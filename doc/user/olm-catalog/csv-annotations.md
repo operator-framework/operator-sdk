@@ -4,9 +4,11 @@
 
 This document describes the semantics of Cluster Service Version (CSV) [code annotations][code-annotations-design] and lists all possible annotations.
 
+**Note:** CSV annotations can only be used in Go Operator projects. Annotations for Ansible and Helm Operator projects will be added in the future.
+
 ## Usage
 
-All annotations have a `+operator-sdk:gen-csv` prefix, denoting that they're parsed while executing [`operator-sdk olm-catalog gen-csv`][sdk-cli-ref].
+All annotations have a `+operator-sdk:gen-csv` prefix, denoting that they're parsed while executing [`operator-sdk generate csv`][generate-csv-cli].
 
 ### Paths
 
@@ -190,6 +192,6 @@ customresourcedefinitions:
 ```
 
 [code-annotations-design]:../../proposals/sdk-code-annotations.md
-[sdk-cli-ref]:../../sdk-cli-reference.md#gen-csv
+[generate-csv-cli]:../../cli/operator-sdk_generate_csv.md
 [csv-x-desc]:https://github.com/openshift/console/blob/feabd61/frontend/packages/operator-lifecycle-manager/src/components/descriptors/types.ts#L3-L39
 [csv-spec]:https://github.com/operator-framework/operator-lifecycle-manager/blob/e0eea22/doc/design/building-your-csv.md

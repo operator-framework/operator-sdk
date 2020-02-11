@@ -96,7 +96,7 @@ type MemcachedSpec struct {
 	Size int32 `json:"size"`
 }
 type MemcachedStatus struct {
-	// Nodes are the names of the memcached pods 
+	// Nodes are the names of the memcached pods
 	Nodes []string `json:"nodes"`
 }
 ```
@@ -107,7 +107,22 @@ After modifying the `*_types.go` file always run the following command to update
 $ operator-sdk generate k8s
 ```
 
-### OpenAPI validation
+### Updating CRD manifests
+
+Now that `MemcachedSpec` and `MemcachedStatus` have fields and possibly annotations, the CRD corresponding to the API's group and kind must be updated. To do so, run the following command:
+
+```console
+$ operator-sdk generate crds
+```
+
+**Notes:**
+- - Your CRD *must* specify exactly one [storage version][crd-storage-version]. Use the `+kubebuilder:storageversion` [marker][crd-markers] to indicate the GVK that should be used to store data by the API server. This marker should be in a comment above your `Memcached` type.
+
+[crd-storage-version]:https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definition-versioning/#writing-reading-and-updating-versioned-customresourcedefinition-objects
+[crd-markers]:https://book.kubebuilder.io/reference/markers/crd.html
+[api-rules]: https://github.com/kubernetes/kubernetes/tree/36981002246682ed7dc4de54ccc2a96c1a0cbbdb/api/api-rules
+
+#### OpenAPI validation
 
 OpenAPIv3 schemas are added to CRD manifests in the `spec.validation` block when the manifests are generated. This validation block allows Kubernetes to validate the properties in a Memcached Custom Resource when it is created or updated.
 
@@ -146,7 +161,6 @@ To learn more about OpenAPI v3.0 validation schemas in Custom Resource Definitio
 [generating-crd]: https://book.kubebuilder.io/reference/generating-crd.html
 [markers]: https://book.kubebuilder.io/reference/markers.html
 [crd-markers]: https://book.kubebuilder.io/reference/markers/crd-validation.html
-[api-rules]: https://github.com/kubernetes/kubernetes/tree/36981002246682ed7dc4de54ccc2a96c1a0cbbdb/api/api-rules
 
 ## Add a new Controller
 
@@ -308,7 +322,7 @@ export OPERATOR_NAME=memcached-operator
 Run the operator locally with the default Kubernetes config file present at `$HOME/.kube/config`:
 
 ```sh
-$ operator-sdk up local --namespace=default
+$ operator-sdk run --local --namespace=default
 2018/09/30 23:10:11 Go Version: go1.10.2
 2018/09/30 23:10:11 Go OS/Arch: darwin/amd64
 2018/09/30 23:10:11 operator-sdk Version: 0.0.6+git
@@ -414,6 +428,32 @@ $ kubectl delete -f deploy/service_account.yaml
 
 ## Advanced Topics
 
+### Manage CR status conditions
+
+An often-used pattern is to include `Conditions` in the status of custom resources. Conditions represent the latest available observations of an object's state (see the [Kubernetes API conventionsdocumentation][typical-status-properties] for more information).
+
+The `Conditions` field added to the `MemcachedStatus` struct simplifies the management of your CR's conditions. It:
+- Enables callers to add and remove conditions.
+- Ensures that there are no duplicates.
+- Sorts the conditions deterministically to avoid unnecessary repeated reconciliations.
+- Automatically handles the each condition's `LastTransitionTime`.
+- Provides helper methods to make it easy to determine the state of a condition.
+
+To use conditions in your custom resource, add a Conditions field to the Status struct in `_types.go`:
+
+```Go
+import (
+    "github.com/operator-framework/operator-sdk/pkg/status"
+)
+
+type MyAppStatus struct {
+    // Conditions represent the latest available observations of an object's state
+    Conditions status.Conditions `json:"conditions"`
+}
+```
+
+Then, in your controller, you can use [`Conditions`][godoc-conditions] methods to make it easier to set and remove conditions or check their current values.
+
 ### Adding 3rd Party Resources To Your Operator
 
 The operator's Manager supports the Core Kubernetes resource types as found in the client-go [scheme][scheme_package] package and will also register the schemes of all custom resource types defined in your project under `pkg/apis`.
@@ -435,7 +475,8 @@ To add a 3rd party resource to an operator, you must add it to the Manager's sch
 
 #### Register with the Manager's scheme
 
-Call the `AddToScheme()` function for your 3rd party resource and pass it the Manager's scheme via `mgr.GetScheme()`.
+Call the `AddToScheme()` function for your 3rd party resource and pass it the Manager's scheme via `mgr.GetScheme()`
+in `cmd/manager/main.go`.
 
 Example:
 ```go
@@ -463,6 +504,47 @@ func main() {
   }
 }
 ```
+
+##### If 3rd party resource does not have `AddToScheme()` function
+
+Use the [SchemeBuilder][scheme_builder] package from controller-runtime to initialize a new scheme builder that can be used to register the 3rd party resource with the manager's scheme.
+
+Example of registering `DNSEndpoints` 3rd party resource from `external-dns`:
+
+```go
+import (
+  ...
+    "k8s.io/apimachinery/pkg/runtime/schema"
+    "sigs.k8s.io/controller-runtime/pkg/scheme"
+  ...
+   // DNSEndoints
+   externaldns "github.com/kubernetes-incubator/external-dns/endpoint"
+   metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+ )
+
+func main() {
+  ....
+
+  log.Info("Registering Components.")
+
+  schemeBuilder := &scheme.Builder{GroupVersion: schema.GroupVersion{Group: "externaldns.k8s.io", Version: "v1alpha1"}}
+  schemeBuilder.Register(&externaldns.DNSEndpoint{}, &externaldns.DNSEndpointList{})
+  if err := schemeBuilder.AddToScheme(mgr.GetScheme()); err != nil {
+    log.Error(err, "")
+    os.Exit(1)
+  }
+
+  ....
+
+  // Setup all Controllers
+  if err := controller.AddToManager(mgr); err != nil {
+    log.Error(err, "")
+    os.Exit(1)
+  }
+}
+```
+
+
 
 **NOTES:**
 
@@ -680,3 +762,6 @@ When the operator is not running in a cluster, the Manager will return an error 
 [metrics_doc]: ./user/metrics/README.md
 [quay_link]: https://quay.io
 [multi-namespaced-cache-builder]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
+[scheme_builder]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/scheme#Builder
+[typical-status-properties]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
+[godoc-conditions]: https://godoc.org/github.com/operator-framework/operator-sdk/pkg/status#Conditions

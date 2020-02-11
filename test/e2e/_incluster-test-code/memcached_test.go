@@ -217,7 +217,9 @@ func MemcachedLocal(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cmd := exec.Command("operator-sdk", "up", "local", "--namespace="+namespace)
+	cmd := exec.Command("operator-sdk", "run",
+		"--local",
+		"--namespace="+namespace)
 	stderr, err := os.Create("stderr.txt")
 	if err != nil {
 		t.Fatalf("Failed to create stderr.txt: %v", err)
@@ -313,7 +315,7 @@ func memcachedMetricsTest(t *testing.T, f *framework.Framework, ctx *framework.T
 	s := v1.Service{}
 	err = f.Client.Get(goctx.TODO(), types.NamespacedName{Name: fmt.Sprintf("%s-metrics", operatorName), Namespace: namespace}, &s)
 	if err != nil {
-		return fmt.Errorf("could not get metrics Service: (%v)", err)
+		return fmt.Errorf("could not get metrics Service: %v", err)
 	}
 	if len(s.Spec.Selector) == 0 {
 		return fmt.Errorf("no labels found in metrics Service")
@@ -428,7 +430,7 @@ func getMetrics(t *testing.T, f *framework.Framework, labels map[string]string, 
 	}
 	err := f.Client.List(goctx.TODO(), pods, opts...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get pods: (%v)", err)
+		return nil, fmt.Errorf("failed to get pods: %v", err)
 	}
 
 	podName := ""

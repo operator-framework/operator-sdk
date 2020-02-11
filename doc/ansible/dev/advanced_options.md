@@ -25,7 +25,7 @@ Some features can be overridden per resource via an annotation on that CR. The o
 - version: v1alpha1
   group: app.example.com
   kind: AppService
-  playbook: /opt/ansible/playbook.yml
+  playbook: playbook.yml
   maxRunnerArtifacts: 30
   reconcilePeriod: 5s
   manageStatus: False
@@ -170,6 +170,6 @@ kind: "PostgreSQL"
 metadata:
   name: "example-db"
   annotations:
-    "ansible.operator-sdk/verbosity": 5
+    "ansible.operator-sdk/verbosity": "5"
 spec: {}
 ```

@@ -47,7 +47,7 @@ The following workflow is for a new **Helm** operator:
   - Alternatively [podman][podman_tool] `v1.2.0+` or [buildah][buildah_tool] `v1.7+`
 - [kubectl][kubectl_tool] version v1.12.0+.
 - Access to a Kubernetes v1.12.0+ cluster.
-- Optional: [delve](https://github.com/go-delve/delve/tree/master/Documentation/installation) version 1.2.0+ (for `up local --enable-delve`).
+- Optional: [delve](https://github.com/go-delve/delve/tree/master/Documentation/installation) version 1.2.0+ (for `run --local --enable-delve`).
 
 ## Quick Start
 
@@ -73,19 +73,22 @@ $ operator-sdk add api --api-version=app.example.com/v1alpha1 --kind=AppService
 # Add a new controller that watches for AppService
 $ operator-sdk add controller --api-version=app.example.com/v1alpha1 --kind=AppService
 
+# Set the username variable
+$ export USERNAME=<username>
+
 # Build and push the app-operator image to a public registry such as quay.io
-$ operator-sdk build quay.io/<username>/app-operator
+$ operator-sdk build quay.io/$USERNAME/app-operator
 
 # Login to public registry such as quay.io
 $ docker login quay.io
 
 # Push image
-$ docker push quay.io/<username>/app-operator
+$ docker push quay.io/$USERNAME/app-operator
 
 # Update the operator manifest to use the built image name (if you are performing these steps on OSX, see note below)
-$ sed -i 's|REPLACE_IMAGE|quay.io/<username>/app-operator|g' deploy/operator.yaml
+$ sed -i "s|REPLACE_IMAGE|quay.io/$USERNAME/app-operator|g" deploy/operator.yaml
 # On OSX use:
-$ sed -i "" 's|REPLACE_IMAGE|quay.io/<username>/app-operator|g' deploy/operator.yaml
+$ sed -i "" "s|REPLACE_IMAGE|quay.io/$USERNAME/app-operator|g" deploy/operator.yaml
 
 # Setup Service Account
 $ kubectl create -f deploy/service_account.yaml
@@ -134,7 +137,7 @@ $ kubectl delete -f deploy/crds/app.example.com_appservices_crd.yaml
 ```
 
 **Note:** Follow the steps in the [Getting Started Repository][getting_started] to learn how to develop your Operator projects.
- 
+
 ## Command Line Interface
 
 To learn more about the SDK CLI, see the [SDK CLI Reference][sdk_cli_ref], or run `operator-sdk [command] -h`.
@@ -196,4 +199,3 @@ Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file f
 [helm_user_guide]:./doc/helm/user-guide.md
 [faq]: ./doc/faq.md
 [getting_started]: https://github.com/operator-framework/getting-started/blob/master/README.md
-

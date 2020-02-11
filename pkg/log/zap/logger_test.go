@@ -28,13 +28,14 @@ import (
 func TestGetConfig(t *testing.T) {
 	var opts []zap.Option
 	type fields struct {
-		name           string
-		inEncoder      *encoderValue
-		inLevel        *levelValue
-		inSample       *sampleValue
-		inTimeEncoding *timeEncodingValue
-		expected       *config
-		inDevel        bool
+		name              string
+		inEncoder         *encoderValue
+		inLevel           *levelValue
+		inSample          *sampleValue
+		inTimeEncoding    *timeEncodingValue
+		expected          *config
+		inDevel           bool
+		inStackTraceLevel *stackLevelValue
 	}
 	tests := []struct {
 		name    string
@@ -54,6 +55,9 @@ func TestGetConfig(t *testing.T) {
 					set: false,
 				},
 				inTimeEncoding: &timeEncodingValue{
+					set: false,
+				},
+				inStackTraceLevel: &stackLevelValue{
 					set: false,
 				},
 				expected: &config{
@@ -76,6 +80,9 @@ func TestGetConfig(t *testing.T) {
 					set: false,
 				},
 				inTimeEncoding: &timeEncodingValue{
+					set: false,
+				},
+				inStackTraceLevel: &stackLevelValue{
 					set: false,
 				},
 				expected: &config{
@@ -101,6 +108,9 @@ func TestGetConfig(t *testing.T) {
 				inTimeEncoding: &timeEncodingValue{
 					set: false,
 				},
+				inStackTraceLevel: &stackLevelValue{
+					set: false,
+				},
 				expected: &config{
 					encoder: newConsoleEncoder(),
 					level:   zap.NewAtomicLevelAt(zap.InfoLevel),
@@ -122,6 +132,9 @@ func TestGetConfig(t *testing.T) {
 					set: false,
 				},
 				inTimeEncoding: &timeEncodingValue{
+					set: false,
+				},
+				inStackTraceLevel: &stackLevelValue{
 					set: false,
 				},
 				expected: &config{
@@ -147,6 +160,9 @@ func TestGetConfig(t *testing.T) {
 				inTimeEncoding: &timeEncodingValue{
 					set: false,
 				},
+				inStackTraceLevel: &stackLevelValue{
+					set: false,
+				},
 				expected: &config{
 					encoder: newJSONEncoder(),
 					level:   zap.NewAtomicLevelAt(zapcore.Level(-10)),
@@ -168,6 +184,9 @@ func TestGetConfig(t *testing.T) {
 					sample: false,
 				},
 				inTimeEncoding: &timeEncodingValue{
+					set: false,
+				},
+				inStackTraceLevel: &stackLevelValue{
 					set: false,
 				},
 				expected: &config{
@@ -194,6 +213,9 @@ func TestGetConfig(t *testing.T) {
 				inTimeEncoding: &timeEncodingValue{
 					set: false,
 				},
+				inStackTraceLevel: &stackLevelValue{
+					set: false,
+				},
 				expected: &config{
 					encoder: newJSONEncoder(),
 					level:   zap.NewAtomicLevelAt(zapcore.Level(-10)),
@@ -217,11 +239,43 @@ func TestGetConfig(t *testing.T) {
 					set:         true,
 					timeEncoder: zapcore.EpochMillisTimeEncoder,
 				},
+				inStackTraceLevel: &stackLevelValue{
+					set: false,
+				},
 				expected: &config{
 					encoder: newJSONEncoder(withTimeEncoding(zapcore.EpochMillisTimeEncoder)),
 					level:   zap.NewAtomicLevelAt(zap.InfoLevel),
 					opts:    append(opts, zap.AddStacktrace(zap.WarnLevel)),
 					sample:  true,
+				}},
+		},
+		{
+			name: "set stacktrace generation on 'panic' level only",
+			fields: fields{
+				inDevel: false,
+				inEncoder: &encoderValue{
+					set: false,
+				},
+				inLevel: &levelValue{
+					set:   true,
+					level: zapcore.Level(-10),
+				},
+				inSample: &sampleValue{
+					set:    true,
+					sample: true,
+				},
+				inTimeEncoding: &timeEncodingValue{
+					set: false,
+				},
+				inStackTraceLevel: &stackLevelValue{
+					set:   true,
+					level: zapcore.Level(zapcore.PanicLevel),
+				},
+				expected: &config{
+					encoder: newJSONEncoder(),
+					level:   zap.NewAtomicLevelAt(zapcore.Level(-10)),
+					opts:    append(opts, zap.AddStacktrace(zap.PanicLevel)),
+					sample:  false,
 				}},
 		},
 	}
@@ -246,6 +300,7 @@ func TestGetConfig(t *testing.T) {
 			levelVal = *tc.fields.inLevel
 			sampleVal = *tc.fields.inSample
 			timeEncodingVal = *tc.fields.inTimeEncoding
+			stacktraceLevel = *tc.fields.inStackTraceLevel
 
 			cfg := getConfig()
 			assert.Equal(t, tc.fields.expected.level, cfg.level)
@@ -256,11 +311,13 @@ func TestGetConfig(t *testing.T) {
 			// the same way that the expected encoder does. In addition to
 			// testing that the correct entry encoding (json vs. console) is
 			// used, this also tests that the correct time encoding is used.
-			expectedEncoderOut, err := tc.fields.expected.encoder.EncodeEntry(entry, []zapcore.Field{{Key: "fieldKey", Type: zapcore.StringType, String: "fieldValue"}})
+			expectedEncoderOut, err := tc.fields.expected.encoder.EncodeEntry(entry, []zapcore.Field{{Key: "fieldKey",
+				Type: zapcore.StringType, String: "fieldValue"}})
 			if err != nil {
 				t.Fatalf("Unexpected error encoding entry with expected encoder: %s", err)
 			}
-			actualEncoderOut, err := cfg.encoder.EncodeEntry(entry, []zapcore.Field{{Key: "fieldKey", Type: zapcore.StringType, String: "fieldValue"}})
+			actualEncoderOut, err := cfg.encoder.EncodeEntry(entry, []zapcore.Field{{Key: "fieldKey",
+				Type: zapcore.StringType, String: "fieldValue"}})
 			if err != nil {
 				t.Fatalf("Unexpected error encoding entry with actual encoder: %s", err)
 			}

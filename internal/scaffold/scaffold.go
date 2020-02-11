@@ -30,7 +30,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"golang.org/x/tools/imports"
@@ -99,14 +98,14 @@ func validateBoilerplateBytes(b []byte) error {
 	}
 	var tb []byte
 	tb, cb = bytes.TrimSpace(b), bytes.TrimSpace(cb)
-	if bytes.Compare(tb, cb) != 0 {
+	if !bytes.Equal(tb, cb) {
 		return fmt.Errorf(`boilerplate contains text other than comments:\n"%s"\n`, tb)
 	}
 	return nil
 }
 
 func wrapBoilerplateErr(err error, bp string) error {
-	return errors.Wrapf(err, `boilerplate file "%s"`, bp)
+	return fmt.Errorf("boilerplate file %s: %v", bp, err)
 }
 
 func (s *Scaffold) setBoilerplate() (err error) {

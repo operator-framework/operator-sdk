@@ -1,5 +1,9 @@
 # Operator SDK FAQ
 
+## Controller Runtime FAQ
+
+Please see the upstream [Controller Runtime FAQ][cr-faq] first for any questions related to runtime mechanics or controller-runtime APIs. 
+
 ## How can I have separate logic for Create, Update, and Delete events? When reconciling an object can I access its previous state?
 
 You should not have separate logic. Instead design your reconciler to be idempotent. See the [controller-runtime FAQ][controller-runtime_faq] for more details.
@@ -32,8 +36,14 @@ time="2019-06-05T12:29:54Z" level=fatal msg="failed to create or get service for
 Add the following to your `deploy/role.yaml` file to grant the operator permissions to set owner references to the metrics Service resource. This is needed so that the metrics Service will get deleted as soon as you delete the operators Deployment. If you are using another way of deploying your operator, have a look at [this guide][gc-metrics] for more information.
 
 ```
+- apiGroups:
+  - apps
   resources:
   - deployments/finalizers
+  resourceNames:
+  - <operator-name>
+  verbs:
+  - "update"
 ```
 
 ## My Ansible module is missing a dependency. How do I add it to the image? 
@@ -54,3 +64,4 @@ If you aren't sure what dependencies are required, start up a container using th
 [controller-runtime_faq]: https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md#q-how-do-i-have-different-logic-in-my-reconciler-for-different-types-of-events-eg-create-update-delete
 [finalizer]: https://github.com/operator-framework/operator-sdk/blob/master/doc/user-guide.md#handle-cleanup-on-deletion
 [gc-metrics]:./user/metrics/README.md#garbage-collection
+[cr-faq]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md

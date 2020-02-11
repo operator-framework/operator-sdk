@@ -17,22 +17,24 @@ package cli
 import (
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
-	// to ensure that `run` and `up local` can make use of them.
+	// to ensure that `exec-entrypoint` and `run` can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/add"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/build"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/bundle"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cleanup"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/completion"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/execentrypoint"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/migrate"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/new"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/olmcatalog"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/olm"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/printdeps"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/run"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/scorecard"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/test"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/up"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/version"
 	"github.com/operator-framework/operator-sdk/internal/flags"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
@@ -61,20 +63,24 @@ func GetCLIRoot() *cobra.Command {
 		},
 	}
 
-	root.AddCommand(add.NewCmd())
-	root.AddCommand(alpha.NewCmd())
-	root.AddCommand(build.NewCmd())
-	root.AddCommand(completion.NewCmd())
-	root.AddCommand(generate.NewCmd())
-	root.AddCommand(migrate.NewCmd())
-	root.AddCommand(new.NewCmd())
-	root.AddCommand(olmcatalog.NewCmd())
-	root.AddCommand(printdeps.NewCmd())
-	root.AddCommand(run.NewCmd())
-	root.AddCommand(scorecard.NewCmd())
-	root.AddCommand(test.NewCmd())
-	root.AddCommand(up.NewCmd())
-	root.AddCommand(version.NewCmd())
+	root.AddCommand(
+		add.NewCmd(),
+		alpha.NewCmd(),
+		build.NewCmd(),
+		bundle.NewCmd(),
+		cleanup.NewCmd(),
+		completion.NewCmd(),
+		execentrypoint.NewCmd(),
+		generate.NewCmd(),
+		migrate.NewCmd(),
+		new.NewCmd(),
+		olm.NewCmd(),
+		printdeps.NewCmd(),
+		run.NewCmd(),
+		scorecard.NewCmd(),
+		test.NewCmd(),
+		version.NewCmd(),
+	)
 
 	return root
 }

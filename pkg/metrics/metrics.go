@@ -47,7 +47,7 @@ func CreateMetricsService(ctx context.Context, cfg *rest.Config, servicePorts []
 	}
 	client, err := crclient.New(cfg, crclient.Options{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create new client: %v", err)
+		return nil, fmt.Errorf("failed to create new client: %w", err)
 	}
 	s, err := initOperatorService(ctx, client, servicePorts)
 	if err != nil {
@@ -55,11 +55,11 @@ func CreateMetricsService(ctx context.Context, cfg *rest.Config, servicePorts []
 			log.Info("Skipping metrics Service creation; not running in a cluster.")
 			return nil, nil
 		}
-		return nil, fmt.Errorf("failed to initialize service object for metrics: %v", err)
+		return nil, fmt.Errorf("failed to initialize service object for metrics: %w", err)
 	}
 	service, err := createOrUpdateService(ctx, client, s)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create or get service for metrics: %v", err)
+		return nil, fmt.Errorf("failed to create or get service for metrics: %w", err)
 	}
 
 	return service, nil
@@ -89,11 +89,13 @@ func createOrUpdateService(ctx context.Context, client crclient.Client, s *v1.Se
 		if err != nil {
 			return nil, err
 		}
-		log.Info("Metrics Service object updated", "Service.Name", s.Name, "Service.Namespace", s.Namespace)
+		log.Info("Metrics Service object updated", "Service.Name",
+			s.Name, "Service.Namespace", s.Namespace)
 		return s, nil
 	}
 
-	log.Info("Metrics Service object created", "Service.Name", s.Name, "Service.Namespace", s.Namespace)
+	log.Info("Metrics Service object created", "Service.Name",
+		s.Name, "Service.Namespace", s.Namespace)
 	return s, nil
 }
 
@@ -152,7 +154,8 @@ func getPodOwnerRef(ctx context.Context, client crclient.Client, ns string) (*me
 }
 
 // findFinalOwnerRef tries to locate the final controller/owner based on the owner reference provided.
-func findFinalOwnerRef(ctx context.Context, client crclient.Client, ns string, ownerRef *metav1.OwnerReference) (*metav1.OwnerReference, error) {
+func findFinalOwnerRef(ctx context.Context, client crclient.Client, ns string,
+	ownerRef *metav1.OwnerReference) (*metav1.OwnerReference, error) {
 	if ownerRef == nil {
 		return nil, nil
 	}
@@ -169,6 +172,7 @@ func findFinalOwnerRef(ctx context.Context, client crclient.Client, ns string, o
 		return findFinalOwnerRef(ctx, client, ns, newOwnerRef)
 	}
 
-	log.V(1).Info("Pods owner found", "Kind", ownerRef.Kind, "Name", ownerRef.Name, "Namespace", ns)
+	log.V(1).Info("Pods owner found", "Kind", ownerRef.Kind, "Name",
+		ownerRef.Name, "Namespace", ns)
 	return ownerRef, nil
 }

@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2020 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ func (m *MoleculeDefaultPlaybook) GetInput() (input.Input, error) {
 	}
 	m.TemplateBody = moleculeDefaultPlaybookAnsibleTmpl
 	m.Delims = AnsibleDelims
-
 	return m.Input, nil
 }
 
@@ -49,11 +48,7 @@ const moleculeDefaultPlaybookAnsibleTmpl = `---
 - name: Converge
   hosts: localhost
   connection: local
-  vars:
-    ansible_python_interpreter: '{{ ansible_playbook_python }}'
   roles:
     - [[.Resource.LowerKind]]
   [[- end ]]
-
-- import_playbook: '{{ playbook_dir }}/asserts.yml'
 `

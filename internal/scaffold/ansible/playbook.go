@@ -37,9 +37,11 @@ func (p *Playbook) GetInput() (input.Input, error) {
 	return p.Input, nil
 }
 
-const playbookTmpl = `- hosts: localhost
+const playbookTmpl = `---
+- hosts: localhost
   gather_facts: no
+
   tasks:
-  - import_role:
-      name: "[[.Resource.LowerKind]]"
+    - import_role:
+        name: "[[.Resource.LowerKind]]"
 `

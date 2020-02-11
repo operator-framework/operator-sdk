@@ -6,9 +6,8 @@
 To begin, you sould have:
 - The latest version of the [operator-sdk](https://github.com/operator-framework/operator-sdk) installed.
 - Docker installed and running
-- [Molecule](https://github.com/ansible/molecule) >= v2.20
-- [Ansible](https://github.com/ansible/ansible) >= v2.7
-- [jmespath](https://pypi.org/project/jmespath/)
+- [Molecule](https://github.com/ansible/molecule) >= v2.22
+- [Ansible](https://github.com/ansible/ansible) >= v2.9
 - [The OpenShift Python client](https://github.com/openshift/openshift-restclient-python) >= v0.8
 - An initialized Ansible Operator project, with the molecule directory present. If you initialized a project with a previous
   version of operator-sdk, you can generate a new dummy project and copy in the `molecule` directory. Just be sure
@@ -25,8 +24,9 @@ To begin, you sould have:
     ```
 
 ### Molecule scenarios
-If you look into the `molecule` directory, you will see three directories (`default`, `test-local`, `test-cluster`).
-Each of those directories contains a set of files that together make up what is known as a molecule *scenario*.
+If you look into the `molecule` directory, you will see four directories (`default`, `test-local`, `cluster`, `templates`).
+The `default`, `test-local`, and `cluster` directories contain a set of files that together make up what is known as a molecule *scenario*.
+The `templates` directory contains Jinja templates that are used by multiple scenarios to configure the Kubernetes cluster.
 
 Our molecule scenarios have the following basic structure:
 
@@ -34,7 +34,8 @@ Our molecule scenarios have the following basic structure:
 .
 ├── molecule.yml
 ├── prepare.yml
-└── playbook.yml
+├── playbook.yml
+└── verify.yml
 ```
 
 `molecule.yml` is a configuration file for molecule. It defines what driver to use to stand up an environment and the associated configuration, linting rules, and a variety of other configuration options. For full documentation on the options available here, see the [molecule configuration documentation](https://molecule.readthedocs.io/en/latest/configuration.html)
@@ -46,8 +47,8 @@ that your Operator will watch.
 
 `playbook.yml` is an Ansible playbook that contains your core logic for the scenario. In a
 normal molecule scenario, this would import and run the associated role. For Ansible
-Operator, we mostly use this to create the Kubernetes resources and then execute a
-series of asserts that verify your cluster state.
+Operators, we mostly use this to create the Kubernetes resources necessary to deploy
+your operator into Kubernetes.
 
 Below we will walk through the structure and function of each file for each scenario.
 
@@ -63,30 +64,94 @@ The scenario has the following structure:
 
 ```
 molecule/default
-├── asserts.yml
 ├── molecule.yml
+├── prepare.yml
 ├── playbook.yml
-└── prepare.yml
+└── verify.yml
 ```
 
-`asserts.yml` is an Ansible playbook contains Ansible assert tasks that will be run by all three scenarios.
-If you would like to write specific asserts for individual scenarios, you can instead remove the `asserts.yml`
-playbook import from that scenario's `playbook.yml`, or if you only want to add additional asserts, you can
-create a new playbook in that scenario and import it at the bottom of that scenario's `playbook.yml`.
-
 `molecule.yml` for this scenario tells molecule to use the docker driver to bring up a Kubernetes-in-Docker container,
-and exposes the API on the host's port 9443. It also specifies a few inventory and environment
+and by default exposes the API on the host's port 9443. It also specifies a few inventory and environment
 variables which are used in `prepare.yml` and `playbook.yml`.
 
-`prepare.yml` ensures that a kubeconfig properly configured to connect to the Kubernetes-in-Docker cluster exists and is mapped to the proper port, and also waits for the Kubernetes API to become
-available before allowing testing to begin.
+`prepare.yml` ensures that a kubeconfig properly configured to connect to the Kubernetes-in-Docker cluster exists and
+is mapped to the proper port, and also waits for the Kubernetes API to become available before allowing testing to begin.
 
-`playbook.yml` only imports your role or playbook and then imports the `asserts.yml` playbook.
+`playbook.yml` imports and runs your role or playbook.
+
+`verify.yml` is an Ansible playbook where you can put tasks to verify that the state of your cluster matches what you expect.
+
+##### Configuration
+
+There are a few parameters you can tweak at runtime to change the behavior of your molecule run.
+You can change these parameters by setting the environment variable before invoking molecule.
+
+The options supported by the default scenario are:
+
+| Environment variable | Default | Purpose |
+| :---                 | :---    | :---    |
+| KUBE_VERSION | 1.16 | The Kubernetes version to deploy |
+| TEST_CLUSTER_PORT | 9443 | The port on the host to expose the Kubernetes API |
+| TEST_NAMESPACE | osdk-test | The namespace to run your role against |
+
+#### cluster
+
+The cluster scenario runs an end-to-end test of your operator against an existing cluster.
+The operator image needs to be available to the cluster for this scenario to succeed.
+This scenario will deploy your CRDs, RBAC, and operator into the cluster,
+and then creates an instance of your CustomResource and runs your assertions to make sure the Operator responded properly.
+
+You can run this scenario with
+`molecule test`
+or
+`molecule converge`. There is no corresponding `operator-sdk` command for this scenario.
+
+The scenario has the following structure:
+
+```
+molecule/default
+├── molecule.yml
+├── create.yml
+├── prepare.yml
+├── playbook.yml
+├── verify.yml
+└── destroy.yml
+```
+
+`molecule.yml` for this scenario uses the delegated driver, and does not spin up any additional infrastructure.
+
+`create.yml` is a no-op, but must be present for the delegated driver to work.
+
+`prepare.yml` ensures the CRD, namespace, and RBAC resources are present in the cluster.
+
+`playbook.yml` creates your operator deployment, based on the template in `molecule/templates/operator.yaml.j2`.
+
+`verify.yml` is an Ansible playbook where you can put tasks to verify that the state of your cluster matches what you expect. By default, it creates a Custom Resource and waits for reconciliation to complete successfully. 
+There is an example assertion present as well.
+
+`destroy.yml` ensures that the namespace, RBAC resources, and CRD are deleted at the end of the run.
+
+##### Configuration
+
+There are a few parameters you can tweak at runtime to change the behavior of your molecule run.
+You can change these parameters by setting the environment variable before invoking molecule.
+
+The options supported by the default scenario are:
+
+| Environment variable | Default | Purpose |
+| :---                 | :---    | :---    |
+| OPERATOR_IMAGE | None | *Required* The image to use when deploying the operator into the cluster |
+| OPERATOR_PULL_POLICY | Always | The pull policy to use when deploying the operator into the cluster |
+| KUBECONFIG | ~/.kube/config | The path to the Kubeconfig for the cluster to test against |
+| TEST_NAMESPACE | osdk-test | The namespace to run your role against |
 
 #### test-local
-The test-local scenario is a more full integration test of your operator. It brings up a Kubernetes-in-docker cluster, builds your Operator, deploys it
-into the cluster, and then creates an instance of your CustomResource and runs your assertions to make sure the Operator responded properly. You can run
-this scenario with
+The test-local scenario runs a full end-to-end test of your operator that does not require an existing
+cluster or external registry, and can run in CI environments that allow users to run privileged containers
+(such as Travis).
+It brings up a Kubernetes-in-docker cluster, builds your Operator, deploys it into the cluster,
+and then creates an instance of your CustomResource and runs your assertions to make sure the Operator responded properly.
+You can run this scenario with
 `molecule test -s local`, which is equivalent to `operator-sdk test local`, or with `molecule converge -s test-local`, which will leave the environment up
 afterward.
 
@@ -95,47 +160,38 @@ The scenario has the following structure:
 ```
 molecule/test-local
 ├── molecule.yml
+├── prepare.yml
 ├── playbook.yml
-└── prepare.yml
+└── verify.yml
 ```
 
 `molecule.yml` for this scenario tells molecule to use the docker driver to bring up a Kubernetes-in-Docker container with the project root mounted,
 and exposes the API on the host's port 10443. It also specifies a few inventory and environment
 variables which are used in `prepare.yml` and `playbook.yml`. It is very similar to the default scenario's configuration.
 
-`prepare.yml` first runs the `prepare.yml` from the default scenario to ensure the kubeconfig is present and the API is up. It then creates the CustomResourceDefinition, namespace, and RBAC
-resources specified in the `deploy/` directory.
+`prepare.yml` first runs the `prepare.yml` from the default scenario to ensure the kubeconfig is present and the API is up.
+It then runs the `prepare.yml` from the cluster scenario to configure your cluster's CRDs and RBAC.
 
-`playbook.yml` is the most complicated file in this project. First, it connects to your
-Kubernetes-in-Docker container, and uses your mounted project root to build your Operator.
-This makes your Operator available to the cluster without needing to push it to an external
-registry. Next, it will ensure that a fresh deployment of your Operator is present in the
-cluster, and once there is it will create an instance of your Custom Resource
-(specified in `deploy/crds/`). It will then wait for the CustomResource to report a successful
-run, and once it has, will import the `asserts.yml` from the default scenario.
+`playbook.yml` connects to your Kubernetes-in-Docker container, and uses your mounted project root to build your Operator.
+This makes your Operator available to the cluster without needing to push it to an external registry.
+Then, it will ensure that a fresh deployment of your Operator is present in the cluster, using the
+template `molecule/templates/operator.yaml.j2`.
 
-#### test-cluster
-The test-cluster scenario is intended as a full integration test against
-an existing Kubernetes cluster, and assumes that the cluster is already available, the dependent resources from the `deploy/` directory
-are created, the operator image is built with `--enable-tests`, and that the image is available in a container registry. It connects
-to the existing Kubernetes cluster and deploys the test Operator, creates a Custom Resource, and runs your asserts.  You shouldn't
-call this scenario directly, rather you should build your operator with the `--enable-tests` flag, in which case a new entrypoint will
-be added that runs this scenario when the container starts up. It is recommended that you only interact with this scenario through
-`operator-sdk test cluster`.
+`verify.yml` will run the `verify.yml` from the `cluster` scenario, as the main difference between the `test-local` and `cluster`
+scenarios is the method of deployment, but not the behavior of the operator.
 
-The scenario has the following structure:
+##### Configuration
 
-```
-molecule/test-cluster
-├── molecule.yml
-└── playbook.yml
-```
-`molecule.yml` for this scenario is very simple, as it assumes an environment is already
-present. It essentially is just specifying the metadata of the scenario, and telling molecule
-not to try and create or destroy anything when run.
+There are a few parameters you can tweak at runtime to change the behavior of your molecule run.
+You can change these parameters by setting the environment variable before invoking molecule.
 
-`playbook.yml` is also pretty simple, compared to the previous scenarios. All it does is create
-an instance of your Custom Resource (specified in `deploy/crds`), and then import the `asserts.yml` from the `default` scenario.
+The options supported by the default scenario are:
+
+| Environment variable | Default | Purpose |
+| :---                 | :---    | :---    |
+| KUBE_VERSION | 1.16 | The Kubernetes version to deploy |
+| TEST_CLUSTER_PORT | 10443 | The port on the host to expose the Kubernetes API |
+| TEST_NAMESPACE | osdk-test | The namespace to deploy the operator and associated resources |
 
 #### converge vs test
 The two most common molecule commands for testing during development are `molecule test` and `molecule converge`.
@@ -145,23 +201,10 @@ can cause unexpected problems if you end up corrupting your environment during t
 will reset it.
 
 
+## operator-sdk test local 
 
-## operator-sdk test commands
-
-### test local
-
-The `operator-sdk test local` command kicks off an end-to-end test of your Operator. It will bring up a [Kubernetes-in-Docker (kind)](https://github.com/bsycorp/kind) cluster, builds your Operator
-image and make it available to that cluster, create all the required resources from the `deploy/` directory, create an instance of your
-Custom Resource (specified in the `deploy/crds` directory), and then verify that the Operator has responded appropriately by running
-the asserts from `molecule/default/asserts.yml`.
-
-
-### test cluster
-
-The `operator-sdk test cluster` command does much less than the `test local` command. It is intended as a full integration test against
-an existing Kubernetes cluster, and assumes that the cluster is already available, the dependent resources from the `deploy/` directory
-are created, the operator image is built with `--enable-tests`, and that the image is available in a container registry. When you run the command, it will connect
-to the existing Kubernetes cluster and deploy the test Operator, create a Custom Resource, and run the asserts in `molecule/default/asserts.yml`.
+The `operator-sdk test local` command kicks off an end-to-end test of your Operator. It will run the
+`test-local` molecule scenario described above.
 
 ## Writing tests
 
@@ -190,7 +233,7 @@ We'll be adding the task to `roles/example/tasks/main.yml`, which should now loo
 
 ### Adding a test
 
-Now that our Operator actually does some work, we can add a corresponding assert to `molecule/default/asserts.yml`.
+Now that our Operator actually does some work, we can add a corresponding assert to `molecule/cluster/verify.yml`.
 We'll also add a debug message so that we can see what the ConfigMap looks like.
 The file should now look like this:
 
@@ -200,8 +243,6 @@ The file should now look like this:
 - name: Verify
   hosts: localhost
   connection: local
-  vars:
-    ansible_python_interpreter: '{{ ansible_playbook_python }}'
   tasks:
     - debug: var=cm
       vars:

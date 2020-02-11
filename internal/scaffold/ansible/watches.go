@@ -44,8 +44,8 @@ const watchesAnsibleTmpl = `---
   group: [[.Resource.FullGroup]]
   kind: [[.Resource.Kind]]
   [[- if .GeneratePlaybook ]]
-  playbook: /opt/ansible/playbook.yml
+  playbook: playbook.yml
   [[- else ]]
-  role: /opt/ansible/[[.RolesDir]]/[[.Resource.LowerKind]]
+  role: [[.Resource.LowerKind]]
   [[- end ]]
 `

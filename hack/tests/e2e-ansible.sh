@@ -4,7 +4,7 @@ set -eu
 
 source hack/lib/test_lib.sh
 source hack/lib/image_lib.sh
-source ./hack/common.sh
+source ./hack/lib/common.sh
 
 # ansible proxy test require a running cluster; run during e2e instead
 go test -count=1 ./pkg/ansible/proxy/...
@@ -83,6 +83,14 @@ test_operator() {
         exit 1
     fi
 
+    header_text "verify that the servicemonitor is created"
+    if ! timeout 1m bash -c -- "until kubectl get servicemonitors/memcached-operator-metrics > /dev/null 2>&1; do sleep 1; done";
+    then
+        error_text "FAIL: Failed to get service monitor"
+        operator_logs
+        exit 1
+    fi
+
     header_text "create custom resource (Memcached CR)"
     kubectl create -f deploy/crds/ansible.example.com_v1alpha1_memcached_cr.yaml
     if ! timeout 60s bash -c -- 'until kubectl get deployment -l app=memcached | grep memcached; do sleep 1; done';
@@ -92,8 +100,25 @@ test_operator() {
         exit 1
     fi
 
+    header_text "Verify that a config map owned by the CR has been created."
+    if ! timeout 1m bash -c -- "until kubectl get configmap test-blacklist-watches > /dev/null 2>&1; do sleep 1; done";
+    then
+        error_text "FAIL: Unable to retrieve config map test-blacklist-watches."
+        operator_logs
+        exit 1
+    fi
+
+    header_text "Verify that config map requests skip the cache."
+    if ! kubectl logs deployment/memcached-operator -c operator | grep -e "Skipping cache lookup\".*"Path\":\"\/api\/v1\/namespaces\/default\/configmaps\/test-blacklist-watches\";
+    then
+        error_text "FAIL: test-blacklist-watches should not be accessible with the cache."
+        operator_logs
+        exit 1
+    fi
+
+
     header_text "verify that metrics reflect cr creation"
-    if ! timeout 1m bash -c -- "until kubectl run -it --rm --restart=Never test-metrics --image=$metrics_test_image -- curl http://memcached-operator-metrics:8686/metrics | grep example-memcached; do sleep 1; done";
+    if ! timeout 60s bash -c -- "until kubectl run -it --rm --restart=Never test-metrics --image=$metrics_test_image -- curl http://memcached-operator-metrics:8686/metrics | grep example-memcached; do sleep 1; done";
     then
         error_text "FAIL: Failed to verify custom resource metrics"
         operator_logs
@@ -153,6 +178,8 @@ cat "$ROOTDIR/test/ansible-memcached/watches-finalizer.yaml" >> memcached-operat
 # Append Foo kind to watches to test watching multiple Kinds
 cat "$ROOTDIR/test/ansible-memcached/watches-foo-kind.yaml" >> memcached-operator/watches.yaml
 
+install_service_monitor_crd
+
 pushd memcached-operator
 
 header_text "Adding a second Kind to test watching multiple GVKs"
@@ -161,8 +188,8 @@ sed -i".bak" -E -e 's/(FROM quay.io\/operator-framework\/ansible-operator)(:.*)?
 operator-sdk build "$DEST_IMAGE"
 # If using a kind cluster, load the image into all nodes.
 load_image_if_kind "$DEST_IMAGE"
-sed -i".bak" -E -e "s|\{\{ REPLACE_IMAGE \}\}|$DEST_IMAGE|g" deploy/operator.yaml; rm -f deploy/operator.yaml.bak
-sed -i".bak" -E -e 's|\{\{ pull_policy.default..Always.. \}\}|Never|g' deploy/operator.yaml; rm -f deploy/operator.yaml.bak
+sed -i".bak" -E -e "s|REPLACE_IMAGE|$DEST_IMAGE|g" deploy/operator.yaml; rm -f deploy/operator.yaml.bak
+sed -i".bak" -E -e 's|Always|Never|g' deploy/operator.yaml; rm -f deploy/operator.yaml.bak
 # kind has an issue with certain image registries (ex. redhat's), so use a
 # different test pod image.
 METRICS_TEST_IMAGE="fedora:latest"

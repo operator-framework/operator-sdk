@@ -16,26 +16,19 @@ package scorecard
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
-	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	scplugins "github.com/operator-framework/operator-sdk/internal/scorecard/plugins"
-	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
+	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 	"github.com/operator-framework/operator-sdk/version"
 	v1 "k8s.io/api/core/v1"
 )
 
 type Plugin interface {
-	List() scapiv1alpha1.ScorecardOutput
-	Run() scapiv1alpha1.ScorecardOutput
-}
-
-type externalPlugin struct {
-	config externalPluginConfig
+	List() scapiv1alpha2.ScorecardOutput
+	Run() scapiv1alpha2.ScorecardOutput
 }
 
 type basicOrOLMPlugin struct {
@@ -43,54 +36,16 @@ type basicOrOLMPlugin struct {
 	config     scplugins.BasicAndOLMPluginConfig
 }
 
-func (p externalPlugin) List() scapiv1alpha1.ScorecardOutput {
-	return scapiv1alpha1.ScorecardOutput{}
-}
-
-func (p externalPlugin) Run() scapiv1alpha1.ScorecardOutput {
-	cmd := exec.Command(p.config.Command, p.config.Args...)
-	for _, env := range p.config.Env {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", env.Name, env.Value))
-	}
-	stdout := &bytes.Buffer{}
-	cmd.Stdout = stdout
-	stderr := &bytes.Buffer{}
-	cmd.Stderr = stderr
-	err := cmd.Run()
-	if err != nil {
-		name := filepath.Base(p.config.Command)
-		logs := fmt.Sprintf("%s\nError: %s\nStdout: %s\nStderr: %s", p.config, err, stdout.String(), stderr.String())
-		// output error to main logger as well for human-readable output
-		log.Errorf("Plugin `%s` failed\nLogs: %s", filepath.Base(p.config.Command), logs)
-		return failedPlugin(name, logs)
-	}
-	// parse output and add to suites
-	result := scapiv1alpha1.ScorecardOutput{}
-	err = json.Unmarshal(stdout.Bytes(), &result)
-	if err != nil {
-		name := filepath.Base(p.config.Command)
-		logs := fmt.Sprintf("%s\nError: %s\nStdout: %s\nStderr: %s", p.config, err, stdout.String(), stderr.String())
-		// output error to main logger as well for human-readable output
-		log.Errorf("Output from plugin `%s` failed to unmarshal\nLogs: %s", filepath.Base(p.config.Command), logs)
-		return failedPlugin(name, logs)
-	}
-	stderrString := stderr.String()
-	if len(stderrString) != 0 {
-		log.Warn(stderrString)
-	}
-	return result
-}
-
-func (p basicOrOLMPlugin) List() scapiv1alpha1.ScorecardOutput {
+func (p basicOrOLMPlugin) List() scapiv1alpha2.ScorecardOutput {
 	res, err := scplugins.ListInternalPlugin(p.pluginType, p.config)
 	if err != nil {
-		log.Errorf("%v", err)
-		return scapiv1alpha1.ScorecardOutput{}
+		Log.Errorf("%v", err)
+		return scapiv1alpha2.ScorecardOutput{}
 	}
 	return res
 }
 
-func (p basicOrOLMPlugin) Run() scapiv1alpha1.ScorecardOutput {
+func (p basicOrOLMPlugin) Run() scapiv1alpha2.ScorecardOutput {
 	pluginLogs := &bytes.Buffer{}
 	res, err := scplugins.RunInternalPlugin(p.pluginType, p.config, pluginLogs)
 	if err != nil {
@@ -102,12 +57,12 @@ func (p basicOrOLMPlugin) Run() scapiv1alpha1.ScorecardOutput {
 		}
 		logs := fmt.Sprintf("%s:\nLogs: %s", err, pluginLogs.String())
 		// output error to main logger as well for human-readable output
-		log.Errorf("Plugin `%s` failed with error (%v)", name, err)
+		Log.Errorf("Plugin `%s` failed with error (%v)", name, err)
 		return failedPlugin(name, logs)
 	}
 	stderrString := pluginLogs.String()
 	if len(stderrString) != 0 {
-		log.Warn(stderrString)
+		Log.Warn(stderrString)
 	}
 	return res
 }
@@ -118,7 +73,8 @@ func setConfigDefaults(config *scplugins.BasicAndOLMPluginConfig, kubeconfig str
 		config.InitTimeout = 60
 	}
 	if config.ProxyImage == "" {
-		config.ProxyImage = fmt.Sprintf("quay.io/operator-framework/scorecard-proxy:%s", strings.TrimSuffix(version.Version, "+git"))
+		config.ProxyImage = fmt.Sprintf("quay.io/operator-framework/scorecard-proxy:%s",
+			strings.TrimSuffix(version.Version, "+git"))
 	}
 	if config.ProxyPullPolicy == "" {
 		config.ProxyPullPolicy = v1.PullAlways
@@ -131,12 +87,12 @@ func setConfigDefaults(config *scplugins.BasicAndOLMPluginConfig, kubeconfig str
 	}
 }
 
-func failedPlugin(name, log string) scapiv1alpha1.ScorecardOutput {
-	return scapiv1alpha1.ScorecardOutput{
-		Results: []scapiv1alpha1.ScorecardSuiteResult{{
-			Name:  name,
-			Error: 1,
-			Log:   log,
+func failedPlugin(name, log string) scapiv1alpha2.ScorecardOutput {
+	return scapiv1alpha2.ScorecardOutput{
+		Results: []scapiv1alpha2.ScorecardTestResult{{
+			Name:   name,
+			Errors: []string{"plugin error"},
+			Log:    log,
 		}},
 	}
 }

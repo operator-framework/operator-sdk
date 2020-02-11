@@ -252,7 +252,8 @@ func verifyCASecret(t *testing.T, caSecret *v1.Secret, namespace string) {
 	}
 
 	// check if caConfigMap exists in k8s cluster.
-	caSecretFromCluster, err := framework.Global.KubeClient.CoreV1().Secrets(namespace).Get(caConfigMapAndSecretName, metav1.GetOptions{})
+	caSecretFromCluster, err := framework.Global.KubeClient.CoreV1().Secrets(namespace).Get(caConfigMapAndSecretName,
+		metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -275,7 +276,8 @@ func verifyCaConfigMap(t *testing.T, caConfigMap *v1.ConfigMap, namespace string
 	}
 
 	// check if caConfigMap exists in k8s cluster.
-	caConfigMapFromCluster, err := framework.Global.KubeClient.CoreV1().ConfigMaps(namespace).Get(caConfigMapAndSecretName, metav1.GetOptions{})
+	caConfigMapFromCluster, err :=
+		framework.Global.KubeClient.CoreV1().ConfigMaps(namespace).Get(caConfigMapAndSecretName, metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -304,7 +306,8 @@ func verifyAppSecret(t *testing.T, appSecret *v1.Secret, namespace string) {
 	}
 
 	// check if appSecret exists in k8s cluster.
-	appSecretFromCluster, err := framework.Global.KubeClient.CoreV1().Secrets(namespace).Get(appSecretName, metav1.GetOptions{})
+	appSecretFromCluster, err := framework.Global.KubeClient.CoreV1().Secrets(namespace).Get(appSecretName,
+		metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}

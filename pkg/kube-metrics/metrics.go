@@ -15,10 +15,10 @@
 package kubemetrics
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
@@ -39,7 +39,8 @@ func GenerateAndServeCRMetrics(cfg *rest.Config,
 	host string, port int32) error {
 	// We have to have at least one namespace.
 	if len(ns) < 1 {
-		return errors.New("namespaces were empty; pass at least one namespace to generate custom resource metrics")
+		return errors.New(
+			"namespaces were empty; pass at least one namespace to generate custom resource metrics")
 	}
 	// Create new unstructured client.
 	var allStores [][]*metricsstore.MetricsStore

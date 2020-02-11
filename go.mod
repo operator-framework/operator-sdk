@@ -24,12 +24,13 @@ require (
 	github.com/mattn/go-isatty v0.0.8
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.1.2
-	github.com/operator-framework/api v0.0.0-20191127212340-9066a6e95573
+	github.com/operator-framework/api v0.0.0-20200120235816-80fd2f1a09c9
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20191115003340-16619cd27fa5
-	github.com/operator-framework/operator-registry v1.5.3
+	github.com/operator-framework/operator-registry v1.5.7-0.20200121213444-d8e2ec52c19a
 	github.com/pborman/uuid v1.2.0
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v1.2.1
+	github.com/prometheus/common v0.7.0
 	github.com/rogpeppe/go-internal v1.5.0
 	github.com/rubenv/sql-migrate v0.0.0-20191025130928-9355dd04f4b3 // indirect
 	github.com/sergi/go-diff v1.0.0
@@ -59,7 +60,7 @@ require (
 	k8s.io/kubectl v0.0.0
 	k8s.io/kubernetes v1.16.2 // indirect
 	sigs.k8s.io/controller-runtime v0.4.0
-	sigs.k8s.io/controller-tools v0.2.2
+	sigs.k8s.io/controller-tools v0.2.4
 )
 
 // Pinned to kubernetes-1.16.2

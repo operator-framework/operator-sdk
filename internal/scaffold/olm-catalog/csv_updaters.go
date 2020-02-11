@@ -18,12 +18,12 @@ import (
 	"bytes"
 	"encoding/json"
 	goerrors "errors"
+	"fmt"
 	"sort"
 
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/olm-catalog/descriptor"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
-	"github.com/pkg/errors"
 
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
@@ -203,7 +203,7 @@ func depHasOLMNamespaces(dep appsv1.Deployment) bool {
 		// Something is wrong with the deployment manifest, not with CLI inputs.
 		log.Fatalf("Marshal Deployment spec: %v", err)
 	}
-	return bytes.Index(b, []byte(olmTNMeta)) != -1
+	return bytes.Contains(b, []byte(olmTNMeta))
 }
 
 type descSorter []olmapiv1alpha1.CRDDescription
@@ -249,7 +249,7 @@ func (us crds) apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
 				} else if goerrors.Is(err, descriptor.ErrAPITypeNotFound) {
 					log.Infof("No kind type found for API %s. Skipping CSV annotation parsing for API.", gvk)
 				} else {
-					return errors.Wrapf(err, "failed to set CRD descriptors for %s", gvk)
+					return fmt.Errorf("failed to set CRD descriptors for %s: %v", gvk, err)
 				}
 				continue
 			}

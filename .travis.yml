@@ -1,3 +1,4 @@
+os: linux
 branches:
   except:
     - release-4.2
@@ -5,7 +6,6 @@ branches:
 
 language: go
 go_import_path: github.com/operator-framework/operator-sdk
-sudo: required
 
 # go modules require xenial for mercurial TLS 1.2 support
 dist: xenial
@@ -36,21 +36,17 @@ go:
 # so we can use it to create a bunch of common build step
 # YAML anchors which we use in our build jobs.
 x_base_steps:
-  # before_install for jobs that require go builds and do not run for doc-only changes
-  - &go_before_install
-    before_install:
-      # hack/ci/check-doc-only-update.sh needs to be sourced so
-      # that it can properly exit the test early with success
-      - source hack/ci/check-doc-only-update.sh
-      - travis_retry make tidy
-
   # Base go, ansbile, and helm job
   - &test
     stage: test
     env:
     - CLUSTER=k8s
-    os: linux
-    <<: *go_before_install
+    # before_install for jobs that require go builds and do not run for doc-only changes
+    before_install:
+      # hack/ci/check-doc-only-update.sh needs to be sourced so
+      # that it can properly exit the test early with success
+      - source hack/ci/check-doc-only-update.sh
+      - travis_retry make tidy
     install:
       - make install
       - hack/ci/setup-${CLUSTER}.sh
@@ -68,7 +64,8 @@ x_base_steps:
   - &deploy
     stage: deploy
     if: type != pull_request AND ( tag IS present OR branch = master OR commit_message =~ /\[travis deploy\]/ )
-    <<: *go_before_install
+    before_install:
+      - travis_retry make tidy
     install: make install
     before_script:
       - git config remote.origin.fetch +refs/heads/*:refs/remotes/origin/*
@@ -103,7 +100,9 @@ jobs:
     # Build and test go
     - <<: *test
       name: Go on Kubernetes
-      script: make test-e2e-go
+      script:
+      - make test-e2e-go
+      - make test-integration
 
     # Build and test ansible and test ansible using molecule
     - <<: *test
@@ -129,7 +128,7 @@ jobs:
     - stage: test
       name: Unit, Sanity, and Markdown Tests
       before_install:
-        - go get github.com/mattn/goveralls
+        - (cd / && go get github.com/mattn/goveralls)
       script:
         - make test-sanity test-unit test-markdown
         - $GOPATH/bin/goveralls -service=travis-ci -coverprofile=coverage.out -repotoken=$COVERALLS_TOKEN
@@ -139,6 +138,7 @@ jobs:
     # Build and deploy ansible-operator docker image
     - <<: *deploy
       name: Docker image for ansible-operator
+      arch: amd64
       script:
         - make image-build-ansible
         - make image-push-ansible
@@ -146,7 +146,7 @@ jobs:
     # Build and deploy amd64 helm-operator docker image
     - <<: *deploy
       name: Docker image for helm-operator (amd64)
-      os: linux
+      arch: amd64
       script:
         - make image-build-helm
         - make image-push-helm
@@ -154,7 +154,7 @@ jobs:
     # Build and deploy ppc64le helm-operator docker image
     - <<: *deploy
       name: Docker image for helm-operator (ppc64le)
-      os: linux-ppc64le
+      arch: ppc64le
       script:
         - make image-build-helm
         - make image-push-helm
@@ -162,6 +162,7 @@ jobs:
     # Build and deploy scorecard-proxy docker image
     - <<: *deploy
       name: Docker image for scorecard-proxy
+      arch: amd64
       script:
         - make image-build-scorecard-proxy
         - make image-push-scorecard-proxy

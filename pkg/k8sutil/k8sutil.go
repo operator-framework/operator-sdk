@@ -91,6 +91,9 @@ func GetOperatorName() (string, error) {
 // ResourceExists returns true if the given resource kind exists
 // in the given api groupversion
 func ResourceExists(dc discovery.DiscoveryInterface, apiGroupVersion, kind string) (bool, error) {
+	// TODO(camilamacedo86): fix deprecation
+	// SA1019: dc.ServerResources is deprecated: use ServerGroupsAndResources instead.  (staticcheck)
+	// nolint:staticcheck
 	apiLists, err := dc.ServerResources()
 	if err != nil {
 		return false, err

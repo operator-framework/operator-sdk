@@ -27,6 +27,7 @@ import (
 	"helm.sh/helm/v3/pkg/kube"
 	rpb "helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -36,11 +37,6 @@ import (
 
 	"github.com/mattbaird/jsonpatch"
 	"github.com/operator-framework/operator-sdk/pkg/helm/internal/types"
-)
-
-var (
-	// ErrNotFound indicates the release was not found.
-	ErrNotFound = errors.New("release not found")
 )
 
 // Manager manages a Helm release. It can install, update, reconcile,
@@ -92,7 +88,7 @@ func (m *manager) Sync(ctx context.Context) error {
 	// Get release history for this release name
 	releases, err := m.storageBackend.History(m.releaseName)
 	if err != nil && !notFoundErr(err) {
-		return fmt.Errorf("failed to retrieve release history: %s", err)
+		return fmt.Errorf("failed to retrieve release history: %w", err)
 	}
 
 	// Cleanup non-deployed release versions. If all release versions are
@@ -102,18 +98,18 @@ func (m *manager) Sync(ctx context.Context) error {
 		if rel.Info != nil && rel.Info.Status != rpb.StatusDeployed {
 			_, err := m.storageBackend.Delete(rel.Name, rel.Version)
 			if err != nil && !notFoundErr(err) {
-				return fmt.Errorf("failed to delete stale release version: %s", err)
+				return fmt.Errorf("failed to delete stale release version: %w", err)
 			}
 		}
 	}
 
 	// Load the most recently deployed release from the storage backend.
 	deployedRelease, err := m.getDeployedRelease()
-	if err == ErrNotFound {
+	if errors.Is(err, driver.ErrReleaseNotFound) {
 		return nil
 	}
 	if err != nil {
-		return fmt.Errorf("failed to get deployed release: %s", err)
+		return fmt.Errorf("failed to get deployed release: %w", err)
 	}
 	m.deployedRelease = deployedRelease
 	m.isInstalled = true
@@ -121,7 +117,7 @@ func (m *manager) Sync(ctx context.Context) error {
 	// Get the next candidate release to determine if an update is necessary.
 	candidateRelease, err := m.getCandidateRelease(m.namespace, m.releaseName, m.chart, m.values)
 	if err != nil {
-		return fmt.Errorf("failed to get candidate release: %s", err)
+		return fmt.Errorf("failed to get candidate release: %w", err)
 	}
 	if deployedRelease.Manifest != candidateRelease.Manifest {
 		m.isUpdateRequired = true
@@ -138,14 +134,15 @@ func (m manager) getDeployedRelease() (*rpb.Release, error) {
 	deployedRelease, err := m.storageBackend.Deployed(m.releaseName)
 	if err != nil {
 		if strings.Contains(err.Error(), "has no deployed releases") {
-			return nil, ErrNotFound
+			return nil, driver.ErrReleaseNotFound
 		}
 		return nil, err
 	}
 	return deployedRelease, nil
 }
 
-func (m manager) getCandidateRelease(namespace, name string, chart *cpb.Chart, values map[string]interface{}) (*rpb.Release, error) {
+func (m manager) getCandidateRelease(namespace, name string, chart *cpb.Chart,
+	values map[string]interface{}) (*rpb.Release, error) {
 	upgrade := action.NewUpgrade(m.actionConfig)
 	upgrade.Namespace = namespace
 	upgrade.DryRun = true
@@ -174,10 +171,10 @@ func (m manager) InstallRelease(ctx context.Context) (*rpb.Release, error) {
 			// Only log a message about a rollback failure if the failure was caused
 			// by something other than the release not being found.
 			if uninstallErr != nil && !notFoundErr(uninstallErr) {
-				return nil, fmt.Errorf("failed installation (%s) and failed rollback (%s)", err, uninstallErr)
+				return nil, fmt.Errorf("failed installation (%s) and failed rollback: %w", err, uninstallErr)
 			}
 		}
-		return nil, fmt.Errorf("failed to install release: %s", err)
+		return nil, fmt.Errorf("failed to install release: %w", err)
 	}
 	return installedRelease, nil
 }
@@ -201,10 +198,10 @@ func (m manager) UpdateRelease(ctx context.Context) (*rpb.Release, *rpb.Release,
 			// log both the update and rollback errors.
 			rollbackErr := rollback.Run(m.releaseName)
 			if rollbackErr != nil {
-				return nil, nil, fmt.Errorf("failed update (%s) and failed rollback (%s)", err, rollbackErr)
+				return nil, nil, fmt.Errorf("failed update (%s) and failed rollback: %w", err, rollbackErr)
 			}
 		}
-		return nil, nil, fmt.Errorf("failed to update release: %s", err)
+		return nil, nil, fmt.Errorf("failed to update release: %w", err)
 	}
 	return m.deployedRelease, updatedRelease, err
 }
@@ -233,7 +230,8 @@ func reconcileRelease(ctx context.Context, kubeClient kube.Interface, expectedMa
 
 		existing, err := helper.Get(expected.Namespace, expected.Name, false)
 		if apierrors.IsNotFound(err) {
-			if _, err := helper.Create(expected.Namespace, true, expected.Object, &metav1.CreateOptions{}); err != nil {
+			if _, err := helper.Create(expected.Namespace, true, expected.Object,
+				&metav1.CreateOptions{}); err != nil {
 				return fmt.Errorf("create error: %s", err)
 			}
 			return nil
@@ -243,7 +241,7 @@ func reconcileRelease(ctx context.Context, kubeClient kube.Interface, expectedMa
 
 		patch, err := generatePatch(existing, expected.Object)
 		if err != nil {
-			return fmt.Errorf("failed to marshal JSON patch: %s", err)
+			return fmt.Errorf("failed to marshal JSON patch: %w", err)
 		}
 
 		if patch == nil {
@@ -252,7 +250,7 @@ func reconcileRelease(ctx context.Context, kubeClient kube.Interface, expectedMa
 
 		_, err = helper.Patch(expected.Namespace, expected.Name, apitypes.JSONPatchType, patch, &metav1.PatchOptions{})
 		if err != nil {
-			return fmt.Errorf("patch error: %s", err)
+			return fmt.Errorf("patch error: %w", err)
 		}
 		return nil
 	})
@@ -299,13 +297,13 @@ func (m manager) UninstallRelease(ctx context.Context) (*rpb.Release, error) {
 	// Get history of this release
 	h, err := m.storageBackend.History(m.releaseName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get release history: %s", err)
+		return nil, fmt.Errorf("failed to get release history: %w", err)
 	}
 
 	// If there is no history, the release has already been uninstalled,
-	// so return ErrNotFound.
+	// so return ErrReleaseNotFound.
 	if len(h) == 0 {
-		return nil, ErrNotFound
+		return nil, driver.ErrReleaseNotFound
 	}
 
 	uninstall := action.NewUninstall(m.actionConfig)

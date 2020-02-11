@@ -15,29 +15,11 @@
 package scplugins
 
 import (
+	"errors"
 	"fmt"
 
-	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
-)
-
-const (
-	NamespaceOpt          = "namespace"
-	KubeconfigOpt         = "kubeconfig"
-	InitTimeoutOpt        = "init-timeout"
-	OlmDeployedOpt        = "olm-deployed"
-	CSVPathOpt            = "csv-path"
-	NamespacedManifestOpt = "namespaced-manifest"
-	GlobalManifestOpt     = "global-manifest"
-	CRManifestOpt         = "cr-manifest"
-	ProxyImageOpt         = "proxy-image"
-	ProxyPullPolicyOpt    = "proxy-pull-policy"
-	CRDsDirOpt            = "crds-dir"
-	DeployDirOpt          = "deploy-dir"
-	BasicTestsOpt         = "basic-tests"
-	OLMTestsOpt           = "olm-tests"
-	BundleOpt             = "bundle"
 )
 
 type BasicAndOLMPluginConfig struct {
@@ -71,7 +53,8 @@ func validateScorecardPluginFlags(config BasicAndOLMPluginConfig, pluginType Plu
 	}
 	pullPolicy := config.ProxyPullPolicy
 	if pullPolicy != v1.PullAlways && pullPolicy != v1.PullNever && pullPolicy != v1.PullIfNotPresent {
-		return fmt.Errorf("invalid proxy pull policy: (%s); valid values: %s, %s, %s", pullPolicy, v1.PullAlways, v1.PullNever, v1.PullIfNotPresent)
+		return fmt.Errorf("invalid proxy pull policy: (%s); valid values: %s, %s, %s", pullPolicy,
+			v1.PullAlways, v1.PullNever, v1.PullIfNotPresent)
 	}
 	return nil
 }

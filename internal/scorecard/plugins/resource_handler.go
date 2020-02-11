@@ -47,7 +47,8 @@ type cleanupFn func() error
 // is reached, it simply continues and assumes there is no status block
 func waitUntilCRStatusExists(timeout time.Duration, cr *unstructured.Unstructured) error {
 	err := wait.Poll(time.Second*1, timeout, func() (bool, error) {
-		err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: cr.GetNamespace(), Name: cr.GetName()}, cr)
+		err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: cr.GetNamespace(),
+			Name: cr.GetName()}, cr)
 		if err != nil {
 			return false, fmt.Errorf("error getting custom resource: %v", err)
 		}
@@ -77,7 +78,7 @@ func yamlToUnstructured(namespace, yamlPath string) (*unstructured.Unstructured,
 		return nil, fmt.Errorf("could not convert yaml file to json: %v", err)
 	}
 	if err := obj.UnmarshalJSON(jsonSpec); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal custom resource manifest to unstructured: %s", err)
+		return nil, fmt.Errorf("failed to unmarshal custom resource manifest to unstructured: %v", err)
 	}
 	// set the namespace
 	obj.SetNamespace(namespace)
@@ -156,7 +157,7 @@ func createFromYAMLFile(namespace, yamlPath, proxyImage string, pullPolicy v1.Pu
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("failed to scan %s: (%v)", yamlPath, err)
+		return fmt.Errorf("failed to scan %s: %v", yamlPath, err)
 	}
 
 	return nil
@@ -174,7 +175,8 @@ func getPodFromDeployment(depName, namespace string) (pod *v1.Pod, err error) {
 	// instead of the new one.
 	err = wait.PollImmediate(time.Second*1, time.Second*60, func() (bool, error) {
 		pods := &v1.PodList{}
-		err = runtimeClient.List(context.TODO(), pods, client.InNamespace(namespace), client.MatchingLabels(dep.Spec.Selector.MatchLabels))
+		err = runtimeClient.List(context.TODO(), pods, client.InNamespace(namespace),
+			client.MatchingLabels(dep.Spec.Selector.MatchLabels))
 		if err != nil {
 			return false, fmt.Errorf("failed to get list of pods in deployment: %v", err)
 		}
@@ -207,7 +209,7 @@ func getPodFromDeployment(depName, namespace string) (pod *v1.Pod, err error) {
 		return true, nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get proxyPod: %s", err)
+		return nil, fmt.Errorf("failed to get proxyPod: %v", err)
 	}
 	return pod, nil
 }
@@ -245,7 +247,8 @@ func createKubeconfigSecret(namespace string) error {
 	if err != nil {
 		return err
 	}
-	addResourceCleanup(kubeconfigSecret, types.NamespacedName{Namespace: kubeconfigSecret.GetNamespace(), Name: kubeconfigSecret.GetName()})
+	addResourceCleanup(kubeconfigSecret, types.NamespacedName{Namespace: kubeconfigSecret.GetNamespace(),
+		Name: kubeconfigSecret.GetName()})
 	return nil
 }
 
@@ -265,10 +268,11 @@ func addMountKubeconfigSecret(dep *appsv1.Deployment) {
 	})
 	for index := range dep.Spec.Template.Spec.Containers {
 		// mount the volume
-		dep.Spec.Template.Spec.Containers[index].VolumeMounts = append(dep.Spec.Template.Spec.Containers[index].VolumeMounts, v1.VolumeMount{
-			Name:      "scorecard-kubeconfig",
-			MountPath: "/scorecard-secret",
-		})
+		dep.Spec.Template.Spec.Containers[index].VolumeMounts =
+			append(dep.Spec.Template.Spec.Containers[index].VolumeMounts, v1.VolumeMount{
+				Name:      "scorecard-kubeconfig",
+				MountPath: "/scorecard-secret",
+			})
 		// specify the path via KUBECONFIG env var
 		dep.Spec.Template.Spec.Containers[index].Env = append(dep.Spec.Template.Spec.Containers[index].Env, v1.EnvVar{
 			Name:  "KUBECONFIG",
@@ -305,7 +309,8 @@ func unstructuredToDeployment(obj *unstructured.Unstructured) (*appsv1.Deploymen
 	case *appsv1.Deployment:
 		return o, nil
 	default:
-		return nil, fmt.Errorf("conversion of runtime object to deployment failed (resulting runtime object not deployment type)")
+		return nil, fmt.Errorf("conversion of runtime object to deployment failed (resulting runtime object" +
+			" not deployment type)")
 	}
 }
 
@@ -354,7 +359,8 @@ func addResourceCleanup(obj runtime.Object, key types.NamespacedName) {
 				if apierrors.IsNotFound(err) {
 					return true, nil
 				}
-				return false, fmt.Errorf("error encountered during deletion of resource type %v with namespace/name (%+v): %v", objCopy.GetObjectKind().GroupVersionKind().Kind, key, err)
+				return false, fmt.Errorf("error encountered during deletion of resource type %v with"+
+					" namespace/name (%+v): %v", objCopy.GetObjectKind().GroupVersionKind().Kind, key, err)
 			}
 			return false, nil
 		})
@@ -399,7 +405,7 @@ func getGVKs(yamlFile []byte) ([]schema.GroupVersionKind, error) {
 			return nil, fmt.Errorf("could not convert yaml file to json: %v", err)
 		}
 		if err := obj.UnmarshalJSON(jsonSpec); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal object spec: (%v)", err)
+			return nil, fmt.Errorf("failed to unmarshal object spec: %v", err)
 		}
 		gvks = append(gvks, obj.GroupVersionKind())
 	}

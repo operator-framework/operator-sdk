@@ -17,6 +17,7 @@ package release
 import (
 	"fmt"
 	"strings"
+	"sync"
 
 	helm2to3 "github.com/helm/helm-2to3/pkg/v3"
 	"github.com/martinlindhe/base36"
@@ -27,6 +28,7 @@ import (
 	helmreleasev3 "helm.sh/helm/v3/pkg/release"
 	storagev3 "helm.sh/helm/v3/pkg/storage"
 	driverv3 "helm.sh/helm/v3/pkg/storage/driver"
+	"helm.sh/helm/v3/pkg/strvals"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apitypes "k8s.io/apimachinery/pkg/types"
@@ -40,12 +42,22 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/helm/internal/types"
 )
 
+// globalMutex is used to ensure non-concurrent access to
+// Helm's `kube.New` function which is not safe for concurrent
+// use.
+//
+// See https://github.com/operator-framework/operator-sdk/issues/2476
+//
+// TODO(joelanford): this can be removed after SDK's Helm
+//   dependendency is bumped to 3.1.0+
+var globalMutex sync.Mutex
+
 // ManagerFactory creates Managers that are specific to custom resources. It is
 // used by the HelmOperatorReconciler during resource reconciliation, and it
 // improves decoupling between reconciliation logic and the Helm backend
 // components used to manage releases.
 type ManagerFactory interface {
-	NewManager(r *unstructured.Unstructured) (Manager, error)
+	NewManager(r *unstructured.Unstructured, overrideValues map[string]string) (Manager, error)
 }
 
 type managerFactory struct {
@@ -58,7 +70,7 @@ func NewManagerFactory(mgr crmanager.Manager, chartDir string) ManagerFactory {
 	return &managerFactory{mgr, chartDir}
 }
 
-func (f managerFactory) NewManager(cr *unstructured.Unstructured) (Manager, error) {
+func (f managerFactory) NewManager(cr *unstructured.Unstructured, overrideValues map[string]string) (Manager, error) {
 	// Get both v2 and v3 storage backends
 	clientv1, err := v1.NewForConfig(f.mgr.GetConfig())
 	if err != nil {
@@ -76,11 +88,15 @@ func (f managerFactory) NewManager(cr *unstructured.Unstructured) (Manager, erro
 
 	// Get the necessary clients and client getters. Use a client that injects the CR
 	// as an owner reference into all resources templated by the chart.
-	rcg, err := client.NewRESTClientGetter(f.mgr)
+	rcg, err := client.NewRESTClientGetter(f.mgr, cr.GetNamespace())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get REST client getter from manager: %w", err)
 	}
-	kubeClient := kube.New(nil)
+
+	globalMutex.Lock()
+	kubeClient := kube.New(rcg)
+	globalMutex.Unlock()
+
 	ownerRef := metav1.NewControllerRef(cr, cr.GroupVersionKind())
 	ownerRefClient := client.NewOwnerRefInjectingClient(*kubeClient, *ownerRef)
 
@@ -94,10 +110,16 @@ func (f managerFactory) NewManager(cr *unstructured.Unstructured) (Manager, erro
 		return nil, fmt.Errorf("failed to get helm release name: %w", err)
 	}
 
-	values, ok := cr.Object["spec"].(map[string]interface{})
+	crValues, ok := cr.Object["spec"].(map[string]interface{})
 	if !ok {
 		return nil, fmt.Errorf("failed to get spec: expected map[string]interface{}")
 	}
+
+	expOverrides, err := parseOverrides(overrideValues)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse override values: %w", err)
+	}
+	values := mergeMaps(crValues, expOverrides)
 
 	actionConfig := &action.Configuration{
 		RESTClientGetter: rcg,
@@ -120,7 +142,8 @@ func (f managerFactory) NewManager(cr *unstructured.Unstructured) (Manager, erro
 	}, nil
 }
 
-func convertV2ToV3(storageBackendV2 *storagev2.Storage, storageBackendV3 *storagev3.Storage, cr *unstructured.Unstructured) error {
+func convertV2ToV3(storageBackendV2 *storagev2.Storage, storageBackendV3 *storagev3.Storage,
+	cr *unstructured.Unstructured) error {
 	// If a v2 release with the legacy name exists, convert it to v3.
 	legacyName := getLegacyName(cr)
 	legacyHistoryV2, legacyExistsV2, err := releaseHistoryV2(storageBackendV2, legacyName)
@@ -143,7 +166,8 @@ func convertV2ToV3(storageBackendV2 *storagev2.Storage, storageBackendV3 *storag
 	return nil
 }
 
-func convertHistoryToV3(history []*helmreleasev2.Release, storageBackendV2 *storagev2.Storage, storageBackendV3 *storagev3.Storage) error {
+func convertHistoryToV3(history []*helmreleasev2.Release, storageBackendV2 *storagev2.Storage,
+	storageBackendV3 *storagev3.Storage) error {
 	for _, relV2 := range history {
 		relV3, err := helm2to3.CreateRelease(relV2)
 		if err != nil {
@@ -194,7 +218,8 @@ func getLegacyName(cr *unstructured.Unstructured) string {
 //   admission webhook so that the CR owner receives immediate feedback of the
 //   collision. As is, the only indication of collision will be in the CR status
 //   and operator logs.
-func getReleaseName(storageBackend *storagev3.Storage, crChartName string, cr *unstructured.Unstructured) (string, error) {
+func getReleaseName(storageBackend *storagev3.Storage, crChartName string,
+	cr *unstructured.Unstructured) (string, error) {
 	// If a release with the legacy name exists as a v3 release,
 	// return the legacy name.
 	legacyName := getLegacyName(cr)
@@ -224,7 +249,8 @@ func getReleaseName(storageBackend *storagev3.Storage, crChartName string, cr *u
 	}
 	existingChartName := history[0].Chart.Name()
 	if existingChartName != crChartName {
-		return "", fmt.Errorf("duplicate release name: found existing release with name %q for chart %q", releaseName, existingChartName)
+		return "", fmt.Errorf("duplicate release name: found existing release with name %q for chart %q",
+			releaseName, existingChartName)
 	}
 
 	return releaseName, nil
@@ -259,4 +285,34 @@ func shortenUID(uid apitypes.UID) string {
 		return strings.Replace(string(uid), "-", "", -1)
 	}
 	return strings.ToLower(base36.EncodeBytes(uidBytes))
+}
+
+func parseOverrides(in map[string]string) (map[string]interface{}, error) {
+	out := make(map[string]interface{})
+	for k, v := range in {
+		val := fmt.Sprintf("%s=%s", k, v)
+		if err := strvals.ParseIntoString(val, out); err != nil {
+			return nil, err
+		}
+	}
+	return out, nil
+}
+
+func mergeMaps(a, b map[string]interface{}) map[string]interface{} {
+	out := make(map[string]interface{}, len(a))
+	for k, v := range a {
+		out[k] = v
+	}
+	for k, v := range b {
+		if v, ok := v.(map[string]interface{}); ok {
+			if bv, ok := out[k]; ok {
+				if bv, ok := bv.(map[string]interface{}); ok {
+					out[k] = mergeMaps(bv, v)
+					continue
+				}
+			}
+		}
+		out[k] = v
+	}
+	return out
 }

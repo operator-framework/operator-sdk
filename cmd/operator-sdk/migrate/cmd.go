@@ -39,12 +39,16 @@ func NewCmd() *cobra.Command {
 	newCmd := &cobra.Command{
 		Use:   "migrate",
 		Short: "Adds source code to an operator",
-		Long:  `operator-sdk migrate adds a main.go source file and any associated source files for an operator that is not of the "go" type.`,
-		RunE:  migrateRun,
+		Long: `operator-sdk migrate adds a main.go source file and any associated source files` +
+			`for an operator that is not of the "go" type.`,
+		RunE: migrateRun,
 	}
 
-	newCmd.Flags().StringVar(&headerFile, "header-file", "", "Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt")
-	newCmd.Flags().StringVar(&repo, "repo", "", "Project repository path. Used as the project's Go import path. This must be set if outside of $GOPATH/src (e.g. github.com/example-inc/my-operator)")
+	newCmd.Flags().StringVar(&headerFile, "header-file", "",
+		"Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt")
+	newCmd.Flags().StringVar(&repo, "repo", "",
+		"Project repository path. Used as the project's Go import path. This must be set if outside of "+
+			"$GOPATH/src (e.g. github.com/example-inc/my-operator)")
 
 	return newCmd
 }
@@ -101,7 +105,7 @@ func migrateAnsible() error {
 	case os.IsNotExist(err):
 		log.Info("No playbook was found, so not including it in the new Dockerfile")
 	default:
-		return fmt.Errorf("error trying to stat %s: (%v)", ansible.PlaybookYamlFile, err)
+		return fmt.Errorf("error trying to stat %s: %v", ansible.PlaybookYamlFile, err)
 	}
 	if err := renameDockerfile(); err != nil {
 		return err
@@ -111,7 +115,7 @@ func migrateAnsible() error {
 	if headerFile != "" {
 		err = s.Execute(cfg, &scaffold.Boilerplate{BoilerplateSrcPath: headerFile})
 		if err != nil {
-			return fmt.Errorf("boilerplate scaffold failed: (%v)", err)
+			return fmt.Errorf("boilerplate scaffold failed: %v", err)
 		}
 		s.BoilerplatePath = headerFile
 	}
@@ -126,7 +130,7 @@ func migrateAnsible() error {
 		&ansible.AoLogs{},
 	)
 	if err != nil {
-		return fmt.Errorf("migrate ansible scaffold failed: (%v)", err)
+		return fmt.Errorf("migrate ansible scaffold failed: %v", err)
 	}
 	return nil
 }
@@ -149,7 +153,7 @@ func migrateHelm() error {
 	if headerFile != "" {
 		err := s.Execute(cfg, &scaffold.Boilerplate{BoilerplateSrcPath: headerFile})
 		if err != nil {
-			return fmt.Errorf("boilerplate scaffold failed: (%v)", err)
+			return fmt.Errorf("boilerplate scaffold failed: %v", err)
 		}
 		s.BoilerplatePath = headerFile
 	}
@@ -166,7 +170,7 @@ func migrateHelm() error {
 		&helm.UserSetup{},
 	)
 	if err != nil {
-		return fmt.Errorf("migrate helm scaffold failed: (%v)", err)
+		return fmt.Errorf("migrate helm scaffold failed: %v", err)
 	}
 	return nil
 }
@@ -176,8 +180,9 @@ func renameDockerfile() error {
 	newDockerfilePath := dockerfilePath + ".sdkold"
 	err := os.Rename(dockerfilePath, newDockerfilePath)
 	if err != nil {
-		return fmt.Errorf("failed to rename Dockerfile: (%v)", err)
+		return fmt.Errorf("failed to rename Dockerfile: %v", err)
 	}
-	log.Infof("Renamed Dockerfile to %s and replaced with newer version. Compare the new Dockerfile to your old one and manually migrate any customizations", newDockerfilePath)
+	log.Infof("Renamed Dockerfile to %s and replaced with newer version. Compare the new Dockerfile to your"+
+		" old one and manually migrate any customizations", newDockerfilePath)
 	return nil
 }

@@ -2,30 +2,99 @@
 
 ### Added
 
+- Add a new option to set the minimum log level that triggers stack trace generation in logs (`--zap-stacktrace-level`) ([#2319](https://github.com/operator-framework/operator-sdk/pull/2319))
+- Added `pkg/status` with several new types and interfaces that can be used in `Status` structs to simplify handling of [status conditions](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties). ([#1143](https://github.com/operator-framework/operator-sdk/pull/1143))
+- Added support for relative Ansible roles and playbooks paths in the Ansible operator's file. ([#2273](https://github.com/operator-framework/operator-sdk/pull/2273))
+- Add Prometheus metrics support to Ansible-based operators. ([#2179](https://github.com/operator-framework/operator-sdk/pull/2179))
+- On `generate csv`, populate a CSV manifest’s `spec.icon`, `spec.keywords`, and `spec.mantainers` fields with empty values to better inform users how to add data. ([#2521](https://github.com/operator-framework/operator-sdk/pull/2521))
+
+### Changed
+- Ansible scaffolding has been rewritten to be simpler and make use of newer features of Ansible and Molecule.
+    - No longer generates the build/test-framework directory or molecule/test-cluster scenario
+    - Adds new `cluster` scenario that can be used to test against an existing cluster
+    - There is no longer any Ansible templating done in the `deploy/` directory, any templates used for testing will be located in `molecule/templates/` instead.
+    - The scaffolded molecule.yml files now use the Ansible verifier. All asserts.yml files were renamed to verify.yml to reflect this.
+    - The prepare/converge/verify tasks now make use of the new `k8s` `wait` option to simplify the deployment logic.
+- Operator user setup and entrypoint scripts no longer insert dynamic runtime user entries into `/etc/passwd`. To use dynamic runtime users, use a container runtime that supports it (e.g. CRI-O). ([#2469](https://github.com/operator-framework/operator-sdk/pull/2469))
+- Changed the scorecard basic test, `Writing into CRs has an effect`, to include the http.MethodPatch as part of its test criteria alongside http.MethodPut and http.MethodPost. ([#2509](https://github.com/operator-framework/operator-sdk/pull/2509))
+
+### Deprecated
+
+### Removed
+
+### Bug Fixes
+
+- Fixed issue with Go dependencies caused by removed tag in `openshift/api` repository ([#2466](https://github.com/operator-framework/operator-sdk/issues/2466))
+- Fixed a regression in the `operator-sdk run` command that caused `--local` flags to be ignored ([#2478](https://github.com/operator-framework/operator-sdk/issues/2478))
+
+## v0.15.1
+
+### Bug Fixes
+
+- Fixed issue with Go dependencies caused by removed tag in `openshift/api` repository ([#2466](https://github.com/operator-framework/operator-sdk/issues/2466))
+
+## v0.15.0
+
+### Added
+
+- Added the [`cleanup`](./doc/cli/operator-sdk_cleanup.md) subcommand and [`run --olm`](./doc/cli/operator-sdk_run.md) to manage deployment/deletion of operators. These commands currently interact with OLM via an in-cluster registry-server created using an operator's on-disk manifests and managed by `operator-sdk`. ([#2402](https://github.com/operator-framework/operator-sdk/pull/2402), [#2441](https://github.com/operator-framework/operator-sdk/pull/2441))
+- Added [`bundle create`](./doc/cli/operator-sdk_bundle_create.md) which builds, and optionally generates metadata for, [operator bundle images](https://github.com/openshift/enhancements/blob/ec2cf96/enhancements/olm/operator-registry.md). ([#2076](https://github.com/operator-framework/operator-sdk/pull/2076), [#2438](https://github.com/operator-framework/operator-sdk/pull/2438))
+- Added [`bundle validate`](./doc/cli/operator-sdk_bundle_validate.md) which validates [operator bundle images](https://github.com/openshift/enhancements/blob/ec2cf96/enhancements/olm/operator-registry.md). ([#2411](https://github.com/operator-framework/operator-sdk/pull/2411))
+- Added `blacklist` field to the `watches.yaml` for Ansible based operators. Blacklisted secondary resources will not be watched or cached.([#2374](https://github.com/operator-framework/operator-sdk/pull/2374))
+
+### Changed
+
+- Changed error wrapping according to Go version 1.13+ [error handling](https://blog.golang.org/go1.13-errors). ([#2355](https://github.com/operator-framework/operator-sdk/pull/2355))
+- Added retry logic to the cleanup function from the e2e test framework in order to allow it to be achieved in the scenarios where temporary network issues are faced. ([#2277](https://github.com/operator-framework/operator-sdk/pull/2277))
+- **Breaking Change:** Moved `olm-catalog gen-csv` to the `generate csv` subcommand. ([#2439](https://github.com/operator-framework/operator-sdk/pull/2439))
+- **Breaking Change:** `run ansible/helm` are now the hidden commands `exec-entrypoint ansible/helm`. All functionality of each subcommand is the same. ([#2441](https://github.com/operator-framework/operator-sdk/pull/2441))
+- **Breaking Change:** `up local` is now [`run --local`](./doc/cli/operator-sdk_run.md). All functionality of this command is the same. ([#2441](https://github.com/operator-framework/operator-sdk/pull/2441))
+- **Breaking Change:** Moved the `olm` subcommand from `alpha` to its own subcommand. All functionality of this command is the same. ([#2447](https://github.com/operator-framework/operator-sdk/pull/2447))
+
+### Deprecated
+
+### Removed
+
+### Bug Fixes
+
+- Fixed a regression in the helm-operator that caused all releases to be deployed in the same namespace that the operator was deployed in, regardless of which namespace the CR was created in. Now release resources are created in the same namespace as the CR. ([#2414](https://github.com/operator-framework/operator-sdk/pull/2414))
+- Fix issue when the test-framework would attempt to create a namespace exceeding 63 characters. `pkg/test/NewCtx()` now creates a unique id instead of using the test name. `TestCtx.GetNamespace()` uses this unique id to create a namespace that avoids this scenario. ([#2335](https://github.com/operator-framework/operator-sdk/pull/2335))
+
+## v0.14.1
+
+### Bug Fixes
+
+- Fixed a regression in the helm-operator that caused all releases to be deployed in the same namespace that the operator was deployed in, regardless of which namespace the CR was created in. Now release resources are created in the same namespace as the CR. ([#2414](https://github.com/operator-framework/operator-sdk/pull/2414))
+
+## v0.14.0
+
+### Added
+
 - Added new `--bundle` flag to the `operator-sdk scorecard` command to support bundle validation testing using the validation API (https://github.com/operator-framework/api). ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
 - Added new `log` field to the `operator-sdk scorecard` v1alpha2 output to support tests that produce logging. ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
 - Added new `bundle validation` test to the `operator-sdk scorecard` OLM tests. ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
 - Added scorecard test short names to each scorecard test to allow users to run a specific scorecard test using the selector flag. ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
 - Improve Ansible logs in the Operator container for Ansible-based Operators. ([#2321](https://github.com/operator-framework/operator-sdk/pull/2321))
+- Added support for override values with environment variable expansion in the `watches.yaml` file for Helm-based operators. ([#2325](https://github.com/operator-framework/operator-sdk/pull/2325))
 
 ### Changed
-
 - Replace usage of `github.com/operator-framework/operator-sdk/pkg/restmapper.DynamicRESTMapper` with `sigs.k8s.io/controller-runtime/pkg/client/apiutil.DynamicRESTMapper`. ([#2309](https://github.com/operator-framework/operator-sdk/pull/2309))
 - Upgraded Helm operator packages and base image from Helm v2 to Helm v3. Cluster state for pre-existing CRs using Helm v2-based operators will be automatically migrated to Helm v3's new release storage format, and existing releases may be upgraded due to changes in Helm v3's label injection. ([#2080](https://github.com/operator-framework/operator-sdk/pull/2080))
 - Fail `operator-sdk olm-catalog gen-csv` if it is not run from a project's root, which the command already assumes is the case. ([#2322](https://github.com/operator-framework/operator-sdk/pull/2322))
 - **Breaking Change:** Extract custom Ansible module `k8s_status`, which is now provided by the `operator_sdk.util` Ansible collection. See [developer_guide](https://github.com/operator-framework/operator-sdk/blob/master/doc/ansible/dev/developer_guide.md#custom-resource-status-management) for new usage. ([#2310](https://github.com/operator-framework/operator-sdk/pull/2310))
 - Upgrade minimal Ansible version in the init projects from `2.6` to `2.9` for collections support. ([#2310](https://github.com/operator-framework/operator-sdk/pull/2310))
+- Improve skip metrics logs when running the operator locally in order to make clear the information. ([#2190](https://github.com/operator-framework/operator-sdk/pull/2190))
+- Upgrade [`controller-tools`](https://github.com/kubernetes-sigs/controller-tools) version from `v0.2.2` to [`v0.2.4`](https://github.com/kubernetes-sigs/controller-tools/releases/tag/v0.2.4). ([#2368](https://github.com/operator-framework/operator-sdk/pull/2368))
 
 ### Deprecated
 
 - Deprecated `github.com/operator-framework/operator-sdk/pkg/restmapper` in favor of the `DynamicRESTMapper` implementation in [controller-runtime](https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/client/apiutil#NewDiscoveryRESTMapper). ([#2309](https://github.com/operator-framework/operator-sdk/pull/2309))
 
-### Removed
-
-
 ### Bug Fixes
-- Fix `operator-sdk build`'s `--image-build-args` to support spaces within quotes like `--label some.name="First Last"`. ([#2312](https://github.com/operator-framework/operator-sdk/pull/2312))
 
+- Fix `operator-sdk build`'s `--image-build-args` to support spaces within quotes like `--label some.name="First Last"`. ([#2312](https://github.com/operator-framework/operator-sdk/pull/2312))
+- Fix misleading Helm operator "release not found" errors during CR deletion. ([#2359](https://github.com/operator-framework/operator-sdk/pull/2359))
+- Fix Ansible based image in order to re-trigger reconcile when playbooks are runner with error. ([#2375](https://github.com/operator-framework/operator-sdk/pull/2375))
 
 ## v0.13.0
 

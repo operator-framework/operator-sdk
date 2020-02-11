@@ -120,7 +120,8 @@ type CertGenerator interface {
 	//   namespace: <cr-namespace>
 	//  data:
 	//   ca.key: ..
-	GenerateCert(cr runtime.Object, service *v1.Service, config *CertConfig) (*v1.Secret, *v1.ConfigMap, *v1.Secret, error)
+	GenerateCert(cr runtime.Object, service *v1.Service, config *CertConfig) (*v1.Secret, *v1.ConfigMap, *v1.Secret,
+		error)
 }
 
 const (
@@ -142,7 +143,9 @@ type SDKCertGenerator struct {
 // GenerateCert returns a secret containing the TLS encryption key and cert,
 // a ConfigMap containing the CA Certificate and a Secret containing the CA key or it
 // returns a error incase something goes wrong.
-func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *v1.Service, config *CertConfig) (*v1.Secret, *v1.ConfigMap, *v1.Secret, error) {
+
+func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *v1.Service, config *CertConfig) (*v1.Secret,
+	*v1.ConfigMap, *v1.Secret, error) {
 	if err := verifyConfig(config); err != nil {
 		return nil, nil, nil, err
 	}
@@ -172,22 +175,22 @@ func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *v1.Service
 		// custom CA provided by the user.
 		customCAKeyData, err := ioutil.ReadFile(config.CAKey)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("error reading CA Key from the given file name: %v", err)
+			return nil, nil, nil, fmt.Errorf("error reading CA Key from the given file name: %w", err)
 		}
 
 		customCACertData, err := ioutil.ReadFile(config.CACert)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("error reading CA Cert from the given file name: %v", err)
+			return nil, nil, nil, fmt.Errorf("error reading CA Cert from the given file name: %w", err)
 		}
 
 		customCAKey, err := parsePEMEncodedPrivateKey(customCAKeyData)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("error parsing CA Key from the given file name: %v", err)
+			return nil, nil, nil, fmt.Errorf("error parsing CA Key from the given file name: %w", err)
 		}
 
 		customCACert, err := parsePEMEncodedCert(customCACertData)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("error parsing CA Cert from the given file name: %v", err)
+			return nil, nil, nil, fmt.Errorf("error parsing CA Cert from the given file name: %w", err)
 		}
 		caSecret, caConfigMap = toCASecretAndConfigmap(customCAKey, customCACert, caSecretAndConfigMapName)
 	} else if config.CAKey != "" || config.CACert != "" {
@@ -303,7 +306,8 @@ func getAppSecretInCluster(kubeClient kubernetes.Interface, name, namespace stri
 //
 // NOTE: both the CA secret and configmap have the same name with template `<cr-kind>-<cr-name>-ca` which is what the
 // input parameter `name` refers to.
-func getCASecretAndConfigMapInCluster(kubeClient kubernetes.Interface, name, namespace string) (*v1.Secret, *v1.ConfigMap, error) {
+func getCASecretAndConfigMapInCluster(kubeClient kubernetes.Interface, name,
+	namespace string) (*v1.Secret, *v1.ConfigMap, error) {
 	hasConfigMap := true
 	cm, err := kubeClient.CoreV1().ConfigMaps(namespace).Get(name, metav1.GetOptions{})
 	if err != nil && !apiErrors.IsNotFound(err) {
@@ -323,10 +327,12 @@ func getCASecretAndConfigMapInCluster(kubeClient kubernetes.Interface, name, nam
 	}
 
 	if hasConfigMap != hasSecret {
-		// TODO: this case can happen if creating CA configmap succeeds and creating CA secret failed. We need to handle this case properly.
-		return nil, nil, fmt.Errorf("expect either both ca configmap and secret both exist or not exist, but got hasCAConfigmap==%v and hasCASecret==%v", hasConfigMap, hasSecret)
+		// TODO: this case can happen if creating CA configmap succeeds and creating CA secret failed.
+		//  We need to handle this case properly.
+		return nil, nil, fmt.Errorf("expect either both ca configmap and secret both exist or not exist, "+
+			" but got hasCAConfigmap==%v and hasCASecret==%v", hasConfigMap, hasSecret)
 	}
-	if hasConfigMap == false {
+	if !hasConfigMap {
 		return nil, nil, nil
 	}
 	return se, cm, nil

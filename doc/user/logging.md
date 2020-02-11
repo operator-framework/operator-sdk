@@ -14,6 +14,7 @@ By default, `zap.Logger()` will return a logger that is ready for production use
 * `--zap-encoder` string - Sets the zap log encoding (`json` or `console`)
 * `--zap-level` string or integer - Sets the zap log level (`debug`, `info`, `error`, or an integer value greater than 0). If 4 or greater the verbosity of client-go will be set to this level.
 * `--zap-sample` - Enables zap's sampling mode. Sampling will be disabled for integer log levels greater than 1.
+* `--zap-stacktrace-level` - Set the minimum log level that triggers stacktrace generation (default: `error`)
 * `--zap-time-encoding` string - Sets the zap time format (`epoch`, `millis`, `nano`, or `iso8601`)
 
 ### A simple example
@@ -64,10 +65,10 @@ By using `sigs.k8s.io/controller-runtime/pkg/log`, your logger is propagated thr
 
 ### Setting flags when running locally
 
-When running locally with `operator-sdk up local`, you can use the `--operator-flags` flag to pass additional flags to your operator, including the zap flags. For example:
+When running locally with `operator-sdk run --local`, you can use the `--operator-flags` flag to pass additional flags to your operator, including the zap flags. For example:
 
 ```console
-$ operator-sdk up local --operator-flags="--zap-level=debug --zap-encoder=console"`
+$ operator-sdk run --local --operator-flags="--zap-level=debug --zap-encoder=console"`
 ```
 
 ### Setting flags when deploying to a cluster

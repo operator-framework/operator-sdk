@@ -1,6 +1,0 @@
----
-- version: v1alpha1
-  group: inventory.apps.fabianism.us
-  kind: Inventory
-  playbook: /opt/ansible/playbooks/playbook.yml
-  inventory: /opt/ansible/inventory

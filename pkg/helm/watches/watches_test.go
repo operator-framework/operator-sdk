@@ -17,13 +17,17 @@ package watches
 import (
 	"io/ioutil"
 	"os"
+	"reflect"
 	"testing"
 )
 
 type testCase struct {
-	name      string
-	data      string
-	expectErr bool
+	name            string
+	data            string
+	env             map[string]string
+	expectLen       int
+	expectErr       bool
+	expectOverrides []map[string]string
 }
 
 func TestLoadWatches(t *testing.T) {
@@ -35,7 +39,43 @@ func TestLoadWatches(t *testing.T) {
   version: v1alpha1
   kind: MyKind
   chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
+  watchDependentResources: false
+  overrideValues:
+    key: value
 `,
+			expectLen:       1,
+			expectErr:       false,
+			expectOverrides: []map[string]string{{"key": "value"}},
+		},
+		{
+			name: "valid with override expansion",
+			data: `---
+- group: mygroup
+  version: v1alpha1
+  kind: MyKind
+  chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
+  watchDependentResources: false
+  overrideValues:
+    key: $MY_VALUE
+`,
+			env:             map[string]string{"MY_VALUE": "value"},
+			expectLen:       1,
+			expectErr:       false,
+			expectOverrides: []map[string]string{{"key": "value"}},
+		},
+		{
+			name: "multiple gvk",
+			data: `---
+- group: mygroup
+  version: v1alpha1
+  kind: MyFirstKind
+  chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
+- group: mygroup
+  version: v1alpha1
+  kind: MySecondKind
+  chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
+`,
+			expectLen: 2,
 			expectErr: false,
 		},
 		{
@@ -50,6 +90,7 @@ func TestLoadWatches(t *testing.T) {
   kind: MyKind
   chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
 `,
+			expectLen: 0,
 			expectErr: true,
 		},
 		{
@@ -59,6 +100,7 @@ func TestLoadWatches(t *testing.T) {
   kind: MyKind
   chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
 `,
+			expectLen: 0,
 			expectErr: true,
 		},
 		{
@@ -68,6 +110,7 @@ func TestLoadWatches(t *testing.T) {
   version: v1alpha1
   chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
 `,
+			expectLen: 0,
 			expectErr: true,
 		},
 		{
@@ -78,6 +121,21 @@ func TestLoadWatches(t *testing.T) {
   kind: MyKind
   chart: nonexistent/path/to/chart
 `,
+			expectLen: 0,
+			expectErr: true,
+		},
+		{
+			name: "invalid overrides",
+			data: `---
+- group: mygroup
+  version: v1alpha1
+  kind: MyKind
+  chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
+  overrideValues:
+    key1:
+		key2: value
+`,
+			expectLen: 0,
 			expectErr: true,
 		},
 		{
@@ -85,6 +143,7 @@ func TestLoadWatches(t *testing.T) {
 			data: `---
 foo: bar
 `,
+			expectLen: 0,
 			expectErr: true,
 		},
 	}
@@ -103,12 +162,46 @@ foo: bar
 				t.Fatalf("Failed to close temporary watches.yaml file: %w", err)
 			}
 
-			_, err = Load(tmp.Name())
-			if !tc.expectErr && err != nil {
-				t.Fatalf("Expected no error; got error: %w", err)
-			} else if tc.expectErr && err == nil {
-				t.Fatalf("Expected error; got no error")
+			for k, v := range tc.env {
+				if err := os.Setenv(k, v); err != nil {
+					t.Fatalf("Failed to set environment variable %q: %w", k, err)
+				}
+			}
+
+			doTest(t, tc, tmp.Name())
+
+			for k := range tc.env {
+				if err := os.Unsetenv(k); err != nil {
+					t.Fatalf("Failed to unset environment variable %q: %w", k, err)
+				}
 			}
 		})
+	}
+}
+
+func doTest(t *testing.T, tc testCase, watchesFile string) {
+	watches, err := Load(watchesFile)
+	if !tc.expectErr && err != nil {
+		t.Fatalf("Expected no error; got error: %w", err)
+	} else if tc.expectErr && err == nil {
+		t.Fatalf("Expected error; got no error")
+	}
+	if len(watches) != tc.expectLen {
+		t.Fatalf("Expected %d watches; got %d", tc.expectLen, len(watches))
+	}
+
+	for i, w := range watches {
+		if len(tc.expectOverrides) <= i {
+			if len(w.OverrideValues) > 0 {
+				t.Fatalf("Expected no overides; got %#v", w.OverrideValues)
+			} else {
+				continue
+			}
+		}
+
+		expectedOverrides := tc.expectOverrides[i]
+		if !reflect.DeepEqual(expectedOverrides, w.OverrideValues) {
+			t.Fatalf("Expected overrides %#v; got %#v", expectedOverrides, w.OverrideValues)
+		}
 	}
 }
