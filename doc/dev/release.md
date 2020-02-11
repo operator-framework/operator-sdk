@@ -45,6 +45,24 @@ $ git config [--global] user.signingkey "$GPG_KEY_ID"
 $ git config [--global] user.email "$GPG_EMAIL"
 ```
 
+Also, make sure that you setup the git gpg config as follows.
+```bash
+ cat ~/.gnupg/gpg.conf
+default-key $GPG_KEY_ID
+```
+
+**NOTE** If you will do a release from an OSX then, to be able to assign the tag you need to do:
+- Try first:
+```bash
+run `git config --global gpg.program gpg2`, to make sure git uses gpg2 and not gpg
+run `echo "test" | gpg2 --clearsign`, to make sure gpg2 itself is working
+```
+- If that all looks all right, one next thing to do is:
+```bash
+$brew install pinentry-mac gnupg2
+```
+- And then, to tell git that’s the GPG program want to use, run this: `git config --global gpg.program gpg2`
+
 ## GitHub release information
 
 ### Locking down branches
@@ -214,6 +232,18 @@ Call the script with the only argument being the new SDK version:
 
 ```sh
 $ ./release.sh v1.3.0
+```
+
+**NOTE** To run the above script from an OSX env you will need to: 
+- Use gnu-sed instead of the default sed for the script work. Install it with `brew uninstall gnu-sed` 
+- Export the gnu-sed to use it as "sed" in your bash profile. (E.g `export PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"`)
+- Upgrade the version of make used as follows.
+```sh
+$ brew install make
+
+# note that you need to add the new path in the bash `export PATH="/usr/local/opt/make/libexec/gnubin:$PATH"`
+$ make --version 
+GNU Make 4.3
 ```
 
 Release binaries and signatures will be in `build/`. Both binary and signature file names contain version, architecture, and platform information; signature file names correspond to the binary they were generated from suffixed with `.asc`. For example, signature file `operator-sdk-v1.3.0-x86_64-apple-darwin.asc` was generated from a binary named `operator-sdk-v1.3.0-x86_64-apple-darwin`. To verify binaries and tags, see the [verification section](#verifying-a-release).
