@@ -106,6 +106,11 @@ func Run(done chan error, o Options) error {
 		watchedNamespaceMap[ns] = nil
 	}
 
+	resources, err := newAPIResourcesForConfig(o.KubeConfig)
+	if err != nil {
+		return err
+	}
+
 	if o.Cache == nil && !o.DisableCache {
 		// Need to initialize cache since we don't have one
 		cacheInform, err := initCacheForConfig(o.KubeConfig)
@@ -113,16 +118,10 @@ func Run(done chan error, o Options) error {
 			return err
 		}
 		o.Cache = cacheInform
-
 	}
 
 	// Remove the authorization header so the proxy can correctly inject the header.
 	server.Handler = removeAuthorizationHeader(server.Handler)
-
-	resources, err := newAPIResourcesForConfig(o.KubeConfig)
-	if err != nil {
-		return err
-	}
 
 	if o.OwnerInjection {
 		server.Handler = &injectOwnerReferenceHandler{
