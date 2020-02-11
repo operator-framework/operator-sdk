@@ -6,6 +6,7 @@
 - Added `pkg/status` with several new types and interfaces that can be used in `Status` structs to simplify handling of [status conditions](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties). ([#1143](https://github.com/operator-framework/operator-sdk/pull/1143))
 - Added support for relative Ansible roles and playbooks paths in the Ansible operator's file. ([#2273](https://github.com/operator-framework/operator-sdk/pull/2273))
 - Add Prometheus metrics support to Ansible-based operators. ([#2179](https://github.com/operator-framework/operator-sdk/pull/2179))
+- On `generate csv`, populate a CSV manifest’s `spec.icon`, `spec.keywords`, and `spec.mantainers` fields with empty values to better inform users how to add data. ([#2521](https://github.com/operator-framework/operator-sdk/pull/2521))
 
 ### Changed
 - Ansible scaffolding has been rewritten to be simpler and make use of newer features of Ansible and Molecule.
@@ -15,7 +16,6 @@
     - The scaffolded molecule.yml files now use the Ansible verifier. All asserts.yml files were renamed to verify.yml to reflect this.
     - The prepare/converge/verify tasks now make use of the new `k8s` `wait` option to simplify the deployment logic.
 - Operator user setup and entrypoint scripts no longer insert dynamic runtime user entries into `/etc/passwd`. To use dynamic runtime users, use a container runtime that supports it (e.g. CRI-O). ([#2469](https://github.com/operator-framework/operator-sdk/pull/2469))
-
 - Changed the scorecard basic test, `Writing into CRs has an effect`, to include the http.MethodPatch as part of its test criteria alongside http.MethodPut and http.MethodPost. ([#2509](https://github.com/operator-framework/operator-sdk/pull/2509))
 
 ### Deprecated
