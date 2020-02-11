@@ -90,14 +90,14 @@ func Run(done chan error, o Options) error {
 	if err != nil {
 		return err
 	}
+
 	if o.Handler != nil {
 		server.Handler = o.Handler(server.Handler)
 	}
-	if o.ControllerMap == nil {
-		return fmt.Errorf("failed to get controller map from options")
-	}
-	if o.WatchedNamespaces == nil {
-		return fmt.Errorf("failed to get list of watched namespaces from options")
+
+	err = checkRequiredOptions(o)
+	if err != nil {
+		return err
 	}
 
 	watchedNamespaceMap := make(map[string]interface{})
@@ -106,42 +106,23 @@ func Run(done chan error, o Options) error {
 		watchedNamespaceMap[ns] = nil
 	}
 
-	// Create apiResources and
-	discoveryClient, err := discovery.NewDiscoveryClientForConfig(o.KubeConfig)
-	if err != nil {
-		return err
-	}
-	resources := &apiResources{
-		mu:               &sync.RWMutex{},
-		gvkToAPIResource: map[string]metav1.APIResource{},
-		discoveryClient:  discoveryClient,
-	}
-
 	if o.Cache == nil && !o.DisableCache {
 		// Need to initialize cache since we don't have one
-		log.Info("Initializing and starting informer cache...")
-		informerCache, err := cache.New(o.KubeConfig, cache.Options{})
+		cacheInform, err := initCacheForConfig(o.KubeConfig)
 		if err != nil {
 			return err
 		}
-		stop := make(chan struct{})
-		go func() {
-			if err := informerCache.Start(stop); err != nil {
-				log.Error(err, "Failed to start informer cache")
-			}
-			defer close(stop)
-		}()
-		log.Info("Waiting for cache to sync...")
-		synced := informerCache.WaitForCacheSync(stop)
-		if !synced {
-			return fmt.Errorf("failed to sync cache")
-		}
-		log.Info("Cache sync was successful")
-		o.Cache = informerCache
+		o.Cache = cacheInform
+
 	}
 
 	// Remove the authorization header so the proxy can correctly inject the header.
 	server.Handler = removeAuthorizationHeader(server.Handler)
+
+	resources, err := newAPIResourcesForConfig(o.KubeConfig)
+	if err != nil {
+		return err
+	}
 
 	if o.OwnerInjection {
 		server.Handler = &injectOwnerReferenceHandler{
@@ -154,9 +135,11 @@ func Run(done chan error, o Options) error {
 	} else {
 		log.Info("Warning: injection of owner references and dependent watches is turned off")
 	}
+
 	if o.LogRequests {
 		server.Handler = RequestLogHandler(server.Handler)
 	}
+
 	if !o.DisableCache {
 		server.Handler = &cacheResponseHandler{
 			next:              server.Handler,
@@ -177,6 +160,55 @@ func Run(done chan error, o Options) error {
 		log.Info("Starting to serve", "Address", l.Addr().String())
 		done <- server.ServeOnListener(l)
 	}()
+	return nil
+}
+
+// initCacheForConfig will Initialize a cache based in the Config
+func initCacheForConfig(config *rest.Config) (cache.Cache, error) {
+	log.Info("Initializing and starting informer cache...")
+	informerCache, err := cache.New(config, cache.Options{})
+	if err != nil {
+		return nil, err
+	}
+	stop := make(chan struct{})
+	go func() {
+		if err := informerCache.Start(stop); err != nil {
+			log.Error(err, "Failed to start informer cache")
+		}
+		defer close(stop)
+	}()
+	log.Info("Waiting for cache to sync...")
+	synced := informerCache.WaitForCacheSync(stop)
+	if !synced {
+		return nil, fmt.Errorf("failed to sync cache")
+	}
+	log.Info("Cache sync was successful")
+	return informerCache, nil
+}
+
+// newAPIResourcesForConfig will build the struct for the Kube Config  informed
+func newAPIResourcesForConfig(config *rest.Config) (*apiResources, error) {
+	// Create apiResources and
+	discoveryClient, err := discovery.NewDiscoveryClientForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+	resources := &apiResources{
+		mu:               &sync.RWMutex{},
+		gvkToAPIResource: map[string]metav1.APIResource{},
+		discoveryClient:  discoveryClient,
+	}
+	return resources, nil
+}
+
+// checkRequiredOptions verify if the mandatory options are filled
+func checkRequiredOptions(o Options) error {
+	if o.ControllerMap == nil {
+		return fmt.Errorf("failed to get controller map from options")
+	}
+	if o.WatchedNamespaces == nil {
+		return fmt.Errorf("failed to get list of watched namespaces from options")
+	}
 	return nil
 }
 

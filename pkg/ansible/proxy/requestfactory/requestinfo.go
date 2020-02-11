@@ -128,37 +128,26 @@ type RequestInfoFactory struct {
 
 func (r *RequestInfoFactory) NewRequestInfo(req *http.Request) (*RequestInfo, error) {
 	// start with a non-resource request until proven otherwise
-	requestInfo := RequestInfo{
-		IsResourceRequest: false,
-		Path:              req.URL.Path,
-		Verb:              strings.ToLower(req.Method),
-	}
+	requestInfo := newRequestInfoForHTTPRequest(req)
 
 	currentParts := splitPath(req.URL.Path)
-	if len(currentParts) < 3 {
+	if len(currentParts) < 3 || !r.APIPrefixes.Has(currentParts[0]) {
 		// return a non-resource request
-		return &requestInfo, nil
+		return requestInfo, nil
 	}
 
-	if !r.APIPrefixes.Has(currentParts[0]) {
-		// return a non-resource request
-		return &requestInfo, nil
-	}
-	requestInfo.APIPrefix = currentParts[0]
-	currentParts = currentParts[1:]
-
-	if !r.GrouplessAPIPrefixes.Has(requestInfo.APIPrefix) {
+	if !r.GrouplessAPIPrefixes.Has(currentParts[0]) {
 		// one part (APIPrefix) has already been consumed, so this is actually "do
 		// we have four parts?"
 		if len(currentParts) < 3 {
 			// return a non-resource request
-			return &requestInfo, nil
+			return requestInfo, nil
 		}
-
 		requestInfo.APIGroup = currentParts[0]
 		currentParts = currentParts[1:]
 	}
 
+	requestInfo.APIPrefix = currentParts[0]
 	requestInfo.IsResourceRequest = true
 	requestInfo.APIVersion = currentParts[0]
 	currentParts = currentParts[1:]
@@ -166,27 +155,13 @@ func (r *RequestInfoFactory) NewRequestInfo(req *http.Request) (*RequestInfo, er
 	// handle input of form /{specialVerb}/*
 	if specialVerbs.Has(currentParts[0]) {
 		if len(currentParts) < 2 {
-			return &requestInfo, fmt.Errorf("unable to determine kind and namespace from url, %v", req.URL)
+			return requestInfo, fmt.Errorf("unable to determine kind and namespace from url, %v", req.URL)
 		}
 
 		requestInfo.Verb = currentParts[0]
 		currentParts = currentParts[1:]
-
 	} else {
-		switch req.Method {
-		case "POST":
-			requestInfo.Verb = "create"
-		case "GET", "HEAD":
-			requestInfo.Verb = "get"
-		case "PUT":
-			requestInfo.Verb = "update"
-		case "PATCH":
-			requestInfo.Verb = "patch"
-		case "DELETE":
-			requestInfo.Verb = "delete"
-		default:
-			requestInfo.Verb = ""
-		}
+		requestInfo.Verb = getRequestVerbFromHTTPRequest(req)
 	}
 
 	// URL forms: /namespaces/{namespace}/{kind}/*, where parts are adjusted to
@@ -222,26 +197,8 @@ func (r *RequestInfoFactory) NewRequestInfo(req *http.Request) (*RequestInfo, er
 		requestInfo.Resource = requestInfo.Parts[0]
 	}
 
-	// if there's no name on the request and we thought it was a get before, then
-	// the actual verb is a list or a watch
-	if len(requestInfo.Name) == 0 && requestInfo.Verb == "get" {
-		opts := metainternalversion.ListOptions{}
-		if err := metainternalversion.ParameterCodec.DecodeParameters(req.URL.Query(), metav1.SchemeGroupVersion,
-			&opts); err != nil {
-			// An error in parsing request will result in default to "list" and not
-			// setting "name" field.
-			log.Error(err, "Could not parse request")
-			// Reset opts to not rely on partial results from parsing.
-			// However, if watch is set, let's report it.
-			opts = metainternalversion.ListOptions{}
-			if values := req.URL.Query()["watch"]; len(values) > 0 {
-				switch strings.ToLower(values[0]) {
-				case "false", "0":
-				default:
-					opts.Watch = true
-				}
-			}
-		}
+	if isToList(requestInfo) {
+		opts := newListOptionsFromHTTPRequest(req)
 
 		if opts.Watch {
 			requestInfo.Verb = "watch"
@@ -257,13 +214,74 @@ func (r *RequestInfoFactory) NewRequestInfo(req *http.Request) (*RequestInfo, er
 			}
 		}
 	}
-	// if there's no name on the request and we thought it was a delete before,
-	// then the actual verb is deletecollection
-	if len(requestInfo.Name) == 0 && requestInfo.Verb == "delete" {
+
+	if isToDeleteCollection(requestInfo) {
 		requestInfo.Verb = "deletecollection"
 	}
 
-	return &requestInfo, nil
+	return requestInfo, nil
+}
+
+// isToDeleteCollection will check if the action should be to delete a collection
+// if there's no name on the request and we thought it was a delete before,
+// then the actual verb is deletecollection
+func isToDeleteCollection(requestInfo *RequestInfo) bool {
+	return len(requestInfo.Name) == 0 && requestInfo.Verb == "delete"
+}
+
+func newListOptionsFromHTTPRequest(req *http.Request) metainternalversion.ListOptions {
+	opts := metainternalversion.ListOptions{}
+	if err := metainternalversion.ParameterCodec.DecodeParameters(req.URL.Query(), metav1.SchemeGroupVersion,
+		&opts); err != nil {
+		// An error in parsing request will result in default to "list" and not
+		// setting "name" field.
+		log.Error(err, "Could not parse request")
+		// Reset opts to not rely on partial results from parsing.
+		// However, if watch is set, let's report it.
+		opts = metainternalversion.ListOptions{}
+		if values := req.URL.Query()["watch"]; len(values) > 0 {
+			switch strings.ToLower(values[0]) {
+			case "false", "0":
+			default:
+				opts.Watch = true
+			}
+		}
+	}
+	return opts
+}
+
+// isToList will check if the action is to list
+// if there's no name on the request and we thought it was a get before, then
+// the actual verb is a list or a watch
+func isToList(requestInfo *RequestInfo) bool {
+	return len(requestInfo.Name) == 0 && requestInfo.Verb == "get"
+}
+
+// getRequestVerbFromHTTPRequest will return the k8s action from the request
+func getRequestVerbFromHTTPRequest(req *http.Request) string {
+	switch req.Method {
+	case "POST":
+		return "create"
+	case "GET", "HEAD":
+		return "get"
+	case "PUT":
+		return "update"
+	case "PATCH":
+		return "patch"
+	case "DELETE":
+		return "delete"
+	default:
+		return ""
+	}
+}
+
+// newRequestInfoForHTTPRequest returns a basic RequestInfo from the HTTP request
+func newRequestInfoForHTTPRequest(req *http.Request) *RequestInfo {
+	return &RequestInfo{
+		IsResourceRequest: false,
+		Path:              req.URL.Path,
+		Verb:              strings.ToLower(req.Method),
+	}
 }
 
 // splitPath returns the segments for a URL path.
