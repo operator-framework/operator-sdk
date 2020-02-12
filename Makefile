@@ -11,6 +11,7 @@ endif
 
 VERSION = $(shell git describe --dirty --tags --always)
 GIT_COMMIT = $(shell git rev-parse HEAD)
+K8S_VERSION = v1.16.3
 REPO = github.com/operator-framework/operator-sdk
 BUILD_PATH = $(REPO)/cmd/operator-sdk
 PKGS = $(shell go list ./... | grep -v /vendor/)
@@ -54,6 +55,7 @@ install: ## Build & install the Operator SDK CLI binary
 		-ldflags " \
 			-X '${REPO}/version.GitVersion=${VERSION}' \
 			-X '${REPO}/version.GitCommit=${GIT_COMMIT}' \
+			-X '${REPO}/version.KubernetesVendorVersion=${K8S_VERSION}' \
 		" \
 		$(BUILD_PATH)
 

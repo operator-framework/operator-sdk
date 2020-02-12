@@ -26,5 +26,4 @@ var (
 	GitCommit               = "unknown"
 	KubernetesVendorVersion = "unknown"
 	GoVersion               = fmt.Sprintf("%s %s/%s", runtime.Version(), runtime.GOOS, runtime.GOARCH)
-	BuildDate               = "1970-01-01T00:00:00Z"
 )
