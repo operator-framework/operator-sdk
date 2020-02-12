@@ -690,11 +690,28 @@ With:
 sigs.k8s.io/controller-runtime/pkg/client/apiutil.DynamicRESTMapper
 ```
 
+### Break Changes
+
+#### Add `operator_sdk.util` Ansible collection
+
+Also, the Ansible module `k8s_status` was extracted and it is now providing the `operator_sdk.util` Ansible collection. See [developer_guide](https://github.com/operator-framework/operator-sdk/blob/master/doc/ansible/dev/developer_guide.md#custom-resource-status-management) for new usage. Update the end of the `main.yaml` file with the `collections` after the `dependencies` block: 
+
+```yaml
+...
+dependencies: []
+  # List your role dependencies here, one per line. Be sure to remove the '[]' above,
+  # if you add dependencies to this list.`
+  # if you add dependencies to this list.
+collections:
+- operator_sdk.util
+...
+```
+
 ### Notable Changes
 
-#### Ansible Operator
+These notable changes contain just the most important user-facing changes. See the [CHANGELOG](https://github.com/operator-framework/operator-sdk/blob/master/CHANGELOG.md#v0141) for details of the release.
 
-##### Ansible version update
+#### Ansible version update
 
 Note that the Ansible version in the init projects from `2.6` to `2.9` for collections support. Update the `main.yaml` file :
 
@@ -712,32 +729,11 @@ With:
 ...
 ```
 
-##### Break Change
-
-######  Add `operator_sdk.util` Ansible collection
-
-Also, the Ansible module `k8s_status` was extracted and it is now providing the `operator_sdk.util` Ansible collection. See [developer_guide](https://github.com/operator-framework/operator-sdk/blob/master/doc/ansible/dev/developer_guide.md#custom-resource-status-management) for new usage. Update the end of the `main.yaml` file with the `collections` after the `dependencies` block: 
-
-```yaml
-...
-dependencies: []
-  # List your role dependencies here, one per line. Be sure to remove the '[]' above,
-  # if you add dependencies to this list.`
-  # if you add dependencies to this list.
-collections:
-- operator_sdk.util
-...
-```
-
-#### Helm Operator
+#### Helm Upgrade to V3
 
 The Helm operator packages and base image were upgraded from Helm v2 to Helm v3. Note that cluster state for pre-existing CRs using Helm v2-based operators will be automatically migrated to Helm v3's new release storage format, and existing releases may be upgraded due to changes in Helm v3's label injection.
 
 If you are using any external helm v2 tooling with the your helm operator-managed releases, you will need to upgrade to the equivalent helm v3 tooling.
-
-### See the CHANGELOG.MD
-
-For further detailed information see the [CHANGELOG](https://github.com/operator-framework/operator-sdk/blob/master/CHANGELOG.md#v0141)
 
 [legacy-kubebuilder-doc-crd]: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 [v0.8.2-go-mod]: https://github.com/operator-framework/operator-sdk/blob/28bd2b0d4fd25aa68e15d928ae09d3c18c3b51da/internal/pkg/scaffold/go_mod.go#L40-L94
