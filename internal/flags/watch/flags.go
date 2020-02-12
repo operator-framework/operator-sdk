@@ -20,7 +20,7 @@ import (
 
 	"github.com/spf13/pflag"
 )
-
+// todo(camilamacedo86):the WatchFlags should be renamed for the release 1.0.0
 // WatchFlags provides flag for configuration of a controller's reconcile period and for a
 // watches.yaml file, which is used to configure dynamic operators (e.g. Ansible and Helm).
 type WatchFlags struct { //nolint:golint
