@@ -712,7 +712,7 @@ With:
 ...
 ```
 
-##### Breaking Change
+##### Break Change
 
 ######  Add `operator_sdk.util` Ansible collection
 
@@ -735,7 +735,7 @@ The Helm operator packages and base image were upgraded from Helm v2 to Helm v3.
 
 If you are using any external helm v2 tooling with the your helm operator-managed releases, you will need to upgrade to the equivalent helm v3 tooling.
 
-### See CHANGELOG.MD
+### See the CHANGELOG.MD
 
 For further detailed information see the [CHANGELOG](https://github.com/operator-framework/operator-sdk/blob/master/CHANGELOG.md#v0141)
 
