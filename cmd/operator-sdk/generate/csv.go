@@ -89,8 +89,8 @@ version to --from-version. Otherwise the SDK will scaffold a new CSV manifest.`,
 Use this to set custom paths for operator manifests and API type definitions
 E.g: --inputs deploy=config/production,apis=pkg/myapp/apis 
 Supported input keys:
-	- deploy=<path to root directory for operator manifests (Deployment, RBAC, CRDs)>
-	- apis=<path to root directory for API type defintions>
+	- deploy=<project-relative path to root directory for operator manifests (Deployment, RBAC, CRDs)>
+	- apis=<project-relative path to root directory for API type defintions>
 `)
 	cmd.Flags().StringVar(&c.outputDir, "output-dir", scaffold.DeployDir,
 		"Base directory to output generated CSV. The resulting CSV bundle directory"+
@@ -139,7 +139,7 @@ func (c csvCmd) run() error {
 		if err != nil {
 			return fmt.Errorf("failed to update CRD's: %v", err)
 		}
-		// TODO: This path should come from the CSV generator
+		// TODO: This path should come from the CSV generator field csvOutputDir
 		bundleDir := filepath.Join(c.outputDir, gencatalog.OLMCatalogChildDir, c.operatorName, c.csvVersion)
 		for path, b := range crdManifestSet {
 			path = filepath.Join(bundleDir, path)
@@ -195,7 +195,7 @@ func findCRDFileSet(path string) (map[string][]byte, error) {
 		return nil, err
 	}
 	if !info.IsDir() {
-		return nil, fmt.Errorf("CRD's must be read from a directory. %s is a file", path)
+		return nil, fmt.Errorf("crd's must be read from a directory. %s is a file", path)
 	}
 
 	crdPaths, err := k8sutil.GetCRDManifestPaths(path)

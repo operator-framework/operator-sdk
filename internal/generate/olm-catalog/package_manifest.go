@@ -35,9 +35,6 @@ import (
 
 const (
 	packageManifestFileExt = ".package.yaml"
-
-	// TODO: Is this an input that needs to be set via the csv generator inputs flag?
-	manifestsDirKey = "manifests"
 )
 
 type pkgGenerator struct {
@@ -52,6 +49,10 @@ type pkgGenerator struct {
 	channelIsDefault bool
 	// PackageManifest file name
 	fileName string
+
+	// existingPkgManifestDir is set to the package manifest root directory
+	// if the generator needs to update from an existing package manifest file.
+	existingPkgManifestDir string
 }
 
 func NewPackageManifest(cfg gen.Config, csvVersion, channel string, isDefault bool) gen.Generator {
@@ -73,14 +74,26 @@ func NewPackageManifest(cfg gen.Config, csvVersion, channel string, isDefault bo
 		olmCatalogDir = filepath.Join(g.Inputs[DeployDirKey], OLMCatalogChildDir)
 	}
 
-	if manifests, ok := g.Inputs[manifestsDirKey]; !ok || manifests == "" {
-		g.Inputs[manifestsDirKey] = filepath.Join(olmCatalogDir, g.OperatorName)
+	// Check if the generator should update from an existing package manifest file
+	pkgManifestDirPath := filepath.Join(olmCatalogDir, g.OperatorName)
+	pkgManifestFilePath := filepath.Join(pkgManifestDirPath, g.fileName)
+	if isFileExist(pkgManifestFilePath) {
+		g.existingPkgManifestDir = pkgManifestDirPath
 	}
 
 	if g.OutputDir == "" {
 		g.OutputDir = scaffold.DeployDir
 	}
 	return g
+}
+
+func isFileExist(path string) bool {
+	_, err := os.Stat(path)
+	if !os.IsNotExist(err) {
+		// TODO: return and handle this error
+		log.Fatalf("Failed to stat %s: %v", path, err)
+	}
+	return err == nil
 }
 
 // getPkgFileName will return the name of the PackageManifestFile
@@ -138,23 +151,21 @@ func (g pkgGenerator) generate() (map[string][]byte, error) {
 	return fileMap, nil
 }
 
-// buildPackageManifest will create a registry.PackageManifest from scratch, or modify
+// buildPackageManifest will create a registry.PackageManifest from scratch, or reads
 // an existing one if found at the expected path.
 func (g pkgGenerator) buildPackageManifest() (registry.PackageManifest, error) {
 	pkg := registry.PackageManifest{}
-	path := filepath.Join(g.Inputs[manifestsDirKey], g.fileName)
-	if _, err := os.Stat(path); err == nil {
-		b, err := ioutil.ReadFile(path)
+	if g.existingPkgManifestDir != "" {
+		existingPkgManifest := filepath.Join(g.existingPkgManifestDir, g.fileName)
+		b, err := ioutil.ReadFile(existingPkgManifest)
 		if err != nil {
-			return pkg, fmt.Errorf("failed to read package manifest %s: %v", path, err)
+			return pkg, fmt.Errorf("failed to read package manifest %s: %v", existingPkgManifest, err)
 		}
 		if err = yaml.Unmarshal(b, &pkg); err != nil {
-			return pkg, fmt.Errorf("failed to unmarshal package manifest %s: %v", path, err)
+			return pkg, fmt.Errorf("failed to unmarshal package manifest %s: %v", existingPkgManifest, err)
 		}
-	} else if os.IsNotExist(err) {
-		pkg = newPackageManifest(g.OperatorName, g.channel, g.csvVersion)
 	} else {
-		return pkg, fmt.Errorf("error reading package manifest %s: %v", path, err)
+		pkg = newPackageManifest(g.OperatorName, g.channel, g.csvVersion)
 	}
 	return pkg, nil
 }

@@ -15,7 +15,6 @@
 package olmcatalog
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -34,16 +33,10 @@ import (
 )
 
 const (
-	sdkCmd = "operator-sdk"
-
-	testProjectName  = "memcached-operator"
-	csvVersion       = "0.0.3"
-	fromVersion      = "0.0.2"
-	notExistVersion  = "1.0.0"
-	scratchBundleDir = "scratch"
-	testGroup        = "cache.example.com"
-	testKind1        = "Memcached"
-	testVersion1     = "v1alpha1"
+	testProjectName = "memcached-operator"
+	csvVersion      = "0.0.3"
+	fromVersion     = "0.0.2"
+	notExistVersion = "1.0.0"
 )
 
 var (
@@ -67,7 +60,7 @@ func setupTestEnvWithCleanup(t *testing.T, dataDir string) (cleanupFuncs []func(
 	return cleanupFuncs
 }
 
-func TestGoCSVGoNew(t *testing.T) {
+func TestGoCSVFromNew(t *testing.T) {
 	for _, cleanupFunc := range setupTestEnvWithCleanup(t, testGoDataDir) {
 		defer cleanupFunc()
 	}
@@ -76,6 +69,8 @@ func TestGoCSVGoNew(t *testing.T) {
 		OperatorName: testProjectName,
 	}
 	g := NewCSV(cfg, csvVersion, "")
+	// TODO: Expand this test to test the g.Generate() method
+	// so we can test the CSV generator's input/out paths.
 	fileMap, err := g.(csvGenerator).generate()
 	if err != nil {
 		t.Fatalf("Failed to execute CSV generator: %v", err)
@@ -150,14 +145,6 @@ func TestGoCSVIncludeAll(t *testing.T) {
 	} else {
 		assert.Equal(t, string(csvExpBytes), string(b))
 	}
-}
-
-func getTestCRDFile(g, k string) string {
-	return fmt.Sprintf("%s_%s_crd.yaml", g, strings.ToLower(k)+"s")
-}
-
-func getTestCRFile(g, v, k string) string {
-	return fmt.Sprintf("%s_%s_%s_cr.yaml", g, v, strings.ToLower(k))
 }
 
 func TestUpdateVersion(t *testing.T) {

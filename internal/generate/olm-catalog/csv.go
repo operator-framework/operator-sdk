@@ -51,9 +51,6 @@ const (
 
 	// Input keys for CSV generator whose values are the filepaths for the respective input directories
 
-	// DEBUG: Why is this an input key? Users don't need to configure this.
-	// bundleDirKey is for the location of the bundle manifests directory
-	bundleDirKey = "bundle"
 	// DeployDirKey is for the location of the operator manifests directory e.g "deploy/production"
 	DeployDirKey = "deploy"
 	// APIsDirKey is for the location of the API types directory e.g "pkg/apis"
@@ -68,6 +65,12 @@ type csvGenerator struct {
 	// manifest with this version should exist at:
 	// deploy/olm-catalog/{from_version}/operator-name.v{from_version}.{csvYamlFileExt}
 	fromVersion string
+	// existingCSVBundleDir is set if the generator needs to update from
+	// an existing CSV bundle directory
+	existingCSVBundleDir string
+	// csvOutputDir is the bundle directory filepath where the CSV will be generated
+	// This is set according to the generator's OutputDir
+	csvOutputDir string
 }
 
 func NewCSV(cfg gen.Config, csvVersion, fromVersion string) gen.Generator {
@@ -88,22 +91,23 @@ func NewCSV(cfg gen.Config, csvVersion, fromVersion string) gen.Generator {
 		// Set to non-standard location.
 		olmCatalogDir = filepath.Join(g.Inputs[DeployDirKey], OLMCatalogChildDir)
 	}
-	if bundle, ok := g.Inputs[bundleDirKey]; !ok || bundle == "" {
-		// Initialize so we don't have to check for key existence elsewhere.
-		g.Inputs[bundleDirKey] = ""
-		parentDir := filepath.Join(olmCatalogDir, g.OperatorName)
-		if isBundleDirExist(parentDir, g.fromVersion) {
-			g.Inputs[bundleDirKey] = filepath.Join(olmCatalogDir, g.OperatorName, g.fromVersion)
-		} else if isBundleDirExist(parentDir, g.csvVersion) {
-			g.Inputs[bundleDirKey] = filepath.Join(olmCatalogDir, g.OperatorName, g.csvVersion)
-		}
+
+	parentDir := filepath.Join(olmCatalogDir, g.OperatorName)
+	if isBundleDirExist(parentDir, g.fromVersion) {
+		g.existingCSVBundleDir = filepath.Join(olmCatalogDir, g.OperatorName, g.fromVersion)
+	} else if isBundleDirExist(parentDir, g.csvVersion) {
+		g.existingCSVBundleDir = filepath.Join(olmCatalogDir, g.OperatorName, g.csvVersion)
 	}
+
 	if apisDir, ok := g.Inputs[APIsDirKey]; !ok || apisDir == "" {
 		g.Inputs[APIsDirKey] = scaffold.ApisDir
 	}
 	if g.OutputDir == "" {
 		g.OutputDir = scaffold.DeployDir
 	}
+
+	// Set the CSV bundle dir output path under the generator's OutputDir
+	g.csvOutputDir = filepath.Join(g.OutputDir, OLMCatalogChildDir, g.OperatorName, g.csvVersion)
 	return g
 }
 
@@ -112,8 +116,13 @@ func isBundleDirExist(parentDir, version string) bool {
 	if parentDir == "" || version == "" {
 		return false
 	}
-	_, err := os.Stat(filepath.Join(parentDir, version))
-	return err == nil || os.IsExist(err)
+	bundleDir := filepath.Join(parentDir, version)
+	_, err := os.Stat(bundleDir)
+	if !os.IsNotExist(err) {
+		// TODO: return and handle this error
+		log.Fatalf("Failed to stat existing bundle directory %s: %v", bundleDir, err)
+	}
+	return err == nil
 }
 
 func getCSVName(name, version string) string {
@@ -135,12 +144,11 @@ func (g csvGenerator) Generate() error {
 		return errors.New("error generating CSV manifest: no generated file found")
 	}
 
-	csvOutputDir := filepath.Join(g.OutputDir, OLMCatalogChildDir, g.OperatorName, g.csvVersion)
-	if err = os.MkdirAll(csvOutputDir, fileutil.DefaultDirFileMode); err != nil {
-		return errors.Wrapf(err, "error mkdir %s", csvOutputDir)
+	if err = os.MkdirAll(g.csvOutputDir, fileutil.DefaultDirFileMode); err != nil {
+		return errors.Wrapf(err, "error mkdir %s", g.csvOutputDir)
 	}
 	for fileName, b := range fileMap {
-		path := filepath.Join(csvOutputDir, fileName)
+		path := filepath.Join(g.csvOutputDir, fileName)
 		log.Debugf("CSV generator writing %s", path)
 		if err = ioutil.WriteFile(path, b, fileutil.DefaultFileMode); err != nil {
 			return err
@@ -150,11 +158,12 @@ func (g csvGenerator) Generate() error {
 }
 
 func (g csvGenerator) generate() (fileMap map[string][]byte, err error) {
-	bundle := g.Inputs[bundleDirKey]
 	// Get current CSV to update, otherwise start with a fresh CSV.
 	var csv *olmapiv1alpha1.ClusterServiceVersion
-	if bundle != "" {
-		if csv, err = getCSVFromDir(bundle); err != nil {
+	if g.existingCSVBundleDir != "" {
+		// TODO: If bundle dir exists, but the CSV file does not
+		// then we should create a new one and not return an error.
+		if csv, err = getCSVFromDir(g.existingCSVBundleDir); err != nil {
 			return nil, err
 		}
 		// TODO: validate existing CSV.
@@ -173,7 +182,8 @@ func (g csvGenerator) generate() (fileMap map[string][]byte, err error) {
 
 	path := getCSVFileName(g.OperatorName, g.csvVersion)
 	if fields := getEmptyRequiredCSVFields(csv); len(fields) != 0 {
-		if bundle != "" {
+		if g.existingCSVBundleDir != "" {
+			// An existing csv should have several required fields populated.
 			log.Warnf("Required csv fields not filled in file %s:%s\n", path, joinFields(fields))
 		} else {
 			// A new csv won't have several required fields populated.
@@ -357,8 +367,6 @@ func (g csvGenerator) updateCSVFromManifests(csv *olmapiv1alpha1.ClusterServiceV
 	kindManifestMap := map[schema.GroupVersionKind][][]byte{}
 	crGVKSet := map[schema.GroupVersionKind]struct{}{}
 	err = filepath.Walk(g.Inputs[DeployDirKey], func(path string, info os.FileInfo, werr error) error {
-		// DEBUG: How is this walking to read deploy/crds/... manifests
-		// if it's not walking directories?
 		if werr != nil || info.IsDir() {
 			return werr
 		}

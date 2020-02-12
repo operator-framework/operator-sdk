@@ -242,7 +242,9 @@ func (us crds) apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
 	return nil
 }
 
-func updateDescriptions(csv *olmapiv1alpha1.ClusterServiceVersion, searchDir string, opType projutil.OperatorType) error {
+func updateDescriptions(csv *olmapiv1alpha1.ClusterServiceVersion,
+	searchDir string,
+	opType projutil.OperatorType) error {
 	ownedCRDs := []olmapiv1alpha1.CRDDescription{}
 	for _, ownedCRD := range csv.Spec.CustomResourceDefinitions.Owned {
 		name := ownedCRD.Name

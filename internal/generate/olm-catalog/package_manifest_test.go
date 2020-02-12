@@ -27,13 +27,19 @@ import (
 
 // newTestPackageManifestGenerator returns a package manifest Generator populated with test values.
 func newTestPackageManifestGenerator() gen.Generator {
-	inputDir := filepath.Join(testGoDataDir, OLMCatalogDir, testProjectName)
 	cfg := gen.Config{
 		OperatorName: testProjectName,
-		Inputs:       map[string]string{manifestsDirKey: inputDir},
 	}
 	g := NewPackageManifest(cfg, csvVersion, "stable", true)
-	return g
+
+	// TODO: The deploy dir input should be the way to point the generator to test data
+	// E.g: Inputs: map[string]string{DeployDirKey: testGoDataDir}
+
+	// Override the generator to point to the package manifest in testGoDataDir
+	testPkgManifestDir := filepath.Join(testGoDataDir, OLMCatalogDir, testProjectName)
+	pkgGen := g.(pkgGenerator)
+	pkgGen.existingPkgManifestDir = testPkgManifestDir
+	return pkgGen
 }
 
 func TestGeneratePackageManifest(t *testing.T) {
