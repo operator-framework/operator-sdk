@@ -24,7 +24,7 @@ import (
 
 // AnsibleOperatorFlags - Options to be used by an ansible operator
 type AnsibleOperatorFlags struct {
-	watch.Flags
+	watch.WatchFlags
 	InjectOwnerRef   bool
 	MaxWorkers       int
 	AnsibleVerbosity int
@@ -37,7 +37,7 @@ const AnsibleRolesPathEnvVar = "ANSIBLE_ROLES_PATH"
 // helpTextPrefix will allow you add a prefix to default help text. Joined by a space.
 func AddTo(flagSet *pflag.FlagSet, helpTextPrefix ...string) *AnsibleOperatorFlags {
 	aof := &AnsibleOperatorFlags{}
-	aof.Flags.AddTo(flagSet, helpTextPrefix...)
+	aof.WatchFlags.AddTo(flagSet, helpTextPrefix...)
 	flagSet.AddFlagSet(zap.FlagSet())
 	flagSet.BoolVar(&aof.InjectOwnerRef,
 		"inject-owner-ref",

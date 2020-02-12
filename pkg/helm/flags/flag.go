@@ -22,14 +22,14 @@ import (
 
 // HelmOperatorFlags - Options to be used by a helm operator
 type HelmOperatorFlags struct {
-	watch.Flags
+	watch.WatchFlags
 }
 
 // AddTo - Add the helm operator flags to the the flagset
 // helpTextPrefix will allow you add a prefix to default help text. Joined by a space.
 func AddTo(flagSet *pflag.FlagSet, helpTextPrefix ...string) *HelmOperatorFlags {
 	hof := &HelmOperatorFlags{}
-	hof.Flags.AddTo(flagSet, helpTextPrefix...)
+	hof.WatchFlags.AddTo(flagSet, helpTextPrefix...)
 	flagSet.AddFlagSet(zap.FlagSet())
 	return hof
 }
