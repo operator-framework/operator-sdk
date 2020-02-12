@@ -50,7 +50,7 @@ func TestMemcached(t *testing.T) {
 	})
 }
 
-func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx, fromReplicas, toReplicas int) error {
+func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Context, fromReplicas, toReplicas int) error {
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
 		return fmt.Errorf("could not get namespace: %v", err)
@@ -66,7 +66,7 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 		},
 	}
 	key := types.NamespacedName{Name: exampleMemcached.GetName(), Namespace: exampleMemcached.GetNamespace()}
-	// use TestCtx's create helper to create the object and add a cleanup function for the new object
+	// use Context's create helper to create the object and add a cleanup function for the new object
 	err = f.Client.Create(goctx.TODO(), exampleMemcached, &framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {
 		return fmt.Errorf("could not create %q: %v", key, err)
@@ -100,7 +100,7 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 
 func MemcachedCluster(t *testing.T) {
 	t.Parallel()
-	ctx := framework.NewTestCtx(t)
+	ctx := framework.NewContext(t)
 	defer ctx.Cleanup()
 	err := ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {

@@ -217,7 +217,7 @@ func (f *Framework) addToScheme(addToScheme addToSchemeFunc, obj runtime.Object)
 
 func (f *Framework) runM(m *testing.M) (int, error) {
 	// setup context to use when setting up crd
-	ctx := f.newTestCtx(nil)
+	ctx := f.newContext(nil)
 	defer ctx.Cleanup()
 
 	// go test always runs from the test directory; change to project root

@@ -22,6 +22,7 @@
 - Changed the scorecard basic test, `Writing into CRs has an effect`, to include the http.MethodPatch as part of its test criteria alongside http.MethodPut and http.MethodPost. ([#2509](https://github.com/operator-framework/operator-sdk/pull/2509))
 
 ### Deprecated
+- The type name `TestCtx` in `pkg/test` has been deprecated and renamed to `Context`. It now exists only as a type alias to maintain backwards compatibility. Users of the e2e framework should migrate to use the new name, `Context`. The `TestCtx` alias will be removed in a future version. ([2549](https://github.com/operator-framework/operator-sdk/pull/2549))
 
 - The additional of the dependency `inotify-tools` on Ansible based-operator images. ([#2586](https://github.com/operator-framework/operator-sdk/pull/2586))
 
