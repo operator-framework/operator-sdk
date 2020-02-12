@@ -38,7 +38,8 @@ func (r *RolesMetaMain) GetInput() (input.Input, error) {
 	return r.Input, nil
 }
 
-const rolesMetaMainAnsibleTmpl = `galaxy_info:
+const rolesMetaMainAnsibleTmpl = `---
+galaxy_info:
   author: your name
   description: your description
   company: your company (optional)

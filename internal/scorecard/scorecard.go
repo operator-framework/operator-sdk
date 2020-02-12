@@ -20,9 +20,8 @@ import (
 	"os"
 	"strings"
 
-	schelpers "github.com/operator-framework/operator-sdk/internal/scorecard/helpers"
 	scplugins "github.com/operator-framework/operator-sdk/internal/scorecard/plugins"
-	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
+	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 	"github.com/operator-framework/operator-sdk/version"
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -88,19 +87,12 @@ func (s Config) GetPlugins(configs []PluginConfig) ([]Plugin, error) {
 
 func (s Config) RunTests() error {
 
-	var pluginOutputs []scapiv1alpha1.ScorecardOutput
+	var pluginOutputs []scapiv1alpha2.ScorecardOutput
 	for _, plugin := range s.Plugins {
 		if s.List {
 			pluginOutputs = append(pluginOutputs, plugin.List())
 		} else {
 			pluginOutputs = append(pluginOutputs, plugin.Run())
-		}
-	}
-
-	// Update the state for the tests
-	for _, suite := range pluginOutputs {
-		for idx, res := range suite.Results {
-			suite.Results[idx] = schelpers.UpdateSuiteStates(res)
 		}
 	}
 
@@ -110,7 +102,7 @@ func (s Config) RunTests() error {
 
 	for _, scorecardOutput := range pluginOutputs {
 		for _, result := range scorecardOutput.Results {
-			if result.Fail > 0 || result.PartialPass > 0 || result.Error > 0 {
+			if result.State != scapiv1alpha2.PassState {
 				os.Exit(1)
 			}
 		}
@@ -123,5 +115,7 @@ func ConfigDocLink() string {
 	if strings.HasSuffix(version.Version, "+git") {
 		return "https://github.com/operator-framework/operator-sdk/blob/master/doc/test-framework/scorecard.md"
 	}
-	return fmt.Sprintf("https://github.com/operator-framework/operator-sdk/blob/%s/doc/test-framework/scorecard.md", version.Version)
+	return fmt.Sprintf(
+		"https://github.com/operator-framework/operator-sdk/blob/%s/doc/test-framework/scorecard.md",
+		version.Version)
 }

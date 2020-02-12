@@ -45,18 +45,22 @@ Read the [operator scope][operator-scope] documentation on how to run your opera
 The Watches file contains a list of mappings from custom resources, identified
 by it's Group, Version, and Kind, to an Ansible Role or Playbook. The Operator
 expects this mapping file in a predefined location: `/opt/ansible/watches.yaml`
+These resources, as well as child resources (determined by owner references) will
+be monitored for updates and cached.
 
 * **group**:  The group of the Custom Resource that you will be watching.
 * **version**:  The version of the Custom Resource that you will be watching.
 * **kind**:  The kind of the Custom Resource that you will be watching.
-* **role** (default):  This is the path to the role that you have added to the
-  container.  For example if your roles directory is at `/opt/ansible/roles/`
-  and your role is named `busybox`, this value will be
-  `/opt/ansible/roles/busybox`. This field is mutually exclusive with the
-  "playbook" field.
-* **playbook**:  This is the path to the playbook that you have added to the
+* **role** (default): This is the name of the role that you have added to the
+  container. This field is mutually exclusive with the
+  "playbook" field. If the path is relative, it is relative to the `roles` directory in the current working directory 
+  which in the image by default is `/opt/ansible/roles`. Also, when it is running locally it is by default the directory 
+  `roles` in the current project directory in the local machine. Note that it can be customized by using the flag 
+  `ansible-roles-path` or the envinroment variable `ANSIBLE_ROLES_PATH`. 
+* **playbook**: This is the playbook name that you have added to the
   container. This playbook is expected to be simply a way to call roles. This
-  field is mutually exclusive with the "role" field.
+  field is mutually exclusive with the "role" field. Also, when it is running locally it looking for the playbook in the 
+  current project directory in the local machine.
 * **vars**: This is an arbitrary map of key-value pairs. The contents will be
   passed as `extra_vars` to the playbook or role specified for this watch.
 * **reconcilePeriod** (optional): The reconciliation interval, how often the
@@ -64,6 +68,7 @@ expects this mapping file in a predefined location: `/opt/ansible/watches.yaml`
 * **manageStatus** (optional): When true (default), the operator will manage
   the status of the CR generically. Set to false, the status of the CR is
   managed elsewhere, by the specified role/playbook or in a separate controller.
+* **blacklist**: A list of child resources (by GVK) that will not be watched or cached.
 
 An example Watches file:
 
@@ -73,13 +78,13 @@ An example Watches file:
 - version: v1alpha1
   group: foo.example.com
   kind: Foo
-  role: /opt/ansible/roles/Foo
+  role: Foo
 
 # Simple example mapping Bar to a playbook
 - version: v1alpha1
   group: bar.example.com
   kind: Bar
-  playbook: /opt/ansible/playbook.yml
+  playbook: playbook.yml
 
 # More complex example for our Baz kind
 # Here we will disable requeuing and be managing the CR status in the playbook,
@@ -87,11 +92,21 @@ An example Watches file:
 - version: v1alpha1
   group: baz.example.com
   kind: Baz
-  playbook: /opt/ansible/baz.yml
+  playbook: baz.yml
   reconcilePeriod: 0
   manageStatus: false
   vars:
     foo: bar
+
+# ConfigMaps owned by a Memcached CR will not be watched or cached.
+- version: v1alpha1
+  group: cache.example.com
+  kind: Memcached
+  role: /opt/ansible/roles/memcached
+  blacklist:
+    - group: ""
+      version: v1
+      kind: ConfigMap
 ```
 
 ## Customize the operator logic
@@ -125,7 +140,7 @@ should go.
 - version: v1alpha1
   group: cache.example.com
   kind: Memcached
-  role: /opt/ansible/roles/memcached
+  role: memcached
 ```
 
 **Playbook**
@@ -137,7 +152,7 @@ Playbook
 - version: v1alpha1
   group: cache.example.com
   kind: Memcached
-  playbook: /opt/ansible/playbook.yaml
+  playbook: playbook.yaml
 ```
 
 ## Building the Memcached Ansible Role
@@ -243,19 +258,13 @@ Kubernetes deployment manifests are generated in `deploy/operator.yaml`. The
 deployment image in this file needs to be modified from the placeholder
 `REPLACE_IMAGE` to the previous built image. To do this run:
 ```
-$ sed -i 's|{{ REPLACE_IMAGE }}|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
-```
-
-The `imagePullPolicy` also requires an update.  To do this run:
-```
-$ sed -i 's|{{ pull_policy\|default('\''Always'\'') }}|Always|g' deploy/operator.yaml
+$ sed -i 's|REPLACE_IMAGE|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
 ```
 
 **Note**
 If you are performing these steps on OSX, use the following `sed` commands instead:
 ```
-$ sed -i "" 's|{{ REPLACE_IMAGE }}|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
-$ sed -i "" 's|{{ pull_policy\|default('\''Always'\'') }}|Always|g' deploy/operator.yaml
+$ sed -i "" 's|REPLACE_IMAGE|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
 ```
 
 Deploy the memcached-operator:
@@ -292,7 +301,7 @@ Run the operator locally with the default Kubernetes config file present at
 `$HOME/.kube/config`:
 
 ```sh
-$ operator-sdk up local
+$ operator-sdk run --local
 INFO[0000] Go Version: go1.10
 INFO[0000] Go OS/Arch: darwin/amd64
 INFO[0000] operator-sdk Version: 0.0.5+git
@@ -301,7 +310,7 @@ INFO[0000] operator-sdk Version: 0.0.5+git
 Run the operator locally with a provided Kubernetes config file:
 
 ```sh
-$ operator-sdk up local --kubeconfig=config
+$ operator-sdk run --local --kubeconfig=config
 INFO[0000] Go Version: go1.10
 INFO[0000] Go OS/Arch: darwin/amd64
 INFO[0000] operator-sdk Version: 0.0.5+git
@@ -370,7 +379,7 @@ kind: "Memcached"
 metadata:
   name: "example-memcached"
   annotations:
-    "ansible.operator-sdk/verbosity": 4
+    "ansible.operator-sdk/verbosity": "4"
 spec:
   size: 4
 ```

@@ -338,9 +338,11 @@ func checkCRDVersions(crd apiextv1beta1.CustomResourceDefinition) error {
 	multiVers := len(crd.Spec.Versions) > 0
 	if singleVer {
 		if !multiVers {
-			log.Warnf("CRD %s: spec.version is deprecated and should be migrated to spec.versions", crd.Spec.Names.Kind)
+			log.Warnf("CRD %s: spec.version is deprecated and should be migrated to spec.versions",
+				crd.Spec.Names.Kind)
 		} else if crd.Spec.Version != crd.Spec.Versions[0].Name {
-			return fmt.Errorf("spec.version %s must be the first element in spec.versions for CRD %s", crd.Spec.Version, crd.Spec.Names.Kind)
+			return fmt.Errorf("spec.version %s must be the first element in spec.versions for CRD %s",
+				crd.Spec.Version, crd.Spec.Names.Kind)
 		}
 	}
 

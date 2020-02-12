@@ -23,6 +23,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -56,25 +58,30 @@ func TestNew(t *testing.T) {
 				t.Fatalf("Unexpected GVK %v expected %v", watch.GroupVersionKind, tc.gvk)
 			}
 			if watch.MaxRunnerArtifacts != maxRunnerArtifactsDefault {
-				t.Fatalf("Unexpected maxRunnerArtifacts %v expected %v", watch.MaxRunnerArtifacts, maxRunnerArtifactsDefault)
+				t.Fatalf("Unexpected maxRunnerArtifacts %v expected %v", watch.MaxRunnerArtifacts,
+					maxRunnerArtifactsDefault)
 			}
 			if watch.MaxWorkers != maxWorkersDefault {
 				t.Fatalf("Unexpected maxWorkers %v expected %v", watch.MaxWorkers, maxWorkersDefault)
 			}
 			if watch.ReconcilePeriod != expectedReconcilePeriod {
-				t.Fatalf("Unexpected reconcilePeriod %v expected %v", watch.ReconcilePeriod, expectedReconcilePeriod)
+				t.Fatalf("Unexpected reconcilePeriod %v expected %v", watch.ReconcilePeriod,
+					expectedReconcilePeriod)
 			}
 			if watch.ManageStatus != manageStatusDefault {
 				t.Fatalf("Unexpected manageStatus %v expected %v", watch.ManageStatus, manageStatusDefault)
 			}
 			if watch.WatchDependentResources != watchDependentResourcesDefault {
-				t.Fatalf("Unexpected watchDependentResources %v expected %v", watch.WatchDependentResources, watchDependentResourcesDefault)
+				t.Fatalf("Unexpected watchDependentResources %v expected %v", watch.WatchDependentResources,
+					watchDependentResourcesDefault)
 			}
 			if watch.WatchClusterScopedResources != watchClusterScopedResourcesDefault {
-				t.Fatalf("Unexpected watchClusterScopedResources %v expected %v", watch.WatchClusterScopedResources, watchClusterScopedResourcesDefault)
+				t.Fatalf("Unexpected watchClusterScopedResources %v expected %v",
+					watch.WatchClusterScopedResources, watchClusterScopedResourcesDefault)
 			}
 			if watch.AnsibleVerbosity != ansibleVerbosityDefault {
-				t.Fatalf("Unexpected ansibleVerbosity %v expected %v", watch.AnsibleVerbosity, ansibleVerbosityDefault)
+				t.Fatalf("Unexpected ansibleVerbosity %v expected %v", watch.AnsibleVerbosity,
+					ansibleVerbosityDefault)
 			}
 
 			err := watch.Validate()
@@ -104,6 +111,7 @@ func TestLoad(t *testing.T) {
 
 	tmpl, err := template.ParseFiles("testdata/valid.yaml.tmpl")
 	if err != nil {
+		t.Fatalf("Unable to parse template: %v", err)
 	}
 	f, err := os.Create("testdata/valid.yaml")
 	if err != nil {
@@ -118,13 +126,192 @@ func TestLoad(t *testing.T) {
 
 	zeroSeconds := time.Duration(0)
 	twoSeconds := time.Second * 2
+
+	validWatches := []Watch{
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "NoFinalizer",
+			},
+			Playbook:                    validTemplate.ValidPlaybook,
+			ManageStatus:                true,
+			ReconcilePeriod:             twoSeconds,
+			WatchDependentResources:     true,
+			WatchClusterScopedResources: false,
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "Playbook",
+			},
+			Playbook:                    validTemplate.ValidPlaybook,
+			ManageStatus:                true,
+			WatchDependentResources:     true,
+			WatchClusterScopedResources: false,
+			Finalizer: &Finalizer{
+				Name: "finalizer.app.example.com",
+				Role: validTemplate.ValidRole,
+				Vars: map[string]interface{}{"sentinel": "finalizer_running"},
+			},
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "WatchClusterScoped",
+			},
+			Playbook:                    validTemplate.ValidPlaybook,
+			ReconcilePeriod:             twoSeconds,
+			ManageStatus:                true,
+			WatchDependentResources:     true,
+			WatchClusterScopedResources: true,
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "NoReconcile",
+			},
+			Playbook:        validTemplate.ValidPlaybook,
+			ReconcilePeriod: zeroSeconds,
+			ManageStatus:    true,
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "DefaultStatus",
+			},
+			Playbook:     validTemplate.ValidPlaybook,
+			ManageStatus: true,
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "DisableStatus",
+			},
+			Playbook:     validTemplate.ValidPlaybook,
+			ManageStatus: false,
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "EnableStatus",
+			},
+			Playbook:     validTemplate.ValidPlaybook,
+			ManageStatus: true,
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "Role",
+			},
+			Role:         validTemplate.ValidRole,
+			ManageStatus: true,
+			Finalizer: &Finalizer{
+				Name:     "finalizer.app.example.com",
+				Playbook: validTemplate.ValidPlaybook,
+				Vars:     map[string]interface{}{"sentinel": "finalizer_running"},
+			},
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "FinalizerRole",
+			},
+			Role:         validTemplate.ValidRole,
+			ManageStatus: true,
+			Finalizer: &Finalizer{
+				Name: "finalizer.app.example.com",
+				Vars: map[string]interface{}{"sentinel": "finalizer_running"},
+			},
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "MaxWorkersDefault",
+			},
+			Role:         validTemplate.ValidRole,
+			ManageStatus: true,
+			MaxWorkers:   1,
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "MaxWorkersIgnored",
+			},
+			Role:         validTemplate.ValidRole,
+			ManageStatus: true,
+			MaxWorkers:   1,
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "MaxWorkersEnv",
+			},
+			Role:         validTemplate.ValidRole,
+			ManageStatus: true,
+			MaxWorkers:   4,
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "AnsibleVerbosityDefault",
+			},
+			Role:             validTemplate.ValidRole,
+			ManageStatus:     true,
+			AnsibleVerbosity: 2,
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "AnsibleVerbosityIgnored",
+			},
+			Role:             validTemplate.ValidRole,
+			ManageStatus:     true,
+			AnsibleVerbosity: 2,
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "AnsibleVerbosityEnv",
+			},
+			Role:             validTemplate.ValidRole,
+			ManageStatus:     true,
+			AnsibleVerbosity: 4,
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "WatchWithVars",
+			},
+			Role:         validTemplate.ValidRole,
+			ManageStatus: true,
+			Vars:         map[string]interface{}{"sentinel": "reconciling"},
+		},
+	}
+
 	testCases := []struct {
-		name             string
-		path             string
-		maxWorkers       int
-		ansibleVerbosity int
-		expected         []Watch
-		shouldError      bool
+		name                           string
+		path                           string
+		maxWorkers                     int
+		ansibleVerbosity               int
+		expected                       []Watch
+		shouldError                    bool
+		shouldSetAnsibleRolePathEnvVar bool
 	}{
 		{
 			name:        "error duplicate GVK",
@@ -149,6 +336,21 @@ func TestLoad(t *testing.T) {
 		{
 			name:        "error invalid playbook finalizer path",
 			path:        "testdata/invalid_finalizer_playbook_path.yaml",
+			shouldError: true,
+		},
+		{
+			name:        "error invalid finalizer whithout name",
+			path:        "testdata/invalid_finalizer_whithout_name.yaml",
+			shouldError: true,
+		},
+		{
+			name:        "error invalid role path",
+			path:        "testdata/invalid_role_path.yaml",
+			shouldError: true,
+		},
+		{
+			name:        "error invalid yaml file",
+			path:        "testdata/invalid_yaml_file.yaml",
 			shouldError: true,
 		},
 		{
@@ -181,182 +383,15 @@ func TestLoad(t *testing.T) {
 			path:             "testdata/valid.yaml",
 			maxWorkers:       1,
 			ansibleVerbosity: 2,
-			expected: []Watch{
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "NoFinalizer",
-					},
-					Playbook:                    validTemplate.ValidPlaybook,
-					ManageStatus:                true,
-					ReconcilePeriod:             twoSeconds,
-					WatchDependentResources:     true,
-					WatchClusterScopedResources: false,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "Playbook",
-					},
-					Playbook:                    validTemplate.ValidPlaybook,
-					ManageStatus:                true,
-					WatchDependentResources:     true,
-					WatchClusterScopedResources: false,
-					Finalizer: &Finalizer{
-						Name: "finalizer.app.example.com",
-						Role: validTemplate.ValidRole,
-						Vars: map[string]interface{}{"sentinel": "finalizer_running"},
-					},
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "WatchClusterScoped",
-					},
-					Playbook:                    validTemplate.ValidPlaybook,
-					ReconcilePeriod:             twoSeconds,
-					ManageStatus:                true,
-					WatchDependentResources:     true,
-					WatchClusterScopedResources: true,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "NoReconcile",
-					},
-					Playbook:        validTemplate.ValidPlaybook,
-					ReconcilePeriod: zeroSeconds,
-					ManageStatus:    true,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "DefaultStatus",
-					},
-					Playbook:     validTemplate.ValidPlaybook,
-					ManageStatus: true,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "DisableStatus",
-					},
-					Playbook:     validTemplate.ValidPlaybook,
-					ManageStatus: false,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "EnableStatus",
-					},
-					Playbook:     validTemplate.ValidPlaybook,
-					ManageStatus: true,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "Role",
-					},
-					Role:         validTemplate.ValidRole,
-					ManageStatus: true,
-					Finalizer: &Finalizer{
-						Name:     "finalizer.app.example.com",
-						Playbook: validTemplate.ValidPlaybook,
-						Vars:     map[string]interface{}{"sentinel": "finalizer_running"},
-					},
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "FinalizerRole",
-					},
-					Role:         validTemplate.ValidRole,
-					ManageStatus: true,
-					Finalizer: &Finalizer{
-						Name: "finalizer.app.example.com",
-						Vars: map[string]interface{}{"sentinel": "finalizer_running"},
-					},
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "MaxWorkersDefault",
-					},
-					Role:         validTemplate.ValidRole,
-					ManageStatus: true,
-					MaxWorkers:   1,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "MaxWorkersIgnored",
-					},
-					Role:         validTemplate.ValidRole,
-					ManageStatus: true,
-					MaxWorkers:   1,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "MaxWorkersEnv",
-					},
-					Role:         validTemplate.ValidRole,
-					ManageStatus: true,
-					MaxWorkers:   4,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "AnsibleVerbosityDefault",
-					},
-					Role:             validTemplate.ValidRole,
-					ManageStatus:     true,
-					AnsibleVerbosity: 2,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "AnsibleVerbosityIgnored",
-					},
-					Role:             validTemplate.ValidRole,
-					ManageStatus:     true,
-					AnsibleVerbosity: 2,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "AnsibleVerbosityEnv",
-					},
-					Role:             validTemplate.ValidRole,
-					ManageStatus:     true,
-					AnsibleVerbosity: 4,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "WatchWithVars",
-					},
-					Role:         validTemplate.ValidRole,
-					ManageStatus: true,
-					Vars:         map[string]interface{}{"sentinel": "reconciling"},
-				},
-			},
+			expected:         validWatches,
+		},
+		{
+			name:                           "should watches file successfully with ANSIBLE ROLES PATH ENV VAR set",
+			path:                           "testdata/valid.yaml",
+			maxWorkers:                     1,
+			ansibleVerbosity:               2,
+			shouldSetAnsibleRolePathEnvVar: true,
+			expected:                       validWatches,
 		},
 	}
 
@@ -367,6 +402,14 @@ func TestLoad(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+
+			// Test Load with ANSIBLE_ROLES_PATH var
+			if tc.shouldSetAnsibleRolePathEnvVar {
+				anisbleEnvVar := "path/invalid:/path/invalid/myroles:" + projutil.MustGetwd()
+				os.Setenv("ANSIBLE_ROLES_PATH", anisbleEnvVar)
+				defer os.Unsetenv("ANSIBLE_ROLES_PATH")
+			}
+
 			watchSlice, err := Load(tc.path, tc.maxWorkers, tc.ansibleVerbosity)
 			if err != nil && !tc.shouldError {
 				t.Fatalf("Error occurred unexpectedly: %v", err)
@@ -382,33 +425,44 @@ func TestLoad(t *testing.T) {
 				gvk := expectedWatch.GroupVersionKind
 				gotWatch := watchSlice[idx]
 				if gotWatch.GroupVersionKind != gvk {
-					t.Fatalf("Unexpected GVK: \nunexpected GVK: %#v\nexpected GVK: %#v", gotWatch.GroupVersionKind, gvk)
+					t.Fatalf("Unexpected GVK: \nunexpected GVK: %#v\nexpected GVK: %#v",
+						gotWatch.GroupVersionKind, gvk)
 				}
 				if gotWatch.Role != expectedWatch.Role {
-					t.Fatalf("The GVK: %v unexpected Role: %v expected Role: %v", gvk, gotWatch.Role, expectedWatch.Role)
+					t.Fatalf("The GVK: %v unexpected Role: %v expected Role: %v", gvk, gotWatch.Role,
+						expectedWatch.Role)
 				}
 				if gotWatch.Playbook != expectedWatch.Playbook {
-					t.Fatalf("The GVK: %v unexpected Playbook: %v expected Playbook: %v", gvk, gotWatch.Playbook, expectedWatch.Playbook)
+					t.Fatalf("The GVK: %v unexpected Playbook: %v expected Playbook: %v", gvk, gotWatch.Playbook,
+						expectedWatch.Playbook)
 				}
 				if gotWatch.ManageStatus != expectedWatch.ManageStatus {
-					t.Fatalf("The GVK: %v\nunexpected manageStatus:%#v\nexpected manageStatus: %#v", gvk, gotWatch.ManageStatus, expectedWatch.ManageStatus)
+					t.Fatalf("The GVK: %v\nunexpected manageStatus:%#v\nexpected manageStatus: %#v", gvk,
+						gotWatch.ManageStatus, expectedWatch.ManageStatus)
 				}
 				if gotWatch.Finalizer != expectedWatch.Finalizer {
-					if gotWatch.Finalizer.Name != expectedWatch.Finalizer.Name || gotWatch.Finalizer.Playbook != expectedWatch.Finalizer.Playbook || gotWatch.Finalizer.Role != expectedWatch.Finalizer.Role || reflect.DeepEqual(gotWatch.Finalizer.Vars["sentinel"], expectedWatch.Finalizer.Vars["sentininel"]) {
-						t.Fatalf("The GVK: %v\nunexpected finalizer: %#v\nexpected finalizer: %#v", gvk, gotWatch.Finalizer, expectedWatch.Finalizer)
+					if gotWatch.Finalizer.Name != expectedWatch.Finalizer.Name || gotWatch.Finalizer.Playbook !=
+						expectedWatch.Finalizer.Playbook || gotWatch.Finalizer.Role !=
+						expectedWatch.Finalizer.Role || reflect.DeepEqual(gotWatch.Finalizer.Vars["sentinel"],
+						expectedWatch.Finalizer.Vars["sentininel"]) {
+						t.Fatalf("The GVK: %v\nunexpected finalizer: %#v\nexpected finalizer: %#v", gvk,
+							gotWatch.Finalizer, expectedWatch.Finalizer)
 					}
 				}
 				if gotWatch.ReconcilePeriod != expectedWatch.ReconcilePeriod {
-					t.Fatalf("The GVK: %v unexpected reconcile period: %v expected reconcile period: %v", gvk, gotWatch.ReconcilePeriod, expectedWatch.ReconcilePeriod)
+					t.Fatalf("The GVK: %v unexpected reconcile period: %v expected reconcile period: %v", gvk,
+						gotWatch.ReconcilePeriod, expectedWatch.ReconcilePeriod)
 				}
 
 				if expectedWatch.MaxWorkers == 0 {
 					if gotWatch.MaxWorkers != tc.maxWorkers {
-						t.Fatalf("Unexpected max workers: %v expected workers: %v", gotWatch.MaxWorkers, tc.maxWorkers)
+						t.Fatalf("Unexpected max workers: %v expected workers: %v", gotWatch.MaxWorkers,
+							tc.maxWorkers)
 					}
 				} else {
 					if gotWatch.MaxWorkers != expectedWatch.MaxWorkers {
-						t.Fatalf("Unexpected max workers: %v expected workers: %v", gotWatch.MaxWorkers, expectedWatch.MaxWorkers)
+						t.Fatalf("Unexpected max workers: %v expected workers: %v", gotWatch.MaxWorkers,
+							expectedWatch.MaxWorkers)
 					}
 				}
 			}
@@ -578,6 +632,85 @@ func TestAnsibleVerbosity(t *testing.T) {
 			verbosity := getAnsibleVerbosity(tc.gvk, tc.defValue)
 			if tc.expectedValue != verbosity {
 				t.Fatalf("Unexpected Verbosity: %v expected Verbosity: %v", verbosity, tc.expectedValue)
+			}
+		})
+	}
+}
+
+// Test the func getFullRolePath when no envVar is set.
+func TestGetFullRolePath(t *testing.T) {
+	// Mock default Full Path based in the current directory
+	rolesPath := filepath.Join(projutil.MustGetwd(), "roles")
+
+	type args struct {
+		path                           string
+		shouldSetAnsibleRolePathEnvVar bool
+		env                            string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "Should work with default values",
+			args: args{
+				path: "Foo",
+			},
+			want: filepath.Join(rolesPath, "Foo"),
+		},
+		{
+			name: "Should work with full role",
+			args: args{
+				path: filepath.Join(rolesPath, "Foo"),
+			},
+			want: filepath.Join(rolesPath, "Foo"),
+		},
+		{
+			name: "Should work with relative role",
+			args: args{
+				path: "relative/Foo",
+			},
+			want: filepath.Join(rolesPath, "relative/Foo"),
+		},
+		{
+			name: "Should work when the full role is informed and the envvar is set",
+			args: args{
+				path:                           filepath.Join(rolesPath, "Foo"),
+				shouldSetAnsibleRolePathEnvVar: true,
+			},
+			want: filepath.Join(rolesPath, "Foo"),
+		},
+		{
+			name: "Should return the default full role path based in the current directory when all " +
+				"custom paths are invalids",
+			args: args{
+				env:                            "invalid/myroles:invalid:mypath/invalid",
+				path:                           "Foo",
+				shouldSetAnsibleRolePathEnvVar: true,
+			},
+			want: filepath.Join(rolesPath, "Foo"),
+		},
+		{
+			name: "Should return the default full role when the role is not found in the customized one",
+			args: args{
+				env:                            "customized/myroles",
+				path:                           "Foo",
+				shouldSetAnsibleRolePathEnvVar: true,
+			},
+			want: filepath.Join(rolesPath, "Foo"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			if tt.args.shouldSetAnsibleRolePathEnvVar {
+				os.Setenv("ANSIBLE_ROLES_PATH", tt.args.env)
+				defer os.Unsetenv("ANSIBLE_ROLES_PATH")
+			}
+
+			if got := getFullRolePath(tt.args.path); got != tt.want {
+				t.Errorf("Error to check getFullRolePath() = %v, want %v", got, tt.want)
 			}
 		})
 	}

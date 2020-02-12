@@ -19,13 +19,15 @@ import (
 )
 
 const (
-	filePathSep            = string(filepath.Separator)
-	RolesDir               = "roles"
-	MoleculeDir            = "molecule"
-	MoleculeTestClusterDir = MoleculeDir + filePathSep + "test-cluster"
-	MoleculeDefaultDir     = MoleculeDir + filePathSep + "default"
-	MoleculeTestLocalDir   = MoleculeDir + filePathSep + "test-local"
+	filePathSep          = string(filepath.Separator)
+	RolesDir             = "roles"
+	MoleculeDir          = "molecule"
+	MoleculeDefaultDir   = MoleculeDir + filePathSep + "default"
+	MoleculeTestLocalDir = MoleculeDir + filePathSep + "test-local"
+	MoleculeClusterDir   = MoleculeDir + filePathSep + "cluster"
+	MoleculeTemplatesDir = MoleculeDir + filePathSep + "templates"
 )
 
-// AnsibleDelims is a slice of two strings representing the left and right delimiters for ansible templates. Arrays can't be constants but this should be a constant.
+// AnsibleDelims is a slice of two strings representing the left and right delimiters for ansible templates.
+// Arrays can't be constants but this should be a constant.
 var AnsibleDelims = [2]string{"[[", "]]"}

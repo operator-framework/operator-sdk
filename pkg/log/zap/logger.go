@@ -51,10 +51,11 @@ func createLogger(conf config, destWriter io.Writer) logr.Logger {
 }
 
 type config struct {
-	encoder zapcore.Encoder
-	level   zap.AtomicLevel
-	sample  bool
-	opts    []zap.Option
+	encoder         zapcore.Encoder
+	level           zap.AtomicLevel
+	opts            []zap.Option
+	stackTraceLevel zapcore.Level
+	sample          bool
 }
 
 func getConfig() config {
@@ -66,16 +67,22 @@ func getConfig() config {
 	if development {
 		newEncoder = newConsoleEncoder
 		c.level = zap.NewAtomicLevelAt(zap.DebugLevel)
-		c.opts = append(c.opts, zap.Development(), zap.AddStacktrace(zap.ErrorLevel))
+		c.opts = append(c.opts, zap.Development())
 		c.sample = false
+		c.stackTraceLevel = zap.WarnLevel
 	} else {
 		newEncoder = newJSONEncoder
 		c.level = zap.NewAtomicLevelAt(zap.InfoLevel)
-		c.opts = append(c.opts, zap.AddStacktrace(zap.WarnLevel))
 		c.sample = true
+		c.stackTraceLevel = zap.ErrorLevel
 	}
 
 	// Override the defaults if the flags were set explicitly on the command line
+	if stacktraceLevel.set {
+		c.stackTraceLevel = stacktraceLevel.level
+	}
+	c.opts = append(c.opts, zap.AddStacktrace(c.stackTraceLevel))
+
 	var ecfs []encoderConfigFunc
 	if encoderVal.set {
 		newEncoder = encoderVal.newEncoder

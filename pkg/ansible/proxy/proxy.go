@@ -181,8 +181,10 @@ func Run(done chan error, o Options) error {
 }
 
 // Helper function used by cache response and owner injection
-func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *controllermap.ControllerMap, resource *unstructured.Unstructured, restMapper meta.RESTMapper, useOwnerRef bool) error {
-	dataMapping, err := restMapper.RESTMapping(resource.GroupVersionKind().GroupKind(), resource.GroupVersionKind().Version)
+func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *controllermap.ControllerMap,
+	resource *unstructured.Unstructured, restMapper meta.RESTMapper, useOwnerRef bool) error {
+	dataMapping, err := restMapper.RESTMapping(resource.GroupVersionKind().GroupKind(),
+		resource.GroupVersionKind().Version)
 	if err != nil {
 		m := fmt.Sprintf("Could not get rest mapping for: %v", resource.GroupVersionKind())
 		log.Error(err, m)
@@ -191,11 +193,12 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 	}
 	ownerGV, err := schema.ParseGroupVersion(owner.APIVersion)
 	if err != nil {
-		m := fmt.Sprintf("could not get broup version for: %v", owner)
+		m := fmt.Sprintf("could not get group version for: %v", owner)
 		log.Error(err, m)
 		return err
 	}
-	ownerMapping, err := restMapper.RESTMapping(schema.GroupKind{Kind: owner.Kind, Group: ownerGV.Group}, ownerGV.Version)
+	ownerMapping, err := restMapper.RESTMapping(schema.GroupKind{Kind: owner.Kind, Group: ownerGV.Group},
+		ownerGV.Version)
 	if err != nil {
 		m := fmt.Sprintf("could not get rest mapping for: %v", owner)
 		log.Error(err, m)
@@ -216,7 +219,7 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 	dependentPredicate := predicates.DependentPredicateFuncs()
 
 	// Add a watch to controller
-	if contents.WatchDependentResources {
+	if contents.WatchDependentResources && !contents.Blacklist[resource.GroupVersionKind()] {
 		// Store watch in map
 		// Use EnqueueRequestForOwner unless user has configured watching cluster scoped resources and we have to
 		switch {
@@ -228,8 +231,10 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 			}
 
 			owMap.Store(resource.GroupVersionKind())
-			log.Info("Watching child resource", "kind", resource.GroupVersionKind(), "enqueue_kind", u.GroupVersionKind())
-			err := contents.Controller.Watch(&source.Kind{Type: resource}, &handler.EnqueueRequestForOwner{OwnerType: u}, dependentPredicate)
+			log.Info("Watching child resource", "kind", resource.GroupVersionKind(),
+				"enqueue_kind", u.GroupVersionKind())
+			err := contents.Controller.Watch(&source.Kind{Type: resource},
+				&handler.EnqueueRequestForOwner{OwnerType: u}, dependentPredicate)
 			// Store watch in map
 			if err != nil {
 				return err
@@ -242,12 +247,16 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 			}
 			awMap.Store(resource.GroupVersionKind())
 			typeString := fmt.Sprintf("%v.%v", owner.Kind, ownerGV.Group)
-			log.Info("Watching child resource", "kind", resource.GroupVersionKind(), "enqueue_annotation_type", typeString)
-			err = contents.Controller.Watch(&source.Kind{Type: resource}, &osdkHandler.EnqueueRequestForAnnotation{Type: typeString}, dependentPredicate)
+			log.Info("Watching child resource", "kind", resource.GroupVersionKind(),
+				"enqueue_annotation_type", typeString)
+			err = contents.Controller.Watch(&source.Kind{Type: resource},
+				&osdkHandler.EnqueueRequestForAnnotation{Type: typeString}, dependentPredicate)
 			if err != nil {
 				return err
 			}
 		}
+	} else {
+		log.Info("Resource will not be watched/cached.", "GVK", resource.GroupVersionKind())
 	}
 	return nil
 }
@@ -302,6 +311,10 @@ type apiResources struct {
 func (a *apiResources) resetResources() error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+
+	// TODO(camilamacedo86): Fix deprecation
+	// SA1019: a.discoveryClient.ServerResources is deprecated: use ServerGroupsAndResources instead.  (staticcheck)
+	// nolint: staticcheck
 	apisResourceList, err := a.discoveryClient.ServerResources()
 	if err != nil {
 		return err

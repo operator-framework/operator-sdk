@@ -48,6 +48,8 @@ type ScorecardTestResult struct {
 	Suggestions []string `json:"suggestions,omitempty"`
 	// Log holds a log produced from the test (if applicable)
 	Log string `json:"log,omitempty"`
+	// CRName holds the CR name this test was run with (if applicable)
+	CRName string `json:"crname,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

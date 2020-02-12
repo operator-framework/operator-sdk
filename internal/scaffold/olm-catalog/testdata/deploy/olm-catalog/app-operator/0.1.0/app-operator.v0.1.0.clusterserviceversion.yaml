@@ -29,6 +29,9 @@ spec:
       version: v1beta2
   description: Placeholder description
   displayName: App Operator
+  icon:
+  - base64data: ""
+    mediatype: ""
   install:
     spec:
       deployments:
@@ -107,6 +110,10 @@ spec:
     type: MultiNamespace
   - supported: true
     type: AllNamespace
+  keywords:
+  - ""
+  maintainers:
+  - {}
   maturity: alpha
   provider: {}
   version: 0.1.0

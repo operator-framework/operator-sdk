@@ -199,31 +199,41 @@ func TestGetCustomAPIImportPathAndIdentifier(t *testing.T) {
 	}{
 		{"", "", "", true},
 		{"=rbacv1", "", "", true},
-		{"k8s.io/api/rbac-2/v1", "k8s.io/api/rbac-2/v1", "rbac2v1", false},
-		{"k8s.io/api/rbac/v1=rbacv1", "k8s.io/api/rbac/v1", "rbacv1", false},
-		{"k8s.io/api/rbac/v1=rbac-v1", "k8s.io/api/rbac/v1", "rbacv1", false},
-		{"k8s.io/api/rb_ac/v1", "k8s.io/api/rb_ac/v1", "rb_acv1", false},
-		{"k8s.io/api/rbac/v1=rbaC_v1", "k8s.io/api/rbac/v1", "rbaC_v1", false},
+		{"k8s.io/api/rbac-2/v1", "k8s.io/api/rbac-2/v1",
+			"rbac2v1", false},
+		{"k8s.io/api/rbac/v1=rbacv1", "k8s.io/api/rbac/v1",
+			"rbacv1", false},
+		{"k8s.io/api/rbac/v1=rbac-v1", "k8s.io/api/rbac/v1",
+			"rbacv1", false},
+		{"k8s.io/api/rb_ac/v1", "k8s.io/api/rb_ac/v1",
+			"rb_acv1", false},
+		{"k8s.io/api/rbac/v1=rbaC_v1", "k8s.io/api/rbac/v1",
+			"rbaC_v1", false},
 		{"k8s.io/api/rbac/v1=", "", "", true},
-		{"k8s.io/api/rbac/v1=rbacv1=", "k8s.io/api/rbac/v1", "rbacv1", false},
-		{"k8s.io/api/rbac/v1=Rbacv1", "k8s.io/api/rbac/v1", "Rbacv1", false},
+		{"k8s.io/api/rbac/v1=rbacv1=", "k8s.io/api/rbac/v1",
+			"rbacv1", false},
+		{"k8s.io/api/rbac/v1=Rbacv1", "k8s.io/api/rbac/v1",
+			"Rbacv1", false},
 	}
 
 	for _, c := range cases {
 		gotPath, gotIdent, err := getCustomAPIImportPathAndIdent(c.inputImport)
 		if err != nil && !c.wantErr {
-			t.Errorf(`wanted import path "%s" and identifier "%s" from "%s", got error %v`, c.wantImportPath, c.wantImportIdent, c.inputImport, err)
+			t.Errorf(`wanted import path "%s" and identifier "%s" from "%s", got error %v`, c.wantImportPath,
+				c.wantImportIdent, c.inputImport, err)
 			continue
 		}
 		if err == nil && c.wantErr {
-			t.Errorf(`wanted error from "%s", got import path "%s" and identifier "%s"`, c.inputImport, c.wantImportPath, c.wantImportIdent)
+			t.Errorf(`wanted error from "%s", got import path "%s" and identifier "%s"`, c.inputImport,
+				c.wantImportPath, c.wantImportIdent)
 			continue
 		}
 		if gotPath != c.wantImportPath {
 			t.Errorf(`wanted import path "%s" from "%s", got "%s"`, c.wantImportPath, c.inputImport, gotPath)
 		}
 		if gotIdent != c.wantImportIdent {
-			t.Errorf(`wanted import identifier "%s" from "%s", got "%s"`, c.wantImportIdent, c.inputImport, gotIdent)
+			t.Errorf(`wanted import identifier "%s" from "%s", got "%s"`, c.wantImportIdent,
+				c.inputImport, gotIdent)
 		}
 	}
 }

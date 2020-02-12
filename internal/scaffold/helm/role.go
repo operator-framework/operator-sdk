@@ -88,7 +88,8 @@ func GenerateRoleScaffold(dc roleDiscoveryInterface, chart *chart.Chart) scaffol
 		log.Info("Scaffolding ClusterRole and ClusterRolebinding for cluster scoped resources in the helm chart")
 		roleScaffold.IsClusterScoped = true
 	}
-	roleScaffold.CustomRules = append(roleScaffold.CustomRules, append(clusterResourceRules, namespacedResourceRules...)...)
+	roleScaffold.CustomRules = append(roleScaffold.CustomRules, append(clusterResourceRules,
+		namespacedResourceRules...)...)
 
 	log.Warn("The RBAC rules generated in deploy/role.yaml are based on the chart's default manifest." +
 		" Some rules may be missing for resources that are only enabled with custom values, and" +
@@ -98,7 +99,8 @@ func GenerateRoleScaffold(dc roleDiscoveryInterface, chart *chart.Chart) scaffol
 	return roleScaffold
 }
 
-func generateRoleRules(dc roleDiscoveryInterface, chart *chart.Chart) ([]rbacv1.PolicyRule, []rbacv1.PolicyRule, error) {
+func generateRoleRules(dc roleDiscoveryInterface, chart *chart.Chart) ([]rbacv1.PolicyRule,
+	[]rbacv1.PolicyRule, error) {
 	serverResources, err := dc.ServerResources()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get server resources: %v", err)
@@ -165,7 +167,8 @@ func generateRoleRules(dc roleDiscoveryInterface, chart *chart.Chart) ([]rbacv1.
 				namespacedGroups[group][resourceName] = struct{}{}
 			}
 		} else {
-			log.Warnf("Skipping rule generation for %s. Failed to determine resource scope for %s.", name, resource.GroupVersionKind())
+			log.Warnf("Skipping rule generation for %s. Failed to determine resource scope for %s.",
+				name, resource.GroupVersionKind())
 			continue
 		}
 	}
@@ -187,7 +190,8 @@ func getDefaultManifests(c *chart.Chart) ([]releaseutil.Manifest, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to render chart templates: %v", err)
 	}
-	_, manifests, err := releaseutil.SortManifests(releaseutil.SplitManifests(rel.Manifest), chartutil.DefaultVersionSet, releaseutil.InstallOrder)
+	_, manifests, err := releaseutil.SortManifests(releaseutil.SplitManifests(rel.Manifest),
+		chartutil.DefaultVersionSet, releaseutil.InstallOrder)
 	return manifests, err
 }
 

@@ -38,7 +38,8 @@ const (
 )
 
 // NewCondition -  condition
-func NewCondition(condType ConditionType, status v1.ConditionStatus, ansibleResult *AnsibleResult, reason, message string) *Condition {
+func NewCondition(condType ConditionType, status v1.ConditionStatus, ansibleResult *AnsibleResult, reason,
+	message string) *Condition {
 	return &Condition{
 		Type:               condType,
 		Status:             status,

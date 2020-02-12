@@ -104,7 +104,8 @@ func parseCSVGenAnnotations(comments []string) (pd parsedCRDDescriptions, err er
 					pd.resources = append(pd.resources, r)
 				}
 			default:
-				return parsedCRDDescriptions{}, fmt.Errorf("unsupported %s child path element %s", parentPathElem, childPathElems[0])
+				return parsedCRDDescriptions{}, fmt.Errorf("unsupported %s child path element %s",
+					parentPathElem, childPathElems[0])
 			}
 		default:
 			return parsedCRDDescriptions{}, fmt.Errorf("unsupported path element %s", parentPathElem)
@@ -248,6 +249,7 @@ func isPathIgnore(path string) bool {
 	return path == ignoredTag
 }
 
+//nolint:lll
 // From https://github.com/openshift/console/blob/feabd61/frontend/packages/operator-lifecycle-manager/src/components/descriptors/types.ts#L3-L26
 var specXDescriptors = map[string]string{
 	"size":                 "urn:alm:descriptor:com.tectonic.ui:podCount",
@@ -279,6 +281,7 @@ func getSpecXDescriptorsByPath(existingXDescs []string, path string) []string {
 	return getXDescriptorsByPath(specXDescriptors, existingXDescs, path)
 }
 
+//nolint:lll // the  following line is  a reference, if split it will not be clear if the whole line is a link
 // From https://github.com/openshift/console/blob/feabd61/frontend/packages/operator-lifecycle-manager/src/components/descriptors/types.ts#L28-L39
 var statusXDescriptors = map[string]string{
 	"podStatuses":        "urn:alm:descriptor:com.tectonic.ui:podStatuses",

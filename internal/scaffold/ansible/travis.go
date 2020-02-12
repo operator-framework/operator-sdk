@@ -32,7 +32,7 @@ func (t *Travis) GetInput() (input.Input, error) {
 	return t.Input, nil
 }
 
-const travisAnsibleTmpl = `sudo: required
+const travisAnsibleTmpl = `---
 services: docker
 language: python
 install:

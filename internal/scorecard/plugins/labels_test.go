@@ -17,6 +17,7 @@ package scplugins
 import (
 	"testing"
 
+	schelpers "github.com/operator-framework/operator-sdk/internal/scorecard/helpers"
 	"k8s.io/apimachinery/pkg/labels"
 )
 
@@ -51,9 +52,15 @@ func TestBasicShortNames(t *testing.T) {
 				return
 			}
 
-			basicTests := NewBasicTestSuite(BasicTestConfig{})
-			basicTests.ApplySelector(selector)
-			testsSelected := len(basicTests.Tests)
+			tests := make([]schelpers.Test, 0)
+
+			conf := BasicTestConfig{}
+			tests = append(tests, NewCheckSpecTest(conf))
+			tests = append(tests, NewCheckStatusTest(conf))
+			tests = append(tests, NewWritingIntoCRsHasEffectTest(conf))
+
+			tests = applySelector(tests, selector)
+			testsSelected := len(tests)
 			if testsSelected != c.testsSelected {
 				t.Errorf("Wanted testsSelected %d, got: %d", c.testsSelected, testsSelected)
 			}
@@ -95,9 +102,15 @@ func TestOLMShortNames(t *testing.T) {
 				t.Errorf("Wanted result but got error: %v", err)
 				return
 			}
-			olmTests := NewOLMTestSuite(OLMTestConfig{})
-			olmTests.ApplySelector(selector)
-			testsSelected := len(olmTests.Tests)
+			tests := make([]schelpers.Test, 0)
+			conf := OLMTestConfig{}
+			tests = append(tests, NewBundleValidationTest(conf))
+			tests = append(tests, NewCRDsHaveValidationTest(conf))
+			tests = append(tests, NewCRDsHaveResourcesTest(conf))
+			tests = append(tests, NewSpecDescriptorsTest(conf))
+			tests = append(tests, NewStatusDescriptorsTest(conf))
+			tests = applySelector(tests, selector)
+			testsSelected := len(tests)
 			if testsSelected != c.testsSelected {
 				t.Errorf("Wanted testsSelected %d, got: %d", c.testsSelected, testsSelected)
 			}

@@ -31,3 +31,9 @@ function is_installed {
   fi
   return 1
 }
+
+# Install the ServiceMonitor CustomResourceDefinition so tests can verify that
+# the ServiceMonitor resource is created for the operator.
+function install_service_monitor_crd {
+  kubectl apply -f https://raw.githubusercontent.com/coreos/prometheus-operator/release-0.35/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml
+}

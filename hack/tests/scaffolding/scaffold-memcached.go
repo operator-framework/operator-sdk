@@ -39,7 +39,8 @@ const (
 )
 
 func main() {
-	localRepo := flag.String("local-repo", "", "Path to local SDK repository being tested. Only use when running e2e tests locally")
+	localRepo := flag.String("local-repo", "", "Path to local SDK repository being tested."+
+		" Only use when running e2e tests locally")
 	imageName := flag.String("image-name", "", "Name of image being used for tests")
 	noPull := flag.Bool("local-image", false, "Disable pulling images as image is local")
 	flag.Parse()
@@ -80,7 +81,8 @@ func main() {
 	log.Printf("go.mod: %v", string(modBytes))
 	cmdOut, err = exec.Command("go", "build", "./...").CombinedOutput()
 	if err != nil {
-		log.Fatalf("Command \"go build ./...\" failed after modifying go.mod: %v\nCommand Output:\n%v", err, string(cmdOut))
+		log.Fatalf("Command \"go build ./...\" failed after modifying go.mod: %v\nCommand Output:\n%v",
+			err, string(cmdOut))
 	}
 
 	// Set replicas to 2 to test leader election. In production, this should
@@ -114,7 +116,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
-
+	//nolint:lll
 	tmplFiles := map[string]string{
 		filepath.Join(localSDKPath, "example/memcached-operator/memcached_controller.go.tmpl"): "pkg/controller/memcached/memcached_controller.go",
 		filepath.Join(localSDKPath, "test/e2e/_incluster-test-code/main_test.go"):              "test/e2e/main_test.go",
@@ -139,16 +141,20 @@ func main() {
 	memcachedTypesFileLines := bytes.Split(memcachedTypesFile, []byte("\n"))
 	for lineNum, line := range memcachedTypesFileLines {
 		if strings.Contains(string(line), "type MemcachedSpec struct {") {
-			memcachedTypesFileLinesIntermediate := append(memcachedTypesFileLines[:lineNum+1], []byte("\tSize int32 `json:\"size\"`"))
-			memcachedTypesFileLines = append(memcachedTypesFileLinesIntermediate, memcachedTypesFileLines[lineNum+3:]...)
+			memcachedTypesFileLinesIntermediate := append(memcachedTypesFileLines[:lineNum+1],
+				[]byte("\tSize int32 `json:\"size\"`"))
+			memcachedTypesFileLines = append(memcachedTypesFileLinesIntermediate,
+				memcachedTypesFileLines[lineNum+3:]...)
 			break
 		}
 	}
 
 	for lineNum, line := range memcachedTypesFileLines {
 		if strings.Contains(string(line), "type MemcachedStatus struct {") {
-			memcachedTypesFileLinesIntermediate := append(memcachedTypesFileLines[:lineNum+1], []byte("\tNodes []string `json:\"nodes\"`"))
-			memcachedTypesFileLines = append(memcachedTypesFileLinesIntermediate, memcachedTypesFileLines[lineNum+3:]...)
+			memcachedTypesFileLinesIntermediate := append(memcachedTypesFileLines[:lineNum+1],
+				[]byte("\tNodes []string `json:\"nodes\"`"))
+			memcachedTypesFileLines = append(memcachedTypesFileLinesIntermediate,
+				memcachedTypesFileLines[lineNum+3:]...)
 			break
 		}
 	}
@@ -156,7 +162,8 @@ func main() {
 	if err := os.Remove("pkg/apis/cache/v1alpha1/memcached_types.go"); err != nil {
 		log.Fatalf("Failed to remove old memcached_type.go file: (%v)", err)
 	}
-	err = ioutil.WriteFile("pkg/apis/cache/v1alpha1/memcached_types.go", bytes.Join(memcachedTypesFileLines, []byte("\n")), fileutil.DefaultFileMode)
+	err = ioutil.WriteFile("pkg/apis/cache/v1alpha1/memcached_types.go", bytes.Join(memcachedTypesFileLines,
+		[]byte("\n")), fileutil.DefaultFileMode)
 	if err != nil {
 		log.Fatalf("Could not write to pkg/apis/cache/v1alpha1/memcached_types.go: %v", err)
 	}
@@ -187,7 +194,8 @@ func main() {
 		*imageName = "quay.io/example/memcached-operator:v0.0.1"
 	}
 	if *noPull {
-		operatorYAML = bytes.Replace(operatorYAML, []byte("imagePullPolicy: Always"), []byte("imagePullPolicy: Never"), 1)
+		operatorYAML = bytes.Replace(operatorYAML, []byte("imagePullPolicy: Always"), []byte("imagePullPolicy: Never"),
+			1)
 	}
 	operatorYAML = bytes.Replace(operatorYAML, []byte("REPLACE_IMAGE"), []byte(*imageName), 1)
 	err = ioutil.WriteFile("deploy/operator.yaml", operatorYAML, fileutil.DefaultFileMode)

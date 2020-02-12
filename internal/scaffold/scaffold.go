@@ -98,7 +98,7 @@ func validateBoilerplateBytes(b []byte) error {
 	}
 	var tb []byte
 	tb, cb = bytes.TrimSpace(b), bytes.TrimSpace(cb)
-	if bytes.Compare(tb, cb) != 0 {
+	if !bytes.Equal(tb, cb) {
 		return fmt.Errorf(`boilerplate contains text other than comments:\n"%s"\n`, tb)
 	}
 	return nil

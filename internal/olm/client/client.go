@@ -149,19 +149,23 @@ func (c Client) DoRolloutWait(ctx context.Context, key types.NamespacedName) err
 			}
 			if deployment.Spec.Replicas != nil && deployment.Status.UpdatedReplicas < *deployment.Spec.Replicas {
 				onceReplicasUpdated.Do(func() {
-					log.Printf("  Waiting for Deployment %q to rollout: %d out of %d new replicas have been updated", key, deployment.Status.UpdatedReplicas, *deployment.Spec.Replicas)
+					log.Printf(
+						"  Waiting for Deployment %q to rollout: %d out of %d new replicas have been updated",
+						key, deployment.Status.UpdatedReplicas, *deployment.Spec.Replicas)
 				})
 				return false, nil
 			}
 			if deployment.Status.Replicas > deployment.Status.UpdatedReplicas {
 				oncePendingTermination.Do(func() {
-					log.Printf("  Waiting for Deployment %q to rollout: %d old replicas are pending termination", key, deployment.Status.Replicas-deployment.Status.UpdatedReplicas)
+					log.Printf("  Waiting for Deployment %q to rollout: %d old replicas are pending termination",
+						key, deployment.Status.Replicas-deployment.Status.UpdatedReplicas)
 				})
 				return false, nil
 			}
 			if deployment.Status.AvailableReplicas < deployment.Status.UpdatedReplicas {
 				onceNotAvailable.Do(func() {
-					log.Printf("  Waiting for Deployment %q to rollout: %d of %d updated replicas are available", key, deployment.Status.AvailableReplicas, deployment.Status.UpdatedReplicas)
+					log.Printf("  Waiting for Deployment %q to rollout: %d of %d updated replicas are available",
+						key, deployment.Status.AvailableReplicas, deployment.Status.UpdatedReplicas)
 				})
 				return false, nil
 			}
@@ -169,7 +173,8 @@ func (c Client) DoRolloutWait(ctx context.Context, key types.NamespacedName) err
 			return true, nil
 		}
 		onceSpecUpdate.Do(func() {
-			log.Printf("  Waiting for Deployment %q to rollout: waiting for deployment spec update to be observed", key)
+			log.Printf("Waiting for Deployment %q to rollout: waiting for deployment spec update to be observed",
+				key)
 		})
 		return false, nil
 	}
@@ -223,7 +228,8 @@ func (c Client) GetInstalledVersion(ctx context.Context) (string, error) {
 			// There is more than one version of OLM installed in the cluster,
 			// so we can't resolve the version being used.
 			if pkgServerCSV != nil {
-				return "", fmt.Errorf("more than one OLM (package server) version installed: %q and %q", pkgServerCSV.GetName(), name)
+				return "", fmt.Errorf("more than one OLM (package server) version installed: %q and %q",
+					pkgServerCSV.GetName(), name)
 			}
 			pkgServerCSV = &csv
 		}

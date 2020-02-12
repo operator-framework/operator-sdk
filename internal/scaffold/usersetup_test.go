@@ -20,7 +20,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
 )
 
-func UserSetupTest(t *testing.T) {
+func TestUserSetup(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
 	err := s.Execute(appConfig, &UserSetup{})
 	if err != nil {
@@ -37,12 +37,10 @@ const userSetupExp = `#!/bin/sh
 set -x
 
 # ensure $HOME exists and is accessible by group 0 (we don't know what the runtime UID will be)
+echo "${USER_NAME}:x:${USER_UID}:0:${USER_NAME} user:${HOME}:/sbin/nologin" >> /etc/passwd
 mkdir -p ${HOME}
 chown ${USER_UID}:0 ${HOME}
 chmod ug+rwx ${HOME}
-
-# runtime user will need to be able to self-insert in /etc/passwd
-chmod g+rw /etc/passwd
 
 # no need for this script to remain in the image after running
 rm $0

@@ -42,7 +42,8 @@ func getChannelForCSVName(pkg registry.PackageManifest, csvName string) (registr
 			return c, nil
 		}
 	}
-	return registry.PackageChannel{}, fmt.Errorf("no channel in package manifest %s exists for CSV %s", pkg.PackageName, csvName)
+	return registry.PackageChannel{}, fmt.Errorf("no channel in package manifest %s exists for CSV %s",
+		pkg.PackageName, csvName)
 }
 
 // withCatalogSource returns a function that sets the Subscription argument's
@@ -70,7 +71,8 @@ func withPackageChannel(pkgName string, channel registry.PackageChannel) func(*o
 // newSubscription creates a new Subscription for a CSV with a name derived
 // from csvName, the CSV's objectmeta.name, in namespace. opts will be applied
 // to the Subscription object.
-func newSubscription(csvName, namespace string, opts ...func(*olmapiv1alpha1.Subscription)) *olmapiv1alpha1.Subscription {
+func newSubscription(csvName, namespace string,
+	opts ...func(*olmapiv1alpha1.Subscription)) *olmapiv1alpha1.Subscription {
 	sub := &olmapiv1alpha1.Subscription{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: olmapiv1alpha1.SchemeGroupVersion.String(),
@@ -104,7 +106,8 @@ func withGRPC(addr string) func(*olmapiv1alpha1.CatalogSource) {
 // newCatalogSource creates a new CatalogSource with a name derived from
 // pkgName, the package manifest's packageName, in namespace. opts will
 // be applied to the CatalogSource object.
-func newCatalogSource(pkgName, namespace string, opts ...func(*olmapiv1alpha1.CatalogSource)) *olmapiv1alpha1.CatalogSource {
+func newCatalogSource(pkgName, namespace string,
+	opts ...func(*olmapiv1alpha1.CatalogSource)) *olmapiv1alpha1.CatalogSource {
 	cs := &olmapiv1alpha1.CatalogSource{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: olmapiv1alpha1.SchemeGroupVersion.String(),

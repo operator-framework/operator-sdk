@@ -17,6 +17,7 @@ package release
 import (
 	"fmt"
 	"strings"
+	"sync"
 
 	helm2to3 "github.com/helm/helm-2to3/pkg/v3"
 	"github.com/martinlindhe/base36"
@@ -40,6 +41,16 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/helm/client"
 	"github.com/operator-framework/operator-sdk/pkg/helm/internal/types"
 )
+
+// globalMutex is used to ensure non-concurrent access to
+// Helm's `kube.New` function which is not safe for concurrent
+// use.
+//
+// See https://github.com/operator-framework/operator-sdk/issues/2476
+//
+// TODO(joelanford): this can be removed after SDK's Helm
+//   dependendency is bumped to 3.1.0+
+var globalMutex sync.Mutex
 
 // ManagerFactory creates Managers that are specific to custom resources. It is
 // used by the HelmOperatorReconciler during resource reconciliation, and it
@@ -81,7 +92,11 @@ func (f managerFactory) NewManager(cr *unstructured.Unstructured, overrideValues
 	if err != nil {
 		return nil, fmt.Errorf("failed to get REST client getter from manager: %w", err)
 	}
+
+	globalMutex.Lock()
 	kubeClient := kube.New(rcg)
+	globalMutex.Unlock()
+
 	ownerRef := metav1.NewControllerRef(cr, cr.GroupVersionKind())
 	ownerRefClient := client.NewOwnerRefInjectingClient(*kubeClient, *ownerRef)
 
@@ -127,7 +142,8 @@ func (f managerFactory) NewManager(cr *unstructured.Unstructured, overrideValues
 	}, nil
 }
 
-func convertV2ToV3(storageBackendV2 *storagev2.Storage, storageBackendV3 *storagev3.Storage, cr *unstructured.Unstructured) error {
+func convertV2ToV3(storageBackendV2 *storagev2.Storage, storageBackendV3 *storagev3.Storage,
+	cr *unstructured.Unstructured) error {
 	// If a v2 release with the legacy name exists, convert it to v3.
 	legacyName := getLegacyName(cr)
 	legacyHistoryV2, legacyExistsV2, err := releaseHistoryV2(storageBackendV2, legacyName)
@@ -150,7 +166,8 @@ func convertV2ToV3(storageBackendV2 *storagev2.Storage, storageBackendV3 *storag
 	return nil
 }
 
-func convertHistoryToV3(history []*helmreleasev2.Release, storageBackendV2 *storagev2.Storage, storageBackendV3 *storagev3.Storage) error {
+func convertHistoryToV3(history []*helmreleasev2.Release, storageBackendV2 *storagev2.Storage,
+	storageBackendV3 *storagev3.Storage) error {
 	for _, relV2 := range history {
 		relV3, err := helm2to3.CreateRelease(relV2)
 		if err != nil {
@@ -201,7 +218,8 @@ func getLegacyName(cr *unstructured.Unstructured) string {
 //   admission webhook so that the CR owner receives immediate feedback of the
 //   collision. As is, the only indication of collision will be in the CR status
 //   and operator logs.
-func getReleaseName(storageBackend *storagev3.Storage, crChartName string, cr *unstructured.Unstructured) (string, error) {
+func getReleaseName(storageBackend *storagev3.Storage, crChartName string,
+	cr *unstructured.Unstructured) (string, error) {
 	// If a release with the legacy name exists as a v3 release,
 	// return the legacy name.
 	legacyName := getLegacyName(cr)
@@ -231,7 +249,8 @@ func getReleaseName(storageBackend *storagev3.Storage, crChartName string, cr *u
 	}
 	existingChartName := history[0].Chart.Name()
 	if existingChartName != crChartName {
-		return "", fmt.Errorf("duplicate release name: found existing release with name %q for chart %q", releaseName, existingChartName)
+		return "", fmt.Errorf("duplicate release name: found existing release with name %q for chart %q",
+			releaseName, existingChartName)
 	}
 
 	return releaseName, nil

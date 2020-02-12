@@ -40,7 +40,8 @@ func (m operatorManager) installModeCompatible(installMode olmapiv1alpha1.Instal
 	}
 	if installMode == olmapiv1alpha1.InstallModeTypeOwnNamespace {
 		if ns := m.installModeNamespaces[0]; ns != m.namespace {
-			return fmt.Errorf("installMode %s namespace %q must match namespace %q", installMode, ns, m.namespace)
+			return fmt.Errorf("installMode %s namespace %q must match namespace %q",
+				installMode, ns, m.namespace)
 		}
 	}
 	// Ensure CSV supports installMode.
@@ -77,9 +78,7 @@ func parseInstallModeKV(raw string) (olmapiv1alpha1.InstallModeType, []string, e
 		return "", nil, fmt.Errorf("installMode type string %q is not a valid installMode type", modeStr)
 	}
 	namespaces := []string{}
-	for _, namespace := range strings.Split(strings.Trim(namespaceList, ","), ",") {
-		namespaces = append(namespaces, namespace)
-	}
+	namespaces = append(namespaces, strings.Split(strings.Trim(namespaceList, ","), ",")...)
 	return mode, namespaces, nil
 }
 
@@ -88,15 +87,18 @@ func validateInstallModeForNamespaces(mode olmapiv1alpha1.InstallModeType, names
 	switch mode {
 	case olmapiv1alpha1.InstallModeTypeOwnNamespace, olmapiv1alpha1.InstallModeTypeSingleNamespace:
 		if len(namespaces) != 1 || namespaces[0] == "" {
-			return fmt.Errorf("installMode %s must be passed with exactly one non-empty namespace, have: %+q", mode, namespaces)
+			return fmt.Errorf("installMode %s must be passed with exactly one non-empty namespace, have: %+q",
+				mode, namespaces)
 		}
 	case olmapiv1alpha1.InstallModeTypeMultiNamespace:
 		if len(namespaces) < 2 {
-			return fmt.Errorf("installMode %s must be passed with more than one non-empty namespaces, have: %+q", mode, namespaces)
+			return fmt.Errorf("installMode %s must be passed with more than one non-empty namespaces, have: %+q",
+				mode, namespaces)
 		}
 	case olmapiv1alpha1.InstallModeTypeAllNamespaces:
 		if len(namespaces) != 1 || namespaces[0] != "" {
-			return fmt.Errorf("installMode %s must be passed with exactly one empty namespace, have: %+q", mode, namespaces)
+			return fmt.Errorf("installMode %s must be passed with exactly one empty namespace, have: %+q",
+				mode, namespaces)
 		}
 	default:
 		return fmt.Errorf("installMode %q is not a valid installMode type", mode)

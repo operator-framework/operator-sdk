@@ -237,6 +237,16 @@ func (s *CSV) setCSVDefaultFields(csv *olmapiv1alpha1.ClusterServiceVersion) {
 			{Type: olmapiv1alpha1.InstallModeTypeAllNamespaces, Supported: true},
 		}
 	}
+	if len(csv.Spec.Icon) == 0 {
+		csv.Spec.Icon = make([]olmapiv1alpha1.Icon, 1)
+	}
+	if len(csv.Spec.Keywords) == 0 {
+		csv.Spec.Keywords = []string{""}
+	}
+	if len(csv.Spec.Maintainers) == 0 {
+		csv.Spec.Maintainers = make([]olmapiv1alpha1.Maintainer, 1)
+	}
+
 }
 
 // TODO: validate that all fields from files are populated as expected
@@ -263,7 +273,7 @@ func getEmptyRequiredCSVFields(csv *olmapiv1alpha1.ClusterServiceVersion) (field
 	if csv.Spec.Description == "" {
 		fields = append(fields, "spec.description")
 	}
-	if len(csv.Spec.Keywords) == 0 {
+	if len(csv.Spec.Keywords) == 0 || len(csv.Spec.Keywords[0]) == 0 {
 		fields = append(fields, "spec.keywords")
 	}
 	if len(csv.Spec.Maintainers) == 0 {

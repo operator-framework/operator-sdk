@@ -51,6 +51,7 @@ Example:
 
 const deprecationTemplate = "\033[1;36m%s\033[0m"
 
+//nolint:lll
 func openAPIFunc(cmd *cobra.Command, args []string) error {
 	fmt.Printf(deprecationTemplate, `[Deprecation notice] The 'operator-sdk generate openapi' command is deprecated!
 

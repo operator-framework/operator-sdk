@@ -78,12 +78,19 @@ Configure CSV generation by writing a config file 'deploy/olm-catalog/csv-config
 	if err := cmd.MarkFlagRequired("csv-version"); err != nil {
 		log.Fatalf("Failed to mark `csv-version` flag for `generate csv` subcommand as required: %v", err)
 	}
-	cmd.Flags().StringVar(&c.fromVersion, "from-version", "", "Semantic version of an existing CSV to use as a base")
-	cmd.Flags().StringVar(&c.csvConfigPath, "csv-config", "", "Path to CSV config file. Defaults to deploy/olm-catalog/csv-config.yaml")
-	cmd.Flags().BoolVar(&c.updateCRDs, "update-crds", false, "Update CRD manifests in deploy/{operator-name}/{csv-version} the using latest API's")
-	cmd.Flags().StringVar(&c.operatorName, "operator-name", "", "Operator name to use while generating CSV")
-	cmd.Flags().StringVar(&c.csvChannel, "csv-channel", "", "Channel the CSV should be registered under in the package manifest")
-	cmd.Flags().BoolVar(&c.defaultChannel, "default-channel", false, "Use the channel passed to --csv-channel as the package manifests' default channel. Only valid when --csv-channel is set")
+	cmd.Flags().StringVar(&c.fromVersion, "from-version", "",
+		"Semantic version of an existing CSV to use as a base")
+	cmd.Flags().StringVar(&c.csvConfigPath, "csv-config", "",
+		"Path to CSV config file. Defaults to deploy/olm-catalog/csv-config.yaml")
+	cmd.Flags().BoolVar(&c.updateCRDs, "update-crds", false,
+		"Update CRD manifests in deploy/{operator-name}/{csv-version} the using latest API's")
+	cmd.Flags().StringVar(&c.operatorName, "operator-name", "",
+		"Operator name to use while generating CSV")
+	cmd.Flags().StringVar(&c.csvChannel, "csv-channel", "",
+		"Channel the CSV should be registered under in the package manifest")
+	cmd.Flags().BoolVar(&c.defaultChannel, "default-channel", false,
+		"Use the channel passed to --csv-channel as the package manifests' default channel. "+
+			"Only valid when --csv-channel is set")
 
 	return cmd
 }
@@ -160,7 +167,8 @@ func (c csvCmd) validate() error {
 		}
 	}
 	if c.fromVersion != "" && c.csvVersion == c.fromVersion {
-		return fmt.Errorf("from-version (%s) cannot equal csv-version; set only csv-version instead", c.fromVersion)
+		return fmt.Errorf(
+			"from-version (%s) cannot equal csv-version; set only csv-version instead", c.fromVersion)
 	}
 
 	if c.defaultChannel && c.csvChannel == "" {

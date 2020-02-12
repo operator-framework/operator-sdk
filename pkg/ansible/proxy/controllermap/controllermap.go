@@ -40,6 +40,7 @@ type Contents struct {
 	WatchClusterScopedResources bool
 	OwnerWatchMap               *WatchMap
 	AnnotationWatchMap          *WatchMap
+	Blacklist                   map[schema.GroupVersionKind]bool
 }
 
 // NewControllerMap returns a new object that contains a mapping between GVK
@@ -75,10 +76,16 @@ func (cm *ControllerMap) Delete(key schema.GroupVersionKind) {
 }
 
 // Store - Adds a new GVK to controller mapping
-func (cm *ControllerMap) Store(key schema.GroupVersionKind, value *Contents) {
+func (cm *ControllerMap) Store(key schema.GroupVersionKind, value *Contents, blacklist []schema.GroupVersionKind) {
 	cm.mutex.Lock()
 	defer cm.mutex.Unlock()
 	cm.internal[key] = value
+	// watches.go Blacklist is []schema.GroupVersionKind, which we convert to a map (better performance)
+	// for the controller.
+	value.Blacklist = map[schema.GroupVersionKind]bool{}
+	for _, blacklistGVK := range blacklist {
+		cm.internal[key].Blacklist[blacklistGVK] = true
+	}
 }
 
 // Get - Checks if GVK is already watched

@@ -42,9 +42,11 @@ func NewCmd() *cobra.Command {
 		},
 	}
 	// OLM is the default.
-	cmd.Flags().BoolVar(&cargs.olm, "olm", true, "The operator to be deleted is managed by OLM in a cluster.")
+	cmd.Flags().BoolVar(&cargs.olm, "olm", true,
+		"The operator to be deleted is managed by OLM in a cluster.")
 	// TODO(estroz): refactor flag setting when new run mode options are added.
 	c.AddToFlagSet(cmd.Flags())
-	cmd.Flags().BoolVar(&c.ForceRegistry, "force-registry", false, "Force deletion of the in-cluster registry.")
+	cmd.Flags().BoolVar(&c.ForceRegistry, "force-registry", false,
+		"Force deletion of the in-cluster registry.")
 	return cmd
 }

@@ -29,7 +29,8 @@ import (
 
 // NewMetricsStores returns collections of metrics in the namespaces provided, per the api/kind resource.
 // The metrics are registered in the custom metrics.FamilyGenerator that needs to be defined.
-func NewMetricsStores(dclient dynamic.NamespaceableResourceInterface, namespaces []string, api string, kind string, metricFamily []metric.FamilyGenerator) []*metricsstore.MetricsStore {
+func NewMetricsStores(dclient dynamic.NamespaceableResourceInterface, namespaces []string, api string, kind string,
+	metricFamily []metric.FamilyGenerator) []*metricsstore.MetricsStore {
 	namespaces = deduplicateNamespaces(namespaces)
 	var stores []*metricsstore.MetricsStore
 	// Generate collector per namespace.

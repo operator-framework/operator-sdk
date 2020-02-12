@@ -2,14 +2,54 @@
 
 ### Added
 
-- Added [`run`](./doc/cli/operator-sdk_alpha_run.md) and [`cleanup`](./doc/cli/operator-sdk_alpha_cleanup.md) subcommands (under the `alpha` subcommand) to manage deployment/deletion of operators. These commands currently interact with OLM via an in-cluster registry-server created using an operator's on-disk manifests and managed by `operator-sdk`. ([#2402](https://github.com/operator-framework/operator-sdk/pull/2402))
+- Add a new option to set the minimum log level that triggers stack trace generation in logs (`--zap-stacktrace-level`) ([#2319](https://github.com/operator-framework/operator-sdk/pull/2319))
+- Added `pkg/status` with several new types and interfaces that can be used in `Status` structs to simplify handling of [status conditions](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties). ([#1143](https://github.com/operator-framework/operator-sdk/pull/1143))
+- Added support for relative Ansible roles and playbooks paths in the Ansible operator's file. ([#2273](https://github.com/operator-framework/operator-sdk/pull/2273))
+- Add Prometheus metrics support to Ansible-based operators. ([#2179](https://github.com/operator-framework/operator-sdk/pull/2179))
+- On `generate csv`, populate a CSV manifest’s `spec.icon`, `spec.keywords`, and `spec.mantainers` fields with empty values to better inform users how to add data. ([#2521](https://github.com/operator-framework/operator-sdk/pull/2521))
+
+### Changed
+- Ansible scaffolding has been rewritten to be simpler and make use of newer features of Ansible and Molecule.
+    - No longer generates the build/test-framework directory or molecule/test-cluster scenario
+    - Adds new `cluster` scenario that can be used to test against an existing cluster
+    - There is no longer any Ansible templating done in the `deploy/` directory, any templates used for testing will be located in `molecule/templates/` instead.
+    - The scaffolded molecule.yml files now use the Ansible verifier. All asserts.yml files were renamed to verify.yml to reflect this.
+    - The prepare/converge/verify tasks now make use of the new `k8s` `wait` option to simplify the deployment logic.
+- Operator user setup and entrypoint scripts no longer insert dynamic runtime user entries into `/etc/passwd`. To use dynamic runtime users, use a container runtime that supports it (e.g. CRI-O). ([#2469](https://github.com/operator-framework/operator-sdk/pull/2469))
+- Changed the scorecard basic test, `Writing into CRs has an effect`, to include the http.MethodPatch as part of its test criteria alongside http.MethodPut and http.MethodPost. ([#2509](https://github.com/operator-framework/operator-sdk/pull/2509))
+
+### Deprecated
+
+### Removed
+
+### Bug Fixes
+
+- Fixed issue with Go dependencies caused by removed tag in `openshift/api` repository ([#2466](https://github.com/operator-framework/operator-sdk/issues/2466))
+- Fixed a regression in the `operator-sdk run` command that caused `--local` flags to be ignored ([#2478](https://github.com/operator-framework/operator-sdk/issues/2478))
+
+## v0.15.1
+
+### Bug Fixes
+
+- Fixed issue with Go dependencies caused by removed tag in `openshift/api` repository ([#2466](https://github.com/operator-framework/operator-sdk/issues/2466))
+
+## v0.15.0
+
+### Added
+
+- Added the [`cleanup`](./doc/cli/operator-sdk_cleanup.md) subcommand and [`run --olm`](./doc/cli/operator-sdk_run.md) to manage deployment/deletion of operators. These commands currently interact with OLM via an in-cluster registry-server created using an operator's on-disk manifests and managed by `operator-sdk`. ([#2402](https://github.com/operator-framework/operator-sdk/pull/2402), [#2441](https://github.com/operator-framework/operator-sdk/pull/2441))
 - Added [`bundle create`](./doc/cli/operator-sdk_bundle_create.md) which builds, and optionally generates metadata for, [operator bundle images](https://github.com/openshift/enhancements/blob/ec2cf96/enhancements/olm/operator-registry.md). ([#2076](https://github.com/operator-framework/operator-sdk/pull/2076), [#2438](https://github.com/operator-framework/operator-sdk/pull/2438))
+- Added [`bundle validate`](./doc/cli/operator-sdk_bundle_validate.md) which validates [operator bundle images](https://github.com/openshift/enhancements/blob/ec2cf96/enhancements/olm/operator-registry.md). ([#2411](https://github.com/operator-framework/operator-sdk/pull/2411))
+- Added `blacklist` field to the `watches.yaml` for Ansible based operators. Blacklisted secondary resources will not be watched or cached.([#2374](https://github.com/operator-framework/operator-sdk/pull/2374))
 
 ### Changed
 
 - Changed error wrapping according to Go version 1.13+ [error handling](https://blog.golang.org/go1.13-errors). ([#2355](https://github.com/operator-framework/operator-sdk/pull/2355))
 - Added retry logic to the cleanup function from the e2e test framework in order to allow it to be achieved in the scenarios where temporary network issues are faced. ([#2277](https://github.com/operator-framework/operator-sdk/pull/2277))
-- Moved `olm-catalog gen-csv` to the `generate csv` subcommand. ([#2439](https://github.com/operator-framework/operator-sdk/pull/2439))
+- **Breaking Change:** Moved `olm-catalog gen-csv` to the `generate csv` subcommand. ([#2439](https://github.com/operator-framework/operator-sdk/pull/2439))
+- **Breaking Change:** `run ansible/helm` are now the hidden commands `exec-entrypoint ansible/helm`. All functionality of each subcommand is the same. ([#2441](https://github.com/operator-framework/operator-sdk/pull/2441))
+- **Breaking Change:** `up local` is now [`run --local`](./doc/cli/operator-sdk_run.md). All functionality of this command is the same. ([#2441](https://github.com/operator-framework/operator-sdk/pull/2441))
+- **Breaking Change:** Moved the `olm` subcommand from `alpha` to its own subcommand. All functionality of this command is the same. ([#2447](https://github.com/operator-framework/operator-sdk/pull/2447))
 
 ### Deprecated
 

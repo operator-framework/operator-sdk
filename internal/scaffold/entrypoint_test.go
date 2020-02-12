@@ -20,7 +20,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
 )
 
-func EntrypointTest(t *testing.T) {
+func TestEntrypointTest(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
 	err := s.Execute(appConfig, &Entrypoint{})
 	if err != nil {
@@ -33,17 +33,8 @@ func EntrypointTest(t *testing.T) {
 	}
 }
 
+//nolint:lll
 const entrypointExp = `#!/bin/sh -e
 
-# This is documented here:
-# https://docs.openshift.com/container-platform/3.11/creating_images/guidelines.html#openshift-specific-guidelines
-
-if ! whoami &>/dev/null; then
-  if [ -w /etc/passwd ]; then
-    echo "${USER_NAME:-app-operator}:x:$(id -u):$(id -g):${USER_NAME:-app-operator} user:${HOME}:/sbin/nologin" >> /etc/passwd
-  fi
-fi
-
 exec ${OPERATOR} $@
-
 `

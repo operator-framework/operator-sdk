@@ -141,7 +141,8 @@ func (m manager) getDeployedRelease() (*rpb.Release, error) {
 	return deployedRelease, nil
 }
 
-func (m manager) getCandidateRelease(namespace, name string, chart *cpb.Chart, values map[string]interface{}) (*rpb.Release, error) {
+func (m manager) getCandidateRelease(namespace, name string, chart *cpb.Chart,
+	values map[string]interface{}) (*rpb.Release, error) {
 	upgrade := action.NewUpgrade(m.actionConfig)
 	upgrade.Namespace = namespace
 	upgrade.DryRun = true
@@ -229,8 +230,9 @@ func reconcileRelease(ctx context.Context, kubeClient kube.Interface, expectedMa
 
 		existing, err := helper.Get(expected.Namespace, expected.Name, false)
 		if apierrors.IsNotFound(err) {
-			if _, err := helper.Create(expected.Namespace, true, expected.Object, &metav1.CreateOptions{}); err != nil {
-				return fmt.Errorf("create error: %w", err)
+			if _, err := helper.Create(expected.Namespace, true, expected.Object,
+				&metav1.CreateOptions{}); err != nil {
+				return fmt.Errorf("create error: %s", err)
 			}
 			return nil
 		} else if err != nil {

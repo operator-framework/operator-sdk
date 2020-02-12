@@ -26,10 +26,11 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
 	yaml "gopkg.in/yaml.v2"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
 var log = logf.Log.WithName("watches")
@@ -37,16 +38,17 @@ var log = logf.Log.WithName("watches")
 // Watch - holds data used to create a mapping of GVK to ansible playbook or role.
 // The mapping is used to compose an ansible operator.
 type Watch struct {
-	GroupVersionKind            schema.GroupVersionKind `yaml:",inline"`
-	Playbook                    string                  `yaml:"playbook"`
-	Role                        string                  `yaml:"role"`
-	Vars                        map[string]interface{}  `yaml:"vars"`
-	MaxRunnerArtifacts          int                     `yaml:"maxRunnerArtifacts"`
-	ReconcilePeriod             time.Duration           `yaml:"reconcilePeriod"`
-	ManageStatus                bool                    `yaml:"manageStatus"`
-	WatchDependentResources     bool                    `yaml:"watchDependentResources"`
-	WatchClusterScopedResources bool                    `yaml:"watchClusterScopedResources"`
-	Finalizer                   *Finalizer              `yaml:"finalizer"`
+	GroupVersionKind            schema.GroupVersionKind   `yaml:",inline"`
+	Blacklist                   []schema.GroupVersionKind `yaml:"blacklist"`
+	Playbook                    string                    `yaml:"playbook"`
+	Role                        string                    `yaml:"role"`
+	Vars                        map[string]interface{}    `yaml:"vars"`
+	MaxRunnerArtifacts          int                       `yaml:"maxRunnerArtifacts"`
+	ReconcilePeriod             time.Duration             `yaml:"reconcilePeriod"`
+	Finalizer                   *Finalizer                `yaml:"finalizer"`
+	ManageStatus                bool                      `yaml:"manageStatus"`
+	WatchDependentResources     bool                      `yaml:"watchDependentResources"`
+	WatchClusterScopedResources bool                      `yaml:"watchClusterScopedResources"`
 
 	// Not configurable via watches.yaml
 	MaxWorkers       int `yaml:"maxWorkers"`
@@ -63,6 +65,7 @@ type Finalizer struct {
 
 // Default values for optional fields on Watch
 var (
+	blacklistDefault                   = []schema.GroupVersionKind{}
 	maxRunnerArtifactsDefault          = 20
 	reconcilePeriodDefault             = "0s"
 	manageStatusDefault                = true
@@ -81,18 +84,19 @@ var (
 func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	// Use an alias struct to handle complex types
 	type alias struct {
-		Group                       string                 `yaml:"group"`
-		Version                     string                 `yaml:"version"`
-		Kind                        string                 `yaml:"kind"`
-		Playbook                    string                 `yaml:"playbook"`
-		Role                        string                 `yaml:"role"`
-		Vars                        map[string]interface{} `yaml:"vars"`
-		MaxRunnerArtifacts          int                    `yaml:"maxRunnerArtifacts"`
-		ReconcilePeriod             string                 `yaml:"reconcilePeriod"`
-		ManageStatus                bool                   `yaml:"manageStatus"`
-		WatchDependentResources     bool                   `yaml:"watchDependentResources"`
-		WatchClusterScopedResources bool                   `yaml:"watchClusterScopedResources"`
-		Finalizer                   *Finalizer             `yaml:"finalizer"`
+		Group                       string                    `yaml:"group"`
+		Version                     string                    `yaml:"version"`
+		Kind                        string                    `yaml:"kind"`
+		Playbook                    string                    `yaml:"playbook"`
+		Role                        string                    `yaml:"role"`
+		Vars                        map[string]interface{}    `yaml:"vars"`
+		MaxRunnerArtifacts          int                       `yaml:"maxRunnerArtifacts"`
+		ReconcilePeriod             string                    `yaml:"reconcilePeriod"`
+		ManageStatus                bool                      `yaml:"manageStatus"`
+		WatchDependentResources     bool                      `yaml:"watchDependentResources"`
+		WatchClusterScopedResources bool                      `yaml:"watchClusterScopedResources"`
+		Blacklist                   []schema.GroupVersionKind `yaml:"blacklist"`
+		Finalizer                   *Finalizer                `yaml:"finalizer"`
 	}
 	var tmp alias
 
@@ -103,6 +107,7 @@ func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	tmp.MaxRunnerArtifacts = maxRunnerArtifactsDefault
 	tmp.ReconcilePeriod = reconcilePeriodDefault
 	tmp.WatchClusterScopedResources = watchClusterScopedResourcesDefault
+	tmp.Blacklist = blacklistDefault
 
 	if err := unmarshal(&tmp); err != nil {
 		return err
@@ -136,8 +141,58 @@ func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	w.WatchClusterScopedResources = tmp.WatchClusterScopedResources
 	w.Finalizer = tmp.Finalizer
 	w.AnsibleVerbosity = getAnsibleVerbosity(gvk, ansibleVerbosityDefault)
+	w.Blacklist = tmp.Blacklist
+	w.addRolePlaybookPaths()
 
 	return nil
+}
+
+// addRolePlaybookPaths will add the full path based on the current dir
+func (w *Watch) addRolePlaybookPaths() {
+	w.Playbook = getFullPath(w.Playbook)
+	w.Role = getFullRolePath(w.Role)
+	if w.Finalizer != nil && len(w.Finalizer.Role) > 0 {
+		w.Finalizer.Role = getFullRolePath(w.Finalizer.Role)
+	}
+	if w.Finalizer != nil && len(w.Finalizer.Playbook) > 0 {
+		w.Finalizer.Playbook = getFullPath(w.Finalizer.Playbook)
+	}
+}
+
+// getFullPath will return a valid full path for the playbook
+func getFullPath(path string) string {
+	if len(path) > 0 && !filepath.IsAbs(path) {
+		return filepath.Join(projutil.MustGetwd(), path)
+	}
+	return path
+}
+
+// getFullRolePath will return a valid full path for the role
+func getFullRolePath(path string) string {
+	if len(path) > 0 && !filepath.IsAbs(path) {
+		envVar, ok := os.LookupEnv("ANSIBLE_ROLES_PATH")
+		if ok && len(envVar) > 0 {
+			// Check all values informed (e.g. path1/roles:path2/roles:/absolute/path3/roles)
+			result := strings.Split(envVar, ":")
+			for i := range result {
+				// Check if the role can be found in the envVar + role path
+				infoPath := filepath.Join(result[i], path)
+				if _, err := os.Stat(infoPath); err == nil {
+					return infoPath
+				}
+
+				// Check if the role can be found in the envVar + roles + role path
+				infoPathWithRolesDir := filepath.Join(result[i], "roles", path)
+				if _, err := os.Stat(infoPathWithRolesDir); err == nil {
+					return infoPathWithRolesDir
+				}
+			}
+		}
+		// If the flag and/or env var ANSIBLE_ROLES_PATH was not set or no roles were informed in the path then, it will
+		// be the current directory concat with roles.
+		return getFullPath(filepath.Join("roles", path))
+	}
+	return path
 }
 
 // Validate - ensures that a Watch is valid
@@ -160,7 +215,8 @@ func (w *Watch) Validate() error {
 		// only fail if Vars not set
 		err = verifyAnsiblePath(w.Finalizer.Playbook, w.Finalizer.Role)
 		if err != nil && len(w.Finalizer.Vars) == 0 {
-			log.Error(err, fmt.Sprintf("Invalid ansible path on Finalizer for GVK: %v", w.GroupVersionKind.String()))
+			log.Error(err, fmt.Sprintf("Invalid ansible path on Finalizer for GVK: %v",
+				w.GroupVersionKind.String()))
 			return err
 		}
 	}
@@ -172,6 +228,7 @@ func (w *Watch) Validate() error {
 func New(gvk schema.GroupVersionKind, role, playbook string, vars map[string]interface{}, finalizer *Finalizer) *Watch {
 	reconcilePeriod, _ := time.ParseDuration(reconcilePeriodDefault)
 	return &Watch{
+		Blacklist:                   blacklistDefault,
 		GroupVersionKind:            gvk,
 		Playbook:                    playbook,
 		Role:                        role,
@@ -240,18 +297,14 @@ func verifyGVK(gvk schema.GroupVersionKind) error {
 func verifyAnsiblePath(playbook string, role string) error {
 	switch {
 	case playbook != "":
-		if !filepath.IsAbs(playbook) {
-			return fmt.Errorf("playbook path must be absolute")
-		}
-		if _, err := os.Stat(playbook); err != nil {
+		playbookPath := getFullPath(playbook)
+		if _, err := os.Stat(playbookPath); err != nil {
 			return fmt.Errorf("playbook: %v was not found", playbook)
 		}
 	case role != "":
-		if !filepath.IsAbs(role) {
-			return fmt.Errorf("role path must be absolute")
-		}
-		if _, err := os.Stat(role); err != nil {
-			return fmt.Errorf("role path: %v was not found", role)
+		rolePath := getFullRolePath(role)
+		if _, err := os.Stat(rolePath); err != nil {
+			return fmt.Errorf("role: %v was not found", role)
 		}
 	default:
 		return fmt.Errorf("must specify Role or Playbook")
@@ -302,17 +355,20 @@ func getAnsibleVerbosity(gvk schema.GroupVersionKind, defValue int) int {
 	return ansibleVerbosity
 }
 
-// getIntegerEnvWithDefault returns value for MaxWorkers/Ansibleverbosity based on if envVar is set or a defvalue is used.
+// getIntegerEnvWithDefault returns value for MaxWorkers/Ansibleverbosity based on if envVar is set
+// sor a defvalue is used.
 func getIntegerEnvWithDefault(envVar string, defValue int) int {
 	val := defValue
 	if envVal, ok := os.LookupEnv(envVar); ok {
 		if i, err := strconv.Atoi(envVal); err != nil {
-			log.Info("Could not parse environment variable as an integer; using default value", "envVar", envVar, "default", defValue)
+			log.Info("Could not parse environment variable as an integer; using default value",
+				"envVar", envVar, "default", defValue)
 		} else {
 			val = i
 		}
 	} else if !ok {
-		log.Info("Environment variable not set; using default value", "envVar", envVar, "default", defValue)
+		log.Info("Environment variable not set; using default value", "envVar", envVar,
+			"default", defValue)
 	}
 	return val
 }

@@ -32,7 +32,8 @@ type ServiceMonitorUpdater func(*monitoringv1.ServiceMonitor) error
 
 // CreateServiceMonitors creates ServiceMonitors objects based on an array of Service objects.
 // If CR ServiceMonitor is not registered in the Cluster it will not attempt at creating resources.
-func CreateServiceMonitors(config *rest.Config, ns string, services []*v1.Service, updaters ...ServiceMonitorUpdater) ([]*monitoringv1.ServiceMonitor, error) {
+func CreateServiceMonitors(config *rest.Config, ns string, services []*v1.Service,
+	updaters ...ServiceMonitorUpdater) ([]*monitoringv1.ServiceMonitor, error) {
 	// check if we can even create ServiceMonitors
 	exists, err := hasServiceMonitor(config)
 	if err != nil {

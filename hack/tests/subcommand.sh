@@ -23,12 +23,12 @@ trap_add 'kubectl delete namespace test-memcached || true' EXIT
 operator-sdk test local ./test/e2e --namespace=test-memcached
 kubectl delete namespace test-memcached
 
-# test operator in up local mode
+# test operator in 'run --local' mode
 kubectl create namespace test-memcached
 operator-sdk test local ./test/e2e --up-local --namespace=test-memcached
 kubectl delete namespace test-memcached
 
-# test operator in up local mode with kubeconfig
+# test operator in 'run --local' mode with kubeconfig
 kubectl create namespace test-memcached
 operator-sdk test local ./test/e2e --up-local --namespace=test-memcached --kubeconfig $KUBECONFIG
 kubectl delete namespace test-memcached

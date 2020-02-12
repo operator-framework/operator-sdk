@@ -187,26 +187,14 @@ annotations:
 
 Once a developer is comfortable working with the above workflow, it will be
 beneficial to test the logic inside of an operator. To accomplish this, we can
-use `operator-sdk up local` from the top-level directory of our project. The
-`up local` command reads from `./watches.yaml` and uses `~/.kube/config` to
+use `operator-sdk run --local` from the top-level directory of our project. The
+`run --local` command reads from `./watches.yaml` and uses `~/.kube/config` to
 communicate with a Kubernetes cluster just as the `k8s` modules do. This
 section assumes the developer has read the [Ansible Operator user
 guide][ansible_operator_user_guide] and has the proper dependencies installed.
 
-Since `up local` reads from `./watches.yaml`, there are a couple options
-available to the developer. If `role` is left alone (by default
-`/opt/ansible/roles/<name>`) the developer must copy the role over to
-`/opt/ansible/roles` from the operator directly. This is cumbersome because
-changes will not be reflected from the current directory. It is recommended
-that the developer instead change the `role` field to point to the current
-directory and simply comment out the existing line:
-```yaml
-- version: v1alpha1
-  group: foo.example.com
-  kind: Foo
-  #  role: /opt/ansible/roles/Foo
-  role: /home/user/foo-operator/Foo
-```
+**NOTE:** You can customize the roles path by setting the environment variable `ANSIBLE_ROLES_PATH` or using the flag `ansible-roles-path`. Note that, if the role not be found in the 
+customized path informed in `ANSIBLE_ROLES_PATH` then, the operator will look for it in the `{{current directory}}/roles`.   
 
 Create a Custom Resource Definition (CRD) and proper Role-Based Access Control
 (RBAC) definitions for resource Foo. `operator-sdk` auto-generates these files
@@ -218,9 +206,9 @@ $ kubectl create -f deploy/role.yaml
 $ kubectl create -f deploy/role_binding.yaml
 ```
 
-Run the `up local` command:
+Run the `run --local` command:
 ```bash
-$ operator-sdk up local
+$ operator-sdk run --local
 INFO[0000] Go Version: go1.10.3
 INFO[0000] Go OS/Arch: linux/amd64
 INFO[0000] operator-sdk Version: 0.0.6+git
@@ -379,7 +367,7 @@ application, then simply update the watches file with `manageStatus`:
 - version: v1
   group: api.example.com
   kind: Foo
-  role: /opt/ansible/roles/Foo
+  role: Foo
   manageStatus: false
 ```
 
@@ -441,14 +429,14 @@ Please look over the following sections for help debugging an Ansible Operator:
 * [Additional Ansible debug](../user-guide.md#additional-ansible-debug)
 * [Testing Ansible Operators with Molecule](testing_guide.md#testing-ansible-operators-with-molecule)
 
-### Using k8s_status Ansible module with `up local`
+### Using k8s_status Ansible module with `run --local`
 This section covers the required steps to using the `k8s_status` Ansible module
-with `operator-sdk up local`. If you are unfamiliar with managing status from
+with `operator-sdk run --local`. If you are unfamiliar with managing status from
 the Ansible Operator, see the [proposal for user-driven status
 management][manage_status_proposal].
 
 If your operator takes advantage of the `k8s_status` Ansible module and you are
-interested in testing the operator with `operator-sdk up local`, then
+interested in testing the operator with `operator-sdk run --local`, then
 you will need to install the collection locally.
 
 ```sh

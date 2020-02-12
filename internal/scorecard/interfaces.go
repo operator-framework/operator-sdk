@@ -21,14 +21,14 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	scplugins "github.com/operator-framework/operator-sdk/internal/scorecard/plugins"
-	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
+	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 	"github.com/operator-framework/operator-sdk/version"
 	v1 "k8s.io/api/core/v1"
 )
 
 type Plugin interface {
-	List() scapiv1alpha1.ScorecardOutput
-	Run() scapiv1alpha1.ScorecardOutput
+	List() scapiv1alpha2.ScorecardOutput
+	Run() scapiv1alpha2.ScorecardOutput
 }
 
 type basicOrOLMPlugin struct {
@@ -36,16 +36,16 @@ type basicOrOLMPlugin struct {
 	config     scplugins.BasicAndOLMPluginConfig
 }
 
-func (p basicOrOLMPlugin) List() scapiv1alpha1.ScorecardOutput {
+func (p basicOrOLMPlugin) List() scapiv1alpha2.ScorecardOutput {
 	res, err := scplugins.ListInternalPlugin(p.pluginType, p.config)
 	if err != nil {
 		Log.Errorf("%v", err)
-		return scapiv1alpha1.ScorecardOutput{}
+		return scapiv1alpha2.ScorecardOutput{}
 	}
 	return res
 }
 
-func (p basicOrOLMPlugin) Run() scapiv1alpha1.ScorecardOutput {
+func (p basicOrOLMPlugin) Run() scapiv1alpha2.ScorecardOutput {
 	pluginLogs := &bytes.Buffer{}
 	res, err := scplugins.RunInternalPlugin(p.pluginType, p.config, pluginLogs)
 	if err != nil {
@@ -73,7 +73,8 @@ func setConfigDefaults(config *scplugins.BasicAndOLMPluginConfig, kubeconfig str
 		config.InitTimeout = 60
 	}
 	if config.ProxyImage == "" {
-		config.ProxyImage = fmt.Sprintf("quay.io/operator-framework/scorecard-proxy:%s", strings.TrimSuffix(version.Version, "+git"))
+		config.ProxyImage = fmt.Sprintf("quay.io/operator-framework/scorecard-proxy:%s",
+			strings.TrimSuffix(version.Version, "+git"))
 	}
 	if config.ProxyPullPolicy == "" {
 		config.ProxyPullPolicy = v1.PullAlways
@@ -86,12 +87,12 @@ func setConfigDefaults(config *scplugins.BasicAndOLMPluginConfig, kubeconfig str
 	}
 }
 
-func failedPlugin(name, log string) scapiv1alpha1.ScorecardOutput {
-	return scapiv1alpha1.ScorecardOutput{
-		Results: []scapiv1alpha1.ScorecardSuiteResult{{
-			Name:  name,
-			Error: 1,
-			Log:   log,
+func failedPlugin(name, log string) scapiv1alpha2.ScorecardOutput {
+	return scapiv1alpha2.ScorecardOutput{
+		Results: []scapiv1alpha2.ScorecardTestResult{{
+			Name:   name,
+			Errors: []string{"plugin error"},
+			Log:    log,
 		}},
 	}
 }
