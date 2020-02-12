@@ -758,10 +758,6 @@ If you are using any external helm v2 tooling with the your helm operator-manage
 
 ## `v0.15.x`
 
-### Go version
-
-- Ensure that you are using a go version 1.13+
-
 ### modules
 
 - Ensure the the following `require` modules and `replace` directives with the specific versions are present in your `go.mod` file:
@@ -803,7 +799,7 @@ replace github.com/openshift/api => github.com/openshift/api v0.0.0-201909241025
 - Run the command `operator-sdk generate k8s` to ensure that your resources will be updated
 - Run the command `operator-sdk generate crds` to regenerate CRDs
 
-### Notable Changes
+### Break Changes in the commands
 
 This release contains break changes in the commands tool. Note that:
 
@@ -811,9 +807,11 @@ This release contains break changes in the commands tool. Note that:
 - The `operator-sdk up local` is now `operator-sdk run --local`. However, all functionality of this is the same.
 - And then, the `operator-sdk alpha olm [sub-commands] [flags]` was moved from `alpha` to its own sub-command. However, all functionality of this still the same. To check run; `operator-sdk olm --help`.
 
-**(Valid just for Ansible/Helm based-operators):** 
+#### For Ansible and Helm 
 
-The `operator-sdk run ansible/helm` are now hidden commands in `exec-entrypoint ansible/helm`. However, all functionality of each sub-command still the same.
+- The `operator-sdk run ansible/helm` are now hidden commands in `exec-entrypoint ansible/helm`. However, all functionality of each sub-command still the same.
+
+### See the CHANGELOG.MD
 
 For further detailed information see [CHANGELOG](https://github.com/operator-framework/operator-sdk/blob/master/CHANGELOG.md#v0151)
 
