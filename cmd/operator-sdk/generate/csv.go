@@ -56,10 +56,6 @@ has already generated a CSV manifest you want to use as a base, supply its
 version to --from-version. Otherwise the SDK will scaffold a new CSV manifest.`,
 
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// The CSV generator assumes that the deploy and pkg directories are
-			// present at runtime, so this command must be run in a project's root.
-			projutil.MustInProjectRoot()
-
 			if len(args) != 0 {
 				return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 			}

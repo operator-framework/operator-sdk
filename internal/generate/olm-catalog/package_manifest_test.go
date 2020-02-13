@@ -15,6 +15,9 @@
 package olmcatalog
 
 import (
+	"io/ioutil"
+	"log"
+	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
@@ -40,6 +43,61 @@ func newTestPackageManifestGenerator() gen.Generator {
 	pkgGen := g.(pkgGenerator)
 	pkgGen.existingPkgManifestDir = testPkgManifestDir
 	return pkgGen
+}
+
+func TestNewPkgManifestWithInputsAndOutput(t *testing.T) {
+	nonStandardTestDataDir := filepath.Join(testDataDir, "non-standard-layout")
+	for _, cleanupFunc := range setupTestEnvWithCleanup(t, nonStandardTestDataDir) {
+		defer cleanupFunc()
+	}
+
+	// Temporary output dir for generating catalog bundle
+	outputDir, err := ioutil.TempDir("", t.Name()+"-output-catalog")
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Clean up output catalog dir
+	defer func() {
+		if err := os.RemoveAll(outputDir); err != nil && !os.IsNotExist(err) {
+			// Not a test failure since files in /tmp will eventually get deleted
+			t.Logf("Failed to remove tmp generated catalog directory (%s): %v", outputDir, err)
+		}
+	}()
+
+	cfg := gen.Config{
+		OperatorName: testProjectName,
+		Inputs: map[string]string{
+			DeployDirKey: "config",
+			APIsDirKey:   "api",
+		},
+		OutputDir: outputDir,
+	}
+
+	g := NewPackageManifest(cfg, csvVersion, "stable", true)
+	if err := g.Generate(); err != nil {
+		t.Fatalf("Failed to execute package manifest generator: %v", err)
+	}
+
+	pkgManFileName := getPkgFileName(testProjectName)
+
+	// Read expected Package Manifest
+	expCatalogDir := filepath.Join("expected-catalog", OLMCatalogChildDir)
+	pkgManExpBytes, err := ioutil.ReadFile(filepath.Join(expCatalogDir, testProjectName, pkgManFileName))
+	if err != nil {
+		t.Fatalf("Failed to read expected package manifest file: %v", err)
+	}
+	pkgManExp := string(pkgManExpBytes)
+
+	// Read generated Package Manifest from OutputDir/olm-catalog
+	outputCatalogDir := filepath.Join(cfg.OutputDir, OLMCatalogChildDir)
+	pkgManOutputBytes, err := ioutil.ReadFile(filepath.Join(outputCatalogDir, testProjectName, pkgManFileName))
+	if err != nil {
+		t.Fatalf("Failed to read output package manifest file: %v", err)
+	}
+	pkgManOutput := string(pkgManOutputBytes)
+
+	assert.Equal(t, pkgManExp, pkgManOutput)
+
 }
 
 func TestGeneratePackageManifest(t *testing.T) {

@@ -16,6 +16,7 @@ package olmcatalog
 
 import (
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -60,6 +61,66 @@ func setupTestEnvWithCleanup(t *testing.T, dataDir string) (cleanupFuncs []func(
 	return cleanupFuncs
 }
 
+func TestGoCSVWithInputsAndOutput(t *testing.T) {
+	// Move to testdata/non-standard to test on the non-standard project layout
+	// TODO: Refactor to make the chdir logic more readable
+	nonStandardTestDataDir := filepath.Join(testDataDir, "non-standard-layout")
+	for _, cleanupFunc := range setupTestEnvWithCleanup(t, nonStandardTestDataDir) {
+		defer cleanupFunc()
+	}
+
+	// Temporary output dir for generating catalog bundle
+	outputDir, err := ioutil.TempDir("", t.Name()+"-output-catalog")
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Clean up output catalog dir
+	defer func() {
+		if err := os.RemoveAll(outputDir); err != nil && !os.IsNotExist(err) {
+			// Not a test failure since files in /tmp will eventually get deleted
+			t.Logf("Failed to remove tmp generated catalog directory (%s): %v", outputDir, err)
+		}
+	}()
+
+	cfg := gen.Config{
+		OperatorName: testProjectName,
+		Inputs: map[string]string{
+			DeployDirKey: "config",
+			APIsDirKey:   "api",
+		},
+		OutputDir: outputDir,
+	}
+	g := NewCSV(cfg, csvVersion, "")
+
+	if err := g.Generate(); err != nil {
+		t.Fatalf("Failed to execute CSV generator: %v", err)
+	}
+
+	csvFileName := getCSVFileName(testProjectName, csvVersion)
+
+	// Read expected CSV
+	expCatalogDir := filepath.Join("expected-catalog", OLMCatalogChildDir)
+	csvExpBytes, err := ioutil.ReadFile(filepath.Join(expCatalogDir, testProjectName, csvVersion, csvFileName))
+	if err != nil {
+		t.Fatalf("Failed to read expected CSV file: %v", err)
+	}
+	csvExp := string(csvExpBytes)
+
+	// Read generated CSV from OutputDir/olm-catalog
+	outputCatalogDir := filepath.Join(cfg.OutputDir, OLMCatalogChildDir)
+	csvOutputBytes, err := ioutil.ReadFile(filepath.Join(outputCatalogDir, testProjectName, csvVersion, csvFileName))
+	if err != nil {
+		t.Fatalf("Failed to read output CSV file: %v", err)
+	}
+	csvOutput := string(csvOutputBytes)
+
+	assert.Equal(t, csvExp, csvOutput)
+}
+
+// TODO: This test is only updating the existing CSV
+// deploy/olm-catalog/memcached-operator/0.0.3/memcached-operator.v0.0.3.clusterserviceversion.yaml
+// present in testdata/go
+// Fix to generate a new CSV rather than only update an existing one
 func TestGoCSVFromNew(t *testing.T) {
 	for _, cleanupFunc := range setupTestEnvWithCleanup(t, testGoDataDir) {
 		defer cleanupFunc()
@@ -69,8 +130,6 @@ func TestGoCSVFromNew(t *testing.T) {
 		OperatorName: testProjectName,
 	}
 	g := NewCSV(cfg, csvVersion, "")
-	// TODO: Expand this test to test the g.Generate() method
-	// so we can test the CSV generator's input/out paths.
 	fileMap, err := g.(csvGenerator).generate()
 	if err != nil {
 		t.Fatalf("Failed to execute CSV generator: %v", err)
