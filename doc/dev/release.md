@@ -22,9 +22,9 @@ As the Operator SDK interacts directly with the Kubernetes API, certain API feat
 
 ### Operating systems and architectures
 
-Release binaries will be built for the `x86_64` architecture for both GNU Linux and MacOS Darwin platforms and for the `ppc64le` architecture for GNU Linux.
+Release binaries will be built for the `x86_64` architecture for MacOS Darwin platform and for the following GNU Linux architectures: `x86_64`, `ppc64le`, `s390x`.
 
-Base images for ansible-operator, helm-operator, and scorecard-proxy will be built for the `x86_64` architecture for GNU Linux. Base images for the `ppc64le` architecture for GNU Linux are a work-in-progress.
+Base images for ansible-operator, helm-operator, and scorecard-proxy will be built for the following GNU Linux architectures: `x86_64`, `ppc64le`, `s390x`.
 
 Support for the Windows platform is not on the roadmap at this time.
 

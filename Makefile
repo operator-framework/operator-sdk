@@ -24,7 +24,9 @@ ANSIBLE_IMAGE ?= $(ANSIBLE_BASE_IMAGE)
 HELM_IMAGE ?= $(HELM_BASE_IMAGE)
 SCORECARD_PROXY_IMAGE ?= $(SCORECARD_PROXY_BASE_IMAGE)
 
-HELM_ARCHES:="amd64" "ppc64le"
+ANSIBLE_ARCHES:="amd64" "ppc64le" "s390x"
+HELM_ARCHES:="amd64" "ppc64le" "s390x"
+SCORECARD_PROXY_ARCHES:="amd64" "ppc64le" "s390x"
 
 export CGO_ENABLED:=0
 .DEFAULT_GOAL:=help
@@ -164,7 +166,10 @@ image-build-scorecard-proxy:
 image-push: image-push-ansible image-push-helm image-push-scorecard-proxy ## Push all images
 
 image-push-ansible:
-	./hack/image/push-image-tags.sh $(ANSIBLE_BASE_IMAGE):dev $(ANSIBLE_IMAGE)
+	./hack/image/push-image-tags.sh $(ANSIBLE_BASE_IMAGE):dev $(ANSIBLE_IMAGE)-$(shell go env GOARCH)
+
+image-push-ansible-multiarch:
+	./hack/image/push-manifest-list.sh $(ANSIBLE_IMAGE) ${ANSIBLE_ARCHES}
 
 image-push-helm:
 	./hack/image/push-image-tags.sh $(HELM_BASE_IMAGE):dev $(HELM_IMAGE)-$(shell go env GOARCH)
@@ -173,7 +178,10 @@ image-push-helm-multiarch:
 	./hack/image/push-manifest-list.sh $(HELM_IMAGE) ${HELM_ARCHES}
 
 image-push-scorecard-proxy:
-	./hack/image/push-image-tags.sh $(SCORECARD_PROXY_BASE_IMAGE):dev $(SCORECARD_PROXY_IMAGE)
+	./hack/image/push-image-tags.sh $(SCORECARD_PROXY_BASE_IMAGE):dev $(SCORECARD_PROXY_IMAGE)-$(shell go env GOARCH)
+
+image-push-scorecard-proxy-multiarch:
+	./hack/image/push-manifest-list.sh $(SCORECARD_PROXY_IMAGE) ${SCORECARD_PROXY_ARCHES}
 
 ##############################
 # Tests                      #

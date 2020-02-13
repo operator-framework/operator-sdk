@@ -135,10 +135,26 @@ jobs:
       after_success: echo 'Tests Passed'
       after_failure: echo 'Failure in unit, sanity and markdown tests'
 
-    # Build and deploy ansible-operator docker image
+    # Build and deploy amd64 ansible-operator docker image
     - <<: *deploy
-      name: Docker image for ansible-operator
+      name: Docker image for ansible-operator (amd64)
       arch: amd64
+      script:
+        - make image-build-ansible
+        - make image-push-ansible
+
+    # Build and deploy ppc64le ansible-operator docker image
+    - <<: *deploy
+      name: Docker image for ansible-operator (ppc64le)
+      arch: ppc64le
+      script:
+        - make image-build-ansible
+        - make image-push-ansible
+
+    # Build and deploy s390x ansible-operator docker image
+    - <<: *deploy
+      name: Docker image for ansible-operator (s390x)
+      arch: s390x
       script:
         - make image-build-ansible
         - make image-push-ansible
@@ -159,17 +175,53 @@ jobs:
         - make image-build-helm
         - make image-push-helm
 
-    # Build and deploy scorecard-proxy docker image
+    # Build and deploy s390x helm-operator docker image
     - <<: *deploy
-      name: Docker image for scorecard-proxy
+      name: Docker image for helm-operator (s390x)
+      arch: s390x
+      script:
+        - make image-build-helm
+        - make image-push-helm
+
+    # Build and deploy amd64 scorecard-proxy docker image
+    - <<: *deploy
+      name: Docker image for scorecard-proxy (amd64)
       arch: amd64
       script:
         - make image-build-scorecard-proxy
         - make image-push-scorecard-proxy
+
+    # Build and deploy ppc64le scorecard-proxy docker image
+    - <<: *deploy
+      name: Docker image for scorecard-proxy (ppc64le)
+      arch: ppc64le
+      script:
+        - make image-build-scorecard-proxy
+        - make image-push-scorecard-proxy
+
+    # Build and deploy s390x scorecard-proxy docker image
+    - <<: *deploy
+      name: Docker image for scorecard-proxy (s390x)
+      arch: s390x
+      script:
+        - make image-build-scorecard-proxy
+        - make image-push-scorecard-proxy
+
+    # Build and deploy ansible multi-arch manifest list
+    - <<: *manifest-deploy
+      name: Manifest list for ansible-operator
+      script:
+        - make image-push-ansible-multiarch
 
     # Build and deploy helm multi-arch manifest list
     - <<: *manifest-deploy
       name: Manifest list for helm-operator
       script:
         - make image-push-helm-multiarch
+
+    # Build and deploy scorecard-proxy multi-arch manifest list
+    - <<: *manifest-deploy
+      name: Manifest list for scorecard-proxy
+      script:
+        - make image-push-scorecard-proxy-multiarch
 
