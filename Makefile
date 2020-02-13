@@ -152,7 +152,7 @@ image-scaffold-helm:
 
 image-build: image-build-ansible image-build-helm image-build-scorecard-proxy ## Build all images
 
-image-build-ansible: build/operator-sdk-dev-x86_64-linux-gnu
+image-build-ansible: build/operator-sdk-dev-linux-gnu
 	./hack/image/build-ansible-image.sh $(ANSIBLE_BASE_IMAGE):dev
 
 image-build-helm: build/operator-sdk-dev-linux-gnu
