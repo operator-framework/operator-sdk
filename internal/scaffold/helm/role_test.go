@@ -99,21 +99,9 @@ func simpleGroupList() []*metav1.APIGroup {
 	return []*metav1.APIGroup{
 		{
 			Name: "example",
-			Versions: []metav1.GroupVersionForDiscovery{
-				metav1.GroupVersionForDiscovery{
-					"v1",
-					"v1",
-				},
-			},
 		},
 		{
 			Name: "example2",
-			Versions: []metav1.GroupVersionForDiscovery{
-				metav1.GroupVersionForDiscovery{
-					"v2",
-					"v2",
-				},
-			},
 		},
 	}
 }
