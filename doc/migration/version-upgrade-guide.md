@@ -568,10 +568,6 @@ func printVersion() {
 
 ## `v0.13.x`
 
-### Go version
-
-- Ensure that you are using a go version 1.13+
-
 ### modules
 
 - Ensure the the following `require` modules and `replace` directives with the specific versions are present in your `go.mod` file:
@@ -636,6 +632,129 @@ Replace `*` per verbs in order to solve the issue [671](https://github.com/opera
 - **Potentially Breaking change:** Be aware that there are potentially other breaking changes due to the controller-runtime and Kubernetes version be upgraded from `v0.4.0` to `v1.16.2, respectively. There may be breaking changes to Go client code due to both of those changes.
 
 For further detailed information see [CHANGELOG](https://github.com/operator-framework/operator-sdk/blob/master/CHANGELOG.md#v0130)
+
+## `v0.14.x`
+
+### modules
+
+- Ensure the the following `require` modules and `replace` directives with the specific versions are present in your `go.mod` file:
+
+```
+require (
+	github.com/operator-framework/operator-sdk v0.14.1
+	sigs.k8s.io/controller-runtime v0.4.0
+)
+// Pinned to kubernetes-1.16.2
+replace (
+	k8s.io/api => k8s.io/api v0.0.0-20191016110408-35e52d86657a
+	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.0.0-20191016113550-5357c4baaf65
+	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20191004115801-a2eda9f80ab8
+	k8s.io/apiserver => k8s.io/apiserver v0.0.0-20191016112112-5190913f932d
+	k8s.io/cli-runtime => k8s.io/cli-runtime v0.0.0-20191016114015-74ad18325ed5
+	k8s.io/client-go => k8s.io/client-go v0.0.0-20191016111102-bec269661e48
+	k8s.io/cloud-provider => k8s.io/cloud-provider v0.0.0-20191016115326-20453efc2458
+	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.0.0-20191016115129-c07a134afb42
+	k8s.io/code-generator => k8s.io/code-generator v0.0.0-20191004115455-8e001e5d1894
+	k8s.io/component-base => k8s.io/component-base v0.0.0-20191016111319-039242c015a9
+	k8s.io/cri-api => k8s.io/cri-api v0.0.0-20190828162817-608eb1dad4ac
+	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.0.0-20191016115521-756ffa5af0bd
+	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.0.0-20191016112429-9587704a8ad4
+	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.0.0-20191016114939-2b2b218dc1df
+	k8s.io/kube-proxy => k8s.io/kube-proxy v0.0.0-20191016114407-2e83b6f20229
+	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.0.0-20191016114748-65049c67a58b
+	k8s.io/kubectl => k8s.io/kubectl v0.0.0-20191016120415-2ed914427d51
+	k8s.io/kubelet => k8s.io/kubelet v0.0.0-20191016114556-7841ed97f1b2
+	k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.0.0-20191016115753-cf0698c3a16b
+	k8s.io/metrics => k8s.io/metrics v0.0.0-20191016113814-3b1a734dba6e
+	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.0.0-20191016112829-06bb3c9d77c9
+)
+replace github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503-38ab9da00309 // Required by Helm
+```
+
+- Run `go mod tidy` to update the project modules
+- Run the command `operator-sdk generate k8s` to ensure that your resources will be updated
+- Run the command `operator-sdk generate crds` to regenerate CRDs
+
+### Deprecations
+
+The `github.com/operator-framework/operator-sdk/pkg/restmapper` package was deprecated in favor of the `DynamicRESTMapper` implementation in [controller-runtime](https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/client/apiutil#NewDiscoveryRESTMapper). Users should migrate to controller-runtime's implementation, which is a drop-in replacement.
+
+Replace:
+```
+github.com/operator-framework/operator-sdk/pkg/restmapper.DynamicRESTMapper
+```
+
+With:
+
+```
+sigs.k8s.io/controller-runtime/pkg/client/apiutil.DynamicRESTMapper
+```
+
+### Breaking Changes
+
+#### Add `operator_sdk.util` Ansible collection
+
+The Ansible module `k8s_status` was extracted and is now provided by the `operator_sdk.util` Ansible collection. See [developer_guide](https://github.com/operator-framework/operator-sdk/blob/master/doc/ansible/dev/developer_guide.md#custom-resource-status-management) for new usage.
+
+To use the collection in a role, declare it at the root level in `meta/main.yaml`:
+```yaml
+collections:
+- operator_sdk.util
+```
+
+To use it in a playbook, declare it in the play:
+```yaml
+- hosts: all
+  collections:
+   - operator_sdk.util
+  tasks:
+   - k8s_status:
+       api_version: app.example.com/v1
+       kind: Foo
+       name: "{{ meta.name }}"
+       namespace: "{{ meta.namespace }}"
+       status:
+         foo: bar
+```
+
+You can also use the fully-qualified name without declaring the collection:
+```yaml
+   - operator_sdk.util.k8s_status:
+       api_version: app.example.com/v1
+       kind: Foo
+       name: "{{ meta.name }}"
+       namespace: "{{ meta.namespace }}"
+       status:
+         foo: bar
+```
+
+### Notable Changes
+
+These notable changes contain just the most important user-facing changes. See the [CHANGELOG](https://github.com/operator-framework/operator-sdk/blob/master/CHANGELOG.md#v0141) for details of the release.
+
+#### Ansible version update
+
+The Ansible version in the init projects was upgraded from `2.6` to `2.9` for collections support. Update the `meta/main.yaml` file.
+
+Replace:
+```yaml
+...
+ min_ansible_version: 2.6
+...
+```
+
+With: 
+```yaml
+...
+ min_ansible_version: 2.9
+...
+```
+
+#### Helm Upgrade to V3
+
+The Helm operator packages and base image were upgraded from Helm v2 to Helm v3. Note that cluster state for pre-existing CRs using Helm v2-based operators will be automatically migrated to Helm v3's new release storage format, and existing releases may be upgraded due to changes in Helm v3's label injection.
+
+If you are using any external helm v2 tooling with the your helm operator-managed releases, you will need to upgrade to the equivalent helm v3 tooling.
 
 [legacy-kubebuilder-doc-crd]: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 [v0.8.2-go-mod]: https://github.com/operator-framework/operator-sdk/blob/28bd2b0d4fd25aa68e15d928ae09d3c18c3b51da/internal/pkg/scaffold/go_mod.go#L40-L94
