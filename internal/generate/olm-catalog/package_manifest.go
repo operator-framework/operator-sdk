@@ -89,11 +89,14 @@ func NewPackageManifest(cfg gen.Config, csvVersion, channel string, isDefault bo
 
 func isFileExist(path string) bool {
 	_, err := os.Stat(path)
-	if !os.IsNotExist(err) {
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false
+		}
 		// TODO: return and handle this error
 		log.Fatalf("Failed to stat %s: %v", path, err)
 	}
-	return err == nil
+	return true
 }
 
 // getPkgFileName will return the name of the PackageManifestFile
@@ -144,7 +147,6 @@ func (g pkgGenerator) generate() (map[string][]byte, error) {
 		return nil, err
 	}
 
-	// TODO: Why is this a file map?
 	fileMap := map[string][]byte{
 		g.fileName: b,
 	}

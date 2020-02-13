@@ -83,7 +83,7 @@ version to --from-version. Otherwise the SDK will scaffold a new CSV manifest.`,
 	cmd.Flags().StringToStringVar(&c.inputs, "inputs",
 		map[string]string{
 			gencatalog.DeployDirKey: "deploy",
-			gencatalog.APIsDirKey:   "pkg/apis",
+			gencatalog.APIsDirKey:   filepath.Join("pkg", "apis"),
 		},
 		`Key value input paths used in CSV generation.
 Use this to set custom paths for operator manifests and API type definitions
@@ -132,9 +132,9 @@ func (c csvCmd) run() error {
 
 	// Write CRD's to the new or updated CSV package dir.
 	if c.updateCRDs {
-		// TODO: Any requirement to update CRD's from any place other
-		// than the input "deploy" directory?
-		// Can CRD manifests be present outside of the "deploy" directory?
+		// TODO: Add a "crd" key to the --inputs flag to allow
+		// configuring the location of the CRD manifests directory
+		// from which to find and update CRD's.
 		crdManifestSet, err := findCRDFileSet(c.inputs[gencatalog.DeployDirKey])
 		if err != nil {
 			return fmt.Errorf("failed to update CRD's: %v", err)

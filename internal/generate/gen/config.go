@@ -14,13 +14,8 @@
 
 package gen
 
-import (
-	"path/filepath"
-	"strings"
-
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-)
-
+// TODO(hasbro17/estroz): Remove the generator config in favor of generator
+// specific option structs configured with Inputs and OutputDir.
 // Config configures a generator with common operator project information.
 type Config struct {
 	// OperatorName is the operator's name, ex. app-operator
@@ -34,38 +29,4 @@ type Config struct {
 	// OutputDir is the root directory where the output files will be generated.
 	// If not set, a default is used on a per-generator basis.
 	OutputDir string
-}
-
-// FilterFuncs is a slice of filter funcs.
-type FilterFuncs []func(string) bool
-
-// MakeFilters creates a set of closures around each path in paths.
-// If the argument to a closure has a prefix of path, it returns true.
-func MakeFilters(paths ...string) (filters FilterFuncs) {
-	pathSet := map[string]struct{}{}
-	for _, path := range paths {
-		pathSet[filepath.Clean(path)] = struct{}{}
-	}
-	wd := projutil.MustGetwd() + string(filepath.Separator)
-	for path := range pathSet {
-		// Copy the string for the closure.
-		pb := strings.Builder{}
-		pb.WriteString(path)
-		filters = append(filters, func(p string) bool {
-			// Handle absolute paths referencing the project directory.
-			p = strings.TrimPrefix(p, wd)
-			return strings.HasPrefix(filepath.Clean(p), pb.String())
-		})
-	}
-	return filters
-}
-
-// SatisfiesAny returns true if path passes any filter in funcs.
-func (funcs FilterFuncs) SatisfiesAny(path string) bool {
-	for _, f := range funcs {
-		if f(path) {
-			return true
-		}
-	}
-	return false
 }

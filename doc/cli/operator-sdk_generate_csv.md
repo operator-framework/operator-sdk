@@ -29,7 +29,7 @@ operator-sdk generate csv [flags]
                                 Supported input keys:
                                 	- deploy=<project-relative path to root directory for operator manifests (Deployment, RBAC, CRDs)>
                                 	- apis=<project-relative path to root directory for API type defintions>
-                                 (default [apis=pkg/apis,deploy=deploy])
+                                 (default [deploy=deploy,apis=pkg/apis])
       --operator-name string    Operator name to use while generating CSV
       --output-dir string       Base directory to output generated CSV. The resulting CSV bundle directorywill be "<output-dir>/olm-catalog/<operator-name>/<csv-version>" (default "deploy")
       --update-crds             Update CRD manifests in deploy/{operator-name}/{csv-version} the using latest API's

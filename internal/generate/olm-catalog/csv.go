@@ -118,11 +118,14 @@ func isBundleDirExist(parentDir, version string) bool {
 	}
 	bundleDir := filepath.Join(parentDir, version)
 	_, err := os.Stat(bundleDir)
-	if !os.IsNotExist(err) {
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false
+		}
 		// TODO: return and handle this error
 		log.Fatalf("Failed to stat existing bundle directory %s: %v", bundleDir, err)
 	}
-	return err == nil
+	return true
 }
 
 func getCSVName(name, version string) string {
@@ -196,7 +199,6 @@ func (g csvGenerator) generate() (fileMap map[string][]byte, err error) {
 	if err != nil {
 		return nil, err
 	}
-	// TODO: Why is this a file map when we only generate one CSV file?
 	fileMap = map[string][]byte{
 		path: b,
 	}
