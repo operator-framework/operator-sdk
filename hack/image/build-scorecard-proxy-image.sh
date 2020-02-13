@@ -6,7 +6,7 @@ source hack/lib/image_lib.sh
 
 # build operator binary and base image
 WD="$(dirname "$(pwd)")"
-GOOS=linux GOARCH=amd64 CGO_ENABLED=0 \
+GOOS=linux CGO_ENABLED=0 \
   go build \
   -gcflags "all=-trimpath=${WD}" \
   -asmflags "all=-trimpath=${WD}" \
