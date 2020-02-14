@@ -801,12 +801,12 @@ replace github.com/openshift/api => github.com/openshift/api v0.0.0-201909241025
 
 ### Breaking Changes on Commands 
 
-This release contains break changes in the commands tool. Note that:
+This release contains breaking changes in some commands.
 
 - The `operator-sdk olm-catalog gen-csv` was replaced by `operator-sdk generate csv`
-- The `operator-sdk up local` is now `operator-sdk run --local`. However, all functionality of this is the same.
-- And then, the `operator-sdk alpha olm [sub-commands] [flags]` was moved from `alpha` to its own sub-command. However, all functionality of this still the same. To check run; `operator-sdk olm --help`.
-- **(Useful for Ansible and Helm based-operators only)** The `operator-sdk run ansible/helm` are now hidden commands in `exec-entrypoint ansible/helm`. However, all functionality of each sub-command still the same.
+- The `operator-sdk up local` is now `operator-sdk run --local`. However, all functionality of this command is retained.
+- And then, the `operator-sdk alpha olm [sub-commands] [flags]` was moved from `alpha` to its own sub-command. However, all functionality of this command is retained. To check run; `operator-sdk olm --help`.
+- **(Useful for Ansible and Helm based-operators only)** The `operator-sdk run ansible/helm` are now hidden commands in `exec-entrypoint ansible/helm`. However, all functionality of each sub-command is still the same.
 
 See the [CHANGELOG](https://github.com/operator-framework/operator-sdk/blob/master/CHANGELOG.md#v0151) for details of the release.
 
