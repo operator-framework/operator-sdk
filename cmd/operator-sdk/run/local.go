@@ -76,11 +76,10 @@ func (c runLocalArgs) runGo() error {
 	projutil.MustInProjectRoot()
 	absProjectPath := projutil.MustGetwd()
 	projectName := filepath.Base(absProjectPath)
-	var exeSuffix string
+	outputBinName := filepath.Join(scaffold.BuildBinDir, projectName+"-local")
 	if runtime.GOOS == "windows" {
-		exeSuffix = ".exe"
+		outputBinName += ".exe"
 	}
-	outputBinName := filepath.Join(scaffold.BuildBinDir, projectName+"-local"+exeSuffix)
 	if err := c.buildLocal(outputBinName); err != nil {
 		return fmt.Errorf("failed to build operator to run locally: %v", err)
 	}
