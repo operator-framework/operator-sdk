@@ -34,17 +34,19 @@ var (
 	imageBuildArgs string
 	imageBuilder   string
 	goBuildArgs    string
+	skipImage      bool
 )
 
 func NewCmd() *cobra.Command {
 	buildCmd := &cobra.Command{
-		Use:   "build <image>",
+		Use:   "build [<image>]",
 		Short: "Compiles code and builds artifacts",
 		Long: `The operator-sdk build command compiles the Operator code into an executable binary
 and generates the Dockerfile manifest.
 
 <image> is the container image to be built, e.g. "quay.io/example/operator:v0.0.1".
-This image will be automatically set in the deployment manifests.
+By default, this image will be automatically set in the deployment manifests. Note that you can use
+the flag --skip-image to skip building the container image and only build the operator binary.
 
 After build completes, the image would be built locally in docker. Then it needs to
 be pushed to remote registry.
@@ -61,6 +63,8 @@ For example:
 		"Tool to build OCI images. One of: [docker, podman, buildah]")
 	buildCmd.Flags().StringVar(&goBuildArgs, "go-build-args", "",
 		"Extra Go build arguments as one string such as \"-ldflags -X=main.xyz=abc\"")
+	buildCmd.Flags().BoolVar(&skipImage, "skip-image", false,
+		"If set, only the operator binary is built and the container image build is skipped.")
 	return buildCmd
 }
 
@@ -91,8 +95,8 @@ func createBuildCommand(imageBuilder, context, dockerFile, image string, imageBu
 }
 
 func buildFunc(cmd *cobra.Command, args []string) error {
-	if len(args) != 1 {
-		return fmt.Errorf("command %s requires exactly one argument", cmd.CommandPath())
+	if len(args) != 1 && !skipImage {
+		return fmt.Errorf("command %s requires exactly one argument or --skip-image", cmd.CommandPath())
 	}
 
 	projutil.MustInProjectRoot()
@@ -127,17 +131,21 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	image := args[0]
+	if !skipImage {
+		image := args[0]
 
-	log.Infof("Building OCI image %s", image)
+		log.Infof("Building OCI image %s", image)
 
-	buildCmd, err := createBuildCommand(imageBuilder, ".", "build/Dockerfile", image, imageBuildArgs)
-	if err != nil {
-		return err
-	}
+		buildCmd, err := createBuildCommand(imageBuilder, ".", "build/Dockerfile", image, imageBuildArgs)
+		if err != nil {
+			return err
+		}
 
-	if err := projutil.ExecCmd(buildCmd); err != nil {
-		return fmt.Errorf("failed to output build image %s: %v", image, err)
+		if err := projutil.ExecCmd(buildCmd); err != nil {
+			return fmt.Errorf("failed to output build image %s: %v", image, err)
+		}
+	} else {
+		log.Infof("Skipping image building")
 	}
 
 	log.Info("Operator build complete.")

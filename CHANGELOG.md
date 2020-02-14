@@ -11,6 +11,7 @@
 - Add a new flag option (`--skip-cleanup-error`) to the test framework to allow skip the function which will remove all artefacts when an error be faced to perform this operation.   ([#2512](https://github.com/operator-framework/operator-sdk/pull/2512))
 - Add event stats output to the operator logs for Ansible based-operators. ([2580](https://github.com/operator-framework/operator-sdk/pull/2580))   
 - Improve Ansible logs by allowing output the full Ansible result for Ansible based-operators configurable by environment variable. ([2589](https://github.com/operator-framework/operator-sdk/pull/2589))   
+- When building, allow the image name to be omitted, skip building a container in those circumstances ([#2570](https://github.com/operator-framework/operator-sdk/pull/2570))
 
 ### Changed
 - Ansible scaffolding has been rewritten to be simpler and make use of newer features of Ansible and Molecule.
