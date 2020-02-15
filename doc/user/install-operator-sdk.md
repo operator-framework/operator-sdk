@@ -86,12 +86,15 @@ $ chmod +x operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin && sudo mkdir -p 
 - [go][go_tool] version v1.13+.
 
 ```sh
-$ go get -d github.com/operator-framework/operator-sdk # This will download the git repository and not install it
-$ cd $GOPATH/src/github.com/operator-framework/operator-sdk
+$ git clone https://github.com/operator-framework/operator-sdk
+$ cd operator-sdk
 $ git checkout master
 $ make tidy
 $ make install
 ```
+
+**Note:** Ensure that your `GOPROXY` is set with its default value for Go
+versions 1.13+ which is `https://proxy.golang.org,direct`.
 
 [homebrew_tool]:https://brew.sh/
 [git_tool]:https://git-scm.com/downloads

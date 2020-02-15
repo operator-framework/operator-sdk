@@ -4,7 +4,7 @@ This document explains how to setup your dev environment.
 
 ## Prerequisites
 - [git][git-tool]
-- [go][go-tool] version v1.12+
+- [go][go-tool] version v1.13+
 
 ## Download Operator SDK
 
