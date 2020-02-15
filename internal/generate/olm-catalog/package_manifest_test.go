@@ -32,20 +32,21 @@ import (
 func newTestPackageManifestGenerator() gen.Generator {
 	cfg := gen.Config{
 		OperatorName: testProjectName,
+		OutputDir:    testGoDataDir,
 	}
-	g := NewPackageManifest(cfg, csvVersion, "stable", true)
+	return NewPackageManifest(cfg, csvVersion, "stable", true)
 
 	// TODO: The deploy dir input should be the way to point the generator to test data
 	// E.g: Inputs: map[string]string{DeployDirKey: testGoDataDir}
 
 	// Override the generator to point to the package manifest in testGoDataDir
-	testPkgManifestDir := filepath.Join(testGoDataDir, OLMCatalogDir, testProjectName)
-	pkgGen := g.(pkgGenerator)
-	pkgGen.existingPkgManifestDir = testPkgManifestDir
-	return pkgGen
+	// testPkgManifestDir := filepath.Join(testGoDataDir, OLMCatalogDir, testProjectName)
+	// pkgGen := g.(pkgGenerator)
+	// pkgGen.existingPkgManifestDir = testPkgManifestDir
+	// return pkgGen
 }
 
-func TestNewPkgManifestWithInputsAndOutput(t *testing.T) {
+func TestGeneratePkgManifestToOutput(t *testing.T) {
 	nonStandardTestDataDir := filepath.Join(testDataDir, "non-standard-layout")
 	for _, cleanupFunc := range setupTestEnvWithCleanup(t, nonStandardTestDataDir) {
 		defer cleanupFunc()
@@ -66,11 +67,7 @@ func TestNewPkgManifestWithInputsAndOutput(t *testing.T) {
 
 	cfg := gen.Config{
 		OperatorName: testProjectName,
-		Inputs: map[string]string{
-			DeployDirKey: "config",
-			APIsDirKey:   "api",
-		},
-		OutputDir: outputDir,
+		OutputDir:    outputDir,
 	}
 
 	g := NewPackageManifest(cfg, csvVersion, "stable", true)
@@ -98,6 +95,10 @@ func TestNewPkgManifestWithInputsAndOutput(t *testing.T) {
 
 	assert.Equal(t, pkgManExp, pkgManOutput)
 
+}
+
+func TestUpdatePkgManifestToOutput(t *testing.T) {
+	// TODO
 }
 
 func TestGeneratePackageManifest(t *testing.T) {

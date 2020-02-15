@@ -63,16 +63,15 @@ func NewPackageManifest(cfg gen.Config, csvVersion, channel string, isDefault bo
 		channelIsDefault: isDefault,
 		fileName:         getPkgFileName(cfg.OperatorName),
 	}
-	if g.Inputs == nil {
-		g.Inputs = map[string]string{}
+
+	// Pkg manifest generator has no defined inputs
+	g.Inputs = map[string]string{}
+
+	// The olm-catalog directory location depends on where the output directory is set.
+	if g.OutputDir == "" {
+		g.OutputDir = scaffold.DeployDir
 	}
-	// The olm-catalog directory location depends on where the deploy (operator
-	// manifests) directory is.
-	olmCatalogDir := OLMCatalogDir
-	if deployDir, ok := g.Inputs[DeployDirKey]; ok && deployDir != "" {
-		// Set to non-standard location.
-		olmCatalogDir = filepath.Join(g.Inputs[DeployDirKey], OLMCatalogChildDir)
-	}
+	olmCatalogDir := filepath.Join(g.OutputDir, OLMCatalogChildDir)
 
 	// Check if the generator should update from an existing package manifest file
 	pkgManifestDirPath := filepath.Join(olmCatalogDir, g.OperatorName)
@@ -81,9 +80,6 @@ func NewPackageManifest(cfg gen.Config, csvVersion, channel string, isDefault bo
 		g.existingPkgManifestDir = pkgManifestDirPath
 	}
 
-	if g.OutputDir == "" {
-		g.OutputDir = scaffold.DeployDir
-	}
 	return g
 }
 

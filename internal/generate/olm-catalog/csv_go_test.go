@@ -61,7 +61,7 @@ func setupTestEnvWithCleanup(t *testing.T, dataDir string) (cleanupFuncs []func(
 	return cleanupFuncs
 }
 
-func TestGoCSVWithInputsAndOutput(t *testing.T) {
+func TestGenerateNewCSVWithInputsToOutput(t *testing.T) {
 	// Move to testdata/non-standard to test on the non-standard project layout
 	// TODO: Refactor to make the chdir logic more readable
 	nonStandardTestDataDir := filepath.Join(testDataDir, "non-standard-layout")
@@ -115,6 +115,10 @@ func TestGoCSVWithInputsAndOutput(t *testing.T) {
 	csvOutput := string(csvOutputBytes)
 
 	assert.Equal(t, csvExp, csvOutput)
+}
+
+func TestUpgradeFromExistingCSVWithInputsToOutput() {
+	// TODO
 }
 
 // TODO: This test is only updating the existing CSV

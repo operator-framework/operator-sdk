@@ -82,32 +82,32 @@ func NewCSV(cfg gen.Config, csvVersion, fromVersion string) gen.Generator {
 	if g.Inputs == nil {
 		g.Inputs = map[string]string{}
 	}
-	// The olm-catalog directory location depends on where the deploy (operator
-	// manifests) directory is.
-	olmCatalogDir := OLMCatalogDir
-	if deployDir, ok := g.Inputs[DeployDirKey]; !ok || deployDir == "" {
-		g.Inputs[DeployDirKey] = scaffold.DeployDir
-	} else {
-		// Set to non-standard location.
-		olmCatalogDir = filepath.Join(g.Inputs[DeployDirKey], OLMCatalogChildDir)
+
+	// The olm-catalog directory location depends on where the output directory is set.
+	if g.OutputDir == "" {
+		g.OutputDir = scaffold.DeployDir
+	}
+	// Set the CSV bundle dir output path under the generator's OutputDir
+	olmCatalogDir := filepath.Join(g.OutputDir, OLMCatalogChildDir)
+	g.csvOutputDir = filepath.Join(olmCatalogDir, g.OperatorName, g.csvVersion)
+
+	bundleParentDir := filepath.Join(olmCatalogDir, g.OperatorName)
+	if isBundleDirExist(bundleParentDir, g.fromVersion) {
+		// Upgrading a new CSV from previous CSV version
+		g.existingCSVBundleDir = filepath.Join(bundleParentDir, g.fromVersion)
+	} else if isBundleDirExist(bundleParentDir, g.csvVersion) {
+		// Updating an existing CSV version
+		g.existingCSVBundleDir = filepath.Join(bundleParentDir, g.csvVersion)
 	}
 
-	parentDir := filepath.Join(olmCatalogDir, g.OperatorName)
-	if isBundleDirExist(parentDir, g.fromVersion) {
-		g.existingCSVBundleDir = filepath.Join(olmCatalogDir, g.OperatorName, g.fromVersion)
-	} else if isBundleDirExist(parentDir, g.csvVersion) {
-		g.existingCSVBundleDir = filepath.Join(olmCatalogDir, g.OperatorName, g.csvVersion)
+	if deployDir, ok := g.Inputs[DeployDirKey]; !ok || deployDir == "" {
+		g.Inputs[DeployDirKey] = scaffold.DeployDir
 	}
 
 	if apisDir, ok := g.Inputs[APIsDirKey]; !ok || apisDir == "" {
 		g.Inputs[APIsDirKey] = scaffold.ApisDir
 	}
-	if g.OutputDir == "" {
-		g.OutputDir = scaffold.DeployDir
-	}
 
-	// Set the CSV bundle dir output path under the generator's OutputDir
-	g.csvOutputDir = filepath.Join(g.OutputDir, OLMCatalogChildDir, g.OperatorName, g.csvVersion)
 	return g
 }
 
