@@ -109,7 +109,7 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 		options.Namespace = metav1.NamespaceAll
 	}
 
-	// Create a new Cmd to provide shared dependencies and start components
+	// Create a new manager to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, options)
 	if err != nil {
 		log.Error(err, "Failed to create a new manager.")

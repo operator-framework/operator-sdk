@@ -102,7 +102,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Create a new Cmd to provide shared dependencies and start components
+	// Create a new manager to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{
 		Namespace:          namespace,
 		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
