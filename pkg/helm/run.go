@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strings"
 
 	"github.com/operator-framework/operator-sdk/pkg/helm/controller"
 	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
@@ -61,27 +62,14 @@ func printVersion() {
 func Run(flags *hoflags.HelmOperatorFlags) error {
 	printVersion()
 
-	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
-	log = log.WithValues("Namespace", namespace)
-	if found {
-		if namespace == metav1.NamespaceAll {
-			log.Info("Watching all namespaces.")
-		} else {
-			log.Info("Watching single namespace.")
-		}
-	} else {
-		log.Info(fmt.Sprintf("%v environment variable not set. Watching all namespaces.",
-			k8sutil.WatchNamespaceEnvVar))
-		namespace = metav1.NamespaceAll
-	}
-
 	cfg, err := config.GetConfig()
 	if err != nil {
 		log.Error(err, "Failed to get config.")
 		return err
 	}
-	mgr, err := manager.New(cfg, manager.Options{
-		Namespace:          namespace,
+
+	// Set default manager options
+	options := manager.Options{
 		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
 		NewClient: func(cache cache.Cache, config *rest.Config, options crclient.Options) (crclient.Client, error) {
 			c, err := crclient.New(config, options)
@@ -94,7 +82,30 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 				StatusClient: c,
 			}, nil
 		},
-	})
+	}
+
+	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
+	log = log.WithValues("Namespace", namespace)
+	if found {
+		if namespace == metav1.NamespaceAll {
+			log.Info("Watching all namespaces.")
+			options.Namespace = metav1.NamespaceAll
+		} else {
+			if strings.Contains(namespace, ",") {
+				log.Info("Watching multiple namespaces.")
+				options.NewCache = cache.MultiNamespacedCacheBuilder(strings.Split(namespace, ","))
+			} else {
+				log.Info("Watching single namespace.")
+				options.Namespace = namespace
+			}
+		}
+	} else {
+		log.Info(fmt.Sprintf("%v environment variable not set. Watching all namespaces.",
+			k8sutil.WatchNamespaceEnvVar))
+		options.Namespace = metav1.NamespaceAll
+	}
+
+	mgr, err := manager.New(cfg, options)
 	if err != nil {
 		log.Error(err, "Failed to create a new manager.")
 		return err
