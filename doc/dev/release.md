@@ -51,17 +51,24 @@ Also, make sure that you setup the git gpg config as follows.
 default-key $GPG_KEY_ID
 ```
 
-> **NOTE** If you will do a release from an OSX then, to be able to assign the tag you need to do:
-> - Try first:
-> ```bash
-> run `git config --global gpg.program gpg2`, to make sure git uses gpg2 and not gpg
-> run `echo "test" | gpg2 --clearsign`, to make sure gpg2 itself is working
-> ```
-> - If that all looks all right, one next thing to do is:
-> ```bash
-> $brew install pinentry-mac gnupg2
-> ```
-> - And then, to tell git that’s the GPG program want to use, run this: `git config --global gpg.program gpg2`
+**NOTE** If you will do a release from an OSX then, to be able to assign the tag you need to do:
+- Try first: to make sure git uses gpg2 and not gpg
+```bash
+# to make sure git uses gpg2 and not gpg
+$ git config --global gpg.program gpg2 
+
+# to make sure gpg2 itself is working
+$ echo "test" | gpg2 --clearsign
+```
+- If the above commands execute successfully, install the following packages:
+```bash
+$ brew install pinentry-mac gnupg2
+```
+- To configure `git` to use the correct GPG binary, run: 
+
+```shell
+$ git config --global gpg.program gpg2
+```
 
 ## GitHub release information
 
@@ -234,10 +241,9 @@ Call the script with the only argument being the new SDK version:
 $ ./release.sh v1.3.0
 ```
 
-> **NOTE** To run the above script from an OSX env you will need to: 
-> - Use gnu-sed instead of the default sed for the script work. Install it with `brew uninstall gnu-sed` 
-> - Export the gnu-sed to use it as "sed" in your bash profile. (E.g `export PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"`)
-> - Ensure that you will be using the GNU make instead of the default provide one by installing it with `brew install make`. Note that you need to add the new path in the bash profile as well. (E.g `export PATH="/usr/local/opt/make/libexec/gnubin:$PATH"`)
+**NOTE** To run the above script, the`./release.sh`, from an OSX env requires `gnu-sed` and the `GNU make` instead of the default installed ones. Then, you need:
+- Ensure that you will be using the GNU sed by installing it with `brew install gnu-sed`. Note that you will see the line that is recommended be added in the bash profile from the brew installation output. (E.g `export PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"`)
+- Ensure that you will be using the GNU make by installing it with `brew install make`. Note that you will see the line that is recommended be added in the bash profile from the brew installation output. (E.g `export PATH="/usr/local/opt/make/libexec/gnubin:$PATH"`)
 
 Release binaries and signatures will be in `build/`. Both binary and signature file names contain version, architecture, and platform information; signature file names correspond to the binary they were generated from suffixed with `.asc`. For example, signature file `operator-sdk-v1.3.0-x86_64-apple-darwin.asc` was generated from a binary named `operator-sdk-v1.3.0-x86_64-apple-darwin`. To verify binaries and tags, see the [verification section](#verifying-a-release).
 
