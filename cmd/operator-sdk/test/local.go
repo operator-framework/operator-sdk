@@ -48,11 +48,12 @@ type testLocalConfig struct {
 	goTestFlags        string
 	moleculeTestFlags  string
 	namespace          string
+	image              string
+	localOperatorFlags string
 	upLocal            bool
 	noSetup            bool
 	debug              bool
-	image              string
-	localOperatorFlags string
+	skipCleanupOnError bool
 }
 
 var tlConfig testLocalConfig
@@ -82,6 +83,9 @@ func newTestLocalCmd() *cobra.Command {
 		"Use a different operator image from the one specified in the namespaced manifest")
 	testCmd.Flags().StringVar(&tlConfig.localOperatorFlags, "local-operator-flags", "",
 		"The flags that the operator needs (while using --up-local). Example: \"--flag1 value1 --flag2=value2\"")
+	testCmd.Flags().BoolVar(&tlConfig.skipCleanupOnError, "skip-cleanup-error", false,
+		"If set as true, the cleanup function responsible to remove all artifacts "+
+			"will be skipped if an error is faced.")
 
 	return testCmd
 }
@@ -227,6 +231,7 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 			testArgs = append(testArgs, "-"+test.LocalOperatorArgs, tlConfig.localOperatorFlags)
 		}
 	}
+	testArgs = append(testArgs, fmt.Sprintf("-%s=%t", test.SkipCleanupOnErrorFlag, tlConfig.skipCleanupOnError))
 	opts := projutil.GoTestOptions{
 		GoCmdOptions: projutil.GoCmdOptions{
 			PackagePath: args[0] + "/...",

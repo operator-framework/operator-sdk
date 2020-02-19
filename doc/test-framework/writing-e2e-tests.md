@@ -274,6 +274,18 @@ $ operator-sdk test local ./test/e2e --namespace operator-test --no-setup
 
 For more documentation on the `operator-sdk test local` command, see the [SDK CLI Reference][sdk-cli-ref] doc.
 
+### Skip-Cleanup-Error Flag
+
+If the tests encounter an error, it is possible to tell the framework not to delete the resources. This behavior is enabled with the `--skip-cleanup-error` flag:
+
+```shell
+$ operator-sdk test local ./test/e2e --skip-cleanup-error
+```
+
+This is useful if after the error happens, you need to inspect the resources that were created in the test or if you have automated scripts that download all the logs from the pods at the end of the test run.
+
+**NOTE**: The created resources will be deleted if the tests pass.
+
 ### Running Go Test Directly (Not Recommended)
 
 For advanced use cases, it is possible to run the tests via `go test` directly. As long as all flags defined
