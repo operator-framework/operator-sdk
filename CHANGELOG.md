@@ -28,6 +28,7 @@
 
 - Fixed issue with Go dependencies caused by removed tag in `openshift/api` repository ([#2466](https://github.com/operator-framework/operator-sdk/issues/2466))
 - Fixed a regression in the `operator-sdk run` command that caused `--local` flags to be ignored ([#2478](https://github.com/operator-framework/operator-sdk/issues/2478))
+- Fix command `operator-sdk run --local` which was not working on Windows. ([#2481](https://github.com/operator-framework/operator-sdk/pull/2481))
 
 ## v0.15.2
 

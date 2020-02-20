@@ -21,6 +21,7 @@ import (
 	"os/signal"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"syscall"
 
@@ -76,6 +77,9 @@ func (c runLocalArgs) runGo() error {
 	absProjectPath := projutil.MustGetwd()
 	projectName := filepath.Base(absProjectPath)
 	outputBinName := filepath.Join(scaffold.BuildBinDir, projectName+"-local")
+	if runtime.GOOS == "windows" {
+		outputBinName += ".exe"
+	}
 	if err := c.buildLocal(outputBinName); err != nil {
 		return fmt.Errorf("failed to build operator to run locally: %v", err)
 	}
