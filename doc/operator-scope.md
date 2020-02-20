@@ -31,12 +31,15 @@ The SDK scaffolds operators to be namespaced by default but with a few modificat
 
 * `deploy/operator.yaml`:
   * Set `WATCH_NAMESPACE=""` to watch all namespaces instead of setting it to the pod's namespace
+  * Set `metadata.namespace` to define the namespace where the operator will be deployed.
 * `deploy/role.yaml`:
   * Use `ClusterRole` instead of `Role`
 * `deploy/role_binding.yaml`:
   * Use `ClusterRoleBinding` instead of `RoleBinding`
   * Use `ClusterRole` instead of `Role` for `roleRef`
   * Set the subject namespace to the namespace in which the operator is deployed.
+* `deploy/service_account.yaml`:
+  * Set `metadata.namespace` to the namespace where the operator is deployed.
 
 ### Example for cluster-scoped operator
 
@@ -46,6 +49,9 @@ With the above changes the specified manifests should look as follows:
     ```YAML
     apiVersion: apps/v1
     kind: Deployment
+    metadata:
+      name: memcached-operator
+      namespace: <operator-namespace>
     ...
     spec:
       ...
@@ -83,6 +89,13 @@ With the above changes the specified manifests should look as follows:
       kind: ClusterRole
       name: memcached-operator
       apiGroup: rbac.authorization.k8s.io
+* `deploy/service_account.yaml`
+    ```YAML
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: memcached-operator
+      namespace: <operator-namespace>
     ```
 
 ## CRD scope
