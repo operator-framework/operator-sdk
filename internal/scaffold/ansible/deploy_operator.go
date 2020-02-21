@@ -55,19 +55,7 @@ spec:
     spec:
       serviceAccountName: [[.ProjectName]]
       containers:
-        - name: ansible
-          command:
-          - /usr/local/bin/ao-logs
-          - /tmp/ansible-operator/runner
-          - stdout
-          # Replace this with the built image name
-          image: "REPLACE_IMAGE"
-          imagePullPolicy: "Always"
-          volumeMounts:
-          - mountPath: /tmp/ansible-operator/runner
-            name: runner
-            readOnly: true
-        - name: operator
+        - name: [[.ProjectName]]
           # Replace this with the built image name
           image: "REPLACE_IMAGE"
           imagePullPolicy: "Always"
