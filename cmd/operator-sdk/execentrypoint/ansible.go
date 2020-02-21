@@ -38,7 +38,7 @@ in a Pod inside a cluster. Developers wanting to run their operator locally
 should use "run --local" instead.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			logf.SetLogger(zap.Logger())
-			err := setAnsibleRolePathEnvVar(flags)
+			err := setAnsibleEnvVars(flags)
 			if err != nil {
 				log.Error(err)
 				os.Exit(1)
@@ -51,15 +51,23 @@ should use "run --local" instead.`,
 	return runAnsibleCmd
 }
 
-// setAnsibleRolePathEnvVar will set the default role path for the ANSIBLE_ROLES_PATH
-func setAnsibleRolePathEnvVar(flags *aoflags.AnsibleOperatorFlags) error {
-	if flags != nil && len(flags.AnsibleRolesPath) > 0 {
-		if err := os.Setenv(aoflags.AnsibleRolesPathEnvVar, flags.AnsibleRolesPath); err != nil {
-			return fmt.Errorf("failed to set %s environment variable: (%v)", aoflags.AnsibleRolesPathEnvVar, err)
+// setAnsibleEnvVars will set Ansible-defined environment variables from CLI flags.
+func setAnsibleEnvVars(flags *aoflags.AnsibleOperatorFlags) error {
+	if flags != nil {
+		if len(flags.AnsibleRolesPath) > 0 {
+			if err := os.Setenv(aoflags.AnsibleRolesPathEnvVar, flags.AnsibleRolesPath); err != nil {
+				return fmt.Errorf("failed to set %s environment variable: (%v)", aoflags.AnsibleRolesPathEnvVar, err)
+			}
+			log.Info(fmt.Sprintf("set the value %v for environment variable %v.", flags.AnsibleRolesPath,
+				aoflags.AnsibleRolesPathEnvVar))
 		}
-		log.Info(fmt.Sprintf("set the value %v for environment variable %v.", flags.AnsibleRolesPath,
-			aoflags.AnsibleRolesPathEnvVar))
+		if len(flags.AnsibleCollectionsPath) > 0 {
+			if err := os.Setenv(aoflags.AnsibleCollectionsPathEnvVar, flags.AnsibleCollectionsPath); err != nil {
+				return fmt.Errorf("failed to set %s environment variable: (%v)", aoflags.AnsibleCollectionsPathEnvVar, err)
+			}
+			log.Info(fmt.Sprintf("set the value %v for environment variable %v.", flags.AnsibleCollectionsPath,
+				aoflags.AnsibleCollectionsPathEnvVar))
+		}
 	}
-
 	return nil
 }
