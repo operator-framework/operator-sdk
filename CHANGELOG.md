@@ -9,6 +9,7 @@
 - On `generate csv`, populate a CSV manifest’s `spec.icon`, `spec.keywords`, and `spec.mantainers` fields with empty values to better inform users how to add data. ([#2521](https://github.com/operator-framework/operator-sdk/pull/2521))
 - Scaffold code in `cmd/manager/main.go` for Go operators and add logic to Ansible/Helm operators to handle [multinamespace caching](https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder) if `WATCH_NAMESPACE` contains multiple namespaces. ([#2522](https://github.com/operator-framework/operator-sdk/pull/2522))
 - Add a new flag option (`--skip-cleanup-error`) to the test framework to allow skip the function which will remove all artefacts when an error be faced to perform this operation.   ([#2512](https://github.com/operator-framework/operator-sdk/pull/2512))
+- Add event stats output to the operator logs for Ansible based-operators. ([2580](https://github.com/operator-framework/operator-sdk/pull/2580))   
 
 ### Changed
 - Ansible scaffolding has been rewritten to be simpler and make use of newer features of Ansible and Molecule.

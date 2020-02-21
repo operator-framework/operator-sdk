@@ -176,10 +176,12 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 			// convert to StatusJobEvent; would love a better way to do this
 			data, err := json.Marshal(event)
 			if err != nil {
+				printEventStats(statusEvent)
 				return reconcile.Result{}, err
 			}
 			err = json.Unmarshal(data, &statusEvent)
 			if err != nil {
+				printEventStats(statusEvent)
 				return reconcile.Result{}, err
 			}
 		}
@@ -187,6 +189,10 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 			failureMessages = append(failureMessages, event.GetFailedPlaybookMessage())
 		}
 	}
+
+	// To print the stats of the task
+	printEventStats(statusEvent)
+
 	if statusEvent.Event == "" {
 		eventErr := errors.New("did not receive playbook_on_stats event")
 		stdout, err := result.Stdout()
@@ -247,6 +253,12 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		return reconcileResult, errors.New("received failed task event")
 	}
 	return reconcileResult, nil
+}
+
+func printEventStats(statusEvent eventapi.StatusJobEvent) {
+	fmt.Printf("\n--------------------------- Ansible Task Status Event StdOut  -----------------\n")
+	fmt.Println(statusEvent.StdOut)
+	fmt.Printf("\n-------------------------------------------------------------------------------\n")
 }
 
 func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured,
