@@ -93,7 +93,7 @@ timeout after 5 seconds, returning an error if the mappings were not discovered 
 
 #### 3. Setup the test context and resources
 
-The next step is to create a TestCtx for the current test and defer its cleanup function:
+The next step is to create a Context for the current test and defer its cleanup function:
 
 ```go
 ctx := framework.NewContext(t)
