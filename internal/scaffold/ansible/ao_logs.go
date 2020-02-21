@@ -39,13 +39,14 @@ func (a *AoLogs) GetInput() (input.Input, error) {
 
 const aoLogsTmpl = `#!/bin/bash
 
+echo "WARN: This script is deprecated and will soon be removed"
+
 watch_dir=${1:-/tmp/ansible-operator/runner}
 filename=${2:-stdout}
 mkdir -p ${watch_dir}
 inotifywait -r -m -e close_write ${watch_dir} | while read dir op file
 do
   if [[ "${file}" = "${filename}" ]] ; then
-    echo "WARN: This script is deprecated and will soon be removed"
     echo "${dir}/${file}"
     cat ${dir}/${file}
   fi

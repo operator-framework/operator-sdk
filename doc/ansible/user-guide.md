@@ -360,8 +360,8 @@ In order to see the logs from a particular you can run:
 kubectl logs deployment/memcached-operator
 ```
 
-The logs contain the information about the Ansible run and will make it much easier to debug issues within your Ansible tasks. Note that the
-logs will contain much more detailed information about the Ansible Operator's internals and interface with Kubernetes as well.
+The logs contain the information about the Ansible run and will make it much easier to debug issues within your Ansible tasks. 
+Note that the logs will contain much more detailed information about the Ansible Operator's internals and interface with Kubernetes as well.
 
 ### Additional Ansible Debug
 
