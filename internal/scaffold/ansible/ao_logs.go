@@ -20,6 +20,8 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 )
 
+// todo(camilamacedo86): Remove before 1.0.0
+// Deprecated : The dep inotify-tools will be removed and then, it will no long be required.
 //DockerfileHybrid - Dockerfile for a hybrid operator
 type AoLogs struct {
 	StaticInput
@@ -35,9 +37,9 @@ func (a *AoLogs) GetInput() (input.Input, error) {
 	return a.Input, nil
 }
 
-//TODO: Change this implementation for no longer use inotifywait.
-// More Info: https://github.com/operator-framework/operator-sdk/issues/2007
 const aoLogsTmpl = `#!/bin/bash
+
+echo "WARN: This script is deprecated and will soon be removed"
 
 watch_dir=${1:-/tmp/ansible-operator/runner}
 filename=${2:-stdout}

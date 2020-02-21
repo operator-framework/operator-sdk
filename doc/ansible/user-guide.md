@@ -354,17 +354,14 @@ memcached-operator-7cc7cfdf86-vvjqk   2/2       Running   0          2m
 
 ### View the Ansible logs
 
-The `memcached-operator` deployment creates a Pod with two containers, `operator` and `ansible`.
-The `ansible` container exists only to expose the standard Ansible stdout logs that most Ansible
-users will be familiar with. In order to see the logs from a particular container, you can run
+In order to see the logs from a particular you can run:
 
 ```sh
-kubectl logs deployment/memcached-operator -c ansible
-kubectl logs deployment/memcached-operator -c operator
+kubectl logs deployment/memcached-operator
 ```
 
-The `ansible` logs contain all of the information about the Ansible run and will make it much easier to debug issues within your Ansible tasks,
-whereas the `operator` logs will contain much more detailed information about the Ansible Operator's internals and interface with Kubernetes.
+The logs contain the information about the Ansible run and will make it much easier to debug issues within your Ansible tasks. 
+Note that the logs will contain much more detailed information about the Ansible Operator's internals and interface with Kubernetes as well.
 
 ### Additional Ansible Debug
 

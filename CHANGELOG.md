@@ -23,7 +23,11 @@
 
 ### Deprecated
 
+- The additional of the dependency `inotify-tools` on Ansible based-operator images. ([#2586](https://github.com/operator-framework/operator-sdk/pull/2586))
+
 ### Removed
+
+-  **Breaking Change:** The additional Ansible sidecar container. ([#2586](https://github.com/operator-framework/operator-sdk/pull/2586))
 
 ### Bug Fixes
 

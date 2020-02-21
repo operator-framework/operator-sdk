@@ -127,6 +127,7 @@ func migrateAnsible() error {
 		&dockerfile,
 		&ansible.Entrypoint{},
 		&ansible.UserSetup{},
+		// todo(camilamacedo86): It is deprecated and should be removed before 1.0.0
 		&ansible.AoLogs{},
 	)
 	if err != nil {

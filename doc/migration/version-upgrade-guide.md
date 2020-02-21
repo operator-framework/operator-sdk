@@ -810,6 +810,43 @@ This release contains breaking changes in some commands.
 
 See the [CHANGELOG](https://github.com/operator-framework/operator-sdk/blob/master/CHANGELOG.md#v0151) for details of the release.
 
+## Unreleased
+
+### Breaking changes
+
+#### Remove Ansible container sidecar
+
+The additional of the dependency `inotify-tools` on Ansible based-operator images is deprecated and it will be removed in the next versions. In this way, update the `deploy/operator.yaml` file as follows.
+
+Remove:
+
+```
+- name: ansible
+  command:
+    - /usr/local/bin/ao-logs
+    - /tmp/ansible-operator/runner
+    - stdout
+  # Replace this with the built image name
+  image: "REPLACE_IMAGE"
+  imagePullPolicy: "Always"
+  volumeMounts:
+    - mountPath: /tmp/ansible-operator/runner
+    name: runner
+    readOnly: true
+```
+
+Replace:
+
+```yaml 
+- name: operator
+```
+
+With:
+
+```yaml 
+- name: {{your operator name which is the value of metadata.name in this file}}
+```
+
 [legacy-kubebuilder-doc-crd]: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 [v0.8.2-go-mod]: https://github.com/operator-framework/operator-sdk/blob/28bd2b0d4fd25aa68e15d928ae09d3c18c3b51da/internal/pkg/scaffold/go_mod.go#L40-L94
 [activating-modules]: https://github.com/golang/go/wiki/Modules#how-to-install-and-activate-module-support

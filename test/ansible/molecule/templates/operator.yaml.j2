@@ -15,18 +15,6 @@ spec:
     spec:
       serviceAccountName: ansible
       containers:
-        - name: ansible
-          command:
-          - /usr/local/bin/ao-logs
-          - /tmp/ansible-operator/runner
-          - stdout
-          # Replace this with the built image name
-          image: "{{ image }}"
-          imagePullPolicy: "{{ pull_policy }}"
-          volumeMounts:
-          - mountPath: /tmp/ansible-operator/runner
-            name: runner
-            readOnly: true
         - name: operator
           # Replace this with the built image name
           image: "{{ image }}"
