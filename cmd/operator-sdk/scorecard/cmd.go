@@ -114,7 +114,7 @@ func NewCmd() *cobra.Command {
 	return scorecardCmd
 }
 
-func initConfig()(*viper.Viper, error) {
+func initConfig() (*viper.Viper, error) {
 	// viper/cobra already has flags parsed at this point; we can check if a config file flag is set
 	if viper.GetString(configOpt) != "" {
 		// Use config file from the flag.
