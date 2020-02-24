@@ -51,23 +51,20 @@ $ cat ~/.gnupg/gpg.conf
 default-key $GPG_KEY_ID
 ```
 
-**NOTE** If you will do a release from an OSX then, to be able to assign the tag you need to do:
-- Try first: to make sure git uses gpg2 and not gpg
+**NOTE** If you will do a release from an OSX then, to be able to assign the tag you need to use `gnu-gpg`. Following the step to do this setup.
+- Install the requirements by running : `brew install gpg2 gnupg pinentry-mac`
+- Append the following to your ~/.bash_profile or ~/.bashrc or ~/.zshrc
+```
+export GPG_TTY=`tty`
+```
+- Restart your Terminal or source your ~/.*rc file 
+- Then, make sure git uses gpg2 and not gpg
 ```bash
-# to make sure git uses gpg2 and not gpg
 $ git config --global gpg.program gpg2 
-
-# to make sure gpg2 itself is working
-$ echo "test" | gpg2 --clearsign
 ```
-- If the above commands execute successfully, install the following packages:
+- To make sure gpg2 itself is working
 ```bash
-$ brew install pinentry-mac gnupg2
-```
-- To configure `git` to use the correct GPG binary, run: 
-
-```shell
-$ git config --global gpg.program gpg2
+$ echo "test" | gpg2 --clearsign
 ```
 
 ## GitHub release information
