@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/pkg/ansible/controller"
@@ -131,11 +132,12 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 		}
 
 		ctr := controller.Add(mgr, controller.Options{
-			GVK:             w.GroupVersionKind,
-			Runner:          runner,
-			ManageStatus:    w.ManageStatus,
-			MaxWorkers:      w.MaxWorkers,
-			ReconcilePeriod: w.ReconcilePeriod,
+			GVK:              w.GroupVersionKind,
+			Runner:           runner,
+			ManageStatus:     w.ManageStatus,
+			AnsibleDebugLogs: getAnsibleDebugLog(),
+			MaxWorkers:       w.MaxWorkers,
+			ReconcilePeriod:  w.ReconcilePeriod,
 		})
 		if ctr == nil {
 			return fmt.Errorf("failed to add controller for GVK %v", w.GroupVersionKind.String())
@@ -254,4 +256,23 @@ func serveCRMetrics(cfg *rest.Config, gvks []schema.GroupVersionKind) error {
 		return err
 	}
 	return nil
+}
+
+// getAnsibleDebugLog return the value from the ANSIBLE_DEBUG_LOGS it order to
+// print the full Ansible logs
+func getAnsibleDebugLog() bool {
+	const envVar = "ANSIBLE_DEBUG_LOGS"
+	val := false
+	if envVal, ok := os.LookupEnv(envVar); ok {
+		if i, err := strconv.ParseBool(envVal); err != nil {
+			log.Info("Could not parse environment variable as an integer; using default value",
+				"envVar", envVar, "default", val)
+		} else {
+			val = i
+		}
+	} else if !ok {
+		log.Info("Environment variable not set; using default value", "envVar", envVar,
+			envVar, val)
+	}
+	return val
 }

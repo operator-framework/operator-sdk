@@ -52,13 +52,14 @@ const (
 
 // AnsibleOperatorReconciler - object to reconcile runner requests
 type AnsibleOperatorReconciler struct {
-	GVK             schema.GroupVersionKind
-	Runner          runner.Runner
-	Client          client.Client
-	APIReader       client.Reader
-	EventHandlers   []events.EventHandler
-	ReconcilePeriod time.Duration
-	ManageStatus    bool
+	GVK              schema.GroupVersionKind
+	Runner           runner.Runner
+	Client           client.Client
+	APIReader        client.Reader
+	EventHandlers    []events.EventHandler
+	ReconcilePeriod  time.Duration
+	ManageStatus     bool
+	AnsibleDebugLogs bool
 }
 
 // Reconcile - handle the event.
@@ -193,6 +194,9 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	// To print the stats of the task
 	printEventStats(statusEvent)
 
+	// To print the full ansible result
+	r.printAnsibleResult(result)
+
 	if statusEvent.Event == "" {
 		eventErr := errors.New("did not receive playbook_on_stats event")
 		stdout, err := result.Stdout()
@@ -256,13 +260,26 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 }
 
 func printEventStats(statusEvent eventapi.StatusJobEvent) {
-	fmt.Printf("\n--------------------------- Ansible Task Status Event StdOut  -----------------\n")
-	fmt.Println(statusEvent.StdOut)
-	fmt.Printf("\n-------------------------------------------------------------------------------\n")
+	if len(statusEvent.StdOut) > 0 {
+		fmt.Printf("\n--------------------------- Ansible Task Status Event StdOut  -----------------\n")
+		fmt.Println(statusEvent.StdOut)
+		fmt.Printf("\n-------------------------------------------------------------------------------\n")
+	}
+}
+
+func (r *AnsibleOperatorReconciler) printAnsibleResult(result runner.RunResult) {
+	if r.AnsibleDebugLogs {
+		if res, err := result.Stdout(); err == nil && len(res) > 0 {
+			fmt.Printf("\n--------------------------- Ansible Debug Result -----------------------------\n")
+			fmt.Println(res)
+			fmt.Printf("\n-------------------------------------------------------------------------------\n")
+		}
+	}
 }
 
 func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured,
 	namespacedName types.NamespacedName) error {
+
 	// Get the latest resource to prevent updating a stale status.
 	if err := r.APIReader.Get(context.TODO(), namespacedName, u); err != nil {
 		return err
