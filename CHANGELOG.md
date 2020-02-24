@@ -24,7 +24,7 @@
 ### Deprecated
 
 - The additional of the dependency `inotify-tools` on Ansible based-operator images. ([#2586](https://github.com/operator-framework/operator-sdk/pull/2586))
--  **Breaking Change:** The scorecard feature now only supports YAML config files. So, any config file with other extension is deprecated and should be changed for the YAML format. For further information see [`scorecard config file`](./doc/test-framework/scorecard.md#config-file) ([#](https://github.com/operator-framework/operator-sdk/pull/))
+-  **Breaking Change:** The scorecard feature now only supports YAML config files. So, any config file with other extension is deprecated and should be changed for the YAML format. For further information see [`scorecard config file`](./doc/test-framework/scorecard.md#config-file) ([#2591](https://github.com/operator-framework/operator-sdk/pull/2591))
 
 ### Removed
 
