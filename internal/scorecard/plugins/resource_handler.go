@@ -87,7 +87,7 @@ func yamlToUnstructured(namespace, yamlPath string) (*unstructured.Unstructured,
 
 // createFromYAMLFile will take a path to a YAML file and create the resource. If it finds a
 // deployment, it will add the scorecard proxy as a container in the deployments podspec.
-func createFromYAMLFile(namespace, yamlPath, proxyImage string, pullPolicy v1.PullPolicy) error {
+func createFromYAMLFile(namespace, yamlPath, proxyImage string, pullPolicy v1.PullPolicy, initTimeout int) error {
 	yamlSpecs, err := ioutil.ReadFile(yamlPath)
 	if err != nil {
 		return fmt.Errorf("failed to read file %s: %v", yamlPath, err)
@@ -148,7 +148,7 @@ func createFromYAMLFile(namespace, yamlPath, proxyImage string, pullPolicy v1.Pu
 				return err
 			}
 		}
-		addResourceCleanup(obj, types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()})
+		addResourceCleanup(obj, types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, initTimeout)
 		if obj.GetKind() == "Deployment" {
 			proxyPodGlobal, err = getPodFromDeployment(deploymentName, namespace)
 			if err != nil {
@@ -248,7 +248,7 @@ func createKubeconfigSecret(namespace string) error {
 		return err
 	}
 	addResourceCleanup(kubeconfigSecret, types.NamespacedName{Namespace: kubeconfigSecret.GetNamespace(),
-		Name: kubeconfigSecret.GetName()})
+		Name: kubeconfigSecret.GetName()}, 60)
 	return nil
 }
 
@@ -345,7 +345,7 @@ func cleanupScorecard() error {
 }
 
 // addResourceCleanup adds a cleanup function for the specified runtime object
-func addResourceCleanup(obj runtime.Object, key types.NamespacedName) {
+func addResourceCleanup(obj runtime.Object, key types.NamespacedName, initTimeout int) {
 	cleanupFns = append(cleanupFns, func() error {
 		// make a copy of the object because the client changes it
 		objCopy := obj.DeepCopyObject()
@@ -353,7 +353,7 @@ func addResourceCleanup(obj runtime.Object, key types.NamespacedName) {
 		if err != nil && !apierrors.IsNotFound(err) {
 			return err
 		}
-		err = wait.PollImmediate(time.Second*1, time.Second*10, func() (bool, error) {
+		err = wait.PollImmediate(time.Second*1, time.Second*time.Duration(initTimeout), func() (bool, error) {
 			err = runtimeClient.Get(context.TODO(), key, objCopy)
 			if err != nil {
 				if apierrors.IsNotFound(err) {
