@@ -265,7 +265,7 @@ func getAnsibleDebugLog() bool {
 	val := false
 	if envVal, ok := os.LookupEnv(envVar); ok {
 		if i, err := strconv.ParseBool(envVal); err != nil {
-			log.Info("Could not parse environment variable as an integer; using default value",
+			log.Info("Could not parse environment variable as an boolean; using default value",
 				"envVar", envVar, "default", val)
 		} else {
 			val = i
