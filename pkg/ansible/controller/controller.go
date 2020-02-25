@@ -45,6 +45,7 @@ type Options struct {
 	GVK                         schema.GroupVersionKind
 	ReconcilePeriod             time.Duration
 	ManageStatus                bool
+	AnsibleDebugLogs            bool
 	WatchDependentResources     bool
 	WatchClusterScopedResources bool
 	MaxWorkers                  int
@@ -60,13 +61,14 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 	eventHandlers := append(options.EventHandlers, events.NewLoggingEventHandler(options.LoggingLevel))
 
 	aor := &AnsibleOperatorReconciler{
-		Client:          mgr.GetClient(),
-		GVK:             options.GVK,
-		Runner:          options.Runner,
-		EventHandlers:   eventHandlers,
-		ReconcilePeriod: options.ReconcilePeriod,
-		ManageStatus:    options.ManageStatus,
-		APIReader:       mgr.GetAPIReader(),
+		Client:           mgr.GetClient(),
+		GVK:              options.GVK,
+		Runner:           options.Runner,
+		EventHandlers:    eventHandlers,
+		ReconcilePeriod:  options.ReconcilePeriod,
+		ManageStatus:     options.ManageStatus,
+		AnsibleDebugLogs: options.AnsibleDebugLogs,
+		APIReader:        mgr.GetAPIReader(),
 	}
 
 	scheme := mgr.GetScheme()

@@ -67,7 +67,7 @@ be monitored for updates and cached.
   role/playbook is run, for a given CR.
 * **manageStatus** (optional): When true (default), the operator will manage
   the status of the CR generically. Set to false, the status of the CR is
-  managed elsewhere, by the specified role/playbook or in a separate controller.
+  managed elsewhere, by the specified role/playbook or in a separate controller. 
 * **blacklist**: A list of child resources (by GVK) that will not be watched or cached.
 
 An example Watches file:
@@ -94,7 +94,7 @@ An example Watches file:
   kind: Baz
   playbook: baz.yml
   reconcilePeriod: 0
-  manageStatus: false
+  manageStatus: False
   vars:
     foo: bar
 
@@ -362,6 +362,18 @@ kubectl logs deployment/memcached-operator
 
 The logs contain the information about the Ansible run and will make it much easier to debug issues within your Ansible tasks. 
 Note that the logs will contain much more detailed information about the Ansible Operator's internals and interface with Kubernetes as well.
+
+Also, you can use the environment variable `ANSIBLE_DEBUG_LOGS` set as `True` to check the full Ansible result in the logs in order to be able to debug it. 
+
+**Example**
+
+In the `deploy/operator.yaml`:
+```yaml
+...
+- name: ANSIBLE_DEBUG_LOGS
+  value: "True"
+...
+```
 
 ### Additional Ansible Debug
 

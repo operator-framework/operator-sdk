@@ -321,6 +321,18 @@ kubectl logs deployment/foo-operator
 The logs contain the information about the Ansible run and will make it much easier to debug issues within your Ansible tasks. 
 Note that the logs will contain much more detailed information about the Ansible Operator's internals and interface with Kubernetes as well.
 
+Also, you can use the environment variable `ANSIBLE_DEBUG_LOGS` set as `True` to check the full Ansible result in the logs in order to be able to debug it. 
+
+**Example**
+
+In the `deploy/operator.yaml`:
+```yaml
+...
+- name: ANSIBLE_DEBUG_LOGS
+  value: "True"
+...
+```
+
 ## Custom Resource Status Management
 The operator will automatically update the CR's `status` subresource with
 generic information about the previous Ansible run. This includes the number of
