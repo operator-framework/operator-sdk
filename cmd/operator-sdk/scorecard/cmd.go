@@ -72,8 +72,8 @@ func NewCmd() *cobra.Command {
 	}
 
 	scorecardCmd.Flags().String(configOpt, "", fmt.Sprintf(
-		"config file (default is '<project_dir>/%s'; the config file's extension and format can be .yaml,"+
-			" .json, or .toml)", scorecard.DefaultConfigFile))
+		"config file (default is '<project_dir>/%s.yaml'; the config file's extension and format must be .yaml",
+		scorecard.DefaultConfigFile))
 	scorecardCmd.Flags().String(kubeconfigOpt, "",
 		"Path to kubeconfig of custom resource created in cluster")
 	scorecardCmd.Flags().StringP(outputFormatOpt, "o", scorecard.TextOutputFormat,
@@ -121,7 +121,11 @@ func initConfig() (*viper.Viper, error) {
 		viper.SetConfigFile(viper.GetString(configOpt))
 	} else {
 		viper.AddConfigPath(projutil.MustGetwd())
-		// using SetConfigName allows users to use a .yaml, .json, or .toml file
+		// Note that viper allows other extensions as  .json, or .toml file as well, however,
+		// these other formats are deprecated in the SDK.
+		// By using SetConfigName allows users to use  diff extensions.
+		// todo(camilamacedo86): Check if we can replace this configuration and make the things easier for the future
+		// versions since from 0.16 we will need just support the YAML format.
 		viper.SetConfigName(scorecard.DefaultConfigFile)
 	}
 
@@ -152,8 +156,13 @@ func initConfig() (*viper.Viper, error) {
 		scorecard.Log.SetOutput(logReadWriter)
 		scorecard.Log.Info("Using config file: ", viper.ConfigFileUsed())
 	} else {
-		return nil, fmt.Errorf("could not read config file: %v\nSee %s for more information about the"+
-			" scorecard config file", err, scorecard.ConfigDocLink())
+		// The file var is used here to make clear the file.ext that is missing in the project
+		file := viper.ConfigFileUsed()
+		if len(file) < 1 {
+			file = scorecard.DefaultConfigFile + ".yaml"
+		}
+		return nil, fmt.Errorf("could not read config file (%v): %v\nSee %s for more information about the"+
+			" scorecard config file", file, err, scorecard.ConfigDocLink())
 	}
 	return scViper, nil
 }
@@ -162,7 +171,7 @@ func buildScorecardConfig(c *scorecard.Config) {
 
 	scViper, err := initConfig()
 	if err != nil {
-		log.Fatalf("%v", err.Error())
+		log.Fatalf("Unable to parse the scorecard config file: %v", err.Error())
 	}
 
 	outputFormat := scViper.GetString(outputFormatOpt)
