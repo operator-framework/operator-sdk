@@ -125,7 +125,7 @@ func initConfig() (*viper.Viper, error) {
 		// these other formats are deprecated in the SDK.
 		// By using SetConfigName allows users to use  diff extensions.
 		// todo(camilamacedo86): Check if we can replace this configuration and make the things easier for the future
-		// versions since from 0.16 we will need just support the YAML format. 
+		// versions since from 0.16 we will need just support the YAML format.
 		viper.SetConfigName(scorecard.DefaultConfigFile)
 	}
 
