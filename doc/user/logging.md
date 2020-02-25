@@ -60,6 +60,86 @@ $ go run main.go --zap-level=1
 {"level":"info","ts":1559866310.065119,"logger":"scoped","msg":"Printing at INFO level"}
 {"level":"debug","ts":1559866310.065123,"logger":"scoped","msg":"Printing at DEBUG level"}
 ```
+## Custom zap logger
+
+In order to use a custom zap logger, [`zap`][controller_runtime_zap] from controller-runtime can be utilized to wrap it in a logr implementation.
+
+Below is an example illustrating the use of [`zap-logfmt`][logfmt_repo] in logging.
+
+### Example
+
+In your `main.go` file, replace the current implementation for logs inside the `main` function:
+
+```Go
+...
+// Add the zap logger flag set to the CLI. The flag set must
+// be added before calling pflag.Parse().
+pflag.CommandLine.AddFlagSet(zap.FlagSet())
+
+// Add flags registered by imported packages (e.g. glog and
+// controller-runtime)
+pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+
+pflag.Parse()
+
+// Use a zap logr.Logger implementation. If none of the zap
+// flags are configured (or if the zap flag set is not being
+// used), this defaults to a production zap logger.
+// The logger instantiated here can be changed to any logger
+// implementing the logr.Logger interface. This logger will
+// be propagated through the whole operator, generating
+// uniform and structured logs.
+logf.SetLogger(zap.Logger())
+...
+```
+
+With:
+
+```Go
+configLog := zap.NewProductionEncoderConfig()
+configLog.EncodeTime = func(ts time.Time, encoder zapcore.PrimitiveArrayEncoder) {
+	encoder.AppendString(ts.UTC().Format(time.RFC3339))
+}
+logfmtEncoder := zaplogfmt.NewEncoder(configLog)
+
+// Construct a new logr.logger.
+log = zapcr.New(zapcr.UseDevMode(true), zapcr.WriteTo(os.Stdout), zapcr.Encoder(logfmtEncoder))
+
+// Set the controller logger to log, which will
+// be propagated through the whole operator, generating
+// uniform and structured logs.
+logf.SetLogger(log)
+```
+
+Ensure that the following additional imports are being used:
+
+```Go
+import(
+	...
+	zaplogfmt "github.com/sykesm/zap-logfmt"
+	zapcr "sigs.k8s.io/controller-runtime/pkg/log/zap"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	...
+)
+```
+**NOTE**: For this example, you will need to add the module `"github.com/sykesm/zap-logfmt"` to your project. Run `go get -u github.com/sykesm/zap-logfmt`.
+
+To test, the following print statement can be added in the main function:
+
+`log.Info("Printing at INFO LEVEL")`
+
+#### Output using custom zap logger
+
+```console
+$ operator-sdk run --local
+ts=2020-02-27T23:10:33Z level=info msg="Prinitng at DEBUG level"
+ts=2020-02-27T23:10:33Z level=info msg="Operator Version: 0.0.1"
+ts=2020-02-27T23:10:33Z level=info msg="Go Version: go1.13.8"
+ts=2020-02-27T23:10:33Z level=info msg="Go OS/Arch: darwin/amd64"
+ts=2020-02-27T23:10:33Z level=info msg="Version of operator-sdk: v0.15.2"
+```
 
 By using `sigs.k8s.io/controller-runtime/pkg/log`, your logger is propagated through `controller-runtime`. Any logs produced by `controller-runtime` code will be through your logger, and therefore have the same formatting and destination.
 
@@ -191,3 +271,5 @@ If you do not want to use `logr` as your logging tool, you can remove `logr`-spe
 [code_memcached_controller]:../../example/memcached-operator/memcached_controller.go.tmpl
 [code_set_logger]:https://github.com/operator-framework/operator-sdk/blob/4d66be409a69d169aaa29d470242a1defbaf08bb/internal/pkg/scaffold/cmd.go#L92-L96
 [zap_sampling]:https://github.com/uber-go/zap/blob/master/FAQ.md#why-sample-application-logs
+[logfmt_repo]:https://github.com/jsternberg/zap-logfmt
+[controller_runtime_zap]:https://github.com/kubernetes-sigs/controller-runtime/tree/master/pkg/log/zap
