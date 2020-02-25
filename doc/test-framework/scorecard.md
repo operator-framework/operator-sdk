@@ -58,7 +58,7 @@ The scorecard is configured by a config file that allows configuring internal pl
 
 ### Config File
 
-To use scorecard, you need to create a config file which by default will be `<project_dir>/.osdk-scorecard.yaml`. The following is an example over how the config file may look like:
+To use scorecard, you need to create a config file which by default will be `<project_dir>/.osdk-scorecard.yaml`.The following is an example of how the config file may look:
 
 ```yaml
 scorecard:

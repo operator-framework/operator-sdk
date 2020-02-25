@@ -15,7 +15,7 @@ operator-sdk scorecard [flags]
 
 ```
   -b, --bundle string       OLM bundle directory path, when specified runs bundle validation
-      --config string       config file (default is '<project_dir>/.osdk-scorecard'; the config file's extension and format can be .yaml, .json, or .toml)
+      --config string       config file (default is '<project_dir>/.osdk-scorecard.yaml'; the config file's extension and format must be .yaml
   -h, --help                help for scorecard
       --kubeconfig string   Path to kubeconfig of custom resource created in cluster
   -L, --list                If true, only print the test names that would be run based on selector filtering
