@@ -20,6 +20,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	rpb "helm.sh/helm/v3/pkg/release"
 )
 
 type HelmAppList struct {
@@ -89,6 +91,46 @@ func (s *HelmAppStatus) ToMap() (map[string]interface{}, error) {
 		return nil, err
 	}
 	return out, nil
+}
+
+// SetReleaseFailedConditionWith will set the failed status in the CR with the reason and error
+func (s *HelmAppStatus) SetReleaseFailedConditionWith(reason HelmAppConditionReason, err error) {
+	s.SetCondition(HelmAppCondition{
+		Type:    ConditionReleaseFailed,
+		Status:  StatusTrue,
+		Reason:  reason,
+		Message: err.Error(),
+	})
+}
+
+// SetConditionDeployedWith will set the the Deployed status in the CR with the reason and release info
+func (s *HelmAppStatus) SetConditionDeployedWith(reason HelmAppConditionReason, rls *rpb.Release) {
+	message := ""
+	if rls != nil {
+		if rls.Info != nil {
+			message = rls.Info.Notes
+		}
+		s.DeployedRelease = &HelmAppRelease{
+			Name:     rls.Name,
+			Manifest: rls.Manifest,
+		}
+	}
+	s.SetCondition(HelmAppCondition{
+		Type:    ConditionDeployed,
+		Status:  StatusFalse,
+		Reason:  reason,
+		Message: message,
+	})
+}
+
+// SetIrreconcilableConditionalWith will set the Irreconcilable status in the CR with the error
+func (s *HelmAppStatus) SetIrreconcilableConditionalWith(err error) {
+	s.SetCondition(HelmAppCondition{
+		Type:    ConditionIrreconcilable,
+		Status:  StatusTrue,
+		Reason:  ReasonReconcileError,
+		Message: err.Error(),
+	})
 }
 
 // SetCondition sets a condition on the status object. If the condition already
