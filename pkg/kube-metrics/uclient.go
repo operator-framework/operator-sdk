@@ -57,10 +57,7 @@ func getAPIResource(cfg *rest.Config, apiVersion, kind string) (*metav1.APIResou
 		return nil, nil, err
 	}
 
-	// TODO(camilamacedo86): fix deprecation
-	// nolint:staticcheck
-	// SA1019: kclient.Discovery().ServerResources is deprecated: use ServerGroupsAndResources instead.  (staticcheck)
-	apiResourceLists, err := kclient.Discovery().ServerResources()
+	_, apiResourceLists, err := kclient.Discovery().ServerGroupsAndResources()
 	if err != nil {
 		return nil, nil, err
 	}
