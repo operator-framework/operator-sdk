@@ -21,6 +21,7 @@
     - The prepare/converge/verify tasks now make use of the new `k8s` `wait` option to simplify the deployment logic.
 - Operator user setup and entrypoint scripts no longer insert dynamic runtime user entries into `/etc/passwd`. To use dynamic runtime users, use a container runtime that supports it (e.g. CRI-O). ([#2469](https://github.com/operator-framework/operator-sdk/pull/2469))
 - Changed the scorecard basic test, `Writing into CRs has an effect`, to include the http.MethodPatch as part of its test criteria alongside http.MethodPut and http.MethodPost. ([#2509](https://github.com/operator-framework/operator-sdk/pull/2509))
+- Changed the scorecard to use the init-timeout configuration setting as a wait time when performing cleanup instead of a hard-coded time.  ([#2597](https://github.com/operator-framework/operator-sdk/pull/2597))
 
 ### Deprecated
 

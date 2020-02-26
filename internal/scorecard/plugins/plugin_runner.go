@@ -392,7 +392,7 @@ func duplicateCRCheck(crs []string) error {
 	return nil
 }
 
-func runTests(csv *olmapiv1alpha1.ClusterServiceVersion, pluginType PluginType, config BasicAndOLMPluginConfig,
+func runTests(csv *olmapiv1alpha1.ClusterServiceVersion, pluginType PluginType, cfg BasicAndOLMPluginConfig,
 	cr string, logFile io.Writer) ([]schelpers.TestResult, string, error) {
 	testResults := make([]schelpers.TestResult, 0)
 
@@ -400,27 +400,27 @@ func runTests(csv *olmapiv1alpha1.ClusterServiceVersion, pluginType PluginType, 
 	log.SetOutput(logReadWriter)
 	log.Printf("Running for cr: %s", cr)
 
-	if !config.OLMDeployed {
-		if err := createFromYAMLFile(config.Namespace, config.GlobalManifest, config.ProxyImage,
-			config.ProxyPullPolicy); err != nil {
+	if !cfg.OLMDeployed {
+		if err := createFromYAMLFile(cfg.Namespace, cfg.GlobalManifest, cfg.ProxyImage,
+			cfg.ProxyPullPolicy, cfg.InitTimeout); err != nil {
 			return testResults, "", fmt.Errorf("failed to create global resources: %v", err)
 		}
-		if err := createFromYAMLFile(config.Namespace, config.NamespacedManifest, config.ProxyImage,
-			config.ProxyPullPolicy); err != nil {
+		if err := createFromYAMLFile(cfg.Namespace, cfg.NamespacedManifest, cfg.ProxyImage,
+			cfg.ProxyPullPolicy, cfg.InitTimeout); err != nil {
 			return testResults, "", fmt.Errorf("failed to create namespaced resources: %v", err)
 		}
 	}
 
-	if err := createFromYAMLFile(config.Namespace, cr, config.ProxyImage, config.ProxyPullPolicy); err != nil {
+	if err := createFromYAMLFile(cfg.Namespace, cr, cfg.ProxyImage, cfg.ProxyPullPolicy, cfg.InitTimeout); err != nil {
 		return testResults, "", fmt.Errorf("failed to create cr resource: %v", err)
 	}
 
-	obj, err := yamlToUnstructured(config.Namespace, cr)
+	obj, err := yamlToUnstructured(cfg.Namespace, cr)
 	if err != nil {
 		return testResults, "", fmt.Errorf("failed to decode custom resource manifest into object: %s", err)
 	}
 
-	if err := waitUntilCRStatusExists(time.Second*time.Duration(config.InitTimeout), obj); err != nil {
+	if err := waitUntilCRStatusExists(time.Second*time.Duration(cfg.InitTimeout), obj); err != nil {
 		return testResults, "", fmt.Errorf("failed waiting to check if CR status exists: %v", err)
 	}
 
@@ -443,9 +443,9 @@ func runTests(csv *olmapiv1alpha1.ClusterServiceVersion, pluginType PluginType, 
 			Client:   runtimeClient,
 			CR:       obj,
 			CSV:      csv,
-			CRDsDir:  config.CRDsDir,
+			CRDsDir:  cfg.CRDsDir,
 			ProxyPod: proxyPodGlobal,
-			Bundle:   config.Bundle,
+			Bundle:   cfg.Bundle,
 		}
 
 		tests = append(tests, NewBundleValidationTest(conf))
@@ -456,7 +456,7 @@ func runTests(csv *olmapiv1alpha1.ClusterServiceVersion, pluginType PluginType, 
 
 	}
 
-	tests = applySelector(tests, config.Selector)
+	tests = applySelector(tests, cfg.Selector)
 
 	for _, test := range tests {
 		testResults = append(testResults, *test.Run(context.TODO()))
