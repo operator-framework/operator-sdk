@@ -115,7 +115,7 @@ func createFromYAMLFile(namespace, yamlPath, proxyImage string, pullPolicy v1.Pu
 				return fmt.Errorf("failed to convert object to deployment: %v", err)
 			}
 			deploymentName = dep.GetName()
-			err = createKubeconfigSecret(namespace)
+			err = createKubeconfigSecret(namespace, initTimeout)
 			if err != nil {
 				return fmt.Errorf("failed to create kubeconfig secret for scorecard-proxy: %v", err)
 			}
@@ -216,7 +216,7 @@ func getPodFromDeployment(depName, namespace string) (pod *v1.Pod, err error) {
 
 // createKubeconfigSecret creates the secret that will be mounted in the operator's container and contains
 // the kubeconfig for communicating with the proxy
-func createKubeconfigSecret(namespace string) error {
+func createKubeconfigSecret(namespace string, initTimeout int) error {
 	kubeconfigMap := make(map[string][]byte)
 	kc, err := proxyConf.Create(metav1.OwnerReference{Name: "scorecard"}, "http://localhost:8889", namespace)
 	if err != nil {
@@ -248,7 +248,7 @@ func createKubeconfigSecret(namespace string) error {
 		return err
 	}
 	addResourceCleanup(kubeconfigSecret, types.NamespacedName{Namespace: kubeconfigSecret.GetNamespace(),
-		Name: kubeconfigSecret.GetName()}, 60)
+		Name: kubeconfigSecret.GetName()}, initTimeout)
 	return nil
 }
 

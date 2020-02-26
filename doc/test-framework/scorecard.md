@@ -125,7 +125,7 @@ The `basic` and `olm` internal plugins have the same configuration fields:
 | `olm-deployed` | bool | indicates that the CSV and relevant CRD's have been deployed onto the cluster by the [Operator Lifecycle Manager (OLM)][olm] |
 | `kubeconfig` | string | path to kubeconfig. If both the global `kubeconfig` and this field are set, this field is used for the plugin |
 | `namespace` | string | namespace to run the plugins in. If not set, the default specified by the kubeconfig is used |
-| `init-timeout` | int | time in seconds until a timeout during initialization of the operator |
+| `init-timeout` | int | time in seconds until a timeout during initialization or cleanup of the operator |
 | `crds-dir` | string | path to directory containing CRDs that must be deployed to the cluster |
 | `namespaced-manifest` | string | manifest file with all resources that run within a namespace. By default, the scorecard will combine `service_account.yaml`, `role.yaml`, `role_binding.yaml`, and `operator.yaml` from the `deploy` directory into a temporary manifest to use as the namespaced manifest |
 | `global-manifest` | string | manifest containing required resources that run globally (not namespaced). By default, the scorecard will combine all CRDs in the `crds-dir` directory into a temporary manifest to use as the global manifest |
