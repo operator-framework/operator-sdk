@@ -165,7 +165,7 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 		return err
 	}
 
-	addMetrics(context.TODO(), cfg, namespace, gvks)
+	addMetrics(context.TODO(), cfg, gvks)
 
 	done := make(chan error)
 
@@ -202,7 +202,7 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 
 // addMetrics will create the Services and Service Monitors to allow the operator export the metrics by using
 // the Prometheus operator
-func addMetrics(ctx context.Context, cfg *rest.Config, namespace string, gvks []schema.GroupVersionKind) {
+func addMetrics(ctx context.Context, cfg *rest.Config, gvks []schema.GroupVersionKind) {
 	if err := serveCRMetrics(cfg, gvks); err != nil {
 		if errors.Is(err, k8sutil.ErrRunLocal) {
 			log.Info("Skipping CR metrics server creation; not running in a cluster.")
@@ -229,7 +229,16 @@ func addMetrics(ctx context.Context, cfg *rest.Config, namespace string, gvks []
 	// CreateServiceMonitors will automatically create the prometheus-operator ServiceMonitor resources
 	// necessary to configure Prometheus to scrape metrics from this operator.
 	services := []*v1.Service{service}
-	_, err = metrics.CreateServiceMonitors(cfg, namespace, services)
+
+	// Get the namespace the operator is currently deployed in.
+	operatorNs, err := k8sutil.GetOperatorNamespace()
+	if err != nil {
+		log.Error(err, "")
+		return
+	}
+
+	// The ServiceMonitor is created in the same namespace where the operator is deployed
+	_, err = metrics.CreateServiceMonitors(cfg, operatorNs, services)
 	if err != nil {
 		log.Info("Could not create ServiceMonitor object", "error", err.Error())
 		// If this operator is deployed to a cluster without the prometheus-operator running, it will return
