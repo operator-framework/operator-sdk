@@ -40,8 +40,7 @@ type Context struct {
 // todo(camilamacedo86): Remove the following line just added for we are able to deprecated TestCtx
 // need to be done before: 1.0.0
 
-// Deprecated: Context exists for historical compatibility
-// Yoou should use Context instead of.
+// Deprecated: Context exists for historical compatibility. Use Context instead.
 type TestCtx = Context //nolint:golint
 
 type CleanupOptions struct {
@@ -69,12 +68,12 @@ func (f *Framework) newContext(t *testing.T) *Context {
 		client:            f.Client,
 		kubeclient:        f.KubeClient,
 		restMapper:        f.restMapper,
+		skipCleanupOnError: f.skipCleanupOnError,
 	}
 }
 
-// Deprecated: NewTestCtx exists for historical compatibility
-// You should use NewContext instead of.
 // todo(camilamacedo86): remove before 1.0.0
+// Deprecated: NewTestCtx exists for historical compatibility. Use NewContext instead.
 func NewTestCtx(t *testing.T) *TestCtx {
 	return Global.newContext(t)
 }
