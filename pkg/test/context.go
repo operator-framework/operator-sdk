@@ -75,7 +75,7 @@ func (f *Framework) newContext(t *testing.T) *Context {
 // Deprecated: NewTestCtx exists for historical compatibility
 // You should use NewContext instead of.
 // todo(camilamacedo86): remove before 1.0.0
-func NewTestCtx(t *testing.T) *Context {
+func NewTestCtx(t *testing.T) *TestCtx {
 	return Global.newContext(t)
 }
 
