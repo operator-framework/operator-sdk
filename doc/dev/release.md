@@ -238,7 +238,7 @@ Call the script with the only argument being the new SDK version:
 $ ./release.sh v1.3.0
 ```
 
-**NOTE** The `./release.sh` script requires `GNU sed` and the `GNU make` instead of the default installed sed. Install them with: `brew install gnu-sed` and `brew install make` and then, ensure they are present in your `$PATH`.
+**NOTE** The `./release.sh` script requires `GNU sed` and the `GNU make` instead of the default installed sed. Install them with: `brew install gnu-sed` and `brew install make`, then ensure they are present in your `$PATH`.
 
 Release binaries and signatures will be in `build/`. Both binary and signature file names contain version, architecture, and platform information; signature file names correspond to the binary they were generated from suffixed with `.asc`. For example, signature file `operator-sdk-v1.3.0-x86_64-apple-darwin.asc` was generated from a binary named `operator-sdk-v1.3.0-x86_64-apple-darwin`. To verify binaries and tags, see the [verification section](#verifying-a-release).
 
