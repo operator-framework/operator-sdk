@@ -51,7 +51,7 @@ $ cat ~/.gnupg/gpg.conf
 default-key $GPG_KEY_ID
 ```
 
-**NOTE** If you do a release from an OSX machine, you need to use `gnu-gpg` to assign the tag. Following the steps to setup it. 
+**NOTE** If you do a release from an OSX machine, you need to configure `gnu-gpg` to sign the release's tag:
 - Install the requirements by running : `brew install gpg2 gnupg pinentry-mac`
 - Append the following to your ~/.bash_profile or ~/.bashrc or ~/.zshrc
 ```
