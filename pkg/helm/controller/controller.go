@@ -69,7 +69,7 @@ func Add(mgr manager.Manager, options WatchOptions) error {
 	mgr.GetScheme().AddKnownTypeWithName(options.GVK, &unstructured.Unstructured{})
 	metav1.AddToGroupVersion(mgr.GetScheme(), options.GVK.GroupVersion())
 
-	c, err := controller.New(controllerName, mgr, controller.Options{Reconciler: r})
+	c, err := controller.New(controllerName, mgr, controller.Options{Reconciler: r, MaxConcurrentReconciles: 10})
 	if err != nil {
 		return err
 	}
