@@ -29,7 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-func (ctx *TestCtx) GetNamespace() (string, error) {
+func (ctx *Context) GetNamespace() (string, error) {
 	if ctx.namespace != "" {
 		return ctx.namespace, nil
 	}
@@ -48,7 +48,7 @@ func (ctx *TestCtx) GetNamespace() (string, error) {
 	return ctx.namespace, nil
 }
 
-func (ctx *TestCtx) createFromYAML(yamlFile []byte, skipIfExists bool, cleanupOptions *CleanupOptions) error {
+func (ctx *Context) createFromYAML(yamlFile []byte, skipIfExists bool, cleanupOptions *CleanupOptions) error {
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
 		return err
@@ -101,7 +101,7 @@ func (ctx *TestCtx) createFromYAML(yamlFile []byte, skipIfExists bool, cleanupOp
 	return nil
 }
 
-func (ctx *TestCtx) InitializeClusterResources(cleanupOptions *CleanupOptions) error {
+func (ctx *Context) InitializeClusterResources(cleanupOptions *CleanupOptions) error {
 	// create namespaced resources
 	namespacedYAML, err := ioutil.ReadFile(ctx.namespacedManPath)
 	if err != nil {
