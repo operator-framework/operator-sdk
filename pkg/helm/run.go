@@ -150,9 +150,24 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 		return err
 	}
 
+	// Get the namespace the operator is currently deployed in.
+	operatorNs, err := k8sutil.GetOperatorNamespace()
+	if err != nil {
+		return err
+	}
+
+	// The metrics will be generated from the namespaces which are in ns
+	// NOTE that passing nil or an empty list of namespaces will result in an error.
+	ns := []string{operatorNs}
+
+	// To generate metrics from WATCH_NAMESPACES values if it be as for example ns1,ns2
+	if strings.Contains(namespace, ",") {
+		ns = strings.Split(namespace, ",")
+	}
+
 	// Generates operator specific metrics based on the GVKs.
 	// It serves those metrics on "http://metricsHost:operatorMetricsPort".
-	err = kubemetrics.GenerateAndServeCRMetrics(cfg, []string{namespace}, gvks, metricsHost, operatorMetricsPort)
+	err = kubemetrics.GenerateAndServeCRMetrics(cfg, ns, gvks, metricsHost, operatorMetricsPort)
 	if err != nil {
 		log.Info("Could not generate and serve custom resource metrics", "error", err.Error())
 	}

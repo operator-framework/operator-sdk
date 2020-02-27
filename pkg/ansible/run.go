@@ -257,8 +257,22 @@ func serveCRMetrics(cfg *rest.Config, gvks []schema.GroupVersionKind) error {
 	if err != nil {
 		return err
 	}
-	// To generate metrics in other namespaces, add the values below.
+
+	// Get the value from WATCH_NAMESPACES
+	watchNamespace, err := k8sutil.GetWatchNamespace()
+	if err != nil {
+		return err
+	}
+
+	// The metrics will be generated from the namespaces which are in ns
+	// NOTE that passing nil or an empty list of namespaces will result in an error.
 	ns := []string{operatorNs}
+
+	// To generate metrics from WATCH_NAMESPACES values if it be as for example ns1,ns2
+	if strings.Contains(watchNamespace, ",") {
+		ns = strings.Split(watchNamespace, ",")
+	}
+
 	// Generate and serve custom resource specific metrics.
 	err = kubemetrics.GenerateAndServeCRMetrics(cfg, ns, gvks, metricsHost, operatorMetricsPort)
 	if err != nil {

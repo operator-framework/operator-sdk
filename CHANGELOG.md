@@ -13,6 +13,7 @@
 - Add event stats output to the operator logs for Ansible based-operators. ([2580](https://github.com/operator-framework/operator-sdk/pull/2580))
 - Improve Ansible logs by allowing output the full Ansible result for Ansible based-operators configurable by environment variable. ([2589](https://github.com/operator-framework/operator-sdk/pull/2589))
 - Add the --max-workers flag to the commands operator-sdk exec-entrypoint and operator-sdk run --local for Helm based-operators with the purpose of controling the number of concurrent reconcile workers. ([2607](https://github.com/operator-framework/operator-sdk/pull/2607))
+- Add support for Metrics with MultiNamespace scenario for Ansible and Helm based-operators. ([#2603](https://github.com/operator-framework/operator-sdk/pull/2603)) 
 
 ### Changed
 - Ansible scaffolding has been rewritten to be simpler and make use of newer features of Ansible and Molecule.
@@ -25,6 +26,7 @@
 - Changed the scorecard basic test, `Writing into CRs has an effect`, to include the http.MethodPatch as part of its test criteria alongside http.MethodPut and http.MethodPost. ([#2509](https://github.com/operator-framework/operator-sdk/pull/2509))
 - Changed the scorecard to use the init-timeout configuration setting as a wait time when performing cleanup instead of a hard-coded time.  ([#2597](https://github.com/operator-framework/operator-sdk/pull/2597))
 - Upgrade the Helm dependency version from `v3.0.1` to `v3.0.2`. ([#2621](https://github.com/operator-framework/operator-sdk/pull/2621)) 
+- Changed the scaffolded `serveCRMetrics` to use the namespaces informed in the environment variable `WATCH_NAMESPACE` in the MultiNamespace scenario. ([#2603](https://github.com/operator-framework/operator-sdk/pull/2603)) 
 
 ### Deprecated
 - The type name `TestCtx` in `pkg/test` has been deprecated and renamed to `Context`. It now exists only as a type alias to maintain backwards compatibility. Users of the e2e framework should migrate to use the new name, `Context`. The `TestCtx` alias will be removed in a future version. ([2549](https://github.com/operator-framework/operator-sdk/pull/2549))
