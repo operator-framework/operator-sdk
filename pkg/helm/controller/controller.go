@@ -50,6 +50,7 @@ type WatchOptions struct {
 	ReconcilePeriod         time.Duration
 	WatchDependentResources bool
 	OverrideValues          map[string]string
+	MaxWorkers              int
 }
 
 // Add creates a new helm operator controller and adds it to the manager
@@ -69,7 +70,7 @@ func Add(mgr manager.Manager, options WatchOptions) error {
 	mgr.GetScheme().AddKnownTypeWithName(options.GVK, &unstructured.Unstructured{})
 	metav1.AddToGroupVersion(mgr.GetScheme(), options.GVK.GroupVersion())
 
-	c, err := controller.New(controllerName, mgr, controller.Options{Reconciler: r, MaxConcurrentReconciles: 10})
+	c, err := controller.New(controllerName, mgr, controller.Options{Reconciler: r, MaxConcurrentReconciles: options.MaxWorkers})
 	if err != nil {
 		return err
 	}
