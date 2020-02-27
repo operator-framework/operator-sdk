@@ -551,6 +551,47 @@ func main() {
 * After adding new import paths to your operator project, run `go mod vendor` if a `vendor/` directory is present in the root of your project directory to fulfill these dependencies.
 * Your 3rd party resource needs to be added before add the controller in `"Setup all Controllers"`.
 
+#### Default Metrics exported with 3rd party resource 
+
+By default the projects built with SDK will be implemented to export metrics. For further information check the [metrics section][metrics_doc]. Then, in the `main.go` you will see:
+
+```go
+func serveCRMetrics(cfg *rest.Config) error {
+    
+    ...
+
+	filteredGVK, err := k8sutil.GetGVKsFromAddToScheme(apis.AddToScheme)
+	if err != nil {
+		return err
+	}
+
+    ...
+
+	// Generate and serve custom resource specific metrics.
+	err = kubemetrics.GenerateAndServeCRMetrics(cfg, ns, filteredGVK, metricsHost, operatorMetricsPort)
+	if err != nil {
+		return err
+	}
+``` 
+
+The `kubemetrics.GenerateAndServeCRMetrics` will requires permission to List all GroupVersionKinds in the List of namespaces informed. So, probably you will need to customize the implementation of the [k8sutil.GetGVKsFromAddToScheme](https://godoc.org/github.com/operator-framework/operator-sdk/pkg/k8sutil#GetGVKsFromAddToScheme) by doing your own `GetGVKsFromAddToScheme` to not face permissions issues such as `Failed to list *unstructured.Unstructured`.
+
+In this scenario, this error may occurs because your Operator has not the RBCA(roles) permissions to LIST the third party API schemas or the schemas which are required to them and will be added with. See that the default SDK implementation will just add the Kubernetes schemas and they will be ignored in the metrics as you can check the `k8sutil.GetGVKsFromAddToScheme` code implementation:
+
+```go 
+...
+	schemeAllKnownTypes := s.AllKnownTypes()
+	ownGVKs := []schema.GroupVersionKind{}
+	for gvk := range schemeAllKnownTypes {
+		if !isKubeMetaKind(gvk.Kind) {
+			ownGVKs = append(ownGVKs, gvk)
+		}
+	}
+... 
+```
+
+In this way, may will be required to the same to ignore the third party API schemas added by you. 
+
 ### Handle Cleanup on Deletion
 
 To implement complex deletion logic, you can add a finalizer to your Custom Resource. This will prevent your Custom Resource from being
