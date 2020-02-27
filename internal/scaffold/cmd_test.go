@@ -216,12 +216,9 @@ func addMetrics(ctx context.Context, cfg *rest.Config, namespace string) {
 // serveCRMetrics gets the Operator/CustomResource GVKs and generates metrics based on those types.
 // It serves those metrics on "http://metricsHost:operatorMetricsPort".
 func serveCRMetrics(cfg *rest.Config) error {
-	// The function below returns filtered operator/CR specific GVKs. For more control, override the GVK list below
-	// with your own custom logic.
-	// Note that if you are adding third party API schemas, probably you will need to customize this implementation
-	// to not face issues such as; "Failed to list *unstructured.Unstructured:" which may occur because
-	// the operator has not permission to List the schemas added. See that when a schema is added
-	// it also may add others schemas which are required by it and then, they will not be filtered by default.
+	// The function below returns a list of filtered operator/CR specific GVKs. For more control, override the GVK list below
+	// with your own custom logic. Note that if you are adding third party API schemas, probably you will need to
+	// customize this implementation to avoid permissions issues.
 	filteredGVK, err := k8sutil.GetGVKsFromAddToScheme(apis.AddToScheme)
 	if err != nil {
 		return err

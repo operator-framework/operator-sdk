@@ -553,11 +553,11 @@ func main() {
 
 #### Default Metrics exported with 3rd party resource 
 
-By default the projects built with SDK will be implemented to export metrics. For further information check the [metrics section][metrics_doc]. Then, in the `main.go` you will see:
+By default, SDK operator projects are set up to [export metrics][metrics_doc] through `addMetrics` in `cmd/manager/main.go`. See that it will call the `serveCRMetrics`:
+
 
 ```go
 func serveCRMetrics(cfg *rest.Config) error {
-    
     ...
 	filteredGVK, err := k8sutil.GetGVKsFromAddToScheme(apis.AddToScheme)
 	if err != nil {
@@ -575,21 +575,7 @@ func serveCRMetrics(cfg *rest.Config) error {
 
 The `kubemetrics.GenerateAndServeCRMetrics` requires an RBAC permission to List all GroupVersionKinds in the List of watched namespaces, therefore, you might need to customize the implementation of the [k8sutil.GetGVKsFromAddToScheme](https://godoc.org/github.com/operator-framework/operator-sdk/pkg/k8sutil#GetGVKsFromAddToScheme) by implementing your own `GetGVKsFromAddToScheme` to avoid permission issues such as `Failed to list *unstructured.Unstructured`.
 
-In this scenario, this error may occur because your Operator RBAC roles do not include permissions to LIST the third party API schemas or the schemas which are required to them and will be added with. See that the default SDK implementation will just add the Kubernetes schemas and they will be ignored in the metrics as you can check the `k8sutil.GetGVKsFromAddToScheme` code implementation:
-
-```go 
-...
-	schemeAllKnownTypes := s.AllKnownTypes()
-	ownGVKs := []schema.GroupVersionKind{}
-	for gvk := range schemeAllKnownTypes {
-		if !isKubeMetaKind(gvk.Kind) {
-			ownGVKs = append(ownGVKs, gvk)
-		}
-	}
-... 
-```
-
-It means that you might need to do an similar implementation to filter the third party API schemas and their dependencies added in order to provide a filtered a List of GVK(GroupVersionKind) to the  `GenerateAndServeCRMetrics` method. 
+In this scenario, this error may occur because your Operator RBAC roles do not include permissions to LIST the third party API schemas or the schemas which are required to them and will be added with. See that the default SDK implementation will just add the Kubernetes schemas and they will be ignored in the metrics It means that you might need to do an similar implementation to filter the third party API schemas and their dependencies added in order to provide a filtered a List of GVK(GroupVersionKind) to the  `GenerateAndServeCRMetrics` method. 
 
 ### Handle Cleanup on Deletion
 
