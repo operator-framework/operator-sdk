@@ -61,13 +61,13 @@ func (f *Framework) newContext(t *testing.T) *Context {
 		namespace = f.Namespace
 	}
 	return &Context{
-		id:                id,
-		t:                 t,
-		namespace:         namespace,
-		namespacedManPath: *f.NamespacedManPath,
-		client:            f.Client,
-		kubeclient:        f.KubeClient,
-		restMapper:        f.restMapper,
+		id:                 id,
+		t:                  t,
+		namespace:          namespace,
+		namespacedManPath:  *f.NamespacedManPath,
+		client:             f.Client,
+		kubeclient:         f.KubeClient,
+		restMapper:         f.restMapper,
 		skipCleanupOnError: f.skipCleanupOnError,
 	}
 }
