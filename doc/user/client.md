@@ -158,7 +158,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 	podList := &v1.PodList{}
 	opts := []client.ListOption{
 		client.InNamespace(request.NamespacedName.Namespace),
-		client.MatchingLabels{"app", request.NamespacedName.Name},
+		client.MatchingLabels{"app": request.NamespacedName.Name},
 		client.MatchingFields{"status.phase": "Running"},
 	}
 	ctx := context.TODO()
