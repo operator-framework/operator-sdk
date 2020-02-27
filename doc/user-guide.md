@@ -559,7 +559,6 @@ By default the projects built with SDK will be implemented to export metrics. Fo
 func serveCRMetrics(cfg *rest.Config) error {
     
     ...
-
 	filteredGVK, err := k8sutil.GetGVKsFromAddToScheme(apis.AddToScheme)
 	if err != nil {
 		return err
@@ -574,9 +573,9 @@ func serveCRMetrics(cfg *rest.Config) error {
 	}
 ``` 
 
-The `kubemetrics.GenerateAndServeCRMetrics` will requires permission to List all GroupVersionKinds in the List of namespaces informed. So, probably you will need to customize the implementation of the [k8sutil.GetGVKsFromAddToScheme](https://godoc.org/github.com/operator-framework/operator-sdk/pkg/k8sutil#GetGVKsFromAddToScheme) by doing your own `GetGVKsFromAddToScheme` to not face permissions issues such as `Failed to list *unstructured.Unstructured`.
+The `kubemetrics.GenerateAndServeCRMetrics` requires an RBAC permission to List all GroupVersionKinds in the List of watched namespaces, therefore, you might need to customize the implementation of the [k8sutil.GetGVKsFromAddToScheme](https://godoc.org/github.com/operator-framework/operator-sdk/pkg/k8sutil#GetGVKsFromAddToScheme) by implementing your own `GetGVKsFromAddToScheme` to avoid permission issues such as `Failed to list *unstructured.Unstructured`.
 
-In this scenario, this error may occurs because your Operator has not the RBCA(roles) permissions to LIST the third party API schemas or the schemas which are required to them and will be added with. See that the default SDK implementation will just add the Kubernetes schemas and they will be ignored in the metrics as you can check the `k8sutil.GetGVKsFromAddToScheme` code implementation:
+In this scenario, this error may occur because your Operator RBAC roles do not include permissions to LIST the third party API schemas or the schemas which are required to them and will be added with. See that the default SDK implementation will just add the Kubernetes schemas and they will be ignored in the metrics as you can check the `k8sutil.GetGVKsFromAddToScheme` code implementation:
 
 ```go 
 ...
@@ -590,7 +589,7 @@ In this scenario, this error may occurs because your Operator has not the RBCA(r
 ... 
 ```
 
-In this way, may will be required to the same to ignore the third party API schemas added by you. 
+It means that you might need to do an similar implementation to filter the third party API schemas and their dependencies added in order to provide a filtered a List of GVK(GroupVersionKind) to the  `GenerateAndServeCRMetrics` method. 
 
 ### Handle Cleanup on Deletion
 
