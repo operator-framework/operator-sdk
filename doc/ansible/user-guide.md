@@ -51,15 +51,17 @@ be monitored for updates and cached.
 * **group**:  The group of the Custom Resource that you will be watching.
 * **version**:  The version of the Custom Resource that you will be watching.
 * **kind**:  The kind of the Custom Resource that you will be watching.
-* **role** (default): This is the name of the role that you have added to the
-  container. This field is mutually exclusive with the
-  "playbook" field. If the path is relative, it is relative to the `roles` directory in the current working directory 
-  which in the image by default is `/opt/ansible/roles`. Also, when it is running locally it is by default the directory 
-  `roles` in the current project directory in the local machine. Note that it can be customized by using the flag 
-  `ansible-roles-path` or the envinroment variable `ANSIBLE_ROLES_PATH`. 
+* **role** (default): Speficies a role to be executed. This field is mutually exclusive with the
+  "playbook" field. This field can be:
+  * an absolute path to a role directory.
+  * a relative path within one of the directories specified by `ANSIBLE_ROLES_PATH` environment variable or `ansible-roles-path` flag.
+  * a relative path within the current working directory, which defaults to `/opt/ansible/roles`.
+  * a fully qualified collection name of an installed Ansible collection. Ansible collections are installed to
+    `~/.ansible/collections` or `/usr/share/ansible/collections` by default. If they are installed elsewhere, 
+    use the `ANSIBLE_COLLECTIONS_PATH` environment variable or the `ansible-collections-path` flag
 * **playbook**: This is the playbook name that you have added to the
   container. This playbook is expected to be simply a way to call roles. This
-  field is mutually exclusive with the "role" field. Also, when it is running locally it looking for the playbook in the 
+  field is mutually exclusive with the "role" field. Also, when it is running locally it looking for the playbook in the
   current project directory in the local machine.
 * **vars**: This is an arbitrary map of key-value pairs. The contents will be
   passed as `extra_vars` to the playbook or role specified for this watch.
@@ -107,6 +109,12 @@ An example Watches file:
     - group: ""
       version: v1
       kind: ConfigMap
+
+# Example usage with a role from an installed Ansible collection 
+- version: v1alpha1
+  group: bar.example.com
+  kind: Bar
+  role: myNamespace.myCollection.myRole
 ```
 
 ## Customize the operator logic
