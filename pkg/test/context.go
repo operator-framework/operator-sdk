@@ -40,7 +40,7 @@ type Context struct {
 // todo(camilamacedo86): Remove the following line just added for we are able to deprecated TestCtx
 // need to be done before: 1.0.0
 
-// Deprecated: Context exists for historical compatibility. Use Context instead.
+// Deprecated: TestCtx exists for historical compatibility. Use Context instead.
 type TestCtx = Context //nolint:golint
 
 type CleanupOptions struct {
