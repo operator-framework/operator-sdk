@@ -203,7 +203,8 @@ func getPossibleRolePaths(path string) []string {
 			}
 		}
 		for _, possiblePathParent := range strings.Split(ansibleCollectionsPathEnv, ":") {
-			possibleRolePaths = append(possibleRolePaths, filepath.Join(possiblePathParent, "ansible_collections", fqcn[0], fqcn[1], "roles", fqcn[2]))
+			possiblePath := filepath.Join(possiblePathParent, "ansible_collections", fqcn[0], fqcn[1], "roles", fqcn[2])
+			possibleRolePaths = append(possibleRolePaths, possiblePath)
 		}
 	}
 
@@ -212,7 +213,6 @@ func getPossibleRolePaths(path string) []string {
 	if ok && len(ansibleRolesPathEnv) > 0 {
 		for _, possiblePathParent := range strings.Split(ansibleRolesPathEnv, ":") {
 			// "roles" is optionally a part of the path. Check with, and without.
-			// TODO(asmacdo) ^This might not be true. https://github.com/operator-framework/operator-sdk/pull/2273#discussion_r374946618
 			possibleRolePaths = append(possibleRolePaths, filepath.Join(possiblePathParent, path))
 			possibleRolePaths = append(possibleRolePaths, filepath.Join(possiblePathParent, "roles", path))
 		}

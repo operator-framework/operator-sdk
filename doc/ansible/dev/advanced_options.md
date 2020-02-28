@@ -137,6 +137,7 @@ command:
    setting the `"ansible.operator-sdk/verbosity"` annotation on the Custom
    Resource.
 
+
 ### Examples
 
 For demonstration purposes, let us assume that we have a database operator that

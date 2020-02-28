@@ -72,8 +72,10 @@ func AddTo(flagSet *pflag.FlagSet, helpTextPrefix ...string) *AnsibleOperatorFla
 		"ansible-collections-path",
 		"",
 		strings.Join(append(helpTextPrefix,
-			"Path to installed Ansible Collections. If set, collections should be located in {{value}}/ansible_collections/. If unset, collections are assumed to be in ~/.ansible/collections or /usr/share/ansible/collections."),
-			" "),
+			`Path to installed Ansible Collections. If set, collections should be
+			located in {{value}}/ansible_collections/. If unset, collections are
+			assumed to be in ~/.ansible/collections or
+			/usr/share/ansible/collections.`), " "),
 	)
 	return aof
 }
