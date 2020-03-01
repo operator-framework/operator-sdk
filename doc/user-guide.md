@@ -249,6 +249,99 @@ return reconcile.Result{RequeueAfter: time.Second*5}, nil
 
 **Note:** Returning `Result` with `RequeueAfter` set is how you can periodically reconcile a CR.
 
+The example [`memcached_controller.go`][memcached_controller] implementation illustrates several 
+common use cases of the `reconcile.Result` options listed above. The first common use case
+demonstrated in [`memcached_controller.go`][memcached_controller] is when the primary resource
+managed by the reconcile loop cannot be found. This is shown in the following snippet:
+```Go
+// Fetch the Memcached instance
+memcached := &cachev1alpha1.Memcached{}
+err := r.client.Get(context.TODO(), request.NamespacedName, memcached)
+if err != nil {
+	if errors.IsNotFound(err) {
+		// Request object not found, could have been deleted after reconcile request.
+		// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
+		// Return and don't requeue
+		reqLogger.Info("Memcached resource not found. Ignoring since object must be deleted")
+		return reconcile.Result{}, nil
+	}
+...
+```
+
+In this situation, the primary resource managed by the reconcile loop is a `Memcached` resource, and it cannot be found. Since it cannot be found, it is assumed to have already been deleted.  In this case, there is no more processing that is required and the reconcile loop returns without performing a requeue by doing
+the following:
+```Go
+return reconcile.Result{}, nil
+```
+
+The next common use case is when the reconcile loop encounters any type of error that is not
+associated with a resource being unavailable. This could occur when the reconcile loop is
+able to fetch the primary resource that it manages but is unable to read the resource.  
+In this situation, the reconcile loop will return the error encountered and this will trigger
+a requeue so that another attempt to perform a reconcile will occur.  The 
+[`memcached_controller.go`][memcached_controller] illustrates this behavior as shown in the 
+following code snippet:
+```Go
+// Fetch the Memcached instance
+memcached := &cachev1alpha1.Memcached{}
+err := r.client.Get(context.TODO(), request.NamespacedName, memcached)
+if err != nil {
+	if errors.IsNotFound(err) {
+		...
+  }
+  // Error reading the object - requeue the request.
+	reqLogger.Error(err, "Failed to get Memcached")
+	return reconcile.Result{}, err
+}
+```
+
+The [`memcached_controller.go`][memcached_controller] provides several other examples of using
+`return reconcile.Result{}, err` to return an error and perform a requeue. All these examples
+follow the common patterns of being errors such as failure to update or list resources, or failure
+to update the status of a resource.
+
+Another common use case that is encountered is when the reconcile loop needs to create a new resource
+that is owned by the primary resource. For example, the reconcile loop in the 
+[`memcached_controller.go`][memcached_controller] needs to create a `Deployment` resource if the 
+`Memcached` resource that it manages does not already have a `Deployment` resource associated with it.
+Because new resources are being created in this situation, there is the potential
+that further processing is required.  Thus, the reconcile loop needs to trigger a
+requeue but there is no error associated with this requeue.  A requeue with no error 
+associated with it is performed by using the `return reconcile.Result{Requeue: true}, nil`
+option as shown in the code snippet from [`memcached_controller.go`][memcached_controller] below:
+```Go
+// Define a new deployment
+dep := r.deploymentForMemcached(memcached)
+...
+
+// Deployment created successfully - return and requeue
+return reconcile.Result{Requeue: true}, nil
+```
+
+A use case similar to the one just described that also requires a requeue to be
+performed is when the reconcile loop needs to update
+the `spec` values of one of resources that are under its watch.  An example of this in  [`memcached_controller.go`][memcached_controller] is when it performs an update to the 
+`spec` of its `Deployment` resource to ensure its `size` attribute matches the value in the
+parent `Memcached` resource. The update operation finishes by using 
+`return reconcile.Result{Requeue: true}, nil` to perform a requeue as shown in the following
+snippet:
+```Go
+// Ensure the deployment size is the same as the spec
+size := memcached.Spec.Size
+if *found.Spec.Replicas != size {
+	found.Spec.Replicas = &size
+	err = r.client.Update(context.TODO(), found)
+  ...
+	// Spec updated - return and requeue
+	return reconcile.Result{Requeue: true}, nil
+}
+```
+
+A final common use case is when the reconcile loop determines that no action at all needs
+to be taken. In this case, there is no remaining work or issues that need to be resolved and no
+requeueing or error reporting is necessary.  In this situation, all that is required is a basic
+`return reconcile.Result{}, nil`. 
+
 For a guide on Reconcilers, Clients, and interacting with resource Events, see the [Client API doc][doc_client_api].
 
 ## Build and run the operator
