@@ -249,6 +249,7 @@ return reconcile.Result{RequeueAfter: time.Second*5}, nil
 
 **Note:** Returning `Result` with `RequeueAfter` set is how you can periodically reconcile a CR.
 
+#### Reconcile Result Use Cases
 The example [`memcached_controller.go`][memcached_controller] implementation illustrates several 
 common use cases of the `reconcile.Result` options listed above. The first common use case
 demonstrated in [`memcached_controller.go`][memcached_controller] is when the primary resource
@@ -273,11 +274,11 @@ the following:
 ```Go
 return reconcile.Result{}, nil
 ```
-
+##### Reconcile Result Error Use Cases
 The next common use case is when the reconcile loop encounters any type of error that is not
 associated with a resource being unavailable. This could occur when the reconcile loop is
-able to fetch the primary resource that it manages but is unable to read the resource.  
-In this situation, the reconcile loop will return the error encountered and this will trigger
+able to fetch the primary resource that it manages but is unable to read the resource. In
+this situation, the reconcile loop will return the error encountered and this will trigger
 a requeue so that another attempt to perform a reconcile will occur.  The 
 [`memcached_controller.go`][memcached_controller] illustrates this behavior as shown in the 
 following code snippet:
@@ -300,6 +301,7 @@ The [`memcached_controller.go`][memcached_controller] provides several other exa
 follow the common patterns of being errors such as failure to update or list resources, or failure
 to update the status of a resource.
 
+##### Reconcile Result Resource Creation Use Cases
 Another common use case that is encountered is when the reconcile loop needs to create a new resource
 that is owned by the primary resource. For example, the reconcile loop in the 
 [`memcached_controller.go`][memcached_controller] needs to create a `Deployment` resource if the 
@@ -336,7 +338,7 @@ if *found.Spec.Replicas != size {
 	return reconcile.Result{Requeue: true}, nil
 }
 ```
-
+##### Reconcile Result No Action Taken Use Cases
 A final common use case is when the reconcile loop determines that no action at all needs
 to be taken. In this case, there is no remaining work or issues that need to be resolved and no
 requeueing or error reporting is necessary.  In this situation, all that is required is a basic
