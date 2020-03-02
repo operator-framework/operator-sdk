@@ -20,6 +20,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/operator-framework/operator-sdk/internal/olm"
 	operator "github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
@@ -91,6 +92,7 @@ func SingleOperator(t *testing.T) {
 		OperatorVersion: operatorVersion,
 		KubeconfigPath:  kubeconfigPath,
 		Timeout:         defaultTimeout,
+		OLMNamespace:    olm.DefaultOLMNamespace,
 	}
 	// Cleanup.
 	defer func() {

@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"github.com/operator-framework/operator-sdk/internal/olm"
 	olmresourceclient "github.com/operator-framework/operator-sdk/internal/olm/client"
 	opinternal "github.com/operator-framework/operator-sdk/internal/olm/operator/internal"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
@@ -51,7 +52,10 @@ func init() {
 }
 
 type operatorManager struct {
-	client        *olmresourceclient.Client
+	client *olmresourceclient.Client
+	// olmNamespace is the namespace where olm is installed
+	// and operator registry server resources are created
+	olmNamespace  string
 	version       string
 	namespace     string
 	forceRegistry bool
@@ -72,6 +76,10 @@ func (c *OLMCmd) newManager() (*operatorManager, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get namespace from kubeconfig %s: %w", c.KubeconfigPath, err)
 	}
+	if m.olmNamespace = c.OLMNamespace; m.olmNamespace == "" {
+		m.olmNamespace = olm.DefaultOLMNamespace
+	}
+
 	if ns == "" {
 		ns = defaultNamespace
 	}
@@ -132,7 +140,7 @@ func (c *OLMCmd) newManager() (*operatorManager, error) {
 
 func (m *operatorManager) run(ctx context.Context) (err error) {
 	// Ensure OLM is installed.
-	olmVer, err := m.client.GetInstalledVersion(ctx)
+	olmVer, err := m.client.GetInstalledVersion(ctx, m.olmNamespace)
 	if err != nil {
 		return fmt.Errorf("error getting installed OLM version: %w", err)
 	}
@@ -159,12 +167,12 @@ func (m *operatorManager) run(ctx context.Context) (err error) {
 		return fmt.Errorf("an operator with name %q is present and has resource errors\n%s", pkgName, status)
 	}
 
-	if err = m.registryUp(ctx, olmresourceclient.OLMNamespace); err != nil {
+	if err = m.registryUp(ctx, m.olmNamespace); err != nil {
 		return fmt.Errorf("error creating registry resources: %w", err)
 	}
 	log.Info("Creating resources")
 	if !m.hasCatalogSource() {
-		registryGRPCAddr := opinternal.GetRegistryServiceAddr(pkgName, olmresourceclient.OLMNamespace)
+		registryGRPCAddr := opinternal.GetRegistryServiceAddr(pkgName, m.olmNamespace)
 		catsrc := newCatalogSource(pkgName, m.namespace, withGRPC(registryGRPCAddr))
 		m.olmObjects = append(m.olmObjects, catsrc)
 	}
@@ -223,7 +231,7 @@ func (m *operatorManager) run(ctx context.Context) (err error) {
 
 func (m *operatorManager) cleanup(ctx context.Context) (err error) {
 	// Ensure OLM is installed.
-	olmVer, err := m.client.GetInstalledVersion(ctx)
+	olmVer, err := m.client.GetInstalledVersion(ctx, m.olmNamespace)
 	if err != nil {
 		return fmt.Errorf("error getting installed OLM version: %w", err)
 	}
@@ -237,7 +245,7 @@ func (m *operatorManager) cleanup(ctx context.Context) (err error) {
 		return fmt.Errorf("error getting CSV from bundle: %w", err)
 	}
 
-	if err = m.registryDown(ctx, olmresourceclient.OLMNamespace); err != nil {
+	if err = m.registryDown(ctx, m.olmNamespace); err != nil {
 		return fmt.Errorf("error removing registry resources: %w", err)
 	}
 	log.Info("Deleting resources")

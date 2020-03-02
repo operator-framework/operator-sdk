@@ -13,8 +13,9 @@ operator-sdk olm status [flags]
 ### Options
 
 ```
-  -h, --help               help for status
-      --timeout duration   time to wait for the command to complete before failing (default 2m0s)
+  -h, --help                   help for status
+      --olm-namespace string   namespace where OLM is installed (default "olm")
+      --timeout duration       time to wait for the command to complete before failing (default 2m0s)
 ```
 
 ### SEE ALSO

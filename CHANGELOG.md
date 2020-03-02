@@ -36,6 +36,7 @@
 - Add the --proxy-port flag to the operator-sdk scorecard command allowing users to override the default proxy port value (8889). ([2634](https://github.com/operator-framework/operator-sdk/pull/2634))
 - Add support for Metrics with MultiNamespace scenario. ([#2603](https://github.com/operator-framework/operator-sdk/pull/2603))
 - Add Prometheus metrics support to Helm-based operators. ([#2603](https://github.com/operator-framework/operator-sdk/pull/2603))
+- Add a new flag option `--olm-namespace` to `operator-sdk run --olm`, `operator-sdk cleanup --olm` and `operator-sdk olm status` command, which allows specifying the namespace in which OLM is installed. ([#2613](https://github.com/operator-framework/operator-sdk/pull/2613))
 
 ### Changed
 - The base image now includes version 0.10.3 of the OpenShift Python client. This should fix hanging in Python3
