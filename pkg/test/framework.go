@@ -60,7 +60,7 @@ type Framework struct {
 	KubeClient        kubernetes.Interface
 	Scheme            *runtime.Scheme
 	NamespacedManPath *string
-	Namespace         string
+	OperatorNamespace string
 
 	restMapper *restmapper.DeferredDiscoveryRESTMapper
 
@@ -95,7 +95,7 @@ const (
 	LocalOperatorArgs      = "localOperatorArgs"
 	SkipCleanupOnErrorFlag = "skipCleanupOnError"
 
-	TestNamespaceEnv = "TEST_NAMESPACE"
+	TestOperatorNamespaceEnv = "TEST_OPERATOR_NAMESPACE"
 )
 
 func (opts *frameworkOpts) addToFlagSet(flagset *flag.FlagSet) {
@@ -119,11 +119,11 @@ func newFramework(opts *frameworkOpts) (*Framework, error) {
 		return nil, fmt.Errorf("failed to build the kubeconfig: %w", err)
 	}
 
-	namespace := kcNamespace
+	operatorNamespace := kcNamespace
 	if opts.singleNamespaceMode {
-		testNamespace := os.Getenv(TestNamespaceEnv)
-		if testNamespace != "" {
-			namespace = testNamespace
+		testOperatorNamespace := os.Getenv(TestOperatorNamespaceEnv)
+		if testOperatorNamespace != "" {
+			operatorNamespace = testOperatorNamespace
 		}
 	}
 
@@ -154,7 +154,7 @@ func newFramework(opts *frameworkOpts) (*Framework, error) {
 		KubeClient:        kubeclient,
 		Scheme:            scheme,
 		NamespacedManPath: &opts.namespacedManPath,
-		Namespace:         namespace,
+		OperatorNamespace: operatorNamespace,
 		LocalOperator:     opts.isLocalOperator,
 
 		projectRoot:         opts.projectRoot,
@@ -198,7 +198,7 @@ func (f *Framework) addToScheme(addToScheme addToSchemeFunc, obj runtime.Object)
 	}
 	err = wait.PollImmediate(time.Second, time.Second*10, func() (done bool, err error) {
 		if f.singleNamespaceMode {
-			err = dynClient.List(goctx.TODO(), obj, dynclient.InNamespace(f.Namespace))
+			err = dynClient.List(goctx.TODO(), obj, dynclient.InNamespace(f.OperatorNamespace))
 		} else {
 			err = dynClient.List(goctx.TODO(), obj, dynclient.InNamespace("default"))
 		}
@@ -293,6 +293,6 @@ func (f *Framework) setupLocalCommand() (*exec.Cmd, error) {
 		localCmd.Env = append(os.Environ(), fmt.Sprintf("%v=%v", k8sutil.KubeConfigEnvVar,
 			clientcmd.NewDefaultClientConfigLoadingRules().Precedence[0]))
 	}
-	localCmd.Env = append(localCmd.Env, fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, f.Namespace))
+	localCmd.Env = append(localCmd.Env, fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, f.OperatorNamespace))
 	return localCmd, nil
 }

@@ -84,7 +84,7 @@ func init() {
 func TestBothAppAndCATLSAssetsExist(t *testing.T) {
 	ctx := framework.NewContext(t)
 	defer ctx.Cleanup()
-	namespace, err := ctx.GetNamespace()
+	namespace, err := ctx.GetOperatorNamespace()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -129,7 +129,7 @@ func TestBothAppAndCATLSAssetsExist(t *testing.T) {
 func TestOnlyAppSecretExist(t *testing.T) {
 	ctx := framework.NewContext(t)
 	defer ctx.Cleanup()
-	namespace, err := ctx.GetNamespace()
+	namespace, err := ctx.GetOperatorNamespace()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -155,7 +155,7 @@ func TestOnlyAppSecretExist(t *testing.T) {
 func TestOnlyCAExist(t *testing.T) {
 	ctx := framework.NewContext(t)
 	defer ctx.Cleanup()
-	namespace, err := ctx.GetNamespace()
+	namespace, err := ctx.GetOperatorNamespace()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -184,7 +184,7 @@ func TestOnlyCAExist(t *testing.T) {
 func TestNoneOfCaAndAppSecretExist(t *testing.T) {
 	ctx := framework.NewContext(t)
 	defer ctx.Cleanup()
-	namespace, err := ctx.GetNamespace()
+	namespace, err := ctx.GetOperatorNamespace()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -206,7 +206,7 @@ func TestNoneOfCaAndAppSecretExist(t *testing.T) {
 func TestCustomCA(t *testing.T) {
 	ctx := framework.NewContext(t)
 	defer ctx.Cleanup()
-	namespace, err := ctx.GetNamespace()
+	namespace, err := ctx.GetOperatorNamespace()
 	if err != nil {
 		t.Fatal(err)
 	}

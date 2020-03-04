@@ -54,7 +54,7 @@ header_text "Test local"
 pushd memcached-operator
 sed -i".bak" -E -e 's/(FROM quay.io\/operator-framework\/ansible-operator)(:.*)?/\1:dev/g' build/Dockerfile; rm -f build/Dockerfile.bak
 OPERATORDIR="$(pwd)"
-TEST_CLUSTER_PORT=24443 operator-sdk test local --namespace default
+TEST_CLUSTER_PORT=24443 operator-sdk test local --operator-namespace default
 
 remove_prereqs
 
@@ -67,6 +67,6 @@ DEST_IMAGE="quay.io/example/ansible-test-operator:v0.0.1"
 sed -i".bak" -E -e 's/(FROM quay.io\/operator-framework\/ansible-operator)(:.*)?/\1:dev/g' build/Dockerfile; rm -f build/Dockerfile.bak
 operator-sdk build "$DEST_IMAGE" --image-build-args="--no-cache"
 load_image_if_kind "$DEST_IMAGE"
-OPERATOR_PULL_POLICY=Never OPERATOR_IMAGE=${DEST_IMAGE} TEST_CLUSTER_PORT=24443 TEST_NAMESPACE=osdk-test molecule test --all
+OPERATOR_PULL_POLICY=Never OPERATOR_IMAGE=${DEST_IMAGE} TEST_CLUSTER_PORT=24443 TEST_OPERATOR_NAMESPACE=osdk-test molecule test --all
 
 popd

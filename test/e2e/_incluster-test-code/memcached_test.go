@@ -66,7 +66,7 @@ func TestMemcached(t *testing.T) {
 }
 
 func memcachedLeaderTest(t *testing.T, f *framework.Framework, ctx *framework.Context) error {
-	namespace, err := ctx.GetNamespace()
+	namespace, err := ctx.GetOperatorNamespace()
 	if err != nil {
 		return err
 	}
@@ -162,7 +162,7 @@ func verifyLeader(t *testing.T, namespace string, f *framework.Framework, labels
 
 func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Context, fromReplicas, toReplicas int) error {
 	name := "example-memcached"
-	namespace, err := ctx.GetNamespace()
+	namespace, err := ctx.GetOperatorNamespace()
 	if err != nil {
 		return fmt.Errorf("could not get namespace: %v", err)
 	}
@@ -213,7 +213,7 @@ func MemcachedLocal(t *testing.T) {
 	// get global framework variables
 	ctx := framework.NewContext(t)
 	defer ctx.Cleanup()
-	namespace, err := ctx.GetNamespace()
+	namespace, err := ctx.GetOperatorNamespace()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -273,7 +273,7 @@ func MemcachedCluster(t *testing.T) {
 		t.Fatalf("Failed to initialize cluster resources: %v", err)
 	}
 	t.Log("Initialized cluster resources")
-	namespace, err := ctx.GetNamespace()
+	namespace, err := ctx.GetOperatorNamespace()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -306,7 +306,7 @@ func MemcachedCluster(t *testing.T) {
 }
 
 func memcachedMetricsTest(t *testing.T, f *framework.Framework, ctx *framework.Context) error {
-	namespace, err := ctx.GetNamespace()
+	namespace, err := ctx.GetOperatorNamespace()
 	if err != nil {
 		return err
 	}
@@ -348,7 +348,7 @@ func memcachedMetricsTest(t *testing.T, f *framework.Framework, ctx *framework.C
 }
 
 func memcachedOperatorMetricsTest(t *testing.T, f *framework.Framework, ctx *framework.Context) error {
-	namespace, err := ctx.GetNamespace()
+	namespace, err := ctx.GetOperatorNamespace()
 	if err != nil {
 		return err
 	}

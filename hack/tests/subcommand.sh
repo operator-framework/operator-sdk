@@ -20,17 +20,17 @@ operator-sdk test local ./test/e2e --global-manifest deploy/crds/cache.example.c
 # we use the test-memcached namespace for all future tests, so we only need to set this trap once
 kubectl create namespace test-memcached
 trap_add 'kubectl delete namespace test-memcached || true' EXIT
-operator-sdk test local ./test/e2e --namespace=test-memcached
+operator-sdk test local ./test/e2e --operator-namespace=test-memcached
 kubectl delete namespace test-memcached
 
 # test operator in 'run --local' mode
 kubectl create namespace test-memcached
-operator-sdk test local ./test/e2e --up-local --namespace=test-memcached
+operator-sdk test local ./test/e2e --up-local --operator-namespace=test-memcached
 kubectl delete namespace test-memcached
 
 # test operator in 'run --local' mode with kubeconfig
 kubectl create namespace test-memcached
-operator-sdk test local ./test/e2e --up-local --namespace=test-memcached --kubeconfig $KUBECONFIG
+operator-sdk test local ./test/e2e --up-local --operator-namespace=test-memcached --kubeconfig $KUBECONFIG
 kubectl delete namespace test-memcached
 
 # test operator in no-setup mode
@@ -45,6 +45,6 @@ kubectl create -f deploy/service_account.yaml --namespace test-memcached
 kubectl create -f deploy/role.yaml --namespace test-memcached
 kubectl create -f deploy/role_binding.yaml --namespace test-memcached
 kubectl create -f deploy/operator.yaml --namespace test-memcached
-operator-sdk test local ./test/e2e --namespace=test-memcached --no-setup
+operator-sdk test local ./test/e2e --operator-namespace=test-memcached --no-setup
 kubectl delete namespace test-memcached
 popd

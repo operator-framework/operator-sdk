@@ -29,27 +29,27 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-func (ctx *Context) GetNamespace() (string, error) {
-	if ctx.namespace != "" {
-		return ctx.namespace, nil
+func (ctx *Context) GetOperatorNamespace() (string, error) {
+	if ctx.operatorNamespace != "" {
+		return ctx.operatorNamespace, nil
 	}
 	// create namespace
-	ctx.namespace = ctx.GetID()
-	namespaceObj := &core.Namespace{ObjectMeta: metav1.ObjectMeta{Name: ctx.namespace}}
+	ctx.operatorNamespace = ctx.GetID()
+	namespaceObj := &core.Namespace{ObjectMeta: metav1.ObjectMeta{Name: ctx.operatorNamespace}}
 	_, err := ctx.kubeclient.CoreV1().Namespaces().Create(namespaceObj)
 	if apierrors.IsAlreadyExists(err) {
-		return "", fmt.Errorf("namespace %s already exists: %w", ctx.namespace, err)
+		return "", fmt.Errorf("namespace %s already exists: %w", ctx.operatorNamespace, err)
 	} else if err != nil {
 		return "", err
 	}
 	ctx.AddCleanupFn(func() error {
-		return ctx.kubeclient.CoreV1().Namespaces().Delete(ctx.namespace, metav1.NewDeleteOptions(0))
+		return ctx.kubeclient.CoreV1().Namespaces().Delete(ctx.operatorNamespace, metav1.NewDeleteOptions(0))
 	})
-	return ctx.namespace, nil
+	return ctx.operatorNamespace, nil
 }
 
 func (ctx *Context) createFromYAML(yamlFile []byte, skipIfExists bool, cleanupOptions *CleanupOptions) error {
-	namespace, err := ctx.GetNamespace()
+	operatorNamespace, err := ctx.GetOperatorNamespace()
 	if err != nil {
 		return err
 	}
@@ -65,7 +65,7 @@ func (ctx *Context) createFromYAML(yamlFile []byte, skipIfExists bool, cleanupOp
 		if err := obj.UnmarshalJSON(jsonSpec); err != nil {
 			return fmt.Errorf("failed to unmarshal object spec: %w", err)
 		}
-		obj.SetNamespace(namespace)
+		obj.SetNamespace(operatorNamespace)
 		err = ctx.client.Create(goctx.TODO(), obj, cleanupOptions)
 		if skipIfExists && apierrors.IsAlreadyExists(err) {
 			continue

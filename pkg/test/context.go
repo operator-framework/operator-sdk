@@ -25,10 +25,10 @@ import (
 )
 
 type Context struct {
-	id         string
-	cleanupFns []cleanupFn
-	namespace  string
-	t          *testing.T
+	id                string
+	cleanupFns        []cleanupFn
+	operatorNamespace string
+	t                 *testing.T
 
 	namespacedManPath  string
 	client             *frameworkClient
@@ -56,14 +56,14 @@ func (f *Framework) newContext(t *testing.T) *Context {
 	// Context is used among others for namespace names where '/' is forbidden and must be 63 characters or less
 	id := "osdk-e2e-" + uuid.New()
 
-	var namespace string
+	var operatorNamespace string
 	if f.singleNamespaceMode {
-		namespace = f.Namespace
+		operatorNamespace = f.OperatorNamespace
 	}
 	return &Context{
 		id:                 id,
 		t:                  t,
-		namespace:          namespace,
+		operatorNamespace:  operatorNamespace,
 		namespacedManPath:  *f.NamespacedManPath,
 		client:             f.Client,
 		kubeclient:         f.KubeClient,

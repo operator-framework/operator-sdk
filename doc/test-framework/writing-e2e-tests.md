@@ -125,7 +125,7 @@ test, the `WaitForOperatorDeployment` function from [e2eutil][e2eutil-link] (in 
 
 ```go
 // get namespace
-namespace, err := ctx.GetNamespace()
+namespace, err := ctx.GetOperatorNamespace()
 if err != nil {
     t.Fatal(err)
 }

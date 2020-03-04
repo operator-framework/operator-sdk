@@ -47,7 +47,7 @@ type testLocalConfig struct {
 	namespacedManPath  string
 	goTestFlags        string
 	moleculeTestFlags  string
-	namespace          string
+	operatorNamespace  string
 	image              string
 	localOperatorFlags string
 	upLocal            bool
@@ -73,7 +73,7 @@ func newTestLocalCmd() *cobra.Command {
 		"Additional flags to pass to go test")
 	testCmd.Flags().StringVar(&tlConfig.moleculeTestFlags, "molecule-test-flags", "",
 		"Additional flags to pass to molecule test")
-	testCmd.Flags().StringVar(&tlConfig.namespace, "namespace", "",
+	testCmd.Flags().StringVar(&tlConfig.operatorNamespace, "operator-namespace", "",
 		"If non-empty, single namespace to run tests in")
 	testCmd.Flags().BoolVar(&tlConfig.upLocal, "up-local", false,
 		"Enable running operator locally with go run instead of as an image in the cluster")
@@ -115,7 +115,7 @@ func testLocalAnsibleFunc() error {
 	}
 
 	dc := exec.Command("molecule", testArgs...)
-	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", test.TestNamespaceEnv, tlConfig.namespace))
+	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", test.TestOperatorNamespaceEnv, tlConfig.operatorNamespace))
 	dc.Dir = projutil.MustGetwd()
 	if err := projutil.ExecCmd(dc); err != nil {
 		log.Fatal(err)
@@ -133,8 +133,8 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 			" at the same time as the no-setup flag")
 	}
 
-	if tlConfig.upLocal && tlConfig.namespace == "" {
-		return fmt.Errorf("must specify a namespace to run in when -up-local flag is set")
+	if tlConfig.upLocal && tlConfig.operatorNamespace == "" {
+		return fmt.Errorf("must specify a namespace with operator-namespace flag to run in when -up-local flag is set")
 	}
 
 	log.Info("Testing operator locally.")
@@ -223,10 +223,10 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 	if tlConfig.goTestFlags != "" {
 		testArgs = append(testArgs, strings.Split(tlConfig.goTestFlags, " ")...)
 	}
-	if tlConfig.namespace != "" || tlConfig.noSetup {
+	if tlConfig.operatorNamespace != "" || tlConfig.noSetup {
 		testArgs = append(testArgs, "-"+test.SingleNamespaceFlag, "-parallel=1")
 	}
-	env := append(os.Environ(), fmt.Sprintf("%v=%v", test.TestNamespaceEnv, tlConfig.namespace))
+	env := append(os.Environ(), fmt.Sprintf("%v=%v", test.TestOperatorNamespaceEnv, tlConfig.operatorNamespace))
 	if tlConfig.upLocal {
 		env = append(env, fmt.Sprintf("%s=%s", k8sutil.ForceRunModeEnv, k8sutil.LocalRunMode))
 		testArgs = append(testArgs, "-"+test.LocalOperatorFlag)
