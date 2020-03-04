@@ -6,3 +6,4 @@
   tasks:
     - import_tasks: tasks/inventory_test.yml
     - import_tasks: tasks/servicemonitor_test.yml
+    - import_tasks: tasks/collections_test.yml

@@ -1,0 +1,17 @@
+- name: Create the test.example.com/v1alpha1.Collection
+  k8s:
+    state: present
+    definition:
+      apiVersion:
+      kind: Collection
+      metadata:
+        name: collection-test
+        namespace: '{{ namespace }}'
+      spec:
+        arbitrary: data
+
+- name: Assert sentinel ConfigMap has been created for Molecule Test
+  assert:
+    that: cm.data.did_this_work == 'yes'
+  vars:
+    cm: "{{ q('k8s', api_version='v1', kind='ConfigMap', namespace=namespace, resource_name='test-this-collection').0 }}"
