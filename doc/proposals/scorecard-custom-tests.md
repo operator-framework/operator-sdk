@@ -17,12 +17,6 @@ status: implementable
 
 # Scorecard - Custom Tests
 
-   the domain.
-1. **Fill out the "overview" sections.** This includes the Summary and
-   Motivation sections. These should be easy and explain why the community
-   should desire this enhancement.
-1. **Create a PR.** Assign it to folks with expertise in that domain to help
-   sponsor the process.
 
 ## Release Signoff Checklist
 
@@ -31,13 +25,6 @@ status: implementable
 - \[ \] Test plan is defined
 - \[ \] Graduation criteria for dev preview, tech preview, GA
 - \[ \] User-facing documentation is created in [operator-sdk/doc][operator-sdk-doc]
-
-## Open Questions (optional)
-
-This is where to call out areas of the design that require closure before deciding
-to implement the design.  For instance, 
- > 1. This requires exposing previously private resources which contain sensitive
-  information.  Can we do this? 
 
 ## Summary
 
@@ -78,22 +65,6 @@ Scorecard users can develop custom test using the programming language of their 
 #### Story 3
 
 Scorecard users can execute custom tests as container images.
-
-### Implementation Details/Notes/Constraints (optional)
-
-What are the caveats to the implementation? What are some important details that
-didn't come across above. Go in to as much detail as necessary here. This might
-be a good place to talk about core concepts and how they releate.
-
-### Risks and Mitigations
-
-What are the risks of this proposal and how do we mitigate. Think broadly. For
-example, consider both security and how this will impact the larger OKD
-ecosystem.
-
-How will security be reviewed and by whom? How will UX be reviewed and by whom?
-
-Consider including folks that also work outside your immediate sub-project.
 
 ## Design Details
 
@@ -291,7 +262,9 @@ spec:
 ```
 
 The end user could run that test with this command:
+```
 operator-sdk scorecard -o text --selector=test=mycustomtest
+```
 The scorecard would look at on-disk custom tests as well as tests referenced by URL and perform label selection/matching to determine which tests would be executed.
 
 #### Sample Scorecard Usage
@@ -336,7 +309,7 @@ To implement this custom test functionality, additions or changes to the existin
 
 ## Drawbacks
 
-Disadvantages of using Kuttl within this proposed design include:
+Drawbacks of using Kuttl within this proposed design might include:
 
  * Immaturity of Kuttl and KUDO in general, integration into Operator SDK will require Redhat to possibly contribute upstream to the Kuttl project itself in order to meet the needs of the Operator SDK.
   * <https://github.com/kudobuilder/kuttl/issues/16#issuecomment-589242819>
@@ -363,6 +336,8 @@ The proposed changes to the scorecard solve the immediate need to support custom
 
 The proposed design focuses heavily on separation of concerns, turning scorecard into a test runner essentially, moving Kube provisioning/setup responsibilities outside of the scorecard, and moving test implementations into their own concern (YAML manifests and/or container images).
 
+**The proposed design would be implemented by means of integrating the Kuttl library into the SDK scorecard codebase.**
+
 ## Reference Material
 
 <https://github.com/kudobuilder/kudo>
@@ -387,7 +362,7 @@ To test out this proposal I constructed the following Kudo tests:
 <https://github.com/jmccormick2001/my-static-test>
 This test implements a OLM bundle validation test similar to that of the current scorecard OLM Bundle Validation test.  This test harness consists of a container image that examines the bundle, provided by means of a ConfigMap, and validates it using the operator-framework/api validation API.  If there are no errors, the the container image exits normally, if not, it will exit with a failure exit code (1).
 There is a static test constructed that is run on a sample operator, the rqlite-operator that I wrote previously as a learning tool.  The static test harness is found here:
-https://github.com/jmccormick2001/rqlite-operator/tree/master/tests/e2estatic/static-test
+<https://github.com/jmccormick2001/rqlite-operator/tree/master/tests/e2estatic/static-test>
 
 The test steps include:
 
