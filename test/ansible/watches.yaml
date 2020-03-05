@@ -6,5 +6,5 @@
 
 - version: v1alpha1
   group: test.example.com
-  kind: CollectionTest
+  kind: Collection
   role: asmacdo.fixture_collection.dummy
