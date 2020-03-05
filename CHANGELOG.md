@@ -22,6 +22,7 @@
 - Operator user setup and entrypoint scripts no longer insert dynamic runtime user entries into `/etc/passwd`. To use dynamic runtime users, use a container runtime that supports it (e.g. CRI-O). ([#2469](https://github.com/operator-framework/operator-sdk/pull/2469))
 - Changed the scorecard basic test, `Writing into CRs has an effect`, to include the http.MethodPatch as part of its test criteria alongside http.MethodPut and http.MethodPost. ([#2509](https://github.com/operator-framework/operator-sdk/pull/2509))
 - Changed the scorecard to use the init-timeout configuration setting as a wait time when performing cleanup instead of a hard-coded time.  ([#2597](https://github.com/operator-framework/operator-sdk/pull/2597))
+- Upgrade the Helm dependency version from `v3.0.1` to `v3.0.2`. ([#2621](https://github.com/operator-framework/operator-sdk/pull/2621)) 
 
 ### Deprecated
 - The type name `TestCtx` in `pkg/test` has been deprecated and renamed to `Context`. It now exists only as a type alias to maintain backwards compatibility. Users of the e2e framework should migrate to use the new name, `Context`. The `TestCtx` alias will be removed in a future version. ([2549](https://github.com/operator-framework/operator-sdk/pull/2549))

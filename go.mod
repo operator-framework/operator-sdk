@@ -45,7 +45,7 @@ require (
 	golang.org/x/tools v0.0.0-20191018212557-ed542cd5b28a
 	gopkg.in/gorp.v1 v1.7.2 // indirect
 	gopkg.in/yaml.v2 v2.2.4
-	helm.sh/helm/v3 v3.0.1
+	helm.sh/helm/v3 v3.0.2
 	k8s.io/api v0.0.0
 	k8s.io/apiextensions-apiserver v0.0.0
 	k8s.io/apimachinery v0.0.0
