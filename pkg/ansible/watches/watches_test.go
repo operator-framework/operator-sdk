@@ -391,7 +391,7 @@ func TestLoad(t *testing.T) {
 			shouldError: true,
 		},
 		{
-			name:        "if collection is not installed, fail",
+			name:        "if collection env var is not set and collection is not installed to the default locations, fail",
 			path:        "testdata/invalid_collection.yaml",
 			shouldError: true,
 		},
