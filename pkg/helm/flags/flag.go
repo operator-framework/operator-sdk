@@ -15,6 +15,8 @@
 package flags
 
 import (
+	"strings"
+
 	"github.com/operator-framework/operator-sdk/internal/flags/watch"
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 	"github.com/spf13/pflag"
@@ -23,6 +25,7 @@ import (
 // HelmOperatorFlags - Options to be used by a helm operator
 type HelmOperatorFlags struct {
 	watch.WatchFlags
+	MaxWorkers int
 }
 
 // AddTo - Add the helm operator flags to the the flagset
@@ -31,5 +34,12 @@ func AddTo(flagSet *pflag.FlagSet, helpTextPrefix ...string) *HelmOperatorFlags 
 	hof := &HelmOperatorFlags{}
 	hof.WatchFlags.AddTo(flagSet, helpTextPrefix...)
 	flagSet.AddFlagSet(zap.FlagSet())
+	flagSet.IntVar(&hof.MaxWorkers,
+		"max-workers",
+		1,
+		strings.Join(append(helpTextPrefix,
+			"Maximum number of workers to use."),
+			" "),
+	)
 	return hof
 }
