@@ -184,7 +184,7 @@ func getFullPath(path string) string {
 	return path
 }
 
-// getFullRolePath returns a full path to the role directory
+// getPossibleRolePaths returns list of possible absolute paths derived from a user provided value.
 func getPossibleRolePaths(path string) []string {
 	possibleRolePaths := []string{}
 	if filepath.IsAbs(path) || len(path) == 0 {

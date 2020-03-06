@@ -51,7 +51,7 @@ be monitored for updates and cached.
 * **group**:  The group of the Custom Resource that you will be watching.
 * **version**:  The version of the Custom Resource that you will be watching.
 * **kind**:  The kind of the Custom Resource that you will be watching.
-* **role** (default): Speficies a role to be executed. This field is mutually exclusive with the
+* **role** (default): Specifies a role to be executed. This field is mutually exclusive with the
   "playbook" field. This field can be:
   * an absolute path to a role directory.
   * a relative path within one of the directories specified by `ANSIBLE_ROLES_PATH` environment variable or `ansible-roles-path` flag.
@@ -61,8 +61,8 @@ be monitored for updates and cached.
     use the `ANSIBLE_COLLECTIONS_PATH` environment variable or the `ansible-collections-path` flag
 * **playbook**: This is the playbook name that you have added to the
   container. This playbook is expected to be simply a way to call roles. This
-  field is mutually exclusive with the "role" field. Also, when it is running locally it looking for the playbook in the
-  current project directory in the local machine.
+  field is mutually exclusive with the "role" field. When running locally, the playbook is expected to be in the
+  current project directory.
 * **vars**: This is an arbitrary map of key-value pairs. The contents will be
   passed as `extra_vars` to the playbook or role specified for this watch.
 * **reconcilePeriod** (optional): The reconciliation interval, how often the
