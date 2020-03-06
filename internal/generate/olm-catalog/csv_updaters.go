@@ -201,8 +201,6 @@ var _ csvUpdater = crds{}
 
 // apply updates csv's "owned" CRDDescriptions. "required" CRDDescriptions are
 // left as-is, since they are user-defined values.
-// apply will only make a new spec.customresourcedefinitions.owned element for
-// a type if an annotation is present on that type's declaration.
 func (us crds) apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
 	ownedDescs := []olmapiv1alpha1.CRDDescription{}
 	descMap := map[registry.DefinitionKey]olmapiv1alpha1.CRDDescription{}

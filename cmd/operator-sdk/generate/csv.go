@@ -38,7 +38,9 @@ type csvCmd struct {
 	fromVersion    string
 	operatorName   string
 	outputDir      string
-	inputs         map[string]string
+	deployDir      string
+	apisDir        string
+	crdDir         string
 	updateCRDs     bool
 	defaultChannel bool
 }
@@ -54,6 +56,9 @@ for the operator. This file is used to publish the operator to the OLM Catalog.
 A CSV semantic version is supplied via the --csv-version flag. If your operator
 has already generated a CSV manifest you want to use as a base, supply its
 version to --from-version. Otherwise the SDK will scaffold a new CSV manifest.`,
+		Example: `
+TODO
+	`,
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 0 {
@@ -61,6 +66,10 @@ version to --from-version. Otherwise the SDK will scaffold a new CSV manifest.`,
 			}
 			if err := c.validate(); err != nil {
 				return fmt.Errorf("error validating command flags: %v", err)
+			}
+			// Default for crd dir if unset
+			if c.crdDir == "" {
+				c.crdDir = c.deployDir
 			}
 			if err := c.run(); err != nil {
 				log.Fatal(err)
@@ -76,18 +85,25 @@ version to --from-version. Otherwise the SDK will scaffold a new CSV manifest.`,
 	}
 	cmd.Flags().StringVar(&c.fromVersion, "from-version", "",
 		"Semantic version of an existing CSV to use as a base")
-	cmd.Flags().StringToStringVar(&c.inputs, "inputs",
-		map[string]string{
-			gencatalog.DeployDirKey: "deploy",
-			gencatalog.APIsDirKey:   filepath.Join("pkg", "apis"),
-		},
-		`Key value input paths used in CSV generation.
-Use this to set custom paths for operator manifests and API type definitions
-E.g: --inputs deploy=config/production,apis=pkg/myapp/apis 
-Supported input keys:
-	- deploy=<project-relative path to root directory for operator manifests (Deployment, RBAC, CRDs)>
-	- apis=<project-relative path to root directory for API type defintions>
+
+	cmd.Flags().StringVar(&c.deployDir, "deploy-dir", "deploy",
+		`Project relative path to root directory for operator manifests (Deployment, RBAC, CRDs).
+The CSV file contents will be generated from the manifests present in this directory. 
 `)
+	cmd.Flags().StringVar(&c.apisDir, "apis-dir", filepath.Join("pkg", "apis"),
+		`Project relative path to root directory for API type defintions.
+The CSV annotation comments will be parsed from the Go types under this path to
+fill out metadata for owned APIs in spec.customresourcedefinitions.owned.
+`)
+	cmd.Flags().StringVar(&c.crdDir, "crd-dir", "",
+		`Project relative path to root directory for for CRD manifests.
+Used when --update-crds is set to copy over CRD manifests to the CSV bundle directory.
+Note: The CSV generator only uses this to copy the CRD manifests.
+The CSV contents for spec.customresourcedefinitions.owned will still be updated
+from the CRD manifests in the deploy directory specified by --deploy-dir.
+If unset, it defaults to the same value as --deploy-dir.
+`)
+
 	cmd.Flags().StringVar(&c.outputDir, "output-dir", scaffold.DeployDir,
 		"Base directory to output generated CSV. The resulting CSV bundle directory"+
 			"will be \"<output-dir>/olm-catalog/<operator-name>/<csv-version>\"")
@@ -105,7 +121,6 @@ Supported input keys:
 }
 
 func (c csvCmd) run() error {
-
 	log.Infof("Generating CSV manifest version %s", c.csvVersion)
 
 	if c.operatorName == "" {
@@ -113,8 +128,13 @@ func (c csvCmd) run() error {
 	}
 	cfg := gen.Config{
 		OperatorName: c.operatorName,
-		Inputs:       c.inputs,
-		OutputDir:    c.outputDir,
+		// TODO(hasbro17): Remove the Input key map when the Generator input keys
+		// are removed in favour of config fields in the csvGenerator
+		Inputs: map[string]string{
+			gencatalog.DeployDirKey: c.deployDir,
+			gencatalog.APIsDirKey:   c.apisDir,
+		},
+		OutputDir: c.outputDir,
 	}
 
 	csv := gencatalog.NewCSV(cfg, c.csvVersion, c.fromVersion)
@@ -128,10 +148,12 @@ func (c csvCmd) run() error {
 
 	// Write CRD's to the new or updated CSV package dir.
 	if c.updateCRDs {
-		// TODO: Add a "crd" key to the --inputs flag to allow
-		// configuring the location of the CRD manifests directory
-		// from which to find and update CRD's.
-		crdManifestSet, err := findCRDFileSet(c.inputs[gencatalog.DeployDirKey])
+		// TODO(hasbro17): Reconsider the crd-dir flag since it only lets you control
+		// where the CRD manifests are copied from but the CSV generator above
+		// will uses the CRD manifests in deploy dir to build the CSV contents for
+		// spec.customresourcedefinitions.owned
+		// Need to reconcile this disparity.
+		crdManifestSet, err := findCRDFileSet(c.crdDir)
 		if err != nil {
 			return fmt.Errorf("failed to update CRD's: %v", err)
 		}
@@ -194,7 +216,9 @@ func findCRDFileSet(path string) (map[string][]byte, error) {
 		return nil, fmt.Errorf("crd's must be read from a directory. %s is a file", path)
 	}
 
-	crdPaths, err := k8sutil.GetCRDManifestPaths(path)
+	// Get CRD manifest paths from path recursively but ignore olm-catalog subdir
+	// if it is present in the search directory
+	crdPaths, err := k8sutil.GetCRDManifestPaths(path, gencatalog.OLMCatalogChildDir)
 	if err != nil {
 		return nil, err
 	}

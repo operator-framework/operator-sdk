@@ -18,38 +18,40 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// MemcachedRSSpec defines the desired state of MemcachedRS
-type MemcachedRSSpec struct {
+// MemcachedSpec defines the desired state of Memcached
+type MemcachedSpec struct {
+	// Size is the size of the memcached deployment
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
-	NumNodes int32 `json:"numNodes"`
+	Size int32 `json:"size"`
 }
 
-// MemcachedRSStatus defines the observed state of MemcachedRS
-type MemcachedRSStatus struct {
+// MemcachedStatus defines the observed state of Memcached
+type MemcachedStatus struct {
+	// Nodes are the names of the memcached pods
 	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors=true
-	NodeList []string `json:"nodeList"`
+	Nodes []string `json:"nodes"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// MemcachedRS is the Schema for the memcachedrs API
+// Memcached is the Schema for the memcacheds API
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:path=memcachedrs,scope=Namespaced
+// +kubebuilder:resource:path=memcacheds,scope=Namespaced
 // +kubebuilder:storageversion
-// +operator-sdk:gen-csv:customresourcedefinitions.displayName="MemcachedRS App"
-type MemcachedRS struct {
+// +operator-sdk:gen-csv:customresourcedefinitions.displayName="Memcached App"
+type Memcached struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   MemcachedRSSpec   `json:"spec,omitempty"`
-	Status MemcachedRSStatus `json:"status,omitempty"`
+	Spec   MemcachedSpec   `json:"spec,omitempty"`
+	Status MemcachedStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// MemcachedRSList contains a list of MemcachedRS
-type MemcachedRSList struct {
+// MemcachedList contains a list of Memcached
+type MemcachedList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []MemcachedRS `json:"items"`
+	Items           []Memcached `json:"items"`
 }

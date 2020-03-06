@@ -38,7 +38,7 @@ type MemcachedStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=memcacheds,scope=Namespaced
 // +kubebuilder:storageversion
-// +operator-sdk:gen-csv:customresourcedefinitions.displayName="Memcached App"
+// +operator-sdk:gen-csv:customresourcedefinitions.displayName="Memcached App Display Name"
 type Memcached struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

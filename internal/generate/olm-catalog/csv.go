@@ -369,9 +369,19 @@ func (g csvGenerator) updateCSVFromManifests(csv *olmapiv1alpha1.ClusterServiceV
 	kindManifestMap := map[schema.GroupVersionKind][][]byte{}
 	crGVKSet := map[schema.GroupVersionKind]struct{}{}
 	err = filepath.Walk(g.Inputs[DeployDirKey], func(path string, info os.FileInfo, werr error) error {
-		if werr != nil || info.IsDir() {
+		if werr != nil {
+			log.Debugf("Failed to walk dir: %v", werr)
 			return werr
 		}
+		// Only read manifest from files, not directories
+		if info.IsDir() {
+			// Skip walking olm-catalog dir if it's present in the deploy directory
+			if info.Name() == OLMCatalogChildDir {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
 		b, err := ioutil.ReadFile(path)
 		if err != nil {
 			return err
@@ -407,6 +417,9 @@ func (g csvGenerator) updateCSVFromManifests(csv *olmapiv1alpha1.ClusterServiceV
 		}
 		return scanner.Err()
 	})
+	if err != nil {
+		return fmt.Errorf("failed to walk manifests directory for CSV updates: %v", err)
+	}
 
 	crUpdaters := crs{}
 	for gvk, manifests := range kindManifestMap {

@@ -28,29 +28,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// newTestPackageManifestGenerator returns a package manifest Generator populated with test values.
-func newTestPackageManifestGenerator() gen.Generator {
-	cfg := gen.Config{
-		OperatorName: testProjectName,
-		OutputDir:    testGoDataDir,
-	}
-	return NewPackageManifest(cfg, csvVersion, "stable", true)
-
-	// TODO: The deploy dir input should be the way to point the generator to test data
-	// E.g: Inputs: map[string]string{DeployDirKey: testGoDataDir}
-
-	// Override the generator to point to the package manifest in testGoDataDir
-	// testPkgManifestDir := filepath.Join(testGoDataDir, OLMCatalogDir, testProjectName)
-	// pkgGen := g.(pkgGenerator)
-	// pkgGen.existingPkgManifestDir = testPkgManifestDir
-	// return pkgGen
-}
-
 func TestGeneratePkgManifestToOutput(t *testing.T) {
-	nonStandardTestDataDir := filepath.Join(testDataDir, "non-standard-layout")
-	for _, cleanupFunc := range setupTestEnvWithCleanup(t, nonStandardTestDataDir) {
-		defer cleanupFunc()
-	}
+	cleanupFunc := chDirWithCleanup(t, relativeProjectRootDir)
+	defer cleanupFunc()
 
 	// Temporary output dir for generating catalog bundle
 	outputDir, err := ioutil.TempDir("", t.Name()+"-output-catalog")
@@ -78,7 +58,7 @@ func TestGeneratePkgManifestToOutput(t *testing.T) {
 	pkgManFileName := getPkgFileName(testProjectName)
 
 	// Read expected Package Manifest
-	expCatalogDir := filepath.Join("expected-catalog", OLMCatalogChildDir)
+	expCatalogDir := filepath.Join(testNonStandardLayoutDataDir, "expected-catalog", OLMCatalogChildDir)
 	pkgManExpBytes, err := ioutil.ReadFile(filepath.Join(expCatalogDir, testProjectName, pkgManFileName))
 	if err != nil {
 		t.Fatalf("Failed to read expected package manifest file: %v", err)
@@ -97,12 +77,15 @@ func TestGeneratePkgManifestToOutput(t *testing.T) {
 
 }
 
-func TestUpdatePkgManifestToOutput(t *testing.T) {
-	// TODO
-}
-
 func TestGeneratePackageManifest(t *testing.T) {
-	g := newTestPackageManifestGenerator()
+	cleanupFunc := chDirWithCleanup(t, relativeProjectRootDir)
+	defer cleanupFunc()
+
+	cfg := gen.Config{
+		OperatorName: testProjectName,
+		OutputDir:    filepath.Join(testGoDataDir, "deploy"),
+	}
+	g := NewPackageManifest(cfg, csvVersion, "stable", true)
 	fileMap, err := g.(pkgGenerator).generate()
 	if err != nil {
 		t.Fatalf("Failed to execute package manifest generator: %v", err)
@@ -116,7 +99,14 @@ func TestGeneratePackageManifest(t *testing.T) {
 }
 
 func TestValidatePackageManifest(t *testing.T) {
-	g := newTestPackageManifestGenerator()
+	cleanupFunc := chDirWithCleanup(t, relativeProjectRootDir)
+	defer cleanupFunc()
+
+	cfg := gen.Config{
+		OperatorName: testProjectName,
+		OutputDir:    filepath.Join(testGoDataDir, "deploy"),
+	}
+	g := NewPackageManifest(cfg, csvVersion, "stable", true)
 
 	// pkg is a basic, valid package manifest.
 	pkg, err := g.(pkgGenerator).buildPackageManifest()

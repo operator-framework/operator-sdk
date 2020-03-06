@@ -82,7 +82,6 @@
 ### Removed
 
 -  **Breaking Change:** The additional Ansible sidecar container. ([#2586](https://github.com/operator-framework/operator-sdk/pull/2586))
-- **Breaking Change:** Removed CSV configuration file support (defaulting to deploy/olm-catalog/csv-config.yaml) in favor of specifying inputs to the generator via [`generate csv --input`](doc/cli/operator-sdk_generate_csv.md#options), and configuring output locations via [`generate csv --outputDir`](doc/cli/operator-sdk_generate_csv.md#options). ([#2511](https://github.com/operator-framework/operator-sdk/pull/2511))
 
 ### Bug Fixes
 

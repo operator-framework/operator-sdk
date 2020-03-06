@@ -30,7 +30,7 @@ import (
 
 // GetCRDs parses all CRD manifests in the directory crdsDir and all of its subdirectories.
 func GetCRDs(crdsDir string) ([]*apiextv1beta1.CustomResourceDefinition, error) {
-	manifests, err := GetCRDManifestPaths(crdsDir)
+	manifests, err := GetCRDManifestPaths(crdsDir, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get CRD's from %s: %v", crdsDir, err)
 	}
@@ -50,32 +50,38 @@ func GetCRDs(crdsDir string) ([]*apiextv1beta1.CustomResourceDefinition, error) 
 }
 
 // GetCRDManifestPaths returns all CRD manifest paths in crdsDir and subdirs.
-func GetCRDManifestPaths(crdsDir string) (crdPaths []string, err error) {
+// The directory ignoreSubDir will be ignored
+func GetCRDManifestPaths(crdsDir, ignoreSubDir string) (crdPaths []string, err error) {
 	err = filepath.Walk(crdsDir, func(path string, info os.FileInfo, werr error) error {
 		if werr != nil {
 			return werr
 		}
-		if info == nil {
+
+		// Only read manifest from files, not directories
+		if info.IsDir() {
+			// Skip walking ignored directory
+			if ignoreSubDir != "" && info.Name() == ignoreSubDir {
+				return filepath.SkipDir
+			}
 			return nil
 		}
-		if !info.IsDir() {
-			b, err := ioutil.ReadFile(path)
-			if err != nil {
-				return fmt.Errorf("error reading manifest %s: %v", path, err)
-			}
-			// Skip files in crdsDir that aren't k8s manifests since we do not know
-			// what other files are in crdsDir.
-			typeMeta, err := GetTypeMetaFromBytes(b)
-			if err != nil {
-				log.Debugf("Skipping non-manifest file %s: %v", path, err)
-				return nil
-			}
-			if typeMeta.Kind != "CustomResourceDefinition" {
-				log.Debugf("Skipping non CRD manifest %s", path)
-				return nil
-			}
-			crdPaths = append(crdPaths, path)
+
+		b, err := ioutil.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("error reading manifest %s: %v", path, err)
 		}
+		// Skip files in crdsDir that aren't k8s manifests since we do not know
+		// what other files are in crdsDir.
+		typeMeta, err := GetTypeMetaFromBytes(b)
+		if err != nil {
+			log.Debugf("Skipping non-manifest file %s: %v", path, err)
+			return nil
+		}
+		if typeMeta.Kind != "CustomResourceDefinition" {
+			log.Debugf("Skipping non CRD manifest %s", path)
+			return nil
+		}
+		crdPaths = append(crdPaths, path)
 		return nil
 	})
 	return crdPaths, err

@@ -16,7 +16,7 @@ metadata:
         }
       ]
     capabilities: Basic Install
-  name: memcached-operator.v0.0.3
+  name: memcached-operator.v0.0.1
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -145,10 +145,9 @@ spec:
   - supported: true
     type: AllNamespaces
   keywords:
-  - "FooBar"
-  - "These keywords must be preserved in the CSV update tests from 0.0.3 to 0.0.4"
+  - ""
   maintainers:
   - {}
   maturity: alpha
   provider: {}
-  version: 0.0.3
+  version: 0.0.1

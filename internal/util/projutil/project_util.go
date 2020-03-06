@@ -113,9 +113,19 @@ func getHomeDir() (string, error) {
 	return homedir.Expand(hd)
 }
 
+// TODO(hasbro17): If this function is called in the subdir of
+// a module project it will fail to parse go.mod and return
+// the correct import path.
+// This needs to be fixed to return the pkg import path for any subdir
+// in order for `generate csv` to correctly form pkg imports
+// for API pkg paths that are not relative to the root dir.
+// This might not be fixable since there is no good way to
+// get the project root from inside the subdir of a module project.
+//
 // GetGoPkg returns the current directory's import path by parsing it from
 // wd if this project's repository path is rooted under $GOPATH/src, or
 // from go.mod the project uses Go modules to manage dependencies.
+// If the project has a go.mod then wd must be the project root.
 //
 // Example: "github.com/example-inc/app-operator"
 func GetGoPkg() string {
@@ -176,8 +186,17 @@ func GetOperatorType() OperatorType {
 		return OperatorTypeAnsible
 	case IsOperatorHelm():
 		return OperatorTypeHelm
+	// Additional case for when tests run cmds which have this check
+	// from the SDK root
+	case hasGoPkgFile():
+		return OperatorTypeGo
 	}
 	return OperatorTypeUnknown
+}
+
+func hasGoPkgFile() bool {
+	_, err := os.Stat("go.mod")
+	return err == nil
 }
 
 func IsOperatorGo() bool {
