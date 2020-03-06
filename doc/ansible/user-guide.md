@@ -57,7 +57,7 @@ be monitored for updates and cached.
   * a relative path within one of the directories specified by `ANSIBLE_ROLES_PATH` environment variable or `ansible-roles-path` flag.
   * a relative path within the current working directory, which defaults to `/opt/ansible/roles`.
   * a fully qualified collection name of an installed Ansible collection. Ansible collections are installed to
-    `~/.ansible/collections` or `/usr/share/ansible/collections` by default. If they are installed elsewhere, 
+    `~/.ansible/collections` or `/usr/share/ansible/collections` by default. If they are installed elsewhere,
     use the `ANSIBLE_COLLECTIONS_PATH` environment variable or the `ansible-collections-path` flag
 * **playbook**: This is the playbook name that you have added to the
   container. This playbook is expected to be simply a way to call roles. This
@@ -69,7 +69,7 @@ be monitored for updates and cached.
   role/playbook is run, for a given CR.
 * **manageStatus** (optional): When true (default), the operator will manage
   the status of the CR generically. Set to false, the status of the CR is
-  managed elsewhere, by the specified role/playbook or in a separate controller. 
+  managed elsewhere, by the specified role/playbook or in a separate controller.
 * **blacklist**: A list of child resources (by GVK) that will not be watched or cached.
 
 An example Watches file:
@@ -110,7 +110,7 @@ An example Watches file:
       version: v1
       kind: ConfigMap
 
-# Example usage with a role from an installed Ansible collection 
+# Example usage with a role from an installed Ansible collection
 - version: v1alpha1
   group: bar.example.com
   kind: Bar
@@ -368,10 +368,10 @@ In order to see the logs from a particular you can run:
 kubectl logs deployment/memcached-operator
 ```
 
-The logs contain the information about the Ansible run and will make it much easier to debug issues within your Ansible tasks. 
+The logs contain the information about the Ansible run and will make it much easier to debug issues within your Ansible tasks.
 Note that the logs will contain much more detailed information about the Ansible Operator's internals and interface with Kubernetes as well.
 
-Also, you can use the environment variable `ANSIBLE_DEBUG_LOGS` set as `True` to check the full Ansible result in the logs in order to be able to debug it. 
+Also, you can use the environment variable `ANSIBLE_DEBUG_LOGS` set as `True` to check the full Ansible result in the logs in order to be able to debug it.
 
 **Example**
 
