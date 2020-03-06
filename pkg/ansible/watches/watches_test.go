@@ -15,10 +15,12 @@
 package watches
 
 import (
+	"fmt"
 	"html/template"
 	"os"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"strconv"
 	"testing"
 	"time"
@@ -302,16 +304,26 @@ func TestLoad(t *testing.T) {
 			ManageStatus: true,
 			Vars:         map[string]interface{}{"sentinel": "reconciling"},
 		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "AnsibleCollectionEnvTest",
+			},
+			Role:         filepath.Join(cwd, "testdata", "ansible_collections", "nameSpace", "collection", "roles", "someRole"),
+			ManageStatus: true,
+		},
 	}
 
 	testCases := []struct {
-		name                           string
-		path                           string
-		maxWorkers                     int
-		ansibleVerbosity               int
-		expected                       []Watch
-		shouldError                    bool
-		shouldSetAnsibleRolePathEnvVar bool
+		name                                 string
+		path                                 string
+		maxWorkers                           int
+		ansibleVerbosity                     int
+		expected                             []Watch
+		shouldError                          bool
+		shouldSetAnsibleRolePathEnvVar       bool
+		shouldSetAnsibleCollectionPathEnvVar bool
 	}{
 		{
 			name:        "error duplicate GVK",
@@ -379,19 +391,26 @@ func TestLoad(t *testing.T) {
 			shouldError: true,
 		},
 		{
-			name:             "valid watches file",
-			path:             "testdata/valid.yaml",
-			maxWorkers:       1,
-			ansibleVerbosity: 2,
-			expected:         validWatches,
+			name:        "if collection env var is not set and collection is not installed to the default locations, fail",
+			path:        "testdata/invalid_collection.yaml",
+			shouldError: true,
 		},
 		{
-			name:                           "should watches file successfully with ANSIBLE ROLES PATH ENV VAR set",
-			path:                           "testdata/valid.yaml",
-			maxWorkers:                     1,
-			ansibleVerbosity:               2,
-			shouldSetAnsibleRolePathEnvVar: true,
-			expected:                       validWatches,
+			name:                                 "valid watches file",
+			path:                                 "testdata/valid.yaml",
+			maxWorkers:                           1,
+			ansibleVerbosity:                     2,
+			shouldSetAnsibleCollectionPathEnvVar: true,
+			expected:                             validWatches,
+		},
+		{
+			name:                                 "should load file successfully with ANSIBLE ROLES PATH ENV VAR set",
+			path:                                 "testdata/valid.yaml",
+			maxWorkers:                           1,
+			ansibleVerbosity:                     2,
+			shouldSetAnsibleRolePathEnvVar:       true,
+			shouldSetAnsibleCollectionPathEnvVar: true,
+			expected:                             validWatches,
 		},
 	}
 
@@ -408,6 +427,12 @@ func TestLoad(t *testing.T) {
 				anisbleEnvVar := "path/invalid:/path/invalid/myroles:" + projutil.MustGetwd()
 				os.Setenv("ANSIBLE_ROLES_PATH", anisbleEnvVar)
 				defer os.Unsetenv("ANSIBLE_ROLES_PATH")
+			}
+			if tc.shouldSetAnsibleCollectionPathEnvVar {
+
+				ansibleCollectionPathEnv := filepath.Join(projutil.MustGetwd(), "testdata")
+				os.Setenv("ANSIBLE_COLLECTIONS_PATH", ansibleCollectionPathEnv)
+				defer os.Unsetenv("ANSIBLE_COLLECTIONS_PATH")
 			}
 
 			watchSlice, err := Load(tc.path, tc.maxWorkers, tc.ansibleVerbosity)
@@ -637,80 +662,101 @@ func TestAnsibleVerbosity(t *testing.T) {
 	}
 }
 
-// Test the func getFullRolePath when no envVar is set.
-func TestGetFullRolePath(t *testing.T) {
+// Test the func getPossibleRolePaths.
+func TestGetPossibleRolePaths(t *testing.T) {
 	// Mock default Full Path based in the current directory
 	rolesPath := filepath.Join(projutil.MustGetwd(), "roles")
+	home, _ := os.UserHomeDir()
 
 	type args struct {
-		path                           string
-		shouldSetAnsibleRolePathEnvVar bool
-		env                            string
+		path           string
+		rolesEnv       string
+		collectionsEnv string
 	}
 	tests := []struct {
 		name string
 		args args
-		want string
+		want []string
 	}{
 		{
-			name: "Should work with default values",
+			name: "check the current dir for a role name",
 			args: args{
 				path: "Foo",
 			},
-			want: filepath.Join(rolesPath, "Foo"),
+			want: []string{filepath.Join(rolesPath, "Foo")},
 		},
 		{
-			name: "Should work with full role",
-			args: args{
-				path: filepath.Join(rolesPath, "Foo"),
-			},
-			want: filepath.Join(rolesPath, "Foo"),
-		},
-		{
-			name: "Should work with relative role",
+			name: "check the current dir for a relative path",
 			args: args{
 				path: "relative/Foo",
 			},
-			want: filepath.Join(rolesPath, "relative/Foo"),
+			want: []string{filepath.Join(rolesPath, "relative/Foo")},
 		},
 		{
-			name: "Should work when the full role is informed and the envvar is set",
+			name: "check all paths in ANSIBLE_ROLES_PATH env var",
 			args: args{
-				path:                           filepath.Join(rolesPath, "Foo"),
-				shouldSetAnsibleRolePathEnvVar: true,
+				rolesEnv: "relative:nested/relative:/and/abs",
+				path:     "Foo",
 			},
-			want: filepath.Join(rolesPath, "Foo"),
+			want: []string{
+				filepath.Join(rolesPath, "Foo"),
+				filepath.Join("relative", "Foo"),
+				filepath.Join("relative", "roles", "Foo"),
+				filepath.Join("nested/relative", "Foo"),
+				filepath.Join("nested/relative", "roles", "Foo"),
+				filepath.Join("/and/abs", "Foo"),
+				filepath.Join("/and/abs", "roles", "Foo"),
+			},
 		},
 		{
-			name: "Should return the default full role path based in the current directory when all " +
-				"custom paths are invalids",
+			name: "Check for roles inside default collection locations when given fqcn",
 			args: args{
-				env:                            "invalid/myroles:invalid:mypath/invalid",
-				path:                           "Foo",
-				shouldSetAnsibleRolePathEnvVar: true,
+				path: "myNS.myCol.myRole",
 			},
-			want: filepath.Join(rolesPath, "Foo"),
+			want: []string{
+				filepath.Join(rolesPath, "myNS.myCol.myRole"),
+				filepath.Join("/usr/share/ansible/collections", "ansible_collections", "myNS", "myCol", "roles", "myRole"),
+				filepath.Join(home, ".ansible/collections", "ansible_collections", "myNS", "myCol", "roles", "myRole"),
+			},
 		},
 		{
-			name: "Should return the default full role when the role is not found in the customized one",
+			name: "Check for roles inside ANSIBLE_COLLECTIONS_PATH locations when set and given path is fqcn",
 			args: args{
-				env:                            "customized/myroles",
-				path:                           "Foo",
-				shouldSetAnsibleRolePathEnvVar: true,
+				path:           "myNS.myCol.myRole",
+				collectionsEnv: "/my/collections/",
 			},
-			want: filepath.Join(rolesPath, "Foo"),
+			want: []string{
+				filepath.Join(rolesPath, "myNS.myCol.myRole"),
+				filepath.Join("/my/collections/", "ansible_collections", "myNS", "myCol", "roles", "myRole"),
+				// Note: Defaults are not checked when the env variable is set
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			if tt.args.shouldSetAnsibleRolePathEnvVar {
-				os.Setenv("ANSIBLE_ROLES_PATH", tt.args.env)
+			if len(tt.args.rolesEnv) > 0 {
+				os.Setenv("ANSIBLE_ROLES_PATH", tt.args.rolesEnv)
 				defer os.Unsetenv("ANSIBLE_ROLES_PATH")
 			}
+			if len(tt.args.collectionsEnv) > 0 {
+				os.Setenv("ANSIBLE_COLLECTIONS_PATH", tt.args.collectionsEnv)
+				defer os.Unsetenv("ANSIBLE_COLLECTIONS_PATH")
+			}
 
-			if got := getFullRolePath(tt.args.path); got != tt.want {
-				t.Errorf("Error to check getFullRolePath() = %v, want %v", got, tt.want)
+			allPathsToCheck := getPossibleRolePaths(tt.args.path)
+			sort.Strings(tt.want)
+			sort.Strings(allPathsToCheck)
+			if !reflect.DeepEqual(allPathsToCheck, tt.want) {
+				t.Errorf("Unexpected paths returned")
+				fmt.Println("Returned:")
+				for i, path := range allPathsToCheck {
+					fmt.Println(i, path)
+				}
+				fmt.Println("Wanted:")
+				for i, path := range tt.want {
+					fmt.Println(i, path)
+				}
 			}
 		})
 	}
