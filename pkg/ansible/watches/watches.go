@@ -161,6 +161,14 @@ func (w *Watch) addRolePlaybookPaths() {
 				break
 			}
 		}
+		fmt.Println("OH NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
+		fmt.Println("OH NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
+		fmt.Println("OH NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
+		fmt.Println("OH NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
+		fmt.Println("OH NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
+		for _, possiblePath := range possibleRolePaths {
+			fmt.Println(possiblePath)
+		}
 	}
 	if w.Finalizer != nil && len(w.Finalizer.Role) > 0 {
 		possibleRolePaths := getPossibleRolePaths(w.Finalizer.Role)

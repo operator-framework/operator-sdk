@@ -304,16 +304,26 @@ func TestLoad(t *testing.T) {
 			ManageStatus: true,
 			Vars:         map[string]interface{}{"sentinel": "reconciling"},
 		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "AnsibleCollectionEnvTest",
+			},
+			Role:         filepath.Join(cwd, "testdata", "ansible_collections", "nameSpace", "collection", "roles", "someRole"),
+			ManageStatus: true,
+		},
 	}
 
 	testCases := []struct {
-		name                           string
-		path                           string
-		maxWorkers                     int
-		ansibleVerbosity               int
-		expected                       []Watch
-		shouldError                    bool
-		shouldSetAnsibleRolePathEnvVar bool
+		name                                 string
+		path                                 string
+		maxWorkers                           int
+		ansibleVerbosity                     int
+		expected                             []Watch
+		shouldError                          bool
+		shouldSetAnsibleRolePathEnvVar       bool
+		shouldSetAnsibleCollectionPathEnvVar bool
 	}{
 		{
 			name:        "error duplicate GVK",
@@ -381,19 +391,26 @@ func TestLoad(t *testing.T) {
 			shouldError: true,
 		},
 		{
-			name:             "valid watches file",
-			path:             "testdata/valid.yaml",
-			maxWorkers:       1,
-			ansibleVerbosity: 2,
-			expected:         validWatches,
+			name:        "if collection is not installed, fail",
+			path:        "testdata/invalid_collection.yaml",
+			shouldError: true,
 		},
 		{
-			name:                           "should watches file successfully with ANSIBLE ROLES PATH ENV VAR set",
-			path:                           "testdata/valid.yaml",
-			maxWorkers:                     1,
-			ansibleVerbosity:               2,
-			shouldSetAnsibleRolePathEnvVar: true,
-			expected:                       validWatches,
+			name:                                 "valid watches file",
+			path:                                 "testdata/valid.yaml",
+			maxWorkers:                           1,
+			ansibleVerbosity:                     2,
+			shouldSetAnsibleCollectionPathEnvVar: true,
+			expected:                             validWatches,
+		},
+		{
+			name:                                 "should load file successfully with ANSIBLE ROLES PATH ENV VAR set",
+			path:                                 "testdata/valid.yaml",
+			maxWorkers:                           1,
+			ansibleVerbosity:                     2,
+			shouldSetAnsibleRolePathEnvVar:       true,
+			shouldSetAnsibleCollectionPathEnvVar: true,
+			expected:                             validWatches,
 		},
 	}
 
@@ -410,6 +427,12 @@ func TestLoad(t *testing.T) {
 				anisbleEnvVar := "path/invalid:/path/invalid/myroles:" + projutil.MustGetwd()
 				os.Setenv("ANSIBLE_ROLES_PATH", anisbleEnvVar)
 				defer os.Unsetenv("ANSIBLE_ROLES_PATH")
+			}
+			if tc.shouldSetAnsibleCollectionPathEnvVar {
+
+				ansibleCollectionPathEnv := filepath.Join(projutil.MustGetwd(), "testdata")
+				os.Setenv("ANSIBLE_COLLECTIONS_PATH", ansibleCollectionPathEnv)
+				defer os.Unsetenv("ANSIBLE_COLLECTIONS_PATH")
 			}
 
 			watchSlice, err := Load(tc.path, tc.maxWorkers, tc.ansibleVerbosity)
