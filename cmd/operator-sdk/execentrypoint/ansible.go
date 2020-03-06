@@ -58,14 +58,14 @@ func setAnsibleEnvVars(flags *aoflags.AnsibleOperatorFlags) error {
 			if err := os.Setenv(aoflags.AnsibleRolesPathEnvVar, flags.AnsibleRolesPath); err != nil {
 				return fmt.Errorf("failed to set %s environment variable: (%v)", aoflags.AnsibleRolesPathEnvVar, err)
 			}
-			log.Infof("set the value %v for environment variable %v.",
+			log.Infof("Set the value %v for environment variable %v.",
 				flags.AnsibleRolesPath, aoflags.AnsibleRolesPathEnvVar)
 		}
 		if len(flags.AnsibleCollectionsPath) > 0 {
 			if err := os.Setenv(aoflags.AnsibleCollectionsPathEnvVar, flags.AnsibleCollectionsPath); err != nil {
 				return fmt.Errorf("failed to set %s environment variable: (%v)", aoflags.AnsibleCollectionsPathEnvVar, err)
 			}
-			log.Infof("set the value %v for environment variable %v.",
+			log.Infof("Set the value %v for environment variable %v.",
 				flags.AnsibleCollectionsPath, aoflags.AnsibleCollectionsPathEnvVar)
 		}
 	}
