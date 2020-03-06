@@ -287,7 +287,7 @@ Today there are 2 internal scorecard tests that make use of the scorecard proxy,
 #### Building the Proposed Design
 
 The proposed design was influenced greatly by the KUDO testing framework in various concepts, however, the proposed design doesn’t necessarily have to include KUDO as a dependency.  A decision of whether or not to incorporate KUDO testing APIs within the Red Hat solution needs to be reached.  Some pro’s and con’s to using KUDO testing frameworks are listed below.  If KUDO’s testing framework is not incorporated, then a custom built set of equivalent capabilities would need to be developed.
-The advantage of using Kuttl as the test framework in scorecard would include:
+The advantage of using [Kuttl](https://github.com/kudobuilder/kuttl) as the test framework in scorecard would include:
 
  * Pre-built, works, community, evolving.
  * Ready to work with, code exists and mostly works, a starting point exists.
