@@ -16,7 +16,10 @@ about are Framework and Context.
 
 [Framework][framework-link] contains all global variables, such as the kubeconfig, kubeclient,
 scheme, and dynamic client (provided via the controller-runtime project).
-It is initialized by MainEntry and can be used anywhere in the tests.
+It is initialized by the MainEntry function and can be used anywhere in the tests.
+
+**Note:** several required arguments are initialized and added by `MainEntry()`. Do not attempt to
+use `testing.M` directly.
 
 ### Context
 
