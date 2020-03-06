@@ -15,7 +15,7 @@
       reason: Successful
       status: "True"
 
-- name: Assert sentinel ConfigMap has been created for Molecule Test
+- name: Assert ConfigMap has been created by collection Role
   assert:
     that: cm.data.did_it_work == 'indeed'
   vars:

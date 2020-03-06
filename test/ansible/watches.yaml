@@ -7,4 +7,4 @@
 - version: v1alpha1
   group: test.example.com
   kind: Collection
-  role: asmacdo.fixture_collection.dummy
+  role: operator_sdk.test_fixtures.dummy
