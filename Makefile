@@ -194,14 +194,14 @@ image-push-scorecard-proxy-multiarch:
 
 test: test-unit ## Run the tests
 
-test-markdown test/markdown:
+test-markdown:
 	./hack/ci/marker -e website
 
-test-sanity test/sanity: tidy build/operator-sdk lint
+test-sanity: tidy build/operator-sdk lint
 	./hack/tests/sanity-check.sh
 
 TEST_PKGS:=$(shell go list ./... | grep -v -E 'github.com/operator-framework/operator-sdk/(hack/|test/)')
-test-unit test/unit: ## Run the unit tests
+test-unit: ## Run the unit tests
 	$(Q)go test -coverprofile=coverage.out -covermode=count -count=1 -short ${TEST_PKGS}
 
 # CI tests.
