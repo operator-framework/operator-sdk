@@ -40,8 +40,9 @@ path to a playbook on the operator’s file system.
 One of `playbook`, `role`, or `vars` must be provided. If `role` is not provided, it
 will default to the role specified at the top level of the `watches.yaml` entry.
 
-This field is identical to the top-level `role` field. It requires an absolute
-path to a role on the operator’s file system.
+This field is identical to the top-level `role` field.
+https://github.com/operator-framework/operator-sdk/blob/master/doc/ansible/user-guide.md#watches-file
+
 
 #### vars
 
@@ -114,6 +115,20 @@ This example will run the `/opt/ansible/roles/teardown_database` role when the C
 ```
 
 This example will run the `/opt/ansible/destroy.yml` playbook when the Custom Resource is deleted.
+
+```yaml
+---
+- version: v1alpha1
+  group: app.example.com
+  kind: Database
+  playbook: playbook.yml
+  finalizer:
+    name: finalizer.app.example.com
+    role: myNamespace.myCollection.myRole
+```
+
+This example will run the `myRole` when the Custom Resource is deleted. (The collection must have been installed.)
+
 
 ### Run a different playbook or role with vars
 

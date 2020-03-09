@@ -149,17 +149,34 @@ func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 // addRolePlaybookPaths will add the full path based on the current dir
 func (w *Watch) addRolePlaybookPaths() {
-	w.Playbook = getFullPath(w.Playbook)
-	w.Role = getFullRolePath(w.Role)
+	if len(w.Playbook) > 0 {
+		w.Playbook = getFullPath(w.Playbook)
+	}
+
+	if len(w.Role) > 0 {
+		possibleRolePaths := getPossibleRolePaths(w.Role)
+		for _, possiblePath := range possibleRolePaths {
+			if _, err := os.Stat(possiblePath); err == nil {
+				w.Role = possiblePath
+				break
+			}
+		}
+	}
 	if w.Finalizer != nil && len(w.Finalizer.Role) > 0 {
-		w.Finalizer.Role = getFullRolePath(w.Finalizer.Role)
+		possibleRolePaths := getPossibleRolePaths(w.Finalizer.Role)
+		for _, possiblePath := range possibleRolePaths {
+			if _, err := os.Stat(possiblePath); err == nil {
+				w.Finalizer.Role = possiblePath
+				break
+			}
+		}
 	}
 	if w.Finalizer != nil && len(w.Finalizer.Playbook) > 0 {
 		w.Finalizer.Playbook = getFullPath(w.Finalizer.Playbook)
 	}
 }
 
-// getFullPath will return a valid full path for the playbook
+// getFullPath returns an absolute path for the playbook
 func getFullPath(path string) string {
 	if len(path) > 0 && !filepath.IsAbs(path) {
 		return filepath.Join(projutil.MustGetwd(), path)
@@ -167,32 +184,41 @@ func getFullPath(path string) string {
 	return path
 }
 
-// getFullRolePath will return a valid full path for the role
-func getFullRolePath(path string) string {
-	if len(path) > 0 && !filepath.IsAbs(path) {
-		envVar, ok := os.LookupEnv("ANSIBLE_ROLES_PATH")
-		if ok && len(envVar) > 0 {
-			// Check all values informed (e.g. path1/roles:path2/roles:/absolute/path3/roles)
-			result := strings.Split(envVar, ":")
-			for i := range result {
-				// Check if the role can be found in the envVar + role path
-				infoPath := filepath.Join(result[i], path)
-				if _, err := os.Stat(infoPath); err == nil {
-					return infoPath
-				}
-
-				// Check if the role can be found in the envVar + roles + role path
-				infoPathWithRolesDir := filepath.Join(result[i], "roles", path)
-				if _, err := os.Stat(infoPathWithRolesDir); err == nil {
-					return infoPathWithRolesDir
-				}
+// getPossibleRolePaths returns list of possible absolute paths derived from a user provided value.
+func getPossibleRolePaths(path string) []string {
+	possibleRolePaths := []string{}
+	if filepath.IsAbs(path) || len(path) == 0 {
+		return append(possibleRolePaths, path)
+	}
+	fqcn := strings.Split(path, ".")
+	// If fqcn is a valid fully qualified collection name, it is <namespace>.<collectionName>.<roleName>
+	if len(fqcn) == 3 {
+		ansibleCollectionsPathEnv, ok := os.LookupEnv("ANSIBLE_COLLECTIONS_PATH")
+		if !ok || len(ansibleCollectionsPathEnv) == 0 {
+			ansibleCollectionsPathEnv = "/usr/share/ansible/collections"
+			home, err := os.UserHomeDir()
+			if err == nil {
+				homeCollections := filepath.Join(home, ".ansible/collections")
+				ansibleCollectionsPathEnv = ansibleCollectionsPathEnv + ":" + homeCollections
 			}
 		}
-		// If the flag and/or env var ANSIBLE_ROLES_PATH was not set or no roles were informed in the path then, it will
-		// be the current directory concat with roles.
-		return getFullPath(filepath.Join("roles", path))
+		for _, possiblePathParent := range strings.Split(ansibleCollectionsPathEnv, ":") {
+			possiblePath := filepath.Join(possiblePathParent, "ansible_collections", fqcn[0], fqcn[1], "roles", fqcn[2])
+			possibleRolePaths = append(possibleRolePaths, possiblePath)
+		}
 	}
-	return path
+
+	// Check for the role where Ansible would. If it exists, use it.
+	ansibleRolesPathEnv, ok := os.LookupEnv("ANSIBLE_ROLES_PATH")
+	if ok && len(ansibleRolesPathEnv) > 0 {
+		for _, possiblePathParent := range strings.Split(ansibleRolesPathEnv, ":") {
+			// "roles" is optionally a part of the path. Check with, and without.
+			possibleRolePaths = append(possibleRolePaths, filepath.Join(possiblePathParent, path))
+			possibleRolePaths = append(possibleRolePaths, filepath.Join(possiblePathParent, "roles", path))
+		}
+	}
+	// Roles can also live in the current working directory.
+	return append(possibleRolePaths, getFullPath(filepath.Join("roles", path)))
 }
 
 // Validate - ensures that a Watch is valid
@@ -297,13 +323,11 @@ func verifyGVK(gvk schema.GroupVersionKind) error {
 func verifyAnsiblePath(playbook string, role string) error {
 	switch {
 	case playbook != "":
-		playbookPath := getFullPath(playbook)
-		if _, err := os.Stat(playbookPath); err != nil {
+		if _, err := os.Stat(playbook); err != nil {
 			return fmt.Errorf("playbook: %v was not found", playbook)
 		}
 	case role != "":
-		rolePath := getFullRolePath(role)
-		if _, err := os.Stat(rolePath); err != nil {
+		if _, err := os.Stat(role); err != nil {
 			return fmt.Errorf("role: %v was not found", role)
 		}
 	default:

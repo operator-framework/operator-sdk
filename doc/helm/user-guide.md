@@ -391,6 +391,17 @@ Events:
 ```
 
 
+## Changing the concurrent worker count
+
+Depending on the number of CRs of the same type, a single reconciling worker may have issues keeping up. You can increase the number of workers by passing `--max-workers <number of workers>`.
+
+For example:
+
+```sh
+$ operator-sdk exec-entrypoint helm --max-workers 10
+```
+
+
 [operator-scope]:./../operator-scope.md
 [install-guide]: ../user/install-operator-sdk.md
 [layout-doc]:./project_layout.md
