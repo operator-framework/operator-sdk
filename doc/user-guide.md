@@ -551,6 +551,32 @@ func main() {
 * After adding new import paths to your operator project, run `go mod vendor` if a `vendor/` directory is present in the root of your project directory to fulfill these dependencies.
 * Your 3rd party resource needs to be added before add the controller in `"Setup all Controllers"`.
 
+#### Default Metrics exported with 3rd party resource 
+
+By default, SDK operator projects are set up to [export metrics][metrics_doc] through `addMetrics` in `cmd/manager/main.go`. See that it will call the `serveCRMetrics`:
+
+
+```go
+func serveCRMetrics(cfg *rest.Config) error {
+    ...
+	filteredGVK, err := k8sutil.GetGVKsFromAddToScheme(apis.AddToScheme)
+	if err != nil {
+		return err
+	}
+
+    ...
+
+	// Generate and serve custom resource specific metrics.
+	err = kubemetrics.GenerateAndServeCRMetrics(cfg, ns, filteredGVK, metricsHost, operatorMetricsPort)
+	if err != nil {
+		return err
+	}
+``` 
+
+The `kubemetrics.GenerateAndServeCRMetrics` function requires an RBAC rule to list all GroupVersionKinds in the list of watched namespaces, so you might need to [filter](https://github.com/operator-framework/operator-sdk/blob/v0.15.2/pkg/k8sutil/k8sutil.go#L161) the kinds returned by [`k8sutil.GetGVKsFromAddToScheme`](https://godoc.org/github.com/operator-framework/operator-sdk/pkg/k8sutil#GetGVKsFromAddToScheme) more stringently to avoid authorization errors such as `Failed to list *unstructured.Unstructured`.
+
+In this scenario, this error may occur because your Operator RBAC roles do not include permissions to LIST the third party API schemas or the schemas which are required to them and will be added with. See that the default SDK implementation will just add the Kubernetes schemas and they will be ignored in the metrics It means that you might need to do an similar implementation to filter the third party API schemas and their dependencies added in order to provide a filtered a List of GVK(GroupVersionKind) to the  `GenerateAndServeCRMetrics` method. 
+
 ### Handle Cleanup on Deletion
 
 To implement complex deletion logic, you can add a finalizer to your Custom Resource. This will prevent your Custom Resource from being
