@@ -268,7 +268,7 @@ func serveCRMetrics(cfg *rest.Config, gvks []schema.GroupVersionKind) error {
 	// NOTE that passing nil or an empty list of namespaces will result in an error.
 	ns := []string{operatorNs}
 
-	// To generate metrics from WATCH_NAMESPACES values if it be as for example ns1,ns2
+	// Generate metrics from the WATCH_NAMESPACES value if it contains multiple namespaces
 	if strings.Contains(watchNamespace, ",") {
 		ns = strings.Split(watchNamespace, ",")
 	}
