@@ -88,7 +88,7 @@ func yamlToUnstructured(namespace, yamlPath string) (*unstructured.Unstructured,
 
 // createFromYAMLFile will take a path to a YAML file and create the resource. If it finds a
 // deployment, it will add the scorecard proxy as a container in the deployments podspec.
-func createFromYAMLFile(namespace, yamlPath, proxyImage string, pullPolicy v1.PullPolicy, initTimeout, proxyPort int) error {
+func createFromYAMLFile(cfg BasicAndOLMPluginConfig, yamlPath string) error {
 	yamlSpecs, err := ioutil.ReadFile(yamlPath)
 	if err != nil {
 		return fmt.Errorf("failed to read file %s: %v", yamlPath, err)
@@ -103,7 +103,7 @@ func createFromYAMLFile(namespace, yamlPath, proxyImage string, pullPolicy v1.Pu
 		if err := obj.UnmarshalJSON(jsonSpec); err != nil {
 			return fmt.Errorf("could not unmarshal resource spec: %v", err)
 		}
-		obj.SetNamespace(namespace)
+		obj.SetNamespace(cfg.Namespace)
 
 		// dirty hack to merge scorecard proxy into operator deployment; lots of serialization and deserialization
 		if obj.GetKind() == "Deployment" {
@@ -116,12 +116,12 @@ func createFromYAMLFile(namespace, yamlPath, proxyImage string, pullPolicy v1.Pu
 				return fmt.Errorf("failed to convert object to deployment: %v", err)
 			}
 			deploymentName = dep.GetName()
-			err = createKubeconfigSecret(namespace, initTimeout, proxyPort)
+			err = createKubeconfigSecret(cfg.Namespace, cfg.InitTimeout, cfg.ProxyPort)
 			if err != nil {
 				return fmt.Errorf("failed to create kubeconfig secret for scorecard-proxy: %v", err)
 			}
 			addMountKubeconfigSecret(dep)
-			addProxyContainer(dep, proxyImage, pullPolicy, proxyPort)
+			addProxyContainer(dep, cfg.ProxyImage, cfg.ProxyPullPolicy, cfg.ProxyPort)
 			// go back to unstructured to create
 			obj, err = deploymentToUnstructured(dep)
 			if err != nil {
@@ -149,9 +149,9 @@ func createFromYAMLFile(namespace, yamlPath, proxyImage string, pullPolicy v1.Pu
 				return err
 			}
 		}
-		addResourceCleanup(obj, types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, initTimeout)
+		addResourceCleanup(obj, types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, cfg.InitTimeout)
 		if obj.GetKind() == "Deployment" {
-			proxyPodGlobal, err = getPodFromDeployment(deploymentName, namespace)
+			proxyPodGlobal, err = getPodFromDeployment(deploymentName, cfg.Namespace)
 			if err != nil {
 				return err
 			}
