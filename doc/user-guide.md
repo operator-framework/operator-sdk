@@ -277,7 +277,10 @@ $ go mod vendor
 
 before building the memcached-operator image.
 
-Build the memcached-operator image and push it to a registry:
+Build the memcached-operator image and push it to a registry.  Make sure to modify
+`quay.io/example/` in the example below to reference a container repository that
+you have access to. You can obtain an account for storing containers at
+repository sites such quay.io or hub.docker.com: 
 ```sh
 $ operator-sdk build quay.io/example/memcached-operator:v0.0.1
 $ sed -i 's|REPLACE_IMAGE|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
