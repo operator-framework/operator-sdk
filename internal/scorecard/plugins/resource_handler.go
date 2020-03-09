@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
@@ -87,7 +88,7 @@ func yamlToUnstructured(namespace, yamlPath string) (*unstructured.Unstructured,
 
 // createFromYAMLFile will take a path to a YAML file and create the resource. If it finds a
 // deployment, it will add the scorecard proxy as a container in the deployments podspec.
-func createFromYAMLFile(namespace, yamlPath, proxyImage string, pullPolicy v1.PullPolicy, initTimeout int) error {
+func createFromYAMLFile(namespace, yamlPath, proxyImage string, pullPolicy v1.PullPolicy, initTimeout, proxyPort int) error {
 	yamlSpecs, err := ioutil.ReadFile(yamlPath)
 	if err != nil {
 		return fmt.Errorf("failed to read file %s: %v", yamlPath, err)
@@ -115,12 +116,12 @@ func createFromYAMLFile(namespace, yamlPath, proxyImage string, pullPolicy v1.Pu
 				return fmt.Errorf("failed to convert object to deployment: %v", err)
 			}
 			deploymentName = dep.GetName()
-			err = createKubeconfigSecret(namespace, initTimeout)
+			err = createKubeconfigSecret(namespace, initTimeout, proxyPort)
 			if err != nil {
 				return fmt.Errorf("failed to create kubeconfig secret for scorecard-proxy: %v", err)
 			}
 			addMountKubeconfigSecret(dep)
-			addProxyContainer(dep, proxyImage, pullPolicy)
+			addProxyContainer(dep, proxyImage, pullPolicy, proxyPort)
 			// go back to unstructured to create
 			obj, err = deploymentToUnstructured(dep)
 			if err != nil {
@@ -216,9 +217,9 @@ func getPodFromDeployment(depName, namespace string) (pod *v1.Pod, err error) {
 
 // createKubeconfigSecret creates the secret that will be mounted in the operator's container and contains
 // the kubeconfig for communicating with the proxy
-func createKubeconfigSecret(namespace string, initTimeout int) error {
+func createKubeconfigSecret(namespace string, initTimeout int, proxyPort int) error {
 	kubeconfigMap := make(map[string][]byte)
-	kc, err := proxyConf.Create(metav1.OwnerReference{Name: "scorecard"}, "http://localhost:8889", namespace)
+	kc, err := proxyConf.Create(metav1.OwnerReference{Name: "scorecard"}, "http://localhost:"+strconv.Itoa(proxyPort), namespace)
 	if err != nil {
 		return err
 	}
@@ -282,16 +283,21 @@ func addMountKubeconfigSecret(dep *appsv1.Deployment) {
 }
 
 // addProxyContainer adds the container spec for the scorecard-proxy to the deployment's podspec
-func addProxyContainer(dep *appsv1.Deployment, proxyImage string, pullPolicy v1.PullPolicy) {
+func addProxyContainer(dep *appsv1.Deployment, proxyImage string, pullPolicy v1.PullPolicy, proxyPort int) {
 	dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, v1.Container{
 		Name:            scorecardContainerName,
 		Image:           proxyImage,
 		ImagePullPolicy: pullPolicy,
 		Command:         []string{"scorecard-proxy"},
-		Env: []v1.EnvVar{{
-			Name:      k8sutil.WatchNamespaceEnvVar,
-			ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{FieldPath: "metadata.namespace"}},
-		}},
+		Env: []v1.EnvVar{
+			{
+				Name: k8sutil.WatchNamespaceEnvVar,
+				ValueFrom: &v1.EnvVarSource{
+					FieldRef: &v1.ObjectFieldSelector{FieldPath: "metadata.namespace"}},
+			}, {
+				Name:  "SCORECARD_PROXY_PORT",
+				Value: strconv.Itoa(proxyPort),
+			}},
 	})
 }
 
