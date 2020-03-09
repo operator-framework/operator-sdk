@@ -4,7 +4,8 @@
 
 - Add a new option to set the minimum log level that triggers stack trace generation in logs (`--zap-stacktrace-level`) ([#2319](https://github.com/operator-framework/operator-sdk/pull/2319))
 - Added `pkg/status` with several new types and interfaces that can be used in `Status` structs to simplify handling of [status conditions](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties). ([#1143](https://github.com/operator-framework/operator-sdk/pull/1143))
-- Added support for relative Ansible roles and playbooks paths in the Ansible operator's file. ([#2273](https://github.com/operator-framework/operator-sdk/pull/2273))
+- Added support for relative Ansible roles and playbooks paths in the Ansible-based operator watches files. ([#2273](https://github.com/operator-framework/operator-sdk/pull/2273))
+- Added watches file support for roles that were installed as Ansible collections. ([#2587](https://github.com/operator-framework/operator-sdk/pull/2587))
 - Add Prometheus metrics support to Ansible-based operators. ([#2179](https://github.com/operator-framework/operator-sdk/pull/2179))
 - On `generate csv`, populate a CSV manifest’s `spec.icon`, `spec.keywords`, and `spec.mantainers` fields with empty values to better inform users how to add data. ([#2521](https://github.com/operator-framework/operator-sdk/pull/2521))
 - Scaffold code in `cmd/manager/main.go` for Go operators and add logic to Ansible/Helm operators to handle [multinamespace caching](https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder) if `WATCH_NAMESPACE` contains multiple namespaces. ([#2522](https://github.com/operator-framework/operator-sdk/pull/2522))
