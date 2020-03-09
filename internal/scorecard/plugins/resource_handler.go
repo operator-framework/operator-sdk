@@ -219,7 +219,8 @@ func getPodFromDeployment(depName, namespace string) (pod *v1.Pod, err error) {
 // the kubeconfig for communicating with the proxy
 func createKubeconfigSecret(namespace string, initTimeout int, proxyPort int) error {
 	kubeconfigMap := make(map[string][]byte)
-	kc, err := proxyConf.Create(metav1.OwnerReference{Name: "scorecard"}, "http://localhost:"+strconv.Itoa(proxyPort), namespace)
+	proxyURL := fmt.Sprintf("http://localhost:%d", proxyPort)
+	kc, err := proxyConf.Create(metav1.OwnerReference{Name: "scorecard"}, proxyURL, namespace)
 	if err != nil {
 		return err
 	}
