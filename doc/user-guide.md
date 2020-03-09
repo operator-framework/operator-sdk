@@ -573,7 +573,7 @@ func serveCRMetrics(cfg *rest.Config) error {
 	}
 ``` 
 
-The `kubemetrics.GenerateAndServeCRMetrics` requires an RBAC permission to List all GroupVersionKinds in the List of watched namespaces, therefore, you might need to customize the implementation of the [k8sutil.GetGVKsFromAddToScheme](https://godoc.org/github.com/operator-framework/operator-sdk/pkg/k8sutil#GetGVKsFromAddToScheme) by implementing your own `GetGVKsFromAddToScheme` to avoid permission issues such as `Failed to list *unstructured.Unstructured`.
+The `kubemetrics.GenerateAndServeCRMetrics` function requires an RBAC rule to list all GroupVersionKinds in the list of watched namespaces, so you might need to [filter](https://github.com/operator-framework/operator-sdk/blob/v0.15.2/pkg/k8sutil/k8sutil.go#L161) the kinds returned by [`k8sutil.GetGVKsFromAddToScheme`](https://godoc.org/github.com/operator-framework/operator-sdk/pkg/k8sutil#GetGVKsFromAddToScheme) more stringently to avoid authorization errors such as `Failed to list *unstructured.Unstructured`.
 
 In this scenario, this error may occur because your Operator RBAC roles do not include permissions to LIST the third party API schemas or the schemas which are required to them and will be added with. See that the default SDK implementation will just add the Kubernetes schemas and they will be ignored in the metrics It means that you might need to do an similar implementation to filter the third party API schemas and their dependencies added in order to provide a filtered a List of GVK(GroupVersionKind) to the  `GenerateAndServeCRMetrics` method. 
 
