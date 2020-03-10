@@ -809,7 +809,7 @@ This release contains breaking changes in some commands.
 
 ### Breaking Changes for Helm and Ansible 
 
-The `operator-sdk run ansible/helm` are now hidden commands in `exec-entrypoint ansible/helm`. However, all functionality of each sub-command is still the same.  So, if you are using this feature then you will need replace the `run` for `exec-entrypoint` as the following examples.
+The `operator-sdk run ansible/helm` are now hidden commands in `exec-entrypoint ansible/helm`. However, all functionality of each sub-command is still the same. If you are using this feature then you will need to replace the `run` for `exec-entrypoint` as the following examples.
 
 Replace:
 
