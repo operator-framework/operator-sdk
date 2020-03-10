@@ -234,7 +234,7 @@ func serveCRMetrics(cfg *rest.Config, operatorNs string) error {
 
 	// The metrics will be generated from the namespaces which are returned here.
 	// NOTE that passing nil or an empty list of namespaces in GenerateAndServeCRMetrics will result in an error.
-	ns, err := getNamespacesForMetrics(operatorNs)
+	ns, err := kubemetrics.GetNamespacesForMetrics(operatorNs)
 	if err != nil {
 		return err
 	}
@@ -245,22 +245,5 @@ func serveCRMetrics(cfg *rest.Config, operatorNs string) error {
 		return err
 	}
 	return nil
-}
-
-// getNamespacesForMetrics wil return all namespaces which will be used to export the metrics
-func getNamespacesForMetrics(operatorNs string) ([]string, error) {
-	ns := []string{operatorNs}
-
-	// Get the value from WATCH_NAMESPACES
-	watchNamespace, err := k8sutil.GetWatchNamespace()
-	if err != nil {
-		return nil, err
-	}
-
-	// Generate metrics from the WATCH_NAMESPACES value if it contains multiple namespaces
-	if strings.Contains(watchNamespace, ",") {
-		ns = strings.Split(watchNamespace, ",")
-	}
-	return ns, nil
 }
 `
