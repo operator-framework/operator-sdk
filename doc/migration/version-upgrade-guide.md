@@ -806,7 +806,35 @@ This release contains breaking changes in some commands.
 - The `operator-sdk olm-catalog gen-csv` was replaced by `operator-sdk generate csv`
 - The `operator-sdk up local` is now `operator-sdk run --local`. However, all functionality of this command is retained.
 - And then, the `operator-sdk alpha olm [sub-commands] [flags]` was moved from `alpha` to its own sub-command. However, all functionality of this command is retained. To check run; `operator-sdk olm --help`.
-- **(Useful for Ansible and Helm based-operators only)** The `operator-sdk run ansible/helm` are now hidden commands in `exec-entrypoint ansible/helm`. However, all functionality of each sub-command is still the same.
+
+### Breaking Changes for Helm and Ansible 
+
+The `operator-sdk run ansible/helm` are now hidden commands in `exec-entrypoint ansible/helm`. However, all functionality of each sub-command is still the same.  So, if you are using this feature then you will need replace the `run` for `exec-entrypoint` as the following examples.
+
+Replace:
+
+```
+oprator-sdk run ansible --watches-file=/opt/ansible/watches.yaml 
+```
+
+With: 
+
+```
+oprator-sdk exec-entrypoint ansible --watches-file=/opt/ansible/watches.yaml
+```
+
+
+Replace:
+
+```
+oprator-sdk run helm --watches-file=$HOME/watches.yaml
+```
+
+With: 
+
+```
+oprator-sdk run exec-entrypoint helm --watches-file=$HOME/watches.yaml
+```
 
 See the [CHANGELOG](https://github.com/operator-framework/operator-sdk/blob/master/CHANGELOG.md#v0151) for details of the release.
 
