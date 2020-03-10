@@ -180,11 +180,16 @@ func main() {
 // addMetrics will create the Services and Service Monitors to allow the operator export the metrics by using
 // the Prometheus operator
 func addMetrics(ctx context.Context, cfg *rest.Config) {
-	if err := serveCRMetrics(cfg); err != nil {
+	// Get the namespace the operator is currently deployed in.
+	operatorNs, err := k8sutil.GetOperatorNamespace()
+	if err != nil {
 		if errors.Is(err, k8sutil.ErrRunLocal) {
 			log.Info("Skipping CR metrics server creation; not running in a cluster.")
 			return
 		}
+	}
+
+	if err := serveCRMetrics(cfg, operatorNs); err != nil {
 		log.Info("Could not generate and serve custom resource metrics", "error", err.Error())
 	}
 
@@ -204,13 +209,6 @@ func addMetrics(ctx context.Context, cfg *rest.Config) {
 	// necessary to configure Prometheus to scrape metrics from this operator.
 	services := []*v1.Service{service}
 
-	// Get the namespace the operator is currently deployed in.
-	operatorNs, err := k8sutil.GetOperatorNamespace()
-	if err != nil {
-		log.Error(err, "")
-		os.Exit(1)
-	}
-
 	// The ServiceMonitor is created in the same namespace where the operator is deployed
 	_, err = metrics.CreateServiceMonitors(cfg, operatorNs, services)
 	if err != nil {
@@ -225,39 +223,44 @@ func addMetrics(ctx context.Context, cfg *rest.Config) {
 
 // serveCRMetrics gets the Operator/CustomResource GVKs and generates metrics based on those types.
 // It serves those metrics on "http://metricsHost:operatorMetricsPort".
-func serveCRMetrics(cfg *rest.Config) error {
+func serveCRMetrics(cfg *rest.Config, operatorNs string) error {
 	// The function below returns a list of filtered operator/CR specific GVKs. For more control, override the GVK list below
 	// with your own custom logic. Note that if you are adding third party API schemas, probably you will need to
 	// customize this implementation to avoid permissions issues.
 	filteredGVK, err := k8sutil.GetGVKsFromAddToScheme(apis.AddToScheme)
 	if err != nil {
-	    return err
-	}
-	// Get the namespace the operator is currently deployed in.
-	operatorNs, err := k8sutil.GetOperatorNamespace()
-	if err != nil {
-		return err
-	}
-	// Get the value from WATCH_NAMESPACES
-	watchNamespace, err := k8sutil.GetWatchNamespace()
-	if err != nil {
 		return err
 	}
 
-	// The metrics will be generated from the namespaces which are in ns
-	// NOTE that passing nil or an empty list of namespaces will result in an error.
-	ns := []string{operatorNs}
-
-	// Generate metrics from the WATCH_NAMESPACES value if it contains multiple namespaces
-	if strings.Contains(watchNamespace, ",") {
-		ns = strings.Split(watchNamespace, ",")
+	// The metrics will be generated from the namespaces which are returned here.
+	// NOTE that passing nil or an empty list of namespaces in GenerateAndServeCRMetrics will result in an error.
+	ns, err := getNamespacesForMetrics(operatorNs)
+	if err != nil {
+		return err
 	}
 
 	// Generate and serve custom resource specific metrics.
 	err = kubemetrics.GenerateAndServeCRMetrics(cfg, ns, filteredGVK, metricsHost, operatorMetricsPort)
 	if err != nil {
-	    return err
+		return err
 	}
 	return nil
+}
+
+// getNamespacesForMetrics wil return all namespaces which will be used to export the metrics
+func getNamespacesForMetrics(operatorNs string) ([]string, error) {
+	ns := []string{operatorNs}
+
+	// Get the value from WATCH_NAMESPACES
+	watchNamespace, err := k8sutil.GetWatchNamespace()
+	if err != nil {
+		return nil, err
+	}
+
+	// Generate metrics from the WATCH_NAMESPACES value if it contains multiple namespaces
+	if strings.Contains(watchNamespace, ",") {
+		ns = strings.Split(watchNamespace, ",")
+	}
+	return ns, nil
 }
 `
