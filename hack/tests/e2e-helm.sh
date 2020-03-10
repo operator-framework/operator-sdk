@@ -76,6 +76,14 @@ test_operator() {
         exit 1
     fi
 
+    header_text "verify that the servicemonitor is created"
+    if ! timeout 1m bash -c -- "until kubectl get servicemonitors/nginx-operator-metrics > /dev/null 2>&1; do sleep 1; done";
+    then
+        error_text "FAIL: Failed to get service monitor"
+        operator_logs
+        exit 1
+    fi
+
     release_name=$(kubectl get --namespace=${test_namespace} nginxes.helm.example.com example-nginx -o jsonpath="{..status.deployedRelease.name}")
     nginx_deployment=$(kubectl get --namespace=${test_namespace} deployment -l "app.kubernetes.io/instance=${release_name}" -o jsonpath="{..metadata.name}")
 
@@ -128,6 +136,8 @@ if echo $log | grep -q "failed to generate RBAC rules"; then
     echo FAIL expected successful generation of RBAC rules
     exit 1
 fi
+
+install_service_monitor_crd
 
 pushd nginx-operator
 sed -i".bak" -E -e 's/(FROM quay.io\/operator-framework\/helm-operator)(:.*)?/\1:dev/g' build/Dockerfile; rm -f build/Dockerfile.bak
