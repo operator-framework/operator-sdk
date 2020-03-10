@@ -61,28 +61,27 @@ type Framework struct {
 	Scheme            *runtime.Scheme
 	NamespacedManPath *string
 	OperatorNamespace string
+	WatchNamespace    string
 
 	restMapper *restmapper.DeferredDiscoveryRESTMapper
 
-	projectRoot         string
-	globalManPath       string
-	localOperatorArgs   string
-	kubeconfigPath      string
-	schemeMutex         sync.Mutex
-	LocalOperator       bool
-	singleNamespaceMode bool
-	skipCleanupOnError  bool
+	projectRoot        string
+	globalManPath      string
+	localOperatorArgs  string
+	kubeconfigPath     string
+	schemeMutex        sync.Mutex
+	LocalOperator      bool
+	skipCleanupOnError bool
 }
 
 type frameworkOpts struct {
-	projectRoot         string
-	kubeconfigPath      string
-	globalManPath       string
-	namespacedManPath   string
-	localOperatorArgs   string
-	singleNamespaceMode bool
-	isLocalOperator     bool
-	skipCleanupOnError  bool
+	projectRoot        string
+	kubeconfigPath     string
+	globalManPath      string
+	namespacedManPath  string
+	localOperatorArgs  string
+	isLocalOperator    bool
+	skipCleanupOnError bool
 }
 
 const (
@@ -90,12 +89,12 @@ const (
 	KubeConfigFlag         = "kubeconfig"
 	NamespacedManPathFlag  = "namespacedMan"
 	GlobalManPathFlag      = "globalMan"
-	SingleNamespaceFlag    = "singleNamespace"
 	LocalOperatorFlag      = "localOperator"
 	LocalOperatorArgs      = "localOperatorArgs"
 	SkipCleanupOnErrorFlag = "skipCleanupOnError"
 
 	TestOperatorNamespaceEnv = "TEST_OPERATOR_NAMESPACE"
+	TestWatchNamespaceEnv    = "TEST_WATCH_NAMESPACE"
 )
 
 func (opts *frameworkOpts) addToFlagSet(flagset *flag.FlagSet) {
@@ -105,7 +104,6 @@ func (opts *frameworkOpts) addToFlagSet(flagset *flag.FlagSet) {
 		"enable if operator is running locally (not in cluster)")
 	flagset.StringVar(&opts.kubeconfigPath, KubeConfigFlag, "", "path to kubeconfig")
 	flagset.StringVar(&opts.globalManPath, GlobalManPathFlag, "", "path to operator manifest")
-	flagset.BoolVar(&opts.singleNamespaceMode, SingleNamespaceFlag, false, "enable single namespace mode")
 	flagset.StringVar(&opts.localOperatorArgs, LocalOperatorArgs, "",
 		"flags that the operator needs (while using --up-local). example: \"--flag1 value1 --flag2=value2\"")
 	flagset.BoolVar(&opts.skipCleanupOnError, SkipCleanupOnErrorFlag, false,
@@ -120,11 +118,9 @@ func newFramework(opts *frameworkOpts) (*Framework, error) {
 	}
 
 	operatorNamespace := kcNamespace
-	if opts.singleNamespaceMode {
-		testOperatorNamespace := os.Getenv(TestOperatorNamespaceEnv)
-		if testOperatorNamespace != "" {
-			operatorNamespace = testOperatorNamespace
-		}
+	ns, ok := os.LookupEnv(TestOperatorNamespaceEnv)
+	if ok && ns != "" {
+		operatorNamespace = ns
 	}
 
 	kubeclient, err := kubernetes.NewForConfig(kubeconfig)
@@ -157,13 +153,12 @@ func newFramework(opts *frameworkOpts) (*Framework, error) {
 		OperatorNamespace: operatorNamespace,
 		LocalOperator:     opts.isLocalOperator,
 
-		projectRoot:         opts.projectRoot,
-		singleNamespaceMode: opts.singleNamespaceMode,
-		globalManPath:       opts.globalManPath,
-		localOperatorArgs:   opts.localOperatorArgs,
-		kubeconfigPath:      opts.kubeconfigPath,
-		restMapper:          restMapper,
-		skipCleanupOnError:  opts.skipCleanupOnError,
+		projectRoot:        opts.projectRoot,
+		globalManPath:      opts.globalManPath,
+		localOperatorArgs:  opts.localOperatorArgs,
+		kubeconfigPath:     opts.kubeconfigPath,
+		restMapper:         restMapper,
+		skipCleanupOnError: opts.skipCleanupOnError,
 	}
 	return framework, nil
 }
@@ -197,7 +192,8 @@ func (f *Framework) addToScheme(addToScheme addToSchemeFunc, obj runtime.Object)
 		return fmt.Errorf("failed to initialize new dynamic client: %w", err)
 	}
 	err = wait.PollImmediate(time.Second, time.Second*10, func() (done bool, err error) {
-		if f.singleNamespaceMode {
+		ns, ok := os.LookupEnv(TestOperatorNamespaceEnv)
+		if ok && ns != "" {
 			err = dynClient.List(goctx.TODO(), obj, dynclient.InNamespace(f.OperatorNamespace))
 		} else {
 			err = dynClient.List(goctx.TODO(), obj, dynclient.InNamespace("default"))
@@ -293,6 +289,11 @@ func (f *Framework) setupLocalCommand() (*exec.Cmd, error) {
 		localCmd.Env = append(os.Environ(), fmt.Sprintf("%v=%v", k8sutil.KubeConfigEnvVar,
 			clientcmd.NewDefaultClientConfigLoadingRules().Precedence[0]))
 	}
-	localCmd.Env = append(localCmd.Env, fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, f.OperatorNamespace))
+	watchNamespace := f.OperatorNamespace
+	ns, ok := os.LookupEnv(TestWatchNamespaceEnv)
+	if ok {
+		watchNamespace = ns
+	}
+	localCmd.Env = append(localCmd.Env, fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, watchNamespace))
 	return localCmd, nil
 }

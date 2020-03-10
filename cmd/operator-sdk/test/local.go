@@ -48,6 +48,7 @@ type testLocalConfig struct {
 	goTestFlags        string
 	moleculeTestFlags  string
 	operatorNamespace  string
+	watchNamespace     string
 	image              string
 	localOperatorFlags string
 	upLocal            bool
@@ -74,7 +75,11 @@ func newTestLocalCmd() *cobra.Command {
 	testCmd.Flags().StringVar(&tlConfig.moleculeTestFlags, "molecule-test-flags", "",
 		"Additional flags to pass to molecule test")
 	testCmd.Flags().StringVar(&tlConfig.operatorNamespace, "operator-namespace", "",
-		"If non-empty, single namespace to run tests in")
+		"Namespace where the operator will be deployed, CRs will be created and tests will be executed "+
+			"(By default it will be in the default namespace defined in the kubeconfig)")
+	testCmd.Flags().StringVar(&tlConfig.watchNamespace, "watch-namespace", "",
+		"(only valid with --up-local) Namespace where the operator watches for changes. "+
+			"Explicitly set to empty string to watch all namespaces (defaults to the operatorNamespace).")
 	testCmd.Flags().BoolVar(&tlConfig.upLocal, "up-local", false,
 		"Enable running operator locally with go run instead of as an image in the cluster")
 	testCmd.Flags().BoolVar(&tlConfig.noSetup, "no-setup", false, "Disable test resource creation")
@@ -134,7 +139,10 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 	}
 
 	if tlConfig.upLocal && tlConfig.operatorNamespace == "" {
-		return fmt.Errorf("must specify a namespace with operator-namespace flag to run in when -up-local flag is set")
+		return fmt.Errorf("must specify a namespace with operator-namespace flag to run in when --up-local flag is set")
+	}
+	if !tlConfig.upLocal && cmd.Flags().Changed("watch-namespace") {
+		return fmt.Errorf("--watch-namespace not valid without -up-local flag")
 	}
 
 	log.Info("Testing operator locally.")
@@ -224,9 +232,23 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 		testArgs = append(testArgs, strings.Split(tlConfig.goTestFlags, " ")...)
 	}
 	if tlConfig.operatorNamespace != "" || tlConfig.noSetup {
-		testArgs = append(testArgs, "-"+test.SingleNamespaceFlag, "-parallel=1")
+		testArgs = append(testArgs, "-parallel=1")
 	}
-	env := append(os.Environ(), fmt.Sprintf("%v=%v", test.TestOperatorNamespaceEnv, tlConfig.operatorNamespace))
+	env := os.Environ()
+	if tlConfig.operatorNamespace != "" {
+		env = append(
+			env,
+			fmt.Sprintf("%v=%v", test.TestOperatorNamespaceEnv, tlConfig.operatorNamespace),
+		)
+	}
+
+	if cmd.Flags().Changed("watch-namespace") {
+		env = append(
+			env,
+			fmt.Sprintf("%v=%v", test.TestWatchNamespaceEnv, tlConfig.watchNamespace),
+		)
+	}
+
 	if tlConfig.upLocal {
 		env = append(env, fmt.Sprintf("%s=%s", k8sutil.ForceRunModeEnv, k8sutil.LocalRunMode))
 		testArgs = append(testArgs, "-"+test.LocalOperatorFlag)

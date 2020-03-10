@@ -45,6 +45,9 @@
 - Upgrade the Helm dependency version from `v3.0.1` to `v3.0.2`. ([#2621](https://github.com/operator-framework/operator-sdk/pull/2621))
 - Changed the scaffolded `serveCRMetrics` to use the namespaces informed in the environment variable `WATCH_NAMESPACE` in the MultiNamespace scenario. ([#2603](https://github.com/operator-framework/operator-sdk/pull/2603))
 - Improve skip metrics logs when running the operator locally in order to make clear the information for Helm based operators. ([#2603](https://github.com/operator-framework/operator-sdk/pull/2603))
+- Breaking Change: Renamed --namespace flag as --watch-namespace in operator-sdk run local command. (#2617)
+- Breaking Change: Split --namespace flag into --operator-namespace and --watch-namespace in operator-sdk test local command to decouple the operator namespace from the watch namespace. (#2617)
+- Breaking Change: Split `ctx.GetNamespace()` in `pkg/test` into `ctx.GetOperatorNamespace()` and `ctx.GetWatchNamespace()`. (#2617) 
 
 ### Deprecated
 - The type name `TestCtx` in `pkg/test` has been deprecated and renamed to `Context`. It now exists only as a type alias to maintain backwards compatibility. Users of the e2e framework should migrate to use the new name, `Context`. The `TestCtx` alias will be removed in a future version. ([2549](https://github.com/operator-framework/operator-sdk/pull/2549))

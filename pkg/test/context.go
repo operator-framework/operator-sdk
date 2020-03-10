@@ -15,6 +15,7 @@
 package test
 
 import (
+	"os"
 	"testing"
 	"time"
 
@@ -28,6 +29,7 @@ type Context struct {
 	id                string
 	cleanupFns        []cleanupFn
 	operatorNamespace string
+	watchNamespace    string
 	t                 *testing.T
 
 	namespacedManPath  string
@@ -57,13 +59,22 @@ func (f *Framework) newContext(t *testing.T) *Context {
 	id := "osdk-e2e-" + uuid.New()
 
 	var operatorNamespace string
-	if f.singleNamespaceMode {
+	_, ok := os.LookupEnv(TestOperatorNamespaceEnv)
+	if ok {
 		operatorNamespace = f.OperatorNamespace
 	}
+
+	watchNamespace := operatorNamespace
+	ns, ok := os.LookupEnv(TestWatchNamespaceEnv)
+	if ok {
+		watchNamespace = ns
+	}
+
 	return &Context{
 		id:                 id,
 		t:                  t,
 		operatorNamespace:  operatorNamespace,
+		watchNamespace:     watchNamespace,
 		namespacedManPath:  *f.NamespacedManPath,
 		client:             f.Client,
 		kubeclient:         f.KubeClient,

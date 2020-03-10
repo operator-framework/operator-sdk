@@ -23,9 +23,10 @@ operator-sdk test local <path to tests directory> [flags]
       --molecule-test-flags string    Additional flags to pass to molecule test
       --namespaced-manifest string    Path to manifest for per-test, namespaced resources (e.g. RBAC and Operator manifest)
       --no-setup                      Disable test resource creation
-      --operator-namespace string     If non-empty, single namespace to run tests in
+      --operator-namespace string     Namespace where the operator will be deployed, CRs will be created and tests will be executed (By default it will be in the default namespace defined in the kubeconfig)
       --skip-cleanup-error            If set as true, the cleanup function responsible to remove all artifacts will be skipped if an error is faced.
       --up-local                      Enable running operator locally with go run instead of as an image in the cluster
+      --watch-namespace string        (only valid with --up-local) Namespace where the operator watches for changes. Explicitly set to empty string to watch all namespaces (defaults to the operatorNamespace).
 ```
 
 ### SEE ALSO

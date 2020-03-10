@@ -66,19 +66,19 @@ func TestMemcached(t *testing.T) {
 }
 
 func memcachedLeaderTest(t *testing.T, f *framework.Framework, ctx *framework.Context) error {
-	namespace, err := ctx.GetOperatorNamespace()
+	operatorNamespace, err := ctx.GetOperatorNamespace()
 	if err != nil {
 		return err
 	}
 
-	err = e2eutil.WaitForOperatorDeployment(t, f.KubeClient, namespace, operatorName, 2, retryInterval, timeout)
+	err = e2eutil.WaitForOperatorDeployment(t, f.KubeClient, operatorNamespace, operatorName, 2, retryInterval, timeout)
 	if err != nil {
 		return err
 	}
 
 	label := map[string]string{"name": operatorName}
 
-	leader, err := verifyLeader(t, namespace, f, label)
+	leader, err := verifyLeader(t, operatorNamespace, f, label)
 	if err != nil {
 		return err
 	}
@@ -94,12 +94,12 @@ func memcachedLeaderTest(t *testing.T, f *framework.Framework, ctx *framework.Co
 		return err
 	}
 
-	err = e2eutil.WaitForOperatorDeployment(t, f.KubeClient, namespace, operatorName, 2, retryInterval, timeout)
+	err = e2eutil.WaitForOperatorDeployment(t, f.KubeClient, operatorNamespace, operatorName, 2, retryInterval, timeout)
 	if err != nil {
 		return err
 	}
 
-	newLeader, err := verifyLeader(t, namespace, f, label)
+	newLeader, err := verifyLeader(t, operatorNamespace, f, label)
 	if err != nil {
 		return err
 	}
@@ -162,11 +162,11 @@ func verifyLeader(t *testing.T, namespace string, f *framework.Framework, labels
 
 func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Context, fromReplicas, toReplicas int) error {
 	name := "example-memcached"
-	namespace, err := ctx.GetOperatorNamespace()
+	watchNamespace, err := ctx.GetWatchNamespace()
 	if err != nil {
-		return fmt.Errorf("could not get namespace: %v", err)
+		return fmt.Errorf("could not get watch namespace: %v", err)
 	}
-	key := types.NamespacedName{Name: name, Namespace: namespace}
+	key := types.NamespacedName{Name: name, Namespace: watchNamespace}
 	// create memcached custom resource
 	exampleMemcached := &operator.Memcached{
 		ObjectMeta: metav1.ObjectMeta{
@@ -213,13 +213,13 @@ func MemcachedLocal(t *testing.T) {
 	// get global framework variables
 	ctx := framework.NewContext(t)
 	defer ctx.Cleanup()
-	namespace, err := ctx.GetOperatorNamespace()
+	watchNamespace, err := ctx.GetWatchNamespace()
 	if err != nil {
 		t.Fatal(err)
 	}
 	cmd := exec.Command("operator-sdk", "run",
 		"--local",
-		"--watch-namespace="+namespace)
+		"--watch-namespace="+watchNamespace)
 	stderr, err := os.Create("stderr.txt")
 	if err != nil {
 		t.Fatalf("Failed to create stderr.txt: %v", err)
@@ -273,14 +273,14 @@ func MemcachedCluster(t *testing.T) {
 		t.Fatalf("Failed to initialize cluster resources: %v", err)
 	}
 	t.Log("Initialized cluster resources")
-	namespace, err := ctx.GetOperatorNamespace()
+	operatorNamespace, err := ctx.GetOperatorNamespace()
 	if err != nil {
 		t.Fatal(err)
 	}
 	// get global framework variables
 	f := framework.Global
 	// wait for memcached-operator to be ready
-	if err := e2eutil.WaitForOperatorDeployment(t, f.KubeClient, namespace, operatorName, 2, retryInterval, timeout); err != nil {
+	if err := e2eutil.WaitForOperatorDeployment(t, f.KubeClient, operatorNamespace, operatorName, 2, retryInterval, timeout); err != nil {
 		t.Fatal(err)
 	}
 

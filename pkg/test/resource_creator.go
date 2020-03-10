@@ -18,6 +18,7 @@ import (
 	goctx "context"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"time"
 
 	"github.com/ghodss/yaml"
@@ -46,6 +47,27 @@ func (ctx *Context) GetOperatorNamespace() (string, error) {
 		return ctx.kubeclient.CoreV1().Namespaces().Delete(ctx.operatorNamespace, metav1.NewDeleteOptions(0))
 	})
 	return ctx.operatorNamespace, nil
+}
+
+func (ctx *Context) GetWatchNamespace() (string, error) {
+	// if ctx.watchNamespace is already set and not "";
+	// then return ctx.watchnamespace
+	if ctx.watchNamespace != "" {
+		return ctx.watchNamespace, nil
+	}
+	// if ctx.watchNamespace == "";
+	// ensure it was set explicitly using TestWatchNamespaceEnv
+	if ns, ok := os.LookupEnv(TestWatchNamespaceEnv); ok {
+		return ns, nil
+	}
+	// get ctx.operatorNamespace (use ctx.GetOperatorNamespace()
+	// to make sure ctx.operatorNamespace is not "")
+	operatorNamespace, err := ctx.GetOperatorNamespace()
+	if err != nil {
+		return "", nil
+	}
+	ctx.watchNamespace = operatorNamespace
+	return ctx.watchNamespace, nil
 }
 
 func (ctx *Context) createFromYAML(yamlFile []byte, skipIfExists bool, cleanupOptions *CleanupOptions) error {

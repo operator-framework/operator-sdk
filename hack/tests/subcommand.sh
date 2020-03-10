@@ -28,6 +28,11 @@ kubectl create namespace test-memcached
 operator-sdk test local ./test/e2e --up-local --operator-namespace=test-memcached
 kubectl delete namespace test-memcached
 
+# test operator in up local mode with --watch-namespace flag
+kubectl create namespace test-memcached
+operator-sdk test local ./test/e2e --up-local --operator-namespace=test-memcached --watch-namespace=""
+kubectl delete namespace test-memcached
+
 # test operator in 'run --local' mode with kubeconfig
 kubectl create namespace test-memcached
 operator-sdk test local ./test/e2e --up-local --operator-namespace=test-memcached --kubeconfig $KUBECONFIG
