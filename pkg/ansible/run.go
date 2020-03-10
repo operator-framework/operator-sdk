@@ -203,11 +203,16 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 // addMetrics will create the Services and Service Monitors to allow the operator export the metrics by using
 // the Prometheus operator
 func addMetrics(ctx context.Context, cfg *rest.Config, gvks []schema.GroupVersionKind) {
-	if err := serveCRMetrics(cfg, gvks); err != nil {
+	// Get the namespace the operator is currently deployed in.
+	operatorNs, err := k8sutil.GetOperatorNamespace()
+	if err != nil {
 		if errors.Is(err, k8sutil.ErrRunLocal) {
 			log.Info("Skipping CR metrics server creation; not running in a cluster.")
 			return
 		}
+	}
+
+	if err := serveCRMetrics(cfg, operatorNs, gvks); err != nil {
 		log.Info("Could not generate and serve custom resource metrics", "error", err.Error())
 	}
 
@@ -230,13 +235,6 @@ func addMetrics(ctx context.Context, cfg *rest.Config, gvks []schema.GroupVersio
 	// necessary to configure Prometheus to scrape metrics from this operator.
 	services := []*v1.Service{service}
 
-	// Get the namespace the operator is currently deployed in.
-	operatorNs, err := k8sutil.GetOperatorNamespace()
-	if err != nil {
-		log.Error(err, "")
-		return
-	}
-
 	// The ServiceMonitor is created in the same namespace where the operator is deployed
 	_, err = metrics.CreateServiceMonitors(cfg, operatorNs, services)
 	if err != nil {
@@ -251,14 +249,14 @@ func addMetrics(ctx context.Context, cfg *rest.Config, gvks []schema.GroupVersio
 
 // serveCRMetrics takes GVKs retrieved from watches and generates metrics based on those types.
 // It serves those metrics on "http://metricsHost:operatorMetricsPort".
-func serveCRMetrics(cfg *rest.Config, gvks []schema.GroupVersionKind) error {
-	// Get the namespace the operator is currently deployed in.
-	operatorNs, err := k8sutil.GetOperatorNamespace()
+func serveCRMetrics(cfg *rest.Config, operatorNs string, gvks []schema.GroupVersionKind) error {
+	// The metrics will be generated from the namespaces which are returned here.
+	// NOTE that passing nil or an empty list of namespaces in GenerateAndServeCRMetrics will result in an error.
+	ns, err := kubemetrics.GetNamespacesForMetrics(operatorNs)
 	if err != nil {
 		return err
 	}
-	// To generate metrics in other namespaces, add the values below.
-	ns := []string{operatorNs}
+
 	// Generate and serve custom resource specific metrics.
 	err = kubemetrics.GenerateAndServeCRMetrics(cfg, ns, gvks, metricsHost, operatorMetricsPort)
 	if err != nil {
