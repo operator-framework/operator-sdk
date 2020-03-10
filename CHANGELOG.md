@@ -13,6 +13,7 @@
 - Add event stats output to the operator logs for Ansible based-operators. ([2580](https://github.com/operator-framework/operator-sdk/pull/2580))
 - Improve Ansible logs by allowing output the full Ansible result for Ansible based-operators configurable by environment variable. ([2589](https://github.com/operator-framework/operator-sdk/pull/2589))
 - Add the --max-workers flag to the commands operator-sdk exec-entrypoint and operator-sdk run --local for Helm based-operators with the purpose of controling the number of concurrent reconcile workers. ([2607](https://github.com/operator-framework/operator-sdk/pull/2607))
+- Add the --proxy-port flag to the operator-sdk scorecard command allowing users to override the default proxy port value (8889). ([2634](https://github.com/operator-framework/operator-sdk/pull/2634))
 
 ### Changed
 - Ansible scaffolding has been rewritten to be simpler and make use of newer features of Ansible and Molecule.
