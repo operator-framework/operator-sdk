@@ -14,6 +14,7 @@
 - Improve Ansible logs by allowing output the full Ansible result for Ansible based-operators configurable by environment variable. ([2589](https://github.com/operator-framework/operator-sdk/pull/2589))
 - Add the --max-workers flag to the commands operator-sdk exec-entrypoint and operator-sdk run --local for Helm based-operators with the purpose of controling the number of concurrent reconcile workers. ([2607](https://github.com/operator-framework/operator-sdk/pull/2607))
 - Add support for Metrics with MultiNamespace scenario for Ansible and Helm based-operators. ([#2603](https://github.com/operator-framework/operator-sdk/pull/2603)) 
+- Add Prometheus metrics support to Helm-based operators. ([#2603](https://github.com/operator-framework/operator-sdk/pull/2603))
 
 ### Changed
 - Ansible scaffolding has been rewritten to be simpler and make use of newer features of Ansible and Molecule.
@@ -45,7 +46,6 @@
 - Fixed a regression in the `operator-sdk run` command that caused `--local` flags to be ignored ([#2478](https://github.com/operator-framework/operator-sdk/issues/2478))
 - Fix command `operator-sdk run --local` which was not working on Windows. ([#2481](https://github.com/operator-framework/operator-sdk/pull/2481))
 - Fix `ServiceMonitor` creation when the operator is cluster-scoped and the environment variable `WATCH_NAMESPACE` has a different value than the namespace where the operator is deployed. ([#2601](https://github.com/operator-framework/operator-sdk/pull/2601))
-- Start to create `ServiceMonitor` resources for Helm based operators. ([#2603](https://github.com/operator-framework/operator-sdk/pull/2603))
 
 ## v0.15.2
 
