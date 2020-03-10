@@ -134,7 +134,7 @@ To test, the following print statement can be added in the main function:
 
 ```console
 $ operator-sdk run --local
-ts=2020-02-27T23:10:33Z level=info msg="Prinitng at DEBUG level"
+ts=2020-02-27T23:10:33Z level=info msg="Printing at INFO level"
 ts=2020-02-27T23:10:33Z level=info msg="Operator Version: 0.0.1"
 ts=2020-02-27T23:10:33Z level=info msg="Go Version: go1.13.8"
 ts=2020-02-27T23:10:33Z level=info msg="Go OS/Arch: darwin/amd64"
