@@ -27,6 +27,7 @@
 - Changed the scorecard to use the init-timeout configuration setting as a wait time when performing cleanup instead of a hard-coded time.  ([#2597](https://github.com/operator-framework/operator-sdk/pull/2597))
 - Upgrade the Helm dependency version from `v3.0.1` to `v3.0.2`. ([#2621](https://github.com/operator-framework/operator-sdk/pull/2621)) 
 - Changed the scaffolded `serveCRMetrics` to use the namespaces informed in the environment variable `WATCH_NAMESPACE` in the MultiNamespace scenario. ([#2603](https://github.com/operator-framework/operator-sdk/pull/2603)) 
+- Improve skip metrics logs when running the operator locally in order to make clear the information for Helm based operators. ([#2603](https://github.com/operator-framework/operator-sdk/pull/2603))
 
 ### Deprecated
 - The type name `TestCtx` in `pkg/test` has been deprecated and renamed to `Context`. It now exists only as a type alias to maintain backwards compatibility. Users of the e2e framework should migrate to use the new name, `Context`. The `TestCtx` alias will be removed in a future version. ([2549](https://github.com/operator-framework/operator-sdk/pull/2549))
@@ -43,7 +44,9 @@
 - Fixed issue with Go dependencies caused by removed tag in `openshift/api` repository ([#2466](https://github.com/operator-framework/operator-sdk/issues/2466))
 - Fixed a regression in the `operator-sdk run` command that caused `--local` flags to be ignored ([#2478](https://github.com/operator-framework/operator-sdk/issues/2478))
 - Fix command `operator-sdk run --local` which was not working on Windows. ([#2481](https://github.com/operator-framework/operator-sdk/pull/2481))
-- - Fix `ServiceMonitor` creation when the operator is cluster-scoped and the environment variable `WATCH_NAMESPACE` has a different value than the namespace where the operator is deployed. ([#2601](https://github.com/operator-framework/operator-sdk/pull/2601))
+- Fix `ServiceMonitor` creation when the operator is cluster-scoped and the environment variable `WATCH_NAMESPACE` has a different value than the namespace where the operator is deployed. ([#2601](https://github.com/operator-framework/operator-sdk/pull/2601))
+- Improve skip metrics logs when running the operator locally in order to make clear the information for Helm based operators. ([#2603](https://github.com/operator-framework/operator-sdk/pull/2603))
+- Start to create `ServiceMonitor` resources for Helm based operators. ([#2603](https://github.com/operator-framework/operator-sdk/pull/2603))
 
 ## v0.15.2
 
