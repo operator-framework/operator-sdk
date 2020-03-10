@@ -814,7 +814,7 @@ See the [CHANGELOG](https://github.com/operator-framework/operator-sdk/blob/mast
 
 ### Bug Fixes and Improvements for Metrics
 
-Some changes were performed in the default implementation regards the default metrics export.  In this way, update the  `cmd/main.go` file as follows. 
+There were some changes to the default implementation of the metrics export. These changes require the `cmd/main.go` be updated as follows.
 
 Replace:
 
