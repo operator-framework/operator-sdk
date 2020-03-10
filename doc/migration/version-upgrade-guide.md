@@ -925,7 +925,7 @@ func getNamespacesForMetrics(operatorNs string) ([]string, error) {
 }
 ```
 
-**NOTE**: For further and detailed information check the PRs which are responsible for the above changes [#2606](https://github.com/operator-framework/operator-sdk/pull/2606),[#2603](https://github.com/operator-framework/operator-sdk/pull/2603) #2603 and [#2601](https://github.com/operator-framework/operator-sdk/pull/2601).
+**NOTE**: For further and detailed information check the PRs which are responsible for the above changes [#2606](https://github.com/operator-framework/operator-sdk/pull/2606),[#2603](https://github.com/operator-framework/operator-sdk/pull/2603) and [#2601](https://github.com/operator-framework/operator-sdk/pull/2601).
 
 ### Breaking changes
 
