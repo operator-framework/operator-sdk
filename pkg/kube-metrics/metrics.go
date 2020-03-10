@@ -17,8 +17,9 @@ package kubemetrics
 import (
 	"errors"
 	"fmt"
-	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"strings"
+
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"

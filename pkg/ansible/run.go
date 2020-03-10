@@ -283,5 +283,3 @@ func getAnsibleDebugLog() bool {
 	}
 	return val
 }
-
-
