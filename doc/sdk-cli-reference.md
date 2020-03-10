@@ -414,13 +414,6 @@ should use `up local` instead.
 #### Flags
 
 * `--reconcile-period` string - Default reconcile period for controllers (default 1m0s)
-* `--watches-file` string - Path to the watches file to use (default "./watches.yaml")
-
-#### Example
-
-```console
-$ operator-sdk run ansible --watches-file=/opt/ansible/watches.yaml --reconcile-period=30s
-```
 
 ### helm
 
@@ -431,13 +424,6 @@ should use `up local` instead.
 #### Flags
 
 * `--reconcile-period` string - Default reconcile period for controllers (default 1m0s)
-* `--watches-file` string - Path to the watches file to use (default "./watches.yaml")
-
-#### Example
-
-```console
-$ operator-sdk run helm --watches-file=/opt/helm/watches.yaml --reconcile-period=30s
-```
 
 ## scorecard
 
