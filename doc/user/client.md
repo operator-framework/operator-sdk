@@ -275,9 +275,9 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 	...
 
 	ctx := context.TODO()
-	dep.Spec.Selector.MatchLabels["is_running"] = "true"
 	// A merge patch will preserve other fields modified at runtime.
-	patch := client.MergeFrom(dep)
+	patch := client.MergeFrom(dep.DeepCopy())
+	dep.Spec.Selector.MatchLabels["is_running"] = "true"
 	err := r.client.Patch(ctx, dep, patch)
 
 	...
@@ -326,7 +326,8 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 	...
 
 	// Patch
-	patch := client.MergeFrom(mem)
+	patch := client.MergeFrom(mem.DeepCopy())
+	mem.Status.Nodes = []string{"pod1", "pod2", "pod3"}
 	err := r.client.Status().Patch(ctx, mem, patch)
 
 	...
