@@ -16,6 +16,7 @@ package main
 
 import (
 	"os"
+	"strconv"
 
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
@@ -27,6 +28,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+)
+
+const (
+	defaultPort = 8889
 )
 
 func main() {
@@ -43,6 +48,19 @@ func main() {
 			k8sutil.WatchNamespaceEnvVar)
 	}
 
+	port := defaultPort
+
+	var tmp string
+	tmp, found = os.LookupEnv("SCORECARD_PROXY_PORT")
+	if found {
+		i, err := strconv.Atoi(tmp)
+		if err != nil {
+			log.Fatal(err)
+		}
+		port = i
+	}
+	log.Infof("Listening on port %d.", port)
+
 	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{
 		Namespace: namespace,
 	})
@@ -56,7 +74,7 @@ func main() {
 	// start the proxy
 	err = proxy.Run(done, proxy.Options{
 		Address:           "localhost",
-		Port:              8889,
+		Port:              port,
 		KubeConfig:        mgr.GetConfig(),
 		RESTMapper:        mgr.GetRESTMapper(),
 		ControllerMap:     cMap,

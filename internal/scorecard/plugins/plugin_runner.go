@@ -401,17 +401,15 @@ func runTests(csv *olmapiv1alpha1.ClusterServiceVersion, pluginType PluginType, 
 	log.Printf("Running for cr: %s", cr)
 
 	if !cfg.OLMDeployed {
-		if err := createFromYAMLFile(cfg.Namespace, cfg.GlobalManifest, cfg.ProxyImage,
-			cfg.ProxyPullPolicy, cfg.InitTimeout); err != nil {
+		if err := createFromYAMLFile(cfg, cfg.GlobalManifest); err != nil {
 			return testResults, "", fmt.Errorf("failed to create global resources: %v", err)
 		}
-		if err := createFromYAMLFile(cfg.Namespace, cfg.NamespacedManifest, cfg.ProxyImage,
-			cfg.ProxyPullPolicy, cfg.InitTimeout); err != nil {
+		if err := createFromYAMLFile(cfg, cfg.NamespacedManifest); err != nil {
 			return testResults, "", fmt.Errorf("failed to create namespaced resources: %v", err)
 		}
 	}
 
-	if err := createFromYAMLFile(cfg.Namespace, cr, cfg.ProxyImage, cfg.ProxyPullPolicy, cfg.InitTimeout); err != nil {
+	if err := createFromYAMLFile(cfg, cr); err != nil {
 		return testResults, "", fmt.Errorf("failed to create cr resource: %v", err)
 	}
 

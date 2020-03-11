@@ -129,6 +129,7 @@ The `basic` and `olm` internal plugins have the same configuration fields:
 | `crds-dir` | string | path to directory containing CRDs that must be deployed to the cluster |
 | `namespaced-manifest` | string | manifest file with all resources that run within a namespace. By default, the scorecard will combine `service_account.yaml`, `role.yaml`, `role_binding.yaml`, and `operator.yaml` from the `deploy` directory into a temporary manifest to use as the namespaced manifest |
 | `global-manifest` | string | manifest containing required resources that run globally (not namespaced). By default, the scorecard will combine all CRDs in the `crds-dir` directory into a temporary manifest to use as the global manifest |
+| `proxy-port` | int | port for scorecard-proxy to listen to, default is port 8889 |
 
 ## Tests Performed
 
