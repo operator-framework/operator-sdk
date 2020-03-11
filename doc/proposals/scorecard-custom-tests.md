@@ -379,6 +379,12 @@ The proposed design focuses heavily on separation of concerns, turning scorecard
 
 **The proposed design would be implemented by means of integrating the Kuttl library into the SDK scorecard codebase.**
 
+SDK Scorecard end-users would be provided the following with this proposal:
+
+ * sample custom tests source code
+ * documentation that describes how to write a custom test
+ * sample expected custom test sample JSON (e.g. v1alpha2 ScorecardTestResult output)
+
 ## Reference Material
 
 <https://github.com/kudobuilder/kudo>
