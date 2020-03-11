@@ -29,14 +29,14 @@ The Operator offers the following basic features:
 - Operator waits for managed resources to reach a healthy state
 - Operator conveys readiness of application or managed resources to the user leveraging the `status` block of the Custom Resource
 
-Example: an Operator deploys a database by creating `Deployment`, `ServiceAccount`, `RoleBinding`, `ConfigMap`, `PersistentVolumeClaim` and `Secret` object, initializes an empty database schema and signals readiness of the database to accept queries.
+**Example:** an Operator deploys a database by creating `Deployment`, `ServiceAccount`, `RoleBinding`, `ConfigMap`, `PersistentVolumeClaim` and `Secret` object, initializes an empty database schema and signals readiness of the database to accept queries.
 
 **Configuration of the workload**
 
 - Operator provides configuration via the `spec` section of the Custom Resource
 - Operator reconciles configuration and updates to it with the status of the managed resources
 
-Example: an Operator, managing a database, offers increasing the capacity of the database by resizing the underlying `PersistentVolumeClaim` based on changes the databases Custom Resource instance.
+**Example:** an Operator, managing a database, offers increasing the capacity of the database by resizing the underlying `PersistentVolumeClaim` based on changes the databases Custom Resource instance.
 
 ### Guiding questions to determine Operator reaching Level 1
 
@@ -73,7 +73,7 @@ The Operator offers the following features related to upgrades:
 - Operator can upgraded seamlessly and can either still manage older versions of the Operand or update them
 - Operator conveys inability to manage an unsupported version of the Operand in the `status` section of the CR
 
-Example: An Operator managing a database can update an existing database from a previous to a newer version without data loss. The Operator might do so as part of a configuration change or as part of an update of the Operator itself.
+**Example:** An Operator managing a database can update an existing database from a previous to a newer version without data loss. The Operator might do so as part of a configuration change or as part of an update of the Operator itself.
 
 ### Guiding questions to determine Operator reaching Level 2
 
@@ -103,7 +103,7 @@ The Operator offers one or more of the following lifecycle management features:
 - Operator supports add/removing members to a clustered Operand
 - Operator enables application-aware scaling of the Operand
 
-Example: an Operator managing a database provides the ability to create an application consistent backup of the data by flushing the database log and quiescing the write activity to the database files.
+**Example:** an Operator managing a database provides the ability to create an application consistent backup of the data by flushing the database log and quiescing the write activity to the database files.
 
 ### Guiding questions to determine Operator reaching Level 3
 
@@ -139,7 +139,7 @@ Example: an Operator managing a database provides the ability to create an appli
 
 [2] Native k8s objects emit events (“Events” objects) as their states change. Your operator should do similar for state changes related to your operand. “Custom”, here, means that it should emit events specific to your operator/operand outside of the events already emitted by their deployment methodology.  This, in conjunction with status descriptors, give much needed visibility into actions taken by your operator/operand. Operators are codified domain-specific knowledge. Your end user should not need this domain-specific knowledge to gain visibility into what’s happening with their resource.
 
-Example: A database Operator continues to parse the logging output of the database software and understands noteworthy log events, e.g. running out of space for database files and produces alerts. The operator also intruments the database and exposes application level, e.g. database queries per second
+**Example:** A database Operator continues to parse the logging output of the database software and understands noteworthy log events, e.g. running out of space for database files and produces alerts. The operator also intruments the database and exposes application level, e.g. database queries per second
 
 ### Guiding questions to determine Operator reaching Level 4
 
@@ -176,7 +176,7 @@ Example: A database Operator continues to parse the logging output of the databa
 
 - Operator determines deviations from a standard performance profile
 
-Example: A database operator monitors the query load of the database and automatically scales additional read-only slave replicas up and down. The operator also detects subpar index performance and automatically rebuilds the index in times of reduced load. Further, the operator understands the normal performance profile of the database and creates alerts on excessive amount of slow queries. In the event of slow queries and high disk latency the Operator automatically transitions the database files to another `PersistentVolume` of a higher performance class.
+**Example:** A database operator monitors the query load of the database and automatically scales additional read-only slave replicas up and down. The operator also detects subpar index performance and automatically rebuilds the index in times of reduced load. Further, the operator understands the normal performance profile of the database and creates alerts on excessive amount of slow queries. In the event of slow queries and high disk latency the Operator automatically transitions the database files to another `PersistentVolume` of a higher performance class.
 
 ### Guiding questions to determine Operator reaching Level 5
 
