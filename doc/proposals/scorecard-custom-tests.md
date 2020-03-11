@@ -98,7 +98,7 @@ Complex tests would require a test container image, that image would be provided
 
 The test image would  adhere to the following common interface:
 
-* Output would be in v1alpha2 ScorecardTestResult format, this is required for the scorecard to parse the test image log output and report the test results to the scorecard user, all scorecard tests would require this output format.
+* Output would be in v1alpha2 ScorecardTestResult format, this is required for the scorecard to parse the test image log output and report the test results to the scorecard user, all scorecard tests would require this output format.  
 
  * Input would be a ConfigMap holding the scorecard configuration such as the CR being tested.  The ConfigMap would follow a naming convention of scorecard-custom-test and would include the CR being tested.  The custom test image could either mount the ConfigMap within its Dockerfile or read it dynamically using an API (e.g.  client-go).
 
@@ -177,6 +177,21 @@ Custom tests that are merely a static check are implemented in a similar fashion
 ### Custom Test Assertion Output Format
 
 With all scorecard test types, the test assertion output is translated into a scorecard v1alpha2 ScorecardTestResult structure for consistency in reporting test results.
+
+The scorecard expected output would be in JSON, and would match the following definition:  https://github.com/operator-framework/operator-sdk/blob/master/pkg/apis/scorecard/v1alpha2/types.go#L36
+
+### Custom Test Development Model
+
+The developer of a custom test would have a workflow similar to:
+ 
+ * copy the example custom test Dockerfile as a starting point template
+ * modify the Dockerfile to run their custom binary
+ * test locally to make sure the output is produced that matches v1alpha2 ScorecardTestResult format
+ * the developer would write the test assertions and steps required for the custom test
+ * when the test binary works as expected, the developer would build and push the test image to a container registry accessible to the scorecard test environment
+ * the developer would push their test assertions/steps to github or some other repository where they can be pulled down by the scorecard
+ * the scorecard configuration would be updated to reference the custom test assertions and steps prior to running the custom test
+ * the scorecard would then be able to run the custom test image
 
 ### Custom Test Packaging and Configuration
 
@@ -337,6 +352,17 @@ Drawbacks of using Kuttl within this proposed design might include:
  * Needs some kind of regex capability for a more robust YAML testing capability
  * Will require integration work to include it into the scorecard code.
  * KUDO doesn’t currently make it easy to get the test Pod log output, this is useful to determine why a test might have failed, without it being built-into Kudo, the scorecard would need to read the Pod logs to present back to the end user.
+
+## Ansible and Helm Operator Support
+
+### Ansible
+For operators written in Ansible using the SDK Ansible Operator, simple YAML test steps and assertions would work with this proposal since they are just Kube resources being created and/or checked against by the scorecard test mechanism itself.
+
+For custom tests, it might be possible to write the custom test image using ansible's callback plugin framework to produce container image log output in the scorecard required format (e.g. v1alpha2).  The complexity of the test might dictate whether this is viable or not, the fallback would be for the custom test to be developed in python, Java, or golang as discussed in this proposal.
+
+### Helm
+Writing a custom test image in a Helm chart was not evaluated or pursued in this proposal.  What is likely for a Helm operator is that the operator owner would need to write custom test images using either Python, Java, golang, or some other programming language.
+
 
 ## Alternatives
 
