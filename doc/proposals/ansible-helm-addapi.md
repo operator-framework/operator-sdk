@@ -24,7 +24,7 @@ status: implementable
 - \[x\] Design details are appropriately documented from clear requirements
 - \[ \] Test plan is defined
 - \[ \] Accceptance criteria
-- \[ \] User-facing documentation is created in [operator-sdk/doc][operator-sdk-doc]
+- \[ \] User-facing documentation is created
 
 
 
@@ -85,7 +85,7 @@ NA
 ### Acceptance Criteria
 
 * Documentation is updated with steps to add additonal apis for both Ansible and Helm.
-* Flags options which are related to the API scaffold and available for operator-sdk new project --type [options] also should be provided in the operator-sdk new api for the types
+* Flags options which are related to the API scaffold and available for operator-sdk new project --type   also should be provided in the operator-sdk new api for the types
 * Ansible User should be able to scadffold all resources needed for the additional api with below command
 `operator-sdk add api --kind <kind> --api-version <group/version>` 
 * Helm User should be able to scadffold all resources needed for the additional api with below command,   --helm-chart being optionl
