@@ -182,19 +182,34 @@ With all scorecard test types, the test assertion output is translated into a sc
 
 In this design proposal, the test assertions are YAML files, test steps are YAML files as well.  Container images holding the custom test logic are expected to be pulled from a registry that is accessible in the Kube test environment that is executing the scorecard tests.
 
+Note that is would also be possible to add a resource limit to the scorecard configuration as shown in the example below.  Those resource limits would be applied to custom tests that are executed allowing for some control as to how much resources are available for the test execution.
+
 Custom tests and the YAML files that make them up would be accessible via URL or from a local disk location.  Custom test locations would be configured from within the scorecard configuration file.  For example, the scorecard configuration might be as follows to indicate the presence of custom tests from different sources:
 ```
 scorecard:
   # Setting a global scorecard option
   output: json
   plugins:
-    - tests:
+    - basic:
+      cr-manifest:
+          - "deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml"
+    - olm:
+      cr-manifest:
+          - "deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml"
+    - custom-tests:
         init-timeout: 60
+        resources:
+          limits:
+            cpu: "1"
+            memory: "200Mi"
+          requests:
+            cpu: 750m
+            memory: "100Mi"
         test-paths:
           - "tests/scorecard-tests"
           - "https://some-of-my-tests"
           - "tests/mycustom-tests
-cr-manifest:
+        cr-manifest:
           - "deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml"
           - "deploy/crds/cache.example.com_v1alpha1_memcached_cr2.yaml"
   …
@@ -364,6 +379,18 @@ This test implements a OLM bundle validation test similar to that of the current
 There is a static test constructed that is run on a sample operator, the rqlite-operator that I wrote previously as a learning tool.  The static test harness is found here:
 <https://github.com/jmccormick2001/rqlite-operator/tree/master/tests/e2estatic/static-test>
 
+Sample static test manifests are located here:
+```
+tests
+└── e2estatic
+    └── static-test
+        ├── 00-assert.yaml
+        ├── 00-install.yaml (set up a ConfigMap used by the test)
+        ├── 01-assert.yaml  (assert the custom test pod succeeded)
+        ├── 01-install.yaml (define the custom test pod)
+        └── 02-cleanup.yaml (tear down of the custom test)
+```
+
 The test steps include:
 
  * Deleting the test Pod if it exists
@@ -385,6 +412,15 @@ The example test container is implemented here:
 <https://github.com/jmccormick2001/my-custom-test>
 The complex test example evaluates a CR’s number of nodes to the number of expected by the test, if they don’t match, the test container image will pass a failure exit code.
 
+The test manifests for the complex test are located here:
+```
+tests
+├── e2ecomplex
+│   └── complex-test
+│       ├── 00-assert.yaml (assert whether or not the custom test pod succeeded)
+│       └── 00-install.yaml (the custom test pod manifest to create)
+```
+
 The test consists of the following steps:
 
  * Create a test Pod, passing in the expected number of Nodes, and the Custom Resource name to examine.
@@ -394,6 +430,16 @@ The test consists of the following steps:
 
 There is an example of a very simple YAML based state comparison test here:
 <https://github.com/jmccormick2001/rqlite-operator/tree/master/tests/e2e/example-test>
+
+The test manifests for the state comparison example include:
+```
+tests
+├── e2e
+│   └── example-test
+│       ├── 00-assert.yaml (assertion that the CR created a pod that is running)
+│       └── 00-install.yaml (custom resource that is created)
+```
+
 This test consists of the following steps:
 
  * Create a rqcluster Custom Resource
