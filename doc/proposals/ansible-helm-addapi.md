@@ -1,15 +1,17 @@
 ---
-title: Ansibkle/Helm Operator: Operator SDK supports adding additional apis.
+title: Ansible/Helm add api command  Proposal for Operator SDK
 authors:
   - "@bharathi-tenneti"
 reviewers:
-  - @fabian, @cmacedo
+  - "@fabianvf"
+  - "@cmacedo"
 approvers:
-  - @fabian
+  - "@fabianvf"
+  - "@jlanford"
+  - "@dmesser"
 creation-date: 2020-03-10
 last-updated: 2020-03-11
 status: implementable
-
 ---
 
 
