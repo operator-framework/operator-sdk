@@ -1,4 +1,3 @@
-
 ---
 title: Ansibkle/Helm Operator: Operator SDK supports adding additional apis.
 authors:
@@ -10,9 +9,7 @@ approvers:
 creation-date: 2020-03-10
 last-updated: 2020-03-11
 status: implementable
-see-also: []
-replaces: []
-superseded-by: []
+
 ---
 
 
