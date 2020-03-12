@@ -46,6 +46,9 @@ const moleculeClusterPrepareAnsibleTmpl = `---
   connection: local
   gather_facts: false
   no_log: "{{ molecule_no_log }}"
+  collections:
+   - my_namespace.my_collection
+
   vars:
     deploy_dir: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/deploy"
 

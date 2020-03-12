@@ -155,7 +155,7 @@ would become:
 
 ```yaml
 - name: Create bind credential secret
-  k8s:
+  community.kubernetes.k8s:
     definition:
       apiVersion: v1
       kind: Secret
@@ -171,7 +171,7 @@ would become:
         DB_NAME: "{{ postgresql_database | b64encode }}"
 
 - name: Attach secret to CR status
-  k8s_status:
+  operator_sdk.util.k8s_status:
     api_version: apps.example.com/v1alpha1
     kind: PostgreSQL
     name: '{{ meta.name }}'
@@ -182,8 +182,8 @@ would become:
 
 ### ansible_kubernetes_modules
 The `ansible_kubernetes_modules` role and the generated modules are now deprecated.
-The `k8s` module was added in Ansible 2.6 and is the supported way to interact with Kubernetes from Ansible.
-The `k8s` module takes normal kubernetes manifests, so if you currently rely on the old generated modules some refactoring will be required.
+The  `community.kubernetes` Ansible collection supports Ansible 2.9+ and is the supported way to interact with Kubernetes from Ansible.
+The `community.kubernetes.k8s` module takes normal kubernetes manifests, so if you currently rely on the old generated modules some refactoring will be required.
 
 
 # convert.py
