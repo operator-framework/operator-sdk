@@ -26,8 +26,11 @@ import (
 )
 
 type Context struct {
-	id                string
-	cleanupFns        []cleanupFn
+	id         string
+	cleanupFns []cleanupFn
+	// Deprecated: namespace will be removed in future versions
+	// use operatorNamespace or watchNamespace  instead
+	namespace         string
 	operatorNamespace string
 	watchNamespace    string
 	t                 *testing.T
@@ -73,6 +76,7 @@ func (f *Framework) newContext(t *testing.T) *Context {
 	return &Context{
 		id:                 id,
 		t:                  t,
+		namespace:          operatorNamespace,
 		operatorNamespace:  operatorNamespace,
 		watchNamespace:     watchNamespace,
 		namespacedManPath:  *f.NamespacedManPath,

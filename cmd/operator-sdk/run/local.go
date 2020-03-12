@@ -41,6 +41,7 @@ import (
 
 type runLocalArgs struct {
 	kubeconfig           string
+	namespace            string
 	watchNamespace       string
 	operatorFlags        string
 	ldFlags              string
@@ -51,6 +52,7 @@ type runLocalArgs struct {
 
 func (c *runLocalArgs) addToFlags(fs *pflag.FlagSet) {
 	prefix := "[local only] "
+
 	fs.StringVar(&c.watchNamespace, "watch-namespace", "",
 		prefix+"The namespace where the operator watches for changes.")
 	fs.StringVar(&c.operatorFlags, "operator-flags", "",

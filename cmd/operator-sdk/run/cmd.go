@@ -33,6 +33,7 @@ import (
 type runCmd struct {
 	// Common options.
 	kubeconfig string
+	namespace  string
 
 	// Run type.
 	olm, local bool
@@ -72,6 +73,15 @@ func NewCmd() *cobra.Command {
 					log.Fatalf("Failed to run operator using OLM: %v", err)
 				}
 			case c.local:
+				// set --watch-namespace flag if the --namespace flag is set
+				// (only if --watch-namespace flag is not set)
+				if cmd.Flags().Changed("namespace") {
+					log.Info("--namespace is deprecated; use --watch-namespace instead.")
+					if !cmd.Flags().Changed("watch-namespace") {
+						err := cmd.Flags().Set("watch-namespace", c.namespace)
+						return err
+					}
+				}
 				// Get default namespace to watch if unset.
 				if !cmd.Flags().Changed("watch-namespace") {
 					_, defaultNamespace, err := k8sinternal.GetKubeconfigAndNamespace(c.kubeconfig)
@@ -95,6 +105,10 @@ func NewCmd() *cobra.Command {
 	cmd.Flags().StringVar(&c.kubeconfig, "kubeconfig", "",
 		"The file path to kubernetes configuration file. Defaults to location "+
 			"specified by $KUBECONFIG, or to default file rules if not set")
+	// Deprecated: namespace exists for historical compatibility. Use watch-namespace instead.
+	cmd.Flags().StringVar(&c.namespace, "namespace", "",
+		"(Deprecated: use --watch-namespace instead.)"+
+			"The namespace where the operator watches for changes.")
 	// 'run --olm' and related flags.
 	cmd.Flags().BoolVar(&c.olm, "olm", false,
 		"The operator to be run will be managed by OLM in a cluster. "+

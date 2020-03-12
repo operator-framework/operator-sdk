@@ -30,6 +30,28 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
+// Deprecated: GetNamespace() is deprecated.
+// GetNamespace() will be removed in future versions
+// Use GetOperatorNamespace() or GetWatchNamespace() instead
+func (ctx *Context) GetNamespace() (string, error) {
+	if ctx.namespace != "" {
+		return ctx.namespace, nil
+	}
+	// create namespace
+	ctx.namespace = ctx.GetID()
+	namespaceObj := &core.Namespace{ObjectMeta: metav1.ObjectMeta{Name: ctx.namespace}}
+	_, err := ctx.kubeclient.CoreV1().Namespaces().Create(namespaceObj)
+	if apierrors.IsAlreadyExists(err) {
+		return "", fmt.Errorf("namespace %s already exists: %w", ctx.namespace, err)
+	} else if err != nil {
+		return "", err
+	}
+	ctx.AddCleanupFn(func() error {
+		return ctx.kubeclient.CoreV1().Namespaces().Delete(ctx.namespace, metav1.NewDeleteOptions(0))
+	})
+	return ctx.namespace, nil
+}
+
 func (ctx *Context) GetOperatorNamespace() (string, error) {
 	if ctx.operatorNamespace != "" {
 		return ctx.operatorNamespace, nil

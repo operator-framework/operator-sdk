@@ -972,6 +972,22 @@ With:
 ```yaml
 - name: {{your operator name which is the value of metadata.name in this file}}
 ```
+### Notable Changes
+
+- Deprecated: The flag `--namespace` in `operator-sdk run --local` is deprecated. It will be removed in future versions.
+  The functionality will be supported by the new `--watch-namespace` flag.
+- `--watch-namespace` flag is added to `operator-sdk run --local` command. This flag works exactly like the `--namespace` flag.
+  This flag was added to align flag names with changes in `operator-sdk test --up-local` commnand.
+- Deprecated: The flag `--namespace` in `operator-sdk test --up-local` is deprecated. It will be removed in future versions.
+  The functionality will be supported by the new `--operator-namespace` flag.
+- `--operator-namespace` is added to `operator-sdk test --up-local` command. This flag specifies the namespace in which Namespaced manifests
+  are installed.
+- `--watch-namespace` is added to `operator-sdk test --up-local` command. This flag specifies the namespace in where the operator watches
+   for changes. This flag can be set to "foobar", "" (watch-all-namespace) or left unset (when not set watch-namespace = operator-namespace)*[]:
+- The `ctx.GetNamespace()` in `pkg/test` is replaced with `ctx.GetOperatorNamespace()` and `ctx.GetWatchNamespace()` to accomodate the
+  changes in flags.
+
+NOTE: For more information check the PRs which are responsible for the above changes [#2617](https://github.com/operator-framework/operator-sdk/pull/2617).
 
 #### Migration to Ansible collections
 

@@ -22,12 +22,12 @@ import (
 )
 
 const (
-	OperatorNamespaceEnv = "TEST_OPERATOR_NAMESPACE"
-	WatchNamespaceEnv    = "TEST_WATCH_NAMESPACE"
+	OperatorNamespaceEnv  = "TEST_OPERATOR_NAMESPACE"
+	WatchNamespaceEnv     = "TEST_WATCH_NAMESPACE"
+	fakeNamespacedManPath = "fakePath"
 )
 
 func TestGetOperatorNamespace(t *testing.T) {
-	fakeNamespacedManPath := "fakePath"
 	Global = &Framework{
 		NamespacedManPath: &fakeNamespacedManPath,
 		KubeClient:        fake.NewSimpleClientset(),
@@ -46,11 +46,11 @@ func TestGetOperatorNamespace(t *testing.T) {
 	t.Run("should return Operator Namespace specified by OperatorNamespace Env", func(t *testing.T) {
 		operatorNamespace := "test-operator-namespae"
 		Global.OperatorNamespace = operatorNamespace
+		os.Setenv(TestOperatorNamespaceEnv, operatorNamespace)
 		defer func() {
 			Global.OperatorNamespace = ""
+			os.Unsetenv(OperatorNamespaceEnv)
 		}()
-		os.Setenv(TestOperatorNamespaceEnv, operatorNamespace)
-		defer os.Unsetenv(OperatorNamespaceEnv)
 
 		ctx := NewContext(t)
 		got, err := ctx.GetOperatorNamespace()
@@ -63,11 +63,13 @@ func TestGetOperatorNamespace(t *testing.T) {
 		func(t *testing.T) {
 			operatorNamespace := ""
 			Global.OperatorNamespace = operatorNamespace
+			os.Setenv(TestOperatorNamespaceEnv, operatorNamespace)
 			defer func() {
 				Global.OperatorNamespace = ""
+				os.Unsetenv(OperatorNamespaceEnv)
 			}()
+
 			ctx := NewContext(t)
-			//defer os.Unsetenv(OperatorNamespaceEnv)
 			got, err := ctx.GetOperatorNamespace()
 			assertNoError(t, err)
 			if len(got) <= 0 {
@@ -77,7 +79,6 @@ func TestGetOperatorNamespace(t *testing.T) {
 }
 
 func TestGetWatchNamespace(t *testing.T) {
-	fakeNamespacedManPath := "fakePath"
 	Global = &Framework{
 		NamespacedManPath: &fakeNamespacedManPath,
 		KubeClient:        fake.NewSimpleClientset(),

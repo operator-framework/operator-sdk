@@ -41,6 +41,7 @@ require (
 	github.com/stretchr/testify v1.4.0
 	github.com/ziutek/mymysql v1.5.4 // indirect
 	go.uber.org/zap v1.10.0
+	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
 	golang.org/x/tools v0.0.0-20191018212557-ed542cd5b28a
 	gopkg.in/gorp.v1 v1.7.2 // indirect
 	gopkg.in/yaml.v2 v2.2.7
@@ -60,7 +61,6 @@ require (
 	k8s.io/kubernetes v1.16.2 // indirect
 	sigs.k8s.io/controller-runtime v0.5.1
 	sigs.k8s.io/controller-tools v0.2.4
-	sigs.k8s.io/testing_frameworks v0.1.2 // indirect
 )
 
 // Pinned to kubernetes-1.16.2
