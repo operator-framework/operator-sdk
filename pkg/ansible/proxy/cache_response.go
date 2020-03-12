@@ -81,7 +81,7 @@ func (c *cacheResponseHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 		k, err := getGVKFromRequestInfo(r, c.restMapper)
 		if err != nil {
 			// break here in case resource doesn't exist in cache
-			log.Info("Cache miss, can not find in rest mapper")
+			log.Error(err, "Cache miss, can not find in rest mapper")
 			break
 		}
 
@@ -94,7 +94,7 @@ func (c *cacheResponseHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 		isVR, err := c.apiResources.IsVirtualResource(k)
 		if err != nil {
 			// break here in case we can not understand if virtual resource or not
-			log.Info("Unable to determine if virtual resource", "gvk", k)
+			log.Error(err, "Unable to determine if virtual resource", "gvk", k)
 			break
 		}
 
