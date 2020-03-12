@@ -33,15 +33,16 @@ func TestGetOperatorNamespace(t *testing.T) {
 		KubeClient:        fake.NewSimpleClientset(),
 	}
 
-	t.Run("should create a non-empty new Operator Namespace when OperatorNamespace env is not set", func(t *testing.T) {
-		Global.OperatorNamespace = ""
-		ctx := NewContext(t)
-		operatorNamespace, err := ctx.GetOperatorNamespace()
-		assertNoError(t, err)
-		if len(operatorNamespace) <= 0 {
-			t.Errorf("expected non-empty operatorNamespace")
-		}
-	})
+	t.Run("should create a non-empty new Operator Namespace when OperatorNamespace env is not set",
+		func(t *testing.T) {
+			Global.OperatorNamespace = ""
+			ctx := NewContext(t)
+			operatorNamespace, err := ctx.GetOperatorNamespace()
+			assertNoError(t, err)
+			if len(operatorNamespace) <= 0 {
+				t.Errorf("expected non-empty operatorNamespace")
+			}
+		})
 	t.Run("should return Operator Namespace specified by OperatorNamespace Env", func(t *testing.T) {
 		operatorNamespace := "test-operator-namespae"
 		Global.OperatorNamespace = operatorNamespace
@@ -58,20 +59,21 @@ func TestGetOperatorNamespace(t *testing.T) {
 			t.Errorf("expected %v, got %v", operatorNamespace, got)
 		}
 	})
-	t.Run("should return non-empty new Operator Namespace, when OperatorNamespace Env = \"\"", func(t *testing.T) {
-		operatorNamespace := ""
-		Global.OperatorNamespace = operatorNamespace
-		defer func() {
-			Global.OperatorNamespace = ""
-		}()
-		ctx := NewContext(t)
-		//defer os.Unsetenv(OperatorNamespaceEnv)
-		got, err := ctx.GetOperatorNamespace()
-		assertNoError(t, err)
-		if len(got) <= 0 {
-			t.Errorf("expected non-empty operatorNamespace")
-		}
-	})
+	t.Run("should return non-empty new Operator Namespace, when OperatorNamespace Env = \"\"",
+		func(t *testing.T) {
+			operatorNamespace := ""
+			Global.OperatorNamespace = operatorNamespace
+			defer func() {
+				Global.OperatorNamespace = ""
+			}()
+			ctx := NewContext(t)
+			//defer os.Unsetenv(OperatorNamespaceEnv)
+			got, err := ctx.GetOperatorNamespace()
+			assertNoError(t, err)
+			if len(got) <= 0 {
+				t.Errorf("expected non-empty operatorNamespace")
+			}
+		})
 }
 
 func TestGetWatchNamespace(t *testing.T) {
@@ -81,108 +83,115 @@ func TestGetWatchNamespace(t *testing.T) {
 		KubeClient:        fake.NewSimpleClientset(),
 	}
 
-	t.Run("should return Watch Namespace (==Operator Namespace) WatchNamespace Env is not set", func(t *testing.T) {
-		Global.WatchNamespace = ""
-		Global.OperatorNamespace = ""
-		ctx := NewContext(t)
-		watchNamespace, err := ctx.GetWatchNamespace()
-		assertNoError(t, err)
-		operatorNamespace, err := ctx.GetOperatorNamespace()
-		assertNoError(t, err)
-		if len(operatorNamespace) <= 0 {
-			t.Errorf("expected non-empty operatorNamespace")
-		}
-		if watchNamespace != operatorNamespace {
-			t.Errorf("expected watchNamespace: %s, got %s", operatorNamespace, watchNamespace)
-		}
-	})
-
-	t.Run("should return Watch Namespace (==WatchNamespace Env) WatchNamespace Env is set", func(t *testing.T) {
-		watchNamespace := "test-watch-namespace"
-		Global.WatchNamespace = watchNamespace
-		Global.OperatorNamespace = ""
-		os.Setenv(WatchNamespaceEnv, watchNamespace)
-		defer func() {
-			Global.WatchNamespace = ""
-			defer os.Unsetenv(WatchNamespaceEnv)
-		}()
-
-		ctx := NewContext(t)
-		got, err := ctx.GetWatchNamespace()
-		assertNoError(t, err)
-		if watchNamespace != got {
-			t.Errorf("expected watchNamespace: %s, got %s", watchNamespace, got)
-		}
-		operatorNamespace, err := ctx.GetOperatorNamespace()
-		assertNoError(t, err)
-		if len(operatorNamespace) <= 0 {
-			t.Errorf("expected non-empty operatorNamespace")
-		}
-		if watchNamespace == operatorNamespace {
-			t.Errorf("expected operator-Namespace: %v, to be different than watch-Namespace: %v", operatorNamespace, watchNamespace)
-		}
-	})
-
-	t.Run("should return Watch Namespace (==WatchNamespace Env) even when WatchNamespace Env is set to \"\"", func(t *testing.T) {
-		watchNamespace := ""
-		Global.WatchNamespace = watchNamespace
-		Global.OperatorNamespace = ""
-		os.Setenv(WatchNamespaceEnv, watchNamespace)
-		defer func() {
-			Global.WatchNamespace = ""
-			defer os.Unsetenv(WatchNamespaceEnv)
-		}()
-
-		ctx := NewContext(t)
-
-		got, err := ctx.GetWatchNamespace()
-		assertNoError(t, err)
-		if watchNamespace != got {
-			t.Errorf("expected watchNamespace: %s, got %s", watchNamespace, got)
-		}
-		operatorNamespace, err := ctx.GetOperatorNamespace()
-		assertNoError(t, err)
-		if len(operatorNamespace) <= 0 {
-			t.Errorf("expected non-empty operatorNamespace")
-		}
-		if watchNamespace == operatorNamespace {
-			t.Errorf("expected operator-Namespace: %v, to be different than watch-Namespace: %v", operatorNamespace, watchNamespace)
-		}
-	})
-
-	t.Run("should return Watch Namespace and Operator Namespace when both Env are set through Env var", func(t *testing.T) {
-		watchNamespace := "test-watch-namespace"
-		operatorNamespace := "test-operator-namespace"
-		Global.WatchNamespace = watchNamespace
-		Global.OperatorNamespace = operatorNamespace
-		os.Setenv(OperatorNamespaceEnv, operatorNamespace)
-		os.Setenv(WatchNamespaceEnv, watchNamespace)
-		defer func() {
+	t.Run("should return Watch Namespace (==Operator Namespace) WatchNamespace Env is not set",
+		func(t *testing.T) {
 			Global.WatchNamespace = ""
 			Global.OperatorNamespace = ""
-			defer os.Unsetenv(OperatorNamespaceEnv)
-			defer os.Unsetenv(WatchNamespaceEnv)
-		}()
+			ctx := NewContext(t)
+			watchNamespace, err := ctx.GetWatchNamespace()
+			assertNoError(t, err)
+			operatorNamespace, err := ctx.GetOperatorNamespace()
+			assertNoError(t, err)
+			if len(operatorNamespace) <= 0 {
+				t.Errorf("expected non-empty operatorNamespace")
+			}
+			if watchNamespace != operatorNamespace {
+				t.Errorf("expected watchNamespace: %s, got %s", operatorNamespace, watchNamespace)
+			}
+		})
 
-		ctx := NewContext(t)
-		gotWatchNamespace, err := ctx.GetWatchNamespace()
-		assertNoError(t, err)
-		if watchNamespace != gotWatchNamespace {
-			t.Errorf("expected watchNamespace: %s, got %s", watchNamespace, gotWatchNamespace)
-		}
+	t.Run("should return Watch Namespace (==WatchNamespace Env) WatchNamespace Env is set",
+		func(t *testing.T) {
+			watchNamespace := "test-watch-namespace"
+			Global.WatchNamespace = watchNamespace
+			Global.OperatorNamespace = ""
+			os.Setenv(WatchNamespaceEnv, watchNamespace)
+			defer func() {
+				Global.WatchNamespace = ""
+				defer os.Unsetenv(WatchNamespaceEnv)
+			}()
 
-		gotOperatorNamespace, err := ctx.GetOperatorNamespace()
-		assertNoError(t, err)
-		if len(gotOperatorNamespace) <= 0 {
-			t.Errorf("expected non-empty operatorNamespace")
-		}
-		if gotWatchNamespace == gotOperatorNamespace {
-			t.Errorf("expected operator-Namespace: %v, to be different than watch-Namespace: %v", operatorNamespace, watchNamespace)
-		}
-		if gotOperatorNamespace != operatorNamespace {
-			t.Errorf("expected operatorNamespace: %s, got %s", operatorNamespace, gotOperatorNamespace)
-		}
-	})
+			ctx := NewContext(t)
+			got, err := ctx.GetWatchNamespace()
+			assertNoError(t, err)
+			if watchNamespace != got {
+				t.Errorf("expected watchNamespace: %s, got %s", watchNamespace, got)
+			}
+			operatorNamespace, err := ctx.GetOperatorNamespace()
+			assertNoError(t, err)
+			if len(operatorNamespace) <= 0 {
+				t.Errorf("expected non-empty operatorNamespace")
+			}
+			if watchNamespace == operatorNamespace {
+				t.Errorf("expected operator-Namespace: %v, to be different than watch-Namespace: %v",
+					operatorNamespace, watchNamespace)
+			}
+		})
+
+	t.Run("should return Watch Namespace (==WatchNamespace Env) even when WatchNamespace Env is set to \"\"",
+		func(t *testing.T) {
+			watchNamespace := ""
+			Global.WatchNamespace = watchNamespace
+			Global.OperatorNamespace = ""
+			os.Setenv(WatchNamespaceEnv, watchNamespace)
+			defer func() {
+				Global.WatchNamespace = ""
+				defer os.Unsetenv(WatchNamespaceEnv)
+			}()
+
+			ctx := NewContext(t)
+
+			got, err := ctx.GetWatchNamespace()
+			assertNoError(t, err)
+			if watchNamespace != got {
+				t.Errorf("expected watchNamespace: %s, got %s", watchNamespace, got)
+			}
+			operatorNamespace, err := ctx.GetOperatorNamespace()
+			assertNoError(t, err)
+			if len(operatorNamespace) <= 0 {
+				t.Errorf("expected non-empty operatorNamespace")
+			}
+			if watchNamespace == operatorNamespace {
+				t.Errorf("expected operator-Namespace: %v, to be different than watch-Namespace: %v",
+					operatorNamespace, watchNamespace)
+			}
+		})
+
+	t.Run("should return Watch Namespace and Operator Namespace when both Env are set through Env var",
+		func(t *testing.T) {
+			watchNamespace := "test-watch-namespace"
+			operatorNamespace := "test-operator-namespace"
+			Global.WatchNamespace = watchNamespace
+			Global.OperatorNamespace = operatorNamespace
+			os.Setenv(OperatorNamespaceEnv, operatorNamespace)
+			os.Setenv(WatchNamespaceEnv, watchNamespace)
+			defer func() {
+				Global.WatchNamespace = ""
+				Global.OperatorNamespace = ""
+				defer os.Unsetenv(OperatorNamespaceEnv)
+				defer os.Unsetenv(WatchNamespaceEnv)
+			}()
+
+			ctx := NewContext(t)
+			gotWatchNamespace, err := ctx.GetWatchNamespace()
+			assertNoError(t, err)
+			if watchNamespace != gotWatchNamespace {
+				t.Errorf("expected watchNamespace: %s, got %s", watchNamespace, gotWatchNamespace)
+			}
+
+			gotOperatorNamespace, err := ctx.GetOperatorNamespace()
+			assertNoError(t, err)
+			if len(gotOperatorNamespace) <= 0 {
+				t.Errorf("expected non-empty operatorNamespace")
+			}
+			if gotWatchNamespace == gotOperatorNamespace {
+				t.Errorf("expected operator-Namespace: %v, to be different than watch-Namespace: %v",
+					operatorNamespace, watchNamespace)
+			}
+			if gotOperatorNamespace != operatorNamespace {
+				t.Errorf("expected operatorNamespace: %s, got %s", operatorNamespace, gotOperatorNamespace)
+			}
+		})
 }
 
 func assertNoError(t *testing.T, err error) {
