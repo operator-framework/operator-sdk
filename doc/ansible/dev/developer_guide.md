@@ -33,7 +33,7 @@ $ pip3 install openshift
 
 Finally, a user must install the Ansible Kubernetes collection from ansible-galaxy:
 ```bash
-$ ansible-galaxy install community.kubernetes
+$ ansible-galaxy collection install community.kubernetes
 ```
 
 ### Testing the k8s Ansible modules locally
