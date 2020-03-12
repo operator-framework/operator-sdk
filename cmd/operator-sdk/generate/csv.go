@@ -199,7 +199,7 @@ func writeCRDsToDir(crdPaths []string, toDir string) error {
 		}
 		typeMeta, err := k8sutil.GetTypeMetaFromBytes(b)
 		if err != nil {
-			return err
+			return fmt.Errorf("error in %s : %v", p, err)
 		}
 		if typeMeta.Kind != "CustomResourceDefinition" {
 			continue
