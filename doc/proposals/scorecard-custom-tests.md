@@ -355,12 +355,17 @@ Drawbacks of using Kuttl within this proposed design might include:
 
 ## Ansible and Helm Operator Support
 
-### Ansible
-For operators written in Ansible using the SDK Ansible Operator, simple YAML test steps and assertions would work with this proposal since they are just Kube resources being created and/or checked against by the scorecard test mechanism itself.
+For either Ansible or Helm operators, test assertions being in YAML, should
+be possible to write for some basic tests.  Remember, these assertions are
+simply checking Kube resource state, so it is not impacted by how the
+operator is constructed.
+
+### Ansible Operator Complex Tests
 
 For custom tests, it might be possible to write the custom test image using ansible's callback plugin framework to produce container image log output in the scorecard required format (e.g. v1alpha2).  The complexity of the test might dictate whether this is viable or not, the fallback would be for the custom test to be developed in python, Java, or golang as discussed in this proposal.
 
-### Helm
+### Helm Operator Complex Tests
+
 Writing a custom test image in a Helm chart was not evaluated or pursued in this proposal.  What is likely for a Helm operator is that the operator owner would need to write custom test images using either Python, Java, golang, or some other programming language.
 
 
