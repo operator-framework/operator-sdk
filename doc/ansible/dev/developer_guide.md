@@ -36,6 +36,16 @@ Finally, a user must install the Ansible Kubernetes collection from ansible-gala
 $ ansible-galaxy collection install community.kubernetes
 ```
 
+Alternatively, if you've already initialized your operator, you will have a `requirements.yml`
+file at the top level of your project. This file specifies Ansible dependencies that
+need to be installed for your operator to function. By default it will install the
+`community.kubernetes` collection, which are used to interact with the Kubernetes API, as well
+as the `operator_sdk.util` collection, which provides modules and plugins for operator-specific
+operations. To install the Ansible modules from this file, run
+```bash
+$ ansible-galaxy collection install -r requirements.yml
+```
+
 ### Testing the k8s Ansible modules locally
 
 Sometimes it is beneficial for a developer to run the Ansible code from their
@@ -50,6 +60,7 @@ Create foo-operator/tmp/build/go-test.sh
 Rendering Ansible Galaxy role [foo-operator/roles/Foo]...
 Cleaning up foo-operator/tmp/init
 Create foo-operator/watches.yaml
+Create foo-operator/requirements.yml
 Create foo-operator/deploy/rbac.yaml
 Create foo-operator/deploy/crd.yaml
 Create foo-operator/deploy/cr.yaml
@@ -59,8 +70,8 @@ Initialized empty Git repository in /home/dymurray/go/src/github.com/dymurray/op
 Run git init done
 
 $ cd foo-operator
+$ ansible-galaxy collection install -r requirements.yml
 ```
-
 Modify `roles/Foo/tasks/main.yml` with desired Ansible logic. For this example
 we will create and delete a namespace with the switch of a variable:
 ```yaml
@@ -442,19 +453,6 @@ Please look over the following sections for help debugging an Ansible Operator:
 * [Additional Ansible debug](../user-guide.md#additional-ansible-debug)
 * [Testing Ansible Operators with Molecule](testing_guide.md#testing-ansible-operators-with-molecule)
 
-### Using k8s_status Ansible module with `run --local`
-This section covers the required steps to using the `k8s_status` Ansible module
-with `operator-sdk run --local`. If you are unfamiliar with managing status from
-the Ansible Operator, see the [proposal for user-driven status
-management][manage_status_proposal].
-
-If your operator takes advantage of the `k8s_status` Ansible module and you are
-interested in testing the operator with `operator-sdk run --local`, then
-you will need to install the collection locally.
-
-```sh
-$ ansible-galaxy collection install operator_sdk.util
- ```
 ## Extra vars sent to Ansible
 The extra vars that are sent to Ansible are managed by the operator. The `spec`
 section will pass along the key-value pairs as extra vars.  This is equivalent
