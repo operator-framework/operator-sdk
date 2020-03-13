@@ -59,9 +59,12 @@ type Runner interface {
 
 func ansibleVerbosityString(verbosity int) string {
 	if verbosity > 0 {
-		return fmt.Sprintf("-%v", strings.Repeat("v", verbosity))
+		// the default verbosity 0 is == -v
+		// more info: https://docs.ansible.com/ansible/latest/reference_appendices/config.html#default-verbosity
+		return fmt.Sprintf("-%v", strings.Repeat("v", verbosity+1))
 	}
-	return ""
+	// Return default verbosity (-v)
+	return fmt.Sprintf("-%v", strings.Repeat("v", 1))
 }
 
 type cmdFuncType func(ident, inputDirPath string, maxArtifacts, verbosity int) *exec.Cmd
