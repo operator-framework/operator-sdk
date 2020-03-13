@@ -1,5 +1,5 @@
 - name: delete configmap for test
-  k8s:
+  community.kubernetes.k8s:
     kind: ConfigMap
     api_version: v1
     name: deleteme

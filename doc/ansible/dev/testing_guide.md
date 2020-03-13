@@ -218,7 +218,7 @@ We'll be adding the task to `roles/example/tasks/main.yml`, which should now loo
 ---
 # tasks file for exampleapp
 - name: create Example configmap
-  k8s:
+  community.kubernetes.k8s:
     definition:
       apiVersion: v1
       kind: ConfigMap
@@ -246,11 +246,11 @@ The file should now look like this:
   tasks:
     - debug: var=cm
       vars:
-        cm: '{{ lookup("k8s", api_version="v1", kind="ConfigMap", namespace=namespace, resource_name="test-data") }}'
+        cm: '{{ lookup("community.kubernetes.k8s", api_version="v1", kind="ConfigMap", namespace=namespace, resource_name="test-data") }}'
     - assert:
         that: cm.data.hello == 'world'
       vars:
-        cm: '{{ lookup("k8s", api_version="v1", kind="ConfigMap", namespace=namespace, resource_name="test-data") }}'
+        cm: '{{ lookup("community.kubernetes.k8s", api_version="v1", kind="ConfigMap", namespace=namespace, resource_name="test-data") }}'
 ```
 
 Now that we have a functional Operator, and an assertion of its behavior, we can verify that everything is working

@@ -201,7 +201,7 @@ Modify `roles/memcached/tasks/main.yml` to look like the following:
 ```yaml
 ---
 - name: start memcached
-  k8s:
+  community.kubernetes.k8s:
     definition:
       kind: Deployment
       apiVersion: apps/v1

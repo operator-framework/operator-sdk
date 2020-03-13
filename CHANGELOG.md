@@ -19,6 +19,7 @@
 
 ### Changed
 - Ansible scaffolding has been rewritten to be simpler and make use of newer features of Ansible and Molecule.
+    - The Kubernetes modules have migrated to the [Kubernetes Ansible collection](https://github.com/ansible-collections/kubernetes). All scaffolded code now references modules from this collection instead of Ansible Core. No immediate action is required for existing users of the modules from core, though it is recommended they switch to using the collection to continue to get non-critical bugfixes and features. The collection is now installed by default in the base image. ([#2646](https://github.com/operator-framework/operator-sdk/pull/2646))
     - No longer generates the build/test-framework directory or molecule/test-cluster scenario
     - Adds new `cluster` scenario that can be used to test against an existing cluster
     - There is no longer any Ansible templating done in the `deploy/` directory, any templates used for testing will be located in `molecule/templates/` instead.

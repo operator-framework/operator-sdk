@@ -79,7 +79,7 @@ RUN yum clean all && rm -rf /var/cache/yum/* \
  && yum remove -y gcc libffi-devel openssl-devel python36-devel \
  && yum clean all \
  && rm -rf /var/cache/yum \
- && ansible-galaxy collection install operator_sdk.util
+ && ansible-galaxy collection install operator_sdk.util community.kubernetes
 
 COPY build/_output/bin/[[.ProjectName]] ${OPERATOR}
 COPY bin /usr/local/bin

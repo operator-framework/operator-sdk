@@ -1,8 +1,12 @@
 ---
 - name: Build Operator in Kubernetes docker container
   hosts: k8s
+  collections:
+    - community.kubernetes
+
   vars:
     image: test.example.com/ansible:testing
+
   tasks:
     # using command so we don't need to install any dependencies
     - name: Get existing image hash
@@ -21,6 +25,9 @@
 - name: Converge
   hosts: localhost
   connection: local
+  collections:
+    - community.kubernetes
+
   vars:
     image: test.example.com/ansible:testing
     operator_template: "{{ '/'.join([template_dir, 'operator.yaml.j2']) }}"

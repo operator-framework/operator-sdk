@@ -19,7 +19,7 @@ and test them using a playbook.
 
 ### Installing the k8s Ansible modules
 
-To install the k8s Ansible modules, one must first install Ansible 2.6+. On
+To install the k8s Ansible modules, one must first install Ansible 2.9+. On
 Fedora/Centos:
 ```bash
 $ sudo dnf install ansible
@@ -29,6 +29,11 @@ In addition to Ansible, a user must install the [OpenShift Restclient
 Python][openshift_restclient_python] package. This can be installed from pip:
 ```bash
 $ pip3 install openshift
+```
+
+Finally, a user must install the Ansible Kubernetes collection from ansible-galaxy:
+```bash
+$ ansible-galaxy collection install community.kubernetes
 ```
 
 ### Testing the k8s Ansible modules locally
@@ -61,7 +66,7 @@ we will create and delete a namespace with the switch of a variable:
 ```yaml
 ---
 - name: set example-memcached namespace to {{ state }}
-  k8s:
+  community.kubernetes.k8s:
     api_version: v1
     kind: Namespace
     name: example-memcached

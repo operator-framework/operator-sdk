@@ -40,6 +40,9 @@ func (p *Playbook) GetInput() (input.Input, error) {
 const playbookTmpl = `---
 - hosts: localhost
   gather_facts: no
+  collections:
+    - community.kubernetes
+    - operator_sdk.util
 
   tasks:
     - import_role:

@@ -43,6 +43,9 @@ func (m *MoleculeTestLocalPlaybook) GetInput() (input.Input, error) {
 const moleculeTestLocalPlaybookAnsibleTmpl = `---
 - name: Build Operator in Kubernetes docker container
   hosts: k8s
+  collections:
+   - community.kubernetes
+
   vars:
     image: [[.Resource.FullGroup]]/[[.ProjectName]]:testing
 
@@ -64,6 +67,9 @@ const moleculeTestLocalPlaybookAnsibleTmpl = `---
 - name: Converge
   hosts: localhost
   connection: local
+  collections:
+   - community.kubernetes
+
   vars:
     image: [[.Resource.FullGroup]]/[[.ProjectName]]:testing
     operator_template: "{{ '/'.join([template_dir, 'operator.yaml.j2']) }}"
