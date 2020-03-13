@@ -1,5 +1,7 @@
 FROM quay.io/operator-framework/ansible-operator:dev
 
+COPY requirements.yml ${HOME}/requirements.yml
+RUN ansible-galaxy collection install -r ${HOME}/requirements.yml
 COPY ansible.cfg /etc/ansible/ansible.cfg
 COPY watches.yaml ${HOME}/watches.yaml
 
