@@ -18,6 +18,8 @@ Build the Operator SDK CLI `operator-sdk` binary:
 $ make install
 ```
 
+Then, now you are able to test and use the operator-sdk build using the source code.
+
 ## Testing
 
 The SDK includes many tests that are run as part of CI.
