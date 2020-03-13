@@ -41,7 +41,6 @@ import (
 
 type runLocalArgs struct {
 	kubeconfig           string
-	namespace            string
 	watchNamespace       string
 	operatorFlags        string
 	ldFlags              string

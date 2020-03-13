@@ -14,6 +14,7 @@ operator-sdk run [flags]
 
 ```
       --kubeconfig string           The file path to kubernetes configuration file. Defaults to location specified by $KUBECONFIG, or to default file rules if not set
+      --namespace string            (Deprecated: use --watch-namespace instead.)The namespace where the operator watches for changes.
       --olm                         The operator to be run will be managed by OLM in a cluster. Cannot be set with another run-type flag
       --operator-namespace string   [olm only] The namespace where operator resources are created in --olm mode. It must already exist in the cluster or be defined in a manifest passed to IncludePaths.
       --manifests string            [olm only] Directory containing package manifest and operator bundles.

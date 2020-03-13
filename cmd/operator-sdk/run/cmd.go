@@ -65,6 +65,15 @@ func NewCmd() *cobra.Command {
 			switch {
 			case c.olm:
 				c.olmArgs.KubeconfigPath = c.kubeconfig
+				// operator-namespace flag is not set
+				// use default namespace from kubeconfig to deploy operator resources
+				if !cmd.Flags().Changed("operator-namespace") {
+					_, defaultNamespace, err := k8sinternal.GetKubeconfigAndNamespace(c.kubeconfig)
+					if err != nil {
+						return fmt.Errorf("error getting kubeconfig and default namespace: %v", err)
+					}
+					c.olmArgs.OperatorNamespace = defaultNamespace
+				}
 				if c.olmArgs.ManifestsDir == "" {
 					operatorName := filepath.Base(projutil.MustGetwd())
 					c.olmArgs.ManifestsDir = filepath.Join(olmcatalog.OLMCatalogDir, operatorName)

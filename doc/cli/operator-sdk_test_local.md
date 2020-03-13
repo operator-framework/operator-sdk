@@ -21,6 +21,7 @@ operator-sdk test local <path to tests directory> [flags]
       --kubeconfig string             Kubeconfig path
       --local-operator-flags string   The flags that the operator needs (while using --up-local). Example: "--flag1 value1 --flag2=value2"
       --molecule-test-flags string    Additional flags to pass to molecule test
+      --namespace string              (Deprecated: use --operator-namespace instead) If non-empty, single namespace to run tests in
       --namespaced-manifest string    Path to manifest for per-test, namespaced resources (e.g. RBAC and Operator manifest)
       --no-setup                      Disable test resource creation
       --operator-namespace string     Namespace where the operator will be deployed, CRs will be created and tests will be executed (By default it will be in the default namespace defined in the kubeconfig)
