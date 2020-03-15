@@ -43,36 +43,41 @@ Ansible/Helm operator developers are not able to create additonal APIs via CLI, 
 * Ansible/Helm operator developer should be able to use flags necessary for Ansible/Helm as used in `operator-sdk new`CLI. for adding additional APIs as well.
 * Ansible/Helm operator developer can find supported documentation for the same.
 
+## Non-Goals
+
+* Updating Molecule tests for additiona APIs created for Anible based operators.[**TBD**]
+* Generating/Updating Playbook for additional APIs for Ansibel based operators. [**TBD**]
+
 ## Proposal
 
 ### User Stories 
 
 #### Story 1 - Ansible operator additional API
-As an  Ansible operator developer, I would like to scaffold additional api, once the original Ansible operator project has been created. Goal is to use  following command, to create additonal APIs.
-`operator-sdk add api --kind <kind> --api-version <group/version>`
+As an  Ansible operator developer, I would like to scaffold additional API, once the original Ansible operator project has been created. Goal is to use  following command, to create additonal APIs.
+`operator-sdk add api --kind <kind> --api-version <group/version> [flags]`
 
 ##### Acceptance Criteria
 
-* Documentation for [SDK ClI reference][sdkclidoc] is updated with steps to add additonal APIs for Ansible based operator.
-* Documentation is updated for [operatr-sdk add api][addapidoc] for ansible.
+* Ansible operator developer should be able to scaffold all resources needed for the additional API with following command
+  `operator-sdk add api --kind <kind> --api-version <group/version> [flags]`
 * Flags options available for `operator-sdk new`, should also be made available for `operator-sdk add api`, as shown below.
 ```
   --api-version string - CRD APIVersion in the format $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)
   --kind string - CRD Kind. (e.g AppService)
-  --generate-playbook - Generate a playbook skeleton. (Only used for --type ansible)[**TBD**]
+  --generate-playbook - Generate a playbook skeleton. (Only used for --type ansible) [**TBD**]
 ```
-* Ansible operator developer should be able to scaffold all resources needed for the additional API with following command
-  `operator-sdk add api --kind <kind> --api-version <group/version>` 
+* Documentation for [SDK CLI reference][sdkclidoc] is updated with steps to add additonal APIs for Ansible based operator.
+* Documentation is updated for [operator-sdk add api][addapidoc] for ansible.
+
 
 #### Story 2 - Helm operator additional API
 
 As Helm operator developer, I would like to scaffold additional API, once the original Helm operator project has been created, using following command.
-`operator-sdk add api --kind <kind> --api-version <group/version>` with optional `--helm-chart`flag.
+`operator-sdk add api --kind <kind> --api-version <group/version> [flags]`
 
 ##### Acceptance Criteria
-
-* Documentation for [SDK ClI reference][sdkclidoc] is updated with steps to add additonal APIs for Helm based operator.
-* Documentation is updated for [operatr-sdk add api][addapidoc] for helm.
+* Helm operator developer should be able to scaffold all resources needed for the additional API with any of below commands, 
+  `operator-sdk add api --kind <kind> --api-version <group/version> [flags]`
 * Flags options available for `operator-sdk new`, should also be made available for `operator-sdk add api`
 ```
   --api-version string - CRD APIVersion in the format $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)
@@ -81,11 +86,12 @@ As Helm operator developer, I would like to scaffold additional API, once the or
   --helm-chart-repo string - Chart repository URL for the requested helm chart
   --helm-chart-version string - Specific version of the helm chart (default is latest version)
   ```
-* Helm operator developer should be able to scaffold all resources needed for the additional API with any of below commands, 
-  `operator-sdk add api --kind <kind> --api-version <group/version> --helm-chart=stable/nginx`
+* Documentation for [SDK CLI reference][sdkclidoc] is updated with steps to add additonal APIs for Helm based operator.
+* Documentation is updated for [operator-sdk add api][addapidoc] for helm.
 
 
-##### Implementation Details/Notes/Constraints
+
+### Implementation Details/Notes/Constraints
 
 * `operator-sdk new memcached-operator --api-version=cache.example.com/v1alpha1 --kind=Memcached --type=ansible` scaffolds new ansible based operator for the user with given API. `projutil.OperatorTypeAnsible` \ '`projutil.OperatorTypeHelm` is being decided as shown here,
 ```go
