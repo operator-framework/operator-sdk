@@ -88,7 +88,7 @@ An example Watches file:
   group: baz.example.com
   kind: Baz
   playbook: /opt/ansible/baz.yml
-  reconcilePeriod: 0
+  reconcilePeriod: 0s
   manageStatus: false
   vars:
     foo: bar
@@ -206,7 +206,6 @@ Modify `roles/memcached/tasks/main.yml` to look like the following:
               image: "docker.io/memcached:1.4.36-alpine"
               ports:
                 - containerPort: 11211
-
 ```
 
 It is important to note that we used the `size` variable to control how many
@@ -241,7 +240,10 @@ $ docker push quay.io/example/memcached-operator:v0.0.1
 
 Kubernetes deployment manifests are generated in `deploy/operator.yaml`. The
 deployment image in this file needs to be modified from the placeholder
-`REPLACE_IMAGE` to the previous built image. To do this run:
+`REPLACE_IMAGE` to the previous built image.
+**NOTE** Also, we recommend keeping the `imagePullPolicy` as `Always` because it makes easier for testing.
+
+To do the above run:
 ```
 $ sed -i 's|{{ REPLACE_IMAGE }}|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
 ```
