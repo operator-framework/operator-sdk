@@ -17,7 +17,7 @@ Each capability level is associated with a certain set of management features th
 
 **Managed resources** - the Kubernetes objects or off-cluster services the Operator uses to constitute an Operand (also known as secodary resources)
 
-**Custom Resource Definition** - an API of the Operator, providing the blueprint and validation rules for **Custom Resources**.
+**Custom Resource Definition (CRD)** - an API of the Operator, providing the blueprint and validation rules for **Custom Resources**.
 
 ---
 
