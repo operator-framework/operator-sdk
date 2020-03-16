@@ -28,7 +28,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 
 	"github.com/blang/semver"
@@ -448,7 +447,7 @@ func (g csvGenerator) updateCSVFromManifests(csv *olmapiv1alpha1.ClusterServiceV
 			return err
 		}
 	}
-	err = updateDescriptions(csv, g.Inputs[APIsDirKey], projutil.GetOperatorType())
+	err = updateDescriptions(csv, g.Inputs[APIsDirKey])
 	if err != nil {
 		return fmt.Errorf("error updating CSV customresourcedefinitions: %w", err)
 	}

@@ -240,42 +240,47 @@ func (us crds) apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
 	return nil
 }
 
-func updateDescriptions(csv *olmapiv1alpha1.ClusterServiceVersion,
-	searchDir string,
-	opType projutil.OperatorType) error {
-	ownedCRDs := []olmapiv1alpha1.CRDDescription{}
-	for _, ownedCRD := range csv.Spec.CustomResourceDefinitions.Owned {
-		name := ownedCRD.Name
-		group := name
-		if split := strings.Split(name, "."); len(split) > 1 {
+func updateDescriptions(csv *olmapiv1alpha1.ClusterServiceVersion, searchDir string) error {
+	// TODO: Should this skip generating descriptions if API directory exists
+	// but project type can't be detected due to layout differences.
+	if opType := projutil.GetOperatorType(); opType != projutil.OperatorTypeGo {
+		log.Infof("Skipping generation of owned CRDDescriptions from CSV annotations in %s."+
+			" Could not detect project to be of Go type.", searchDir)
+		return nil
+	}
+
+	updatedDescriptions := []olmapiv1alpha1.CRDDescription{}
+	for _, currDescription := range csv.Spec.CustomResourceDefinitions.Owned {
+		group := currDescription.Name
+		if split := strings.Split(currDescription.Name, "."); len(split) > 1 {
 			group = strings.Join(split[1:], ".")
 		}
 		// Parse CRD descriptors from source code comments and annotations.
 		gvk := schema.GroupVersionKind{
 			Group:   group,
-			Version: ownedCRD.Version,
-			Kind:    ownedCRD.Kind,
+			Version: currDescription.Version,
+			Kind:    currDescription.Kind,
 		}
-		var err error
-		switch opType {
-		case projutil.OperatorTypeGo:
-			ownedCRD, err = descriptor.GetCRDDescriptionForGVK(searchDir, gvk)
-			if err != nil {
-				if goerrors.Is(err, descriptor.ErrAPIDirNotExist) {
-					log.Infof("Directory for API %s does not exist. Skipping CSV annotation parsing for API.", gvk)
-				} else if goerrors.Is(err, descriptor.ErrAPITypeNotFound) {
-					log.Infof("No kind type found for API %s. Skipping CSV annotation parsing for API.", gvk)
-				} else {
-					return fmt.Errorf("failed to set CRD descriptors for %s: %v", gvk, err)
-				}
-				continue
+		newDescription, err := descriptor.GetCRDDescriptionForGVK(searchDir, gvk)
+		if err != nil {
+			if goerrors.Is(err, descriptor.ErrAPIDirNotExist) {
+				log.Infof("Directory for API %s does not exist. Skipping CSV annotation parsing for API.", gvk)
+			} else if goerrors.Is(err, descriptor.ErrAPITypeNotFound) {
+				log.Infof("No kind type found for API %s. Skipping CSV annotation parsing for API.", gvk)
+			} else {
+				// TODO: Should we ignore all CSV annotation parsing errors and simply log the error
+				// like we do for the above cases.
+				return fmt.Errorf("failed to set CRD descriptors for %s: %v", gvk, err)
 			}
-			// Only set the name if no error was returned.
-			ownedCRD.Name = name
+			// Keep the existing description and don't update on error
+			updatedDescriptions = append(updatedDescriptions, currDescription)
+		} else {
+			// Replace the existing description with the newly parsed one
+			newDescription.Name = currDescription.Name
+			updatedDescriptions = append(updatedDescriptions, newDescription)
 		}
-		ownedCRDs = append(ownedCRDs, ownedCRD)
 	}
-	csv.Spec.CustomResourceDefinitions.Owned = ownedCRDs
+	csv.Spec.CustomResourceDefinitions.Owned = updatedDescriptions
 	sort.Sort(descSorter(csv.Spec.CustomResourceDefinitions.Owned))
 	sort.Sort(descSorter(csv.Spec.CustomResourceDefinitions.Required))
 	return nil
