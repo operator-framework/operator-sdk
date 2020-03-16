@@ -99,7 +99,8 @@ RUN TINIARCH=$(case $(arch) in x86_64) echo -n amd64 ;; ppc64le) echo -n ppc64el
 
 [[- if .Requirements ]]
 COPY requirements.yml ${HOME}/requirements.yml
-RUN ansible-galaxy collection install -r ${HOME}/requirements.yml[[ end ]]
+RUN ansible-galaxy collection install -r ${HOME}/requirements.yml \
+ && chmod -R ug+rwx ${HOME}/.ansible[[ end ]]
 [[- if .Watches ]]
 COPY watches.yaml ${HOME}/watches.yaml[[ end ]]
 [[- if .Roles ]]
