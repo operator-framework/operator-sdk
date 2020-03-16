@@ -209,11 +209,11 @@ func TestAnsibleVerbosityString(t *testing.T) {
 		verbosity      int
 		expectedString string
 	}{
-		{verbosity: -1, expectedString: "-v"},
-		{verbosity: 0, expectedString: "-v"},
-		{verbosity: 1, expectedString: "-vv"},
-		{verbosity: 2, expectedString: "-vvv"},
-		{verbosity: 7, expectedString: "-vvvvvvvv"},
+		{verbosity: -1, expectedString: ""},
+		{verbosity: 0, expectedString: ""},
+		{verbosity: 1, expectedString: "-v"},
+		{verbosity: 2, expectedString: "-vv"},
+		{verbosity: 7, expectedString: "-vvvvvvv"},
 	}
 
 	for _, tc := range testCases {
