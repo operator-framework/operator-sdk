@@ -44,6 +44,7 @@ operator-sdk add api [flags]
 
 ```
       --api-version string   Kubernetes APIVersion that has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)
+      --crd-version string   CRD version to generate (default "v1beta1")
   -h, --help                 help for api
       --kind string          Kubernetes resource Kind name. (e.g AppService)
       --skip-generation      Skip generation of deepcopy and OpenAPI code and OpenAPI CRD specs

@@ -123,6 +123,8 @@ generates a default directory layout based on the input <project-name>.
 		"Specific version of the helm chart (default is latest version)")
 	newCmd.Flags().StringVar(&helmChartRepo, "helm-chart-repo", "",
 		"Chart repository URL for the requested helm chart")
+	newCmd.Flags().StringVar(&crdVersion, "crd-version", gencrd.DefaultCRDVersion,
+		"CRD version to generate (Only used for --type=ansible|helm)")
 
 	return newCmd
 }
@@ -142,6 +144,8 @@ var (
 	helmChartRef     string
 	helmChartVersion string
 	helmChartRepo    string
+
+	crdVersion string
 )
 
 func newFunc(cmd *cobra.Command, args []string) error {
@@ -321,7 +325,7 @@ func doAnsibleScaffold() error {
 		return fmt.Errorf("new ansible scaffold failed: %v", err)
 	}
 
-	if err = generateCRDNonGo(projectName, *resource); err != nil {
+	if err = generateCRDNonGo(projectName, *resource, crdVersion); err != nil {
 		return err
 	}
 
@@ -411,7 +415,7 @@ func doHelmScaffold() error {
 		return fmt.Errorf("new helm scaffold failed: %v", err)
 	}
 
-	if err = generateCRDNonGo(projectName, *resource); err != nil {
+	if err = generateCRDNonGo(projectName, *resource, crdVersion); err != nil {
 		return err
 	}
 
@@ -422,13 +426,13 @@ func doHelmScaffold() error {
 	return nil
 }
 
-func generateCRDNonGo(projectName string, resource scaffold.Resource) error {
+func generateCRDNonGo(projectName string, resource scaffold.Resource, crdVersion string) error {
 	crdsDir := filepath.Join(projectName, scaffold.CRDsDir)
 	gcfg := gen.Config{
 		Inputs:    map[string]string{gencrd.CRDsDirKey: crdsDir},
 		OutputDir: crdsDir,
 	}
-	crd := gencrd.NewCRDNonGo(gcfg, resource)
+	crd := gencrd.NewCRDNonGo(gcfg, resource, crdVersion)
 	if err := crd.Generate(); err != nil {
 		return fmt.Errorf("error generating CRD for %s: %w", resource, err)
 	}
