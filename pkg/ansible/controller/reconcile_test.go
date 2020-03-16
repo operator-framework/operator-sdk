@@ -458,6 +458,22 @@ func TestReconcile(t *testing.T) {
 					"apiVersion": "operator-sdk/v1beta1",
 					"kind":       "Testing",
 					"spec":       map[string]interface{}{},
+					"status": map[string]interface{}{
+						"conditions": []interface{}{
+							map[string]interface{}{
+								"status": "True",
+								"type":   "Running",
+								"ansibleResult": map[string]interface{}{
+									"changed":    int64(0),
+									"failures":   int64(0),
+									"ok":         int64(0),
+									"skipped":    int64(0),
+									"completion": eventTime.Format("2006-01-02T15:04:05.99999999"),
+								},
+								"message": "Failed to get ansible-runner stdout",
+							},
+						},
+					},
 				},
 			}),
 			Result: reconcile.Result{
