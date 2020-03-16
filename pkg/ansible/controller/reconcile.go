@@ -201,6 +201,10 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		eventErr := errors.New("did not receive playbook_on_stats event")
 		stdout, err := result.Stdout()
 		if err != nil {
+			errmark := r.markError(u, request.NamespacedName, "Failed to get ansible-runner stdout")
+			if errmark != nil {
+				logger.Error(errmark, "Unable to mark error to run reconciliation")
+			}
 			logger.Error(err, "Failed to get ansible-runner stdout")
 			return reconcileResult, err
 		}
