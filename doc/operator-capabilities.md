@@ -13,7 +13,7 @@ Each capability level is associated with a certain set of management features th
 
 **Operand** - the managed workload provided by the Operator as a service
 
-**Custom Resource (CR)** - an instance of the `CustomResourceDefinition` the Operator ships that represents the Operand or an Operation on an Operand
+**Custom Resource (CR)** - an instance of the [`CustomResourceDefinition`](https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/) the Operator ships that represents the Operand or an Operation on an Operand
 
 **Managed resources** - the Kubernetes objects or off-cluster services the Operator uses to constitute an Operand
 
@@ -66,11 +66,11 @@ The Operator offers the following features related to upgrades:
 
 - Operand can be upgraded in the process of upgrading the Operator, or
 - Operand can be upgraded as part of changing the CR
-- Operator understands how to upgrade older versions of the Operand, managed previously by an older version of the Operato
+- Operator understands how to upgrade older versions of the Operand, managed previously by an older version of the Operator
 
 **Upgrade of the Operator**
 
-- Operator can upgraded seamlessly and can either still manage older versions of the Operand or update them
+- Operator can be upgraded seamlessly and can either still manage older versions of the Operand or update them
 - Operator conveys inability to manage an unsupported version of the Operand in the `status` section of the CR
 
 **Example:** An Operator managing a database can update an existing database from a previous to a newer version without data loss. The Operator might do so as part of a configuration change or as part of an update of the Operator itself.
@@ -128,18 +128,18 @@ The Operator offers one or more of the following lifecycle management features:
 
 **Alerting and Events**
 
-- Operand sends useful alerts [1]
-- Custom Resources emit custom events [2]
+- Operand sends useful alerts <sup>1</sup>
+- Custom Resources emit custom events <sup>2</sup>
 
 **Metering**
 
 - Operator leverages Operator Metering
 
-[1] Aim to have as few alerts as possible, by alerting on symptoms that are associated with end-user pain rather than trying to catch every possible way that pain could be caused. Alerts should link to relevant consoles and make it easy to figure out which component is at fault
+<sup>1</sup> Aim to have as few alerts as possible, by alerting on symptoms that are associated with end-user pain rather than trying to catch every possible way that pain could be caused. Alerts should link to relevant consoles and make it easy to figure out which component is at fault
 
-[2] Native k8s objects emit events (“Events” objects) as their states change. Your operator should do similar for state changes related to your operand. “Custom”, here, means that it should emit events specific to your operator/operand outside of the events already emitted by their deployment methodology.  This, in conjunction with status descriptors, give much needed visibility into actions taken by your operator/operand. Operators are codified domain-specific knowledge. Your end user should not need this domain-specific knowledge to gain visibility into what’s happening with their resource.
+<sup>2</sup> Native k8s objects emit events (“Events” objects) as their states change. Your operator should do similar for state changes related to your operand. “Custom”, here, means that it should emit events specific to your operator/operand outside of the events already emitted by their deployment methodology.  This, in conjunction with status descriptors, give much needed visibility into actions taken by your operator/operand. Operators are codified domain-specific knowledge. Your end user should not need this domain-specific knowledge to gain visibility into what’s happening with their resource.
 
-**Example:** A database Operator continues to parse the logging output of the database software and understands noteworthy log events, e.g. running out of space for database files and produces alerts. The operator also intruments the database and exposes application level, e.g. database queries per second
+**Example:** A database Operator continues to parse the logging output of the database software and understands noteworthy log events, e.g. running out of space for database files and produces alerts. The operator also instruments the database and exposes application level, e.g. database queries per second
 
 **Guiding questions to determine Operator reaching Level 4**
 
