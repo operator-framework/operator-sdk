@@ -45,8 +45,8 @@ Ansible/Helm operator developers are not able to create additonal APIs via CLI, 
 
 ## Non-Goals
 
-* Updating Molecule tests for additional APIs created for Anible based operators.[**TBD**]
-* Generating/Updating Playbook for additional APIs for Ansible based operators. [**TBD**]
+* Updating Molecule tests for additional APIs created for Anible based operators.<**TBD**>
+* Generating/Updating Playbook for additional APIs for Ansible based operators. <**TBD**>
 
 ## Proposal
 
