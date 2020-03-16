@@ -21,7 +21,7 @@ status: implementable
 ## Release Signoff Checklist
 
 - \[x\] Enhancement is `implementable`
-- \[ \] Design details are appropriately documented from clear requirements
+- \[x\] Design details are appropriately documented from clear requirements
 - \[ \] Test plan is defined
 - \[ \] Accceptance criteria
 - \[ \] User-facing documentation is created
@@ -93,7 +93,7 @@ As Helm operator developer, I would like to scaffold additional API, once the or
 
 ### Implementation Details/Notes/Constraints
 
-* `operator-sdk new memcached-operator --api-version=cache.example.com/v1alpha1 --kind=Memcached --type=ansible` scaffolds new ansible based operator for the user with given API. Below logic is being used to determine the type of operator.
+* The `operator-sdk new memcached-operator --api-version=cache.example.com/v1alpha1 --kind=Memcached --type=ansible` command scaffolds new ansible based operator for the user with given API.Please refer below logic being used to determine the type of operator:
 ```go
 	case projutil.OperatorTypeAnsible:
 		if err := doAnsibleScaffold(); err != nil {
@@ -106,133 +106,134 @@ As Helm operator developer, I would like to scaffold additional API, once the or
 ```
 and subsequently [`func doAnsibleScaffold()`][doansible] or [`func doHelmScaffold()`][dohelm] is being called to perform the scaffold.
 
-* Currently, `operator-sdk add api` only allows Go based operators to create futher APIs, after the original project is scaffolded. By posing retriction as shown [here][onlygorestriction].
+ Currently, `operator-sdk add api` only allows Go-based operators to create further APIs, after the original project is scaffolded. By posing restriction as shown [here][onlygorestriction].
 ```go
 // Only Go projects can add apis.
 	if err := projutil.CheckGoProjectCmd(cmd); err != nil {
 		return err
 	}
 ```
-* The proposal is to enhance [`func apiRun(cmd *cobra.Command, args []string)`][addapifunc] to add APIs for Ansible/Helm operators, by re-using pre-existing functions as shown above to check for `--type`, and perform necessary scaffolds for the new resource.
+* This proposal is to enhance [`func apiRun(cmd *cobra.Command, args []string)`][addapifunc] to add APIs for Ansible/Helm operators, by re-using pre-existing functions as shown above to check for `--type`, and perform necessary scaffolds for the new resource.
 
-* To this extent, PoCs have been done for both [Ansible][ansiblepoc] and [Helm][helmpoc] by manually adding necessary files in the scaffold.
+* To this extent, PoCs have been done for both [Ansible][ansiblepoc] and [Helm][helmpoc] by manually adding necessary files in the scaffold. Please see below for project layout.
+  **NOTE**: To test/check the POCs locally used the makefile targets `make install` and `make uninstall`. 
 
-* Ansible roles scaffold after adding APIs:
-```
-── roles
-│   ├── memcached
-│   │   ├── README.md
-│   │   ├── defaults
-│   │   │   └── main.yml
-│   │   ├── files
-│   │   ├── handlers
-│   │   │   └── main.yml
-│   │   ├── meta
-│   │   │   └── main.yml
-│   │   ├── tasks
-│   │   │   └── main.yml
-│   │   ├── templates
-│   │   └── vars
-│   │       └── main.yml
-│   ├── myapp
-│   │   ├── README.md
-│   │   ├── defaults
-│   │   │   └── main.yml
-│   │   ├── files
-│   │   ├── handlers
-│   │   │   └── main.yml
-│   │   ├── meta
-│   │   │   └── main.yml
-│   │   ├── tasks
-│   │   │   └── main.yml
-│   │   ├── templates
-│   │   └── vars
-│   │       └── main.yml
-```
+  * Ansible roles scaffold after adding APIs:
+  ```
+  ── roles
+  │   ├── memcached
+  │   │   ├── README.md
+  │   │   ├── defaults
+  │   │   │   └── main.yml
+  │   │   ├── files
+  │   │   ├── handlers
+  │   │   │   └── main.yml
+  │   │   ├── meta
+  │   │   │   └── main.yml
+  │   │   ├── tasks
+  │   │   │   └── main.yml
+  │   │   ├── templates
+  │   │   └── vars
+  │   │       └── main.yml
+  │   ├── myapp
+  │   │   ├── README.md
+  │   │   ├── defaults
+  │   │   │   └── main.yml
+  │   │   ├── files
+  │   │   ├── handlers
+  │   │   │   └── main.yml
+  │   │   ├── meta
+  │   │   │   └── main.yml
+  │   │   ├── tasks
+  │   │   │   └── main.yml
+  │   │   ├── templates
+  │   │   └── vars
+  │   │       └── main.yml
+  ```
 
-* Helm charts are scaffolded as shown below for new APIs:
-```bash
-├── helm-charts
-│   ├── memcached
-│   │   ├── Chart.yaml
-│   │   ├── README.md
-│   │   ├── templates
-│   │   │   ├── NOTES.txt
-│   │   │   ├── _helpers.tpl
-│   │   │   ├── pdb.yaml
-│   │   │   ├── statefulset.yaml
-│   │   │   └── svc.yaml
-│   │   └── values.yaml
-│   ├── mongodb
-│   │   ├── Chart.yaml
-│   │   ├── OWNERS
-│   │   ├── README.md
-│   │   ├── files
-│   │   │   └── docker-entrypoint-initdb.d
-│   │   │       └── README.md
-│   │   ├── templates
-│   │   │   ├── NOTES.txt
-│   │   │   ├── _helpers.tpl
-│   │   │   ├── configmap.yaml
-│   │   │   ├── deployment-standalone.yaml
-│   │   │   ├── ingress.yaml
-│   │   │   ├── initialization-configmap.yaml
-│   │   │   ├── poddisruptionbudget-arbiter-rs.yaml
-│   │   │   ├── poddisruptionbudget-secondary-rs.yaml
-│   │   │   ├── prometheus-alerting-rule.yaml
-│   │   │   ├── prometheus-service-monitor.yaml
-│   │   │   ├── pvc-standalone.yaml
-│   │   │   ├── secrets.yaml
-│   │   │   ├── statefulset-arbiter-rs.yaml
-│   │   │   ├── statefulset-primary-rs.yaml
-│   │   │   ├── statefulset-secondary-rs.yaml
-│   │   │   ├── svc-headless-rs.yaml
-│   │   │   ├── svc-primary-rs.yaml
-│   │   │   └── svc-standalone.yaml
-│   │   ├── values-production.yaml
-│   │   ├── values.schema.json
-│   │   └── values.yaml
-│   └── nginx
-│       ├── Chart.yaml
-│       ├── charts
-│       ├── templates
-│       │   ├── NOTES.txt
-│       │   ├── _helpers.tpl
-│       │   ├── deployment.yaml
-│       │   ├── ingress.yaml
-│       │   ├── service.yaml
-│       │   ├── serviceaccount.yaml
-│       │   └── tests
-│       │       └── test-connection.yaml
-│       └── values.yaml
-```
-* Along with above changes,`/deploy/role.yaml` will be updated to reflect new apiGroups.
-``` yaml
-- apiGroups:
-  - cache.example.com
-  resources:
-  - '*'
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - app.example.com
-  resources:
-  - '*'
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-```
+  * Helm charts are scaffolded as shown below for new APIs:
+  ```bash
+  ├── helm-charts
+  │   ├── memcached
+  │   │   ├── Chart.yaml
+  │   │   ├── README.md
+  │   │   ├── templates
+  │   │   │   ├── NOTES.txt
+  │   │   │   ├── _helpers.tpl
+  │   │   │   ├── pdb.yaml
+  │   │   │   ├── statefulset.yaml
+  │   │   │   └── svc.yaml
+  │   │   └── values.yaml
+  │   ├── mongodb
+  │   │   ├── Chart.yaml
+  │   │   ├── OWNERS
+  │   │   ├── README.md
+  │   │   ├── files
+  │   │   │   └── docker-entrypoint-initdb.d
+  │   │   │       └── README.md
+  │   │   ├── templates
+  │   │   │   ├── NOTES.txt
+  │   │   │   ├── _helpers.tpl
+  │   │   │   ├── configmap.yaml
+  │   │   │   ├── deployment-standalone.yaml
+  │   │   │   ├── ingress.yaml
+  │   │   │   ├── initialization-configmap.yaml
+  │   │   │   ├── poddisruptionbudget-arbiter-rs.yaml
+  │   │   │   ├── poddisruptionbudget-secondary-rs.yaml
+  │   │   │   ├── prometheus-alerting-rule.yaml
+  │   │   │   ├── prometheus-service-monitor.yaml
+  │   │   │   ├── pvc-standalone.yaml
+  │   │   │   ├── secrets.yaml
+  │   │   │   ├── statefulset-arbiter-rs.yaml
+  │   │   │   ├── statefulset-primary-rs.yaml
+  │   │   │   ├── statefulset-secondary-rs.yaml
+  │   │   │   ├── svc-headless-rs.yaml
+  │   │   │   ├── svc-primary-rs.yaml
+  │   │   │   └── svc-standalone.yaml
+  │   │   ├── values-production.yaml
+  │   │   ├── values.schema.json
+  │   │   └── values.yaml
+  │   └── nginx
+  │       ├── Chart.yaml
+  │       ├── charts
+  │       ├── templates
+  │       │   ├── NOTES.txt
+  │       │   ├── _helpers.tpl
+  │       │   ├── deployment.yaml
+  │       │   ├── ingress.yaml
+  │       │   ├── service.yaml
+  │       │   ├── serviceaccount.yaml
+  │       │   └── tests
+  │       │       └── test-connection.yaml
+  │       └── values.yaml
+  ```
+  * Along with above changes,`/deploy/role.yaml` will be updated to reflect new apiGroups.
+  ``` yaml
+  - apiGroups:
+    - cache.example.com
+    resources:
+    - '*'
+    verbs:
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - update
+    - watch
+  - apiGroups:
+    - app.example.com
+    resources:
+    - '*'
+    verbs:
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - update
+    - watch
+  ```
 * CRD and CR files will be generated at `/deploy/crds`, as shown below.
 ```
 ── deploy
@@ -256,9 +257,6 @@ and subsequently [`func doAnsibleScaffold()`][doansible] or [`func doHelmScaffol
   kind: Mykind
   role: /opt/ansible/roles/mykind
 ```
-
-
-
 [addapidoc]:https://github.com/operator-framework/operator-sdk/blob/master/doc/cli/operator-sdk_add_api.md
 [sdkclidoc]:https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md
 [onlygorestriction]:https://github.com/operator-framework/operator-sdk/blob/master/cmd/operator-sdk/add/api.go#L95
