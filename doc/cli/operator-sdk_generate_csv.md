@@ -35,7 +35,8 @@ TODO
                                Note: The CSV generator only uses this to copy the CRD manifests.
                                The CSV contents for spec.customresourcedefinitions.owned will still be updated
                                from the CRD manifests in the deploy directory specified by --deploy-dir.
-                                (default "deploy")
+                               If unset, it defaults to the same value as --deploy-dir.
+                               
       --csv-channel string     Channel the CSV should be registered under in the package manifest
       --csv-version string     Semantic version of the CSV
       --default-channel        Use the channel passed to --csv-channel as the package manifests' default channel. Only valid when --csv-channel is set

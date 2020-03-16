@@ -149,17 +149,17 @@ func TestGetKindTypeForAPI(t *testing.T) {
 			}
 
 			if n := len(pkgTypes); n != st.numPkgTypes {
-				t.Errorf("expected %d package types, got %d", st.numPkgTypes, n)
+				t.Errorf("Expected %d package types, got %d", st.numPkgTypes, n)
 			}
 			kindType := findKindType(st.kind, pkgTypes)
 			if st.wantNil && kindType != nil {
-				t.Errorf("expected type %q to not be found", kindType.Name)
+				t.Errorf("Expected type %q to not be found", kindType.Name)
 			}
 			if !st.wantNil && kindType == nil {
-				t.Errorf("expected type %q to be found", st.kind)
+				t.Errorf("Expected type %q to be found", st.kind)
 			}
 			if !st.wantNil && kindType != nil && kindType.Name.Name != st.kind {
-				t.Errorf("expected type %q to have type name %q", kindType.Name, st.kind)
+				t.Errorf("Expected type %q to have type name %q", kindType.Name, st.kind)
 			}
 		})
 	}

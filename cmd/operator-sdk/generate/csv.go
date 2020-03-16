@@ -225,10 +225,7 @@ func findCRDFileSet(path string) (map[string][]byte, error) {
 	for _, crdPath := range crdPaths {
 		b, err := ioutil.ReadFile(crdPath)
 		if err != nil {
-			return fmt.Errorf("error in %s : %v", p, err)
-		}
-		if typeMeta.Kind != "CustomResourceDefinition" {
-			continue
+			return nil, err
 		}
 		crdFileSet[filepath.Base(crdPath)] = b
 	}

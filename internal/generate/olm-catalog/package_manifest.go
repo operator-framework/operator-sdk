@@ -49,10 +49,6 @@ type pkgGenerator struct {
 	channelIsDefault bool
 	// PackageManifest file name
 	fileName string
-
-	// existingPkgManifestDir is set to the package manifest root directory
-	// if the generator needs to update from an existing package manifest file.
-	existingPkgManifestDir string
 }
 
 func NewPackageManifest(cfg gen.Config, csvVersion, channel string, isDefault bool) gen.Generator {
