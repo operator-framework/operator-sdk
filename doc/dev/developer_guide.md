@@ -45,9 +45,11 @@ To run the lint checks done in the CI locally, run:
 $ make lint
 ```
 
+**NOTE** Note that for it is required to install `golangci-lint` locally. For more info see its [doc](https://github.com/golangci/golangci-lint#install)
+
 ## How to test the changes done for Ansible/Helm based-operator projects?
 
-If your change is NOT in the scaffold files then, you will need build an new image with the changes performed in order to test it locally. And then, when you build and test your POC project locally with this new image you will be able to check changes in the Ansible/Helm operator image as their libs. Following the steps
+If the change performed is NOT in the scaffold files or sdk commands then, is required to build an new image with the changes done to test it locally. In this way, by using this dev image in an operator project locally we will be able to check the changes made for the Ansible/Helm based-operator. 
 
 ### For Ansible
 
