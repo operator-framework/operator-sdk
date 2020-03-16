@@ -29,7 +29,7 @@ import (
 )
 
 func TestGeneratePkgManifestToOutput(t *testing.T) {
-	cleanupFunc := chDirWithCleanup(t, relativeProjectRootDir)
+	cleanupFunc := chDirWithCleanup(t, testNonStandardLayoutDataDir)
 	defer cleanupFunc()
 
 	// Temporary output dir for generating catalog bundle
@@ -58,7 +58,7 @@ func TestGeneratePkgManifestToOutput(t *testing.T) {
 	pkgManFileName := getPkgFileName(testProjectName)
 
 	// Read expected Package Manifest
-	expCatalogDir := filepath.Join(testNonStandardLayoutDataDir, "expected-catalog", OLMCatalogChildDir)
+	expCatalogDir := filepath.Join("expected-catalog", OLMCatalogChildDir)
 	pkgManExpBytes, err := ioutil.ReadFile(filepath.Join(expCatalogDir, testProjectName, pkgManFileName))
 	if err != nil {
 		t.Fatalf("Failed to read expected package manifest file: %v", err)
@@ -78,12 +78,12 @@ func TestGeneratePkgManifestToOutput(t *testing.T) {
 }
 
 func TestGeneratePackageManifest(t *testing.T) {
-	cleanupFunc := chDirWithCleanup(t, relativeProjectRootDir)
+	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
 	cfg := gen.Config{
 		OperatorName: testProjectName,
-		OutputDir:    filepath.Join(testGoDataDir, "deploy"),
+		OutputDir:    "deploy",
 	}
 	g := NewPackageManifest(cfg, csvVersion, "stable", true)
 	fileMap, err := g.(pkgGenerator).generate()
@@ -99,12 +99,12 @@ func TestGeneratePackageManifest(t *testing.T) {
 }
 
 func TestValidatePackageManifest(t *testing.T) {
-	cleanupFunc := chDirWithCleanup(t, relativeProjectRootDir)
+	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
 	cfg := gen.Config{
 		OperatorName: testProjectName,
-		OutputDir:    filepath.Join(testGoDataDir, "deploy"),
+		OutputDir:    "deploy",
 	}
 	g := NewPackageManifest(cfg, csvVersion, "stable", true)
 

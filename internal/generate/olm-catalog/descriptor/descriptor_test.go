@@ -30,20 +30,17 @@ import (
 )
 
 var (
-	relativeProjectRootDir       = filepath.Join("..", "..", "..", "..")
-	testDataRelativePathFromRoot = filepath.Join("internal", "generate", "testdata", "go")
+	testDataDir = filepath.Join("..", "..", "testdata", "go")
 )
 
 func TestGetKindTypeForAPI(t *testing.T) {
 	multiAPIRootDir := filepath.Join("pkg", "apis")
-	singleAPIRootDir := filepath.Join("api")
+	singleAPIRootDir := "api"
 	group := "cache"
 	version := "v1alpha1"
 
 	subTests := []struct {
 		description string
-		// True if apis dir in the expected single or multi group layout
-		isExpectedLayout bool
 		// path to apis types root dir e.g pkg/apis
 		apisDir string
 		// path to kind api pkg e.g pkg/apis/cache/v1alpha1
@@ -53,10 +50,11 @@ func TestGetKindTypeForAPI(t *testing.T) {
 		kind            string
 		numPkgTypes     int
 		wantNil         bool
+		// True if apis dir in the expected single or multi group layout
+		isExpectedLayout bool
 	}{
 		{
 			"Must Succeed: Find types for Kind from multi APIs root directory",
-			true,
 			multiAPIRootDir,
 			filepath.Join(multiAPIRootDir, group, version),
 			group,
@@ -64,10 +62,10 @@ func TestGetKindTypeForAPI(t *testing.T) {
 			"Dummy",
 			22,
 			false,
+			true,
 		},
 		{
 			"Must Fail: Find types for non-existing Kind from multi APIs root directory",
-			true,
 			multiAPIRootDir,
 			filepath.Join(multiAPIRootDir, group, version),
 			group,
@@ -75,10 +73,10 @@ func TestGetKindTypeForAPI(t *testing.T) {
 			"NotFound",
 			22,
 			true,
+			true,
 		},
 		{
 			"Must Succeed: Find types for Kind from single APIs root directory",
-			true,
 			singleAPIRootDir,
 			filepath.Join(singleAPIRootDir, version),
 			group,
@@ -86,10 +84,10 @@ func TestGetKindTypeForAPI(t *testing.T) {
 			"Memcached",
 			4,
 			false,
+			true,
 		},
 		{
 			"Must Fail: Find types for non-existing Kind from single APIs root directory",
-			true,
 			singleAPIRootDir,
 			filepath.Join(singleAPIRootDir, version),
 			group,
@@ -97,16 +95,17 @@ func TestGetKindTypeForAPI(t *testing.T) {
 			"NotFound",
 			4,
 			true,
+			true,
 		},
 		// TODO: Add cases for non-standard api dir layouts: pkg/apis/<foo>/<bar>/version
 	}
 
-	// Change directory to project root so the test cases can form the correct pkg imports
+	// Change directory to test data dir so the test cases can form the correct pkg imports
 	wd, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Chdir(relativeProjectRootDir); err != nil {
+	if err := os.Chdir(testDataDir); err != nil {
 		t.Fatal(err)
 	}
 	defer func() {
@@ -117,10 +116,9 @@ func TestGetKindTypeForAPI(t *testing.T) {
 
 	for _, st := range subTests {
 		t.Run(st.description, func(t *testing.T) {
-			testAPIRootDir := filepath.Join(testDataRelativePathFromRoot, st.apisDir)
-			expectedPkgPath, err := getExpectedPkgLayout(testAPIRootDir, st.group, st.version)
+			expectedPkgPath, err := getExpectedPkgLayout(st.apisDir, st.group, st.version)
 			if err != nil {
-				t.Fatalf("Failed to getExpectedPkgLayout(%s, %s, %s): %v", testAPIRootDir, st.group, st.version, err)
+				t.Fatalf("Failed to getExpectedPkgLayout(%s, %s, %s): %v", st.apisDir, st.group, st.version, err)
 			}
 			if st.isExpectedLayout {
 				if expectedPkgPath == "" || !strings.HasSuffix(expectedPkgPath, st.expectedPkgPath) {
@@ -137,16 +135,16 @@ func TestGetKindTypeForAPI(t *testing.T) {
 				pkgTypes, err = getTypesForPkgPath(expectedPkgPath, universe)
 				if err != nil {
 					t.Fatalf("Failed to get types of pkg path (%s) from API root directory(%s): %v)",
-						expectedPkgPath, testAPIRootDir, err)
+						expectedPkgPath, st.apisDir, err)
 				}
 			} else {
-				universe, err := getTypesFromDirRecursive(testAPIRootDir)
+				universe, err := getTypesFromDirRecursive(st.apisDir)
 				if err != nil {
 					t.Fatalf("Failed to get universe of types from API root directory (%s): %v)", st.apisDir, err)
 				}
 				pkgTypes, err = getTypesForPkgName(st.version, universe)
 				if err != nil {
-					t.Fatalf("Failed to get types of pkg name (%s) from API root directory(%s): %v)", st.version, testAPIRootDir, err)
+					t.Fatalf("Failed to get types of pkg name (%s) from API root directory(%s): %v)", st.version, st.apisDir, err)
 				}
 			}
 
@@ -173,7 +171,7 @@ func TestGetCRDDescriptionForGVK(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Chdir(relativeProjectRootDir); err != nil {
+	if err := os.Chdir(testDataDir); err != nil {
 		t.Fatal(err)
 	}
 	defer func() {
@@ -199,7 +197,7 @@ func TestGetCRDDescriptionForGVK(t *testing.T) {
 	}{
 		{
 			"Populate CRDDescription successfully",
-			filepath.Join(testDataRelativePathFromRoot, "pkg", "apis"),
+			filepath.Join("pkg", "apis"),
 			schema.GroupVersionKind{Group: "cache.example.com", Version: "v1alpha1", Kind: "Dummy"},
 			olmapiv1alpha1.CRDDescription{
 				Kind:        "Dummy",
@@ -238,7 +236,7 @@ func TestGetCRDDescriptionForGVK(t *testing.T) {
 		},
 		{
 			"Populate CRDDescription with non-standard spec type successfully",
-			filepath.Join(testDataRelativePathFromRoot, "pkg", "apis"),
+			filepath.Join("pkg", "apis"),
 			schema.GroupVersionKind{Group: "cache.example.com", Version: "v1alpha1", Kind: "OtherDummy"},
 			olmapiv1alpha1.CRDDescription{
 				Kind:        "OtherDummy",
@@ -266,7 +264,7 @@ func TestGetCRDDescriptionForGVK(t *testing.T) {
 		},
 		{
 			"Fail to populate CRDDescription with skip on dir not exist",
-			filepath.Join(testDataRelativePathFromRoot, "pkg", "notexist"),
+			filepath.Join("pkg", "notexist"),
 			schema.GroupVersionKind{Group: "cache.example.com", Version: "v1alpha1", Kind: "Dummy"},
 			olmapiv1alpha1.CRDDescription{},
 			true,
@@ -274,7 +272,7 @@ func TestGetCRDDescriptionForGVK(t *testing.T) {
 		},
 		{
 			"Fail to populate CRDDescription with skip on type",
-			filepath.Join(testDataRelativePathFromRoot, "pkg", "apis"),
+			filepath.Join("pkg", "apis"),
 			schema.GroupVersionKind{Group: "cache.example.com", Version: "v1alpha1", Kind: "NoKind"},
 			olmapiv1alpha1.CRDDescription{},
 			true,

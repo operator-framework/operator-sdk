@@ -71,14 +71,6 @@ func NewPackageManifest(cfg gen.Config, csvVersion, channel string, isDefault bo
 	if g.OutputDir == "" {
 		g.OutputDir = scaffold.DeployDir
 	}
-	olmCatalogDir := filepath.Join(g.OutputDir, OLMCatalogChildDir)
-
-	// Check if the generator should update from an existing package manifest file
-	pkgManifestDirPath := filepath.Join(olmCatalogDir, g.OperatorName)
-	pkgManifestFilePath := filepath.Join(pkgManifestDirPath, g.fileName)
-	if isFileExist(pkgManifestFilePath) {
-		g.existingPkgManifestDir = pkgManifestDirPath
-	}
 
 	return g
 }
@@ -153,8 +145,9 @@ func (g pkgGenerator) generate() (map[string][]byte, error) {
 // an existing one if found at the expected path.
 func (g pkgGenerator) buildPackageManifest() (registry.PackageManifest, error) {
 	pkg := registry.PackageManifest{}
-	if g.existingPkgManifestDir != "" {
-		existingPkgManifest := filepath.Join(g.existingPkgManifestDir, g.fileName)
+	olmCatalogDir := filepath.Join(g.OutputDir, OLMCatalogChildDir)
+	existingPkgManifest := filepath.Join(olmCatalogDir, g.OperatorName, g.fileName)
+	if isFileExist(existingPkgManifest) {
 		b, err := ioutil.ReadFile(existingPkgManifest)
 		if err != nil {
 			return pkg, fmt.Errorf("failed to read package manifest %s: %v", existingPkgManifest, err)

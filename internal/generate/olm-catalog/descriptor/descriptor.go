@@ -18,11 +18,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
-
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -53,7 +50,11 @@ func GetCRDDescriptionForGVK(apisDir string, gvk schema.GroupVersionKind) (olmap
 	}
 
 	// Check if apisDir exists
-	if exists, _ := isDirExist(apisDir); !exists {
+	exists, err := isDirExist(apisDir)
+	if err != nil {
+		return olmapiv1alpha1.CRDDescription{}, err
+	}
+	if !exists {
 		return olmapiv1alpha1.CRDDescription{}, ErrAPIDirNotExist
 	}
 
@@ -192,15 +193,18 @@ func getTypesFromDirRecursive(dir string) (types.Universe, error) {
 	if _, err := os.Stat(dir); err != nil {
 		return nil, err
 	}
-
-	// Gengo's AddDirRecursive fails to load subdir pkgs if the root dir
-	// isn't the full pkg import path.
-	dirImportPath := path.Join(projutil.GetGoPkg(), filepath.ToSlash(dir))
 	p := parser.New()
+	// Gengo's AddDirRecursive fails to load subdir pkgs if the root dir
+	// isn't the full pkg import path, or begins with ./
+	// Use path relative to current dir
+	// TODO: Turn abs path into ./... relative path as well
+	if !filepath.IsAbs(dir) && !strings.HasPrefix(dir, ".") {
+		dir = fmt.Sprintf(".%s%s", string(filepath.Separator), dir)
+	}
 	// TODO(hasbro17): AddDirRecursive can be noisy with klog warnings
 	// when it skips directories with no .go files.
 	// Silence those warnings unless in debug mode.
-	if err := p.AddDirRecursive(dirImportPath); err != nil {
+	if err := p.AddDirRecursive(dir); err != nil {
 		return nil, err
 	}
 	universe, err := p.FindTypes()
@@ -212,11 +216,10 @@ func getTypesFromDirRecursive(dir string) (types.Universe, error) {
 
 // getTypesForPkgPath find the pkg with the given path in universe
 // Note that pkg path must be relative to the project root directory.
-func getTypesForPkgPath(projectRelativePkgPath string, universe types.Universe) (pkgTypes []*types.Type, err error) {
-	pkgPath := path.Join(projutil.GetGoPkg(), projectRelativePkgPath)
+func getTypesForPkgPath(pkgPath string, universe types.Universe) (pkgTypes []*types.Type, err error) {
 	var pkg *types.Package
 	for _, upkg := range universe {
-		if upkg.Path == pkgPath {
+		if strings.HasSuffix(upkg.Path, pkgPath) {
 			pkg = upkg
 			break
 		}

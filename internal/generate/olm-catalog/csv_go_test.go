@@ -44,15 +44,8 @@ const (
 )
 
 var (
-	// Used to change directory to project root so the CSV generator's descriptor updates can form
-	// the correct pkg import paths to the API types directory
-	// See limitation with projutil.GetGoPkg()
-	relativeProjectRootDir = filepath.Join("..", "..", "..")
-	// Used to form all relative paths from the SDK root dir to
-	// the API, CRD, and deploy test dirs
-	testDataRelativePathFromRoot = filepath.Join("internal", "generate", "testdata")
-	testGoDataDir                = filepath.Join(testDataRelativePathFromRoot, "go")
-	testNonStandardLayoutDataDir = filepath.Join(testDataRelativePathFromRoot, "non-standard-layout")
+	testGoDataDir                = filepath.Join("..", "testdata", "go")
+	testNonStandardLayoutDataDir = filepath.Join("..", "testdata", "non-standard-layout")
 )
 
 func chDirWithCleanup(t *testing.T, dataDir string) func() {
@@ -74,7 +67,7 @@ func chDirWithCleanup(t *testing.T, dataDir string) func() {
 // TODO: Change to table driven subtests to test out different Inputs/Output for the generator
 func TestGenerateNewCSVWithInputsToOutput(t *testing.T) {
 	// Change directory to project root so the test cases can form the correct pkg imports
-	cleanupFunc := chDirWithCleanup(t, relativeProjectRootDir)
+	cleanupFunc := chDirWithCleanup(t, testNonStandardLayoutDataDir)
 	defer cleanupFunc()
 
 	// Temporary output dir for generating catalog bundle
@@ -93,8 +86,8 @@ func TestGenerateNewCSVWithInputsToOutput(t *testing.T) {
 	cfg := gen.Config{
 		OperatorName: testProjectName,
 		Inputs: map[string]string{
-			DeployDirKey: filepath.Join(testNonStandardLayoutDataDir, "config"),
-			APIsDirKey:   filepath.Join(testNonStandardLayoutDataDir, "api"),
+			DeployDirKey: "config",
+			APIsDirKey:   "api",
 		},
 		OutputDir: outputDir,
 	}
@@ -108,7 +101,7 @@ func TestGenerateNewCSVWithInputsToOutput(t *testing.T) {
 	csvFileName := getCSVFileName(testProjectName, csvVersion)
 
 	// Read expected CSV
-	expCatalogDir := filepath.Join(testNonStandardLayoutDataDir, "expected-catalog", OLMCatalogChildDir)
+	expCatalogDir := filepath.Join("expected-catalog", OLMCatalogChildDir)
 	csvExpBytes, err := ioutil.ReadFile(filepath.Join(expCatalogDir, testProjectName, csvVersion, csvFileName))
 	if err != nil {
 		t.Fatalf("Failed to read expected CSV file: %v", err)
@@ -128,7 +121,7 @@ func TestGenerateNewCSVWithInputsToOutput(t *testing.T) {
 
 func TestUpgradeFromExistingCSVWithInputsToOutput(t *testing.T) {
 	// Change directory to project root so the test cases can form the correct pkg imports
-	cleanupFunc := chDirWithCleanup(t, relativeProjectRootDir)
+	cleanupFunc := chDirWithCleanup(t, testNonStandardLayoutDataDir)
 	defer cleanupFunc()
 
 	// Temporary output dir for generating catalog bundle
@@ -147,8 +140,8 @@ func TestUpgradeFromExistingCSVWithInputsToOutput(t *testing.T) {
 	cfg := gen.Config{
 		OperatorName: testProjectName,
 		Inputs: map[string]string{
-			DeployDirKey: filepath.Join(testNonStandardLayoutDataDir, "config"),
-			APIsDirKey:   filepath.Join(testNonStandardLayoutDataDir, "api"),
+			DeployDirKey: "config",
+			APIsDirKey:   "api",
 		},
 		OutputDir: outputDir,
 	}
@@ -161,7 +154,7 @@ func TestUpgradeFromExistingCSVWithInputsToOutput(t *testing.T) {
 	if err := os.MkdirAll(outputFromCSVDir, os.FileMode(fileutil.DefaultDirFileMode)); err != nil {
 		t.Fatalf("Failed to create CSV bundle dir (%s) for fromVersion (%s): %v", outputFromCSVDir, fromVersion, err)
 	}
-	expCatalogDir := filepath.Join(testNonStandardLayoutDataDir, "expected-catalog", OLMCatalogChildDir)
+	expCatalogDir := filepath.Join("expected-catalog", OLMCatalogChildDir)
 	expFromCSVDir := filepath.Join(expCatalogDir, testProjectName, fromVersion)
 	cmd := exec.Command("cp", "-r", expFromCSVDir, outputFromCSVDir)
 	t.Logf("Copying expected fromVersion CSV manifest dir %#v", cmd.Args)
@@ -200,16 +193,16 @@ func TestUpgradeFromExistingCSVWithInputsToOutput(t *testing.T) {
 // present in testdata/go
 // Fix to generate a new CSV rather than only update an existing one
 func TestGoCSVFromNew(t *testing.T) {
-	cleanupFunc := chDirWithCleanup(t, relativeProjectRootDir)
+	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
 	cfg := gen.Config{
 		OperatorName: testProjectName,
 		Inputs: map[string]string{
-			DeployDirKey: filepath.Join(testGoDataDir, "deploy"),
-			APIsDirKey:   filepath.Join(testGoDataDir, filepath.Join("pkg", "apis")),
+			DeployDirKey: "deploy",
+			APIsDirKey:   filepath.Join("pkg", "apis"),
 		},
-		OutputDir: filepath.Join(testGoDataDir, "deploy"),
+		OutputDir: "deploy",
 	}
 	g := NewCSV(cfg, csvVersion, "")
 	fileMap, err := g.(csvGenerator).generate()
@@ -218,8 +211,7 @@ func TestGoCSVFromNew(t *testing.T) {
 	}
 
 	csvExpFile := getCSVFileName(testProjectName, csvVersion)
-	csvExpBytes, err := ioutil.ReadFile(filepath.Join(testGoDataDir,
-		OLMCatalogDir, testProjectName, csvVersion, csvExpFile))
+	csvExpBytes, err := ioutil.ReadFile(filepath.Join(OLMCatalogDir, testProjectName, csvVersion, csvExpFile))
 	if err != nil {
 		t.Fatalf("Failed to read expected CSV file: %v", err)
 	}
@@ -238,16 +230,16 @@ func TestGoCSVFromNew(t *testing.T) {
 }
 
 func TestGoCSVFromOld(t *testing.T) {
-	cleanupFunc := chDirWithCleanup(t, relativeProjectRootDir)
+	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
 	cfg := gen.Config{
 		OperatorName: testProjectName,
 		Inputs: map[string]string{
-			DeployDirKey: filepath.Join(testGoDataDir, "deploy"),
-			APIsDirKey:   filepath.Join(testGoDataDir, filepath.Join("pkg", "apis")),
+			DeployDirKey: "deploy",
+			APIsDirKey:   filepath.Join("pkg", "apis"),
 		},
-		OutputDir: filepath.Join(testGoDataDir, "deploy"),
+		OutputDir: "deploy",
 	}
 	g := NewCSV(cfg, csvVersion, fromVersion)
 	fileMap, err := g.(csvGenerator).generate()
@@ -256,8 +248,7 @@ func TestGoCSVFromOld(t *testing.T) {
 	}
 
 	csvExpFile := getCSVFileName(testProjectName, csvVersion)
-	csvExpBytes, err := ioutil.ReadFile(filepath.Join(testGoDataDir,
-		OLMCatalogDir, testProjectName, csvVersion, csvExpFile))
+	csvExpBytes, err := ioutil.ReadFile(filepath.Join(OLMCatalogDir, testProjectName, csvVersion, csvExpFile))
 	if err != nil {
 		t.Fatalf("Failed to read expected CSV file: %v", err)
 	}
@@ -270,16 +261,16 @@ func TestGoCSVFromOld(t *testing.T) {
 }
 
 func TestGoCSVWithInvalidManifestsDir(t *testing.T) {
-	cleanupFunc := chDirWithCleanup(t, relativeProjectRootDir)
+	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
 	cfg := gen.Config{
 		OperatorName: testProjectName,
 		Inputs: map[string]string{
-			DeployDirKey: filepath.Join(testGoDataDir, "notExist"),
-			APIsDirKey:   filepath.Join(testGoDataDir, filepath.Join("pkg", "apis")),
+			DeployDirKey: "notExist",
+			APIsDirKey:   filepath.Join("pkg", "apis"),
 		},
-		OutputDir: filepath.Join(testGoDataDir, "deploy"),
+		OutputDir: "deploy",
 	}
 
 	g := NewCSV(cfg, notExistVersion, "")
@@ -291,16 +282,16 @@ func TestGoCSVWithInvalidManifestsDir(t *testing.T) {
 }
 
 func TestGoCSVWithEmptyManifestsDir(t *testing.T) {
-	cleanupFunc := chDirWithCleanup(t, relativeProjectRootDir)
+	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
 	cfg := gen.Config{
 		OperatorName: testProjectName,
 		Inputs: map[string]string{
-			DeployDirKey: filepath.Join(testGoDataDir, "emptydir"),
-			APIsDirKey:   filepath.Join(testGoDataDir, filepath.Join("pkg", "apis")),
+			DeployDirKey: "emptydir",
+			APIsDirKey:   filepath.Join("pkg", "apis"),
 		},
-		OutputDir: filepath.Join(testGoDataDir, "emptydir"),
+		OutputDir: "emptydir",
 	}
 
 	g := NewCSV(cfg, notExistVersion, "")
@@ -327,10 +318,10 @@ func TestGoCSVWithEmptyManifestsDir(t *testing.T) {
 }
 
 func TestUpdateVersion(t *testing.T) {
-	cleanupFunc := chDirWithCleanup(t, relativeProjectRootDir)
+	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
-	csv, err := getCSVFromDir(filepath.Join(testGoDataDir, OLMCatalogDir, testProjectName, fromVersion))
+	csv, err := getCSVFromDir(filepath.Join(OLMCatalogDir, testProjectName, fromVersion))
 	if err != nil {
 		t.Fatal("Failed to get new CSV")
 	}
@@ -338,10 +329,10 @@ func TestUpdateVersion(t *testing.T) {
 	cfg := gen.Config{
 		OperatorName: testProjectName,
 		Inputs: map[string]string{
-			DeployDirKey: filepath.Join(testGoDataDir, "deploy"),
-			APIsDirKey:   filepath.Join(testGoDataDir, filepath.Join("pkg", "apis")),
+			DeployDirKey: "deploy",
+			APIsDirKey:   filepath.Join("pkg", "apis"),
 		},
-		OutputDir: filepath.Join(testGoDataDir, "deploy"),
+		OutputDir: "deploy",
 	}
 	g := NewCSV(cfg, csvVersion, fromVersion)
 	if err := g.(csvGenerator).updateCSVVersions(csv); err != nil {
@@ -381,10 +372,10 @@ func TestUpdateVersion(t *testing.T) {
 }
 
 func TestSetAndCheckOLMNamespaces(t *testing.T) {
-	cleanupFunc := chDirWithCleanup(t, relativeProjectRootDir)
+	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
-	depBytes, err := ioutil.ReadFile(filepath.Join(testGoDataDir, scaffold.DeployDir, "operator.yaml"))
+	depBytes, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, "operator.yaml"))
 	if err != nil {
 		t.Fatalf("Failed to read Deployment bytes: %v", err)
 	}
