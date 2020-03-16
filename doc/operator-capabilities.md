@@ -13,9 +13,9 @@ Each capability level is associated with a certain set of management features th
 
 **Operand** - the managed workload provided by the Operator as a service
 
-**Custom Resource (CR)** - an instance of the [`CustomResourceDefinition`](https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/) the Operator ships that represents the Operand or an Operation on an Operand
+**Custom Resource (CR)** - an instance of the [`CustomResourceDefinition`](https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/) the Operator ships that represents the Operand or an Operation on an Operand (also known as primary resources)
 
-**Managed resources** - the Kubernetes objects or off-cluster services the Operator uses to constitute an Operand
+**Managed resources** - the Kubernetes objects or off-cluster services the Operator uses to constitute an Operand (also known as secodary resources)
 
 ---
 
@@ -42,7 +42,7 @@ The Operator offers the following basic features:
 
 1. What installation configuration can be set in the CR?
 
-2. What additional CR installation configuration could still be added?
+2. What additional installation configuration could still be added?
 
 3. Can you set operand configuration in the CR? If so, what configuration is supported for each operand?
 
