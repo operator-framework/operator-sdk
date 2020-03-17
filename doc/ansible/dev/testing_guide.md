@@ -3,12 +3,13 @@
 ## Getting started
 
 ### Requirements
-To begin, you sould have:
+To begin, you should have:
 - The latest version of the [operator-sdk](https://github.com/operator-framework/operator-sdk) installed.
-- Docker installed and running
+- [Docker](https://www.docker.com/get-started) installed and running
 - [Molecule](https://github.com/ansible/molecule) >= v2.20
 - [Ansible](https://github.com/ansible/ansible) >= v2.7
-- [jmespath](https://pypi.org/project/jmespath/)
+- [JMESPath](https://github.com/jmespath/jmespath.py)
+- [The Docker Python Library](https://github.com/docker/docker-py)
 - [The OpenShift Python client](https://github.com/openshift/openshift-restclient-python) >= v0.8
 - An initialized Ansible Operator project, with the molecule directory present. If you initialized a project with a previous
   version of operator-sdk, you can generate a new dummy project and copy in the `molecule` directory. Just be sure
