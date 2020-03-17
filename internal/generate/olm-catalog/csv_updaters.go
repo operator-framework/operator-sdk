@@ -24,7 +24,6 @@ import (
 
 	"github.com/operator-framework/operator-registry/pkg/registry"
 	"github.com/operator-framework/operator-sdk/internal/generate/olm-catalog/descriptor"
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
 	"github.com/ghodss/yaml"
@@ -241,14 +240,6 @@ func (us crds) apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
 }
 
 func updateDescriptions(csv *olmapiv1alpha1.ClusterServiceVersion, searchDir string) error {
-	// TODO: Should this skip generating descriptions if API directory exists
-	// but project type can't be detected due to layout differences.
-	if opType := projutil.GetOperatorType(); opType != projutil.OperatorTypeGo {
-		log.Infof("Skipping generation of owned CRDDescriptions from CSV annotations in %s."+
-			" Could not detect project to be of Go type.", searchDir)
-		return nil
-	}
-
 	updatedDescriptions := []olmapiv1alpha1.CRDDescription{}
 	for _, currDescription := range csv.Spec.CustomResourceDefinitions.Owned {
 		group := currDescription.Name

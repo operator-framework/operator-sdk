@@ -1,1 +1,0 @@
-// Only here so "generate csv" can detect the testdata directory as a Go type project 

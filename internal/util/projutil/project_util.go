@@ -186,10 +186,6 @@ func GetOperatorType() OperatorType {
 		return OperatorTypeAnsible
 	case IsOperatorHelm():
 		return OperatorTypeHelm
-	// Additional case for when tests run cmds which have this check
-	// from the SDK root
-	case hasGoPkgFile():
-		return OperatorTypeGo
 	}
 	return OperatorTypeUnknown
 }

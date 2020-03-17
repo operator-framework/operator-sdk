@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/gengo/parser"
 	"k8s.io/gengo/types"
@@ -55,6 +56,7 @@ func GetCRDDescriptionForGVK(apisDir string, gvk schema.GroupVersionKind) (olmap
 		return olmapiv1alpha1.CRDDescription{}, err
 	}
 	if !exists {
+		log.Debugf("Could not find API types directory: %s", apisDir)
 		return olmapiv1alpha1.CRDDescription{}, ErrAPIDirNotExist
 	}
 
