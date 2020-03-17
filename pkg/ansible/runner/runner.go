@@ -57,10 +57,14 @@ type Runner interface {
 	GetFinalizer() (string, bool)
 }
 
+// ansibleVerbosityString will return the string with the -v* levels
 func ansibleVerbosityString(verbosity int) string {
 	if verbosity > 0 {
+		// the default verbosity is 0
+		// more info: https://docs.ansible.com/ansible/latest/reference_appendices/config.html#default-verbosity
 		return fmt.Sprintf("-%v", strings.Repeat("v", verbosity))
 	}
+	// Return default verbosity
 	return ""
 }
 
@@ -68,15 +72,27 @@ type cmdFuncType func(ident, inputDirPath string, maxArtifacts, verbosity int) *
 
 func playbookCmdFunc(path string) cmdFuncType {
 	return func(ident, inputDirPath string, maxArtifacts, verbosity int) *exec.Cmd {
-		return exec.Command("ansible-runner", ansibleVerbosityString(verbosity), "--rotate-artifacts",
+		// check the verbosity since the exec.Command will fail if an arg as "" or " " be informed
+		if verbosity > 0 {
+			return exec.Command("ansible-runner", ansibleVerbosityString(verbosity), "--rotate-artifacts",
+				fmt.Sprintf("%v", maxArtifacts), "-p", path, "-i", ident, "run", inputDirPath)
+		}
+		return exec.Command("ansible-runner", "--rotate-artifacts",
 			fmt.Sprintf("%v", maxArtifacts), "-p", path, "-i", ident, "run", inputDirPath)
+
 	}
 }
 
 func roleCmdFunc(path string) cmdFuncType {
 	rolePath, roleName := filepath.Split(path)
 	return func(ident, inputDirPath string, maxArtifacts, verbosity int) *exec.Cmd {
-		return exec.Command("ansible-runner", ansibleVerbosityString(verbosity), "--rotate-artifacts",
+		// check the verbosity since the exec.Command will fail if an arg as "" or " " be informed
+		if verbosity > 0 {
+			return exec.Command("ansible-runner", ansibleVerbosityString(verbosity), "--rotate-artifacts",
+				fmt.Sprintf("%v", maxArtifacts), "--role", roleName, "--roles-path", rolePath, "--hosts",
+				"localhost", "-i", ident, "run", inputDirPath)
+		}
+		return exec.Command("ansible-runner", "--rotate-artifacts",
 			fmt.Sprintf("%v", maxArtifacts), "--role", roleName, "--roles-path", rolePath, "--hosts",
 			"localhost", "-i", ident, "run", inputDirPath)
 	}

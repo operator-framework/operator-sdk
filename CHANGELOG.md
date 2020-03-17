@@ -48,6 +48,7 @@
 - Fixed a regression in the `operator-sdk run` command that caused `--local` flags to be ignored ([#2478](https://github.com/operator-framework/operator-sdk/issues/2478))
 - Fix command `operator-sdk run --local` which was not working on Windows. ([#2481](https://github.com/operator-framework/operator-sdk/pull/2481))
 - Fix `ServiceMonitor` creation when the operator is cluster-scoped and the environment variable `WATCH_NAMESPACE` has a different value than the namespace where the operator is deployed. ([#2601](https://github.com/operator-framework/operator-sdk/pull/2601))
+- Fix error faced when the `ansible.operator-sdk/verbosity` annotation for Ansible based-operators is 0 or less. ([#2651](https://github.com/operator-framework/operator-sdk/pull/2651))
 - Fix missing error status when the error faced in the Ansible do not return an event status. ([#2661](https://github.com/operator-framework/operator-sdk/pull/2661))
 
 ## v0.15.2

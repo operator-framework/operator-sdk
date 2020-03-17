@@ -219,7 +219,7 @@ func TestAnsibleVerbosityString(t *testing.T) {
 	for _, tc := range testCases {
 		gotString := ansibleVerbosityString(tc.verbosity)
 		if tc.expectedString != gotString {
-			t.Fatalf("Unexpected string %v expected %v", gotString, tc.expectedString)
+			t.Fatalf("Unexpected string %v for  expected %v from verbosity %v", gotString, tc.expectedString, tc.verbosity)
 		}
 	}
 }
