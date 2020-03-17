@@ -195,7 +195,7 @@ image-push-scorecard-proxy-multiarch:
 test: test-unit ## Run the tests
 
 test-markdown test/markdown:
-	./hack/ci/marker
+	./hack/ci/marker -e website
 
 test-sanity test/sanity: tidy build/operator-sdk lint
 	./hack/tests/sanity-check.sh
