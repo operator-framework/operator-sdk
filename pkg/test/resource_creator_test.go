@@ -22,10 +22,11 @@ import (
 )
 
 const (
-	OperatorNamespaceEnv  = "TEST_OPERATOR_NAMESPACE"
-	WatchNamespaceEnv     = "TEST_WATCH_NAMESPACE"
-	fakeNamespacedManPath = "fakePath"
+	OperatorNamespaceEnv = "TEST_OPERATOR_NAMESPACE"
+	WatchNamespaceEnv    = "TEST_WATCH_NAMESPACE"
 )
+
+var fakeNamespacedManPath string = "fakePath"
 
 func TestGetOperatorNamespace(t *testing.T) {
 	Global = &Framework{
@@ -40,7 +41,7 @@ func TestGetOperatorNamespace(t *testing.T) {
 			operatorNamespace, err := ctx.GetOperatorNamespace()
 			assertNoError(t, err)
 			if len(operatorNamespace) <= 0 {
-				t.Errorf("expected non-empty operatorNamespace")
+				t.Errorf("Expected non-empty operatorNamespace")
 			}
 		})
 	t.Run("should return Operator Namespace specified by OperatorNamespace Env", func(t *testing.T) {
@@ -56,7 +57,7 @@ func TestGetOperatorNamespace(t *testing.T) {
 		got, err := ctx.GetOperatorNamespace()
 		assertNoError(t, err)
 		if got != operatorNamespace {
-			t.Errorf("expected %v, got %v", operatorNamespace, got)
+			t.Errorf("Expected %v, got %v", operatorNamespace, got)
 		}
 	})
 	t.Run("should return non-empty new Operator Namespace, when OperatorNamespace Env = \"\"",
@@ -73,7 +74,7 @@ func TestGetOperatorNamespace(t *testing.T) {
 			got, err := ctx.GetOperatorNamespace()
 			assertNoError(t, err)
 			if len(got) <= 0 {
-				t.Errorf("expected non-empty operatorNamespace")
+				t.Errorf("Expected non-empty operatorNamespace")
 			}
 		})
 }
@@ -94,10 +95,10 @@ func TestGetWatchNamespace(t *testing.T) {
 			operatorNamespace, err := ctx.GetOperatorNamespace()
 			assertNoError(t, err)
 			if len(operatorNamespace) <= 0 {
-				t.Errorf("expected non-empty operatorNamespace")
+				t.Errorf("Expected non-empty operatorNamespace")
 			}
 			if watchNamespace != operatorNamespace {
-				t.Errorf("expected watchNamespace: %s, got %s", operatorNamespace, watchNamespace)
+				t.Errorf("Expected watchNamespace: %s, got %s", operatorNamespace, watchNamespace)
 			}
 		})
 
@@ -116,15 +117,15 @@ func TestGetWatchNamespace(t *testing.T) {
 			got, err := ctx.GetWatchNamespace()
 			assertNoError(t, err)
 			if watchNamespace != got {
-				t.Errorf("expected watchNamespace: %s, got %s", watchNamespace, got)
+				t.Errorf("Expected watchNamespace: %s, got %s", watchNamespace, got)
 			}
 			operatorNamespace, err := ctx.GetOperatorNamespace()
 			assertNoError(t, err)
 			if len(operatorNamespace) <= 0 {
-				t.Errorf("expected non-empty operatorNamespace")
+				t.Errorf("Expected non-empty operatorNamespace")
 			}
 			if watchNamespace == operatorNamespace {
-				t.Errorf("expected operator-Namespace: %v, to be different than watch-Namespace: %v",
+				t.Errorf("Expected operator-Namespace: %v, to be different than watch-Namespace: %v",
 					operatorNamespace, watchNamespace)
 			}
 		})
@@ -145,15 +146,15 @@ func TestGetWatchNamespace(t *testing.T) {
 			got, err := ctx.GetWatchNamespace()
 			assertNoError(t, err)
 			if watchNamespace != got {
-				t.Errorf("expected watchNamespace: %s, got %s", watchNamespace, got)
+				t.Errorf("Expected watchNamespace: %s, got %s", watchNamespace, got)
 			}
 			operatorNamespace, err := ctx.GetOperatorNamespace()
 			assertNoError(t, err)
 			if len(operatorNamespace) <= 0 {
-				t.Errorf("expected non-empty operatorNamespace")
+				t.Errorf("Expected non-empty operatorNamespace")
 			}
 			if watchNamespace == operatorNamespace {
-				t.Errorf("expected operator-Namespace: %v, to be different than watch-Namespace: %v",
+				t.Errorf("Expected operator-Namespace: %v, to be different than watch-Namespace: %v",
 					operatorNamespace, watchNamespace)
 			}
 		})
@@ -177,20 +178,20 @@ func TestGetWatchNamespace(t *testing.T) {
 			gotWatchNamespace, err := ctx.GetWatchNamespace()
 			assertNoError(t, err)
 			if watchNamespace != gotWatchNamespace {
-				t.Errorf("expected watchNamespace: %s, got %s", watchNamespace, gotWatchNamespace)
+				t.Errorf("Expected watchNamespace: %s, got %s", watchNamespace, gotWatchNamespace)
 			}
 
 			gotOperatorNamespace, err := ctx.GetOperatorNamespace()
 			assertNoError(t, err)
 			if len(gotOperatorNamespace) <= 0 {
-				t.Errorf("expected non-empty operatorNamespace")
+				t.Errorf("Expected non-empty operatorNamespace")
 			}
 			if gotWatchNamespace == gotOperatorNamespace {
-				t.Errorf("expected operator-Namespace: %v, to be different than watch-Namespace: %v",
+				t.Errorf("Expected operator-Namespace: %v, to be different than watch-Namespace: %v",
 					operatorNamespace, watchNamespace)
 			}
 			if gotOperatorNamespace != operatorNamespace {
-				t.Errorf("expected operatorNamespace: %s, got %s", operatorNamespace, gotOperatorNamespace)
+				t.Errorf("Expected operatorNamespace: %s, got %s", operatorNamespace, gotOperatorNamespace)
 			}
 		})
 }
@@ -198,6 +199,6 @@ func TestGetWatchNamespace(t *testing.T) {
 func assertNoError(t *testing.T, err error) {
 	t.Helper()
 	if err != nil {
-		t.Errorf("expected no error, %v", err)
+		t.Errorf("Expected no error, %v", err)
 	}
 }

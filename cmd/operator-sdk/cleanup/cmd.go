@@ -29,7 +29,9 @@ import (
 type cleanupCmd struct {
 	// Common options.
 	kubeconfig string
-	namespace  string
+	// TODO: remove --namespace and c.namespace
+	//Deprecated: use olmArgs.OperatorNamespace instead
+	namespace string
 
 	// Cleanup type.
 	olm bool
@@ -60,7 +62,16 @@ func NewCmd() *cobra.Command {
 			switch {
 			case c.olm:
 				c.olmArgs.KubeconfigPath = c.kubeconfig
-				c.olmArgs.OperatorNamespace = c.namespace
+				//TODO: remove --namespace and c.namespace
+				//use olmArgs.OperatorNamespace directly
+				if cmd.Flags().Changed("namespace") {
+					log.Warn("--namespace is deprecates use --operator-namespace instead")
+					if !cmd.Flags().Changed("operator-namespace") {
+						c.olmArgs.OperatorNamespace = c.namespace
+					} else {
+						log.Warn("--operator-namespace present; ignoring --namespace")
+					}
+				}
 				if c.olmArgs.ManifestsDir == "" {
 					operatorName := filepath.Base(projutil.MustGetwd())
 					c.olmArgs.ManifestsDir = filepath.Join(olmcatalog.OLMCatalogDir, operatorName)
@@ -81,7 +92,8 @@ func NewCmd() *cobra.Command {
 		"The file path to kubernetes configuration file. Defaults to location "+
 			"specified by $KUBECONFIG, or to default file rules if not set")
 	cmd.Flags().StringVar(&c.namespace, "namespace", "",
-		"The namespace where the operator watches for changes.")
+		"(Deprecated: use --operator-namespace instead.) The namespace from which operator and namespaces"+
+			"resources are cleaned up")
 
 	// 'cleanup --olm' and related flags. Set as default since this is the only
 	// cleanup type.

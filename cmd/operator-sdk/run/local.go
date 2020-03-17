@@ -53,7 +53,8 @@ func (c *runLocalArgs) addToFlags(fs *pflag.FlagSet) {
 	prefix := "[local only] "
 
 	fs.StringVar(&c.watchNamespace, "watch-namespace", "",
-		prefix+"The namespace where the operator watches for changes.")
+		prefix+"The namespace where the operator watches for changes. Set \"\" for AllNamespaces, "+
+			"set \"ns1,ns2\" for MultiNamespace")
 	fs.StringVar(&c.operatorFlags, "operator-flags", "",
 		prefix+"The flags that the operator needs. Example: \"--flag1 value1 --flag2=value2\"")
 	fs.StringVar(&c.ldFlags, "go-ldflags", "", prefix+"Set Go linker options")

@@ -42,11 +42,13 @@ import (
 var deployTestDir = filepath.Join(scaffold.DeployDir, "test")
 
 type testLocalConfig struct {
-	kubeconfig         string
-	globalManPath      string
-	namespacedManPath  string
-	goTestFlags        string
-	moleculeTestFlags  string
+	kubeconfig        string
+	globalManPath     string
+	namespacedManPath string
+	goTestFlags       string
+	moleculeTestFlags string
+	// TODO: remove before 1.0.0
+	// Namespace is deprecated
 	namespace          string
 	operatorNamespace  string
 	watchNamespace     string
@@ -75,14 +77,16 @@ func newTestLocalCmd() *cobra.Command {
 		"Additional flags to pass to go test")
 	testCmd.Flags().StringVar(&tlConfig.moleculeTestFlags, "molecule-test-flags", "",
 		"Additional flags to pass to molecule test")
+	// TODO: remove before 1.0.0. Namespace is deprecated
 	testCmd.Flags().StringVar(&tlConfig.namespace, "namespace", "",
 		"(Deprecated: use --operator-namespace instead) If non-empty, single namespace to run tests in")
 	testCmd.Flags().StringVar(&tlConfig.operatorNamespace, "operator-namespace", "",
 		"Namespace where the operator will be deployed, CRs will be created and tests will be executed "+
 			"(By default it will be in the default namespace defined in the kubeconfig)")
 	testCmd.Flags().StringVar(&tlConfig.watchNamespace, "watch-namespace", "",
-		"(only valid with --up-local) Namespace where the operator watches for changes. "+
-			"Explicitly set to empty string to watch all namespaces (defaults to the operatorNamespace).")
+		"(only valid with --up-local) Namespace where the operator watches for changes."+
+			" Set \"\" for AllNamespaces, set \"ns1,ns2\" for MultiNamespace"+
+			"(if not set then watches Operator Namespace")
 	testCmd.Flags().BoolVar(&tlConfig.upLocal, "up-local", false,
 		"Enable running operator locally with go run instead of as an image in the cluster")
 	testCmd.Flags().BoolVar(&tlConfig.noSetup, "no-setup", false, "Disable test resource creation")
@@ -99,6 +103,7 @@ func newTestLocalCmd() *cobra.Command {
 }
 
 func testLocalFunc(cmd *cobra.Command, args []string) error {
+	//TODO: remove before 1.0.0
 	// set --operator-namespace flag if the --namespace flag is set
 	// (only if --operator-namespace flag is not set)
 	if cmd.Flags().Changed("namespace") {

@@ -2,9 +2,15 @@
 
 ### Added
 
+- The flag `--watch-namespace` and `--operator-namespace` was added to `operator-sdk run --local`, `operator-sdk test --local` and `operator-sdk cleanup` commands in order to replace the flag `--namespace` which was  deprecated.([#2617](https://github.com/operator-framework/operator-sdk/pull/2617))
+- The methods `ctx.GetOperatorNamespace()` and `ctx.GetWatchNamespace()` was added `pkg/test` in order to replace `ctx.GetNamespace()` which is  deprecated. ([#2617](https://github.com/operator-framework/operator-sdk/pull/2617))
+
 ### Changed
 
 ### Deprecated
+
+- **Breaking Change:** The `--namespace` flag from `operator-sdk run --local`, `operator-sdk test --local` and `operator-sdk cleanup` command was deprecated and will be removed in the future versions. Use `--watch-namespace` and `--operator-namespace`  instead of. ([#2617](https://github.com/operator-framework/operator-sdk/pull/2617))
+- **Breaking Change:** The method `ctx.GetNamespace()` from the `pkg/test` is deprecated and will be removed in the future versions. Use `ctx.GetOperatorNamespace()` and `ctx.GetWatchNamespace()` instead of. ([#2617](https://github.com/operator-framework/operator-sdk/pull/2617))
 
 ### Removed
 
@@ -28,8 +34,6 @@
 - Add the --proxy-port flag to the operator-sdk scorecard command allowing users to override the default proxy port value (8889). ([2634](https://github.com/operator-framework/operator-sdk/pull/2634))
 - Add support for Metrics with MultiNamespace scenario. ([#2603](https://github.com/operator-framework/operator-sdk/pull/2603))
 - Add Prometheus metrics support to Helm-based operators. ([#2603](https://github.com/operator-framework/operator-sdk/pull/2603))
-- The flag `--watch-namespace` and `--operator-namespace` was added to `operator-sdk run --local` and `operator-sdk test --local` commands in order to replace the flag `--namespace` which was  deprecated.([#2617](https://github.com/operator-framework/operator-sdk/pull/2617))
-- The methods `ctx.GetOperatorNamespace()` and `ctx.GetWatchNamespace()` was added `pkg/test` in order to replace `ctx.GetNamespace()` which is  deprecated. ([#2617](https://github.com/operator-framework/operator-sdk/pull/2617))
 
 ### Changed
 - The base image now includes version 0.10.3 of the OpenShift Python client. This should fix hanging in Python3
@@ -47,8 +51,6 @@
 - Upgrade the Helm dependency version from `v3.0.1` to `v3.0.2`. ([#2621](https://github.com/operator-framework/operator-sdk/pull/2621))
 - Changed the scaffolded `serveCRMetrics` to use the namespaces informed in the environment variable `WATCH_NAMESPACE` in the MultiNamespace scenario. ([#2603](https://github.com/operator-framework/operator-sdk/pull/2603))
 - Improve skip metrics logs when running the operator locally in order to make clear the information for Helm based operators. ([#2603](https://github.com/operator-framework/operator-sdk/pull/2603))
-- **Breaking Change:** The `--namespace` flag from `operator-sdk run --local` and `operator-sdk test --local` command was deprecated and will be removed in the future versions. Use `--watch-namespace` and `--operator-namespace`  instead of. ([#2617](https://github.com/operator-framework/operator-sdk/pull/2617))
-- **Breaking Change:** The method `ctx.GetNamespace()` from the `pkg/test` is deprecated and will be removed in the future versions. Use `ctx.GetOperatorNamespace()` and `ctx.GetWatchNamespace()` instead of. ([#2617](https://github.com/operator-framework/operator-sdk/pull/2617))
 
 ### Deprecated
 - The type name `TestCtx` in `pkg/test` has been deprecated and renamed to `Context`. It now exists only as a type alias to maintain backwards compatibility. Users of the e2e framework should migrate to use the new name, `Context`. The `TestCtx` alias will be removed in a future version. ([2549](https://github.com/operator-framework/operator-sdk/pull/2549))

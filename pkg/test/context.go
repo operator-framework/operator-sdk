@@ -28,7 +28,8 @@ import (
 type Context struct {
 	id         string
 	cleanupFns []cleanupFn
-	// Deprecated: namespace will be removed in future versions
+	// the  namespace is deprecated
+	// todo: remove before 1.0.0
 	// use operatorNamespace or watchNamespace  instead
 	namespace         string
 	operatorNamespace string

@@ -30,8 +30,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-// Deprecated: GetNamespace() is deprecated.
-// GetNamespace() will be removed in future versions
+// TODO: remove before 1.0.0
+// Deprecated: GetNamespace() exists for historical compatibility.
 // Use GetOperatorNamespace() or GetWatchNamespace() instead
 func (ctx *Context) GetNamespace() (string, error) {
 	if ctx.namespace != "" {
@@ -52,6 +52,9 @@ func (ctx *Context) GetNamespace() (string, error) {
 	return ctx.namespace, nil
 }
 
+// GetOperatorNamespace will return an Operator Namespace,
+// if the flag --operator-namespace  not be used (TestOpeatorNamespaceEnv not set)
+// then it will create a new namespace with randon name and return that namespace
 func (ctx *Context) GetOperatorNamespace() (string, error) {
 	if ctx.operatorNamespace != "" {
 		return ctx.operatorNamespace, nil
@@ -71,6 +74,9 @@ func (ctx *Context) GetOperatorNamespace() (string, error) {
 	return ctx.operatorNamespace, nil
 }
 
+// GetWatchNamespace will return the  namespaces to operator
+// watch for changes, if the flag --watch-namespaced not be used
+// then it will  return the Operator Namespace.
 func (ctx *Context) GetWatchNamespace() (string, error) {
 	// if ctx.watchNamespace is already set and not "";
 	// then return ctx.watchnamespace

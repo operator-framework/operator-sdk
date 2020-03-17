@@ -27,7 +27,7 @@ operator-sdk test local <path to tests directory> [flags]
       --operator-namespace string     Namespace where the operator will be deployed, CRs will be created and tests will be executed (By default it will be in the default namespace defined in the kubeconfig)
       --skip-cleanup-error            If set as true, the cleanup function responsible to remove all artifacts will be skipped if an error is faced.
       --up-local                      Enable running operator locally with go run instead of as an image in the cluster
-      --watch-namespace string        (only valid with --up-local) Namespace where the operator watches for changes. Explicitly set to empty string to watch all namespaces (defaults to the operatorNamespace).
+      --watch-namespace string        (only valid with --up-local) Namespace where the operator watches for changes. Set "" for AllNamespaces, set "ns1,ns2" for MultiNamespace(if not set then watches Operator Namespace
 ```
 
 ### SEE ALSO
