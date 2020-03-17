@@ -1,7 +1,6 @@
 ---
-title: How to Contribute
-linkTitle: Contribution Guidelines
-weight: 30
+title: Ansible Based Operators
+weight: 20
 ---
 
 {{% alert title="Warning" color="warning" %}}
