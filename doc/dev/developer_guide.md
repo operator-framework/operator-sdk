@@ -68,7 +68,7 @@ quay.io/my-repo-user/ansible-operator
 ```
 
 - Build the image locally by running `make image-build-ansible`
-- Push your new image. (E.g quay.io/my-repo-user/ansible-operator:dev)
+- Push your new image. (E.g `docker push quay.io/my-repo-user/ansible-operator:dev`)
 
 **NOTE** Ensure that you configured the repo, `quay.io/my-repo-user/ansible-operator`, to be public.
 
