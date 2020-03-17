@@ -99,7 +99,7 @@ quay.io/my-repo-user/helm-operator
 ```
 
 - Build the image locally by running `make image-build-helm`
-- Push your new image. (E.g quay.io/my-repo-user/helm-operator:dev)
+- Push your new image. (E.g `docker push quay.io/my-repo-user/helm-operator:dev`)
 
 **NOTE** Ensure that you configured the repo, `quay.io/my-repo-user/helm-operator`, to be public.
 
