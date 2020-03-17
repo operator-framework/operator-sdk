@@ -268,6 +268,7 @@ func doAnsibleScaffold() error {
 		},
 		&ansible.DeployOperator{},
 		&ansible.Travis{},
+		&ansible.RequirementsYml{},
 		&ansible.MoleculeTestLocalMolecule{},
 		&ansible.MoleculeTestLocalPrepare{},
 		&ansible.MoleculeTestLocalVerify{},

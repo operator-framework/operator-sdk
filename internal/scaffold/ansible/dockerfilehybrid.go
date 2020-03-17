@@ -34,6 +34,9 @@ type DockerfileHybrid struct {
 
 	// Watches - if true, include a COPY statement for watches.yaml
 	Watches bool
+
+	// Requirements - if true, include a COPY and RUN to install Ansible requirements
+	Requirements bool
 }
 
 // GetInput - gets the input
@@ -73,13 +76,12 @@ RUN yum clean all && rm -rf /var/cache/yum/* \
  && pip3 install --no-cache-dir --ignore-installed ipaddress \
       ansible-runner==1.3.4 \
       ansible-runner-http==1.0.0 \
-      openshift==0.9.2 \
+      openshift~=0.10.0 \
       ansible~=2.9 \
       jmespath \
  && yum remove -y gcc libffi-devel openssl-devel python36-devel \
  && yum clean all \
- && rm -rf /var/cache/yum \
- && ansible-galaxy collection install operator_sdk.util community.kubernetes
+ && rm -rf /var/cache/yum
 
 COPY build/_output/bin/[[.ProjectName]] ${OPERATOR}
 COPY bin /usr/local/bin
@@ -95,6 +97,10 @@ RUN TINIARCH=$(case $(arch) in x86_64) echo -n amd64 ;; ppc64le) echo -n ppc64el
   && curl -L -o /tini https://github.com/krallin/tini/releases/latest/download/tini-$TINIARCH \
   && chmod +x /tini
 
+[[- if .Requirements ]]
+COPY requirements.yml ${HOME}/requirements.yml
+RUN ansible-galaxy collection install -r ${HOME}/requirements.yml \
+ && chmod -R ug+rwx ${HOME}/.ansible[[ end ]]
 [[- if .Watches ]]
 COPY watches.yaml ${HOME}/watches.yaml[[ end ]]
 [[- if .Roles ]]

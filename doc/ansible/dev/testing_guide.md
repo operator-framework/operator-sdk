@@ -15,13 +15,15 @@ To begin, you sould have:
   without modification. Your top-level project structure should look like this:
     ```
     .
-    ├── build
-    ├── deploy
-    ├── molecule
-    ├── roles
+    ├── build/
+    ├── deploy/
+    ├── molecule/
+    ├── roles/
     ├── playbook.yml (optional)
+    ├── requirements.yml
     └── watches.yaml
     ```
+- The Ansible content specified in `requirements.yml` will also need to be installed. You can install them with `ansible-galaxy collection install -r requirements.yml`
 
 ### Molecule scenarios
 If you look into the `molecule` directory, you will see four directories (`default`, `test-local`, `cluster`, `templates`).

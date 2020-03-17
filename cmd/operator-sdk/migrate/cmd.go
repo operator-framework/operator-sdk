@@ -95,8 +95,9 @@ func migrateAnsible() error {
 	}
 
 	dockerfile := ansible.DockerfileHybrid{
-		Watches: true,
-		Roles:   true,
+		Watches:      true,
+		Roles:        true,
+		Requirements: true,
 	}
 	_, err := os.Stat(ansible.PlaybookYamlFile)
 	switch {
