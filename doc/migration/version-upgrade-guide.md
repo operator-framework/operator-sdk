@@ -838,7 +838,7 @@ oprator-sdk run exec-entrypoint helm --watches-file=$HOME/watches.yaml
 
 See the [CHANGELOG](https://github.com/operator-framework/operator-sdk/blob/master/CHANGELOG.md#v0151) for details of the release.
 
-## Unreleased
+## v0.16.x
 
 ### Bug Fixes and Improvements for Metrics
 
