@@ -1025,7 +1025,17 @@ With:
 - name: {{your operator name which is the value of metadata.name in this file}}
 ```
 
-**NOTE** The dependency `inotify-tools` on Ansible based-operator images has been deprecated since its usage was required just because of this container sidecar. It will be removed for the next versions. 
+By default the full Ansible logs will not be output, however, you can setup it via the `ANSIBLE_DEBUG_LOGS` environment variable in the `deploy/operator.yaml` file. See:
+
+```
+...
+- name: ANSIBLE_DEBUG_LOGS
+  value: "True"
+...
+```
+
+**NOTE:** The dependency `inotify-tools` on Ansible based-operator images has been deprecated since its usage was required just because of this container sidecar. It will be removed for the next versions. 
+- Now, you can use the environmentt 
 
 #### Migration to Ansible collections
 
