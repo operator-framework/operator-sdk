@@ -275,6 +275,42 @@ $ kubectl create -f deploy/operator.yaml --namespace operator-test
 $ operator-sdk test local ./test/e2e --namespace operator-test --no-setup
 ```
 
+### Test Permissions
+
+Executing e2e tests requires the permission to access, create, and delete resources on your cluster. Depending on what kind of Kubernetes cluster
+you are using, this may require some manual setup. For example, OpenShift users are not created with cluster-admin access by default, so you would have
+to manually add permissions to access these resources.
+
+The simplest way to accomplish this is to bind the cluster-admin Cluster Role to the Service Account you will run the test under. 
+If you are unable or unwilling to grant such access, a more limited Cluster Role such as this testuser can be created and bound 
+to the Service Account you are using.
+
+```
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: testuser
+rules:
+- apiGroups:
+  - ""
+  - apiextensions.k8s.io
+  - cache.example.com # the api space your tests are created in
+  - apps
+  resources:
+  - memcacheds # the type(s) of the CRD in your operator
+  - namespaces
+  - customresourcedefinitions
+  - deployments
+  - pods
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - watch
+  - update
+```
+
 For more documentation on the `operator-sdk test local` command, see the [SDK CLI Reference][cli-test-local] doc.
 
 ### Skip-Cleanup-Error Flag
