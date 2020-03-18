@@ -840,6 +840,45 @@ See the [CHANGELOG](https://github.com/operator-framework/operator-sdk/blob/mast
 
 ## v0.16.x
 
+### modules
+
+- Ensure the the following `require` modules and `replace` directives with the specific versions are present in your `go.mod` file:
+
+```
+require (
+	github.com/operator-framework/operator-sdk 0.16.0
+	sigs.k8s.io/controller-runtime v0.4.0
+)
+
+// Pinned to kubernetes-1.16.2
+replace (
+	k8s.io/api => k8s.io/api v0.0.0-20191016110408-35e52d86657a
+	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.0.0-20191016113550-5357c4baaf65
+	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20191004115801-a2eda9f80ab8
+	k8s.io/apiserver => k8s.io/apiserver v0.0.0-20191016112112-5190913f932d
+	k8s.io/cli-runtime => k8s.io/cli-runtime v0.0.0-20191016114015-74ad18325ed5
+	k8s.io/client-go => k8s.io/client-go v0.0.0-20191016111102-bec269661e48
+	k8s.io/cloud-provider => k8s.io/cloud-provider v0.0.0-20191016115326-20453efc2458
+	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.0.0-20191016115129-c07a134afb42
+	k8s.io/code-generator => k8s.io/code-generator v0.0.0-20191004115455-8e001e5d1894
+	k8s.io/component-base => k8s.io/component-base v0.0.0-20191016111319-039242c015a9
+	k8s.io/cri-api => k8s.io/cri-api v0.0.0-20190828162817-608eb1dad4ac
+	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.0.0-20191016115521-756ffa5af0bd
+	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.0.0-20191016112429-9587704a8ad4
+	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.0.0-20191016114939-2b2b218dc1df
+	k8s.io/kube-proxy => k8s.io/kube-proxy v0.0.0-20191016114407-2e83b6f20229
+	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.0.0-20191016114748-65049c67a58b
+	k8s.io/kubectl => k8s.io/kubectl v0.0.0-20191016120415-2ed914427d51
+	k8s.io/kubelet => k8s.io/kubelet v0.0.0-20191016114556-7841ed97f1b2
+	k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.0.0-20191016115753-cf0698c3a16b
+	k8s.io/metrics => k8s.io/metrics v0.0.0-20191016113814-3b1a734dba6e
+	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.0.0-20191016112829-06bb3c9d77c9
+)
+
+replace github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503-38ab9da00309 // Required by Helm
+replace github.com/openshift/api => github.com/openshift/api v0.0.0-20190924102528-32369d4db2ad // Required until https://github.com/operator-framework/operator-lifecycle-manager/pull/1241 is resolved
+```
+
 ### Bug Fixes and Improvements for Metrics
 
 There were some changes to the default implementation of the metrics export. These changes require the `cmd/main.go` be updated as follows.
@@ -940,7 +979,20 @@ func serveCRMetrics(cfg *rest.Config, operatorNs string) error {
 
 ### Breaking changes
 
-#### Remove Ansible container sidecar
+#### `TestCtx` in `pkg/test` has been deprecated
+
+ The type name `TestCtx` in `pkg/test` has been deprecated and renamed to `Context`. Users of the e2e framework should: 
+ 
+ - Replace `TestCtx` with `Context`
+ - Replace `NewTestCtx` with `NewContext`
+
+#### Scorecard only supports YAML config files
+  
+The scorecard feature now only supports YAML config files. So, any config file with other extension is deprecated and should be changed for the YAML format. For further information see [`scorecard config file`](./doc/test-framework/scorecard.md#config-file)
+  
+### Breaking Changes for Ansible 
+
+#### Remove Ansible container sidecar 
 
 The additional of the dependency `inotify-tools` on Ansible based-operator images is deprecated and it will be removed in the next versions. In this way, update the `deploy/operator.yaml` file as follows.
 
@@ -972,6 +1024,7 @@ With:
 ```yaml
 - name: {{your operator name which is the value of metadata.name in this file}}
 ```
+
 #### Migration to Ansible collections
 
 The core Ansible Kubernetes modules have been moved to the [`community.kubernetes` Ansible collection][kubernetes-ansible-collection]. Future development of the modules will occur there, with only critical bugfixes going into the modules in core. Additionally, the `operator_sdk.util` collection is no longer installed by default in the base image. Instead, users should add a `requirements.yml` to their project root, with the following content:
@@ -990,25 +1043,7 @@ RUN ansible-galaxy collection install -r ${HOME}/requirements.yml \
  && chmod -R ug+rwx ${HOME}/.ansible
 ```
 
-## Unreleased (Master Branch)
-
-### Breaking changes
-
-#### In the test-framework
-
-The methods `ctx.GetOperatorNamespace()` and `ctx.GetWatchNamespace()` was added pkg/test in order to replace `ctx.GetNamespace()` which is deprecated. In this way replace the use of `ctx.GetNamespace()` in your project with `ctx.GetOperatorNamespace()`
-
-### Breaking Changes on Commands
-
-This release contains breaking changes in some commands.
-
-- The --namespace flag from `operator-sdk run --local` command, `operator-sdk test --local` command and `operator-sdk cleanup` command was deprecated and was replaced by --watch-namespace and --operator-namespace .
-
-Note that --watch-namespace can be used to set the namespace(s) which the operator will watch for changes. It will set the environment variable WATCH_NAMESPACE. Use explicitly an empty string to watch all namespaces or inform a List of namespaces such as "ns1,ns2" when the operator is cluster-scoped. If you use a List, then it needs contains the namespace where the operator is "deployed" in since the default metrics implementation will manage resources in the Operator's namespace. By default, it will be the Operator Namespace.
-
-Then, use the flag --operator-namespace to inform the namespace where the Operator will be "deployed" in and then, it will set the environment variable OPERATOR_NAMESPACE. If this value is not set, then it will be the namespace defined as default in the Kubeconfig.
-
-NOTE: For more information check the PRs which are responsible for the above changes [#2617](https://github.com/operator-framework/operator-sdk/pull/2617).
+## Unreleased (Master branch)
 
 [legacy-kubebuilder-doc-crd]: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 [v0.8.2-go-mod]: https://github.com/operator-framework/operator-sdk/blob/28bd2b0d4fd25aa68e15d928ae09d3c18c3b51da/internal/pkg/scaffold/go_mod.go#L40-L94
