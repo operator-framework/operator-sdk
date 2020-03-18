@@ -988,7 +988,7 @@ func serveCRMetrics(cfg *rest.Config, operatorNs string) error {
 
 #### Scorecard only supports YAML config files
   
-The scorecard feature now only supports YAML config files. So, any config file with other extension is deprecated and should be changed for the YAML format. For further information see [`scorecard config file`](./doc/test-framework/scorecard.md#config-file)
+The scorecard feature now only supports YAML config files. So, any config file with other extension is deprecated and should be changed for the YAML format. For further information see [`scorecard config file`](https://github.com/operator-framework/operator-sdk/blob/v0.16.x/doc/test-framework/scorecard.md#config-file)
   
 ### Breaking Changes for Ansible 
 
