@@ -881,7 +881,7 @@ replace github.com/openshift/api => github.com/openshift/api v0.0.0-201909241025
 
 ### Bug Fixes and Improvements for Metrics
 
-There were some changes to the default implementation of the metrics export. These changes require the `cmd/main.go` be updated as follows.
+There are changes to the default implementation of the metrics export. These changes require `cmd/main.go to be updated as follows.
 
 Replace:
 
@@ -980,21 +980,21 @@ func serveCRMetrics(cfg *rest.Config, operatorNs string) error {
 ### Breaking changes
 
 #### `TestCtx` in `pkg/test` has been deprecated
-
- The type name `TestCtx` in `pkg/test` has been deprecated and renamed to `Context`. Users of the e2e framework should: 
+ 
+ The type name `TestCtx` in `pkg/test` has been deprecated and renamed to `Context`. Users of the e2e framework should do the following:
  
  - Replace `TestCtx` with `Context`
  - Replace `NewTestCtx` with `NewContext`
 
 #### Scorecard only supports YAML config files
   
-The scorecard feature now only supports YAML config files. So, any config file with other extension is deprecated and should be changed for the YAML format. For further information see [`scorecard config file`](https://github.com/operator-framework/operator-sdk/blob/v0.16.x/doc/test-framework/scorecard.md#config-file)
+The scorecard feature now only supports YAML config files. Any config file with other extension is deprecated and should be changed for the YAML format. For further information see [`scorecard config file`](https://github.com/operator-framework/operator-sdk/blob/v0.16.x/doc/test-framework/scorecard.md#config-file)
   
 ### Breaking Changes for Ansible 
 
 #### Remove Ansible container sidecar 
 
-The additional of the dependency `inotify-tools` on Ansible based-operator images is deprecated and it will be removed in the next versions. In this way, update the `deploy/operator.yaml` file as follows.
+The Ansible logs are now are outputted in the operator container and has no long need for the Ansible container sidecar. To reflect this change, update the `deploy/operator.yaml` file as follows. 
 
 Remove:
 
@@ -1024,6 +1024,8 @@ With:
 ```yaml
 - name: {{your operator name which is the value of metadata.name in this file}}
 ```
+
+**NOTE** The dependency `inotify-tools` on Ansible based-operator images has been deprecated since its usage was required just because of this container sidecar. It will be removed for the next versions. 
 
 #### Migration to Ansible collections
 
