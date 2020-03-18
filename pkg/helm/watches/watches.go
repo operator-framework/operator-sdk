@@ -28,28 +28,20 @@ import (
 // Watch defines options for configuring a watch for a Helm-based
 // custom resource.
 type Watch struct {
-	GroupVersionKind        schema.GroupVersionKind
-	ChartDir                string
-	WatchDependentResources bool
-	OverrideValues          map[string]string
+	GroupVersionKind        schema.GroupVersionKind `yaml:",inline"`
+	ChartDir                string                  `yaml:"chart"`
+	WatchDependentResources *bool                   `yaml:"watchDependentResources,omitempty"`
+	OverrideValues          map[string]string       `yaml:"overrideValues,omitempty"`
 }
 
-type yamlWatch struct {
-	Group                   string            `yaml:"group"`
-	Version                 string            `yaml:"version"`
-	Kind                    string            `yaml:"kind"`
-	Chart                   string            `yaml:"chart"`
-	WatchDependentResources bool              `yaml:"watchDependentResources"`
-	OverrideValues          map[string]string `yaml:"overrideValues"`
-}
-
-func (w *yamlWatch) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	// by default, the operator will watch dependent resources
-	w.WatchDependentResources = true
+	trueVal := true
+	w.WatchDependentResources = &trueVal
 
 	// hide watch data in plain struct to prevent unmarshal from calling
 	// UnmarshalYAML again
-	type plain yamlWatch
+	type plain Watch
 
 	return unmarshal((*plain)(w))
 }
@@ -64,7 +56,7 @@ func Load(path string) ([]Watch, error) {
 		return nil, err
 	}
 
-	yamlWatches := []yamlWatch{}
+	yamlWatches := []Watch{}
 	err = yaml.Unmarshal(b, &yamlWatches)
 	if err != nil {
 		return nil, err
@@ -73,18 +65,14 @@ func Load(path string) ([]Watch, error) {
 	watches := []Watch{}
 	watchesMap := make(map[schema.GroupVersionKind]Watch)
 	for _, w := range yamlWatches {
-		gvk := schema.GroupVersionKind{
-			Group:   w.Group,
-			Version: w.Version,
-			Kind:    w.Kind,
-		}
+		gvk := w.GroupVersionKind
 
 		if err := verifyGVK(gvk); err != nil {
 			return nil, fmt.Errorf("invalid GVK: %s: %w", gvk, err)
 		}
 
-		if _, err := chartutil.IsChartDir(w.Chart); err != nil {
-			return nil, fmt.Errorf("invalid chart directory %s: %w", w.Chart, err)
+		if _, err := chartutil.IsChartDir(w.ChartDir); err != nil {
+			return nil, fmt.Errorf("invalid chart directory %s: %w", w.ChartDir, err)
 		}
 
 		if _, ok := watchesMap[gvk]; ok {
@@ -93,7 +81,7 @@ func Load(path string) ([]Watch, error) {
 
 		watch := Watch{
 			GroupVersionKind:        gvk,
-			ChartDir:                w.Chart,
+			ChartDir:                w.ChartDir,
 			WatchDependentResources: w.WatchDependentResources,
 			OverrideValues:          expandOverrideEnvs(w.OverrideValues),
 		}

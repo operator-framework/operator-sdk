@@ -1,0 +1,4 @@
+---
+  version: v1alpha1
+  kind: App
+  role: app

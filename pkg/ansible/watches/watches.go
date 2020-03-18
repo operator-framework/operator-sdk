@@ -51,8 +51,8 @@ type Watch struct {
 	WatchClusterScopedResources bool                      `yaml:"watchClusterScopedResources"`
 
 	// Not configurable via watches.yaml
-	MaxWorkers       int `yaml:"maxWorkers"`
-	AnsibleVerbosity int `yaml:"ansibleVerbosity"`
+	MaxWorkers       int `yaml:"-"`
+	AnsibleVerbosity int `yaml:"-"`
 }
 
 // Finalizer - Expose finalizer to be used by a user.
@@ -293,6 +293,7 @@ func Load(path string, maxWorkers, ansibleVerbosity int) ([]Watch, error) {
 		if _, ok := watchesMap[watch.GroupVersionKind]; ok {
 			return nil, fmt.Errorf("duplicate GVK: %v", watch.GroupVersionKind.String())
 		}
+
 		watchesMap[watch.GroupVersionKind] = true
 
 		err = watch.Validate()

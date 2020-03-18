@@ -309,6 +309,8 @@ kubectl delete -f deploy/role.yaml
 kubectl delete -f deploy/service_account.yaml
 kubectl delete -f deploy/crds/example.com_nginxes_crd.yaml
 ```
+**NOTE** Additional CR/CRD's can be added to the project by running, for example, the command :`operator-sdk add api --api-version=cache.example.com/v1alpha1 --kind=AppService`
+For more information, refer [cli][addcli] doc.
 
 ## Advanced features
 
@@ -429,3 +431,4 @@ spec:
 [helm-charts]:https://helm.sh/docs/topics/charts/
 [helm-values]:https://helm.sh/docs/intro/using_helm/#customizing-the-chart-before-installing
 [quay-link]:https://quay.io
+[addcli]: https://operator-sdk.netlify.com/docs/cli/operator-sdk_add_api/

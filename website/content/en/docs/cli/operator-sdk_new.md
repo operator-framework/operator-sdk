@@ -69,17 +69,18 @@ operator-sdk new <project-name> [flags]
 ### Options
 
 ```
-      --api-version string          Kubernetes apiVersion and has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1) - used with "ansible" or "helm" types
-      --crd-version string          CRD version to generate (Only used for --type=ansible|helm) (default "v1beta1")
+      --api-version string          Kubernetes apiVersion and has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)
+      --crd-version string          CRD version to generate (default "v1beta1")
       --generate-playbook           Generate a playbook skeleton. (Only used for --type ansible)
       --git-init                    Initialize the project directory as a git repository (default false)
       --header-file string          Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt
-      --helm-chart string           Initialize helm operator with existing helm chart (<URL>, <repo>/<name>, or local path)
-      --helm-chart-repo string      Chart repository URL for the requested helm chart
-      --helm-chart-version string   Specific version of the helm chart (default is latest version)
+      --helm-chart string           Initialize helm operator with existing helm chart (<URL>, <repo>/<name>, or local path). Valid only for --type helm
+      --helm-chart-repo string      Chart repository URL for the requested helm chart, Valid only for --type helm
+      --helm-chart-version string   Specific version of the helm chart (default is latest version). Valid only for --type helm
   -h, --help                        help for new
-      --kind string                 Kubernetes CustomResourceDefintion kind. (e.g AppService) - used with "ansible" or "helm" types
+      --kind string                 Kubernetes resource Kind name. (e.g AppService)
       --repo string                 Project repository path for Go operators. Used as the project's Go import path. This must be set if outside of $GOPATH/src (e.g. github.com/example-inc/my-operator)
+      --skip-generation             Skip generation of deepcopy and OpenAPI code and OpenAPI CRD specs
       --skip-validation             Do not validate the resulting project's structure and dependencies. (Only used for --type go)
       --type string                 Type of operator to initialize (choices: "go", "ansible" or "helm") (default "go")
       --vendor                      Use a vendor directory for dependencies

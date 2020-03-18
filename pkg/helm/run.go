@@ -125,7 +125,7 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 			GVK:                     w.GroupVersionKind,
 			ManagerFactory:          release.NewManagerFactory(mgr, w.ChartDir),
 			ReconcilePeriod:         flags.ReconcilePeriod,
-			WatchDependentResources: w.WatchDependentResources,
+			WatchDependentResources: *w.WatchDependentResources,
 			OverrideValues:          w.OverrideValues,
 			MaxWorkers:              flags.MaxWorkers,
 		})

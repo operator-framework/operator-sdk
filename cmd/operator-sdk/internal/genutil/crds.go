@@ -16,6 +16,7 @@ package genutil
 
 import (
 	"fmt"
+	"path/filepath"
 
 	gencrd "github.com/operator-framework/operator-sdk/internal/generate/crd"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
@@ -39,5 +40,20 @@ func CRDGen(crdVersion string) error {
 	}
 
 	log.Info("CRD generation complete.")
+	return nil
+}
+
+// GenerateCRDNonGo generates CRDs for Non-Go APIs(Eg., Ansible,Helm)
+func GenerateCRDNonGo(projectName string, resource scaffold.Resource, crdVersion string) error {
+	crdsDir := filepath.Join(projectName, scaffold.CRDsDir)
+	gcfg := gen.Config{
+		Inputs:    map[string]string{gencrd.CRDsDirKey: crdsDir},
+		OutputDir: crdsDir,
+	}
+	crd := gencrd.NewCRDNonGo(gcfg, resource, crdVersion)
+	if err := crd.Generate(); err != nil {
+		return fmt.Errorf("error generating CRD for %s: %w", resource, err)
+	}
+	log.Info("Generated CustomResourceDefinition manifests.")
 	return nil
 }
