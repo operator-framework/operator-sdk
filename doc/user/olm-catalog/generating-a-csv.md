@@ -66,7 +66,7 @@ INFO[0000] Created deploy/olm-catalog/app-operator/0.0.1/app-operator.v0.0.1.clu
 
 When running `generate csv` with a version that already exists, the `Required csv fields...` info statement will become a warning, as these fields are useful for displaying your Operator in Operator Hub.
 
-**Note:** `description`, `displayName`, `resources`, `specDescriptors`, `statusDescriptors`, `actionDescriptors` fields in each `spec.customresourcedefinitions.owned` element will not be filled by the CSV generator. These fields must be added manually. The SDK plans on using [code annotations][code-annotations] to populate these fields in the near future.
+**Note:** `generate csv` will populate many but not all fields in your CSV automatically. Subsequent calls to `generate csv` will warn you of missing required fields. See the list of fields [below](#csv-fields) for more information.
 
 ## Updating your CSV
 
@@ -86,7 +86,7 @@ Be sure to include the `--update-crds` flag if you want to add CRD's to your bun
 
 Below are two lists of fields: the first is a list of all fields the SDK and OLM expect in a CSV, and the second are optional.
 
-Several fields require user input. The set of fields with this requirement may change as the SDK becomes better at generating CSV's. For now, those are marked with a _(user)_ qualifier.
+Several fields require user input (labeled _user_) or a [code annotation][code-annotations] (labeled _annotation_). This list may change as the SDK becomes better at generating CSV's.
 
 Required:
 
@@ -104,11 +104,12 @@ Required:
         * `name`: CRD's `metadata.name`.
         * `kind`: CRD's `metadata.spec.names.kind`.
         * `version`: CRD's `metadata.spec.version`.
-        * `description` _(user)_ : description of the CRD.
-        * `displayName` _(user)_ : display name of the CRD.
-        * `resources` _(user)_ : any Kubernetes resources used by the CRD, ex. `Pod`'s and `ConfigMap`'s.
-        * `specDescriptors` _(user)_ : UI hints for inputs and outputs of the Operator's spec.
-        * `statusDescriptors` _(user)_ : UI hints for inputs and outputs of the Operator's status.
+        * `description` _(annotation)_ : description of the CRD.
+        * `displayName` _(annotation)_ : display name of the CRD.
+        * `resources` _(annotation)_ : any Kubernetes resources used by the CRD, ex. `Pod`'s and `ConfigMap`'s.
+        * `specDescriptors` _(annotation)_ : UI hints for inputs and outputs of the Operator's spec.
+        * `statusDescriptors` _(annotation)_ : UI hints for inputs and outputs of the Operator's status.
+        * `actionDescriptors` _(user)_ : UI hints for an Operator's in-cluster actions.
     * `required` _(user)_ : all CRDs the Operator expects to be present in-cluster, if any. All `required` element fields must be populated manually.
 
 Optional:
