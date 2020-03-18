@@ -23,7 +23,7 @@ and validate that image:
 $ cd ${HOME}/go/test-operator
 
 # Generate manifests locally.
-$ operator-sdk bundle build --generate-only
+$ operator-sdk bundle create --generate-only
 
 # Modify the metadata and Dockerfile.
 $ cd ./deploy/olm-catalog/test-operator
