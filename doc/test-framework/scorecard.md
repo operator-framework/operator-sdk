@@ -680,7 +680,7 @@ Once done, follow the steps in this [document][olm-deploy-operator] to bundle yo
 - As of now, using the scorecard with a CSV does not permit multiple CR manifests to be set through the CLI/config/CSV annotations. You will have to tear down your operator in the cluster, re-deploy, and re-run the scorecard for each CR being tested. In the future the scorecard will fully support testing multiple CR's without requiring users to teardown/standup each time.
 - You can either set `cr-manifest` or your CSV's [`metadata.annotations['alm-examples']`][olm-csv-alm-examples] to provide CR's to the scorecard, but not both.
 
-[cli-reference]: ../sdk-cli-reference.md#scorecard
+[cli-reference]: ../cli/operator-sdk_scorecard.md
 [writing-tests]: ./writing-e2e-tests.md
 [owned-crds]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md#owned-crds
 [alm-examples]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md#crd-templates

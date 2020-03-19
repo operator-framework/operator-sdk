@@ -50,10 +50,10 @@ Ansible/Helm operator developers are not able to create additonal APIs via CLI, 
 
 ## Proposal
 
-### User Stories 
+### User Stories
 
 #### Story 1 - Ansible operator additional API
-As an  Ansible operator developer, I would like to scaffold additional API, once the original Ansible operator project has been created. Goal is to use  following command, to create additonal APIs. 
+As an  Ansible operator developer, I would like to scaffold additional API, once the original Ansible operator project has been created. Goal is to use  following command, to create additonal APIs.
     `operator-sdk add api --kind <kind> --api-version <group/version> [flags]`
 
 ##### Acceptance Criteria
@@ -76,7 +76,7 @@ As Helm operator developer, I would like to scaffold additional API, once the or
     `operator-sdk add api --kind <kind> --api-version <group/version> [flags]`
 
 ##### Acceptance Criteria
-* Helm operator developer should be able to scaffold all resources needed for the additional API with any of below commands, 
+* Helm operator developer should be able to scaffold all resources needed for the additional API with any of below commands,
       `operator-sdk add api --kind <kind> --api-version <group/version> [flags]`
 * Flags options available for `operator-sdk new`, should also be made available for `operator-sdk add api`
 ```
@@ -116,7 +116,7 @@ and subsequently [`func doAnsibleScaffold()`][doansible] or [`func doHelmScaffol
 * This proposal is to enhance [`func apiRun(cmd *cobra.Command, args []string)`][addapifunc] to add APIs for Ansible/Helm operators, by re-using pre-existing functions as shown above to check for `--type`, and perform necessary scaffolds for the new resource.
 
 * To this extent, PoCs have been done for both [Ansible][ansiblepoc] and [Helm][helmpoc] by manually adding necessary files in the scaffold. Please see below for project layout.
-  **NOTE**: To test/check the POCs locally used the makefile targets `make install` and `make uninstall`. 
+  **NOTE**: To test/check the POCs locally used the makefile targets `make install` and `make uninstall`.
 
   * Ansible roles scaffold after adding APIs:
   ```
@@ -258,7 +258,7 @@ and subsequently [`func doAnsibleScaffold()`][doansible] or [`func doHelmScaffol
   role: /opt/ansible/roles/mykind
 ```
 [addapidoc]:https://github.com/operator-framework/operator-sdk/blob/master/doc/cli/operator-sdk_add_api.md
-[sdkclidoc]:https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md
+[sdkclidoc]:https://github.com/operator-framework/operator-sdk/tree/master/doc/cli
 [onlygorestriction]:https://github.com/operator-framework/operator-sdk/blob/master/cmd/operator-sdk/add/api.go#L95
 [doansible]:https://github.com/operator-framework/operator-sdk/blob/master/cmd/operator-sdk/new/cmd.go#L228
 [dohelm]:https://github.com/operator-framework/operator-sdk/blob/master/cmd/operator-sdk/new/cmd.go#L320

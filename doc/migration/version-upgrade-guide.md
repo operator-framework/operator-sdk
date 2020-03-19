@@ -471,8 +471,8 @@ All method signatures for [`sigs.k8s.io/controller-runtime/pkg/client.Client`](h
 
 ### OpenAPI updates
 
-- Run the command `operator-sdk generate openapi` and ensure that no errors such as `API rule violation` are raised. For further information see the [API rules][api-rules] documentation. 
- 
+- Run the command `operator-sdk generate openapi` and ensure that no errors such as `API rule violation` are raised. For further information see the [API rules][api-rules] documentation.
+
 **NOTE:** You may need to add or remove markers (code annotations) to fix issues found when running `generate openapi`. Usage of markers in API code is discussed in the kubebuilder CRD generation [documentation][generating-crd] and in marker [documentation][markers]. A full list of OpenAPIv3 validation markers can be found [here](https://book.kubebuilder.io/reference/markers/crd-validation.html).
 
 **TIPS:**
@@ -545,7 +545,7 @@ replace (
 
 - Run `go mod tidy` to update the project modules
 - Run the command `operator-sdk generate k8s` to ensure that your resources will be updated
-- Run the command `operator-sdk generate openapi` and ensure that no errors such as `API rule violation` are raised. For further information see the [API rules][api-rules] documentation. 
+- Run the command `operator-sdk generate openapi` and ensure that no errors such as `API rule violation` are raised. For further information see the [API rules][api-rules] documentation.
 
 ### (Optional) Update your operator to print its version
 
@@ -610,7 +610,7 @@ replace (
 
 ### (Optional) Update the roles.yaml file
 
-Replace `*` per verbs in order to solve the issue [671](https://github.com/operator-framework/operator-sdk/issues/671) and make clear the permissions used. 
+Replace `*` per verbs in order to solve the issue [671](https://github.com/operator-framework/operator-sdk/issues/671) and make clear the permissions used.
 
 **Example**
 
@@ -628,7 +628,7 @@ Replace `*` per verbs in order to solve the issue [671](https://github.com/opera
 ### Notable changes
 
 - **Deprecated:** Deprecated the `operator-sdk generate openapi` command. CRD generation is still supported with `operator-sdk generate crds`. It is now recommended to use [openapi-gen](https://github.com/kubernetes/kube-openapi/tree/master/cmd/openapi-gen) directly for OpenAPI code generation. The `generate openapi` subcommand will be removed in a future release.
-- **Breaking change:** An existing CSV's `spec.customresourcedefinitions.owned` is now always overwritten except for each name, version, and kind on invoking olm-catalog gen-csv when Go API code annotations are present. 
+- **Breaking change:** An existing CSV's `spec.customresourcedefinitions.owned` is now always overwritten except for each name, version, and kind on invoking olm-catalog gen-csv when Go API code annotations are present.
 - **Potentially Breaking change:** Be aware that there are potentially other breaking changes due to the controller-runtime and Kubernetes version be upgraded from `v0.4.0` to `v1.16.2, respectively. There may be breaking changes to Go client code due to both of those changes.
 
 For further detailed information see [CHANGELOG](https://github.com/operator-framework/operator-sdk/blob/master/CHANGELOG.md#v0130)
@@ -743,7 +743,7 @@ Replace:
 ...
 ```
 
-With: 
+With:
 ```yaml
 ...
  min_ansible_version: 2.9
@@ -799,7 +799,7 @@ replace github.com/openshift/api => github.com/openshift/api v0.0.0-201909241025
 - Run the command `operator-sdk generate k8s` to ensure that your resources will be updated
 - Run the command `operator-sdk generate crds` to regenerate CRDs
 
-### Breaking Changes on Commands 
+### Breaking Changes on Commands
 
 This release contains breaking changes in some commands.
 
@@ -807,17 +807,17 @@ This release contains breaking changes in some commands.
 - The `operator-sdk up local` is now `operator-sdk run --local`. However, all functionality of this command is retained.
 - And then, the `operator-sdk alpha olm [sub-commands] [flags]` was moved from `alpha` to its own sub-command. However, all functionality of this command is retained. To check run; `operator-sdk olm --help`.
 
-### Breaking Changes for Helm and Ansible 
+### Breaking Changes for Helm and Ansible
 
 The `operator-sdk run ansible/helm` are now hidden commands in `exec-entrypoint ansible/helm`. However, all functionality of each sub-command is still the same. If you are using this feature then you will need to replace the `run` for `exec-entrypoint` as the following examples.
 
 Replace:
 
 ```
-oprator-sdk run ansible --watches-file=/opt/ansible/watches.yaml 
+oprator-sdk run ansible --watches-file=/opt/ansible/watches.yaml
 ```
 
-With: 
+With:
 
 ```
 oprator-sdk exec-entrypoint ansible --watches-file=/opt/ansible/watches.yaml
@@ -830,7 +830,7 @@ Replace:
 oprator-sdk run helm --watches-file=$HOME/watches.yaml
 ```
 
-With: 
+With:
 
 ```
 oprator-sdk run exec-entrypoint helm --watches-file=$HOME/watches.yaml
@@ -851,7 +851,7 @@ func main() {
     ...
 	// Add the Metrics Service
 	addMetrics(ctx, cfg, namespace)
-``` 
+```
 
 With:
 
@@ -860,7 +860,7 @@ func main() {
     ...
 	// Add the Metrics Service
 	addMetrics(ctx, cfg)
-``` 
+```
 
 And then, update the default implementation of `addMetrics` and `serveCRMetrics` with:
 
@@ -963,13 +963,13 @@ Remove:
 
 Replace:
 
-```yaml 
+```yaml
 - name: operator
 ```
 
 With:
 
-```yaml 
+```yaml
 - name: {{your operator name which is the value of metadata.name in this file}}
 ```
 
@@ -998,7 +998,7 @@ RUN ansible-galaxy collection install -r ${HOME}/requirements.yml \
 [mercurial]: https://www.mercurial-scm.org/downloads
 [migrating-to-modules]: https://github.com/golang/go/wiki/Modules#migrating-to-modules
 [modules-wiki]: https://github.com/golang/go/wiki/Modules#migrating-to-modules
-[print-deps-cli]: ../sdk-cli-reference.md#print-deps
+[print-deps-cli]: ../cli/operator-sdk_print-deps.md
 [changelog]: ../../CHANGELOG.md
 [release-notes]: https://github.com/operator-framework/operator-sdk/releases
 [v0.1.0-migration-guide]: ./v0.1.0-migration-guide.md

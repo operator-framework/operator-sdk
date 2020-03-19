@@ -48,7 +48,7 @@ Following are some requirements for the operator project which would be  checked
 
 1. Setup the `.osdk-scorecard.yaml` configuration file in your project. See [Config file](#config-file)
 2. Create the namespace defined in the RBAC files(`role_binding`)
-3. Then, run the scorecard, for example `$ operator-sdk scorecard`. See the [Command args](#command-args) to check its options.
+3. Then, run the [`scorecard` command][cli-scorecard]. See the [Command args](#command-args) to check its options.
 
 **NOTE:** If your operator is non-SDK then some steps will be required in order to meet its requirements.
 
@@ -680,7 +680,7 @@ Once done, follow the steps in this [document][olm-deploy-operator] to bundle yo
 - As of now, using the scorecard with a CSV does not permit multiple CR manifests to be set through the CLI/config/CSV annotations. You will have to tear down your operator in the cluster, re-deploy, and re-run the scorecard for each CR being tested. In the future the scorecard will fully support testing multiple CR's without requiring users to teardown/standup each time.
 - You can either set `cr-manifest` or your CSV's [`metadata.annotations['alm-examples']`][olm-csv-alm-examples] to provide CR's to the scorecard, but not both.
 
-[cli-reference]: ../sdk-cli-reference.md#scorecard
+[cli-scorecard]: ../cli/operator-sdk_scorecard.md
 [writing-tests]: ./writing-e2e-tests.md
 [owned-crds]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md#owned-crds
 [alm-examples]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md#crd-templates
