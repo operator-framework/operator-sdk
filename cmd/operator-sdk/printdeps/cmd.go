@@ -17,6 +17,8 @@ package printdeps
 import (
 	"fmt"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
@@ -44,7 +46,7 @@ func printDepsFunc(cmd *cobra.Command, args []string) error {
 	projutil.MustInProjectRoot()
 
 	if err := printDeps(); err != nil {
-		return fmt.Errorf("print deps failed: %v", err)
+		log.Fatalf("Print deps failed: %v", err)
 	}
 	return nil
 }
