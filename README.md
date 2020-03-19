@@ -181,7 +181,7 @@ Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file f
 [install_guide]: ./doc/user/install-operator-sdk.md
 [operator_link]: https://coreos.com/operators/
 [proposals_docs]: ./doc/proposals
-[sdk_cli_ref]: ./doc/sdk-cli-reference.md
+[sdk_cli_ref]: ./doc/cli
 [guide]: ./doc/user-guide.md
 [samples]: https://github.com/operator-framework/operator-sdk-samples
 [of-home]: https://github.com/operator-framework
