@@ -31,6 +31,7 @@ import (
 	"github.com/ghodss/yaml"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -129,7 +130,9 @@ func createFromYAMLFile(cfg BasicAndOLMPluginConfig, yamlPath string) error {
 			}
 		}
 		err = runtimeClient.Create(context.TODO(), obj)
-		if err != nil {
+		if errors.IsAlreadyExists(err) {
+			fmt.Printf("already exists, %s, not creating.", yamlPath)
+		} else if err != nil {
 			_, restErr := restMapper.RESTMappings(obj.GetObjectKind().GroupVersionKind().GroupKind())
 			if restErr == nil {
 				return err
