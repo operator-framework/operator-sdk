@@ -282,9 +282,9 @@ you are using, this may require some manual setup. For example, OpenShift users 
 to manually add permissions to access these resources.
 
 The simplest way to accomplish this is to bind the cluster-admin Cluster Role to the Service Account you will run the test under. 
-If you are unable or unwilling to grant such access, a more limited Cluster Role such as this testuser can be created and bound 
-to the Service Account you are using.
-
+If you are unable or unwilling to grant such access, a more limited permission set can be created and bound to your Service Account.
+A good place to start would be the Role bound to your operator itself, such as [this role for the memcached operator example][memcached-role].
+In addition, you might have to create a Cluster Role to allow your tests to create namespaces, like so:
 ```
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -293,15 +293,8 @@ metadata:
 rules:
 - apiGroups:
   - ""
-  - apiextensions.k8s.io
-  - cache.example.com # the api space your tests are created in
-  - apps
   resources:
-  - memcacheds # the type(s) of the CRD in your operator
   - namespaces
-  - customresourcedefinitions
-  - deployments
-  - pods
   verbs:
   - create
   - delete
@@ -310,6 +303,8 @@ rules:
   - watch
   - update
 ```
+
+Note that this isn't an exhaustive permission set, and the e2e tests you write might require more or less access.
 
 For more documentation on the `operator-sdk test local` command, see the [SDK CLI Reference][cli-test-local] doc.
 
@@ -386,3 +381,4 @@ $ kubectl delete -f deploy/crds/cache.example.com_memcacheds_crd.yaml
 [scheme-link]:https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/framework.go#L109
 [cli-test-local]:https://github.com/operator-framework/operator-sdk/blob/master/doc/cli/operator-sdk_test_local.md
 [main-entry-link]:https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/main_entry.go#L25
+[memcached-role]:https://github.com/operator-framework/operator-sdk-samples/blob/master/go/memcached-operator/deploy/role.yaml
