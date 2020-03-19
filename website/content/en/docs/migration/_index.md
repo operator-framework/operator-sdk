@@ -1,7 +1,6 @@
 ---
-title: How to Contribute
-linkTitle: Contribution Guidelines
-weight: 30
+title: Migration Reference
+weight: 50
 ---
 
 {{% alert title="Warning" color="warning" %}}
