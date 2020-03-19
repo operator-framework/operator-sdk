@@ -840,9 +840,52 @@ See the [CHANGELOG](https://github.com/operator-framework/operator-sdk/blob/mast
 
 ## v0.16.x
 
+### modules
+
+- Ensure the the following `require` modules and `replace` directives with the specific versions are present in your `go.mod` file:
+
+```
+require (
+	github.com/operator-framework/operator-sdk 0.16.0
+	sigs.k8s.io/controller-runtime v0.4.0
+)
+
+// Pinned to kubernetes-1.16.2
+replace (
+	k8s.io/api => k8s.io/api v0.0.0-20191016110408-35e52d86657a
+	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.0.0-20191016113550-5357c4baaf65
+	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20191004115801-a2eda9f80ab8
+	k8s.io/apiserver => k8s.io/apiserver v0.0.0-20191016112112-5190913f932d
+	k8s.io/cli-runtime => k8s.io/cli-runtime v0.0.0-20191016114015-74ad18325ed5
+	k8s.io/client-go => k8s.io/client-go v0.0.0-20191016111102-bec269661e48
+	k8s.io/cloud-provider => k8s.io/cloud-provider v0.0.0-20191016115326-20453efc2458
+	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.0.0-20191016115129-c07a134afb42
+	k8s.io/code-generator => k8s.io/code-generator v0.0.0-20191004115455-8e001e5d1894
+	k8s.io/component-base => k8s.io/component-base v0.0.0-20191016111319-039242c015a9
+	k8s.io/cri-api => k8s.io/cri-api v0.0.0-20190828162817-608eb1dad4ac
+	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.0.0-20191016115521-756ffa5af0bd
+	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.0.0-20191016112429-9587704a8ad4
+	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.0.0-20191016114939-2b2b218dc1df
+	k8s.io/kube-proxy => k8s.io/kube-proxy v0.0.0-20191016114407-2e83b6f20229
+	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.0.0-20191016114748-65049c67a58b
+	k8s.io/kubectl => k8s.io/kubectl v0.0.0-20191016120415-2ed914427d51
+	k8s.io/kubelet => k8s.io/kubelet v0.0.0-20191016114556-7841ed97f1b2
+	k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.0.0-20191016115753-cf0698c3a16b
+	k8s.io/metrics => k8s.io/metrics v0.0.0-20191016113814-3b1a734dba6e
+	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.0.0-20191016112829-06bb3c9d77c9
+)
+
+replace github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503-38ab9da00309 // Required by Helm
+replace github.com/openshift/api => github.com/openshift/api v0.0.0-20190924102528-32369d4db2ad // Required until https://github.com/operator-framework/operator-lifecycle-manager/pull/1241 is resolved
+```
+
+- Run `go mod tidy` to update the project modules
+- Run the command `operator-sdk generate k8s` to ensure that your resources will be updated
+- Run the command `operator-sdk generate crds` to regenerate CRDs
+
 ### Bug Fixes and Improvements for Metrics
 
-There were some changes to the default implementation of the metrics export. These changes require the `cmd/main.go` be updated as follows.
+There are changes to the default implementation of the metrics export. These changes require `cmd/main.go to be updated as follows.
 
 Replace:
 
@@ -940,9 +983,22 @@ func serveCRMetrics(cfg *rest.Config, operatorNs string) error {
 
 ### Breaking changes
 
-#### Remove Ansible container sidecar
+#### `TestCtx` in `pkg/test` has been deprecated
+ 
+ The type name `TestCtx` in `pkg/test` has been deprecated and renamed to `Context`. Users of the e2e framework should do the following:
+ 
+ - Replace `TestCtx` with `Context`
+ - Replace `NewTestCtx` with `NewContext`
 
-The additional of the dependency `inotify-tools` on Ansible based-operator images is deprecated and it will be removed in the next versions. In this way, update the `deploy/operator.yaml` file as follows.
+#### Scorecard only supports YAML config files
+  
+The scorecard feature now only supports YAML config files. Any config file with other extension is deprecated and should be changed for the YAML format. For further information see [`scorecard config file`](https://github.com/operator-framework/operator-sdk/blob/v0.16.x/doc/test-framework/scorecard.md#config-file)
+  
+### Breaking Changes for Ansible 
+
+#### Remove Ansible container sidecar 
+
+The Ansible logs are now are outputted in the operator container and has no long need for the Ansible container sidecar. To reflect this change, update the `deploy/operator.yaml` file as follows. 
 
 Remove:
 
@@ -972,6 +1028,19 @@ With:
 ```yaml
 - name: {{your operator name which is the value of metadata.name in this file}}
 ```
+
+By default the full Ansible logs will not be output, however, you can setup it via the `ANSIBLE_DEBUG_LOGS` environment variable in the `deploy/operator.yaml` file. See:
+
+```
+...
+- name: ANSIBLE_DEBUG_LOGS
+  value: "True"
+...
+```
+
+**NOTE:** The dependency `inotify-tools` on Ansible based-operator images has been deprecated since its usage was required just because of this container sidecar. It will be removed for the next versions. 
+- Now, you can use the environmentt 
+
 #### Migration to Ansible collections
 
 The core Ansible Kubernetes modules have been moved to the [`community.kubernetes` Ansible collection][kubernetes-ansible-collection]. Future development of the modules will occur there, with only critical bugfixes going into the modules in core. Additionally, the `operator_sdk.util` collection is no longer installed by default in the base image. Instead, users should add a `requirements.yml` to their project root, with the following content:

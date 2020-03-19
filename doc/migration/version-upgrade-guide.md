@@ -879,6 +879,10 @@ replace github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503
 replace github.com/openshift/api => github.com/openshift/api v0.0.0-20190924102528-32369d4db2ad // Required until https://github.com/operator-framework/operator-lifecycle-manager/pull/1241 is resolved
 ```
 
+- Run `go mod tidy` to update the project modules
+- Run the command `operator-sdk generate k8s` to ensure that your resources will be updated
+- Run the command `operator-sdk generate crds` to regenerate CRDs
+
 ### Bug Fixes and Improvements for Metrics
 
 There are changes to the default implementation of the metrics export. These changes require `cmd/main.go to be updated as follows.
@@ -1055,7 +1059,25 @@ RUN ansible-galaxy collection install -r ${HOME}/requirements.yml \
  && chmod -R ug+rwx ${HOME}/.ansible
 ```
 
-## Unreleased (Master branch)
+## Unreleased (Master Branch)
+
+### Breaking changes
+
+#### In the test-framework
+
+The methods `ctx.GetOperatorNamespace()` and `ctx.GetWatchNamespace()` was added pkg/test in order to replace `ctx.GetNamespace()` which is deprecated. In this way replace the use of `ctx.GetNamespace()` in your project with `ctx.GetOperatorNamespace()`
+
+### Breaking Changes on Commands
+
+This release contains breaking changes in some commands.
+
+- The --namespace flag from `operator-sdk run --local` command, `operator-sdk test --local` command and `operator-sdk cleanup` command was deprecated and was replaced by --watch-namespace and --operator-namespace .
+
+Note that --watch-namespace can be used to set the namespace(s) which the operator will watch for changes. It will set the environment variable WATCH_NAMESPACE. Use explicitly an empty string to watch all namespaces or inform a List of namespaces such as "ns1,ns2" when the operator is cluster-scoped. If you use a List, then it needs contains the namespace where the operator is "deployed" in since the default metrics implementation will manage resources in the Operator's namespace. By default, it will be the Operator Namespace.
+
+Then, use the flag --operator-namespace to inform the namespace where the Operator will be "deployed" in and then, it will set the environment variable OPERATOR_NAMESPACE. If this value is not set, then it will be the namespace defined as default in the Kubeconfig.
+
+NOTE: For more information check the PRs which are responsible for the above changes [#2617](https://github.com/operator-framework/operator-sdk/pull/2617).
 
 [legacy-kubebuilder-doc-crd]: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 [v0.8.2-go-mod]: https://github.com/operator-framework/operator-sdk/blob/28bd2b0d4fd25aa68e15d928ae09d3c18c3b51da/internal/pkg/scaffold/go_mod.go#L40-L94
