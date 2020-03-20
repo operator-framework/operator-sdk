@@ -64,7 +64,11 @@ Scorecard will ship with an example custom test that end users could use as a re
 
 Scorecard internal tests will migrate to the custom test format and therefore be externalized from the scorecard binary itself.
 
-#### Story 4 (optional)
+#### Story 4
+
+Scorecard would support testing a bundle image.  
+
+#### Story 5 (optional)
 
 Scorecard would support the creation of a Kuttl test image.  This custom test would execute kuttl to perform testing enabling scorecard users a means to write tests using kuttl but have the result integrated into scorecard results.  
 
@@ -83,11 +87,45 @@ This proposal outlines the end-user facing components that make up a custom test
 A custom test is based on a container image, that image is created by
 the end-user using whatever tools they want to use.
 
-The test image must produce log output that conforms to the scorecard Test Result output.
+The test image must produce log output that conforms to the scorecard Test Result output.  Here is a sample of test output in the required format:
+```
+    {
+      "name": "Spec fields with descriptors",
+      "description": "All spec fields have matching descriptors in the CSV",
+      "labels": {
+        "necessity": "required",
+        "suite": "olm",
+        "test": "specdescriptorstest"
+      },
+      "state": "fail",
+      "suggestions": [
+        "Add a spec descriptor for size"
+      ],
+      "crname": "example-memcached"
+    },
+```
 
 The test image will be executed as a Pod by the scorecard with a restart policy of `never`.
 
 When executing a scorecard test, scorecard will create a ConfigMap holding the scorecard configuration manifests such as the Custom Resource or Bundle being tested.  This ConfigMap can then be mounted into the custom test image and used within the test execution.  
+
+The ConfigMap would be mounted into the test container at the following location:
+```
+/scorecard/config
+```
+
+For the case of testing a bundle image, the following command:
+```
+operator-sdk scorecard --bundle-image=quay.io/myorg/mytest
+```
+
+In this case, for each test execution, we could construct:
+
+ * A ConfigMap containing the required test configuration for the test.
+ * A PodSpec with the containers being the bundle image, the test image, and an init container that copies the bundle files from the bundle image into the test image at a specific place (using a shared emptyDir volume mount) (e.g. /scorecard/bundle)
+ * We would also mount the ConfigMap into the test image container (e.g. /scorecard/config)
+
+For this, scorecard would need to support bundle images which is included as a User Story in this proposal.  If the bundle image were to contain the scorecard configuration it might be possble to use that for running the scorecard test as opposed to having a scorecard configuration outside of the bundle image being used.
 
 #### Test Output
 
@@ -118,9 +156,9 @@ The developer of a custom test would have a workflow similar to:
 
 In this design proposal, custom tests are Pod manifests in YAML that run a custom test image.
 
-Note that is would also be possible to add a resource limit to the scorecard configuration as shown in the example below.  Those resource limits would be applied to custom tests that are executed allowing for some control as to how much resources are available for the test execution.
+Note that it would also be possible to add a resource limit to the scorecard configuration as shown in the example below.  Those resource limits would be applied to custom tests that are executed allowing for some control as to how much resources are available for the test execution.
 
-Custom tests (ie Pod manifests) would be accessible via URL or from a local disk location.  Custom test locations would be configured from within the scorecard configuration 
+Custom tests (i.e. Pod manifests) would be accessible from a local disk location.  Custom test locations would be configured from within the scorecard configuration 
 file.  Custom test labels would be also in the scorecard configuration file whereas the scorecard could pick tests to run by test labels.  For example, the scorecard configuration might be as follows to indicate the presence of custom tests from different sources:
 ```
 scorecard:
@@ -137,8 +175,8 @@ scorecard:
         memory: "100Mi"
       test-path:
         - "tests/here/ondisk"
-        - "https://github.com/someisv/tests"
-        - "https://github.com/operator-framework/operator-sdk/scorecard-tests"
+        - "someisv/tests"
+        - "operator-sdk/scorecard-tests"
       cr-manifest:
         - "deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml"
         - "deploy/crds/cache.example.com_v1alpha1_memcached_cr2.yaml"
@@ -221,4 +259,5 @@ The proposed design focuses heavily on separation of concerns, turning scorecard
 
 ## Reference Material
 
-<https://github.com/kudobuilder/kuttl>
+[Original Proposal]<https://github.com/operator-framework/operator-sdk/pull/2624>
+[kuttl information] <https://github.com/kudobuilder/kuttl>
