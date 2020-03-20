@@ -22,6 +22,8 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/spf13/cobra"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func NewCmd() *cobra.Command {
@@ -44,7 +46,7 @@ func printDepsFunc(cmd *cobra.Command, args []string) error {
 	projutil.MustInProjectRoot()
 
 	if err := printDeps(); err != nil {
-		return fmt.Errorf("print deps failed: %v", err)
+		log.Fatalf("Print deps failed: %v", err)
 	}
 	return nil
 }

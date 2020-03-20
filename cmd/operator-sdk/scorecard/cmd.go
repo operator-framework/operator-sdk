@@ -66,8 +66,10 @@ func NewCmd() *cobra.Command {
 				}
 			}
 
-			err := c.RunTests()
-			return err
+			if err := c.RunTests(); err != nil {
+				log.Fatal(err)
+			}
+			return nil
 		},
 	}
 

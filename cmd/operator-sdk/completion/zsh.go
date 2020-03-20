@@ -17,6 +17,7 @@ package completion
 import (
 	"os"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -25,7 +26,10 @@ func newZshCmd() *cobra.Command {
 		Use:   "zsh",
 		Short: "Generate zsh completions",
 		RunE: func(cmd *cobra.Command, cmdArgs []string) error {
-			return cmd.Root().GenZshCompletion(os.Stdout)
+			if err := cmd.Root().GenZshCompletion(os.Stdout); err != nil {
+				log.Fatal(err)
+			}
+			return nil
 		},
 	}
 }

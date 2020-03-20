@@ -117,7 +117,10 @@ func testLocalAnsibleFunc() error {
 	dc := exec.Command("molecule", testArgs...)
 	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", test.TestNamespaceEnv, tlConfig.namespace))
 	dc.Dir = projutil.MustGetwd()
-	return projutil.ExecCmd(dc)
+	if err := projutil.ExecCmd(dc); err != nil {
+		log.Fatal(err)
+	}
+	return nil
 }
 
 func testLocalGoFunc(cmd *cobra.Command, args []string) error {
@@ -245,7 +248,7 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 		if errors.As(err, &exitErr) {
 			os.Exit(exitErr.ExitCode())
 		}
-		return fmt.Errorf("failed to build test binary: %v", err)
+		log.Fatalf("Failed to build test binary: %v", err)
 	}
 	log.Info("Local operator test successfully completed.")
 	return nil

@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/prometheus/common/log"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -38,12 +38,13 @@ in a Pod inside a cluster. Developers wanting to run their operator locally
 should use "run --local" instead.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			logf.SetLogger(zap.Logger())
-			err := setAnsibleEnvVars(flags)
-			if err != nil {
-				log.Error(err)
-				os.Exit(1)
+			if err := setAnsibleEnvVars(flags); err != nil {
+				log.Fatal(err)
 			}
-			return ansible.Run(flags)
+			if err := ansible.Run(flags); err != nil {
+				log.Fatal(err)
+			}
+			return nil
 		},
 	}
 	flags = aoflags.AddTo(runAnsibleCmd.Flags())

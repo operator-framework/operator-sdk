@@ -161,30 +161,30 @@ func newFunc(cmd *cobra.Command, args []string) error {
 			repo = path.Join(projutil.GetGoPkg(), projectName)
 		}
 		if err := doGoScaffold(); err != nil {
-			return err
+			log.Fatal(err)
 		}
 		if err := getDeps(); err != nil {
-			return err
+			log.Fatal(err)
 		}
 		if !skipValidation {
 			if err := validateProject(); err != nil {
-				return err
+				log.Fatal(err)
 			}
 		}
 
 	case projutil.OperatorTypeAnsible:
 		if err := doAnsibleScaffold(); err != nil {
-			return err
+			log.Fatal(err)
 		}
 	case projutil.OperatorTypeHelm:
 		if err := doHelmScaffold(); err != nil {
-			return err
+			log.Fatal(err)
 		}
 	}
 
 	if gitInit {
 		if err := initGit(); err != nil {
-			return err
+			log.Fatal(err)
 		}
 	}
 

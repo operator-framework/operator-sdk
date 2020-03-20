@@ -69,11 +69,17 @@ func migrateRun(cmd *cobra.Command, args []string) error {
 	opType := projutil.GetOperatorType()
 	switch opType {
 	case projutil.OperatorTypeAnsible:
-		return migrateAnsible()
+		if err := migrateAnsible(); err != nil {
+			log.Fatal(err)
+		}
 	case projutil.OperatorTypeHelm:
-		return migrateHelm()
+		if err := migrateHelm(); err != nil {
+			log.Fatal(err)
+		}
+	default:
+		return fmt.Errorf("operator of type %s cannot be migrated", opType)
 	}
-	return fmt.Errorf("operator of type %s cannot be migrated", opType)
+	return nil
 }
 
 func verifyFlags() error {
