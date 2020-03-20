@@ -4,6 +4,8 @@
 
 ### Changed
 
+- The scorecard when creating a Custom Resource, will produce a message to the user if that CR already exists. ([#2683](https://github.com/operator-framework/operator-sdk/pull/2683))
+
 ### Deprecated
 
 ### Removed
