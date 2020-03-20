@@ -12,7 +12,7 @@ if [ -z "$COMMIT_RANGE" ] || ! git rev-list --quiet $COMMIT_RANGE; then
 	COMMIT_RANGE="master"
 fi
 
-old_changes=$(git diff --name-only $COMMIT_RANGE -- ./doc | wc -l)
+old_changes=$(git diff --name-only $COMMIT_RANGE -- ./doc | wc -l) | grep -v "^doc/proposals/"
 new_changes=$(git diff --name-only $COMMIT_RANGE -- ./website | wc -l)
 
 if [[ "$old_changes" -ne 0 && "$new_changes" -eq 0 ]]; then
