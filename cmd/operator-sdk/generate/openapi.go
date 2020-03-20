@@ -17,9 +17,9 @@ package generate
 import (
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal/genutil"
+
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 

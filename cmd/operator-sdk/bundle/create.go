@@ -21,10 +21,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	catalog "github.com/operator-framework/operator-sdk/internal/scaffold/olm-catalog"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
+	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )

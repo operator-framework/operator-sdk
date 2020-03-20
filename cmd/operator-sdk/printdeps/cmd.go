@@ -17,13 +17,13 @@ package printdeps
 import (
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/spf13/cobra"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func NewCmd() *cobra.Command {
