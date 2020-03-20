@@ -86,6 +86,10 @@ var installModeFormat = "InstallModeType=[ns1,ns2[, ...]]"
 
 func (c *OLMCmd) AddToFlagSet(fs *pflag.FlagSet) {
 	prefix := "[olm only] "
+	fs.StringVar(&c.OperatorNamespace, "operator-namespace", "",
+		prefix+"The namespace where operator resources are created in --olm mode. It "+
+			"must already exist in the cluster or be defined in"+
+			" a manifest passed to IncludePaths.")
 	fs.StringVar(&c.ManifestsDir, "manifests", "",
 		prefix+"Directory containing package manifest and operator bundles.")
 	fs.StringVar(&c.OperatorVersion, "operator-version", "",

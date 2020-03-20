@@ -20,7 +20,7 @@ provisioner:
   inventory:
     group_vars:
       all:
-        namespace: ${TEST_NAMESPACE:-osdk-test}
+        namespace: ${TEST_OPERATOR_NAMESPACE:-osdk-test}
     host_vars:
       localhost:
         ansible_python_interpreter: '{{ ansible_playbook_python }}'

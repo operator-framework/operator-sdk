@@ -71,7 +71,7 @@ provisioner:
   inventory:
     group_vars:
       all:
-        namespace: ${TEST_NAMESPACE:-osdk-test}
+        namespace: ${TEST_OPERATOR_NAMESPACE:-osdk-test}
         kubeconfig_file: ${MOLECULE_EPHEMERAL_DIRECTORY}/kubeconfig
     host_vars:
       localhost:

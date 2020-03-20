@@ -94,7 +94,7 @@ The options supported by the default scenario are:
 | :---                 | :---    | :---    |
 | KUBE_VERSION | 1.16 | The Kubernetes version to deploy |
 | TEST_CLUSTER_PORT | 9443 | The port on the host to expose the Kubernetes API |
-| TEST_NAMESPACE | osdk-test | The namespace to run your role against |
+| TEST_OPERATOR_NAMESPACE | osdk-test | The namespace to run your role against |
 
 #### cluster
 
@@ -145,7 +145,7 @@ The options supported by the default scenario are:
 | OPERATOR_IMAGE | None | *Required* The image to use when deploying the operator into the cluster |
 | OPERATOR_PULL_POLICY | Always | The pull policy to use when deploying the operator into the cluster |
 | KUBECONFIG | ~/.kube/config | The path to the Kubeconfig for the cluster to test against |
-| TEST_NAMESPACE | osdk-test | The namespace to run your role against |
+| TEST_OPERATOR_NAMESPACE | osdk-test | The namespace to run your role against |
 
 #### test-local
 The test-local scenario runs a full end-to-end test of your operator that does not require an existing
@@ -193,7 +193,7 @@ The options supported by the default scenario are:
 | :---                 | :---    | :---    |
 | KUBE_VERSION | 1.16 | The Kubernetes version to deploy |
 | TEST_CLUSTER_PORT | 10443 | The port on the host to expose the Kubernetes API |
-| TEST_NAMESPACE | osdk-test | The namespace to deploy the operator and associated resources |
+| TEST_OPERATOR_NAMESPACE | osdk-test | The namespace to deploy the operator and associated resources |
 
 #### converge vs test
 The two most common molecule commands for testing during development are `molecule test` and `molecule converge`.

@@ -15,6 +15,7 @@
 package test
 
 import (
+	"os"
 	"testing"
 	"time"
 
@@ -27,8 +28,13 @@ import (
 type Context struct {
 	id         string
 	cleanupFns []cleanupFn
-	namespace  string
-	t          *testing.T
+	// the  namespace is deprecated
+	// todo: remove before 1.0.0
+	// use operatorNamespace or watchNamespace  instead
+	namespace         string
+	operatorNamespace string
+	watchNamespace    string
+	t                 *testing.T
 
 	namespacedManPath  string
 	client             *frameworkClient
@@ -56,14 +62,24 @@ func (f *Framework) newContext(t *testing.T) *Context {
 	// Context is used among others for namespace names where '/' is forbidden and must be 63 characters or less
 	id := "osdk-e2e-" + uuid.New()
 
-	var namespace string
-	if f.singleNamespaceMode {
-		namespace = f.Namespace
+	var operatorNamespace string
+	_, ok := os.LookupEnv(TestOperatorNamespaceEnv)
+	if ok {
+		operatorNamespace = f.OperatorNamespace
 	}
+
+	watchNamespace := operatorNamespace
+	ns, ok := os.LookupEnv(TestWatchNamespaceEnv)
+	if ok {
+		watchNamespace = ns
+	}
+
 	return &Context{
 		id:                 id,
 		t:                  t,
-		namespace:          namespace,
+		namespace:          operatorNamespace,
+		operatorNamespace:  operatorNamespace,
+		watchNamespace:     watchNamespace,
 		namespacedManPath:  *f.NamespacedManPath,
 		client:             f.Client,
 		kubeclient:         f.KubeClient,
