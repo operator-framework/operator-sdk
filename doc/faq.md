@@ -60,8 +60,69 @@ USER 1001
 If you aren't sure what dependencies are required, start up a container using the image in the `FROM` line as root. That will look something like this.
 `docker run -u 0 -it --rm --entrypoint /bin/bash quay.io/operator-framework/ansible-operator:<sdk-tag-version>`
 
+## I keep seeing errors like "Failed to watch", how do I fix this?
+
+If you run into the following error message:
+
+```
+E0320 15:42:17.676888       1 reflector.go:280] pkg/mod/k8s.io/client-go@v0.0.0-20191016111102-bec269661e48/tools/cache/reflector.go:96: Failed to watch *v1.ImageStreamTag: unknown (get imagestreamtags.image.openshift.io)
+{"level":"info","ts":1584718937.766342,"logger":"controller_memcached","msg":"ImageStreamTag resource not found. 
+``` 
+
+Then, it means that your Operator is unable to watch the resource. This scenario can be faced because the Operator does not have the permission [(RBAC)[rbac]] to `Watch` the resource, or may be the Schema from the API used, did not implement this verb. In this way the solution would be to grant the permission in the `role.yaml` , or when it is not  possible, use the [client.Reader][client.Reader] instead of the client provided.
+
+The client provided will work with a cache, and because of this, the `WATCH` verb is required.   
+
+**Example**
+
+Following are the changes in the `conttroler.go`,  to address the need to get the resource via the [client.Reader][client.Reader]. See: 
+
+```go 
+
+import (
+	...
+	imagev1 "github.com/openshift/api/image/v1"
+)
+
+... 
+
+// newReconciler returns a new reconcile.Reconciler
+func newReconciler(mgr manager.Manager) reconcile.Reconciler {
+	return &ReconcileMemcached{client: mgr.GetClient(), scheme: mgr.GetScheme(), APIReader: mgr.GetAPIReader() }
+
+}
+
+...
+
+// ReconcileMemcached reconciles a Memcached object
+type ReconcileMemcached struct {
+	// TODO: Clarify the split client
+	// This client, initialized using mgr.Client() above, is a split client
+	// that reads objects from the cache and writes to the apiserver
+	client client.Client
+	scheme *runtime.Scheme
+	APIReader client.Reader // the APIReader  will not use the cache
+}
+
+...
+func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	
+	// Get the ImageStreamTag from OCP API which has not the WATCH verb.
+	img := &imagev1.ImageStreamTag{}
+	err = r.APIReader.Get(context.TODO(), types.NamespacedName{Name: fmt.Sprintf("%s:%s", "example-name", "example-tag"), img)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			reqLogger.Info("resource not found")
+		} else {
+			reqLogger.Error(err, "unexpected error")
+		}
+	}
+```
+
 [kube-apiserver_options]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options
 [controller-runtime_faq]: https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md#q-how-do-i-have-different-logic-in-my-reconciler-for-different-types-of-events-eg-create-update-delete
 [finalizer]: https://github.com/operator-framework/operator-sdk/blob/master/doc/user-guide.md#handle-cleanup-on-deletion
 [gc-metrics]:./user/metrics/README.md#garbage-collection
 [cr-faq]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md
+[client.Reader]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#Reader
+[rbac]:https://kubernetes.io/docs/reference/access-authn-authz/rbac/
