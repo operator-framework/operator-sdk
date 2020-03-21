@@ -842,7 +842,7 @@ See the [CHANGELOG](https://github.com/operator-framework/operator-sdk/blob/mast
 
 ### modules
 
-- Ensure the the following `require` modules and `replace` directives with the specific versions are present in your `go.mod` file:
+- Ensure that the following `require` modules and `replace` directives with the specific versions are present in your `go.mod` file:
 
 ```
 require (
@@ -998,7 +998,7 @@ The scorecard feature now only supports YAML config files. Any config file with 
 
 #### Remove Ansible container sidecar 
 
-The Ansible logs are now are outputted in the operator container and has no long need for the Ansible container sidecar. To reflect this change, update the `deploy/operator.yaml` file as follows. 
+The Ansible logs are now outputted in the operator container, and has no need for the Ansible container sidecar. To reflect this change, update the `deploy/operator.yaml` file as follows. 
 
 Remove:
 
