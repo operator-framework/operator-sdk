@@ -79,13 +79,13 @@ E0320 15:42:17.676888       1 reflector.go:280] pkg/mod/k8s.io/client-go@v0.0.0-
 {"level":"info","ts":1584718937.766342,"logger":"controller_memcached","msg":"ImageStreamTag resource not found. 
 ``` 
 
-Then, it means that your Operator is unable to watch the resource This scenario can be faced because the Operator has not the permission [(RBAC)[rbac]] to `Watch` the resource or may the Schema from the API used did not implement this verb. In this way the solution would be grant the permission in the `role.yaml` or when it is not  possible use the [client.Reader][client.Reader] instead of the client provide.
+Then, it means that your Operator is unable to watch the resource. This scenario can be faced because the Operator does not have the permission [(RBAC)[rbac]] to `Watch` the resource, or may be the Schema from the API used, did not implement this verb. In this way the solution would be to grant the permission in the `role.yaml` , or when it is not  possible, use the [client.Reader][client.Reader] instead of the client provided.
 
-The client provide will work with an cache and then, because of this the `WATCH` verb is required.  
+The client provided will work with a cache, and because of this, the `WATCH` verb is required.   
 
 **Example**
 
-Following the changes in the `conttroler.go` to address the need to get the resource via the [client.Reader][client.Reader]. See: 
+Following are the changes in the `conttroler.go`,  to address the need to get the resource via the [client.Reader][client.Reader]. See: 
 
 ```go 
 
