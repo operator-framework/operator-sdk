@@ -87,22 +87,27 @@ This proposal outlines the end-user facing components that make up a custom test
 A custom test is based on a container image, that image is created by
 the end-user using whatever tools they want to use.
 
-The test image must produce log output that conforms to the scorecard Test Result output.  Here is a sample of test output in the required format:
+The test image must produce container log output that conforms to the scorecard Test Result output.  The output is an array of Test Results, so a test image could contain multiple tests if necessary.  Here is a sample of test output in the required format:
 ```
-    {
-      "name": "Spec fields with descriptors",
-      "description": "All spec fields have matching descriptors in the CSV",
-      "labels": {
-        "necessity": "required",
-        "suite": "olm",
-        "test": "specdescriptorstest"
+    [
+      {
+	      "name": "Spec fields with descriptors",
+	      "description": "All spec fields have matching descriptors in the CSV",
+	      "state": "fail",
+	      "suggestions": [
+		"Add a spec descriptor for size"
+	      ],
+	      "crname": "example-memcached"
+      }, 
+      {
+	      "name": "Some other test",
+	      "description": "Another test on the CSV",
+	      "state": "pass",
+	      "suggestions": [
+	      ],
+	      "crname": "example-memcached"
       },
-      "state": "fail",
-      "suggestions": [
-        "Add a spec descriptor for size"
-      ],
-      "crname": "example-memcached"
-    },
+    ]
 ```
 
 The test image will be executed as a Pod by the scorecard with a restart policy of `never`.
@@ -219,17 +224,9 @@ With the above custom test capability, there is benefit to Red Hat in migrating 
 
 Today there are 2 internal scorecard tests that make use of the scorecard proxy, with these tests migrating to the custom test format, the scorecard proxy is likely not necessary which would also reduce the overall scorecard implementation complexity.
 
-### Test Plan
-
-**Note:** *Section not required until targeted at a release.*
-
 ### Upgrade / Downgrade Strategy
 
 To implement this custom test functionality, additions or changes to the existing scorecard configuration file and command line flags would be necessary and would not be supported in previous scorecard releases.
-
-## Implementation History
-
- * Proposal initiated in March 2020.
 
 ## Drawbacks
 
@@ -260,4 +257,5 @@ The proposed design focuses heavily on separation of concerns, turning scorecard
 ## Reference Material
 
 [Original Proposal]<https://github.com/operator-framework/operator-sdk/pull/2624>
+
 [kuttl information] <https://github.com/kudobuilder/kuttl>
