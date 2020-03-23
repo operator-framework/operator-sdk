@@ -54,7 +54,7 @@ With this proposal, the scorecard will continue to setup and teardown the Operat
 
 #### Story 1
 
-Scorecard users will be able to construct custom tests and execute them using the scorecard.
+I am as an Operator developer, I'd like to be able to construct custom tests and execute them via the scorecard.
 
 #### Story 2
 
