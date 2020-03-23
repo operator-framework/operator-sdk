@@ -992,13 +992,13 @@ func serveCRMetrics(cfg *rest.Config, operatorNs string) error {
 
 #### Scorecard only supports YAML config files
   
-The scorecard feature now only supports YAML config files. Any config file with other extension is deprecated and should be changed for the YAML format. For further information see [`scorecard config file`](https://github.com/operator-framework/operator-sdk/blob/v0.16.x/doc/test-framework/scorecard.md#config-file)
+The scorecard feature now only supports YAML config files. Config files with other extensions are no longer supported and should be changed to the YAML format. For further information see [`scorecard config file`](https://github.com/operator-framework/operator-sdk/blob/v0.16.x/doc/test-framework/scorecard.md#config-file)
   
 ### Breaking Changes for Ansible 
 
 #### Remove Ansible container sidecar 
 
-The Ansible logs are now outputted in the operator container, and has no need for the Ansible container sidecar. To reflect this change, update the `deploy/operator.yaml` file as follows. 
+The Ansible logs are now output in the operator container, so there is no longer a need for the Ansible container sidecar. To reflect this change, update the `deploy/operator.yaml` file as follows. 
 
 Remove:
 
@@ -1037,9 +1037,6 @@ By default the full Ansible logs will not be output, however, you can setup it v
   value: "True"
 ...
 ```
-
-**NOTE:** The dependency `inotify-tools` on Ansible based-operator images has been deprecated since its usage was required just because of this container sidecar. It will be removed for the next versions. 
-- Now, you can use the environmentt 
 
 #### Migration to Ansible collections
 
