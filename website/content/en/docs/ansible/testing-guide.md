@@ -1,4 +1,8 @@
-# Testing Operator SDK Ansible-based Operators with Molecule
+---
+title: Ansible Based Operator Testing with Molecule
+linkTitle: Testing with Molecule
+weight: 20
+---
 
 ## Getting started
 
