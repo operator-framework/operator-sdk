@@ -62,7 +62,7 @@ Scorecard will ship with an example custom test that end users could use as a re
 
 #### Story 3
 
-Scorecard internal tests will migrate to the custom test format and therefore be externalized from the scorecard binary itself.
+As a scorecard developer I would like for custom tests and internal scorecard tests to share the same architecture to provide a cleaner scorecard design and implementation. Scorecard internal tests will migrate to the custom test format and therefore be externalized from the scorecard binary itself.
 
 #### Story 4
 
