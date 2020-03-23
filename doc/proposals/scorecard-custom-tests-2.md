@@ -54,7 +54,7 @@ With this proposal, the scorecard will continue to setup and teardown the Operat
 
 #### Story 1
 
-Scorecard users will be able to construct custom tests and execute them using the scorecard.
+I am as an Operator developer, I'd like to be able to construct custom tests and execute them via the scorecard.
 
 #### Story 2
 
@@ -66,7 +66,7 @@ As a scorecard developer I would like for custom tests and internal scorecard te
 
 #### Story 4
 
-Scorecard would support testing a bundle image.  
+I am as an Operator developer, would like to be able to use the Scorecard feature to test the [OLM Bundles](https://github.com/operator-framework/operator-registry/tree/v1.5.3#manifest-format) created for my project.
 
 #### Story 5 (optional)
 
