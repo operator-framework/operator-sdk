@@ -21,13 +21,13 @@ import (
 	"github.com/pborman/uuid"
 )
 
-func TestNewTestCtxCreatesID(t *testing.T) {
+func TestNewContextCreatesID(t *testing.T) {
 	fakeNamespacedManPath := "fakePath"
 	Global = &Framework{
 		NamespacedManPath: &fakeNamespacedManPath,
 	}
 
-	ctx := NewTestCtx(t)
+	ctx := NewContext(t)
 
 	if strings.Index(ctx.GetID(), "osdk-e2e-") != 0 {
 		t.Error("ID should start with osdk-e2e-")

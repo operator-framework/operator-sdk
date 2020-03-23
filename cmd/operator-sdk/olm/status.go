@@ -34,6 +34,7 @@ func newStatusCmd() *cobra.Command {
 		},
 	}
 
+	cmd.Flags().StringVar(&mgr.OLMNamespace, "olm-namespace", olm.DefaultOLMNamespace, "namespace where OLM is installed")
 	mgr.AddToFlagSet(cmd.Flags())
 	return cmd
 }

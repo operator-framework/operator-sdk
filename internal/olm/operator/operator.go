@@ -21,6 +21,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/operator-framework/operator-sdk/internal/olm"
+
 	"github.com/spf13/pflag"
 )
 
@@ -73,6 +75,8 @@ type OLMCmd struct { // nolint:golint
 	// OperatorNamespace must already exist in the cluster or be defined in
 	// a manifest passed to IncludePaths.
 	OperatorNamespace string
+	// OLMNamespace is the namespace in which OLM is installed.
+	OLMNamespace string
 	// Timeout dictates how long to wait for a REST call to complete. A call
 	// exceeding Timeout will generate an error.
 	Timeout time.Duration
@@ -86,6 +90,12 @@ var installModeFormat = "InstallModeType=[ns1,ns2[, ...]]"
 
 func (c *OLMCmd) AddToFlagSet(fs *pflag.FlagSet) {
 	prefix := "[olm only] "
+	fs.StringVar(&c.OLMNamespace, "olm-namespace", olm.DefaultOLMNamespace,
+		prefix+"The namespace where OLM is installed")
+	fs.StringVar(&c.OperatorNamespace, "operator-namespace", "",
+		prefix+"The namespace where operator resources are created in --olm mode. It "+
+			"must already exist in the cluster or be defined in"+
+			" a manifest passed to IncludePaths.")
 	fs.StringVar(&c.ManifestsDir, "manifests", "",
 		prefix+"Directory containing package manifest and operator bundles.")
 	fs.StringVar(&c.OperatorVersion, "operator-version", "",

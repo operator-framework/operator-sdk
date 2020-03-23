@@ -46,7 +46,7 @@ Following are some requirements for the operator project which would be  checked
 
 ## Running the Scorecard
 
-1. Setup the `.osdk-scorecard.yaml` configuration file in your project.. See [Config file](#config-file)
+1. Setup the `.osdk-scorecard.yaml` configuration file in your project. See [Config file](#config-file)
 2. Create the namespace defined in the RBAC files(`role_binding`)
 3. Then, run the scorecard, for example `$ operator-sdk scorecard`. See the [Command args](#command-args) to check its options.
 
@@ -58,7 +58,7 @@ The scorecard is configured by a config file that allows configuring internal pl
 
 ### Config File
 
-To use scorecard, you need to create a config file which by default will be `<project_dir>/.osdk-scorecard.*`. The following is an example of what a YAML formatted config file may look like:
+To use scorecard, you need to create a config file which by default will be `<project_dir>/.osdk-scorecard.yaml`.The following is an example of how the config file may look:
 
 ```yaml
 scorecard:
@@ -92,7 +92,7 @@ While most configuration is done via a config file, there are a few important ar
 | Flag        | Type   | Description   |
 | --------    | -------- | -------- |
 | `--bundle`, `-b`  | string |  The path to a bundle directory used for the bundle validation test. |
-| `--config`  | string | Path to config file (default `<project_dir>/.osdk-scorecard`; file type and extension can be any of `.yaml`, `.json`, or `.toml`). If a config file is not provided and a config file is not found at the default location, the scorecard will exit with an error. |
+| `--config`  | string | Path to config file (default `<project_dir>/.osdk-scorecard.yaml`; file type and extension must be `.yaml`). If a config file is not provided and a config file is not found at the default location, the scorecard will exit with an error. |
 | `--output`, `-o`  | string | Output format. Valid options are: `text` and `json`. The default format is `text`, which is designed to be a simpler human readable format. The `json` format uses the JSON schema output format used for plugins defined later in this document. |
 | `--kubeconfig`, `-o`  | string |  path to kubeconfig. It sets the kubeconfig internally for internal plugins. |
 | `--version`  | string |  The version of scorecard to run, v1alpha2 is the default, valid values are v1alpha2. |
@@ -125,10 +125,11 @@ The `basic` and `olm` internal plugins have the same configuration fields:
 | `olm-deployed` | bool | indicates that the CSV and relevant CRD's have been deployed onto the cluster by the [Operator Lifecycle Manager (OLM)][olm] |
 | `kubeconfig` | string | path to kubeconfig. If both the global `kubeconfig` and this field are set, this field is used for the plugin |
 | `namespace` | string | namespace to run the plugins in. If not set, the default specified by the kubeconfig is used |
-| `init-timeout` | int | time in seconds until a timeout during initialization of the operator |
+| `init-timeout` | int | time in seconds until a timeout during initialization or cleanup of the operator |
 | `crds-dir` | string | path to directory containing CRDs that must be deployed to the cluster |
 | `namespaced-manifest` | string | manifest file with all resources that run within a namespace. By default, the scorecard will combine `service_account.yaml`, `role.yaml`, `role_binding.yaml`, and `operator.yaml` from the `deploy` directory into a temporary manifest to use as the namespaced manifest |
 | `global-manifest` | string | manifest containing required resources that run globally (not namespaced). By default, the scorecard will combine all CRDs in the `crds-dir` directory into a temporary manifest to use as the global manifest |
+| `proxy-port` | int | port for scorecard-proxy to listen to, default is port 8889 |
 
 ## Tests Performed
 
@@ -679,7 +680,7 @@ Once done, follow the steps in this [document][olm-deploy-operator] to bundle yo
 - As of now, using the scorecard with a CSV does not permit multiple CR manifests to be set through the CLI/config/CSV annotations. You will have to tear down your operator in the cluster, re-deploy, and re-run the scorecard for each CR being tested. In the future the scorecard will fully support testing multiple CR's without requiring users to teardown/standup each time.
 - You can either set `cr-manifest` or your CSV's [`metadata.annotations['alm-examples']`][olm-csv-alm-examples] to provide CR's to the scorecard, but not both.
 
-[cli-reference]: ../sdk-cli-reference.md#scorecard
+[cli-reference]: ../cli/operator-sdk_scorecard.md
 [writing-tests]: ./writing-e2e-tests.md
 [owned-crds]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md#owned-crds
 [alm-examples]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md#crd-templates

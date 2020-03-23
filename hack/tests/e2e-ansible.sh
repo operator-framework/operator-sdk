@@ -40,9 +40,7 @@ operator_logs() {
     header_text "Getting events"
     kubectl get events
     header_text "Getting operator logs"
-    kubectl logs deployment/memcached-operator -c operator
-    header_text "Getting Ansible logs"
-    kubectl logs deployment/memcached-operator -c ansible
+    kubectl logs deployment/memcached-operator
 }
 
 test_operator() {
@@ -109,7 +107,7 @@ test_operator() {
     fi
 
     header_text "Verify that config map requests skip the cache."
-    if ! kubectl logs deployment/memcached-operator -c operator | grep -e "Skipping cache lookup\".*"Path\":\"\/api\/v1\/namespaces\/default\/configmaps\/test-blacklist-watches\";
+    if ! kubectl logs deployment/memcached-operator | grep -e "Skipping cache lookup\".*"Path\":\"\/api\/v1\/namespaces\/default\/configmaps\/test-blacklist-watches\";
     then
         error_text "FAIL: test-blacklist-watches should not be accessible with the cache."
         operator_logs
@@ -157,7 +155,7 @@ test_operator() {
     fi
 
     header_text "Ensure that no errors appear in the log"
-    if kubectl logs deployment/memcached-operator -c operator | grep -i error;
+    if kubectl logs deployment/memcached-operator| grep -i error;
     then
         error_text "FAIL: the operator log includes errors"
         operator_logs

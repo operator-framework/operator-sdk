@@ -101,3 +101,9 @@ images/scorecard-proxy/scorecard-proxy
 # Test artifacts
 pkg/ansible/runner/testdata/valid.yaml
 /bin
+
+# Website
+website/public/
+website/resources/
+website/node_modules/
+website/tech-doc-hugo

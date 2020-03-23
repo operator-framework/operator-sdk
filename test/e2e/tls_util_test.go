@@ -82,9 +82,9 @@ func init() {
 // and CA TLS assets exist in the k8s cluster for a given cr,
 // the GenerateCert() simply returns those to the caller.
 func TestBothAppAndCATLSAssetsExist(t *testing.T) {
-	ctx := framework.NewTestCtx(t)
+	ctx := framework.NewContext(t)
 	defer ctx.Cleanup()
-	namespace, err := ctx.GetNamespace()
+	namespace, err := ctx.GetOperatorNamespace()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -127,9 +127,9 @@ func TestBothAppAndCATLSAssetsExist(t *testing.T) {
 // it won't verify the existing application TLS cert. Therefore, CertGenerator can't proceed
 // and returns an error to the caller.
 func TestOnlyAppSecretExist(t *testing.T) {
-	ctx := framework.NewTestCtx(t)
+	ctx := framework.NewContext(t)
 	defer ctx.Cleanup()
-	namespace, err := ctx.GetNamespace()
+	namespace, err := ctx.GetOperatorNamespace()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -153,9 +153,9 @@ func TestOnlyAppSecretExist(t *testing.T) {
 // TestOnlyCAExist tests the case where only the CA exists in the cluster;
 // GenerateCert can retrieve the CA and uses it to create a new application secret.
 func TestOnlyCAExist(t *testing.T) {
-	ctx := framework.NewTestCtx(t)
+	ctx := framework.NewContext(t)
 	defer ctx.Cleanup()
-	namespace, err := ctx.GetNamespace()
+	namespace, err := ctx.GetOperatorNamespace()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -182,9 +182,9 @@ func TestOnlyCAExist(t *testing.T) {
 // TestNoneOfCaAndAppSecretExist ensures that when none of the CA and Application TLS assets
 // exist, GenerateCert() creates both and put them into the k8s cluster.
 func TestNoneOfCaAndAppSecretExist(t *testing.T) {
-	ctx := framework.NewTestCtx(t)
+	ctx := framework.NewContext(t)
 	defer ctx.Cleanup()
-	namespace, err := ctx.GetNamespace()
+	namespace, err := ctx.GetOperatorNamespace()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -204,9 +204,9 @@ func TestNoneOfCaAndAppSecretExist(t *testing.T) {
 // TestCustomCA ensures that if a user provides a custom Key and Cert and the CA and Application TLS assets
 // do not exist, the GenerateCert method can use the custom CA to generate the TLS assest.
 func TestCustomCA(t *testing.T) {
-	ctx := framework.NewTestCtx(t)
+	ctx := framework.NewContext(t)
 	defer ctx.Cleanup()
-	namespace, err := ctx.GetNamespace()
+	namespace, err := ctx.GetOperatorNamespace()
 	if err != nil {
 		t.Fatal(err)
 	}

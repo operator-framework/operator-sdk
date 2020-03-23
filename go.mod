@@ -30,7 +30,6 @@ require (
 	github.com/pborman/uuid v1.2.0
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v1.2.1
-	github.com/prometheus/common v0.7.0
 	github.com/rogpeppe/go-internal v1.5.0
 	github.com/rubenv/sql-migrate v0.0.0-20191025130928-9355dd04f4b3 // indirect
 	github.com/sergi/go-diff v1.0.0
@@ -45,7 +44,7 @@ require (
 	golang.org/x/tools v0.0.0-20191018212557-ed542cd5b28a
 	gopkg.in/gorp.v1 v1.7.2 // indirect
 	gopkg.in/yaml.v2 v2.2.4
-	helm.sh/helm/v3 v3.0.1
+	helm.sh/helm/v3 v3.0.2
 	k8s.io/api v0.0.0
 	k8s.io/apiextensions-apiserver v0.0.0
 	k8s.io/apimachinery v0.0.0

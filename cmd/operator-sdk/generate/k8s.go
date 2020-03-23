@@ -20,6 +20,7 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal/genutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -54,5 +55,8 @@ func k8sFunc(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return genutil.K8sCodegen()
+	if err := genutil.K8sCodegen(); err != nil {
+		log.Fatal(err)
+	}
+	return nil
 }

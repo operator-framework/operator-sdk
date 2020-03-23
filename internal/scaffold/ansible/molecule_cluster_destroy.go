@@ -46,6 +46,8 @@ const moleculeClusterDestroyAnsibleTmpl = `---
   connection: local
   gather_facts: false
   no_log: "{{ molecule_no_log }}"
+  collections:
+    - community.kubernetes
 
   tasks:
     - name: Delete namespace

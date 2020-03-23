@@ -3,6 +3,10 @@
   hosts: localhost
   connection: local
   gather_facts: no
+  collections:
+    - community.kubernetes
   tasks:
-    - import_tasks: tasks/inventory_test.yml
-    - import_tasks: tasks/servicemonitor_test.yml
+    - name: Import all test files from tasks/
+      include_tasks: '{{ item }}'
+      with_fileglob:
+        - tasks/*_test.yml

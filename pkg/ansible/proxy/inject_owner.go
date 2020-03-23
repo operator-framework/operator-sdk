@@ -74,7 +74,7 @@ func (i *injectOwnerReferenceHandler) ServeHTTP(w http.ResponseWriter, req *http
 		k, err := getGVKFromRequestInfo(r, i.restMapper)
 		if err != nil {
 			// break here in case resource doesn't exist in cache
-			log.Info("Cache miss, can not find in rest mapper")
+			log.Error(err, "Cache miss, can not find in rest mapper")
 			break
 		}
 
@@ -82,7 +82,7 @@ func (i *injectOwnerReferenceHandler) ServeHTTP(w http.ResponseWriter, req *http
 		isVR, err := i.apiResources.IsVirtualResource(k)
 		if err != nil {
 			// break here in case we can not understand if virtual resource or not
-			log.Info("Unable to determine if virtual resource", "gvk", k)
+			log.Error(err, "Unable to determine if virtual resource", "gvk", k)
 			break
 		}
 

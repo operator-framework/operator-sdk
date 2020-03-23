@@ -41,6 +41,8 @@ const moleculeClusterPlaybookAnsibleTmpl = `---
   hosts: localhost
   connection: local
   gather_facts: no
+  collections:
+    - community.kubernetes
 
   tasks:
     - name: Ensure operator image is set

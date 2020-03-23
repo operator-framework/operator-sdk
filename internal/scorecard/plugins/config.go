@@ -31,6 +31,7 @@ type BasicAndOLMPluginConfig struct {
 	CRManifest         []string        `mapstructure:"cr-manifest"`
 	CSVManifest        string          `mapstructure:"csv-path"`
 	ProxyImage         string          `mapstructure:"proxy-image"`
+	ProxyPort          int             `mapstructure:"proxy-port"`
 	ProxyPullPolicy    v1.PullPolicy   `mapstructure:"proxy-pull-policy"`
 	CRDsDir            string          `mapstructure:"crds-dir"`
 	DeployDir          string          `mapstructure:"deploy-dir"`

@@ -28,11 +28,15 @@ import (
 
 func TestGenerateRoleScaffold(t *testing.T) {
 	validDiscoveryClient := &mockRoleDiscoveryClient{
-		serverResources: func() ([]*metav1.APIResourceList, error) { return simpleResourcesList(), nil },
+		serverGroupsAndResources: func() ([]*metav1.APIGroup, []*metav1.APIResourceList, error) {
+			return simpleGroupList(), simpleResourcesList(), nil
+		},
 	}
 
 	brokenDiscoveryClient := &mockRoleDiscoveryClient{
-		serverResources: func() ([]*metav1.APIResourceList, error) { return nil, errors.New("no server resources") },
+		serverGroupsAndResources: func() ([]*metav1.APIGroup, []*metav1.APIResourceList, error) {
+			return nil, nil, errors.New("no server resources")
+		},
 	}
 
 	testCases := []roleScaffoldTestCase{
@@ -84,11 +88,22 @@ func TestGenerateRoleScaffold(t *testing.T) {
 }
 
 type mockRoleDiscoveryClient struct {
-	serverResources func() ([]*metav1.APIResourceList, error)
+	serverGroupsAndResources func() ([]*metav1.APIGroup, []*metav1.APIResourceList, error)
 }
 
-func (dc *mockRoleDiscoveryClient) ServerResources() ([]*metav1.APIResourceList, error) {
-	return dc.serverResources()
+func (dc *mockRoleDiscoveryClient) ServerGroupsAndResources() ([]*metav1.APIGroup, []*metav1.APIResourceList, error) {
+	return dc.serverGroupsAndResources()
+}
+
+func simpleGroupList() []*metav1.APIGroup {
+	return []*metav1.APIGroup{
+		{
+			Name: "example",
+		},
+		{
+			Name: "example2",
+		},
+	}
 }
 
 func simpleResourcesList() []*metav1.APIResourceList {

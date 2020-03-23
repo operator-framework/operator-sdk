@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
@@ -30,6 +31,7 @@ import (
 	"github.com/ghodss/yaml"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -87,7 +89,7 @@ func yamlToUnstructured(namespace, yamlPath string) (*unstructured.Unstructured,
 
 // createFromYAMLFile will take a path to a YAML file and create the resource. If it finds a
 // deployment, it will add the scorecard proxy as a container in the deployments podspec.
-func createFromYAMLFile(namespace, yamlPath, proxyImage string, pullPolicy v1.PullPolicy) error {
+func createFromYAMLFile(cfg BasicAndOLMPluginConfig, yamlPath string) error {
 	yamlSpecs, err := ioutil.ReadFile(yamlPath)
 	if err != nil {
 		return fmt.Errorf("failed to read file %s: %v", yamlPath, err)
@@ -102,7 +104,7 @@ func createFromYAMLFile(namespace, yamlPath, proxyImage string, pullPolicy v1.Pu
 		if err := obj.UnmarshalJSON(jsonSpec); err != nil {
 			return fmt.Errorf("could not unmarshal resource spec: %v", err)
 		}
-		obj.SetNamespace(namespace)
+		obj.SetNamespace(cfg.Namespace)
 
 		// dirty hack to merge scorecard proxy into operator deployment; lots of serialization and deserialization
 		if obj.GetKind() == "Deployment" {
@@ -115,12 +117,12 @@ func createFromYAMLFile(namespace, yamlPath, proxyImage string, pullPolicy v1.Pu
 				return fmt.Errorf("failed to convert object to deployment: %v", err)
 			}
 			deploymentName = dep.GetName()
-			err = createKubeconfigSecret(namespace)
+			err = createKubeconfigSecret(cfg.Namespace, cfg.InitTimeout, cfg.ProxyPort)
 			if err != nil {
 				return fmt.Errorf("failed to create kubeconfig secret for scorecard-proxy: %v", err)
 			}
 			addMountKubeconfigSecret(dep)
-			addProxyContainer(dep, proxyImage, pullPolicy)
+			addProxyContainer(dep, cfg.ProxyImage, cfg.ProxyPullPolicy, cfg.ProxyPort)
 			// go back to unstructured to create
 			obj, err = deploymentToUnstructured(dep)
 			if err != nil {
@@ -128,7 +130,9 @@ func createFromYAMLFile(namespace, yamlPath, proxyImage string, pullPolicy v1.Pu
 			}
 		}
 		err = runtimeClient.Create(context.TODO(), obj)
-		if err != nil {
+		if errors.IsAlreadyExists(err) {
+			fmt.Printf("already exists, %s, not creating.", yamlPath)
+		} else if err != nil {
 			_, restErr := restMapper.RESTMappings(obj.GetObjectKind().GroupVersionKind().GroupKind())
 			if restErr == nil {
 				return err
@@ -148,9 +152,9 @@ func createFromYAMLFile(namespace, yamlPath, proxyImage string, pullPolicy v1.Pu
 				return err
 			}
 		}
-		addResourceCleanup(obj, types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()})
+		addResourceCleanup(obj, types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, cfg.InitTimeout)
 		if obj.GetKind() == "Deployment" {
-			proxyPodGlobal, err = getPodFromDeployment(deploymentName, namespace)
+			proxyPodGlobal, err = getPodFromDeployment(deploymentName, cfg.Namespace)
 			if err != nil {
 				return err
 			}
@@ -216,9 +220,10 @@ func getPodFromDeployment(depName, namespace string) (pod *v1.Pod, err error) {
 
 // createKubeconfigSecret creates the secret that will be mounted in the operator's container and contains
 // the kubeconfig for communicating with the proxy
-func createKubeconfigSecret(namespace string) error {
+func createKubeconfigSecret(namespace string, initTimeout int, proxyPort int) error {
 	kubeconfigMap := make(map[string][]byte)
-	kc, err := proxyConf.Create(metav1.OwnerReference{Name: "scorecard"}, "http://localhost:8889", namespace)
+	proxyURL := fmt.Sprintf("http://localhost:%d", proxyPort)
+	kc, err := proxyConf.Create(metav1.OwnerReference{Name: "scorecard"}, proxyURL, namespace)
 	if err != nil {
 		return err
 	}
@@ -248,7 +253,7 @@ func createKubeconfigSecret(namespace string) error {
 		return err
 	}
 	addResourceCleanup(kubeconfigSecret, types.NamespacedName{Namespace: kubeconfigSecret.GetNamespace(),
-		Name: kubeconfigSecret.GetName()})
+		Name: kubeconfigSecret.GetName()}, initTimeout)
 	return nil
 }
 
@@ -282,16 +287,21 @@ func addMountKubeconfigSecret(dep *appsv1.Deployment) {
 }
 
 // addProxyContainer adds the container spec for the scorecard-proxy to the deployment's podspec
-func addProxyContainer(dep *appsv1.Deployment, proxyImage string, pullPolicy v1.PullPolicy) {
+func addProxyContainer(dep *appsv1.Deployment, proxyImage string, pullPolicy v1.PullPolicy, proxyPort int) {
 	dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, v1.Container{
 		Name:            scorecardContainerName,
 		Image:           proxyImage,
 		ImagePullPolicy: pullPolicy,
 		Command:         []string{"scorecard-proxy"},
-		Env: []v1.EnvVar{{
-			Name:      k8sutil.WatchNamespaceEnvVar,
-			ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{FieldPath: "metadata.namespace"}},
-		}},
+		Env: []v1.EnvVar{
+			{
+				Name: k8sutil.WatchNamespaceEnvVar,
+				ValueFrom: &v1.EnvVarSource{
+					FieldRef: &v1.ObjectFieldSelector{FieldPath: "metadata.namespace"}},
+			}, {
+				Name:  "SCORECARD_PROXY_PORT",
+				Value: strconv.Itoa(proxyPort),
+			}},
 	})
 }
 
@@ -345,7 +355,7 @@ func cleanupScorecard() error {
 }
 
 // addResourceCleanup adds a cleanup function for the specified runtime object
-func addResourceCleanup(obj runtime.Object, key types.NamespacedName) {
+func addResourceCleanup(obj runtime.Object, key types.NamespacedName, initTimeout int) {
 	cleanupFns = append(cleanupFns, func() error {
 		// make a copy of the object because the client changes it
 		objCopy := obj.DeepCopyObject()
@@ -353,7 +363,7 @@ func addResourceCleanup(obj runtime.Object, key types.NamespacedName) {
 		if err != nil && !apierrors.IsNotFound(err) {
 			return err
 		}
-		err = wait.PollImmediate(time.Second*1, time.Second*10, func() (bool, error) {
+		err = wait.PollImmediate(time.Second*1, time.Second*time.Duration(initTimeout), func() (bool, error) {
 			err = runtimeClient.Get(context.TODO(), key, objCopy)
 			if err != nil {
 				if apierrors.IsNotFound(err) {

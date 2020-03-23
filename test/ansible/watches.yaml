@@ -3,3 +3,8 @@
   group: test.example.com
   kind: Inventory
   playbook: /opt/ansible/playbooks/inventory.yml
+
+- version: v1alpha1
+  group: test.example.com
+  kind: Collection
+  role: operator_sdk.test_fixtures.dummy

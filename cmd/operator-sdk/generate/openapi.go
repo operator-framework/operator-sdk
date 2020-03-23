@@ -18,6 +18,8 @@ import (
 	"fmt"
 
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal/genutil"
+
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -76,7 +78,7 @@ func openAPIFunc(cmd *cobra.Command, args []string) error {
 	}
 	for _, f := range fs {
 		if err := f(); err != nil {
-			return err
+			log.Fatal(err)
 		}
 	}
 	return nil

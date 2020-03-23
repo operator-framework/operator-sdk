@@ -46,6 +46,9 @@ const moleculeClusterVerifyAnsibleTmpl = `---
   hosts: localhost
   connection: local
   gather_facts: no
+  collections:
+    - community.kubernetes
+
   vars:
     custom_resource: "{{ lookup('template', '/'.join([deploy_dir, 'crds/[[.Resource.FullGroup]]_[[.Resource.Version]]_[[.Resource.LowerKind]]_cr.yaml'])) | from_yaml }}"
 

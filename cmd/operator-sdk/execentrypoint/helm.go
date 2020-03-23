@@ -19,6 +19,7 @@ import (
 	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -35,7 +36,10 @@ should use "run --local" instead.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			logf.SetLogger(zap.Logger())
 
-			return helm.Run(flags)
+			if err := helm.Run(flags); err != nil {
+				log.Fatal(err)
+			}
+			return nil
 		},
 	}
 	flags = hoflags.AddTo(runHelmCmd.Flags())

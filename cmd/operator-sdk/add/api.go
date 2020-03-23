@@ -116,7 +116,7 @@ func apiRun(cmd *cobra.Command, args []string) error {
 	// scaffold a group.go to prevent erroneous gengo parse errors.
 	group := &scaffold.Group{Resource: r}
 	if err := scaffoldIfNoPkgFileExists(s, cfg, group); err != nil {
-		return fmt.Errorf("scaffold group file: %v", err)
+		log.Fatalf("Failed to scaffold group file: %v", err)
 	}
 
 	err = s.Execute(cfg,
@@ -127,24 +127,24 @@ func apiRun(cmd *cobra.Command, args []string) error {
 		&scaffold.CR{Resource: r},
 	)
 	if err != nil {
-		return fmt.Errorf("api scaffold failed: %v", err)
+		log.Fatalf("API scaffold failed: %v", err)
 	}
 
 	// update deploy/role.yaml for the given resource r.
 	if err := scaffold.UpdateRoleForResource(r, absProjectPath); err != nil {
-		return fmt.Errorf("failed to update the RBAC manifest for the resource (%v, %v): (%v)",
+		log.Fatalf("Failed to update the RBAC manifest for the resource (%v, %v): (%v)",
 			r.APIVersion, r.Kind, err)
 	}
 
 	if !skipGeneration {
 		// Run k8s codegen for deepcopy
 		if err := genutil.K8sCodegen(); err != nil {
-			return err
+			log.Fatal(err)
 		}
 
 		// Generate a validation spec for the new CRD.
 		if err := genutil.CRDGen(); err != nil {
-			return err
+			log.Fatal(err)
 		}
 	}
 

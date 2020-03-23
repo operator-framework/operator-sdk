@@ -7,6 +7,7 @@ go fmt ./...
 
 ./hack/check-license.sh
 ./hack/check-error-log-msg-format.sh
+./hack/check-doc-diffs.sh
 ./hack/generate/gen-cli-doc.sh
 ./hack/generate/gen-test-framework.sh
 

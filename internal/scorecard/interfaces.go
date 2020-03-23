@@ -76,6 +76,9 @@ func setConfigDefaults(config *scplugins.BasicAndOLMPluginConfig, kubeconfig str
 		config.ProxyImage = fmt.Sprintf("quay.io/operator-framework/scorecard-proxy:%s",
 			strings.TrimSuffix(version.Version, "+git"))
 	}
+	if config.ProxyPort == 0 {
+		config.ProxyPort = 8889
+	}
 	if config.ProxyPullPolicy == "" {
 		config.ProxyPullPolicy = v1.PullAlways
 	}

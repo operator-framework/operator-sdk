@@ -51,13 +51,50 @@ func NewCmd() *cobra.Command { //nolint:golint
 generates a default directory layout based on the input <project-name>.
 
 <project-name> is the project name of the new operator. (e.g app-operator)
+`,
+		Example: `  # Create a new project directory
+  $ mkdir $HOME/projects/example.com/
+  $ cd $HOME/projects/example.com/
 
-For example:
+  # Go project
+  $ operator-sdk new app-operator
 
-	$ mkdir $HOME/projects/example.com/
-	$ cd $HOME/projects/example.com/
-	$ operator-sdk new app-operator
-generates a skeletal app-operator application in $HOME/projects/example.com/app-operator.
+  # Ansible project
+  $ operator-sdk new app-operator --type=ansible \
+    --api-version=app.example.com/v1alpha1 \
+    --kind=AppService
+
+  # Helm project
+  $ operator-sdk new app-operator --type=helm \
+  --api-version=app.example.com/v1alpha1 \
+  --kind=AppService
+
+  $ operator-sdk new app-operator --type=helm \
+  --api-version=app.example.com/v1alpha1 \
+  --kind=AppService \
+  --helm-chart=myrepo/app
+
+  $ operator-sdk new app-operator --type=helm \
+  --helm-chart=myrepo/app
+
+  $ operator-sdk new app-operator --type=helm \
+  --helm-chart=myrepo/app \
+  --helm-chart-version=1.2.3
+
+  $ operator-sdk new app-operator --type=helm \
+  --helm-chart=app \
+  --helm-chart-repo=https://charts.mycompany.com/
+
+  $ operator-sdk new app-operator --type=helm \
+  --helm-chart=app \
+  --helm-chart-repo=https://charts.mycompany.com/ \
+  --helm-chart-version=1.2.3
+
+  $ operator-sdk new app-operator --type=helm \
+  --helm-chart=/path/to/local/chart-directories/app/
+
+  $ operator-sdk new app-operator --type=helm \
+  --helm-chart=/path/to/local/chart-archives/app-1.2.3.tgz
 `,
 		RunE: newFunc,
 	}
@@ -124,30 +161,30 @@ func newFunc(cmd *cobra.Command, args []string) error {
 			repo = path.Join(projutil.GetGoPkg(), projectName)
 		}
 		if err := doGoScaffold(); err != nil {
-			return err
+			log.Fatal(err)
 		}
 		if err := getDeps(); err != nil {
-			return err
+			log.Fatal(err)
 		}
 		if !skipValidation {
 			if err := validateProject(); err != nil {
-				return err
+				log.Fatal(err)
 			}
 		}
 
 	case projutil.OperatorTypeAnsible:
 		if err := doAnsibleScaffold(); err != nil {
-			return err
+			log.Fatal(err)
 		}
 	case projutil.OperatorTypeHelm:
 		if err := doHelmScaffold(); err != nil {
-			return err
+			log.Fatal(err)
 		}
 	}
 
 	if gitInit {
 		if err := initGit(); err != nil {
-			return err
+			log.Fatal(err)
 		}
 	}
 
@@ -268,6 +305,7 @@ func doAnsibleScaffold() error {
 		},
 		&ansible.DeployOperator{},
 		&ansible.Travis{},
+		&ansible.RequirementsYml{},
 		&ansible.MoleculeTestLocalMolecule{},
 		&ansible.MoleculeTestLocalPrepare{},
 		&ansible.MoleculeTestLocalVerify{},

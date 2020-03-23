@@ -69,11 +69,17 @@ func migrateRun(cmd *cobra.Command, args []string) error {
 	opType := projutil.GetOperatorType()
 	switch opType {
 	case projutil.OperatorTypeAnsible:
-		return migrateAnsible()
+		if err := migrateAnsible(); err != nil {
+			log.Fatal(err)
+		}
 	case projutil.OperatorTypeHelm:
-		return migrateHelm()
+		if err := migrateHelm(); err != nil {
+			log.Fatal(err)
+		}
+	default:
+		return fmt.Errorf("operator of type %s cannot be migrated", opType)
 	}
-	return fmt.Errorf("operator of type %s cannot be migrated", opType)
+	return nil
 }
 
 func verifyFlags() error {
@@ -95,8 +101,9 @@ func migrateAnsible() error {
 	}
 
 	dockerfile := ansible.DockerfileHybrid{
-		Watches: true,
-		Roles:   true,
+		Watches:      true,
+		Roles:        true,
+		Requirements: true,
 	}
 	_, err := os.Stat(ansible.PlaybookYamlFile)
 	switch {
@@ -127,6 +134,7 @@ func migrateAnsible() error {
 		&dockerfile,
 		&ansible.Entrypoint{},
 		&ansible.UserSetup{},
+		// todo(camilamacedo86): It is deprecated and should be removed before 1.0.0
 		&ansible.AoLogs{},
 	)
 	if err != nil {

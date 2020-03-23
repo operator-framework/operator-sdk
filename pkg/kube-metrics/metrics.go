@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
@@ -91,4 +93,21 @@ func generateMetricFamilies(kind string) []ksmetric.FamilyGenerator {
 			},
 		},
 	}
+}
+
+// GetNamespacesForMetrics wil return all namespaces which will be used to export the metrics
+func GetNamespacesForMetrics(operatorNs string) ([]string, error) {
+	ns := []string{operatorNs}
+
+	// Get the value from WATCH_NAMESPACES
+	watchNamespace, err := k8sutil.GetWatchNamespace()
+	if err != nil {
+		return nil, err
+	}
+
+	// Generate metrics from the WATCH_NAMESPACES value if it contains multiple namespaces
+	if strings.Contains(watchNamespace, ",") {
+		ns = strings.Split(watchNamespace, ",")
+	}
+	return ns, nil
 }

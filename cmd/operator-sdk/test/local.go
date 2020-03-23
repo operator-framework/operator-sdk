@@ -42,17 +42,22 @@ import (
 var deployTestDir = filepath.Join(scaffold.DeployDir, "test")
 
 type testLocalConfig struct {
-	kubeconfig         string
-	globalManPath      string
-	namespacedManPath  string
-	goTestFlags        string
-	moleculeTestFlags  string
+	kubeconfig        string
+	globalManPath     string
+	namespacedManPath string
+	goTestFlags       string
+	moleculeTestFlags string
+	// TODO: remove before 1.0.0
+	// Namespace is deprecated
 	namespace          string
+	operatorNamespace  string
+	watchNamespace     string
+	image              string
+	localOperatorFlags string
 	upLocal            bool
 	noSetup            bool
 	debug              bool
-	image              string
-	localOperatorFlags string
+	skipCleanupOnError bool
 }
 
 var tlConfig testLocalConfig
@@ -72,8 +77,16 @@ func newTestLocalCmd() *cobra.Command {
 		"Additional flags to pass to go test")
 	testCmd.Flags().StringVar(&tlConfig.moleculeTestFlags, "molecule-test-flags", "",
 		"Additional flags to pass to molecule test")
+	// TODO: remove before 1.0.0. Namespace is deprecated
 	testCmd.Flags().StringVar(&tlConfig.namespace, "namespace", "",
-		"If non-empty, single namespace to run tests in")
+		"(Deprecated: use --operator-namespace instead) If non-empty, single namespace to run tests in")
+	testCmd.Flags().StringVar(&tlConfig.operatorNamespace, "operator-namespace", "",
+		"Namespace where the operator will be deployed, CRs will be created and tests will be executed "+
+			"(By default it will be in the default namespace defined in the kubeconfig)")
+	testCmd.Flags().StringVar(&tlConfig.watchNamespace, "watch-namespace", "",
+		"(only valid with --up-local) Namespace where the operator watches for changes."+
+			" Set \"\" for AllNamespaces, set \"ns1,ns2\" for MultiNamespace"+
+			"(if not set then watches Operator Namespace")
 	testCmd.Flags().BoolVar(&tlConfig.upLocal, "up-local", false,
 		"Enable running operator locally with go run instead of as an image in the cluster")
 	testCmd.Flags().BoolVar(&tlConfig.noSetup, "no-setup", false, "Disable test resource creation")
@@ -82,11 +95,24 @@ func newTestLocalCmd() *cobra.Command {
 		"Use a different operator image from the one specified in the namespaced manifest")
 	testCmd.Flags().StringVar(&tlConfig.localOperatorFlags, "local-operator-flags", "",
 		"The flags that the operator needs (while using --up-local). Example: \"--flag1 value1 --flag2=value2\"")
+	testCmd.Flags().BoolVar(&tlConfig.skipCleanupOnError, "skip-cleanup-error", false,
+		"If set as true, the cleanup function responsible to remove all artifacts "+
+			"will be skipped if an error is faced.")
 
 	return testCmd
 }
 
 func testLocalFunc(cmd *cobra.Command, args []string) error {
+	//TODO: remove before 1.0.0
+	// set --operator-namespace flag if the --namespace flag is set
+	// (only if --operator-namespace flag is not set)
+	if cmd.Flags().Changed("namespace") {
+		log.Info("--namespace is deprecated; use --operator-namespace instead.")
+		if !cmd.Flags().Changed("operator-namespace") {
+			err := cmd.Flags().Set("operator-namespace", tlConfig.namespace)
+			return err
+		}
+	}
 	switch t := projutil.GetOperatorType(); t {
 	case projutil.OperatorTypeGo:
 		return testLocalGoFunc(cmd, args)
@@ -111,9 +137,12 @@ func testLocalAnsibleFunc() error {
 	}
 
 	dc := exec.Command("molecule", testArgs...)
-	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", test.TestNamespaceEnv, tlConfig.namespace))
+	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", test.TestOperatorNamespaceEnv, tlConfig.operatorNamespace))
 	dc.Dir = projutil.MustGetwd()
-	return projutil.ExecCmd(dc)
+	if err := projutil.ExecCmd(dc); err != nil {
+		log.Fatal(err)
+	}
+	return nil
 }
 
 func testLocalGoFunc(cmd *cobra.Command, args []string) error {
@@ -126,8 +155,11 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 			" at the same time as the no-setup flag")
 	}
 
-	if tlConfig.upLocal && tlConfig.namespace == "" {
-		return fmt.Errorf("must specify a namespace to run in when -up-local flag is set")
+	if tlConfig.upLocal && tlConfig.operatorNamespace == "" {
+		return fmt.Errorf("must specify a namespace with operator-namespace flag to run in when --up-local flag is set")
+	}
+	if !tlConfig.upLocal && cmd.Flags().Changed("watch-namespace") {
+		return fmt.Errorf("--watch-namespace not valid without -up-local flag")
 	}
 
 	log.Info("Testing operator locally.")
@@ -216,10 +248,24 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 	if tlConfig.goTestFlags != "" {
 		testArgs = append(testArgs, strings.Split(tlConfig.goTestFlags, " ")...)
 	}
-	if tlConfig.namespace != "" || tlConfig.noSetup {
-		testArgs = append(testArgs, "-"+test.SingleNamespaceFlag, "-parallel=1")
+	if tlConfig.operatorNamespace != "" || tlConfig.noSetup {
+		testArgs = append(testArgs, "-parallel=1")
 	}
-	env := append(os.Environ(), fmt.Sprintf("%v=%v", test.TestNamespaceEnv, tlConfig.namespace))
+	env := os.Environ()
+	if tlConfig.operatorNamespace != "" {
+		env = append(
+			env,
+			fmt.Sprintf("%v=%v", test.TestOperatorNamespaceEnv, tlConfig.operatorNamespace),
+		)
+	}
+
+	if cmd.Flags().Changed("watch-namespace") {
+		env = append(
+			env,
+			fmt.Sprintf("%v=%v", test.TestWatchNamespaceEnv, tlConfig.watchNamespace),
+		)
+	}
+
 	if tlConfig.upLocal {
 		env = append(env, fmt.Sprintf("%s=%s", k8sutil.ForceRunModeEnv, k8sutil.LocalRunMode))
 		testArgs = append(testArgs, "-"+test.LocalOperatorFlag)
@@ -227,6 +273,7 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 			testArgs = append(testArgs, "-"+test.LocalOperatorArgs, tlConfig.localOperatorFlags)
 		}
 	}
+	testArgs = append(testArgs, fmt.Sprintf("-%s=%t", test.SkipCleanupOnErrorFlag, tlConfig.skipCleanupOnError))
 	opts := projutil.GoTestOptions{
 		GoCmdOptions: projutil.GoCmdOptions{
 			PackagePath: args[0] + "/...",
@@ -240,7 +287,7 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 		if errors.As(err, &exitErr) {
 			os.Exit(exitErr.ExitCode())
 		}
-		return fmt.Errorf("failed to build test binary: %v", err)
+		log.Fatalf("Failed to build test binary: %v", err)
 	}
 	log.Info("Local operator test successfully completed.")
 	return nil

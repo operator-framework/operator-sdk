@@ -93,17 +93,20 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 	// log everything else for the 'Everything' LogLevel
 	if l.LogLevel == Everything {
 		logger.Info("", "EventData", e.EventData)
+		l.logAnsibleStdOut(e)
 	}
 }
 
 // logAnsibleStdOut will print in the logs the Ansible Task Output formatted
 func (l loggingEventHandler) logAnsibleStdOut(e eventapi.JobEvent) {
-	fmt.Printf("\n--------------------------- Ansible Task StdOut -------------------------------\n")
-	if e.Event != eventapi.EventPlaybookOnTaskStart {
-		fmt.Printf("\n TASK [%v] ******************************** \n", e.EventData["task"])
+	if len(e.StdOut) > 0 {
+		fmt.Printf("\n--------------------------- Ansible Task StdOut -------------------------------\n")
+		if e.Event != eventapi.EventPlaybookOnTaskStart {
+			fmt.Printf("\n TASK [%v] ******************************** \n", e.EventData["task"])
+		}
+		fmt.Println(e.StdOut)
+		fmt.Printf("\n-------------------------------------------------------------------------------\n")
 	}
-	fmt.Println(e.StdOut)
-	fmt.Printf("\n-------------------------------------------------------------------------------\n")
 }
 
 // NewLoggingEventHandler - Creates a Logging Event Handler to log events.

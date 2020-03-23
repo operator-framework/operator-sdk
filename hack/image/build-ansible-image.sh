@@ -17,7 +17,7 @@ pushd "$BASEIMAGEDIR"
 ./scaffold-ansible-image
 
 mkdir -p build/_output/bin/
-cp $ROOTDIR/build/operator-sdk-dev-x86_64-linux-gnu build/_output/bin/ansible-operator
+cp $ROOTDIR/build/operator-sdk-dev-linux-gnu build/_output/bin/ansible-operator
 operator-sdk build $1
 # If using a kind cluster, load the image into all nodes.
 load_image_if_kind "$1"

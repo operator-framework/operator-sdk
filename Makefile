@@ -25,7 +25,9 @@ ANSIBLE_IMAGE ?= $(ANSIBLE_BASE_IMAGE)
 HELM_IMAGE ?= $(HELM_BASE_IMAGE)
 SCORECARD_PROXY_IMAGE ?= $(SCORECARD_PROXY_BASE_IMAGE)
 
-HELM_ARCHES:="amd64" "ppc64le"
+ANSIBLE_ARCHES:="amd64" "ppc64le" "s390x"
+HELM_ARCHES:="amd64" "ppc64le" "s390x"
+SCORECARD_PROXY_ARCHES:="amd64" "ppc64le" "s390x"
 
 export CGO_ENABLED:=0
 .DEFAULT_GOAL:=help
@@ -107,13 +109,15 @@ generate: gen-cli-doc gen-test-framework  ## Run all generate targets
 release_builds := \
 	build/operator-sdk-$(VERSION)-x86_64-linux-gnu \
 	build/operator-sdk-$(VERSION)-x86_64-apple-darwin \
-	build/operator-sdk-$(VERSION)-ppc64le-linux-gnu
+	build/operator-sdk-$(VERSION)-ppc64le-linux-gnu \
+	build/operator-sdk-$(VERSION)-s390x-linux-gnu
 
 release: clean $(release_builds) $(release_builds:=.asc) ## Release the Operator SDK
 
 build/operator-sdk-%-x86_64-linux-gnu: GOARGS = GOOS=linux GOARCH=amd64
 build/operator-sdk-%-x86_64-apple-darwin: GOARGS = GOOS=darwin GOARCH=amd64
 build/operator-sdk-%-ppc64le-linux-gnu: GOARGS = GOOS=linux GOARCH=ppc64le
+build/operator-sdk-%-s390x-linux-gnu: GOARGS = GOOS=linux GOARCH=s390x
 build/operator-sdk-%-linux-gnu: GOARGS = GOOS=linux
 
 build/%: $(SOURCES)
@@ -152,7 +156,7 @@ image-scaffold-helm:
 
 image-build: image-build-ansible image-build-helm image-build-scorecard-proxy ## Build all images
 
-image-build-ansible: build/operator-sdk-dev-x86_64-linux-gnu
+image-build-ansible: build/operator-sdk-dev-linux-gnu
 	./hack/image/build-ansible-image.sh $(ANSIBLE_BASE_IMAGE):dev
 
 image-build-helm: build/operator-sdk-dev-linux-gnu
@@ -164,7 +168,10 @@ image-build-scorecard-proxy:
 image-push: image-push-ansible image-push-helm image-push-scorecard-proxy ## Push all images
 
 image-push-ansible:
-	./hack/image/push-image-tags.sh $(ANSIBLE_BASE_IMAGE):dev $(ANSIBLE_IMAGE)
+	./hack/image/push-image-tags.sh $(ANSIBLE_BASE_IMAGE):dev $(ANSIBLE_IMAGE)-$(shell go env GOARCH)
+
+image-push-ansible-multiarch:
+	./hack/image/push-manifest-list.sh $(ANSIBLE_IMAGE) ${ANSIBLE_ARCHES}
 
 image-push-helm:
 	./hack/image/push-image-tags.sh $(HELM_BASE_IMAGE):dev $(HELM_IMAGE)-$(shell go env GOARCH)
@@ -173,7 +180,10 @@ image-push-helm-multiarch:
 	./hack/image/push-manifest-list.sh $(HELM_IMAGE) ${HELM_ARCHES}
 
 image-push-scorecard-proxy:
-	./hack/image/push-image-tags.sh $(SCORECARD_PROXY_BASE_IMAGE):dev $(SCORECARD_PROXY_IMAGE)
+	./hack/image/push-image-tags.sh $(SCORECARD_PROXY_BASE_IMAGE):dev $(SCORECARD_PROXY_IMAGE)-$(shell go env GOARCH)
+
+image-push-scorecard-proxy-multiarch:
+	./hack/image/push-manifest-list.sh $(SCORECARD_PROXY_IMAGE) ${SCORECARD_PROXY_ARCHES}
 
 ##############################
 # Tests                      #
@@ -186,14 +196,14 @@ image-push-scorecard-proxy:
 
 test: test-unit ## Run the tests
 
-test-markdown test/markdown:
-	./hack/ci/marker
+test-markdown:
+	./hack/ci/marker -e website
 
-test-sanity test/sanity: tidy build/operator-sdk lint
+test-sanity: tidy build/operator-sdk lint
 	./hack/tests/sanity-check.sh
 
 TEST_PKGS:=$(shell go list ./... | grep -v -E 'github.com/operator-framework/operator-sdk/(hack/|test/)')
-test-unit test/unit: ## Run the unit tests
+test-unit: ## Run the unit tests
 	$(Q)go test -coverprofile=coverage.out -covermode=count -count=1 -short ${TEST_PKGS}
 
 # CI tests.
