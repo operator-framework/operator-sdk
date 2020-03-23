@@ -1,28 +1,16 @@
-# Ansible User Guide for Operator SDK
+---
+title: Ansible Operator Quickstart
+linkTitle: Quickstart
+weight: 2
+---
 
 This guide walks through an example of building a simple memcached-operator powered by Ansible using tools and libraries provided by the Operator SDK.
 
-## Prerequisites
-
-- [git][git-tool]
-- [docker][docker-tool] version 17.03+.
-- [kubectl][kubectl-tool] version v1.9.0+.
-- [ansible][ansible-tool] version v2.6.0+
-- [ansible-runner][ansible-runner-tool] version v1.1.0+
-- [ansible-runner-http][ansible-runner-http-plugin] version v1.0.0+
-- [go][go-tool] version v1.13+. (Optional if you aren't installing from source)
-- Access to a Kubernetes v.1.9.0+ cluster.
-
-**Note**: This guide uses [minikube][minikube-tool] version v0.25.0+ as the
-local Kubernetes cluster and [quay.io][quay-link] for the public registry.
-
-## Install the Operator SDK CLI
-
-Follow the steps in the [installation guide][install-guide] to learn how to install the Operator SDK CLI tool.
-
 ## Create a new project
 
-Use the CLI to create a new Ansible-based memcached-operator project:
+After [installing the Operator SDK CLI][install-guide] and 
+[ansible operator prerequisites][ansible-install-guide], use the CLI to create a
+new Ansible-based memcached-operator project:
 
 ```sh
 $ operator-sdk new memcached-operator --api-version=cache.example.com/v1alpha1 --kind=Memcached --type=ansible
@@ -40,83 +28,6 @@ layout][layout-doc] doc.
 
 Read the [operator scope][operator-scope] documentation on how to run your operator as namespace-scoped vs cluster-scoped.
 
-### Watches file
-
-The Watches file contains a list of mappings from custom resources, identified
-by it's Group, Version, and Kind, to an Ansible Role or Playbook. The Operator
-expects this mapping file in a predefined location: `/opt/ansible/watches.yaml`
-These resources, as well as child resources (determined by owner references) will
-be monitored for updates and cached.
-
-* **group**:  The group of the Custom Resource that you will be watching.
-* **version**:  The version of the Custom Resource that you will be watching.
-* **kind**:  The kind of the Custom Resource that you will be watching.
-* **role** (default): Specifies a role to be executed. This field is mutually exclusive with the
-  "playbook" field. This field can be:
-  * an absolute path to a role directory.
-  * a relative path within one of the directories specified by `ANSIBLE_ROLES_PATH` environment variable or `ansible-roles-path` flag.
-  * a relative path within the current working directory, which defaults to `/opt/ansible/roles`.
-  * a fully qualified collection name of an installed Ansible collection. Ansible collections are installed to
-    `~/.ansible/collections` or `/usr/share/ansible/collections` by default. If they are installed elsewhere,
-    use the `ANSIBLE_COLLECTIONS_PATH` environment variable or the `ansible-collections-path` flag
-* **playbook**: This is the playbook name that you have added to the
-  container. This playbook is expected to be simply a way to call roles. This
-  field is mutually exclusive with the "role" field. When running locally, the playbook is expected to be in the
-  current project directory.
-* **vars**: This is an arbitrary map of key-value pairs. The contents will be
-  passed as `extra_vars` to the playbook or role specified for this watch.
-* **reconcilePeriod** (optional): The reconciliation interval, how often the
-  role/playbook is run, for a given CR.
-* **manageStatus** (optional): When true (default), the operator will manage
-  the status of the CR generically. Set to false, the status of the CR is
-  managed elsewhere, by the specified role/playbook or in a separate controller.
-* **blacklist**: A list of child resources (by GVK) that will not be watched or cached.
-
-An example Watches file:
-
-```yaml
----
-# Simple example mapping Foo to the Foo role
-- version: v1alpha1
-  group: foo.example.com
-  kind: Foo
-  role: Foo
-
-# Simple example mapping Bar to a playbook
-- version: v1alpha1
-  group: bar.example.com
-  kind: Bar
-  playbook: playbook.yml
-
-# More complex example for our Baz kind
-# Here we will disable requeuing and be managing the CR status in the playbook,
-# and specify additional variables.
-- version: v1alpha1
-  group: baz.example.com
-  kind: Baz
-  playbook: baz.yml
-  reconcilePeriod: 0
-  manageStatus: False
-  vars:
-    foo: bar
-
-# ConfigMaps owned by a Memcached CR will not be watched or cached.
-- version: v1alpha1
-  group: cache.example.com
-  kind: Memcached
-  role: /opt/ansible/roles/memcached
-  blacklist:
-    - group: ""
-      version: v1
-      kind: ConfigMap
-
-# Example usage with a role from an installed Ansible collection
-- version: v1alpha1
-  group: bar.example.com
-  kind: Bar
-  role: myNamespace.myCollection.myRole
-```
-
 ## Customize the operator logic
 
 For this example the memcached-operator will execute the following
@@ -125,7 +36,7 @@ reconciliation logic for each `Memcached` Custom Resource (CR):
 - Ensure that the Deployment size is the same as specified by the `Memcached`
 CR
 
-### Watch the Memcached CR
+## Watch the Memcached CR
 
 By default, the memcached-operator watches `Memcached` resource events as shown
 in `watches.yaml` and executes Ansible Role `Memcached`:
@@ -137,7 +48,9 @@ in `watches.yaml` and executes Ansible Role `Memcached`:
   kind: Memcached
 ```
 
+
 #### Options
+
 **Role**
 Specifying a `role` option in `watches.yaml` will configure the operator to use
 this specified path when launching `ansible-runner` with an Ansible Role. By
@@ -162,6 +75,8 @@ Playbook
   kind: Memcached
   playbook: playbook.yaml
 ```
+
+See [watches reference][ansible-watches] for more information.
 
 ## Building the Memcached Ansible Role
 
@@ -441,16 +356,13 @@ $ kubectl delete -f deploy/crds/cache.example.com_memcacheds_crd.yaml
 
 **NOTE** Additional CR/CRD's can be added to the project by running, for example, the command :`operator-sdk new api --api-version=cache.example.com/v1alpha1 --kind=AppService --type=ansible`
 
+[ansible-install-guide]: /docs/ansible/installation
+[ansible-watches]: /docs/ansible/reference/watches
 [operator-scope]:./../operator-scope.md
-[install-guide]: ../user/install-operator-sdk.md
-[layout-doc]:./project_layout.md
+[layout-doc]:../reference/scaffolding
 [homebrew-tool]:https://brew.sh/
+[install-guide]: /docs/install-operator-sdk
 [git-tool]:https://git-scm.com/downloads
 [go-tool]:https://golang.org/dl/
 [docker-tool]:https://docs.docker.com/install/
 [kubectl-tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
-[minikube-tool]:https://github.com/kubernetes/minikube#installation
-[ansible-tool]:https://docs.ansible.com/ansible/latest/index.html
-[ansible-runner-tool]:https://ansible-runner.readthedocs.io/en/latest/install.html
-[ansible-runner-http-plugin]:https://github.com/ansible/ansible-runner-http
-[quay-link]:https://quay.io

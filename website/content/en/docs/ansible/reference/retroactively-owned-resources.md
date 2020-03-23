@@ -1,4 +1,8 @@
-# Adding Owner References for Existing Resources
+---
+title: Adding Owner References for Existing Resources
+linkTitle: Retroactively Owned Resources
+weight: 20
+---
 
 Owner references are automatically injected `only during creation of
 resources`. Enabling owner reference injection `will not update objects`

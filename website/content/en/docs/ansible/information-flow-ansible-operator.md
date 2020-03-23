@@ -1,6 +1,10 @@
-# Information Flow for Operator SDK Ansible-based Operators
+---
+title: Information Flow for Operator SDK Ansible-based Operators
+linkTitle: Information Flow
+weight: 10
+---
 
-![Ansible Operator Flow](ao-flow.png)
+![Ansible Operator Flow](/ao-flow.png)
 
 ### Controller/Reconciler
  * Gets the primary resource based on NamespacedName this uses the cache from controller runtime.
