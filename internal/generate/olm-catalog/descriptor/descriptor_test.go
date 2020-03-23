@@ -128,7 +128,7 @@ func TestGetKindTypeForAPI(t *testing.T) {
 
 			var pkgTypes []*types.Type
 			if st.isExpectedLayout {
-				universe, err := getTypesFromDirRecursive(expectedPkgPath)
+				universe, err := getPkgsFromDirRecursive(expectedPkgPath)
 				if err != nil {
 					t.Fatalf("Failed to get universe of types from API root directory (%s): %v)", st.apisDir, err)
 				}
@@ -138,7 +138,7 @@ func TestGetKindTypeForAPI(t *testing.T) {
 						expectedPkgPath, st.apisDir, err)
 				}
 			} else {
-				universe, err := getTypesFromDirRecursive(st.apisDir)
+				universe, err := getPkgsFromDirRecursive(st.apisDir)
 				if err != nil {
 					t.Fatalf("Failed to get universe of types from API root directory (%s): %v)", st.apisDir, err)
 				}

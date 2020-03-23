@@ -72,7 +72,7 @@ func GetCRDDescriptionForGVK(apisDir string, gvk schema.GroupVersionKind) (olmap
 	var pkgTypes []*types.Type
 	if expectedPkgPath != "" {
 		// Look for the pkg types at the expected single or multi group import path
-		universe, err := getTypesFromDirRecursive(expectedPkgPath)
+		universe, err := getPkgsFromDirRecursive(expectedPkgPath)
 		if err != nil {
 			return olmapiv1alpha1.CRDDescription{}, err
 		}
@@ -88,7 +88,7 @@ func GetCRDDescriptionForGVK(apisDir string, gvk schema.GroupVersionKind) (olmap
 		// root apisDir has no .go files.
 		// Workaround for this is to have a doc.go file in the package.
 		// Move away from using gengo in the future if possible.
-		universe, err := getTypesFromDirRecursive(apisDir)
+		universe, err := getPkgsFromDirRecursive(apisDir)
 		if err != nil {
 			return olmapiv1alpha1.CRDDescription{}, err
 		}
@@ -189,9 +189,9 @@ func getExpectedPkgLayout(apisDir, group, version string) (expectedPkgPath strin
 	return "", nil
 }
 
-// getTypesFromDir gets all Go types from dir and recursively its sub directories.
+// getPkgsFromDirRecursive gets all Go types from dir and recursively its sub directories.
 // dir must be the project relative path to the pkg directory
-func getTypesFromDirRecursive(dir string) (types.Universe, error) {
+func getPkgsFromDirRecursive(dir string) (types.Universe, error) {
 	if _, err := os.Stat(dir); err != nil {
 		return nil, err
 	}
@@ -217,7 +217,6 @@ func getTypesFromDirRecursive(dir string) (types.Universe, error) {
 }
 
 // getTypesForPkgPath find the pkg with the given path in universe
-// Note that pkg path must be relative to the project root directory.
 func getTypesForPkgPath(pkgPath string, universe types.Universe) (pkgTypes []*types.Type, err error) {
 	var pkg *types.Package
 	for _, upkg := range universe {

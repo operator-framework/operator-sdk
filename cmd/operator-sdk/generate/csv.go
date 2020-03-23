@@ -55,10 +55,88 @@ for the operator. This file is used to publish the operator to the OLM Catalog.
 
 A CSV semantic version is supplied via the --csv-version flag. If your operator
 has already generated a CSV manifest you want to use as a base, supply its
-version to --from-version. Otherwise the SDK will scaffold a new CSV manifest.`,
+version to --from-version. Otherwise the SDK will scaffold a new CSV manifest.
+
+CSV input flags:
+	--deploy-dir:	The CSV file contents will be generated from the operator manifests
+					present in this directory.
+
+	--apis-dir:		The CSV annotation comments will be parsed from the Go types under this path to 
+					fill out metadata for owned APIs in spec.customresourcedefinitions.owned.
+
+	--crd-dir:		The CRD manifests are updated from this path to the CSV bundle directory.
+					Note: The CSV generator only uses this to copy the CRD manifests.
+					The CSV contents for spec.customresourcedefinitions.owned will still be generated
+					from the CRD manifests in the deploy directory specified by --deploy-dir.
+					If unset, it defaults to the same value as --deploy-dir.
+
+`,
 		Example: `
-TODO
-	`,
+		##### Generate CSV from default input paths #####
+		$ tree pkg/apis/ deploy/
+		pkg/apis/
+		├── ...
+		└── cache
+			├── group.go
+			└── v1alpha1
+				├── ...
+				└── memcached_types.go
+		deploy/
+		├── crds
+		│   ├── cache.example.com_memcacheds_crd.yaml
+		│   └── cache.example.com_v1alpha1_memcached_cr.yaml
+		├── operator.yaml
+		├── role.yaml
+		├── role_binding.yaml
+		└── service_account.yaml
+
+		$ operator-sdk generate csv --csv-version=0.0.1 --update-crds
+		INFO[0000] Generating CSV manifest version 0.0.1
+		...
+
+		$ tree deploy/
+		deploy/
+		...
+		├── olm-catalog
+		│   └── memcached-operator
+		│       ├── 0.0.1
+		│       │   ├── cache.example.com_memcacheds_crd.yaml
+		│       │   └── memcached-operator.v0.0.1.clusterserviceversion.yaml
+		│       └── memcached-operator.package.yaml
+		...
+
+
+
+		##### Generate CSV from custom input paths #####
+		$ operator-sdk generate csv --csv-version=0.0.1 --update-crds \
+		--deploy-dir=config --apis-dir=api --output-dir=production
+		INFO[0000] Generating CSV manifest version 0.0.1
+		...
+
+		$ tree config/ api/ production/
+		config/
+		├── crds
+		│   ├── cache.example.com_memcacheds_crd.yaml
+		│   └── cache.example.com_v1alpha1_memcached_cr.yaml
+		├── operator.yaml
+		├── role.yaml
+		├── role_binding.yaml
+		└── service_account.yaml
+		api/
+		├── ...
+		└── cache
+			├── group.go
+			└── v1alpha1
+				├── ...
+				└── memcached_types.go
+		production/
+		└── olm-catalog
+			└── memcached-operator
+				├── 0.0.1
+				│   ├── cache.example.com_memcacheds_crd.yaml
+				│   └── memcached-operator.v0.0.1.clusterserviceversion.yaml
+				└── memcached-operator.package.yaml
+`,
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 0 {
@@ -67,6 +145,12 @@ TODO
 			if err := c.validate(); err != nil {
 				return fmt.Errorf("error validating command flags: %v", err)
 			}
+
+			if err := projutil.CheckProjectRoot(); err != nil {
+				log.Warn("Could not detect project root. Ensure that this command " +
+					"runs from the project root directory.")
+			}
+
 			// Default for crd dir if unset
 			if c.crdDir == "" {
 				c.crdDir = c.deployDir
@@ -87,22 +171,11 @@ TODO
 		"Semantic version of an existing CSV to use as a base")
 
 	cmd.Flags().StringVar(&c.deployDir, "deploy-dir", "deploy",
-		`Project relative path to root directory for operator manifests (Deployment, RBAC, CRDs).
-The CSV file contents will be generated from the manifests present in this directory. 
-`)
+		`Project relative path to root directory for operator manifests (Deployment, RBAC, CRDs)`)
 	cmd.Flags().StringVar(&c.apisDir, "apis-dir", filepath.Join("pkg", "apis"),
-		`Project relative path to root directory for API type defintions.
-The CSV annotation comments will be parsed from the Go types under this path to
-fill out metadata for owned APIs in spec.customresourcedefinitions.owned.
-`)
+		`Project relative path to root directory for API type defintions`)
 	cmd.Flags().StringVar(&c.crdDir, "crd-dir", "",
-		`Project relative path to root directory for for CRD manifests.
-Used when --update-crds is set to copy over CRD manifests to the CSV bundle directory.
-Note: The CSV generator only uses this to copy the CRD manifests.
-The CSV contents for spec.customresourcedefinitions.owned will still be updated
-from the CRD manifests in the deploy directory specified by --deploy-dir.
-If unset, it defaults to the same value as --deploy-dir.
-`)
+		`Project relative path to root directory for for CRD manifests`)
 
 	cmd.Flags().StringVar(&c.outputDir, "output-dir", scaffold.DeployDir,
 		"Base directory to output generated CSV. The resulting CSV bundle directory"+

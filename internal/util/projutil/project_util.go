@@ -77,6 +77,8 @@ func MustInProjectRoot() {
 
 // CheckProjectRoot checks if the current dir is the project root, and returns
 // an error if not.
+// TODO(hasbro17): Change this to check for go.mod
+// "build/Dockerfile" may not be present in all projects
 func CheckProjectRoot() error {
 	// If the current directory has a "build/Dockerfile", then it is safe to say
 	// we are at the project root.
@@ -188,11 +190,6 @@ func GetOperatorType() OperatorType {
 		return OperatorTypeHelm
 	}
 	return OperatorTypeUnknown
-}
-
-func hasGoPkgFile() bool {
-	_, err := os.Stat("go.mod")
-	return err == nil
 }
 
 func IsOperatorGo() bool {
