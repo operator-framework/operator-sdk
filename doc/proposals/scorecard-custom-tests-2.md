@@ -66,7 +66,7 @@ Scorecard internal tests will migrate to the custom test format and therefore be
 
 #### Story 4
 
-Scorecard would support testing a bundle image.  
+I am as an Operator developer, would like to be able to use the Scorecard feature to test the [OLM Bundles](https://github.com/operator-framework/operator-registry/tree/v1.5.3#manifest-format) created for my project.
 
 #### Story 5 (optional)
 
