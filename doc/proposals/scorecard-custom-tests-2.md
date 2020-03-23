@@ -119,7 +119,7 @@ The ConfigMap would be mounted into the test container at the following location
 /scorecard/config
 ```
 
-For the case of testing a bundle image, the following command:
+For the case of testing a bundle image, the following command will run scorecard tests which are configured within the bundle image itself:
 ```
 operator-sdk scorecard --bundle-image=quay.io/myorg/mytest
 ```
