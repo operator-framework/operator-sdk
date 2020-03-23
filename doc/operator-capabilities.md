@@ -23,7 +23,7 @@ Each capability level is associated with a certain set of management features th
 
 ## Level 1 - Basic Install
 
-Automated application provisioning and configuration management. This first capability level means your operator can fully provision an application through a custom resource, allowing all installation configuration details to be specified in the CR. It should also be possible to install the operator itself in multiple ways (kubectl, OLM, Catalog source). Any configuration required to make the Operand run should be configured through the CR if possible. Avoid the practice of requiring the user to create/manage configuration files outside of Kubernetes/OpenShift.
+Automated application provisioning and configuration management. This first capability level means your operator can fully provision an application through a custom resource, allowing all installation configuration details to be specified in the CR. It should also be possible to install the operator itself in multiple ways (kubectl, OLM, Catalog source). Any configuration required to make the Operand run should be configured through the CR if possible. Avoid the practice of requiring the user to create/manage configuration files outside of Kubernetes.
 
 ### Installation of the workload
 
@@ -48,7 +48,7 @@ Automated application provisioning and configuration management. This first capa
 
 3. Can you set operand configuration in the CR? If so, what configuration is supported for each operand?
 
-4. Can you override the operand images through the CR or an env var?
+4. Can you override the operand images through the CR or an environment variable of the Operator deployment?
 
 5. Does the managed application / workload get updated in a non-disruptive fashion when the configuration of the CR is changed?
 
@@ -60,13 +60,13 @@ Automated application provisioning and configuration management. This first capa
 
 9. Do all of your CRs have documentation listing valid values and mandatory fields?
 
-10. If your operator includes a CSV, are all images used listed in the CSV under relatedImages?
+10. If your operator is packaged for OLM, does its CSV list all images used in the CSV under `spec.relatedImages`?
 
 ---
 
 ## Level 2 - Seamless Upgrades
 
-Seamless upgrades mean the upgrade is as easy as possible for the user. You should support seamless upgrades of both your operator and operand, these would normally go hand in hand, an upgrade of the operator would automatically ensure the instantiated resources for each CR are in the new desired state and which would upgrade your operand. Upgrade may also be defined multiple ways, such as updating the software of the operand - and other internals specific to the application - such as schema migrations. It should be very clear what is upgraded when this takes place, and what is not.
+Seamless upgrades mean the upgrade is as easy as possible for the user. You should support seamless upgrades of both your operator and operand, these would normally go hand in hand, an upgrade of the operator would automatically ensure the instantiated resources for each CR are in the new desired state and which would upgrade your operand. Upgrade may also be defined in multiple ways, such as updating the software of the operand - and other internals specific to the application - such as schema migrations. It should be very clear what is upgraded when this takes place, and what is not.
 
 ### Upgrade of the managed workload**
 
@@ -98,7 +98,7 @@ Seamless upgrades mean the upgrade is as easy as possible for the user. You shou
 
 ## Level 3 - Full Lifecycle
 
-It should be possible to backup and restore the operand from the operator itself without any additional manual intervention other than triggering these operations. The operand data that should be backed up is any stateful data managed by the operand. You don’t need to backup the CR itself. You do not need to backup the k8s resources created by the operator as the operator should return all resources to the same state if the CR is recreated. If your operator does not already setup the operand with other k8s resilient best practices, this should be completed to achieve this capability level. This includes liveness and readiness probes, multiple replicas, rolling deployment strategies, pod disruption budgets, CPU and memory requests and limits.
+It should be possible to backup and restore the operand from the operator itself without any additional manual intervention other than triggering these operations. The operand data that should be backed up is any stateful data managed by the operand. You don’t need to backup the CR itself or the k8s resources created by the operator as the operator should return all resources to the same state if the CR is recreated. If your operator does not already setup the operand with other k8s resilient best practices, this should be completed to achieve this capability level. This includes liveness and readiness probes, multiple replicas, rolling deployment strategies, pod disruption budgets, CPU and memory requests and limits.
 
 
 ### Lifecycle features**
@@ -140,10 +140,9 @@ It should be possible to backup and restore the operand from the operator itself
 
 ## Level 4 - Deep Insights
 
-Setup full monitoring and alerting for your operand. All resources such as Prometheus rules (alerts) and Grafana dashboards should be created by the operator when the operand CR is instantiated. The RED method is a good place to start with knowing what metrics to expose.
+Setup full monitoring and alerting for your operand. All resources such as Prometheus rules (alerts) and Grafana dashboards should be created by the operator when the operand CR is instantiated. The RED method<sup>1</sup> is a good place to start with knowing what metrics to expose.
 Aim to have as few alerts as possible, by alerting on symptoms that are associated with end-user pain rather than trying to catch every possible way that pain could be caused. Alerts should link to relevant consoles and make it easy to figure out which component is at fault
 Native k8s objects emit events (“Events” objects) as their states change. Your operator should do similar for state changes related to your operand. “Custom”, here, means that it should emit events specific to your operator/operand outside of the events already emitted by their deployment methodology.  This, in conjunction with status descriptors, give much needed visibility into actions taken by your operator/operand. Operators are codified domain-specific knowledge. Your end user should not need this domain-specific knowledge to gain visibility into what’s happening with their resource.
-
 
 ### Monitoring
 
@@ -152,8 +151,8 @@ Native k8s objects emit events (“Events” objects) as their states change. Yo
 
 ### Alerting and Events
 
-- Operand sends useful alerts <sup>1</sup>
-- Custom Resources emit custom events <sup>2</sup>
+- Operand sends useful alerts
+- Custom Resources emit custom events
 
 ### Metering
 
@@ -167,7 +166,7 @@ Native k8s objects emit events (“Events” objects) as their states change. Yo
 
 2. Does your Operator expose Operand alerts?
 
-4. Do you have SOPs for each alert?
+4. Do you have Standard Operating Procedures (SOPs) for each alert?
 
 5. Does you operator create critical alerts when the service is down and warning alerts for all other alerts?
 
@@ -177,13 +176,17 @@ Native k8s objects emit events (“Events” objects) as their states change. Yo
 
 8. Does your Operator expose Operand performance metrics?
 
+<sup>1</sup> The RED method  
+The RED Method defines the three key metrics for every service in your architecture.
+* Rate (the number of requests per second)
+* Errors (the number of those requests that are failing)
+* Duration (the amount of time those requests take)
+
 ---
 
 ## Level 5 - Auto Pilot
 
-The final piece of the puzzle in eliminating/significantly reducing  any remaining manual intervention in managing the operand. The operator should automatically pick up on load of the operand and auto scale based on thresholds. The operator should automatically fix an unhealthy operand. The operator should tune the operands performance, this could include changing the node the pods are running on or modifying operand configuration.
-Abnormality detection takes it one step further, having the operator learn the normal performance pattern to detect abnormalities and self heal where possible.
-
+The highest capability level aims to significantly reduce/eliminate any remaining manual intervention in managing the operand. The operator should configure the Operand to auto-scale as load picks up. The Operator should understand the application-level performance indicators and determine when it's healthy and performing well. The operator should attempt to automatically fix an unhealthy operand. The operator should tune the operands performance, this could include scheduling on another node the pods are running on or modifying operand configuration.
 
 ### Auto-scaling
 
@@ -219,3 +222,4 @@ Abnormality detection takes it one step further, having the operator learn the n
 5. Can it move the workloads to better nodes, storage or networks to do so?
 
 6. Can it detect and alert when anything is working below the learned performance baseline that can’t be corrected automatically?
+
