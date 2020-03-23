@@ -3,7 +3,7 @@ title: Dependent Watches
 weight: 20
 ---
 
-This document describes the `watchDependentResources` option in [`watches.yaml`](#Example) file. It delves into what dependent resources are, why the option is required, how it is achieved and finally gives an example.
+This document describes the `watchDependentResources` option in [`watches.yaml`](#example) file. It delves into what dependent resources are, why the option is required, how it is achieved and finally gives an example.
 
 ### What are dependent resources?
 In most cases, an operator creates a bunch of Kubernetes resources in the cluster, that helps deploy and manage the application. For instance, the [etcd-operator](https://github.com/coreos/etcd-operator/blob/master/doc/gif/demo.gif) creates two services and a number of pods for a single `EtcdCluster` CR. In this case, all the Kubernetes resources created by the operator for a CR is defined as dependent resources.
