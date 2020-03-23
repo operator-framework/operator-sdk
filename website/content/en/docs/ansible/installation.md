@@ -4,8 +4,6 @@ linkTitle: Installation
 weight: 1
 ---
 
-## Install the Operator SDK CLI
-
 Follow the steps in the [installation guide][install-guide] to learn how to install the Operator SDK CLI tool.
 
 ## Additional Prerequisites
