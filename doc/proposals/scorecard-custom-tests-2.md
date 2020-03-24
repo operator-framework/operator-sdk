@@ -72,7 +72,11 @@ I am as an Operator developer, would like to be able to use the Scorecard featur
 
 I am as an Operator developer, will require the ability to include scorecard confgration file and scorecard test pod manifests into an operator bundle image. 
 
-#### Story 6 (optional)
+#### Story 6 
+
+Scorecard would support creating and deleting namespaces to run tests within.  When a test is executed, a unique namespace will be created to run the test within.  When the test is completed, the namespace would be removed by scorecard.  So, if you have 5 tests to be run, scorecard would create a unique namespace for each of those 5 tests.
+
+#### Story 7 (optional)
 
 Scorecard would support the creation of a Kuttl test image.  This custom test would execute kuttl to perform testing enabling scorecard users a means to write tests using kuttl but have the result integrated into scorecard results.  
 
@@ -179,8 +183,6 @@ In this design proposal, custom tests are Pod manifests in YAML that run a custo
 
 ### Scorecard Configuration
 
-Note that it would also be possible to add a resource limit to the scorecard configuration as shown in the example below.  Those resource limits would be applied to custom tests that are executed allowing for some control as to how much resources are available for the test execution.
-
 Custom test Pod manifests would be accessible from a local disk location to scorecard.  Scorecard would obtain the custom test manifests as part of its bundle image processing since the bundle image is passed into scorecard as a configuration flag.  
 
 Scorecard would assume that the scorecard configuration file and test
@@ -198,15 +200,8 @@ scorecard:
   output: text
   tests:
     init-timeout: 60
-    resources:
-      limits:
-        cpu: "1"
-        memory: "200Mi"
-      requests:
-        cpu: 750m
-        memory: "100Mi"
-      test-path:
-        - "/bundle/scorecard/tests"
+    test-path:
+      - "/bundle/scorecard/tests"
   …
 ```
 
@@ -222,9 +217,12 @@ Running the above command would have scorecard perform the following:
  
  * fetch the test configuration and test manifests from the bundle image
  * select the tests to run based on the test manifest labels and the selector
- * iterate through each CR within the bundle image CSV
- * execute the test image Pod for each selected test passing in the current CR as an environment variable
- * fetch the test image Pods log output for aggregation of test results
+ * iterate through each test, 
+   * create a unique test namespace
+   * create the operator roles and service account in the unique namespace
+   * create the operator deployment
+   * when the test pod completes, fetch the test image Pod log output for aggregation of test results
+   * delete the unique test namespace
  * display the test results 
 
 ### Custom Test Environments
@@ -241,6 +239,7 @@ metadata:
   name: isvtest1
   labels:
     vendor: someisv
+    testdescription: this is a test that does...
     test: isvtest1
     suite: isvcustom
 ```
