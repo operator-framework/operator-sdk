@@ -138,18 +138,24 @@ func (conditions Conditions) IsUnknownFor(t ConditionType) bool {
 // is new or was a change to the existing condition with the same type.
 func (conditions *Conditions) SetCondition(newCond Condition) bool {
 	tmpConditions := []Condition{}
-	isUpdated := false
+	hasChanges := false
 	isFound := false
 
+	// Check all conditionals
 	for _, condition := range *conditions {
 		if condition.Type == newCond.Type {
-			isFound = true;
-			isUpdated = condition.Status != newCond.Status ||
+			isFound = true
+			hasChanges = condition.Status != newCond.Status ||
 				condition.Reason != newCond.Reason ||
 				condition.Message != newCond.Message
-
-			if isUpdated {
-				newCond.LastTransitionTime = metav1.Time{Time: clock.Now()}
+			if hasChanges {
+				// If the condition status didn't change, use the existing
+				// condition's last transition time.
+				if condition.Status == newCond.Status {
+					newCond.LastTransitionTime = condition.LastTransitionTime
+				} else {
+					newCond.LastTransitionTime = metav1.Time{Time: clock.Now()}
+				}
 				tmpConditions = append(tmpConditions, newCond)
 			} else {
 				tmpConditions = append(tmpConditions, condition)
@@ -167,10 +173,11 @@ func (conditions *Conditions) SetCondition(newCond Condition) bool {
 		return true
 	}
 
-	// update conditional with changes if it is the case
-    if isFound {
+	// if the conditional was found
+	if isFound {
 		*conditions = tmpConditions
-		return isUpdated
+		// return true when it has changes and was updated
+		return hasChanges
 	}
 
 	return false

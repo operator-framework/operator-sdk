@@ -137,7 +137,7 @@ func TestConditionsSetExistsDifferentReason(t *testing.T) {
 	expectedCondition := withLastTransitionTime(setCondition, initTime)
 	actualCondition := conditions.GetCondition(expectedCondition.Type)
 	assert.Equal(t, 1, len(conditions))
-	assert.Equal(t, expectedCondition.Reason, actualCondition.Reason)
+	assert.Equal(t, expectedCondition, *actualCondition)
 }
 
 func TestConditionsSetExistsDifferentStatus(t *testing.T) {

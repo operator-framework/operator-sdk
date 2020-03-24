@@ -15,6 +15,7 @@
 package v1alpha1
 
 import (
+	"github.com/operator-framework/operator-sdk/pkg/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -22,9 +23,13 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // MemcachedSpec defines the desired state of Memcached
+// +k8s:openapi-gen=true
 type MemcachedSpec struct {
 	// Size is the size of the memcached deployment
 	Size int32 `json:"size"`
+
+	// +kubebuilder:validation:type=array
+	Conditions status.Conditions `json:"conditions"`
 }
 
 // MemcachedStatus defines the observed state of Memcached

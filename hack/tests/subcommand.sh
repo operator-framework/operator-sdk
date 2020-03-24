@@ -51,5 +51,13 @@ kubectl create -f deploy/role.yaml --namespace test-memcached
 kubectl create -f deploy/role_binding.yaml --namespace test-memcached
 kubectl create -f deploy/operator.yaml --namespace test-memcached
 operator-sdk test local ./test/e2e --operator-namespace=test-memcached --no-setup
+
+# check SDK CRD's generated with controller-gen
+make manifests
+kubectl create -f deploy/crds/cache.example.com_dummys.yaml --namespace test-memcached
+kubectl create -f deploy/crds/cache.example.com_memcachedrs.yaml --namespace test-memcached
+kubectl create -f deploy/crds/cache.example.com_memcacheds.yaml --namespace test-memcached
+kubectl create -f deploy/crds/cache.example.com_otherdummies.yaml --namespace test-memcached
+
 kubectl delete namespace test-memcached
 popd
