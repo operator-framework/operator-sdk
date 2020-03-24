@@ -11,7 +11,19 @@ webhook server. You will likely need to make a few modifications to the webhook 
 
 When integrating an admission webhook server into your Ansible-based Operator, we recommend that you
 deploy it as a sidecar container alongside your operator. This allows you to make use of the proxy
-server that the operator deploys, as well as the cache that backs it.
+server that the operator deploys, as well as the cache that backs it. The sidecar will be defined in the `deploy/operator.yaml` and it will look like:
+
+```yaml
+...
+# This deploys the webhook
+        - name: webhook
+          # Replace this with the built image name
+          image: "REPLACE_WEBHOOK_IMAGE"
+          imagePullPolicy: "Always"
+          volumeMounts:
+          - mountPath: /etc/tls/
+            name: webhook-cert
+...            
 
 ## Ensuring the webhook server uses the caching proxy
 
