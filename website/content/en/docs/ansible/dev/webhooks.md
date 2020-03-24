@@ -3,8 +3,7 @@
 ## Background
 
 For general background on what admission webhooks are, why to use them, and how to build them,
-please refer to the official Kubernetes documentation:
-https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/
+please refer to the official Kubernetes documentation on [Extensible Admission Controllers][admission-controllers]
 
 This guide will assume that you understand the above content, and that you have an existing admission
 webhook server. You will likely need to make a few modifications to the webhook server container.
@@ -109,14 +108,13 @@ spec:
 ```
 
 Now that you have a `Service` directing traffic to your webhook server, you will need to create
-`MutatingWebhookConfiguration` or `ValidatingWebhookConfiguration` objects (depending on what type of webhook you have deployed), which will tell Kubernetes
+[`MutatingWebhookConfiguration`][mutating-webhook] or [`ValidatingWebhookConfiguration`][validating-webhook] objects (depending on what type of webhook you have deployed), which will tell Kubernetes
 to send certain API requests through your webhooks before writing to etcd.
 
-Below are examples of both `MutatingWebhookConfiguration` and `ValidatingWebhookConfiguration` objects,
+Below are examples of both [`MutatingWebhookConfiguration`][mutating-webhook] and [`ValidatingWebhookConfiguration`][validating-webhook] objects,
 which will tell Kubernetes to call the `my-operator-webhook` service when `samples.example.com Example` resources
 are created. The mutating webhook is served on the `/mutating` path in my example webhook server, and the validating webhook is served on `/validating`. Update these values as needed to reflect your environment
-and desired behavior. These objects are thoroughly documented in the official Kubernetes documentation:
-https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/
+and desired behavior. These objects are thoroughly documented in the official Kubernetes documentation on [Extensible Admission Controllers][admission-controllers]
 
 ```yaml
 ---
@@ -175,4 +173,9 @@ Ansible-based Operator, you must
 1. Add the webhook container to your operator deployment
 1. Create a `Service` pointing to your webhook
 1. Make sure your webhook is reachable via the `Service` over `https`
-1. Create `MutatingWebhookConfiguration` or `ValidatingWebhookConfiguration` mapping the resource you want to mutate/validate to the `Service` you created
+1. Create [`MutatingWebhookConfiguration`][mutating-webhook] or [`ValidatingWebhookConfiguration`][validating-webhook] mapping the resource you want to mutate/validate to the `Service` you created
+
+
+[admission-controllers]:https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/
+[validating-webhook]:https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.17/#validatingwebhookconfiguration-v1-admissionregistration-k8s-io
+[mutating-webhook]:https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.17/#mutatingwebhookconfiguration-v1-admissionregistration-k8s-io
