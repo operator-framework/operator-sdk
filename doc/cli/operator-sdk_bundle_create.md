@@ -59,6 +59,7 @@ $ operator-sdk bundle create \
   -g, --generate-only            Generate metadata and a Dockerfile on disk without building the bundle image
   -h, --help                     help for create
   -b, --image-builder string     Tool to build container images. One of: [docker, podman, buildah] (default "docker")
+  -o, --output-dir string        Optional output directory for operator manifests
   -p, --package string           The name of the package that bundle image belongs to. Set if package name differs from project name (default "operator-sdk")
 ```
 

@@ -78,7 +78,7 @@ $ operator-sdk bundle create \
 				if len(args) != 0 {
 					return fmt.Errorf("command %s does not accept any arguments", cmd.CommandPath())
 				}
-				err := bundle.GenerateFunc(c.directory, c.packageName, channels,
+				err := bundle.GenerateFunc(c.directory, c.outputDir, c.packageName, channels,
 					c.defaultChannel, true)
 				if err != nil {
 					log.Fatalf("Error generating bundle image files: %v", err)
@@ -96,7 +96,7 @@ $ operator-sdk bundle create \
 				defer cleanup()
 			}
 			// Build but never overwrite existing metadata/Dockerfile.
-			err := bundle.BuildFunc(c.directory, c.imageTag, c.imageBuilder,
+			err := bundle.BuildFunc(c.directory, c.outputDir, c.imageTag, c.imageBuilder,
 				c.packageName, channels, c.defaultChannel, false)
 			if err != nil {
 				log.Fatalf("Error building bundle image: %v", err)
@@ -115,6 +115,8 @@ $ operator-sdk bundle create \
 
 	cmd.Flags().StringVarP(&c.directory, "directory", "d", defaultDir,
 		"The directory where bundle manifests are located")
+	cmd.Flags().StringVarP(&c.outputDir, "output-dir", "o", "",
+		"Optional output directory for operator manifests")
 	cmd.Flags().StringVarP(&c.packageName, "package", "p", projectName,
 		"The name of the package that bundle image belongs to. Set if package name differs from project name")
 	cmd.Flags().StringSliceVarP(&c.channels, "channels", "c", defaultChannels,
