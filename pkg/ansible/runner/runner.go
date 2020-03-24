@@ -310,7 +310,7 @@ func (r *runner) makeParameters(u *unstructured.Unstructured) map[string]interfa
 	parameters := paramconv.MapToSnake(spec)
 	parameters["meta"] = map[string]string{"namespace": u.GetNamespace(), "name": u.GetName()}
 
-	objKey := fmt.Sprintf("_%v_%v", strings.Replace(r.GVK.Group, ".", "_", -1),
+	objKey := fmt.Sprintf("_%v_%v", strings.ReplaceAll(strings.ReplaceAll(r.GVK.Group, ".", "_"), "-", "_"),
 		strings.ToLower(r.GVK.Kind))
 	parameters[objKey] = u.Object
 
