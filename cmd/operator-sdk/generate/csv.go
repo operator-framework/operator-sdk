@@ -178,8 +178,8 @@ CSV input flags:
 		`Project relative path to root directory for for CRD manifests`)
 
 	cmd.Flags().StringVar(&c.outputDir, "output-dir", scaffold.DeployDir,
-		"Base directory to output generated CSV. The resulting CSV bundle directory"+
-			"will be \"<output-dir>/olm-catalog/<operator-name>/<csv-version>\"")
+		"Base directory to output generated CSV. The resulting CSV bundle directory "+
+			"will be \"<output-dir>/olm-catalog/<operator-name>/<csv-version>\".")
 	cmd.Flags().BoolVar(&c.updateCRDs, "update-crds", false,
 		"Update CRD manifests in deploy/{operator-name}/{csv-version} the using latest API's")
 	cmd.Flags().StringVar(&c.operatorName, "operator-name", "",

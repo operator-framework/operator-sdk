@@ -10,15 +10,23 @@ This document describes how to manage the following lifecycle for your Operator 
 
 ## Configuration
 
-Operator SDK projects have an expected [project layout][doc-project-layout]. In particular, a few manifests are expected to be present in the `deploy` directory:
+### Inputs
 
-* Roles: `role.yaml`
-* ClusterRoles: `cluster_role.yaml`
-* Deployments: `operator.yaml`
-* Custom Resources (CR's): `crds/<full group>_<version>_<kind>_cr.yaml`
-* CustomResourceDefinitions (CRD's): `crds/<full group>_<resource>_crd.yaml`.
+The CSV generator requires certain inputs to construct a CSV manifest.
 
-`generate csv` extracts manifests from files in `deploy/` by default that match the kinds above and adds them to the CSV. If your manifest files are not in `deploy/`, you can use the `--include=[list of paths]` option to instruct the command to extract manifests from files at those paths, ex. `--include="deploy/prod,deploy/test"`. Setting `--include` overrides default behavior; if you still want default behavior, you must append `deploy/` to the list of paths passed to `--include`.
+1. Path to the operator manifests root directory. By default `generate csv` extracts manifests from files in `deploy/` for the following kinds and adds them to the CSV. Use the `--deploy-dir` flag to change this path.
+    * Roles: `role.yaml`
+    * ClusterRoles: `cluster_role.yaml`
+    * Deployments: `operator.yaml`
+    * Custom Resources (CR's): `crds/<full group>_<version>_<kind>_cr.yaml`
+    * CustomResourceDefinitions (CRD's): `crds/<full group>_<resource>_crd.yaml`
+2. Path to API types root directory. The CSV generator also parses the [CSV annotations][csv-annotations] from the API type definitions to populate certain CSV fields. By default the API types directory is `pkg/apis/`. Use the `--apis-dir` flag to change this path. The CSV generator expects either of the following layouyts for the API types directory
+    * Mulitple groups: `<API-root-dir>/<group>/<version>/`
+    * Single groups: `<API-root-dir>/<version>/`
+
+### Output
+
+By default `generate csv` will generate the catalog bundle directory `olm-catalog/...` under `deploy/`. To change where the CSV bundle directory is generated use the `--ouput-dir` flag.
 
 ## Versioning
 
@@ -66,7 +74,7 @@ Be sure to include the `--update-crds` flag if you want to add CRD's to your bun
 
 Below are two lists of fields: the first is a list of all fields the SDK and OLM expect in a CSV, and the second are optional.
 
-Several fields require user input (labeled _user_) or a [code annotation][code-annotations] (labeled _annotation_). This list may change as the SDK becomes better at generating CSV's.
+Several fields require user input (labeled _user_) or a [CSV annotation][csv-annotations] (labeled _annotation_). This list may change as the SDK becomes better at generating CSV's.
 
 Required:
 
@@ -110,10 +118,9 @@ Optional:
 [doc-csv]:https://github.com/operator-framework/operator-lifecycle-manager/blob/4197455/Documentation/design/building-your-csv.md
 [olm]:https://github.com/operator-framework/operator-lifecycle-manager
 [generate-csv-cli]:../../cli/operator-sdk_generate_csv.md
-[doc-project-layout]:../../project_layout.md
 [doc-csv-design]:../../design/milestone-0.2.0/csv-generation.md
 [doc-bundle]:https://github.com/operator-framework/operator-registry/blob/6893d19/README.md#manifest-format
 [x-desc-list]:https://github.com/openshift/console/blob/70bccfe/frontend/public/components/operator-lifecycle-manager/descriptors/types.ts#L3-L35
 [install-modes]:https://github.com/operator-framework/operator-lifecycle-manager/blob/4197455/Documentation/design/building-your-csv.md#operator-metadata
 [olm-capabilities]:../../images/operator-capability-level.png
-[code-annotations]:../../proposals/sdk-code-annotations.md
+[csv-annotations]: ./csv-annotations.md

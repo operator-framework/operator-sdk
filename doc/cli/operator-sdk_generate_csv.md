@@ -113,7 +113,7 @@ operator-sdk generate csv [flags]
       --from-version string    Semantic version of an existing CSV to use as a base
   -h, --help                   help for csv
       --operator-name string   Operator name to use while generating CSV
-      --output-dir string      Base directory to output generated CSV. The resulting CSV bundle directorywill be "<output-dir>/olm-catalog/<operator-name>/<csv-version>" (default "deploy")
+      --output-dir string      Base directory to output generated CSV. The resulting CSV bundle directory will be "<output-dir>/olm-catalog/<operator-name>/<csv-version>". (default "deploy")
       --update-crds            Update CRD manifests in deploy/{operator-name}/{csv-version} the using latest API's
 ```
 
