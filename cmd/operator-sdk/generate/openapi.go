@@ -72,14 +72,14 @@ func openAPIFunc(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 	}
 
-	fs := []func() error{
-		genutil.OpenAPIGen,
-		genutil.CRDGen,
+	if err := genutil.OpenAPIGen(); err != nil {
+		log.Fatal(err)
 	}
-	for _, f := range fs {
-		if err := f(); err != nil {
-			log.Fatal(err)
-		}
+
+	// Hardcode "v1beta1" here because we never want to change the functionality of this deprecated function.
+	if err := genutil.CRDGen("v1beta1"); err != nil {
+		log.Fatal(err)
 	}
+
 	return nil
 }

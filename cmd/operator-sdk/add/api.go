@@ -21,6 +21,7 @@ import (
 	"path/filepath"
 
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal/genutil"
+	gencrd "github.com/operator-framework/operator-sdk/internal/generate/crd"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
@@ -33,6 +34,7 @@ var (
 	apiVersion     string
 	kind           string
 	skipGeneration bool
+	crdVersion     string
 )
 
 func newAddAPICmd() *cobra.Command {
@@ -84,6 +86,8 @@ Example:
 	}
 	apiCmd.Flags().BoolVar(&skipGeneration, "skip-generation", false,
 		"Skip generation of deepcopy and OpenAPI code and OpenAPI CRD specs")
+	apiCmd.Flags().StringVar(&crdVersion, "crd-version", gencrd.DefaultCRDVersion,
+		"CRD version to generate")
 
 	return apiCmd
 }
@@ -143,7 +147,7 @@ func apiRun(cmd *cobra.Command, args []string) error {
 		}
 
 		// Generate a validation spec for the new CRD.
-		if err := genutil.CRDGen(); err != nil {
+		if err := genutil.CRDGen(crdVersion); err != nil {
 			log.Fatal(err)
 		}
 	}

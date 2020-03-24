@@ -56,6 +56,8 @@ Generated CR  filename: <project-name>/deploy/crds/<full group>_<version>_<kind>
 	if err := crdCmd.MarkFlagRequired("kind"); err != nil {
 		log.Fatalf("Failed to mark `kind` flag for `add crd` subcommand as required")
 	}
+	crdCmd.Flags().StringVar(&crdVersion, "crd-version", gencrd.DefaultCRDVersion,
+		"CRD version to generate")
 	return crdCmd
 }
 
@@ -101,7 +103,7 @@ func crdFunc(cmd *cobra.Command, args []string) error {
 	// This command does not consider an APIs dir. Instead it adds a plain CRD
 	// for the provided resource. We can use NewCRDNonGo to get this behavior.
 	gcfg := gen.Config{}
-	crd := gencrd.NewCRDNonGo(gcfg, *resource)
+	crd := gencrd.NewCRDNonGo(gcfg, *resource, crdVersion)
 	if err := crd.Generate(); err != nil {
 		log.Fatalf("Error generating CRD for %s: %w", resource, err)
 	}

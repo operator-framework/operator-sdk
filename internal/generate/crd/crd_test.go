@@ -22,6 +22,7 @@ import (
 	"path"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -72,31 +73,57 @@ func TestGenerate(t *testing.T) {
 	cases := []struct {
 		description string
 		generator   gen.Generator
+		wantErr     bool
 	}{
 		{
-			"Generate Go CRD",
-			NewCRDGo(gen.Config{
+			description: "Generate Go CRD",
+			generator: NewCRDGo(gen.Config{
 				Inputs: map[string]string{
 					APIsDirKey: filepath.Join(testGoDataDir, scaffold.ApisDir),
 				},
 				OutputDir: filepath.Join(tmp, randomString()),
-			}),
+			}, "v1beta1"),
+			wantErr: false,
 		},
 		{
-			"Generate non-Go CRD",
-			NewCRDNonGo(gen.Config{
+			description: "Generate non-Go CRD",
+			generator: NewCRDNonGo(gen.Config{
 				Inputs: map[string]string{
 					APIsDirKey: filepath.Join(testGoDataDir, scaffold.ApisDir),
 				},
 				OutputDir: filepath.Join(tmp, randomString()),
-			}, *r),
+			}, *r, "v1beta1"),
+			wantErr: false,
+		},
+		{
+			description: "invalid Go CRD version",
+			generator: NewCRDGo(gen.Config{
+				Inputs: map[string]string{
+					APIsDirKey: filepath.Join(testGoDataDir, scaffold.ApisDir),
+				},
+				OutputDir: filepath.Join(tmp, randomString()),
+			}, "invalid"),
+			wantErr: true,
+		},
+		{
+			description: "invalid non-Go CRD version",
+			generator: NewCRDNonGo(gen.Config{
+				Inputs: map[string]string{
+					APIsDirKey: filepath.Join(testGoDataDir, scaffold.ApisDir),
+				},
+				OutputDir: filepath.Join(tmp, randomString()),
+			}, *r, "invalid"),
+			wantErr: true,
 		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.description, func(t *testing.T) {
-			err = c.generator.Generate()
+			err := c.generator.Generate()
 			if err != nil {
+				if c.wantErr {
+					return
+				}
 				t.Errorf("Wanted nil error, got: %v", err)
 			}
 		})
@@ -109,52 +136,82 @@ func TestCRDGo(t *testing.T) {
 			APIsDirKey: filepath.Join(testGoDataDir, scaffold.ApisDir),
 		},
 	}
-	g := NewCRDGo(cfg)
-	fileMap, err := g.(crdGenerator).generateGo()
-	if err != nil {
-		t.Fatalf("Failed to execute CRD generator: %v", err)
-	}
+
 	r, err := scaffold.NewResource(testAPIVersion, testKind)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if b, ok := fileMap[getFileNameForResource(*r)]; !ok {
-		t.Errorf("Failed to generate CRD for %s", r)
-	} else {
-		assert.Equal(t, crdCustomExp, string(b))
+
+	cases := []struct {
+		crdVersion  string
+		expectedCRD string
+	}{
+		{"v1beta1", crdCustomExpV1beta1},
+		{"v1", crdCustomExpV1},
+	}
+
+	for _, c := range cases {
+		t.Run(c.crdVersion, func(t *testing.T) {
+			g := NewCRDGo(cfg, c.crdVersion)
+			fileMap, err := g.(crdGenerator).generateGo()
+			if err != nil {
+				t.Fatalf("Failed to execute CRD generator: %v", err)
+			}
+			if b, ok := fileMap[getFileNameForResource(*r)]; !ok {
+				t.Errorf("Failed to generate CRDs for %s", r)
+			} else {
+				assert.Equal(t, c.expectedCRD, string(b))
+			}
+		})
 	}
 }
 
 func TestCRDNonGo(t *testing.T) {
+	r, err := scaffold.NewResource(testAPIVersion, testKind)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	cases := []struct {
-		description      string
-		apiVersion, kind string
-		crdsDir          string
-		expCRD           string
-		wantErr          bool
+		description string
+		crdsDir     string
+		crdVersion  string
+		expCRD      string
 	}{
 		{
-			"non-existent CRD with default structural schema",
-			testAPIVersion, testKind, filepath.Join("not", "exist"), crdNonGoDefaultExp, false,
+			"non-existent v1beta1 CRD with default structural schema",
+			filepath.Join("not", "exist"), "v1beta1", crdNonGoDefaultExpV1beta1,
 		},
 		{
-			"existing CRD with custom structural schema",
-			testAPIVersion, testKind, filepath.Join(testGoDataDir, scaffold.CRDsDir), crdCustomExp, false,
+			"non-existent v1 CRD with default structural schema",
+			filepath.Join("not", "exist"), "v1", crdNonGoDefaultExpV1,
+		},
+		{
+			"existing v1beta1 CRD with custom structural schema",
+			filepath.Join(testGoDataDir, scaffold.CRDsDir+"_v1beta1"), "v1beta1", crdCustomExpV1beta1,
+		},
+		{
+			"existing v1 CRD with custom structural schema",
+			filepath.Join(testGoDataDir, scaffold.CRDsDir+"_v1"), "v1", crdCustomExpV1,
+		},
+		{
+			"existing v1beta1 to v1 CRD with custom structural schema",
+			filepath.Join(testGoDataDir, scaffold.CRDsDir+"_v1beta1"), "v1", crdCustomExpV1,
+		},
+		{
+			"existing v1 to v1beta1 CRD with custom structural schema",
+			filepath.Join(testGoDataDir, scaffold.CRDsDir+"_v1"), "v1beta1", asV1beta1(crdCustomExpV1),
 		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.description, func(t *testing.T) {
-			r, err := scaffold.NewResource(c.apiVersion, c.kind)
-			if err != nil {
-				t.Fatal(err)
-			}
 			cfg := gen.Config{
 				Inputs: map[string]string{
 					CRDsDirKey: c.crdsDir,
 				},
 			}
-			g := NewCRDNonGo(cfg, *r)
+			g := NewCRDNonGo(cfg, *r, c.crdVersion)
 			fileMap, err := g.(crdGenerator).generateNonGo()
 			if err != nil {
 				t.Fatalf("Error executing CRD generator: %v", err)
@@ -168,9 +225,13 @@ func TestCRDNonGo(t *testing.T) {
 	}
 }
 
-// crdNonGoDefaultExp is the default non-go CRD. Non-go projects don't have the
+func asV1beta1(crdV1 string) string {
+	return strings.ReplaceAll(crdV1, "apiVersion: apiextensions.k8s.io/v1", "apiVersion: apiextensions.k8s.io/v1beta1")
+}
+
+// crdNonGoDefaultExpV1beta1 is the default non-go v1beta1 CRD. Non-go projects don't have the
 // luxury of kubebuilder annotations.
-const crdNonGoDefaultExp = `apiVersion: apiextensions.k8s.io/v1beta1
+const crdNonGoDefaultExpV1beta1 = `apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   name: memcacheds.cache.example.com
@@ -194,9 +255,35 @@ spec:
     storage: true
 `
 
-// crdCustomExp is a CRD with custom validation, either created manually or
+// crdNonGoDefaultExpV1 is the equivalent default non-go v1 CRD. Non-go projects don't have the
+// luxury of kubebuilder annotations.
+const crdNonGoDefaultExpV1 = `apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: memcacheds.cache.example.com
+spec:
+  group: cache.example.com
+  names:
+    kind: Memcached
+    listKind: MemcachedList
+    plural: memcacheds
+    singular: memcached
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        type: object
+        x-kubernetes-preserve-unknown-fields: true
+    served: true
+    storage: true
+    subresources:
+      status: {}
+`
+
+// crdCustomExpV1beta1 is a v1beta1 CRD with custom validation, either created manually or
 // with Go API code annotations.
-const crdCustomExp = `apiVersion: apiextensions.k8s.io/v1beta1
+const crdCustomExpV1beta1 = `apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   name: memcacheds.cache.example.com
@@ -253,4 +340,64 @@ spec:
   - name: v1alpha1
     served: true
     storage: true
+`
+
+// crdCustomExpV1 is the equivalent v1 CRD with custom validation, either created manually or
+// with Go API code annotations.
+const crdCustomExpV1 = `apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: memcacheds.cache.example.com
+spec:
+  group: cache.example.com
+  names:
+    kind: Memcached
+    listKind: MemcachedList
+    plural: memcacheds
+    singular: memcached
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Memcached is the Schema for the memcacheds API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: MemcachedSpec defines the desired state of Memcached
+            properties:
+              size:
+                description: Size is the size of the memcached deployment
+                format: int32
+                type: integer
+            required:
+            - size
+            type: object
+          status:
+            description: MemcachedStatus defines the observed state of Memcached
+            properties:
+              nodes:
+                description: Nodes are the names of the memcached pods
+                items:
+                  type: string
+                type: array
+            required:
+            - nodes
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
 `
