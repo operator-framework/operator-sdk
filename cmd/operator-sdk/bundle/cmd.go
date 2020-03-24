@@ -42,6 +42,7 @@ https://github.com/openshift/enhancements/blob/master/enhancements/olm/operator-
 
 type bundleCmd struct {
 	directory      string
+	outputDir      string
 	packageName    string
 	imageTag       string
 	imageBuilder   string
@@ -53,9 +54,17 @@ type bundleCmd struct {
 // cleanupFuncs returns a set of general funcs to clean up after a bundle
 // subcommand.
 func (c bundleCmd) cleanupFuncs() (fs []func()) {
-	metaDir := filepath.Join(c.directory, bundle.MetadataDir)
-	dockerFile := filepath.Join(c.directory, bundle.DockerFile)
+	manifestDir := c.outputDir
+	if manifestDir == "" {
+		manifestDir = c.directory
+	}
+	absManifestDir, _ := filepath.Abs(manifestDir)
+	manifestParent := filepath.Dir(absManifestDir)
+	metaDir := filepath.Join(manifestParent, bundle.MetadataDir)
 	metaExists := isExist(metaDir)
+
+	workingDir, _ := os.Getwd()
+	dockerFile := filepath.Join(workingDir, bundle.DockerFile)
 	dockerFileExists := isExist(dockerFile)
 	fs = append(fs,
 		func() {
