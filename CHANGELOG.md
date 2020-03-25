@@ -6,12 +6,13 @@
 - The methods `ctx.GetOperatorNamespace()` and `ctx.GetWatchNamespace()` was added `pkg/test` in order to replace `ctx.GetNamespace()` which is  deprecated. ([#2617](https://github.com/operator-framework/operator-sdk/pull/2617))
 - The `--crd-version` flag was added to the `new`, `add api`, `add crd`, and `generate crds` commands so that users can opt-in to `v1` CRDs. ([#2684](https://github.com/operator-framework/operator-sdk/pull/2684))
 - The printout for the compatible Kubernetes Version [#2446](https://github.com/operator-framework/operator-sdk/pull/2446)
-- Add the new flag `output-dir` to the command `operator-sdk bundle create`. ([#2662](https://github.com/operator-framework/operator-sdk/pull/2662))
+- Add the new flag `--output-dir` to the command [`operator-sdk bundle create`](./doc/cli/operator-sdk_bundle_create.md). ([#2715](https://github.com/operator-framework/operator-sdk/pull/2715))
 
 ### Changed
 
 - The scorecard when creating a Custom Resource, will produce a message to the user if that CR already exists. ([#2683](https://github.com/operator-framework/operator-sdk/pull/2683))
 - Upgrade the `operator-registry` dependency version from `v1.5.7`to `v1.6.0` to update `bundle create` behaviour. ([#2662](https://github.com/operator-framework/operator-sdk/pull/2662))
+- **Breaking Change:** [`operator-sdk bundle create --generate-only`](./doc/cli/operator-sdk_bundle_create.md) now writes a Dockerfile to `<project-root>/bundle.Dockerfile` and copies bundle manifests directly from the argument to `--directory`. ([#2715](https://github.com/operator-framework/operator-sdk/pull/2715))
 
 ### Deprecated
 
