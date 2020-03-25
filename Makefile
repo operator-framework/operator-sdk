@@ -202,7 +202,7 @@ test-sanity: tidy build/operator-sdk lint
 
 TEST_PKGS:=$(shell go list ./... | grep -v -E 'github.com/operator-framework/operator-sdk/(hack/|test/)')
 test-unit: ## Run the unit tests
-	$(Q)go test -coverprofile=coverage.out -covermode=count -count=1 -short ${TEST_PKGS}
+	$(Q)go test -coverprofile=coverage.out -covermode=count -count=1 ${TEST_PKGS}
 
 # CI tests.
 .PHONY: test-ci
