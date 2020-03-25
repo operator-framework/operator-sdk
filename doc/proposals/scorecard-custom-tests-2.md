@@ -78,7 +78,10 @@ Scorecard would support creating and deleting namespaces to run tests within.  W
 
 #### Story 7 (optional)
 
-Scorecard would support the creation of a Kuttl test image.  This custom test would execute kuttl to perform testing enabling scorecard users a means to write tests using kuttl but have the result integrated into scorecard results.  
+- I am as an Operator developer, would like to be able to create tests using the same Assert syntax adopted by [Kuttl](https://github.com/kudobuilder/kuttl) and check its results aggregated within scorecard results. 
+
+**Implementation Notes**
+The Scorecard would support the creation of a Kuttl test image and the execute tests via Kuttl, however, it would be transparent for users since its results will be integrated into scorecard results.
 
 ## Design Details
 
