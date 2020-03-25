@@ -17,6 +17,7 @@ package status
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"testing"
 	"time"
 
@@ -259,5 +260,11 @@ func TestConditionsMarshalUnmarshalJSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to unmarshal JSON: %s", err)
 	}
+
+	// Just to sort and be able to compare the results
+	sort.Slice(conditions, func(a, b int) bool {
+		return conditions[a].Type < conditions[b].Type
+	})
+
 	assert.Equal(t, conditions, unmarshalConds)
 }

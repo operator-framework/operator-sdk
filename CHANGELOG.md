@@ -20,6 +20,8 @@
 
 ### Bug Fixes
 
+- **Breaking Change:** Change `pkg/status.Conditions` from `map[ConditionType]Condition`  to `[]Condition` to fix issues faced to apply CRD's generated with validations which are using it in their type definitions. ([#2711](https://github.com/operator-framework/operator-sdk/pull/2711))
+ 
 ## v0.16.0
 
 ### Added
