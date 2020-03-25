@@ -1,3 +1,8 @@
+---
+title: Writing E2E Tests
+linkTitle: Writing E2E Tests
+weight: 1
+---
 # Using the Operator SDK's Test Framework to Write E2E Tests
 
 End-to-end tests are essential to ensure that an operator works

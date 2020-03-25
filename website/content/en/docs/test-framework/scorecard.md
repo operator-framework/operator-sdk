@@ -1,3 +1,8 @@
+---
+title: Scorecard
+linkTitle: Scorecard
+weight: 1
+---
 # operator-sdk scorecard
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
