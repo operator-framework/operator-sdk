@@ -39,22 +39,23 @@ Note: the image being validated must exist in a remote registry, not just locall
 		Example: `The following command flow will generate test-operator bundle image manifests
 and validate that image:
 
-$ cd ${HOME}/go/test-operator
+  $ cd ${HOME}/go/test-operator
 
-# Generate manifests locally.
-$ operator-sdk bundle create --generate-only
+  # Generate manifests locally.
+  $ operator-sdk bundle create --generate-only
 
-# Modify the metadata and Dockerfile.
-$ cd ./deploy/olm-catalog/test-operator
-$ vim ./metadata/annotations.yaml
-$ vim ./Dockerfile
+  # Modify the metadata and Dockerfile.
+  $ cd ./deploy/olm-catalog/test-operator
+  $ vim ./metadata/annotations.yaml
+  $ vim ./Dockerfile
 
-# Build and push the image using the docker CLI.
-$ docker build -t quay.io/example/test-operator:v0.1.0 .
-$ docker push quay.io/example/test-operator:v0.1.0
+  # Build and push the image using the docker CLI.
+  $ docker build -t quay.io/example/test-operator:v0.1.0 .
+  $ docker push quay.io/example/test-operator:v0.1.0
 
-# Ensure the image with modified metadata/Dockerfile is valid.
-$ operator-sdk bundle validate quay.io/example/test-operator:v0.1.0`,
+  # Ensure the image with modified metadata/Dockerfile is valid.
+  $ operator-sdk bundle validate quay.io/example/test-operator:v0.1.0
+`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
 				return errors.New("a bundle image tag is a required argument, ex. example.com/test-operator:v0.1.0")
@@ -70,11 +71,11 @@ $ operator-sdk bundle validate quay.io/example/test-operator:v0.1.0`,
 					log.Error(err.Error())
 				}
 			}()
+
 			logger := log.WithFields(log.Fields{
 				"container-tool": c.imageBuilder,
 				"bundle-dir":     dir,
 			})
-			log.SetLevel(log.DebugLevel)
 			val := bundle.NewImageValidator(c.imageBuilder, logger)
 			if err = val.PullBundleImage(c.imageTag, dir); err != nil {
 				log.Fatalf("Error to unpacking image: %v", err)

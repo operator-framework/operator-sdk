@@ -20,22 +20,23 @@ operator-sdk bundle validate [flags]
 The following command flow will generate test-operator bundle image manifests
 and validate that image:
 
-$ cd ${HOME}/go/test-operator
+  $ cd ${HOME}/go/test-operator
 
-# Generate manifests locally.
-$ operator-sdk bundle create --generate-only
+  # Generate manifests locally.
+  $ operator-sdk bundle create --generate-only
 
-# Modify the metadata and Dockerfile.
-$ cd ./deploy/olm-catalog/test-operator
-$ vim ./metadata/annotations.yaml
-$ vim ./Dockerfile
+  # Modify the metadata and Dockerfile.
+  $ cd ./deploy/olm-catalog/test-operator
+  $ vim ./metadata/annotations.yaml
+  $ vim ./Dockerfile
 
-# Build and push the image using the docker CLI.
-$ docker build -t quay.io/example/test-operator:v0.1.0 .
-$ docker push quay.io/example/test-operator:v0.1.0
+  # Build and push the image using the docker CLI.
+  $ docker build -t quay.io/example/test-operator:v0.1.0 .
+  $ docker push quay.io/example/test-operator:v0.1.0
 
-# Ensure the image with modified metadata/Dockerfile is valid.
-$ operator-sdk bundle validate quay.io/example/test-operator:v0.1.0
+  # Ensure the image with modified metadata/Dockerfile is valid.
+  $ operator-sdk bundle validate quay.io/example/test-operator:v0.1.0
+
 ```
 
 ### Options

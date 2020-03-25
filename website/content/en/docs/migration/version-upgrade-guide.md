@@ -984,21 +984,21 @@ func serveCRMetrics(cfg *rest.Config, operatorNs string) error {
 ### Breaking changes
 
 #### `TestCtx` in `pkg/test` has been deprecated
- 
+
  The type name `TestCtx` in `pkg/test` has been deprecated and renamed to `Context`. Users of the e2e framework should do the following:
- 
+
  - Replace `TestCtx` with `Context`
  - Replace `NewTestCtx` with `NewContext`
 
 #### Scorecard only supports YAML config files
-  
+
 The scorecard feature now only supports YAML config files. Config files with other extensions are no longer supported and should be changed to the YAML format. For further information see [`scorecard config file`](https://github.com/operator-framework/operator-sdk/blob/v0.16.x/doc/test-framework/scorecard.md#config-file)
-  
-### Breaking Changes for Ansible 
 
-#### Remove Ansible container sidecar 
+### Breaking Changes for Ansible
 
-The Ansible logs are now output in the operator container, so there is no longer a need for the Ansible container sidecar. To reflect this change, update the `deploy/operator.yaml` file as follows. 
+#### Remove Ansible container sidecar
+
+The Ansible logs are now output in the operator container, so there is no longer a need for the Ansible container sidecar. To reflect this change, update the `deploy/operator.yaml` file as follows.
 
 Remove:
 
@@ -1068,13 +1068,13 @@ The methods `ctx.GetOperatorNamespace()` and `ctx.GetWatchNamespace()` was added
 
 This release contains breaking changes in some commands.
 
-- The --namespace flag from `operator-sdk run --local` command, `operator-sdk test --local` command and `operator-sdk cleanup` command was deprecated and was replaced by --watch-namespace and --operator-namespace .
+- The --namespace flag from `operator-sdk run --local` command, `operator-sdk test --local` command and `operator-sdk cleanup` command was deprecated and was replaced by --watch-namespace and --operator-namespace. [#2617](https://github.com/operator-framework/operator-sdk/pull/2617)
 
 Note that --watch-namespace can be used to set the namespace(s) which the operator will watch for changes. It will set the environment variable WATCH_NAMESPACE. Use explicitly an empty string to watch all namespaces or inform a List of namespaces such as "ns1,ns2" when the operator is cluster-scoped. If you use a List, then it needs contains the namespace where the operator is "deployed" in since the default metrics implementation will manage resources in the Operator's namespace. By default, it will be the Operator Namespace.
 
 Then, use the flag --operator-namespace to inform the namespace where the Operator will be "deployed" in and then, it will set the environment variable OPERATOR_NAMESPACE. If this value is not set, then it will be the namespace defined as default in the Kubeconfig.
 
-NOTE: For more information check the PRs which are responsible for the above changes [#2617](https://github.com/operator-framework/operator-sdk/pull/2617).
+- If you've run `operator-sdk bundle create --generate-only`, move your bundle Dockerfile at `<project-root>/deploy/olm-catalog/<operator-name>/Dockerfile` to `<project-root>/bundle.Dockerfile` and update the first `COPY` from `COPY /*.yaml manifests/` to `COPY deploy/olm-catalog/<operator-name>/<bundle-dir> manifests/`. [#2715](https://github.com/operator-framework/operator-sdk/pull/2715)
 
 [legacy-kubebuilder-doc-crd]: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 [v0.8.2-go-mod]: https://github.com/operator-framework/operator-sdk/blob/28bd2b0d4fd25aa68e15d928ae09d3c18c3b51da/internal/pkg/scaffold/go_mod.go#L40-L94
