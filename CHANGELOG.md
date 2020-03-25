@@ -21,6 +21,8 @@
 
 ### Bug Fixes
 
+- The Ansible Operator proxy server now properly supports the Pod `exec` API ([#2716](https://github.com/operator-framework/operator-sdk/pull/2716))
+
 ## v0.16.0
 
 ### Added
