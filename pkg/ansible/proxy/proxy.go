@@ -44,6 +44,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
+const AutoSkipCacheRE = "^/api/.*/pods/.*/exec,^/api/.*/pods/.*/attach"
+
 // RequestLogHandler - log the requests that come through the proxy.
 func RequestLogHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -158,6 +160,10 @@ func Run(done chan error, o Options) error {
 		server.Handler = RequestLogHandler(server.Handler)
 	}
 	if !o.DisableCache {
+		autoSkipCacheRegexp, err := MakeRegexpArray(AutoSkipCacheRE)
+		if err != nil {
+			log.Error(err, "Failed to parse cache skip regular expression")
+		}
 		server.Handler = &cacheResponseHandler{
 			next:              server.Handler,
 			informerCache:     o.Cache,
@@ -166,6 +172,7 @@ func Run(done chan error, o Options) error {
 			cMap:              o.ControllerMap,
 			injectOwnerRef:    o.OwnerInjection,
 			apiResources:      resources,
+			skipPathRegexp:    autoSkipCacheRegexp,
 		}
 	}
 

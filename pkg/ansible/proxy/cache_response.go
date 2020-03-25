@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
@@ -52,6 +53,7 @@ type cacheResponseHandler struct {
 	cMap              *controllermap.ControllerMap
 	injectOwnerRef    bool
 	apiResources      *apiResources
+	skipPathRegexp    []*regexp.Regexp
 }
 
 func (c *cacheResponseHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -150,6 +152,11 @@ func (c *cacheResponseHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 // skipCacheLookup - determine if we should skip the cache lookup
 func (c *cacheResponseHandler) skipCacheLookup(r *requestfactory.RequestInfo, gvk schema.GroupVersionKind,
 	req *http.Request) bool {
+
+	skip := matchesRegexp(req.URL.String(), c.skipPathRegexp)
+	if skip {
+		return true
+	}
 
 	owner, err := getRequestOwnerRef(req)
 	if err != nil {
