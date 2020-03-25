@@ -47,5 +47,5 @@ $ operator-sdk bundle validate quay.io/example/test-operator:v0.1.0
 
 ### SEE ALSO
 
-* [operator-sdk bundle](operator-sdk_bundle.md)	 - Work with operator bundle metadata and bundle images
+* [operator-sdk bundle](operator-sdk_bundle.md)	 - Work with operator bundle metadata and operator bundle and index images
 

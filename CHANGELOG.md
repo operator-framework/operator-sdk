@@ -5,6 +5,7 @@
 - The flag `--watch-namespace` and `--operator-namespace` was added to `operator-sdk run --local`, `operator-sdk test --local` and `operator-sdk cleanup` commands in order to replace the flag `--namespace` which was  deprecated.([#2617](https://github.com/operator-framework/operator-sdk/pull/2617))
 - The methods `ctx.GetOperatorNamespace()` and `ctx.GetWatchNamespace()` was added `pkg/test` in order to replace `ctx.GetNamespace()` which is  deprecated. ([#2617](https://github.com/operator-framework/operator-sdk/pull/2617))
 - The `--crd-version` flag was added to the `new`, `add api`, `add crd`, and `generate crds` commands so that users can opt-in to `v1` CRDs. ([#2684](https://github.com/operator-framework/operator-sdk/pull/2684))
+- Added [`bundle add`](./doc/cli/operator-sdk_bundle_add.md) which adds bundle images to an [operator index image](https://github.com/openshift/enhancements/blob/master/enhancements/olm/operator-registry.md) by creating a new index image or updates an existing one. These index images are a ready-to-ship catalog for all of your operator versions. ([#2714](https://github.com/operator-framework/operator-sdk/pull/2714))
 
 ### Changed
 

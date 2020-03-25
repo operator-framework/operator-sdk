@@ -25,9 +25,10 @@ import (
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "bundle",
-		Short: "Work with operator bundle metadata and bundle images",
-		Long: `Generate operator bundle metadata and build operator bundle images, which
-are used to manage operators in the Operator Lifecycle Manager.
+		Short: "Work with operator bundle metadata and operator bundle and index images",
+		Long: `Generate operator bundle metadata, and build operator bundle and index images.
+These image formats are used to manage operators in the Operator Lifecycle Manager
+and beyond.
 
 More information on operator bundle images and metadata:
 https://github.com/openshift/enhancements/blob/master/enhancements/olm/operator-bundle.md#docker`,
@@ -36,6 +37,7 @@ https://github.com/openshift/enhancements/blob/master/enhancements/olm/operator-
 	cmd.AddCommand(
 		newCreateCmd(),
 		newValidateCmd(),
+		newAddCmd(),
 	)
 	return cmd
 }
@@ -73,5 +75,5 @@ func (c bundleCmd) cleanupFuncs() (fs []func()) {
 
 func isExist(path string) bool {
 	_, err := os.Stat(path)
-	return os.IsExist(err)
+	return err == nil || os.IsExist(err)
 }
