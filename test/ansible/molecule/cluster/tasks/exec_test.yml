@@ -1,0 +1,27 @@
+---
+- name: Create the test.example.com/v1alpha1.ExecTest
+  k8s:
+    state: present
+    definition:
+      apiVersion: test.example.com/v1alpha1
+      kind: ExecTest
+      metadata:
+        name: exec-test
+        namespace: '{{ namespace }}'
+      spec:
+        execCommand: "echo 'hello world'"
+    wait: yes
+    wait_timeout: 300
+    wait_condition:
+      type: Running
+      reason: Successful
+      status: "True"
+  register: exec_test
+
+- debug: var=exec_test
+
+- name: Assert stdout and stderr are properly set in status
+  assert:
+    that:
+      - exec_test.result.status.execCommandStderr == ""
+      - exec_test.result.status.execCommandStdout == "hello world"
