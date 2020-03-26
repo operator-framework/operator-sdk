@@ -57,7 +57,7 @@ install: ## Build & install the Operator SDK CLI binary
 		-ldflags " \
 			-X '${REPO}/version.GitVersion=${VERSION}' \
 			-X '${REPO}/version.GitCommit=${GIT_COMMIT}' \
-			-X '${REPO}/version.KubernetesVendorVersion=${K8S_VERSION}' \
+			-X '${REPO}/version.KubernetesVersion=${K8S_VERSION}' \
 		" \
 		$(BUILD_PATH)
 
