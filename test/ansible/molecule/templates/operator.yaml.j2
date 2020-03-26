@@ -12,6 +12,9 @@ spec:
     metadata:
       labels:
         name: ansible
+{% if hash is defined %}
+        image_hash: "{{ hash }}"
+{% endif %}
     spec:
       serviceAccountName: ansible
       containers:
@@ -37,6 +40,8 @@ spec:
               value: explicit
             - name: ANSIBLE_INVENTORY
               value: /opt/ansible/inventory
+            - name: ANSIBLE_DEBUG_LOGS
+              value: "TRUE"
       volumes:
         - name: runner
           emptyDir: {}

@@ -1,6 +1,7 @@
 ---
 - name: Build Operator in Kubernetes docker container
   hosts: k8s
+  gather_facts: no
   collections:
     - community.kubernetes
 
@@ -14,6 +15,7 @@
       register: prev_hash_raw
       changed_when: false
 
+
     - name: Build Operator Image
       command: docker build -f /build/build/Dockerfile -t {{ image }} /build
       register: build_cmd
@@ -21,6 +23,17 @@
       vars:
         hash: '{{ prev_hash_raw.stdout }}'
         cmd_out: '{{ "".join(build_cmd.stdout_lines[-2:]) }}'
+
+    - name: Get new image hash
+      command: docker images -q {{ image }}
+      register: hash_raw
+      changed_when: false
+
+    - name: Set localhost hash fact
+      set_fact:
+        hash: '{{ hash_raw.stdout }}'
+      delegate_to: localhost
+      delegate_facts: true
 
 - name: Converge
   hosts: localhost

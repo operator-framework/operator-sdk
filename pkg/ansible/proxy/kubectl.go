@@ -46,7 +46,7 @@ const (
 	// DefaultPathAcceptRE is the default path to accept.
 	DefaultPathAcceptRE = "^.*"
 	// DefaultPathRejectRE is the default set of paths to reject.
-	DefaultPathRejectRE = "^/api/.*/pods/.*/exec,^/api/.*/pods/.*/attach"
+	DefaultPathRejectRE = "^$"
 	// DefaultMethodRejectRE is the set of HTTP methods to reject by default.
 	DefaultMethodRejectRE = "^$"
 )

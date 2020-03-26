@@ -21,6 +21,7 @@
 
 ### Bug Fixes
 
+- The Ansible Operator proxy server now properly supports the Pod `exec` API ([#2716](https://github.com/operator-framework/operator-sdk/pull/2716))
 - Resources that use '-' in the APIGroup name can now be directly accessed by Ansible. ([#2712](https://github.com/operator-framework/operator-sdk/pull/2712))
 - Fixed issue in CSV generation that caused an incorrect path to be generated for descriptors on types that are fields in array elements. ([#2721](https://github.com/operator-framework/operator-sdk/pull/2721))
 
