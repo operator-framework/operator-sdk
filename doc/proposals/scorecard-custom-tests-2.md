@@ -48,7 +48,7 @@ The scorecard needs a robust means of enabling end-users of the SDK to write and
 
 This design proposal is to establish a pattern for implementing custom scorecard tests and also support the goal of migrating existing scorecard tests into the same format as the custom tests.
 
-With this proposal, the scorecard will continue to setup and teardown the Operator being tested, as well as creating Custom Resources being tested.
+With this proposal, the scorecard will continue to setup and teardown the Operator being tested.
 
 ### User Stories
 
@@ -81,9 +81,16 @@ Scorecard would support creating and deleting namespaces to run tests within.  W
 - I am as an Operator developer, would like to be able to create tests using the same Assert syntax adopted by [Kuttl](https://github.com/kudobuilder/kuttl) and check its results aggregated within scorecard results. 
 
 **Implementation Notes**
+
 The Scorecard would support the creation of a Kuttl test image and the execute tests via Kuttl, however, it would be transparent for users since its results will be integrated into scorecard results.
 
 ## Design Details
+
+### Glossary
+
+ * test image - this is a container image built by end-users to contain a custom test implementation
+ * bundle image - this is the OLM bundle image that contains the operator manifests for a given operator and is part of OLM already
+ * test pod - this is a Pod manifest that executes the custom test image and includes labels that the scorecard can filter upon, the scorecard would execute tests as Pods and aggregate results from the Pod logs
 
 ### Custom Test Definition
 
@@ -123,13 +130,6 @@ The test image must produce container log output that conforms to the scorecard 
 
 The test image will be executed as a Pod by the scorecard with a restart policy of `never`.
 
-When executing a scorecard test, scorecard will create an environment variable in the test container that holds the name of the CR being tested, this allows the test writer a means of knowing which CR is being created by the scorecard as part of this test execution.
-
-The environment variable created in the test image container will be as follows:
-```
-CR_NAME=<some CR name>
-```
-
 Also, for each test execution, scorecard would also make the
 bundle image contents available to test images by mounting
 the bundle image contents into a shared emptyDir volume mount
@@ -140,7 +140,7 @@ at the following location:
 ```
 
 This allows tests to have access to all the bundle contents if they 
-are required for the test logic.
+are required for the test logic.  Note:  It is the responsibility of the test to iterate though each CR that they want to test.  The list of CRs to test are found in the CSV within the bundle image content.
 
 
 For the case of executing a test, the bundle image will be passed as a scorecard command flag:
@@ -221,16 +221,14 @@ Running the above command would have scorecard perform the following:
  * fetch the test configuration and test manifests from the bundle image
  * select the tests to run based on the test manifest labels and the selector
  * iterate through each test, 
-   * create a unique test namespace
-   * create the operator roles and service account in the unique namespace
-   * create the operator deployment
+   * deploy the operator using OLM  (e.g. operator-sdk run --olm)
+   * deploy the test Pod
    * when the test pod completes, fetch the test image Pod log output for aggregation of test results
-   * delete the unique test namespace
  * display the test results 
 
 ### Custom Test Environments
 
-Scorecard would allow you to run tests on a local Kube cluster as is the case today.  Provisioning the test cluster is external to the scope of the scorecard itself.  
+Scorecard would allow you to run tests on a local Kube cluster as is the case today.  Provisioning the test cluster is external to the scope of the scorecard itself.  Note, that with this proposal, scorecard would require that OLM be installed on the test cluster and will produce an error if OLM is not installed. 
 
 ### Custom Test Labeling
 
@@ -287,6 +285,14 @@ The alternatives to this design proposal might include:
 The proposed changes to the scorecard solve the immediate need to support custom or user-provided tests, both simple and complex tests.  However, the longer term implication for scorecard is that all of its tests would evolve to use a single testing format that is far more flexible that what exists today in the current implementation.
 
 The proposed design focuses heavily on separation of concerns, turning scorecard into a test runner essentially, moving test implementations into their own concern (eg. container images).
+
+Significant changes to scorecard in this proposal from the current scorecard include:
+ 
+ * require OLM be installed on the test cluster
+ * require OLM bundle images to be passed to scorecard 
+ * embed scorecard configuration files and test manifests into the OLM bundle image, scorecard will pull its configuration out of the OLM bundle image
+ * migrate tests out of the scorecard binary and into container images enabling tests to be written in languages other than golang
+ * scorecard would no longer create CRs on behalf of tests, but instead, tests would interate through the CRs found in the CSV if they want to implement a CR-based test
 
 ## Reference Material
 
