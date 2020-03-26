@@ -135,6 +135,14 @@ jobs:
       after_success: echo 'Tests Passed'
       after_failure: echo 'Failure in unit, sanity and markdown tests'
 
+    # Build and deploy arm64 ansible-operator docker image
+    - <<: *deploy
+      name: Docker image for ansible-operator (arm64)
+      arch: arm64
+      script:
+        - make image-build-ansible
+        - make image-push-ansible
+
     # Build and deploy amd64 ansible-operator docker image
     - <<: *deploy
       name: Docker image for ansible-operator (amd64)
@@ -159,6 +167,14 @@ jobs:
         - make image-build-ansible
         - make image-push-ansible
 
+    # Build and deploy arm64 helm-operator docker image
+    - <<: *deploy
+      name: Docker image for helm-operator (arm64)
+      arch: arm64
+      script:
+        - make image-build-helm
+        - make image-push-helm
+
     # Build and deploy amd64 helm-operator docker image
     - <<: *deploy
       name: Docker image for helm-operator (amd64)
@@ -182,6 +198,14 @@ jobs:
       script:
         - make image-build-helm
         - make image-push-helm
+
+    # Build and deploy arm64 scorecard-proxy docker image
+    - <<: *deploy
+      name: Docker image for scorecard-proxy (arm64)
+      arch: arm64
+      script:
+        - make image-build-scorecard-proxy
+        - make image-push-scorecard-proxy
 
     # Build and deploy amd64 scorecard-proxy docker image
     - <<: *deploy

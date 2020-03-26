@@ -24,9 +24,9 @@ ANSIBLE_IMAGE ?= $(ANSIBLE_BASE_IMAGE)
 HELM_IMAGE ?= $(HELM_BASE_IMAGE)
 SCORECARD_PROXY_IMAGE ?= $(SCORECARD_PROXY_BASE_IMAGE)
 
-ANSIBLE_ARCHES:="amd64" "ppc64le" "s390x"
-HELM_ARCHES:="amd64" "ppc64le" "s390x"
-SCORECARD_PROXY_ARCHES:="amd64" "ppc64le" "s390x"
+ANSIBLE_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
+HELM_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
+SCORECARD_PROXY_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
 
 export CGO_ENABLED:=0
 .DEFAULT_GOAL:=help
@@ -105,6 +105,7 @@ generate: gen-cli-doc gen-test-framework  ## Run all generate targets
 .PHONY: release_builds release
 
 release_builds := \
+    build/operator-sdk-$(VERSION)-aarch64-linux-gnu \
 	build/operator-sdk-$(VERSION)-x86_64-linux-gnu \
 	build/operator-sdk-$(VERSION)-x86_64-apple-darwin \
 	build/operator-sdk-$(VERSION)-ppc64le-linux-gnu \
@@ -112,6 +113,7 @@ release_builds := \
 
 release: clean $(release_builds) $(release_builds:=.asc) ## Release the Operator SDK
 
+build/operator-sdk-%-aarch64-linux-gnu: GOARGS = GOOS=linux GOARCH=arm64
 build/operator-sdk-%-x86_64-linux-gnu: GOARGS = GOOS=linux GOARCH=amd64
 build/operator-sdk-%-x86_64-apple-darwin: GOARGS = GOOS=darwin GOARCH=amd64
 build/operator-sdk-%-ppc64le-linux-gnu: GOARGS = GOOS=linux GOARCH=ppc64le
