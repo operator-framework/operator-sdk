@@ -34,8 +34,20 @@ spec:
               description: Should be in spec
               format: int32
               type: integer
+            wheels:
+              description: Should be in spec, but should not have array index in path
+              items:
+                properties:
+                  type:
+                    description: Type should be in spec with path equal to wheels[0].type
+                    type: string
+                required:
+                - type
+                type: object
+              type: array
           required:
           - size
+          - wheels
           type: object
         status:
           properties:

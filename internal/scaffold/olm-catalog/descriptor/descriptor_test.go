@@ -150,7 +150,8 @@ func TestGetCRDDescriptionForGVK(t *testing.T) {
 						XDescriptors: xdescsFor("size")},
 					{Path: "wheels", DisplayName: "Wheels", Description: "Should be in spec, but should not have array index in path",
 						XDescriptors: []string{"urn:alm:descriptor:com.tectonic.ui:text"}},
-					{Path: "wheels[0].type", DisplayName: "Wheel Type", Description: "Type should be in spec with path equal to wheels[0].type",
+					{Path: "wheels[0].type", DisplayName: "Wheel Type",
+						Description: "Type should be in spec with path equal to wheels[0].type",
 						XDescriptors: []string{
 							"urn:alm:descriptor:com.tectonic.ui:arrayFieldGroup:wheels",
 							"urn:alm:descriptor:com.tectonic.ui:text",
