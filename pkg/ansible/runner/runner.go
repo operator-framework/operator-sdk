@@ -310,8 +310,7 @@ func (r *runner) makeParameters(u *unstructured.Unstructured) map[string]interfa
 	parameters := paramconv.MapToSnake(spec)
 	parameters["meta"] = map[string]string{"namespace": u.GetNamespace(), "name": u.GetName()}
 
-	objKey := fmt.Sprintf("_%v_%v", strings.Replace(r.GVK.Group, ".", "_", -1),
-		strings.ToLower(r.GVK.Kind))
+	objKey := escapeAnsibleKey(fmt.Sprintf("_%v_%v", r.GVK.Group, strings.ToLower(r.GVK.Kind)))
 	parameters[objKey] = u.Object
 
 	specKey := fmt.Sprintf("%s_spec", objKey)
@@ -326,6 +325,16 @@ func (r *runner) makeParameters(u *unstructured.Unstructured) map[string]interfa
 		}
 	}
 	return parameters
+}
+
+// escapeAnsibleKey - replaces characters that would result in an inaccessible Ansible parameter with underscores
+// ie, _cert-manager.k8s.io would be converted to _cert_manager_k8s_io
+func escapeAnsibleKey(key string) string {
+	disallowed := []string{".", "-"}
+	for _, c := range disallowed {
+		key = strings.ReplaceAll(key, c, "_")
+	}
+	return key
 }
 
 func (r *runner) GetFinalizer() (string, bool) {
