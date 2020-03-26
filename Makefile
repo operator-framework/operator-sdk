@@ -82,6 +82,9 @@ lint-fix: ## Run golangci-lint automatically fix (development purpose only)
 lint: ## Run golangci-lint with all checks enabled in the ci
 	./hack/tests/check-lint.sh ci
 
+setup-k8s:
+	hack/ci/setup-k8s.sh ${K8S_VERSION}
+
 ##############################
 # Generate Artifacts         #
 ##############################

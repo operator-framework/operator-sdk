@@ -5,7 +5,7 @@ set -eux
 # This image tag corresponds to a Kubernetes version that kind installs using
 # images at:
 # https://hub.docker.com/r/kindest/node/tags
-K8S_VERSION="v1.16.3"
+K8S_VERSION=$1
 KIND_IMAGE="docker.io/kindest/node:${K8S_VERSION}"
 
 # Download the latest version of kind, which supports all versions of
