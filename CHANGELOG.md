@@ -21,6 +21,8 @@
 
 ### Bug Fixes
 
+- Fixed issue in CSV generation that caused an incorrect path to be generated for descriptors on types that are fields in array elements. ([#2721](https://github.com/operator-framework/operator-sdk/pull/2721))
+
 ## v0.16.0
 
 ### Added
