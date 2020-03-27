@@ -1,5 +1,5 @@
 apiVersion: test.example.com/v1alpha1
-kind: Inventory
+kind: InventoryTest
 metadata:
   name: example-inventory
   annotations:

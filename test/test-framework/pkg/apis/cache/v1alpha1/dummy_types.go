@@ -46,6 +46,11 @@ type DummySpec struct {
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="dummy-pods"
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.x-descriptors="urn:alm:descriptor:com.tectonic.ui:podCount"
 	Size int32 `json:"size"`
+	// Should be in spec, but should not have array index in path
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Wheels"
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.x-descriptors="urn:alm:descriptor:com.tectonic.ui:text"
+	Wheels []Wheel `json:"wheels"`
 }
 
 // +k8s:deepcopy-gen=false
@@ -100,6 +105,16 @@ type notExported struct {
 type Engine struct {
 	// Should not be included, no annotations.
 	Pistons []string `json:"pistons"`
+}
+
+// +k8s:deepcopy-gen=false
+// +k8s:openapi-gen=false
+type Wheel struct {
+	// Type should be in spec with path equal to wheels[0].type
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Wheel Type"
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.x-descriptors="urn:alm:descriptor:com.tectonic.ui:arrayFieldGroup:wheels,urn:alm:descriptor:com.tectonic.ui:text"
+	Type string `json:"type"`
 }
 
 // +k8s:deepcopy-gen=false

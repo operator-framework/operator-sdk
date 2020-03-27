@@ -23,7 +23,8 @@ operator-sdk generate crds [flags]
 ### Options
 
 ```
-  -h, --help   help for crds
+      --crd-version string   CRD version to generate (default "v1beta1")
+  -h, --help                 help for crds
 ```
 
 ### SEE ALSO

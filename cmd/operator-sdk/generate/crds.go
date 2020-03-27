@@ -18,13 +18,18 @@ import (
 	"fmt"
 
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal/genutil"
+	gencrd "github.com/operator-framework/operator-sdk/internal/generate/crd"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
+var (
+	crdVersion string
+)
+
 func newGenerateCRDsCmd() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "crds",
 		Short: "Generates CRDs for API's",
 		Long: `generate crds generates CRDs or updates them if they exist,
@@ -40,6 +45,9 @@ Example:
 `,
 		RunE: crdsFunc,
 	}
+
+	cmd.Flags().StringVar(&crdVersion, "crd-version", gencrd.DefaultCRDVersion, "CRD version to generate")
+	return cmd
 }
 
 func crdsFunc(cmd *cobra.Command, args []string) error {
@@ -49,7 +57,7 @@ func crdsFunc(cmd *cobra.Command, args []string) error {
 
 	// Skip usage printing on error, since this command will never fail from
 	// improper CLI usage.
-	if err := genutil.CRDGen(); err != nil {
+	if err := genutil.CRDGen(crdVersion); err != nil {
 		log.Fatal(err)
 	}
 	return nil

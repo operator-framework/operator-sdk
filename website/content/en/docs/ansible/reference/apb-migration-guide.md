@@ -1,4 +1,8 @@
-# Migrating an Ansible Playbook Bundle (APB) to an Operator SDK Ansible-based Operator
+---
+title: Ansible Playbook Bundle Migration Operator
+linkTitle: APB Migration
+weight: 20
+---
 
 This guide will walk you through migrating your legacy Ansible Playbook Bundles (APB)
 to a more modern Kubernetes Operator architecture. We will cover how to prepare a new

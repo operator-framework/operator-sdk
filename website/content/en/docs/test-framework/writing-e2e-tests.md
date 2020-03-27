@@ -1,3 +1,8 @@
+---
+title: Writing E2E Tests
+linkTitle: Writing E2E Tests
+weight: 1
+---
 # Using the Operator SDK's Test Framework to Write E2E Tests
 
 End-to-end tests are essential to ensure that an operator works
@@ -275,6 +280,37 @@ $ kubectl create -f deploy/operator.yaml --namespace operator-test
 $ operator-sdk test local ./test/e2e --operator-namespace operator-test --no-setup
 ```
 
+### Test Permissions
+
+Executing e2e tests requires the permission to access, create, and delete resources on your cluster. Depending on what kind of Kubernetes cluster
+you are using, this may require some manual setup. For example, OpenShift users are not created with cluster-admin access by default, so you would have
+to manually add permissions to access these resources.
+
+The simplest way to accomplish this is to bind the cluster-admin Cluster Role to the Service Account you will run the test under. 
+If you are unable or unwilling to grant such access, a more limited permission set can be created and bound to your Service Account.
+A good place to start would be the Role bound to your operator itself, such as [this role for the memcached operator example][memcached-role].
+In addition, you might have to create a Cluster Role to allow your tests to create namespaces, like so:
+```
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: testuser
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - watch
+  - update
+```
+
+Note that this isn't an exhaustive permission set, and the e2e tests you write might require more or less access.
+
 For more documentation on the `operator-sdk test local` command, see the [SDK CLI Reference][cli-test-local] doc.
 
 ### Skip-Cleanup-Error Flag
@@ -348,5 +384,6 @@ $ kubectl delete -f deploy/crds/cache.example.com_memcacheds_crd.yaml
 [e2eutil-link]:https://github.com/operator-framework/operator-sdk/tree/master/pkg/test/e2eutil
 [memcached-test-link]:https://github.com/operator-framework/operator-sdk-samples/blob/master/go/memcached-operator/test/e2e/memcached_test.go
 [scheme-link]:https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/framework.go#L109
-[cli-test-local]:https://github.com/operator-framework/operator-sdk/blob/master/doc/cli/operator-sdk_test_local.md
+[cli-test-local]:/doc/cli/operator-sdk_test_local
 [main-entry-link]:https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/main_entry.go#L25
+[memcached-role]:https://github.com/operator-framework/operator-sdk-samples/blob/master/go/memcached-operator/deploy/role.yaml

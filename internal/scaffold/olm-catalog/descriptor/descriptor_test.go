@@ -55,11 +55,11 @@ func TestGetKindTypeForAPI(t *testing.T) {
 	}{
 		{
 			"Find types successfully",
-			testFrameworkPackage, "Dummy", 21, false,
+			testFrameworkPackage, "Dummy", 22, false,
 		},
 		{
 			"Find types with error from wrong kind",
-			testFrameworkPackage, "NotFound", 21, true,
+			testFrameworkPackage, "NotFound", 22, true,
 		},
 	}
 	wd, err := os.Getwd()
@@ -148,6 +148,14 @@ func TestGetCRDDescriptionForGVK(t *testing.T) {
 				SpecDescriptors: []olmapiv1alpha1.SpecDescriptor{
 					{Path: "size", DisplayName: "dummy-pods", Description: "Should be in spec",
 						XDescriptors: xdescsFor("size")},
+					{Path: "wheels", DisplayName: "Wheels", Description: "Should be in spec, but should not have array index in path",
+						XDescriptors: []string{"urn:alm:descriptor:com.tectonic.ui:text"}},
+					{Path: "wheels[0].type", DisplayName: "Wheel Type",
+						Description: "Type should be in spec with path equal to wheels[0].type",
+						XDescriptors: []string{
+							"urn:alm:descriptor:com.tectonic.ui:arrayFieldGroup:wheels",
+							"urn:alm:descriptor:com.tectonic.ui:text",
+						}},
 				},
 				StatusDescriptors: []olmapiv1alpha1.StatusDescriptor{
 					{Path: "hog.engine", DisplayName: "boss-hog-engine",
