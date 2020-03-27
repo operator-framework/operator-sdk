@@ -88,6 +88,7 @@ func TestGenerateNewCSVWithInputsToOutput(t *testing.T) {
 		Inputs: map[string]string{
 			DeployDirKey: "config",
 			APIsDirKey:   "api",
+			CRDsDirKey:   filepath.Join("config", "crds"),
 		},
 		OutputDir: outputDir,
 	}
@@ -142,6 +143,7 @@ func TestUpgradeFromExistingCSVWithInputsToOutput(t *testing.T) {
 		Inputs: map[string]string{
 			DeployDirKey: "config",
 			APIsDirKey:   "api",
+			CRDsDirKey:   filepath.Join("config", "crds"),
 		},
 		OutputDir: outputDir,
 	}
@@ -201,6 +203,7 @@ func TestGoCSVFromNew(t *testing.T) {
 		Inputs: map[string]string{
 			DeployDirKey: "deploy",
 			APIsDirKey:   filepath.Join("pkg", "apis"),
+			CRDsDirKey:   filepath.Join("deploy", "crds_v1beta1"),
 		},
 		OutputDir: "deploy",
 	}
@@ -238,6 +241,7 @@ func TestGoCSVFromOld(t *testing.T) {
 		Inputs: map[string]string{
 			DeployDirKey: "deploy",
 			APIsDirKey:   filepath.Join("pkg", "apis"),
+			CRDsDirKey:   filepath.Join("deploy", "crds_v1beta1"),
 		},
 		OutputDir: "deploy",
 	}
@@ -269,6 +273,7 @@ func TestGoCSVWithInvalidManifestsDir(t *testing.T) {
 		Inputs: map[string]string{
 			DeployDirKey: "notExist",
 			APIsDirKey:   filepath.Join("pkg", "apis"),
+			CRDsDirKey:   "notExist",
 		},
 		OutputDir: "deploy",
 	}
@@ -290,6 +295,7 @@ func TestGoCSVWithEmptyManifestsDir(t *testing.T) {
 		Inputs: map[string]string{
 			DeployDirKey: "emptydir",
 			APIsDirKey:   filepath.Join("pkg", "apis"),
+			CRDsDirKey:   "emptydir",
 		},
 		OutputDir: "emptydir",
 	}
@@ -331,6 +337,7 @@ func TestUpdateVersion(t *testing.T) {
 		Inputs: map[string]string{
 			DeployDirKey: "deploy",
 			APIsDirKey:   filepath.Join("pkg", "apis"),
+			CRDsDirKey:   filepath.Join("deploy", "crds_v1beta1"),
 		},
 		OutputDir: "deploy",
 	}

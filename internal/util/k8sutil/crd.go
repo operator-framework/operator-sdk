@@ -30,7 +30,7 @@ import (
 
 // GetCRDs parses all CRD manifests in the directory crdsDir and all of its subdirectories.
 func GetCRDs(crdsDir string) ([]*apiextv1beta1.CustomResourceDefinition, error) {
-	manifests, err := GetCRDManifestPaths(crdsDir, "")
+	manifests, err := GetCRDManifestPaths(crdsDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get CRD's from %s: %v", crdsDir, err)
 	}
@@ -50,8 +50,7 @@ func GetCRDs(crdsDir string) ([]*apiextv1beta1.CustomResourceDefinition, error) 
 }
 
 // GetCRDManifestPaths returns all CRD manifest paths in crdsDir and subdirs.
-// The directory ignoreSubDir will be ignored
-func GetCRDManifestPaths(crdsDir, ignoreSubDir string) (crdPaths []string, err error) {
+func GetCRDManifestPaths(crdsDir string) (crdPaths []string, err error) {
 	err = filepath.Walk(crdsDir, func(path string, info os.FileInfo, werr error) error {
 		if werr != nil {
 			return werr
@@ -59,10 +58,6 @@ func GetCRDManifestPaths(crdsDir, ignoreSubDir string) (crdPaths []string, err e
 
 		// Only read manifest from files, not directories
 		if info.IsDir() {
-			// Skip walking ignored directory
-			if ignoreSubDir != "" && info.Name() == ignoreSubDir {
-				return filepath.SkipDir
-			}
 			return nil
 		}
 

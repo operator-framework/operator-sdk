@@ -58,18 +58,18 @@ has already generated a CSV manifest you want to use as a base, supply its
 version to --from-version. Otherwise the SDK will scaffold a new CSV manifest.
 
 CSV input flags:
-	--deploy-dir:	The CSV file contents will be generated from the operator manifests
-					present in this directory.
+	--deploy-dir:
+		The CSV's install strategy and permissions will be generated from the operator manifests
+		(Deployment and Role/ClusterRole) present in this directory.
 
-	--apis-dir:		The CSV annotation comments will be parsed from the Go types under this path to 
-					fill out metadata for owned APIs in spec.customresourcedefinitions.owned.
+	--apis-dir:
+		The CSV annotation comments will be parsed from the Go types under this path to 
+		fill out metadata for owned APIs in spec.customresourcedefinitions.owned.
 
-	--crd-dir:		The CRD manifests are updated from this path to the CSV bundle directory.
-					Note: The CSV generator only uses this to copy the CRD manifests.
-					The CSV contents for spec.customresourcedefinitions.owned will still be generated
-					from the CRD manifests in the deploy directory specified by --deploy-dir.
-					If unset, it defaults to the same value as --deploy-dir.
-
+	--crd-dir:
+		The CSV's spec.customresourcedefinitions.owned field is generated from the CRD manifests
+		in this path.These CRD manifests are also copied over to the bundle directory if --update-crds is set.
+		Additionally the CR manifests will be used to populate the CSV example CRs.
 `,
 		Example: `
 		##### Generate CSV from default input paths #####
@@ -170,12 +170,16 @@ CSV input flags:
 	cmd.Flags().StringVar(&c.fromVersion, "from-version", "",
 		"Semantic version of an existing CSV to use as a base")
 
+	// TODO: Allow multiple paths
+	// Deployment and RBAC manifests might be in different dirs e.g kubebuilder
 	cmd.Flags().StringVar(&c.deployDir, "deploy-dir", "deploy",
-		`Project relative path to root directory for operator manifests (Deployment, RBAC, CRDs)`)
+		`Project relative path to root directory for operator manifests (Deployment and RBAC)`)
 	cmd.Flags().StringVar(&c.apisDir, "apis-dir", filepath.Join("pkg", "apis"),
 		`Project relative path to root directory for API type defintions`)
-	cmd.Flags().StringVar(&c.crdDir, "crd-dir", "",
-		`Project relative path to root directory for for CRD manifests`)
+	// TODO: Allow multiple paths
+	// CRD and CR manifests might be in different dirs e.g kubebuilder
+	cmd.Flags().StringVar(&c.crdDir, "crd-dir", filepath.Join("deploy", "crds"),
+		`Project relative path to root directory for CRD and CR manifests`)
 
 	cmd.Flags().StringVar(&c.outputDir, "output-dir", scaffold.DeployDir,
 		"Base directory to output generated CSV. The resulting CSV bundle directory "+
@@ -206,6 +210,7 @@ func (c csvCmd) run() error {
 		Inputs: map[string]string{
 			gencatalog.DeployDirKey: c.deployDir,
 			gencatalog.APIsDirKey:   c.apisDir,
+			gencatalog.CRDsDirKey:   c.crdDir,
 		},
 		OutputDir: c.outputDir,
 	}
@@ -221,11 +226,6 @@ func (c csvCmd) run() error {
 
 	// Write CRD's to the new or updated CSV package dir.
 	if c.updateCRDs {
-		// TODO(hasbro17): Reconsider the crd-dir flag since it only lets you control
-		// where the CRD manifests are copied from but the CSV generator above
-		// will uses the CRD manifests in deploy dir to build the CSV contents for
-		// spec.customresourcedefinitions.owned
-		// Need to reconcile this disparity.
 		crdManifestSet, err := findCRDFileSet(c.crdDir)
 		if err != nil {
 			return fmt.Errorf("failed to update CRD's: %v", err)
@@ -277,28 +277,43 @@ func validateVersion(version string) error {
 	return nil
 }
 
-// findCRDFileSet searches all directories and files in path for CRD manifests,
+// findCRDFileSet searches files in the given directory path for CRD manifests,
 // returning a map of paths to file contents.
-func findCRDFileSet(path string) (map[string][]byte, error) {
+func findCRDFileSet(crdDir string) (map[string][]byte, error) {
 	crdFileSet := map[string][]byte{}
-	info, err := os.Stat(path)
+	info, err := os.Stat(crdDir)
 	if err != nil {
 		return nil, err
 	}
 	if !info.IsDir() {
-		return nil, fmt.Errorf("crd's must be read from a directory. %s is a file", path)
+		return nil, fmt.Errorf("crd's must be read from a directory. %s is a file", crdDir)
 	}
-
-	// Get CRD manifest paths from path recursively but ignore olm-catalog subdir
-	// if it is present in the search directory
-	crdPaths, err := k8sutil.GetCRDManifestPaths(path, gencatalog.OLMCatalogChildDir)
+	files, err := ioutil.ReadDir(crdDir)
 	if err != nil {
 		return nil, err
 	}
-	for _, crdPath := range crdPaths {
+
+	wd := projutil.MustGetwd()
+	for _, f := range files {
+		if f.IsDir() {
+			continue
+		}
+
+		crdPath := filepath.Join(wd, crdDir, f.Name())
 		b, err := ioutil.ReadFile(crdPath)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error reading manifest %s: %v", crdPath, err)
+		}
+		// Skip files in crdsDir that aren't k8s manifests since we do not know
+		// what other files are in crdsDir.
+		typeMeta, err := k8sutil.GetTypeMetaFromBytes(b)
+		if err != nil {
+			log.Debugf("Skipping non-manifest file %s: %v", crdPath, err)
+			continue
+		}
+		if typeMeta.Kind != "CustomResourceDefinition" {
+			log.Debugf("Skipping non CRD manifest %s", crdPath)
+			continue
 		}
 		crdFileSet[filepath.Base(crdPath)] = b
 	}

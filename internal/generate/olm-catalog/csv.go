@@ -28,6 +28,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 
 	"github.com/blang/semver"
@@ -51,9 +52,17 @@ const (
 	// Input keys for CSV generator whose values are the filepaths for the respective input directories
 
 	// DeployDirKey is for the location of the operator manifests directory e.g "deploy/production"
+	// The Deployment and RBAC manifests from this directory will be used to populate the CSV
+	// install strategy: spec.install
 	DeployDirKey = "deploy"
 	// APIsDirKey is for the location of the API types directory e.g "pkg/apis"
+	// The CSV annotation comments will be parsed from the types under this path.
 	APIsDirKey = "apis"
+	// CRDsDirKey is for the location of the CRD manifests directory e.g "deploy/crds"
+	// Both the CRD and CR manifests from this path will be used to populate CSV fields
+	// metadata.annotations.alm-examples for CR examples
+	// and spec.customresourcedefinitions.owned for owned CRDs
+	CRDsDirKey = "crds"
 )
 
 type csvGenerator struct {
@@ -105,6 +114,10 @@ func NewCSV(cfg gen.Config, csvVersion, fromVersion string) gen.Generator {
 
 	if apisDir, ok := g.Inputs[APIsDirKey]; !ok || apisDir == "" {
 		g.Inputs[APIsDirKey] = scaffold.ApisDir
+	}
+
+	if crdsDir, ok := g.Inputs[CRDsDirKey]; !ok || crdsDir == "" {
+		g.Inputs[CRDsDirKey] = filepath.Join(g.Inputs[DeployDirKey], "crds")
 	}
 
 	return g
@@ -366,60 +379,24 @@ func (g csvGenerator) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVersio
 // user-defined manifests and updates csv.
 func (g csvGenerator) updateCSVFromManifests(csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
 	kindManifestMap := map[schema.GroupVersionKind][][]byte{}
-	crGVKSet := map[schema.GroupVersionKind]struct{}{}
-	err = filepath.Walk(g.Inputs[DeployDirKey], func(path string, info os.FileInfo, werr error) error {
-		if werr != nil {
-			log.Debugf("Failed to walk dir: %v", werr)
-			return werr
-		}
-		// Only read manifest from files, not directories
-		if info.IsDir() {
-			// Skip walking olm-catalog dir if it's present in the deploy directory
-			if info.Name() == OLMCatalogChildDir {
-				return filepath.SkipDir
-			}
-			return nil
-		}
 
-		b, err := ioutil.ReadFile(path)
-		if err != nil {
-			return err
-		}
-		scanner := yamlutil.NewYAMLScanner(b)
-		for scanner.Scan() {
-			manifest := scanner.Bytes()
-			typeMeta, err := k8sutil.GetTypeMetaFromBytes(manifest)
-			if err != nil {
-				log.Infof("No TypeMeta in %s, skipping file", path)
-				continue
-			}
-			gvk := typeMeta.GroupVersionKind()
-			kindManifestMap[gvk] = append(kindManifestMap[gvk], manifest)
-			switch typeMeta.Kind {
-			case "CustomResourceDefinition":
-				// Collect CRD kinds to filter them out from unsupported manifest types.
-				// The CRD version type doesn't matter as long as it has a group, kind,
-				// and versions in the expected fields.
-				crd := v1beta1.CustomResourceDefinition{}
-				if err = yaml.Unmarshal(manifest, &crd); err != nil {
-					return err
-				}
-				for _, ver := range crd.Spec.Versions {
-					crGVK := schema.GroupVersionKind{
-						Group:   crd.Spec.Group,
-						Version: ver.Name,
-						Kind:    crd.Spec.Names.Kind,
-					}
-					crGVKSet[crGVK] = struct{}{}
-				}
-			}
-		}
-		return scanner.Err()
-	})
-	if err != nil {
-		return fmt.Errorf("failed to walk manifests directory for CSV updates: %v", err)
+	// Read CRD and CR manifests from CRD dir
+	if err := updateFromManifests(g.Inputs[CRDsDirKey], kindManifestMap); err != nil {
+		return err
 	}
 
+	// Get owned CRDs from CRD manifests
+	ownedCRDs, err := getOwnedCRDs(kindManifestMap)
+	if err != nil {
+		return err
+	}
+
+	// Read Deployment and RBAC manifests from Deploy dir
+	if err := updateFromManifests(g.Inputs[DeployDirKey], kindManifestMap); err != nil {
+		return err
+	}
+
+	// Update CSV from all manifest types
 	crUpdaters := crs{}
 	for gvk, manifests := range kindManifestMap {
 		// We don't necessarily care about sorting by a field value, more about
@@ -437,7 +414,8 @@ func (g csvGenerator) updateCSVFromManifests(csv *olmapiv1alpha1.ClusterServiceV
 		case "CustomResourceDefinition":
 			err = crds(manifests).apply(csv)
 		default:
-			if _, ok := crGVKSet[gvk]; ok {
+			// Only update CR examples for owned CRD types
+			if _, ok := ownedCRDs[gvk]; ok {
 				crUpdaters = append(crUpdaters, crs(manifests)...)
 			} else {
 				log.Infof("Skipping manifest %s", gvk)
@@ -461,4 +439,66 @@ func (g csvGenerator) updateCSVFromManifests(csv *olmapiv1alpha1.ClusterServiceV
 		}
 	}
 	return nil
+}
+
+func updateFromManifests(dir string, kindManifestMap map[schema.GroupVersionKind][][]byte) error {
+	files, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return err
+	}
+	// Read and scan all files into kindManifestMap
+	wd := projutil.MustGetwd()
+	for _, f := range files {
+		if f.IsDir() {
+			continue
+		}
+		path := filepath.Join(wd, dir, f.Name())
+		b, err := ioutil.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		scanner := yamlutil.NewYAMLScanner(b)
+		for scanner.Scan() {
+			manifest := scanner.Bytes()
+			typeMeta, err := k8sutil.GetTypeMetaFromBytes(manifest)
+			if err != nil {
+				log.Infof("No TypeMeta in %s, skipping file", path)
+				continue
+			}
+
+			gvk := typeMeta.GroupVersionKind()
+			kindManifestMap[gvk] = append(kindManifestMap[gvk], manifest)
+		}
+		if scanner.Err() != nil {
+			return scanner.Err()
+		}
+	}
+	return nil
+}
+
+func getOwnedCRDs(kindManifestMap map[schema.GroupVersionKind][][]byte) (map[schema.GroupVersionKind]struct{}, error) {
+	ownedCRDs := map[schema.GroupVersionKind]struct{}{}
+	for gvk, manifests := range kindManifestMap {
+		if gvk.Kind != "CustomResourceDefinition" {
+			continue
+		}
+		// Collect CRD kinds to filter them out from unsupported manifest types.
+		// The CRD version type doesn't matter as long as it has a group, kind,
+		// and versions in the expected fields.
+		for _, manifest := range manifests {
+			crd := v1beta1.CustomResourceDefinition{}
+			if err := yaml.Unmarshal(manifest, &crd); err != nil {
+				return ownedCRDs, err
+			}
+			for _, ver := range crd.Spec.Versions {
+				crGVK := schema.GroupVersionKind{
+					Group:   crd.Spec.Group,
+					Version: ver.Name,
+					Kind:    crd.Spec.Names.Kind,
+				}
+				ownedCRDs[crGVK] = struct{}{}
+			}
+		}
+	}
+	return ownedCRDs, nil
 }

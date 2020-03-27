@@ -12,18 +12,18 @@ has already generated a CSV manifest you want to use as a base, supply its
 version to --from-version. Otherwise the SDK will scaffold a new CSV manifest.
 
 CSV input flags:
-	--deploy-dir:	The CSV file contents will be generated from the operator manifests
-					present in this directory.
+	--deploy-dir:
+		The CSV's install strategy and permissions will be generated from the operator manifests
+		(Deployment and Role/ClusterRole) present in this directory.
 
-	--apis-dir:		The CSV annotation comments will be parsed from the Go types under this path to 
-					fill out metadata for owned APIs in spec.customresourcedefinitions.owned.
+	--apis-dir:
+		The CSV annotation comments will be parsed from the Go types under this path to 
+		fill out metadata for owned APIs in spec.customresourcedefinitions.owned.
 
-	--crd-dir:		The CRD manifests are updated from this path to the CSV bundle directory.
-					Note: The CSV generator only uses this to copy the CRD manifests.
-					The CSV contents for spec.customresourcedefinitions.owned will still be generated
-					from the CRD manifests in the deploy directory specified by --deploy-dir.
-					If unset, it defaults to the same value as --deploy-dir.
-
+	--crd-dir:
+		The CSV's spec.customresourcedefinitions.owned field is generated from the CRD manifests
+		in this path.These CRD manifests are also copied over to the bundle directory if --update-crds is set.
+		Additionally the CR manifests will be used to populate the CSV example CRs.
 
 
 ```
@@ -105,11 +105,11 @@ operator-sdk generate csv [flags]
 
 ```
       --apis-dir string        Project relative path to root directory for API type defintions (default "pkg/apis")
-      --crd-dir string         Project relative path to root directory for for CRD manifests
+      --crd-dir string         Project relative path to root directory for CRD and CR manifests (default "deploy/crds")
       --csv-channel string     Channel the CSV should be registered under in the package manifest
       --csv-version string     Semantic version of the CSV
       --default-channel        Use the channel passed to --csv-channel as the package manifests' default channel. Only valid when --csv-channel is set
-      --deploy-dir string      Project relative path to root directory for operator manifests (Deployment, RBAC, CRDs) (default "deploy")
+      --deploy-dir string      Project relative path to root directory for operator manifests (Deployment and RBAC) (default "deploy")
       --from-version string    Semantic version of an existing CSV to use as a base
   -h, --help                   help for csv
       --operator-name string   Operator name to use while generating CSV
