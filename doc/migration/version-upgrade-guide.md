@@ -846,7 +846,7 @@ See the [CHANGELOG](https://github.com/operator-framework/operator-sdk/blob/mast
 
 ```
 require (
-	github.com/operator-framework/operator-sdk 0.16.0
+	github.com/operator-framework/operator-sdk v0.16.0
 	sigs.k8s.io/controller-runtime v0.4.0
 )
 
