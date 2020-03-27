@@ -25,7 +25,21 @@ import (
 func MainEntry(m *testing.M) {
 	fopts := &frameworkOpts{}
 	fopts.addToFlagSet(flag.CommandLine)
+	// controller-runtime registers the --kubeconfig flag in client config
+	// package:
+	// https://github.com/kubernetes-sigs/controller-runtime/blob/v0.5.2/pkg/client/config/config.go#L39
+	//
+	// If this flag is not registered, do so. Otherwise retrieve its value.
+	kcFlag := flag.Lookup(KubeConfigFlag)
+	if kcFlag == nil {
+		flag.StringVar(&fopts.kubeconfigPath, KubeConfigFlag, "", "path to kubeconfig")
+	}
+
 	flag.Parse()
+
+	if kcFlag != nil {
+		fopts.kubeconfigPath = kcFlag.Value.String()
+	}
 
 	f, err := newFramework(fopts)
 	if err != nil {
