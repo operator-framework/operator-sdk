@@ -78,7 +78,9 @@ $ operator-sdk bundle create \
 				if len(args) != 0 {
 					return fmt.Errorf("command %s does not accept any arguments", cmd.CommandPath())
 				}
-				err := bundle.GenerateFunc(c.directory, c.packageName, channels,
+
+				outputDir := filepath.Join(c.directory, "/metadata")
+				err := bundle.GenerateFunc(c.directory, outputDir, c.packageName, channels,
 					c.defaultChannel, true)
 				if err != nil {
 					log.Fatalf("Error generating bundle image files: %v", err)
@@ -96,7 +98,8 @@ $ operator-sdk bundle create \
 				defer cleanup()
 			}
 			// Build but never overwrite existing metadata/Dockerfile.
-			err := bundle.BuildFunc(c.directory, c.imageTag, c.imageBuilder,
+			outputDir := filepath.Join(c.directory, "/metadata")
+			err := bundle.BuildFunc(c.directory, outputDir, c.imageTag, c.imageBuilder,
 				c.packageName, channels, c.defaultChannel, false)
 			if err != nil {
 				log.Fatalf("Error building bundle image: %v", err)

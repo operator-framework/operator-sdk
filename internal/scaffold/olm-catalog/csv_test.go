@@ -150,7 +150,7 @@ func TestUpdateVersion(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	strategy, ok := strategyInterface.(*olminstall.StrategyDetailsDeployment)
+	strategy, ok := strategyInterface.(*olmapiv1alpha1.StrategyDetailsDeployment)
 	if !ok {
 		t.Fatalf("Strategy of type %T was not StrategyDetailsDeployment", strategyInterface)
 	}

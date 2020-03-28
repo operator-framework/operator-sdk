@@ -1058,6 +1058,73 @@ RUN ansible-galaxy collection install -r ${HOME}/requirements.yml \
 
 ## Unreleased (Master Branch)
 
+### modules
+
+- Ensure that the following `require` modules and `replace` directives with the specific versions are present in your `go.mod` file:
+
+```
+require (
+	github.com/operator-framework/operator-sdk master
+	sigs.k8s.io/controller-runtime v0.5.2
+)
+
+// Pinned to kubernetes-1.17.4
+replace (
+	k8s.io/api => k8s.io/api v0.17.4
+	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.17.4
+	k8s.io/apimachinery => k8s.io/apimachinery v0.17.4
+	k8s.io/apiserver => k8s.io/apiserver v0.17.4
+	k8s.io/cli-runtime => k8s.io/cli-runtime v0.17.4
+	// Required for Prometheus
+	k8s.io/client-go => k8s.io/client-go v0.0.0-20191016111102-bec269661e48 
+	k8s.io/cloud-provider => k8s.io/cloud-provider v0.17.4
+	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.17.4
+	k8s.io/code-generator => k8s.io/code-generator v0.17.4
+	k8s.io/component-base => k8s.io/component-base v0.17.4
+	k8s.io/cri-api => k8s.io/cri-api v0.17.4
+	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.17.4
+	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.17.4
+	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.17.4
+	k8s.io/kube-proxy => k8s.io/kube-proxy v0.17.4
+	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.17.4
+	k8s.io/kubectl => k8s.io/kubectl v0.17.4
+	k8s.io/kubelet => k8s.io/kubelet v0.17.4
+	k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.17.4
+	k8s.io/metrics => k8s.io/metrics v0.17.4
+	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.17.4
+)
+
+replace github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503-38ab9da00309 // Required by Helm
+
+// Required for OLM
+replace (
+	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible
+	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
+)
+```
+
+- Run `go mod tidy` to update the project modules
+- Run the command `operator-sdk generate k8s` to ensure that your resources will be updated
+- Run the command `operator-sdk generate crds` to regenerate CRDs
+
+### Breaking changes
+
+#### In the test-framework
+
+The methods `ctx.GetOperatorNamespace()` and `ctx.GetWatchNamespace()` was added pkg/test in order to replace `ctx.GetNamespace()` which is deprecated. In this way replace the use of `ctx.GetNamespace()` in your project with `ctx.GetOperatorNamespace()`
+
+### Breaking Changes on Commands
+
+This release contains breaking changes in some commands.
+
+- The --namespace flag from `operator-sdk run --local` command, `operator-sdk test --local` command and `operator-sdk cleanup` command was deprecated and was replaced by --watch-namespace and --operator-namespace .
+
+Note that --watch-namespace can be used to set the namespace(s) which the operator will watch for changes. It will set the environment variable WATCH_NAMESPACE. Use explicitly an empty string to watch all namespaces or inform a List of namespaces such as "ns1,ns2" when the operator is cluster-scoped. If you use a List, then it needs contains the namespace where the operator is "deployed" in since the default metrics implementation will manage resources in the Operator's namespace. By default, it will be the Operator Namespace.
+
+Then, use the flag --operator-namespace to inform the namespace where the Operator will be "deployed" in and then, it will set the environment variable OPERATOR_NAMESPACE. If this value is not set, then it will be the namespace defined as default in the Kubeconfig.
+
+NOTE: For more information check the PRs which are responsible for the above changes [#2617](https://github.com/operator-framework/operator-sdk/pull/2617).
+
 ### Breaking Changes
 
 #### OpenAPI generation

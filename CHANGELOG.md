@@ -10,6 +10,12 @@
 ### Changed
 
 - The scorecard when creating a Custom Resource, will produce a message to the user if that CR already exists. ([#2683](https://github.com/operator-framework/operator-sdk/pull/2683))
+- Upgrade Kubernetes version from `kubernetes-1.16.2` to `kubernetes-1.17.4`. ([#2702](https://github.com/operator-framework/operator-sdk/pull/2702))
+- Upgrade Controller Runtime version from `v0.4.0` to `v0.5.2`. ([#2702](https://github.com/operator-framework/operator-sdk/pull/2702))
+- Upgrade Controller Tools version from `v0.2.4` to `v0.2.8`. ([#2702](https://github.com/operator-framework/operator-sdk/pull/2702))
+- Upgrade Helm version from `v3.0.2` to `v3.1.2`. ([#2702](https://github.com/operator-framework/operator-sdk/pull/2702))
+- Upgrade Operator Registry version from `v1.5.7` to `v1.6.1`. ([#2702](https://github.com/operator-framework/operator-sdk/pull/2702))
+- Upgrade Prometheus Operator version from `v0.34.0` to `v0.38.0`. ([#2702](https://github.com/operator-framework/operator-sdk/pull/2702))
 
 ### Deprecated
 

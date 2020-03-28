@@ -303,7 +303,7 @@ func getDeploymentName(installStrategy olmapiv1alpha1.NamedInstallStrategy) (str
 	if err != nil {
 		return "", err
 	}
-	stratDep, ok := strategy.(*olminstall.StrategyDetailsDeployment)
+	stratDep, ok := strategy.(*olmapiv1alpha1.StrategyDetailsDeployment)
 	if !ok {
 		return "", fmt.Errorf("expected StrategyDetailsDeployment, got strategy of type %T", strategy)
 	}

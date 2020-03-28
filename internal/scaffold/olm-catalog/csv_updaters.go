@@ -26,7 +26,8 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
 	"github.com/ghodss/yaml"
-	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+
+	operatorsv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
@@ -41,56 +42,44 @@ import (
 // set to the corresponding field on apply().
 type csvUpdater interface {
 	// apply applies a data update to a CSV argument.
-	apply(*olmapiv1alpha1.ClusterServiceVersion) error
+	apply(*operatorsv1alpha1.ClusterServiceVersion) error
 }
 
 // Get install strategy from csv.
-func getCSVInstallStrategy(csv *olmapiv1alpha1.ClusterServiceVersion) (strategy olminstall.Strategy, err error) {
+func getCSVInstallStrategy(csv *operatorsv1alpha1.ClusterServiceVersion) (strategy olminstall.Strategy, err error) {
 	// Default to a deployment strategy if none found.
-	if len(csv.Spec.InstallStrategy.StrategySpecRaw) == 0 || csv.Spec.InstallStrategy.StrategyName == "" {
-		csv.Spec.InstallStrategy.StrategyName = olminstall.InstallStrategyNameDeployment
-		return &olminstall.StrategyDetailsDeployment{}, nil
+	if len(csv.Spec.InstallStrategy.StrategyName) == 0 || csv.Spec.InstallStrategy.StrategyName == "" {
+		csv.Spec.InstallStrategy.StrategyName = operatorsv1alpha1.InstallStrategyNameDeployment
+		return &operatorsv1alpha1.StrategyDetailsDeployment{}, nil
 	}
 	return (&olminstall.StrategyResolver{}).UnmarshalStrategy(csv.Spec.InstallStrategy)
-}
-
-// Set csv's spec.install to strategy.
-func setCSVInstallStrategy(csv *olmapiv1alpha1.ClusterServiceVersion, strategy olminstall.Strategy) error {
-	sb, err := json.Marshal(strategy)
-	if err != nil {
-		return err
-	}
-	csv.Spec.InstallStrategy.StrategySpecRaw = json.RawMessage(sb)
-	return nil
 }
 
 type roles [][]byte
 
 var _ csvUpdater = roles{}
 
-func (us roles) apply(csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
+func (us roles) apply(csv *operatorsv1alpha1.ClusterServiceVersion) (err error) {
 	strategy, err := getCSVInstallStrategy(csv)
 	if err != nil {
 		return err
 	}
 	switch s := strategy.(type) {
-	case *olminstall.StrategyDetailsDeployment:
-		perms := []olminstall.StrategyDeploymentPermissions{}
+	case *operatorsv1alpha1.StrategyDetailsDeployment:
+		perms := []operatorsv1alpha1.StrategyDeploymentPermissions{}
 		for _, u := range us {
 			role := rbacv1.Role{}
 			if err := yaml.Unmarshal(u, &role); err != nil {
 				return err
 			}
-			perms = append(perms, olminstall.StrategyDeploymentPermissions{
+			perms = append(perms, operatorsv1alpha1.StrategyDeploymentPermissions{
 				ServiceAccountName: role.GetName(),
 				Rules:              role.Rules,
 			})
 		}
 		s.Permissions = perms
 	}
-	if err = setCSVInstallStrategy(csv, strategy); err != nil {
-		return err
-	}
+	csv.Spec.InstallStrategy.StrategyName = strategy.GetStrategyName()
 	return nil
 }
 
@@ -98,29 +87,27 @@ type clusterRoles [][]byte
 
 var _ csvUpdater = clusterRoles{}
 
-func (us clusterRoles) apply(csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
+func (us clusterRoles) apply(csv *operatorsv1alpha1.ClusterServiceVersion) (err error) {
 	strategy, err := getCSVInstallStrategy(csv)
 	if err != nil {
 		return err
 	}
 	switch s := strategy.(type) {
-	case *olminstall.StrategyDetailsDeployment:
-		perms := []olminstall.StrategyDeploymentPermissions{}
+	case *operatorsv1alpha1.StrategyDetailsDeployment:
+		perms := []operatorsv1alpha1.StrategyDeploymentPermissions{}
 		for _, u := range us {
 			clusterRole := rbacv1.ClusterRole{}
 			if err := yaml.Unmarshal(u, &clusterRole); err != nil {
 				return err
 			}
-			perms = append(perms, olminstall.StrategyDeploymentPermissions{
+			perms = append(perms, operatorsv1alpha1.StrategyDeploymentPermissions{
 				ServiceAccountName: clusterRole.GetName(),
 				Rules:              clusterRole.Rules,
 			})
 		}
 		s.ClusterPermissions = perms
 	}
-	if err = setCSVInstallStrategy(csv, strategy); err != nil {
-		return err
-	}
+	csv.Spec.InstallStrategy.StrategyName = strategy.GetStrategyName()
 	return nil
 }
 
@@ -128,14 +115,14 @@ type deployments [][]byte
 
 var _ csvUpdater = deployments{}
 
-func (us deployments) apply(csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
+func (us deployments) apply(csv *operatorsv1alpha1.ClusterServiceVersion) (err error) {
 	strategy, err := getCSVInstallStrategy(csv)
 	if err != nil {
 		return err
 	}
 	switch s := strategy.(type) {
-	case *olminstall.StrategyDetailsDeployment:
-		depSpecs := []olminstall.StrategyDeploymentSpec{}
+	case *operatorsv1alpha1.StrategyDetailsDeployment:
+		depSpecs := []operatorsv1alpha1.StrategyDeploymentSpec{}
 		for _, u := range us {
 			dep := appsv1.Deployment{}
 			if err := yaml.Unmarshal(u, &dep); err != nil {
@@ -149,16 +136,14 @@ func (us deployments) apply(csv *olmapiv1alpha1.ClusterServiceVersion) (err erro
 					` detected in operator Deployment. For OLM compatibility, your operator`+
 					` MUST watch namespaces defined in "%s"`, olmTNMeta, olmTNMeta)
 			}
-			depSpecs = append(depSpecs, olminstall.StrategyDeploymentSpec{
+			depSpecs = append(depSpecs, operatorsv1alpha1.StrategyDeploymentSpec{
 				Name: dep.GetName(),
 				Spec: dep.Spec,
 			})
 		}
 		s.DeploymentSpecs = depSpecs
 	}
-	if err = setCSVInstallStrategy(csv, strategy); err != nil {
-		return err
-	}
+	csv.Spec.InstallStrategy.StrategyName = strategy.GetStrategyName()
 	return nil
 }
 
@@ -206,7 +191,7 @@ func depHasOLMNamespaces(dep appsv1.Deployment) bool {
 	return bytes.Contains(b, []byte(olmTNMeta))
 }
 
-type descSorter []olmapiv1alpha1.CRDDescription
+type descSorter []operatorsv1alpha1.CRDDescription
 
 func (descs descSorter) Len() int { return len(descs) }
 func (descs descSorter) Less(i, j int) bool {
@@ -228,8 +213,8 @@ var _ csvUpdater = crds{}
 // left as-is, since they are user-defined values.
 // apply will only make a new spec.customresourcedefinitions.owned element for
 // a type if an annotation is present on that type's declaration.
-func (us crds) apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
-	ownedCRDs := []olmapiv1alpha1.CRDDescription{}
+func (us crds) apply(csv *operatorsv1alpha1.ClusterServiceVersion) error {
+	ownedCRDs := []operatorsv1alpha1.CRDDescription{}
 	for _, u := range us {
 		crd := apiextv1beta1.CustomResourceDefinition{}
 		if err := yaml.Unmarshal(u, &crd); err != nil {
@@ -268,7 +253,7 @@ type crs [][]byte
 
 var _ csvUpdater = crs{}
 
-func (us crs) apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
+func (us crs) apply(csv *operatorsv1alpha1.ClusterServiceVersion) error {
 	examples := []json.RawMessage{}
 	for _, u := range us {
 		crBytes, err := yaml.YAMLToJSON(u)

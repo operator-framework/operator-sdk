@@ -15,7 +15,6 @@
 package genutil
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -62,9 +61,6 @@ func K8sCodegen() error {
 func deepcopyGen(hf string, fqApis []string) error {
 	wd, err := os.Getwd()
 	if err != nil {
-		return err
-	}
-	if err := flag.Set("logtostderr", "true"); err != nil {
 		return err
 	}
 	for _, api := range fqApis {
