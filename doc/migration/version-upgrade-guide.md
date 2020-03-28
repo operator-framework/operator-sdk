@@ -1058,6 +1058,27 @@ RUN ansible-galaxy collection install -r ${HOME}/requirements.yml \
 
 ## Unreleased (Master Branch)
 
+### modules
+
+- Ensure that the following `require` modules and `replace` directives with the specific versions are present in your `go.mod` file:
+
+```
+require (
+	github.com/operator-framework/operator-sdk master
+	sigs.k8s.io/controller-runtime v0.5.2
+)
+
+replace (
+	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d // Required by Helm
+	k8s.io/client-go => k8s.io/client-go v0.0.0-20191016111102-bec269661e48 // Required by prometheus-operator
+	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible // Required by OLM
+)
+```
+
+- Run `go mod tidy` to update the project modules
+- Run the command `operator-sdk generate k8s` to ensure that your resources will be updated
+- Run the command `operator-sdk generate crds` to regenerate CRDs
+
 ### Breaking changes
 
 #### In the test-framework

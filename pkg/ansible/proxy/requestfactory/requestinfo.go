@@ -27,6 +27,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/validation/path"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	metainternalscheme "k8s.io/apimachinery/pkg/apis/meta/internalversion/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 
@@ -226,7 +227,7 @@ func (r *RequestInfoFactory) NewRequestInfo(req *http.Request) (*RequestInfo, er
 	// the actual verb is a list or a watch
 	if len(requestInfo.Name) == 0 && requestInfo.Verb == "get" {
 		opts := metainternalversion.ListOptions{}
-		if err := metainternalversion.ParameterCodec.DecodeParameters(req.URL.Query(), metav1.SchemeGroupVersion,
+		if err := metainternalscheme.ParameterCodec.DecodeParameters(req.URL.Query(), metav1.SchemeGroupVersion,
 			&opts); err != nil {
 			// An error in parsing request will result in default to "list" and not
 			// setting "name" field.

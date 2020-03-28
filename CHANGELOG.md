@@ -11,7 +11,12 @@
 ### Changed
 
 - The scorecard when creating a Custom Resource, will produce a message to the user if that CR already exists. ([#2683](https://github.com/operator-framework/operator-sdk/pull/2683))
-- Upgrade the `operator-registry` dependency version from `v1.5.7`to `v1.6.0` to update `bundle create` behaviour. ([#2662](https://github.com/operator-framework/operator-sdk/pull/2662))
+- Upgrade Kubernetes version from `kubernetes-1.16.2` to `kubernetes-1.17.4`. ([#2715](https://github.com/operator-framework/operator-sdk/pull/2715))
+- Upgrade `controller-runtime` version from `v0.4.0` to `v0.5.2`. ([#2715](https://github.com/operator-framework/operator-sdk/pull/2715))
+- Upgrade `controller-tools` version from `v0.2.4` to `v0.2.8`. ([#2715](https://github.com/operator-framework/operator-sdk/pull/2715))
+- Upgrade Helm version from `v3.0.2` to `v3.1.2`. ([#2715](https://github.com/operator-framework/operator-sdk/pull/2715))
+- Upgrade Prometheus Operator version from `v0.34.0` to `v0.38.0`. ([#2715](https://github.com/operator-framework/operator-sdk/pull/2715))
+- Upgrade `operator-registry` version from `v1.5.7`to `v1.6.2`. ([#2715](https://github.com/operator-framework/operator-sdk/pull/2715))
 - **Breaking Change:** [`operator-sdk bundle create --generate-only`](./doc/cli/operator-sdk_bundle_create.md) now writes a Dockerfile to `<project-root>/bundle.Dockerfile` and copies bundle manifests directly from the argument to `--directory`. ([#2715](https://github.com/operator-framework/operator-sdk/pull/2715))
 
 ### Deprecated

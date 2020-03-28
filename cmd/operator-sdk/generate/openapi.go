@@ -64,7 +64,7 @@ func openAPIFunc(cmd *cobra.Command, args []string) error {
       which ./bin/openapi-gen > /dev/null || go build -o ./bin/openapi-gen k8s.io/kube-openapi/cmd/openapi-gen
 
       # Run openapi-gen for each of your API group/version packages
-      ./bin/openapi-gen --logtostderr=true -o "" -i ./pkg/apis/<group>/<version> -O zz_generated.openapi -p ./pkg/apis/<group>/<version> -h ./hack/boilerplate.go.txt -r "-"
+      ./bin/openapi-gen -o "" -i ./pkg/apis/<group>/<version> -O zz_generated.openapi -p ./pkg/apis/<group>/<version> -h ./hack/boilerplate.go.txt -r "-"
 
 `)
 

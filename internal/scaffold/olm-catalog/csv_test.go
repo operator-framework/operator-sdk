@@ -31,7 +31,6 @@ import (
 	"github.com/blang/semver"
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
-	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
 	"github.com/spf13/afero"
 	appsv1 "k8s.io/api/apps/v1"
 )
@@ -145,16 +144,8 @@ func TestUpdateVersion(t *testing.T) {
 		t.Errorf("Wanted csv name %s, got %s", wantedName, csv.ObjectMeta.Name)
 	}
 
-	var resolver *olminstall.StrategyResolver
-	strategyInterface, err := resolver.UnmarshalStrategy(csv.Spec.InstallStrategy)
-	if err != nil {
-		t.Fatal(err)
-	}
-	strategy, ok := strategyInterface.(*olminstall.StrategyDetailsDeployment)
-	if !ok {
-		t.Fatalf("Strategy of type %T was not StrategyDetailsDeployment", strategyInterface)
-	}
-	csvPodImage := strategy.DeploymentSpecs[0].Spec.Template.Spec.Containers[0].Image
+	csvDepSpecs := csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs
+	csvPodImage := csvDepSpecs[0].Spec.Template.Spec.Containers[0].Image
 	// updateCSVVersions should not update podspec image.
 	wantedImage := "quay.io/example-inc/operator:v0.1.0"
 	if csvPodImage != wantedImage {
