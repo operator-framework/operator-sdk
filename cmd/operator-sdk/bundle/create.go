@@ -26,7 +26,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
-	"github.com/blang/semver"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -36,9 +35,7 @@ import (
 type bundleCreateCmd struct {
 	bundleCmd
 
-	outputDir        string
-	version          string
-	useLatestVersion bool
+	outputDir string
 }
 
 // newCreateCmd returns a command that will build operator bundle image or
@@ -71,8 +68,7 @@ NOTE: bundle images are not runnable.
 This image will contain manifests for package channels 'stable' and 'beta':
 
   $ operator-sdk bundle create quay.io/example/test-operator:v0.1.0 \
-      --version 0.1.0 \
-      --directory ./deploy/olm-catalog/test-operator \
+      --directory ./deploy/olm-catalog/test-operator/0.1.0 \
       --package test-operator \
       --channels stable,beta \
       --default-channel stable
@@ -81,15 +77,15 @@ Assuming your operator has the same name as your operator, the tag corresponds t
 a bundle directory name, and the only channel is 'stable', the above command can
 be abbreviated to:
 
-  $ operator-sdk bundle create quay.io/example/test-operator:v0.1.0 --version 0.1.0
+  $ operator-sdk bundle create quay.io/example/test-operator:v0.1.0 \
+      --directory
 
 The following invocation will generate test-operator bundle metadata, a manifests
 dir, and Dockerfile for your latest operator version without building the image:
 
   $ operator-sdk bundle create \
       --generate-only \
-      --latest \
-      --directory ./deploy/olm-catalog/test-operator \
+      --directory ./deploy/olm-catalog/test-operator/0.1.0 \
       --package test-operator \
       --channels stable,beta \
       --default-channel stable
@@ -103,11 +99,58 @@ dir, and Dockerfile for your latest operator version without building the image:
 				return fmt.Errorf("error validating args: %v", err)
 			}
 
-			if !c.generateOnly {
+			channels := strings.Join(c.channels, ",")
+
+			if c.generateOnly {
+				err := bundle.GenerateFunc(c.directory, c.outputDir, c.packageName, channels, c.defaultChannel, true)
+				if err != nil {
+					log.Fatal(fmt.Errorf("error generating bundle image files: %v", err))
+				}
+				if c.outputDir != "" {
+					outputManifestsDir := filepath.Join(c.outputDir, bundle.ManifestsDir)
+					if err := copyDirShallow(c.directory, outputManifestsDir); err != nil {
+						return fmt.Errorf("error updating manifests dir: %v", err)
+					}
+				}
+			} else {
+				// if c.outputDir != "" {
+				// 	outputManifestsDir := filepath.Join(c.outputDir, bundle.ManifestsDir)
+				// 	if err := copyDirShallow(c.directory, outputManifestsDir); err != nil {
+				// 		return fmt.Errorf("error updating manifests dir: %v", err)
+				// 	}
+				// }
 				c.imageTag = args[0]
-			}
-			if err := c.run(); err != nil {
-				log.Fatal(err)
+				rootDir := filepath.Dir(c.directory)
+				metadataDir := filepath.Join(rootDir, bundle.MetadataDir)
+				metadataDirExisted := isExist(metadataDir)
+				dockerfileExisted := isExist(bundle.DockerFile)
+
+				// Clean up transient files once the image is built, as they are no longer
+				// needed.
+				if !metadataDirExisted {
+					defer func() {
+						if err := os.RemoveAll(metadataDir); err != nil {
+							log.Fatal(err)
+						}
+					}()
+				}
+				if !dockerfileExisted {
+					defer func() {
+						if err := os.RemoveAll(bundle.DockerFile); err != nil {
+							log.Fatal(err)
+						}
+					}()
+				}
+				// for _, cleanup := range c.cleanupFuncs() {
+				// 	defer cleanup()
+				// }
+
+				// Build but never overwrite existing metadata/Dockerfile.
+				err := bundle.BuildFunc(c.directory, c.outputDir, c.imageTag, c.imageBuilder,
+					c.packageName, channels, c.defaultChannel, false)
+				if err != nil {
+					log.Fatal(fmt.Errorf("error building bundle image: %v", err))
+				}
 			}
 			return nil
 		},
@@ -121,15 +164,9 @@ dir, and Dockerfile for your latest operator version without building the image:
 func (c *bundleCreateCmd) addToFlagSet(fs *pflag.FlagSet) {
 
 	fs.StringVarP(&c.directory, "directory", "d", "",
-		"The directory where bundle manifests are located, ex. <project-root>/deploy/olm-catalog/<operator-name>. "+
-			"Set if package name differs from project name")
+		"The directory where bundle manifests are located, ex. <project-root>/deploy/olm-catalog/test-operator/0.1.0")
 	fs.StringVarP(&c.outputDir, "output-dir", "o", "",
 		"Optional output directory for operator manifests")
-	fs.StringVarP(&c.version, "version", "v", "",
-		"Version of operator to build an image for. Must match a directory name of a bundle dir. "+
-			"Set this if you do not have a 'manifests' directory at <project-root>/deploy/olm-catalog/<operator-name>/manifests")
-	fs.BoolVar(&c.useLatestVersion, "latest", false,
-		"Use the latest semantically versioned directory in <project-root>/deploy/olm-catalog/<operator-name>")
 	fs.StringVarP(&c.imageTag, "tag", "t", "",
 		"The path of a registry to pull from, image name and its tag that present the bundle image "+
 			"(e.g. quay.io/test/test-operator:v0.1.0)")
@@ -172,93 +209,30 @@ func (c bundleCreateCmd) validate(args []string) error {
 			return errors.New("a bundle image tag is a required argument if --generate-only is not set")
 		}
 	}
-	// Validate semver if not latest
-	if c.version != "" {
-		if c.useLatestVersion {
-			return fmt.Errorf("cannot set both --latest and --version")
-		}
-		if _, err := semver.Parse(c.version); err != nil {
-			return fmt.Errorf("version %s is invalid: %v", c.version, err)
-		}
-	}
 	return nil
 }
 
-func (c bundleCreateCmd) run() (err error) {
-	channels := strings.Join(c.channels, ",")
-	manifestsDir := filepath.Join(c.directory, bundle.ManifestsDir)
-	manifestsDirExisted := isExist(manifestsDir)
-
-	// If the latest version is passed, find the highest semver in c.directory.
-	if c.useLatestVersion {
-		if c.version, err = findLatestSemverDir(c.directory); err != nil {
-			return fmt.Errorf("error finding latest operator bundle dir: %v", err)
-		}
-	}
-
-	// version will be empty if neither useLatestVersion nor version were set
-	// by the user, so they want manifests/ left alone. Otherwise update it.
-	if c.version != "" {
-		versionedDir := filepath.Join(c.directory, c.version)
-		if err := copyDirShallow(versionedDir, manifestsDir); err != nil {
-			return fmt.Errorf("error updating manifests dir: %v", err)
-		}
-	}
-
-	if c.generateOnly {
-		err := bundle.GenerateFunc(manifestsDir, c.outputDir, c.packageName, channels, c.defaultChannel, true)
-		if err != nil {
-			return fmt.Errorf("error generating bundle image files: %v", err)
-		}
-		return nil
-	}
-
-	// Clean up transient files once the image is built, as they are no longer
-	// needed.
-	if !manifestsDirExisted {
-		defer func() {
-			if err := os.RemoveAll(manifestsDir); err != nil {
-				log.Fatal(err)
-			}
-		}()
-	}
-	for _, cleanup := range c.cleanupFuncs() {
-		defer cleanup()
-	}
-
-	// Build but never overwrite existing metadata/Dockerfile.
-	err = bundle.BuildFunc(manifestsDir, c.outputDir, c.imageTag, c.imageBuilder,
-		c.packageName, channels, c.defaultChannel, false)
-	if err != nil {
-		return fmt.Errorf("error building bundle image: %v", err)
-	}
+// Scenarios:
+// Generate:
+// - no manifests, no outputDir - create manifests normally
+// - manifests, no outputDir - do not create manifests
+// - no manifests, outputDir - create manifests in outputDir
+// - manifests, outputDir - create manifests in outputDir
+func (c bundleCreateCmd) runGenerate() (err error) {
 
 	return nil
 }
 
-func findLatestSemverDir(operatorDir string) (latestVerStr string, err error) {
-	infos, err := ioutil.ReadDir(operatorDir)
-	if err != nil {
-		return "", err
-	}
-	versions := semver.Versions{}
-	for _, info := range infos {
-		if info.IsDir() {
-			childDir := filepath.Clean(info.Name())
-			ver, err := semver.Parse(childDir)
-			if err != nil {
-				log.Debugf("Skipping non-semver dir %s: %v", childDir, err)
-				continue
-			}
-			versions = append(versions, ver)
-		}
-	}
-	if len(versions) == 0 {
-		return "", fmt.Errorf("no semver dirs found in %s", operatorDir)
-	}
-	semver.Sort(versions)
-	latestVerStr = versions[len(versions)-1].String()
-	return latestVerStr, nil
+// Build:
+// - no manifests, no metadata, no outputDir
+// - no manifests, metadata, no outputDir
+// - manifests, no metadata, no outputDir
+// - no manifests, no metadata, outputDir
+// - no manifests, metadata, outputDir
+// - manifests, no metadata, outputDir
+func (c bundleCreateCmd) runBuild() (err error) {
+
+	return nil
 }
 
 func copyDirShallow(from, to string) error {
@@ -278,7 +252,12 @@ func copyDirShallow(from, to string) error {
 			if err != nil {
 				return err
 			}
-			if err = ioutil.WriteFile(toPath, b, info.Mode()); err != nil {
+			data := "(empty)"
+			if len(b) > 20 {
+				data = string(b[:20])
+			}
+			fmt.Printf("writing %s to %s: %s\n", fromPath, toPath, data)
+			if err = ioutil.WriteFile(toPath, b, fileutil.DefaultFileMode); err != nil {
 				return err
 			}
 		} else {
@@ -289,33 +268,30 @@ func copyDirShallow(from, to string) error {
 	return nil
 }
 
-// cleanupFuncs returns a set of funcs to clean up after 'bundle create'.
-func (c bundleCreateCmd) cleanupFuncs() (fs []func()) {
-	rootDir := c.outputDir
-	if rootDir == "" {
-		rootDir = c.directory
-	}
-
-	metaDir := filepath.Join(rootDir, bundle.MetadataDir)
-	metaExists := isExist(metaDir)
-	dockerFileExists := isExist(bundle.DockerFile)
-	fs = append(fs,
-		func() {
-			if !metaExists {
-				if err := os.RemoveAll(metaDir); err != nil {
-					log.Fatal(err)
-				}
-			}
-		},
-		func() {
-			if !dockerFileExists {
-				if err := os.RemoveAll(bundle.DockerFile); err != nil {
-					log.Fatal(err)
-				}
-			}
-		})
-	return fs
-}
+// // cleanupFuncs returns a set of funcs to clean up after 'bundle create'.
+// func (c bundleCreateCmd) cleanupFuncs() (fs []func()) {
+// 	// If output-dir is set we don't want to remove files, since the user has
+// 	// specified they want a directory generated.
+// 	metaDir := filepath.Join(c.directory, bundle.MetadataDir)
+// 	metaExists := isExist(metaDir)
+// 	dockerFileExists := isExist(bundle.DockerFile)
+// 	fs = append(fs,
+// 		func() {
+// 			if !metaExists {
+// 				if err := os.RemoveAll(metaDir); err != nil {
+// 					log.Fatal(err)
+// 				}
+// 			}
+// 		},
+// 		func() {
+// 			if !dockerFileExists {
+// 				if err := os.RemoveAll(bundle.DockerFile); err != nil {
+// 					log.Fatal(err)
+// 				}
+// 			}
+// 		})
+// 	return fs
+// }
 
 func isExist(path string) bool {
 	_, err := os.Stat(path)
