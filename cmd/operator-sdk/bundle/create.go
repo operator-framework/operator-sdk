@@ -326,7 +326,7 @@ func getDirFileMap(dir string) (map[string]string, error) {
 	return fileMap, err
 }
 
-// hashContents returns the hexidecimal representation of hashed b.
+// hashContents returns the hexadecimal representation of hashed b.
 func hashContents(b []byte) string {
 	h := sha256.New()
 	_, _ = h.Write(b)
