@@ -247,13 +247,13 @@ func (c bundleCreateCmd) runBuild() error {
 	// Clean up transient files once the image is built, as they are no longer
 	// needed.
 	if !isExist(manifestsDir) {
-		defer makeRmFunc(manifestsDir)()
+		defer remove(manifestsDir)
 	}
 	if !isExist(metadataDir) {
-		defer makeRmFunc(metadataDir)()
+		defer remove(metadataDir)
 	}
 	if !isExist(bundle.DockerFile) {
-		defer makeRmFunc(bundle.DockerFile)()
+		defer remove(bundle.DockerFile)
 	}
 
 	// Build with overwrite-able option.
@@ -265,12 +265,10 @@ func (c bundleCreateCmd) runBuild() error {
 	return nil
 }
 
-// makeRmFunc returns a function that removes path from disk.
-func makeRmFunc(path string) func() {
-	return func() {
-		if err := os.RemoveAll(path); err != nil {
-			log.Fatal(err)
-		}
+// remove removes path from disk. Used in defer statements.
+func remove(path string) {
+	if err := os.RemoveAll(path); err != nil {
+		log.Fatal(err)
 	}
 }
 

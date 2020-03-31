@@ -47,8 +47,7 @@ require (
 )
 
 replace (
-	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d // Required by Helm
-	k8s.io/client-go => k8s.io/client-go v0.0.0-20191016111102-bec269661e48 // Required by prometheus-operator
+	k8s.io/client-go => k8s.io/client-go v0.17.4 // Required by prometheus-operator
 	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible // Required by OLM
 )
 `

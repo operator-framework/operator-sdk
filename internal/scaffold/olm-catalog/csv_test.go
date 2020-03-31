@@ -145,7 +145,13 @@ func TestUpdateVersion(t *testing.T) {
 	}
 
 	csvDepSpecs := csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs
+	if len(csvDepSpecs) != 1 {
+		t.Fatal("No deployment specs in CSV")
+	}
 	csvPodImage := csvDepSpecs[0].Spec.Template.Spec.Containers[0].Image
+	if len(csvDepSpecs[0].Spec.Template.Spec.Containers) != 1 {
+		t.Fatal("No containers in CSV deployment spec")
+	}
 	// updateCSVVersions should not update podspec image.
 	wantedImage := "quay.io/example-inc/operator:v0.1.0"
 	if csvPodImage != wantedImage {

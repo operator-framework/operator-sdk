@@ -119,7 +119,10 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig,
 	// Extract operator manifests from the CSV if olm-deployed is set.
 	if config.OLMDeployed {
 		// Get deploymentName from the deployment manifest within the CSV.
-		deploymentName = getDeploymentName(csv.Spec.InstallStrategy)
+		deploymentName, err = getDeploymentName(csv.Spec.InstallStrategy)
+		if err != nil {
+			return scapiv1alpha2.ScorecardOutput{}, err
+		}
 		// Get the proxy pod, which should have been created with the CSV.
 		proxyPodGlobal, err = getPodFromDeployment(deploymentName, config.Namespace)
 		if err != nil {
@@ -293,8 +296,11 @@ func getCSV(csvManifest string, csv *olmapiv1alpha1.ClusterServiceVersion) error
 	return nil
 }
 
-func getDeploymentName(strategy olmapiv1alpha1.NamedInstallStrategy) string {
-	return strategy.StrategySpec.DeploymentSpecs[0].Name
+func getDeploymentName(strategy olmapiv1alpha1.NamedInstallStrategy) (string, error) {
+	if len(strategy.StrategySpec.DeploymentSpecs) == 0 {
+		return "", errors.New("no deployment specs in CSV")
+	}
+	return strategy.StrategySpec.DeploymentSpecs[0].Name, nil
 }
 
 func getCRFromCSV(currentCRMans []string, crJSONStr string, csvName string) ([]string, error) {
