@@ -253,14 +253,18 @@ return reconcile.Result{RequeueAfter: time.Second*5}, nil
 **The following are possible reconcile loop return options.**
 
 **With the error:**
+
 If an error is encountered during processing the appropriate return option is to return an error.
 This results in the reconcile loop being re-triggered to run again.
 
 **Usage**
+
 ```Go
 return reconcile.Result{}, err
 ```
+
 **Example**
+
 In the [`memcached_controller.go`][memcached_controller] example below a `reconcile.Result{}, err` is used when there is an error reading the object.
 As a result the request is requeued for another try.
 ```Go
@@ -278,15 +282,18 @@ if err != nil {
 ```
 
 **Without an error:**
+
 There are several situations where although no error occured, the reconcile loop should signify
 during its return that it needs to run again.
 
 **Usage**
+
 ```Go
 return reconcile.Result{Requeue: true}, nil
 ```
 
 **Example**
+
 In the [`memcached_controller.go`][memcached_controller] example below a `reconcile.Result{Requeue: true}, nil` is used because a new resources is being created and as such there is the 
 potential that further processing is required. 
 Thus, the reconcile loop needs to trigger a requeue but there is no error associated with this requeue.
@@ -301,14 +308,18 @@ return reconcile.Result{Requeue: true}, nil
 ```
 
 **Without an error and no need to requeue the request:**
+
 In some situations, such as when the primary resource has been deleted, there is no need to
 requeue the request for another attempt
 
 **Usage**
+
 ```Go
 return reconcile.Result{}, nil
 ```
+
 **Example**
+
 In the [`memcached_controller.go`][memcached_controller] example below a `reconcile.Result{}, nil` is used because the Memcached resource was not found, and no further processing is required.  
 ```Go
 // Fetch the Memcached instance
