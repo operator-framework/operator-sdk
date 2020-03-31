@@ -1093,8 +1093,6 @@ replace (
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.17.4
 )
 
-replace github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503-38ab9da00309 // Required by Helm
-
 // Required for OLM
 replace (
 	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible
