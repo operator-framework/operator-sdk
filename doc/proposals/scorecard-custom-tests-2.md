@@ -81,7 +81,7 @@ Scorecard would process tests based on an on-disk directory or bundle image that
 
 **Implementation Notes**
 
-The Scorecard would support the creation of a Kuttl test image and the execute tests via Kuttl, however, it would be transparent for users since its results will be integrated into scorecard results.
+The Scorecard would support the creation of a Kuttl test image and then execute tests via Kuttl, however, it would be transparent for users since its results will be integrated into scorecard results.
 
 ## Design Details
 
@@ -233,6 +233,18 @@ tests:
     suite: kuttl
 ```
 
+Users could override the default test images shipped with scorecard
+by adding the following into the scorecard DSL configuration:
+```
+default-images: 
+- imagetype: olm
+  image: quay.io/operator-framework/scorecard-olmtests:v0.0.1
+- imagetype: basic
+  image: quay.io/operator-framework/scorecard-basictests:v0.0.1
+- imagetype: kuttl
+  image: quay.io/operator-framework/scorecard-kuttltests:v0.0.1
+tests:
+```
 
 ### Custom Test Execution
 
