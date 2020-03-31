@@ -60,7 +60,7 @@ require (
 	sigs.k8s.io/controller-tools v0.2.8
 )
 
-replace k8s.io/client-go => k8s.io/client-go v0.0.0-20191016111102-bec269661e48 // Required for Prometheus Operator
+replace k8s.io/client-go => k8s.io/client-go v0.17.4 // Required for Prometheus Operator
 
 // Required for OLM
 replace (

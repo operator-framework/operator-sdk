@@ -1058,9 +1058,6 @@ RUN ansible-galaxy collection install -r ${HOME}/requirements.yml \
 
 ## Unreleased (Master Branch)
 
-<<<<<<< HEAD
-### Breaking Changes
-=======
 ### modules
 
 - Ensure that the following `require` modules and `replace` directives with the specific versions are present in your `go.mod` file:
@@ -1078,8 +1075,7 @@ replace (
 	k8s.io/apimachinery => k8s.io/apimachinery v0.17.4
 	k8s.io/apiserver => k8s.io/apiserver v0.17.4
 	k8s.io/cli-runtime => k8s.io/cli-runtime v0.17.4
-	// Required for Prometheus
-	k8s.io/client-go => k8s.io/client-go v0.0.0-20191016111102-bec269661e48
+	k8s.io/client-go => k8s.io/client-go v0.17.4
 	k8s.io/cloud-provider => k8s.io/cloud-provider v0.17.4
 	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.17.4
 	k8s.io/code-generator => k8s.io/code-generator v0.17.4
@@ -1111,7 +1107,6 @@ replace (
 - Run the command `operator-sdk generate crds` to regenerate CRDs
 
 ### Breaking changes
->>>>>>> Upgrade modules to use k8s 1.17
 
 #### OpenAPI generation
 
