@@ -12,6 +12,7 @@ require (
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.1
 	github.com/gobuffalo/packr v1.30.1 // indirect
+	github.com/golang/protobuf v1.3.5 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/helm/helm-2to3 v0.5.1
 	github.com/iancoleman/strcase v0.0.0-20190422225806-e506e3ef7365
@@ -22,9 +23,11 @@ require (
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.1.2
+	github.com/onsi/ginkgo v1.12.0 // indirect
+	github.com/onsi/gomega v1.9.0 // indirect
 	github.com/operator-framework/api v0.1.1
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20200321030439-57b580e57e88
-	github.com/operator-framework/operator-registry v1.6.1
+	github.com/operator-framework/operator-registry v1.6.2-0.20200330184612-11867930adb5
 	github.com/pborman/uuid v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.5.1
@@ -40,7 +43,8 @@ require (
 	github.com/yvasiyarov/go-metrics v0.0.0-20150112132944-c25f46c4b940 // indirect
 	github.com/ziutek/mymysql v1.5.4 // indirect
 	go.uber.org/zap v1.14.1
-	golang.org/x/tools v0.0.0-20200327195553-82bb89366a1e
+	golang.org/x/tools v0.0.0-20200331025713-a30bf2db82d4
+	google.golang.org/grpc v1.28.0 // indirect
 	gopkg.in/gorp.v1 v1.7.2 // indirect
 	gopkg.in/yaml.v2 v2.2.8
 	helm.sh/helm/v3 v3.1.2
