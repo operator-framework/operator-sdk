@@ -159,6 +159,11 @@ func TestConditionsGetNotExists(t *testing.T) {
 	assert.Nil(t, actualCondition)
 }
 
+func TestConditionsRemoveFromNilConditions(t *testing.T) {
+	var conditions *Conditions = nil
+	assert.False(t, conditions.RemoveCondition(ConditionType("C")))
+}
+
 func TestConditionsRemoveNotExists(t *testing.T) {
 	conditions := initConditions(
 		generateCondition("A", corev1.ConditionTrue),
