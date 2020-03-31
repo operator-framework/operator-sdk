@@ -1095,7 +1095,7 @@ Note that --watch-namespace can be used to set the namespace(s) which the operat
 
 Then, use the flag --operator-namespace to inform the namespace where the Operator will be "deployed" in and then, it will set the environment variable OPERATOR_NAMESPACE. If this value is not set, then it will be the namespace defined as default in the Kubeconfig.
 
-- If you've run `operator-sdk bundle create --generate-only`, move your bundle Dockerfile at `<project-root>/deploy/olm-catalog/<operator-name>/Dockerfile` to `<project-root>/bundle.Dockerfile` and update the first `COPY` from `COPY /*.yaml manifests/` to `COPY deploy/olm-catalog/<operator-name>/<bundle-dir> manifests/`. [#2715](https://github.com/operator-framework/operator-sdk/pull/2715)
+- If you've run `operator-sdk bundle create --generate-only`, move your bundle Dockerfile at `<project-root>/deploy/olm-catalog/<operator-name>/Dockerfile` to `<project-root>/bundle.Dockerfile` and update the first `COPY` from `COPY /*.yaml manifests/` to `COPY deploy/olm-catalog/<operator-name>/manifests manifests/`. [#2715](https://github.com/operator-framework/operator-sdk/pull/2715)
 
 [legacy-kubebuilder-doc-crd]: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 [v0.8.2-go-mod]: https://github.com/operator-framework/operator-sdk/blob/28bd2b0d4fd25aa68e15d928ae09d3c18c3b51da/internal/pkg/scaffold/go_mod.go#L40-L94

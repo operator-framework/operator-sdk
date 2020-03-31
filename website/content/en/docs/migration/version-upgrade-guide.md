@@ -1068,35 +1068,11 @@ require (
 	sigs.k8s.io/controller-runtime v0.5.2
 )
 
-// Pinned to kubernetes-1.17.4
 replace (
-	k8s.io/api => k8s.io/api v0.17.4
-	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.17.4
-	k8s.io/apimachinery => k8s.io/apimachinery v0.17.4
-	k8s.io/apiserver => k8s.io/apiserver v0.17.4
-	k8s.io/cli-runtime => k8s.io/cli-runtime v0.17.4
-	// Required for Prometheus
-	k8s.io/client-go => k8s.io/client-go v0.0.0-20191016111102-bec269661e48
-	k8s.io/cloud-provider => k8s.io/cloud-provider v0.17.4
-	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.17.4
-	k8s.io/code-generator => k8s.io/code-generator v0.17.4
-	k8s.io/component-base => k8s.io/component-base v0.17.4
-	k8s.io/cri-api => k8s.io/cri-api v0.17.4
-	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.17.4
-	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.17.4
-	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.17.4
-	k8s.io/kube-proxy => k8s.io/kube-proxy v0.17.4
-	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.17.4
-	k8s.io/kubectl => k8s.io/kubectl v0.17.4
-	k8s.io/kubelet => k8s.io/kubelet v0.17.4
-	k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.17.4
-	k8s.io/metrics => k8s.io/metrics v0.17.4
-	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.17.4
+	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d // Required by Helm
+	k8s.io/client-go => k8s.io/client-go v0.0.0-20191016111102-bec269661e48 // Required by prometheus-operator
+	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible // Required by OLM
 )
-
-replace github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503-38ab9da00309 // Required by Helm
-
-replace github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible // Required for OLM
 ```
 
 - Run `go mod tidy` to update the project modules
@@ -1119,7 +1095,7 @@ Note that --watch-namespace can be used to set the namespace(s) which the operat
 
 Then, use the flag --operator-namespace to inform the namespace where the Operator will be "deployed" in and then, it will set the environment variable OPERATOR_NAMESPACE. If this value is not set, then it will be the namespace defined as default in the Kubeconfig.
 
-- If you've run `operator-sdk bundle create --generate-only`, move your bundle Dockerfile at `<project-root>/deploy/olm-catalog/<operator-name>/Dockerfile` to `<project-root>/bundle.Dockerfile` and update the first `COPY` from `COPY /*.yaml manifests/` to `COPY deploy/olm-catalog/<operator-name>/<bundle-dir> manifests/`. [#2715](https://github.com/operator-framework/operator-sdk/pull/2715)
+- If you've run `operator-sdk bundle create --generate-only`, move your bundle Dockerfile at `<project-root>/deploy/olm-catalog/<operator-name>/Dockerfile` to `<project-root>/bundle.Dockerfile` and update the first `COPY` from `COPY /*.yaml manifests/` to `COPY deploy/olm-catalog/<operator-name>/manifests manifests/`. [#2715](https://github.com/operator-framework/operator-sdk/pull/2715)
 
 [legacy-kubebuilder-doc-crd]: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 [v0.8.2-go-mod]: https://github.com/operator-framework/operator-sdk/blob/28bd2b0d4fd25aa68e15d928ae09d3c18c3b51da/internal/pkg/scaffold/go_mod.go#L40-L94
