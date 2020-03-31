@@ -98,7 +98,6 @@ the end-user using whatever tools they want to use.
 
 The test image must produce container log output that conforms to the scorecard Test Result output.  The output is a single Test Result, so a single run of a test image should execute and output the result for exactly one test.  Here is a sample of test output in the required format:
 ```
-    [
       {
 	      "name": "Spec fields with descriptors",
 	      "description": "All spec fields have matching descriptors in the CSV",
@@ -107,16 +106,7 @@ The test image must produce container log output that conforms to the scorecard 
 		"Add a spec descriptor for size"
 	      ],
 	      "crname": "example-memcached"
-      }, 
-      {
-	      "name": "Some other test",
-	      "description": "Another test on the CSV",
-	      "state": "pass",
-	      "suggestions": [
-	      ],
-	      "crname": "example-memcached"
-      },
-    ]
+      } 
 ```
 
 The test image will be executed as a Pod by the scorecard with a restart policy of `never`.
@@ -130,7 +120,11 @@ the bundle image contents into the following location inside the test pod:
 ```
 
 This allows tests to have access to all the bundle contents if they 
-are required for the test logic.  Note:  It is the responsibility of the test to iterate though each CR that they want to test and create Custom Resources as scorecard will no longer be responsible for this.  The list of CRs to test are found in the CSV within the bundle image content.
+are required for the test logic.  The scorecard does not make assumptions about what the test does with this proposed design.  The test could for example:
+
+ * not use the CR's at all (e.g. doing a static bundle validation)
+ * use the CRs in the CSVs alm-examples annotation (e.g. to verify they validate the associated CRD schema)
+ * use some other CRs built (or maybe mounted) into the test image 
 
 For the case of executing a test, the bundle image will be passed as a scorecard command flag:
 ```
@@ -157,15 +151,21 @@ The developer of a custom test would have a workflow similar to:
  
  * write a custom test binary in the language of their choice, sample custom test within the SDK repository would be available as a starting point
  * test the custom test binary locally (out-of-cluster) to make sure the output is produced that matches v1alpha2 ScorecardTestResult format
- * create a scorecard DSL yaml file to run their custom test image
+ * scorecard creates a scorecard DSL config file for their test image
  * when the test binary works as expected, the developer would build and push the test image to a container registry accessible to the scorecard test environment
- * the developer would rebuild their bundle image passing in their scorecard DSL file
- * the Basic and OLM test manifests would be added automatically to the bundle image as part of the bundle image build process.  This allows users to run the Basic and OLM tests along with their custom tests.
- * lastly, the developer would run the scorecard passing in their operator bundle image they just built along with any other scorecard flags (e.g. selector).
+ * scorecard could build a bundle image that contains the scorecard DSL config
+ NOTE:  the Basic and OLM test manifests would be added automatically to the bundle image as part of the bundle image build process.  This allows users to run the Basic and OLM tests along with their custom tests.
+ * the developer would run the scorecard passing in their operator bundle image they just built along with any other scorecard flags (e.g. selector).
+
+The case of a developer implementing a kuttl test would be as follows:
+ * developer places kuttl test assets into a kuttl test directory known to scorecard
+ * scorecard creates the scorecard DSL config file
+ * scorecard runs the tests which are based on a scorecard kuttl test image
+ * if the test results meet their goals, then scorecard could build a bundle image that contains the kuttl tests in a distributable format (e.g. bundle image)
 
 ### Custom Test Packaging and Configuration
 
-In this design proposal, custom tests are container images, described in the scorecard DSL yaml file.  End users would add their scorecard DSL yaml file into their operator bundle image or pass it into scorecard using a command line flag.  Custom test images are stored in a container registry outside the control of scorecard.
+In this design proposal, custom tests are container images, described in the scorecard DSL yaml file.  End users would add their scorecard DSL yaml file into their operator bundle image or pass it into scorecard using a command line flag.  Custom test images are stored in a container registry outside the control of scorecard.  The scorecard DSL command flag would take precedence over the scorecard DSL config file found in the bundle image if specified.
 
 ### Scorecard Configuration
 
@@ -173,7 +173,7 @@ The scorecard DSL yaml file would be accessible from a local disk location to sc
 
 Scorecard would assume that the scorecard DSL yaml file would be located in the bundle image at the following location:
 ```
-/scorecard/.osdk-scorecard.yaml
+/scorecard/config.yaml
 ```
 
 The scorecard DSL format is yet to be determined but it would need to include configuration settings for each test including labels.
