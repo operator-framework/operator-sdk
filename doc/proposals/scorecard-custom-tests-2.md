@@ -126,7 +126,7 @@ bundle image contents available to test images by mounting
 the bundle image contents into the following location inside the test pod:
 
 ```
-/scorecard
+/scorecard/bundle/
 ```
 
 This allows tests to have access to all the bundle contents if they 
