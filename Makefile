@@ -11,7 +11,7 @@ endif
 
 VERSION = $(shell git describe --dirty --tags --always)
 GIT_COMMIT = $(shell git rev-parse HEAD)
-K8S_VERSION = v1.16.3
+K8S_VERSION = v1.17.2
 REPO = github.com/operator-framework/operator-sdk
 BUILD_PATH = $(REPO)/cmd/operator-sdk
 PKGS = $(shell go list ./... | grep -v /vendor/)
