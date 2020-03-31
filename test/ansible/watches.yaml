@@ -1,10 +1,15 @@
 ---
 - version: v1alpha1
   group: test.example.com
-  kind: Inventory
-  playbook: /opt/ansible/playbooks/inventory.yml
+  kind: InventoryTest
+  playbook: playbooks/inventory.yml
 
 - version: v1alpha1
   group: test.example.com
-  kind: Collection
+  kind: CollectionTest
   role: operator_sdk.test_fixtures.dummy
+
+- version: v1alpha1
+  group: test.example.com
+  kind: ExecTest
+  playbook: playbooks/exec.yml

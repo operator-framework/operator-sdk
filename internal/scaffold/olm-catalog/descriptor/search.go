@@ -54,7 +54,7 @@ func newTypeTreeFromRoot(root *types.Type) (typeTree, error) {
 				if err != nil {
 					return nil, fmt.Errorf("error parsing %s type member %s JSON tags: %v", child.member.Type.Name, cm.Name, err)
 				}
-				node.pathSegments = append(child.pathSegments, path)
+				node.pathSegments = getPathSegments(child, path)
 				if hasAnnotations(cm) {
 					tree.annotated = append(tree.annotated, node)
 				}
@@ -129,6 +129,19 @@ func getUnderlyingType(t *types.Type) *types.Type {
 		t = t.Underlying
 	}
 	return t
+}
+
+func getPathSegments(parent *tnode, path string) []string {
+	childPathSegments := make([]string, len(parent.pathSegments)+1)
+	copy(childPathSegments, parent.pathSegments)
+
+	// If the parent is a slice, include an array
+	// index on the parent's path segment.
+	if parent.member.Type.Kind == types.Slice {
+		childPathSegments[len(childPathSegments)-2] += "[0]"
+	}
+	childPathSegments[len(childPathSegments)-1] = path
+	return childPathSegments
 }
 
 func hasAnnotations(m types.Member) bool {

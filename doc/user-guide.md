@@ -2,7 +2,6 @@
 
 This guide walks through an example of building a simple memcached-operator using the operator-sdk CLI tool and controller-runtime library API. To learn how to use Ansible or Helm to create an operator, see the [Ansible Operator User Guide][ansible_user_guide] or the [Helm Operator User Guide][helm_user_guide]. The rest of this document will show how to program an operator in Go.
 
-
 ## Prerequisites
 
 - [git][git_tool]
@@ -280,7 +279,7 @@ before building the memcached-operator image.
 Build the memcached-operator image and push it to a registry.  Make sure to modify
 `quay.io/example/` in the example below to reference a container repository that
 you have access to. You can obtain an account for storing containers at
-repository sites such quay.io or hub.docker.com: 
+repository sites such quay.io or hub.docker.com:
 ```sh
 $ operator-sdk build quay.io/example/memcached-operator:v0.0.1
 $ sed -i 's|REPLACE_IMAGE|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
@@ -334,6 +333,10 @@ $ operator-sdk run --local --watch-namespace=default
 ```
 
 You can use a specific kubeconfig via the flag `--kubeconfig=<path/to/kubeconfig>`.
+
+### 3. Deploy your Operator with the Operator Lifecycle Manager (OLM)
+
+OLM will manage creation of most if not all resources required to run your operator, using a bit of setup from other `operator-sdk` commands. Check out the [docs][cli-run-olm] for more information.
 
 ## Create a Memcached CR
 
@@ -554,7 +557,7 @@ func main() {
 * After adding new import paths to your operator project, run `go mod vendor` if a `vendor/` directory is present in the root of your project directory to fulfill these dependencies.
 * Your 3rd party resource needs to be added before add the controller in `"Setup all Controllers"`.
 
-#### Default Metrics exported with 3rd party resource 
+#### Default Metrics exported with 3rd party resource
 
 By default, SDK operator projects are set up to [export metrics][metrics_doc] through `addMetrics` in `cmd/manager/main.go`. See that it will call the `serveCRMetrics`:
 
@@ -574,11 +577,9 @@ func serveCRMetrics(cfg *rest.Config) error {
 	if err != nil {
 		return err
 	}
-``` 
+```
 
-The `kubemetrics.GenerateAndServeCRMetrics` function requires an RBAC rule to list all GroupVersionKinds in the list of watched namespaces, so you might need to [filter](https://github.com/operator-framework/operator-sdk/blob/v0.15.2/pkg/k8sutil/k8sutil.go#L161) the kinds returned by [`k8sutil.GetGVKsFromAddToScheme`](https://godoc.org/github.com/operator-framework/operator-sdk/pkg/k8sutil#GetGVKsFromAddToScheme) more stringently to avoid authorization errors such as `Failed to list *unstructured.Unstructured`.
-
-In this scenario, this error may occur because your Operator RBAC roles do not include permissions to LIST the third party API schemas or the schemas which are required to them and will be added with. See that the default SDK implementation will just add the Kubernetes schemas and they will be ignored in the metrics It means that you might need to do an similar implementation to filter the third party API schemas and their dependencies added in order to provide a filtered a List of GVK(GroupVersionKind) to the  `GenerateAndServeCRMetrics` method. 
+The `kubemetrics.GenerateAndServeCRMetrics` function requires an RBAC rule to list all GroupVersionKinds in the list of watched namespaces, so you might need to [filter](https://github.com/operator-framework/operator-sdk/blob/v0.15.2/pkg/k8sutil/k8sutil.go#L161) the kinds returned by [`k8sutil.GetGVKsFromAddToScheme`](https://godoc.org/github.com/operator-framework/operator-sdk/pkg/k8sutil#GetGVKsFromAddToScheme) more stringently to avoid authorization errors such as `Failed to list *unstructured.Unstructured`. You may also need to add a rule to LIST your third party API schemas and their dependent schemas not registered with the manager.
 
 ### Handle Cleanup on Deletion
 
@@ -694,7 +695,7 @@ func remove(list []string, s string) []string {
 
 To learn about how metrics work in the Operator SDK read the [metrics section][metrics_doc] of the user documentation.
 
-## Leader election
+### Leader election
 
 During the lifecycle of an operator it's possible that there may be more than 1 instance running at any given time e.g when rolling out an upgrade for the operator.
 In such a scenario it is necessary to avoid contention between multiple operator instances via leader election so that only one leader instance handles the reconciliation while the other instances are inactive but ready to take over when the leader steps down.
@@ -708,7 +709,7 @@ By default the SDK enables the leader-for-life implementation. However you shoul
 
 The following examples illustrate how to use the two options:
 
-### Leader for life
+#### Leader for life
 
 A call to `leader.Become()` will block the operator as it retries until it can become the leader by creating the configmap named `memcached-operator-lock`.
 
@@ -730,7 +731,7 @@ func main() {
 ```
 If the operator is not running inside a cluster `leader.Become()` will simply return without error to skip the leader election since it can't detect the operator's namespace.
 
-### Leader with lease
+#### Leader with lease
 
 The leader-with-lease approach can be enabled via the [Manager Options][manager_options] for leader election.
 
@@ -794,3 +795,4 @@ When the operator is not running in a cluster, the Manager will return an error 
 [scheme_builder]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/scheme#Builder
 [typical-status-properties]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
 [godoc-conditions]: https://godoc.org/github.com/operator-framework/operator-sdk/pkg/status#Conditions
+[cli-run-olm]: ./user/olm-catalog/olm-cli.md

@@ -21,6 +21,7 @@ import (
 	"reflect"
 	"testing"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/operator-framework/operator-sdk/pkg/ansible/watches"
@@ -57,12 +58,13 @@ func TestNew(t *testing.T) {
 	validPlaybook := filepath.Join(cwd, "testdata", "playbook.yml")
 	validRole := filepath.Join(cwd, "testdata", "roles", "role")
 	testCases := []struct {
-		name      string
-		gvk       schema.GroupVersionKind
-		playbook  string
-		role      string
-		vars      map[string]interface{}
-		finalizer *watches.Finalizer
+		name             string
+		gvk              schema.GroupVersionKind
+		playbook         string
+		role             string
+		vars             map[string]interface{}
+		finalizer        *watches.Finalizer
+		desiredObjectKey string
 	}{
 		{
 			name: "basic runner with playbook",
@@ -141,6 +143,16 @@ func TestNew(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "basic runner with a dash in the group name",
+			gvk: schema.GroupVersionKind{
+				Group:   "operator-with-dash.example.com",
+				Version: "v1alpha1",
+				Kind:    "Example",
+			},
+			playbook:         validPlaybook,
+			desiredObjectKey: "_operator_with_dash_example_com_example",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -165,6 +177,15 @@ func TestNew(t *testing.T) {
 				if testRunnerStruct.Path != testWatch.Role {
 					t.Fatalf("Unexpected path %v expected path %v", testRunnerStruct.Path, testWatch.Role)
 				}
+			}
+
+			// check that the group + kind are properly formatted into a parameter
+			if tc.desiredObjectKey != "" {
+				parameters := testRunnerStruct.makeParameters(&unstructured.Unstructured{})
+				if _, ok := parameters[tc.desiredObjectKey]; !ok {
+					t.Fatalf("Did not find expected objKey %v in parameters %+v", tc.desiredObjectKey, parameters)
+				}
+
 			}
 
 			if testRunnerStruct.GVK != testWatch.GroupVersionKind {
