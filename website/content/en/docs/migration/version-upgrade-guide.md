@@ -1070,7 +1070,7 @@ require (
 
 replace (
   k8s.io/client-go => k8s.io/client-go v0.17.4 // Required by prometheus-operator
-	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible // Required by OLM
+  github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible // Required by OLM
 )
 ```
 
@@ -1078,23 +1078,54 @@ replace (
 - Run the command `operator-sdk generate k8s` to ensure that your resources will be updated
 - Run the command `operator-sdk generate crds` to regenerate CRDs
 
-### Breaking changes
+### Breaking Changes
 
-#### In the test-framework
+#### OpenAPI generation
 
-The methods `ctx.GetOperatorNamespace()` and `ctx.GetWatchNamespace()` was added pkg/test in order to replace `ctx.GetNamespace()` which is deprecated. In this way replace the use of `ctx.GetNamespace()` in your project with `ctx.GetOperatorNamespace()`
+- The deprecated `operator-sdk generate openapi` command has been removed. This command generated CRDs and
+  `zz_generated.openapi` files for operator APIs.
 
-### Breaking Changes on Commands
+To generate CRDs, use `operator-sdk generate crds`.
 
-This release contains breaking changes in some commands.
+To generate Go OpenAPI code, use `openapi-gen` directly. For example:
 
-- The --namespace flag from `operator-sdk run --local` command, `operator-sdk test --local` command and `operator-sdk cleanup` command was deprecated and was replaced by --watch-namespace and --operator-namespace. [#2617](https://github.com/operator-framework/operator-sdk/pull/2617)
+```bash
+# Build the latest openapi-gen from source
+which ./bin/openapi-gen > /dev/null || go build -o ./bin/openapi-gen k8s.io/kube-openapi/cmd/openapi-gen
 
-Note that --watch-namespace can be used to set the namespace(s) which the operator will watch for changes. It will set the environment variable WATCH_NAMESPACE. Use explicitly an empty string to watch all namespaces or inform a List of namespaces such as "ns1,ns2" when the operator is cluster-scoped. If you use a List, then it needs contains the namespace where the operator is "deployed" in since the default metrics implementation will manage resources in the Operator's namespace. By default, it will be the Operator Namespace.
+# Run openapi-gen for each of your API group/version packages
+./bin/openapi-gen --logtostderr=true \
+                  -i ./pkg/apis/<group>/<version> \
+                  -o "" \
+                  -O zz_generated.openapi \
+                  -p ./pkg/apis/<group>/<version> \
+                  -h ./hack/boilerplate.go.txt \
+                  -r "-"
+```
 
-Then, use the flag --operator-namespace to inform the namespace where the Operator will be "deployed" in and then, it will set the environment variable OPERATOR_NAMESPACE. If this value is not set, then it will be the namespace defined as default in the Kubeconfig.
+### Deprecations
 
-- If you've run `operator-sdk bundle create --generate-only`, move your bundle Dockerfile at `<project-root>/deploy/olm-catalog/<operator-name>/Dockerfile` to `<project-root>/bundle.Dockerfile` and update the first `COPY` from `COPY /*.yaml manifests/` to `COPY deploy/olm-catalog/<operator-name>/manifests manifests/`. [#2715](https://github.com/operator-framework/operator-sdk/pull/2715)
+#### Test Framework
+
+- The methods `ctx.GetOperatorNamespace()` and `ctx.GetWatchNamespace()` were added to `pkg/test` in order to replace
+`ctx.GetNamespace()` which is deprecated. In this way, replace the use of `ctx.GetNamespace()` in your project with
+`ctx.GetOperatorNamespace()`.
+- The `--namespace` flag from `operator-sdk run --local`, `operator-sdk test --local`, and `operator-sdk cleanup` was
+deprecated and is replaced by `--watch-namespace` and `--operator-namespace`.
+
+    The `--operator-namespace` flag can be used to set the namespace where the operator will be deployed. It will set the
+    environment variable `OPERATOR_NAMESPACE`. If this value is not set, then it will be the namespace defined as in your
+    current kubeconfig context.
+
+    The `--watch-namespace` flag can be used to set the namespace(s) which the operator will watch for changes. It will set
+    the environment variable `WATCH_NAMESPACE`. Use an explicit empty string to watch all namespaces or a comma-separated
+    list of namespaces (e.g. "ns1,ns2") to watch multiple namespace when the operator is cluster-scoped. If using a list,
+    then it should contain the namespace where the operator is deployed since the default metrics implementation will
+    manage resources in the Operator's namespace. By default, `--watch-namespace` will be set to the operator namespace.
+
+- If you've run `operator-sdk bundle create --generate-only`, move your bundle Dockerfile at
+`<project-root>/deploy/olm-catalog/<operator-name>/Dockerfile` to `<project-root>/bundle.Dockerfile` and update the
+first `COPY` from `COPY /*.yaml manifests/` to `COPY deploy/olm-catalog/<operator-name>/manifests manifests/`.
 
 [legacy-kubebuilder-doc-crd]: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 [v0.8.2-go-mod]: https://github.com/operator-framework/operator-sdk/blob/28bd2b0d4fd25aa68e15d928ae09d3c18c3b51da/internal/pkg/scaffold/go_mod.go#L40-L94
