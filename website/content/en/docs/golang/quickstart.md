@@ -239,9 +239,9 @@ return reconcile.Result{RequeueAfter: time.Second*5}, nil
 **Note:** Returning `Result` with `RequeueAfter` set is how you can periodically reconcile a CR.
 
 #### Reconcile Result Use Cases
-**The following are possible reconcile loop return options.**
+The following are possible reconcile loop return options.
 
-**With the error:**
+#### 1. With the error:
 
 If an error is encountered during processing the appropriate return option is to return an error.
 This results in the reconcile loop being re-triggered to run again.
@@ -270,7 +270,7 @@ if err != nil {
 }
 ```
 
-**Without an error:**
+#### 2. Without an error:
 
 There are several situations where although no error occured, the reconcile loop should signify
 during its return that it needs to run again.
@@ -296,7 +296,7 @@ dep := r.deploymentForMemcached(memcached)
 return reconcile.Result{Requeue: true}, nil
 ```
 
-**Without an error and no need to requeue the request:**
+#### 3. Without an error and no need to requeue the request:
 
 In some situations, such as when the primary resource has been deleted, there is no need to
 requeue the request for another attempt
