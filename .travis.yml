@@ -131,7 +131,7 @@ jobs:
         - (cd / && go get github.com/mattn/goveralls)
       script:
         - make test-sanity test-unit test-markdown
-        # - $GOPATH/bin/goveralls -service=travis-ci -coverprofile=coverage.out -repotoken=$COVERALLS_TOKEN
+        - $GOPATH/bin/goveralls -service=travis-ci -coverprofile=coverage.out -repotoken=$COVERALLS_TOKEN
       after_success: echo 'Tests Passed'
       after_failure: echo 'Failure in unit, sanity and markdown tests'
 
