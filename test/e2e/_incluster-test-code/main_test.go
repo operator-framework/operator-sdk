@@ -19,6 +19,10 @@ import (
 	"testing"
 
 	f "github.com/operator-framework/operator-sdk/pkg/test"
+
+	// This import tests double-registration of the --kubebuilder flag:
+	// https://github.com/kubernetes-sigs/controller-runtime/issues/878
+	_ "sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
 type testArgs struct {

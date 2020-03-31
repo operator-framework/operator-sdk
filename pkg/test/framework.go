@@ -102,7 +102,6 @@ func (opts *frameworkOpts) addToFlagSet(flagset *flag.FlagSet) {
 	flagset.StringVar(&opts.namespacedManPath, NamespacedManPathFlag, "", "path to rbac manifest")
 	flagset.BoolVar(&opts.isLocalOperator, LocalOperatorFlag, false,
 		"enable if operator is running locally (not in cluster)")
-	flagset.StringVar(&opts.kubeconfigPath, KubeConfigFlag, "", "path to kubeconfig")
 	flagset.StringVar(&opts.globalManPath, GlobalManPathFlag, "", "path to operator manifest")
 	flagset.StringVar(&opts.localOperatorArgs, LocalOperatorArgs, "",
 		"flags that the operator needs (while using --up-local). example: \"--flag1 value1 --flag2=value2\"")
