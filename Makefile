@@ -11,6 +11,7 @@ endif
 
 VERSION = $(shell git describe --dirty --tags --always)
 GIT_COMMIT = $(shell git rev-parse HEAD)
+K8S_VERSION = v1.16.3
 REPO = github.com/operator-framework/operator-sdk
 BUILD_PATH = $(REPO)/cmd/operator-sdk
 PKGS = $(shell go list ./... | grep -v /vendor/)
@@ -56,6 +57,7 @@ install: ## Build & install the Operator SDK CLI binary
 		-ldflags " \
 			-X '${REPO}/version.GitVersion=${VERSION}' \
 			-X '${REPO}/version.GitCommit=${GIT_COMMIT}' \
+			-X '${REPO}/version.KubernetesVersion=${K8S_VERSION}' \
 		" \
 		$(BUILD_PATH)
 
@@ -79,6 +81,9 @@ lint-fix: ## Run golangci-lint automatically fix (development purpose only)
 
 lint: ## Run golangci-lint with all checks enabled in the ci
 	./hack/tests/check-lint.sh ci
+
+setup-k8s:
+	hack/ci/setup-k8s.sh ${K8S_VERSION}
 
 ##############################
 # Generate Artifacts         #
@@ -197,7 +202,7 @@ image-push-scorecard-proxy-multiarch:
 test: test-unit ## Run the tests
 
 test-markdown:
-	./hack/ci/marker -e website
+	./hack/check-markdown.sh
 
 test-sanity: tidy build/operator-sdk lint
 	./hack/tests/sanity-check.sh

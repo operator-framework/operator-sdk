@@ -4,7 +4,14 @@ Run an Operator in a variety of environments
 
 ### Synopsis
 
-Run an Operator in a variety of environments
+This command will run or deploy your Operator in two different modes: locally
+and using OLM. These modes are controlled by setting --local and --olm run mode
+flags. Each run mode has a separate set of flags that configure 'run' for that
+mode. Run 'operator-sdk run --help' for more information on these flags.
+
+Read more about the --olm run mode and configuration options here:
+https://github.com/operator-framework/operator-sdk/blob/master/doc/user/olm-catalog/olm-cli.md
+
 
 ```
 operator-sdk run [flags]

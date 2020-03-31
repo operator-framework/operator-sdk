@@ -49,7 +49,7 @@ x_base_steps:
       - travis_retry make tidy
     install:
       - make install
-      - hack/ci/setup-${CLUSTER}.sh
+      - make setup-k8s
       - export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
     after_success:
       - echo "Build succeeded, operator was generated, memcached operator is running on $CLUSTER, and unit/integration tests pass"

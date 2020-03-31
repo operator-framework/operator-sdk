@@ -1,11 +1,11 @@
 ---
-- name: Create the test.example.com/v1alpha1.Collection
+- name: Create the test.example.com/v1alpha1.CollectionTest
   k8s:
     state: present
     namespace: '{{ namespace }}'
     definition:
       apiVersion: test.example.com/v1alpha1
-      kind: Collection
+      kind: CollectionTest
       metadata:
         name: collection-test
     wait: yes

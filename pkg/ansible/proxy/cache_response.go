@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
@@ -52,6 +53,7 @@ type cacheResponseHandler struct {
 	cMap              *controllermap.ControllerMap
 	injectOwnerRef    bool
 	apiResources      *apiResources
+	skipPathRegexp    []*regexp.Regexp
 }
 
 func (c *cacheResponseHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -142,6 +144,7 @@ func (c *cacheResponseHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 		}
 
 		// Return so that request isn't passed along to APIserver
+		log.Info("Read object from cache", "resource", r)
 		return
 	}
 	c.next.ServeHTTP(w, req)
@@ -151,33 +154,39 @@ func (c *cacheResponseHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 func (c *cacheResponseHandler) skipCacheLookup(r *requestfactory.RequestInfo, gvk schema.GroupVersionKind,
 	req *http.Request) bool {
 
+	skip := matchesRegexp(req.URL.String(), c.skipPathRegexp)
+	if skip {
+		return true
+	}
+
 	owner, err := getRequestOwnerRef(req)
 	if err != nil {
 		log.Error(err, "Could not get owner reference from proxy.")
 		return false
 	}
-	ownerGV, err := schema.ParseGroupVersion(owner.APIVersion)
-	if err != nil {
-		m := fmt.Sprintf("Could not get group version for: %v.", owner)
-		log.Error(err, m)
-		return false
-	}
-	ownerGVK := schema.GroupVersionKind{
-		Group:   ownerGV.Group,
-		Version: ownerGV.Version,
-		Kind:    owner.Kind,
-	}
+	if owner != nil {
+		ownerGV, err := schema.ParseGroupVersion(owner.APIVersion)
+		if err != nil {
+			m := fmt.Sprintf("Could not get group version for: %v.", owner)
+			log.Error(err, m)
+			return false
+		}
+		ownerGVK := schema.GroupVersionKind{
+			Group:   ownerGV.Group,
+			Version: ownerGV.Version,
+			Kind:    owner.Kind,
+		}
 
-	relatedController, ok := c.cMap.Get(ownerGVK)
-	if !ok {
-		log.Info("Could not find controller for gvk.", "ownerGVK:", ownerGVK)
-		return false
+		relatedController, ok := c.cMap.Get(ownerGVK)
+		if !ok {
+			log.Info("Could not find controller for gvk.", "ownerGVK:", ownerGVK)
+			return false
+		}
+		if relatedController.Blacklist[gvk] {
+			log.Info("Skipping, because gvk is blacklisted", "GVK", gvk)
+			return true
+		}
 	}
-	if relatedController.Blacklist[gvk] {
-		log.Info("Skipping, because gvk is blacklisted", "GVK", gvk)
-		return true
-	}
-
 	// check if resource doesn't exist in watched namespaces
 	// if watchedNamespaces[""] exists then we are watching all namespaces
 	// and want to continue
@@ -202,10 +211,14 @@ func (c *cacheResponseHandler) recoverDependentWatches(req *http.Request, un *un
 		log.Error(err, "Could not get ownerRef from proxy")
 		return
 	}
+	// This happens when a request unrelated to reconciliation hits the proxy
+	if ownerRef == nil {
+		return
+	}
 
 	for _, oRef := range un.GetOwnerReferences() {
 		if oRef.APIVersion == ownerRef.APIVersion && oRef.Kind == ownerRef.Kind {
-			err := addWatchToController(ownerRef, c.cMap, un, c.restMapper, true)
+			err := addWatchToController(*ownerRef, c.cMap, un, c.restMapper, true)
 			if err != nil {
 				log.Error(err, "Could not recover dependent resource watch", "owner", ownerRef)
 				return
@@ -220,7 +233,7 @@ func (c *cacheResponseHandler) recoverDependentWatches(req *http.Request, un *un
 			return
 		}
 		if typeString == fmt.Sprintf("%v.%v", ownerRef.Kind, ownerGV.Group) {
-			err := addWatchToController(ownerRef, c.cMap, un, c.restMapper, false)
+			err := addWatchToController(*ownerRef, c.cMap, un, c.restMapper, false)
 			if err != nil {
 				log.Error(err, "Could not recover dependent resource watch", "owner", ownerRef)
 				return

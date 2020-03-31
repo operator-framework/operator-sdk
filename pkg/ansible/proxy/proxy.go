@@ -44,6 +44,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
+const AutoSkipCacheREList = "^/api/.*/pods/.*/exec,^/api/.*/pods/.*/attach"
+
 // RequestLogHandler - log the requests that come through the proxy.
 func RequestLogHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -158,6 +160,10 @@ func Run(done chan error, o Options) error {
 		server.Handler = RequestLogHandler(server.Handler)
 	}
 	if !o.DisableCache {
+		autoSkipCacheRegexp, err := MakeRegexpArray(AutoSkipCacheREList)
+		if err != nil {
+			log.Error(err, "Failed to parse cache skip regular expression")
+		}
 		server.Handler = &cacheResponseHandler{
 			next:              server.Handler,
 			informerCache:     o.Cache,
@@ -166,6 +172,7 @@ func Run(done chan error, o Options) error {
 			cMap:              o.ControllerMap,
 			injectOwnerRef:    o.OwnerInjection,
 			apiResources:      resources,
+			skipPathRegexp:    autoSkipCacheRegexp,
 		}
 	}
 
@@ -269,17 +276,17 @@ func removeAuthorizationHeader(h http.Handler) http.Handler {
 }
 
 // Helper function used by recovering dependent watches and owner ref injection.
-func getRequestOwnerRef(req *http.Request) (kubeconfig.NamespacedOwnerReference, error) {
+func getRequestOwnerRef(req *http.Request) (*kubeconfig.NamespacedOwnerReference, error) {
 	owner := kubeconfig.NamespacedOwnerReference{}
 	user, _, ok := req.BasicAuth()
 	if !ok {
-		return owner, errors.New("basic auth header not found")
+		return nil, nil
 	}
 	authString, err := base64.StdEncoding.DecodeString(user)
 	if err != nil {
 		m := "Could not base64 decode username"
 		log.Error(err, m)
-		return owner, err
+		return &owner, err
 	}
 	// Set owner to NamespacedOwnerReference, which has metav1.OwnerReference
 	// as a subset along with the Namespace of the owner. Please see the
@@ -288,9 +295,9 @@ func getRequestOwnerRef(req *http.Request) (kubeconfig.NamespacedOwnerReference,
 	if err := json.Unmarshal(authString, &owner); err != nil {
 		m := "Could not unmarshal auth string"
 		log.Error(err, m)
-		return owner, err
+		return &owner, err
 	}
-	return owner, err
+	return &owner, err
 }
 
 func getGVKFromRequestInfo(r *k8sRequest.RequestInfo, restMapper meta.RESTMapper) (schema.GroupVersionKind, error) {

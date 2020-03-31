@@ -99,75 +99,76 @@ func (i *injectOwnerReferenceHandler) ServeHTTP(w http.ResponseWriter, req *http
 			http.Error(w, m, http.StatusInternalServerError)
 			return
 		}
-
-		body, err := ioutil.ReadAll(req.Body)
-		if err != nil {
-			m := "Could not read request body"
-			log.Error(err, m)
-			http.Error(w, m, http.StatusInternalServerError)
-			return
-		}
-		data := &unstructured.Unstructured{}
-		err = json.Unmarshal(body, data)
-		if err != nil {
-			m := "Could not deserialize request body"
-			log.Error(err, m)
-			http.Error(w, m, http.StatusBadRequest)
-			return
-		}
-
-		addOwnerRef, err := shouldAddOwnerRef(data, owner, i.restMapper)
-		if err != nil {
-			m := "Could not determine if we should add owner ref"
-			log.Error(err, m)
-			http.Error(w, m, http.StatusBadRequest)
-			return
-		}
-		if addOwnerRef {
-			data.SetOwnerReferences(append(data.GetOwnerReferences(), owner.OwnerReference))
-		} else {
-			ownerGV, err := schema.ParseGroupVersion(owner.APIVersion)
+		if owner != nil {
+			body, err := ioutil.ReadAll(req.Body)
 			if err != nil {
-				m := fmt.Sprintf("could not get group version for: %v", owner)
+				m := "Could not read request body"
+				log.Error(err, m)
+				http.Error(w, m, http.StatusInternalServerError)
+				return
+			}
+			data := &unstructured.Unstructured{}
+			err = json.Unmarshal(body, data)
+			if err != nil {
+				m := "Could not deserialize request body"
 				log.Error(err, m)
 				http.Error(w, m, http.StatusBadRequest)
 				return
 			}
-			a := data.GetAnnotations()
-			if a == nil {
-				a = map[string]string{}
-			}
-			a[osdkHandler.NamespacedNameAnnotation] = strings.Join([]string{owner.Namespace, owner.Name}, "/")
-			a[osdkHandler.TypeAnnotation] = fmt.Sprintf("%v.%v", owner.Kind, ownerGV.Group)
 
-			data.SetAnnotations(a)
-		}
-		newBody, err := json.Marshal(data.Object)
-		if err != nil {
-			m := "Could not serialize body"
-			log.Error(err, m)
-			http.Error(w, m, http.StatusInternalServerError)
-			return
-		}
-		log.V(2).Info("Serialized body", "Body", string(newBody))
-		req.Body = ioutil.NopCloser(bytes.NewBuffer(newBody))
-		req.ContentLength = int64(len(newBody))
-
-		// add watch for resource
-		// check if resource doesn't exist in watched namespaces
-		// if watchedNamespaces[""] exists then we are watching all namespaces
-		// and want to continue
-		// This is making sure we are not attempting to watch a resource outside of the
-		// namespaces that the cache can watch.
-		_, allNsPresent := i.watchedNamespaces[metav1.NamespaceAll]
-		_, reqNsPresent := i.watchedNamespaces[r.Namespace]
-		if allNsPresent || reqNsPresent {
-			err = addWatchToController(owner, i.cMap, data, i.restMapper, addOwnerRef)
+			addOwnerRef, err := shouldAddOwnerRef(data, *owner, i.restMapper)
 			if err != nil {
-				m := "could not add watch to controller"
+				m := "Could not determine if we should add owner ref"
+				log.Error(err, m)
+				http.Error(w, m, http.StatusBadRequest)
+				return
+			}
+			if addOwnerRef {
+				data.SetOwnerReferences(append(data.GetOwnerReferences(), owner.OwnerReference))
+			} else {
+				ownerGV, err := schema.ParseGroupVersion(owner.APIVersion)
+				if err != nil {
+					m := fmt.Sprintf("could not get group version for: %v", owner)
+					log.Error(err, m)
+					http.Error(w, m, http.StatusBadRequest)
+					return
+				}
+				a := data.GetAnnotations()
+				if a == nil {
+					a = map[string]string{}
+				}
+				a[osdkHandler.NamespacedNameAnnotation] = strings.Join([]string{owner.Namespace, owner.Name}, "/")
+				a[osdkHandler.TypeAnnotation] = fmt.Sprintf("%v.%v", owner.Kind, ownerGV.Group)
+
+				data.SetAnnotations(a)
+			}
+			newBody, err := json.Marshal(data.Object)
+			if err != nil {
+				m := "Could not serialize body"
 				log.Error(err, m)
 				http.Error(w, m, http.StatusInternalServerError)
 				return
+			}
+			log.V(2).Info("Serialized body", "Body", string(newBody))
+			req.Body = ioutil.NopCloser(bytes.NewBuffer(newBody))
+			req.ContentLength = int64(len(newBody))
+
+			// add watch for resource
+			// check if resource doesn't exist in watched namespaces
+			// if watchedNamespaces[""] exists then we are watching all namespaces
+			// and want to continue
+			// This is making sure we are not attempting to watch a resource outside of the
+			// namespaces that the cache can watch.
+			_, allNsPresent := i.watchedNamespaces[metav1.NamespaceAll]
+			_, reqNsPresent := i.watchedNamespaces[r.Namespace]
+			if allNsPresent || reqNsPresent {
+				err = addWatchToController(*owner, i.cMap, data, i.restMapper, addOwnerRef)
+				if err != nil {
+					m := "could not add watch to controller"
+					log.Error(err, m)
+					http.Error(w, m, http.StatusInternalServerError)
+					return
+				}
 			}
 		}
 	}

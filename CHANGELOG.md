@@ -5,6 +5,7 @@
 - The flag `--watch-namespace` and `--operator-namespace` was added to `operator-sdk run --local`, `operator-sdk test --local` and `operator-sdk cleanup` commands in order to replace the flag `--namespace` which was  deprecated.([#2617](https://github.com/operator-framework/operator-sdk/pull/2617))
 - The methods `ctx.GetOperatorNamespace()` and `ctx.GetWatchNamespace()` was added `pkg/test` in order to replace `ctx.GetNamespace()` which is  deprecated. ([#2617](https://github.com/operator-framework/operator-sdk/pull/2617))
 - The `--crd-version` flag was added to the `new`, `add api`, `add crd`, and `generate crds` commands so that users can opt-in to `v1` CRDs. ([#2684](https://github.com/operator-framework/operator-sdk/pull/2684))
+- The printout for the compatible Kubernetes Version [#2446](https://github.com/operator-framework/operator-sdk/pull/2446)
 
 ### Changed
 
@@ -20,6 +21,10 @@
 - **Breaking Change:** remove `pkg/restmapper` which was deprecated in `v0.14.0`. Projects that use this package must switch to the `DynamicRESTMapper` implementation in [controller-runtime](https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/client/apiutil#NewDynamicRESTMapper). ([#2544](https://github.com/operator-framework/operator-sdk/pull/2544))
 
 ### Bug Fixes
+
+- The Ansible Operator proxy server now properly supports the Pod `exec` API ([#2716](https://github.com/operator-framework/operator-sdk/pull/2716))
+- Resources that use '-' in the APIGroup name can now be directly accessed by Ansible. ([#2712](https://github.com/operator-framework/operator-sdk/pull/2712))
+- Fixed issue in CSV generation that caused an incorrect path to be generated for descriptors on types that are fields in array elements. ([#2721](https://github.com/operator-framework/operator-sdk/pull/2721))
 
 ## v0.16.0
 
