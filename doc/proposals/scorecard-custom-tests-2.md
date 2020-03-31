@@ -181,48 +181,54 @@ The scorecard DSL format is yet to be finalized but it would need to include con
 tests:
 # here is an example of a pair of custom tests that an ISV might implement
 - imagename: quay.io/someuser/customtest1:v0.0.1
+  description: some ISV test
   labels:
     suite: custom
     test: customtest1
 - imagename: quay.io/someuser/customtest2:v0.0.1
+  description: some ISV test
   labels:
     test: customtest2
 # here is an example of the scorecard basic tests
 - imagename: quay.io/operator-framework/scorecard-basictests:v0.0.1
+  description: redhat - check spec
   labels:
     suite: basic
     test: basic-check-spec-test
 - imagename: quay.io/operator-framework/scorecard-basictests:v0.0.1
+  description: redhat - check status
   labels:
     suite: basic
     test: basic-check-status-test
 # here is an example of the scorecard olm tests
 - imagename: quay.io/operator-framework/scorecard-olmtests:v0.0.1
-  labels:
-    suite: olm
-    test: olm-bundle-validation-test
-- imagename: quay.io/operator-framework/scorecard-olmtests:v0.0.1
+  description: redhat - CRDs have validation
   labels:
     suite: olm
     test: olm-crds-have-validation-test
 - imagename: quay.io/operator-framework/scorecard-olmtests:v0.0.1
+  description: redhat - CRDs have resources
   labels:
     suite: olm
     test: olm-crds-have-resources-test
 - imagename: quay.io/operator-framework/scorecard-olmtests:v0.0.1
+  description: redhat - spec descriptors
   labels:
     suite: olm
     test: olm-spec-descriptors-test
 - imagename: quay.io/operator-framework/scorecard-olmtests:v0.0.1
+  description: redhat - status descriptors
   labels:
     suite: olm
     test: olm-status-descriptors-test
 - imagename: quay.io/operator-framework/scorecard-olmtests:v0.0.1
+  description: redhat - bundle validation
   labels:
     suite: olm
     test: olm-bundle-validation-test
 # here is an example of the scorecard kuttl tests
 - imagename: quay.io/operator-framework/scorecard-kuttltests:v0.0.1
+  description: redhat - kuttl tests
   labels:
     suite: kuttl
 ```
