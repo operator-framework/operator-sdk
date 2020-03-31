@@ -176,7 +176,56 @@ Scorecard would assume that the scorecard DSL yaml file would be located in the 
 /scorecard/config.yaml
 ```
 
-The scorecard DSL format is yet to be determined but it would need to include configuration settings for each test including labels.
+The scorecard DSL format is yet to be finalized but it would need to include configuration settings for each test including labels.  Here is a sample of what the scorecard DSL configuration would look like:
+```
+tests:
+# here is an example of a pair of custom tests that an ISV might implement
+- imagename: quay.io/someuser/customtest1:v0.0.1
+  labels:
+    suite: custom
+    test: customtest1
+- imagename: quay.io/someuser/customtest2:v0.0.1
+  labels:
+    test: customtest2
+# here is an example of the scorecard basic tests
+- imagename: quay.io/operator-framework/scorecard-basictests:v0.0.1
+  labels:
+    suite: basic
+    test: basic-check-spec-test
+- imagename: quay.io/operator-framework/scorecard-basictests:v0.0.1
+  labels:
+    suite: basic
+    test: basic-check-status-test
+# here is an example of the scorecard olm tests
+- imagename: quay.io/operator-framework/scorecard-olmtests:v0.0.1
+  labels:
+    suite: olm
+    test: olm-bundle-validation-test
+- imagename: quay.io/operator-framework/scorecard-olmtests:v0.0.1
+  labels:
+    suite: olm
+    test: olm-crds-have-validation-test
+- imagename: quay.io/operator-framework/scorecard-olmtests:v0.0.1
+  labels:
+    suite: olm
+    test: olm-crds-have-resources-test
+- imagename: quay.io/operator-framework/scorecard-olmtests:v0.0.1
+  labels:
+    suite: olm
+    test: olm-spec-descriptors-test
+- imagename: quay.io/operator-framework/scorecard-olmtests:v0.0.1
+  labels:
+    suite: olm
+    test: olm-status-descriptors-test
+- imagename: quay.io/operator-framework/scorecard-olmtests:v0.0.1
+  labels:
+    suite: olm
+    test: olm-bundle-validation-test
+# here is an example of the scorecard kuttl tests
+- imagename: quay.io/operator-framework/scorecard-kuttltests:v0.0.1
+  labels:
+    suite: kuttl
+```
 
 
 ### Custom Test Execution
