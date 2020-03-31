@@ -92,7 +92,7 @@ The options supported by the default scenario are:
 
 | Environment variable | Default | Purpose |
 | :---                 | :---    | :---    |
-| KUBE_VERSION | 1.16 | The Kubernetes version to deploy |
+| KUBE_VERSION | 1.17 | The Kubernetes version to deploy |
 | TEST_CLUSTER_PORT | 9443 | The port on the host to expose the Kubernetes API |
 | TEST_OPERATOR_NAMESPACE | osdk-test | The namespace to run your role against |
 
@@ -191,7 +191,7 @@ The options supported by the default scenario are:
 
 | Environment variable | Default | Purpose |
 | :---                 | :---    | :---    |
-| KUBE_VERSION | 1.16 | The Kubernetes version to deploy |
+| KUBE_VERSION | 1.17 | The Kubernetes version to deploy |
 | TEST_CLUSTER_PORT | 10443 | The port on the host to expose the Kubernetes API |
 | TEST_OPERATOR_NAMESPACE | osdk-test | The namespace to deploy the operator and associated resources |
 
