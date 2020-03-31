@@ -96,7 +96,7 @@ The Scorecard would support the creation of a Kuttl test image and the execute t
 A custom test is based on a container image, that image is created by
 the end-user using whatever tools they want to use.
 
-The test image must produce container log output that conforms to the scorecard Test Result output.  The output is an array of Test Results, so a test image could contain multiple tests if necessary.  Here is a sample of test output in the required format:
+The test image must produce container log output that conforms to the scorecard Test Result output.  The output is a single Test Result, so a single run of a test image should execute and output the result for exactly one test.  Here is a sample of test output in the required format:
 ```
     [
       {
