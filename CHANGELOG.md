@@ -6,10 +6,19 @@
 - The methods `ctx.GetOperatorNamespace()` and `ctx.GetWatchNamespace()` was added `pkg/test` in order to replace `ctx.GetNamespace()` which is  deprecated. ([#2617](https://github.com/operator-framework/operator-sdk/pull/2617))
 - The `--crd-version` flag was added to the `new`, `add api`, `add crd`, and `generate crds` commands so that users can opt-in to `v1` CRDs. ([#2684](https://github.com/operator-framework/operator-sdk/pull/2684))
 - The printout for the compatible Kubernetes Version [#2446](https://github.com/operator-framework/operator-sdk/pull/2446)
+- The `--output-dir` flag instructs [`operator-sdk bundle create`](./doc/cli/operator-sdk_bundle_create.md) to write manifests and metadata to a non-default directory. ([#2715](https://github.com/operator-framework/operator-sdk/pull/2715))
+- The `--overwrite` flag instructs [`operator-sdk bundle create`](./doc/cli/operator-sdk_bundle_create.md) to overwrite metadata, manifests, and `bundle.Dockerfile`. ([#2715](https://github.com/operator-framework/operator-sdk/pull/2715))
 
 ### Changed
 
 - The scorecard when creating a Custom Resource, will produce a message to the user if that CR already exists. ([#2683](https://github.com/operator-framework/operator-sdk/pull/2683))
+- Upgrade Kubernetes dependency versions from `v1.16.2` to `v1.17.4`. ([#2715](https://github.com/operator-framework/operator-sdk/pull/2715))
+- Upgrade `controller-runtime` version from `v0.4.0` to `v0.5.2`. ([#2715](https://github.com/operator-framework/operator-sdk/pull/2715))
+- Upgrade `controller-tools` version from `v0.2.4` to `v0.2.8`. ([#2715](https://github.com/operator-framework/operator-sdk/pull/2715))
+- Upgrade `helm` version from `v3.0.2` to `v3.1.2`. ([#2715](https://github.com/operator-framework/operator-sdk/pull/2715))
+- Upgrade `prometheus-operator` version from `v0.34.0` to `v0.38.0`. ([#2715](https://github.com/operator-framework/operator-sdk/pull/2715))
+- Upgrade `operator-registry` version from `v1.5.7`to `v1.6.2`. ([#2715](https://github.com/operator-framework/operator-sdk/pull/2715))
+- **Breaking Change:** [`operator-sdk bundle create`](./doc/cli/operator-sdk_bundle_create.md) now creates a `manifests/` directory under the parent directory of the argument passed to `--directory`, and setting `--generate-only=true` writes a Dockerfile to `<project-root>/bundle.Dockerfile` that copies bundle manifests from that `manifests/` directory. ([#2715](https://github.com/operator-framework/operator-sdk/pull/2715))
 
 ### Deprecated
 

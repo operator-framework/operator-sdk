@@ -37,7 +37,6 @@ import (
 
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
-	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	extscheme "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
@@ -120,7 +119,6 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig,
 	// Extract operator manifests from the CSV if olm-deployed is set.
 	if config.OLMDeployed {
 		// Get deploymentName from the deployment manifest within the CSV.
-		var err error
 		deploymentName, err = getDeploymentName(csv.Spec.InstallStrategy)
 		if err != nil {
 			return scapiv1alpha2.ScorecardOutput{}, err
@@ -298,16 +296,11 @@ func getCSV(csvManifest string, csv *olmapiv1alpha1.ClusterServiceVersion) error
 	return nil
 }
 
-func getDeploymentName(installStrategy olmapiv1alpha1.NamedInstallStrategy) (string, error) {
-	strategy, err := (&olminstall.StrategyResolver{}).UnmarshalStrategy(installStrategy)
-	if err != nil {
-		return "", err
+func getDeploymentName(strategy olmapiv1alpha1.NamedInstallStrategy) (string, error) {
+	if len(strategy.StrategySpec.DeploymentSpecs) == 0 {
+		return "", errors.New("no deployment specs in CSV")
 	}
-	stratDep, ok := strategy.(*olminstall.StrategyDetailsDeployment)
-	if !ok {
-		return "", fmt.Errorf("expected StrategyDetailsDeployment, got strategy of type %T", strategy)
-	}
-	return stratDep.DeploymentSpecs[0].Name, nil
+	return strategy.StrategySpec.DeploymentSpecs[0].Name, nil
 }
 
 func getCRFromCSV(currentCRMans []string, crJSONStr string, csvName string) ([]string, error) {

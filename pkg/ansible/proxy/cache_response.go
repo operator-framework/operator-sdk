@@ -30,7 +30,7 @@ import (
 	osdkHandler "github.com/operator-framework/operator-sdk/pkg/handler"
 
 	"k8s.io/apimachinery/pkg/api/meta"
-	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	metainternalscheme "k8s.io/apimachinery/pkg/apis/meta/internalversion/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/fields"
@@ -245,7 +245,7 @@ func (c *cacheResponseHandler) recoverDependentWatches(req *http.Request, un *un
 func (c *cacheResponseHandler) getListFromCache(r *requestfactory.RequestInfo, req *http.Request,
 	k schema.GroupVersionKind) (marshaler, error) {
 	k8sListOpts := &metav1.ListOptions{}
-	if err := metainternalversion.ParameterCodec.DecodeParameters(req.URL.Query(), metav1.SchemeGroupVersion,
+	if err := metainternalscheme.ParameterCodec.DecodeParameters(req.URL.Query(), metav1.SchemeGroupVersion,
 		k8sListOpts); err != nil {
 		log.Error(err, "Unable to decode list options from request")
 		return nil, err

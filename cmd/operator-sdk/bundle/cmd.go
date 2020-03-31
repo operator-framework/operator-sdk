@@ -15,12 +15,19 @@
 package bundle
 
 import (
-	"os"
-	"path/filepath"
-
-	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	"github.com/spf13/cobra"
 )
+
+//nolint:structcheck
+type bundleCmd struct {
+	directory      string
+	packageName    string
+	imageTag       string
+	imageBuilder   string
+	defaultChannel string
+	channels       string
+	generateOnly   bool
+}
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -38,40 +45,4 @@ https://github.com/openshift/enhancements/blob/master/enhancements/olm/operator-
 		newValidateCmd(),
 	)
 	return cmd
-}
-
-type bundleCmd struct {
-	directory      string
-	packageName    string
-	imageTag       string
-	imageBuilder   string
-	defaultChannel string
-	channels       []string
-	generateOnly   bool
-}
-
-// cleanupFuncs returns a set of general funcs to clean up after a bundle
-// subcommand.
-func (c bundleCmd) cleanupFuncs() (fs []func()) {
-	metaDir := filepath.Join(c.directory, bundle.MetadataDir)
-	dockerFile := filepath.Join(c.directory, bundle.DockerFile)
-	metaExists := isExist(metaDir)
-	dockerFileExists := isExist(dockerFile)
-	fs = append(fs,
-		func() {
-			if !metaExists {
-				_ = os.RemoveAll(metaDir)
-			}
-		},
-		func() {
-			if !dockerFileExists {
-				_ = os.RemoveAll(dockerFile)
-			}
-		})
-	return fs
-}
-
-func isExist(path string) bool {
-	_, err := os.Stat(path)
-	return os.IsExist(err)
 }

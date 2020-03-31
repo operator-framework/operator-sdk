@@ -11,7 +11,7 @@ endif
 
 VERSION = $(shell git describe --dirty --tags --always)
 GIT_COMMIT = $(shell git rev-parse HEAD)
-K8S_VERSION = v1.16.3
+K8S_VERSION = v1.17.2
 REPO = github.com/operator-framework/operator-sdk
 BUILD_PATH = $(REPO)/cmd/operator-sdk
 PKGS = $(shell go list ./... | grep -v /vendor/)
@@ -218,6 +218,7 @@ test-ci: test-markdown test-sanity test-unit install test-subcommand test-e2e ##
 .PHONY: test-subcommand test-subcommand-local test-subcommand-scorecard test-subcommand-olm-install
 
 test-subcommand: test-subcommand-local test-subcommand-scorecard test-subcommand-olm-install
+	./hack/tests/subcommand-bundle.sh
 
 test-subcommand-local:
 	./hack/tests/subcommand.sh
