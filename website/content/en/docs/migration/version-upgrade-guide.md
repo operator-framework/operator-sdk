@@ -1,4 +1,8 @@
-# Operator SDK Version upgrade guide
+---
+title: Operator SDK Version upgrade guide
+linkTitle: Version Upgrade
+weight: 1
+---
 
 This document aims to facilitate the process of upgrading the Operator SDK version for an existing operator project.
 
@@ -29,27 +33,27 @@ The following sections outline the upgrade steps for each SDK version along with
   ```TOML
   [[override]]
     name = "k8s.io/code-generator"
-    # revision for tag "kubernetes-1.12.3"
+    **revision for tag "kubernetes-1.12.3"**
     revision = "3dcf91f64f638563e5106f21f50c31fa361c918d"
 
   [[override]]
     name = "k8s.io/api"
-    # revision for tag "kubernetes-1.12.3"
+    **revision for tag "kubernetes-1.12.3"**
     revision = "b503174bad5991eb66f18247f52e41c3258f6348"
 
   [[override]]
     name = "k8s.io/apiextensions-apiserver"
-    # revision for tag "kubernetes-1.12.3"
+    **revision for tag "kubernetes-1.12.3"**
     revision = "0cd23ebeb6882bd1cdc2cb15fc7b2d72e8a86a5b"
 
   [[override]]
     name = "k8s.io/apimachinery"
-    # revision for tag "kubernetes-1.12.3"
+    **revision for tag "kubernetes-1.12.3"**
     revision = "eddba98df674a16931d2d4ba75edc3a389bf633a"
 
   [[override]]
     name = "k8s.io/client-go"
-    # revision for tag "kubernetes-1.12.3"
+    **revision for tag "kubernetes-1.12.3"**
     revision = "d082d5923d3cc0bfbb066ee5fbdea3d0ca79acf8"
 
   [[override]]
@@ -76,27 +80,27 @@ The following sections outline the upgrade steps for each SDK version along with
   ```TOML
   [[override]]
     name = "k8s.io/code-generator"
-    # revision for tag "kubernetes-1.13.1"
+    **revision for tag "kubernetes-1.13.1"**
     revision = "c2090bec4d9b1fb25de3812f868accc2bc9ecbae"
 
   [[override]]
     name = "k8s.io/api"
-    # revision for tag "kubernetes-1.13.1"
+    **revision for tag "kubernetes-1.13.1"**
     revision = "05914d821849570fba9eacfb29466f2d8d3cd229"
 
   [[override]]
     name = "k8s.io/apiextensions-apiserver"
-    # revision for tag "kubernetes-1.13.1"
+    **revision for tag "kubernetes-1.13.1"**
     revision = "0fe22c71c47604641d9aa352c785b7912c200562"
 
   [[override]]
     name = "k8s.io/apimachinery"
-    # revision for tag "kubernetes-1.13.1"
+    **revision for tag "kubernetes-1.13.1"**
     revision = "2b1284ed4c93a43499e781493253e2ac5959c4fd"
 
   [[override]]
     name = "k8s.io/client-go"
-    # revision for tag "kubernetes-1.13.1"
+    **revision for tag "kubernetes-1.13.1"**
     revision = "8d9ed539ba3134352c586810e749e58df4e94e4f"
 
   [[override]]
@@ -172,7 +176,7 @@ The following sections outline the upgrade steps for each SDK version along with
 
 The SDK version `v0.8.x` supports scaffolding projects to use Go modules by default. It is recommended that you migrate your operator project to use modules for dependency management, however you can choose to keep using `dep`. The upgrade steps for both are outlined below:
 
-### `dep`
+**`dep`**
 
 - Update the SDK constraint in `Gopkg.toml` to version `v0.8.2`.
   ```TOML
@@ -188,7 +192,7 @@ The SDK version `v0.8.x` supports scaffolding projects to use Go modules by defa
   ```
 - Run `dep ensure` to update the vendor directory.
 
-### `modules`
+**`modules`**
 
 To get familiar with Go modules read the [modules wiki][modules-wiki]. In particular the section on [migrating to modules][migrating-to-modules].
 
@@ -220,7 +224,7 @@ replace github.com/operator-framework/operator-sdk => github.com/operator-framew
 - Ensure that you can build the project with `operator-sdk build`
 - Finally remove `Gopkg.lock`, `Gopkg.toml` and the vendor directory.
 
-### Breaking changes
+**Breaking changes**
 
 Upon updating the project to `v0.8.2` the following breaking changes apply:
 
@@ -277,25 +281,25 @@ Upon updating the project to `v0.8.2` the following breaking changes apply:
   _, err = metrics.CreateMetricsService(ctx, servicePorts)
   ```
 
-### `dep`
+**`dep`**
 
 - Update the SDK constraint in `Gopkg.toml` to version `v0.9.0`, the kubernetes dependencies to `kubernetes-1.13.4` revisions, and the controller-runtime version to `v0.1.12`.
   ```TOML
   [[override]]
     name = "k8s.io/api"
-    # revision for tag "kubernetes-1.13.4"
+    **revision for tag "kubernetes-1.13.4"**
     revision = "5cb15d34447165a97c76ed5a60e4e99c8a01ecfe"
   [[override]]
     name = "k8s.io/apiextensions-apiserver"
-    # revision for tag "kubernetes-1.13.4"
+    **revision for tag "kubernetes-1.13.4"**
     revision = "d002e88f6236312f0289d9d1deab106751718ff0"
   [[override]]
     name = "k8s.io/apimachinery"
-    # revision for tag "kubernetes-1.13.4"
+    **revision for tag "kubernetes-1.13.4"**
     revision = "86fb29eff6288413d76bd8506874fddd9fccdff0"
   [[override]]
     name = "k8s.io/client-go"
-    # revision for tag "kubernetes-1.13.4"
+    **revision for tag "kubernetes-1.13.4"**
     revision = "b40b2a5939e43f7ffe0028ad67586b7ce50bb675"
   [[override]]
     name = "github.com/coreos/prometheus-operator"
@@ -315,7 +319,7 @@ Upon updating the project to `v0.8.2` the following breaking changes apply:
   ```
 - Run `dep ensure` to update the vendor directory.
 
-### modules
+**modules**
 
 - Update the `replace` directives in your `go.mod` file for the SDK, kubernetes, controller-runtime and kube-state metrics dependencies to the following versions.
   ```
@@ -349,7 +353,7 @@ Upon updating the project to `v0.8.2` the following breaking changes apply:
     - path/to/role.yaml
     ```
 
-### modules
+**modules**
 
 - Ensure the the following `replace` directives are present in your `go.mod` file:
     ```
@@ -370,26 +374,26 @@ Upon updating the project to `v0.8.2` the following breaking changes apply:
 
 **NOTE:** this version uses Kubernetes v1.14.x and controller-runtime v0.2.x, both of which have breaking API changes. See the [changelog][changelog] for more details.
 
-### dep
+**dep**
 
 - Remove the `required = [ ... ]` section and comment from the top of your `Gopkg.toml` file.
 - Update the following overrides in `Gopkg.toml`:
     ```TOML
     [[override]]
       name = "k8s.io/api"
-      # revision for tag "kubernetes-1.14.1"
+      **revision for tag "kubernetes-1.14.1"**
       revision = "6e4e0e4f393bf5e8bbff570acd13217aa5a770cd"
     [[override]]
       name = "k8s.io/apiextensions-apiserver"
-      # revision for tag "kubernetes-1.14.1"
+      **revision for tag "kubernetes-1.14.1"**
       revision = "727a075fdec8319bf095330e344b3ccc668abc73"
     [[override]]
       name = "k8s.io/apimachinery"
-      # revision for tag "kubernetes-1.14.1"
+      **revision for tag "kubernetes-1.14.1"**
       revision = "6a84e37a896db9780c75367af8d2ed2bb944022e"
     [[override]]
       name = "k8s.io/client-go"
-      # revision for tag "kubernetes-1.14.1"
+      **revision for tag "kubernetes-1.14.1"**
       revision = "1a26190bd76a9017e289958b9fba936430aa3704"
     [[override]]
       name = "github.com/coreos/prometheus-operator"
@@ -410,7 +414,7 @@ Upon updating the project to `v0.8.2` the following breaking changes apply:
 - Remove the `k8s.io/kube-state-metrics` override.
 - Run `dep ensure` to update the vendor directory.
 
-### modules
+**modules**
 
 - Ensure the the following `replace` directives are present in your `go.mod` file:
     ```
@@ -437,7 +441,7 @@ Upon updating the project to `v0.8.2` the following breaking changes apply:
     replace github.com/operator-framework/operator-sdk => github.com/operator-framework/operator-sdk v0.11.0
     ```
 
-### Import updates
+**Import updates**
 
 - Replace import `sigs.k8s.io/controller-runtime/pkg/runtime/scheme` with `sigs.k8s.io/controller-runtime/pkg/scheme` in:
   - `./pkg/apis/<group>/<version>/register.go`
@@ -447,7 +451,7 @@ Upon updating the project to `v0.8.2` the following breaking changes apply:
 - Replace import `sigs.k8s.io/controller-runtime/pkg/runtime/signals` with `sigs.k8s.io/controller-runtime/pkg/manager/signals` in:
   - `cmd/manager/main.go`
 
-### controller-runtime API updates
+**controller-runtime API updates**
 
 All method signatures for [`sigs.k8s.io/controller-runtime/pkg/client.Client`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L104) and [`sigs.k8s.io/controller-runtime/pkg/client.StatusWriter`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L91) (except for `Client.Get()`) have been updated. Each now uses a variadic option interface parameter typed for each method.
 - `Client.List(ctx context.Context, opts *client.ListOptions, list runtime.Object) error` is now [`Client.List(ctx context.Context, list runtime.Object, opts ...client.ListOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L61).
@@ -469,7 +473,7 @@ All method signatures for [`sigs.k8s.io/controller-runtime/pkg/client.Client`](h
 - `Client.Delete(ctx context.Context, obj runtime.Object, opts ...DeleteOptionFunc) error` is now [`Client.Delete(ctx context.Context, obj runtime.Object, opts ...DeleteOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L70). Although the option interface has changed, the way each `client.DeleteOption` is created is the same as before. No updates need to be made. See the [client doc][client-doc] for a discussion of `client.DeleteOption`.
 - `StatusWriter.Update(ctx context.Context, obj runtime.Object) error` is now [`Update(ctx context.Context, obj runtime.Object, opts ...UpdateOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L95). No updates need to be made. See the [client doc][client-doc] for a discussion of `client.UpdateOption`.
 
-### OpenAPI updates
+**OpenAPI updates**
 
 - Run the command `operator-sdk generate openapi` and ensure that no errors such as `API rule violation` are raised. For further information see the [API rules][api-rules] documentation.
 
@@ -479,7 +483,7 @@ All method signatures for [`sigs.k8s.io/controller-runtime/pkg/client.Client`](h
 - If the `+kubebuilder:validation:Pattern` has commas, then surround the expressions in backticks.
 - If you are using `+kubebuilder:validation:Enum` then either surround the expression list in curly braces and quote each expression, or separate each expression using semicolons.
 
-### Operator SDK updates
+**Operator SDK updates**
 
 - [`pkg/test.FrameworkClient`](https://github.com/operator-framework/operator-sdk/blob/947a464/pkg/test/client.go#L33) `List()` and `Delete()` method invocations should be updated to match those of `Client.List()` and `Client.Delete()`, described above.
 - The annotation to assign a scope to your CRD has changed. For the following changes, note that `<resource>` is the plural lower-case CRD Kind found at `spec.names.plural`.
@@ -492,15 +496,15 @@ All method signatures for [`sigs.k8s.io/controller-runtime/pkg/client.Client`](h
 
 ## `v0.12.x`
 
-### Go version
+**Go version**
 
 - Ensure that you are using a go version 1.13+
 
-### dep
+**dep**
 
 Using `dep` is no longer supported. Follow [Go's official blog post about migrating to modules](https://blog.golang.org/migrating-to-go-modules) to learn how to migrate your project.
 
-### modules
+**modules**
 
 - Ensure the the following `require` modules and `replace` directives with the specific versions are present in your `go.mod` file:
 
@@ -547,7 +551,7 @@ replace (
 - Run the command `operator-sdk generate k8s` to ensure that your resources will be updated
 - Run the command `operator-sdk generate openapi` and ensure that no errors such as `API rule violation` are raised. For further information see the [API rules][api-rules] documentation.
 
-### (Optional) Update your operator to print its version
+**(Optional) Update your operator to print its version**
 
 In v0.12.0, the SDK team updated the scaffold for `cmd/manager/main.go` to include the operator's version in the output produced by the `printVersion()` function. See [#1953](https://github.com/operator-framework/operator-sdk/pull/1953)
 
@@ -568,7 +572,7 @@ func printVersion() {
 
 ## `v0.13.x`
 
-### modules
+**modules**
 
 - Ensure the the following `require` modules and `replace` directives with the specific versions are present in your `go.mod` file:
 
@@ -608,7 +612,7 @@ replace (
 - Run the command `operator-sdk generate k8s` to ensure that your resources will be updated
 - Run the command `operator-sdk generate crds` to regenerate CRDs
 
-### (Optional) Update the roles.yaml file
+**(Optional) Update the roles.yaml file**
 
 Replace `*` per verbs in order to solve the issue [671](https://github.com/operator-framework/operator-sdk/issues/671) and make clear the permissions used.
 
@@ -625,7 +629,7 @@ Replace `*` per verbs in order to solve the issue [671](https://github.com/opera
   - watch
 ```
 
-### Notable changes
+**Notable changes**
 
 - **Deprecated:** Deprecated the `operator-sdk generate openapi` command. CRD generation is still supported with `operator-sdk generate crds`. It is now recommended to use [openapi-gen](https://github.com/kubernetes/kube-openapi/tree/master/cmd/openapi-gen) directly for OpenAPI code generation. The `generate openapi` subcommand will be removed in a future release.
 - **Breaking change:** An existing CSV's `spec.customresourcedefinitions.owned` is now always overwritten except for each name, version, and kind on invoking olm-catalog gen-csv when Go API code annotations are present.
@@ -635,7 +639,7 @@ For further detailed information see [CHANGELOG](https://github.com/operator-fra
 
 ## `v0.14.x`
 
-### modules
+**modules**
 
 - Ensure the the following `require` modules and `replace` directives with the specific versions are present in your `go.mod` file:
 
@@ -675,7 +679,7 @@ replace github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503
 - Run the command `operator-sdk generate k8s` to ensure that your resources will be updated
 - Run the command `operator-sdk generate crds` to regenerate CRDs
 
-### Deprecations
+**Deprecations**
 
 The `github.com/operator-framework/operator-sdk/pkg/restmapper` package was deprecated in favor of the `DynamicRESTMapper` implementation in [controller-runtime](https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/client/apiutil#NewDiscoveryRESTMapper). Users should migrate to controller-runtime's implementation, which is a drop-in replacement.
 
@@ -690,9 +694,9 @@ With:
 sigs.k8s.io/controller-runtime/pkg/client/apiutil.DynamicRESTMapper
 ```
 
-### Breaking Changes
+**Breaking Changes**
 
-#### Add `operator_sdk.util` Ansible collection
+**Add `operator_sdk.util` Ansible collection**
 
 The Ansible module `k8s_status` was extracted and is now provided by the `operator_sdk.util` Ansible collection. See [developer_guide](https://github.com/operator-framework/operator-sdk/blob/master/doc/ansible/dev/developer_guide.md#custom-resource-status-management) for new usage.
 
@@ -728,11 +732,11 @@ You can also use the fully-qualified name without declaring the collection:
          foo: bar
 ```
 
-### Notable Changes
+**Notable Changes**
 
 These notable changes contain just the most important user-facing changes. See the [CHANGELOG](https://github.com/operator-framework/operator-sdk/blob/master/CHANGELOG.md#v0141) for details of the release.
 
-#### Ansible version update
+**Ansible version update**
 
 The Ansible version in the init projects was upgraded from `2.6` to `2.9` for collections support. Update the `meta/main.yaml` file.
 
@@ -750,7 +754,7 @@ With:
 ...
 ```
 
-#### Helm Upgrade to V3
+**Helm Upgrade to V3**
 
 The Helm operator packages and base image were upgraded from Helm v2 to Helm v3. Note that cluster state for pre-existing CRs using Helm v2-based operators will be automatically migrated to Helm v3's new release storage format, and existing releases may be upgraded due to changes in Helm v3's label injection.
 
@@ -758,7 +762,7 @@ If you are using any external helm v2 tooling with the your helm operator-manage
 
 ## `v0.15.x`
 
-### modules
+**modules**
 
 - Ensure the the following `require` modules and `replace` directives with the specific versions are present in your `go.mod` file:
 
@@ -799,7 +803,7 @@ replace github.com/openshift/api => github.com/openshift/api v0.0.0-201909241025
 - Run the command `operator-sdk generate k8s` to ensure that your resources will be updated
 - Run the command `operator-sdk generate crds` to regenerate CRDs
 
-### Breaking Changes on Commands
+**Breaking Changes on Commands**
 
 This release contains breaking changes in some commands.
 
@@ -807,7 +811,7 @@ This release contains breaking changes in some commands.
 - The `operator-sdk up local` is now `operator-sdk run --local`. However, all functionality of this command is retained.
 - And then, the `operator-sdk alpha olm [sub-commands] [flags]` was moved from `alpha` to its own sub-command. However, all functionality of this command is retained. To check run; `operator-sdk olm --help`.
 
-### Breaking Changes for Helm and Ansible
+**Breaking Changes for Helm and Ansible**
 
 The `operator-sdk run ansible/helm` are now hidden commands in `exec-entrypoint ansible/helm`. However, all functionality of each sub-command is still the same. If you are using this feature then you will need to replace the `run` for `exec-entrypoint` as the following examples.
 
@@ -840,7 +844,7 @@ See the [CHANGELOG](https://github.com/operator-framework/operator-sdk/blob/mast
 
 ## v0.16.x
 
-### modules
+**modules**
 
 - Ensure that the following `require` modules and `replace` directives with the specific versions are present in your `go.mod` file:
 
@@ -883,7 +887,7 @@ replace github.com/openshift/api => github.com/openshift/api v0.0.0-201909241025
 - Run the command `operator-sdk generate k8s` to ensure that your resources will be updated
 - Run the command `operator-sdk generate crds` to regenerate CRDs
 
-### Bug Fixes and Improvements for Metrics
+**Bug Fixes and Improvements for Metrics**
 
 There are changes to the default implementation of the metrics export. These changes require `cmd/main.go to be updated as follows.
 
@@ -981,22 +985,22 @@ func serveCRMetrics(cfg *rest.Config, operatorNs string) error {
 
 **NOTE**: For more information check the PRs which are responsible for the above changes [#2606](https://github.com/operator-framework/operator-sdk/pull/2606),[#2603](https://github.com/operator-framework/operator-sdk/pull/2603) and [#2601](https://github.com/operator-framework/operator-sdk/pull/2601).
 
-### Breaking changes
+**Breaking changes**
 
-#### `TestCtx` in `pkg/test` has been deprecated
+**`TestCtx` in `pkg/test` has been deprecated**
 
  The type name `TestCtx` in `pkg/test` has been deprecated and renamed to `Context`. Users of the e2e framework should do the following:
 
  - Replace `TestCtx` with `Context`
  - Replace `NewTestCtx` with `NewContext`
 
-#### Scorecard only supports YAML config files
+**Scorecard only supports YAML config files**
 
 The scorecard feature now only supports YAML config files. Config files with other extensions are no longer supported and should be changed to the YAML format. For further information see [`scorecard config file`](https://github.com/operator-framework/operator-sdk/blob/v0.16.x/doc/test-framework/scorecard.md#config-file)
 
-### Breaking Changes for Ansible
+**Breaking Changes for Ansible**
 
-#### Remove Ansible container sidecar
+**Remove Ansible container sidecar**
 
 The Ansible logs are now output in the operator container, so there is no longer a need for the Ansible container sidecar. To reflect this change, update the `deploy/operator.yaml` file as follows.
 
@@ -1008,7 +1012,7 @@ Remove:
     - /usr/local/bin/ao-logs
     - /tmp/ansible-operator/runner
     - stdout
-  # Replace this with the built image name
+  # Replace this with the built image name**
   image: "REPLACE_IMAGE"
   imagePullPolicy: "Always"
   volumeMounts:
@@ -1038,7 +1042,7 @@ By default the full Ansible logs will not be output, however, you can setup it v
 ...
 ```
 
-#### Migration to Ansible collections
+**Migration to Ansible collections**
 
 The core Ansible Kubernetes modules have been moved to the [`community.kubernetes` Ansible collection][kubernetes-ansible-collection]. Future development of the modules will occur there, with only critical bugfixes going into the modules in core. Additionally, the `operator_sdk.util` collection is no longer installed by default in the base image. Instead, users should add a `requirements.yml` to their project root, with the following content:
 
@@ -1058,7 +1062,7 @@ RUN ansible-galaxy collection install -r ${HOME}/requirements.yml \
 
 ## Unreleased (Master Branch)
 
-### modules
+**modules**
 
 - Ensure that the following `require` modules and `replace` directives with the specific versions are present in your `go.mod` file:
 
@@ -1078,9 +1082,9 @@ replace (
 - Run the command `operator-sdk generate k8s` to ensure that your resources will be updated
 - Run the command `operator-sdk generate crds` to regenerate CRDs
 
-### Breaking Changes
+**Breaking Changes**
 
-#### OpenAPI generation
+**OpenAPI generation**
 
 - The deprecated `operator-sdk generate openapi` command has been removed. This command generated CRDs and
   `zz_generated.openapi` files for operator APIs.
@@ -1090,10 +1094,10 @@ To generate CRDs, use `operator-sdk generate crds`.
 To generate Go OpenAPI code, use `openapi-gen` directly. For example:
 
 ```bash
-# Build the latest openapi-gen from source
+&#35 Build the latest openapi-gen from source
 which ./bin/openapi-gen > /dev/null || go build -o ./bin/openapi-gen k8s.io/kube-openapi/cmd/openapi-gen
 
-# Run openapi-gen for each of your API group/version packages
+&#35 Run openapi-gen for each of your API group/version packages
 ./bin/openapi-gen --logtostderr=true \
                   -i ./pkg/apis/<group>/<version> \
                   -o "" \
@@ -1103,7 +1107,7 @@ which ./bin/openapi-gen > /dev/null || go build -o ./bin/openapi-gen k8s.io/kube
                   -r "-"
 ```
 
-#### Molecule Upgrade for Ansible based-operators
+**Molecule Upgrade for Ansible based-operators**
 
 The Molecule version for Ansible based-operators was upgraded from `2.22` to `3.0.2`. The following changes are required in the default scaffold files.
 
@@ -1163,9 +1167,9 @@ install:
 
 **NOTE** To know more about how to upgrade your project to use the V3 Molecule version see [here](https://github.com/ansible-community/molecule/issues/2560).  
 
-### Deprecations
+**Deprecations**
 
-#### Test Framework
+**Test Framework**
 
 - The methods `ctx.GetOperatorNamespace()` and `ctx.GetWatchNamespace()` were added to `pkg/test` in order to replace
 `ctx.GetNamespace()` which is deprecated. In this way, replace the use of `ctx.GetNamespace()` in your project with
