@@ -67,6 +67,9 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes.phase:reason
       version: v1alpha1
+    - kind: NotExistKind
+      name: notexist.example.com
+      version: v1alpha1
   description: Main enterprise application providing business critical features with
     high availability and no manual intervention.
   displayName: Memcached Application
