@@ -1,6 +1,6 @@
 ---
 title: Using Predicates for Event Filtering with Operator SDK
-linkTitle: Event-filtering
+linkTitle: Event Filtering
 weight: 20
 ---
 

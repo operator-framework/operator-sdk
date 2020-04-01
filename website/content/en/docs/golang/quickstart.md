@@ -751,7 +751,7 @@ When the operator is not running in a cluster, the Manager will return an error 
 [event_filtering]:/docs/golang/references/event-filtering/
 [controller_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/controller#Options
 [controller_godocs]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/controller
-[operator_scope]:docs/operator-scope.md
+[operator_scope]:/docs/operator-scope/
 [pod_eviction_timeout]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#options
 [manager_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Options
 [lease_split_brain]: https://github.com/kubernetes/client-go/blob/30b06a83d67458700a5378239df6b96948cb9160/tools/leaderelection/leaderelection.go#L21-L24
@@ -759,22 +759,22 @@ When the operator is not running in a cluster, the Manager will return an error 
 [leader_with_lease]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/leaderelection
 [memcached_handler]: ../example/memcached-operator/handler.go.tmpl
 [memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/master/example/memcached-operator/memcached_controller.go.tmpl
-[layout_doc]:./project_layout.md
+[layout_doc]:/docs/golang/project_layout/
 [homebrew_tool]:https://brew.sh/
 [go_mod_wiki]: https://github.com/golang/go/wiki/Modules
 [go_vendoring]: https://blog.gopheracademy.com/advent-2015/vendor-folder/
 [scheme_package]:https://github.com/kubernetes/client-go/blob/master/kubernetes/scheme/register.go
 [deployments_register]: https://github.com/kubernetes/api/blob/master/apps/v1/register.go#L41
-[doc_client_api]:./user/client.md
+[doc_client_api]:/docs/golang/references/client/
 [runtime_package]: https://godoc.org/k8s.io/apimachinery/pkg/runtime
 [manager_go_doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Manager
 [controller-go-doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg#hdr-Controller
 [request-go-doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Request
 [result_go_doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Result
-[metrics_doc]: ./user/metrics/README.md
+[metrics_doc]: /docs/golang/metrics/operator-sdk-monitoring/
 [multi-namespaced-cache-builder]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
 [scheme_builder]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/scheme#Builder
 [typical-status-properties]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
 [godoc-conditions]: https://godoc.org/github.com/operator-framework/operator-sdk/pkg/status#Conditions
-[cli-run-olm]: ./user/olm-catalog/olm-cli.md
+[cli-run-olm]: /docs/golang/olm-integration/olm-cli/
 

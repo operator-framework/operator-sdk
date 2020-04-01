@@ -1,6 +1,6 @@
 ---
 title: Unit testing with Operator SDK
-linkTitle: Unit testing with Operator SDK
+linkTitle: Unit Testing
 weight: 10
 ---
 
@@ -264,11 +264,11 @@ func TestMemcachedController(t *testing.T) {
 <!-- Link vars declaration -->
 <!-- NOTE: The CI has a bug and the test will not pass with _ . Use "-" instead of "_" -->
 
-[doc-e2e-test]: ../test-framework/writing-e2e-tests.md
-[doc-client]: client.md
+[doc-e2e-test]: /docs/test-framework/writing-e2e-tests/
+[doc-client]: /docs/golang/references/client/
 [doc-cr-fake-client]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/client/fake
 [repo-memcached-reconcile]: https://github.com/operator-framework/operator-sdk-samples/blob/4c6934448684a6953ece4d3d9f3f77494b1c125e/memcached-operator/pkg/controller/memcached/memcached_controller.go#L82
 [doc-reconcile]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/reconcile#Reconciler
 [code-test-example]: https://github.com/operator-framework/operator-sdk-samples/blob/master/go/memcached-operator/pkg/controller/memcached/memcached_controller_test.go#L25
-[user-guide]: ../user-guide.md#register-with-the-managers-scheme
+[user-guide]: /docs/golang/quickstart/#register-with-the-managers-scheme
 [ocp-doc-v1-route]: https://docs.openshift.com/container-platform/3.11/rest_api/apis-route.openshift.io/v1.Route.html

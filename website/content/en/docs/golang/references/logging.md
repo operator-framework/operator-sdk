@@ -1,6 +1,6 @@
 ---
 title: Operator SDK Logging
-linkTitle: Operator SDK Logging
+linkTitle: Logging
 weight: 20
 ---
 
@@ -272,7 +272,7 @@ If you do not want to use `logr` as your logging tool, you can remove `logr`-spe
 [repo_zapr]:https://godoc.org/github.com/go-logr/zapr
 [godoc_logr_logger]:https://godoc.org/github.com/go-logr/logr#Logger
 [site_struct_logging]:https://www.client9.com/structured-logging-in-golang/
-[code_memcached_controller]:../../example/memcached-operator/memcached_controller.go.tmpl
+[code_memcached_controller]:https://github.com/operator-framework/operator-sdk/blob/master/example/memcached-operator/memcached_controller.go.tmpl
 [code_set_logger]:https://github.com/operator-framework/operator-sdk/blob/4d66be409a69d169aaa29d470242a1defbaf08bb/internal/pkg/scaffold/cmd.go#L92-L96
 [zap_sampling]:https://github.com/uber-go/zap/blob/master/FAQ.md#why-sample-application-logs
 [logfmt_repo]:https://github.com/jsternberg/zap-logfmt

@@ -1,5 +1,8 @@
-
-# Operators and CRD scope with Operator SDK
+---
+title: Operators and CRD scope with Operator SDK
+linkTitle: Operator Scope
+weight: 50
+---
 
 - [Namespace-scoped operator usage](#namespace-scoped-operator-usage)
 - [Cluster-scoped operator usage](#cluster-scoped-operator-usage)
@@ -168,5 +171,5 @@ This scope is ideal for the cases where an instance(CR) of some Kind(CRD) will b
     ```
   
 [RBAC]: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
-[manager_user_guide]: ./user-guide.md#manager
+[manager_user_guide]: /docs/golang/quickstart/#manager
 [manager_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Options

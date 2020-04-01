@@ -1,6 +1,6 @@
 ---
 title: Code Annotations for Cluster Service Versions
-linkTitle: CSV - Annotations
+linkTitle: CSV Code Annotations
 weight: 20
 ---
 ## Overview
@@ -194,7 +194,7 @@ customresourcedefinitions:
       - 'urn:alm:descriptor:com.tectonic.ui:podCount'
 ```
 
-[code-annotations-design]:../../proposals/sdk-code-annotations.md
+[code-annotations-design]:https://github.com/operator-framework/operator-sdk/blob/master/doc/proposals/sdk-code-annotations.md
 [generate-csv-cli]:../../cli/operator-sdk_generate_csv.md
 [csv-x-desc]:https://github.com/openshift/console/blob/feabd61/frontend/packages/operator-lifecycle-manager/src/components/descriptors/types.ts#L3-L39
 [csv-spec]:https://github.com/operator-framework/operator-lifecycle-manager/blob/e0eea22/doc/design/building-your-csv.md

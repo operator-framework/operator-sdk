@@ -1,6 +1,6 @@
 ---
 title: Using the Controller Runtime Client API with Operator SDK
-linkTitle: Client API
+linkTitle: Controller Runtime Client
 weight: 20
 ---
 

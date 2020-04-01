@@ -1,5 +1,5 @@
 ---
-title: Operator-SDK monitoring with Prometheus
+title: Operator SDK monitoring with Prometheus
 linkTitle: Monitoring
 weight: 1
 ---

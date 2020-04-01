@@ -1,6 +1,6 @@
 ---
 title: Running your Operator with OLM
-linkTitle: OLM - cli
+linkTitle: Running with OLM
 weight: 20
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: Generating a Cluster Service Version (CSV) with Operator SDK
-linkTitle: Generating CSV
+linkTitle: Generating CSVs
 weight: 20
 ---
 
@@ -122,9 +122,9 @@ Optional:
 [doc-csv]:https://github.com/operator-framework/operator-lifecycle-manager/blob/4197455/Documentation/design/building-your-csv.md
 [olm]:https://github.com/operator-framework/operator-lifecycle-manager
 [generate-csv-cli]:../../cli/operator-sdk_generate_csv.md
-[doc-csv-design]:../../design/milestone-0.2.0/csv-generation.md
+[doc-csv-design]:https://github.com/operator-framework/operator-sdk/blob/master/doc/design/milestone-0.2.0/csv-generation.md
 [doc-bundle]:https://github.com/operator-framework/operator-registry/blob/6893d19/README.md#manifest-format
 [x-desc-list]:https://github.com/openshift/console/blob/70bccfe/frontend/public/components/operator-lifecycle-manager/descriptors/types.ts#L3-L35
 [install-modes]:https://github.com/operator-framework/operator-lifecycle-manager/blob/4197455/Documentation/design/building-your-csv.md#operator-metadata
-[olm-capabilities]:../../images/operator-capability-level.png
-[csv-annotations]: ./csv-annotations.md
+[olm-capabilities]:https://github.com/operator-framework/operator-sdk/blob/master/doc/images/operator-capability-level.png
+[csv-annotations]: /docs/golang/olm-integration/csv-annotations/

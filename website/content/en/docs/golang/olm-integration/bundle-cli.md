@@ -1,6 +1,6 @@
 ---
-title: Operator Bundle Tooling in Operator-SDK
-linkTitle: Bundle-cli
+title: Operator Bundle Tooling in Operator SDK
+linkTitle: Working with Bundles
 weight: 20
 ---
 
@@ -23,7 +23,7 @@ The following `operator-sdk` subcommands create or interact with Operator on-dis
   | `operator-sdk bundle validate <image-tag>` | `opm alpha bundle validate --tag <image-tag>` |
   | `operator-sdk bundle validate <directory>` | no equivalent |
 
-[sdk-generate-csv]:./generating-a-csv.md
+[sdk-generate-csv]:/docs/golang/olm-integration/generating-a-csv/
 [registry-bundle]:https://github.com/operator-framework/operator-registry/tree/v1.5.3#manifest-format
 [registry-bundle-image]:https://github.com/operator-framework/operator-registry/blob/v1.5.3/docs/design/operator-bundle.md
 [registry-opm-build]:https://github.com/operator-framework/operator-registry/blob/v1.5.9/docs/design/operator-bundle.md#build-bundle-image
