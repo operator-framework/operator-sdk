@@ -13,6 +13,16 @@ metadata:
           "spec": {
             "size": 3
           }
+        },
+        {
+          "apiVersion": "cache.example.com/v1alpha1",
+          "kind": "MemcachedRS",
+          "metadata": {
+            "name": "example-memcachedrs"
+          },
+          "spec": {
+            "numNodes": 4
+          }
         }
       ]
     capabilities: Basic Install
@@ -22,6 +32,18 @@ spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
+    - description: Represents a cluster of MemcachedRS apps
+      displayName: MemcachedRS App
+      kind: MemcachedRS
+      name: memcachedrs.cache.example.com
+      statusDescriptors:
+      - description: List of the pod names running Memcached in the cluster
+        displayName: Nodes
+        path: nodeList
+      - description: A useless testing variable
+        displayName: Test
+        path: test
+      version: v1alpha1
     - description: Represents a cluster of Memcached apps
       displayName: Memcached App
       kind: Memcached
@@ -54,18 +76,6 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes.phase:reason
       version: v1alpha1
-    - description: Represents a cluster of MemcachedRS apps
-      displayName: MemcachedRS App
-      kind: MemcachedRS
-      name: memcachedrs.cache.example.com
-      version: v1alpha1
-      statusDescriptors:
-      - description: List of the pod names running Memcached in the cluster
-        displayName: Nodes
-        path: nodeList
-      - description: A useless testing variable
-        displayName: Test
-        path: test
   description: Main enterprise application providing business critical features with
     high availability and no manual intervention.
   displayName: Memcached Application

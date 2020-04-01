@@ -1,8 +1,12 @@
-# Project Scaffolding Layout for Operator SDK Helm-based Operators
+---
+title: Helm Based Operator Scaffolding
+linkTitle: Scaffolding
+weight: 20
+---
 
-After creating a new operator project using `operator-sdk new --type helm`,
-the project directory has numerous generated folders and files. The following
-table describes a basic rundown of each generated file/directory.
+After creating a new operator project using
+`operator-sdk new --type helm`, the project directory has numerous generated folders and files. The following table describes a basic rundown of each generated file/directory.
+
 
 | File/Folders | Purpose |
 | :---         | :---    |

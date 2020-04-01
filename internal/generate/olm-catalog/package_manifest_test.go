@@ -15,6 +15,9 @@
 package olmcatalog
 
 import (
+	"io/ioutil"
+	"log"
+	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
@@ -25,29 +28,64 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const (
-	testProjectName = "memcached-operator"
-	csvVersion      = "0.0.3"
-)
+func TestGeneratePkgManifestToOutput(t *testing.T) {
+	cleanupFunc := chDirWithCleanup(t, testNonStandardLayoutDataDir)
+	defer cleanupFunc()
 
-var (
-	testDataDir   = filepath.Join("..", "testdata")
-	testGoDataDir = filepath.Join(testDataDir, "go")
-)
+	// Temporary output dir for generating catalog bundle
+	outputDir, err := ioutil.TempDir("", t.Name()+"-output-catalog")
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Clean up output catalog dir
+	defer func() {
+		if err := os.RemoveAll(outputDir); err != nil && !os.IsNotExist(err) {
+			// Not a test failure since files in /tmp will eventually get deleted
+			t.Logf("Failed to remove tmp generated catalog directory (%s): %v", outputDir, err)
+		}
+	}()
 
-// newTestPackageManifestGenerator returns a package manifest Generator populated with test values.
-func newTestPackageManifestGenerator() gen.Generator {
-	inputDir := filepath.Join(testGoDataDir, OLMCatalogDir, testProjectName)
 	cfg := gen.Config{
 		OperatorName: testProjectName,
-		Inputs:       map[string]string{ManifestsDirKey: inputDir},
+		OutputDir:    outputDir,
 	}
+
 	g := NewPackageManifest(cfg, csvVersion, "stable", true)
-	return g
+	if err := g.Generate(); err != nil {
+		t.Fatalf("Failed to execute package manifest generator: %v", err)
+	}
+
+	pkgManFileName := getPkgFileName(testProjectName)
+
+	// Read expected Package Manifest
+	expCatalogDir := filepath.Join("expected-catalog", OLMCatalogChildDir)
+	pkgManExpBytes, err := ioutil.ReadFile(filepath.Join(expCatalogDir, testProjectName, pkgManFileName))
+	if err != nil {
+		t.Fatalf("Failed to read expected package manifest file: %v", err)
+	}
+	pkgManExp := string(pkgManExpBytes)
+
+	// Read generated Package Manifest from OutputDir/olm-catalog
+	outputCatalogDir := filepath.Join(cfg.OutputDir, OLMCatalogChildDir)
+	pkgManOutputBytes, err := ioutil.ReadFile(filepath.Join(outputCatalogDir, testProjectName, pkgManFileName))
+	if err != nil {
+		t.Fatalf("Failed to read output package manifest file: %v", err)
+	}
+	pkgManOutput := string(pkgManOutputBytes)
+
+	assert.Equal(t, pkgManExp, pkgManOutput)
+
 }
 
 func TestGeneratePackageManifest(t *testing.T) {
-	g := newTestPackageManifestGenerator()
+	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
+	defer cleanupFunc()
+
+	cfg := gen.Config{
+		OperatorName: testProjectName,
+		OutputDir:    "deploy",
+	}
+	g := NewPackageManifest(cfg, csvVersion, "stable", true)
 	fileMap, err := g.(pkgGenerator).generate()
 	if err != nil {
 		t.Fatalf("Failed to execute package manifest generator: %v", err)
@@ -61,7 +99,14 @@ func TestGeneratePackageManifest(t *testing.T) {
 }
 
 func TestValidatePackageManifest(t *testing.T) {
-	g := newTestPackageManifestGenerator()
+	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
+	defer cleanupFunc()
+
+	cfg := gen.Config{
+		OperatorName: testProjectName,
+		OutputDir:    "deploy",
+	}
+	g := NewPackageManifest(cfg, csvVersion, "stable", true)
 
 	// pkg is a basic, valid package manifest.
 	pkg, err := g.(pkgGenerator).buildPackageManifest()

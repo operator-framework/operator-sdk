@@ -10,35 +10,23 @@ This document describes how to manage the following lifecycle for your Operator 
 
 ## Configuration
 
-Operator SDK projects have an expected [project layout][doc-project-layout]. In particular, a few manifests are expected to be present in the `deploy` directory:
+### Inputs
 
-* Roles: `role.yaml`
-* Deployments: `operator.yaml`
-* Custom Resources (CR's): `crds/<full group>_<version>_<kind>_cr.yaml`
-* Custom Resource Definitions (CRD's): `crds/<full group>_<resource>_crd.yaml`.
+The CSV generator requires certain inputs to construct a CSV manifest.
 
-`generate csv` reads these files and adds their data to a CSV in an alternate form.
+1. Path to the operator manifests root directory. By default `generate csv` extracts manifests from files in `deploy/` for the following kinds and adds them to the CSV. Use the `--deploy-dir` flag to change this path.
+    * Roles: `role.yaml`
+    * ClusterRoles: `cluster_role.yaml`
+    * Deployments: `operator.yaml`
+    * Custom Resources (CR's): `crds/<full group>_<version>_<kind>_cr.yaml`
+    * CustomResourceDefinitions (CRD's): `crds/<full group>_<resource>_crd.yaml`
+2. Path to API types root directory. The CSV generator also parses the [CSV annotations][csv-annotations] from the API type definitions to populate certain CSV fields. By default the API types directory is `pkg/apis/`. Use the `--apis-dir` flag to change this path. The CSV generator expects either of the following layouyts for the API types directory
+    * Mulitple groups: `<API-root-dir>/<group>/<version>/`
+    * Single groups: `<API-root-dir>/<version>/`
 
-The following example config containing default values should be copied and written to `deploy/olm-catalog/csv-config.yaml`:
+### Output
 
-```yaml
-crd-cr-paths:
-- deploy/crds
-operator-path: deploy/operator.yaml
-role-paths:
-- deploy/role.yaml
-```
-
-Explanation of all config fields:
-
-- `crd-cr-paths`: list of strings - a list of CRD and CR manifest file/directory paths. Defaults to `[deploy/crds]`.
-- `operator-path`: string - the operator `Deployment` manifest file path. Defaults to `deploy/operator.yaml`.
-- `role-paths`: list of strings - Role and ClusterRole manifest file paths. Defaults to `[deploy/role.yaml]`.
-- `operator-name`: string - the name used to create the CSV and manifest file names. Defaults to the project's name.
-
-**Note**: The [design doc][doc-csv-design] has outdated field information which should not be referenced.
-
-Fields in this config file can be modified to point towards alternate manifest locations, and passed to `generate csv --csv-config=<path>` to configure CSV generation. For example, if I have one set of production CR/CRD manifests under `deploy/crds/production`, and a set of test manifests under `deploy/crds/test`, and I only want to include production manifests in my CSV, I can set `crd-cr-paths: [deploy/crds/production]`. `generate csv` will then ignore `deploy/crds/test` when getting CR/CRD data.
+By default `generate csv` will generate the catalog bundle directory `olm-catalog/...` under `deploy/`. To change where the CSV bundle directory is generated use the `--ouput-dir` flag.
 
 ## Versioning
 
@@ -46,7 +34,7 @@ CSV's are versioned in path, file name, and in their `metadata.name` field. For 
 
 `generate csv` allows you to upgrade your CSV using the `--from-version` flag. If you have an existing CSV with version `0.0.1` and want to write a new version `0.0.2`, you can run `operator-sdk generate csv --csv-version 0.0.2 --from-version 0.0.1`. This will write a new CSV manifest to `deploy/olm-catalog/<operator-name>/0.0.2/<operator-name>.v0.0.2.clusterserviceversion.yaml` containing user-defined data from `0.0.1` and any modifications you've made to `roles.yaml`, `operator.yaml`, CR's, or CRD's.
 
-The SDK can manage CRD's in your Operator bundle as well. You can pass the `--update-crds` flag to `generate csv` to add or update your CRD's in your bundle by copying manifests pointed to by `crd-cr-paths` in your config. CRD's in a bundle are not updated by default.
+The SDK can manage CRD's in your Operator bundle as well. You can pass the `--update-crds` flag to `generate csv` to add or update your CRD's in your bundle by copying manifests in `deploy/crds` to your bundle. CRD's in a bundle are not updated by default.
 
 ## First Generation
 
@@ -86,7 +74,7 @@ Be sure to include the `--update-crds` flag if you want to add CRD's to your bun
 
 Below are two lists of fields: the first is a list of all fields the SDK and OLM expect in a CSV, and the second are optional.
 
-Several fields require user input (labeled _user_) or a [code annotation][code-annotations] (labeled _annotation_). This list may change as the SDK becomes better at generating CSV's.
+Several fields require user input (labeled _user_) or a [CSV annotation][csv-annotations] (labeled _annotation_). This list may change as the SDK becomes better at generating CSV's.
 
 Required:
 
@@ -130,10 +118,9 @@ Optional:
 [doc-csv]:https://github.com/operator-framework/operator-lifecycle-manager/blob/4197455/Documentation/design/building-your-csv.md
 [olm]:https://github.com/operator-framework/operator-lifecycle-manager
 [generate-csv-cli]:../../cli/operator-sdk_generate_csv.md
-[doc-project-layout]:../../project_layout.md
 [doc-csv-design]:../../design/milestone-0.2.0/csv-generation.md
 [doc-bundle]:https://github.com/operator-framework/operator-registry/blob/6893d19/README.md#manifest-format
 [x-desc-list]:https://github.com/openshift/console/blob/70bccfe/frontend/public/components/operator-lifecycle-manager/descriptors/types.ts#L3-L35
 [install-modes]:https://github.com/operator-framework/operator-lifecycle-manager/blob/4197455/Documentation/design/building-your-csv.md#operator-metadata
 [olm-capabilities]:../../images/operator-capability-level.png
-[code-annotations]:../../proposals/sdk-code-annotations.md
+[csv-annotations]: ./csv-annotations.md
