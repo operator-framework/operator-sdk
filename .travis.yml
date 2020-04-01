@@ -102,9 +102,12 @@ jobs:
   include:
     # Run the sanity tests
     - stage: check
-      name: Sanity Tests
+      name: Sanity and Unit Tests
+      before_install:
+        - (cd / && go get github.com/mattn/goveralls)
       script:
-        - make test-sanity
+        - make test-sanity test-unit
+        - $GOPATH/bin/goveralls -service=travis-ci -coverprofile=coverage.out -repotoken=$COVERALLS_TOKEN
 
     # Run the markdown link checker
     - name: Markdown Tests
