@@ -15,7 +15,6 @@
 package olmcatalog
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -34,7 +33,6 @@ import (
 	"github.com/blang/semver"
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
-	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
 	olmversion "github.com/operator-framework/operator-lifecycle-manager/pkg/lib/version"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -285,8 +283,8 @@ func newCSV(name, version string) (*olmapiv1alpha1.ClusterServiceVersion, error)
 				{Type: olmapiv1alpha1.InstallModeTypeAllNamespaces, Supported: true},
 			},
 			InstallStrategy: olmapiv1alpha1.NamedInstallStrategy{
-				StrategyName:    olminstall.InstallStrategyNameDeployment,
-				StrategySpecRaw: json.RawMessage("{}"),
+				StrategyName: olmapiv1alpha1.InstallStrategyNameDeployment,
+				StrategySpec: olmapiv1alpha1.StrategyDetailsDeployment{},
 			},
 		},
 	}, nil
