@@ -108,7 +108,7 @@ building the image:
 `,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			if err = c.setDefaults(); err != nil {
-				return fmt.Errorf("error setting default args: %v", err)
+				log.Fatalf("Failed to default args: %v", err)
 			}
 
 			if err = c.validate(args); err != nil {
@@ -183,8 +183,9 @@ func (c *bundleCreateCmd) setDefaults() (err error) {
 		// by only assuming the operator dir is the packageName if directory isn't set.
 		c.packageName = projectName
 	}
+
 	// Clean and make paths relative for less verbose error messages.
-	if c.directory, err = filepath.Abs(c.directory); err != nil {
+	if c.directory, err = relDir(c.directory); err != nil {
 		return err
 	}
 	// Set outputDir in any case so we make the operator-registry file generator
@@ -192,20 +193,22 @@ func (c *bundleCreateCmd) setDefaults() (err error) {
 	if c.outputDir == "" {
 		c.outputDir = filepath.Dir(c.directory)
 	}
-	if c.outputDir, err = filepath.Abs(c.outputDir); err != nil {
+	if c.outputDir, err = relDir(c.outputDir); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func relDir(dir string) (out string, err error) {
+	if out, err = filepath.Abs(dir); err != nil {
+		return "", err
 	}
 	wd, err := os.Getwd()
 	if err != nil {
-		return err
+		return "", err
 	}
-	if c.directory, err = filepath.Rel(wd, c.directory); err != nil {
-		return err
-	}
-	if c.outputDir, err = filepath.Rel(wd, c.outputDir); err != nil {
-		return err
-	}
-	return nil
+	return filepath.Rel(wd, out)
 }
 
 func (c bundleCreateCmd) validate(args []string) error {

@@ -10,6 +10,7 @@
 - The printout for the compatible Kubernetes Version [#2446](https://github.com/operator-framework/operator-sdk/pull/2446)
 - The `--output-dir` flag instructs [`operator-sdk bundle create`](./doc/cli/operator-sdk_bundle_create.md) to write manifests and metadata to a non-default directory. ([#2715](https://github.com/operator-framework/operator-sdk/pull/2715))
 - The `--overwrite` flag instructs [`operator-sdk bundle create`](./doc/cli/operator-sdk_bundle_create.md) to overwrite metadata, manifests, and `bundle.Dockerfile`. ([#2715](https://github.com/operator-framework/operator-sdk/pull/2715))
+- [`operator-sdk bundle validate`](./doc/cli/operator-sdk_bundle_validate.md) now accepts either an image tag or a directory arg. If the arg is a directory, its children must contain a `manifests/` and a `metadata/` directory. [#2737](https://github.com/operator-framework/operator-sdk/pull/2737)
 
 ### Changed
 
