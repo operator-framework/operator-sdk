@@ -100,6 +100,9 @@ stages:
 
 jobs:
   include:
+
+    ## Project check stage jobs ##
+
     # Run the sanity tests
     - stage: check
       name: Sanity Tests
@@ -110,6 +113,8 @@ jobs:
     - name: Markdown Tests
       script:
         - make test-markdown
+
+    ## Operator test stage jobs ##
 
     # Build and test ansible and test ansible using molecule
     - stage: test
@@ -143,8 +148,11 @@ jobs:
       name: Helm on Kubernetes
       script: make test-e2e-helm
 
+    ## Image deploy/push stage jobs ##
+
     # Build and deploy arm64 ansible-operator docker image
-    - <<: *deploy
+    - stage: deploy
+      <<: *deploy
       name: Docker image for ansible-operator (arm64)
       arch: arm64
       script:
@@ -152,8 +160,7 @@ jobs:
         - make image-push-ansible
 
     # Build and deploy amd64 ansible-operator docker image
-    - stage: deploy
-      <<: *deploy
+    - <<: *deploy
       name: Docker image for ansible-operator (amd64)
       arch: amd64
       script:
