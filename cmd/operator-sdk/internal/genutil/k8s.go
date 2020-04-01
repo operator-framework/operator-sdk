@@ -35,14 +35,14 @@ import (
 func K8sCodegen() error {
 	projutil.MustInProjectRoot()
 
-	out, err := exec.Command("go", "env", "GOROOT").CombinedOutput()
+	goEnv, err := exec.Command("go", "env", "GOROOT").CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("failed to GOROOT from go env")
+		return fmt.Errorf("failed to get GOROOT from go env: %w", err)
 	}
-	goRoot := strings.TrimSuffix(string(out), "\n")
+	goRoot := strings.TrimSuffix(string(goEnv), "\n")
 	log.Debugf("Setting GOROOT=%s", goRoot)
 	if err := os.Setenv("GOROOT", goRoot); err != nil {
-		return fmt.Errorf("failed to set env GOROOT=" + goRoot)
+		return fmt.Errorf("failed to set env GOROOT=%s: %w", goRoot, err)
 	}
 
 	repoPkg := projutil.GetGoPkg()
