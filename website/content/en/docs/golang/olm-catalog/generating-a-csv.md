@@ -1,4 +1,8 @@
-# Generating a Cluster Service Version (CSV) with Operator SDK
+---
+title: Generating a Cluster Service Version (CSV) with Operator SDK
+linkTitle: Generating CSV
+weight: 20
+---
 
 This document describes how to manage the following lifecycle for your Operator using the SDK's [`operator-sdk generate csv`][generate-csv-cli] command:
 

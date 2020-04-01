@@ -1,4 +1,8 @@
-#  Operator SDK Monitoring with Prometheus
+---
+title: Operator-SDK monitoring with Prometheus
+linkTitle: Monitoring
+weight: 1
+---
 
 [Prometheus][prometheus] is an open-source systems monitoring and alerting toolkit. Below is the overview of the different helpers that exist in Operator SDK to help setup metrics in the generated operator.
 

@@ -1,4 +1,8 @@
-# Operator Bundle Tooling in `operator-sdk`
+---
+title: Operator Bundle Tooling in Operator-SDK
+linkTitle: Bundle-cli
+weight: 20
+---
 
 This document gives an overview of using `operator-sdk` to work with Operator [bundles][registry-bundle], namely on-disk bundle directories and creating bundle [images/metadata][registry-bundle-image].
 

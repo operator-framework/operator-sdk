@@ -1,5 +1,8 @@
-# Code Annotations for Cluster Service Versions
-
+---
+title: Code Annotations for Cluster Service Versions
+linkTitle: CSV - Annotations
+weight: 20
+---
 ## Overview
 
 This document describes the semantics of Cluster Service Version (CSV) [code annotations][code-annotations-design] and lists all possible annotations.
