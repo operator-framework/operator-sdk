@@ -28,9 +28,10 @@ var (
 //scorecard2 alpha command stub
 func NewCmd() *cobra.Command {
 	scorecardCmd := &cobra.Command{
-		Use:   "scorecard",
-		Short: "Runs scorecard",
-		Long:  `Has flags to configure dsl, bundle, and selector.`,
+		Use:    "scorecard",
+		Short:  "Runs scorecard",
+		Long:   `Has flags to configure dsl, bundle, and selector.`,
+		Hidden: true,
 		Run: func(cmd *cobra.Command, args []string) {
 			log.Info("TODO")
 		},
