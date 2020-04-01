@@ -180,70 +180,72 @@ The scorecard DSL format is yet to be finalized but it would need to include con
 ```
 tests:
 # here is an example of a pair of custom tests that an ISV might implement
-- imagename: quay.io/someuser/customtest1:v0.0.1
+- image: quay.io/someuser/customtest1:v0.0.1
   description: some ISV test
   labels:
     suite: custom
     test: customtest1
-- imagename: quay.io/someuser/customtest2:v0.0.1
+- image: quay.io/someuser/customtest2:v0.0.1
   description: some ISV test
   labels:
     test: customtest2
 # here is an example of the scorecard basic tests
-- imagename: quay.io/operator-framework/scorecard-basictests:v0.0.1
+- image: quay.io/operator-framework/scorecard-basictests:v0.0.1
   description: redhat - check spec
+  entrypoint: checkspec
   labels:
     suite: basic
     test: basic-check-spec-test
-- imagename: quay.io/operator-framework/scorecard-basictests:v0.0.1
+- image: quay.io/operator-framework/scorecard-basictests:v0.0.1
   description: redhat - check status
+  entrypoint: checkstatus
   labels:
     suite: basic
     test: basic-check-status-test
 # here is an example of the scorecard olm tests
-- imagename: quay.io/operator-framework/scorecard-olmtests:v0.0.1
+- image: quay.io/operator-framework/scorecard-olmtests:v0.0.1
   description: redhat - CRDs have validation
+  entrypoint: crdvalidation
   labels:
     suite: olm
     test: olm-crds-have-validation-test
-- imagename: quay.io/operator-framework/scorecard-olmtests:v0.0.1
+- image: quay.io/operator-framework/scorecard-olmtests:v0.0.1
   description: redhat - CRDs have resources
+  entrypoint: crdhasresources
   labels:
     suite: olm
     test: olm-crds-have-resources-test
-- imagename: quay.io/operator-framework/scorecard-olmtests:v0.0.1
+- image: quay.io/operator-framework/scorecard-olmtests:v0.0.1
   description: redhat - spec descriptors
+  entrypoint: crdspecdescriptors
   labels:
     suite: olm
     test: olm-spec-descriptors-test
-- imagename: quay.io/operator-framework/scorecard-olmtests:v0.0.1
+- image: quay.io/operator-framework/scorecard-olmtests:v0.0.1
   description: redhat - status descriptors
+  entrypoint: crdstatusdescriptors
   labels:
     suite: olm
     test: olm-status-descriptors-test
-- imagename: quay.io/operator-framework/scorecard-olmtests:v0.0.1
+- image: quay.io/operator-framework/scorecard-olmtests:v0.0.1
   description: redhat - bundle validation
+  entrypoint: bundlevalidation
   labels:
     suite: olm
     test: olm-bundle-validation-test
 # here is an example of the scorecard kuttl tests
-- imagename: quay.io/operator-framework/scorecard-kuttltests:v0.0.1
+- image: quay.io/operator-framework/scorecard-kuttltests:v0.0.1
   description: redhat - kuttl tests
   labels:
     suite: kuttl
 ```
 
 Users could override the default test images shipped with scorecard
-by adding the following into the scorecard DSL configuration:
+by adding scorecard command flags as follows:
 ```
-default-images: 
-- imagetype: olm
-  image: quay.io/operator-framework/scorecard-olmtests:v0.0.1
-- imagetype: basic
-  image: quay.io/operator-framework/scorecard-basictests:v0.0.1
-- imagetype: kuttl
-  image: quay.io/operator-framework/scorecard-kuttltests:v0.0.1
-tests:
+operator-sdk scorecard --olm-image=quay.io/operator-framework/scorecard-olmtests:dev
+operator-sdk scorecard --basic-image=quay.io/operator-framework/scorecard-basictests:dev
+operator-sdk scorecard --kuttl-image=quay.io/operator-framework/scorecard-kuttltests:dev
 ```
 
 ### Custom Test Execution
