@@ -1,0 +1,27 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Description is the line that shows up in the CHANGELOG. This
+      should be formatted as markdown and be on a single line.
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: ""
+
+    # Is this a breaking change?
+    breaking: false
+
+    # What is the pull request number (without the "#")?
+    pull_request: 0
+
+    # Migration can be defined to automatically add a section to
+    # the migration guide. This is required for breaking changes.
+    migration:
+      title: Header text for the migration section
+      body: >
+        Body of the migration section.
