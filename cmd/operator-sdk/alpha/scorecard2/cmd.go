@@ -20,10 +20,9 @@ import (
 )
 
 var (
-	dsl         string
-	bundle      string
-	bundleImage string
-	selector    string
+	dsl      string
+	bundle   string
+	selector string
 )
 
 //scorecard2 alpha command stub
@@ -31,7 +30,7 @@ func NewCmd() *cobra.Command {
 	scorecardCmd := &cobra.Command{
 		Use:   "scorecard",
 		Short: "Runs scorecard",
-		Long:  `Has flags to configure dsl, bundle, bundle-image, and selector.`,
+		Long:  `Has flags to configure dsl, bundle, and selector.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			log.Info("TODO")
 		},
@@ -39,7 +38,6 @@ func NewCmd() *cobra.Command {
 
 	scorecardCmd.Flags().StringVar(&dsl, "dsl", "", "path to a new to be defined DSL yaml formatted file that configures what tests get executed")
 	scorecardCmd.Flags().StringVar(&bundle, "bundle", "", "path to the operator bundle contents on disk")
-	scorecardCmd.Flags().StringVar(&bundleImage, "bundle-image", "", "name of a bundle image not on disk but in a registry")
 	scorecardCmd.Flags().StringVar(&selector, "selector", "", "label selector to determine which tests are run")
 
 	return scorecardCmd
