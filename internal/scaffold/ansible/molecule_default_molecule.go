@@ -41,13 +41,9 @@ dependency:
   name: galaxy
 driver:
   name: docker
-lint:
-  name: yamllint
-  options:
-    config-data:
-      line-length:
-        max: 120
-
+lint: |
+  set -e
+  yamllint -d "{extends: relaxed, rules: {line-length: {max: 120}}}" .
 platforms:
 - name: kind-default
   groups:
@@ -64,8 +60,9 @@ platforms:
 provisioner:
   name: ansible
   log: True
-  lint:
-    name: ansible-lint
+  lint: |
+    set -e
+    ansible-lint
   inventory:
     group_vars:
       all:
@@ -79,10 +76,9 @@ provisioner:
     KUBECONFIG: ${MOLECULE_EPHEMERAL_DIRECTORY}/kubeconfig
     ANSIBLE_ROLES_PATH: ${MOLECULE_PROJECT_DIRECTORY}/roles
     KIND_PORT: '${TEST_CLUSTER_PORT:-9443}'
-scenario:
-  name: default
 verifier:
   name: ansible
-  lint:
-    name: ansible-lint
+  lint: |
+    set -e
+    ansible-lint
 `

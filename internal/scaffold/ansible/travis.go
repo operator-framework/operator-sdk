@@ -36,7 +36,7 @@ const travisAnsibleTmpl = `---
 services: docker
 language: python
 install:
-  - pip3 install docker molecule openshift jmespath
+  - pip3 install docker molecule ansible-lint yamllint flake8 openshift jmespath
 script:
   - molecule test -s test-local
 `

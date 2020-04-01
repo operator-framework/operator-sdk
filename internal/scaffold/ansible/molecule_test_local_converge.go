@@ -22,25 +22,25 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 )
 
-const MoleculeTestLocalPlaybookFile = "playbook.yml"
+const MoleculeTestLocalConvergeFile = "converge.yml"
 
-type MoleculeTestLocalPlaybook struct {
+type MoleculeTestLocalConverge struct {
 	input.Input
 	Resource scaffold.Resource
 }
 
 // GetInput - gets the input
-func (m *MoleculeTestLocalPlaybook) GetInput() (input.Input, error) {
+func (m *MoleculeTestLocalConverge) GetInput() (input.Input, error) {
 	if m.Path == "" {
-		m.Path = filepath.Join(MoleculeTestLocalDir, MoleculeTestLocalPlaybookFile)
+		m.Path = filepath.Join(MoleculeTestLocalDir, MoleculeTestLocalConvergeFile)
 	}
-	m.TemplateBody = moleculeTestLocalPlaybookAnsibleTmpl
+	m.TemplateBody = moleculeTestLocalConvergeAnsibleTmpl
 	m.Delims = AnsibleDelims
 
 	return m.Input, nil
 }
 
-const moleculeTestLocalPlaybookAnsibleTmpl = `---
+const moleculeTestLocalConvergeAnsibleTmpl = `---
 - name: Build Operator in Kubernetes docker container
   hosts: k8s
   collections:

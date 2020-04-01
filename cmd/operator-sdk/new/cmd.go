@@ -292,12 +292,12 @@ func doAnsibleScaffold() error {
 		&roleFiles,
 		&roleTemplates,
 		&ansible.RolesVarsMain{Resource: *resource},
-		&ansible.MoleculeTestLocalPlaybook{Resource: *resource},
+		&ansible.MoleculeTestLocalConverge{Resource: *resource},
 		&ansible.RolesDefaultsMain{Resource: *resource},
 		&ansible.RolesTasksMain{Resource: *resource},
 		&ansible.MoleculeDefaultMolecule{},
 		&ansible.MoleculeDefaultPrepare{},
-		&ansible.MoleculeDefaultPlaybook{
+		&ansible.MoleculeDefaultConverge{
 			GeneratePlaybook: generatePlaybook,
 			Resource:         *resource,
 		},
@@ -316,7 +316,7 @@ func doAnsibleScaffold() error {
 		&ansible.MoleculeClusterMolecule{Resource: *resource},
 		&ansible.MoleculeClusterCreate{},
 		&ansible.MoleculeClusterPrepare{Resource: *resource},
-		&ansible.MoleculeClusterPlaybook{},
+		&ansible.MoleculeClusterConverge{},
 		&ansible.MoleculeClusterVerify{Resource: *resource},
 		&ansible.MoleculeClusterDestroy{Resource: *resource},
 		&ansible.MoleculeTemplatesOperator{},

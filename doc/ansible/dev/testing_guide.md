@@ -6,7 +6,7 @@
 To begin, you sould have:
 - The latest version of the [operator-sdk](https://github.com/operator-framework/operator-sdk) installed.
 - Docker installed and running
-- [Molecule](https://github.com/ansible/molecule) >= v2.22
+- [Molecule](https://github.com/ansible/molecule) >= v3.0.2
 - [Ansible](https://github.com/ansible/ansible) >= v2.9
 - [The OpenShift Python client](https://github.com/openshift/openshift-restclient-python) >= v0.8
 - An initialized Ansible Operator project, with the molecule directory present. If you initialized a project with a previous
@@ -36,7 +36,7 @@ Our molecule scenarios have the following basic structure:
 .
 ├── molecule.yml
 ├── prepare.yml
-├── playbook.yml
+├── converge.yml
 └── verify.yml
 ```
 
@@ -47,7 +47,7 @@ can put any arbitrary Ansible in this playbook. It is used for one-time configur
 of your test environment, for example, creating the cluster-wide `CustomResourceDefinition`
 that your Operator will watch.
 
-`playbook.yml` is an Ansible playbook that contains your core logic for the scenario. In a
+`converge.yml` is an Ansible playbook that contains your core logic for the scenario. In a
 normal molecule scenario, this would import and run the associated role. For Ansible
 Operators, we mostly use this to create the Kubernetes resources necessary to deploy
 your operator into Kubernetes.
@@ -68,18 +68,18 @@ The scenario has the following structure:
 molecule/default
 ├── molecule.yml
 ├── prepare.yml
-├── playbook.yml
+├── converge.yml
 └── verify.yml
 ```
 
 `molecule.yml` for this scenario tells molecule to use the docker driver to bring up a Kubernetes-in-Docker container,
 and by default exposes the API on the host's port 9443. It also specifies a few inventory and environment
-variables which are used in `prepare.yml` and `playbook.yml`.
+variables which are used in `prepare.yml` and `converge.yml`.
 
 `prepare.yml` ensures that a kubeconfig properly configured to connect to the Kubernetes-in-Docker cluster exists and
 is mapped to the proper port, and also waits for the Kubernetes API to become available before allowing testing to begin.
 
-`playbook.yml` imports and runs your role or playbook.
+`converge.yml` imports and runs your role or playbook.
 
 `verify.yml` is an Ansible playbook where you can put tasks to verify that the state of your cluster matches what you expect.
 
@@ -115,7 +115,7 @@ molecule/default
 ├── molecule.yml
 ├── create.yml
 ├── prepare.yml
-├── playbook.yml
+├── converge.yml
 ├── verify.yml
 └── destroy.yml
 ```
@@ -126,7 +126,7 @@ molecule/default
 
 `prepare.yml` ensures the CRD, namespace, and RBAC resources are present in the cluster.
 
-`playbook.yml` creates your operator deployment, based on the template in `molecule/templates/operator.yaml.j2`.
+`converge.yml` creates your operator deployment, based on the template in `molecule/templates/operator.yaml.j2`.
 
 `verify.yml` is an Ansible playbook where you can put tasks to verify that the state of your cluster matches what you expect. By default, it creates a Custom Resource and waits for reconciliation to complete successfully. 
 There is an example assertion present as well.
@@ -163,18 +163,18 @@ The scenario has the following structure:
 molecule/test-local
 ├── molecule.yml
 ├── prepare.yml
-├── playbook.yml
+├── converge.yml
 └── verify.yml
 ```
 
 `molecule.yml` for this scenario tells molecule to use the docker driver to bring up a Kubernetes-in-Docker container with the project root mounted,
 and exposes the API on the host's port 10443. It also specifies a few inventory and environment
-variables which are used in `prepare.yml` and `playbook.yml`. It is very similar to the default scenario's configuration.
+variables which are used in `prepare.yml` and `converge.yml`. It is very similar to the default scenario's configuration.
 
 `prepare.yml` first runs the `prepare.yml` from the default scenario to ensure the kubeconfig is present and the API is up.
 It then runs the `prepare.yml` from the cluster scenario to configure your cluster's CRDs and RBAC.
 
-`playbook.yml` connects to your Kubernetes-in-Docker container, and uses your mounted project root to build your Operator.
+`converge.yml` connects to your Kubernetes-in-Docker container, and uses your mounted project root to build your Operator.
 This makes your Operator available to the cluster without needing to push it to an external registry.
 Then, it will ensure that a fresh deployment of your Operator is present in the cluster, using the
 template `molecule/templates/operator.yaml.j2`.

@@ -20,23 +20,23 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 )
 
-const MoleculeClusterPlaybookFile = "playbook.yml"
+const MoleculeClusterConvergeFile = "converge.yml"
 
-type MoleculeClusterPlaybook struct {
+type MoleculeClusterConverge struct {
 	StaticInput
 }
 
 // GetInput - gets the input
-func (m *MoleculeClusterPlaybook) GetInput() (input.Input, error) {
+func (m *MoleculeClusterConverge) GetInput() (input.Input, error) {
 	if m.Path == "" {
-		m.Path = filepath.Join(MoleculeClusterDir, MoleculeClusterPlaybookFile)
+		m.Path = filepath.Join(MoleculeClusterDir, MoleculeClusterConvergeFile)
 	}
-	m.TemplateBody = moleculeClusterPlaybookAnsibleTmpl
+	m.TemplateBody = moleculeClusterConvergeAnsibleTmpl
 
 	return m.Input, nil
 }
 
-const moleculeClusterPlaybookAnsibleTmpl = `---
+const moleculeClusterConvergeAnsibleTmpl = `---
 - name: Converge
   hosts: localhost
   connection: local
