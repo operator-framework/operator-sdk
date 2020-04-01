@@ -18,13 +18,11 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/gengo/parser"
 	"k8s.io/gengo/types"
@@ -51,19 +49,55 @@ func GetCRDDescriptionForGVK(apisDir string, gvk schema.GroupVersionKind) (olmap
 	if strings.Contains(group, ".") {
 		group = strings.Split(group, ".")[0]
 	}
-	apiDir := filepath.Join(apisDir, group, gvk.Version)
-	universe, err := getTypesFromDir(apiDir)
+
+	// Check if apisDir exists
+	exists, err := isDirExist(apisDir)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return olmapiv1alpha1.CRDDescription{}, ErrAPIDirNotExist
+		return olmapiv1alpha1.CRDDescription{}, err
+	}
+	if !exists {
+		log.Debugf("Could not find API types directory: %s", apisDir)
+		return olmapiv1alpha1.CRDDescription{}, ErrAPIDirNotExist
+	}
+
+	// Check if the kind pkg is at the expected layout
+	// multi-group layout: <api-dir>/<group>/<version>
+	// single-group layout: <api-dir>/<version>
+	expectedPkgPath, err := getExpectedPkgLayout(apisDir, group, gvk.Version)
+	if err != nil {
+		return olmapiv1alpha1.CRDDescription{}, err
+	}
+
+	// Get pkg types for the given GVK
+	var pkgTypes []*types.Type
+	if expectedPkgPath != "" {
+		// Look for the pkg types at the expected single or multi group import path
+		universe, err := getPkgsFromDirRecursive(expectedPkgPath)
+		if err != nil {
+			return olmapiv1alpha1.CRDDescription{}, err
 		}
-		return olmapiv1alpha1.CRDDescription{}, err
+		pkgTypes, err = getTypesForPkgPath(expectedPkgPath, universe)
+		if err != nil {
+			return olmapiv1alpha1.CRDDescription{}, err
+		}
+	} else {
+		// Unknown apis directory layout: <apis-dir>/.../<version>
+		// Look in <api-dir> recursively for expected pkg name <version>
+
+		// TODO: gengo.parse.AddDirRecursive() will (sometimes?) fail if the
+		// root apisDir has no .go files.
+		// Workaround for this is to have a doc.go file in the package.
+		// Move away from using gengo in the future if possible.
+		universe, err := getPkgsFromDirRecursive(apisDir)
+		if err != nil {
+			return olmapiv1alpha1.CRDDescription{}, err
+		}
+		pkgTypes, err = getTypesForPkgName(gvk.Version, universe)
+		if err != nil {
+			return olmapiv1alpha1.CRDDescription{}, err
+		}
 	}
-	apiPkg := path.Join(projutil.GetGoPkg(), filepath.ToSlash(apiDir))
-	pkgTypes, err := getTypesForPkg(apiPkg, universe)
-	if err != nil {
-		return olmapiv1alpha1.CRDDescription{}, err
-	}
+
 	kindType := findKindType(gvk.Kind, pkgTypes)
 	if kindType == nil {
 		return olmapiv1alpha1.CRDDescription{}, ErrAPITypeNotFound
@@ -119,15 +153,59 @@ func GetCRDDescriptionForGVK(apisDir string, gvk schema.GroupVersionKind) (olmap
 	return crdDesc, nil
 }
 
-// getTypesFromDir gets all Go types from dir.
-func getTypesFromDir(dir string) (types.Universe, error) {
+func isDirExist(path string) (bool, error) {
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	return fileInfo.IsDir(), nil
+}
+
+// getExpectedPkgLayout checks the directory layout in apisDir
+// for single and multi group layouts and returns the expected pkg path
+// for the group and version.
+// Returns empty string if neither single or multi group layout is detected
+// multi group path: <api-dir>/<group>/<version>
+// single group path: <api-dir>/<version>
+func getExpectedPkgLayout(apisDir, group, version string) (expectedPkgPath string, err error) {
+	groupVersionDir := filepath.Join(apisDir, group, version)
+	if isMultiGroupLayout, err := isDirExist(groupVersionDir); isMultiGroupLayout {
+		if err != nil {
+			return "", err
+		}
+		return groupVersionDir, nil
+	}
+	versionDir := filepath.Join(apisDir, version)
+	if isSingleGroupLayout, err := isDirExist(versionDir); isSingleGroupLayout {
+		if err != nil {
+			return "", err
+		}
+		return versionDir, nil
+	}
+	// Neither multi nor single group layout
+	return "", nil
+}
+
+// getPkgsFromDirRecursive gets all Go types from dir and recursively its sub directories.
+// dir must be the project relative path to the pkg directory
+func getPkgsFromDirRecursive(dir string) (types.Universe, error) {
 	if _, err := os.Stat(dir); err != nil {
 		return nil, err
 	}
+	p := parser.New()
+	// Gengo's AddDirRecursive fails to load subdir pkgs if the root dir
+	// isn't the full pkg import path, or begins with ./
+	// Use path relative to current dir
+	// TODO: Turn abs path into ./... relative path as well
 	if !filepath.IsAbs(dir) && !strings.HasPrefix(dir, ".") {
 		dir = fmt.Sprintf(".%s%s", string(filepath.Separator), dir)
 	}
-	p := parser.New()
+	// TODO(hasbro17): AddDirRecursive can be noisy with klog warnings
+	// when it skips directories with no .go files.
+	// Silence those warnings unless in debug mode.
 	if err := p.AddDirRecursive(dir); err != nil {
 		return nil, err
 	}
@@ -138,16 +216,34 @@ func getTypesFromDir(dir string) (types.Universe, error) {
 	return universe, nil
 }
 
-func getTypesForPkg(pkgPath string, universe types.Universe) (pkgTypes []*types.Type, err error) {
+// getTypesForPkgPath find the pkg with the given path in universe
+func getTypesForPkgPath(pkgPath string, universe types.Universe) (pkgTypes []*types.Type, err error) {
 	var pkg *types.Package
 	for _, upkg := range universe {
-		if strings.HasPrefix(upkg.Path, pkgPath) || strings.HasPrefix(upkg.Path, "."+string(filepath.Separator)) {
+		if strings.HasSuffix(upkg.Path, pkgPath) {
 			pkg = upkg
 			break
 		}
 	}
 	if pkg == nil {
 		return nil, fmt.Errorf("no package found for API %s", pkgPath)
+	}
+	for _, t := range pkg.Types {
+		pkgTypes = append(pkgTypes, t)
+	}
+	return pkgTypes, nil
+}
+
+func getTypesForPkgName(pkgName string, universe types.Universe) (pkgTypes []*types.Type, err error) {
+	var pkg *types.Package
+	for _, upkg := range universe {
+		if upkg.Name == pkgName {
+			pkg = upkg
+			break
+		}
+	}
+	if pkg == nil {
+		return nil, fmt.Errorf("no package found for %s", pkgName)
 	}
 	for _, t := range pkg.Types {
 		pkgTypes = append(pkgTypes, t)

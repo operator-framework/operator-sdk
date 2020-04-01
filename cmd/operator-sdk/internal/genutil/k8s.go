@@ -17,6 +17,7 @@ package genutil
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -33,6 +34,16 @@ import (
 // pkg/apis.
 func K8sCodegen() error {
 	projutil.MustInProjectRoot()
+
+	goEnv, err := exec.Command("go", "env", "GOROOT").CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to get GOROOT from go env: %w", err)
+	}
+	goRoot := strings.TrimSuffix(string(goEnv), "\n")
+	log.Debugf("Setting GOROOT=%s", goRoot)
+	if err := os.Setenv("GOROOT", goRoot); err != nil {
+		return fmt.Errorf("failed to set env GOROOT=%s: %w", goRoot, err)
+	}
 
 	repoPkg := projutil.GetGoPkg()
 

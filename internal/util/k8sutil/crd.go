@@ -23,6 +23,7 @@ import (
 	"regexp"
 
 	yaml "github.com/ghodss/yaml"
+	log "github.com/sirupsen/logrus"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/version"
 )
@@ -48,28 +49,34 @@ func GetCRDs(crdsDir string) ([]*apiextv1beta1.CustomResourceDefinition, error) 
 	return crds, nil
 }
 
-// GetCRDManifestPaths gets all CRD manifest paths in crdsDir and subdirs.
+// GetCRDManifestPaths returns all CRD manifest paths in crdsDir and subdirs.
 func GetCRDManifestPaths(crdsDir string) (crdPaths []string, err error) {
 	err = filepath.Walk(crdsDir, func(path string, info os.FileInfo, werr error) error {
 		if werr != nil {
 			return werr
 		}
-		if info == nil {
+
+		// Only read manifest from files, not directories
+		if info.IsDir() {
 			return nil
 		}
-		if !info.IsDir() {
-			b, err := ioutil.ReadFile(path)
-			if err != nil {
-				return fmt.Errorf("error reading manifest %s: %v", path, err)
-			}
-			typeMeta, err := GetTypeMetaFromBytes(b)
-			if err != nil {
-				return fmt.Errorf("error getting kind from manifest %s: %v", path, err)
-			}
-			if typeMeta.Kind == "CustomResourceDefinition" {
-				crdPaths = append(crdPaths, path)
-			}
+
+		b, err := ioutil.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("error reading manifest %s: %v", path, err)
 		}
+		// Skip files in crdsDir that aren't k8s manifests since we do not know
+		// what other files are in crdsDir.
+		typeMeta, err := GetTypeMetaFromBytes(b)
+		if err != nil {
+			log.Debugf("Skipping non-manifest file %s: %v", path, err)
+			return nil
+		}
+		if typeMeta.Kind != "CustomResourceDefinition" {
+			log.Debugf("Skipping non CRD manifest %s", path)
+			return nil
+		}
+		crdPaths = append(crdPaths, path)
 		return nil
 	})
 	return crdPaths, err

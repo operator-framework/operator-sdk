@@ -26,48 +26,86 @@ import (
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/gengo/types"
 )
 
-const testFrameworkPackage = "github.com/operator-framework/operator-sdk/test/test-framework"
-
-func getTestFrameworkDir(t *testing.T) string {
-	t.Helper()
-	absPath, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	sdkPath := absPath[:strings.Index(absPath, "internal")]
-	tfDir := filepath.Join(sdkPath, "test", "test-framework")
-	// parser.AddDirRecursive doesn't like absolute paths.
-	relPath, err := filepath.Rel(absPath, tfDir)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return relPath
-}
+var (
+	testDataDir = filepath.Join("..", "..", "testdata", "go")
+)
 
 func TestGetKindTypeForAPI(t *testing.T) {
-	cases := []struct {
+	multiAPIRootDir := filepath.Join("pkg", "apis")
+	singleAPIRootDir := "api"
+	group := "cache"
+	version := "v1alpha1"
+
+	subTests := []struct {
 		description string
-		pkg, kind   string
-		numPkgTypes int
-		wantNil     bool
+		// path to apis types root dir e.g pkg/apis
+		apisDir string
+		// path to kind api pkg e.g pkg/apis/cache/v1alpha1
+		expectedPkgPath string
+		group           string
+		version         string
+		kind            string
+		numPkgTypes     int
+		wantNil         bool
+		// True if apis dir in the expected single or multi group layout
+		isExpectedLayout bool
 	}{
 		{
-			"Find types successfully",
-			testFrameworkPackage, "Dummy", 22, false,
+			"Must Succeed: Find types for Kind from multi APIs root directory",
+			multiAPIRootDir,
+			filepath.Join(multiAPIRootDir, group, version),
+			group,
+			version,
+			"Dummy",
+			22,
+			false,
+			true,
 		},
 		{
-			"Find types with error from wrong kind",
-			testFrameworkPackage, "NotFound", 22, true,
+			"Must Fail: Find types for non-existing Kind from multi APIs root directory",
+			multiAPIRootDir,
+			filepath.Join(multiAPIRootDir, group, version),
+			group,
+			version,
+			"NotFound",
+			22,
+			true,
+			true,
 		},
+		{
+			"Must Succeed: Find types for Kind from single APIs root directory",
+			singleAPIRootDir,
+			filepath.Join(singleAPIRootDir, version),
+			group,
+			version,
+			"Memcached",
+			4,
+			false,
+			true,
+		},
+		{
+			"Must Fail: Find types for non-existing Kind from single APIs root directory",
+			singleAPIRootDir,
+			filepath.Join(singleAPIRootDir, version),
+			group,
+			version,
+			"NotFound",
+			4,
+			true,
+			true,
+		},
+		// TODO: Add cases for non-standard api dir layouts: pkg/apis/<foo>/<bar>/version
 	}
+
+	// Change directory to test data dir so the test cases can form the correct pkg imports
 	wd, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
 	}
-	tfDir := getTestFrameworkDir(t)
-	if err := os.Chdir(tfDir); err != nil {
+	if err := os.Chdir(testDataDir); err != nil {
 		t.Fatal(err)
 	}
 	defer func() {
@@ -75,40 +113,65 @@ func TestGetKindTypeForAPI(t *testing.T) {
 			t.Fatal(err)
 		}
 	}()
-	tfAPIDir := filepath.Join("pkg", "apis", "cache", "v1alpha1")
-	universe, err := getTypesFromDir(tfAPIDir)
-	if err != nil {
-		t.Fatal(err)
-	}
 
-	for _, c := range cases {
-		pkgTypes, err := getTypesForPkg(c.pkg, universe)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if n := len(pkgTypes); n != c.numPkgTypes {
-			t.Errorf("%s: expected %d package types, got %d", c.description, c.numPkgTypes, n)
-		}
-		kindType := findKindType(c.kind, pkgTypes)
-		if c.wantNil && kindType != nil {
-			t.Errorf("%s: expected type %q to not be found", c.description, kindType.Name)
-		}
-		if !c.wantNil && kindType == nil {
-			t.Errorf("%s: expected type %q to be found", c.description, c.kind)
-		}
-		if !c.wantNil && kindType != nil && kindType.Name.Name != c.kind {
-			t.Errorf("%s: expected type %q to have type name %q", c.description, kindType.Name, c.kind)
-		}
+	for _, st := range subTests {
+		t.Run(st.description, func(t *testing.T) {
+			expectedPkgPath, err := getExpectedPkgLayout(st.apisDir, st.group, st.version)
+			if err != nil {
+				t.Fatalf("Failed to getExpectedPkgLayout(%s, %s, %s): %v", st.apisDir, st.group, st.version, err)
+			}
+			if st.isExpectedLayout {
+				if expectedPkgPath == "" || !strings.HasSuffix(expectedPkgPath, st.expectedPkgPath) {
+					t.Fatalf("Expected (%s) as suffix to expected pkg path (%s)", st.expectedPkgPath, expectedPkgPath)
+				}
+			}
+
+			var pkgTypes []*types.Type
+			if st.isExpectedLayout {
+				universe, err := getPkgsFromDirRecursive(expectedPkgPath)
+				if err != nil {
+					t.Fatalf("Failed to get universe of types from API root directory (%s): %v)", st.apisDir, err)
+				}
+				pkgTypes, err = getTypesForPkgPath(expectedPkgPath, universe)
+				if err != nil {
+					t.Fatalf("Failed to get types of pkg path (%s) from API root directory(%s): %v)",
+						expectedPkgPath, st.apisDir, err)
+				}
+			} else {
+				universe, err := getPkgsFromDirRecursive(st.apisDir)
+				if err != nil {
+					t.Fatalf("Failed to get universe of types from API root directory (%s): %v)", st.apisDir, err)
+				}
+				pkgTypes, err = getTypesForPkgName(st.version, universe)
+				if err != nil {
+					t.Fatalf("Failed to get types of pkg name (%s) from API root directory(%s): %v)", st.version, st.apisDir, err)
+				}
+			}
+
+			if n := len(pkgTypes); n != st.numPkgTypes {
+				t.Errorf("Expected %d package types, got %d", st.numPkgTypes, n)
+			}
+			kindType := findKindType(st.kind, pkgTypes)
+			if st.wantNil && kindType != nil {
+				t.Errorf("Expected type %q to not be found", kindType.Name)
+			}
+			if !st.wantNil && kindType == nil {
+				t.Errorf("Expected type %q to be found", st.kind)
+			}
+			if !st.wantNil && kindType != nil && kindType.Name.Name != st.kind {
+				t.Errorf("Expected type %q to have type name %q", kindType.Name, st.kind)
+			}
+		})
 	}
 }
 
 func TestGetCRDDescriptionForGVK(t *testing.T) {
+
 	wd, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
 	}
-	tfDir := getTestFrameworkDir(t)
-	if err := os.Chdir(tfDir); err != nil {
+	if err := os.Chdir(testDataDir); err != nil {
 		t.Fatal(err)
 	}
 	defer func() {
@@ -123,6 +186,7 @@ func TestGetCRDDescriptionForGVK(t *testing.T) {
 		return xdescs
 	}
 
+	// TODO(hasbro17): Change to run as subtests
 	cases := []struct {
 		description string
 		apisDir     string
