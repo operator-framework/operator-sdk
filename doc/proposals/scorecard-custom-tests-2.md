@@ -309,7 +309,5 @@ The proposed changes to the scorecard solve the immediate need to support custom
 The proposed design focuses heavily on separation of concerns, turning scorecard into a test runner essentially, moving test implementations into their own concern (eg. container images).
 
 ## Reference Material
-
-[Original Proposal]<https://github.com/operator-framework/operator-sdk/pull/2624>
-
-[kuttl information] <https://github.com/kudobuilder/kuttl>
+([Original Proposal](https://github.com/operator-framework/operator-sdk/pull/2624))
+([kuttl information](https://github.com/kudobuilder/kuttl))
