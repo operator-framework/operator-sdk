@@ -201,7 +201,7 @@ func (t *BundleValidationTest) Run(ctx context.Context) *schelpers.TestResult {
 }
 
 // matchVersion checks if a CRD contains a specified version in a case insensitive manner
-func matchVersion(version string, crd *apiextv1beta1.CustomResourceDefinition) bool {
+func matchVersion(version string, crd apiextv1beta1.CustomResourceDefinition) bool {
 	if strings.EqualFold(version, crd.Spec.Version) {
 		return true
 	}
@@ -217,7 +217,7 @@ func matchVersion(version string, crd *apiextv1beta1.CustomResourceDefinition) b
 // Run - implements Test interface
 func (t *CRDsHaveValidationTest) Run(ctx context.Context) *schelpers.TestResult {
 	res := &schelpers.TestResult{Test: t, CRName: t.CR.GetName(), State: scapiv1alpha2.PassState}
-	crds, err := k8sutil.GetCRDs(t.CRDsDir)
+	crds, err := k8sutil.GetCustomResourceDefinitions(t.CRDsDir)
 	if err != nil {
 		res.Errors = append(res.Errors, fmt.Errorf("failed to get CRDs in %s directory: %v", t.CRDsDir, err))
 		res.State = scapiv1alpha2.ErrorState

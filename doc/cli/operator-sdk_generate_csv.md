@@ -17,7 +17,7 @@ CSV input flags:
 		(Deployment and Role/ClusterRole) present in this directory.
 
 	--apis-dir:
-		The CSV annotation comments will be parsed from the Go types under this path to 
+		The CSV annotation comments will be parsed from the Go types under this path to
 		fill out metadata for owned APIs in spec.customresourcedefinitions.owned.
 
 	--crd-dir:
@@ -105,7 +105,7 @@ operator-sdk generate csv [flags]
 
 ```
       --apis-dir string        Project relative path to root directory for API type defintions (default "pkg/apis")
-      --crd-dir string         Project relative path to root directory for CRD and CR manifests (default "deploy/crds")
+      --crd-dir string         Project relative path to root directory for CRD and CR manifests
       --csv-channel string     Channel the CSV should be registered under in the package manifest
       --csv-version string     Semantic version of the CSV
       --default-channel        Use the channel passed to --csv-channel as the package manifests' default channel. Only valid when --csv-channel is set

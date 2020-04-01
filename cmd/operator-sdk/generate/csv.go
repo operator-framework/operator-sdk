@@ -17,13 +17,11 @@ package generate
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 
 	"github.com/operator-framework/operator-sdk/internal/generate/gen"
 	gencatalog "github.com/operator-framework/operator-sdk/internal/generate/olm-catalog"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
-	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
@@ -63,7 +61,7 @@ CSV input flags:
 		(Deployment and Role/ClusterRole) present in this directory.
 
 	--apis-dir:
-		The CSV annotation comments will be parsed from the Go types under this path to 
+		The CSV annotation comments will be parsed from the Go types under this path to
 		fill out metadata for owned APIs in spec.customresourcedefinitions.owned.
 
 	--crd-dir:
@@ -151,10 +149,6 @@ CSV input flags:
 					"runs from the project root directory.")
 			}
 
-			// Default for crd dir if unset
-			if c.crdDir == "" {
-				c.crdDir = c.deployDir
-			}
 			if err := c.run(); err != nil {
 				log.Fatal(err)
 			}
@@ -178,7 +172,7 @@ CSV input flags:
 		`Project relative path to root directory for API type defintions`)
 	// TODO: Allow multiple paths
 	// CRD and CR manifests might be in different dirs e.g kubebuilder
-	cmd.Flags().StringVar(&c.crdDir, "crd-dir", filepath.Join("deploy", "crds"),
+	cmd.Flags().StringVar(&c.crdDir, "crd-dir", "",
 		`Project relative path to root directory for CRD and CR manifests`)
 
 	cmd.Flags().StringVar(&c.outputDir, "output-dir", scaffold.DeployDir,
@@ -199,6 +193,16 @@ CSV input flags:
 
 func (c csvCmd) run() error {
 	log.Infof("Generating CSV manifest version %s", c.csvVersion)
+
+	// Default crdDir differently if deployDir is set, since the CRD manifest dir
+	// is expected to be in a projects manifests (deploy) dir.
+	if c.crdDir == "" {
+		if c.deployDir != "" {
+			c.crdDir = filepath.Join(c.deployDir, "crds")
+		} else {
+			c.crdDir = filepath.Join("deploy", "crds")
+		}
+	}
 
 	if c.operatorName == "" {
 		c.operatorName = filepath.Base(projutil.MustGetwd())
@@ -226,17 +230,10 @@ func (c csvCmd) run() error {
 
 	// Write CRD's to the new or updated CSV package dir.
 	if c.updateCRDs {
-		crdManifestSet, err := findCRDFileSet(c.crdDir)
-		if err != nil {
-			return fmt.Errorf("failed to update CRD's: %v", err)
-		}
 		// TODO: This path should come from the CSV generator field csvOutputDir
 		bundleDir := filepath.Join(c.outputDir, gencatalog.OLMCatalogChildDir, c.operatorName, c.csvVersion)
-		for path, b := range crdManifestSet {
-			path = filepath.Join(bundleDir, path)
-			if err = ioutil.WriteFile(path, b, fileutil.DefaultFileMode); err != nil {
-				return fmt.Errorf("failed to update CRD's: %v", err)
-			}
+		if err := copyCustomResourceDefinitions(c.crdDir, bundleDir); err != nil {
+			return err
 		}
 	}
 
@@ -277,45 +274,49 @@ func validateVersion(version string) error {
 	return nil
 }
 
-// findCRDFileSet searches files in the given directory path for CRD manifests,
-// returning a map of paths to file contents.
-func findCRDFileSet(crdDir string) (map[string][]byte, error) {
-	crdFileSet := map[string][]byte{}
-	info, err := os.Stat(crdDir)
+// copyCustomResourceDefinitions copies all CustomResourceDefinition manifests
+// from fromDir to toDir with the same file name.
+func copyCustomResourceDefinitions(fromDir, toDir string) error {
+	infos, err := ioutil.ReadDir(fromDir)
 	if err != nil {
-		return nil, err
-	}
-	if !info.IsDir() {
-		return nil, fmt.Errorf("crd's must be read from a directory. %s is a file", crdDir)
-	}
-	files, err := ioutil.ReadDir(crdDir)
-	if err != nil {
-		return nil, err
+		return err
 	}
 
-	wd := projutil.MustGetwd()
-	for _, f := range files {
-		if f.IsDir() {
+	for _, info := range infos {
+		if info.IsDir() {
 			continue
 		}
 
-		crdPath := filepath.Join(wd, crdDir, f.Name())
-		b, err := ioutil.ReadFile(crdPath)
+		fromPath := filepath.Join(fromDir, info.Name())
+		b, err := ioutil.ReadFile(fromPath)
 		if err != nil {
-			return nil, fmt.Errorf("error reading manifest %s: %v", crdPath, err)
+			return fmt.Errorf("error reading manifest %s: %v", fromPath, err)
 		}
-		// Skip files in crdsDir that aren't k8s manifests since we do not know
-		// what other files are in crdsDir.
-		typeMeta, err := k8sutil.GetTypeMetaFromBytes(b)
-		if err != nil {
-			log.Debugf("Skipping non-manifest file %s: %v", crdPath, err)
-			continue
+
+		scanner := k8sutil.NewYAMLScanner(b)
+		manifests := []byte{}
+		for scanner.Scan() {
+			manifest := scanner.Bytes()
+			typeMeta, err := k8sutil.GetTypeMetaFromBytes(manifest)
+			if err != nil {
+				log.Debugf("Skipping non-manifest file %s: %v", fromPath, err)
+				continue
+			}
+			if typeMeta.Kind == "CustomResourceDefinition" {
+				manifests = k8sutil.CombineManifests(manifests, b)
+			}
 		}
-		if typeMeta.Kind != "CustomResourceDefinition" {
-			log.Debugf("Skipping non CRD manifest %s", crdPath)
-			continue
+		if err = scanner.Err(); err != nil {
+			return err
 		}
-		crdFileSet[filepath.Base(crdPath)] = b
+
+		if len(manifests) != 0 {
+			toPath := filepath.Join(toDir, info.Name())
+			if err = ioutil.WriteFile(toPath, manifests, info.Mode()); err != nil {
+				return fmt.Errorf("error writing CRD %s: %v", toPath, err)
+			}
+		}
 	}
-	return crdFileSet, nil
+
+	return nil
 }

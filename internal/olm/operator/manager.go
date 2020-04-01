@@ -24,7 +24,6 @@ import (
 	olmresourceclient "github.com/operator-framework/operator-sdk/internal/olm/client"
 	opinternal "github.com/operator-framework/operator-sdk/internal/olm/operator/internal"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 
 	manifests "github.com/operator-framework/api/pkg/manifests"
 	valerrors "github.com/operator-framework/api/pkg/validation/errors"
@@ -366,7 +365,7 @@ func readObjectsFromFile(path string) (objs []*unstructured.Unstructured, err er
 	if err != nil {
 		return nil, err
 	}
-	scanner := yamlutil.NewYAMLScanner(b)
+	scanner := k8sutil.NewYAMLScanner(b)
 	for scanner.Scan() {
 		u := &unstructured.Unstructured{}
 		if err := u.UnmarshalJSON(scanner.Bytes()); err != nil {
