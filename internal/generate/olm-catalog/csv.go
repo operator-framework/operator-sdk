@@ -20,7 +20,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/generate/gen"
@@ -35,9 +34,7 @@ import (
 	olmversion "github.com/operator-framework/operator-lifecycle-manager/pkg/lib/version"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 const (
@@ -192,6 +189,7 @@ func (g csvGenerator) generate() (fileMap map[string][]byte, err error) {
 		return nil, err
 	}
 
+	// TODO(estroz): replace with CSV validator from API library.
 	path := getCSVFileName(g.OperatorName, g.csvVersion)
 	if fields := getEmptyRequiredCSVFields(csv); len(fields) != 0 {
 		if g.existingCSVBundleDir != "" {
@@ -221,27 +219,19 @@ func getCSVFromDir(dir string) (*olmapiv1alpha1.ClusterServiceVersion, error) {
 	}
 	for _, info := range infos {
 		path := filepath.Join(dir, info.Name())
-		info, err := os.Stat(path)
-		if err != nil || info.IsDir() {
-			// Skip any directories or files accessed in error.
-			continue
+		// Only read manifest from files, not directories
+		if !info.IsDir() {
+			b, err := ioutil.ReadFile(path)
+			if err != nil {
+				return nil, fmt.Errorf("error reading manifest %s: %v", path, err)
+			}
+			csv := &olmapiv1alpha1.ClusterServiceVersion{}
+			if err := yaml.Unmarshal(b, csv); err != nil {
+				log.Debugf("Skipping manifest %s: %v", path, err)
+				continue
+			}
+			return csv, nil
 		}
-		b, err := ioutil.ReadFile(path)
-		if err != nil {
-			return nil, err
-		}
-		typeMeta, err := k8sutil.GetTypeMetaFromBytes(b)
-		if err != nil {
-			return nil, err
-		}
-		if typeMeta.Kind != olmapiv1alpha1.ClusterServiceVersionKind {
-			continue
-		}
-		csv := &olmapiv1alpha1.ClusterServiceVersion{}
-		if err := yaml.Unmarshal(b, csv); err != nil {
-			return nil, errors.Wrapf(err, "error unmarshalling CSV %s", path)
-		}
-		return csv, nil
 	}
 	return nil, fmt.Errorf("no CSV manifest in %s", dir)
 }
@@ -249,11 +239,7 @@ func getCSVFromDir(dir string) (*olmapiv1alpha1.ClusterServiceVersion, error) {
 // newCSV sets all csv fields that should be populated by a user
 // to sane defaults.
 func newCSV(name, version string) (*olmapiv1alpha1.ClusterServiceVersion, error) {
-	ver, err := semver.Parse(version)
-	if err != nil {
-		return nil, err
-	}
-	return &olmapiv1alpha1.ClusterServiceVersion{
+	csv := &olmapiv1alpha1.ClusterServiceVersion{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: olmapiv1alpha1.ClusterServiceVersionAPIVersion,
 			Kind:       olmapiv1alpha1.ClusterServiceVersionKind,
@@ -263,18 +249,17 @@ func newCSV(name, version string) (*olmapiv1alpha1.ClusterServiceVersion, error)
 			Namespace: "placeholder",
 			Annotations: map[string]string{
 				"capabilities": "Basic Install",
+				"alm-examples": "[]",
 			},
 		},
 		Spec: olmapiv1alpha1.ClusterServiceVersionSpec{
 			DisplayName: k8sutil.GetDisplayName(name),
-			Description: "",
 			Provider:    olmapiv1alpha1.AppLink{},
 			Maintainers: make([]olmapiv1alpha1.Maintainer, 1),
 			Links:       []olmapiv1alpha1.AppLink{},
 			Maturity:    "alpha",
-			Version:     olmversion.OperatorVersion{Version: ver},
 			Icon:        make([]olmapiv1alpha1.Icon, 1),
-			Keywords:    []string{""},
+			Keywords:    make([]string, 1),
 			InstallModes: []olmapiv1alpha1.InstallMode{
 				{Type: olmapiv1alpha1.InstallModeTypeOwnNamespace, Supported: true},
 				{Type: olmapiv1alpha1.InstallModeTypeSingleNamespace, Supported: true},
@@ -283,10 +268,25 @@ func newCSV(name, version string) (*olmapiv1alpha1.ClusterServiceVersion, error)
 			},
 			InstallStrategy: olmapiv1alpha1.NamedInstallStrategy{
 				StrategyName: olmapiv1alpha1.InstallStrategyNameDeployment,
-				StrategySpec: olmapiv1alpha1.StrategyDetailsDeployment{},
+				StrategySpec: olmapiv1alpha1.StrategyDetailsDeployment{
+					Permissions:        []olmapiv1alpha1.StrategyDeploymentPermissions{},
+					ClusterPermissions: []olmapiv1alpha1.StrategyDeploymentPermissions{},
+					DeploymentSpecs:    []olmapiv1alpha1.StrategyDeploymentSpec{},
+				},
 			},
 		},
-	}, nil
+	}
+
+	// An empty version string will evaluate to "v0.0.0".
+	if version != "" {
+		ver, err := semver.Parse(version)
+		if err != nil {
+			return nil, err
+		}
+		csv.Spec.Version = olmversion.OperatorVersion{Version: ver}
+	}
+
+	return csv, nil
 }
 
 // TODO: replace with validation library.
@@ -369,87 +369,24 @@ func (g csvGenerator) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVersio
 	}
 	csv.Spec.Version = olmversion.OperatorVersion{Version: ver}
 	csv.Spec.Replaces = oldCSVName
+
 	return nil
 }
 
 // updateCSVFromManifests gathers relevant data from generated and
 // user-defined manifests and updates csv.
 func (g csvGenerator) updateCSVFromManifests(csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
-	kindManifestMap := map[schema.GroupVersionKind][][]byte{}
-
-	// Read CRD and CR manifests from CRD dir
-	if err := updateFromManifests(g.Inputs[CRDsDirKey], kindManifestMap); err != nil {
-		return err
-	}
-
-	// Get owned CRDs from CRD manifests
-	ownedCRDs, err := getOwnedCRDs(kindManifestMap)
-	if err != nil {
-		return err
-	}
-
-	// Read Deployment and RBAC manifests from Deploy dir
-	if err := updateFromManifests(g.Inputs[DeployDirKey], kindManifestMap); err != nil {
-		return err
-	}
-
-	// Update CSV from all manifest types
-	crUpdaters := crs{}
-	for gvk, manifests := range kindManifestMap {
-		// We don't necessarily care about sorting by a field value, more about
-		// consistent ordering.
-		sort.Slice(manifests, func(i int, j int) bool {
-			return string(manifests[i]) < string(manifests[j])
-		})
-		switch gvk.Kind {
-		case "Role":
-			err = roles(manifests).apply(csv)
-		case "ClusterRole":
-			err = clusterRoles(manifests).apply(csv)
-		case "Deployment":
-			err = deployments(manifests).apply(csv)
-		case "CustomResourceDefinition":
-			err = crds(manifests).apply(csv)
-		default:
-			// Only update CR examples for owned CRD types
-			if _, ok := ownedCRDs[gvk]; ok {
-				crUpdaters = append(crUpdaters, crs(manifests)...)
-			} else {
-				log.Infof("Skipping manifest %s", gvk)
-			}
-		}
+	// Collect all manifests in paths.
+	collection := manifestCollection{}
+	err = filepath.Walk(g.Inputs[DeployDirKey], func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-	}
-	err = updateDescriptions(csv, g.Inputs[APIsDirKey])
-	if err != nil {
-		return fmt.Errorf("error updating CSV customresourcedefinitions: %w", err)
-	}
-	// Re-sort CR's since they are appended in random order.
-	if len(crUpdaters) != 0 {
-		sort.Slice(crUpdaters, func(i int, j int) bool {
-			return string(crUpdaters[i]) < string(crUpdaters[j])
-		})
-		if err = crUpdaters.apply(csv); err != nil {
-			return err
+		// Only read manifest from files, not directories
+		if info.IsDir() {
+			return nil
 		}
-	}
-	return nil
-}
 
-func updateFromManifests(dir string, kindManifestMap map[schema.GroupVersionKind][][]byte) error {
-	files, err := ioutil.ReadDir(dir)
-	if err != nil {
-		return err
-	}
-	// Read and scan all files into kindManifestMap
-	wd := projutil.MustGetwd()
-	for _, f := range files {
-		if f.IsDir() {
-			continue
-		}
-		path := filepath.Join(wd, dir, f.Name())
 		b, err := ioutil.ReadFile(path)
 		if err != nil {
 			return err
@@ -459,43 +396,65 @@ func updateFromManifests(dir string, kindManifestMap map[schema.GroupVersionKind
 			manifest := scanner.Bytes()
 			typeMeta, err := k8sutil.GetTypeMetaFromBytes(manifest)
 			if err != nil {
-				log.Infof("No TypeMeta in %s, skipping file", path)
+				log.Debugf("No TypeMeta in %s, skipping file", path)
 				continue
 			}
-
-			gvk := typeMeta.GroupVersionKind()
-			kindManifestMap[gvk] = append(kindManifestMap[gvk], manifest)
+			switch typeMeta.GroupVersionKind().Kind {
+			case "Role":
+				err = collection.addRoles(manifest)
+			case "ClusterRole":
+				err = collection.addClusterRoles(manifest)
+			case "Deployment":
+				err = collection.addDeployments(manifest)
+			case "CustomResourceDefinition":
+				// Skip for now and add explicitly from CRDsDir input.
+			default:
+				err = collection.addOthers(manifest)
+			}
+			if err != nil {
+				return err
+			}
 		}
-		if scanner.Err() != nil {
-			return scanner.Err()
+		return scanner.Err()
+	})
+	if err != nil {
+		return fmt.Errorf("failed to walk manifests directory for CSV updates: %v", err)
+	}
+
+	// Add CRDs from input.
+	crdsDir := g.Inputs[CRDsDirKey]
+	if _, err := os.Stat(crdsDir); err == nil || os.IsExist(err) {
+		collection.CustomResourceDefinitions, err = k8sutil.GetCustomResourceDefinitions(crdsDir)
+		if err != nil {
+			return err
 		}
 	}
+
+	// Filter the collection based on data collected.
+	collection.filter()
+
+	// Remove duplicate manifests.
+	if err = collection.deduplicate(); err != nil {
+		return fmt.Errorf("error removing duplicate manifests: %v", err)
+	}
+
+	// Apply manifests to the CSV object.
+	if err = collection.apply(csv); err != nil {
+		return fmt.Errorf("error building CSV: %v", err)
+	}
+
+	// Update descriptions from the APIs dir.
+	// FEAT(estroz): customresourcedefinition should not be updated for
+	// Ansible and Helm CSV's until annotated updates are implemented.
+	if projutil.IsOperatorGo() {
+		err = updateDescriptions(csv, g.Inputs[APIsDirKey])
+		if err != nil {
+			return fmt.Errorf("error updating CSV customresourcedefinitions: %w", err)
+		}
+	}
+
+	// Finally sort all updated fields.
+	sortUpdates(csv)
+
 	return nil
-}
-
-func getOwnedCRDs(kindManifestMap map[schema.GroupVersionKind][][]byte) (map[schema.GroupVersionKind]struct{}, error) {
-	ownedCRDs := map[schema.GroupVersionKind]struct{}{}
-	for gvk, manifests := range kindManifestMap {
-		if gvk.Kind != "CustomResourceDefinition" {
-			continue
-		}
-		// Collect CRD kinds to filter them out from unsupported manifest types.
-		// The CRD version type doesn't matter as long as it has a group, kind,
-		// and versions in the expected fields.
-		for _, manifest := range manifests {
-			crd := v1beta1.CustomResourceDefinition{}
-			if err := yaml.Unmarshal(manifest, &crd); err != nil {
-				return ownedCRDs, err
-			}
-			for _, ver := range crd.Spec.Versions {
-				crGVK := schema.GroupVersionKind{
-					Group:   crd.Spec.Group,
-					Version: ver.Name,
-					Kind:    crd.Spec.Names.Kind,
-				}
-				ownedCRDs[crGVK] = struct{}{}
-			}
-		}
-	}
-	return ownedCRDs, nil
 }
