@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scorecard2
+package scorecard
 
 import (
 	log "github.com/sirupsen/logrus"
@@ -25,7 +25,6 @@ var (
 	selector string
 )
 
-//scorecard2 alpha command stub
 func NewCmd() *cobra.Command {
 	scorecardCmd := &cobra.Command{
 		Use:    "scorecard",
@@ -39,7 +38,7 @@ func NewCmd() *cobra.Command {
 
 	scorecardCmd.Flags().StringVar(&dsl, "dsl", "", "path to a new to be defined DSL yaml formatted file that configures what tests get executed")
 	scorecardCmd.Flags().StringVar(&bundle, "bundle", "", "path to the operator bundle contents on disk")
-	scorecardCmd.Flags().StringVar(&selector, "selector", "", "label selector to determine which tests are run")
+	scorecardCmd.Flags().StringVarP(&selector, "selector", "l", "", "label selector to determine which tests are run")
 
 	return scorecardCmd
 }
