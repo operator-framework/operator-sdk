@@ -1105,9 +1105,9 @@ which ./bin/openapi-gen > /dev/null || go build -o ./bin/openapi-gen k8s.io/kube
 
 #### Molecule Upgrade for Ansible based-operators
 
-The Molecule version for Ansible based-operators was upgrade from `2.22` to `3.0.2`. Following the changes required in the default scaffold files.
+The Molecule version for Ansible based-operators was upgraded from `2.22` to `3.0.2`. The following changes are required in the default scaffold files.
 
-- Remove the `scenario.name` from molecule.yaml, and ensure that any condition with in the `verify.yaml` will look for the folder name which determines the scenario name from now on
+- Remove the `scenario.name` from `molecule.yaml` and then, ensure that any condition with will look for the folder name which determines the scenario name from now on
 - Replace the lint with newer syntax from [documentation](https://molecule.readthedocs.io/en/latest/configuration.html#lint). See:
 
 Replace:
@@ -1146,8 +1146,8 @@ lint: |
   ansible-lint
 ```
 
-- Rename `molecule/playbook.yml` to `molecule/converge.yml` to avoid a deprecation message.
-- Update the `.travis` file to install the supported lints as follows. 
+- Rename `molecule/$SCENARIO/playbook.yml` to `molecule/$SCENARIO/converge.yml` to avoid a deprecation message.
+- Update the `.travis.yml` file to install the supported lints as follows. 
 
 Replace:
 
