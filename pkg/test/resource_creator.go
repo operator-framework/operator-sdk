@@ -21,8 +21,9 @@ import (
 	"os"
 	"time"
 
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
+
 	"github.com/ghodss/yaml"
-	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 	core "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -103,7 +104,7 @@ func (ctx *Context) createFromYAML(yamlFile []byte, skipIfExists bool, cleanupOp
 	if err != nil {
 		return err
 	}
-	scanner := yamlutil.NewYAMLScanner(yamlFile)
+	scanner := k8sutil.NewYAMLScanner(yamlFile)
 	for scanner.Scan() {
 		yamlSpec := scanner.Bytes()
 

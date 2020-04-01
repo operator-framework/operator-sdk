@@ -27,7 +27,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 
 	"github.com/ghodss/yaml"
 	log "github.com/sirupsen/logrus"
@@ -191,7 +190,7 @@ func (g crdGenerator) generateGo() (map[string][]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error reading cached CRD file %s: %w", path, err)
 		}
-		scanner := yamlutil.NewYAMLScanner(b)
+		scanner := k8sutil.NewYAMLScanner(b)
 		modifiedCRD := []byte{}
 		for scanner.Scan() {
 			crd := unstructured.Unstructured{}
@@ -221,7 +220,7 @@ func (g crdGenerator) generateGo() (map[string][]byte, error) {
 			if err != nil {
 				return nil, fmt.Errorf("error marshalling CRD %s: %w", crd.GetName(), err)
 			}
-			modifiedCRD = yamlutil.CombineManifests(modifiedCRD, b)
+			modifiedCRD = k8sutil.CombineManifests(modifiedCRD, b)
 		}
 		if err = scanner.Err(); err != nil {
 			return nil, fmt.Errorf("error scanning CRD manifest %s: %w", path, err)

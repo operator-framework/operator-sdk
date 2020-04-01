@@ -43,6 +43,7 @@
 - Fixed issue in CSV generation that caused an incorrect path to be generated for descriptors on types that are fields in array elements. ([#2721](https://github.com/operator-framework/operator-sdk/pull/2721))
 - The test framework `pkg/test` no longer double-registers the `--kubeconfig` flag. Related bug: [kubernetes-sigs/controller-runtime#878](https://github.com/kubernetes-sigs/controller-runtime/issues/878). ([#2731](https://github.com/operator-framework/operator-sdk/pull/2731))
 - The command `operator-sdk generate k8s` no longer requires users to explicitly set GOROOT in their environment. Now, GOROOT is detected using `go env GOROOT` and set automatically. ([#2754](https://github.com/operator-framework/operator-sdk/pull/2754))
+- `operator-sdk generate csv` and `operator-sdk test local` now parse mutli-manifest files correctly. ([#2758](https://github.com/operator-framework/operator-sdk/pull/2758))
 
 ## v0.16.0
 

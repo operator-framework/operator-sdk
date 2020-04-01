@@ -28,7 +28,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 
 	"github.com/blang/semver"
 	"github.com/ghodss/yaml"
@@ -455,7 +454,7 @@ func updateFromManifests(dir string, kindManifestMap map[schema.GroupVersionKind
 		if err != nil {
 			return err
 		}
-		scanner := yamlutil.NewYAMLScanner(b)
+		scanner := k8sutil.NewYAMLScanner(b)
 		for scanner.Scan() {
 			manifest := scanner.Bytes()
 			typeMeta, err := k8sutil.GetTypeMetaFromBytes(manifest)

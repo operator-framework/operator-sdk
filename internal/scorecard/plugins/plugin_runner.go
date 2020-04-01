@@ -31,8 +31,7 @@ import (
 	"github.com/operator-framework/api/pkg/validation"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	schelpers "github.com/operator-framework/operator-sdk/internal/scorecard/helpers"
-	k8sInternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
+	internalk8sutil "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 
 	"github.com/ghodss/yaml"
@@ -95,7 +94,7 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig,
 
 	var tmpNamespaceVar string
 	var err error
-	kubeconfig, tmpNamespaceVar, err = k8sInternal.GetKubeconfigAndNamespace(config.Kubeconfig)
+	kubeconfig, tmpNamespaceVar, err = internalk8sutil.GetKubeconfigAndNamespace(config.Kubeconfig)
 	if err != nil {
 		return scapiv1alpha2.ScorecardOutput{}, fmt.Errorf("failed to build the kubeconfig: %v", err)
 	}
@@ -139,7 +138,7 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig,
 		// If no namespaced manifest path is given, combine
 		// deploy/{service_account,role.yaml,role_binding,operator}.yaml.
 		if config.NamespacedManifest == "" {
-			file, err := yamlutil.GenerateCombinedNamespacedManifest(scaffold.DeployDir)
+			file, err := internalk8sutil.GenerateCombinedNamespacedManifest(scaffold.DeployDir)
 			if err != nil {
 				return scapiv1alpha2.ScorecardOutput{}, err
 			}
@@ -157,7 +156,7 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig,
 			if config.CRDsDir == "" {
 				config.CRDsDir = filepath.Join(scaffold.DeployDir, "crds")
 			}
-			gMan, err := yamlutil.GenerateCombinedGlobalManifest(config.CRDsDir)
+			gMan, err := internalk8sutil.GenerateCombinedGlobalManifest(config.CRDsDir)
 			if err != nil {
 				return scapiv1alpha2.ScorecardOutput{}, err
 			}
