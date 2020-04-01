@@ -77,6 +77,8 @@ func MustInProjectRoot() {
 
 // CheckProjectRoot checks if the current dir is the project root, and returns
 // an error if not.
+// TODO(hasbro17): Change this to check for go.mod
+// "build/Dockerfile" may not be present in all projects
 func CheckProjectRoot() error {
 	// If the current directory has a "build/Dockerfile", then it is safe to say
 	// we are at the project root.
@@ -113,9 +115,19 @@ func getHomeDir() (string, error) {
 	return homedir.Expand(hd)
 }
 
+// TODO(hasbro17): If this function is called in the subdir of
+// a module project it will fail to parse go.mod and return
+// the correct import path.
+// This needs to be fixed to return the pkg import path for any subdir
+// in order for `generate csv` to correctly form pkg imports
+// for API pkg paths that are not relative to the root dir.
+// This might not be fixable since there is no good way to
+// get the project root from inside the subdir of a module project.
+//
 // GetGoPkg returns the current directory's import path by parsing it from
 // wd if this project's repository path is rooted under $GOPATH/src, or
 // from go.mod the project uses Go modules to manage dependencies.
+// If the project has a go.mod then wd must be the project root.
 //
 // Example: "github.com/example-inc/app-operator"
 func GetGoPkg() string {

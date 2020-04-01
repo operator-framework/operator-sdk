@@ -19,8 +19,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	olmcatalog "github.com/operator-framework/operator-sdk/internal/generate/olm-catalog"
 	olmoperator "github.com/operator-framework/operator-sdk/internal/olm/operator"
-	olmcatalog "github.com/operator-framework/operator-sdk/internal/scaffold/olm-catalog"
 	k8sinternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
