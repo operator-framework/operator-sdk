@@ -1,5 +1,7 @@
 channels:
-- currentCSV: memcached-operator.v0.0.3
+- currentCSV: memcached-operator.v0.0.1
+  name: alpha
+- currentCSV: memcached-operator.v0.0.4
   name: stable
 defaultChannel: stable
 packageName: memcached-operator

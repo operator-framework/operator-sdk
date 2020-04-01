@@ -15,10 +15,6 @@
 package olmcatalog
 
 import (
-	"io/ioutil"
-	"log"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/operator-framework/operator-registry/pkg/registry"
@@ -31,50 +27,33 @@ func TestGeneratePkgManifestToOutput(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testNonStandardLayoutDataDir)
 	defer cleanupFunc()
 
-	// Temporary output dir for generating catalog bundle
-	outputDir, err := ioutil.TempDir("", t.Name()+"-output-catalog")
-	if err != nil {
-		log.Fatal(err)
-	}
-	// Clean up output catalog dir
-	defer func() {
-		if err := os.RemoveAll(outputDir); err != nil && !os.IsNotExist(err) {
-			// Not a test failure since files in /tmp will eventually get deleted
-			t.Logf("Failed to remove tmp generated catalog directory (%s): %v", outputDir, err)
-		}
-	}()
-
 	cfg := gen.Config{
 		OperatorName: testProjectName,
-		OutputDir:    outputDir,
+		OutputDir:    "expected-catalog",
 	}
-
-	g := NewPackageManifest(cfg, csvVersion, "stable", true)
-	if err := g.Generate(); err != nil {
+	g := NewPackageManifest(cfg, csvVersion, "beta", false)
+	fileMap, err := g.(pkgGenerator).generate()
+	if err != nil {
 		t.Fatalf("Failed to execute package manifest generator: %v", err)
 	}
 
-	pkgManFileName := getPkgFileName(testProjectName)
-
-	// Read expected Package Manifest
-	expCatalogDir := filepath.Join("expected-catalog", OLMCatalogChildDir)
-	pkgManExpBytes, err := ioutil.ReadFile(filepath.Join(expCatalogDir, testProjectName, pkgManFileName))
-	if err != nil {
-		t.Fatalf("Failed to read expected package manifest file: %v", err)
+	if b, ok := fileMap[g.(pkgGenerator).fileName]; !ok {
+		t.Error("Failed to generate package manifest")
+	} else {
+		assert.Equal(t, packageManifestNonStandardExp, string(b))
 	}
-	pkgManExp := string(pkgManExpBytes)
-
-	// Read generated Package Manifest from OutputDir/olm-catalog
-	outputCatalogDir := filepath.Join(cfg.OutputDir, OLMCatalogChildDir)
-	pkgManOutputBytes, err := ioutil.ReadFile(filepath.Join(outputCatalogDir, testProjectName, pkgManFileName))
-	if err != nil {
-		t.Fatalf("Failed to read output package manifest file: %v", err)
-	}
-	pkgManOutput := string(pkgManOutputBytes)
-
-	assert.Equal(t, pkgManExp, pkgManOutput)
-
 }
+
+const packageManifestNonStandardExp = `channels:
+- currentCSV: memcached-operator.v0.0.1
+  name: alpha
+- currentCSV: memcached-operator.v0.0.3
+  name: beta
+- currentCSV: memcached-operator.v0.0.4
+  name: stable
+defaultChannel: stable
+packageName: memcached-operator
+`
 
 func TestGeneratePackageManifest(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testGoDataDir)

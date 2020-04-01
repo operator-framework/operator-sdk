@@ -123,7 +123,7 @@ func (g pkgGenerator) generate() (map[string][]byte, error) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return nil, nil
 	} else if err == nil || os.IsExist(err) {
-		projutil.PrintDeprecationWarning("Package manifests are no longer updated. " +
+		projutil.PrintDeprecationWarning("Package manifests are deprecated. " +
 			"Run `operator-sdk bundle create --generate-only` to create operator metadata")
 		b, err := ioutil.ReadFile(path)
 		if err != nil {
