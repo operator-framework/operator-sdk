@@ -27,10 +27,14 @@ import (
 	"github.com/operator-framework/operator-registry/pkg/registry"
 	"github.com/operator-framework/operator-sdk/internal/generate/gen"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	"github.com/ghodss/yaml"
 	log "github.com/sirupsen/logrus"
 )
+
+// Deprecated: The package manifest generator will no longer create new package
+// manifests, only update existing ones. This generator will be removed in v0.19.0.
 
 const (
 	PackageManifestFileExt = ".package.yaml"
@@ -83,7 +87,7 @@ func (g pkgGenerator) Generate() error {
 		return err
 	}
 	if len(fileMap) == 0 {
-		return errors.New("error generating package manifest: no generated file found")
+		return nil
 	}
 	if err = os.MkdirAll(g.OutputDir, fileutil.DefaultDirFileMode); err != nil {
 		return fmt.Errorf("error mkdir %s: %v", g.OutputDir, err)
@@ -100,17 +104,29 @@ func (g pkgGenerator) Generate() error {
 // generate either reads an existing package manifest or creates a new
 // manifest and modifies it based on values set in s.
 func (g pkgGenerator) generate() (map[string][]byte, error) {
-	pkg, err := g.buildPackageManifest()
-	if err != nil {
-		return nil, err
+	path := filepath.Join(g.Inputs[ManifestsDirKey], g.fileName)
+	pkg := registry.PackageManifest{}
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return nil, nil
+	} else if err == nil || os.IsExist(err) {
+		projutil.PrintDeprecationWarning("Package manifests are no longer updated. " +
+			"Run `operator-sdk bundle create --generate-only` to create operator metadata")
+		b, err := ioutil.ReadFile(path)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read package manifest %s: %v", path, err)
+		}
+		if err = yaml.Unmarshal(b, &pkg); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal package manifest %s: %v", path, err)
+		}
+	} else {
+		return nil, fmt.Errorf("error reading package manifest %s: %v", path, err)
 	}
 
 	g.setChannels(&pkg)
 	sortChannelsByName(&pkg)
 
 	if err := validatePackageManifest(&pkg); err != nil {
-		log.Error(err)
-		os.Exit(1)
+		return nil, err
 	}
 
 	b, err := yaml.Marshal(pkg)
@@ -126,6 +142,7 @@ func (g pkgGenerator) generate() (map[string][]byte, error) {
 
 // buildPackageManifest will create a registry.PackageManifest from scratch, or modify
 // an existing one if found at the expected path.
+// Deprecated: only used for testing other methods on g.
 func (g pkgGenerator) buildPackageManifest() (registry.PackageManifest, error) {
 	pkg := registry.PackageManifest{}
 	path := filepath.Join(g.Inputs[ManifestsDirKey], g.fileName)
@@ -175,7 +192,8 @@ func validatePackageManifest(pkg *registry.PackageManifest) error {
 	return nil
 }
 
-// newPackageManifest will return the registry.PackageManifest populated
+// newPackageManifest will return the registry.PackageManifest populated.
+// Deprecated: only used for testing other methods on g.
 func newPackageManifest(operatorName, channelName, version string) registry.PackageManifest {
 	// Take the current CSV version to be the "alpha" channel, as an operator
 	// should only be designated anything more stable than "alpha" by a human.

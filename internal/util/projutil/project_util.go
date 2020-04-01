@@ -40,6 +40,8 @@ const (
 	rolesDir        = "roles"
 	helmChartsDir   = "helm-charts"
 	goModFile       = "go.mod"
+
+	noticeColor = "\033[1;36m%s\033[0m"
 )
 
 // OperatorType - the type of operator
@@ -270,4 +272,10 @@ func CheckGoModules() error {
 			` More info: https://github.com/operator-framework/operator-sdk/blob/master/doc/user-guide.md#go-modules`)
 	}
 	return nil
+}
+
+// PrintDeprecationWarning prints a colored warning wrapping msg to the terminal.
+func PrintDeprecationWarning(msg string) {
+	fmt.Printf(noticeColor, "[Deprecation Notice] "+msg+". Refer to the version upgrade guide "+
+		"for more information: https://operator-sdk.netlify.com/docs/migration/version-upgrade-guide\n\n")
 }
