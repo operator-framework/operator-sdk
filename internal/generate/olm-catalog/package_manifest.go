@@ -117,7 +117,8 @@ func (g pkgGenerator) Generate() error {
 // generate either reads an existing package manifest or creates a new
 // manifest and modifies it based on values set in s.
 func (g pkgGenerator) generate() (map[string][]byte, error) {
-	path := filepath.Join(g.Inputs[ManifestsDirKey], g.fileName)
+	pkgManifestOutputDir := filepath.Join(g.OutputDir, OLMCatalogChildDir, g.OperatorName)
+	path := filepath.Join(pkgManifestOutputDir, g.fileName)
 	pkg := registry.PackageManifest{}
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return nil, nil
@@ -157,16 +158,16 @@ func (g pkgGenerator) generate() (map[string][]byte, error) {
 // an existing one if found at the expected path.
 // Deprecated: only used for testing other methods on g.
 func (g pkgGenerator) buildPackageManifest() (registry.PackageManifest, error) {
+	pkgManifestOutputDir := filepath.Join(g.OutputDir, OLMCatalogChildDir, g.OperatorName)
+	path := filepath.Join(pkgManifestOutputDir, g.fileName)
 	pkg := registry.PackageManifest{}
-	olmCatalogDir := filepath.Join(g.OutputDir, OLMCatalogChildDir)
-	existingPkgManifest := filepath.Join(olmCatalogDir, g.OperatorName, g.fileName)
-	if isFileExist(existingPkgManifest) {
-		b, err := ioutil.ReadFile(existingPkgManifest)
+	if isFileExist(path) {
+		b, err := ioutil.ReadFile(path)
 		if err != nil {
-			return pkg, fmt.Errorf("failed to read package manifest %s: %v", existingPkgManifest, err)
+			return pkg, fmt.Errorf("failed to read package manifest %s: %v", path, err)
 		}
 		if err = yaml.Unmarshal(b, &pkg); err != nil {
-			return pkg, fmt.Errorf("failed to unmarshal package manifest %s: %v", existingPkgManifest, err)
+			return pkg, fmt.Errorf("failed to unmarshal package manifest %s: %v", path, err)
 		}
 	} else {
 		pkg = newPackageManifest(g.OperatorName, g.channel, g.csvVersion)
