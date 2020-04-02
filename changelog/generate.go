@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"flag"
 	"fmt"
@@ -19,24 +20,56 @@ func main() {
 		title         string
 		fragmentsDir  string
 		changelogFile string
+		migrationFile string
 	)
 
-	flag.StringVar(&title, "title", "", "Title for generated CHANGELOG and migration guide sections")
-	flag.StringVar(&fragmentsDir, "fragments-dir", filepath.Join("changelog", "fragments"), "Path to changelog fragments directory")
-	flag.StringVar(&changelogFile, "changelog", "CHANGELOG.md", "Path to CHANGELOG.md")
+	flag.StringVar(&title, "title", "",
+		"Title for generated CHANGELOG and migration guide sections")
+	flag.StringVar(&fragmentsDir, "fragments-dir", filepath.Join("changelog", "fragments"),
+		"Path to changelog fragments directory")
+	flag.StringVar(&changelogFile, "changelog", "CHANGELOG.md",
+		"Path to CHANGELOG")
+	flag.StringVar(&migrationFile, "migration-guide",
+		filepath.Join("website", "content", "en", "docs", "migration", "version-upgrade-guide.md"),
+		"Path to migration guide")
 	flag.Parse()
 
 	if title == "" {
 		log.Fatalf("flag '-title' is required!")
 	}
-	files, err := ioutil.ReadDir(fragmentsDir)
+
+	entries, err := LoadEntries(fragmentsDir)
 	if err != nil {
-		log.Fatalf("failed to read fragments directory: %v", err)
+		log.Fatalf("failed to load fragments: %v", err)
+	}
+	if len(entries) == 0 {
+		log.Fatalf("no entries found")
 	}
 
-	changelog := map[EntryKind][]string{}
-	haveEntries := false
+	if err := UpdateChangelog(Config{
+		File:    changelogFile,
+		Title:   title,
+		Entries: entries,
+	}); err != nil {
+		log.Fatalf("failed to update CHANGELOG: %v", err)
+	}
 
+	if err := UpdateMigrationGuide(Config{
+		File:    migrationFile,
+		Title:   title,
+		Entries: entries,
+	}); err != nil {
+		log.Fatalf("failed to update migration guide: %v", err)
+	}
+}
+
+func LoadEntries(fragmentsDir string) ([]Entry, error) {
+	files, err := ioutil.ReadDir(fragmentsDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read fragments directory: %w", err)
+	}
+
+	var entries []Entry
 	for _, fragFile := range files {
 		if fragFile.Name() == "00-template.yaml" {
 			continue
@@ -52,30 +85,31 @@ func main() {
 		path := filepath.Join(fragmentsDir, fragFile.Name())
 		f, err := os.Open(path)
 		if err != nil {
-			log.Fatalf("Failed to open fragment file %q: %v", fragFile.Name(), err)
+			return nil, fmt.Errorf("failed to open fragment file %q: %w", fragFile.Name(), err)
 		}
 
 		decoder := yaml.NewDecoder(f)
-		fragment := &Fragment{}
-		if err := decoder.Decode(fragment); err != nil {
-			log.Fatalf("Failed to parse fragment file %q: %v", fragFile.Name(), err)
+		fragment := Fragment{}
+		if err := decoder.Decode(&fragment); err != nil {
+			return nil, fmt.Errorf("failed to parse fragment file %q: %w", fragFile.Name(), err)
 		}
 
 		if err := fragment.Validate(); err != nil {
-			log.Fatalf("Failed to validate fragment file %q: %v", fragFile.Name(), err)
+			return nil, fmt.Errorf("failed to validate fragment file %q: %w", fragFile.Name(), err)
 		}
 
-		for _, e := range fragment.Entries {
-			changelog[e.Kind] = append(changelog[e.Kind], e.ToChangelogString())
-			haveEntries = true
-		}
+		entries = append(entries, fragment.Entries...)
+	}
+	return entries, nil
+}
+
+func UpdateChangelog(c Config) error {
+	changelog := map[EntryKind][]string{}
+	for _, e := range c.Entries {
+		changelog[e.Kind] = append(changelog[e.Kind], e.ToChangelogString())
 	}
 
-	if !haveEntries {
-		log.Fatal("No new CHANGELOG entries found!")
-	}
-
-	var sb strings.Builder
+	var bb bytes.Buffer
 	order := []EntryKind{
 		Addition,
 		Change,
@@ -83,23 +117,55 @@ func main() {
 		Deprecation,
 		Bugfix,
 	}
-	sb.WriteString(fmt.Sprintf("## %s\n\n", title))
+	bb.WriteString(fmt.Sprintf("## %s\n\n", c.Title))
 	for _, k := range order {
 		if entries, ok := changelog[k]; ok {
-			sb.WriteString(k.ToHeader() + "\n\n")
+			bb.WriteString(k.ToHeader() + "\n\n")
 			for _, e := range entries {
-				sb.WriteString(e + "\n")
+				bb.WriteString(e + "\n")
 			}
-			sb.WriteString("\n")
+			bb.WriteString("\n")
 		}
 	}
 
-	existingFile, err := ioutil.ReadFile(changelogFile)
+	existingFile, err := ioutil.ReadFile(c.File)
 	if err != nil {
-		log.Infof("No existing CHANGELOG file to prepend to")
+		return fmt.Errorf("could not read CHANGELOG: %v", err)
 	}
-	sb.Write(existingFile)
-	fmt.Print(sb.String())
+	bb.Write(existingFile)
+
+	if err := ioutil.WriteFile(c.File, bb.Bytes(), 0644); err != nil {
+		return fmt.Errorf("could not write CHANGELOG file: %v", err)
+	}
+	return nil
+}
+
+func UpdateMigrationGuide(c Config) error {
+	var bb bytes.Buffer
+	existingFile, err := ioutil.ReadFile(c.File)
+	if err != nil {
+		return fmt.Errorf("could not read migration guide: %v", err)
+	}
+	bb.Write(bytes.Trim(existingFile, "\n"))
+
+	bb.WriteString(fmt.Sprintf("\n\n## %s\n\n", c.Title))
+	haveMigrations := false
+	for _, e := range c.Entries {
+		if e.Migration != nil {
+			haveMigrations = true
+			bb.WriteString(fmt.Sprintf("### %s\n\n", e.Migration.Header))
+			bb.WriteString(fmt.Sprintf("%s\n\n", strings.Trim(e.Migration.Body, "\n")))
+			bb.WriteString(fmt.Sprintf("See %s for more details.\n\n", e.PullRequestLink()))
+		}
+	}
+	if !haveMigrations {
+		bb.WriteString("There are no migrations for this release! :tada:\n\n")
+	}
+
+	if err := ioutil.WriteFile(c.File, bytes.TrimSuffix(bb.Bytes(), []byte("\n")), 0644); err != nil {
+		return fmt.Errorf("could not write migration guide: %v", err)
+	}
+	return nil
 }
 
 type Fragment struct {
@@ -142,8 +208,14 @@ func (k EntryKind) ToHeader() string {
 }
 
 type Migration struct {
-	Title string `yaml:"title"`
-	Body  string `yaml:"body"`
+	Header string `yaml:"header"`
+	Body   string `yaml:"body"`
+}
+
+type Config struct {
+	File    string
+	Title   string
+	Entries []Entry
 }
 
 func (f *Fragment) Validate() error {
@@ -185,9 +257,14 @@ func (e Entry) ToChangelogString() string {
 		text = fmt.Sprintf("%s.", text)
 	}
 	if e.PullRequest != nil {
-		text = fmt.Sprintf("%s ([#%d](https://github.com/operator-framework/operator-sdk/pull/%d))", text, *e.PullRequest, *e.PullRequest)
+		text = fmt.Sprintf("%s (%s)", text, e.PullRequestLink())
 	}
 	return fmt.Sprintf("- %s", text)
+}
+
+func (e Entry) PullRequestLink() string {
+	const repo = "github.com/operator-framework/operator-sdk"
+	return fmt.Sprintf("[#%d](https://%s/pull/%d)", *e.PullRequest, repo, *e.PullRequest)
 }
 
 func (k EntryKind) Validate() error {
@@ -200,8 +277,8 @@ func (k EntryKind) Validate() error {
 }
 
 func (m Migration) Validate() error {
-	if len(m.Title) == 0 {
-		return errors.New("title not specified")
+	if len(m.Header) == 0 {
+		return errors.New("header not specified")
 	}
 	if len(m.Body) == 0 {
 		return errors.New("body not specified")
