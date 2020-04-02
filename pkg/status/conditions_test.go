@@ -70,12 +70,10 @@ func withLastTransitionTime(c Condition, t time.Time) Condition {
 }
 
 func TestConditionDeepCopy(t *testing.T) {
-	var n *Condition
-	assert.Nil(t, n.DeepCopy())
-
 	a := generateCondition("A", corev1.ConditionTrue)
-	aCopy := a.DeepCopy()
-	if &a == aCopy {
+	var aCopy Condition
+	a.DeepCopyInto(&aCopy)
+	if &a == &aCopy {
 		t.Errorf("Expected and actual point to the same object: %p %#v", &a, &a)
 	}
 	if &a.Status == &aCopy.Status {
@@ -159,6 +157,11 @@ func TestConditionsGetNotExists(t *testing.T) {
 
 	actualCondition := conditions.GetCondition(ConditionType("B"))
 	assert.Nil(t, actualCondition)
+}
+
+func TestConditionsRemoveFromNilConditions(t *testing.T) {
+	var conditions *Conditions = nil
+	assert.False(t, conditions.RemoveCondition(ConditionType("C")))
 }
 
 func TestConditionsRemoveNotExists(t *testing.T) {

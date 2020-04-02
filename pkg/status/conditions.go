@@ -73,19 +73,13 @@ func (c Condition) IsUnknown() bool {
 	return c.Status == corev1.ConditionUnknown
 }
 
-// DeepCopy returns a deep copy of the condition
-func (c *Condition) DeepCopy() *Condition {
-	if c == nil {
-		return nil
-	}
-	out := *c
-	return &out
+// DeepCopyInto copies in into out.
+func (c *Condition) DeepCopyInto(cpy *Condition) {
+	*cpy = *c
 }
 
 // Conditions is a set of Condition instances.
-//
-// +kubebuilder:validation:Type=array
-type Conditions map[ConditionType]Condition
+type Conditions []Condition
 
 // NewConditions initializes a set of conditions with the given list of
 // conditions.
@@ -101,8 +95,10 @@ func NewConditions(conds ...Condition) Conditions {
 // ConditionType. If found, it returns `condition.IsTrue()`. If not found,
 // it returns false.
 func (conditions Conditions) IsTrueFor(t ConditionType) bool {
-	if condition, ok := conditions[t]; ok {
-		return condition.IsTrue()
+	for _, condition := range conditions {
+		if condition.Type == t {
+			return condition.IsTrue()
+		}
 	}
 	return false
 }
@@ -111,8 +107,10 @@ func (conditions Conditions) IsTrueFor(t ConditionType) bool {
 // ConditionType. If found, it returns `condition.IsFalse()`. If not found,
 // it returns false.
 func (conditions Conditions) IsFalseFor(t ConditionType) bool {
-	if condition, ok := conditions[t]; ok {
-		return condition.IsFalse()
+	for _, condition := range conditions {
+		if condition.Type == t {
+			return condition.IsFalse()
+		}
 	}
 	return false
 }
@@ -121,8 +119,10 @@ func (conditions Conditions) IsFalseFor(t ConditionType) bool {
 // ConditionType. If found, it returns `condition.IsUnknown()`. If not found,
 // it returns true.
 func (conditions Conditions) IsUnknownFor(t ConditionType) bool {
-	if condition, ok := conditions[t]; ok {
-		return condition.IsUnknown()
+	for _, condition := range conditions {
+		if condition.Type == t {
+			return condition.IsUnknown()
+		}
 	}
 	return true
 }
@@ -131,24 +131,21 @@ func (conditions Conditions) IsUnknownFor(t ConditionType) bool {
 // condition. It returns a boolean value indicating whether the set condition
 // is new or was a change to the existing condition with the same type.
 func (conditions *Conditions) SetCondition(newCond Condition) bool {
-	if conditions == nil || *conditions == nil {
-		*conditions = make(map[ConditionType]Condition)
-	}
 	newCond.LastTransitionTime = metav1.Time{Time: clock.Now()}
 
-	if condition, ok := (*conditions)[newCond.Type]; ok {
-		// If the condition status didn't change, use the existing
-		// condition's last transition time.
-		if condition.Status == newCond.Status {
-			newCond.LastTransitionTime = condition.LastTransitionTime
+	for i, condition := range *conditions {
+		if condition.Type == newCond.Type {
+			if condition.Status == newCond.Status {
+				newCond.LastTransitionTime = condition.LastTransitionTime
+			}
+			changed := condition.Status != newCond.Status ||
+				condition.Reason != newCond.Reason ||
+				condition.Message != newCond.Message
+			(*conditions)[i] = newCond
+			return changed
 		}
-		changed := condition.Status != newCond.Status ||
-			condition.Reason != newCond.Reason ||
-			condition.Message != newCond.Message
-		(*conditions)[newCond.Type] = newCond
-		return changed
 	}
-	(*conditions)[newCond.Type] = newCond
+	*conditions = append(*conditions, newCond)
 	return true
 }
 
@@ -156,8 +153,10 @@ func (conditions *Conditions) SetCondition(newCond Condition) bool {
 // ConditionType and returns it. If the matching condition is not found,
 // GetCondition returns nil.
 func (conditions Conditions) GetCondition(t ConditionType) *Condition {
-	if condition, ok := conditions[t]; ok {
-		return &condition
+	for _, condition := range conditions {
+		if condition.Type == t {
+			return &condition
+		}
 	}
 	return nil
 }
@@ -167,12 +166,14 @@ func (conditions Conditions) GetCondition(t ConditionType) *Condition {
 // returns without performing any action. If the passed condition type is not
 // found in the set of conditions, RemoveCondition returns false.
 func (conditions *Conditions) RemoveCondition(t ConditionType) bool {
-	if conditions == nil || *conditions == nil {
+	if conditions == nil {
 		return false
 	}
-	if _, ok := (*conditions)[t]; ok {
-		delete(*conditions, t)
-		return true
+	for i, condition := range *conditions {
+		if condition.Type == t {
+			*conditions = append((*conditions)[:i], (*conditions)[i+1:]...)
+			return true
+		}
 	}
 	return false
 }
@@ -180,25 +181,9 @@ func (conditions *Conditions) RemoveCondition(t ConditionType) bool {
 // MarshalJSON marshals the set of conditions as a JSON array, sorted by
 // condition type.
 func (conditions Conditions) MarshalJSON() ([]byte, error) {
-	conds := []Condition{}
-	for _, condition := range conditions {
-		conds = append(conds, condition)
-	}
+	conds := []Condition(conditions)
 	sort.Slice(conds, func(a, b int) bool {
 		return conds[a].Type < conds[b].Type
 	})
 	return json.Marshal(conds)
-}
-
-// UnmarshalJSON unmarshals the JSON data into the set of Conditions.
-func (conditions *Conditions) UnmarshalJSON(data []byte) error {
-	*conditions = make(map[ConditionType]Condition)
-	conds := []Condition{}
-	if err := json.Unmarshal(data, &conds); err != nil {
-		return err
-	}
-	for _, condition := range conds {
-		(*conditions)[condition.Type] = condition
-	}
-	return nil
 }

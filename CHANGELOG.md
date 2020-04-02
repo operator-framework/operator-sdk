@@ -23,6 +23,7 @@
 - Upgrade `operator-registry` version from `v1.5.7`to `v1.6.2`. ([#2715](https://github.com/operator-framework/operator-sdk/pull/2715))
 - **Breaking Change:** [`operator-sdk bundle create`](./doc/cli/operator-sdk_bundle_create.md) now creates a `manifests/` directory under the parent directory of the argument passed to `--directory`, and setting `--generate-only=true` writes a Dockerfile to `<project-root>/bundle.Dockerfile` that copies bundle manifests from that `manifests/` directory. ([#2715](https://github.com/operator-framework/operator-sdk/pull/2715))
 - Upgrade Kind used for tests for Ansible based-operators from `1.16` to `1.17`. ([#2753](https://github.com/operator-framework/operator-sdk/pull/2715))
+- **Breaking Change:** Changed Conditions from `map[ConditionType]Condition` to `[]Condition`. ([#2739](https://github.com/operator-framework/operator-sdk/pull/2739))
 
 ### Deprecated
 
@@ -43,7 +44,8 @@
 - Fixed issue in CSV generation that caused an incorrect path to be generated for descriptors on types that are fields in array elements. ([#2721](https://github.com/operator-framework/operator-sdk/pull/2721))
 - The test framework `pkg/test` no longer double-registers the `--kubeconfig` flag. Related bug: [kubernetes-sigs/controller-runtime#878](https://github.com/kubernetes-sigs/controller-runtime/issues/878). ([#2731](https://github.com/operator-framework/operator-sdk/pull/2731))
 - The command `operator-sdk generate k8s` no longer requires users to explicitly set GOROOT in their environment. Now, GOROOT is detected using `go env GOROOT` and set automatically. ([#2754](https://github.com/operator-framework/operator-sdk/pull/2754))
-- `operator-sdk generate csv` and `operator-sdk test local` now parse mutli-manifest files correctly. ([#2758](https://github.com/operator-framework/operator-sdk/pull/2758))
+- `operator-sdk generate csv` and `operator-sdk test local` now parse multi-manifest files correctly. ([#2758](https://github.com/operator-framework/operator-sdk/pull/2758))
+- Fixed CRD validation generation issue with `status.Conditions`. ([#2739](https://github.com/operator-framework/operator-sdk/pull/2739))
 
 ## v0.16.0
 
