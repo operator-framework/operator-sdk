@@ -16,7 +16,6 @@ package alpha
 
 type ScorecardTest struct {
 	Name        string            `yaml:"name"`                 // The container test name
-	Parallel    bool              `yaml:"parallel"`             // Specifies if this test can be run in parallel
 	Image       string            `yaml:"image"`                // The container image name
 	Entrypoint  string            `yaml:"entrypoint,omitempty"` // An optional entrypoint passed to the test image
 	Labels      map[string]string `yaml:"labels"`               // User defined labels used to filter tests
