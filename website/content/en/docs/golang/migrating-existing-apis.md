@@ -1,4 +1,8 @@
-# Migrating Existing Kubernetes APIs
+---
+title: Migrating Existing Kubernetes APIs
+linkTitle: Migrating existing APIs
+weight: 3
+---
 
 Kubernetes APIs are assumed to evolve over time, hence the well-defined API [versioning scheme][k8s-versioning]. Upgrading your operator's APIs can be a non-trivial task, one that will involve changing quite a few source files and manifests. This document aims to identify the complexities of migrating an operator project's API using examples from existing operators.
 
@@ -212,7 +216,7 @@ Kubernetes 1.11+ supports CRD [`spec.versions`][crd-versions] and `spec.version`
 **Notes:**
 - `<full group>` is the full group name of your CRD while `<group>` is the last subdomain of `<full group>`, ex. `foo.bar.com` vs `foo`. `<resource>` is the plural lower-case of CRD `Kind` specified at `spec.names.plural`.
 - Your CRD *must* specify exactly one [storage version][crd-storage-version]. Use the `+kubebuilder:storageversion` [marker][crd-markers] to indicate the GVK that should be used to store data by the API server. This marker should be in a comment above your `CatalogSourceConfig` type.
-- If your operator does not have custom data manually added to its CRD's, you can skip to the [following section](#golang-api-migrations-types-and-commonalities); `operator-sdk generate crds` will handle CRD updates in that case.
+- If your operator does not have custom data manually added to its CRD's, you can skip to the [following section][api-migrations-types-and-commonalities]; `operator-sdk generate crds` will handle CRD updates in that case.
 
 Upgrading from `spec.version` to `spec.versions` will be demonstrated using the following CRD manifest example:
 
@@ -291,7 +295,7 @@ Steps to upgrade the above CRD:
 
     The first version in `spec.versions` *must* match that in `spec.version` if `spec.version` exists in the manifest.
 
-1. *Optional:* `spec.versions` elements have a `schema` field that holds a version-specific OpenAPIV3 validation block to override the global `spec.validation` block. `spec.validation` will be used by the API server to validate one or more versions in `spec.versions` that do not have a `schema` block. If all versions have the same schema, leave `spec.validation` as-is and skip to the [following section](#golang-api-migrations-types-and-commonalities). If your CRD versions differ in scheme, copy `spec.validation` YAML to the `schema` field in each `spec.versions` element, then modify as needed:
+1. *Optional:* `spec.versions` elements have a `schema` field that holds a version-specific OpenAPIV3 validation block to override the global `spec.validation` block. `spec.validation` will be used by the API server to validate one or more versions in `spec.versions` that do not have a `schema` block. If all versions have the same schema, leave `spec.validation` as-is and skip to the [following section][api-migrations-types-and-commonalities]. If your CRD versions differ in scheme, copy `spec.validation` YAML to the `schema` field in each `spec.versions` element, then modify as needed:
 
     ```yaml
     spec:
@@ -335,7 +339,7 @@ Steps to upgrade the above CRD:
 
     **Note:** read the [CRD versioning][crd-versions] docs for detailed CRD information, notes on conversion webhooks, and CRD versioning case studies.
 
-1. *Optional:* `spec.versions` elements have a `subresources` field that holds CR subresource information to override the global `spec.subresources` block. `spec.subresources` will be used by the API server to assess subresource requirements of any version in `spec.versions` that does not have a `subresources` block. If all versions have the same requirements, leave `spec.subresources` as-is and skip to the [following section](#golang-api-migrations-types-and-commonalities). If CRD versions differ in subresource requirements, add a `subresources` section in each `spec.versions` entry with differing requirements and add each subresource's spec and status as needed:
+1. *Optional:* `spec.versions` elements have a `subresources` field that holds CR subresource information to override the global `spec.subresources` block. `spec.subresources` will be used by the API server to assess subresource requirements of any version in `spec.versions` that does not have a `subresources` block. If all versions have the same requirements, leave `spec.subresources` as-is and skip to the [following section][api-migrations-types-and-commonalities]. If CRD versions differ in subresource requirements, add a `subresources` section in each `spec.versions` entry with differing requirements and add each subresource's spec and status as needed:
 
     ```yaml
     spec:
@@ -407,3 +411,4 @@ TODO
 [crd-conv-webhook]:https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definition-versioning/#configure-customresourcedefinition-to-use-conversion-webhooks
 [kubebuilder-api-annotations]:https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 [crd-version-deprecated]:https://github.com/kubernetes/apiextensions-apiserver/commit/d1c6536f26319513417b12245c6e3aee5ca005ca
+[api-migrations-types-and-commonalities]: /docs/golang/migrating-existing-apis/#go-api-migrations-types-and-commonalities

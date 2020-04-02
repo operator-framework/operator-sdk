@@ -1,4 +1,8 @@
-# Running your Operator with OLM
+---
+title: Running your Operator with OLM
+linkTitle: Running with OLM
+weight: 20
+---
 
 The [Operator Lifecycle Manager (OLM)][olm] is a set of cluster resources that
 manage the lifecycle of an Operator. The Operator SDK provides an entrypoint for
