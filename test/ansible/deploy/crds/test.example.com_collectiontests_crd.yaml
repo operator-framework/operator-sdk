@@ -17,6 +17,6 @@ spec:
       type: object
       x-kubernetes-preserve-unknown-fields: true
   versions:
-  - name: v1alpha1
-    served: true
-    storage: true
+    - name: v1alpha1
+      served: true
+      storage: true

@@ -3,9 +3,6 @@ dependency:
   name: galaxy
 driver:
   name: docker
-lint:
-  name: yamllint
-  enabled: False
 platforms:
 - name: kind-test-local
   groups:
@@ -23,9 +20,6 @@ platforms:
     - ${MOLECULE_PROJECT_DIRECTORY}:/build:Z
 provisioner:
   name: ansible
-  lint:
-    name: ansible-lint
-    enabled: False
   inventory:
     group_vars:
       all:
@@ -43,7 +37,6 @@ provisioner:
     KIND_PORT: '${TEST_CLUSTER_PORT:-10443}'
   log: True
 scenario:
-  name: test-local
   test_sequence:
     - lint
     - destroy
@@ -57,5 +50,6 @@ scenario:
     - destroy
 verifier:
   name: ansible
-  lint:
-    name: ansible-lint
+  lint: |
+    set -e
+    ansible-lint

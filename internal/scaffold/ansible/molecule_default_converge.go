@@ -21,25 +21,25 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 )
 
-const MoleculeDefaultPlaybookFile = "playbook.yml"
+const MoleculeDefaultConvergeFile = "converge.yml"
 
-type MoleculeDefaultPlaybook struct {
+type MoleculeDefaultConverge struct {
 	input.Input
 	GeneratePlaybook bool
 	Resource         scaffold.Resource
 }
 
 // GetInput - gets the input
-func (m *MoleculeDefaultPlaybook) GetInput() (input.Input, error) {
+func (m *MoleculeDefaultConverge) GetInput() (input.Input, error) {
 	if m.Path == "" {
-		m.Path = filepath.Join(MoleculeDefaultDir, MoleculeDefaultPlaybookFile)
+		m.Path = filepath.Join(MoleculeDefaultDir, MoleculeDefaultConvergeFile)
 	}
-	m.TemplateBody = moleculeDefaultPlaybookAnsibleTmpl
+	m.TemplateBody = moleculeDefaultConvergeAnsibleTmpl
 	m.Delims = AnsibleDelims
 	return m.Input, nil
 }
 
-const moleculeDefaultPlaybookAnsibleTmpl = `---
+const moleculeDefaultConvergeAnsibleTmpl = `---
 [[- if .GeneratePlaybook ]]
 - import_playbook: '{{ playbook_dir }}/../../playbook.yml'
 [[- end ]]
