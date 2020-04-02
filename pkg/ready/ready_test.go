@@ -55,3 +55,17 @@ func TestFileReady(t *testing.T) {
 		t.Errorf("Could not unset ready file when already removed: %v", err)
 	}
 }
+
+func TestAlreadyExistsNoError(t *testing.T) {
+	f, err := os.Create(FileName)
+	if err != nil {
+		t.Errorf("Could not create test ready file: %v", err)
+	}
+	defer f.Close()
+
+	r := NewFileReady()
+	err = r.Set()
+	if err != nil {
+		t.Errorf("Could not set ready file: %v", err)
+	}
+}
