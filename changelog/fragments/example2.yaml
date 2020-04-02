@@ -4,6 +4,7 @@ entries:
       It's a great change!
     kind: change
     breaking: false
+    pull_request: 3001
 
   - description: >
       Here is another change from the same PR. Using '>' means
@@ -11,6 +12,7 @@ entries:
       just one line.
     kind: change
     breaking: true
+    pull_request: 3001
     migration:
       header: Breaking changes must have migrations
       body: >
@@ -20,3 +22,4 @@ entries:
   - description: Here's a bug we fixed!
     kind: bugfix
     breaking: false
+    pull_request: 3003

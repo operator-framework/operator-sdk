@@ -7,7 +7,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -98,6 +101,19 @@ func loadEntries(fragmentsDir string) ([]entry, error) {
 			return nil, fmt.Errorf("failed to validate fragment file %q: %w", fragFile.Name(), err)
 		}
 
+		prNum, err := getPullRequest(path)
+		if err != nil {
+			log.Warnf("failed to get PR for fragment file %q: %v", fragFile.Name(), err)
+		}
+
+		if prNum != 0 {
+			for i, e := range fragment.Entries {
+				if e.PullRequest == nil {
+					fragment.Entries[i].PullRequest = &prNum
+				}
+			}
+		}
+
 		entries = append(entries, fragment.Entries...)
 	}
 	return entries, nil
@@ -155,7 +171,9 @@ func updateMigrationGuide(c config) error {
 			haveMigrations = true
 			bb.WriteString(fmt.Sprintf("### %s\n\n", e.Migration.Header))
 			bb.WriteString(fmt.Sprintf("%s\n\n", strings.Trim(e.Migration.Body, "\n")))
-			bb.WriteString(fmt.Sprintf("See %s for more details.\n\n", e.pullRequestLink()))
+			if e.PullRequest != nil {
+				bb.WriteString(fmt.Sprintf("See %s for more details.\n\n", e.pullRequestLink()))
+			}
 		}
 	}
 	if !haveMigrations {
@@ -265,6 +283,25 @@ func (e entry) toChangelogString() string {
 func (e entry) pullRequestLink() string {
 	const repo = "github.com/operator-framework/operator-sdk"
 	return fmt.Sprintf("[#%d](https://%s/pull/%d)", *e.PullRequest, repo, *e.PullRequest)
+}
+
+func getPullRequest(filename string) (uint, error) {
+	args := fmt.Sprintf("log --follow --pretty=format:%%s --diff-filter=A --find-renames=40%% %s", filename)
+	line, err := exec.Command("git", strings.Split(args, " ")...).CombinedOutput()
+	if err != nil {
+		return 0, fmt.Errorf("failed to locate git commit for PR discovery: %v", err)
+	}
+
+	numRegex := regexp.MustCompile(`\(#(\d+)\)$`)
+	matches := numRegex.FindAllStringSubmatch(string(line), 1)
+	if len(matches) == 0 || len(matches[0]) < 2 {
+		return 0, fmt.Errorf("could not find PR number in commit message")
+	}
+	u64, err := strconv.ParseUint(matches[0][1], 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse PR number %q from commit message: %v", matches[0][1], err)
+	}
+	return uint(u64), nil
 }
 
 func (k entryKind) validate() error {
