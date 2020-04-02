@@ -19,7 +19,7 @@ type ScorecardTest struct {
 	Parallel    bool              `yaml:"parallel"`             // Specifies if this test can be run in parallel
 	Image       string            `yaml:"image"`                // The container image name
 	Entrypoint  string            `yaml:"entrypoint,omitempty"` // An optional entrypoint passed to the test image
-	Labels      map[string]string `yaml:"labels"`               // User defined labels which are used by scorecard to filter tests
+	Labels      map[string]string `yaml:"labels"`               // User defined labels used to filter tests
 	Description string            `yaml:"description"`          // User readable test description
 }
 
