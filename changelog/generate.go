@@ -38,15 +38,15 @@ func main() {
 		log.Fatalf("flag '-title' is required!")
 	}
 
-	entries, err := LoadEntries(fragmentsDir)
+	entries, err := loadEntries(fragmentsDir)
 	if err != nil {
 		log.Fatalf("failed to load fragments: %v", err)
 	}
 	if len(entries) == 0 {
-		log.Fatalf("no entries found")
+		log.Fatalf("no Entries found")
 	}
 
-	if err := UpdateChangelog(Config{
+	if err := updateChangelog(config{
 		File:    changelogFile,
 		Title:   title,
 		Entries: entries,
@@ -54,7 +54,7 @@ func main() {
 		log.Fatalf("failed to update CHANGELOG: %v", err)
 	}
 
-	if err := UpdateMigrationGuide(Config{
+	if err := updateMigrationGuide(config{
 		File:    migrationFile,
 		Title:   title,
 		Entries: entries,
@@ -63,13 +63,13 @@ func main() {
 	}
 }
 
-func LoadEntries(fragmentsDir string) ([]Entry, error) {
+func loadEntries(fragmentsDir string) ([]entry, error) {
 	files, err := ioutil.ReadDir(fragmentsDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read fragments directory: %w", err)
 	}
 
-	var entries []Entry
+	var entries []entry
 	for _, fragFile := range files {
 		if fragFile.Name() == "00-template.yaml" {
 			continue
@@ -89,12 +89,12 @@ func LoadEntries(fragmentsDir string) ([]Entry, error) {
 		}
 
 		decoder := yaml.NewDecoder(f)
-		fragment := Fragment{}
+		fragment := fragment{}
 		if err := decoder.Decode(&fragment); err != nil {
 			return nil, fmt.Errorf("failed to parse fragment file %q: %w", fragFile.Name(), err)
 		}
 
-		if err := fragment.Validate(); err != nil {
+		if err := fragment.validate(); err != nil {
 			return nil, fmt.Errorf("failed to validate fragment file %q: %w", fragFile.Name(), err)
 		}
 
@@ -103,24 +103,24 @@ func LoadEntries(fragmentsDir string) ([]Entry, error) {
 	return entries, nil
 }
 
-func UpdateChangelog(c Config) error {
-	changelog := map[EntryKind][]string{}
+func updateChangelog(c config) error {
+	changelog := map[entryKind][]string{}
 	for _, e := range c.Entries {
-		changelog[e.Kind] = append(changelog[e.Kind], e.ToChangelogString())
+		changelog[e.Kind] = append(changelog[e.Kind], e.toChangelogString())
 	}
 
 	var bb bytes.Buffer
-	order := []EntryKind{
-		Addition,
-		Change,
-		Removal,
-		Deprecation,
-		Bugfix,
+	order := []entryKind{
+		addition,
+		change,
+		removal,
+		deprecation,
+		bugfix,
 	}
 	bb.WriteString(fmt.Sprintf("## %s\n\n", c.Title))
 	for _, k := range order {
 		if entries, ok := changelog[k]; ok {
-			bb.WriteString(k.ToHeader() + "\n\n")
+			bb.WriteString(k.toHeader() + "\n\n")
 			for _, e := range entries {
 				bb.WriteString(e + "\n")
 			}
@@ -140,7 +140,7 @@ func UpdateChangelog(c Config) error {
 	return nil
 }
 
-func UpdateMigrationGuide(c Config) error {
+func updateMigrationGuide(c config) error {
 	var bb bytes.Buffer
 	existingFile, err := ioutil.ReadFile(c.File)
 	if err != nil {
@@ -155,7 +155,7 @@ func UpdateMigrationGuide(c Config) error {
 			haveMigrations = true
 			bb.WriteString(fmt.Sprintf("### %s\n\n", e.Migration.Header))
 			bb.WriteString(fmt.Sprintf("%s\n\n", strings.Trim(e.Migration.Body, "\n")))
-			bb.WriteString(fmt.Sprintf("See %s for more details.\n\n", e.PullRequestLink()))
+			bb.WriteString(fmt.Sprintf("See %s for more details.\n\n", e.pullRequestLink()))
 		}
 	}
 	if !haveMigrations {
@@ -168,72 +168,72 @@ func UpdateMigrationGuide(c Config) error {
 	return nil
 }
 
-type Fragment struct {
-	Entries []Entry `yaml:"entries"`
+type fragment struct {
+	Entries []entry `yaml:"entries"`
 }
 
-type Entry struct {
+type entry struct {
 	Description string     `yaml:"description"`
-	Kind        EntryKind  `yaml:"kind"`
+	Kind        entryKind  `yaml:"kind"`
 	Breaking    bool       `yaml:"breaking"`
-	Migration   *Migration `yaml:"migration,omitempty"`
+	Migration   *migration `yaml:"migration,omitempty"`
 	PullRequest *uint      `yaml:"pull_request,omitempty"`
 }
 
-type EntryKind string
+type entryKind string
 
 const (
-	Addition    EntryKind = "addition"
-	Change      EntryKind = "change"
-	Removal     EntryKind = "removal"
-	Deprecation EntryKind = "deprecation"
-	Bugfix      EntryKind = "bugfix"
+	addition    entryKind = "addition"
+	change      entryKind = "change"
+	removal     entryKind = "removal"
+	deprecation entryKind = "deprecation"
+	bugfix      entryKind = "bugfix"
 )
 
-func (k EntryKind) ToHeader() string {
+func (k entryKind) toHeader() string {
 	switch k {
-	case Addition:
+	case addition:
 		return "### Additions"
-	case Change:
+	case change:
 		return "### Changes"
-	case Removal:
+	case removal:
 		return "### Removals"
-	case Deprecation:
+	case deprecation:
 		return "### Deprecations"
-	case Bugfix:
+	case bugfix:
 		return "### Bug Fixes"
 	default:
-		panic("invalid entry kind; NOTE TO DEVELOPERS: check EntryKind.Validate")
+		panic("invalid entry kind; NOTE TO DEVELOPERS: check entryKind.validate")
 	}
 }
 
-type Migration struct {
+type migration struct {
 	Header string `yaml:"header"`
 	Body   string `yaml:"body"`
 }
 
-type Config struct {
+type config struct {
 	File    string
 	Title   string
-	Entries []Entry
+	Entries []entry
 }
 
-func (f *Fragment) Validate() error {
+func (f *fragment) validate() error {
 	for i, e := range f.Entries {
-		if err := e.Validate(); err != nil {
+		if err := e.validate(); err != nil {
 			return fmt.Errorf("entry[%d] invalid: %v", i, err)
 		}
 	}
 	return nil
 }
 
-func (e *Entry) Validate() error {
-	if err := e.Kind.Validate(); err != nil {
+func (e *entry) validate() error {
+	if err := e.Kind.validate(); err != nil {
 		return fmt.Errorf("invalid kind: %v", err)
 	}
 
-	if e.Breaking && e.Kind != Change && e.Kind != Removal {
-		return fmt.Errorf("breaking changes can only be kind %q or %q, got %q", Change, Removal, e.Kind)
+	if e.Breaking && e.Kind != change && e.Kind != removal {
+		return fmt.Errorf("breaking changes can only be kind %q or %q, got %q", change, removal, e.Kind)
 	}
 
 	if e.Breaking && e.Migration == nil {
@@ -241,34 +241,34 @@ func (e *Entry) Validate() error {
 	}
 
 	if e.Migration != nil {
-		if err := e.Migration.Validate(); err != nil {
+		if err := e.Migration.validate(); err != nil {
 			return fmt.Errorf("invalid migration: %v", err)
 		}
 	}
 	return nil
 }
 
-func (e Entry) ToChangelogString() string {
+func (e entry) toChangelogString() string {
 	text := strings.Trim(e.Description, "\n")
 	if e.Breaking {
-		text = fmt.Sprintf("**Breaking Change**: %s", text)
+		text = fmt.Sprintf("**Breaking change**: %s", text)
 	}
 	if !strings.HasSuffix(text, ".") && !strings.HasSuffix(text, "!") {
 		text = fmt.Sprintf("%s.", text)
 	}
 	if e.PullRequest != nil {
-		text = fmt.Sprintf("%s (%s)", text, e.PullRequestLink())
+		text = fmt.Sprintf("%s (%s)", text, e.pullRequestLink())
 	}
 	return fmt.Sprintf("- %s", text)
 }
 
-func (e Entry) PullRequestLink() string {
+func (e entry) pullRequestLink() string {
 	const repo = "github.com/operator-framework/operator-sdk"
 	return fmt.Sprintf("[#%d](https://%s/pull/%d)", *e.PullRequest, repo, *e.PullRequest)
 }
 
-func (k EntryKind) Validate() error {
-	for _, t := range []EntryKind{Addition, Change, Removal, Deprecation, Bugfix} {
+func (k entryKind) validate() error {
+	for _, t := range []entryKind{addition, change, removal, deprecation, bugfix} {
 		if k == t {
 			return nil
 		}
@@ -276,7 +276,7 @@ func (k EntryKind) Validate() error {
 	return fmt.Errorf("%q is not a supported kind", k)
 }
 
-func (m Migration) Validate() error {
+func (m migration) validate() error {
 	if len(m.Header) == 0 {
 		return errors.New("header not specified")
 	}
