@@ -15,6 +15,7 @@ K8S_VERSION = v1.17.2
 REPO = github.com/operator-framework/operator-sdk
 BUILD_PATH = $(REPO)/cmd/operator-sdk
 PKGS = $(shell go list ./... | grep -v /vendor/)
+TEST_PKGS = $(shell go list ./... | grep -v -E 'github.com/operator-framework/operator-sdk/(hack/|test/)')
 SOURCES = $(shell find . -name '*.go' -not -path "*/vendor/*")
 
 ANSIBLE_BASE_IMAGE = quay.io/operator-framework/ansible-operator
@@ -207,9 +208,8 @@ test-markdown:
 test-sanity: tidy build/operator-sdk lint
 	./hack/tests/sanity-check.sh
 
-TEST_PKGS:=$(shell go list ./... | grep -v -E 'github.com/operator-framework/operator-sdk/(hack/|test/)')
 test-unit: ## Run the unit tests
-	$(Q)go test -coverprofile=coverage.out -covermode=count -count=1 -short ${TEST_PKGS}
+	$(Q)go test -coverprofile=coverage.out -covermode=count -count=1 -short $(TEST_PKGS)
 
 # CI tests.
 .PHONY: test-ci
