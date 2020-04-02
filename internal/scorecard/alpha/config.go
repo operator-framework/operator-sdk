@@ -14,13 +14,9 @@
 
 package alpha
 
-import (
-	"log"
-
-	"gopkg.in/yaml.v2"
-)
-
 type ScorecardTest struct {
+	Name        string            `yaml:"name"`                 // The container test name
+	Parallel    bool              `yaml:"parallel"`             // Specifies if this test can be run in parallel
 	Image       string            `yaml:"image"`                // The container image name
 	Entrypoint  string            `yaml:"entrypoint,omitempty"` // An optional entrypoint passed to the test image
 	Labels      map[string]string `yaml:"labels"`               // User defined labels which are used by scorecard to filter tests
@@ -31,13 +27,4 @@ type ScorecardTest struct {
 // would run based on user input
 type ScorecardConfig struct {
 	Tests []ScorecardTest `yaml:"tests"`
-}
-
-// String returns the yaml text representation of the ScorecardConfig
-func (c ScorecardConfig) String() string {
-	s, err := yaml.Marshal(&c)
-	if err != nil {
-		log.Fatalf(err.Error())
-	}
-	return string(s)
 }
