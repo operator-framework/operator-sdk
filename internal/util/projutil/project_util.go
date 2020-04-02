@@ -35,11 +35,14 @@ const (
 	SrcDir     = "src"
 
 	fsep            = string(filepath.Separator)
-	mainFile        = "cmd" + fsep + "manager" + fsep + "main.go"
+	mainFile        = "main.go"
+	managerMainFile = "cmd" + fsep + "manager" + fsep + mainFile
 	buildDockerfile = "build" + fsep + "Dockerfile"
 	rolesDir        = "roles"
 	helmChartsDir   = "helm-charts"
 	goModFile       = "go.mod"
+
+	noticeColor = "\033[1;36m%s\033[0m"
 )
 
 // OperatorType - the type of operator
@@ -96,7 +99,8 @@ func CheckGoProjectCmd(cmd *cobra.Command) error {
 	if IsOperatorGo() {
 		return nil
 	}
-	return fmt.Errorf("'%s' can only be run for Go operators; %s does not exist", cmd.CommandPath(), mainFile)
+	return fmt.Errorf("'%s' can only be run for Go operators; %s or %s do not exist",
+		cmd.CommandPath(), managerMainFile, mainFile)
 }
 
 func MustGetwd() string {
@@ -193,18 +197,23 @@ func GetOperatorType() OperatorType {
 }
 
 func IsOperatorGo() bool {
-	_, err := os.Stat(mainFile)
-	return err == nil
+	_, err := os.Stat(managerMainFile)
+	if err == nil || os.IsExist(err) {
+		return true
+	}
+	// Aware of an alternative location for main.go.
+	_, err = os.Stat(mainFile)
+	return err == nil || os.IsExist(err)
 }
 
 func IsOperatorAnsible() bool {
 	stat, err := os.Stat(rolesDir)
-	return err == nil && stat.IsDir()
+	return (err == nil && stat.IsDir()) || os.IsExist(err)
 }
 
 func IsOperatorHelm() bool {
 	stat, err := os.Stat(helmChartsDir)
-	return err == nil && stat.IsDir()
+	return (err == nil && stat.IsDir()) || os.IsExist(err)
 }
 
 // MustGetGopath gets GOPATH and ensures it is set and non-empty. If GOPATH
@@ -282,4 +291,10 @@ func CheckGoModules() error {
 			` More info: https://github.com/operator-framework/operator-sdk/blob/master/doc/user-guide.md#go-modules`)
 	}
 	return nil
+}
+
+// PrintDeprecationWarning prints a colored warning wrapping msg to the terminal.
+func PrintDeprecationWarning(msg string) {
+	fmt.Printf(noticeColor, "[Deprecation Notice] "+msg+". Refer to the version upgrade guide "+
+		"for more information: https://operator-sdk.netlify.com/docs/migration/version-upgrade-guide\n\n")
 }

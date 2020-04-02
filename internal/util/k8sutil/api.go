@@ -17,69 +17,54 @@ package k8sutil
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path"
 	"path/filepath"
 	"regexp"
 
-	yaml "github.com/ghodss/yaml"
+	"github.com/ghodss/yaml"
 	log "github.com/sirupsen/logrus"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/version"
 )
 
-// GetCRDs parses all CRD manifests in the directory crdsDir and all of its subdirectories.
-func GetCRDs(crdsDir string) ([]*apiextv1beta1.CustomResourceDefinition, error) {
-	manifests, err := GetCRDManifestPaths(crdsDir)
+// GetCustomResourceDefinitions returns all CRD manifests in the directory
+// crdsDir.
+func GetCustomResourceDefinitions(crdsDir string) (crds []apiextv1beta1.CustomResourceDefinition, err error) {
+	infos, err := ioutil.ReadDir(crdsDir)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get CRD's from %s: %v", crdsDir, err)
+		return nil, err
 	}
-	var crds []*apiextv1beta1.CustomResourceDefinition
-	for _, m := range manifests {
-		b, err := ioutil.ReadFile(m)
-		if err != nil {
-			return nil, err
-		}
-		crd := &apiextv1beta1.CustomResourceDefinition{}
-		if err = yaml.Unmarshal(b, crd); err != nil {
-			return nil, err
-		}
-		crds = append(crds, crd)
-	}
-	return crds, nil
-}
-
-// GetCRDManifestPaths returns all CRD manifest paths in crdsDir and subdirs.
-func GetCRDManifestPaths(crdsDir string) (crdPaths []string, err error) {
-	err = filepath.Walk(crdsDir, func(path string, info os.FileInfo, werr error) error {
-		if werr != nil {
-			return werr
-		}
-
-		// Only read manifest from files, not directories
+	for _, info := range infos {
 		if info.IsDir() {
-			return nil
+			continue
 		}
-
+		path := filepath.Join(crdsDir, info.Name())
 		b, err := ioutil.ReadFile(path)
 		if err != nil {
-			return fmt.Errorf("error reading manifest %s: %v", path, err)
+			return nil, fmt.Errorf("error reading manifest %s: %w", path, err)
 		}
-		// Skip files in crdsDir that aren't k8s manifests since we do not know
-		// what other files are in crdsDir.
-		typeMeta, err := GetTypeMetaFromBytes(b)
-		if err != nil {
-			log.Debugf("Skipping non-manifest file %s: %v", path, err)
-			return nil
+
+		scanner := NewYAMLScanner(b)
+		for scanner.Scan() {
+			manifest := scanner.Bytes()
+			typeMeta, err := GetTypeMetaFromBytes(manifest)
+			if err != nil {
+				log.Debugf("Skipping manifest in %s: %v", path, err)
+				continue
+			}
+			if typeMeta.Kind == "CustomResourceDefinition" {
+				crd := apiextv1beta1.CustomResourceDefinition{}
+				if err = yaml.Unmarshal(manifest, &crd); err != nil {
+					return nil, fmt.Errorf("error unmarshalling CustomResourceDefinition: %w", err)
+				}
+				crds = append(crds, crd)
+			}
 		}
-		if typeMeta.Kind != "CustomResourceDefinition" {
-			log.Debugf("Skipping non CRD manifest %s", path)
-			return nil
+		if err = scanner.Err(); err != nil {
+			return nil, fmt.Errorf("error scanning %s: %w", path, err)
 		}
-		crdPaths = append(crdPaths, path)
-		return nil
-	})
-	return crdPaths, err
+	}
+	return crds, nil
 }
 
 // ParseGroupSubpackages parses the apisDir directory tree and returns a map of

@@ -17,6 +17,7 @@ The following `operator-sdk` subcommands create or interact with Operator on-dis
   | **operator-sdk** | **opm** |
   |--- |--- |
   | `operator-sdk bundle validate <image-tag>` | `opm alpha bundle validate --tag <image-tag>` |
+  | `operator-sdk bundle validate <directory>` | no equivalent |
 
 [sdk-generate-csv]:./generating-a-csv.md
 [registry-bundle]:https://github.com/operator-framework/operator-registry/tree/v1.5.3#manifest-format

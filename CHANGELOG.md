@@ -10,6 +10,7 @@
 - The printout for the compatible Kubernetes Version [#2446](https://github.com/operator-framework/operator-sdk/pull/2446)
 - The `--output-dir` flag instructs [`operator-sdk bundle create`](./doc/cli/operator-sdk_bundle_create.md) to write manifests and metadata to a non-default directory. ([#2715](https://github.com/operator-framework/operator-sdk/pull/2715))
 - The `--overwrite` flag instructs [`operator-sdk bundle create`](./doc/cli/operator-sdk_bundle_create.md) to overwrite metadata, manifests, and `bundle.Dockerfile`. ([#2715](https://github.com/operator-framework/operator-sdk/pull/2715))
+- [`operator-sdk bundle validate`](./doc/cli/operator-sdk_bundle_validate.md) now accepts either an image tag or a directory arg. If the arg is a directory, its children must contain a `manifests/` and a `metadata/` directory. [#2737](https://github.com/operator-framework/operator-sdk/pull/2737)
 
 ### Changed
 
@@ -23,16 +24,18 @@
 - **Breaking Change:** [`operator-sdk bundle create`](./doc/cli/operator-sdk_bundle_create.md) now creates a `manifests/` directory under the parent directory of the argument passed to `--directory`, and setting `--generate-only=true` writes a Dockerfile to `<project-root>/bundle.Dockerfile` that copies bundle manifests from that `manifests/` directory. ([#2715](https://github.com/operator-framework/operator-sdk/pull/2715))
 - Upgrade Kind used for tests for Ansible based-operators from `1.16` to `1.17`. ([#2753](https://github.com/operator-framework/operator-sdk/pull/2715))
 - **Breaking Change:** Upgrade Molecule for Ansible based-operators from `2.22` to `3.0.2`. To know to upgrade your project to use the V3 Mocule version see [here](https://github.com/ansible-community/molecule/issues/2560).  ([#2749](https://github.com/operator-framework/operator-sdk/pull/2749))
+- **Breaking Change:** Changed Conditions from `map[ConditionType]Condition` to `[]Condition`. ([#2739](https://github.com/operator-framework/operator-sdk/pull/2739))
 
 ### Deprecated
 
 - **Breaking Change:** The `--namespace` flag from `operator-sdk run --local`, `operator-sdk test --local` and `operator-sdk cleanup` command was deprecated and will be removed in the future versions. Use `--watch-namespace` and `--operator-namespace`  instead of. ([#2617](https://github.com/operator-framework/operator-sdk/pull/2617))
-- **Breaking Change:** The method `ctx.GetNamespace()` from the `pkg/test` is deprecated and will be removed in the future versions. Use `ctx.GetOperatorNamespace()` and `ctx.GetWatchNamespace()` instead of. ([#2617](https://github.com/operator-framework/operator-sdk/pull/2617))
+- **Breaking Change:** The method `ctx.GetNamespace()` from the `pkg/test` is deprecated and will be removed in future versions. Use `ctx.GetOperatorNamespace()` and `ctx.GetWatchNamespace()` instead of. ([#2617](https://github.com/operator-framework/operator-sdk/pull/2617))
+- **Breaking Change:** package manifests are deprecated and new manifests are no longer generated; existing manifests are still updated by `operator-sdk generate csv`, but updates will not occur in future versions. Use [`operator-sdk bundle create`](./doc/cli/operator-sdk_bundle_create.md) to manage operator bundle metadata. ([#2755](https://github.com/operator-framework/operator-sdk/pull/2755))
 
 ### Removed
 
 - **Breaking Change:** remove `pkg/restmapper` which was deprecated in `v0.14.0`. Projects that use this package must switch to the `DynamicRESTMapper` implementation in [controller-runtime](https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/client/apiutil#NewDynamicRESTMapper). ([#2544](https://github.com/operator-framework/operator-sdk/pull/2544))
-- **Breaking Change:** remove deprecated `operator-sdk generate openapi` subcommand. ([#2740](https://github.com/operator-framework/operator-sdk/pull/2740)) 
+- **Breaking Change:** remove deprecated `operator-sdk generate openapi` subcommand. ([#2740](https://github.com/operator-framework/operator-sdk/pull/2740))
 - **Breaking Change:** Removed CSV configuration file support (defaulting to deploy/olm-catalog/csv-config.yaml) in favor of specifying inputs to the generator via [`generate csv --deploy-dir --apis-dir --crd-dir`](doc/cli/operator-sdk_generate_csv.md#options), and configuring output locations via [`generate csv --output-dir`](doc/cli/operator-sdk_generate_csv.md#options). ([#2511](https://github.com/operator-framework/operator-sdk/pull/2511))
 
 ### Bug Fixes
@@ -42,6 +45,8 @@
 - Fixed issue in CSV generation that caused an incorrect path to be generated for descriptors on types that are fields in array elements. ([#2721](https://github.com/operator-framework/operator-sdk/pull/2721))
 - The test framework `pkg/test` no longer double-registers the `--kubeconfig` flag. Related bug: [kubernetes-sigs/controller-runtime#878](https://github.com/kubernetes-sigs/controller-runtime/issues/878). ([#2731](https://github.com/operator-framework/operator-sdk/pull/2731))
 - The command `operator-sdk generate k8s` no longer requires users to explicitly set GOROOT in their environment. Now, GOROOT is detected using `go env GOROOT` and set automatically. ([#2754](https://github.com/operator-framework/operator-sdk/pull/2754))
+- `operator-sdk generate csv` and `operator-sdk test local` now parse multi-manifest files correctly. ([#2758](https://github.com/operator-framework/operator-sdk/pull/2758))
+- Fixed CRD validation generation issue with `status.Conditions`. ([#2739](https://github.com/operator-framework/operator-sdk/pull/2739))
 
 ## v0.16.0
 

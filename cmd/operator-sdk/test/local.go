@@ -25,8 +25,8 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
+	internalk8sutil "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/test"
 
@@ -168,7 +168,7 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 	// deploy/role_binding.yaml and deploy/operator.yaml
 	if tlConfig.namespacedManPath == "" && !tlConfig.noSetup {
 		if !tlConfig.upLocal {
-			file, err := yamlutil.GenerateCombinedNamespacedManifest(scaffold.DeployDir)
+			file, err := internalk8sutil.GenerateCombinedNamespacedManifest(scaffold.DeployDir)
 			if err != nil {
 				return err
 			}
@@ -198,7 +198,7 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 		}()
 	}
 	if tlConfig.globalManPath == "" && !tlConfig.noSetup {
-		file, err := yamlutil.GenerateCombinedGlobalManifest(scaffold.CRDsDir)
+		file, err := internalk8sutil.GenerateCombinedGlobalManifest(scaffold.CRDsDir)
 		if err != nil {
 			return err
 		}
@@ -307,7 +307,7 @@ func replaceImage(manifestPath, image string) error {
 	}
 	foundDeployment := false
 	newManifest := []byte{}
-	scanner := yamlutil.NewYAMLScanner(yamlFile)
+	scanner := internalk8sutil.NewYAMLScanner(yamlFile)
 	for scanner.Scan() {
 		yamlSpec := scanner.Bytes()
 
@@ -318,7 +318,7 @@ func replaceImage(manifestPath, image string) error {
 		}
 		kind, ok := decoded["kind"].(string)
 		if !ok || kind != "Deployment" {
-			newManifest = yamlutil.CombineManifests(newManifest, yamlSpec)
+			newManifest = internalk8sutil.CombineManifests(newManifest, yamlSpec)
 			continue
 		}
 		if foundDeployment {
@@ -353,7 +353,7 @@ func replaceImage(manifestPath, image string) error {
 		if err != nil {
 			return fmt.Errorf("failed to convert deployment object back to yaml: %v", err)
 		}
-		newManifest = yamlutil.CombineManifests(newManifest, updatedYamlSpec)
+		newManifest = internalk8sutil.CombineManifests(newManifest, updatedYamlSpec)
 	}
 	if err := scanner.Err(); err != nil {
 		return fmt.Errorf("failed to scan %s: %v", manifestPath, err)

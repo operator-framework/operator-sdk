@@ -100,6 +100,9 @@ stages:
 
 jobs:
   include:
+
+    ## Project check stage jobs ##
+
     # Run the sanity tests
     - stage: check
       name: Sanity Tests
@@ -110,6 +113,8 @@ jobs:
     - name: Markdown Tests
       script:
         - make test-markdown
+
+    ## Operator test stage jobs ##
 
     # Build and test ansible and test ansible using molecule
     - stage: test
@@ -143,9 +148,19 @@ jobs:
       name: Helm on Kubernetes
       script: make test-e2e-helm
 
-    # Build and deploy amd64 ansible-operator docker image
+    ## Image deploy/push stage jobs ##
+
+    # Build and deploy arm64 ansible-operator docker image
     - stage: deploy
       <<: *deploy
+      name: Docker image for ansible-operator (arm64)
+      arch: arm64
+      script:
+        - make image-build-ansible
+        - make image-push-ansible
+
+    # Build and deploy amd64 ansible-operator docker image
+    - <<: *deploy
       name: Docker image for ansible-operator (amd64)
       arch: amd64
       script:
@@ -167,6 +182,14 @@ jobs:
       script:
         - make image-build-ansible
         - make image-push-ansible
+
+    # Build and deploy arm64 helm-operator docker image
+    - <<: *deploy
+      name: Docker image for helm-operator (arm64)
+      arch: arm64
+      script:
+        - make image-build-helm
+        - make image-push-helm
 
     # Build and deploy amd64 helm-operator docker image
     - <<: *deploy
@@ -191,6 +214,14 @@ jobs:
       script:
         - make image-build-helm
         - make image-push-helm
+
+    # Build and deploy arm64 scorecard-proxy docker image
+    - <<: *deploy
+      name: Docker image for scorecard-proxy (arm64)
+      arch: arm64
+      script:
+        - make image-build-scorecard-proxy
+        - make image-push-scorecard-proxy
 
     # Build and deploy amd64 scorecard-proxy docker image
     - <<: *deploy

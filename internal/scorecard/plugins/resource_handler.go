@@ -24,7 +24,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
+	internalk8sutil "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	proxyConf "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/kubeconfig"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
@@ -94,7 +94,7 @@ func createFromYAMLFile(cfg BasicAndOLMPluginConfig, yamlPath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to read file %s: %v", yamlPath, err)
 	}
-	scanner := yamlutil.NewYAMLScanner(yamlSpecs)
+	scanner := internalk8sutil.NewYAMLScanner(yamlSpecs)
 	for scanner.Scan() {
 		obj := &unstructured.Unstructured{}
 		jsonSpec, err := yaml.YAMLToJSON(scanner.Bytes())
@@ -405,7 +405,7 @@ func getProxyLogs(proxyPod *v1.Pod) (string, error) {
 func getGVKs(yamlFile []byte) ([]schema.GroupVersionKind, error) {
 	var gvks []schema.GroupVersionKind
 
-	scanner := yamlutil.NewYAMLScanner(yamlFile)
+	scanner := internalk8sutil.NewYAMLScanner(yamlFile)
 	for scanner.Scan() {
 		yamlSpec := scanner.Bytes()
 

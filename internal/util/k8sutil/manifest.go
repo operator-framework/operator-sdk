@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package yamlutil
+package k8sutil
 
 import (
 	"bytes"
@@ -23,7 +23,6 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
-	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 
 	"github.com/ghodss/yaml"
 	log "github.com/sirupsen/logrus"
@@ -111,7 +110,7 @@ func GenerateCombinedGlobalManifest(crdsDir string) (*os.File, error) {
 		}
 	}()
 
-	crds, err := k8sutil.GetCRDs(crdsDir)
+	crds, err := GetCustomResourceDefinitions(crdsDir)
 	if err != nil {
 		return nil, fmt.Errorf("error getting CRD's from %s: %v", crdsDir, err)
 	}
