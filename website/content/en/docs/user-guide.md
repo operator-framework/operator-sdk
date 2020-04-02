@@ -9,7 +9,7 @@ This guide walks through an example of building a simple memcached-operator usin
 - [mercurial][mercurial_tool] version 3.9+
 - [docker][docker_tool] version 17.03+.
 - [kubectl][kubectl_tool] version v1.11.3+.
-- Access to a Kubernetes v1.11.3+ cluster.
+- Access to a Kubernetes v1.14.3+ cluster.
 
 **Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the local Kubernetes cluster and [quay.io][quay_link] for the public registry.
 

@@ -40,7 +40,7 @@ The scorecard also supports plugins which allows to extend the functionality of 
 
 Following are some requirements for the operator project which would be  checked by the scorecard.
 
-- Access to a Kubernetes v1.11.3+ cluster
+- Access to a Kubernetes v1.14.3+ cluster.
 
 **For non-SDK operators:**
 
