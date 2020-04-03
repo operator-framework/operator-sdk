@@ -93,6 +93,7 @@ func selectTests(selector labels.Selector, tests []ScorecardTest) []ScorecardTes
 	selected := make([]ScorecardTest, 0)
 	for i := 0; i < len(tests); i++ {
 		if selector.String() == "" || selector.Matches(labels.Set(tests[i].Labels)) {
+			// TODO olm manifests check
 			selected = append(selected, tests[i])
 		}
 	}
@@ -100,7 +101,7 @@ func selectTests(selector labels.Selector, tests []ScorecardTest) []ScorecardTes
 }
 
 // runTest executes a single test
-// TODO handle the test output
+// TODO once tests exists, handle the test output
 func runTest(test ScorecardTest) (err error) {
 	log.Printf("running test %s labels %v", test.Name, test.Labels)
 	return err
