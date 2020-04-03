@@ -13,6 +13,7 @@ image, set '--generate-only=true'. A bundle Dockerfile, bundle metadata, and
 a 'manifests/' directory containing your bundle manifests will be written if
 '--generate-only=true':
 
+```
 $ operator-sdk bundle create --generate-only --directory ./deploy/olm-catalog/test-operator/0.1.0
 $ ls .
 ...
@@ -27,6 +28,7 @@ $ tree ./deploy/olm-catalog/test-operator/
 	└── test-operator.v0.1.0.clusterserviceversion.yaml
 └── metadata
 	└── annotations.yaml
+```
 
 '--generate-only' is useful if you want to build an operator's bundle image
 manually, modify metadata before building an image, or want to generate a
