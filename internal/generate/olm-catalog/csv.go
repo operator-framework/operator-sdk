@@ -79,6 +79,9 @@ type bundleGenerator struct {
 	// updateCRDs directs the generator to also add CustomResourceDefinition
 	// manifests to the bundle.
 	updateCRDs bool
+
+	// noUpdate is for testing the generator's update capabilities.
+	noUpdate bool
 }
 
 // NewBundle creates a new bundle generator.
@@ -248,7 +251,7 @@ func getCSVFileName(name, version string) string {
 func (g bundleGenerator) generateCSV() (fileMap map[string][]byte, err error) {
 	// Get current CSV to update, otherwise start with a fresh CSV.
 	var csv *olmapiv1alpha1.ClusterServiceVersion
-	if g.fromBundleDir != "" {
+	if g.fromBundleDir != "" && !g.noUpdate {
 		// TODO: If bundle dir exists, but the CSV file does not
 		// then we should create a new one and not return an error.
 		if csv, err = getCSVFromDir(g.fromBundleDir); err != nil {

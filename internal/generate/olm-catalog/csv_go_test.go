@@ -16,11 +16,9 @@ package olmcatalog
 
 import (
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/operator-framework/operator-sdk/internal/generate/gen"
@@ -35,9 +33,12 @@ import (
 
 const (
 	testProjectName = "memcached-operator"
+
+	// Dir names/CSV versions
 	csvVersion      = "0.0.3"
 	fromVersion     = "0.0.2"
 	notExistVersion = "1.0.0"
+	noUpdateDir     = "noupdate"
 )
 
 var (
@@ -61,6 +62,20 @@ func chDirWithCleanup(t *testing.T, dataDir string) func() {
 	return chDirCleanupFunc
 }
 
+func mkTempDirWithCleanup(t *testing.T, prefix string) (dir string, f func()) {
+	var err error
+	if dir, err = ioutil.TempDir("", prefix); err != nil {
+		t.Fatalf("Failed to create tmp dir: %v", err)
+	}
+	f = func() {
+		if err := os.RemoveAll(dir); err != nil {
+			// Not a test failure since files in /tmp will eventually get deleted
+			t.Logf("Failed to remove tmp dir %s: %v", dir, err)
+		}
+	}
+	return
+}
+
 func readFile(t *testing.T, path string) []byte {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -76,17 +91,8 @@ func TestGoCSVNewWithInputsToOutput(t *testing.T) {
 	defer cleanupFunc()
 
 	// Temporary output dir for generating catalog bundle
-	outputDir, err := ioutil.TempDir("", t.Name()+"-output-catalog")
-	if err != nil {
-		log.Fatal(err)
-	}
-	// Clean up output catalog dir
-	defer func() {
-		if err := os.RemoveAll(outputDir); err != nil && !os.IsNotExist(err) {
-			// Not a test failure since files in /tmp will eventually get deleted
-			t.Logf("Failed to remove tmp generated catalog directory (%s): %v", outputDir, err)
-		}
-	}()
+	outputDir, rmDirFunc := mkTempDirWithCleanup(t, t.Name()+"-output-catalog")
+	defer rmDirFunc()
 
 	cfg := gen.Config{
 		OperatorName: testProjectName,
@@ -98,8 +104,9 @@ func TestGoCSVNewWithInputsToOutput(t *testing.T) {
 		OutputDir: outputDir,
 	}
 	csvVersion := "0.0.1"
-	g := NewBundle(cfg, csvVersion, "", false, false)
 
+	g := NewBundle(cfg, csvVersion, "", false, false).(bundleGenerator)
+	g.noUpdate = true
 	if err := g.Generate(); err != nil {
 		t.Fatalf("Failed to execute CSV generator: %v", err)
 	}
@@ -107,35 +114,24 @@ func TestGoCSVNewWithInputsToOutput(t *testing.T) {
 	csvFileName := getCSVFileName(testProjectName, csvVersion)
 
 	// Read expected CSV
-	expCatalogDir := filepath.Join("expected-catalog", OLMCatalogChildDir)
-	csvExpBytes := readFile(t, filepath.Join(expCatalogDir, testProjectName, csvVersion, csvFileName))
-	csvExp := string(csvExpBytes)
+	expBundleDir := filepath.Join("expected-catalog", OLMCatalogChildDir, testProjectName, csvVersion)
+	csvExp := string(readFile(t, filepath.Join(expBundleDir, csvFileName)))
 
-	// Read generated CSV from OutputDir/olm-catalog
-	outputCatalogDir := filepath.Join(cfg.OutputDir, OLMCatalogChildDir)
-	csvOutputBytes := readFile(t, filepath.Join(outputCatalogDir, testProjectName, csvVersion, csvFileName))
-	csvOutput := string(csvOutputBytes)
+	// Read generated CSV from outputDir path
+	outputBundleDir := filepath.Join(outputDir, OLMCatalogChildDir, testProjectName, csvVersion)
+	csvOutput := string(readFile(t, filepath.Join(outputBundleDir, csvFileName)))
 
 	assert.Equal(t, csvExp, csvOutput)
 }
 
-func TestGoCSVUpdateWithInputsToOutput(t *testing.T) {
+func TestGoCSVUpgradeWithInputsToOutput(t *testing.T) {
 	// Change directory to project root so the test cases can form the correct pkg imports
 	cleanupFunc := chDirWithCleanup(t, testNonStandardLayoutDataDir)
 	defer cleanupFunc()
 
 	// Temporary output dir for generating catalog bundle
-	outputDir, err := ioutil.TempDir("", t.Name()+"-output-catalog")
-	if err != nil {
-		log.Fatal(err)
-	}
-	// Clean up output catalog dir
-	defer func() {
-		if err := os.RemoveAll(outputDir); err != nil && !os.IsNotExist(err) {
-			// Not a test failure since files in /tmp will eventually get deleted
-			t.Logf("Failed to remove tmp generated catalog directory (%s): %v", outputDir, err)
-		}
-	}()
+	outputDir, rmDirFunc := mkTempDirWithCleanup(t, t.Name()+"-output-catalog")
+	defer rmDirFunc()
 
 	fromVersion := "0.0.3"
 	csvVersion := "0.0.4"
@@ -164,7 +160,7 @@ func TestGoCSVUpdateWithInputsToOutput(t *testing.T) {
 		},
 		OutputDir: outputDir,
 	}
-	g := NewBundle(cfg, csvVersion, fromVersion, false, false)
+	g := NewBundle(cfg, csvVersion, fromVersion, false, false).(bundleGenerator)
 	if err := g.Generate(); err != nil {
 		t.Fatalf("Failed to execute CSV generator: %v", err)
 	}
@@ -174,17 +170,13 @@ func TestGoCSVUpdateWithInputsToOutput(t *testing.T) {
 	expCsvFile := filepath.Join(expCatalogDir, testProjectName, csvVersion, csvFileName)
 	csvExp := string(readFile(t, expCsvFile))
 
-	// Read generated CSV from OutputDir/olm-catalog
+	// Read generated CSV from outputDir path
 	csvOutputFile := filepath.Join(outputFromCSVDir, csvVersion, csvFileName)
 	csvOutput := string(readFile(t, csvOutputFile))
 
 	assert.Equal(t, csvExp, csvOutput)
 }
 
-// TODO: This test is only updating the existing CSV
-// deploy/olm-catalog/memcached-operator/0.0.3/memcached-operator.v0.0.3.clusterserviceversion.yaml
-// present in testdata/go
-// Fix to generate a new CSV rather than only update an existing one
 func TestGoCSVNew(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
@@ -198,25 +190,19 @@ func TestGoCSVNew(t *testing.T) {
 		},
 		OutputDir: "deploy",
 	}
-	g := NewBundle(cfg, csvVersion, "", false, false)
-	fileMap, err := g.(bundleGenerator).generateCSV()
+	g := NewBundle(cfg, csvVersion, "", false, false).(bundleGenerator)
+	g.noUpdate = true
+	fileMap, err := g.generateCSV()
 	if err != nil {
 		t.Fatalf("Failed to execute CSV generator: %v", err)
 	}
 
 	csvExpFile := getCSVFileName(testProjectName, csvVersion)
-	csvExpBytes := readFile(t, filepath.Join(OLMCatalogDir, testProjectName, csvVersion, csvExpFile))
-	csvExp := string(csvExpBytes)
-	// Replace image tag, which is retrieved from the deployment and is
-	// different than that in the expected CSV, but doesn't matter for this test.
-	csvExp = strings.Replace(csvExp,
-		"image: quay.io/example/memcached-operator:v0.0.2",
-		"image: quay.io/example/memcached-operator:v0.0.3",
-		-1)
+	csvExpBytes := readFile(t, filepath.Join(OLMCatalogDir, testProjectName, noUpdateDir, csvExpFile))
 	if b, ok := fileMap[csvExpFile]; !ok {
 		t.Errorf("Failed to generate CSV for version %s", csvVersion)
 	} else {
-		assert.Equal(t, csvExp, string(b))
+		assert.Equal(t, string(csvExpBytes), string(b))
 	}
 }
 
@@ -233,23 +219,50 @@ func TestGoCSVUpdate(t *testing.T) {
 		},
 		OutputDir: "deploy",
 	}
-	g := NewBundle(cfg, csvVersion, fromVersion, false, false)
-	fileMap, err := g.(bundleGenerator).generateCSV()
+	g := NewBundle(cfg, csvVersion, "", false, false).(bundleGenerator)
+	fileMap, err := g.generateCSV()
 	if err != nil {
 		t.Fatalf("Failed to execute CSV generator: %v", err)
 	}
 
 	csvExpFile := getCSVFileName(testProjectName, csvVersion)
 	csvExpBytes := readFile(t, filepath.Join(OLMCatalogDir, testProjectName, csvVersion, csvExpFile))
-	csvExp := string(csvExpBytes)
 	if b, ok := fileMap[csvExpFile]; !ok {
 		t.Errorf("Failed to generate CSV for version %s", csvVersion)
 	} else {
-		assert.Equal(t, csvExp, string(b))
+		assert.Equal(t, string(csvExpBytes), string(b))
 	}
 }
 
-func TestGoCSVNewWithInvalidManifestsDir(t *testing.T) {
+func TestGoCSVUpgrade(t *testing.T) {
+	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
+	defer cleanupFunc()
+
+	cfg := gen.Config{
+		OperatorName: testProjectName,
+		Inputs: map[string]string{
+			DeployDirKey: "deploy",
+			APIsDirKey:   filepath.Join("pkg", "apis"),
+			CRDsDirKey:   filepath.Join("deploy", "crds_v1beta1"),
+		},
+		OutputDir: "deploy",
+	}
+	g := NewBundle(cfg, csvVersion, fromVersion, false, false).(bundleGenerator)
+	fileMap, err := g.generateCSV()
+	if err != nil {
+		t.Fatalf("Failed to execute CSV generator: %v", err)
+	}
+
+	csvExpFile := getCSVFileName(testProjectName, csvVersion)
+	csvExpBytes := readFile(t, filepath.Join(OLMCatalogDir, testProjectName, csvVersion, csvExpFile))
+	if b, ok := fileMap[csvExpFile]; !ok {
+		t.Errorf("Failed to generate CSV for version %s", csvVersion)
+	} else {
+		assert.Equal(t, string(csvExpBytes), string(b))
+	}
+}
+
+func TestGoCSVNewWithInvalidDeployDir(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
@@ -263,15 +276,15 @@ func TestGoCSVNewWithInvalidManifestsDir(t *testing.T) {
 		OutputDir: "deploy",
 	}
 
-	g := NewBundle(cfg, notExistVersion, "", false, false)
-	_, err := g.(bundleGenerator).generateCSV()
+	g := NewBundle(cfg, notExistVersion, "", false, false).(bundleGenerator)
+	_, err := g.generateCSV()
 	if err == nil {
 		t.Fatalf("Failed to get error for running CSV generator"+
 			"on non-existent manifests directory: %s", cfg.Inputs[DeployDirKey])
 	}
 }
 
-func TestGoCSVNewWithEmptyManifestsDir(t *testing.T) {
+func TestGoCSVNewWithEmptyDeployDir(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
@@ -285,8 +298,8 @@ func TestGoCSVNewWithEmptyManifestsDir(t *testing.T) {
 		OutputDir: "emptydir",
 	}
 
-	g := NewBundle(cfg, notExistVersion, "", false, false)
-	fileMap, err := g.(bundleGenerator).generateCSV()
+	g := NewBundle(cfg, notExistVersion, "", false, false).(bundleGenerator)
+	fileMap, err := g.generateCSV()
 	if err != nil {
 		t.Fatalf("Failed to execute CSV generator: %v", err)
 	}
@@ -326,8 +339,8 @@ func TestUpdateCSVVersion(t *testing.T) {
 		},
 		OutputDir: "deploy",
 	}
-	g := NewBundle(cfg, csvVersion, fromVersion, false, false)
-	if err := g.(bundleGenerator).updateCSVVersions(csv); err != nil {
+	g := NewBundle(cfg, csvVersion, fromVersion, false, false).(bundleGenerator)
+	if err := g.updateCSVVersions(csv); err != nil {
 		t.Fatalf("Failed to update csv with version %s: (%v)", csvVersion, err)
 	}
 
