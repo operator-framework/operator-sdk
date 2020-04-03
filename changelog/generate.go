@@ -23,7 +23,7 @@ func main() {
 		title         string
 		fragmentsDir  string
 		changelogFile string
-		migrationFile string
+		migrationDir  string
 	)
 
 	flag.StringVar(&title, "title", "",
@@ -32,9 +32,9 @@ func main() {
 		"Path to changelog fragments directory")
 	flag.StringVar(&changelogFile, "changelog", "CHANGELOG.md",
 		"Path to CHANGELOG")
-	flag.StringVar(&migrationFile, "migration-guide",
-		filepath.Join("website", "content", "en", "docs", "migration", "version-upgrade-guide.md"),
-		"Path to migration guide")
+	flag.StringVar(&migrationDir, "migration-guide-dir",
+		filepath.Join("website", "content", "en", "docs", "migration"),
+		"Path to migration guide directory")
 	flag.Parse()
 
 	if title == "" {
@@ -57,8 +57,8 @@ func main() {
 		log.Fatalf("failed to update CHANGELOG: %v", err)
 	}
 
-	if err := updateMigrationGuide(config{
-		File:    migrationFile,
+	if err := createMigrationGuide(config{
+		File:    filepath.Join(migrationDir, fmt.Sprintf("%s.md", title)),
 		Title:   title,
 		Entries: entries,
 	}); err != nil {
@@ -156,23 +156,23 @@ func updateChangelog(c config) error {
 	return nil
 }
 
-func updateMigrationGuide(c config) error {
+func createMigrationGuide(c config) error {
 	var bb bytes.Buffer
-	existingFile, err := ioutil.ReadFile(c.File)
-	if err != nil {
-		return fmt.Errorf("could not read migration guide: %v", err)
-	}
-	bb.Write(bytes.Trim(existingFile, "\n"))
 
-	bb.WriteString(fmt.Sprintf("\n\n## %s\n\n", c.Title))
+	bb.WriteString("---\n")
+	bb.WriteString(fmt.Sprintf("title: %s\n", c.Title))
+
+	// TODO: sort these according to semver?
+	bb.WriteString("weight: 12\n")
+	bb.WriteString("---\n\n")
 	haveMigrations := false
 	for _, e := range c.Entries {
 		if e.Migration != nil {
 			haveMigrations = true
-			bb.WriteString(fmt.Sprintf("### %s\n\n", e.Migration.Header))
+			bb.WriteString(fmt.Sprintf("## %s\n\n", e.Migration.Header))
 			bb.WriteString(fmt.Sprintf("%s\n\n", strings.Trim(e.Migration.Body, "\n")))
 			if e.PullRequest != nil {
-				bb.WriteString(fmt.Sprintf("See %s for more details.\n\n", e.pullRequestLink()))
+				bb.WriteString(fmt.Sprintf("_See %s for more details._\n\n", e.pullRequestLink()))
 			}
 		}
 	}
