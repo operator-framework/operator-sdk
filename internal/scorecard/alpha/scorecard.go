@@ -55,7 +55,9 @@ func RunTests(flags ScorecardFlags) error {
 	tests := selectTests(selector, scConfig.Tests)
 
 	for i := 0; i < len(tests); i++ {
-		runTest(tests[i])
+		if err := runTest(tests[i]); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -67,11 +69,9 @@ func RunTests(flags ScorecardFlags) error {
 func lookupConfig(flags ScorecardFlags) (ScorecardConfig, error) {
 	sc := ScorecardConfig{}
 
+	// TODO handle getting config from bundle (ondisk or image)
 	_, err := os.Stat(flags.Config)
-	if os.IsNotExist(err) {
-		// TODO get config from bundle (ondisk or image)
-		return sc, err
-	} else {
+	if !os.IsNotExist(err) {
 		yamlFile, err := ioutil.ReadFile(flags.Config)
 		if err != nil {
 			return sc, err
@@ -101,9 +101,9 @@ func selectTests(selector labels.Selector, tests []ScorecardTest) []ScorecardTes
 
 // runTest executes a single test
 // TODO handle the test output
-func runTest(test ScorecardTest) error {
+func runTest(test ScorecardTest) (err error) {
 	log.Printf("running test %s labels %v", test.Name, test.Labels)
-	return nil
+	return err
 }
 
 func ConfigDocLink() string {
