@@ -16,9 +16,8 @@ version to --from-version. Otherwise the SDK will scaffold a new CSV manifest.
 
 The --make-manifests flag directs the generator to create a 'manifests' directory
 intended to hold your latest operator manifests. Set this flag if you intend to
-submit your operator to a pipeline that leverages operator-framework tools.
-
-More information:
+version your operator by VCS and/or submit your operator to a pipeline that
+leverages operator-framework tools. More information:
 https://github.com/operator-framework/operator-registry/blob/master/docs/design/operator-bundle.md#operator-bundle-overview
 
 Flags that change project default paths:

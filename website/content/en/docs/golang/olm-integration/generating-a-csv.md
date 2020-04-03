@@ -18,7 +18,7 @@ This document describes how to manage the following lifecycle for your Operator 
 
 The CSV generator requires certain inputs to construct a CSV manifest.
 
-1. Path to the operator manifests root directory. By default `generate csv` extracts manifests from files in `deploy/` for the following kinds and adds them to the CSV. Use the `--deploy-dir` flag to change this path.
+1. Path to the Operator manifests root directory. By default `generate csv` extracts manifests from files in `deploy/` for the following kinds and adds them to the CSV. Use the `--deploy-dir` flag to change this path.
     * Roles: `role.yaml`
     * ClusterRoles: `cluster_role.yaml`
     * Deployments: `operator.yaml`
@@ -34,11 +34,11 @@ By default `generate csv` will generate the catalog bundle directory `olm-catalo
 
 ## Versioning
 
-CSV's are versioned in path, file name, and in their `metadata.name` field. For example, running `operator-sdk generate csv --csv-version 0.0.1` will generate a CSV at `deploy/olm-catalog/<operator-name>/0.0.1/<operator-name>.v0.0.1.clusterserviceversion.yaml`. A versioned directory such as `deploy/olm-catalog/<operator-name>/0.0.1` is known as a [*bundle*][doc-bundle]. Versions allow the OLM to upgrade or downgrade your Operator at runtime, i.e. in a cluster. A valid semantic version is required.
+CSV's are versioned by file name, their `metadata.name` and `spec.version` fields, and optionally their path. For example, running `operator-sdk generate csv --csv-version 0.0.1` will generate a CSV at `deploy/olm-catalog/<operator-name>/0.0.1/<operator-name>.v0.0.1.clusterserviceversion.yaml`. A versioned directory such as `deploy/olm-catalog/<operator-name>/0.0.1` is known as a [*bundle*][doc-bundle]. Versions allow OLM to upgrade or downgrade your Operator in a cluster. A valid semantic version is required. The `--make-manifests` flag directs `generator csv` to create a [`manifests/`][registry-manifests] directory intended to hold your latest Operator manifests. Set this flag if you intend to version your Operator by VCS and/or submit your Operator to a pipeline that leverages operator-framework tools.
 
 `generate csv` allows you to upgrade your CSV using the `--from-version` flag. If you have an existing CSV with version `0.0.1` and want to write a new version `0.0.2`, you can run `operator-sdk generate csv --csv-version 0.0.2 --from-version 0.0.1`. This will write a new CSV manifest to `deploy/olm-catalog/<operator-name>/0.0.2/<operator-name>.v0.0.2.clusterserviceversion.yaml` containing user-defined data from `0.0.1` and any modifications you've made to `roles.yaml`, `operator.yaml`, CR's, or CRD's.
 
-The SDK can manage CRD's in your Operator bundle as well. You can pass the `--update-crds` flag to `generate csv` to add or update your CRD's in your bundle by copying manifests in `deploy/crds` to your bundle. CRD's in a bundle are not updated by default.
+The SDK can manage CRD's in your Operator bundle as well. You can pass the `--update-crds` flag to `generate csv` to add or update your CRD's in your bundle by copying manifests in `deploy/crds` to your bundle. CRD's in a bundle are not updated by default. This flag defaults to `true` if `--make-manifests=true`.
 
 ## First Generation
 
@@ -53,7 +53,7 @@ INFO[0000] Required csv fields not filled in file deploy/olm-catalog/app-operato
 	spec.keywords
 	spec.maintainers
 	spec.provider
-INFO[0000] Created deploy/olm-catalog/app-operator/0.0.1/app-operator.v0.0.1.clusterserviceversion.yaml
+INFO[0031] CSV manifest generated successfully
 ```
 
 When running `generate csv` with a version that already exists, the `Required csv fields...` info statement will become a warning, as these fields are useful for displaying your Operator in Operator Hub.
@@ -126,5 +126,6 @@ Optional:
 [doc-bundle]:https://github.com/operator-framework/operator-registry/blob/6893d19/README.md#manifest-format
 [x-desc-list]:https://github.com/openshift/console/blob/70bccfe/frontend/public/components/operator-lifecycle-manager/descriptors/types.ts#L3-L35
 [install-modes]:https://github.com/operator-framework/operator-lifecycle-manager/blob/4197455/Documentation/design/building-your-csv.md#operator-metadata
-[olm-capabilities]:https://github.com/operator-framework/operator-sdk/blob/master/doc/images/operator-capability-level.png
-[csv-annotations]: /docs/golang/olm-integration/csv-annotations/
+[olm-capabilities]:../../images/operator-capability-level.png
+[csv-annotations]:./csv-annotations.md
+[registry-manifests]:https://github.com/operator-framework/operator-registry/blob/master/docs/design/operator-bundle.md#operator-bundle-overview
