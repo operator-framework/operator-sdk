@@ -22,6 +22,7 @@ import (
 	olmcatalog "github.com/operator-framework/operator-sdk/internal/generate/olm-catalog"
 	olmoperator "github.com/operator-framework/operator-sdk/internal/olm/operator"
 	k8sinternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
+	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
 	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
@@ -29,6 +30,9 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
+
+// KB_INTEGRATION_TODO(estroz): figure out if the SDK can use this command on
+// kubebuilder-style projects. I think there is an equivalent but not sure.
 
 type runCmd struct {
 	// Common options.
@@ -66,6 +70,14 @@ mode. Run 'operator-sdk run --help' for more information on these flags.
 Read more about the --olm run mode and configuration options here:
 https://github.com/operator-framework/operator-sdk/blob/master/doc/user/olm-catalog/olm-cli.md
 `,
+		PreRun: func(_ *cobra.Command, _ []string) {
+			// This command with --local is superceded by a kubebuilder equivalent
+			// for Go projects.
+			if c.local {
+				kbutil.DieIfCmdNotAllowed(true)
+			}
+		},
+		Hidden: kbutil.IsConfigExist(),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := c.checkRunType(); err != nil {
 				return err
@@ -84,6 +96,8 @@ https://github.com/operator-framework/operator-sdk/blob/master/doc/user/olm-cata
 					}
 					c.olmArgs.OperatorNamespace = defaultNamespace
 				}
+				// KB_INTEGRATION_TODO(estroz): change this default if project is
+				// kubebuilder-style.
 				if c.olmArgs.ManifestsDir == "" {
 					operatorName := filepath.Base(projutil.MustGetwd())
 					c.olmArgs.ManifestsDir = filepath.Join(olmcatalog.OLMCatalogDir, operatorName)

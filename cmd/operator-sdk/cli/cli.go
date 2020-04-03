@@ -57,6 +57,7 @@ func GetCLIRoot() *cobra.Command {
 				log.SetLevel(log.DebugLevel)
 				log.Debug("Debug logging is set")
 			}
+			// KB_INTEGRATION_TODO(estroz): remove this check.
 			if err := checkGoModulesForCmd(cmd); err != nil {
 				log.Fatal(err)
 			}

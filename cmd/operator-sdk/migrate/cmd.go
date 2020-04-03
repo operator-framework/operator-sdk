@@ -29,6 +29,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// KB_INTEGRATION_TODO(estroz): rewrite this command to migrate a non-Go project
+// to a kubebuilder-style project.
+
 var (
 	headerFile string
 	repo       string

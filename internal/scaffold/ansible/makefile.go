@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2019 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,23 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package generate
+package ansible
 
 import (
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
+	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 )
 
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "generate <generator>",
-		Short: "Invokes a generate command",
-		Long: `The operator-sdk generate command invokes a command to perform certain code-
-and manifest-generation tasks.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			log.Info("TODO")
-		},
-	}
-	// cmd.AddCommand(newGenerateCSVCmd())
-	return cmd
+type Makefile struct {
+	StaticInput
 }
+
+func (m *Makefile) GetInput() (input.Input, error) {
+	if m.Path == "" {
+		m.Path = "Makefile"
+	}
+	m.TemplateBody = makefileTmpl
+	return m.Input, nil
+}
+
+const makefileTmpl = `
+`

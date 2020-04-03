@@ -19,6 +19,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal/genutil"
 	gencrd "github.com/operator-framework/operator-sdk/internal/generate/crd"
+	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -43,7 +44,12 @@ Example:
 	├── deploy/crds/app.example.com_v1alpha1_appservice_cr.yaml
 	├── deploy/crds/app.example.com_appservices_crd.yaml
 `,
-		RunE: crdsFunc,
+		PreRun: func(_ *cobra.Command, _ []string) {
+			// This command is superceded by a kubebuilder equivalent.
+			kbutil.DieIfCmdNotAllowed(true)
+		},
+		RunE:   crdsFunc,
+		Hidden: kbutil.IsConfigExist(),
 	}
 
 	cmd.Flags().StringVar(&crdVersion, "crd-version", gencrd.DefaultCRDVersion, "CRD version to generate")

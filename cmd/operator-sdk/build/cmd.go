@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
+	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	"github.com/google/shlex"
@@ -37,6 +38,7 @@ var (
 )
 
 func NewCmd() *cobra.Command {
+
 	buildCmd := &cobra.Command{
 		Use:   "build <image>",
 		Short: "Compiles code and builds artifacts",
@@ -53,7 +55,12 @@ For example:
 	$ operator-sdk build quay.io/example/operator:v0.0.1
 	$ docker push quay.io/example/operator:v0.0.1
 `,
-		RunE: buildFunc,
+		PreRun: func(_ *cobra.Command, _ []string) {
+			// This command is superceded by a kubebuilder equivalent.
+			kbutil.DieIfCmdNotAllowed(true)
+		},
+		RunE:   buildFunc,
+		Hidden: kbutil.IsConfigExist(),
 	}
 	buildCmd.Flags().StringVar(&imageBuildArgs, "image-build-args", "",
 		"Extra image build arguments as one string such as \"--build-arg https_proxy=$https_proxy\"")

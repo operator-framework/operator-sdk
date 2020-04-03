@@ -15,6 +15,8 @@
 package add
 
 import (
+	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
+
 	"github.com/spf13/cobra"
 )
 
@@ -23,6 +25,11 @@ func NewCmd() *cobra.Command {
 		Use:   "add",
 		Short: "Adds a controller or resource to the project",
 		Long:  "",
+		PersistentPreRun: func(_ *cobra.Command, _ []string) {
+			// This command is superceded by a kubebuilder equivalent.
+			kbutil.DieIfCmdNotAllowed(true)
+		},
+		Hidden: kbutil.IsConfigExist(),
 	}
 
 	cmd.AddCommand(newAddAPICmd())

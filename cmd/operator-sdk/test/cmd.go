@@ -15,6 +15,8 @@
 package test
 
 import (
+	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
+
 	"github.com/spf13/cobra"
 )
 
@@ -24,6 +26,11 @@ func NewCmd() *cobra.Command {
 		Short: "Tests the operator",
 		Long: `The test command has subcommands that can test the operator.
 `,
+		PersistentPreRun: func(_ *cobra.Command, _ []string) {
+			// This command is superceded by a kubebuilder equivalent.
+			kbutil.DieIfCmdNotAllowed(true)
+		},
+		Hidden: kbutil.IsConfigExist(),
 	}
 
 	testCmd.AddCommand(newTestLocalCmd())

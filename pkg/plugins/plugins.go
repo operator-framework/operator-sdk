@@ -1,4 +1,4 @@
-// Copyright 2019 The Operator-SDK Authors
+// Copyright 2020 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,25 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package alpha
+package plugins
 
-import (
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha/kubebuilder"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha/scorecard"
-
-	"github.com/spf13/cobra"
-)
-
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "alpha",
-		Short: "Run an alpha subcommand",
-	}
-
-	cmd.AddCommand(
-		scorecard.NewCmd(),
-		kubebuilder.NewInitCmd(),
-		kubebuilder.NewCreateCmd(),
-	)
-	return cmd
-}
+const DefaultNameQualifier = ".operator-sdk.io"

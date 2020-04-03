@@ -31,6 +31,9 @@ import (
 	"github.com/spf13/pflag"
 )
 
+// KB_INTEGRATION_TODO(estroz): look into running this from a makefile or
+// using kustomize to create bundle data.
+
 type bundleCreateCmd struct {
 	bundleCmd
 

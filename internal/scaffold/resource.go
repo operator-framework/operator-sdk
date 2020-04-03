@@ -19,11 +19,13 @@ package scaffold
 import (
 	"errors"
 	"fmt"
+	"path"
 	"regexp"
 	"strings"
 
 	"github.com/markbates/inflect"
 	"k8s.io/apimachinery/pkg/util/validation"
+	"sigs.k8s.io/kubebuilder/pkg/model/config"
 )
 
 var (
@@ -64,6 +66,30 @@ type Resource struct {
 	LowerKind string
 
 	// TODO: allow user to specify list of short names for Resource e.g app, myapp
+}
+
+type ResourceOptions struct {
+	APIVersion string
+	Group      string
+	Version    string
+	Kind       string
+}
+
+func (o ResourceOptions) NewResource() (*Resource, error) {
+	apiVersion := o.APIVersion
+	if apiVersion == "" {
+		apiVersion = path.Join(o.Group, o.Version)
+	}
+	return NewResource(apiVersion, o.Kind)
+}
+
+func (o ResourceOptions) Validate() error {
+	_, err := o.NewResource()
+	return err
+}
+
+func (o ResourceOptions) GVK() config.GVK {
+	return config.GVK{Group: o.Group, Version: o.Version, Kind: o.Kind}
 }
 
 func NewResource(apiVersion, kind string) (*Resource, error) {

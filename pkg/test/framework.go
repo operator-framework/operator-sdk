@@ -262,6 +262,9 @@ func (f *Framework) runM(m *testing.M) (int, error) {
 	return exitCode, nil
 }
 
+// KB_INTEGRATION_TODO(estroz): allow arguments using scaffold constants to be
+// configured.
+
 func (f *Framework) setupLocalCommand() (*exec.Cmd, error) {
 	projectName := filepath.Base(projutil.MustGetwd())
 	outputBinName := filepath.Join(scaffold.BuildBinDir, projectName+"-local")

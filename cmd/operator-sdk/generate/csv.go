@@ -30,6 +30,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// KB_INTEGRATION_TODO(estroz): if project is a kubebuilder project, change
+// defaults. Also look into running this from a makefile or using kustomize to
+// create bundle data.
+
 type csvCmd struct {
 	csvVersion     string
 	csvChannel     string

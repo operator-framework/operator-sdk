@@ -72,6 +72,8 @@ func NewCmd() *cobra.Command {
 						log.Warn("--operator-namespace present; ignoring --namespace")
 					}
 				}
+				// KB_INTEGRATION_TODO(estroz): change this default if project is
+				// kubebuilder-style.
 				if c.olmArgs.ManifestsDir == "" {
 					operatorName := filepath.Base(projutil.MustGetwd())
 					c.olmArgs.ManifestsDir = filepath.Join(olmcatalog.OLMCatalogDir, operatorName)
