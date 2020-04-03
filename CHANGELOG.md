@@ -12,7 +12,8 @@
 - The `--overwrite` flag instructs [`operator-sdk bundle create`](./website/content/en/docs/cli/operator-sdk_bundle_create.md) to overwrite metadata, manifests, and `bundle.Dockerfile`. ([#2715](https://github.com/operator-framework/operator-sdk/pull/2715))
 - [`operator-sdk bundle validate`](./website/content/en/docs/cli/operator-sdk_bundle_validate.md) now accepts either an image tag or a directory arg. If the arg is a directory, its children must contain a `manifests/` and a `metadata/` directory. ([#2737](https://github.com/operator-framework/operator-sdk/pull/2737))
 - Add support to release SDK arm64 binaries and images. ([#2742](https://github.com/operator-framework/operator-sdk/pull/2715))
- 
+- Add annotation `helm.operator-sdk/upgrade-force: "True"` to allow force resources replacement (`helm upgrade --force`) for Helm based-operators. ([#2773](https://github.com/operator-framework/operator-sdk/pull/2773))
+
 ### Changed
 
 - The scorecard when creating a Custom Resource, will produce a message to the user if that CR already exists. ([#2683](https://github.com/operator-framework/operator-sdk/pull/2683))
