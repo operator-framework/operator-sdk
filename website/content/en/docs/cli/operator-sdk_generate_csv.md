@@ -14,19 +14,26 @@ A CSV semantic version is supplied via the --csv-version flag. If your operator
 has already generated a CSV manifest you want to use as a base, supply its
 version to --from-version. Otherwise the SDK will scaffold a new CSV manifest.
 
-CSV input flags:
-	--deploy-dir:
-		The CSV's install strategy and permissions will be generated from the operator manifests
-		(Deployment and Role/ClusterRole) present in this directory.
+The --make-manifests flag directs the generator to create a 'manifests' directory
+intended to hold your latest operator manifests. Set this flag if you intend to
+submit your operator to a pipeline that leverages operator-framework tools.
 
-	--apis-dir:
-		The CSV annotation comments will be parsed from the Go types under this path to
-		fill out metadata for owned APIs in spec.customresourcedefinitions.owned.
+More information:
+https://github.com/operator-framework/operator-registry/blob/master/docs/design/operator-bundle.md#operator-bundle-overview
 
-	--crd-dir:
-		The CSV's spec.customresourcedefinitions.owned field is generated from the CRD manifests
-		in this path.These CRD manifests are also copied over to the bundle directory if --update-crds is set.
-		Additionally the CR manifests will be used to populate the CSV example CRs.
+Flags that change project default paths:
+  --deploy-dir:
+    The CSV's install strategy and permissions will be generated from the operator manifests
+    (Deployment and Role/ClusterRole) present in this directory.
+
+  --apis-dir:
+    The CSV annotation comments will be parsed from the Go types under this path to
+    fill out metadata for owned APIs in spec.customresourcedefinitions.owned.
+
+  --crd-dir:
+    The CSV's spec.customresourcedefinitions.owned field is generated from the CRD manifests
+    in this path.These CRD manifests are also copied over to the bundle directory if --update-crds is set.
+    Additionally the CR manifests will be used to populate the CSV example CRs.
 
 
 ```
@@ -109,15 +116,14 @@ operator-sdk generate csv [flags]
 ```
       --apis-dir string        Project relative path to root directory for API type defintions (default "pkg/apis")
       --crd-dir string         Project relative path to root directory for CRD and CR manifests
-      --csv-channel string     Channel the CSV should be registered under in the package manifest
       --csv-version string     Semantic version of the CSV
-      --default-channel        Use the channel passed to --csv-channel as the package manifests' default channel. Only valid when --csv-channel is set
       --deploy-dir string      Project relative path to root directory for operator manifests (Deployment and RBAC) (default "deploy")
       --from-version string    Semantic version of an existing CSV to use as a base
   -h, --help                   help for csv
+      --make-manifests         When set, the generator will create or update a CSV manifest in a 'manifests' directory. This directory is intended to be used for your latest bundle manifests. The default location is deploy/olm-catalog/<operator-name>/manifests. If --output-dir is set, the directory will be <output-dir>/manifests
       --operator-name string   Operator name to use while generating CSV
-      --output-dir string      Base directory to output generated CSV. The resulting CSV bundle directory will be "<output-dir>/olm-catalog/<operator-name>/<csv-version>". (default "deploy")
-      --update-crds            Update CRD manifests in deploy/{operator-name}/{csv-version} the using latest API's
+      --output-dir string      Base directory to output generated CSV. If --make-manifests=false the resulting CSV bundle directory will be <output-dir>/olm-catalog/<operator-name>/<csv-version>. If --make-manifests=true, the bundle directory will be <output-dir>/manifests
+      --update-crds            Update CRD manifests in deploy/<operator-name>/<csv-version> from the default CRDs dir deploy/crds or --crd-dir if set. If --make-manifests=true, this option is true by default
 ```
 
 ### SEE ALSO
