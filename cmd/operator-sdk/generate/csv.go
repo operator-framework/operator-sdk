@@ -41,6 +41,7 @@ type csvCmd struct {
 	makeManifests  bool
 }
 
+//nolint:lll
 func newGenerateCSVCmd() *cobra.Command {
 	c := &csvCmd{}
 	cmd := &cobra.Command{

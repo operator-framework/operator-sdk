@@ -146,7 +146,7 @@ func getBundleDirs(operatorName, csvVersion, fromVersion, outputDir,
 			fromBundleDir = toBundleDir
 		}
 		if fromBundleDir != "" {
-			return
+			return toBundleDir, fromBundleDir
 		}
 	}
 
@@ -163,7 +163,7 @@ func getBundleDirs(operatorName, csvVersion, fromVersion, outputDir,
 		fromBundleDir = toBundleDir
 	}
 
-	return
+	return toBundleDir, fromBundleDir
 }
 
 // getBundleDirsLegacy gets directory names of the new bundle and, if it
@@ -191,7 +191,7 @@ func getBundleDirsLegacy(operatorName, csvVersion, fromVersion, outputDir,
 			fromBundleDir = filepath.Join(outputOperatorDir, csvVersion)
 		}
 		if fromBundleDir != "" {
-			return
+			return toBundleDir, fromBundleDir
 		}
 	}
 
@@ -204,7 +204,7 @@ func getBundleDirsLegacy(operatorName, csvVersion, fromVersion, outputDir,
 		fromBundleDir = filepath.Join(defaultOperatorDir, csvVersion)
 	}
 
-	return
+	return toBundleDir, fromBundleDir
 }
 
 // Generate allows a CSV to be written by marshalling
