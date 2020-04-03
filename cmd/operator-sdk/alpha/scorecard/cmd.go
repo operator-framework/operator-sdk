@@ -15,6 +15,7 @@
 package scorecard
 
 import (
+	scorecard "github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -33,7 +34,15 @@ func NewCmd() *cobra.Command {
 		Long:   `Has flags to configure dsl, bundle, and selector.`,
 		Hidden: true,
 		Run: func(cmd *cobra.Command, args []string) {
-			log.Info("TODO")
+			scorecardFlags := scorecard.ScorecardFlags{
+				Config:   config,
+				Bundle:   bundle,
+				Selector: selector,
+				ListAll:  listAll,
+			}
+			if err := scorecard.RunTests(scorecardFlags); err != nil {
+				log.Fatal(err)
+			}
 		},
 	}
 
