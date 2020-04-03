@@ -256,23 +256,37 @@ Once this is done, there are two ways to run the operator:
 
 Running as a pod inside a Kubernetes cluster is preferred for production use.
 
+Setup the DOCKER_IMAGE environment variable corresponding to your quay registry:
+```
+$ export QUAY_USERNAME="put your quay username here"
+$ export DOCKER_IMAGE="quay.io/${QUAY_USERNAME}/memcached-operator:v0.0.1"
+```
+
 Build the memcached-operator image and push it to a registry:
+
 ```
-$ operator-sdk build quay.io/example/memcached-operator:v0.0.1
-$ docker push quay.io/example/memcached-operator:v0.0.1
+$ operator-sdk build $DOCKER_IMAGE
+$ docker login quay.io
+$ docker create $DOCKER_IMAGE
+$ docker push $DOCKER_IMAGE
 ```
+
+**Note**
+You will need to set the quay memcached-operator repository's "Repository Visibility" to public in order to pull the
+image in subsequent steps.
+
 
 Kubernetes deployment manifests are generated in `deploy/operator.yaml`. The
 deployment image in this file needs to be modified from the placeholder
 `REPLACE_IMAGE` to the previous built image. To do this run:
 ```
-$ sed -i 's|REPLACE_IMAGE|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
+$ sed -i "s|REPLACE_IMAGE|${DOCKER_IMAGE}|g" deploy/operator.yaml
 ```
 
 **Note**
 If you are performing these steps on OSX, use the following `sed` commands instead:
 ```
-$ sed -i "" 's|REPLACE_IMAGE|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
+$ sed -i "" "s|REPLACE_IMAGE|${DOCKER_IMAGE}|g" deploy/operator.yaml
 ```
 
 Deploy the memcached-operator:
