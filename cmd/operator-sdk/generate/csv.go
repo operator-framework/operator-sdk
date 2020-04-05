@@ -15,9 +15,12 @@
 package generate
 
 import (
+	"bufio"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/generate/gen"
 	gencatalog "github.com/operator-framework/operator-sdk/internal/generate/olm-catalog"
@@ -41,6 +44,7 @@ type csvCmd struct {
 	crdDir         string
 	updateCRDs     bool
 	defaultChannel bool
+	subcommand     gencatalog.InteractiveCSVcmd
 }
 
 func newGenerateCSVCmd() *cobra.Command {
@@ -144,6 +148,10 @@ CSV input flags:
 				return fmt.Errorf("error validating command flags: %v", err)
 			}
 
+			// TODO:disable subcommand based on a user flag
+			// Get user inputs to interactive subcommand fields
+			c.csvSubCmd()
+
 			if err := projutil.CheckProjectRoot(); err != nil {
 				log.Warn("Could not detect project root. Ensure that this command " +
 					"runs from the project root directory.")
@@ -191,6 +199,22 @@ CSV input flags:
 	return cmd
 }
 
+// TODO: Get user inputs using the csvSubCmd
+func (c *csvCmd) csvSubCmd() {
+	// Get user input on the displayName
+	userDisplayName := bufio.NewReader(os.Stdin)
+	fmt.Print("DisplayName [Name of the operator] : ")
+
+	userDisplayNameStr := readString(userDisplayName)
+	c.subcommand.DisplayName = userDisplayNameStr
+
+	// Get user input on the list of keywords
+	userKeywords := bufio.NewReader(os.Stdin)
+	fmt.Printf("Keywords for your operator in the format [word1, word2, word3 ...] : ")
+	userKeywordsStr := readArray(userKeywords)
+	c.subcommand.Keywords = userKeywordsStr
+}
+
 func (c csvCmd) run() error {
 	log.Infof("Generating CSV manifest version %s", c.csvVersion)
 
@@ -219,7 +243,7 @@ func (c csvCmd) run() error {
 		OutputDir: c.outputDir,
 	}
 
-	csv := gencatalog.NewCSV(cfg, c.csvVersion, c.fromVersion)
+	csv := gencatalog.NewCSV(cfg, c.csvVersion, c.fromVersion, c.subcommand)
 	if err := csv.Generate(); err != nil {
 		return fmt.Errorf("error generating CSV: %v", err)
 	}
@@ -319,4 +343,31 @@ func copyCustomResourceDefinitions(fromDir, toDir string) error {
 	}
 
 	return nil
+}
+
+func readString(reader *bufio.Reader) string {
+	for {
+		text := readstdin(reader)
+		return text
+	}
+}
+
+// Readstdin reads a line from stdin trimming spaces, and returns the value.
+// log.Fatal's if there is an error.
+func readstdin(reader *bufio.Reader) string {
+	text, err := reader.ReadString('\n')
+	if err != nil {
+		log.Fatalf("Error when reading input: %v", err)
+	}
+	return strings.TrimSpace(text)
+}
+
+func readArray(reader *bufio.Reader) []string {
+	kw := make([]string, 0)
+	text := readstdin(reader)
+
+	for _, words := range strings.Split(text, ",") {
+		kw = append(kw, strings.TrimSpace(words))
+	}
+	return kw
 }

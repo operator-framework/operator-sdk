@@ -162,6 +162,7 @@ func TestUpgradeFromExistingCSVWithInputsToOutput(t *testing.T) {
 	}
 
 	// Upgrade new CSV from old
+	// TODO: Modify tests based on modified function signature
 	g := NewCSV(cfg, csvVersion, fromVersion)
 	if err := g.Generate(); err != nil {
 		t.Fatalf("Failed to execute CSV generator: %v", err)

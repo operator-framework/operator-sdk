@@ -73,13 +73,16 @@ type csvGenerator struct {
 	// csvOutputDir is the bundle directory filepath where the CSV will be generated
 	// This is set according to the generator's OutputDir
 	csvOutputDir string
+	// subcommand are the fields provided by the user in the gen-csv interactive subcommand
+	subcommand InteractiveCSVcmd
 }
 
-func NewCSV(cfg gen.Config, csvVersion, fromVersion string) gen.Generator {
+func NewCSV(cfg gen.Config, csvVersion, fromVersion string, s InteractiveCSVcmd) gen.Generator {
 	g := csvGenerator{
 		Config:      cfg,
 		csvVersion:  csvVersion,
 		fromVersion: fromVersion,
+		subcommand:  s,
 	}
 	if g.Inputs == nil {
 		g.Inputs = map[string]string{}
@@ -189,6 +192,9 @@ func (g csvGenerator) generate() (fileMap map[string][]byte, err error) {
 		return nil, err
 	}
 
+	// update the fields provided by the user
+	updateUserFields(csv, g.subcommand)
+
 	// TODO(estroz): replace with CSV validator from API library.
 	path := getCSVFileName(g.OperatorName, g.csvVersion)
 	if fields := getEmptyRequiredCSVFields(csv); len(fields) != 0 {
@@ -210,6 +216,19 @@ func (g csvGenerator) generate() (fileMap map[string][]byte, err error) {
 		path: b,
 	}
 	return fileMap, nil
+}
+
+// updateUserFields fills tha values provided by the user in the interactive command while
+// generating CSVs.
+// TODO: Include additional fields
+func updateUserFields(c *olmapiv1alpha1.ClusterServiceVersion, inputFields InteractiveCSVcmd) {
+	if inputFields.DisplayName != "" {
+		c.Spec.DisplayName = inputFields.DisplayName
+	}
+
+	if len(inputFields.Keywords) != 0 {
+		c.Spec.Keywords = inputFields.Keywords
+	}
 }
 
 func getCSVFromDir(dir string) (*olmapiv1alpha1.ClusterServiceVersion, error) {
