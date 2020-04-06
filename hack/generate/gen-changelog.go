@@ -20,13 +20,13 @@ import (
 
 func main() {
 	var (
-		title         string
+		tag           string
 		fragmentsDir  string
 		changelogFile string
 		migrationDir  string
 	)
 
-	flag.StringVar(&title, "title", "",
+	flag.StringVar(&tag, "tag", "",
 		"Title for generated CHANGELOG and migration guide sections")
 	flag.StringVar(&fragmentsDir, "fragments-dir", filepath.Join("changelog", "fragments"),
 		"Path to changelog fragments directory")
@@ -37,8 +37,8 @@ func main() {
 		"Path to migration guide directory")
 	flag.Parse()
 
-	if title == "" {
-		log.Fatalf("flag '-title' is required!")
+	if tag == "" {
+		log.Fatalf("flag '-tag' is required!")
 	}
 
 	entries, err := loadEntries(fragmentsDir)
@@ -51,15 +51,15 @@ func main() {
 
 	if err := updateChangelog(config{
 		File:    changelogFile,
-		Title:   title,
+		Title:   tag,
 		Entries: entries,
 	}); err != nil {
 		log.Fatalf("failed to update CHANGELOG: %v", err)
 	}
 
 	if err := createMigrationGuide(config{
-		File:    filepath.Join(migrationDir, fmt.Sprintf("%s.md", title)),
-		Title:   title,
+		File:    filepath.Join(migrationDir, fmt.Sprintf("%s.md", tag)),
+		Title:   tag,
 		Entries: entries,
 	}); err != nil {
 		log.Fatalf("failed to update migration guide: %v", err)
