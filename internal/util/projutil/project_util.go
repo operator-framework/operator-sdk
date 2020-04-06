@@ -34,13 +34,15 @@ const (
 	GoModEnv   = "GO111MODULE"
 	SrcDir     = "src"
 
-	fsep            = string(filepath.Separator)
-	mainFile        = "main.go"
-	managerMainFile = "cmd" + fsep + "manager" + fsep + mainFile
-	buildDockerfile = "build" + fsep + "Dockerfile"
-	rolesDir        = "roles"
-	helmChartsDir   = "helm-charts"
-	goModFile       = "go.mod"
+	fsep             = string(filepath.Separator)
+	mainFile         = "main.go"
+	managerMainFile  = "cmd" + fsep + "manager" + fsep + mainFile
+	buildDockerfile  = "build" + fsep + "Dockerfile"
+	rolesDir         = "roles"
+	requirementsFile = "requirements.yml"
+	moleculeDir      = "molecule"
+	helmChartsDir    = "helm-charts"
+	goModFile        = "go.mod"
 
 	noticeColor = "\033[1;36m%s\033[0m"
 )
@@ -208,7 +210,15 @@ func IsOperatorGo() bool {
 
 func IsOperatorAnsible() bool {
 	stat, err := os.Stat(rolesDir)
-	return (err == nil && stat.IsDir()) || os.IsExist(err)
+	if (err == nil && stat.IsDir()) || os.IsExist(err) {
+		return true
+	}
+	stat, err = os.Stat(moleculeDir)
+	if (err == nil && stat.IsDir()) || os.IsExist(err) {
+		return true
+	}
+	_, err = os.Stat(requirementsFile)
+	return err == nil || os.IsExist(err)
 }
 
 func IsOperatorHelm() bool {
