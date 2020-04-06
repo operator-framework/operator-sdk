@@ -35,7 +35,7 @@ func NewCmd() *cobra.Command {
 		Short:  "Runs scorecard",
 		Long:   `Has flags to configure dsl, bundle, and selector.`,
 		Hidden: true,
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 
 			var err error
 			o := scorecard.Options{}
