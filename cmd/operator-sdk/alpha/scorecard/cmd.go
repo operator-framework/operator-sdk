@@ -25,10 +25,10 @@ import (
 
 func NewCmd() *cobra.Command {
 	var (
-		config   string
-		bundle   string // TODO - to be implemented
+		config string
+		//bundle   string // TODO - to be implemented
 		selector string
-		list     bool // TODO - to be implemented
+		//list     bool // TODO - to be implemented
 	)
 	scorecardCmd := &cobra.Command{
 		Use:    "scorecard",
@@ -60,9 +60,9 @@ func NewCmd() *cobra.Command {
 
 	scorecardCmd.Flags().StringVarP(&config, "config", "c", "",
 		"path to a new to be defined DSL yaml formatted file that configures what tests get executed")
-	scorecardCmd.Flags().StringVar(&bundle, "bundle", "", "path to the operator bundle contents on disk")
+	//	scorecardCmd.Flags().StringVar(&bundle, "bundle", "", "path to the operator bundle contents on disk")
 	scorecardCmd.Flags().StringVarP(&selector, "selector", "l", "", "label selector to determine which tests are run")
-	scorecardCmd.Flags().BoolVarP(&list, "list", "L", false, "option to enable listing which tests are run")
+	//	scorecardCmd.Flags().BoolVarP(&list, "list", "L", false, "option to enable listing which tests are run")
 
 	return scorecardCmd
 }
