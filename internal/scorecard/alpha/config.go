@@ -22,8 +22,8 @@ type ScorecardTest struct {
 	Description string            `yaml:"description"`          // User readable test description
 }
 
-// ScorecardConfig represents the set of test configurations which scorecard
+// Config represents the set of test configurations which scorecard
 // would run based on user input
-type ScorecardConfig struct {
+type Config struct {
 	Tests []ScorecardTest `yaml:"tests"`
 }

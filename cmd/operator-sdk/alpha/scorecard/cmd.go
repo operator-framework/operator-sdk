@@ -15,33 +15,54 @@
 package scorecard
 
 import (
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
-)
+	"fmt"
+	"log"
 
-var (
-	config   string
-	bundle   string
-	selector string
-	listAll  bool
+	scorecard "github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
+	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 func NewCmd() *cobra.Command {
+	var (
+		config string
+		//bundle   string // TODO - to be implemented
+		selector string
+		//list     bool // TODO - to be implemented
+	)
 	scorecardCmd := &cobra.Command{
 		Use:    "scorecard",
 		Short:  "Runs scorecard",
 		Long:   `Has flags to configure dsl, bundle, and selector.`,
 		Hidden: true,
-		Run: func(cmd *cobra.Command, args []string) {
-			log.Info("TODO")
+		RunE: func(cmd *cobra.Command, args []string) error {
+
+			var err error
+			o := scorecard.Options{}
+			o.Config, err = scorecard.LoadConfig(config)
+			if err != nil {
+				return fmt.Errorf("could not find config file %s", err.Error())
+			}
+
+			o.Selector, err = labels.Parse(selector)
+			if err != nil {
+				return fmt.Errorf("could not parse selector %s", err.Error())
+			}
+
+			// TODO - process list and output formatting here?
+
+			if err := scorecard.RunTests(o); err != nil {
+				log.Fatal(err)
+			}
+			return nil
 		},
 	}
 
 	scorecardCmd.Flags().StringVarP(&config, "config", "c", "",
 		"path to a new to be defined DSL yaml formatted file that configures what tests get executed")
-	scorecardCmd.Flags().StringVar(&bundle, "bundle", "", "path to the operator bundle contents on disk")
+	//	scorecardCmd.Flags().StringVar(&bundle, "bundle", "", "path to the operator bundle contents on disk")
 	scorecardCmd.Flags().StringVarP(&selector, "selector", "l", "", "label selector to determine which tests are run")
-	scorecardCmd.Flags().BoolVarP(&listAll, "list", "L", false, "option to enable listing which tests are run")
+	//	scorecardCmd.Flags().BoolVarP(&list, "list", "L", false, "option to enable listing which tests are run")
 
 	return scorecardCmd
 }
