@@ -195,7 +195,7 @@ type entry struct {
 	Kind        entryKind  `yaml:"kind"`
 	Breaking    bool       `yaml:"breaking"`
 	Migration   *migration `yaml:"migration,omitempty"`
-	PullRequest *uint      `yaml:"pull_request,omitempty"`
+	PullRequest *uint      `yaml:"pull_request_override,omitempty"`
 }
 
 type entryKind string
