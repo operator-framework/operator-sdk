@@ -17,7 +17,7 @@ package alpha
 import (
 	"testing"
 
-	"gopkg.in/yaml.v2"
+	"github.com/ghodss/yaml"
 	"k8s.io/apimachinery/pkg/labels"
 )
 
