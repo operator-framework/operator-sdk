@@ -1,4 +1,7 @@
-# Operator SDK Release guide
+---
+title: Release Guide
+weight: 30
+---
 
 Making an Operator SDK release involves:
 

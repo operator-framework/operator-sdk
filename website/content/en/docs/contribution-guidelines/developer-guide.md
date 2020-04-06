@@ -1,4 +1,7 @@
-# Operator SDK Developer guide
+---
+title: Development Environment
+weight: 30
+---
 
 This document explains how to setup your dev environment.
 

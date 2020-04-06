@@ -1,4 +1,7 @@
-# TravisCI Build Information for Operator SDK
+---
+title: Travis 
+weight: 30
+---
 
 Travis is set to run one every push to a branch or PR.
 The results of the builds can be found [here][branches] for branches and [here][pr-builds] for PRs.
