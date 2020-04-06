@@ -1,5 +1,5 @@
 ---
-title: Travis 
+title: Travis CI
 weight: 30
 ---
 
