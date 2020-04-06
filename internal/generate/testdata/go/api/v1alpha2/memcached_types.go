@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v1alpha1
+package v1alpha2
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,7 +38,7 @@ type MemcachedStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=memcacheds,scope=Namespaced
 // +kubebuilder:storageversion
-// +operator-sdk:csv:customresourcedefinitions:displayName="Memcached App Display Name"
+// +operator-sdk:csv:customresourcedefinitions:displayName="Memcached App"
 type Memcached struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

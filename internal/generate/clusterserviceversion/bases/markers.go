@@ -21,31 +21,32 @@ import (
 
 	"github.com/markbates/inflect"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"github.com/operator-framework/operator-registry/pkg/registry"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion/bases/definitions"
 	"github.com/operator-framework/operator-sdk/internal/generate/olm-catalog/descriptor"
 )
 
-// updateDescriptionsForGVKs updates csv with API metadata found in apisDir
-// filtered by gvks.
+// updateDefinitions parses APIs in apisDir for code and markers that can build a crdDescription and
+// updates existing crdDescriptions in csv. If no code/markers are found, the crdDescription is appended as-is.
+func updateDefinitions(csv *v1alpha1.ClusterServiceVersion, apisDir string, gvks []schema.GroupVersionKind) error {
+	keys := make([]registry.DefinitionKey, len(gvks))
+	for i, gvk := range gvks {
+		keys[i] = registry.DefinitionKey{
+			Name:    fmt.Sprintf("%s.%s", inflect.Pluralize(strings.ToLower(gvk.Kind)), gvk.Group),
+			Group:   gvk.Group,
+			Version: gvk.Version,
+			Kind:    gvk.Kind,
+		}
+	}
+	return definitions.ApplyDefinitionsForKeysGo(csv, apisDir, keys)
+}
+
+// updateDescriptionsForGVKs updates csv with API metadata found in apisDir filtered by gvks.
 func updateDescriptionsForGVKs(csv *v1alpha1.ClusterServiceVersion, apisDir string,
 	gvks []schema.GroupVersionKind) error {
-
-	gvkMap := make(map[schema.GroupVersionKind]v1alpha1.CRDDescription)
-	for _, desc := range csv.Spec.CustomResourceDefinitions.Owned {
-		group := desc.Name
-		if split := strings.Split(desc.Name, "."); len(split) > 1 {
-			group = strings.Join(split[1:], ".")
-		}
-		// Parse CRD descriptors from source code comments and annotations.
-		gvk := schema.GroupVersionKind{
-			Group:   group,
-			Version: desc.Version,
-			Kind:    desc.Kind,
-		}
-		gvkMap[gvk] = desc
-	}
 
 	descriptions := []v1alpha1.CRDDescription{}
 	for _, gvk := range gvks {
@@ -60,15 +61,12 @@ func updateDescriptionsForGVKs(csv *v1alpha1.ClusterServiceVersion, apisDir stri
 				// like we do for the above cases.
 				return fmt.Errorf("failed to set CRD descriptors for %s: %v", gvk, err)
 			}
-			// Keep the existing description and don't update on error
-			if desc, hasDesc := gvkMap[gvk]; hasDesc {
-				descriptions = append(descriptions, desc)
-			}
-		} else {
-			// Replace the existing description with the newly parsed one
-			newDescription.Name = inflect.Pluralize(strings.ToLower(gvk.Kind)) + "." + gvk.Group
-			descriptions = append(descriptions, newDescription)
+			continue
 		}
+
+		// Replace the existing description with the newly parsed one
+		newDescription.Name = inflect.Pluralize(strings.ToLower(gvk.Kind)) + "." + gvk.Group
+		descriptions = append(descriptions, newDescription)
 	}
 	csv.Spec.CustomResourceDefinitions.Owned = descriptions
 	return nil
