@@ -112,16 +112,16 @@ The markdown test does not create a new cluster and runs in a barebones Travis V
 
 [branches]: https://travis-ci.org/operator-framework/operator-sdk/branches
 [pr-builds]: https://travis-ci.org/operator-framework/operator-sdk/pull_requests
-[k8s-script]: ../../../hack/ci/setup-k8s.sh
+[k8s-script]: https://github.com/operator-framework/operator-sdk/blob/master/hack/ci/setup-k8s.sh
 [kind]: https://kind.sigs.k8s.io/
-[sanity]: ../../../hack/tests/sanity-check.sh
-[subcommand]: ../../../hack/tests/subcommand.sh
-[go-e2e]: ../../../hack/tests/e2e-go.sh
-[tls-tests]: ../../../test/e2e/tls_util_test.go
-[ansible-molecule]: ../../../hack/tests/e2e-ansible-molecule.sh
-[ansible-test]: ../../../test/ansible
-[helm-e2e]: ../../../hack/tests/e2e-helm.sh
-[helm-base]: ../../../hack/image/helm/scaffold-helm-image.go
+[sanity]: https://github.com/operator-framework/operator-sdk/blob/master/hack/tests/sanity-check.sh
+[subcommand]: https://github.com/operator-framework/operator-sdk/blob/master/hack/tests/subcommand.sh
+[go-e2e]: https://github.com/operator-framework/operator-sdk/blob/master/hack/tests/e2e-go.sh
+[tls-tests]: https://github.com/operator-framework/operator-sdk/blob/master/test/e2e/tls_util_test.go
+[ansible-molecule]: https://github.com/operator-framework/operator-sdk/blob/master/hack/tests/e2e-ansible-molecule.sh
+[ansible-test]: https://github.com/operator-framework/operator-sdk/tree/master/test/ansible
+[helm-e2e]: https://github.com/operator-framework/operator-sdk/blob/master/hack/tests/e2e-helm.sh
+[helm-base]: https://github.com/operator-framework/operator-sdk/blob/master/hack/image/helm/scaffold-helm-image.go
 [marker-github]: https://github.com/crawford/marker
-[marker-local]: ../../../hack/ci/marker
-[deps_mgmt]: ../../user-guide.md#a-note-on-dependency-management
+[marker-local]: https://github.com/operator-framework/operator-sdk/blob/master/hack/ci/marker
+[deps_mgmt]: ../../../golang/quickstart#a-note-on-dependency-management

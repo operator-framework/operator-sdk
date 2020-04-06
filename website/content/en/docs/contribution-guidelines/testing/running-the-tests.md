@@ -105,11 +105,11 @@ testing process, the cleanup functions for the go tests will not run. To manuall
 1. Delete the CRD (`kubectl delete crd memcacheds.cache.example.com`).
 2. Delete the namespaces that the tests run in, which also deletes any resources created within the namespaces. The namespaces start with `memcached-memcached-group` or `main` and are appended with a unix timestamp (seconds since Jan 1 1970). The kubectl command can be used to delete namespaces: `kubectl delete namespace $NAMESPACE`.
 
-[travis]: ./travis-build.md
+[travis]: ../travis-build
 [quay]: https://quay.io
 [minikube]: https://github.com/kubernetes/minikube
 [minikube-binary]: https://github.com/kubernetes/minikube/releases
 [kind]: https://github.com/kubernetes-sigs/kind
 [kind-binary]: https://github.com/kubernetes-sigs/kind/releases
-[k8s-script]: ../../../hack/ci/setup-k8s.sh
-[makefile]: ../../../Makefile
+[k8s-script]: https://github.com/operator-framework/operator-sdk/blob/master/hack/ci/setup-k8s.sh
+[makefile]: https://github.com/operator-framework/operator-sdk/blob/master/Makefile

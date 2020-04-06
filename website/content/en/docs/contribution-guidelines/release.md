@@ -360,14 +360,14 @@ Add the following line to the top of the GitHub release notes for `v1.3.0`:
 **NOTE:** ensure the `v1.3.0` tag is referenced when referring to sample code in the [SDK Operator samples repo](https://github.com/operator-framework/operator-sdk-samples/tree/v1.3.0) for this release. Links in SDK documentation are currently set to the samples repo `master` branch.
 ```
 
-[install-guide]:../user/install-operator-sdk.md
-[doc-maintainers]:../../MAINTAINERS
-[doc-readme-prereqs]:../../README.md#prerequisites
+[install-guide]: ../../install-operator-sdk
+[doc-maintainers]: https://github.com/operator-framework/operator-sdk/blob/master/MAINTAINERS
+[doc-readme-prereqs]: ../../install-operator-sdk#prerequisites
 [doc-git-default-key]:https://help.github.com/en/articles/telling-git-about-your-signing-key
 [doc-gpg-default-key]:https://lists.gnupg.org/pipermail/gnupg-users/2001-September/010163.html
 [link-github-gpg-key-upload]:https://github.com/settings/keys
 [link-git-config-gpg-key]:https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work
-[doc-changelog]:../../CHANGELOG.md
+[doc-changelog]: https://github.com/operator-framework/operator-sdk/blob/master/CHANGELOG.md
 [release-page]:https://github.com/operator-framework/operator-sdk/releases
 [homebrew]:https://brew.sh/
 [homebrew-formula]:https://github.com/Homebrew/homebrew-core/blob/master/Formula/operator-sdk.rb
