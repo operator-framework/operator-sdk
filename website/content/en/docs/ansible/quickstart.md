@@ -360,7 +360,7 @@ $ kubectl delete -f deploy/crds/cache.example.com_memcacheds_crd.yaml
 [ansible-runner-http-plugin]:https://github.com/ansible/ansible-runner-http
 [ansible-runner-tool]: https://ansible-runner.readthedocs.io/en/latest/install.html
 [ansible-watches]: /docs/ansible/reference/watches
-[operator-scope]:./../operator-scope.md
+[operator-scope]:../../operator-scope
 [layout-doc]:../reference/scaffolding
 [homebrew-tool]:https://brew.sh/
 [install-guide]: /docs/install-operator-sdk

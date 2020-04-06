@@ -195,6 +195,6 @@ customresourcedefinitions:
 ```
 
 [code-annotations-design]:https://github.com/operator-framework/operator-sdk/blob/master/doc/proposals/sdk-code-annotations.md
-[generate-csv-cli]:../../cli/operator-sdk_generate_csv.md
+[generate-csv-cli]:../../../cli/operator-sdk_generate_csv
 [csv-x-desc]:https://github.com/openshift/console/blob/feabd61/frontend/packages/operator-lifecycle-manager/src/components/descriptors/types.ts#L3-L39
 [csv-spec]:https://github.com/operator-framework/operator-lifecycle-manager/blob/e0eea22/doc/design/building-your-csv.md

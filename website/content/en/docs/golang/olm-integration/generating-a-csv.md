@@ -121,7 +121,7 @@ Optional:
 
 [doc-csv]:https://github.com/operator-framework/operator-lifecycle-manager/blob/4197455/Documentation/design/building-your-csv.md
 [olm]:https://github.com/operator-framework/operator-lifecycle-manager
-[generate-csv-cli]:../../cli/operator-sdk_generate_csv.md
+[generate-csv-cli]:../../../cli/operator-sdk_generate_csv
 [doc-csv-design]:https://github.com/operator-framework/operator-sdk/blob/master/doc/design/milestone-0.2.0/csv-generation.md
 [doc-bundle]:https://github.com/operator-framework/operator-registry/blob/6893d19/README.md#manifest-format
 [x-desc-list]:https://github.com/openshift/console/blob/70bccfe/frontend/public/components/operator-lifecycle-manager/descriptors/types.ts#L3-L35
