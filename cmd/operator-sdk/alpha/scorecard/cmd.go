@@ -26,9 +26,9 @@ import (
 func NewCmd() *cobra.Command {
 	var (
 		config   string
-		bundle   string
+		bundle   string // TODO - to be implemented
 		selector string
-		list     bool
+		list     bool // TODO - to be implemented
 	)
 	scorecardCmd := &cobra.Command{
 		Use:    "scorecard",
@@ -48,6 +48,8 @@ func NewCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("could not parse selector %s", err.Error())
 			}
+
+			// TODO - process list and output formatting here?
 
 			if err := scorecard.RunTests(o); err != nil {
 				log.Fatal(err)
