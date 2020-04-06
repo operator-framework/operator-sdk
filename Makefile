@@ -98,6 +98,9 @@ gen-cli-doc: ## Generate CLI documentation
 gen-test-framework: build/operator-sdk ## Run generate commands to update test/test-framework
 	./hack/generate/gen-test-framework.sh
 
+gen-changelog: ## Generate CHANGELOG.md and migration guide updates
+	./hack/generate/gen-changelog.sh
+
 generate: gen-cli-doc gen-test-framework  ## Run all generate targets
 .PHONY: generate gen-cli-doc gen-test-framework
 

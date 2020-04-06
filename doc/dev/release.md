@@ -2,7 +2,7 @@
 
 Making an Operator SDK release involves:
 
-- Updating `CHANGELOG.md`.
+- Updating `CHANGELOG.md` and migration guide.
 - Tagging and signing a git commit and pushing the tag to GitHub.
 - Building a release binary and signing the binary
 - Creating a release by uploading binary, signature, and `CHANGELOG.md` updates for the release to GitHub.
@@ -193,7 +193,7 @@ $ git push origin release-v1.3.1
 
 Create a PR from `release-v1.3.1` to `v1.3.x`. Once CI passes and your PR is merged, continue to step 1.
 
-### 1. Create a PR for release version and CHANGELOG.md updates
+### 1. Create a PR for release version, CHANGELOG.md, and migration guide updates
 
 Once all PR's needed for a release have been merged, branch from `master`:
 
@@ -215,14 +215,22 @@ Create a new branch to push release commits:
 $ git checkout -b release-v1.3.0
 ```
 
+Run the CHANGELOG and migration guide generator:
+
+```sh
+$ GEN_CHANGELOG_TAG=v1.3.0 make gen-changelog
+```
+
 Commit the following changes:
 
 - `version/version.go`: update `Version` to `v1.3.0`.
 - `internal/scaffold/go_mod.go`, change the `require` line version for `github.com/operator-framework/operator-sdk` from `master` to `v1.3.0`.
 - `internal/scaffold/helm/go_mod.go`: same as for `internal/scaffold/go_mod.go`.
 - `internal/scaffold/ansible/go_mod.go`: same as for `internal/scaffold/go_mod.go`.
-- `CHANGELOG.md`: update the `## Unreleased` header to `## v1.3.0`.
 - `doc/user/install-operator-sdk.md`: update the linux and macOS URLs to point to the new release URLs.
+- `CHANGELOG.md`: commit changes (updated by changelog generation).
+- `website/content/en/docs/migration/v1.3.0.md`: commit changes (created by changelog generation).
+- `changelog/fragments/*`: commit deleted fragment files (deleted by changelog generation).
 
 _(Non-patch releases only)_ Lock down the master branch to prevent further commits between this and step 4. See [this section](#locking-down-branches) for steps to do so.
 
@@ -254,7 +262,7 @@ Once this tag passes CI, go to step 3. For more info on tagging, see the [releas
 
 **Note:** If CI fails for some reason, you will have to revert the tagged commit, re-commit, and make a new PR.
 
-### 3. Create a PR for post-release version and CHANGELOG.md updates
+### 3. Create a PR for post-release version updates
 
 Check out a new branch from master (or use your `release-v1.3.0` branch) and commit the following changes:
 
@@ -262,21 +270,6 @@ Check out a new branch from master (or use your `release-v1.3.0` branch) and com
 - `internal/scaffold/go_mod.go`, change the `require` line version for `github.com/operator-framework/operator-sdk` from `v1.3.0` to `master`.
 - `internal/scaffold/helm/go_mod.go`: same as for `internal/scaffold/go_mod.go`.
 - `internal/scaffold/ansible/go_mod.go`: same as for `internal/scaffold/go_mod.go`.
-- `CHANGELOG.md`: add the following as a new set of headers above `## v1.3.0`:
-
-    ```markdown
-    ## Unreleased
-
-    ### Added
-
-    ### Changed
-
-    ### Deprecated
-
-    ### Removed
-
-    ### Bug Fixes
-    ```
 
 Create a new PR for this branch, targetting the `master` branch. Once this PR passes CI and is merged, `master` can be unfrozen.
 
