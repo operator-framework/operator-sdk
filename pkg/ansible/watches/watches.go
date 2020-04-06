@@ -26,9 +26,12 @@ import (
 	"strings"
 	"time"
 
-	yaml "gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+
+	// todo(camila): replace it for yaml "sigs.k8s.io/yaml"
+	// See that the unmarshaling JSON will be affected
+	yaml "gopkg.in/yaml.v3"
 
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )

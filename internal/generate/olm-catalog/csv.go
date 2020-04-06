@@ -29,12 +29,12 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	"github.com/blang/semver"
-	"github.com/ghodss/yaml"
 	olmversion "github.com/operator-framework/api/pkg/lib/version"
 	olmapiv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/yaml"
 )
 
 // KB_INTEGRATION_TODO(estroz): generate these using kustomize and pass

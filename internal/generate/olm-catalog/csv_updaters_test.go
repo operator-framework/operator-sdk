@@ -22,8 +22,8 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
-	"github.com/ghodss/yaml"
 	appsv1 "k8s.io/api/apps/v1"
+	"sigs.k8s.io/yaml"
 )
 
 func TestSetAndCheckOLMNamespaces(t *testing.T) {

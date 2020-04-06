@@ -21,10 +21,10 @@ import (
 	"path/filepath"
 	"regexp"
 
-	"github.com/ghodss/yaml"
 	log "github.com/sirupsen/logrus"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/version"
+	"sigs.k8s.io/yaml"
 )
 
 // GetCustomResourceDefinitions returns all CRD manifests in the directory

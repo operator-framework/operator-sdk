@@ -23,12 +23,12 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 
-	"github.com/ghodss/yaml"
 	core "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"sigs.k8s.io/yaml"
 )
 
 // TODO: remove before 1.0.0

@@ -29,8 +29,8 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
-	"github.com/ghodss/yaml"
 	log "github.com/sirupsen/logrus"
+	"sigs.k8s.io/yaml"
 )
 
 // Deprecated: The package manifest generator will no longer create new package

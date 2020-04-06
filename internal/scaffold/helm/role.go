@@ -22,7 +22,6 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 
-	"github.com/ghodss/yaml"
 	log "github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
@@ -31,6 +30,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"sigs.k8s.io/yaml"
 )
 
 // roleDiscoveryInterface is an interface that contains just the discovery

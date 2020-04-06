@@ -20,7 +20,10 @@ import (
 	"io/ioutil"
 	"os"
 
-	yaml "gopkg.in/yaml.v2"
+	// todo(camila): replace it for yaml "sigs.k8s.io/yaml"
+	// See that the unmarshaling JSON will be affected
+	yaml "gopkg.in/yaml.v3"
+
 	"helm.sh/helm/v3/pkg/chartutil"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )

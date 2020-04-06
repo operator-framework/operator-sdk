@@ -24,8 +24,8 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 
-	"github.com/ghodss/yaml"
 	log "github.com/sirupsen/logrus"
+	"sigs.k8s.io/yaml"
 )
 
 var yamlSep = []byte("\n\n---\n\n")
