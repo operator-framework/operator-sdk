@@ -15,32 +15,30 @@
 package scorecard
 
 import (
+	"log"
+
 	scorecard "github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
-var (
-	config   string
-	bundle   string
-	selector string
-	listAll  bool
-)
-
 func NewCmd() *cobra.Command {
+	var (
+		config   string
+		bundle   string
+		selector string
+		list     bool
+	)
 	scorecardCmd := &cobra.Command{
 		Use:    "scorecard",
 		Short:  "Runs scorecard",
 		Long:   `Has flags to configure dsl, bundle, and selector.`,
 		Hidden: true,
 		Run: func(cmd *cobra.Command, args []string) {
-			scorecardFlags := scorecard.ScorecardFlags{
-				Config:   config,
-				Bundle:   bundle,
-				Selector: selector,
-				ListAll:  listAll,
+			options, err := scorecard.GetOptions(config, selector)
+			if err != nil {
+				log.Fatal(err)
 			}
-			if err := scorecard.RunTests(scorecardFlags); err != nil {
+			if err := scorecard.RunTests(options); err != nil {
 				log.Fatal(err)
 			}
 		},
@@ -50,7 +48,7 @@ func NewCmd() *cobra.Command {
 		"path to a new to be defined DSL yaml formatted file that configures what tests get executed")
 	scorecardCmd.Flags().StringVar(&bundle, "bundle", "", "path to the operator bundle contents on disk")
 	scorecardCmd.Flags().StringVarP(&selector, "selector", "l", "", "label selector to determine which tests are run")
-	scorecardCmd.Flags().BoolVarP(&listAll, "list", "L", false, "option to enable listing which tests are run")
+	scorecardCmd.Flags().BoolVarP(&list, "list", "L", false, "option to enable listing which tests are run")
 
 	return scorecardCmd
 }

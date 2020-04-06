@@ -25,65 +25,55 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/kubernetes"
 )
 
 var (
 	Log = logrus.New()
 )
 
-type ScorecardFlags struct {
-	Config       string
-	Bundle       string
-	Selector     string
-	ListAll      bool
+type Options struct {
+	Config       Config
+	Selector     labels.Selector
+	List         bool
 	OutputFormat string
-	Kubeconfig   string
+	Client       kubernetes.Interface
 }
 
 // RunTests executes the scorecard tests as configured
-func RunTests(flags ScorecardFlags) error {
-	scConfig, err := lookupConfig(flags)
-	if err != nil {
-		return err
-	}
-
-	selector, err := labels.Parse(flags.Selector)
-	if err != nil {
-		return err
-	}
-
-	tests := selectTests(selector, scConfig.Tests)
+func RunTests(o Options) error {
+	tests := selectTests(o.Selector, o.Config.Tests)
 
 	for i := 0; i < len(tests); i++ {
 		if err := runTest(tests[i]); err != nil {
-			return err
+			return fmt.Errorf("test %s failed %s", tests[i].Name, err.Error())
 		}
 	}
 
 	return nil
 }
 
-// lookupConfig will find and return the scorecard config, the config file
+// LoadConfig will find and return the scorecard config, the config file
 // can be passed in via command line flag or from a bundle location or
 // bundle image
-func lookupConfig(flags ScorecardFlags) (ScorecardConfig, error) {
-	sc := ScorecardConfig{}
+func LoadConfig(configFlag string) (Config, error) {
+	c := Config{}
 
 	// TODO handle getting config from bundle (ondisk or image)
-	_, err := os.Stat(flags.Config)
-	if !os.IsNotExist(err) {
-		yamlFile, err := ioutil.ReadFile(flags.Config)
-		if err != nil {
-			return sc, err
-		}
-
-		if err := yaml.Unmarshal(yamlFile, &sc); err != nil {
-			return sc, err
-		}
-		return sc, nil
+	_, err := os.Stat(configFlag)
+	if os.IsNotExist(err) {
+		return c, err
+	}
+	yamlFile, err := ioutil.ReadFile(configFlag)
+	if err != nil {
+		return c, err
 	}
 
-	return sc, nil
+	if err := yaml.Unmarshal(yamlFile, &c); err != nil {
+		return c, err
+	}
+
+	return c, nil
 }
 
 // selectTests applies an optionally passed selector expression
@@ -114,4 +104,18 @@ func ConfigDocLink() string {
 	return fmt.Sprintf(
 		"https://github.com/operator-framework/operator-sdk/blob/%s/doc/test-framework/scorecard.md",
 		version.Version)
+}
+
+// GetOptions validates the command line options
+func GetOptions(configFlag, selectorFlag string) (o Options, err error) {
+	o.Config, err = LoadConfig(configFlag)
+	if err != nil {
+		return o, fmt.Errorf("could not find config file %s", err.Error())
+	}
+
+	o.Selector, err = labels.Parse(selectorFlag)
+	if err != nil {
+		return o, fmt.Errorf("could not parse selector %s", err.Error())
+	}
+	return o, nil
 }
