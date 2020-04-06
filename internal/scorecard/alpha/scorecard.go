@@ -23,14 +23,9 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/version"
-	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
-)
-
-var (
-	Log = logrus.New()
 )
 
 type Options struct {
