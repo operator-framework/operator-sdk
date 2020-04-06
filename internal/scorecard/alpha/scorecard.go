@@ -52,7 +52,7 @@ func RunTests(o Options) error {
 // LoadConfig will find and return the scorecard config, the config file
 // can be passed in via command line flag or from a bundle location or
 // bundle image
-func LoadConfig(configFlag string) (Config, error) {
+func LoadConfig(configFilePath string) (Config, error) {
 	c := Config{}
 
 	// TODO handle getting config from bundle (ondisk or image)
