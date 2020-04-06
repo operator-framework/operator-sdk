@@ -15,6 +15,7 @@
 package alpha
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -92,9 +93,12 @@ func selectTests(selector labels.Selector, tests []ScorecardTest) []ScorecardTes
 
 // runTest executes a single test
 // TODO once tests exists, handle the test output
-func runTest(test ScorecardTest) (err error) {
+func runTest(test ScorecardTest) error {
+	if test.Name == "" {
+		return errors.New("todo - remove later, only for linter")
+	}
 	log.Printf("running test %s labels %v", test.Name, test.Labels)
-	return err
+	return nil
 }
 
 func ConfigDocLink() string {
