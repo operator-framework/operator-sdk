@@ -41,17 +41,18 @@ func NewCmd() *cobra.Command {
 			o := scorecard.Options{}
 			o.Config, err = scorecard.LoadConfig(config)
 			if err != nil {
-				log.Fatal(fmt.Errorf("could not find config file %s", err.Error()))
+				return fmt.Errorf("could not find config file %s", err.Error())
 			}
 
 			o.Selector, err = labels.Parse(selector)
 			if err != nil {
-				log.Fatal(fmt.Errorf("could not parse selector %s", err.Error()))
+				return fmt.Errorf("could not parse selector %s", err.Error())
 			}
 
 			if err := scorecard.RunTests(o); err != nil {
 				log.Fatal(err)
 			}
+			return nil
 		},
 	}
 
