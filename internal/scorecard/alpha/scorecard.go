@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"os"
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/version"
@@ -56,11 +55,7 @@ func LoadConfig(configFilePath string) (Config, error) {
 	c := Config{}
 
 	// TODO handle getting config from bundle (ondisk or image)
-	_, err := os.Stat(configFlag)
-	if os.IsNotExist(err) {
-		return c, err
-	}
-	yamlFile, err := ioutil.ReadFile(configFlag)
+	yamlFile, err := ioutil.ReadFile(configFilePath)
 	if err != nil {
 		return c, err
 	}
@@ -103,18 +98,4 @@ func ConfigDocLink() string {
 	return fmt.Sprintf(
 		"https://github.com/operator-framework/operator-sdk/blob/%s/doc/test-framework/scorecard.md",
 		version.Version)
-}
-
-// GetOptions validates the command line options
-func GetOptions(configFlag, selectorFlag string) (o Options, err error) {
-	o.Config, err = LoadConfig(configFlag)
-	if err != nil {
-		return o, fmt.Errorf("could not find config file %s", err.Error())
-	}
-
-	o.Selector, err = labels.Parse(selectorFlag)
-	if err != nil {
-		return o, fmt.Errorf("could not parse selector %s", err.Error())
-	}
-	return o, nil
 }

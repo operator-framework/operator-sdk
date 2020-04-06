@@ -15,10 +15,12 @@
 package scorecard
 
 import (
+	"fmt"
 	"log"
 
 	scorecard "github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 func NewCmd() *cobra.Command {
@@ -34,11 +36,20 @@ func NewCmd() *cobra.Command {
 		Long:   `Has flags to configure dsl, bundle, and selector.`,
 		Hidden: true,
 		Run: func(cmd *cobra.Command, args []string) {
-			options, err := scorecard.GetOptions(config, selector)
+
+			var err error
+			o := scorecard.Options{}
+			o.Config, err = scorecard.LoadConfig(config)
 			if err != nil {
-				log.Fatal(err)
+				log.Fatal(fmt.Errorf("could not find config file %s", err.Error()))
 			}
-			if err := scorecard.RunTests(options); err != nil {
+
+			o.Selector, err = labels.Parse(selector)
+			if err != nil {
+				log.Fatal(fmt.Errorf("could not parse selector %s", err.Error()))
+			}
+
+			if err := scorecard.RunTests(o); err != nil {
 				log.Fatal(err)
 			}
 		},
