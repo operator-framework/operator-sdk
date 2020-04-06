@@ -61,6 +61,7 @@ type AppServiceStatus struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +genclient
 
 // AppService is the Schema for the appservices API
 // +kubebuilder:subresource:status

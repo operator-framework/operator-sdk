@@ -25,6 +25,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/version"
+	"k8s.io/code-generator/cmd/client-gen/types"
 )
 
 // GetCustomResourceDefinitions returns all CRD manifests in the directory
@@ -143,6 +144,31 @@ func CreateFQAPIs(pkg string, gvs map[string][]string) (apis []string) {
 		}
 	}
 	return apis
+}
+
+// CreateGroups return a slice of all pkg + groups + versions
+// of pkg and gvs in the GroupVersions
+func CreateGroups(pkg string, gvs map[string][]string) []types.GroupVersions {
+	ret := []types.GroupVersions{}
+
+	for g, vs := range gvs {
+		vers := []types.PackageVersion{}
+		for _, v := range vs {
+			pv := types.PackageVersion{
+				Version: types.Version(v),
+				Package: filepath.Join(pkg, g, v),
+			}
+			vers = append(vers, pv)
+		}
+		groupVer := types.GroupVersions{
+			PackageName: g,
+			Group:       types.Group(g),
+			Versions:    vers,
+		}
+		ret = append(ret, groupVer)
+	}
+
+	return ret
 }
 
 type CRDVersions []apiextv1beta1.CustomResourceDefinitionVersion

@@ -26,12 +26,15 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	log "github.com/sirupsen/logrus"
+	clgeneratorargs "k8s.io/code-generator/cmd/client-gen/args"
+	clgenerators "k8s.io/code-generator/cmd/client-gen/generators"
+	"k8s.io/code-generator/cmd/client-gen/types"
 	generatorargs "k8s.io/code-generator/cmd/deepcopy-gen/args"
 	"k8s.io/gengo/examples/deepcopy-gen/generators"
 )
 
-// K8sCodegen performs deepcopy code-generation for all custom resources under
-// pkg/apis.
+// K8sCodegen performs deepcopy and client code-generation for all custom
+// resources under pkg/apis.
 func K8sCodegen() error {
 	projutil.MustInProjectRoot()
 
@@ -62,6 +65,13 @@ func K8sCodegen() error {
 	fqApis := k8sutil.CreateFQAPIs(apisPkg, gvMap)
 	f := func(a string) error { return deepcopyGen(a, fqApis) }
 	if err = generateWithHeaderFile(f); err != nil {
+		return err
+	}
+
+	log.Infof("Running client code-generation for Custom Resource group versions: [%v]\n", gvb.String())
+	groups := k8sutil.CreateGroups(apisPkg, gvMap)
+	clf := func(a string) error { return clientGen(a, groups) }
+	if err = generateWithHeaderFile(clf); err != nil {
 		return err
 	}
 
@@ -108,6 +118,35 @@ func deepcopyGen(hf string, fqApis []string) error {
 		if err != nil {
 			return fmt.Errorf("deepcopy-gen generator error: %v", err)
 		}
+	}
+	return nil
+}
+
+func clientGen(hf string, groups []types.GroupVersions) error {
+	args, cargs := clgeneratorargs.NewDefaults()
+	args.GoHeaderFilePath = hf
+	args.OutputPackagePath = scaffold.ClientDir
+	args.OutputBase = ""
+
+	cargs.Groups = groups
+	cargs.ClientsetName = scaffold.ClientsetName
+	for _, pkg := range groups {
+		for _, v := range pkg.Versions {
+			args.InputDirs = append(args.InputDirs, v.Package)
+		}
+	}
+
+	if err := clgeneratorargs.Validate(args); err != nil {
+		return fmt.Errorf("client-gen argument validation error: %v", err)
+	}
+
+	err := args.Execute(
+		clgenerators.NameSystems(),
+		clgenerators.DefaultNameSystem(),
+		clgenerators.Packages,
+	)
+	if err != nil {
+		return fmt.Errorf("client-gen generator error: %v", err)
 	}
 	return nil
 }

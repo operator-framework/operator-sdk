@@ -28,6 +28,8 @@ const (
 	PkgDir         = "pkg"
 	ApisDir        = PkgDir + filePathSep + "apis"
 	ControllerDir  = PkgDir + filePathSep + "controller"
+	ClientDir      = PkgDir + filePathSep + "client" + filePathSep + "clientset"
+	ClientsetName  = "versioned"
 	BuildDir       = "build"
 	BuildTestDir   = BuildDir + filePathSep + "test-framework"
 	BuildBinDir    = BuildDir + filePathSep + "_output" + filePathSep + "bin"

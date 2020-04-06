@@ -66,6 +66,7 @@ type {{.Resource.Kind}}Status struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +genclient
 
 // {{.Resource.Kind}} is the Schema for the {{ .Resource.Resource }} API
 // +kubebuilder:subresource:status
