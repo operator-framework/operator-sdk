@@ -17,7 +17,7 @@ package alpha
 import (
 	"testing"
 
-	"github.com/ghodss/yaml"
+	"gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/labels"
 )
 
@@ -37,7 +37,7 @@ func TestEmptySelector(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.selectorValue, func(t *testing.T) {
-			var scConfig ScorecardConfig
+			var scConfig Config
 
 			err := yaml.Unmarshal([]byte(testConfig), &scConfig)
 			if err != nil {
