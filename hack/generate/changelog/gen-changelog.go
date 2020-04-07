@@ -24,6 +24,7 @@ func main() {
 		fragmentsDir  string
 		changelogFile string
 		migrationDir  string
+		validateOnly  bool
 	)
 
 	flag.StringVar(&tag, "tag", "",
@@ -35,10 +36,12 @@ func main() {
 	flag.StringVar(&migrationDir, "migration-guide-dir",
 		filepath.Join("website", "content", "en", "docs", "migration"),
 		"Path to migration guide directory")
+	flag.BoolVar(&validateOnly, "validate-only", false,
+		"Only validate fragments")
 	flag.Parse()
 
-	if tag == "" {
-		log.Fatalf("flag '-tag' is required!")
+	if tag == "" && !validateOnly {
+		log.Fatalf("flag '-tag' is required without '-validate-only'")
 	}
 
 	entries, err := loadEntries(fragmentsDir)
@@ -47,6 +50,10 @@ func main() {
 	}
 	if len(entries) == 0 {
 		log.Fatalf("no Entries found")
+	}
+
+	if validateOnly {
+		return
 	}
 
 	if err := updateChangelog(config{
