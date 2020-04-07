@@ -21,6 +21,7 @@ require (
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.1.2
+	github.com/openshift/api v0.0.0-20200205133042-34f0ec8dab87
 	github.com/operator-framework/api v0.1.1
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20200321030439-57b580e57e88
 	github.com/operator-framework/operator-registry v1.6.2-0.20200330184612-11867930adb5
@@ -38,7 +39,7 @@ require (
 	github.com/stretchr/testify v1.4.0
 	github.com/ziutek/mymysql v1.5.4 // indirect
 	go.uber.org/zap v1.14.1
-	golang.org/x/tools v0.0.0-20200327195553-82bb89366a1e
+	golang.org/x/tools v0.0.0-20200407143752-a3568bac92ae
 	gomodules.xyz/jsonpatch/v3 v3.0.1
 	gopkg.in/gorp.v1 v1.7.2 // indirect
 	gopkg.in/yaml.v2 v2.2.8
