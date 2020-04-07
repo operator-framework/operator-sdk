@@ -14,7 +14,7 @@ The ansible runner will keep information about the ansible run in the container.
 
 Owner references enable [Kubernetes Garbage Collection](https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection/) to clean up after a CR is deleted. Owner references are injected by ansible operators by default by the proxy.
 
-Owner references only apply to resources in the same namespace as the CR. Resources outside the namespace of the CR will automatically be annotated with `operator-sdk/primary-resource` and `operator-sdk/primary-resource-type` to track creation. These resources will not be automatically garbage collected. To handle deletion of these resources, use a [finalizer](finalizers.md).
+Owner references only apply to resources in the same namespace as the CR. Resources outside the namespace of the CR will automatically be annotated with `operator-sdk/primary-resource` and `operator-sdk/primary-resource-type` to track creation. These resources will not be automatically garbage collected. To handle deletion of these resources, use a [finalizer](../finalizers).
 
 You may want to manage what your operator watches and the owner references. This means that your operator will need to understand how to clean up after itself when your CR is deleted. To disable these features you will need to edit your `build/Dockerfile` to include the line below.
 
@@ -27,7 +27,7 @@ ENTRYPOINT ["/usr/local/bin/entrypoint", "--inject-owner-ref=false"]
 
 If you have created resources without owner reference injection, it is
 possible to manually to update resources following [this
-guide.](./retroactively-owned-resources.md)
+guide.](../retroactively-owned-resources)
 
 ## Max Workers
 
