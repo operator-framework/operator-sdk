@@ -324,7 +324,7 @@ export OPERATOR_NAME=memcached-operator
 Run the operator locally with the default Kubernetes config file present at `$HOME/.kube/config`. And watch the namespace `default`:
 
 ```sh
-$ operator-sdk run --local --watch-namespace=default
+$ operator-sdk run --local --namespace=default
 2018/09/30 23:10:11 Go Version: go1.10.2
 2018/09/30 23:10:11 Go OS/Arch: darwin/amd64
 2018/09/30 23:10:11 operator-sdk Version: 0.0.6+git
