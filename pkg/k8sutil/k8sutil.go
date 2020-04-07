@@ -141,6 +141,7 @@ func GetPod(ctx context.Context, client crclient.Client, ns string) (*corev1.Pod
 }
 
 // GetGVKsFromAddToScheme takes in the runtime scheme and filters out all generic apimachinery meta types.
+// It takes optional param to filter third part API schemas or cluster-scope CRD
 // It returns just the GVK specific to this scheme.
 func GetGVKsFromAddToScheme(addToSchemeFunc func(*runtime.Scheme) error,
 	customMetaKinds ...string) ([]schema.GroupVersionKind, error) {
@@ -155,9 +156,7 @@ func GetGVKsFromAddToScheme(addToSchemeFunc func(*runtime.Scheme) error,
 		if !isKubeMetaKind(gvk.Kind) {
 			ownGVKs = append(ownGVKs, gvk)
 		}
-
 		for _, customKind := range customMetaKinds {
-
 			if customKind == gvk.Kind {
 				ownGVKs = append(ownGVKs, gvk)
 			}

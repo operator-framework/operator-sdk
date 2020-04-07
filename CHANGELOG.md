@@ -12,6 +12,7 @@
 - The `--overwrite` flag instructs [`operator-sdk bundle create`](./doc/cli/operator-sdk_bundle_create.md) to overwrite metadata, manifests, and `bundle.Dockerfile`. ([#2715](https://github.com/operator-framework/operator-sdk/pull/2715))
 - [`operator-sdk bundle validate`](./doc/cli/operator-sdk_bundle_validate.md) now accepts either an image tag or a directory arg. If the arg is a directory, its children must contain a `manifests/` and a `metadata/` directory. ([#2737](https://github.com/operator-framework/operator-sdk/pull/2737))
 - Add support to release SDK arm64 binaries and images. ([#2742](https://github.com/operator-framework/operator-sdk/pull/2715))
+- Add variadic string param to GetGVKsFromAddToScheme for customkinds ([2794](https://github.com/operator-framework/operator-sdk/pull/2794))
  
 ### Changed
 

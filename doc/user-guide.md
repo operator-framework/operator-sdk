@@ -579,7 +579,21 @@ func serveCRMetrics(cfg *rest.Config) error {
 	}
 ```
 
-The `kubemetrics.GenerateAndServeCRMetrics` function requires an RBAC rule to list all GroupVersionKinds in the list of watched namespaces, so you might need to [filter](https://github.com/operator-framework/operator-sdk/blob/v0.15.2/pkg/k8sutil/k8sutil.go#L161) the kinds returned by [`k8sutil.GetGVKsFromAddToScheme`](https://godoc.org/github.com/operator-framework/operator-sdk/pkg/k8sutil#GetGVKsFromAddToScheme) more stringently to avoid authorization errors such as `Failed to list *unstructured.Unstructured`. You may also need to add a rule to LIST your third party API schemas and their dependent schemas not registered with the manager.
+For third part API schemas or CRD which are cluster-scoped:
+
+Example shows a LIST of cluster-scope CRD passed as parameter
+```go
+    ...
+    customMetaKind  := []string{"DeploymentLogOption", "Image"}
+	filteredGVK, err := k8sutil.GetGVKsFromAddToScheme(apis.AddToScheme, customMetaKind...)
+	if err != nil {
+		return err
+	}
+
+    ...
+```
+
+The `kubemetrics.GenerateAndServeCRMetrics` function requires an RBAC rule to list all GroupVersionKinds in the list of watched namespaces, so you might need to [filter](https://github.com/operator-framework/operator-sdk/blob/v0.15.2/pkg/k8sutil/k8sutil.go#L161) the kinds returned by [`k8sutil.GetGVKsFromAddToScheme`](https://godoc.org/github.com/operator-framework/operator-sdk/pkg/k8sutil#GetGVKsFromAddToScheme) more stringently to avoid authorization errors such as `Failed to list *unstructured.Unstructured`. You may also need to add a rule to LIST your third party API schemas and their dependent schemas not registered with the manager. Which can be passed as optional parameter to `k8sutil.GetGVKsFromAddToScheme` to handle such scenarios.
 
 ### Handle Cleanup on Deletion
 
