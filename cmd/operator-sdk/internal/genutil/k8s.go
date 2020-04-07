@@ -16,6 +16,7 @@ package genutil
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -123,10 +124,39 @@ func deepcopyGen(hf string, fqApis []string) error {
 }
 
 func clientGen(hf string, groups []types.GroupVersions) error {
+	wd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
 	args, cargs := clgeneratorargs.NewDefaults()
 	args.GoHeaderFilePath = hf
-	args.OutputPackagePath = scaffold.ClientDir
-	args.OutputBase = ""
+	args.OutputPackagePath = filepath.Join(projutil.GetGoPkg(), scaffold.ClientDir)
+	// Create a temporary directory to generate client codes
+	tmpDir, err := ioutil.TempDir("/tmp", "client-gen")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(tmpDir)
+	args.OutputBase = tmpDir
+
+	// Create directories and a symlink to put the codes to the right places
+	// All unnecessary temporary direcotries and files are cleaned up
+	// by deletion of tmpDir in the defer code above.
+	tmpTarget := filepath.Join(tmpDir, args.OutputPackagePath)
+	actualTarget := filepath.Join(wd, scaffold.ClientDir)
+	if err := os.MkdirAll(filepath.Dir(tmpTarget), 0750); err != nil {
+		return err
+	}
+	if _, err := os.Stat(actualTarget); os.IsNotExist(err) {
+		// Try to create actualTarget, only when it doesn't already exist
+		if err := os.MkdirAll(actualTarget, 0750); err != nil {
+			return err
+		}
+	}
+	if err := os.Symlink(actualTarget, tmpTarget); err != nil {
+		return err
+	}
 
 	cargs.Groups = groups
 	cargs.ClientsetName = scaffold.ClientsetName
@@ -140,7 +170,7 @@ func clientGen(hf string, groups []types.GroupVersions) error {
 		return fmt.Errorf("client-gen argument validation error: %v", err)
 	}
 
-	err := args.Execute(
+	err = args.Execute(
 		clgenerators.NameSystems(),
 		clgenerators.DefaultNameSystem(),
 		clgenerators.Packages,
@@ -148,5 +178,6 @@ func clientGen(hf string, groups []types.GroupVersions) error {
 	if err != nil {
 		return fmt.Errorf("client-gen generator error: %v", err)
 	}
+
 	return nil
 }
