@@ -1,3 +1,6 @@
+---
+title: "operator-sdk scorecard"
+---
 ## operator-sdk scorecard
 
 Run scorecard tests
@@ -26,5 +29,5 @@ operator-sdk scorecard [flags]
 
 ### SEE ALSO
 
-* [operator-sdk](operator-sdk.md)	 - An SDK for building operators with ease
+* [operator-sdk](../operator-sdk)	 - An SDK for building operators with ease
 

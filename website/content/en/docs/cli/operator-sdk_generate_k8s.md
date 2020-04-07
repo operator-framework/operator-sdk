@@ -1,3 +1,6 @@
+---
+title: "operator-sdk generate k8s"
+---
 ## operator-sdk generate k8s
 
 Generates Kubernetes code for custom resource
@@ -30,5 +33,5 @@ operator-sdk generate k8s [flags]
 
 ### SEE ALSO
 
-* [operator-sdk generate](operator-sdk_generate.md)	 - Invokes a specific generator
+* [operator-sdk generate](../operator-sdk_generate)	 - Invokes a specific generator
 

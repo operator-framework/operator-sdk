@@ -1,3 +1,6 @@
+---
+title: "operator-sdk cleanup"
+---
 ## operator-sdk cleanup
 
 Delete and clean up after a running Operator
@@ -28,5 +31,5 @@ operator-sdk cleanup [flags]
 
 ### SEE ALSO
 
-* [operator-sdk](operator-sdk.md)	 - An SDK for building operators with ease
+* [operator-sdk](../operator-sdk)	 - An SDK for building operators with ease
 

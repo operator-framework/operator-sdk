@@ -1,3 +1,6 @@
+---
+title: "operator-sdk bundle create"
+---
 ## operator-sdk bundle create
 
 Create an operator bundle image
@@ -91,5 +94,5 @@ building the image:
 
 ### SEE ALSO
 
-* [operator-sdk bundle](operator-sdk_bundle.md)	 - Work with operator bundle metadata and bundle images
+* [operator-sdk bundle](../operator-sdk_bundle)	 - Work with operator bundle metadata and bundle images
 

@@ -1,3 +1,6 @@
+---
+title: "operator-sdk generate csv"
+---
 ## operator-sdk generate csv
 
 Generates a ClusterServiceVersion YAML file for the operator
@@ -119,5 +122,5 @@ operator-sdk generate csv [flags]
 
 ### SEE ALSO
 
-* [operator-sdk generate](operator-sdk_generate.md)	 - Invokes a specific generator
+* [operator-sdk generate](../operator-sdk_generate)	 - Invokes a specific generator
 

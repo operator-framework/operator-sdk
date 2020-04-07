@@ -1,3 +1,6 @@
+---
+title: "operator-sdk test local"
+---
 ## operator-sdk test local
 
 Run End-To-End tests locally
@@ -32,5 +35,5 @@ operator-sdk test local <path to tests directory> [flags]
 
 ### SEE ALSO
 
-* [operator-sdk test](operator-sdk_test.md)	 - Tests the operator
+* [operator-sdk test](../operator-sdk_test)	 - Tests the operator
 

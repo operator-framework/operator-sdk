@@ -1,3 +1,6 @@
+---
+title: "operator-sdk"
+---
 ## operator-sdk
 
 An SDK for building operators with ease
@@ -14,18 +17,18 @@ An SDK for building operators with ease
 
 ### SEE ALSO
 
-* [operator-sdk add](operator-sdk_add.md)	 - Adds a controller or resource to the project
-* [operator-sdk build](operator-sdk_build.md)	 - Compiles code and builds artifacts
-* [operator-sdk bundle](operator-sdk_bundle.md)	 - Work with operator bundle metadata and bundle images
-* [operator-sdk cleanup](operator-sdk_cleanup.md)	 - Delete and clean up after a running Operator
-* [operator-sdk completion](operator-sdk_completion.md)	 - Generators for shell completions
-* [operator-sdk generate](operator-sdk_generate.md)	 - Invokes a specific generator
-* [operator-sdk migrate](operator-sdk_migrate.md)	 - Adds source code to an operator
-* [operator-sdk new](operator-sdk_new.md)	 - Creates a new operator application
-* [operator-sdk olm](operator-sdk_olm.md)	 - Manage the Operator Lifecycle Manager installation in your cluster
-* [operator-sdk print-deps](operator-sdk_print-deps.md)	 - Print Golang packages and versions required to run the operator
-* [operator-sdk run](operator-sdk_run.md)	 - Run an Operator in a variety of environments
-* [operator-sdk scorecard](operator-sdk_scorecard.md)	 - Run scorecard tests
-* [operator-sdk test](operator-sdk_test.md)	 - Tests the operator
-* [operator-sdk version](operator-sdk_version.md)	 - Prints the version of operator-sdk
+* [operator-sdk add](../operator-sdk_add)	 - Adds a controller or resource to the project
+* [operator-sdk build](../operator-sdk_build)	 - Compiles code and builds artifacts
+* [operator-sdk bundle](../operator-sdk_bundle)	 - Work with operator bundle metadata and bundle images
+* [operator-sdk cleanup](../operator-sdk_cleanup)	 - Delete and clean up after a running Operator
+* [operator-sdk completion](../operator-sdk_completion)	 - Generators for shell completions
+* [operator-sdk generate](../operator-sdk_generate)	 - Invokes a specific generator
+* [operator-sdk migrate](../operator-sdk_migrate)	 - Adds source code to an operator
+* [operator-sdk new](../operator-sdk_new)	 - Creates a new operator application
+* [operator-sdk olm](../operator-sdk_olm)	 - Manage the Operator Lifecycle Manager installation in your cluster
+* [operator-sdk print-deps](../operator-sdk_print-deps)	 - Print Golang packages and versions required to run the operator
+* [operator-sdk run](../operator-sdk_run)	 - Run an Operator in a variety of environments
+* [operator-sdk scorecard](../operator-sdk_scorecard)	 - Run scorecard tests
+* [operator-sdk test](../operator-sdk_test)	 - Tests the operator
+* [operator-sdk version](../operator-sdk_version)	 - Prints the version of operator-sdk
 

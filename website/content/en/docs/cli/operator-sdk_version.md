@@ -1,3 +1,6 @@
+---
+title: "operator-sdk version"
+---
 ## operator-sdk version
 
 Prints the version of operator-sdk
@@ -18,5 +21,5 @@ operator-sdk version [flags]
 
 ### SEE ALSO
 
-* [operator-sdk](operator-sdk.md)	 - An SDK for building operators with ease
+* [operator-sdk](../operator-sdk)	 - An SDK for building operators with ease
 

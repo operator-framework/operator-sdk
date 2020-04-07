@@ -1,3 +1,6 @@
+---
+title: "operator-sdk run"
+---
 ## operator-sdk run
 
 Run an Operator in a variety of environments
@@ -40,5 +43,5 @@ operator-sdk run [flags]
 
 ### SEE ALSO
 
-* [operator-sdk](operator-sdk.md)	 - An SDK for building operators with ease
+* [operator-sdk](../operator-sdk)	 - An SDK for building operators with ease
 
