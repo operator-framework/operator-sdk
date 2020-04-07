@@ -1,3 +1,6 @@
+---
+title: "operator-sdk add crd"
+---
 ## operator-sdk add crd
 
 Adds a Custom Resource Definition (CRD) and the Custom Resource (CR) files
@@ -28,5 +31,5 @@ operator-sdk add crd [flags]
 
 ### SEE ALSO
 
-* [operator-sdk add](operator-sdk_add.md)	 - Adds a controller or resource to the project
+* [operator-sdk add](../operator-sdk_add)	 - Adds a controller or resource to the project
 

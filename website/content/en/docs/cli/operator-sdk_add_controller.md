@@ -1,3 +1,6 @@
+---
+title: "operator-sdk add controller"
+---
 ## operator-sdk add controller
 
 Adds a new controller pkg
@@ -58,5 +61,5 @@ Example:
 
 ### SEE ALSO
 
-* [operator-sdk add](operator-sdk_add.md)	 - Adds a controller or resource to the project
+* [operator-sdk add](../operator-sdk_add)	 - Adds a controller or resource to the project
 

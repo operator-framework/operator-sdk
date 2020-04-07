@@ -1,3 +1,6 @@
+---
+title: "operator-sdk bundle validate"
+---
 ## operator-sdk bundle validate
 
 Validate an operator bundle image
@@ -54,5 +57,5 @@ To build and validate an image:
 
 ### SEE ALSO
 
-* [operator-sdk bundle](operator-sdk_bundle.md)	 - Work with operator bundle metadata and bundle images
+* [operator-sdk bundle](../operator-sdk_bundle)	 - Work with operator bundle metadata and bundle images
 

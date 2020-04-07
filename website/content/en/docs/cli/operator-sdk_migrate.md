@@ -1,3 +1,6 @@
+---
+title: "operator-sdk migrate"
+---
 ## operator-sdk migrate
 
 Adds source code to an operator
@@ -20,5 +23,5 @@ operator-sdk migrate [flags]
 
 ### SEE ALSO
 
-* [operator-sdk](operator-sdk.md)	 - An SDK for building operators with ease
+* [operator-sdk](../operator-sdk)	 - An SDK for building operators with ease
 

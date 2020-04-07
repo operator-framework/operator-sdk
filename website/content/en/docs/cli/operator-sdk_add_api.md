@@ -1,3 +1,6 @@
+---
+title: "operator-sdk add api"
+---
 ## operator-sdk add api
 
 Adds a new api definition under pkg/apis
@@ -52,5 +55,5 @@ operator-sdk add api [flags]
 
 ### SEE ALSO
 
-* [operator-sdk add](operator-sdk_add.md)	 - Adds a controller or resource to the project
+* [operator-sdk add](../operator-sdk_add)	 - Adds a controller or resource to the project
 

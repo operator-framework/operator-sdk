@@ -1,3 +1,6 @@
+---
+title: "operator-sdk new"
+---
 ## operator-sdk new
 
 Creates a new operator application
@@ -84,5 +87,5 @@ operator-sdk new <project-name> [flags]
 
 ### SEE ALSO
 
-* [operator-sdk](operator-sdk.md)	 - An SDK for building operators with ease
+* [operator-sdk](../operator-sdk)	 - An SDK for building operators with ease
 

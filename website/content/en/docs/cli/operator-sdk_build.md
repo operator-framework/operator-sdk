@@ -1,3 +1,6 @@
+---
+title: "operator-sdk build"
+---
 ## operator-sdk build
 
 Compiles code and builds artifacts
@@ -33,5 +36,5 @@ operator-sdk build <image> [flags]
 
 ### SEE ALSO
 
-* [operator-sdk](operator-sdk.md)	 - An SDK for building operators with ease
+* [operator-sdk](../operator-sdk)	 - An SDK for building operators with ease
 

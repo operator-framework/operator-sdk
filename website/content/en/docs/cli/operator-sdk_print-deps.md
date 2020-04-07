@@ -1,3 +1,6 @@
+---
+title: "operator-sdk print-deps"
+---
 ## operator-sdk print-deps
 
 Print Golang packages and versions required to run the operator
@@ -21,5 +24,5 @@ operator-sdk print-deps [flags]
 
 ### SEE ALSO
 
-* [operator-sdk](operator-sdk.md)	 - An SDK for building operators with ease
+* [operator-sdk](../operator-sdk)	 - An SDK for building operators with ease
 

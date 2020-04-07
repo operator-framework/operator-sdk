@@ -1,3 +1,6 @@
+---
+title: "operator-sdk generate crds"
+---
 ## operator-sdk generate crds
 
 Generates CRDs for API's
@@ -29,5 +32,5 @@ operator-sdk generate crds [flags]
 
 ### SEE ALSO
 
-* [operator-sdk generate](operator-sdk_generate.md)	 - Invokes a specific generator
+* [operator-sdk generate](../operator-sdk_generate)	 - Invokes a specific generator
 
