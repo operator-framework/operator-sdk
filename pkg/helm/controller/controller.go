@@ -118,7 +118,7 @@ func watchDependentResources(mgr manager.Manager, r *HelmOperatorReconciler, c c
 			}
 
 			gvk := u.GroupVersionKind()
-			if gvk == nil {
+			if gvk.Empty() {
 				continue
 			}
 			m.RLock()

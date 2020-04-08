@@ -105,7 +105,7 @@ func crdFunc(cmd *cobra.Command, args []string) error {
 	gcfg := gen.Config{}
 	crd := gencrd.NewCRDNonGo(gcfg, *resource, crdVersion)
 	if err := crd.Generate(); err != nil {
-		log.Fatalf("Error generating CRD for %s: %w", resource, err)
+		log.Fatalf("Error generating CRD for %s: %v", resource, err)
 	}
 
 	// update deploy/role.yaml for the given resource r.
