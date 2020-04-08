@@ -435,6 +435,10 @@ func (g BundleGenerator) updateCSVFromManifests(csv *olmapiv1alpha1.ClusterServi
 				err = collection.addDeployments(manifest)
 			case "CustomResourceDefinition":
 				// Skip for now and add explicitly from CRDsDir input.
+			case "ValidatingWebhookConfiguration":
+				err = collection.addValidatingWebhookConfigurations(manifest)
+			case "MutatingWebhookConfiguration":
+				err = collection.addMutatingWebhookConfigurations(manifest)
 			default:
 				err = collection.addOthers(manifest)
 			}

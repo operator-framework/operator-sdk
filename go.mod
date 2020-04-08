@@ -14,7 +14,7 @@ require (
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.1.2
-	github.com/operator-framework/api v0.3.0
+	github.com/operator-framework/api v0.3.1
 	github.com/operator-framework/operator-registry v1.6.2-0.20200330184612-11867930adb5
 	github.com/pborman/uuid v1.2.0
 	github.com/pkg/errors v0.9.1
