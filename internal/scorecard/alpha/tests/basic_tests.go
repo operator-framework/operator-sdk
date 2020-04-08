@@ -18,6 +18,11 @@ import (
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 )
 
+const (
+	BasicCheckStatusTest = "basic-check-status"
+	BasicCheckSpecTest   = "basic-check-spec"
+)
+
 // CheckStatusTest verifies that CRs have a status block
 func CheckStatusTest(conf TestConfig) []scapiv1alpha2.ScorecardTestResult {
 	for b := 0; b < len(conf.Bundles); b++ {

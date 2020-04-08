@@ -18,6 +18,14 @@ import (
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 )
 
+const (
+	OLMBundleValidationTest   = "olm-bundle-validation"
+	OLMCRDsHaveValidationTest = "olm-crds-have-validation"
+	OLMCRDsHaveResourcesTest  = "olm-crds-have-resources"
+	OLMSpecDescriptorsTest    = "olm-spec-descriptors"
+	OLMStatusDescriptorsTest  = "olm-status-descriptors"
+)
+
 // BundleValidationTest validates an on-disk bundle
 func BundleValidationTest(conf TestConfig) []scapiv1alpha2.ScorecardTestResult {
 	results := make([]scapiv1alpha2.ScorecardTestResult, 0)

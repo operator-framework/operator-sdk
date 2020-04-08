@@ -75,6 +75,5 @@ func GetConfig(bundlePath string) (cfg TestConfig, err error) {
 		}
 	}
 
-	log.Printf("crs found were %d\n", len(cfg.CRs))
 	return cfg, err
 }
