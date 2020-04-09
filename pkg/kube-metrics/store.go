@@ -29,8 +29,8 @@ import (
 
 // NewNamespacedMetricsStores returns collections of metrics in the namespaces provided, per the api/kind resource.
 // The metrics are registered in the custom metrics.FamilyGenerator that needs to be defined.
-func NewNamespacedMetricsStores(dclient dynamic.NamespaceableResourceInterface, namespaces []string, api string, kind string,
-	metricFamily []metric.FamilyGenerator) []*metricsstore.MetricsStore {
+func NewNamespacedMetricsStores(dclient dynamic.NamespaceableResourceInterface, namespaces []string,
+	api string, kind string, metricFamily []metric.FamilyGenerator) []*metricsstore.MetricsStore {
 	namespaces = deduplicateNamespaces(namespaces)
 	var stores []*metricsstore.MetricsStore
 	// Generate collector per namespace.
@@ -93,7 +93,8 @@ func reflectorPerNamespace(
 	go reflector.Run(ctx.Done())
 }
 
-func namespacedListWatchFunc(dynamicInterface dynamic.NamespaceableResourceInterface, namespace string) cache.ListWatch {
+func namespacedListWatchFunc(dynamicInterface dynamic.NamespaceableResourceInterface,
+	namespace string) cache.ListWatch {
 	return cache.ListWatch{
 		ListFunc: func(opts metav1.ListOptions) (runtime.Object, error) {
 			return dynamicInterface.Namespace(namespace).List(opts)
