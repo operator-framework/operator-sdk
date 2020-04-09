@@ -59,6 +59,15 @@ func NewClusterScopedMetricsStores(dclient dynamic.NamespaceableResourceInterfac
 	return stores
 }
 
+// NewMetricsStores returns collections of metrics in the namespaces provided, per the api/kind resource.
+// The metrics are registered in the custom metrics.FamilyGenerator that needs to be defined.
+//
+// Deprecated: Use NewNamespacedMetricsStores instead.
+func NewMetricsStores(dclient dynamic.NamespaceableResourceInterface, namespaces []string,
+	api string, kind string, metricFamily []metric.FamilyGenerator) []*metricsstore.MetricsStore {
+	return NewNamespacedMetricsStores(dclient, namespaces, api, kind, metricFamily)
+}
+
 func deduplicateNamespaces(ns []string) (list []string) {
 	keys := make(map[string]struct{})
 	for _, entry := range ns {
