@@ -6,17 +6,20 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 
-	"gopkg.in/yaml.v2"
-
+	"github.com/blang/semver"
 	log "github.com/sirupsen/logrus"
+	"sigs.k8s.io/yaml"
 )
+
+var numRegex = regexp.MustCompile(`\(#(\d+)\)$`)
+
+const repo = "github.com/operator-framework/operator-sdk"
 
 func main() {
 	var (
@@ -43,6 +46,13 @@ func main() {
 	if tag == "" && !validateOnly {
 		log.Fatalf("flag '-tag' is required without '-validate-only'")
 	}
+	version, err := semver.Parse(strings.TrimPrefix(tag, "v"))
+	if err != nil {
+		log.Fatalf("flag '-tag' is not a valid semantic version: %v", err)
+	}
+	if len(version.Pre) > 0 || len(version.Build) > 0 {
+		log.Fatalf("flag '-tag' must not include a build number or pre-release identifiers")
+	}
 
 	entries, err := loadEntries(fragmentsDir)
 	if err != nil {
@@ -58,18 +68,18 @@ func main() {
 
 	if err := updateChangelog(config{
 		File:    changelogFile,
-		Title:   tag,
+		Version: version,
 		Entries: entries,
 	}); err != nil {
 		log.Fatalf("failed to update CHANGELOG: %v", err)
 	}
 
 	if err := createMigrationGuide(config{
-		File:    filepath.Join(migrationDir, fmt.Sprintf("%s.md", tag)),
-		Title:   tag,
+		File:    filepath.Join(migrationDir, fmt.Sprintf("v%s.md", version)),
+		Version: version,
 		Entries: entries,
 	}); err != nil {
-		log.Fatalf("failed to update migration guide: %v", err)
+		log.Fatalf("failed to create migration guide: %v", err)
 	}
 }
 
@@ -88,19 +98,18 @@ func loadEntries(fragmentsDir string) ([]entry, error) {
 			log.Warnf("Skipping directory %q", fragFile.Name())
 			continue
 		}
-		if filepath.Ext(fragFile.Name()) != ".yaml" || fragFile.IsDir() {
+		if filepath.Ext(fragFile.Name()) != ".yaml" {
 			log.Warnf("Skipping non-YAML file %q", fragFile.Name())
 			continue
 		}
 		path := filepath.Join(fragmentsDir, fragFile.Name())
-		f, err := os.Open(path)
+		fragmentData, err := ioutil.ReadFile(path)
 		if err != nil {
-			return nil, fmt.Errorf("failed to open fragment file %q: %w", fragFile.Name(), err)
+			return nil, fmt.Errorf("failed to read fragment file %q: %w", fragFile.Name(), err)
 		}
 
-		decoder := yaml.NewDecoder(f)
 		fragment := fragment{}
-		if err := decoder.Decode(&fragment); err != nil {
+		if err := yaml.Unmarshal(fragmentData, &fragment); err != nil {
 			return nil, fmt.Errorf("failed to parse fragment file %q: %w", fragFile.Name(), err)
 		}
 
@@ -108,9 +117,13 @@ func loadEntries(fragmentsDir string) ([]entry, error) {
 			return nil, fmt.Errorf("failed to validate fragment file %q: %w", fragFile.Name(), err)
 		}
 
-		prNum, err := getPullRequest(path)
+		commitMsg, err := getCommitMessage(path)
 		if err != nil {
-			log.Warnf("failed to get PR for fragment file %q: %v", fragFile.Name(), err)
+			log.Warnf("failed to get commit message for fragment file %q: %v", fragFile.Name(), err)
+		}
+		prNum, err := parsePRNumber(commitMsg)
+		if err != nil {
+			log.Warnf("failed to parse PR number for fragment file %q from string %q: %v", fragFile.Name(), commitMsg, err)
 		}
 
 		if prNum != 0 {
@@ -140,7 +153,7 @@ func updateChangelog(c config) error {
 		deprecation,
 		bugfix,
 	}
-	bb.WriteString(fmt.Sprintf("## %s\n\n", c.Title))
+	bb.WriteString(fmt.Sprintf("## v%s\n\n", c.Version))
 	for _, k := range order {
 		if entries, ok := changelog[k]; ok {
 			bb.WriteString(k.toHeader() + "\n\n")
@@ -167,10 +180,8 @@ func createMigrationGuide(c config) error {
 	var bb bytes.Buffer
 
 	bb.WriteString("---\n")
-	bb.WriteString(fmt.Sprintf("title: %s\n", c.Title))
-
-	// TODO: sort these according to semver?
-	bb.WriteString("weight: 12\n")
+	bb.WriteString(fmt.Sprintf("title: v%s\n", c.Version))
+	bb.WriteString(fmt.Sprintf("weight: %d\n", convertVersionToWeight(c.Version)))
 	bb.WriteString("---\n\n")
 	haveMigrations := false
 	for _, e := range c.Entries {
@@ -191,6 +202,10 @@ func createMigrationGuide(c config) error {
 		return fmt.Errorf("could not write migration guide: %v", err)
 	}
 	return nil
+}
+
+func convertVersionToWeight(v semver.Version) uint64 {
+	return 1_000_000_000 - (v.Major * 1_000_000) - (v.Minor * 1_000) - v.Patch
 }
 
 type fragment struct {
@@ -239,7 +254,7 @@ type migration struct {
 
 type config struct {
 	File    string
-	Title   string
+	Version semver.Version
 	Entries []entry
 }
 
@@ -274,7 +289,7 @@ func (e *entry) validate() error {
 }
 
 func (e entry) toChangelogString() string {
-	text := strings.Trim(e.Description, "\n")
+	text := strings.TrimSpace(e.Description)
 	if e.Breaking {
 		text = fmt.Sprintf("**Breaking change**: %s", text)
 	}
@@ -288,19 +303,20 @@ func (e entry) toChangelogString() string {
 }
 
 func (e entry) pullRequestLink() string {
-	const repo = "github.com/operator-framework/operator-sdk"
 	return fmt.Sprintf("[#%d](https://%s/pull/%d)", *e.PullRequest, repo, *e.PullRequest)
 }
 
-func getPullRequest(filename string) (uint, error) {
+func getCommitMessage(filename string) (string, error) {
 	args := fmt.Sprintf("log --follow --pretty=format:%%s --diff-filter=A --find-renames=40%% %s", filename)
 	line, err := exec.Command("git", strings.Split(args, " ")...).CombinedOutput()
 	if err != nil {
-		return 0, fmt.Errorf("failed to locate git commit for PR discovery: %v", err)
+		return "", fmt.Errorf("failed to locate git commit for PR discovery: %v", err)
 	}
+	return string(line), nil
+}
 
-	numRegex := regexp.MustCompile(`\(#(\d+)\)$`)
-	matches := numRegex.FindAllStringSubmatch(string(line), 1)
+func parsePRNumber(msg string) (uint, error) {
+	matches := numRegex.FindAllStringSubmatch(msg, 1)
 	if len(matches) == 0 || len(matches[0]) < 2 {
 		return 0, fmt.Errorf("could not find PR number in commit message")
 	}
