@@ -120,12 +120,12 @@ func GetNamespacesForMetrics(operatorNs string) ([]string, error) {
 func isNamespaced(gvk schema.GroupVersionKind, cfg *rest.Config) (bool, error) {
 	discoveryClient, err := discovery.NewDiscoveryClientForConfig(cfg)
 	if err != nil {
-		log.Error(err, "unable to get discvery client")
+		log.Error(err, "Unable to get discvery client")
 		return false, err
 	}
 	resourceList, err := discoveryClient.ServerResourcesForGroupVersion(gvk.GroupVersion().String())
 	if err != nil {
-		log.Error(err, "unable to get resource list for", "apiversion", gvk.GroupVersion().String())
+		log.Error(err, "Unable to get resource list for", "apiversion", gvk.GroupVersion().String())
 		return false, err
 	}
 	for _, apiResource := range resourceList.APIResources {
@@ -133,5 +133,5 @@ func isNamespaced(gvk schema.GroupVersionKind, cfg *rest.Config) (bool, error) {
 			return apiResource.Namespaced, nil
 		}
 	}
-	return false, errors.New("unable to find type: " + gvk.String() + " in server")
+	return false, errors.New("Unable to find type: " + gvk.String() + " in server")
 }
