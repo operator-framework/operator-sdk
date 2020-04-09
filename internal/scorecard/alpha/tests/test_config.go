@@ -23,6 +23,7 @@ import (
 	"github.com/operator-framework/api/pkg/manifests"
 	"github.com/operator-framework/api/pkg/validation/errors"
 	"github.com/operator-framework/operator-registry/pkg/registry"
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -36,6 +37,11 @@ type TestConfig struct {
 
 // GetConfig parses a Bundle from a given on-disk path returning a TestConfig
 func GetConfig(bundlePath string) (cfg TestConfig, err error) {
+
+	validationLogOutput := new(bytes.Buffer)
+	origOutput := logrus.StandardLogger().Out
+	logrus.SetOutput(validationLogOutput)
+	defer logrus.SetOutput(origOutput)
 
 	cfg.PackageManifest, cfg.Bundles, cfg.BundleErrors = manifests.GetManifestsDir(bundlePath)
 

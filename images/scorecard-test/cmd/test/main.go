@@ -15,6 +15,8 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 
@@ -38,45 +40,43 @@ const (
 )
 
 func main() {
-	log.Printf("scorecard-test starting\n")
-
 	argsWithoutProg := os.Args[1:]
 	if len(argsWithoutProg) == 0 {
 		// todo return an error since a test name is required
-		log.Printf("test name argument is required")
-		os.Exit(2)
+		log.Fatal("test name argument is required")
 	}
 
 	cfg, err := tests.GetConfig(bundlePath)
 	if err != nil {
 		// TODO produce a v1alpha2 Test Result error in the log
 	}
-	log.Printf("cfg had %d CRs\n", len(cfg.CRs))
 
-	var results []scapiv1alpha2.ScorecardTestResult
+	var result scapiv1alpha2.ScorecardTestResult
 
-	log.Printf("entrypoint [%s]\n", argsWithoutProg[0])
 	switch argsWithoutProg[0] {
 	case tests.OLMBundleValidationTest:
-		results = tests.BundleValidationTest(cfg)
+		result = tests.BundleValidationTest(cfg)
 	case tests.OLMCRDsHaveValidationTest:
-		results = tests.CRDsHaveValidationTest(cfg)
+		result = tests.CRDsHaveValidationTest(cfg)
 	case tests.OLMCRDsHaveResourcesTest:
-		results = tests.CRDsHaveResourcesTest(cfg)
+		result = tests.CRDsHaveResourcesTest(cfg)
 	case tests.OLMSpecDescriptorsTest:
-		results = tests.SpecDescriptorsTest(cfg)
+		result = tests.SpecDescriptorsTest(cfg)
 	case tests.OLMStatusDescriptorsTest:
-		results = tests.StatusDescriptorsTest(cfg)
+		result = tests.StatusDescriptorsTest(cfg)
 	case tests.BasicCheckStatusTest:
-		results = tests.CheckStatusTest(cfg)
+		result = tests.CheckStatusTest(cfg)
 	case tests.BasicCheckSpecTest:
-		results = tests.CheckSpecTest(cfg)
+		result = tests.CheckSpecTest(cfg)
 	default:
 		// todo error if an invalid test name is passed
-		log.Printf("invalid test name argument passed\n")
-		os.Exit(2)
+		log.Fatal("invalid test name argument passed")
 	}
 
-	log.Printf("%v\n", results)
+	prettyJson, err := json.MarshalIndent(result, "", "    ")
+	if err != nil {
+		log.Fatal("failed to generate json", err)
+	}
+	fmt.Printf("%s\n", string(prettyJson))
 
 }

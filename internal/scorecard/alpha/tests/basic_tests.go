@@ -24,36 +24,23 @@ const (
 )
 
 // CheckStatusTest verifies that CRs have a status block
-func CheckStatusTest(conf TestConfig) []scapiv1alpha2.ScorecardTestResult {
-	for b := 0; b < len(conf.Bundles); b++ {
-		//bundle := conf.Bundles[b]
-
-		//csv, err := bundle.ClusterServiceVersion()
-
-		// CRs are withing the csv metadata.annotations.alm-examples
-
-		// get CRDs
-		//crds, err := bundle.CustomResourceDefinitions()
-	}
-	results := make([]scapiv1alpha2.ScorecardTestResult, 0)
+func CheckStatusTest(conf TestConfig) scapiv1alpha2.ScorecardTestResult {
 	r := scapiv1alpha2.ScorecardTestResult{}
+	r.Name = BasicCheckStatusTest
+	r.Description = "a test that verifies that CRs have a status block"
 	r.State = scapiv1alpha2.PassState
-	//r.CRName = conf.CRList[i].Name
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
-	results = append(results, r)
-	return results
+	return r
 }
 
 // CheckSpecTest verifies that CRs have a spec block
-func CheckSpecTest(conf TestConfig) []scapiv1alpha2.ScorecardTestResult {
-	//	for i := 0; i < len(conf.CRList); i++ {
-	results := make([]scapiv1alpha2.ScorecardTestResult, 0)
+func CheckSpecTest(conf TestConfig) scapiv1alpha2.ScorecardTestResult {
 	r := scapiv1alpha2.ScorecardTestResult{}
+	r.Name = BasicCheckSpecTest
+	r.Description = "a test that verifies that CRs have a spec block"
 	r.State = scapiv1alpha2.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
-	results = append(results, r)
-	//	}
-	return results
+	return r
 }

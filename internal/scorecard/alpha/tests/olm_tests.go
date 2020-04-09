@@ -27,88 +27,59 @@ const (
 )
 
 // BundleValidationTest validates an on-disk bundle
-func BundleValidationTest(conf TestConfig) []scapiv1alpha2.ScorecardTestResult {
-	results := make([]scapiv1alpha2.ScorecardTestResult, 0)
+func BundleValidationTest(conf TestConfig) scapiv1alpha2.ScorecardTestResult {
 	r := scapiv1alpha2.ScorecardTestResult{}
+	r.Name = OLMBundleValidationTest
+	r.Description = "validate an on-disk bundle"
 	r.State = scapiv1alpha2.PassState
 	r.Log = "validation output goes here"
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
-	results = append(results, r)
-	return results
+	return r
 }
 
 // CRDsHaveValidationTest verifies all CRDs have a validation section
-func CRDsHaveValidationTest(conf TestConfig) []scapiv1alpha2.ScorecardTestResult {
-	bundle := conf.Bundles[0]
-	results := make([]scapiv1alpha2.ScorecardTestResult, 0)
+func CRDsHaveValidationTest(conf TestConfig) scapiv1alpha2.ScorecardTestResult {
 	r := scapiv1alpha2.ScorecardTestResult{}
+	r.Name = OLMCRDsHaveValidationTest
+	r.Description = "verifies all CRDs have a validation section"
 	r.State = scapiv1alpha2.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
-	crds, err := bundle.CustomResourceDefinitions()
-	if err != nil {
-	}
-	for i := 0; i < len(crds); i++ {
-		r.Errors = append(r.Errors, "todo")
-		r.Suggestions = append(r.Suggestions, "todo")
-	}
-	results = append(results, r)
-	return results
+	return r
 }
 
 // CRDsHaveResourcesTest verifies CRDs have resources listed in its owned CRDs section
-func CRDsHaveResourcesTest(conf TestConfig) []scapiv1alpha2.ScorecardTestResult {
-	results := make([]scapiv1alpha2.ScorecardTestResult, 0)
+func CRDsHaveResourcesTest(conf TestConfig) scapiv1alpha2.ScorecardTestResult {
 	r := scapiv1alpha2.ScorecardTestResult{}
+	r.Name = OLMCRDsHaveResourcesTest
+	r.Description = "verifies all CRDs have resources listed in its owned CRDs section"
 	r.State = scapiv1alpha2.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
-	bundle := conf.Bundles[0]
 
-	crds, err := bundle.CustomResourceDefinitions()
-	if err != nil {
-	}
-
-	for i := 0; i < len(crds); i++ {
-		r.Errors = append(r.Errors, "todo")
-		r.Suggestions = append(r.Suggestions, "todo")
-	}
-	results = append(results, r)
-	return results
+	return r
 }
 
 // SpecDescriptorsTest verifies all spec fields have descriptors
-func SpecDescriptorsTest(conf TestConfig) []scapiv1alpha2.ScorecardTestResult {
-	bundle := conf.Bundles[0]
-	crds, err := bundle.CustomResourceDefinitions()
-	if err != nil {
-	}
+func SpecDescriptorsTest(conf TestConfig) scapiv1alpha2.ScorecardTestResult {
 
-	results := make([]scapiv1alpha2.ScorecardTestResult, 0)
-	for i := 0; i < len(crds); i++ {
-		r := scapiv1alpha2.ScorecardTestResult{}
-		r.State = scapiv1alpha2.PassState
-		r.Errors = make([]string, 0)
-		r.Suggestions = make([]string, 0)
-		results = append(results, r)
-	}
-	return results
+	r := scapiv1alpha2.ScorecardTestResult{}
+	r.Name = OLMSpecDescriptorsTest
+	r.Description = "verifies all spec fields have descriptors"
+	r.State = scapiv1alpha2.PassState
+	r.Errors = make([]string, 0)
+	r.Suggestions = make([]string, 0)
+	return r
 }
 
 // StatusDescriptorsTest verifies all CRDs have status descriptors
-func StatusDescriptorsTest(conf TestConfig) []scapiv1alpha2.ScorecardTestResult {
-	bundle := conf.Bundles[0]
-	crds, err := bundle.CustomResourceDefinitions()
-	if err != nil {
-	}
-	results := make([]scapiv1alpha2.ScorecardTestResult, 0)
-	for i := 0; i < len(crds); i++ {
-		r := scapiv1alpha2.ScorecardTestResult{}
-		r.State = scapiv1alpha2.PassState
-		r.Errors = make([]string, 0)
-		r.Suggestions = make([]string, 0)
-		results = append(results, r)
-	}
-	return results
+func StatusDescriptorsTest(conf TestConfig) scapiv1alpha2.ScorecardTestResult {
+	r := scapiv1alpha2.ScorecardTestResult{}
+	r.Name = OLMStatusDescriptorsTest
+	r.Description = "verifies all CRDs have status descriptors"
+	r.State = scapiv1alpha2.PassState
+	r.Errors = make([]string, 0)
+	r.Suggestions = make([]string, 0)
+	return r
 }
