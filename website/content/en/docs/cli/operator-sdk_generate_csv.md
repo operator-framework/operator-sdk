@@ -15,9 +15,9 @@ has already generated a CSV manifest you want to use as a base, supply its
 version to --from-version. Otherwise the SDK will scaffold a new CSV manifest.
 
 The --make-manifests flag directs the generator to create a 'manifests' directory
-intended to hold your latest operator manifests. Set this flag if you intend to
-version your operator by VCS and/or submit your operator to a pipeline that
-leverages operator-framework tools. More information:
+intended to hold your latest operator manifests. This flag is true by default.
+
+More information on manifests:
 https://github.com/operator-framework/operator-registry/blob/master/docs/design/operator-bundle.md#operator-bundle-overview
 
 Flags that change project default paths:
@@ -31,8 +31,9 @@ Flags that change project default paths:
 
   --crd-dir:
     The CSV's spec.customresourcedefinitions.owned field is generated from the CRD manifests
-    in this path.These CRD manifests are also copied over to the bundle directory if --update-crds is set.
-    Additionally the CR manifests will be used to populate the CSV example CRs.
+    in this path. These CRD manifests are also copied over to the bundle directory if
+    --update-crds=true (the default). Additionally the CR manifests will be used to populate
+    the CSV example CRs.
 
 
 ```
@@ -115,14 +116,13 @@ operator-sdk generate csv [flags]
 ```
       --apis-dir string        Project relative path to root directory for API type defintions (default "pkg/apis")
       --crd-dir string         Project relative path to root directory for CRD and CR manifests
-      --csv-version string     Semantic version of the CSV
+      --csv-version string     Semantic version of the CSV. This flag must be set if a package manifest exists
       --deploy-dir string      Project relative path to root directory for operator manifests (Deployment and RBAC) (default "deploy")
-      --from-version string    Semantic version of an existing CSV to use as a base
   -h, --help                   help for csv
-      --make-manifests         When set, the generator will create or update a CSV manifest in a 'manifests' directory. This directory is intended to be used for your latest bundle manifests. The default location is deploy/olm-catalog/<operator-name>/manifests. If --output-dir is set, the directory will be <output-dir>/manifests
+      --make-manifests         When set, the generator will create or update a CSV manifest in a 'manifests' directory. This directory is intended to be used for your latest bundle manifests. The default location is deploy/olm-catalog/<operator-name>/manifests. If --output-dir is set, the directory will be <output-dir>/manifests (default true)
       --operator-name string   Operator name to use while generating CSV
       --output-dir string      Base directory to output generated CSV. If --make-manifests=false the resulting CSV bundle directory will be <output-dir>/olm-catalog/<operator-name>/<csv-version>. If --make-manifests=true, the bundle directory will be <output-dir>/manifests
-      --update-crds            Update CRD manifests in deploy/<operator-name>/<csv-version> from the default CRDs dir deploy/crds or --crd-dir if set. If --make-manifests=true, this option is true by default
+      --update-crds            Update CRD manifests in deploy/<operator-name>/<csv-version> from the default CRDs dir deploy/crds or --crd-dir if set. If --make-manifests=false, this option is false by default (default true)
 ```
 
 ### SEE ALSO

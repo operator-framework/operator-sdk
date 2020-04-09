@@ -64,10 +64,6 @@ type bundleGenerator struct {
 	operatorName string
 	// csvVersion is the CSV current version.
 	csvVersion string
-	// fromVersion is the CSV version from which to build a new CSV. A CSV
-	// manifest with this version should exist at:
-	// deploy/olm-catalog/{from_version}/operator-name.v{from_version}.{csvYamlFileExt}
-	fromVersion string
 	// fromBundleDir is set if the generator needs to update from
 	// an existing CSV bundle directory
 	fromBundleDir string
@@ -79,6 +75,9 @@ type bundleGenerator struct {
 	// updateCRDs directs the generator to also add CustomResourceDefinition
 	// manifests to the bundle.
 	updateCRDs bool
+	// makeManifests directs the generator to use 'manifests' as the bundle
+	// dir name.
+	makeManifests bool
 
 	// noUpdate is for testing the generator's update capabilities.
 	noUpdate bool
@@ -98,18 +97,18 @@ func NewBundle(cfg gen.Config, csvVersion, fromVersion string, updateCRDs, makeM
 	}
 
 	g := bundleGenerator{
-		operatorName: cfg.OperatorName,
-		csvVersion:   csvVersion,
-		fromVersion:  fromVersion,
-		deployDir:    deployDir,
-		apisDir:      apisDir,
-		crdsDir:      crdsDir,
-		updateCRDs:   updateCRDs,
+		operatorName:  cfg.OperatorName,
+		csvVersion:    csvVersion,
+		deployDir:     deployDir,
+		apisDir:       apisDir,
+		crdsDir:       crdsDir,
+		updateCRDs:    updateCRDs,
+		makeManifests: makeManifests,
 	}
 
 	if makeManifests {
 		g.toBundleDir, g.fromBundleDir = getBundleDirs(cfg.OperatorName, csvVersion,
-			fromVersion, cfg.OutputDir, deployDir)
+			cfg.OutputDir, deployDir)
 	} else {
 		g.toBundleDir, g.fromBundleDir = getBundleDirsLegacy(cfg.OperatorName, csvVersion,
 			fromVersion, cfg.OutputDir, deployDir)
@@ -121,8 +120,7 @@ func NewBundle(cfg gen.Config, csvVersion, fromVersion string, updateCRDs, makeM
 // a bundle to update the new bundle from.
 // getBundleDirs is aware of 'manifests' directories and will update the
 // new bundle from an existing 'manifests' directory if it exists.
-func getBundleDirs(operatorName, csvVersion, fromVersion, outputDir,
-	deployDir string) (toBundleDir, fromBundleDir string) {
+func getBundleDirs(operatorName, csvVersion, outputDir, deployDir string) (toBundleDir, fromBundleDir string) {
 
 	defaultOperatorDir := filepath.Join(deployDir, OLMCatalogChildDir, operatorName)
 
@@ -134,16 +132,13 @@ func getBundleDirs(operatorName, csvVersion, fromVersion, outputDir,
 		toBundleDir = filepath.Join(outputDir, bundle.ManifestsDir)
 		outputOperatorDir := filepath.Join(outputDir, OLMCatalogChildDir, operatorName)
 		switch {
-		case isBundleDirExist(outputOperatorDir, fromVersion):
-			// Upgrading a new CSV from previous CSV version
-			fromBundleDir = filepath.Join(outputOperatorDir, fromVersion)
-		case isBundleDirExist(outputOperatorDir, csvVersion):
-			// Updating an existing CSV version
-			fromBundleDir = filepath.Join(outputOperatorDir, csvVersion)
 		case isBundleDirExist(outputOperatorDir, bundle.ManifestsDir):
 			fromBundleDir = filepath.Join(outputOperatorDir, bundle.ManifestsDir)
 		case isDirExist(toBundleDir):
 			fromBundleDir = toBundleDir
+		case isBundleDirExist(outputOperatorDir, csvVersion):
+			// Updating an existing CSV version
+			fromBundleDir = filepath.Join(outputOperatorDir, csvVersion)
 		}
 		if fromBundleDir != "" {
 			return toBundleDir, fromBundleDir
@@ -151,16 +146,13 @@ func getBundleDirs(operatorName, csvVersion, fromVersion, outputDir,
 	}
 
 	switch {
-	case isBundleDirExist(defaultOperatorDir, fromVersion):
-		// Upgrading a new CSV from previous CSV version
-		fromBundleDir = filepath.Join(defaultOperatorDir, fromVersion)
-	case isBundleDirExist(defaultOperatorDir, csvVersion):
-		// Updating an existing CSV version
-		fromBundleDir = filepath.Join(defaultOperatorDir, csvVersion)
 	case isBundleDirExist(defaultOperatorDir, bundle.ManifestsDir):
 		fromBundleDir = filepath.Join(defaultOperatorDir, bundle.ManifestsDir)
 	case isDirExist(toBundleDir):
 		fromBundleDir = toBundleDir
+	case isBundleDirExist(defaultOperatorDir, csvVersion):
+		// Updating an existing CSV version
+		fromBundleDir = filepath.Join(defaultOperatorDir, csvVersion)
 	}
 
 	return toBundleDir, fromBundleDir
@@ -244,7 +236,11 @@ func getCSVName(name, version string) string {
 	return name + ".v" + version
 }
 
-func getCSVFileName(name, version string) string {
+func getCSVFileName(name string) string {
+	return strings.ToLower(name) + csvYamlFileExt
+}
+
+func getCSVFileNameLegacy(name, version string) string {
 	return getCSVName(strings.ToLower(name), version) + csvYamlFileExt
 }
 
@@ -271,8 +267,11 @@ func (g bundleGenerator) generateCSV() (fileMap map[string][]byte, err error) {
 		return nil, err
 	}
 
+	path := getCSVFileName(g.operatorName)
+	if !g.makeManifests {
+		path = getCSVFileNameLegacy(g.operatorName, g.csvVersion)
+	}
 	// TODO(estroz): replace with CSV validator from API library.
-	path := getCSVFileName(g.operatorName, g.csvVersion)
 	if fields := getEmptyRequiredCSVFields(csv); len(fields) != 0 {
 		if g.fromBundleDir != "" {
 			// An existing csv should have several required fields populated.
@@ -389,10 +388,10 @@ func getEmptyRequiredCSVFields(csv *olmapiv1alpha1.ClusterServiceVersion) (field
 // ex. ObjectMeta.Name, and place the old version in the `replaces` object,
 // if there is an old version to replace.
 func (g bundleGenerator) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVersion) error {
-
-	// Old csv version to replace, and updated csv version.
+	// Otherwise if csvVersion is the same as the current version or empty
+	// (if 'manifests/' is being updated), no updating needs doing
 	oldVer, newVer := csv.Spec.Version.String(), g.csvVersion
-	if oldVer == newVer {
+	if newVer == "" || oldVer == newVer {
 		return nil
 	}
 

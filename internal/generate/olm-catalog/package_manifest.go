@@ -125,6 +125,13 @@ func (g pkgGenerator) generate() (map[string][]byte, error) {
 	} else if err == nil || os.IsExist(err) {
 		projutil.PrintDeprecationWarning("Package manifests are deprecated. " +
 			"Run `operator-sdk bundle create --generate-only` to create operator metadata")
+
+		// NewBundle can now be called without a csvVersion, but existing package
+		// manifests still require a csvVersion for updates.
+		if g.csvVersion == "" {
+			return nil, fmt.Errorf("a CSV version is required to updating existing package manifests")
+		}
+
 		b, err := ioutil.ReadFile(path)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read package manifest %s: %v", path, err)

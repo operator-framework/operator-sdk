@@ -55,9 +55,9 @@ has already generated a CSV manifest you want to use as a base, supply its
 version to --from-version. Otherwise the SDK will scaffold a new CSV manifest.
 
 The --make-manifests flag directs the generator to create a 'manifests' directory
-intended to hold your latest operator manifests. Set this flag if you intend to
-version your operator by VCS and/or submit your operator to a pipeline that
-leverages operator-framework tools. More information:
+intended to hold your latest operator manifests. This flag is true by default.
+
+More information on manifests:
 https://github.com/operator-framework/operator-registry/blob/master/docs/design/operator-bundle.md#operator-bundle-overview
 
 Flags that change project default paths:
@@ -71,8 +71,9 @@ Flags that change project default paths:
 
   --crd-dir:
     The CSV's spec.customresourcedefinitions.owned field is generated from the CRD manifests
-    in this path.These CRD manifests are also copied over to the bundle directory if --update-crds is set.
-    Additionally the CR manifests will be used to populate the CSV example CRs.
+    in this path. These CRD manifests are also copied over to the bundle directory if
+    --update-crds=true (the default). Additionally the CR manifests will be used to populate
+    the CSV example CRs.
 `,
 		Example: `
 		##### Generate CSV from default input paths #####
@@ -154,6 +155,11 @@ Flags that change project default paths:
 					"runs from the project root directory.")
 			}
 
+			// Legacy behavior.
+			if !c.makeManifests && !cmd.Flags().Changed("update-crds") {
+				c.updateCRDs = false
+			}
+
 			if err := c.run(); err != nil {
 				log.Fatal(err)
 			}
@@ -162,9 +168,14 @@ Flags that change project default paths:
 	}
 
 	cmd.Flags().StringVar(&c.csvVersion, "csv-version", "",
-		"Semantic version of the CSV")
+		"Semantic version of the CSV. This flag must be set if a package manifest exists")
 	cmd.Flags().StringVar(&c.fromVersion, "from-version", "",
 		"Semantic version of an existing CSV to use as a base")
+	err := cmd.Flags().MarkDeprecated("from-version",
+		"Use --csv-version to update your bundled CSV in `manifests/`")
+	if err != nil {
+		panic(err)
+	}
 
 	// TODO: Allow multiple paths
 	// Deployment and RBAC manifests might be in different dirs e.g kubebuilder
@@ -185,7 +196,7 @@ Flags that change project default paths:
 		"Operator name to use while generating CSV")
 	cmd.Flags().StringVar(&c.csvChannel, "csv-channel", "",
 		"Channel the CSV should be registered under in the package manifest")
-	err := cmd.Flags().MarkDeprecated("csv-channel", "Package manifests are deprecated. "+
+	err = cmd.Flags().MarkDeprecated("csv-channel", "Package manifests are deprecated. "+
 		"Run `operator-sdk bundle create --generate-only` to create operator metadata")
 	if err != nil {
 		panic(err)
@@ -199,11 +210,11 @@ Flags that change project default paths:
 		panic(err)
 	}
 
-	cmd.Flags().BoolVar(&c.updateCRDs, "update-crds", false,
+	cmd.Flags().BoolVar(&c.updateCRDs, "update-crds", true,
 		"Update CRD manifests in deploy/<operator-name>/<csv-version> from the default "+
-			"CRDs dir deploy/crds or --crd-dir if set. If --make-manifests=true, this option "+
-			"is true by default")
-	cmd.Flags().BoolVar(&c.makeManifests, "make-manifests", false,
+			"CRDs dir deploy/crds or --crd-dir if set. If --make-manifests=false, this option "+
+			"is false by default")
+	cmd.Flags().BoolVar(&c.makeManifests, "make-manifests", true,
 		"When set, the generator will create or update a CSV manifest in a 'manifests' "+
 			"directory. This directory is intended to be used for your latest bundle manifests. "+
 			"The default location is deploy/olm-catalog/<operator-name>/manifests. "+
@@ -223,11 +234,6 @@ func (c csvCmd) run() error {
 		} else {
 			c.crdDir = filepath.Join("deploy", "crds")
 		}
-	}
-	// Since --make-manifests directs the generator to create a latest 'manifests'
-	// bundle, CRDs should always be up-to-date.
-	if c.makeManifests {
-		c.updateCRDs = true
 	}
 
 	if c.operatorName == "" {

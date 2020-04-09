@@ -16,8 +16,16 @@ DEFAULT_BUNDLE_DIR="${OPERATOR_BUNDLE_ROOT_DIR}/${OPERATOR_VERSION}"
 OUTPUT_DIR="foo"
 OUTPUT_BUNDLE_DIR="${OUTPUT_DIR}/olm-catalog/${OPERATOR_NAME}/${OPERATOR_VERSION}"
 
-function csv_file_for_dir() {
+function csv_file_for_dir_legacy() {
   echo "${1}/${OPERATOR_NAME}.v${OPERATOR_VERSION}.clusterserviceversion.yaml"
+}
+
+function check_csv_file_legacy() {
+  check_file "$1" "$(csv_file_for_dir_legacy "$2")" $3
+}
+
+function csv_file_for_dir() {
+  echo "${1}/${OPERATOR_NAME}.clusterserviceversion.yaml"
 }
 
 function check_csv_file() {
@@ -45,33 +53,33 @@ header_text "Running 'operator-sdk generate csv' subcommand tests in $TEST_DIR."
 
 TEST_NAME="generate with version $OPERATOR_VERSION"
 header_text "$TEST_NAME"
-generate_csv --csv-version $OPERATOR_VERSION
+generate_csv --make-manifests=false --csv-version $OPERATOR_VERSION
 check_dir "$TEST_NAME" "$DEFAULT_BUNDLE_DIR" 1
-check_csv_file "$TEST_NAME" "$DEFAULT_BUNDLE_DIR" 1
+check_csv_file_legacy "$TEST_NAME" "$DEFAULT_BUNDLE_DIR" 1
 check_crd_files "$TEST_NAME" "$DEFAULT_BUNDLE_DIR" 0
 cleanup_case
 
 TEST_NAME="generate with version $OPERATOR_VERSION and output-dir"
 header_text "$TEST_NAME"
-generate_csv --csv-version $OPERATOR_VERSION --output-dir "$OUTPUT_DIR"
+generate_csv --make-manifests=false --csv-version $OPERATOR_VERSION --output-dir "$OUTPUT_DIR"
 check_dir "$TEST_NAME" "$OUTPUT_BUNDLE_DIR" 1
-check_csv_file "$TEST_NAME" "$OUTPUT_BUNDLE_DIR" 1
+check_csv_file_legacy "$TEST_NAME" "$OUTPUT_BUNDLE_DIR" 1
 check_crd_files "$TEST_NAME" "$OUTPUT_BUNDLE_DIR" 0
 check_dir "$TEST_NAME" "$DEFAULT_BUNDLE_DIR" 0
 cleanup_case
 
 TEST_NAME="generate with version $OPERATOR_VERSION and output-dir, update-crds"
 header_text "$TEST_NAME"
-generate_csv --csv-version $OPERATOR_VERSION --output-dir "$OUTPUT_DIR" --update-crds
+generate_csv --make-manifests=false --csv-version $OPERATOR_VERSION --output-dir "$OUTPUT_DIR" --update-crds
 check_dir "$TEST_NAME" "$OUTPUT_BUNDLE_DIR" 1
-check_csv_file "$TEST_NAME" "$OUTPUT_BUNDLE_DIR" 1
+check_csv_file_legacy "$TEST_NAME" "$OUTPUT_BUNDLE_DIR" 1
 check_crd_files "$TEST_NAME" "$OUTPUT_BUNDLE_DIR" 1
 check_dir "$TEST_NAME" "$DEFAULT_BUNDLE_DIR" 0
 cleanup_case
 
 TEST_NAME="generate with version $OPERATOR_VERSION and make-manifests"
 header_text "$TEST_NAME"
-generate_csv --csv-version $OPERATOR_VERSION --make-manifests
+generate_csv --csv-version $OPERATOR_VERSION
 check_dir "$TEST_NAME" "$DEFAULT_BUNDLE_DIR" 0
 check_dir "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/manifests" 1
 check_csv_file "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/manifests" 1
@@ -80,7 +88,7 @@ cleanup_case
 
 TEST_NAME="generate with version $OPERATOR_VERSION and output-dir, make-manifests"
 header_text "$TEST_NAME"
-generate_csv --csv-version $OPERATOR_VERSION --output-dir "$OUTPUT_DIR" --make-manifests
+generate_csv --csv-version $OPERATOR_VERSION --output-dir "$OUTPUT_DIR"
 check_dir "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/manifests" 0
 check_dir "$TEST_NAME" "$OUTPUT_DIR/manifests" 1
 check_csv_file "$TEST_NAME" "$OUTPUT_DIR/manifests" 1

@@ -111,7 +111,7 @@ func TestGoCSVNewWithInputsToOutput(t *testing.T) {
 		t.Fatalf("Failed to execute CSV generator: %v", err)
 	}
 
-	csvFileName := getCSVFileName(testProjectName, csvVersion)
+	csvFileName := getCSVFileNameLegacy(testProjectName, csvVersion)
 
 	// Read expected CSV
 	expBundleDir := filepath.Join("expected-catalog", OLMCatalogChildDir, testProjectName, csvVersion)
@@ -164,7 +164,7 @@ func TestGoCSVUpgradeWithInputsToOutput(t *testing.T) {
 	if err := g.Generate(); err != nil {
 		t.Fatalf("Failed to execute CSV generator: %v", err)
 	}
-	csvFileName := getCSVFileName(testProjectName, csvVersion)
+	csvFileName := getCSVFileNameLegacy(testProjectName, csvVersion)
 
 	// Read expected CSV
 	expCsvFile := filepath.Join(expCatalogDir, testProjectName, csvVersion, csvFileName)
@@ -197,7 +197,7 @@ func TestGoCSVNew(t *testing.T) {
 		t.Fatalf("Failed to execute CSV generator: %v", err)
 	}
 
-	csvExpFile := getCSVFileName(testProjectName, csvVersion)
+	csvExpFile := getCSVFileNameLegacy(testProjectName, csvVersion)
 	csvExpBytes := readFile(t, filepath.Join(OLMCatalogDir, testProjectName, noUpdateDir, csvExpFile))
 	if b, ok := fileMap[csvExpFile]; !ok {
 		t.Errorf("Failed to generate CSV for version %s", csvVersion)
@@ -225,7 +225,7 @@ func TestGoCSVUpdate(t *testing.T) {
 		t.Fatalf("Failed to execute CSV generator: %v", err)
 	}
 
-	csvExpFile := getCSVFileName(testProjectName, csvVersion)
+	csvExpFile := getCSVFileNameLegacy(testProjectName, csvVersion)
 	csvExpBytes := readFile(t, filepath.Join(OLMCatalogDir, testProjectName, csvVersion, csvExpFile))
 	if b, ok := fileMap[csvExpFile]; !ok {
 		t.Errorf("Failed to generate CSV for version %s", csvVersion)
@@ -253,9 +253,66 @@ func TestGoCSVUpgrade(t *testing.T) {
 		t.Fatalf("Failed to execute CSV generator: %v", err)
 	}
 
-	csvExpFile := getCSVFileName(testProjectName, csvVersion)
+	csvExpFile := getCSVFileNameLegacy(testProjectName, csvVersion)
 	csvExpBytes := readFile(t, filepath.Join(OLMCatalogDir, testProjectName, csvVersion, csvExpFile))
 	if b, ok := fileMap[csvExpFile]; !ok {
+		t.Errorf("Failed to generate CSV for version %s", csvVersion)
+	} else {
+		assert.Equal(t, string(csvExpBytes), string(b))
+	}
+}
+
+func TestGoCSVNewManifests(t *testing.T) {
+	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
+	defer cleanupFunc()
+
+	cfg := gen.Config{
+		OperatorName: testProjectName,
+		Inputs: map[string]string{
+			DeployDirKey: "deploy",
+			APIsDirKey:   filepath.Join("pkg", "apis"),
+			CRDsDirKey:   filepath.Join("deploy", "crds_v1beta1"),
+		},
+		OutputDir: "deploy",
+	}
+	g := NewBundle(cfg, csvVersion, "", false, true).(bundleGenerator)
+	g.noUpdate = true
+	fileMap, err := g.generateCSV()
+	if err != nil {
+		t.Fatalf("Failed to execute CSV generator: %v", err)
+	}
+
+	csvExpFile := getCSVFileNameLegacy(testProjectName, csvVersion)
+	csvExpBytes := readFile(t, filepath.Join(OLMCatalogDir, testProjectName, noUpdateDir, csvExpFile))
+	if b, ok := fileMap[getCSVFileName(testProjectName)]; !ok {
+		t.Errorf("Failed to generate CSV for version %s", csvVersion)
+	} else {
+		assert.Equal(t, string(csvExpBytes), string(b))
+	}
+}
+
+func TestGoCSVUpdateManifests(t *testing.T) {
+	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
+	defer cleanupFunc()
+
+	cfg := gen.Config{
+		OperatorName: testProjectName,
+		Inputs: map[string]string{
+			DeployDirKey: "deploy",
+			APIsDirKey:   filepath.Join("pkg", "apis"),
+			CRDsDirKey:   filepath.Join("deploy", "crds_v1beta1"),
+		},
+		OutputDir: "deploy",
+	}
+	g := NewBundle(cfg, csvVersion, "", false, true).(bundleGenerator)
+	fileMap, err := g.generateCSV()
+	if err != nil {
+		t.Fatalf("Failed to execute CSV generator: %v", err)
+	}
+
+	csvExpFile := getCSVFileNameLegacy(testProjectName, csvVersion)
+	csvExpBytes := readFile(t, filepath.Join(OLMCatalogDir, testProjectName, csvVersion, csvExpFile))
+	if b, ok := fileMap[getCSVFileName(testProjectName)]; !ok {
 		t.Errorf("Failed to generate CSV for version %s", csvVersion)
 	} else {
 		assert.Equal(t, string(csvExpBytes), string(b))
@@ -313,7 +370,7 @@ func TestGoCSVNewWithEmptyDeployDir(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	csvExpFile := getCSVFileName(testProjectName, notExistVersion)
+	csvExpFile := getCSVFileNameLegacy(testProjectName, notExistVersion)
 	if b, ok := fileMap[csvExpFile]; !ok {
 		t.Errorf("Failed to generate CSV for version %s", notExistVersion)
 	} else {
