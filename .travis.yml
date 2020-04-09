@@ -135,8 +135,8 @@ jobs:
     # Build and test go
     - <<: *test
       name: Go on Kubernetes
-      before_install:
-        - (cd / && go get github.com/mattn/goveralls)
+      before_script:
+      - (cd / && go get github.com/mattn/goveralls)
       script:
       - make test-unit
       - $GOPATH/bin/goveralls -service=travis-ci -coverprofile=coverage.out -repotoken=$COVERALLS_TOKEN
