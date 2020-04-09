@@ -93,3 +93,20 @@ For example:
 ```sh
 $ operator-sdk exec-entrypoint helm --max-workers 10
 ```
+
+## Use `helm upgrade --force` for deployment
+
+By adding the annotation `helm.operator-sdk/upgrade-force: "True"` to the deployed CR, the operator uses the `force` flag of helm to replace the rendered resources. For more info see the [Helm Upgrade documentation](https://helm.sh/docs/helm/helm_upgrade/).
+
+```yaml
+apiVersion: example.com/v1alpha1
+kind: Nginx
+metadata:
+  name: example-nginx
+  annotations:
+    helm.operator-sdk/upgrade-force: "True"
+spec:
+  replicaCount: 2
+  service:
+    port: 8080
+```

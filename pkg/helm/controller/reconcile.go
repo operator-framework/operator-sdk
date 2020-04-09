@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	rpb "helm.sh/helm/v3/pkg/release"
@@ -240,7 +241,8 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 			r.EventRecorder.Eventf(o, "Warning", "OverrideValuesInUse",
 				"Chart value %q overridden to %q by operator's watches.yaml", k, v)
 		}
-		previousRelease, updatedRelease, err := manager.UpdateRelease(context.TODO())
+		force := hasHelmUpgradeForceAnnotation(o)
+		previousRelease, updatedRelease, err := manager.UpdateRelease(context.TODO(), release.ForceUpdate(force))
 		if err != nil {
 			log.Error(err, "Release failed")
 			status.SetCondition(types.HelmAppCondition{
@@ -261,7 +263,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 			}
 		}
 
-		log.Info("Updated release")
+		log.Info("Updated release", "force", force)
 		if log.V(0).Enabled() {
 			fmt.Println(diffutil.Diff(previousRelease.Manifest, updatedRelease.Manifest))
 		}
@@ -320,6 +322,24 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 	}
 	err = r.updateResourceStatus(o, status)
 	return reconcile.Result{RequeueAfter: r.ReconcilePeriod}, err
+}
+
+// returns the boolean representation of the annotation string
+// will return false if annotation is not set
+func hasHelmUpgradeForceAnnotation(o *unstructured.Unstructured) bool {
+	const helmUpgradeForceAnnotation = "helm.operator-sdk/upgrade-force"
+	force := o.GetAnnotations()[helmUpgradeForceAnnotation]
+	if force == "" {
+		return false
+	}
+	value := false
+	if i, err := strconv.ParseBool(helmUpgradeForceAnnotation); err != nil {
+		log.Info("Could not parse annotation as a boolean",
+			"annotation", helmUpgradeForceAnnotation, "value informed", force)
+	} else {
+		value = i
+	}
+	return value
 }
 
 func (r HelmOperatorReconciler) updateResource(o runtime.Object) error {
