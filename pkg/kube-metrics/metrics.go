@@ -23,6 +23,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	ksmetric "k8s.io/kube-state-metrics/pkg/metric"
 	metricsstore "k8s.io/kube-state-metrics/pkg/metrics_store"
@@ -58,8 +59,12 @@ func GenerateAndServeCRMetrics(cfg *rest.Config,
 		if err != nil {
 			return err
 		}
+		namespaced, err := isNamespaced(gvk, cfg)
+		if err != nil {
+			return err
+		}
 		// Generate collector based on the group/version, kind and the metric families.
-		gvkStores := NewMetricsStores(dclient, ns, apiVersion, kind, metricFamilies)
+		gvkStores := NewMetricsStores(dclient, ns, apiVersion, kind, metricFamilies, namespaced)
 		allStores = append(allStores, gvkStores)
 	}
 	// Start serving metrics.
@@ -110,4 +115,23 @@ func GetNamespacesForMetrics(operatorNs string) ([]string, error) {
 		ns = strings.Split(watchNamespace, ",")
 	}
 	return ns, nil
+}
+
+func isNamespaced(gvk schema.GroupVersionKind, cfg *rest.Config) (bool, error) {
+	discoveryClient, err := discovery.NewDiscoveryClientForConfig(cfg)
+	if err != nil {
+		log.Error(err, "unable to get discvery client")
+		return false, err
+	}
+	resourceList, err := discoveryClient.ServerResourcesForGroupVersion(gvk.GroupVersion().String())
+	if err != nil {
+		log.Error(err, "unable to get resource list for", "apiversion", gvk.GroupVersion().String())
+		return false, err
+	}
+	for _, apiResource := range resourceList.APIResources {
+		if apiResource.Kind == gvk.Kind {
+			return apiResource.Namespaced, nil
+		}
+	}
+	return false, errors.New("unable to find type: " + gvk.String() + " in server")
 }

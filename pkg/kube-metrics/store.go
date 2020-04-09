@@ -30,15 +30,23 @@ import (
 // NewMetricsStores returns collections of metrics in the namespaces provided, per the api/kind resource.
 // The metrics are registered in the custom metrics.FamilyGenerator that needs to be defined.
 func NewMetricsStores(dclient dynamic.NamespaceableResourceInterface, namespaces []string, api string, kind string,
-	metricFamily []metric.FamilyGenerator) []*metricsstore.MetricsStore {
+	metricFamily []metric.FamilyGenerator, namespaced bool) []*metricsstore.MetricsStore {
 	namespaces = deduplicateNamespaces(namespaces)
 	var stores []*metricsstore.MetricsStore
 	// Generate collector per namespace.
-	for _, ns := range namespaces {
+	if namespaced {
+		for _, ns := range namespaces {
+			composedMetricGenFuncs := metric.ComposeMetricGenFuncs(metricFamily)
+			headers := metric.ExtractMetricFamilyHeaders(metricFamily)
+			store := metricsstore.NewMetricsStore(headers, composedMetricGenFuncs)
+			reflectorPerNamespace(context.TODO(), dclient, &unstructured.Unstructured{}, store, ns)
+			stores = append(stores, store)
+		}
+	} else {
 		composedMetricGenFuncs := metric.ComposeMetricGenFuncs(metricFamily)
 		headers := metric.ExtractMetricFamilyHeaders(metricFamily)
 		store := metricsstore.NewMetricsStore(headers, composedMetricGenFuncs)
-		reflectorPerNamespace(context.TODO(), dclient, &unstructured.Unstructured{}, store, ns)
+		reflectorPerClusterScoped(context.TODO(), dclient, &unstructured.Unstructured{}, store)
 		stores = append(stores, store)
 	}
 	return stores
@@ -53,6 +61,17 @@ func deduplicateNamespaces(ns []string) (list []string) {
 		}
 	}
 	return list
+}
+
+func reflectorPerClusterScoped(
+	ctx context.Context,
+	dynamicInterface dynamic.NamespaceableResourceInterface,
+	expectedType interface{},
+	store cache.Store,
+) {
+	lw := listWatchFuncClusterScope(dynamicInterface)
+	reflector := cache.NewReflector(&lw, expectedType, store, 0)
+	go reflector.Run(ctx.Done())
 }
 
 func reflectorPerNamespace(
@@ -74,6 +93,17 @@ func listWatchFunc(dynamicInterface dynamic.NamespaceableResourceInterface, name
 		},
 		WatchFunc: func(opts metav1.ListOptions) (watch.Interface, error) {
 			return dynamicInterface.Namespace(namespace).Watch(opts)
+		},
+	}
+}
+
+func listWatchFuncClusterScope(dynamicInterface dynamic.NamespaceableResourceInterface) cache.ListWatch {
+	return cache.ListWatch{
+		ListFunc: func(opts metav1.ListOptions) (runtime.Object, error) {
+			return dynamicInterface.List(opts)
+		},
+		WatchFunc: func(opts metav1.ListOptions) (watch.Interface, error) {
+			return dynamicInterface.Watch(opts)
 		},
 	}
 }
