@@ -63,8 +63,14 @@ func GenerateAndServeCRMetrics(cfg *rest.Config,
 		if err != nil {
 			return err
 		}
+		var gvkStores []*metricsstore.MetricsStore
+		if namespaced {
+			gvkStores = NewNamespacedMetricsStores(dclient, ns, apiVersion, kind, metricFamilies)
+		} else {
+			gvkStores = NewClusterScopedMetricsStores(dclient, apiVersion, kind, metricFamilies)
+		}
 		// Generate collector based on the group/version, kind and the metric families.
-		gvkStores := NewMetricsStores(dclient, ns, apiVersion, kind, metricFamilies, namespaced)
+
 		allStores = append(allStores, gvkStores)
 	}
 	// Start serving metrics.

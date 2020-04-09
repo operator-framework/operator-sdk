@@ -27,28 +27,35 @@ import (
 	metricsstore "k8s.io/kube-state-metrics/pkg/metrics_store"
 )
 
-// NewMetricsStores returns collections of metrics in the namespaces provided, per the api/kind resource.
+// NewNamespacedMetricsStores returns collections of metrics in the namespaces provided, per the api/kind resource.
 // The metrics are registered in the custom metrics.FamilyGenerator that needs to be defined.
-func NewMetricsStores(dclient dynamic.NamespaceableResourceInterface, namespaces []string, api string, kind string,
-	metricFamily []metric.FamilyGenerator, namespaced bool) []*metricsstore.MetricsStore {
+func NewNamespacedMetricsStores(dclient dynamic.NamespaceableResourceInterface, namespaces []string, api string, kind string,
+	metricFamily []metric.FamilyGenerator) []*metricsstore.MetricsStore {
 	namespaces = deduplicateNamespaces(namespaces)
 	var stores []*metricsstore.MetricsStore
 	// Generate collector per namespace.
-	if namespaced {
-		for _, ns := range namespaces {
-			composedMetricGenFuncs := metric.ComposeMetricGenFuncs(metricFamily)
-			headers := metric.ExtractMetricFamilyHeaders(metricFamily)
-			store := metricsstore.NewMetricsStore(headers, composedMetricGenFuncs)
-			reflectorPerNamespace(context.TODO(), dclient, &unstructured.Unstructured{}, store, ns)
-			stores = append(stores, store)
-		}
-	} else {
+	for _, ns := range namespaces {
 		composedMetricGenFuncs := metric.ComposeMetricGenFuncs(metricFamily)
 		headers := metric.ExtractMetricFamilyHeaders(metricFamily)
 		store := metricsstore.NewMetricsStore(headers, composedMetricGenFuncs)
-		reflectorPerClusterScoped(context.TODO(), dclient, &unstructured.Unstructured{}, store)
+		reflectorPerNamespace(context.TODO(), dclient, &unstructured.Unstructured{}, store, ns)
 		stores = append(stores, store)
 	}
+	return stores
+}
+
+// NewClusterScopedMetricsStores returns collections of metrics per the api/kind resource.
+// The metrics are registered in the custom metrics.FamilyGenerator that needs to be defined.
+func NewClusterScopedMetricsStores(dclient dynamic.NamespaceableResourceInterface, api string, kind string,
+	metricFamily []metric.FamilyGenerator) []*metricsstore.MetricsStore {
+	var stores []*metricsstore.MetricsStore
+	// Generate collector per cluster scoped resources.
+	composedMetricGenFuncs := metric.ComposeMetricGenFuncs(metricFamily)
+	headers := metric.ExtractMetricFamilyHeaders(metricFamily)
+	store := metricsstore.NewMetricsStore(headers, composedMetricGenFuncs)
+	reflectorPerClusterScoped(context.TODO(), dclient, &unstructured.Unstructured{}, store)
+	stores = append(stores, store)
+
 	return stores
 }
 
@@ -69,7 +76,7 @@ func reflectorPerClusterScoped(
 	expectedType interface{},
 	store cache.Store,
 ) {
-	lw := listWatchFuncClusterScope(dynamicInterface)
+	lw := clusterScopeListWatchFunc(dynamicInterface)
 	reflector := cache.NewReflector(&lw, expectedType, store, 0)
 	go reflector.Run(ctx.Done())
 }
@@ -81,12 +88,12 @@ func reflectorPerNamespace(
 	store cache.Store,
 	ns string,
 ) {
-	lw := listWatchFunc(dynamicInterface, ns)
+	lw := namespacedListWatchFunc(dynamicInterface, ns)
 	reflector := cache.NewReflector(&lw, expectedType, store, 0)
 	go reflector.Run(ctx.Done())
 }
 
-func listWatchFunc(dynamicInterface dynamic.NamespaceableResourceInterface, namespace string) cache.ListWatch {
+func namespacedListWatchFunc(dynamicInterface dynamic.NamespaceableResourceInterface, namespace string) cache.ListWatch {
 	return cache.ListWatch{
 		ListFunc: func(opts metav1.ListOptions) (runtime.Object, error) {
 			return dynamicInterface.Namespace(namespace).List(opts)
@@ -97,7 +104,7 @@ func listWatchFunc(dynamicInterface dynamic.NamespaceableResourceInterface, name
 	}
 }
 
-func listWatchFuncClusterScope(dynamicInterface dynamic.NamespaceableResourceInterface) cache.ListWatch {
+func clusterScopeListWatchFunc(dynamicInterface dynamic.NamespaceableResourceInterface) cache.ListWatch {
 	return cache.ListWatch{
 		ListFunc: func(opts metav1.ListOptions) (runtime.Object, error) {
 			return dynamicInterface.List(opts)
