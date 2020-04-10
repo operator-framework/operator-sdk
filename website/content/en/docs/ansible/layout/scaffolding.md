@@ -1,7 +1,7 @@
 ---
 title: Ansible Based Operator Scaffolding
 linkTitle: Scaffolding
-weight: 20
+weight: 30
 ---
 
 After creating a new operator project using
