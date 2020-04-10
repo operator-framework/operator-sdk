@@ -2,6 +2,7 @@
 
 ### Added
 
+- Added support for generating kube-state-metrics metrics for cluster-scoped resources. Also added `pkg/kubemetrics.NewNamespacedMetricsStores` and `pkg/kubemetrics.NewClusterScopedMetricsStores` to support this new feature. ([#2809](https://github.com/operator-framework/operator-sdk/pull/2809))
 - Added the [`generate csv --deploy-dir --apis-dir --crd-dir`](website/content/en/docs/cli/operator-sdk_generate_csv.md#options) flags to allow configuring input locations for operator manifests and API types directories to the CSV generator in lieu of a config. See the CLI reference doc or `generate csv -h` help text for more details. ([#2511](https://github.com/operator-framework/operator-sdk/pull/2511))
 - Added the [`generate csv --output-dir`](website/content/en/docs/cli/operator-sdk_generate_csv.md#options) flag to allow configuring the output location for the catalog directory. ([#2511](https://github.com/operator-framework/operator-sdk/pull/2511))
 - The flag `--watch-namespace` and `--operator-namespace` was added to `operator-sdk run --local`, `operator-sdk test --local` and `operator-sdk cleanup` commands in order to replace the flag `--namespace` which was  deprecated.([#2617](https://github.com/operator-framework/operator-sdk/pull/2617))
@@ -30,6 +31,7 @@
 
 ### Deprecated
 
+- Deprecated `pkg/kubemetrics.NewMetricsStores`. Use `pkg/kubemetrics.NewNamespacedMetricsStores` instead. ([#2809](https://github.com/operator-framework/operator-sdk/pull/2809))
 - **Breaking Change:** The `--namespace` flag from `operator-sdk run --local`, `operator-sdk test --local` and `operator-sdk cleanup` command was deprecated and will be removed in the future versions. Use `--watch-namespace` and `--operator-namespace`  instead of. ([#2617](https://github.com/operator-framework/operator-sdk/pull/2617))
 - **Breaking Change:** The method `ctx.GetNamespace()` from the `pkg/test` is deprecated and will be removed in future versions. Use `ctx.GetOperatorNamespace()` and `ctx.GetWatchNamespace()` instead of. ([#2617](https://github.com/operator-framework/operator-sdk/pull/2617))
 - **Breaking Change:** package manifests are deprecated and new manifests are no longer generated; existing manifests are still updated by `operator-sdk generate csv`, but updates will not occur in future versions. Use [`operator-sdk bundle create`](./website/content/en/docs/cli/operator-sdk_bundle_create.md) to manage operator bundle metadata. ([#2755](https://github.com/operator-framework/operator-sdk/pull/2755))
