@@ -53,7 +53,7 @@ func RunLegacy() error {
 	projutil.PrintDeprecationWarning(fmt.Sprintf("No %s config exists. "+
 		"Please migrate to the new kubebuilder-style project structure", kbutil.ConfigFile))
 
-	root := GetCLIRootLegacy()
+	root := GetCLIRoot()
 	root.PersistentFlags().Bool(flags.VerboseOpt, false, "Enable verbose logging")
 	if err := viper.BindPFlags(root.PersistentFlags()); err != nil {
 		log.Fatalf("Failed to bind root flags: %v", err)
@@ -62,9 +62,9 @@ func RunLegacy() error {
 	return root.Execute()
 }
 
-// GetCLIRootLegacy is intended to creeate the base command structure for the OSDK for use in CLI and documentation
+// GetCLIRoot is intended to creeate the base command structure for the OSDK for use in CLI and documentation
 // Deprecated: this is only used for projects without a PROJECT config/kubebuilder-style repo.
-func GetCLIRootLegacy() *cobra.Command {
+func GetCLIRoot() *cobra.Command {
 	root := &cobra.Command{
 		Use:   "operator-sdk",
 		Short: "An SDK for building operators with ease",

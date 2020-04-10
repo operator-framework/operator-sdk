@@ -18,8 +18,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// KB_INTEGRATION_TODO(estroz): figure out how to get completion for SDK + KB commands
-
 func NewCmd() *cobra.Command {
 	completionCmd := &cobra.Command{
 		Use:   "completion",

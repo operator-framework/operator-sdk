@@ -18,6 +18,7 @@ import (
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that `exec-entrypoint` and `run` can make use of them.
+
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha"
@@ -62,8 +63,12 @@ var commands = []*cobra.Command{
 }
 
 func Run() error {
+	c, _ := GetCLIAndRoot()
+	return c.Run()
+}
 
-	root := GetCLIRoot()
+// GetCLIRoot is intended to creeate the base command structure for the OSDK for use in CLI and documentation
+func GetCLIAndRoot() (cli.CLI, *cobra.Command) {
 
 	c, err := cli.New(
 		cli.WithCommandName("operator-sdk"),
@@ -73,33 +78,26 @@ func Run() error {
 			&ansible.Plugin{},
 		),
 		cli.WithDefaultPlugins(&kbgov2.Plugin{}),
-		cli.WithExtraCommands(root.Commands()...),
+		cli.WithExtraCommands(commands...),
 	)
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 
-	return c.Run()
-}
+	// We can get the whole CLI for doc-gen/completion from the root of any
+	// command added to a CLI.
+	root := commands[0].Root()
 
-// GetCLIRoot is intended to creeate the base command structure for the OSDK for use in CLI and documentation
-func GetCLIRoot() *cobra.Command {
-	root := &cobra.Command{
-		Use: "placeholder",
+	// Configure --verbose globally.
+	// TODO(estroz): upstream PR for global --verbose.
+	root.PersistentFlags().Bool(flags.VerboseOpt, false, "Enable verbose logging")
+	if err := viper.BindPFlags(root.PersistentFlags()); err != nil {
+		log.Fatalf("Failed to bind %s flags: %v", root.Name(), err)
 	}
+	prerun := root.PersistentPreRun
+	root.PersistentPreRun = preRunner(prerun).run
 
-	for _, cmd := range commands {
-		cmd.PersistentFlags().Bool(flags.VerboseOpt, false, "Enable verbose logging")
-		if err := viper.BindPFlags(cmd.PersistentFlags()); err != nil {
-			log.Fatalf("Failed to bind %s flags: %v", cmd.Name(), err)
-		}
-		prerun := cmd.PersistentPreRun
-		cmd.PersistentPreRun = preRunner(prerun).run
-	}
-
-	root.AddCommand(commands...)
-
-	return root
+	return c, root
 }
 
 type preRunner func(*cobra.Command, []string)

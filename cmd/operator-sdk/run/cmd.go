@@ -30,9 +30,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// KB_INTEGRATION_TODO(estroz): figure out if the SDK can use this command on
-// kubebuilder-style projects. I think there is an equivalent but not sure.
-
 type runCmd struct {
 	// Common options.
 	kubeconfig string

@@ -33,7 +33,7 @@ title: "%s"
 `
 
 func main() {
-	root := cli.GetCLIRootLegacy()
+	root := cli.GetCLIRoot()
 	root.DisableAutoGenTag = true
 
 	filePrepender := func(filename string) string {
