@@ -164,6 +164,8 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 
 	log.Info("Testing operator locally.")
 
+	// KB_INTEGRATION_TODO(estroz): optionally receive namespaced and global manifests from kustomize output.
+
 	// if no namespaced manifest path is given, combine deploy/service_account.yaml, deploy/role.yaml,
 	// deploy/role_binding.yaml and deploy/operator.yaml
 	if tlConfig.namespacedManPath == "" && !tlConfig.noSetup {

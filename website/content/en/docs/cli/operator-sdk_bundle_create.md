@@ -16,12 +16,12 @@ image, set '--generate-only=true'. A bundle Dockerfile, bundle metadata, and
 a 'manifests/' directory containing your bundle manifests will be written if
 '--generate-only=true':
 
-	$ operator-sdk bundle create --generate-only --directory ./deploy/olm-catalog/test-operator/0.1.0
+	$ operator-sdk bundle create --generate-only --directory ./deploy/olm-catalog/test-operator/manifests
 	$ ls .
 	...
 	bundle.Dockerfile
 	...
-	$ tree ./deploy/olm-catalog/test-operator/
+	$ tree ./deploy/olm-catalog/test-operator
 	└── 0.1.0
 		└── example.com_tests_crd.yaml
 		└── test-operator.v0.1.0.clusterserviceversion.yaml
@@ -53,7 +53,7 @@ The following invocation will build a test-operator 0.1.0 bundle image using Doc
 This image will contain manifests for package channels 'stable' and 'beta':
 
   $ operator-sdk bundle create quay.io/example/test-operator:v0.1.0 \
-      --directory ./deploy/olm-catalog/test-operator/0.1.0 \
+      --directory ./deploy/olm-catalog/test-operator/manifests \
       --package test-operator \
       --channels stable,beta \
       --default-channel stable
@@ -62,7 +62,7 @@ Assuming your operator has the same name as your repo directory and the only
 channel is 'stable', the above command can be abbreviated to:
 
   $ operator-sdk bundle create quay.io/example/test-operator:v0.1.0 \
-      --directory ./deploy/olm-catalog/test-operator/0.1.0
+      --directory ./deploy/olm-catalog/test-operator/manifests
 
 The following invocation will generate test-operator bundle metadata, a
 'manifests/' dir, and Dockerfile for your latest operator version without
@@ -70,7 +70,7 @@ building the image:
 
   $ operator-sdk bundle create \
       --generate-only \
-      --directory ./deploy/olm-catalog/test-operator/0.1.0 \
+      --directory ./deploy/olm-catalog/test-operator/manifests \
       --package test-operator \
       --channels beta \
       --default-channel beta
@@ -82,7 +82,7 @@ building the image:
 ```
   -c, --channels string          The comma-separated list of channels that bundle image belongs to (default "stable")
   -e, --default-channel string   The default channel for the bundle image
-  -d, --directory string         The directory where bundle manifests are located, ex. <project-root>/deploy/olm-catalog/test-operator/0.1.0
+  -d, --directory string         The directory where bundle manifests are located, ex. <project-root>/deploy/olm-catalog/test-operator/manifests
   -g, --generate-only            Generate metadata/, manifests/ and a Dockerfile on disk without building the bundle image
   -h, --help                     help for create
   -b, --image-builder string     Tool to build container images. One of: [docker, podman, buildah] (default "docker")

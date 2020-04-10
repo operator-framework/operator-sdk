@@ -15,22 +15,15 @@
 package completion
 
 import (
-	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
-
 	"github.com/spf13/cobra"
 )
 
-// KB_INTEGRATION_TODO(estroz): wire this into kubebuilder's CLI.
+// KB_INTEGRATION_TODO(estroz): figure out how to get completion for SDK + KB commands
 
 func NewCmd() *cobra.Command {
 	completionCmd := &cobra.Command{
 		Use:   "completion",
 		Short: "Generators for shell completions",
-		PersistentPreRun: func(_ *cobra.Command, _ []string) {
-			// This command is superceded by a kubebuilder equivalent.
-			kbutil.DieIfCmdNotAllowed(true)
-		},
-		Hidden: kbutil.IsConfigExist(),
 	}
 	completionCmd.AddCommand(newZshCmd())
 	completionCmd.AddCommand(newBashCmd())

@@ -37,6 +37,8 @@ type bundleValidateCmd struct {
 // newValidateCmd returns a command that will validate an operator bundle image.
 func newValidateCmd() *cobra.Command {
 	c := bundleValidateCmd{}
+	defaults := getDefaults()
+
 	cmd := &cobra.Command{
 		Use:   "validate",
 		Short: "Validate an operator bundle image",
@@ -50,12 +52,12 @@ just locally.
 `,
 		Example: `The following command flow will generate test-operator bundle image manifests
 and validate them, assuming a bundle for 'test-operator' version v0.1.0 exists at
-<project-root>/deploy/olm-catalog/test-operator/0.1.0:
+<project-root>/` + defaults.directory + `:
 
   # Generate manifests locally.
   $ operator-sdk bundle create \
       --generate-only \
-      --directory ./deploy/olm-catalog/test-operator/0.1.0
+      --directory ./` + defaults.directory + `
 
   # Validate the directory containing manifests and metadata.
   $ operator-sdk bundle validate ./deploy/olm-catalog/test-operator
@@ -64,7 +66,7 @@ To build and validate an image:
 
   # Build and push the image using the docker CLI.
 	$ operator-sdk bundle create quay.io/example/test-operator:v0.1.0 \
-      --directory ./deploy/olm-catalog/test-operator/0.1.0
+      --directory ./` + defaults.directory + `
   $ docker push quay.io/example/test-operator:v0.1.0
 
   # Ensure the image with modified metadata and Dockerfile is valid.

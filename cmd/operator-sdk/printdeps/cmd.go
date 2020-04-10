@@ -20,7 +20,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
-	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	log "github.com/sirupsen/logrus"
@@ -38,12 +37,7 @@ func NewCmd() *cobra.Command {
 by this version of the Operator SDK. Versions for these packages should match
 those in an operator's go.mod file.
 `,
-		PreRun: func(_ *cobra.Command, _ []string) {
-			// This command does not have a kubebuilder equivalent.
-			kbutil.DieIfCmdNotAllowed(false)
-		},
-		RunE:   printDepsFunc,
-		Hidden: kbutil.IsConfigExist(),
+		RunE: printDepsFunc,
 	}
 	return printDepsCmd
 }

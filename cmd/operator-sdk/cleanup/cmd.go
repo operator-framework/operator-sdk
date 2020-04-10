@@ -18,8 +18,8 @@ import (
 	"errors"
 	"path/filepath"
 
-	olmcatalog "github.com/operator-framework/operator-sdk/internal/generate/olm-catalog"
 	olmoperator "github.com/operator-framework/operator-sdk/internal/olm/operator"
+	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	log "github.com/sirupsen/logrus"
@@ -50,6 +50,8 @@ func (c *cleanupCmd) checkCleanupType() error {
 
 func NewCmd() *cobra.Command {
 	c := &cleanupCmd{}
+	defaults := getDefaults()
+
 	cmd := &cobra.Command{
 		Use:   "cleanup",
 		Short: "Delete and clean up after a running Operator",
@@ -72,11 +74,8 @@ func NewCmd() *cobra.Command {
 						log.Warn("--operator-namespace present; ignoring --namespace")
 					}
 				}
-				// KB_INTEGRATION_TODO(estroz): change this default if project is
-				// kubebuilder-style.
 				if c.olmArgs.ManifestsDir == "" {
-					operatorName := filepath.Base(projutil.MustGetwd())
-					c.olmArgs.ManifestsDir = filepath.Join(olmcatalog.OLMCatalogDir, operatorName)
+					c.olmArgs.ManifestsDir = defaults.olmArgs.ManifestsDir
 				}
 				if err := c.olmArgs.Cleanup(); err != nil {
 					log.Fatalf("Failed to clean up operator using OLM: %v", err)
@@ -104,4 +103,22 @@ func NewCmd() *cobra.Command {
 			"Cannot be set with another cleanup-type flag")
 	c.olmArgs.AddToFlagSet(cmd.Flags())
 	return cmd
+}
+
+func getDefaults() *cleanupCmd {
+	c := &cleanupCmd{}
+
+	if kbutil.IsConfigExist() {
+		cfg, err := kbutil.ReadConfig()
+		if err != nil {
+			log.Fatal(err)
+		}
+		packageName := filepath.Base(cfg.Repo)
+		c.olmArgs.ManifestsDir = filepath.Join("config", "olm-catalog", packageName)
+	} else {
+		packageName := filepath.Base(projutil.MustGetwd())
+		c.olmArgs.ManifestsDir = filepath.Join("deploy", "olm-catalog", packageName)
+	}
+
+	return c
 }

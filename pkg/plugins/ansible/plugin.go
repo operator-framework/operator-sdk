@@ -17,7 +17,6 @@ package ansible
 import (
 	"github.com/operator-framework/operator-sdk/pkg/plugins"
 
-	"github.com/spf13/pflag"
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 	"sigs.k8s.io/kubebuilder/pkg/plugin"
 )
@@ -45,8 +44,3 @@ func (Plugin) Version() string                        { return pluginVersion }
 func (Plugin) SupportedProjectVersions() []string     { return supportedProjectVersions }
 func (p Plugin) GetInitPlugin() plugin.Init           { return &p.initPlugin }
 func (p Plugin) GetCreateAPIPlugin() plugin.CreateAPI { return &p.createAPIPlugin }
-
-// Helpers while migrating to kubebuilder plugins.
-// KB_INTEGRATION_TODO(estroz): remove after fully migrated.
-func (p *Plugin) BindFlagsInit(fs *pflag.FlagSet)      { p.initPlugin.BindFlags(fs) }
-func (p *Plugin) BindFlagsCreateAPI(fs *pflag.FlagSet) { p.createAPIPlugin.BindFlags(fs) }

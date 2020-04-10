@@ -37,8 +37,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
-// KB_INTEGRATION_TODO(estroz): deprecate this command in favor of "init".
-
 func NewCmd() *cobra.Command { //nolint:golint
 	newCmd := &cobra.Command{
 		Use:   "new <project-name>",
@@ -92,7 +90,8 @@ generates a default directory layout based on the input <project-name>.
   $ operator-sdk new app-operator --type=helm \
   --helm-chart=/path/to/local/chart-archives/app-1.2.3.tgz
 `,
-		RunE: newFunc,
+		RunE:       newFunc,
+		Deprecated: "please use 'operator-sdk init' instead\n",
 	}
 
 	newCmd.Flags().StringVar(&apiVersion, "api-version", "", "Kubernetes apiVersion and has"+

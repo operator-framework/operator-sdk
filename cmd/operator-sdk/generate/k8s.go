@@ -18,7 +18,6 @@ import (
 	"fmt"
 
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal/genutil"
-	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	log "github.com/sirupsen/logrus"
@@ -42,12 +41,7 @@ Example:
 		└── v1alpha1
 			├── zz_generated.deepcopy.go
 `,
-		PreRun: func(_ *cobra.Command, _ []string) {
-			// This command is superceded by a kubebuilder equivalent.
-			kbutil.DieIfCmdNotAllowed(true)
-		},
-		RunE:   k8sFunc,
-		Hidden: kbutil.IsConfigExist(),
+		RunE: k8sFunc,
 	}
 }
 

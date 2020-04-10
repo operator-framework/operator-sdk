@@ -22,6 +22,8 @@ import (
 	"regexp"
 	"strings"
 
+	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
+
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/rogpeppe/go-internal/modfile"
 	log "github.com/sirupsen/logrus"
@@ -85,6 +87,9 @@ func MustInProjectRoot() {
 // TODO(hasbro17): Change this to check for go.mod
 // "build/Dockerfile" may not be present in all projects
 func CheckProjectRoot() error {
+	if kbutil.IsConfigExist() {
+		return nil
+	}
 	// If the current directory has a "build/Dockerfile", then it is safe to say
 	// we are at the project root.
 	if _, err := os.Stat(buildDockerfile); err != nil {

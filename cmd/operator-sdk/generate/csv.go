@@ -21,8 +21,8 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/generate/gen"
 	gencatalog "github.com/operator-framework/operator-sdk/internal/generate/olm-catalog"
-	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
+	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	"github.com/coreos/go-semver/semver"
@@ -33,6 +33,8 @@ import (
 // KB_INTEGRATION_TODO(estroz): if project is a kubebuilder project, change
 // defaults. Also look into running this from a makefile or using kustomize to
 // create bundle data.
+// Once https://github.com/operator-framework/operator-sdk/pull/2776 is merged
+// update more defaults.
 
 type csvCmd struct {
 	csvVersion     string
@@ -47,8 +49,10 @@ type csvCmd struct {
 	defaultChannel bool
 }
 
-func newGenerateCSVCmd() *cobra.Command {
+func NewGenerateCSVCmd() *cobra.Command {
 	c := &csvCmd{}
+	defaults := getDefaults()
+
 	cmd := &cobra.Command{
 		Use:   "csv",
 		Short: "Generates a ClusterServiceVersion YAML file for the operator",
@@ -170,16 +174,16 @@ CSV input flags:
 
 	// TODO: Allow multiple paths
 	// Deployment and RBAC manifests might be in different dirs e.g kubebuilder
-	cmd.Flags().StringVar(&c.deployDir, "deploy-dir", "deploy",
+	cmd.Flags().StringVar(&c.deployDir, "deploy-dir", defaults.deployDir,
 		`Project relative path to root directory for operator manifests (Deployment and RBAC)`)
-	cmd.Flags().StringVar(&c.apisDir, "apis-dir", filepath.Join("pkg", "apis"),
+	cmd.Flags().StringVar(&c.apisDir, "apis-dir", defaults.apisDir,
 		`Project relative path to root directory for API type defintions`)
 	// TODO: Allow multiple paths
 	// CRD and CR manifests might be in different dirs e.g kubebuilder
 	cmd.Flags().StringVar(&c.crdDir, "crd-dir", "",
 		`Project relative path to root directory for CRD and CR manifests`)
 
-	cmd.Flags().StringVar(&c.outputDir, "output-dir", scaffold.DeployDir,
+	cmd.Flags().StringVar(&c.outputDir, "output-dir", defaults.deployDir,
 		"Base directory to output generated CSV. The resulting CSV bundle directory "+
 			"will be \"<output-dir>/olm-catalog/<operator-name>/<csv-version>\".")
 	cmd.Flags().BoolVar(&c.updateCRDs, "update-crds", false,
@@ -323,4 +327,34 @@ func copyCustomResourceDefinitions(fromDir, toDir string) error {
 	}
 
 	return nil
+}
+
+func getDefaults() *csvCmd {
+	c := &csvCmd{}
+
+	if kbutil.IsConfigExist() {
+		cfg, err := kbutil.ReadConfig()
+		if err != nil {
+			log.Fatal(err)
+		}
+		c.operatorName = filepath.Base(cfg.Repo)
+		c.deployDir = "config"
+		c.crdDir = filepath.Join("config", "bases")
+		if cfg.MultiGroup {
+			c.apisDir = "apis"
+		} else {
+			c.apisDir = "api"
+		}
+	} else {
+		c.operatorName = filepath.Base(projutil.MustGetwd())
+		// For generating CLI docs.
+		if c.operatorName == "operator-sdk" {
+			c.operatorName = "test-operator"
+		}
+		c.deployDir = "deploy"
+		c.crdDir = filepath.Join("deploy", "crds")
+		c.apisDir = filepath.Join("pkg", "apis")
+	}
+
+	return c
 }

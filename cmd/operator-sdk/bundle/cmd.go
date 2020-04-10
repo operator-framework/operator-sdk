@@ -15,7 +15,13 @@
 package bundle
 
 import (
+	"log"
+	"path/filepath"
+
 	"github.com/spf13/cobra"
+
+	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
 //nolint:structcheck
@@ -45,4 +51,31 @@ https://github.com/openshift/enhancements/blob/master/enhancements/olm/operator-
 		newValidateCmd(),
 	)
 	return cmd
+}
+
+func getDefaults() *bundleCmd {
+	c := &bundleCmd{
+		imageBuilder:   "docker",
+		defaultChannel: "stable",
+		channels:       "stable",
+		generateOnly:   false,
+	}
+
+	if kbutil.IsConfigExist() {
+		cfg, err := kbutil.ReadConfig()
+		if err != nil {
+			log.Fatal(err)
+		}
+		c.packageName = filepath.Base(cfg.Repo)
+		c.directory = filepath.Join("config", "olm-catalog", c.packageName, "manifests")
+	} else {
+		c.packageName = filepath.Base(projutil.MustGetwd())
+		// For generating CLI docs.
+		if c.packageName == "operator-sdk" {
+			c.packageName = "test-operator"
+		}
+		c.directory = filepath.Join("deploy", "olm-catalog", c.packageName, "manifests")
+	}
+
+	return c
 }

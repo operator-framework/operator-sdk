@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	olmcatalog "github.com/operator-framework/operator-sdk/internal/generate/olm-catalog"
 	olmoperator "github.com/operator-framework/operator-sdk/internal/olm/operator"
 	k8sinternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
@@ -41,6 +40,8 @@ type runCmd struct {
 	//namespace is deprecated
 	namespace string
 
+	projectName string
+
 	// Run type.
 	olm, local bool
 
@@ -59,6 +60,8 @@ func (c *runCmd) checkRunType() error {
 
 func NewCmd() *cobra.Command {
 	c := &runCmd{}
+	defaults := getDefaults()
+
 	cmd := &cobra.Command{
 		Use:   "run",
 		Short: "Run an Operator in a variety of environments",
@@ -73,11 +76,10 @@ https://github.com/operator-framework/operator-sdk/blob/master/doc/user/olm-cata
 		PreRun: func(_ *cobra.Command, _ []string) {
 			// This command with --local is superceded by a kubebuilder equivalent
 			// for Go projects.
-			if c.local {
+			if c.local && projutil.IsOperatorGo() {
 				kbutil.DieIfCmdNotAllowed(true)
 			}
 		},
-		Hidden: kbutil.IsConfigExist(),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := c.checkRunType(); err != nil {
 				return err
@@ -96,11 +98,8 @@ https://github.com/operator-framework/operator-sdk/blob/master/doc/user/olm-cata
 					}
 					c.olmArgs.OperatorNamespace = defaultNamespace
 				}
-				// KB_INTEGRATION_TODO(estroz): change this default if project is
-				// kubebuilder-style.
 				if c.olmArgs.ManifestsDir == "" {
-					operatorName := filepath.Base(projutil.MustGetwd())
-					c.olmArgs.ManifestsDir = filepath.Join(olmcatalog.OLMCatalogDir, operatorName)
+					c.olmArgs.ManifestsDir = defaults.olmArgs.ManifestsDir
 				}
 				if err := c.olmArgs.Run(); err != nil {
 					log.Fatalf("Failed to run operator using OLM: %v", err)
@@ -163,4 +162,26 @@ https://github.com/operator-framework/operator-sdk/blob/master/doc/user/olm-cata
 		c.localArgs.helmOperatorFlags = hoflags.AddTo(cmd.Flags(), "(helm operator)")
 	}
 	return cmd
+}
+
+func getDefaults() *runCmd {
+	c := &runCmd{}
+
+	if kbutil.IsConfigExist() {
+		cfg, err := kbutil.ReadConfig()
+		if err != nil {
+			log.Fatal(err)
+		}
+		c.projectName = filepath.Base(cfg.Repo)
+		c.olmArgs.ManifestsDir = filepath.Join("config", "olm-catalog", c.projectName)
+	} else {
+		c.projectName = filepath.Base(projutil.MustGetwd())
+		// For generating CLI docs.
+		if c.projectName == "operator-sdk" {
+			c.projectName = "test-operator"
+		}
+		c.olmArgs.ManifestsDir = filepath.Join("deploy", "olm-catalog", c.projectName)
+	}
+
+	return c
 }

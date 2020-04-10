@@ -22,9 +22,6 @@ import (
 	"os"
 	"path/filepath"
 
-	catalog "github.com/operator-framework/operator-sdk/internal/generate/olm-catalog"
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -45,6 +42,7 @@ type bundleCreateCmd struct {
 // generate metadata for them.
 func newCreateCmd() *cobra.Command {
 	c := &bundleCreateCmd{}
+	defaults := getDefaults()
 
 	cmd := &cobra.Command{
 		Use:   "create",
@@ -58,12 +56,12 @@ image, set '--generate-only=true'. A bundle Dockerfile, bundle metadata, and
 a 'manifests/' directory containing your bundle manifests will be written if
 '--generate-only=true':
 
-	$ operator-sdk bundle create --generate-only --directory ./deploy/olm-catalog/test-operator/0.1.0
+	$ operator-sdk bundle create --generate-only --directory ./` + defaults.directory + `
 	$ ls .
 	...
 	bundle.Dockerfile
 	...
-	$ tree ./deploy/olm-catalog/test-operator/
+	$ tree ./` + filepath.Dir(defaults.directory) + `
 	└── 0.1.0
 		└── example.com_tests_crd.yaml
 		└── test-operator.v0.1.0.clusterserviceversion.yaml
@@ -87,7 +85,7 @@ NOTE: bundle images are not runnable.
 This image will contain manifests for package channels 'stable' and 'beta':
 
   $ operator-sdk bundle create quay.io/example/test-operator:v0.1.0 \
-      --directory ./deploy/olm-catalog/test-operator/0.1.0 \
+      --directory ./` + defaults.directory + ` \
       --package test-operator \
       --channels stable,beta \
       --default-channel stable
@@ -96,7 +94,7 @@ Assuming your operator has the same name as your repo directory and the only
 channel is 'stable', the above command can be abbreviated to:
 
   $ operator-sdk bundle create quay.io/example/test-operator:v0.1.0 \
-      --directory ./deploy/olm-catalog/test-operator/0.1.0
+      --directory ./` + defaults.directory + `
 
 The following invocation will generate test-operator bundle metadata, a
 'manifests/' dir, and Dockerfile for your latest operator version without
@@ -104,7 +102,7 @@ building the image:
 
   $ operator-sdk bundle create \
       --generate-only \
-      --directory ./deploy/olm-catalog/test-operator/0.1.0 \
+      --directory ./` + defaults.directory + ` \
       --package test-operator \
       --channels beta \
       --default-channel beta
@@ -157,7 +155,8 @@ building the image:
 
 func (c *bundleCreateCmd) addToFlagSet(fs *pflag.FlagSet) {
 	fs.StringVarP(&c.directory, "directory", "d", "",
-		"The directory where bundle manifests are located, ex. <project-root>/deploy/olm-catalog/test-operator/0.1.0")
+		fmt.Sprintf("The directory where bundle manifests are located, ex. <project-root>/%s",
+			getDefaults().directory))
 	fs.StringVarP(&c.outputDir, "output-dir", "o", "",
 		"Optional output directory for operator manifests")
 	fs.StringVarP(&c.imageTag, "tag", "t", "",
@@ -179,12 +178,13 @@ func (c *bundleCreateCmd) addToFlagSet(fs *pflag.FlagSet) {
 }
 
 func (c *bundleCreateCmd) setDefaults() (err error) {
-	projectName := filepath.Base(projutil.MustGetwd())
+	defaults := getDefaults()
+
 	if c.directory == "" {
-		c.directory = filepath.Join(catalog.OLMCatalogDir, projectName)
+		c.directory = defaults.directory
 		// Avoid discrepancy between packageName and directory if either is set
 		// by only assuming the operator dir is the packageName if directory isn't set.
-		c.packageName = projectName
+		c.packageName = defaults.packageName
 	}
 
 	// Clean and make paths relative for less verbose error messages.

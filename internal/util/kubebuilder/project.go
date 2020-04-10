@@ -15,15 +15,20 @@
 package kbutil
 
 import (
+	"fmt"
+	"io/ioutil"
 	"os"
 
 	log "github.com/sirupsen/logrus"
+	"sigs.k8s.io/kubebuilder/pkg/model/config"
 )
+
+const ConfigFile = "PROJECT"
 
 // IsConfigExist returns true if the project is configured as a kubebuilder
 // project.
 func IsConfigExist() bool {
-	_, err := os.Stat("PROJECT")
+	_, err := os.Stat(ConfigFile)
 	return err == nil || os.IsExist(err)
 }
 
@@ -39,4 +44,27 @@ func DieIfCmdNotAllowed(hasEquivalent bool) {
 		log.Fatal("This command does not work with kubebuilder-style projects. " +
 			"Please read the kubebuilder book for an equivalent command: https://book.kubebuilder.io/")
 	}
+}
+
+func SaveConfig(c *config.Config) error {
+	content, err := c.Marshal()
+	if err != nil {
+		return err
+	}
+	if err := ioutil.WriteFile(ConfigFile, content, 0600); err != nil {
+		return fmt.Errorf("error saving config: %v", err)
+	}
+	return nil
+}
+
+func ReadConfig() (*config.Config, error) {
+	content, err := ioutil.ReadFile(ConfigFile)
+	if err != nil {
+		return nil, fmt.Errorf("error reading config: %v", err)
+	}
+	c := &config.Config{}
+	if err = config.Unmarshal(content, c); err != nil {
+		return nil, err
+	}
+	return c, nil
 }

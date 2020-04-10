@@ -155,6 +155,8 @@ func (c runLocalArgs) runHelm() error {
 }
 
 func setupOperatorEnv(kubeconfig, namespace string) error {
+	defaults := getDefaults()
+
 	// Set the kubeconfig that the manager will be able to grab
 	// only set env var if user explicitly specified a kubeconfig path
 	if kubeconfig != "" {
@@ -171,8 +173,7 @@ func setupOperatorEnv(kubeconfig, namespace string) error {
 	// Set the operator name, if not already set
 	projutil.MustInProjectRoot()
 	if _, err := k8sutil.GetOperatorName(); err != nil {
-		operatorName := filepath.Base(projutil.MustGetwd())
-		if err := os.Setenv(k8sutil.OperatorNameEnvVar, operatorName); err != nil {
+		if err := os.Setenv(k8sutil.OperatorNameEnvVar, defaults.projectName); err != nil {
 			return fmt.Errorf("failed to set %s environment variable: %v", k8sutil.OperatorNameEnvVar, err)
 		}
 	}

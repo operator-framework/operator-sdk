@@ -28,7 +28,7 @@ code or manifests on disk.`,
 	cmd.AddCommand(
 		newGenerateK8SCmd(),
 		newGenerateCRDsCmd(),
-		newGenerateCSVCmd(),
+		NewGenerateCSVCmd(),
 	)
 	return cmd
 }

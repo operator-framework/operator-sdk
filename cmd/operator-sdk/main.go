@@ -22,21 +22,22 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cli"
-	"github.com/operator-framework/operator-sdk/internal/flags"
+	"github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
 func main() {
-	root := cli.GetCLIRoot()
-
-	root.PersistentFlags().Bool(flags.VerboseOpt, false, "Enable verbose logging")
-	if err := viper.BindPFlags(root.PersistentFlags()); err != nil {
-		log.Fatalf("Failed to bind root flags: %v", err)
+	// Use new commands if in a configured project or not in a project.
+	if kbutil.IsConfigExist() || projutil.CheckProjectRoot() != nil {
+		if err := cli.Run(); err != nil {
+			log.Fatal(err)
+		}
+		return
 	}
 
-	if err := root.Execute(); err != nil {
+	if err := cli.RunLegacy(); err != nil {
 		os.Exit(1)
 	}
 }
