@@ -239,33 +239,33 @@ return reconcile.Result{RequeueAfter: time.Second*5}, nil
 **Note:** Returning `Result` with `RequeueAfter` set is how you can periodically reconcile a CR.
 
 #### Reconcile Result Use Cases
-The following are possible reconcile loop return options.
+**The following are possible reconcile loop return options.**
 
 #### 1. With the error:
 
 If an error is encountered during processing the appropriate return option is to return an error.
 This results in the reconcile loop being re-triggered to run again.
 
-Usage
+**Usage**
 ```Go
 return reconcile.Result{}, err
 ```
-Example:
 
-In the [`memcached_controller.go`][memcached_controller] example below a `reconcile.Result{}, err` is used when there is an error reading the object.
+**Example:**
+
+In the example below a `reconcile.Result{}, err` is used when there is an error reading the object.
 As a result the request is requeued for another try.
-
 ```Go
 // Fetch the Memcached instance
 memcached := &cachev1alpha1.Memcached{}
 err := r.client.Get(context.TODO(), request.NamespacedName, memcached)
 if err != nil {
-	if errors.IsNotFound(err) {
+  if errors.IsNotFound(err) {
 		...
   }
   // Error reading the object - requeue the request.
-	reqLogger.Error(err, "Failed to get Memcached")
-	return reconcile.Result{}, err
+  reqLogger.Error(err, "Failed to get Memcached")
+  return reconcile.Result{}, err
 }
 ```
 
@@ -274,16 +274,14 @@ if err != nil {
 There are several situations where although no error occured, the reconcile loop should signify
 during its return that it needs to run again.
 
-Usage
+**Usage**
 ```Go
 return reconcile.Result{Requeue: true}, nil
 ```
 
-Example:
+**Example:**
 
-In the [`memcached_controller.go`][memcached_controller] example below a `reconcile.Result{Requeue: true}, nil` is used because a new resources is being created and as such there is the 
-potential that further processing is required. 
-Thus, the reconcile loop needs to trigger a requeue but there is no error associated with this requeue.
+In the example below a `reconcile.Result{Requeue: true}, nil` is used because a new resource is being created and as such there is the potential that further processing is required. Thus, the reconcile loop needs to trigger a requeue but there is no error associated with this requeue.
 As a result the request is requeued for another try.
 ```Go
 // Define a new deployment
@@ -299,13 +297,14 @@ return reconcile.Result{Requeue: true}, nil
 In some situations, such as when the primary resource has been deleted, there is no need to
 requeue the request for another attempt
 
-Usage
+**Usage**
 ```Go
 return reconcile.Result{}, nil
 ```
-Example:
 
-In the [`memcached_controller.go`][memcached_controller] example below a `reconcile.Result{}, nil` is used because the Memcached resource was not found, and no further processing is required.  
+**Example:**
+
+In the example below a `reconcile.Result{}, nil` is used because the Memcached resource was not found, and no further processing is required.  
 ```Go
 // Fetch the Memcached instance
 memcached := &cachev1alpha1.Memcached{}
@@ -321,7 +320,7 @@ if err != nil {
 ...
 ```
 
-For a guide on Reconcilers, Clients, and interacting with resource Events, see the [Client API doc][doc_client_api].
+For a guide on Reconcilers, Clients, and interacting with resource Events, see the [Client API doc][doc_client_api] and the [controller-runtime documentation over reconcile][controller-runtime-reconcile-godoc].
 
 ## Build and run the operator
 
