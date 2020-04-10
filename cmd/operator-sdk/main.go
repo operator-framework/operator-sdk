@@ -22,7 +22,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cli"
-	"github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
+	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	log "github.com/sirupsen/logrus"

@@ -92,7 +92,7 @@ func (p *createAPIPlugin) Validate() error {
 
 	// Check that resource doesn't exist or flag force was set
 	if !p.force && p.config.HasResource(p.resource.GVK()) {
-		return errors.New("API resource already exists")
+		return errors.New("resource for API already exists in configuration")
 	}
 
 	// Check that the provided group can be added to the project

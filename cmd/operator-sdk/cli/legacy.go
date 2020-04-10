@@ -15,13 +15,6 @@
 package cli
 
 import (
-
-	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
-	// to ensure that `exec-entrypoint` and `run` can make use of them.
-	"fmt"
-
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
-
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/add"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/build"
@@ -39,7 +32,6 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/test"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/version"
 	"github.com/operator-framework/operator-sdk/internal/flags"
-	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	log "github.com/sirupsen/logrus"
@@ -47,11 +39,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Deprecated: this is only used for projects without a PROJECT config/kubebuilder-style repo.
 func RunLegacy() error {
-
-	projutil.PrintDeprecationWarning(fmt.Sprintf("No %s config exists. "+
-		"Please migrate to the new kubebuilder-style project structure", kbutil.ConfigFile))
 
 	root := GetCLIRoot()
 	root.PersistentFlags().Bool(flags.VerboseOpt, false, "Enable verbose logging")
