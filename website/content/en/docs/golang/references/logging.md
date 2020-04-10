@@ -1,7 +1,7 @@
 ---
 title: Operator SDK Logging
 linkTitle: Logging
-weight: 20
+weight: 3
 ---
 
 Operator SDK-generated operators use the [`logr`][godoc_logr] interface to log. This log interface has several backends such as [`zap`][repo_zapr], which the SDK uses in generated code by default. [`logr.Logger`][godoc_logr_logger] exposes [structured logging][site_struct_logging] methods that help create machine-readable logs and adding a wealth of information to log records.
