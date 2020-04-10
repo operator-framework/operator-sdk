@@ -1,5 +1,6 @@
 ---
-title: K8S Ansible Modules
+title: Getting started with the k8s Ansible modules
+linkTitle: K8S Ansible Modules
 weight: 3
 ---
 
