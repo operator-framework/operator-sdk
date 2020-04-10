@@ -139,5 +139,5 @@ func isNamespaced(gvk schema.GroupVersionKind, cfg *rest.Config) (bool, error) {
 			return apiResource.Namespaced, nil
 		}
 	}
-	return false, errors.New("Unable to find type: " + gvk.String() + " in server")
+	return false, errors.New("unable to find type: " + gvk.String() + " in server")
 }
