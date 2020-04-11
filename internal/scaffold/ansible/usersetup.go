@@ -39,10 +39,10 @@ set -x
 
 # ensure $HOME exists and is accessible by group 0 (we don't know what the runtime UID will be)
 echo "${USER_NAME}:x:${USER_UID}:0:${USER_NAME} user:${HOME}:/sbin/nologin" >> /etc/passwd
-mkdir -p ${HOME}/.ansible/tmp
-chown -R ${USER_UID}:0 ${HOME}
-chmod -R ug+rwx ${HOME}
+mkdir -p "${HOME}/.ansible/tmp"
+chown -R "${USER_UID}:0" "${HOME}"
+chmod -R ug+rwx "${HOME}"
 
 # no need for this script to remain in the image after running
-rm $0
+rm "$0"
 `
