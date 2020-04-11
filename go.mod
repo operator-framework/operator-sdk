@@ -28,6 +28,7 @@ require (
 	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.5.1
 	go.uber.org/zap v1.14.1
+	golang.org/x/mod v0.2.0
 	golang.org/x/tools v0.0.0-20200403190813-44a64ad78b9b
 	gomodules.xyz/jsonpatch/v3 v3.0.1
 	gopkg.in/yaml.v2 v2.2.8
