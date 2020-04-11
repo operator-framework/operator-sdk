@@ -88,4 +88,3 @@ replace github.com/operator-framework/operator-sdk => github.com/<yourfork>/oper
 ```
 
 [makefile]: ../../../../../../Makefile
-[testing-changes-locally] : ../testing/local-changes.md

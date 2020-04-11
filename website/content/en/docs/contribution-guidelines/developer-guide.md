@@ -58,3 +58,4 @@ See the project [README][sdk-readme] for more details.
 [kubectl-tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [sdk-readme]: https://github.com/operator-framework/operator-sdk/blob/master/README.md
 [running-the-tests]: ../testing/running-the-tests
+[testing-changes-locally]: ../testing/local-changes.md 

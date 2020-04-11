@@ -58,4 +58,4 @@ See the project [README][sdk-readme] for more details.
 [kubectl-tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [sdk-readme]:../../README.md
 [running-the-tests]: ./testing/running-the-tests.md
-[testing-changes-locally] : ./testing/local-changes.md
+[testing-changes-locally]: ./testing/local-changes.md
