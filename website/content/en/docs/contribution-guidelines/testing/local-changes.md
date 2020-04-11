@@ -84,8 +84,8 @@ require (
 	...
 )
 
-// # branch fix#2707
-replace github.com/operator-framework/operator-sdk => github.com/<yourfork>/operator-sdk <branch>
+// # Add a replace to the fork and branch with the changes
+replace github.com/operator-framework/operator-sdk => github.com/<fork>/operator-sdk <branch>
 ```
 
 [makefile]: ../../../../../../Makefile

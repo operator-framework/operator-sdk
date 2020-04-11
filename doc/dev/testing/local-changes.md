@@ -77,8 +77,14 @@ Following an example over how to test the changes made from a source code of a f
 - Update the `go.mod` file of the POC operator project with a replace for the fork. See:
 
 ```
-// # branch fix#2707
-replace github.com/operator-framework/operator-sdk => github.com/raffaelespazzoli/operator-sdk v0.16.1-0.20200409232423-c9b2ed2f16b6
+require (
+	...
+	github.com/operator-framework/operator-sdk v0.0.0
+	...
+)
+
+// # Add a replace to the fork and branch with the changes
+replace github.com/operator-framework/operator-sdk => github.com/<fork>/operator-sdk <branch>
 ```
 
 [makefile]:../../Makefile 
