@@ -1,9 +1,10 @@
 ---
-title: Testing changes Locally
+title: Testing Changes Locally
+linkTitle: Local Changes
 weight: 40
 ---
 
-## Testing changes Locally
+## Testing Changes Locally
 
 If your changes are in the SDK commands then you just need to run `make install` to be able to use an SDK binary built from the source code and then test locally it. Also, see that you can run `operator-sdk version` to check what is the commit used to built it. 
 
