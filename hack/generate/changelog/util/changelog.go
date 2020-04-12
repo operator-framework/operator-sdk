@@ -87,7 +87,7 @@ func ChangelogFromEntries(version semver.Version, entries []FragmentEntry) Chang
 		Version: version.String(),
 	}
 	for _, e := range entries {
-		cle := e.ToChangelogEntry()
+		cle := e.toChangelogEntry()
 		switch e.Kind {
 		case Addition:
 			cl.Additions = append(cl.Additions, cle)
@@ -104,7 +104,7 @@ func ChangelogFromEntries(version semver.Version, entries []FragmentEntry) Chang
 	return cl
 }
 
-func (e *FragmentEntry) ToChangelogEntry() ChangelogEntry {
+func (e *FragmentEntry) toChangelogEntry() ChangelogEntry {
 	cle := ChangelogEntry{}
 	desc := strings.TrimSpace(e.Description)
 	if e.Breaking {
