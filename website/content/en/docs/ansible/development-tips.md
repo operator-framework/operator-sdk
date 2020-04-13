@@ -1,7 +1,6 @@
 ---
-title: Getting started with the k8s Ansible modules
-linkTitle: K8S Ansible Modules
-weight: 3
+title: Development Tips
+weight: 12
 ---
 
 This document provides some useful information and tips for a developer
