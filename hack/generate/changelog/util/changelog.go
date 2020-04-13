@@ -2,8 +2,10 @@ package util
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
 	"text/template"
 
@@ -26,37 +28,41 @@ type ChangelogEntry struct {
 	Link        string
 }
 
-const changelogTemplate = `## v{{ .Version }}
+const changelogTemplate = `## {{ .Version }}
+{{- if or .Additions .Changes .Removals .Deprecations .Bugfixes -}}
 {{- with .Additions }}
 
 ### Additions
 {{ range . }}
-- {{ .Description }} ({{ .Link }})
+- {{ .Description }}{{ if .Link }} ({{ .Link }}){{ end }}
 {{- end }}{{- end }}
 {{- with .Changes }}
 
 ### Changes
 {{ range . }}
-- {{ .Description }} ({{ .Link }})
+- {{ .Description }}{{ if .Link }} ({{ .Link }}){{ end }}
 {{- end }}{{- end }}
 {{- with .Removals }}
 
 ### Removals
 {{ range . }}
-- {{ .Description }} ({{ .Link }})
+- {{ .Description }}{{ if .Link }} ({{ .Link }}){{ end }}
 {{- end }}{{- end }}
 {{- with .Deprecations }}
 
 ### Deprecations
 {{ range . }}
-- {{ .Description }} ({{ .Link }})
+- {{ .Description }}{{ if .Link }} ({{ .Link }}){{ end }}
 {{- end }}{{- end }}
 {{- with .Bugfixes }}
 
 ### Bug Fixes
 {{ range . }}
-- {{ .Description }} ({{ .Link }})
-{{- end }}{{- end }}`
+- {{ .Description }}{{ if .Link }} ({{ .Link }}){{ end }}
+{{- end }}{{- end }}{{- else }}
+
+No changes for this version!{{ end }}
+`
 
 var changelogTmpl = template.Must(template.New("changelog").Parse(changelogTemplate))
 
@@ -74,17 +80,21 @@ func (c *Changelog) WriteFile(path string) error {
 		return err
 	}
 	existingFile, err := ioutil.ReadFile(path)
-	if err != nil {
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
-	data = append(data, '\n', '\n')
+	if errors.Is(err, os.ErrNotExist) || len(existingFile) == 0 {
+		return ioutil.WriteFile(path, data, 0644)
+	}
+
+	data = append(data, '\n')
 	data = append(data, existingFile...)
 	return ioutil.WriteFile(path, data, 0644)
 }
 
 func ChangelogFromEntries(version semver.Version, entries []FragmentEntry) Changelog {
 	cl := Changelog{
-		Version: version.String(),
+		Version: fmt.Sprintf("v%s", version),
 	}
 	for _, e := range entries {
 		cle := e.toChangelogEntry()
