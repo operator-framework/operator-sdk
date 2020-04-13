@@ -22,21 +22,25 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cli"
-	"github.com/operator-framework/operator-sdk/internal/flags"
+	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
 func main() {
-	root := cli.GetCLIRoot()
-
-	root.PersistentFlags().Bool(flags.VerboseOpt, false, "Enable verbose logging")
-	if err := viper.BindPFlags(root.PersistentFlags()); err != nil {
-		log.Fatalf("Failed to bind root flags: %v", err)
+	// Use the new KB CLI only when running inside an existing Kubebuilder project with a PROJECT file.
+	// The default legacy CLI provides the init cmd to initialize
+	// a Kubebuilder project as a way to opt into the new KB CLI.
+	// TODO: Make the new KB CLI the default, once the integration is complete
+	// and deprecate "operator-sdk new" from the old CLI.
+	if kbutil.IsConfigExist() {
+		if err := cli.Run(); err != nil {
+			log.Fatal(err)
+		}
+		return
 	}
 
-	if err := root.Execute(); err != nil {
+	if err := cli.RunLegacy(); err != nil {
 		os.Exit(1)
 	}
 }

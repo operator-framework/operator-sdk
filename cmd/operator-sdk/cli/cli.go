@@ -15,23 +15,11 @@
 package cli
 
 import (
-
-	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
-	// to ensure that `exec-entrypoint` and `run` can make use of them.
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
-
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/add"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/build"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/bundle"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cleanup"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/completion"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/execentrypoint"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/migrate"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/new"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/olm"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/printdeps"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/run"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/scorecard"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/test"
@@ -42,91 +30,71 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"sigs.k8s.io/kubebuilder/pkg/cli"
+	kbgov1 "sigs.k8s.io/kubebuilder/pkg/plugin/v1"
+	kbgov2 "sigs.k8s.io/kubebuilder/pkg/plugin/v2"
 )
 
-// GetCLIRoot is intended to creeate the base command structure for the OSDK for use in CLI and documentation
-func GetCLIRoot() *cobra.Command {
-	root := &cobra.Command{
-		Use:   "operator-sdk",
-		Short: "An SDK for building operators with ease",
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			if viper.GetBool(flags.VerboseOpt) {
-				if err := projutil.SetGoVerbose(); err != nil {
-					log.Fatalf("Could not set GOFLAGS: (%v)", err)
-				}
-				log.SetLevel(log.DebugLevel)
-				log.Debug("Debug logging is set")
-			}
-			if err := checkGoModulesForCmd(cmd); err != nil {
-				log.Fatal(err)
-			}
-		},
-	}
+var commands = []*cobra.Command{
+	// Once the KB CLI is made the default, add the "new" command as a way to
+	// scaffold the legacy project layout and mark "new" as deprecated
+	// new.NewCmd()
 
-	root.AddCommand(
-		add.NewCmd(),
-		alpha.NewCmd(),
-		build.NewCmd(),
-		bundle.NewCmd(),
-		cleanup.NewCmd(),
-		completion.NewCmd(),
-		execentrypoint.NewCmd(),
-		generate.NewCmd(),
-		migrate.NewCmd(),
-		new.NewCmd(),
-		olm.NewCmd(),
-		printdeps.NewCmd(),
-		run.NewCmd(),
-		scorecard.NewCmd(),
-		test.NewCmd(),
-		version.NewCmd(),
+	alpha.NewCmd(),
+	bundle.NewCmd(),
+	cleanup.NewCmd(),
+	completion.NewCmd(),
+	olm.NewCmd(),
+	run.NewCmd(),
+	scorecard.NewCmd(),
+	test.NewCmd(),
+	version.NewCmd(),
+	// TODO(hasbro17): add generate csv command after aligning it for kubebuilder layout
+}
+
+func Run() error {
+	cli, _ := GetPluginsCLIAndRoot()
+	return cli.Run()
+}
+
+// GetPluginsCLIAndRoot returns the plugins based CLI configured to use operator-sdk as the root command
+// This CLI can run kubebuilder commands and certain SDK specific commands that are aligned for
+// the kubebuilder project layout
+func GetPluginsCLIAndRoot() (cli.CLI, *cobra.Command) {
+	c, err := cli.New(
+		cli.WithCommandName("operator-sdk"),
+		cli.WithPlugins(
+			&kbgov1.Plugin{},
+			&kbgov2.Plugin{},
+		),
+		cli.WithDefaultPlugins(&kbgov2.Plugin{}),
+		cli.WithExtraCommands(commands...),
 	)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	return root
+	// We can get the whole CLI for doc-gen/completion from the root of any
+	// command added to a CLI.
+	root := commands[0].Root()
+
+	// Configure --verbose globally.
+	// TODO(estroz): upstream PR for global --verbose.
+	root.PersistentFlags().Bool(flags.VerboseOpt, false, "Enable verbose logging")
+	if err := viper.BindPFlags(root.PersistentFlags()); err != nil {
+		log.Fatalf("Failed to bind %s flags: %v", root.Name(), err)
+	}
+	root.PersistentPreRun = rootPersistentPreRun
+
+	return c, root
 }
 
-func checkGoModulesForCmd(cmd *cobra.Command) (err error) {
-	// Certain commands are able to be run anywhere or handle this check
-	// differently in their CLI code.
-	if skipCheckForCmd(cmd) {
-		return nil
-	}
-	// Do not perform this check if the project is non-Go, as they will not
-	// be using go modules.
-	if !projutil.IsOperatorGo() {
-		return nil
-	}
-	// Do not perform a go modules check if the working directory is not in
-	// the project root, as some sub-commands might not require project root.
-	// Individual subcommands will perform this check as needed.
-	if err := projutil.CheckProjectRoot(); err != nil {
-		return nil
-	}
-
-	return projutil.CheckGoModules()
-}
-
-var commandsToSkip = map[string]struct{}{
-	"new":          struct{}{}, // Handles this logic in cmd/operator-sdk/new
-	"migrate":      struct{}{}, // Handles this logic in cmd/operator-sdk/migrate
-	"operator-sdk": struct{}{}, // Alias for "help"
-	"help":         struct{}{},
-	"completion":   struct{}{},
-	"version":      struct{}{},
-	"print-deps":   struct{}{}, // Does not require this logic
-}
-
-func skipCheckForCmd(cmd *cobra.Command) (skip bool) {
-	if _, ok := commandsToSkip[cmd.Name()]; ok {
-		return true
-	}
-	cmd.VisitParents(func(pc *cobra.Command) {
-		if _, ok := commandsToSkip[pc.Name()]; ok {
-			// The bare "operator-sdk" command will be checked above.
-			if pc.Name() != "operator-sdk" {
-				skip = true
-			}
+func rootPersistentPreRun(cmd *cobra.Command, args []string) {
+	if viper.GetBool(flags.VerboseOpt) {
+		if err := projutil.SetGoVerbose(); err != nil {
+			log.Fatalf("Could not set GOFLAGS: (%v)", err)
 		}
-	})
-	return skip
+		log.SetLevel(log.DebugLevel)
+		log.Debug("Debug logging is set")
+	}
 }
