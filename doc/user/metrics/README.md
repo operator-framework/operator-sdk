@@ -83,6 +83,76 @@ By default operator will expose info metrics based on the number of the current 
 
 The operator uses [Prometheus][prometheus] to expose a number of metrics by default. In order to expose custom metrics they have to be registered with the `Registry` object. An example can be found in the [kubebuilder book][kubebuilder].
 
+### With 3rd party resource
+
+By default, SDK operator projects are set up to export metrics through `addMetrics` in `cmd/manager/main.go`. See that it will call the `serveCRMetrics`:
+
+
+```go
+func serveCRMetrics(cfg *rest.Config) error {
+    ...
+    filteredGVK, err := k8sutil.GetGVKsFromAddToScheme(apis.AddToScheme)
+    if err != nil {
+        return err
+    }
+    ...
+    // Generate and serve custom resource specific metrics.
+    err = kubemetrics.GenerateAndServeCRMetrics(cfg, ns, filteredGVK, metricsHost, operatorMetricsPort)
+    if err != nil {
+        return err
+    }
+```
+
+The `kubemetrics.GenerateAndServeCRMetrics` function requires an RBAC rule to list all GroupVersionKinds in the list of watched namespaces, so you might need to [filter](https://github.com/operator-framework/operator-sdk/blob/v0.15.2/pkg/k8sutil/k8sutil.go#L161) the kinds returned by [`k8sutil.GetGVKsFromAddToScheme`](https://godoc.org/github.com/operator-framework/operator-sdk/pkg/k8sutil#GetGVKsFromAddToScheme) more stringently to avoid authorization errors such as `Failed to list *unstructured.Unstructured`. You may also need to add a rule to LIST your third party API schemas and their dependent schemas not registered with the manager.
+
+Note that the original use case for [`k8sutil.GetGVKsFromAddToScheme`](https://godoc.org/github.com/operator-framework/operator-sdk/pkg/k8sutil#GetGVKsFromAddToScheme) was to return just the GVKs of the CRDs that the operator owns. Your RBAC roles would have rules that permit List on these resources already.
+
+**Example**
+
+```go
+func filterGKVsFromAddToScheme() ([]schema.GroupVersionKind, error) {
+    filteredGVK, err := k8sutil.GetGVKsFromAddToScheme(apis.AddToScheme)
+    if err != nil {
+        return nil, err
+    }
+	
+    // types that will be ignored
+    ignoreList := []schema.GroupVersionKind{
+        // OCP types
+        schema.GroupVersionKind{Group: "route.openshift.io", Kind: "Route", Version: "*"},
+        schema.GroupVersionKind{Group: "image.openshift.io", Kind: "ImageStream", Version: "*"},
+        schema.GroupVersionKind{Group: "apps.openshift.io", Kind: "DeploymentConfig", Version: "*"},
+        // Others Operators API
+        schema.GroupVersionKind{Group: "example.appservice.com", Kind: "AppService", Version: "*"},
+        // Kubernetes types 
+        schema.GroupVersionKind{Kind: "PersistentVolumeClaim", Version: "*"},
+        schema.GroupVersionKind{Kind: "ServiceAccount", Version: "*"},
+    }
+
+    ownGVKs := []schema.GroupVersionKind{}
+    for _, gvk:= range filteredGVK {
+        for _, ignoreGKV := range ignoreList {
+            if !hasMatch(ignoreGKV, gvk) {
+            	ownGVKs = append(ownGVKs, gvk)
+            }
+        }
+    }
+
+    return ownGVKs, nil
+}
+
+func hasMatch(ignoreGKV schema.GroupVersionKind, gvk schema.GroupVersionKind) bool {
+    if ignoreGKV.Kind == "*" && ignoreGKV.Group == "*" && ignoreGKV.Version == "*" {
+        return false
+    } else {
+        if (ignoreGKV.Kind != "*" && ignoreGKV.Kind != gvk.Kind) ||
+            (ignoreGKV.Group != "*" && ignoreGKV.Group != gvk.Group) ||
+            (ignoreGKV.Version != "*" && ignoreGKV.Version != gvk.Version) {
+            return false
+        }
+    }
+}
+```
 
 [kubebuilder]: https://book.kubebuilder.io/reference/metrics.html
 [prometheus]: https://prometheus.io/
