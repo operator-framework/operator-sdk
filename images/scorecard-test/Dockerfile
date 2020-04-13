@@ -1,12 +1,12 @@
 # Base image
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 
-ENV PROXY=/usr/local/bin/scorecard-proxy \
+ENV TEST=/usr/local/bin/scorecard-test \
     USER_UID=1001 \
-    USER_NAME=proxy
+    USER_NAME=test
 
 # install operator binary
-COPY scorecard-proxy ${PROXY}
+COPY scorecard-test ${TEST}
 
 COPY bin /usr/local/bin
 RUN  /usr/local/bin/user_setup

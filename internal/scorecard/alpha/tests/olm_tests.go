@@ -27,10 +27,10 @@ const (
 )
 
 // BundleValidationTest validates an on-disk bundle
-func BundleValidationTest(conf TestConfig) scapiv1alpha2.ScorecardTestResult {
+func BundleValidationTest(conf TestBundle) scapiv1alpha2.ScorecardTestResult {
 	r := scapiv1alpha2.ScorecardTestResult{}
 	r.Name = OLMBundleValidationTest
-	r.Description = "validate an on-disk bundle"
+	r.Description = "Validates bundle contents"
 	r.State = scapiv1alpha2.PassState
 	r.Log = "validation output goes here"
 	r.Errors = make([]string, 0)
@@ -39,10 +39,10 @@ func BundleValidationTest(conf TestConfig) scapiv1alpha2.ScorecardTestResult {
 }
 
 // CRDsHaveValidationTest verifies all CRDs have a validation section
-func CRDsHaveValidationTest(conf TestConfig) scapiv1alpha2.ScorecardTestResult {
+func CRDsHaveValidationTest(conf TestBundle) scapiv1alpha2.ScorecardTestResult {
 	r := scapiv1alpha2.ScorecardTestResult{}
 	r.Name = OLMCRDsHaveValidationTest
-	r.Description = "verifies all CRDs have a validation section"
+	r.Description = "All CRDs have an OpenAPI validation subsection"
 	r.State = scapiv1alpha2.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
@@ -50,10 +50,10 @@ func CRDsHaveValidationTest(conf TestConfig) scapiv1alpha2.ScorecardTestResult {
 }
 
 // CRDsHaveResourcesTest verifies CRDs have resources listed in its owned CRDs section
-func CRDsHaveResourcesTest(conf TestConfig) scapiv1alpha2.ScorecardTestResult {
+func CRDsHaveResourcesTest(conf TestBundle) scapiv1alpha2.ScorecardTestResult {
 	r := scapiv1alpha2.ScorecardTestResult{}
 	r.Name = OLMCRDsHaveResourcesTest
-	r.Description = "verifies all CRDs have resources listed in its owned CRDs section"
+	r.Description = "All Owned CRDs contain a resources subsection"
 	r.State = scapiv1alpha2.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
@@ -62,11 +62,10 @@ func CRDsHaveResourcesTest(conf TestConfig) scapiv1alpha2.ScorecardTestResult {
 }
 
 // SpecDescriptorsTest verifies all spec fields have descriptors
-func SpecDescriptorsTest(conf TestConfig) scapiv1alpha2.ScorecardTestResult {
-
+func SpecDescriptorsTest(conf TestBundle) scapiv1alpha2.ScorecardTestResult {
 	r := scapiv1alpha2.ScorecardTestResult{}
 	r.Name = OLMSpecDescriptorsTest
-	r.Description = "verifies all spec fields have descriptors"
+	r.Description = "All spec fields have matching descriptors in the CSV"
 	r.State = scapiv1alpha2.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
@@ -74,10 +73,10 @@ func SpecDescriptorsTest(conf TestConfig) scapiv1alpha2.ScorecardTestResult {
 }
 
 // StatusDescriptorsTest verifies all CRDs have status descriptors
-func StatusDescriptorsTest(conf TestConfig) scapiv1alpha2.ScorecardTestResult {
+func StatusDescriptorsTest(conf TestBundle) scapiv1alpha2.ScorecardTestResult {
 	r := scapiv1alpha2.ScorecardTestResult{}
 	r.Name = OLMStatusDescriptorsTest
-	r.Description = "verifies all CRDs have status descriptors"
+	r.Description = "All status fields have matching descriptors in the CSV"
 	r.State = scapiv1alpha2.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)

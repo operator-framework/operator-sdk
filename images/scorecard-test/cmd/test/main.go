@@ -35,25 +35,23 @@ import (
 // test image.
 
 const (
-	//bundlePath = "/scorecard" // mounted by the Pod
-	bundlePath = "/home/jeffmc/projects/memcached-operator/deploy/olm-catalog/memcached-operator" // mounted by the Pod
+	bundlePath = "/scorecard"
 )
 
 func main() {
-	argsWithoutProg := os.Args[1:]
-	if len(argsWithoutProg) == 0 {
-		// todo return an error since a test name is required
+	entrypoint := os.Args[1:]
+	if len(entrypoint) == 0 {
 		log.Fatal("test name argument is required")
 	}
 
-	cfg, err := tests.GetConfig(bundlePath)
+	cfg, err := tests.GetBundle(bundlePath)
 	if err != nil {
-		// TODO produce a v1alpha2 Test Result error in the log
+		log.Fatal(err.Error())
 	}
 
 	var result scapiv1alpha2.ScorecardTestResult
 
-	switch argsWithoutProg[0] {
+	switch entrypoint[0] {
 	case tests.OLMBundleValidationTest:
 		result = tests.BundleValidationTest(cfg)
 	case tests.OLMCRDsHaveValidationTest:
@@ -69,14 +67,13 @@ func main() {
 	case tests.BasicCheckSpecTest:
 		result = tests.CheckSpecTest(cfg)
 	default:
-		// todo error if an invalid test name is passed
 		log.Fatal("invalid test name argument passed")
 	}
 
-	prettyJson, err := json.MarshalIndent(result, "", "    ")
+	prettyJSON, err := json.MarshalIndent(result, "", "    ")
 	if err != nil {
 		log.Fatal("failed to generate json", err)
 	}
-	fmt.Printf("%s\n", string(prettyJson))
+	fmt.Printf("%s\n", string(prettyJSON))
 
 }

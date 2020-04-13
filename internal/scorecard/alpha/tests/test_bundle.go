@@ -18,7 +18,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/operator-framework/api/pkg/manifests"
 	"github.com/operator-framework/api/pkg/validation/errors"
@@ -27,16 +26,16 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-// TestConfig holds the bundle contents to be tested
-type TestConfig struct {
+// TestBundle holds the bundle contents to be tested
+type TestBundle struct {
 	PackageManifest registry.PackageManifest
 	BundleErrors    []errors.ManifestResult
 	Bundles         []*registry.Bundle
 	CRs             []unstructured.Unstructured
 }
 
-// GetConfig parses a Bundle from a given on-disk path returning a TestConfig
-func GetConfig(bundlePath string) (cfg TestConfig, err error) {
+// GetBundle parses a Bundle from a given on-disk path returning a TestBundle
+func GetBundle(bundlePath string) (cfg TestBundle, err error) {
 
 	validationLogOutput := new(bytes.Buffer)
 	origOutput := logrus.StandardLogger().Out
@@ -48,14 +47,18 @@ func GetConfig(bundlePath string) (cfg TestConfig, err error) {
 	// get CRs from CSV's alm-examples annotation, assume single bundle
 	cfg.CRs = make([]unstructured.Unstructured, 0)
 
+	if len(cfg.Bundles) == 0 {
+		return cfg, fmt.Errorf("no bundle found")
+	}
+
 	csv, err := cfg.Bundles[0].ClusterServiceVersion()
 	if err != nil {
 		return cfg, fmt.Errorf("error in csv retrieval %s", err.Error())
 	}
+
 	almExamples := csv.ObjectMeta.Annotations["alm-examples"]
 
 	if almExamples == "" {
-		log.Printf("no alm-examples were found, so no CRs")
 		return cfg, nil
 	}
 
@@ -63,21 +66,20 @@ func GetConfig(bundlePath string) (cfg TestConfig, err error) {
 		var crInterfaces []map[string]interface{}
 		err = json.Unmarshal([]byte(almExamples), &crInterfaces)
 		if err != nil {
-			log.Printf("error unmarshalling CRs from alm-examples %s\n", err.Error())
+			return cfg, err
 		}
 		for i := 0; i < len(crInterfaces); i++ {
 			buff := new(bytes.Buffer)
 			enc := json.NewEncoder(buff)
 			err := enc.Encode(crInterfaces[i])
 			if err != nil {
-				log.Printf("error encoding CRs from alm-examples %s\n", err.Error())
-			} else {
-				obj := &unstructured.Unstructured{}
-				if err := obj.UnmarshalJSON(buff.Bytes()); err != nil {
-				} else {
-					cfg.CRs = append(cfg.CRs, *obj)
-				}
+				return cfg, err
 			}
+			obj := &unstructured.Unstructured{}
+			if err := obj.UnmarshalJSON(buff.Bytes()); err != nil {
+				return cfg, err
+			}
+			cfg.CRs = append(cfg.CRs, *obj)
 		}
 	}
 
