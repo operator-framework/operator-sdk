@@ -152,19 +152,19 @@ foo: bar
 		t.Run(tc.name, func(t *testing.T) {
 			tmp, err := ioutil.TempFile("", "watches.yaml")
 			if err != nil {
-				t.Fatalf("Failed to create temporary watches.yaml file: %v", err)
+				t.Fatalf("Failed to create temporary watches.yaml file: %w", err)
 			}
 			defer func() { _ = os.Remove(tmp.Name()) }()
 			if _, err := tmp.WriteString(tc.data); err != nil {
-				t.Fatalf("Failed to write data to temporary watches.yaml file: %v", err)
+				t.Fatalf("Failed to write data to temporary watches.yaml file: %w", err)
 			}
 			if err := tmp.Close(); err != nil {
-				t.Fatalf("Failed to close temporary watches.yaml file: %v", err)
+				t.Fatalf("Failed to close temporary watches.yaml file: %w", err)
 			}
 
 			for k, v := range tc.env {
 				if err := os.Setenv(k, v); err != nil {
-					t.Fatalf("Failed to set environment variable %q: %v", k, err)
+					t.Fatalf("Failed to set environment variable %q: %w", k, err)
 				}
 			}
 
@@ -172,7 +172,7 @@ foo: bar
 
 			for k := range tc.env {
 				if err := os.Unsetenv(k); err != nil {
-					t.Fatalf("Failed to unset environment variable %q: %v", k, err)
+					t.Fatalf("Failed to unset environment variable %q: %w", k, err)
 				}
 			}
 		})
@@ -182,7 +182,7 @@ foo: bar
 func doTest(t *testing.T, tc testCase, watchesFile string) {
 	watches, err := Load(watchesFile)
 	if !tc.expectErr && err != nil {
-		t.Fatalf("Expected no error; got error: %v", err)
+		t.Fatalf("Expected no error; got error: %w", err)
 	} else if tc.expectErr && err == nil {
 		t.Fatalf("Expected error; got no error")
 	}
