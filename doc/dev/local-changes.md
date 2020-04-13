@@ -1,10 +1,4 @@
----
-title: Testing Changes Locally
-linkTitle: Local Changes
-weight: 40
----
-
-## Testing Changes Locally
+## Testing changes Locally
 
 If your changes are in the SDK commands then you just need to run `make install` to be able to use an SDK binary built from the source code and then test locally it. Also, see that you can run `operator-sdk version` to check what is the commit used to built it. 
 
@@ -88,4 +82,4 @@ require (
 replace github.com/operator-framework/operator-sdk => github.com/<fork>/operator-sdk <branch>
 ```
 
-[makefile]: ../../../../../../Makefile
+[makefile]:../../Makefile 

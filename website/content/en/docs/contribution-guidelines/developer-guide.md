@@ -37,7 +37,7 @@ $ make test
 ```
 
 For more information on running testing and correctly configuring your environment,
-refer to the [`Running the Tests Locally`][running-the-tests] document. Also, to check hot to test the changes performed locally see the [`Testing changes Locally`][testing-changes-locally] document.
+refer to the [`Running the Tests Locally`][running-the-tests] document. To incorporate code changes in your development environment see the [`Testing changes Locally`][testing-changes-locally] document.
 
 
 To run the lint checks done in the CI locally, run:

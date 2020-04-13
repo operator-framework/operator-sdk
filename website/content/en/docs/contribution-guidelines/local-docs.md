@@ -1,7 +1,6 @@
 ---
 title: Build and serve the docs locally
 linkTitle: Local Docs
-weight: 50
 ---
 
 ## Prerequisites

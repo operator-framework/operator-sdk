@@ -37,7 +37,7 @@ $ make test
 ```
 
 For more information on running testing and correctly configuring your environment,
-refer to the [`Running the Tests Locally`][running-the-tests] document. Also, to check hot to test the changes performed locally see the [`Testing changes Locally`][testing-changes-locally] document.
+refer to the [`Running the Tests Locally`][running-the-tests] document. To incorporate code changes in your development environment see the [`Testing changes Locally`][testing-changes-locally] document.
 
 To run the lint checks done in the CI locally, run:
 
@@ -58,4 +58,4 @@ See the project [README][sdk-readme] for more details.
 [kubectl-tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [sdk-readme]:../../README.md
 [running-the-tests]: ./testing/running-the-tests.md
-[testing-changes-locally]: ./testing/local-changes.md
+[testing-changes-locally]: local-changes.md
