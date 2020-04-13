@@ -65,7 +65,7 @@ func TestBundleCRs(t *testing.T) {
 
 			abs, err := filepath.Abs(c.bundlePath)
 			if err != nil {
-				t.Errorf("invalid filepath")
+				t.Errorf("Invalid filepath")
 			}
 			var cfg TestBundle
 			cfg, err = GetBundle(abs)
@@ -108,12 +108,12 @@ func TestBasicAndOLM(t *testing.T) {
 
 			abs, err := filepath.Abs(c.bundlePath)
 			if err != nil {
-				t.Errorf("invalid filepath")
+				t.Errorf("Invalid filepath")
 			}
 			var cfg TestBundle
 			cfg, err = GetBundle(abs)
 			if err != nil {
-				t.Errorf("error getting bundle %s", err.Error())
+				t.Errorf("Error getting bundle %s", err.Error())
 			}
 
 			result := c.function(cfg)
