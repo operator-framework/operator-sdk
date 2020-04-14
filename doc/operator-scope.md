@@ -119,6 +119,8 @@ This scope is ideal for the cases where an instance(CR) of some Kind(CRD) will b
 
 ### Example for changing the CRD scope from namespace to cluster 
 
+The following example is for Go based-operators. Note that for Helm and Ansible based-operators the changes in the CRD required to be done manually. 
+
 - Check the `spec.names.plural` in the  CRD's Kind YAML file
 
 * `deploy/crds/cache_v1alpha1_memcached_crd.yaml`
