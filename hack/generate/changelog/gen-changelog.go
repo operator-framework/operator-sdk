@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/hack/generate/changelog/util"
-
 	"github.com/blang/semver"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/operator-framework/operator-sdk/hack/generate/changelog/util"
 )
 
 const repo = "github.com/operator-framework/operator-sdk"
