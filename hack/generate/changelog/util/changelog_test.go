@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/blang/semver"
-
 	"github.com/stretchr/testify/assert"
 )
 
