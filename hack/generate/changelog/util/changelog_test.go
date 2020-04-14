@@ -273,7 +273,7 @@ func TestChangelog_Template(t *testing.T) {
 			},
 			output: `## v999.999.999
 
-No changes for this version!
+No changes for this release!
 `,
 		},
 	}
