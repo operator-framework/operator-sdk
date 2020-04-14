@@ -21,10 +21,12 @@ SOURCES = $(shell find . -name '*.go' -not -path "*/vendor/*")
 ANSIBLE_BASE_IMAGE = quay.io/operator-framework/ansible-operator
 HELM_BASE_IMAGE = quay.io/operator-framework/helm-operator
 SCORECARD_PROXY_BASE_IMAGE = quay.io/operator-framework/scorecard-proxy
+SCORECARD_TEST_BASE_IMAGE = quay.io/operator-framework/scorecard-test
 
 ANSIBLE_IMAGE ?= $(ANSIBLE_BASE_IMAGE)
 HELM_IMAGE ?= $(HELM_BASE_IMAGE)
 SCORECARD_PROXY_IMAGE ?= $(SCORECARD_PROXY_BASE_IMAGE)
+SCORECARD_TEST_IMAGE ?= $(SCORECARD_TEST_BASE_IMAGE)
 
 ANSIBLE_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
 HELM_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
@@ -171,6 +173,9 @@ image-build-helm: build/operator-sdk-dev-linux-gnu
 image-build-scorecard-proxy:
 	./hack/image/build-scorecard-proxy-image.sh $(SCORECARD_PROXY_BASE_IMAGE):dev
 
+image-build-scorecard-test:
+	./hack/image/build-scorecard-test-image.sh $(SCORECARD_TEST_BASE_IMAGE):dev
+
 image-push: image-push-ansible image-push-helm image-push-scorecard-proxy ## Push all images
 
 image-push-ansible:
@@ -190,6 +195,9 @@ image-push-scorecard-proxy:
 
 image-push-scorecard-proxy-multiarch:
 	./hack/image/push-manifest-list.sh $(SCORECARD_PROXY_IMAGE) ${SCORECARD_PROXY_ARCHES}
+
+image-push-scorecard-test:
+	./hack/image/push-image-tags.sh $(SCORECARD_TEST_BASE_IMAGE):dev $(SCORECARD_TEST_IMAGE)-$(shell go env GOARCH)
 
 ##############################
 # Tests                      #
