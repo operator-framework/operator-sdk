@@ -87,10 +87,11 @@ By default operator will expose info metrics based on the number of the current 
 
 The operator uses [Prometheus][prometheus] to expose a number of metrics by default. In order to expose custom metrics they have to be registered with the `Registry` object. An example can be found in the [kubebuilder book][kubebuilder].
 
-### With 3rd party resource
+### With 3rd party resources
 
 By default, SDK operator projects are set up to export metrics through `addMetrics` in `cmd/manager/main.go`. See that it will call the `serveCRMetrics`:
 
+**NOTE** If you have any 3rd party resource types registered with the SDK's scheme, then register those with the Manager's scheme in the new project. For further information see how to [register 3rd party resources][register-3rd-party-resources].
 
 ```go
 func serveCRMetrics(cfg *rest.Config) error {
@@ -165,4 +166,4 @@ func hasMatch(ignoreGKV schema.GroupVersionKind, gvk schema.GroupVersionKind) bo
 [ownerref-permission]: https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#ownerreferencespermissionenforcement
 [ksm]: https://github.com/kubernetes/kube-state-metrics
 [controller-metrics]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/internal/controller/metrics
-
+[register-3rd-party-resources]: ../../quickstart/#adding-3rd-party-resources-to-your-operator
