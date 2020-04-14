@@ -25,6 +25,12 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+const (
+	// The directory containing all manifests for an operator, with the
+	// package manifest being top-level.
+	containerManifestsDir = "/registry/manifests"
+)
+
 // SDKLabels are used to identify certain operator-sdk resources.
 var SDKLabels = map[string]string{
 	"owner": "operator-sdk",

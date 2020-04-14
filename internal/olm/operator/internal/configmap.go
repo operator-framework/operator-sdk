@@ -30,12 +30,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-const (
-	// The directory containing all manifests for an operator, with the
-	// package manifest being top-level.
-	containerManifestsDir = "/registry/manifests"
-)
-
 // IsManifestDataStale checks if manifest data stored in the registry is stale
 // by comparing it to manifest data currently managed by m.
 func (m *RegistryResources) IsManifestDataStale(ctx context.Context, namespace string) (bool, error) {
