@@ -26,7 +26,7 @@ func TestGeneratePkgManifestToOutput(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testNonStandardLayoutDataDir)
 	defer cleanupFunc()
 
-	cfg := BundleGeneratorConfig{
+	cfg := GeneratorConfig{
 		OperatorName: testProjectName,
 		OutputDir:    "expected-catalog",
 	}
@@ -58,7 +58,7 @@ func TestGeneratePackageManifest(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
-	cfg := BundleGeneratorConfig{
+	cfg := GeneratorConfig{
 		OperatorName: testProjectName,
 		OutputDir:    "deploy",
 	}
@@ -79,7 +79,7 @@ func TestValidatePackageManifest(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
-	cfg := BundleGeneratorConfig{
+	cfg := GeneratorConfig{
 		OperatorName: testProjectName,
 		OutputDir:    "deploy",
 	}

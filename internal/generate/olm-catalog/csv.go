@@ -72,7 +72,7 @@ type bundleGenerator struct {
 	noUpdate bool
 }
 
-type BundleGeneratorConfig struct {
+type GeneratorConfig struct {
 	// OperatorName is the operator's name, ex. app-operator
 	OperatorName string
 	// OutputDir is the root directory where the output files will be generated.
@@ -92,7 +92,7 @@ type BundleGeneratorConfig struct {
 }
 
 // NewBundle creates a new bundle generator.
-func NewBundle(cfg BundleGeneratorConfig, csvVersion, fromVersion string, updateCRDs, makeManifests bool) gen.Generator {
+func NewBundle(cfg GeneratorConfig, csvVersion, fromVersion string, updateCRDs, makeManifests bool) gen.Generator {
 	g := bundleGenerator{
 		operatorName:  cfg.OperatorName,
 		csvVersion:    csvVersion,

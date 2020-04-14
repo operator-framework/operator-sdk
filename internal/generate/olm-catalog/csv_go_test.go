@@ -93,7 +93,7 @@ func TestGoCSVNewWithInputsToOutput(t *testing.T) {
 	outputDir, rmDirFunc := mkTempDirWithCleanup(t, t.Name()+"-output-catalog")
 	defer rmDirFunc()
 
-	cfg := BundleGeneratorConfig{
+	cfg := GeneratorConfig{
 		OperatorName: testProjectName,
 		DeployDir:    "config",
 		ApisDir:      "api",
@@ -148,7 +148,7 @@ func TestGoCSVUpgradeWithInputsToOutput(t *testing.T) {
 	}
 
 	// Upgrade new CSV from old
-	cfg := BundleGeneratorConfig{
+	cfg := GeneratorConfig{
 		OperatorName: testProjectName,
 		DeployDir:    "config",
 		ApisDir:      "api",
@@ -176,7 +176,7 @@ func TestGoCSVNew(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
-	cfg := BundleGeneratorConfig{
+	cfg := GeneratorConfig{
 		OperatorName: testProjectName,
 		DeployDir:    "deploy",
 		ApisDir:      filepath.Join("pkg", "apis"),
@@ -203,7 +203,7 @@ func TestGoCSVUpdate(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
-	cfg := BundleGeneratorConfig{
+	cfg := GeneratorConfig{
 		OperatorName: testProjectName,
 		DeployDir:    "deploy",
 		ApisDir:      filepath.Join("pkg", "apis"),
@@ -229,7 +229,7 @@ func TestGoCSVUpgrade(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
-	cfg := BundleGeneratorConfig{
+	cfg := GeneratorConfig{
 		OperatorName: testProjectName,
 		DeployDir:    "deploy",
 		ApisDir:      filepath.Join("pkg", "apis"),
@@ -255,7 +255,7 @@ func TestGoCSVNewManifests(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
-	cfg := BundleGeneratorConfig{
+	cfg := GeneratorConfig{
 		OperatorName: testProjectName,
 		DeployDir:    "deploy",
 		ApisDir:      filepath.Join("pkg", "apis"),
@@ -282,7 +282,7 @@ func TestGoCSVUpdateManifests(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
-	cfg := BundleGeneratorConfig{
+	cfg := GeneratorConfig{
 		OperatorName: testProjectName,
 		DeployDir:    "deploy",
 		ApisDir:      filepath.Join("pkg", "apis"),
@@ -308,7 +308,7 @@ func TestGoCSVNewWithInvalidDeployDir(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
-	cfg := BundleGeneratorConfig{
+	cfg := GeneratorConfig{
 		OperatorName: testProjectName,
 		DeployDir:    "notExist",
 		ApisDir:      filepath.Join("pkg", "apis"),
@@ -328,7 +328,7 @@ func TestGoCSVNewWithEmptyDeployDir(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
-	cfg := BundleGeneratorConfig{
+	cfg := GeneratorConfig{
 		OperatorName: testProjectName,
 		DeployDir:    "emptydir",
 		ApisDir:      filepath.Join("pkg", "apis"),
@@ -368,7 +368,7 @@ func TestUpdateCSVVersion(t *testing.T) {
 		t.Fatal("Failed to get new CSV")
 	}
 
-	cfg := BundleGeneratorConfig{
+	cfg := GeneratorConfig{
 		OperatorName: testProjectName,
 		DeployDir:    "deploy",
 		ApisDir:      filepath.Join("pkg", "apis"),

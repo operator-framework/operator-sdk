@@ -53,20 +53,15 @@ type crdGenerator struct {
 	// crdVersion is the API version of the CRD that will be generated.
 	// Should be one of [v1, v1beta1]
 	crdVersion string
-	deployDir  string
 	crdsDir    string
 	apisDir    string
 }
 
-type CRDGeneratorConfig struct {
+type GeneratorConfig struct {
 	// OperatorName is the operator's name, ex. app-operator
 	OperatorName string
 	// OutputDir is the root directory where the output files will be generated.
 	OutputDir string
-	// DeployDir is for the location of the operator manifests directory e.g "deploy/production"
-	// The Deployment and RBAC manifests from this directory will be used to populate the CSV
-	// install strategy: spec.install
-	DeployDir string
 	// CRDsDir is for the location of the CRD manifests directory e.g "deploy/crds"
 	// Both the CRD and CR manifests from this path will be used to populate CSV fields
 	// metadata.annotations.alm-examples for CR examples
@@ -79,7 +74,7 @@ type CRDGeneratorConfig struct {
 
 // NewCRDGo returns a CRD generator configured to generate CustomResourceDefintion
 // manifests from Go API files.
-func NewCRDGo(cfg CRDGeneratorConfig, crdVersion string) gen.Generator {
+func NewCRDGo(cfg GeneratorConfig, crdVersion string) gen.Generator {
 	g := crdGenerator{
 		operatorName: cfg.OperatorName,
 		outputDir:    cfg.OutputDir,
@@ -102,7 +97,7 @@ func NewCRDGo(cfg CRDGeneratorConfig, crdVersion string) gen.Generator {
 
 // NewCRDNonGo returns a CRD generator configured to generate a
 // CustomResourceDefintion manifest from scratch using data in resource.
-func NewCRDNonGo(cfg CRDGeneratorConfig, resource scaffold.Resource, crdVersion string) gen.Generator {
+func NewCRDNonGo(cfg GeneratorConfig, resource scaffold.Resource, crdVersion string) gen.Generator {
 	g := crdGenerator{
 		operatorName: cfg.OperatorName,
 		outputDir:    cfg.OutputDir,

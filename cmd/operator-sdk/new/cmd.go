@@ -427,7 +427,7 @@ func doHelmScaffold() error {
 
 func generateCRDNonGo(projectName string, resource scaffold.Resource, crdVersion string) error {
 	crdsDir := filepath.Join(projectName, scaffold.CRDsDir)
-	gcfg := gencrd.CRDGeneratorConfig{
+	gcfg := gencrd.GeneratorConfig{
 		CRDsDir:   crdsDir,
 		OutputDir: crdsDir,
 	}

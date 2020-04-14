@@ -238,7 +238,7 @@ func (c csvCmd) run() error {
 	if c.operatorName == "" {
 		c.operatorName = filepath.Base(projutil.MustGetwd())
 	}
-	cfg := gencatalog.BundleGeneratorConfig{
+	cfg := gencatalog.GeneratorConfig{
 		OperatorName: c.operatorName,
 		DeployDir:    c.deployDir,
 		ApisDir:      c.apisDir,

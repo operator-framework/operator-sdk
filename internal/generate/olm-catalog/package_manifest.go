@@ -56,7 +56,7 @@ type pkgGenerator struct {
 	fileName string
 }
 
-func NewPackageManifest(cfg BundleGeneratorConfig, csvVersion, channel string, isDefault bool) gen.Generator {
+func NewPackageManifest(cfg GeneratorConfig, csvVersion, channel string, isDefault bool) gen.Generator {
 	g := pkgGenerator{
 		OperatorName:     cfg.OperatorName,
 		OutputDir:        cfg.OutputDir,

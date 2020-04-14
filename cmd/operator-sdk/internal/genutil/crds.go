@@ -30,7 +30,7 @@ func CRDGen(crdVersion string) error {
 
 	log.Info("Running CRD generator.")
 
-	cfg := gencrd.CRDGeneratorConfig{}
+	cfg := gencrd.GeneratorConfig{}
 	crd := gencrd.NewCRDGo(cfg, crdVersion)
 	if err := crd.Generate(); err != nil {
 		return fmt.Errorf("error generating CRDs from APIs in %s: %w", scaffold.ApisDir, err)
