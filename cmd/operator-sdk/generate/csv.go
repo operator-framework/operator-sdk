@@ -22,7 +22,7 @@ import (
 	gencatalog "github.com/operator-framework/operator-sdk/internal/generate/olm-catalog"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
-	"github.com/coreos/go-semver/semver"
+	"github.com/blang/semver"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -268,18 +268,18 @@ func (c csvCmd) run() error {
 func (c csvCmd) validate() error {
 	// If a manifests directory exists, allow no versions to be set. In this case
 	// either a new CSV will be created or existing CSV updated in the manifests dir.
-	if !c.makeManifests {
+	if c.csvVersion != "" {
 		if err := validateVersion(c.csvVersion); err != nil {
 			return err
 		}
-		if c.fromVersion != "" {
-			if err := validateVersion(c.fromVersion); err != nil {
-				return err
-			}
+	}
+	if c.fromVersion != "" {
+		if err := validateVersion(c.fromVersion); err != nil {
+			return err
 		}
-		if c.fromVersion != "" && c.csvVersion == c.fromVersion {
-			return fmt.Errorf(
-				"from-version (%s) cannot equal csv-version; set only csv-version instead", c.fromVersion)
+		if c.csvVersion == c.fromVersion {
+			return fmt.Errorf("--from-version (%s) cannot equal --csv-version; set only csv-version instead",
+				c.fromVersion)
 		}
 	}
 
@@ -291,7 +291,7 @@ func (c csvCmd) validate() error {
 }
 
 func validateVersion(version string) error {
-	v, err := semver.NewVersion(version)
+	v, err := semver.Parse(version)
 	if err != nil {
 		return fmt.Errorf("%s is not a valid semantic version: %v", version, err)
 	}
