@@ -38,79 +38,79 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
+const DefaultCRDVersion = "v1beta1"
+
 // crdGenerator configures the CustomResourceDefintion manifest generator
 // for Go and non-Go projects.
 type crdGenerator struct {
-	gen.Config
+	OperatorName string
+	OutputDir    string
 	// isOperatorGo is true when the operator is written in Go.
 	isOperatorGo bool
 	// resource contains API information used to configure single-CRD generation.
 	// This is only required when isOperatorGo is false.
 	resource   scaffold.Resource
 	crdVersion string
+	deployDir  string
+	crdsDir    string
+	apisDir    string
 }
 
-const (
-	APIsDirKey        = "apis"
-	CRDsDirKey        = "crds"
-	DefaultCRDVersion = "v1beta1"
-)
+type CRDGeneratorConfig struct {
+	OperatorName string
+	OutputDir    string
+	DeployDir    string
+	CRDsDir      string
+	ApisDir      string
+}
 
 // NewCRDGo returns a CRD generator configured to generate CustomResourceDefintion
 // manifests from Go API files.
-func NewCRDGo(cfg gen.Config, crdVersion string) gen.Generator {
+func NewCRDGo(cfg CRDGeneratorConfig, crdVersion string) gen.Generator {
 	g := crdGenerator{
-		Config:       cfg,
+		OperatorName: cfg.OperatorName,
 		isOperatorGo: true,
 		crdVersion:   crdVersion,
 	}
-	if g.Inputs == nil {
-		g.Inputs = map[string]string{}
+	if cfg.CRDsDir == "" {
+		g.crdsDir = scaffold.CRDsDir
 	}
-	if crdsDir, ok := g.Inputs[CRDsDirKey]; !ok || crdsDir == "" {
-		g.Inputs[CRDsDirKey] = scaffold.CRDsDir
+	if cfg.ApisDir == "" {
+		g.apisDir = scaffold.ApisDir
 	}
-	if apisDir, ok := g.Inputs[APIsDirKey]; !ok || apisDir == "" {
-		g.Inputs[APIsDirKey] = scaffold.ApisDir
-	}
-	if g.OutputDir == "" {
-		g.OutputDir = g.Inputs[CRDsDirKey]
+	if cfg.OutputDir == "" {
+		g.OutputDir = g.crdsDir
 	}
 	return g
 }
 
 // NewCRDNonGo returns a CRD generator configured to generate a
 // CustomResourceDefintion manifest from scratch using data in resource.
-func NewCRDNonGo(cfg gen.Config, resource scaffold.Resource, crdVersion string) gen.Generator {
+func NewCRDNonGo(cfg CRDGeneratorConfig, resource scaffold.Resource, crdVersion string) gen.Generator {
 	g := crdGenerator{
-		Config:       cfg,
+		OperatorName: cfg.OperatorName,
 		resource:     resource,
 		isOperatorGo: false,
 		crdVersion:   crdVersion,
 	}
-	if g.Inputs == nil {
-		g.Inputs = map[string]string{}
+	if cfg.CRDsDir == "" {
+		g.crdsDir = scaffold.CRDsDir
 	}
-	if crdsDir, ok := g.Inputs[CRDsDirKey]; !ok || crdsDir == "" {
-		g.Inputs[CRDsDirKey] = scaffold.CRDsDir
+	if cfg.ApisDir == "" {
+		g.apisDir = scaffold.ApisDir
 	}
 	if g.OutputDir == "" {
-		g.OutputDir = g.Inputs[CRDsDirKey]
+		g.OutputDir = g.crdsDir
 	}
 	return g
 }
 
 func (g crdGenerator) validate() error {
-	if len(g.Inputs) == 0 {
-		return errors.New("inputs cannot be empty")
-	}
-	if _, ok := g.Inputs[CRDsDirKey]; !ok {
+	if g.crdsDir == "" {
 		return errors.New("input CRDs dir cannot be empty")
 	}
-	if g.isOperatorGo {
-		if _, ok := g.Inputs[APIsDirKey]; !ok {
-			return errors.New("input APIs dir cannot be empty")
-		}
+	if g.isOperatorGo && g.apisDir == "" {
+		return errors.New("input APIs dir cannot be empty")
 	}
 	if g.OutputDir == "" {
 		return errors.New("output dir cannot be empty")
@@ -167,7 +167,7 @@ func (g crdGenerator) generateGo() (map[string][]byte, error) {
 	cacheOutputDir := filepath.Clean(g.OutputDir)
 	rawOpts := []string{
 		fmt.Sprintf("crd:crdVersions={%s}", g.crdVersion),
-		fmt.Sprintf("paths=%s/...", fileutil.DotPath(g.Inputs[APIsDirKey])),
+		fmt.Sprintf("paths=%s/...", fileutil.DotPath(g.apisDir)),
 		fmt.Sprintf("%s:dir=%s", defName, cacheOutputDir),
 	}
 
@@ -241,7 +241,7 @@ func (g crdGenerator) generateNonGo() (map[string][]byte, error) {
 	crd := apiextv1beta1.CustomResourceDefinition{}
 	fileMap := map[string][]byte{}
 	fileName := getFileNameForResource(g.resource)
-	path := filepath.Join(g.Inputs[CRDsDirKey], fileName)
+	path := filepath.Join(g.crdsDir, fileName)
 	if _, err := os.Stat(path); err != nil {
 		if !os.IsNotExist(err) {
 			return nil, fmt.Errorf("error stating CRD file %s: %w", path, err)

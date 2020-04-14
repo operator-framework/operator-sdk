@@ -42,7 +42,8 @@ const (
 )
 
 type pkgGenerator struct {
-	gen.Config
+	OperatorName string
+	OutputDir    string
 	// csvVersion is the version of the CSV being updated.
 	csvVersion string
 	// channel is csvVersion's package manifest channel. If a new package
@@ -55,17 +56,15 @@ type pkgGenerator struct {
 	fileName string
 }
 
-func NewPackageManifest(cfg gen.Config, csvVersion, channel string, isDefault bool) gen.Generator {
+func NewPackageManifest(cfg BundleGeneratorConfig, csvVersion, channel string, isDefault bool) gen.Generator {
 	g := pkgGenerator{
-		Config:           cfg,
+		OperatorName:     cfg.OperatorName,
+		OutputDir:        cfg.OutputDir,
 		csvVersion:       csvVersion,
 		channel:          channel,
 		channelIsDefault: isDefault,
 		fileName:         getPkgFileName(cfg.OperatorName),
 	}
-
-	// Pkg manifest generator has no defined inputs
-	g.Inputs = map[string]string{}
 
 	// The olm-catalog directory location depends on where the output directory is set.
 	if g.OutputDir == "" {

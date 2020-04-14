@@ -18,7 +18,6 @@ import (
 	"fmt"
 
 	gencrd "github.com/operator-framework/operator-sdk/internal/generate/crd"
-	gen "github.com/operator-framework/operator-sdk/internal/generate/gen"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
@@ -31,7 +30,7 @@ func CRDGen(crdVersion string) error {
 
 	log.Info("Running CRD generator.")
 
-	cfg := gen.Config{}
+	cfg := gencrd.CRDGeneratorConfig{}
 	crd := gencrd.NewCRDGo(cfg, crdVersion)
 	if err := crd.Generate(); err != nil {
 		return fmt.Errorf("error generating CRDs from APIs in %s: %w", scaffold.ApisDir, err)

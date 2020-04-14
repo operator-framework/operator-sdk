@@ -46,21 +46,6 @@ const (
 	// OLMCatalogDir is the default location for OLM catalog directory.
 	OLMCatalogDir  = scaffold.DeployDir + string(filepath.Separator) + OLMCatalogChildDir
 	csvYamlFileExt = ".clusterserviceversion.yaml"
-
-	// Input keys for CSV generator whose values are the filepaths for the respective input directories
-
-	// DeployDirKey is for the location of the operator manifests directory e.g "deploy/production"
-	// The Deployment and RBAC manifests from this directory will be used to populate the CSV
-	// install strategy: spec.install
-	DeployDirKey = "deploy"
-	// APIsDirKey is for the location of the API types directory e.g "pkg/apis"
-	// The CSV annotation comments will be parsed from the types under this path.
-	APIsDirKey = "apis"
-	// CRDsDirKey is for the location of the CRD manifests directory e.g "deploy/crds"
-	// Both the CRD and CR manifests from this path will be used to populate CSV fields
-	// metadata.annotations.alm-examples for CR examples
-	// and spec.customresourcedefinitions.owned for owned CRDs
-	CRDsDirKey = "crds"
 )
 
 type bundleGenerator struct {
@@ -86,35 +71,38 @@ type bundleGenerator struct {
 	noUpdate bool
 }
 
-// NewBundle creates a new bundle generator.
-func NewBundle(cfg gen.Config, csvVersion, fromVersion string, updateCRDs, makeManifests bool) gen.Generator {
-	deployDir, apisDir, crdsDir := cfg.Inputs[DeployDirKey], cfg.Inputs[APIsDirKey], cfg.Inputs[CRDsDirKey]
-	if deployDir == "" {
-		deployDir = scaffold.DeployDir
-	}
-	if apisDir == "" {
-		apisDir = scaffold.ApisDir
-	}
-	if crdsDir == "" {
-		crdsDir = filepath.Join(deployDir, "crds")
-	}
+type BundleGeneratorConfig struct {
+	OperatorName string
+	OutputDir    string
+	DeployDir    string
+	CRDsDir      string
+	ApisDir      string
+}
 
+// NewBundle creates a new bundle generator.
+func NewBundle(cfg BundleGeneratorConfig, csvVersion, fromVersion string, updateCRDs, makeManifests bool) gen.Generator {
 	g := bundleGenerator{
 		operatorName:  cfg.OperatorName,
 		csvVersion:    csvVersion,
-		deployDir:     deployDir,
-		apisDir:       apisDir,
-		crdsDir:       crdsDir,
 		updateCRDs:    updateCRDs,
 		makeManifests: makeManifests,
+	}
+	if cfg.DeployDir == "" {
+		g.deployDir = scaffold.DeployDir
+	}
+	if cfg.ApisDir == "" {
+		g.apisDir = scaffold.ApisDir
+	}
+	if cfg.CRDsDir == "" {
+		g.crdsDir = filepath.Join(g.deployDir, "crds")
 	}
 
 	if makeManifests {
 		g.toBundleDir, g.fromBundleDir = getBundleDirs(cfg.OperatorName, csvVersion,
-			cfg.OutputDir, deployDir)
+			cfg.OutputDir, g.deployDir)
 	} else {
 		g.toBundleDir, g.fromBundleDir = getBundleDirsLegacy(cfg.OperatorName, csvVersion,
-			fromVersion, cfg.OutputDir, deployDir)
+			fromVersion, cfg.OutputDir, g.deployDir)
 	}
 	return g
 }

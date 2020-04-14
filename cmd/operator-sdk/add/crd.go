@@ -21,7 +21,6 @@ import (
 	"strings"
 
 	gencrd "github.com/operator-framework/operator-sdk/internal/generate/crd"
-	gen "github.com/operator-framework/operator-sdk/internal/generate/gen"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
@@ -102,7 +101,7 @@ func crdFunc(cmd *cobra.Command, args []string) error {
 
 	// This command does not consider an APIs dir. Instead it adds a plain CRD
 	// for the provided resource. We can use NewCRDNonGo to get this behavior.
-	gcfg := gen.Config{}
+	gcfg := gencrd.CRDGeneratorConfig{}
 	crd := gencrd.NewCRDNonGo(gcfg, *resource, crdVersion)
 	if err := crd.Generate(); err != nil {
 		log.Fatalf("Error generating CRD for %s: %w", resource, err)

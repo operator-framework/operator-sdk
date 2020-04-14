@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/operator-framework/operator-sdk/internal/generate/gen"
 	gencatalog "github.com/operator-framework/operator-sdk/internal/generate/olm-catalog"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
@@ -239,16 +238,12 @@ func (c csvCmd) run() error {
 	if c.operatorName == "" {
 		c.operatorName = filepath.Base(projutil.MustGetwd())
 	}
-	cfg := gen.Config{
+	cfg := gencatalog.BundleGeneratorConfig{
 		OperatorName: c.operatorName,
-		// TODO(hasbro17): Remove the Input key map when the Generator input keys
-		// are removed in favour of config fields in the bundle generator
-		Inputs: map[string]string{
-			gencatalog.DeployDirKey: c.deployDir,
-			gencatalog.APIsDirKey:   c.apisDir,
-			gencatalog.CRDsDirKey:   c.crdDir,
-		},
-		OutputDir: c.outputDir,
+		DeployDir:    c.deployDir,
+		ApisDir:      c.apisDir,
+		CRDsDir:      c.crdDir,
+		OutputDir:    c.outputDir,
 	}
 
 	csv := gencatalog.NewBundle(cfg, c.csvVersion, c.fromVersion, c.updateCRDs, c.makeManifests)
