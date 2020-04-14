@@ -111,7 +111,7 @@ generate: gen-cli-doc gen-test-framework  ## Run all generate targets
 .PHONY: release_builds release
 
 release_builds := \
-    build/operator-sdk-$(VERSION)-aarch64-linux-gnu \
+	build/operator-sdk-$(VERSION)-aarch64-linux-gnu \
 	build/operator-sdk-$(VERSION)-x86_64-linux-gnu \
 	build/operator-sdk-$(VERSION)-x86_64-apple-darwin \
 	build/operator-sdk-$(VERSION)-ppc64le-linux-gnu \
@@ -221,6 +221,7 @@ test-ci: test-markdown test-sanity test-unit install test-subcommand test-e2e ##
 
 test-subcommand: test-subcommand-local test-subcommand-scorecard test-subcommand-olm-install
 	./hack/tests/subcommand-bundle.sh
+	./hack/tests/subcommand-generate-csv.sh
 
 test-subcommand-local:
 	./hack/tests/subcommand.sh

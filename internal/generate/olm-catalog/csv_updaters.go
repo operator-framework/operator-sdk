@@ -302,9 +302,9 @@ func updateDescriptions(csv *operatorsv1alpha1.ClusterServiceVersion, apisDir st
 		newDescription, err := descriptor.GetCRDDescriptionForGVK(apisDir, gvk)
 		if err != nil {
 			if goerrors.Is(err, descriptor.ErrAPIDirNotExist) {
-				log.Infof("Directory for API %s does not exist. Skipping CSV annotation parsing for API.", gvk)
+				log.Debugf("Directory for API %s does not exist. Skipping CSV annotation parsing for API.", gvk)
 			} else if goerrors.Is(err, descriptor.ErrAPITypeNotFound) {
-				log.Infof("No kind type found for API %s. Skipping CSV annotation parsing for API.", gvk)
+				log.Debugf("No kind type found for API %s. Skipping CSV annotation parsing for API.", gvk)
 			} else {
 				// TODO: Should we ignore all CSV annotation parsing errors and simply log the error
 				// like we do for the above cases.

@@ -5,7 +5,6 @@ go 1.13
 require (
 	github.com/DATA-DOG/go-sqlmock v1.4.1 // indirect
 	github.com/blang/semver v3.5.1+incompatible
-	github.com/coreos/go-semver v0.3.0
 	github.com/coreos/prometheus-operator v0.38.0
 	github.com/fatih/structtag v1.1.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32

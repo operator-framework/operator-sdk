@@ -176,12 +176,11 @@ func (c *bundleCreateCmd) addToFlagSet(fs *pflag.FlagSet) {
 }
 
 func (c *bundleCreateCmd) setDefaults() (err error) {
-	projectName := filepath.Base(projutil.MustGetwd())
+	if c.packageName == "" {
+		c.packageName = filepath.Base(projutil.MustGetwd())
+	}
 	if c.directory == "" {
-		c.directory = filepath.Join(catalog.OLMCatalogDir, projectName)
-		// Avoid discrepancy between packageName and directory if either is set
-		// by only assuming the operator dir is the packageName if directory isn't set.
-		c.packageName = projectName
+		c.directory = filepath.Join(catalog.OLMCatalogDir, c.packageName, bundle.ManifestsDir)
 	}
 
 	// Clean and make paths relative for less verbose error messages.
