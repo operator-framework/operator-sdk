@@ -246,7 +246,7 @@ in your bundle directory (no `Secret`'s, etc.), you can deploy your Operator
 using the following command invocation:
 
 ```console
-$ operator-sdk run --olm --manifests deploy/olm-catalog-memcached-operator --operator-version 0.1.0
+$ operator-sdk run --olm --manifests deploy/olm-catalog/memcached-operator --operator-version 0.1.0
 INFO[0000] loading Bundles                               dir=deploy/olm-catalog/memcached-operator
 INFO[0000] directory                                     dir=deploy/olm-catalog/memcached-operator file=memcached-operator load=bundles
 INFO[0000] directory                                     dir=deploy/olm-catalog/memcached-operator file=0.1.0 load=bundles
