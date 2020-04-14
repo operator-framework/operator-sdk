@@ -1,7 +1,7 @@
 ---
 title: Information Flow for Operator SDK Ansible-based Operators
 linkTitle: Information Flow
-weight: 10
+weight: 20
 ---
 
 ![Ansible Operator Flow](/ao-flow.png)
