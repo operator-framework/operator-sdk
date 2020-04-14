@@ -42,12 +42,16 @@ func (e *FragmentEntry) Validate() error {
 		return fmt.Errorf("invalid kind: %v", err)
 	}
 
+	if len(e.Description) == 0 {
+		return errors.New("missing description")
+	}
+
 	if e.Breaking && e.Kind != Change && e.Kind != Removal {
 		return fmt.Errorf("breaking changes can only be kind %q or %q, got %q", Change, Removal, e.Kind)
 	}
 
 	if e.Breaking && e.Migration == nil {
-		return fmt.Errorf("breaking changes require migration descriptions")
+		return fmt.Errorf("breaking changes require migration sections")
 	}
 
 	if e.Migration != nil {
@@ -133,13 +137,9 @@ func LoadEntries(fragmentsDir, repo string) ([]FragmentEntry, error) {
 			return nil, fmt.Errorf("failed to validate fragment file %q: %w", fragFile.Name(), err)
 		}
 
-		commitMsg, err := getCommitMessage(path)
+		prNum, err := prGetter.GetPullRequestNumberFor(path)
 		if err != nil {
-			log.Warnf("failed to get commit message for fragment file %q: %v", fragFile.Name(), err)
-		}
-		prNum, err := parsePRNumber(commitMsg)
-		if err != nil {
-			log.Warnf("failed to parse PR number for fragment file %q from string %q: %v", fragFile.Name(), commitMsg, err)
+			log.Warn(err)
 		}
 
 		if prNum != 0 {
@@ -159,7 +159,23 @@ func LoadEntries(fragmentsDir, repo string) ([]FragmentEntry, error) {
 	return entries, nil
 }
 
-func getCommitMessage(filename string) (string, error) {
+var prGetter PullRequestNumberGetter = &gitPullRequestNumberGetter{}
+
+type PullRequestNumberGetter interface {
+	GetPullRequestNumberFor(file string) (uint, error)
+}
+
+type gitPullRequestNumberGetter struct{}
+
+func (g *gitPullRequestNumberGetter) GetPullRequestNumberFor(filename string) (uint, error) {
+	msg, err := g.getCommitMessage(filename)
+	if err != nil {
+		return 0, err
+	}
+	return g.parsePRNumber(msg)
+}
+
+func (g *gitPullRequestNumberGetter) getCommitMessage(filename string) (string, error) {
 	args := fmt.Sprintf("log --follow --pretty=format:%%s --diff-filter=A --find-renames=40%% %s", filename)
 	line, err := exec.Command("git", strings.Split(args, " ")...).CombinedOutput()
 	if err != nil {
@@ -170,7 +186,7 @@ func getCommitMessage(filename string) (string, error) {
 
 var numRegex = regexp.MustCompile(`\(#(\d+)\)$`)
 
-func parsePRNumber(msg string) (uint, error) {
+func (g *gitPullRequestNumberGetter) parsePRNumber(msg string) (uint, error) {
 	matches := numRegex.FindAllStringSubmatch(msg, 1)
 	if len(matches) == 0 || len(matches[0]) < 2 {
 		return 0, fmt.Errorf("could not find PR number in commit message")

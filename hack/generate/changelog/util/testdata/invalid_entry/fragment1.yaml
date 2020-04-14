@@ -1,0 +1,4 @@
+entries:
+  - description: Addition description 0
+    kind: addition
+    breaking: true

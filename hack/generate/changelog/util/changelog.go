@@ -61,7 +61,7 @@ const changelogTemplate = `## {{ .Version }}
 - {{ .Description }}{{ if .Link }} ({{ .Link }}){{ end }}
 {{- end }}{{- end }}{{- else }}
 
-No changes for this version!{{ end }}
+No changes for this release!{{ end }}
 `
 
 var changelogTmpl = template.Must(template.New("changelog").Parse(changelogTemplate))

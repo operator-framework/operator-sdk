@@ -2,6 +2,7 @@ package util
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"strings"
 	"text/template"
@@ -22,19 +23,18 @@ type Migration struct {
 }
 
 const migrationGuideTemplate = `---
-title: v{{ .Version }}
+title: {{ .Version }}
 weight: {{ .Weight }}
 ---
-{{- range .Migrations }}
+{{ range .Migrations }}
 ## {{ .Header }}
 
 {{ .Body }}
-
+{{ if .PullRequestLink }}
 _See {{ .PullRequestLink }} for more details._
-{{ else }}
+{{ end }}{{ else }}
 There are no migrations for this release! :tada:
-{{- end }}
-`
+{{ end }}`
 
 var migrationGuideTmpl = template.Must(template.New("migrationGuide").Parse(migrationGuideTemplate))
 
@@ -56,7 +56,7 @@ func (mg *MigrationGuide) WriteFile(path string) error {
 
 func MigrationGuideFromEntries(version semver.Version, entries []FragmentEntry) MigrationGuide {
 	mg := MigrationGuide{
-		Version: version.String(),
+		Version: fmt.Sprintf("v%s", version.String()),
 		Weight:  versionToWeight(version),
 	}
 	for _, e := range entries {
