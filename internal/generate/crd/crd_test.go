@@ -77,40 +77,32 @@ func TestGenerate(t *testing.T) {
 	}{
 		{
 			description: "Generate Go CRD",
-			generator: NewCRDGo(gen.Config{
-				Inputs: map[string]string{
-					APIsDirKey: filepath.Join(testGoDataDir, scaffold.ApisDir),
-				},
+			generator: NewCRDGo(CRDGeneratorConfig{
+				ApisDir:   filepath.Join(testGoDataDir, scaffold.ApisDir),
 				OutputDir: filepath.Join(tmp, randomString()),
 			}, "v1beta1"),
 			wantErr: false,
 		},
 		{
 			description: "Generate non-Go CRD",
-			generator: NewCRDNonGo(gen.Config{
-				Inputs: map[string]string{
-					APIsDirKey: filepath.Join(testGoDataDir, scaffold.ApisDir),
-				},
+			generator: NewCRDNonGo(CRDGeneratorConfig{
+				ApisDir:   filepath.Join(testGoDataDir, scaffold.ApisDir),
 				OutputDir: filepath.Join(tmp, randomString()),
 			}, *r, "v1beta1"),
 			wantErr: false,
 		},
 		{
 			description: "invalid Go CRD version",
-			generator: NewCRDGo(gen.Config{
-				Inputs: map[string]string{
-					APIsDirKey: filepath.Join(testGoDataDir, scaffold.ApisDir),
-				},
+			generator: NewCRDGo(CRDGeneratorConfig{
+				ApisDir:   filepath.Join(testGoDataDir, scaffold.ApisDir),
 				OutputDir: filepath.Join(tmp, randomString()),
 			}, "invalid"),
 			wantErr: true,
 		},
 		{
 			description: "invalid non-Go CRD version",
-			generator: NewCRDNonGo(gen.Config{
-				Inputs: map[string]string{
-					APIsDirKey: filepath.Join(testGoDataDir, scaffold.ApisDir),
-				},
+			generator: NewCRDNonGo(CRDGeneratorConfig{
+				ApisDir:   filepath.Join(testGoDataDir, scaffold.ApisDir),
 				OutputDir: filepath.Join(tmp, randomString()),
 			}, *r, "invalid"),
 			wantErr: true,
@@ -131,10 +123,8 @@ func TestGenerate(t *testing.T) {
 }
 
 func TestCRDGo(t *testing.T) {
-	cfg := gen.Config{
-		Inputs: map[string]string{
-			APIsDirKey: filepath.Join(testGoDataDir, scaffold.ApisDir),
-		},
+	cfg := CRDGeneratorConfig{
+		ApisDir: filepath.Join(testGoDataDir, scaffold.ApisDir),
 	}
 
 	r, err := scaffold.NewResource(testAPIVersion, testKind)
@@ -206,10 +196,8 @@ func TestCRDNonGo(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.description, func(t *testing.T) {
-			cfg := gen.Config{
-				Inputs: map[string]string{
-					CRDsDirKey: c.crdsDir,
-				},
+			cfg := CRDGeneratorConfig{
+				CRDsDir: c.crdsDir,
 			}
 			g := NewCRDNonGo(cfg, *r, c.crdVersion)
 			fileMap, err := g.(crdGenerator).generateNonGo()

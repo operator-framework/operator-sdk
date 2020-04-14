@@ -18,7 +18,6 @@ import (
 	"testing"
 
 	"github.com/operator-framework/operator-registry/pkg/registry"
-	gen "github.com/operator-framework/operator-sdk/internal/generate/gen"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -27,7 +26,7 @@ func TestGeneratePkgManifestToOutput(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testNonStandardLayoutDataDir)
 	defer cleanupFunc()
 
-	cfg := gen.Config{
+	cfg := BundleGeneratorConfig{
 		OperatorName: testProjectName,
 		OutputDir:    "expected-catalog",
 	}
@@ -59,7 +58,7 @@ func TestGeneratePackageManifest(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
-	cfg := gen.Config{
+	cfg := BundleGeneratorConfig{
 		OperatorName: testProjectName,
 		OutputDir:    "deploy",
 	}
@@ -80,7 +79,7 @@ func TestValidatePackageManifest(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
-	cfg := gen.Config{
+	cfg := BundleGeneratorConfig{
 		OperatorName: testProjectName,
 		OutputDir:    "deploy",
 	}
