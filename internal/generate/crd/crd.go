@@ -43,13 +43,15 @@ const DefaultCRDVersion = "v1beta1"
 // crdGenerator configures the CustomResourceDefintion manifest generator
 // for Go and non-Go projects.
 type crdGenerator struct {
-	OperatorName string
-	OutputDir    string
+	operatorName string
+	outputDir    string
 	// isOperatorGo is true when the operator is written in Go.
 	isOperatorGo bool
 	// resource contains API information used to configure single-CRD generation.
 	// This is only required when isOperatorGo is false.
-	resource   scaffold.Resource
+	resource scaffold.Resource
+	// crdVersion is the API version of the CRD that will be generated.
+	// Should be one of [v1, v1beta1]
 	crdVersion string
 	deployDir  string
 	crdsDir    string
@@ -57,29 +59,43 @@ type crdGenerator struct {
 }
 
 type CRDGeneratorConfig struct {
+	// OperatorName is the operator's name, ex. app-operator
 	OperatorName string
-	OutputDir    string
-	DeployDir    string
-	CRDsDir      string
-	ApisDir      string
+	// OutputDir is the root directory where the output files will be generated.
+	OutputDir string
+	// DeployDir is for the location of the operator manifests directory e.g "deploy/production"
+	// The Deployment and RBAC manifests from this directory will be used to populate the CSV
+	// install strategy: spec.install
+	DeployDir string
+	// CRDsDir is for the location of the CRD manifests directory e.g "deploy/crds"
+	// Both the CRD and CR manifests from this path will be used to populate CSV fields
+	// metadata.annotations.alm-examples for CR examples
+	// and spec.customresourcedefinitions.owned for owned CRDs
+	CRDsDir string
+	// ApisDir is for the location of the API types directory e.g "pkg/apis"
+	// The CSV annotation comments will be parsed from the types under this path.
+	ApisDir string
 }
 
 // NewCRDGo returns a CRD generator configured to generate CustomResourceDefintion
 // manifests from Go API files.
 func NewCRDGo(cfg CRDGeneratorConfig, crdVersion string) gen.Generator {
 	g := crdGenerator{
-		OperatorName: cfg.OperatorName,
+		operatorName: cfg.OperatorName,
+		outputDir:    cfg.OutputDir,
 		isOperatorGo: true,
 		crdVersion:   crdVersion,
+		crdsDir:      cfg.CRDsDir,
+		apisDir:      cfg.ApisDir,
 	}
-	if cfg.CRDsDir == "" {
+	if g.crdsDir == "" {
 		g.crdsDir = scaffold.CRDsDir
 	}
-	if cfg.ApisDir == "" {
+	if g.apisDir == "" {
 		g.apisDir = scaffold.ApisDir
 	}
-	if cfg.OutputDir == "" {
-		g.OutputDir = g.crdsDir
+	if g.outputDir == "" {
+		g.outputDir = g.crdsDir
 	}
 	return g
 }
@@ -88,19 +104,22 @@ func NewCRDGo(cfg CRDGeneratorConfig, crdVersion string) gen.Generator {
 // CustomResourceDefintion manifest from scratch using data in resource.
 func NewCRDNonGo(cfg CRDGeneratorConfig, resource scaffold.Resource, crdVersion string) gen.Generator {
 	g := crdGenerator{
-		OperatorName: cfg.OperatorName,
+		operatorName: cfg.OperatorName,
+		outputDir:    cfg.OutputDir,
 		resource:     resource,
 		isOperatorGo: false,
 		crdVersion:   crdVersion,
+		crdsDir:      cfg.CRDsDir,
+		apisDir:      cfg.ApisDir,
 	}
-	if cfg.CRDsDir == "" {
+	if g.crdsDir == "" {
 		g.crdsDir = scaffold.CRDsDir
 	}
-	if cfg.ApisDir == "" {
+	if g.apisDir == "" {
 		g.apisDir = scaffold.ApisDir
 	}
-	if g.OutputDir == "" {
-		g.OutputDir = g.crdsDir
+	if g.outputDir == "" {
+		g.outputDir = g.crdsDir
 	}
 	return g
 }
@@ -112,7 +131,7 @@ func (g crdGenerator) validate() error {
 	if g.isOperatorGo && g.apisDir == "" {
 		return errors.New("input APIs dir cannot be empty")
 	}
-	if g.OutputDir == "" {
+	if g.outputDir == "" {
 		return errors.New("output dir cannot be empty")
 	}
 	if !g.isOperatorGo {
@@ -128,7 +147,7 @@ func (g crdGenerator) validate() error {
 	return nil
 }
 
-// Generate generates CRD manifests and writes them to g.OutputDir.
+// Generate generates CRD manifests and writes them to g.outputDir.
 func (g crdGenerator) Generate() (err error) {
 	if err = g.validate(); err != nil {
 		return fmt.Errorf("error validating generator configuration: %w", err)
@@ -142,11 +161,11 @@ func (g crdGenerator) Generate() (err error) {
 	if err != nil {
 		return fmt.Errorf("error generating CRD manifests: %w", err)
 	}
-	if err = os.MkdirAll(g.OutputDir, fileutil.DefaultDirFileMode); err != nil {
-		return fmt.Errorf("error mkdir %s: %w", g.OutputDir, err)
+	if err = os.MkdirAll(g.outputDir, fileutil.DefaultDirFileMode); err != nil {
+		return fmt.Errorf("error mkdir %s: %w", g.outputDir, err)
 	}
 	for fileName, b := range fileMap {
-		path := filepath.Join(g.OutputDir, fileName)
+		path := filepath.Join(g.outputDir, fileName)
 		if err := ioutil.WriteFile(path, b, fileutil.DefaultFileMode); err != nil {
 			return fmt.Errorf("error writing CRD manifests: %w", err)
 		}
@@ -164,7 +183,7 @@ func (g crdGenerator) generateGo() (map[string][]byte, error) {
 	// Generate files in the generator's cache so we can modify the file name
 	// and annotations.
 	defName := "output:crd:cache"
-	cacheOutputDir := filepath.Clean(g.OutputDir)
+	cacheOutputDir := filepath.Clean(g.outputDir)
 	rawOpts := []string{
 		fmt.Sprintf("crd:crdVersions={%s}", g.crdVersion),
 		fmt.Sprintf("paths=%s/...", fileutil.DotPath(g.apisDir)),

@@ -49,6 +49,7 @@ const (
 )
 
 type bundleGenerator struct {
+	// OperatorName is the operator's name, ex. app-operator
 	operatorName string
 	// csvVersion is the CSV current version.
 	csvVersion string
@@ -72,11 +73,22 @@ type bundleGenerator struct {
 }
 
 type BundleGeneratorConfig struct {
+	// OperatorName is the operator's name, ex. app-operator
 	OperatorName string
-	OutputDir    string
-	DeployDir    string
-	CRDsDir      string
-	ApisDir      string
+	// OutputDir is the root directory where the output files will be generated.
+	OutputDir string
+	// DeployDir is for the location of the operator manifests directory e.g "deploy/production"
+	// The Deployment and RBAC manifests from this directory will be used to populate the CSV
+	// install strategy: spec.install
+	DeployDir string
+	// CRDsDir is for the location of the CRD manifests directory e.g "deploy/crds"
+	// Both the CRD and CR manifests from this path will be used to populate CSV fields
+	// metadata.annotations.alm-examples for CR examples
+	// and spec.customresourcedefinitions.owned for owned CRDs
+	CRDsDir string
+	// ApisDir is for the location of the API types directory e.g "pkg/apis"
+	// The CSV annotation comments will be parsed from the types under this path.
+	ApisDir string
 }
 
 // NewBundle creates a new bundle generator.
@@ -86,14 +98,17 @@ func NewBundle(cfg BundleGeneratorConfig, csvVersion, fromVersion string, update
 		csvVersion:    csvVersion,
 		updateCRDs:    updateCRDs,
 		makeManifests: makeManifests,
+		deployDir:     cfg.DeployDir,
+		apisDir:       cfg.ApisDir,
+		crdsDir:       cfg.CRDsDir,
 	}
-	if cfg.DeployDir == "" {
+	if g.deployDir == "" {
 		g.deployDir = scaffold.DeployDir
 	}
-	if cfg.ApisDir == "" {
+	if g.apisDir == "" {
 		g.apisDir = scaffold.ApisDir
 	}
-	if cfg.CRDsDir == "" {
+	if g.crdsDir == "" {
 		g.crdsDir = filepath.Join(g.deployDir, "crds")
 	}
 
