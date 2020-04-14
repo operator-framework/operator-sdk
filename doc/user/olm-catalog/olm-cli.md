@@ -365,9 +365,9 @@ requires the typical setup described above.
 [pkg-manifest]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/how-to-update-operators.md
 [operator-bundle]:https://github.com/operator-framework/operator-registry/tree/v1.5.3#manifest-format
 [sdk-olm-design]:https://github.com/operator-framework/operator-sdk/blob/master/doc/proposals/sdk-integration-with-olm.md
-[cli-olm-install]:https://github.com/operator-framework/operator-sdk/blob/master/doc/cli/operator-sdk_olm_install.md
-[cli-olm-status]:https://github.com/operator-framework/operator-sdk/blob/master/doc/cli/operator-sdk_olm_status.md
-[cli-generate-csv]:https://github.com/operator-framework/operator-sdk/blob/master/doc/cli/operator-sdk_generate_csv.md
+[cli-olm-install]:../../../website/content/en/docs/cli/operator-sdk_olm_install.md
+[cli-olm-status]:../../../website/content/en/docs/cli/operator-sdk_olm_status.md
+[cli-generate-csv]:../../../website/content/en/docs/cli/operator-sdk_generate_csv.md
 [sdk-release-v0.15.0]:https://github.com/operator-framework/operator-sdk/releases/tag/v0.15.0
 [sdk-user-guide-go]:https://github.com/operator-framework/operator-sdk/blob/master/doc/user-guide.md
 [sdk-user-guide-ansible]:https://github.com/operator-framework/operator-sdk/blob/master/doc/ansible/user-guide.md
