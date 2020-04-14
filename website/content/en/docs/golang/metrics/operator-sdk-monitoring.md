@@ -108,7 +108,7 @@ func serveCRMetrics(cfg *rest.Config) error {
     }
 ```
 
-The `kubemetrics.GenerateAndServeCRMetrics` function requires an RBAC rule to list all GroupVersionKinds in the list of watched namespaces, so you might need to [filter](https://github.com/operator-framework/operator-sdk/blob/v0.15.2/pkg/k8sutil/k8sutil.go#L161) the kinds returned by [`k8sutil.GetGVKsFromAddToScheme`](https://godoc.org/github.com/operator-framework/operator-sdk/pkg/k8sutil#GetGVKsFromAddToScheme) more stringently to avoid authorization errors such as `Failed to list *unstructured.Unstructured`. You may also need to add a rule to LIST your third party API schemas and their dependent schemas not registered with the manager.
+The `kubemetrics.GenerateAndServeCRMetrics` function requires an RBAC rule to list all GroupVersionKinds in the list of watched namespaces, so you might need to filter the kinds returned by [`k8sutil.GetGVKsFromAddToScheme`](https://godoc.org/github.com/operator-framework/operator-sdk/pkg/k8sutil#GetGVKsFromAddToScheme) more stringently to avoid authorization errors such as `Failed to list *unstructured.Unstructured`. You may also need to add a rule to LIST your third party API schemas and their dependent schemas not registered with the manager.
 
 Note that the original use case for [`k8sutil.GetGVKsFromAddToScheme`](https://godoc.org/github.com/operator-framework/operator-sdk/pkg/k8sutil#GetGVKsFromAddToScheme) was to return just the GVKs of the CRDs that the operator owns. Your RBAC roles would have rules that permit List on these resources already.
 
