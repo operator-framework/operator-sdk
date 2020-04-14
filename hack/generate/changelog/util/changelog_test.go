@@ -249,8 +249,13 @@ func TestChangelog_Template(t *testing.T) {
 			changelog: Changelog{
 				Version: "v999.999.999",
 				Additions: []ChangelogEntry{
-					{Description: "Changelog entry description 0."},
-					{Description: "Changelog entry description 1.", Link: "[#999999](https://example.com/test/changelog/pulls/999999)"},
+					{
+						Description: "Changelog entry description 0.",
+					},
+					{
+						Description: "Changelog entry description 1.",
+						Link:        "[#999999](https://example.com/test/changelog/pulls/999999)",
+					},
 				},
 			},
 			output: `## v999.999.999

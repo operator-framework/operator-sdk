@@ -45,7 +45,7 @@ func main() {
 		log.Fatalf("failed to load fragments: %v", err)
 	}
 	if len(entries) == 0 {
-		log.Fatalf("no entries found")
+		log.Warnf("no entries found")
 	}
 
 	if validateOnly {
