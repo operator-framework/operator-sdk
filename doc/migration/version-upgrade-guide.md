@@ -337,7 +337,7 @@ Upon updating the project to `v0.8.2` the following breaking changes apply:
 
 ## `v0.10.x`
 
-- The scorecard configuration format for the `operator-sdk scorecard` command has changed. See [`doc/test-framework/scorecard`](../test-framework/scorecard.md) for more info.
+- The scorecard configuration format for the `operator-sdk scorecard` command has changed. See [the scorecard docs](https://github.com/operator-framework/operator-sdk/blob/v0.10.x/doc/test-framework/scorecard.md) for more info.
 - The CSV config field `role-path` is now `role-paths` and takes a list of strings.
     Replace:
     ```yaml
@@ -1147,7 +1147,7 @@ lint: |
 ```
 
 - Rename `molecule/$SCENARIO/playbook.yml` to `molecule/$SCENARIO/converge.yml` to avoid a deprecation message.
-- Update the `.travis.yml` file to install the supported lints as follows. 
+- Update the `.travis.yml` file to install the supported lints as follows.
 
 Replace:
 
@@ -1195,7 +1195,7 @@ first `COPY` from `COPY /*.yaml manifests/` to `COPY deploy/olm-catalog/<operato
 [mercurial]: https://www.mercurial-scm.org/downloads
 [migrating-to-modules]: https://github.com/golang/go/wiki/Modules#migrating-to-modules
 [modules-wiki]: https://github.com/golang/go/wiki/Modules#migrating-to-modules
-[print-deps-cli]: ../cli/operator-sdk_print-deps.md
+[print-deps-cli]: https://github.com/operator-framework/operator-sdk/blob/master/website/content/en/docs/cli/operator-sdk_print-deps.md
 [changelog]: ../../CHANGELOG.md
 [release-notes]: https://github.com/operator-framework/operator-sdk/releases
 [v0.1.0-migration-guide]: ./v0.1.0-migration-guide.md
