@@ -1,7 +1,6 @@
 package util
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -10,18 +9,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 )
-
-func getMigrations(n int) []Migration {
-	sections := make([]Migration, n)
-	for i := 0; i < n; i++ {
-		sections[i] = Migration{
-			Header:          fmt.Sprintf("Migration header %d", i),
-			Body:            fmt.Sprintf("Migration body %d", i),
-			PullRequestLink: "[#999999](https://example.com/test/changelog/pull/999999)",
-		}
-	}
-	return sections
-}
 
 func TestMigrationGuide_Template(t *testing.T) {
 	testCases := []struct {
