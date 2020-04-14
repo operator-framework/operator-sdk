@@ -12,7 +12,7 @@
 - The `--overwrite` flag instructs [`operator-sdk bundle create`](./website/content/en/docs/cli/operator-sdk_bundle_create.md) to overwrite metadata, manifests, and `bundle.Dockerfile`. ([#2715](https://github.com/operator-framework/operator-sdk/pull/2715))
 - [`operator-sdk bundle validate`](./website/content/en/docs/cli/operator-sdk_bundle_validate.md) now accepts either an image tag or a directory arg. If the arg is a directory, its children must contain a `manifests/` and a `metadata/` directory. ([#2737](https://github.com/operator-framework/operator-sdk/pull/2737))
 - Add support to release SDK arm64 binaries and images. ([#2742](https://github.com/operator-framework/operator-sdk/pull/2715))
-- The [`--make-manifests`](website/content/en/docs/cli/operator-sdk_generate_csv.md#options) flag directs `operator-sdk generate csv` to create a `manifests/` directory for the latest operator bundle, including CRDs. ([#2776](https://github.com/operator-framework/operator-sdk/pull/2776))
+- The [`--make-manifests`](website/content/en/docs/cli/operator-sdk_generate_csv.md#options) flag directs `operator-sdk generate csv` to create a `manifests/` directory for the latest operator bundle, including CRDs. This flag is set by default. ([#2776](https://github.com/operator-framework/operator-sdk/pull/2776))
 
 ### Changed
 

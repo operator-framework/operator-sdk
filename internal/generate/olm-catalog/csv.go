@@ -38,6 +38,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// KB_INTEGRATION_TODO(estroz): generate these using kustomize and pass
+// from stdin, like 'make deploy'.
+
 const (
 	OLMCatalogChildDir = "olm-catalog"
 	// OLMCatalogDir is the default location for OLM catalog directory.
@@ -212,8 +215,6 @@ func (g bundleGenerator) Generate() error {
 
 	// Write CRD's to the new or updated CSV package dir.
 	if g.updateCRDs {
-		// KB_INTEGRATION_TODO(estroz): generate these using kustomize and pass
-		// from stdin, like 'make deploy'.
 		if err := addCustomResourceDefinitionsToFileSet(g.crdsDir, fileMap); err != nil {
 			return fmt.Errorf("error collecting CustomResourceDefinitions from %s: %v", g.crdsDir, err)
 		}
@@ -267,8 +268,10 @@ func (g bundleGenerator) generateCSV() (fileMap map[string][]byte, err error) {
 		return nil, err
 	}
 
-	path := getCSVFileName(g.operatorName)
-	if !g.makeManifests {
+	path := ""
+	if g.makeManifests {
+		path = getCSVFileName(g.operatorName)
+	} else {
 		path = getCSVFileNameLegacy(g.operatorName, g.csvVersion)
 	}
 	// TODO(estroz): replace with CSV validator from API library.
@@ -388,8 +391,8 @@ func getEmptyRequiredCSVFields(csv *olmapiv1alpha1.ClusterServiceVersion) (field
 // ex. ObjectMeta.Name, and place the old version in the `replaces` object,
 // if there is an old version to replace.
 func (g bundleGenerator) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVersion) error {
-	// Otherwise if csvVersion is the same as the current version or empty
-	// (if 'manifests/' is being updated), no updating needs doing
+	// If csvVersion is the same as the current version, or empty
+	// bevause manifests/ is being updated, no version update is needed.
 	oldVer, newVer := csv.Spec.Version.String(), g.csvVersion
 	if newVer == "" || oldVer == newVer {
 		return nil
@@ -399,7 +402,7 @@ func (g bundleGenerator) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVer
 	oldCSVName := getCSVName(g.operatorName, oldVer)
 	oldRe, err := regexp.Compile(fmt.Sprintf("\\b%s\\b", regexp.QuoteMeta(oldCSVName)))
 	if err != nil {
-		return fmt.Errorf("error compiling CSV name regexp %s: %v", oldRe.String(), err)
+		return fmt.Errorf("error compiling CSV name regexp %s: %v", oldRe, err)
 	}
 	b, err := yaml.Marshal(csv)
 	if err != nil {

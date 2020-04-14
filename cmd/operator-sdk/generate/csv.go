@@ -242,7 +242,7 @@ func (c csvCmd) run() error {
 	cfg := gen.Config{
 		OperatorName: c.operatorName,
 		// TODO(hasbro17): Remove the Input key map when the Generator input keys
-		// are removed in favour of config fields in the bundleGenerator
+		// are removed in favour of config fields in the bundle generator
 		Inputs: map[string]string{
 			gencatalog.DeployDirKey: c.deployDir,
 			gencatalog.APIsDirKey:   c.apisDir,
