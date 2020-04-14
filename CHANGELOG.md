@@ -2,6 +2,7 @@
 
 ### Added
 
+- Added support for generating kube-state-metrics metrics for cluster-scoped resources. Also added `pkg/kubemetrics.NewNamespacedMetricsStores` and `pkg/kubemetrics.NewClusterScopedMetricsStores` to support this new feature. ([#2809](https://github.com/operator-framework/operator-sdk/pull/2809))
 - Added the [`generate csv --deploy-dir --apis-dir --crd-dir`](website/content/en/docs/cli/operator-sdk_generate_csv.md#options) flags to allow configuring input locations for operator manifests and API types directories to the CSV generator in lieu of a config. See the CLI reference doc or `generate csv -h` help text for more details. ([#2511](https://github.com/operator-framework/operator-sdk/pull/2511))
 - Added the [`generate csv --output-dir`](website/content/en/docs/cli/operator-sdk_generate_csv.md#options) flag to allow configuring the output location for the catalog directory. ([#2511](https://github.com/operator-framework/operator-sdk/pull/2511))
 - The flag `--watch-namespace` and `--operator-namespace` was added to `operator-sdk run --local`, `operator-sdk test --local` and `operator-sdk cleanup` commands in order to replace the flag `--namespace` which was  deprecated.([#2617](https://github.com/operator-framework/operator-sdk/pull/2617))
@@ -12,6 +13,7 @@
 - The `--overwrite` flag instructs [`operator-sdk bundle create`](./website/content/en/docs/cli/operator-sdk_bundle_create.md) to overwrite metadata, manifests, and `bundle.Dockerfile`. ([#2715](https://github.com/operator-framework/operator-sdk/pull/2715))
 - [`operator-sdk bundle validate`](./website/content/en/docs/cli/operator-sdk_bundle_validate.md) now accepts either an image tag or a directory arg. If the arg is a directory, its children must contain a `manifests/` and a `metadata/` directory. ([#2737](https://github.com/operator-framework/operator-sdk/pull/2737))
 - Add support to release SDK arm64 binaries and images. ([#2742](https://github.com/operator-framework/operator-sdk/pull/2715))
+- Add annotation `helm.operator-sdk/upgrade-force: "True"` to allow force resources replacement (`helm upgrade --force`) for Helm based-operators. ([#2773](https://github.com/operator-framework/operator-sdk/pull/2773))
 - The [`--make-manifests`](website/content/en/docs/cli/operator-sdk_generate_csv.md#options) flag directs `operator-sdk generate csv` to create a `manifests/` directory for the latest operator bundle, including CRDs. This flag is set by default. ([#2776](https://github.com/operator-framework/operator-sdk/pull/2776))
 
 ### Changed
@@ -31,6 +33,7 @@
 
 ### Deprecated
 
+- Deprecated `pkg/kubemetrics.NewMetricsStores`. Use `pkg/kubemetrics.NewNamespacedMetricsStores` instead. ([#2809](https://github.com/operator-framework/operator-sdk/pull/2809))
 - **Breaking Change:** The `--namespace` flag from `operator-sdk run --local`, `operator-sdk test --local` and `operator-sdk cleanup` command was deprecated and will be removed in the future versions. Use `--watch-namespace` and `--operator-namespace`  instead of. ([#2617](https://github.com/operator-framework/operator-sdk/pull/2617))
 - **Breaking Change:** The method `ctx.GetNamespace()` from the `pkg/test` is deprecated and will be removed in future versions. Use `ctx.GetOperatorNamespace()` and `ctx.GetWatchNamespace()` instead of. ([#2617](https://github.com/operator-framework/operator-sdk/pull/2617))
 - **Breaking Change:** package manifests are deprecated and new manifests are no longer generated; existing manifests are still updated by `operator-sdk generate csv`, but updates will not occur in future versions. Use [`operator-sdk bundle create`](./website/content/en/docs/cli/operator-sdk_bundle_create.md) to manage operator bundle metadata. ([#2755](https://github.com/operator-framework/operator-sdk/pull/2755))
@@ -51,6 +54,8 @@
 - `operator-sdk generate csv` and `operator-sdk test local` now parse multi-manifest files correctly. ([#2758](https://github.com/operator-framework/operator-sdk/pull/2758))
 - Fixed CRD validation generation issue with `status.Conditions`. ([#2739](https://github.com/operator-framework/operator-sdk/pull/2739))
 - Fix issue faced in the reconciliation when arrays are used in the config YAML files for Helm based-operators. ([#2777](https://github.com/operator-framework/operator-sdk/pull/2777))
+- Fixed issue in helm-operator where empty resource in release manifest caused failures while setting up watches for dependent resources. ([#2831](https://github.com/operator-framework/operator-sdk/pull/2831))
+
 
 ## v0.16.0
 
