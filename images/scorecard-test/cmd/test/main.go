@@ -68,6 +68,8 @@ func main() {
 		result = tests.CheckSpecTest(cfg)
 	default:
 		log.Fatal("invalid test name argument passed")
+		// TODO print out full list of test names to give a hint
+		// to the end user on what the valid tests are
 	}
 
 	prettyJSON, err := json.MarshalIndent(result, "", "    ")

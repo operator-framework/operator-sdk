@@ -41,6 +41,8 @@ func GetBundle(bundlePath string) (cfg TestBundle, err error) {
 	logrus.SetOutput(validationLogOutput)
 	defer logrus.SetOutput(origOutput)
 
+	// TODO evaluate another API call that would support the new
+	// bundle format
 	_, cfg.Bundles, cfg.BundleErrors = manifests.GetManifestsDir(bundlePath)
 
 	// get CRs from CSV's alm-examples annotation, assume single bundle
@@ -53,6 +55,10 @@ func GetBundle(bundlePath string) (cfg TestBundle, err error) {
 	csv, err := cfg.Bundles[0].ClusterServiceVersion()
 	if err != nil {
 		return cfg, fmt.Errorf("error in csv retrieval %s", err.Error())
+	}
+
+	if csv.GetAnnotations() == nil {
+		return cfg, nil
 	}
 
 	almExamples := csv.ObjectMeta.Annotations["alm-examples"]
