@@ -1,6 +1,6 @@
 ---
 title: Community
-menu:
-  main:
-    weight: 5
+# menu:
+#   main:
+    # weight: 5
 ---

@@ -117,25 +117,25 @@ no = 'Sorry to hear that. Please <a href="https://github.com/operator-framework/
 # End user relevant links. These will show up on left side of footer and in the community page if you have one.
 [[params.links.social]]
 	name = "Forum"
-	url = "https://example.org/mail"
+	url = "https://groups.google.com/forum/#!forum/operator-framework"
 	icon = "fas fa-comment"
 
-[[params.links.social]]
-	name = "twitter"
-	url = "https://example.org/mail"
-	icon = "fab fa-twitter"
+#[[params.links.social]]
+#	name = "twitter"
+#	url = "https://example.org/mail"
+#	icon = "fab fa-twitter"
 
-[[params.links.social]]
-	name = "youtube"
-	url = "https://example.org/mail"
-	icon = "fab fa-youtube"
+#[[params.links.social]]
+#	name = "youtube"
+#	url = "https://example.org/mail"
+#	icon = "fab fa-youtube"
 
 [[params.links.social]]
 	name = "github"
-	url = "https://example.org/mail"
+	url = "https://github.com/operator-framework/operator-sdk"
 	icon = "fab fa-github"
 	
-[[params.links.social]]
-	name = "slack"
-	url = "https://example.org/mail"
-	icon = "fab fa-slack"
+#[[params.links.social]]
+#	name = "slack"
+#	url = "https://example.org/mail"
+#	icon = "fab fa-slack"
