@@ -341,7 +341,7 @@ Upon updating the project to `v0.8.2` the following breaking changes apply:
 
 ## `v0.10.x`
 
-- The scorecard configuration format for the `operator-sdk scorecard` command has changed. See [`doc/test-framework/scorecard`](../../test-framework/scorecard) for more info.
+- The scorecard configuration format for the `operator-sdk scorecard` command has changed. See [`doc/test-framework/scorecard`](https://github.com/operator-framework/operator-sdk/blob/v0.10.x/doc/test-framework/scorecard.md) for more info.
 - The CSV config field `role-path` is now `role-paths` and takes a list of strings.
     Replace:
     ```yaml
@@ -1149,7 +1149,7 @@ lint: |
 ```
 
 - Rename `molecule/$SCENARIO/playbook.yml` to `molecule/$SCENARIO/converge.yml` to avoid a deprecation message.
-- Update the `.travis.yml` file to install the supported lints as follows. 
+- Update the `.travis.yml` file to install the supported lints as follows.
 
 Replace:
 
