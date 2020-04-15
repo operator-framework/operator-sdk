@@ -35,6 +35,10 @@ SCORECARD_PROXY_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
 export CGO_ENABLED:=0
 .DEFAULT_GOAL:=help
 
+# To check if has some controller-gen installed
+# Useful go generate the testdata
+CONTROLLER_GEN_BIN_PATH := $(shell which controller-gen)
+
 .PHONY: help
 help: ## Show this help screen
 	@echo 'Usage: make <OPTIONS> ... <TARGETS>'
@@ -104,7 +108,13 @@ gen-changelog: ## Generate CHANGELOG.md and migration guide updates
 	./hack/generate/changelog/gen-changelog.sh
 
 generate: gen-cli-doc gen-test-framework  ## Run all generate targets
-.PHONY: generate gen-cli-doc gen-test-framework
+.PHONY: generate gen-cli-doc gen-test-framework gen-test-mockdata
+
+gen-test-mockdata: ## Update/generate mockdata to check the kb integration
+	# remove any controller-gen that may be installed
+	- rm -rf $(CONTROLLER_GEN_BIN_PATH)
+	GO111MODULE=on ./hack/generate/kb-integration/gen-test-mockdata.sh
+	go mod tidy
 
 ##############################
 # Release                    #

@@ -103,6 +103,7 @@ images/scorecard-test/scorecard-test
 pkg/ansible/runner/testdata/valid.yaml
 /bin
 test/test-framework/go.sum
+testdata/memcached-operator/go.sum
 
 # Website
 website/public/

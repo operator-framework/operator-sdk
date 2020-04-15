@@ -10,6 +10,8 @@ go fmt ./...
 ./hack/check-doc-diffs.sh
 ./hack/generate/cli-doc/gen-cli-doc.sh
 ./hack/generate/test-framework/gen-test-framework.sh
+./hack/generate/kb-integration/gen-test-mockdata.sh
+
 go run ./hack/generate/changelog/gen-changelog.go -validate-only
 
 # Make sure repo is still in a clean state.
