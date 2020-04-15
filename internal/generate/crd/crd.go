@@ -40,28 +40,21 @@ import (
 
 const DefaultCRDVersion = "v1beta1"
 
-// crdGenerator configures the CustomResourceDefintion manifest generator
+// Generator configures the CustomResourceDefintion manifest generator
 // for Go and non-Go projects.
-type crdGenerator struct {
-	operatorName string
-	outputDir    string
-	// isOperatorGo is true when the operator is written in Go.
-	isOperatorGo bool
-	// resource contains API information used to configure single-CRD generation.
-	// This is only required when isOperatorGo is false.
-	resource scaffold.Resource
-	// crdVersion is the API version of the CRD that will be generated.
-	// Should be one of [v1, v1beta1]
-	crdVersion string
-	crdsDir    string
-	apisDir    string
-}
-
-type GeneratorConfig struct {
+type Generator struct {
 	// OperatorName is the operator's name, ex. app-operator
 	OperatorName string
 	// OutputDir is the root directory where the output files will be generated.
 	OutputDir string
+	// isOperatorGo is true when the operator is written in Go.
+	IsOperatorGo bool
+	// resource contains API information used to configure single-CRD generation.
+	// This is only required when isOperatorGo is false.
+	Resource scaffold.Resource
+	// crdVersion is the API version of the CRD that will be generated.
+	// Should be one of [v1, v1beta1]
+	CRDVersion string
 	// CRDsDir is for the location of the CRD manifests directory e.g "deploy/crds"
 	// Both the CRD and CR manifests from this path will be used to populate CSV fields
 	// metadata.annotations.alm-examples for CR examples
@@ -72,83 +65,45 @@ type GeneratorConfig struct {
 	ApisDir string
 }
 
-// NewCRDGo returns a CRD generator configured to generate CustomResourceDefintion
-// manifests from Go API files.
-func NewCRDGo(cfg GeneratorConfig, crdVersion string) gen.Generator {
-	g := crdGenerator{
-		operatorName: cfg.OperatorName,
-		outputDir:    cfg.OutputDir,
-		isOperatorGo: true,
-		crdVersion:   crdVersion,
-		crdsDir:      cfg.CRDsDir,
-		apisDir:      cfg.ApisDir,
-	}
-	if g.crdsDir == "" {
-		g.crdsDir = scaffold.CRDsDir
-	}
-	if g.apisDir == "" {
-		g.apisDir = scaffold.ApisDir
-	}
-	if g.outputDir == "" {
-		g.outputDir = g.crdsDir
-	}
-	return g
-}
-
-// NewCRDNonGo returns a CRD generator configured to generate a
-// CustomResourceDefintion manifest from scratch using data in resource.
-func NewCRDNonGo(cfg GeneratorConfig, resource scaffold.Resource, crdVersion string) gen.Generator {
-	g := crdGenerator{
-		operatorName: cfg.OperatorName,
-		outputDir:    cfg.OutputDir,
-		resource:     resource,
-		isOperatorGo: false,
-		crdVersion:   crdVersion,
-		crdsDir:      cfg.CRDsDir,
-		apisDir:      cfg.ApisDir,
-	}
-	if g.crdsDir == "" {
-		g.crdsDir = scaffold.CRDsDir
-	}
-	if g.apisDir == "" {
-		g.apisDir = scaffold.ApisDir
-	}
-	if g.outputDir == "" {
-		g.outputDir = g.crdsDir
-	}
-	return g
-}
-
-func (g crdGenerator) validate() error {
-	if g.crdsDir == "" {
+func (g Generator) validate() error {
+	if g.CRDsDir == "" {
 		return errors.New("input CRDs dir cannot be empty")
 	}
-	if g.isOperatorGo && g.apisDir == "" {
+	if g.IsOperatorGo && g.ApisDir == "" {
 		return errors.New("input APIs dir cannot be empty")
 	}
-	if g.outputDir == "" {
+	if g.OutputDir == "" {
 		return errors.New("output dir cannot be empty")
 	}
-	if !g.isOperatorGo {
-		if err := g.resource.Validate(); err != nil {
+	if !g.IsOperatorGo {
+		if err := g.Resource.Validate(); err != nil {
 			return fmt.Errorf("resource is invalid: %w", err)
 		}
 	}
-	switch g.crdVersion {
+	switch g.CRDVersion {
 	case "v1", "v1beta1":
 	default:
-		return fmt.Errorf("crd version %q is invalid", g.crdVersion)
+		return fmt.Errorf("crd version %q is invalid", g.CRDVersion)
 	}
 	return nil
 }
 
-// Generate generates CRD manifests and writes them to g.outputDir.
-func (g crdGenerator) Generate() (err error) {
+// Generate generates CRD manifests and writes them to g.OutputDir.
+func (g Generator) Generate() (err error) {
+	if g.CRDsDir == "" {
+		g.CRDsDir = scaffold.CRDsDir
+	}
+	if g.ApisDir == "" {
+		g.ApisDir = scaffold.ApisDir
+	}
+	if g.OutputDir == "" {
+		g.OutputDir = g.CRDsDir
+	}
 	if err = g.validate(); err != nil {
 		return fmt.Errorf("error validating generator configuration: %w", err)
 	}
 	var fileMap map[string][]byte
-	if g.isOperatorGo {
+	if g.IsOperatorGo {
 		fileMap, err = g.generateGo()
 	} else {
 		fileMap, err = g.generateNonGo()
@@ -156,11 +111,11 @@ func (g crdGenerator) Generate() (err error) {
 	if err != nil {
 		return fmt.Errorf("error generating CRD manifests: %w", err)
 	}
-	if err = os.MkdirAll(g.outputDir, fileutil.DefaultDirFileMode); err != nil {
-		return fmt.Errorf("error mkdir %s: %w", g.outputDir, err)
+	if err = os.MkdirAll(g.OutputDir, fileutil.DefaultDirFileMode); err != nil {
+		return fmt.Errorf("error mkdir %s: %w", g.OutputDir, err)
 	}
 	for fileName, b := range fileMap {
-		path := filepath.Join(g.outputDir, fileName)
+		path := filepath.Join(g.OutputDir, fileName)
 		if err := ioutil.WriteFile(path, b, fileutil.DefaultFileMode); err != nil {
 			return fmt.Errorf("error writing CRD manifests: %w", err)
 		}
@@ -173,15 +128,15 @@ func getFileNameForResource(r scaffold.Resource) string {
 }
 
 // generateGo generates CRDs for Go projects using Go API files.
-func (g crdGenerator) generateGo() (map[string][]byte, error) {
+func (g Generator) generateGo() (map[string][]byte, error) {
 	fileMap := map[string][]byte{}
 	// Generate files in the generator's cache so we can modify the file name
 	// and annotations.
 	defName := "output:crd:cache"
-	cacheOutputDir := filepath.Clean(g.outputDir)
+	cacheOutputDir := filepath.Clean(g.OutputDir)
 	rawOpts := []string{
-		fmt.Sprintf("crd:crdVersions={%s}", g.crdVersion),
-		fmt.Sprintf("paths=%s/...", fileutil.DotPath(g.apisDir)),
+		fmt.Sprintf("crd:crdVersions={%s}", g.CRDVersion),
+		fmt.Sprintf("paths=%s/...", fileutil.DotPath(g.ApisDir)),
 		fmt.Sprintf("%s:dir=%s", defName, cacheOutputDir),
 	}
 
@@ -251,16 +206,16 @@ func (g crdGenerator) generateGo() (map[string][]byte, error) {
 }
 
 // generateNonGo generates a CRD for non-Go projects using a resource.
-func (g crdGenerator) generateNonGo() (map[string][]byte, error) {
+func (g Generator) generateNonGo() (map[string][]byte, error) {
 	crd := apiextv1beta1.CustomResourceDefinition{}
 	fileMap := map[string][]byte{}
-	fileName := getFileNameForResource(g.resource)
-	path := filepath.Join(g.crdsDir, fileName)
+	fileName := getFileNameForResource(g.Resource)
+	path := filepath.Join(g.CRDsDir, fileName)
 	if _, err := os.Stat(path); err != nil {
 		if !os.IsNotExist(err) {
 			return nil, fmt.Errorf("error stating CRD file %s: %w", path, err)
 		}
-		crd = newCRDForResource(g.resource)
+		crd = newCRDForResource(g.Resource)
 	} else {
 		b, err := ioutil.ReadFile(path)
 		if err != nil {
@@ -272,7 +227,7 @@ func (g crdGenerator) generateNonGo() (map[string][]byte, error) {
 		// If version is new, append it to spec.versions.
 		hasVersion := false
 		for _, version := range crd.Spec.Versions {
-			if version.Name == g.resource.Version {
+			if version.Name == g.Resource.Version {
 				hasVersion = true
 				break
 			}
@@ -281,7 +236,7 @@ func (g crdGenerator) generateNonGo() (map[string][]byte, error) {
 			// Let either the user or below logic determine whether this new
 			// version is stored or not.
 			crd.Spec.Versions = append(crd.Spec.Versions, apiextv1beta1.CustomResourceDefinitionVersion{
-				Name:    g.resource.Version,
+				Name:    g.Resource.Version,
 				Storage: false,
 				Served:  true,
 			})
@@ -298,7 +253,7 @@ func (g crdGenerator) generateNonGo() (map[string][]byte, error) {
 		b   []byte
 		err error
 	)
-	switch g.crdVersion {
+	switch g.CRDVersion {
 	case "v1beta1":
 		crd.TypeMeta.APIVersion = apiextv1beta1.SchemeGroupVersion.String()
 		b, err = k8sutil.GetObjectBytes(&crd, yaml.Marshal)

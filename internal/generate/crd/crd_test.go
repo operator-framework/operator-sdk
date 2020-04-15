@@ -77,34 +77,44 @@ func TestGenerate(t *testing.T) {
 	}{
 		{
 			description: "Generate Go CRD",
-			generator: NewCRDGo(GeneratorConfig{
-				ApisDir:   filepath.Join(testGoDataDir, scaffold.ApisDir),
-				OutputDir: filepath.Join(tmp, randomString()),
-			}, "v1beta1"),
+			generator: Generator{
+				IsOperatorGo: true,
+				ApisDir:      filepath.Join(testGoDataDir, scaffold.ApisDir),
+				OutputDir:    filepath.Join(tmp, randomString()),
+				CRDVersion:   "v1beta1",
+			},
 			wantErr: false,
 		},
 		{
 			description: "Generate non-Go CRD",
-			generator: NewCRDNonGo(GeneratorConfig{
-				ApisDir:   filepath.Join(testGoDataDir, scaffold.ApisDir),
-				OutputDir: filepath.Join(tmp, randomString()),
-			}, *r, "v1beta1"),
+			generator: Generator{
+				IsOperatorGo: false,
+				ApisDir:      filepath.Join(testGoDataDir, scaffold.ApisDir),
+				OutputDir:    filepath.Join(tmp, randomString()),
+				CRDVersion:   "v1beta1",
+				Resource:     *r,
+			},
 			wantErr: false,
 		},
 		{
 			description: "invalid Go CRD version",
-			generator: NewCRDGo(GeneratorConfig{
-				ApisDir:   filepath.Join(testGoDataDir, scaffold.ApisDir),
-				OutputDir: filepath.Join(tmp, randomString()),
-			}, "invalid"),
+			generator: Generator{
+				IsOperatorGo: true,
+				ApisDir:      filepath.Join(testGoDataDir, scaffold.ApisDir),
+				OutputDir:    filepath.Join(tmp, randomString()),
+				CRDVersion:   "invalid",
+			},
 			wantErr: true,
 		},
 		{
 			description: "invalid non-Go CRD version",
-			generator: NewCRDNonGo(GeneratorConfig{
-				ApisDir:   filepath.Join(testGoDataDir, scaffold.ApisDir),
-				OutputDir: filepath.Join(tmp, randomString()),
-			}, *r, "invalid"),
+			generator: Generator{
+				IsOperatorGo: false,
+				ApisDir:      filepath.Join(testGoDataDir, scaffold.ApisDir),
+				OutputDir:    filepath.Join(tmp, randomString()),
+				CRDVersion:   "invalid",
+				Resource:     *r,
+			},
 			wantErr: true,
 		},
 	}
@@ -123,8 +133,9 @@ func TestGenerate(t *testing.T) {
 }
 
 func TestCRDGo(t *testing.T) {
-	cfg := GeneratorConfig{
-		ApisDir: filepath.Join(testGoDataDir, scaffold.ApisDir),
+	g := Generator{
+		IsOperatorGo: true,
+		ApisDir:      filepath.Join(testGoDataDir, scaffold.ApisDir),
 	}
 
 	r, err := scaffold.NewResource(testAPIVersion, testKind)
@@ -142,8 +153,9 @@ func TestCRDGo(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.crdVersion, func(t *testing.T) {
-			g := NewCRDGo(cfg, c.crdVersion)
-			fileMap, err := g.(crdGenerator).generateGo()
+
+			g.CRDVersion = c.crdVersion
+			fileMap, err := g.generateGo()
 			if err != nil {
 				t.Fatalf("Failed to execute CRD generator: %v", err)
 			}
@@ -196,11 +208,13 @@ func TestCRDNonGo(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.description, func(t *testing.T) {
-			cfg := GeneratorConfig{
-				CRDsDir: c.crdsDir,
+			g := Generator{
+				CRDsDir:      c.crdsDir,
+				Resource:     *r,
+				CRDVersion:   c.crdVersion,
+				IsOperatorGo: false,
 			}
-			g := NewCRDNonGo(cfg, *r, c.crdVersion)
-			fileMap, err := g.(crdGenerator).generateNonGo()
+			fileMap, err := g.generateNonGo()
 			if err != nil {
 				t.Fatalf("Error executing CRD generator: %v", err)
 			}
