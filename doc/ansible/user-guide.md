@@ -439,12 +439,12 @@ $ kubectl delete -f deploy/service_account.yaml
 $ kubectl delete -f deploy/crds/cache.example.com_memcacheds_crd.yaml
 ```
 
+**NOTE** Additional CR/CRD's can be added to the project by running, for example, the command :`operator-sdk new api --api-version=cache.example.com/v1alpha1 --kind=AppService --type=ansible`
+
 ## Ansible Resources
 
 - [Ansible Testing Guide][ansible-test]
 - [Ansible Developer Guide][ansible-developer]
-
-**NOTE** Additional CR/CRD's can be added to the project by running, for example, the command :`operator-sdk new api --api-version=cache.example.com/v1alpha1 --kind=AppService --type=ansible`
 
 [ansible-test]:./dev/testing_guide.md
 [ansible-developer]:./dev/developer_guide.md
