@@ -193,6 +193,7 @@ func TestGoCSVNew(t *testing.T) {
 		MakeManifests: false,
 	}
 	g.noUpdate = true
+	g.setDefaults()
 	fileMap, err := g.generateCSV()
 	if err != nil {
 		t.Fatalf("Failed to execute CSV generator: %v", err)
@@ -222,6 +223,7 @@ func TestGoCSVUpdate(t *testing.T) {
 		UpdateCRDs:    false,
 		MakeManifests: false,
 	}
+	g.setDefaults()
 	fileMap, err := g.generateCSV()
 	if err != nil {
 		t.Fatalf("Failed to execute CSV generator: %v", err)
@@ -251,6 +253,7 @@ func TestGoCSVUpgrade(t *testing.T) {
 		UpdateCRDs:    false,
 		MakeManifests: false,
 	}
+	g.setDefaults()
 	fileMap, err := g.generateCSV()
 	if err != nil {
 		t.Fatalf("Failed to execute CSV generator: %v", err)
@@ -281,6 +284,7 @@ func TestGoCSVNewManifests(t *testing.T) {
 		MakeManifests: true,
 	}
 	g.noUpdate = true
+	g.setDefaults()
 	fileMap, err := g.generateCSV()
 	if err != nil {
 		t.Fatalf("Failed to execute CSV generator: %v", err)
@@ -310,6 +314,7 @@ func TestGoCSVUpdateManifests(t *testing.T) {
 		UpdateCRDs:    false,
 		MakeManifests: true,
 	}
+	g.setDefaults()
 	fileMap, err := g.generateCSV()
 	if err != nil {
 		t.Fatalf("Failed to execute CSV generator: %v", err)
@@ -340,6 +345,7 @@ func TestGoCSVNewWithInvalidDeployDir(t *testing.T) {
 		MakeManifests: false,
 	}
 
+	g.setDefaults()
 	_, err := g.generateCSV()
 	if err == nil {
 		t.Fatalf("Failed to get error for running CSV generator"+
@@ -363,6 +369,7 @@ func TestGoCSVNewWithEmptyDeployDir(t *testing.T) {
 		MakeManifests: false,
 	}
 
+	g.setDefaults()
 	fileMap, err := g.generateCSV()
 	if err != nil {
 		t.Fatalf("Failed to execute CSV generator: %v", err)
@@ -405,6 +412,7 @@ func TestUpdateCSVVersion(t *testing.T) {
 		UpdateCRDs:    false,
 		MakeManifests: false,
 	}
+	g.setDefaults()
 	if err := g.updateCSVVersions(csv); err != nil {
 		t.Fatalf("Failed to update csv with version %s: (%v)", csvVersion, err)
 	}

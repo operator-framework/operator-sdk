@@ -156,9 +156,7 @@ func getBundleDirsLegacy(operatorName, csvVersion, fromVersion, outputDir,
 	return toBundleDir, fromBundleDir
 }
 
-// Generate allows a CSV to be written by marshalling
-// olmapiv1alpha1.ClusterServiceVersion instead of writing to a template.
-func (g BundleGenerator) Generate() error {
+func (g BundleGenerator) setDefaults() {
 	if g.DeployDir == "" {
 		g.DeployDir = scaffold.DeployDir
 	}
@@ -176,6 +174,12 @@ func (g BundleGenerator) Generate() error {
 		g.toBundleDir, g.fromBundleDir = getBundleDirsLegacy(g.OperatorName, g.CSVVersion,
 			g.FromVersion, g.OutputDir, g.DeployDir)
 	}
+}
+
+// Generate allows a CSV to be written by marshalling
+// olmapiv1alpha1.ClusterServiceVersion instead of writing to a template.
+func (g BundleGenerator) Generate() error {
+	g.setDefaults()
 	fileMap, err := g.generateCSV()
 	if err != nil {
 		return err

@@ -33,6 +33,7 @@ func TestGeneratePkgManifestToOutput(t *testing.T) {
 		Channel:          "beta",
 		ChannelIsDefault: false,
 	}
+	g.setDefaults()
 	fileMap, err := g.generate()
 	if err != nil {
 		t.Fatalf("Failed to execute package manifest generator: %v", err)
@@ -67,6 +68,7 @@ func TestGeneratePackageManifest(t *testing.T) {
 		Channel:          "stable",
 		ChannelIsDefault: true,
 	}
+	g.setDefaults()
 	fileMap, err := g.generate()
 	if err != nil {
 		t.Fatalf("Failed to execute package manifest generator: %v", err)
@@ -91,6 +93,7 @@ func TestValidatePackageManifest(t *testing.T) {
 		ChannelIsDefault: true,
 	}
 
+	g.setDefaults()
 	// pkg is a basic, valid package manifest.
 	pkg, err := g.buildPackageManifest()
 	if err != nil {
