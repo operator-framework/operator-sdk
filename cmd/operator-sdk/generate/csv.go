@@ -238,19 +238,28 @@ func (c csvCmd) run() error {
 	if c.operatorName == "" {
 		c.operatorName = filepath.Base(projutil.MustGetwd())
 	}
-	cfg := gencatalog.GeneratorConfig{
-		OperatorName: c.operatorName,
-		DeployDir:    c.deployDir,
-		ApisDir:      c.apisDir,
-		CRDsDir:      c.crdDir,
-		OutputDir:    c.outputDir,
+	csv := gencatalog.BundleGenerator{
+		OperatorName:  c.operatorName,
+		CSVVersion:    c.csvVersion,
+		FromVersion:   c.fromVersion,
+		UpdateCRDs:    c.updateCRDs,
+		MakeManifests: c.makeManifests,
+		DeployDir:     c.deployDir,
+		ApisDir:       c.apisDir,
+		CRDsDir:       c.crdDir,
+		OutputDir:     c.outputDir,
 	}
 
-	csv := gencatalog.NewBundle(cfg, c.csvVersion, c.fromVersion, c.updateCRDs, c.makeManifests)
 	if err := csv.Generate(); err != nil {
 		return fmt.Errorf("error generating CSV: %v", err)
 	}
-	pkg := gencatalog.NewPackageManifest(cfg, c.csvVersion, c.csvChannel, c.defaultChannel)
+	pkg := gencatalog.PkgGenerator{
+		OperatorName:     c.operatorName,
+		CSVVersion:       c.csvVersion,
+		OutputDir:        c.outputDir,
+		Channel:          c.csvChannel,
+		ChannelIsDefault: c.defaultChannel,
+	}
 	if err := pkg.Generate(); err != nil {
 		return fmt.Errorf("error generating package manifest: %v", err)
 	}
