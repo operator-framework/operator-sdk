@@ -63,14 +63,14 @@ type BundleGenerator struct {
 	// dir name.
 	MakeManifests bool
 
+	// noUpdate is for testing the generator's update capabilities.
+	noUpdate bool
 	// fromBundleDir is set if the generator needs to update from
 	// an existing CSV bundle directory
 	fromBundleDir string
 	// toBundleDir is the bundle directory filepath where the CSV will be generated
 	// This is set according to the generator's OutputDir
 	toBundleDir string
-	// noUpdate is for testing the generator's update capabilities.
-	noUpdate bool
 }
 
 // getBundleDirs gets directory names of the new bundle and, if it exists,
