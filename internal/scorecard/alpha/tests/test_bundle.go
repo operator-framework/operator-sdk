@@ -28,10 +28,9 @@ import (
 
 // TestBundle holds the bundle contents to be tested
 type TestBundle struct {
-	PackageManifest registry.PackageManifest
-	BundleErrors    []errors.ManifestResult
-	Bundles         []*registry.Bundle
-	CRs             []unstructured.Unstructured
+	BundleErrors []errors.ManifestResult
+	Bundles      []*registry.Bundle
+	CRs          []unstructured.Unstructured
 }
 
 // GetBundle parses a Bundle from a given on-disk path returning a TestBundle
@@ -42,7 +41,7 @@ func GetBundle(bundlePath string) (cfg TestBundle, err error) {
 	logrus.SetOutput(validationLogOutput)
 	defer logrus.SetOutput(origOutput)
 
-	cfg.PackageManifest, cfg.Bundles, cfg.BundleErrors = manifests.GetManifestsDir(bundlePath)
+	_, cfg.Bundles, cfg.BundleErrors = manifests.GetManifestsDir(bundlePath)
 
 	// get CRs from CSV's alm-examples annotation, assume single bundle
 	cfg.CRs = make([]unstructured.Unstructured, 0)
