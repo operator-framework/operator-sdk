@@ -54,7 +54,7 @@ mgr, err := manager.New(cfg, manager.Options{
 
 #### Operator scope
 
-**// TODO:** Update [operator scope doc][operator_scope] and update commands that rely on WATCH_NAMESPACE being defined and sourced from `deploy/operator.yaml`.
+> **// TODO:** Update [operator scope doc][operator_scope] and update commands that rely on WATCH_NAMESPACE being defined and sourced from `deploy/operator.yaml`.
 
 Read the [operator scope][operator_scope] documentation on how to run your operator as namespace-scoped vs cluster-scoped.
 
@@ -62,7 +62,7 @@ By default the main program will set the manager's namespace using the value of 
 
 ## Create a new API and Controller
 
-Create a new Custom Resource Definition(CRD) API with group `cache` version `v1alpha1` and Kind `Memcached`.
+Create a new Custom Resource Definition(CRD) API with group `cache` version `v1alpha1` and Kind Memcached.
 When prompted, enter yes `y` for creating both the resource and controller.
 
 ```console
@@ -83,14 +83,9 @@ See the [API terminology doc][api_terms_doc] for details on the CRD API conventi
 
 To understand the API Go types and controller scaffolding see the Kubebuilder [api doc][kb_api_doc] and [controller doc][kb_controller_doc].
 
-[api_terms_doc]: https://book.kubebuilder.io/cronjob-tutorial/gvks.html
-[kb_controller_doc]: https://book.kubebuilder.io/cronjob-tutorial/controller-overview.html
-[kb_api_doc]: https://book.kubebuilder.io/cronjob-tutorial/new-api.html
-
-
 ### Define the API
 
-Define the API for the `Memcached` Custom Resource(CR) by modifying the Go type definitions at `api/v1alpha1/memcached_types.go` to have the following spec and status:
+Define the API for the Memcached Custom Resource(CR) by modifying the Go type definitions at `api/v1alpha1/memcached_types.go` to have the following spec and status:
 
 ```Go
 // MemcachedSpec defines the desired state of Memcached
@@ -115,8 +110,6 @@ $ make generate
 
 The above makefile target will invoke the [controller-gen][controller_tools] utility to update the `api/v1alpha1/zz_generated.deepcopy.go` file to ensure our API's Go type definitons implement the `runtime.Object` interface that all Kind types must implement.
 
-[controller_tools]: https://sigs.k8s.io/controller-tools
-
 ### Generating CRD manifests
 
 Once the API is defined with spec/status fields and CRD validation markers, the CRD manifests can be generated and updated with the following command:
@@ -137,27 +130,20 @@ Usage of markers in API code is discussed in the kubebuilder [CRD generation][ge
 
 To learn more about OpenAPI v3.0 validation schemas in CRDs, refer to the [Kubernetes Documentation][doc-validation-schema].
 
-[doc-validation-schema]: https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#specifying-a-structural-schema
-[generating-crd]: https://book.kubebuilder.io/reference/generating-crd.html
-[markers]: https://book.kubebuilder.io/reference/markers.html
-[crd-markers]: https://book.kubebuilder.io/reference/markers/crd-validation.html
-
 ### Implement the Controller
 
-For this example replace the generated Controller file `controllers/memcached_controller.go` with the example [`memcached_controller.go`][memcached_controller] implementation.
+For this example replace the generated controller file `controllers/memcached_controller.go` with the example [`memcached_controller.go`][memcached_controller] implementation.
 
-The example Controller executes the following reconciliation logic for each `Memcached` CR:
+The example controller executes the following reconciliation logic for each Memcached CR:
 - Create a memcached Deployment if it doesn't exist
-- Ensure that the Deployment size is the same as specified by the `Memcached` CR spec
-- Update the `Memcached` CR status using the status writer with the names of the memcached pods
+- Ensure that the Deployment size is the same as specified by the Memcached CR spec
+- Update the Memcached CR status using the status writer with the names of the memcached pods
 
-The next two subsections explain how the Controller watches resources and how the reconcile loop is triggered. Skip to the [Build](#build-and-run-the-operator) section to see how to build and run the operator.
-
-[memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/master/example/kb-memcached-operator/memcached_controller.go.tmpl
+The next two subsections explain how the controller watches resources and how the reconcile loop is triggered. Skip to the [Build](#build-and-run-the-operator) section to see how to build and run the operator.
 
 #### Resources watched by the Controller
 
-Inspect the Controller implementation at `controllers/memcached_controller.go` to see how the Controller watches resources.
+The `SetupWithManager()` function in `controllers/memcached_controller.go` specifies how the controller is built to watch a CR and other resources that are owned and managed by that controller.
 
 ```Go
 func (r *MemcachedReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -168,12 +154,15 @@ func (r *MemcachedReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 ```
 
-**// TODO:** explain how `For` and `Owns` relate to primary/secondary resources and relate to the reconcile loop
+The `NewControllerManagedBy()` provides a controller builder that allows various controller configurations.
 
+`For(&cachev1alpha1.Memcached{})` specifies the Memcached type as the primary resource to watch. For each Memcached type Add/Update/Delete event the reconcile loop will be sent a reconcile `Request` (a namespace/name key) for that Memcached object.
 
-#### Controller configurations
+`Owns(&appsv1.Deployment{})` specifies the Deployments type as the secondary resource to watch. For each Deployment type Add/Update/Delete event, the event handler will map each event to a reconcile `Request` for the owner of the Deployment. Which in this case is the Memcached object for which the Deployment was created.
 
-There are a number of useful configurations that can be made when initialzing a controller and declaring the watch parameters. For more details on these configurations consult the upstream [controller godocs][controller_godocs].
+#### Controller Configurations
+
+There are a number of other useful configurations that can be made when initialzing a controller. For more details on these configurations consult the upstream [builder][builder_godocs] and [controller][controller_godocs] godocs.
 
 - Set the max number of concurrent Reconciles for the controller via the [`MaxConcurrentReconciles`][controller_options]  option. Defaults to 1.
   ```Go
@@ -196,10 +185,17 @@ There are a number of useful configurations that can be made when initialzing a 
 Every Controller has a Reconciler object with a `Reconcile()` method that implements the reconcile loop. The reconcile loop is passed the [`Request`][request-go-doc] argument which is a Namespace/Name key used to lookup the primary resource object, Memcached, from the cache:
 
 ```Go
-func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+import (
+	ctrl "sigs.k8s.io/controller-runtime"
+
+	cachev1alpha1 "github.com/example-inc/memcached-operator/api/v1alpha1"
+	...
+)
+
+func (r *MemcachedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
   // Lookup the Memcached instance for this reconcile request
   memcached := &cachev1alpha1.Memcached{}
-  err := r.client.Get(context.TODO(), request.NamespacedName, memcached)
+  err := r.Get(ctx, req.NamespacedName, memcached)
   ...
 }
 ```
@@ -208,11 +204,11 @@ Based on the return values, [`Result`][result_go_doc] and error, the `Request` m
 
 ```Go
 // Reconcile successful - don't requeue
-return reconcile.Result{}, nil
+return ctrl.Result{}, nil
 // Reconcile failed due to error - requeue
-return reconcile.Result{}, err
+return ctrl.Result{}, err
 // Requeue for any reason other than error
-return reconcile.Result{Requeue: true}, nil
+return ctrl.Result{Requeue: true}, nil
 ```
 
 You can set the `Result.RequeueAfter` to requeue the `Request` after a grace period as well:
@@ -220,16 +216,18 @@ You can set the `Result.RequeueAfter` to requeue the `Request` after a grace per
 import "time"
 
 // Reconcile for any reason than error after 5 seconds
-return reconcile.Result{RequeueAfter: time.Second*5}, nil
+return ctrl.Result{RequeueAfter: time.Second*5}, nil
 ```
 
 **Note:** Returning `Result` with `RequeueAfter` set is how you can periodically reconcile a CR.
 
 For a guide on Reconcilers, Clients, and interacting with resource Events, see the [Client API doc][doc_client_api].
 
-### Generate RBAC manifests
+> **// TODO:** Should we point to the client API doc after the integration?
 
-// TODO: explain rbac markers and config/rbac
+### Specify permissions and generate RBAC manifests
+
+The controller needs certain RBAC permissions to interact with the resources it manages. These are specified via [RBAC markers][rbac_markers] like the following:
 
 ```Go
 // +kubebuilder:rbac:groups=cache.example.com,resources=memcacheds,verbs=get;list;watch;create;update;patch;delete
@@ -240,19 +238,85 @@ For a guide on Reconcilers, Clients, and interacting with resource Events, see t
 func (r *MemcachedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 ```
 
-[rbac-markers]: https://book.kubebuilder.io/reference/markers/rbac.html
+The `ClusterRole` manifest at `config/rbac/role.yaml` is generated from the above markers via controller-gen with the following command:
+
+```sh
+$ make manifests
+```
 
 ## Build and run the operator
 
-// TODO
+Before running the operator, the CRD must be registered with the Kubernetes apiserver:
 
-### 1. Run as a Deployment inside the cluster
+```sh
+$ make install
+```
 
-// TODO
+Once this is done, there are two ways to run the operator:
 
-### 2. Run locally outside the cluster
+- As Go program outside a cluster
+- As a Deployment inside a Kubernetes cluster
 
-// TODO
+### 1. Run locally outside the cluster
+
+To run the operator locally execute the following command:
+
+```sh
+$ make run ENABLE_WEBHOOKS=false
+```
+
+> **// TODO:** Add an advanced section or separate doc on writing defaulting/validating and conversion webhooks.
+
+### 2. Run as a Deployment inside the cluster
+
+#### Build and push the image
+
+Build the operator image and push it to a registry.
+
+Make sure to modify `quay.io/example/` in the example below to reference a container repository that
+you have access to. You can obtain an account for storing containers at
+repository sites such quay.io or hub.docker.com
+
+Build the image:
+
+```sh
+$ make docker-build IMG=quay.io/example/memcached-operator:v0.0.1
+```
+
+Push the image to a repository:
+
+```sh
+$ make docker-push IMG=quay.io/example/memcached-operator:v0.0.1
+```
+
+> **// TODO:** Mention how to use `buildah build` by just updating the Makefile?
+
+**Note**:
+The name and tag of the image (`IMG=<some-registry>/<project-name>:tag`) in both the commands can also be set in the Makefile. Modify the line which has `IMG ?= controller:latest` to set your desired default base image.
+
+#### Deploy the operator
+
+For this example we will run the operator in the `default` namespace which can be specified for all resources in `config/default/kustomization.yaml`:
+
+```YAML
+# Adds namespace to all resources.
+namespace: default
+...
+```
+
+Run the following to deploy the operator. This will also install the RBAC manifests from `config/rbac`.
+
+```sh
+$ make deploy IMG=quay.io/example/memcached-operator:v0.0.1
+```
+
+Verify that the memcached-operator is up and running:
+
+```sh
+$ kubectl get deployment
+NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE
+memcached-operator-controller-manager   1/1     1            1           8m
+```
 
 ### 3. Deploy your Operator with the Operator Lifecycle Manager (OLM)
 
@@ -260,21 +324,103 @@ OLM will manage creation of most if not all resources required to run your opera
 
 ## Create a Memcached CR
 
-// TODO
+Update the sample Memcached CR manifest at `config/samples/cache_v1alpha1_memcached.yaml` and define the `spec` as the following:
+
+```YAML
+apiVersion: cache.example.com/v1alpha1
+kind: Memcached
+metadata:
+  name: memcached-sample
+spec:
+  size: 3
+```
+
+Create the CR:
+
+```sh
+$ kubectl apply -f config/samples/cache_v1alpha1_memcached.yaml
+```
+
+Ensure that the memcached operator creates the deployment for the sample CR with the correct size:
+
+```sh
+$ kubectl get deployment
+NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE
+memcached-operator-controller-manager   1/1     1            1           8m
+memcached-sample                        3/3     3            3           1m
+```
+
+Check the pods and CR status to confirm the status is updated with the memcached pod names:
+
+```sh
+$ kubectl get pods
+NAME                                  READY     STATUS    RESTARTS   AGE
+memcached-sample-6fd7c98d8-7dqdr      1/1       Running   0          1m
+memcached-sample-6fd7c98d8-g5k7v      1/1       Running   0          1m
+memcached-sample-6fd7c98d8-m7vn7      1/1       Running   0          1m
+```
+
+```sh
+$ kubectl get memcached/memcached-sample -o yaml
+apiVersion: cache.example.com/v1alpha1
+kind: Memcached
+metadata:
+  clusterName: ""
+  creationTimestamp: 2018-03-31T22:51:08Z
+  generation: 0
+  name: memcached-sample
+  namespace: default
+  resourceVersion: "245453"
+  selfLink: /apis/cache.example.com/v1alpha1/namespaces/default/memcacheds/memcached-sample
+  uid: 0026cc97-3536-11e8-bd83-0800274106a1
+spec:
+  size: 3
+status:
+  nodes:
+  - memcached-sample-6fd7c98d8-7dqdr
+  - memcached-sample-6fd7c98d8-g5k7v
+  - memcached-sample-6fd7c98d8-m7vn7
+```
 
 ### Update the size
 
-// TODO
+Update `config/samples/cache_v1alpha1_memcached.yaml` to change the `spec.size` field in the Memcached CR from 3 to 4:
+
+```YAML
+apiVersion: cache.example.com/v1alpha1
+kind: Memcached
+metadata:
+  name: memcached-sample
+spec:
+  size: 3
+```
+
+Apply the change:
+
+```
+$ kubectl apply -f config/samples/cache_v1alpha1_memcached.yaml
+```
+
+Confirm that the operator changes the deployment size:
+
+```sh
+$ kubectl get deployment
+NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE
+memcached-operator-controller-manager   1/1     1            1           10m
+memcached-sample                        4/4     4            4           3m
+```
 
 ### Cleanup
 
-// TODO
+```sh
+$ kubectl delete -f config/samples/cache_v1alpha1_memcached.yaml
+$ $ kubectl delete deployments,service -l control-plane=controller-manager
+$ kubectl delete role,rolebinding --all
+```
 
 ## Advanced Topics
 
 ### Manage CR status conditions
-
-**// TODO:** Update main.go code to use `SetupWithManager()` instead of `apis.AddToScheme()`
 
 An often-used pattern is to include `Conditions` in the status of custom resources. Conditions represent the latest available observations of an object's state (see the [Kubernetes API conventionsdocumentation][typical-status-properties] for more information).
 
@@ -302,9 +448,9 @@ Then, in your controller, you can use [`Conditions`][godoc-conditions] methods t
 
 ### Adding 3rd Party Resources To Your Operator
 
-The operator's Manager supports the core Kubernetes resource types as found in the client-go [scheme][scheme_package] package and will also register the schemes of all custom resource types defined in your project.
+> **// TODO:** Update the `main.go` code in these sections to use the `init()` func to register the scheme instead of doing it in `main()`.
 
-// TODO: Update for 
+The operator's Manager supports the core Kubernetes resource types as found in the client-go [scheme][scheme_package] package and will also register the schemes of all custom resource types defined in your project.
 
 ```Go
 import (
@@ -335,7 +481,7 @@ import (
 )
 
 func main() {
-  ....
+  ...
 
   // Adding the routev1
   if err := routev1.AddToScheme(mgr.GetScheme()); err != nil {
@@ -343,7 +489,7 @@ func main() {
     os.Exit(1)
   }
 
-  ....
+  ...
 }
 ```
 
@@ -365,7 +511,7 @@ import (
  )
 
 func main() {
-  ....
+  ...
 
   log.Info("Registering Components.")
 
@@ -376,13 +522,7 @@ func main() {
     os.Exit(1)
   }
 
-  ....
-
-  // Setup all Controllers
-  if err := controller.AddToManager(mgr); err != nil {
-    log.Error(err, "")
-    os.Exit(1)
-  }
+  ...
 }
 ```
 
@@ -395,16 +535,17 @@ func main() {
 
 ### Metrics
 
-**// TODO:** Update the [metrics doc](https://github.com/operator-framework/operator-sdk/blob/master/website/content/en/docs/golang/metrics/operator-sdk-monitoring.md) since it doesn't match the default scaffolded by kubebuilder anymore.
+> **// TODO:** Update the [metrics doc](https://github.com/operator-framework/operator-sdk/blob/master/website/content/en/docs/golang/metrics/operator-sdk-monitoring.md) since it doesn't match the default scaffolded by kubebuilder anymore.
+
 To learn about how metrics work in the Operator SDK read the [metrics section][metrics_doc] of the user documentation.
 
 #### Default Metrics exported with 3rd party resource
 
-**// TODO:** Remove this section since we're no longer scaffolding main.go to use the SDK's `GenerateAndServeCRMetrics()` util in `pkg/kube-metrics`.
+> **// TODO:** Remove this section since we're no longer scaffolding main.go to use the SDK's `GenerateAndServeCRMetrics()` util in `pkg/kube-metrics`.
 
 ### Handle Cleanup on Deletion
 
-**// TODO:** Update finalizer reconcile code for kubebuilder's scaffold
+> **// TODO:** Update finalizer reconcile code for kubebuilder's default reconciler imports and variable names
 
 To implement complex deletion logic, you can add a finalizer to your Custom Resource. This will prevent your Custom Resource from being
 deleted until you remove the finalizer (ie, after your cleanup logic has successfully run). For more information, see the
@@ -516,7 +657,7 @@ func remove(list []string, s string) []string {
 
 ### Leader election
 
-**// TODO:** Update this section to remove `leader-for-life` option? Since it's no longer the default.
+> **// TODO:** Update this section to remove `leader-for-life` option? Since it's no longer the default.
 
 During the lifecycle of an operator it's possible that there may be more than 1 instance running at any given time e.g when rolling out an upgrade for the operator.
 In such a scenario it is necessary to avoid contention between multiple operator instances via leader election so that only one leader instance handles the reconciliation while the other instances are inactive but ready to take over when the leader steps down.
@@ -609,3 +750,14 @@ When the operator is not running in a cluster, the Manager will return an error 
 [cli-run-olm]: /docs/golang/olm-integration/olm-cli/
 [kubebuilder_entrypoint_doc]: https://book.kubebuilder.io/cronjob-tutorial/empty-main.html
 
+[api_terms_doc]: https://book.kubebuilder.io/cronjob-tutorial/gvks.html
+[kb_controller_doc]: https://book.kubebuilder.io/cronjob-tutorial/controller-overview.html
+[kb_api_doc]: https://book.kubebuilder.io/cronjob-tutorial/new-api.html
+[controller_tools]: https://sigs.k8s.io/controller-tools
+[doc-validation-schema]: https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#specifying-a-structural-schema
+[generating-crd]: https://book.kubebuilder.io/reference/generating-crd.html
+[markers]: https://book.kubebuilder.io/reference/markers.html
+[crd-markers]: https://book.kubebuilder.io/reference/markers/crd-validation.html
+[rbac-markers]: https://book.kubebuilder.io/reference/markers/rbac.html
+[memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/master/example/kb-memcached-operator/memcached_controller.go.tmpl
+[builder_godocs]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/builder#example-Builder
