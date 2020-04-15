@@ -15,11 +15,14 @@
 package e2e
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/operator-framework/operator-registry/pkg/registry"
 	"github.com/operator-framework/operator-sdk/internal/olm"
 	operator "github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
@@ -42,16 +45,102 @@ func TestOLMIntegration(t *testing.T) {
 		defaultTestImageTag = image
 	}
 	t.Run("Operator", func(t *testing.T) {
-		t.Run("Single", SingleOperator)
+		t.Run("SingleWithAnnotations", SingleOperatorAnnotations)
+		t.Run("SingleWithPackageManifest", SingleOperatorPackageManifest)
 	})
 }
 
-func SingleOperator(t *testing.T) {
+func SingleOperatorAnnotations(t *testing.T) {
+	operatorName := "memcached-operator"
+	operatorVersion := "0.0.2"
+
 	csvConfig := CSVTemplateConfig{
-		OperatorName:    "memcached-operator",
-		OperatorVersion: "0.0.2",
+		OperatorName:    operatorName,
+		OperatorVersion: operatorVersion,
 		TestImageTag:    defaultTestImageTag,
-		Maturity:        "alpha",
+		ReplacesCSVName: "",
+		CRDKeys: []DefinitionKey{
+			{
+				Kind:  "Memcached",
+				Name:  "memcacheds.cache.example.com",
+				Group: "cache.example.com",
+				Versions: []apiextv1beta1.CustomResourceDefinitionVersion{
+					{Name: "v1alpha1", Storage: true, Served: true},
+				},
+			},
+		},
+		InstallModes: []opv1alpha1.InstallMode{
+			{Type: opv1alpha1.InstallModeTypeOwnNamespace, Supported: true},
+			{Type: opv1alpha1.InstallModeTypeSingleNamespace, Supported: true},
+			{Type: opv1alpha1.InstallModeTypeMultiNamespace, Supported: false},
+			{Type: opv1alpha1.InstallModeTypeAllNamespaces, Supported: true},
+		},
+		IsManifests: true,
+	}
+	tmp, err := ioutil.TempDir("", "sdk-integration.")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if err := os.RemoveAll(tmp); err != nil {
+			t.Fatal(err)
+		}
+	}()
+	channels := []string{"alpha"}
+	manifestsDir := filepath.Join(tmp, operatorName)
+	err = writeOperatorManifests(manifestsDir, csvConfig)
+	if err != nil {
+		os.RemoveAll(tmp)
+		t.Fatal(err)
+	}
+	err = writeAnnotations(manifestsDir, operatorName, channels)
+	if err != nil {
+		os.RemoveAll(tmp)
+		t.Fatal(err)
+	}
+	opcmd := operator.OLMCmd{
+		ManifestsDir:    manifestsDir,
+		OperatorVersion: operatorVersion,
+		KubeconfigPath:  kubeconfigPath,
+		Timeout:         defaultTimeout,
+		OLMNamespace:    olm.DefaultOLMNamespace,
+	}
+	// Cleanup.
+	defer func() {
+		opcmd.ForceRegistry = true
+		if err := opcmd.Cleanup(); err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	// "Remove operator before deploy"
+	assert.NoError(t, opcmd.Cleanup())
+	// "Remove operator before deploy (force delete registry)"
+	opcmd.ForceRegistry = true
+	assert.NoError(t, opcmd.Cleanup())
+
+	// "Deploy operator"
+	assert.NoError(t, opcmd.Run())
+	// "Fail to deploy operator after deploy"
+	assert.Error(t, opcmd.Run())
+
+	// "Remove operator after deploy"
+	assert.NoError(t, opcmd.Cleanup())
+	// "Remove operator after removal"
+	assert.NoError(t, opcmd.Cleanup())
+	// "Remove operator after removal (force delete registry)"
+	opcmd.ForceRegistry = true
+	assert.NoError(t, opcmd.Cleanup())
+}
+
+func SingleOperatorPackageManifest(t *testing.T) {
+	operatorName := "memcached-operator"
+	operatorVersion := "0.0.2"
+
+	csvConfig := CSVTemplateConfig{
+		OperatorName:    operatorName,
+		OperatorVersion: operatorVersion,
+		TestImageTag:    defaultTestImageTag,
 		ReplacesCSVName: "",
 		CRDKeys: []DefinitionKey{
 			{
@@ -79,10 +168,16 @@ func SingleOperator(t *testing.T) {
 			t.Fatal(err)
 		}
 	}()
-	defaultChannel := "alpha"
-	operatorName := "memcached-operator"
-	operatorVersion := "0.0.2"
-	manifestsDir, err := writeOperatorManifests(tmp, operatorName, defaultChannel, csvConfig)
+	channels := []registry.PackageChannel{
+		{Name: "alpha", CurrentCSVName: fmt.Sprintf("%s.v%s", operatorName, operatorVersion)},
+	}
+	manifestsDir := filepath.Join(tmp, operatorName)
+	err = writeOperatorManifests(manifestsDir, csvConfig)
+	if err != nil {
+		os.RemoveAll(tmp)
+		t.Fatal(err)
+	}
+	err = writePackageManifest(manifestsDir, operatorName, channels)
 	if err != nil {
 		os.RemoveAll(tmp)
 		t.Fatal(err)

@@ -4,7 +4,7 @@ set -eu
 
 source hack/lib/image_lib.sh
 
-export OSDK_INTEGRATION_IMAGE="quay.io/example/memcached-operator:v0.0.1"
+export OSDK_INTEGRATION_IMAGE="quay.io/example/memcached-operator:v0.0.2"
 
 # Build the operator image.
 pushd test/test-framework

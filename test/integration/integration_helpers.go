@@ -24,6 +24,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	operatorsv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	"github.com/operator-framework/operator-registry/pkg/registry"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -49,10 +50,11 @@ type CSVTemplateConfig struct {
 	OperatorName    string
 	OperatorVersion string
 	TestImageTag    string
-	Maturity        string
 	ReplacesCSVName string
 	CRDKeys         []DefinitionKey
 	InstallModes    []operatorsv1alpha1.InstallMode
+
+	IsManifests bool
 }
 
 const csvTmpl = `apiVersion: operators.coreos.com/v1alpha1
@@ -71,30 +73,6 @@ spec:
       displayName: {{ $crd.Kind }} App
       kind: {{ $crd.Kind }}
       name: {{ $crd.Name }}
-      resources:
-      - kind: Deployment
-        version: v1
-      - kind: ReplicaSet
-        version: v1
-      - kind: Pod
-        version: v1
-      specDescriptors:
-      - description: The desired number of member Pods for the deployment.
-        displayName: Size
-        path: size
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:podCount
-      statusDescriptors:
-      - description: The current status of the application.
-        displayName: Status
-        path: phase
-        x-descriptors:
-        - urn:alm:descriptor:io.kubernetes.phase
-      - description: Explanation for the current status of the application.
-        displayName: Status Details
-        path: reason
-        x-descriptors:
-        - urn:alm:descriptor:io.kubernetes.phase:reason
       version: {{ $version.Name }}
 {{- end }}{{- end }}
   description: Big ol' Operator.
@@ -184,73 +162,82 @@ spec:
   - supported: {{ $mode.Supported }}
     type: {{ $mode.Type }}
 {{- end }}
-  keywords:
-  - big
-  - ol
-  - operator
-  maintainers:
-  - email: corp@example.com
-    name: Some Corp
-  maturity: {{ .Maturity }}
-  provider:
-    name: Example
-    url: www.example.com
 {{- if .ReplacesCSVName }}
   replaces: {{ .ReplacesCSVName }}
 {{- end }}
   version: {{ .OperatorVersion }}
 `
 
-func writeOperatorManifests(root, operatorName, defaultChannel string,
-	csvConfigs ...CSVTemplateConfig) (manifestsDir string, err error) {
-	manifestsDir = filepath.Join(root, operatorName)
-	pkg := registry.PackageManifest{
-		PackageName:        operatorName,
-		DefaultChannelName: defaultChannel,
+func writeOperatorManifests(dir string, csvConfig CSVTemplateConfig) error {
+	bundleDir := ""
+	if csvConfig.IsManifests {
+		bundleDir = filepath.Join(dir, bundle.ManifestsDir)
+	} else {
+		bundleDir = filepath.Join(dir, csvConfig.OperatorVersion)
 	}
-	for _, csvConfig := range csvConfigs {
-		pkg.Channels = append(pkg.Channels, registry.PackageChannel{
-			Name:           csvConfig.Maturity,
-			CurrentCSVName: fmt.Sprintf("%s.v%s", csvConfig.OperatorName, csvConfig.OperatorVersion),
-		})
-		bundleDir := filepath.Join(manifestsDir, csvConfig.OperatorVersion)
-		for _, key := range csvConfig.CRDKeys {
-			crd := apiextv1beta1.CustomResourceDefinition{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: apiextv1beta1.SchemeGroupVersion.String(),
-					Kind:       "CustomResourceDefinition",
+	for _, key := range csvConfig.CRDKeys {
+		crd := apiextv1beta1.CustomResourceDefinition{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: apiextv1beta1.SchemeGroupVersion.String(),
+				Kind:       "CustomResourceDefinition",
+			},
+			ObjectMeta: metav1.ObjectMeta{Name: key.Name},
+			Spec: apiextv1beta1.CustomResourceDefinitionSpec{
+				Names: apiextv1beta1.CustomResourceDefinitionNames{
+					Kind:     key.Kind,
+					ListKind: key.Kind + "List",
+					Singular: strings.ToLower(key.Kind),
+					Plural:   strings.ToLower(key.Kind) + "s",
 				},
-				ObjectMeta: metav1.ObjectMeta{Name: key.Name},
-				Spec: apiextv1beta1.CustomResourceDefinitionSpec{
-					Names: apiextv1beta1.CustomResourceDefinitionNames{
-						Kind:     key.Kind,
-						ListKind: key.Kind + "List",
-						Singular: strings.ToLower(key.Kind),
-						Plural:   strings.ToLower(key.Kind) + "s",
-					},
-					Group:    key.Group,
-					Scope:    "Namespaced",
-					Versions: key.Versions,
-				},
-			}
-			crdPath := filepath.Join(bundleDir, fmt.Sprintf("%s.crd.yaml", key.Name))
-			if err = writeObjectManifest(crdPath, crd); err != nil {
-				return "", err
-			}
+				Group:    key.Group,
+				Scope:    "Namespaced",
+				Versions: key.Versions,
+			},
 		}
-		csvPath := filepath.Join(bundleDir, fmt.Sprintf("%s.v%s.csv.yaml", csvConfig.OperatorName, csvConfig.OperatorVersion))
-		if err = execTemplateOnFile(csvPath, csvTmpl, csvConfig); err != nil {
-			return "", err
+		crdPath := filepath.Join(bundleDir, fmt.Sprintf("%s.crd.yaml", key.Name))
+		if err := writeManifest(crdPath, crd); err != nil {
+			return err
 		}
 	}
-	pkgPath := filepath.Join(manifestsDir, fmt.Sprintf("%s.package.yaml", operatorName))
-	if err = writeObjectManifest(pkgPath, pkg); err != nil {
-		return "", err
+	csvPath := ""
+	if csvConfig.IsManifests {
+		csvPath = filepath.Join(bundleDir, fmt.Sprintf("%s.csv.yaml", csvConfig.OperatorName))
+	} else {
+		csvPath = filepath.Join(bundleDir, fmt.Sprintf("%s.v%s.csv.yaml",
+			csvConfig.OperatorName, csvConfig.OperatorVersion))
 	}
-	return manifestsDir, nil
+	if err := execTemplateOnFile(csvPath, csvTmpl, csvConfig); err != nil {
+		return err
+	}
+	return nil
 }
 
-func writeObjectManifest(path string, o interface{}) error {
+func writePackageManifest(dir, pkgName string, channels []registry.PackageChannel) error {
+	pkg := registry.PackageManifest{
+		PackageName:        pkgName,
+		DefaultChannelName: channels[0].Name,
+		Channels:           channels,
+	}
+	pkgPath := filepath.Join(dir, fmt.Sprintf("%s.package.yaml", pkgName))
+	return writeManifest(pkgPath, pkg)
+}
+
+func writeAnnotations(dir, pkgName string, channels []string) error {
+	annotations := bundle.AnnotationMetadata{
+		Annotations: map[string]string{
+			bundle.MediatypeLabel:      bundle.RegistryV1Type,
+			bundle.ManifestsLabel:      bundle.ManifestsDir,
+			bundle.MetadataLabel:       bundle.MetadataDir,
+			bundle.PackageLabel:        pkgName,
+			bundle.ChannelsLabel:       strings.Join(channels, ","),
+			bundle.ChannelDefaultLabel: channels[0],
+		},
+	}
+	path := filepath.Join(dir, bundle.MetadataDir, bundle.AnnotationsFile)
+	return writeManifest(path, annotations)
+}
+
+func writeManifest(path string, o interface{}) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
@@ -258,13 +245,10 @@ func writeObjectManifest(path string, o interface{}) error {
 	if err != nil {
 		return err
 	}
-	if err = ioutil.WriteFile(path, b, 0644); err != nil {
-		return err
-	}
-	return nil
+	return ioutil.WriteFile(path, b, 0644)
 }
 
-func execTemplateOnFile(path, tmpl string, o interface{}) error {
+func execTemplateOnFile(path, tmplStr string, o interface{}) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
@@ -273,12 +257,9 @@ func execTemplateOnFile(path, tmpl string, o interface{}) error {
 		return err
 	}
 	defer w.Close()
-	csvTmpl, err := template.New(path).Parse(tmpl)
+	tmpl, err := template.New(path).Parse(tmplStr)
 	if err != nil {
 		return err
 	}
-	if err = csvTmpl.Execute(w, o); err != nil {
-		return err
-	}
-	return nil
+	return tmpl.Execute(w, o)
 }

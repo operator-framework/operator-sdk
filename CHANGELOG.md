@@ -15,6 +15,7 @@
 - Add support to release SDK arm64 binaries and images. ([#2742](https://github.com/operator-framework/operator-sdk/pull/2715))
 - Add annotation `helm.operator-sdk/upgrade-force: "True"` to allow force resources replacement (`helm upgrade --force`) for Helm based-operators. ([#2773](https://github.com/operator-framework/operator-sdk/pull/2773))
 - The [`--make-manifests`](website/content/en/docs/cli/operator-sdk_generate_csv.md#options) flag directs `operator-sdk generate csv` to create a `manifests/` directory for the latest operator bundle, including CRDs. This flag is set by default. ([#2776](https://github.com/operator-framework/operator-sdk/pull/2776))
+- `operator-sdk run --olm` supports the new operator metadata format in `metadata/annotations.yaml`. ([#2840](https://github.com/operator-framework/operator-sdk/issues/2839))
 
 ### Changed
 

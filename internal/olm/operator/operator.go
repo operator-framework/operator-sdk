@@ -36,10 +36,10 @@ const (
 // OLMCmd configures deployment and teardown of an operator via an OLM
 // installation existing on a cluster.
 type OLMCmd struct { // nolint:golint
-	// ManifestsDir is a directory containing a package manifest and N bundles
-	// of the operator's CSV and CRD's. OperatorVersion can be set to the
-	// version of the desired operator version's subdir and Run()/Cleanup() will
-	// deploy the operator version in that subdir.
+	// ManifestsDir is a directory containing 1..N bundle directories and either
+	// a package manifest or metadata/annotations.yaml. OperatorVersion can be
+	// set to the version of the desired operator bundle and Run()/Cleanup() will
+	// deploy that operator version.
 	ManifestsDir string
 	// OperatorVersion is the version of the operator to deploy. It must be
 	// a semantic version, ex. 0.0.1.
@@ -93,11 +93,10 @@ func (c *OLMCmd) AddToFlagSet(fs *pflag.FlagSet) {
 	fs.StringVar(&c.OLMNamespace, "olm-namespace", olm.DefaultOLMNamespace,
 		prefix+"The namespace where OLM is installed")
 	fs.StringVar(&c.OperatorNamespace, "operator-namespace", "",
-		prefix+"The namespace where operator resources are created in --olm mode. It "+
-			"must already exist in the cluster or be defined in"+
-			" a manifest passed to IncludePaths.")
+		prefix+"The namespace where operator resources are created. It must already exist "+
+			"in the cluster or be defined in a manifest passed to --include")
 	fs.StringVar(&c.ManifestsDir, "manifests", "",
-		prefix+"Directory containing package manifest and operator bundles.")
+		prefix+"Directory containing operator bundle directories and metadata")
 	fs.StringVar(&c.OperatorVersion, "operator-version", "",
 		prefix+"Version of operator to deploy")
 	fs.StringVar(&c.InstallMode, "install-mode", "",
