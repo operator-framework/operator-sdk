@@ -24,7 +24,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 
 	"github.com/ghodss/yaml"
-	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	olmapiv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 )
 

@@ -20,8 +20,7 @@ require (
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.1.2
-	github.com/operator-framework/api v0.1.1
-	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20200321030439-57b580e57e88
+	github.com/operator-framework/api v0.3.0
 	github.com/operator-framework/operator-registry v1.6.2-0.20200330184612-11867930adb5
 	github.com/pborman/uuid v1.2.0
 	github.com/pkg/errors v0.9.1
@@ -53,6 +52,7 @@ require (
 	k8s.io/klog v1.0.0
 	k8s.io/kube-state-metrics v1.7.2
 	k8s.io/kubectl v0.17.4
+	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/controller-runtime v0.5.2
 	sigs.k8s.io/controller-tools v0.2.8
 	// Using branch feature/plugins-part-2-electric-boogaloo 27812b07d2db958a31f985b4d9800c204f68bff0
