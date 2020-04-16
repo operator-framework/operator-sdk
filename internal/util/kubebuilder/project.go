@@ -15,12 +15,9 @@
 package kbutil
 
 import (
-	"fmt"
-	"io/ioutil"
 	"os"
 
 	log "github.com/sirupsen/logrus"
-	"sigs.k8s.io/kubebuilder/pkg/model/config"
 )
 
 const ConfigFile = "PROJECT"
@@ -36,30 +33,4 @@ func IsConfigExist() bool {
 		log.Fatalf("Failed to read PROJECT file to detect kubebuilder project: %v", err)
 	}
 	return true
-}
-
-// DieIfCmdNotAllowed logs a message and exits if a callee cannot run on a
-// kubebuilder-style project.
-// FEAT(estroz): pass an equivalent command as string to this function to
-// customize log message.
-func DieIfCmdNotAllowed(hasEquivalent bool) {
-	if IsConfigExist() {
-		if !hasEquivalent {
-			log.Fatal("This command does not work with kubebuilder-style projects.")
-		}
-		log.Fatal("This command does not work with kubebuilder-style projects. " +
-			"Please read the kubebuilder book for an equivalent command: https://book.kubebuilder.io/")
-	}
-}
-
-func ReadConfig() (*config.Config, error) {
-	content, err := ioutil.ReadFile(ConfigFile)
-	if err != nil {
-		return nil, fmt.Errorf("error reading config: %v", err)
-	}
-	c := &config.Config{}
-	if err = config.Unmarshal(content, c); err != nil {
-		return nil, err
-	}
-	return c, nil
 }

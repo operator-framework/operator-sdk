@@ -31,7 +31,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"sigs.k8s.io/kubebuilder/pkg/cli"
-	kbgov1 "sigs.k8s.io/kubebuilder/pkg/plugin/v1"
 	kbgov2 "sigs.k8s.io/kubebuilder/pkg/plugin/v2"
 )
 
@@ -64,7 +63,6 @@ func GetPluginsCLIAndRoot() (cli.CLI, *cobra.Command) {
 	c, err := cli.New(
 		cli.WithCommandName("operator-sdk"),
 		cli.WithPlugins(
-			&kbgov1.Plugin{},
 			&kbgov2.Plugin{},
 		),
 		cli.WithDefaultPlugins(&kbgov2.Plugin{}),
