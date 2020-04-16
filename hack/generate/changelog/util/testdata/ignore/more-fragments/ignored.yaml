@@ -1,0 +1,19 @@
+entries:
+  - addition: Addition description
+    kind: addition
+    breaking: false
+  - description: Change description
+    kind: change
+    breaking: false
+  - description: Removal description
+    kind: removal
+    breaking: true
+    migration:
+      header: Header for removal migration
+      body: Body for removal migration
+  - description: Deprecation description
+    kind: deprecation
+    breaking: false
+  - description: Bugfix description
+    kind: bugfix
+    breaking: false

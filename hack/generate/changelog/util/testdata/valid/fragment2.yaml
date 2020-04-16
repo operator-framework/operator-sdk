@@ -1,0 +1,24 @@
+entries:
+  - description: Addition description 1
+    kind: addition
+    breaking: false
+    pull_request_override: 999999
+  - description: Change description 1
+    kind: change
+    breaking: false
+    pull_request_override: 999999
+  - description: Removal description 1
+    kind: removal
+    breaking: true
+    pull_request_override: 999999
+    migration:
+      header: Header for removal migration 1
+      body: Body for removal migration 1
+  - description: Deprecation description 1
+    kind: deprecation
+    breaking: false
+    pull_request_override: 999999
+  - description: Bugfix description 1
+    kind: bugfix
+    breaking: false
+    pull_request_override: 999999

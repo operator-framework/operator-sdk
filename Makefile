@@ -15,7 +15,7 @@ K8S_VERSION = v1.17.2
 REPO = github.com/operator-framework/operator-sdk
 BUILD_PATH = $(REPO)/cmd/operator-sdk
 PKGS = $(shell go list ./... | grep -v /vendor/)
-TEST_PKGS = $(shell go list ./... | grep -v -E 'github.com/operator-framework/operator-sdk/(hack/|test/)')
+TEST_PKGS = $(shell go list ./... | grep -v -E 'github.com/operator-framework/operator-sdk/test/')
 SOURCES = $(shell find . -name '*.go' -not -path "*/vendor/*")
 
 ANSIBLE_BASE_IMAGE = quay.io/operator-framework/ansible-operator
@@ -99,6 +99,9 @@ gen-cli-doc: ## Generate CLI documentation
 
 gen-test-framework: build/operator-sdk ## Run generate commands to update test/test-framework
 	./hack/generate/gen-test-framework.sh
+
+gen-changelog: ## Generate CHANGELOG.md and migration guide updates
+	./hack/generate/gen-changelog.sh
 
 generate: gen-cli-doc gen-test-framework  ## Run all generate targets
 .PHONY: generate gen-cli-doc gen-test-framework
