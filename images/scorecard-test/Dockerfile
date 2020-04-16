@@ -5,12 +5,11 @@ ENV TEST=/usr/local/bin/scorecard-test \
     USER_UID=1001 \
     USER_NAME=test
 
-# TODO install test binary 
-# COPY scorecard-test ${TEST}
+# install test binary 
+COPY scorecard-test ${TEST}
 
 COPY bin /usr/local/bin
 RUN  /usr/local/bin/user_setup
-
 
 ENTRYPOINT ["/usr/local/bin/entrypoint"]
 
