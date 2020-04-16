@@ -1,9 +1,9 @@
 ---
 title: Operator SDK Documentation
-linkTitle: SDK Docs
+linkTitle: Documentation
 menu:
   main:
-    weight: 1
+    weight: 3
 weight: 20
 ---
 

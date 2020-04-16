@@ -1,3 +1,6 @@
 [submodule "website/themes/docsy"]
 	path = website/themes/docsy
-	url = https://github.com/google/docsy.git
+	url = https://github.com/asmacdo/docsy.git
+[submodule "website/assets"]
+	path = website/assets
+	url = https://github.com/asmacdo/docsy-overrides.git
