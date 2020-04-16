@@ -176,21 +176,16 @@ func MergeRoleForResource(r *Resource, absProjectPath string, roleScaffold Role)
 		}
 		mergedRoleRules := mergeRules(role.Rules, roleScaffold)
 		role.Rules = mergedRoleRules
-
-		if err := updateRoleFile(&role, roleFilePath); err != nil {
-			return fmt.Errorf("failed to update for resource (%v, %v): %v",
-				r.APIVersion, r.Kind, err)
-		}
 	case *rbacv1.ClusterRole:
 		mergedClusterRoleRules := mergeRules(role.Rules, roleScaffold)
 		role.Rules = mergedClusterRoleRules
-
-		if err := updateRoleFile(&role, roleFilePath); err != nil {
-			return fmt.Errorf("failed to update for resource (%v, %v): %v",
-				r.APIVersion, r.Kind, err)
-		}
 	default:
 		log.Errorf("Failed to parse role.yaml as a role %v", err)
+	}
+
+	if err := updateRoleFile(obj, roleFilePath); err != nil {
+		return fmt.Errorf("failed to update for resource (%v, %v): %v",
+			r.APIVersion, r.Kind, err)
 	}
 
 	return UpdateRoleForResource(r, absProjectPath)

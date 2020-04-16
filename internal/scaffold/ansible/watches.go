@@ -25,6 +25,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/watches"
+
 	"gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -55,9 +56,6 @@ func UpdateAnsibleWatchForResource(r *scaffold.Resource, absProjectPath string) 
 	watchYAML, err := ioutil.ReadFile(watchFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to read watch manifest %v: %v", watchFilePath, err)
-	}
-	if len(watchYAML) == 0 {
-		return fmt.Errorf("empty watch File at: %v", absProjectPath)
 	}
 	var buf bytes.Buffer
 	watchList := []watches.Watch{}

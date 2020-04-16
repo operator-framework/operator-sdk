@@ -440,7 +440,6 @@ $ kubectl delete -f deploy/crds/cache.example.com_memcacheds_crd.yaml
 ```
 
 **NOTE** Additional CR/CRD's can be added to the project by running, for example, the command :`operator-sdk add api --api-version=cache.example.com/v1alpha1 --kind=AppService`
-For more information, refer [cli][addcli] doc.
 
 [operator-scope]:./../operator-scope.md
 [install-guide]: ../user/install-operator-sdk.md
@@ -455,4 +454,3 @@ For more information, refer [cli][addcli] doc.
 [ansible-runner-tool]:https://ansible-runner.readthedocs.io/en/latest/install.html
 [ansible-runner-http-plugin]:https://github.com/ansible/ansible-runner-http
 [quay-link]:https://quay.io
-[addcli]: https://operator-sdk.netlify.com/docs/cli/operator-sdk_add_api/

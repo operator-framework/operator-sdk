@@ -92,49 +92,49 @@ func TestMergeRoleForResource(t *testing.T) {
 	clusterRoleFilePath1 := "./testdata/testroles/valid_clusterrole"
 	clusterRoleFile1 := clusterRoleFilePath1 + "/deploy/role.yaml"
 	if err := ioutil.WriteFile(clusterRoleFile1, []byte(clusterRole), fileutil.DefaultFileMode); err != nil {
-		fmt.Printf("failed to update %v: %v", clusterRoleFile1, err)
+		fmt.Printf("failed to instantiate %v: %v", clusterRoleFile1, err)
 	}
 	defer remove(clusterRoleFile1)
 
 	roleFilePath1 := "./testdata/testroles/valid_role1"
 	absRoleFile1 := roleFilePath1 + "/deploy/role.yaml"
 	if err := ioutil.WriteFile(absRoleFile1, []byte(roleFile1), fileutil.DefaultFileMode); err != nil {
-		fmt.Printf("failed to update %v: %v", absRoleFile1, err)
+		fmt.Printf("failed to instantiate %v: %v", absRoleFile1, err)
 	}
 	defer remove(absRoleFile1)
 
 	roleFilePath2 := "./testdata/testroles/valid_role2"
 	absRoleFile2 := roleFilePath2 + "/deploy/role.yaml"
 	if err := ioutil.WriteFile(absRoleFile2, []byte(roleFile2), fileutil.DefaultFileMode); err != nil {
-		fmt.Printf("failed to update %v: %v", absRoleFile2, err)
+		fmt.Printf("failed to instantiate %v: %v", absRoleFile2, err)
 	}
 	defer remove(absRoleFile2)
 
 	roleFilePath3 := "./testdata/testroles/valid_role3"
 	absRoleFile3 := roleFilePath3 + "/deploy/role.yaml"
 	if err := ioutil.WriteFile(absRoleFile3, []byte(roleFile3), fileutil.DefaultFileMode); err != nil {
-		fmt.Printf("failed to update %v: %v", absRoleFile3, err)
+		fmt.Printf("failed to instantiate %v: %v", absRoleFile3, err)
 	}
 	defer remove(absRoleFile3)
 
 	roleFilePath4 := "./testdata/testroles/valid_role4"
 	absRoleFile4 := roleFilePath4 + "/deploy/role.yaml"
 	if err := ioutil.WriteFile(absRoleFile4, []byte(roleFile3), fileutil.DefaultFileMode); err != nil {
-		fmt.Printf("failed to update %v: %v", absRoleFile4, err)
+		fmt.Printf("failed to instantiate %v: %v", absRoleFile4, err)
 	}
 	defer remove(absRoleFile4)
 
 	roleFilePath5 := "./testdata/testroles/valid_role5"
 	absRoleFile5 := roleFilePath5 + "/deploy/role.yaml"
 	if err := ioutil.WriteFile(absRoleFile5, []byte(roleFile3), fileutil.DefaultFileMode); err != nil {
-		fmt.Printf("failed to update %v: %v", absRoleFile5, err)
+		fmt.Printf("failed to instantiate %v: %v", absRoleFile5, err)
 	}
 	defer remove(absRoleFile5)
 
 	roleFilePath6 := "./testdata/testroles/valid_role6"
 	absRoleFile6 := roleFilePath6 + "/deploy/role.yaml"
 	if err := ioutil.WriteFile(absRoleFile6, []byte(roleFile3), fileutil.DefaultFileMode); err != nil {
-		fmt.Printf("failed to update %v: %v", absRoleFile6, err)
+		fmt.Printf("failed to instantiate %v: %v", absRoleFile6, err)
 	}
 	defer remove(absRoleFile6)
 

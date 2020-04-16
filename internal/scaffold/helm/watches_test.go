@@ -92,19 +92,6 @@ func TestUpdateHelmWatchForResource(t *testing.T) {
 		},
 		{
 			// Invalid Watch
-			name: "Empty WatchFile",
-			r: &scaffold.Resource{
-				APIVersion: "app.example.com/v1alpha1",
-				Kind:       "App",
-				LowerKind:  "app",
-				FullGroup:  "app.example.com",
-				Version:    "v1alpha1",
-			},
-			absProjectPath: "./testdata/testwatches/invalid/emptywatchfile",
-			expError:       "empty Watch File at: ./testdata/testwatches/invalid/emptywatchfile",
-		},
-		{
-			// Invalid Watch
 			name: "Empty Directory",
 			r: &scaffold.Resource{
 				APIVersion: "app.example.com/v1alpha1",

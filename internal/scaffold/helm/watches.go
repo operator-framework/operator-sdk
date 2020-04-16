@@ -59,9 +59,6 @@ func UpdateHelmWatchForResource(r *scaffold.Resource, absProjectPath string, cha
 	if err != nil {
 		return fmt.Errorf("failed to read watch manifest %v: %v", watchFilePath, err)
 	}
-	if len(watchYAML) == 0 {
-		return fmt.Errorf("empty Watch File at: %v", absProjectPath)
-	}
 
 	watchList := []watches.Watch{}
 	err = yaml.Unmarshal(watchYAML, &watchList)
