@@ -3,4 +3,4 @@
 	url = https://github.com/asmacdo/docsy.git
 [submodule "website/assets"]
 	path = website/assets
-	url = git@github.com:asmacdo/docsy-overrides.git
+	url = https://github.com/asmacdo/docsy-overrides.git
