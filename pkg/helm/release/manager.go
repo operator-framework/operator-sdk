@@ -270,7 +270,12 @@ func reconcileRelease(ctx context.Context, kubeClient kube.Interface, expectedMa
 		// https://github.com/helm/helm/blob/1c9b54ad7f62a5ce12f87c3ae55136ca20f09c98/pkg/kube/client.go#L392
 		patch, patchType, err := createPatch(existing, expected)
 		if err != nil {
-			return err
+			return fmt.Errorf("error creating patch: %w", err)
+		}
+
+		if patch == nil {
+			// nothing to do
+			return nil
 		}
 
 		_, err = helper.Patch(expected.Namespace, expected.Name, patchType, patch,
@@ -287,7 +292,7 @@ func createPatch(existing runtime.Object, expected *resource.Info) ([]byte, apit
 	if err != nil {
 		return nil, apitypes.StrategicMergePatchType, err
 	}
-	expectedJSON, err := json.Marshal(expected)
+	expectedJSON, err := json.Marshal(expected.Object)
 	if err != nil {
 		return nil, apitypes.StrategicMergePatchType, err
 	}
@@ -329,9 +334,10 @@ func createJSONMergePatch(existingJSON, expectedJSON []byte) ([]byte, error) {
 	// fields added by Kubernetes or by the user after the existing release
 	// resource has been applied. The goal for this patch is to make sure that
 	// the fields managed by the Helm chart are applied.
+	// All "add" operations without a value (null) can be ignored
 	patchOps := make([]jsonpatch.JsonPatchOperation, 0)
 	for _, op := range ops {
-		if op.Operation != "remove" {
+		if op.Operation != "remove" && !(op.Operation == "add" && op.Value == nil) {
 			patchOps = append(patchOps, op)
 		}
 	}
