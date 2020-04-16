@@ -21,7 +21,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/operator-framework/operator-sdk/internal/generate/gen"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
@@ -94,18 +93,19 @@ func TestGoCSVNewWithInputsToOutput(t *testing.T) {
 	outputDir, rmDirFunc := mkTempDirWithCleanup(t, t.Name()+"-output-catalog")
 	defer rmDirFunc()
 
-	cfg := gen.Config{
-		OperatorName: testProjectName,
-		Inputs: map[string]string{
-			DeployDirKey: "config",
-			APIsDirKey:   "api",
-			CRDsDirKey:   filepath.Join("config", "crds"),
-		},
-		OutputDir: outputDir,
-	}
 	csvVersion := "0.0.1"
+	g := BundleGenerator{
+		OperatorName:  testProjectName,
+		DeployDir:     "config",
+		ApisDir:       "api",
+		CRDsDir:       filepath.Join("config", "crds"),
+		OutputDir:     outputDir,
+		CSVVersion:    csvVersion,
+		FromVersion:   "",
+		UpdateCRDs:    false,
+		MakeManifests: false,
+	}
 
-	g := NewBundle(cfg, csvVersion, "", false, false).(bundleGenerator)
 	g.noUpdate = true
 	if err := g.Generate(); err != nil {
 		t.Fatalf("Failed to execute CSV generator: %v", err)
@@ -150,17 +150,17 @@ func TestGoCSVUpgradeWithInputsToOutput(t *testing.T) {
 		t.Fatalf("Failed to copy expected CSV bundle dir (%s) to output dir (%s): %v", expFromCSVDir, outputFromCSVDir, err)
 	}
 
-	// Upgrade new CSV from old
-	cfg := gen.Config{
-		OperatorName: testProjectName,
-		Inputs: map[string]string{
-			DeployDirKey: "config",
-			APIsDirKey:   "api",
-			CRDsDirKey:   filepath.Join("config", "crds"),
-		},
-		OutputDir: outputDir,
+	g := BundleGenerator{
+		OperatorName:  testProjectName,
+		DeployDir:     "config",
+		ApisDir:       "api",
+		CRDsDir:       filepath.Join("config", "crds"),
+		OutputDir:     outputDir,
+		CSVVersion:    csvVersion,
+		FromVersion:   fromVersion,
+		UpdateCRDs:    false,
+		MakeManifests: false,
 	}
-	g := NewBundle(cfg, csvVersion, fromVersion, false, false).(bundleGenerator)
 	if err := g.Generate(); err != nil {
 		t.Fatalf("Failed to execute CSV generator: %v", err)
 	}
@@ -181,17 +181,19 @@ func TestGoCSVNew(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
-	cfg := gen.Config{
-		OperatorName: testProjectName,
-		Inputs: map[string]string{
-			DeployDirKey: "deploy",
-			APIsDirKey:   filepath.Join("pkg", "apis"),
-			CRDsDirKey:   filepath.Join("deploy", "crds_v1beta1"),
-		},
-		OutputDir: "deploy",
+	g := BundleGenerator{
+		OperatorName:  testProjectName,
+		DeployDir:     "deploy",
+		ApisDir:       filepath.Join("pkg", "apis"),
+		CRDsDir:       filepath.Join("deploy", "crds_v1beta1"),
+		OutputDir:     "deploy",
+		CSVVersion:    csvVersion,
+		FromVersion:   "",
+		UpdateCRDs:    false,
+		MakeManifests: false,
 	}
-	g := NewBundle(cfg, csvVersion, "", false, false).(bundleGenerator)
 	g.noUpdate = true
+	g.setDefaults()
 	fileMap, err := g.generateCSV()
 	if err != nil {
 		t.Fatalf("Failed to execute CSV generator: %v", err)
@@ -210,16 +212,18 @@ func TestGoCSVUpdate(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
-	cfg := gen.Config{
-		OperatorName: testProjectName,
-		Inputs: map[string]string{
-			DeployDirKey: "deploy",
-			APIsDirKey:   filepath.Join("pkg", "apis"),
-			CRDsDirKey:   filepath.Join("deploy", "crds_v1beta1"),
-		},
-		OutputDir: "deploy",
+	g := BundleGenerator{
+		OperatorName:  testProjectName,
+		DeployDir:     "deploy",
+		ApisDir:       filepath.Join("pkg", "apis"),
+		CRDsDir:       filepath.Join("deploy", "crds_v1beta1"),
+		OutputDir:     "deploy",
+		CSVVersion:    csvVersion,
+		FromVersion:   "",
+		UpdateCRDs:    false,
+		MakeManifests: false,
 	}
-	g := NewBundle(cfg, csvVersion, "", false, false).(bundleGenerator)
+	g.setDefaults()
 	fileMap, err := g.generateCSV()
 	if err != nil {
 		t.Fatalf("Failed to execute CSV generator: %v", err)
@@ -238,16 +242,18 @@ func TestGoCSVUpgrade(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
-	cfg := gen.Config{
-		OperatorName: testProjectName,
-		Inputs: map[string]string{
-			DeployDirKey: "deploy",
-			APIsDirKey:   filepath.Join("pkg", "apis"),
-			CRDsDirKey:   filepath.Join("deploy", "crds_v1beta1"),
-		},
-		OutputDir: "deploy",
+	g := BundleGenerator{
+		OperatorName:  testProjectName,
+		DeployDir:     "deploy",
+		ApisDir:       filepath.Join("pkg", "apis"),
+		CRDsDir:       filepath.Join("deploy", "crds_v1beta1"),
+		OutputDir:     "deploy",
+		CSVVersion:    csvVersion,
+		FromVersion:   fromVersion,
+		UpdateCRDs:    false,
+		MakeManifests: false,
 	}
-	g := NewBundle(cfg, csvVersion, fromVersion, false, false).(bundleGenerator)
+	g.setDefaults()
 	fileMap, err := g.generateCSV()
 	if err != nil {
 		t.Fatalf("Failed to execute CSV generator: %v", err)
@@ -266,17 +272,19 @@ func TestGoCSVNewManifests(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
-	cfg := gen.Config{
-		OperatorName: testProjectName,
-		Inputs: map[string]string{
-			DeployDirKey: "deploy",
-			APIsDirKey:   filepath.Join("pkg", "apis"),
-			CRDsDirKey:   filepath.Join("deploy", "crds_v1beta1"),
-		},
-		OutputDir: "deploy",
+	g := BundleGenerator{
+		OperatorName:  testProjectName,
+		DeployDir:     "deploy",
+		ApisDir:       filepath.Join("pkg", "apis"),
+		CRDsDir:       filepath.Join("deploy", "crds_v1beta1"),
+		OutputDir:     "deploy",
+		CSVVersion:    csvVersion,
+		FromVersion:   "",
+		UpdateCRDs:    false,
+		MakeManifests: true,
 	}
-	g := NewBundle(cfg, csvVersion, "", false, true).(bundleGenerator)
 	g.noUpdate = true
+	g.setDefaults()
 	fileMap, err := g.generateCSV()
 	if err != nil {
 		t.Fatalf("Failed to execute CSV generator: %v", err)
@@ -295,16 +303,18 @@ func TestGoCSVUpdateManifests(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
-	cfg := gen.Config{
-		OperatorName: testProjectName,
-		Inputs: map[string]string{
-			DeployDirKey: "deploy",
-			APIsDirKey:   filepath.Join("pkg", "apis"),
-			CRDsDirKey:   filepath.Join("deploy", "crds_v1beta1"),
-		},
-		OutputDir: "deploy",
+	g := BundleGenerator{
+		OperatorName:  testProjectName,
+		DeployDir:     "deploy",
+		ApisDir:       filepath.Join("pkg", "apis"),
+		CRDsDir:       filepath.Join("deploy", "crds_v1beta1"),
+		OutputDir:     "deploy",
+		CSVVersion:    csvVersion,
+		FromVersion:   "",
+		UpdateCRDs:    false,
+		MakeManifests: true,
 	}
-	g := NewBundle(cfg, csvVersion, "", false, true).(bundleGenerator)
+	g.setDefaults()
 	fileMap, err := g.generateCSV()
 	if err != nil {
 		t.Fatalf("Failed to execute CSV generator: %v", err)
@@ -323,21 +333,23 @@ func TestGoCSVNewWithInvalidDeployDir(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
-	cfg := gen.Config{
-		OperatorName: testProjectName,
-		Inputs: map[string]string{
-			DeployDirKey: "notExist",
-			APIsDirKey:   filepath.Join("pkg", "apis"),
-			CRDsDirKey:   "notExist",
-		},
-		OutputDir: "deploy",
+	g := BundleGenerator{
+		OperatorName:  testProjectName,
+		DeployDir:     "notExist",
+		ApisDir:       filepath.Join("pkg", "apis"),
+		CRDsDir:       "notExist",
+		OutputDir:     "deploy",
+		CSVVersion:    notExistVersion,
+		FromVersion:   "",
+		UpdateCRDs:    false,
+		MakeManifests: false,
 	}
 
-	g := NewBundle(cfg, notExistVersion, "", false, false).(bundleGenerator)
+	g.setDefaults()
 	_, err := g.generateCSV()
 	if err == nil {
 		t.Fatalf("Failed to get error for running CSV generator"+
-			"on non-existent manifests directory: %s", cfg.Inputs[DeployDirKey])
+			"on non-existent manifests directory: %s", g.DeployDir)
 	}
 }
 
@@ -345,17 +357,19 @@ func TestGoCSVNewWithEmptyDeployDir(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
-	cfg := gen.Config{
-		OperatorName: testProjectName,
-		Inputs: map[string]string{
-			DeployDirKey: "emptydir",
-			APIsDirKey:   filepath.Join("pkg", "apis"),
-			CRDsDirKey:   "emptydir",
-		},
-		OutputDir: "emptydir",
+	g := BundleGenerator{
+		OperatorName:  testProjectName,
+		DeployDir:     "emptydir",
+		ApisDir:       filepath.Join("pkg", "apis"),
+		CRDsDir:       "emptydir",
+		OutputDir:     "emptydir",
+		CSVVersion:    notExistVersion,
+		FromVersion:   "",
+		UpdateCRDs:    false,
+		MakeManifests: false,
 	}
 
-	g := NewBundle(cfg, notExistVersion, "", false, false).(bundleGenerator)
+	g.setDefaults()
 	fileMap, err := g.generateCSV()
 	if err != nil {
 		t.Fatalf("Failed to execute CSV generator: %v", err)
@@ -387,16 +401,18 @@ func TestUpdateCSVVersion(t *testing.T) {
 		t.Fatal("Failed to get new CSV")
 	}
 
-	cfg := gen.Config{
-		OperatorName: testProjectName,
-		Inputs: map[string]string{
-			DeployDirKey: "deploy",
-			APIsDirKey:   filepath.Join("pkg", "apis"),
-			CRDsDirKey:   filepath.Join("deploy", "crds_v1beta1"),
-		},
-		OutputDir: "deploy",
+	g := BundleGenerator{
+		OperatorName:  testProjectName,
+		DeployDir:     "deploy",
+		ApisDir:       filepath.Join("pkg", "apis"),
+		CRDsDir:       filepath.Join("deploy", "crds_v1beta1"),
+		OutputDir:     "deploy",
+		CSVVersion:    csvVersion,
+		FromVersion:   fromVersion,
+		UpdateCRDs:    false,
+		MakeManifests: false,
 	}
-	g := NewBundle(cfg, csvVersion, fromVersion, false, false).(bundleGenerator)
+	g.setDefaults()
 	if err := g.updateCSVVersions(csv); err != nil {
 		t.Fatalf("Failed to update csv with version %s: (%v)", csvVersion, err)
 	}

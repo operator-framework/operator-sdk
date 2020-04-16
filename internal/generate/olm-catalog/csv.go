@@ -23,7 +23,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/internal/generate/gen"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
@@ -46,77 +45,32 @@ const (
 	// OLMCatalogDir is the default location for OLM catalog directory.
 	OLMCatalogDir  = scaffold.DeployDir + string(filepath.Separator) + OLMCatalogChildDir
 	csvYamlFileExt = ".clusterserviceversion.yaml"
-
-	// Input keys for CSV generator whose values are the filepaths for the respective input directories
-
-	// DeployDirKey is for the location of the operator manifests directory e.g "deploy/production"
-	// The Deployment and RBAC manifests from this directory will be used to populate the CSV
-	// install strategy: spec.install
-	DeployDirKey = "deploy"
-	// APIsDirKey is for the location of the API types directory e.g "pkg/apis"
-	// The CSV annotation comments will be parsed from the types under this path.
-	APIsDirKey = "apis"
-	// CRDsDirKey is for the location of the CRD manifests directory e.g "deploy/crds"
-	// Both the CRD and CR manifests from this path will be used to populate CSV fields
-	// metadata.annotations.alm-examples for CR examples
-	// and spec.customresourcedefinitions.owned for owned CRDs
-	CRDsDirKey = "crds"
 )
 
-type bundleGenerator struct {
-	operatorName string
+type BundleGenerator struct {
+	// OperatorName is the operator's name, ex. app-operator
+	OperatorName string
+	OutputDir    string
+	FromVersion  string
 	// csvVersion is the CSV current version.
-	csvVersion string
+	CSVVersion string
+	// These directories specify where to retrieve manifests from.
+	DeployDir, ApisDir, CRDsDir string
+	// updateCRDs directs the generator to also add CustomResourceDefinition
+	// manifests to the bundle.
+	UpdateCRDs bool
+	// makeManifests directs the generator to use 'manifests' as the bundle
+	// dir name.
+	MakeManifests bool
+
+	// noUpdate is for testing the generator's update capabilities.
+	noUpdate bool
 	// fromBundleDir is set if the generator needs to update from
 	// an existing CSV bundle directory
 	fromBundleDir string
 	// toBundleDir is the bundle directory filepath where the CSV will be generated
 	// This is set according to the generator's OutputDir
 	toBundleDir string
-	// These directories specify where to retrieve manifests from.
-	deployDir, apisDir, crdsDir string
-	// updateCRDs directs the generator to also add CustomResourceDefinition
-	// manifests to the bundle.
-	updateCRDs bool
-	// makeManifests directs the generator to use 'manifests' as the bundle
-	// dir name.
-	makeManifests bool
-
-	// noUpdate is for testing the generator's update capabilities.
-	noUpdate bool
-}
-
-// NewBundle creates a new bundle generator.
-func NewBundle(cfg gen.Config, csvVersion, fromVersion string, updateCRDs, makeManifests bool) gen.Generator {
-	deployDir, apisDir, crdsDir := cfg.Inputs[DeployDirKey], cfg.Inputs[APIsDirKey], cfg.Inputs[CRDsDirKey]
-	if deployDir == "" {
-		deployDir = scaffold.DeployDir
-	}
-	if apisDir == "" {
-		apisDir = scaffold.ApisDir
-	}
-	if crdsDir == "" {
-		crdsDir = filepath.Join(deployDir, "crds")
-	}
-
-	g := bundleGenerator{
-		operatorName:  cfg.OperatorName,
-		csvVersion:    csvVersion,
-		deployDir:     deployDir,
-		apisDir:       apisDir,
-		crdsDir:       crdsDir,
-		updateCRDs:    updateCRDs,
-		makeManifests: makeManifests,
-	}
-
-	if makeManifests {
-		g.toBundleDir, g.fromBundleDir = getBundleDirs(cfg.OperatorName, csvVersion,
-			cfg.OutputDir, deployDir)
-	} else {
-		g.toBundleDir, g.fromBundleDir = getBundleDirsLegacy(cfg.OperatorName, csvVersion,
-			fromVersion, cfg.OutputDir, deployDir)
-	}
-	return g
 }
 
 // getBundleDirs gets directory names of the new bundle and, if it exists,
@@ -202,9 +156,30 @@ func getBundleDirsLegacy(operatorName, csvVersion, fromVersion, outputDir,
 	return toBundleDir, fromBundleDir
 }
 
+func (g *BundleGenerator) setDefaults() {
+	if g.DeployDir == "" {
+		g.DeployDir = scaffold.DeployDir
+	}
+	if g.ApisDir == "" {
+		g.ApisDir = scaffold.ApisDir
+	}
+	if g.CRDsDir == "" {
+		g.CRDsDir = filepath.Join(g.DeployDir, "crds")
+	}
+
+	if g.MakeManifests {
+		g.toBundleDir, g.fromBundleDir = getBundleDirs(g.OperatorName, g.CSVVersion,
+			g.OutputDir, g.DeployDir)
+	} else {
+		g.toBundleDir, g.fromBundleDir = getBundleDirsLegacy(g.OperatorName, g.CSVVersion,
+			g.FromVersion, g.OutputDir, g.DeployDir)
+	}
+}
+
 // Generate allows a CSV to be written by marshalling
 // olmapiv1alpha1.ClusterServiceVersion instead of writing to a template.
-func (g bundleGenerator) Generate() error {
+func (g BundleGenerator) Generate() error {
+	g.setDefaults()
 	fileMap, err := g.generateCSV()
 	if err != nil {
 		return err
@@ -214,9 +189,9 @@ func (g bundleGenerator) Generate() error {
 	}
 
 	// Write CRD's to the new or updated CSV package dir.
-	if g.updateCRDs {
-		if err := addCustomResourceDefinitionsToFileSet(g.crdsDir, fileMap); err != nil {
-			return fmt.Errorf("error collecting CustomResourceDefinitions from %s: %v", g.crdsDir, err)
+	if g.UpdateCRDs {
+		if err := addCustomResourceDefinitionsToFileSet(g.CRDsDir, fileMap); err != nil {
+			return fmt.Errorf("error collecting CustomResourceDefinitions from %s: %v", g.CRDsDir, err)
 		}
 	}
 
@@ -245,7 +220,7 @@ func getCSVFileNameLegacy(name, version string) string {
 	return getCSVName(strings.ToLower(name), version) + csvYamlFileExt
 }
 
-func (g bundleGenerator) generateCSV() (fileMap map[string][]byte, err error) {
+func (g BundleGenerator) generateCSV() (fileMap map[string][]byte, err error) {
 	// Get current CSV to update, otherwise start with a fresh CSV.
 	var csv *olmapiv1alpha1.ClusterServiceVersion
 	if g.fromBundleDir != "" && !g.noUpdate {
@@ -259,7 +234,7 @@ func (g bundleGenerator) generateCSV() (fileMap map[string][]byte, err error) {
 			return nil, err
 		}
 	} else {
-		if csv, err = newCSV(g.operatorName, g.csvVersion); err != nil {
+		if csv, err = newCSV(g.OperatorName, g.CSVVersion); err != nil {
 			return nil, err
 		}
 	}
@@ -269,10 +244,10 @@ func (g bundleGenerator) generateCSV() (fileMap map[string][]byte, err error) {
 	}
 
 	path := ""
-	if g.makeManifests {
-		path = getCSVFileName(g.operatorName)
+	if g.MakeManifests {
+		path = getCSVFileName(g.OperatorName)
 	} else {
-		path = getCSVFileNameLegacy(g.operatorName, g.csvVersion)
+		path = getCSVFileNameLegacy(g.OperatorName, g.CSVVersion)
 	}
 	// TODO(estroz): replace with CSV validator from API library.
 	if fields := getEmptyRequiredCSVFields(csv); len(fields) != 0 {
@@ -390,16 +365,16 @@ func getEmptyRequiredCSVFields(csv *olmapiv1alpha1.ClusterServiceVersion) (field
 // updateCSVVersions updates csv's version and data involving the version,
 // ex. ObjectMeta.Name, and place the old version in the `replaces` object,
 // if there is an old version to replace.
-func (g bundleGenerator) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVersion) error {
+func (g BundleGenerator) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVersion) error {
 	// If csvVersion is the same as the current version, or empty
-	// bevause manifests/ is being updated, no version update is needed.
-	oldVer, newVer := csv.Spec.Version.String(), g.csvVersion
+	// bevause manifests/ is being.Updated, no version update is needed.
+	oldVer, newVer := csv.Spec.Version.String(), g.CSVVersion
 	if newVer == "" || oldVer == newVer {
 		return nil
 	}
 
 	// Replace all references to the old operator name.
-	oldCSVName := getCSVName(g.operatorName, oldVer)
+	oldCSVName := getCSVName(g.OperatorName, oldVer)
 	oldRe, err := regexp.Compile(fmt.Sprintf("\\b%s\\b", regexp.QuoteMeta(oldCSVName)))
 	if err != nil {
 		return fmt.Errorf("error compiling CSV name regexp %s: %v", oldRe, err)
@@ -408,14 +383,14 @@ func (g bundleGenerator) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVer
 	if err != nil {
 		return err
 	}
-	newCSVName := getCSVName(g.operatorName, newVer)
+	newCSVName := getCSVName(g.OperatorName, newVer)
 	b = oldRe.ReplaceAll(b, []byte(newCSVName))
 	*csv = olmapiv1alpha1.ClusterServiceVersion{}
 	if err = yaml.Unmarshal(b, csv); err != nil {
 		return fmt.Errorf("error unmarshalling CSV %s after replacing old CSV name: %v", csv.GetName(), err)
 	}
 
-	ver, err := semver.Parse(g.csvVersion)
+	ver, err := semver.Parse(g.CSVVersion)
 	if err != nil {
 		return err
 	}
@@ -427,10 +402,10 @@ func (g bundleGenerator) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVer
 
 // updateCSVFromManifests gathers relevant data from generated and
 // user-defined manifests and updates csv.
-func (g bundleGenerator) updateCSVFromManifests(csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
+func (g BundleGenerator) updateCSVFromManifests(csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
 	// Collect all manifests in paths.
 	collection := manifestCollection{}
-	err = filepath.Walk(g.deployDir, func(path string, info os.FileInfo, err error) error {
+	err = filepath.Walk(g.DeployDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -474,8 +449,8 @@ func (g bundleGenerator) updateCSVFromManifests(csv *olmapiv1alpha1.ClusterServi
 	}
 
 	// Add CRDs from input.
-	if isDirExist(g.crdsDir) {
-		collection.CustomResourceDefinitions, err = k8sutil.GetCustomResourceDefinitions(g.crdsDir)
+	if isDirExist(g.CRDsDir) {
+		collection.CustomResourceDefinitions, err = k8sutil.GetCustomResourceDefinitions(g.CRDsDir)
 		if err != nil {
 			return err
 		}
@@ -498,7 +473,7 @@ func (g bundleGenerator) updateCSVFromManifests(csv *olmapiv1alpha1.ClusterServi
 	// FEAT(estroz): customresourcedefinition should not be updated for
 	// Ansible and Helm CSV's until annotated updates are implemented.
 	if projutil.IsOperatorGo() {
-		err = updateDescriptions(csv, g.apisDir)
+		err = updateDescriptions(csv, g.ApisDir)
 		if err != nil {
 			return fmt.Errorf("error updating CSV customresourcedefinitions: %w", err)
 		}

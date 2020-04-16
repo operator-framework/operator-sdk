@@ -18,7 +18,6 @@ import (
 	"testing"
 
 	"github.com/operator-framework/operator-registry/pkg/registry"
-	gen "github.com/operator-framework/operator-sdk/internal/generate/gen"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -27,17 +26,20 @@ func TestGeneratePkgManifestToOutput(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testNonStandardLayoutDataDir)
 	defer cleanupFunc()
 
-	cfg := gen.Config{
-		OperatorName: testProjectName,
-		OutputDir:    "expected-catalog",
+	g := PkgGenerator{
+		OperatorName:     testProjectName,
+		OutputDir:        "expected-catalog",
+		CSVVersion:       csvVersion,
+		Channel:          "beta",
+		ChannelIsDefault: false,
 	}
-	g := NewPackageManifest(cfg, csvVersion, "beta", false)
-	fileMap, err := g.(pkgGenerator).generate()
+	g.setDefaults()
+	fileMap, err := g.generate()
 	if err != nil {
 		t.Fatalf("Failed to execute package manifest generator: %v", err)
 	}
 
-	if b, ok := fileMap[g.(pkgGenerator).fileName]; !ok {
+	if b, ok := fileMap[g.fileName]; !ok {
 		t.Error("Failed to generate package manifest")
 	} else {
 		assert.Equal(t, packageManifestNonStandardExp, string(b))
@@ -59,17 +61,20 @@ func TestGeneratePackageManifest(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
-	cfg := gen.Config{
-		OperatorName: testProjectName,
-		OutputDir:    "deploy",
+	g := PkgGenerator{
+		OperatorName:     testProjectName,
+		OutputDir:        "deploy",
+		CSVVersion:       csvVersion,
+		Channel:          "stable",
+		ChannelIsDefault: true,
 	}
-	g := NewPackageManifest(cfg, csvVersion, "stable", true)
-	fileMap, err := g.(pkgGenerator).generate()
+	g.setDefaults()
+	fileMap, err := g.generate()
 	if err != nil {
 		t.Fatalf("Failed to execute package manifest generator: %v", err)
 	}
 
-	if b, ok := fileMap[g.(pkgGenerator).fileName]; !ok {
+	if b, ok := fileMap[g.fileName]; !ok {
 		t.Error("Failed to generate package manifest")
 	} else {
 		assert.Equal(t, packageManifestExp, string(b))
@@ -80,19 +85,22 @@ func TestValidatePackageManifest(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
-	cfg := gen.Config{
-		OperatorName: testProjectName,
-		OutputDir:    "deploy",
+	g := PkgGenerator{
+		OperatorName:     testProjectName,
+		OutputDir:        "deploy",
+		CSVVersion:       csvVersion,
+		Channel:          "stable",
+		ChannelIsDefault: true,
 	}
-	g := NewPackageManifest(cfg, csvVersion, "stable", true)
 
+	g.setDefaults()
 	// pkg is a basic, valid package manifest.
-	pkg, err := g.(pkgGenerator).buildPackageManifest()
+	pkg, err := g.buildPackageManifest()
 	if err != nil {
 		t.Fatalf("Failed to execute package manifest generator: %v", err)
 	}
 
-	g.(pkgGenerator).setChannels(&pkg)
+	g.setChannels(&pkg)
 	sortChannelsByName(&pkg)
 
 	// invalid mock data, pkg with empty channel
