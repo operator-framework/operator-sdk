@@ -7,10 +7,77 @@ Generates bundle data for the operator
 
 ### Synopsis
 
-Generates bundle data for the operator
+
+  Running 'generate bundle' is the first step to publishing your operator to a catalog
+  and/or deploying it with OLM. This command generates a set of bundle manifests,
+  metadata, and a bundle.Dockerfile for your operator, and will interactively ask
+  for UI metadata, an important component of publishing your operator, by default unless
+  a bundle for your operator exists or you set '--interactive=false'.
+
+  Set '--version' to supply a semantic version for your bundle if you are creating one
+  for the first time or upgrading an existing one.
+
+  If '--output-dir' is set and you wish to build bundle images from that directory,
+  either manually update your bundle.Dockerfile or set '--overwrite'.
+
+  More information on bundles:
+  https://github.com/operator-framework/operator-registry/#manifest-format
+
 
 ```
 operator-sdk generate bundle [flags]
+```
+
+### Examples
+
+```
+
+  # Using the example 'memcached-operator' and assuming a directory structure
+  # similar to the following exists:
+  $ tree pkg/apis/ deploy/
+  pkg/apis/
+  ├── ...
+  └── cache
+      ├── group.go
+      └── v1alpha1
+          ├── ...
+          └── memcached_types.go
+  deploy/
+  ├── crds
+  │   ├── cache.example.com_memcacheds_crd.yaml
+  │   └── cache.example.com_v1alpha1_memcached_cr.yaml
+  ├── operator.yaml
+  ├── role.yaml
+  ├── role_binding.yaml
+  └── service_account.yaml
+
+  # Create bundle manifests, metadata, and a bundle.Dockerfile:
+  $ operator-sdk generate bundle --version 0.0.1
+  INFO[0000] Generating bundle manifest version 0.0.1
+
+  Display name for the operator (required):
+  > memcached-operator
+  ...
+
+  # After running the above commands, you should see:
+  $ tree deploy/olm-catalog
+  deploy/olm-catalog
+  └── memcached-operator
+      ├── manifests
+      │   ├── cache.example.com_memcacheds_crd.yaml
+      │   └── memcached-operator.clusterserviceversion.yaml
+      └── metadata
+          └── annotations.yaml
+
+  # Then build and push your bundle image:
+  $ export USERNAME=<your registry username>
+  $ export BUNDLE_IMG=quay.io/$USERNAME/memcached-operator-bundle:v0.0.1
+  $ docker build -f bundle.Dockerfile -t $BUNDLE_IMG .
+  Sending build context to Docker daemon  42.33MB
+  Step 1/9 : FROM scratch
+  ...
+  $ docker push $BUNDLE_IMG
+
 ```
 
 ### Options

@@ -28,6 +28,56 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
+const (
+	examplesLegacy = `
+  # Using the example 'memcached-operator' and assuming a directory structure
+  # similar to the following exists:
+  $ tree pkg/apis/ deploy/
+  pkg/apis/
+  ├── ...
+  └── cache
+      ├── group.go
+      └── v1alpha1
+          ├── ...
+          └── memcached_types.go
+  deploy/
+  ├── crds
+  │   ├── cache.example.com_memcacheds_crd.yaml
+  │   └── cache.example.com_v1alpha1_memcached_cr.yaml
+  ├── operator.yaml
+  ├── role.yaml
+  ├── role_binding.yaml
+  └── service_account.yaml
+
+  # Create bundle manifests, metadata, and a bundle.Dockerfile:
+  $ operator-sdk generate bundle --version 0.0.1
+  INFO[0000] Generating bundle manifest version 0.0.1
+
+  Display name for the operator (required):
+  > memcached-operator
+  ...
+
+  # After running the above commands, you should see:
+  $ tree deploy/olm-catalog
+  deploy/olm-catalog
+  └── memcached-operator
+      ├── manifests
+      │   ├── cache.example.com_memcacheds_crd.yaml
+      │   └── memcached-operator.clusterserviceversion.yaml
+      └── metadata
+          └── annotations.yaml
+
+  # Then build and push your bundle image:
+  $ export USERNAME=<your registry username>
+  $ export BUNDLE_IMG=quay.io/$USERNAME/memcached-operator-bundle:v0.0.1
+  $ docker build -f bundle.Dockerfile -t $BUNDLE_IMG .
+  Sending build context to Docker daemon  42.33MB
+  Step 1/9 : FROM scratch
+  ...
+  $ docker push $BUNDLE_IMG
+`
+)
+
 // setCommonDefaultsLegacy sets defaults useful to all modes of this subcommand.
 func (c *bundleCmd) setCommonDefaultsLegacy() {
 	if c.operatorName == "" {
@@ -58,7 +108,7 @@ func (c bundleCmd) runManifestsLegacy() (err error) {
 		if c.version == "" {
 			log.Info("Generating bundle manifests")
 		} else {
-			log.Info("Generating bundle manifests version", c.version)
+			log.Infoln("Generating bundle manifests version", c.version)
 		}
 	}
 

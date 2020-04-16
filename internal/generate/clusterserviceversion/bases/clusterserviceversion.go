@@ -186,7 +186,7 @@ func readClusterServiceVersionBase(path string) (*v1alpha1.ClusterServiceVersion
 		if typeMeta.Kind == v1alpha1.ClusterServiceVersionKind {
 			csv := &v1alpha1.ClusterServiceVersion{}
 			if err := yaml.Unmarshal(manifest, csv); err != nil {
-				return nil, fmt.Errorf("error unmarshalling ClusterServiceVersion from manifest %s: %v", path, err)
+				return nil, fmt.Errorf("error unmarshaling ClusterServiceVersion from manifest %s: %v", path, err)
 			}
 			return csv, nil
 		}

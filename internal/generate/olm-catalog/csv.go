@@ -39,9 +39,6 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-// KB_INTEGRATION_TODO(estroz): generate these using kustomize and pass
-// from stdin, like 'make deploy'.
-
 const (
 	OLMCatalogChildDir = "olm-catalog"
 	// OLMCatalogDir is the default location for OLM catalog directory.

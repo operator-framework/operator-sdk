@@ -29,6 +29,78 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
 )
 
+const (
+	//nolint:lll
+	examples = `
+  # Using the example 'memcached-operator' and assuming a directory structure
+  # similar to the following exists:
+  $ tree api/ config/
+  api/
+  └── v1alpha1
+      ├── groupversion_info.go
+      ├── memcached_types.go
+      └── zz_generated.deepcopy.go
+  config/
+  ├── bundle
+  │   └── kustomization.yaml
+  ├── crd
+  │   ├── bases
+  │   │   └── cache.my.domain_memcacheds.yaml
+  │   ├── kustomization.yaml
+  │   ├── kustomizeconfig.yaml
+  │   ...
+  ├── default
+  │   ├── kustomization.yaml
+  │   ...
+  ├── manager
+  │   ├── kustomization.yaml
+  │   └── manager.yaml
+  ...
+
+  # Generate bundle files and build your bundle image with these 'make' recipes:
+  $ make bundle
+  $ export USERNAME=<your registry username>
+  $ export BUNDLE_IMG=quay.io/$USERNAME/memcached-operator-bundle:v0.0.1
+  $ make bundle-build BUNDLE_IMG=$BUNDLE_IMG
+
+  # The above recipe runs the following commands manually. First it creates bundle
+  # manifests, metadata, and a bundle.Dockerfile:
+  $ make manifests
+  /home/user/go/bin/controller-gen "crd:trivialVersions=true" rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+  $ operator-sdk generate bundle -q --kustomize
+
+  Display name for the operator (required):
+  > memcached-operator
+  ...
+
+  $ kustomize build config/bundle | operator-sdk generate bundle --manifests --metadata --overwrite --version 0.0.1
+  Generating bundle manifest version 0.0.1
+  ...
+
+  # After running the above commands, you should see:
+  $ tree config/bundle
+  config/bundle
+  ├── bases
+  │   └── memcached-operator.clusterserviceversion.yaml
+  ├── kustomization.yaml
+  ├── manifests
+  │   ├── cache.my.domain_memcacheds.yaml
+  │   └── memcached-operator.clusterserviceversion.yaml
+  └── metadata
+      └── annotations.yaml
+
+  # Then it validates your bundle files and builds your bundle image:
+  $ operator-sdk bundle validate config/bundle
+  $ docker build -f bundle.Dockerfile -t $BUNDLE_IMG .
+  Sending build context to Docker daemon  42.33MB
+  Step 1/9 : FROM scratch
+  ...
+
+  # You can then push your bundle image:
+  $ make docker-push IMG=$BUNDLE_IMG
+`
+)
+
 // setCommonDefaults sets defaults useful to all modes of this subcommand.
 func (c *bundleCmd) setCommonDefaults(cfg *config.Config) {
 	if c.operatorName == "" {
