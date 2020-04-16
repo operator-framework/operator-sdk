@@ -72,7 +72,7 @@ func getPkgFileName(operatorName string) string {
 	return strings.ToLower(operatorName) + packageManifestFileExt
 }
 
-func (g PkgGenerator) setDefaults() {
+func (g *PkgGenerator) setDefaults() {
 	// The olm-catalog directory location depends on where the output directory is set.
 	if g.OutputDir == "" {
 		g.OutputDir = scaffold.DeployDir

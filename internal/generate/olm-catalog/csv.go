@@ -156,7 +156,7 @@ func getBundleDirsLegacy(operatorName, csvVersion, fromVersion, outputDir,
 	return toBundleDir, fromBundleDir
 }
 
-func (g BundleGenerator) setDefaults() {
+func (g *BundleGenerator) setDefaults() {
 	if g.DeployDir == "" {
 		g.DeployDir = scaffold.DeployDir
 	}
