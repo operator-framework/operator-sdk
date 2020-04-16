@@ -56,9 +56,6 @@ func main() {
 	}
 	defer os.Remove(tmpDir)
 
-	// TODO remove this log
-	log.Printf("directory %s\n", tmpDir)
-
 	// Unzip the bundle
 	_, err = Unzip(bundleZip, tmpDir)
 	if err != nil {
