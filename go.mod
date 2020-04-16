@@ -55,6 +55,8 @@ require (
 	k8s.io/kubectl v0.17.4
 	sigs.k8s.io/controller-runtime v0.5.2
 	sigs.k8s.io/controller-tools v0.2.8
+	// Using branch feature/plugins-part-2-electric-boogaloo 27812b07d2db958a31f985b4d9800c204f68bff0
+	sigs.k8s.io/kubebuilder v1.0.9-0.20200409105744-27812b07d2db
 	sigs.k8s.io/yaml v1.1.0
 )
 

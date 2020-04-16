@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2020 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,23 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package generate
+package kbutil
 
 import (
+	"os"
+
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 )
 
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "generate <generator>",
-		Short: "Invokes a generate command",
-		Long: `The operator-sdk generate command invokes a command to perform certain code-
-and manifest-generation tasks.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			log.Info("TODO")
-		},
+const ConfigFile = "PROJECT"
+
+// IsConfigExist returns true if the project is configured as a kubebuilder
+// project.
+func IsConfigExist() bool {
+	_, err := os.Stat(ConfigFile)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false
+		}
+		log.Fatalf("Failed to read PROJECT file to detect kubebuilder project: %v", err)
 	}
-	// cmd.AddCommand(newGenerateCSVCmd())
-	return cmd
+	return true
 }

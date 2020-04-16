@@ -33,6 +33,7 @@ title: "%s"
 `
 
 func main() {
+	// TODO: Generate CLI docs for plugins CLI at doc/cli/kubebuilder
 	root := cli.GetCLIRoot()
 	root.DisableAutoGenTag = true
 

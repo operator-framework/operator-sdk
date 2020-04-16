@@ -15,7 +15,6 @@
 package alpha
 
 import (
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha/kubebuilder"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha/scorecard"
 
 	"github.com/spf13/cobra"
@@ -28,7 +27,6 @@ func NewCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		kubebuilder.NewCmd(),
 		scorecard.NewCmd(),
 	)
 	return cmd
