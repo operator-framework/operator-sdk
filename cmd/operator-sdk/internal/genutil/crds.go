@@ -46,11 +46,13 @@ func CRDGen(crdVersion string) error {
 // GenerateCRDNonGo generates CRDs for Non-Go APIs(Eg., Ansible,Helm)
 func GenerateCRDNonGo(projectName string, resource scaffold.Resource, crdVersion string) error {
 	crdsDir := filepath.Join(projectName, scaffold.CRDsDir)
-	gcfg := gen.Config{
-		Inputs:    map[string]string{gencrd.CRDsDirKey: crdsDir},
-		OutputDir: crdsDir,
+	crd := gencrd.Generator{
+		CRDsDir:      crdsDir,
+		OutputDir:    crdsDir,
+		CRDVersion:   crdVersion,
+		Resource:     resource,
+		IsOperatorGo: false,
 	}
-	crd := gencrd.NewCRDNonGo(gcfg, resource, crdVersion)
 	if err := crd.Generate(); err != nil {
 		return fmt.Errorf("error generating CRD for %s: %w", resource, err)
 	}

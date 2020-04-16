@@ -24,7 +24,6 @@ import (
 
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal/genutil"
 	"github.com/operator-framework/operator-sdk/internal/flags/apiflags"
-	gencrd "github.com/operator-framework/operator-sdk/internal/generate/crd"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
@@ -407,22 +406,6 @@ func doHelmScaffold() error {
 		return fmt.Errorf("failed to update the RBAC manifest for resource (%v, %v): %v",
 			resource.APIVersion, resource.Kind, err)
 	}
-	return nil
-}
-
-func generateCRDNonGo(projectName string, resource scaffold.Resource, crdVersion string) error {
-	crdsDir := filepath.Join(projectName, scaffold.CRDsDir)
-	crd := gencrd.Generator{
-		CRDsDir:      crdsDir,
-		OutputDir:    crdsDir,
-		CRDVersion:   crdVersion,
-		Resource:     resource,
-		IsOperatorGo: false,
-	}
-	if err := crd.Generate(); err != nil {
-		return fmt.Errorf("error generating CRD for %s: %w", resource, err)
-	}
-	log.Info("Generated CustomResourceDefinition manifests.")
 	return nil
 }
 
