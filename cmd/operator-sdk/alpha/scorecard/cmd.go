@@ -27,7 +27,8 @@ func NewCmd() *cobra.Command {
 	var (
 		config string
 		//bundle   string // TODO - to be implemented
-		selector string
+		selector   string
+		kubeconfig string
 		//list     bool // TODO - to be implemented
 	)
 	scorecardCmd := &cobra.Command{
@@ -39,6 +40,10 @@ func NewCmd() *cobra.Command {
 
 			var err error
 			o := scorecard.Options{}
+			o.Client, err = scorecard.GetKubeClient(kubeconfig)
+			if err != nil {
+				return fmt.Errorf("could not get Kube connection %s", err.Error())
+			}
 			o.Config, err = scorecard.LoadConfig(config)
 			if err != nil {
 				return fmt.Errorf("could not find config file %s", err.Error())
@@ -60,6 +65,8 @@ func NewCmd() *cobra.Command {
 
 	scorecardCmd.Flags().StringVarP(&config, "config", "c", "",
 		"path to a new to be defined DSL yaml formatted file that configures what tests get executed")
+	scorecardCmd.Flags().StringVar(&kubeconfig, "kubeconfig", "", "kubeconfig path")
+
 	//	scorecardCmd.Flags().StringVar(&bundle, "bundle", "", "path to the operator bundle contents on disk")
 	scorecardCmd.Flags().StringVarP(&selector, "selector", "l", "", "label selector to determine which tests are run")
 	//	scorecardCmd.Flags().BoolVarP(&list, "list", "L", false, "option to enable listing which tests are run")
