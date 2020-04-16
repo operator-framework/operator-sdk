@@ -50,6 +50,7 @@ func (w *Watches) GetInput() (input.Input, error) {
 	return w.Input, nil
 }
 
+// TODO Extract adding watch resource into its own func.
 // UpdateAnsibleWatchForResource checks for duplicate GVK, and appends to existing Watch.yaml file.
 func UpdateAnsibleWatchForResource(r *scaffold.Resource, absProjectPath string) error {
 	watchFilePath := filepath.Join(absProjectPath, WatchesFile)

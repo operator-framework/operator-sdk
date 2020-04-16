@@ -52,6 +52,7 @@ func (s *WatchesYAML) GetInput() (input.Input, error) {
 	return s.Input, nil
 }
 
+// TODO Extract adding watch resource into its own func.
 // UpdateHelmWatchForResource checks for duplicate GVK, and appends to existing Watch.yaml file.
 func UpdateHelmWatchForResource(r *scaffold.Resource, absProjectPath string, chart string) error {
 	watchFilePath := filepath.Join(absProjectPath, WatchesYamlFile)
