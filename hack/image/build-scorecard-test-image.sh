@@ -4,14 +4,14 @@ set -eux
 
 source hack/lib/image_lib.sh
 
-# TODO build test image
-#WD="$(dirname "$(pwd)")"
-#GOOS=linux CGO_ENABLED=0 \
-#  go build \
-#  -gcflags "all=-trimpath=${WD}" \
-#  -asmflags "all=-trimpath=${WD}" \
-#  -o images/scorecard-test/scorecard-test \
-#  images/scorecard-test/cmd/test/main.go
+# build scorecard test image
+WD="$(dirname "$(pwd)")"
+GOOS=linux CGO_ENABLED=0 \
+  go build \
+  -gcflags "all=-trimpath=${WD}" \
+  -asmflags "all=-trimpath=${WD}" \
+  -o images/scorecard-test/scorecard-test \
+  images/scorecard-test/cmd/test/main.go
 
 # Build base image
 pushd images/scorecard-test

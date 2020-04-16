@@ -97,6 +97,7 @@ tags
 test/ansible-operator/ansible-operator
 test/helm-operator/helm-operator
 images/scorecard-proxy/scorecard-proxy
+images/scorecard-test/scorecard-test
 
 # Test artifacts
 pkg/ansible/runner/testdata/valid.yaml
