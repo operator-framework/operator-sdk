@@ -95,13 +95,13 @@ setup-k8s:
 ##@ Generate
 
 gen-cli-doc: ## Generate CLI documentation
-	./hack/generate/gen-cli-doc.sh
+	./hack/generate/cli-doc/gen-cli-doc.sh
 
 gen-test-framework: build/operator-sdk ## Run generate commands to update test/test-framework
-	./hack/generate/gen-test-framework.sh
+	./hack/generate/test-framework/gen-test-framework.sh
 
 gen-changelog: ## Generate CHANGELOG.md and migration guide updates
-	./hack/generate/gen-changelog.sh
+	./hack/generate/changelog/gen-changelog.sh
 
 generate: gen-cli-doc gen-test-framework  ## Run all generate targets
 .PHONY: generate gen-cli-doc gen-test-framework
