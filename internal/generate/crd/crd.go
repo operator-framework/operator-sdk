@@ -15,6 +15,7 @@
 package crd
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -159,7 +160,7 @@ func (g Generator) generateGo() (map[string][]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error reading cached CRD file %s: %w", path, err)
 		}
-		scanner := k8sutil.NewYAMLScanner(b)
+		scanner := k8sutil.NewYAMLScanner(bytes.NewBuffer(b))
 		modifiedCRD := []byte{}
 		for scanner.Scan() {
 			crd := unstructured.Unstructured{}

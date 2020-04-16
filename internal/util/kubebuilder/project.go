@@ -15,9 +15,11 @@
 package kbutil
 
 import (
+	"io/ioutil"
 	"os"
 
 	log "github.com/sirupsen/logrus"
+	"sigs.k8s.io/kubebuilder/pkg/model/config"
 )
 
 const configFile = "PROJECT"
@@ -33,4 +35,16 @@ func HasProjectFile() bool {
 		log.Fatalf("Failed to read PROJECT file to detect kubebuilder project: %v", err)
 	}
 	return true
+}
+
+func ReadConfig() (*config.Config, error) {
+	b, err := ioutil.ReadFile(configFile)
+	if err != nil {
+		return nil, err
+	}
+	c := &config.Config{}
+	if err = c.Unmarshal(b); err != nil {
+		return nil, err
+	}
+	return c, nil
 }

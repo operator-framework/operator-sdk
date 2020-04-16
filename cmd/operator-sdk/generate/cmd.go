@@ -16,19 +16,37 @@ package generate
 
 import (
 	"github.com/spf13/cobra"
+
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate/bundle"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate/packagemanifests"
 )
 
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func newCmd() *cobra.Command {
+	return &cobra.Command{
 		Use:   "generate <generator>",
 		Short: "Invokes a specific generator",
 		Long: `The 'operator-sdk generate' command invokes a specific generator to generate
-code or manifests on disk.`,
+code or manifests.`,
 	}
+}
+
+func NewCmd() *cobra.Command {
+	cmd := newCmd()
+	cmd.AddCommand(
+		bundle.NewCmd(),
+		packagemanifests.NewCmd(),
+	)
+	return cmd
+}
+
+func NewCmdLegacy() *cobra.Command {
+	cmd := newCmd()
 	cmd.AddCommand(
 		newGenerateK8SCmd(),
 		newGenerateCRDsCmd(),
 		newGenerateCSVCmd(),
+		bundle.NewCmdLegacy(),
+		packagemanifests.NewCmdLegacy(),
 	)
 	return cmd
 }

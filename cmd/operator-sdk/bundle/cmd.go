@@ -29,7 +29,7 @@ type bundleCmd struct {
 	generateOnly   bool
 }
 
-func NewCmd() *cobra.Command {
+func newCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "bundle",
 		Short: "Manage operator bundle metadata",
@@ -44,9 +44,21 @@ Operator Lifecycle Manager:
 https://github.com/operator-framework/operator-lifecycle-manager
 `,
 	}
+	return cmd
+}
 
+func NewCmdLegacy() *cobra.Command {
+	cmd := newCmd()
 	cmd.AddCommand(
 		newCreateCmd(),
+		newValidateCmd(),
+	)
+	return cmd
+}
+
+func NewCmd() *cobra.Command {
+	cmd := newCmd()
+	cmd.AddCommand(
 		newValidateCmd(),
 	)
 	return cmd

@@ -74,7 +74,7 @@ func NewCmd() *cobra.Command {
 				}
 				if c.olmArgs.ManifestsDir == "" {
 					operatorName := filepath.Base(projutil.MustGetwd())
-					c.olmArgs.ManifestsDir = filepath.Join(olmcatalog.OLMCatalogDir, operatorName)
+					c.olmArgs.ManifestsDir = filepath.Join("deploy", olmcatalog.OLMCatalogDir, operatorName)
 				}
 				if err := c.olmArgs.Cleanup(); err != nil {
 					log.Fatalf("Failed to clean up operator using OLM: %v", err)

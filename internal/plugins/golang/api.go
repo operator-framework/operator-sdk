@@ -15,10 +15,20 @@
 package golang
 
 import (
+	"fmt"
+	"path/filepath"
+	"strings"
+
+	"github.com/operator-framework/operator-sdk/internal/scaffold/kustomize"
+
 	"github.com/spf13/pflag"
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 	"sigs.k8s.io/kubebuilder/pkg/plugin"
 )
+
+const sampleKustomizationFragment = `## This file is auto-generated, do not modify ##
+resources:
+`
 
 type createAPIPlugin struct {
 	plugin.CreateAPI
@@ -52,5 +62,18 @@ func (p *createAPIPlugin) Run() error {
 
 // SDK plugin-specific scaffolds.
 func (p *createAPIPlugin) run() error {
+	// Add CR paths to the samples' kustomization file.
+	samplesKustomization := sampleKustomizationFragment
+	for _, gvk := range p.config.Resources {
+		samplesKustomization += fmt.Sprintf("- %s\n", makeCRFile(gvk))
+	}
+	kpath := filepath.Join("config", "samples")
+	if err := kustomize.Write(kpath, samplesKustomization); err != nil {
+		return err
+	}
 	return nil
+}
+
+func makeCRFile(gvk config.GVK) string {
+	return fmt.Sprintf("%s_%s_%s.yaml", gvk.Group, gvk.Version, strings.ToLower(gvk.Kind))
 }

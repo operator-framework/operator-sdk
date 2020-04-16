@@ -48,7 +48,7 @@ func TestGeneratePackageManifestToOutput(t *testing.T) {
 	pkgManFileName := getPkgFileName(testProjectName)
 
 	// Read expected Package Manifest
-	expCatalogDir := filepath.Join("expected-catalog", OLMCatalogChildDir)
+	expCatalogDir := filepath.Join("expected-catalog", OLMCatalogDir)
 	pkgManExpBytes, err := ioutil.ReadFile(filepath.Join(expCatalogDir, testProjectName, pkgManFileName))
 	if err != nil {
 		t.Fatalf("Failed to read expected package manifest file: %v", err)
@@ -56,7 +56,7 @@ func TestGeneratePackageManifestToOutput(t *testing.T) {
 	pkgManExp := string(pkgManExpBytes)
 
 	// Read generated Package Manifest from OutputDir/olm-catalog
-	outputCatalogDir := filepath.Join(g.OutputDir, OLMCatalogChildDir)
+	outputCatalogDir := filepath.Join(g.OutputDir, OLMCatalogDir)
 	pkgManOutputBytes, err := ioutil.ReadFile(filepath.Join(outputCatalogDir, testProjectName, pkgManFileName))
 	if err != nil {
 		t.Fatalf("Failed to read output package manifest file: %v", err)
@@ -75,11 +75,11 @@ func TestGeneratePackageManifest(t *testing.T) {
 	outputDir, mktempCleanup := mkTempDirWithCleanup(t, "-output-catalog")
 	defer mktempCleanup()
 
-	manifestsRootDir := filepath.Join(outputDir, OLMCatalogChildDir, testProjectName)
-	if err := os.MkdirAll(manifestsRootDir, os.ModePerm); err != nil {
+	manifestRootDir := filepath.Join(outputDir, OLMCatalogDir, testProjectName)
+	if err := os.MkdirAll(manifestRootDir, os.ModePerm); err != nil {
 		t.Fatal(err)
 	}
-	outputPath := filepath.Join(manifestsRootDir, getPkgFileName(testProjectName))
+	outputPath := filepath.Join(manifestRootDir, getPkgFileName(testProjectName))
 	err := ioutil.WriteFile(outputPath, []byte(packageManifestInput), os.ModePerm)
 	if err != nil {
 		t.Fatal(err)

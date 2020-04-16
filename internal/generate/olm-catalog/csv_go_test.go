@@ -114,11 +114,11 @@ func TestGoCSVNewWithInputsToOutput(t *testing.T) {
 	csvFileName := getCSVFileNameLegacy(testProjectName, csvVersion)
 
 	// Read expected CSV
-	expBundleDir := filepath.Join("expected-catalog", OLMCatalogChildDir, testProjectName, csvVersion)
+	expBundleDir := filepath.Join("expected-catalog", OLMCatalogDir, testProjectName, csvVersion)
 	csvExp := string(readFile(t, filepath.Join(expBundleDir, csvFileName)))
 
 	// Read generated CSV from outputDir path
-	outputBundleDir := filepath.Join(outputDir, OLMCatalogChildDir, testProjectName, csvVersion)
+	outputBundleDir := filepath.Join(outputDir, OLMCatalogDir, testProjectName, csvVersion)
 	csvOutput := string(readFile(t, filepath.Join(outputBundleDir, csvFileName)))
 
 	assert.Equal(t, csvExp, csvOutput)
@@ -138,11 +138,11 @@ func TestGoCSVUpgradeWithInputsToOutput(t *testing.T) {
 
 	// Copy over expected fromVersion CSV bundle directory to the output dir
 	// so the test can upgrade from it
-	outputFromCSVDir := filepath.Join(outputDir, OLMCatalogChildDir, testProjectName)
+	outputFromCSVDir := filepath.Join(outputDir, OLMCatalogDir, testProjectName)
 	if err := os.MkdirAll(outputFromCSVDir, fileutil.DefaultDirFileMode); err != nil {
 		t.Fatalf("Failed to create CSV bundle dir (%s) for fromVersion (%s): %v", outputFromCSVDir, fromVersion, err)
 	}
-	expCatalogDir := filepath.Join("expected-catalog", OLMCatalogChildDir)
+	expCatalogDir := filepath.Join("expected-catalog", OLMCatalogDir)
 	expFromCSVDir := filepath.Join(expCatalogDir, testProjectName, fromVersion)
 	cmd := exec.Command("cp", "-r", expFromCSVDir, outputFromCSVDir)
 	t.Logf("Copying expected fromVersion CSV manifest dir %#v", cmd.Args)
@@ -200,7 +200,7 @@ func TestGoCSVNew(t *testing.T) {
 	}
 
 	csvExpFile := getCSVFileNameLegacy(testProjectName, csvVersion)
-	csvExpBytes := readFile(t, filepath.Join(OLMCatalogDir, testProjectName, noUpdateDir, csvExpFile))
+	csvExpBytes := readFile(t, filepath.Join("deploy", OLMCatalogDir, testProjectName, noUpdateDir, csvExpFile))
 	if b, ok := fileMap[csvExpFile]; !ok {
 		t.Errorf("Failed to generate CSV for version %s", csvVersion)
 	} else {
@@ -230,7 +230,7 @@ func TestGoCSVUpdate(t *testing.T) {
 	}
 
 	csvExpFile := getCSVFileNameLegacy(testProjectName, csvVersion)
-	csvExpBytes := readFile(t, filepath.Join(OLMCatalogDir, testProjectName, csvVersion, csvExpFile))
+	csvExpBytes := readFile(t, filepath.Join("deploy", OLMCatalogDir, testProjectName, csvVersion, csvExpFile))
 	if b, ok := fileMap[csvExpFile]; !ok {
 		t.Errorf("Failed to generate CSV for version %s", csvVersion)
 	} else {
@@ -260,7 +260,7 @@ func TestGoCSVUpgrade(t *testing.T) {
 	}
 
 	csvExpFile := getCSVFileNameLegacy(testProjectName, csvVersion)
-	csvExpBytes := readFile(t, filepath.Join(OLMCatalogDir, testProjectName, csvVersion, csvExpFile))
+	csvExpBytes := readFile(t, filepath.Join("deploy", OLMCatalogDir, testProjectName, csvVersion, csvExpFile))
 	if b, ok := fileMap[csvExpFile]; !ok {
 		t.Errorf("Failed to generate CSV for version %s", csvVersion)
 	} else {
@@ -291,7 +291,7 @@ func TestGoCSVNewManifests(t *testing.T) {
 	}
 
 	csvExpFile := getCSVFileNameLegacy(testProjectName, csvVersion)
-	csvExpBytes := readFile(t, filepath.Join(OLMCatalogDir, testProjectName, noUpdateDir, csvExpFile))
+	csvExpBytes := readFile(t, filepath.Join("deploy", OLMCatalogDir, testProjectName, noUpdateDir, csvExpFile))
 	if b, ok := fileMap[getCSVFileName(testProjectName)]; !ok {
 		t.Errorf("Failed to generate CSV for version %s", csvVersion)
 	} else {
@@ -321,7 +321,7 @@ func TestGoCSVUpdateManifests(t *testing.T) {
 	}
 
 	csvExpFile := getCSVFileNameLegacy(testProjectName, csvVersion)
-	csvExpBytes := readFile(t, filepath.Join(OLMCatalogDir, testProjectName, csvVersion, csvExpFile))
+	csvExpBytes := readFile(t, filepath.Join("deploy", OLMCatalogDir, testProjectName, csvVersion, csvExpFile))
 	if b, ok := fileMap[getCSVFileName(testProjectName)]; !ok {
 		t.Errorf("Failed to generate CSV for version %s", csvVersion)
 	} else {
@@ -396,7 +396,7 @@ func TestUpdateCSVVersion(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
-	csv, err := getCSVFromDir(filepath.Join(OLMCatalogDir, testProjectName, fromVersion))
+	csv, err := getCSVFromDir(filepath.Join("deploy", OLMCatalogDir, testProjectName, fromVersion))
 	if err != nil {
 		t.Fatal("Failed to get new CSV")
 	}

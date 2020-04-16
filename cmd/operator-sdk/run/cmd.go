@@ -86,7 +86,7 @@ https://sdk.operatorframework.io/docs/olm-integration/cli-overview
 				}
 				if c.olmArgs.ManifestsDir == "" {
 					operatorName := filepath.Base(projutil.MustGetwd())
-					c.olmArgs.ManifestsDir = filepath.Join(olmcatalog.OLMCatalogDir, operatorName)
+					c.olmArgs.ManifestsDir = filepath.Join("deploy", olmcatalog.OLMCatalogDir, operatorName)
 				}
 				if err := c.olmArgs.Run(); err != nil {
 					log.Fatalf("Failed to run operator using OLM: %v", err)

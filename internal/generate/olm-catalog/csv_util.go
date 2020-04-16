@@ -15,6 +15,7 @@
 package olmcatalog
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -23,10 +24,12 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 
-	olmapiv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml"
 )
+
+const CustomResourceDefinitionKind = "CustomResourceDefinition"
 
 // isBundleDirExist returns true if "parentDir/version" exists on disk.
 func isBundleDirExist(parentDir, version string) bool {
@@ -59,7 +62,7 @@ func addCustomResourceDefinitionsToFileSet(dir string, fileMap map[string][]byte
 			return fmt.Errorf("error reading manifest %s: %v", fromPath, err)
 		}
 
-		scanner := k8sutil.NewYAMLScanner(b)
+		scanner := k8sutil.NewYAMLScanner(bytes.NewBuffer(b))
 		manifests := []byte{}
 		for scanner.Scan() {
 			manifest := scanner.Bytes()
@@ -68,8 +71,8 @@ func addCustomResourceDefinitionsToFileSet(dir string, fileMap map[string][]byte
 				log.Debugf("Skipping non-Object manifest %s: %v", fromPath, err)
 				continue
 			}
-			if typeMeta.Kind == "CustomResourceDefinition" {
-				manifests = k8sutil.CombineManifests(manifests, b)
+			if typeMeta.Kind == CustomResourceDefinitionKind {
+				manifests = k8sutil.CombineManifests(manifests, manifest)
 			}
 		}
 		if err = scanner.Err(); err != nil {
@@ -86,7 +89,7 @@ func addCustomResourceDefinitionsToFileSet(dir string, fileMap map[string][]byte
 
 // getCSVFromDir returns the ClusterServiceVersion manifest in dir. If no
 // manifest is found, getCSVFromDir returns an error.
-func getCSVFromDir(dir string) (*olmapiv1alpha1.ClusterServiceVersion, error) {
+func getCSVFromDir(dir string) (*operatorsv1alpha1.ClusterServiceVersion, error) {
 	infos, err := ioutil.ReadDir(dir)
 	if err != nil {
 		return nil, err
@@ -104,7 +107,7 @@ func getCSVFromDir(dir string) (*olmapiv1alpha1.ClusterServiceVersion, error) {
 			return nil, fmt.Errorf("error reading manifest %s: %v", path, err)
 		}
 
-		scanner := k8sutil.NewYAMLScanner(b)
+		scanner := k8sutil.NewYAMLScanner(bytes.NewBuffer(b))
 		for scanner.Scan() {
 			manifest := scanner.Bytes()
 			typeMeta, err := k8sutil.GetTypeMetaFromBytes(manifest)
@@ -112,8 +115,8 @@ func getCSVFromDir(dir string) (*olmapiv1alpha1.ClusterServiceVersion, error) {
 				log.Debugf("Skipping non-Object manifest %s: %v", path, err)
 				continue
 			}
-			if typeMeta.Kind == olmapiv1alpha1.ClusterServiceVersionKind {
-				csv := &olmapiv1alpha1.ClusterServiceVersion{}
+			if typeMeta.Kind == operatorsv1alpha1.ClusterServiceVersionKind {
+				csv := &operatorsv1alpha1.ClusterServiceVersion{}
 				if err := yaml.Unmarshal(b, csv); err != nil {
 					return nil, fmt.Errorf("error unmarshalling ClusterServiceVersion from manifest %s: %v", path, err)
 				}

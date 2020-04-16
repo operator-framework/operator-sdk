@@ -85,7 +85,7 @@ func (g PkgGenerator) Generate() error {
 	if len(fileMap) == 0 {
 		return errors.New("error generating package manifest: no generated file found")
 	}
-	pkgManifestOutputDir := filepath.Join(g.OutputDir, OLMCatalogChildDir, g.OperatorName)
+	pkgManifestOutputDir := filepath.Join(g.OutputDir, OLMCatalogDir, g.OperatorName)
 	if err = os.MkdirAll(pkgManifestOutputDir, fileutil.DefaultDirFileMode); err != nil {
 		return fmt.Errorf("error mkdir %s: %v", pkgManifestOutputDir, err)
 	}
@@ -128,7 +128,7 @@ func (g PkgGenerator) generate() (map[string][]byte, error) {
 // buildPackageManifest will create a registry.PackageManifest from scratch, or reads
 // an existing one if found at the expected path.
 func (g PkgGenerator) buildPackageManifest() (registry.PackageManifest, error) {
-	pkgManifestOutputDir := filepath.Join(g.OutputDir, OLMCatalogChildDir, g.OperatorName)
+	pkgManifestOutputDir := filepath.Join(g.OutputDir, OLMCatalogDir, g.OperatorName)
 	path := filepath.Join(pkgManifestOutputDir, g.fileName)
 	pkg := registry.PackageManifest{}
 	if isFileExist(path) {
