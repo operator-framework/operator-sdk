@@ -15,19 +15,31 @@
 package alpha
 
 import (
+	"fmt"
+	"math/rand"
+	"time"
+
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	charset = "abcdefghijklmnopqrstuvwxyz"
+)
+
+var seededRand *rand.Rand = rand.New(
+	rand.NewSource(time.Now().UnixNano()))
+
 // getPodDefinition fills out a Pod definition based on
 // information from the test
 func getPodDefinition(test ScorecardTest, namespace, serviceAccount string) *v1.Pod {
+	podName := fmt.Sprintf("scorecard-test-%s", randomString())
 	return &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "scorecard-test",
+			Name:      podName,
 			Namespace: namespace,
 			Labels: map[string]string{
-				"name": "scorecard-test",
+				"app": "scorecard-test",
 			},
 		},
 		Spec: v1.PodSpec{
@@ -67,4 +79,16 @@ func getPodDefinition(test ScorecardTest, namespace, serviceAccount string) *v1.
 			},
 		},
 	}
+}
+
+func randomString() string {
+	return stringWithCharset(4, charset)
+}
+
+func stringWithCharset(length int, charset string) string {
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[seededRand.Intn(len(charset))]
+	}
+	return string(b)
 }
