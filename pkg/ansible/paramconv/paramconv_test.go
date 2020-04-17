@@ -161,6 +161,11 @@ func TestToSnake(t *testing.T) {
 			args: args{"k8s var"},
 			want: "k8s_var",
 		},
+		{
+			name: "should convert to snake when has Camel",
+			args: args{"sizeK8sBuckets"},
+			want: "size_k8s_buckets",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
