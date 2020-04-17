@@ -15,12 +15,15 @@
 package alpha
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"math/rand"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 const (
@@ -91,4 +94,22 @@ func stringWithCharset(length int, charset string) string {
 		b[i] = charset[seededRand.Intn(len(charset))]
 	}
 	return string(b)
+}
+
+func getPodLog(client kubernetes.Interface, pod v1.Pod) (logOutput string, err error) {
+
+	req := client.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &v1.PodLogOptions{})
+	podLogs, err := req.Stream()
+	if err != nil {
+		return logOutput, err
+	}
+	defer podLogs.Close()
+
+	buf := new(bytes.Buffer)
+	_, err = io.Copy(buf, podLogs)
+	if err != nil {
+		return logOutput, err
+	}
+	logOutput = buf.String()
+	return logOutput, err
 }
