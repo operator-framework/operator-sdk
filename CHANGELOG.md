@@ -1,9 +1,3 @@
-## Unreleased
-
-### Bug Fixes
-
-- Fixed issue to convert variables with numbers for Ansible based-operator. ([#2842](https://github.com/operator-framework/operator-sdk/pull/2842))
-
 ## v0.17.0
 
 ### Added
@@ -62,6 +56,7 @@
 - Fixed CRD validation generation issue with `status.Conditions`. ([#2739](https://github.com/operator-framework/operator-sdk/pull/2739))
 - Fix issue faced in the reconciliation when arrays are used in the config YAML files for Helm based-operators. ([#2777](https://github.com/operator-framework/operator-sdk/pull/2777))
 - Fixed issue in helm-operator where empty resource in release manifest caused failures while setting up watches for dependent resources. ([#2831](https://github.com/operator-framework/operator-sdk/pull/2831))
+
 
 ## v0.16.0
 
