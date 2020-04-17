@@ -137,7 +137,7 @@ func TestToSnake(t *testing.T) {
 		want string
 	}{
 		{
-			name: "should convert to Snake",
+			name: "should keep the same",
 			args: args{"var"},
 			want: "var",
 		},
@@ -147,7 +147,7 @@ func TestToSnake(t *testing.T) {
 			want: "888",
 		},
 		{
-			name: "should convert to Snake when has numbers",
+			name: "should convert to Snake when has numbers and _",
 			args: args{"k8s_var"},
 			want: "k8s_var",
 		},
@@ -157,14 +157,29 @@ func TestToSnake(t *testing.T) {
 			want: "_k8s_var",
 		},
 		{
-			name: "should convert to Snake when has space",
+			name: "should convert to Snake and replace the space for _",
 			args: args{"k8s var"},
 			want: "k8s_var",
 		},
 		{
-			name: "should convert to snake when has Camel",
+			name: "should handle Camel and add _ prefix when starts with",
+			args: args{"ThisShouldHaveUnderscores"},
+			want: "_this_should_have_underscores",
+		},
+		{
+			name: "should convert to snake when has Camel and numbers",
 			args: args{"sizeK8sBuckets"},
 			want: "size_k8s_buckets",
+		},
+		{
+			name: "should be able to handle mixed vars",
+			args: args{"_CanYou_Handle_mixedVars"},
+			want: "_can_you_handle_mixed_vars",
+		},
+		{
+			name: "should be a noop",
+			args: args{"this_should_be_a_noop"},
+			want: "this_should_be_a_noop",
 		},
 	}
 	for _, tt := range tests {
