@@ -1,0 +1,31 @@
+entries:
+  - description: >
+      Changed default API version for new Helm-based operators
+      to `helm.operator-sdk/v1alpha1`. The `k8s.io` domain is
+      reserved, so CRDs should not use it without explicit appproval.
+      See the [API Review Process](https://github.com/kubernetes/community/blob/81ec4af0ed02b4c5c0917a16563250b2f45250c2/sig-architecture/api-review-process.md#mandatory) for details.
+     
+    kind: change
+
+    # Is this a breaking change?
+    breaking: false
+
+    migration:
+      header: Helm-based operators should not use `k8s.io` API version suffix
+      body: |-
+        Newly created Helm-based operators no longer use the `k8s.io` domain
+        suffix as a default API version because it is reserved. APIs and CRDs
+        using this domain [require API review][api-review] and approval.
+        Existing projects that do not have this approval should migrate to use
+        a new CRD API version suffix.
+
+        Make the following changes to migrate to a new group name:
+  
+          - `watches.yaml` - Update the `group` field.
+          - `deploy/role.yaml` - Update the `apiGroups` field in the policy rule giving access to the CRD.
+          - `deploy/crds/`
+            - Update the `metadata.name` and `spec.group` fields in the CRD files.
+            - Update the `apiVersion` field in the CR files.
+            - Rename the CRD and CR files to reflect the new group name.
+
+        [api-review]: https://github.com/kubernetes/community/blob/81ec4af0ed02b4c5c0917a16563250b2f45250c2/sig-architecture/api-review-process.md#mandatory
