@@ -19,16 +19,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"os"
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/version"
 	"gopkg.in/yaml.v2"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 type Options struct {
@@ -43,6 +39,10 @@ type Options struct {
 // RunTests executes the scorecard tests as configured
 func RunTests(o Options) error {
 	tests := selectTests(o.Selector, o.Config.Tests)
+	if len(tests) == 0 {
+		fmt.Println("no tests selected")
+		return nil
+	}
 
 	for i := 0; i < len(tests); i++ {
 		if err := runTest(o, tests[i]); err != nil {
@@ -96,7 +96,7 @@ func runTest(o Options, test ScorecardTest) error {
 
 	// Create a Pod to run the test
 
-	podDef := getPodDefinition(test)
+	podDef := getPodDefinition(test, "default", "default")
 	_, err := o.Client.CoreV1().Pods("default").Create(podDef)
 	return err
 }
@@ -108,75 +108,4 @@ func ConfigDocLink() string {
 	return fmt.Sprintf(
 		"https://github.com/operator-framework/operator-sdk/blob/%s/doc/test-framework/scorecard.md",
 		version.Version)
-}
-
-// GetKubeClient will get a kubernetes client from the ...
-func GetKubeClient(kubeconfig string) (client kubernetes.Interface, err error) {
-
-	// use the current context in kubeconfig
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-	if err != nil {
-		return client, err
-	}
-
-	// create the clientset
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return client, err
-	}
-
-	return clientset, err
-}
-
-func homeDir() string {
-	if h := os.Getenv("HOME"); h != "" {
-		return h
-	}
-	return os.Getenv("USERPROFILE") // windows
-}
-
-func getPodDefinition(test ScorecardTest) *v1.Pod {
-	return &v1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "scorecard-test",
-			Namespace: "default",
-			Labels: map[string]string{
-				"name": "scorecard-test",
-			},
-		},
-		Spec: v1.PodSpec{
-			Containers: []v1.Container{
-				{
-					Name:            "scorecard-test",
-					Image:           "quay.io/operator-framework/scorecard-test:dev",
-					ImagePullPolicy: v1.PullIfNotPresent,
-					Command: []string{
-						"/usr/local/bin/scorecard-test",
-					},
-					Args: []string{
-						test.Entrypoint,
-					},
-					VolumeMounts: []v1.VolumeMount{
-						{
-							MountPath: "/scorecard",
-							Name:      "scorecard-bundle",
-							ReadOnly:  true,
-						},
-					},
-				},
-			},
-			Volumes: []v1.Volume{
-				{
-					Name: "scorecard-bundle",
-					VolumeSource: v1.VolumeSource{
-						ConfigMap: &v1.ConfigMapVolumeSource{
-							LocalObjectReference: v1.LocalObjectReference{
-								Name: "scorecard-bundle",
-							},
-						},
-					},
-				},
-			},
-		},
-	}
 }
