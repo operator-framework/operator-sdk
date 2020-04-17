@@ -15,19 +15,21 @@
 package golang
 
 import (
-	"github.com/operator-framework/operator-sdk/pkg/plugins"
+	"github.com/operator-framework/operator-sdk/internal/plugins"
 
-	"sigs.k8s.io/kubebuilder/pkg/model/config"
 	"sigs.k8s.io/kubebuilder/pkg/plugin"
 	kbgov2 "sigs.k8s.io/kubebuilder/pkg/plugin/v2"
 )
 
 const (
+	// These will be used as plugin name/version in phase 2 plugins when we can
+	// pipe kubebuilder's init/create api output into our scaffold modification
+	// plugins. In phase 1 we wrap kubebuilder's Go plugin to have the same effect.
 	pluginName    = "go" + plugins.DefaultNameQualifier
 	pluginVersion = "v2.0.0"
 )
 
-var supportedProjectVersions = []string{config.Version3}
+var pluginConfigKey = plugin.Key(pluginName, pluginVersion)
 
 var (
 	_ plugin.Base                      = Plugin{}
@@ -38,15 +40,22 @@ var (
 
 type Plugin struct{}
 
-func (Plugin) Name() string                       { return pluginName }
-func (Plugin) Version() string                    { return pluginVersion }
-func (Plugin) SupportedProjectVersions() []string { return supportedProjectVersions }
+func (Plugin) Name() string                       { return (kbgov2.Plugin{}).Name() }
+func (Plugin) Version() string                    { return (kbgov2.Plugin{}).Version() }
+func (Plugin) SupportedProjectVersions() []string { return (kbgov2.Plugin{}).SupportedProjectVersions() }
+
 func (p Plugin) GetInitPlugin() plugin.Init {
-	return &initPlugin{(kbgov2.Plugin{}).GetInitPlugin()}
+	return &initPlugin{
+		Init: (kbgov2.Plugin{}).GetInitPlugin(),
+	}
 }
+
 func (p Plugin) GetCreateAPIPlugin() plugin.CreateAPI {
-	return (kbgov2.Plugin{}).GetCreateAPIPlugin()
+	return &createAPIPlugin{
+		CreateAPI: (kbgov2.Plugin{}).GetCreateAPIPlugin(),
+	}
 }
+
 func (p Plugin) GetCreateWebhookPlugin() plugin.CreateWebhook {
 	return (kbgov2.Plugin{}).GetCreateWebhookPlugin()
 }

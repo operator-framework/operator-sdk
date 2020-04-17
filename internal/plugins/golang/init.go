@@ -15,6 +15,8 @@
 package golang
 
 import (
+	"fmt"
+
 	"github.com/spf13/pflag"
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 	"sigs.k8s.io/kubebuilder/pkg/plugin"
@@ -22,15 +24,30 @@ import (
 
 type initPlugin struct {
 	plugin.Init
+
+	config *config.Config
 }
 
 var _ plugin.Init = &initPlugin{}
 
 func (p *initPlugin) UpdateContext(ctx *plugin.Context) { p.Init.UpdateContext(ctx) }
 func (p *initPlugin) BindFlags(fs *pflag.FlagSet)       { p.Init.BindFlags(fs) }
-func (p *initPlugin) Run() error                        { return p.Init.Run() }
+
 func (p *initPlugin) InjectConfig(c *config.Config) {
 	p.Init.InjectConfig(c)
-	// Update layout key with this plugin's name.
-	c.Layout = plugin.KeyFor(Plugin{})
+	p.config = c
+}
+
+func (p *initPlugin) Run() error {
+	if err := p.Init.Run(); err != nil {
+		return err
+	}
+
+	// Update plugin config section with this plugin's configuration.
+	cfg := Config{}
+	if err := p.config.EncodeExtraFields(pluginConfigKey, cfg); err != nil {
+		return fmt.Errorf("error writing plugin config for %s: %v", pluginConfigKey, err)
+	}
+
+	return nil
 }
