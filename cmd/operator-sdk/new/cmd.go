@@ -22,7 +22,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	gencrd "github.com/operator-framework/operator-sdk/internal/generate/crd"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal/genutil"
+	"github.com/operator-framework/operator-sdk/internal/flags/apiflags"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
@@ -97,11 +98,6 @@ generates a default directory layout based on the input <project-name>.
 `,
 		RunE: newFunc,
 	}
-
-	newCmd.Flags().StringVar(&apiVersion, "api-version", "", "Kubernetes apiVersion and has"+
-		" a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1) - used with \"ansible\" or \"helm\" types")
-	newCmd.Flags().StringVar(&kind, "kind", "",
-		"Kubernetes CustomResourceDefintion kind. (e.g AppService) - used with \"ansible\" or \"helm\" types")
 	newCmd.Flags().StringVar(&operatorType, "type", "go",
 		"Type of operator to initialize (choices: \"go\", \"ansible\" or \"helm\")")
 	newCmd.Flags().StringVar(&repo, "repo", "",
@@ -116,21 +112,15 @@ generates a default directory layout based on the input <project-name>.
 		"Do not validate the resulting project's structure and dependencies. (Only used for --type go)")
 	newCmd.Flags().BoolVar(&generatePlaybook, "generate-playbook", false,
 		"Generate a playbook skeleton. (Only used for --type ansible)")
-	newCmd.Flags().StringVar(&helmChartRef, "helm-chart", "",
-		"Initialize helm operator with existing helm chart (<URL>, <repo>/<name>, or local path)")
-	newCmd.Flags().StringVar(&helmChartVersion, "helm-chart-version", "",
-		"Specific version of the helm chart (default is latest version)")
-	newCmd.Flags().StringVar(&helmChartRepo, "helm-chart-repo", "",
-		"Chart repository URL for the requested helm chart")
-	newCmd.Flags().StringVar(&crdVersion, "crd-version", gencrd.DefaultCRDVersion,
-		"CRD version to generate (Only used for --type=ansible|helm)")
+
+	// Initialize flagSet struct with common flags
+	apiFlags.AddTo(newCmd.Flags())
 
 	return newCmd
 }
 
 var (
-	apiVersion       string
-	kind             string
+	apiFlags         apiflags.APIFlags
 	operatorType     string
 	projectName      string
 	headerFile       string
@@ -139,12 +129,6 @@ var (
 	makeVendor       bool
 	skipValidation   bool
 	generatePlaybook bool
-
-	helmChartRef     string
-	helmChartVersion string
-	helmChartRepo    string
-
-	crdVersion string
 )
 
 func newFunc(cmd *cobra.Command, args []string) error {
@@ -271,7 +255,7 @@ func doAnsibleScaffold() error {
 		ProjectName:    projectName,
 	}
 
-	resource, err := scaffold.NewResource(apiVersion, kind)
+	resource, err := scaffold.NewResource(apiFlags.APIVersion, apiFlags.Kind)
 	if err != nil {
 		return fmt.Errorf("invalid apiVersion and kind: %v", err)
 	}
@@ -324,7 +308,7 @@ func doAnsibleScaffold() error {
 		return fmt.Errorf("new ansible scaffold failed: %v", err)
 	}
 
-	if err = generateCRDNonGo(projectName, *resource, crdVersion); err != nil {
+	if err = genutil.GenerateCRDNonGo(projectName, *resource, apiFlags.CrdVersion); err != nil {
 		return err
 	}
 
@@ -365,11 +349,11 @@ func doHelmScaffold() error {
 	}
 
 	createOpts := helm.CreateChartOptions{
-		ResourceAPIVersion: apiVersion,
-		ResourceKind:       kind,
-		Chart:              helmChartRef,
-		Version:            helmChartVersion,
-		Repo:               helmChartRepo,
+		ResourceAPIVersion: apiFlags.APIVersion,
+		ResourceKind:       apiFlags.Kind,
+		Chart:              apiFlags.HelmChartRef,
+		Version:            apiFlags.HelmChartVersion,
+		Repo:               apiFlags.HelmChartRepo,
 	}
 
 	resource, chart, err := helm.CreateChart(cfg.AbsProjectPath, createOpts)
@@ -414,7 +398,7 @@ func doHelmScaffold() error {
 		return fmt.Errorf("new helm scaffold failed: %v", err)
 	}
 
-	if err = generateCRDNonGo(projectName, *resource, crdVersion); err != nil {
+	if err = genutil.GenerateCRDNonGo(projectName, *resource, apiFlags.CrdVersion); err != nil {
 		return err
 	}
 
@@ -422,22 +406,6 @@ func doHelmScaffold() error {
 		return fmt.Errorf("failed to update the RBAC manifest for resource (%v, %v): %v",
 			resource.APIVersion, resource.Kind, err)
 	}
-	return nil
-}
-
-func generateCRDNonGo(projectName string, resource scaffold.Resource, crdVersion string) error {
-	crdsDir := filepath.Join(projectName, scaffold.CRDsDir)
-	crd := gencrd.Generator{
-		CRDsDir:      crdsDir,
-		OutputDir:    crdsDir,
-		CRDVersion:   crdVersion,
-		Resource:     resource,
-		IsOperatorGo: false,
-	}
-	if err := crd.Generate(); err != nil {
-		return fmt.Errorf("error generating CRD for %s: %w", resource, err)
-	}
-	log.Info("Generated CustomResourceDefinition manifests.")
 	return nil
 }
 
@@ -450,19 +418,8 @@ func verifyFlags() error {
 	if operatorType != projutil.OperatorTypeAnsible && generatePlaybook {
 		return fmt.Errorf("value of --generate-playbook can only be used with --type `ansible`")
 	}
-
-	if len(helmChartRef) != 0 {
-		if operatorType != projutil.OperatorTypeHelm {
-			return fmt.Errorf("value of --helm-chart can only be used with --type=helm")
-		}
-	} else if len(helmChartRepo) != 0 {
-		return fmt.Errorf("value of --helm-chart-repo can only be used with --type=helm and --helm-chart")
-	} else if len(helmChartVersion) != 0 {
-		return fmt.Errorf("value of --helm-chart-version can only be used with --type=helm and --helm-chart")
-	}
-
 	if operatorType == projutil.OperatorTypeGo {
-		if len(apiVersion) != 0 || len(kind) != 0 {
+		if len(apiFlags.APIVersion) != 0 || len(apiFlags.Kind) != 0 {
 			return fmt.Errorf("operators of type Go do not use --api-version or --kind")
 		}
 
@@ -470,27 +427,8 @@ func verifyFlags() error {
 			return err
 		}
 	}
-
-	// --api-version and --kind are required with --type=ansible and --type=helm, with one exception.
-	//
-	// If --type=helm and --helm-chart is set, --api-version and --kind are optional. If left unset,
-	// sane defaults are used when the specified helm chart is created.
-	if operatorType == projutil.OperatorTypeAnsible || operatorType == projutil.OperatorTypeHelm &&
-		len(helmChartRef) == 0 {
-		if len(apiVersion) == 0 {
-			return fmt.Errorf("value of --api-version must not have empty value")
-		}
-		if len(kind) == 0 {
-			return fmt.Errorf("value of --kind must not have empty value")
-		}
-		kindFirstLetter := string(kind[0])
-		if kindFirstLetter != strings.ToUpper(kindFirstLetter) {
-			return fmt.Errorf("value of --kind must start with an uppercase letter")
-		}
-		if strings.Count(apiVersion, "/") != 1 {
-			return fmt.Errorf("value of --api-version has wrong format (%v);"+
-				" format must be $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)", apiVersion)
-		}
+	if err := apiFlags.VerifyCommonFlags(operatorType); err != nil {
+		return err
 	}
 
 	return nil

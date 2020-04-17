@@ -1,0 +1,9 @@
+- group: mykind.example.com
+  version: v1alpha1
+  kind: MyKind
+  chart: helm-charts/mykind
+  watchDependentResources: true
+- group: app.example.com
+  version: v1alpha1
+  kind: App
+  chart: helm-charts/app

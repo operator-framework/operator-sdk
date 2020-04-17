@@ -23,7 +23,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var customAPIImport string
+var (
+	customAPIImport string
+	apiVersion      string
+	kind            string
+	crdVersion      string
+)
 
 //nolint:lll
 func newAddControllerCmd() *cobra.Command {

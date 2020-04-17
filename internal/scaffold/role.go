@@ -20,14 +20,15 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
-
-	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
-	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
+	"sort"
 
 	log "github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"
 	rbacv1 "k8s.io/api/rbac/v1"
 	cgoscheme "k8s.io/client-go/kubernetes/scheme"
+
+	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
+	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 )
 
 const RoleYamlFile = "role.yaml"
@@ -61,9 +62,9 @@ func UpdateRoleForResource(r *Resource, absProjectPath string) error {
 		return fmt.Errorf("failed to decode role manifest %v: %v", roleFilePath, err)
 	}
 	switch role := obj.(type) {
-	// TODO: use rbac/v1.
 	case *rbacv1.Role:
 		pr := &rbacv1.PolicyRule{}
+
 		apiGroupFound := false
 		for i := range role.Rules {
 			if role.Rules[i].APIGroups[0] == r.FullGroup {
@@ -72,6 +73,7 @@ func UpdateRoleForResource(r *Resource, absProjectPath string) error {
 				break
 			}
 		}
+
 		// check if the resource already exists
 		for _, resource := range pr.Resources {
 			if resource == r.Resource {
@@ -143,6 +145,106 @@ func UpdateRoleForResource(r *Resource, absProjectPath string) error {
 	}
 }
 
+// MergeRoleForResource merges incoming new API resource rules with existing deploy/role.yaml
+func MergeRoleForResource(r *Resource, absProjectPath string, roleScaffold Role) error {
+	roleFilePath := filepath.Join(absProjectPath, DeployDir, RoleYamlFile)
+	roleYAML, err := ioutil.ReadFile(roleFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to read role manifest %v: %v", roleFilePath, err)
+	}
+	// Check for existing role.yaml
+	if len(roleYAML) == 0 {
+		return fmt.Errorf("empty Role File at: %v", absProjectPath)
+	}
+	// Check for incoming new Role
+	if len(roleScaffold.CustomRules) == 0 {
+		return fmt.Errorf("customRules cannot be empty for new Role at: %v", r.APIVersion)
+	}
+
+	obj, _, err := cgoscheme.Codecs.UniversalDeserializer().Decode(roleYAML, nil, nil)
+	if err != nil {
+		return fmt.Errorf("failed to decode role manifest %v: %v", roleFilePath, err)
+	}
+	switch role := obj.(type) {
+	case *rbacv1.Role:
+		// TODO: Add logic to merge Cluster scoped rules into existing Kind: Role scoped rules
+		// Error out for ClusterRole merging with existing Kind: Role
+		if roleScaffold.IsClusterScoped {
+			return fmt.Errorf("cannot Merge Cluster scoped rules with existing deploy/role.yaml. " +
+				"please modify existing deploy/role.yaml and deploy/role_binding.yaml " +
+				"to reflect Cluster scope and try again")
+		}
+		mergedRoleRules := mergeRules(role.Rules, roleScaffold)
+		role.Rules = mergedRoleRules
+	case *rbacv1.ClusterRole:
+		mergedClusterRoleRules := mergeRules(role.Rules, roleScaffold)
+		role.Rules = mergedClusterRoleRules
+	default:
+		log.Errorf("Failed to parse role.yaml as a role %v", err)
+	}
+
+	if err := updateRoleFile(obj, roleFilePath); err != nil {
+		return fmt.Errorf("failed to update for resource (%v, %v): %v",
+			r.APIVersion, r.Kind, err)
+	}
+
+	return UpdateRoleForResource(r, absProjectPath)
+}
+
+func ifMatches(pr []string, newPr []string) bool {
+
+	sort.Strings(pr)
+	sort.Strings(newPr)
+
+	if len(pr) != len(newPr) {
+		return false
+	}
+	for i, v := range pr {
+		if v != newPr[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func findResource(resources []string, search string) bool {
+	for _, r := range resources {
+		if r == search || r == "*" {
+			return true
+		}
+	}
+	return false
+}
+
+func mergeRules(rules1 []rbacv1.PolicyRule, rules2 Role) []rbacv1.PolicyRule {
+	for j := range rules2.CustomRules {
+		ruleFound := false
+		prj := &rules2.CustomRules[j]
+	iLoop:
+		for i, pri := range rules1 {
+			// check if apiGroup, verbs, resourceName, and nonResourceURLS matches for new resource.
+			apiGroupsEqual := ifMatches(pri.APIGroups, prj.APIGroups)
+			verbsEqual := ifMatches(pri.Verbs, prj.Verbs)
+			resourceNamesEqual := ifMatches(pri.ResourceNames, prj.ResourceNames)
+			nonResourceURLsEqual := ifMatches(pri.NonResourceURLs, prj.NonResourceURLs)
+
+			if apiGroupsEqual && verbsEqual && resourceNamesEqual && nonResourceURLsEqual {
+				for _, newResource := range prj.Resources {
+					if !findResource(pri.Resources, newResource) {
+						// append rbac rule to deploy/role.yaml
+						rules1[i].Resources = append(rules1[i].Resources, newResource)
+					}
+				}
+				ruleFound = true
+				break iLoop
+			}
+		}
+		if !ruleFound {
+			rules1 = append(rules1, *prj)
+		}
+	}
+	return rules1
+}
 func updateRoleFile(role interface{}, roleFilePath string) error {
 	d, err := json.Marshal(&role)
 	if err != nil {

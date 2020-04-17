@@ -20,90 +20,270 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal/genutil"
-	gencrd "github.com/operator-framework/operator-sdk/internal/generate/crd"
-	"github.com/operator-framework/operator-sdk/internal/scaffold"
-	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
+	"k8s.io/client-go/discovery"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
+
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal/genutil"
+	apiflags "github.com/operator-framework/operator-sdk/internal/flags/apiflags"
+	"github.com/operator-framework/operator-sdk/internal/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/scaffold/ansible"
+	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
+	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
-var (
-	apiVersion     string
-	kind           string
-	skipGeneration bool
-	crdVersion     string
-)
+var apiFlags apiflags.APIFlags
 
 func newAddAPICmd() *cobra.Command {
 	apiCmd := &cobra.Command{
 		Use:   "api",
 		Short: "Adds a new api definition under pkg/apis",
-		Long: `operator-sdk add api --kind=<kind> --api-version=<group/version> creates
-the api definition for a new custom resource under pkg/apis. This command
-must be run from the project root directory. If the api already exists at
-pkg/apis/<group>/<version> then the command will not overwrite and return
-an error.
+		Long: `operator-sdk add api --kind=<kind> --api-version<group/version> 
+creates an API definition for a new custom resource.
+This command must be run from the project root directory.
 
-By default, this command runs Kubernetes deepcopy and CRD generators on
-tagged types in all paths under pkg/apis. Go code is generated under
-pkg/apis/<group>/<version>/zz_generated.deepcopy.go. CRD's are generated,
-or updated if they exist for a particular group + version + kind, under
+For Go-based operators:
+
+  - Creates the api definition for a new custom resource under pkg/apis.
+  - By default, this command runs Kubernetes deepcopy and CRD generators on
+  tagged types in all paths under pkg/apis. Go code is generated under
+  pkg/apis/<group>/<version>/zz_generated.deepcopy.go. Generation can be disabled with the
+  --skip-generation flag for Go-based operators.
+
+For Ansible-based operators:
+
+  - Creates resource folder under /roles.
+  - watches.yaml is updated with new resource.
+  - deploy/role.yaml will be updated with apiGroup for new API.
+
+For Helm-based operators:
+  - Creates resource folder under /helm-charts.
+  - watches.yaml is updated with new resource.
+  - deploy/role.yaml will be updated to reflact new rules for the incoming API.
+
+CRD's are generated, or updated if they exist for a particular group + version + kind, under
 deploy/crds/<full group>_<resource>_crd.yaml; OpenAPI V3 validation YAML
-is generated as a 'validation' object. Generation can be disabled with the
---skip-generation flag.
+is generated as a 'validation' object.`,
+		Example: `  # Create a new API, under an existing project. This command must be run from the project root directory.
+# Go Example:
+  $ operator-sdk add api --api-version=app.example.com/v1alpha1 --kind=AppService
 
-Example:
+# Ansible Example
+  $ operator-sdk add api  \
+  --api-version=app.example.com/v1alpha1 \
+  --kind=AppService
 
-	$ operator-sdk add api --api-version=app.example.com/v1alpha1 --kind=AppService
-	$ tree pkg/apis
-	pkg/apis/
-	├── addtoscheme_app_appservice.go
-	├── apis.go
-	└── app
-		└── v1alpha1
-			├── doc.go
-			├── register.go
-			├── appservice_types.go
-			├── zz_generated.deepcopy.go
-	$ tree deploy/crds
-	├── deploy/crds/app.example.com_v1alpha1_appservice_cr.yaml
-	├── deploy/crds/app.example.com_appservices_crd.yaml
+# Helm Example:
+  $ operator-sdk add api \
+  --api-version=app.example.com/v1alpha1 \
+  --kind=AppService
+
+  $ operator-sdk add api \
+  --api-version=app.example.com/v1alpha1 \
+  --kind=AppService
+  --helm-chart=myrepo/app
+
+  $ operator-sdk add api \
+  --helm-chart=myrepo/app
+
+  $ operator-sdk add api \
+  --helm-chart=myrepo/app \
+  --helm-chart-version=1.2.3
+
+  $ operator-sdk add api \
+  --helm-chart=app \
+  --helm-chart-repo=https://charts.mycompany.com/
+
+  $ operator-sdk add api \
+  --helm-chart=app \
+  --helm-chart-repo=https://charts.mycompany.com/ \
+  --helm-chart-version=1.2.3
+
+  $ operator-sdk add api \
+  --helm-chart=/path/to/local/chart-directories/app/
+
+  $ operator-sdk add api \
+  --helm-chart=/path/to/local/chart-archives/app-1.2.3.tgz
 `,
 		RunE: apiRun,
 	}
 
-	apiCmd.Flags().StringVar(&apiVersion, "api-version", "",
-		"Kubernetes APIVersion that has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)")
-	if err := apiCmd.MarkFlagRequired("api-version"); err != nil {
-		log.Fatalf("Failed to mark `api-version` flag for `add api` subcommand as required")
-	}
-	apiCmd.Flags().StringVar(&kind, "kind", "", "Kubernetes resource Kind name. (e.g AppService)")
-	if err := apiCmd.MarkFlagRequired("kind"); err != nil {
-		log.Fatalf("Failed to mark `kind` flag for `add api` subcommand as required")
-	}
-	apiCmd.Flags().BoolVar(&skipGeneration, "skip-generation", false,
-		"Skip generation of deepcopy and OpenAPI code and OpenAPI CRD specs")
-	apiCmd.Flags().StringVar(&crdVersion, "crd-version", gencrd.DefaultCRDVersion,
-		"CRD version to generate")
+	// Initialize flagSet struct with command flags
+	apiFlags.AddTo(apiCmd.Flags())
 
 	return apiCmd
 }
 
 func apiRun(cmd *cobra.Command, args []string) error {
+
 	projutil.MustInProjectRoot()
 
-	// Only Go projects can add apis.
-	if err := projutil.CheckGoProjectCmd(cmd); err != nil {
+	operatorType := projutil.GetOperatorType()
+	if operatorType == projutil.OperatorTypeUnknown {
+		return projutil.ErrUnknownOperatorType{}
+	}
+	// Verify the incoming flags.
+	if err := apiFlags.VerifyCommonFlags(operatorType); err != nil {
 		return err
 	}
 
-	log.Infof("Generating api version %s for kind %s.", apiVersion, kind)
+	log.Infof("Generating api version %s for kind %s.", apiFlags.APIVersion, apiFlags.Kind)
+
+	switch operatorType {
+	case projutil.OperatorTypeGo:
+		if err := doGoAPIScaffold(); err != nil {
+			return err
+		}
+	case projutil.OperatorTypeAnsible:
+		if err := doAnsibleAPIScaffold(); err != nil {
+			return err
+		}
+	case projutil.OperatorTypeHelm:
+		if err := doHelmAPIScaffold(); err != nil {
+			return err
+		}
+	}
+	log.Info("API generation complete.")
+	return nil
+}
+
+// TODO
+// Consolidate scaffold func to be used by both "new" and "add api" commands.
+func doAnsibleAPIScaffold() error {
+	// Create and validate new resource.
+	r, err := scaffold.NewResource(apiFlags.APIVersion, apiFlags.Kind)
+	if err != nil {
+		return fmt.Errorf("invalid apiVersion and kind: %v", err)
+	}
+	absProjectPath := projutil.MustGetwd()
+	cfg := &input.Config{
+		AbsProjectPath: absProjectPath,
+	}
+	roleFiles := ansible.RolesFiles{Resource: *r}
+	roleTemplates := ansible.RolesTemplates{Resource: *r}
+
+	// update watch.yaml for the given resource r.
+	if err := ansible.UpdateAnsibleWatchForResource(r, absProjectPath); err != nil {
+		return fmt.Errorf("failed to update the Watch manifest for the resource (%v, %v): (%v)",
+			r.APIVersion, r.Kind, err)
+	}
+
+	s := &scaffold.Scaffold{}
+	err = s.Execute(cfg,
+		&scaffold.CR{Resource: r},
+		&ansible.RolesReadme{Resource: *r},
+		&ansible.RolesMetaMain{Resource: *r},
+		&roleFiles,
+		&roleTemplates,
+		&ansible.RolesVarsMain{Resource: *r},
+		&ansible.RolesDefaultsMain{Resource: *r},
+		&ansible.RolesTasksMain{Resource: *r},
+		&ansible.RolesHandlersMain{Resource: *r},
+	)
+	if err != nil {
+		return fmt.Errorf("new ansible api scaffold failed: %v", err)
+	}
+	if err = genutil.GenerateCRDNonGo("", *r, apiFlags.CrdVersion); err != nil {
+		return err
+	}
+
+	// Remove placeholders from empty directories
+	err = os.Remove(filepath.Join(s.AbsProjectPath, roleFiles.Path))
+	if err != nil {
+		return fmt.Errorf("new ansible api scaffold failed: %v", err)
+	}
+	err = os.Remove(filepath.Join(s.AbsProjectPath, roleTemplates.Path))
+	if err != nil {
+		return fmt.Errorf("new ansible api scaffold failed: %v", err)
+	}
+
+	// update deploy/role.yaml for the given resource r.
+	if err := scaffold.UpdateRoleForResource(r, absProjectPath); err != nil {
+		return fmt.Errorf("failed to update the RBAC manifest for the resource (%v, %v): (%v)",
+			r.APIVersion, r.Kind, err)
+	}
+	return nil
+}
+
+// TODO
+// Consolidate scaffold func to be used by both "new" and "add api" commands.
+func doHelmAPIScaffold() error {
+
+	absProjectPath := projutil.MustGetwd()
+	projectName := filepath.Base(absProjectPath)
+	cfg := &input.Config{
+		AbsProjectPath: absProjectPath,
+		ProjectName:    projectName,
+	}
+
+	createOpts := helm.CreateChartOptions{
+		ResourceAPIVersion: apiFlags.APIVersion,
+		ResourceKind:       apiFlags.Kind,
+		Chart:              apiFlags.HelmChartRef,
+		Version:            apiFlags.HelmChartVersion,
+		Repo:               apiFlags.HelmChartRepo,
+	}
+
+	r, chart, err := helm.CreateChart(cfg.AbsProjectPath, createOpts)
+	if err != nil {
+		return fmt.Errorf("failed to create helm chart: %v", err)
+	}
+
+	valuesPath := filepath.Join("<project_dir>", helm.HelmChartsDir, chart.Name(), "values.yaml")
+
+	rawValues, err := yaml.Marshal(chart.Values)
+	if err != nil {
+		return fmt.Errorf("failed to get raw chart values: %v", err)
+	}
+	crSpec := fmt.Sprintf("# Default values copied from %s\n\n%s", valuesPath, rawValues)
+
+	// update watch.yaml for the given resource r.
+	if err := helm.UpdateHelmWatchForResource(r, absProjectPath, chart.Name()); err != nil {
+		return fmt.Errorf("failed to update the Watch manifest for the resource (%v, %v): (%v)",
+			r.APIVersion, r.Kind, err)
+	}
+
+	s := &scaffold.Scaffold{}
+	err = s.Execute(cfg,
+		&scaffold.CR{
+			Resource: r,
+			Spec:     crSpec,
+		},
+	)
+	if err != nil {
+		log.Fatalf("API scaffold failed: %v", err)
+	}
+	if err = genutil.GenerateCRDNonGo("", *r, apiFlags.CrdVersion); err != nil {
+		return err
+	}
+
+	roleScaffold := helm.DefaultRoleScaffold
+
+	if k8sCfg, err := config.GetConfig(); err != nil {
+		log.Warnf("Using default RBAC rules: failed to get Kubernetes config: %s", err)
+	} else if dc, err := discovery.NewDiscoveryClientForConfig(k8sCfg); err != nil {
+		log.Warnf("Using default RBAC rules: failed to create Kubernetes discovery client: %s", err)
+	} else {
+		roleScaffold = helm.GenerateRoleScaffold(dc, chart)
+	}
+
+	if err = scaffold.MergeRoleForResource(r, absProjectPath, roleScaffold); err != nil {
+		return fmt.Errorf("failed to merge rules in the RBAC manifest for resource (%v, %v): %v",
+			r.APIVersion, r.Kind, err)
+	}
+
+	return nil
+}
+
+// TODO
+// Consolidate scaffold func to be used by both "new" and "add api" commands.
+func doGoAPIScaffold() error {
 
 	// Create and validate new resource.
-	r, err := scaffold.NewResource(apiVersion, kind)
+	r, err := scaffold.NewResource(apiFlags.APIVersion, apiFlags.Kind)
 	if err != nil {
 		return err
 	}
@@ -140,14 +320,14 @@ func apiRun(cmd *cobra.Command, args []string) error {
 			r.APIVersion, r.Kind, err)
 	}
 
-	if !skipGeneration {
+	if !apiFlags.SkipGeneration {
 		// Run k8s codegen for deepcopy
 		if err := genutil.K8sCodegen(); err != nil {
 			log.Fatal(err)
 		}
 
 		// Generate a validation spec for the new CRD.
-		if err := genutil.CRDGen(crdVersion); err != nil {
+		if err := genutil.CRDGen(apiFlags.CrdVersion); err != nil {
 			log.Fatal(err)
 		}
 	}

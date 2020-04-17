@@ -354,7 +354,8 @@ $ kubectl delete -f deploy/service_account.yaml
 $ kubectl delete -f deploy/crds/cache.example.com_memcacheds_crd.yaml
 ```
 
-**NOTE** Additional CR/CRD's can be added to the project by running, for example, the command :`operator-sdk new api --api-version=cache.example.com/v1alpha1 --kind=AppService --type=ansible`
+**NOTE** Additional CR/CRD's can be added to the project by running, for example, the command :`operator-sdk add api --api-version=cache.example.com/v1alpha1 --kind=AppService`
+For more information, refer [cli][addcli] doc.
 
 [ansible-install-guide]: /docs/ansible/installation
 [ansible-runner-http-plugin]:https://github.com/ansible/ansible-runner-http
@@ -368,3 +369,4 @@ $ kubectl delete -f deploy/crds/cache.example.com_memcacheds_crd.yaml
 [go-tool]:https://golang.org/dl/
 [docker-tool]:https://docs.docker.com/install/
 [kubectl-tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
+[addcli]: /docs/cli/operator-sdk_add_api
