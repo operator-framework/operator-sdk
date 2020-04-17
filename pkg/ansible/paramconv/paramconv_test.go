@@ -112,7 +112,7 @@ func TestToCamel(t *testing.T) {
 			name: "should convert to Camel when has numbers",
 			args: args{"_app_test_k8s"},
 			want: "AppTestK8s",
-		},{
+		}, {
 			name: "should convert to Camel when has numbers and _",
 			args: args{"var_k8s"},
 			want: "varK8s",
