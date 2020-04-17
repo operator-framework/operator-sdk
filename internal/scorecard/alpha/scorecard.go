@@ -20,9 +20,11 @@ import (
 	"io/ioutil"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/operator-framework/operator-sdk/version"
 	"gopkg.in/yaml.v2"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
 )
@@ -44,11 +46,19 @@ func RunTests(o Options) error {
 		return nil
 	}
 
+	createdPods := make([]*v1.Pod, 0)
 	for i := 0; i < len(tests); i++ {
-		if err := runTest(o, tests[i]); err != nil {
+		pod, err := runTest(o, tests[i])
+		if err != nil {
 			return fmt.Errorf("test %s failed %s", tests[i].Name, err.Error())
 		}
+		createdPods = append(createdPods, pod)
 	}
+
+	// TODO replace sleep with a watch on the list of pods
+	time.Sleep(7 * time.Second)
+
+	printTestResults(o.Client, createdPods)
 
 	return nil
 }
@@ -88,17 +98,17 @@ func selectTests(selector labels.Selector, tests []ScorecardTest) []ScorecardTes
 
 // runTest executes a single test
 // TODO once tests exists, handle the test output
-func runTest(o Options, test ScorecardTest) error {
+func runTest(o Options, test ScorecardTest) (result *v1.Pod, err error) {
 	if test.Name == "" {
-		return errors.New("todo - remove later, only for linter")
+		return result, errors.New("todo - remove later, only for linter")
 	}
 	log.Printf("running test %s labels %v", test.Name, test.Labels)
 
 	// Create a Pod to run the test
 
 	podDef := getPodDefinition(test, "default", "default")
-	_, err := o.Client.CoreV1().Pods("default").Create(podDef)
-	return err
+	result, err = o.Client.CoreV1().Pods("default").Create(podDef)
+	return result, err
 }
 
 func ConfigDocLink() string {
@@ -108,4 +118,15 @@ func ConfigDocLink() string {
 	return fmt.Sprintf(
 		"https://github.com/operator-framework/operator-sdk/blob/%s/doc/test-framework/scorecard.md",
 		version.Version)
+}
+
+func printTestResults(client kubernetes.Interface, pods []*v1.Pod) {
+	for i := 0; i < len(pods); i++ {
+		testResult, err := getPodLog(client, *pods[i])
+		if err != nil {
+			fmt.Printf("error getting pod log %s\n", err.Error())
+		} else {
+			fmt.Println(testResult)
+		}
+	}
 }
