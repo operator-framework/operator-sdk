@@ -28,9 +28,9 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 
 	"github.com/operator-framework/api/pkg/manifests"
+	olmapiv1 "github.com/operator-framework/api/pkg/operators/v1"
+	olmapiv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	valerrors "github.com/operator-framework/api/pkg/validation/errors"
-	olmapiv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
-	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	"github.com/operator-framework/operator-registry/pkg/registry"
 	log "github.com/sirupsen/logrus"
