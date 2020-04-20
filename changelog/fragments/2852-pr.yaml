@@ -1,0 +1,41 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: The `inotify-tools` as a dependency of Ansible based-operator images which was deprecated and it will no longer scaffold the `/bin/ao-logs` which was using it to print the Ansible logs in the side-car since the side-car ansible container was removed in the previous versions.
+
+# kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "removal"
+
+    # Is this a breaking change?
+    breaking: true
+
+    # NOTE: ONLY USE `pull_request_override` WHEN ADDING THIS
+    # FILE FOR A PREVIOUSLY MERGED PULL_REQUEST!
+    #
+    # The generator auto-detects the PR number from the commit
+    # message in which this file was originally added.
+    #
+    # What is the pull request number (without the "#")?
+    # pull_request_override: 0
+
+
+    # Migration can be defined to automatically add a section to
+    # the migration guide. This is required for breaking changes.
+    migration:
+      header: Remove the file `/bin/ao-logs` for Ansible based-operators
+      body: >
+        The `inotify-tools` as a dependency of Ansible based-operator images which was deprecated
+        in the version `v0.16.0` was removed. This dependency was used to output the Ansible logs
+        in a side-car container called `ansible`, which has no longer been scaffolded by default.
+        In this way, if you have any customization using this dependency be aware that it is no longer
+        in the Ansible based-operator image and then, feel free to remove this file `/bin/ao-logs`
+        for your projects since it has no longer usage.
+        For further information also see the section `Remove Ansible container sidecar` on the migration
+        guide of the version `v0.16.0`.
+
+
