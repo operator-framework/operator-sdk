@@ -26,10 +26,13 @@ import (
 func NewCmd() *cobra.Command {
 	var (
 		config string
+		output string
 		//bundle   string // TODO - to be implemented
-		selector   string
-		kubeconfig string
-		//list     bool // TODO - to be implemented
+		selector       string
+		kubeconfig     string
+		namespace      string
+		serviceAccount string
+		list           bool
 	)
 	scorecardCmd := &cobra.Command{
 		Use:    "scorecard",
@@ -49,12 +52,24 @@ func NewCmd() *cobra.Command {
 				return fmt.Errorf("could not find config file %s", err.Error())
 			}
 
+			o.ServiceAccount = serviceAccount
+			o.Namespace = namespace
+			o.List = list
+			o.OutputFormat = output
+
 			o.Selector, err = labels.Parse(selector)
 			if err != nil {
 				return fmt.Errorf("could not parse selector %s", err.Error())
 			}
 
 			// TODO - process list and output formatting here?
+
+			if list {
+				if err := scorecard.ListTests(o); err != nil {
+					log.Fatal(err)
+				}
+				return nil
+			}
 
 			if err := scorecard.RunTests(o); err != nil {
 				log.Fatal(err)
@@ -69,7 +84,10 @@ func NewCmd() *cobra.Command {
 
 	//	scorecardCmd.Flags().StringVar(&bundle, "bundle", "", "path to the operator bundle contents on disk")
 	scorecardCmd.Flags().StringVarP(&selector, "selector", "l", "", "label selector to determine which tests are run")
-	//	scorecardCmd.Flags().BoolVarP(&list, "list", "L", false, "option to enable listing which tests are run")
+	scorecardCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "namespace to run the test images in")
+	scorecardCmd.Flags().StringVarP(&output, "output", "o", "text", "Output format for results.  Valid values: text, json")
+	scorecardCmd.Flags().StringVarP(&serviceAccount, "service-account", "s", "default", "service account to run the test images")
+	scorecardCmd.Flags().BoolVarP(&list, "list", "L", false, "option to enable listing which tests are run")
 
 	return scorecardCmd
 }

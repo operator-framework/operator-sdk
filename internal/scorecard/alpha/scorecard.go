@@ -15,6 +15,7 @@
 package alpha
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -22,6 +23,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 	"github.com/operator-framework/operator-sdk/version"
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
@@ -30,12 +32,14 @@ import (
 )
 
 type Options struct {
-	Config       Config
-	Selector     labels.Selector
-	List         bool
-	OutputFormat string
-	Kubeconfig   string
-	Client       kubernetes.Interface
+	Config         Config
+	Selector       labels.Selector
+	List           bool
+	OutputFormat   string
+	Kubeconfig     string
+	Namespace      string
+	ServiceAccount string
+	Client         kubernetes.Interface
 }
 
 // RunTests executes the scorecard tests as configured
@@ -106,7 +110,7 @@ func runTest(o Options, test ScorecardTest) (result *v1.Pod, err error) {
 
 	// Create a Pod to run the test
 
-	podDef := getPodDefinition(test, "default", "default")
+	podDef := getPodDefinition(test, o.Namespace, o.ServiceAccount)
 	result, err = o.Client.CoreV1().Pods("default").Create(podDef)
 	return result, err
 }
@@ -129,4 +133,48 @@ func printTestResults(client kubernetes.Interface, pods []*v1.Pod) {
 			fmt.Println(testResult)
 		}
 	}
+}
+
+// ListTests lists the scorecard tests as configured that would be
+// run based on user selection
+func ListTests(o Options) error {
+	tests := selectTests(o.Selector, o.Config.Tests)
+	if len(tests) == 0 {
+		fmt.Println("no tests selected")
+		return nil
+	}
+
+	fmt.Printf("%s\n", getScorecardOutput(o.OutputFormat, tests))
+
+	return nil
+}
+
+func getScorecardOutput(outputFormat string, tests []ScorecardTest) string {
+	output := v1alpha2.ScorecardOutput{}
+	output.Results = make([]v1alpha2.ScorecardTestResult, 0)
+
+	for i := 0; i < len(tests); i++ {
+		testResult := v1alpha2.ScorecardTestResult{}
+		testResult.Name = tests[i].Name
+		testResult.Labels = tests[i].Labels
+		testResult.Description = tests[i].Description
+		output.Results = append(output.Results, testResult)
+	}
+
+	if outputFormat == "text" {
+		o, err := output.MarshalText()
+		if err != nil {
+			return err.Error()
+		}
+		return o
+	} else {
+		bytes, err := json.MarshalIndent(output, "", "  ")
+		if err != nil {
+			return err.Error()
+		}
+		return string(bytes)
+	}
+
+	return "error, invalid output format selected"
+
 }
