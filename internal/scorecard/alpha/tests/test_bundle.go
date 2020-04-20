@@ -46,7 +46,7 @@ func GetBundle(bundlePath string) (cfg TestBundle, err error) {
 		return cfg, fmt.Errorf("no bundle found")
 	}
 
-	csv, err := cfg.Bundles[0].ClusterServiceVersion()
+	_, err = cfg.Bundles[0].ClusterServiceVersion()
 	if err != nil {
 		return cfg, fmt.Errorf("error in csv retrieval %s", err.Error())
 	}
