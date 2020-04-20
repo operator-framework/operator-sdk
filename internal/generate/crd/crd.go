@@ -28,7 +28,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 
-	"github.com/ghodss/yaml"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	apiext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
@@ -36,6 +35,7 @@ import (
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"sigs.k8s.io/yaml"
 )
 
 const DefaultCRDVersion = "v1beta1"

@@ -34,7 +34,6 @@ import (
 	internalk8sutil "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 
-	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
@@ -49,6 +48,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
 )
 
 type PluginType int

@@ -23,9 +23,9 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 
-	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
+	"sigs.k8s.io/yaml"
 )
 
 // isBundleDirExist returns true if "parentDir/version" exists on disk.

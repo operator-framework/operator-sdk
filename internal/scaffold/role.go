@@ -15,7 +15,6 @@
 package scaffold
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -23,9 +22,9 @@ import (
 	"sort"
 
 	log "github.com/sirupsen/logrus"
-	yaml "gopkg.in/yaml.v2"
 	rbacv1 "k8s.io/api/rbac/v1"
 	cgoscheme "k8s.io/client-go/kubernetes/scheme"
+	yaml "sigs.k8s.io/yaml"
 
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
@@ -246,15 +245,7 @@ func mergeRules(rules1 []rbacv1.PolicyRule, rules2 Role) []rbacv1.PolicyRule {
 	return rules1
 }
 func updateRoleFile(role interface{}, roleFilePath string) error {
-	d, err := json.Marshal(&role)
-	if err != nil {
-		return fmt.Errorf("failed to marshal role(%+v): %v", role, err)
-	}
-	m := &map[string]interface{}{}
-	if err := yaml.Unmarshal(d, m); err != nil {
-		return fmt.Errorf("failed to unmarshal role(%+v): %v", role, err)
-	}
-	data, err := yaml.Marshal(m)
+	data, err := yaml.Marshal(&role)
 	if err != nil {
 		return fmt.Errorf("failed to marshal role(%+v): %v", role, err)
 	}

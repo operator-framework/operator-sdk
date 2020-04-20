@@ -27,7 +27,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/generate/olm-catalog/descriptor"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
-	"github.com/ghodss/yaml"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
@@ -37,6 +36,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/version"
+	"sigs.k8s.io/yaml"
 )
 
 // manifestCollection holds a collection of all manifests relevant to CSV updates.

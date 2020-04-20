@@ -23,11 +23,11 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 
-	"github.com/ghodss/yaml"
 	"github.com/operator-framework/operator-registry/pkg/registry"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/yaml"
 )
 
 // IsManifestDataStale checks if manifest data stored in the registry is stale

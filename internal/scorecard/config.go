@@ -17,7 +17,7 @@ package scorecard
 import (
 	"fmt"
 
-	"gopkg.in/yaml.v2"
+	"sigs.k8s.io/yaml"
 )
 
 // ValidateConfig takes a config for a plugin and returns a nil error if valid or an error

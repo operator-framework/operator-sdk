@@ -7,7 +7,6 @@ require (
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/coreos/prometheus-operator v0.38.0
 	github.com/fatih/structtag v1.1.0
-	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.1
 	github.com/gobuffalo/packr v1.30.1 // indirect
@@ -40,6 +39,7 @@ require (
 	gomodules.xyz/jsonpatch/v3 v3.0.1
 	gopkg.in/gorp.v1 v1.7.2 // indirect
 	gopkg.in/yaml.v2 v2.2.8
+	gopkg.in/yaml.v3 v3.0.0-20190905181640-827449938966
 	helm.sh/helm/v3 v3.1.2
 	k8s.io/api v0.17.4
 	k8s.io/apiextensions-apiserver v0.17.4
@@ -57,6 +57,7 @@ require (
 	sigs.k8s.io/controller-tools v0.2.8
 	// Using branch feature/plugins-part-2-electric-boogaloo 27812b07d2db958a31f985b4d9800c204f68bff0
 	sigs.k8s.io/kubebuilder v1.0.9-0.20200409105744-27812b07d2db
+	// todo: Note: this needs to be bumped to v1.2.0 when we bump to k8s 1.18.
 	sigs.k8s.io/yaml v1.1.0
 )
 

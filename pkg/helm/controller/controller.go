@@ -22,7 +22,11 @@ import (
 	"sync"
 	"time"
 
-	yaml "gopkg.in/yaml.v2"
+	// todo(camila): replace it for sigs.k8s.io/yaml
+	// We'll need to refactor it do split the manifest string into separate YAML documents
+	// and then iterate through using yaml.Unmarshal instead.
+	"gopkg.in/yaml.v3"
+
 	rpb "helm.sh/helm/v3/pkg/release"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
