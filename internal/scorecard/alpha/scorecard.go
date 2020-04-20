@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"strings"
 	"time"
 
@@ -62,7 +61,8 @@ func RunTests(o Options) error {
 	// TODO replace sleep with a watch on the list of pods
 	time.Sleep(7 * time.Second)
 
-	printTestResults(o.Client, createdPods)
+	testOutput := getTestResults(o.Client, createdPods)
+	printOutput(o.OutputFormat, testOutput)
 
 	return nil
 }
@@ -106,10 +106,8 @@ func runTest(o Options, test ScorecardTest) (result *v1.Pod, err error) {
 	if test.Name == "" {
 		return result, errors.New("todo - remove later, only for linter")
 	}
-	log.Printf("running test %s labels %v", test.Name, test.Labels)
 
 	// Create a Pod to run the test
-
 	podDef := getPodDefinition(test, o.Namespace, o.ServiceAccount)
 	result, err = o.Client.CoreV1().Pods("default").Create(podDef)
 	return result, err
@@ -124,15 +122,24 @@ func ConfigDocLink() string {
 		version.Version)
 }
 
-func printTestResults(client kubernetes.Interface, pods []*v1.Pod) {
+func getTestResults(client kubernetes.Interface, pods []*v1.Pod) (output v1alpha2.ScorecardOutput) {
+	output.Results = make([]v1alpha2.ScorecardTestResult, 0)
 	for i := 0; i < len(pods); i++ {
-		testResult, err := getPodLog(client, *pods[i])
+		logBytes, err := getPodLog(client, *pods[i])
 		if err != nil {
 			fmt.Printf("error getting pod log %s\n", err.Error())
 		} else {
-			fmt.Println(testResult)
+			// marshal pod log into ScorecardTestResult
+			var sc v1alpha2.ScorecardTestResult
+			err := json.Unmarshal(logBytes, &sc)
+			if err != nil {
+				fmt.Printf("error unmarshalling test result %s\n", err.Error())
+			} else {
+				output.Results = append(output.Results, sc)
+			}
 		}
 	}
+	return output
 }
 
 // ListTests lists the scorecard tests as configured that would be
@@ -144,12 +151,6 @@ func ListTests(o Options) error {
 		return nil
 	}
 
-	fmt.Printf("%s\n", getScorecardOutput(o.OutputFormat, tests))
-
-	return nil
-}
-
-func getScorecardOutput(outputFormat string, tests []ScorecardTest) string {
 	output := v1alpha2.ScorecardOutput{}
 	output.Results = make([]v1alpha2.ScorecardTestResult, 0)
 
@@ -161,20 +162,31 @@ func getScorecardOutput(outputFormat string, tests []ScorecardTest) string {
 		output.Results = append(output.Results, testResult)
 	}
 
+	printOutput(o.OutputFormat, output)
+
+	return nil
+}
+
+func printOutput(outputFormat string, output v1alpha2.ScorecardOutput) {
 	if outputFormat == "text" {
 		o, err := output.MarshalText()
 		if err != nil {
-			return err.Error()
+			fmt.Printf(err.Error())
+			return
 		}
-		return o
-	} else {
+		fmt.Printf("%s\n", o)
+		return
+	}
+	if outputFormat == "json" {
 		bytes, err := json.MarshalIndent(output, "", "  ")
 		if err != nil {
-			return err.Error()
+			fmt.Printf(err.Error())
+			return
 		}
-		return string(bytes)
+		fmt.Printf("%s\n", string(bytes))
+		return
 	}
 
-	return "error, invalid output format selected"
+	fmt.Printf("error, invalid output format selected")
 
 }
