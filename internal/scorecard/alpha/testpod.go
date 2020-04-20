@@ -113,3 +113,16 @@ func getPodLog(client kubernetes.Interface, pod v1.Pod) (logOutput []byte, err e
 	//logOutput = buf.String()
 	return buf.Bytes(), err
 }
+
+func deletePods(client kubernetes.Interface, pods []*v1.Pod) {
+	for i := 0; i < len(pods); i++ {
+		p := pods[i]
+		err := client.CoreV1().Pods(p.Namespace).Delete(p.Name, &metav1.DeleteOptions{})
+		if err != nil {
+			fmt.Printf("error deleting pod %s %s\n", p.Name, err.Error())
+		} else {
+			fmt.Printf("deleted pod %s\n", p.Name)
+		}
+
+	}
+}
