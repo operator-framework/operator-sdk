@@ -25,6 +25,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 
 	"github.com/operator-framework/operator-sdk/internal/scorecard/alpha/tests"
@@ -85,9 +86,7 @@ func main() {
 	case tests.BasicCheckSpecTest:
 		result = tests.CheckSpecTest(cfg)
 	default:
-		log.Fatal("invalid test name argument passed")
-		// TODO print out full list of test names to give a hint
-		// to the end user on what the valid tests are
+		result = printValidTests()
 	}
 
 	prettyJSON, err := json.MarshalIndent(result, "", "    ")
@@ -154,4 +153,21 @@ func Unzip(src string, dest string) ([]string, error) {
 		}
 	}
 	return filenames, nil
+}
+
+func printValidTests() (result v1alpha2.ScorecardTestResult) {
+	result.State = scapiv1alpha2.FailState
+	result.Errors = make([]string, 0)
+	result.Suggestions = make([]string, 0)
+
+	str := fmt.Sprintf("Valid tests for this image include: %s, %s, %s, %s, %s, %s, %s",
+		tests.OLMBundleValidationTest,
+		tests.OLMCRDsHaveValidationTest,
+		tests.OLMCRDsHaveResourcesTest,
+		tests.OLMSpecDescriptorsTest,
+		tests.OLMStatusDescriptorsTest,
+		tests.BasicCheckStatusTest,
+		tests.BasicCheckSpecTest)
+	result.Suggestions = append(result.Suggestions, str)
+	return result
 }
