@@ -25,13 +25,6 @@ tests:
     suite: basic
     test: basic-check-status-test
   description: check the status test
-- name: "foo-check-status"
-  image: quay.io/operator-framework/scorecard-test:dev
-  entrypoint: foo-check-status
-  labels:
-    suite: basic
-    test: foo
-  description: check the status test
 - name: "olm-bundle-validation"
   image: quay.io/operator-framework/scorecard-test:dev
   entrypoint: olm-bundle-validation

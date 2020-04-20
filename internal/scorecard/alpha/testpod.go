@@ -96,7 +96,7 @@ func stringWithCharset(length int, charset string) string {
 	return string(b)
 }
 
-func getPodLog(client kubernetes.Interface, pod v1.Pod) (logOutput string, err error) {
+func getPodLog(client kubernetes.Interface, pod v1.Pod) (logOutput []byte, err error) {
 
 	req := client.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &v1.PodLogOptions{})
 	podLogs, err := req.Stream()
@@ -110,6 +110,6 @@ func getPodLog(client kubernetes.Interface, pod v1.Pod) (logOutput string, err e
 	if err != nil {
 		return logOutput, err
 	}
-	logOutput = buf.String()
-	return logOutput, err
+	//logOutput = buf.String()
+	return buf.Bytes(), err
 }
