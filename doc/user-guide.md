@@ -842,7 +842,7 @@ When the operator is not running in a cluster, the Manager will return an error 
 [event_filtering]:./user/event-filtering.md
 [controller_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/controller#Options
 [controller_godocs]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/controller
-controller-runtime-reconcile-godoc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Reconciler
+[controller-runtime-reconcile-godoc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Reconciler
 [operator_scope]:./operator-scope.md
 [install_guide]: ./user/install-operator-sdk.md
 [pod_eviction_timeout]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#options
