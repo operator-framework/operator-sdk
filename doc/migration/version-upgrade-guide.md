@@ -1056,7 +1056,7 @@ RUN ansible-galaxy collection install -r ${HOME}/requirements.yml \
  && chmod -R ug+rwx ${HOME}/.ansible
 ```
 
-## Unreleased (Master Branch)
+## v0.17.x
 
 ### modules
 
@@ -1064,7 +1064,7 @@ RUN ansible-galaxy collection install -r ${HOME}/requirements.yml \
 
 ```
 require (
-	github.com/operator-framework/operator-sdk master
+	github.com/operator-framework/operator-sdk v0.17.0
 	sigs.k8s.io/controller-runtime v0.5.2
 )
 
@@ -1175,15 +1175,10 @@ install:
 - The `--namespace` flag from `operator-sdk run --local`, `operator-sdk test --local`, and `operator-sdk cleanup` was
 deprecated and is replaced by `--watch-namespace` and `--operator-namespace`.
 
-    The `--operator-namespace` flag can be used to set the namespace where the operator will be deployed. It will set the
-    environment variable `OPERATOR_NAMESPACE`. If this value is not set, then it will be the namespace defined as in your
-    current kubeconfig context.
+> **NOTES:** 
+> - The `--operator-namespace` flag can be used to set the namespace where the operator will be deployed. It will set the environment variable `OPERATOR_NAMESPACE`. If this value is not set, then it will be the namespace defined as in your current kubeconfig context.
 
-    The `--watch-namespace` flag can be used to set the namespace(s) which the operator will watch for changes. It will set
-    the environment variable `WATCH_NAMESPACE`. Use an explicit empty string to watch all namespaces or a comma-separated
-    list of namespaces (e.g. "ns1,ns2") to watch multiple namespace when the operator is cluster-scoped. If using a list,
-    then it should contain the namespace where the operator is deployed since the default metrics implementation will
-    manage resources in the Operator's namespace. By default, `--watch-namespace` will be set to the operator namespace.
+> - The `--watch-namespace` flag can be used to set the namespace(s) which the operator will watch for changes. It will set the environment variable `WATCH_NAMESPACE`. Use an explicit empty string to watch all namespaces or a comma-separated list of namespaces (e.g. "ns1,ns2") to watch multiple namespace when the operator is cluster-scoped. If using a list, then it should contain the namespace where the operator is deployed since the default metrics implementation will manage resources in the Operator's namespace. By default, `--watch-namespace` will be set to the operator namespace.
 
 - If you've run `operator-sdk bundle create --generate-only`, move your bundle Dockerfile at
 `<project-root>/deploy/olm-catalog/<operator-name>/Dockerfile` to `<project-root>/bundle.Dockerfile` and update the

@@ -1060,15 +1060,15 @@ RUN ansible-galaxy collection install -r ${HOME}/requirements.yml \
  && chmod -R ug+rwx ${HOME}/.ansible
 ```
 
-## Unreleased (Master Branch)
+## v0.17.x
 
-**modules**
+### modules
 
 - Ensure that the following `require` modules and `replace` directives with the specific versions are present in your `go.mod` file:
 
 ```
 require (
-	github.com/operator-framework/operator-sdk master
+	github.com/operator-framework/operator-sdk v0.17.0
 	sigs.k8s.io/controller-runtime v0.5.2
 )
 
@@ -1082,9 +1082,9 @@ replace (
 - Run the command `operator-sdk generate k8s` to ensure that your resources will be updated
 - Run the command `operator-sdk generate crds` to regenerate CRDs
 
-**Breaking Changes**
+### Breaking Changes
 
-**OpenAPI generation**
+#### OpenAPI generation
 
 - The deprecated `operator-sdk generate openapi` command has been removed. This command generated CRDs and
   `zz_generated.openapi` files for operator APIs.
@@ -1094,10 +1094,10 @@ To generate CRDs, use `operator-sdk generate crds`.
 To generate Go OpenAPI code, use `openapi-gen` directly. For example:
 
 ```bash
-&#35 Build the latest openapi-gen from source
+# Build the latest openapi-gen from source
 which ./bin/openapi-gen > /dev/null || go build -o ./bin/openapi-gen k8s.io/kube-openapi/cmd/openapi-gen
 
-&#35 Run openapi-gen for each of your API group/version packages
+# Run openapi-gen for each of your API group/version packages
 ./bin/openapi-gen --logtostderr=true \
                   -i ./pkg/apis/<group>/<version> \
                   -o "" \
@@ -1107,7 +1107,7 @@ which ./bin/openapi-gen > /dev/null || go build -o ./bin/openapi-gen k8s.io/kube
                   -r "-"
 ```
 
-**Molecule Upgrade for Ansible based-operators**
+#### Molecule Upgrade for Ansible based-operators
 
 The Molecule version for Ansible based-operators was upgraded from `2.22` to `3.0.2`. The following changes are required in the default scaffold files.
 
@@ -1131,6 +1131,8 @@ With:
 lint: |
   set -e
   yamllint -d "{extends: relaxed, rules: {line-length: {max: 120}}}" .
+```
+
 ```
 
 Replace:
@@ -1167,9 +1169,9 @@ install:
 
 **NOTE** To know more about how to upgrade your project to use the V3 Molecule version see [here](https://github.com/ansible-community/molecule/issues/2560).  
 
-**Deprecations**
+### Deprecations
 
-**Test Framework**
+#### Test Framework
 
 - The methods `ctx.GetOperatorNamespace()` and `ctx.GetWatchNamespace()` were added to `pkg/test` in order to replace
 `ctx.GetNamespace()` which is deprecated. In this way, replace the use of `ctx.GetNamespace()` in your project with
@@ -1177,15 +1179,10 @@ install:
 - The `--namespace` flag from `operator-sdk run --local`, `operator-sdk test --local`, and `operator-sdk cleanup` was
 deprecated and is replaced by `--watch-namespace` and `--operator-namespace`.
 
-    The `--operator-namespace` flag can be used to set the namespace where the operator will be deployed. It will set the
-    environment variable `OPERATOR_NAMESPACE`. If this value is not set, then it will be the namespace defined as in your
-    current kubeconfig context.
+> **NOTES:** 
+> - The `--operator-namespace` flag can be used to set the namespace where the operator will be deployed. It will set the environment variable `OPERATOR_NAMESPACE`. If this value is not set, then it will be the namespace defined as in your current kubeconfig context.
 
-    The `--watch-namespace` flag can be used to set the namespace(s) which the operator will watch for changes. It will set
-    the environment variable `WATCH_NAMESPACE`. Use an explicit empty string to watch all namespaces or a comma-separated
-    list of namespaces (e.g. "ns1,ns2") to watch multiple namespace when the operator is cluster-scoped. If using a list,
-    then it should contain the namespace where the operator is deployed since the default metrics implementation will
-    manage resources in the Operator's namespace. By default, `--watch-namespace` will be set to the operator namespace.
+> - The `--watch-namespace` flag can be used to set the namespace(s) which the operator will watch for changes. It will set the environment variable `WATCH_NAMESPACE`. Use an explicit empty string to watch all namespaces or a comma-separated list of namespaces (e.g. "ns1,ns2") to watch multiple namespace when the operator is cluster-scoped. If using a list, then it should contain the namespace where the operator is deployed since the default metrics implementation will manage resources in the Operator's namespace. By default, `--watch-namespace` will be set to the operator namespace.
 
 - If you've run `operator-sdk bundle create --generate-only`, move your bundle Dockerfile at
 `<project-root>/deploy/olm-catalog/<operator-name>/Dockerfile` to `<project-root>/bundle.Dockerfile` and update the
