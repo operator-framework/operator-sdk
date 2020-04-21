@@ -50,7 +50,7 @@ func main() {
 		log.Fatal("test name argument is required")
 	}
 
-	// Create tmp directory for the unzipped bundle
+	// Create tmp directory for the untar'd bundle
 	tmpDir, err := ioutil.TempDir("/tmp", "scorecard-bundle")
 	if err != nil {
 		log.Fatal(err)

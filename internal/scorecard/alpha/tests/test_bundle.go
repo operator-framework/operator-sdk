@@ -27,7 +27,7 @@ import (
 // TestBundle holds the bundle contents to be tested
 type TestBundle struct {
 	BundleErrors []errors.ManifestResult
-	Bundles      []*registry.Bundle
+	Bundle       registry.Bundle
 }
 
 // GetBundle parses a Bundle from a given on-disk path returning a TestBundle
@@ -40,13 +40,11 @@ func GetBundle(bundlePath string) (cfg TestBundle, err error) {
 
 	// TODO evaluate another API call that would support the new
 	// bundle format
-	_, cfg.Bundles, cfg.BundleErrors = manifests.GetManifestsDir(bundlePath)
+	var bundles []*registry.Bundle
+	_, bundles, cfg.BundleErrors = manifests.GetManifestsDir(bundlePath)
 
-	if len(cfg.Bundles) == 0 {
-		return cfg, fmt.Errorf("no bundle found")
-	}
-
-	_, err = cfg.Bundles[0].ClusterServiceVersion()
+	cfg.Bundle = *bundles[0]
+	_, err = cfg.Bundle.ClusterServiceVersion()
 	if err != nil {
 		return cfg, fmt.Errorf("error in csv retrieval %s", err.Error())
 	}
