@@ -277,7 +277,7 @@ Create a new PR for this branch, targetting the `master` branch. Once this PR pa
 
 If the release is for a patch version (e.g. `v1.3.1`), an identical PR should be created, targetting the  `v1.3.x` branch. Once this PR passes CI and is merged, `v1.3.x` can be unfrozen.
 
-2. A new section for upgrading operator projects to v1.3.0 should be added to the [version upgrade guide][version-upgrade-guide]. This section should contain steps directing users to upgrade dependency versions in `go.mod`, update function signatures, etc.
+2. A pull request for the new section for upgrading operator projects to <tag> that should be added to the [version upgrade guide][version-upgrade-guide] will be generated automatically based one the `changelog/fragments`. This section should contain steps directing users to upgrade dependency versions in `go.mod`, update function signatures, etc.
 
 3. Then, update the GitHub Release Notes as:
 
@@ -378,4 +378,3 @@ Add the following line to the top of the GitHub release notes for `v1.3.0`:
 [homebrew-repo]:https://github.com/Homebrew/homebrew-core
 [sdk-samples-repo]:https://github.com/operator-framework/operator-sdk-samples
 [version-upgrade-guide]:../migration/version-upgrade-guide.md
-[go-memcached-sample]:https://github.com/operator-framework/operator-sdk-samples/tree/master/memcached-operator
