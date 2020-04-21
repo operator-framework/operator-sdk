@@ -54,8 +54,9 @@
 - The command `operator-sdk generate k8s` no longer requires users to explicitly set GOROOT in their environment. Now, GOROOT is detected using `go env GOROOT` and set automatically. ([#2754](https://github.com/operator-framework/operator-sdk/pull/2754))
 - `operator-sdk generate csv` and `operator-sdk test local` now parse multi-manifest files correctly. ([#2758](https://github.com/operator-framework/operator-sdk/pull/2758))
 - Fixed CRD validation generation issue with `status.Conditions`. ([#2739](https://github.com/operator-framework/operator-sdk/pull/2739))
-- In Helm-based operators, reconcile logic now uses three-way strategic merge patches so that array patch strategies are correctly honored and applied. ([#2808](https://github.com/operator-framework/operator-sdk/pull/2808))
+- Fix issue faced in the reconciliation when arrays are used in the config YAML files for Helm based-operators. ([#2777](https://github.com/operator-framework/operator-sdk/pull/2777))
 - Fixed issue in helm-operator where empty resource in release manifest caused failures while setting up watches for dependent resources. ([#2831](https://github.com/operator-framework/operator-sdk/pull/2831))
+
 
 ## v0.16.0
 

@@ -20,10 +20,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
+
 	"gomodules.xyz/jsonpatch/v3"
 	helmkube "helm.sh/helm/v3/pkg/kube"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-	"strings"
 
 	"helm.sh/helm/v3/pkg/action"
 	cpb "helm.sh/helm/v3/pkg/chart"
@@ -312,7 +313,7 @@ func createPatch(existing runtime.Object, expected *resource.Info) ([]byte, apit
 	if isUnstructured || isCRD {
 		// fall back to generic JSON merge patch
 		patch, err := createJSONMergePatch(existingJSON, expectedJSON)
-		return patch, apitypes.MergePatchType, err
+		return patch, apitypes.JSONPatchType, err
 	}
 
 	patchMeta, err := strategicpatch.NewPatchMetaFromStruct(versionedObject)
