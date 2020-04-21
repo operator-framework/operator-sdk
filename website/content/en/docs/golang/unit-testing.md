@@ -252,7 +252,7 @@ func TestMemcachedController(t *testing.T) {
 <!-- Link vars declaration -->
 <!-- NOTE: The CI has a bug and the test will not pass with _ . Use "-" instead of "_" -->
 
-[doc-e2e-test]: /docs/test-framework/writing-e2e-tests/
+[doc-e2e-test]: e2e-tests
 [doc-client]: /docs/golang/references/client/
 [doc-cr-fake-client]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/client/fake
 [repo-memcached-reconcile]: https://github.com/operator-framework/operator-sdk-samples/blob/4c6934448684a6953ece4d3d9f3f77494b1c125e/memcached-operator/pkg/controller/memcached/memcached_controller.go#L82
