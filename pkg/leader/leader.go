@@ -120,7 +120,7 @@ func Become(ctx context.Context, lockName string) error {
 				err = client.Get(ctx, key, leaderPod)
 				switch {
 				case apierrors.IsNotFound(err):
-					log.Info("Leader pod has been deleted, waiting for garbage collection do remove the lock.")
+					log.Info("Leader pod has been deleted, waiting for garbage collection to remove the lock.")
 				case err != nil:
 					return err
 				case isPodEvicted(*leaderPod) && leaderPod.GetDeletionTimestamp() == nil:
