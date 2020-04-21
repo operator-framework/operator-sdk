@@ -19,14 +19,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"regexp"
+	"strings"
+
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
 	k8sRequest "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
 	osdkHandler "github.com/operator-framework/operator-sdk/pkg/handler"
-	"net/http"
-	"regexp"
-	"strings"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalscheme "k8s.io/apimachinery/pkg/apis/meta/internalversion/scheme"
@@ -271,7 +272,6 @@ func (c *cacheResponseHandler) getListFromCache(r *requestfactory.RequestInfo, r
 	k.Kind = k.Kind + "List"
 	un := unstructured.UnstructuredList{}
 	un.SetGroupVersionKind(k)
-
 	ctx, cancel := context.WithTimeout(context.Background(), cacheEscacheEstablishmentTimeout)
 	defer cancel()
 	err := c.informerCache.List(ctx, &un, clientListOpts...)
