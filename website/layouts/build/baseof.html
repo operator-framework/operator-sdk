@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="{{ .Site.Language.Lang }}" class="no-js">
+  <head>
+    {{ partial "head.html" . }}
+  </head>
+  <body class="td-{{ .Kind }}">
+      {{ partial "navbar.html" . }}
+      
+<section class="of-masthead of-masthead--subpage">
+  <h1 class="of-heading of-heading--xl">Building the Operator SDK</h1>
+</section>
+<section class="of-section-page-intro of-section-page-intro--overlay">
+  <header class="of-section-page-intro__header">
+    <h2 class="of-heading of-heading--md">How can I build with Operator SDK?</h2>
+  <p>There are many ways to build an Operator with SDK. To get started building today, follow the steps in this quick start guide.</p>
+  </header>
+</section>
+    
+         <main role="main">
+          <section class="of-section-page-intro__content of-page--faq">
+            {{ .Content }}
+          </section>
+          </main>       
+        {{ partial "footer.html" . }}
+  </body>
+</html>
