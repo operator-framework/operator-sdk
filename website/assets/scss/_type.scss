@@ -1,0 +1,47 @@
+//type
+.of-heading {
+    color: var(--of--Color--brand--200);
+    text-transform: uppercase;
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+.of-heading--secondary {
+    color: var(--of--color-brand--200);
+    margin-bottom: var(--of--spacer--md);
+}
+.of-heading--xs, .of-heading--sm {
+    font-size: var(--of--FontSize--xs);
+}
+.of-heading--md {
+    font-size: var(--of--FontSize--sm);
+}
+.of-heading--lg {
+    font-size: var(--of--FontSize--md);
+}
+.of-heading--xl {
+    font-size: var(--of--FontSize--md);
+}
+.of-heading--2xl {
+    font-size: var(--of--FontSize--lg);
+}
+
+@media (min-width: $ov--breakpoint--lg) {
+    .of-heading--xs {
+        font-size: var(--of--FontSize--xs);
+    }
+    .of-heading--sm {
+        font-size: var(--of--FontSize--sm);
+    }
+    .of-heading--md {
+        font-size: var(--of--FontSize--md);
+    }
+    .of-heading--lg {
+        font-size: var(--of--FontSize--lg);
+    }
+    .of-heading--xl {
+        font-size: var(--of--FontSize--xl);
+    }
+    .of-heading--2xl {
+        font-size: var(--of--FontSize--2xl);
+    }
+}
