@@ -24,7 +24,7 @@ operator-sdk add crd [flags]
 
 ```
       --api-version string   Kubernetes apiVersion and has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)
-      --crd-version string   CRD version to generate (default "v1beta1")
+      --crd-version string   CRD version to generate (default "v1")
   -h, --help                 help for crd
       --kind string          Kubernetes CustomResourceDefintion kind. (e.g AppService)
 ```

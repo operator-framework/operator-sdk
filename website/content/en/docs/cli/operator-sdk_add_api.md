@@ -88,7 +88,7 @@ operator-sdk add api [flags]
 
 ```
       --api-version string          Kubernetes apiVersion and has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)
-      --crd-version string          CRD version to generate (default "v1beta1")
+      --crd-version string          CRD version to generate (default "v1")
       --helm-chart string           Initialize helm operator with existing helm chart (<URL>, <repo>/<name>, or local path). Valid only for --type helm
       --helm-chart-repo string      Chart repository URL for the requested helm chart, Valid only for --type helm
       --helm-chart-version string   Specific version of the helm chart (default is latest version). Valid only for --type helm

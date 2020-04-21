@@ -70,7 +70,7 @@ operator-sdk new <project-name> [flags]
 
 ```
       --api-version string          Kubernetes apiVersion and has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)
-      --crd-version string          CRD version to generate (default "v1beta1")
+      --crd-version string          CRD version to generate (default "v1")
       --generate-playbook           Generate a playbook skeleton. (Only used for --type ansible)
       --git-init                    Initialize the project directory as a git repository (default false)
       --header-file string          Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt

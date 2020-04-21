@@ -23,11 +23,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/internal/generate/gen"
-	"github.com/operator-framework/operator-sdk/internal/scaffold"
-	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
-	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	apiext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
@@ -36,9 +31,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
+
+	"github.com/operator-framework/operator-sdk/internal/generate/gen"
+	"github.com/operator-framework/operator-sdk/internal/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
 
-const DefaultCRDVersion = "v1beta1"
+const DefaultCRDVersion = "v1"
 
 // Generator configures the CustomResourceDefintion manifest generator
 // for Go and non-Go projects.

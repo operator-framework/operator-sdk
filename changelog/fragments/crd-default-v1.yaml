@@ -1,0 +1,26 @@
+entries:
+  - description: >
+      Changed the default CRD version from `apiextensions.k8s.io/v1beta1`
+      to `apiextensions.k8s.io/v1` for commands that create or generate
+      CRDs.
+
+    kind: change
+
+    breaking: true
+
+    migration:
+      header: Default CRD version
+      body: |-
+        The default CRD version was changed from `apiextensions.k8s.io/v1beta1`
+        to `apiextensions.k8s.io/v1` for commands that create or generate
+        CRDs. To migrate CRDs from `v1beta1` to `v1`, simply re-run
+        `operator-sdk generate crds`. To continue generating CRDs with
+        `apiextensions.k8s.io/v1beta1`, use `--crd-version=v1beta1`.
+
+        The following CRD versions are (or will be) compatible with the
+        following Kubernetes versions:
+
+          - Kubernetes <= v1.15 - Only `apiextensions.k8s.io/v1beta1` supported
+          - Kubernetes v1.16 through v1.18 - Both `apiextensions.k8s.io/v1beta1`
+            and `apiextensions.k8s.io/v1` supported
+          - Kubernetes >= v1.19 - Only `apiextensions.k8s.io/v1` supported
