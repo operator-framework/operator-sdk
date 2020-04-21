@@ -1056,7 +1056,7 @@ RUN ansible-galaxy collection install -r ${HOME}/requirements.yml \
  && chmod -R ug+rwx ${HOME}/.ansible
 ```
 
-## Unreleased (Master Branch)
+## v0.17.x
 
 ### modules
 
@@ -1064,7 +1064,7 @@ RUN ansible-galaxy collection install -r ${HOME}/requirements.yml \
 
 ```
 require (
-	github.com/operator-framework/operator-sdk master
+	github.com/operator-framework/operator-sdk v0.17.0
 	sigs.k8s.io/controller-runtime v0.5.2
 )
 
