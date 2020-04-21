@@ -31,14 +31,16 @@ import (
 )
 
 type Options struct {
-	Config         Config
-	Selector       labels.Selector
-	List           bool
-	OutputFormat   string
-	Kubeconfig     string
-	Namespace      string
-	ServiceAccount string
-	Client         kubernetes.Interface
+	Config          Config
+	Selector        labels.Selector
+	List            bool
+	BundlePath      string
+	OutputFormat    string
+	Kubeconfig      string
+	Namespace       string
+	BundleConfigMap *v1.ConfigMap
+	ServiceAccount  string
+	Client          kubernetes.Interface
 }
 
 // RunTests executes the scorecard tests as configured
@@ -46,6 +48,19 @@ func RunTests(o Options) error {
 	tests := selectTests(o.Selector, o.Config.Tests)
 	if len(tests) == 0 {
 		fmt.Println("no tests selected")
+		return nil
+	}
+
+	bundleData, err := getBundleData(o.BundlePath)
+	if err != nil {
+		fmt.Printf("error getting bundle data %s\n", err.Error())
+		return nil
+	}
+
+	// create a ConfigMap holding the bundle contents
+	o.BundleConfigMap, err = createConfigMap(o, bundleData)
+	if err != nil {
+		fmt.Printf("error creating ConfigMap %s\n", err.Error())
 		return nil
 	}
 
@@ -61,6 +76,7 @@ func RunTests(o Options) error {
 	// TODO replace sleep with a watch on the list of pods
 	time.Sleep(7 * time.Second)
 	defer deletePods(o.Client, createdPods)
+	//defer deleteConfigMap(o.Client, o.BundleConfigMap.Name)
 
 	testOutput := getTestResults(o.Client, createdPods)
 	printOutput(o.OutputFormat, testOutput)
@@ -109,8 +125,8 @@ func runTest(o Options, test ScorecardTest) (result *v1.Pod, err error) {
 	}
 
 	// Create a Pod to run the test
-	podDef := getPodDefinition(test, o.Namespace, o.ServiceAccount)
-	result, err = o.Client.CoreV1().Pods("default").Create(podDef)
+	podDef := getPodDefinition(test, o)
+	result, err = o.Client.CoreV1().Pods(o.Namespace).Create(podDef)
 	return result, err
 }
 

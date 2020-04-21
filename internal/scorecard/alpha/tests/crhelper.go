@@ -27,7 +27,7 @@ func (c TestBundle) GetCRs() (crList []unstructured.Unstructured, err error) {
 
 	// get CRs from CSV's alm-examples annotation, assume single bundle
 
-	csv, err := c.Bundles[0].ClusterServiceVersion()
+	csv, err := c.Bundle.ClusterServiceVersion()
 	if err != nil {
 		return crList, fmt.Errorf("error in csv retrieval %s", err.Error())
 	}
@@ -42,25 +42,23 @@ func (c TestBundle) GetCRs() (crList []unstructured.Unstructured, err error) {
 		return crList, nil
 	}
 
-	if len(c.Bundles) > 0 {
-		var crInterfaces []map[string]interface{}
-		err = json.Unmarshal([]byte(almExamples), &crInterfaces)
+	var crInterfaces []map[string]interface{}
+	err = json.Unmarshal([]byte(almExamples), &crInterfaces)
+	if err != nil {
+		return crList, err
+	}
+	for i := 0; i < len(crInterfaces); i++ {
+		buff := new(bytes.Buffer)
+		enc := json.NewEncoder(buff)
+		err := enc.Encode(crInterfaces[i])
 		if err != nil {
 			return crList, err
 		}
-		for i := 0; i < len(crInterfaces); i++ {
-			buff := new(bytes.Buffer)
-			enc := json.NewEncoder(buff)
-			err := enc.Encode(crInterfaces[i])
-			if err != nil {
-				return crList, err
-			}
-			obj := &unstructured.Unstructured{}
-			if err := obj.UnmarshalJSON(buff.Bytes()); err != nil {
-				return crList, err
-			}
-			crList = append(crList, *obj)
+		obj := &unstructured.Unstructured{}
+		if err := obj.UnmarshalJSON(buff.Bytes()); err != nil {
+			return crList, err
 		}
+		crList = append(crList, *obj)
 	}
 
 	return crList, err

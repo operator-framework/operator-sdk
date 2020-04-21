@@ -35,18 +35,17 @@ var seededRand *rand.Rand = rand.New(
 
 // getPodDefinition fills out a Pod definition based on
 // information from the test
-func getPodDefinition(test ScorecardTest, namespace, serviceAccount string) *v1.Pod {
-	podName := fmt.Sprintf("scorecard-test-%s", randomString())
+func getPodDefinition(test ScorecardTest, o Options) *v1.Pod {
 	return &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      podName,
-			Namespace: namespace,
+			Name:      fmt.Sprintf("scorecard-test-%s", randomString()),
+			Namespace: o.Namespace,
 			Labels: map[string]string{
 				"app": "scorecard-test",
 			},
 		},
 		Spec: v1.PodSpec{
-			ServiceAccountName: serviceAccount,
+			ServiceAccountName: o.ServiceAccount,
 			RestartPolicy:      v1.RestartPolicyNever,
 			Containers: []v1.Container{
 				{
@@ -74,7 +73,7 @@ func getPodDefinition(test ScorecardTest, namespace, serviceAccount string) *v1.
 					VolumeSource: v1.VolumeSource{
 						ConfigMap: &v1.ConfigMapVolumeSource{
 							LocalObjectReference: v1.LocalObjectReference{
-								Name: "scorecard-bundle",
+								Name: o.BundleConfigMap.Name,
 							},
 						},
 					},

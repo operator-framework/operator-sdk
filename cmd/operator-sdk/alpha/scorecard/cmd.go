@@ -25,9 +25,9 @@ import (
 
 func NewCmd() *cobra.Command {
 	var (
-		config string
-		output string
-		//bundle   string // TODO - to be implemented
+		config         string
+		output         string
+		bundle         string
 		selector       string
 		kubeconfig     string
 		namespace      string
@@ -52,17 +52,20 @@ func NewCmd() *cobra.Command {
 				return fmt.Errorf("could not find config file %s", err.Error())
 			}
 
+			if bundle == "" {
+				return fmt.Errorf("bundle flag required")
+			}
+
 			o.ServiceAccount = serviceAccount
 			o.Namespace = namespace
 			o.List = list
+			o.BundlePath = bundle
 			o.OutputFormat = output
 
 			o.Selector, err = labels.Parse(selector)
 			if err != nil {
 				return fmt.Errorf("could not parse selector %s", err.Error())
 			}
-
-			// TODO - process list and output formatting here?
 
 			if list {
 				if err := scorecard.ListTests(o); err != nil {
@@ -82,7 +85,7 @@ func NewCmd() *cobra.Command {
 		"path to a new to be defined DSL yaml formatted file that configures what tests get executed")
 	scorecardCmd.Flags().StringVar(&kubeconfig, "kubeconfig", "", "kubeconfig path")
 
-	//	scorecardCmd.Flags().StringVar(&bundle, "bundle", "", "path to the operator bundle contents on disk")
+	scorecardCmd.Flags().StringVar(&bundle, "bundle", "", "path to the operator bundle contents on disk")
 	scorecardCmd.Flags().StringVarP(&selector, "selector", "l", "", "label selector to determine which tests are run")
 	scorecardCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "namespace to run the test images in")
 	scorecardCmd.Flags().StringVarP(&output, "output", "o", "text", "Output format for results.  Valid values: text, json")
