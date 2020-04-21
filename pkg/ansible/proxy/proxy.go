@@ -25,8 +25,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"strings"
 	"sync"
 	"time"
@@ -246,8 +244,9 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 			owMap.Store(resource.GroupVersionKind())
 			log.Info("Watching child resource", "kind", resource.GroupVersionKind(),
 				"enqueue_kind", u.GroupVersionKind())
+			err := contents.Controller.Watch(&source.Kind{Type: resource},
+				&handler.EnqueueRequestForOwner{OwnerType: u}, dependentPredicate)
 			// Store watch in map
-			err := addWatch(contents.Controller, &source.Kind{Type: resource}, &handler.EnqueueRequestForOwner{OwnerType: u}, dependentPredicate)
 			if err != nil {
 				log.Error(err, "GVK", resource.GroupVersionKind())
 				return err
@@ -262,7 +261,8 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 			typeString := fmt.Sprintf("%v.%v", owner.Kind, ownerGV.Group)
 			log.Info("Watching child resource", "kind", resource.GroupVersionKind(),
 				"enqueue_annotation_type", typeString)
-			err = addWatch(contents.Controller, &source.Kind{Type: resource}, &osdkHandler.EnqueueRequestForAnnotation{Type: typeString})
+			err = contents.Controller.Watch(&source.Kind{Type: resource},
+				&osdkHandler.EnqueueRequestForAnnotation{Type: typeString}, dependentPredicate)
 			if err != nil {
 				log.Error(err, "GVK", resource.GroupVersionKind())
 				return err
@@ -384,19 +384,4 @@ func (a *apiResources) IsVirtualResource(gvk schema.GroupVersionKind) (bool, err
 	}
 
 	return false, nil
-}
-
-func addWatch(c controller.Controller, s source.Source, eh handler.EventHandler, predicates ...predicate.Predicate) error {
-	errChan := make(chan error, 1)
-	go func() {
-		err := c.Watch(s, eh, predicates...)
-		errChan <- err
-	}()
-
-	select {
-	case watchErr := <-errChan:
-		return watchErr
-	case <-time.After(cacheEscacheEstablishmentTimeout):
-		return fmt.Errorf("timeout establishing watch, commonly permissions of the controller are not sufficent")
-	}
 }
