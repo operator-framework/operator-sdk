@@ -1,18 +1,6 @@
 # Unit testing with Operator SDK
 ------------
 
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**  <!-- *generated with [DocToc](https://github.com/thlorenz/doctoc)*  -->
-
-- [Overview](#overview)
-- [Using a Fake client](#using-a-fake-client)
-- [Testing Reconcile](#testing-reconcile)
-- [Testing with 3rd Party Resources](#testing-with-3rd-party-resources)
-- [How to increase the verbosity of the logs?](#how-to-increase-the-verbosity-of-the-logs)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
 ## Overview
 
 Testing your operator should involve both unit and [end-to-end][doc-e2e-test] tests. Unit tests assess the expected outcomes of individual operator components without requiring coordination between components. Operator unit tests should test multiple scenarios likely to be encountered by your custom operator logic at runtime. Much of your custom logic will involve API server calls via a [client][doc-client]; `Reconcile()` in particular will be making API calls on each reconciliation loop. These API calls can be mocked by using `controller-runtime`'s [fake client][doc-cr-fake-client], perfect for unit testing. This document steps through writing a unit test for the [memcached-operator][repo-memcached-reconcile]'s `Reconcile()` method using a fake client.
@@ -261,7 +249,7 @@ func TestMemcachedController(t *testing.T) {
 <!-- Link vars declaration -->
 <!-- NOTE: The CI has a bug and the test will not pass with _ . Use "-" instead of "_" -->
 
-[doc-e2e-test]: ../test-framework/writing-e2e-tests.md
+[doc-e2e-test]: ../../website/content/en/docs/golang/e2e-tests.md
 [doc-client]: client.md
 [doc-cr-fake-client]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/client/fake
 [repo-memcached-reconcile]: https://github.com/operator-framework/operator-sdk-samples/blob/4c6934448684a6953ece4d3d9f3f77494b1c125e/memcached-operator/pkg/controller/memcached/memcached_controller.go#L82
