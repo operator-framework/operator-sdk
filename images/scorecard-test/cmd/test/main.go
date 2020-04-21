@@ -28,6 +28,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 
+	"github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
 	"github.com/operator-framework/operator-sdk/internal/scorecard/alpha/tests"
 )
 
@@ -58,9 +59,15 @@ func main() {
 	defer os.Remove(tmpDir)
 
 	// Unzip the bundle
+	/**
 	_, err = Unzip(bundleZip, tmpDir)
 	if err != nil {
 		log.Fatalf("error unzipping bundle %s", err.Error())
+	}
+	*/
+	err = alpha.Untartar(bundleZip, tmpDir)
+	if err != nil {
+		log.Fatalf("error untarring bundle %s", err.Error())
 	}
 
 	cfg, err := tests.GetBundle(tmpDir)

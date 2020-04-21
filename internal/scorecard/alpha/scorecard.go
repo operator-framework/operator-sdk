@@ -75,7 +75,7 @@ func RunTests(o Options) error {
 
 	// TODO replace sleep with a watch on the list of pods
 	time.Sleep(7 * time.Second)
-	defer deletePods(o.Client, createdPods)
+	//defer deletePods(o.Client, createdPods)
 	//defer deleteConfigMap(o.Client, o.BundleConfigMap.Name)
 
 	testOutput := getTestResults(o.Client, createdPods)
