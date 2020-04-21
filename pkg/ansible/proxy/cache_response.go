@@ -272,7 +272,7 @@ func (c *cacheResponseHandler) getListFromCache(r *requestfactory.RequestInfo, r
 	k.Kind = k.Kind + "List"
 	un := unstructured.UnstructuredList{}
 	un.SetGroupVersionKind(k)
-	ctx, cancel := context.WithTimeout(context.Background(), cacheEscacheEstablishmentTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), cacheEstablishmentTimeout)
 	defer cancel()
 	err := c.informerCache.List(ctx, &un, clientListOpts...)
 	if err != nil {
@@ -289,7 +289,7 @@ func (c *cacheResponseHandler) getObjectFromCache(r *requestfactory.RequestInfo,
 	un := &unstructured.Unstructured{}
 	un.SetGroupVersionKind(k)
 	obj := client.ObjectKey{Namespace: r.Namespace, Name: r.Name}
-	ctx, cancel := context.WithTimeout(context.Background(), cacheEscacheEstablishmentTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), cacheEstablishmentTimeout)
 	defer cancel()
 	err := c.informerCache.Get(ctx, obj, un)
 	if err != nil {
