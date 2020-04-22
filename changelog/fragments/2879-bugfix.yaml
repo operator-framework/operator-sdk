@@ -1,0 +1,9 @@
+entries:
+  - description: >
+      bundle create: print deprecation notice for old bundle format, and adopt
+      behavior more akin to 'opm' so existing bundles are not overwritten in
+      situations like those described by [#2879](https://github.com/operator-framework/operator-sdk/issues/2879).
+
+    kind: "bugfix"
+
+    breaking: false

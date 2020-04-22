@@ -38,30 +38,24 @@ function check_validate_fail() {
   fi
 }
 
-function check_dir_files_not_empty() {
-  if [[ -n "$(find $2 -empty)" ]]; then
-    error_text "${1}: found empty files in $2"
-    exit 1
-  fi
-}
-
 pushd "$TEST_DIR"
-# trap_add "git clean -dfxq $TEST_DIR" EXIT
+trap_add "git clean -dfxq $TEST_DIR" EXIT
 trap_add "popd" EXIT
 
 set -e
 
 header_text "Running 'operator-sdk bundle' subcommand tests."
 
+# TODO(estroz): these test cases are currently testing the old semver bundle
+# format and copying the old bundle to a 'manifests/' directory. Once support
+# for the old format is removed, update testdata and cases to the new format.
+
 TEST_NAME="create with version ${OPERATOR_VERSION_2}"
 header_text "$TEST_NAME"
 create $OPERATOR_BUNDLE_IMAGE_2 "$OPERATOR_BUNDLE_DIR_2"
-check_dir "$TEST_NAME" "${OUTPUT_DIR}/manifests" 0
-check_dir "$TEST_NAME" "${OUTPUT_DIR}/metadata" 0
-check_dir "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/metadata" 0
-check_dir "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/manifests" 0
+check_dir "$TEST_NAME" "${OPERATOR_BUNDLE_ROOT_DIR}/metadata" 0
+check_dir "$TEST_NAME" "${OPERATOR_BUNDLE_ROOT_DIR}/manifests" 0
 check_file "$TEST_NAME" "bundle.Dockerfile" 0
-check_dir_files_not_empty "$OPERATOR_BUNDLE_DIR_2"
 cleanup_case
 
 TEST_NAME="create with version ${OPERATOR_VERSION_2} and output-dir"
@@ -69,24 +63,19 @@ header_text "$TEST_NAME"
 create $OPERATOR_BUNDLE_IMAGE_2 "$OPERATOR_BUNDLE_DIR_2" --output-dir "$OUTPUT_DIR"
 check_dir "$TEST_NAME" "${OUTPUT_DIR}/manifests" 1
 check_dir "$TEST_NAME" "${OUTPUT_DIR}/metadata" 1
-check_dir "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/metadata" 0
-check_dir "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/manifests" 0
+check_dir "$TEST_NAME" "${OPERATOR_BUNDLE_ROOT_DIR}/metadata" 0
+check_dir "$TEST_NAME" "${OPERATOR_BUNDLE_ROOT_DIR}/manifests" 0
 check_file "$TEST_NAME" "bundle.Dockerfile" 0
-check_dir_files_not_empty "$OPERATOR_BUNDLE_DIR_2"
-check_dir_files_not_empty "${OUTPUT_DIR}/manifests"
 check_validate_pass "$TEST_NAME" "$OUTPUT_DIR"
 cleanup_case
 
 TEST_NAME="generate with version ${OPERATOR_VERSION_2}"
 header_text "$TEST_NAME"
 generate "$OPERATOR_BUNDLE_DIR_2"
-check_dir "$TEST_NAME" "${OUTPUT_DIR}/manifests" 0
-check_dir "$TEST_NAME" "${OUTPUT_DIR}/metadata" 0
-check_dir "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/metadata" 1
-check_dir "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/manifests" 1
+check_dir "$TEST_NAME" "${OPERATOR_BUNDLE_ROOT_DIR}/metadata" 1
+check_dir "$TEST_NAME" "${OPERATOR_BUNDLE_ROOT_DIR}/manifests" 0
 check_file "$TEST_NAME" "bundle.Dockerfile" 1
-check_dir_files_not_empty "$OPERATOR_BUNDLE_DIR_2"
-check_dir_files_not_empty "${OPERATOR_BUNDLE_ROOT_DIR}/manifests"
+cp -r "$OPERATOR_BUNDLE_DIR_2" "${OPERATOR_BUNDLE_ROOT_DIR}/manifests"
 check_validate_pass "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR"
 cleanup_case
 
@@ -95,11 +84,9 @@ header_text "$TEST_NAME"
 generate "$OPERATOR_BUNDLE_DIR_2" --output-dir "$OUTPUT_DIR"
 check_dir "$TEST_NAME" "${OUTPUT_DIR}/manifests" 1
 check_dir "$TEST_NAME" "${OUTPUT_DIR}/metadata" 1
-check_dir "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/metadata" 0
-check_dir "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/manifests" 0
+check_dir "$TEST_NAME" "${OPERATOR_BUNDLE_ROOT_DIR}/metadata" 0
+check_dir "$TEST_NAME" "${OPERATOR_BUNDLE_ROOT_DIR}/manifests" 0
 check_file "$TEST_NAME" "bundle.Dockerfile" 1
-check_dir_files_not_empty "$OPERATOR_BUNDLE_DIR_2"
-check_dir_files_not_empty "${OUTPUT_DIR}/manifests"
 check_validate_pass "$TEST_NAME" "$OUTPUT_DIR"
 cleanup_case
 
@@ -107,11 +94,10 @@ TEST_NAME="create with version ${OPERATOR_VERSION_2} with existing metadata"
 header_text "$TEST_NAME"
 generate "$OPERATOR_BUNDLE_DIR_2"
 create $OPERATOR_BUNDLE_IMAGE_2 "$OPERATOR_BUNDLE_DIR_2"
-check_dir "$TEST_NAME" "${OUTPUT_DIR}/manifests" 0
-check_dir "$TEST_NAME" "${OUTPUT_DIR}/metadata" 0
-check_dir "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/metadata" 1
-check_dir "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/manifests" 1
+check_dir "$TEST_NAME" "${OPERATOR_BUNDLE_ROOT_DIR}/metadata" 1
+check_dir "$TEST_NAME" "${OPERATOR_BUNDLE_ROOT_DIR}/manifests" 0
 check_file "$TEST_NAME" "bundle.Dockerfile" 1
+cp -r "$OPERATOR_BUNDLE_DIR_2" "${OPERATOR_BUNDLE_ROOT_DIR}/manifests"
 check_validate_pass "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR"
 cleanup_case
 
@@ -121,39 +107,29 @@ generate "$OPERATOR_BUNDLE_DIR_2"
 create $OPERATOR_BUNDLE_IMAGE_2 "$OPERATOR_BUNDLE_DIR_2" --output-dir "$OUTPUT_DIR"
 check_dir "$TEST_NAME" "${OUTPUT_DIR}/manifests" 1
 check_dir "$TEST_NAME" "${OUTPUT_DIR}/metadata" 1
-check_dir "$TEST_NAME" "${OPERATOR_BUNDLE_ROOT_DIR}/manifests" 1
+check_dir "$TEST_NAME" "${OPERATOR_BUNDLE_ROOT_DIR}/manifests" 0
 check_dir "$TEST_NAME" "${OPERATOR_BUNDLE_ROOT_DIR}/metadata" 1
 check_file "$TEST_NAME" "bundle.Dockerfile" 1
 check_validate_pass "$TEST_NAME" "$OUTPUT_DIR"
-check_validate_pass "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR"
-cleanup_case
-
-TEST_NAME="error on create with version ${OPERATOR_VERSION_2} with existing manifests version ${OPERATOR_VERSION_1}"
-header_text "$TEST_NAME"
-generate "$OPERATOR_BUNDLE_DIR_1"
-if create $OPERATOR_BUNDLE_IMAGE_2 "$OPERATOR_BUNDLE_DIR_2"; then
-  error_text "$TEST_NAME: expected error"
-  exit 1
-fi
 cleanup_case
 
 TEST_NAME="create with version ${OPERATOR_VERSION_2} with existing manifests/metadata version ${OPERATOR_VERSION_1} and overwrite"
 header_text "$TEST_NAME"
 generate "$OPERATOR_BUNDLE_DIR_2"
 create $OPERATOR_BUNDLE_IMAGE_2 "$OPERATOR_BUNDLE_DIR_2" --overwrite
-check_dir "$TEST_NAME" "${OUTPUT_DIR}/manifests" 0
-check_dir "$TEST_NAME" "${OUTPUT_DIR}/metadata" 0
-check_dir "$TEST_NAME" "${OPERATOR_BUNDLE_ROOT_DIR}/manifests" 1
+check_dir "$TEST_NAME" "${OPERATOR_BUNDLE_ROOT_DIR}/manifests" 0
 check_dir "$TEST_NAME" "${OPERATOR_BUNDLE_ROOT_DIR}/metadata" 1
 check_file "$TEST_NAME" "bundle.Dockerfile" 1
+cp -r "$OPERATOR_BUNDLE_DIR_2" "${OPERATOR_BUNDLE_ROOT_DIR}/manifests"
 check_validate_pass "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR"
 cleanup_case
 
 TEST_NAME="error on validate invalid generated bundle content with version ${OPERATOR_VERSION_2}"
 header_text "$TEST_NAME"
 generate "$OPERATOR_BUNDLE_DIR_2"
-check_dir "$TEST_NAME" "${OPERATOR_BUNDLE_ROOT_DIR}/manifests" 1
+check_dir "$TEST_NAME" "${OPERATOR_BUNDLE_ROOT_DIR}/manifests" 0
 check_dir "$TEST_NAME" "${OPERATOR_BUNDLE_ROOT_DIR}/metadata" 1
+cp -r "$OPERATOR_BUNDLE_DIR_2" "${OPERATOR_BUNDLE_ROOT_DIR}/manifests"
 # Change version to an invalid value.
 sed -i 's/version: '$OPERATOR_VERSION_2'/version: a.b.c/g' "${OPERATOR_BUNDLE_ROOT_DIR}"/manifests/*.clusterserviceversion.yaml
 check_validate_fail "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR"
@@ -162,8 +138,9 @@ cleanup_case
 TEST_NAME="error on validate invalid generated bundle format with version ${OPERATOR_VERSION_2}"
 header_text "$TEST_NAME"
 generate "$OPERATOR_BUNDLE_DIR_2"
-check_dir "$TEST_NAME" "${OPERATOR_BUNDLE_ROOT_DIR}/manifests" 1
+check_dir "$TEST_NAME" "${OPERATOR_BUNDLE_ROOT_DIR}/manifests" 0
 check_dir "$TEST_NAME" "${OPERATOR_BUNDLE_ROOT_DIR}/metadata" 1
+cp -r "$OPERATOR_BUNDLE_DIR_2" "${OPERATOR_BUNDLE_ROOT_DIR}/manifests"
 # Change annotations mediatype to the incorrect type.
 sed -i 's/mediatype.v1: registry+v1/mediatype.v1: plain/g' "${OPERATOR_BUNDLE_ROOT_DIR}"/metadata/annotations.yaml
 check_validate_fail "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR"

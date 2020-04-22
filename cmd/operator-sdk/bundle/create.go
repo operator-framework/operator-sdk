@@ -15,7 +15,6 @@
 package bundle
 
 import (
-	"crypto/sha256"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -29,6 +28,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"sigs.k8s.io/yaml"
 )
 
 type bundleCreateCmd struct {
@@ -40,6 +40,7 @@ type bundleCreateCmd struct {
 
 // newCreateCmd returns a command that will build operator bundle image or
 // generate metadata for them.
+//nolint:lll
 func newCreateCmd() *cobra.Command {
 	c := &bundleCreateCmd{}
 
@@ -51,32 +52,29 @@ bundle image containing operator metadata and manifests, tagged with the
 provided image tag.
 
 To write all files required to build a bundle image without building the
-image, set '--generate-only=true'. A bundle Dockerfile, bundle metadata, and
-a 'manifests/' directory containing your bundle manifests will be written if
-'--generate-only=true':
+image, set '--generate-only=true'. A bundle.Dockerfile and bundle metadata
+will be written if '--generate-only=true':
 
-	$ operator-sdk bundle create --generate-only --directory ./deploy/olm-catalog/test-operator/0.1.0
-	$ ls .
-	...
-	bundle.Dockerfile
-	...
-	$ tree ./deploy/olm-catalog/test-operator/
-	└── 0.1.0
-		└── example.com_tests_crd.yaml
-		└── test-operator.v0.1.0.clusterserviceversion.yaml
-	└── manifests
-		└── example.com_tests_crd.yaml
-		└── test-operator.v0.1.0.clusterserviceversion.yaml
-	└── metadata
-		└── annotations.yaml
+` + "```" + `
+  $ operator-sdk bundle create --generate-only --directory ./deploy/olm-catalog/test-operator/manifests
+  $ ls .
+  ...
+  bundle.Dockerfile
+  ...
+  $ tree ./deploy/olm-catalog/test-operator/
+  ./deploy/olm-catalog/test-operator/
+  ├── manifests
+  │   ├── example.com_tests_crd.yaml
+  │   └── test-operator.clusterserviceversion.yaml
+  └── metadata
+      └── annotations.yaml
+` + "```" + `
 
 '--generate-only' is useful if you want to build an operator's bundle image
-manually, modify metadata before building an image, or want to generate a
-'manifests/' directory containing your operator manifests for compatibility
-with other operator tooling.
+manually or modify metadata before building an image.
 
-More information on operator bundle images and metadata:
-https://github.com/openshift/enhancements/blob/master/enhancements/olm/operator-bundle.md#docker
+More information on operator bundle images and the manifests/metadata format:
+https://github.com/operator-framework/operator-registry#manifest-format
 
 NOTE: bundle images are not runnable.
 `,
@@ -84,7 +82,7 @@ NOTE: bundle images are not runnable.
 This image will contain manifests for package channels 'stable' and 'beta':
 
   $ operator-sdk bundle create quay.io/example/test-operator:v0.1.0 \
-      --directory ./deploy/olm-catalog/test-operator/0.1.0 \
+      --directory ./deploy/olm-catalog/test-operator/manifests \
       --package test-operator \
       --channels stable,beta \
       --default-channel stable
@@ -92,16 +90,13 @@ This image will contain manifests for package channels 'stable' and 'beta':
 Assuming your operator has the same name as your repo directory and the only
 channel is 'stable', the above command can be abbreviated to:
 
-  $ operator-sdk bundle create quay.io/example/test-operator:v0.1.0 \
-      --directory ./deploy/olm-catalog/test-operator/0.1.0
+  $ operator-sdk bundle create quay.io/example/test-operator:v0.1.0
 
-The following invocation will generate test-operator bundle metadata, a
-'manifests/' dir, and Dockerfile for your latest operator version without
-building the image:
+The following invocation will generate test-operator bundle metadata and a
+bundle.Dockerfile for your latest operator version without building the image:
 
   $ operator-sdk bundle create \
       --generate-only \
-      --directory ./deploy/olm-catalog/test-operator/0.1.0 \
       --package test-operator \
       --channels beta \
       --default-channel beta
@@ -115,22 +110,18 @@ building the image:
 				return fmt.Errorf("error validating args: %v", err)
 			}
 
+			// Help users migrate to the new manifests/metadata format by warning
+			// of the old format's deprecation.
 			rootDir := filepath.Dir(c.directory)
-			manifestsDir := filepath.Join(rootDir, bundle.ManifestsDir)
-
-			// To ensure users don't accidentally overwrite their manifests dir
-			// created previously, make sure they have set --overwrite or no
-			// contents of the directory differ in the source directory.
-			if !c.overwrite && isExist(manifestsDir) && !cmd.Flags().Changed("output-dir") {
-				dirsDiffer, err := areDirsDiff(c.directory, manifestsDir)
-				if err != nil {
-					log.Fatal(err)
-				}
-				if dirsDiffer {
-					log.Fatalf("'manifests' dir already exists at %s. Set --overwrite=true "+
-						"to overwrite its contents with contents in %s",
-						manifestsDir, c.directory)
-				}
+			manifestsDir, err := findManifestsDir(rootDir)
+			if err != nil {
+				log.Fatalf("Error finding 'manifests/' dir in %s: %v", rootDir, err)
+			}
+			if isNotExist(manifestsDir) || c.directory != manifestsDir {
+				projutil.PrintDeprecationWarning(fmt.Sprintf("Running this command by setting "+
+					"--directory to a value other than %s may cause inconsistent image builds. "+
+					"Please migrate to the new manifests/metadata format by copying your latest "+
+					"operator bundle to %s", manifestsDir, manifestsDir))
 			}
 
 			if c.generateOnly {
@@ -154,7 +145,7 @@ building the image:
 
 func (c *bundleCreateCmd) addToFlagSet(fs *pflag.FlagSet) {
 	fs.StringVarP(&c.directory, "directory", "d", "",
-		"The directory where bundle manifests are located, ex. <project-root>/deploy/olm-catalog/test-operator/0.1.0")
+		"The directory where bundle manifests are located, ex. <project-root>/deploy/olm-catalog/test-operator/manifests")
 	fs.StringVarP(&c.outputDir, "output-dir", "o", "",
 		"Optional output directory for operator manifests")
 	fs.StringVarP(&c.imageTag, "tag", "t", "",
@@ -191,18 +182,6 @@ func (c *bundleCreateCmd) setDefaults() (err error) {
 	// Clean and make paths relative for less verbose error messages.
 	if c.directory, err = relWd(c.directory); err != nil {
 		return err
-	}
-	// Set outputDir if a 'manifests/' directory does not exist to force the file
-	// generator to write one. This helps migrate old semver directory layouts.
-	// Cleanup logic is handled in runBuild().
-	rootDir := filepath.Dir(c.directory)
-	if c.outputDir == "" && isNotExist(filepath.Join(rootDir, bundle.ManifestsDir)) {
-		c.outputDir = rootDir
-	}
-	if c.outputDir != "" {
-		if c.outputDir, err = relWd(c.outputDir); err != nil {
-			return err
-		}
 	}
 
 	return nil
@@ -253,13 +232,9 @@ func (c bundleCreateCmd) runGenerate() error {
 func (c bundleCreateCmd) runBuild() error {
 	rootDir := filepath.Dir(c.directory)
 	metadataDir := filepath.Join(rootDir, bundle.MetadataDir)
-	manifestsDir := filepath.Join(rootDir, bundle.ManifestsDir)
 
 	// Clean up transient files once the image is built, as they are no longer
 	// needed.
-	if isNotExist(manifestsDir) {
-		defer remove(manifestsDir)
-	}
 	if isNotExist(metadataDir) {
 		defer remove(metadataDir)
 	}
@@ -295,55 +270,29 @@ func isNotExist(path string) bool {
 	return err != nil && os.IsNotExist(err)
 }
 
-// areDirsDiff returns true if either file names or file contents differ
-// between dirA and dirB.
-func areDirsDiff(dirA, dirB string) (bool, error) {
-	if filepath.Clean(dirA) == filepath.Clean(dirB) {
-		return false, nil
-	}
-	fileMapA, err := getDirFileMap(dirA)
-	if err != nil {
-		return false, err
-	}
-	fileMapB, err := getDirFileMap(dirB)
-	if err != nil {
-		return false, err
-	}
-	if len(fileMapB) != len(fileMapA) {
-		return true, nil
-	}
-	for pathA, contentsA := range fileMapA {
-		contentsB, hasPathA := fileMapB[pathA]
-		if !hasPathA || contentsA != contentsB {
-			return true, nil
-		}
-	}
-	return false, nil
-}
+// findManifestsDir returns either the manifests directory stored in metadata
+// at '<dir>/metadata/annotations.yaml', or the default location
+// `<dir>/manifests` if metadata does not exist.
+func findManifestsDir(dir string) (manifestsDir string, err error) {
+	// The default path.
+	manifestsDir = filepath.Join(dir, bundle.ManifestsDir)
 
-// getDirFileMap returns a map of file names to contents as strings for all
-// normal files in dir (recursive).
-func getDirFileMap(dir string) (map[string]string, error) {
-	fileMap := make(map[string]string)
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
+	annotationsPath := filepath.Join(dir, bundle.MetadataDir, bundle.AnnotationsFile)
+	b, err := ioutil.ReadFile(annotationsPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return manifestsDir, nil
 		}
-		if !info.IsDir() {
-			b, err := ioutil.ReadFile(path)
-			if err != nil {
-				return err
-			}
-			fileMap[filepath.Base(path)] = hashContents(b)
-		}
-		return nil
-	})
-	return fileMap, err
-}
-
-// hashContents returns the hexadecimal representation of hashed b.
-func hashContents(b []byte) string {
-	h := sha256.New()
-	_, _ = h.Write(b)
-	return fmt.Sprintf("%x", h.Sum(nil))
+		return "", err
+	}
+	annotations := bundle.AnnotationMetadata{
+		Annotations: make(map[string]string),
+	}
+	if err = yaml.Unmarshal(b, &annotations); err != nil {
+		return "", err
+	}
+	if labelDir, hasLabel := annotations.Annotations[bundle.ManifestsLabel]; hasLabel {
+		manifestsDir = filepath.Join(dir, labelDir)
+	}
+	return manifestsDir, nil
 }
