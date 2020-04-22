@@ -121,7 +121,7 @@ building the image:
 			// To ensure users don't accidentally overwrite their manifests dir
 			// created previously, make sure they have set --overwrite or no
 			// contents of the directory differ in the source directory.
-			if !c.overwrite && isExist(manifestsDir) && c.outputDir == filepath.Dir(c.directory) {
+			if !c.overwrite && isExist(manifestsDir) && !cmd.Flags().Changed("output-dir") {
 				dirsDiffer, err := areDirsDiff(c.directory, manifestsDir)
 				if err != nil {
 					log.Fatal(err)
@@ -179,27 +179,36 @@ func (c *bundleCreateCmd) setDefaults() (err error) {
 	if c.packageName == "" {
 		c.packageName = filepath.Base(projutil.MustGetwd())
 	}
+	defaultManifestsDir := filepath.Join(catalog.OLMCatalogDir, c.packageName, bundle.ManifestsDir)
 	if c.directory == "" {
-		c.directory = filepath.Join(catalog.OLMCatalogDir, c.packageName, bundle.ManifestsDir)
+		if isNotExist(defaultManifestsDir) {
+			return fmt.Errorf("default manifests directory %s does not exist; "+
+				"set --directory to a valid bundle directory", defaultManifestsDir)
+		}
+		c.directory = defaultManifestsDir
 	}
 
 	// Clean and make paths relative for less verbose error messages.
-	if c.directory, err = relDir(c.directory); err != nil {
+	if c.directory, err = relWd(c.directory); err != nil {
 		return err
 	}
-	// Set outputDir in any case so we make the operator-registry file generator
-	// write 'manifests/' every time, and handle cleanup logic in runBuild().
-	if c.outputDir == "" {
-		c.outputDir = filepath.Dir(c.directory)
+	// Set outputDir if a 'manifests/' directory does not exist to force the file
+	// generator to write one. This helps migrate old semver directory layouts.
+	// Cleanup logic is handled in runBuild().
+	rootDir := filepath.Dir(c.directory)
+	if c.outputDir == "" && isNotExist(filepath.Join(rootDir, bundle.ManifestsDir)) {
+		c.outputDir = rootDir
 	}
-	if c.outputDir, err = relDir(c.outputDir); err != nil {
-		return err
+	if c.outputDir != "" {
+		if c.outputDir, err = relWd(c.outputDir); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-func relDir(dir string) (out string, err error) {
+func relWd(dir string) (out string, err error) {
 	if out, err = filepath.Abs(dir); err != nil {
 		return "", err
 	}
@@ -248,13 +257,13 @@ func (c bundleCreateCmd) runBuild() error {
 
 	// Clean up transient files once the image is built, as they are no longer
 	// needed.
-	if !isExist(manifestsDir) {
+	if isNotExist(manifestsDir) {
 		defer remove(manifestsDir)
 	}
-	if !isExist(metadataDir) {
+	if isNotExist(metadataDir) {
 		defer remove(metadataDir)
 	}
-	if !isExist(bundle.DockerFile) {
+	if isNotExist(bundle.DockerFile) {
 		defer remove(bundle.DockerFile)
 	}
 
@@ -278,6 +287,12 @@ func remove(path string) {
 func isExist(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil || os.IsExist(err)
+}
+
+// isNotExist returns true if path does not exist.
+func isNotExist(path string) bool {
+	_, err := os.Stat(path)
+	return err != nil && os.IsNotExist(err)
 }
 
 // areDirsDiff returns true if either file names or file contents differ

@@ -17,11 +17,11 @@ OPERATOR_BUNDLE_DIR_2="${OPERATOR_BUNDLE_ROOT_DIR}/${OPERATOR_VERSION_2}"
 OUTPUT_DIR="foo"
 
 function create() {
-  operator-sdk bundle create $1 --directory $2 --package $OPERATOR_NAME ${@:3}
+  echo_run operator-sdk bundle create $1 --directory $2 --package $OPERATOR_NAME ${@:3}
 }
 
 function generate() {
-  operator-sdk bundle create --generate-only --directory $1 --package $OPERATOR_NAME ${@:2}
+  echo_run operator-sdk bundle create --generate-only --directory $1 --package $OPERATOR_NAME ${@:2}
 }
 
 function check_validate_pass() {
@@ -38,8 +38,15 @@ function check_validate_fail() {
   fi
 }
 
+function check_dir_files_not_empty() {
+  if [[ -n "$(find $2 -empty)" ]]; then
+    error_text "${1}: found empty files in $2"
+    exit 1
+  fi
+}
+
 pushd "$TEST_DIR"
-trap_add "git clean -dfxq $TEST_DIR" EXIT
+# trap_add "git clean -dfxq $TEST_DIR" EXIT
 trap_add "popd" EXIT
 
 set -e
@@ -54,6 +61,7 @@ check_dir "$TEST_NAME" "${OUTPUT_DIR}/metadata" 0
 check_dir "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/metadata" 0
 check_dir "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/manifests" 0
 check_file "$TEST_NAME" "bundle.Dockerfile" 0
+check_dir_files_not_empty "$OPERATOR_BUNDLE_DIR_2"
 cleanup_case
 
 TEST_NAME="create with version ${OPERATOR_VERSION_2} and output-dir"
@@ -64,6 +72,8 @@ check_dir "$TEST_NAME" "${OUTPUT_DIR}/metadata" 1
 check_dir "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/metadata" 0
 check_dir "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/manifests" 0
 check_file "$TEST_NAME" "bundle.Dockerfile" 0
+check_dir_files_not_empty "$OPERATOR_BUNDLE_DIR_2"
+check_dir_files_not_empty "${OUTPUT_DIR}/manifests"
 check_validate_pass "$TEST_NAME" "$OUTPUT_DIR"
 cleanup_case
 
@@ -75,6 +85,8 @@ check_dir "$TEST_NAME" "${OUTPUT_DIR}/metadata" 0
 check_dir "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/metadata" 1
 check_dir "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/manifests" 1
 check_file "$TEST_NAME" "bundle.Dockerfile" 1
+check_dir_files_not_empty "$OPERATOR_BUNDLE_DIR_2"
+check_dir_files_not_empty "${OPERATOR_BUNDLE_ROOT_DIR}/manifests"
 check_validate_pass "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR"
 cleanup_case
 
@@ -86,6 +98,8 @@ check_dir "$TEST_NAME" "${OUTPUT_DIR}/metadata" 1
 check_dir "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/metadata" 0
 check_dir "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/manifests" 0
 check_file "$TEST_NAME" "bundle.Dockerfile" 1
+check_dir_files_not_empty "$OPERATOR_BUNDLE_DIR_2"
+check_dir_files_not_empty "${OUTPUT_DIR}/manifests"
 check_validate_pass "$TEST_NAME" "$OUTPUT_DIR"
 cleanup_case
 

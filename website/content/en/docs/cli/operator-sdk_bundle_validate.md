@@ -38,7 +38,7 @@ and validate them, assuming a bundle for 'test-operator' version v0.1.0 exists a
 To build and validate an image:
 
   # Build and push the image using the docker CLI.
-	$ operator-sdk bundle create quay.io/example/test-operator:v0.1.0 \
+  $ operator-sdk bundle create quay.io/example/test-operator:v0.1.0 \
       --directory ./deploy/olm-catalog/test-operator/0.1.0
   $ docker push quay.io/example/test-operator:v0.1.0
 

@@ -41,8 +41,7 @@ function check_crd_files() {
 }
 
 function generate_csv() {
-  echo "operator-sdk generate csv --operator-name $OPERATOR_NAME $@"
-  operator-sdk generate csv --operator-name $OPERATOR_NAME $@
+  echo_run operator-sdk generate csv --operator-name $OPERATOR_NAME $@
 }
 
 pushd "$TEST_DIR" > /dev/null
