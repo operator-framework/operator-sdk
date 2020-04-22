@@ -12,7 +12,6 @@ enableGitInfo = false
 
 # Language settings
 contentDir = "content/en"
-layoutDir = "assets/layouts"
 defaultContentLanguage = "en"
 defaultContentLanguageInSubdir = false
 # Useful when translating.
