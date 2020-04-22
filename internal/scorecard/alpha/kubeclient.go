@@ -16,16 +16,49 @@ package alpha
 
 import (
 	"os"
+	"path/filepath"
 
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-// GetKubeClient will get a kubernetes client from the ...
+// GetKubeClient will get a kubernetes client from the following sources:
+// - a path to the kubeconfig file passed on the command line (--kubeconfig)
+// - an environment variable that specifies the path (export KUBECONFIG)
+// - the user's $HOME/.kube/config file
+// - in-cluster connection for when the sdk is run within a cluster instead of
+//   the command line
 func GetKubeClient(kubeconfig string) (client kubernetes.Interface, err error) {
 
-	// use the current context in kubeconfig
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	var inCluster bool
+
+	if kubeconfig != "" {
+		// use the command line flag
+	} else {
+		envVar := os.Getenv("KUBECONFIG")
+		if envVar != "" {
+			// use the KUBECONFIG env variable
+			kubeconfig = envVar
+		} else {
+
+			home := homeDir()
+			if home != "" {
+				// use the $HOME/.kube/config path
+				kubeconfig = filepath.Join(home, ".kube", "config")
+			} else {
+				// assume in-cluster
+				inCluster = true
+			}
+		}
+	}
+
+	var config *rest.Config
+	if inCluster {
+		config, err = rest.InClusterConfig()
+	} else {
+		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
+	}
 	if err != nil {
 		return client, err
 	}
