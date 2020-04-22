@@ -34,6 +34,7 @@ func NewCmd() *cobra.Command {
 		serviceAccount string
 		list           bool
 		cleanup        bool
+		waitTime       int
 	)
 	scorecardCmd := &cobra.Command{
 		Use:    "scorecard",
@@ -50,6 +51,7 @@ func NewCmd() *cobra.Command {
 				BundlePath:     bundle,
 				OutputFormat:   output,
 				Cleanup:        cleanup,
+				WaitTime:       waitTime,
 			}
 			o.Client, err = scorecard.GetKubeClient(kubeconfig)
 			if err != nil {
@@ -94,6 +96,7 @@ func NewCmd() *cobra.Command {
 	scorecardCmd.Flags().StringVarP(&serviceAccount, "service-account", "s", "default", "service account to run the test images")
 	scorecardCmd.Flags().BoolVarP(&list, "list", "L", false, "option to enable listing which tests are run")
 	scorecardCmd.Flags().BoolVarP(&cleanup, "cleanup", "x", true, "option to disable resource cleanup after tests are run")
+	scorecardCmd.Flags().IntVarP(&waitTime, "waittime", "w", 30, "time in seconds to wait for tests to complete")
 
 	return scorecardCmd
 }

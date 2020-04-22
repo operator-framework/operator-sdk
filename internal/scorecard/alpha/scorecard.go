@@ -26,6 +26,7 @@ import (
 	"github.com/operator-framework/operator-sdk/version"
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
 )
@@ -36,6 +37,7 @@ type Options struct {
 	List            bool
 	Cleanup         bool
 	BundlePath      string
+	WaitTime        int
 	OutputFormat    string
 	Kubeconfig      string
 	Namespace       string
@@ -75,7 +77,7 @@ func RunTests(o Options) error {
 	}
 
 	// TODO replace sleep with a watch on the list of pods
-	time.Sleep(7 * time.Second)
+	waitForPodsToComplete(o, createdPods)
 
 	if o.Cleanup {
 		defer deletePods(o.Client, createdPods)
@@ -209,5 +211,39 @@ func printOutput(outputFormat string, output v1alpha2.ScorecardOutput) {
 	}
 
 	fmt.Printf("error, invalid output format selected")
+
+}
+
+// waitForPodsToComplete waits for a fixed amount of time while
+// checking for test pods to complete
+func waitForPodsToComplete(o Options, pods []*v1.Pod) (err error) {
+	var elapsedSeconds int
+	fmt.Printf("waiting up to %d seconds for tests to complete\n", o.WaitTime)
+	for {
+		allPodsCompleted := true
+		for i := 0; i < len(pods); i++ {
+			p := pods[i]
+			var tmp *v1.Pod
+			tmp, err = o.Client.CoreV1().Pods(p.Namespace).Get(p.Name, metav1.GetOptions{})
+			if err != nil {
+				fmt.Printf("error getting pod %s %s\n", p.Name, err.Error())
+				return err
+			}
+			if tmp.Status.Phase != v1.PodSucceeded {
+				allPodsCompleted = false
+			}
+
+		}
+		if allPodsCompleted {
+			fmt.Printf("all pods completed\n")
+			return nil
+		}
+		time.Sleep(1 * time.Second)
+		elapsedSeconds++
+		if elapsedSeconds > o.WaitTime {
+			return fmt.Errorf("error - wait time of %d seconds has been exceeded\n", o.WaitTime)
+		}
+	}
+	return nil
 
 }
