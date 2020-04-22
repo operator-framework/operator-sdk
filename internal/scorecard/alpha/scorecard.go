@@ -34,6 +34,7 @@ type Options struct {
 	Config          Config
 	Selector        labels.Selector
 	List            bool
+	Cleanup         bool
 	BundlePath      string
 	OutputFormat    string
 	Kubeconfig      string
@@ -75,8 +76,11 @@ func RunTests(o Options) error {
 
 	// TODO replace sleep with a watch on the list of pods
 	time.Sleep(7 * time.Second)
-	//defer deletePods(o.Client, createdPods)
-	//defer deleteConfigMap(o.Client, o.BundleConfigMap.Name)
+
+	if o.Cleanup {
+		defer deletePods(o.Client, createdPods)
+		defer deleteConfigMap(o.Client, o.BundleConfigMap)
+	}
 
 	testOutput := getTestResults(o.Client, createdPods)
 	printOutput(o.OutputFormat, testOutput)

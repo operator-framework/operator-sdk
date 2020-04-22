@@ -33,6 +33,7 @@ func NewCmd() *cobra.Command {
 		namespace      string
 		serviceAccount string
 		list           bool
+		cleanup        bool
 	)
 	scorecardCmd := &cobra.Command{
 		Use:    "scorecard",
@@ -42,7 +43,14 @@ func NewCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			var err error
-			o := scorecard.Options{}
+			o := scorecard.Options{
+				ServiceAccount: serviceAccount,
+				Namespace:      namespace,
+				List:           list,
+				BundlePath:     bundle,
+				OutputFormat:   output,
+				Cleanup:        cleanup,
+			}
 			o.Client, err = scorecard.GetKubeClient(kubeconfig)
 			if err != nil {
 				return fmt.Errorf("could not get Kube connection %s", err.Error())
@@ -55,12 +63,6 @@ func NewCmd() *cobra.Command {
 			if bundle == "" {
 				return fmt.Errorf("bundle flag required")
 			}
-
-			o.ServiceAccount = serviceAccount
-			o.Namespace = namespace
-			o.List = list
-			o.BundlePath = bundle
-			o.OutputFormat = output
 
 			o.Selector, err = labels.Parse(selector)
 			if err != nil {
@@ -91,6 +93,7 @@ func NewCmd() *cobra.Command {
 	scorecardCmd.Flags().StringVarP(&output, "output", "o", "text", "Output format for results.  Valid values: text, json")
 	scorecardCmd.Flags().StringVarP(&serviceAccount, "service-account", "s", "default", "service account to run the test images")
 	scorecardCmd.Flags().BoolVarP(&list, "list", "L", false, "option to enable listing which tests are run")
+	scorecardCmd.Flags().BoolVarP(&cleanup, "cleanup", "x", true, "option to disable resource cleanup after tests are run")
 
 	return scorecardCmd
 }
