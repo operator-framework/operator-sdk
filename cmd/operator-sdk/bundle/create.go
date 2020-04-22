@@ -232,6 +232,7 @@ func (c bundleCreateCmd) validate(args []string) error {
 // runGenerate generates a bundle.Dockerfile, and manifests/ and metadata/ dirs,
 // always overwriting their contents.
 func (c bundleCreateCmd) runGenerate() error {
+	log.Printf("Generating files in: %s", c.outputDir)
 	err := bundle.GenerateFunc(c.directory, c.outputDir, c.packageName, c.channels, c.defaultChannel, true)
 	if err != nil {
 		return fmt.Errorf("error generating bundle image files: %v", err)
