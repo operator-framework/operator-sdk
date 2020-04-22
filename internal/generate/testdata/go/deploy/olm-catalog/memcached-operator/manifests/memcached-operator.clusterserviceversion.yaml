@@ -90,7 +90,7 @@ spec:
                       fieldPath: metadata.name
                 - name: OPERATOR_NAME
                   value: memcached-operator
-                image: quay.io/example/memcached-operator:v0.0.2
+                image: quay.io/example/memcached-operator:v0.0.3
                 imagePullPolicy: Never
                 name: memcached-operator
                 resources: {}

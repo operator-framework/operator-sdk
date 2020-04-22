@@ -1,0 +1,3 @@
+entries:
+    - description: Add flag `--interactive` to the command `operator-sdk generate csv`  in order to enable working with interactive prompts while generating CSV.
+      kind: "addition"

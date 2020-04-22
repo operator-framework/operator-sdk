@@ -95,18 +95,20 @@ func TestGoCSVNewWithInputsToOutput(t *testing.T) {
 
 	csvVersion := "0.0.1"
 	g := BundleGenerator{
-		OperatorName:  testProjectName,
-		DeployDir:     "config",
-		ApisDir:       "api",
-		CRDsDir:       filepath.Join("config", "crds"),
-		OutputDir:     outputDir,
-		CSVVersion:    csvVersion,
-		FromVersion:   "",
-		UpdateCRDs:    false,
-		MakeManifests: false,
+		OperatorName:          testProjectName,
+		DeployDir:             "config",
+		ApisDir:               "api",
+		CRDsDir:               filepath.Join("config", "crds"),
+		OutputDir:             outputDir,
+		CSVVersion:            csvVersion,
+		FromVersion:           "",
+		UpdateCRDs:            false,
+		MakeManifests:         false,
+		InteractivePreference: projutil.InteractiveHardOff,
 	}
 
 	g.noUpdate = true
+
 	if err := g.Generate(); err != nil {
 		t.Fatalf("Failed to execute CSV generator: %v", err)
 	}
@@ -151,16 +153,18 @@ func TestGoCSVUpgradeWithInputsToOutput(t *testing.T) {
 	}
 
 	g := BundleGenerator{
-		OperatorName:  testProjectName,
-		DeployDir:     "config",
-		ApisDir:       "api",
-		CRDsDir:       filepath.Join("config", "crds"),
-		OutputDir:     outputDir,
-		CSVVersion:    csvVersion,
-		FromVersion:   fromVersion,
-		UpdateCRDs:    false,
-		MakeManifests: false,
+		OperatorName:          testProjectName,
+		DeployDir:             "config",
+		ApisDir:               "api",
+		CRDsDir:               filepath.Join("config", "crds"),
+		OutputDir:             outputDir,
+		CSVVersion:            csvVersion,
+		FromVersion:           fromVersion,
+		UpdateCRDs:            false,
+		MakeManifests:         false,
+		InteractivePreference: projutil.InteractiveHardOff,
 	}
+
 	if err := g.Generate(); err != nil {
 		t.Fatalf("Failed to execute CSV generator: %v", err)
 	}
@@ -390,6 +394,49 @@ func TestGoCSVNewWithEmptyDeployDir(t *testing.T) {
 	} else {
 		assert.Equal(t, string(csvExpBytes), string(b))
 	}
+}
+
+func TestCSVPrompt(t *testing.T) {
+	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
+	defer cleanupFunc()
+
+	s := interactiveCSVCmd{
+		DisplayName: "Memcached Application",
+		Keywords:    []string{"memcached", "app"},
+		Description: "Main enterprise application providing business critical features with " +
+			"high availability and no manual intervention.",
+		ProviderName: "Example",
+		ProviderURL:  "www.example.com",
+		Maintainers:  []string{"Some Corp:corp@example.com"},
+	}
+
+	g := BundleGenerator{
+		OperatorName:      testProjectName,
+		DeployDir:         "deploy",
+		ApisDir:           filepath.Join("pkg", "apis"),
+		CRDsDir:           filepath.Join("deploy", "crds_v1beta1"),
+		OutputDir:         "deploy",
+		CSVVersion:        "0.0.2",
+		FromVersion:       "",
+		UpdateCRDs:        false,
+		MakeManifests:     true,
+		interactiveCSVCmd: s,
+	}
+
+	g.setDefaults()
+	fileMap, err := g.generateCSV()
+	if err != nil {
+		t.Fatalf("Failed to execute CSV generator: %v", err)
+	}
+
+	csvExpFile := getCSVFileName(testProjectName)
+	csvExpBytes := readFile(t, filepath.Join(OLMCatalogDir, testProjectName, "manifests", csvExpFile))
+	if b, ok := fileMap[csvExpFile]; !ok {
+		t.Errorf("Failed to generate CSV for version %s", csvVersion)
+	} else {
+		assert.Equal(t, string(csvExpBytes), string(b))
+	}
+
 }
 
 func TestUpdateCSVVersion(t *testing.T) {
