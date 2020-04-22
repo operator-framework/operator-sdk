@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
+	"sigs.k8s.io/yaml"
 )
 
 type Fragment struct {
@@ -28,13 +28,13 @@ func (f *Fragment) Validate() error {
 }
 
 type FragmentEntry struct {
-	Description string          `yaml:"description"`
-	Kind        EntryKind       `yaml:"kind"`
-	Breaking    bool            `yaml:"breaking"`
-	Migration   *EntryMigration `yaml:"migration,omitempty"`
-	PullRequest *uint           `yaml:"pull_request_override,omitempty"`
+	Description string          `json:"description"`
+	Kind        EntryKind       `json:"kind"`
+	Breaking    bool            `json:"breaking"`
+	Migration   *EntryMigration `json:"migration,omitempty"`
+	PullRequest *uint           `json:"pull_request_override,omitempty"`
 
-	PullRequestLink string `yaml:"-"`
+	PullRequestLink string `json:"-"`
 }
 
 func (e *FragmentEntry) Validate() error {
