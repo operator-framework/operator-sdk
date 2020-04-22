@@ -15,16 +15,12 @@
 package alpha
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"strings"
 	"time"
 
-	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 	"github.com/operator-framework/operator-sdk/version"
-	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -67,46 +63,25 @@ func RunTests(o Options) error {
 		return nil
 	}
 
-	createdPods := make([]*v1.Pod, 0)
 	for i := 0; i < len(tests); i++ {
-		pod, err := runTest(o, tests[i])
+		var err error
+		tests[i].TestPod, err = runTest(o, tests[i])
 		if err != nil {
 			return fmt.Errorf("test %s failed %s", tests[i].Name, err.Error())
 		}
-		createdPods = append(createdPods, pod)
 	}
 
-	// TODO replace sleep with a watch on the list of pods
-	waitForPodsToComplete(o, createdPods)
+	waitForTestsToComplete(o, tests)
 
 	if o.Cleanup {
-		defer deletePods(o.Client, createdPods)
+		defer deletePods(o.Client, tests)
 		defer deleteConfigMap(o.Client, o.BundleConfigMap)
 	}
 
-	testOutput := getTestResults(o.Client, createdPods)
+	testOutput := getTestResults(o.Client, tests)
 	printOutput(o.OutputFormat, testOutput)
 
 	return nil
-}
-
-// LoadConfig will find and return the scorecard config, the config file
-// can be passed in via command line flag or from a bundle location or
-// bundle image
-func LoadConfig(configFilePath string) (Config, error) {
-	c := Config{}
-
-	// TODO handle getting config from bundle (ondisk or image)
-	yamlFile, err := ioutil.ReadFile(configFilePath)
-	if err != nil {
-		return c, err
-	}
-
-	if err := yaml.Unmarshal(yamlFile, &c); err != nil {
-		return c, err
-	}
-
-	return c, nil
 }
 
 // selectTests applies an optionally passed selector expression
@@ -145,84 +120,15 @@ func ConfigDocLink() string {
 		version.Version)
 }
 
-func getTestResults(client kubernetes.Interface, pods []*v1.Pod) (output v1alpha2.ScorecardOutput) {
-	output.Results = make([]v1alpha2.ScorecardTestResult, 0)
-	for i := 0; i < len(pods); i++ {
-		logBytes, err := getPodLog(client, *pods[i])
-		if err != nil {
-			fmt.Printf("error getting pod log %s\n", err.Error())
-		} else {
-			// marshal pod log into ScorecardTestResult
-			var sc v1alpha2.ScorecardTestResult
-			err := json.Unmarshal(logBytes, &sc)
-			if err != nil {
-				fmt.Printf("error unmarshalling test result %s\n", err.Error())
-			} else {
-				output.Results = append(output.Results, sc)
-			}
-		}
-	}
-	return output
-}
-
-// ListTests lists the scorecard tests as configured that would be
-// run based on user selection
-func ListTests(o Options) error {
-	tests := selectTests(o.Selector, o.Config.Tests)
-	if len(tests) == 0 {
-		fmt.Println("no tests selected")
-		return nil
-	}
-
-	output := v1alpha2.ScorecardOutput{}
-	output.Results = make([]v1alpha2.ScorecardTestResult, 0)
-
-	for i := 0; i < len(tests); i++ {
-		testResult := v1alpha2.ScorecardTestResult{}
-		testResult.Name = tests[i].Name
-		testResult.Labels = tests[i].Labels
-		testResult.Description = tests[i].Description
-		output.Results = append(output.Results, testResult)
-	}
-
-	printOutput(o.OutputFormat, output)
-
-	return nil
-}
-
-func printOutput(outputFormat string, output v1alpha2.ScorecardOutput) {
-	if outputFormat == "text" {
-		o, err := output.MarshalText()
-		if err != nil {
-			fmt.Printf(err.Error())
-			return
-		}
-		fmt.Printf("%s\n", o)
-		return
-	}
-	if outputFormat == "json" {
-		bytes, err := json.MarshalIndent(output, "", "  ")
-		if err != nil {
-			fmt.Printf(err.Error())
-			return
-		}
-		fmt.Printf("%s\n", string(bytes))
-		return
-	}
-
-	fmt.Printf("error, invalid output format selected")
-
-}
-
-// waitForPodsToComplete waits for a fixed amount of time while
+// waitForTestsToComplete waits for a fixed amount of time while
 // checking for test pods to complete
-func waitForPodsToComplete(o Options, pods []*v1.Pod) (err error) {
+func waitForTestsToComplete(o Options, tests []ScorecardTest) (err error) {
 	var elapsedSeconds int
 	fmt.Printf("waiting up to %d seconds for tests to complete\n", o.WaitTime)
 	for {
 		allPodsCompleted := true
-		for i := 0; i < len(pods); i++ {
-			p := pods[i]
+		for i := 0; i < len(tests); i++ {
+			p := tests[i].TestPod
 			var tmp *v1.Pod
 			tmp, err = o.Client.CoreV1().Pods(p.Namespace).Get(p.Name, metav1.GetOptions{})
 			if err != nil {
