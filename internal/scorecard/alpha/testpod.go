@@ -95,7 +95,7 @@ func stringWithCharset(length int, charset string) string {
 	return string(b)
 }
 
-func getPodLog(client kubernetes.Interface, pod v1.Pod) (logOutput []byte, err error) {
+func getPodLog(client kubernetes.Interface, pod *v1.Pod) (logOutput []byte, err error) {
 
 	req := client.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &v1.PodLogOptions{})
 	podLogs, err := req.Stream()
@@ -113,9 +113,9 @@ func getPodLog(client kubernetes.Interface, pod v1.Pod) (logOutput []byte, err e
 	return buf.Bytes(), err
 }
 
-func deletePods(client kubernetes.Interface, pods []*v1.Pod) {
-	for i := 0; i < len(pods); i++ {
-		p := pods[i]
+func deletePods(client kubernetes.Interface, tests []ScorecardTest) {
+	for i := 0; i < len(tests); i++ {
+		p := tests[i].TestPod
 		err := client.CoreV1().Pods(p.Namespace).Delete(p.Name, &metav1.DeleteOptions{})
 		if err != nil {
 			fmt.Printf("error deleting pod %s %s\n", p.Name, err.Error())
