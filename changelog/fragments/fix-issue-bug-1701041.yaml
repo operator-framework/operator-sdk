@@ -2,7 +2,7 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      Added timeout to child resource watches for Ansible based-operators. This is necessary to avoid appears that reconciler is blocked when the operator does not have the required RBAC permissions to List and Watch the child resource and update the CR with the error in the `status.conditions` field.
+      Added timeout to the Ansible based-operator proxy, which enables error reporting for requests that fail due to RBAC permissions issues to List and Watch the resources. 
 
     # kind iss one of:
     # - addition
