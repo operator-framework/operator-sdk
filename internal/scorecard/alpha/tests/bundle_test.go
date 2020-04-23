@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 func TestBundlePath(t *testing.T) {
@@ -76,8 +77,10 @@ func TestBundleCRs(t *testing.T) {
 				t.Errorf("Wanted result but got error: %v", err)
 				return
 			}
-			if len(cfg.Bundles) != c.crCount {
-				t.Errorf("Wanted %d CRs but got: %d", c.crCount, len(cfg.Bundles))
+			var crList []unstructured.Unstructured
+			crList, err = cfg.GetCRs()
+			if len(crList) != c.crCount {
+				t.Errorf("Wanted %d CRs but got: %d", c.crCount, len(crList))
 				return
 			}
 
