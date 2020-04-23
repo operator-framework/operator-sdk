@@ -20,20 +20,8 @@ import (
 )
 
 const (
-	BasicCheckStatusTest = "basic-check-status"
-	BasicCheckSpecTest   = "basic-check-spec"
+	BasicCheckSpecTest = "basic-check-spec"
 )
-
-// CheckStatusTest verifies that CRs have a status block
-func CheckStatusTest(bundle registry.Bundle) scapiv1alpha2.ScorecardTestResult {
-	r := scapiv1alpha2.ScorecardTestResult{}
-	r.Name = BasicCheckStatusTest
-	r.Description = "Custom Resource has a Status Block"
-	r.State = scapiv1alpha2.PassState
-	r.Errors = make([]string, 0)
-	r.Suggestions = make([]string, 0)
-	return r
-}
 
 // CheckSpecTest verifies that CRs have a spec block
 func CheckSpecTest(bundle registry.Bundle) scapiv1alpha2.ScorecardTestResult {
