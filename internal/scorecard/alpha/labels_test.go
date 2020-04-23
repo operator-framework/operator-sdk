@@ -46,11 +46,12 @@ func TestEmptySelector(t *testing.T) {
 			}
 
 			selector, err := labels.Parse(c.selectorValue)
-			if err != nil && c.wantError {
-				t.Logf("Wanted error and got error : %v", err)
-				return
-			} else if err != nil && !c.wantError {
-				t.Errorf("Wanted result but got error: %v", err)
+			if err == nil && c.wantError {
+				t.Fatalf("Wanted error but got no error")
+			} else if err != nil {
+				if !c.wantError {
+					t.Fatalf("Wanted result but got error: %v", err)
+				}
 				return
 			}
 

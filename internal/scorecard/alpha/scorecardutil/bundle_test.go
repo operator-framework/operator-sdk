@@ -12,30 +12,58 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package alpha
+package scorecardutil
 
 import (
 	"testing"
 )
 
-func TestInvalidConfigPath(t *testing.T) {
-
+func TestBundlePath(t *testing.T) {
 	cases := []struct {
-		configPathValue string
-		wantError       bool
+		bundlePath string
+		wantError  bool
 	}{
-		{"", true},
+		{"../testdata/bundle", false},
+		{"/foo", true},
 	}
 
 	for _, c := range cases {
-		t.Run(c.configPathValue, func(t *testing.T) {
-			_, err := LoadConfig(c.configPathValue)
+		t.Run(c.bundlePath, func(t *testing.T) {
+			_, err := LoadBundleDirectory(c.bundlePath)
 			if err == nil && c.wantError {
 				t.Fatalf("Wanted error but got no error")
 			} else if err != nil {
 				if !c.wantError {
 					t.Fatalf("Wanted result but got error: %v", err)
 				}
+				return
+			}
+		})
+
+	}
+}
+func TestBundleCRs(t *testing.T) {
+	cases := []struct {
+		bundlePath string
+		crCount    int
+	}{
+		{"../testdata/bundle", 1},
+	}
+
+	for _, c := range cases {
+		t.Run(c.bundlePath, func(t *testing.T) {
+			bundle, err := LoadBundleDirectory(c.bundlePath)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			examples, err := GetALMExamples(*bundle)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if len(examples) != c.crCount {
+				t.Errorf("Wanted %d CRs but got: %d", c.crCount, len(examples))
 				return
 			}
 
