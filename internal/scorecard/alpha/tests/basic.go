@@ -15,6 +15,7 @@
 package tests
 
 import (
+	"github.com/operator-framework/operator-registry/pkg/registry"
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 )
 
@@ -24,7 +25,7 @@ const (
 )
 
 // CheckStatusTest verifies that CRs have a status block
-func CheckStatusTest(conf TestBundle) scapiv1alpha2.ScorecardTestResult {
+func CheckStatusTest(bundle registry.Bundle) scapiv1alpha2.ScorecardTestResult {
 	r := scapiv1alpha2.ScorecardTestResult{}
 	r.Name = BasicCheckStatusTest
 	r.Description = "Custom Resource has a Status Block"
@@ -35,7 +36,7 @@ func CheckStatusTest(conf TestBundle) scapiv1alpha2.ScorecardTestResult {
 }
 
 // CheckSpecTest verifies that CRs have a spec block
-func CheckSpecTest(conf TestBundle) scapiv1alpha2.ScorecardTestResult {
+func CheckSpecTest(bundle registry.Bundle) scapiv1alpha2.ScorecardTestResult {
 	r := scapiv1alpha2.ScorecardTestResult{}
 	r.Name = BasicCheckSpecTest
 	r.Description = "Custom Resource has a Spec Block"

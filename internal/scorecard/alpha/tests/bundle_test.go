@@ -19,6 +19,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/operator-framework/operator-registry/pkg/registry"
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -68,8 +69,8 @@ func TestBundleCRs(t *testing.T) {
 			if err != nil {
 				t.Errorf("Invalid filepath")
 			}
-			var cfg TestBundle
-			cfg, err = GetBundle(abs)
+			var bundle registry.Bundle
+			bundle, err = GetBundle(abs)
 			if err != nil && c.wantError {
 				t.Logf("Wanted error and got error : %v", err)
 				return
@@ -78,7 +79,7 @@ func TestBundleCRs(t *testing.T) {
 				return
 			}
 			var crList []unstructured.Unstructured
-			crList, err = cfg.GetCRs()
+			crList, err = GetCRs(bundle)
 			if err != nil {
 				t.Error(err)
 				return
@@ -98,7 +99,7 @@ func TestBasicAndOLM(t *testing.T) {
 	cases := []struct {
 		bundlePath string
 		state      scapiv1alpha2.State
-		function   func(TestBundle) scapiv1alpha2.ScorecardTestResult
+		function   func(registry.Bundle) scapiv1alpha2.ScorecardTestResult
 	}{
 		{"../testdata", scapiv1alpha2.PassState, CheckStatusTest},
 		{"../testdata", scapiv1alpha2.PassState, CheckSpecTest},
@@ -117,13 +118,13 @@ func TestBasicAndOLM(t *testing.T) {
 			if err != nil {
 				t.Errorf("Invalid filepath")
 			}
-			var cfg TestBundle
-			cfg, err = GetBundle(abs)
+			var bundle registry.Bundle
+			bundle, err = GetBundle(abs)
 			if err != nil {
 				t.Errorf("Error getting bundle %s", err.Error())
 			}
 
-			result := c.function(cfg)
+			result := c.function(bundle)
 			if result.State != scapiv1alpha2.PassState {
 				t.Errorf("%s result State %v expected", result.Name, scapiv1alpha2.PassState)
 				return

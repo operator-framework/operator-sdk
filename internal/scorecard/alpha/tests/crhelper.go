@@ -19,15 +19,16 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/operator-framework/operator-registry/pkg/registry"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 // GetCRs parses a Bundle's CSV for CRs
-func (c TestBundle) GetCRs() (crList []unstructured.Unstructured, err error) {
+func GetCRs(bundle registry.Bundle) (crList []unstructured.Unstructured, err error) {
 
 	// get CRs from CSV's alm-examples annotation, assume single bundle
 
-	csv, err := c.Bundle.ClusterServiceVersion()
+	csv, err := bundle.ClusterServiceVersion()
 	if err != nil {
 		return crList, fmt.Errorf("error in csv retrieval %s", err.Error())
 	}
