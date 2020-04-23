@@ -109,6 +109,20 @@ type MemcachedStatus struct {
 }
 ```
 
+Add the `+kubebuilder:subresource:status` [marker comment][status_marker] to enable the [status subresource][status_subresource] for the CRD so that the controller can update the CR status without changing the rest of the CR object:
+
+```Go
+// Memcached is the Schema for the memcacheds API
+// +kubebuilder:subresource:status
+type Memcached struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   MemcachedSpec   `json:"spec,omitempty"`
+	Status MemcachedStatus `json:"status,omitempty"`
+}
+```
+
 After modifying the `*_types.go` file always run the following command to update the generated code for that resource type:
 
 ```sh
@@ -455,3 +469,5 @@ See the [advanced topics][advanced_topics] doc for more use cases and under the 
 [legacy_quickstart_doc]: /docs/golang/quickstart/
 [activate_modules]: https://github.com/golang/go/wiki/Modules#how-to-install-and-activate-module-support
 [advanced_topics]: /docs/kubebuilder/advanced-topics/
+[status_marker]: https://book.kubebuilder.io/reference/generating-crd.html#status
+[status_subresource]: https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#status-subresource
