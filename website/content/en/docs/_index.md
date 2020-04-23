@@ -3,8 +3,7 @@ title: Operator SDK Documentation
 linkTitle: Documentation
 menu:
   main:
-    weight: 3
-weight: 20
+    weight: 2
 ---
 
 {{% alert title="Warning" color="warning" %}}
