@@ -96,7 +96,7 @@ func printValidTests() (result v1alpha2.ScorecardTestResult) {
 	result.Errors = make([]string, 0)
 	result.Suggestions = make([]string, 0)
 
-	str := fmt.Sprintf("Valid tests for this image include: %s, %s, %s, %s, %s, %s, %s",
+	str := fmt.Sprintf("Valid tests for this image include: %s, %s, %s, %s, %s, %s",
 		tests.OLMBundleValidationTest,
 		tests.OLMCRDsHaveValidationTest,
 		tests.OLMCRDsHaveResourcesTest,

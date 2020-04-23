@@ -101,7 +101,6 @@ func TestBasicAndOLM(t *testing.T) {
 		state      scapiv1alpha2.State
 		function   func(registry.Bundle) scapiv1alpha2.ScorecardTestResult
 	}{
-		{"../testdata", scapiv1alpha2.PassState, CheckStatusTest},
 		{"../testdata", scapiv1alpha2.PassState, CheckSpecTest},
 		{"../testdata", scapiv1alpha2.PassState, BundleValidationTest},
 		{"../testdata", scapiv1alpha2.PassState, CRDsHaveValidationTest},
