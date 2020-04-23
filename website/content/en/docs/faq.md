@@ -129,6 +129,24 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 	}
 ```
 
+## My environment is restricted for external access and I am unable to build the operators, how do I fix this?
+
+To create the project is required to have its dependencies. So, because of this, the `GOPROXY` environment variable with 'https://proxy.golang.org,direct' is set by default in go 1.13+. See the [Module downloading and verification](https://golang.org/cmd/go/#hdr-Module_downloading_and_verification) to understand it better.
+
+In this way, to attend the requirements defined in restrictive environments, is possible to:
+
+**Use vendor**
+
+A possible solution would be `vendor` the modules, ([go vendor](https://golang.org/cmd/go/#hdr-Vendor_Directories)), which means that all dependent modules required will have the source code in the `vendor` directory inside of the project. 
+ 
+However, note that it also requires light changes in the Dockerfiles for Ansible and Helm based-operators as well to looking for the modules in the `vendor directory` instead of the internet. See the [dowsntream Dockerfile for Ansible based-operator image](https://github.com/openshift/ocp-release-operator-sdk/blob/master/release/ansible/Dockerfile) as an example. 
+
+**Configure a private proxy**
+
+See [Module configuration for non-public modules](https://golang.org/cmd/go/#hdr-Module_configuration_for_non_public_modules) to know how you can configure non-public ones and then keep all required modules available on it. 
+
+**NOTES:** Usually, the vendor solution is easier to get done and work with. Though its pros and cons may be considered an anti-pattern and it is a very debatable subject. In this way, if you just got one project may set up the whole private proxy seems like more work than it's worth. However, if you have multiple projects, it shows that could make more sense. 
+
 [kube-apiserver_options]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options
 [controller-runtime_faq]: https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md#q-how-do-i-have-different-logic-in-my-reconciler-for-different-types-of-events-eg-create-update-delete
 [finalizer]: https://github.com/operator-framework/operator-sdk/blob/master/doc/user-guide.md#handle-cleanup-on-deletion
