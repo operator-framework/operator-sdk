@@ -3,6 +3,9 @@
         list-style: disc;
         margin-left: 1rem;
     }
+    p + p {
+        margin-top: var(--of--spacer--md);
+    }
     .td-sidebar-nav .td-sidebar-link__page {
         font-weight: normal;
     }
