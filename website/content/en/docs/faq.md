@@ -133,7 +133,7 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 
 To create the project is required to have its dependencies. So, because of this, the `GOPROXY` environment variable with 'https://proxy.golang.org,direct' is set by default in go 1.13+. See the [Module downloading and verification](https://golang.org/cmd/go/#hdr-Module_downloading_and_verification) to understand it better.
 
-In this way, to attend the requirements defined in restrictive environments, is possible to:
+In this way, to attain the defined requirements in restrictive environments is possible to:
 
 **Use vendor**
 
