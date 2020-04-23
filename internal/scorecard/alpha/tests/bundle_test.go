@@ -79,6 +79,10 @@ func TestBundleCRs(t *testing.T) {
 			}
 			var crList []unstructured.Unstructured
 			crList, err = cfg.GetCRs()
+			if err != nil {
+				t.Error(err)
+				return
+			}
 			if len(crList) != c.crCount {
 				t.Errorf("Wanted %d CRs but got: %d", c.crCount, len(crList))
 				return

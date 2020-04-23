@@ -119,8 +119,6 @@ func deletePods(client kubernetes.Interface, tests []ScorecardTest) {
 		err := client.CoreV1().Pods(p.Namespace).Delete(p.Name, &metav1.DeleteOptions{})
 		if err != nil {
 			fmt.Printf("error deleting pod %s %s\n", p.Name, err.Error())
-		} else {
-			fmt.Printf("deleted pod %s\n", p.Name)
 		}
 
 	}
