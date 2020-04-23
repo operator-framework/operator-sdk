@@ -38,7 +38,8 @@ import (
 // test image.
 
 const (
-	bundleZip = "/scorecard/bundle.zip"
+	// bundleTar is the tar file containing the bundle contents
+	bundleTar = "/scorecard/bundle.tar"
 )
 
 func main() {
@@ -54,7 +55,7 @@ func main() {
 	}
 	defer os.Remove(tmpDir)
 
-	err = alpha.Untartar(bundleZip, tmpDir)
+	err = alpha.Untartar(bundleTar, tmpDir)
 	if err != nil {
 		log.Fatalf("error untarring bundle %s", err.Error())
 	}
@@ -91,6 +92,7 @@ func main() {
 
 }
 
+// printValidTests will print out full list of test names to give a hint to the end user on what the valid tests are
 func printValidTests() (result v1alpha2.ScorecardTestResult) {
 	result.State = scapiv1alpha2.FailState
 	result.Errors = make([]string, 0)

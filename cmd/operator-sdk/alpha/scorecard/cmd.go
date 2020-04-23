@@ -16,7 +16,6 @@ package scorecard
 
 import (
 	"fmt"
-	"log"
 
 	scorecard "github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
 	"github.com/spf13/cobra"
@@ -72,16 +71,10 @@ func NewCmd() *cobra.Command {
 			}
 
 			if list {
-				if err := scorecard.ListTests(o); err != nil {
-					log.Fatal(err)
-				}
-				return nil
+				return scorecard.ListTests(o)
 			}
 
-			if err := scorecard.RunTests(o); err != nil {
-				log.Fatal(err)
-			}
-			return nil
+			return scorecard.RunTests(o)
 		},
 	}
 
