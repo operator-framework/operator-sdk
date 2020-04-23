@@ -20,23 +20,16 @@ import (
 	"os"
 
 	"github.com/operator-framework/api/pkg/manifests"
-	"github.com/operator-framework/api/pkg/validation/errors"
 	"github.com/operator-framework/operator-registry/pkg/registry"
 	"github.com/sirupsen/logrus"
 )
 
-// TestBundle holds the bundle contents to be tested
-type TestBundle struct {
-	BundleErrors []errors.ManifestResult
-	Bundle       registry.Bundle
-}
-
-// GetBundle parses a Bundle from a given on-disk path returning a TestBundle
-func GetBundle(bundlePath string) (cfg TestBundle, err error) {
+// GetBundle parses a Bundle from a given on-disk path returning a bundle
+func GetBundle(bundlePath string) (bundle registry.Bundle, err error) {
 
 	// validate the path
 	if _, err := os.Stat(bundlePath); os.IsNotExist(err) {
-		return cfg, err
+		return bundle, err
 	}
 
 	validationLogOutput := new(bytes.Buffer)
@@ -47,13 +40,14 @@ func GetBundle(bundlePath string) (cfg TestBundle, err error) {
 	// TODO evaluate another API call that would support the new
 	// bundle format
 	var bundles []*registry.Bundle
-	_, bundles, cfg.BundleErrors = manifests.GetManifestsDir(bundlePath)
+	//var bundleErrors []errors.ManifestResult
+	_, bundles, _ = manifests.GetManifestsDir(bundlePath)
 
-	cfg.Bundle = *bundles[0]
-	_, err = cfg.Bundle.ClusterServiceVersion()
+	bundle = *bundles[0]
+	_, err = bundle.ClusterServiceVersion()
 	if err != nil {
-		return cfg, fmt.Errorf("error in csv retrieval %s", err.Error())
+		return bundle, fmt.Errorf("error in csv retrieval %s", err.Error())
 	}
 
-	return cfg, err
+	return bundle, err
 }
