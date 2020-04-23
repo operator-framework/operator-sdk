@@ -51,10 +51,9 @@ func getConfigMapDefinition(namespace string, bundleData []byte) *v1.ConfigMap {
 
 // deleteConfigMap deletes the test bundle ConfigMap and is called
 // as part of the test run cleanup
-func deleteConfigMap(client kubernetes.Interface, configMap *v1.ConfigMap) error {
+func deleteConfigMap(client kubernetes.Interface, configMap *v1.ConfigMap) {
 	err := client.CoreV1().ConfigMaps(configMap.Namespace).Delete(configMap.Name, &metav1.DeleteOptions{})
 	if err != nil {
-		return fmt.Errorf("error deleting configMap %s %s\n", configMap.Name, err.Error())
+		fmt.Printf("error deleting configMap %s %s", configMap.Name, err.Error())
 	}
-	return nil
 }

@@ -74,7 +74,7 @@ func printOutput(outputFormat string, output v1alpha2.ScorecardOutput) {
 	if outputFormat == "text" {
 		o, err := output.MarshalText()
 		if err != nil {
-			fmt.Printf(err.Error())
+			fmt.Println(err.Error())
 			return
 		}
 		fmt.Printf("%s\n", o)
@@ -83,13 +83,13 @@ func printOutput(outputFormat string, output v1alpha2.ScorecardOutput) {
 	if outputFormat == "json" {
 		bytes, err := json.MarshalIndent(output, "", "  ")
 		if err != nil {
-			fmt.Printf(err.Error())
+			fmt.Println(err.Error())
 			return
 		}
 		fmt.Printf("%s\n", string(bytes))
 		return
 	}
 
-	fmt.Printf("error, invalid output format selected")
+	fmt.Println("error, invalid output format selected")
 
 }

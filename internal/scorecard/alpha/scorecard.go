@@ -71,11 +71,14 @@ func RunTests(o Options) error {
 		}
 	}
 
-	waitForTestsToComplete(o, tests)
-
 	if o.Cleanup {
 		defer deletePods(o.Client, tests)
 		defer deleteConfigMap(o.Client, o.BundleConfigMap)
+	}
+
+	err = waitForTestsToComplete(o, tests)
+	if err != nil {
+		return err
 	}
 
 	testOutput := getTestResults(o.Client, tests)
@@ -123,9 +126,7 @@ func ConfigDocLink() string {
 // waitForTestsToComplete waits for a fixed amount of time while
 // checking for test pods to complete
 func waitForTestsToComplete(o Options, tests []ScorecardTest) (err error) {
-	var elapsedSeconds int
-	fmt.Printf("waiting up to %d seconds for tests to complete\n", o.WaitTime)
-	for {
+	for elapsedSeconds := 0; elapsedSeconds < o.WaitTime; elapsedSeconds++ {
 		allPodsCompleted := true
 		for i := 0; i < len(tests); i++ {
 			p := tests[i].TestPod
@@ -141,15 +142,10 @@ func waitForTestsToComplete(o Options, tests []ScorecardTest) (err error) {
 
 		}
 		if allPodsCompleted {
-			fmt.Printf("all pods completed\n")
 			return nil
 		}
 		time.Sleep(1 * time.Second)
-		elapsedSeconds++
-		if elapsedSeconds > o.WaitTime {
-			return fmt.Errorf("error - wait time of %d seconds has been exceeded\n", o.WaitTime)
-		}
 	}
-	return nil
+	return fmt.Errorf("error - wait time of %d seconds has been exceeded", o.WaitTime)
 
 }
