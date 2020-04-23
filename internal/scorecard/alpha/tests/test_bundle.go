@@ -17,6 +17,7 @@ package tests
 import (
 	"bytes"
 	"fmt"
+	"os"
 
 	"github.com/operator-framework/api/pkg/manifests"
 	"github.com/operator-framework/api/pkg/validation/errors"
@@ -32,6 +33,11 @@ type TestBundle struct {
 
 // GetBundle parses a Bundle from a given on-disk path returning a TestBundle
 func GetBundle(bundlePath string) (cfg TestBundle, err error) {
+
+	// validate the path
+	if _, err := os.Stat(bundlePath); os.IsNotExist(err) {
+		return cfg, err
+	}
 
 	validationLogOutput := new(bytes.Buffer)
 	origOutput := logrus.StandardLogger().Out
