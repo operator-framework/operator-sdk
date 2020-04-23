@@ -77,8 +77,6 @@ func main() {
 		result = tests.SpecDescriptorsTest(cfg)
 	case tests.OLMStatusDescriptorsTest:
 		result = tests.StatusDescriptorsTest(cfg)
-	case tests.BasicCheckStatusTest:
-		result = tests.CheckStatusTest(cfg)
 	case tests.BasicCheckSpecTest:
 		result = tests.CheckSpecTest(cfg)
 	default:
@@ -104,7 +102,6 @@ func printValidTests() (result v1alpha2.ScorecardTestResult) {
 		tests.OLMCRDsHaveResourcesTest,
 		tests.OLMSpecDescriptorsTest,
 		tests.OLMStatusDescriptorsTest,
-		tests.BasicCheckStatusTest,
 		tests.BasicCheckSpecTest)
 	result.Suggestions = append(result.Suggestions, str)
 	return result
