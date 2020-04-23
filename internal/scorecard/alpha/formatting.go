@@ -65,31 +65,30 @@ func ListTests(o Options) error {
 		output.Results = append(output.Results, testResult)
 	}
 
-	printOutput(o.OutputFormat, output)
+	err := printOutput(o.OutputFormat, output)
 
-	return nil
+	return err
 }
 
-func printOutput(outputFormat string, output v1alpha2.ScorecardOutput) {
-	if outputFormat == "text" {
+func printOutput(outputFormat string, output v1alpha2.ScorecardOutput) error {
+	switch outputFormat {
+	case "text":
 		o, err := output.MarshalText()
 		if err != nil {
 			fmt.Println(err.Error())
-			return
+			return err
 		}
 		fmt.Printf("%s\n", o)
-		return
-	}
-	if outputFormat == "json" {
+	case "json":
 		bytes, err := json.MarshalIndent(output, "", "  ")
 		if err != nil {
 			fmt.Println(err.Error())
-			return
+			return err
 		}
 		fmt.Printf("%s\n", string(bytes))
-		return
+	default:
+		return fmt.Errorf("invalid output format selected")
 	}
-
-	fmt.Println("error, invalid output format selected")
+	return nil
 
 }

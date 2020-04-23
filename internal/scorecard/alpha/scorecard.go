@@ -30,8 +30,6 @@ import (
 type Options struct {
 	Config          Config
 	Selector        labels.Selector
-	List            bool
-	Cleanup         bool
 	BundlePath      string
 	WaitTime        int
 	OutputFormat    string
@@ -40,6 +38,8 @@ type Options struct {
 	BundleConfigMap *v1.ConfigMap
 	ServiceAccount  string
 	Client          kubernetes.Interface
+	List            bool
+	Cleanup         bool
 }
 
 // RunTests executes the scorecard tests as configured
@@ -82,9 +82,9 @@ func RunTests(o Options) error {
 	}
 
 	testOutput := getTestResults(o.Client, tests)
-	printOutput(o.OutputFormat, testOutput)
+	err = printOutput(o.OutputFormat, testOutput)
 
-	return nil
+	return err
 }
 
 // selectTests applies an optionally passed selector expression

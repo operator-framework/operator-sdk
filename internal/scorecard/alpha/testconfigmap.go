@@ -36,7 +36,7 @@ func createConfigMap(o Options, bundleData []byte) (configMap *v1.ConfigMap, err
 func getConfigMapDefinition(namespace string, bundleData []byte) *v1.ConfigMap {
 	configMapName := fmt.Sprintf("scorecard-test-%s", randomString())
 	data := make(map[string][]byte)
-	data["bundle.zip"] = bundleData
+	data["bundle.tar"] = bundleData
 	return &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      configMapName,

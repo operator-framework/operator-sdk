@@ -33,9 +33,7 @@ func GetKubeClient(kubeconfig string) (client kubernetes.Interface, err error) {
 
 	var inCluster bool
 
-	if kubeconfig != "" {
-		// use the command line flag
-	} else {
+	if kubeconfig == "" {
 		envVar := os.Getenv("KUBECONFIG")
 		if envVar != "" {
 			// use the KUBECONFIG env variable

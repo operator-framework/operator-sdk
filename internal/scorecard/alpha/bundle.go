@@ -20,6 +20,7 @@ import (
 	"os"
 )
 
+// getBundleData tars up the contents of a bundle from a path, and returns that tar file in []byte
 func getBundleData(bundlePath string) (bundleData []byte, err error) {
 
 	// make sure the bundle exists on disk
@@ -28,14 +29,18 @@ func getBundleData(bundlePath string) (bundleData []byte, err error) {
 		return bundleData, fmt.Errorf("bundle path is not valid %s", err.Error())
 	}
 
+	tempTarFileName := fmt.Sprintf("%s%ctempBundle-%s.tar", os.TempDir(), os.PathSeparator, randomString())
+
 	paths := []string{bundlePath}
-	err = Tartar("/tmp/my.tar", paths)
+	err = Tartar(tempTarFileName, paths)
 	if err != nil {
 		return bundleData, fmt.Errorf("error creating tar of bundle %s", err.Error())
 	}
 
+	defer os.Remove(tempTarFileName)
+
 	var buf []byte
-	buf, err = ioutil.ReadFile("/tmp/my.tar")
+	buf, err = ioutil.ReadFile(tempTarFileName)
 	if err != nil {
 		return bundleData, fmt.Errorf("error reading tar of bundle %s", err.Error())
 	}
