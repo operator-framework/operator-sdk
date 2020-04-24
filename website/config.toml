@@ -29,8 +29,8 @@ pygmentsUseClassic = false
 pygmentsStyle = "tango"
 
 # Configure how URLs look like per section.
-[permalinks]
-blog = "/:section/:year/:month/:day/:slug/"
+# [permalinks]
+# blog = "/:section/:year/:month/:day/:slug/"
 
 ## Configuration for Goldmark markdown parser: https://github.com/yuin/goldmark
 [markup]
