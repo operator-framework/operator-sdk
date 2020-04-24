@@ -49,9 +49,9 @@
         white-space: nowrap;
         &:first-of-type {
             grid-area: action-1;
-            // margin-bottom: var(--of--spacer--md);
+            margin-bottom: var(--of--spacer--md);
         }
-        &:last-of-type {
+        &+.of-button {
             grid-area: action-2;
         }
     }

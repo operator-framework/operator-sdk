@@ -58,7 +58,7 @@ ol {
         background: var(--of--color-brand--200);
         color: var(--of--color-white--100);
         &:hover,&:active,&:focus {
-            
+            color: var(--of--color-white--100);
             background: var(--of--color-brand--300);  
         }
     }
