@@ -96,7 +96,8 @@ func NewCmd() *cobra.Command {
 	scorecardCmd.Flags().StringVar(&bundle, "bundle", "", "path to the operator bundle contents on disk")
 	scorecardCmd.Flags().StringVarP(&selector, "selector", "l", "", "label selector to determine which tests are run")
 	scorecardCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "namespace to run the test images in")
-	scorecardCmd.Flags().StringVarP(&outputFormat, "output", "o", "text", "Output format for results.  Valid values: text, json")
+	scorecardCmd.Flags().StringVarP(&outputFormat, "output", "o", "text",
+		"Output format for results.  Valid values: text, json")
 	scorecardCmd.Flags().StringVarP(&serviceAccount, "service-account", "s", "default", "Service account to use for tests")
 	scorecardCmd.Flags().BoolVarP(&list, "list", "L", false, "Option to enable listing which tests are run")
 	scorecardCmd.Flags().BoolVarP(&skipCleanup, "skip-cleanup", "x", true, "Disable resource cleanup after tests are run")
