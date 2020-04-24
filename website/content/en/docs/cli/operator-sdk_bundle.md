@@ -7,15 +7,20 @@ Manage operator bundle metadata
 
 ### Synopsis
 
+
 Manage bundle builds, bundle metadata generation, and bundle validation.
 An operator bundle is a portable operator packaging format understood by Kubernetes
 native software, like the Operator Lifecycle Manager.
 
-More information about operator bundles and metadata:
-https://github.com/openshift/enhancements/blob/master/enhancements/olm/operator-bundle.md
+The bundle generate and in this command follow the Operator Registry Manifests format.
+Note that, the bundle metadata and bundle images will be validated following the Operator Registry rules.
 
-Operator Lifecycle Manager:
-https://github.com/operator-framework/operator-lifecycle-manager
+And then, for further information over the integration with OLM via SDK see its docs:
+https://sdk.operatorframework.io/docs/olm-integration/
+
+Notes:
+* More info about OLM: https://github.com/operator-framework/operator-lifecycle-manager.
+* More info about the bundle format see: https://github.com/operator-framework/operator-registry#manifest-format.
 
 
 ### Options

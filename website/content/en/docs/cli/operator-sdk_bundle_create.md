@@ -7,36 +7,25 @@ Create an operator bundle image
 
 ### Synopsis
 
-The 'operator-sdk bundle create' command will build an operator
-bundle image containing operator metadata and manifests, tagged with the
-provided image tag.
 
-To write all files required to build a bundle image without building the
-image, set '--generate-only=true'. A bundle.Dockerfile and bundle metadata
-will be written if '--generate-only=true':
+The 'operator-sdk bundle create' command will build an operator bundle image containing operator metadata and 
+manifests, tagged with the provided image tag. 
+		
+To write all files required to build a bundle image without building the image, set '--generate-only=true'. 
+		
+A bundle Dockerfile, bundle metadata, and a 'manifests/' directory containing your bundle manifests will 
+be written if '--generate-only=true'. Note that, if the 'manifests/' do not exist, this command will 
+create the directory which is expected with the CRD's resources from the '/deploy/crds/' directory and generate 
+a CSV file that can be applied to the cluster using standard tooling like kubectl and defines its 
+integration with OLM. 
 
-```
-  $ operator-sdk bundle create --generate-only --directory ./deploy/olm-catalog/test-operator/manifests
-  $ ls .
-  ...
-  bundle.Dockerfile
-  ...
-  $ tree ./deploy/olm-catalog/test-operator/
-  ./deploy/olm-catalog/test-operator/
-  ├── manifests
-  │   ├── example.com_tests_crd.yaml
-  │   └── test-operator.clusterserviceversion.yaml
-  └── metadata
-      └── annotations.yaml
-```
-
-'--generate-only' is useful if you want to build an operator's bundle image
-manually or modify metadata before building an image.
-
-More information on operator bundle images and the manifests/metadata format:
-https://github.com/openshift/enhancements/blob/master/enhancements/olm/operator-bundle.md
-
-NOTE: bundle images are not runnable.
+Also, the /metadata directory will be created with resources that are used to store supporting 
+metadata associated with the operator.
+		
+Notes:
+* The image is not runnable.
+* For more information on operator bundle images and metadata format see: 
+  https://github.com/operator-framework/operator-registry#manifest-format 
 
 
 ```
@@ -46,28 +35,56 @@ operator-sdk bundle create [flags]
 ### Examples
 
 ```
-The following invocation will build a test-operator 0.1.0 bundle image using Docker.
-This image will contain manifests for package channels 'stable' and 'beta':
+
+The following invocation will build a memcached-operator bundle metadata locally which is useful 
+if you want to build an operator's bundle image manually, modify metadata before building an image, 
+or want to generate a 'manifests/' directory containing your operator manifests for compatibility
+with other operator tooling.
+
+  $ operator-sdk bundle create --generate-only
+		
+  # The following is the directory of an operator registry bundle which will be generated.
+
+  $ ls .
+  ...
+  bundle.Dockerfile
+  ...
+  $ tree ./deploy/olm-catalog/memcached-operator/
+  └── manifests
+  	└── cache.example.com_memcacheds_crd.yaml
+  	└── memcached-operator.clusterserviceversion.yaml
+  └── metadata
+  	└── annotations.yaml
+		
+  # Now, you can, for example, validate the bundle generate locally with:
+  $ operator-sdk bundle validate \
+	--directory ./deploy/olm-catalog/memcached-operator/	
+		
+The following invocation will build a test-operator 0.1.0 bundle image using Docker. 
+
+  # This image will contain manifests for package channels 'stable' and 'beta':
 
   $ operator-sdk bundle create quay.io/example/test-operator:v0.1.0 \
-      --directory ./deploy/olm-catalog/test-operator/manifests \
-      --package test-operator \
-      --channels stable,beta \
-      --default-channel stable
+    --directory ./deploy/olm-catalog/test-operator/ \
+    --package test-operator \
+    --channels stable,beta \
+    --default-channel stable
 
-Assuming your operator has the same name as your repo directory and the only
-channel is 'stable', the above command can be abbreviated to:
+  # Assuming your operator has the same name as your repo directory and the only channel is 'stable',
+  the above command can be abbreviated to:
 
-  $ operator-sdk bundle create quay.io/example/test-operator:v0.1.0
+  $ operator-sdk bundle create quay.io/example/test-operator:v0.1.0 \
+    --directory ./deploy/olm-catalog/test-operator/
 
-The following invocation will generate test-operator bundle metadata and a
-bundle.Dockerfile for your latest operator version without building the image:
+  # The following invocation will generate test-operator bundle metadata, a 'manifests/' dir, and Dockerfile 
+  for your latest operator version without building the image:
 
   $ operator-sdk bundle create \
-      --generate-only \
-      --package test-operator \
-      --channels beta \
-      --default-channel beta
+    --generate-only \
+    --directory ./deploy/olm-catalog/test-operator/ \
+    --package test-operator \
+    --channels beta \
+    --default-channel beta
 
 ```
 
