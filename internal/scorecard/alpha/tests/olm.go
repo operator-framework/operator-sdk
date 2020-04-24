@@ -130,7 +130,7 @@ func getCRsFromCSV(almExamples string, csvName string) ([]unstructured.Unstructu
 		return crs, nil
 	} else {
 		return crs, errors.New(
-			// TODO what is this and do we still need it?
+			// TODO can users still pass crs to be validated?
 			"cr-manifest config option must be set if CSV has no metadata.annotations['alm-examples']")
 	}
 	return crs, nil
@@ -149,6 +149,9 @@ func registryToApiCSV(csv *registry.ClusterServiceVersion) (*operators.ClusterSe
 	return &apiCSV, nil
 }
 
+// TODO This is the validation we did in v1, but it looks like it only validates fields that
+// are in the example CRs, if you have a field in your CRD that isn't present in one of your examples,
+// I don't think it will be validated.
 func checkOwnedCSVDescriptors(cr unstructured.Unstructured, csv *operators.ClusterServiceVersion,
 	descriptor string, r scapiv1alpha2.ScorecardTestResult) scapiv1alpha2.ScorecardTestResult {
 
