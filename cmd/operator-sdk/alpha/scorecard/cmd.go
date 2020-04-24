@@ -15,11 +15,13 @@
 package scorecard
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"time"
 
 	scorecard "github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
+	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/labels"
 )
@@ -27,7 +29,7 @@ import (
 func NewCmd() *cobra.Command {
 	var (
 		config         string
-		output         string
+		outputFormat   string
 		bundle         string
 		selector       string
 		kubeconfig     string
@@ -49,7 +51,6 @@ func NewCmd() *cobra.Command {
 				ServiceAccount: serviceAccount,
 				Namespace:      namespace,
 				BundlePath:     bundle,
-				OutputFormat:   output,
 				Cleanup:        skipCleanup,
 				WaitTime:       waitTime,
 			}
@@ -71,11 +72,20 @@ func NewCmd() *cobra.Command {
 				return fmt.Errorf("could not parse selector %s", err.Error())
 			}
 
+			var scorecardOutput v1alpha2.ScorecardOutput
 			if list {
-				return scorecard.ListTests(o)
+				scorecardOutput, err = scorecard.ListTests(o)
+				if err != nil {
+					return fmt.Errorf("error listing tests %s", err.Error())
+				}
+			} else {
+				scorecardOutput, err = scorecard.RunTests(o)
+				if err != nil {
+					return fmt.Errorf("error running tests %s", err.Error())
+				}
 			}
 
-			return scorecard.RunTests(o)
+			return printOutput(outputFormat, scorecardOutput)
 		},
 	}
 
@@ -86,11 +96,35 @@ func NewCmd() *cobra.Command {
 	scorecardCmd.Flags().StringVar(&bundle, "bundle", "", "path to the operator bundle contents on disk")
 	scorecardCmd.Flags().StringVarP(&selector, "selector", "l", "", "label selector to determine which tests are run")
 	scorecardCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "namespace to run the test images in")
-	scorecardCmd.Flags().StringVarP(&output, "output", "o", "text", "Output format for results.  Valid values: text, json")
-	scorecardCmd.Flags().StringVarP(&serviceAccount, "service-account", "s", "default", "service account to use for tests")
-	scorecardCmd.Flags().BoolVarP(&list, "list", "L", false, "option to enable listing which tests are run")
-	scorecardCmd.Flags().BoolVarP(&skipCleanup, "skip-cleanup", "x", true, "option to disable resource cleanup after tests are run")
-	scorecardCmd.Flags().DurationVarP(&waitTime, "wait-time", "w", time.Duration(30*time.Second), "time in seconds to wait for tests to complete")
+	scorecardCmd.Flags().StringVarP(&outputFormat, "output", "o", "text", "Output format for results.  Valid values: text, json")
+	scorecardCmd.Flags().StringVarP(&serviceAccount, "service-account", "s", "default", "Service account to use for tests")
+	scorecardCmd.Flags().BoolVarP(&list, "list", "L", false, "Option to enable listing which tests are run")
+	scorecardCmd.Flags().BoolVarP(&skipCleanup, "skip-cleanup", "x", true, "Disable resource cleanup after tests are run")
+	scorecardCmd.Flags().DurationVarP(&waitTime, "wait-time", "w", time.Duration(30*time.Second),
+		"seconds to wait for tests to complete. Example: 35s")
 
 	return scorecardCmd
+}
+
+func printOutput(outputFormat string, output v1alpha2.ScorecardOutput) error {
+	switch outputFormat {
+	case "text":
+		o, err := output.MarshalText()
+		if err != nil {
+			fmt.Println(err.Error())
+			return err
+		}
+		fmt.Printf("%s\n", o)
+	case "json":
+		bytes, err := json.MarshalIndent(output, "", "  ")
+		if err != nil {
+			fmt.Println(err.Error())
+			return err
+		}
+		fmt.Printf("%s\n", string(bytes))
+	default:
+		return fmt.Errorf("invalid output format selected")
+	}
+	return nil
+
 }

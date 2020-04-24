@@ -47,14 +47,13 @@ func getTestResults(client kubernetes.Interface, tests []ScorecardTest) (output 
 
 // ListTests lists the scorecard tests as configured that would be
 // run based on user selection
-func ListTests(o Options) error {
+func ListTests(o Options) (output v1alpha2.ScorecardOutput, err error) {
 	tests := selectTests(o.Selector, o.Config.Tests)
 	if len(tests) == 0 {
 		fmt.Println("no tests selected")
-		return nil
+		return output, err
 	}
 
-	output := v1alpha2.ScorecardOutput{}
 	output.Results = make([]v1alpha2.ScorecardTestResult, 0)
 
 	for i := 0; i < len(tests); i++ {
@@ -65,30 +64,5 @@ func ListTests(o Options) error {
 		output.Results = append(output.Results, testResult)
 	}
 
-	err := printOutput(o.OutputFormat, output)
-
-	return err
-}
-
-func printOutput(outputFormat string, output v1alpha2.ScorecardOutput) error {
-	switch outputFormat {
-	case "text":
-		o, err := output.MarshalText()
-		if err != nil {
-			fmt.Println(err.Error())
-			return err
-		}
-		fmt.Printf("%s\n", o)
-	case "json":
-		bytes, err := json.MarshalIndent(output, "", "  ")
-		if err != nil {
-			fmt.Println(err.Error())
-			return err
-		}
-		fmt.Printf("%s\n", string(bytes))
-	default:
-		return fmt.Errorf("invalid output format selected")
-	}
-	return nil
-
+	return output, err
 }

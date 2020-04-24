@@ -20,6 +20,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 	"github.com/operator-framework/operator-sdk/version"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,7 +33,6 @@ type Options struct {
 	Selector        labels.Selector
 	BundlePath      string
 	WaitTime        time.Duration
-	OutputFormat    string
 	Kubeconfig      string
 	Namespace       string
 	BundleConfigMap *v1.ConfigMap
@@ -42,31 +42,29 @@ type Options struct {
 }
 
 // RunTests executes the scorecard tests as configured
-func RunTests(o Options) error {
+func RunTests(o Options) (testOutput v1alpha2.ScorecardOutput, err error) {
 	tests := selectTests(o.Selector, o.Config.Tests)
 	if len(tests) == 0 {
 		fmt.Println("no tests selected")
-		return nil
+		return testOutput, err
 	}
 
 	bundleData, err := getBundleData(o.BundlePath)
 	if err != nil {
-		fmt.Printf("error getting bundle data %s\n", err.Error())
-		return nil
+		return testOutput, fmt.Errorf("error getting bundle data %s", err.Error())
 	}
 
 	// create a ConfigMap holding the bundle contents
 	o.BundleConfigMap, err = createConfigMap(o, bundleData)
 	if err != nil {
-		fmt.Printf("error creating ConfigMap %s\n", err.Error())
-		return nil
+		return testOutput, fmt.Errorf("error creating ConfigMap %s", err.Error())
 	}
 
 	for i := 0; i < len(tests); i++ {
 		var err error
 		tests[i].TestPod, err = runTest(o, tests[i])
 		if err != nil {
-			return fmt.Errorf("test %s failed %s", tests[i].Name, err.Error())
+			return testOutput, fmt.Errorf("test %s failed %s", tests[i].Name, err.Error())
 		}
 	}
 
@@ -77,13 +75,12 @@ func RunTests(o Options) error {
 
 	err = waitForTestsToComplete(o, tests)
 	if err != nil {
-		return err
+		return testOutput, err
 	}
 
-	testOutput := getTestResults(o.Client, tests)
-	err = printOutput(o.OutputFormat, testOutput)
+	testOutput = getTestResults(o.Client, tests)
 
-	return err
+	return testOutput, err
 }
 
 // selectTests applies an optionally passed selector expression
