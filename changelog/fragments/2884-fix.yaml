@@ -2,6 +2,6 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      Fixes issue where the helm.operator-sdk/upgrade-force annotation value for helm-based operators is not parsed. ([#2884](https://github.com/operator-framework/operator-sdk/issues/2884))
+      Fixes issue where the `helm.operator-sdk/upgrade-force` annotation value for Helm based-operators is not parsed. 
     kind: "bugfix"
     breaking: false
