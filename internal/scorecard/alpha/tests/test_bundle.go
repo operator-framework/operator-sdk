@@ -25,7 +25,7 @@ import (
 )
 
 // GetBundle parses a Bundle from a given on-disk path returning a bundle
-func GetBundle(bundlePath string) (bundle *registry.Bundle, err error) {
+func GetBundle(bundlePath string) (bundle registry.Bundle, err error) {
 
 	// validate the path
 	if _, err := os.Stat(bundlePath); os.IsNotExist(err) {
@@ -43,6 +43,12 @@ func GetBundle(bundlePath string) (bundle *registry.Bundle, err error) {
 	//var bundleErrors []errors.ManifestResult
 	_, bundles, _ = manifests.GetManifestsDir(bundlePath)
 
+	if len(bundles) == 0 {
+		return bundle, fmt.Errorf("bundle was not found")
+	}
+	if bundles[0] == nil {
+		return bundle, fmt.Errorf("bundle is invalid nil value")
+	}
 	bundle = *bundles[0]
 	_, err = bundle.ClusterServiceVersion()
 	if err != nil {

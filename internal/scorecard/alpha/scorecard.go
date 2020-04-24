@@ -31,14 +31,13 @@ type Options struct {
 	Config          Config
 	Selector        labels.Selector
 	BundlePath      string
-	WaitTime        int
+	WaitTime        time.Duration
 	OutputFormat    string
 	Kubeconfig      string
 	Namespace       string
 	BundleConfigMap *v1.ConfigMap
 	ServiceAccount  string
 	Client          kubernetes.Interface
-	List            bool
 	Cleanup         bool
 }
 
@@ -126,15 +125,15 @@ func ConfigDocLink() string {
 // waitForTestsToComplete waits for a fixed amount of time while
 // checking for test pods to complete
 func waitForTestsToComplete(o Options, tests []ScorecardTest) (err error) {
-	for elapsedSeconds := 0; elapsedSeconds < o.WaitTime; elapsedSeconds++ {
+	waitTimeInSeconds := int(o.WaitTime.Seconds())
+	for elapsedSeconds := 0; elapsedSeconds < waitTimeInSeconds; elapsedSeconds++ {
 		allPodsCompleted := true
 		for i := 0; i < len(tests); i++ {
 			p := tests[i].TestPod
 			var tmp *v1.Pod
 			tmp, err = o.Client.CoreV1().Pods(p.Namespace).Get(p.Name, metav1.GetOptions{})
 			if err != nil {
-				fmt.Printf("error getting pod %s %s\n", p.Name, err.Error())
-				return err
+				return fmt.Errorf("error getting pod %s %s", p.Name, err.Error())
 			}
 			if tmp.Status.Phase != v1.PodSucceeded {
 				allPodsCompleted = false

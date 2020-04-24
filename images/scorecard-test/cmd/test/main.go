@@ -55,7 +55,7 @@ func main() {
 	}
 	defer os.Remove(tmpDir)
 
-	err = alpha.Untartar(bundleTar, tmpDir)
+	err = alpha.UntarFile(bundleTar, tmpDir)
 	if err != nil {
 		log.Fatalf("error untarring bundle %s", err.Error())
 	}

@@ -17,6 +17,8 @@ package scorecard
 import (
 	"fmt"
 
+	"time"
+
 	scorecard "github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/labels"
@@ -32,7 +34,7 @@ func NewCmd() *cobra.Command {
 		namespace      string
 		serviceAccount string
 		list           bool
-		skipCleanup        bool
+		skipCleanup    bool
 		waitTime       time.Duration
 	)
 	scorecardCmd := &cobra.Command{
@@ -46,10 +48,9 @@ func NewCmd() *cobra.Command {
 			o := scorecard.Options{
 				ServiceAccount: serviceAccount,
 				Namespace:      namespace,
-				List:           list,
 				BundlePath:     bundle,
 				OutputFormat:   output,
-				Cleanup:        cleanup,
+				Cleanup:        skipCleanup,
 				WaitTime:       waitTime,
 			}
 			o.Client, err = scorecard.GetKubeClient(kubeconfig)
@@ -88,8 +89,8 @@ func NewCmd() *cobra.Command {
 	scorecardCmd.Flags().StringVarP(&output, "output", "o", "text", "Output format for results.  Valid values: text, json")
 	scorecardCmd.Flags().StringVarP(&serviceAccount, "service-account", "s", "default", "service account to use for tests")
 	scorecardCmd.Flags().BoolVarP(&list, "list", "L", false, "option to enable listing which tests are run")
-	scorecardCmd.Flags().BoolVarP(&cleanup, "cleanup", "x", true, "option to disable resource cleanup after tests are run")
-	scorecardCmd.Flags().IntVarP(&waitTime, "wait-time", "w", 30, "time in seconds to wait for tests to complete")
+	scorecardCmd.Flags().BoolVarP(&skipCleanup, "skip-cleanup", "x", true, "option to disable resource cleanup after tests are run")
+	scorecardCmd.Flags().DurationVarP(&waitTime, "wait-time", "w", time.Duration(30*time.Second), "time in seconds to wait for tests to complete")
 
 	return scorecardCmd
 }

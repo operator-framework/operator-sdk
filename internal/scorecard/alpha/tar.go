@@ -116,8 +116,8 @@ func Tartar(tarName string, paths []string) (err error) {
 	return nil
 }
 
-// untarrer extract contant of file tarName into location xpath
-func Untartar(tarName, xpath string) (err error) {
+// untar a file into a location
+func UntarFile(tarName, target string) (err error) {
 	tarFile, err := os.Open(tarName)
 	if err != nil {
 		return err
@@ -126,7 +126,7 @@ func Untartar(tarName, xpath string) (err error) {
 		err = tarFile.Close()
 	}()
 
-	absPath, err := filepath.Abs(xpath)
+	absPath, err := filepath.Abs(target)
 	if err != nil {
 		return err
 	}
