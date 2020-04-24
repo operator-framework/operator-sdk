@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
+	log "github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -30,13 +31,13 @@ func getTestResults(client kubernetes.Interface, tests []ScorecardTest) (output 
 		p := tests[i].TestPod
 		logBytes, err := getPodLog(client, p)
 		if err != nil {
-			fmt.Printf("error getting pod log %s\n", err.Error())
+			log.Errorf("Error getting pod log %s\n", err.Error())
 		} else {
 			// marshal pod log into ScorecardTestResult
 			var sc v1alpha2.ScorecardTestResult
 			err := json.Unmarshal(logBytes, &sc)
 			if err != nil {
-				fmt.Printf("error unmarshalling test result %s\n", err.Error())
+				log.Errorf("Error unmarshalling test result %s\n", err.Error())
 			} else {
 				output.Results = append(output.Results, sc)
 			}

@@ -21,6 +21,7 @@ import (
 	"math/rand"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -118,7 +119,7 @@ func deletePods(client kubernetes.Interface, tests []ScorecardTest) {
 		p := tests[i].TestPod
 		err := client.CoreV1().Pods(p.Namespace).Delete(p.Name, &metav1.DeleteOptions{})
 		if err != nil {
-			fmt.Printf("error deleting pod %s %s\n", p.Name, err.Error())
+			log.Errorf("Error deleting pod %s %s\n", p.Name, err.Error())
 		}
 
 	}

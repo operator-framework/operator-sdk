@@ -17,6 +17,7 @@ package alpha
 import (
 	"fmt"
 
+	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -54,6 +55,6 @@ func getConfigMapDefinition(namespace string, bundleData []byte) *v1.ConfigMap {
 func deleteConfigMap(client kubernetes.Interface, configMap *v1.ConfigMap) {
 	err := client.CoreV1().ConfigMaps(configMap.Namespace).Delete(configMap.Name, &metav1.DeleteOptions{})
 	if err != nil {
-		fmt.Printf("error deleting configMap %s %s", configMap.Name, err.Error())
+		log.Errorf("Error deleting configMap %s %s", configMap.Name, err.Error())
 	}
 }
