@@ -1,8 +1,3 @@
----
-title: Golang Based Operator Quickstart
-linkTitle: Quickstart
-weight: 1
----
 
 **NOTE:** This is a WIP doc for the Kubebuilder integration effort. This new CLI and workflow is currently alpha and there may be breaking changes.
 Please refer to the [quickstart guide][legacy_quickstart_doc] for the default CLI and workflow.
@@ -106,6 +101,20 @@ type MemcachedSpec struct {
 type MemcachedStatus struct {
 	// Nodes are the names of the memcached pods
 	Nodes []string `json:"nodes"`
+}
+```
+
+Add the `+kubebuilder:subresource:status` [marker][status_marker] to add a [status subresource][status_subresource] to the CRD manifest so that the controller can update the CR status without changing the rest of the CR object:
+
+```Go
+// Memcached is the Schema for the memcacheds API
+// +kubebuilder:subresource:status
+type Memcached struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   MemcachedSpec   `json:"spec,omitempty"`
+	Status MemcachedStatus `json:"status,omitempty"`
 }
 ```
 
@@ -455,3 +464,5 @@ See the [advanced topics][advanced_topics] doc for more use cases and under the 
 [legacy_quickstart_doc]: /docs/golang/quickstart/
 [activate_modules]: https://github.com/golang/go/wiki/Modules#how-to-install-and-activate-module-support
 [advanced_topics]: /docs/kubebuilder/advanced-topics/
+[status_marker]: https://book.kubebuilder.io/reference/generating-crd.html#status
+[status_subresource]: https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#status-subresource
