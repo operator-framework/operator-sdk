@@ -24,8 +24,8 @@ import (
 	"strings"
 )
 
-// tarrer walks paths to create tar file tarName
-func Tartar(tarName string, paths []string) (err error) {
+// CreateTarFile walks paths to create tar file tarName
+func CreateTarFile(tarName string, paths []string) (err error) {
 	tarFile, err := os.Create(tarName)
 	if err != nil {
 		return err

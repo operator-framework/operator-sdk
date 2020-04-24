@@ -32,7 +32,7 @@ func getBundleData(bundlePath string) (bundleData []byte, err error) {
 	tempTarFileName := fmt.Sprintf("%s%ctempBundle-%s.tar", os.TempDir(), os.PathSeparator, randomString())
 
 	paths := []string{bundlePath}
-	err = Tartar(tempTarFileName, paths)
+	err = CreateTarFile(tempTarFileName, paths)
 	if err != nil {
 		return bundleData, fmt.Errorf("error creating tar of bundle %s", err.Error())
 	}
