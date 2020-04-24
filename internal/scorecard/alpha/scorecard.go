@@ -38,7 +38,7 @@ type Options struct {
 	BundleConfigMap *v1.ConfigMap
 	ServiceAccount  string
 	Client          kubernetes.Interface
-	Cleanup         bool
+	SkipCleanup     bool
 }
 
 // RunTests executes the scorecard tests as configured
@@ -68,7 +68,7 @@ func RunTests(o Options) (testOutput v1alpha2.ScorecardOutput, err error) {
 		}
 	}
 
-	if o.Cleanup {
+	if !o.SkipCleanup {
 		defer deletePods(o.Client, tests)
 		defer deleteConfigMap(o.Client, o.BundleConfigMap)
 	}

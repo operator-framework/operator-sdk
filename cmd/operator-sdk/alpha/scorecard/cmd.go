@@ -51,7 +51,7 @@ func NewCmd() *cobra.Command {
 				ServiceAccount: serviceAccount,
 				Namespace:      namespace,
 				BundlePath:     bundle,
-				Cleanup:        skipCleanup,
+				SkipCleanup:    skipCleanup,
 				WaitTime:       waitTime,
 			}
 			o.Client, err = scorecard.GetKubeClient(kubeconfig)
