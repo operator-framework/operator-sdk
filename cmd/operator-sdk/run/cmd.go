@@ -64,7 +64,7 @@ flags. Each run mode has a separate set of flags that configure 'run' for that
 mode. Run 'operator-sdk run --help' for more information on these flags.
 
 Read more about the --olm run mode and configuration options here:
-https://github.com/operator-framework/operator-sdk/blob/master/doc/user/olm-catalog/olm-cli.md
+https://sdk.operatorframework.io/docs/olm-integration/cli-overview
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := c.checkRunType(); err != nil {

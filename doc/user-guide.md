@@ -878,4 +878,4 @@ When the operator is not running in a cluster, the Manager will return an error 
 [scheme_builder]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/scheme#Builder
 [typical-status-properties]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
 [godoc-conditions]: https://godoc.org/github.com/operator-framework/operator-sdk/pkg/status#Conditions
-[cli-run-olm]: ./user/olm-catalog/olm-cli.md
+[cli-run-olm]: https://github.com/operator-framework/operator-sdk/blob/v0.17.0/doc/user/olm-catalog/generating-a-csv.md
