@@ -15,7 +15,6 @@
 package tests
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 
@@ -43,24 +42,9 @@ func GetCRs(bundle registry.Bundle) (crList []unstructured.Unstructured, err err
 		return crList, nil
 	}
 
-	var crInterfaces []map[string]interface{}
-	err = json.Unmarshal([]byte(almExamples), &crInterfaces)
+	err = json.Unmarshal([]byte(almExamples), &crList)
 	if err != nil {
 		return crList, err
 	}
-	for i := 0; i < len(crInterfaces); i++ {
-		buff := new(bytes.Buffer)
-		enc := json.NewEncoder(buff)
-		err := enc.Encode(crInterfaces[i])
-		if err != nil {
-			return crList, err
-		}
-		obj := &unstructured.Unstructured{}
-		if err := obj.UnmarshalJSON(buff.Bytes()); err != nil {
-			return crList, err
-		}
-		crList = append(crList, *obj)
-	}
-
 	return crList, err
 }
