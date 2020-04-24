@@ -73,7 +73,7 @@ and metadata for an Operator [bundle][operator-bundle]. From the bundle docs:
 >contains operator manifests and specific metadata in designated directories
 >inside the image. Then, it can be pushed and pulled from an OCI-compliant
 >container registry. Ultimately, an operator bundle will be used by Operator
->Registry and [OLM] to install an operator in OLM-enabled clusters.
+>Registry and OLM to install an operator in OLM-enabled clusters.
 
 A bundle is built using on-disk manifests and metadata that define an Operator
 at a particular version. At this stage in memcached-operator's development,
@@ -102,9 +102,9 @@ at `deploy/olm-catalog/memcached-operator/manifests`:
 ```console
 $ tree deploy/olm-catalog/memcached-operator
 deploy/olm-catalog/memcached-operator
-├── manifests
-│   ├── cache.example.com_memcacheds_crd.yaml
-│   └── memcached-operator.clusterserviceversion.yaml
+└── manifests
+    ├── cache.example.com_memcacheds_crd.yaml
+    └── memcached-operator.clusterserviceversion.yaml
 ```
 
 Next we create bundle [metadata][bundle-metadata] and a [Dockerfile][bundle-dockerfile].
@@ -112,7 +112,7 @@ Metadata contains information about a particular Operator version available in a
 OLM uses this information to install specific Operator versions and resolve dependencies.
 
 Of particular note are channels:
->[C]hannels allow package authors to write different upgrade paths for different users (e.g. beta vs. stable).
+>Channels allow package authors to write different upgrade paths for different users (e.g. beta vs. stable).
 
 Channels become important when publishing, but we should still be aware of them
 beforehand as they're required values in our metadata. `bundle create` writes the
@@ -258,9 +258,9 @@ manager tool [`opm`][opm] to manage index images. Once one has been built, follo
 the OLM [docs][doc-olm-index] on adding an index to a cluster registry.
 
 
-[sdk-user-guide-go]:https://github.com/operator-framework/operator-sdk/blob/master/doc/user-guide.md
-[sdk-user-guide-ansible]:https://github.com/operator-framework/operator-sdk/blob/master/doc/ansible/user-guide.md
-[sdk-user-guide-helm]:https://github.com/operator-framework/operator-sdk/blob/master/doc/helm/user-guide.md
+[sdk-user-guide-go]:/docs/golang/quickstart
+[sdk-user-guide-ansible]:/docs/ansible/quickstart
+[sdk-user-guide-helm]:/docs/helm/quickstart
 [olm]:https://github.com/operator-framework/operator-lifecycle-manager/
 [csv]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md
 [operator-registry]:https://github.com/operator-framework/operator-registry
@@ -270,15 +270,15 @@ the OLM [docs][doc-olm-index] on adding an index to a cluster registry.
 [opm]:https://github.com/operator-framework/operator-registry/blob/master/docs/design/opm-tooling.md
 [olm-prod-install]:https://github.com/operator-framework/operator-lifecycle-manager/#discovery-catalogs-and-automated-upgrades
 [operatorhub]:https://operatorhub.io/
-[cli-olm]:/docs/cli/operator-sdk_olm.md
-[cli-olm-install]:/docs/cli/operator-sdk_olm_install.md
-[cli-olm-status]:/docs/cli/operator-sdk_olm_status.md
-[cli-run-olm]:/docs/cli/operator-sdk_run.md
-[cli-cleanup-olm]:/docs/cli/operator-sdk_cleanup.md
-[cli-bundle-create]:/docs/cli/operator-sdk_bundle_create.md
-[cli-bundle-validate]:/docs/cli/operator-sdk_bundle_validate.md
-[doc-bundle-cli]:/docs/golang/olm-catalog/bundle-cli.md
-[cli-generate-csv]:/docs/cli/operator-sdk_generate_csv.md
-[csv-markers]:/docs/golang/olm-catalog/csv-annotations.md
-[doc-run-olm]:/docs/golang/olm-catalog/olm-cli.md
+[cli-olm]:/docs/cli/operator-sdk_olm
+[cli-olm-install]:/docs/cli/operator-sdk_olm_install
+[cli-olm-status]:/docs/cli/operator-sdk_olm_status
+[cli-run-olm]:/docs/cli/operator-sdk_run
+[cli-cleanup-olm]:/docs/cli/operator-sdk_cleanup
+[cli-bundle-create]:/docs/cli/operator-sdk_bundle_create
+[cli-bundle-validate]:/docs/cli/operator-sdk_bundle_validate
+[doc-bundle-cli]:/docs/olm-integration/cli-overview
+[cli-generate-csv]:/docs/cli/operator-sdk_generate_csv
+[csv-markers]:/docs/golang/references/markers
+[doc-run-olm-explanation]:/docs/olm-integration/olm-deployment/#operator-sdk-run---olm-command-overview
 [doc-olm-index]:https://github.com/operator-framework/operator-registry#using-the-index-with-operator-lifecycle-manager

@@ -32,7 +32,7 @@ Use the `--crd-dir` flag to change this path.
     * Custom Resources: `deploy/crds/<full group>_<version>_<kind>_cr.yaml`
     * CustomResourceDefinitions: `deploy/crds/<full group>_<resource>_crd.yaml`
 1. _For Go Operators only:_ Path to the API types root directory. The CSV generator
-also parses the [CSV annotations][csv-annotations] from the API type definitions
+also parses the [CSV markers][csv-markers] from the API type definitions
 to populate certain CSV fields. By default the API types directory is `pkg/apis/`.
 Use the `--apis-dir` flag to change this path. The CSV generator expects either
 of the following layouts for the API types directory.
@@ -105,7 +105,7 @@ and populates `spec.replaces` with the old CSV versions' name.
 
 Below are two lists of fields: the first is a list of all fields the SDK and OLM expect in a CSV, and the second are optional.
 
-_For Go Operators only:_ Several fields require user input (labeled _user_) or a [CSV annotation][csv-annotations] (labeled _annotation_). This list may change as the SDK becomes better at generating CSV's.
+_For Go Operators only:_ Several fields require user input (labeled _user_) or a [CSV marker][csv-markers] (labeled _marker_). This list may change as the SDK becomes better at generating CSV's.
 
 Required:
 
@@ -123,11 +123,11 @@ Required:
         * `name`: CRD's `metadata.name`.
         * `kind`: CRD's `metadata.spec.names.kind`.
         * `version`: CRD's `metadata.spec.version`.
-        * `description` _(annotation)_ : description of the CRD.
-        * `displayName` _(annotation)_ : display name of the CRD.
-        * `resources` _(annotation)_ : any Kubernetes resources used by the CRD, ex. `Pod`'s and `ConfigMap`'s.
-        * `specDescriptors` _(annotation)_ : UI hints for inputs and outputs of the Operator's spec.
-        * `statusDescriptors` _(annotation)_ : UI hints for inputs and outputs of the Operator's status.
+        * `description` _(marker)_ : description of the CRD.
+        * `displayName` _(marker)_ : display name of the CRD.
+        * `resources` _(marker)_ : any Kubernetes resources used by the CRD, ex. `Pod`'s and `ConfigMap`'s.
+        * `specDescriptors` _(marker)_ : UI hints for inputs and outputs of the Operator's spec.
+        * `statusDescriptors` _(marker)_ : UI hints for inputs and outputs of the Operator's status.
         * `actionDescriptors` _(user)_ : UI hints for an Operator's in-cluster actions.
     * `required` _(user)_ : all CRDs the Operator expects to be present in-cluster, if any. All `required` element fields must be populated manually.
 
@@ -153,4 +153,4 @@ Optional:
 [doc-bundle]:https://github.com/operator-framework/operator-registry/blob/6893d19/README.md#manifest-format
 [install-modes]:https://github.com/operator-framework/operator-lifecycle-manager/blob/4197455/Documentation/design/building-your-csv.md#operator-metadata
 [olm-capabilities]:https://github.com/operator-framework/operator-sdk/blob/master/doc/images/operator-capability-level.png
-[csv-annotations]:/docs/golang/olm-integration/
+[csv-markers]:/docs/golang/references/markers

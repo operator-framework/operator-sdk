@@ -1,20 +1,20 @@
 ---
-title: Golang Operator Integration with Operator Lifecycle Manager
-linkTitle: Golang Operator OLM Integration
-weight: 200
+title: API Markers
+linkTitle: API Markers
+weight: 5
 ---
 
-# Go API Markers for ClusterServiceVersion's
+This document describes [code markers][markers] supported by the SDK.
 
-## Overview
+## ClusterServiceVersion markers
 
-This document describes the semantics of Cluster Service Version (CSV) [code annotations][code-annotations-design] and lists all possible annotations.
+This section details ClusterServiceVersion (CSV) [code markers][code-markers-design] and lists available markers.
 
-**Note:** CSV annotations can only be used in Go Operator projects. Annotations for Ansible and Helm Operator projects will be added in the future.
+**Note:** CSV markers can only be used in Go Operator projects. Annotations for Ansible and Helm Operator projects will be added in the future.
 
 ## Usage
 
-All annotations have a `+operator-sdk:gen-csv` prefix, denoting that they're parsed while executing [`operator-sdk generate csv`][generate-csv-cli].
+All markers have a `+operator-sdk:gen-csv` prefix, denoting that they're parsed while executing [`operator-sdk generate csv`][generate-csv-cli].
 
 ### Paths
 
@@ -66,7 +66,7 @@ type MemcachedSpec struct {
 }
 ```
 
-3. Let the SDK infer all un-annotated paths on a field for a `customresourcedefinitions.specDescriptors` entry:
+3. Let the SDK infer all unmarked paths on a field for a `customresourcedefinitions.specDescriptors` entry:
 
 ```go
 type MemcachedSpec struct {
@@ -82,8 +82,9 @@ The SDK also checks `path` elements against a list of well-known path to x-descr
 
 #### Spec x-descriptors
 
-| PATH | X-DESCRIPTOR |
-|:---:|:---:|
+{{<table "table table-striped table-bordered">}}
+| Path | x-descriptor |
+|-----|-----|
 | `size` | `urn:alm:descriptor:com.tectonic.ui:podCount` |
 | `podCount` | `urn:alm:descriptor:com.tectonic.ui:podCount` |
 | `endpoints` | `urn:alm:descriptor:com.tectonic.ui:endpointList` |
@@ -108,11 +109,13 @@ The SDK also checks `path` elements against a list of well-known path to x-descr
 | none | `urn:alm:descriptor:com.tectonic.ui:arrayFieldGroup:` |
 | none | `urn:alm:descriptor:com.tectonic.ui:select:` |
 | `advanced` | `urn:alm:descriptor:com.tectonic.ui:advanced` |
+{{</table>}}
 
 #### Status x-descriptors
 
-| PATH | X-DESCRIPTOR |
-|:---:|:---:|
+{{<table "table table-striped table-bordered">}}
+| Path | x-descriptor |
+|-----|-----|
 | `podStatuses` | `urn:alm:descriptor:com.tectonic.ui:podStatuses` |
 | `size` | `urn:alm:descriptor:com.tectonic.ui:podCount` |
 | `podCount` | `urn:alm:descriptor:com.tectonic.ui:podCount` |
@@ -126,8 +129,9 @@ The SDK also checks `path` elements against a list of well-known path to x-descr
 | `reason` | `urn:alm:descriptor:io.kubernetes.phase:reason` |
 | `k8sReason` | `urn:alm:descriptor:io.kubernetes.phase:reason` |
 | none | `urn:alm:descriptor:io.kubernetes:` |
+{{</table>}}
 
-**NOTE:** any x-descriptor that ends in `:` will not be inferred by `path` element, ex. `urn:alm:descriptor:io.kubernetes:`. Use the `x-descriptors` annotation if you want to enable one for your type.
+**NOTE:** any x-descriptor that ends in `:` will not be inferred by `path` element, ex. `urn:alm:descriptor:io.kubernetes:`. Use the `x-descriptors` marker if you want to enable one for your type.
 
 4. A comprehensive example:
 - Infer `path`, `description`, `displayName`, and `x-descriptors` for `specDescriptors` and `statusDescriptors` entries.
@@ -197,7 +201,8 @@ customresourcedefinitions:
       - 'urn:alm:descriptor:com.tectonic.ui:podCount'
 ```
 
-[code-annotations-design]:https://github.com/operator-framework/operator-sdk/blob/master/doc/proposals/sdk-code-annotations.md
+[markers]:https://pkg.go.dev/sigs.k8s.io/controller-tools/pkg/markers
+[code-markers-design]:https://github.com/operator-framework/operator-sdk/blob/master/doc/proposals/sdk-code-annotations.md
 [generate-csv-cli]:/docs/cli/operator-sdk_generate_csv
 [csv-x-desc]:https://github.com/openshift/console/blob/feabd61/frontend/packages/operator-lifecycle-manager/src/components/descriptors/types.ts#L3-L39
 [csv-spec]:https://github.com/operator-framework/operator-lifecycle-manager/blob/e0eea22/doc/design/building-your-csv.md
