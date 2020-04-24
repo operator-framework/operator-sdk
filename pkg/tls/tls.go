@@ -15,6 +15,7 @@
 package tlsutil
 
 import (
+	"context"
 	"crypto/rsa"
 	"crypto/x509"
 	"errors"
@@ -227,7 +228,8 @@ func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *v1.Service
 		if err != nil {
 			return nil, nil, nil, err
 		}
-		appSecret, err := scg.KubeClient.CoreV1().Secrets(ns).Create(toTLSSecret(key, cert, appSecretName))
+		tlsSecret := toTLSSecret(key, cert, appSecretName)
+		appSecret, err := scg.KubeClient.CoreV1().Secrets(ns).Create(context.TODO(), tlsSecret, metav1.CreateOptions{})
 		if err != nil {
 			return nil, nil, nil, err
 		}
@@ -245,11 +247,11 @@ func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *v1.Service
 		}
 
 		caSecret, caConfigMap := toCASecretAndConfigmap(caKey, caCert, caSecretAndConfigMapName)
-		caSecret, err = scg.KubeClient.CoreV1().Secrets(ns).Create(caSecret)
+		caSecret, err = scg.KubeClient.CoreV1().Secrets(ns).Create(context.TODO(), caSecret, metav1.CreateOptions{})
 		if err != nil {
 			return nil, nil, nil, err
 		}
-		caConfigMap, err = scg.KubeClient.CoreV1().ConfigMaps(ns).Create(caConfigMap)
+		caConfigMap, err = scg.KubeClient.CoreV1().ConfigMaps(ns).Create(context.TODO(), caConfigMap, metav1.CreateOptions{})
 		if err != nil {
 			return nil, nil, nil, err
 		}
@@ -261,7 +263,8 @@ func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *v1.Service
 		if err != nil {
 			return nil, nil, nil, err
 		}
-		appSecret, err := scg.KubeClient.CoreV1().Secrets(ns).Create(toTLSSecret(key, cert, appSecretName))
+		tlsSecret := toTLSSecret(key, cert, appSecretName)
+		appSecret, err := scg.KubeClient.CoreV1().Secrets(ns).Create(context.TODO(), tlsSecret, metav1.CreateOptions{})
 		if err != nil {
 			return nil, nil, nil, err
 		}
@@ -290,7 +293,7 @@ func ToCASecretAndConfigMapName(kind, name string) string {
 }
 
 func getAppSecretInCluster(kubeClient kubernetes.Interface, name, namespace string) (*v1.Secret, error) {
-	se, err := kubeClient.CoreV1().Secrets(namespace).Get(name, metav1.GetOptions{})
+	se, err := kubeClient.CoreV1().Secrets(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil && !apiErrors.IsNotFound(err) {
 		return nil, err
 	}
@@ -309,7 +312,7 @@ func getAppSecretInCluster(kubeClient kubernetes.Interface, name, namespace stri
 func getCASecretAndConfigMapInCluster(kubeClient kubernetes.Interface, name,
 	namespace string) (*v1.Secret, *v1.ConfigMap, error) {
 	hasConfigMap := true
-	cm, err := kubeClient.CoreV1().ConfigMaps(namespace).Get(name, metav1.GetOptions{})
+	cm, err := kubeClient.CoreV1().ConfigMaps(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil && !apiErrors.IsNotFound(err) {
 		return nil, nil, err
 	}
@@ -318,7 +321,7 @@ func getCASecretAndConfigMapInCluster(kubeClient kubernetes.Interface, name,
 	}
 
 	hasSecret := true
-	se, err := kubeClient.CoreV1().Secrets(namespace).Get(name, metav1.GetOptions{})
+	se, err := kubeClient.CoreV1().Secrets(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil && !apiErrors.IsNotFound(err) {
 		return nil, nil, err
 	}

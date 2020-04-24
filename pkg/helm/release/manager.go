@@ -38,7 +38,6 @@ import (
 	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/cli-runtime/pkg/resource"
-	"k8s.io/client-go/rest"
 
 	"github.com/operator-framework/operator-sdk/pkg/helm/internal/types"
 )
@@ -238,7 +237,7 @@ func (m manager) ReconcileRelease(ctx context.Context) (*rpb.Release, error) {
 	return m.deployedRelease, err
 }
 
-func reconcileRelease(ctx context.Context, kubeClient kube.Interface, expectedManifest string) error {
+func reconcileRelease(_ context.Context, kubeClient kube.Interface, expectedManifest string) error {
 	expectedInfos, err := kubeClient.Build(bytes.NewBufferString(expectedManifest), false)
 	if err != nil {
 		return err
@@ -248,15 +247,10 @@ func reconcileRelease(ctx context.Context, kubeClient kube.Interface, expectedMa
 			return fmt.Errorf("visit error: %w", err)
 		}
 
-		expectedClient := resource.NewClientWithOptions(expected.Client, func(r *rest.Request) {
-			*r = *r.Context(ctx)
-		})
-		helper := resource.NewHelper(expectedClient, expected.Mapping)
-
+		helper := resource.NewHelper(expected.Client, expected.Mapping)
 		existing, err := helper.Get(expected.Namespace, expected.Name, expected.Export)
 		if apierrors.IsNotFound(err) {
-			if _, err := helper.Create(expected.Namespace, true, expected.Object,
-				&metav1.CreateOptions{}); err != nil {
+			if _, err := helper.Create(expected.Namespace, true, expected.Object); err != nil {
 				return fmt.Errorf("create error: %s", err)
 			}
 			return nil

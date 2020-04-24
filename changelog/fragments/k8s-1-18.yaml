@@ -1,0 +1,67 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: Updated Kubernetes dependencies to v1.18.2
+    kind: "change"
+    breaking: true
+    migration:
+      header: Kubernetes client-go contexts
+      body: |-
+        Operators using client-go directly and operators
+        that have generated clientsets will be required to
+        update many of their client-go function calls, which
+        have signature changes related to passing contexts
+        and options.
+
+        Users can use http://sigs.k8s.io/clientgofix to 
+        rewrite method invocations to the new signatures.
+
+  - description: Updated controller-runtime to v0.6.0
+    kind: "change"
+    breaking: true
+    migration:
+      header: Controller-runtime changes
+      body: |-
+        There were various breaking changes in controller-runtime
+        v0.6.0.
+
+          - Informers methods now require a context parameter
+          - Owns, For, and Watches funtions now take variadic
+            functional option arguments.
+
+  - description: Updated controller-tools to v0.3.0
+    kind: "change"
+
+  - description: Updated helm to v3.2.0
+    kind: "change"
+   
+  - description: Removed automatic migration of helm releases from v2 to v3
+    kind: "removal"
+    breaking: true
+    migration:
+      header: Helm operator no longer migrates v2 releases to v3
+      body: |-
+        The deprecated support for Helm v2 releases has been removed. If
+        you require automigration of Helm v2 releases, continue using
+        v0.17.x.
+
+        This removal does NOT affect support for v2 Helm charts, which
+        are still supported by Helm v3.
+
+  - description: Removed support for deprecated helm release naming scheme
+    kind: "removal"
+    breaking: true
+    migration:
+      header: >
+        Helm operator no longer supports deprecated UID-based release names
+      body: |-
+        In v0.11.0, the Helm operator began using the CR name as the release
+        name while also maintaining backwards compatibility for legacy
+        UID-based release names. Continued support for the UID-based release
+        names has been removed.
+
+        Before upgrading to this release, delete and recreate custom resources
+        that are still using the deprecated UID-based release name. To determine
+        if you have any UID-based release names still in use, inspect the
+        `status.deployedRelease` field of your custom resources and look for
+        release names that end with a 25-character random string.
