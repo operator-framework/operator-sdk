@@ -49,5 +49,5 @@ func GetBundle(bundlePath string) (bundle registry.Bundle, err error) {
 		return bundle, fmt.Errorf("error in csv retrieval %s", err.Error())
 	}
 
-	return bundle, err
+	return bundle, nil
 }
