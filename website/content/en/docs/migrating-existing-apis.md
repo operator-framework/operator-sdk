@@ -411,4 +411,4 @@ TODO
 [crd-conv-webhook]:https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definition-versioning/#configure-customresourcedefinition-to-use-conversion-webhooks
 [kubebuilder-api-annotations]:https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 [crd-version-deprecated]:https://github.com/kubernetes/apiextensions-apiserver/commit/d1c6536f26319513417b12245c6e3aee5ca005ca
-[api-migrations-types-and-commonalities]: /docs/golang/migrating-existing-apis/#go-api-migrations-types-and-commonalities
+[api-migrations-types-and-commonalities]: ./#go-api-migrations-types-and-commonalities
