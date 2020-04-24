@@ -1,8 +1,3 @@
----
-title: Golang Based Operator Quickstart
-linkTitle: Quickstart
-weight: 1
----
 
 **NOTE:** This is a WIP doc for the Kubebuilder integration effort. This new CLI and workflow is currently alpha and there may be breaking changes.
 Please refer to the [quickstart guide][legacy_quickstart_doc] for the default CLI and workflow.
@@ -109,7 +104,7 @@ type MemcachedStatus struct {
 }
 ```
 
-Add the `+kubebuilder:subresource:status` [marker comment][status_marker] to enable the [status subresource][status_subresource] for the CRD so that the controller can update the CR status without changing the rest of the CR object:
+Add the `+kubebuilder:subresource:status` [marker][status_marker] to add a [status subresource][status_subresource] to the CRD manifest so that the controller can update the CR status without changing the rest of the CR object:
 
 ```Go
 // Memcached is the Schema for the memcacheds API
