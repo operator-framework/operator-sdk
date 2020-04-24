@@ -1,0 +1,54 @@
+.docs {
+    ul {
+        list-style: disc;
+        margin-left: 1rem;
+    }
+    p + p {
+        margin-top: var(--of--spacer--md);
+    }
+    .td-sidebar-nav .td-sidebar-link__page {
+        font-weight: normal;
+    }
+    h1,h2,h3,h4,h5,h6 {
+        color: var(--of--Color--brand--200);
+        font-weight: 800;
+        letter-spacing: 2px;
+    }
+    
+    h5, h6 {
+        font-size: var(--of--FontSize--xs);
+    }
+    h4 {
+        font-size: var(--of--FontSize--sm);
+    }
+    h3 {
+        font-size: var(--of--FontSize--md);
+    }
+    h2 {
+        font-size: var(--of--FontSize--md);
+    }
+    h1 {
+        font-size: var(--of--FontSize--lg);
+    }
+    
+    @media (min-width: $ov--breakpoint--lg) {
+        h6 {
+            font-size: var(--of--FontSize--xs);
+        }
+        h5 {
+            font-size: var(--of--FontSize--xs);
+        }
+        h4 {
+            font-size: var(--of--FontSize--sm);
+        }
+        h3 {
+            font-size: var(--of--FontSize--md);
+        }
+        h2 {
+            font-size: var(--of--FontSize--lg);
+        }
+        h1 {
+            font-size: var(--of--FontSize--xl);
+        }
+    }
+}
