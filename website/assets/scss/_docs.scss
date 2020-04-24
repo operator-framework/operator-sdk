@@ -1,10 +1,15 @@
-.docs {
+.td-sidebar-nav .td-sidebar-link__page {
+    color: #222;
+    font-weight: normal;
+}
+
+.of-docs__wrapper {
     ul {
         list-style: disc;
         margin-left: 1rem;
     }
-    p + p {
-        margin-top: var(--of--spacer--md);
+    p {
+        margin-bottom: var(--of--spacer--md);
     }
     .td-sidebar-nav .td-sidebar-link__page {
         font-weight: normal;
