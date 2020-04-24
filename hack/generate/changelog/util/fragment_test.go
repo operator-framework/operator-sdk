@@ -37,7 +37,7 @@ func TestFragment_LoadEntries(t *testing.T) {
 			name:            "invalid yaml",
 			fragmentsDir:    "testdata/invalid_yaml",
 			expectedEntries: nil,
-			expectedErr:     "unmarshal errors",
+			expectedErr:     "error unmarshaling",
 		},
 		{
 			name:            "invalid entry",
