@@ -15,8 +15,14 @@
 package tests
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
+
+	"github.com/operator-framework/api/pkg/operators"
 	"github.com/operator-framework/operator-registry/pkg/registry"
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 const (
@@ -25,6 +31,8 @@ const (
 	OLMCRDsHaveResourcesTest  = "olm-crds-have-resources"
 	OLMSpecDescriptorsTest    = "olm-spec-descriptors"
 	OLMStatusDescriptorsTest  = "olm-status-descriptors"
+	statusDescriptor          = "status"
+	specDescriptor            = "spec"
 )
 
 // BundleValidationTest validates an on-disk bundle
@@ -70,6 +78,29 @@ func SpecDescriptorsTest(bundle registry.Bundle) scapiv1alpha2.ScorecardTestResu
 	r.State = scapiv1alpha2.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
+	csv, err := bundle.ClusterServiceVersion()
+	if err != nil {
+		r.Errors = append(r.Errors, err.Error())
+		r.State = scapiv1alpha2.ErrorState
+		return r
+	}
+	r.Log += fmt.Sprintf("Loaded ClusterServiceVersion: %s\n", csv.GetName())
+	crs, err := getCRsFromCSV(csv.ObjectMeta.Annotations["alm-examples"], csv.GetName())
+	if err != nil {
+		r.Errors = append(r.Errors, err.Error())
+		r.State = scapiv1alpha2.ErrorState
+		return r
+	}
+	r.Log += fmt.Sprintf("Loaded %d Custom Resources from alm-examples\n", len(crs))
+	apiCSV, err := registryToApiCSV(csv)
+	if err != nil {
+		r.Errors = append(r.Errors, err.Error())
+		r.State = scapiv1alpha2.ErrorState
+		return r
+	}
+	for _, cr := range crs {
+		r = checkOwnedCSVDescriptors(cr, apiCSV, specDescriptor, r)
+	}
 	return r
 }
 
@@ -81,5 +112,92 @@ func StatusDescriptorsTest(bundle registry.Bundle) scapiv1alpha2.ScorecardTestRe
 	r.State = scapiv1alpha2.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
+	return r
+}
+
+func getCRsFromCSV(almExamples string, csvName string) ([]unstructured.Unstructured, error) {
+	var crs []unstructured.Unstructured
+	// Create temporary CR manifests from metadata if one is not provided.
+	if almExamples != "" {
+		if err := json.Unmarshal([]byte(almExamples), &crs); err != nil {
+			return crs, fmt.Errorf("metadata.annotations['alm-examples'] in CSV %s"+
+				"incorrectly formatted: %v", csvName, err)
+		}
+		if len(crs) == 0 {
+			return crs, fmt.Errorf("no CRs found in metadata.annotations['alm-examples']"+
+				" in CSV %s and cr-manifest config option not set", csvName)
+		}
+		return crs, nil
+	} else {
+		return crs, errors.New(
+			// TODO what is this and do we still need it?
+			"cr-manifest config option must be set if CSV has no metadata.annotations['alm-examples']")
+	}
+	return crs, nil
+}
+
+func registryToApiCSV(csv *registry.ClusterServiceVersion) (*operators.ClusterServiceVersion, error) {
+	var apiCSV operators.ClusterServiceVersion
+	csvBytes, err := json.Marshal(csv)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(csvBytes, &apiCSV)
+	if err != nil {
+		return nil, err
+	}
+	return &apiCSV, nil
+}
+
+func checkOwnedCSVDescriptors(cr unstructured.Unstructured, csv *operators.ClusterServiceVersion,
+	descriptor string, r scapiv1alpha2.ScorecardTestResult) scapiv1alpha2.ScorecardTestResult {
+
+	if cr.Object[descriptor] == nil {
+		r.State = scapiv1alpha2.FailState
+		return r
+	}
+
+	block := cr.Object[descriptor].(map[string]interface{})
+
+	var crd *operators.CRDDescription
+	for _, owned := range csv.Spec.CustomResourceDefinitions.Owned {
+		if owned.Kind == cr.GetKind() {
+			crd = &owned
+			break
+		}
+	}
+
+	if crd == nil {
+		r.Errors = append(r.Errors, fmt.Sprintf("Failed to find an owned CRD for CR %s with GVK %s", cr.GetName(), cr.GroupVersionKind().String()))
+		r.State = scapiv1alpha2.FailState
+		return r
+	}
+
+	if descriptor == statusDescriptor {
+		for key := range block {
+			for _, statDesc := range crd.StatusDescriptors {
+				if statDesc.Path == key {
+					delete(block, key)
+					break
+				}
+			}
+		}
+	}
+	if descriptor == specDescriptor {
+		for key := range block {
+			for _, specDesc := range crd.SpecDescriptors {
+				if specDesc.Path == key {
+					delete(block, key)
+					break
+				}
+			}
+		}
+	}
+
+	for key := range block {
+		r.Errors = append(r.Errors, fmt.Sprintf("%s does not have a %s descriptor", key, descriptor))
+		r.Suggestions = append(r.Suggestions, fmt.Sprintf("Add a %s descriptor for %s", descriptor, key))
+		r.State = scapiv1alpha2.FailState
+	}
 	return r
 }
