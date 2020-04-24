@@ -33,7 +33,7 @@ func NewCmd() *cobra.Command {
 		serviceAccount string
 		list           bool
 		skipCleanup        bool
-		waitTime       int
+		waitTime       time.Duration
 	)
 	scorecardCmd := &cobra.Command{
 		Use:    "scorecard",
