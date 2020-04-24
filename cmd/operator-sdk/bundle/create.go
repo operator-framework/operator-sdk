@@ -63,7 +63,7 @@ metadata associated with the operator.
 		
 Notes:
 * The image is not runnable.
-* For more information on operator bundle images and metadata format see: 
+* More info on Operator Bundle images and metadata format see: 
   https://github.com/operator-framework/operator-registry#manifest-format 
 `,
 		Example: `
