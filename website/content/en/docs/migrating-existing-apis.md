@@ -1,7 +1,7 @@
 ---
 title: Migrating Existing Kubernetes APIs
 linkTitle: Migrating Existing K8S APIs
-weight: 50
+weight: 3
 ---
 
 Kubernetes APIs are assumed to evolve over time, hence the well-defined API [versioning scheme][k8s-versioning]. Upgrading your operator's APIs can be a non-trivial task, one that will involve changing quite a few source files and manifests. This document aims to identify the complexities of migrating an operator project's API using examples from existing operators.

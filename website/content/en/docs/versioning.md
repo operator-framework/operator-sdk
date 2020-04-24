@@ -1,7 +1,7 @@
 ---
 title: Versioning for Operator SDK
 linkTitle: Versioning
-weight: 50
+weight: 5
 ---
 
 {{% alert title="Warning" color="warning" %}}

@@ -1,7 +1,7 @@
 ---
 title: Operators and CRD scope with Operator SDK
 linkTitle: Operator Scope
-weight: 50
+weight: 4
 ---
 
 - [Namespace-scoped operator usage](#namespace-scoped-operator-usage)
