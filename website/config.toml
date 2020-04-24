@@ -8,7 +8,7 @@ theme = ["docsy"]
 enableRobotsTXT = true
 
 # Will give values to .Lastmod etc.
-enableGitInfo = false
+enableGitInfo = true
 
 # Language settings
 contentDir = "content/en"
