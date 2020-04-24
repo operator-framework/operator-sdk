@@ -4,12 +4,6 @@ linkTitle: FAQ
 weight: 60
 ---
 
-{{% alert title="Warning" color="warning" %}}
-These pages are under construction. Please continue to use the [docs in
-tree](https://github.com/operator-framework/operator-sdk/tree/master/doc)
-for now.
-{{% /alert %}}
-
 ## Controller Runtime FAQ
 
 Please see the upstream [Controller Runtime FAQ][cr-faq] first for any questions related to runtime mechanics or controller-runtime APIs. 

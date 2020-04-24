@@ -3,11 +3,6 @@ title: Install the Operator SDK CLI
 linkTitle: Installation
 weight: 1
 ---
-{{% alert title="Warning" color="warning" %}}
-These pages are under construction. Please continue to use the [docs in
-tree](https://github.com/operator-framework/operator-sdk/tree/master/doc)
-for now.
-{{% /alert %}}
 
 - [Install from Homebrew (macOS)](#install-from-homebrew-macos)
 - [Install from GitHub release](#install-from-github-release)
