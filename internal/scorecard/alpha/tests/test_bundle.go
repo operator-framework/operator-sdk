@@ -25,7 +25,7 @@ import (
 )
 
 // GetBundle parses a Bundle from a given on-disk path returning a bundle
-func GetBundle(bundlePath string) (bundle registry.Bundle, err error) {
+func GetBundle(bundlePath string) (bundle *registry.Bundle, err error) {
 
 	// validate the path
 	if _, err := os.Stat(bundlePath); os.IsNotExist(err) {
