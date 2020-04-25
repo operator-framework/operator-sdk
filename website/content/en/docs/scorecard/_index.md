@@ -1,6 +1,6 @@
 ---
 title: Scorecard
-weight: 20
+weight: 25
 ---
 
 # operator-sdk scorecard

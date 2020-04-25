@@ -4,7 +4,7 @@ linkTitle: Quickstart
 weight: 2
 ---
 
-This guide walks through an example of building a simple memcached-operator using the operator-sdk CLI tool and controller-runtime library API. 
+This guide walks through an example of building a simple memcached-operator using the operator-sdk CLI tool and controller-runtime library API.
 
 ## Create a new project
 
@@ -407,7 +407,9 @@ You can use a specific kubeconfig via the flag `--kubeconfig=<path/to/kubeconfig
 
 ### 3. Deploy your Operator with the Operator Lifecycle Manager (OLM)
 
-OLM will manage creation of most if not all resources required to run your operator, using a bit of setup from other `operator-sdk` commands. Check out the [docs][cli-run-olm] for more information.
+OLM will manage creation of most if not all resources required to run your operator,
+using a bit of setup from other `operator-sdk` commands. Check out the OLM integration
+[user guide][olm-user-guide] for more information.
 
 ## Create a Memcached CR
 
@@ -859,5 +861,4 @@ When the operator is not running in a cluster, the Manager will return an error 
 [scheme_builder]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/scheme#Builder
 [typical-status-properties]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
 [godoc-conditions]: https://godoc.org/github.com/operator-framework/operator-sdk/pkg/status#Conditions
-[cli-run-olm]: /docs/golang/olm-integration/olm-cli/
-
+[olm-user-guide]: /docs/olm-integration/user-guide

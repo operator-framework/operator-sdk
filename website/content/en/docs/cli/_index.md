@@ -1,4 +1,4 @@
 ---
 title: CLI Reference
-weight: 25
+weight: 30
 ---

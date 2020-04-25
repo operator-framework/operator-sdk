@@ -140,7 +140,7 @@ This makefile target will invoke controller-gen to generate the CRD manifests at
 
 OpenAPIv3 schemas are added to CRD manifests in the `spec.validation` block when the manifests are generated. This validation block allows Kubernetes to validate the properties in a Memcached Custom Resource when it is created or updated.
 
-Markers (annotations) are available to configure validations for your API. These markers will always have a `+kubebuilder:validation` prefix. 
+Markers (annotations) are available to configure validations for your API. These markers will always have a `+kubebuilder:validation` prefix.
 
 Usage of markers in API code is discussed in the kubebuilder [CRD generation][generating-crd] and [marker][markers] documentation. A full list of OpenAPIv3 validation markers can be found [here][crd-markers].
 
@@ -422,7 +422,7 @@ $ kubectl delete deployments,service -l control-plane=controller-manager
 $ kubectl delete role,rolebinding --all
 ```
 
-See the [advanced topics][advanced_topics] doc for more use cases and under the hood details. 
+See the [advanced topics][advanced_topics] doc for more use cases and under the hood details.
 
 
 [go_tool]:https://golang.org/dl/
@@ -447,7 +447,7 @@ See the [advanced topics][advanced_topics] doc for more use cases and under the 
 [request-go-doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Request
 [result_go_doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Result
 [multi-namespaced-cache-builder]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
-[cli-run-olm]: /docs/golang/olm-integration/olm-cli/
+[cli-run-olm]: /docs/olm-integration/cli-overview
 [kubebuilder_entrypoint_doc]: https://book.kubebuilder.io/cronjob-tutorial/empty-main.html
 
 [api_terms_doc]: https://book.kubebuilder.io/cronjob-tutorial/gvks.html

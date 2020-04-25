@@ -8,7 +8,7 @@ This guide walks through an example of building a simple memcached-operator powe
 
 ## Create a new project
 
-After [installing the Operator SDK CLI][install-guide] and 
+After [installing the Operator SDK CLI][install-guide] and
 [ansible operator prerequisites][ansible-install-guide], use the CLI to create a
 new Ansible-based memcached-operator project:
 
@@ -239,6 +239,12 @@ INFO[0000] Go OS/Arch: darwin/amd64
 INFO[0000] operator-sdk Version: 0.0.5+git
 ```
 
+### 3. Deploy your Operator with the Operator Lifecycle Manager (OLM)
+
+OLM will manage creation of most if not all resources required to run your operator,
+using a bit of setup from other `operator-sdk` commands. Check out the OLM integration
+[user guide][olm-user-guide] for more information.
+
 ### Create a Memcached CR
 
 Modify `deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml` as shown and create a `Memcached` custom resource:
@@ -370,3 +376,4 @@ For more information, refer [cli][addcli] doc.
 [docker-tool]:https://docs.docker.com/install/
 [kubectl-tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [addcli]: /docs/cli/operator-sdk_add_api
+[olm-user-guide]: /docs/olm-integration/user-guide
