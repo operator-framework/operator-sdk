@@ -69,11 +69,12 @@ catalogsources.operators.coreos.com                          CustomResourceDefin
 
 Now that we have a working, simple memcached-operator, we can generate manifests
 and metadata for an Operator [bundle][operator-bundle]. From the bundle docs:
->An Operator Bundle is built as a scratch (non-runnable) container image that
->contains operator manifests and specific metadata in designated directories
->inside the image. Then, it can be pushed and pulled from an OCI-compliant
->container registry. Ultimately, an operator bundle will be used by Operator
->Registry and OLM to install an operator in OLM-enabled clusters.
+
+> An Operator Bundle is built as a scratch (non-runnable) container image that
+> contains operator manifests and specific metadata in designated directories
+> inside the image. Then, it can be pushed and pulled from an OCI-compliant
+> container registry. Ultimately, an operator bundle will be used by Operator
+> Registry and OLM to install an operator in OLM-enabled clusters.
 
 A bundle is built using on-disk manifests and metadata that define an Operator
 at a particular version. At this stage in memcached-operator's development,
@@ -112,7 +113,8 @@ Metadata contains information about a particular Operator version available in a
 OLM uses this information to install specific Operator versions and resolve dependencies.
 
 Of particular note are channels:
->Channels allow package authors to write different upgrade paths for different users (e.g. beta vs. stable).
+
+> Channels allow package authors to write different upgrade paths for different users (e.g. beta vs. stable).
 
 Channels become important when publishing, but we should still be aware of them
 beforehand as they're required values in our metadata. `bundle create` writes the
