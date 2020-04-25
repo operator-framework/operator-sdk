@@ -1,6 +1,6 @@
 ---
 title: Generating a ClusterServiceVersion
-linkTitle: Generating ClusterServiceVersion's
+linkTitle: Generating a ClusterServiceVersion
 weight: 3
 ---
 
@@ -27,7 +27,7 @@ them to the CSV. Use the `--deploy-dir` flag to change this path.
     * Roles: `deploy/role.yaml`
     * ClusterRoles: `deploy/cluster_role.yaml`
     * Deployments: `deploy/operator.yaml`
-1. Path to a directory containing CustomResourceDefinition's (CRD's) and Custom Resource examples (CR's).
+1. Path to a directory containing CustomResourceDefinitions (CRDs) and Custom Resource examples (CRs).
 Use the `--crd-dir` flag to change this path.
     * Custom Resources: `deploy/crds/<full group>_<version>_<kind>_cr.yaml`
     * CustomResourceDefinitions: `deploy/crds/<full group>_<resource>_crd.yaml`
