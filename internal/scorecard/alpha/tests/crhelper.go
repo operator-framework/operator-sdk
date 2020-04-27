@@ -44,7 +44,7 @@ func GetCRs(bundle registry.Bundle) (crList []unstructured.Unstructured, err err
 
 	err = json.Unmarshal([]byte(almExamples), &crList)
 	if err != nil {
-		return crList, err
+		return nil, fmt.Errorf("failed to parse alm-examples annotation: %v", err)
 	}
 	return crList, err
 }
