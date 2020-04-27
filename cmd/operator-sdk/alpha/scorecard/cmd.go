@@ -56,7 +56,7 @@ func NewCmd() *cobra.Command {
 			}
 			o.Client, err = scorecard.GetKubeClient(kubeconfig)
 			if err != nil {
-				return fmt.Errorf("could not get Kube connection %s", err.Error())
+				return fmt.Errorf("could not get kubernetes client: %w", err)
 			}
 			o.Config, err = scorecard.LoadConfig(config)
 			if err != nil {
