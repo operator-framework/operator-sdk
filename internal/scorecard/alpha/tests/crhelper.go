@@ -46,5 +46,5 @@ func GetCRs(bundle registry.Bundle) (crList []unstructured.Unstructured, err err
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse alm-examples annotation: %v", err)
 	}
-	return crList, err
+	return crList, nil
 }
