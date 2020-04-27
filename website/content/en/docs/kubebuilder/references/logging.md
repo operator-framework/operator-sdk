@@ -198,59 +198,64 @@ An example from [`memcached_controller.go`][code_memcached_controller]:
 package memcached
 
 import (
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"github.com/go-logr/logr"
 )
 
-// Set a global logger for the memcached package. Each log record produced
-// by this logger will have an identifier containing "controller_memcached".
-// These names are hierarchical; the name attached to memcached log statements
-// will be "operator-sdk.controller_memcached" because SDKLog has name
-// "operator-sdk".
-var log = logf.Log.WithName("controller_memcached")
 
-func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	// Create a logger for Reconcile() that includes "Request.Namespace"
-	// and "Request.Name" in each log record from this log statement.
-	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
-	reqLogger.Info("Reconciling Memcached.")
+// MemcachedReconciler reconciles a Memcached object
+type MemcachedReconciler struct {
+	client.Client
+	Log    logr.Logger
+	Scheme *runtime.Scheme
+}
 
+func (r *MemcachedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
+	ctx := context.Background()
+	log := r.Log.WithValues("memcached", req.NamespacedName)
+
+	// Fetch the Memcached instance
 	memcached := &cachev1alpha1.Memcached{}
-	err := r.client.Get(context.TODO(), request.NamespacedName, memcached)
+	err := r.Get(ctx, req.NamespacedName, memcached)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			reqLogger.Info("Memcached resource not found. Ignoring since object must be deleted.")
-			return reconcile.Result{}, nil
+			// Request object not found, could have been deleted after reconcile request.
+			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
+			// Return and don't requeue
+			log.Info("Memcached resource not found. Ignoring since object must be deleted")
+			return ctrl.Result{}, nil
 		}
-		return reconcile.Result{}, err
+		// Error reading the object - requeue the request.
+		log.Error(err, "Failed to get Memcached")
+		return ctrl.Result{}, err
 	}
 
+	// Check if the deployment already exists, if not create a new one
 	found := &appsv1.Deployment{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: memcached.Name, Namespace: memcached.Namespace}, found)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			dep := r.deploymentForMemcached(memcached)
-			// Include "Deployment.Namespace" and "Deployment.Name" in records
-			// produced by this particular log statement. "Request.Namespace" and
-			// "Request.Name" will also be included from reqLogger.
-			reqLogger.Info("Creating a new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
-			err = r.client.Create(context.TODO(), dep)
-			if err != nil {
-				// Include the error in records produced by this log statement.
-				reqLogger.Error(err, "Failed to create new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
-				return reconcile.Result{}, err
-			}
+	err = r.Get(ctx, types.NamespacedName{Name: memcached.Name, Namespace: memcached.Namespace}, found)
+	if err != nil && errors.IsNotFound(err) {
+		// Define a new deployment
+		dep := r.deploymentForMemcached(memcached)
+		log.Info("Creating a new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+		err = r.Create(ctx, dep)
+		if err != nil {
+			log.Error(err, "Failed to create new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+			return ctrl.Result{}, err
 		}
-		return reconcile.Result{}, err
+		// Deployment created successfully - return and requeue
+		return ctrl.Result{Requeue: true}, nil
+	} else if err != nil {
+		log.Error(err, "Failed to get Deployment")
+		return ctrl.Result{}, err
 	}
 
 	...
 }
 ```
 
-Log records will look like the following (from `reqLogger.Error()` above):
+Log records will look like the following (from `log.Error()` above):
 
 ```
-2018-11-08T00:00:25.700Z	ERROR	operator-sdk.controller_memcached pkg/controller/memcached/memcached_controller.go:118	Failed to create new Deployment	{"Request.Namespace", "memcached", "Request.Name", "memcached-operator", "Deployment.Namespace", "memcached", "Deployment.Name", "memcached-operator"}
+2020-04-27T09:14:15.939-0400	ERROR	controllers.Memcached	Failed to create new Deployment	{"memcached": "default/memcached-sample", "Deployment.Namespace": "default", "Deployment.Name": "memcached-sample"}
 ```
 
 ## Non-default logging
@@ -262,8 +267,7 @@ If you do not want to use `logr` as your logging tool, you can remove `logr`-spe
 [repo_zapr]:https://godoc.org/github.com/go-logr/zapr
 [godoc_logr_logger]:https://godoc.org/github.com/go-logr/logr#Logger
 [site_struct_logging]:https://www.client9.com/structured-logging-in-golang/
-[code_memcached_controller]:https://github.com/operator-framework/operator-sdk/blob/master/example/memcached-operator/memcached_controller.go.tmpl
+[code_memcached_controller]:https://github.com/operator-framework/operator-sdk/blob/master/example/kb-memcached-operator/memcached_controller.go.tmpl
 [code_set_logger]:https://github.com/operator-framework/operator-sdk/blob/4d66be409a69d169aaa29d470242a1defbaf08bb/internal/pkg/scaffold/cmd.go#L92-L96
-[zap_sampling]:https://github.com/uber-go/zap/blob/master/FAQ.md#why-sample-application-logs
 [logfmt_repo]:https://github.com/jsternberg/zap-logfmt
 [controller_runtime_zap]:https://github.com/kubernetes-sigs/controller-runtime/tree/master/pkg/log/zap
