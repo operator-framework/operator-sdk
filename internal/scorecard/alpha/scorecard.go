@@ -15,7 +15,6 @@
 package alpha
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -100,9 +99,6 @@ func selectTests(selector labels.Selector, tests []ScorecardTest) []ScorecardTes
 // runTest executes a single test
 // TODO once tests exists, handle the test output
 func runTest(o Options, test ScorecardTest) (result *v1.Pod, err error) {
-	if test.Name == "" {
-		return result, errors.New("todo - remove later, only for linter")
-	}
 
 	// Create a Pod to run the test
 	podDef := getPodDefinition(test, o)

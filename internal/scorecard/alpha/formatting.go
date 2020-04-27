@@ -19,7 +19,6 @@ import (
 	"fmt"
 
 	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
-	log "github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -28,16 +27,25 @@ import (
 func getTestResults(client kubernetes.Interface, tests []ScorecardTest) (output v1alpha2.ScorecardOutput) {
 	output.Results = make([]v1alpha2.ScorecardTestResult, 0)
 	for i := 0; i < len(tests); i++ {
-		p := tests[i].TestPod
+		t := tests[i]
+		p := t.TestPod
 		logBytes, err := getPodLog(client, p)
 		if err != nil {
-			log.Errorf("Error getting pod log %s\n", err.Error())
+			r := v1alpha2.ScorecardTestResult{}
+			r.Name = t.Name
+			r.Description = t.Description
+			r.Errors = []string{fmt.Sprintf("Error getting pod log %s", err.Error())}
+			output.Results = append(output.Results, r)
 		} else {
 			// marshal pod log into ScorecardTestResult
 			var sc v1alpha2.ScorecardTestResult
 			err := json.Unmarshal(logBytes, &sc)
 			if err != nil {
-				log.Errorf("Error unmarshalling test result %s\n", err.Error())
+				r := v1alpha2.ScorecardTestResult{}
+				r.Name = t.Name
+				r.Description = t.Description
+				r.Errors = []string{fmt.Sprintf("Error unmarshalling test result %s", err.Error())}
+				output.Results = append(output.Results, r)
 			} else {
 				output.Results = append(output.Results, sc)
 			}
