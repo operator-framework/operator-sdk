@@ -105,6 +105,6 @@ func printValidTests() (result v1alpha2.ScorecardTestResult) {
 		tests.OLMSpecDescriptorsTest,
 		tests.OLMStatusDescriptorsTest,
 		tests.BasicCheckSpecTest)
-	result.Suggestions = append(result.Suggestions, str)
+	result.Errors = append(result.Errors, str)
 	return result
 }

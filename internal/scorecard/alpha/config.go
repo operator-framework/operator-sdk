@@ -17,11 +17,11 @@ package alpha
 import (
 	"io/ioutil"
 
-	"sigs.k8s.io/yaml"
 	v1 "k8s.io/api/core/v1"
+	"sigs.k8s.io/yaml"
 )
 
-type ScorecardTest struct {
+type Test struct {
 	Name        string            `yaml:"name"`                 // The container test name
 	Image       string            `yaml:"image"`                // The container image name
 	Entrypoint  string            `yaml:"entrypoint,omitempty"` // An optional entrypoint passed to the test image
@@ -33,7 +33,7 @@ type ScorecardTest struct {
 // Config represents the set of test configurations which scorecard
 // would run based on user input
 type Config struct {
-	Tests []ScorecardTest `yaml:"tests"`
+	Tests []Test `yaml:"tests"`
 }
 
 // LoadConfig will find and return the scorecard config, the config file

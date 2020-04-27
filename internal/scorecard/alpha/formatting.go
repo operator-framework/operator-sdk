@@ -24,7 +24,7 @@ import (
 
 // getTestResults fetches the test pod logs and converts it into
 // ScorecardOutput format
-func getTestResults(client kubernetes.Interface, tests []ScorecardTest) (output v1alpha2.ScorecardOutput) {
+func getTestResults(client kubernetes.Interface, tests []Test) (output v1alpha2.ScorecardOutput) {
 	output.Results = make([]v1alpha2.ScorecardTestResult, 0)
 	for i := 0; i < len(tests); i++ {
 		t := tests[i]

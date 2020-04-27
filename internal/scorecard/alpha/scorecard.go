@@ -84,9 +84,9 @@ func RunTests(o Options) (testOutput v1alpha2.ScorecardOutput, err error) {
 
 // selectTests applies an optionally passed selector expression
 // against the configured set of tests, returning the selected tests
-func selectTests(selector labels.Selector, tests []ScorecardTest) []ScorecardTest {
+func selectTests(selector labels.Selector, tests []Test) []Test {
 
-	selected := make([]ScorecardTest, 0)
+	selected := make([]Test, 0)
 	for i := 0; i < len(tests); i++ {
 		if selector.String() == "" || selector.Matches(labels.Set(tests[i].Labels)) {
 			// TODO olm manifests check
@@ -97,8 +97,7 @@ func selectTests(selector labels.Selector, tests []ScorecardTest) []ScorecardTes
 }
 
 // runTest executes a single test
-// TODO once tests exists, handle the test output
-func runTest(o Options, test ScorecardTest) (result *v1.Pod, err error) {
+func runTest(o Options, test Test) (result *v1.Pod, err error) {
 
 	// Create a Pod to run the test
 	podDef := getPodDefinition(test, o)
@@ -117,7 +116,7 @@ func ConfigDocLink() string {
 
 // waitForTestsToComplete waits for a fixed amount of time while
 // checking for test pods to complete
-func waitForTestsToComplete(o Options, tests []ScorecardTest) (err error) {
+func waitForTestsToComplete(o Options, tests []Test) (err error) {
 	waitTimeInSeconds := int(o.WaitTime.Seconds())
 	for elapsedSeconds := 0; elapsedSeconds < waitTimeInSeconds; elapsedSeconds++ {
 		allPodsCompleted := true

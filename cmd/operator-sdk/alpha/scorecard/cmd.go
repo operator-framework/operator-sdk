@@ -54,6 +54,11 @@ func NewCmd() *cobra.Command {
 				SkipCleanup:    skipCleanup,
 				WaitTime:       waitTime,
 			}
+
+			if bundle == "" {
+				return fmt.Errorf("bundle flag required")
+			}
+
 			o.Client, err = scorecard.GetKubeClient(kubeconfig)
 			if err != nil {
 				return fmt.Errorf("could not get kubernetes client: %w", err)
@@ -61,10 +66,6 @@ func NewCmd() *cobra.Command {
 			o.Config, err = scorecard.LoadConfig(config)
 			if err != nil {
 				return fmt.Errorf("could not find config file %s", err.Error())
-			}
-
-			if bundle == "" {
-				return fmt.Errorf("bundle flag required")
 			}
 
 			o.Selector, err = labels.Parse(selector)
