@@ -63,26 +63,27 @@ func NewCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("could not get kubernetes client: %w", err)
 			}
+
 			o.Config, err = scorecard.LoadConfig(config)
 			if err != nil {
-				return fmt.Errorf("could not find config file %s", err.Error())
+				return fmt.Errorf("could not find config file %w", err)
 			}
 
 			o.Selector, err = labels.Parse(selector)
 			if err != nil {
-				return fmt.Errorf("could not parse selector %s", err.Error())
+				return fmt.Errorf("could not parse selector %w", err)
 			}
 
 			var scorecardOutput v1alpha2.ScorecardOutput
 			if list {
 				scorecardOutput, err = scorecard.ListTests(o)
 				if err != nil {
-					return fmt.Errorf("error listing tests %s", err.Error())
+					return fmt.Errorf("error listing tests %w", err)
 				}
 			} else {
 				scorecardOutput, err = scorecard.RunTests(o)
 				if err != nil {
-					return fmt.Errorf("error running tests %s", err.Error())
+					return fmt.Errorf("error running tests %w", err)
 				}
 			}
 

@@ -15,8 +15,6 @@
 package tests
 
 import (
-	"log"
-	"path/filepath"
 	"testing"
 
 	"github.com/operator-framework/operator-registry/pkg/registry"
@@ -36,11 +34,7 @@ func TestBundlePath(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.bundlePath, func(t *testing.T) {
 
-			abs, err := filepath.Abs(c.bundlePath)
-			if err != nil {
-				log.Println(err)
-			}
-			_, err = GetBundle(abs)
+			_, err := GetBundle(c.bundlePath)
 			if err != nil && c.wantError {
 				t.Logf("Wanted error and got error : %v", err)
 				return
@@ -65,12 +59,7 @@ func TestBundleCRs(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.bundlePath, func(t *testing.T) {
 
-			abs, err := filepath.Abs(c.bundlePath)
-			if err != nil {
-				t.Errorf("Invalid filepath")
-			}
-			var bundle registry.Bundle
-			bundle, err = GetBundle(abs)
+			bundle, err := GetBundle(c.bundlePath)
 			if err != nil && c.wantError {
 				t.Logf("Wanted error and got error : %v", err)
 				return
@@ -113,12 +102,7 @@ func TestBasicAndOLM(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.bundlePath, func(t *testing.T) {
 
-			abs, err := filepath.Abs(c.bundlePath)
-			if err != nil {
-				t.Errorf("Invalid filepath")
-			}
-			var bundle registry.Bundle
-			bundle, err = GetBundle(abs)
+			bundle, err := GetBundle(c.bundlePath)
 			if err != nil {
 				t.Errorf("Error getting bundle %s", err.Error())
 			}

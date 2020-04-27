@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+
+	"k8s.io/apimachinery/pkg/util/rand"
 )
 
 // getBundleData tars up the contents of a bundle from a path, and returns that tar file in []byte
@@ -29,7 +31,7 @@ func getBundleData(bundlePath string) (bundleData []byte, err error) {
 		return bundleData, fmt.Errorf("bundle path is not valid %s", err.Error())
 	}
 
-	tempTarFileName := fmt.Sprintf("%s%ctempBundle-%s.tar", os.TempDir(), os.PathSeparator, randomString())
+	tempTarFileName := fmt.Sprintf("%s%ctempBundle-%s.tar", os.TempDir(), os.PathSeparator, rand.String(4))
 
 	paths := []string{bundlePath}
 	err = CreateTarFile(tempTarFileName, paths)

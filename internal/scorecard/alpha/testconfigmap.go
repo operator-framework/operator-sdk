@@ -20,6 +20,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -35,7 +36,7 @@ func createConfigMap(o Options, bundleData []byte) (configMap *v1.ConfigMap, err
 // will hold the bundle contents and eventually will be mounted
 // into each test Pod
 func getConfigMapDefinition(namespace string, bundleData []byte) *v1.ConfigMap {
-	configMapName := fmt.Sprintf("scorecard-test-%s", randomString())
+	configMapName := fmt.Sprintf("scorecard-test-%s", rand.String(4))
 	data := make(map[string][]byte)
 	data["bundle.tar"] = bundleData
 	return &v1.ConfigMap{

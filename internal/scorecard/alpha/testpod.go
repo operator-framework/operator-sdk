@@ -18,28 +18,20 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"math/rand"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/client-go/kubernetes"
 )
-
-const (
-	charset = "abcdefghijklmnopqrstuvwxyz"
-)
-
-var seededRand *rand.Rand = rand.New(
-	rand.NewSource(time.Now().UnixNano()))
 
 // getPodDefinition fills out a Pod definition based on
 // information from the test
 func getPodDefinition(test Test, o Options) *v1.Pod {
 	return &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("scorecard-test-%s", randomString()),
+			Name:      fmt.Sprintf("scorecard-test-%s", rand.String(4)),
 			Namespace: o.Namespace,
 			Labels: map[string]string{
 				"app": "scorecard-test",
@@ -74,7 +66,7 @@ func getPodDefinition(test Test, o Options) *v1.Pod {
 					VolumeSource: v1.VolumeSource{
 						ConfigMap: &v1.ConfigMapVolumeSource{
 							LocalObjectReference: v1.LocalObjectReference{
-								Name: o.BundleConfigMap.Name,
+								Name: o.bundleConfigMap.Name,
 							},
 						},
 					},
@@ -82,18 +74,6 @@ func getPodDefinition(test Test, o Options) *v1.Pod {
 			},
 		},
 	}
-}
-
-func randomString() string {
-	return stringWithCharset(4, charset)
-}
-
-func stringWithCharset(length int, charset string) string {
-	b := make([]byte, length)
-	for i := range b {
-		b[i] = charset[seededRand.Intn(len(charset))]
-	}
-	return string(b)
 }
 
 func getPodLog(client kubernetes.Interface, pod *v1.Pod) (logOutput []byte, err error) {
@@ -110,13 +90,12 @@ func getPodLog(client kubernetes.Interface, pod *v1.Pod) (logOutput []byte, err 
 	if err != nil {
 		return logOutput, err
 	}
-	//logOutput = buf.String()
 	return buf.Bytes(), err
 }
 
 func deletePods(client kubernetes.Interface, tests []Test) {
-	for i := 0; i < len(tests); i++ {
-		p := tests[i].TestPod
+	for _, test := range tests {
+		p := test.TestPod
 		err := client.CoreV1().Pods(p.Namespace).Delete(p.Name, &metav1.DeleteOptions{})
 		if err != nil {
 			log.Errorf("Error deleting pod %s %s\n", p.Name, err.Error())

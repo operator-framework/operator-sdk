@@ -16,11 +16,10 @@ package alpha
 
 import (
 	"os"
-	"path/filepath"
 
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
+	cruntime "sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
 // GetKubeClient will get a kubernetes client from the following sources:
@@ -31,32 +30,11 @@ import (
 //   the command line
 func GetKubeClient(kubeconfig string) (client kubernetes.Interface, err error) {
 
-	var inCluster bool
-
-	if kubeconfig == "" {
-		envVar := os.Getenv("KUBECONFIG")
-		if envVar != "" {
-			// use the KUBECONFIG env variable
-			kubeconfig = envVar
-		} else {
-
-			home := homeDir()
-			if home != "" {
-				// use the $HOME/.kube/config path
-				kubeconfig = filepath.Join(home, ".kube", "config")
-			} else {
-				// assume in-cluster
-				inCluster = true
-			}
-		}
+	if kubeconfig != "" {
+		os.Setenv(k8sutil.KubeConfigEnvVar, kubeconfig)
 	}
 
-	var config *rest.Config
-	if inCluster {
-		config, err = rest.InClusterConfig()
-	} else {
-		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
-	}
+	config, err := cruntime.GetConfig()
 	if err != nil {
 		return client, err
 	}
@@ -68,11 +46,4 @@ func GetKubeClient(kubeconfig string) (client kubernetes.Interface, err error) {
 	}
 
 	return clientset, err
-}
-
-func homeDir() string {
-	if h := os.Getenv("HOME"); h != "" {
-		return h
-	}
-	return os.Getenv("USERPROFILE") // windows
 }

@@ -34,7 +34,7 @@ type Options struct {
 	WaitTime        time.Duration
 	Kubeconfig      string
 	Namespace       string
-	BundleConfigMap *v1.ConfigMap
+	bundleConfigMap *v1.ConfigMap
 	ServiceAccount  string
 	Client          kubernetes.Interface
 	SkipCleanup     bool
@@ -54,22 +54,22 @@ func RunTests(o Options) (testOutput v1alpha2.ScorecardOutput, err error) {
 	}
 
 	// create a ConfigMap holding the bundle contents
-	o.BundleConfigMap, err = createConfigMap(o, bundleData)
+	o.bundleConfigMap, err = createConfigMap(o, bundleData)
 	if err != nil {
 		return testOutput, fmt.Errorf("error creating ConfigMap %s", err.Error())
 	}
 
-	for i := 0; i < len(tests); i++ {
+	for i, test := range tests {
 		var err error
-		tests[i].TestPod, err = runTest(o, tests[i])
+		tests[i].TestPod, err = runTest(o, test)
 		if err != nil {
-			return testOutput, fmt.Errorf("test %s failed %s", tests[i].Name, err.Error())
+			return testOutput, fmt.Errorf("test %s failed %s", test.Name, err.Error())
 		}
 	}
 
 	if !o.SkipCleanup {
 		defer deletePods(o.Client, tests)
-		defer deleteConfigMap(o.Client, o.BundleConfigMap)
+		defer deleteConfigMap(o.Client, o.bundleConfigMap)
 	}
 
 	err = waitForTestsToComplete(o, tests)
@@ -87,10 +87,11 @@ func RunTests(o Options) (testOutput v1alpha2.ScorecardOutput, err error) {
 func selectTests(selector labels.Selector, tests []Test) []Test {
 
 	selected := make([]Test, 0)
-	for i := 0; i < len(tests); i++ {
-		if selector.String() == "" || selector.Matches(labels.Set(tests[i].Labels)) {
+
+	for _, test := range tests {
+		if selector.String() == "" || selector.Matches(labels.Set(test.Labels)) {
 			// TODO olm manifests check
-			selected = append(selected, tests[i])
+			selected = append(selected, test)
 		}
 	}
 	return selected
@@ -120,8 +121,8 @@ func waitForTestsToComplete(o Options, tests []Test) (err error) {
 	waitTimeInSeconds := int(o.WaitTime.Seconds())
 	for elapsedSeconds := 0; elapsedSeconds < waitTimeInSeconds; elapsedSeconds++ {
 		allPodsCompleted := true
-		for i := 0; i < len(tests); i++ {
-			p := tests[i].TestPod
+		for _, test := range tests {
+			p := test.TestPod
 			var tmp *v1.Pod
 			tmp, err = o.Client.CoreV1().Pods(p.Namespace).Get(p.Name, metav1.GetOptions{})
 			if err != nil {
