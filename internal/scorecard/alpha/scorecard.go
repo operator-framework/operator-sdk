@@ -50,20 +50,20 @@ func RunTests(o Options) (testOutput v1alpha2.ScorecardOutput, err error) {
 
 	bundleData, err := getBundleData(o.BundlePath)
 	if err != nil {
-		return testOutput, fmt.Errorf("error getting bundle data %s", err.Error())
+		return testOutput, fmt.Errorf("error getting bundle data %w", err)
 	}
 
 	// create a ConfigMap holding the bundle contents
 	o.bundleConfigMap, err = createConfigMap(o, bundleData)
 	if err != nil {
-		return testOutput, fmt.Errorf("error creating ConfigMap %s", err.Error())
+		return testOutput, fmt.Errorf("error creating ConfigMap %w", err)
 	}
 
 	for i, test := range tests {
 		var err error
 		tests[i].TestPod, err = runTest(o, test)
 		if err != nil {
-			return testOutput, fmt.Errorf("test %s failed %s", test.Name, err.Error())
+			return testOutput, fmt.Errorf("test %s failed %w", test.Name, err)
 		}
 	}
 
@@ -126,7 +126,7 @@ func waitForTestsToComplete(o Options, tests []Test) (err error) {
 			var tmp *v1.Pod
 			tmp, err = o.Client.CoreV1().Pods(p.Namespace).Get(p.Name, metav1.GetOptions{})
 			if err != nil {
-				return fmt.Errorf("error getting pod %s %s", p.Name, err.Error())
+				return fmt.Errorf("error getting pod %s %w", p.Name, err)
 			}
 			if tmp.Status.Phase != v1.PodSucceeded {
 				allPodsCompleted = false

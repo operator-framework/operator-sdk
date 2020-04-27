@@ -28,7 +28,7 @@ func getBundleData(bundlePath string) (bundleData []byte, err error) {
 	// make sure the bundle exists on disk
 	_, err = os.Stat(bundlePath)
 	if os.IsNotExist(err) {
-		return bundleData, fmt.Errorf("bundle path is not valid %s", err.Error())
+		return bundleData, fmt.Errorf("bundle path is not valid %w", err)
 	}
 
 	tempTarFileName := fmt.Sprintf("%s%ctempBundle-%s.tar", os.TempDir(), os.PathSeparator, rand.String(4))
@@ -36,7 +36,7 @@ func getBundleData(bundlePath string) (bundleData []byte, err error) {
 	paths := []string{bundlePath}
 	err = CreateTarFile(tempTarFileName, paths)
 	if err != nil {
-		return bundleData, fmt.Errorf("error creating tar of bundle %s", err.Error())
+		return bundleData, fmt.Errorf("error creating tar of bundle %w", err)
 	}
 
 	defer os.Remove(tempTarFileName)
@@ -44,7 +44,7 @@ func getBundleData(bundlePath string) (bundleData []byte, err error) {
 	var buf []byte
 	buf, err = ioutil.ReadFile(tempTarFileName)
 	if err != nil {
-		return bundleData, fmt.Errorf("error reading tar of bundle %s", err.Error())
+		return bundleData, fmt.Errorf("error reading tar of bundle %w", err)
 	}
 
 	return buf, err

@@ -110,7 +110,7 @@ func CreateTarFile(tarName string, paths []string) (err error) {
 		// build tar
 		err = filepath.Walk(path, walker)
 		if err != nil {
-			return fmt.Errorf("failed to add %s to tar: %s", path, err)
+			return fmt.Errorf("failed to add %s to tar: %w", path, err)
 		}
 	}
 	return nil
