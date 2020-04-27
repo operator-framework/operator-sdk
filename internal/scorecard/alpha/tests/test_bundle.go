@@ -25,11 +25,11 @@ import (
 )
 
 // GetBundle parses a Bundle from a given on-disk path returning a bundle
-func GetBundle(bundlePath string) (bundle registry.Bundle, err error) {
+func GetBundle(bundlePath string) (bundle *registry.Bundle, err error) {
 
 	// validate the path
 	if _, err := os.Stat(bundlePath); os.IsNotExist(err) {
-		return bundle, err
+		return nil, err
 	}
 
 	validationLogOutput := new(bytes.Buffer)
@@ -44,15 +44,15 @@ func GetBundle(bundlePath string) (bundle registry.Bundle, err error) {
 	_, bundles, _ = manifests.GetManifestsDir(bundlePath)
 
 	if len(bundles) == 0 {
-		return bundle, fmt.Errorf("bundle was not found")
+		return nil, fmt.Errorf("bundle was not found")
 	}
 	if bundles[0] == nil {
-		return bundle, fmt.Errorf("bundle is invalid nil value")
+		return nil, fmt.Errorf("bundle is invalid nil value")
 	}
 	bundle = *bundles[0]
 	_, err = bundle.ClusterServiceVersion()
 	if err != nil {
-		return bundle, fmt.Errorf("error in csv retrieval %s", err.Error())
+		return nil, fmt.Errorf("error in csv retrieval %s", err.Error())
 	}
 
 	return bundle, nil
