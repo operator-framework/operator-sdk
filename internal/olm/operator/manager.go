@@ -434,8 +434,12 @@ func readObjectsFromFile(path string) (objs []*unstructured.Unstructured, err er
 	}
 	scanner := k8sutil.NewYAMLScanner(b)
 	for scanner.Scan() {
+		b, err := yaml.YAMLToJSON(scanner.Bytes())
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert YAML to JSON before decode: %v", err)
+		}
 		u := &unstructured.Unstructured{}
-		if err := u.UnmarshalJSON(scanner.Bytes()); err != nil {
+		if err := u.UnmarshalJSON(b); err != nil {
 			return nil, fmt.Errorf("failed to decode object from manifest %s: %w", path, err)
 		}
 		objs = append(objs, u)
