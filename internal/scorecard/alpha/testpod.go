@@ -45,12 +45,7 @@ func getPodDefinition(test Test, o Scorecard) *v1.Pod {
 					Name:            "scorecard-test",
 					Image:           "quay.io/operator-framework/scorecard-test:dev",
 					ImagePullPolicy: v1.PullIfNotPresent,
-					Command: []string{
-						"/usr/local/bin/scorecard-test",
-					},
-					Args: []string{
-						test.Entrypoint,
-					},
+					Command:         test.Entrypoint,
 					VolumeMounts: []v1.VolumeMount{
 						{
 							MountPath: "/scorecard",

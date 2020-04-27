@@ -22,12 +22,13 @@ import (
 )
 
 type Test struct {
-	Name        string            `yaml:"name"`                 // The container test name
-	Image       string            `yaml:"image"`                // The container image name
-	Entrypoint  string            `yaml:"entrypoint,omitempty"` // An optional entrypoint passed to the test image
-	Labels      map[string]string `yaml:"labels"`               // User defined labels used to filter tests
-	Description string            `yaml:"description"`          // User readable test description
-	TestPod     *v1.Pod           `yaml:"-"`                    // Pod that ran the test
+	Name  string `yaml:"name"`  // The container test name
+	Image string `yaml:"image"` // The container image name
+	// An list of commands and arguments passed to the test image
+	Entrypoint  []string          `yaml:"entrypoint,omitempty"`
+	Labels      map[string]string `yaml:"labels"`      // User defined labels used to filter tests
+	Description string            `yaml:"description"` // User readable test description
+	TestPod     *v1.Pod           `yaml:"-"`           // Pod that ran the test
 }
 
 // Config represents the set of test configurations which scorecard
