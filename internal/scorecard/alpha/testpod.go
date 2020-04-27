@@ -28,7 +28,7 @@ import (
 
 // getPodDefinition fills out a Pod definition based on
 // information from the test
-func getPodDefinition(test Test, o Options) *v1.Pod {
+func getPodDefinition(test Test, o Scorecard) *v1.Pod {
 	return &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("scorecard-test-%s", rand.String(4)),

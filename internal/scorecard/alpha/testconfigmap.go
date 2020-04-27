@@ -26,7 +26,7 @@ import (
 
 // createConfigMap creates a ConfigMap that will hold the bundle
 // contents to be mounted into the test Pods
-func createConfigMap(o Options, bundleData []byte) (configMap *v1.ConfigMap, err error) {
+func createConfigMap(o Scorecard, bundleData []byte) (configMap *v1.ConfigMap, err error) {
 	cfg := getConfigMapDefinition(o.Namespace, bundleData)
 	configMap, err = o.Client.CoreV1().ConfigMaps(o.Namespace).Create(cfg)
 	return configMap, err

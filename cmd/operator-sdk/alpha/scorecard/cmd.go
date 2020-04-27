@@ -47,7 +47,7 @@ func NewCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			var err error
-			o := scorecard.Options{
+			o := scorecard.Scorecard{
 				ServiceAccount: serviceAccount,
 				Namespace:      namespace,
 				BundlePath:     bundle,
@@ -76,12 +76,12 @@ func NewCmd() *cobra.Command {
 
 			var scorecardOutput v1alpha2.ScorecardOutput
 			if list {
-				scorecardOutput, err = scorecard.ListTests(o)
+				scorecardOutput, err = o.ListTests()
 				if err != nil {
 					return fmt.Errorf("error listing tests %w", err)
 				}
 			} else {
-				scorecardOutput, err = scorecard.RunTests(o)
+				scorecardOutput, err = o.RunTests()
 				if err != nil {
 					return fmt.Errorf("error running tests %w", err)
 				}

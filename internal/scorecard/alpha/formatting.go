@@ -56,7 +56,7 @@ func getTestResults(client kubernetes.Interface, tests []Test) (output v1alpha2.
 
 // ListTests lists the scorecard tests as configured that would be
 // run based on user selection
-func ListTests(o Options) (output v1alpha2.ScorecardOutput, err error) {
+func (o Scorecard) ListTests() (output v1alpha2.ScorecardOutput, err error) {
 	tests := selectTests(o.Selector, o.Config.Tests)
 	if len(tests) == 0 {
 		fmt.Println("no tests selected")

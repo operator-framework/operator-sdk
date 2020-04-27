@@ -27,7 +27,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-type Options struct {
+type Scorecard struct {
 	Config          Config
 	Selector        labels.Selector
 	BundlePath      string
@@ -41,7 +41,7 @@ type Options struct {
 }
 
 // RunTests executes the scorecard tests as configured
-func RunTests(o Options) (testOutput v1alpha2.ScorecardOutput, err error) {
+func (o Scorecard) RunTests() (testOutput v1alpha2.ScorecardOutput, err error) {
 	tests := selectTests(o.Selector, o.Config.Tests)
 	if len(tests) == 0 {
 		fmt.Println("no tests selected")
@@ -61,7 +61,7 @@ func RunTests(o Options) (testOutput v1alpha2.ScorecardOutput, err error) {
 
 	for i, test := range tests {
 		var err error
-		tests[i].TestPod, err = runTest(o, test)
+		tests[i].TestPod, err = o.runTest(test)
 		if err != nil {
 			return testOutput, fmt.Errorf("test %s failed %w", test.Name, err)
 		}
@@ -72,7 +72,7 @@ func RunTests(o Options) (testOutput v1alpha2.ScorecardOutput, err error) {
 		defer deleteConfigMap(o.Client, o.bundleConfigMap)
 	}
 
-	err = waitForTestsToComplete(o, tests)
+	err = o.waitForTestsToComplete(tests)
 	if err != nil {
 		return testOutput, err
 	}
@@ -98,7 +98,7 @@ func selectTests(selector labels.Selector, tests []Test) []Test {
 }
 
 // runTest executes a single test
-func runTest(o Options, test Test) (result *v1.Pod, err error) {
+func (o Scorecard) runTest(test Test) (result *v1.Pod, err error) {
 
 	// Create a Pod to run the test
 	podDef := getPodDefinition(test, o)
@@ -117,7 +117,7 @@ func ConfigDocLink() string {
 
 // waitForTestsToComplete waits for a fixed amount of time while
 // checking for test pods to complete
-func waitForTestsToComplete(o Options, tests []Test) (err error) {
+func (o Scorecard) waitForTestsToComplete(tests []Test) (err error) {
 	waitTimeInSeconds := int(o.WaitTime.Seconds())
 	for elapsedSeconds := 0; elapsedSeconds < waitTimeInSeconds; elapsedSeconds++ {
 		allPodsCompleted := true
