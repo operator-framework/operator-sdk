@@ -33,7 +33,9 @@ import (
 var (
 	imageBuildArgs string
 	imageBuilder   string
-	goBuildArgs    string
+
+	// Deprecated
+	goBuildArgs string
 )
 
 func NewCmd() *cobra.Command {
@@ -59,8 +61,15 @@ For example:
 		"Extra image build arguments as one string such as \"--build-arg https_proxy=$https_proxy\"")
 	buildCmd.Flags().StringVar(&imageBuilder, "image-builder", "docker",
 		"Tool to build OCI images. One of: [docker, podman, buildah]")
+
+	// Deprecated
 	buildCmd.Flags().StringVar(&goBuildArgs, "go-build-args", "",
 		"Extra Go build arguments as one string such as \"-ldflags -X=main.xyz=abc\"")
+
+	if err := buildCmd.Flags().MarkDeprecated("goBuildArgs", "the flag is not valid for the new layout"); err != nil {
+		log.Printf("error to mark goBuildArgs flag as deprecated: %v", err)
+	}
+
 	return buildCmd
 }
 
@@ -95,14 +104,31 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("command %s requires exactly one argument", cmd.CommandPath())
 	}
 
+	image := args[0]
+	projutil.MustInProjectRoot()
+
+	if projutil.IsNewOperatorLayout() {
+		doImageBuild("Dockerfile", image)
+	} else {
+		if err := doLegacyBuild(image); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// todo: remove when the legacy layout is no longer supported
+// Deprecated: Used just for the legacy layout
+// --
+// doLegacyBuild will build projects with the legacy layout.
+func doLegacyBuild(image string) error {
 	projutil.MustInProjectRoot()
 	goBuildEnv := append(os.Environ(), "GOOS=linux")
-
 	// If CGO_ENABLED is not set, set it to '0'.
 	if _, ok := os.LookupEnv("CGO_ENABLED"); !ok {
 		goBuildEnv = append(goBuildEnv, "CGO_ENABLED=0")
 	}
-
 	absProjectPath := projutil.MustGetwd()
 	projectName := filepath.Base(absProjectPath)
 
@@ -126,20 +152,19 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 			log.Fatalf("Failed to build operator binary: %v", err)
 		}
 	}
+	doImageBuild("build/Dockerfile", image)
+	return nil
+}
 
-	image := args[0]
-
+// doImageBuild will execute the build command for the Dockerfile and image informed
+func doImageBuild(dockerFilePath, image string) {
 	log.Infof("Building OCI image %s", image)
-
-	buildCmd, err := createBuildCommand(imageBuilder, ".", "build/Dockerfile", image, imageBuildArgs)
+	buildCmd, err := createBuildCommand(imageBuilder, ".", dockerFilePath, image, imageBuildArgs)
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	if err := projutil.ExecCmd(buildCmd); err != nil {
 		log.Fatalf("Failed to output build image %s: %v", image, err)
 	}
-
 	log.Info("Operator build complete.")
-	return nil
 }

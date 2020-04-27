@@ -26,6 +26,8 @@ import (
 	"github.com/rogpeppe/go-internal/modfile"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
 )
 
 const (
@@ -85,6 +87,12 @@ func MustInProjectRoot() {
 // TODO(hasbro17): Change this to check for go.mod
 // "build/Dockerfile" may not be present in all projects
 func CheckProjectRoot() error {
+	// If is the kubebuilder base layout
+	if kbutil.HasProjectFile() {
+		return nil
+	}
+
+	// todo(camilamacedo86): remove the following check when we no longer support the legacy scaffold layout
 	// If the current directory has a "build/Dockerfile", then it is safe to say
 	// we are at the project root.
 	if _, err := os.Stat(buildDockerfile); err != nil {
@@ -206,6 +214,12 @@ func IsOperatorGo() bool {
 	// Aware of an alternative location for main.go.
 	_, err = os.Stat(mainFile)
 	return err == nil || os.IsExist(err)
+}
+
+// todo(camilamacedo86): it should be removed when we no longer support the old scaffold layout
+// IsNewOperatorLayout return true when has the project file
+func IsNewOperatorLayout() bool {
+	return kbutil.HasProjectFile()
 }
 
 func IsOperatorAnsible() bool {
