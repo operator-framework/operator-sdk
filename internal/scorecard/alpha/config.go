@@ -17,7 +17,7 @@ package alpha
 import (
 	"io/ioutil"
 
-	"gopkg.in/yaml.v2"
+	"sigs.k8s.io/yaml"
 	v1 "k8s.io/api/core/v1"
 )
 
