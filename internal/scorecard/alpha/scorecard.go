@@ -64,7 +64,7 @@ func (o Scorecard) RunTests() (testOutput v1alpha2.ScorecardOutput, err error) {
 		if err != nil {
 			return testOutput, fmt.Errorf("test %s failed %w", test.Name, err)
 		}
-		err = o.waitForTestToComplete(pod, test)
+		err = o.waitForTestToComplete(pod)
 		if err != nil {
 			return testOutput, err
 		}
@@ -114,7 +114,7 @@ func ConfigDocLink() string {
 
 // waitForTestToComplete waits for a fixed amount of time while
 // checking for a test pod to complete
-func (o Scorecard) waitForTestToComplete(p *v1.Pod, test Test) (err error) {
+func (o Scorecard) waitForTestToComplete(p *v1.Pod) (err error) {
 	waitTimeInSeconds := int(o.WaitTime.Seconds())
 	for elapsedSeconds := 0; elapsedSeconds < waitTimeInSeconds; elapsedSeconds++ {
 		var tmp *v1.Pod
