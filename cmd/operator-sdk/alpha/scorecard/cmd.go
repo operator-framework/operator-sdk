@@ -37,6 +37,7 @@ func NewCmd() *cobra.Command {
 		serviceAccount string
 		list           bool
 		skipCleanup    bool
+		parallel       bool
 		waitTime       time.Duration
 	)
 	scorecardCmd := &cobra.Command{
@@ -52,6 +53,7 @@ func NewCmd() *cobra.Command {
 				Namespace:      namespace,
 				BundlePath:     bundle,
 				SkipCleanup:    skipCleanup,
+				Parallel:       parallel,
 				WaitTime:       waitTime,
 			}
 
@@ -103,6 +105,7 @@ func NewCmd() *cobra.Command {
 	scorecardCmd.Flags().StringVarP(&serviceAccount, "service-account", "s", "default", "Service account to use for tests")
 	scorecardCmd.Flags().BoolVarP(&list, "list", "L", false, "Option to enable listing which tests are run")
 	scorecardCmd.Flags().BoolVarP(&skipCleanup, "skip-cleanup", "x", false, "Disable resource cleanup after tests are run")
+	scorecardCmd.Flags().BoolVarP(&parallel, "parallel", "p", false, "Run tests in parallel")
 	scorecardCmd.Flags().DurationVarP(&waitTime, "wait-time", "w", time.Duration(30*time.Second),
 		"seconds to wait for tests to complete. Example: 35s")
 
