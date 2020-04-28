@@ -35,7 +35,8 @@ func getPodDefinition(test Test, o Scorecard) *v1.Pod {
 			Name:      fmt.Sprintf("scorecard-test-%s", rand.String(4)),
 			Namespace: o.Namespace,
 			Labels: map[string]string{
-				"app": "scorecard-test",
+				"app":     "scorecard-test",
+				"testrun": o.BundleConfigMapName,
 			},
 		},
 		Spec: v1.PodSpec{
@@ -62,7 +63,7 @@ func getPodDefinition(test Test, o Scorecard) *v1.Pod {
 					VolumeSource: v1.VolumeSource{
 						ConfigMap: &v1.ConfigMapVolumeSource{
 							LocalObjectReference: v1.LocalObjectReference{
-								Name: o.bundleConfigMap.Name,
+								Name: o.BundleConfigMapName,
 							},
 						},
 					},
@@ -89,13 +90,13 @@ func getPodLog(client kubernetes.Interface, pod *v1.Pod) (logOutput []byte, err 
 	return buf.Bytes(), err
 }
 
-func deletePods(client kubernetes.Interface, tests []Test) {
-	for _, test := range tests {
-		p := test.TestPod
-		err := client.CoreV1().Pods(p.Namespace).Delete(context.TODO(), p.Name, metav1.DeleteOptions{})
-		if err != nil {
-			log.Errorf("Error deleting pod %s %s\n", p.Name, err.Error())
-		}
-
+func deletePods(o Scorecard) {
+	do := metav1.DeleteOptions{}
+	selector := fmt.Sprintf("testrun=%s", o.BundleConfigMapName)
+	lo := metav1.ListOptions{LabelSelector: selector}
+	err := o.Client.CoreV1().Pods(o.Namespace).DeleteCollection(context.TODO(), &do, lo)
+	if err != nil {
+		log.Errorf("Error deleting pods selector %s %w\n", selector, err)
 	}
+
 }
