@@ -69,17 +69,17 @@ func main() {
 
 	switch entrypoint[0] {
 	case tests.OLMBundleValidationTest:
-		result = tests.BundleValidationTest(cfg)
+		result = tests.BundleValidationTest(*cfg)
 	case tests.OLMCRDsHaveValidationTest:
-		result = tests.CRDsHaveValidationTest(cfg)
+		result = tests.CRDsHaveValidationTest(*cfg)
 	case tests.OLMCRDsHaveResourcesTest:
-		result = tests.CRDsHaveResourcesTest(cfg)
+		result = tests.CRDsHaveResourcesTest(*cfg)
 	case tests.OLMSpecDescriptorsTest:
-		result = tests.SpecDescriptorsTest(cfg)
+		result = tests.SpecDescriptorsTest(*cfg)
 	case tests.OLMStatusDescriptorsTest:
-		result = tests.StatusDescriptorsTest(cfg)
+		result = tests.StatusDescriptorsTest(*cfg)
 	case tests.BasicCheckSpecTest:
-		result = tests.CheckSpecTest(cfg)
+		result = tests.CheckSpecTest(*cfg)
 	default:
 		result = printValidTests()
 	}
