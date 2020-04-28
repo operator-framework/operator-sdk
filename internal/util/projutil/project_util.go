@@ -84,11 +84,10 @@ func MustInProjectRoot() {
 
 // CheckProjectRoot checks if the current dir is the project root, and returns
 // an error if not.
-// TODO(hasbro17): Change this to check for go.mod
 // "build/Dockerfile" may not be present in all projects
+// todo: scaffold Project file for Ansible and Helm with the type information
 func CheckProjectRoot() error {
-	// If is the kubebuilder base layout
-	if kbutil.HasProjectFile() {
+	if kbutil.IsConfigExist() {
 		return nil
 	}
 
@@ -214,12 +213,6 @@ func IsOperatorGo() bool {
 	// Aware of an alternative location for main.go.
 	_, err = os.Stat(mainFile)
 	return err == nil || os.IsExist(err)
-}
-
-// todo(camilamacedo86): it should be removed when we no longer support the old scaffold layout
-// IsNewOperatorLayout return true when has the project file
-func IsNewOperatorLayout() bool {
-	return kbutil.HasProjectFile()
 }
 
 func IsOperatorAnsible() bool {

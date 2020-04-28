@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
+	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	"github.com/google/shlex"
@@ -34,6 +35,7 @@ var (
 	imageBuildArgs string
 	imageBuilder   string
 
+	// todo: remove when the legacy layout is no longer supported
 	// Deprecated
 	goBuildArgs string
 )
@@ -62,14 +64,11 @@ For example:
 	buildCmd.Flags().StringVar(&imageBuilder, "image-builder", "docker",
 		"Tool to build OCI images. One of: [docker, podman, buildah]")
 
-	// Deprecated
-	buildCmd.Flags().StringVar(&goBuildArgs, "go-build-args", "",
-		"Extra Go build arguments as one string such as \"-ldflags -X=main.xyz=abc\"")
-
-	if err := buildCmd.Flags().MarkDeprecated("goBuildArgs", "the flag is not valid for the new layout"); err != nil {
-		log.Printf("error to mark goBuildArgs flag as deprecated: %v", err)
+	// todo: remove when the legacy layout is no longer supported
+	if !kbutil.IsConfigExist() {
+		buildCmd.Flags().StringVar(&goBuildArgs, "go-build-args", "",
+			"Extra Go build arguments as one string such as \"-ldflags -X=main.xyz=abc\"")
 	}
-
 	return buildCmd
 }
 
@@ -107,14 +106,18 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 	image := args[0]
 	projutil.MustInProjectRoot()
 
-	if projutil.IsNewOperatorLayout() {
-		doImageBuild("Dockerfile", image)
-	} else {
-		if err := doLegacyBuild(image); err != nil {
-			return err
+	if kbutil.IsConfigExist() {
+		if err := doImageBuild("Dockerfile", image); err != nil {
+			log.Fatalf("Failed to build image %s: %v", image, err)
 		}
+		return nil
 	}
 
+	// todo: remove when the legacy layout is no longer supported
+	// note that the above if will no longer be required as well.
+	if err := doLegacyBuild(image); err != nil {
+		log.Fatalf("Failed to build image %s: %v", image, err)
+	}
 	return nil
 }
 
@@ -123,7 +126,6 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 // --
 // doLegacyBuild will build projects with the legacy layout.
 func doLegacyBuild(image string) error {
-	projutil.MustInProjectRoot()
 	goBuildEnv := append(os.Environ(), "GOOS=linux")
 	// If CGO_ENABLED is not set, set it to '0'.
 	if _, ok := os.LookupEnv("CGO_ENABLED"); !ok {
@@ -152,19 +154,19 @@ func doLegacyBuild(image string) error {
 			log.Fatalf("Failed to build operator binary: %v", err)
 		}
 	}
-	doImageBuild("build/Dockerfile", image)
-	return nil
+	return doImageBuild("build/Dockerfile", image)
 }
 
 // doImageBuild will execute the build command for the Dockerfile and image informed
-func doImageBuild(dockerFilePath, image string) {
+func doImageBuild(dockerFilePath, image string) error {
 	log.Infof("Building OCI image %s", image)
 	buildCmd, err := createBuildCommand(imageBuilder, ".", dockerFilePath, image, imageBuildArgs)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	if err := projutil.ExecCmd(buildCmd); err != nil {
-		log.Fatalf("Failed to output build image %s: %v", image, err)
+		return err
 	}
 	log.Info("Operator build complete.")
+	return nil
 }

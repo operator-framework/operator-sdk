@@ -33,7 +33,7 @@ func main() {
 	// a Kubebuilder project as a way to opt into the new KB CLI.
 	// TODO: Make the new KB CLI the default, once the integration is complete
 	// and deprecate "operator-sdk new" from the old CLI.
-	if kbutil.HasProjectFile() {
+	if kbutil.IsConfigExist() {
 		if err := cli.Run(); err != nil {
 			log.Fatal(err)
 		}
