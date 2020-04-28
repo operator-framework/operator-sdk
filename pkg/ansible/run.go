@@ -34,6 +34,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,6 +54,7 @@ var (
 	log                       = logf.Log.WithName("cmd")
 	metricsPort         int32 = 8383
 	operatorMetricsPort int32 = 8686
+	healthProbePort     int32 = 6789
 )
 
 func printVersion() {
@@ -75,7 +77,8 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 	// Set default manager options
 	// TODO: probably should expose the host & port as an environment variables
 	options := manager.Options{
-		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
+		HealthProbeBindAddress: fmt.Sprintf("%s:%d", metricsHost, healthProbePort),
+		MetricsBindAddress:     fmt.Sprintf("%s:%d", metricsHost, metricsPort),
 		NewClient: func(cache cache.Cache, config *rest.Config, options client.Options) (client.Client, error) {
 			c, err := client.New(config, options)
 			if err != nil {
@@ -166,6 +169,7 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 	}
 
 	addMetrics(context.TODO(), cfg, gvks)
+	mgr.AddHealthzCheck("ping", healthz.Ping)
 
 	done := make(chan error)
 
@@ -218,6 +222,8 @@ func addMetrics(ctx context.Context, cfg *rest.Config, gvks []schema.GroupVersio
 
 	// Add to the below struct any other metrics ports you want to expose.
 	servicePorts := []v1.ServicePort{
+		{Port: healthProbePort, Name: "healthz", Protocol: v1.ProtocolTCP,
+			TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: healthProbePort}},
 		{Port: metricsPort, Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP,
 			TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},
 		{Port: operatorMetricsPort, Name: metrics.CRPortName, Protocol: v1.ProtocolTCP,
