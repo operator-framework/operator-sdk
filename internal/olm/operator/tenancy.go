@@ -69,6 +69,9 @@ func (m operatorManager) installModeCompatible(installMode olmapiv1alpha1.Instal
 // installModeFormat.
 func parseInstallModeKV(raw string) (olmapiv1alpha1.InstallModeType, []string, error) {
 	modeSplit := strings.Split(raw, "=")
+	if allNs := string(olmapiv1alpha1.InstallModeTypeAllNamespaces); raw == allNs || modeSplit[0] == allNs {
+		return olmapiv1alpha1.InstallModeTypeAllNamespaces, nil, nil
+	}
 	if len(modeSplit) != 2 {
 		return "", nil, fmt.Errorf("installMode string %q is malformatted, must be: %s", raw, installModeFormat)
 	}
@@ -96,8 +99,8 @@ func validateInstallModeForNamespaces(mode olmapiv1alpha1.InstallModeType, names
 				mode, namespaces)
 		}
 	case olmapiv1alpha1.InstallModeTypeAllNamespaces:
-		if len(namespaces) != 1 || namespaces[0] != "" {
-			return fmt.Errorf("installMode %s must be passed with exactly one empty namespace, have: %+q",
+		if len(namespaces) != 0 && namespaces[0] != "" {
+			return fmt.Errorf("installMode %s must be passed with no namespaces, have: %+q",
 				mode, namespaces)
 		}
 	default:

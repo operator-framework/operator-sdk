@@ -16,7 +16,6 @@ package e2e
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -34,6 +33,9 @@ import (
 
 const (
 	defaultTimeout = 2 * time.Minute
+
+	defaultOperatorName    = "memcached-operator"
+	defaultOperatorVersion = "0.0.2"
 )
 
 var (
@@ -44,19 +46,16 @@ func TestOLMIntegration(t *testing.T) {
 	if image, ok := os.LookupEnv(imageEnvVar); ok && image != "" {
 		defaultTestImageTag = image
 	}
-	t.Run("Operator", func(t *testing.T) {
-		t.Run("SingleWithAnnotations", SingleOperatorAnnotations)
-		t.Run("SingleWithPackageManifest", SingleOperatorPackageManifest)
-	})
+	t.Run("AnnotationsBasic", OperatorAnnotationsBasic)
+	t.Run("AnnotationsAllNamespaces", OperatorAnnotationsAllNamespaces)
+	t.Run("PackageManifestBasic", OperatorPackageManifestBasic)
 }
 
-func SingleOperatorAnnotations(t *testing.T) {
-	operatorName := "memcached-operator"
-	operatorVersion := "0.0.2"
+func OperatorAnnotationsBasic(t *testing.T) {
 
 	csvConfig := CSVTemplateConfig{
-		OperatorName:    operatorName,
-		OperatorVersion: operatorVersion,
+		OperatorName:    defaultOperatorName,
+		OperatorVersion: defaultOperatorVersion,
 		TestImageTag:    defaultTestImageTag,
 		ReplacesCSVName: "",
 		CRDKeys: []DefinitionKey{
@@ -71,75 +70,119 @@ func SingleOperatorAnnotations(t *testing.T) {
 		},
 		InstallModes: []opv1alpha1.InstallMode{
 			{Type: opv1alpha1.InstallModeTypeOwnNamespace, Supported: true},
-			{Type: opv1alpha1.InstallModeTypeSingleNamespace, Supported: true},
+			{Type: opv1alpha1.InstallModeTypeSingleNamespace, Supported: false},
+			{Type: opv1alpha1.InstallModeTypeMultiNamespace, Supported: false},
+			{Type: opv1alpha1.InstallModeTypeAllNamespaces, Supported: false},
+		},
+		IsManifests: true,
+	}
+	tmp, cleanup := mkTempDirWithCleanup(t, "sdk-integration.")
+	defer cleanup()
+
+	channels := []string{"alpha"}
+	manifestsDir := filepath.Join(tmp, defaultOperatorName)
+	err := writeOperatorManifests(manifestsDir, csvConfig)
+	if err != nil {
+		os.RemoveAll(tmp)
+		t.Fatal(err)
+	}
+	err = writeAnnotations(manifestsDir, defaultOperatorName, channels)
+	if err != nil {
+		os.RemoveAll(tmp)
+		t.Fatal(err)
+	}
+	opcmd := operator.OLMCmd{
+		ManifestsDir:    manifestsDir,
+		OperatorVersion: defaultOperatorVersion,
+		KubeconfigPath:  kubeconfigPath,
+		Timeout:         defaultTimeout,
+		OLMNamespace:    olm.DefaultOLMNamespace,
+	}
+	// Cleanup.
+	defer func() {
+		if err := opcmd.Cleanup(); err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	// Remove operator before deploy.
+	assert.NoError(t, opcmd.Cleanup())
+
+	// Deploy operator.
+	assert.NoError(t, opcmd.Run())
+	// Fail to deploy operator after deploy.
+	assert.Error(t, opcmd.Run())
+
+	// Remove operator after deploy.
+	assert.NoError(t, opcmd.Cleanup())
+	// Remove operator after removal.
+	assert.NoError(t, opcmd.Cleanup())
+}
+
+func OperatorAnnotationsAllNamespaces(t *testing.T) {
+
+	csvConfig := CSVTemplateConfig{
+		OperatorName:    defaultOperatorName,
+		OperatorVersion: defaultOperatorVersion,
+		TestImageTag:    defaultTestImageTag,
+		ReplacesCSVName: "",
+		CRDKeys: []DefinitionKey{
+			{
+				Kind:  "Memcached",
+				Name:  "memcacheds.cache.example.com",
+				Group: "cache.example.com",
+				Versions: []apiextv1beta1.CustomResourceDefinitionVersion{
+					{Name: "v1alpha1", Storage: true, Served: true},
+				},
+			},
+		},
+		InstallModes: []opv1alpha1.InstallMode{
+			{Type: opv1alpha1.InstallModeTypeOwnNamespace, Supported: false},
+			{Type: opv1alpha1.InstallModeTypeSingleNamespace, Supported: false},
 			{Type: opv1alpha1.InstallModeTypeMultiNamespace, Supported: false},
 			{Type: opv1alpha1.InstallModeTypeAllNamespaces, Supported: true},
 		},
 		IsManifests: true,
 	}
-	tmp, err := ioutil.TempDir("", "sdk-integration.")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer func() {
-		if err := os.RemoveAll(tmp); err != nil {
-			t.Fatal(err)
-		}
-	}()
+	tmp, cleanup := mkTempDirWithCleanup(t, "sdk-integration.")
+	defer cleanup()
+
 	channels := []string{"alpha"}
-	manifestsDir := filepath.Join(tmp, operatorName)
-	err = writeOperatorManifests(manifestsDir, csvConfig)
+	manifestsDir := filepath.Join(tmp, defaultOperatorName)
+	err := writeOperatorManifests(manifestsDir, csvConfig)
 	if err != nil {
 		os.RemoveAll(tmp)
 		t.Fatal(err)
 	}
-	err = writeAnnotations(manifestsDir, operatorName, channels)
+	err = writeAnnotations(manifestsDir, defaultOperatorName, channels)
 	if err != nil {
 		os.RemoveAll(tmp)
 		t.Fatal(err)
 	}
 	opcmd := operator.OLMCmd{
 		ManifestsDir:    manifestsDir,
-		OperatorVersion: operatorVersion,
+		OperatorVersion: defaultOperatorVersion,
 		KubeconfigPath:  kubeconfigPath,
 		Timeout:         defaultTimeout,
 		OLMNamespace:    olm.DefaultOLMNamespace,
+		InstallMode:     string(opv1alpha1.InstallModeTypeAllNamespaces),
 	}
 	// Cleanup.
 	defer func() {
-		opcmd.ForceRegistry = true
 		if err := opcmd.Cleanup(); err != nil {
 			t.Fatal(err)
 		}
 	}()
 
-	// "Remove operator before deploy"
-	assert.NoError(t, opcmd.Cleanup())
-	// "Remove operator before deploy (force delete registry)"
-	opcmd.ForceRegistry = true
-	assert.NoError(t, opcmd.Cleanup())
-
-	// "Deploy operator"
+	// Deploy operator.
 	assert.NoError(t, opcmd.Run())
-	// "Fail to deploy operator after deploy"
-	assert.Error(t, opcmd.Run())
-
-	// "Remove operator after deploy"
-	assert.NoError(t, opcmd.Cleanup())
-	// "Remove operator after removal"
-	assert.NoError(t, opcmd.Cleanup())
-	// "Remove operator after removal (force delete registry)"
-	opcmd.ForceRegistry = true
-	assert.NoError(t, opcmd.Cleanup())
 }
 
-func SingleOperatorPackageManifest(t *testing.T) {
-	operatorName := "memcached-operator"
-	operatorVersion := "0.0.2"
+func OperatorPackageManifestBasic(t *testing.T) {
 
 	csvConfig := CSVTemplateConfig{
-		OperatorName:    operatorName,
-		OperatorVersion: operatorVersion,
+		OperatorName:    defaultOperatorName,
+		OperatorVersion: defaultOperatorVersion,
 		TestImageTag:    defaultTestImageTag,
 		ReplacesCSVName: "",
 		CRDKeys: []DefinitionKey{
@@ -154,37 +197,31 @@ func SingleOperatorPackageManifest(t *testing.T) {
 		},
 		InstallModes: []opv1alpha1.InstallMode{
 			{Type: opv1alpha1.InstallModeTypeOwnNamespace, Supported: true},
-			{Type: opv1alpha1.InstallModeTypeSingleNamespace, Supported: true},
+			{Type: opv1alpha1.InstallModeTypeSingleNamespace, Supported: false},
 			{Type: opv1alpha1.InstallModeTypeMultiNamespace, Supported: false},
-			{Type: opv1alpha1.InstallModeTypeAllNamespaces, Supported: true},
+			{Type: opv1alpha1.InstallModeTypeAllNamespaces, Supported: false},
 		},
 	}
-	tmp, err := ioutil.TempDir("", "sdk-integration.")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer func() {
-		if err := os.RemoveAll(tmp); err != nil {
-			t.Fatal(err)
-		}
-	}()
+	tmp, cleanup := mkTempDirWithCleanup(t, "sdk-integration.")
+	defer cleanup()
+
 	channels := []registry.PackageChannel{
-		{Name: "alpha", CurrentCSVName: fmt.Sprintf("%s.v%s", operatorName, operatorVersion)},
+		{Name: "alpha", CurrentCSVName: fmt.Sprintf("%s.v%s", defaultOperatorName, defaultOperatorVersion)},
 	}
-	manifestsDir := filepath.Join(tmp, operatorName)
-	err = writeOperatorManifests(manifestsDir, csvConfig)
+	manifestsDir := filepath.Join(tmp, defaultOperatorName)
+	err := writeOperatorManifests(manifestsDir, csvConfig)
 	if err != nil {
 		os.RemoveAll(tmp)
 		t.Fatal(err)
 	}
-	err = writePackageManifest(manifestsDir, operatorName, channels)
+	err = writePackageManifest(manifestsDir, defaultOperatorName, channels)
 	if err != nil {
 		os.RemoveAll(tmp)
 		t.Fatal(err)
 	}
 	opcmd := operator.OLMCmd{
 		ManifestsDir:    manifestsDir,
-		OperatorVersion: operatorVersion,
+		OperatorVersion: defaultOperatorVersion,
 		KubeconfigPath:  kubeconfigPath,
 		Timeout:         defaultTimeout,
 		OLMNamespace:    olm.DefaultOLMNamespace,
@@ -199,9 +236,6 @@ func SingleOperatorPackageManifest(t *testing.T) {
 
 	// "Remove operator before deploy"
 	assert.NoError(t, opcmd.Cleanup())
-	// "Remove operator before deploy (force delete registry)"
-	opcmd.ForceRegistry = true
-	assert.NoError(t, opcmd.Cleanup())
 
 	// "Deploy operator"
 	assert.NoError(t, opcmd.Run())
@@ -211,8 +245,5 @@ func SingleOperatorPackageManifest(t *testing.T) {
 	// "Remove operator after deploy"
 	assert.NoError(t, opcmd.Cleanup())
 	// "Remove operator after removal"
-	assert.NoError(t, opcmd.Cleanup())
-	// "Remove operator after removal (force delete registry)"
-	opcmd.ForceRegistry = true
 	assert.NoError(t, opcmd.Cleanup())
 }

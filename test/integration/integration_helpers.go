@@ -21,6 +21,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"testing"
 
 	"github.com/ghodss/yaml"
 	operatorsv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
@@ -262,4 +263,18 @@ func execTemplateOnFile(path, tmplStr string, o interface{}) error {
 		return err
 	}
 	return tmpl.Execute(w, o)
+}
+
+func mkTempDirWithCleanup(t *testing.T, prefix string) (dir string, f func()) {
+	var err error
+	if dir, err = ioutil.TempDir("", prefix); err != nil {
+		t.Fatalf("Failed to create tmp dir: %v", err)
+	}
+	f = func() {
+		if err := os.RemoveAll(dir); err != nil {
+			// Not a test failure since files in /tmp will eventually get deleted
+			t.Logf("Failed to remove tmp dir %s: %v", dir, err)
+		}
+	}
+	return
 }

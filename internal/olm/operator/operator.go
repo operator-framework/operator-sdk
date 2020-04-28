@@ -86,7 +86,7 @@ type OLMCmd struct { // nolint:golint
 	once sync.Once
 }
 
-var installModeFormat = "InstallModeType=[ns1,ns2[, ...]]"
+var installModeFormat = "InstallModeType[=ns1,ns2[, ...]]"
 
 func (c *OLMCmd) AddToFlagSet(fs *pflag.FlagSet) {
 	prefix := "[olm only] "
@@ -154,6 +154,8 @@ func (c *OLMCmd) Cleanup() (err error) {
 	if err != nil {
 		return fmt.Errorf("error initializing operator manager: %w", err)
 	}
+	// Cleanups should clean up all resources, which includes the registry.
+	m.forceRegistry = true
 	ctx, cancel := context.WithTimeout(context.Background(), c.Timeout)
 	defer cancel()
 	return m.cleanup(ctx)
