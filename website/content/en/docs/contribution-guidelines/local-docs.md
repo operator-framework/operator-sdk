@@ -11,7 +11,7 @@ Clone the repository:
 $ git clone https://github.com/operator-framework/operator-sdk/
 ```
 
-The docs are built with [Hugo]() which can be installed along with the
+The docs are built with [Hugo](https://gohugo.io/) which can be installed along with the
 required extensions by following the [docsy install
 guide](https://www.docsy.dev/docs/getting-started/#prerequisites-and-installation).
 
