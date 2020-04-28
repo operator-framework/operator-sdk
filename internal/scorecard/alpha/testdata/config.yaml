@@ -1,0 +1,79 @@
+tests:
+- name: "customtest1"
+  image: quay.io/jemccorm/customtest1:v0.0.1
+  entrypoint: 
+  - custom-test
+  labels:
+    suite: custom
+    test: customtest1
+  description: an ISV custom test that does...
+- name: "customtest2"
+  entrypoint: 
+  - custom-test
+  image: quay.io/jemccorm/customtest2:v0.0.1
+  labels:
+    suite: custom
+    test: customtest2
+  description: an ISV custom test that does...
+- name: "basic-check-spec"
+  image: quay.io/operator-framework/scorecard-test:dev
+  entrypoint: 
+  - scorecard-test
+  - basic-check-spec
+  labels:
+    suite: basic
+    test: basic-check-spec-test
+  description: check the spec test
+- name: "olm-bundle-validation"
+  image: quay.io/operator-framework/scorecard-test:dev
+  entrypoint: 
+  - scorecard-test
+  - olm-bundle-validation
+  labels:
+    suite: olm
+    test: olm-bundle-validation-test
+  description: validate the bundle test
+- name: "olm-crds-have-validation"
+  image: quay.io/operator-framework/scorecard-test:dev
+  entrypoint: 
+  - scorecard-test
+  - olm-crds-have-validation
+  labels:
+    suite: olm
+    test: olm-crds-have-validation-test
+  description: CRDs have validation
+- name: "olm-crds-have-resources"
+  image: quay.io/operator-framework/scorecard-test:dev
+  entrypoint: 
+  - scorecard-test
+  - olm-crds-have-resources
+  labels:
+    suite: olm
+    test: olm-crds-have-resources-test
+  description: CRDs have resources
+- name: "olm-spec-descriptors"
+  image: quay.io/operator-framework/scorecard-test:dev
+  entrypoint: 
+  - scorecard-test
+  - olm-spec-descriptors
+  labels:
+    suite: olm
+    test: olm-spec-descriptors-test
+  description: OLM Spec Descriptors
+- name: "olm-status-descriptors"
+  image: quay.io/operator-framework/scorecard-test:dev
+  entrypoint: 
+  - scorecard-test
+  - olm-status-descriptors
+  labels:
+    suite: olm
+    test: olm-status-descriptors-test
+  description: OLM Status Descriptors
+- name: "kuttl-tests"
+  image: quay.io/operator-framework/scorecard-kuttl:dev
+  labels:
+    suite: kuttl
+  description: Kuttl tests
+  entrypoint: 
+  - kuttl-test
+  - olm-status-descriptors

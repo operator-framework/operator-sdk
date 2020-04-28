@@ -15,11 +15,11 @@
 package tests
 
 import (
-	"log"
-	"path/filepath"
 	"testing"
 
+	"github.com/operator-framework/operator-registry/pkg/registry"
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 func TestBundlePath(t *testing.T) {
@@ -34,11 +34,7 @@ func TestBundlePath(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.bundlePath, func(t *testing.T) {
 
-			abs, err := filepath.Abs(c.bundlePath)
-			if err != nil {
-				log.Println(err)
-			}
-			_, err = GetBundle(abs)
+			_, err := GetBundle(c.bundlePath)
 			if err != nil && c.wantError {
 				t.Logf("Wanted error and got error : %v", err)
 				return
@@ -63,12 +59,7 @@ func TestBundleCRs(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.bundlePath, func(t *testing.T) {
 
-			abs, err := filepath.Abs(c.bundlePath)
-			if err != nil {
-				t.Errorf("Invalid filepath")
-			}
-			var cfg TestBundle
-			cfg, err = GetBundle(abs)
+			bundle, err := GetBundle(c.bundlePath)
 			if err != nil && c.wantError {
 				t.Logf("Wanted error and got error : %v", err)
 				return
@@ -76,8 +67,14 @@ func TestBundleCRs(t *testing.T) {
 				t.Errorf("Wanted result but got error: %v", err)
 				return
 			}
-			if len(cfg.Bundles) != c.crCount {
-				t.Errorf("Wanted %d CRs but got: %d", c.crCount, len(cfg.Bundles))
+			var crList []unstructured.Unstructured
+			crList, err = GetCRs(*bundle)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if len(crList) != c.crCount {
+				t.Errorf("Wanted %d CRs but got: %d", c.crCount, len(crList))
 				return
 			}
 
@@ -91,9 +88,8 @@ func TestBasicAndOLM(t *testing.T) {
 	cases := []struct {
 		bundlePath string
 		state      scapiv1alpha2.State
-		function   func(TestBundle) scapiv1alpha2.ScorecardTestResult
+		function   func(registry.Bundle) scapiv1alpha2.ScorecardTestResult
 	}{
-		{"../testdata", scapiv1alpha2.PassState, CheckStatusTest},
 		{"../testdata", scapiv1alpha2.PassState, CheckSpecTest},
 		{"../testdata", scapiv1alpha2.PassState, BundleValidationTest},
 		{"../testdata", scapiv1alpha2.PassState, CRDsHaveValidationTest},
@@ -106,17 +102,12 @@ func TestBasicAndOLM(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.bundlePath, func(t *testing.T) {
 
-			abs, err := filepath.Abs(c.bundlePath)
-			if err != nil {
-				t.Errorf("Invalid filepath")
-			}
-			var cfg TestBundle
-			cfg, err = GetBundle(abs)
+			bundle, err := GetBundle(c.bundlePath)
 			if err != nil {
 				t.Errorf("Error getting bundle %s", err.Error())
 			}
 
-			result := c.function(cfg)
+			result := c.function(*bundle)
 			if result.State != scapiv1alpha2.PassState {
 				t.Errorf("%s result State %v expected", result.Name, scapiv1alpha2.PassState)
 				return

@@ -16,25 +16,21 @@ package tests
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/operator-framework/api/pkg/manifests"
-	"github.com/operator-framework/api/pkg/validation/errors"
 	"github.com/operator-framework/operator-registry/pkg/registry"
 	"github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-// TestBundle holds the bundle contents to be tested
-type TestBundle struct {
-	BundleErrors []errors.ManifestResult
-	Bundles      []*registry.Bundle
-	CRs          []unstructured.Unstructured
-}
+// GetBundle parses a Bundle from a given on-disk path returning a bundle
+func GetBundle(bundlePath string) (bundle *registry.Bundle, err error) {
 
-// GetBundle parses a Bundle from a given on-disk path returning a TestBundle
-func GetBundle(bundlePath string) (cfg TestBundle, err error) {
+	// validate the path
+	if _, err := os.Stat(bundlePath); os.IsNotExist(err) {
+		return nil, err
+	}
 
 	validationLogOutput := new(bytes.Buffer)
 	origOutput := logrus.StandardLogger().Out
@@ -43,50 +39,21 @@ func GetBundle(bundlePath string) (cfg TestBundle, err error) {
 
 	// TODO evaluate another API call that would support the new
 	// bundle format
-	_, cfg.Bundles, cfg.BundleErrors = manifests.GetManifestsDir(bundlePath)
+	var bundles []*registry.Bundle
+	//var bundleErrors []errors.ManifestResult
+	_, bundles, _ = manifests.GetManifestsDir(bundlePath)
 
-	// get CRs from CSV's alm-examples annotation, assume single bundle
-	cfg.CRs = make([]unstructured.Unstructured, 0)
-
-	if len(cfg.Bundles) == 0 {
-		return cfg, fmt.Errorf("no bundle found")
+	if len(bundles) == 0 {
+		return nil, fmt.Errorf("bundle was not found")
 	}
-
-	csv, err := cfg.Bundles[0].ClusterServiceVersion()
+	if bundles[0] == nil {
+		return nil, fmt.Errorf("bundle is invalid nil value")
+	}
+	bundle = bundles[0]
+	_, err = bundle.ClusterServiceVersion()
 	if err != nil {
-		return cfg, fmt.Errorf("error in csv retrieval %s", err.Error())
+		return nil, fmt.Errorf("error in csv retrieval %s", err.Error())
 	}
 
-	if csv.GetAnnotations() == nil {
-		return cfg, nil
-	}
-
-	almExamples := csv.ObjectMeta.Annotations["alm-examples"]
-
-	if almExamples == "" {
-		return cfg, nil
-	}
-
-	if len(cfg.Bundles) > 0 {
-		var crInterfaces []map[string]interface{}
-		err = json.Unmarshal([]byte(almExamples), &crInterfaces)
-		if err != nil {
-			return cfg, err
-		}
-		for i := 0; i < len(crInterfaces); i++ {
-			buff := new(bytes.Buffer)
-			enc := json.NewEncoder(buff)
-			err := enc.Encode(crInterfaces[i])
-			if err != nil {
-				return cfg, err
-			}
-			obj := &unstructured.Unstructured{}
-			if err := obj.UnmarshalJSON(buff.Bytes()); err != nil {
-				return cfg, err
-			}
-			cfg.CRs = append(cfg.CRs, *obj)
-		}
-	}
-
-	return cfg, err
+	return bundle, nil
 }

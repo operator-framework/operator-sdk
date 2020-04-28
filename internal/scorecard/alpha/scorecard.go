@@ -15,80 +15,95 @@
 package alpha
 
 import (
-	"errors"
 	"fmt"
-	"io/ioutil"
-	"log"
 	"strings"
+	"time"
 
+	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 	"github.com/operator-framework/operator-sdk/version"
-	"gopkg.in/yaml.v2"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
 )
 
-type Options struct {
-	Config       Config
-	Selector     labels.Selector
-	List         bool
-	OutputFormat string
-	Client       kubernetes.Interface
+type Scorecard struct {
+	Config          Config
+	Selector        labels.Selector
+	BundlePath      string
+	WaitTime        time.Duration
+	Kubeconfig      string
+	Namespace       string
+	bundleConfigMap *v1.ConfigMap
+	ServiceAccount  string
+	Client          kubernetes.Interface
+	SkipCleanup     bool
 }
 
 // RunTests executes the scorecard tests as configured
-func RunTests(o Options) error {
+func (o Scorecard) RunTests() (testOutput v1alpha2.ScorecardOutput, err error) {
 	tests := selectTests(o.Selector, o.Config.Tests)
+	if len(tests) == 0 {
+		fmt.Println("no tests selected")
+		return testOutput, err
+	}
 
-	for i := 0; i < len(tests); i++ {
-		if err := runTest(tests[i]); err != nil {
-			return fmt.Errorf("test %s failed %s", tests[i].Name, err.Error())
+	bundleData, err := getBundleData(o.BundlePath)
+	if err != nil {
+		return testOutput, fmt.Errorf("error getting bundle data %w", err)
+	}
+
+	// create a ConfigMap holding the bundle contents
+	o.bundleConfigMap, err = createConfigMap(o, bundleData)
+	if err != nil {
+		return testOutput, fmt.Errorf("error creating ConfigMap %w", err)
+	}
+
+	for i, test := range tests {
+		var err error
+		tests[i].TestPod, err = o.runTest(test)
+		if err != nil {
+			return testOutput, fmt.Errorf("test %s failed %w", test.Name, err)
 		}
 	}
 
-	return nil
-}
+	if !o.SkipCleanup {
+		defer deletePods(o.Client, tests)
+		defer deleteConfigMap(o.Client, o.bundleConfigMap)
+	}
 
-// LoadConfig will find and return the scorecard config, the config file
-// can be passed in via command line flag or from a bundle location or
-// bundle image
-func LoadConfig(configFilePath string) (Config, error) {
-	c := Config{}
-
-	// TODO handle getting config from bundle (ondisk or image)
-	yamlFile, err := ioutil.ReadFile(configFilePath)
+	err = o.waitForTestsToComplete(tests)
 	if err != nil {
-		return c, err
+		return testOutput, err
 	}
 
-	if err := yaml.Unmarshal(yamlFile, &c); err != nil {
-		return c, err
-	}
+	testOutput = getTestResults(o.Client, tests)
 
-	return c, nil
+	return testOutput, err
 }
 
 // selectTests applies an optionally passed selector expression
 // against the configured set of tests, returning the selected tests
-func selectTests(selector labels.Selector, tests []ScorecardTest) []ScorecardTest {
+func selectTests(selector labels.Selector, tests []Test) []Test {
 
-	selected := make([]ScorecardTest, 0)
-	for i := 0; i < len(tests); i++ {
-		if selector.String() == "" || selector.Matches(labels.Set(tests[i].Labels)) {
+	selected := make([]Test, 0)
+
+	for _, test := range tests {
+		if selector.String() == "" || selector.Matches(labels.Set(test.Labels)) {
 			// TODO olm manifests check
-			selected = append(selected, tests[i])
+			selected = append(selected, test)
 		}
 	}
 	return selected
 }
 
 // runTest executes a single test
-// TODO once tests exists, handle the test output
-func runTest(test ScorecardTest) error {
-	if test.Name == "" {
-		return errors.New("todo - remove later, only for linter")
-	}
-	log.Printf("running test %s labels %v", test.Name, test.Labels)
-	return nil
+func (o Scorecard) runTest(test Test) (result *v1.Pod, err error) {
+
+	// Create a Pod to run the test
+	podDef := getPodDefinition(test, o)
+	result, err = o.Client.CoreV1().Pods(o.Namespace).Create(podDef)
+	return result, err
 }
 
 func ConfigDocLink() string {
@@ -98,4 +113,31 @@ func ConfigDocLink() string {
 	return fmt.Sprintf(
 		"https://github.com/operator-framework/operator-sdk/blob/%s/doc/test-framework/scorecard.md",
 		version.Version)
+}
+
+// waitForTestsToComplete waits for a fixed amount of time while
+// checking for test pods to complete
+func (o Scorecard) waitForTestsToComplete(tests []Test) (err error) {
+	waitTimeInSeconds := int(o.WaitTime.Seconds())
+	for elapsedSeconds := 0; elapsedSeconds < waitTimeInSeconds; elapsedSeconds++ {
+		allPodsCompleted := true
+		for _, test := range tests {
+			p := test.TestPod
+			var tmp *v1.Pod
+			tmp, err = o.Client.CoreV1().Pods(p.Namespace).Get(p.Name, metav1.GetOptions{})
+			if err != nil {
+				return fmt.Errorf("error getting pod %s %w", p.Name, err)
+			}
+			if tmp.Status.Phase != v1.PodSucceeded {
+				allPodsCompleted = false
+			}
+
+		}
+		if allPodsCompleted {
+			return nil
+		}
+		time.Sleep(1 * time.Second)
+	}
+	return fmt.Errorf("error - wait time of %d seconds has been exceeded", o.WaitTime)
+
 }

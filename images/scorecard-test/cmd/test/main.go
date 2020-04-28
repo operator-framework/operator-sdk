@@ -17,11 +17,14 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 
+	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 
+	"github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
 	"github.com/operator-framework/operator-sdk/internal/scorecard/alpha/tests"
 )
 
@@ -35,7 +38,8 @@ import (
 // test image.
 
 const (
-	bundlePath = "/scorecard"
+	// bundleTar is the tar file containing the bundle contents
+	bundleTar = "/scorecard/bundle.tar"
 )
 
 func main() {
@@ -44,7 +48,19 @@ func main() {
 		log.Fatal("test name argument is required")
 	}
 
-	cfg, err := tests.GetBundle(bundlePath)
+	// Create tmp directory for the untar'd bundle
+	tmpDir, err := ioutil.TempDir("/tmp", "scorecard-bundle")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.Remove(tmpDir)
+
+	err = alpha.UntarFile(bundleTar, tmpDir)
+	if err != nil {
+		log.Fatalf("error untarring bundle %s", err.Error())
+	}
+
+	cfg, err := tests.GetBundle(tmpDir)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -53,23 +69,19 @@ func main() {
 
 	switch entrypoint[0] {
 	case tests.OLMBundleValidationTest:
-		result = tests.BundleValidationTest(cfg)
+		result = tests.BundleValidationTest(*cfg)
 	case tests.OLMCRDsHaveValidationTest:
-		result = tests.CRDsHaveValidationTest(cfg)
+		result = tests.CRDsHaveValidationTest(*cfg)
 	case tests.OLMCRDsHaveResourcesTest:
-		result = tests.CRDsHaveResourcesTest(cfg)
+		result = tests.CRDsHaveResourcesTest(*cfg)
 	case tests.OLMSpecDescriptorsTest:
-		result = tests.SpecDescriptorsTest(cfg)
+		result = tests.SpecDescriptorsTest(*cfg)
 	case tests.OLMStatusDescriptorsTest:
-		result = tests.StatusDescriptorsTest(cfg)
-	case tests.BasicCheckStatusTest:
-		result = tests.CheckStatusTest(cfg)
+		result = tests.StatusDescriptorsTest(*cfg)
 	case tests.BasicCheckSpecTest:
-		result = tests.CheckSpecTest(cfg)
+		result = tests.CheckSpecTest(*cfg)
 	default:
-		log.Fatal("invalid test name argument passed")
-		// TODO print out full list of test names to give a hint
-		// to the end user on what the valid tests are
+		result = printValidTests()
 	}
 
 	prettyJSON, err := json.MarshalIndent(result, "", "    ")
@@ -78,4 +90,21 @@ func main() {
 	}
 	fmt.Printf("%s\n", string(prettyJSON))
 
+}
+
+// printValidTests will print out full list of test names to give a hint to the end user on what the valid tests are
+func printValidTests() (result v1alpha2.ScorecardTestResult) {
+	result.State = scapiv1alpha2.FailState
+	result.Errors = make([]string, 0)
+	result.Suggestions = make([]string, 0)
+
+	str := fmt.Sprintf("Valid tests for this image include: %s, %s, %s, %s, %s, %s",
+		tests.OLMBundleValidationTest,
+		tests.OLMCRDsHaveValidationTest,
+		tests.OLMCRDsHaveResourcesTest,
+		tests.OLMSpecDescriptorsTest,
+		tests.OLMStatusDescriptorsTest,
+		tests.BasicCheckSpecTest)
+	result.Errors = append(result.Errors, str)
+	return result
 }

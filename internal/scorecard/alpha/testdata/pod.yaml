@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: scorecard-test
+  namespace: default
+spec:
+  containers:
+  - env:
+    - name: NAMESPACE
+      valueFrom:
+        fieldRef:
+          apiVersion: v1
+          fieldPath: metadata.namespace
+    image: quay.io/operator-framework/scorecard-test:dev 
+    imagePullPolicy: IfNotPresent
+    name: scorecard-test
+    command: ["/usr/local/bin/scorecard-test"]
+    args: ["basic-check-spec"]
+    resources: {}
+    volumeMounts:
+    - mountPath: /scorecard
+      name: scorecard-bundle
+      readOnly: true
+  dnsPolicy: ClusterFirst
+  restartPolicy: Never
+  securityContext: {}
+  serviceAccount: default
+  serviceAccountName: default
+  volumes:
+  - name: scorecard-bundle
+    configMap:
+      name: scorecard-bundle
