@@ -16,7 +16,6 @@ package tests
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/operator-framework/api/pkg/operators"
@@ -85,7 +84,7 @@ func SpecDescriptorsTest(bundle registry.Bundle) scapiv1alpha2.ScorecardTestResu
 		return r
 	}
 	r.Log += fmt.Sprintf("Loaded ClusterServiceVersion: %s\n", csv.GetName())
-	crs, err := getCRsFromCSV(csv.ObjectMeta.Annotations["alm-examples"], csv.GetName())
+	crs, err := GetCRs(bundle)
 	if err != nil {
 		r.Errors = append(r.Errors, err.Error())
 		r.State = scapiv1alpha2.ErrorState
@@ -113,25 +112,6 @@ func StatusDescriptorsTest(bundle registry.Bundle) scapiv1alpha2.ScorecardTestRe
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
 	return r
-}
-
-func getCRsFromCSV(almExamples string, csvName string) ([]unstructured.Unstructured, error) {
-	var crs []unstructured.Unstructured
-	// Create temporary CR manifests from metadata if one is not provided.
-	if almExamples != "" {
-		if err := json.Unmarshal([]byte(almExamples), &crs); err != nil {
-			return crs, fmt.Errorf("metadata.annotations['alm-examples'] in CSV %s"+
-				"incorrectly formatted: %v", csvName, err)
-		}
-		if len(crs) == 0 {
-			return crs, fmt.Errorf("no CRs found in metadata.annotations['alm-examples']"+
-				" in CSV %s and cr-manifest config option not set", csvName)
-		}
-		return crs, nil
-	}
-	return crs, errors.New(
-		// TODO can users still pass crs to be validated?
-		"cr-manifest config option must be set if CSV has no metadata.annotations['alm-examples']")
 }
 
 func registryToAPICSV(csv *registry.ClusterServiceVersion) (*operators.ClusterServiceVersion, error) {
