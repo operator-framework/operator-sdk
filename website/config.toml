@@ -10,6 +10,9 @@ enableRobotsTXT = true
 # Will give values to .Lastmod etc.
 enableGitInfo = true
 
+# Ignore drafts
+ignoreFiles = ["docs/kubebuilder"]
+
 # Language settings
 contentDir = "content/en"
 defaultContentLanguage = "en"
