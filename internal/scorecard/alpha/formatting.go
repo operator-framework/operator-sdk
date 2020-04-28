@@ -34,16 +34,15 @@ func getTestResult(client kubernetes.Interface, p *v1.Pod, test Test) (output v1
 		r.Description = test.Description
 		r.Errors = []string{fmt.Sprintf("Error getting pod log %s", err.Error())}
 		return r
-	} else {
-		// marshal pod log into ScorecardTestResult
-		err := json.Unmarshal(logBytes, &output)
-		if err != nil {
-			r := v1alpha2.ScorecardTestResult{}
-			r.Name = test.Name
-			r.Description = test.Description
-			r.Errors = []string{fmt.Sprintf("Error unmarshalling test result %s", err.Error())}
-			return r
-		}
+	}
+	// marshal pod log into ScorecardTestResult
+	err = json.Unmarshal(logBytes, &output)
+	if err != nil {
+		r := v1alpha2.ScorecardTestResult{}
+		r.Name = test.Name
+		r.Description = test.Description
+		r.Errors = []string{fmt.Sprintf("Error unmarshalling test result %s", err.Error())}
+		return r
 	}
 	return output
 }
