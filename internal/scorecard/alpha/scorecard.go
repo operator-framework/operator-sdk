@@ -15,16 +15,18 @@
 package alpha
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
-	"github.com/operator-framework/operator-sdk/version"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
+	"github.com/operator-framework/operator-sdk/version"
 )
 
 type Scorecard struct {
@@ -102,7 +104,7 @@ func (o Scorecard) runTest(test Test) (result *v1.Pod, err error) {
 
 	// Create a Pod to run the test
 	podDef := getPodDefinition(test, o)
-	result, err = o.Client.CoreV1().Pods(o.Namespace).Create(podDef)
+	result, err = o.Client.CoreV1().Pods(o.Namespace).Create(context.TODO(), podDef, metav1.CreateOptions{})
 	return result, err
 }
 
@@ -124,7 +126,7 @@ func (o Scorecard) waitForTestsToComplete(tests []Test) (err error) {
 		for _, test := range tests {
 			p := test.TestPod
 			var tmp *v1.Pod
-			tmp, err = o.Client.CoreV1().Pods(p.Namespace).Get(p.Name, metav1.GetOptions{})
+			tmp, err = o.Client.CoreV1().Pods(p.Namespace).Get(context.TODO(), p.Name, metav1.GetOptions{})
 			if err != nil {
 				return fmt.Errorf("error getting pod %s %w", p.Name, err)
 			}

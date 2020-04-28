@@ -16,6 +16,7 @@ package alpha
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 
@@ -74,7 +75,7 @@ func getPodDefinition(test Test, o Scorecard) *v1.Pod {
 func getPodLog(client kubernetes.Interface, pod *v1.Pod) (logOutput []byte, err error) {
 
 	req := client.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &v1.PodLogOptions{})
-	podLogs, err := req.Stream()
+	podLogs, err := req.Stream(context.TODO())
 	if err != nil {
 		return logOutput, err
 	}
@@ -91,7 +92,7 @@ func getPodLog(client kubernetes.Interface, pod *v1.Pod) (logOutput []byte, err 
 func deletePods(client kubernetes.Interface, tests []Test) {
 	for _, test := range tests {
 		p := test.TestPod
-		err := client.CoreV1().Pods(p.Namespace).Delete(p.Name, &metav1.DeleteOptions{})
+		err := client.CoreV1().Pods(p.Namespace).Delete(context.TODO(), p.Name, metav1.DeleteOptions{})
 		if err != nil {
 			log.Errorf("Error deleting pod %s %s\n", p.Name, err.Error())
 		}

@@ -26,8 +26,6 @@ import (
 	"net/http"
 	"time"
 
-	olmresourceclient "github.com/operator-framework/operator-sdk/internal/olm/client"
-
 	olmapiv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -37,6 +35,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/rest"
+
+	olmresourceclient "github.com/operator-framework/operator-sdk/internal/olm/client"
 )
 
 const (

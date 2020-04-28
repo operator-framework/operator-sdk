@@ -15,6 +15,7 @@
 package alpha
 
 import (
+	"context"
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
@@ -28,7 +29,7 @@ import (
 // contents to be mounted into the test Pods
 func createConfigMap(o Scorecard, bundleData []byte) (configMap *v1.ConfigMap, err error) {
 	cfg := getConfigMapDefinition(o.Namespace, bundleData)
-	configMap, err = o.Client.CoreV1().ConfigMaps(o.Namespace).Create(cfg)
+	configMap, err = o.Client.CoreV1().ConfigMaps(o.Namespace).Create(context.TODO(), cfg, metav1.CreateOptions{})
 	return configMap, err
 }
 
@@ -54,7 +55,7 @@ func getConfigMapDefinition(namespace string, bundleData []byte) *v1.ConfigMap {
 // deleteConfigMap deletes the test bundle ConfigMap and is called
 // as part of the test run cleanup
 func deleteConfigMap(client kubernetes.Interface, configMap *v1.ConfigMap) {
-	err := client.CoreV1().ConfigMaps(configMap.Namespace).Delete(configMap.Name, &metav1.DeleteOptions{})
+	err := client.CoreV1().ConfigMaps(configMap.Namespace).Delete(context.TODO(), configMap.Name, metav1.DeleteOptions{})
 	if err != nil {
 		log.Errorf("Error deleting configMap %s %s", configMap.Name, err.Error())
 	}

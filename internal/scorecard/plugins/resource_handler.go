@@ -389,7 +389,7 @@ func getProxyLogs(proxyPod *v1.Pod) (string, error) {
 	}
 	logOpts := &v1.PodLogOptions{Container: scorecardContainerName}
 	req := kubeclient.CoreV1().Pods(proxyPod.GetNamespace()).GetLogs(proxyPod.GetName(), logOpts)
-	readCloser, err := req.Stream()
+	readCloser, err := req.Stream(context.TODO())
 	if err != nil {
 		return "", fmt.Errorf("failed to get logs: %v", err)
 	}

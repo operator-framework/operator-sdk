@@ -455,7 +455,7 @@ func getMetrics(t *testing.T, f *framework.Framework, labels map[string]string, 
 
 	// Get metrics data
 	request := proxyViaPod(f.KubeClient, ns, podName, port, "/metrics")
-	response, err := request.DoRaw()
+	response, err := request.DoRaw(goctx.TODO())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get response from metrics: %v", err)
 	}
