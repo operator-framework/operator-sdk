@@ -15,17 +15,18 @@
 package test
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	internalk8sutil "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
+	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/test"
@@ -39,7 +40,8 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-var deployTestDir = filepath.Join(scaffold.DeployDir, "test")
+// Cleanup functions to be deferred
+var cleanups []func()
 
 type testLocalConfig struct {
 	kubeconfig        string
@@ -164,71 +166,19 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 
 	log.Info("Testing operator locally.")
 
-	// if no namespaced manifest path is given, combine deploy/service_account.yaml, deploy/role.yaml,
-	// deploy/role_binding.yaml and deploy/operator.yaml
-	if tlConfig.namespacedManPath == "" && !tlConfig.noSetup {
-		if !tlConfig.upLocal {
-			file, err := internalk8sutil.GenerateCombinedNamespacedManifest(scaffold.DeployDir)
-			if err != nil {
-				return err
-			}
-			tlConfig.namespacedManPath = file.Name()
-		} else {
-			file, err := ioutil.TempFile("", "empty.yaml")
-			if err != nil {
-				return fmt.Errorf("could not create empty manifest file: %v", err)
-			}
-			tlConfig.namespacedManPath = file.Name()
-			emptyBytes := []byte{}
-			if err := file.Chmod(os.FileMode(fileutil.DefaultFileMode)); err != nil {
-				return fmt.Errorf("could not chown temporary namespaced manifest file: %v", err)
-			}
-			if _, err := file.Write(emptyBytes); err != nil {
-				return fmt.Errorf("could not write temporary namespaced manifest file: %v", err)
-			}
-			if err := file.Close(); err != nil {
-				return err
-			}
+	// Run cleanup for removing temp files
+	defer func() {
+		for _, cleanup := range cleanups {
+			cleanup()
 		}
-		defer func() {
-			err := os.Remove(tlConfig.namespacedManPath)
-			if err != nil {
-				log.Errorf("Could not delete temporary namespace manifest file: (%v)", err)
-			}
-		}()
+	}()
+
+	// Collect and generate namspaced and global manifest files
+	// if not already specified by their flags
+	if err := collectManifests(); err != nil {
+		return err
 	}
-	if tlConfig.globalManPath == "" && !tlConfig.noSetup {
-		file, err := internalk8sutil.GenerateCombinedGlobalManifest(scaffold.CRDsDir)
-		if err != nil {
-			return err
-		}
-		tlConfig.globalManPath = file.Name()
-		defer func() {
-			err := os.Remove(tlConfig.globalManPath)
-			if err != nil {
-				log.Errorf("Could not delete global manifest file: (%v)", err)
-			}
-		}()
-	}
-	if tlConfig.noSetup {
-		err := os.MkdirAll(deployTestDir, os.FileMode(fileutil.DefaultDirFileMode))
-		if err != nil {
-			return fmt.Errorf("could not create %s: %v", deployTestDir, err)
-		}
-		tlConfig.namespacedManPath = filepath.Join(deployTestDir, "empty.yaml")
-		tlConfig.globalManPath = filepath.Join(deployTestDir, "empty.yaml")
-		emptyBytes := []byte{}
-		err = ioutil.WriteFile(tlConfig.globalManPath, emptyBytes, os.FileMode(fileutil.DefaultFileMode))
-		if err != nil {
-			return fmt.Errorf("could not create empty manifest file: %v", err)
-		}
-		defer func() {
-			err := os.Remove(tlConfig.globalManPath)
-			if err != nil {
-				log.Errorf("Could not delete empty manifest file: (%v)", err)
-			}
-		}()
-	}
+
 	if tlConfig.image != "" {
 		err := replaceImage(tlConfig.namespacedManPath, tlConfig.image)
 		if err != nil {
@@ -291,6 +241,162 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 	}
 	log.Info("Local operator test successfully completed.")
 	return nil
+}
+
+func collectManifests() error {
+	// Pass empty files to the test-framework if no setup required
+	if tlConfig.noSetup {
+		emptyBytes := []byte{}
+		file, err := writeToTempFile(emptyBytes, "empty.yaml")
+		if err != nil {
+			return err
+		}
+		tlConfig.namespacedManPath = file.Name()
+		tlConfig.globalManPath = file.Name()
+
+		f := func() {
+			err := os.Remove(file.Name())
+			if err != nil {
+				log.Errorf("Could not delete empty manifest file: (%v)", err)
+			}
+		}
+		cleanups = append(cleanups, f)
+		return nil
+	}
+
+	// Collect manifest from deploy dir if legacy layout
+	// TODO: Remove this after the legacy layout has been deprecated
+	if !kbutil.HasProjectFile() {
+		return legacyCollectFromDeployDir()
+	}
+
+	// For new layout check if the manifests are piped to stdin
+	stdinF, err := os.Stdin.Stat()
+	if err != nil {
+		return err
+	}
+	if stdinF.Mode()&os.ModeNamedPipe != 0 {
+		return collectFromStdin()
+	}
+
+	// If no input is piped to stdin, the manifest paths must be set by flags
+	if tlConfig.namespacedManPath == "" || tlConfig.globalManPath == "" {
+		return fmt.Errorf("The namespaced and global manifests must be piped to stdin" +
+			" e.g (kustomize build config/default | operator-sdk test ...).\n" +
+			"Or the both the flags --namespaced-manifest and --global-manifest must be set.")
+	}
+	return nil
+}
+
+func collectFromStdin() error {
+	reader := bufio.NewReader(os.Stdin)
+	b, err := ioutil.ReadAll(reader)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	namespacedManifests := []byte{}
+	globalManifests := []byte{}
+	scanner := internalk8sutil.NewYAMLScanner(b)
+	for scanner.Scan() {
+		manifest := scanner.Bytes()
+		typeMeta, err := internalk8sutil.GetTypeMetaFromBytes(manifest)
+		if err != nil {
+			log.Debugf("No TypeMeta found, skipping file")
+			continue
+		}
+		switch typeMeta.GroupVersionKind().Kind {
+		// Namespaced scoped resources
+		case "Role", "RoleBinding", "ServiceAccount", "Deployment", "Service":
+			namespacedManifests = internalk8sutil.CombineManifests(namespacedManifests, manifest)
+
+		// Cluster scoped resources
+		case "ClusterRole", "ClusterRoleBinding", "CustomResourceDefinition":
+			globalManifests = internalk8sutil.CombineManifests(globalManifests, manifest)
+		default:
+			// TODO: Should the framework create other manifests by checking
+			// the `namespace` field to see if it's global vs namespaced?
+			// "kustomize build" can output extraneous manifests not relevant(?) to testing,
+			// e.g ServiceMonitor, Namespace
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("failed to scan stdin for manifests: %v", err)
+	}
+
+	f, err := writeToTempFile(namespacedManifests, "namespaced-manifest.yaml")
+	if err != nil {
+		log.Fatal(err)
+	}
+	tlConfig.namespacedManPath = f.Name()
+
+	f, err = writeToTempFile(globalManifests, "global-manifest.yaml")
+	if err != nil {
+		log.Fatal(err)
+	}
+	tlConfig.globalManPath = f.Name()
+
+	return nil
+}
+
+func legacyCollectFromDeployDir() error {
+	// if no namespaced manifest path is given, combine deploy/service_account.yaml, deploy/role.yaml,
+	// deploy/role_binding.yaml and deploy/operator.yaml
+	if tlConfig.namespacedManPath == "" && !tlConfig.noSetup {
+		if !tlConfig.upLocal {
+			file, err := internalk8sutil.GenerateCombinedNamespacedManifest(scaffold.DeployDir)
+			if err != nil {
+				return err
+			}
+			tlConfig.namespacedManPath = file.Name()
+		} else {
+			emptyBytes := []byte{}
+			file, err := writeToTempFile(emptyBytes, "empty.yaml")
+			if err != nil {
+				return err
+			}
+			tlConfig.namespacedManPath = file.Name()
+		}
+		f := func() {
+			err := os.Remove(tlConfig.namespacedManPath)
+			if err != nil {
+				log.Errorf("Could not delete temporary namespace manifest file: (%v)", err)
+			}
+		}
+		cleanups = append(cleanups, f)
+	}
+	if tlConfig.globalManPath == "" && !tlConfig.noSetup {
+		file, err := internalk8sutil.GenerateCombinedGlobalManifest(scaffold.CRDsDir)
+		if err != nil {
+			return err
+		}
+		tlConfig.globalManPath = file.Name()
+		f := func() {
+			err := os.Remove(tlConfig.globalManPath)
+			if err != nil {
+				log.Errorf("Could not delete global manifest file: (%v)", err)
+			}
+		}
+		cleanups = append(cleanups, f)
+	}
+	return nil
+}
+
+func writeToTempFile(b []byte, fileName string) (*os.File, error) {
+	file, err := ioutil.TempFile("", fileName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open temporary file: %v", (err))
+	}
+	if err := file.Chmod(os.FileMode(fileutil.DefaultFileMode)); err != nil {
+		return nil, fmt.Errorf("failed to change file permissions: %v", err)
+	}
+	if _, err := file.Write(b); err != nil {
+		return nil, fmt.Errorf("failed to write to file: %v", err)
+	}
+	if err := file.Close(); err != nil {
+		return nil, fmt.Errorf("failed to close file: %v", err)
+	}
+	return file, nil
 }
 
 // TODO: add support for multiple deployments and containers (user would have to

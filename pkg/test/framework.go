@@ -293,6 +293,10 @@ func (f *Framework) setupLocalCommand() (*exec.Cmd, error) {
 	if ok {
 		watchNamespace = ns
 	}
+	// TODO: The default kubebuilder main.go has no support for using WATCH_NAMESPACE
+	// The default manager is cluster-scoped.
+	// Will need to introduce WATCH_NAMESPACE support into the main.go scaffold to control
+	// the test namespace for namespace-scoped operators.
 	localCmd.Env = append(localCmd.Env, fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, watchNamespace))
 	return localCmd, nil
 }

@@ -47,6 +47,8 @@ func (ctx *Context) GetNamespace() (string, error) {
 func (ctx *Context) GetOperatorNamespace() (string, error) {
 	var err error
 	ctx.operatorNamespace, err = ctx.getNamespace(ctx.operatorNamespace)
+	// Set ctx.namespace so GetNamespace() returns the same namespace on subesequent calls
+	ctx.namespace = ctx.operatorNamespace
 	return ctx.operatorNamespace, err
 }
 
@@ -112,6 +114,10 @@ func (ctx *Context) createFromYAML(yamlFile []byte, skipIfExists bool, cleanupOp
 		if err := obj.UnmarshalJSON(jsonSpec); err != nil {
 			return fmt.Errorf("failed to unmarshal object spec: %w", err)
 		}
+
+		// TODO: Not enough to set the object namespace
+		// For Rolebinding/ClusterRolebinding the subjects.namespace
+		// must be set to the operator-namespace as well.
 		obj.SetNamespace(operatorNamespace)
 		err = ctx.client.Create(goctx.TODO(), obj, cleanupOptions)
 		if skipIfExists && apierrors.IsAlreadyExists(err) {
