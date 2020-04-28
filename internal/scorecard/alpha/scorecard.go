@@ -65,28 +65,29 @@ func (o Scorecard) RunTests() (testOutput v1alpha2.ScorecardOutput, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), o.WaitTime)
 	defer cancel()
 
+	testOutput.Results = make([]v1alpha2.ScorecardTestResult, len(tests))
 	if o.Parallel {
 		wg := sync.WaitGroup{}
 		wg.Add(len(tests))
 		for idx, test := range tests {
 			go func(i int, t Test) {
 				defer wg.Done()
-				result, err := o.runTest(ctx, test)
+				result, err := o.runTest(ctx, t)
 				if err != nil {
 					result = convertErrorToResult(t, err)
 				}
-				testOutput.Results = append(testOutput.Results, result)
+				testOutput.Results[i] = result
 			}(idx, test)
 		}
 		wg.Wait()
 	} else {
 
-		for _, test := range tests {
+		for idx, test := range tests {
 			result, err := o.runTest(ctx, test)
 			if err != nil {
 				result = convertErrorToResult(test, err)
 			}
-			testOutput.Results = append(testOutput.Results, result)
+			testOutput.Results[idx] = result
 		}
 	}
 
@@ -114,7 +115,7 @@ func (o Scorecard) selectTests() []Test {
 }
 
 // runTest executes a single test
-func (o Scorecard) runTest(ctx context.Context, test Test) (result v1alpha2.ScorecardTestResult, err error) {
+func (o Scorecard) runTest(_ context.Context, test Test) (result v1alpha2.ScorecardTestResult, err error) {
 
 	// Create a Pod to run the test
 	podDef := getPodDefinition(test, o)
