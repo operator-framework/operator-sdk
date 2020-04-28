@@ -54,7 +54,7 @@ func getConfigMapDefinition(namespace string, bundleData []byte) *v1.ConfigMap {
 // deleteConfigMap deletes the test bundle ConfigMap and is called
 // as part of the test run cleanup
 func deleteConfigMap(o Scorecard) {
-	err := o.Client.CoreV1().ConfigMaps(o.Namespace).Delete(context.TODO(), o.BundleConfigMapName, &metav1.DeleteOptions{})
+	err := o.Client.CoreV1().ConfigMaps(o.Namespace).Delete(context.TODO(), o.BundleConfigMapName, metav1.DeleteOptions{})
 	if err != nil {
 		log.Errorf("Error deleting configMap %s %w", o.BundleConfigMapName, err)
 	}

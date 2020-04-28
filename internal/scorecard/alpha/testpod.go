@@ -94,7 +94,7 @@ func deletePods(o Scorecard) {
 	do := metav1.DeleteOptions{}
 	selector := fmt.Sprintf("testrun=%s", o.BundleConfigMapName)
 	lo := metav1.ListOptions{LabelSelector: selector}
-	err := o.Client.CoreV1().Pods(o.Namespace).DeleteCollection(context.TODO(), &do, lo)
+	err := o.Client.CoreV1().Pods(o.Namespace).DeleteCollection(context.TODO(), do, lo)
 	if err != nil {
 		log.Errorf("Error deleting pods selector %s %w\n", selector, err)
 	}
