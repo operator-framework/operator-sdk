@@ -65,7 +65,7 @@ For example:
 		"Tool to build OCI images. One of: [docker, podman, buildah]")
 
 	// todo: remove when the legacy layout is no longer supported
-	if !kbutil.IsConfigExist() {
+	if !kbutil.HasProjectFile() {
 		buildCmd.Flags().StringVar(&goBuildArgs, "go-build-args", "",
 			"Extra Go build arguments as one string such as \"-ldflags -X=main.xyz=abc\"")
 	}
@@ -106,7 +106,7 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 	image := args[0]
 	projutil.MustInProjectRoot()
 
-	if kbutil.IsConfigExist() {
+	if kbutil.HasProjectFile() {
 		if err := doImageBuild("Dockerfile", image); err != nil {
 			log.Fatalf("Failed to build image %s: %v", image, err)
 		}
@@ -157,7 +157,7 @@ func doLegacyBuild(image string) error {
 	return doImageBuild("build/Dockerfile", image)
 }
 
-// doImageBuild will execute the build command for the Dockerfile and image informed
+// doImageBuild will execute the build command for the given Dockerfile path and image
 func doImageBuild(dockerFilePath, image string) error {
 	log.Infof("Building OCI image %s", image)
 	buildCmd, err := createBuildCommand(imageBuilder, ".", dockerFilePath, image, imageBuildArgs)

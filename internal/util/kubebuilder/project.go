@@ -20,16 +20,12 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-<<<<<<< HEAD
 const configFile = "PROJECT"
-=======
-const ConfigFile = "PROJECT"
->>>>>>> review changes
 
-// IsConfigExist returns true if the project is configured as a kubebuilder
+// HasProjectFile returns true if the project is configured as a kubebuilder
 // project.
-func IsConfigExist() bool {
-	_, err := os.Stat(ConfigFile)
+func HasProjectFile() bool {
+	_, err := os.Stat(configFile)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return false

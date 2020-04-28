@@ -87,7 +87,7 @@ func MustInProjectRoot() {
 // "build/Dockerfile" may not be present in all projects
 // todo: scaffold Project file for Ansible and Helm with the type information
 func CheckProjectRoot() error {
-	if kbutil.IsConfigExist() {
+	if kbutil.HasProjectFile() {
 		return nil
 	}
 
