@@ -49,7 +49,7 @@ func GetBundle(bundlePath string) (bundle *registry.Bundle, err error) {
 	if bundles[0] == nil {
 		return nil, fmt.Errorf("bundle is invalid nil value")
 	}
-	bundle = *bundles[0]
+	bundle = bundles[0]
 	_, err = bundle.ClusterServiceVersion()
 	if err != nil {
 		return nil, fmt.Errorf("error in csv retrieval %s", err.Error())

@@ -68,7 +68,7 @@ func TestBundleCRs(t *testing.T) {
 				return
 			}
 			var crList []unstructured.Unstructured
-			crList, err = GetCRs(bundle)
+			crList, err = GetCRs(*bundle)
 			if err != nil {
 				t.Error(err)
 				return
@@ -107,7 +107,7 @@ func TestBasicAndOLM(t *testing.T) {
 				t.Errorf("Error getting bundle %s", err.Error())
 			}
 
-			result := c.function(bundle)
+			result := c.function(*bundle)
 			if result.State != scapiv1alpha2.PassState {
 				t.Errorf("%s result State %v expected", result.Name, scapiv1alpha2.PassState)
 				return
