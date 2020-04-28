@@ -17,7 +17,6 @@ package alpha
 import (
 	"io/ioutil"
 
-	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/yaml"
 )
 
@@ -28,7 +27,6 @@ type Test struct {
 	Entrypoint  []string          `yaml:"entrypoint,omitempty"`
 	Labels      map[string]string `yaml:"labels"`      // User defined labels used to filter tests
 	Description string            `yaml:"description"` // User readable test description
-	TestPod     *v1.Pod           `yaml:"-"`           // Pod that ran the test
 }
 
 // Config represents the set of test configurations which scorecard
