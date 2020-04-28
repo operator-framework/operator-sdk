@@ -115,6 +115,24 @@ func TestBasicAndOLM(t *testing.T) {
 	}
 }
 
+func TestOLMBundle(t *testing.T) {
+	cases := []struct {
+		bundlePath string
+		state      scapiv1alpha2.State
+	}{
+		{"../testdata", scapiv1alpha2.PassState},
+	}
+	for _, c := range cases {
+		t.Run(c.bundlePath, func(t *testing.T) {
+			result := BundleValidationTest(c.bundlePath)
+			if result.State != scapiv1alpha2.PassState {
+				t.Errorf("%s result State %v expected", result.Name, scapiv1alpha2.PassState)
+				return
+			}
+		})
+	}
+}
+
 func TestCRDHaveValidation(t *testing.T) {
 
 	cases := []struct {
@@ -130,7 +148,6 @@ func TestCRDHaveValidation(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.bundlePath, func(t *testing.T) {
-
 			bundle, err := GetBundle(c.bundlePath)
 			if err != nil {
 				t.Errorf("Error getting bundle %s", err.Error())
