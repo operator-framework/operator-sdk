@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
@@ -40,6 +41,7 @@ type Scorecard struct {
 	BundleConfigMapName string
 	Client              kubernetes.Interface
 	SkipCleanup         bool
+	Parallel            bool
 }
 
 // RunTests executes the scorecard tests as configured
@@ -61,16 +63,32 @@ func (o Scorecard) RunTests() (testOutput v1alpha2.ScorecardOutput, err error) {
 		return testOutput, fmt.Errorf("error creating ConfigMap %w", err)
 	}
 
-	for _, test := range tests {
-		pod, err := o.runTest(test)
-		if err != nil {
-			return testOutput, fmt.Errorf("test %s failed %w", test.Name, err)
+	ctx, cancel := context.WithTimeout(context.Background(), o.WaitTime)
+	defer cancel()
+
+	if o.Parallel {
+		wg := sync.WaitGroup{}
+		wg.Add(len(tests))
+		for idx, test := range tests {
+			go func(i int, t Test) {
+				defer wg.Done()
+				result, err := o.runTest(ctx, test)
+				if err != nil {
+					result = convertErrorToResult(t, err)
+				}
+				testOutput.Results = append(testOutput.Results, result)
+			}(idx, test)
 		}
-		err = o.waitForTestToComplete(pod)
-		if err != nil {
-			return testOutput, err
+		wg.Wait()
+	} else {
+
+		for _, test := range tests {
+			result, err := o.runTest(ctx, test)
+			if err != nil {
+				result = convertErrorToResult(test, err)
+			}
+			testOutput.Results = append(testOutput.Results, result)
 		}
-		testOutput.Results = append(testOutput.Results, getTestResult(o.Client, pod, test))
 	}
 
 	if !o.SkipCleanup {
@@ -97,12 +115,22 @@ func (o Scorecard) selectTests() []Test {
 }
 
 // runTest executes a single test
-func (o Scorecard) runTest(test Test) (result *v1.Pod, err error) {
+func (o Scorecard) runTest(ctx context.Context, test Test) (result v1alpha2.ScorecardTestResult, err error) {
 
 	// Create a Pod to run the test
 	podDef := getPodDefinition(test, o)
-	result, err = o.Client.CoreV1().Pods(o.Namespace).Create(context.TODO(), podDef, metav1.CreateOptions{})
-	return result, err
+	pod, err := o.Client.CoreV1().Pods(o.Namespace).Create(context.TODO(), podDef, metav1.CreateOptions{})
+	if err != nil {
+		return result, err
+	}
+
+	err = o.waitForTestToComplete(pod)
+	if err != nil {
+		return result, err
+	}
+
+	result = getTestResult(o.Client, pod, test)
+	return result, nil
 }
 
 func ConfigDocLink() string {
@@ -132,4 +160,13 @@ func (o Scorecard) waitForTestToComplete(p *v1.Pod) (err error) {
 	}
 	return fmt.Errorf("error - wait time of %d seconds has been exceeded", o.WaitTime)
 
+}
+
+func convertErrorToResult(t Test, err error) (result v1alpha2.ScorecardTestResult) {
+	result.Name = t.Name
+	result.Description = t.Description
+	result.Errors = []string{err.Error()}
+	result.Suggestions = []string{}
+	result.State = v1alpha2.FailState
+	return result
 }
