@@ -92,7 +92,7 @@ func SpecDescriptorsTest(bundle registry.Bundle) scapiv1alpha2.ScorecardTestResu
 		return r
 	}
 	r.Log += fmt.Sprintf("Loaded %d Custom Resources from alm-examples\n", len(crs))
-	apiCSV, err := registryToApiCSV(csv)
+	apiCSV, err := registryToAPICSV(csv)
 	if err != nil {
 		r.Errors = append(r.Errors, err.Error())
 		r.State = scapiv1alpha2.ErrorState
@@ -128,15 +128,13 @@ func getCRsFromCSV(almExamples string, csvName string) ([]unstructured.Unstructu
 				" in CSV %s and cr-manifest config option not set", csvName)
 		}
 		return crs, nil
-	} else {
-		return crs, errors.New(
-			// TODO can users still pass crs to be validated?
-			"cr-manifest config option must be set if CSV has no metadata.annotations['alm-examples']")
 	}
-	return crs, nil
+	return crs, errors.New(
+		// TODO can users still pass crs to be validated?
+		"cr-manifest config option must be set if CSV has no metadata.annotations['alm-examples']")
 }
 
-func registryToApiCSV(csv *registry.ClusterServiceVersion) (*operators.ClusterServiceVersion, error) {
+func registryToAPICSV(csv *registry.ClusterServiceVersion) (*operators.ClusterServiceVersion, error) {
 	var apiCSV operators.ClusterServiceVersion
 	csvBytes, err := json.Marshal(csv)
 	if err != nil {
@@ -171,7 +169,8 @@ func checkOwnedCSVDescriptors(cr unstructured.Unstructured, csv *operators.Clust
 	}
 
 	if crd == nil {
-		r.Errors = append(r.Errors, fmt.Sprintf("Failed to find an owned CRD for CR %s with GVK %s", cr.GetName(), cr.GroupVersionKind().String()))
+		msg := fmt.Sprintf("Failed to find an owned CRD for CR %s with GVK %s", cr.GetName(), cr.GroupVersionKind().String())
+		r.Errors = append(r.Errors, msg)
 		r.State = scapiv1alpha2.FailState
 		return r
 	}
