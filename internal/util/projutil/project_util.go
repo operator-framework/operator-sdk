@@ -26,6 +26,8 @@ import (
 	"github.com/rogpeppe/go-internal/modfile"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
 )
 
 const (
@@ -82,9 +84,14 @@ func MustInProjectRoot() {
 
 // CheckProjectRoot checks if the current dir is the project root, and returns
 // an error if not.
-// TODO(hasbro17): Change this to check for go.mod
 // "build/Dockerfile" may not be present in all projects
+// todo: scaffold Project file for Ansible and Helm with the type information
 func CheckProjectRoot() error {
+	if kbutil.HasProjectFile() {
+		return nil
+	}
+
+	// todo(camilamacedo86): remove the following check when we no longer support the legacy scaffold layout
 	// If the current directory has a "build/Dockerfile", then it is safe to say
 	// we are at the project root.
 	if _, err := os.Stat(buildDockerfile); err != nil {

@@ -16,6 +16,7 @@ package cli
 
 import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/build"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/bundle"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cleanup"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/completion"
@@ -48,6 +49,8 @@ var commands = []*cobra.Command{
 	scorecard.NewCmd(),
 	test.NewCmd(),
 	version.NewCmd(),
+	build.NewCmd(),
+
 	// TODO(hasbro17): add generate csv command after aligning it for kubebuilder layout
 }
 
