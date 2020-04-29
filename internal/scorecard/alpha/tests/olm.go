@@ -129,6 +129,34 @@ func CRDsHaveResourcesTest(bundle registry.Bundle) scapiv1alpha2.ScorecardTestRe
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
 
+	csv, err := bundle.ClusterServiceVersion()
+	if err != nil {
+		r.Errors = append(r.Errors, err.Error())
+		r.State = scapiv1alpha2.FailState
+		return r
+	}
+
+	r.Log += fmt.Sprintf("Loaded ClusterServiceVersion: %s\n", csv.GetName())
+
+	apiCSV, err := registryToAPICSV(csv)
+	if err != nil {
+		r.Errors = append(r.Errors, err.Error())
+		r.State = scapiv1alpha2.FailState
+		return r
+	}
+	return CheckResources(apiCSV.Spec.CustomResourceDefinitions, r)
+}
+
+// CheckResources verified if the owned CRDs have the resources field.
+func CheckResources(crd operators.CustomResourceDefinitions,
+	r scapiv1alpha2.ScorecardTestResult) scapiv1alpha2.ScorecardTestResult {
+	for _, description := range crd.Owned {
+		if description.Resources == nil || len(description.Resources) == 0 {
+			r.State = scapiv1alpha2.FailState
+			r.Errors = append(r.Errors, "Owned CRDs do not have resources specified")
+			return r
+		}
+	}
 	return r
 }
 
