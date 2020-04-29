@@ -55,23 +55,6 @@ func CRDsHaveValidationTest(bundle registry.Bundle) scapiv1alpha2.ScorecardTestR
 	r.State = scapiv1alpha2.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
-	crds, err := bundle.CustomResourceDefinitions()
-	if err != nil {
-		r.Errors = append(r.Errors, err.Error())
-		r.State = scapiv1alpha2.ErrorState
-		return r
-	}
-	r.Log += fmt.Sprintf("Loaded CustomresourceDefinitions: %s\n", crds)
-	crs, err := GetCRs(bundle)
-	if err != nil {
-		r.Errors = append(r.Errors, err.Error())
-		r.State = scapiv1alpha2.ErrorState
-		return r
-	}
-	r.Log += fmt.Sprintf("Loaded %d Custom Resources from alm-examples\n", len(crs))
-	for _, cr := range crs {
-		r = validateCR(cr, crds, r)
-	}
 	return r
 }
 

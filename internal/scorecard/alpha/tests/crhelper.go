@@ -17,14 +17,9 @@ package tests
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/operator-framework/operator-registry/pkg/registry"
-	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
-	log "github.com/sirupsen/logrus"
 
-	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -52,78 +47,4 @@ func GetCRs(bundle registry.Bundle) (crList []unstructured.Unstructured, err err
 		return nil, fmt.Errorf("failed to parse alm-examples annotation: %v", err)
 	}
 	return crList, nil
-}
-
-func validateCR(cr unstructured.Unstructured, crds []*v1beta1.CustomResourceDefinition,
-	r scapiv1alpha2.ScorecardTestResult) scapiv1alpha2.ScorecardTestResult {
-
-	// check if the CRD matches the testing CR
-	for _, crd := range crds {
-		gvk := cr.GroupVersionKind()
-		// Only check the validation block if the CRD and CR have the same Kind and Version
-		if !(matchVersion(gvk.Version, crd) && matchKind(gvk.Kind, crd.Spec.Names.Kind)) {
-			continue
-		}
-		if crd.Spec.Validation == nil {
-			r.Suggestions = append(r.Suggestions, fmt.Sprintf("Add CRD validation for %s/%s",
-				crd.Spec.Names.Kind, crd.Spec.Version))
-			continue
-		}
-		failed := false
-		if cr.Object["spec"] != nil {
-			spec := cr.Object["spec"].(map[string]interface{})
-			for key := range spec {
-				if _, ok := crd.Spec.Validation.OpenAPIV3Schema.Properties["spec"].Properties[key]; !ok {
-					failed = true
-					r.Suggestions = append(r.Suggestions,
-						fmt.Sprintf("Add CRD validation for spec field `%s` in %s/%s",
-							key, gvk.Kind, gvk.Version))
-				}
-			}
-		}
-		if cr.Object["status"] != nil {
-			status := cr.Object["status"].(map[string]interface{})
-			for key := range status {
-				if _, ok := crd.Spec.Validation.OpenAPIV3Schema.Properties["status"].Properties[key]; !ok {
-					failed = true
-					r.Suggestions = append(r.Suggestions, fmt.Sprintf("Add CRD validation for status"+
-						" field `%s` in %s/%s", key, gvk.Kind, gvk.Version))
-				}
-			}
-		}
-		if failed {
-			r.State = scapiv1alpha2.FailState
-		}
-	}
-	return r
-}
-
-// matchVersion checks if a CRD contains a specified version in a case insensitive manner
-func matchVersion(version string, crd *v1beta1.CustomResourceDefinition) bool {
-	if strings.EqualFold(version, crd.Spec.Version) {
-		return true
-	}
-	// crd.Spec.Version is deprecated, so check in crd.Spec.Versions as well
-	for _, currVer := range crd.Spec.Versions {
-		if strings.EqualFold(version, currVer.Name) {
-			return true
-		}
-	}
-	return false
-}
-
-func matchKind(kind1, kind2 string) bool {
-
-	var restMapper meta.DefaultRESTMapper
-	singularKind1, err := restMapper.ResourceSingularizer(kind1)
-	if err != nil {
-		singularKind1 = kind1
-		log.Warningf("could not find singular version of %s", kind1)
-	}
-	singularKind2, err := restMapper.ResourceSingularizer(kind2)
-	if err != nil {
-		singularKind2 = kind2
-		log.Warningf("could not find singular version of %s", kind2)
-	}
-	return strings.EqualFold(singularKind1, singularKind2)
 }
