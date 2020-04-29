@@ -15,16 +15,15 @@
 package bundle
 
 import (
-	"crypto/sha256"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	catalog "github.com/operator-framework/operator-sdk/internal/generate/olm-catalog"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
+	"github.com/blang/semver"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -40,6 +39,7 @@ type bundleCreateCmd struct {
 
 // newCreateCmd returns a command that will build operator bundle image or
 // generate metadata for them.
+//nolint:lll
 func newCreateCmd() *cobra.Command {
 	c := &bundleCreateCmd{}
 
@@ -51,32 +51,29 @@ bundle image containing operator metadata and manifests, tagged with the
 provided image tag.
 
 To write all files required to build a bundle image without building the
-image, set '--generate-only=true'. A bundle Dockerfile, bundle metadata, and
-a 'manifests/' directory containing your bundle manifests will be written if
-'--generate-only=true':
+image, set '--generate-only=true'. A bundle.Dockerfile and bundle metadata
+will be written if '--generate-only=true':
 
-	$ operator-sdk bundle create --generate-only --directory ./deploy/olm-catalog/test-operator/0.1.0
-	$ ls .
-	...
-	bundle.Dockerfile
-	...
-	$ tree ./deploy/olm-catalog/test-operator/
-	└── 0.1.0
-		└── example.com_tests_crd.yaml
-		└── test-operator.v0.1.0.clusterserviceversion.yaml
-	└── manifests
-		└── example.com_tests_crd.yaml
-		└── test-operator.v0.1.0.clusterserviceversion.yaml
-	└── metadata
-		└── annotations.yaml
+` + "```" + `
+  $ operator-sdk bundle create --generate-only --directory ./deploy/olm-catalog/test-operator/manifests
+  $ ls .
+  ...
+  bundle.Dockerfile
+  ...
+  $ tree ./deploy/olm-catalog/test-operator/
+  ./deploy/olm-catalog/test-operator/
+  ├── manifests
+  │   ├── example.com_tests_crd.yaml
+  │   └── test-operator.clusterserviceversion.yaml
+  └── metadata
+      └── annotations.yaml
+` + "```" + `
 
 '--generate-only' is useful if you want to build an operator's bundle image
-manually, modify metadata before building an image, or want to generate a
-'manifests/' directory containing your operator manifests for compatibility
-with other operator tooling.
+manually or modify metadata before building an image.
 
-More information on operator bundle images and metadata:
-https://github.com/openshift/enhancements/blob/master/enhancements/olm/operator-bundle.md#docker
+More information on operator bundle images and the manifests/metadata format:
+https://github.com/openshift/enhancements/blob/master/enhancements/olm/operator-bundle.md
 
 NOTE: bundle images are not runnable.
 `,
@@ -84,7 +81,7 @@ NOTE: bundle images are not runnable.
 This image will contain manifests for package channels 'stable' and 'beta':
 
   $ operator-sdk bundle create quay.io/example/test-operator:v0.1.0 \
-      --directory ./deploy/olm-catalog/test-operator/0.1.0 \
+      --directory ./deploy/olm-catalog/test-operator/manifests \
       --package test-operator \
       --channels stable,beta \
       --default-channel stable
@@ -92,16 +89,13 @@ This image will contain manifests for package channels 'stable' and 'beta':
 Assuming your operator has the same name as your repo directory and the only
 channel is 'stable', the above command can be abbreviated to:
 
-  $ operator-sdk bundle create quay.io/example/test-operator:v0.1.0 \
-      --directory ./deploy/olm-catalog/test-operator/0.1.0
+  $ operator-sdk bundle create quay.io/example/test-operator:v0.1.0
 
-The following invocation will generate test-operator bundle metadata, a
-'manifests/' dir, and Dockerfile for your latest operator version without
-building the image:
+The following invocation will generate test-operator bundle metadata and a
+bundle.Dockerfile for your latest operator version without building the image:
 
   $ operator-sdk bundle create \
       --generate-only \
-      --directory ./deploy/olm-catalog/test-operator/0.1.0 \
       --package test-operator \
       --channels beta \
       --default-channel beta
@@ -113,24 +107,6 @@ building the image:
 
 			if err = c.validate(args); err != nil {
 				return fmt.Errorf("error validating args: %v", err)
-			}
-
-			rootDir := filepath.Dir(c.directory)
-			manifestsDir := filepath.Join(rootDir, bundle.ManifestsDir)
-
-			// To ensure users don't accidentally overwrite their manifests dir
-			// created previously, make sure they have set --overwrite or no
-			// contents of the directory differ in the source directory.
-			if !c.overwrite && isExist(manifestsDir) && c.outputDir == filepath.Dir(c.directory) {
-				dirsDiffer, err := areDirsDiff(c.directory, manifestsDir)
-				if err != nil {
-					log.Fatal(err)
-				}
-				if dirsDiffer {
-					log.Fatalf("'manifests' dir already exists at %s. Set --overwrite=true "+
-						"to overwrite its contents with contents in %s",
-						manifestsDir, c.directory)
-				}
 			}
 
 			if c.generateOnly {
@@ -154,7 +130,7 @@ building the image:
 
 func (c *bundleCreateCmd) addToFlagSet(fs *pflag.FlagSet) {
 	fs.StringVarP(&c.directory, "directory", "d", "",
-		"The directory where bundle manifests are located, ex. <project-root>/deploy/olm-catalog/test-operator/0.1.0")
+		"The directory where bundle manifests are located, ex. <project-root>/deploy/olm-catalog/test-operator/manifests")
 	fs.StringVarP(&c.outputDir, "output-dir", "o", "",
 		"Optional output directory for operator manifests")
 	fs.StringVarP(&c.imageTag, "tag", "t", "",
@@ -179,27 +155,25 @@ func (c *bundleCreateCmd) setDefaults() (err error) {
 	if c.packageName == "" {
 		c.packageName = filepath.Base(projutil.MustGetwd())
 	}
+	defaultManifestsDir := filepath.Join(catalog.OLMCatalogDir, c.packageName, bundle.ManifestsDir)
 	if c.directory == "" {
-		c.directory = filepath.Join(catalog.OLMCatalogDir, c.packageName, bundle.ManifestsDir)
+		if isNotExist(defaultManifestsDir) {
+			return fmt.Errorf("default manifests directory %s does not exist; "+
+				"set --directory to a valid bundle manifests directory", defaultManifestsDir)
+		}
+		c.directory = defaultManifestsDir
 	}
 
-	// Clean and make paths relative for less verbose error messages.
-	if c.directory, err = relDir(c.directory); err != nil {
-		return err
-	}
-	// Set outputDir in any case so we make the operator-registry file generator
-	// write 'manifests/' every time, and handle cleanup logic in runBuild().
-	if c.outputDir == "" {
-		c.outputDir = filepath.Dir(c.directory)
-	}
-	if c.outputDir, err = relDir(c.outputDir); err != nil {
-		return err
+	// Clean and make paths relative for less verbose error messages. Don't return
+	// an error if we cannot.
+	if dir, err := relWd(c.directory); err == nil {
+		c.directory = dir
 	}
 
 	return nil
 }
 
-func relDir(dir string) (out string, err error) {
+func relWd(dir string) (out string, err error) {
 	if out, err = filepath.Abs(dir); err != nil {
 		return "", err
 	}
@@ -216,6 +190,11 @@ func (c bundleCreateCmd) validate(args []string) error {
 	}
 	if c.packageName == "" {
 		return fmt.Errorf("--package must be set")
+	}
+	// Bundle commands only work with bundle directory formats, not package
+	// manifests formats.
+	if isPackageManifestsDir(c.directory, c.packageName) {
+		return fmt.Errorf("bundle commands can only be used on bundle directory formats")
 	}
 	if c.generateOnly {
 		if len(args) != 0 {
@@ -244,17 +223,13 @@ func (c bundleCreateCmd) runGenerate() error {
 func (c bundleCreateCmd) runBuild() error {
 	rootDir := filepath.Dir(c.directory)
 	metadataDir := filepath.Join(rootDir, bundle.MetadataDir)
-	manifestsDir := filepath.Join(rootDir, bundle.ManifestsDir)
 
 	// Clean up transient files once the image is built, as they are no longer
 	// needed.
-	if !isExist(manifestsDir) {
-		defer remove(manifestsDir)
-	}
-	if !isExist(metadataDir) {
+	if isNotExist(metadataDir) {
 		defer remove(metadataDir)
 	}
-	if !isExist(bundle.DockerFile) {
+	if isNotExist(bundle.DockerFile) {
 		defer remove(bundle.DockerFile)
 	}
 
@@ -280,55 +255,16 @@ func isExist(path string) bool {
 	return err == nil || os.IsExist(err)
 }
 
-// areDirsDiff returns true if either file names or file contents differ
-// between dirA and dirB.
-func areDirsDiff(dirA, dirB string) (bool, error) {
-	if filepath.Clean(dirA) == filepath.Clean(dirB) {
-		return false, nil
-	}
-	fileMapA, err := getDirFileMap(dirA)
-	if err != nil {
-		return false, err
-	}
-	fileMapB, err := getDirFileMap(dirB)
-	if err != nil {
-		return false, err
-	}
-	if len(fileMapB) != len(fileMapA) {
-		return true, nil
-	}
-	for pathA, contentsA := range fileMapA {
-		contentsB, hasPathA := fileMapB[pathA]
-		if !hasPathA || contentsA != contentsB {
-			return true, nil
-		}
-	}
-	return false, nil
+// isNotExist returns true if path does not exist.
+func isNotExist(path string) bool {
+	_, err := os.Stat(path)
+	return err != nil && os.IsNotExist(err)
 }
 
-// getDirFileMap returns a map of file names to contents as strings for all
-// normal files in dir (recursive).
-func getDirFileMap(dir string) (map[string]string, error) {
-	fileMap := make(map[string]string)
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if !info.IsDir() {
-			b, err := ioutil.ReadFile(path)
-			if err != nil {
-				return err
-			}
-			fileMap[filepath.Base(path)] = hashContents(b)
-		}
-		return nil
-	})
-	return fileMap, err
-}
-
-// hashContents returns the hexadecimal representation of hashed b.
-func hashContents(b []byte) string {
-	h := sha256.New()
-	_, _ = h.Write(b)
-	return fmt.Sprintf("%x", h.Sum(nil))
+// isPackageManifestsDir checks if dir is a package manifests format directory
+// by checking for the existence of a package manifest and a semver-named directory.
+func isPackageManifestsDir(dir, operatorName string) bool {
+	packageManifestPath := filepath.Join(filepath.Dir(dir), operatorName+".package.yaml")
+	_, err := semver.ParseTolerant(filepath.Clean(filepath.Base(dir)))
+	return isExist(packageManifestPath) && err == nil
 }
