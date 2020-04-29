@@ -31,5 +31,21 @@ func CheckSpecTest(bundle registry.Bundle) scapiv1alpha2.ScorecardTestResult {
 	r.State = scapiv1alpha2.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
+
+	crSet, err := GetCRs(bundle)
+	if err != nil {
+		r.Errors = append(r.Errors, "error getting custom resource definitions")
+		r.State = scapiv1alpha2.ErrorState
+		return r
+	}
+
+	for _, cr := range crSet {
+		if cr.Object["spec"] == nil {
+			r.Errors = append(r.Errors, "error spec does not exist")
+			r.State = scapiv1alpha2.ErrorState
+			return r
+		}
+	}
+
 	return r
 }
