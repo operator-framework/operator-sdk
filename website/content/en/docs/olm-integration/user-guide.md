@@ -76,13 +76,13 @@ and metadata for an Operator [bundle][operator-bundle]. From the bundle docs:
 > container registry. Ultimately, an operator bundle will be used by Operator
 > Registry and OLM to install an operator in OLM-enabled clusters.
 
-A bundle is built using on-disk manifests and metadata that define an Operator
+A bundle consists of on-disk manifests and metadata that define an Operator
 at a particular version. At this stage in memcached-operator's development,
-we only need to worry about generating these files; the bundle becomes important
+we only need to worry about generating bundle files; bundle images becomes important
 once we're ready to [publish](#publishing-an-operator) our Operator. For a condensed
 overview of all bundle operations supported by the SDK, read [this doc][doc-bundle-cli].
 
-We will now create manifests by running [`operator-sdk generate csv`][cli-generate-csv]
+We will now create bundle manifests by running [`operator-sdk generate csv`][cli-generate-csv]
 in the root of the memcached-operator project:
 
 **Note:** while `generate csv` only officially supports Go Operators, it will
@@ -97,8 +97,8 @@ INFO[0004] Required csv fields not filled in file deploy/olm-catalog/memcached-o
 INFO[0004] Created deploy/olm-catalog/memcached-operator/manifests/memcached-operator.clusterserviceversion.yaml
 ```
 
-A bundle directory containing a CSV and all CRDs in `deploy/crds` has been created
-at `deploy/olm-catalog/memcached-operator/manifests`:
+A bundle manifests directory containing a CSV and all CRDs in `deploy/crds` has
+been created at `deploy/olm-catalog/memcached-operator/manifests`:
 
 ```console
 $ tree deploy/olm-catalog/memcached-operator
