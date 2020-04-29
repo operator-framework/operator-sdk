@@ -34,7 +34,7 @@ will be written if '--generate-only=true':
 manually or modify metadata before building an image.
 
 More information on operator bundle images and the manifests/metadata format:
-https://github.com/operator-framework/operator-registry#manifest-format
+https://github.com/openshift/enhancements/blob/master/enhancements/olm/operator-bundle.md
 
 NOTE: bundle images are not runnable.
 

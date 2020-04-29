@@ -46,7 +46,7 @@ containing operator metadata and manifests. This command will exit with a non-ze
 exit code if any validation tests fail.
 
 More information on operator bundle images and the manifests/metadata format:
-https://github.com/operator-framework/operator-registry#manifest-format
+https://github.com/openshift/enhancements/blob/master/enhancements/olm/operator-bundle.md
 
 NOTE: if validating an image, the image must exist in a remote registry, not
 just locally.
