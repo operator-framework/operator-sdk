@@ -1,0 +1,10 @@
+entries:
+  - description: >
+      Revert deprecation of the package manifests format. See
+      [#2755](https://github.com/operator-framework/operator-sdk/pull/2755) for
+      deprecation details. The package manifests format will be supported
+      indefinitely.
+
+    kind: change
+
+    breaking: false

@@ -27,14 +27,10 @@ import (
 	"github.com/operator-framework/operator-registry/pkg/registry"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	log "github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml"
 )
-
-// Deprecated: The package manifest generator will no longer create new package
-// manifests, only update existing ones. This generator will be removed in v0.19.0.
 
 const (
 	packageManifestFileExt = ".package.yaml"
@@ -87,7 +83,7 @@ func (g PkgGenerator) Generate() error {
 		return err
 	}
 	if len(fileMap) == 0 {
-		return nil
+		return errors.New("error generating package manifest: no generated file found")
 	}
 	pkgManifestOutputDir := filepath.Join(g.OutputDir, OLMCatalogChildDir, g.OperatorName)
 	if err = os.MkdirAll(pkgManifestOutputDir, fileutil.DefaultDirFileMode); err != nil {
@@ -106,30 +102,9 @@ func (g PkgGenerator) Generate() error {
 // generate either reads an existing package manifest or creates a new
 // manifest and modifies it based on values set in s.
 func (g PkgGenerator) generate() (map[string][]byte, error) {
-	pkgManifestOutputDir := filepath.Join(g.OutputDir, OLMCatalogChildDir, g.OperatorName)
-	path := filepath.Join(pkgManifestOutputDir, g.fileName)
-	pkg := registry.PackageManifest{}
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return nil, nil
-	} else if err == nil || os.IsExist(err) {
-		projutil.PrintDeprecationWarning("Package manifests are deprecated. " +
-			"Run `operator-sdk bundle create --generate-only` to create operator metadata")
-
-		// NewBundle can now be called without a csvVersion, but existing package
-		// manifests still require a csvVersion for updates.
-		if g.CSVVersion == "" {
-			return nil, fmt.Errorf("a CSV version is required to updating existing package manifests")
-		}
-
-		b, err := ioutil.ReadFile(path)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read package manifest %s: %v", path, err)
-		}
-		if err = yaml.Unmarshal(b, &pkg); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal package manifest %s: %v", path, err)
-		}
-	} else {
-		return nil, fmt.Errorf("error reading package manifest %s: %v", path, err)
+	pkg, err := g.buildPackageManifest()
+	if err != nil {
+		return nil, err
 	}
 
 	g.setChannels(&pkg)
@@ -152,7 +127,6 @@ func (g PkgGenerator) generate() (map[string][]byte, error) {
 
 // buildPackageManifest will create a registry.PackageManifest from scratch, or reads
 // an existing one if found at the expected path.
-// Deprecated: only used for testing other methods on g.
 func (g PkgGenerator) buildPackageManifest() (registry.PackageManifest, error) {
 	pkgManifestOutputDir := filepath.Join(g.OutputDir, OLMCatalogChildDir, g.OperatorName)
 	path := filepath.Join(pkgManifestOutputDir, g.fileName)
@@ -202,7 +176,6 @@ func validatePackageManifest(pkg *registry.PackageManifest) error {
 }
 
 // newPackageManifest will return the registry.PackageManifest populated.
-// Deprecated: only used for testing other methods on g.
 func newPackageManifest(operatorName, channelName, version string) registry.PackageManifest {
 	// Take the current CSV version to be the "alpha" channel, as an operator
 	// should only be designated anything more stable than "alpha" by a human.
