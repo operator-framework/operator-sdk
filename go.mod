@@ -29,7 +29,7 @@ require (
 	github.com/stretchr/testify v1.5.1
 	go.uber.org/zap v1.14.1
 	golang.org/x/net v0.0.0-20200301022130-244492dfa37a
-	golang.org/x/tools v0.0.0-20200327195553-82bb89366a1e
+	golang.org/x/tools v0.0.0-20200403190813-44a64ad78b9b
 	gomodules.xyz/jsonpatch/v3 v3.0.1
 	gopkg.in/yaml.v2 v2.2.8
 	gopkg.in/yaml.v3 v3.0.0-20190905181640-827449938966
@@ -47,8 +47,7 @@ require (
 	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/controller-runtime v0.6.0
 	sigs.k8s.io/controller-tools v0.3.0
-	// Using branch feature/plugins-part-2-electric-boogaloo 27812b07d2db958a31f985b4d9800c204f68bff0
-	sigs.k8s.io/kubebuilder v1.0.9-0.20200409105744-27812b07d2db
+	sigs.k8s.io/kubebuilder v1.0.9-0.20200428220224-d6e2b995831c
 	sigs.k8s.io/yaml v1.2.0
 )
 

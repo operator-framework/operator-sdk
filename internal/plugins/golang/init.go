@@ -45,7 +45,7 @@ func (p *initPlugin) Run() error {
 
 	// Update plugin config section with this plugin's configuration.
 	cfg := Config{}
-	if err := p.config.EncodeExtraFields(pluginConfigKey, cfg); err != nil {
+	if err := p.config.EncodePluginConfig(pluginConfigKey, cfg); err != nil {
 		return fmt.Errorf("error writing plugin config for %s: %v", pluginConfigKey, err)
 	}
 
