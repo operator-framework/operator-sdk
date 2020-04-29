@@ -35,7 +35,7 @@ func CheckSpecTest(bundle registry.Bundle) scapiv1alpha2.ScorecardTestResult {
 	crSet, err := GetCRs(bundle)
 	if err != nil {
 		r.Errors = append(r.Errors, "error getting custom resources")
-		r.State = scapiv1alpha2.ErrorState
+		r.State = scapiv1alpha2.FailState
 		return r
 	}
 
