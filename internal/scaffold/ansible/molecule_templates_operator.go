@@ -55,6 +55,7 @@ spec:
       serviceAccountName: [[.ProjectName]]
       containers:
         - name: [[.ProjectName]]
+          # TODO(asmacdo) liveness
           # Replace this with the built image name
           image: "{{ image }}"
           imagePullPolicy: "{{ pull_policy }}"

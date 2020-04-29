@@ -10,10 +10,10 @@ header_text "Running tests to check ansible molecule"
 ROOTDIR="$(pwd)"
 TMPDIR="$(mktemp -d)"
 trap_add 'rm -rf $TMPDIR' EXIT
-pip3 install --user pyasn1==0.4.7 pyasn1-modules==0.2.6 idna==2.8 ipaddress==1.0.22
-pip3 install --user molecule==3.0.2
-pip3 install --user ansible-lint yamllint
-pip3 install --user docker openshift jmespath
+pip install  pyasn1==0.4.7 pyasn1-modules==0.2.6 idna==2.8 ipaddress==1.0.22
+pip install  molecule==3.0.2
+pip install  ansible-lint yamllint
+pip install  docker openshift jmespath
 
 deploy_prereqs() {
     header_text "Deploying resources"

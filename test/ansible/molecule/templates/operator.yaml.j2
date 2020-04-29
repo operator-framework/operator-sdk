@@ -19,6 +19,7 @@ spec:
       serviceAccountName: ansible
       containers:
         - name: operator
+          # TODO(asmacdo) liveness probe
           # Replace this with the built image name
           image: "{{ image }}"
           imagePullPolicy: "{{ pull_policy }}"

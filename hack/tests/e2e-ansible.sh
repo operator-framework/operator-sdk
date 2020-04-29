@@ -98,6 +98,17 @@ test_operator() {
         exit 1
     fi
 
+    header_text "Ensure no liveness probe fail events"
+    # TODO(asmacdo) use the actual pod name
+    # TODO actually 2 field selectors dont work
+    if timeout 60s bash -c -- "kubectl get events --field-selector='involvedObject.name=memcached-operator-7959b45477-zf74q' --field-selector='reason=Unhealthy'"
+    then 
+        error_text "FAIL: "
+        operator_logs
+        exit 1
+
+
+
     header_text "Verify that a config map owned by the CR has been created."
     if ! timeout 1m bash -c -- "until kubectl get configmap test-blacklist-watches > /dev/null 2>&1; do sleep 1; done";
     then

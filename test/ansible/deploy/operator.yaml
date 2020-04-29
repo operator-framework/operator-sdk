@@ -15,6 +15,7 @@ spec:
     spec:
       serviceAccountName: ansible
       containers:
+        # TODO liveness probe
         - name: ansible
           # Replace this with the built image name
           image: "REPLACE_IMAGE"
