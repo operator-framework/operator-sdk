@@ -15,34 +15,25 @@
 package alpha
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/client-go/kubernetes"
 )
 
 // getTestResult fetches the test pod log and converts it into
 // ScorecardOutput format
-func getTestResult(client kubernetes.Interface, p *v1.Pod, test Test) (output v1alpha2.ScorecardTestResult) {
+func (o Scorecard) getTestResult(ctx context.Context, p *v1.Pod, test Test) (output v1alpha2.ScorecardTestResult) {
 
-	logBytes, err := getPodLog(client, p)
+	logBytes, err := getPodLog(ctx, o.Client, p)
 	if err != nil {
-		r := v1alpha2.ScorecardTestResult{}
-		r.Name = test.Name
-		r.Description = test.Description
-		r.Errors = []string{fmt.Sprintf("Error getting pod log %s", err.Error())}
-		return r
+		return testResultError(err, test)
 	}
 	// marshal pod log into ScorecardTestResult
 	err = json.Unmarshal(logBytes, &output)
 	if err != nil {
-		r := v1alpha2.ScorecardTestResult{}
-		r.Name = test.Name
-		r.Description = test.Description
-		r.Errors = []string{fmt.Sprintf("Error unmarshalling test result %s", err.Error())}
-		return r
+		return testResultError(err, test)
 	}
 	return output
 }
@@ -52,7 +43,7 @@ func getTestResult(client kubernetes.Interface, p *v1.Pod, test Test) (output v1
 func (o Scorecard) ListTests() (output v1alpha2.ScorecardOutput, err error) {
 	tests := o.selectTests()
 	if len(tests) == 0 {
-		fmt.Println("no tests selected")
+		output.Results = make([]v1alpha2.ScorecardTestResult, 0)
 		return output, err
 	}
 
@@ -67,4 +58,13 @@ func (o Scorecard) ListTests() (output v1alpha2.ScorecardOutput, err error) {
 	}
 
 	return output, err
+}
+
+func testResultError(err error, test Test) v1alpha2.ScorecardTestResult {
+	r := v1alpha2.ScorecardTestResult{}
+	r.Name = test.Name
+	r.State = v1alpha2.FailState
+	r.Description = test.Description
+	r.Errors = []string{err.Error()}
+	return r
 }

@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"io"
 
-	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/rand"
@@ -36,7 +35,7 @@ func getPodDefinition(test Test, o Scorecard) *v1.Pod {
 			Namespace: o.Namespace,
 			Labels: map[string]string{
 				"app":     "scorecard-test",
-				"testrun": o.BundleConfigMapName,
+				"testrun": o.bundleConfigMapName,
 			},
 		},
 		Spec: v1.PodSpec{
@@ -63,7 +62,7 @@ func getPodDefinition(test Test, o Scorecard) *v1.Pod {
 					VolumeSource: v1.VolumeSource{
 						ConfigMap: &v1.ConfigMapVolumeSource{
 							LocalObjectReference: v1.LocalObjectReference{
-								Name: o.BundleConfigMapName,
+								Name: o.bundleConfigMapName,
 							},
 						},
 					},
@@ -73,10 +72,10 @@ func getPodDefinition(test Test, o Scorecard) *v1.Pod {
 	}
 }
 
-func getPodLog(client kubernetes.Interface, pod *v1.Pod) (logOutput []byte, err error) {
+func getPodLog(ctx context.Context, client kubernetes.Interface, pod *v1.Pod) (logOutput []byte, err error) {
 
 	req := client.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &v1.PodLogOptions{})
-	podLogs, err := req.Stream(context.TODO())
+	podLogs, err := req.Stream(ctx)
 	if err != nil {
 		return logOutput, err
 	}
@@ -90,13 +89,14 @@ func getPodLog(client kubernetes.Interface, pod *v1.Pod) (logOutput []byte, err 
 	return buf.Bytes(), err
 }
 
-func deletePods(o Scorecard) {
+func (o Scorecard) deletePods(ctx context.Context) error {
 	do := metav1.DeleteOptions{}
-	selector := fmt.Sprintf("testrun=%s", o.BundleConfigMapName)
+	selector := fmt.Sprintf("testrun=%s", o.bundleConfigMapName)
 	lo := metav1.ListOptions{LabelSelector: selector}
-	err := o.Client.CoreV1().Pods(o.Namespace).DeleteCollection(context.TODO(), do, lo)
+	err := o.Client.CoreV1().Pods(o.Namespace).DeleteCollection(ctx, do, lo)
 	if err != nil {
-		log.Errorf("Error deleting pods selector %s %w\n", selector, err)
+		return fmt.Errorf("error deleting pods selector %s %w", selector, err)
 	}
+	return nil
 
 }

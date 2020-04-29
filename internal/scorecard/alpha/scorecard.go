@@ -35,10 +35,9 @@ type Scorecard struct {
 	Selector            labels.Selector
 	BundlePath          string
 	WaitTime            time.Duration
-	Kubeconfig          string
 	Namespace           string
 	ServiceAccount      string
-	BundleConfigMapName string
+	bundleConfigMapName string
 	Client              kubernetes.Interface
 	SkipCleanup         bool
 	Parallel            bool
@@ -48,23 +47,22 @@ type Scorecard struct {
 func (o Scorecard) RunTests() (testOutput v1alpha2.ScorecardOutput, err error) {
 	tests := o.selectTests()
 	if len(tests) == 0 {
-		fmt.Println("no tests selected")
+		testOutput.Results = make([]v1alpha2.ScorecardTestResult, 0)
 		return testOutput, err
-	}
-
-	bundleData, err := getBundleData(o.BundlePath)
-	if err != nil {
-		return testOutput, fmt.Errorf("error getting bundle data %w", err)
-	}
-
-	// create a ConfigMap holding the bundle contents
-	o.BundleConfigMapName, err = createConfigMap(o, bundleData)
-	if err != nil {
-		return testOutput, fmt.Errorf("error creating ConfigMap %w", err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), o.WaitTime)
 	defer cancel()
+
+	bundleData, err := o.GetBundleData()
+	if err != nil {
+		return testOutput, fmt.Errorf("error getting bundle data %w", err)
+	}
+
+	err = o.CreateConfigMap(ctx, bundleData)
+	if err != nil {
+		return testOutput, fmt.Errorf("error creating ConfigMap %w", err)
+	}
 
 	testOutput.Results = make([]v1alpha2.ScorecardTestResult, len(tests))
 	if o.Parallel {
@@ -75,7 +73,7 @@ func (o Scorecard) RunTests() (testOutput v1alpha2.ScorecardOutput, err error) {
 				defer wg.Done()
 				result, err := o.runTest(ctx, t)
 				if err != nil {
-					result = convertErrorToResult(t, err)
+					result = convertErrorToResult(t.Name, t.Description, err)
 				}
 				testOutput.Results[i] = result
 			}(idx, test)
@@ -86,15 +84,25 @@ func (o Scorecard) RunTests() (testOutput v1alpha2.ScorecardOutput, err error) {
 		for idx, test := range tests {
 			result, err := o.runTest(ctx, test)
 			if err != nil {
-				result = convertErrorToResult(test, err)
+				result = convertErrorToResult(test.Name, test.Description, err)
 			}
 			testOutput.Results[idx] = result
 		}
 	}
 
 	if !o.SkipCleanup {
-		defer deletePods(o)
-		defer deleteConfigMap(o)
+		defer func() {
+			err := o.deletePods(ctx)
+			if err != nil {
+				testOutput.Results = append(testOutput.Results,
+					convertErrorToResult("", "", err))
+			}
+			err = o.deleteConfigMap(ctx)
+			if err != nil {
+				testOutput.Results = append(testOutput.Results,
+					convertErrorToResult("", "", err))
+			}
+		}()
 	}
 
 	return testOutput, err
@@ -116,21 +124,21 @@ func (o Scorecard) selectTests() []Test {
 }
 
 // runTest executes a single test
-func (o Scorecard) runTest(_ context.Context, test Test) (result v1alpha2.ScorecardTestResult, err error) {
+func (o Scorecard) runTest(ctx context.Context, test Test) (result v1alpha2.ScorecardTestResult, err error) {
 
 	// Create a Pod to run the test
 	podDef := getPodDefinition(test, o)
-	pod, err := o.Client.CoreV1().Pods(o.Namespace).Create(context.TODO(), podDef, metav1.CreateOptions{})
+	pod, err := o.Client.CoreV1().Pods(o.Namespace).Create(ctx, podDef, metav1.CreateOptions{})
 	if err != nil {
 		return result, err
 	}
 
-	err = o.waitForTestToComplete(pod)
+	err = o.waitForTestToComplete(ctx, pod)
 	if err != nil {
 		return result, err
 	}
 
-	result = getTestResult(o.Client, pod, test)
+	result = o.getTestResult(ctx, pod, test)
 	return result, nil
 }
 
@@ -145,11 +153,11 @@ func ConfigDocLink() string {
 
 // waitForTestToComplete waits for a fixed amount of time while
 // checking for a test pod to complete
-func (o Scorecard) waitForTestToComplete(p *v1.Pod) (err error) {
+func (o Scorecard) waitForTestToComplete(ctx context.Context, p *v1.Pod) (err error) {
 	waitTimeInSeconds := int(o.WaitTime.Seconds())
 	for elapsedSeconds := 0; elapsedSeconds < waitTimeInSeconds; elapsedSeconds++ {
 		var tmp *v1.Pod
-		tmp, err = o.Client.CoreV1().Pods(p.Namespace).Get(context.TODO(), p.Name, metav1.GetOptions{})
+		tmp, err = o.Client.CoreV1().Pods(p.Namespace).Get(ctx, p.Name, metav1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("error getting pod %s %w", p.Name, err)
 		}
@@ -163,9 +171,9 @@ func (o Scorecard) waitForTestToComplete(p *v1.Pod) (err error) {
 
 }
 
-func convertErrorToResult(t Test, err error) (result v1alpha2.ScorecardTestResult) {
-	result.Name = t.Name
-	result.Description = t.Description
+func convertErrorToResult(name, description string, err error) (result v1alpha2.ScorecardTestResult) {
+	result.Name = name
+	result.Description = description
 	result.Errors = []string{err.Error()}
 	result.Suggestions = []string{}
 	result.State = v1alpha2.FailState

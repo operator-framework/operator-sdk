@@ -22,18 +22,18 @@ import (
 	"k8s.io/apimachinery/pkg/util/rand"
 )
 
-// getBundleData tars up the contents of a bundle from a path, and returns that tar file in []byte
-func getBundleData(bundlePath string) (bundleData []byte, err error) {
+// GetBundleData tars up the contents of a bundle from a path, and returns that tar file in []byte
+func (o Scorecard) GetBundleData() (bundleData []byte, err error) {
 
 	// make sure the bundle exists on disk
-	_, err = os.Stat(bundlePath)
+	_, err = os.Stat(o.BundlePath)
 	if os.IsNotExist(err) {
 		return bundleData, fmt.Errorf("bundle path is not valid %w", err)
 	}
 
 	tempTarFileName := fmt.Sprintf("%s%ctempBundle-%s.tar", os.TempDir(), os.PathSeparator, rand.String(4))
 
-	paths := []string{bundlePath}
+	paths := []string{o.BundlePath}
 	err = CreateTarFile(tempTarFileName, paths)
 	if err != nil {
 		return bundleData, fmt.Errorf("error creating tar of bundle %w", err)

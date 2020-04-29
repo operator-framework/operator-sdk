@@ -115,6 +115,10 @@ func NewCmd() *cobra.Command {
 func printOutput(outputFormat string, output v1alpha2.ScorecardOutput) error {
 	switch outputFormat {
 	case "text":
+		if len(output.Results) == 0 {
+			fmt.Println("0 tests selected")
+			return nil
+		}
 		o, err := output.MarshalText()
 		if err != nil {
 			fmt.Println(err.Error())

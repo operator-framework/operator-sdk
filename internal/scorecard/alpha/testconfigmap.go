@@ -18,18 +18,18 @@ import (
 	"context"
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/rand"
 )
 
-// createConfigMap creates a ConfigMap that will hold the bundle
+// CreateConfigMap creates a ConfigMap that will hold the bundle
 // contents to be mounted into the test Pods
-func createConfigMap(o Scorecard, bundleData []byte) (configMapName string, err error) {
+func (o *Scorecard) CreateConfigMap(ctx context.Context, bundleData []byte) (err error) {
 	cfg := getConfigMapDefinition(o.Namespace, bundleData)
-	configMap, err := o.Client.CoreV1().ConfigMaps(o.Namespace).Create(context.TODO(), cfg, metav1.CreateOptions{})
-	return configMap.Name, err
+	configMap, err := o.Client.CoreV1().ConfigMaps(o.Namespace).Create(ctx, cfg, metav1.CreateOptions{})
+	o.bundleConfigMapName = configMap.Name
+	return err
 }
 
 // getConfigMapDefinition returns a ConfigMap definition that
@@ -53,9 +53,10 @@ func getConfigMapDefinition(namespace string, bundleData []byte) *v1.ConfigMap {
 
 // deleteConfigMap deletes the test bundle ConfigMap and is called
 // as part of the test run cleanup
-func deleteConfigMap(o Scorecard) {
-	err := o.Client.CoreV1().ConfigMaps(o.Namespace).Delete(context.TODO(), o.BundleConfigMapName, metav1.DeleteOptions{})
+func (o Scorecard) deleteConfigMap(ctx context.Context) error {
+	err := o.Client.CoreV1().ConfigMaps(o.Namespace).Delete(ctx, o.bundleConfigMapName, metav1.DeleteOptions{})
 	if err != nil {
-		log.Errorf("Error deleting configMap %s %w", o.BundleConfigMapName, err)
+		return fmt.Errorf("error deleting configMap %s %w", o.bundleConfigMapName, err)
 	}
+	return nil
 }
