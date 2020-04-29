@@ -120,7 +120,7 @@ func TestOLMBundle(t *testing.T) {
 		bundlePath string
 		state      scapiv1alpha2.State
 	}{
-		{"../testdata", scapiv1alpha2.PassState},
+		{"../testdata/bundle", scapiv1alpha2.PassState},
 	}
 	for _, c := range cases {
 		t.Run(c.bundlePath, func(t *testing.T) {
