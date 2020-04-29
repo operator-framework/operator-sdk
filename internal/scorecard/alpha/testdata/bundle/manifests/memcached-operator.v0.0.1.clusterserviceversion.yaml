@@ -12,14 +12,11 @@ metadata:
           },
           "spec": {
             "size": 3
-          },
-          "status": {
-            "status": "Reconciled"
           }
         }
       ]
     capabilities: Basic Install
-  name: memcached-operator.v0.0.1
+  name: memcached-operator.v
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -37,6 +34,9 @@ spec:
         - 'urn:alm:descriptor:com.tectonic.ui:podCount'
   description: Placeholder description
   displayName: Memcached Operator
+  icon:
+  - base64data: ""
+    mediatype: ""
   install:
     spec:
       deployments:
@@ -66,8 +66,8 @@ spec:
                       fieldPath: metadata.name
                 - name: OPERATOR_NAME
                   value: memcached-operator
-                image: quay.io/jemccorm/memcached-operator:v0.0.1
-                imagePullPolicy: IfNotPresent
+                image: REPLACE_IMAGE
+                imagePullPolicy: Always
                 name: memcached-operator
                 resources: {}
               serviceAccountName: memcached-operator
@@ -85,7 +85,13 @@ spec:
           - configmaps
           - secrets
           verbs:
-          - '*'
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
         - apiGroups:
           - apps
           resources:
@@ -94,7 +100,13 @@ spec:
           - replicasets
           - statefulsets
           verbs:
-          - '*'
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
         - apiGroups:
           - monitoring.coreos.com
           resources:
@@ -128,7 +140,13 @@ spec:
           resources:
           - '*'
           verbs:
-          - '*'
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
         serviceAccountName: memcached-operator
     strategy: deployment
   installModes:
@@ -140,7 +158,10 @@ spec:
     type: MultiNamespace
   - supported: true
     type: AllNamespaces
+  keywords:
+  - ""
+  maintainers:
+  - {}
   maturity: alpha
   provider: {}
-  replaces: memcached-operator.v0.0.0
-  version: 0.0.1
+  version: 0.0.0
