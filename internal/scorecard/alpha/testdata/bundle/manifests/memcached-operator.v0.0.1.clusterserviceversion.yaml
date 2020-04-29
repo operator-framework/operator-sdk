@@ -14,7 +14,7 @@ metadata:
             "size": 3
           },
           "status": {
-            "nodes": null
+            "status": "Reconciled"
           }
         }
       ]
