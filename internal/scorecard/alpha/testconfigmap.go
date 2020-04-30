@@ -23,9 +23,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/rand"
 )
 
-// CreateConfigMap creates a ConfigMap that will hold the bundle
+// createConfigMap creates a ConfigMap that will hold the bundle
 // contents to be mounted into the test Pods
-func (o *Scorecard) CreateConfigMap(ctx context.Context, bundleData []byte) (err error) {
+func (o *Scorecard) createConfigMap(ctx context.Context, bundleData []byte) (err error) {
 	cfg := getConfigMapDefinition(o.Namespace, bundleData)
 	configMap, err := o.Client.CoreV1().ConfigMaps(o.Namespace).Create(ctx, cfg, metav1.CreateOptions{})
 	o.bundleConfigMapName = configMap.Name

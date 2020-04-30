@@ -57,7 +57,7 @@ func (o Scorecard) RunTests() (testOutput v1alpha2.ScorecardOutput, err error) {
 		return testOutput, fmt.Errorf("error getting bundle data %w", err)
 	}
 
-	err = o.CreateConfigMap(ctx, bundleData)
+	err = o.createConfigMap(ctx, bundleData)
 	if err != nil {
 		return testOutput, fmt.Errorf("error creating ConfigMap %w", err)
 	}
@@ -73,18 +73,14 @@ func (o Scorecard) RunTests() (testOutput v1alpha2.ScorecardOutput, err error) {
 	}
 
 	if !o.SkipCleanup {
-		defer func() {
-			err := o.deletePods(ctx)
-			if err != nil {
-				testOutput.Results = append(testOutput.Results,
-					*convertErrorToResult("", "", err))
-			}
-			err = o.deleteConfigMap(ctx)
-			if err != nil {
-				testOutput.Results = append(testOutput.Results,
-					*convertErrorToResult("", "", err))
-			}
-		}()
+		err := o.deletePods(ctx)
+		if err != nil {
+			return testOutput, err
+		}
+		err = o.deleteConfigMap(ctx)
+		if err != nil {
+			return testOutput, err
+		}
 	}
 
 	return testOutput, err
