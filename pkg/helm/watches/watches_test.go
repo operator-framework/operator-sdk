@@ -15,23 +15,27 @@
 package watches
 
 import (
+	"bytes"
 	"io/ioutil"
 	"os"
-	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/operator-framework/operator-sdk/internal/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 )
 
-type testCase struct {
-	name            string
-	data            string
-	env             map[string]string
-	expectLen       int
-	expectErr       bool
-	expectOverrides []map[string]string
-}
-
-func TestLoadWatches(t *testing.T) {
-	testCases := []testCase{
+func TestLoadReader(t *testing.T) {
+	trueVal, falseVal := true, false
+	testCases := []struct {
+		name          string
+		data          string
+		env           map[string]string
+		expectWatches []Watch
+		expectErr     bool
+	}{
 		{
 			name: "valid",
 			data: `---
@@ -43,9 +47,15 @@ func TestLoadWatches(t *testing.T) {
   overrideValues:
     key: value
 `,
-			expectLen:       1,
-			expectErr:       false,
-			expectOverrides: []map[string]string{{"key": "value"}},
+			expectWatches: []Watch{
+				{
+					GroupVersionKind:        schema.GroupVersionKind{Group: "mygroup", Version: "v1alpha1", Kind: "MyKind"},
+					ChartDir:                "../../../internal/scaffold/helm/testdata/testcharts/test-chart",
+					WatchDependentResources: &falseVal,
+					OverrideValues:          map[string]string{"key": "value"},
+				},
+			},
+			expectErr: false,
 		},
 		{
 			name: "valid with override expansion",
@@ -58,10 +68,16 @@ func TestLoadWatches(t *testing.T) {
   overrideValues:
     key: $MY_VALUE
 `,
-			env:             map[string]string{"MY_VALUE": "value"},
-			expectLen:       1,
-			expectErr:       false,
-			expectOverrides: []map[string]string{{"key": "value"}},
+			env: map[string]string{"MY_VALUE": "value"},
+			expectWatches: []Watch{
+				{
+					GroupVersionKind:        schema.GroupVersionKind{Group: "mygroup", Version: "v1alpha1", Kind: "MyKind"},
+					ChartDir:                "../../../internal/scaffold/helm/testdata/testcharts/test-chart",
+					WatchDependentResources: &falseVal,
+					OverrideValues:          map[string]string{"key": "value"},
+				},
+			},
+			expectErr: false,
 		},
 		{
 			name: "multiple gvk",
@@ -75,7 +91,18 @@ func TestLoadWatches(t *testing.T) {
   kind: MySecondKind
   chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
 `,
-			expectLen: 2,
+			expectWatches: []Watch{
+				{
+					GroupVersionKind:        schema.GroupVersionKind{Group: "mygroup", Version: "v1alpha1", Kind: "MyFirstKind"},
+					ChartDir:                "../../../internal/scaffold/helm/testdata/testcharts/test-chart",
+					WatchDependentResources: &trueVal,
+				},
+				{
+					GroupVersionKind:        schema.GroupVersionKind{Group: "mygroup", Version: "v1alpha1", Kind: "MySecondKind"},
+					ChartDir:                "../../../internal/scaffold/helm/testdata/testcharts/test-chart",
+					WatchDependentResources: &trueVal,
+				},
+			},
 			expectErr: false,
 		},
 		{
@@ -90,7 +117,6 @@ func TestLoadWatches(t *testing.T) {
   kind: MyKind
   chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
 `,
-			expectLen: 0,
 			expectErr: true,
 		},
 		{
@@ -100,7 +126,6 @@ func TestLoadWatches(t *testing.T) {
   kind: MyKind
   chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
 `,
-			expectLen: 0,
 			expectErr: true,
 		},
 		{
@@ -110,7 +135,6 @@ func TestLoadWatches(t *testing.T) {
   version: v1alpha1
   chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
 `,
-			expectLen: 0,
 			expectErr: true,
 		},
 		{
@@ -121,7 +145,6 @@ func TestLoadWatches(t *testing.T) {
   kind: MyKind
   chart: nonexistent/path/to/chart
 `,
-			expectLen: 0,
 			expectErr: true,
 		},
 		{
@@ -135,7 +158,6 @@ func TestLoadWatches(t *testing.T) {
     key1:
 		key2: value
 `,
-			expectLen: 0,
 			expectErr: true,
 		},
 		{
@@ -143,32 +165,26 @@ func TestLoadWatches(t *testing.T) {
 			data: `---
 foo: bar
 `,
-			expectLen: 0,
 			expectErr: true,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tmp, err := ioutil.TempFile("", "watches.yaml")
-			if err != nil {
-				t.Fatalf("Failed to create temporary watches.yaml file: %v", err)
-			}
-			defer func() { _ = os.Remove(tmp.Name()) }()
-			if _, err := tmp.WriteString(tc.data); err != nil {
-				t.Fatalf("Failed to write data to temporary watches.yaml file: %v", err)
-			}
-			if err := tmp.Close(); err != nil {
-				t.Fatalf("Failed to close temporary watches.yaml file: %v", err)
-			}
-
 			for k, v := range tc.env {
 				if err := os.Setenv(k, v); err != nil {
 					t.Fatalf("Failed to set environment variable %q: %v", k, err)
 				}
 			}
 
-			doTest(t, tc, tmp.Name())
+			watchesData := bytes.NewBufferString(tc.data)
+			watches, err := LoadReader(watchesData)
+			if !tc.expectErr && err != nil {
+				t.Fatalf("Expected no error; got error: %v", err)
+			} else if tc.expectErr && err == nil {
+				t.Fatalf("Expected error; got no error")
+			}
+			assert.Equal(t, tc.expectWatches, watches)
 
 			for k := range tc.env {
 				if err := os.Unsetenv(k); err != nil {
@@ -179,29 +195,322 @@ foo: bar
 	}
 }
 
-func doTest(t *testing.T, tc testCase, watchesFile string) {
-	watches, err := Load(watchesFile)
-	if !tc.expectErr && err != nil {
-		t.Fatalf("Expected no error; got error: %v", err)
-	} else if tc.expectErr && err == nil {
-		t.Fatalf("Expected error; got no error")
-	}
-	if len(watches) != tc.expectLen {
-		t.Fatalf("Expected %d watches; got %d", tc.expectLen, len(watches))
+func TestLoad(t *testing.T) {
+	falseVal := false
+	testCases := []struct {
+		name          string
+		data          string
+		env           map[string]string
+		expectWatches []Watch
+		expectErr     bool
+	}{
+		{
+			name: "valid",
+			data: `---
+- group: mygroup
+  version: v1alpha1
+  kind: MyKind
+  chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
+  watchDependentResources: false
+  overrideValues:
+    key: value
+`,
+			expectWatches: []Watch{
+				{
+					GroupVersionKind:        schema.GroupVersionKind{Group: "mygroup", Version: "v1alpha1", Kind: "MyKind"},
+					ChartDir:                "../../../internal/scaffold/helm/testdata/testcharts/test-chart",
+					WatchDependentResources: &falseVal,
+					OverrideValues:          map[string]string{"key": "value"},
+				},
+			},
+			expectErr: false,
+		},
 	}
 
-	for i, w := range watches {
-		if len(tc.expectOverrides) <= i {
-			if len(w.OverrideValues) > 0 {
-				t.Fatalf("Expected no overides; got %#v", w.OverrideValues)
-			} else {
-				continue
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			for k, v := range tc.env {
+				if err := os.Setenv(k, v); err != nil {
+					t.Fatalf("Failed to set environment variable %q: %v", k, err)
+				}
 			}
-		}
 
-		expectedOverrides := tc.expectOverrides[i]
-		if !reflect.DeepEqual(expectedOverrides, w.OverrideValues) {
-			t.Fatalf("Expected overrides %#v; got %#v", expectedOverrides, w.OverrideValues)
-		}
+			f, err := ioutil.TempFile("", "osdk-test-load")
+			if err != nil {
+				t.Fatalf("Failed to create temporary watches file: %v", err)
+			}
+			defer removeFile(t, f)
+			if _, err := f.WriteString(tc.data); err != nil {
+				t.Fatalf("Failed to write temporary watches file: %v", err)
+			}
+			watches, err := Load(f.Name())
+			if !tc.expectErr && err != nil {
+				t.Fatalf("Expected no error; got error: %v", err)
+			} else if tc.expectErr && err == nil {
+				t.Fatalf("Expected error; got no error")
+			}
+			assert.Equal(t, tc.expectWatches, watches)
+
+			for k := range tc.env {
+				if err := os.Unsetenv(k); err != nil {
+					t.Fatalf("Failed to unset environment variable %q: %v", k, err)
+				}
+			}
+		})
+	}
+}
+
+func TestAppend(t *testing.T) {
+	trueVal := true
+	testCases := []struct {
+		name          string
+		data          string
+		watch         Watch
+		expectErr     bool
+		expectWatches string
+	}{
+		{
+			name: "empty_existing",
+			watch: Watch{
+				GroupVersionKind: schema.GroupVersionKind{
+					Group: "mygroup", Version: "v1alpha1", Kind: "MyNewKind",
+				},
+				ChartDir:                "helm-charts/test",
+				WatchDependentResources: &trueVal,
+				OverrideValues:          map[string]string{"key": "value"},
+			},
+			expectErr: false,
+			expectWatches: `---
+- group: mygroup
+  version: v1alpha1
+  kind: MyNewKind
+  chart: helm-charts/test
+  watchDependentResources: true
+  overrideValues:
+    "key": "value"
+`,
+		},
+		{
+			name: "empty_minimal_watch",
+			watch: Watch{
+				GroupVersionKind: schema.GroupVersionKind{
+					Group: "mygroup", Version: "v1alpha1", Kind: "MyNewKind",
+				},
+				ChartDir: "helm-charts/test",
+			},
+			expectErr: false,
+			expectWatches: `---
+- group: mygroup
+  version: v1alpha1
+  kind: MyNewKind
+  chart: helm-charts/test
+`,
+		},
+		{
+			name: "append_all_fields",
+			data: `---
+- group: mygroup
+  version: v1alpha1
+  kind: MyKind
+  chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
+  watchDependentResources: false
+  overrideValues:
+    "key": "value"
+`,
+			watch: Watch{
+				GroupVersionKind: schema.GroupVersionKind{
+					Group: "mygroup", Version: "v1alpha1", Kind: "MyNewKind",
+				},
+				ChartDir:                "helm-charts/test",
+				WatchDependentResources: &trueVal,
+				OverrideValues:          map[string]string{"key": "value"},
+			},
+			expectErr: false,
+			expectWatches: `---
+- group: mygroup
+  version: v1alpha1
+  kind: MyKind
+  chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
+  watchDependentResources: false
+  overrideValues:
+    "key": "value"
+- group: mygroup
+  version: v1alpha1
+  kind: MyNewKind
+  chart: helm-charts/test
+  watchDependentResources: true
+  overrideValues:
+    "key": "value"
+`,
+		},
+		{
+			name: "duplicate_error",
+			data: `---
+- group: mygroup
+  version: v1alpha1
+  kind: MyKind
+  chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
+  watchDependentResources: false
+  overrideValues:
+    "key": "value"
+`,
+			watch: Watch{
+				GroupVersionKind: schema.GroupVersionKind{
+					Group: "mygroup", Version: "v1alpha1", Kind: "MyKind",
+				},
+				ChartDir: "helm-charts/test",
+			},
+			expectErr: true,
+		},
+		{
+			name: "invalid_yaml_error",
+			data: `---
+group: mygroup
+version: v1alpha1
+kind: MyKind
+chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
+watchDependentResources: false
+overrideValues:
+  "key": "value"
+`,
+			watch: Watch{
+				GroupVersionKind: schema.GroupVersionKind{
+					Group: "mygroup", Version: "v1alpha1", Kind: "MyNewKind",
+				},
+				ChartDir: "helm-charts/test",
+			},
+			expectErr: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := Append(bytes.NewBufferString(tc.data), tc.watch)
+			if !tc.expectErr && err != nil {
+				t.Fatalf("Expected no error; got error: %v", err)
+			} else if tc.expectErr && err == nil {
+				t.Fatalf("Expected error; got no error")
+			}
+			assert.Equal(t, tc.expectWatches, string(data))
+		})
+	}
+}
+
+func TestUpdateForResource(t *testing.T) {
+	resource, err := scaffold.NewResource("mygroup/v1alpha1", "MyNewKind")
+	if err != nil {
+		t.Fatal("Invalid resource: %w", err)
+	}
+	testCases := []struct {
+		name            string
+		initialData     string
+		resource        *scaffold.Resource
+		chartName       string
+		expectWatches   string
+		expectErr       bool
+		skipInitialFile bool
+	}{
+		{
+			name:            "non-existent",
+			resource:        resource,
+			chartName:       "test",
+			skipInitialFile: true,
+			expectErr:       false,
+			expectWatches: `---
+- group: mygroup
+  version: v1alpha1
+  kind: MyNewKind
+  chart: helm-charts/test
+`,
+		},
+		{
+			name:      "empty",
+			resource:  resource,
+			chartName: "test",
+			expectErr: false,
+			expectWatches: `---
+- group: mygroup
+  version: v1alpha1
+  kind: MyNewKind
+  chart: helm-charts/test
+`,
+		},
+		{
+			name:      "existing",
+			resource:  resource,
+			chartName: "test",
+			initialData: `---
+- group: mygroup
+  version: v1alpha1
+  kind: MyKind
+  chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
+  watchDependentResources: false
+  overrideValues:
+    "key": "value"
+`,
+			expectErr: false,
+			expectWatches: `---
+- group: mygroup
+  version: v1alpha1
+  kind: MyKind
+  chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
+  watchDependentResources: false
+  overrideValues:
+    "key": "value"
+- group: mygroup
+  version: v1alpha1
+  kind: MyNewKind
+  chart: helm-charts/test
+`,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			wf, err := ioutil.TempFile("", "osdk-test-append-to-file")
+			if err != nil {
+				t.Fatalf("Error creating temporary watches file: %v", err)
+			}
+			defer func() {
+				if err := os.Remove(wf.Name()); err != nil {
+					t.Fatalf("Error removing temporary watches file: %v", err)
+				}
+			}()
+			if err := wf.Close(); err != nil {
+				t.Fatalf("Error closing temporary watches file: %v", err)
+			}
+			if tc.skipInitialFile {
+				if err := os.Remove(wf.Name()); err != nil {
+					t.Fatalf("Error removing temporary watches file: %v", err)
+				}
+			} else {
+				if err := ioutil.WriteFile(wf.Name(), []byte(tc.initialData), fileutil.DefaultFileMode); err != nil {
+					t.Fatalf("Error writing test initialData to temporary watches file: %v", err)
+				}
+			}
+
+			err = UpdateForResource(wf.Name(), tc.resource, tc.chartName)
+			if !tc.expectErr && err != nil {
+				t.Fatalf("Expected no error; got error: %v", err)
+			} else if tc.expectErr && err == nil {
+				t.Fatalf("Expected error; got no error")
+			}
+
+			watchesData, err := ioutil.ReadFile(wf.Name())
+			if err != nil {
+				t.Fatalf("Error reading temporary watches file: %v", err)
+			}
+
+			assert.Equal(t, tc.expectWatches, string(watchesData))
+		})
+	}
+}
+
+// remove removes path from disk. Used in defer statements.
+func removeFile(t *testing.T, f *os.File) {
+	if err := f.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(f.Name()); err != nil {
+		t.Fatal(err)
 	}
 }

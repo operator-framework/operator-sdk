@@ -22,16 +22,6 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/pkg/helm/controller"
-	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
-	"github.com/operator-framework/operator-sdk/pkg/helm/release"
-	"github.com/operator-framework/operator-sdk/pkg/helm/watches"
-	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
-	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
-	"github.com/operator-framework/operator-sdk/pkg/leader"
-	"github.com/operator-framework/operator-sdk/pkg/metrics"
-	sdkVersion "github.com/operator-framework/operator-sdk/version"
-
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -43,6 +33,16 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
+
+	"github.com/operator-framework/operator-sdk/pkg/helm/controller"
+	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
+	"github.com/operator-framework/operator-sdk/pkg/helm/release"
+	"github.com/operator-framework/operator-sdk/pkg/helm/watches"
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
+	"github.com/operator-framework/operator-sdk/pkg/leader"
+	"github.com/operator-framework/operator-sdk/pkg/metrics"
+	sdkVersion "github.com/operator-framework/operator-sdk/version"
 )
 
 var (
@@ -112,13 +112,13 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 		return err
 	}
 
-	watches, err := watches.Load(flags.WatchesFile)
+	ws, err := watches.Load(flags.WatchesFile)
 	if err != nil {
 		log.Error(err, "Failed to create new manager factories.")
 		return err
 	}
 	var gvks []schema.GroupVersionKind
-	for _, w := range watches {
+	for _, w := range ws {
 		// Register the controller with the factory.
 		err := controller.Add(mgr, controller.WatchOptions{
 			Namespace:               namespace,

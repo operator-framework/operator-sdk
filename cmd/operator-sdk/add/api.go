@@ -22,9 +22,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	"sigs.k8s.io/yaml"
 
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal/genutil"
 	apiflags "github.com/operator-framework/operator-sdk/internal/flags/apiflags"
@@ -33,6 +33,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/operator-framework/operator-sdk/pkg/helm/watches"
 )
 
 var apiFlags apiflags.APIFlags
@@ -240,10 +241,10 @@ func doHelmAPIScaffold() error {
 	}
 	crSpec := fmt.Sprintf("# Default values copied from %s\n\n%s", valuesPath, rawValues)
 
-	// update watch.yaml for the given resource r.
-	if err := helm.UpdateHelmWatchForResource(r, absProjectPath, chart.Name()); err != nil {
-		return fmt.Errorf("failed to update the Watch manifest for the resource (%v, %v): (%v)",
-			r.APIVersion, r.Kind, err)
+	// update watch.yaml for the given resource.
+	watchesFile := filepath.Join(cfg.AbsProjectPath, watches.WatchesFile)
+	if err := watches.UpdateForResource(watchesFile, r, chart.Name()); err != nil {
+		return fmt.Errorf("failed to update watches.yaml: %w", err)
 	}
 
 	s := &scaffold.Scaffold{}
