@@ -206,6 +206,14 @@ func GetOperatorType() OperatorType {
 }
 
 func IsOperatorGo() bool {
+	// todo: in the future we should check the plugin prefx to see if is or not a go type
+	// for now, we can assume that any project with the kubebuilder layout is Go Type
+	if kbutil.HasProjectFile() {
+		return true
+	}
+
+	// todo: remove the following code when the legacy layout is no longer supported
+	// we can check it using the Project File
 	_, err := os.Stat(managerMainFile)
 	if err == nil || os.IsExist(err) {
 		return true
@@ -314,4 +322,10 @@ func CheckGoModules() error {
 func PrintDeprecationWarning(msg string) {
 	fmt.Printf(noticeColor, "[Deprecation Notice] "+msg+". Refer to the version upgrade guide "+
 		"for more information: https://operator-sdk.netlify.com/docs/migration/version-upgrade-guide\n\n")
+}
+
+// GetProjectName will return the name of the project
+func GetProjectName() string {
+	absProjectPath := MustGetwd()
+	return filepath.Base(absProjectPath)
 }
