@@ -125,8 +125,8 @@ func TestOLMBundle(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.bundlePath, func(t *testing.T) {
 			result := BundleValidationTest(c.bundlePath)
-			if result.State != scapiv1alpha2.PassState {
-				t.Errorf("%s result State %v expected", result.Name, scapiv1alpha2.PassState)
+			if result.State != c.state {
+				t.Errorf("%s result State %v expected", result.Name, c.state)
 				return
 			}
 		})
