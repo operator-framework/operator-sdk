@@ -49,9 +49,35 @@ func getPodDefinition(test Test, o Scorecard) *v1.Pod {
 					Command:         test.Entrypoint,
 					VolumeMounts: []v1.VolumeMount{
 						{
+							MountPath: "/scorecard-bundle-path",
+							Name:      "scorecard-untar",
+							ReadOnly:  true,
+						},
+					},
+				},
+			},
+			InitContainers: []v1.Container{
+				{
+					Name:            "scorecard-untar",
+					Image:           "busybox",
+					ImagePullPolicy: v1.PullIfNotPresent,
+					Args: []string{
+						"tar",
+						"xvzf",
+						"/scorecard/bundle.tar.gz",
+						"-C",
+						"/scorecard-bundle",
+					},
+					VolumeMounts: []v1.VolumeMount{
+						{
 							MountPath: "/scorecard",
 							Name:      "scorecard-bundle",
 							ReadOnly:  true,
+						},
+						{
+							MountPath: "/scorecard-bundle",
+							Name:      "scorecard-untar",
+							ReadOnly:  false,
 						},
 					},
 				},
@@ -67,11 +93,18 @@ func getPodDefinition(test Test, o Scorecard) *v1.Pod {
 						},
 					},
 				},
+				{
+					Name: "scorecard-untar",
+					VolumeSource: v1.VolumeSource{
+						EmptyDir: &v1.EmptyDirVolumeSource{},
+					},
+				},
 			},
 		},
 	}
 }
 
+// getPodLog fetches the test results which are found in the pod log
 func getPodLog(ctx context.Context, client kubernetes.Interface, pod *v1.Pod) (logOutput []byte, err error) {
 
 	req := client.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &v1.PodLogOptions{})
@@ -89,6 +122,7 @@ func getPodLog(ctx context.Context, client kubernetes.Interface, pod *v1.Pod) (l
 	return buf.Bytes(), err
 }
 
+// deletePods deletes a collection of pods that match a predefined selector value
 func (o Scorecard) deletePods(ctx context.Context) error {
 	do := metav1.DeleteOptions{}
 	selector := fmt.Sprintf("testrun=%s", o.bundleConfigMapName)

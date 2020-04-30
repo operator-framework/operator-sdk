@@ -24,7 +24,7 @@ import (
 
 // getTestResult fetches the test pod log and converts it into
 // ScorecardOutput format
-func (o Scorecard) getTestResult(ctx context.Context, p *v1.Pod, test Test) (output v1alpha2.ScorecardTestResult) {
+func (o Scorecard) getTestResult(ctx context.Context, p *v1.Pod, test Test) (output *v1alpha2.ScorecardTestResult) {
 
 	logBytes, err := getPodLog(ctx, o.Client, p)
 	if err != nil {
@@ -60,11 +60,10 @@ func (o Scorecard) ListTests() (output v1alpha2.ScorecardOutput, err error) {
 	return output, err
 }
 
-func testResultError(err error, test Test) v1alpha2.ScorecardTestResult {
-	r := v1alpha2.ScorecardTestResult{}
-	r.Name = test.Name
-	r.State = v1alpha2.FailState
-	r.Description = test.Description
-	r.Errors = []string{err.Error()}
-	return r
+func testResultError(err error, test Test) (result *v1alpha2.ScorecardTestResult) {
+	result.Name = test.Name
+	result.State = v1alpha2.FailState
+	result.Description = test.Description
+	result.Errors = []string{err.Error()}
+	return result
 }

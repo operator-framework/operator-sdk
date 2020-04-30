@@ -31,7 +31,7 @@ func (o Scorecard) getBundleData() (bundleData []byte, err error) {
 		return bundleData, fmt.Errorf("bundle path is not valid %w", err)
 	}
 
-	tempTarFileName := fmt.Sprintf("%s%ctempBundle-%s.tar", os.TempDir(), os.PathSeparator, rand.String(4))
+	tempTarFileName := fmt.Sprintf("%s%ctempBundle-%s.tar.gz", os.TempDir(), os.PathSeparator, rand.String(4))
 
 	paths := []string{o.BundlePath}
 	err = CreateTarFile(tempTarFileName, paths)

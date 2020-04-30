@@ -17,14 +17,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 
 	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 
-	"github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
 	"github.com/operator-framework/operator-sdk/internal/scorecard/alpha/tests"
 )
 
@@ -37,28 +35,14 @@ import (
 // this binary to run various tests all from within a single
 // test image.
 
-const (
-	// bundleTar is the tar file containing the bundle contents
-	bundleTar = "/scorecard/bundle.tar"
-)
-
 func main() {
 	entrypoint := os.Args[1:]
 	if len(entrypoint) == 0 {
 		log.Fatal("test name argument is required")
 	}
 
-	// Create tmp directory for the untar'd bundle
-	tmpDir, err := ioutil.TempDir("/tmp", "scorecard-bundle")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer os.Remove(tmpDir)
-
-	err = alpha.UntarFile(bundleTar, tmpDir)
-	if err != nil {
-		log.Fatalf("error untarring bundle %s", err.Error())
-	}
+	// This is the path that holds the untar'd bundle contents
+	tmpDir := "/scorecard-bundle-path"
 
 	cfg, err := tests.GetBundle(tmpDir)
 	if err != nil {

@@ -69,7 +69,7 @@ func (o Scorecard) RunTests() (testOutput v1alpha2.ScorecardOutput, err error) {
 		if err != nil {
 			result = convertErrorToResult(test.Name, test.Description, err)
 		}
-		testOutput.Results[idx] = result
+		testOutput.Results[idx] = *result
 	}
 
 	if !o.SkipCleanup {
@@ -77,12 +77,12 @@ func (o Scorecard) RunTests() (testOutput v1alpha2.ScorecardOutput, err error) {
 			err := o.deletePods(ctx)
 			if err != nil {
 				testOutput.Results = append(testOutput.Results,
-					convertErrorToResult("", "", err))
+					*convertErrorToResult("", "", err))
 			}
 			err = o.deleteConfigMap(ctx)
 			if err != nil {
 				testOutput.Results = append(testOutput.Results,
-					convertErrorToResult("", "", err))
+					*convertErrorToResult("", "", err))
 			}
 		}()
 	}
@@ -106,7 +106,7 @@ func (o Scorecard) selectTests() []Test {
 }
 
 // runTest executes a single test
-func (o Scorecard) runTest(ctx context.Context, test Test) (result v1alpha2.ScorecardTestResult, err error) {
+func (o Scorecard) runTest(ctx context.Context, test Test) (result *v1alpha2.ScorecardTestResult, err error) {
 
 	// Create a Pod to run the test
 	podDef := getPodDefinition(test, o)
@@ -153,7 +153,7 @@ func (o Scorecard) waitForTestToComplete(ctx context.Context, p *v1.Pod) (err er
 
 }
 
-func convertErrorToResult(name, description string, err error) (result v1alpha2.ScorecardTestResult) {
+func convertErrorToResult(name, description string, err error) (result *v1alpha2.ScorecardTestResult) {
 	result.Name = name
 	result.Description = description
 	result.Errors = []string{err.Error()}

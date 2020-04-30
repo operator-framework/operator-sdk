@@ -28,7 +28,6 @@ import (
 
 func NewCmd() *cobra.Command {
 	var (
-		config         string
 		outputFormat   string
 		bundle         string
 		selector       string
@@ -64,7 +63,7 @@ func NewCmd() *cobra.Command {
 				return fmt.Errorf("could not get kubernetes client: %w", err)
 			}
 
-			o.Config, err = scorecard.LoadConfig(config)
+			o.Config, err = scorecard.LoadConfig(bundle)
 			if err != nil {
 				return fmt.Errorf("could not find config file %w", err)
 			}
@@ -91,8 +90,6 @@ func NewCmd() *cobra.Command {
 		},
 	}
 
-	scorecardCmd.Flags().StringVarP(&config, "config", "c", "",
-		"path to a new to be defined DSL yaml formatted file that configures what tests get executed")
 	scorecardCmd.Flags().StringVar(&kubeconfig, "kubeconfig", "", "kubeconfig path")
 
 	scorecardCmd.Flags().StringVar(&bundle, "bundle", "", "path to the operator bundle contents on disk")
