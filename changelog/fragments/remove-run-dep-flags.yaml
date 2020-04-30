@@ -1,0 +1,27 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      The `ctx.GetNamespace()` from `pkg/test` and the flag  the flag `--namespace` from `operator-sdk run --local`
+      and `operator-sdk test --local` which were deprecated was removed.
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "removal"
+
+    # Is this a breaking change?
+    breaking: yes
+
+    # Migration can be defined to automatically add a section to
+    # the migration guide. This is required for breaking changes.
+    migration:
+      header: Romoval of deprecated flags and functions
+      body: >
+        The `ctx.GetNamespace()` from `pkg/test` and the flag  the flag `--namespace` from `operator-sdk run --local`
+        and `operator-sdk test --local` which were deprecated was removed. See the migration guide of the version 0.17 to know
+        how to replace its usage.
+
