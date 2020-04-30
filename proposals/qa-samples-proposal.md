@@ -36,7 +36,7 @@ The Operator SDK has a repo with [sample projects](https://github.com/operator-f
 
 - As a maintainer, I would like to ensure that samples projects continue to work after the changes performed in the PR are applied
 - As an operator developer, I would like to know how to cover the projects with tests
-- As an operator developer, I would like to know how to use the [test-framework](https://github.com/operator-framework/operator-sdk/blob/master/doc/test-framework/writing-e2e-tests.md)to do unit and integration tests
+- As an operator developer, I would like to know how to use the [test-framework][e2e-docs] to do unit and integration tests
 - As an operator developer, I would like to know how to call the tests in the CI and integrate them with Travis
 - As an operator developer, I would like to know good practices to ensure the quality of my operators projects 
 
@@ -63,7 +63,7 @@ The Operator SDK has a repo with [sample projects](https://github.com/operator-f
 - The tests should all pass.
 - The project should have a makefile target to call the tests
 - A section with a short info over how to tests and the links for its documents in the README of the project
-- The tests should be done using the default GO testing lib and the [test-framework](https://github.com/operator-framework/operator-sdk/blob/master/doc/test-framework/writing-e2e-tests.md)provided by SDK
+- The tests should be done using the default GO testing lib and the [test-framework][e2e-docs] provided by SDK
  
 **NOTES** 
 - See [here](https://github.com/dev4devs-com/postgresql-operator/blob/master/pkg/controller/database/controller_test.go) an example of how to cover the controller.
@@ -78,7 +78,7 @@ The Operator SDK has a repo with [sample projects](https://github.com/operator-f
 - The tests should all pass.
 - The project should have a makefile target to call the integration test
 - A section with a short info over how to tests and the links for its documents in the README of the project
-- The tests should be done using the default GO testing lib and the [test-framework](https://github.com/operator-framework/operator-sdk/blob/master/doc/test-framework/writing-e2e-tests.md) provided by SDK
+- The tests should be done using the default GO testing lib and the [test-framework][e2e-docs] provided by SDK
 
 #### Unit tests for Ansible Memcached Sample
 
@@ -133,4 +133,5 @@ The Operator SDK has a repo with [sample projects](https://github.com/operator-f
 
 [Coveralls](https://coveralls.io/) may not work well with [molecule](https://github.com/operator-framework/operator-sdk-samples/tree/master/ansible/memcached-operator/molecule), if this is the case we can just not integrate with it or we can find a similar tool.
 
-[operator-sdk-doc]:  ../../doc
+[operator-sdk-doc]:  https://sdk.operatorframework.io/
+[e2e-docs]: https://sdk.operatorframework.io/docs/golang/e2e-tests/

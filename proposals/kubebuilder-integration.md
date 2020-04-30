@@ -219,4 +219,4 @@ different commands for initializing different project types.
   that is not currently in scope for this proposal.
 
 
-[operator-sdk-doc]: ../../doc
+[operator-sdk-doc]:  https://sdk.operatorframework.io/

@@ -98,4 +98,4 @@ Unit tests will be implemented for scenarios described above.
 - An `--exclude` flag to which a list of patterns that should be excluded from CSV generation is passed.
   - This alternative would not easily support non-standard Operator project structures.
 
-[operator-sdk-doc]:  ../../doc
+[operator-sdk-doc]:  https://sdk.operatorframework.io/

@@ -162,4 +162,4 @@ None
 
 None
 
-[operator-sdk-doc]:  ../../doc
+[operator-sdk-doc]:  https://sdk.operatorframework.io/

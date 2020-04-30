@@ -2,7 +2,7 @@
 
 > Status: **implemented**
 > 
-> See user documentation in the [User Guide][helm_user_guide] and developer documentation in the [Developer Guide][helm_dev_guide].
+> See also: [Helm documentation][helm_docs].
 
 - [Background](#background)
 - [Goals](#goals)
@@ -163,5 +163,4 @@ The base image repository will be `quay.io/water-hole/helm-operator`.
 
 * There is a moderate amount of complexity already related to how operator types are handled between the `go` and `ansible` types. With the addition of a third type, there may need to be a larger design proposal for operator types. For example, do we need to define an `Operator` interface that each of the operator types can implement for flag verification, scaffolding, project detection, etc.?
 
-[helm_user_guide]:./../helm/user-guide.md
-[helm_dev_guide]:./../helm/dev/developer_guide.md
+[helm_docs]: https://sdk.operatorframework.io/docs/helm/

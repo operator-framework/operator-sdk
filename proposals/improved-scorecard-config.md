@@ -3,7 +3,7 @@
 Implementation Owner: AlexNPavel
 > Status: **implemented**
 >
-> See the [scorecard documentation](../test-framework/scorecard.md) for up-to-date information.
+> See the [scorecard documentation](https://sdk.operatorframework.io/docs/scorecard/) for up-to-date information.
 
 - [Background](#background)
 - [Goals](#goals)

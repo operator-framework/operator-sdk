@@ -2,7 +2,7 @@
 
 > Status: **implemented**
 > 
-> This proposal has been implemented, please see the [Ansible User Guide for Operator SDK](../ansible/user-guide.md) for current documentation.
+> This proposal has been implemented, please see the [Ansible User Guide for Operator SDK](http://sdk.operatorframework.io/docs/ansible/) for current documentation.
 
 - [Background](#background)
 - [Goals](#goals)

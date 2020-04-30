@@ -131,6 +131,6 @@ None
 
 N/A
 
-[operator-sdk-doc]:  ../../doc
+[operator-sdk-doc]:  https://sdk.operatorframework.io/
 [controller-runtime]: https://github.com/kubernetes-sigs/controller-runtime
 [helm]: https://github.com/helm/helm

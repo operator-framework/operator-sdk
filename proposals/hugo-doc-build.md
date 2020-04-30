@@ -121,4 +121,4 @@ require a more significant refactor.
 1. SSL Cert via Let's Encrypt
 1. Installation of Netlify app for GitHub repository.
 
-[operator-sdk-doc]:  ../../doc
+[operator-sdk-doc]:  https://sdk.operatorframework.io/
