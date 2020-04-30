@@ -30,68 +30,74 @@ import (
 )
 
 type Scorecard struct {
-	Config          Config
-	Selector        labels.Selector
-	BundlePath      string
-	WaitTime        time.Duration
-	Kubeconfig      string
-	Namespace       string
-	bundleConfigMap *v1.ConfigMap
-	ServiceAccount  string
-	Client          kubernetes.Interface
-	SkipCleanup     bool
+	Config              Config
+	Selector            labels.Selector
+	BundlePath          string
+	WaitTime            time.Duration
+	Namespace           string
+	ServiceAccount      string
+	bundleConfigMapName string
+	Client              kubernetes.Interface
+	SkipCleanup         bool
 }
 
 // RunTests executes the scorecard tests as configured
 func (o Scorecard) RunTests() (testOutput v1alpha2.ScorecardOutput, err error) {
-	tests := selectTests(o.Selector, o.Config.Tests)
+	tests := o.selectTests()
 	if len(tests) == 0 {
-		fmt.Println("no tests selected")
+		testOutput.Results = make([]v1alpha2.ScorecardTestResult, 0)
 		return testOutput, err
 	}
 
-	bundleData, err := getBundleData(o.BundlePath)
+	ctx, cancel := context.WithTimeout(context.Background(), o.WaitTime)
+	defer cancel()
+
+	bundleData, err := o.getBundleData()
 	if err != nil {
 		return testOutput, fmt.Errorf("error getting bundle data %w", err)
 	}
 
-	// create a ConfigMap holding the bundle contents
-	o.bundleConfigMap, err = createConfigMap(o, bundleData)
+	err = o.CreateConfigMap(ctx, bundleData)
 	if err != nil {
 		return testOutput, fmt.Errorf("error creating ConfigMap %w", err)
 	}
 
-	for i, test := range tests {
-		var err error
-		tests[i].TestPod, err = o.runTest(test)
+	testOutput.Results = make([]v1alpha2.ScorecardTestResult, len(tests))
+
+	for idx, test := range tests {
+		result, err := o.runTest(ctx, test)
 		if err != nil {
-			return testOutput, fmt.Errorf("test %s failed %w", test.Name, err)
+			result = convertErrorToResult(test.Name, test.Description, err)
 		}
+		testOutput.Results[idx] = result
 	}
 
 	if !o.SkipCleanup {
-		defer deletePods(o.Client, tests)
-		defer deleteConfigMap(o.Client, o.bundleConfigMap)
+		defer func() {
+			err := o.deletePods(ctx)
+			if err != nil {
+				testOutput.Results = append(testOutput.Results,
+					convertErrorToResult("", "", err))
+			}
+			err = o.deleteConfigMap(ctx)
+			if err != nil {
+				testOutput.Results = append(testOutput.Results,
+					convertErrorToResult("", "", err))
+			}
+		}()
 	}
-
-	err = o.waitForTestsToComplete(tests)
-	if err != nil {
-		return testOutput, err
-	}
-
-	testOutput = getTestResults(o.Client, tests)
 
 	return testOutput, err
 }
 
 // selectTests applies an optionally passed selector expression
 // against the configured set of tests, returning the selected tests
-func selectTests(selector labels.Selector, tests []Test) []Test {
+func (o Scorecard) selectTests() []Test {
 
 	selected := make([]Test, 0)
 
-	for _, test := range tests {
-		if selector.String() == "" || selector.Matches(labels.Set(test.Labels)) {
+	for _, test := range o.Config.Tests {
+		if o.Selector.String() == "" || o.Selector.Matches(labels.Set(test.Labels)) {
 			// TODO olm manifests check
 			selected = append(selected, test)
 		}
@@ -100,12 +106,22 @@ func selectTests(selector labels.Selector, tests []Test) []Test {
 }
 
 // runTest executes a single test
-func (o Scorecard) runTest(test Test) (result *v1.Pod, err error) {
+func (o Scorecard) runTest(ctx context.Context, test Test) (result v1alpha2.ScorecardTestResult, err error) {
 
 	// Create a Pod to run the test
 	podDef := getPodDefinition(test, o)
-	result, err = o.Client.CoreV1().Pods(o.Namespace).Create(context.TODO(), podDef, metav1.CreateOptions{})
-	return result, err
+	pod, err := o.Client.CoreV1().Pods(o.Namespace).Create(ctx, podDef, metav1.CreateOptions{})
+	if err != nil {
+		return result, err
+	}
+
+	err = o.waitForTestToComplete(ctx, pod)
+	if err != nil {
+		return result, err
+	}
+
+	result = o.getTestResult(ctx, pod, test)
+	return result, nil
 }
 
 func ConfigDocLink() string {
@@ -117,29 +133,31 @@ func ConfigDocLink() string {
 		version.Version)
 }
 
-// waitForTestsToComplete waits for a fixed amount of time while
-// checking for test pods to complete
-func (o Scorecard) waitForTestsToComplete(tests []Test) (err error) {
+// waitForTestToComplete waits for a fixed amount of time while
+// checking for a test pod to complete
+func (o Scorecard) waitForTestToComplete(ctx context.Context, p *v1.Pod) (err error) {
 	waitTimeInSeconds := int(o.WaitTime.Seconds())
 	for elapsedSeconds := 0; elapsedSeconds < waitTimeInSeconds; elapsedSeconds++ {
-		allPodsCompleted := true
-		for _, test := range tests {
-			p := test.TestPod
-			var tmp *v1.Pod
-			tmp, err = o.Client.CoreV1().Pods(p.Namespace).Get(context.TODO(), p.Name, metav1.GetOptions{})
-			if err != nil {
-				return fmt.Errorf("error getting pod %s %w", p.Name, err)
-			}
-			if tmp.Status.Phase != v1.PodSucceeded {
-				allPodsCompleted = false
-			}
-
+		var tmp *v1.Pod
+		tmp, err = o.Client.CoreV1().Pods(p.Namespace).Get(ctx, p.Name, metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("error getting pod %s %w", p.Name, err)
 		}
-		if allPodsCompleted {
+		if tmp.Status.Phase == v1.PodSucceeded {
 			return nil
 		}
+
 		time.Sleep(1 * time.Second)
 	}
 	return fmt.Errorf("error - wait time of %d seconds has been exceeded", o.WaitTime)
 
+}
+
+func convertErrorToResult(name, description string, err error) (result v1alpha2.ScorecardTestResult) {
+	result.Name = name
+	result.Description = description
+	result.Errors = []string{err.Error()}
+	result.Suggestions = []string{}
+	result.State = v1alpha2.FailState
+	return result
 }

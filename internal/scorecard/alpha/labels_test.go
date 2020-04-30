@@ -37,15 +37,15 @@ func TestEmptySelector(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.selectorValue, func(t *testing.T) {
-			var scConfig Config
+			o := Scorecard{}
 
-			err := yaml.Unmarshal([]byte(testConfig), &scConfig)
+			err := yaml.Unmarshal([]byte(testConfig), &o.Config)
 			if err != nil {
 				t.Log(err)
 				return
 			}
 
-			selector, err := labels.Parse(c.selectorValue)
+			o.Selector, err = labels.Parse(c.selectorValue)
 			if err == nil && c.wantError {
 				t.Fatalf("Wanted error but got no error")
 			} else if err != nil {
@@ -55,7 +55,7 @@ func TestEmptySelector(t *testing.T) {
 				return
 			}
 
-			tests := selectTests(selector, scConfig.Tests)
+			tests := o.selectTests()
 			testsSelected := len(tests)
 			if testsSelected != c.testsSelected {
 				t.Errorf("Wanted testsSelected %d, got: %d", c.testsSelected, testsSelected)
