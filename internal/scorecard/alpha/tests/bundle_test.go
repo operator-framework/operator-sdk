@@ -94,7 +94,6 @@ func TestBasicAndOLM(t *testing.T) {
 		{"../testdata", scapiv1alpha2.PassState, BundleValidationTest},
 		{"../testdata", scapiv1alpha2.PassState, CRDsHaveValidationTest},
 		{"../testdata", scapiv1alpha2.PassState, CRDsHaveResourcesTest},
-		{"../testdata", scapiv1alpha2.PassState, CRDsHaveResourcesTest},
 		{"../testdata", scapiv1alpha2.PassState, SpecDescriptorsTest},
 		{"../testdata", scapiv1alpha2.PassState, StatusDescriptorsTest},
 	}
