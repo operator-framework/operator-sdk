@@ -1,8 +1,12 @@
-# Operator Capability Levels
+---
+title: Operator Capability Levels
+linkTitle: Capability Levels
+weight: 50
+---
 
 Operators come in different maturity levels in regards to their lifecycle management capabilities for the application or workload they deliver. The capability models aims to provide guidance in terminology to express what features users can expect from an operator.
 
-![operator-capability-level](./images/operator-capability-level.png)
+![operator-capability-level](/operator-capability-level.png)
 
 Each capability level is associated with a certain set of management features the Operator offers around the managed workload. Operator that do not manage a workload and/or are delegating to off-clusters orchestration services would remain at Level 1. Capability levels are accumulating, i.e. Level 3 capabilities require all capabilities desired from Level 1 and 2.
 
