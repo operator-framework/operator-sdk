@@ -92,19 +92,19 @@ In your `main.go` file, replace the current implementation for logs inside the `
 With:
 
 ```Go
-configLog := zap.NewProductionEncoderConfig()
-configLog.EncodeTime = func(ts time.Time, encoder zapcore.PrimitiveArrayEncoder) {
-	encoder.AppendString(ts.UTC().Format(time.RFC3339))
-}
-logfmtEncoder := zaplogfmt.NewEncoder(configLog)
+	configLog := zapcr.NewProductionEncoderConfig()
+	configLog.EncodeTime = func(ts time.Time, encoder zapcore.PrimitiveArrayEncoder) {
+		encoder.AppendString(ts.UTC().Format(time.RFC3339Nano))
+	}
+	logfmtEncoder := zaplogfmt.NewEncoder(configLog)
 
-// Construct a new logr.logger.
-log = zapcr.New(zapcr.UseDevMode(true), zapcr.WriteTo(os.Stdout), zapcr.Encoder(logfmtEncoder))
+	// Construct a new logr.logger.
+	logger := zap.New(zap.UseDevMode(true), zap.WriteTo(os.Stdout), zap.Encoder(logfmtEncoder))
 
-// Set the controller logger to log, which will
-// be propagated through the whole operator, generating
-// uniform and structured logs.
-logf.SetLogger(logger)
+	// Set the controller logger to log, which will
+	// be propagated through the whole operator, generating
+	// uniform and structured logs.
+	logf.SetLogger(logger)
 ```
 
 Ensure that the following additional imports are being used:
@@ -113,79 +113,72 @@ Ensure that the following additional imports are being used:
 import(
 	...
 	zaplogfmt "github.com/sykesm/zap-logfmt"
-	zapcr "sigs.k8s.io/controller-runtime/pkg/log/zap"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"go.uber.org/zap"
+	zapcr "go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	...
 )
 ```
 **NOTE**: For this example, you will need to add the module `"github.com/sykesm/zap-logfmt"` to your project. Run `go get -u github.com/sykesm/zap-logfmt`.
 
-To test, the following print statement can be added in the main function:
-
-`log.Info("Printing at INFO LEVEL")`
-
 #### Output using custom zap logger
 
 ```console
-$ operator-sdk run --local
-INFO[0000] Running the operator locally in namespace default. 
-{"level":"info","ts":1587741740.407766,"logger":"global","msg":"Printing at INFO level"}
-{"level":"info","ts":1587741740.407855,"logger":"scoped","msg":"Printing at INFO level"}
+$ go run main.go
+ts=2020-04-30T20:35:59.551268Z level=info logger=global msg="Printing at INFO level"
+ts=2020-04-30T20:35:59.551314Z level=debug logger=global msg="Printing at DEBUG level"
+ts=2020-04-30T20:35:59.551318Z level=info logger=scoped msg="Printing at INFO level"
+ts=2020-04-30T20:35:59.55132Z level=debug logger=scoped msg="Printing at DEBUG level"
 ```
 
 By using `sigs.k8s.io/controller-runtime/pkg/log`, your logger is propagated through `controller-runtime`. Any logs produced by `controller-runtime` code will be through your logger, and therefore have the same formatting and destination.
 
 ### Setting flags when running locally
 
-When running locally with `operator-sdk run --local`, you can use the `--operator-flags` flag to pass additional flags to your operator, including the zap flags. For example:
+When running locally with `make run ENABLE_WEBHOOKS=false`, you can use the `ARGS` var to pass additional flags to your operator, including the zap flags. For example:
 
 ```console
-$ operator-sdk run --local --operator-flags="--zap-log-level=debug --zap-encoder=console"`
+$ make run ARGS="--zap-encoder=console" ENABLE_WEBHOOKS=false
+```
+Make sure to have your `run` target to take `ARGS` as shown below in `Makefile`.
+
+```makefile
+# Run against the configured Kubernetes cluster in ~/.kube/config
+run: generate fmt vet manifests
+	go run ./main.go $(ARGS)
 ```
 
 ### Setting flags when deploying to a cluster
 
-When deploying your operator to a cluster you can set additional flags using an `args` array in your operator's `container` spec. For example:
+When deploying your operator to a cluster you can set additional flags using an `args` array in your operator's `container` spec in the file `config/default/manager_auth_proxy_patch.yaml` For example:
 
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: memcached-operator
+  name: controller-manager
+  namespace: system
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      name: memcached-operator
   template:
-    metadata:
-      labels:
-        name: memcached-operator
     spec:
-      serviceAccountName: memcached-operator
       containers:
-        - name: memcached-operator
-          # Replace this with the built image name
-          image: REPLACE_IMAGE
-          command:
-            - memcached-operator
-          args:
-            - "--zap-log-level=debug"
-            - "--zap-encoder=console"
-          imagePullPolicy: Always
-          env:
-            - name: WATCH_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-            - name: POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            - name: OPERATOR_NAME
-              value: "memcached-operator"
+      - name: kube-rbac-proxy
+        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+        args:
+        - "--secure-listen-address=0.0.0.0:8443"
+        - "--upstream=http://127.0.0.1:8080/"
+        - "--logtostderr=true"
+        - "--v=10"
+        ports:
+        - containerPort: 8443
+          name: https
+      - name: manager
+        args:
+        - "--metrics-addr=127.0.0.1:8080"
+        - "--enable-leader-election"
+        - "--zap-encoder=console"
+        - "--zap-log-level=debug"
 ```
 
 ## Creating a structured log statement
@@ -260,7 +253,7 @@ Log records will look like the following (from `log.Error()` above):
 
 ## Non-default logging
 
-If you do not want to use `logr` as your logging tool, you can remove `logr`-specific statements without issue from your operator's code, including the `logr` [setup code][code_set_logger] in `cmd/manager/main.go`, and add your own. Note that removing `logr` setup code will prevent `controller-runtime` from logging.
+If you do not want to use `logr` as your logging tool, you can remove `logr`-specific statements without issue from your operator's code, including the `logr` [setup code][code_set_logger] in `main.go`, and add your own. Note that removing `logr` setup code will prevent `controller-runtime` from logging.
 
 
 [godoc_logr]:https://godoc.org/github.com/go-logr/logr
