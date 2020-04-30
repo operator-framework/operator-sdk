@@ -13,32 +13,36 @@ This project is a component of the [Operator Framework][of-home], an open source
 [Operators][operator_link] make it easy to manage complex stateful applications on top of Kubernetes. However writing an operator today can be difficult because of challenges such as using low level APIs, writing boilerplate, and a lack of modularity which leads to duplication.
 
 The Operator SDK is a framework that uses the [controller-runtime][controller_runtime] library to make writing operators easier by providing:
-- High level APIs and abstractions to write the operational logic more intuitively
-- Tools for scaffolding and code generation to bootstrap a new project fast
-- Extensions to cover common operator use cases
+
+  - High level APIs and abstractions to write the operational logic more intuitively
+  - Tools for scaffolding and code generation to bootstrap a new project fast
+  - Extensions to cover common operator use cases
 
 ## Workflow
 
 The SDK provides workflows to develop operators in Go, Ansible, or Helm.
 
 The following workflow is for a new [Golang operator][golang-guide]:
-1. Create a new operator project using the SDK Command Line Interface(CLI)
-2. Define new resource APIs by adding Custom Resource Definitions(CRD)
-3. Define Controllers to watch and reconcile resources
-4. Write the reconciling logic for your Controller using the SDK and controller-runtime APIs
-5. Use the SDK CLI to build and generate the operator deployment manifests
+
+  1. Create a new operator project using the SDK Command Line Interface(CLI)
+  2. Define new resource APIs by adding Custom Resource Definitions(CRD)
+  3. Define Controllers to watch and reconcile resources
+  4. Write the reconciling logic for your Controller using the SDK and controller-runtime APIs
+  5. Use the SDK CLI to build and generate the operator deployment manifests
 
 The following workflow is for a new [Ansible operator][ansible-guide]:
-1. Create a new operator project using the SDK Command Line Interface(CLI)
-2. Write the reconciling logic for your object using ansible playbooks and roles
-3. Use the SDK CLI to build and generate the operator deployment manifests
-4. Optionally add additional CRD's using the SDK CLI and repeat steps 2 and 3
+
+  1. Create a new operator project using the SDK Command Line Interface(CLI)
+  2. Write the reconciling logic for your object using ansible playbooks and roles
+  3. Use the SDK CLI to build and generate the operator deployment manifests
+  4. Optionally add additional CRD's using the SDK CLI and repeat steps 2 and 3
 
 The following workflow is for a new [Helm operator][helm-guide]:
-1. Create a new operator project using the SDK Command Line Interface(CLI)
-2. Create a new (or add your existing) Helm chart for use by the operator's reconciling logic
-3. Use the SDK CLI to build and generate the operator deployment manifests
-4. Optionally add additional CRD's using the SDK CLI and repeat steps 2 and 3
+
+  1. Create a new operator project using the SDK Command Line Interface(CLI)
+  2. Create a new (or add your existing) Helm chart for use by the operator's reconciling logic
+  3. Use the SDK CLI to build and generate the operator deployment manifests
+  4. Optionally add additional CRD's using the SDK CLI and repeat steps 2 and 3
 
 ## Command Line Interface
 
