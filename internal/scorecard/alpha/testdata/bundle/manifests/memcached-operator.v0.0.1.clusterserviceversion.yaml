@@ -16,7 +16,7 @@ metadata:
         }
       ]
     capabilities: Basic Install
-  name: memcached-operator.v
+  name: memcached-operator.v0.0.1
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -164,4 +164,4 @@ spec:
   - {}
   maturity: alpha
   provider: {}
-  version: 0.0.0
+  version: 0.0.1
