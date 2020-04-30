@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
@@ -40,7 +39,6 @@ type Scorecard struct {
 	bundleConfigMapName string
 	Client              kubernetes.Interface
 	SkipCleanup         bool
-	Parallel            bool
 }
 
 // RunTests executes the scorecard tests as configured
@@ -54,7 +52,7 @@ func (o Scorecard) RunTests() (testOutput v1alpha2.ScorecardOutput, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), o.WaitTime)
 	defer cancel()
 
-	bundleData, err := o.GetBundleData()
+	bundleData, err := o.getBundleData()
 	if err != nil {
 		return testOutput, fmt.Errorf("error getting bundle data %w", err)
 	}
@@ -65,29 +63,13 @@ func (o Scorecard) RunTests() (testOutput v1alpha2.ScorecardOutput, err error) {
 	}
 
 	testOutput.Results = make([]v1alpha2.ScorecardTestResult, len(tests))
-	if o.Parallel {
-		wg := sync.WaitGroup{}
-		wg.Add(len(tests))
-		for idx, test := range tests {
-			go func(i int, t Test) {
-				defer wg.Done()
-				result, err := o.runTest(ctx, t)
-				if err != nil {
-					result = convertErrorToResult(t.Name, t.Description, err)
-				}
-				testOutput.Results[i] = result
-			}(idx, test)
-		}
-		wg.Wait()
-	} else {
 
-		for idx, test := range tests {
-			result, err := o.runTest(ctx, test)
-			if err != nil {
-				result = convertErrorToResult(test.Name, test.Description, err)
-			}
-			testOutput.Results[idx] = result
+	for idx, test := range tests {
+		result, err := o.runTest(ctx, test)
+		if err != nil {
+			result = convertErrorToResult(test.Name, test.Description, err)
 		}
+		testOutput.Results[idx] = result
 	}
 
 	if !o.SkipCleanup {

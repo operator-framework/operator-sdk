@@ -22,8 +22,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/rand"
 )
 
-// GetBundleData tars up the contents of a bundle from a path, and returns that tar file in []byte
-func (o Scorecard) GetBundleData() (bundleData []byte, err error) {
+// getBundleData tars up the contents of a bundle from a path, and returns that tar file in []byte
+func (o Scorecard) getBundleData() (bundleData []byte, err error) {
 
 	// make sure the bundle exists on disk
 	_, err = os.Stat(o.BundlePath)
