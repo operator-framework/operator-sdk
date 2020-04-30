@@ -32,15 +32,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
 
-// TODO: remove before 1.0.0
-// Deprecated: GetNamespace() exists for historical compatibility.
-// Use GetOperatorNamespace() or GetWatchNamespace() instead
-func (ctx *Context) GetNamespace() (string, error) {
-	var err error
-	ctx.namespace, err = ctx.getNamespace(ctx.namespace)
-	return ctx.namespace, err
-}
-
 // GetOperatorNamespace will return an Operator Namespace,
 // if the flag --operator-namespace  not be used (TestOpeatorNamespaceEnv not set)
 // then it will create a new namespace with randon name and return that namespace
