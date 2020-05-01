@@ -313,7 +313,7 @@ func validateOdd(n int32) error {
 }
 ```
 
-and then call that method from the `ValidateCreate` and `ValidateUpdate` functions:
+And then, call that method from the `ValidateCreate` and `ValidateUpdate` functions:
 
 ```go
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
