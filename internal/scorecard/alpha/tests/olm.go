@@ -168,29 +168,7 @@ func SpecDescriptorsTest(bundle registry.Bundle) scapiv1alpha2.ScorecardTestResu
 	r.State = scapiv1alpha2.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
-	csv, err := bundle.ClusterServiceVersion()
-	if err != nil {
-		r.Errors = append(r.Errors, err.Error())
-		r.State = scapiv1alpha2.ErrorState
-		return r
-	}
-	r.Log += fmt.Sprintf("Loaded ClusterServiceVersion: %s\n", csv.GetName())
-	crs, err := GetCRs(bundle)
-	if err != nil {
-		r.Errors = append(r.Errors, err.Error())
-		r.State = scapiv1alpha2.ErrorState
-		return r
-	}
-	r.Log += fmt.Sprintf("Loaded %d Custom Resources from alm-examples\n", len(crs))
-	apiCSV, err := registryToAPICSV(csv)
-	if err != nil {
-		r.Errors = append(r.Errors, err.Error())
-		r.State = scapiv1alpha2.ErrorState
-		return r
-	}
-	for _, cr := range crs {
-		r = checkOwnedCSVDescriptors(cr, apiCSV, specDescriptor, r)
-	}
+	r = loadCSV(bundle, r, specDescriptor)
 	return r
 }
 
@@ -202,6 +180,12 @@ func StatusDescriptorsTest(bundle registry.Bundle) scapiv1alpha2.ScorecardTestRe
 	r.State = scapiv1alpha2.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
+	r = loadCSV(bundle, r, statusDescriptor)
+	return r
+}
+
+func loadCSV(bundle registry.Bundle, r scapiv1alpha2.ScorecardTestResult,
+	descriptor string) scapiv1alpha2.ScorecardTestResult {
 	csv, err := bundle.ClusterServiceVersion()
 	if err != nil {
 		r.Errors = append(r.Errors, err.Error())
@@ -223,8 +207,9 @@ func StatusDescriptorsTest(bundle registry.Bundle) scapiv1alpha2.ScorecardTestRe
 		return r
 	}
 	for _, cr := range crs {
-		r = checkOwnedCSVDescriptors(cr, apiCSV, statusDescriptor, r)
+		r = checkOwnedCSVDescriptors(cr, apiCSV, descriptor, r)
 	}
+
 	return r
 }
 
