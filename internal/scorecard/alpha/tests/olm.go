@@ -202,6 +202,29 @@ func StatusDescriptorsTest(bundle registry.Bundle) scapiv1alpha2.ScorecardTestRe
 	r.State = scapiv1alpha2.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
+	csv, err := bundle.ClusterServiceVersion()
+	if err != nil {
+		r.Errors = append(r.Errors, err.Error())
+		r.State = scapiv1alpha2.ErrorState
+		return r
+	}
+	r.Log += fmt.Sprintf("Loaded ClusterServiceVersion: %s\n", csv.GetName())
+	crs, err := GetCRs(bundle)
+	if err != nil {
+		r.Errors = append(r.Errors, err.Error())
+		r.State = scapiv1alpha2.ErrorState
+		return r
+	}
+	r.Log += fmt.Sprintf("Loaded %d Custom Resources from alm-examples\n", len(crs))
+	apiCSV, err := registryToAPICSV(csv)
+	if err != nil {
+		r.Errors = append(r.Errors, err.Error())
+		r.State = scapiv1alpha2.ErrorState
+		return r
+	}
+	for _, cr := range crs {
+		r = checkOwnedCSVDescriptors(cr, apiCSV, statusDescriptor, r)
+	}
 	return r
 }
 

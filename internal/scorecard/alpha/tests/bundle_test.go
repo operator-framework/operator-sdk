@@ -95,7 +95,7 @@ func TestBasicAndOLM(t *testing.T) {
 		{"../testdata/bundle", scapiv1alpha2.PassState, CRDsHaveValidationTest},
 		{"../testdata/bundle", scapiv1alpha2.PassState, CRDsHaveResourcesTest},
 		{"../testdata/bundle", scapiv1alpha2.PassState, SpecDescriptorsTest},
-		{"../testdata", scapiv1alpha2.PassState, StatusDescriptorsTest},
+		{"../testdata/bundle", scapiv1alpha2.PassState, StatusDescriptorsTest},
 	}
 
 	for _, c := range cases {
@@ -148,6 +148,34 @@ func TestCRDHaveValidation(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.bundlePath, func(t *testing.T) {
+			bundle, err := GetBundle(c.bundlePath)
+			if err != nil {
+				t.Errorf("Error getting bundle %s", err.Error())
+			}
+			result := c.function(*bundle)
+			if result.State != c.state {
+				t.Errorf("%s result State %v expected", result.Name, c.state)
+				return
+			}
+		})
+	}
+}
+func TestStatusDescriptors(t *testing.T) {
+
+	cases := []struct {
+		bundlePath string
+		state      scapiv1alpha2.State
+		function   func(registry.Bundle) scapiv1alpha2.ScorecardTestResult
+	}{
+		{"../testdata/statusdescriptor/error_bundle", scapiv1alpha2.ErrorState, StatusDescriptorsTest},
+		{"../testdata/statusdescriptor/invalid_status_bundle", scapiv1alpha2.FailState, StatusDescriptorsTest},
+		{"../testdata/statusdescriptor/no_crd_bundle", scapiv1alpha2.FailState, StatusDescriptorsTest},
+		{"../testdata/statusdescriptor/no_statusdesc_bundle", scapiv1alpha2.FailState, StatusDescriptorsTest},
+	}
+
+	for _, c := range cases {
+		t.Run(c.bundlePath, func(t *testing.T) {
+
 			bundle, err := GetBundle(c.bundlePath)
 			if err != nil {
 				t.Errorf("Error getting bundle %s", err.Error())

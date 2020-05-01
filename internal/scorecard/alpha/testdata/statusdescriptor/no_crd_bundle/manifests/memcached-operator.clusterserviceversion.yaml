@@ -15,7 +15,7 @@ metadata:
           },
           "status": {
             "nodes": null
-          }          
+          }
         }
       ]
     capabilities: Basic Install
@@ -24,27 +24,6 @@ metadata:
 spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
-    owned:
-    - description: Memcached is the Schema for the memcacheds API
-      kind: Memcached
-      name: memcacheds.cache.example.com
-      version: v1alpha1
-      specDescriptors:
-      - description: The desired number of memcached instances to deploy.
-        displayName: Size
-        path: size
-        x-descriptors:
-        - 'urn:alm:descriptor:com.tectonic.ui:podCount'
-      resources:
-      - kind: Pod
-        version: v1
-      statusDescriptors:
-      - description: Nodes are the names of the memcached pods
-        displayName: Nodes
-        path: nodes
-        x-descriptors:
-        - 'urn:alm:descriptor:com.tectonic.ui:nodes'           
-  description: Placeholder description
   displayName: Memcached Operator
   icon:
   - base64data: ""
