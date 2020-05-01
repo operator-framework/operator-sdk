@@ -18,7 +18,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/json"
-	"errors"
+	goerrors "errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -84,19 +84,6 @@ func (c *manifestCollection) addDeployments(rawManifests ...[]byte) error {
 			return fmt.Errorf("error adding Deployment to manifest collection: %v", err)
 		}
 		c.Deployments = append(c.Deployments, dep)
-	}
-	return nil
-}
-
-// addCustomResourceDefinitions assumes add manifest data in rawManifests are
-// CustomResourceDefinitions and adds them to the collection.
-func (c *manifestCollection) addCustomResourceDefinitions(rawManifests ...[]byte) error {
-	for _, rawManifest := range rawManifests {
-		crd := apiextv1beta1.CustomResourceDefinition{}
-		if err := yaml.Unmarshal(rawManifest, &crd); err != nil {
-			return fmt.Errorf("error adding Deployment to manifest collection: %v", err)
-		}
-		c.CustomResourceDefinitions = append(c.CustomResourceDefinitions, crd)
 	}
 	return nil
 }
@@ -314,9 +301,9 @@ func updateDescriptions(csv *operatorsv1alpha1.ClusterServiceVersion, apisDir st
 		}
 		newDescription, err := descriptor.GetCRDDescriptionForGVK(apisDir, gvk)
 		if err != nil {
-			if errors.Is(err, descriptor.ErrAPIDirNotExist) {
+			if goerrors.Is(err, descriptor.ErrAPIDirNotExist) {
 				log.Debugf("Directory for API %s does not exist. Skipping CSV annotation parsing for API.", gvk)
-			} else if errors.Is(err, descriptor.ErrAPITypeNotFound) {
+			} else if goerrors.Is(err, descriptor.ErrAPITypeNotFound) {
 				log.Debugf("No kind type found for API %s. Skipping CSV annotation parsing for API.", gvk)
 			} else {
 				// TODO: Should we ignore all CSV annotation parsing errors and simply log the error

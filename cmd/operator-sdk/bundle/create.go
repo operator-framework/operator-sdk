@@ -155,7 +155,7 @@ func (c *bundleCreateCmd) setDefaults() (err error) {
 	if c.packageName == "" {
 		c.packageName = filepath.Base(projutil.MustGetwd())
 	}
-	defaultManifestsDir := filepath.Join("deploy", catalog.OLMCatalogDir, c.packageName, bundle.ManifestsDir)
+	defaultManifestsDir := filepath.Join(catalog.OLMCatalogDir, c.packageName, bundle.ManifestsDir)
 	if c.directory == "" {
 		if isNotExist(defaultManifestsDir) {
 			return fmt.Errorf("default manifests directory %s does not exist; "+

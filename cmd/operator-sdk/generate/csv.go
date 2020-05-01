@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	gencatalog "github.com/operator-framework/operator-sdk/internal/generate/olm-catalog"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
@@ -236,32 +235,21 @@ Flags that change project default paths:
 }
 
 func (c csvCmd) run() error {
-	if c.csvVersion == "" {
-		log.Info("Generating bundle")
-	} else {
-		log.Infof("Generating bundle version %s", c.csvVersion)
+	log.Infof("Generating CSV manifest version %s", c.csvVersion)
+
+	// Default crdDir differently if deployDir is set, since the CRD manifest dir
+	// is expected to be in a projects manifests (deploy) dir.
+	if c.crdDir == "" {
+		if c.deployDir != "" {
+			c.crdDir = filepath.Join(c.deployDir, "crds")
+		} else {
+			c.crdDir = filepath.Join("deploy", "crds")
+		}
 	}
 
 	if c.operatorName == "" {
 		c.operatorName = filepath.Base(projutil.MustGetwd())
 	}
-	// Default crdDir differently if deployDir is set, since the CRD manifest dir
-	// is expected to be in a projects manifests (deploy) dir.
-	if c.deployDir == "" {
-		c.deployDir = "deploy"
-	}
-	if c.crdDir == "" {
-		c.crdDir = filepath.Join(c.deployDir, "crds")
-	}
-	if c.outputDir == "" {
-		baseDir := filepath.Join(c.deployDir, gencatalog.OLMCatalogDir, c.operatorName)
-		if c.csvVersion == "" {
-			c.outputDir = filepath.Join(baseDir, c.csvVersion)
-		} else {
-			c.outputDir = filepath.Join(baseDir, bundle.ManifestsDir)
-		}
-	}
-
 	csv := gencatalog.BundleGenerator{
 		OperatorName:  c.operatorName,
 		CSVVersion:    c.csvVersion,

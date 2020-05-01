@@ -24,12 +24,10 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 
-	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	olmapiv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml"
 )
-
-const CustomResourceDefinitionKind = "CustomResourceDefinition"
 
 // isBundleDirExist returns true if "parentDir/version" exists on disk.
 func isBundleDirExist(parentDir, version string) bool {
@@ -71,8 +69,8 @@ func addCustomResourceDefinitionsToFileSet(dir string, fileMap map[string][]byte
 				log.Debugf("Skipping non-Object manifest %s: %v", fromPath, err)
 				continue
 			}
-			if typeMeta.Kind == CustomResourceDefinitionKind {
-				manifests = k8sutil.CombineManifests(manifests, manifest)
+			if typeMeta.Kind == "CustomResourceDefinition" {
+				manifests = k8sutil.CombineManifests(manifests, b)
 			}
 		}
 		if err = scanner.Err(); err != nil {
@@ -89,7 +87,7 @@ func addCustomResourceDefinitionsToFileSet(dir string, fileMap map[string][]byte
 
 // getCSVFromDir returns the ClusterServiceVersion manifest in dir. If no
 // manifest is found, getCSVFromDir returns an error.
-func getCSVFromDir(dir string) (*operatorsv1alpha1.ClusterServiceVersion, error) {
+func getCSVFromDir(dir string) (*olmapiv1alpha1.ClusterServiceVersion, error) {
 	infos, err := ioutil.ReadDir(dir)
 	if err != nil {
 		return nil, err
@@ -115,8 +113,8 @@ func getCSVFromDir(dir string) (*operatorsv1alpha1.ClusterServiceVersion, error)
 				log.Debugf("Skipping non-Object manifest %s: %v", path, err)
 				continue
 			}
-			if typeMeta.Kind == operatorsv1alpha1.ClusterServiceVersionKind {
-				csv := &operatorsv1alpha1.ClusterServiceVersion{}
+			if typeMeta.Kind == olmapiv1alpha1.ClusterServiceVersionKind {
+				csv := &olmapiv1alpha1.ClusterServiceVersion{}
 				if err := yaml.Unmarshal(b, csv); err != nil {
 					return nil, fmt.Errorf("error unmarshalling ClusterServiceVersion from manifest %s: %v", path, err)
 				}

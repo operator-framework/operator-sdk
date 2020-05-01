@@ -39,9 +39,9 @@ import (
 )
 
 const (
-	// OLMCatalogDir is the named directory for OLM catalog manifests.
-	OLMCatalogDir = "olm-catalog"
-
+	OLMCatalogChildDir = "olm-catalog"
+	// OLMCatalogDir is the default location for OLM catalog directory.
+	OLMCatalogDir  = scaffold.DeployDir + string(filepath.Separator) + OLMCatalogChildDir
 	csvYamlFileExt = ".clusterserviceversion.yaml"
 )
 
@@ -77,7 +77,7 @@ type BundleGenerator struct {
 // new bundle from an existing 'manifests' directory if it exists.
 func getBundleDirs(operatorName, csvVersion, outputDir, deployDir string) (toBundleDir, fromBundleDir string) {
 
-	defaultOperatorDir := filepath.Join(deployDir, OLMCatalogDir, operatorName)
+	defaultOperatorDir := filepath.Join(deployDir, OLMCatalogChildDir, operatorName)
 
 	// If outputDir was set, first check this dir for existing bundles. Otherwise
 	// check the default location.
@@ -85,7 +85,7 @@ func getBundleDirs(operatorName, csvVersion, outputDir, deployDir string) (toBun
 		toBundleDir = filepath.Join(defaultOperatorDir, bundle.ManifestsDir)
 	} else {
 		toBundleDir = filepath.Join(outputDir, bundle.ManifestsDir)
-		outputOperatorDir := filepath.Join(outputDir, OLMCatalogDir, operatorName)
+		outputOperatorDir := filepath.Join(outputDir, OLMCatalogChildDir, operatorName)
 		switch {
 		case isBundleDirExist(outputOperatorDir, bundle.ManifestsDir):
 			fromBundleDir = filepath.Join(outputOperatorDir, bundle.ManifestsDir)
@@ -120,14 +120,14 @@ func getBundleDirs(operatorName, csvVersion, outputDir, deployDir string) (toBun
 func getBundleDirsLegacy(operatorName, csvVersion, fromVersion, outputDir,
 	deployDir string) (toBundleDir, fromBundleDir string) {
 
-	defaultOperatorDir := filepath.Join(deployDir, OLMCatalogDir, operatorName)
+	defaultOperatorDir := filepath.Join(deployDir, OLMCatalogChildDir, operatorName)
 
 	// If outputDir was set, first check this dir for existing bundles. Otherwise
 	// check the default location.
 	if outputDir == "" {
 		toBundleDir = filepath.Join(defaultOperatorDir, csvVersion)
 	} else {
-		outputOperatorDir := filepath.Join(outputDir, OLMCatalogDir, operatorName)
+		outputOperatorDir := filepath.Join(outputDir, OLMCatalogChildDir, operatorName)
 		toBundleDir = filepath.Join(outputOperatorDir, csvVersion)
 		switch {
 		case isBundleDirExist(outputOperatorDir, fromVersion):
@@ -403,8 +403,55 @@ func (g BundleGenerator) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVer
 func (g BundleGenerator) updateCSVFromManifests(csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
 	// Collect all manifests in paths.
 	collection := manifestCollection{}
-	if err = collectFromDirs(&collection, g.DeployDir, g.CRDsDir); err != nil {
-		return err
+	err = filepath.Walk(g.DeployDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		// Only read manifest from files, not directories
+		if info.IsDir() {
+			return nil
+		}
+
+		b, err := ioutil.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		scanner := k8sutil.NewYAMLScanner(bytes.NewBuffer(b))
+		for scanner.Scan() {
+			manifest := scanner.Bytes()
+			typeMeta, err := k8sutil.GetTypeMetaFromBytes(manifest)
+			if err != nil {
+				log.Debugf("No TypeMeta in %s, skipping file", path)
+				continue
+			}
+			switch typeMeta.GroupVersionKind().Kind {
+			case "Role":
+				err = collection.addRoles(manifest)
+			case "ClusterRole":
+				err = collection.addClusterRoles(manifest)
+			case "Deployment":
+				err = collection.addDeployments(manifest)
+			case "CustomResourceDefinition":
+				// Skip for now and add explicitly from CRDsDir input.
+			default:
+				err = collection.addOthers(manifest)
+			}
+			if err != nil {
+				return err
+			}
+		}
+		return scanner.Err()
+	})
+	if err != nil {
+		return fmt.Errorf("failed to walk manifests directory for CSV updates: %v", err)
+	}
+
+	// Add CRDs from input.
+	if isDirExist(g.CRDsDir) {
+		collection.CustomResourceDefinitions, err = k8sutil.GetCustomResourceDefinitions(g.CRDsDir)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Filter the collection based on data collected.
@@ -432,58 +479,6 @@ func (g BundleGenerator) updateCSVFromManifests(csv *olmapiv1alpha1.ClusterServi
 
 	// Finally sort all updated fields.
 	sortUpdates(csv)
-
-	return nil
-}
-
-func collectFromDirs(collection *manifestCollection, deployDir, crdsDir string) (err error) {
-	// Collect all manifests in paths.
-	err = filepath.Walk(deployDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil || info.IsDir() {
-			return err
-		}
-
-		b, err := ioutil.ReadFile(path)
-		if err != nil {
-			return err
-		}
-		scanner := k8sutil.NewYAMLScanner(bytes.NewBuffer(b))
-		for scanner.Scan() {
-			manifest := scanner.Bytes()
-			typeMeta, err := k8sutil.GetTypeMetaFromBytes(manifest)
-			if err != nil {
-				log.Debugf("No TypeMeta in %s, skipping file", path)
-				continue
-			}
-			switch typeMeta.GroupVersionKind().Kind {
-			case "Role":
-				err = collection.addRoles(manifest)
-			case "ClusterRole":
-				err = collection.addClusterRoles(manifest)
-			case "Deployment":
-				err = collection.addDeployments(manifest)
-			case CustomResourceDefinitionKind:
-				// Skip for now and add explicitly from CRDsDir input.
-			default:
-				err = collection.addOthers(manifest)
-			}
-			if err != nil {
-				return err
-			}
-		}
-		return scanner.Err()
-	})
-	if err != nil {
-		return fmt.Errorf("failed to walk manifests directory for CSV updates: %v", err)
-	}
-
-	// Add CRDs from input.
-	if isDirExist(crdsDir) {
-		collection.CustomResourceDefinitions, err = k8sutil.GetCustomResourceDefinitions(crdsDir)
-		if err != nil {
-			return err
-		}
-	}
 
 	return nil
 }
