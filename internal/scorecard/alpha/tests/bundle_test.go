@@ -53,7 +53,7 @@ func TestBundleCRs(t *testing.T) {
 		crCount    int
 		wantError  bool
 	}{
-		{"../testdata/bundle", 1, false},
+		{"../testdata", 1, false},
 	}
 
 	for _, c := range cases {
@@ -94,7 +94,7 @@ func TestBasicAndOLM(t *testing.T) {
 		{"../testdata", scapiv1alpha2.PassState, BundleValidationTest},
 		{"../testdata/bundle", scapiv1alpha2.PassState, CRDsHaveValidationTest},
 		{"../testdata", scapiv1alpha2.PassState, CRDsHaveResourcesTest},
-		{"../testdata", scapiv1alpha2.PassState, SpecDescriptorsTest},
+		{"../testdata/bundle", scapiv1alpha2.PassState, SpecDescriptorsTest},
 		{"../testdata", scapiv1alpha2.PassState, StatusDescriptorsTest},
 	}
 
