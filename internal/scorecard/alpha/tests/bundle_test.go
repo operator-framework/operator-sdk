@@ -163,14 +163,35 @@ func TestCRDHaveValidation(t *testing.T) {
 func TestStatusDescriptors(t *testing.T) {
 
 	cases := []struct {
+		name       string
 		bundlePath string
 		state      scapiv1alpha2.State
 		function   func(registry.Bundle) scapiv1alpha2.ScorecardTestResult
 	}{
-		{"../testdata/statusdescriptor/error_bundle", scapiv1alpha2.ErrorState, StatusDescriptorsTest},
-		{"../testdata/statusdescriptor/invalid_status_bundle", scapiv1alpha2.FailState, StatusDescriptorsTest},
-		{"../testdata/statusdescriptor/no_crd_bundle", scapiv1alpha2.FailState, StatusDescriptorsTest},
-		{"../testdata/statusdescriptor/no_statusdesc_bundle", scapiv1alpha2.FailState, StatusDescriptorsTest},
+		{
+			name:       "Ill formatted CR",
+			bundlePath: "../testdata/statusdescriptor/error_bundle",
+			state:      scapiv1alpha2.ErrorState,
+			function:   StatusDescriptorsTest,
+		},
+		{
+			name:       "Missing status in CR",
+			bundlePath: "../testdata/statusdescriptor/invalid_status_bundle",
+			state:      scapiv1alpha2.FailState,
+			function:   StatusDescriptorsTest,
+		},
+		{
+			name:       "Missing owned CRD in CSV",
+			bundlePath: "../testdata/statusdescriptor/no_crd_bundle",
+			state:      scapiv1alpha2.FailState,
+			function:   StatusDescriptorsTest,
+		},
+		{
+			name:       "Missing statusDescriptor in CSV",
+			bundlePath: "../testdata/statusdescriptor/no_statusdesc_bundle",
+			state:      scapiv1alpha2.FailState,
+			function:   StatusDescriptorsTest,
+		},
 	}
 
 	for _, c := range cases {
