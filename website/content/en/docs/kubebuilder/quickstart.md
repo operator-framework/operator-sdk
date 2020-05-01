@@ -526,7 +526,7 @@ $ kubectl patch memcached memcached-sample -p '{"spec":{"size": 4}}' --type=merg
 
 The request should fail, and you should see a response like this:
 
-```
+```sh
 Error from server (Cluster size must be an odd number): admission webhook "vmemcached.kb.io" denied the request: Cluster size must be an odd number
 ```
 
