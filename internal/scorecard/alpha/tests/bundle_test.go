@@ -92,10 +92,9 @@ func TestBasicAndOLM(t *testing.T) {
 	}{
 		{"../testdata", scapiv1alpha2.PassState, CheckSpecTest},
 		{"../testdata", scapiv1alpha2.PassState, BundleValidationTest},
-		{"../testdata", scapiv1alpha2.PassState, CRDsHaveValidationTest},
+		{"../testdata/bundle", scapiv1alpha2.PassState, CRDsHaveValidationTest},
 		{"../testdata", scapiv1alpha2.PassState, CRDsHaveResourcesTest},
-		{"../testdata", scapiv1alpha2.PassState, CRDsHaveResourcesTest},
-		{"../testdata", scapiv1alpha2.PassState, SpecDescriptorsTest},
+		{"../testdata/bundle", scapiv1alpha2.PassState, SpecDescriptorsTest},
 		{"../testdata", scapiv1alpha2.PassState, StatusDescriptorsTest},
 	}
 
@@ -108,12 +107,39 @@ func TestBasicAndOLM(t *testing.T) {
 			}
 
 			result := c.function(*bundle)
-			if result.State != scapiv1alpha2.PassState {
-				t.Errorf("%s result State %v expected", result.Name, scapiv1alpha2.PassState)
+			if result.State != c.state {
+				t.Errorf("%s result State %v expected", result.Name, c.state)
 				return
 			}
-
 		})
+	}
+}
 
+func TestCRDHaveValidation(t *testing.T) {
+
+	cases := []struct {
+		bundlePath string
+		state      scapiv1alpha2.State
+		function   func(registry.Bundle) scapiv1alpha2.ScorecardTestResult
+	}{
+		{"../testdata/crdvalidation/error_bundle", scapiv1alpha2.ErrorState, CRDsHaveValidationTest},
+		{"../testdata/crdvalidation/invalid_status_bundle", scapiv1alpha2.FailState, CRDsHaveValidationTest},
+		{"../testdata/crdvalidation/invalid_spec_bundle", scapiv1alpha2.FailState, CRDsHaveValidationTest},
+		{"../testdata/crdvalidation/invalid_version_kind_check", scapiv1alpha2.PassState, CRDsHaveValidationTest},
+	}
+
+	for _, c := range cases {
+		t.Run(c.bundlePath, func(t *testing.T) {
+
+			bundle, err := GetBundle(c.bundlePath)
+			if err != nil {
+				t.Errorf("Error getting bundle %s", err.Error())
+			}
+			result := c.function(*bundle)
+			if result.State != c.state {
+				t.Errorf("%s result State %v expected", result.Name, c.state)
+				return
+			}
+		})
 	}
 }
