@@ -16,5 +16,5 @@ package kbutil
 
 const (
 	BinBuildDir = "bin"
-	PkgPath     = "main.go"
+	MainPath    = "main.go"
 )

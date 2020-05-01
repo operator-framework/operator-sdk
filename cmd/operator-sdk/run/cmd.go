@@ -19,15 +19,16 @@ import (
 	"fmt"
 	"path/filepath"
 
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+
 	olmcatalog "github.com/operator-framework/operator-sdk/internal/generate/olm-catalog"
 	olmoperator "github.com/operator-framework/operator-sdk/internal/olm/operator"
 	k8sinternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
+	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
 	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
-
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 )
 
 type runCmd struct {
@@ -127,9 +128,11 @@ https://sdk.operatorframework.io/docs/olm-integration/cli-overview
 			"specified by $KUBECONFIG, or to default file rules if not set")
 	// Deprecated: namespace exists for historical compatibility. Use watch-namespace instead.
 	//TODO: remove namespace flag before 1.0.0
-	cmd.Flags().StringVar(&c.namespace, "namespace", "",
-		"(Deprecated: use --watch-namespace instead.)"+
-			"The namespace where the operator watches for changes.")
+	if !kbutil.HasProjectFile() { // not show for the kb layout projects
+		cmd.Flags().StringVar(&c.namespace, "namespace", "",
+			"(Deprecated: use --watch-namespace instead.)"+
+				"The namespace where the operator watches for changes.")
+	}
 	// 'run --olm' and related flags.
 	cmd.Flags().BoolVar(&c.olm, "olm", false,
 		"The operator to be run will be managed by OLM in a cluster. "+

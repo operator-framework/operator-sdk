@@ -53,9 +53,15 @@ type runLocalArgs struct {
 func (c *runLocalArgs) addToFlags(fs *pflag.FlagSet) {
 	prefix := "[local only] "
 
-	fs.StringVar(&c.watchNamespace, "watch-namespace", "",
-		prefix+"The namespace where the operator watches for changes. Set \"\" for AllNamespaces, "+
-			"set \"ns1,ns2\" for MultiNamespace")
+	// Currently (plugin phase 1), the new layout is not customized and has not the WATCH_NAMESPACE env var scaffolded
+	// by default into in; the main.go and manager.yaml as it is not importing sdk into go.mod. So, was decide that
+	// for now at least we would not allow the watch-namespace flag.
+	if !kbutil.HasProjectFile() {
+		fs.StringVar(&c.watchNamespace, "watch-namespace", "",
+			prefix+"The namespace where the operator watches for changes. Set \"\" for AllNamespaces, "+
+				"set \"ns1,ns2\" for MultiNamespace")
+	}
+
 	fs.StringVar(&c.operatorFlags, "operator-flags", "",
 		prefix+"The flags that the operator needs. Example: \"--flag1 value1 --flag2=value2\"")
 	fs.StringVar(&c.ldFlags, "go-ldflags", "", prefix+"Set Go linker options")
@@ -109,14 +115,6 @@ func (c runLocalArgs) runGo() error {
 	}()
 	// Add default env vars and values informed via flags
 	c.addEnvVars(cmd)
-	// todo: check if it should really be here. Shows that it should be part of AnsibleRun only.
-	// Set the ANSIBLE_ROLES_PATH
-	if c.ansibleOperatorFlags != nil && len(c.ansibleOperatorFlags.AnsibleRolesPath) > 0 {
-		log.Info(fmt.Sprintf("set the value %v for environment variable %v.",
-			c.ansibleOperatorFlags.AnsibleRolesPath, aoflags.AnsibleRolesPathEnvVar))
-		cmd.Env = append(cmd.Env, fmt.Sprintf("%v=%v", aoflags.AnsibleRolesPathEnvVar,
-			c.ansibleOperatorFlags.AnsibleRolesPath))
-	}
 	// Execute the command build above to exec the binary build with the project
 	if err := projutil.ExecCmd(cmd); err != nil {
 		return err
@@ -179,28 +177,28 @@ func (c runLocalArgs) getBuildRunLocalArgs() []string {
 // generateBinary will build the Go project by running the command `go build -o bin/manager main.go`
 func (c runLocalArgs) generateBinary() (string, error) {
 	// Define name of the bin and where is the main.go pkg for each layout
-	var name, packagePath string
+	var outputBinName, mainPath string
 	if kbutil.HasProjectFile() {
-		name = filepath.Join(kbutil.BinBuildDir, projutil.GetProjectName()+"-local")
-		packagePath = kbutil.PkgPath
+		outputBinName = filepath.Join(kbutil.BinBuildDir, projutil.GetProjectName()+"-local")
+		mainPath = kbutil.MainPath
 	} else {
 		// todo: remove the if, else when the legacy code is no longer supported
-		packagePath = path.Join(projutil.GetGoPkg(), filepath.ToSlash(scaffold.ManagerDir))
-		name = filepath.Join(scaffold.BuildBinDir, projutil.GetProjectName()+"-local")
+		mainPath = path.Join(projutil.GetGoPkg(), filepath.ToSlash(scaffold.ManagerDir))
+		outputBinName = filepath.Join(scaffold.BuildBinDir, projutil.GetProjectName()+"-local")
 	}
 	// allow the command works in windows SO
 	if runtime.GOOS == "windows" {
-		name += ".exe"
+		outputBinName += ".exe"
 	}
 	opts := projutil.GoCmdOptions{
-		BinName:     name,
-		PackagePath: packagePath,
+		BinName:     outputBinName,
+		PackagePath: mainPath,
 		Args:        c.getBuildRunLocalArgs(),
 	}
 	if err := projutil.GoBuild(opts); err != nil {
-		return name, err
+		return outputBinName, err
 	}
-	return name, nil
+	return outputBinName, nil
 }
 
 // execCmdForBinWithDebugger will exec the command with the delve required args
@@ -220,13 +218,22 @@ func (c runLocalArgs) addEnvVars(cmd *exec.Cmd) {
 	// Set EnvVar to let the project knows that it is running outside of the cluster
 	cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k8sutil.ForceRunModeEnv, k8sutil.LocalRunMode))
 
-	// only set env var if user explicitly specified a kubeconfig path
+	// Only set env var if user explicitly specified a kubeconfig path
 	if c.kubeconfig != "" {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%v=%v", k8sutil.KubeConfigEnvVar, c.kubeconfig))
 	}
 
 	// Set WATCH_NAMESPACE with the value informed via flag
 	cmd.Env = append(cmd.Env, fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, c.watchNamespace))
+
+	// todo: check if it should really be here. Shows that it should be part of AnsibleRun only.
+	// Set the ANSIBLE_ROLES_PATH
+	if c.ansibleOperatorFlags != nil && len(c.ansibleOperatorFlags.AnsibleRolesPath) > 0 {
+		log.Info(fmt.Sprintf("set the value %v for environment variable %v.",
+			c.ansibleOperatorFlags.AnsibleRolesPath, aoflags.AnsibleRolesPathEnvVar))
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%v=%v", aoflags.AnsibleRolesPathEnvVar,
+			c.ansibleOperatorFlags.AnsibleRolesPath))
+	}
 }
 
 // buildArgsBasedOnOperatorFlag will return an array with all args used in the flags
