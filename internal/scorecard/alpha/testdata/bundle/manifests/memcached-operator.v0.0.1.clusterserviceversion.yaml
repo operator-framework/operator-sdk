@@ -29,6 +29,12 @@ spec:
       kind: Memcached
       name: memcacheds.cache.example.com
       version: v1alpha1
+      specDescriptors:
+      - description: The desired number of memcached instances to deploy.
+        displayName: Size
+        path: size
+        x-descriptors:
+        - 'urn:alm:descriptor:com.tectonic.ui:podCount'
   description: Placeholder description
   displayName: Memcached Operator
   install:
