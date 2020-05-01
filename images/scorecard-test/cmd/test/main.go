@@ -69,7 +69,7 @@ func main() {
 
 	switch entrypoint[0] {
 	case tests.OLMBundleValidationTest:
-		result = tests.BundleValidationTest(*cfg)
+		result = tests.BundleValidationTest(tmpDir)
 	case tests.OLMCRDsHaveValidationTest:
 		result = tests.CRDsHaveValidationTest(*cfg)
 	case tests.OLMCRDsHaveResourcesTest:

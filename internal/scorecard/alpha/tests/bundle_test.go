@@ -91,7 +91,6 @@ func TestBasicAndOLM(t *testing.T) {
 		function   func(registry.Bundle) scapiv1alpha2.ScorecardTestResult
 	}{
 		{"../testdata", scapiv1alpha2.PassState, CheckSpecTest},
-		{"../testdata", scapiv1alpha2.PassState, BundleValidationTest},
 		{"../testdata/bundle", scapiv1alpha2.PassState, CRDsHaveValidationTest},
 		{"../testdata", scapiv1alpha2.PassState, CRDsHaveResourcesTest},
 		{"../testdata/bundle", scapiv1alpha2.PassState, SpecDescriptorsTest},
@@ -115,6 +114,24 @@ func TestBasicAndOLM(t *testing.T) {
 	}
 }
 
+func TestOLMBundle(t *testing.T) {
+	cases := []struct {
+		bundlePath string
+		state      scapiv1alpha2.State
+	}{
+		{"../testdata/bundle", scapiv1alpha2.PassState},
+	}
+	for _, c := range cases {
+		t.Run(c.bundlePath, func(t *testing.T) {
+			result := BundleValidationTest(c.bundlePath)
+			if result.State != c.state {
+				t.Errorf("%s result State %v expected", result.Name, c.state)
+				return
+			}
+		})
+	}
+}
+
 func TestCRDHaveValidation(t *testing.T) {
 
 	cases := []struct {
@@ -130,7 +147,6 @@ func TestCRDHaveValidation(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.bundlePath, func(t *testing.T) {
-
 			bundle, err := GetBundle(c.bundlePath)
 			if err != nil {
 				t.Errorf("Error getting bundle %s", err.Error())
