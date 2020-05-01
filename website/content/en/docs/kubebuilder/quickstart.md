@@ -274,7 +274,7 @@ or the [official Kubernetes documentation][kubernetes_admission_controllers] on 
 Kubebuilder also has a guide
 that walks through implementing webhooks for their example `CronJob` resource.
 
-To add a webhook to your operator-sdk project, first you must scaffold out the webhooks with the following command.
+To add a webhook to your Operator SDK project, first you must scaffold out the webhooks with the following command.
 
 ```sh
 $ operator-sdk create webhook --group cache --version v1alpha1 --kind Memcached --defaulting --programmatic-validation
@@ -284,7 +284,7 @@ The `--defaulting` flag will scaffold  the resources required for a mutating web
 scaffold the resources required for a validating webhook. In this case we scaffolded both.
 
 To implement the actual webhook logic, edit the `api/v1alpha1/memcached_webhook.go` file. The file will
-contain some boilerplate to set up the logger and register your webhook with the controller Manager, as
+contain some boilerplate to set up the logger and register your webhook with the controller manager, as
 well as a variety of unimplemented methods (marked with `TODO`s). The mutating webhook implementation
 belongs in the `Default` function. The validating webhook implementation will be split between the
 `ValidateCreate`, `ValidateUpdate`, and `ValidateDelete` functions, which allows you to perform different
@@ -331,7 +331,7 @@ func (r *Memcached) ValidateUpdate(old runtime.Object) error {
 
 #### Generate webhook manifests and enable webhook deployment
 
-Once your webhooks are implemented, all that's left is to create the WebhookConfiguration manifests
+Once your webhooks are implemented, all that's left is to create the `WebhookConfiguration` manifests
 required to register your webhooks with Kubernetes:
 
 ```sh
@@ -346,7 +346,7 @@ To do so, edit the `config/default/kustomize.yaml` and uncomment the sections ma
 
 To ensure that running locally continues working, ensure that there is a check that prevents
 the webhooks from being started when the `ENABLE_WEBHOOKS` flag is set to false. To do so,
-edit `main.go`, and add the following check around the call to `SetupWebhookWithManager`:
+edit `main.go`, and add the following check around the call to `SetupWebhookWithManager` if it's not already present:
 
 ```go
 if os.Getenv("ENABLE_WEBHOOKS") != "false" {
