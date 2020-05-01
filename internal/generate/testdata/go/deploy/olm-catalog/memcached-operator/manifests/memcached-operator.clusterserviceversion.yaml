@@ -179,7 +179,7 @@ spec:
   - admissionReviewVersions: null
     deploymentName: memcached-operator-webhook
     failurePolicy: Fail
-    name: vmemcached.kb.io
+    generateName: vmemcached.kb.io
     rules:
     - apiGroups:
       - cache.example.com
@@ -196,7 +196,7 @@ spec:
   - admissionReviewVersions: null
     deploymentName: memcached-operator-webhook
     failurePolicy: Fail
-    name: mmemcached.kb.io
+    generateName: mmemcached.kb.io
     rules:
     - apiGroups:
       - cache.example.com
