@@ -43,7 +43,8 @@ type Config struct {
 func LoadConfig(bundlePath string) (Config, error) {
 	c := Config{}
 
-	configFilePath := bundlePath + string(os.PathSeparator) + "tests" + string(os.PathSeparator) + "scorecard" + string(os.PathSeparator) + "config.yaml"
+	sep := string(os.PathSeparator)
+	configFilePath := bundlePath + sep + "tests" + sep + "scorecard" + sep + "config.yaml"
 
 	// TODO handle bundle images, not just on-disk
 	yamlFile, err := ioutil.ReadFile(configFilePath)

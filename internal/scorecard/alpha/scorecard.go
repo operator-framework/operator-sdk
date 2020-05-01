@@ -23,6 +23,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
@@ -73,6 +74,7 @@ func (o Scorecard) RunTests() (testOutput v1alpha2.ScorecardOutput, err error) {
 	}
 
 	if !o.SkipCleanup {
+		fmt.Printf("jeff, doing cleanup\n")
 		err := o.deletePods(ctx)
 		if err != nil {
 			return testOutput, err
@@ -132,28 +134,35 @@ func ConfigDocLink() string {
 // waitForTestToComplete waits for a fixed amount of time while
 // checking for a test pod to complete
 func (o Scorecard) waitForTestToComplete(ctx context.Context, p *v1.Pod) (err error) {
-	waitTimeInSeconds := int(o.WaitTime.Seconds())
-	for elapsedSeconds := 0; elapsedSeconds < waitTimeInSeconds; elapsedSeconds++ {
+
+	podCheck := func() (done bool, err error) {
 		var tmp *v1.Pod
 		tmp, err = o.Client.CoreV1().Pods(p.Namespace).Get(ctx, p.Name, metav1.GetOptions{})
 		if err != nil {
-			return fmt.Errorf("error getting pod %s %w", p.Name, err)
+			return true, fmt.Errorf("error getting pod %s %w", p.Name, err)
 		}
 		if tmp.Status.Phase == v1.PodSucceeded {
-			return nil
+			return true, nil
 		}
 
-		time.Sleep(1 * time.Second)
+		if ctx.Err() != nil {
+			// return a timeout error
+			return true, err
+		}
+		return false, nil
 	}
-	return fmt.Errorf("error - wait time of %d seconds has been exceeded", o.WaitTime)
+
+	err = wait.PollImmediateInfinite(time.Duration(1*time.Second), podCheck)
+	return err
 
 }
 
-func convertErrorToResult(name, description string, err error) (result *v1alpha2.ScorecardTestResult) {
+func convertErrorToResult(name, description string, err error) *v1alpha2.ScorecardTestResult {
+	result := v1alpha2.ScorecardTestResult{}
 	result.Name = name
 	result.Description = description
 	result.Errors = []string{err.Error()}
 	result.Suggestions = []string{}
 	result.State = v1alpha2.FailState
-	return result
+	return &result
 }

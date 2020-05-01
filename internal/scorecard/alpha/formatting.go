@@ -60,10 +60,11 @@ func (o Scorecard) ListTests() (output v1alpha2.ScorecardOutput, err error) {
 	return output, err
 }
 
-func testResultError(err error, test Test) (result *v1alpha2.ScorecardTestResult) {
-	result.Name = test.Name
-	result.State = v1alpha2.FailState
-	result.Description = test.Description
-	result.Errors = []string{err.Error()}
-	return result
+func testResultError(err error, test Test) *v1alpha2.ScorecardTestResult {
+	r := v1alpha2.ScorecardTestResult{}
+	r.Name = test.Name
+	r.State = v1alpha2.FailState
+	r.Description = test.Description
+	r.Errors = []string{err.Error()}
+	return &r
 }
