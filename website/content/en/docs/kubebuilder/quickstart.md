@@ -260,103 +260,6 @@ The `ClusterRole` manifest at `config/rbac/role.yaml` is generated from the abov
 $ make manifests
 ```
 
-### Create a validating or mutating Admission Webhook (optional)
-
-An admission webhook is an HTTP callback that is registered with Kubernetes, and will be called by Kubernetes to validate or mutate
-a resource before being stored. There are two types of admission webhooks, validating and mutating. Validating webhooks can be used
-to perform validations that go beyond the capabilities of OpenAPI schema validation, such as ensuring a field is immutable after
-creation or higher level permissions checks based on the user that is making the request to the API server. Mutating webhooks are
-most frequently used for defaulting, by adding default values for unset fields in the resource on creation.
-
-For more background on Admission webhooks, refer to the [Kubebuilder documentation][kubebuilder_admission_controllers] 
-or the [official Kubernetes documentation][kubernetes_admission_controllers] on the topic. You can also refer to the
-[Kubebuilder webhook walkthrough][kubebuilder_cronjob_webhook], which is similar in content to this guide.
-Kubebuilder also has a guide
-that walks through implementing webhooks for their example `CronJob` resource.
-
-To add a webhook to your Operator SDK project, first you must scaffold out the webhooks with the following command.
-
-```sh
-$ operator-sdk create webhook --group cache --version v1alpha1 --kind Memcached --defaulting --programmatic-validation
-```
-
-The `--defaulting` flag will scaffold  the resources required for a mutating webhook, and the `--programmatic-validation` flag will
-scaffold the resources required for a validating webhook. In this case we scaffolded both.
-
-To implement the actual webhook logic, edit the `api/v1alpha1/memcached_webhook.go` file. The file will
-contain some boilerplate to set up the logger and register your webhook with the controller manager, as
-well as a variety of unimplemented methods (marked with `TODO`s). The mutating webhook implementation
-belongs in the `Default` function. The validating webhook implementation will be split between the
-`ValidateCreate`, `ValidateUpdate`, and `ValidateDelete` functions, which allows you to perform different
-validations based on the operation being performed, ie, preventing a field from being changed on `Update`. 
-
-The memcached operator we are building in this example is too simple to require defaulting or
-additional validations, but as an example, we can reinforce that the default value for `spec.size` should be `3`, by adding the following logic to the `Default` function (note that this is already handled by the CRD defaulting and is technically completely superfluous):
-
-```go
-if r.Spec.Size == 0 {
-    r.Spec.Size = 3
-}
-```
-
-For validation, we can enforce that the size of the cluster follows a rule that is difficult or impossible
-to describe with OpenAPI, for example, that the size of the cluster always remain an odd number.
-
-To do so, we can simply implement a new function in `api/v1alpha1/memcached_webhook.go`, which performs this check:
-
-```go
-func validateOdd(n int32) error {
-	if n%2 == 0 {
-		return errors.New("Cluster size must be an odd number")
-	}
-	return nil
-}
-```
-
-And then, call that method from the `ValidateCreate` and `ValidateUpdate` functions:
-
-```go
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *Memcached) ValidateCreate() error {
-	memcachedlog.Info("validate create", "name", r.Name)
-	return validateOdd(r.Spec.Size)
-}
-
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *Memcached) ValidateUpdate(old runtime.Object) error {
-	memcachedlog.Info("validate update", "name", r.Name)
-	return validateOdd(r.Spec.Size)
-}
-```
-
-#### Generate webhook manifests and enable webhook deployment
-
-Once your webhooks are implemented, all that's left is to create the `WebhookConfiguration` manifests
-required to register your webhooks with Kubernetes:
-
-```sh
-$ make manifests
-```
-
-You will need to enable cert-manager and webhook deployment in order to deploy these webhooks properly.
-To do so, edit the `config/default/kustomize.yaml` and uncomment the sections marked by `[WEBHOOK]` and `[CERTMANAGER]` comments. More detail on this step can be found in the 
-[Kubebuilder documentation][kubebuilder_running_webhook].
-
-#### Update main.go so that running locally works
-
-To ensure that running locally continues working, ensure that there is a check that prevents
-the webhooks from being started when the `ENABLE_WEBHOOKS` flag is set to false. To do so,
-edit `main.go`, and add the following check around the call to `SetupWebhookWithManager` if it's not already present:
-
-```go
-if os.Getenv("ENABLE_WEBHOOKS") != "false" {
-	if err = (&cachev1alpha1.Memcached{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "Memcached")
-		os.Exit(1)
-	}
-}
-```
-
 ## Build and run the operator
 
 Before running the operator, the CRD must be registered with the Kubernetes apiserver:
@@ -377,10 +280,6 @@ To run the operator locally execute the following command:
 ```sh
 $ make run ENABLE_WEBHOOKS=false
 ```
-
-The webhooks can be run locally, but for it to work you need to generate certificates for the webhook server
-and store them at `/tmp/k8s-webhook-server/serving-certs/tls.{crt,key}`. Generally it's easier to just disable
-them locally and test the webhooks when running in a cluster.
 
 ### 2. Run as a Deployment inside the cluster
 
@@ -513,21 +412,7 @@ Confirm that the operator changes the deployment size:
 $ kubectl get deployment
 NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE
 memcached-operator-controller-manager   1/1     1            1           10m
-memcached-sample                        4/4     4            4           3m
-```
-
-#### Update the size to an even number (if webhooks are implemented)
-
-Update `config/samples/cache_v1alpha1_memcached.yaml` to change the `spec.size` field in the Memcached CR from 3 to 4:
-
-```sh
-$ kubectl patch memcached memcached-sample -p '{"spec":{"size": 4}}' --type=merge
-```
-
-The request should fail, and you should see a response like this:
-
-```sh
-Error from server (Cluster size must be an odd number): admission webhook "vmemcached.kb.io" denied the request: Cluster size must be an odd number
+memcached-sample                        5/5     5            5           3m
 ```
 
 ### Cleanup
@@ -538,7 +423,14 @@ $ kubectl delete deployments,service -l control-plane=controller-manager
 $ kubectl delete role,rolebinding --all
 ```
 
-See the [advanced topics][advanced_topics] doc for more use cases and under the hood details.
+
+## Further steps
+
+The following guides build off the operator created in this example, adding advanced features:
+
+- [Create a validating or mutating Admission Webhook][create_a_webhook]
+
+Also see the [advanced topics][advanced_topics] doc for more use cases and under the hood details.
 
 
 [go_tool]:https://golang.org/dl/
@@ -565,10 +457,6 @@ See the [advanced topics][advanced_topics] doc for more use cases and under the 
 [multi-namespaced-cache-builder]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
 [cli-run-olm]: /docs/olm-integration/cli-overview
 [kubebuilder_entrypoint_doc]: https://book.kubebuilder.io/cronjob-tutorial/empty-main.html
-[kubernetes_admission_controllers]: https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/
-[kubebuilder_admission_controllers]: https://book.kubebuilder.io/reference/admission-webhook.html
-[kubebuilder_cronjob_webhook]: https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html
-[kubebuilder_running_webhook]: https://book.kubebuilder.io/cronjob-tutorial/running-webhook.html
 
 [api_terms_doc]: https://book.kubebuilder.io/cronjob-tutorial/gvks.html
 [kb_controller_doc]: https://book.kubebuilder.io/cronjob-tutorial/controller-overview.html
@@ -584,5 +472,6 @@ See the [advanced topics][advanced_topics] doc for more use cases and under the 
 [legacy_quickstart_doc]: /docs/golang/quickstart/
 [activate_modules]: https://github.com/golang/go/wiki/Modules#how-to-install-and-activate-module-support
 [advanced_topics]: /docs/kubebuilder/advanced-topics/
+[create_a_webhook]: /docs/kubebuilder/webhooks.md
 [status_marker]: https://book.kubebuilder.io/reference/generating-crd.html#status
 [status_subresource]: https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#status-subresource
