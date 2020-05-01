@@ -91,7 +91,6 @@ func TestBasicAndOLM(t *testing.T) {
 		function   func(registry.Bundle) scapiv1alpha2.ScorecardTestResult
 	}{
 		{"../testdata", scapiv1alpha2.PassState, CheckSpecTest},
-		{"../testdata", scapiv1alpha2.PassState, BundleValidationTest},
 		{"../testdata/bundle", scapiv1alpha2.PassState, CRDsHaveValidationTest},
 		{"../testdata", scapiv1alpha2.PassState, CRDsHaveResourcesTest},
 		{"../testdata/bundle", scapiv1alpha2.PassState, SpecDescriptorsTest},
