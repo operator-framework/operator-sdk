@@ -281,7 +281,7 @@ func (m *operatorManager) run(ctx context.Context) (err error) {
 	if installed, err := status.HasInstalledResources(); !installed {
 		return fmt.Errorf("operator %s did not install successfully\n%s", pkgName, status)
 	} else if err != nil {
-		return fmt.Errorf("operator %qhas resource errors\n%s", pkgName, status)
+		return fmt.Errorf("operator %q has resource errors\n%s", pkgName, status)
 	}
 	log.Infof("Successfully installed %q on OLM version %q", csv.GetName(), olmVer)
 	fmt.Print(status)
@@ -351,27 +351,24 @@ func (m operatorManager) registryUp(ctx context.Context, namespace string) error
 		Bundles: m.bundles,
 	}
 
-	registryStale, err := rr.IsManifestDataStale(ctx, namespace)
-	if err != nil {
-		if !apierrors.IsNotFound(err) {
+	if exists, err := rr.IsRegistryExist(ctx, namespace); err != nil {
+		return fmt.Errorf("error checking registry existence: %v", err)
+	} else if exists {
+		if isRegistryStale, err := rr.IsRegistryDataStale(ctx, namespace); err == nil {
+			if !isRegistryStale {
+				log.Infof("%s registry data is current", m.pkg.PackageName)
+				return nil
+			}
+			log.Infof("A stale %s registry exists, deleting", m.pkg.PackageName)
+			if err = rr.DeletePackageManifestsRegistry(ctx, namespace); err != nil {
+				return fmt.Errorf("error deleting registered bundle: %w", err)
+			}
+		} else if !apierrors.IsNotFound(err) {
 			return fmt.Errorf("error checking registry data: %w", err)
 		}
-		// ConfigMap doesn't exist yet, so create it as usual.
-		log.Info("Creating registry")
-		if err = rr.CreateRegistryManifests(ctx, namespace); err != nil {
-			return fmt.Errorf("error registering bundle: %w", err)
-		}
-		return nil
 	}
-	if !registryStale {
-		log.Printf("Registry data is current")
-		return nil
-	}
-	log.Printf("Registry data stale. Recreating registry")
-	if err = rr.DeleteRegistryManifests(ctx, namespace); err != nil {
-		return fmt.Errorf("error deleting registered bundle: %w", err)
-	}
-	if err = rr.CreateRegistryManifests(ctx, namespace); err != nil {
+	log.Infof("Creating %s registry", m.pkg.PackageName)
+	if err := rr.CreatePackageManifestsRegistry(ctx, namespace); err != nil {
 		return fmt.Errorf("error registering bundle: %w", err)
 	}
 
@@ -386,8 +383,8 @@ func (m *operatorManager) registryDown(ctx context.Context, namespace string) er
 	}
 
 	if m.forceRegistry {
-		log.Printf("Deleting registry")
-		if err := rr.DeleteRegistryManifests(ctx, namespace); err != nil {
+		log.Print("Deleting registry")
+		if err := rr.DeletePackageManifestsRegistry(ctx, namespace); err != nil {
 			return fmt.Errorf("error deleting registered bundle: %w", err)
 		}
 	}
