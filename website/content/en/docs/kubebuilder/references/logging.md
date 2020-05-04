@@ -25,7 +25,7 @@ Operators set the logger for all operator logging in [`cmd/manager/main.go`][cod
 package main
 
 import (
-    "sigs.k8s.io/controller-runtime/pkg/log/zap"  
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"  
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -35,10 +35,10 @@ func main() {
 	// be added before calling flag.Parse().
 	opts := zap.Options{}
 	opts.BindFlags(flag.CommandLine)
-    flag.Parse()
+	flag.Parse()
     
-    logger := zap.New(zap.UseFlagOptions(&opts))
-    logf.SetLogger(logger)
+	logger := zap.New(zap.UseFlagOptions(&opts))
+	logf.SetLogger(logger)
 
 	scopedLog := logf.Log.WithName("scoped")
 
@@ -68,7 +68,7 @@ INFO[0000] Running the operator locally in namespace default.
 ```
 ## Custom zap logger
 
-In order to use a custom zap logger, [`zap`][controller_runtime_zap] from controller-runtime can be utilized to wrap it in a logr implementation.
+In order to use a custom zap logger, [`zap`][controller_runtime_zap] from controller-runtime can be utilized to wrap it in a `logr` implementation.
 
 Below is an example illustrating the use of [`zap-logfmt`][logfmt_repo] in logging.
 
