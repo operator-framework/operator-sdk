@@ -38,7 +38,13 @@ func TestFakeRunner(t *testing.T) {
 			o := Scorecard{}
 			var err error
 			o.Config, err = LoadConfig(c.configPathValue)
+			if err != nil {
+				t.Fatalf("Unexpected error loading config %w", err)
+			}
 			o.Selector, err = labels.Parse(c.selector)
+			if err != nil {
+				t.Fatalf("Unexpected error parsing selector %w", err)
+			}
 			o.SkipCleanup = true
 
 			mockResult := v1alpha2.ScorecardTestResult{}
@@ -49,7 +55,7 @@ func TestFakeRunner(t *testing.T) {
 			mockResult.Suggestions = make([]string, 0)
 
 			r := FakePodTestRunner{}
-			r.TestConfiguration = o
+			r.TestConfig = o
 			r.TestResult = &mockResult
 			o.TestRunner = r
 

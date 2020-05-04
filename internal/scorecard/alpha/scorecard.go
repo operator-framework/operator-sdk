@@ -48,13 +48,13 @@ type Scorecard struct {
 }
 
 type PodTestRunner struct {
-	TestConfiguration Scorecard
+	TestConfig Scorecard
 }
 
 type FakePodTestRunner struct {
-	TestConfiguration Scorecard
-	TestResult        *v1alpha2.ScorecardTestResult
-	Error             error
+	TestConfig Scorecard
+	TestResult *v1alpha2.ScorecardTestResult
+	Error      error
 }
 
 // RunTests executes the scorecard tests as configured
@@ -108,18 +108,18 @@ func (o Scorecard) selectTests() []Test {
 func (r PodTestRunner) RunTest(ctx context.Context, test Test) (result *v1alpha2.ScorecardTestResult, err error) {
 
 	// Create a Pod to run the test
-	podDef := getPodDefinition(test, r.TestConfiguration)
-	pod, err := r.TestConfiguration.Client.CoreV1().Pods(r.TestConfiguration.Namespace).Create(ctx, podDef, metav1.CreateOptions{})
+	podDef := getPodDefinition(test, r.TestConfig)
+	pod, err := r.TestConfig.Client.CoreV1().Pods(r.TestConfig.Namespace).Create(ctx, podDef, metav1.CreateOptions{})
 	if err != nil {
 		return result, err
 	}
 
-	err = r.TestConfiguration.waitForTestToComplete(ctx, pod)
+	err = r.TestConfig.waitForTestToComplete(ctx, pod)
 	if err != nil {
 		return result, err
 	}
 
-	result = r.TestConfiguration.getTestResult(ctx, pod, test)
+	result = r.TestConfig.getTestResult(ctx, pod, test)
 	return result, nil
 }
 

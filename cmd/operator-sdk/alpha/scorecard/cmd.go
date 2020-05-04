@@ -95,7 +95,7 @@ func NewCmd() *cobra.Command {
 				}
 
 				runner := scorecard.PodTestRunner{}
-				runner.TestConfiguration = o
+				runner.TestConfig = o
 				o.TestRunner = runner
 
 				scorecardOutput, err = o.RunTests(ctx)
