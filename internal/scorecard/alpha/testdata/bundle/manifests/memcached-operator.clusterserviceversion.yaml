@@ -32,6 +32,9 @@ spec:
         path: size
         x-descriptors:
         - 'urn:alm:descriptor:com.tectonic.ui:podCount'
+      resources:
+      - kind: Pod
+        version: v1
   description: Placeholder description
   displayName: Memcached Operator
   icon:
