@@ -136,14 +136,35 @@ func TestOLMBundle(t *testing.T) {
 func TestCRDHaveValidation(t *testing.T) {
 
 	cases := []struct {
+		name       string
 		bundlePath string
 		state      scapiv1alpha2.State
 		function   func(registry.Bundle) scapiv1alpha2.ScorecardTestResult
 	}{
-		{"../testdata/crdvalidation/error_bundle", scapiv1alpha2.ErrorState, CRDsHaveValidationTest},
-		{"../testdata/crdvalidation/invalid_status_bundle", scapiv1alpha2.FailState, CRDsHaveValidationTest},
-		{"../testdata/crdvalidation/invalid_spec_bundle", scapiv1alpha2.FailState, CRDsHaveValidationTest},
-		{"../testdata/crdvalidation/invalid_version_kind_check", scapiv1alpha2.PassState, CRDsHaveValidationTest},
+		{
+			name:       "Should error when CR has format errors",
+			bundlePath: "../testdata/crdvalidation/error_bundle",
+			state:      scapiv1alpha2.ErrorState,
+			function:   CRDsHaveValidationTest,
+		},
+		{
+			name:       "Should fail when CR has invalid status field",
+			bundlePath: "../testdata/crdvalidation/invalid_status_bundle",
+			state:      scapiv1alpha2.FailState,
+			function:   CRDsHaveValidationTest,
+		},
+		{
+			name:       "Should fail when CR has invalid spec field",
+			bundlePath: "../testdata/crdvalidation/invalid_spec_bundle",
+			state:      scapiv1alpha2.FailState,
+			function:   CRDsHaveValidationTest,
+		},
+		{
+			name:       "Should pass when CR has no matching version/kind",
+			bundlePath: "../testdata/crdvalidation/invalid_version_kind_check",
+			state:      scapiv1alpha2.PassState,
+			function:   CRDsHaveValidationTest,
+		},
 	}
 
 	for _, c := range cases {
