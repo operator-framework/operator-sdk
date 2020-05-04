@@ -168,6 +168,24 @@ func SpecDescriptorsTest(bundle registry.Bundle) scapiv1alpha2.ScorecardTestResu
 	r.State = scapiv1alpha2.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
+	r = loadCSV(bundle, r, specDescriptor)
+	return r
+}
+
+// StatusDescriptorsTest verifies all CRDs have status descriptors
+func StatusDescriptorsTest(bundle registry.Bundle) scapiv1alpha2.ScorecardTestResult {
+	r := scapiv1alpha2.ScorecardTestResult{}
+	r.Name = OLMStatusDescriptorsTest
+	r.Description = "All status fields have matching descriptors in the CSV"
+	r.State = scapiv1alpha2.PassState
+	r.Errors = make([]string, 0)
+	r.Suggestions = make([]string, 0)
+	r = loadCSV(bundle, r, statusDescriptor)
+	return r
+}
+
+func loadCSV(bundle registry.Bundle, r scapiv1alpha2.ScorecardTestResult,
+	descriptor string) scapiv1alpha2.ScorecardTestResult {
 	csv, err := bundle.ClusterServiceVersion()
 	if err != nil {
 		r.Errors = append(r.Errors, err.Error())
@@ -189,19 +207,9 @@ func SpecDescriptorsTest(bundle registry.Bundle) scapiv1alpha2.ScorecardTestResu
 		return r
 	}
 	for _, cr := range crs {
-		r = checkOwnedCSVDescriptors(cr, apiCSV, specDescriptor, r)
+		r = checkOwnedCSVDescriptors(cr, apiCSV, descriptor, r)
 	}
-	return r
-}
 
-// StatusDescriptorsTest verifies all CRDs have status descriptors
-func StatusDescriptorsTest(bundle registry.Bundle) scapiv1alpha2.ScorecardTestResult {
-	r := scapiv1alpha2.ScorecardTestResult{}
-	r.Name = OLMStatusDescriptorsTest
-	r.Description = "All status fields have matching descriptors in the CSV"
-	r.State = scapiv1alpha2.PassState
-	r.Errors = make([]string, 0)
-	r.Suggestions = make([]string, 0)
 	return r
 }
 
