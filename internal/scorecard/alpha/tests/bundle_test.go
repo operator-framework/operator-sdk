@@ -169,25 +169,25 @@ func TestStatusDescriptors(t *testing.T) {
 		function   func(registry.Bundle) scapiv1alpha2.ScorecardTestResult
 	}{
 		{
-			name:       "Ill formatted CR",
+			name:       "Should error when CR has format errors",
 			bundlePath: "../testdata/statusdescriptor/error_bundle",
 			state:      scapiv1alpha2.ErrorState,
 			function:   StatusDescriptorsTest,
 		},
 		{
-			name:       "Missing status in CR",
+			name:       "Should fail when CR has nmissing status from CSV",
 			bundlePath: "../testdata/statusdescriptor/invalid_status_bundle",
 			state:      scapiv1alpha2.FailState,
 			function:   StatusDescriptorsTest,
 		},
 		{
-			name:       "Missing owned CRD in CSV",
+			name:       "Should fail when owned CRD is missing from CSV",
 			bundlePath: "../testdata/statusdescriptor/no_crd_bundle",
 			state:      scapiv1alpha2.FailState,
 			function:   StatusDescriptorsTest,
 		},
 		{
-			name:       "Missing statusDescriptor in CSV",
+			name:       "Should fail when statusDescriptor is missing from CSV",
 			bundlePath: "../testdata/statusdescriptor/no_statusdesc_bundle",
 			state:      scapiv1alpha2.FailState,
 			function:   StatusDescriptorsTest,
