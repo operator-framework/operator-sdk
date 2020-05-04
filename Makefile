@@ -18,8 +18,7 @@ PKGS = $(shell go list ./... | grep -v /vendor/)
 TEST_PKGS = $(shell go list ./... | grep -v -E 'github.com/operator-framework/operator-sdk/test/')
 SOURCES = $(shell find . -name '*.go' -not -path "*/vendor/*")
 
-ANSIBLE_BASE_IMAGE = quay.io/asmacdo/ansible-operator
-# ANSIBLE_BASE_IMAGE = quay.io/operator-framework/ansible-operator
+ANSIBLE_BASE_IMAGE = quay.io/operator-framework/ansible-operator
 HELM_BASE_IMAGE = quay.io/operator-framework/helm-operator
 SCORECARD_PROXY_BASE_IMAGE = quay.io/operator-framework/scorecard-proxy
 SCORECARD_TEST_BASE_IMAGE = quay.io/operator-framework/scorecard-test
@@ -169,8 +168,7 @@ image-scaffold-helm:
 image-build: image-build-ansible image-build-helm image-build-scorecard-proxy ## Build all images
 
 image-build-ansible: build/operator-sdk-dev-linux-gnu
-	# ./hack/image/build-ansible-image.sh $(ANSIBLE_BASE_IMAGE):dev
-	./hack/image/build-ansible-image.sh $(ANSIBLE_BASE_IMAGE):hack
+	./hack/image/build-ansible-image.sh $(ANSIBLE_BASE_IMAGE):dev
 
 image-build-helm: build/operator-sdk-dev-linux-gnu
 	./hack/image/build-helm-image.sh $(HELM_BASE_IMAGE):dev
@@ -264,8 +262,3 @@ test-e2e-helm: image-build-helm
 
 test-integration:
 	./hack/tests/integration.sh
-
-
-hackhack:
-	make image-build-ansible 
-	docker push quay.io/asmacdo/ansible-operator:hack

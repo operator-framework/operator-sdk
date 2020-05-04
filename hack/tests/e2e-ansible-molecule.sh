@@ -10,10 +10,10 @@ header_text "Running tests to check ansible molecule"
 ROOTDIR="$(pwd)"
 TMPDIR="$(mktemp -d)"
 trap_add 'rm -rf $TMPDIR' EXIT
-pip install  pyasn1==0.4.7 pyasn1-modules==0.2.6 idna==2.8 ipaddress==1.0.22
-pip install  molecule==3.0.2
-pip install  ansible-lint yamllint
-pip install  docker openshift jmespath
+pip3 install --user pyasn1==0.4.7 pyasn1-modules==0.2.6 idna==2.8 ipaddress==1.0.22
+pip3 install --user molecule==3.0.2
+pip3 install --user ansible-lint yamllint
+pip3 install --user docker openshift jmespath
 
 deploy_prereqs() {
     header_text "Deploying resources"
@@ -68,6 +68,6 @@ DEST_IMAGE="quay.io/example/ansible-test-operator:v0.0.1"
 sed -i".bak" -E -e 's/(FROM quay.io\/operator-framework\/ansible-operator)(:.*)?/\1:dev/g' build/Dockerfile; rm -f build/Dockerfile.bak
 operator-sdk build "$DEST_IMAGE" --image-build-args="--no-cache"
 load_image_if_kind "$DEST_IMAGE"
-OPERATOR_PULL_POLICY=Never OPERATOR_IMAGE=${DEST_IMAGE} TEST_CLUSTER_PORT=24443 TEST_OPERATOR_NAMESPACE=osdk-test molecule test --scenario-name cluster
+OPERATOR_PULL_POLICY=Never OPERATOR_IMAGE=${DEST_IMAGE} TEST_CLUSTER_PORT=24443 TEST_OPERATOR_NAMESPACE=osdk-test molecule test --all
 
 popd
