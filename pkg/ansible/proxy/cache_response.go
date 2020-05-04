@@ -23,7 +23,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
 	k8sRequest "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
@@ -267,7 +266,7 @@ func (c *cacheResponseHandler) getListFromCache(r *requestfactory.RequestInfo, r
 			log.Error(err, "Unable to parse field selectors for the client")
 			return nil, err
 		}
-		clientListOpts = append(clientListOpts, k8sutil.MatchingFields{Sel: sel})
+		clientListOpts = append(clientListOpts, client.MatchingFieldsSelector{Selector: sel})
 	}
 	k.Kind = k.Kind + "List"
 	un := unstructured.UnstructuredList{}
