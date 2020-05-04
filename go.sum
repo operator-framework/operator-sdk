@@ -723,8 +723,8 @@ github.com/opentracing/opentracing-go v1.0.2/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFSt
 github.com/opentracing/opentracing-go v1.1.0/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
 github.com/openzipkin/zipkin-go v0.1.6/go.mod h1:QgAqvLzwWbR/WpD4A3cGpPtJrZXNIiJc5AZX7/PBEpw=
 github.com/operator-framework/api v0.1.1/go.mod h1:yzNYR7qyJqRGOOp+bT6Z/iYSbSPNxeh3Si93Gx/3OBY=
-github.com/operator-framework/api v0.3.0 h1:Ey7hpg/pwzIBkJtFICksbQLORLYmIjlPdGt+6GNeWT0=
-github.com/operator-framework/api v0.3.0/go.mod h1:tOJUgbX7u1fBEEjt2cz3QjXzydBPJ19SwWwmAjiSz/s=
+github.com/operator-framework/api v0.3.1 h1:rjQ4lbfKSlccH2hCXKw8giybgjskiE17dm+9xIfRSK8=
+github.com/operator-framework/api v0.3.1/go.mod h1:tOJUgbX7u1fBEEjt2cz3QjXzydBPJ19SwWwmAjiSz/s=
 github.com/operator-framework/operator-registry v1.5.3/go.mod h1:agrQlkWOo1q8U1SAaLSS2WQ+Z9vswNT2M2HFib9iuLY=
 github.com/operator-framework/operator-registry v1.6.2-0.20200330184612-11867930adb5 h1:o7Ugm+uXWF2B1oyJU9q/wd2R4w4d57K5ByZoxXJaPcI=
 github.com/operator-framework/operator-registry v1.6.2-0.20200330184612-11867930adb5/go.mod h1:SHff373z8asEkPo6aWpN0qId4Y/feQTjZxRF8PRhti8=
