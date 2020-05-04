@@ -16,6 +16,7 @@ package alpha
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -26,11 +27,17 @@ import (
 func TestFakeRunner(t *testing.T) {
 
 	cases := []struct {
+		name            string
 		configPathValue string
 		selector        string
 		wantError       bool
 	}{
-		{"testdata/bundle", "suite=basic", false},
+		{
+			name:            "should execute 1 fake test",
+			configPathValue: "testdata/bundle",
+			selector:        "suite=basic",
+			wantError:       false,
+		},
 	}
 
 	for _, c := range cases {
@@ -54,14 +61,81 @@ func TestFakeRunner(t *testing.T) {
 			mockResult.Errors = make([]string, 0)
 			mockResult.Suggestions = make([]string, 0)
 
-			r := FakePodTestRunner{}
-			r.TestConfig = o
-			r.TestResult = &mockResult
-			o.TestRunner = r
+			runner := FakePodTestRunner{}
+			runner.TestConfig = o
+			runner.TestResult = &mockResult
+			o.TestRunner = runner
 
 			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(7*time.Second))
 			defer cancel()
 			_, err = o.RunTests(ctx)
+
+			if err == nil && c.wantError {
+				t.Fatalf("Wanted error but got no error")
+			} else if err != nil {
+				if !c.wantError {
+					t.Fatalf("Wanted result but got error: %v", err)
+				}
+				return
+			}
+
+		})
+
+	}
+}
+
+func TestFakeRunnerWithTestError(t *testing.T) {
+
+	cases := []struct {
+		name            string
+		configPathValue string
+		selector        string
+		wantError       bool
+		expectedState   v1alpha2.State
+	}{
+		{
+			name:            "should execute 1 fake test",
+			configPathValue: "testdata/bundle",
+			selector:        "suite=basic",
+			wantError:       false,
+			expectedState:   v1alpha2.FailState,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.configPathValue, func(t *testing.T) {
+			o := Scorecard{}
+			var err error
+			o.Config, err = LoadConfig(c.configPathValue)
+			if err != nil {
+				t.Fatalf("Unexpected error loading config %w", err)
+			}
+			o.Selector, err = labels.Parse(c.selector)
+			if err != nil {
+				t.Fatalf("Unexpected error parsing selector %w", err)
+			}
+			o.SkipCleanup = true
+
+			mockResult := v1alpha2.ScorecardTestResult{}
+			mockResult.Name = "mocked test"
+			mockResult.Description = "mocked test description"
+			mockResult.State = v1alpha2.PassState
+			mockResult.Errors = make([]string, 0)
+			mockResult.Suggestions = make([]string, 0)
+
+			runner := FakePodTestRunner{}
+			runner.Error = fmt.Errorf("fake error test")
+			runner.TestConfig = o
+			runner.TestResult = &mockResult
+			o.TestRunner = runner
+
+			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(7*time.Second))
+			defer cancel()
+			var scorecardOutput v1alpha2.ScorecardOutput
+			scorecardOutput, err = o.RunTests(ctx)
+			if scorecardOutput.Results[0].State != c.expectedState {
+				t.Fatalf("Wanted state %v, got %v", c.expectedState, scorecardOutput.Results[0].State)
+			}
 
 			if err == nil && c.wantError {
 				t.Fatalf("Wanted error but got no error")
