@@ -30,6 +30,10 @@ import (
 	"github.com/operator-framework/operator-sdk/version"
 )
 
+type TestRunner interface {
+	RunTest(context.Context, Test) (*v1alpha2.ScorecardTestResult, error)
+}
+
 type Scorecard struct {
 	Config              Config
 	Selector            labels.Selector
@@ -40,33 +44,31 @@ type Scorecard struct {
 	bundleConfigMapName string
 	Client              kubernetes.Interface
 	SkipCleanup         bool
+	TestRunner          TestRunner
+}
+
+type PodTestRunner struct {
+	TestConfiguration Scorecard
+}
+
+type FakePodTestRunner struct {
+	TestConfiguration Scorecard
+	TestResult        *v1alpha2.ScorecardTestResult
+	Error             error
 }
 
 // RunTests executes the scorecard tests as configured
-func (o Scorecard) RunTests() (testOutput v1alpha2.ScorecardOutput, err error) {
+func (o Scorecard) RunTests(ctx context.Context) (testOutput v1alpha2.ScorecardOutput, err error) {
 	tests := o.selectTests()
 	if len(tests) == 0 {
 		testOutput.Results = make([]v1alpha2.ScorecardTestResult, 0)
 		return testOutput, err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), o.WaitTime)
-	defer cancel()
-
-	bundleData, err := o.getBundleData()
-	if err != nil {
-		return testOutput, fmt.Errorf("error getting bundle data %w", err)
-	}
-
-	err = o.createConfigMap(ctx, bundleData)
-	if err != nil {
-		return testOutput, fmt.Errorf("error creating ConfigMap %w", err)
-	}
-
 	testOutput.Results = make([]v1alpha2.ScorecardTestResult, len(tests))
 
 	for idx, test := range tests {
-		result, err := o.runTest(ctx, test)
+		result, err := o.TestRunner.RunTest(ctx, test)
 		if err != nil {
 			result = convertErrorToResult(test.Name, test.Description, err)
 		}
@@ -74,7 +76,6 @@ func (o Scorecard) RunTests() (testOutput v1alpha2.ScorecardOutput, err error) {
 	}
 
 	if !o.SkipCleanup {
-		fmt.Printf("jeff, doing cleanup\n")
 		err := o.deletePods(ctx)
 		if err != nil {
 			return testOutput, err
@@ -103,23 +104,28 @@ func (o Scorecard) selectTests() []Test {
 	return selected
 }
 
-// runTest executes a single test
-func (o Scorecard) runTest(ctx context.Context, test Test) (result *v1alpha2.ScorecardTestResult, err error) {
+// RunTest executes a single test
+func (r PodTestRunner) RunTest(ctx context.Context, test Test) (result *v1alpha2.ScorecardTestResult, err error) {
 
 	// Create a Pod to run the test
-	podDef := getPodDefinition(test, o)
-	pod, err := o.Client.CoreV1().Pods(o.Namespace).Create(ctx, podDef, metav1.CreateOptions{})
+	podDef := getPodDefinition(test, r.TestConfiguration)
+	pod, err := r.TestConfiguration.Client.CoreV1().Pods(r.TestConfiguration.Namespace).Create(ctx, podDef, metav1.CreateOptions{})
 	if err != nil {
 		return result, err
 	}
 
-	err = o.waitForTestToComplete(ctx, pod)
+	err = r.TestConfiguration.waitForTestToComplete(ctx, pod)
 	if err != nil {
 		return result, err
 	}
 
-	result = o.getTestResult(ctx, pod, test)
+	result = r.TestConfiguration.getTestResult(ctx, pod, test)
 	return result, nil
+}
+
+// RunTest executes a single test
+func (r FakePodTestRunner) RunTest(ctx context.Context, test Test) (result *v1alpha2.ScorecardTestResult, err error) {
+	return r.TestResult, r.Error
 }
 
 func ConfigDocLink() string {

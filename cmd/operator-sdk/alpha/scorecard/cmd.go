@@ -15,6 +15,7 @@
 package scorecard
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -80,10 +81,28 @@ func NewCmd() *cobra.Command {
 					return fmt.Errorf("error listing tests %w", err)
 				}
 			} else {
-				scorecardOutput, err = o.RunTests()
+				ctx, cancel := context.WithTimeout(context.Background(), o.WaitTime)
+				defer cancel()
+
+				bundleData, err := o.GetBundleData()
+				if err != nil {
+					return fmt.Errorf("error getting bundle data %w", err)
+				}
+
+				err = o.CreateConfigMap(ctx, bundleData)
+				if err != nil {
+					return fmt.Errorf("error creating ConfigMap %w", err)
+				}
+
+				runner := scorecard.PodTestRunner{}
+				runner.TestConfiguration = o
+				o.TestRunner = runner
+
+				scorecardOutput, err = o.RunTests(ctx)
 				if err != nil {
 					return fmt.Errorf("error running tests %w", err)
 				}
+
 			}
 
 			return printOutput(outputFormat, scorecardOutput)
