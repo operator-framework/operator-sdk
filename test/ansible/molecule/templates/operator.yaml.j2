@@ -19,7 +19,6 @@ spec:
       serviceAccountName: ansible
       containers:
         - name: operator
-          # TODO(asmacdo) liveness probe
           # Replace this with the built image name
           image: "{{ image }}"
           imagePullPolicy: "{{ pull_policy }}"
@@ -43,6 +42,12 @@ spec:
               value: /opt/ansible/inventory
             - name: ANSIBLE_DEBUG_LOGS
               value: "TRUE"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 6789
+            initialDelaySeconds: 5
+            periodSeconds: 3
       volumes:
         - name: runner
           emptyDir: {}
