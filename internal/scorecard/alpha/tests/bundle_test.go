@@ -133,7 +133,7 @@ func TestOLMBundle(t *testing.T) {
 	}
 }
 
-func TestCRDHaveValidation(t *testing.T) {
+func TestScorecardFuncs(t *testing.T) {
 
 	cases := []struct {
 		name       string
@@ -141,55 +141,70 @@ func TestCRDHaveValidation(t *testing.T) {
 		state      scapiv1alpha2.State
 		function   func(registry.Bundle) scapiv1alpha2.ScorecardTestResult
 	}{
-		{"Should fail when CR has spec field missing", "../testdata/crdvalidation/invalid_spec_bundle",
-			scapiv1alpha2.FailState, CRDsHaveValidationTest},
+		{
+			// test StatusDescriptorsTest()
+			name:       "Should error when CR has format errors",
+			bundlePath: "../testdata/statusdescriptor/error_bundle",
+			state:      scapiv1alpha2.ErrorState,
+			function:   StatusDescriptorsTest,
+		},
 
-		// This test should skip and pass when version/kind does not match for CR with CRD.
-		{"Should pass when CR has no matching version/kind", "../testdata/crdvalidation/invalid_version_kind_check",
-			scapiv1alpha2.PassState, CRDsHaveValidationTest},
+		{
+			// test StatusDescriptorsTest()
+			name:       "Should fail when CR has missing status from CSV",
+			bundlePath: "../testdata/statusdescriptor/invalid_status_bundle",
+			state:      scapiv1alpha2.FailState,
+			function:   StatusDescriptorsTest,
+		},
+		{
+			// test StatusDescriptorsTest()
+			// This test checks for spec.customresourcedefinitions.owned presence, and fails
+			// when missing from CSV.
+			name:       "Should fail when owned CRD is missing from CSV",
+			bundlePath: "../testdata/statusdescriptor/no_crd_bundle",
+			state:      scapiv1alpha2.FailState,
+			function:   StatusDescriptorsTest,
+		},
 
-		{"This test should error when CR has format issues", "../testdata/crdvalidation/error_bundle",
-			scapiv1alpha2.ErrorState, CRDsHaveValidationTest},
+		{
+			// test StatusDescriptorsTest()
+			name:       "Should fail when statusDescriptor is missing from CSV",
+			bundlePath: "../testdata/statusdescriptor/no_statusdesc_bundle",
+			state:      scapiv1alpha2.FailState,
+			function:   StatusDescriptorsTest,
+		},
+		{
+			// test CRDsHaveValidationTest()
+			name:       "Should fail when CR has spec field missing",
+			bundlePath: "../testdata/crdvalidation/invalid_spec_bundle",
+			state:      scapiv1alpha2.FailState,
+			function:   CRDsHaveValidationTest,
+		},
 
-		{"Should fail when CR has status field missing", "../testdata/crdvalidation/invalid_status_bundle",
-			scapiv1alpha2.FailState, CRDsHaveValidationTest},
-	}
+		{
+			// test CRDsHaveValidationTest()
+			// This test should skip and pass when version/kind does not match for CR with CRD.
+			name:       "Should pass when CR has no matching version/kind",
+			bundlePath: "../testdata/crdvalidation/invalid_version_kind_check",
+			state:      scapiv1alpha2.PassState,
+			function:   CRDsHaveValidationTest,
+		},
 
-	for _, c := range cases {
-		t.Run(c.bundlePath, func(t *testing.T) {
-			bundle, err := GetBundle(c.bundlePath)
-			if err != nil {
-				t.Errorf("Error getting bundle %s", err.Error())
-			}
-			result := c.function(*bundle)
-			if result.State != c.state {
-				t.Errorf("%s result State %v expected", result.Name, c.state)
-				return
-			}
-		})
-	}
-}
-func TestStatusDescriptors(t *testing.T) {
+		{
+			// test CRDsHaveValidationTest()
+			name:       "This test should error when CR has format issues",
+			bundlePath: "../testdata/crdvalidation/error_bundle",
+			state:      scapiv1alpha2.ErrorState,
+			function:   CRDsHaveValidationTest,
+		},
 
-	cases := []struct {
-		name       string
-		bundlePath string
-		state      scapiv1alpha2.State
-		function   func(registry.Bundle) scapiv1alpha2.ScorecardTestResult
-	}{
-		{"Should error when CR has format errors", "../testdata/statusdescriptor/error_bundle",
-			scapiv1alpha2.ErrorState, StatusDescriptorsTest},
-
-		{"Should fail when CR has missing status from CSV", "../testdata/statusdescriptor/invalid_status_bundle",
-			scapiv1alpha2.FailState, StatusDescriptorsTest},
-
-		// This test checks for spec.customresourcedefinitions.owned presence, and fails
-		// when missing from CSV.
-		{"Should fail when owned CRD is missing from CSV", "../testdata/statusdescriptor/no_crd_bundle",
-			scapiv1alpha2.FailState, StatusDescriptorsTest},
-
-		{"Should fail when statusDescriptor is missing from CSV", "../testdata/statusdescriptor/no_statusdesc_bundle",
-			scapiv1alpha2.FailState, StatusDescriptorsTest},
+		{
+			// test CRDsHaveValidationTest()
+			name:       "Should fail when CR has status field missing",
+			bundlePath: "../testdata/crdvalidation/invalid_status_bundle",
+			state:      scapiv1alpha2.FailState,
+			function:   CRDsHaveValidationTest,
+		},
 	}
 
 	for _, c := range cases {
