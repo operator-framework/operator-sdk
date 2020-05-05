@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 
 	"time"
 
@@ -31,6 +32,7 @@ func NewCmd() *cobra.Command {
 	var (
 		outputFormat   string
 		bundle         string
+		config         string
 		selector       string
 		kubeconfig     string
 		namespace      string
@@ -47,7 +49,9 @@ func NewCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			var err error
-			o := scorecard.Scorecard{}
+			o := scorecard.Scorecard{
+				SkipCleanup: skipCleanup,
+			}
 
 			if bundle == "" {
 				return fmt.Errorf("bundle flag required")
@@ -64,7 +68,11 @@ func NewCmd() *cobra.Command {
 				return fmt.Errorf("could not get kubernetes client: %w", err)
 			}
 
-			o.Config, err = scorecard.LoadConfig(bundle)
+			configPath := filepath.Join(bundle, "tests", "scorecard", "config.yaml")
+			if config != "" {
+				configPath = config
+			}
+			o.Config, err = scorecard.LoadConfig(configPath)
 			if err != nil {
 				return fmt.Errorf("could not find config file %w", err)
 			}
@@ -84,23 +92,11 @@ func NewCmd() *cobra.Command {
 				ctx, cancel := context.WithTimeout(context.Background(), waitTime)
 				defer cancel()
 
-				runner.ConfigMapName, err = runner.Initialize(ctx)
-				if err != nil {
-					return err
-				}
-
 				o.TestRunner = runner
 
-				scorecardOutput, err = o.RunTests(runner.ConfigMapName, ctx)
+				scorecardOutput, err = o.RunTests(ctx)
 				if err != nil {
 					return fmt.Errorf("error running tests %w", err)
-				}
-
-				if !skipCleanup {
-					err := runner.Cleanup(ctx)
-					if err != nil {
-						return err
-					}
 				}
 
 			}
@@ -113,6 +109,7 @@ func NewCmd() *cobra.Command {
 
 	scorecardCmd.Flags().StringVar(&bundle, "bundle", "", "path to the operator bundle contents on disk")
 	scorecardCmd.Flags().StringVarP(&selector, "selector", "l", "", "label selector to determine which tests are run")
+	scorecardCmd.Flags().StringVarP(&config, "config", "c", "", "path to scorecard config file")
 	scorecardCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "namespace to run the test images in")
 	scorecardCmd.Flags().StringVarP(&outputFormat, "output", "o", "text",
 		"Output format for results.  Valid values: text, json")

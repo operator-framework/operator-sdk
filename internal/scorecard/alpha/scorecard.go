@@ -32,8 +32,8 @@ import (
 
 type TestRunner interface {
 	Initialize(context.Context) (string, error)
-	RunTest(string, context.Context, Test) (*v1alpha2.ScorecardTestResult, error)
-	Cleanup(context.Context) error
+	RunTest(context.Context, string, Test) (*v1alpha2.ScorecardTestResult, error)
+	Cleanup(context.Context, string) error
 }
 
 type Scorecard struct {
@@ -57,7 +57,12 @@ type FakeTestRunner struct {
 }
 
 // RunTests executes the scorecard tests as configured
-func (o Scorecard) RunTests(configMapName string, ctx context.Context) (testOutput v1alpha2.ScorecardOutput, err error) {
+func (o Scorecard) RunTests(ctx context.Context) (testOutput v1alpha2.ScorecardOutput, err error) {
+
+	configMapName, err := o.TestRunner.Initialize(ctx)
+	if err != nil {
+		return testOutput, err
+	}
 
 	tests := o.selectTests()
 	if len(tests) == 0 {
@@ -68,13 +73,19 @@ func (o Scorecard) RunTests(configMapName string, ctx context.Context) (testOutp
 	testOutput.Results = make([]v1alpha2.ScorecardTestResult, len(tests))
 
 	for idx, test := range tests {
-		result, err := o.TestRunner.RunTest(configMapName, ctx, test)
+		result, err := o.TestRunner.RunTest(ctx, configMapName, test)
 		if err != nil {
 			result = convertErrorToResult(test.Name, test.Description, err)
 		}
 		testOutput.Results[idx] = *result
 	}
 
+	if !o.SkipCleanup {
+		err = o.TestRunner.Cleanup(ctx, configMapName)
+		if err != nil {
+			return testOutput, err
+		}
+	}
 	return testOutput, err
 }
 
@@ -93,9 +104,13 @@ func (o Scorecard) selectTests() []Test {
 	return selected
 }
 
+func (r FakeTestRunner) Initialize(ctx context.Context) (configMapName string, err error) {
+	return configMapName, nil
+}
+
 // Initialize sets up the bundle configmap for tests
 func (r PodTestRunner) Initialize(ctx context.Context) (configMapName string, err error) {
-	bundleData, err := r.GetBundleData()
+	bundleData, err := r.getBundleData()
 	if err != nil {
 		return configMapName, fmt.Errorf("error getting bundle data %w", err)
 	}
@@ -108,13 +123,17 @@ func (r PodTestRunner) Initialize(ctx context.Context) (configMapName string, er
 	return configMapName, nil
 }
 
+func (r FakeTestRunner) Cleanup(ctx context.Context, configMapName string) (err error) {
+	return nil
+}
+
 // Cleanup deletes pods and configmap resources from this test run
-func (r PodTestRunner) Cleanup(ctx context.Context) (err error) {
-	err = r.deletePods(r.ConfigMapName, ctx)
+func (r PodTestRunner) Cleanup(ctx context.Context, configMapName string) (err error) {
+	err = r.deletePods(ctx, configMapName)
 	if err != nil {
 		return err
 	}
-	err = r.deleteConfigMap(r.ConfigMapName, ctx)
+	err = r.deleteConfigMap(ctx, configMapName)
 	if err != nil {
 		return err
 	}
@@ -122,7 +141,8 @@ func (r PodTestRunner) Cleanup(ctx context.Context) (err error) {
 }
 
 // RunTest executes a single test
-func (r PodTestRunner) RunTest(configMapName string, ctx context.Context, test Test) (result *v1alpha2.ScorecardTestResult, err error) {
+func (r PodTestRunner) RunTest(ctx context.Context, configMapName string,
+	test Test) (result *v1alpha2.ScorecardTestResult, err error) {
 
 	// Create a Pod to run the test
 	podDef := getPodDefinition(configMapName, test, r)
@@ -141,7 +161,8 @@ func (r PodTestRunner) RunTest(configMapName string, ctx context.Context, test T
 }
 
 // RunTest executes a single test
-func (r FakeTestRunner) RunTest(configMapName string, ctx context.Context, test Test) (result *v1alpha2.ScorecardTestResult, err error) {
+func (r FakeTestRunner) RunTest(ctx context.Context, configMapName string,
+	test Test) (result *v1alpha2.ScorecardTestResult, err error) {
 	return r.TestResult, r.Error
 }
 

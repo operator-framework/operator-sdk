@@ -23,8 +23,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/rand"
 )
 
-// GetBundleData tars up the contents of a bundle from a path, and returns that tar file in []byte
-func (r PodTestRunner) GetBundleData() (bundleData []byte, err error) {
+// getBundleData tars up the contents of a bundle from a path, and returns that tar file in []byte
+func (r PodTestRunner) getBundleData() (bundleData []byte, err error) {
 
 	// make sure the bundle exists on disk
 	_, err = os.Stat(r.BundlePath)

@@ -30,9 +30,9 @@ func TestBundlePath(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.bundlePathValue, func(t *testing.T) {
-			o := Scorecard{}
-			o.BundlePath = c.bundlePathValue
-			_, err := o.GetBundleData()
+			r := PodTestRunner{}
+			r.BundlePath = c.bundlePathValue
+			_, err := r.getBundleData()
 			if err == nil && c.wantError {
 				t.Fatalf("Wanted error but got no error")
 			} else if err != nil {

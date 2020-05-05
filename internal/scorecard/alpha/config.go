@@ -16,7 +16,6 @@ package alpha
 
 import (
 	"io/ioutil"
-	"path/filepath"
 
 	"sigs.k8s.io/yaml"
 )
@@ -40,10 +39,9 @@ type Config struct {
 // is found from a bundle location (TODO bundle image)
 // scorecard config.yaml is expected to be in the bundle at the following
 // location:  tests/scorecard/config.yaml
-func LoadConfig(bundlePath string) (Config, error) {
+// the user can override this location using the --config CLI flag
+func LoadConfig(configFilePath string) (Config, error) {
 	c := Config{}
-
-	configFilePath := filepath.Join(bundlePath, "tests", "scorecard", "config.yaml")
 
 	// TODO handle bundle images, not just on-disk
 	yamlFile, err := ioutil.ReadFile(configFilePath)

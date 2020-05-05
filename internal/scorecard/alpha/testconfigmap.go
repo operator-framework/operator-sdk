@@ -55,7 +55,7 @@ func getConfigMapDefinition(namespace string, bundleData []byte) *v1.ConfigMap {
 
 // deleteConfigMap deletes the test bundle ConfigMap and is called
 // as part of the test run cleanup
-func (r PodTestRunner) deleteConfigMap(configMapName string, ctx context.Context) error {
+func (r PodTestRunner) deleteConfigMap(ctx context.Context, configMapName string) error {
 	err := r.Client.CoreV1().ConfigMaps(r.Namespace).Delete(ctx, configMapName, metav1.DeleteOptions{})
 	if err != nil {
 		return fmt.Errorf("error deleting configMap %s %w", configMapName, err)

@@ -123,7 +123,7 @@ func getPodLog(ctx context.Context, client kubernetes.Interface, pod *v1.Pod) (l
 }
 
 // deletePods deletes a collection of pods that match a predefined selector value
-func (r PodTestRunner) deletePods(configMapName string, ctx context.Context) error {
+func (r PodTestRunner) deletePods(ctx context.Context, configMapName string) error {
 	do := metav1.DeleteOptions{}
 	selector := fmt.Sprintf("testrun=%s", configMapName)
 	lo := metav1.ListOptions{LabelSelector: selector}

@@ -16,7 +16,7 @@ package alpha
 
 import (
 	"context"
-	"fmt"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -24,72 +24,14 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-func TestFakeRunner(t *testing.T) {
+func TestRunTests(t *testing.T) {
 
 	cases := []struct {
 		name            string
 		configPathValue string
 		selector        string
 		wantError       bool
-	}{
-		{
-			name:            "should execute 1 fake test",
-			configPathValue: "testdata/bundle",
-			selector:        "suite=basic",
-			wantError:       false,
-		},
-	}
-
-	for _, c := range cases {
-		t.Run(c.configPathValue, func(t *testing.T) {
-			o := Scorecard{}
-			var err error
-			o.Config, err = LoadConfig(c.configPathValue)
-			if err != nil {
-				t.Fatalf("Unexpected error loading config %w", err)
-			}
-			o.Selector, err = labels.Parse(c.selector)
-			if err != nil {
-				t.Fatalf("Unexpected error parsing selector %w", err)
-			}
-			o.SkipCleanup = true
-
-			mockResult := v1alpha2.ScorecardTestResult{}
-			mockResult.Name = "mocked test"
-			mockResult.Description = "mocked test description"
-			mockResult.State = v1alpha2.PassState
-			mockResult.Errors = make([]string, 0)
-			mockResult.Suggestions = make([]string, 0)
-
-			runner := FakeTestRunner{}
-			runner.TestResult = &mockResult
-			o.TestRunner = runner
-
-			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(7*time.Second))
-			defer cancel()
-			_, err = o.RunTests(ctx)
-
-			if err == nil && c.wantError {
-				t.Fatalf("Wanted error but got no error")
-			} else if err != nil {
-				if !c.wantError {
-					t.Fatalf("Wanted result but got error: %v", err)
-				}
-				return
-			}
-
-		})
-
-	}
-}
-
-func TestFakeRunnerWithTestError(t *testing.T) {
-
-	cases := []struct {
-		name            string
-		configPathValue string
-		selector        string
-		wantError       bool
+		testRunner      FakeTestRunner
 		expectedState   v1alpha2.State
 	}{
 		{
@@ -97,7 +39,16 @@ func TestFakeRunnerWithTestError(t *testing.T) {
 			configPathValue: "testdata/bundle",
 			selector:        "suite=basic",
 			wantError:       false,
-			expectedState:   v1alpha2.FailState,
+			testRunner:      FakeTestRunner{},
+			expectedState:   v1alpha2.PassState,
+		},
+		{
+			name:            "should execute 1 fake test",
+			configPathValue: "testdata/bundle",
+			selector:        "suite=basic",
+			wantError:       false,
+			testRunner:      FakeTestRunner{},
+			expectedState:   v1alpha2.PassState,
 		},
 	}
 
@@ -105,7 +56,8 @@ func TestFakeRunnerWithTestError(t *testing.T) {
 		t.Run(c.configPathValue, func(t *testing.T) {
 			o := Scorecard{}
 			var err error
-			o.Config, err = LoadConfig(c.configPathValue)
+			configPath := filepath.Join(c.configPathValue, "tests", "scorecard", "config.yaml")
+			o.Config, err = LoadConfig(configPath)
 			if err != nil {
 				t.Fatalf("Unexpected error loading config %w", err)
 			}
@@ -122,15 +74,14 @@ func TestFakeRunnerWithTestError(t *testing.T) {
 			mockResult.Errors = make([]string, 0)
 			mockResult.Suggestions = make([]string, 0)
 
-			runner := FakeTestRunner{}
-			runner.Error = fmt.Errorf("fake error test")
-			runner.TestResult = &mockResult
-			o.TestRunner = runner
+			c.testRunner.TestResult = &mockResult
+			o.TestRunner = c.testRunner
 
 			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(7*time.Second))
 			defer cancel()
 			var scorecardOutput v1alpha2.ScorecardOutput
 			scorecardOutput, err = o.RunTests(ctx)
+
 			if scorecardOutput.Results[0].State != c.expectedState {
 				t.Fatalf("Wanted state %v, got %v", c.expectedState, scorecardOutput.Results[0].State)
 			}

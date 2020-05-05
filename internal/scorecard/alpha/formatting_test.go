@@ -15,6 +15,7 @@
 package alpha
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
@@ -35,8 +36,11 @@ func TestList(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.bundlePathValue, func(t *testing.T) {
 			o := Scorecard{}
+			runner := PodTestRunner{}
 			var err error
-			o.Config, err = LoadConfig(c.bundlePathValue)
+			configPath := filepath.Join(c.bundlePathValue, "tests", "scorecard", "config.yaml")
+
+			o.Config, err = LoadConfig(configPath)
 			if err != nil {
 				t.Fatalf("Unexpected error %w", err)
 			}
@@ -44,7 +48,8 @@ func TestList(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Unexpected error %w", err)
 			}
-			o.BundlePath = c.bundlePathValue
+			runner.BundlePath = c.bundlePathValue
+			o.TestRunner = runner
 			var output v1alpha2.ScorecardOutput
 			output, err = o.ListTests()
 			if err == nil && c.wantError {
