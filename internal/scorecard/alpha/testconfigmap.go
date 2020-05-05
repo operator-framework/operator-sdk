@@ -25,10 +25,10 @@ import (
 
 // CreateConfigMap creates a ConfigMap that will hold the bundle
 // contents to be mounted into the test Pods
-func (o *Scorecard) CreateConfigMap(ctx context.Context, bundleData []byte) (err error) {
-	cfg := getConfigMapDefinition(o.Namespace, bundleData)
-	configMap, err := o.Client.CoreV1().ConfigMaps(o.Namespace).Create(ctx, cfg, metav1.CreateOptions{})
-	o.bundleConfigMapName = configMap.Name
+func (r *PodTestRunner) CreateConfigMap(ctx context.Context, bundleData []byte) (err error) {
+	cfg := getConfigMapDefinition(r.Namespace, bundleData)
+	configMap, err := r.Client.CoreV1().ConfigMaps(r.Namespace).Create(ctx, cfg, metav1.CreateOptions{})
+	r.bundleConfigMapName = configMap.Name
 	return err
 }
 
@@ -51,12 +51,12 @@ func getConfigMapDefinition(namespace string, bundleData []byte) *v1.ConfigMap {
 	}
 }
 
-// deleteConfigMap deletes the test bundle ConfigMap and is called
+// DeleteConfigMap deletes the test bundle ConfigMap and is called
 // as part of the test run cleanup
-func (o Scorecard) deleteConfigMap(ctx context.Context) error {
-	err := o.Client.CoreV1().ConfigMaps(o.Namespace).Delete(ctx, o.bundleConfigMapName, metav1.DeleteOptions{})
+func (r PodTestRunner) DeleteConfigMap(ctx context.Context) error {
+	err := r.Client.CoreV1().ConfigMaps(r.Namespace).Delete(ctx, r.bundleConfigMapName, metav1.DeleteOptions{})
 	if err != nil {
-		return fmt.Errorf("error deleting configMap %s %w", o.bundleConfigMapName, err)
+		return fmt.Errorf("error deleting configMap %s %w", r.bundleConfigMapName, err)
 	}
 	return nil
 }

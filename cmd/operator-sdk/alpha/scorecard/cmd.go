@@ -48,18 +48,19 @@ func NewCmd() *cobra.Command {
 
 			var err error
 			o := scorecard.Scorecard{
-				ServiceAccount: serviceAccount,
-				Namespace:      namespace,
-				BundlePath:     bundle,
-				SkipCleanup:    skipCleanup,
-				WaitTime:       waitTime,
+				BundlePath: bundle,
 			}
 
 			if bundle == "" {
 				return fmt.Errorf("bundle flag required")
 			}
 
-			o.Client, err = scorecard.GetKubeClient(kubeconfig)
+			runner := scorecard.PodTestRunner{
+				ServiceAccount: serviceAccount,
+				Namespace:      namespace,
+			}
+
+			runner.Client, err = scorecard.GetKubeClient(kubeconfig)
 			if err != nil {
 				return fmt.Errorf("could not get kubernetes client: %w", err)
 			}
@@ -81,7 +82,7 @@ func NewCmd() *cobra.Command {
 					return fmt.Errorf("error listing tests %w", err)
 				}
 			} else {
-				ctx, cancel := context.WithTimeout(context.Background(), o.WaitTime)
+				ctx, cancel := context.WithTimeout(context.Background(), waitTime)
 				defer cancel()
 
 				bundleData, err := o.GetBundleData()
@@ -89,18 +90,27 @@ func NewCmd() *cobra.Command {
 					return fmt.Errorf("error getting bundle data %w", err)
 				}
 
-				err = o.CreateConfigMap(ctx, bundleData)
+				err = runner.CreateConfigMap(ctx, bundleData)
 				if err != nil {
 					return fmt.Errorf("error creating ConfigMap %w", err)
 				}
 
-				runner := scorecard.PodTestRunner{}
-				runner.TestConfig = o
 				o.TestRunner = runner
 
 				scorecardOutput, err = o.RunTests(ctx)
 				if err != nil {
 					return fmt.Errorf("error running tests %w", err)
+				}
+
+				if !skipCleanup {
+					err := runner.DeletePods(ctx)
+					if err != nil {
+						return err
+					}
+					err = runner.DeleteConfigMap(ctx)
+					if err != nil {
+						return err
+					}
 				}
 
 			}

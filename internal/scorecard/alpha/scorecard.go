@@ -35,20 +35,18 @@ type TestRunner interface {
 }
 
 type Scorecard struct {
-	Config              Config
-	Selector            labels.Selector
-	BundlePath          string
-	WaitTime            time.Duration
-	Namespace           string
-	ServiceAccount      string
-	bundleConfigMapName string
-	Client              kubernetes.Interface
-	SkipCleanup         bool
-	TestRunner          TestRunner
+	Config      Config
+	Selector    labels.Selector
+	BundlePath  string
+	SkipCleanup bool
+	TestRunner  TestRunner
 }
 
 type PodTestRunner struct {
-	TestConfig Scorecard
+	bundleConfigMapName string
+	Client              kubernetes.Interface
+	Namespace           string
+	ServiceAccount      string
 }
 
 type FakePodTestRunner struct {
@@ -75,16 +73,18 @@ func (o Scorecard) RunTests(ctx context.Context) (testOutput v1alpha2.ScorecardO
 		testOutput.Results[idx] = *result
 	}
 
+	/**
 	if !o.SkipCleanup {
-		err := o.deletePods(ctx)
+		err := o.TestRunner.deletePods(ctx)
 		if err != nil {
 			return testOutput, err
 		}
-		err = o.deleteConfigMap(ctx)
+		err = o.TestRunner.deleteConfigMap(ctx)
 		if err != nil {
 			return testOutput, err
 		}
 	}
+	*/
 
 	return testOutput, err
 }
@@ -108,18 +108,18 @@ func (o Scorecard) selectTests() []Test {
 func (r PodTestRunner) RunTest(ctx context.Context, test Test) (result *v1alpha2.ScorecardTestResult, err error) {
 
 	// Create a Pod to run the test
-	podDef := getPodDefinition(test, r.TestConfig)
-	pod, err := r.TestConfig.Client.CoreV1().Pods(r.TestConfig.Namespace).Create(ctx, podDef, metav1.CreateOptions{})
+	podDef := getPodDefinition(test, r)
+	pod, err := r.Client.CoreV1().Pods(r.Namespace).Create(ctx, podDef, metav1.CreateOptions{})
 	if err != nil {
 		return result, err
 	}
 
-	err = r.TestConfig.waitForTestToComplete(ctx, pod)
+	err = r.waitForTestToComplete(ctx, pod)
 	if err != nil {
 		return result, err
 	}
 
-	result = r.TestConfig.getTestResult(ctx, pod, test)
+	result = r.getTestResult(ctx, pod, test)
 	return result, nil
 }
 
@@ -139,11 +139,11 @@ func ConfigDocLink() string {
 
 // waitForTestToComplete waits for a fixed amount of time while
 // checking for a test pod to complete
-func (o Scorecard) waitForTestToComplete(ctx context.Context, p *v1.Pod) (err error) {
+func (r PodTestRunner) waitForTestToComplete(ctx context.Context, p *v1.Pod) (err error) {
 
 	podCheck := func() (done bool, err error) {
 		var tmp *v1.Pod
-		tmp, err = o.Client.CoreV1().Pods(p.Namespace).Get(ctx, p.Name, metav1.GetOptions{})
+		tmp, err = r.Client.CoreV1().Pods(p.Namespace).Get(ctx, p.Name, metav1.GetOptions{})
 		if err != nil {
 			return true, fmt.Errorf("error getting pod %s %w", p.Name, err)
 		}
