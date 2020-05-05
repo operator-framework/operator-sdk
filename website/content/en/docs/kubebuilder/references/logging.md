@@ -17,7 +17,7 @@ By default, `zap.Options{}` will return a logger that is ready for production us
 			       or any integer value > 0 which corresponds to custom debug levels of increasing verbosity")
 * `--zap-stacktrace-level`: Zap Level at and above which stacktraces are captured (one of 'warn' or 'error')
 
-Please refer [godocs][logging_godocs] for more detailed flag information.
+Consult the controller-runtime [godocs][logging_godocs] for more detailed flag information.
 
 ### A simple example
 
@@ -79,16 +79,6 @@ Below is an example illustrating the use of [`zap-logfmt`][logfmt_repo] in loggi
 In your `main.go` file, replace the current implementation for logs inside the `main` function:
 
 ```Go
-import(
-	...
-	zaplogfmt "github.com/sykesm/zap-logfmt"
-	uzap "go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	...
-)
-
 ...
 // Add the zap logger flag set to the CLI. The flag set must
 // be added before calling flag.Parse().
@@ -104,6 +94,15 @@ import(
 With:
 
 ```Go
+	import(
+	...
+	zaplogfmt "github.com/sykesm/zap-logfmt"
+	uzap "go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	...
+)
 	configLog := uzap.NewProductionEncoderConfig()
 	configLog.EncodeTime = func(ts time.Time, encoder zapcore.PrimitiveArrayEncoder) {
 		encoder.AppendString(ts.UTC().Format(time.RFC3339Nano))
