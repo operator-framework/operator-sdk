@@ -178,12 +178,12 @@ func (c runLocalArgs) generateBinary() (string, error) {
 	// Define name of the bin and where is the main.go pkg for each layout
 	var outputBinName, mainPath string
 	if kbutil.HasProjectFile() {
-		outputBinName = filepath.Join(kbutil.BinBuildDir, projutil.GetProjectName()+"-local")
+		outputBinName = filepath.Join(kbutil.BinBuildDir, getProjectName()+"-local")
 		mainPath = kbutil.MainPath
 	} else {
 		// todo: remove the if, else when the legacy code is no longer supported
 		mainPath = path.Join(projutil.GetGoPkg(), filepath.ToSlash(scaffold.ManagerDir))
-		outputBinName = filepath.Join(scaffold.BuildBinDir, projutil.GetProjectName()+"-local")
+		outputBinName = filepath.Join(scaffold.BuildBinDir, getProjectName()+"-local")
 	}
 	// allow the command works in windows SO
 	if runtime.GOOS == "windows" {
@@ -243,4 +243,10 @@ func (c runLocalArgs) argsFromOperatorFlags() []string {
 		args = append(args, extraArgs...)
 	}
 	return args
+}
+
+// GetProjectName will return the name of the project
+func getProjectName() string {
+	absProjectPath := projutil.MustGetwd()
+	return filepath.Base(absProjectPath)
 }

@@ -323,9 +323,3 @@ func PrintDeprecationWarning(msg string) {
 	fmt.Printf(noticeColor, "[Deprecation Notice] "+msg+". Refer to the version upgrade guide "+
 		"for more information: https://operator-sdk.netlify.com/docs/migration/version-upgrade-guide\n\n")
 }
-
-// GetProjectName will return the name of the project
-func GetProjectName() string {
-	absProjectPath := MustGetwd()
-	return filepath.Base(absProjectPath)
-}
