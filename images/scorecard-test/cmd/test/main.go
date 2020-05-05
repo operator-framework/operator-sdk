@@ -20,10 +20,9 @@ import (
 	"log"
 	"os"
 
+	"github.com/operator-framework/operator-sdk/internal/scorecard/alpha/tests"
 	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
-
-	"github.com/operator-framework/operator-sdk/internal/scorecard/alpha/tests"
 )
 
 // this is the scorecard test binary that ultimately executes the

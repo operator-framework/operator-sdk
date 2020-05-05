@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	"k8s.io/apimachinery/pkg/util/rand"
 )
@@ -31,7 +32,7 @@ func (o Scorecard) GetBundleData() (bundleData []byte, err error) {
 		return bundleData, fmt.Errorf("bundle path is not valid %w", err)
 	}
 
-	tempTarFileName := fmt.Sprintf("%s%ctempBundle-%s.tar.gz", os.TempDir(), os.PathSeparator, rand.String(4))
+	tempTarFileName := filepath.Join(os.TempDir(), fmt.Sprintf("tempBundle-%s.tar.gz", rand.String(4)))
 
 	paths := []string{o.BundlePath}
 	err = CreateTarFile(tempTarFileName, paths)

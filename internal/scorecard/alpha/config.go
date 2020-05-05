@@ -16,7 +16,7 @@ package alpha
 
 import (
 	"io/ioutil"
-	"os"
+	"path/filepath"
 
 	"sigs.k8s.io/yaml"
 )
@@ -43,7 +43,7 @@ type Config struct {
 func LoadConfig(bundlePath string) (Config, error) {
 	c := Config{}
 
-	configFilePath := filepath.Join(bundlePath,"tests","scorecard","config.yaml" )
+	configFilePath := filepath.Join(bundlePath, "tests", "scorecard", "config.yaml")
 
 	// TODO handle bundle images, not just on-disk
 	yamlFile, err := ioutil.ReadFile(configFilePath)
