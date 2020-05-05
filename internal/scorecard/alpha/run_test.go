@@ -61,8 +61,7 @@ func TestFakeRunner(t *testing.T) {
 			mockResult.Errors = make([]string, 0)
 			mockResult.Suggestions = make([]string, 0)
 
-			runner := FakePodTestRunner{}
-			runner.TestConfig = o
+			runner := FakeTestRunner{}
 			runner.TestResult = &mockResult
 			o.TestRunner = runner
 
@@ -123,9 +122,8 @@ func TestFakeRunnerWithTestError(t *testing.T) {
 			mockResult.Errors = make([]string, 0)
 			mockResult.Suggestions = make([]string, 0)
 
-			runner := FakePodTestRunner{}
+			runner := FakeTestRunner{}
 			runner.Error = fmt.Errorf("fake error test")
-			runner.TestConfig = o
 			runner.TestResult = &mockResult
 			o.TestRunner = runner
 

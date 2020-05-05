@@ -28,14 +28,14 @@ import (
 
 // getPodDefinition fills out a Pod definition based on
 // information from the test
-func getPodDefinition(test Test, r PodTestRunner) *v1.Pod {
+func getPodDefinition(configMapName string, test Test, r PodTestRunner) *v1.Pod {
 	return &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("scorecard-test-%s", rand.String(4)),
 			Namespace: r.Namespace,
 			Labels: map[string]string{
 				"app":     "scorecard-test",
-				"testrun": r.bundleConfigMapName,
+				"testrun": configMapName,
 			},
 		},
 		Spec: v1.PodSpec{
@@ -49,7 +49,7 @@ func getPodDefinition(test Test, r PodTestRunner) *v1.Pod {
 					Command:         test.Entrypoint,
 					VolumeMounts: []v1.VolumeMount{
 						{
-							MountPath: "/scorecard-bundle-path",
+							MountPath: "/bundle",
 							Name:      "scorecard-untar",
 							ReadOnly:  true,
 						},
@@ -88,7 +88,7 @@ func getPodDefinition(test Test, r PodTestRunner) *v1.Pod {
 					VolumeSource: v1.VolumeSource{
 						ConfigMap: &v1.ConfigMapVolumeSource{
 							LocalObjectReference: v1.LocalObjectReference{
-								Name: r.bundleConfigMapName,
+								Name: configMapName,
 							},
 						},
 					},
@@ -122,10 +122,10 @@ func getPodLog(ctx context.Context, client kubernetes.Interface, pod *v1.Pod) (l
 	return buf.Bytes(), err
 }
 
-// DeletePods deletes a collection of pods that match a predefined selector value
-func (r PodTestRunner) DeletePods(ctx context.Context) error {
+// deletePods deletes a collection of pods that match a predefined selector value
+func (r PodTestRunner) deletePods(configMapName string, ctx context.Context) error {
 	do := metav1.DeleteOptions{}
-	selector := fmt.Sprintf("testrun=%s", r.bundleConfigMapName)
+	selector := fmt.Sprintf("testrun=%s", configMapName)
 	lo := metav1.ListOptions{LabelSelector: selector}
 	err := r.Client.CoreV1().Pods(r.Namespace).DeleteCollection(ctx, do, lo)
 	if err != nil {

@@ -41,7 +41,7 @@ func main() {
 	}
 
 	// This is the path that holds the untar'd bundle contents
-	tmpDir := "/scorecard-bundle-path"
+	tmpDir := "/bundle"
 
 	cfg, err := tests.GetBundle(tmpDir)
 	if err != nil {

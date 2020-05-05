@@ -47,9 +47,7 @@ func NewCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			var err error
-			o := scorecard.Scorecard{
-				BundlePath: bundle,
-			}
+			o := scorecard.Scorecard{}
 
 			if bundle == "" {
 				return fmt.Errorf("bundle flag required")
@@ -58,6 +56,7 @@ func NewCmd() *cobra.Command {
 			runner := scorecard.PodTestRunner{
 				ServiceAccount: serviceAccount,
 				Namespace:      namespace,
+				BundlePath:     bundle,
 			}
 
 			runner.Client, err = scorecard.GetKubeClient(kubeconfig)
@@ -85,29 +84,20 @@ func NewCmd() *cobra.Command {
 				ctx, cancel := context.WithTimeout(context.Background(), waitTime)
 				defer cancel()
 
-				bundleData, err := o.GetBundleData()
+				runner.ConfigMapName, err = runner.Initialize(ctx)
 				if err != nil {
-					return fmt.Errorf("error getting bundle data %w", err)
-				}
-
-				err = runner.CreateConfigMap(ctx, bundleData)
-				if err != nil {
-					return fmt.Errorf("error creating ConfigMap %w", err)
+					return err
 				}
 
 				o.TestRunner = runner
 
-				scorecardOutput, err = o.RunTests(ctx)
+				scorecardOutput, err = o.RunTests(runner.ConfigMapName, ctx)
 				if err != nil {
 					return fmt.Errorf("error running tests %w", err)
 				}
 
 				if !skipCleanup {
-					err := runner.DeletePods(ctx)
-					if err != nil {
-						return err
-					}
-					err = runner.DeleteConfigMap(ctx)
+					err := runner.Cleanup(ctx)
 					if err != nil {
 						return err
 					}

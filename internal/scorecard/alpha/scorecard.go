@@ -31,32 +31,34 @@ import (
 )
 
 type TestRunner interface {
-	RunTest(context.Context, Test) (*v1alpha2.ScorecardTestResult, error)
+	Initialize(context.Context) (string, error)
+	RunTest(string, context.Context, Test) (*v1alpha2.ScorecardTestResult, error)
+	Cleanup(context.Context) error
 }
 
 type Scorecard struct {
 	Config      Config
 	Selector    labels.Selector
-	BundlePath  string
-	SkipCleanup bool
 	TestRunner  TestRunner
+	SkipCleanup bool
 }
 
 type PodTestRunner struct {
-	bundleConfigMapName string
-	Client              kubernetes.Interface
-	Namespace           string
-	ServiceAccount      string
+	Namespace      string
+	ServiceAccount string
+	BundlePath     string
+	Client         kubernetes.Interface
+	ConfigMapName  string
 }
 
-type FakePodTestRunner struct {
-	TestConfig Scorecard
+type FakeTestRunner struct {
 	TestResult *v1alpha2.ScorecardTestResult
 	Error      error
 }
 
 // RunTests executes the scorecard tests as configured
-func (o Scorecard) RunTests(ctx context.Context) (testOutput v1alpha2.ScorecardOutput, err error) {
+func (o Scorecard) RunTests(configMapName string, ctx context.Context) (testOutput v1alpha2.ScorecardOutput, err error) {
+
 	tests := o.selectTests()
 	if len(tests) == 0 {
 		testOutput.Results = make([]v1alpha2.ScorecardTestResult, 0)
@@ -66,25 +68,12 @@ func (o Scorecard) RunTests(ctx context.Context) (testOutput v1alpha2.ScorecardO
 	testOutput.Results = make([]v1alpha2.ScorecardTestResult, len(tests))
 
 	for idx, test := range tests {
-		result, err := o.TestRunner.RunTest(ctx, test)
+		result, err := o.TestRunner.RunTest(configMapName, ctx, test)
 		if err != nil {
 			result = convertErrorToResult(test.Name, test.Description, err)
 		}
 		testOutput.Results[idx] = *result
 	}
-
-	/**
-	if !o.SkipCleanup {
-		err := o.TestRunner.deletePods(ctx)
-		if err != nil {
-			return testOutput, err
-		}
-		err = o.TestRunner.deleteConfigMap(ctx)
-		if err != nil {
-			return testOutput, err
-		}
-	}
-	*/
 
 	return testOutput, err
 }
@@ -104,11 +93,39 @@ func (o Scorecard) selectTests() []Test {
 	return selected
 }
 
+// Initialize sets up the bundle configmap for tests
+func (r PodTestRunner) Initialize(ctx context.Context) (configMapName string, err error) {
+	bundleData, err := r.GetBundleData()
+	if err != nil {
+		return configMapName, fmt.Errorf("error getting bundle data %w", err)
+	}
+
+	configMapName, err = r.CreateConfigMap(ctx, bundleData)
+	if err != nil {
+		return configMapName, fmt.Errorf("error creating ConfigMap %w", err)
+	}
+
+	return configMapName, nil
+}
+
+// Cleanup deletes pods and configmap resources from this test run
+func (r PodTestRunner) Cleanup(ctx context.Context) (err error) {
+	err = r.deletePods(r.ConfigMapName, ctx)
+	if err != nil {
+		return err
+	}
+	err = r.deleteConfigMap(r.ConfigMapName, ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // RunTest executes a single test
-func (r PodTestRunner) RunTest(ctx context.Context, test Test) (result *v1alpha2.ScorecardTestResult, err error) {
+func (r PodTestRunner) RunTest(configMapName string, ctx context.Context, test Test) (result *v1alpha2.ScorecardTestResult, err error) {
 
 	// Create a Pod to run the test
-	podDef := getPodDefinition(test, r)
+	podDef := getPodDefinition(configMapName, test, r)
 	pod, err := r.Client.CoreV1().Pods(r.Namespace).Create(ctx, podDef, metav1.CreateOptions{})
 	if err != nil {
 		return result, err
@@ -124,7 +141,7 @@ func (r PodTestRunner) RunTest(ctx context.Context, test Test) (result *v1alpha2
 }
 
 // RunTest executes a single test
-func (r FakePodTestRunner) RunTest(ctx context.Context, test Test) (result *v1alpha2.ScorecardTestResult, err error) {
+func (r FakeTestRunner) RunTest(configMapName string, ctx context.Context, test Test) (result *v1alpha2.ScorecardTestResult, err error) {
 	return r.TestResult, r.Error
 }
 
