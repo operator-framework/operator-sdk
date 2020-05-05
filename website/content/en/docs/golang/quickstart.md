@@ -667,6 +667,10 @@ deleted until you remove the finalizer (ie, after your cleanup logic has success
 The following is a snippet from the controller file under `pkg/controller/memcached/memcached_controller.go`
 
 ```Go
+import (
+  ...
+  "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+)
 
 const memcachedFinalizer = "finalizer.cache.example.com"
 
@@ -678,14 +682,16 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 	memcached := &cachev1alpha1.Memcached{}
 	err := r.client.Get(context.TODO(), request.NamespacedName, memcached)
 	if err != nil {
-		// If the resource is not found, that means all of
-		// the finalizers have been removed, and the memcached
-		// resource has been deleted, so there is nothing left
-		// to do.
-		if apierrors.IsNotFound(err) {
+		if errors.IsNotFound(err) {
+			// Request object not found, could have been deleted after reconcile request.
+			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
+			// Return and don't requeue
+			reqLogger.Info("Memcached resource not found. Ignoring since object must be deleted.")
 			return reconcile.Result{}, nil
 		}
-		return reconcile.Result{}, fmt.Errorf("could not fetch memcached instance: %s", err)
+		// Error reading the object - requeue the request.
+		reqLogger.Error(err, "Failed to get Memcached.")
+		return reconcile.Result{}, err
 	}
 
 	...
@@ -704,7 +710,7 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 
 			// Remove memcachedFinalizer. Once all finalizers have been
 			// removed, the object will be deleted.
-			memcached.SetFinalizers(remove(memcached.GetFinalizers(), memcachedFinalizer))
+			controllerutil.RemoveFinalizer(memcached, memcachedFinalizer)
 			err := r.client.Update(context.TODO(), memcached)
 			if err != nil {
 				return reconcile.Result{}, err
@@ -736,7 +742,7 @@ func (r *ReconcileMemcached) finalizeMemcached(reqLogger logr.Logger, m *cachev1
 
 func (r *ReconcileMemcached) addFinalizer(reqLogger logr.Logger, m *cachev1alpha1.Memcached) error {
 	reqLogger.Info("Adding Finalizer for the Memcached")
-	m.SetFinalizers(append(m.GetFinalizers(), memcachedFinalizer))
+	controllerutil.AddFinalizer(m, memcachedFinalizer)
 
 	// Update CR
 	err := r.client.Update(context.TODO(), m)
@@ -754,15 +760,6 @@ func contains(list []string, s string) bool {
 		}
 	}
 	return false
-}
-
-func remove(list []string, s string) []string {
-	for i, v := range list {
-		if v == s {
-			list = append(list[:i], list[i+1:]...)
-		}
-	}
-	return list
 }
 ```
 
