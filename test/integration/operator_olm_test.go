@@ -44,19 +44,20 @@ var (
 
 func TestOLMIntegration(t *testing.T) {
 	if image, ok := os.LookupEnv(imageEnvVar); ok && image != "" {
-		defaultTestImageTag = image
+		testImageTag = image
 	}
-	t.Run("AnnotationsBasic", OperatorAnnotationsBasic)
-	t.Run("AnnotationsAllNamespaces", OperatorAnnotationsAllNamespaces)
-	t.Run("PackageManifestBasic", OperatorPackageManifestBasic)
+	t.Run("BundleBasic", OperatorBundleBasic)
+	t.Run("BundleAllNamespaces", OperatorBundleAllNamespaces)
+	t.Run("PackageManifestsBasic", OperatorPackageManifestsBasic)
+	t.Run("PackageManifestsMultiple", OperatorPackageManifestsMultiplePackages)
 }
 
-func OperatorAnnotationsBasic(t *testing.T) {
+func OperatorBundleBasic(t *testing.T) {
 
 	csvConfig := CSVTemplateConfig{
 		OperatorName:    defaultOperatorName,
 		OperatorVersion: defaultOperatorVersion,
-		TestImageTag:    defaultTestImageTag,
+		TestImageTag:    testImageTag,
 		ReplacesCSVName: "",
 		CRDKeys: []DefinitionKey{
 			{
@@ -74,9 +75,9 @@ func OperatorAnnotationsBasic(t *testing.T) {
 			{Type: opv1alpha1.InstallModeTypeMultiNamespace, Supported: false},
 			{Type: opv1alpha1.InstallModeTypeAllNamespaces, Supported: false},
 		},
-		IsManifests: true,
+		IsBundle: true,
 	}
-	tmp, cleanup := mkTempDirWithCleanup(t, "sdk-integration.")
+	tmp, cleanup := mkTempDirWithCleanup(t, "")
 	defer cleanup()
 
 	channels := []string{"alpha"}
@@ -119,12 +120,12 @@ func OperatorAnnotationsBasic(t *testing.T) {
 	assert.NoError(t, opcmd.Cleanup())
 }
 
-func OperatorAnnotationsAllNamespaces(t *testing.T) {
+func OperatorBundleAllNamespaces(t *testing.T) {
 
 	csvConfig := CSVTemplateConfig{
 		OperatorName:    defaultOperatorName,
 		OperatorVersion: defaultOperatorVersion,
-		TestImageTag:    defaultTestImageTag,
+		TestImageTag:    testImageTag,
 		ReplacesCSVName: "",
 		CRDKeys: []DefinitionKey{
 			{
@@ -142,9 +143,9 @@ func OperatorAnnotationsAllNamespaces(t *testing.T) {
 			{Type: opv1alpha1.InstallModeTypeMultiNamespace, Supported: false},
 			{Type: opv1alpha1.InstallModeTypeAllNamespaces, Supported: true},
 		},
-		IsManifests: true,
+		IsBundle: true,
 	}
-	tmp, cleanup := mkTempDirWithCleanup(t, "sdk-integration.")
+	tmp, cleanup := mkTempDirWithCleanup(t, "")
 	defer cleanup()
 
 	channels := []string{"alpha"}
@@ -178,12 +179,12 @@ func OperatorAnnotationsAllNamespaces(t *testing.T) {
 	assert.NoError(t, opcmd.Run())
 }
 
-func OperatorPackageManifestBasic(t *testing.T) {
+func OperatorPackageManifestsBasic(t *testing.T) {
 
 	csvConfig := CSVTemplateConfig{
 		OperatorName:    defaultOperatorName,
 		OperatorVersion: defaultOperatorVersion,
-		TestImageTag:    defaultTestImageTag,
+		TestImageTag:    testImageTag,
 		ReplacesCSVName: "",
 		CRDKeys: []DefinitionKey{
 			{
@@ -202,7 +203,7 @@ func OperatorPackageManifestBasic(t *testing.T) {
 			{Type: opv1alpha1.InstallModeTypeAllNamespaces, Supported: false},
 		},
 	}
-	tmp, cleanup := mkTempDirWithCleanup(t, "sdk-integration.")
+	tmp, cleanup := mkTempDirWithCleanup(t, "")
 	defer cleanup()
 
 	channels := []registry.PackageChannel{
@@ -245,5 +246,101 @@ func OperatorPackageManifestBasic(t *testing.T) {
 	// "Remove operator after deploy"
 	assert.NoError(t, opcmd.Cleanup())
 	// "Remove operator after removal"
+	assert.NoError(t, opcmd.Cleanup())
+}
+
+func OperatorPackageManifestsMultiplePackages(t *testing.T) {
+
+	operatorVersion1 := defaultOperatorVersion
+	operatorVersion2 := "0.0.3"
+	csvConfigs := []CSVTemplateConfig{
+		{
+			OperatorName:    defaultOperatorName,
+			OperatorVersion: operatorVersion1,
+			TestImageTag:    testImageTag,
+			ReplacesCSVName: "",
+			CRDKeys: []DefinitionKey{
+				{
+					Kind:  "Memcached",
+					Name:  "memcacheds.cache.example.com",
+					Group: "cache.example.com",
+					Versions: []apiextv1beta1.CustomResourceDefinitionVersion{
+						{Name: "v1alpha1", Storage: true, Served: true},
+					},
+				},
+			},
+			InstallModes: []opv1alpha1.InstallMode{
+				{Type: opv1alpha1.InstallModeTypeOwnNamespace, Supported: true},
+				{Type: opv1alpha1.InstallModeTypeSingleNamespace, Supported: false},
+				{Type: opv1alpha1.InstallModeTypeMultiNamespace, Supported: false},
+				{Type: opv1alpha1.InstallModeTypeAllNamespaces, Supported: false},
+			},
+		},
+		{
+			OperatorName:    defaultOperatorName,
+			OperatorVersion: operatorVersion2,
+			TestImageTag:    testImageTag,
+			ReplacesCSVName: fmt.Sprintf("%s.v%s", defaultOperatorName, operatorVersion1),
+			CRDKeys: []DefinitionKey{
+				{
+					Kind:  "Memcached",
+					Name:  "memcacheds.cache.example.com",
+					Group: "cache.example.com",
+					Versions: []apiextv1beta1.CustomResourceDefinitionVersion{
+						// TODO(estroz): uncomment after the following is merged and
+						// api version is bumped:
+						// https://github.com/operator-framework/api/pull/32
+						//
+						// {Name: "v1alpha1", Storage: false, Served: true},
+						{Name: "v1alpha2", Storage: true, Served: true},
+					},
+				},
+			},
+			InstallModes: []opv1alpha1.InstallMode{
+				{Type: opv1alpha1.InstallModeTypeOwnNamespace, Supported: true},
+				{Type: opv1alpha1.InstallModeTypeSingleNamespace, Supported: false},
+				{Type: opv1alpha1.InstallModeTypeMultiNamespace, Supported: false},
+				{Type: opv1alpha1.InstallModeTypeAllNamespaces, Supported: false},
+			},
+		},
+	}
+
+	tmp, cleanup := mkTempDirWithCleanup(t, "")
+	defer cleanup()
+
+	channels := []registry.PackageChannel{
+		{Name: "stable", CurrentCSVName: fmt.Sprintf("%s.v%s", defaultOperatorName, operatorVersion2)},
+		{Name: "alpha", CurrentCSVName: fmt.Sprintf("%s.v%s", defaultOperatorName, operatorVersion1)},
+	}
+	manifestsDir := filepath.Join(tmp, defaultOperatorName)
+	for _, config := range csvConfigs {
+		err := writeOperatorManifests(manifestsDir, config)
+		if err != nil {
+			os.RemoveAll(tmp)
+			t.Fatal(err)
+		}
+	}
+	err := writePackageManifest(manifestsDir, defaultOperatorName, channels)
+	if err != nil {
+		os.RemoveAll(tmp)
+		t.Fatal(err)
+	}
+	opcmd := operator.OLMCmd{
+		ManifestsDir:    manifestsDir,
+		OperatorVersion: operatorVersion2,
+		KubeconfigPath:  kubeconfigPath,
+		Timeout:         defaultTimeout,
+		OLMNamespace:    olm.DefaultOLMNamespace,
+	}
+	// Cleanup.
+	defer func() {
+		if err := opcmd.Cleanup(); err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	// "Deploy operator"
+	assert.NoError(t, opcmd.Run())
+	// "Remove operator after deploy"
 	assert.NoError(t, opcmd.Cleanup())
 }
