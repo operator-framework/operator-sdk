@@ -285,8 +285,12 @@ $ make run ENABLE_WEBHOOKS=false
 
 #### Build and push the image
 
-Build the operator image and push it to a registry.
+Before building the operator image, ensure the generated Dockerfile references
+the base image you want. You can change the default "runner" image `gcr.io/distroless/static:nonroot`
+by replacing its tag with another, for example `alpine:latest`, and removing
+the `USER: nonroot:nonroot` directive.
 
+To build and push the operator image, use the following `make` commands.
 Make sure to modify the `IMG` arg in the example below to reference a container repository that
 you have access to. You can obtain an account for storing containers at
 repository sites such quay.io or hub.docker.com. This example uses quay.
