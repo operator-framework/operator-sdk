@@ -206,7 +206,7 @@ func GetOperatorType() OperatorType {
 }
 
 func IsOperatorGo() bool {
-	// todo: in the future we should check the plugin prefx to see if is or not a go type
+	// todo: in the future we should check the plugin prefix to ensure the operator type
 	// for now, we can assume that any project with the kubebuilder layout is Go Type
 	if kbutil.HasProjectFile() {
 		return true

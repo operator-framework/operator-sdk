@@ -53,9 +53,9 @@ type runLocalArgs struct {
 func (c *runLocalArgs) addToFlags(fs *pflag.FlagSet) {
 	prefix := "[local only] "
 
-	// Currently (plugin phase 1), the new layout is not customized and has not the WATCH_NAMESPACE env var scaffolded
-	// by default into in; the main.go and manager.yaml as it is not importing sdk into go.mod. So, was decide that
-	// for now at least we would not allow the watch-namespace flag.
+	// The main.go and manager.yaml scaffolds in the new layout do not support the WATCH_NAMESPACE
+	// env var to configure the namespace that the operator watches. The default is all namespaces.
+	// So this flag is unsupported for the new layout.
 	if !kbutil.HasProjectFile() {
 		fs.StringVar(&c.watchNamespace, "watch-namespace", "",
 			prefix+"The namespace where the operator watches for changes. Set \"\" for AllNamespaces, "+
@@ -94,7 +94,7 @@ func (c runLocalArgs) runGo() error {
 	}
 	// Get the args that will be used to exec the binary.
 	// Users are allowed to use the flag operator-flags to pass any value that they may wish
-	args := c.buildArgsBasedOnOperatorFlag()
+	args := c.argsFromOperatorFlags()
 	// Build the command
 	var cmd *exec.Cmd
 	if c.enableDelve {
@@ -115,7 +115,6 @@ func (c runLocalArgs) runGo() error {
 	}()
 	// Add default env vars and values informed via flags
 	c.addEnvVars(cmd)
-	// Execute the command build above to exec the binary build with the project
 	if err := projutil.ExecCmd(cmd); err != nil {
 		return err
 	}
@@ -162,7 +161,7 @@ func setupOperatorEnv(kubeconfig, namespace string) error {
 	return nil
 }
 
-// getBuildRunLocalArgs will return the Args to buil the project based on the flags used
+// getBuildRunLocalArgs returns go build args for -ldflags and -gcflags
 func (c runLocalArgs) getBuildRunLocalArgs() []string {
 	var args []string
 	if c.ldFlags != "" {
@@ -236,8 +235,8 @@ func (c runLocalArgs) addEnvVars(cmd *exec.Cmd) {
 	}
 }
 
-// buildArgsBasedOnOperatorFlag will return an array with all args used in the flags
-func (c runLocalArgs) buildArgsBasedOnOperatorFlag() []string {
+// argsFromOperatorFlags will return an array with all args used in the flags
+func (c runLocalArgs) argsFromOperatorFlags() []string {
 	args := []string{}
 	if c.operatorFlags != "" {
 		extraArgs := strings.Split(c.operatorFlags, " ")
