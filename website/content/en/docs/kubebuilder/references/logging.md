@@ -17,6 +17,8 @@ By default, `zap.Options{}` will return a logger that is ready for production us
 			       or any integer value > 0 which corresponds to custom debug levels of increasing verbosity")
 * `--zap-stacktrace-level`: Zap Level at and above which stacktraces are captured (one of 'warn' or 'error')
 
+Please refer [godocs][logging_godocs] for more detailed flag information.
+
 ### A simple example
 
 Operators set the logger for all operator logging in [`cmd/manager/main.go`][code_set_logger]. To illustrate how this works, try out this simple example:
@@ -77,6 +79,16 @@ Below is an example illustrating the use of [`zap-logfmt`][logfmt_repo] in loggi
 In your `main.go` file, replace the current implementation for logs inside the `main` function:
 
 ```Go
+import(
+	...
+	zaplogfmt "github.com/sykesm/zap-logfmt"
+	uzap "go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	...
+)
+
 ...
 // Add the zap logger flag set to the CLI. The flag set must
 // be added before calling flag.Parse().
@@ -92,7 +104,7 @@ In your `main.go` file, replace the current implementation for logs inside the `
 With:
 
 ```Go
-	configLog := zapcr.NewProductionEncoderConfig()
+	configLog := uzap.NewProductionEncoderConfig()
 	configLog.EncodeTime = func(ts time.Time, encoder zapcore.PrimitiveArrayEncoder) {
 		encoder.AppendString(ts.UTC().Format(time.RFC3339Nano))
 	}
@@ -100,26 +112,9 @@ With:
 
 	// Construct a new logr.logger.
 	logger := zap.New(zap.UseDevMode(true), zap.WriteTo(os.Stdout), zap.Encoder(logfmtEncoder))
-
-	// Set the controller logger to log, which will
-	// be propagated through the whole operator, generating
-	// uniform and structured logs.
 	logf.SetLogger(logger)
 ```
 
-Ensure that the following additional imports are being used:
-
-```Go
-import(
-	...
-	zaplogfmt "github.com/sykesm/zap-logfmt"
-	zapcr "go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	...
-)
-```
 **NOTE**: For this example, you will need to add the module `"github.com/sykesm/zap-logfmt"` to your project. Run `go get -u github.com/sykesm/zap-logfmt`.
 
 #### Output using custom zap logger
@@ -264,3 +259,4 @@ If you do not want to use `logr` as your logging tool, you can remove `logr`-spe
 [code_set_logger]:https://github.com/operator-framework/operator-sdk/blob/4d66be409a69d169aaa29d470242a1defbaf08bb/internal/pkg/scaffold/cmd.go#L92-L96
 [logfmt_repo]:https://github.com/jsternberg/zap-logfmt
 [controller_runtime_zap]:https://github.com/kubernetes-sigs/controller-runtime/tree/master/pkg/log/zap
+[logging_godocs]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/log/zap#Options.BindFlags
