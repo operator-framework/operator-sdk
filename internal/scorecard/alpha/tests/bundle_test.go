@@ -91,6 +91,7 @@ func TestBasicAndOLM(t *testing.T) {
 		function   func(registry.Bundle) scapiv1alpha2.ScorecardTestResult
 	}{
 		{"../testdata", scapiv1alpha2.PassState, CheckSpecTest},
+		{"../testdata/failspec", scapiv1alpha2.FailState, CheckSpecTest},
 		{"../testdata", scapiv1alpha2.PassState, BundleValidationTest},
 		{"../testdata", scapiv1alpha2.PassState, CRDsHaveValidationTest},
 		{"../testdata", scapiv1alpha2.PassState, CRDsHaveResourcesTest},
@@ -108,8 +109,8 @@ func TestBasicAndOLM(t *testing.T) {
 			}
 
 			result := c.function(*bundle)
-			if result.State != scapiv1alpha2.PassState {
-				t.Errorf("%s result State %v expected", result.Name, scapiv1alpha2.PassState)
+			if result.State != c.state {
+				t.Errorf("%s result State %v expected", result.Name, c.state)
 				return
 			}
 
