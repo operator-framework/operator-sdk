@@ -93,24 +93,30 @@ https://sdk.operatorframework.io/docs/olm-integration/cli-overview
 					log.Fatalf("Failed to run operator using OLM: %v", err)
 				}
 			case c.local:
-				//TODO: remove namespace flag before 1.0.0
-				// set --watch-namespace flag if the --namespace flag is set
-				// (only if --watch-namespace flag is not set)
-				if cmd.Flags().Changed("namespace") {
-					log.Info("--namespace is deprecated; use --watch-namespace instead.")
+				// The main.go and manager.yaml scaffolds in the new layout do not support the WATCH_NAMESPACE
+				// env var to configure the namespace that the operator watches. The default is all namespaces.
+				// So this flag is unsupported for the new layout.
+				if !kbutil.HasProjectFile() {
+					//TODO: remove namespace flag before 1.0.0
+					// set --watch-namespace flag if the --namespace flag is set
+					// (only if --watch-namespace flag is not set)
+					if cmd.Flags().Changed("namespace") { // not valid for te new layout
+						log.Info("--namespace is deprecated; use --watch-namespace instead.")
+						if !cmd.Flags().Changed("watch-namespace") {
+							err := cmd.Flags().Set("watch-namespace", c.namespace)
+							return err
+						}
+					}
+					// Get default namespace to watch if unset.
 					if !cmd.Flags().Changed("watch-namespace") {
-						err := cmd.Flags().Set("watch-namespace", c.namespace)
-						return err
+						_, defaultNamespace, err := k8sinternal.GetKubeconfigAndNamespace(c.kubeconfig)
+						if err != nil {
+							return fmt.Errorf("error getting kubeconfig and default namespace: %v", err)
+						}
+						c.localArgs.watchNamespace = defaultNamespace
 					}
 				}
-				// Get default namespace to watch if unset.
-				if !cmd.Flags().Changed("watch-namespace") {
-					_, defaultNamespace, err := k8sinternal.GetKubeconfigAndNamespace(c.kubeconfig)
-					if err != nil {
-						return fmt.Errorf("error getting kubeconfig and default namespace: %v", err)
-					}
-					c.localArgs.watchNamespace = defaultNamespace
-				}
+
 				c.localArgs.kubeconfig = c.kubeconfig
 				if err := c.localArgs.run(); err != nil {
 					log.Fatalf("Failed to run operator locally: %v", err)

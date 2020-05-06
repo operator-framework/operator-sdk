@@ -70,10 +70,12 @@ func (c *runLocalArgs) addToFlags(fs *pflag.FlagSet) {
 }
 
 func (c runLocalArgs) run() error {
-	log.Infof("Running the operator locally in namespace %s.", c.watchNamespace)
-
-	projutil.MustInProjectRoot()
-
+	// The new layout will not have c.watchNamespace
+	if kbutil.HasProjectFile() {
+		log.Infof("Running the operator locally ...")
+	} else {
+		log.Infof("Running the operator locally in namespace %v.", c.watchNamespace)
+	}
 	switch t := projutil.GetOperatorType(); t {
 	case projutil.OperatorTypeGo:
 		return c.runGo()
@@ -102,7 +104,7 @@ func (c runLocalArgs) runGo() error {
 	} else {
 		cmd = exec.Command(binName, args...)
 	}
-	// Kills the binary execution, if the exit signal be raised from the container
+	// Kill the command if an exit signal is received.
 	ch := make(chan os.Signal)
 	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
 	go func() {
@@ -116,7 +118,7 @@ func (c runLocalArgs) runGo() error {
 	// Add default env vars and values informed via flags
 	c.addEnvVars(cmd)
 	if err := projutil.ExecCmd(cmd); err != nil {
-		return err
+		return fmt.Errorf("failed to run operator locally: %v", err)
 	}
 	return nil
 }
@@ -176,13 +178,13 @@ func (c runLocalArgs) getBuildRunLocalArgs() []string {
 // generateBinary will build the Go project by running the command `go build -o bin/manager main.go`
 func (c runLocalArgs) generateBinary() (string, error) {
 	// Define name of the bin and where is the main.go pkg for each layout
-	var outputBinName, mainPath string
+	var outputBinName, packagePath string
 	if kbutil.HasProjectFile() {
 		outputBinName = filepath.Join(kbutil.BinBuildDir, getProjectName()+"-local")
-		mainPath = kbutil.MainPath
+		packagePath = projutil.GetGoPkg()
 	} else {
 		// todo: remove the if, else when the legacy code is no longer supported
-		mainPath = path.Join(projutil.GetGoPkg(), filepath.ToSlash(scaffold.ManagerDir))
+		packagePath = path.Join(projutil.GetGoPkg(), filepath.ToSlash(scaffold.ManagerDir))
 		outputBinName = filepath.Join(scaffold.BuildBinDir, getProjectName()+"-local")
 	}
 	// allow the command works in windows SO
@@ -191,11 +193,11 @@ func (c runLocalArgs) generateBinary() (string, error) {
 	}
 	opts := projutil.GoCmdOptions{
 		BinName:     outputBinName,
-		PackagePath: mainPath,
+		PackagePath: packagePath,
 		Args:        c.getBuildRunLocalArgs(),
 	}
 	if err := projutil.GoBuild(opts); err != nil {
-		return outputBinName, err
+		return "", err
 	}
 	return outputBinName, nil
 }
