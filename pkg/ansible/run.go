@@ -169,7 +169,10 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 	}
 
 	addMetrics(context.TODO(), cfg, gvks)
-	mgr.AddHealthzCheck("ping", healthz.Ping)
+	err = mgr.AddHealthzCheck("ping", healthz.Ping)
+	if err != nil {
+		log.Error(err, "Failed to add Healthz check.")
+	}
 
 	done := make(chan error)
 
