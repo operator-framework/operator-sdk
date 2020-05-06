@@ -92,7 +92,7 @@ func NewCmd() *cobra.Command {
 				ctx, cancel := context.WithTimeout(context.Background(), waitTime)
 				defer cancel()
 
-				o.TestRunner = runner
+				o.TestRunner = &runner
 
 				scorecardOutput, err = o.RunTests(ctx)
 				if err != nil {

@@ -31,9 +31,9 @@ import (
 )
 
 type TestRunner interface {
-	Initialize(context.Context) (string, error)
-	RunTest(context.Context, string, Test) (*v1alpha2.ScorecardTestResult, error)
-	Cleanup(context.Context, string) error
+	Initialize(context.Context) error
+	RunTest(context.Context, Test) (*v1alpha2.ScorecardTestResult, error)
+	Cleanup(context.Context) error
 }
 
 type Scorecard struct {
@@ -48,7 +48,7 @@ type PodTestRunner struct {
 	ServiceAccount string
 	BundlePath     string
 	Client         kubernetes.Interface
-	ConfigMapName  string
+	configMapName  string
 }
 
 type FakeTestRunner struct {
@@ -59,7 +59,7 @@ type FakeTestRunner struct {
 // RunTests executes the scorecard tests as configured
 func (o Scorecard) RunTests(ctx context.Context) (testOutput v1alpha2.ScorecardOutput, err error) {
 
-	configMapName, err := o.TestRunner.Initialize(ctx)
+	err = o.TestRunner.Initialize(ctx)
 	if err != nil {
 		return testOutput, err
 	}
@@ -73,7 +73,7 @@ func (o Scorecard) RunTests(ctx context.Context) (testOutput v1alpha2.ScorecardO
 	testOutput.Results = make([]v1alpha2.ScorecardTestResult, len(tests))
 
 	for idx, test := range tests {
-		result, err := o.TestRunner.RunTest(ctx, configMapName, test)
+		result, err := o.TestRunner.RunTest(ctx, test)
 		if err != nil {
 			result = convertErrorToResult(test.Name, test.Description, err)
 		}
@@ -81,7 +81,7 @@ func (o Scorecard) RunTests(ctx context.Context) (testOutput v1alpha2.ScorecardO
 	}
 
 	if !o.SkipCleanup {
-		err = o.TestRunner.Cleanup(ctx, configMapName)
+		err = o.TestRunner.Cleanup(ctx)
 		if err != nil {
 			return testOutput, err
 		}
@@ -104,36 +104,36 @@ func (o Scorecard) selectTests() []Test {
 	return selected
 }
 
-func (r FakeTestRunner) Initialize(ctx context.Context) (configMapName string, err error) {
-	return configMapName, nil
+func (r FakeTestRunner) Initialize(ctx context.Context) (err error) {
+	return nil
 }
 
 // Initialize sets up the bundle configmap for tests
-func (r PodTestRunner) Initialize(ctx context.Context) (configMapName string, err error) {
+func (r *PodTestRunner) Initialize(ctx context.Context) error {
 	bundleData, err := r.getBundleData()
 	if err != nil {
-		return configMapName, fmt.Errorf("error getting bundle data %w", err)
+		return fmt.Errorf("error getting bundle data %w", err)
 	}
 
-	configMapName, err = r.CreateConfigMap(ctx, bundleData)
+	r.configMapName, err = r.CreateConfigMap(ctx, bundleData)
 	if err != nil {
-		return configMapName, fmt.Errorf("error creating ConfigMap %w", err)
+		return fmt.Errorf("error creating ConfigMap %w", err)
 	}
+	return nil
 
-	return configMapName, nil
 }
 
-func (r FakeTestRunner) Cleanup(ctx context.Context, configMapName string) (err error) {
+func (r FakeTestRunner) Cleanup(ctx context.Context) (err error) {
 	return nil
 }
 
 // Cleanup deletes pods and configmap resources from this test run
-func (r PodTestRunner) Cleanup(ctx context.Context, configMapName string) (err error) {
-	err = r.deletePods(ctx, configMapName)
+func (r PodTestRunner) Cleanup(ctx context.Context) (err error) {
+	err = r.deletePods(ctx, r.configMapName)
 	if err != nil {
 		return err
 	}
-	err = r.deleteConfigMap(ctx, configMapName)
+	err = r.deleteConfigMap(ctx, r.configMapName)
 	if err != nil {
 		return err
 	}
@@ -141,11 +141,10 @@ func (r PodTestRunner) Cleanup(ctx context.Context, configMapName string) (err e
 }
 
 // RunTest executes a single test
-func (r PodTestRunner) RunTest(ctx context.Context, configMapName string,
-	test Test) (result *v1alpha2.ScorecardTestResult, err error) {
+func (r PodTestRunner) RunTest(ctx context.Context, test Test) (result *v1alpha2.ScorecardTestResult, err error) {
 
 	// Create a Pod to run the test
-	podDef := getPodDefinition(configMapName, test, r)
+	podDef := getPodDefinition(r.configMapName, test, r)
 	pod, err := r.Client.CoreV1().Pods(r.Namespace).Create(ctx, podDef, metav1.CreateOptions{})
 	if err != nil {
 		return result, err
@@ -161,8 +160,7 @@ func (r PodTestRunner) RunTest(ctx context.Context, configMapName string,
 }
 
 // RunTest executes a single test
-func (r FakeTestRunner) RunTest(ctx context.Context, configMapName string,
-	test Test) (result *v1alpha2.ScorecardTestResult, err error) {
+func (r FakeTestRunner) RunTest(ctx context.Context, test Test) (result *v1alpha2.ScorecardTestResult, err error) {
 	return r.TestResult, r.Error
 }
 

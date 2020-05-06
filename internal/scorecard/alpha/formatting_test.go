@@ -49,7 +49,7 @@ func TestList(t *testing.T) {
 				t.Fatalf("Unexpected error %w", err)
 			}
 			runner.BundlePath = c.bundlePathValue
-			o.TestRunner = runner
+			o.TestRunner = &runner
 			var output v1alpha2.ScorecardOutput
 			output, err = o.ListTests()
 			if err == nil && c.wantError {
