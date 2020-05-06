@@ -16,7 +16,7 @@ The `operator-sdk` CLI generates a number of packages for each project. The foll
 | deploy | Contains various YAML manifests for registering CRDs, setting up [RBAC][RBAC], and deploying the operator as a Deployment.
 | go.mod go.sum | The [Go mod][go_mod] manifests that describe the external dependencies of this operator. |
 | vendor | The golang [vendor][Vendor] directory that contains local copies of external dependencies that satisfy Go imports in this project. [Go modules][go_mod] manages the vendor directory directly. This directory will not exist unless the project is initialized with the `--vendor` flag, or `go mod vendor` is run in the project root. |
-
+| version | Contains version information of the operator.
 [RBAC]: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
 [Vendor]: https://golang.org/cmd/go/#hdr-Vendor_Directories
 [go_mod]: https://github.com/golang/go/wiki/Modules
