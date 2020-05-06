@@ -74,7 +74,7 @@ func (c runLocalArgs) run() error {
 	if kbutil.HasProjectFile() {
 		log.Infof("Running the operator locally ...")
 	} else {
-		log.Infof("Running the operator locally in namespace %v.", c.watchNamespace)
+		log.Infof("Running the operator locally; watching namespace %q", c.watchNamespace)
 	}
 	switch t := projutil.GetOperatorType(); t {
 	case projutil.OperatorTypeGo:
@@ -247,7 +247,8 @@ func (c runLocalArgs) argsFromOperatorFlags() []string {
 	return args
 }
 
-// GetProjectName will return the name of the project
+// getProjectName will return the name of the project. This function only works if the current working directory
+// is the project root.
 func getProjectName() string {
 	absProjectPath := projutil.MustGetwd()
 	return filepath.Base(absProjectPath)
