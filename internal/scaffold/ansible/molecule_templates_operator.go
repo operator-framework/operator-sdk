@@ -55,7 +55,6 @@ spec:
       serviceAccountName: [[.ProjectName]]
       containers:
         - name: [[.ProjectName]]
-          # TODO(asmacdo) liveness
           # Replace this with the built image name
           image: "{{ image }}"
           imagePullPolicy: "{{ pull_policy }}"
@@ -75,6 +74,13 @@ spec:
               value: "[[.ProjectName]]"
             - name: ANSIBLE_GATHERING
               value: explicit
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 6789
+            initialDelaySeconds: 5
+            periodSeconds: 3
+
       volumes:
         - name: runner
           emptyDir: {}

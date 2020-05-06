@@ -222,8 +222,6 @@ func addMetrics(ctx context.Context, cfg *rest.Config, gvks []schema.GroupVersio
 
 	// Add to the below struct any other metrics ports you want to expose.
 	servicePorts := []v1.ServicePort{
-		{Port: healthProbePort, Name: "healthz", Protocol: v1.ProtocolTCP,
-			TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: healthProbePort}},
 		{Port: metricsPort, Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP,
 			TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},
 		{Port: operatorMetricsPort, Name: metrics.CRPortName, Protocol: v1.ProtocolTCP,

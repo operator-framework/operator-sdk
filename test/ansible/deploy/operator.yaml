@@ -15,7 +15,6 @@ spec:
     spec:
       serviceAccountName: ansible
       containers:
-        # TODO liveness probe
         - name: ansible
           # Replace this with the built image name
           image: "REPLACE_IMAGE"
@@ -38,6 +37,13 @@ spec:
               value: explicit
             - name: ANSIBLE_INVENTORY
               value: /opt/ansible/inventory
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 6789
+            initialDelaySeconds: 5
+            periodSeconds: 3
+
       volumes:
         - name: runner
           emptyDir: {}
