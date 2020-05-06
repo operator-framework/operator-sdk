@@ -15,8 +15,10 @@
 package scorecard
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 
 	"time"
 
@@ -28,9 +30,9 @@ import (
 
 func NewCmd() *cobra.Command {
 	var (
-		config         string
 		outputFormat   string
 		bundle         string
+		config         string
 		selector       string
 		kubeconfig     string
 		namespace      string
@@ -48,23 +50,29 @@ func NewCmd() *cobra.Command {
 
 			var err error
 			o := scorecard.Scorecard{
-				ServiceAccount: serviceAccount,
-				Namespace:      namespace,
-				BundlePath:     bundle,
-				SkipCleanup:    skipCleanup,
-				WaitTime:       waitTime,
+				SkipCleanup: skipCleanup,
 			}
 
 			if bundle == "" {
 				return fmt.Errorf("bundle flag required")
 			}
 
-			o.Client, err = scorecard.GetKubeClient(kubeconfig)
+			runner := scorecard.PodTestRunner{
+				ServiceAccount: serviceAccount,
+				Namespace:      namespace,
+				BundlePath:     bundle,
+			}
+
+			runner.Client, err = scorecard.GetKubeClient(kubeconfig)
 			if err != nil {
 				return fmt.Errorf("could not get kubernetes client: %w", err)
 			}
 
-			o.Config, err = scorecard.LoadConfig(config)
+			configPath := filepath.Join(bundle, "tests", "scorecard", "config.yaml")
+			if config != "" {
+				configPath = config
+			}
+			o.Config, err = scorecard.LoadConfig(configPath)
 			if err != nil {
 				return fmt.Errorf("could not find config file %w", err)
 			}
@@ -81,22 +89,27 @@ func NewCmd() *cobra.Command {
 					return fmt.Errorf("error listing tests %w", err)
 				}
 			} else {
-				scorecardOutput, err = o.RunTests()
+				ctx, cancel := context.WithTimeout(context.Background(), waitTime)
+				defer cancel()
+
+				o.TestRunner = &runner
+
+				scorecardOutput, err = o.RunTests(ctx)
 				if err != nil {
 					return fmt.Errorf("error running tests %w", err)
 				}
+
 			}
 
 			return printOutput(outputFormat, scorecardOutput)
 		},
 	}
 
-	scorecardCmd.Flags().StringVarP(&config, "config", "c", "",
-		"path to a new to be defined DSL yaml formatted file that configures what tests get executed")
 	scorecardCmd.Flags().StringVar(&kubeconfig, "kubeconfig", "", "kubeconfig path")
 
 	scorecardCmd.Flags().StringVar(&bundle, "bundle", "", "path to the operator bundle contents on disk")
 	scorecardCmd.Flags().StringVarP(&selector, "selector", "l", "", "label selector to determine which tests are run")
+	scorecardCmd.Flags().StringVarP(&config, "config", "c", "", "path to scorecard config file")
 	scorecardCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "namespace to run the test images in")
 	scorecardCmd.Flags().StringVarP(&outputFormat, "output", "o", "text",
 		"Output format for results.  Valid values: text, json")

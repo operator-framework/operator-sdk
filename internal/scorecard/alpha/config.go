@@ -36,12 +36,14 @@ type Config struct {
 }
 
 // LoadConfig will find and return the scorecard config, the config file
-// can be passed in via command line flag or from a bundle location or
-// bundle image
+// is found from a bundle location (TODO bundle image)
+// scorecard config.yaml is expected to be in the bundle at the following
+// location:  tests/scorecard/config.yaml
+// the user can override this location using the --config CLI flag
 func LoadConfig(configFilePath string) (Config, error) {
 	c := Config{}
 
-	// TODO handle getting config from bundle (ondisk or image)
+	// TODO handle bundle images, not just on-disk
 	yamlFile, err := ioutil.ReadFile(configFilePath)
 	if err != nil {
 		return c, err
