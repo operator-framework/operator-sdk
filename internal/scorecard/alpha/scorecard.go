@@ -177,7 +177,7 @@ func ConfigDocLink() string {
 // checking for a test pod to complete
 func (r PodTestRunner) waitForTestToComplete(ctx context.Context, p *v1.Pod) (err error) {
 
-	podCheck := func() (done bool, err error) {
+	podCheck := wait.ConditionFunc(func() (done bool, err error) {
 		var tmp *v1.Pod
 		tmp, err = r.Client.CoreV1().Pods(p.Namespace).Get(ctx, p.Name, metav1.GetOptions{})
 		if err != nil {
@@ -186,15 +186,10 @@ func (r PodTestRunner) waitForTestToComplete(ctx context.Context, p *v1.Pod) (er
 		if tmp.Status.Phase == v1.PodSucceeded {
 			return true, nil
 		}
-
-		if ctx.Err() != nil {
-			// return a timeout error
-			return true, err
-		}
 		return false, nil
-	}
+	})
 
-	err = wait.PollImmediateInfinite(time.Duration(1*time.Second), podCheck)
+	err = wait.PollImmediateUntil(time.Duration(1*time.Second), podCheck, ctx.Done())
 	return err
 
 }
