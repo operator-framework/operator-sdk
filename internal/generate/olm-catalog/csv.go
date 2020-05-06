@@ -56,13 +56,15 @@ type BundleGenerator struct {
 	CSVVersion string
 	// These directories specify where to retrieve manifests from.
 	DeployDir, ApisDir, CRDsDir string
+	// Interactivepreference refers to the user preference to enable/disable
+	// interactive prompts.
+	InteractivePreference projutil.InteractiveLevel
 	// updateCRDs directs the generator to also add CustomResourceDefinition
 	// manifests to the bundle.
 	UpdateCRDs bool
 	// makeManifests directs the generator to use 'manifests' as the bundle
 	// dir name.
 	MakeManifests bool
-
 	// noUpdate is for testing the generator's update capabilities.
 	noUpdate bool
 	// fromBundleDir is set if the generator needs to update from
@@ -71,6 +73,9 @@ type BundleGenerator struct {
 	// toBundleDir is the bundle directory filepath where the CSV will be generated
 	// This is set according to the generator's OutputDir
 	toBundleDir string
+	// Subcommand includes the list of csv metadata fields which the user
+	// provides to the interactive prompts which appear while generating csv.
+	interactiveCSVCmd interactiveCSVCmd
 }
 
 // getBundleDirs gets directory names of the new bundle and, if it exists,
@@ -180,6 +185,14 @@ func (g *BundleGenerator) setDefaults() {
 // olmapiv1alpha1.ClusterServiceVersion instead of writing to a template.
 func (g BundleGenerator) Generate() error {
 	g.setDefaults()
+
+	csvPath := g.getCSVPath(g.OperatorName)
+
+	if (g.InteractivePreference == projutil.InteractiveSoftOff && !isFileExist(csvPath)) ||
+		g.InteractivePreference == projutil.InteractiveOnAll {
+		g.interactiveCSVCmd.generateInteractivePrompt()
+	}
+
 	fileMap, err := g.generateCSV()
 	if err != nil {
 		return err
@@ -195,13 +208,14 @@ func (g BundleGenerator) Generate() error {
 		}
 	}
 
-	if err = os.MkdirAll(g.toBundleDir, fileutil.DefaultDirFileMode); err != nil {
+	if err := os.MkdirAll(g.toBundleDir, fileutil.DefaultDirFileMode); err != nil {
 		return fmt.Errorf("error mkdir %s: %v", g.toBundleDir, err)
 	}
+
 	for fileName, b := range fileMap {
 		path := filepath.Join(g.toBundleDir, fileName)
 		log.Debugf("CSV generator writing %s", path)
-		if err = ioutil.WriteFile(path, b, fileutil.DefaultFileMode); err != nil {
+		if err := ioutil.WriteFile(path, b, fileutil.DefaultFileMode); err != nil {
 			return fmt.Errorf("error writing bundle file: %v", err)
 		}
 	}
@@ -218,6 +232,11 @@ func getCSVFileName(name string) string {
 
 func getCSVFileNameLegacy(name, version string) string {
 	return getCSVName(strings.ToLower(name), version) + csvYamlFileExt
+}
+
+// getCSVPath returns the location of CSV in the project.
+func (g BundleGenerator) getCSVPath(operatorName string) string {
+	return filepath.Join(g.fromBundleDir, getCSVFileName(operatorName))
 }
 
 func (g BundleGenerator) generateCSV() (fileMap map[string][]byte, err error) {
@@ -242,6 +261,9 @@ func (g BundleGenerator) generateCSV() (fileMap map[string][]byte, err error) {
 	if err = g.updateCSVFromManifests(csv); err != nil {
 		return nil, err
 	}
+
+	// populate the csv with the metadata obtained from the user.
+	g.interactiveCSVCmd.addUImetadata(csv)
 
 	path := ""
 	if g.MakeManifests {

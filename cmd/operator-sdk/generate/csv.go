@@ -27,17 +27,19 @@ import (
 )
 
 type csvCmd struct {
-	csvVersion     string
-	csvChannel     string
-	fromVersion    string
-	operatorName   string
-	outputDir      string
-	deployDir      string
-	apisDir        string
-	crdDir         string
-	updateCRDs     bool
-	defaultChannel bool
-	makeManifests  bool
+	csvVersion       string
+	csvChannel       string
+	fromVersion      string
+	operatorName     string
+	outputDir        string
+	deployDir        string
+	apisDir          string
+	crdDir           string
+	interactivelevel projutil.InteractiveLevel
+	updateCRDs       bool
+	defaultChannel   bool
+	makeManifests    bool
+	interactive      bool
 }
 
 //nolint:lll
@@ -171,6 +173,16 @@ Flags that change project default paths:
 				c.updateCRDs = false
 			}
 
+			// Check if the user has any specific preference to enable / disable interactive prompts.
+			// Default behaviour is to disable the prompts.
+			if cmd.Flags().Changed("interactive") {
+				if c.interactive {
+					c.interactivelevel = projutil.InteractiveOnAll
+				} else {
+					c.interactivelevel = projutil.InteractiveHardOff
+				}
+			}
+
 			if err := c.run(); err != nil {
 				log.Fatal(err)
 			}
@@ -230,6 +242,9 @@ Flags that change project default paths:
 			"directory. This directory is intended to be used for your latest bundle manifests. "+
 			"The default location is deploy/olm-catalog/<operator-name>/manifests. "+
 			"If --output-dir is set, the directory will be <output-dir>/manifests")
+	cmd.Flags().BoolVar(&c.interactive, "interactive", false,
+		"When set, will enable the interactive command prompt feature to fill the UI "+
+			"metadata fields in CSV")
 
 	return cmd
 }
@@ -250,16 +265,18 @@ func (c csvCmd) run() error {
 	if c.operatorName == "" {
 		c.operatorName = filepath.Base(projutil.MustGetwd())
 	}
+
 	csv := gencatalog.BundleGenerator{
-		OperatorName:  c.operatorName,
-		CSVVersion:    c.csvVersion,
-		FromVersion:   c.fromVersion,
-		UpdateCRDs:    c.updateCRDs,
-		MakeManifests: c.makeManifests,
-		DeployDir:     c.deployDir,
-		ApisDir:       c.apisDir,
-		CRDsDir:       c.crdDir,
-		OutputDir:     c.outputDir,
+		OperatorName:          c.operatorName,
+		CSVVersion:            c.csvVersion,
+		FromVersion:           c.fromVersion,
+		UpdateCRDs:            c.updateCRDs,
+		MakeManifests:         c.makeManifests,
+		DeployDir:             c.deployDir,
+		ApisDir:               c.apisDir,
+		CRDsDir:               c.crdDir,
+		OutputDir:             c.outputDir,
+		InteractivePreference: c.interactivelevel,
 	}
 
 	if err := csv.Generate(); err != nil {

@@ -131,6 +131,7 @@ operator-sdk generate csv [flags]
       --csv-version string     Semantic version of the CSV. This flag must be set if a package manifest exists
       --deploy-dir string      Project relative path to root directory for operator manifests (Deployment and RBAC) (default "deploy")
   -h, --help                   help for csv
+      --interactive            When set, will enable the interactive command prompt feature to fill the UI metadata fields in CSV
       --make-manifests         When set, the generator will create or update a CSV manifest in a 'manifests' directory. This directory is intended to be used for your latest bundle manifests. The default location is deploy/olm-catalog/<operator-name>/manifests. If --output-dir is set, the directory will be <output-dir>/manifests (default true)
       --operator-name string   Operator name to use while generating CSV
       --output-dir string      Base directory to output generated CSV. If --make-manifests=false the resulting CSV bundle directory will be <output-dir>/olm-catalog/<operator-name>/<csv-version>. If --make-manifests=true, the bundle directory will be <output-dir>/manifests
