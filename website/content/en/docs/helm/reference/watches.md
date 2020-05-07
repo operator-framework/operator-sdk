@@ -27,4 +27,4 @@ An example Watches file:
   chart: helm-charts/foo
 ```
 
-[override-values]: /docs/helm/reference/advanced_features/#using-override-values-and-passing-environment-variables-to-the-helm-chart
+[override-values]: /docs/helm/reference/advanced_features/#passing-environment-variables-to-the-helm-chart

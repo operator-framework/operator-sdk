@@ -222,6 +222,9 @@ test-sanity: tidy build/operator-sdk lint
 test-unit: ## Run the unit tests
 	$(Q)go test -coverprofile=coverage.out -covermode=count -count=1 -short $(TEST_PKGS)
 
+test-links:
+	./hack/check-links.sh
+
 # CI tests.
 .PHONY: test-ci
 
