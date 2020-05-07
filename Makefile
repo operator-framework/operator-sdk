@@ -216,6 +216,9 @@ test: test-unit ## Run the tests
 test-markdown:
 	./hack/check-markdown.sh
 
+test-links:
+	./hack/check-hugo-links.sh
+
 test-sanity: tidy build/operator-sdk lint
 	./hack/tests/sanity-check.sh
 
