@@ -37,7 +37,7 @@ func Write(dir, content string) error {
 func WriteIfNotExist(dir, content string) error {
 	_, err := os.Stat(filepath.Join(dir, File))
 	if err != nil && errors.Is(err, os.ErrNotExist) {
-		return nil
+		return Write(dir, content)
 	}
-	return Write(dir, content)
+	return nil
 }
