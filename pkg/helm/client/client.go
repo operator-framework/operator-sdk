@@ -15,8 +15,10 @@
 package client
 
 import (
+	"fmt"
 	"io"
 
+	"github.com/operator-framework/operator-sdk/pkg/handler"
 	"helm.sh/helm/v3/pkg/kube"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -79,6 +81,7 @@ func (c namespaceClientConfig) ConfigAccess() clientcmd.ConfigAccess {
 	return nil
 }
 
+// NewRESTClientGetter ...
 func NewRESTClientGetter(mgr manager.Manager, ns string) (genericclioptions.RESTClientGetter, error) {
 	cfg := mgr.GetConfig()
 	dc, err := discovery.NewDiscoveryClientForConfig(cfg)
@@ -98,16 +101,21 @@ func NewRESTClientGetter(mgr manager.Manager, ns string) (genericclioptions.REST
 
 var _ kube.Interface = &ownerRefInjectingClient{}
 
-func NewOwnerRefInjectingClient(base kube.Client, ownerRef metav1.OwnerReference) kube.Interface {
+func NewOwnerRefInjectingClient(base kube.Client, ownerRef metav1.OwnerReference,
+	mgr manager.Manager, cr *unstructured.Unstructured) kube.Interface {
 	return &ownerRefInjectingClient{
-		refs:   []metav1.OwnerReference{ownerRef},
-		Client: base,
+		refs:       []metav1.OwnerReference{ownerRef},
+		Client:     base,
+		restMapper: mgr.GetRESTMapper(),
+		owner:      cr,
 	}
 }
 
 type ownerRefInjectingClient struct {
 	refs []metav1.OwnerReference
 	kube.Client
+	restMapper meta.RESTMapper
+	owner      *unstructured.Unstructured
 }
 
 func (c *ownerRefInjectingClient) Build(reader io.Reader, validate bool) (kube.ResourceList, error) {
@@ -124,8 +132,22 @@ func (c *ownerRefInjectingClient) Build(reader io.Reader, validate bool) (kube.R
 			return err
 		}
 		u := &unstructured.Unstructured{Object: objMap}
-		if r.ResourceMapping().Scope == meta.RESTScopeNamespace {
+		useOwnerRef, err := SupportsOwnerReference(c.restMapper, c.owner, u)
+		if err != nil {
+			return err
+		}
+
+		if useOwnerRef {
 			u.SetOwnerReferences(c.refs)
+		} else {
+			a := u.GetAnnotations()
+			if a == nil {
+				a = map[string]string{}
+			}
+			a[handler.NamespacedNameAnnotation] = fmt.Sprintf("%s/%s", c.owner.GetNamespace(), c.owner.GetName())
+			a[handler.TypeAnnotation] = c.owner.GetObjectKind().GroupVersionKind().GroupKind().String()
+
+			u.SetAnnotations(a)
 		}
 		return nil
 	})
@@ -133,4 +155,45 @@ func (c *ownerRefInjectingClient) Build(reader io.Reader, validate bool) (kube.R
 		return nil, err
 	}
 	return resourceList, nil
+}
+
+func SupportsOwnerReference(restMapper meta.RESTMapper, owner, dependent runtime.Object) (bool, error) {
+	ownerGVK := owner.GetObjectKind().GroupVersionKind()
+	ownerMapping, err := restMapper.RESTMapping(ownerGVK.GroupKind(), ownerGVK.Version)
+	if err != nil {
+		return false, err
+	}
+	mOwner, err := meta.Accessor(owner)
+	if err != nil {
+		return false, err
+	}
+
+	depGVK := dependent.GetObjectKind().GroupVersionKind()
+	depMapping, err := restMapper.RESTMapping(depGVK.GroupKind(), depGVK.Version)
+	if err != nil {
+		return false, err
+	}
+	mDep, err := meta.Accessor(dependent)
+	if err != nil {
+		return false, err
+	}
+
+	ownerClusterScoped := ownerMapping.Scope.Name() == meta.RESTScopeNameRoot
+	ownerNamespace := mOwner.GetNamespace()
+	depClusterScoped := depMapping.Scope.Name() == meta.RESTScopeNameRoot
+	depNamespace := mDep.GetNamespace()
+
+	if ownerClusterScoped {
+		return true, nil
+	}
+
+	if depClusterScoped {
+		return false, nil
+	}
+
+	if ownerNamespace != depNamespace {
+		return false, nil
+	}
+
+	return true, nil
 }

@@ -69,7 +69,7 @@ func (f managerFactory) NewManager(cr *unstructured.Unstructured, overrideValues
 	kubeClient := kube.New(rcg)
 
 	ownerRef := metav1.NewControllerRef(cr, cr.GroupVersionKind())
-	ownerRefClient := client.NewOwnerRefInjectingClient(*kubeClient, *ownerRef)
+	ownerRefClient := client.NewOwnerRefInjectingClient(*kubeClient, *ownerRef, f.mgr, cr)
 
 	crChart, err := loader.LoadDir(f.chartDir)
 	if err != nil {
