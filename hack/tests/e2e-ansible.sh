@@ -107,6 +107,7 @@ test_operator() {
     fi
 
     header_text "Ensure no liveness probe fail events"
+    # We can't directly hit the endpoint, which is not publicly exposed. If k8s sees a failing endpoint, it will create a "Killing" event.
     live_pod=$(kubectl get pod -l name=memcached-operator -o jsonpath="{..metadata.name}")
     if kubectl get events --field-selector involvedObject.name=$live_pod | grep Killing
     then
