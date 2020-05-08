@@ -4,12 +4,12 @@
 }
 
 .of-docs__wrapper {
+    pre, p, ol, ul {
+        margin-bottom: var(--of--spacer--md);
+    }
     ul {
         list-style: disc;
-        margin-left: 1rem;
-    }
-    p {
-        margin-bottom: var(--of--spacer--md);
+        margin-left: 2rem;
     }
     .td-sidebar-nav .td-sidebar-link__page {
         font-weight: normal;
