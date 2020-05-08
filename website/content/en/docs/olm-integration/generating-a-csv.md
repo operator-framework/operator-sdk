@@ -21,38 +21,41 @@ manifests to construct a CSV manifest. Each of these inputs are read every time
 `operator-sdk generate csv` is run are used to overwrite data in corresponding
 CSV fields (with one exception described [below](#csv-fields)).
 
-1. Path to the Operator manifests root directory. By default `generate csv`
+* Path to the Operator manifests root directory. By default `generate csv`
 extracts manifests from files in `deploy/` for the following kinds and adds
 them to the CSV. Use the `--deploy-dir` flag to change this path.
     * Roles: `deploy/role.yaml`
     * ClusterRoles: `deploy/cluster_role.yaml`
     * Deployments: `deploy/operator.yaml`
-2. Path to a directory containing CustomResourceDefinitions (CRDs) and Custom Resource examples (CRs).
+* Path to a directory containing CustomResourceDefinitions (CRDs) and Custom Resource examples (CRs).
 Use the `--crd-dir` flag to change this path.
     * Custom Resources: `deploy/crds/<full group>_<version>_<kind>_cr.yaml`
     * CustomResourceDefinitions: `deploy/crds/<full group>_<resource>_crd.yaml`
-3. Path to the API types root directory. The CSV generator
+* _For Go Operators only:_ Path to the API types root directory. The CSV generator
 also parses the [CSV markers][csv-markers] from the API type definitions
 to populate certain CSV fields. By default the API types directory is `pkg/apis/`.
 Use the `--apis-dir` flag to change this path. The CSV generator expects either
 of the following layouts for the API types directory.
     * Mulitple groups: `<API-root-dir>/<group>/<version>/`
     * Single groups: `<API-root-dir>/<version>/`
-4. Interactive command prompts: Operator SDK provides an option to enable the interactive command prompt feature while generating CSV. These prompts ask the user for inputs on some of the required and optional UI metadata fields of the CSV. They can be enabled or disabled using the `--interactive` flag in `operator-sdk generate csv` command. For example:
+* Interactive command prompts: `operator-sdk generate csv` provides the `--interactive`
+flag to optionally enable an interactive command prompt before generating a CSV
+that requests input for required and optional UI metadata fields. For example:
 
-```sh
-operator-sdk generate csv  --csv-version 0.1.0 --interactive=true
-INFO[0000] Generating CSV manifest version 0.1.0
+  ```console
+  $ operator-sdk generate csv  --csv-version 0.1.0 --interactive=true
+  INFO[0000] Generating CSV manifest version 0.1.0
 
-Display name for the operator (required):
-> memcached
+  Display name for the operator (required):
+  > memcached
 
-Comma-separated list of keywords for your operator (required):
-> app, operator
-...
+  Comma-separated list of keywords for your operator (required):
+  > app, operator
+  ...
+  ```
 
-```
-By default, the command checks for the existence of base CSV in the bundle directory and prompts the user for inputs if the base CSV is not present.
+  By default, the command starts an interactive prompt if some base CSV is not present,
+  either in the destination directory or a package manifests directory named with version `--from-version=<version>`.
 
 ### Output
 
