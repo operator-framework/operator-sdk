@@ -30,7 +30,7 @@ entries:
     # Migration can be defined to automatically add a section to
     # the migration guide. This is required for breaking changes.
     migration:
-      header: **(Optional for Ansible-base operators)**  Add livenessProbe check
+      header: (Optional) Add livenessProbe check for Ansible-based operators
       body: >
         Existing operators will have a healthz endpoint without intervention,
         but to take advantage of it, a liveness probe should be manually added
