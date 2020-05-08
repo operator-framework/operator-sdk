@@ -9,8 +9,9 @@ Validate an operator bundle image
 
 The 'operator-sdk bundle validate' command can validate both content and
 format of an operator bundle image or an operator bundles directory on-disk
-containing operator metadata and manifests. This command will exit with a non-zero
-exit code if any validation tests fail.
+containing operator metadata and manifests. This command will exit with an
+exit code of 1 if any validation errors arise, and 0 if only warnings arise or
+all validators pass.
 
 More information on operator bundle images and the manifests/metadata format:
 https://github.com/openshift/enhancements/blob/master/enhancements/olm/operator-bundle.md
@@ -52,7 +53,7 @@ To build and validate an image:
 
 ```
   -h, --help                   help for validate
-  -b, --image-builder string   Tool to extract container images. One of: [docker, podman] (default "docker")
+  -b, --image-builder string   Tool to extract bundle image data. Only used when validating a bundle image. One of: [docker, podman] (default "docker")
 ```
 
 ### SEE ALSO
