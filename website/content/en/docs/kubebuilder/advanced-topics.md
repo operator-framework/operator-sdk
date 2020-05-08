@@ -67,7 +67,11 @@ func init() {
   if err := routev1.AddToScheme(mgr.GetScheme()); err != nil {
     log.Error(err, "")
     os.Exit(1)
-  }
+	}
+	
+	_ = clientgoscheme.AddToScheme(mgr.GetScheme())
+
+	_ = routev1.AddToScheme(mgr.GetScheme())
 
   ...
 }
