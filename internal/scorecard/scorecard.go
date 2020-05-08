@@ -15,17 +15,14 @@
 package scorecard
 
 import (
-	"fmt"
 	"io"
 	"os"
-	"strings"
 
 	scplugins "github.com/operator-framework/operator-sdk/internal/scorecard/plugins"
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
-	"github.com/operator-framework/operator-sdk/version"
-	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 const DefaultConfigFile = ".osdk-scorecard"
@@ -112,10 +109,5 @@ func (s Config) RunTests() error {
 }
 
 func ConfigDocLink() string {
-	if strings.HasSuffix(version.Version, "+git") {
-		return "https://github.com/operator-framework/operator-sdk/blob/master/doc/test-framework/scorecard.md"
-	}
-	return fmt.Sprintf(
-		"https://github.com/operator-framework/operator-sdk/blob/%s/doc/test-framework/scorecard.md",
-		version.Version)
+	return "https://sdk.operatorframework.io/docs/scorecard/"
 }

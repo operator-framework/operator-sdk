@@ -42,10 +42,9 @@ path to a playbook on the operator’s file system.
 #### role
 
 One of `playbook`, `role`, or `vars` must be provided. If `role` is not provided, it
-will default to the role specified at the top level of the `watches.yaml` entry.
+will default to the role specified at the top level of the [`watches.yaml`][watches] entry.
 
 This field is identical to the top-level `role` field.
-https://github.com/operator-framework/operator-sdk/blob/master/doc/ansible/user-guide.md#watches-file
 
 
 #### vars
@@ -165,3 +164,5 @@ let the operator remove our finalizer and allow the resource to be deleted.
 
 ## Further reading
 • [Kubernetes finalizers](https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#finalizers)
+
+[watches]:https://sdk.operatorframework.io/docs/ansible/reference/watches/

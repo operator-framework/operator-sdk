@@ -73,7 +73,7 @@ at a time, hence its intended purpose being testing only.
 [olm]:https://github.com/operator-framework/operator-lifecycle-manager/
 [csv]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md
 [csv-install-modes]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md#operator-metadata[operator-bundle]:https://github.com/operator-framework/operator-registry/tree/v1.5.3#manifest-format
-[sdk-olm-design]:https://github.com/operator-framework/operator-sdk/blob/master/doc/proposals/sdk-integration-with-olm.md
+[sdk-olm-design]:https://github.com/operator-framework/operator-sdk/blob/master/proposals/sdk-integration-with-olm.md
 [cli-olm-install]:/docs/cli/operator-sdk_olm_install
 [cli-olm-status]:/docs/cli/operator-sdk_olm_status
 [cli-run-olm]:/docs/cli/operator-sdk_run
