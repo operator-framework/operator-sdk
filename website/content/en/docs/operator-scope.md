@@ -6,7 +6,7 @@ weight: 50
 
 - [Namespace-scoped operator usage](#namespace-scoped-operator-usage)
 - [Cluster-scoped operator usage](#cluster-scoped-operator-usage)
-  - [Changed required for a cluster-scoped operator](#changed-required-for-a-cluster-scoped-operator)
+  - [Changes required for a cluster-scoped operator](#changes-required-for-a-cluster-scoped-operator)
   - [Example for cluster-scoped operator](#example-for-cluster-scoped-operator)
 - [CRD scope](#crd-scope)
   - [CRD cluster-scoped usage](#crd-cluster-scoped-usage)

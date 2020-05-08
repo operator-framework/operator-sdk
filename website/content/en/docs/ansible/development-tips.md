@@ -454,7 +454,7 @@ Please look over the following sections for help debugging an Ansible Operator:
 
 * [View the Ansible logs](../quickstart#view-the-ansible-logs)
 * [Additional Ansible debug](../quickstart#additional-ansible-debug)
-* [Testing Ansible Operators with Molecule](../testing-guide#testing-ansible-operators-with-molecule)
+* [Testing Ansible Operators with Molecule](../testing-guide)
 
 ## Extra vars sent to Ansible
 The extra vars that are sent to Ansible are managed by the operator. The `spec`

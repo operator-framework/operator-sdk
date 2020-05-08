@@ -304,7 +304,7 @@ To github.com:operator-framework/operator-sdk.git
  * [new branch]      v1.3.x -> v1.3.x
 ```
 
-Now that the branch exists, you need to make the post-release PR for the new release branch. To do this, simply follow the same steps as in [step 3](#3-create-a-pr-for-post-release-version-and-changelogmd-updates) with the addition of changing the branch name in the `go.mod` scaffold from `master` to the new branch (for example, `v1.3.x`). Then, make the PR against the new branch.
+Now that the branch exists, you need to make the post-release PR for the new release branch. To do this, simply follow the same steps as in [step 3](#3-create-a-pr-for-post-release-version-updates) with the addition of changing the branch name in the `go.mod` scaffold from `master` to the new branch (for example, `v1.3.x`). Then, make the PR against the new branch.
 
 ### 6. Updating the Homebrew formula
 

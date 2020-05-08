@@ -10,7 +10,7 @@ Compiles code and builds artifacts
 The operator-sdk build command compiles the Operator code into an executable binary
 and generates the Dockerfile manifest.
 
-<image> is the container image to be built, e.g. "quay.io/example/operator:v0.0.1".
+'< image >' is the container image to be built, e.g. "quay.io/example/operator:v0.0.1".
 This image will be automatically set in the deployment manifests.
 
 After build completes, the image would be built locally in docker. Then it needs to

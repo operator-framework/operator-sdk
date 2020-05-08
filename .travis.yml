@@ -114,6 +114,11 @@ jobs:
       script:
         - make test-markdown
 
+    # Run the markdown link checker
+    - name: Check Website links
+      script:
+        - make test-links
+
     ## Operator test stage jobs ##
 
     # Build and test ansible and test ansible using molecule
