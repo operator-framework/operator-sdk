@@ -402,7 +402,7 @@ func (c manifestCollection) applyWebhooks(csv *operatorsv1alpha1.ClusterServiceV
 func validatingToWebhookDescription(webhook admissionregv1.ValidatingWebhook) operatorsv1alpha1.WebhookDescription {
 	description := operatorsv1alpha1.WebhookDescription{
 		Type:                    operatorsv1alpha1.ValidatingAdmissionWebhook,
-		Name:                    webhook.Name,
+		GenerateName:            webhook.Name,
 		Rules:                   webhook.Rules,
 		FailurePolicy:           webhook.FailurePolicy,
 		MatchPolicy:             webhook.MatchPolicy,
@@ -425,7 +425,7 @@ func validatingToWebhookDescription(webhook admissionregv1.ValidatingWebhook) op
 func mutatingToWebhookDescription(webhook admissionregv1.MutatingWebhook) operatorsv1alpha1.WebhookDescription {
 	description := operatorsv1alpha1.WebhookDescription{
 		Type:                    operatorsv1alpha1.MutatingAdmissionWebhook,
-		Name:                    webhook.Name,
+		GenerateName:            webhook.Name,
 		Rules:                   webhook.Rules,
 		FailurePolicy:           webhook.FailurePolicy,
 		MatchPolicy:             webhook.MatchPolicy,

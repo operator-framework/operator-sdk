@@ -14,8 +14,8 @@ require (
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.1.2
-	github.com/operator-framework/api v0.3.1
-	github.com/operator-framework/operator-registry v1.6.2-0.20200330184612-11867930adb5
+	github.com/operator-framework/api v0.3.5
+	github.com/operator-framework/operator-registry v1.12.2
 	github.com/pborman/uuid v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.5.1
@@ -44,7 +44,6 @@ require (
 	k8s.io/klog v1.0.0
 	k8s.io/kube-state-metrics v1.7.2
 	k8s.io/kubectl v0.18.2
-	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/controller-runtime v0.6.0
 	sigs.k8s.io/controller-tools v0.3.0
 	sigs.k8s.io/kubebuilder v1.0.9-0.20200428220224-d6e2b995831c

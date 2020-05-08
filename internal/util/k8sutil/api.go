@@ -22,6 +22,8 @@ import (
 	"regexp"
 
 	log "github.com/sirupsen/logrus"
+	apiext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/version"
 	"sigs.k8s.io/yaml"
@@ -152,3 +154,20 @@ func (vs CRDVersions) Less(i, j int) bool {
 	return version.CompareKubeAwareVersionStrings(vs[i].Name, vs[j].Name) > 0
 }
 func (vs CRDVersions) Swap(i, j int) { vs[i], vs[j] = vs[j], vs[i] }
+
+//nolint:lll
+func Convertv1beta1Tov1CustomResourceDefinition(in *apiextv1beta1.CustomResourceDefinition) (*apiextv1.CustomResourceDefinition, error) {
+	var unversioned apiext.CustomResourceDefinition
+	//nolint:lll
+	if err := apiextv1beta1.Convert_v1beta1_CustomResourceDefinition_To_apiextensions_CustomResourceDefinition(in, &unversioned, nil); err != nil {
+		return nil, err
+	}
+	var out apiextv1.CustomResourceDefinition
+	out.TypeMeta.APIVersion = apiextv1.SchemeGroupVersion.String()
+	out.TypeMeta.Kind = "CustomResourceDefinition"
+	//nolint:lll
+	if err := apiextv1.Convert_apiextensions_CustomResourceDefinition_To_v1_CustomResourceDefinition(&unversioned, &out, nil); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}

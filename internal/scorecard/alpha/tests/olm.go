@@ -22,7 +22,8 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -30,6 +31,7 @@ import (
 	"github.com/operator-framework/api/pkg/operators"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	"github.com/operator-framework/operator-registry/pkg/registry"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 )
 
@@ -114,8 +116,28 @@ func CRDsHaveValidationTest(bundle registry.Bundle) scapiv1alpha2.ScorecardTestR
 		return r
 	}
 	r.Log += fmt.Sprintf("Loaded %d Custom Resources from alm-examples\n", len(crs))
+	var v1crds []*apiextv1.CustomResourceDefinition
+	for _, crd := range crds {
+		var out *apiextv1.CustomResourceDefinition
+		switch t := crd.(type) {
+		case *apiextv1beta1.CustomResourceDefinition:
+			out, err = k8sutil.Convertv1beta1Tov1CustomResourceDefinition(t)
+			if err != nil {
+				r.Errors = append(r.Errors, err.Error())
+				r.State = scapiv1alpha2.ErrorState
+				return r
+			}
+		case *apiextv1.CustomResourceDefinition:
+			out = t
+		default:
+			r.Errors = append(r.Errors, fmt.Sprintf("cannot convert %T to *v1.CustomResourceDefinition", t))
+			r.State = scapiv1alpha2.ErrorState
+			return r
+		}
+		v1crds = append(v1crds, out)
+	}
 	for _, cr := range crs {
-		r = isCRFromCRDApi(cr, crds, r)
+		r = isCRFromCRDApi(cr, v1crds, r)
 	}
 	return r
 }
@@ -284,17 +306,8 @@ func checkOwnedCSVDescriptors(cr unstructured.Unstructured, csv *operators.Clust
 }
 
 // hasVersion checks if a CRD contains a specified version in a case insensitive manner
-func hasVersion(version string, crd *v1beta1.CustomResourceDefinition) bool {
-	if strings.EqualFold(version, crd.Spec.Version) {
-		return true
-	}
-	// crd.Spec.Version is deprecated, so check in crd.Spec.Versions as well
-	for _, currVer := range crd.Spec.Versions {
-		if strings.EqualFold(version, currVer.Name) {
-			return true
-		}
-	}
-	return false
+func hasVersion(version string, crdVersion apiextv1.CustomResourceDefinitionVersion) bool {
+	return strings.EqualFold(version, crdVersion.Name)
 }
 
 func hasKind(kind1, kind2 string, r scapiv1alpha2.ScorecardTestResult) bool {
@@ -313,7 +326,7 @@ func hasKind(kind1, kind2 string, r scapiv1alpha2.ScorecardTestResult) bool {
 	return strings.EqualFold(singularKind1, singularKind2)
 }
 
-func isCRFromCRDApi(cr unstructured.Unstructured, crds []*v1beta1.CustomResourceDefinition,
+func isCRFromCRDApi(cr unstructured.Unstructured, crds []*apiextv1.CustomResourceDefinition,
 	r scapiv1alpha2.ScorecardTestResult) scapiv1alpha2.ScorecardTestResult {
 
 	// check if the CRD matches the testing CR
@@ -321,39 +334,43 @@ func isCRFromCRDApi(cr unstructured.Unstructured, crds []*v1beta1.CustomResource
 		gvk := cr.GroupVersionKind()
 		// Only check the validation block if the CRD and CR have the same Kind and Version
 
-		if !hasVersion(gvk.Version, crd) || !hasKind(gvk.Kind, crd.Spec.Names.Kind, r) {
-			continue
-		}
+		for _, version := range crd.Spec.Versions {
 
-		if crd.Spec.Validation == nil {
-			r.Suggestions = append(r.Suggestions, fmt.Sprintf("Add CRD validation for %s/%s",
-				crd.Spec.Names.Kind, crd.Spec.Version))
-			continue
-		}
-		failed := false
-		if cr.Object["spec"] != nil {
-			spec := cr.Object["spec"].(map[string]interface{})
-			for key := range spec {
-				if _, ok := crd.Spec.Validation.OpenAPIV3Schema.Properties["spec"].Properties[key]; !ok {
-					failed = true
-					r.Suggestions = append(r.Suggestions,
-						fmt.Sprintf("Add CRD validation for spec field `%s` in %s/%s",
-							key, gvk.Kind, gvk.Version))
+			if !hasVersion(gvk.Version, version) || !hasKind(gvk.Kind, crd.Spec.Names.Kind, r) {
+				continue
+			}
+
+			if version.Schema == nil {
+				r.Suggestions = append(r.Suggestions, fmt.Sprintf("Add CRD validation for %s/%s",
+					crd.Spec.Names.Kind, version.Name))
+				continue
+			}
+			failed := false
+			if cr.Object["spec"] != nil {
+				spec := cr.Object["spec"].(map[string]interface{})
+				for key := range spec {
+					if _, ok := version.Schema.OpenAPIV3Schema.Properties["spec"].Properties[key]; !ok {
+						failed = true
+						r.Suggestions = append(r.Suggestions,
+							fmt.Sprintf("Add CRD validation for spec field `%s` in %s/%s",
+								key, gvk.Kind, gvk.Version))
+					}
 				}
 			}
-		}
-		if cr.Object["status"] != nil {
-			status := cr.Object["status"].(map[string]interface{})
-			for key := range status {
-				if _, ok := crd.Spec.Validation.OpenAPIV3Schema.Properties["status"].Properties[key]; !ok {
-					failed = true
-					r.Suggestions = append(r.Suggestions, fmt.Sprintf("Add CRD validation for status"+
-						" field `%s` in %s/%s", key, gvk.Kind, gvk.Version))
+			if cr.Object["status"] != nil {
+				status := cr.Object["status"].(map[string]interface{})
+				for key := range status {
+					if _, ok := version.Schema.OpenAPIV3Schema.Properties["status"].Properties[key]; !ok {
+						failed = true
+						r.Suggestions = append(r.Suggestions, fmt.Sprintf("Add CRD validation for status"+
+							" field `%s` in %s/%s", key, gvk.Kind, gvk.Version))
+					}
 				}
 			}
-		}
-		if failed {
-			r.State = scapiv1alpha2.FailState
+			if failed {
+				r.State = scapiv1alpha2.FailState
+				return r
+			}
 		}
 	}
 	return r
