@@ -313,7 +313,7 @@ func CheckGoModules() error {
 	}
 	if !goModOn {
 		return fmt.Errorf(`using go modules requires GO111MODULE="on", "auto", or unset.` +
-			` More info: https://github.com/operator-framework/operator-sdk/blob/master/doc/user-guide.md#go-modules`)
+			` More info: https://sdk.operatorframework.io/docs/golang/quickstart/#a-note-on-dependency-management`)
 	}
 	return nil
 }
@@ -321,5 +321,5 @@ func CheckGoModules() error {
 // PrintDeprecationWarning prints a colored warning wrapping msg to the terminal.
 func PrintDeprecationWarning(msg string) {
 	fmt.Printf(noticeColor, "[Deprecation Notice] "+msg+". Refer to the version upgrade guide "+
-		"for more information: https://operator-sdk.netlify.com/docs/migration/version-upgrade-guide\n\n")
+		"for more information: https://sdk.operatorframework.io/docs/migration/version-upgrade-guide/\n\n")
 }

@@ -9,7 +9,7 @@ The document considers [memcached operator][memcached-operator] as an example to
 - [go][go_tool] version 17.03+.
 - [kubectl][kubectl_tool] version v1.11.3+.
 - [kustomize][kustomize_tool] v3.1.0+.
-- Access to a Kubernetes v1.11.3+ cluster. 
+- Access to a Kubernetes v1.11.3+ cluster.
 
 **Note**
 It is recommended that you have your project upgraded to the latest SDK release version before following the steps of this guide to migrate to Kubebuilder layout.
@@ -74,7 +74,7 @@ type MemcachedStatus struct {
 	Nodes []string `json:"nodes"`
 }
 ```
-**Note**: 
+**Note**:
 If there are any any libraries or pkgs present in `pkg/apis/cache/v1alpha1`, copy them over to `api/v1alpha1`.
 
 ### CRD markers
@@ -121,7 +121,7 @@ Run [`make manifests`][generate_crd] to generate CRD manifests. They would be ge
 
 The operator deployment manifest [`deploy/operator.yaml`][deployment_yaml] from the old project should be copied over to `config/manager/manager.yaml` in the new project.
 
-**Note**: 
+**Note**:
 The kustomize file requires the operator deployment manifest to have the field `namespace` which is missing in the `deploy/operator.yaml` manifest of SDK project.
 > **// TODO:** Explain label propagation for metrics collection.
 

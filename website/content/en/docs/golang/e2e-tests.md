@@ -382,7 +382,7 @@ $ kubectl delete -f deploy/crds/cache.example.com_memcacheds_crd.yaml
 [context-link]:https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/context.go
 [e2eutil-link]:https://github.com/operator-framework/operator-sdk/tree/master/pkg/test/e2eutil
 [memcached-test-link]:https://github.com/operator-framework/operator-sdk-samples/blob/master/go/memcached-operator/test/e2e/memcached_test.go
-[scheme-link]:https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/framework.go#L109
+[scheme-link]:https://github.com/operator-framework/operator-sdk/blob/v0.17.0/pkg/test/framework.go#L176
 [cli-test-local]: ../../cli/operator-sdk_test_local
-[main-entry-link]:https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/main_entry.go#L25
+[main-entry-link]:https://github.com/operator-framework/operator-sdk/blob/v0.17.0/pkg/test/main_entry.go#L25
 [memcached-role]:https://github.com/operator-framework/operator-sdk-samples/blob/master/go/memcached-operator/deploy/role.yaml

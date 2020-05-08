@@ -17,7 +17,6 @@ package alpha
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
@@ -27,7 +26,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
-	"github.com/operator-framework/operator-sdk/version"
 )
 
 type TestRunner interface {
@@ -165,12 +163,7 @@ func (r FakeTestRunner) RunTest(ctx context.Context, test Test) (result *v1alpha
 }
 
 func ConfigDocLink() string {
-	if strings.HasSuffix(version.Version, "+git") {
-		return "https://github.com/operator-framework/operator-sdk/blob/master/doc/test-framework/scorecard.md"
-	}
-	return fmt.Sprintf(
-		"https://github.com/operator-framework/operator-sdk/blob/%s/doc/test-framework/scorecard.md",
-		version.Version)
+	return "https://sdk.operatorframework.io/docs/scorecard/"
 }
 
 // waitForTestToComplete waits for a fixed amount of time while
