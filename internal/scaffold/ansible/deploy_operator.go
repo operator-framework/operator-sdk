@@ -75,6 +75,12 @@ spec:
               value: "[[.ProjectName]]"
             - name: ANSIBLE_GATHERING
               value: explicit
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 6789
+            initialDelaySeconds: 5
+            periodSeconds: 3
       volumes:
         - name: runner
           emptyDir: {}

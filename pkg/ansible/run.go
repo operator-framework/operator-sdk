@@ -34,6 +34,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,6 +54,7 @@ var (
 	log                       = logf.Log.WithName("cmd")
 	metricsPort         int32 = 8383
 	operatorMetricsPort int32 = 8686
+	healthProbePort     int32 = 6789
 )
 
 func printVersion() {
@@ -75,7 +77,8 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 	// Set default manager options
 	// TODO: probably should expose the host & port as an environment variables
 	options := manager.Options{
-		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
+		HealthProbeBindAddress: fmt.Sprintf("%s:%d", metricsHost, healthProbePort),
+		MetricsBindAddress:     fmt.Sprintf("%s:%d", metricsHost, metricsPort),
 		NewClient: func(cache cache.Cache, config *rest.Config, options client.Options) (client.Client, error) {
 			c, err := client.New(config, options)
 			if err != nil {
@@ -166,6 +169,10 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 	}
 
 	addMetrics(context.TODO(), cfg, gvks)
+	err = mgr.AddHealthzCheck("ping", healthz.Ping)
+	if err != nil {
+		log.Error(err, "Failed to add Healthz check.")
+	}
 
 	done := make(chan error)
 
