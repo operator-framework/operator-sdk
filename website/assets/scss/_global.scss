@@ -172,9 +172,12 @@ ol {
 }
 
 .of-section--largetext {
-    margin: var(--of--spacer--lg);
+    padding: var(--of--spacer--lg);
+    
     @media (min-width: $ov--breakpoint--lg) { 
-    margin: var(--of--spacer--2xl) var(--of--spacer--3xl);
+    padding: var(--of--spacer--2xl) var(--of--spacer--3xl);
+    margin: 0 auto;
+    max-width: 1200px;
     }
     .of-heading {
         text-transform: uppercase;
@@ -249,7 +252,9 @@ ol {
         }
         .of-section--largetext__content {
             grid-area: content;
+            @media (min-width: $ov--breakpoint--lg) {
             max-width: 550px;
+            }
         }
         .of-button {
             grid-area: action;
