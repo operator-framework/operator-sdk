@@ -17,12 +17,12 @@ package olm
 import (
 	"fmt"
 
-	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-
-	olmapiv1 "github.com/operator-framework/api/pkg/operators/v1"
-	olmapiv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"github.com/operator-framework/operator-registry/pkg/registry"
+	apimanifests "github.com/operator-framework/api/pkg/manifests"
+	operatorsv1 "github.com/operator-framework/api/pkg/operators/v1"
+	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
 
 // General OperatorGroup for operators created with the SDK.
@@ -36,20 +36,20 @@ func getSubscriptionName(csvName string) string {
 // getChannelForCSVName returns the channel for a given csvName. csvName
 // has the format "{operator-name}.(v)?{X.Y.Z}". An error is returned if
 // no channel with current CSV name csvName is found.
-func getChannelForCSVName(pkg registry.PackageManifest, csvName string) (registry.PackageChannel, error) {
+func getChannelForCSVName(pkg *apimanifests.PackageManifest, csvName string) (apimanifests.PackageChannel, error) {
 	for _, c := range pkg.Channels {
 		if c.CurrentCSVName == csvName {
 			return c, nil
 		}
 	}
-	return registry.PackageChannel{}, fmt.Errorf("no channel in package manifest %s exists for CSV %s",
+	return apimanifests.PackageChannel{}, fmt.Errorf("no channel in package manifest %s exists for CSV %s",
 		pkg.PackageName, csvName)
 }
 
 // withCatalogSource returns a function that sets the Subscription argument's
 // target CatalogSource's name and namespace.
-func withCatalogSource(csName, csNamespace string) func(*olmapiv1alpha1.Subscription) {
-	return func(sub *olmapiv1alpha1.Subscription) {
+func withCatalogSource(csName, csNamespace string) func(*operatorsv1alpha1.Subscription) {
+	return func(sub *operatorsv1alpha1.Subscription) {
 		sub.Spec.CatalogSource = csName
 		sub.Spec.CatalogSourceNamespace = csNamespace
 	}
@@ -57,10 +57,10 @@ func withCatalogSource(csName, csNamespace string) func(*olmapiv1alpha1.Subscrip
 
 // withPackageChannel returns a function that sets the Subscription argument's
 // target package, channel, and starting CSV to those in channel.
-func withPackageChannel(pkgName string, channel registry.PackageChannel) func(*olmapiv1alpha1.Subscription) {
-	return func(sub *olmapiv1alpha1.Subscription) {
+func withPackageChannel(pkgName string, channel apimanifests.PackageChannel) func(*operatorsv1alpha1.Subscription) {
+	return func(sub *operatorsv1alpha1.Subscription) {
 		if sub.Spec == nil {
-			sub.Spec = &olmapiv1alpha1.SubscriptionSpec{}
+			sub.Spec = &operatorsv1alpha1.SubscriptionSpec{}
 		}
 		sub.Spec.Package = pkgName
 		sub.Spec.Channel = channel.Name
@@ -72,11 +72,11 @@ func withPackageChannel(pkgName string, channel registry.PackageChannel) func(*o
 // from csvName, the CSV's objectmeta.name, in namespace. opts will be applied
 // to the Subscription object.
 func newSubscription(csvName, namespace string,
-	opts ...func(*olmapiv1alpha1.Subscription)) *olmapiv1alpha1.Subscription {
-	sub := &olmapiv1alpha1.Subscription{
+	opts ...func(*operatorsv1alpha1.Subscription)) *operatorsv1alpha1.Subscription {
+	sub := &operatorsv1alpha1.Subscription{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: olmapiv1alpha1.SchemeGroupVersion.String(),
-			Kind:       olmapiv1alpha1.SubscriptionKind,
+			APIVersion: operatorsv1alpha1.SchemeGroupVersion.String(),
+			Kind:       operatorsv1alpha1.SubscriptionKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      getSubscriptionName(csvName),
@@ -96,9 +96,9 @@ func getCatalogSourceName(pkgName string) string {
 
 // withGRPC returns a function that sets the CatalogSource argument's
 // server type to GRPC and address at addr.
-func withGRPC(addr string) func(*olmapiv1alpha1.CatalogSource) {
-	return func(catsrc *olmapiv1alpha1.CatalogSource) {
-		catsrc.Spec.SourceType = olmapiv1alpha1.SourceTypeGrpc
+func withGRPC(addr string) func(*operatorsv1alpha1.CatalogSource) {
+	return func(catsrc *operatorsv1alpha1.CatalogSource) {
+		catsrc.Spec.SourceType = operatorsv1alpha1.SourceTypeGrpc
 		catsrc.Spec.Address = addr
 	}
 }
@@ -107,17 +107,17 @@ func withGRPC(addr string) func(*olmapiv1alpha1.CatalogSource) {
 // pkgName, the package manifest's packageName, in namespace. opts will
 // be applied to the CatalogSource object.
 func newCatalogSource(pkgName, namespace string,
-	opts ...func(*olmapiv1alpha1.CatalogSource)) *olmapiv1alpha1.CatalogSource {
-	cs := &olmapiv1alpha1.CatalogSource{
+	opts ...func(*operatorsv1alpha1.CatalogSource)) *operatorsv1alpha1.CatalogSource {
+	cs := &operatorsv1alpha1.CatalogSource{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: olmapiv1alpha1.SchemeGroupVersion.String(),
-			Kind:       olmapiv1alpha1.CatalogSourceKind,
+			APIVersion: operatorsv1alpha1.SchemeGroupVersion.String(),
+			Kind:       operatorsv1alpha1.CatalogSourceKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      getCatalogSourceName(pkgName),
 			Namespace: namespace,
 		},
-		Spec: olmapiv1alpha1.CatalogSourceSpec{
+		Spec: operatorsv1alpha1.CatalogSourceSpec{
 			DisplayName: pkgName,
 			Publisher:   "operator-sdk",
 		},
@@ -132,8 +132,8 @@ func newCatalogSource(pkgName, namespace string,
 // targetNamespaces to namespaces. namespaces can be length 0..N; if
 // namespaces length is 0, targetNamespaces is set to an empty string,
 // indicating a global scope.
-func withTargetNamespaces(namespaces ...string) func(*olmapiv1.OperatorGroup) {
-	return func(og *olmapiv1.OperatorGroup) {
+func withTargetNamespaces(namespaces ...string) func(*operatorsv1.OperatorGroup) {
+	return func(og *operatorsv1.OperatorGroup) {
 		if len(namespaces) != 0 && namespaces[0] != "" {
 			og.Spec.TargetNamespaces = namespaces
 		}
@@ -144,11 +144,11 @@ func withTargetNamespaces(namespaces ...string) func(*olmapiv1.OperatorGroup) {
 // sdkOperatorGroupName in namespace. opts will be applied to the
 // OperatorGroup object. Note that the default OperatorGroup has a global
 // scope.
-func newSDKOperatorGroup(namespace string, opts ...func(*olmapiv1.OperatorGroup)) *olmapiv1.OperatorGroup {
-	og := &olmapiv1.OperatorGroup{
+func newSDKOperatorGroup(namespace string, opts ...func(*operatorsv1.OperatorGroup)) *operatorsv1.OperatorGroup {
+	og := &operatorsv1.OperatorGroup{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: olmapiv1.SchemeGroupVersion.String(),
-			Kind:       olmapiv1.OperatorGroupKind,
+			APIVersion: operatorsv1.SchemeGroupVersion.String(),
+			Kind:       operatorsv1.OperatorGroupKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      sdkOperatorGroupName,

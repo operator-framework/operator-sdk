@@ -18,7 +18,7 @@ source ./hack/lib/common.sh
 pushd test/test-framework
 
 header_text 'scorecard test to test kubeconfig flag, kubeconfig should not exist so internal plugins should fail'
-if ! commandoutput="$(operator-sdk scorecard --kubeconfig=/kubeconfig 2>&1)"; then 
+if ! commandoutput="$(operator-sdk scorecard --kubeconfig=/kubeconfig 2>&1)"; then
 	echo $commandoutput
 else
 	echo "test failed: expected return code 1"
@@ -41,10 +41,10 @@ else
 fi
 
 header_text 'scorecard test to see if bundle flag works correctly'
-if ! commandoutput="$(operator-sdk scorecard --config "$CONFIG_PATH_BUNDLE" 2>&1)"; then 
+if ! commandoutput="$(operator-sdk scorecard --config "$CONFIG_PATH_BUNDLE" 2>&1)"; then
 	echo $commandoutput
 	failCount=`echo $commandoutput | grep -o "fail" | wc -l`
-	expectedFailCount=3
+	expectedFailCount=2
 	if [ $failCount -ne $expectedFailCount ]
 	then
 		echo "expected fail count $expectedFailCount, got $failCount"
@@ -56,7 +56,7 @@ else
 fi
 
 header_text 'scorecard test to see if exit code 1 is returned on test failures'
-if ! commandoutput="$(operator-sdk scorecard --config "$CONFIG_PATH_V1ALPHA2" 2>&1)"; then 
+if ! commandoutput="$(operator-sdk scorecard --config "$CONFIG_PATH_V1ALPHA2" 2>&1)"; then
 	echo $commandoutput
 	failCount=`echo $commandoutput | grep -o "fail" | wc -l`
 	expectedFailCount=4

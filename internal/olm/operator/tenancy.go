@@ -15,12 +15,10 @@
 package olm
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
 	olmapiv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"github.com/operator-framework/operator-registry/pkg/registry"
 )
 
 // Mapping of installMode string values to types, for validation.
@@ -96,18 +94,4 @@ func validateInstallModeForNamespaces(mode olmapiv1alpha1.InstallModeType, names
 		return fmt.Errorf("installMode %q is not a valid installMode type", mode)
 	}
 	return nil
-}
-
-// bundleCSVToCSV converts a registry.ClusterServiceVersion bcsv to a
-// v1alpha1.ClusterServiceVersion. The returned type will not have a status.
-func bundleCSVToCSV(bcsv *registry.ClusterServiceVersion) (*olmapiv1alpha1.ClusterServiceVersion, error) {
-	spec := olmapiv1alpha1.ClusterServiceVersionSpec{}
-	if err := json.Unmarshal(bcsv.Spec, &spec); err != nil {
-		return nil, fmt.Errorf("error converting CSV %q type: %w", bcsv.GetName(), err)
-	}
-	return &olmapiv1alpha1.ClusterServiceVersion{
-		TypeMeta:   bcsv.TypeMeta,
-		ObjectMeta: bcsv.ObjectMeta,
-		Spec:       spec,
-	}, nil
 }

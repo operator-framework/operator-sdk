@@ -21,13 +21,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-
-	"github.com/operator-framework/operator-registry/pkg/registry"
+	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
+
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
 
 // getRegistryConfigMaps performs a List operation to get all ConfigMaps
@@ -48,8 +48,8 @@ func (rr *RegistryResources) getRegistryConfigMaps(ctx context.Context, namespac
 // makeConfigMapsForPackageManifests creates a set of ConfigMap binary data
 // for a given PackageManifest and Bundles. Each ConfigMaps's binary data is
 // indexed by the ConfigMap's name.
-func makeConfigMapsForPackageManifests(pkg registry.PackageManifest,
-	bundles []*registry.Bundle) (_ map[string]map[string][]byte, err error) {
+func makeConfigMapsForPackageManifests(pkg *apimanifests.PackageManifest,
+	bundles []*apimanifests.Bundle) (_ map[string]map[string][]byte, err error) {
 
 	binaryDataByConfigMap := make(map[string]map[string][]byte)
 	// Create a PackageManifest ConfigMap.
@@ -61,9 +61,9 @@ func makeConfigMapsForPackageManifests(pkg registry.PackageManifest,
 
 	// Create Bundle ConfigMaps.
 	for _, bundle := range bundles {
-		version, err := bundle.Version()
-		if err != nil {
-			return nil, err
+		version := bundle.CSV.Spec.Version.String()
+		if version == "" {
+			return nil, fmt.Errorf("bundle ClusterServiceVersion %s has no version", bundle.CSV.GetName())
 		}
 		// ConfigMap name containing the bundle's version.
 		cmName := getRegistryConfigMapName(pkg.PackageName) + "-" + k8sutil.FormatOperatorNameDNS1123(version)
@@ -86,7 +86,7 @@ func makeObjectBinaryData(obj interface{}, names ...string) (map[string][]byte, 
 
 // makeBundleBinaryData creates a ConfigMap's binary data for a Bundle's objects,
 // indexed by a file name key containing each object's name and kind.
-func makeBundleBinaryData(bundle *registry.Bundle) (map[string][]byte, error) {
+func makeBundleBinaryData(bundle *apimanifests.Bundle) (map[string][]byte, error) {
 	binaryData := make(map[string][]byte)
 	for _, obj := range bundle.Objects {
 		err := addObjectToBinaryData(binaryData, obj, obj.GetName(), obj.GetKind())

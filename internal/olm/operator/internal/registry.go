@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/operator-framework/operator-registry/pkg/registry"
+	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -45,8 +45,8 @@ var SDKLabels = map[string]string{
 // resources.
 type RegistryResources struct {
 	Client  *olmclient.Client
-	Pkg     registry.PackageManifest
-	Bundles []*registry.Bundle
+	Pkg     *apimanifests.PackageManifest
+	Bundles []*apimanifests.Bundle
 }
 
 // IsRegistryExist returns true if a registry Deployment exists in namespace.
