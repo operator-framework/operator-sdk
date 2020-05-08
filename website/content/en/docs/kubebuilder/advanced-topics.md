@@ -34,12 +34,12 @@ The operator's Manager supports the core Kubernetes resource types as found in t
 
 ```Go
 import (
-  "github.com/example-inc/memcached-operator/pkg/apis"
+  cachev1alpha1 "github.com/example-inc/memcached-operator/api/v1alpha1
   ...
 )
 
 // Setup Scheme for all resources
-if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
+if err := cachev1alpha1.AddToScheme(mgr.GetScheme()); err != nil {
   log.Error(err, "")
   os.Exit(1)
 }
@@ -60,7 +60,7 @@ import (
   routev1 "github.com/openshift/api/route/v1"
 )
 
-func main() {
+func init() {
   ...
 
   // Adding the routev1
@@ -90,7 +90,7 @@ import (
    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
  )
 
-func main() {
+func init() {
   ...
 
   log.Info("Registering Components.")
@@ -115,13 +115,8 @@ func main() {
 
 ### Metrics
 
-> **// TODO:** Update the [metrics doc](https://github.com/operator-framework/operator-sdk/blob/master/website/content/en/docs/golang/metrics/operator-sdk-monitoring.md) since it doesn't match the default scaffolded by kubebuilder anymore.
+To learn about how metrics work in the Operator SDK read the [metrics section][metrics_doc] of the Kubebuilder documentation.
 
-To learn about how metrics work in the Operator SDK read the [metrics section][metrics_doc] of the user documentation.
-
-#### Default Metrics exported with 3rd party resource
-
-> **// TODO:** Remove this section since we're no longer scaffolding main.go to use the SDK's `GenerateAndServeCRMetrics()` util in `pkg/kube-metrics`.
 
 ### Handle Cleanup on Deletion
 
@@ -300,7 +295,7 @@ When the operator is not running in a cluster, the Manager will return an error 
 [deployments_register]: https://github.com/kubernetes/api/blob/master/apps/v1/register.go#L41
 [runtime_package]: https://godoc.org/k8s.io/apimachinery/pkg/runtime
 [scheme_builder]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/scheme#Builder
-[metrics_doc]: /docs/golang/metrics/operator-sdk-monitoring/
+[metrics_doc]: https://book.kubebuilder.io/reference/metrics.html
 [lease_split_brain]: https://github.com/kubernetes/client-go/blob/30b06a83d67458700a5378239df6b96948cb9160/tools/leaderelection/leaderelection.go#L21-L24
 [leader_for_life]: https://godoc.org/github.com/operator-framework/operator-sdk/pkg/leader
 [leader_with_lease]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/leaderelection
