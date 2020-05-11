@@ -38,6 +38,8 @@ import (
   ...
 )
 
+func init() {
+
 // Setup Scheme for all resources
 if err := cachev1alpha1.AddToScheme(mgr.GetScheme()); err != nil {
   log.Error(err, "")
@@ -64,14 +66,11 @@ func init() {
   ...
 
   // Adding the routev1
-  if err := routev1.AddToScheme(mgr.GetScheme()); err != nil {
-    log.Error(err, "")
-    os.Exit(1)
-	}
-	
+
 	utilruntime.Must(clientgoscheme.AddToScheme(mgr.GetScheme()))
 
 	utilruntime.Must(routev1.AddToScheme(mgr.GetScheme()))
+	// +kubebuilder:scaffold:scheme
 
   ...
 }
