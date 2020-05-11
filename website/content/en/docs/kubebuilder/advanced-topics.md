@@ -69,7 +69,7 @@ func init() {
     os.Exit(1)
 	}
 	
-	_ = clientgoscheme.AddToScheme(mgr.GetScheme())
+	utilruntime.Must(clientgoscheme.AddToScheme(mgr.GetScheme()))
 
 	_ = routev1.AddToScheme(mgr.GetScheme())
 
