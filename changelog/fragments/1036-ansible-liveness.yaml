@@ -1,0 +1,46 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      The Ansible operator now includes a healthz endpoint and liveness probe.
+      All operators will now have a running healthz endpoint (not publicly
+      exposed) without changes. Existing Oper
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "addition"
+
+    # Is this a breaking change?
+    breaking: false
+
+    # NOTE: ONLY USE `pull_request_override` WHEN ADDING THIS
+    # FILE FOR A PREVIOUSLY MERGED PULL_REQUEST!
+    #
+    # The generator auto-detects the PR number from the commit
+    # message in which this file was originally added.
+    #
+    # What is the pull request number (without the "#")?
+    # pull_request_override: 0
+
+
+    # Migration can be defined to automatically add a section to
+    # the migration guide. This is required for breaking changes.
+    migration:
+      header: (Optional) Add livenessProbe check for Ansible-based operators
+      body: >
+        Existing operators will have a healthz endpoint without intervention,
+        but to take advantage of it, a liveness probe should be manually added
+        to the operator manifest. For example, the `deploy/operator.yaml` file would need to include:
+
+        ```yaml
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 6789
+            initialDelaySeconds: 5
+            periodSeconds: 3
+        ```

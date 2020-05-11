@@ -16,10 +16,10 @@ package alpha
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 
-	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/rand"
@@ -28,17 +28,18 @@ import (
 
 // getPodDefinition fills out a Pod definition based on
 // information from the test
-func getPodDefinition(test Test, o Scorecard) *v1.Pod {
+func getPodDefinition(configMapName string, test Test, r PodTestRunner) *v1.Pod {
 	return &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("scorecard-test-%s", rand.String(4)),
-			Namespace: o.Namespace,
+			Namespace: r.Namespace,
 			Labels: map[string]string{
-				"app": "scorecard-test",
+				"app":     "scorecard-test",
+				"testrun": configMapName,
 			},
 		},
 		Spec: v1.PodSpec{
-			ServiceAccountName: o.ServiceAccount,
+			ServiceAccountName: r.ServiceAccount,
 			RestartPolicy:      v1.RestartPolicyNever,
 			Containers: []v1.Container{
 				{
@@ -48,9 +49,35 @@ func getPodDefinition(test Test, o Scorecard) *v1.Pod {
 					Command:         test.Entrypoint,
 					VolumeMounts: []v1.VolumeMount{
 						{
+							MountPath: "/bundle",
+							Name:      "scorecard-untar",
+							ReadOnly:  true,
+						},
+					},
+				},
+			},
+			InitContainers: []v1.Container{
+				{
+					Name:            "scorecard-untar",
+					Image:           "busybox",
+					ImagePullPolicy: v1.PullIfNotPresent,
+					Args: []string{
+						"tar",
+						"xvzf",
+						"/scorecard/bundle.tar.gz",
+						"-C",
+						"/scorecard-bundle",
+					},
+					VolumeMounts: []v1.VolumeMount{
+						{
 							MountPath: "/scorecard",
 							Name:      "scorecard-bundle",
 							ReadOnly:  true,
+						},
+						{
+							MountPath: "/scorecard-bundle",
+							Name:      "scorecard-untar",
+							ReadOnly:  false,
 						},
 					},
 				},
@@ -61,9 +88,15 @@ func getPodDefinition(test Test, o Scorecard) *v1.Pod {
 					VolumeSource: v1.VolumeSource{
 						ConfigMap: &v1.ConfigMapVolumeSource{
 							LocalObjectReference: v1.LocalObjectReference{
-								Name: o.bundleConfigMap.Name,
+								Name: configMapName,
 							},
 						},
+					},
+				},
+				{
+					Name: "scorecard-untar",
+					VolumeSource: v1.VolumeSource{
+						EmptyDir: &v1.EmptyDirVolumeSource{},
 					},
 				},
 			},
@@ -71,10 +104,11 @@ func getPodDefinition(test Test, o Scorecard) *v1.Pod {
 	}
 }
 
-func getPodLog(client kubernetes.Interface, pod *v1.Pod) (logOutput []byte, err error) {
+// getPodLog fetches the test results which are found in the pod log
+func getPodLog(ctx context.Context, client kubernetes.Interface, pod *v1.Pod) (logOutput []byte, err error) {
 
 	req := client.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &v1.PodLogOptions{})
-	podLogs, err := req.Stream()
+	podLogs, err := req.Stream(ctx)
 	if err != nil {
 		return logOutput, err
 	}
@@ -88,13 +122,15 @@ func getPodLog(client kubernetes.Interface, pod *v1.Pod) (logOutput []byte, err 
 	return buf.Bytes(), err
 }
 
-func deletePods(client kubernetes.Interface, tests []Test) {
-	for _, test := range tests {
-		p := test.TestPod
-		err := client.CoreV1().Pods(p.Namespace).Delete(p.Name, &metav1.DeleteOptions{})
-		if err != nil {
-			log.Errorf("Error deleting pod %s %s\n", p.Name, err.Error())
-		}
-
+// deletePods deletes a collection of pods that match a predefined selector value
+func (r PodTestRunner) deletePods(ctx context.Context, configMapName string) error {
+	do := metav1.DeleteOptions{}
+	selector := fmt.Sprintf("testrun=%s", configMapName)
+	lo := metav1.ListOptions{LabelSelector: selector}
+	err := r.Client.CoreV1().Pods(r.Namespace).DeleteCollection(ctx, do, lo)
+	if err != nil {
+		return fmt.Errorf("error deleting pods selector %s %w", selector, err)
 	}
+	return nil
+
 }

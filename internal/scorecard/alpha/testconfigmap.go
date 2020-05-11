@@ -15,21 +15,23 @@
 package alpha
 
 import (
+	"context"
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/rand"
-	"k8s.io/client-go/kubernetes"
 )
 
-// createConfigMap creates a ConfigMap that will hold the bundle
+// CreateConfigMap creates a ConfigMap that will hold the bundle
 // contents to be mounted into the test Pods
-func createConfigMap(o Scorecard, bundleData []byte) (configMap *v1.ConfigMap, err error) {
-	cfg := getConfigMapDefinition(o.Namespace, bundleData)
-	configMap, err = o.Client.CoreV1().ConfigMaps(o.Namespace).Create(cfg)
-	return configMap, err
+func (r PodTestRunner) CreateConfigMap(ctx context.Context, bundleData []byte) (configMapName string, err error) {
+	cfg := getConfigMapDefinition(r.Namespace, bundleData)
+	configMap, err := r.Client.CoreV1().ConfigMaps(r.Namespace).Create(ctx, cfg, metav1.CreateOptions{})
+	if err != nil {
+		return configMapName, err
+	}
+	return configMap.Name, nil
 }
 
 // getConfigMapDefinition returns a ConfigMap definition that
@@ -38,7 +40,7 @@ func createConfigMap(o Scorecard, bundleData []byte) (configMap *v1.ConfigMap, e
 func getConfigMapDefinition(namespace string, bundleData []byte) *v1.ConfigMap {
 	configMapName := fmt.Sprintf("scorecard-test-%s", rand.String(4))
 	data := make(map[string][]byte)
-	data["bundle.tar"] = bundleData
+	data["bundle.tar.gz"] = bundleData
 	return &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      configMapName,
@@ -53,9 +55,10 @@ func getConfigMapDefinition(namespace string, bundleData []byte) *v1.ConfigMap {
 
 // deleteConfigMap deletes the test bundle ConfigMap and is called
 // as part of the test run cleanup
-func deleteConfigMap(client kubernetes.Interface, configMap *v1.ConfigMap) {
-	err := client.CoreV1().ConfigMaps(configMap.Namespace).Delete(configMap.Name, &metav1.DeleteOptions{})
+func (r PodTestRunner) deleteConfigMap(ctx context.Context, configMapName string) error {
+	err := r.Client.CoreV1().ConfigMaps(r.Namespace).Delete(ctx, configMapName, metav1.DeleteOptions{})
 	if err != nil {
-		log.Errorf("Error deleting configMap %s %s", configMap.Name, err.Error())
+		return fmt.Errorf("error deleting configMap %s %w", configMapName, err)
 	}
+	return nil
 }

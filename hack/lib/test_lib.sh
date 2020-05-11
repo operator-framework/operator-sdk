@@ -107,3 +107,8 @@ function check_file() {
     fi
   fi
 }
+
+function echo_run() {
+	echo "$@"
+	$@
+}

@@ -106,7 +106,7 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
 
 ### Markdown
 
-The markdown test does not create a new cluster and runs in a barebones Travis VM configured only for `bash`. This allows documentation PRs to pass quickly, as they don't require code tests. The markdown checker uses a precompiled version of [`marker`][marker-github] stored in [`hack/ci/marker`][marker-local] to check the validity and correctness of the links in all markdown files in the `doc` directory.
+The markdown test does not create a new cluster and runs in a barebones Travis VM configured only for `bash`. This allows documentation PRs to pass quickly, as they don't require code tests. The markdown checker uses a precompiled version of [`marker`][marker-github] stored in [`hack/ci/marker`][marker-local] to check the validity and correctness of the links in all markdown files in the `website/content/en/docs` directory.
 
 **NOTE**: There is currently a bug in marker that causes link with underscores (`_`) to not be checked correctly.
 

@@ -17,7 +17,6 @@ package alpha
 import (
 	"io/ioutil"
 
-	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/yaml"
 )
 
@@ -28,7 +27,6 @@ type Test struct {
 	Entrypoint  []string          `yaml:"entrypoint,omitempty"`
 	Labels      map[string]string `yaml:"labels"`      // User defined labels used to filter tests
 	Description string            `yaml:"description"` // User readable test description
-	TestPod     *v1.Pod           `yaml:"-"`           // Pod that ran the test
 }
 
 // Config represents the set of test configurations which scorecard
@@ -38,12 +36,14 @@ type Config struct {
 }
 
 // LoadConfig will find and return the scorecard config, the config file
-// can be passed in via command line flag or from a bundle location or
-// bundle image
+// is found from a bundle location (TODO bundle image)
+// scorecard config.yaml is expected to be in the bundle at the following
+// location:  tests/scorecard/config.yaml
+// the user can override this location using the --config CLI flag
 func LoadConfig(configFilePath string) (Config, error) {
 	c := Config{}
 
-	// TODO handle getting config from bundle (ondisk or image)
+	// TODO handle bundle images, not just on-disk
 	yamlFile, err := ioutil.ReadFile(configFilePath)
 	if err != nil {
 		return c, err

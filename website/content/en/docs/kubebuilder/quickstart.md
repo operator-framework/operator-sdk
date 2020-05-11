@@ -281,14 +281,16 @@ To run the operator locally execute the following command:
 $ make run ENABLE_WEBHOOKS=false
 ```
 
-> **// TODO:** Add an advanced section or separate doc on writing defaulting/validating and conversion webhooks.
-
 ### 2. Run as a Deployment inside the cluster
 
 #### Build and push the image
 
-Build the operator image and push it to a registry.
+Before building the operator image, ensure the generated Dockerfile references
+the base image you want. You can change the default "runner" image `gcr.io/distroless/static:nonroot`
+by replacing its tag with another, for example `alpine:latest`, and removing
+the `USER: nonroot:nonroot` directive.
 
+To build and push the operator image, use the following `make` commands.
 Make sure to modify the `IMG` arg in the example below to reference a container repository that
 you have access to. You can obtain an account for storing containers at
 repository sites such quay.io or hub.docker.com. This example uses quay.
@@ -324,6 +326,9 @@ Run the following to deploy the operator. This will also install the RBAC manife
 ```sh
 $ make deploy IMG=quay.io/$USERNAME/memcached-operator:v0.0.1
 ```
+
+*NOTE* If you have enabled webhooks in your deployments, you will need to have cert-manager already installed
+in the cluster or `make deploy` will fail when creating the cert-manager resources.
 
 Verify that the memcached-operator is up and running:
 
@@ -399,10 +404,10 @@ status:
 
 ### Update the size
 
-Update `config/samples/cache_v1alpha1_memcached.yaml` to change the `spec.size` field in the Memcached CR from 3 to 4:
+Update `config/samples/cache_v1alpha1_memcached.yaml` to change the `spec.size` field in the Memcached CR from 3 to 5:
 
 ```sh
-$ kubectl patch memcached memcached-sample -p '{"spec":{"size": 4}}' --type=merge
+$ kubectl patch memcached memcached-sample -p '{"spec":{"size": 5}}' --type=merge
 ```
 
 Confirm that the operator changes the deployment size:
@@ -411,7 +416,7 @@ Confirm that the operator changes the deployment size:
 $ kubectl get deployment
 NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE
 memcached-operator-controller-manager   1/1     1            1           10m
-memcached-sample                        4/4     4            4           3m
+memcached-sample                        5/5     5            5           3m
 ```
 
 ### Cleanup
@@ -422,7 +427,14 @@ $ kubectl delete deployments,service -l control-plane=controller-manager
 $ kubectl delete role,rolebinding --all
 ```
 
-See the [advanced topics][advanced_topics] doc for more use cases and under the hood details.
+
+## Further steps
+
+The following guides build off the operator created in this example, adding advanced features:
+
+- [Create a validating or mutating Admission Webhook][create_a_webhook]
+
+Also see the [advanced topics][advanced_topics] doc for more use cases and under the hood details.
 
 
 [go_tool]:https://golang.org/dl/
@@ -464,5 +476,6 @@ See the [advanced topics][advanced_topics] doc for more use cases and under the 
 [legacy_quickstart_doc]: /docs/golang/quickstart/
 [activate_modules]: https://github.com/golang/go/wiki/Modules#how-to-install-and-activate-module-support
 [advanced_topics]: /docs/kubebuilder/advanced-topics/
+[create_a_webhook]: /docs/kubebuilder/webhooks.md
 [status_marker]: https://book.kubebuilder.io/reference/generating-crd.html#status
 [status_subresource]: https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#status-subresource

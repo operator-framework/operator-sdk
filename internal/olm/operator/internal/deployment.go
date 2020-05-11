@@ -43,20 +43,11 @@ func getRegistryServerName(pkgName string) string {
 	return fmt.Sprintf("%s-registry-server", name)
 }
 
-func getRegistryVolumeName(pkgName string) string {
-	name := k8sutil.FormatOperatorNameDNS1123(pkgName)
-	return fmt.Sprintf("%s-bundle-db", name)
-}
-
 // getRegistryDeploymentLabels creates a set of labels to identify
 // operator-registry Deployment objects.
 func getRegistryDeploymentLabels(pkgName string) map[string]string {
-	labels := map[string]string{
-		"name": getRegistryServerName(pkgName),
-	}
-	for k, v := range SDKLabels {
-		labels[k] = v
-	}
+	labels := makeRegistryLabels(pkgName)
+	labels["server-name"] = getRegistryServerName(pkgName)
 	return labels
 }
 
@@ -65,10 +56,10 @@ func applyToDeploymentPodSpec(dep *appsv1.Deployment, f func(*corev1.PodSpec)) {
 	f(&dep.Spec.Template.Spec)
 }
 
-// withVolumeConfigMap returns a function that appends a volume with name
+// withConfigMapVolume returns a function that appends a volume with name
 // volName containing a reference to a ConfigMap with name cmName to the
 // Deployment argument's pod template spec.
-func withVolumeConfigMap(volName, cmName string) func(*appsv1.Deployment) {
+func withConfigMapVolume(volName, cmName string) func(*appsv1.Deployment) {
 	volume := corev1.Volume{
 		Name: volName,
 		VolumeSource: corev1.VolumeSource{
@@ -90,7 +81,7 @@ func withVolumeConfigMap(volName, cmName string) func(*appsv1.Deployment) {
 // to each container in the Deployment argument's pod template spec. One
 // volumeMount is appended for each path in paths from volume with name
 // volName.
-func withContainerVolumeMounts(volName string, paths []string) func(*appsv1.Deployment) {
+func withContainerVolumeMounts(volName string, paths ...string) func(*appsv1.Deployment) {
 	volumeMounts := []corev1.VolumeMount{}
 	for _, p := range paths {
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{

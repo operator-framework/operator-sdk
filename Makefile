@@ -11,7 +11,7 @@ endif
 
 VERSION = $(shell git describe --dirty --tags --always)
 GIT_COMMIT = $(shell git rev-parse HEAD)
-K8S_VERSION = v1.17.2
+K8S_VERSION = v1.18.2
 REPO = github.com/operator-framework/operator-sdk
 BUILD_PATH = $(REPO)/cmd/operator-sdk
 PKGS = $(shell go list ./... | grep -v /vendor/)
@@ -221,6 +221,9 @@ test-sanity: tidy build/operator-sdk lint
 
 test-unit: ## Run the unit tests
 	$(Q)go test -coverprofile=coverage.out -covermode=count -count=1 -short $(TEST_PKGS)
+
+test-links:
+	./hack/check-links.sh
 
 # CI tests.
 .PHONY: test-ci

@@ -27,17 +27,19 @@ import (
 )
 
 type csvCmd struct {
-	csvVersion     string
-	csvChannel     string
-	fromVersion    string
-	operatorName   string
-	outputDir      string
-	deployDir      string
-	apisDir        string
-	crdDir         string
-	updateCRDs     bool
-	defaultChannel bool
-	makeManifests  bool
+	csvVersion       string
+	csvChannel       string
+	fromVersion      string
+	operatorName     string
+	outputDir        string
+	deployDir        string
+	apisDir          string
+	crdDir           string
+	interactivelevel projutil.InteractiveLevel
+	updateCRDs       bool
+	defaultChannel   bool
+	makeManifests    bool
+	interactive      bool
 }
 
 //nolint:lll
@@ -53,10 +55,10 @@ A CSV semantic version is supplied via the --csv-version flag. If your operator
 has already generated a CSV manifest you want to use as a base, supply its
 version to --from-version. Otherwise the SDK will scaffold a new CSV manifest.
 
-The --make-manifests flag directs the generator to create a 'manifests' directory
+The --make-manifests flag directs the generator to create a bundle manifests directory
 intended to hold your latest operator manifests. This flag is true by default.
 
-More information on manifests:
+More information on bundles:
 https://github.com/operator-framework/operator-registry/blob/master/docs/design/operator-bundle.md#operator-bundle-overview
 
 Flags that change project default paths:
@@ -74,71 +76,83 @@ Flags that change project default paths:
     --update-crds=true (the default). Additionally the CR manifests will be used to populate
     the CSV example CRs.
 `,
-		Example: `
-		##### Generate CSV from default input paths #####
-		$ tree pkg/apis/ deploy/
-		pkg/apis/
-		├── ...
-		└── cache
-			├── group.go
-			└── v1alpha1
-				├── ...
-				└── memcached_types.go
-		deploy/
-		├── crds
-		│   ├── cache.example.com_memcacheds_crd.yaml
-		│   └── cache.example.com_v1alpha1_memcached_cr.yaml
-		├── operator.yaml
-		├── role.yaml
-		├── role_binding.yaml
-		└── service_account.yaml
+		Example: `    ##### Generate a CSV in bundle format from default input paths #####
+    $ tree pkg/apis/ deploy/
+    pkg/apis/
+    ├── ...
+    └── cache
+        ├── group.go
+        ├── v1alpha1
+        ├── ...
+        └── memcached_types.go
+    deploy/
+    ├── crds
+    │   ├── cache.example.com_memcacheds_crd.yaml
+    │   └── cache.example.com_v1alpha1_memcached_cr.yaml
+    ├── operator.yaml
+    ├── role.yaml
+    ├── role_binding.yaml
+    └── service_account.yaml
 
-		$ operator-sdk generate csv --csv-version=0.0.1 --update-crds
-		INFO[0000] Generating CSV manifest version 0.0.1
-		...
+    $ operator-sdk generate csv --csv-version=0.0.1
+    INFO[0000] Generating CSV manifest version 0.0.1
+    ...
 
-		$ tree deploy/
-		deploy/
-		...
-		├── olm-catalog
-		│   └── memcached-operator
-		│       ├── 0.0.1
-		│       │   ├── cache.example.com_memcacheds_crd.yaml
-		│       │   └── memcached-operator.v0.0.1.clusterserviceversion.yaml
-		│       └── memcached-operator.package.yaml
-		...
+    $ tree deploy/
+    deploy/
+    ...
+    └── olm-catalog
+        └── memcached-operator
+            └── manifests
+                ├── cache.example.com_memcacheds_crd.yaml
+                └── memcached-operator.clusterserviceversion.yaml
+    ...
 
+    ##### Generate a CSV in package manifests format from default input paths #####
 
+		$ operator-sdk generate csv --csv-version=0.0.1 --make-manifests=false --update-crds
+    INFO[0000] Generating CSV manifest version 0.0.1
+    ...
+    $ tree deploy/
+    deploy/
+    ...
+    └── olm-catalog
+        └── memcached-operator
+            ├── 0.0.1
+            │   ├── cache.example.com_memcacheds_crd.yaml
+            │   └── memcached-operator.v0.0.1.clusterserviceversion.yaml
+            └── memcached-operator.package.yaml
+    ...
 
-		##### Generate CSV from custom input paths #####
-		$ operator-sdk generate csv --csv-version=0.0.1 --update-crds \
-		--deploy-dir=config --apis-dir=api --output-dir=production
-		INFO[0000] Generating CSV manifest version 0.0.1
-		...
+    ##### Generate CSV from custom input paths #####
+    $ operator-sdk generate csv --csv-version=0.0.1 --update-crds \
+    --deploy-dir=config --apis-dir=api --output-dir=production
+    INFO[0000] Generating CSV manifest version 0.0.1
+    ...
 
-		$ tree config/ api/ production/
-		config/
-		├── crds
-		│   ├── cache.example.com_memcacheds_crd.yaml
-		│   └── cache.example.com_v1alpha1_memcached_cr.yaml
-		├── operator.yaml
-		├── role.yaml
-		├── role_binding.yaml
-		└── service_account.yaml
-		api/
-		├── ...
-		└── cache
-			├── group.go
-			└── v1alpha1
-				├── ...
-				└── memcached_types.go
-		production/
-		└── olm-catalog
-			└── memcached-operator
-				├── 0.0.1
-				│   ├── cache.example.com_memcacheds_crd.yaml
-				│   └── memcached-operator.v0.0.1.clusterserviceversion.yaml
-				└── memcached-operator.package.yaml
+    $ tree config/ api/ production/
+    config/
+    ├── crds
+    │   ├── cache.example.com_memcacheds_crd.yaml
+    │   └── cache.example.com_v1alpha1_memcached_cr.yaml
+    ├── operator.yaml
+    ├── role.yaml
+    ├── role_binding.yaml
+    └── service_account.yaml
+    api/
+    ├── ...
+    └── cache
+    |   ├── group.go
+    |   └── v1alpha1
+    |       ├── ...
+    |       └── memcached_types.go
+    production/
+    └── olm-catalog
+        └── memcached-operator
+            ├── 0.0.1
+            │   ├── cache.example.com_memcacheds_crd.yaml
+            │   └── memcached-operator.v0.0.1.clusterserviceversion.yaml
+            └── memcached-operator.package.yaml
 `,
 
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -157,6 +171,16 @@ Flags that change project default paths:
 			// Legacy behavior.
 			if !c.makeManifests && !cmd.Flags().Changed("update-crds") {
 				c.updateCRDs = false
+			}
+
+			// Check if the user has any specific preference to enable / disable interactive prompts.
+			// Default behaviour is to disable the prompts.
+			if cmd.Flags().Changed("interactive") {
+				if c.interactive {
+					c.interactivelevel = projutil.InteractiveOnAll
+				} else {
+					c.interactivelevel = projutil.InteractiveHardOff
+				}
 			}
 
 			if err := c.run(); err != nil {
@@ -218,6 +242,9 @@ Flags that change project default paths:
 			"directory. This directory is intended to be used for your latest bundle manifests. "+
 			"The default location is deploy/olm-catalog/<operator-name>/manifests. "+
 			"If --output-dir is set, the directory will be <output-dir>/manifests")
+	cmd.Flags().BoolVar(&c.interactive, "interactive", false,
+		"When set, will enable the interactive command prompt feature to fill the UI "+
+			"metadata fields in CSV")
 
 	return cmd
 }
@@ -238,16 +265,18 @@ func (c csvCmd) run() error {
 	if c.operatorName == "" {
 		c.operatorName = filepath.Base(projutil.MustGetwd())
 	}
+
 	csv := gencatalog.BundleGenerator{
-		OperatorName:  c.operatorName,
-		CSVVersion:    c.csvVersion,
-		FromVersion:   c.fromVersion,
-		UpdateCRDs:    c.updateCRDs,
-		MakeManifests: c.makeManifests,
-		DeployDir:     c.deployDir,
-		ApisDir:       c.apisDir,
-		CRDsDir:       c.crdDir,
-		OutputDir:     c.outputDir,
+		OperatorName:          c.operatorName,
+		CSVVersion:            c.csvVersion,
+		FromVersion:           c.fromVersion,
+		UpdateCRDs:            c.updateCRDs,
+		MakeManifests:         c.makeManifests,
+		DeployDir:             c.deployDir,
+		ApisDir:               c.apisDir,
+		CRDsDir:               c.crdDir,
+		OutputDir:             c.outputDir,
+		InteractivePreference: c.interactivelevel,
 	}
 
 	if err := csv.Generate(); err != nil {

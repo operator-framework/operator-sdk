@@ -19,9 +19,9 @@ import "sigs.k8s.io/kubebuilder/pkg/model/config"
 type Config struct{}
 
 func hasPluginConfig(cfg *config.Config) bool {
-	if len(cfg.ExtraFields) == 0 {
+	if len(cfg.Plugins) == 0 {
 		return false
 	}
-	_, hasKey := cfg.ExtraFields[pluginConfigKey]
+	_, hasKey := cfg.Plugins[pluginConfigKey]
 	return hasKey
 }

@@ -25,8 +25,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
-	apiext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
-	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -258,24 +256,16 @@ func (g Generator) generateNonGo() (map[string][]byte, error) {
 		crd.TypeMeta.APIVersion = apiextv1beta1.SchemeGroupVersion.String()
 		b, err = k8sutil.GetObjectBytes(&crd, yaml.Marshal)
 	case "v1":
-		var unversioned apiext.CustomResourceDefinition
-		//nolint:lll
-		if err := apiextv1beta1.Convert_v1beta1_CustomResourceDefinition_To_apiextensions_CustomResourceDefinition(&crd, &unversioned, nil); err != nil {
-			return nil, err
+		out, cerr := k8sutil.Convertv1beta1Tov1CustomResourceDefinition(&crd)
+		if cerr != nil {
+			return nil, cerr
 		}
-		var out apiextv1.CustomResourceDefinition
-		out.TypeMeta.APIVersion = apiextv1.SchemeGroupVersion.String()
-		out.TypeMeta.Kind = "CustomResourceDefinition"
-		//nolint:lll
-		if err := apiextv1.Convert_apiextensions_CustomResourceDefinition_To_v1_CustomResourceDefinition(&unversioned, &out, nil); err != nil {
-			return nil, err
-		}
-		b, err = k8sutil.GetObjectBytes(&out, yaml.Marshal)
+		b, err = k8sutil.GetObjectBytes(out, yaml.Marshal)
 	}
-
 	if err != nil {
 		return nil, fmt.Errorf("error marshalling CRD %s: %w", crd.GetName(), err)
 	}
+
 	fileMap[fileName] = b
 	return fileMap, nil
 }

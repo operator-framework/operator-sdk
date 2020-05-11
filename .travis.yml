@@ -109,10 +109,11 @@ jobs:
       script:
         - make test-sanity
 
-    # Run the markdown link checker
-    - name: Markdown Tests
+    # Run website and markdown doc checks
+    - name: Doc Checks
       script:
         - make test-markdown
+        - make test-links
 
     ## Operator test stage jobs ##
 

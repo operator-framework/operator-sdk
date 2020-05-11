@@ -1,4 +1,0 @@
----
-  version: v1alpha1
-  kind: App
-  chart: helm-charts/app

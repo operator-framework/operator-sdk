@@ -7,7 +7,7 @@ weight: 20
 Owner references are automatically injected `only during creation of
 resources`. Enabling owner reference injection `will not update objects`
 created while [owner reference injection is
-disabled](../advanced_options#turning-off-dependent-watches-and-owner-reference-injection)
+disabled](../advanced_options#owner-reference-injection)
 
 This guide will demonstrate how to retroactively set owner references
 for existing resources.

@@ -1,0 +1,8 @@
+entries:
+  - description: >
+      In 'run --olm', package manifests format must be replicated in a pod's
+      file system for consistent registry initialization.
+
+    kind: "bugfix"
+
+    breaking: false

@@ -22,6 +22,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"k8s.io/client-go/discovery"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	"sigs.k8s.io/yaml"
+
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal/genutil"
 	"github.com/operator-framework/operator-sdk/internal/flags/apiflags"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
@@ -29,12 +35,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
-	"k8s.io/client-go/discovery"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
-	"sigs.k8s.io/yaml"
+	"github.com/operator-framework/operator-sdk/pkg/helm/watches"
 )
 
 func NewCmd() *cobra.Command { //nolint:golint
@@ -378,13 +379,15 @@ func doHelmScaffold() error {
 		roleScaffold = helm.GenerateRoleScaffold(dc, chart)
 	}
 
+	// update watch.yaml for the given resource.
+	watchesFile := filepath.Join(cfg.AbsProjectPath, watches.WatchesFile)
+	if err := watches.UpdateForResource(watchesFile, resource, chart.Name()); err != nil {
+		return fmt.Errorf("failed to create watches.yaml: %w", err)
+	}
+
 	s := &scaffold.Scaffold{}
 	err = s.Execute(cfg,
 		&helm.Dockerfile{},
-		&helm.WatchesYAML{
-			Resource:  resource,
-			ChartName: chart.Name(),
-		},
 		&scaffold.ServiceAccount{},
 		&roleScaffold,
 		&scaffold.RoleBinding{IsClusterScoped: roleScaffold.IsClusterScoped},

@@ -29,6 +29,7 @@ import (
 
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
+	admissionregv1 "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -45,6 +46,8 @@ type manifestCollection struct {
 	ClusterRoles              []rbacv1.ClusterRole
 	Deployments               []appsv1.Deployment
 	CustomResourceDefinitions []apiextv1beta1.CustomResourceDefinition
+	ValidatingWebhooks        []admissionregv1.ValidatingWebhook
+	MutatingWebhooks          []admissionregv1.MutatingWebhook
 	CustomResources           []unstructured.Unstructured
 	Others                    []unstructured.Unstructured
 }
@@ -84,6 +87,32 @@ func (c *manifestCollection) addDeployments(rawManifests ...[]byte) error {
 			return fmt.Errorf("error adding Deployment to manifest collection: %v", err)
 		}
 		c.Deployments = append(c.Deployments, dep)
+	}
+	return nil
+}
+
+// addValidatingWebhookConfigurations assumes all manifest data in rawManifests
+// are ValidatingWebhookConfigurations and adds their webhooks to the collection.
+func (c *manifestCollection) addValidatingWebhookConfigurations(rawManifests ...[]byte) error {
+	for _, rawManifest := range rawManifests {
+		webhookConfig := admissionregv1.ValidatingWebhookConfiguration{}
+		if err := yaml.Unmarshal(rawManifest, &webhookConfig); err != nil {
+			return fmt.Errorf("error adding ValidatingWebhookConfig to manifest collection: %v", err)
+		}
+		c.ValidatingWebhooks = append(c.ValidatingWebhooks, webhookConfig.Webhooks...)
+	}
+	return nil
+}
+
+// addMutatingWebhookConfigurations assumes all manifest data in rawManifests
+// are MutatingWebhookConfigurations and adds their webhooks to the collection.
+func (c *manifestCollection) addMutatingWebhookConfigurations(rawManifests ...[]byte) error {
+	for _, rawManifest := range rawManifests {
+		webhookConfig := admissionregv1.MutatingWebhookConfiguration{}
+		if err := yaml.Unmarshal(rawManifest, &webhookConfig); err != nil {
+			return fmt.Errorf("error adding MutatingWebhookConfig to manifest collection: %v", err)
+		}
+		c.MutatingWebhooks = append(c.MutatingWebhooks, webhookConfig.Webhooks...)
 	}
 	return nil
 }
@@ -145,6 +174,7 @@ func (c manifestCollection) apply(csv *operatorsv1alpha1.ClusterServiceVersion) 
 	if err := c.applyCustomResources(csv); err != nil {
 		return fmt.Errorf("error applying Custom Resource: %v", err)
 	}
+	c.applyWebhooks(csv)
 	return nil
 }
 
@@ -355,6 +385,66 @@ func prettifyJSON(b []byte) ([]byte, error) {
 	return out.Bytes(), err
 }
 
+// applyWebhooks updates csv's webhookDefinitions with any
+// mutating and validating webhooks in the collection.
+func (c manifestCollection) applyWebhooks(csv *operatorsv1alpha1.ClusterServiceVersion) {
+	webhookDescriptions := []operatorsv1alpha1.WebhookDescription{}
+	for _, webhook := range c.ValidatingWebhooks {
+		webhookDescriptions = append(webhookDescriptions, validatingToWebhookDescription(webhook))
+	}
+	for _, webhook := range c.MutatingWebhooks {
+		webhookDescriptions = append(webhookDescriptions, mutatingToWebhookDescription(webhook))
+	}
+	csv.Spec.WebhookDefinitions = webhookDescriptions
+}
+
+// validatingToWebhookDescription transforms webhook into a WebhookDescription.
+func validatingToWebhookDescription(webhook admissionregv1.ValidatingWebhook) operatorsv1alpha1.WebhookDescription {
+	description := operatorsv1alpha1.WebhookDescription{
+		Type:                    operatorsv1alpha1.ValidatingAdmissionWebhook,
+		GenerateName:            webhook.Name,
+		Rules:                   webhook.Rules,
+		FailurePolicy:           webhook.FailurePolicy,
+		MatchPolicy:             webhook.MatchPolicy,
+		ObjectSelector:          webhook.ObjectSelector,
+		SideEffects:             webhook.SideEffects,
+		TimeoutSeconds:          webhook.TimeoutSeconds,
+		AdmissionReviewVersions: webhook.AdmissionReviewVersions,
+	}
+	if serviceRef := webhook.ClientConfig.Service; serviceRef != nil {
+		if serviceRef.Port != nil {
+			description.ContainerPort = *serviceRef.Port
+		}
+		description.DeploymentName = strings.TrimSuffix(serviceRef.Name, "-service")
+		description.WebhookPath = serviceRef.Path
+	}
+	return description
+}
+
+// mutatingToWebhookDescription transforms webhook into a WebhookDescription.
+func mutatingToWebhookDescription(webhook admissionregv1.MutatingWebhook) operatorsv1alpha1.WebhookDescription {
+	description := operatorsv1alpha1.WebhookDescription{
+		Type:                    operatorsv1alpha1.MutatingAdmissionWebhook,
+		GenerateName:            webhook.Name,
+		Rules:                   webhook.Rules,
+		FailurePolicy:           webhook.FailurePolicy,
+		MatchPolicy:             webhook.MatchPolicy,
+		ObjectSelector:          webhook.ObjectSelector,
+		SideEffects:             webhook.SideEffects,
+		TimeoutSeconds:          webhook.TimeoutSeconds,
+		AdmissionReviewVersions: webhook.AdmissionReviewVersions,
+		ReinvocationPolicy:      webhook.ReinvocationPolicy,
+	}
+	if serviceRef := webhook.ClientConfig.Service; serviceRef != nil {
+		if serviceRef.Port != nil {
+			description.ContainerPort = *serviceRef.Port
+		}
+		description.DeploymentName = strings.TrimSuffix(serviceRef.Name, "-service")
+		description.WebhookPath = serviceRef.Path
+	}
+	return description
+}
+
 // deduplicate removes duplicate objects from the collection, since we are
 // collecting an arbitrary list of manifests.
 func (c *manifestCollection) deduplicate() error {
@@ -421,6 +511,30 @@ func (c *manifestCollection) deduplicate() error {
 		}
 	}
 	c.CustomResources = crs
+
+	validatingWebhooks := []admissionregv1.ValidatingWebhook{}
+	for _, webhook := range c.ValidatingWebhooks {
+		hasHash, err := addToHashes(&webhook, hashes)
+		if err != nil {
+			return err
+		}
+		if !hasHash {
+			validatingWebhooks = append(validatingWebhooks, webhook)
+		}
+	}
+	c.ValidatingWebhooks = validatingWebhooks
+
+	mutatingWebhooks := []admissionregv1.MutatingWebhook{}
+	for _, webhook := range c.MutatingWebhooks {
+		hasHash, err := addToHashes(&webhook, hashes)
+		if err != nil {
+			return err
+		}
+		if !hasHash {
+			mutatingWebhooks = append(mutatingWebhooks, webhook)
+		}
+	}
+	c.MutatingWebhooks = mutatingWebhooks
 
 	return nil
 }

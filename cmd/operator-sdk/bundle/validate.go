@@ -45,17 +45,18 @@ format of an operator bundle image or an operator bundles directory on-disk
 containing operator metadata and manifests. This command will exit with a non-zero
 exit code if any validation tests fail.
 
-Note: if validating an image, the image must exist in a remote registry, not
+More information on operator bundle images and the manifests/metadata format:
+https://github.com/openshift/enhancements/blob/master/enhancements/olm/operator-bundle.md
+
+NOTE: if validating an image, the image must exist in a remote registry, not
 just locally.
 `,
 		Example: `The following command flow will generate test-operator bundle image manifests
 and validate them, assuming a bundle for 'test-operator' version v0.1.0 exists at
-<project-root>/deploy/olm-catalog/test-operator/0.1.0:
+<project-root>/deploy/olm-catalog/test-operator/manifests:
 
   # Generate manifests locally.
-  $ operator-sdk bundle create \
-      --generate-only \
-      --directory ./deploy/olm-catalog/test-operator/0.1.0
+  $ operator-sdk bundle create --generate-only
 
   # Validate the directory containing manifests and metadata.
   $ operator-sdk bundle validate ./deploy/olm-catalog/test-operator
@@ -63,8 +64,7 @@ and validate them, assuming a bundle for 'test-operator' version v0.1.0 exists a
 To build and validate an image:
 
   # Build and push the image using the docker CLI.
-	$ operator-sdk bundle create quay.io/example/test-operator:v0.1.0 \
-      --directory ./deploy/olm-catalog/test-operator/0.1.0
+  $ operator-sdk bundle create quay.io/example/test-operator:v0.1.0
   $ docker push quay.io/example/test-operator:v0.1.0
 
   # Ensure the image with modified metadata and Dockerfile is valid.
@@ -77,7 +77,7 @@ To build and validate an image:
 			}
 			// If the argument isn't a directory, assume it's an image.
 			if isExist(args[0]) {
-				if c.directory, err = relDir(args[0]); err != nil {
+				if c.directory, err = relWd(args[0]); err != nil {
 					log.Fatal(err)
 				}
 			} else {

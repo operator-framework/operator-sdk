@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"github.com/operator-framework/operator-registry/pkg/registry"
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -26,7 +27,6 @@ import (
 func GetCRs(bundle registry.Bundle) (crList []unstructured.Unstructured, err error) {
 
 	// get CRs from CSV's alm-examples annotation, assume single bundle
-
 	csv, err := bundle.ClusterServiceVersion()
 	if err != nil {
 		return crList, fmt.Errorf("error in csv retrieval %s", err.Error())

@@ -134,10 +134,7 @@ func newCatalogSource(pkgName, namespace string,
 // indicating a global scope.
 func withTargetNamespaces(namespaces ...string) func(*olmapiv1.OperatorGroup) {
 	return func(og *olmapiv1.OperatorGroup) {
-		if len(namespaces) == 0 {
-			// Supports all namespaces.
-			og.Spec.TargetNamespaces = []string{""}
-		} else {
+		if len(namespaces) != 0 && namespaces[0] != "" {
 			og.Spec.TargetNamespaces = namespaces
 		}
 	}

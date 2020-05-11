@@ -176,3 +176,38 @@ spec:
     url: www.example.com
   replaces: memcached-operator.v0.0.2
   version: 0.0.3
+  webhookdefinitions:
+  - admissionReviewVersions: null
+    deploymentName: memcached-operator-webhook
+    failurePolicy: Fail
+    generateName: vmemcached.kb.io
+    rules:
+    - apiGroups:
+      - cache.example.com
+      apiVersions:
+      - v1alpha1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - memcacheds
+    sideEffects: null
+    type: ValidatingAdmissionWebhook
+    webhookPath: /validate-cache-example-com-v1alpha1-memcached
+  - admissionReviewVersions: null
+    deploymentName: memcached-operator-webhook
+    failurePolicy: Fail
+    generateName: mmemcached.kb.io
+    rules:
+    - apiGroups:
+      - cache.example.com
+      apiVersions:
+      - v1alpha1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - memcacheds
+    sideEffects: null
+    type: MutatingAdmissionWebhook
+    webhookPath: /mutate-cache-example-com-v1alpha1-memcached

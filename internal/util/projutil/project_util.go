@@ -26,6 +26,8 @@ import (
 	"github.com/rogpeppe/go-internal/modfile"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
 )
 
 const (
@@ -82,9 +84,14 @@ func MustInProjectRoot() {
 
 // CheckProjectRoot checks if the current dir is the project root, and returns
 // an error if not.
-// TODO(hasbro17): Change this to check for go.mod
 // "build/Dockerfile" may not be present in all projects
+// todo: scaffold Project file for Ansible and Helm with the type information
 func CheckProjectRoot() error {
+	if kbutil.HasProjectFile() {
+		return nil
+	}
+
+	// todo(camilamacedo86): remove the following check when we no longer support the legacy scaffold layout
 	// If the current directory has a "build/Dockerfile", then it is safe to say
 	// we are at the project root.
 	if _, err := os.Stat(buildDockerfile); err != nil {
@@ -199,6 +206,14 @@ func GetOperatorType() OperatorType {
 }
 
 func IsOperatorGo() bool {
+	// todo: in the future we should check the plugin prefix to ensure the operator type
+	// for now, we can assume that any project with the kubebuilder layout is Go Type
+	if kbutil.HasProjectFile() {
+		return true
+	}
+
+	// todo: remove the following code when the legacy layout is no longer supported
+	// we can check it using the Project File
 	_, err := os.Stat(managerMainFile)
 	if err == nil || os.IsExist(err) {
 		return true
@@ -298,7 +313,7 @@ func CheckGoModules() error {
 	}
 	if !goModOn {
 		return fmt.Errorf(`using go modules requires GO111MODULE="on", "auto", or unset.` +
-			` More info: https://github.com/operator-framework/operator-sdk/blob/master/doc/user-guide.md#go-modules`)
+			` More info: https://sdk.operatorframework.io/docs/golang/quickstart/#a-note-on-dependency-management`)
 	}
 	return nil
 }
@@ -306,5 +321,5 @@ func CheckGoModules() error {
 // PrintDeprecationWarning prints a colored warning wrapping msg to the terminal.
 func PrintDeprecationWarning(msg string) {
 	fmt.Printf(noticeColor, "[Deprecation Notice] "+msg+". Refer to the version upgrade guide "+
-		"for more information: https://operator-sdk.netlify.com/docs/migration/version-upgrade-guide\n\n")
+		"for more information: https://sdk.operatorframework.io/docs/migration/version-upgrade-guide/\n\n")
 }

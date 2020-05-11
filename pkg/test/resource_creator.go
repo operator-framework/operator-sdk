@@ -21,58 +21,54 @@ import (
 	"os"
 	"time"
 
-	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-
+	"golang.org/x/net/context"
 	core "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/yaml"
+
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
 
 // TODO: remove before 1.0.0
 // Deprecated: GetNamespace() exists for historical compatibility.
 // Use GetOperatorNamespace() or GetWatchNamespace() instead
 func (ctx *Context) GetNamespace() (string, error) {
-	if ctx.namespace != "" {
-		return ctx.namespace, nil
-	}
-	// create namespace
-	ctx.namespace = ctx.GetID()
-	namespaceObj := &core.Namespace{ObjectMeta: metav1.ObjectMeta{Name: ctx.namespace}}
-	_, err := ctx.kubeclient.CoreV1().Namespaces().Create(namespaceObj)
-	if apierrors.IsAlreadyExists(err) {
-		return "", fmt.Errorf("namespace %s already exists: %w", ctx.namespace, err)
-	} else if err != nil {
-		return "", err
-	}
-	ctx.AddCleanupFn(func() error {
-		return ctx.kubeclient.CoreV1().Namespaces().Delete(ctx.namespace, metav1.NewDeleteOptions(0))
-	})
-	return ctx.namespace, nil
+	var err error
+	ctx.namespace, err = ctx.getNamespace(ctx.namespace)
+	return ctx.namespace, err
 }
 
 // GetOperatorNamespace will return an Operator Namespace,
 // if the flag --operator-namespace  not be used (TestOpeatorNamespaceEnv not set)
 // then it will create a new namespace with randon name and return that namespace
 func (ctx *Context) GetOperatorNamespace() (string, error) {
-	if ctx.operatorNamespace != "" {
-		return ctx.operatorNamespace, nil
+	var err error
+	ctx.operatorNamespace, err = ctx.getNamespace(ctx.operatorNamespace)
+	return ctx.operatorNamespace, err
+}
+
+func (ctx *Context) getNamespace(ns string) (string, error) {
+	if ns != "" {
+		return ns, nil
 	}
 	// create namespace
-	ctx.operatorNamespace = ctx.GetID()
-	namespaceObj := &core.Namespace{ObjectMeta: metav1.ObjectMeta{Name: ctx.operatorNamespace}}
-	_, err := ctx.kubeclient.CoreV1().Namespaces().Create(namespaceObj)
+	ns = ctx.GetID()
+	namespaceObj := &core.Namespace{ObjectMeta: metav1.ObjectMeta{Name: ns}}
+	_, err := ctx.kubeclient.CoreV1().Namespaces().Create(context.TODO(), namespaceObj, metav1.CreateOptions{})
 	if apierrors.IsAlreadyExists(err) {
-		return "", fmt.Errorf("namespace %s already exists: %w", ctx.operatorNamespace, err)
+		return "", fmt.Errorf("namespace %s already exists: %w", ns, err)
 	} else if err != nil {
 		return "", err
 	}
 	ctx.AddCleanupFn(func() error {
-		return ctx.kubeclient.CoreV1().Namespaces().Delete(ctx.operatorNamespace, metav1.NewDeleteOptions(0))
+		gracePeriodSeconds := int64(0)
+		opts := metav1.DeleteOptions{GracePeriodSeconds: &gracePeriodSeconds}
+		return ctx.kubeclient.CoreV1().Namespaces().Delete(context.TODO(), ns, opts)
 	})
-	return ctx.operatorNamespace, nil
+	return ns, nil
 }
 
 // GetWatchNamespace will return the  namespaces to operator

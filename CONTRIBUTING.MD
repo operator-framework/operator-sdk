@@ -9,7 +9,7 @@ Operator SDK is Apache 2.0 licensed and accepts contributions via GitHub pull re
 ## Getting started
 
 - Fork the repository on GitHub
-- See the [developer guide](./doc/dev/developer_guide.md) for build instructions
+- See the [developer guide](https://sdk.operatorframework.io/docs/contribution-guidelines/developer-guide/) for build instructions
 
 ## Reporting bugs and creating issues
 

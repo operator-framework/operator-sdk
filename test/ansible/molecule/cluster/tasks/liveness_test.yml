@@ -1,0 +1,16 @@
+- name: get the operator pod
+  set_fact:
+    op_pod: "{{ lookup('k8s', kind='Pod', label_selector='name=ansible') }}"
+
+- name: Check for liveness probe failure events
+  # We can't directly hit the endpoint, which is not publicly exposed. If k8s sees a failing endpoint, it will create a "Killing" event.
+  k8s_info:
+    kind: Event
+    field_selectors:
+      - "involvedObject.name={{ op_pod.metadata.name }}"
+      - "reason=Killing"
+  register: liveness_failures
+
+- name: Assert that the Pod has not been liveness probe Killed
+  assert:
+    that: liveness_failures.resources|length == 0

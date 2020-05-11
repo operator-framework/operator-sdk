@@ -15,41 +15,25 @@
 package alpha
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
-	"k8s.io/client-go/kubernetes"
+	v1 "k8s.io/api/core/v1"
 )
 
-// getTestResults fetches the test pod logs and converts it into
+// getTestResult fetches the test pod log and converts it into
 // ScorecardOutput format
-func getTestResults(client kubernetes.Interface, tests []Test) (output v1alpha2.ScorecardOutput) {
-	output.Results = make([]v1alpha2.ScorecardTestResult, 0)
+func (r PodTestRunner) getTestResult(ctx context.Context, p *v1.Pod, test Test) (output *v1alpha2.ScorecardTestResult) {
 
-	for _, test := range tests {
-		p := test.TestPod
-		logBytes, err := getPodLog(client, p)
-		if err != nil {
-			r := v1alpha2.ScorecardTestResult{}
-			r.Name = test.Name
-			r.Description = test.Description
-			r.Errors = []string{fmt.Sprintf("Error getting pod log %s", err.Error())}
-			output.Results = append(output.Results, r)
-		} else {
-			// marshal pod log into ScorecardTestResult
-			var sc v1alpha2.ScorecardTestResult
-			err := json.Unmarshal(logBytes, &sc)
-			if err != nil {
-				r := v1alpha2.ScorecardTestResult{}
-				r.Name = test.Name
-				r.Description = test.Description
-				r.Errors = []string{fmt.Sprintf("Error unmarshalling test result %s", err.Error())}
-				output.Results = append(output.Results, r)
-			} else {
-				output.Results = append(output.Results, sc)
-			}
-		}
+	logBytes, err := getPodLog(ctx, r.Client, p)
+	if err != nil {
+		return testResultError(err, test)
+	}
+	// marshal pod log into ScorecardTestResult
+	err = json.Unmarshal(logBytes, &output)
+	if err != nil {
+		return testResultError(err, test)
 	}
 	return output
 }
@@ -57,9 +41,9 @@ func getTestResults(client kubernetes.Interface, tests []Test) (output v1alpha2.
 // ListTests lists the scorecard tests as configured that would be
 // run based on user selection
 func (o Scorecard) ListTests() (output v1alpha2.ScorecardOutput, err error) {
-	tests := selectTests(o.Selector, o.Config.Tests)
+	tests := o.selectTests()
 	if len(tests) == 0 {
-		fmt.Println("no tests selected")
+		output.Results = make([]v1alpha2.ScorecardTestResult, 0)
 		return output, err
 	}
 
@@ -74,4 +58,13 @@ func (o Scorecard) ListTests() (output v1alpha2.ScorecardOutput, err error) {
 	}
 
 	return output, err
+}
+
+func testResultError(err error, test Test) *v1alpha2.ScorecardTestResult {
+	r := v1alpha2.ScorecardTestResult{}
+	r.Name = test.Name
+	r.State = v1alpha2.FailState
+	r.Description = test.Description
+	r.Errors = []string{err.Error()}
+	return &r
 }

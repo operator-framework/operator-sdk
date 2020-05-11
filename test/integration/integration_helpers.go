@@ -21,6 +21,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"testing"
 
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
@@ -36,7 +37,7 @@ const (
 
 var (
 	// Set with OSDK_INTEGRATION_IMAGE in CI.
-	defaultTestImageTag = "memcached-operator"
+	testImageTag = "memcached-operator"
 )
 
 type DefinitionKey struct {
@@ -54,7 +55,7 @@ type CSVTemplateConfig struct {
 	CRDKeys         []DefinitionKey
 	InstallModes    []operatorsv1alpha1.InstallMode
 
-	IsManifests bool
+	IsBundle bool
 }
 
 const csvTmpl = `apiVersion: operators.coreos.com/v1alpha1
@@ -169,11 +170,11 @@ spec:
 `
 
 func writeOperatorManifests(dir string, csvConfig CSVTemplateConfig) error {
-	bundleDir := ""
-	if csvConfig.IsManifests {
-		bundleDir = filepath.Join(dir, bundle.ManifestsDir)
+	manifestDir := ""
+	if csvConfig.IsBundle {
+		manifestDir = filepath.Join(dir, bundle.ManifestsDir)
 	} else {
-		bundleDir = filepath.Join(dir, csvConfig.OperatorVersion)
+		manifestDir = filepath.Join(dir, csvConfig.OperatorVersion)
 	}
 	for _, key := range csvConfig.CRDKeys {
 		crd := apiextv1beta1.CustomResourceDefinition{
@@ -194,16 +195,16 @@ func writeOperatorManifests(dir string, csvConfig CSVTemplateConfig) error {
 				Versions: key.Versions,
 			},
 		}
-		crdPath := filepath.Join(bundleDir, fmt.Sprintf("%s.crd.yaml", key.Name))
+		crdPath := filepath.Join(manifestDir, fmt.Sprintf("%s.crd.yaml", key.Name))
 		if err := writeManifest(crdPath, crd); err != nil {
 			return err
 		}
 	}
 	csvPath := ""
-	if csvConfig.IsManifests {
-		csvPath = filepath.Join(bundleDir, fmt.Sprintf("%s.csv.yaml", csvConfig.OperatorName))
+	if csvConfig.IsBundle {
+		csvPath = filepath.Join(manifestDir, fmt.Sprintf("%s.csv.yaml", csvConfig.OperatorName))
 	} else {
-		csvPath = filepath.Join(bundleDir, fmt.Sprintf("%s.v%s.csv.yaml",
+		csvPath = filepath.Join(manifestDir, fmt.Sprintf("%s.v%s.csv.yaml",
 			csvConfig.OperatorName, csvConfig.OperatorVersion))
 	}
 	if err := execTemplateOnFile(csvPath, csvTmpl, csvConfig); err != nil {
@@ -262,4 +263,22 @@ func execTemplateOnFile(path, tmplStr string, o interface{}) error {
 		return err
 	}
 	return tmpl.Execute(w, o)
+}
+
+//nolint:unparam
+func mkTempDirWithCleanup(t *testing.T, prefix string) (dir string, f func()) {
+	var err error
+	if prefix == "" {
+		prefix = "sdk-integration-"
+	}
+	if dir, err = ioutil.TempDir("", prefix); err != nil {
+		t.Fatalf("Failed to create tmp dir: %v", err)
+	}
+	f = func() {
+		if err := os.RemoveAll(dir); err != nil {
+			// Not a test failure since files in /tmp will eventually get deleted
+			t.Logf("Failed to remove tmp dir %s: %v", dir, err)
+		}
+	}
+	return
 }

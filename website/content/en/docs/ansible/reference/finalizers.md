@@ -20,6 +20,9 @@ define the mapping from your finalizer to a playbook or role by simply setting t
 your top-level playbook or role with different variables set. The `watches.yaml`
 finalizer configuration accepts the following options:
 
+See [Ansible watches documentation][ansible-watches] for more
+information.
+
 
 #### name
 `name` is required.
@@ -42,10 +45,9 @@ path to a playbook on the operator’s file system.
 #### role
 
 One of `playbook`, `role`, or `vars` must be provided. If `role` is not provided, it
-will default to the role specified at the top level of the `watches.yaml` entry.
+will default to the role specified at the top level of the [`watches.yaml`][watches] entry.
 
 This field is identical to the top-level `role` field.
-https://github.com/operator-framework/operator-sdk/blob/master/doc/ansible/user-guide.md#watches-file
 
 
 #### vars
@@ -165,3 +167,5 @@ let the operator remove our finalizer and allow the resource to be deleted.
 
 ## Further reading
 • [Kubernetes finalizers](https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#finalizers)
+
+[ansible-watches]:/docs/ansible/reference/watches/

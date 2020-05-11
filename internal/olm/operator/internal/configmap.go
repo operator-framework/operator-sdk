@@ -26,41 +26,98 @@ import (
 	"github.com/operator-framework/operator-registry/pkg/registry"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
 
-// IsManifestDataStale checks if manifest data stored in the registry is stale
-// by comparing it to manifest data currently managed by m.
-func (m *RegistryResources) IsManifestDataStale(ctx context.Context, namespace string) (bool, error) {
-	pkgName := m.Pkg.PackageName
-	nn := types.NamespacedName{
-		Name:      getRegistryConfigMapName(pkgName),
-		Namespace: namespace,
+// getRegistryConfigMaps performs a List operation to get all ConfigMaps
+// labelled as belonging to an operator's registry created by operator-sdk.
+func (rr *RegistryResources) getRegistryConfigMaps(ctx context.Context, namespace string) ([]corev1.ConfigMap, error) {
+	list := corev1.ConfigMapList{}
+	opts := []client.ListOption{
+		client.MatchingLabels(makeRegistryLabels(rr.Pkg.PackageName)),
+		client.InNamespace(namespace),
 	}
-	configmap := corev1.ConfigMap{}
-	err := m.Client.KubeClient.Get(ctx, nn, &configmap)
+	err := rr.Client.KubeClient.List(ctx, &list, opts...)
 	if err != nil {
-		return false, err
+		return nil, fmt.Errorf("error listing operator %q ConfigMaps: %w", rr.Pkg.PackageName, err)
 	}
-	// Collect digests of manifests submitted to m.
-	newData, err := createConfigMapBinaryData(m.Pkg, m.Bundles)
+	return list.Items, nil
+}
+
+// makeConfigMapsForPackageManifests creates a set of ConfigMap binary data
+// for a given PackageManifest and Bundles. Each ConfigMaps's binary data is
+// indexed by the ConfigMap's name.
+func makeConfigMapsForPackageManifests(pkg registry.PackageManifest,
+	bundles []*registry.Bundle) (_ map[string]map[string][]byte, err error) {
+
+	binaryDataByConfigMap := make(map[string]map[string][]byte)
+	// Create a PackageManifest ConfigMap.
+	cmName := getRegistryConfigMapName(pkg.PackageName) + "-package"
+	binaryDataByConfigMap[cmName], err = makeObjectBinaryData(pkg)
 	if err != nil {
-		return false, fmt.Errorf("error creating binary data: %w", err)
+		return nil, err
 	}
-	// If the number of files to be added to the registry don't match the number
-	// of files currently in the registry, we have added or removed a file.
-	if len(newData) != len(configmap.BinaryData) {
-		return true, nil
-	}
-	// Check each binary value's key, which contains a base32-encoded md5 digest
-	// component, against the new set of manifest keys.
-	for fileKey := range configmap.BinaryData {
-		if _, match := newData[fileKey]; !match {
-			return true, nil
+
+	// Create Bundle ConfigMaps.
+	for _, bundle := range bundles {
+		version, err := bundle.Version()
+		if err != nil {
+			return nil, err
+		}
+		// ConfigMap name containing the bundle's version.
+		cmName := getRegistryConfigMapName(pkg.PackageName) + "-" + k8sutil.FormatOperatorNameDNS1123(version)
+		binaryDataByConfigMap[cmName], err = makeBundleBinaryData(bundle)
+		if err != nil {
+			return nil, err
 		}
 	}
-	return false, nil
+
+	return binaryDataByConfigMap, nil
+}
+
+// makeObjectBinaryData creates a ConfigMap's binary data, indexed by a file
+// name key containing names.
+func makeObjectBinaryData(obj interface{}, names ...string) (map[string][]byte, error) {
+	binaryData := make(map[string][]byte)
+	err := addObjectToBinaryData(binaryData, obj, names...)
+	return binaryData, err
+}
+
+// makeBundleBinaryData creates a ConfigMap's binary data for a Bundle's objects,
+// indexed by a file name key containing each object's name and kind.
+func makeBundleBinaryData(bundle *registry.Bundle) (map[string][]byte, error) {
+	binaryData := make(map[string][]byte)
+	for _, obj := range bundle.Objects {
+		err := addObjectToBinaryData(binaryData, obj, obj.GetName(), obj.GetKind())
+		if err != nil {
+			return nil, err
+		}
+	}
+	return binaryData, nil
+}
+
+// addObjectToBinaryData adds an object's bytes to binaryData indexed by a
+// file name key containing names.
+func addObjectToBinaryData(binaryData map[string][]byte, obj interface{}, names ...string) error {
+	b, err := yaml.Marshal(obj)
+	if err != nil {
+		return fmt.Errorf("error creating %s binary data: %w", names, err)
+	}
+	binaryData[makeObjectFileName(b, names...)] = b
+	return nil
+}
+
+// makeObjectFileName opaquely creates a unique file name based on data in b
+// and names.
+func makeObjectFileName(b []byte, names ...string) string {
+	fileName := hashContents(b) + "."
+	for _, name := range names {
+		if name != "" {
+			fileName += strings.ToLower(name) + "."
+		}
+	}
+	return fileName + "yaml"
 }
 
 // hashContents creates a base32-encoded md5 digest of b's bytes.
@@ -71,42 +128,9 @@ func hashContents(b []byte) string {
 	return enc.EncodeToString(h.Sum(nil))
 }
 
-// getObjectFileName opaquely creates a unique file name based on data in b.
-func getObjectFileName(b []byte, name, kind string) string {
-	digest := hashContents(b)
-	return fmt.Sprintf("%s.%s.%s.yaml", digest, name, strings.ToLower(kind))
-}
-
-func getPackageFileName(b []byte, name string) string {
-	return getObjectFileName(b, name, "package")
-}
-
-// createConfigMapBinaryData opaquely creates a set of paths using data in pkg
-// and each bundle in bundles, unique by path. These paths are intended to
-// be keys in a ConfigMap.
-func createConfigMapBinaryData(pkg registry.PackageManifest, bundles []*registry.Bundle) (map[string][]byte, error) {
-	pkgName := pkg.PackageName
-	binaryKeyValues := map[string][]byte{}
-	pb, err := yaml.Marshal(pkg)
-	if err != nil {
-		return nil, fmt.Errorf("error marshalling package manifest %s: %w", pkgName, err)
-	}
-	binaryKeyValues[getPackageFileName(pb, pkgName)] = pb
-	for _, bundle := range bundles {
-		for _, o := range bundle.Objects {
-			ob, err := yaml.Marshal(o)
-			if err != nil {
-				return nil, fmt.Errorf("error marshalling object %s %q: %w", o.GroupVersionKind(), o.GetName(), err)
-			}
-			binaryKeyValues[getObjectFileName(ob, o.GetName(), o.GetKind())] = ob
-		}
-	}
-	return binaryKeyValues, nil
-}
-
 func getRegistryConfigMapName(pkgName string) string {
 	name := k8sutil.FormatOperatorNameDNS1123(pkgName)
-	return fmt.Sprintf("%s-registry-bundles", name)
+	return fmt.Sprintf("%s-registry-manifests", name)
 }
 
 // withBinaryData returns a function that creates entries in the ConfigMap
@@ -122,17 +146,16 @@ func withBinaryData(kvs map[string][]byte) func(*corev1.ConfigMap) {
 	}
 }
 
-// newRegistryConfigMap creates a new ConfigMap with a name derived from
-// pkgName, the package manifest's packageName, in namespace. opts will
+// newConfigMap creates a new ConfigMap with name in namespace. opts will
 // be applied to the ConfigMap object.
-func newRegistryConfigMap(pkgName, namespace string, opts ...func(*corev1.ConfigMap)) *corev1.ConfigMap {
+func newConfigMap(name, namespace string, opts ...func(*corev1.ConfigMap)) *corev1.ConfigMap {
 	cm := &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: corev1.SchemeGroupVersion.String(),
 			Kind:       "ConfigMap",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      getRegistryConfigMapName(pkgName),
+			Name:      name,
 			Namespace: namespace,
 		},
 	}

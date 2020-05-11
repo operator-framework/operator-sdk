@@ -37,6 +37,13 @@ spec:
               value: explicit
             - name: ANSIBLE_INVENTORY
               value: /opt/ansible/inventory
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 6789
+            initialDelaySeconds: 5
+            periodSeconds: 3
+
       volumes:
         - name: runner
           emptyDir: {}
