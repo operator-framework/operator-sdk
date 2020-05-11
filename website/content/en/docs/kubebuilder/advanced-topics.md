@@ -41,7 +41,8 @@ import (
 func init() {
 
 // Setup Scheme for all resources
-if err := cachev1alpha1.AddToScheme(mgr.GetScheme()); err != nil {
+	utilruntime.Must(cachev1alpha1.AddToScheme(mgr.GetScheme()))
+	// +kubebuilder:scaffold:scheme
   log.Error(err, "")
   os.Exit(1)
 }
