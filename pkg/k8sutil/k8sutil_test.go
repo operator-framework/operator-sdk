@@ -19,6 +19,12 @@ import (
 	"os"
 	"reflect"
 	"testing"
+
+	"gotest.tools/assert"
+	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func TestGetOperatorName(t *testing.T) {
@@ -72,5 +78,81 @@ func TestGetOperatorName(t *testing.T) {
 				test.expectedOutput.operatorName, test.expectedOutput.err, operatorName, err)
 		}
 		_ = os.Unsetenv(test.envVarKey)
+	}
+}
+
+func TestSupportsOwnerReference(t *testing.T) {
+	type testcase struct {
+		name       string
+		restMapper meta.RESTMapper
+		owner      runtime.Object
+		dependent  runtime.Object
+		result     bool
+	}
+
+	var defaultVersion []schema.GroupVersion
+	restMapper := meta.NewDefaultRESTMapper(defaultVersion)
+
+	ownerGVK := schema.GroupVersionKind{
+		Group:   "apps",
+		Version: "v1",
+		Kind:    "Deployment",
+	}
+	depGVK := schema.GroupVersionKind{
+		Group:   "rbac.authorization.k8s.io",
+		Version: "v1",
+		Kind:    "ClusterRole",
+	}
+
+	restMapper.Add(ownerGVK, meta.RESTScopeNamespace)
+	restMapper.Add(depGVK, meta.RESTScopeRoot)
+
+	cases := []testcase{
+		{
+			name:       "This test should pass",
+			restMapper: restMapper,
+			owner: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind":       "Deployment",
+					"apiVersion": "apps/v1",
+					"metadata": map[string]interface{}{
+						"name":      "example-nginx-controller",
+						"namespace": "ns",
+					},
+				},
+			},
+			dependent: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind":       "ClusterRole",
+					"apiVersion": "rbac.authorization.k8s.io/v1",
+					"metadata": map[string]interface{}{
+						"name":      "example-nginx-role",
+						"namespace": "ns",
+					},
+				},
+			},
+			result: false,
+		},
+	}
+
+	for _, c := range cases {
+		useOwner, err := SupportsOwnerReference(c.restMapper, c.owner, c.dependent)
+		if err != nil {
+			t.Errorf("Error is %s", err)
+		}
+		assert.Equal(t, c.result, useOwner)
+	}
+}
+
+func newTestUnstructured(containers []interface{}) *unstructured.Unstructured {
+	return &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"kind":       "MyKind",
+			"apiVersion": "example.com/v1alpha1",
+			"metadata": map[string]interface{}{
+				"name":      "example-MyKind",
+				"namespace": "ns",
+			},
+		},
 	}
 }

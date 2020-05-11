@@ -33,9 +33,9 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/operator-framework/operator-sdk/pkg/handler"
-	"github.com/operator-framework/operator-sdk/pkg/helm/client"
 	"github.com/operator-framework/operator-sdk/pkg/helm/release"
 	"github.com/operator-framework/operator-sdk/pkg/internal/predicates"
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 )
 
 var log = logf.Log.WithName("helm.controller")
@@ -123,7 +123,7 @@ func watchDependentResources(mgr manager.Manager, r *HelmOperatorReconciler, c c
 			}
 
 			restMapper := mgr.GetRESTMapper()
-			useOwnerRef, err := client.SupportsOwnerReference(restMapper, owner, &u)
+			useOwnerRef, err := k8sutil.SupportsOwnerReference(restMapper, owner, &u)
 			if err != nil {
 				return err
 			}

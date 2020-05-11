@@ -19,6 +19,7 @@ import (
 	"io"
 
 	"github.com/operator-framework/operator-sdk/pkg/handler"
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"helm.sh/helm/v3/pkg/kube"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -101,18 +102,15 @@ func NewRESTClientGetter(mgr manager.Manager, ns string) (genericclioptions.REST
 
 var _ kube.Interface = &ownerRefInjectingClient{}
 
-func NewOwnerRefInjectingClient(base kube.Client, ownerRef metav1.OwnerReference,
-	mgr manager.Manager, cr *unstructured.Unstructured) kube.Interface {
+func NewOwnerRefInjectingClient(base kube.Client, restMapper meta.RESTMapper, cr *unstructured.Unstructured) kube.Interface {
 	return &ownerRefInjectingClient{
-		refs:       []metav1.OwnerReference{ownerRef},
 		Client:     base,
-		restMapper: mgr.GetRESTMapper(),
+		restMapper: restMapper,
 		owner:      cr,
 	}
 }
 
 type ownerRefInjectingClient struct {
-	refs []metav1.OwnerReference
 	kube.Client
 	restMapper meta.RESTMapper
 	owner      *unstructured.Unstructured
@@ -132,13 +130,14 @@ func (c *ownerRefInjectingClient) Build(reader io.Reader, validate bool) (kube.R
 			return err
 		}
 		u := &unstructured.Unstructured{Object: objMap}
-		useOwnerRef, err := SupportsOwnerReference(c.restMapper, c.owner, u)
+		useOwnerRef, err := k8sutil.SupportsOwnerReference(c.restMapper, c.owner, u)
 		if err != nil {
 			return err
 		}
 
 		if useOwnerRef {
-			u.SetOwnerReferences(c.refs)
+			ownerRef := metav1.NewControllerRef(c.owner, c.owner.GroupVersionKind())
+			u.SetOwnerReferences([]metav1.OwnerReference{*ownerRef})
 		} else {
 			a := u.GetAnnotations()
 			if a == nil {
@@ -155,45 +154,4 @@ func (c *ownerRefInjectingClient) Build(reader io.Reader, validate bool) (kube.R
 		return nil, err
 	}
 	return resourceList, nil
-}
-
-func SupportsOwnerReference(restMapper meta.RESTMapper, owner, dependent runtime.Object) (bool, error) {
-	ownerGVK := owner.GetObjectKind().GroupVersionKind()
-	ownerMapping, err := restMapper.RESTMapping(ownerGVK.GroupKind(), ownerGVK.Version)
-	if err != nil {
-		return false, err
-	}
-	mOwner, err := meta.Accessor(owner)
-	if err != nil {
-		return false, err
-	}
-
-	depGVK := dependent.GetObjectKind().GroupVersionKind()
-	depMapping, err := restMapper.RESTMapping(depGVK.GroupKind(), depGVK.Version)
-	if err != nil {
-		return false, err
-	}
-	mDep, err := meta.Accessor(dependent)
-	if err != nil {
-		return false, err
-	}
-
-	ownerClusterScoped := ownerMapping.Scope.Name() == meta.RESTScopeNameRoot
-	ownerNamespace := mOwner.GetNamespace()
-	depClusterScoped := depMapping.Scope.Name() == meta.RESTScopeNameRoot
-	depNamespace := mDep.GetNamespace()
-
-	if ownerClusterScoped {
-		return true, nil
-	}
-
-	if depClusterScoped {
-		return false, nil
-	}
-
-	if ownerNamespace != depNamespace {
-		return false, nil
-	}
-
-	return true, nil
 }

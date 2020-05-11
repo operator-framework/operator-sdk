@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	discovery "k8s.io/client-go/discovery"
@@ -182,4 +183,46 @@ func isKubeMetaKind(kind string) bool {
 
 func isRunModeLocal() bool {
 	return os.Getenv(ForceRunModeEnv) == string(LocalRunMode)
+}
+
+// SupportsOwnerReference ...
+func SupportsOwnerReference(restMapper meta.RESTMapper, owner runtime.Object, dependent runtime.Object) (bool, error) {
+	ownerGVK := owner.GetObjectKind().GroupVersionKind()
+	ownerMapping, err := restMapper.RESTMapping(ownerGVK.GroupKind(), ownerGVK.Version)
+	if err != nil {
+		return false, err
+	}
+	mOwner, err := meta.Accessor(owner)
+	if err != nil {
+		return false, err
+	}
+
+	depGVK := dependent.GetObjectKind().GroupVersionKind()
+
+	depMapping, err := restMapper.RESTMapping(depGVK.GroupKind(), depGVK.Version)
+	if err != nil {
+		return false, err
+	}
+	mDep, err := meta.Accessor(dependent)
+	if err != nil {
+		return false, err
+	}
+	ownerClusterScoped := ownerMapping.Scope.Name() == meta.RESTScopeNameRoot
+	ownerNamespace := mOwner.GetNamespace()
+	depClusterScoped := depMapping.Scope.Name() == meta.RESTScopeNameRoot
+	depNamespace := mDep.GetNamespace()
+
+	if ownerClusterScoped {
+		return true, nil
+	}
+
+	if depClusterScoped {
+		return false, nil
+	}
+
+	if ownerNamespace != depNamespace {
+		return false, nil
+	}
+	// Both owner and dependent are namespace-scoped and in the same namespace.
+	return true, nil
 }
