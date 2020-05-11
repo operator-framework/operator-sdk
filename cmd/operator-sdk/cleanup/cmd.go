@@ -37,7 +37,7 @@ type cleanupCmd struct {
 	olm bool
 
 	// Cleanup type-specific options.
-	olmArgs olmoperator.OLMCmd
+	olmArgs olmoperator.PackageManifestsCmd
 }
 
 // checkCleanupType ensures exactly one cleanup type has been selected.

@@ -42,7 +42,7 @@ type runCmd struct {
 	olm, local bool
 
 	// Run type-specific options.
-	olmArgs   olmoperator.OLMCmd
+	olmArgs   olmoperator.PackageManifestsCmd
 	localArgs runLocalArgs
 }
 
