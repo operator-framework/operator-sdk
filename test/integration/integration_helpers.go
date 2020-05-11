@@ -223,21 +223,6 @@ func writePackageManifest(dir, pkgName string, channels []registry.PackageChanne
 	return writeManifest(pkgPath, pkg)
 }
 
-func writeAnnotations(dir, pkgName string, channels []string) error {
-	annotations := bundle.AnnotationMetadata{
-		Annotations: map[string]string{
-			bundle.MediatypeLabel:      bundle.RegistryV1Type,
-			bundle.ManifestsLabel:      bundle.ManifestsDir,
-			bundle.MetadataLabel:       bundle.MetadataDir,
-			bundle.PackageLabel:        pkgName,
-			bundle.ChannelsLabel:       strings.Join(channels, ","),
-			bundle.ChannelDefaultLabel: channels[0],
-		},
-	}
-	path := filepath.Join(dir, bundle.MetadataDir, bundle.AnnotationsFile)
-	return writeManifest(path, annotations)
-}
-
 func writeManifest(path string, o interface{}) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
