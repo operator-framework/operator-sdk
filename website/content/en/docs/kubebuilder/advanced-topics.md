@@ -43,7 +43,6 @@ func init() {
 // Setup Scheme for all resources
 	utilruntime.Must(cachev1alpha1.AddToScheme(mgr.GetScheme()))
 	// +kubebuilder:scaffold:scheme
-  os.Exit(1)
 }
 ```
 
