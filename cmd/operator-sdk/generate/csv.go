@@ -282,15 +282,19 @@ func (c csvCmd) run() error {
 	if err := csv.Generate(); err != nil {
 		return fmt.Errorf("error generating CSV: %v", err)
 	}
-	pkg := gencatalog.PkgGenerator{
-		OperatorName:     c.operatorName,
-		CSVVersion:       c.csvVersion,
-		OutputDir:        c.outputDir,
-		Channel:          c.csvChannel,
-		ChannelIsDefault: c.defaultChannel,
-	}
-	if err := pkg.Generate(); err != nil {
-		return fmt.Errorf("error generating package manifest: %v", err)
+
+	// A package manifest file is not a part of the bundle format.
+	if !c.makeManifests {
+		pkg := gencatalog.PkgGenerator{
+			OperatorName:     c.operatorName,
+			CSVVersion:       c.csvVersion,
+			OutputDir:        c.outputDir,
+			Channel:          c.csvChannel,
+			ChannelIsDefault: c.defaultChannel,
+		}
+		if err := pkg.Generate(); err != nil {
+			return fmt.Errorf("error generating package manifest: %v", err)
+		}
 	}
 
 	log.Info("CSV manifest generated successfully")
