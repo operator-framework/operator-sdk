@@ -20,7 +20,7 @@ import (
 	"reflect"
 	"testing"
 
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -93,28 +93,28 @@ func TestSupportsOwnerReference(t *testing.T) {
 	var defaultVersion []schema.GroupVersion
 	restMapper := meta.NewDefaultRESTMapper(defaultVersion)
 
-	ownerGVK := schema.GroupVersionKind{
+	GVK1 := schema.GroupVersionKind{
 		Group:   "apps",
-		Version: "v1",
-		Kind:    "Deployment",
+		Version: "v1alpha1",
+		Kind:    "MyNamespaceKind",
 	}
-	depGVK := schema.GroupVersionKind{
-		Group:   "rbac.authorization.k8s.io",
-		Version: "v1",
-		Kind:    "ClusterRole",
+	GVK2 := schema.GroupVersionKind{
+		Group:   "rbac",
+		Version: "v1alpha1",
+		Kind:    "MyClusterKind",
 	}
 
-	restMapper.Add(ownerGVK, meta.RESTScopeNamespace)
-	restMapper.Add(depGVK, meta.RESTScopeRoot)
+	restMapper.Add(GVK1, meta.RESTScopeNamespace)
+	restMapper.Add(GVK2, meta.RESTScopeRoot)
 
 	cases := []testcase{
 		{
-			name:       "This test should pass",
+			name:       "Returns false when owner is Namespaced and dependent resource is Clusterscoped.",
 			restMapper: restMapper,
 			owner: &unstructured.Unstructured{
 				Object: map[string]interface{}{
-					"kind":       "Deployment",
-					"apiVersion": "apps/v1",
+					"kind":       "MyNamespaceKind",
+					"apiVersion": "apps/v1alpha1",
 					"metadata": map[string]interface{}{
 						"name":      "example-nginx-controller",
 						"namespace": "ns",
@@ -123,8 +123,133 @@ func TestSupportsOwnerReference(t *testing.T) {
 			},
 			dependent: &unstructured.Unstructured{
 				Object: map[string]interface{}{
-					"kind":       "ClusterRole",
-					"apiVersion": "rbac.authorization.k8s.io/v1",
+					"kind":       "MyClusterKind",
+					"apiVersion": "rbac/v1alpha1",
+					"metadata": map[string]interface{}{
+						"name":      "example-nginx-role",
+						"namespace": "ns",
+					},
+				},
+			},
+			result: false,
+		},
+		{
+			name:       "Returns true for owner and dependant are both ClusterScoped.",
+			restMapper: restMapper,
+			owner: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind":       "MyClusterKind",
+					"apiVersion": "rbac/v1alpha1",
+					"metadata": map[string]interface{}{
+						"name":      "example-nginx-controller",
+						"namespace": "ns",
+					},
+				},
+			},
+			dependent: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind":       "MyClusterKind",
+					"apiVersion": "rbac/v1alpha1",
+					"metadata": map[string]interface{}{
+						"name":      "example-nginx-role",
+						"namespace": "ns",
+					},
+				},
+			},
+			result: true,
+		},
+		{
+			name:       "Returns true when owner and dependant are Namespaced with in same namespace.",
+			restMapper: restMapper,
+			owner: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind":       "MyNamespaceKind",
+					"apiVersion": "apps/v1alpha1",
+					"metadata": map[string]interface{}{
+						"name":      "example-nginx-controller",
+						"namespace": "ns",
+					},
+				},
+			},
+			dependent: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind":       "MyNamespaceKind",
+					"apiVersion": "apps/v1alpha1",
+					"metadata": map[string]interface{}{
+						"name":      "example-nginx-role",
+						"namespace": "ns",
+					},
+				},
+			},
+			result: true,
+		},
+		{
+			name:       "Returns false when owner,and dependant are Namespaced, with different namespaces.",
+			restMapper: restMapper,
+			owner: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind":       "MyNamespaceKind",
+					"apiVersion": "apps/v1alpha1",
+					"metadata": map[string]interface{}{
+						"name":      "example-nginx-controller",
+						"namespace": "ns1",
+					},
+				},
+			},
+			dependent: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind":       "MyNamespaceKind",
+					"apiVersion": "apps/v1alpha1",
+					"metadata": map[string]interface{}{
+						"name":      "example-nginx-role",
+						"namespace": "ns",
+					},
+				},
+			},
+			result: false,
+		},
+		{
+			name:       "Returns false for invalid Owner Kind.",
+			restMapper: restMapper,
+			owner: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind":       "Dummy",
+					"apiVersion": "apps/v1alpha1",
+					"metadata": map[string]interface{}{
+						"name":      "example-nginx-controller",
+						"namespace": "ns1",
+					},
+				},
+			},
+			dependent: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind":       "MyNamespaceKind",
+					"apiVersion": "apps/v1alpha1",
+					"metadata": map[string]interface{}{
+						"name":      "example-nginx-role",
+						"namespace": "ns",
+					},
+				},
+			},
+			result: false,
+		},
+		{
+			name:       "Returns false for invalid dependant Kind.",
+			restMapper: restMapper,
+			owner: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind":       "MyNamespaceKind",
+					"apiVersion": "apps/v1alpha1",
+					"metadata": map[string]interface{}{
+						"name":      "example-nginx-controller",
+						"namespace": "ns1",
+					},
+				},
+			},
+			dependent: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind":       "Dummy",
+					"apiVersion": "apps/v1alpha1",
 					"metadata": map[string]interface{}{
 						"name":      "example-nginx-role",
 						"namespace": "ns",
@@ -138,21 +263,8 @@ func TestSupportsOwnerReference(t *testing.T) {
 	for _, c := range cases {
 		useOwner, err := SupportsOwnerReference(c.restMapper, c.owner, c.dependent)
 		if err != nil {
-			t.Errorf("Error is %s", err)
+			assert.Error(t, err)
 		}
 		assert.Equal(t, c.result, useOwner)
-	}
-}
-
-func newTestUnstructured(containers []interface{}) *unstructured.Unstructured {
-	return &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"kind":       "MyKind",
-			"apiVersion": "example.com/v1alpha1",
-			"metadata": map[string]interface{}{
-				"name":      "example-MyKind",
-				"namespace": "ns",
-			},
-		},
 	}
 }

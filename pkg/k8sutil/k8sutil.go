@@ -185,7 +185,7 @@ func isRunModeLocal() bool {
 	return os.Getenv(ForceRunModeEnv) == string(LocalRunMode)
 }
 
-// SupportsOwnerReference ...
+// SupportsOwnerReference func checks whether a given dependent supports owner references, based in the owner.
 func SupportsOwnerReference(restMapper meta.RESTMapper, owner runtime.Object, dependent runtime.Object) (bool, error) {
 	ownerGVK := owner.GetObjectKind().GroupVersionKind()
 	ownerMapping, err := restMapper.RESTMapping(ownerGVK.GroupKind(), ownerGVK.Version)
@@ -198,7 +198,6 @@ func SupportsOwnerReference(restMapper meta.RESTMapper, owner runtime.Object, de
 	}
 
 	depGVK := dependent.GetObjectKind().GroupVersionKind()
-
 	depMapping, err := restMapper.RESTMapping(depGVK.GroupKind(), depGVK.Version)
 	if err != nil {
 		return false, err
