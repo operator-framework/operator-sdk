@@ -17,6 +17,7 @@ package alpha
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
@@ -46,7 +47,9 @@ type PodTestRunner struct {
 	ServiceAccount string
 	BundlePath     string
 	Client         kubernetes.Interface
-	configMapName  string
+
+	configMapName string
+	removeBundle  bool
 }
 
 type FakeTestRunner struct {
@@ -135,6 +138,13 @@ func (r PodTestRunner) Cleanup(ctx context.Context) (err error) {
 	if err != nil {
 		return err
 	}
+
+	if r.removeBundle {
+		if err = os.RemoveAll(r.BundlePath); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

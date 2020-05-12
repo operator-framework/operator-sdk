@@ -18,20 +18,23 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
-
 	"time"
 
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"k8s.io/apimachinery/pkg/labels"
+
+	"github.com/operator-framework/operator-sdk/internal/flags"
 	scorecard "github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
 	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
-	"github.com/spf13/cobra"
-	"k8s.io/apimachinery/pkg/labels"
 )
 
 func NewCmd() *cobra.Command {
 	var (
 		outputFormat   string
-		bundle         string
 		config         string
 		selector       string
 		kubeconfig     string
@@ -42,33 +45,46 @@ func NewCmd() *cobra.Command {
 		waitTime       time.Duration
 	)
 	scorecardCmd := &cobra.Command{
-		Use:    "scorecard",
-		Short:  "Runs scorecard",
-		Long:   `Has flags to configure dsl, bundle, and selector.`,
+		Use:   "scorecard",
+		Short: "Runs scorecard",
+		// TODO: describe what the purpose of the command is, why someone would want
+		// to run it, etc.
+		Long: `Has flags to configure dsl, bundle, and selector. This command takes
+one argument, either a bundle image or directory containing manifests and metadata.
+If the argument holds an image tag or SHA, it must be present remotely.`,
 		Hidden: true,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
 
-			var err error
-			o := scorecard.Scorecard{
-				SkipCleanup: skipCleanup,
+			if len(args) != 1 {
+				return fmt.Errorf("a bundle image or directory argument is required")
 			}
 
-			if bundle == "" {
-				return fmt.Errorf("bundle flag required")
-			}
-
-			runner := scorecard.PodTestRunner{
+			opts := scorecard.PodRunnerOptions{
 				ServiceAccount: serviceAccount,
 				Namespace:      namespace,
-				BundlePath:     bundle,
+				KubeconfigPath: kubeconfig,
+				Bundle:         args[0],
 			}
 
-			runner.Client, err = scorecard.GetKubeClient(kubeconfig)
+			ctx, cancel := context.WithTimeout(context.Background(), waitTime)
+			defer cancel()
+
+			// Discard bundle extraction logs unless user sets verbose mode.
+			opts.Logger = log.NewEntry(discardLogger())
+			if viper.GetBool(flags.VerboseOpt) {
+				opts.Logger = log.WithFields(log.Fields{"bundle": opts.Bundle})
+			}
+			runner, err := scorecard.NewPodTestRunner(ctx, opts)
 			if err != nil {
-				return fmt.Errorf("could not get kubernetes client: %w", err)
+				log.Fatal(err)
 			}
 
-			configPath := filepath.Join(bundle, "tests", "scorecard", "config.yaml")
+			o := scorecard.Scorecard{
+				SkipCleanup: skipCleanup,
+				TestRunner:  runner,
+			}
+
+			configPath := filepath.Join(runner.BundlePath, "tests", "scorecard", "config.yaml")
 			if config != "" {
 				configPath = config
 			}
@@ -89,16 +105,10 @@ func NewCmd() *cobra.Command {
 					return fmt.Errorf("error listing tests %w", err)
 				}
 			} else {
-				ctx, cancel := context.WithTimeout(context.Background(), waitTime)
-				defer cancel()
-
-				o.TestRunner = &runner
-
 				scorecardOutput, err = o.RunTests(ctx)
 				if err != nil {
 					return fmt.Errorf("error running tests %w", err)
 				}
-
 			}
 
 			return printOutput(outputFormat, scorecardOutput)
@@ -107,7 +117,6 @@ func NewCmd() *cobra.Command {
 
 	scorecardCmd.Flags().StringVar(&kubeconfig, "kubeconfig", "", "kubeconfig path")
 
-	scorecardCmd.Flags().StringVar(&bundle, "bundle", "", "path to the operator bundle contents on disk")
 	scorecardCmd.Flags().StringVarP(&selector, "selector", "l", "", "label selector to determine which tests are run")
 	scorecardCmd.Flags().StringVarP(&config, "config", "c", "", "path to scorecard config file")
 	scorecardCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "namespace to run the test images in")
@@ -147,4 +156,11 @@ func printOutput(outputFormat string, output v1alpha2.ScorecardOutput) error {
 	}
 	return nil
 
+}
+
+// discardLogger returns a logger that throws away input.
+func discardLogger() *log.Logger {
+	logger := log.New()
+	logger.SetOutput(ioutil.Discard)
+	return logger
 }

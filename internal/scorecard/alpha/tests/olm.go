@@ -21,16 +21,16 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/operator-framework/api/pkg/manifests"
+	"github.com/operator-framework/api/pkg/operators"
+	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
+	"github.com/operator-framework/operator-registry/pkg/registry"
 	"github.com/sirupsen/logrus"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	"github.com/operator-framework/api/pkg/manifests"
-	"github.com/operator-framework/api/pkg/operators"
-	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
-	"github.com/operator-framework/operator-registry/pkg/registry"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 )
