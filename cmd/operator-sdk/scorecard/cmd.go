@@ -20,17 +20,16 @@ import (
 	"io"
 	"os"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/mitchellh/mapstructure"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"k8s.io/apimachinery/pkg/labels"
+
 	"github.com/operator-framework/operator-sdk/internal/scorecard"
 	schelpers "github.com/operator-framework/operator-sdk/internal/scorecard/helpers"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-	"github.com/pkg/errors"
-	"k8s.io/apimachinery/pkg/labels"
-
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 const (

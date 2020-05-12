@@ -32,6 +32,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/flags"
 	scorecard "github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
 	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
+	"github.com/operator-framework/operator-sdk/pkg/output"
 )
 
 func NewCmd() *cobra.Command {
@@ -65,7 +66,7 @@ If the argument holds an image tag, it must be present remotely.`,
 			// Extract bundle image contents if bundle is inferred to be an image.
 			if _, err = os.Stat(bundle); err != nil && errors.Is(err, os.ErrNotExist) {
 				// Discard bundle extraction logs unless user sets verbose mode.
-				logger := log.NewEntry(discardLogger())
+				logger := log.NewEntry(output.NewLoggerTo(ioutil.Discard))
 				if viper.GetBool(flags.VerboseOpt) {
 					logger = log.WithFields(log.Fields{"bundle": bundle})
 				}
@@ -171,12 +172,4 @@ func printOutput(outputFormat string, output v1alpha2.ScorecardOutput) error {
 		return fmt.Errorf("invalid output format selected")
 	}
 	return nil
-
-}
-
-// discardLogger returns a logger that throws away input.
-func discardLogger() *log.Logger {
-	logger := log.New()
-	logger.SetOutput(ioutil.Discard)
-	return logger
 }

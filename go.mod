@@ -8,6 +8,7 @@ require (
 	github.com/fatih/structtag v1.1.0
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.1
+	github.com/gobuffalo/logger v1.0.1
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/iancoleman/strcase v0.0.0-20190422225806-e506e3ef7365
 	github.com/markbates/inflect v1.0.4

@@ -1,0 +1,16 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Add new hidden alpha flag `--output` to allow output the result of `operator-sdk bundle validate` in JSON format.
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "addition"
+
+    # Is this a breaking change?
+    breaking: false
