@@ -114,7 +114,7 @@ func getCSVFromDir(dir string) (*olmapiv1alpha1.ClusterServiceVersion, error) {
 			}
 			if typeMeta.Kind == olmapiv1alpha1.ClusterServiceVersionKind {
 				csv := &olmapiv1alpha1.ClusterServiceVersion{}
-				if err := yaml.Unmarshal(b, csv); err != nil {
+				if err := yaml.Unmarshal(manifest, csv); err != nil {
 					return nil, fmt.Errorf("error unmarshalling ClusterServiceVersion from manifest %s: %v", path, err)
 				}
 				return csv, nil
