@@ -27,6 +27,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/kubeconfig"
@@ -44,6 +45,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
+// This is the default timeout to wait for the cache to respond
+// todo(shawn-hurley): Eventually this should be configurable
+const cacheEstablishmentTimeout = 6 * time.Second
 const AutoSkipCacheREList = "^/api/.*/pods/.*/exec,^/api/.*/pods/.*/attach"
 
 // RequestLogHandler - log the requests that come through the proxy.
@@ -244,6 +248,8 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 				&handler.EnqueueRequestForOwner{OwnerType: u}, dependentPredicate)
 			// Store watch in map
 			if err != nil {
+				log.Error(err, "Failed to watch child resource",
+					"kind", resource.GroupVersionKind(), "enqueue_kind", u.GroupVersionKind())
 				return err
 			}
 		case (!useOwnerRef && dataNamespaceScoped) || contents.WatchClusterScopedResources:
@@ -259,6 +265,8 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 			err = contents.Controller.Watch(&source.Kind{Type: resource},
 				&osdkHandler.EnqueueRequestForAnnotation{Type: typeString}, dependentPredicate)
 			if err != nil {
+				log.Error(err, "Failed to watch child resource",
+					"kind", resource.GroupVersionKind(), "enqueue_kind", u.GroupVersionKind())
 				return err
 			}
 		}

@@ -1,0 +1,13 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Added timeout to the Ansible based-operator proxy, which enables error reporting for requests that fail due to RBAC permissions issues to List and Watch the resources. 
+
+    # kind iss one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "bugfix"
