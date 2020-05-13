@@ -183,11 +183,6 @@ Flags that change project default paths:
 		"Semantic version of the CSV. This flag must be set if a package manifest exists")
 	cmd.Flags().StringVar(&c.fromVersion, "from-version", "",
 		"Semantic version of an existing CSV to use as a base")
-	err := cmd.Flags().MarkDeprecated("from-version",
-		"Use --csv-version to update your bundled CSV in `manifests/`")
-	if err != nil {
-		panic(err)
-	}
 
 	// TODO: Allow multiple paths
 	// Deployment and RBAC manifests might be in different dirs e.g kubebuilder
@@ -206,21 +201,12 @@ Flags that change project default paths:
 			"If --make-manifests=true, the bundle directory will be <output-dir>/manifests")
 	cmd.Flags().StringVar(&c.operatorName, "operator-name", "",
 		"Operator name to use while generating CSV")
+
 	cmd.Flags().StringVar(&c.csvChannel, "csv-channel", "",
 		"Channel the CSV should be registered under in the package manifest")
-	err = cmd.Flags().MarkDeprecated("csv-channel", "Package manifests are deprecated. "+
-		"Run `operator-sdk bundle create --generate-only` to create operator metadata")
-	if err != nil {
-		panic(err)
-	}
 	cmd.Flags().BoolVar(&c.defaultChannel, "default-channel", false,
 		"Use the channel passed to --csv-channel as the package manifests' default channel. "+
 			"Only valid when --csv-channel is set")
-	err = cmd.Flags().MarkDeprecated("default-channel", "Package manifests are deprecated. "+
-		"Run `operator-sdk bundle create --generate-only` to create operator metadata")
-	if err != nil {
-		panic(err)
-	}
 
 	cmd.Flags().BoolVar(&c.updateCRDs, "update-crds", true,
 		"Update CRD manifests in deploy/<operator-name>/<csv-version> from the default "+
