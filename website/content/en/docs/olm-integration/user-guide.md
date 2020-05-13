@@ -284,3 +284,4 @@ the OLM [docs][doc-olm-index] on adding an index to a cluster registry.
 [csv-markers]:/docs/golang/references/markers
 [doc-run-olm-explanation]:/docs/olm-integration/olm-deployment/#operator-sdk-run---olm-command-overview
 [doc-olm-index]:https://github.com/operator-framework/operator-registry#using-the-index-with-operator-lifecycle-manager
+[index-image]:https://github.com/operator-framework/operator-registry#building-an-index-of-operators-using-opm
