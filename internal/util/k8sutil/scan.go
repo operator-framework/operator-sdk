@@ -34,9 +34,8 @@ type Scanner struct {
 	done    bool   // Scan has finished.
 }
 
-func NewYAMLScanner(b []byte) *Scanner {
-	r := bufio.NewReader(bytes.NewBuffer(b))
-	return &Scanner{reader: k8syaml.NewYAMLReader(r)}
+func NewYAMLScanner(r io.Reader) *Scanner {
+	return &Scanner{reader: k8syaml.NewYAMLReader(bufio.NewReader(r))}
 }
 
 func (s *Scanner) Err() error {

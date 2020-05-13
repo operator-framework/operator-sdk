@@ -18,13 +18,11 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/json"
-	goerrors "errors"
 	"fmt"
 	"sort"
 	"strings"
 
 	"github.com/operator-framework/operator-registry/pkg/registry"
-	"github.com/operator-framework/operator-sdk/internal/generate/olm-catalog/descriptor"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -311,45 +309,6 @@ func (c manifestCollection) applyCustomResourceDefinitions(csv *operatorsv1alpha
 		}
 	}
 	csv.Spec.CustomResourceDefinitions.Owned = ownedDescs
-}
-
-// updateDescriptions parses APIs in apisDir for code and annotations that
-// can build a verbose crdDescription and updates existing crdDescriptions in
-// csv. If no code/annotations are found, the crdDescription is appended as-is.
-func updateDescriptions(csv *operatorsv1alpha1.ClusterServiceVersion, apisDir string) error {
-	updatedDescriptions := []operatorsv1alpha1.CRDDescription{}
-	for _, currDescription := range csv.Spec.CustomResourceDefinitions.Owned {
-		group := currDescription.Name
-		if split := strings.Split(currDescription.Name, "."); len(split) > 1 {
-			group = strings.Join(split[1:], ".")
-		}
-		// Parse CRD descriptors from source code comments and annotations.
-		gvk := schema.GroupVersionKind{
-			Group:   group,
-			Version: currDescription.Version,
-			Kind:    currDescription.Kind,
-		}
-		newDescription, err := descriptor.GetCRDDescriptionForGVK(apisDir, gvk)
-		if err != nil {
-			if goerrors.Is(err, descriptor.ErrAPIDirNotExist) {
-				log.Debugf("Directory for API %s does not exist. Skipping CSV annotation parsing for API.", gvk)
-			} else if goerrors.Is(err, descriptor.ErrAPITypeNotFound) {
-				log.Debugf("No kind type found for API %s. Skipping CSV annotation parsing for API.", gvk)
-			} else {
-				// TODO: Should we ignore all CSV annotation parsing errors and simply log the error
-				// like we do for the above cases.
-				return fmt.Errorf("failed to set CRD descriptors for %s: %v", gvk, err)
-			}
-			// Keep the existing description and don't update on error
-			updatedDescriptions = append(updatedDescriptions, currDescription)
-		} else {
-			// Replace the existing description with the newly parsed one
-			newDescription.Name = currDescription.Name
-			updatedDescriptions = append(updatedDescriptions, newDescription)
-		}
-	}
-	csv.Spec.CustomResourceDefinitions.Owned = updatedDescriptions
-	return nil
 }
 
 // applyCustomResources updates csv's "alm-examples" annotation with the

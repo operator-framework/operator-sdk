@@ -15,6 +15,7 @@
 package olm
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io/ioutil"
@@ -197,7 +198,7 @@ func readObjectsFromFile(path string) (objs []*unstructured.Unstructured, err er
 	if err != nil {
 		return nil, err
 	}
-	scanner := k8sutil.NewYAMLScanner(b)
+	scanner := k8sutil.NewYAMLScanner(bytes.NewBuffer(b))
 	for scanner.Scan() {
 		b, err := yaml.YAMLToJSON(scanner.Bytes())
 		if err != nil {
