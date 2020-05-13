@@ -6,11 +6,12 @@ set -eux
 # images at:
 # https://hub.docker.com/r/kindest/node/tags
 K8S_VERSION=$1
+KIND_VERSION="v0.8.1"
 KIND_IMAGE="docker.io/kindest/node:${K8S_VERSION}"
 
 # Download the latest version of kind, which supports all versions of
 # Kubernetes v1.11+.
-curl -Lo kind https://github.com/kubernetes-sigs/kind/releases/latest/download/kind-$(uname)-amd64
+curl -Lo kind https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-$(uname)-amd64
 chmod +x kind
 sudo mv kind /usr/local/bin/
 
