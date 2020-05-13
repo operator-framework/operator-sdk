@@ -1,0 +1,19 @@
+tests:
+- name: "customtest1"
+  image: quay.io/username/custom-scorecard-tests:dev
+  entrypoint: 
+  - custom-scorecard-tests
+  - customtest1
+  labels:
+    suite: custom
+    test: customtest1
+  description: an ISV custom test
+- name: "customtest2"
+  entrypoint: 
+  - custom-scorecard-tests
+  - customtest2
+  image: quay.io/username/custom-scorecard-tests:dev
+  labels:
+    suite: custom
+    test: customtest2
+  description: an ISV custom test

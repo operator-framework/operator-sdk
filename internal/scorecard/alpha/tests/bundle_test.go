@@ -20,6 +20,7 @@ import (
 
 	"github.com/operator-framework/api/pkg/operators"
 	"github.com/operator-framework/operator-registry/pkg/registry"
+	scorecard "github.com/operator-framework/operator-sdk/pkg/scorecard/tests"
 
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -41,7 +42,7 @@ func TestBundlePath(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.bundlePath, func(t *testing.T) {
 
-			_, err := GetBundle(c.bundlePath)
+			_, err := scorecard.GetBundle(c.bundlePath)
 			if err != nil && c.wantError {
 				t.Logf("Wanted error and got error : %v", err)
 				return
@@ -66,7 +67,7 @@ func TestBundleCRs(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.bundlePath, func(t *testing.T) {
 
-			bundle, err := GetBundle(c.bundlePath)
+			bundle, err := scorecard.GetBundle(c.bundlePath)
 			if err != nil && c.wantError {
 				t.Logf("Wanted error and got error : %v", err)
 				return
@@ -107,7 +108,7 @@ func TestBasicAndOLM(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.bundlePath, func(t *testing.T) {
 
-			bundle, err := GetBundle(c.bundlePath)
+			bundle, err := scorecard.GetBundle(c.bundlePath)
 			if err != nil {
 				t.Fatalf("Error getting bundle: %s", err.Error())
 			}
