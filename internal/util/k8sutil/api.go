@@ -15,6 +15,7 @@
 package k8sutil
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"path"
@@ -46,7 +47,7 @@ func GetCustomResourceDefinitions(crdsDir string) (crds []apiextv1beta1.CustomRe
 			return nil, fmt.Errorf("error reading manifest %s: %w", path, err)
 		}
 
-		scanner := NewYAMLScanner(b)
+		scanner := NewYAMLScanner(bytes.NewBuffer(b))
 		for scanner.Scan() {
 			manifest := scanner.Bytes()
 			typeMeta, err := GetTypeMetaFromBytes(manifest)

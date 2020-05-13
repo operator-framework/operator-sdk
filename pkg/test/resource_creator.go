@@ -15,6 +15,7 @@
 package test
 
 import (
+	"bytes"
 	goctx "context"
 	"fmt"
 	"io/ioutil"
@@ -100,7 +101,7 @@ func (ctx *Context) createFromYAML(yamlFile []byte, skipIfExists bool, cleanupOp
 	if err != nil {
 		return err
 	}
-	scanner := k8sutil.NewYAMLScanner(yamlFile)
+	scanner := k8sutil.NewYAMLScanner(bytes.NewBuffer(yamlFile))
 	for scanner.Scan() {
 		yamlSpec := scanner.Bytes()
 

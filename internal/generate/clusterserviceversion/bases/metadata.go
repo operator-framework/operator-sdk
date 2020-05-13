@@ -12,22 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package olmcatalog
+package bases
 
 import (
 	"strings"
 
-	olmapiv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
-// InteractiveCSVCmd includes the list of CSV fields which would be asked
+// uiMetadata includes the list of CSV fields which would be asked
 // to the user while generating CSV.
-type interactiveCSVCmd struct {
+type uiMetadata struct {
 	// DisplayName is the name of the crd.
 	DisplayName string
-	// Keyword is a list of keywords describing the operator.
-	Keywords []string
 	// Description of the operator. Can include the features, limitations or
 	// use-cases of the operator.
 	Description string
@@ -35,25 +34,26 @@ type interactiveCSVCmd struct {
 	ProviderName string
 	// URL related to the publishing entity behind the operator.
 	ProviderURL string
+	// Keyword is a list of keywords describing the operator.
+	Keywords []string
 	// Maintainers is the list of organizational entities maintaining the operator.
 	Maintainers []string
+	// FEAT: read icon bytes from files.
 }
 
-// generateInteractivePrompt generates the prompts for user to provide input to the CSV
-// fields.
-func (s *interactiveCSVCmd) generateInteractivePrompt() {
+// runInteractivePrompt prompts the user to provide input to uiMetadata fields.
+func (s *uiMetadata) runInteractivePrompt() {
 	s.DisplayName = projutil.GetRequiredInput("Display name for the operator")
-	s.Keywords = projutil.GetStringArray("Comma-separated list of keywords for your operator")
 	s.Description = projutil.GetRequiredInput("Description for the operator")
 	s.ProviderName = projutil.GetRequiredInput("Provider's name for the operator")
 	s.ProviderURL = projutil.GetOptionalInput("Any relevant URL for the provider name")
+	s.Keywords = projutil.GetStringArray("Comma-separated list of keywords for your operator")
 	s.Maintainers = projutil.GetStringArray("Comma-separated list of maintainers and their emails" +
 		" (e.g. 'name1:email1, name2:email2')")
 }
 
-// addUImetadata populates the CSV with the data obtained from the interactive
-// prompts which appear while generating CSV.
-func (s *interactiveCSVCmd) addUImetadata(csv *olmapiv1alpha1.ClusterServiceVersion) {
+// apply populates the CSV with the data in s.
+func (s uiMetadata) apply(csv *v1alpha1.ClusterServiceVersion) {
 	if s.DisplayName != "" {
 		csv.Spec.DisplayName = s.DisplayName
 	}
@@ -67,11 +67,11 @@ func (s *interactiveCSVCmd) addUImetadata(csv *olmapiv1alpha1.ClusterServiceVers
 	}
 
 	if len(s.Maintainers) != 0 {
-		maintainers := make([]olmapiv1alpha1.Maintainer, 0)
+		maintainers := make([]v1alpha1.Maintainer, 0)
 		for _, entity := range s.Maintainers {
 			entityDetails := strings.Split(entity, ":")
 			if len(entityDetails) == 2 {
-				m := olmapiv1alpha1.Maintainer{}
+				m := v1alpha1.Maintainer{}
 				m.Name, m.Email = entityDetails[0], entityDetails[1]
 				maintainers = append(maintainers, m)
 			}
@@ -80,12 +80,11 @@ func (s *interactiveCSVCmd) addUImetadata(csv *olmapiv1alpha1.ClusterServiceVers
 	}
 
 	if s.ProviderName != "" {
-		provider := olmapiv1alpha1.AppLink{}
+		provider := v1alpha1.AppLink{}
 		provider.Name = s.ProviderName
 		if s.ProviderURL != "" {
 			provider.URL = s.ProviderURL
 		}
 		csv.Spec.Provider = provider
 	}
-
 }
