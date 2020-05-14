@@ -1,7 +1,0 @@
-entries:
-  - description: >
-      do not generate a package manifest when 'generate csv --make-manifests=true'
-
-    kind: "bugfix"
-
-    breaking: false
