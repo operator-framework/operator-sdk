@@ -1,0 +1,7 @@
+entries:
+  - description: >
+      Helm operator now applies its uninstall finalizer only when
+      a release is deployed. This fixes a bug that caused the 
+      CR to be unable to be deleted without manually intervening
+      to delete a prematurely added finalizer.
+    kind: bugfix
