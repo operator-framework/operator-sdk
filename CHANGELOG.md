@@ -177,7 +177,7 @@
 - Replace usage of `github.com/operator-framework/operator-sdk/pkg/restmapper.DynamicRESTMapper` with `sigs.k8s.io/controller-runtime/pkg/client/apiutil.DynamicRESTMapper`. ([#2309](https://github.com/operator-framework/operator-sdk/pull/2309))
 - Upgraded Helm operator packages and base image from Helm v2 to Helm v3. Cluster state for pre-existing CRs using Helm v2-based operators will be automatically migrated to Helm v3's new release storage format, and existing releases may be upgraded due to changes in Helm v3's label injection. ([#2080](https://github.com/operator-framework/operator-sdk/pull/2080))
 - Fail `operator-sdk olm-catalog gen-csv` if it is not run from a project's root, which the command already assumes is the case. ([#2322](https://github.com/operator-framework/operator-sdk/pull/2322))
-- **Breaking Change:** Extract custom Ansible module `k8s_status`, which is now provided by the `operator_sdk.util` Ansible collection. See [developer_guide](https://github.com/operator-framework/operator-sdk/blob/master/doc/ansible/dev/developer_guide.md#custom-resource-status-management) for new usage. ([#2310](https://github.com/operator-framework/operator-sdk/pull/2310))
+- **Breaking Change:** Extract custom Ansible module `k8s_status`, which is now provided by the `operator_sdk.util` Ansible collection. See [developer_guide](https://github.com/operator-framework/operator-sdk/blob/v0.14.0/doc/ansible/dev/developer_guide.md#custom-resource-status-management) for new usage. ([#2310](https://github.com/operator-framework/operator-sdk/pull/2310))
 - Upgrade minimal Ansible version in the init projects from `2.6` to `2.9` for collections support. ([#2310](https://github.com/operator-framework/operator-sdk/pull/2310))
 - Improve skip metrics logs when running the operator locally in order to make clear the information. ([#2190](https://github.com/operator-framework/operator-sdk/pull/2190))
 - Upgrade [`controller-tools`](https://github.com/kubernetes-sigs/controller-tools) version from `v0.2.2` to [`v0.2.4`](https://github.com/kubernetes-sigs/controller-tools/releases/tag/v0.2.4). ([#2368](https://github.com/operator-framework/operator-sdk/pull/2368))
@@ -312,7 +312,7 @@
       }
       err = r.client.List(context.TODO(), podList, listOpts...)
       ```
-- [`pkg/test.FrameworkClient`](https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/client.go#L33) methods `List()` and `Delete()` have new signatures corresponding to the homonymous methods of `sigs.k8s.io/controller-runtime/pkg/client.Client`. ([#1876](https://github.com/operator-framework/operator-sdk/pull/1876))
+- [`pkg/test.FrameworkClient`](https://github.com/operator-framework/operator-sdk/blob/v0.11.0/pkg/test/client.go#L33) methods `List()` and `Delete()` have new signatures corresponding to the homonymous methods of `sigs.k8s.io/controller-runtime/pkg/client.Client`. ([#1876](https://github.com/operator-framework/operator-sdk/pull/1876))
 - CRD file names were previously of the form `<group>_<version>_<kind>_crd.yaml`. Now that CRD manifest `spec.version` is deprecated in favor of `spec.versions`, i.e. multiple versions can be specified in one CRD, CRD file names have the form `<full group>_<resource>_crd.yaml`. `<full group>` is the full group name of your CRD while `<group>` is the last subdomain of `<full group>`, ex. `foo.bar.com` vs `foo`. `<resource>` is the plural lower-case CRD Kind found at `spec.names.plural`. ([#1876](https://github.com/operator-framework/operator-sdk/pull/1876))
 - Upgrade Python version from `2.7` to `3.6`, Ansible version from `2.8.0` to `~=2.8` and ansible-runner from `1.2` to `1.3.4` in the Ansible based images. ([#1947](https://github.com/operator-framework/operator-sdk/pull/1947))
 - Made the default scorecard version `v1alpha2` which is new for this release and could break users that were parsing the older scorecard output (`v1alpha1`).  Users can still specify version `v1alpha1` on the scorecard configuration to use the older style for some period of time until `v1alpha1` is removed.
@@ -340,7 +340,7 @@
 ### Added
 
 - Document new compile-time dependency `mercurial` in user-facing documentation. ([#1683](https://github.com/operator-framework/operator-sdk/pull/1683))
-- Adds new flag `--zap-time-encoding` to the flagset provided by `pkg/log/zap`. This flag configures the timestamp format produced by the zap logger. See the [logging doc](https://github.com/operator-framework/operator-sdk/blob/master/doc/user/logging.md) for more information. ([#1529](https://github.com/operator-framework/operator-sdk/pull/1529))
+- Adds new flag `--zap-time-encoding` to the flagset provided by `pkg/log/zap`. This flag configures the timestamp format produced by the zap logger. See the [logging doc](https://github.com/operator-framework/operator-sdk/blob/v0.10.0/doc/user/logging.md) for more information. ([#1529](https://github.com/operator-framework/operator-sdk/pull/1529))
 
 ### Changed
 
@@ -432,7 +432,7 @@
 - The SDK will no longer run `defaulter-gen` on running `operator-sdk generate k8s`. Defaulting for CRDs should be handled with mutating admission webhooks. ([#1288](https://github.com/operator-framework/operator-sdk/pull/1288))
 - The `--version` flag was removed. Users should use the `operator-sdk version` command. ([#1444](https://github.com/operator-framework/operator-sdk/pull/1444))
 - **Breaking Change**: The `test cluster` subcommand and the corresponding `--enable-tests` flag for the `build` subcommand have been removed ([#1414](https://github.com/operator-framework/operator-sdk/pull/1414))
-- **Breaking Change**: The `--cluster-scoped` flag for `operator-sdk new` has been removed so it won't scaffold a cluster-scoped operator. Read the [operator scope](https://github.com/operator-framework/operator-sdk/blob/master/doc/operator-scope.md) documentation on the changes needed to run a cluster-scoped operator. ([#1434](https://github.com/operator-framework/operator-sdk/pull/1434))
+- **Breaking Change**: The `--cluster-scoped` flag for `operator-sdk new` has been removed so it won't scaffold a cluster-scoped operator. Read the [operator scope](https://github.com/operator-framework/operator-sdk/blob/v0.8.0/doc/operator-scope.md) documentation on the changes needed to run a cluster-scoped operator. ([#1434](https://github.com/operator-framework/operator-sdk/pull/1434))
 
 ### Bug Fixes
 
@@ -551,7 +551,7 @@
 
 - The SDK's Kubernetes Golang dependency versions/revisions have been updated from `v1.11.2` to `v1.12.3`. ([#807](https://github.com/operator-framework/operator-sdk/pull/807))
 - The controller-runtime version has been updated from `v0.1.4` to `v0.1.8`. See the `v0.1.8` [release notes](https://github.com/kubernetes-sigs/controller-runtime/releases/tag/v0.1.8) for details.
-- The SDK now generates the CRD with the status subresource enabled by default. See the [client doc](https://github.com/operator-framework/operator-sdk/blob/master/doc/user/client.md#updating-status-subresource) on how to update the status subresource. ([#787](https://github.com/operator-framework/operator-sdk/pull/787))
+- The SDK now generates the CRD with the status subresource enabled by default. See the [client doc](https://github.com/operator-framework/operator-sdk/blob/v0.3.0/doc/user/client.md#updating-status-subresource) on how to update the status subresource. ([#787](https://github.com/operator-framework/operator-sdk/pull/787))
 
 ### Deprecated
 
@@ -569,13 +569,13 @@
 
 ### Changed
 
-- The SDK now uses logr as the default logger to unify the logging output with the controller-runtime logs. Users can still use a logger of their own choice. See the [logging doc](https://github.com/operator-framework/operator-sdk/blob/master/doc/user/logging.md) on how the SDK initializes and uses logr.
+- The SDK now uses logr as the default logger to unify the logging output with the controller-runtime logs. Users can still use a logger of their own choice. See the [logging doc](https://github.com/operator-framework/operator-sdk/blob/v0.2.0/doc/user/logging.md) on how the SDK initializes and uses logr.
 - Ansible Operator CR status better aligns with [conventions](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties). ([#639](https://github.com/operator-framework/operator-sdk/pull/639))
 
 ### Added
 
 - A new command [`operator-sdk print-deps`](https://github.com/operator-framework/operator-sdk/blob/v0.2.0/doc/sdk-cli-reference.md#print-deps) which prints Golang packages and versions expected by the current Operator SDK version. Supplying `--as-file` prints packages and versions in Gopkg.toml format. ([#772](https://github.com/operator-framework/operator-sdk/pull/772))
-- Add [`cluster-scoped`](https://github.com/operator-framework/operator-sdk/blob/master/doc/user-guide.md#operator-scope) flag to `operator-sdk new` command ([#747](https://github.com/operator-framework/operator-sdk/pull/747))
+- Add [`cluster-scoped`](https://github.com/operator-framework/operator-sdk/blob/v0.2.0/doc/user-guide.md#operator-scope) flag to `operator-sdk new` command ([#747](https://github.com/operator-framework/operator-sdk/pull/747))
 - Add [`up-local`](https://github.com/operator-framework/operator-sdk/blob/v0.2.0/doc/sdk-cli-reference.md#flags-9) flag to `test local` subcommand ([#781](https://github.com/operator-framework/operator-sdk/pull/781))
 - Add [`no-setup`](https://github.com/operator-framework/operator-sdk/blob/v0.2.0/doc/sdk-cli-reference.md#flags-9) flag to `test local` subcommand ([#770](https://github.com/operator-framework/operator-sdk/pull/770))
 - Add [`image`](https://github.com/operator-framework/operator-sdk/blob/v0.2.0/doc/sdk-cli-reference.md#flags-9) flag to `test local` subcommand ([#768](https://github.com/operator-framework/operator-sdk/pull/768))
@@ -597,7 +597,7 @@
 ### Changed
 
 - Use [controller runtime](https://github.com/kubernetes-sigs/controller-runtime) library for controller and client APIs
-- See [migration guide](https://github.com/operator-framework/operator-sdk/blob/master/doc/migration/v0.1.0-migration-guide.md) to migrate your project to `v0.1.0`
+- See [migration guide](https://github.com/operator-framework/operator-sdk/blob/v0.1.0/doc/migration/v0.1.0-migration-guide.md) to migrate your project to `v0.1.0`
 
 ## v0.0.7
 
