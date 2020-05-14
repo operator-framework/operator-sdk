@@ -333,7 +333,7 @@ func hasHelmUpgradeForceAnnotation(o *unstructured.Unstructured) bool {
 		return false
 	}
 	value := false
-	if i, err := strconv.ParseBool(helmUpgradeForceAnnotation); err != nil {
+	if i, err := strconv.ParseBool(force); err != nil {
 		log.Info("Could not parse annotation as a boolean",
 			"annotation", helmUpgradeForceAnnotation, "value informed", force)
 	} else {
