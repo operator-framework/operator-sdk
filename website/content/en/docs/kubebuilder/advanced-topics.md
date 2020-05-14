@@ -28,7 +28,6 @@ Then, in your controller, you can use [`Conditions`][godoc-conditions] methods t
 
 ### Adding 3rd Party Resources To Your Operator
 
-> **// TODO:** Update the `main.go` code in these sections to use the `init()` func to register the scheme instead of doing it in `main()`.
 
 The operator's Manager supports the core Kubernetes resource types as found in the client-go [scheme][scheme_package] package and will also register the schemes of all custom resource types defined in your project.
 
@@ -50,8 +49,7 @@ To add a 3rd party resource to an operator, you must add it to the Manager's sch
 
 #### Register with the Manager's scheme
 
-Call the `AddToScheme()` function for your 3rd party resource and pass it the Manager's scheme via `mgr.GetScheme()`
-in `cmd/manager/main.go`.
+Call the `AddToScheme()` function for your 3rd party resource and pass it the Manager's scheme via `mgr.GetScheme()`.
 
 Example:
 ```go
