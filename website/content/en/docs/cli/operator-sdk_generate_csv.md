@@ -14,10 +14,10 @@ A CSV semantic version is supplied via the --csv-version flag. If your operator
 has already generated a CSV manifest you want to use as a base, supply its
 version to --from-version. Otherwise the SDK will scaffold a new CSV manifest.
 
-The --make-manifests flag directs the generator to create a 'manifests' directory
+The --make-manifests flag directs the generator to create a bundle manifests directory
 intended to hold your latest operator manifests. This flag is true by default.
 
-More information on manifests:
+More information on bundles:
 https://github.com/operator-framework/operator-registry/blob/master/docs/design/operator-bundle.md#operator-bundle-overview
 
 Flags that change project default paths:
@@ -43,71 +43,83 @@ operator-sdk generate csv [flags]
 ### Examples
 
 ```
+    ##### Generate a CSV in bundle format from default input paths #####
+    $ tree pkg/apis/ deploy/
+    pkg/apis/
+    ├── ...
+    └── cache
+        ├── group.go
+        ├── v1alpha1
+        ├── ...
+        └── memcached_types.go
+    deploy/
+    ├── crds
+    │   ├── cache.example.com_memcacheds_crd.yaml
+    │   └── cache.example.com_v1alpha1_memcached_cr.yaml
+    ├── operator.yaml
+    ├── role.yaml
+    ├── role_binding.yaml
+    └── service_account.yaml
 
-		##### Generate CSV from default input paths #####
-		$ tree pkg/apis/ deploy/
-		pkg/apis/
-		├── ...
-		└── cache
-			├── group.go
-			└── v1alpha1
-				├── ...
-				└── memcached_types.go
-		deploy/
-		├── crds
-		│   ├── cache.example.com_memcacheds_crd.yaml
-		│   └── cache.example.com_v1alpha1_memcached_cr.yaml
-		├── operator.yaml
-		├── role.yaml
-		├── role_binding.yaml
-		└── service_account.yaml
+    $ operator-sdk generate csv --csv-version=0.0.1
+    INFO[0000] Generating CSV manifest version 0.0.1
+    ...
 
-		$ operator-sdk generate csv --csv-version=0.0.1 --update-crds
-		INFO[0000] Generating CSV manifest version 0.0.1
-		...
+    $ tree deploy/
+    deploy/
+    ...
+    └── olm-catalog
+        └── memcached-operator
+            └── manifests
+                ├── cache.example.com_memcacheds_crd.yaml
+                └── memcached-operator.clusterserviceversion.yaml
+    ...
 
-		$ tree deploy/
-		deploy/
-		...
-		├── olm-catalog
-		│   └── memcached-operator
-		│       ├── 0.0.1
-		│       │   ├── cache.example.com_memcacheds_crd.yaml
-		│       │   └── memcached-operator.v0.0.1.clusterserviceversion.yaml
-		│       └── memcached-operator.package.yaml
-		...
+    ##### Generate a CSV in package manifests format from default input paths #####
 
+		$ operator-sdk generate csv --csv-version=0.0.1 --make-manifests=false --update-crds
+    INFO[0000] Generating CSV manifest version 0.0.1
+    ...
+    $ tree deploy/
+    deploy/
+    ...
+    └── olm-catalog
+        └── memcached-operator
+            ├── 0.0.1
+            │   ├── cache.example.com_memcacheds_crd.yaml
+            │   └── memcached-operator.v0.0.1.clusterserviceversion.yaml
+            └── memcached-operator.package.yaml
+    ...
 
+    ##### Generate CSV from custom input paths #####
+    $ operator-sdk generate csv --csv-version=0.0.1 --update-crds \
+    --deploy-dir=config --apis-dir=api --output-dir=production
+    INFO[0000] Generating CSV manifest version 0.0.1
+    ...
 
-		##### Generate CSV from custom input paths #####
-		$ operator-sdk generate csv --csv-version=0.0.1 --update-crds \
-		--deploy-dir=config --apis-dir=api --output-dir=production
-		INFO[0000] Generating CSV manifest version 0.0.1
-		...
-
-		$ tree config/ api/ production/
-		config/
-		├── crds
-		│   ├── cache.example.com_memcacheds_crd.yaml
-		│   └── cache.example.com_v1alpha1_memcached_cr.yaml
-		├── operator.yaml
-		├── role.yaml
-		├── role_binding.yaml
-		└── service_account.yaml
-		api/
-		├── ...
-		└── cache
-			├── group.go
-			└── v1alpha1
-				├── ...
-				└── memcached_types.go
-		production/
-		└── olm-catalog
-			└── memcached-operator
-				├── 0.0.1
-				│   ├── cache.example.com_memcacheds_crd.yaml
-				│   └── memcached-operator.v0.0.1.clusterserviceversion.yaml
-				└── memcached-operator.package.yaml
+    $ tree config/ api/ production/
+    config/
+    ├── crds
+    │   ├── cache.example.com_memcacheds_crd.yaml
+    │   └── cache.example.com_v1alpha1_memcached_cr.yaml
+    ├── operator.yaml
+    ├── role.yaml
+    ├── role_binding.yaml
+    └── service_account.yaml
+    api/
+    ├── ...
+    └── cache
+    |   ├── group.go
+    |   └── v1alpha1
+    |       ├── ...
+    |       └── memcached_types.go
+    production/
+    └── olm-catalog
+        └── memcached-operator
+            ├── 0.0.1
+            │   ├── cache.example.com_memcacheds_crd.yaml
+            │   └── memcached-operator.v0.0.1.clusterserviceversion.yaml
+            └── memcached-operator.package.yaml
 
 ```
 

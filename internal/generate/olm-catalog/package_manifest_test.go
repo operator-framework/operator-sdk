@@ -31,7 +31,7 @@ func TestGeneratePkgManifestToOutput(t *testing.T) {
 		OperatorName: testProjectName,
 		OutputDir:    "expected-catalog",
 	}
-	g := NewPackageManifest(cfg, csvVersion, "beta", false)
+	g := NewPackageManifest(cfg, "0.0.4", "beta", false)
 	fileMap, err := g.(pkgGenerator).generate()
 	if err != nil {
 		t.Fatalf("Failed to execute package manifest generator: %v", err)
@@ -45,11 +45,9 @@ func TestGeneratePkgManifestToOutput(t *testing.T) {
 }
 
 const packageManifestNonStandardExp = `channels:
-- currentCSV: memcached-operator.v0.0.1
-  name: alpha
-- currentCSV: memcached-operator.v0.0.3
-  name: beta
 - currentCSV: memcached-operator.v0.0.4
+  name: beta
+- currentCSV: memcached-operator.v0.0.3
   name: stable
 defaultChannel: stable
 packageName: memcached-operator
