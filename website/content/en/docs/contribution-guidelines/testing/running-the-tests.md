@@ -57,7 +57,7 @@ $ export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 All the tests are run through the [`Makefile`][makefile]. This is a brief description of all makefile test instructions:
 
 - `test` - Runs the unit tests (`test-unit`).
-- `test-ci` - Runs markdown, sanity, and unit tests, installs the SDK binary, and runs the SDK subcommand and all E2E tests.
+- `test-ci` - Runs sanity and unit tests, installs the SDK binary, and runs the SDK subcommand and all E2E tests.
 - `test-sanity` - Runs sanity checks.
 - `test-unit` - Runs unit tests.
 - `test-subcommand` - Runs subcommand tests.
@@ -66,7 +66,6 @@ All the tests are run through the [`Makefile`][makefile]. This is a brief descri
 - `test-e2e-ansible` - Runs the ansible E2E test.
 - `test-e2e-ansible-molecule` - Runs the ansible molecule E2E test.
 - `test-e2e-helm` - Runs the helm E2E test.
-- `test-markdown` - Runs the markdown checks
 
 For more info on what these tests actually do, please see the [Travis Build][travis] doc.
 
