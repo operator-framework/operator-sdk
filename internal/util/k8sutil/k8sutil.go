@@ -128,3 +128,12 @@ func FormatOperatorNameDNS1123(name string) string {
 	}
 	return name
 }
+
+// TrimDNS1123Label trims a label to meet the DNS 1123 label length requirement
+// by removing characters from the beginning of label such that len(label) <= 63.
+func TrimDNS1123Label(label string) string {
+	if len(label) > validation.DNS1123LabelMaxLength {
+		return label[len(label)-validation.DNS1123LabelMaxLength:]
+	}
+	return label
+}
