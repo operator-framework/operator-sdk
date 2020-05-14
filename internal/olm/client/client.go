@@ -220,7 +220,8 @@ func (c Client) GetInstalledVersion(ctx context.Context, namespace string) (stri
 		return "", fmt.Errorf("failed to list CSVs in namespace %q: %v", namespace, err)
 	}
 	var pkgServerCSV *olmapiv1alpha1.ClusterServiceVersion
-	for _, csv := range csvs.Items {
+	for i := range csvs.Items {
+		csv := csvs.Items[i]
 		name := csv.GetName()
 		// Check old and new name possibilities.
 		if name == pkgServerCSVNewName || strings.HasPrefix(name, pkgServerCSVOldNamePrefix) {
