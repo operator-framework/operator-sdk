@@ -128,8 +128,11 @@ operator-sdk generate csv [flags]
 ```
       --apis-dir string        Project relative path to root directory for API type defintions (default "pkg/apis")
       --crd-dir string         Project relative path to root directory for CRD and CR manifests
+      --csv-channel string     Channel the CSV should be registered under in the package manifest
       --csv-version string     Semantic version of the CSV. This flag must be set if a package manifest exists
+      --default-channel        Use the channel passed to --csv-channel as the package manifests' default channel. Only valid when --csv-channel is set
       --deploy-dir string      Project relative path to root directory for operator manifests (Deployment and RBAC) (default "deploy")
+      --from-version string    Semantic version of an existing CSV to use as a base
   -h, --help                   help for csv
       --make-manifests         When set, the generator will create or update a CSV manifest in a 'manifests' directory. This directory is intended to be used for your latest bundle manifests. The default location is deploy/olm-catalog/<operator-name>/manifests. If --output-dir is set, the directory will be <output-dir>/manifests (default true)
       --operator-name string   Operator name to use while generating CSV
