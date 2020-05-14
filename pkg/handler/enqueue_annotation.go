@@ -18,7 +18,9 @@ import (
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
+
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	crtHandler "sigs.k8s.io/controller-runtime/pkg/handler"
@@ -109,4 +111,18 @@ func parseNamespacedName(namespacedNameString string) types.NamespacedName {
 		}
 	}
 	return types.NamespacedName{}
+}
+
+// SetOwnerAnnotation sets annotations for dependent resources that needs to be watched by namespaced Owners.
+func SetOwnerAnnotation(u *unstructured.Unstructured, owner *unstructured.Unstructured) {
+	a := u.GetAnnotations()
+	if a == nil {
+		a = map[string]string{}
+	}
+
+	nn := types.NamespacedName{Namespace: owner.GetNamespace(), Name: owner.GetName()}
+	a[NamespacedNameAnnotation] = nn.String()
+
+	a[TypeAnnotation] = owner.GetObjectKind().GroupVersionKind().GroupKind().String()
+	u.SetAnnotations(a)
 }

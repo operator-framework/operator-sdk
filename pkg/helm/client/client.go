@@ -15,7 +15,6 @@
 package client
 
 import (
-	"fmt"
 	"io"
 
 	"github.com/operator-framework/operator-sdk/pkg/handler"
@@ -82,7 +81,6 @@ func (c namespaceClientConfig) ConfigAccess() clientcmd.ConfigAccess {
 	return nil
 }
 
-// NewRESTClientGetter ...
 func NewRESTClientGetter(mgr manager.Manager, ns string) (genericclioptions.RESTClientGetter, error) {
 	cfg := mgr.GetConfig()
 	dc, err := discovery.NewDiscoveryClientForConfig(cfg)
@@ -140,14 +138,7 @@ func (c *ownerRefInjectingClient) Build(reader io.Reader, validate bool) (kube.R
 			ownerRef := metav1.NewControllerRef(c.owner, c.owner.GroupVersionKind())
 			u.SetOwnerReferences([]metav1.OwnerReference{*ownerRef})
 		} else {
-			a := u.GetAnnotations()
-			if a == nil {
-				a = map[string]string{}
-			}
-			a[handler.NamespacedNameAnnotation] = fmt.Sprintf("%s/%s", c.owner.GetNamespace(), c.owner.GetName())
-			a[handler.TypeAnnotation] = c.owner.GetObjectKind().GroupVersionKind().GroupKind().String()
-
-			u.SetAnnotations(a)
+			handler.SetOwnerAnnotation(u, c.owner)
 		}
 		return nil
 	})
