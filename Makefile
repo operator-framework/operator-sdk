@@ -209,12 +209,9 @@ image-push-scorecard-test:
 ##@ Tests
 
 # Static tests.
-.PHONY: test test-markdown test-sanity test-unit
+.PHONY: test test-sanity test-unit
 
 test: test-unit ## Run the tests
-
-test-markdown:
-	./hack/check-markdown.sh
 
 test-sanity: tidy build/operator-sdk lint
 	./hack/tests/sanity-check.sh
@@ -225,7 +222,7 @@ test-unit: ## Run the unit tests
 # CI tests.
 .PHONY: test-ci
 
-test-ci: test-markdown test-sanity test-unit install test-subcommand test-e2e ## Run the CI test suite
+test-ci: test-sanity test-unit install test-subcommand test-e2e ## Run the CI test suite
 
 # Subcommand tests.
 .PHONY: test-subcommand test-subcommand-local test-subcommand-scorecard test-subcommand-olm-install
