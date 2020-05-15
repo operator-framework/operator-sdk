@@ -42,7 +42,7 @@ const goModTmpl = `module {{ .Repo }}
 go 1.13
 
 require (
-	github.com/operator-framework/operator-sdk v0.17.x
+	github.com/operator-framework/operator-sdk v0.17.1
 	sigs.k8s.io/controller-runtime v0.5.2
 )
 
