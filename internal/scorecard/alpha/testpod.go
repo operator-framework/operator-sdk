@@ -44,7 +44,7 @@ func getPodDefinition(configMapName string, test Test, r PodTestRunner) *v1.Pod 
 			Containers: []v1.Container{
 				{
 					Name:            "scorecard-test",
-					Image:           "quay.io/operator-framework/scorecard-test:dev",
+					Image:           test.Image,
 					ImagePullPolicy: v1.PullIfNotPresent,
 					Command:         test.Entrypoint,
 					VolumeMounts: []v1.VolumeMount{
