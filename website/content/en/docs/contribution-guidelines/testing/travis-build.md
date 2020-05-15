@@ -13,7 +13,6 @@ In Travis CI, 4 jobs are run to test the sdk:
 - [Go](#go-tests)
 - [Ansible](#ansible-tests)
 - [Helm](#helm-tests)
-- [Markdown](#markdown)
 
 ### Before Install for Go, Ansible, and Helm
 
@@ -104,12 +103,6 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
 
 **NOTE**: All created resources, including the namespace, are deleted using a bash trap when the test finishes
 
-### Markdown
-
-The markdown test does not create a new cluster and runs in a barebones Travis VM configured only for `bash`. This allows documentation PRs to pass quickly, as they don't require code tests. The markdown checker uses a precompiled version of [`marker`][marker-github] stored in [`hack/ci/marker`][marker-local] to check the validity and correctness of the links in all markdown files in the `doc` directory.
-
-**NOTE**: There is currently a bug in marker that causes link with underscores (`_`) to not be checked correctly.
-
 [branches]: https://travis-ci.org/operator-framework/operator-sdk/branches
 [pr-builds]: https://travis-ci.org/operator-framework/operator-sdk/pull_requests
 [k8s-script]: https://github.com/operator-framework/operator-sdk/blob/master/hack/ci/setup-k8s.sh
@@ -122,6 +115,4 @@ The markdown test does not create a new cluster and runs in a barebones Travis V
 [ansible-test]: https://github.com/operator-framework/operator-sdk/tree/master/test/ansible
 [helm-e2e]: https://github.com/operator-framework/operator-sdk/blob/master/hack/tests/e2e-helm.sh
 [helm-base]: https://github.com/operator-framework/operator-sdk/blob/master/hack/image/helm/scaffold-helm-image.go
-[marker-github]: https://github.com/crawford/marker
-[marker-local]: https://github.com/operator-framework/operator-sdk/blob/master/hack/ci/marker
 [deps_mgmt]: ../../../golang/quickstart#a-note-on-dependency-management
