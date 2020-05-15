@@ -1,0 +1,6 @@
+{
+    "ignorePatterns": [
+        { "pattern": "^https://github.com/\\S+/\\S+/(issues|pull)/[0-9]+" },
+        { "pattern": "^mailto:" }
+    ]
+}
