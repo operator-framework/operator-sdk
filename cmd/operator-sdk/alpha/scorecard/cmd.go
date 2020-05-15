@@ -17,8 +17,10 @@ package scorecard
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -51,7 +53,7 @@ func NewCmd() *cobra.Command {
 		// to run it, etc.
 		Long: `Has flags to configure dsl, bundle, and selector. This command takes
 one argument, either a bundle image or directory containing manifests and metadata.
-If the argument holds an image tag or SHA, it must be present remotely.`,
+If the argument holds an image tag, it must be present remotely.`,
 		Hidden: true,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 
@@ -59,34 +61,33 @@ If the argument holds an image tag or SHA, it must be present remotely.`,
 				return fmt.Errorf("a bundle image or directory argument is required")
 			}
 
-			opts := scorecard.PodRunnerOptions{
-				ServiceAccount: serviceAccount,
-				Namespace:      namespace,
-				KubeconfigPath: kubeconfig,
-				Bundle:         args[0],
-			}
+			bundle := args[0]
 
-			ctx, cancel := context.WithTimeout(context.Background(), waitTime)
-			defer cancel()
-
-			// Discard bundle extraction logs unless user sets verbose mode.
-			opts.Logger = log.NewEntry(discardLogger())
-			if viper.GetBool(flags.VerboseOpt) {
-				opts.Logger = log.WithFields(log.Fields{"bundle": opts.Bundle})
-			}
-			runner, err := scorecard.NewPodTestRunner(ctx, opts)
-			if err != nil {
-				log.Fatal(err)
+			// Extract bundle image contents if bundle is inferred to be an image.
+			if _, err = os.Stat(bundle); err != nil && errors.Is(err, os.ErrNotExist) {
+				// Discard bundle extraction logs unless user sets verbose mode.
+				logger := log.NewEntry(discardLogger())
+				if viper.GetBool(flags.VerboseOpt) {
+					logger = log.WithFields(log.Fields{"bundle": bundle})
+				}
+				// FEAT: enable explicit local image extraction.
+				if bundle, err = scorecard.ExtractBundleImage(context.TODO(), logger, bundle, false); err != nil {
+					log.Fatal(err)
+				}
+				defer func() {
+					if err := os.RemoveAll(bundle); err != nil {
+						logger.Error(err)
+					}
+				}()
 			}
 
 			o := scorecard.Scorecard{
 				SkipCleanup: skipCleanup,
-				TestRunner:  runner,
 			}
 
-			configPath := filepath.Join(runner.BundlePath, "tests", "scorecard", "config.yaml")
-			if config != "" {
-				configPath = config
+			configPath := config
+			if configPath == "" {
+				configPath = filepath.Join(bundle, "tests", "scorecard", "config.yaml")
 			}
 			o.Config, err = scorecard.LoadConfig(configPath)
 			if err != nil {
@@ -105,6 +106,22 @@ If the argument holds an image tag or SHA, it must be present remotely.`,
 					return fmt.Errorf("error listing tests %w", err)
 				}
 			} else {
+				runner := scorecard.PodTestRunner{
+					ServiceAccount: serviceAccount,
+					Namespace:      namespace,
+					BundlePath:     bundle,
+				}
+
+				// Only get the client if running tests.
+				if runner.Client, err = scorecard.GetKubeClient(kubeconfig); err != nil {
+					return fmt.Errorf("error getting kubernetes client: %w", err)
+				}
+
+				o.TestRunner = &runner
+
+				ctx, cancel := context.WithTimeout(context.Background(), waitTime)
+				defer cancel()
+
 				scorecardOutput, err = o.RunTests(ctx)
 				if err != nil {
 					return fmt.Errorf("error running tests %w", err)

@@ -16,7 +16,6 @@ package alpha
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -28,44 +27,9 @@ import (
 	"github.com/operator-framework/operator-registry/pkg/image/containerdregistry"
 )
 
-// PodRunnerOptions helps construct a TestRunner for a Kubernetes pod by
-// handling information that one may not need once created but will need
-// during construction.
-type PodRunnerOptions struct {
-	Namespace      string
-	ServiceAccount string
-	KubeconfigPath string
-	Bundle         string
-	Logger         *log.Entry
-}
-
-// NewPodTestRunner creates a new PodTestRunner from PodRunnerOptions.
-func NewPodTestRunner(ctx context.Context, opts PodRunnerOptions) (r *PodTestRunner, err error) {
-	r = &PodTestRunner{
-		Namespace:      opts.Namespace,
-		ServiceAccount: opts.ServiceAccount,
-	}
-
-	if r.Client, err = GetKubeClient(opts.KubeconfigPath); err != nil {
-		return nil, fmt.Errorf("error getting kubernetes client: %w", err)
-	}
-
-	if _, err = os.Stat(opts.Bundle); err != nil && errors.Is(err, os.ErrNotExist) {
-		// FEAT: enable explicit local image extraction.
-		if r.BundlePath, err = extractBundleImage(ctx, opts.Logger, opts.Bundle, false); err != nil {
-			log.Fatal(err)
-		}
-		r.removeBundle = true
-	} else {
-		r.BundlePath = opts.Bundle
-	}
-
-	return r, nil
-}
-
-// extractBundleImage returns a bundle directory containing files extracted
+// ExtractBundleImage returns a bundle directory containing files extracted
 // from image. If local is true, the image will not be pulled.
-func extractBundleImage(ctx context.Context, logger *log.Entry, image string, local bool) (string, error) {
+func ExtractBundleImage(ctx context.Context, logger *log.Entry, image string, local bool) (string, error) {
 	// Use a temp directory for bundle files. This will likely be removed by
 	// the caller.
 	wd, err := os.Getwd()

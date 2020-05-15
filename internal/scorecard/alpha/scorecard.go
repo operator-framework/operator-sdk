@@ -17,7 +17,6 @@ package alpha
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
@@ -49,7 +48,6 @@ type PodTestRunner struct {
 	Client         kubernetes.Interface
 
 	configMapName string
-	removeBundle  bool
 }
 
 type FakeTestRunner struct {
@@ -68,7 +66,7 @@ func (o Scorecard) RunTests(ctx context.Context) (testOutput v1alpha2.ScorecardO
 	tests := o.selectTests()
 	if len(tests) == 0 {
 		testOutput.Results = make([]v1alpha2.ScorecardTestResult, 0)
-		return testOutput, err
+		return testOutput, nil
 	}
 
 	testOutput.Results = make([]v1alpha2.ScorecardTestResult, len(tests))
@@ -87,7 +85,7 @@ func (o Scorecard) RunTests(ctx context.Context) (testOutput v1alpha2.ScorecardO
 			return testOutput, err
 		}
 	}
-	return testOutput, err
+	return testOutput, nil
 }
 
 // selectTests applies an optionally passed selector expression
@@ -138,13 +136,6 @@ func (r PodTestRunner) Cleanup(ctx context.Context) (err error) {
 	if err != nil {
 		return err
 	}
-
-	if r.removeBundle {
-		if err = os.RemoveAll(r.BundlePath); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
