@@ -22,7 +22,6 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/completion"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/olm"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/run"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/scorecard"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/version"
 	"github.com/operator-framework/operator-sdk/internal/flags"
 	"github.com/operator-framework/operator-sdk/internal/plugins/golang"
@@ -45,7 +44,6 @@ var commands = []*cobra.Command{
 	completion.NewCmd(),
 	olm.NewCmd(),
 	run.NewCmd(),
-	scorecard.NewCmd(),
 	version.NewCmd(),
 	build.NewCmd(),
 
