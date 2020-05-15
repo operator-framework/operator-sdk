@@ -129,6 +129,8 @@ func (i *injectOwnerReferenceHandler) ServeHTTP(w http.ResponseWriter, req *http
 			}
 			ownerObject := &unstructured.Unstructured{}
 			ownerObject.SetGroupVersionKind(ownerGVK)
+			ownerObject.SetNamespace(owner.Namespace)
+			ownerObject.SetName(owner.Name)
 			addOwnerRef, err := k8sutil.SupportsOwnerReference(i.restMapper, ownerObject, data)
 			if err != nil {
 				m := "Could not determine if we should add owner ref"
