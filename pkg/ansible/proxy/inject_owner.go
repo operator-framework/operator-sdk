@@ -21,12 +21,12 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
-	"strings"
 
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
-	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/kubeconfig"
 	k8sRequest "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
-	osdkHandler "github.com/operator-framework/operator-sdk/pkg/handler"
+	"github.com/operator-framework/operator-sdk/pkg/handler"
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -115,8 +115,21 @@ func (i *injectOwnerReferenceHandler) ServeHTTP(w http.ResponseWriter, req *http
 				http.Error(w, m, http.StatusBadRequest)
 				return
 			}
-
-			addOwnerRef, err := shouldAddOwnerRef(data, *owner, i.restMapper)
+			ownerGV, err := schema.ParseGroupVersion(owner.APIVersion)
+			if err != nil {
+				m := fmt.Sprintf("could not get group version for: %v", owner)
+				log.Error(err, m)
+				http.Error(w, m, http.StatusBadRequest)
+				return
+			}
+			ownerGVK := schema.GroupVersionKind{
+				Group:   ownerGV.Group,
+				Version: ownerGV.Version,
+				Kind:    owner.Kind,
+			}
+			ownerObject := &unstructured.Unstructured{}
+			ownerObject.SetGroupVersionKind(ownerGVK)
+			addOwnerRef, err := k8sutil.SupportsOwnerReference(i.restMapper, ownerObject, data)
 			if err != nil {
 				m := "Could not determine if we should add owner ref"
 				log.Error(err, m)
@@ -126,21 +139,7 @@ func (i *injectOwnerReferenceHandler) ServeHTTP(w http.ResponseWriter, req *http
 			if addOwnerRef {
 				data.SetOwnerReferences(append(data.GetOwnerReferences(), owner.OwnerReference))
 			} else {
-				ownerGV, err := schema.ParseGroupVersion(owner.APIVersion)
-				if err != nil {
-					m := fmt.Sprintf("could not get group version for: %v", owner)
-					log.Error(err, m)
-					http.Error(w, m, http.StatusBadRequest)
-					return
-				}
-				a := data.GetAnnotations()
-				if a == nil {
-					a = map[string]string{}
-				}
-				a[osdkHandler.NamespacedNameAnnotation] = strings.Join([]string{owner.Namespace, owner.Name}, "/")
-				a[osdkHandler.TypeAnnotation] = fmt.Sprintf("%v.%v", owner.Kind, ownerGV.Group)
-
-				data.SetAnnotations(a)
+				handler.SetOwnerAnnotation(data, ownerObject)
 			}
 			newBody, err := json.Marshal(data.Object)
 			if err != nil {
@@ -173,39 +172,4 @@ func (i *injectOwnerReferenceHandler) ServeHTTP(w http.ResponseWriter, req *http
 		}
 	}
 	i.next.ServeHTTP(w, req)
-}
-
-func shouldAddOwnerRef(data *unstructured.Unstructured, owner kubeconfig.NamespacedOwnerReference,
-	restMapper meta.RESTMapper) (bool, error) {
-	dataMapping, err := restMapper.RESTMapping(data.GroupVersionKind().GroupKind(), data.GroupVersionKind().Version)
-	if err != nil {
-		m := fmt.Sprintf("Could not get rest mapping for: %v", data.GroupVersionKind())
-		log.Error(err, m)
-		return false, err
-
-	}
-	// We need to determine whether or not the owner is a cluster-scoped
-	// resource because enqueue based on an owner reference does not work if
-	// a namespaced resource owns a cluster-scoped resource
-	ownerGV, err := schema.ParseGroupVersion(owner.APIVersion)
-	if err != nil {
-		m := fmt.Sprintf("could not get group version for: %v", owner)
-		log.Error(err, m)
-		return false, err
-	}
-	ownerMapping, err := restMapper.RESTMapping(schema.GroupKind{Kind: owner.Kind, Group: ownerGV.Group},
-		ownerGV.Version)
-	if err != nil {
-		m := fmt.Sprintf("could not get rest mapping for: %v", owner)
-		log.Error(err, m)
-		return false, err
-	}
-
-	dataNamespaceScoped := dataMapping.Scope.Name() != meta.RESTScopeNameRoot
-	ownerNamespaceScoped := ownerMapping.Scope.Name() != meta.RESTScopeNameRoot
-
-	if dataNamespaceScoped && ownerNamespaceScoped && data.GetNamespace() == owner.Namespace {
-		return true, nil
-	}
-	return false, nil
 }

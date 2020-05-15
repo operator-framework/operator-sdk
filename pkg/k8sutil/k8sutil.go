@@ -185,13 +185,13 @@ func isRunModeLocal() bool {
 	return os.Getenv(ForceRunModeEnv) == string(LocalRunMode)
 }
 
-// SupportsOwnerReference checks whether a given dependent supports owner references, based on the owner.
+// SupportsOwnerReference checks whether a given child supports owner references, based on the owner.
 // This function performs following checks:
-//	 -- True: Owner is cluster-scoped.
-// 	 -- True: Both Owner and dependent are Namespaced with in same namespace.
-//	 -- False: Owner is Namespaced and Dependent is Cluster-scoped.
-//   -- False: Both Owner and dependent are Namespaced with different namespaces.
-func SupportsOwnerReference(restMapper meta.RESTMapper, owner, dependent runtime.Object) (bool, error) {
+//  -- True: Owner is cluster-scoped.
+//  -- True: Both Owner and Child are Namespaced with in same namespace.
+//  -- False: Owner is Namespaced and Child is Cluster-scoped.
+//  -- False: Both Owner and Child are Namespaced with different namespaces.
+func SupportsOwnerReference(restMapper meta.RESTMapper, owner, child runtime.Object) (bool, error) {
 	ownerGVK := owner.GetObjectKind().GroupVersionKind()
 	ownerMapping, err := restMapper.RESTMapping(ownerGVK.GroupKind(), ownerGVK.Version)
 	if err != nil {
@@ -202,12 +202,12 @@ func SupportsOwnerReference(restMapper meta.RESTMapper, owner, dependent runtime
 		return false, err
 	}
 
-	depGVK := dependent.GetObjectKind().GroupVersionKind()
+	depGVK := child.GetObjectKind().GroupVersionKind()
 	depMapping, err := restMapper.RESTMapping(depGVK.GroupKind(), depGVK.Version)
 	if err != nil {
 		return false, err
 	}
-	mDep, err := meta.Accessor(dependent)
+	mDep, err := meta.Accessor(child)
 	if err != nil {
 		return false, err
 	}
