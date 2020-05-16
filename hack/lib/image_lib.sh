@@ -120,7 +120,7 @@ function is_latest_tag() {
 #
 function load_image_if_kind() {
   if [[ "$(kubectl config current-context)" == "kind-kind" ]]; then
-    if which kind 2>/dev/null; then
+    if is_installed kind; then
       kind load docker-image "$1"
     fi
   fi
