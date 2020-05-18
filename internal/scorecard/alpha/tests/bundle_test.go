@@ -15,20 +15,24 @@
 package tests
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/operator-framework/api/pkg/operators"
 	"github.com/operator-framework/operator-registry/pkg/registry"
-	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 )
+
+var testBundle = filepath.Join("..", "testdata", "bundle")
 
 func TestBundlePath(t *testing.T) {
 	cases := []struct {
 		bundlePath string
 		wantError  bool
 	}{
-		{"../testdata", false},
+		{testBundle, false},
 		{"/foo", true},
 	}
 
@@ -54,7 +58,7 @@ func TestBundleCRs(t *testing.T) {
 		crCount    int
 		wantError  bool
 	}{
-		{"../testdata", 1, false},
+		{testBundle, 1, false},
 	}
 
 	for _, c := range cases {
@@ -91,11 +95,11 @@ func TestBasicAndOLM(t *testing.T) {
 		state      scapiv1alpha2.State
 		function   func(registry.Bundle) scapiv1alpha2.ScorecardTestResult
 	}{
-		{"../testdata", scapiv1alpha2.PassState, CheckSpecTest},
-		{"../testdata/bundle", scapiv1alpha2.PassState, CRDsHaveValidationTest},
-		{"../testdata/bundle", scapiv1alpha2.PassState, CRDsHaveResourcesTest},
-		{"../testdata/bundle", scapiv1alpha2.PassState, SpecDescriptorsTest},
-		{"../testdata/bundle", scapiv1alpha2.PassState, StatusDescriptorsTest},
+		{testBundle, scapiv1alpha2.PassState, CheckSpecTest},
+		{testBundle, scapiv1alpha2.PassState, CRDsHaveValidationTest},
+		{testBundle, scapiv1alpha2.PassState, CRDsHaveResourcesTest},
+		{testBundle, scapiv1alpha2.PassState, SpecDescriptorsTest},
+		{testBundle, scapiv1alpha2.PassState, StatusDescriptorsTest},
 	}
 
 	for _, c := range cases {
@@ -103,7 +107,7 @@ func TestBasicAndOLM(t *testing.T) {
 
 			bundle, err := GetBundle(c.bundlePath)
 			if err != nil {
-				t.Errorf("Error getting bundle %s", err.Error())
+				t.Fatalf("Error getting bundle: %s", err.Error())
 			}
 
 			result := c.function(*bundle)
@@ -120,7 +124,7 @@ func TestOLMBundle(t *testing.T) {
 		bundlePath string
 		state      scapiv1alpha2.State
 	}{
-		{"../testdata/bundle", scapiv1alpha2.PassState},
+		{testBundle, scapiv1alpha2.PassState},
 	}
 	for _, c := range cases {
 		t.Run(c.bundlePath, func(t *testing.T) {

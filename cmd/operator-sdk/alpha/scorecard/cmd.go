@@ -17,21 +17,26 @@ package scorecard
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"path/filepath"
-
 	"time"
 
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"k8s.io/apimachinery/pkg/labels"
+
+	"github.com/operator-framework/operator-sdk/internal/flags"
 	scorecard "github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
 	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
-	"github.com/spf13/cobra"
-	"k8s.io/apimachinery/pkg/labels"
 )
 
 func NewCmd() *cobra.Command {
 	var (
 		outputFormat   string
-		bundle         string
 		config         string
 		selector       string
 		kubeconfig     string
@@ -42,35 +47,47 @@ func NewCmd() *cobra.Command {
 		waitTime       time.Duration
 	)
 	scorecardCmd := &cobra.Command{
-		Use:    "scorecard",
-		Short:  "Runs scorecard",
-		Long:   `Has flags to configure dsl, bundle, and selector.`,
+		Use:   "scorecard",
+		Short: "Runs scorecard",
+		// TODO: describe what the purpose of the command is, why someone would want
+		// to run it, etc.
+		Long: `Has flags to configure dsl, bundle, and selector. This command takes
+one argument, either a bundle image or directory containing manifests and metadata.
+If the argument holds an image tag, it must be present remotely.`,
 		Hidden: true,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
 
-			var err error
+			if len(args) != 1 {
+				return fmt.Errorf("a bundle image or directory argument is required")
+			}
+
+			bundle := args[0]
+
+			// Extract bundle image contents if bundle is inferred to be an image.
+			if _, err = os.Stat(bundle); err != nil && errors.Is(err, os.ErrNotExist) {
+				// Discard bundle extraction logs unless user sets verbose mode.
+				logger := log.NewEntry(discardLogger())
+				if viper.GetBool(flags.VerboseOpt) {
+					logger = log.WithFields(log.Fields{"bundle": bundle})
+				}
+				// FEAT: enable explicit local image extraction.
+				if bundle, err = scorecard.ExtractBundleImage(context.TODO(), logger, bundle, false); err != nil {
+					log.Fatal(err)
+				}
+				defer func() {
+					if err := os.RemoveAll(bundle); err != nil {
+						logger.Error(err)
+					}
+				}()
+			}
+
 			o := scorecard.Scorecard{
 				SkipCleanup: skipCleanup,
 			}
 
-			if bundle == "" {
-				return fmt.Errorf("bundle flag required")
-			}
-
-			runner := scorecard.PodTestRunner{
-				ServiceAccount: serviceAccount,
-				Namespace:      namespace,
-				BundlePath:     bundle,
-			}
-
-			runner.Client, err = scorecard.GetKubeClient(kubeconfig)
-			if err != nil {
-				return fmt.Errorf("could not get kubernetes client: %w", err)
-			}
-
-			configPath := filepath.Join(bundle, "tests", "scorecard", "config.yaml")
-			if config != "" {
-				configPath = config
+			configPath := config
+			if configPath == "" {
+				configPath = filepath.Join(bundle, "tests", "scorecard", "config.yaml")
 			}
 			o.Config, err = scorecard.LoadConfig(configPath)
 			if err != nil {
@@ -89,16 +106,26 @@ func NewCmd() *cobra.Command {
 					return fmt.Errorf("error listing tests %w", err)
 				}
 			} else {
-				ctx, cancel := context.WithTimeout(context.Background(), waitTime)
-				defer cancel()
+				runner := scorecard.PodTestRunner{
+					ServiceAccount: serviceAccount,
+					Namespace:      namespace,
+					BundlePath:     bundle,
+				}
+
+				// Only get the client if running tests.
+				if runner.Client, err = scorecard.GetKubeClient(kubeconfig); err != nil {
+					return fmt.Errorf("error getting kubernetes client: %w", err)
+				}
 
 				o.TestRunner = &runner
+
+				ctx, cancel := context.WithTimeout(context.Background(), waitTime)
+				defer cancel()
 
 				scorecardOutput, err = o.RunTests(ctx)
 				if err != nil {
 					return fmt.Errorf("error running tests %w", err)
 				}
-
 			}
 
 			return printOutput(outputFormat, scorecardOutput)
@@ -107,7 +134,6 @@ func NewCmd() *cobra.Command {
 
 	scorecardCmd.Flags().StringVar(&kubeconfig, "kubeconfig", "", "kubeconfig path")
 
-	scorecardCmd.Flags().StringVar(&bundle, "bundle", "", "path to the operator bundle contents on disk")
 	scorecardCmd.Flags().StringVarP(&selector, "selector", "l", "", "label selector to determine which tests are run")
 	scorecardCmd.Flags().StringVarP(&config, "config", "c", "", "path to scorecard config file")
 	scorecardCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "namespace to run the test images in")
@@ -147,4 +173,11 @@ func printOutput(outputFormat string, output v1alpha2.ScorecardOutput) error {
 	}
 	return nil
 
+}
+
+// discardLogger returns a logger that throws away input.
+func discardLogger() *log.Logger {
+	logger := log.New()
+	logger.SetOutput(ioutil.Discard)
+	return logger
 }
