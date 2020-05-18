@@ -17,6 +17,7 @@ package tests
 import (
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 const (
@@ -39,13 +40,16 @@ func CheckSpecTest(bundle *apimanifests.Bundle) scapiv1alpha2.ScorecardTestResul
 		return r
 	}
 
+	return checkSpecHelper(crSet, r)
+}
+
+func checkSpecHelper(crSet []unstructured.Unstructured, res scapiv1alpha2.ScorecardTestResult) scapiv1alpha2.ScorecardTestResult {
 	for _, cr := range crSet {
 		if cr.Object["spec"] == nil {
-			r.Errors = append(r.Errors, "error spec does not exist")
-			r.State = scapiv1alpha2.FailState
-			return r
+			res.Errors = append(res.Errors, "error spec does not exist")
+			res.State = scapiv1alpha2.FailState
+			return res
 		}
 	}
-
-	return r
+	return res
 }
