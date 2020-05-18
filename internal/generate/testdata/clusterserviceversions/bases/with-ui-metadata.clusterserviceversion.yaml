@@ -1,0 +1,58 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[]'
+    capabilities: Basic Install
+  name: memcached-operator.vX.Y.Z
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: Memcached is the Schema for the memcacheds API
+      displayName: Memcached App Display Name
+      kind: Memcached
+      name: memcacheds.cache.example.com
+      specDescriptors:
+      - description: Size is the size of the memcached deployment
+        displayName: Size
+        path: size
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:podCount
+      statusDescriptors:
+      - description: Nodes are the names of the memcached pods
+        displayName: Nodes
+        path: nodes
+      version: v1alpha1
+  description: Memcached Operator description. TODO.
+  displayName: Memcached Operator
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      deployments: null
+    strategy: ""
+  installModes:
+  - supported: true
+    type: OwnNamespace
+  - supported: true
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - memcached-operator
+  links:
+  - name: Memcached Operator
+    url: https://memcached-operator.domain
+  maintainers:
+  - email: your@email.com
+    name: Maintainer Name
+  maturity: alpha
+  provider:
+    name: Provider Name
+    url: https://your.domain
+  version: 0.0.0

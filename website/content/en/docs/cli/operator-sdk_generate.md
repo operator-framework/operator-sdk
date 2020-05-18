@@ -8,7 +8,7 @@ Invokes a specific generator
 ### Synopsis
 
 The 'operator-sdk generate' command invokes a specific generator to generate
-code or manifests on disk.
+code or manifests.
 
 ### Options
 
