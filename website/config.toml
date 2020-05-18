@@ -11,7 +11,7 @@ enableRobotsTXT = true
 enableGitInfo = true
 
 # Ignore drafts
-ignoreFiles = ["docs/kubebuilder","docs/scorecard-alpha"]
+ignoreFiles = ["docs/kubebuilder"]
 
 # Language settings
 contentDir = "content/en"
