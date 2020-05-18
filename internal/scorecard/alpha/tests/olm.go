@@ -333,7 +333,6 @@ func isCRFromCRDApi(cr unstructured.Unstructured, crds []*apiextv1.CustomResourc
 	for _, crd := range crds {
 		gvk := cr.GroupVersionKind()
 		// Only check the validation block if the CRD and CR have the same Kind and Version
-
 		for _, version := range crd.Spec.Versions {
 
 			if !hasVersion(gvk.Version, version) || !hasKind(gvk.Kind, crd.Spec.Names.Kind, r) {

@@ -59,11 +59,11 @@ func TestRunTests(t *testing.T) {
 			configPath := filepath.Join(c.configPathValue, "tests", "scorecard", "config.yaml")
 			o.Config, err = LoadConfig(configPath)
 			if err != nil {
-				t.Fatalf("Unexpected error loading config %w", err)
+				t.Fatalf("Unexpected error loading config %v", err)
 			}
 			o.Selector, err = labels.Parse(c.selector)
 			if err != nil {
-				t.Fatalf("Unexpected error parsing selector %w", err)
+				t.Fatalf("Unexpected error parsing selector %v", err)
 			}
 			o.SkipCleanup = true
 
