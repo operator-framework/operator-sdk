@@ -81,11 +81,10 @@ var _ = Describe("Running an alpha scorecard command", func() {
 			Expect(err).To(HaveOccurred())
 		})
 
-		It("succeeds if exactly one arg is provided and parses the arg", func() {
+		It("succeeds if exactly one arg is provided", func() {
 			input := "cherry"
 			err := cmd.validate([]string{input})
 			Expect(err).NotTo(HaveOccurred())
-			Expect(cmd.bundle).To(Equal(input))
 		})
 	})
 })

@@ -30,6 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/operator-framework/operator-sdk/internal/flags"
+	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
 	scorecard "github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
 	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
@@ -62,6 +63,7 @@ If the argument holds an image tag, it must be present remotely.`,
 			return c.validate(args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			c.bundle = args[0]
 			return c.run()
 		},
 	}
@@ -108,27 +110,30 @@ func (c *scorecardCmd) printOutput(output v1alpha3.Test) error {
 		return fmt.Errorf("invalid output format selected")
 	}
 	return nil
-
 }
 
-func (c *scorecardCmd) run() error {
-	var err error
+func (c *scorecardCmd) run() (err error) {
 	// Extract bundle image contents if bundle is inferred to be an image.
+	var bundleLabels registryutil.Labels
 	if _, err = os.Stat(c.bundle); err != nil && errors.Is(err, os.ErrNotExist) {
-		// Discard bundle extraction logs unless user sets verbose mode.
-		logger := log.NewEntry(discardLogger())
-		if viper.GetBool(flags.VerboseOpt) {
-			logger = log.WithFields(log.Fields{"bundle": c.bundle})
-		}
-		// FEAT: enable explicit local image extraction.
-		if c.bundle, err = scorecard.ExtractBundleImage(context.TODO(), logger, c.bundle, false); err != nil {
+		if c.bundle, bundleLabels, err = getBundlePathAndLabelsFromImage(c.bundle); err != nil {
 			log.Fatal(err)
 		}
 		defer func() {
 			if err := os.RemoveAll(c.bundle); err != nil {
-				logger.Error(err)
+				log.Error(err)
 			}
 		}()
+	} else {
+		// Search for the metadata dir since we cannot assume its path, and
+		// use that metadata as the source of truth when testing.
+		metadataDir, err := registryutil.FindMetadataDir(c.bundle)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if bundleLabels, err = registryutil.GetMetadataLabels(metadataDir); err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	o := scorecard.Scorecard{
@@ -160,6 +165,7 @@ func (c *scorecardCmd) run() error {
 			ServiceAccount: c.serviceAccount,
 			Namespace:      c.namespace,
 			BundlePath:     c.bundle,
+			BundleLabels:   bundleLabels,
 		}
 
 		// Only get the client if running tests.
@@ -185,8 +191,6 @@ func (c *scorecardCmd) validate(args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("a bundle image or directory argument is required")
 	}
-	c.bundle = args[0]
-
 	return nil
 }
 
@@ -195,4 +199,28 @@ func discardLogger() *log.Logger {
 	logger := log.New()
 	logger.SetOutput(ioutil.Discard)
 	return logger
+}
+
+// getBundlePathAndLabelsFromImage returns bundleImage's path on disk post-
+// extraction and image labels.
+func getBundlePathAndLabelsFromImage(bundleImage string) (string, registryutil.Labels, error) {
+	// Discard bundle extraction logs unless user sets verbose mode.
+	logger := log.NewEntry(discardLogger())
+	if viper.GetBool(flags.VerboseOpt) {
+		logger = log.WithFields(log.Fields{"bundle": bundleImage})
+	}
+	// FEAT: enable explicit local image extraction.
+	bundlePath, err := registryutil.ExtractBundleImage(context.TODO(), logger, bundleImage, false)
+	if err != nil {
+		return "", nil, err
+	}
+
+	// Get image labels from bundleImage locally, since the bundle extraction
+	// already pulled the image.
+	bundleLabels, err := registryutil.GetImageLabels(context.TODO(), logger, bundleImage, true)
+	if err != nil {
+		return "", nil, err
+	}
+
+	return bundlePath, bundleLabels, nil
 }

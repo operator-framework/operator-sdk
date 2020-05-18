@@ -24,6 +24,8 @@ import (
 	"path/filepath"
 	"reflect"
 	"testing"
+
+	"github.com/operator-framework/operator-sdk/internal/registry"
 )
 
 func TestBundlePath(t *testing.T) {
@@ -44,6 +46,15 @@ func TestBundlePath(t *testing.T) {
 		t.Run(c.bundlePathValue, func(t *testing.T) {
 			r := PodTestRunner{}
 			r.BundlePath = c.bundlePathValue
+
+			if c.bundlePathValue != "" {
+				var err error
+				r.BundleLabels, err = registry.GetMetadataLabels(filepath.Join(c.bundlePathValue, "metadata"))
+				if err != nil {
+					t.Fatalf("Failed to get test bundle labels: %v", err)
+				}
+			}
+
 			bundleData, err := r.getBundleData()
 			if err != nil && !c.wantError {
 				t.Fatalf("Wanted result but got error: %v", err)

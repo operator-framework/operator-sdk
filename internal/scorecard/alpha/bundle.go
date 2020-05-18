@@ -15,12 +15,23 @@
 package alpha
 
 import (
+	"archive/tar"
+	"bytes"
+	"compress/gzip"
 	"fmt"
-	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
+	"strings"
 
-	"k8s.io/apimachinery/pkg/util/rand"
+	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
+	log "github.com/sirupsen/logrus"
+
+	// TODO: replace `gopkg.in/yaml.v2` with `sigs.k8s.io/yaml` once operator-registry has `json` tags in the
+	// annotations struct.
+	yaml "gopkg.in/yaml.v3"
+
+	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
 )
 
 // getBundleData tars up the contents of a bundle from a path, and returns that tar file in []byte
@@ -28,25 +39,75 @@ func (r PodTestRunner) getBundleData() (bundleData []byte, err error) {
 
 	// make sure the bundle exists on disk
 	_, err = os.Stat(r.BundlePath)
-	if os.IsNotExist(err) {
-		return bundleData, fmt.Errorf("bundle path is not valid %w", err)
+	if err != nil && os.IsNotExist(err) {
+		return nil, fmt.Errorf("bundle path does not exist: %w", err)
 	}
 
-	tempTarFileName := filepath.Join(os.TempDir(), fmt.Sprintf("tempBundle-%s.tar.gz", rand.String(4)))
+	// Write the tarball in-memory.
+	buf := &bytes.Buffer{}
+	gz := gzip.NewWriter(buf)
+	w := tar.NewWriter(gz)
+	// Both tar and gzip writer Close() methods write some data that is
+	// required when reading the result, so we must close these without a defer.
+	closers := closeFuncs{w.Close, gz.Close}
 
+	// Write the bundle itself.
 	paths := []string{r.BundlePath}
-	err = CreateTarFile(tempTarFileName, paths)
-	if err != nil {
-		return bundleData, fmt.Errorf("error creating tar of bundle %w", err)
+	if err = WritePathsToTar(w, paths); err != nil {
+		if err := closers.close(); err != nil {
+			log.Error(err)
+		}
+		return nil, fmt.Errorf("error writing bundle tar: %w", err)
 	}
 
-	defer os.Remove(tempTarFileName)
-
-	var buf []byte
-	buf, err = ioutil.ReadFile(tempTarFileName)
-	if err != nil {
-		return bundleData, fmt.Errorf("error reading tar of bundle %w", err)
+	// Write the source of truth labels to the expected path within a pod.
+	labelPath := filepath.Join(PodLabelsDirName, bundle.AnnotationsFile)
+	if err = writeLabels(w, labelPath, r.BundleLabels); err != nil {
+		if err := closers.close(); err != nil {
+			log.Error(err)
+		}
+		return nil, fmt.Errorf("error writing image labels to bundle tar: %w", err)
 	}
 
-	return buf, err
+	if err := closers.close(); err != nil {
+		log.Error(err)
+	}
+
+	return buf.Bytes(), nil
+}
+
+type closeFuncs []func() error
+
+func (fs closeFuncs) close() error {
+	for _, f := range fs {
+		if err := f(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// writeLabels writes labels to w, creating each directory in
+func writeLabels(w *tar.Writer, labelPath string, labels registryutil.Labels) error {
+	annotations := bundle.AnnotationMetadata{
+		Annotations: labels,
+	}
+	b, err := yaml.Marshal(annotations)
+	if err != nil {
+		return err
+	}
+
+	// Create one header per directory in path.
+	labelPath = path.Clean(labelPath)
+	pathSplit := strings.Split(labelPath, "/")
+	for i := 1; i < len(pathSplit); i++ {
+		hdr := newTarDirHeader(filepath.Join(pathSplit[:i]...))
+		if err = WriteToTar(w, &bytes.Buffer{}, hdr); err != nil {
+			return err
+		}
+	}
+
+	// Write labels to path.
+	hdr := newTarFileHeader(labelPath, int64(len(b)))
+	return WriteToTar(w, bytes.NewBuffer(b), hdr)
 }
