@@ -182,5 +182,4 @@ See here for an example of a custom test image written in golang.  Writing custo
 
 [sample-config]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/alpha/testdata/bundle/tests/scorecard/config.yaml
 [scorecard-struct]: https://github.com/operator-framework/operator-sdk/blob/master/pkg/apis/scorecard/v1alpha2/types.go
-[cli-scorecard]: ../../cli/operator-sdk_scorecard
 [olm-bundle]:https://github.com/operator-framework/operator-registry#manifest-format
