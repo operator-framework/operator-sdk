@@ -137,7 +137,7 @@ To test, the following print statement can be added in the main function:
 #### Output using custom zap logger
 
 ```console
-$ operator-sdk run --local
+$ operator-sdk run local
 ts=2020-02-27T23:10:33Z level=info msg="Printing at INFO level"
 ts=2020-02-27T23:10:33Z level=info msg="Operator Version: 0.0.1"
 ts=2020-02-27T23:10:33Z level=info msg="Go Version: go1.13.8"
@@ -149,10 +149,10 @@ By using `sigs.k8s.io/controller-runtime/pkg/log`, your logger is propagated thr
 
 ### Setting flags when running locally
 
-When running locally with `operator-sdk run --local`, you can use the `--operator-flags` flag to pass additional flags to your operator, including the zap flags. For example:
+When running locally with `operator-sdk run local`, you can use the `--operator-flags` flag to pass additional flags to your operator, including the zap flags. For example:
 
 ```console
-$ operator-sdk run --local --operator-flags="--zap-level=debug --zap-encoder=console"`
+$ operator-sdk run local --operator-flags="--zap-level=debug --zap-encoder=console"`
 ```
 
 ### Setting flags when deploying to a cluster

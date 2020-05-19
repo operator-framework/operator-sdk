@@ -206,13 +206,13 @@ annotations:
 
 Once a developer is comfortable working with the above workflow, it will be
 beneficial to test the logic inside of an operator. To accomplish this, we can
-use `operator-sdk run --local` from the top-level directory of our project. The
-`run --local` command reads from `./watches.yaml` and uses `~/.kube/config` to
+use `operator-sdk run local` from the top-level directory of our project. The
+`run local` command reads from `./watches.yaml` and uses `~/.kube/config` to
 communicate with a Kubernetes cluster just as the `k8s` modules do. This
 section assumes the developer has read the [Ansible Operator user
 guide][ansible_operator_user_guide] and has the proper dependencies installed.
 
-**NOTE:** You can customize the roles path by setting the environment variable `ANSIBLE_ROLES_PATH` or using the flag `ansible-roles-path`. Note that, if the role not be found in the 
+**NOTE:** You can customize the roles path by setting the environment variable `ANSIBLE_ROLES_PATH` or using the flag `ansible-roles-path`. Note that, if the role not be found in the
 customized path informed in `ANSIBLE_ROLES_PATH` then, the operator will look for it in the `{{current directory}}/roles`.   
 
 Create a Custom Resource Definition (CRD) and proper Role-Based Access Control
@@ -225,9 +225,9 @@ $ kubectl create -f deploy/role.yaml
 $ kubectl create -f deploy/role_binding.yaml
 ```
 
-Run the `run --local` command:
+Run the `run local` command:
 ```bash
-$ operator-sdk run --local
+$ operator-sdk run local
 INFO[0000] Go Version: go1.10.3
 INFO[0000] Go OS/Arch: linux/amd64
 INFO[0000] operator-sdk Version: 0.0.6+git
@@ -334,13 +334,13 @@ foo-operator       1         1         1            1           1m
 In order to see the logs from a particular you can run:
 
 ```sh
-kubectl logs deployment/foo-operator 
+kubectl logs deployment/foo-operator
 ```
 
-The logs contain the information about the Ansible run and will make it much easier to debug issues within your Ansible tasks. 
+The logs contain the information about the Ansible run and will make it much easier to debug issues within your Ansible tasks.
 Note that the logs will contain much more detailed information about the Ansible Operator's internals and interface with Kubernetes as well.
 
-Also, you can use the environment variable `ANSIBLE_DEBUG_LOGS` set as `True` to check the full Ansible result in the logs in order to be able to debug it. 
+Also, you can use the environment variable `ANSIBLE_DEBUG_LOGS` set as `True` to check the full Ansible result in the logs in order to be able to debug it.
 
 **Example**
 
