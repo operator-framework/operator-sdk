@@ -44,9 +44,6 @@ const (
 	defaultTimeout   = time.Minute * 2
 	defaultNamespace = "default"
 
-	// Deprecated: don't use for `run packagemanifests` or `run bundle`,
-	// remove this when `run --olm` is removed.
-	flagPrefix        = "[olm only] "
 	installModeFormat = "InstallModeType[=ns1,ns2[, ...]]"
 )
 
@@ -93,14 +90,14 @@ type OperatorCmd struct {
 
 func (c *OperatorCmd) AddToFlagSet(fs *pflag.FlagSet) {
 	fs.StringVar(&c.OLMNamespace, "olm-namespace", olm.DefaultOLMNamespace,
-		flagPrefix+"The namespace where OLM is installed")
+		"The namespace where OLM is installed")
 	fs.StringVar(&c.OperatorNamespace, "operator-namespace", "",
-		flagPrefix+"The namespace where operator resources are created. It must already exist "+
+		"The namespace where operator resources are created. It must already exist "+
 			"in the cluster or be defined in a manifest passed to --include")
 	fs.StringVar(&c.InstallMode, "install-mode", "",
-		flagPrefix+"InstallMode to create OperatorGroup with. Format: "+installModeFormat)
+		"InstallMode to create OperatorGroup with. Format: "+installModeFormat)
 	fs.DurationVar(&c.Timeout, "timeout", defaultTimeout,
-		flagPrefix+"Time to wait for the command to complete before failing")
+		"Time to wait for the command to complete before failing")
 }
 
 func (c *OperatorCmd) validate() error {

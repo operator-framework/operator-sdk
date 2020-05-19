@@ -24,6 +24,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 type cleanupCmd struct {
@@ -92,14 +93,37 @@ func NewCmd() *cobra.Command {
 		"The file path to kubernetes configuration file. Defaults to location "+
 			"specified by $KUBECONFIG, or to default file rules if not set")
 	cmd.Flags().StringVar(&c.namespace, "namespace", "",
-		"(Deprecated: use --operator-namespace instead.) The namespace from which operator and namespaces"+
-			"resources are cleaned up")
+		"The namespace from which operator and namespaces resources are cleaned up")
+	err := cmd.Flags().MarkDeprecated("namespace", "use --operator-namespace instead")
+	if err != nil {
+		panic(err)
+	}
 
 	// 'cleanup --olm' and related flags. Set as default since this is the only
 	// cleanup type.
 	cmd.Flags().BoolVar(&c.olm, "olm", true,
 		"The operator to be cleaned up is managed by OLM in a cluster. "+
 			"Cannot be set with another cleanup-type flag")
-	c.olmArgs.AddToFlagSet(cmd.Flags())
+	err = cmd.Flags().MarkDeprecated("olm", "use 'cleanup packagemanifests' instead")
+	if err != nil {
+		panic(err)
+	}
+	// Mark all flags used with '--olm' as deprecated and hidden separately so
+	// all other 'cleanup' flags are still available.
+	fs := pflag.NewFlagSet("olm", pflag.ExitOnError)
+	fs.SortFlags = false
+	fs.StringVar(&c.olmArgs.ManifestsDir, "manifests", "",
+		"Directory containing operator package directories and a package manifest file")
+	c.olmArgs.AddToFlagSet(fs)
+	fs.VisitAll(func(f *pflag.Flag) {
+		f.Deprecated = "use this flag with 'cleanup packagemanifests' instead"
+		f.Hidden = true
+	})
+	cmd.Flags().AddFlagSet(fs)
+
+	cmd.AddCommand(
+		newPackageManifestsCmdLegacy(),
+	)
+
 	return cmd
 }
