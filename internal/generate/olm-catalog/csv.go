@@ -15,7 +15,6 @@
 package olmcatalog
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -23,7 +22,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion"
 	"github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion/bases"
+	"github.com/operator-framework/operator-sdk/internal/generate/collector"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
@@ -382,77 +383,17 @@ func (g BundleGenerator) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVer
 // user-defined manifests and updates csv.
 func (g BundleGenerator) updateCSVFromManifests(csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
 	// Collect all manifests in paths.
-	collection := manifestCollection{}
-	err = filepath.Walk(g.DeployDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		// Only read manifest from files, not directories
-		if info.IsDir() {
-			return nil
-		}
-
-		b, err := ioutil.ReadFile(path)
-		if err != nil {
-			return err
-		}
-		scanner := k8sutil.NewYAMLScanner(bytes.NewBuffer(b))
-		for scanner.Scan() {
-			manifest := scanner.Bytes()
-			typeMeta, err := k8sutil.GetTypeMetaFromBytes(manifest)
-			if err != nil {
-				log.Debugf("No TypeMeta in %s, skipping file", path)
-				continue
-			}
-			switch typeMeta.GroupVersionKind().Kind {
-			case "Role":
-				err = collection.addRoles(manifest)
-			case "ClusterRole":
-				err = collection.addClusterRoles(manifest)
-			case "Deployment":
-				err = collection.addDeployments(manifest)
-			case "CustomResourceDefinition":
-				// Skip for now and add explicitly from CRDsDir input.
-			case "ValidatingWebhookConfiguration":
-				err = collection.addValidatingWebhookConfigurations(manifest)
-			case "MutatingWebhookConfiguration":
-				err = collection.addMutatingWebhookConfigurations(manifest)
-			default:
-				err = collection.addOthers(manifest)
-			}
-			if err != nil {
-				return err
-			}
-		}
-		return scanner.Err()
-	})
-	if err != nil {
-		return fmt.Errorf("failed to walk manifests directory for CSV updates: %v", err)
-	}
-
-	// Add CRDs from input.
-	if isExist(g.CRDsDir) {
-		collection.CustomResourceDefinitions, err = k8sutil.GetCustomResourceDefinitions(g.CRDsDir)
-		if err != nil {
-			return err
-		}
-	}
-
-	// Filter the collection based on data collected.
-	collection.filter()
-
-	// Remove duplicate manifests.
-	if err = collection.deduplicate(); err != nil {
-		return fmt.Errorf("error removing duplicate manifests: %v", err)
+	col := &collector.Manifests{}
+	if err := col.UpdateFromDirs(g.DeployDir, g.CRDsDir); err != nil {
+		return err
 	}
 
 	// Apply manifests to the CSV object.
-	if err = collection.apply(csv); err != nil {
+	if err = clusterserviceversion.ApplyTo(col, csv); err != nil {
 		return fmt.Errorf("error building CSV: %v", err)
 	}
 
-	// Finally sort all updated fields.
-	sortUpdates(csv)
+	handleWatchNamespaces(csv)
 
 	return nil
 }
