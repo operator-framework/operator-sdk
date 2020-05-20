@@ -184,7 +184,7 @@ See an example of the JSON format produced by a scorecard test:
 
 ### Text format
 
-Here is an example of the text format produced by a scorecard test:
+See an example of the text format produced by a scorecard test:
 
 ```
 	basic-check-spec                    : pass
