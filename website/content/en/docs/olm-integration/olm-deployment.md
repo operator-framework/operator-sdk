@@ -7,16 +7,17 @@ weight: 4
 The [Operator Lifecycle Manager (OLM)][olm] is a set of cluster resources that
 manage the lifecycle of an Operator. The Operator SDK provides an entrypoint for
 deploying your Operator using an OLM-enabled Kubernetes cluster through
-[`operator-sdk run --olm`][cli-run-olm]. This command is currently intended for testing only.
+[`operator-sdk run packagemanifests`][cli-run-olm]. This command is currently
+intended for testing only.
 
 This document assumes you are familiar with OLM and related terminology, and have
 read the SDK-OLM integration [design proposal][sdk-olm-design].
 
-`run --olm` assumes OLM is already installed and running on your cluster. If not,
-you can install OLM by running [`operator-sdk olm install`][cli-olm-install].
+`run packagemanifests` assumes OLM is already installed and running on your cluster.
+If not, you can install OLM by running [`operator-sdk olm install`][cli-olm-install].
 You can check the status of OLM by running [`operator-sdk olm status`][cli-olm-status].
 
-`run --olm` also assumes you have valid [Operator bundle][operator-bundle]
+`run packagemanifests` also assumes you have valid [Operator bundle][operator-bundle]
 manifests and metadata available on disk. You can create manifests using
 [`operator-sdk generate csv`][cli-generate-csv], which will create a [`ClusterServiceVersion` (CSV)][csv]
 in and copy your `CustomResourceDefinition`'s to a manifests directory.
@@ -24,9 +25,9 @@ Then create metadata using [`operator-sdk bundle create --generate-only`][cli-bu
 
 **Note:** before continuing, please read the [caveats](#caveats) section below.
 
-## `operator-sdk run --olm` command overview
+## `operator-sdk run packagemanifests` command overview
 
-Let's look at the anatomy of the `run --olm` configuration model:
+Let's look at the anatomy of the `run packagemanifests` configuration model:
 
 - **kubeconfig-path**: the local path to a kubeconfig.
   - This uses well-defined default loading rules to load the config if empty.
@@ -61,12 +62,12 @@ Let's look at the anatomy of the `run --olm` configuration model:
 
 ### Caveats
 
-- `run --olm` (and `cleanup --olm`) are intended to be used for testing purposes
+- `<run|cleanup> packagemanifests` are intended to be used for testing purposes
 only as of now, since this command creates a transient image registry that should
 not be used in production. Typically a registry is deployed separately and a set
 of catalog manifests are created in the cluster to inform OLM of that registry
 and which Operator versions it can deploy and where to deploy the Operator.
-- `run --olm` can only deploy one Operator and one version of that Operator
+- `run packagemanifests` can only deploy one Operator and one version of that Operator
 at a time, hence its intended purpose being testing only.
 
 
@@ -76,6 +77,6 @@ at a time, hence its intended purpose being testing only.
 [sdk-olm-design]:https://github.com/operator-framework/operator-sdk/blob/master/proposals/sdk-integration-with-olm.md
 [cli-olm-install]:/docs/cli/operator-sdk_olm_install
 [cli-olm-status]:/docs/cli/operator-sdk_olm_status
-[cli-run-olm]:/docs/cli/operator-sdk_run
+[cli-run-olm]:/docs/cli/operator-sdk_run_packagemanifests
 [cli-generate-csv]:/docs/cli/operator-sdk_generate_csv
 [cli-bundle-create]:/docs/cli/operator-sdk_bundle_create
