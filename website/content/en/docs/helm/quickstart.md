@@ -205,7 +205,7 @@ Run the operator locally with the default Kubernetes config file present at
 `$HOME/.kube/config`:
 
 ```sh
-$ operator-sdk run --local
+$ operator-sdk run local
 INFO[0000] Go Version: go1.10.3
 INFO[0000] Go OS/Arch: linux/amd64
 INFO[0000] operator-sdk Version: v0.1.1+git
@@ -214,7 +214,7 @@ INFO[0000] operator-sdk Version: v0.1.1+git
 Run the operator locally with a provided Kubernetes config file:
 
 ```sh
-$ operator-sdk run --local --kubeconfig=<path_to_config>
+$ operator-sdk run local --kubeconfig=<path_to_config>
 INFO[0000] Go Version: go1.10.3
 INFO[0000] Go OS/Arch: linux/amd64
 INFO[0000] operator-sdk Version: v0.2.0+git

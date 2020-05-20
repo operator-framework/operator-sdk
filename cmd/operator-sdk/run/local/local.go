@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package run
+package local
 
 import (
 	"fmt"
@@ -40,41 +40,42 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 )
 
-type runLocalArgs struct {
-	kubeconfig           string
-	watchNamespace       string
-	operatorFlags        string
-	ldFlags              string
-	enableDelve          bool
-	ansibleOperatorFlags *aoflags.AnsibleOperatorFlags
-	helmOperatorFlags    *hoflags.HelmOperatorFlags
+type RunLocalCmd struct {
+	Kubeconfig           string
+	WatchNamespace       string
+	OperatorFlags        string
+	LDFlags              string
+	EnableDelve          bool
+	AnsibleOperatorFlags *aoflags.AnsibleOperatorFlags
+	HelmOperatorFlags    *hoflags.HelmOperatorFlags
 }
 
-func (c *runLocalArgs) addToFlags(fs *pflag.FlagSet) {
-	prefix := "[local only] "
-
+func (c *RunLocalCmd) AddToFlags(fs *pflag.FlagSet) {
 	// The main.go and manager.yaml scaffolds in the new layout do not support the WATCH_NAMESPACE
 	// env var to configure the namespace that the operator watches. The default is all namespaces.
 	// So this flag is unsupported for the new layout.
 	if !kbutil.HasProjectFile() {
-		fs.StringVar(&c.watchNamespace, "watch-namespace", "",
-			prefix+"The namespace where the operator watches for changes. Set \"\" for AllNamespaces, "+
+		fs.StringVar(&c.WatchNamespace, "watch-namespace", "",
+			"The namespace where the operator watches for changes. Set \"\" for AllNamespaces, "+
 				"set \"ns1,ns2\" for MultiNamespace")
 	}
 
-	fs.StringVar(&c.operatorFlags, "operator-flags", "",
-		prefix+"The flags that the operator needs. Example: \"--flag1 value1 --flag2=value2\"")
-	fs.StringVar(&c.ldFlags, "go-ldflags", "", prefix+"Set Go linker options")
-	fs.BoolVar(&c.enableDelve, "enable-delve", false,
-		prefix+"Start the operator using the delve debugger")
+	fs.StringVar(&c.Kubeconfig, "kubeconfig", "",
+		"The file path to kubernetes configuration file. Defaults to location "+
+			"specified by $KUBECONFIG, or to default file rules if not set")
+	fs.StringVar(&c.OperatorFlags, "operator-flags", "",
+		"The flags that the operator needs. Example: \"--flag1 value1 --flag2=value2\"")
+	fs.StringVar(&c.LDFlags, "go-ldflags", "", "Set Go linker options")
+	fs.BoolVar(&c.EnableDelve, "enable-delve", false,
+		"Start the operator using the delve debugger")
 }
 
-func (c runLocalArgs) run() error {
-	// The new layout will not have c.watchNamespace
+func (c RunLocalCmd) Run() error {
+	// The new layout will not have c.WatchNamespace
 	if kbutil.HasProjectFile() {
 		log.Infof("Running the operator locally ...")
 	} else {
-		log.Infof("Running the operator locally; watching namespace %q", c.watchNamespace)
+		log.Infof("Running the operator locally; watching namespace %q", c.WatchNamespace)
 	}
 	switch t := projutil.GetOperatorType(); t {
 	case projutil.OperatorTypeGo:
@@ -88,7 +89,7 @@ func (c runLocalArgs) run() error {
 }
 
 // runGo will run the project locally for the Go Type projects
-func (c runLocalArgs) runGo() error {
+func (c RunLocalCmd) runGo() error {
 	// Build the project and generate binary that will be executed
 	binName, err := c.generateBinary()
 	if err != nil {
@@ -99,7 +100,7 @@ func (c runLocalArgs) runGo() error {
 	args := c.argsFromOperatorFlags()
 	// Build the command
 	var cmd *exec.Cmd
-	if c.enableDelve {
+	if c.EnableDelve {
 		cmd = getExecCmdWithDebugger(binName, args)
 	} else {
 		cmd = exec.Command(binName, args...)
@@ -123,20 +124,20 @@ func (c runLocalArgs) runGo() error {
 	return nil
 }
 
-func (c runLocalArgs) runAnsible() error {
+func (c RunLocalCmd) runAnsible() error {
 	logf.SetLogger(zap.Logger())
-	if err := setupOperatorEnv(c.kubeconfig, c.watchNamespace); err != nil {
+	if err := setupOperatorEnv(c.Kubeconfig, c.WatchNamespace); err != nil {
 		return err
 	}
-	return ansible.Run(c.ansibleOperatorFlags)
+	return ansible.Run(c.AnsibleOperatorFlags)
 }
 
-func (c runLocalArgs) runHelm() error {
+func (c RunLocalCmd) runHelm() error {
 	logf.SetLogger(zap.Logger())
-	if err := setupOperatorEnv(c.kubeconfig, c.watchNamespace); err != nil {
+	if err := setupOperatorEnv(c.Kubeconfig, c.WatchNamespace); err != nil {
 		return err
 	}
-	return helm.Run(c.helmOperatorFlags)
+	return helm.Run(c.HelmOperatorFlags)
 }
 
 // setupOperatorEnv will add envvar for the kubeconfig and namespace informed
@@ -164,19 +165,19 @@ func setupOperatorEnv(kubeconfig, namespace string) error {
 }
 
 // getBuildRunLocalArgs returns go build args for -ldflags and -gcflags
-func (c runLocalArgs) getBuildRunLocalArgs() []string {
+func (c RunLocalCmd) getBuildRunLocalArgs() []string {
 	var args []string
-	if c.ldFlags != "" {
-		args = []string{"-ldflags", c.ldFlags}
+	if c.LDFlags != "" {
+		args = []string{"-ldflags", c.LDFlags}
 	}
-	if c.enableDelve {
+	if c.EnableDelve {
 		args = append(args, "-gcflags=\"all=-N -l\"")
 	}
 	return args
 }
 
 // generateBinary will build the Go project by running the command `go build -o bin/manager main.go`
-func (c runLocalArgs) generateBinary() (string, error) {
+func (c RunLocalCmd) generateBinary() (string, error) {
 	// Define name of the bin and where is the main.go pkg for each layout
 	var outputBinName, packagePath string
 	if kbutil.HasProjectFile() {
@@ -213,35 +214,35 @@ func getExecCmdWithDebugger(binName string, args []string) *exec.Cmd {
 }
 
 // addEnvVars will add the EnvVars to the command informed
-func (c runLocalArgs) addEnvVars(cmd *exec.Cmd) {
+func (c RunLocalCmd) addEnvVars(cmd *exec.Cmd) {
 	cmd.Env = os.Environ()
 
 	// Set EnvVar to let the project knows that it is running outside of the cluster
 	cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k8sutil.ForceRunModeEnv, k8sutil.LocalRunMode))
 
 	// Only set env var if user explicitly specified a kubeconfig path
-	if c.kubeconfig != "" {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("%v=%v", k8sutil.KubeConfigEnvVar, c.kubeconfig))
+	if c.Kubeconfig != "" {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%v=%v", k8sutil.KubeConfigEnvVar, c.Kubeconfig))
 	}
 
 	// Set WATCH_NAMESPACE with the value informed via flag
-	cmd.Env = append(cmd.Env, fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, c.watchNamespace))
+	cmd.Env = append(cmd.Env, fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, c.WatchNamespace))
 
 	// todo: check if it should really be here. Shows that it should be part of AnsibleRun only.
 	// Set the ANSIBLE_ROLES_PATH
-	if c.ansibleOperatorFlags != nil && len(c.ansibleOperatorFlags.AnsibleRolesPath) > 0 {
+	if c.AnsibleOperatorFlags != nil && len(c.AnsibleOperatorFlags.AnsibleRolesPath) > 0 {
 		log.Info(fmt.Sprintf("set the value %v for environment variable %v.",
-			c.ansibleOperatorFlags.AnsibleRolesPath, aoflags.AnsibleRolesPathEnvVar))
+			c.AnsibleOperatorFlags.AnsibleRolesPath, aoflags.AnsibleRolesPathEnvVar))
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%v=%v", aoflags.AnsibleRolesPathEnvVar,
-			c.ansibleOperatorFlags.AnsibleRolesPath))
+			c.AnsibleOperatorFlags.AnsibleRolesPath))
 	}
 }
 
 // argsFromOperatorFlags will return an array with all args used in the flags
-func (c runLocalArgs) argsFromOperatorFlags() []string {
+func (c RunLocalCmd) argsFromOperatorFlags() []string {
 	args := []string{}
-	if c.operatorFlags != "" {
-		extraArgs := strings.Split(c.operatorFlags, " ")
+	if c.OperatorFlags != "" {
+		extraArgs := strings.Split(c.OperatorFlags, " ")
 		args = append(args, extraArgs...)
 	}
 	return args

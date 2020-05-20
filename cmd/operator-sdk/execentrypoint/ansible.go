@@ -35,7 +35,7 @@ func newRunAnsibleCmd() *cobra.Command {
 		Short: "Runs as an ansible operator",
 		Long: `Runs as an ansible operator. This is intended to be used when running
 in a Pod inside a cluster. Developers wanting to run their operator locally
-should use "run --local" instead.`,
+should use 'run local' instead.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			logf.SetLogger(zap.Logger())
 			if err := setAnsibleEnvVars(flags); err != nil {

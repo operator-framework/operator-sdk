@@ -23,6 +23,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/run/local"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/run/packagemanifests"
 	olmcatalog "github.com/operator-framework/operator-sdk/internal/generate/olm-catalog"
 	olmoperator "github.com/operator-framework/operator-sdk/internal/olm/operator"
 	k8sinternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
@@ -44,7 +46,7 @@ type runCmd struct {
 
 	// Run type-specific options.
 	olmArgs   olmoperator.PackageManifestsCmd
-	localArgs runLocalArgs
+	localArgs local.RunLocalCmd
 }
 
 // checkRunType ensures exactly one run type has been selected.
@@ -60,13 +62,10 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "run",
 		Short: "Run an Operator in a variety of environments",
-		Long: `This command will run or deploy your Operator in two different modes: locally
-and using OLM. These modes are controlled by setting --local and --olm run mode
-flags. Each run mode has a separate set of flags that configure 'run' for that
-mode. Run 'operator-sdk run --help' for more information on these flags.
-
-Read more about the --olm run mode and configuration options here:
-https://sdk.operatorframework.io/docs/olm-integration/cli-overview
+		Long: `This command has subcommands that will run or deploy your Operator in two
+different modes: locally and using OLM. These modes are controlled by using 'local'
+or 'packagemanifests' subcommands. Run 'operator-sdk run --help' for more
+information on these subcommands.
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := c.checkRunType(); err != nil {
@@ -114,25 +113,28 @@ https://sdk.operatorframework.io/docs/olm-integration/cli-overview
 						if err != nil {
 							return fmt.Errorf("error getting kubeconfig and default namespace: %v", err)
 						}
-						c.localArgs.watchNamespace = defaultNamespace
+						c.localArgs.WatchNamespace = defaultNamespace
 					}
 				}
 
-				c.localArgs.kubeconfig = c.kubeconfig
-				if err := c.localArgs.run(); err != nil {
+				c.localArgs.Kubeconfig = c.kubeconfig
+				if err := c.localArgs.Run(); err != nil {
 					log.Fatalf("Failed to run operator locally: %v", err)
 				}
 			}
 			return nil
 		},
 	}
-	// Avoid sorting flags so we can group them according to run type.
-	cmd.Flags().SortFlags = false
 
 	// Shared flags.
 	cmd.Flags().StringVar(&c.kubeconfig, "kubeconfig", "",
 		"The file path to kubernetes configuration file. Defaults to location "+
 			"specified by $KUBECONFIG, or to default file rules if not set")
+	err := cmd.Flags().MarkDeprecated("kubeconfig",
+		"use --kubeconfig with 'local' or 'packagemanifests' subcommands instead")
+	if err != nil {
+		panic(err)
+	}
 	// Deprecated: namespace exists for historical compatibility. Use watch-namespace instead.
 	//TODO: remove namespace flag before 1.0.0
 	if !kbutil.HasProjectFile() { // not show for the kb layout projects
@@ -149,38 +151,48 @@ https://sdk.operatorframework.io/docs/olm-integration/cli-overview
 	cmd.Flags().BoolVar(&c.olm, "olm", false,
 		"The operator to be run will be managed by OLM in a cluster. "+
 			"Cannot be set with another run-type flag")
-	err := cmd.Flags().MarkDeprecated("olm", "use 'run packagemanifests' instead")
+	err = cmd.Flags().MarkDeprecated("olm", "use 'run packagemanifests' instead")
 	if err != nil {
 		panic(err)
 	}
 	// Mark all flags used with '--olm' as deprecated and hidden separately so
 	// all other 'run' flags are still available.
-	fs := pflag.NewFlagSet("olm", pflag.ExitOnError)
-	fs.SortFlags = false
-	fs.StringVar(&c.olmArgs.ManifestsDir, "manifests", "",
+	olmFS := pflag.NewFlagSet("olm", pflag.ExitOnError)
+	olmFS.StringVar(&c.olmArgs.ManifestsDir, "manifests", "",
 		"Directory containing operator package directories and a package manifest file")
-	c.olmArgs.AddToFlagSet(fs)
-	fs.VisitAll(func(f *pflag.Flag) {
+	c.olmArgs.AddToFlagSet(olmFS)
+	olmFS.VisitAll(func(f *pflag.Flag) {
 		f.Deprecated = "use this flag with 'run packagemanifests' instead"
 		f.Hidden = true
 	})
-	cmd.Flags().AddFlagSet(fs)
+	cmd.Flags().AddFlagSet(olmFS)
 
 	// 'run --local' and related flags.
 	cmd.Flags().BoolVar(&c.local, "local", false,
 		"The operator will be run locally by building the operator binary with "+
 			"the ability to access a kubernetes cluster using a kubeconfig file. "+
 			"Cannot be set with another run-type flag.")
-	c.localArgs.addToFlags(cmd.Flags())
+	err = cmd.Flags().MarkDeprecated("local", "use 'run local' instead")
+	if err != nil {
+		panic(err)
+	}
+	localFS := pflag.NewFlagSet("local", pflag.ExitOnError)
+	c.localArgs.AddToFlags(localFS)
 	switch projutil.GetOperatorType() {
 	case projutil.OperatorTypeAnsible:
-		c.localArgs.ansibleOperatorFlags = aoflags.AddTo(cmd.Flags(), "(ansible operator)")
+		c.localArgs.AnsibleOperatorFlags = aoflags.AddTo(localFS, "(ansible operator)")
 	case projutil.OperatorTypeHelm:
-		c.localArgs.helmOperatorFlags = hoflags.AddTo(cmd.Flags(), "(helm operator)")
+		c.localArgs.HelmOperatorFlags = hoflags.AddTo(localFS, "(helm operator)")
 	}
+	localFS.VisitAll(func(f *pflag.Flag) {
+		f.Deprecated = "use this flag with 'run local' instead"
+		f.Hidden = true
+	})
+	cmd.Flags().AddFlagSet(localFS)
 
 	cmd.AddCommand(
-		newPackageManifestsCmd(),
+		packagemanifests.NewCmd(),
+		local.NewCmd(),
 	)
 
 	return cmd
