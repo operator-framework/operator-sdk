@@ -33,7 +33,7 @@ require if the tests are designed for resource creation.
 
 Scorecard requires the following Kube environment:
 
-- Access to a Kubernetes v1.17.1+ cluster
+- Access to a Kubernetes v1.11.3+ cluster
 
 ## Running the Scorecard
 
@@ -88,21 +88,16 @@ tests:
   description: validate the bundle test
 ```
 
-The configuration file defines each test that scorecard can execute.  
-The following fields of the scorecard configuration file define the 
-test as follows:
+The configuration file defines each test that scorecard can execute.  The 
+following fields of the scorecard configuration file define the test 
+as follows:
+
  
- * name - the human readable name you use to describe the test, 
-however, the actual name printed by scorecard when it executes the 
-test is defined within the test itself
- * image - the test container image name that implements a test 
- * entrypoint - the command and arguments that are invoked in the 
-test image to execute a test
- * labels - user defined labels that allow for test selection using 
-the scorecard CLI `--selector` flag
- * description - the human readable description for the test, however, 
-the description printed by scorecard on an executed test is the 
-description provided by the test implementation itself
+| Config Field        | Description   |
+| --------    | -------- |
+| image | the test container image name that implements a test 
+| entrypoint | the command and arguments that are invoked in the test image to execute a test
+| labels | user defined labels that allow for test selection using the scorecard CLI `--selector` flag
 
 ### Command Args
 
@@ -128,7 +123,7 @@ Scorecard flags include the following:
 | `--skip-cleanup`, `-x`  | boolean |  disable deleting test Pods and ConfigMaps generated from executing scorecard tests, useful for debugging.|
 | `--wait-time`, `-w`  | int |  seconds to wait for tests to complete.  Example is 35s.|
 
-## Tests Performed
+## Selecting Tests
 
 Scorecard users can specify a `--selector` CLI flag to filter which 
 tests it will execute.  If a selector flag is not supplied, then all 
@@ -137,20 +132,34 @@ the tests within the scorecard configuration file are executed.
 Tests are executed serially, one after the other, with test results 
 being aggregated by scorecard to present back to the end user.
 
-Here are some examples of supplying a selector flag to scorecard:
+To select a single test, basic-check-spec-test, you would enter the
+following:
 ```sh
 operator-sdk scorecard -o text --selector=test=basic-check-spec-test
+```
+
+To select a suite of tests, olm in this case, you would specify
+a label that is used by all the OLM tests:
+```sh
 operator-sdk scorecard -o text --selector=suite=olm
+```
+
+To select multiple tests, you could specify them as follows:
+```sh
 operator-sdk scorecard -o text --selector='test in (basic-check-spec-test,olm-bundle-validation-test)'
 ```
 
-### Basic Operator
+## Built-in Tests
+
+The scorecard ships with pre-defined tests that are arranged into suites.
+
+### Basic Test Suite
 
 | Test        | Description   | Test Name |
 | --------    | -------- | -------- |
 | Spec Block Exists | This test checks the Custom Resource(s) created in the cluster to make sure that all CRs have a spec block. | basic-check-spec-test |
 
-### OLM Integration
+### OLM Test Suite
 
 | Test        | Description   | Short Name |
 | --------    | -------- | -------- |
@@ -161,6 +170,9 @@ operator-sdk scorecard -o text --selector='test in (basic-check-spec-test,olm-bu
 | Status Fields With Descriptors | This test verifies that every field in the Custom Resources' status sections have a corresponding descriptor listed in the CSV.| olm-status-descriptors-test |
 
 ## Scorecard Output
+
+Users can specify the `--output` flag to define the scorecard results 
+output format.
 
 ### JSON format
 
@@ -194,6 +206,7 @@ See an example of the text format produced by a scorecard test:
 
 This output is structured according to the golang struct found
 [here][scorecard-struct].
+
 
 ## Exit Status
 
