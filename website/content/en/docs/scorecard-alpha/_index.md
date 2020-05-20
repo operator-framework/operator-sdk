@@ -204,8 +204,7 @@ See an example of the text format produced by a scorecard test:
 	Labels: 
 ```
 
-This output is structured according to the golang struct found
-[here][scorecard-struct].
+**NOTE** The results are done using the type [ScorecardOutput](https://godoc.org/github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2#ScorecardOutput). 
 
 
 ## Exit Status
