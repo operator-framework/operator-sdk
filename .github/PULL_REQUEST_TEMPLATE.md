@@ -1,8 +1,12 @@
 <!--
 
-Before making a PR, please read our contributing guidelines https://github.com/operator-framework/operator-sdk/blob/master/CONTRIBUTING.MD
+Welcome to the Operator SDK! Before contributing, make sure to:
 
-Note: Make sure your branch is rebased to the latest upstream master.
+- Read the contributing guidelines https://github.com/operator-framework/operator-sdk/blob/master/CONTRIBUTING.MD
+- Rebase your branch on the latest upstream master
+- Add a changelog file by copying changelog/fragments/00-template.yaml 
+- Link any relevant issues, PR's, or documentation
+- When fixing an issue, add "Closes #<ISSUE_NUMBER>"
 
 -->
 
@@ -10,10 +14,3 @@ Note: Make sure your branch is rebased to the latest upstream master.
 
 
 **Motivation for the change:**
-
-<!--
-
-Note: If this PR is fixing an issue make sure to add a note saying:
-Closes #<ISSUE_NUMBER>
-
--->

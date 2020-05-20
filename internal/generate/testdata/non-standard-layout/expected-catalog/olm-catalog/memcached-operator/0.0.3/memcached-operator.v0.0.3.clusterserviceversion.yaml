@@ -37,6 +37,7 @@ spec:
         displayName: Nodes
         path: nodes
       version: v1alpha1
+  description: Memcached Operator description. TODO.
   displayName: Memcached Operator
   icon:
   - base64data: ""
@@ -145,10 +146,16 @@ spec:
   - supported: true
     type: AllNamespaces
   keywords:
-  - "FooBar"
-  - "These keywords must be preserved in the CSV update tests from 0.0.3 to 0.0.4"
+  - FooBar
+  - These keywords must be preserved in the CSV update tests from 0.0.3 to 0.0.4
+  links:
+  - name: Memcached Operator
+    url: https://memcached-operator.domain
   maintainers:
-  - {}
+  - email: your@email.com
+    name: Maintainer Name
   maturity: alpha
-  provider: {}
+  provider:
+    name: Provider Name
+    url: https://your.domain
   version: 0.0.3

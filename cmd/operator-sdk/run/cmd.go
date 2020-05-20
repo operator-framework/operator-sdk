@@ -21,6 +21,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 
 	olmcatalog "github.com/operator-framework/operator-sdk/internal/generate/olm-catalog"
 	olmoperator "github.com/operator-framework/operator-sdk/internal/olm/operator"
@@ -42,7 +43,7 @@ type runCmd struct {
 	olm, local bool
 
 	// Run type-specific options.
-	olmArgs   olmoperator.OLMCmd
+	olmArgs   olmoperator.PackageManifestsCmd
 	localArgs runLocalArgs
 }
 
@@ -136,14 +137,34 @@ https://sdk.operatorframework.io/docs/olm-integration/cli-overview
 	//TODO: remove namespace flag before 1.0.0
 	if !kbutil.HasProjectFile() { // not show for the kb layout projects
 		cmd.Flags().StringVar(&c.namespace, "namespace", "",
-			"(Deprecated: use --watch-namespace instead.)"+
-				"The namespace where the operator watches for changes.")
+			"The namespace in which operator and namespaces resources are run")
+		err := cmd.Flags().MarkDeprecated("namespace", "use --watch-namespaces (with --local) "+
+			"or --operator-namespace (with --olm) instead")
+		if err != nil {
+			panic(err)
+		}
 	}
+
 	// 'run --olm' and related flags.
 	cmd.Flags().BoolVar(&c.olm, "olm", false,
 		"The operator to be run will be managed by OLM in a cluster. "+
 			"Cannot be set with another run-type flag")
-	c.olmArgs.AddToFlagSet(cmd.Flags())
+	err := cmd.Flags().MarkDeprecated("olm", "use 'run packagemanifests' instead")
+	if err != nil {
+		panic(err)
+	}
+	// Mark all flags used with '--olm' as deprecated and hidden separately so
+	// all other 'run' flags are still available.
+	fs := pflag.NewFlagSet("olm", pflag.ExitOnError)
+	fs.SortFlags = false
+	fs.StringVar(&c.olmArgs.ManifestsDir, "manifests", "",
+		"Directory containing operator package directories and a package manifest file")
+	c.olmArgs.AddToFlagSet(fs)
+	fs.VisitAll(func(f *pflag.Flag) {
+		f.Deprecated = "use this flag with 'run packagemanifests' instead"
+		f.Hidden = true
+	})
+	cmd.Flags().AddFlagSet(fs)
 
 	// 'run --local' and related flags.
 	cmd.Flags().BoolVar(&c.local, "local", false,
@@ -157,5 +178,10 @@ https://sdk.operatorframework.io/docs/olm-integration/cli-overview
 	case projutil.OperatorTypeHelm:
 		c.localArgs.helmOperatorFlags = hoflags.AddTo(cmd.Flags(), "(helm operator)")
 	}
+
+	cmd.AddCommand(
+		newPackageManifestsCmd(),
+	)
+
 	return cmd
 }

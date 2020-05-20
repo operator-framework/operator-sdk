@@ -20,8 +20,8 @@ import (
 	"log"
 	"os"
 
+	scorecard "github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
 	"github.com/operator-framework/operator-sdk/internal/scorecard/alpha/tests"
-	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 )
 
@@ -40,10 +40,8 @@ func main() {
 		log.Fatal("test name argument is required")
 	}
 
-	// This is the path that holds the untar'd bundle contents
-	tmpDir := "/bundle"
-
-	cfg, err := tests.GetBundle(tmpDir)
+	// Read the pod's untar'd bundle from a well-known path.
+	cfg, err := tests.GetBundle(scorecard.PodBundleRoot)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -52,7 +50,7 @@ func main() {
 
 	switch entrypoint[0] {
 	case tests.OLMBundleValidationTest:
-		result = tests.BundleValidationTest(tmpDir)
+		result = tests.BundleValidationTest(scorecard.PodBundleRoot)
 	case tests.OLMCRDsHaveValidationTest:
 		result = tests.CRDsHaveValidationTest(*cfg)
 	case tests.OLMCRDsHaveResourcesTest:
@@ -76,7 +74,7 @@ func main() {
 }
 
 // printValidTests will print out full list of test names to give a hint to the end user on what the valid tests are
-func printValidTests() (result v1alpha2.ScorecardTestResult) {
+func printValidTests() (result scapiv1alpha2.ScorecardTestResult) {
 	result.State = scapiv1alpha2.FailState
 	result.Errors = make([]string, 0)
 	result.Suggestions = make([]string, 0)

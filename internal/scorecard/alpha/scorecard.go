@@ -46,7 +46,8 @@ type PodTestRunner struct {
 	ServiceAccount string
 	BundlePath     string
 	Client         kubernetes.Interface
-	configMapName  string
+
+	configMapName string
 }
 
 type FakeTestRunner struct {
@@ -65,7 +66,7 @@ func (o Scorecard) RunTests(ctx context.Context) (testOutput v1alpha2.ScorecardO
 	tests := o.selectTests()
 	if len(tests) == 0 {
 		testOutput.Results = make([]v1alpha2.ScorecardTestResult, 0)
-		return testOutput, err
+		return testOutput, nil
 	}
 
 	testOutput.Results = make([]v1alpha2.ScorecardTestResult, len(tests))
@@ -84,7 +85,7 @@ func (o Scorecard) RunTests(ctx context.Context) (testOutput v1alpha2.ScorecardO
 			return testOutput, err
 		}
 	}
-	return testOutput, err
+	return testOutput, nil
 }
 
 // selectTests applies an optionally passed selector expression

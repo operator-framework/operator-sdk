@@ -18,11 +18,8 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/build"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/bundle"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cleanup"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/completion"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/olm"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/run"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/scorecard"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/version"
 	"github.com/operator-framework/operator-sdk/internal/flags"
 	"github.com/operator-framework/operator-sdk/internal/plugins/golang"
@@ -41,11 +38,12 @@ var commands = []*cobra.Command{
 
 	alpha.NewCmd(),
 	bundle.NewCmd(),
-	cleanup.NewCmd(),
+	// Add back when implemented for new project layouts.
+	// cleanup.NewCmd(),
 	completion.NewCmd(),
 	olm.NewCmd(),
-	run.NewCmd(),
-	scorecard.NewCmd(),
+	// Add back when implemented for new project layouts.
+	// run.NewCmd(),
 	version.NewCmd(),
 	build.NewCmd(),
 

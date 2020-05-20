@@ -33,29 +33,18 @@ var installModeStrings = map[string]olmapiv1alpha1.InstallModeType{
 
 // installModeCompatible ensures installMode is compatible with the namespaces
 // and CSV's installModes being used.
-func (m operatorManager) installModeCompatible(installMode olmapiv1alpha1.InstallModeType) error {
-	err := validateInstallModeForNamespaces(installMode, m.installModeNamespaces)
+func installModeCompatible(csv *olmapiv1alpha1.ClusterServiceVersion, installMode olmapiv1alpha1.InstallModeType,
+	operatorNamespace string, targetNamespaces []string) error {
+
+	err := validateInstallModeForNamespaces(installMode, targetNamespaces)
 	if err != nil {
 		return err
 	}
 	if installMode == olmapiv1alpha1.InstallModeTypeOwnNamespace {
-		if ns := m.installModeNamespaces[0]; ns != m.namespace {
+		if ns := targetNamespaces[0]; ns != operatorNamespace {
 			return fmt.Errorf("installMode %s namespace %q must match namespace %q",
-				installMode, ns, m.namespace)
+				installMode, ns, operatorNamespace)
 		}
-	}
-	// Ensure CSV supports installMode.
-	bundle, err := getBundleForVersion(m.bundles, m.version)
-	if err != nil {
-		return err
-	}
-	bcsv, err := bundle.ClusterServiceVersion()
-	if err != nil {
-		return err
-	}
-	csv, err := bundleCSVToCSV(bcsv)
-	if err != nil {
-		return err
 	}
 	for _, mode := range csv.Spec.InstallModes {
 		if mode.Type == installMode && !mode.Supported {
@@ -114,7 +103,7 @@ func validateInstallModeForNamespaces(mode olmapiv1alpha1.InstallModeType, names
 func bundleCSVToCSV(bcsv *registry.ClusterServiceVersion) (*olmapiv1alpha1.ClusterServiceVersion, error) {
 	spec := olmapiv1alpha1.ClusterServiceVersionSpec{}
 	if err := json.Unmarshal(bcsv.Spec, &spec); err != nil {
-		return nil, fmt.Errorf("error converting bundle CSV %q type: %w", bcsv.GetName(), err)
+		return nil, fmt.Errorf("error converting CSV %q type: %w", bcsv.GetName(), err)
 	}
 	return &olmapiv1alpha1.ClusterServiceVersion{
 		TypeMeta:   bcsv.TypeMeta,

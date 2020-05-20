@@ -21,11 +21,13 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion/bases"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	"github.com/blang/semver"
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"sigs.k8s.io/yaml"
 )
@@ -186,15 +188,16 @@ func TestGoCSVNew(t *testing.T) {
 	defer cleanupFunc()
 
 	g := BundleGenerator{
-		OperatorName:  testProjectName,
-		DeployDir:     "deploy",
-		ApisDir:       filepath.Join("pkg", "apis"),
-		CRDsDir:       filepath.Join("deploy", "crds_v1beta1"),
-		OutputDir:     "deploy",
-		CSVVersion:    csvVersion,
-		FromVersion:   "",
-		UpdateCRDs:    false,
-		MakeManifests: false,
+		InteractivePreference: projutil.InteractiveHardOff,
+		OperatorName:          testProjectName,
+		DeployDir:             "deploy",
+		ApisDir:               filepath.Join("pkg", "apis"),
+		CRDsDir:               filepath.Join("deploy", "crds_v1beta1"),
+		OutputDir:             "deploy",
+		CSVVersion:            csvVersion,
+		FromVersion:           "",
+		UpdateCRDs:            false,
+		MakeManifests:         false,
 	}
 	g.noUpdate = true
 	g.setDefaults()
@@ -217,15 +220,16 @@ func TestGoCSVUpdate(t *testing.T) {
 	defer cleanupFunc()
 
 	g := BundleGenerator{
-		OperatorName:  testProjectName,
-		DeployDir:     "deploy",
-		ApisDir:       filepath.Join("pkg", "apis"),
-		CRDsDir:       filepath.Join("deploy", "crds_v1beta1"),
-		OutputDir:     "deploy",
-		CSVVersion:    csvVersion,
-		FromVersion:   "",
-		UpdateCRDs:    false,
-		MakeManifests: false,
+		InteractivePreference: projutil.InteractiveHardOff,
+		OperatorName:          testProjectName,
+		DeployDir:             "deploy",
+		ApisDir:               filepath.Join("pkg", "apis"),
+		CRDsDir:               filepath.Join("deploy", "crds_v1beta1"),
+		OutputDir:             "deploy",
+		CSVVersion:            csvVersion,
+		FromVersion:           "",
+		UpdateCRDs:            false,
+		MakeManifests:         false,
 	}
 	g.setDefaults()
 	fileMap, err := g.generateCSV()
@@ -247,15 +251,16 @@ func TestGoCSVUpgrade(t *testing.T) {
 	defer cleanupFunc()
 
 	g := BundleGenerator{
-		OperatorName:  testProjectName,
-		DeployDir:     "deploy",
-		ApisDir:       filepath.Join("pkg", "apis"),
-		CRDsDir:       filepath.Join("deploy", "crds_v1beta1"),
-		OutputDir:     "deploy",
-		CSVVersion:    csvVersion,
-		FromVersion:   fromVersion,
-		UpdateCRDs:    false,
-		MakeManifests: false,
+		InteractivePreference: projutil.InteractiveHardOff,
+		OperatorName:          testProjectName,
+		DeployDir:             "deploy",
+		ApisDir:               filepath.Join("pkg", "apis"),
+		CRDsDir:               filepath.Join("deploy", "crds_v1beta1"),
+		OutputDir:             "deploy",
+		CSVVersion:            csvVersion,
+		FromVersion:           fromVersion,
+		UpdateCRDs:            false,
+		MakeManifests:         false,
 	}
 	g.setDefaults()
 	fileMap, err := g.generateCSV()
@@ -277,15 +282,16 @@ func TestGoCSVNewManifests(t *testing.T) {
 	defer cleanupFunc()
 
 	g := BundleGenerator{
-		OperatorName:  testProjectName,
-		DeployDir:     "deploy",
-		ApisDir:       filepath.Join("pkg", "apis"),
-		CRDsDir:       filepath.Join("deploy", "crds_v1beta1"),
-		OutputDir:     "deploy",
-		CSVVersion:    csvVersion,
-		FromVersion:   "",
-		UpdateCRDs:    false,
-		MakeManifests: true,
+		InteractivePreference: projutil.InteractiveHardOff,
+		OperatorName:          testProjectName,
+		DeployDir:             "deploy",
+		ApisDir:               filepath.Join("pkg", "apis"),
+		CRDsDir:               filepath.Join("deploy", "crds_v1beta1"),
+		OutputDir:             "deploy",
+		CSVVersion:            csvVersion,
+		FromVersion:           "",
+		UpdateCRDs:            false,
+		MakeManifests:         true,
 	}
 	g.noUpdate = true
 	g.setDefaults()
@@ -308,15 +314,16 @@ func TestGoCSVUpdateManifests(t *testing.T) {
 	defer cleanupFunc()
 
 	g := BundleGenerator{
-		OperatorName:  testProjectName,
-		DeployDir:     "deploy",
-		ApisDir:       filepath.Join("pkg", "apis"),
-		CRDsDir:       filepath.Join("deploy", "crds_v1beta1"),
-		OutputDir:     "deploy",
-		CSVVersion:    csvVersion,
-		FromVersion:   "",
-		UpdateCRDs:    false,
-		MakeManifests: true,
+		InteractivePreference: projutil.InteractiveHardOff,
+		OperatorName:          testProjectName,
+		DeployDir:             "deploy",
+		ApisDir:               filepath.Join("pkg", "apis"),
+		CRDsDir:               filepath.Join("deploy", "crds_v1beta1"),
+		OutputDir:             "deploy",
+		CSVVersion:            csvVersion,
+		FromVersion:           "",
+		UpdateCRDs:            false,
+		MakeManifests:         true,
 	}
 	g.setDefaults()
 	fileMap, err := g.generateCSV()
@@ -338,15 +345,16 @@ func TestGoCSVNewWithInvalidDeployDir(t *testing.T) {
 	defer cleanupFunc()
 
 	g := BundleGenerator{
-		OperatorName:  testProjectName,
-		DeployDir:     "notExist",
-		ApisDir:       filepath.Join("pkg", "apis"),
-		CRDsDir:       "notExist",
-		OutputDir:     "deploy",
-		CSVVersion:    notExistVersion,
-		FromVersion:   "",
-		UpdateCRDs:    false,
-		MakeManifests: false,
+		InteractivePreference: projutil.InteractiveHardOff,
+		OperatorName:          testProjectName,
+		DeployDir:             "notExist",
+		ApisDir:               filepath.Join("pkg", "apis"),
+		CRDsDir:               "notExist",
+		OutputDir:             "deploy",
+		CSVVersion:            notExistVersion,
+		FromVersion:           "",
+		UpdateCRDs:            false,
+		MakeManifests:         false,
 	}
 
 	g.setDefaults()
@@ -362,15 +370,16 @@ func TestGoCSVNewWithEmptyDeployDir(t *testing.T) {
 	defer cleanupFunc()
 
 	g := BundleGenerator{
-		OperatorName:  testProjectName,
-		DeployDir:     "emptydir",
-		ApisDir:       filepath.Join("pkg", "apis"),
-		CRDsDir:       "emptydir",
-		OutputDir:     "emptydir",
-		CSVVersion:    notExistVersion,
-		FromVersion:   "",
-		UpdateCRDs:    false,
-		MakeManifests: false,
+		InteractivePreference: projutil.InteractiveHardOff,
+		OperatorName:          testProjectName,
+		DeployDir:             "emptydir",
+		ApisDir:               filepath.Join("pkg", "apis"),
+		CRDsDir:               "emptydir",
+		OutputDir:             "emptydir",
+		CSVVersion:            notExistVersion,
+		FromVersion:           "",
+		UpdateCRDs:            false,
+		MakeManifests:         false,
 	}
 
 	g.setDefaults()
@@ -380,10 +389,20 @@ func TestGoCSVNewWithEmptyDeployDir(t *testing.T) {
 	}
 
 	// Create an empty CSV.
-	csv, err := newCSV(testProjectName, notExistVersion)
+	b := bases.ClusterServiceVersion{
+		OperatorName: testProjectName,
+		OperatorType: projutil.OperatorTypeGo,
+	}
+	csv, err := b.GetBase()
 	if err != nil {
 		t.Fatal(err)
 	}
+	if err := g.updateCSVVersions(csv); err != nil {
+		t.Fatal(err)
+	}
+	csv.Spec.InstallStrategy.StrategyName = v1alpha1.InstallStrategyNameDeployment
+	csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs = []v1alpha1.StrategyDeploymentSpec{}
+
 	csvExpBytes, err := k8sutil.GetObjectBytes(csv, yaml.Marshal)
 	if err != nil {
 		t.Fatal(err)
@@ -396,49 +415,6 @@ func TestGoCSVNewWithEmptyDeployDir(t *testing.T) {
 	}
 }
 
-func TestCSVPrompt(t *testing.T) {
-	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
-	defer cleanupFunc()
-
-	s := interactiveCSVCmd{
-		DisplayName: "Memcached Application",
-		Keywords:    []string{"memcached", "app"},
-		Description: "Main enterprise application providing business critical features with " +
-			"high availability and no manual intervention.",
-		ProviderName: "Example",
-		ProviderURL:  "www.example.com",
-		Maintainers:  []string{"Some Corp:corp@example.com"},
-	}
-
-	g := BundleGenerator{
-		OperatorName:      testProjectName,
-		DeployDir:         "deploy",
-		ApisDir:           filepath.Join("pkg", "apis"),
-		CRDsDir:           filepath.Join("deploy", "crds_v1beta1"),
-		OutputDir:         "deploy",
-		CSVVersion:        "0.0.2",
-		FromVersion:       "",
-		UpdateCRDs:        false,
-		MakeManifests:     true,
-		interactiveCSVCmd: s,
-	}
-
-	g.setDefaults()
-	fileMap, err := g.generateCSV()
-	if err != nil {
-		t.Fatalf("Failed to execute CSV generator: %v", err)
-	}
-
-	csvExpFile := getCSVFileName(testProjectName)
-	csvExpBytes := readFile(t, filepath.Join(OLMCatalogDir, testProjectName, "manifests", csvExpFile))
-	if b, ok := fileMap[csvExpFile]; !ok {
-		t.Errorf("Failed to generate CSV for version %s", csvVersion)
-	} else {
-		assert.Equal(t, string(csvExpBytes), string(b))
-	}
-
-}
-
 func TestUpdateCSVVersion(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
@@ -449,15 +425,16 @@ func TestUpdateCSVVersion(t *testing.T) {
 	}
 
 	g := BundleGenerator{
-		OperatorName:  testProjectName,
-		DeployDir:     "deploy",
-		ApisDir:       filepath.Join("pkg", "apis"),
-		CRDsDir:       filepath.Join("deploy", "crds_v1beta1"),
-		OutputDir:     "deploy",
-		CSVVersion:    csvVersion,
-		FromVersion:   fromVersion,
-		UpdateCRDs:    false,
-		MakeManifests: false,
+		InteractivePreference: projutil.InteractiveHardOff,
+		OperatorName:          testProjectName,
+		DeployDir:             "deploy",
+		ApisDir:               filepath.Join("pkg", "apis"),
+		CRDsDir:               filepath.Join("deploy", "crds_v1beta1"),
+		OutputDir:             "deploy",
+		CSVVersion:            csvVersion,
+		FromVersion:           fromVersion,
+		UpdateCRDs:            false,
+		MakeManifests:         false,
 	}
 	g.setDefaults()
 	if err := g.updateCSVVersions(csv); err != nil {

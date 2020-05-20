@@ -26,6 +26,11 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+const (
+	// PodBundleRoot is the directory containing all bundle data within a test pod.
+	PodBundleRoot = "/bundle"
+)
+
 // getPodDefinition fills out a Pod definition based on
 // information from the test
 func getPodDefinition(configMapName string, test Test, r PodTestRunner) *v1.Pod {
@@ -44,12 +49,12 @@ func getPodDefinition(configMapName string, test Test, r PodTestRunner) *v1.Pod 
 			Containers: []v1.Container{
 				{
 					Name:            "scorecard-test",
-					Image:           "quay.io/operator-framework/scorecard-test:dev",
+					Image:           test.Image,
 					ImagePullPolicy: v1.PullIfNotPresent,
 					Command:         test.Entrypoint,
 					VolumeMounts: []v1.VolumeMount{
 						{
-							MountPath: "/bundle",
+							MountPath: PodBundleRoot,
 							Name:      "scorecard-untar",
 							ReadOnly:  true,
 						},

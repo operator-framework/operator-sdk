@@ -51,18 +51,6 @@ type PkgGenerator struct {
 	fileName string
 }
 
-func isFileExist(path string) bool {
-	_, err := os.Stat(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false
-		}
-		// TODO: return and handle this error
-		log.Fatalf("Failed to stat %s: %v", path, err)
-	}
-	return true
-}
-
 // getPkgFileName will return the name of the PackageManifestFile
 func getPkgFileName(operatorName string) string {
 	return strings.ToLower(operatorName) + packageManifestFileExt
@@ -131,7 +119,7 @@ func (g PkgGenerator) buildPackageManifest() (registry.PackageManifest, error) {
 	pkgManifestOutputDir := filepath.Join(g.OutputDir, OLMCatalogChildDir, g.OperatorName)
 	path := filepath.Join(pkgManifestOutputDir, g.fileName)
 	pkg := registry.PackageManifest{}
-	if isFileExist(path) {
+	if isExist(path) {
 		b, err := ioutil.ReadFile(path)
 		if err != nil {
 			return pkg, fmt.Errorf("failed to read package manifest %s: %v", path, err)

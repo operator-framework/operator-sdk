@@ -94,7 +94,7 @@ func createFromYAMLFile(cfg BasicAndOLMPluginConfig, yamlPath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to read file %s: %v", yamlPath, err)
 	}
-	scanner := internalk8sutil.NewYAMLScanner(yamlSpecs)
+	scanner := internalk8sutil.NewYAMLScanner(bytes.NewBuffer(yamlSpecs))
 	for scanner.Scan() {
 		obj := &unstructured.Unstructured{}
 		jsonSpec, err := yaml.YAMLToJSON(scanner.Bytes())
@@ -405,7 +405,7 @@ func getProxyLogs(proxyPod *v1.Pod) (string, error) {
 func getGVKs(yamlFile []byte) ([]schema.GroupVersionKind, error) {
 	var gvks []schema.GroupVersionKind
 
-	scanner := internalk8sutil.NewYAMLScanner(yamlFile)
+	scanner := internalk8sutil.NewYAMLScanner(bytes.NewBuffer(yamlFile))
 	for scanner.Scan() {
 		yamlSpec := scanner.Bytes()
 

@@ -1,0 +1,13 @@
+# Hugo build configuration for Netlify
+# (https://gohugo.io/hosting-and-deployment/hosting-on-netlify/#configure-hugo-version-in-netlify)
+
+# Default build settings
+[build]
+  publish = "public"
+  base = "website"
+  command = "cd themes/docsy && git submodule update -f --init && cd ../.. && npm install postcss-cli autoprefixer && hugo version && hugo"
+
+# "production" environment specific build settings
+[build.environment]
+  HUGO_ENV = "production"
+  HUGO_VERSION = "0.70.0"
