@@ -164,7 +164,7 @@ operator-sdk scorecard -o text --selector='test in (basic-check-spec-test,olm-bu
 
 ### JSON format
 
-Here is an example of the JSON format produced by a scorecard test:
+See an example of the JSON format produced by a scorecard test:
 
 ```json
 {
