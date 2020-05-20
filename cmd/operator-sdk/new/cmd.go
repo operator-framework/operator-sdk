@@ -38,6 +38,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/helm/watches"
 )
 
+//nolint:lll
 func NewCmd() *cobra.Command { //nolint:golint
 	/*
 		The nolint here is used to hide the warning
@@ -57,9 +58,10 @@ generates a default directory layout based on the input <project-name>.
   $ mkdir $HOME/projects/example.com/
   $ cd $HOME/projects/example.com/
 
-  # Go project
+  # (Deprecated) Go project 
   $ operator-sdk new app-operator
-
+  # Note that it will be replaced by operator-sdk init. More info: https://sdk.operatorframework.io/docs/golang/kubebuilder/
+		
   # Ansible project
   $ operator-sdk new app-operator --type=ansible \
     --api-version=app.example.com/v1alpha1 \
@@ -159,7 +161,6 @@ func newFunc(cmd *cobra.Command, args []string) error {
 				log.Fatal(err)
 			}
 		}
-
 	case projutil.OperatorTypeAnsible:
 		if err := doAnsibleScaffold(); err != nil {
 			log.Fatal(err)

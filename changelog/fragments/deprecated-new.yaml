@@ -1,0 +1,13 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      The command `operator-sdk new` for Golang based-operators has been deprecated use `operator-sdk init` instead of that. More info: https://sdk.operatorframework.io/docs/golang/kubebuilder/.
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "deprecation"

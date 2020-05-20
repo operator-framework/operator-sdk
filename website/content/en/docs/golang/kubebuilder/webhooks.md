@@ -1,5 +1,16 @@
+---
+title: Webhooks
+weight: 3
+---
 
-**NOTE:** This is a WIP doc for the Kubebuilder integration effort. This new CLI and workflow is currently alpha and there may be breaking changes.
+{{% alert title="Warning" color="warning" %}}
+These pages are under construction. Please, continue to using the current [docs][golang-docs]
+if you used or are still using the deprecated command `operator-sdk new` to create the projects.
+ 
+However, please feel free to check this section and contribute with if you would like to try out the new layout 
+by using `operator-sdk init` to start a new operator. For further information see the 
+[proposal](https://github.com/operator-framework/operator-sdk/blob/master/proposals/kubebuilder-integration.md).
+{{% /alert %}}
 
 ## Create a validating or mutating Admission Webhook
 
@@ -205,3 +216,5 @@ memcached-sample                        5/5     5            5           3m
 [kubebuilder_cronjob_webhook]: https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html
 [kubebuilder_running_webhook]: https://book.kubebuilder.io/cronjob-tutorial/running-webhook.html
 [kubernetes_admission_controllers]: https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/
+
+[golang-docs]: /docs/golang/

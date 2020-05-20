@@ -46,6 +46,14 @@ func RunLegacy() error {
 		log.Fatalf("Failed to bind root flags: %v", err)
 	}
 
+	//todo: update info when the operator-sdk init be default (e.g `will be` for `was replaced` )
+	if projutil.GetOperatorType() == projutil.OperatorTypeGo {
+		log.Infof("Currently, the SDK has been in a process to be integrated with Kubebuilder.")
+		log.Infof("The `operator-sdk new` command for Golang Based Operators has been deprecated " +
+			"and will be replaced by `operator-sdk init`.")
+		log.Infof("More info: https://sdk.operatorframework.io/docs/golang/kubebuilder/")
+	}
+
 	return root.Execute()
 }
 

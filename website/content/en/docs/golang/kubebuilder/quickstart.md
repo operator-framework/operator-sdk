@@ -1,6 +1,16 @@
+---
+title: Quickstart
+weight: 2
+---
 
-**NOTE:** This is a WIP doc for the Kubebuilder integration effort. This new CLI and workflow is currently alpha and there may be breaking changes.
-Please refer to the [quickstart guide][legacy_quickstart_doc] for the default CLI and workflow.
+{{% alert title="Warning" color="warning" %}}
+These pages are under construction. Please, continue to using the current [docs][golang-docs]
+if you used or are still using the deprecated command `operator-sdk new` to create the projects.
+ 
+However, please feel free to check this section and contribute with if you would like to try out the new layout 
+by using `operator-sdk init` to start a new operator. For further information see the 
+[proposal](https://github.com/operator-framework/operator-sdk/blob/master/proposals/kubebuilder-integration.md).
+{{% /alert %}}
 
 This guide walks through an example of building a simple memcached-operator using the operator-sdk CLI tool and controller-runtime library API.
 
@@ -479,3 +489,4 @@ Also see the [advanced topics][advanced_topics] doc for more use cases and under
 [create_a_webhook]: /docs/kubebuilder/webhooks.md
 [status_marker]: https://book.kubebuilder.io/reference/generating-crd.html#status
 [status_subresource]: https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#status-subresource
+[golang-docs]: /docs/golang/

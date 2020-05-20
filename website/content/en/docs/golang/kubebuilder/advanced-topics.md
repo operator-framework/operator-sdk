@@ -1,3 +1,17 @@
+---
+title: Advanced Topics
+weight: 4
+---
+
+{{% alert title="Warning" color="warning" %}}
+These pages are under construction. Please, continue to using the current [docs][golang-docs]
+if you used or are still using the deprecated command `operator-sdk new` to create the projects.
+ 
+However, please feel free to check this section and contribute with if you would like to try out the new layout 
+by using `operator-sdk init` to start a new operator. For further information see the 
+[proposal](https://github.com/operator-framework/operator-sdk/blob/master/proposals/kubebuilder-integration.md).
+{{% /alert %}}
+
 # Advanced Topics
 
 ### Manage CR status conditions
@@ -306,3 +320,4 @@ When the operator is not running in a cluster, the Manager will return an error 
 [leader_with_lease]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/leaderelection
 [pod_eviction_timeout]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#options
 [manager_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Options
+[golang-docs]: /docs/golang/
