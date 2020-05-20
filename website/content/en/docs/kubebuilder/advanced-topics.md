@@ -120,8 +120,6 @@ To learn about how metrics work in the Operator SDK read the [metrics section][m
 
 ### Handle Cleanup on Deletion
 
-> **// TODO:** Update finalizer reconcile code for kubebuilder's default reconciler imports and variable names
-
 To implement complex deletion logic, you can add a finalizer to your Custom Resource. This will prevent your Custom Resource from being
 deleted until you remove the finalizer (ie, after your cleanup logic has successfully run). For more information, see the
 [official Kubernetes documentation on finalizers](https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#finalizers).
