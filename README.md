@@ -23,8 +23,8 @@ boilerplate, and a lack of modularity which leads to duplication.
 The Operator SDK is a framework that uses the
 [controller-runtime][controller-runtime] library to make writing
 operators easier by providing:
-- High level APIs and abstractions to write the operational logic more
-- intuitively
+
+- High level APIs and abstractions to write the operational logic more intuitively
 - Tools for scaffolding and code generation to bootstrap a new project fast
 - Extensions to cover common operator use cases
 
