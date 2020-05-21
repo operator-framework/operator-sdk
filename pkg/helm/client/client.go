@@ -101,7 +101,6 @@ func NewRESTClientGetter(mgr manager.Manager, ns string) (genericclioptions.REST
 
 var _ kube.Interface = &ownerRefInjectingClient{}
 
-// NewOwnerRefInjectingClient ...
 func NewOwnerRefInjectingClient(base kube.Client, restMapper meta.RESTMapper,
 	cr *unstructured.Unstructured) (kube.Interface, error) {
 
