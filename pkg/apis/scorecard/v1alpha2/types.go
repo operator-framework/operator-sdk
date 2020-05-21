@@ -34,16 +34,18 @@ const (
 
 // ScorecardTestResult contains the results of an individual scorecard test.
 type ScorecardTestResult struct {
-	// Name is the name of the test
+	// Name is the name of the test image
 	Name string `json:"name"`
 	// Description describes what the test does
-	Description string `json:"description"`
+	Description string `json:"description,omitempty"`
 	// Labels that further describe the test and enable selection
 	Labels map[string]string `json:"labels,omitempty"`
 	// State is the final state of the test
 	State State `json:"state,omitempty"`
 	// Errors is a list of the errors that occurred during the test (this can include both fatal and non-fatal errors)
 	Errors []string `json:"errors,omitempty"`
+	// EntryPoint is list of commands and arguments passed to the test image
+	EntryPoint []string
 	// Suggestions is a list of suggestions for the user to improve their score (if applicable)
 	Suggestions []string `json:"suggestions,omitempty"`
 	// Log holds a log produced from the test (if applicable)
