@@ -105,6 +105,7 @@ func PackageManifestsAllNamespaces(t *testing.T) {
 	}
 	// Cleanup.
 	defer func() {
+		opcmd.ForceRegistry = true
 		if err := opcmd.Cleanup(); err != nil {
 			t.Fatal(err)
 		}
@@ -224,11 +225,7 @@ func PackageManifestsMultiplePackages(t *testing.T) {
 					Name:  "memcacheds.cache.example.com",
 					Group: "cache.example.com",
 					Versions: []apiextv1beta1.CustomResourceDefinitionVersion{
-						// TODO(estroz): uncomment after the following is merged and
-						// api version is bumped:
-						// https://github.com/operator-framework/api/pull/32
-						//
-						// {Name: "v1alpha1", Storage: false, Served: true},
+						{Name: "v1alpha1", Storage: false, Served: true},
 						{Name: "v1alpha2", Storage: true, Served: true},
 					},
 				},
@@ -273,6 +270,7 @@ func PackageManifestsMultiplePackages(t *testing.T) {
 	}
 	// Cleanup.
 	defer func() {
+		opcmd.ForceRegistry = true
 		if err := opcmd.Cleanup(); err != nil {
 			t.Fatal(err)
 		}
