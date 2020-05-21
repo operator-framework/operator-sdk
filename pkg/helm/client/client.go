@@ -104,9 +104,13 @@ var _ kube.Interface = &ownerRefInjectingClient{}
 func NewOwnerRefInjectingClient(base kube.Client, restMapper meta.RESTMapper,
 	cr *unstructured.Unstructured) (kube.Interface, error) {
 
-	if cr.GetObjectKind().GroupVersionKind().Empty() || cr.GetName() == "" || cr.GetUID() == "" {
-		var err = errors.New("owner resource is invalid")
-		return nil, err
+	if cr != nil {
+		if cr.GetObjectKind() != nil {
+			if cr.GetObjectKind().GroupVersionKind().Empty() || cr.GetName() == "" || cr.GetUID() == "" {
+				var err = errors.New("owner resource is invalid")
+				return nil, err
+			}
+		}
 	}
 	return &ownerRefInjectingClient{
 		Client:     base,
