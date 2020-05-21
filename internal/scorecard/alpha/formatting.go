@@ -51,7 +51,7 @@ func (o Scorecard) ListTests() (output v1alpha2.ScorecardOutput, err error) {
 
 	for _, test := range tests {
 		testResult := v1alpha2.ScorecardTestResult{}
-		testResult.Name = test.Image
+		testResult.Image = test.Image
 		testResult.Labels = test.Labels
 		testResult.EntryPoint = test.Entrypoint
 		output.Results = append(output.Results, testResult)
