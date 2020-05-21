@@ -67,7 +67,10 @@ func (f managerFactory) NewManager(cr *unstructured.Unstructured, overrideValues
 
 	kubeClient := kube.New(rcg)
 	restMapper := f.mgr.GetRESTMapper()
-	ownerRefClient := client.NewOwnerRefInjectingClient(*kubeClient, restMapper, cr)
+	ownerRefClient, err := client.NewOwnerRefInjectingClient(*kubeClient, restMapper, cr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to inject owner references: %w", err)
+	}
 
 	crChart, err := loader.LoadDir(f.chartDir)
 	if err != nil {

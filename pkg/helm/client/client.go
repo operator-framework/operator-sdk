@@ -15,6 +15,7 @@
 package client
 
 import (
+	"errors"
 	"io"
 
 	"github.com/operator-framework/operator-sdk/pkg/handler"
@@ -100,13 +101,19 @@ func NewRESTClientGetter(mgr manager.Manager, ns string) (genericclioptions.REST
 
 var _ kube.Interface = &ownerRefInjectingClient{}
 
+// NewOwnerRefInjectingClient ...
 func NewOwnerRefInjectingClient(base kube.Client, restMapper meta.RESTMapper,
-	cr *unstructured.Unstructured) kube.Interface {
+	cr *unstructured.Unstructured) (kube.Interface, error) {
+
+	if cr.GetObjectKind().GroupVersionKind().Empty() || cr.GetName() == "" || cr.GetUID() == "" {
+		var err = errors.New("owner resource is invalid")
+		return nil, err
+	}
 	return &ownerRefInjectingClient{
 		Client:     base,
 		restMapper: restMapper,
 		owner:      cr,
-	}
+	}, nil
 }
 
 type ownerRefInjectingClient struct {
