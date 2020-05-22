@@ -34,7 +34,7 @@ require if the tests are designed for resource creation.
 
 1. Define a scorecard configuration file `config.yaml`.  A sample 
 configuration file [config.yaml][sample-config] is found within 
-the SDK repository. See [Config file](#config-file) for an explaination 
+the SDK repository. See the [config file section](#config-file) for an explaination 
 of the configuration file format.  Unless you are executing custom 
 tests, you can just copy the provided example configuration file 
 into your project.
