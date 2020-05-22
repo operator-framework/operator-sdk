@@ -18,6 +18,7 @@ An SDK for building operators with ease
 ### SEE ALSO
 
 * [operator-sdk add](../operator-sdk_add)	 - Adds a controller or resource to the project
+* [operator-sdk alpha](../operator-sdk_alpha)	 - Run an alpha subcommand
 * [operator-sdk build](../operator-sdk_build)	 - Compiles code and builds artifacts
 * [operator-sdk bundle](../operator-sdk_bundle)	 - Manage operator bundle metadata
 * [operator-sdk cleanup](../operator-sdk_cleanup)	 - Delete and clean up after a running Operator

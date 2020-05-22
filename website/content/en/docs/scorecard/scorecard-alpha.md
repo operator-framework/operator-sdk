@@ -31,10 +31,6 @@ for an operator are left outside the scope of the scorecard itself.
 Scorecard tests can however create whatever resources they 
 require if the tests are designed for resource creation.
 
-Scorecard requires the following Kube environment:
-
-- Access to a Kubernetes v1.11.3+ cluster
-
 ## Running the Scorecard
 
 1. Define a scorecard configuration file `config.yaml`.  A sample 
@@ -109,19 +105,7 @@ operator-sdk alpha scorecard [bundle path] | [bundle image name] [flags]
 The scorecard requires a positional argument that holds either the
 on-disk path to your operator bundle or the name of a bundle image.
 
-Scorecard flags include the following:
-
-| Flag        | Type   | Description   |
-| --------    | -------- | -------- |
-| `--config`  | string | path to config file (default `<bundle directory>/tests/scorecard/config.yaml`; file type and extension must be `.yaml`). If a config file is not provided and a config file is not found at the default location, the scorecard will exit with an error. |
-| `--kubeconfig`, `-o`  | string |  path to kubeconfig used by the scorecard to execute tests, if not supplied, the KUBECONFIG environment variable or $HOME/.kube/config path is assumed, if those are not found an in-cluster configuraiton is assumed. |
-| `--list`, `-L`  | bool |  if true, only print the test names that would be run based on selector filtering. |
-| `--namespace`, `-n`  | string |  the namespace for scorecard to use when executing test Pods |
-| `--output`, `-o`  | string | output format. Valid options are: `text` and `json`. The default format is `text`, which is designed to be a simpler human readable format.|
-| `--selector`, `-l`  | string |  the label selector to filter tests on. |
-| `--service-account`, `-s`  | string |  the service account for scorecard to use when creating test Pods.|
-| `--skip-cleanup`, `-x`  | boolean |  disable deleting test Pods and ConfigMaps generated from executing scorecard tests, useful for debugging.|
-| `--wait-time`, `-w`  | int |  seconds to wait for tests to complete.  Example is 35s.|
+Scorecard flags are documented [here][cli-scorecard].
 
 ## Selecting Tests
 
@@ -223,12 +207,12 @@ the custom tests following some mandated conventions including:
  * tests can obtain the bundle contents at a shared mount point of /bundle
  * tests can access the Kube API using an in-cluster client connection
 
-See here for an example of a custom test image written in golang.  
+See here (TODO) for an example of a custom test image written in golang.  
 Writing custom tests in other programming languages is possible 
 if the test image follows the above guidelines.
 
 
-
+[cli-scorecard]: ../../cli/operator-sdk_alpha_scorecard/
 [sample-config]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/alpha/testdata/bundle/tests/scorecard/config.yaml
 [scorecard-struct]: https://github.com/operator-framework/operator-sdk/blob/master/pkg/apis/scorecard/v1alpha2/types.go
 [olm-bundle]:https://github.com/operator-framework/operator-registry#manifest-format
