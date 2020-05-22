@@ -111,7 +111,7 @@ tests it will execute.  If a selector flag is not supplied, then all
 the tests within the scorecard configuration file are executed.
 
 Tests are executed serially, one after the other, with test results 
-being aggregated by scorecard to present back to the end user.
+being aggregated by scorecard and written to stdout.
 
 To select a single test (`basic-check-spec-test`) you would enter the
 following:
