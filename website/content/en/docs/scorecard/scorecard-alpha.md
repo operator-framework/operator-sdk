@@ -48,7 +48,7 @@ by specifying the `--config` flag.
 ## Configuration
 
 The scorecard test execution is driven by a configuration file typically named
-`config.yaml`.   The configuration file is located at the following 
+`config.yaml`. The configuration file is located at the following 
 location within your bundle:
 ```
 tests/scorecard/config.yaml
