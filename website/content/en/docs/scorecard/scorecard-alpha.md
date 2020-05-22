@@ -115,7 +115,7 @@ the tests within the scorecard configuration file are executed.
 Tests are executed serially, one after the other, with test results 
 being aggregated by scorecard to present back to the end user.
 
-To select a single test, basic-check-spec-test, you would enter the
+To select a single test (`basic-check-spec-test`) you would enter the
 following:
 ```sh
 operator-sdk scorecard -o text --selector=test=basic-check-spec-test
