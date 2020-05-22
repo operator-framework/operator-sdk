@@ -62,7 +62,7 @@ func (c bundleCmd) runKustomize(cfg *config.Config) error {
 		OperatorType: genutil.PluginKeyToOperatorType(cfg.Layout),
 	}
 	opts := []gencsv.Option{
-		gencsv.WithBase(c.inputDir, c.apisDir),
+		gencsv.WithBase(c.inputDir, c.apisDir, c.interactiveLevel),
 		gencsv.WithBaseWriter(c.outputDir),
 	}
 	if err := csvGen.Generate(cfg, opts...); err != nil {
@@ -152,7 +152,7 @@ func (c bundleCmd) runManifests(cfg *config.Config) (err error) {
 
 	stdout := genutil.NewMultiManifestWriter(os.Stdout)
 	opts := []gencsv.Option{
-		gencsv.WithBase(c.inputDir, c.apisDir),
+		gencsv.WithBase(c.inputDir, c.apisDir, c.interactiveLevel),
 	}
 	if c.stdout {
 		opts = append(opts, gencsv.WithWriter(stdout))
@@ -187,7 +187,14 @@ func (c bundleCmd) runMetadata() error {
 
 	directory := c.inputDir
 	if directory == "" {
-		directory = filepath.Join("config", "bundle", bundle.ManifestsDir)
+		// There may be no existing bundle at the default path, so assume manifests
+		// only exist in the output directory.
+		defaultDirectory := filepath.Join("config", "bundle", bundle.ManifestsDir)
+		if c.outputDir != "" && genutil.IsNotExist(defaultDirectory) {
+			directory = filepath.Join(c.outputDir, bundle.ManifestsDir)
+		} else {
+			directory = defaultDirectory
+		}
 	} else {
 		directory = filepath.Join(directory, bundle.ManifestsDir)
 	}

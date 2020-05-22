@@ -22,6 +22,7 @@ import (
 	"github.com/spf13/pflag"
 
 	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
 //nolint:maligned
@@ -42,6 +43,10 @@ type bundleCmd struct {
 	stdout       bool
 	quiet        bool
 
+	// Interactive options.
+	interactiveLevel projutil.InteractiveLevel
+	interactive      bool
+
 	// Metadata options.
 	channels       string
 	defaultChannel string
@@ -57,6 +62,17 @@ func NewCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 0 {
 				return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
+			}
+
+			// Check if the user has any specific preference to enable/disable
+			// interactive prompts. Default behaviour is to disable the prompt
+			// unless a base bundle does not exist.
+			if cmd.Flags().Changed("interactive") {
+				if c.interactive {
+					c.interactiveLevel = projutil.InteractiveOnAll
+				} else {
+					c.interactiveLevel = projutil.InteractiveHardOff
+				}
 			}
 
 			// Generate kustomize bases, manifests, and metadata by default if no
@@ -131,4 +147,6 @@ func (c *bundleCmd) addCommonFlagsTo(fs *pflag.FlagSet) {
 	fs.StringVar(&c.defaultChannel, "default-channel", "", "The default channel for the bundle")
 	fs.BoolVar(&c.overwrite, "overwrite", false, "Overwrite the bundle's metadata and Dockerfile if they exist")
 	fs.BoolVarP(&c.quiet, "quiet", "q", false, "Run in quiet mode")
+	fs.BoolVar(&c.interactive, "interactive", false, "When set or no bundle base exists, an interactive "+
+		"command prompt will be presented to accept bundle ClusterServiceVersion metadata")
 }

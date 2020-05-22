@@ -117,7 +117,7 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 					Collector:    col,
 				}
 				opts := []Option{
-					WithBase(csvBasesDir, goAPIsDir),
+					WithBase(csvBasesDir, goAPIsDir, projutil.InteractiveHardOff),
 					WithWriter(buf),
 				}
 				Expect(g.Generate(cfg, opts...)).ToNot(HaveOccurred())
@@ -129,11 +129,11 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 					OperatorType: operatorType,
 				}
 				opts := []Option{
-					WithBase(csvBasesDir, goAPIsDir),
+					WithBase(csvBasesDir, goAPIsDir, projutil.InteractiveHardOff),
 					WithBaseWriter(tmp),
 				}
 				Expect(g.Generate(cfg, opts...)).ToNot(HaveOccurred())
-				outputFile := filepath.Join(tmp, "bases", makeCSVFileName("memcached-operator"))
+				outputFile := filepath.Join(tmp, "bases", makeCSVFileName(operatorName))
 				Expect(outputFile).To(BeAnExistingFile())
 				Expect(string(readFileHelper(outputFile))).To(MatchYAML(baseCSVUIMetaStr))
 			})
@@ -145,11 +145,11 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 					Collector:    col,
 				}
 				opts := []Option{
-					WithBase(csvBasesDir, goAPIsDir),
+					WithBase(csvBasesDir, goAPIsDir, projutil.InteractiveHardOff),
 					WithBundleWriter(tmp),
 				}
 				Expect(g.Generate(cfg, opts...)).ToNot(HaveOccurred())
-				outputFile := filepath.Join(tmp, bundle.ManifestsDir, makeCSVFileName("memcached-operator"))
+				outputFile := filepath.Join(tmp, bundle.ManifestsDir, makeCSVFileName(operatorName))
 				Expect(outputFile).To(BeAnExistingFile())
 				Expect(string(readFileHelper(outputFile))).To(MatchYAML(newCSVStr))
 			})
@@ -172,7 +172,7 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 			})
 			It("should return an error without a getWriter", func() {
 				opts := []Option{
-					WithBase(csvBasesDir, goAPIsDir),
+					WithBase(csvBasesDir, goAPIsDir, projutil.InteractiveHardOff),
 				}
 				Expect(g.Generate(cfg, opts...)).To(MatchError(noGetWriterError))
 			})
@@ -280,6 +280,43 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 
 	})
 
+})
+
+var _ = Describe("Generation requires interaction", func() {
+	var (
+		testExistingPath    = filepath.Join(csvBasesDir, "memcached-operator.clusterserviceversion.yaml")
+		testNotExistingPath = filepath.Join(csvBasesDir, "notexist.clusterserviceversion.yaml")
+	)
+
+	Context("when base path does not exist", func() {
+		By("turning interaction off explicitly")
+		It("returns false", func() {
+			Expect(requiresInteraction(testNotExistingPath, projutil.InteractiveHardOff)).To(BeFalse())
+		})
+		By("turning interaction off implicitly")
+		It("returns true", func() {
+			Expect(requiresInteraction(testNotExistingPath, projutil.InteractiveSoftOff)).To(BeTrue())
+		})
+		By("turning interaction on explicitly")
+		It("returns true", func() {
+			Expect(requiresInteraction(testNotExistingPath, projutil.InteractiveOnAll)).To(BeTrue())
+		})
+	})
+
+	Context("when base path does exist", func() {
+		By("turning interaction off explicitly")
+		It("returns false", func() {
+			Expect(requiresInteraction(testExistingPath, projutil.InteractiveHardOff)).To(BeFalse())
+		})
+		By("turning interaction off implicitly")
+		It("returns false", func() {
+			Expect(requiresInteraction(testExistingPath, projutil.InteractiveSoftOff)).To(BeFalse())
+		})
+		By("turning interaction on explicitly")
+		It("returns true", func() {
+			Expect(requiresInteraction(testExistingPath, projutil.InteractiveOnAll)).To(BeTrue())
+		})
+	})
 })
 
 func readConfigHelper(dir string) *config.Config {

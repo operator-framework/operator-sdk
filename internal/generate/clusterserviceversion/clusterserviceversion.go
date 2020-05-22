@@ -75,9 +75,9 @@ type getBaseFunc func() (*operatorsv1alpha1.ClusterServiceVersion, error)
 type Option func(*Generator) error
 
 // WithBase sets a Generator's base CSV to a kustomize-style base.
-func WithBase(inputDir, apisDir string) Option {
+func WithBase(inputDir, apisDir string, ilvl projutil.InteractiveLevel) Option {
 	return func(g *Generator) error {
-		g.getBase = g.makeKustomizeBaseGetter(inputDir, apisDir)
+		g.getBase = g.makeKustomizeBaseGetter(inputDir, apisDir, ilvl)
 		return nil
 	}
 }
@@ -179,18 +179,18 @@ func makeCSVFileName(name string) string {
 }
 
 // makeKustomizeBaseGetter returns a function that gets a kustomize-style base.
-func (g Generator) makeKustomizeBaseGetter(inputDir, apisDir string) getBaseFunc {
+func (g Generator) makeKustomizeBaseGetter(inputDir, apisDir string, ilvl projutil.InteractiveLevel) getBaseFunc {
 	basePath := filepath.Join(inputDir, "bases", makeCSVFileName(g.OperatorName))
 	if genutil.IsNotExist(basePath) {
 		basePath = ""
 	}
 
-	return g.makeBaseGetter(basePath, apisDir)
+	return g.makeBaseGetter(basePath, apisDir, requiresInteraction(basePath, ilvl))
 }
 
 // makeBaseGetter returns a function that gets a base from inputDir.
 // apisDir is used by getBaseFunc to populate base fields.
-func (g Generator) makeBaseGetter(basePath, apisDir string) getBaseFunc {
+func (g Generator) makeBaseGetter(basePath, apisDir string, interactive bool) getBaseFunc {
 	gvks := make([]schema.GroupVersionKind, len(g.config.Resources))
 	for i, gvk := range g.config.Resources {
 		gvks[i].Group = fmt.Sprintf("%s.%s", gvk.Group, g.config.Domain)
@@ -205,9 +205,16 @@ func (g Generator) makeBaseGetter(basePath, apisDir string) getBaseFunc {
 			BasePath:     basePath,
 			APIsDir:      apisDir,
 			GVKs:         gvks,
+			Interactive:  interactive,
 		}
 		return b.GetBase()
 	}
+}
+
+// requiresInteraction checks if the combination of ilvl and basePath existence
+// requires the generator prompt a user interactively.
+func requiresInteraction(basePath string, ilvl projutil.InteractiveLevel) bool {
+	return (ilvl == projutil.InteractiveSoftOff && genutil.IsNotExist(basePath)) || ilvl == projutil.InteractiveOnAll
 }
 
 // updateVersions updates csv's version and data involving the version,
