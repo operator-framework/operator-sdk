@@ -19,6 +19,7 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/build"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/bundle"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/completion"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/olm"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/version"
 	"github.com/operator-framework/operator-sdk/internal/flags"
@@ -37,17 +38,16 @@ var commands = []*cobra.Command{
 	// new.NewCmd()
 
 	alpha.NewCmd(),
+	build.NewCmd(),
 	bundle.NewCmd(),
 	// Add back when implemented for new project layouts.
 	// cleanup.NewCmd(),
 	completion.NewCmd(),
+	generate.NewCmd(),
 	olm.NewCmd(),
 	// Add back when implemented for new project layouts.
 	// run.NewCmd(),
 	version.NewCmd(),
-	build.NewCmd(),
-
-	// TODO(hasbro17): add generate csv command after aligning it for kubebuilder layout
 }
 
 func Run() error {
