@@ -335,23 +335,35 @@ func RewriteFileContents(filename, instruction, content string) error {
 	}
 
 	existingContent := string(text)
-	labelIndex := strings.LastIndex(existingContent, instruction)
 
-	if labelIndex == -1 {
-		return fmt.Errorf("instruction not present previously in dockerfile")
+	modifiedContent, err := appendContent(existingContent, instruction, content)
+	if err != nil {
+		return err
 	}
 
-	separationIndex := strings.Index(existingContent[labelIndex:], "\n")
-	if labelIndex == -1 {
-		return fmt.Errorf("no new line at the end of dockerfile command %s", existingContent[labelIndex:])
-	}
-
-	index := labelIndex + separationIndex + 1
-
-	newContent := existingContent[:index] + content + existingContent[index:]
-	err = ioutil.WriteFile(filename, []byte(newContent), defaultPermission)
+	err = ioutil.WriteFile(filename, []byte(modifiedContent), defaultPermission)
 	if err != nil {
 		return fmt.Errorf("error writing modified contents to file, %v", err)
 	}
 	return nil
+}
+
+func appendContent(fileContents, instruction, content string) (string, error) {
+	labelIndex := strings.LastIndex(fileContents, instruction)
+
+	if labelIndex == -1 {
+		return "", fmt.Errorf("instruction not present previously in dockerfile")
+	}
+
+	separationIndex := strings.Index(fileContents[labelIndex:], "\n")
+	if separationIndex == -1 {
+		return "", fmt.Errorf("no new line at the end of dockerfile command %s", fileContents[labelIndex:])
+	}
+
+	index := labelIndex + separationIndex + 1
+
+	newContent := fileContents[:index] + content + fileContents[index:]
+
+	return newContent, nil
+
 }

@@ -25,14 +25,10 @@ import (
 
 	"github.com/blang/semver"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
+	scorecard "github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-)
-
-const (
-	scorecardConfigPath = "scorecard/"
-	scorecardBundlePath = "/tests/scorecard/"
 )
 
 type bundleCreateCmd struct {
@@ -225,7 +221,7 @@ func (c bundleCreateCmd) runGenerate() error {
 		return fmt.Errorf("error generating bundle image files: %v", err)
 	}
 	if err = copyScorecardConfig(); err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 	return nil
 }
@@ -311,8 +307,8 @@ func isPackageManifestsDir(dir, operatorName string) bool {
 // image.
 // TODO: Add labels to annotations.yaml and bundle.dockerfile.
 func copyScorecardConfig() error {
-	if isExist(bundle.DockerFile) && isExist(scorecardConfigPath) {
-		scorecardFileContent := fmt.Sprintf("COPY %s %s\n", scorecardConfigPath, scorecardBundlePath)
+	if isExist(bundle.DockerFile) && isExist(scorecard.ConfigDirName) {
+		scorecardFileContent := fmt.Sprintf("COPY %s %s\n", scorecard.ConfigDirName, scorecard.ConfigDirPath)
 		err := projutil.RewriteFileContents(bundle.DockerFile, "COPY", scorecardFileContent)
 		if err != nil {
 			return fmt.Errorf("error rewriting dockerfile, %v", err)
