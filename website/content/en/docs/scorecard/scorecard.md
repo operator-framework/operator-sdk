@@ -663,7 +663,7 @@ Once done, follow the steps in this [document][olm-deploy-operator] to bundle yo
 - You can either set `cr-manifest` or your CSV's [`metadata.annotations['alm-examples']`][olm-csv-alm-examples] to provide CR's to the scorecard, but not both.
 
 [cli-scorecard]: ../cli/operator-sdk_scorecard
-[writing-tests]: ../golang/e2e-tests
+[writing-tests]: ../../golang/e2e-tests
 [owned-crds]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md#owned-crds
 [alm-examples]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md#crd-templates
 [viper]: https://github.com/spf13/viper/blob/master/README.md
