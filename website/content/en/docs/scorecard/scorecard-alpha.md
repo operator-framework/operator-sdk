@@ -206,7 +206,11 @@ the custom tests following some mandated conventions including:
  * tests can obtain the bundle contents at a shared mount point of /bundle
  * tests can access the Kube API using an in-cluster client connection
 
-See here (TODO) for an example of a custom test image written in golang.  
+<!--- TODO(jeff): Add an example. 
+See here for an example of a custom test image written in golang.  
+-->
+
+
 Writing custom tests in other programming languages is possible 
 if the test image follows the above guidelines.
 
