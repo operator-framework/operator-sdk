@@ -16,6 +16,7 @@ package genutil
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -125,4 +126,13 @@ func (w *multiManifestWriter) Write(b []byte) (int, error) {
 // if writing a package or bundle to stdout or a single file.
 func NewMultiManifestWriter(w io.Writer) io.Writer {
 	return &multiManifestWriter{w}
+}
+
+// IsNotExist returns true if path does not exist on disk.
+func IsNotExist(path string) bool {
+	if path == "" {
+		return true
+	}
+	_, err := os.Stat(path)
+	return err != nil && errors.Is(err, os.ErrNotExist)
 }
