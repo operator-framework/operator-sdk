@@ -107,7 +107,7 @@ For further information about the flags see the [CLI documentation][cli-scorecar
 ## Selecting Tests
 
 Tests are selected by setting the `--selector` CLI flag to
-tests it will execute.  If a selector flag is not supplied, then all 
+a set of label strings.  If a selector flag is not supplied, then all 
 the tests within the scorecard configuration file are executed.
 
 Tests are executed serially, one after the other, with test results 
