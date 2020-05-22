@@ -7,7 +7,7 @@ weight: 25
 ## Overview
 
 The scorecard command, part of the operator-sdk, executes tests 
-on your operator based upon a user defined configuration file 
+on your operator based upon a configuration file and test images.
 and test images.
 
 Tests are implemented within test images that are configured 
