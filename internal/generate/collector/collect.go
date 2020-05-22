@@ -47,13 +47,13 @@ type Manifests struct {
 	Others                           []unstructured.Unstructured
 }
 
-// UpdateFromDirs adds Roles, ClusterRoles, Deployments, and Custom Resources
-// found in manifestRoot, and CustomResourceDefinitions found in crdsDir,
+// UpdateFromDirs adds Roles, ClusterRoles, Deployments, and Custom Resource examples
+// found in deployDir, and CustomResourceDefinitions found in crdsDir,
 // to their respective fields in a Manifests, then filters and deduplicates them.
 // All other objects are added to Manifests.Others.
-func (c *Manifests) UpdateFromDirs(manifestRoot, crdsDir string) error {
+func (c *Manifests) UpdateFromDirs(deployDir, crdsDir string) error {
 	// Collect all manifests in paths.
-	err := filepath.Walk(manifestRoot, func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(deployDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil || info.IsDir() {
 			return err
 		}
@@ -95,7 +95,7 @@ func (c *Manifests) UpdateFromDirs(manifestRoot, crdsDir string) error {
 		return scanner.Err()
 	})
 	if err != nil {
-		return fmt.Errorf("error collecting manifests from directory %s: %v", manifestRoot, err)
+		return fmt.Errorf("error collecting manifests from directory %s: %v", deployDir, err)
 	}
 
 	// Add CRDs from input.
