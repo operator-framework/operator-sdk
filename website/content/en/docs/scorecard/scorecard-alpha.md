@@ -118,7 +118,7 @@ being aggregated by scorecard to present back to the end user.
 To select a single test (`basic-check-spec-test`) you would enter the
 following:
 ```sh
-operator-sdk scorecard -o text --selector=test=basic-check-spec-test
+$ operator-sdk scorecard -o text --selector=test=basic-check-spec-test
 ```
 
 To select a suite of tests, olm in this case, you would specify
