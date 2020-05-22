@@ -71,7 +71,6 @@ In the above example, a CR created in a Namespace not in the set passed to `Opti
 its controller because the [Manager][ctrl-manager] does not manage that Namespace.
 
 **IMPORTANT:** Note that this is not intended to be used for excluding Namespaces, this is better done via a Predicate. 
-Also note that you may face performance issues when managing a high number of Namespaces.
 
 ## Restricting Roles and permissions
 
@@ -79,11 +78,12 @@ An operator's scope defines its [Manager's][ctrl-manager] cache's scope but not 
 After updating the Manager's scope to be Namespaced, the cluster's [Role-Based Access Control (RBAC)][k8s-rbac] 
 permissions should be restricted accordingly.
 
-These permissions are found in the directory `config/rbac/`. The `ClusterRole` and `ClusterRoleBinding` manifests are 
-responsible for creating the permissions which allow the operator to have access to the resources.
+These permissions are found in the directory `config/rbac/`. The `ClusterRole` in `role.yaml` and `ClusterRoleBinding` 
+in `role_binding.yaml` are used to grant the operator permissions to access and manage its resources.
 
-**NOTE** Only `ClusterRole` and `ClusterRoleBinding` manifests require changes to achieve this goal. 
-Ignore `<kind>_editor_role.yaml`, `<kind>_viewer_role.yaml`, and files a name pattern of `auth_proxy_*.yaml`.
+**NOTE** For changing the operator's scope only the `role.yaml` and `role_binding.yaml` manifests need to be updated. 
+For the purposes of this doc, the other RBAC manifests `<kind>_editor_role.yaml`, `<kind>_viewer_role.yaml`, 
+and `auth_proxy_*.yaml` are not relevant to changing the operator's resource permissions.
 
 ### Changing the permissions 
 
@@ -92,7 +92,7 @@ and `RoleBinding`s instead of `ClusterRole`s and `ClusterRoleBinding`s, respecti
  
 [`RBAC markers`][rbac-markers] defined in the controller (e.g `controllers/memcached_controller.go`)
 are used to generate the operator's [RBAC ClusterRole][rbac-clusterrole] (e.g `config/rbac/role.yaml`). The default
- markers don't specify a `namespace` property and will result in a ClusterRole.
+ markers don't specify a `namespace` property and will result in a `ClusterRole`.
 
 Update the RBAC markers to specify a `namespace` property so that `config/rbac/role.yaml` is generated as a `Role`
  instead of a `ClusterRole`.
@@ -154,8 +154,8 @@ variables to allow the restrictive configurations
 // getWatchNamespace returns the Namespace the operator should be watching for changes
 func getWatchNamespace() (string, error) {
     // WatchNamespaceEnvVar is the constant for env variable WATCH_NAMESPACE
-    // which is the Namespace where the watch activity happens.
-    // this value is empty if the operator is running with clusterScope.
+    // which specifies the Namespace to watch.
+    // An empty value means the operator is running with cluster scope.
     var watchNamespaceEnvVar = "WATCH_NAMESPACE"
     
     ns, found := os.LookupEnv(watchNamespaceEnvVar)
@@ -173,7 +173,7 @@ func getWatchNamespace() (string, error) {
 watchNamespace, err := getWatchNamespace()
 if err != nil {
     setupLog.Error(err, "unable to get WatchNamespace, " +
-        "the manager will watch and manage resources in all cluster")
+       "the manager will watch and manage resources in all namespaces")
 }
 
 mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
@@ -213,29 +213,12 @@ spec:
   terminationGracePeriodSeconds: 10
 ``` 
 
-**NOTE** The above will set as value of `WATCH_NAMESPACE` the namespace where the operator will be deployed. 
+**NOTE** `WATCH_NAMESPACE` here will always be set as the namespace where the operator is deployed. 
 
 ### Configuring cluster-scoped operators with MultiNamespacedCacheBuilder
 
-- Add a helper function in the `main.go` file :
-
-```go
-// getWatchNamespace returns the namespace the operator should be watching for changes
-func getWatchNamespace() (string, error) {
-    // WatchNamespaceEnvVar is the constant for env variable WATCH_NAMESPACE
-    // which is the namespace where the watch activity happens.
-    // this value is empty if the operator is running with clusterScope.
-    var watchNamespaceEnvVar = "WATCH_NAMESPACE"
-	
-    ns, found := os.LookupEnv(watchNamespaceEnvVar)
-    if !found {
-        return "", fmt.Errorf("%s must be set", watchNamespaceEnvVar)
-    }
-    return ns, nil
-}
-```
-
-- Use the environment variable value and check if it is an multi-namespace scenario:
+- Add a helper function to get the environment variable value in the `main.go` file as done in the in the previous example (e.g `getWatchNamespace()`) 
+- Use the environment variable value and check if it is a multi-namespace scenario:
 
 ```go
     ...
@@ -267,25 +250,12 @@ if strings.Contains(namespace, ",") {
 - Define the environment variable in the `config/manager/manager.yaml`:
 
 ```yaml
-spec:
-  containers:
-  - command:
-    - /manager
-    args:
-    - --enable-leader-election
-    image: controller:latest
-    name: manager
-    resources:
-      limits:
-        cpu: 100m
-        memory: 30Mi
-      requests:
-        cpu: 100m
-        memory: 20Mi
+...
     env:
       - name: WATCH_NAMESPACE
         value: "ns1,ns2"
   terminationGracePeriodSeconds: 10
+...
 ``` 
 
 [cert-manager]: https://github.com/jetstack/cert-manager
