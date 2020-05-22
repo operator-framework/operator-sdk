@@ -187,7 +187,7 @@ See an example of the text format produced by a scorecard test:
 	Labels: 
 ```
 
-**NOTE** The results are done using the type [ScorecardOutput](https://godoc.org/github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2#ScorecardOutput). 
+**NOTE** The output format spec matches the [`ScorecardOutput`](https://godoc.org/github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2#ScorecardOutput) type layout.
 
 
 ## Exit Status
