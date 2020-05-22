@@ -1,3 +1,8 @@
+---
+title: Writing Custom Scorecard Tests
+weight: 50
+---
+
 # Custom Tests using Operator SDK Scorecard
 
 This guide outlines the steps which can be followed to extend the existing scorecard tests and implement operator specific custom tests. 
@@ -8,7 +13,7 @@ This guide outlines the steps which can be followed to extend the existing score
 
 The following steps explain creating of a custom test image which can be used with Scorecard to run operator specific tests. As an example, let us start by creating a sample go repository containing the test bundle data, custom scorecard tests and a Makefile to help us build a test image.
 
-The sample test image repository present [here][] has the following project structure:
+The sample test image repository present [here][custom_scorecard_repo] has the following project structure:
 
 ```
 ├── Makefile
@@ -38,7 +43,7 @@ The sample test image repository present [here][] has the following project stru
         └── tests.go
 ```
 
-1. `bundle/` - Contains the bundle manifests and metadata under test.
+1. `bundle/` - Contains bundle manifests and metadata under test.
 2. `bundle/tests/scorecard/config.yaml` - Configuration yaml to define and run scorecard tests.
 3. `images/custom-scorecard-tests/cmd/test/main.go` - Scorecard test binary.
 4. `internal/tests/tests.go` -  Contains the implementation of custom tests specific to the operator.
@@ -78,7 +83,7 @@ func CustomTest1(bundle registry.Bundle) scapiv1alpha2.ScorecardTestResult {
 
 ### Scorecard Configuration file:
 
-The [configuration file][config_yaml] includes the test definition and metadata to run the test. For the example `CustomTest1` function, the following fields should be specified in `config.yaml`.
+The [configuration file][config_yaml] includes test definitions and metadata to run the test. For the example `CustomTest1` function, the following fields should be specified in `config.yaml`.
 
 ```yaml
 tests:
@@ -101,7 +106,7 @@ The important fields to note here are:
 
 ### Scorecard binary:
 
-The scorecard test image implementation requires the bundle under test to be present in the test image. The `GetBundle()` function reads the pod's bundle to fetch the manifests and scorecard configuration from the desired path.
+The scorecard test image implementation requires the bundle under test to be present in the test image. The `GetBundle()` function reads the pod's bundle to fetch the manifests and scorecard configuration from desired path.
 
 ```Go
 	cfg, err := GetBundle("/bundle")
@@ -109,9 +114,9 @@ The scorecard test image implementation requires the bundle under test to be pre
 		log.Fatal(err.Error())
 	}
 ```
-The scorecard binary uses `config.yaml` file to locate tests and execute the them as Pods which scorecard creates. Custom test images are included into the Pods that scorecard creates, passing in the bundle contents on a shared mount point to the test image container. The specific custom test that is executed is driven by the config.yaml's entry-point command and arguments.
+The scorecard binary uses `config.yaml` file to locate tests and execute the them as Pods which scorecard creates. Custom test images are included into Pods that scorecard creates, passing in the bundle contents on a shared mount point to the test image container. The specific custom test that is executed is driven by the config.yaml's entry-point command and arguments.
 
-An example scorecard binary is present [here][].
+An example scorecard binary is present [here][scorecard_binary].
 
 The names with which the tests are identified in `config.yaml` and would be passed in the `scorecard` command, are to be specified here.
 
@@ -125,17 +130,17 @@ case tests.CustomTest1Name:
 ...
 ```
 
-The result of the custom tests which is in `scapiv1alpha2.ScorecardTestResult` format, is converted to json for the output.
+The result of the custom tests which is in `scapiv1alpha2.ScorecardTestResult` format, is converted to json for output.
 
 ```Go
 prettyJSON, err := json.MarshalIndent(result, "", "    ")
 	if err != nil {
 		log.Fatal("Failed to generate json", err)
 	}
-	fmt.Printf("%s\n", string(prettyJSON))
+fmt.Printf("%s\n", string(prettyJSON))
 ```
 
-The names of the custom tests are also included in the `printValidTests()` function: 
+The names of the custom tests are also included in `printValidTests()` function:
 
 ```Go
 func printValidTests() (result v1alpha2.ScorecardTestResult) {
@@ -149,11 +154,11 @@ func printValidTests() (result v1alpha2.ScorecardTestResult) {
 
 ### Building the project
 
-The project makefile is to help us build the go project and the test image using docker. An example of the [makefile][sample_makefile] script can be found in the sample test image.
+The project makefile is to help us build the go project and test image using docker. An example of the [makefile][sample_makefile] script can be found in the sample test image.
 
 To build the project, use the `docker build` command and specify the desired name of the image in the format: `<repository_name>/<username>/<image_name>:tag`.
 
-Push the image to the remote repository by running the docker command:
+Push the image to a remote repository by running the docker command:
 
 ```
 docker push <repository_name>/<username>/<image_name>:tag
@@ -188,3 +193,7 @@ operator-sdk alpha scorecard bundle/ --selector=suite=custom -o json --wait-time
 [basic_tests]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/alpha/tests/basic.go
 [config_yaml]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/alpha/testdata/bundle/tests/scorecard/config.yaml
 [scorecard_main_func]: https://github.com/operator-framework/operator-sdk/blob/master/images/scorecard-test/cmd/test/main.go
+[custom_scorecard_repo]: https://github.com/operator-framework/operator-sdk/tree/master/internal/scorecard/alpha/examples
+[user_doc]: /docs/scorecard/scorecard-alpha/
+[scorecard_binary]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/alpha/examples/custom-scorecard-tests/images/custom-scorecard-tests/cmd/test/main.go
+[sample_makefile]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/alpha/examples/custom-scorecard-tests/Makefile
