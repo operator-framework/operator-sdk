@@ -140,7 +140,7 @@ The scorecard ships with pre-defined tests that are arranged into suites.
 
 | Test        | Description   | Test Name |
 | --------    | -------- | -------- |
-| Spec Block Exists | This test checks the Custom Resource(s) created in the cluster to make sure that all CRs have a spec block. | basic-check-spec-test |
+| Spec Block Exists | This test checks the Custom Resource (CRs) created in the cluster to make sure that all CRs have a spec block. | basic-check-spec-test |
 
 ### OLM Test Suite
 
