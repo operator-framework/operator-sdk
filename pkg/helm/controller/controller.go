@@ -22,7 +22,6 @@ import (
 
 	rpb "helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/releaseutil"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -33,8 +32,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 	"sigs.k8s.io/yaml"
 
+	"github.com/operator-framework/operator-sdk/pkg/handler"
 	"github.com/operator-framework/operator-sdk/pkg/helm/release"
 	"github.com/operator-framework/operator-sdk/pkg/internal/predicates"
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 )
 
 var log = logf.Log.WithName("helm.controller")
@@ -122,36 +123,24 @@ func watchDependentResources(mgr manager.Manager, r *HelmOperatorReconciler, c c
 			}
 
 			restMapper := mgr.GetRESTMapper()
-			depMapping, err := restMapper.RESTMapping(gvk.GroupKind(), gvk.Version)
-			if err != nil {
-				return err
-			}
-			ownerMapping, err := restMapper.RESTMapping(owner.GroupVersionKind().GroupKind(),
-				owner.GroupVersionKind().Version)
+			useOwnerRef, err := k8sutil.SupportsOwnerReference(restMapper, owner, &u)
 			if err != nil {
 				return err
 			}
 
-			depClusterScoped := depMapping.Scope.Name() == meta.RESTScopeNameRoot
-			ownerClusterScoped := ownerMapping.Scope.Name() == meta.RESTScopeNameRoot
-
-			if !ownerClusterScoped && depClusterScoped {
-				m.Lock()
-				watches[gvk] = struct{}{}
-				m.Unlock()
-				log.Info("Cannot watch cluster-scoped dependent resource for namespace-scoped owner."+
-					" Changes to this dependent resource type will not be reconciled",
-					"ownerApiVersion", r.GVK.GroupVersion(), "ownerKind", r.GVK.Kind, "apiVersion",
-					gvk.GroupVersion(), "kind", gvk.Kind)
-				continue
+			if useOwnerRef { // Setup watch using owner references.
+				err = c.Watch(&source.Kind{Type: &u}, &crthandler.EnqueueRequestForOwner{OwnerType: owner},
+					dependentPredicate)
+				if err != nil {
+					return err
+				}
+			} else { // Setup watch using annotations.
+				err = c.Watch(&source.Kind{Type: &u}, &handler.EnqueueRequestForAnnotation{Type: gvk.GroupKind().String()},
+					dependentPredicate)
+				if err != nil {
+					return err
+				}
 			}
-
-			err = c.Watch(&source.Kind{Type: &u}, &crthandler.EnqueueRequestForOwner{OwnerType: owner},
-				dependentPredicate)
-			if err != nil {
-				return err
-			}
-
 			m.Lock()
 			watches[gvk] = struct{}{}
 			m.Unlock()

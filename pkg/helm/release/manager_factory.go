@@ -24,7 +24,6 @@ import (
 	"helm.sh/helm/v3/pkg/storage"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	"helm.sh/helm/v3/pkg/strvals"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	crmanager "sigs.k8s.io/controller-runtime/pkg/manager"
@@ -67,9 +66,11 @@ func (f managerFactory) NewManager(cr *unstructured.Unstructured, overrideValues
 	}
 
 	kubeClient := kube.New(rcg)
-
-	ownerRef := metav1.NewControllerRef(cr, cr.GroupVersionKind())
-	ownerRefClient := client.NewOwnerRefInjectingClient(*kubeClient, *ownerRef)
+	restMapper := f.mgr.GetRESTMapper()
+	ownerRefClient, err := client.NewOwnerRefInjectingClient(*kubeClient, restMapper, cr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to inject owner references: %w", err)
+	}
 
 	crChart, err := loader.LoadDir(f.chartDir)
 	if err != nil {
