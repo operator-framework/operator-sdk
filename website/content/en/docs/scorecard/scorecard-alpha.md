@@ -152,7 +152,7 @@ The scorecard ships with pre-defined tests that are arranged into suites.
 
 ## Scorecard Output
 
-Users can specify the `--output` flag to define the scorecard results 
+The `--output` flag specifies the scorecard results output format.
 output format.
 
 ### JSON format
