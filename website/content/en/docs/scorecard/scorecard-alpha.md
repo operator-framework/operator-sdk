@@ -19,7 +19,7 @@ results to display to end users.  Scorecard therefore assumes
 it is being executed with access to a configured Kube cluster.
 
 Scorecard has built-in basic and OLM tests but also provides a 
-means to execute custom user defined tests.
+means to execute custom test definitions.
 
 ## Requirements
 
