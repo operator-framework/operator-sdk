@@ -43,7 +43,7 @@ bundle directory a the following location `tests/scorecard/config.yaml`.
 You can override the default location of the configuration file 
 by specifying the `--config` flag.
 3. Execute the [`scorecard` command][cli-scorecard]. See the 
-[Command args](#command-args) to check its options.
+[command args section](#command-args) for an overview of command invocation.
 
 ## Configuration
 
