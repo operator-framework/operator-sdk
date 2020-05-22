@@ -89,6 +89,9 @@ type OperatorCmd struct {
 }
 
 func (c *OperatorCmd) AddToFlagSet(fs *pflag.FlagSet) {
+	fs.StringVar(&c.KubeconfigPath, "kubeconfig", "",
+		"The file path to kubernetes configuration file. Defaults to location "+
+			"specified by $KUBECONFIG, or to default file rules if not set")
 	fs.StringVar(&c.OLMNamespace, "olm-namespace", olm.DefaultOLMNamespace,
 		"The namespace where OLM is installed")
 	fs.StringVar(&c.OperatorNamespace, "operator-namespace", "",

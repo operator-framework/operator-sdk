@@ -25,7 +25,7 @@ particular OLM versions in a cluster.
 **Note:** Certain cluster types may already have OLM enabled, but under a
 non-default (`"olm"`) namespace, which can be configured by setting
 `--olm-namespace=[non-default-olm-namespace]` for `operator-sdk olm` subcommands
-and `operator-sdk run --olm`.
+and `operator-sdk run packagemanifests`.
 
 You can check if OLM is already installed by running the following command,
 which will detect the installed OLM version automatically (v0.14.1 in this example):
@@ -156,19 +156,23 @@ At this point in development we've generated all files necessary to build the
 memcached-operator bundle. Now we're ready to test and deploy the Operator
 with OLM.
 
-### Testing
+### Testing bundles
 
-[`operator-sdk run --olm`][cli-run-olm] will create an Operator [registry][operator-registry]
+Coming soon.
+
+### Testing package manifests
+
+[`operator-sdk run packagemanifests`][cli-run-packagemanifests] will create an Operator [registry][operator-registry]
 from manifests and metadata in the memcached-operator project, and inform OLM that
 memcached-operator v0.1.0 is ready to be deployed. This process effectively
 replicates production deployment in a constrained manner to make sure OLM can
 deploy our Operator successfully before attempting real production deployment.
 
-`run --olm` performs some optionally configurable setup [under the hood][doc-run-olm], but for
+`run packagemanifests` performs some optionally configurable setup [under the hood][doc-run-olm], but for
 most use cases the following invocation is all we need:
 
 ```console
-$ operator-sdk run --olm --operator-version 0.1.0
+$ operator-sdk run packagemanifests --operator-version 0.1.0
 INFO[0000] loading Bundles                               dir=deploy/olm-catalog/memcached-operator
 INFO[0000] directory                                     dir=deploy/olm-catalog/memcached-operator file=memcached-operator load=bundles
 INFO[0000] directory                                     dir=deploy/olm-catalog/memcached-operator file=manifests load=bundles
@@ -209,10 +213,11 @@ As long as both the `ClusterServiceVersion` and all `CustomResourceDefinition`'s
 return an `Installed` status, the memcached-operator has been deployed successfully.
 
 Now that we're done testing the memcached-operator, we should probably clean up
-the Operator's resources. The [`operator-sdk cleanup --olm`][cli-cleanup-olm] command will do this for you:
+the Operator's resources. The [`operator-sdk cleanup packagemanifests`][cli-cleanup-packagemanifests]
+command will do this for you:
 
 ```console
-$ operator-sdk cleanup --olm --operator-version 0.1.0
+$ operator-sdk cleanup packagemanifests --operator-version 0.1.0
 INFO[0000] loading Bundles                               dir=deploy/olm-catalog/memcached-operator
 INFO[0000] directory                                     dir=deploy/olm-catalog/memcached-operator file=memcached-operator load=bundles
 INFO[0000] directory                                     dir=deploy/olm-catalog/memcached-operator file=manifests load=bundles
@@ -234,7 +239,7 @@ INFO[0000]   Waiting for deleted resources to disappear
 INFO[0001] Successfully uninstalled "memcached-operator.v0.1.0" on OLM version "0.14.1"
 ```
 
-### Production
+### Production bundle deployment
 
 OLM and Operator Registry consumes Operator bundles via an [index image][index-image],
 which are composed of one or more bundles. To build a memcached-operator bundle, run:
@@ -275,13 +280,13 @@ the OLM [docs][doc-olm-index] on adding an index to a cluster registry.
 [cli-olm]:/docs/cli/operator-sdk_olm
 [cli-olm-install]:/docs/cli/operator-sdk_olm_install
 [cli-olm-status]:/docs/cli/operator-sdk_olm_status
-[cli-run-olm]:/docs/cli/operator-sdk_run
-[cli-cleanup-olm]:/docs/cli/operator-sdk_cleanup
+[cli-run-packagemanifests]:/docs/cli/operator-sdk_run_packagemanifests
+[cli-cleanup-packagemanifests]:/docs/cli/operator-sdk_cleanup_packagemanifests
 [cli-bundle-create]:/docs/cli/operator-sdk_bundle_create
 [cli-bundle-validate]:/docs/cli/operator-sdk_bundle_validate
 [doc-bundle-cli]:/docs/olm-integration/cli-overview
 [cli-generate-csv]:/docs/cli/operator-sdk_generate_csv
 [csv-markers]:/docs/golang/references/markers
-[doc-run-olm-explanation]:/docs/olm-integration/olm-deployment/#operator-sdk-run---olm-command-overview
+[doc-run-olm]:/docs/olm-integration/olm-deployment/#operator-sdk-run-packagemanifests-command-overview
 [doc-olm-index]:https://github.com/operator-framework/operator-registry#using-the-index-with-operator-lifecycle-manager
 [index-image]:https://github.com/operator-framework/operator-registry#building-an-index-of-operators-using-opm

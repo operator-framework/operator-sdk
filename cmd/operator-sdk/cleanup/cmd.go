@@ -85,16 +85,17 @@ func NewCmd() *cobra.Command {
 		},
 	}
 
-	// Avoid sorting flags so we can group them according to cleanup type.
-	cmd.Flags().SortFlags = false
-
 	// Shared flags.
 	cmd.Flags().StringVar(&c.kubeconfig, "kubeconfig", "",
 		"The file path to kubernetes configuration file. Defaults to location "+
 			"specified by $KUBECONFIG, or to default file rules if not set")
+	err := cmd.Flags().MarkDeprecated("kubeconfig", "use this flag with 'cleanup packagemanifests' instead")
+	if err != nil {
+		panic(err)
+	}
 	cmd.Flags().StringVar(&c.namespace, "namespace", "",
 		"The namespace from which operator and namespaces resources are cleaned up")
-	err := cmd.Flags().MarkDeprecated("namespace", "use --operator-namespace instead")
+	err = cmd.Flags().MarkDeprecated("namespace", "use --operator-namespace instead")
 	if err != nil {
 		panic(err)
 	}
@@ -111,7 +112,6 @@ func NewCmd() *cobra.Command {
 	// Mark all flags used with '--olm' as deprecated and hidden separately so
 	// all other 'cleanup' flags are still available.
 	fs := pflag.NewFlagSet("olm", pflag.ExitOnError)
-	fs.SortFlags = false
 	fs.StringVar(&c.olmArgs.ManifestsDir, "manifests", "",
 		"Directory containing operator package directories and a package manifest file")
 	c.olmArgs.AddToFlagSet(fs)
