@@ -106,7 +106,7 @@ For further information about the flags see the [CLI documentation][cli-scorecar
 
 ## Selecting Tests
 
-Scorecard users can specify a `--selector` CLI flag to filter which 
+Tests are selected by setting the `--selector` CLI flag to
 tests it will execute.  If a selector flag is not supplied, then all 
 the tests within the scorecard configuration file are executed.
 
