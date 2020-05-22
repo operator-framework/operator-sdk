@@ -90,7 +90,7 @@ as follows:
 | --------    | -------- |
 | image | the test container image name that implements a test 
 | entrypoint | the command and arguments that are invoked in the test image to execute a test
-| labels | user defined labels that allow for test selection using the scorecard CLI `--selector` flag
+| labels | scorecard-defined or custom labels that [select](#selecting-tests) which tests to run
 
 ### Command Args
 
