@@ -7,7 +7,9 @@ Runs scorecard
 
 ### Synopsis
 
-Has flags to configure dsl, bundle, and selector.
+Has flags to configure dsl, bundle, and selector. This command takes
+one argument, either a bundle image or directory containing manifests and metadata.
+If the argument holds an image tag, it must be present remotely.
 
 ```
 operator-sdk alpha scorecard [flags]
@@ -16,7 +18,6 @@ operator-sdk alpha scorecard [flags]
 ### Options
 
 ```
-      --bundle string            path to the operator bundle contents on disk
   -c, --config string            path to scorecard config file
   -h, --help                     help for scorecard
       --kubeconfig string        kubeconfig path
