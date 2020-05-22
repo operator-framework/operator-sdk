@@ -13,10 +13,9 @@ and test images.
 Tests are implemented within test images that are configured 
 and constructed to be executed by scorecard.
 
-Each test is executed within a Pod by scorecard, from which pod logs 
-are aggregated and test results sent to the console. 
-results to display to end users.  Scorecard therefore assumes 
-it is being executed with access to a configured Kube cluster.
+Scorecard assumes it is being executed with access to a configured
+Kube cluster.  Each test is executed within a Pod by scorecard, 
+from which pod logs are aggregated and test results sent to the console. 
 
 Scorecard has built-in basic and OLM tests but also provides a 
 means to execute custom test definitions.
