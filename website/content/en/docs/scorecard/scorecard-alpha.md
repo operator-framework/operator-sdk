@@ -104,7 +104,7 @@ operator-sdk alpha scorecard [bundle path] | [bundle image name] [flags]
 The scorecard requires a positional argument that holds either the
 on-disk path to your operator bundle or the name of a bundle image.
 
-**NOTE:** For further information about the flags see the [CLI documentation][cli-scorecard].
+For further information about the flags see the [CLI documentation][cli-scorecard].
 
 ## Selecting Tests
 
