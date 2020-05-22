@@ -14,7 +14,7 @@ Tests are implemented within test images that are configured
 and constructed to be executed by scorecard.
 
 Each test is executed within a Pod by scorecard, from which pod logs 
-contain the test results, and scorecard aggregates the test 
+are aggregated and test results sent to the console. 
 results to display to end users.  Scorecard therefore assumes 
 it is being executed with access to a configured Kube cluster.
 
