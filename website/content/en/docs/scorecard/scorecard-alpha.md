@@ -196,7 +196,7 @@ pass and 0 if all selected tests pass.
 
 ## Extending the Scorecard with Custom Tests
 
-Scorecard will execute custom tests if 
+Scorecard will execute custom tests if they follow these mandated conventions:
 the custom tests following some mandated conventions including:
 
  * tests are implemented within a container image
