@@ -3,7 +3,6 @@ title: Scorecard (alpha)
 weight: 25
 ---
 
-# operator-sdk scorecard (alpha)
 
 ## Overview
 
