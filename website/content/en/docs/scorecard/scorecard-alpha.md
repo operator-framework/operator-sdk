@@ -127,7 +127,7 @@ operator-sdk scorecard -o text --selector=suite=olm
 
 To select multiple tests, you could specify them as follows:
 ```sh
-operator-sdk scorecard -o text --selector='test in (basic-check-spec-test,olm-bundle-validation-test)'
+$ operator-sdk scorecard -o text --selector='test in (basic-check-spec-test,olm-bundle-validation-test)'
 ```
 
 ## Built-in Tests
