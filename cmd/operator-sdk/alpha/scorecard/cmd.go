@@ -47,15 +47,11 @@ func NewCmd() *cobra.Command {
 		waitTime       time.Duration
 	)
 	scorecardCmd := &cobra.Command{
-		Use:   "scorecard",
-		Short: "Runs scorecard",
-		// TODO: describe what the purpose of the command is, why someone would want
-		// to run it, etc.
-		Long: `Has flags to configure dsl, bundle, and selector. This command takes
-one argument, either a bundle image or directory containing manifests and metadata.
-If the argument holds an image tag, it must be present remotely.`,
-		Hidden: true,
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
+		Use:    "scorecard",
+		Short:  "Runs scorecard",
+		Long:   `Has flags to configure dsl, bundle, and selector.`,
+		Hidden: false,
+		RunE: func(cmd *cobra.Command, args []string) error {
 
 			if len(args) != 1 {
 				return fmt.Errorf("a bundle image or directory argument is required")
