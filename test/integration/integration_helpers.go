@@ -23,9 +23,9 @@ import (
 	"strings"
 	"testing"
 
+	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
-	"github.com/operator-framework/operator-registry/pkg/registry"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
@@ -213,8 +213,8 @@ func writeOperatorManifests(dir string, csvConfig CSVTemplateConfig) error {
 	return nil
 }
 
-func writePackageManifest(dir, pkgName string, channels []registry.PackageChannel) error {
-	pkg := registry.PackageManifest{
+func writePackageManifest(dir, pkgName string, channels []apimanifests.PackageChannel) error {
+	pkg := apimanifests.PackageManifest{
 		PackageName:        pkgName,
 		DefaultChannelName: channels[0].Name,
 		Channels:           channels,

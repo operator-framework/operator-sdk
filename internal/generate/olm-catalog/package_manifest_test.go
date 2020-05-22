@@ -21,7 +21,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/operator-framework/operator-registry/pkg/registry"
+	apimanifests "github.com/operator-framework/api/pkg/manifests"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -143,10 +143,10 @@ func TestValidatePackageManifest(t *testing.T) {
 
 	// invalid mock data, pkg with empty channel
 	invalidPkgWithEmptyChannels := pkg
-	invalidPkgWithEmptyChannels.Channels = []registry.PackageChannel{}
+	invalidPkgWithEmptyChannels.Channels = []apimanifests.PackageChannel{}
 
 	type args struct {
-		pkg *registry.PackageManifest
+		pkg *apimanifests.PackageManifest
 	}
 	tests := []struct {
 		name    string
@@ -190,14 +190,14 @@ func TestNewPackageManifest(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want registry.PackageManifest
+		want apimanifests.PackageManifest
 	}{
 		{
-			name: "Should return a valid registry.PackageManifest",
-			want: registry.PackageManifest{
+			name: "Should return a valid apimanifests.PackageManifest",
+			want: apimanifests.PackageManifest{
 				PackageName: "memcached-operator",
-				Channels: []registry.PackageChannel{
-					registry.PackageChannel{
+				Channels: []apimanifests.PackageChannel{
+					apimanifests.PackageChannel{
 						Name:           "stable",
 						CurrentCSVName: "memcached-operator.v0.0.3",
 					},
@@ -211,11 +211,11 @@ func TestNewPackageManifest(t *testing.T) {
 			},
 		},
 		{
-			name: "Should return a valid registry.PackageManifest with channel == alpha when it is not informed",
-			want: registry.PackageManifest{
+			name: "Should return a valid apimanifests.PackageManifest with channel == alpha when it is not informed",
+			want: apimanifests.PackageManifest{
 				PackageName: "memcached-operator",
-				Channels: []registry.PackageChannel{
-					registry.PackageChannel{
+				Channels: []apimanifests.PackageChannel{
+					apimanifests.PackageChannel{
 						Name:           "alpha",
 						CurrentCSVName: "memcached-operator.v0.0.3",
 					},

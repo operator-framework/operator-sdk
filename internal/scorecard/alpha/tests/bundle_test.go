@@ -18,65 +18,35 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/operator-framework/api/pkg/operators"
-	"github.com/operator-framework/operator-registry/pkg/registry"
-	scorecard "github.com/operator-framework/operator-sdk/pkg/scorecard/tests"
-
-	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
+	apimanifests "github.com/operator-framework/api/pkg/manifests"
+	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 )
 
 var testBundle = filepath.Join("..", "testdata", "bundle")
 
-func TestBundlePath(t *testing.T) {
-	cases := []struct {
-		bundlePath string
-		wantError  bool
-	}{
-		{testBundle, false},
-		{"/foo", true},
-	}
-
-	for _, c := range cases {
-		t.Run(c.bundlePath, func(t *testing.T) {
-
-			_, err := scorecard.GetBundle(c.bundlePath)
-			if err != nil && c.wantError {
-				t.Logf("Wanted error and got error : %v", err)
-				return
-			} else if err != nil && !c.wantError {
-				t.Errorf("Wanted result but got error: %v", err)
-				return
-			}
-
-		})
-
-	}
-}
 func TestBundleCRs(t *testing.T) {
 	cases := []struct {
 		bundlePath string
 		crCount    int
-		wantError  bool
 	}{
-		{testBundle, 1, false},
+		{testBundle, 1},
 	}
 
 	for _, c := range cases {
 		t.Run(c.bundlePath, func(t *testing.T) {
 
-			bundle, err := scorecard.GetBundle(c.bundlePath)
-			if err != nil && c.wantError {
-				t.Logf("Wanted error and got error : %v", err)
-				return
-			} else if err != nil && !c.wantError {
-				t.Errorf("Wanted result but got error: %v", err)
-				return
+			bundle, err := apimanifests.GetBundleFromDir(c.bundlePath)
+			if err != nil {
+				t.Fatalf("Error getting bundle: %v", err)
 			}
+
 			var crList []unstructured.Unstructured
-			crList, err = GetCRs(*bundle)
+			crList, err = GetCRs(bundle)
 			if err != nil {
 				t.Error(err)
 				return
@@ -96,7 +66,7 @@ func TestBasicAndOLM(t *testing.T) {
 	cases := []struct {
 		bundlePath string
 		state      scapiv1alpha2.State
-		function   func(registry.Bundle) scapiv1alpha2.ScorecardTestResult
+		function   func(*apimanifests.Bundle) scapiv1alpha2.ScorecardTestResult
 	}{
 		{testBundle, scapiv1alpha2.PassState, CheckSpecTest},
 		{testBundle, scapiv1alpha2.PassState, CRDsHaveValidationTest},
@@ -108,12 +78,12 @@ func TestBasicAndOLM(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.bundlePath, func(t *testing.T) {
 
-			bundle, err := scorecard.GetBundle(c.bundlePath)
+			bundle, err := apimanifests.GetBundleFromDir(c.bundlePath)
 			if err != nil {
-				t.Fatalf("Error getting bundle: %s", err.Error())
+				t.Fatalf("Error getting bundle: %v", err)
 			}
 
-			result := c.function(*bundle)
+			result := c.function(bundle)
 			if result.State != c.state {
 				t.Errorf("%s result State %v expected", result.Name, c.state)
 				return
@@ -184,21 +154,21 @@ func TestDescriptors(t *testing.T) {
 		},
 	}
 
-	csvWithOwnedCR := operators.ClusterServiceVersion{
-		Spec: operators.ClusterServiceVersionSpec{
-			CustomResourceDefinitions: operators.CustomResourceDefinitions{
-				Owned: []operators.CRDDescription{
-					operators.CRDDescription{
+	csvWithOwnedCR := operatorsv1alpha1.ClusterServiceVersion{
+		Spec: operatorsv1alpha1.ClusterServiceVersionSpec{
+			CustomResourceDefinitions: operatorsv1alpha1.CustomResourceDefinitions{
+				Owned: []operatorsv1alpha1.CRDDescription{
+					operatorsv1alpha1.CRDDescription{
 						Name:    "Test",
 						Version: "v1",
 						Kind:    "TestKind",
-						StatusDescriptors: []operators.StatusDescriptor{
-							operators.StatusDescriptor{
+						StatusDescriptors: []operatorsv1alpha1.StatusDescriptor{
+							operatorsv1alpha1.StatusDescriptor{
 								Path: "status",
 							},
 						},
-						SpecDescriptors: []operators.SpecDescriptor{
-							operators.SpecDescriptor{
+						SpecDescriptors: []operatorsv1alpha1.SpecDescriptor{
+							operatorsv1alpha1.SpecDescriptor{
 								Path: "spec",
 							},
 						},
@@ -211,7 +181,7 @@ func TestDescriptors(t *testing.T) {
 	tests := []struct {
 		name       string
 		cr         unstructured.Unstructured
-		csv        *operators.ClusterServiceVersion
+		csv        *operatorsv1alpha1.ClusterServiceVersion
 		descriptor string
 		want       scapiv1alpha2.State
 	}{
@@ -385,15 +355,15 @@ func TestCRDsHaveValidationTests(t *testing.T) {
 }
 
 func TestCheckForResources(t *testing.T) {
-	crdWithResources := operators.CustomResourceDefinitions{
-		Owned: []operators.CRDDescription{
-			operators.CRDDescription{
+	crdWithResources := operatorsv1alpha1.CustomResourceDefinitions{
+		Owned: []operatorsv1alpha1.CRDDescription{
+			operatorsv1alpha1.CRDDescription{
 				Name:              "Test",
 				Version:           "v1",
 				Kind:              "Test",
-				StatusDescriptors: make([]operators.StatusDescriptor, 0),
-				Resources: []operators.APIResourceReference{
-					operators.APIResourceReference{
+				StatusDescriptors: make([]operatorsv1alpha1.StatusDescriptor, 0),
+				Resources: []operatorsv1alpha1.APIResourceReference{
+					operatorsv1alpha1.APIResourceReference{
 						Name:    "operator",
 						Kind:    "Test",
 						Version: "v1",
@@ -403,21 +373,21 @@ func TestCheckForResources(t *testing.T) {
 		},
 	}
 
-	crdWithoutResources := operators.CustomResourceDefinitions{
-		Owned: []operators.CRDDescription{
-			operators.CRDDescription{
+	crdWithoutResources := operatorsv1alpha1.CustomResourceDefinitions{
+		Owned: []operatorsv1alpha1.CRDDescription{
+			operatorsv1alpha1.CRDDescription{
 				Name:              "Test",
 				Version:           "v1",
 				Kind:              "Test",
-				StatusDescriptors: make([]operators.StatusDescriptor, 0),
-				Resources:         make([]operators.APIResourceReference, 0),
+				StatusDescriptors: make([]operatorsv1alpha1.StatusDescriptor, 0),
+				Resources:         make([]operatorsv1alpha1.APIResourceReference, 0),
 			},
 		},
 	}
 
 	tests := []struct {
 		name string
-		args operators.CustomResourceDefinitions
+		args operatorsv1alpha1.CustomResourceDefinitions
 		want scapiv1alpha2.State
 	}{
 		{
