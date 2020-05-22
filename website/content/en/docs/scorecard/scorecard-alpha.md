@@ -122,7 +122,7 @@ $ operator-sdk scorecard -o text --selector=test=basic-check-spec-test
 To select a suite of tests, olm in this case, you would specify
 a label that is used by all the OLM tests:
 ```sh
-operator-sdk scorecard -o text --selector=suite=olm
+$ operator-sdk scorecard -o text --selector=suite=olm
 ```
 
 To select multiple tests, you could specify them as follows:
