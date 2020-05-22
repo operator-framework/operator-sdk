@@ -29,7 +29,7 @@ code or manifests.`,
 	}
 }
 
-// NewCmdLegacy returns the 'generate' command configured for the new project layout.
+// NewCmd returns the 'generate' command configured for the new project layout.
 func NewCmd() *cobra.Command {
 	cmd := newCmd()
 	cmd.AddCommand(
@@ -45,6 +45,7 @@ func NewCmdLegacy() *cobra.Command {
 		newGenerateK8SCmd(),
 		newGenerateCRDsCmd(),
 		newGenerateCSVCmd(),
+		bundle.NewCmdLegacy(),
 	)
 	return cmd
 }

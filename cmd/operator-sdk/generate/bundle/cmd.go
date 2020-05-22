@@ -53,7 +53,7 @@ type bundleCmd struct {
 	overwrite      bool
 }
 
-//nolint:lll
+// NewCmd returns the 'bundle' command configured for the new project layout.
 func NewCmd() *cobra.Command {
 	c := &bundleCmd{}
 	cmd := &cobra.Command{
@@ -117,6 +117,64 @@ func NewCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&c.manifests, "manifests", false, "Generate bundle manifests")
 	cmd.Flags().BoolVar(&c.metadata, "metadata", false, "Generate bundle metadata and Dockerfile")
 	cmd.Flags().BoolVar(&c.stdout, "stdout", false, "Write bundle manifest to stdout")
+
+	c.addCommonFlagsTo(cmd.Flags())
+
+	return cmd
+}
+
+// NewCmdLegacy returns the 'bundle' command configured for the legacy project layout.
+func NewCmdLegacy() *cobra.Command {
+	c := &bundleCmd{}
+	cmd := &cobra.Command{
+		Use:   "bundle",
+		Short: "Generates bundle data for the operator",
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			if len(args) != 0 {
+				return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
+			}
+
+			// Check if the user has any specific preference to enable/disable
+			// interactive prompts. Default behaviour is to disable the prompt
+			// unless a base bundle does not exist.
+			if cmd.Flags().Changed("interactive") {
+				if c.interactive {
+					c.interactiveLevel = projutil.InteractiveOnAll
+				} else {
+					c.interactiveLevel = projutil.InteractiveHardOff
+				}
+			}
+
+			// Generate manifests and metadata by default if no flags are set so
+			// the default behavior is "do everything".
+			fs := cmd.Flags()
+			if !fs.Changed("metadata") && !fs.Changed("manifests") {
+				c.metadata = true
+				c.manifests = true
+			}
+
+			c.setCommonDefaultsLegacy()
+
+			if c.manifests {
+				if err = c.validateManifestsLegacy(); err != nil {
+					return fmt.Errorf("invalid command options: %v", err)
+				}
+				if err = c.runManifestsLegacy(); err != nil {
+					log.Fatalf("Error generating bundle manifests: %v", err)
+				}
+			}
+			if c.metadata {
+				if err = c.runMetadataLegacy(); err != nil {
+					log.Fatalf("Error generating bundle metadata: %v", err)
+				}
+			}
+
+			return nil
+		},
+	}
+
+	cmd.Flags().BoolVar(&c.manifests, "manifests", false, "Generate bundle manifests")
+	cmd.Flags().BoolVar(&c.metadata, "metadata", false, "Generate bundle metadata and Dockerfile")
 
 	c.addCommonFlagsTo(cmd.Flags())
 

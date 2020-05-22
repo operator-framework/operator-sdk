@@ -149,6 +149,42 @@ func (g *Generator) Generate(cfg *config.Config, opts ...Option) (err error) {
 	return genutil.WriteObject(w, csv)
 }
 
+// LegacyOption is a function that modifies a Generator for legacy project layouts.
+type LegacyOption Option
+
+// WithBundleBase sets a Generator's base CSV to a legacy-style bundle base.
+func WithBundleBase(inputDir, apisDir string, ilvl projutil.InteractiveLevel) LegacyOption {
+	return func(g *Generator) error {
+		g.getBase = g.makeBundleBaseGetterLegacy(inputDir, apisDir, ilvl)
+		return nil
+	}
+}
+
+// GenerateLegacy configures the generator with opts then runs it. Used for
+// generating files for legacy project layouts.
+func (g *Generator) GenerateLegacy(opts ...LegacyOption) (err error) {
+	for _, opt := range opts {
+		if err = opt(g); err != nil {
+			return err
+		}
+	}
+
+	if g.getWriter == nil {
+		return noGetWriterError
+	}
+
+	csv, err := g.generate()
+	if err != nil {
+		return err
+	}
+
+	w, err := g.getWriter()
+	if err != nil {
+		return err
+	}
+	return genutil.WriteObject(w, csv)
+}
+
 // generate runs a configured Generator.
 func (g *Generator) generate() (*operatorsv1alpha1.ClusterServiceVersion, error) {
 	if g.getBase == nil {
@@ -196,6 +232,46 @@ func (g Generator) makeBaseGetter(basePath, apisDir string, interactive bool) ge
 		gvks[i].Group = fmt.Sprintf("%s.%s", gvk.Group, g.config.Domain)
 		gvks[i].Version = gvk.Version
 		gvks[i].Kind = gvk.Kind
+	}
+
+	return func() (*operatorsv1alpha1.ClusterServiceVersion, error) {
+		b := bases.ClusterServiceVersion{
+			OperatorName: g.OperatorName,
+			OperatorType: g.OperatorType,
+			BasePath:     basePath,
+			APIsDir:      apisDir,
+			GVKs:         gvks,
+			Interactive:  interactive,
+		}
+		return b.GetBase()
+	}
+}
+
+// makeBundleBaseGetterLegacy returns a function that gets a bundle base
+// for legacy project layouts.
+func (g Generator) makeBundleBaseGetterLegacy(inputDir, apisDir string, ilvl projutil.InteractiveLevel) getBaseFunc {
+	basePath := filepath.Join(inputDir, bundle.ManifestsDir, makeCSVFileName(g.OperatorName))
+	if genutil.IsNotExist(basePath) {
+		basePath = ""
+	}
+	return g.makeBaseGetterLegacy(basePath, apisDir, requiresInteraction(basePath, ilvl))
+}
+
+// makeBaseGetterLegacy returns a function that gets a base from inputDir.
+// apisDir is used by getBaseFunc to populate base fields. This method should
+// be used when creating LegacyOptions.
+func (g Generator) makeBaseGetterLegacy(basePath, apisDir string, interactive bool) getBaseFunc {
+	var gvks []schema.GroupVersionKind
+	if g.Collector != nil {
+		for _, crd := range g.Collector.CustomResourceDefinitions {
+			for _, version := range crd.Spec.Versions {
+				gvks = append(gvks, schema.GroupVersionKind{
+					Group:   crd.Spec.Group,
+					Version: version.Name,
+					Kind:    crd.Spec.Names.Kind,
+				})
+			}
+		}
 	}
 
 	return func() (*operatorsv1alpha1.ClusterServiceVersion, error) {
