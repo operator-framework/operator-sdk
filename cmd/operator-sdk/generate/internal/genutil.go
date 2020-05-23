@@ -83,17 +83,37 @@ func WriteCRDFiles(dir string, crds ...v1beta1.CustomResourceDefinition) error {
 		return err
 	}
 	for _, crd := range crds {
-		if err := writeCRDFile(dir, crd); err != nil {
+		if err := writeCRDFile(dir, crd, makeCRDFileName(crd)); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-// writeCRDFile marshals crd to bytes and writes them to dir in a file named
-// <full group>_<resource>.yaml.
-func writeCRDFile(dir string, crd v1beta1.CustomResourceDefinition) error {
-	file := fmt.Sprintf("%s_%s.yaml", crd.Spec.Group, crd.Spec.Names.Plural)
+func makeCRDFileName(crd v1beta1.CustomResourceDefinition) string {
+	return fmt.Sprintf("%s_%s.yaml", crd.Spec.Group, crd.Spec.Names.Plural)
+}
+
+// WriteCRDFilesLegacy creates dir then writes each CustomResourceDefinition
+// in crds to a file in legacy format in dir.
+func WriteCRDFilesLegacy(dir string, crds ...v1beta1.CustomResourceDefinition) error {
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return err
+	}
+	for _, crd := range crds {
+		if err := writeCRDFile(dir, crd, makeCRDFileNameLegacy(crd)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func makeCRDFileNameLegacy(crd v1beta1.CustomResourceDefinition) string {
+	return fmt.Sprintf("%s_%s_crd.yaml", crd.Spec.Group, crd.Spec.Names.Plural)
+}
+
+// writeCRDFile marshals crd to bytes and writes them to dir in file.
+func writeCRDFile(dir string, crd v1beta1.CustomResourceDefinition, file string) error {
 	f, err := os.Create(filepath.Join(dir, file))
 	if err != nil {
 		return err
