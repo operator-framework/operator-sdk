@@ -30,9 +30,9 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/operator-framework/operator-sdk/internal/flags"
+	"github.com/operator-framework/operator-sdk/internal/output"
 	scorecard "github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
 	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
-	"github.com/operator-framework/operator-sdk/pkg/output"
 )
 
 func NewCmd() *cobra.Command {

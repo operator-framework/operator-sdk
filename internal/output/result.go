@@ -24,56 +24,47 @@ import (
 )
 
 const (
-	//output types
 	JSONAlpha1 = "json-alpha1"
 	Text       = "text"
 )
 
 // Result represents the final result
 type Result struct {
-	Passed bool  `json:"passed"`
-	Logs   []Log `json:"logs"`
+	Passed  bool     `json:"passed"`
+	Outputs []output `json:"outputs"`
 }
 
-// Log represents the logs which are used to return the final result in the JSON format
-type Log struct {
+// output represents the logs which are used to return the final result in the JSON format
+type output struct {
 	Type    string `json:"type"`
 	Message string `json:"message"`
 }
 
+// NewResult return a new result object which starts with passed == true since has no errors
+func NewResult() Result {
+	return Result{Passed: true}
+}
+
 // AddInfo will add a log to the result with the Info Level
 func (o *Result) AddInfo(msg string) {
-	o.Logs = append(o.Logs, Log{
+	o.Outputs = append(o.Outputs, output{
 		Type:    logrus.InfoLevel.String(),
 		Message: msg,
 	})
 }
 
 // AddError will add a log to the result with the Error Level
-func (o *Result) addError(err error) {
-	o.Logs = append(o.Logs, Log{
+func (o *Result) AddError(err error) {
+	o.Outputs = append(o.Outputs, output{
 		Type:    logrus.ErrorLevel.String(),
 		Message: err.Error(),
 	})
 	o.Passed = false
 }
 
-// AddError(s) will add a log to the result with the Error Level
-func (o *Result) AddErrors(errs ...error) {
-	// Collect validation errors, if any.
-	for _, err := range errs {
-		if err == nil {
-			continue
-		}
-		o.addError(err)
-	}
-}
-
-
-
 // AddWarn will add a log to the result with the Warn Level
 func (o *Result) AddWarn(err error) {
-	o.Logs = append(o.Logs, Log{
+	o.Outputs = append(o.Outputs, output{
 		Type:    logrus.WarnLevel.String(),
 		Message: err.Error(),
 	})
@@ -81,8 +72,7 @@ func (o *Result) AddWarn(err error) {
 
 // printText will print the output in human readable format
 func (o *Result) printText(logger *logrus.Entry) error {
-
-	for _, obj := range o.Logs {
+	for _, obj := range o.Outputs {
 		lvl, err := logrus.ParseLevel(obj.Type)
 		if err != nil {
 			return err
@@ -113,10 +103,10 @@ func (o *Result) printJSON() error {
 }
 
 // prepare should be used when writing an Result to a non-log writer.
-// it will ensure that the passed boolean will properly set
+// it will ensure that the passed boolean will properly set in the case of the setters were not properly used
 func (o *Result) prepare() error {
 	o.Passed = true
-	for i, obj := range o.Logs {
+	for i, obj := range o.Outputs {
 		lvl, err := logrus.ParseLevel(obj.Type)
 		if err != nil {
 			return err
@@ -125,7 +115,7 @@ func (o *Result) prepare() error {
 			o.Passed = false
 		}
 		lvlBytes, _ := lvl.MarshalText()
-		o.Logs[i].Type = string(lvlBytes)
+		o.Outputs[i].Type = string(lvlBytes)
 	}
 	return nil
 }
@@ -133,13 +123,14 @@ func (o *Result) prepare() error {
 // PrintWithFormat prints output to w in format, and exits if some object in output
 // is not in a passing state.
 func (o *Result) PrintWithFormat(format string) (err error) {
+	// the prepare will ensure the result data if the setters were not used
 	if err = o.prepare(); err != nil {
 		return fmt.Errorf("error to prepare output: %v", err)
 	}
 
 	printf := o.getPrintFuncFormat(format)
 	if err = printf(*o); err == nil && !o.Passed {
-		os.Exit(1)
+		os.Exit(1) // Exit with error when any Error type was added
 	}
 	return err
 }
@@ -155,6 +146,7 @@ func (o *Result) getPrintFuncFormat(format string) func(Result) error {
 		}
 	}
 
+	// Address all to the Stdout when the type is not JSON
 	logger := log.NewEntry(NewLoggerTo(os.Stdout))
 	return func(o Result) error {
 		return o.printText(logger)

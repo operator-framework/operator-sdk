@@ -8,7 +8,6 @@ require (
 	github.com/fatih/structtag v1.1.0
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.1
-	github.com/gobuffalo/logger v1.0.1
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/iancoleman/strcase v0.0.0-20190422225806-e506e3ef7365
 	github.com/markbates/inflect v1.0.4
@@ -24,7 +23,7 @@ require (
 	github.com/prometheus/client_golang v1.5.1
 	github.com/rogpeppe/go-internal v1.5.0
 	github.com/sergi/go-diff v1.0.0
-	github.com/sirupsen/logrus v1.5.0
+	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/afero v1.2.2
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
