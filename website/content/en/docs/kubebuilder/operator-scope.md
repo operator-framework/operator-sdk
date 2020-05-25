@@ -217,7 +217,7 @@ spec:
 
 ### Configuring cluster-scoped operators with MultiNamespacedCacheBuilder
 
-- Add a helper function to get the environment variable value in the `main.go` file as done in the in the previous example (e.g `getWatchNamespace()`) 
+- Add a helper function to get the environment variable value in the `main.go` file as done in the previous example (e.g `getWatchNamespace()`)
 - Use the environment variable value and check if it is a multi-namespace scenario:
 
 ```go
@@ -225,7 +225,7 @@ spec:
 watchNamespace, err := getWatchNamespace()
 if err != nil {
     setupLog.Error(err, "unable to get WatchNamespace, " +
-        "the manager will watch and manage resources in all cluster")
+        "the manager will watch and manage resources in all Namespaces")
 }
 
 options := ctrl.Options{
