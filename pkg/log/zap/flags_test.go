@@ -91,6 +91,82 @@ func TestLevel(t *testing.T) {
 	}
 }
 
+func TestStackTraceLevel(t *testing.T) {
+	testCases := []struct {
+		name      string
+		input     string
+		expStr    string
+		expSet    bool
+		expLevel  zapcore.Level
+		shouldErr bool
+	}{
+		{
+			name:     "debug level set",
+			input:    "debug",
+			expStr:   "debug",
+			expSet:   true,
+			expLevel: zapcore.DebugLevel,
+		},
+		{
+			name:     "info level set",
+			input:    "info",
+			expStr:   "info",
+			expSet:   true,
+			expLevel: zapcore.InfoLevel,
+		},
+		{
+			name:     "error level set",
+			input:    "error",
+			expStr:   "error",
+			expSet:   true,
+			expLevel: zapcore.ErrorLevel,
+		},
+		{
+			name:     "panic level set",
+			input:    "panic",
+			expStr:   "panic",
+			expSet:   true,
+			expLevel: zapcore.PanicLevel,
+		},
+		{
+			name:      "negative number should error",
+			input:     "-10",
+			shouldErr: true,
+			expSet:    false,
+		},
+		{
+			name:     "positive number level results in negative level set",
+			input:    "8",
+			expStr:   "Level(-8)",
+			expSet:   true,
+			expLevel: zapcore.Level(int8(-8)),
+		},
+		{
+			name:      "non-integer should cause error",
+			input:     "invalid",
+			shouldErr: true,
+			expSet:    false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			stackLvl := stackLevelValue{}
+			err := stackLvl.Set(tc.input)
+			if err != nil && !tc.shouldErr {
+				t.Fatalf("Unknown error - %v", err)
+			}
+			if err != nil && tc.shouldErr {
+				return
+			}
+			assert.Equal(t, tc.expSet, stackLvl.set)
+			assert.Equal(t, tc.expLevel, stackLvl.level)
+			assert.Equal(t, "level", stackLvl.Type())
+			assert.Equal(t, tc.expStr, stackLvl.String())
+		})
+	}
+}
+
 func TestSample(t *testing.T) {
 	testCases := []struct {
 		name      string
