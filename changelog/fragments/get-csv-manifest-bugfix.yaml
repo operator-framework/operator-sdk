@@ -1,0 +1,9 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      CSV manifests read from disk are now properly marshaled into the CSV struct
+
+    kind: "bugfix"
+
+    breaking: false
