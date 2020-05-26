@@ -20,6 +20,11 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+const (
+	ConfigDirName = "scorecard"
+	ConfigDirPath = "/tests/" + ConfigDirName + "/"
+)
+
 type Test struct {
 	Name  string `yaml:"name"`  // The container test name
 	Image string `yaml:"image"` // The container image name

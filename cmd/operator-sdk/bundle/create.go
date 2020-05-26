@@ -25,6 +25,7 @@ import (
 
 	"github.com/blang/semver"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
+	scorecard "github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -115,6 +116,7 @@ bundle.Dockerfile for your latest operator version without building the image:
 				c.imageTag = args[0]
 				err = c.runBuild()
 			}
+
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -124,7 +126,6 @@ bundle.Dockerfile for your latest operator version without building the image:
 	}
 
 	c.addToFlagSet(cmd.Flags())
-
 	return cmd
 }
 
@@ -208,12 +209,19 @@ func (c bundleCreateCmd) validate(args []string) error {
 	return nil
 }
 
-// runGenerate generates a bundle.Dockerfile, and manifests/ and metadata/ dirs,
-// always overwriting their contents.
+// runGenerate generates a bundle.Dockerfile, and manifests/ and metadata/ dirs with scorecard config
+// copied to the bundle image.
 func (c bundleCreateCmd) runGenerate() error {
-	err := bundle.GenerateFunc(c.directory, c.outputDir, c.packageName, c.channels, c.defaultChannel, true)
+	if c.generateOnly {
+		c.overwrite = true
+	}
+
+	err := bundle.GenerateFunc(c.directory, c.outputDir, c.packageName, c.channels, c.defaultChannel, c.overwrite)
 	if err != nil {
 		return fmt.Errorf("error generating bundle image files: %v", err)
+	}
+	if err = copyScorecardConfig(); err != nil {
+		return err
 	}
 	return nil
 }
@@ -234,11 +242,36 @@ func (c bundleCreateCmd) runBuild() error {
 	}
 
 	// Build with overwrite-able option.
-	err := bundle.BuildFunc(c.directory, c.outputDir, c.imageTag, c.imageBuilder,
-		c.packageName, c.channels, c.defaultChannel, c.overwrite)
+	err := c.buildFunc()
 	if err != nil {
 		return fmt.Errorf("error building bundle image: %v", err)
 	}
+	return nil
+}
+
+// buildFunc is used to build a container image from a list of manifests and generates dockerfile and annotations.yaml.
+func (c bundleCreateCmd) buildFunc() error {
+	_, err := os.Stat(c.directory)
+	if os.IsNotExist(err) {
+		return err
+	}
+
+	err = c.runGenerate()
+	if err != nil {
+		return err
+	}
+
+	// Build bundle image
+	log.Info("Building bundle image")
+	buildCmd, err := bundle.BuildBundleImage(c.imageTag, c.imageBuilder)
+	if err != nil {
+		return err
+	}
+
+	if err := bundle.ExecuteCommand(buildCmd); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -267,4 +300,19 @@ func isPackageManifestsDir(dir, operatorName string) bool {
 	packageManifestPath := filepath.Join(filepath.Dir(dir), operatorName+".package.yaml")
 	_, err := semver.ParseTolerant(filepath.Clean(filepath.Base(dir)))
 	return isExist(packageManifestPath) && err == nil
+}
+
+// copyScorecardConfigToBundle checks if bundle.Dockerfile and scorecard config exists in
+// the operator project. If it does, it injects the scorecard configuration into bundle
+// image.
+// TODO: Add labels to annotations.yaml and bundle.dockerfile.
+func copyScorecardConfig() error {
+	if isExist(bundle.DockerFile) && isExist(scorecard.ConfigDirName) {
+		scorecardFileContent := fmt.Sprintf("COPY %s %s\n", scorecard.ConfigDirName, scorecard.ConfigDirPath)
+		err := projutil.RewriteFileContents(bundle.DockerFile, "COPY", scorecardFileContent)
+		if err != nil {
+			return fmt.Errorf("error rewriting dockerfile, %v", err)
+		}
+	}
+	return nil
 }
