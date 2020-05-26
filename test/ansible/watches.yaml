@@ -11,8 +11,8 @@
 
 - version: v1alpha1
   group: test.example.com
-  kind: ExecTest
-  playbook: playbooks/exec.yml
+  kind: SubresourceTest
+  playbook: playbooks/subresources.yml
 
 - version: v1
   group: ""
