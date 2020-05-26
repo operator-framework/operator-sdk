@@ -1,7 +1,7 @@
 ---
 title: Operator SDK FAQ
 linkTitle: FAQ
-weight: 60
+weight: 80
 ---
 
 ## Controller Runtime FAQ
