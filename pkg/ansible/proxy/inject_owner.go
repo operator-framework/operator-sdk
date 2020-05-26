@@ -81,9 +81,14 @@ func (i *injectOwnerReferenceHandler) ServeHTTP(w http.ResponseWriter, req *http
 		// Determine if the resource is virtual. If it is then we should not attempt to use cache
 		isVR, err := i.apiResources.IsVirtualResource(k)
 		if err != nil {
-			// break here in case we can not understand if virtual resource or not
-			log.Error(err, "Unable to determine if virtual resource", "gvk", k)
-			break
+			// Fail if we can't determine whether it's a virtual resource or not.
+			// Otherwise we might create a resource without an ownerReference, which will prevent
+			// dependentWatches from being re-established and garbage collection from deleting the
+			// resource, unless a user manually adds the ownerReference.
+			m := "Unable to determine if virtual resource"
+			log.Error(err, m, "gvk", k)
+			http.Error(w, m, http.StatusInternalServerError)
+			return
 		}
 
 		if isVR {
