@@ -62,6 +62,21 @@ Read the [operator scope][operator_scope] documentation on how to run your opera
 
 By default the main program will set the manager's namespace using the value of `WATCH_NAMESPACE` env defined in `deploy/operator.yaml`.
 
+### Multi-Group APIs
+
+Before creating an API and Controller, consider if your operator's API requires multiple [groups][API-groups].
+If yes then add the line `multigroup: true` in the `PROJECT` file which should look like the following:
+
+```YAML
+domain: example.com
+layout: go.kubebuilder.io/v2.0.0
+multigroup: true
+...
+```
+For multi-group projects, the API Go type files are created under `apis/<group>/<version>/` and the controllers would be created under `controllers/<group>/`.
+
+This guide will cover the default case of a single group API.
+
 ## Create a new API and Controller
 
 Create a new Custom Resource Definition(CRD) API with group `cache` version `v1alpha1` and Kind Memcached.
@@ -479,3 +494,4 @@ Also see the [advanced topics][advanced_topics] doc for more use cases and under
 [create_a_webhook]: /docs/kubebuilder/webhooks.md
 [status_marker]: https://book.kubebuilder.io/reference/generating-crd.html#status
 [status_subresource]: https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#status-subresource
+[API-groups]:https://kubernetes.io/docs/concepts/overview/kubernetes-api/#api-groups
