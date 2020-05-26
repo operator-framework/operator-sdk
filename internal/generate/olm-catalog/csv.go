@@ -277,14 +277,9 @@ func (g BundleGenerator) getBase() (*olmapiv1alpha1.ClusterServiceVersion, error
 	}
 	var gvks []schema.GroupVersionKind
 	for _, crd := range crds {
-		nameSplit := strings.SplitN(crd.GetName(), ".", 2)
-		group := crd.GetName()
-		if len(nameSplit) > 1 {
-			group = nameSplit[1]
-		}
 		for _, version := range crd.Spec.Versions {
 			gvks = append(gvks, schema.GroupVersionKind{
-				Group:   group,
+				Group:   crd.Spec.Group,
 				Version: version.Name,
 				Kind:    crd.Spec.Names.Kind,
 			})

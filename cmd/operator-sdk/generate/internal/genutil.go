@@ -24,7 +24,7 @@ import (
 	"strings"
 
 	"github.com/blang/semver"
-	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"sigs.k8s.io/yaml"
 
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
@@ -67,7 +67,7 @@ func PluginKeyToOperatorType(pluginKey string) projutil.OperatorType {
 }
 
 // WriteCRDs writes each CustomResourceDefinition in crds to w.
-func WriteCRDs(w io.Writer, crds ...v1beta1.CustomResourceDefinition) error {
+func WriteCRDs(w io.Writer, crds ...apiextv1.CustomResourceDefinition) error {
 	for _, crd := range crds {
 		if err := writeCRD(w, crd); err != nil {
 			return err
@@ -78,7 +78,7 @@ func WriteCRDs(w io.Writer, crds ...v1beta1.CustomResourceDefinition) error {
 
 // WriteCRDFiles creates dir then writes each CustomResourceDefinition in crds
 // to a file in dir.
-func WriteCRDFiles(dir string, crds ...v1beta1.CustomResourceDefinition) error {
+func WriteCRDFiles(dir string, crds ...apiextv1.CustomResourceDefinition) error {
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
@@ -90,13 +90,13 @@ func WriteCRDFiles(dir string, crds ...v1beta1.CustomResourceDefinition) error {
 	return nil
 }
 
-func makeCRDFileName(crd v1beta1.CustomResourceDefinition) string {
+func makeCRDFileName(crd apiextv1.CustomResourceDefinition) string {
 	return fmt.Sprintf("%s_%s.yaml", crd.Spec.Group, crd.Spec.Names.Plural)
 }
 
 // WriteCRDFilesLegacy creates dir then writes each CustomResourceDefinition
 // in crds to a file in legacy format in dir.
-func WriteCRDFilesLegacy(dir string, crds ...v1beta1.CustomResourceDefinition) error {
+func WriteCRDFilesLegacy(dir string, crds ...apiextv1.CustomResourceDefinition) error {
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
@@ -108,12 +108,12 @@ func WriteCRDFilesLegacy(dir string, crds ...v1beta1.CustomResourceDefinition) e
 	return nil
 }
 
-func makeCRDFileNameLegacy(crd v1beta1.CustomResourceDefinition) string {
+func makeCRDFileNameLegacy(crd apiextv1.CustomResourceDefinition) string {
 	return fmt.Sprintf("%s_%s_crd.yaml", crd.Spec.Group, crd.Spec.Names.Plural)
 }
 
 // writeCRDFile marshals crd to bytes and writes them to dir in file.
-func writeCRDFile(dir string, crd v1beta1.CustomResourceDefinition, file string) error {
+func writeCRDFile(dir string, crd apiextv1.CustomResourceDefinition, file string) error {
 	f, err := os.Create(filepath.Join(dir, file))
 	if err != nil {
 		return err
@@ -123,7 +123,7 @@ func writeCRDFile(dir string, crd v1beta1.CustomResourceDefinition, file string)
 }
 
 // writeCRD marshals crd to bytes and writes them to w.
-func writeCRD(w io.Writer, crd v1beta1.CustomResourceDefinition) error {
+func writeCRD(w io.Writer, crd apiextv1.CustomResourceDefinition) error {
 	b, err := yaml.Marshal(crd)
 	if err != nil {
 		return err

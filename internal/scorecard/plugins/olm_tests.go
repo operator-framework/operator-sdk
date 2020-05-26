@@ -31,7 +31,7 @@ import (
 
 	olmapiv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	v1 "k8s.io/api/core/v1"
-	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -215,20 +215,6 @@ func (t *BundleValidationTest) Run(ctx context.Context) *schelpers.TestResult {
 	return res
 }
 
-// matchVersion checks if a CRD contains a specified version in a case insensitive manner
-func matchVersion(version string, crd apiextv1beta1.CustomResourceDefinition) bool {
-	if strings.EqualFold(version, crd.Spec.Version) {
-		return true
-	}
-	// crd.Spec.Version is deprecated, so check in crd.Spec.Versions as well
-	for _, currVer := range crd.Spec.Versions {
-		if strings.EqualFold(version, currVer.Name) {
-			return true
-		}
-	}
-	return false
-}
-
 // Run - implements Test interface
 func (t *CRDsHaveValidationTest) Run(ctx context.Context) *schelpers.TestResult {
 	res := &schelpers.TestResult{Test: t, CRName: t.CR.GetName(), State: scapiv1alpha2.PassState}
@@ -244,46 +230,51 @@ func (t *CRDsHaveValidationTest) Run(ctx context.Context) *schelpers.TestResult 
 		res.State = scapiv1alpha2.ErrorState
 		return res
 	}
-	for _, crd := range crds {
-		// check if the CRD matches the testing CR
-		gvk := t.CR.GroupVersionKind()
-		// Only check the validation block if the CRD and CR have the same Kind and Version
-		if !(matchVersion(gvk.Version, crd) && matchKind(gvk.Kind, crd.Spec.Names.Kind)) {
-			continue
-		}
-		if crd.Spec.Validation == nil {
-			res.Suggestions = append(res.Suggestions, fmt.Sprintf("Add CRD validation for %s/%s",
-				crd.Spec.Names.Kind, crd.Spec.Version))
-			continue
-		}
-		failed := false
-		if t.CR.Object["spec"] != nil {
-			spec := t.CR.Object["spec"].(map[string]interface{})
-			for key := range spec {
-				if _, ok := crd.Spec.Validation.OpenAPIV3Schema.Properties["spec"].Properties[key]; !ok {
-					failed = true
-					res.Suggestions = append(res.Suggestions,
-						fmt.Sprintf("Add CRD validation for spec field `%s` in %s/%s",
-							key, gvk.Kind, gvk.Version))
-				}
-			}
-		}
-		if t.CR.Object["status"] != nil {
-			status := t.CR.Object["status"].(map[string]interface{})
-			for key := range status {
-				if _, ok := crd.Spec.Validation.OpenAPIV3Schema.Properties["status"].Properties[key]; !ok {
-					failed = true
-					res.Suggestions = append(res.Suggestions, fmt.Sprintf("Add CRD validation for status"+
-						" field `%s` in %s/%s", key, gvk.Kind, gvk.Version))
-				}
-			}
-		}
 
-		if failed {
-			res.State = scapiv1alpha2.FailState
+	// check if the CRD matches the testing CR
+	gvk := t.CR.GroupVersionKind()
+	for _, crd := range crds {
+		for _, ver := range crd.Spec.Versions {
+			// Only check the validation block if the CRD and CR have the same Kind and Version
+			if strings.EqualFold(gvk.Version, ver.Name) && matchKind(gvk.Kind, crd.Spec.Names.Kind) {
+				checkCRDVersion(res, t.CR, ver.Schema)
+			}
 		}
 	}
 	return res
+}
+
+func checkCRDVersion(res *schelpers.TestResult, cr *unstructured.Unstructured, val *apiextv1.CustomResourceValidation) {
+	gvk := cr.GroupVersionKind()
+	if val == nil {
+		res.Suggestions = append(res.Suggestions, fmt.Sprintf("Add CRD validation for %s/%s", gvk.Kind, gvk.Version))
+		return
+	}
+	failed := false
+	if cr.Object["spec"] != nil {
+		spec := cr.Object["spec"].(map[string]interface{})
+		for key := range spec {
+			if _, ok := val.OpenAPIV3Schema.Properties["spec"].Properties[key]; !ok {
+				failed = true
+				res.Suggestions = append(res.Suggestions,
+					fmt.Sprintf("Add CRD validation for spec field `%s` in %s/%s", key, gvk.Kind, gvk.Version))
+			}
+		}
+	}
+	if cr.Object["status"] != nil {
+		status := cr.Object["status"].(map[string]interface{})
+		for key := range status {
+			if _, ok := val.OpenAPIV3Schema.Properties["status"].Properties[key]; !ok {
+				failed = true
+				res.Suggestions = append(res.Suggestions,
+					fmt.Sprintf("Add CRD validation for status field `%s` in %s/%s", key, gvk.Kind, gvk.Version))
+			}
+		}
+	}
+
+	if failed {
+		res.State = scapiv1alpha2.FailState
+	}
 }
 
 // Run - implements Test interface

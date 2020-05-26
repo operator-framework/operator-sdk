@@ -26,6 +26,7 @@ import (
 	admissionregv1 "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
@@ -38,7 +39,7 @@ type Manifests struct {
 	Roles                     []rbacv1.Role
 	ClusterRoles              []rbacv1.ClusterRole
 	Deployments               []appsv1.Deployment
-	CustomResourceDefinitions []apiextv1beta1.CustomResourceDefinition
+	CustomResourceDefinitions []apiextv1.CustomResourceDefinition
 	ValidatingWebhooks        []admissionregv1.ValidatingWebhook
 	MutatingWebhooks          []admissionregv1.MutatingWebhook
 	CustomResources           []unstructured.Unstructured
@@ -68,7 +69,9 @@ func (c *Manifests) UpdateFromDirs(manifestRoot, crdsDir string) error {
 				log.Debugf("No TypeMeta in %s, skipping file", path)
 				continue
 			}
-			switch typeMeta.GroupVersionKind().Kind {
+
+			gvk := typeMeta.GroupVersionKind()
+			switch gvk.Kind {
 			case "Role":
 				err = c.addRoles(manifest)
 			case "ClusterRole":
@@ -85,7 +88,7 @@ func (c *Manifests) UpdateFromDirs(manifestRoot, crdsDir string) error {
 				err = c.addOthers(manifest)
 			}
 			if err != nil {
-				return err
+				return fmt.Errorf("error adding %s to manifest collector: %v", gvk, err)
 			}
 		}
 		return scanner.Err()
@@ -98,7 +101,7 @@ func (c *Manifests) UpdateFromDirs(manifestRoot, crdsDir string) error {
 	if isDirExist(crdsDir) {
 		c.CustomResourceDefinitions, err = k8sutil.GetCustomResourceDefinitions(crdsDir)
 		if err != nil {
-			return err
+			return fmt.Errorf("error adding CustomResourceDefinitions to manifest collector: %v", err)
 		}
 	}
 
@@ -126,7 +129,9 @@ func (c *Manifests) UpdateFromReader(r io.Reader) error {
 			log.Debug("No TypeMeta found, skipping manifest")
 			continue
 		}
-		switch typeMeta.GroupVersionKind().Kind {
+
+		gvk := typeMeta.GroupVersionKind()
+		switch gvk.Kind {
 		case "Role":
 			err = c.addRoles(manifest)
 		case "ClusterRole":
@@ -134,7 +139,7 @@ func (c *Manifests) UpdateFromReader(r io.Reader) error {
 		case "Deployment":
 			err = c.addDeployments(manifest)
 		case "CustomResourceDefinition":
-			err = c.addCustomResourceDefinitions(manifest)
+			err = c.addCustomResourceDefinitions(gvk.Version, manifest)
 		case "ValidatingWebhookConfiguration":
 			err = c.addValidatingWebhookConfigurations(manifest)
 		case "MutatingWebhookConfiguration":
@@ -143,7 +148,7 @@ func (c *Manifests) UpdateFromReader(r io.Reader) error {
 			err = c.addOthers(manifest)
 		}
 		if err != nil {
-			return err
+			return fmt.Errorf("error adding %s to manifest collector: %v", gvk, err)
 		}
 	}
 	if err := scanner.Err(); err != nil {
@@ -167,7 +172,7 @@ func (c *Manifests) addRoles(rawManifests ...[]byte) error {
 	for _, rawManifest := range rawManifests {
 		role := rbacv1.Role{}
 		if err := yaml.Unmarshal(rawManifest, &role); err != nil {
-			return fmt.Errorf("error adding Role to manifest collector: %v", err)
+			return err
 		}
 		c.Roles = append(c.Roles, role)
 	}
@@ -180,7 +185,7 @@ func (c *Manifests) addClusterRoles(rawManifests ...[]byte) error {
 	for _, rawManifest := range rawManifests {
 		role := rbacv1.ClusterRole{}
 		if err := yaml.Unmarshal(rawManifest, &role); err != nil {
-			return fmt.Errorf("error adding ClusterRole to manifest collector: %v", err)
+			return err
 		}
 		c.ClusterRoles = append(c.ClusterRoles, role)
 	}
@@ -193,7 +198,7 @@ func (c *Manifests) addDeployments(rawManifests ...[]byte) error {
 	for _, rawManifest := range rawManifests {
 		dep := appsv1.Deployment{}
 		if err := yaml.Unmarshal(rawManifest, &dep); err != nil {
-			return fmt.Errorf("error adding Deployment to manifest collector: %v", err)
+			return err
 		}
 		c.Deployments = append(c.Deployments, dep)
 	}
@@ -201,14 +206,28 @@ func (c *Manifests) addDeployments(rawManifests ...[]byte) error {
 }
 
 // addCustomResourceDefinitions assumes add manifest data in rawManifests are
-// CustomResourceDefinitions and adds them to the collector.
-func (c *Manifests) addCustomResourceDefinitions(rawManifests ...[]byte) error {
+// CustomResourceDefinitions and adds them to the collector. version determines
+// which CustomResourceDefinition type is used for all manifests in rawManifests.
+func (c *Manifests) addCustomResourceDefinitions(version string, rawManifests ...[]byte) (err error) {
 	for _, rawManifest := range rawManifests {
-		crd := apiextv1beta1.CustomResourceDefinition{}
-		if err := yaml.Unmarshal(rawManifest, &crd); err != nil {
-			return fmt.Errorf("error adding Deployment to manifest collector: %v", err)
+		crd := &apiextv1.CustomResourceDefinition{}
+		switch version {
+		case "v1":
+			if err = yaml.Unmarshal(rawManifest, crd); err != nil {
+				return err
+			}
+		case "v1beta1":
+			in := &apiextv1beta1.CustomResourceDefinition{}
+			if err := yaml.Unmarshal(rawManifest, &in); err != nil {
+				return err
+			}
+			if crd, err = k8sutil.Convertv1beta1Tov1CustomResourceDefinition(in); err != nil {
+				return fmt.Errorf("error converting CustomResourceDefinition v1beta1 to v1: %v", err)
+			}
+		default:
+			return fmt.Errorf("unrecognized CustomResourceDefinition version %q", version)
 		}
-		c.CustomResourceDefinitions = append(c.CustomResourceDefinitions, crd)
+		c.CustomResourceDefinitions = append(c.CustomResourceDefinitions, *crd)
 	}
 	return nil
 }
@@ -219,7 +238,7 @@ func (c *Manifests) addValidatingWebhookConfigurations(rawManifests ...[]byte) e
 	for _, rawManifest := range rawManifests {
 		webhookConfig := admissionregv1.ValidatingWebhookConfiguration{}
 		if err := yaml.Unmarshal(rawManifest, &webhookConfig); err != nil {
-			return fmt.Errorf("error adding ValidatingWebhookConfig to manifest collection: %v", err)
+			return err
 		}
 		c.ValidatingWebhooks = append(c.ValidatingWebhooks, webhookConfig.Webhooks...)
 	}
@@ -232,7 +251,7 @@ func (c *Manifests) addMutatingWebhookConfigurations(rawManifests ...[]byte) err
 	for _, rawManifest := range rawManifests {
 		webhookConfig := admissionregv1.MutatingWebhookConfiguration{}
 		if err := yaml.Unmarshal(rawManifest, &webhookConfig); err != nil {
-			return fmt.Errorf("error adding MutatingWebhookConfig to manifest collection: %v", err)
+			return err
 		}
 		c.MutatingWebhooks = append(c.MutatingWebhooks, webhookConfig.Webhooks...)
 	}
@@ -245,7 +264,7 @@ func (c *Manifests) addOthers(rawManifests ...[]byte) error {
 	for _, rawManifest := range rawManifests {
 		u := unstructured.Unstructured{}
 		if err := yaml.Unmarshal(rawManifest, &u); err != nil {
-			return fmt.Errorf("error adding manifest collector: %v", err)
+			return err
 		}
 		c.Others = append(c.Others, u)
 	}

@@ -118,7 +118,7 @@ func GenerateCombinedGlobalManifest(crdsDir string) (*os.File, error) {
 	for _, crd := range crds {
 		b, err := yaml.Marshal(crd)
 		if err != nil {
-			return nil, fmt.Errorf("error marshalling CRD %s bytes: %v", crd.GetName(), err)
+			return nil, fmt.Errorf("error marshaling %s: %v", crd.GetObjectKind().GroupVersionKind(), err)
 		}
 		combined = CombineManifests(combined, b)
 	}

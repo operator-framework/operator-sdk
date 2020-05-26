@@ -22,16 +22,16 @@ import (
 	"fmt"
 	"strings"
 
-	"gomodules.xyz/jsonpatch/v3"
-	helmkube "helm.sh/helm/v3/pkg/kube"
-	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-
+	jsonpatch "gomodules.xyz/jsonpatch/v3"
 	"helm.sh/helm/v3/pkg/action"
 	cpb "helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/kube"
+	helmkube "helm.sh/helm/v3/pkg/kube"
 	rpb "helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage"
 	"helm.sh/helm/v3/pkg/storage/driver"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -301,8 +301,10 @@ func createPatch(existing runtime.Object, expected *resource.Info) ([]byte, apit
 	// on objects like CRDs.
 	_, isUnstructured := versionedObject.(runtime.Unstructured)
 
-	// On newer K8s versions, CRDs aren't unstructured but has this dedicated type
-	_, isCRD := versionedObject.(*apiextv1beta1.CustomResourceDefinition)
+	// On newer K8s versions, CRDs aren't unstructured but have a dedicated type
+	_, isV1CRD := versionedObject.(*apiextv1.CustomResourceDefinition)
+	_, isV1beta1CRD := versionedObject.(*apiextv1beta1.CustomResourceDefinition)
+	isCRD := isV1CRD || isV1beta1CRD
 
 	if isUnstructured || isCRD {
 		// fall back to generic JSON merge patch

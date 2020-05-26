@@ -20,7 +20,7 @@ import (
 	admissionregv1 "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
-	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -95,7 +95,7 @@ func (c *Manifests) deduplicate() error {
 	}
 	c.Deployments = deps
 
-	crds := []apiextv1beta1.CustomResourceDefinition{}
+	crds := []apiextv1.CustomResourceDefinition{}
 	for _, crd := range c.CustomResourceDefinitions {
 		hasHash, err := addToHashes(&crd, hashes)
 		if err != nil {

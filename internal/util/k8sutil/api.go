@@ -26,17 +26,21 @@ import (
 	apiext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/version"
 	"sigs.k8s.io/yaml"
 )
 
 // GetCustomResourceDefinitions returns all CRD manifests in the directory
 // crdsDir.
-func GetCustomResourceDefinitions(crdsDir string) (crds []apiextv1beta1.CustomResourceDefinition, err error) {
+func GetCustomResourceDefinitions(crdsDir string) (crds []apiextv1.CustomResourceDefinition, err error) {
 	infos, err := ioutil.ReadDir(crdsDir)
 	if err != nil {
 		return nil, err
 	}
+
+	// The set of all custom resource GVKs in found CRDs.
+	crGVKSet := map[schema.GroupVersionKind]struct{}{}
 	for _, info := range infos {
 		if info.IsDir() {
 			continue
@@ -55,13 +59,43 @@ func GetCustomResourceDefinitions(crdsDir string) (crds []apiextv1beta1.CustomRe
 				log.Debugf("Skipping manifest in %s: %v", path, err)
 				continue
 			}
-			if typeMeta.Kind == "CustomResourceDefinition" {
-				crd := apiextv1beta1.CustomResourceDefinition{}
-				if err = yaml.Unmarshal(manifest, &crd); err != nil {
-					return nil, fmt.Errorf("error unmarshalling CustomResourceDefinition: %w", err)
-				}
-				crds = append(crds, crd)
+			if typeMeta.Kind != "CustomResourceDefinition" {
+				continue
 			}
+
+			// Unmarshal based on CRD version.
+			crd := &apiextv1.CustomResourceDefinition{}
+			switch gvk := typeMeta.GroupVersionKind(); gvk.Version {
+			case "v1":
+				if err = yaml.Unmarshal(manifest, crd); err != nil {
+					return nil, err
+				}
+			case "v1beta1":
+				in := &apiextv1beta1.CustomResourceDefinition{}
+				if err := yaml.Unmarshal(manifest, &in); err != nil {
+					return nil, err
+				}
+				if crd, err = Convertv1beta1Tov1CustomResourceDefinition(in); err != nil {
+					return nil, fmt.Errorf("error converting CustomResourceDefinition v1beta1 to v1: %v", err)
+				}
+			default:
+				return nil, fmt.Errorf("unrecognized CustomResourceDefinition version %q", gvk.Version)
+			}
+
+			// Check if any GVK in crd is a duplicate.
+			for _, ver := range crd.Spec.Versions {
+				gvk := schema.GroupVersionKind{
+					Group:   crd.Spec.Group,
+					Version: ver.Name,
+					Kind:    crd.Spec.Names.Kind,
+				}
+				if _, hasGVK := crGVKSet[gvk]; hasGVK {
+					return nil, fmt.Errorf("duplicate custom resource GVK %s in %s", gvk, path)
+				}
+				crGVKSet[gvk] = struct{}{}
+			}
+
+			crds = append(crds, *crd)
 		}
 		if err = scanner.Err(); err != nil {
 			return nil, fmt.Errorf("error scanning %s: %w", path, err)
