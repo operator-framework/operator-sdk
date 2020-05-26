@@ -49,8 +49,8 @@ containing operator metadata and manifests. This command will exit with an
 exit code of 1 if any validation errors arise, and 0 if only warnings arise or
 all validators pass.
 
-More information on operator bundle images and the manifests/metadata format:
-https://github.com/openshift/enhancements/blob/master/enhancements/olm/operator-bundle.md
+More information about operator bundles and metadata:
+https://github.com/operator-framework/operator-registry#manifest-format.
 
 NOTE: if validating an image, the image must exist in a remote registry, not
 just locally.

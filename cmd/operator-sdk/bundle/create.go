@@ -72,8 +72,8 @@ will be written if '--generate-only=true':
 '--generate-only' is useful if you want to build an operator's bundle image
 manually or modify metadata before building an image.
 
-More information on operator bundle images and the manifests/metadata format:
-https://github.com/openshift/enhancements/blob/master/enhancements/olm/operator-bundle.md
+More information about operator bundles and metadata:
+https://github.com/operator-framework/operator-registry#manifest-format.
 
 NOTE: bundle images are not runnable.
 `,
