@@ -64,7 +64,7 @@ By default the main program will set the manager's namespace using the value of 
 
 ### Multi-Group APIs
 
-Before creating an API and Controller, consider if your operator's API requires multiple [groups][API-groups].
+Before creating an API and controller, consider if your operator's API requires multiple [groups][API-groups].
 If yes then add the line `multigroup: true` in the `PROJECT` file which should look like the following:
 
 ```YAML
@@ -73,7 +73,7 @@ layout: go.kubebuilder.io/v2.0.0
 multigroup: true
 ...
 ```
-For multi-group projects, the API Go type files are created under `apis/<group>/<version>/` and the controllers would be created under `controllers/<group>/`.
+For multi-group projects, the API Go type files are created under `apis/<group>/<version>/` and the controllers under `controllers/<group>/`.
 
 This guide will cover the default case of a single group API.
 
