@@ -31,6 +31,7 @@ SCORECARD_TEST_IMAGE ?= $(SCORECARD_TEST_BASE_IMAGE)
 ANSIBLE_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
 HELM_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
 SCORECARD_PROXY_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
+SCORECARD_TEST_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
 
 export CGO_ENABLED:=0
 .DEFAULT_GOAL:=help
@@ -165,7 +166,7 @@ image-scaffold-ansible:
 image-scaffold-helm:
 	go run ./hack/image/helm/scaffold-helm-image.go
 
-image-build: image-build-ansible image-build-helm image-build-scorecard-proxy ## Build all images
+image-build: image-build-ansible image-build-helm image-build-scorecard-proxy image-build-scorecard-test ## Build all images
 
 image-build-ansible: build/operator-sdk-dev-linux-gnu
 	./hack/image/build-ansible-image.sh $(ANSIBLE_BASE_IMAGE):dev
@@ -179,7 +180,7 @@ image-build-scorecard-proxy:
 image-build-scorecard-test:
 	./hack/image/build-scorecard-test-image.sh $(SCORECARD_TEST_BASE_IMAGE):dev
 
-image-push: image-push-ansible image-push-helm image-push-scorecard-proxy ## Push all images
+image-push: image-push-ansible image-push-helm image-push-scorecard-proxy image-push-scorecard-test ## Push all images
 
 image-push-ansible:
 	./hack/image/push-image-tags.sh $(ANSIBLE_BASE_IMAGE):dev $(ANSIBLE_IMAGE)-$(shell go env GOARCH)
@@ -196,11 +197,17 @@ image-push-helm-multiarch:
 image-push-scorecard-proxy:
 	./hack/image/push-image-tags.sh $(SCORECARD_PROXY_BASE_IMAGE):dev $(SCORECARD_PROXY_IMAGE)-$(shell go env GOARCH)
 
+image-push-scorecard-test:
+	./hack/image/push-image-tags.sh $(SCORECARD_TEST_BASE_IMAGE):dev $(SCORECARD_TEST_IMAGE)-$(shell go env GOARCH)
+
 image-push-scorecard-proxy-multiarch:
 	./hack/image/push-manifest-list.sh $(SCORECARD_PROXY_IMAGE) ${SCORECARD_PROXY_ARCHES}
 
 image-push-scorecard-test:
 	./hack/image/push-image-tags.sh $(SCORECARD_TEST_BASE_IMAGE):dev $(SCORECARD_TEST_IMAGE)-$(shell go env GOARCH)
+
+image-push-scorecard-test-multiarch:
+	./hack/image/push-manifest-list.sh $(SCORECARD_TEST_IMAGE) ${SCORECARD_TEST_ARCHES}
 
 ##############################
 # Tests                      #
