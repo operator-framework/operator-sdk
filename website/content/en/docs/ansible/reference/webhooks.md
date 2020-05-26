@@ -1,6 +1,8 @@
-# Adding Admission Webhooks to an Ansible-based Operator
-
-## Background
+---
+title: Adding Admission Webhooks to an Ansible-based Operator
+linkTitle: Webhooks
+weight: 20
+---
 
 For general background on what admission webhooks are, why to use them, and how to build them,
 please refer to the official Kubernetes documentation on [Extensible Admission Controllers][admission-controllers]
@@ -13,8 +15,7 @@ deploy it as a sidecar container alongside your operator. This allows you to mak
 server that the operator deploys, as well as the cache that backs it. The sidecar will be defined in the `deploy/operator.yaml` and it will look like:
 
 ```yaml
-...
-# This deploys the webhook
+        # This deploys the webhook
         - name: webhook
           # Replace this with the built image name
           image: "REPLACE_WEBHOOK_IMAGE"
