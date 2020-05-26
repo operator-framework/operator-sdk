@@ -1,19 +1,3 @@
-## v0.17.1
-
-### Changes
-
-- Revert deprecation of the package manifests format. See [#2755](https://github.com/operator-framework/operator-sdk/pull/2755) for deprecation details. The package manifests format is still officially supported by the Operator Framework. ([#3030](https://github.com/operator-framework/operator-sdk/pull/3030), [#3042](https://github.com/operator-framework/operator-sdk/pull/3042), [#3044](https://github.com/operator-framework/operator-sdk/pull/3042))
-
-### Bug Fixes
-
-- Fixes issue where the `helm.operator-sdk/upgrade-force` annotation value for Helm based-operators is not parsed. ([#3027](https://github.com/operator-framework/operator-sdk/pull/3027))
-- In 'run --olm', package manifests format must be replicated in a pod's file system for consistent registry initialization. ([#3038](https://github.com/operator-framework/operator-sdk/pull/3038))
-- the internal OLM client retrieves existing OLM versions correctly now that the returned list of CSVs is indexed properly. ([#3029](https://github.com/operator-framework/operator-sdk/pull/3029))
-- Fixed issue to convert variables with numbers for Ansible based-operator. ([#2842](https://github.com/operator-framework/operator-sdk/pull/2842)). ([#3025](https://github.com/operator-framework/operator-sdk/pull/3025))
-- Added timeout to the Ansible based-operator proxy, which enables error reporting for requests that fail due to RBAC permissions issues to List and Watch the resources. ([#3025](https://github.com/operator-framework/operator-sdk/pull/3025))
-- CSV manifests read from disk are now properly marshaled into the CSV struct. ([#3027](https://github.com/operator-framework/operator-sdk/pull/3027))
-- Helm operator now applies its uninstall finalizer only when a release is deployed. This fixes a bug that caused the  CR to be unable to be deleted without manually intervening to delete a prematurely added finalizer. ([#3046](https://github.com/operator-framework/operator-sdk/pull/3046))
-
 ## v0.17.0
 
 ### Added

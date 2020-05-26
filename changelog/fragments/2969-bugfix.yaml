@@ -1,0 +1,6 @@
+entries:
+  - description: >
+      the internal OLM client retrieves existing OLM versions correctly now
+      that the returned list of CSVs is indexed properly
+
+    kind: "bugfix"
