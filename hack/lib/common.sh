@@ -1,12 +1,19 @@
 #!/usr/bin/env bash
 
-tmp_root=/tmp
-tmp_sdk_root=$tmp_root/operator-sdk
-
-function log() { printf '%s\n' "$*"; }
-function error() { error_text "ERROR:" $* >&2; }
-function fatal() { error "$@"; exit 1; }
-
+# Skip fetching and untaring the tools by setting the SKIP_FETCH_TOOLS variable
+# in your environment to any value:
+#
+# $ SKIP_FETCH_TOOLS=1 ./test.sh
+#
+# If you skip fetching tools, this script will use the tools already on your
+# machine, but rebuild the operator-sdk binary.
+SKIP_FETCH_TOOLS=${SKIP_FETCH_TOOLS:-""}
+# Current version of the 'kind' binary. Update this when a new breaking release
+# is made for a docker.io/kindest/node:${K8S_VERSION} image.
+KIND_VERSION="v0.8.1"
+# ENVTEST_TOOLS_VERSION is the version of k8s server tarballs used for envtest.
+# TODO: use K8S_VERSION once we start building our own server binary tarballs.
+ENVTEST_TOOLS_VERSION="1.16.4"
 # Turn colors in this script off by setting the NO_COLOR variable in your
 # environment to any value:
 NO_COLOR=${NO_COLOR:-""}
@@ -19,6 +26,14 @@ else
   error_color=''
   reset_color=''
 fi
+
+# Roots used by tests.
+tmp_root=/tmp
+tmp_sdk_root=$tmp_root/operator-sdk
+
+function log() { printf '%s\n' "$*"; }
+function error() { error_text "ERROR:" $* >&2; }
+function fatal() { error "$@"; exit 1; }
 
 function header_text {
   echo "$header_color$*$reset_color"
@@ -40,15 +55,6 @@ function is_installed {
 function install_service_monitor_crd {
   kubectl apply -f https://raw.githubusercontent.com/coreos/prometheus-operator/release-0.35/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml
 }
-
-# Skip fetching and untaring the tools by setting the SKIP_FETCH_TOOLS variable
-# in your environment to any value:
-#
-# $ SKIP_FETCH_TOOLS=1 ./test.sh
-#
-# If you skip fetching tools, this script will use the tools already on your
-# machine, but rebuild the operator-sdk binary.
-SKIP_FETCH_TOOLS=${SKIP_FETCH_TOOLS:-""}
 
 # prepare the e2e test staging dir, containing test tools (SKIP_FETCH_TOOLS aware).
 function prepare_staging_dir {
@@ -83,7 +89,7 @@ function fetch_envtest_tools {
   # curl -fL --retry 3 --keepalive-time 2 "${url}" -o "${tmp_sdk_root}/${server_tar}"
   # tar -zxvf "${tmp_sdk_root}/${server_tar}"
 
-  local tools_archive_name="kubebuilder-tools-1.16.4-$(go env GOOS)-$(go env GOARCH).tar.gz"
+  local tools_archive_name="kubebuilder-tools-${ENVTEST_TOOLS_VERSION}-$(go env GOOS)-$(go env GOARCH).tar.gz"
   local tools_download_url="https://storage.googleapis.com/kubebuilder-tools/$tools_archive_name"
 
   local tools_archive_path="$1/$tools_archive_name"
@@ -113,10 +119,6 @@ function build_sdk {
   GO111MODULE=on make build/operator-sdk
   mv ./build/operator-sdk "$1"/bin/operator-sdk
 }
-
-# Current version of the 'kind' binary. Update this when a new breaking release
-# is made for a docker.io/kindest/node:${K8S_VERSION} image.
-KIND_VERSION="v0.8.1"
 
 # Install the 'kind' binary at version $KIND_VERSION.
 function install_kind {

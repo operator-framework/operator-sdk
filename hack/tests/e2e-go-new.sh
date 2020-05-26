@@ -12,8 +12,6 @@ set -o pipefail
 source ./hack/lib/common.sh
 source ./hack/lib/test_lib.sh
 
-tmp_root=/tmp
-tmp_sdk_root=$tmp_root/operator-sdk
 test_dir=./test
 tests=$test_dir/e2e-new
 
@@ -24,6 +22,8 @@ export GO111MODULE=on
 
 prepare_staging_dir $tmp_sdk_root
 fetch_tools $tmp_sdk_root
+# These envtest environment variables are required for the default unit tests
+# scaffolded in the test operator project. No e2e tests currently use envtest.
 setup_envs $tmp_sdk_root
 build_sdk $tmp_sdk_root
 
