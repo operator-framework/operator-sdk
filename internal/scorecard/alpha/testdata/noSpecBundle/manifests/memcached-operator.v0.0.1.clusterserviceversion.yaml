@@ -1,0 +1,137 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: |-
+      [
+        {
+          "apiVersion": "cache.example.com/v1alpha1",
+          "kind": "Memcached",
+          "metadata": {
+            "name": "example-memcached"
+          },
+          "status": {
+            "nodes": null
+          }
+        }
+      ]
+    capabilities: Basic Install
+  name: memcached-operator.v0.0.1
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: Memcached is the Schema for the memcacheds API
+      kind: Memcached
+      name: memcacheds.cache.example.com
+      version: v1alpha1
+  description: Placeholder description
+  displayName: Memcached Operator
+  install:
+    spec:
+      deployments:
+      - name: memcached-operator
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              name: memcached-operator
+          strategy: {}
+          template:
+            metadata:
+              labels:
+                name: memcached-operator
+            spec:
+              containers:
+              - command:
+                - memcached-operator
+                env:
+                - name: WATCH_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.annotations['olm.targetNamespaces']
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+                - name: OPERATOR_NAME
+                  value: memcached-operator
+                image: quay.io/jemccorm/memcached-operator:v0.0.1
+                imagePullPolicy: IfNotPresent
+                name: memcached-operator
+                resources: {}
+              serviceAccountName: memcached-operator
+      permissions:
+      - rules:
+        - apiGroups:
+          - ""
+          resources:
+          - pods
+          - services
+          - services/finalizers
+          - endpoints
+          - persistentvolumeclaims
+          - events
+          - configmaps
+          - secrets
+          verbs:
+          - '*'
+        - apiGroups:
+          - apps
+          resources:
+          - deployments
+          - daemonsets
+          - replicasets
+          - statefulsets
+          verbs:
+          - '*'
+        - apiGroups:
+          - monitoring.coreos.com
+          resources:
+          - servicemonitors
+          verbs:
+          - get
+          - create
+        - apiGroups:
+          - apps
+          resourceNames:
+          - memcached-operator
+          resources:
+          - deployments/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - ""
+          resources:
+          - pods
+          verbs:
+          - get
+        - apiGroups:
+          - apps
+          resources:
+          - replicasets
+          - deployments
+          verbs:
+          - get
+        - apiGroups:
+          - cache.example.com
+          resources:
+          - '*'
+          verbs:
+          - '*'
+        serviceAccountName: memcached-operator
+    strategy: deployment
+  installModes:
+  - supported: true
+    type: OwnNamespace
+  - supported: true
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  maturity: alpha
+  provider: {}
+  replaces: memcached-operator.v0.0.0
+  version: 0.0.1
