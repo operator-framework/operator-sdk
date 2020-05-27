@@ -190,7 +190,7 @@ func (r *MemcachedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
     return ctrl.Result{}, nil
 }
 
-func (r *ReconcileMemcached) finalizeMemcached(reqLogger logr.Logger, m *cachev1alpha1.Memcached) error {
+func (r *MemcachedReconciler) finalizeMemcached(reqLogger logr.Logger, m *cachev1alpha1.Memcached) error {
     // TODO(user): Add the cleanup steps that the operator
     // needs to do before the CR can be deleted. Examples
     // of finalizers include performing backups and deleting
@@ -199,12 +199,12 @@ func (r *ReconcileMemcached) finalizeMemcached(reqLogger logr.Logger, m *cachev1
     return nil
 }
 
-func (r *ReconcileMemcached) addFinalizer(reqLogger logr.Logger, m *cachev1alpha1.Memcached) error {
+func (r *MemcachedReconciler) addFinalizer(reqLogger logr.Logger, m *cachev1alpha1.Memcached) error {
     reqLogger.Info("Adding Finalizer for the Memcached")
     controllerutil.AddFinalizer(m, memcachedFinalizer)
 
     // Update CR
-    err := r.client.Update(context.TODO(), m)
+    err := r.Update(context.TODO(), m)
     if err != nil {
         reqLogger.Error(err, "Failed to update Memcached with finalizer")
         return err
