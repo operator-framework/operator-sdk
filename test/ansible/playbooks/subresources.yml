@@ -42,7 +42,7 @@
     - name: Write results to resource status
       k8s_status:
         api_version: test.example.com/v1alpha1
-        kind: ExecTest
+        kind: SubresourcesTest
         name: '{{ meta.name }}'
         namespace: '{{ meta.namespace }}'
         status:
