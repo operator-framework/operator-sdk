@@ -15,7 +15,7 @@
 package tests
 
 import (
-	"github.com/operator-framework/operator-registry/pkg/registry"
+	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 )
 
@@ -24,7 +24,7 @@ const (
 )
 
 // CheckSpecTest verifies that CRs have a spec block
-func CheckSpecTest(bundle registry.Bundle) scapiv1alpha2.ScorecardTestResult {
+func CheckSpecTest(bundle *apimanifests.Bundle) scapiv1alpha2.ScorecardTestResult {
 	r := scapiv1alpha2.ScorecardTestResult{}
 	r.Name = BasicCheckSpecTest
 	r.Description = "Custom Resource has a Spec Block"

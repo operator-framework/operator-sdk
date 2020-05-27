@@ -23,13 +23,13 @@ import (
 	"sort"
 	"strings"
 
+	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	"github.com/operator-framework/api/pkg/validation"
-	"github.com/operator-framework/operator-registry/pkg/registry"
-	"github.com/operator-framework/operator-sdk/internal/scaffold"
-	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
-
 	log "github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml"
+
+	"github.com/operator-framework/operator-sdk/internal/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 )
 
 const (
@@ -113,12 +113,12 @@ func (g PkgGenerator) generate() (map[string][]byte, error) {
 	return fileMap, nil
 }
 
-// buildPackageManifest will create a registry.PackageManifest from scratch, or reads
+// buildPackageManifest will create a apimanifests.PackageManifest from scratch, or reads
 // an existing one if found at the expected path.
-func (g PkgGenerator) buildPackageManifest() (registry.PackageManifest, error) {
+func (g PkgGenerator) buildPackageManifest() (apimanifests.PackageManifest, error) {
 	pkgManifestOutputDir := filepath.Join(g.OutputDir, OLMCatalogChildDir, g.OperatorName)
 	path := filepath.Join(pkgManifestOutputDir, g.fileName)
-	pkg := registry.PackageManifest{}
+	pkg := apimanifests.PackageManifest{}
 	if isExist(path) {
 		b, err := ioutil.ReadFile(path)
 		if err != nil {
@@ -135,7 +135,7 @@ func (g PkgGenerator) buildPackageManifest() (registry.PackageManifest, error) {
 
 // sortChannelsByName sorts pkg.Channels by each element's name.
 // NOTE: sorting makes the channel order always consistent when appending new channels
-func sortChannelsByName(pkg *registry.PackageManifest) {
+func sortChannelsByName(pkg *apimanifests.PackageManifest) {
 	sort.Slice(pkg.Channels, func(i int, j int) bool {
 		return pkg.Channels[i].Name < pkg.Channels[j].Name
 	})
@@ -143,7 +143,7 @@ func sortChannelsByName(pkg *registry.PackageManifest) {
 
 // validatePackageManifest will validate pkg using the api validation library.
 // More info: https://github.com/operator-framework/api
-func validatePackageManifest(pkg *registry.PackageManifest) error {
+func validatePackageManifest(pkg *apimanifests.PackageManifest) error {
 	if pkg == nil {
 		return errors.New("generated package manifest is empty")
 	}
@@ -163,8 +163,8 @@ func validatePackageManifest(pkg *registry.PackageManifest) error {
 	return nil
 }
 
-// newPackageManifest will return the registry.PackageManifest populated.
-func newPackageManifest(operatorName, channelName, version string) registry.PackageManifest {
+// newPackageManifest will return the apimanifests.PackageManifest populated.
+func newPackageManifest(operatorName, channelName, version string) apimanifests.PackageManifest {
 	// Take the current CSV version to be the "alpha" channel, as an operator
 	// should only be designated anything more stable than "alpha" by a human.
 	channel := "alpha"
@@ -172,9 +172,9 @@ func newPackageManifest(operatorName, channelName, version string) registry.Pack
 		channel = channelName
 	}
 	lowerOperatorName := strings.ToLower(operatorName)
-	pkg := registry.PackageManifest{
+	pkg := apimanifests.PackageManifest{
 		PackageName: lowerOperatorName,
-		Channels: []registry.PackageChannel{
+		Channels: []apimanifests.PackageChannel{
 			{Name: channel, CurrentCSVName: getCSVName(lowerOperatorName, version)},
 		},
 		DefaultChannelName: channel,
@@ -184,7 +184,7 @@ func newPackageManifest(operatorName, channelName, version string) registry.Pack
 
 // setChannels checks for duplicate channels in pkg and sets the default
 // channel if possible.
-func (g PkgGenerator) setChannels(pkg *registry.PackageManifest) {
+func (g PkgGenerator) setChannels(pkg *apimanifests.PackageManifest) {
 	if g.Channel != "" {
 		channelIdx := -1
 		for i, channel := range pkg.Channels {
@@ -195,7 +195,7 @@ func (g PkgGenerator) setChannels(pkg *registry.PackageManifest) {
 		}
 		lowerOperatorName := strings.ToLower(g.OperatorName)
 		if channelIdx == -1 {
-			pkg.Channels = append(pkg.Channels, registry.PackageChannel{
+			pkg.Channels = append(pkg.Channels, apimanifests.PackageChannel{
 				Name:           g.Channel,
 				CurrentCSVName: getCSVName(lowerOperatorName, g.CSVVersion),
 			})

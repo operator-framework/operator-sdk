@@ -15,8 +15,11 @@
 package client
 
 import (
+	"errors"
 	"io"
 
+	"github.com/operator-framework/operator-sdk/pkg/handler"
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"helm.sh/helm/v3/pkg/kube"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -98,16 +101,28 @@ func NewRESTClientGetter(mgr manager.Manager, ns string) (genericclioptions.REST
 
 var _ kube.Interface = &ownerRefInjectingClient{}
 
-func NewOwnerRefInjectingClient(base kube.Client, ownerRef metav1.OwnerReference) kube.Interface {
-	return &ownerRefInjectingClient{
-		refs:   []metav1.OwnerReference{ownerRef},
-		Client: base,
+func NewOwnerRefInjectingClient(base kube.Client, restMapper meta.RESTMapper,
+	cr *unstructured.Unstructured) (kube.Interface, error) {
+
+	if cr != nil {
+		if cr.GetObjectKind() != nil {
+			if cr.GetObjectKind().GroupVersionKind().Empty() || cr.GetName() == "" || cr.GetUID() == "" {
+				var err = errors.New("owner resource is invalid")
+				return nil, err
+			}
+		}
 	}
+	return &ownerRefInjectingClient{
+		Client:     base,
+		restMapper: restMapper,
+		owner:      cr,
+	}, nil
 }
 
 type ownerRefInjectingClient struct {
-	refs []metav1.OwnerReference
 	kube.Client
+	restMapper meta.RESTMapper
+	owner      *unstructured.Unstructured
 }
 
 func (c *ownerRefInjectingClient) Build(reader io.Reader, validate bool) (kube.ResourceList, error) {
@@ -124,8 +139,16 @@ func (c *ownerRefInjectingClient) Build(reader io.Reader, validate bool) (kube.R
 			return err
 		}
 		u := &unstructured.Unstructured{Object: objMap}
-		if r.ResourceMapping().Scope == meta.RESTScopeNamespace {
-			u.SetOwnerReferences(c.refs)
+		useOwnerRef, err := k8sutil.SupportsOwnerReference(c.restMapper, c.owner, u)
+		if err != nil {
+			return err
+		}
+
+		if useOwnerRef {
+			ownerRef := metav1.NewControllerRef(c.owner, c.owner.GroupVersionKind())
+			u.SetOwnerReferences([]metav1.OwnerReference{*ownerRef})
+		} else {
+			handler.SetOwnerAnnotation(u, c.owner)
 		}
 		return nil
 	})

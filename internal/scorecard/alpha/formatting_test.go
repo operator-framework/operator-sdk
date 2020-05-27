@@ -42,11 +42,11 @@ func TestList(t *testing.T) {
 
 			o.Config, err = LoadConfig(configPath)
 			if err != nil {
-				t.Fatalf("Unexpected error %w", err)
+				t.Fatalf("Unexpected error %v", err)
 			}
 			o.Selector, err = labels.Parse(c.selector)
 			if err != nil {
-				t.Fatalf("Unexpected error %w", err)
+				t.Fatalf("Unexpected error %v", err)
 			}
 			runner.BundlePath = c.bundlePathValue
 			o.TestRunner = &runner

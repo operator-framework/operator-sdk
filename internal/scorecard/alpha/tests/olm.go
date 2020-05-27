@@ -16,21 +16,19 @@ package tests
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"strings"
 
+	apimanifests "github.com/operator-framework/api/pkg/manifests"
+	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	apivalidation "github.com/operator-framework/api/pkg/validation"
+	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	"github.com/sirupsen/logrus"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	"github.com/operator-framework/api/pkg/manifests"
-	"github.com/operator-framework/api/pkg/operators"
-	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
-	"github.com/operator-framework/operator-registry/pkg/registry"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 )
@@ -63,7 +61,7 @@ func BundleValidationTest(dir string) scapiv1alpha2.ScorecardTestResult {
 	logrus.SetLevel(logrus.DebugLevel)
 	logrus.SetOutput(buf)
 
-	val := bundle.NewImageValidator("", logger)
+	val := registrybundle.NewImageValidator("", logger)
 
 	// Validate bundle format.
 	if err := val.ValidateBundleFormat(dir); err != nil {
@@ -72,8 +70,21 @@ func BundleValidationTest(dir string) scapiv1alpha2.ScorecardTestResult {
 	}
 
 	// Validate bundle content.
-	manifestsDir := filepath.Join(dir, bundle.ManifestsDir)
-	_, _, validationResults := manifests.GetManifestsDir(dir)
+	manifestsDir := filepath.Join(dir, registrybundle.ManifestsDir)
+	bundle, err := apimanifests.GetBundleFromDir(manifestsDir)
+	if err != nil {
+		r.State = scapiv1alpha2.FailState
+		r.Errors = append(r.Errors, err.Error())
+	}
+
+	objs := []interface{}{bundle, bundle.CSV}
+	for _, crd := range bundle.V1CRDs {
+		objs = append(objs, crd)
+	}
+	for _, crd := range bundle.V1beta1CRDs {
+		objs = append(objs, crd)
+	}
+	validationResults := apivalidation.AllValidators.Validate(objs...)
 	for _, result := range validationResults {
 		for _, e := range result.Errors {
 			r.Errors = append(r.Errors, e.Error())
@@ -85,30 +96,19 @@ func BundleValidationTest(dir string) scapiv1alpha2.ScorecardTestResult {
 		}
 	}
 
-	if err := val.ValidateBundleContent(manifestsDir); err != nil {
-		r.State = scapiv1alpha2.FailState
-		r.Errors = append(r.Errors, err.Error())
-	}
-
 	r.Log = buf.String()
 	return r
 }
 
 // CRDsHaveValidationTest verifies all CRDs have a validation section
-func CRDsHaveValidationTest(bundle registry.Bundle) scapiv1alpha2.ScorecardTestResult {
+func CRDsHaveValidationTest(bundle *apimanifests.Bundle) scapiv1alpha2.ScorecardTestResult {
 	r := scapiv1alpha2.ScorecardTestResult{}
 	r.Name = OLMCRDsHaveValidationTest
 	r.Description = "All CRDs have an OpenAPI validation subsection"
 	r.State = scapiv1alpha2.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
-	crds, err := bundle.CustomResourceDefinitions()
-	if err != nil {
-		r.Errors = append(r.Errors, err.Error())
-		r.State = scapiv1alpha2.ErrorState
-		return r
-	}
-	r.Log += fmt.Sprintf("Loaded CustomresourceDefinitions: %s\n", crds)
+
 	crs, err := GetCRs(bundle)
 	if err != nil {
 		r.Errors = append(r.Errors, err.Error())
@@ -116,34 +116,30 @@ func CRDsHaveValidationTest(bundle registry.Bundle) scapiv1alpha2.ScorecardTestR
 		return r
 	}
 	r.Log += fmt.Sprintf("Loaded %d Custom Resources from alm-examples\n", len(crs))
-	var v1crds []*apiextv1.CustomResourceDefinition
-	for _, crd := range crds {
-		var out *apiextv1.CustomResourceDefinition
-		switch t := crd.(type) {
-		case *apiextv1beta1.CustomResourceDefinition:
-			out, err = k8sutil.Convertv1beta1Tov1CustomResourceDefinition(t)
-			if err != nil {
-				r.Errors = append(r.Errors, err.Error())
-				r.State = scapiv1alpha2.ErrorState
-				return r
-			}
-		case *apiextv1.CustomResourceDefinition:
-			out = t
-		default:
-			r.Errors = append(r.Errors, fmt.Sprintf("cannot convert %T to *v1.CustomResourceDefinition", t))
+
+	var crds []*apiextv1.CustomResourceDefinition
+	for _, crd := range bundle.V1CRDs {
+		crds = append(crds, crd.DeepCopy())
+	}
+	for _, crd := range bundle.V1beta1CRDs {
+		out, err := k8sutil.Convertv1beta1Tov1CustomResourceDefinition(crd)
+		if err != nil {
+			r.Errors = append(r.Errors, err.Error())
 			r.State = scapiv1alpha2.ErrorState
 			return r
 		}
-		v1crds = append(v1crds, out)
+		crds = append(crds, out)
 	}
+	r.Log += fmt.Sprintf("Loaded CustomresourceDefinitions: %s\n", crds)
+
 	for _, cr := range crs {
-		r = isCRFromCRDApi(cr, v1crds, r)
+		r = isCRFromCRDApi(cr, crds, r)
 	}
 	return r
 }
 
 // CRDsHaveResourcesTest verifies CRDs have resources listed in its owned CRDs section
-func CRDsHaveResourcesTest(bundle registry.Bundle) scapiv1alpha2.ScorecardTestResult {
+func CRDsHaveResourcesTest(bundle *apimanifests.Bundle) scapiv1alpha2.ScorecardTestResult {
 	r := scapiv1alpha2.ScorecardTestResult{}
 	r.Name = OLMCRDsHaveResourcesTest
 	r.Description = "All Owned CRDs contain a resources subsection"
@@ -151,26 +147,13 @@ func CRDsHaveResourcesTest(bundle registry.Bundle) scapiv1alpha2.ScorecardTestRe
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
 
-	csv, err := bundle.ClusterServiceVersion()
-	if err != nil {
-		r.Errors = append(r.Errors, err.Error())
-		r.State = scapiv1alpha2.FailState
-		return r
-	}
+	r.Log += fmt.Sprintf("Loaded ClusterServiceVersion: %s\n", bundle.CSV.GetName())
 
-	r.Log += fmt.Sprintf("Loaded ClusterServiceVersion: %s\n", csv.GetName())
-
-	apiCSV, err := registryToAPICSV(csv)
-	if err != nil {
-		r.Errors = append(r.Errors, err.Error())
-		r.State = scapiv1alpha2.FailState
-		return r
-	}
-	return CheckResources(apiCSV.Spec.CustomResourceDefinitions, r)
+	return CheckResources(bundle.CSV.Spec.CustomResourceDefinitions, r)
 }
 
 // CheckResources verified if the owned CRDs have the resources field.
-func CheckResources(crd operators.CustomResourceDefinitions,
+func CheckResources(crd operatorsv1alpha1.CustomResourceDefinitions,
 	r scapiv1alpha2.ScorecardTestResult) scapiv1alpha2.ScorecardTestResult {
 	for _, description := range crd.Owned {
 		if description.Resources == nil || len(description.Resources) == 0 {
@@ -183,38 +166,34 @@ func CheckResources(crd operators.CustomResourceDefinitions,
 }
 
 // SpecDescriptorsTest verifies all spec fields have descriptors
-func SpecDescriptorsTest(bundle registry.Bundle) scapiv1alpha2.ScorecardTestResult {
+func SpecDescriptorsTest(bundle *apimanifests.Bundle) scapiv1alpha2.ScorecardTestResult {
 	r := scapiv1alpha2.ScorecardTestResult{}
 	r.Name = OLMSpecDescriptorsTest
 	r.Description = "All spec fields have matching descriptors in the CSV"
 	r.State = scapiv1alpha2.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
-	r = loadCSV(bundle, r, specDescriptor)
+	r = checkCSVDescriptors(bundle, r, specDescriptor)
 	return r
 }
 
 // StatusDescriptorsTest verifies all CRDs have status descriptors
-func StatusDescriptorsTest(bundle registry.Bundle) scapiv1alpha2.ScorecardTestResult {
+func StatusDescriptorsTest(bundle *apimanifests.Bundle) scapiv1alpha2.ScorecardTestResult {
 	r := scapiv1alpha2.ScorecardTestResult{}
 	r.Name = OLMStatusDescriptorsTest
 	r.Description = "All status fields have matching descriptors in the CSV"
 	r.State = scapiv1alpha2.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
-	r = loadCSV(bundle, r, statusDescriptor)
+	r = checkCSVDescriptors(bundle, r, statusDescriptor)
 	return r
 }
 
-func loadCSV(bundle registry.Bundle, r scapiv1alpha2.ScorecardTestResult,
+func checkCSVDescriptors(bundle *apimanifests.Bundle, r scapiv1alpha2.ScorecardTestResult,
 	descriptor string) scapiv1alpha2.ScorecardTestResult {
-	csv, err := bundle.ClusterServiceVersion()
-	if err != nil {
-		r.Errors = append(r.Errors, err.Error())
-		r.State = scapiv1alpha2.ErrorState
-		return r
-	}
-	r.Log += fmt.Sprintf("Loaded ClusterServiceVersion: %s\n", csv.GetName())
+
+	r.Log += fmt.Sprintf("Loaded ClusterServiceVersion: %s\n", bundle.CSV.GetName())
+
 	crs, err := GetCRs(bundle)
 	if err != nil {
 		r.Errors = append(r.Errors, err.Error())
@@ -222,36 +201,18 @@ func loadCSV(bundle registry.Bundle, r scapiv1alpha2.ScorecardTestResult,
 		return r
 	}
 	r.Log += fmt.Sprintf("Loaded %d Custom Resources from alm-examples\n", len(crs))
-	apiCSV, err := registryToAPICSV(csv)
-	if err != nil {
-		r.Errors = append(r.Errors, err.Error())
-		r.State = scapiv1alpha2.ErrorState
-		return r
-	}
+
 	for _, cr := range crs {
-		r = checkOwnedCSVDescriptors(cr, apiCSV, descriptor, r)
+		r = checkOwnedCSVDescriptors(cr, bundle.CSV, descriptor, r)
 	}
 
 	return r
 }
 
-func registryToAPICSV(csv *registry.ClusterServiceVersion) (*operators.ClusterServiceVersion, error) {
-	var apiCSV operators.ClusterServiceVersion
-	csvBytes, err := json.Marshal(csv)
-	if err != nil {
-		return nil, err
-	}
-	err = json.Unmarshal(csvBytes, &apiCSV)
-	if err != nil {
-		return nil, err
-	}
-	return &apiCSV, nil
-}
-
 // TODO This is the validation we did in v1, but it looks like it only validates fields that
 // are in the example CRs, if you have a field in your CRD that isn't present in one of your examples,
 // I don't think it will be validated.
-func checkOwnedCSVDescriptors(cr unstructured.Unstructured, csv *operators.ClusterServiceVersion,
+func checkOwnedCSVDescriptors(cr unstructured.Unstructured, csv *operatorsv1alpha1.ClusterServiceVersion,
 	descriptor string, r scapiv1alpha2.ScorecardTestResult) scapiv1alpha2.ScorecardTestResult {
 
 	if cr.Object[descriptor] == nil {
@@ -261,7 +222,7 @@ func checkOwnedCSVDescriptors(cr unstructured.Unstructured, csv *operators.Clust
 
 	block := cr.Object[descriptor].(map[string]interface{})
 
-	var crd *operators.CRDDescription
+	var crd *operatorsv1alpha1.CRDDescription
 	for _, owned := range csv.Spec.CustomResourceDefinitions.Owned {
 		if owned.Kind == cr.GetKind() {
 			crd = &owned
@@ -333,7 +294,6 @@ func isCRFromCRDApi(cr unstructured.Unstructured, crds []*apiextv1.CustomResourc
 	for _, crd := range crds {
 		gvk := cr.GroupVersionKind()
 		// Only check the validation block if the CRD and CR have the same Kind and Version
-
 		for _, version := range crd.Spec.Versions {
 
 			if !hasVersion(gvk.Version, version) || !hasKind(gvk.Kind, crd.Spec.Names.Kind, r) {

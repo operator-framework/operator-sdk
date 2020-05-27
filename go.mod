@@ -16,7 +16,7 @@ require (
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.9.0
-	github.com/operator-framework/api v0.3.5
+	github.com/operator-framework/api v0.3.7-0.20200522193628-197407cd70e8
 	github.com/operator-framework/operator-registry v1.12.2
 	github.com/pborman/uuid v1.2.0
 	github.com/pkg/errors v0.9.1
@@ -48,7 +48,7 @@ require (
 	k8s.io/kubectl v0.18.2
 	sigs.k8s.io/controller-runtime v0.6.0
 	sigs.k8s.io/controller-tools v0.3.0
-	sigs.k8s.io/kubebuilder v1.0.9-0.20200428220224-d6e2b995831c
+	sigs.k8s.io/kubebuilder v1.0.9-0.20200513134826-f07a0146a40b
 	sigs.k8s.io/yaml v1.2.0
 )
 

@@ -212,7 +212,6 @@ func mutatingToWebhookDescription(webhook admissionregv1.MutatingWebhook) operat
 func applyCustomResources(c *collector.Manifests, csv *operatorsv1alpha1.ClusterServiceVersion) error {
 	examples := []json.RawMessage{}
 	for _, cr := range c.CustomResources {
-		fmt.Println("applying", cr.GetName())
 		crBytes, err := cr.MarshalJSON()
 		if err != nil {
 			return err
@@ -228,7 +227,6 @@ func applyCustomResources(c *collector.Manifests, csv *operatorsv1alpha1.Cluster
 		csv.SetAnnotations(make(map[string]string))
 	}
 	csv.GetAnnotations()["alm-examples"] = string(examplesJSON)
-	fmt.Println("applied")
 
 	return nil
 }

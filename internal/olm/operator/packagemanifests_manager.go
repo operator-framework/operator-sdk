@@ -19,10 +19,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/operator-framework/api/pkg/manifests"
+	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	apivalerrors "github.com/operator-framework/api/pkg/validation/errors"
-	"github.com/operator-framework/operator-registry/pkg/registry"
 	log "github.com/sirupsen/logrus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -37,8 +35,8 @@ type packageManifestsManager struct {
 
 	version       string
 	forceRegistry bool
-	pkg           registry.PackageManifest
-	bundles       []*registry.Bundle
+	pkg           *apimanifests.PackageManifest
+	bundles       []*apimanifests.Bundle
 }
 
 func (c *PackageManifestsCmd) newManager() (m *packageManifestsManager, err error) {
@@ -70,23 +68,14 @@ func (c *PackageManifestsCmd) newManager() (m *packageManifestsManager, err erro
 	}
 
 	// Operator bundles and metadata.
-	var results []apivalerrors.ManifestResult
-	m.pkg, m.bundles, results = manifests.GetManifestsDir(c.ManifestsDir)
-	if len(results) != 0 {
-		badResults := []apivalerrors.ManifestResult{}
-		for _, result := range results {
-			if result.HasError() || result.HasWarn() {
-				badResults = append(badResults, result)
-			}
-		}
-		if len(badResults) != 0 {
-			return nil, fmt.Errorf("package had errors: %s", badResults)
-		}
+	m.pkg, m.bundles, err = apimanifests.GetManifestsDir(c.ManifestsDir)
+	if err != nil {
+		return nil, err
 	}
 	if len(m.bundles) == 0 {
 		return nil, errors.New("no packages found")
 	}
-	if m.pkg.PackageName == "" {
+	if m.pkg == nil || m.pkg.PackageName == "" {
 		return nil, errors.New("no package manifest found")
 	}
 
@@ -107,15 +96,7 @@ func (c *PackageManifestsCmd) newManager() (m *packageManifestsManager, err erro
 	if err != nil {
 		return nil, err
 	}
-	bcsv, err := bundle.ClusterServiceVersion()
-	if err != nil {
-		return nil, err
-	}
-	csv, err := bundleCSVToCSV(bcsv)
-	if err != nil {
-		return nil, err
-	}
-	if err := installModeCompatible(csv, m.installMode, m.operatorNamespace, m.targetNamespaces); err != nil {
+	if err := installModeCompatible(bundle.CSV, m.installMode, m.operatorNamespace, m.targetNamespaces); err != nil {
 		return nil, err
 	}
 
@@ -134,10 +115,7 @@ func (m *packageManifestsManager) run(ctx context.Context) (err error) {
 	if err != nil {
 		return fmt.Errorf("error getting package for version %s: %w", m.version, err)
 	}
-	csv, err := bundle.ClusterServiceVersion()
-	if err != nil {
-		return fmt.Errorf("error getting CSV from package: %w", err)
-	}
+	csv := bundle.CSV
 
 	// Only check CSV here, since other deployed operators/versions may be
 	// running with shared CRDs.
@@ -229,10 +207,7 @@ func (m *packageManifestsManager) cleanup(ctx context.Context) (err error) {
 	if err != nil {
 		return fmt.Errorf("error getting package for version %s: %w", m.version, err)
 	}
-	csv, err := bundle.ClusterServiceVersion()
-	if err != nil {
-		return fmt.Errorf("error getting CSV from package: %w", err)
-	}
+	csv := bundle.CSV
 
 	if err = m.registryDown(ctx, m.olmNamespace); err != nil {
 		return fmt.Errorf("error removing registry resources: %w", err)
@@ -320,13 +295,14 @@ func (m *packageManifestsManager) registryDown(ctx context.Context, namespace st
 	return nil
 }
 
-func getPackageForVersion(bundles []*registry.Bundle, version string) (*registry.Bundle, error) {
-	names := []string{}
+func getPackageForVersion(bundles []*apimanifests.Bundle, version string) (*apimanifests.Bundle, error) {
+	versions := []string{}
 	for _, bundle := range bundles {
-		if bundle.Name == version {
+		verStr := bundle.CSV.Spec.Version.String()
+		if verStr == version {
 			return bundle, nil
 		}
-		names = append(names, bundle.Name)
+		versions = append(versions, verStr)
 	}
-	return nil, fmt.Errorf("no package found for version %s; valid names: %+q", version, names)
+	return nil, fmt.Errorf("no package found for version %s; valid versions: %+q", version, versions)
 }

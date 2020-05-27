@@ -21,7 +21,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/operator-framework/operator-registry/pkg/registry"
+	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	"github.com/operator-framework/operator-sdk/internal/olm"
 	operator "github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
@@ -79,7 +79,7 @@ func PackageManifestsAllNamespaces(t *testing.T) {
 	tmp, cleanup := mkTempDirWithCleanup(t, "")
 	defer cleanup()
 
-	channels := []registry.PackageChannel{
+	channels := []apimanifests.PackageChannel{
 		{Name: "alpha", CurrentCSVName: fmt.Sprintf("%s.v%s", defaultOperatorName, defaultOperatorVersion)},
 	}
 	manifestsDir := filepath.Join(tmp, defaultOperatorName)
@@ -105,6 +105,7 @@ func PackageManifestsAllNamespaces(t *testing.T) {
 	}
 	// Cleanup.
 	defer func() {
+		opcmd.ForceRegistry = true
 		if err := opcmd.Cleanup(); err != nil {
 			t.Fatal(err)
 		}
@@ -141,7 +142,7 @@ func PackageManifestsBasic(t *testing.T) {
 	tmp, cleanup := mkTempDirWithCleanup(t, "")
 	defer cleanup()
 
-	channels := []registry.PackageChannel{
+	channels := []apimanifests.PackageChannel{
 		{Name: "alpha", CurrentCSVName: fmt.Sprintf("%s.v%s", defaultOperatorName, defaultOperatorVersion)},
 	}
 	manifestsDir := filepath.Join(tmp, defaultOperatorName)
@@ -224,11 +225,7 @@ func PackageManifestsMultiplePackages(t *testing.T) {
 					Name:  "memcacheds.cache.example.com",
 					Group: "cache.example.com",
 					Versions: []apiextv1beta1.CustomResourceDefinitionVersion{
-						// TODO(estroz): uncomment after the following is merged and
-						// api version is bumped:
-						// https://github.com/operator-framework/api/pull/32
-						//
-						// {Name: "v1alpha1", Storage: false, Served: true},
+						{Name: "v1alpha1", Storage: false, Served: true},
 						{Name: "v1alpha2", Storage: true, Served: true},
 					},
 				},
@@ -245,7 +242,7 @@ func PackageManifestsMultiplePackages(t *testing.T) {
 	tmp, cleanup := mkTempDirWithCleanup(t, "")
 	defer cleanup()
 
-	channels := []registry.PackageChannel{
+	channels := []apimanifests.PackageChannel{
 		{Name: "stable", CurrentCSVName: fmt.Sprintf("%s.v%s", defaultOperatorName, operatorVersion2)},
 		{Name: "alpha", CurrentCSVName: fmt.Sprintf("%s.v%s", defaultOperatorName, operatorVersion1)},
 	}
@@ -273,6 +270,7 @@ func PackageManifestsMultiplePackages(t *testing.T) {
 	}
 	// Cleanup.
 	defer func() {
+		opcmd.ForceRegistry = true
 		if err := opcmd.Cleanup(); err != nil {
 			t.Fatal(err)
 		}

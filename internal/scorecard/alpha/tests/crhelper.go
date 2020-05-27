@@ -18,26 +18,18 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/operator-framework/operator-registry/pkg/registry"
-
+	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 // GetCRs parses a Bundle's CSV for CRs
-func GetCRs(bundle registry.Bundle) (crList []unstructured.Unstructured, err error) {
-
-	// get CRs from CSV's alm-examples annotation, assume single bundle
-	csv, err := bundle.ClusterServiceVersion()
-	if err != nil {
-		return crList, fmt.Errorf("error in csv retrieval %s", err.Error())
-	}
-
-	if csv.GetAnnotations() == nil {
+func GetCRs(bundle *apimanifests.Bundle) (crList []unstructured.Unstructured, err error) {
+	if bundle.CSV.GetAnnotations() == nil {
 		return crList, nil
 	}
 
-	almExamples := csv.ObjectMeta.Annotations["alm-examples"]
-
+	// get CRs from CSV's alm-examples annotation, assume single bundle
+	almExamples := bundle.CSV.GetAnnotations()["alm-examples"]
 	if almExamples == "" {
 		return crList, nil
 	}

@@ -16,8 +16,7 @@ operator-sdk cleanup [flags]
 ### Options
 
 ```
-      --kubeconfig string   The file path to kubernetes configuration file. Defaults to location specified by $KUBECONFIG, or to default file rules if not set
-  -h, --help                help for cleanup
+  -h, --help   help for cleanup
 ```
 
 ### SEE ALSO

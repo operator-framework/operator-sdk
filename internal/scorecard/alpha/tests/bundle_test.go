@@ -18,62 +18,35 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/operator-framework/api/pkg/operators"
-	"github.com/operator-framework/operator-registry/pkg/registry"
+	apimanifests "github.com/operator-framework/api/pkg/manifests"
+	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 )
 
 var testBundle = filepath.Join("..", "testdata", "bundle")
 
-func TestBundlePath(t *testing.T) {
-	cases := []struct {
-		bundlePath string
-		wantError  bool
-	}{
-		{testBundle, false},
-		{"/foo", true},
-	}
-
-	for _, c := range cases {
-		t.Run(c.bundlePath, func(t *testing.T) {
-
-			_, err := GetBundle(c.bundlePath)
-			if err != nil && c.wantError {
-				t.Logf("Wanted error and got error : %v", err)
-				return
-			} else if err != nil && !c.wantError {
-				t.Errorf("Wanted result but got error: %v", err)
-				return
-			}
-
-		})
-
-	}
-}
 func TestBundleCRs(t *testing.T) {
 	cases := []struct {
 		bundlePath string
 		crCount    int
-		wantError  bool
 	}{
-		{testBundle, 1, false},
+		{testBundle, 1},
 	}
 
 	for _, c := range cases {
 		t.Run(c.bundlePath, func(t *testing.T) {
 
-			bundle, err := GetBundle(c.bundlePath)
-			if err != nil && c.wantError {
-				t.Logf("Wanted error and got error : %v", err)
-				return
-			} else if err != nil && !c.wantError {
-				t.Errorf("Wanted result but got error: %v", err)
-				return
+			bundle, err := apimanifests.GetBundleFromDir(c.bundlePath)
+			if err != nil {
+				t.Fatalf("Error getting bundle: %v", err)
 			}
+
 			var crList []unstructured.Unstructured
-			crList, err = GetCRs(*bundle)
+			crList, err = GetCRs(bundle)
 			if err != nil {
 				t.Error(err)
 				return
@@ -93,7 +66,7 @@ func TestBasicAndOLM(t *testing.T) {
 	cases := []struct {
 		bundlePath string
 		state      scapiv1alpha2.State
-		function   func(registry.Bundle) scapiv1alpha2.ScorecardTestResult
+		function   func(*apimanifests.Bundle) scapiv1alpha2.ScorecardTestResult
 	}{
 		{"../testdata/bundle", scapiv1alpha2.PassState, CheckSpecTest},
 		{"../testdata/noSpecBundle", scapiv1alpha2.FailState, CheckSpecTest},
@@ -108,12 +81,12 @@ func TestBasicAndOLM(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.bundlePath, func(t *testing.T) {
 
-			bundle, err := GetBundle(c.bundlePath)
+			bundle, err := apimanifests.GetBundleFromDir(c.bundlePath)
 			if err != nil {
-				t.Fatalf("Error getting bundle: %s", err.Error())
+				t.Fatalf("Error getting bundle: %v", err)
 			}
 
-			result := c.function(*bundle)
+			result := c.function(bundle)
 			if result.State != c.state {
 				t.Errorf("%s result State %v expected", result.Name, c.state)
 				return
@@ -140,106 +113,260 @@ func TestOLMBundle(t *testing.T) {
 	}
 }
 
-func TestScorecardFuncs(t *testing.T) {
+func TestDescriptors(t *testing.T) {
+	crWithDescriptor := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"status": map[string]interface{}{
+				"status": "val",
+			},
+			"spec": map[string]interface{}{
+				"spec": "val",
+			},
+		},
+	}
+	crWithDescriptor.SetGroupVersionKind(schema.GroupVersionKind{
+		Kind:  "TestKind",
+		Group: "test.example.com",
+	})
 
-	cases := []struct {
-		name       string
-		bundlePath string
-		state      scapiv1alpha2.State
-		function   func(registry.Bundle) scapiv1alpha2.ScorecardTestResult
-	}{
-		{
-			// test StatusDescriptorsTest()
-			name:       "Should error when CR has format errors",
-			bundlePath: "../testdata/statusdescriptor/error_bundle",
-			state:      scapiv1alpha2.ErrorState,
-			function:   StatusDescriptorsTest,
-		},
+	crWithoutDescriptor := unstructured.Unstructured{
+		Object: nil,
+	}
 
-		{
-			// test StatusDescriptorsTest()
-			name:       "Should fail when CR has missing status from CSV",
-			bundlePath: "../testdata/statusdescriptor/invalid_status_bundle",
-			state:      scapiv1alpha2.FailState,
-			function:   StatusDescriptorsTest,
-		},
-		{
-			// test StatusDescriptorsTest()
-			// This test checks for spec.customresourcedefinitions.owned presence, and fails
-			// when missing from CSV.
-			name:       "Should fail when owned CRD is missing from CSV",
-			bundlePath: "../testdata/statusdescriptor/no_crd_bundle",
-			state:      scapiv1alpha2.FailState,
-			function:   StatusDescriptorsTest,
-		},
-
-		{
-			// test StatusDescriptorsTest()
-			name:       "Should fail when statusDescriptor is missing from CSV",
-			bundlePath: "../testdata/statusdescriptor/no_statusdesc_bundle",
-			state:      scapiv1alpha2.FailState,
-			function:   StatusDescriptorsTest,
-		},
-		{
-			// test CRDsHaveValidationTest()
-			name:       "Should fail when CR has spec field missing",
-			bundlePath: "../testdata/crdvalidation/invalid_spec_bundle",
-			state:      scapiv1alpha2.FailState,
-			function:   CRDsHaveValidationTest,
-		},
-
-		{
-			// test CRDsHaveValidationTest()
-			// This test should skip and pass when version/kind does not match for CR with CRD.
-			name:       "Should pass when CR has no matching version/kind",
-			bundlePath: "../testdata/crdvalidation/invalid_version_kind_check",
-			state:      scapiv1alpha2.PassState,
-			function:   CRDsHaveValidationTest,
-		},
-
-		{
-			// test CRDsHaveValidationTest()
-			name:       "This test should error when CR has format issues",
-			bundlePath: "../testdata/crdvalidation/error_bundle",
-			state:      scapiv1alpha2.ErrorState,
-			function:   CRDsHaveValidationTest,
-		},
-
-		{
-			// test CRDsHaveValidationTest()
-			name:       "Should fail when CR has status field missing",
-			bundlePath: "../testdata/crdvalidation/invalid_status_bundle",
-			state:      scapiv1alpha2.FailState,
-			function:   CRDsHaveValidationTest,
+	crWithoutGVK := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"status": map[string]interface{}{
+				"status": "val",
+			},
 		},
 	}
 
-	for _, c := range cases {
-		t.Run(c.bundlePath, func(t *testing.T) {
+	crWithNoRequiredDescriptor := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"node": map[string]interface{}{
+				"node": "val",
+			},
+		},
+	}
 
-			bundle, err := GetBundle(c.bundlePath)
-			if err != nil {
-				t.Errorf("Error when getting bundle %s", err.Error())
+	crwithNoSpecDescriptor := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"status": map[string]interface{}{
+				"status": "val",
+			},
+		},
+	}
+
+	csvWithOwnedCR := operatorsv1alpha1.ClusterServiceVersion{
+		Spec: operatorsv1alpha1.ClusterServiceVersionSpec{
+			CustomResourceDefinitions: operatorsv1alpha1.CustomResourceDefinitions{
+				Owned: []operatorsv1alpha1.CRDDescription{
+					operatorsv1alpha1.CRDDescription{
+						Name:    "Test",
+						Version: "v1",
+						Kind:    "TestKind",
+						StatusDescriptors: []operatorsv1alpha1.StatusDescriptor{
+							operatorsv1alpha1.StatusDescriptor{
+								Path: "status",
+							},
+						},
+						SpecDescriptors: []operatorsv1alpha1.SpecDescriptor{
+							operatorsv1alpha1.SpecDescriptor{
+								Path: "spec",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	tests := []struct {
+		name       string
+		cr         unstructured.Unstructured
+		csv        *operatorsv1alpha1.ClusterServiceVersion
+		descriptor string
+		want       scapiv1alpha2.State
+	}{
+		{
+			name:       "should pass when csv with owned cr and required fields is present",
+			cr:         crWithDescriptor,
+			descriptor: "status",
+			csv:        &csvWithOwnedCR,
+			want:       scapiv1alpha2.PassState,
+		},
+		{
+			name:       "should fail when CR Object Descriptor is nil",
+			cr:         crWithoutDescriptor,
+			descriptor: "status",
+			csv:        &csvWithOwnedCR,
+			want:       scapiv1alpha2.FailState,
+		},
+		{
+			name:       "should fail when owned CRD for CR does not have GVK set",
+			cr:         crWithoutGVK,
+			descriptor: "status",
+			csv:        &csvWithOwnedCR,
+			want:       scapiv1alpha2.FailState,
+		},
+		{
+			name:       "should fail when required descriptor field is not present in CR",
+			cr:         crWithNoRequiredDescriptor,
+			descriptor: "status",
+			csv:        &csvWithOwnedCR,
+			want:       scapiv1alpha2.FailState,
+		},
+		{
+			name:       "should pass when required descriptor field is present in CR",
+			cr:         crWithDescriptor,
+			descriptor: "spec",
+			csv:        &csvWithOwnedCR,
+			want:       scapiv1alpha2.PassState,
+		},
+		{
+			name:       "should fail when required spec descriptor field is not present in CR",
+			cr:         crwithNoSpecDescriptor,
+			descriptor: "spec",
+			csv:        &csvWithOwnedCR,
+			want:       scapiv1alpha2.FailState,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			res := scapiv1alpha2.ScorecardTestResult{
+				Name:   "Test status and spec descriptor",
+				State:  scapiv1alpha2.PassState,
+				Errors: make([]string, 0),
 			}
-			result := c.function(*bundle)
-			if result.State != c.state {
-				t.Errorf("%s is the result State, %v expected", result.Name, c.state)
-				return
+			if res = checkOwnedCSVDescriptors(tt.cr, tt.csv, tt.descriptor, res); res.State != tt.want {
+				t.Errorf("%s result State %v expected but obtained %v ",
+					res.Name, tt.want, res.State)
+			}
+		})
+	}
+}
+
+func TestCRDsHaveValidationTests(t *testing.T) {
+	crWithSpec := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"spec": map[string]interface{}{
+				"node": "val",
+			},
+		},
+	}
+	crWithSpec.SetGroupVersionKind(schema.GroupVersionKind{
+		Kind:    "TestKind",
+		Group:   "test.example.com",
+		Version: "v1",
+	})
+
+	crWithoutSpec := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"spec": map[string]interface{}{
+				"items": "val",
+			},
+		},
+	}
+	crWithoutSpec.SetGroupVersionKind(schema.GroupVersionKind{
+		Kind:    "TestKind",
+		Group:   "test.example.com",
+		Version: "v1",
+	})
+
+	crWithNoMatchingGVK := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"spec": map[string]interface{}{
+				"node": "val",
+			},
+		},
+	}
+	crWithNoMatchingGVK.SetGroupVersionKind(schema.GroupVersionKind{
+		Kind:    "MemcachedKind",
+		Group:   "Cache",
+		Version: "v2",
+	})
+
+	crdsWithSpecInSchema := []*apiextv1.CustomResourceDefinition{
+		&apiextv1.CustomResourceDefinition{
+			Spec: apiextv1.CustomResourceDefinitionSpec{
+				Versions: []apiextv1.CustomResourceDefinitionVersion{
+					apiextv1.CustomResourceDefinitionVersion{
+						Name: "v1",
+						Schema: &apiextv1.CustomResourceValidation{
+							OpenAPIV3Schema: &apiextv1.JSONSchemaProps{
+								ID:          "Test",
+								Schema:      "URL",
+								Description: "Schema for test",
+								Properties: map[string]apiextv1.JSONSchemaProps{
+									"spec": apiextv1.JSONSchemaProps{
+										Properties: map[string]apiextv1.JSONSchemaProps{
+											"node": apiextv1.JSONSchemaProps{
+												ID: "node",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Names: apiextv1.CustomResourceDefinitionNames{
+					Kind: "TestKind",
+				},
+			},
+		},
+	}
+	tests := []struct {
+		name string
+		cr   unstructured.Unstructured
+		crd  []*apiextv1.CustomResourceDefinition
+		want scapiv1alpha2.State
+	}{
+		{
+			name: "should pass when CR has Spec field",
+			cr:   crWithSpec,
+			crd:  crdsWithSpecInSchema,
+			want: scapiv1alpha2.PassState,
+		},
+		{
+			name: "should fail when cr does not have required fields in Spec",
+			cr:   crWithoutSpec,
+			crd:  crdsWithSpecInSchema,
+			want: scapiv1alpha2.FailState,
+		},
+		{
+			name: "should skip and pass when version/kind does not match for CR with CRD",
+			cr:   crWithNoMatchingGVK,
+			crd:  crdsWithSpecInSchema,
+			want: scapiv1alpha2.PassState,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			res := scapiv1alpha2.ScorecardTestResult{
+				Name:   "Test CRDs have validation test",
+				State:  scapiv1alpha2.PassState,
+				Errors: make([]string, 0),
+			}
+			if res = isCRFromCRDApi(tt.cr, tt.crd, res); res.State != tt.want {
+				t.Errorf("%s result State %v expected but obtained %v ",
+					res.Name, tt.want, res.State)
 			}
 		})
 	}
 }
 
 func TestCheckForResources(t *testing.T) {
-	crdWithResources := operators.CustomResourceDefinitions{
-		Owned: []operators.CRDDescription{
-			operators.CRDDescription{
+	crdWithResources := operatorsv1alpha1.CustomResourceDefinitions{
+		Owned: []operatorsv1alpha1.CRDDescription{
+			operatorsv1alpha1.CRDDescription{
 				Name:              "Test",
 				Version:           "v1",
 				Kind:              "Test",
-				StatusDescriptors: make([]operators.StatusDescriptor, 0),
-				Resources: []operators.APIResourceReference{
-					operators.APIResourceReference{
+				StatusDescriptors: make([]operatorsv1alpha1.StatusDescriptor, 0),
+				Resources: []operatorsv1alpha1.APIResourceReference{
+					operatorsv1alpha1.APIResourceReference{
 						Name:    "operator",
 						Kind:    "Test",
 						Version: "v1",
@@ -249,21 +376,21 @@ func TestCheckForResources(t *testing.T) {
 		},
 	}
 
-	crdWithoutResources := operators.CustomResourceDefinitions{
-		Owned: []operators.CRDDescription{
-			operators.CRDDescription{
+	crdWithoutResources := operatorsv1alpha1.CustomResourceDefinitions{
+		Owned: []operatorsv1alpha1.CRDDescription{
+			operatorsv1alpha1.CRDDescription{
 				Name:              "Test",
 				Version:           "v1",
 				Kind:              "Test",
-				StatusDescriptors: make([]operators.StatusDescriptor, 0),
-				Resources:         make([]operators.APIResourceReference, 0),
+				StatusDescriptors: make([]operatorsv1alpha1.StatusDescriptor, 0),
+				Resources:         make([]operatorsv1alpha1.APIResourceReference, 0),
 			},
 		},
 	}
 
 	tests := []struct {
 		name string
-		args operators.CustomResourceDefinitions
+		args operatorsv1alpha1.CustomResourceDefinitions
 		want scapiv1alpha2.State
 	}{
 		{

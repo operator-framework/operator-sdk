@@ -24,7 +24,7 @@ func NewCmd() *cobra.Command {
 		Short: "Runs a generic operator",
 		Long: `Runs a generic operator. This is intended to be used when running
 in a Pod inside a cluster. Developers wanting to run their operator locally
-should use "run --local" instead.`,
+should use 'run local' instead.`,
 		Hidden: true,
 	}
 

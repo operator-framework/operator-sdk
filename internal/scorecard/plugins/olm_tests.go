@@ -22,7 +22,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/operator-framework/api/pkg/manifests"
+	apimanifests "github.com/operator-framework/api/pkg/manifests"
+	apivalidation "github.com/operator-framework/api/pkg/validation"
 	schelpers "github.com/operator-framework/operator-sdk/internal/scorecard/helpers"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
@@ -183,7 +184,21 @@ func (t *BundleValidationTest) Run(ctx context.Context) *schelpers.TestResult {
 	logrus.SetOutput(validationLogOutput)
 	defer logrus.SetOutput(origOutput)
 
-	_, _, validationResults := manifests.GetManifestsDir(t.OLMTestConfig.Bundle)
+	bundle, err := apimanifests.GetBundleFromDir(t.OLMTestConfig.Bundle)
+	if err != nil {
+		res.Errors = append(res.Errors, err)
+		res.State = scapiv1alpha2.ErrorState
+		return res
+	}
+
+	objs := []interface{}{bundle, bundle.CSV}
+	for _, crd := range bundle.V1CRDs {
+		objs = append(objs, crd)
+	}
+	for _, crd := range bundle.V1beta1CRDs {
+		objs = append(objs, crd)
+	}
+	validationResults := apivalidation.AllValidators.Validate(objs...)
 	for _, result := range validationResults {
 		for _, e := range result.Errors {
 			res.Errors = append(res.Errors, &e)

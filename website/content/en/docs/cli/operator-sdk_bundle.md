@@ -12,10 +12,10 @@ An operator bundle is a portable operator packaging format understood by Kuberne
 native software, like the Operator Lifecycle Manager.
 
 More information about operator bundles and metadata:
-https://github.com/openshift/enhancements/blob/master/enhancements/olm/operator-bundle.md
+https://github.com/operator-framework/operator-registry#manifest-format.
 
-Operator Lifecycle Manager:
-https://github.com/operator-framework/operator-lifecycle-manager
+More information about the integration with OLM via SDK:
+https://sdk.operatorframework.io/docs/olm-integration/
 
 
 ### Options

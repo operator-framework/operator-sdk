@@ -41,8 +41,11 @@ function check_crd_files() {
 }
 
 function generate_csv() {
-  echo "operator-sdk generate csv --operator-name $OPERATOR_NAME --interactive=false $@"
-  operator-sdk generate csv --operator-name $OPERATOR_NAME --interactive=false $@
+  echo_run operator-sdk generate csv --operator-name $OPERATOR_NAME --interactive=false $@
+}
+
+function generate_bundle() {
+  echo_run operator-sdk generate bundle --operator-name $OPERATOR_NAME --interactive=false $@
 }
 
 pushd "$TEST_DIR" > /dev/null
@@ -96,3 +99,40 @@ check_crd_files "$TEST_NAME" "$OUTPUT_DIR/manifests" 1
 cleanup_case
 
 header_text "All 'operator-sdk generate csv' subcommand tests passed."
+
+header_text "Running 'operator-sdk generate bundle' subcommand tests in $TEST_DIR."
+
+TEST_NAME="generate with version $OPERATOR_VERSION"
+header_text "$TEST_NAME"
+generate_bundle --version $OPERATOR_VERSION
+check_dir "$TEST_NAME" "$DEFAULT_BUNDLE_DIR" 0
+check_dir "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/manifests" 1
+check_dir "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/metadata" 1
+check_csv_file "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/manifests" 1
+check_crd_files "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/manifests" 1
+check_file "$TEST_NAME" "bundle.Dockerfile" 1
+cleanup_case
+
+TEST_NAME="generate manifests only with version $OPERATOR_VERSION"
+header_text "$TEST_NAME"
+generate_bundle --version $OPERATOR_VERSION --manifests
+check_dir "$TEST_NAME" "$DEFAULT_BUNDLE_DIR" 0
+check_dir "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/manifests" 1
+check_dir "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/metadata" 0
+check_csv_file "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/manifests" 1
+check_crd_files "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/manifests" 1
+check_file "$TEST_NAME" "bundle.Dockerfile" 0
+cleanup_case
+
+TEST_NAME="generate with version $OPERATOR_VERSION and output-dir"
+header_text "$TEST_NAME"
+generate_bundle --version $OPERATOR_VERSION --output-dir "$OUTPUT_DIR"
+check_dir "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR/manifests" 0
+check_dir "$TEST_NAME" "$OUTPUT_DIR/manifests" 1
+check_dir "$TEST_NAME" "$OUTPUT_DIR/metadata" 1
+check_csv_file "$TEST_NAME" "$OUTPUT_DIR/manifests" 1
+check_crd_files "$TEST_NAME" "$OUTPUT_DIR/manifests" 1
+check_file "$TEST_NAME" "bundle.Dockerfile" 1
+cleanup_case
+
+header_text "All 'operator-sdk generate bundle' subcommand tests passed."

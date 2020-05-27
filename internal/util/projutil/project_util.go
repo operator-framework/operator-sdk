@@ -36,15 +36,16 @@ const (
 	GoModEnv   = "GO111MODULE"
 	SrcDir     = "src"
 
-	fsep             = string(filepath.Separator)
-	mainFile         = "main.go"
-	managerMainFile  = "cmd" + fsep + "manager" + fsep + mainFile
-	buildDockerfile  = "build" + fsep + "Dockerfile"
-	rolesDir         = "roles"
-	requirementsFile = "requirements.yml"
-	moleculeDir      = "molecule"
-	helmChartsDir    = "helm-charts"
-	goModFile        = "go.mod"
+	fsep              = string(filepath.Separator)
+	mainFile          = "main.go"
+	managerMainFile   = "cmd" + fsep + "manager" + fsep + mainFile
+	buildDockerfile   = "build" + fsep + "Dockerfile"
+	rolesDir          = "roles"
+	requirementsFile  = "requirements.yml"
+	moleculeDir       = "molecule"
+	helmChartsDir     = "helm-charts"
+	goModFile         = "go.mod"
+	defaultPermission = 0644
 
 	noticeColor = "\033[1;36m%s\033[0m"
 )
@@ -322,4 +323,47 @@ func CheckGoModules() error {
 func PrintDeprecationWarning(msg string) {
 	fmt.Printf(noticeColor, "[Deprecation Notice] "+msg+". Refer to the version upgrade guide "+
 		"for more information: https://sdk.operatorframework.io/docs/migration/version-upgrade-guide/\n\n")
+}
+
+// RewriteFileContents adds the provided content before the last occurrence of the word label
+// and rewrites the file with the new content.
+func RewriteFileContents(filename, instruction, content string) error {
+	text, err := ioutil.ReadFile(filename)
+
+	if err != nil {
+		return fmt.Errorf("error in getting contents from the file, %v", err)
+	}
+
+	existingContent := string(text)
+
+	modifiedContent, err := appendContent(existingContent, instruction, content)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(filename, []byte(modifiedContent), defaultPermission)
+	if err != nil {
+		return fmt.Errorf("error writing modified contents to file, %v", err)
+	}
+	return nil
+}
+
+func appendContent(fileContents, instruction, content string) (string, error) {
+	labelIndex := strings.LastIndex(fileContents, instruction)
+
+	if labelIndex == -1 {
+		return "", fmt.Errorf("instruction not present previously in dockerfile")
+	}
+
+	separationIndex := strings.Index(fileContents[labelIndex:], "\n")
+	if separationIndex == -1 {
+		return "", fmt.Errorf("no new line at the end of dockerfile command %s", fileContents[labelIndex:])
+	}
+
+	index := labelIndex + separationIndex + 1
+
+	newContent := fileContents[:index] + content + fileContents[index:]
+
+	return newContent, nil
+
 }

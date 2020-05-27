@@ -217,8 +217,7 @@ func MemcachedLocal(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cmd := exec.Command("operator-sdk", "run",
-		"--local",
+	cmd := exec.Command("operator-sdk", "run", "local",
 		"--watch-namespace="+watchNamespace)
 	stderr, err := os.Create("stderr.txt")
 	if err != nil {

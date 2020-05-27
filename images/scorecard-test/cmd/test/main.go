@@ -20,6 +20,8 @@ import (
 	"log"
 	"os"
 
+	apimanifests "github.com/operator-framework/api/pkg/manifests"
+
 	scorecard "github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
 	"github.com/operator-framework/operator-sdk/internal/scorecard/alpha/tests"
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
@@ -41,7 +43,7 @@ func main() {
 	}
 
 	// Read the pod's untar'd bundle from a well-known path.
-	cfg, err := tests.GetBundle(scorecard.PodBundleRoot)
+	cfg, err := apimanifests.GetBundleFromDir(scorecard.PodBundleRoot)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -52,15 +54,15 @@ func main() {
 	case tests.OLMBundleValidationTest:
 		result = tests.BundleValidationTest(scorecard.PodBundleRoot)
 	case tests.OLMCRDsHaveValidationTest:
-		result = tests.CRDsHaveValidationTest(*cfg)
+		result = tests.CRDsHaveValidationTest(cfg)
 	case tests.OLMCRDsHaveResourcesTest:
-		result = tests.CRDsHaveResourcesTest(*cfg)
+		result = tests.CRDsHaveResourcesTest(cfg)
 	case tests.OLMSpecDescriptorsTest:
-		result = tests.SpecDescriptorsTest(*cfg)
+		result = tests.SpecDescriptorsTest(cfg)
 	case tests.OLMStatusDescriptorsTest:
-		result = tests.StatusDescriptorsTest(*cfg)
+		result = tests.StatusDescriptorsTest(cfg)
 	case tests.BasicCheckSpecTest:
-		result = tests.CheckSpecTest(*cfg)
+		result = tests.CheckSpecTest(cfg)
 	default:
 		result = printValidTests()
 	}

@@ -1,7 +1,7 @@
 ---
 title: Versioning for Operator SDK
 linkTitle: Versioning
-weight: 50
+weight: 70
 ---
 
 The following is a concise explanation of how Operator SDK versions are determined. The Operator SDK versioning follows [semantic versioning][link-semver] standards.

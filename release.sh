@@ -1,24 +1,25 @@
 #!/usr/bin/env bash
 
-set -e
+set -eu
 
-[ $# == 1 ] || { echo "usage: $0 version" && exit 1; }
+if [[ $# != 1 ]]; then
+	echo "usage: $0 vX.Y.Z"
+	exit 1
+fi
 
 VER=$1
 
-[[ "$VER" =~ ^v[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+$ ]] || {
+if ! [[ "$VER" =~ ^v[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+$ ]]; then
 	echo "malformed version: \"$VER\""
-	exit 2
-}
+	exit 1
+fi
 
-if test -n "$(git ls-files --others | \
-	grep --invert-match '\(vendor\|build/operator-sdk-v.\+\)')";
-then
+if git ls-files --others | grep -Ev 'build/operator-sdk-v.+'; then
 	echo "directory has untracked files"
 	exit 1
 fi
 
-if ! $(git diff-index --quiet HEAD --); then
+if ! git diff-index --quiet HEAD --; then
 	echo "directory has uncommitted files"
 	exit 1
 fi
@@ -56,14 +57,16 @@ if [[ "$VER" != "$CURR_VER_HELM_GOMOD" ]]; then
 	exit 1
 fi
 
-INSTALL_GUIDE_FILE="doc/user/install-operator-sdk.md"
+INSTALL_GUIDE_FILE="website/content/en/docs/install-operator-sdk.md"
 CURR_VER_INSTALL_GUIDE_FILE="$(sed -nr 's/.*RELEASE_VERSION=(.+)/\1/p' "$INSTALL_GUIDE_FILE" | tr -d ' \t\n')"
 if [[ "$VER" != "$CURR_VER_INSTALL_GUIDE_FILE" ]]; then
 	echo "version '$VER' is not set correctly in $INSTALL_GUIDE_FILE"
-    exit 1
+	exit 1
 fi
-git tag --sign --message "Operator SDK $VER" "$VER"
 
+# Tag the release commit and verify its tag.
+git tag --sign --message "Operator SDK $VER" "$VER"
 git verify-tag --verbose "$VER"
 
-make release
+# Run the release builds.
+make release V=1

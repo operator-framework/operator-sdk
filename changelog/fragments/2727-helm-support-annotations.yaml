@@ -1,0 +1,9 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Adds the ability for Helm operators to properly watch and reconcile when cluster-scoped release resources are changed.
+
+    kind: "addition"
+
+    breaking: false
