@@ -68,9 +68,8 @@ func TestBasicAndOLM(t *testing.T) {
 		state      scapiv1alpha2.State
 		function   func(*apimanifests.Bundle) scapiv1alpha2.ScorecardTestResult
 	}{
-		{"../testdata/bundle", scapiv1alpha2.PassState, CheckSpecTest},
+		{testBundle, scapiv1alpha2.PassState, CheckSpecTest},
 		{"../testdata/noSpecBundle", scapiv1alpha2.FailState, CheckSpecTest},
-		{"../testdata/bundle", scapiv1alpha2.PassState, BundleValidationTest},
 		{testBundle, scapiv1alpha2.PassState, CheckSpecTest},
 		{testBundle, scapiv1alpha2.PassState, CRDsHaveValidationTest},
 		{testBundle, scapiv1alpha2.PassState, CRDsHaveResourcesTest},
