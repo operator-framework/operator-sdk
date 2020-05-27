@@ -36,14 +36,15 @@ import (
 
 // Manifests holds a collector of all manifests relevant to CSV updates.
 type Manifests struct {
-	Roles                     []rbacv1.Role
-	ClusterRoles              []rbacv1.ClusterRole
-	Deployments               []appsv1.Deployment
-	CustomResourceDefinitions []apiextv1.CustomResourceDefinition
-	ValidatingWebhooks        []admissionregv1.ValidatingWebhook
-	MutatingWebhooks          []admissionregv1.MutatingWebhook
-	CustomResources           []unstructured.Unstructured
-	Others                    []unstructured.Unstructured
+	Roles                            []rbacv1.Role
+	ClusterRoles                     []rbacv1.ClusterRole
+	Deployments                      []appsv1.Deployment
+	V1CustomResourceDefinitions      []apiextv1.CustomResourceDefinition
+	V1beta1CustomResourceDefinitions []apiextv1beta1.CustomResourceDefinition
+	ValidatingWebhooks               []admissionregv1.ValidatingWebhook
+	MutatingWebhooks                 []admissionregv1.MutatingWebhook
+	CustomResources                  []unstructured.Unstructured
+	Others                           []unstructured.Unstructured
 }
 
 // UpdateFromDirs adds Roles, ClusterRoles, Deployments, and Custom Resources
@@ -99,7 +100,8 @@ func (c *Manifests) UpdateFromDirs(manifestRoot, crdsDir string) error {
 
 	// Add CRDs from input.
 	if isDirExist(crdsDir) {
-		c.CustomResourceDefinitions, err = k8sutil.GetCustomResourceDefinitions(crdsDir)
+		//nolint:lll
+		c.V1CustomResourceDefinitions, c.V1beta1CustomResourceDefinitions, err = k8sutil.GetCustomResourceDefinitions(crdsDir)
 		if err != nil {
 			return fmt.Errorf("error adding CustomResourceDefinitions to manifest collector: %v", err)
 		}
@@ -210,24 +212,22 @@ func (c *Manifests) addDeployments(rawManifests ...[]byte) error {
 // which CustomResourceDefinition type is used for all manifests in rawManifests.
 func (c *Manifests) addCustomResourceDefinitions(version string, rawManifests ...[]byte) (err error) {
 	for _, rawManifest := range rawManifests {
-		crd := &apiextv1.CustomResourceDefinition{}
 		switch version {
-		case "v1":
-			if err = yaml.Unmarshal(rawManifest, crd); err != nil {
+		case apiextv1.SchemeGroupVersion.Version:
+			crd := apiextv1.CustomResourceDefinition{}
+			if err := yaml.Unmarshal(rawManifest, &crd); err != nil {
 				return err
 			}
-		case "v1beta1":
-			in := &apiextv1beta1.CustomResourceDefinition{}
-			if err := yaml.Unmarshal(rawManifest, &in); err != nil {
+			c.V1CustomResourceDefinitions = append(c.V1CustomResourceDefinitions, crd)
+		case apiextv1beta1.SchemeGroupVersion.Version:
+			crd := apiextv1beta1.CustomResourceDefinition{}
+			if err := yaml.Unmarshal(rawManifest, &crd); err != nil {
 				return err
 			}
-			if crd, err = k8sutil.Convertv1beta1Tov1CustomResourceDefinition(in); err != nil {
-				return fmt.Errorf("error converting CustomResourceDefinition v1beta1 to v1: %v", err)
-			}
+			c.V1beta1CustomResourceDefinitions = append(c.V1beta1CustomResourceDefinitions, crd)
 		default:
 			return fmt.Errorf("unrecognized CustomResourceDefinition version %q", version)
 		}
-		c.CustomResourceDefinitions = append(c.CustomResourceDefinitions, *crd)
 	}
 	return nil
 }

@@ -29,6 +29,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion/bases"
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
 	genutil "github.com/operator-framework/operator-sdk/internal/generate/internal"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
@@ -263,15 +264,10 @@ func (g Generator) makeBundleBaseGetterLegacy(inputDir, apisDir string, ilvl pro
 func (g Generator) makeBaseGetterLegacy(basePath, apisDir string, interactive bool) getBaseFunc {
 	var gvks []schema.GroupVersionKind
 	if g.Collector != nil {
-		for _, crd := range g.Collector.CustomResourceDefinitions {
-			for _, version := range crd.Spec.Versions {
-				gvks = append(gvks, schema.GroupVersionKind{
-					Group:   crd.Spec.Group,
-					Version: version.Name,
-					Kind:    crd.Spec.Names.Kind,
-				})
-			}
-		}
+		v1crdGVKs := k8sutil.GVKsForV1CustomResourceDefinitions(g.Collector.V1CustomResourceDefinitions...)
+		gvks = append(gvks, v1crdGVKs...)
+		v1beta1crdGVKs := k8sutil.GVKsForV1beta1CustomResourceDefinitions(g.Collector.V1beta1CustomResourceDefinitions...)
+		gvks = append(gvks, v1beta1crdGVKs...)
 	}
 
 	return func() (*operatorsv1alpha1.ClusterServiceVersion, error) {

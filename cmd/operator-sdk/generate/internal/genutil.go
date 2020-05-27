@@ -25,6 +25,7 @@ import (
 
 	"github.com/blang/semver"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"sigs.k8s.io/yaml"
 
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
@@ -66,65 +67,96 @@ func PluginKeyToOperatorType(pluginKey string) projutil.OperatorType {
 	return ""
 }
 
-// WriteCRDs writes each CustomResourceDefinition in crds to w.
-func WriteCRDs(w io.Writer, crds ...apiextv1.CustomResourceDefinition) error {
-	for _, crd := range crds {
-		if err := writeCRD(w, crd); err != nil {
+// WriteObjects writes each object in objs to w.
+func WriteObjects(w io.Writer, objs ...interface{}) error {
+	for _, obj := range objs {
+		if err := writeObject(w, obj); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-// WriteCRDFiles creates dir then writes each CustomResourceDefinition in crds
-// to a file in dir.
-func WriteCRDFiles(dir string, crds ...apiextv1.CustomResourceDefinition) error {
+// WriteObjectsToFiles creates dir then writes each object in objs to a file in dir.
+func WriteObjectsToFiles(dir string, objs ...interface{}) error {
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
-	for _, crd := range crds {
-		if err := writeCRDFile(dir, crd, makeCRDFileName(crd)); err != nil {
+
+	seenFiles := make(map[string]struct{})
+	for _, obj := range objs {
+		var fileName string
+		switch t := obj.(type) {
+		case apiextv1.CustomResourceDefinition:
+			fileName = makeCRDFileName(t.Spec.Group, t.Spec.Names.Plural)
+		case apiextv1beta1.CustomResourceDefinition:
+			fileName = makeCRDFileName(t.Spec.Group, t.Spec.Names.Plural)
+		default:
+			return fmt.Errorf("unknown object type: %T", t)
+		}
+
+		if _, hasFile := seenFiles[fileName]; hasFile {
+			return fmt.Errorf("duplicate file cannot be written: %s", fileName)
+		}
+		if err := writeObjectToFile(dir, obj, fileName); err != nil {
 			return err
 		}
+		seenFiles[fileName] = struct{}{}
 	}
 	return nil
 }
 
-func makeCRDFileName(crd apiextv1.CustomResourceDefinition) string {
-	return fmt.Sprintf("%s_%s.yaml", crd.Spec.Group, crd.Spec.Names.Plural)
+func makeCRDFileName(group, resource string) string {
+	return fmt.Sprintf("%s_%s.yaml", group, resource)
 }
 
-// WriteCRDFilesLegacy creates dir then writes each CustomResourceDefinition
-// in crds to a file in legacy format in dir.
-func WriteCRDFilesLegacy(dir string, crds ...apiextv1.CustomResourceDefinition) error {
+// WriteObjectsToFilesLegacy creates dir then writes each object in objs to a
+// file in legacy format in dir.
+func WriteObjectsToFilesLegacy(dir string, objs ...interface{}) error {
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
-	for _, crd := range crds {
-		if err := writeCRDFile(dir, crd, makeCRDFileNameLegacy(crd)); err != nil {
+
+	seenFiles := make(map[string]struct{})
+	for _, obj := range objs {
+		var fileName string
+		switch t := obj.(type) {
+		case apiextv1.CustomResourceDefinition:
+			fileName = makeCRDFileNameLegacy(t.Spec.Group, t.Spec.Names.Plural)
+		case apiextv1beta1.CustomResourceDefinition:
+			fileName = makeCRDFileNameLegacy(t.Spec.Group, t.Spec.Names.Plural)
+		default:
+			return fmt.Errorf("unknown object type: %T", t)
+		}
+
+		if _, hasFile := seenFiles[fileName]; hasFile {
+			return fmt.Errorf("duplicate file cannot be written: %s", fileName)
+		}
+		if err := writeObjectToFile(dir, obj, fileName); err != nil {
 			return err
 		}
+		seenFiles[fileName] = struct{}{}
 	}
 	return nil
 }
 
-func makeCRDFileNameLegacy(crd apiextv1.CustomResourceDefinition) string {
-	return fmt.Sprintf("%s_%s_crd.yaml", crd.Spec.Group, crd.Spec.Names.Plural)
+func makeCRDFileNameLegacy(group, resource string) string {
+	return fmt.Sprintf("%s_%s_crd.yaml", group, resource)
 }
 
-// writeCRDFile marshals crd to bytes and writes them to dir in file.
-func writeCRDFile(dir string, crd apiextv1.CustomResourceDefinition, file string) error {
-	f, err := os.Create(filepath.Join(dir, file))
+// writeObjectToFile marshals crd to bytes and writes them to dir in file.
+func writeObjectToFile(dir string, obj interface{}, fileName string) error {
+	f, err := os.Create(filepath.Join(dir, fileName))
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	return writeCRD(f, crd)
+	return writeObject(f, obj)
 }
 
-// writeCRD marshals crd to bytes and writes them to w.
-func writeCRD(w io.Writer, crd apiextv1.CustomResourceDefinition) error {
-	b, err := yaml.Marshal(crd)
+// writeObject marshals crd to bytes and writes them to w.
+func writeObject(w io.Writer, obj interface{}) error {
+	b, err := yaml.Marshal(obj)
 	if err != nil {
 		return err
 	}

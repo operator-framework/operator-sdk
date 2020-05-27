@@ -31,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
 
 // ApplyTo applies relevant manifests in c to csv, sorts the applied updates,
@@ -173,24 +174,29 @@ func applyCustomResourceDefinitions(c *collector.Manifests, csv *operatorsv1alph
 		}
 		descMap[defKey] = owned
 	}
-	for _, crd := range c.CustomResourceDefinitions {
-		for _, ver := range crd.Spec.Versions {
-			defKey := registry.DefinitionKey{
-				Name:    crd.GetName(),
-				Version: ver.Name,
-				Kind:    crd.Spec.Names.Kind,
-			}
-			if owned, ownedExists := descMap[defKey]; ownedExists {
-				ownedDescs = append(ownedDescs, owned)
-			} else {
-				ownedDescs = append(ownedDescs, operatorsv1alpha1.CRDDescription{
-					Name:    defKey.Name,
-					Version: defKey.Version,
-					Kind:    defKey.Kind,
-				})
-			}
+
+	var defKeys []registry.DefinitionKey
+	v1crdKeys := k8sutil.DefinitionsForV1CustomResourceDefinitions(c.V1CustomResourceDefinitions...)
+	defKeys = append(defKeys, v1crdKeys...)
+	v1beta1crdKeys := k8sutil.DefinitionsForV1beta1CustomResourceDefinitions(c.V1beta1CustomResourceDefinitions...)
+	defKeys = append(defKeys, v1beta1crdKeys...)
+	// crdDescriptions don't have a 'group' field.
+	for i := 0; i < len(defKeys); i++ {
+		defKeys[i].Group = ""
+	}
+
+	for _, defKey := range defKeys {
+		if owned, ownedExists := descMap[defKey]; ownedExists {
+			ownedDescs = append(ownedDescs, owned)
+		} else {
+			ownedDescs = append(ownedDescs, operatorsv1alpha1.CRDDescription{
+				Name:    defKey.Name,
+				Version: defKey.Version,
+				Kind:    defKey.Kind,
+			})
 		}
 	}
+
 	csv.Spec.CustomResourceDefinitions.Owned = ownedDescs
 }
 

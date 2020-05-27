@@ -110,12 +110,19 @@ func GenerateCombinedGlobalManifest(crdsDir string) (*os.File, error) {
 		}
 	}()
 
-	crds, err := GetCustomResourceDefinitions(crdsDir)
+	v1crds, v1beta1crds, err := GetCustomResourceDefinitions(crdsDir)
 	if err != nil {
 		return nil, fmt.Errorf("error getting CRD's from %s: %v", crdsDir, err)
 	}
 	combined := []byte{}
-	for _, crd := range crds {
+	for _, crd := range v1crds {
+		b, err := yaml.Marshal(crd)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling %s: %v", crd.GetObjectKind().GroupVersionKind(), err)
+		}
+		combined = CombineManifests(combined, b)
+	}
+	for _, crd := range v1beta1crds {
 		b, err := yaml.Marshal(crd)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling %s: %v", crd.GetObjectKind().GroupVersionKind(), err)

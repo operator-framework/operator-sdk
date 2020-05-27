@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"regexp"
 
+	"github.com/operator-framework/operator-registry/pkg/registry"
 	log "github.com/sirupsen/logrus"
 	apiext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -31,24 +32,32 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-// GetCustomResourceDefinitions returns all CRD manifests in the directory
-// crdsDir.
-func GetCustomResourceDefinitions(crdsDir string) (crds []apiextv1.CustomResourceDefinition, err error) {
+// GetCustomResourceDefinitions returns all CRD manifests of both v1 and v1beta1
+// versions in the directory crdsDir. If a duplicate object with different API
+// versions is found, and error is returned.
+func GetCustomResourceDefinitions(crdsDir string) (
+	v1crds []apiextv1.CustomResourceDefinition,
+	v1beta1crds []apiextv1beta1.CustomResourceDefinition,
+	err error) {
+
 	infos, err := ioutil.ReadDir(crdsDir)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// The set of all custom resource GVKs in found CRDs.
 	crGVKSet := map[schema.GroupVersionKind]struct{}{}
 	for _, info := range infos {
+		path := filepath.Join(crdsDir, info.Name())
+
 		if info.IsDir() {
+			log.Debugf("Skipping dir: %s", path)
 			continue
 		}
-		path := filepath.Join(crdsDir, info.Name())
+
 		b, err := ioutil.ReadFile(path)
 		if err != nil {
-			return nil, fmt.Errorf("error reading manifest %s: %w", path, err)
+			return nil, nil, fmt.Errorf("error reading manifest %s: %w", path, err)
 		}
 
 		scanner := NewYAMLScanner(bytes.NewBuffer(b))
@@ -64,44 +73,109 @@ func GetCustomResourceDefinitions(crdsDir string) (crds []apiextv1.CustomResourc
 			}
 
 			// Unmarshal based on CRD version.
-			crd := &apiextv1.CustomResourceDefinition{}
+			var crGVKs []schema.GroupVersionKind
 			switch gvk := typeMeta.GroupVersionKind(); gvk.Version {
-			case "v1":
-				if err = yaml.Unmarshal(manifest, crd); err != nil {
-					return nil, err
+			case apiextv1.SchemeGroupVersion.Version:
+				crd := apiextv1.CustomResourceDefinition{}
+				if err = yaml.Unmarshal(manifest, &crd); err != nil {
+					return nil, nil, err
 				}
-			case "v1beta1":
-				in := &apiextv1beta1.CustomResourceDefinition{}
-				if err := yaml.Unmarshal(manifest, &in); err != nil {
-					return nil, err
+				v1crds = append(v1crds, crd)
+				crGVKs = append(crGVKs, GVKsForV1CustomResourceDefinitions(crd)...)
+			case apiextv1beta1.SchemeGroupVersion.Version:
+				crd := apiextv1beta1.CustomResourceDefinition{}
+				if err := yaml.Unmarshal(manifest, &crd); err != nil {
+					return nil, nil, err
 				}
-				if crd, err = Convertv1beta1Tov1CustomResourceDefinition(in); err != nil {
-					return nil, fmt.Errorf("error converting CustomResourceDefinition v1beta1 to v1: %v", err)
-				}
+				v1beta1crds = append(v1beta1crds, crd)
+				crGVKs = append(crGVKs, GVKsForV1beta1CustomResourceDefinitions(crd)...)
 			default:
-				return nil, fmt.Errorf("unrecognized CustomResourceDefinition version %q", gvk.Version)
+				return nil, nil, fmt.Errorf("unrecognized CustomResourceDefinition version %q", gvk.Version)
 			}
 
 			// Check if any GVK in crd is a duplicate.
-			for _, ver := range crd.Spec.Versions {
-				gvk := schema.GroupVersionKind{
-					Group:   crd.Spec.Group,
-					Version: ver.Name,
-					Kind:    crd.Spec.Names.Kind,
-				}
+			for _, gvk := range crGVKs {
 				if _, hasGVK := crGVKSet[gvk]; hasGVK {
-					return nil, fmt.Errorf("duplicate custom resource GVK %s in %s", gvk, path)
+					return nil, nil, fmt.Errorf("duplicate custom resource GVK %s in %s", gvk, path)
 				}
 				crGVKSet[gvk] = struct{}{}
 			}
 
-			crds = append(crds, *crd)
 		}
 		if err = scanner.Err(); err != nil {
-			return nil, fmt.Errorf("error scanning %s: %w", path, err)
+			return nil, nil, fmt.Errorf("error scanning %s: %w", path, err)
 		}
 	}
-	return crds, nil
+	return v1crds, v1beta1crds, nil
+}
+
+// DefinitionsForV1CustomResourceDefinitions returns definition keys for all
+// custom resource versions in each crd in crds.
+//nolint:lll
+func DefinitionsForV1CustomResourceDefinitions(crds ...apiextv1.CustomResourceDefinition) (keys []registry.DefinitionKey) {
+	for _, crd := range crds {
+		for _, ver := range crd.Spec.Versions {
+			keys = append(keys, registry.DefinitionKey{
+				Name:    crd.GetName(),
+				Group:   crd.Spec.Group,
+				Version: ver.Name,
+				Kind:    crd.Spec.Names.Kind,
+			})
+		}
+	}
+	return keys
+}
+
+// DefinitionsForV1beta1CustomResourceDefinitions returns definition keys for all
+// custom resource versions in each crd in crds.
+//nolint:lll
+func DefinitionsForV1beta1CustomResourceDefinitions(crds ...apiextv1beta1.CustomResourceDefinition) (keys []registry.DefinitionKey) {
+	for _, crd := range crds {
+		if len(crd.Spec.Versions) == 0 {
+			keys = append(keys, registry.DefinitionKey{
+				Name:    crd.GetName(),
+				Group:   crd.Spec.Group,
+				Version: crd.Spec.Version,
+				Kind:    crd.Spec.Names.Kind,
+			})
+		}
+		for _, ver := range crd.Spec.Versions {
+			keys = append(keys, registry.DefinitionKey{
+				Name:    crd.GetName(),
+				Group:   crd.Spec.Group,
+				Version: ver.Name,
+				Kind:    crd.Spec.Names.Kind,
+			})
+		}
+	}
+	return keys
+}
+
+// GVKsForV1CustomResourceDefinitions returns GroupVersionKind's for all
+// custom resource versions in each crd in crds.
+func GVKsForV1CustomResourceDefinitions(crds ...apiextv1.CustomResourceDefinition) (gvks []schema.GroupVersionKind) {
+	for _, key := range DefinitionsForV1CustomResourceDefinitions(crds...) {
+		gvks = append(gvks, schema.GroupVersionKind{
+			Group:   key.Group,
+			Version: key.Version,
+			Kind:    key.Kind,
+		})
+	}
+	return gvks
+}
+
+// GVKsForV1beta1CustomResourceDefinitions returns GroupVersionKind's for all
+// custom resource versions in each crd in crds.
+//nolint:lll
+func GVKsForV1beta1CustomResourceDefinitions(crds ...apiextv1beta1.CustomResourceDefinition) (gvks []schema.GroupVersionKind) {
+	for _, key := range DefinitionsForV1beta1CustomResourceDefinitions(crds...) {
+		gvks = append(gvks, schema.GroupVersionKind{
+			Group:   key.Group,
+			Version: key.Version,
+			Kind:    key.Kind,
+		})
+	}
+	return gvks
 }
 
 // ParseGroupSubpackages parses the apisDir directory tree and returns a map of

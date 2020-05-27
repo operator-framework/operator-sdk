@@ -93,8 +93,15 @@ func (c bundleCmd) runManifestsLegacy() (err error) {
 		return fmt.Errorf("error generating ClusterServiceVersion: %v", err)
 	}
 
+	var objs []interface{}
+	for _, crd := range col.V1CustomResourceDefinitions {
+		objs = append(objs, crd)
+	}
+	for _, crd := range col.V1beta1CustomResourceDefinitions {
+		objs = append(objs, crd)
+	}
 	dir := filepath.Join(c.outputDir, bundle.ManifestsDir)
-	if err := genutil.WriteCRDFilesLegacy(dir, col.CustomResourceDefinitions...); err != nil {
+	if err := genutil.WriteObjectsToFilesLegacy(dir, objs...); err != nil {
 		return err
 	}
 

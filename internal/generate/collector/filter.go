@@ -17,10 +17,12 @@ package collector
 import (
 	"crypto/sha256"
 
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	admissionregv1 "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -34,15 +36,10 @@ func (c *Manifests) filter() {
 // Custom Resources corresponding to a CustomResourceDefinition, by GVK.
 func (c *Manifests) filterCustomResources() {
 	crdGVKSet := make(map[schema.GroupVersionKind]struct{})
-	for _, crd := range c.CustomResourceDefinitions {
-		for _, version := range crd.Spec.Versions {
-			gvk := schema.GroupVersionKind{
-				Group:   crd.Spec.Group,
-				Version: version.Name,
-				Kind:    crd.Spec.Names.Kind,
-			}
-			crdGVKSet[gvk] = struct{}{}
-		}
+	v1crdGVKs := k8sutil.GVKsForV1CustomResourceDefinitions(c.V1CustomResourceDefinitions...)
+	v1beta1crdGVKs := k8sutil.GVKsForV1beta1CustomResourceDefinitions(c.V1beta1CustomResourceDefinitions...)
+	for _, gvk := range append(v1crdGVKs, v1beta1crdGVKs...) {
+		crdGVKSet[gvk] = struct{}{}
 	}
 
 	customResources := []unstructured.Unstructured{}
@@ -95,17 +92,29 @@ func (c *Manifests) deduplicate() error {
 	}
 	c.Deployments = deps
 
-	crds := []apiextv1.CustomResourceDefinition{}
-	for _, crd := range c.CustomResourceDefinitions {
+	v1crds := []apiextv1.CustomResourceDefinition{}
+	for _, crd := range c.V1CustomResourceDefinitions {
 		hasHash, err := addToHashes(&crd, hashes)
 		if err != nil {
 			return err
 		}
 		if !hasHash {
-			crds = append(crds, crd)
+			v1crds = append(v1crds, crd)
 		}
 	}
-	c.CustomResourceDefinitions = crds
+	c.V1CustomResourceDefinitions = v1crds
+
+	v1beta1crds := []apiextv1beta1.CustomResourceDefinition{}
+	for _, crd := range c.V1beta1CustomResourceDefinitions {
+		hasHash, err := addToHashes(&crd, hashes)
+		if err != nil {
+			return err
+		}
+		if !hasHash {
+			v1beta1crds = append(v1beta1crds, crd)
+		}
+	}
+	c.V1beta1CustomResourceDefinitions = v1beta1crds
 
 	validatingWebhooks := []admissionregv1.ValidatingWebhook{}
 	for _, webhook := range c.ValidatingWebhooks {
