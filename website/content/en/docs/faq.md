@@ -125,22 +125,22 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 
 ## I see deepcopy errors and image build fails. How do I fix this?
 
-When you run the ```operator-sdk generate k8s``` command while following the [Getting Started][getting-started-guide] guide, you might see an error like this
+When you run the ```operator-sdk generate k8s``` command, you might see an error like this
 
 ``` bash
 INFO[0000] Running deepcopy code-generation for Custom Resource group versions: [cache:[v1alpha1], ] 
 F0523 01:18:27.122034    5157 deepcopy.go:885] Hit an unsupported type invalid type for invalid type, from github.com/example-inc/memcached-operator/pkg/apis/cache/v1alpha1.Memcached
 ```
 
-This is because of the ```GOROOT``` environment variable not being set. More details [here][goroot-github-issue].
+This is because of the `GOROOT` environment variable not being set. More details [here][goroot-github-issue].
 
-In order to fix this, you simply need to export the ```GOROOT``` environment variable
+In order to fix this, you simply need to export the `GOROOT` environment variable
 
-``` bash
-export GOROOT=$(go env GOROOT)
+```
+$ export GOROOT=$(go env GOROOT)
 ```
 
-This will work for the current terminal instance, to make it more permanent, consider adding this line to the ```bashrc``` file.
+This will work for the current environment. To persist this fix, add the above line to your environment's config file, ex. `bashrc` file.
 
 [kube-apiserver_options]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options
 [controller-runtime_faq]: https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md#q-how-do-i-have-different-logic-in-my-reconciler-for-different-types-of-events-eg-create-update-delete
@@ -150,4 +150,3 @@ This will work for the current terminal instance, to make it more permanent, con
 [client.Reader]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#Reader
 [rbac]:https://kubernetes.io/docs/reference/access-authn-authz/rbac/
 [goroot-github-issue]:https://github.com/operator-framework/operator-sdk/issues/1854#issuecomment-525132306
-[getting-started-guide]:https://github.com/operator-framework/getting-started#overview
