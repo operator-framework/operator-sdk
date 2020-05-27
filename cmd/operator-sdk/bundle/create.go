@@ -23,6 +23,7 @@ import (
 
 	catalog "github.com/operator-framework/operator-sdk/internal/generate/olm-catalog"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/operator-framework/operator-sdk/internal/util/registry"
 
 	"github.com/blang/semver"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
@@ -234,7 +235,7 @@ func (c bundleCreateCmd) runGenerate() error {
 	if err != nil {
 		return fmt.Errorf("error generating bundle image files: %v", err)
 	}
-	if err = copyScorecardConfig(); err != nil {
+	if err = rewriteBundleImageContents(c.outputDir, c.directory); err != nil {
 		return err
 	}
 	return nil
@@ -328,5 +329,70 @@ func copyScorecardConfig() error {
 			return fmt.Errorf("error rewriting dockerfile, %v", err)
 		}
 	}
+	return nil
+}
+
+func addSDKMetricLabels() error {
+	var sdkMetricContent string
+
+	content := getSDKMetricsContent()
+
+	for key, value := range content {
+		sdkMetricContent += fmt.Sprintf("LABEL %s=%s\n", key, value)
+	}
+
+	err := projutil.RewriteFileContents(bundle.DockerFile, "LABEL", sdkMetricContent)
+
+	if err != nil {
+		return fmt.Errorf("error rewriting dockerfile with metric labels, %v", err)
+	}
+	return nil
+}
+
+func rewriteBundleImageContents(outputDir, manifestDir string) error {
+	// CopyScorecardConfig to bundle.Dockerfile
+	if err := copyScorecardConfig(); err != nil {
+		return fmt.Errorf("error copying scorecardConfig to bundle image, %v", err)
+	}
+
+	// Add SDK labels to bundle.Dockerfile
+	if err := addSDKMetricLabels(); err != nil {
+		return err
+	}
+
+	// Add sdk metric annotations
+	if err := writeMetricsToAnnotationsYaml(outputDir, manifestDir); err != nil {
+		return fmt.Errorf("error writing sdk metric labels to annotations.yaml, %v", err)
+	}
+
+	return nil
+
+}
+
+// getAnnotationsFilePath return the locations of annotations.yaml. If the user had specified
+// --output dir in the command, then its location would be inside outputDir/metadataDir/. If not
+// the metadataDir is present in the same location as the manifests are present.
+func getAnnotationsFilePath(outputDir, manifestsDir string) string {
+	if outputDir != "" {
+		return filepath.Join(outputDir, bundle.MetadataDir, bundle.AnnotationsFile)
+	}
+	return filepath.Join(filepath.Dir(manifestsDir), bundle.MetadataDir, bundle.AnnotationsFile)
+}
+
+func getSDKMetricsContent() map[string]string {
+	content := projutil.MakeMetricsLabels()
+	return content.Data
+}
+
+func writeMetricsToAnnotationsYaml(outputDir, manifestsDir string) error {
+	annotationsFilePath := getAnnotationsFilePath(outputDir, manifestsDir)
+
+	// Write metrics annotations
+	metricsContent := projutil.MakeMetricsLabels()
+	err := registry.RewriteAnnotationsYaml(annotationsFilePath, manifestsDir, metricsContent.Data)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
