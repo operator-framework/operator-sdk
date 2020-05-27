@@ -1,0 +1,88 @@
+// Copyright 2019 The Operator-SDK Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package v1alpha1
+
+import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+// State is a type used to indicate the result state of a Test.
+type State string
+
+const (
+	// NotRunState occurs when a user specifies the --list flag
+	NotRunState State = ""
+	// PassState occurs when a Test's ExpectedPoints == MaximumPoints.
+	PassState State = "pass"
+	// FailState occurs when a Test's ExpectedPoints == 0.
+	FailState State = "fail"
+	// ErrorState occurs when a Test encounters a fatal error and the reported points should not be considered.
+	ErrorState State = "error"
+)
+
+// TestSpec contains the results of an individual scorecard test
+type TestSpec struct {
+	// Image is the name of the testimage
+	Image string `json:"image"`
+	// EntryPoint is list of commands and arguments passed to the test image
+	EntryPoint []string `json:"entrypoint,omitempty"`
+	// Labels that further describe the test and enable selection
+	Labels map[string]string `json:"labels,omitempty"`
+}
+
+// Result contains the results of an individual scorecard test
+type Result struct {
+	// Name is the name of the test
+	Name string `json:"name"`
+	// Description describes what the test does
+	Description string `json:"description"`
+	// Log holds a log produced from the test (if applicable)
+	Log string `json:"log,omitempty"`
+	// State is the final state of the test
+	State State `json:"state,omitempty"`
+	// Errors is a list of the errors that occurred during the test (this can include both fatal and non-fatal errors)
+	Errors []string `json:"errors,omitempty"`
+	// Suggestions is a list of suggestions for the user to improve their score (if applicable)
+	Suggestions []string `json:"suggestions,omitempty"`
+}
+
+// Test contains collection of testResults and spec details.
+type Test struct {
+	TestSpec `json:",testspec"`
+	Results  []Result `json:"results"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// TestOutput is the schema for the scorecard API
+type TestOutput struct {
+	metav1.TypeMeta `json:",inline"`
+	// Tests is an array of ScorecardTestResult for the current scorecard run.
+	Tests []Test `json:"tests"`
+}
+
+func NewTestOutput() *TestOutput {
+	return &TestOutput{
+		// The TypeMeta is mandatory because it is used to distinguish the versions (v1alpha1 and v1alpha2)
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "TestOutput",
+			APIVersion: "osdk.operatorframework.io/v1alpha1",
+		},
+	}
+}
+
+func init() {
+	SchemeBuilder.Register(&TestOutput{})
+}
