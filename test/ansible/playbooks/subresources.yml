@@ -21,7 +21,7 @@
                 args:
                   - "/bin/sh"
                   - "-c"
-                  - "while true;do date;sleep 5;done"
+                  - "while true ; do echo '{{ log_message }}' ; sleep 5 ; done"
         wait: yes
 
     - name: Execute command in busybox pod
@@ -33,12 +33,19 @@
 
     - debug: var=exec_result
 
-    - name: Write result to resource status
+    - name: Get logs from busybox pod
+      k8s_log:
+        name: '{{ meta.name }}-busybox'
+        namespace: '{{ meta.namespace }}'
+      register: log_result
+
+    - name: Write results to resource status
       k8s_status:
         api_version: test.example.com/v1alpha1
-        kind: ExecTest
+        kind: SubresourcesTest
         name: '{{ meta.name }}'
         namespace: '{{ meta.namespace }}'
         status:
           execCommandStdout: '{{ exec_result.stdout.strip() }}'
           execCommandStderr: '{{ exec_result.stderr.strip() }}'
+          logs: '{{ log_result.log }}'

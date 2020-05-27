@@ -67,8 +67,8 @@ func (c *cacheResponseHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 			break
 		}
 
-		// Skip cache for non-resource requests, not a part of skipCacheLookup for performance.
-		if !r.IsResourceRequest {
+		// Skip cache for non-cacheable requests, not a part of skipCacheLookup for performance.
+		if !r.IsResourceRequest || !(r.Subresource == "" || r.Subresource == "status") {
 			log.Info("Skipping cache lookup", "resource", r)
 			break
 		}
