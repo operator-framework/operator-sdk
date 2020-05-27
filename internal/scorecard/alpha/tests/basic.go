@@ -43,7 +43,8 @@ func CheckSpecTest(bundle *apimanifests.Bundle) scapiv1alpha2.ScorecardTestResul
 	return checkSpecHelper(crSet, r)
 }
 
-func checkSpecHelper(crSet []unstructured.Unstructured, res scapiv1alpha2.ScorecardTestResult) scapiv1alpha2.ScorecardTestResult {
+func checkSpecHelper(crSet []unstructured.Unstructured,
+	res scapiv1alpha2.ScorecardTestResult) scapiv1alpha2.ScorecardTestResult {
 	for _, cr := range crSet {
 		if cr.Object["spec"] == nil {
 			res.Errors = append(res.Errors, "error spec does not exist")
