@@ -54,16 +54,9 @@ help: ## Show this help screen
 
 all: format test build/operator-sdk ## Test and Build the Operator SDK
 
-install: ## Build & install the Operator SDK CLI binary
-	$(Q)go install \
-		-gcflags "all=-trimpath=${GOPATH}" \
-		-asmflags "all=-trimpath=${GOPATH}" \
-		-ldflags " \
-			-X '${REPO}/version.GitVersion=${VERSION}' \
-			-X '${REPO}/version.GitCommit=${GIT_COMMIT}' \
-			-X '${REPO}/version.KubernetesVersion=${K8S_VERSION}' \
-		" \
-		$(BUILD_PATH)
+install: ## Install the operator-sdk binary
+	make build/operator-sdk
+	cp ./build/operator-sdk $(shell go env GOPATH)/bin/operator-sdk
 
 # Code management.
 .PHONY: format tidy clean cli-doc lint
@@ -95,6 +88,10 @@ setup-k8s:
 
 ##@ Generate
 
+.PHONY: generate gen-cli-doc gen-test-framework gen-changelog
+
+generate: gen-cli-doc gen-test-framework  ## Run all non-release generate targets
+
 gen-cli-doc: ## Generate CLI documentation
 	./hack/generate/cli-doc/gen-cli-doc.sh
 
@@ -103,9 +100,6 @@ gen-test-framework: build/operator-sdk ## Run generate commands to update test/t
 
 gen-changelog: ## Generate CHANGELOG.md and migration guide updates
 	./hack/generate/changelog/gen-changelog.sh
-
-generate: gen-cli-doc gen-test-framework  ## Run all generate targets
-.PHONY: generate gen-cli-doc gen-test-framework
 
 ##############################
 # Release                    #
@@ -132,17 +126,18 @@ build/operator-sdk-%-ppc64le-linux-gnu: GOARGS = GOOS=linux GOARCH=ppc64le
 build/operator-sdk-%-s390x-linux-gnu: GOARGS = GOOS=linux GOARCH=s390x
 build/operator-sdk-%-linux-gnu: GOARGS = GOOS=linux
 
-build/%: $(SOURCES)
+build/%: $(SOURCES) ## Build the operator-sdk binary
 	$(Q)$(GOARGS) go build \
 		-gcflags "all=-trimpath=${GOPATH}" \
 		-asmflags "all=-trimpath=${GOPATH}" \
 		-ldflags " \
 			-X '${REPO}/version.GitVersion=${VERSION}' \
 			-X '${REPO}/version.GitCommit=${GIT_COMMIT}' \
+			-X '${REPO}/version.KubernetesVersion=${K8S_VERSION}' \
 		" \
 		-o $@ $(BUILD_PATH)
 
-build/%.asc:
+build/%.asc: ## Create release signatures for operator-sdk release binaries
 	$(Q){ \
 	default_key=$$(gpgconf --list-options gpg | awk -F: '$$1 == "default-key" { gsub(/"/,""); print toupper($$10)}'); \
 	git_key=$$(git config --get user.signingkey | awk '{ print toupper($$0) }'); \
@@ -156,31 +151,22 @@ build/%.asc:
 	}
 
 # Image scaffold/build/push.
-.PHONY: image image-scaffold-ansible image-scaffold-helm image-build image-build-ansible image-build-helm image-push image-push-ansible image-push-helm
+.PHONY: image image-build image-push
 
 image: image-build image-push ## Build and push all images
+
+image-build: image-build-ansible image-build-helm image-build-scorecard-proxy image-build-scorecard-test ## Build all images
+
+image-push: image-push-ansible image-push-helm image-push-scorecard-proxy image-push-scorecard-test ## Push all images
+
+# Ansible operator image scaffold/build/push.
+.PHONY: image-scaffold-ansible image-build-ansible image-push-ansible image-push-ansible-multiarch
 
 image-scaffold-ansible:
 	go run ./hack/image/ansible/scaffold-ansible-image.go
 
-image-scaffold-helm:
-	go run ./hack/image/helm/scaffold-helm-image.go
-
-image-build: image-build-ansible image-build-helm image-build-scorecard-proxy image-build-scorecard-test ## Build all images
-
 image-build-ansible: build/operator-sdk-dev-linux-gnu
 	./hack/image/build-ansible-image.sh $(ANSIBLE_BASE_IMAGE):dev
-
-image-build-helm: build/operator-sdk-dev-linux-gnu
-	./hack/image/build-helm-image.sh $(HELM_BASE_IMAGE):dev
-
-image-build-scorecard-proxy:
-	./hack/image/build-scorecard-proxy-image.sh $(SCORECARD_PROXY_BASE_IMAGE):dev
-
-image-build-scorecard-test:
-	./hack/image/build-scorecard-test-image.sh $(SCORECARD_TEST_BASE_IMAGE):dev
-
-image-push: image-push-ansible image-push-helm image-push-scorecard-proxy image-push-scorecard-test ## Push all images
 
 image-push-ansible:
 	./hack/image/push-image-tags.sh $(ANSIBLE_BASE_IMAGE):dev $(ANSIBLE_IMAGE)-$(shell go env GOARCH)
@@ -188,20 +174,38 @@ image-push-ansible:
 image-push-ansible-multiarch:
 	./hack/image/push-manifest-list.sh $(ANSIBLE_IMAGE) ${ANSIBLE_ARCHES}
 
+# Helm operator image scaffold/build/push.
+.PHONY: image-scaffold-helm image-build-helm image-push-helm image-push-helm-multiarch
+
+image-scaffold-helm:
+	go run ./hack/image/helm/scaffold-helm-image.go
+
+image-build-helm: build/operator-sdk-dev-linux-gnu
+	./hack/image/build-helm-image.sh $(HELM_BASE_IMAGE):dev
+
 image-push-helm:
 	./hack/image/push-image-tags.sh $(HELM_BASE_IMAGE):dev $(HELM_IMAGE)-$(shell go env GOARCH)
 
 image-push-helm-multiarch:
 	./hack/image/push-manifest-list.sh $(HELM_IMAGE) ${HELM_ARCHES}
 
+# Scorecard proxy image scaffold/build/push.
+.PHONY: image-build-scorecard-proxy image-push-scorecard-proxy image-push-scorecard-proxy-multiarch
+
+image-build-scorecard-proxy:
+	./hack/image/build-scorecard-proxy-image.sh $(SCORECARD_PROXY_BASE_IMAGE):dev
+
 image-push-scorecard-proxy:
 	./hack/image/push-image-tags.sh $(SCORECARD_PROXY_BASE_IMAGE):dev $(SCORECARD_PROXY_IMAGE)-$(shell go env GOARCH)
 
-image-push-scorecard-test:
-	./hack/image/push-image-tags.sh $(SCORECARD_TEST_BASE_IMAGE):dev $(SCORECARD_TEST_IMAGE)-$(shell go env GOARCH)
-
 image-push-scorecard-proxy-multiarch:
 	./hack/image/push-manifest-list.sh $(SCORECARD_PROXY_IMAGE) ${SCORECARD_PROXY_ARCHES}
+
+# Scorecard test image scaffold/build/push.
+.PHONY: image-build-scorecard-test image-push-scorecard-test image-push-scorecard-test-multiarch
+
+image-build-scorecard-test:
+	./hack/image/build-scorecard-test-image.sh $(SCORECARD_TEST_BASE_IMAGE):dev
 
 image-push-scorecard-test:
 	./hack/image/push-image-tags.sh $(SCORECARD_TEST_BASE_IMAGE):dev $(SCORECARD_TEST_IMAGE)-$(shell go env GOARCH)
