@@ -26,4 +26,4 @@
     that:
       - subresources_test.result.status.execCommandStderr == ""
       - subresources_test.result.status.execCommandStdout == "hello world"
-      - "'Running' in subresources_test.result.status.log"
+      - "'Running' in subresources_test.result.status.logs"
