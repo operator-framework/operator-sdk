@@ -39,12 +39,15 @@ and validate them, assuming a bundle for 'test-operator' version v0.1.0 exists a
 
 To build and validate an image:
 
+  # Create a registry namespace or use an existing one.
+  $ export NAMESPACE=<your registry namespace>
+
   # Build and push the image using the docker CLI.
-  $ operator-sdk bundle create quay.io/example/test-operator:v0.1.0
-  $ docker push quay.io/example/test-operator:v0.1.0
+  $ operator-sdk bundle create quay.io/$NAMESPACE/test-operator:v0.1.0
+  $ docker push quay.io/$NAMESPACE/test-operator:v0.1.0
 
   # Ensure the image with modified metadata and Dockerfile is valid.
-  $ operator-sdk bundle validate quay.io/example/test-operator:v0.1.0
+  $ operator-sdk bundle validate quay.io/$NAMESPACE/test-operator:v0.1.0
 
 
 ```
