@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	catalog "github.com/operator-framework/operator-sdk/internal/generate/olm-catalog"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
@@ -169,6 +170,12 @@ func (c *bundleCreateCmd) setDefaults() (err error) {
 	// an error if we cannot.
 	if dir, err := relWd(c.directory); err == nil {
 		c.directory = dir
+	}
+
+	// Ensure a default channel is present if there only one channel. Don't infer
+	// default otherwise; the user must set this value.
+	if c.defaultChannel == "" && strings.Count(c.channels, ",") == 0 {
+		c.defaultChannel = c.channels
 	}
 
 	return nil
