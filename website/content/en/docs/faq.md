@@ -125,7 +125,7 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 
 ## I see deepcopy errors and image build fails. How do I fix this?
 
-When you run the ```operator-sdk generate k8s``` command while following the [Getting Started][getting-started-guide] guide, you might see an error like this
+When you run the ```operator-sdk generate k8s``` command, you might see an error like this
 
 ``` bash
 INFO[0000] Running deepcopy code-generation for Custom Resource group versions: [cache:[v1alpha1], ] 
@@ -150,4 +150,3 @@ This will work for the current terminal instance, to make it more permanent, con
 [client.Reader]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#Reader
 [rbac]:https://kubernetes.io/docs/reference/access-authn-authz/rbac/
 [goroot-github-issue]:https://github.com/operator-framework/operator-sdk/issues/1854#issuecomment-525132306
-[getting-started-guide]:https://github.com/operator-framework/getting-started#overview
