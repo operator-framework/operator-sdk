@@ -28,20 +28,20 @@ Then, in your controller, you can use [`Conditions`][godoc-conditions] methods t
 
 ### Adding 3rd Party Resources To Your Operator
 
-> **// TODO:** Update the `main.go` code in these sections to use the `init()` func to register the scheme instead of doing it in `main()`.
 
 The operator's Manager supports the core Kubernetes resource types as found in the client-go [scheme][scheme_package] package and will also register the schemes of all custom resource types defined in your project.
 
 ```Go
 import (
-  "github.com/example-inc/memcached-operator/pkg/apis"
-  ...
+    cachev1alpha1 "github.com/example-inc/memcached-operator/api/v1alpha1
+    ...
 )
 
-// Setup Scheme for all resources
-if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
-  log.Error(err, "")
-  os.Exit(1)
+func init() {
+
+    // Setup Scheme for all resources
+    utilruntime.Must(cachev1alpha1.AddToScheme(mgr.GetScheme()))
+    // +kubebuilder:scaffold:scheme
 }
 ```
 
@@ -49,27 +49,23 @@ To add a 3rd party resource to an operator, you must add it to the Manager's sch
 
 #### Register with the Manager's scheme
 
-Call the `AddToScheme()` function for your 3rd party resource and pass it the Manager's scheme via `mgr.GetScheme()`
-in `cmd/manager/main.go`.
-
+Call the `AddToScheme()` function for your 3rd party resource and pass it the Manager's scheme via `mgr.GetScheme()` in `main.go`.
 Example:
 ```go
 import (
-  ....
-
-  routev1 "github.com/openshift/api/route/v1"
+    routev1 "github.com/openshift/api/route/v1"
 )
 
-func main() {
-  ...
+func init() {
+    ...
 
-  // Adding the routev1
-  if err := routev1.AddToScheme(mgr.GetScheme()); err != nil {
-    log.Error(err, "")
-    os.Exit(1)
-  }
+    // Adding the routev1
+    utilruntime.Must(clientgoscheme.AddToScheme(mgr.GetScheme()))
 
-  ...
+    utilruntime.Must(routev1.AddToScheme(mgr.GetScheme()))
+    // +kubebuilder:scaffold:scheme
+
+    ...
 }
 ```
 
@@ -81,28 +77,28 @@ Example of registering `DNSEndpoints` 3rd party resource from `external-dns`:
 
 ```go
 import (
-  ...
+    ...
     "k8s.io/apimachinery/pkg/runtime/schema"
     "sigs.k8s.io/controller-runtime/pkg/scheme"
-  ...
-   // DNSEndoints
-   externaldns "github.com/kubernetes-incubator/external-dns/endpoint"
-   metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+    ...
+    // DNSEndoints
+    externaldns "github.com/kubernetes-incubator/external-dns/endpoint"
+    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
  )
 
-func main() {
-  ...
+func init() {
+    ...
 
-  log.Info("Registering Components.")
+    log.Info("Registering Components.")
 
-  schemeBuilder := &scheme.Builder{GroupVersion: schema.GroupVersion{Group: "externaldns.k8s.io", Version: "v1alpha1"}}
-  schemeBuilder.Register(&externaldns.DNSEndpoint{}, &externaldns.DNSEndpointList{})
-  if err := schemeBuilder.AddToScheme(mgr.GetScheme()); err != nil {
-    log.Error(err, "")
-    os.Exit(1)
-  }
+    schemeBuilder := &scheme.Builder{GroupVersion: schema.GroupVersion{Group: "externaldns.k8s.io", Version: "v1alpha1"}}
+    schemeBuilder.Register(&externaldns.DNSEndpoint{}, &externaldns.DNSEndpointList{})
+    if err := schemeBuilder.AddToScheme(mgr.GetScheme()); err != nil {
+        log.Error(err, "")
+        os.Exit(1)
+    }
 
-  ...
+    ...
 }
 ```
 
@@ -115,17 +111,10 @@ func main() {
 
 ### Metrics
 
-> **// TODO:** Update the [metrics doc](https://github.com/operator-framework/operator-sdk/blob/master/website/content/en/docs/golang/metrics/operator-sdk-monitoring.md) since it doesn't match the default scaffolded by kubebuilder anymore.
+To learn about how metrics work in the Operator SDK read the [metrics section][metrics_doc] of the Kubebuilder documentation.
 
-To learn about how metrics work in the Operator SDK read the [metrics section][metrics_doc] of the user documentation.
-
-#### Default Metrics exported with 3rd party resource
-
-> **// TODO:** Remove this section since we're no longer scaffolding main.go to use the SDK's `GenerateAndServeCRMetrics()` util in `pkg/kube-metrics`.
 
 ### Handle Cleanup on Deletion
-
-> **// TODO:** Update finalizer reconcile code for kubebuilder's default reconciler imports and variable names
 
 To implement complex deletion logic, you can add a finalizer to your Custom Resource. This will prevent your Custom Resource from being
 deleted until you remove the finalizer (ie, after your cleanup logic has successfully run). For more information, see the
@@ -137,104 +126,103 @@ The following is a snippet from the controller file under `pkg/controller/memcac
 
 ```Go
 import (
-  ...
-  "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+    ...
+    "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 const memcachedFinalizer = "finalizer.cache.example.com"
 
-func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
-	reqLogger.Info("Reconciling Memcached")
+func (r *MemcachedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
+    ctx := context.Background()
+    reqLogger := r.log.WithValues("memcached", req.NamespacedName)
+    reqLogger.Info("Reconciling Memcached")
 
-	// Fetch the Memcached instance
-	memcached := &cachev1alpha1.Memcached{}
-	err := r.client.Get(context.TODO(), request.NamespacedName, memcached)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			// Request object not found, could have been deleted after reconcile request.
-			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
-			// Return and don't requeue
-			reqLogger.Info("Memcached resource not found. Ignoring since object must be deleted.")
-			return reconcile.Result{}, nil
-		}
-		// Error reading the object - requeue the request.
-		reqLogger.Error(err, "Failed to get Memcached.")
-		return reconcile.Result{}, err
-	}
+    // Fetch the Memcached instance
+    memcached := &cachev1alpha1.Memcached{}
+    err := r.Get(ctx, req.NamespacedName, memcached)
+    if err != nil {
+        if errors.IsNotFound(err) {
+            // Request object not found, could have been deleted after reconcile request.
+            // Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
+            // Return and don't requeue
+            reqLogger.Info("Memcached resource not found. Ignoring since object must be deleted.")
+            return ctrl.Result{}, nil
+        }
+        // Error reading the object - requeue the request.
+        reqLogger.Error(err, "Failed to get Memcached.")
+        return ctrl.Result{}, err
+    }
 
-	...
+    ...
 
-	// Check if the Memcached instance is marked to be deleted, which is
-	// indicated by the deletion timestamp being set.
-	isMemcachedMarkedToBeDeleted := memcached.GetDeletionTimestamp() != nil
-	if isMemcachedMarkedToBeDeleted {
-		if contains(memcached.GetFinalizers(), memcachedFinalizer) {
-			// Run finalization logic for memcachedFinalizer. If the
-			// finalization logic fails, don't remove the finalizer so
-			// that we can retry during the next reconciliation.
-			if err := r.finalizeMemcached(reqLogger, memcached); err != nil {
-				return reconcile.Result{}, err
-			}
+    // Check if the Memcached instance is marked to be deleted, which is
+    // indicated by the deletion timestamp being set.
+    isMemcachedMarkedToBeDeleted := memcached.GetDeletionTimestamp() != nil
+    if isMemcachedMarkedToBeDeleted {
+        if contains(memcached.GetFinalizers(), memcachedFinalizer) {
+            // Run finalization logic for memcachedFinalizer. If the
+            // finalization logic fails, don't remove the finalizer so
+            // that we can retry during the next reconciliation.
+            if err := r.finalizeMemcached(reqLogger, memcached); err != nil {
+                return ctrl.Result{}, err
+            }
 
-			// Remove memcachedFinalizer. Once all finalizers have been
-			// removed, the object will be deleted.
-			controllerutil.RemoveFinalizer(memcached, memcachedFinalizer)
-			err := r.client.Update(context.TODO(), memcached)
-			if err != nil {
-				return reconcile.Result{}, err
-			}
-		}
-		return reconcile.Result{}, nil
-	}
+            // Remove memcachedFinalizer. Once all finalizers have been
+            // removed, the object will be deleted.
+            controllerutil.RemoveFinalizer(memcached, memcachedFinalizer)
+            err := r.Update(ctx, memcached)
+            if err != nil {
+                return ctrl.Result{}, err
+            }
+        }
+        return ctrl.Result{}, nil
+    }
 
-	// Add finalizer for this CR
-	if !contains(memcached.GetFinalizers(), memcachedFinalizer) {
-		if err := r.addFinalizer(reqLogger, memcached); err != nil {
-			return reconcile.Result{}, err
-		}
-	}
+    // Add finalizer for this CR
+    if !contains(memcached.GetFinalizers(), memcachedFinalizer) {
+        if err := r.addFinalizer(reqLogger, memcached); err != nil {
+            return ctrl.Result{}, err
+        }
+    }
 
-	...
+    ...
 
-	return reconcile.Result{}, nil
+    return ctrl.Result{}, nil
 }
 
-func (r *ReconcileMemcached) finalizeMemcached(reqLogger logr.Logger, m *cachev1alpha1.Memcached) error {
-	// TODO(user): Add the cleanup steps that the operator
-	// needs to do before the CR can be deleted. Examples
-	// of finalizers include performing backups and deleting
-	// resources that are not owned by this CR, like a PVC.
-	reqLogger.Info("Successfully finalized memcached")
-	return nil
+func (r *MemcachedReconciler) finalizeMemcached(reqLogger logr.Logger, m *cachev1alpha1.Memcached) error {
+    // TODO(user): Add the cleanup steps that the operator
+    // needs to do before the CR can be deleted. Examples
+    // of finalizers include performing backups and deleting
+    // resources that are not owned by this CR, like a PVC.
+    reqLogger.Info("Successfully finalized memcached")
+    return nil
 }
 
-func (r *ReconcileMemcached) addFinalizer(reqLogger logr.Logger, m *cachev1alpha1.Memcached) error {
-	reqLogger.Info("Adding Finalizer for the Memcached")
-	controllerutil.AddFinalizer(m, memcachedFinalizer)
+func (r *MemcachedReconciler) addFinalizer(reqLogger logr.Logger, m *cachev1alpha1.Memcached) error {
+    reqLogger.Info("Adding Finalizer for the Memcached")
+    controllerutil.AddFinalizer(m, memcachedFinalizer)
 
-	// Update CR
-	err := r.client.Update(context.TODO(), m)
-	if err != nil {
-		reqLogger.Error(err, "Failed to update Memcached with finalizer")
-		return err
-	}
-	return nil
+    // Update CR
+    err := r.Update(context.TODO(), m)
+    if err != nil {
+        reqLogger.Error(err, "Failed to update Memcached with finalizer")
+        return err
+    }
+    return nil
 }
 
 func contains(list []string, s string) bool {
-	for _, v := range list {
-		if v == s {
-			return true
-		}
-	}
-	return false
+    for _, v := range list {
+        if v == s {
+            return true
+        }
+    }
+    return false
 }
 ```
 
 ### Leader election
-
-> **// TODO:** Update this section to remove `leader-for-life` option? Since it's no longer the default.
 
 During the lifecycle of an operator it's possible that there may be more than 1 instance running at any given time e.g when rolling out an upgrade for the operator.
 In such a scenario it is necessary to avoid contention between multiple operator instances via leader election so that only one leader instance handles the reconciliation while the other instances are inactive but ready to take over when the leader steps down.
@@ -254,18 +242,18 @@ A call to `leader.Become()` will block the operator as it retries until it can b
 
 ```Go
 import (
-  ...
-  "github.com/operator-framework/operator-sdk/pkg/leader"
+    ...
+    "github.com/operator-framework/operator-sdk/pkg/leader"
 )
 
 func main() {
-  ...
-  err = leader.Become(context.TODO(), "memcached-operator-lock")
-  if err != nil {
-    log.Error(err, "Failed to retry for leader lock")
-    os.Exit(1)
-  }
-  ...
+    ...
+    err = leader.Become(context.TODO(), "memcached-operator-lock")
+    if err != nil {
+        log.Error(err, "Failed to retry for leader lock")
+        os.Exit(1)
+    }
+    ...
 }
 ```
 If the operator is not running inside a cluster `leader.Become()` will simply return without error to skip the leader election since it can't detect the operator's namespace.
@@ -276,19 +264,19 @@ The leader-with-lease approach can be enabled via the [Manager Options][manager_
 
 ```Go
 import (
-  ...
-  "sigs.k8s.io/controller-runtime/pkg/manager"
+    ...
+    "sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
 func main() {
-  ...
-  opts := manager.Options{
     ...
-    LeaderElection: true,
-    LeaderElectionID: "memcached-operator-lock"
-  }
-  mgr, err := manager.New(cfg, opts)
-  ...
+    opts := manager.Options{
+        ...
+        LeaderElection: true,
+        LeaderElectionID: "memcached-operator-lock"
+    }
+    mgr, err := manager.New(cfg, opts)
+    ...
 }
 ```
 
@@ -300,7 +288,7 @@ When the operator is not running in a cluster, the Manager will return an error 
 [deployments_register]: https://github.com/kubernetes/api/blob/master/apps/v1/register.go#L41
 [runtime_package]: https://godoc.org/k8s.io/apimachinery/pkg/runtime
 [scheme_builder]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/scheme#Builder
-[metrics_doc]: /docs/golang/metrics/operator-sdk-monitoring/
+[metrics_doc]: https://book.kubebuilder.io/reference/metrics.html
 [lease_split_brain]: https://github.com/kubernetes/client-go/blob/30b06a83d67458700a5378239df6b96948cb9160/tools/leaderelection/leaderelection.go#L21-L24
 [leader_for_life]: https://godoc.org/github.com/operator-framework/operator-sdk/pkg/leader
 [leader_with_lease]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/leaderelection
