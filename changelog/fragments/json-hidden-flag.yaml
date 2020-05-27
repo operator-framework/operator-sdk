@@ -2,7 +2,7 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      Add new hidden alpha flag `--output` to allow output the result of `operator-sdk bundle validate` in JSON format.
+      Add new hidden alpha flag `--output` to print the result of `operator-sdk bundle validate` in JSON format to stdout. Logs are printed to stderr.
 
     # kind is one of:
     # - addition

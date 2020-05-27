@@ -21,6 +21,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/bundle/internal"
+
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	apierrors "github.com/operator-framework/api/pkg/validation/errors"
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
@@ -30,7 +32,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/operator-framework/operator-sdk/internal/flags"
-	"github.com/operator-framework/operator-sdk/internal/output"
 	internalregistry "github.com/operator-framework/operator-sdk/internal/registry"
 )
 
@@ -90,7 +91,7 @@ To build and validate an image:
 			// Note that it allows the JSON result be redirected to the Stdout. E.g
 			// if we run the command with `| jq . > result.json` the command will print just the logs
 			// and the file will have only the JSON result.
-			logger := log.NewEntry(output.NewLoggerTo(os.Stderr))
+			logger := log.NewEntry(internal.NewLoggerTo(os.Stderr))
 
 			if err = c.validate(args); err != nil {
 				return fmt.Errorf("invalid command args: %v", err)
@@ -119,14 +120,10 @@ To build and validate an image:
 			}
 
 			result := c.run()
-			if result.Passed { // if no errors were added
-				result.AddInfo("All validation tests have completed successfully")
-			}
-
 			if err := result.PrintWithFormat(c.outputFormat); err != nil {
 				logger.Fatal(err)
 			}
-
+			logger.Info("All validation tests have completed successfully")
 			return nil
 		},
 	}
@@ -141,7 +138,7 @@ func (c bundleValidateCmd) validate(args []string) error {
 	if len(args) != 1 {
 		return errors.New("an image tag or directory is a required argument")
 	}
-	if c.outputFormat != output.JSONAlpha1 && c.outputFormat != output.Text {
+	if c.outputFormat != internal.JSONAlpha1 && c.outputFormat != internal.Text {
 		return fmt.Errorf("invalid value for output flag: %v", c.outputFormat)
 	}
 	return nil
@@ -153,7 +150,7 @@ func (c *bundleValidateCmd) addToFlagSet(fs *pflag.FlagSet) {
 	fs.StringVarP(&c.imageBuilder, "image-builder", "b", "docker",
 		"Tool to extract bundle image data. Only used when validating a bundle image. "+
 			"One of: [docker, podman]")
-	fs.StringVarP(&c.outputFormat, "output", "o", output.Text,
+	fs.StringVarP(&c.outputFormat, "output", "o", internal.Text,
 		"Result format for results. One of: [text, json-alpha1]")
 
 	// It is hidden because it is an alpha option
@@ -163,9 +160,9 @@ func (c *bundleValidateCmd) addToFlagSet(fs *pflag.FlagSet) {
 	}
 }
 
-func (c bundleValidateCmd) run() (res output.Result) {
+func (c bundleValidateCmd) run() (res internal.Result) {
 	// Create Result to be outputted
-	res = output.NewResult()
+	res = internal.NewResult()
 
 	logger := log.WithFields(log.Fields{
 		"bundle-dir":     c.directory,
@@ -176,8 +173,7 @@ func (c bundleValidateCmd) run() (res output.Result) {
 
 	// Validate bundle format.
 	if err := val.ValidateBundleFormat(c.directory); err != nil {
-		addBundleValidationErrorToResult(err, &res)
-		res.AddError(errors.New("invalid bundle format"))
+		addBundleValidationErrorToResult(fmt.Errorf("error validating format in %s: %v", c.directory, err), &res)
 	}
 
 	// Validate bundle content.
@@ -186,8 +182,7 @@ func (c bundleValidateCmd) run() (res output.Result) {
 	manifestsDir := filepath.Join(c.directory, registrybundle.ManifestsDir)
 	results, err := validateBundleContent(logger, manifestsDir)
 	if err != nil {
-		addBundleValidationErrorToResult(err, &res)
-		res.AddError(fmt.Errorf("error validating %s", manifestsDir))
+		addBundleValidationErrorToResult(fmt.Errorf("error validating content in %s: %v", manifestsDir, err), &res)
 	}
 
 	// Check the Results will check the []apierrors.ManifestResult returned
@@ -224,20 +219,14 @@ func validateBundleContent(logger *log.Entry, manifestsDir string) ([]apierrors.
 
 // checkResults logs warnings and errors in results, and returns true if at
 // least one error was encountered.
-func checkResults(results []apierrors.ManifestResult, res *output.Result) {
-	hasErrors := false
+func checkResults(results []apierrors.ManifestResult, res *internal.Result) {
 	for _, r := range results {
 		for _, w := range r.Warnings {
 			res.AddWarn(w)
 		}
 		for _, e := range r.Errors {
 			res.AddError(e)
-			hasErrors = true
 		}
-
-	}
-	if hasErrors {
-		res.AddError(errors.New("invalid bundle content"))
 	}
 }
 
@@ -245,7 +234,7 @@ func checkResults(results []apierrors.ManifestResult, res *output.Result) {
 // accordingly to the results
 // NOTE: Currently, the Bundle Validation from Operator Registry only returns error types,
 // however, it might have WARN and INFO types in the future as well.
-func addBundleValidationErrorToResult(err error, res *output.Result) {
+func addBundleValidationErrorToResult(err error, res *internal.Result) {
 	verr := registrybundle.ValidationError{}
 	if errors.As(err, &verr) {
 		for _, valErr := range verr.Errors {
