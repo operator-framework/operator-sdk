@@ -123,7 +123,7 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 	}
 ```
 
-## When using the "Getting Started" guide, I see deepcopy errors and image build fails. How do I fix this?
+## I see deepcopy errors and image build fails. How do I fix this?
 
 When you run the ```operator-sdk generate k8s``` command while following the [Getting Started][getting-started-guide] guide, you might see an error like this
 
