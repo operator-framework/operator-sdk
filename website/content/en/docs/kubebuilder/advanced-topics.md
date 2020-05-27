@@ -77,17 +77,17 @@ Example of registering `DNSEndpoints` 3rd party resource from `external-dns`:
 
 ```go
 import (
-  ...
+    ...
     "k8s.io/apimachinery/pkg/runtime/schema"
     "sigs.k8s.io/controller-runtime/pkg/scheme"
-  ...
+    ...
     // DNSEndoints
     externaldns "github.com/kubernetes-incubator/external-dns/endpoint"
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
  )
 
 func init() {
-  ...
+    ...
 
     log.Info("Registering Components.")
 
@@ -98,7 +98,7 @@ func init() {
         os.Exit(1)
     }
 
-  ...
+    ...
 }
 ```
 
