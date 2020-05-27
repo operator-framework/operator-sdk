@@ -127,7 +127,7 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 
 When you run the ```operator-sdk generate k8s``` command, you might see an error like this
 
-``` bash
+```
 INFO[0000] Running deepcopy code-generation for Custom Resource group versions: [cache:[v1alpha1], ] 
 F0523 01:18:27.122034    5157 deepcopy.go:885] Hit an unsupported type invalid type for invalid type, from github.com/example-inc/memcached-operator/pkg/apis/cache/v1alpha1.Memcached
 ```
