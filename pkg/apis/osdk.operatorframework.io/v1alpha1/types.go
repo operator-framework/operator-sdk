@@ -60,7 +60,7 @@ type Result struct {
 
 // Test contains collection of testResults and spec details.
 type Test struct {
-	TestSpec `json:",testspec"`
+	TestSpec `json:"testspec"`
 	Results  []Result `json:"results"`
 }
 
