@@ -33,8 +33,8 @@ The operator's Manager supports the core Kubernetes resource types as found in t
 
 ```Go
 import (
-  cachev1alpha1 "github.com/example-inc/memcached-operator/api/v1alpha1
-  ...
+    cachev1alpha1 "github.com/example-inc/memcached-operator/api/v1alpha1
+    ...
 )
 
 func init() {
@@ -53,22 +53,19 @@ Call the `AddToScheme()` function for your 3rd party resource and pass it the Ma
 Example:
 ```go
 import (
-  ....
-
-  routev1 "github.com/openshift/api/route/v1"
+    routev1 "github.com/openshift/api/route/v1"
 )
 
 func init() {
-  ...
+    ...
 
-  // Adding the routev1
-
+    // Adding the routev1
     utilruntime.Must(clientgoscheme.AddToScheme(mgr.GetScheme()))
 
     utilruntime.Must(routev1.AddToScheme(mgr.GetScheme()))
     // +kubebuilder:scaffold:scheme
 
-  ...
+    ...
 }
 ```
 
@@ -84,22 +81,22 @@ import (
     "k8s.io/apimachinery/pkg/runtime/schema"
     "sigs.k8s.io/controller-runtime/pkg/scheme"
   ...
-   // DNSEndoints
-   externaldns "github.com/kubernetes-incubator/external-dns/endpoint"
-   metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+    // DNSEndoints
+    externaldns "github.com/kubernetes-incubator/external-dns/endpoint"
+    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
  )
 
 func init() {
   ...
 
-  log.Info("Registering Components.")
+    log.Info("Registering Components.")
 
-  schemeBuilder := &scheme.Builder{GroupVersion: schema.GroupVersion{Group: "externaldns.k8s.io", Version: "v1alpha1"}}
-  schemeBuilder.Register(&externaldns.DNSEndpoint{}, &externaldns.DNSEndpointList{})
-  if err := schemeBuilder.AddToScheme(mgr.GetScheme()); err != nil {
-    log.Error(err, "")
-    os.Exit(1)
-  }
+    schemeBuilder := &scheme.Builder{GroupVersion: schema.GroupVersion{Group: "externaldns.k8s.io", Version: "v1alpha1"}}
+    schemeBuilder.Register(&externaldns.DNSEndpoint{}, &externaldns.DNSEndpointList{})
+    if err := schemeBuilder.AddToScheme(mgr.GetScheme()); err != nil {
+        log.Error(err, "")
+        os.Exit(1)
+    }
 
   ...
 }
@@ -129,8 +126,8 @@ The following is a snippet from the controller file under `pkg/controller/memcac
 
 ```Go
 import (
-  ...
-  "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+    ...
+    "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 const memcachedFinalizer = "finalizer.cache.example.com"
@@ -245,18 +242,18 @@ A call to `leader.Become()` will block the operator as it retries until it can b
 
 ```Go
 import (
-  ...
-  "github.com/operator-framework/operator-sdk/pkg/leader"
+    ...
+    "github.com/operator-framework/operator-sdk/pkg/leader"
 )
 
 func main() {
-  ...
-  err = leader.Become(context.TODO(), "memcached-operator-lock")
-  if err != nil {
-    log.Error(err, "Failed to retry for leader lock")
-    os.Exit(1)
-  }
-  ...
+    ...
+    err = leader.Become(context.TODO(), "memcached-operator-lock")
+    if err != nil {
+        log.Error(err, "Failed to retry for leader lock")
+        os.Exit(1)
+    }
+    ...
 }
 ```
 If the operator is not running inside a cluster `leader.Become()` will simply return without error to skip the leader election since it can't detect the operator's namespace.
@@ -267,19 +264,19 @@ The leader-with-lease approach can be enabled via the [Manager Options][manager_
 
 ```Go
 import (
-  ...
-  "sigs.k8s.io/controller-runtime/pkg/manager"
+    ...
+    "sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
 func main() {
-  ...
-  opts := manager.Options{
     ...
-    LeaderElection: true,
-    LeaderElectionID: "memcached-operator-lock"
-  }
-  mgr, err := manager.New(cfg, opts)
-  ...
+    opts := manager.Options{
+        ...
+        LeaderElection: true,
+        LeaderElectionID: "memcached-operator-lock"
+    }
+    mgr, err := manager.New(cfg, opts)
+    ...
 }
 ```
 
