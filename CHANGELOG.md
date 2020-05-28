@@ -2,7 +2,7 @@
 
 ### Additions
 
-- The Ansible operator now includes a healthz endpoint and liveness probe. All operators will now have a running healthz endpoint (not publicly exposed) without changes. Existing Oper. ([#2761](https://github.com/operator-framework/operator-sdk/pull/2761))
+- The Ansible operator now includes a healthz endpoint and liveness probe. All operators will now have a running healthz endpoint (not publicly exposed) without changes. ([#2761](https://github.com/operator-framework/operator-sdk/pull/2761))
 - Adds the ability for Helm operators to properly watch and reconcile when cluster-scoped release resources are changed. ([#2894](https://github.com/operator-framework/operator-sdk/pull/2894))
 - The CSV generator adds admission webhook config manifests present in --deploy-dir to new and existing CSV manifests. ([#2894](https://github.com/operator-framework/operator-sdk/pull/2894))
 - Add 'run packagemanifests' subcommand, which has the same functionality of the deprecated 'run --olm' mode. ([#3016](https://github.com/operator-framework/operator-sdk/pull/3016))
@@ -20,7 +20,7 @@
 - In Helm-based operators, reconcile logic now uses three-way strategic merge patches for native kubernetes objects so that array patch strategies are correctly honored and applied. ([#2842](https://github.com/operator-framework/operator-sdk/pull/2842))
 - Revert deprecation of the package manifests format. See [#2755](https://github.com/operator-framework/operator-sdk/pull/2755) for deprecation details. The package manifests format is still officially supported by the Operator Framework. ([#2944](https://github.com/operator-framework/operator-sdk/pull/2944))
 - 'bundle validate' will print errors and warnings from validation. ([#3083](https://github.com/operator-framework/operator-sdk/pull/3083))
-- **Breaking change**: Set bundle dir permissions to 0755 so they can be read by in-cluster tooling.
+- **Breaking change**: Set bundle dir permissions to 0755 so they can be read by in-cluster tooling. ([#3129](https://github.com/operator-framework/operator-sdk/pull/3129))
 - **Breaking change**: Changed the default CRD version from `apiextensions.k8s.io/v1beta1` to `apiextensions.k8s.io/v1` for commands that create or generate CRDs. ([#2874](https://github.com/operator-framework/operator-sdk/pull/2874))
 - Changed default API version for new Helm-based operators to `helm.operator-sdk/v1alpha1`. The `k8s.io` domain is reserved, so CRDs should not use it without explicit appproval. See the [API Review Process](https://github.com/kubernetes/community/blob/81ec4af0ed02b4c5c0917a16563250b2f45250c2/sig-architecture/api-review-process.md#mandatory) for details. ([#2859](https://github.com/operator-framework/operator-sdk/pull/2859))
 - **Breaking change**: Updated Kubernetes dependencies to v1.18.2. ([#2918](https://github.com/operator-framework/operator-sdk/pull/2918))
@@ -47,9 +47,9 @@
 - the internal OLM client retrieves existing OLM versions correctly now that the returned list of CSVs is indexed properly. ([#2969](https://github.com/operator-framework/operator-sdk/pull/2969))
 - The Ansible Operator proxy will now return a 500 if it cannot determine whether a resource is virtual or not, instead of continuing on and skipping the cache. This will prevent resources that should have ownerReferences injected from being created without them, which would leave the user in a state that cannot be recovered without manual intervention. ([#3112](https://github.com/operator-framework/operator-sdk/pull/3112))
 - The Ansible Operator proxy no longer will attempt to cache non-status  subresource requests. This will fix the issue where attempting to get Pod logs returns the API Pod resource instead of the log contents. ([#3103](https://github.com/operator-framework/operator-sdk/pull/3103))
-- do not generate a package manifest when 'generate csv --make-manifests=true'. ([#3014](https://github.com/operator-framework/operator-sdk/pull/3014))
+- Do not generate a package manifest when 'generate csv --make-manifests=true'. ([#3014](https://github.com/operator-framework/operator-sdk/pull/3014))
 - Fixed issue to convert variables with numbers for Ansible based-operator. ([#2842](https://github.com/operator-framework/operator-sdk/pull/2842)). ([#2842](https://github.com/operator-framework/operator-sdk/pull/2842))
-- fix issue faced when the `healthz` endpoint is successfully called. ([#2842](https://github.com/operator-framework/operator-sdk/pull/2842))
+- Fix issue faced when the `healthz` endpoint is successfully called. ([#2842](https://github.com/operator-framework/operator-sdk/pull/2842))
 - Added timeout to the Ansible based-operator proxy, which enables error reporting for requests that fail due to RBAC permissions issues to List and Watch the resources. ([#2842](https://github.com/operator-framework/operator-sdk/pull/2842))
 - CSV manifests read from disk are now properly marshaled into the CSV struct. ([#2894](https://github.com/operator-framework/operator-sdk/pull/2894))
 - Helm operator now applies its uninstall finalizer only when a release is deployed. This fixes a bug that caused the  CR to be unable to be deleted without manually intervening to delete a prematurely added finalizer. ([#3039](https://github.com/operator-framework/operator-sdk/pull/3039))
