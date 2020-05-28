@@ -9,11 +9,11 @@ Operator SDK is Apache 2.0 licensed and accepts contributions via GitHub pull re
 ## Getting started
 
 - Fork the repository on GitHub
-- See the [developer guide](https://sdk.operatorframework.io/docs/contribution-guidelines/developer-guide/) for build instructions
+- See the [developer guide][developer-guide] for build instructions
 
 ## Reporting bugs and creating issues
 
-Reporting bugs is one of the best ways to contribute. However, a good bug report has some very specific qualities, so please read over our short document on [reporting bugs](./doc/dev/reporting_bugs.md) before submitting a bug report. This document might contain links to known issues, another good reason to take a look there before reporting a bug.
+Reporting bugs is one of the best ways to contribute. However, a good bug report has some very specific qualities, so please read over our short document on [reporting issues][reporting-issues] before submitting a bug report. This document might contain links to known issues, another good reason to take a look there before reporting a bug.
 
 ## Contribution flow
 
@@ -30,7 +30,7 @@ Thanks for contributing!
 
 ### Code style
 
-The coding style suggested by the Golang community is used in operator-sdk. See the [style doc](https://github.com/golang/go/wiki/CodeReviewComments) for details.
+The coding style suggested by the Golang community is used in operator-sdk. See the [style doc][golang-style-doc] for details.
 
 Please follow this style to make operator-sdk easy to review, maintain and develop.
 
@@ -66,4 +66,7 @@ If the contribution changes the existing APIs or user interface it must include 
 
 
 [operator_framework]: https://groups.google.com/forum/#!forum/operator-framework
+[developer-guide]: https://sdk.operatorframework.io/docs/contribution-guidelines/developer-guide/
+[reporting-issues]: https://sdk.operatorframework.io/docs/contribution-guidelines/reporting-issues/
+[golang-style-doc]: https://github.com/golang/go/wiki/CodeReviewComments
 [changelog]: https://github.com/operator-framework/operator-sdk/blob/master/CHANGELOG.md
