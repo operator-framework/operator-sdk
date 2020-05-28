@@ -36,6 +36,9 @@ import (
 const (
 	// File extension for all ClusterServiceVersion manifests written by Generator.
 	csvYamlFileExt = ".clusterserviceversion.yaml"
+
+	sdkAnnotationBuilder = "operators.operatorframework.io.metrics.builder: operator-sdk-unknown"
+	sdkAnnotationLayout  = "operators.operatorframework.io.metrics.project_layout: unknown"
 )
 
 var (

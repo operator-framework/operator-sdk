@@ -27,6 +27,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
 )
 
@@ -366,4 +367,28 @@ func appendContent(fileContents, instruction, content string) (string, error) {
 
 	return newContent, nil
 
+}
+
+// RemoveSDKstampsFromCSV removes the sdk stamps from CSV struct. Used for test cases where
+// we need to test the generated CSV with expected predefined CSV file on disk.
+func RemoveSDKstampsFromCSV(csv *v1alpha1.ClusterServiceVersion) {
+	if _, exist := csv.ObjectMeta.Annotations[Builder]; exist {
+		metricLabels := MakeMetricsLabels()
+		for label := range metricLabels.Data {
+			if label != Mediatype {
+				delete(csv.ObjectMeta.Annotations, label)
+			}
+		}
+	}
+}
+
+// RemoveSDKStampsFromCSVString to remove the sdk stamps from test CSV structs. The test
+// cases do not generate a PROJECTFILE or an entire operator to get the version or layout
+// of SDK. Hence the values of those will appear "unknown".
+func RemoveSDKStampsFromCSVString(csv string) string {
+	sdkBuilder := "operators.operatorframework.io.metrics.builder: operator-sdk-unknown"
+	sdkLayout := "operators.operatorframework.io.metrics.project_layout: unknown"
+
+	replacer := strings.NewReplacer(sdkBuilder, "", sdkLayout, "")
+	return replacer.Replace(csv)
 }

@@ -15,21 +15,25 @@
 package olmcatalog
 
 import (
+	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
 
-	"github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion/bases"
+	"github.com/blang/semver"
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	olmapiv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-
-	"github.com/blang/semver"
-	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"github.com/stretchr/testify/assert"
+	log "github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml"
+
+	"github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion/bases"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -119,13 +123,21 @@ func TestGoCSVNewWithInputsToOutput(t *testing.T) {
 
 	// Read expected CSV
 	expBundleDir := filepath.Join("expected-catalog", OLMCatalogChildDir, testProjectName, csvVersion)
-	csvExp := string(readFile(t, filepath.Join(expBundleDir, csvFileName)))
 
 	// Read generated CSV from outputDir path
 	outputBundleDir := filepath.Join(outputDir, OLMCatalogChildDir, testProjectName, csvVersion)
-	csvOutput := string(readFile(t, filepath.Join(outputBundleDir, csvFileName)))
 
-	assert.Equal(t, csvExp, csvOutput)
+	csvOutputStruct, err := getCSVFromFile(filepath.Join(outputBundleDir, csvFileName))
+	if err != nil {
+		t.Errorf("error occured %v", err)
+	}
+	projutil.RemoveSDKstampsFromCSV(csvOutputStruct)
+
+	expStruct, err := getCSVFromFile(filepath.Join(expBundleDir, csvFileName))
+	if err != nil {
+		t.Errorf("error occured %v", err)
+	}
+	assert.Equal(t, expStruct, csvOutputStruct)
 }
 
 func TestGoCSVUpgradeWithInputsToOutput(t *testing.T) {
@@ -174,13 +186,22 @@ func TestGoCSVUpgradeWithInputsToOutput(t *testing.T) {
 
 	// Read expected CSV
 	expCsvFile := filepath.Join(expCatalogDir, testProjectName, csvVersion, csvFileName)
-	csvExp := string(readFile(t, expCsvFile))
 
 	// Read generated CSV from outputDir path
 	csvOutputFile := filepath.Join(outputFromCSVDir, csvVersion, csvFileName)
-	csvOutput := string(readFile(t, csvOutputFile))
 
-	assert.Equal(t, csvExp, csvOutput)
+	csvOutputStruct, err := getCSVFromFile(csvOutputFile)
+	if err != nil {
+		t.Errorf("error occured %v", err)
+	}
+	projutil.RemoveSDKstampsFromCSV(csvOutputStruct)
+
+	expStruct, err := getCSVFromFile(expCsvFile)
+	if err != nil {
+		t.Errorf("error occured %v", err)
+	}
+
+	assert.Equal(t, expStruct, csvOutputStruct)
 }
 
 func TestGoCSVNew(t *testing.T) {
@@ -207,11 +228,20 @@ func TestGoCSVNew(t *testing.T) {
 	}
 
 	csvExpFile := getCSVFileNameLegacy(testProjectName, csvVersion)
-	csvExpBytes := readFile(t, filepath.Join(OLMCatalogDir, testProjectName, noUpdateDir, csvExpFile))
 	if b, ok := fileMap[csvExpFile]; !ok {
 		t.Errorf("Failed to generate CSV for version %s", csvVersion)
 	} else {
-		assert.Equal(t, string(csvExpBytes), string(b))
+		csvExpStruct, err := getCSVFromFile(filepath.Join(OLMCatalogDir, testProjectName, noUpdateDir, csvExpFile))
+		if err != nil {
+			t.Errorf("error occured %v", err)
+		}
+
+		csvOutputStruct, err := generateCSV(b)
+		if err != nil {
+			t.Errorf("error occured %v", err)
+		}
+		projutil.RemoveSDKstampsFromCSV(csvOutputStruct)
+		assert.Equal(t, csvExpStruct, csvOutputStruct)
 	}
 }
 
@@ -238,11 +268,20 @@ func TestGoCSVUpdate(t *testing.T) {
 	}
 
 	csvExpFile := getCSVFileNameLegacy(testProjectName, csvVersion)
-	csvExpBytes := readFile(t, filepath.Join(OLMCatalogDir, testProjectName, csvVersion, csvExpFile))
 	if b, ok := fileMap[csvExpFile]; !ok {
 		t.Errorf("Failed to generate CSV for version %s", csvVersion)
 	} else {
-		assert.Equal(t, string(csvExpBytes), string(b))
+		csvExpStruct, err := getCSVFromFile(filepath.Join(OLMCatalogDir, testProjectName, csvVersion, csvExpFile))
+		if err != nil {
+			t.Errorf("error occured %v", err)
+		}
+
+		csvOutputStruct, err := generateCSV(b)
+		if err != nil {
+			t.Errorf("error occured %v", err)
+		}
+		projutil.RemoveSDKstampsFromCSV(csvOutputStruct)
+		assert.Equal(t, csvExpStruct, csvOutputStruct)
 	}
 }
 
@@ -269,11 +308,20 @@ func TestGoCSVUpgrade(t *testing.T) {
 	}
 
 	csvExpFile := getCSVFileNameLegacy(testProjectName, csvVersion)
-	csvExpBytes := readFile(t, filepath.Join(OLMCatalogDir, testProjectName, csvVersion, csvExpFile))
 	if b, ok := fileMap[csvExpFile]; !ok {
 		t.Errorf("Failed to generate CSV for version %s", csvVersion)
 	} else {
-		assert.Equal(t, string(csvExpBytes), string(b))
+		csvExpStruct, err := getCSVFromFile(filepath.Join(OLMCatalogDir, testProjectName, csvVersion, csvExpFile))
+		if err != nil {
+			t.Errorf("error occured %v", err)
+		}
+
+		csvOutputStruct, err := generateCSV(b)
+		if err != nil {
+			t.Errorf("error occured %v", err)
+		}
+		projutil.RemoveSDKstampsFromCSV(csvOutputStruct)
+		assert.Equal(t, csvExpStruct, csvOutputStruct)
 	}
 }
 
@@ -301,11 +349,20 @@ func TestGoCSVNewManifests(t *testing.T) {
 	}
 
 	csvExpFile := getCSVFileNameLegacy(testProjectName, csvVersion)
-	csvExpBytes := readFile(t, filepath.Join(OLMCatalogDir, testProjectName, noUpdateDir, csvExpFile))
 	if b, ok := fileMap[getCSVFileName(testProjectName)]; !ok {
 		t.Errorf("Failed to generate CSV for version %s", csvVersion)
 	} else {
-		assert.Equal(t, string(csvExpBytes), string(b))
+		csvExpStruct, err := getCSVFromFile(filepath.Join(OLMCatalogDir, testProjectName, noUpdateDir, csvExpFile))
+		if err != nil {
+			t.Errorf("error occured %v", err)
+		}
+
+		csvOutputStruct, err := generateCSV(b)
+		if err != nil {
+			t.Errorf("error occured %v", err)
+		}
+		projutil.RemoveSDKstampsFromCSV(csvOutputStruct)
+		assert.Equal(t, csvExpStruct, csvOutputStruct)
 	}
 }
 
@@ -332,11 +389,20 @@ func TestGoCSVUpdateManifests(t *testing.T) {
 	}
 
 	csvExpFile := getCSVFileNameLegacy(testProjectName, csvVersion)
-	csvExpBytes := readFile(t, filepath.Join(OLMCatalogDir, testProjectName, csvVersion, csvExpFile))
 	if b, ok := fileMap[getCSVFileName(testProjectName)]; !ok {
 		t.Errorf("Failed to generate CSV for version %s", csvVersion)
 	} else {
-		assert.Equal(t, string(csvExpBytes), string(b))
+		csvExpStruct, err := getCSVFromFile(filepath.Join(OLMCatalogDir, testProjectName, csvVersion, csvExpFile))
+		if err != nil {
+			t.Errorf("error occured %v", err)
+		}
+
+		csvOutputStruct, err := generateCSV(b)
+		if err != nil {
+			t.Errorf("error occured %v", err)
+		}
+		projutil.RemoveSDKstampsFromCSV(csvOutputStruct)
+		assert.Equal(t, csvExpStruct, csvOutputStruct)
 	}
 }
 
@@ -471,4 +537,42 @@ func TestUpdateCSVVersion(t *testing.T) {
 	if csv.Spec.Replaces != wantedReplaces {
 		t.Errorf("Wanted csv replaces %s, got %s", wantedReplaces, csv.Spec.Replaces)
 	}
+}
+
+func getCSVFromFile(path string) (*olmapiv1alpha1.ClusterServiceVersion, error) {
+	csvpath := filepath.Join(path)
+	b, err := ioutil.ReadFile(csvpath)
+	if err != nil {
+		return nil, fmt.Errorf("error reading manifest %s: %v", path, err)
+	}
+
+	csv, err := generateCSV(b)
+	if err != nil {
+		return nil, err
+	}
+	return csv, nil
+}
+
+func generateCSV(input []byte) (*olmapiv1alpha1.ClusterServiceVersion, error) {
+	scanner := k8sutil.NewYAMLScanner(bytes.NewBuffer(input))
+	for scanner.Scan() {
+		manifest := scanner.Bytes()
+		typeMeta, err := k8sutil.GetTypeMetaFromBytes(manifest)
+		if err != nil {
+			log.Debugf("Skipping non-Object manifest : %v", err)
+			continue
+		}
+		if typeMeta.Kind == olmapiv1alpha1.ClusterServiceVersionKind {
+			csv := &olmapiv1alpha1.ClusterServiceVersion{}
+			if err := yaml.Unmarshal(manifest, csv); err != nil {
+				return nil, fmt.Errorf("error unmarshalling ClusterServiceVersion from manifest: %v", err)
+			}
+			return csv, nil
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("error scanning manifest  %v", err)
+	}
+	return nil, fmt.Errorf("error getting manifest")
+
 }
