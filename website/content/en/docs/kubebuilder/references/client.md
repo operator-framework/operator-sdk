@@ -29,8 +29,9 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 
 type ReconcileKind struct {
 	// Populated above from a manager.Manager.
-	client client.Client
-	scheme *runtime.Scheme
+    client.Client
+    Log    logr.Logger
+    Scheme *runtime.Scheme
 }
 ```
 
@@ -85,14 +86,16 @@ A Reconciler implements the [`reconcile.Reconciler`][doc-reconcile-reconciler] i
 type ReconcileKind struct {
 	// client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client client.Client
+	client.Client
+
+    Log    logr.Logger
 
 	// scheme defines methods for serializing and deserializing API objects,
 	// a type registry for converting group, version, and kind information
 	// to and from Go schemas, and mappings between Go schemas of different
 	// versions. A scheme is the foundation for a versioned API and versioned
 	// configuration over time.
-	scheme *runtime.Scheme
+    Scheme *runtime.Scheme
 }
 
 // Reconcile watches for Events and reconciles cluster state with desired
@@ -446,8 +449,9 @@ import (
 )
 
 type ReconcileApp struct {
-	client client.Client
-	scheme *runtime.Scheme
+    client.Client
+    Log    logr.Logger
+    Scheme *runtime.Scheme
 }
 
 func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
