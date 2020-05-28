@@ -26,6 +26,8 @@ import (
 	"github.com/operator-framework/operator-registry/pkg/registry"
 	log "github.com/sirupsen/logrus"
 	admissionregv1 "k8s.io/api/admissionregistration/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/version"
 
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
@@ -38,6 +40,10 @@ func ApplyTo(c *collector.Manifests, csv *operatorsv1alpha1.ClusterServiceVersio
 	if err := apply(c, csv); err != nil {
 		return fmt.Errorf("error updating ClusterServiceVersion: %v", err)
 	}
+
+	// Set fields required by namespaced operators. This is a no-op for cluster-
+	// scoped operators.
+	setNamespacedFields(csv)
 
 	// Sort all updated fields.
 	sortUpdates(csv)
@@ -109,6 +115,47 @@ func applyDeployments(c *collector.Manifests, strategy *operatorsv1alpha1.Strate
 		})
 	}
 	strategy.DeploymentSpecs = depSpecs
+}
+
+const (
+	// WatchNamespaceEnv is a constant for internal use.
+	WatchNamespaceEnv = "WATCH_NAMESPACE"
+	// TargetNamespacesRef references the target namespaces a CSV is installed in.
+	// This is required by legacy project Deployments.
+	TargetNamespacesRef = "metadata.annotations['olm.targetNamespaces']"
+)
+
+// setNamespacedFields sets static fields in a CSV required by namespaced
+// operators.
+func setNamespacedFields(csv *operatorsv1alpha1.ClusterServiceVersion) {
+	for _, dep := range csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
+		// Set WATCH_NAMESPACE if it exists in a deployment spec..
+		envVar := newFieldRefEnvVar(WatchNamespaceEnv, TargetNamespacesRef)
+		setContainerEnvVarIfExists(&dep.Spec, envVar)
+	}
+}
+
+// setContainerEnvVarIfExists overwrites all references to ev.Name with ev.
+func setContainerEnvVarIfExists(spec *appsv1.DeploymentSpec, ev corev1.EnvVar) {
+	for _, c := range spec.Template.Spec.Containers {
+		for i := 0; i < len(c.Env); i++ {
+			if c.Env[i].Name == ev.Name {
+				c.Env[i] = ev
+			}
+		}
+	}
+}
+
+// newFieldRefEnvVar creates a new environment variable referencing fieldPath.
+func newFieldRefEnvVar(name, fieldPath string) corev1.EnvVar {
+	return corev1.EnvVar{
+		Name: name,
+		ValueFrom: &corev1.EnvVarSource{
+			FieldRef: &corev1.ObjectFieldSelector{
+				FieldPath: fieldPath,
+			},
+		},
+	}
 }
 
 // applyCustomResourceDefinitions updates csv's customresourcedefinitions.owned
