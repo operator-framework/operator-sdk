@@ -132,9 +132,9 @@ jobs:
       name: Subcommands on Kubernetes
       script: make test-subcommand
 
-    # Build and test go
+    # Build and test go for legacy project layouts
     - <<: *test
-      name: Go on Kubernetes
+      name: Go for legacy project layouts on Kubernetes
       before_script:
       - (cd / && go get github.com/mattn/goveralls)
       script:
@@ -142,6 +142,23 @@ jobs:
       - $GOPATH/bin/goveralls -service=travis-ci -coverprofile=coverage.out -repotoken=$COVERALLS_TOKEN
       - make test-e2e-go
       - make test-integration
+
+    # Build and test go for new project layouts
+    - name: Go e2e tests for new project layouts
+      before_install:
+      # hack/ci/check-doc-only-update.sh needs to be sourced so
+      # that it can properly exit the test early with success
+      - source hack/ci/check-doc-only-update.sh
+      script:
+      - make test-e2e-go-new
+      after_success:
+      - echo "E2E tests passed"
+      after_failure:
+      - echo "E2E tests failed"
+      - kubectl get all --all-namespaces
+      - kubectl get events --all-namespaces --field-selector=type=Warning
+      services:
+      - docker
 
     # Build and test helm
     - <<: *test
