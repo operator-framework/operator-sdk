@@ -145,8 +145,8 @@ The scorecard ships with pre-defined tests that are arranged into suites.
 | Test        | Description   | Short Name |
 | --------    | -------- | -------- |
 | Bundle Validation | This test validates the bundle manifests found in the bundle that is passed into scorecard.  If the bundle contents contain errors, then the test result output will include the validator log as well as error messages from the validation library.  See this [document][olm-bundle] for details on bundles.| olm-bundle-validation-test |
-| Provided APIs have validation |This test verifies that the CRDs for the provided CRs contain a validation section and that there is validation for each spec and status field detected in the CR. | olm-crds-have-validation |
-| Owned CRDs Have Resources Listed | This test makes sure that the CRDs for each CR provided via the `cr-manifest` option have a `resources` subsection in the [`owned` CRDs section][owned-crds] of the CSV. If the test detects used resources that are not listed in the resources section, it will list them in the suggestions at the end of the test. | olm-crds-have-resources |
+| Provided APIs have validation |This test verifies that the CRDs for the provided CRs contain a validation section and that there is validation for each spec and status field detected in the CR. | olm-crds-have-validation-test |
+| Owned CRDs Have Resources Listed | This test makes sure that the CRDs for each CR provided via the `cr-manifest` option have a `resources` subsection in the [`owned` CRDs section][owned-crds] of the CSV. If the test detects used resources that are not listed in the resources section, it will list them in the suggestions at the end of the test. | olm-crds-have-resources-test |
 | Spec Fields With Descriptors | This test verifies that every field in the Custom Resources' spec sections have a corresponding descriptor listed in the CSV.| olm-spec-descriptors-test |
 | Status Fields With Descriptors | This test verifies that every field in the Custom Resources' status sections have a corresponding descriptor listed in the CSV.| olm-status-descriptors-test |
 
