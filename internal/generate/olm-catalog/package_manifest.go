@@ -74,7 +74,7 @@ func (g PkgGenerator) Generate() error {
 		return errors.New("error generating package manifest: no generated file found")
 	}
 	pkgManifestOutputDir := filepath.Join(g.OutputDir, OLMCatalogChildDir, g.OperatorName)
-	if err = os.MkdirAll(pkgManifestOutputDir, fileutil.DefaultDirFileMode); err != nil {
+	if err = os.MkdirAll(pkgManifestOutputDir, 0755); err != nil {
 		return fmt.Errorf("error mkdir %s: %v", pkgManifestOutputDir, err)
 	}
 	for fileName, b := range fileMap {

@@ -79,7 +79,7 @@ func WriteCRDs(w io.Writer, crds ...v1beta1.CustomResourceDefinition) error {
 // WriteCRDFiles creates dir then writes each CustomResourceDefinition in crds
 // to a file in dir.
 func WriteCRDFiles(dir string, crds ...v1beta1.CustomResourceDefinition) error {
-	if err := os.MkdirAll(dir, 0700); err != nil {
+	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
 	for _, crd := range crds {
@@ -97,7 +97,7 @@ func makeCRDFileName(crd v1beta1.CustomResourceDefinition) string {
 // WriteCRDFilesLegacy creates dir then writes each CustomResourceDefinition
 // in crds to a file in legacy format in dir.
 func WriteCRDFilesLegacy(dir string, crds ...v1beta1.CustomResourceDefinition) error {
-	if err := os.MkdirAll(dir, 0700); err != nil {
+	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
 	for _, crd := range crds {
