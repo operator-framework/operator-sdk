@@ -200,7 +200,7 @@ func (g BundleGenerator) Generate() error {
 		}
 	}
 
-	if err := os.MkdirAll(g.toBundleDir, fileutil.DefaultDirFileMode); err != nil {
+	if err := os.MkdirAll(g.toBundleDir, 0755); err != nil {
 		return fmt.Errorf("error mkdir %s: %v", g.toBundleDir, err)
 	}
 

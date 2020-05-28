@@ -48,7 +48,7 @@ type File struct {
 // Open first creates dir then opens <dir>/<fileName> for reading and writing,
 // creating the file if it does not exist.
 func Open(dir, fileName string) (*File, error) {
-	if err := os.MkdirAll(dir, 0700); err != nil {
+	if err := os.MkdirAll(dir, 0755); err != nil {
 		return nil, err
 	}
 	f, err := os.OpenFile(filepath.Join(dir, fileName), os.O_RDWR|os.O_CREATE, 0666)

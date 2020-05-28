@@ -1,0 +1,13 @@
+entries:
+  - description: >
+      Set bundle dir permissions to 0755 so they can be read by in-cluster tooling.
+
+    kind: change
+
+    breaking: true
+
+    migration:
+      header: Modify permissions on your bundle manifests directory
+      body: >
+        Run `chmod 0755 deploy/olm-catalog/<operator-name>/manifests` to update
+        your operator's bundle directory permissions.
