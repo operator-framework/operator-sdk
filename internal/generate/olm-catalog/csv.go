@@ -15,6 +15,7 @@
 package olmcatalog
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -393,7 +394,34 @@ func (g BundleGenerator) updateCSVFromManifests(csv *olmapiv1alpha1.ClusterServi
 		return fmt.Errorf("error building CSV: %v", err)
 	}
 
-	handleWatchNamespaces(csv)
+	// Ensure WATCH_NAMESPACE is set.
+	if err = checkWatchNamespaces(csv); err != nil {
+		return fmt.Errorf("error checking for WATCH_NAMESPACE: %v", err)
+	}
 
+	return nil
+}
+
+// OLM places the set of target namespaces for the operator in
+// "metadata.annotations['olm.targetNamespaces']". This value should be
+// referenced in either:
+//	- The DeploymentSpec's pod spec WATCH_NAMESPACE env variable.
+//	- Some other DeploymentSpec pod spec field.
+func checkWatchNamespaces(csv *olmapiv1alpha1.ClusterServiceVersion) error {
+	envVarValue := clusterserviceversion.TargetNamespacesRef
+	for _, dep := range csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
+		// Make sure "olm.targetNamespaces" is referenced somewhere in dep,
+		// and emit a warning of not.
+		b, err := dep.Spec.Template.Marshal()
+		if err != nil {
+			return err
+		}
+		if !bytes.Contains(b, []byte(envVarValue)) {
+			log.Warnf("No WATCH_NAMESPACE environment variable nor reference to %q "+
+				"detected in operator Deployment %s. For compatibility between OLM and a "+
+				"namespaced operator, your operator must watch namespaces defined in %q",
+				envVarValue, dep.Name, envVarValue)
+		}
+	}
 	return nil
 }
