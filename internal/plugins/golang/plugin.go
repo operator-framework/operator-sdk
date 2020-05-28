@@ -18,7 +18,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/plugins"
 
 	"sigs.k8s.io/kubebuilder/pkg/plugin"
-	kbgov2 "sigs.k8s.io/kubebuilder/pkg/plugin/v2"
+	kbgov3 "sigs.k8s.io/kubebuilder/pkg/plugin/v3"
 )
 
 const (
@@ -40,22 +40,22 @@ var (
 
 type Plugin struct{}
 
-func (Plugin) Name() string                       { return (kbgov2.Plugin{}).Name() }
-func (Plugin) Version() string                    { return (kbgov2.Plugin{}).Version() }
-func (Plugin) SupportedProjectVersions() []string { return (kbgov2.Plugin{}).SupportedProjectVersions() }
+func (Plugin) Name() string                       { return (kbgov3.Plugin{}).Name() }
+func (Plugin) Version() string                    { return (kbgov3.Plugin{}).Version() }
+func (Plugin) SupportedProjectVersions() []string { return (kbgov3.Plugin{}).SupportedProjectVersions() }
 
 func (p Plugin) GetInitPlugin() plugin.Init {
 	return &initPlugin{
-		Init: (kbgov2.Plugin{}).GetInitPlugin(),
+		Init: (kbgov3.Plugin{}).GetInitPlugin(),
 	}
 }
 
 func (p Plugin) GetCreateAPIPlugin() plugin.CreateAPI {
 	return &createAPIPlugin{
-		CreateAPI: (kbgov2.Plugin{}).GetCreateAPIPlugin(),
+		CreateAPI: (kbgov3.Plugin{}).GetCreateAPIPlugin(),
 	}
 }
 
 func (p Plugin) GetCreateWebhookPlugin() plugin.CreateWebhook {
-	return (kbgov2.Plugin{}).GetCreateWebhookPlugin()
+	return (kbgov3.Plugin{}).GetCreateWebhookPlugin()
 }

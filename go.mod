@@ -48,7 +48,7 @@ require (
 	k8s.io/kubectl v0.18.2
 	sigs.k8s.io/controller-runtime v0.6.0
 	sigs.k8s.io/controller-tools v0.3.0
-	sigs.k8s.io/kubebuilder v1.0.9-0.20200513134826-f07a0146a40b
+	sigs.k8s.io/kubebuilder v0.0.0
 	sigs.k8s.io/yaml v1.2.0
 )
 
@@ -56,4 +56,5 @@ replace (
 	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible // Required by OLM
 	github.com/mattn/go-sqlite3 => github.com/mattn/go-sqlite3 v1.10.0
 	k8s.io/client-go => k8s.io/client-go v0.18.2
+	sigs.k8s.io/kubebuilder => github.com/camilamacedo86/kubebuilder v1.0.9-0.20200527013433-e6976818e5bb
 )
