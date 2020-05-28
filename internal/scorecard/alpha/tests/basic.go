@@ -40,10 +40,10 @@ func CheckSpecTest(bundle *apimanifests.Bundle) scapiv1alpha2.ScorecardTestResul
 		return r
 	}
 
-	return checkSpecHelper(crSet, r)
+	return checkSpec(crSet, r)
 }
 
-func checkSpecHelper(crSet []unstructured.Unstructured,
+func checkSpec(crSet []unstructured.Unstructured,
 	res scapiv1alpha2.ScorecardTestResult) scapiv1alpha2.ScorecardTestResult {
 	for _, cr := range crSet {
 		if cr.Object["spec"] == nil {

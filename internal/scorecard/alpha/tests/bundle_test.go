@@ -22,10 +22,11 @@ import (
 	. "github.com/onsi/gomega"
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 )
 
 var _ = Describe("Basic and OLM tests", func() {
@@ -58,8 +59,8 @@ var _ = Describe("Basic and OLM tests", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			crList, err = GetCRs(bundle)
-			Expect(crCount).To(Equal(len(crList)))
 			Expect(err).ToNot(HaveOccurred())
+			Expect(crCount).To(Equal(len(crList)))
 		})
 	})
 
@@ -111,7 +112,7 @@ var _ = Describe("Basic and OLM tests", func() {
 	})
 
 	Describe("Testing OLM Bundle", func() {
-		It("Should pass when test bundle is at the desired location", func() {
+		It("should pass when test bundle is at the desired location", func() {
 			res = BundleValidationTest(testBundle)
 			Expect(res.State).To(Equal(scapiv1alpha2.PassState))
 		})
@@ -243,7 +244,7 @@ var _ = Describe("Basic and OLM tests", func() {
 						Object: map[string]interface{}{},
 					},
 				}
-				res = checkSpecHelper(cr, res)
+				res = checkSpec(cr, res)
 				Expect(res.State).To(Equal(scapiv1alpha2.FailState))
 			})
 			It("should pass when CRs do have spec field specified", func() {
@@ -256,7 +257,7 @@ var _ = Describe("Basic and OLM tests", func() {
 						},
 					},
 				}
-				res = checkSpecHelper(cr, res)
+				res = checkSpec(cr, res)
 				Expect(res.State).To(Equal(scapiv1alpha2.PassState))
 			})
 
