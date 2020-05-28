@@ -21,8 +21,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/bundle/internal"
-
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	apierrors "github.com/operator-framework/api/pkg/validation/errors"
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
@@ -31,6 +29,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/bundle/internal"
 	"github.com/operator-framework/operator-sdk/internal/flags"
 	internalregistry "github.com/operator-framework/operator-sdk/internal/registry"
 )
@@ -114,6 +113,7 @@ To build and validate an image:
 				}()
 
 				logger.Info("Unpacking image layers")
+
 				if err := c.unpackImageIntoDir(args[0], c.directory); err != nil {
 					logger.Fatalf("Error unpacking image %s: %v", args[0], err)
 				}
@@ -123,7 +123,9 @@ To build and validate an image:
 			if err := result.PrintWithFormat(c.outputFormat); err != nil {
 				logger.Fatal(err)
 			}
+
 			logger.Info("All validation tests have completed successfully")
+
 			return nil
 		},
 	}
@@ -168,12 +170,11 @@ func (c bundleValidateCmd) run() (res internal.Result) {
 		"bundle-dir":     c.directory,
 		"container-tool": c.imageBuilder,
 	})
-
 	val := registrybundle.NewImageValidator(c.imageBuilder, logger)
 
 	// Validate bundle format.
 	if err := val.ValidateBundleFormat(c.directory); err != nil {
-		addBundleValidationErrorToResult(fmt.Errorf("error validating format in %s: %v", c.directory, err), &res)
+		res.AddError(fmt.Errorf("error validating format in %s: %v", c.directory, err))
 	}
 
 	// Validate bundle content.
@@ -182,7 +183,7 @@ func (c bundleValidateCmd) run() (res internal.Result) {
 	manifestsDir := filepath.Join(c.directory, registrybundle.ManifestsDir)
 	results, err := validateBundleContent(logger, manifestsDir)
 	if err != nil {
-		addBundleValidationErrorToResult(fmt.Errorf("error validating content in %s: %v", manifestsDir, err), &res)
+		res.AddError(fmt.Errorf("error validating content in %s: %v", manifestsDir, err))
 	}
 
 	// Check the Results will check the []apierrors.ManifestResult returned
@@ -199,6 +200,7 @@ func (c bundleValidateCmd) unpackImageIntoDir(imageTag, dir string) error {
 		"container-tool": c.imageBuilder,
 	})
 	val := registrybundle.NewImageValidator(c.imageBuilder, logger)
+
 	return val.PullBundleImage(imageTag, dir)
 }
 
@@ -214,6 +216,7 @@ func validateBundleContent(logger *log.Entry, manifestsDir string) ([]apierrors.
 	if err != nil {
 		return nil, err
 	}
+
 	return internalregistry.ValidateBundleContent(logger, bundle, mediaType), nil
 }
 
@@ -227,20 +230,5 @@ func checkResults(results []apierrors.ManifestResult, res *internal.Result) {
 		for _, e := range r.Errors {
 			res.AddError(e)
 		}
-	}
-}
-
-// addBundleValidationErrorToResult will check if is a ValidationError from Registry Operator and set them
-// accordingly to the results
-// NOTE: Currently, the Bundle Validation from Operator Registry only returns error types,
-// however, it might have WARN and INFO types in the future as well.
-func addBundleValidationErrorToResult(err error, res *internal.Result) {
-	verr := registrybundle.ValidationError{}
-	if errors.As(err, &verr) {
-		for _, valErr := range verr.Errors {
-			res.AddError(valErr)
-		}
-	} else {
-		res.AddError(err)
 	}
 }

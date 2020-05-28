@@ -16,9 +16,11 @@ package internal
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 
+	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
@@ -55,10 +57,20 @@ func (o *Result) AddInfo(msg string) {
 
 // AddError will add a log to the result with the Error Level
 func (o *Result) AddError(err error) {
-	o.Outputs = append(o.Outputs, output{
-		Type:    logrus.ErrorLevel.String(),
-		Message: err.Error(),
-	})
+	verr := registrybundle.ValidationError{}
+	if errors.As(err, &verr) {
+		for _, valErr := range verr.Errors {
+			o.Outputs = append(o.Outputs, output{
+				Type:    logrus.ErrorLevel.String(),
+				Message: valErr.Error(),
+			})
+		}
+	} else {
+		o.Outputs = append(o.Outputs, output{
+			Type:    logrus.ErrorLevel.String(),
+			Message: err.Error(),
+		})
+	}
 	o.Passed = false
 }
 
