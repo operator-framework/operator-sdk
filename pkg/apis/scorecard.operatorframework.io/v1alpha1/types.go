@@ -32,7 +32,7 @@ const (
 	ErrorState State = "error"
 )
 
-// TestSpec contains the results of an individual scorecard test
+// TestSpec contains the spec details of an individual scorecard test
 type TestSpec struct {
 	// Image is the name of the testimage
 	Image string `json:"image"`
@@ -42,12 +42,10 @@ type TestSpec struct {
 	Labels map[string]string `json:"labels,omitempty"`
 }
 
-// Result contains the results of an individual scorecard test
-type Result struct {
+// TestResult contains the results of an individual scorecard test
+type TestResult struct {
 	// Name is the name of the test
 	Name string `json:"name"`
-	// Description describes what the test does
-	Description string `json:"description"`
 	// Log holds a log produced from the test (if applicable)
 	Log string `json:"log,omitempty"`
 	// State is the final state of the test
@@ -58,31 +56,33 @@ type Result struct {
 	Suggestions []string `json:"suggestions,omitempty"`
 }
 
-// Test contains collection of testResults and spec details.
-type Test struct {
-	TestSpec `json:"testspec"`
-	Results  []Result `json:"results"`
+// TestStatus contains collection of testResults and test suite name.
+type TestStatus struct {
+	SuiteName string       `json:"suitename"`
+	Results   []TestResult `json:"results"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 
-// TestOutput is the schema for the scorecard API
-type TestOutput struct {
+// Test is the schema for the scorecard API
+type Test struct {
 	metav1.TypeMeta `json:",inline"`
-	// Tests is an array of ScorecardTestResult for the current scorecard run.
-	Tests []Test `json:"tests"`
+	Spec            TestSpec   `json:"spec,omitempty"`
+	Status          TestStatus `json:"status,omitempty"`
 }
 
-func NewTestOutput() *TestOutput {
-	return &TestOutput{
+func NewTest() *Test {
+	return &Test{
 		// The TypeMeta is mandatory because it is used to distinguish the versions (v1alpha1 and v1alpha2)
 		TypeMeta: metav1.TypeMeta{
-			Kind:       "TestOutput",
-			APIVersion: "osdk.operatorframework.io/v1alpha1",
+			Kind:       "Test",
+			APIVersion: "scorecard.operatorframework.io/v1alpha1",
 		},
 	}
 }
 
 func init() {
-	SchemeBuilder.Register(&TestOutput{})
+	SchemeBuilder.Register(&Test{})
 }
