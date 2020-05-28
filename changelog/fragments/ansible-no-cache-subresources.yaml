@@ -1,9 +1,0 @@
-entries:
-  - description: >
-      The Ansible Operator proxy no longer will attempt to cache non-status 
-      subresource requests. This will fix the issue where attempting to get
-      Pod logs returns the API Pod resource instead of the log contents.
-
-    kind: "bugfix"
-
-    breaking: false

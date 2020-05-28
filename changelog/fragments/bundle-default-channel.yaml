@@ -1,6 +1,0 @@
-entries:
-  - description: >
-      Set a default channel to the channel supplied to 'bundle create --channels=<c>'
-      if exactly one channel is set.
-
-    kind: addition

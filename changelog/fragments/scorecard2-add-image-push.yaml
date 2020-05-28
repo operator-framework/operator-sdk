@@ -1,3 +1,0 @@
-entries:
-    - description: Add scorecard-test image push targets into Makefile.
-      kind: "addition"

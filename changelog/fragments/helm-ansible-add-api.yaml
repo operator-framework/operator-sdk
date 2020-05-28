@@ -1,3 +1,0 @@
-entries:
-    - description: Add support for additional API creation for Anisble/Helm based operators.
-      kind: "addition"

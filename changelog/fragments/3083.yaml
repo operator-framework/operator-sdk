@@ -1,5 +1,0 @@
-entries:
-  - description: >
-      'bundle validate' will print errors and warnings from validation.
-
-    kind: change
