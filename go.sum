@@ -141,6 +141,9 @@ github.com/bugsnag/panicwrap v1.2.0 h1:OzrKrRvXis8qEvOkfcxNcYbOd2O7xXS2nnKMEMABF
 github.com/bugsnag/panicwrap v1.2.0/go.mod h1:D/8v3kj0zr8ZAKg1AQ6crr+5VwKN5eIywRkfhyM/+dE=
 github.com/camilamacedo86/kubebuilder v1.0.9-0.20200527013433-e6976818e5bb h1:BKUoK/PBsrxewi5JtPmnnm8cAxVTlFeGGX2bGi1Uoo0=
 github.com/camilamacedo86/kubebuilder v1.0.9-0.20200527013433-e6976818e5bb/go.mod h1:FGPx0hvP73+bapzWoy5ePuhAJYgJjrFbPxgvWyortM0=
+github.com/camilamacedo86/kubebuilder v1.0.9-0.20200528124623-e98bf93a1d4a/go.mod h1:FGPx0hvP73+bapzWoy5ePuhAJYgJjrFbPxgvWyortM0=
+github.com/camilamacedo86/kubebuilder v1.0.9-0.20200528130124-1a29329e09b2 h1:LQnZq6D3kKdgeFJNE982FizopiuVZ/JsUFesDigJdcc=
+github.com/camilamacedo86/kubebuilder v1.0.9-0.20200528130124-1a29329e09b2/go.mod h1:FGPx0hvP73+bapzWoy5ePuhAJYgJjrFbPxgvWyortM0=
 github.com/campoy/embedmd v1.0.0/go.mod h1:oxyr9RCiSXg0M3VJ3ks0UGfp98BpSSGr0kpiX3MzVl8=
 github.com/cenkalti/backoff v0.0.0-20181003080854-62661b46c409/go.mod h1:90ReRw6GdpyfrHakVjL/QHaoyV4aDUVVkXQJJJ3NXXM=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
