@@ -42,11 +42,7 @@ func (s Test) MarshalText() (string, error) {
 		failColor = noColor
 	}
 
-	var currentSuite string
-	if currentSuite != s.Spec.Labels["suite"] {
-		sb.WriteString(fmt.Sprintf("%s:\n", s.Spec.Labels["suite"]))
-		currentSuite = s.Spec.Labels["suite"]
-	}
+	sb.WriteString(fmt.Sprintf("%s:\n", s.Spec.Labels["suite"]))
 	sb.WriteString("\tLabels: \n")
 	for labelKey, labelValue := range s.Spec.Labels {
 		sb.WriteString(fmt.Sprintf("\t\t%q:%q\n", labelKey, labelValue))
