@@ -271,25 +271,15 @@ func (g BundleGenerator) generateCSV() (fileMap map[string][]byte, err error) {
 
 // getBase either reads an existing CSV from fromBundleDir or creates a new one.
 func (g BundleGenerator) getBase() (*olmapiv1alpha1.ClusterServiceVersion, error) {
-	crds, err := k8sutil.GetCustomResourceDefinitions(g.CRDsDir)
+	v1crds, v1beta1crds, err := k8sutil.GetCustomResourceDefinitions(g.CRDsDir)
 	if err != nil {
 		return nil, err
 	}
 	var gvks []schema.GroupVersionKind
-	for _, crd := range crds {
-		nameSplit := strings.SplitN(crd.GetName(), ".", 2)
-		group := crd.GetName()
-		if len(nameSplit) > 1 {
-			group = nameSplit[1]
-		}
-		for _, version := range crd.Spec.Versions {
-			gvks = append(gvks, schema.GroupVersionKind{
-				Group:   group,
-				Version: version.Name,
-				Kind:    crd.Spec.Names.Kind,
-			})
-		}
-	}
+	v1crdGVKs := k8sutil.GVKsForV1CustomResourceDefinitions(v1crds...)
+	gvks = append(gvks, v1crdGVKs...)
+	v1beta1crdGVKs := k8sutil.GVKsForV1beta1CustomResourceDefinitions(v1beta1crds...)
+	gvks = append(gvks, v1beta1crdGVKs...)
 
 	b := bases.ClusterServiceVersion{
 		OperatorName: g.OperatorName,

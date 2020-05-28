@@ -164,13 +164,20 @@ func (c bundleCmd) runManifests(cfg *config.Config) (err error) {
 		return fmt.Errorf("error generating ClusterServiceVersion: %v", err)
 	}
 
+	var objs []interface{}
+	for _, crd := range col.V1CustomResourceDefinitions {
+		objs = append(objs, crd)
+	}
+	for _, crd := range col.V1beta1CustomResourceDefinitions {
+		objs = append(objs, crd)
+	}
 	if c.stdout {
-		if err := genutil.WriteCRDs(stdout, col.CustomResourceDefinitions...); err != nil {
+		if err := genutil.WriteObjects(stdout, objs...); err != nil {
 			return err
 		}
 	} else {
 		dir := filepath.Join(c.outputDir, bundle.ManifestsDir)
-		if err := genutil.WriteCRDFiles(dir, col.CustomResourceDefinitions...); err != nil {
+		if err := genutil.WriteObjectsToFiles(dir, objs...); err != nil {
 			return err
 		}
 	}

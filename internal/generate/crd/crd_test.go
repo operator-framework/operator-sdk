@@ -22,7 +22,6 @@ import (
 	"path"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 
@@ -202,7 +201,7 @@ func TestCRDNonGo(t *testing.T) {
 		},
 		{
 			"existing v1 to v1beta1 CRD with custom structural schema",
-			filepath.Join(testGoDataDir, scaffold.CRDsDir+"_v1"), "v1beta1", asV1beta1(crdCustomExpV1),
+			filepath.Join(testGoDataDir, scaffold.CRDsDir+"_v1"), "v1beta1", crdCustomExpV1beta1,
 		},
 	}
 
@@ -225,10 +224,6 @@ func TestCRDNonGo(t *testing.T) {
 			}
 		})
 	}
-}
-
-func asV1beta1(crdV1 string) string {
-	return strings.ReplaceAll(crdV1, "apiVersion: apiextensions.k8s.io/v1", "apiVersion: apiextensions.k8s.io/v1beta1")
 }
 
 // crdNonGoDefaultExpV1beta1 is the default non-go v1beta1 CRD. Non-go projects don't have the
