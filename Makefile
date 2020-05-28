@@ -17,6 +17,16 @@ BUILD_PATH = $(REPO)/cmd/operator-sdk
 PKGS = $(shell go list ./... | grep -v /vendor/)
 TEST_PKGS = $(shell go list ./... | grep -v -E 'github.com/operator-framework/operator-sdk/test/')
 SOURCES = $(shell find . -name '*.go' -not -path "*/vendor/*")
+# GO_BUILD_ARGS should be set when running 'go build' or 'go install'.
+GO_BUILD_ARGS = \
+  -gcflags "all=-trimpath=$(shell go env GOPATH)" \
+  -asmflags "all=-trimpath=$(shell go env GOPATH)" \
+  -ldflags " \
+    -X '$(REPO)/version.GitVersion=$(VERSION)' \
+    -X '$(REPO)/version.GitCommit=$(GIT_COMMIT)' \
+    -X '$(REPO)/version.KubernetesVersion=$(K8S_VERSION)' \
+  " \
+
 
 ANSIBLE_BASE_IMAGE = quay.io/operator-framework/ansible-operator
 HELM_BASE_IMAGE = quay.io/operator-framework/helm-operator
@@ -55,8 +65,7 @@ help: ## Show this help screen
 all: format test build/operator-sdk ## Test and Build the Operator SDK
 
 install: ## Install the operator-sdk binary
-	make build/operator-sdk
-	cp ./build/operator-sdk $(shell go env GOPATH)/bin/operator-sdk
+	$(Q)$(GOARGS) go install $(GO_BUILD_ARGS) $(BUILD_PATH)
 
 # Code management.
 .PHONY: format tidy clean cli-doc lint
@@ -127,15 +136,7 @@ build/operator-sdk-%-s390x-linux-gnu: GOARGS = GOOS=linux GOARCH=s390x
 build/operator-sdk-%-linux-gnu: GOARGS = GOOS=linux
 
 build/%: $(SOURCES) ## Build the operator-sdk binary
-	$(Q)$(GOARGS) go build \
-		-gcflags "all=-trimpath=${GOPATH}" \
-		-asmflags "all=-trimpath=${GOPATH}" \
-		-ldflags " \
-			-X '${REPO}/version.GitVersion=${VERSION}' \
-			-X '${REPO}/version.GitCommit=${GIT_COMMIT}' \
-			-X '${REPO}/version.KubernetesVersion=${K8S_VERSION}' \
-		" \
-		-o $@ $(BUILD_PATH)
+	$(Q)$(GOARGS) go build $(GO_BUILD_ARGS) -o $@ $(BUILD_PATH)
 
 build/%.asc: ## Create release signatures for operator-sdk release binaries
 	$(Q){ \
