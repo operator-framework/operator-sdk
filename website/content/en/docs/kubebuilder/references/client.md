@@ -21,7 +21,7 @@ Clients are the focus of this document. A separate document will discuss Manager
 
 The SDK relies on a `manager.Manager` to create a `client.Client` interface that performs Create, Update, Delete, Get, and List operations within a `reconcile.Reconciler`'s Reconcile function. The SDK will generate code to create a Manager, which holds a Cache and a Client to be used in CRUD operations and communicate with the API server. By default a Controller's Reconciler will be populated with the Manager's Client which is a [split-client][doc-split-client].
 
-`pkg/controller/<kind>/<kind>_controller.go`:
+`controllers/<kind>_controller.go`:
 ```Go
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &ReconcileKind{client: mgr.GetClient(), scheme: mgr.GetScheme()}
