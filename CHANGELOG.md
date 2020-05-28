@@ -1,3 +1,59 @@
+## v0.18.0
+
+### Additions
+
+- The Ansible operator now includes a healthz endpoint and liveness probe. All operators will now have a running healthz endpoint (not publicly exposed) without changes. ([#2761](https://github.com/operator-framework/operator-sdk/pull/2761))
+- Adds the ability for Helm operators to properly watch and reconcile when cluster-scoped release resources are changed. ([#2894](https://github.com/operator-framework/operator-sdk/pull/2894))
+- The CSV generator adds admission webhook config manifests present in --deploy-dir to new and existing CSV manifests. ([#2894](https://github.com/operator-framework/operator-sdk/pull/2894))
+- Add 'run packagemanifests' subcommand, which has the same functionality of the deprecated 'run --olm' mode. ([#3016](https://github.com/operator-framework/operator-sdk/pull/3016))
+- 'bundle generate' generates bundles for current project layouts; this has the same behavior as 'generate csv --make-manifests=true'. ([#3088](https://github.com/operator-framework/operator-sdk/pull/3088))
+- Set a default channel to the channel supplied to 'bundle create --channels=<c>' if exactly one channel is set. ([#3124](https://github.com/operator-framework/operator-sdk/pull/3124))
+- Add '--kubeconfig' flag to '<run|cleanup> packagemanifests'. ([#3067](https://github.com/operator-framework/operator-sdk/pull/3067))
+- Add support for additional API creation for Anisble/Helm based operators. ([#2703](https://github.com/operator-framework/operator-sdk/pull/2703))
+- Add flag `--interactive` to the command `operator-sdk generate csv`  in order to enable working with interactive prompts while generating CSV. ([#2891](https://github.com/operator-framework/operator-sdk/pull/2891))
+- Add new hidden alpha flag `--output` to print the result of `operator-sdk bundle validate` in JSON format to stdout. Logs are printed to stderr. ([#2842](https://github.com/operator-framework/operator-sdk/pull/2842))
+- Add 'run local' subcommand, which has the same functionality of the deprecated 'run --local' mode. ([#3067](https://github.com/operator-framework/operator-sdk/pull/3067))
+- Add scorecard-test image push targets into Makefile. ([#3107](https://github.com/operator-framework/operator-sdk/pull/3107))
+
+### Changes
+
+- In Helm-based operators, reconcile logic now uses three-way strategic merge patches for native kubernetes objects so that array patch strategies are correctly honored and applied. ([#2842](https://github.com/operator-framework/operator-sdk/pull/2842))
+- Revert deprecation of the package manifests format. See [#2755](https://github.com/operator-framework/operator-sdk/pull/2755) for deprecation details. The package manifests format is still officially supported by the Operator Framework. ([#2944](https://github.com/operator-framework/operator-sdk/pull/2944))
+- 'bundle validate' will print errors and warnings from validation. ([#3083](https://github.com/operator-framework/operator-sdk/pull/3083))
+- **Breaking change**: Set bundle dir permissions to 0755 so they can be read by in-cluster tooling. ([#3129](https://github.com/operator-framework/operator-sdk/pull/3129))
+- **Breaking change**: Changed the default CRD version from `apiextensions.k8s.io/v1beta1` to `apiextensions.k8s.io/v1` for commands that create or generate CRDs. ([#2874](https://github.com/operator-framework/operator-sdk/pull/2874))
+- Changed default API version for new Helm-based operators to `helm.operator-sdk/v1alpha1`. The `k8s.io` domain is reserved, so CRDs should not use it without explicit appproval. See the [API Review Process](https://github.com/kubernetes/community/blob/81ec4af0ed02b4c5c0917a16563250b2f45250c2/sig-architecture/api-review-process.md#mandatory) for details. ([#2859](https://github.com/operator-framework/operator-sdk/pull/2859))
+- **Breaking change**: Updated Kubernetes dependencies to v1.18.2. ([#2918](https://github.com/operator-framework/operator-sdk/pull/2918))
+- **Breaking change**: Updated controller-runtime to v0.6.0. ([#2918](https://github.com/operator-framework/operator-sdk/pull/2918))
+- Updated controller-tools to v0.3.0. ([#2918](https://github.com/operator-framework/operator-sdk/pull/2918))
+- Updated helm to v3.2.0. ([#2918](https://github.com/operator-framework/operator-sdk/pull/2918))
+
+### Removals
+
+- **Breaking change**: The `inotify-tools` as a dependency of Ansible based-operator images which was deprecated and it will no longer scaffold the `/bin/ao-logs` which was using it to print the Ansible logs in the side-car since the side-car ansible container was removed in the previous versions. ([#2852](https://github.com/operator-framework/operator-sdk/pull/2852))
+- **Breaking change**: Removed automatic migration of helm releases from v2 to v3. ([#2918](https://github.com/operator-framework/operator-sdk/pull/2918))
+- **Breaking change**: Removed support for deprecated helm release naming scheme. ([#2918](https://github.com/operator-framework/operator-sdk/pull/2918))
+
+### Deprecations
+
+- Deprecate 'run --olm' mode. Use 'run packagemanifests' instead. ([#3016](https://github.com/operator-framework/operator-sdk/pull/3016))
+- Deprecate '--kubeconfig' flag on the 'cleanup' subcommand. Use 'run packagemanifests' instead. ([#3067](https://github.com/operator-framework/operator-sdk/pull/3067))
+- Deprecate 'run --local' mode. Use 'run local' instead. ([#3067](https://github.com/operator-framework/operator-sdk/pull/3067))
+
+### Bug Fixes
+
+- Fixes issue where the `helm.operator-sdk/upgrade-force` annotation value for Helm based-operators is not parsed. ([#2894](https://github.com/operator-framework/operator-sdk/pull/2894))
+- In 'run --olm', package manifests format must be replicated in a pod's file system for consistent registry initialization. ([#2964](https://github.com/operator-framework/operator-sdk/pull/2964))
+- the internal OLM client retrieves existing OLM versions correctly now that the returned list of CSVs is indexed properly. ([#2969](https://github.com/operator-framework/operator-sdk/pull/2969))
+- The Ansible Operator proxy will now return a 500 if it cannot determine whether a resource is virtual or not, instead of continuing on and skipping the cache. This will prevent resources that should have ownerReferences injected from being created without them, which would leave the user in a state that cannot be recovered without manual intervention. ([#3112](https://github.com/operator-framework/operator-sdk/pull/3112))
+- The Ansible Operator proxy no longer will attempt to cache non-status  subresource requests. This will fix the issue where attempting to get Pod logs returns the API Pod resource instead of the log contents. ([#3103](https://github.com/operator-framework/operator-sdk/pull/3103))
+- Do not generate a package manifest when 'generate csv --make-manifests=true'. ([#3014](https://github.com/operator-framework/operator-sdk/pull/3014))
+- Fixed issue to convert variables with numbers for Ansible based-operator. ([#2842](https://github.com/operator-framework/operator-sdk/pull/2842)). ([#2842](https://github.com/operator-framework/operator-sdk/pull/2842))
+- Fix issue faced when the `healthz` endpoint is successfully called. ([#2842](https://github.com/operator-framework/operator-sdk/pull/2842))
+- Added timeout to the Ansible based-operator proxy, which enables error reporting for requests that fail due to RBAC permissions issues to List and Watch the resources. ([#2842](https://github.com/operator-framework/operator-sdk/pull/2842))
+- CSV manifests read from disk are now properly marshaled into the CSV struct. ([#2894](https://github.com/operator-framework/operator-sdk/pull/2894))
+- Helm operator now applies its uninstall finalizer only when a release is deployed. This fixes a bug that caused the  CR to be unable to be deleted without manually intervening to delete a prematurely added finalizer. ([#3039](https://github.com/operator-framework/operator-sdk/pull/3039))
+
 ## v0.17.0
 
 ### Added

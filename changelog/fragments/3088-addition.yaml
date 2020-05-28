@@ -1,6 +1,0 @@
-entries:
-  - description: >
-      'bundle generate' generates bundles for current project layouts; this
-      has the same behavior as 'generate csv --make-manifests=true'
-
-    kind: addition
