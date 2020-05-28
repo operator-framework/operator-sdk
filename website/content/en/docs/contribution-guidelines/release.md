@@ -27,7 +27,7 @@ As the Operator SDK interacts directly with the Kubernetes API, certain API feat
 
 Release binaries will be built for the `x86_64` architecture for MacOS Darwin platform and for the following GNU Linux architectures: `x86_64`, `ppc64le`, `s390x`.
 
-Base images for ansible-operator, helm-operator, and scorecard-proxy will be built for the following GNU Linux architectures: `x86_64`, `ppc64le`, `s390x`.
+Base images for ansible-operator, helm-operator, scorecard-proxy, and scorecard-test will be built for the following GNU Linux architectures: `x86_64`, `ppc64le`, `s390x`.
 
 Support for the Windows platform is not on the roadmap at this time.
 
@@ -49,7 +49,7 @@ $ git config [--global] user.email "$GPG_EMAIL"
 ```
 
 Also, make sure that you setup the git gpg config as follows.
-```bash
+```console
 $ cat ~/.gnupg/gpg.conf
 default-key $GPG_KEY_ID
 ```
@@ -60,10 +60,10 @@ default-key $GPG_KEY_ID
 ```
 export GPG_TTY=`tty`
 ```
-- Restart your Terminal or source your ~/.*rc file 
+- Restart your Terminal or source your ~/.\*rc file
 - Then, make sure git uses gpg2 and not gpg
 ```bash
-$ git config --global gpg.program gpg2 
+$ git config --global gpg.program gpg2
 ```
 - To make sure gpg2 itself is working
 ```bash
@@ -90,7 +90,7 @@ The GitHub [`Releases` tab][release-page] in the operator-sdk repo is where all 
 
 1. Go to the SDK [`Releases` tab][release-page] and click the `Draft a new release` button in the top right corner.
 1. Select the tag version `v1.3.0`, and set the title to `v1.3.0`.
-1. Copy and paste any `CHANGELOG.md` under the `v1.3.0` header that have any notes into the description form (see [below](#release-notes)).
+1. Copy and paste `CHANGELOG.md` updates under the `v1.3.0` header into the description form (see [below](#release-notes)).
 1. Attach all binaries and `.asc` signature files to the release by dragging and dropping them.
 1. Click the `Publish release` button.
 
@@ -154,8 +154,8 @@ $ git verify-tag --verbose "$TAG_NAME"
 
 If you do not have the mantainers public key on your machine, you will get an error message similiar to this:
 
-```sh
-git verify-tag --verbose "$TAG_NAME"
+```console
+$ git verify-tag --verbose "$TAG_NAME"
 object 61e0c23e9d2e217f8d95ac104a8f2545c102b5c3
 type commit
 tag v0.6.0
@@ -230,7 +230,7 @@ Commit the following changes:
 - `internal/scaffold/go_mod.go`, change the `require` line version for `github.com/operator-framework/operator-sdk` from `master` to `v1.3.0`.
 - `internal/scaffold/helm/go_mod.go`: same as for `internal/scaffold/go_mod.go`.
 - `internal/scaffold/ansible/go_mod.go`: same as for `internal/scaffold/go_mod.go`.
-- `doc/user/install-operator-sdk.md`: update the linux and macOS URLs to point to the new release URLs.
+- `website/content/en/docs/install-operator-sdk.md`: update the linux and macOS URLs to point to the new release URLs.
 - `CHANGELOG.md`: commit changes (updated by changelog generation).
 - `website/content/en/docs/migration/v1.3.0.md`: commit changes (created by changelog generation).
 - `changelog/fragments/*`: commit deleted fragment files (deleted by changelog generation).
@@ -311,18 +311,18 @@ Now that the branch exists, you need to make the post-release PR for the new rel
 We support installing via [Homebrew][homebrew], so we need to update the operator-sdk [Homebrew formula][homebrew-formula] once the release is cut. Follow the instructions below, or for more detailed ones on the Homebrew contribution [README][homebrew-readme], to open a PR against the [repository][homebrew-repo].
 
 
-```
-docker run -t -d linuxbrew/brew:latest
-docker exec -it <CONTAINER_ID> /bin/bash`
+```sh
+$ docker run -t -d linuxbrew/brew:latest --name homebrew
+$ docker exec --rm -it homebrew /bin/bash
 # Run the following commands in the container.
-git config --global github.name <GITHUB-USERNAME>
-git config --global github.token <GITHUB-TOKEN>
+$ git config --global github.name <GITHUB-USERNAME>
+$ git config --global github.token <GITHUB-TOKEN>
 # Replace the release version of the newly cut release.
-OPERATORSDKURL=https://github.com/operator-framework/operator-sdk/archive/<RELEASE-VERSION>.tar.gz
-curl $OPERATORSDKURL -o operator-sdk
+$ export OPERATORSDKURL=https://github.com/operator-framework/operator-sdk/archive/<RELEASE-VERSION>.tar.gz
+$ curl -L $OPERATORSDKURL -o operator-sdk
 # Calculate the SHA256
-OPERATORSUM="$(sha256sum operator-sdk | cut -d ' ' -f 1)"
-brew bump-formula-pr --strict --url=$OPERATORSDKURL --sha256=$OPERATORSUM operator-sdk
+$ export OPERATORSUM="$(sha256sum operator-sdk | cut -d ' ' -f 1)"
+$ brew bump-formula-pr --strict --url=$OPERATORSDKURL --sha256=$OPERATORSUM operator-sdk
 ```
 
 Note: If there were any changes made to the CLI commands, make sure to look at the existing tests, in case they need updating.
@@ -340,7 +340,7 @@ The release process for the samples repo is simple:
 1. Once all API changes are in `master`, create a release tag locally:
     ```console
     $ git checkout master && git pull
-    $ VER="v1.3.0"
+    $ export VER="v1.3.0"
     $ git tag --sign --message "Operator SDK Samples $VER" "$VER"
     $ git push --tags
     ```
