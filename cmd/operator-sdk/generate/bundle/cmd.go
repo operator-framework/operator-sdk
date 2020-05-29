@@ -104,6 +104,9 @@ func NewCmd() *cobra.Command {
 				}
 			}
 			if c.metadata {
+				if err = c.validateMetadata(cfg); err != nil {
+					return fmt.Errorf("invalid command options: %v", err)
+				}
 				if err = c.runMetadata(); err != nil {
 					log.Fatalf("Error generating bundle metadata: %v", err)
 				}
@@ -164,6 +167,9 @@ func NewCmdLegacy() *cobra.Command {
 				}
 			}
 			if c.metadata {
+				if err = c.validateMetadataLegacy(); err != nil {
+					return fmt.Errorf("invalid command options: %v", err)
+				}
 				if err = c.runMetadataLegacy(); err != nil {
 					log.Fatalf("Error generating bundle metadata: %v", err)
 				}
