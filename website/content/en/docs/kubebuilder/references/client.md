@@ -1,9 +1,3 @@
----
-title: Using the Controller Runtime Client API with Operator SDK
-linkTitle: Controller Runtime Client API
-weight: 1
----
-
 ## Overview
 
 The [`controller-runtime`][repo-controller-runtime] library provides various abstractions to watch and reconcile resources in a Kubernetes cluster via CRUD (Create, Update, Delete, as well as Get and List in this case) operations. Operators use at least one controller to perform a coherent set of tasks within a cluster, usually through a combination of CRUD operations. The Operator SDK uses controller-runtime's [Client][doc-client-client] interface, which provides the interface for these operations.
@@ -24,11 +18,11 @@ The SDK relies on a `manager.Manager` to create a `client.Client` interface that
 `controllers/<kind>_controller.go`:
 ```Go
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileKind{client: mgr.GetClient(), scheme: mgr.GetScheme()}
+    return &KindReconciler{client: mgr.GetClient(), scheme: mgr.GetScheme()}
 }
 
-type ReconcileKind struct {
-	// Populated above from a manager.Manager.
+type KindReconciler struct {
+    // Populated above from a manager.Manager.
     client.Client
     Log    logr.Logger
     Scheme *runtime.Scheme
@@ -51,11 +45,11 @@ func New(config *rest.Config, options client.Options) (client.Client, error)
 ```Go
 // Options are creation options for a Client
 type Options struct {
-	// Scheme, if provided, will be used to map go structs to GroupVersionKinds
-	Scheme *runtime.Scheme
+    // Scheme, if provided, will be used to map go structs to GroupVersionKinds
+    Scheme *runtime.Scheme
 
-	// Mapper, if provided, will be used to map GroupVersionKinds to Resources
-	Mapper meta.RESTMapper
+    // Mapper, if provided, will be used to map GroupVersionKinds to Resources
+    Mapper meta.RESTMapper
 }
 ```
 Example:
@@ -79,22 +73,20 @@ Creating a new Client is not usually necessary nor advised, as the default Clien
 
 A Reconciler implements the [`reconcile.Reconciler`][doc-reconcile-reconciler] interface, which exposes the Reconcile method. Reconcilers are added to a corresponding Controller for a Kind; Reconcile is called in response to cluster or external Events, with a `reconcile.Request` object argument, to read and write cluster state by the Controller, and returns a `reconcile.Result`. SDK Reconcilers have access to a Client in order to make Kubernetes API calls.
 
-**Note**: For those familiar with the SDK's old project semantics, [Handle][doc-osdk-handle] received resource events and reconciled state for multiple resource types, whereas Reconcile receives resource events and reconciles state for a single resource type.
-
 ```Go
-// ReconcileKind reconciles a Kind object
-type ReconcileKind struct {
-	// client, initialized using mgr.Client() above, is a split client
-	// that reads objects from the cache and writes to the apiserver
-	client.Client
+// KindReconciler reconciles a Kind object
+type KindReconciler struct {
+    // client, initialized using mgr.Client() above, is a split client
+    // that reads objects from the cache and writes to the apiserver
+    client.Client
 
     Log    logr.Logger
 
-	// scheme defines methods for serializing and deserializing API objects,
-	// a type registry for converting group, version, and kind information
-	// to and from Go schemas, and mappings between Go schemas of different
-	// versions. A scheme is the foundation for a versioned API and versioned
-	// configuration over time.
+    // scheme defines methods for serializing and deserializing API objects,
+    // a type registry for converting group, version, and kind information
+    // to and from Go schemas, and mappings between Go schemas of different
+    // versions. A scheme is the foundation for a versioned API and versioned
+    // configuration over time.
     Scheme *runtime.Scheme
 }
 
@@ -103,10 +95,10 @@ type ReconcileKind struct {
 // The Controller will requeue the Request to be processed again if an error
 // is non-nil or Result.Requeue is true, otherwise upon completion it will
 // remove the work from the queue.
-func (r *ReconcileKind) Reconcile(request reconcile.Request) (reconcile.Result, error)
+func (r *KindReconciler) Reconcile(req ctrl.Request) (ctrl.Request, error)
 ```
 
-Reconcile is where Controller business logic lives, i.e. where Client API calls are made via `ReconcileKind.client`. A `client.Client` implementer performs the following operations:
+Reconcile is where Controller business logic lives, i.e. where Client API calls are made via `KindReconciler.client`. A `client.Client` implementer performs the following operations:
 
 #### Get
 
@@ -120,19 +112,19 @@ func (c Client) Get(ctx context.Context, key ObjectKey, obj runtime.Object) erro
 Example:
 ```Go
 import (
-	"context"
-	"github.com/example-org/app-operator/pkg/apis/cache/v1alpha1"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+    "context"
+    "github.com/example-org/app-operator/pkg/apis/cache/v1alpha1"
+    ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	...
+func (r *ReconcileApp) Reconcile(req ctrl.Request) (ctrl.Request, error) {
+    ...
 
-	app := &v1alpha1.App{}
-	ctx := context.TODO()
-	err := r.Get(ctx, request.NamespacedName, app)
+    app := &v1alpha1.App{}
+    ctx := context.TODO()
+    err := r.Get(ctx, request.NamespacedName, app)
 
-	...
+    ...
 }
 ```
 
@@ -150,28 +142,28 @@ Example:
 
 ```Go
 import (
-	"context"
-	"fmt"
-	"k8s.io/api/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+    "context"
+    "fmt"
+    "k8s.io/api/core/v1"
+    "sigs.k8s.io/controller-runtime/pkg/client"
+    ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	...
+func (r *ReconcileApp) Reconcile(req ctrl.Request) (ctrl.Request, error) {
+    ...
 
-	// Return all pods in the request namespace with a label of `app=<name>`
-	// and phase `Running`.
-	podList := &v1.PodList{}
-	opts := []client.ListOption{
-		client.InNamespace(request.NamespacedName.Namespace),
-		client.MatchingLabels{"app": request.NamespacedName.Name},
-		client.MatchingFields{"status.phase": "Running"},
-	}
-	ctx := context.TODO()
-	err := r.List(ctx, podList, opts...)
+    // Return all pods in the request namespace with a label of `app=<name>`
+    // and phase `Running`.
+    podList := &v1.PodList{}
+    opts := []client.ListOption{
+        client.InNamespace(request.NamespacedName.Namespace),
+        client.MatchingLabels{"app": request.NamespacedName.Name},
+        client.MatchingFields{"status.phase": "Running"},
+    }
+    ctx := context.TODO()
+    err := r.List(ctx, podList, opts...)
 
-	...
+    ...
 }
 ```
 
@@ -194,21 +186,21 @@ Example:
 
 ```Go
 import (
-	"context"
-	"k8s.io/api/apps/v1"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+    "context"
+    "k8s.io/api/apps/v1"
+    ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	...
+func (r *ReconcileApp) Reconcile(req ctrl.Request) (ctrl.Request, error) {
+    ...
 
-	app := &v1.Deployment{ // Any cluster object you want to create.
-		...
-	}
-	ctx := context.TODO()
-	err := r.Create(ctx, app)
+    app := &v1.Deployment{ // Any cluster object you want to create.
+        ...
+    }
+    ctx := context.TODO()
+    err := r.Create(ctx, app)
 
-	...
+    ...
 }
 ```
 
@@ -230,24 +222,24 @@ Example:
 
 ```Go
 import (
-	"context"
-	"k8s.io/api/apps/v1"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+    "context"
+    "k8s.io/api/apps/v1"
+    ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	...
+func (r *ReconcileApp) Reconcile(req ctrl.Request) (ctrl.Request, error) {
+    ...
 
-	dep := &v1.Deployment{}
-	err := r.Get(context.TODO(), request.NamespacedName, dep)
+    dep := &v1.Deployment{}
+    err := r.Get(context.TODO(), request.NamespacedName, dep)
 
-	...
+    ...
 
-	ctx := context.TODO()
-	dep.Spec.Selector.MatchLabels["is_running"] = "true"
-	err := r.Update(ctx, dep)
+    ctx := context.TODO()
+    dep.Spec.Selector.MatchLabels["is_running"] = "true"
+    err := r.Update(ctx, dep)
 
-	...
+    ...
 }
 ```
 
@@ -267,27 +259,27 @@ Example:
 
 ```Go
 import (
-	"context"
-	"k8s.io/api/apps/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+    "context"
+    "k8s.io/api/apps/v1"
+    "sigs.k8s.io/controller-runtime/pkg/client"
+    ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	...
+func (r *ReconcileApp) Reconcile(req ctrl.Request) (ctrl.Request, error) {
+    ...
 
-	dep := &v1.Deployment{}
-	err := r.Get(context.TODO(), request.NamespacedName, dep)
+    dep := &v1.Deployment{}
+    err := r.Get(context.TODO(), request.NamespacedName, dep)
 
-	...
+    ...
 
-	ctx := context.TODO()
-	// A merge patch will preserve other fields modified at runtime.
-	patch := client.MergeFrom(dep.DeepCopy())
-	dep.Spec.Selector.MatchLabels["is_running"] = "true"
-	err := r.Patch(ctx, dep, patch)
+    ctx := context.TODO()
+    // A merge patch will preserve other fields modified at runtime.
+    patch := client.MergeFrom(dep.DeepCopy())
+    dep.Spec.Selector.MatchLabels["is_running"] = "true"
+    err := r.Patch(ctx, dep, patch)
 
-	...
+    ...
 }
 ```
 
@@ -312,32 +304,32 @@ func (c Client) Status() (client.StatusWriter, error)
 Example:
 ```Go
 import (
-	"context"
-	cachev1alpha1 "github.com/example-inc/memcached-operator/pkg/apis/cache/v1alpha1"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+    "context"
+    cachev1alpha1 "github.com/example-inc/memcached-operator/pkg/apis/cache/v1alpha1"
+    ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	...
+func (r *ReconcileApp) Reconcile(req ctrl.Request) (ctrl.Request, error) {
+    ...
 
-	ctx := context.TODO()
-	mem := &cachev1alpha1.Memcached{}
-	err := r.Get(ctx, request.NamespacedName, mem)
+    ctx := context.TODO()
+    mem := &cachev1alpha1.Memcached{}
+    err := r.Get(ctx, request.NamespacedName, mem)
 
-	...
+    ...
 
-	// Update
-	mem.Status.Nodes = []string{"pod1", "pod2"}
-	err := r.Status().Update(ctx, mem)
+    // Update
+    mem.Status.Nodes = []string{"pod1", "pod2"}
+    err := r.Status().Update(ctx, mem)
 
-	...
+    ...
 
-	// Patch
-	patch := client.MergeFrom(mem.DeepCopy())
-	mem.Status.Nodes = []string{"pod1", "pod2", "pod3"}
-	err := r.Status().Patch(ctx, mem, patch)
+    // Patch
+    patch := client.MergeFrom(mem.DeepCopy())
+    mem.Status.Nodes = []string{"pod1", "pod2", "pod3"}
+    err := r.Status().Patch(ctx, mem, patch)
 
-	...
+    ...
 }
 ```
 
@@ -356,28 +348,28 @@ Example:
 
 ```Go
 import (
-	"context"
-	"k8s.io/api/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+    "context"
+    "k8s.io/api/core/v1"
+    "sigs.k8s.io/controller-runtime/pkg/client"
+    ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	...
+func (r *ReconcileApp) Reconcile(req ctrl.Request) (ctrl.Request, error) {
+    ...
 
-	pod := &v1.Pod{}
-	err := r.Get(context.TODO(), request.NamespacedName, pod)
+    pod := &v1.Pod{}
+    err := r.Get(context.TODO(), request.NamespacedName, pod)
 
-	...
+    ...
 
-	ctx := context.TODO()
-	if pod.Status.Phase == v1.PodUnknown {
-		// Delete the pod after 5 seconds.
-		err := r.Delete(ctx, pod, client.GracePeriodSeconds(5))
-		...
-	}
+    ctx := context.TODO()
+    if pod.Status.Phase == v1.PodUnknown {
+        // Delete the pod after 5 seconds.
+        err := r.Delete(ctx, pod, client.GracePeriodSeconds(5))
+        ...
+    }
 
-	...
+    ...
 }
 ```
 
@@ -399,29 +391,29 @@ Example:
 
 ```Go
 import (
-	"context"
-	"fmt"
-	"k8s.io/api/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+    "context"
+    "fmt"
+    "k8s.io/api/core/v1"
+    "sigs.k8s.io/controller-runtime/pkg/client"
+    ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	...
+func (r *ReconcileApp) Reconcile(req ctrl.Request) (ctrl.Request, error) {
+    ...
 
-	// Delete all pods in the request namespace with a label of `app=<name>`
-	// and phase `Failed`.
-	pod := &v1.Pod{}
-	opts := []client.DeleteAllOfOption{
-		client.InNamespace(request.NamespacedName.Namespace),
-		client.MatchingLabels{"app", request.NamespacedName.Name},
-		client.MatchingFields{"status.phase": "Failed"},
-		client.GracePeriodSeconds(5),
-	}
-	ctx := context.TODO()
-	err := r.DeleteAllOf(ctx, pod, opts...)
+    // Delete all pods in the request namespace with a label of `app=<name>`
+    // and phase `Failed`.
+    pod := &v1.Pod{}
+    opts := []client.DeleteAllOfOption{
+        client.InNamespace(request.NamespacedName.Namespace),
+        client.MatchingLabels{"app", request.NamespacedName.Name},
+        client.MatchingFields{"status.phase": "Failed"},
+        client.GracePeriodSeconds(5),
+    }
+    ctx := context.TODO()
+    err := r.DeleteAllOf(ctx, pod, opts...)
 
-	...
+    ...
 }
 ```
 
@@ -431,21 +423,21 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 
 ```Go
 import (
-	"context"
-	"reflect"
+    "context"
+    "reflect"
 
-	appv1alpha1 "github.com/example-org/app-operator/pkg/apis/app/v1alpha1"
+    appv1alpha1 "github.com/example-org/app-operator/pkg/apis/app/v1alpha1"
 
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+    appsv1 "k8s.io/api/apps/v1"
+    corev1 "k8s.io/api/core/v1"
+    "k8s.io/apimachinery/pkg/api/errors"
+    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+    "k8s.io/apimachinery/pkg/labels"
+    "k8s.io/apimachinery/pkg/runtime"
+    "k8s.io/apimachinery/pkg/types"
+    "sigs.k8s.io/controller-runtime/pkg/client"
+    "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+    ctrl "sigs.k8s.io/controller-runtime"
 )
 
 type ReconcileApp struct {
@@ -454,111 +446,111 @@ type ReconcileApp struct {
     Scheme *runtime.Scheme
 }
 
-func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r *ReconcileApp) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
-	// Fetch the App instance.
-	app := &appv1alpha1.App{}
-	err := r.Get(context.TODO(), request.NamespacedName, app)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return reconcile.Result{}, nil
-		}
-		return reconcile.Result{}, err
-	}
+    // Fetch the App instance.
+    app := &appv1alpha1.App{}
+    err := r.Get(context.TODO(), request.NamespacedName, app)
+    if err != nil {
+        if errors.IsNotFound(err) {
+            return ctrl.Result{}, nil
+        }
+        return ctrl.Result{}, err
+    }
 
-	// Check if the deployment already exists, if not create a new deployment.
-	found := &appsv1.Deployment{}
-	err = r.Get(context.TODO(), types.NamespacedName{Name: app.Name, Namespace: app.Namespace}, found)
-	if err != nil {
-	 	if errors.IsNotFound(err) {
-			// Define and create a new deployment.
-			dep := r.deploymentForApp(app)
-			if err = r.Create(context.TODO(), dep); err != nil {
-				return reconcile.Result{}, err
-			}
-			return reconcile.Result{Requeue: true}, nil
-		} else {
-			return reconcile.Result{}, err			
-		}
-	}
+    // Check if the deployment already exists, if not create a new deployment.
+    found := &appsv1.Deployment{}
+    err = r.Get(context.TODO(), types.NamespacedName{Name: app.Name, Namespace: app.Namespace}, found)
+    if err != nil {
+         if errors.IsNotFound(err) {
+            // Define and create a new deployment.
+            dep := r.deploymentForApp(app)
+            if err = r.Create(context.TODO(), dep); err != nil {
+                return ctrl.Result{}, err
+            }
+            return ctrl.Result{Requeue: true}, nil
+        } else {
+            return ctrl.Result{}, err            
+        }
+    }
 
-	// Ensure the deployment size is the same as the spec.
-	size := app.Spec.Size
-	if *found.Spec.Replicas != size {
-		found.Spec.Replicas = &size
-		if err = r.Update(context.TODO(), found); err != nil {
-			return reconcile.Result{}, err
-		}
-		return reconcile.Result{Requeue: true}, nil
-	}
+    // Ensure the deployment size is the same as the spec.
+    size := app.Spec.Size
+    if *found.Spec.Replicas != size {
+        found.Spec.Replicas = &size
+        if err = r.Update(context.TODO(), found); err != nil {
+            return ctrl.Result{}, err
+        }
+        return ctrl.Result{Requeue: true}, nil
+    }
 
-	// Update the App status with the pod names.
-	// List the pods for this app's deployment.
-	podList := &corev1.PodList{}
-	listOpts := []client.ListOption{
-		client.InNamespace(app.Namespace),
-		client.MatchingLabels(labelsForApp(app.Name)),
-	}
-	if err = r.List(context.TODO(), podList, listOpts...); err != nil {
-		return reconcile.Result{}, err
-	}
+    // Update the App status with the pod names.
+    // List the pods for this app's deployment.
+    podList := &corev1.PodList{}
+    listOpts := []client.ListOption{
+        client.InNamespace(app.Namespace),
+        client.MatchingLabels(labelsForApp(app.Name)),
+    }
+    if err = r.List(context.TODO(), podList, listOpts...); err != nil {
+        return ctrl.Result{}, err
+    }
 
-	// Update status.Nodes if needed.
-	podNames := getPodNames(podList.Items)
-	if !reflect.DeepEqual(podNames, app.Status.Nodes) {
-		app.Status.Nodes = podNames
-		if err := r.Status().Update(context.TODO(), app); err != nil {
-			return reconcile.Result{}, err
-		}
-	}
+    // Update status.Nodes if needed.
+    podNames := getPodNames(podList.Items)
+    if !reflect.DeepEqual(podNames, app.Status.Nodes) {
+        app.Status.Nodes = podNames
+        if err := r.Status().Update(context.TODO(), app); err != nil {
+            return ctrl.Result{}, err
+        }
+    }
 
-	return reconcile.Result{}, nil
+    return ctrl.Request{}, nil
 }
 
 // deploymentForApp returns a app Deployment object.
-func (r *ReconcileKind) deploymentForApp(m *appv1alpha1.App) *appsv1.Deployment {
-	lbls := labelsForApp(m.Name)
-	replicas := m.Spec.Size
+func (r *KindReconciler) deploymentForApp(m *appv1alpha1.App) *appsv1.Deployment {
+    lbls := labelsForApp(m.Name)
+    replicas := m.Spec.Size
 
-	dep := &appsv1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name,
-			Namespace: m.Namespace,
-		},
-		Spec: appsv1.DeploymentSpec{
-			Replicas: &replicas,
-			Selector: &metav1.LabelSelector{
-				MatchLabels: lbls,
-			},
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: lbls,
-				},
-				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{{
-						Image:   "app:alpine",
-						Name:    "app",
-						Command: []string{"app", "-a=64", "-b"},
-						Ports: []corev1.ContainerPort{{
-							ContainerPort: 10000,
-							Name:          "app",
-						}},
-					}},
-				},
-			},
-		},
-	}
+    dep := &appsv1.Deployment{
+        ObjectMeta: metav1.ObjectMeta{
+            Name:      m.Name,
+            Namespace: m.Namespace,
+        },
+        Spec: appsv1.DeploymentSpec{
+            Replicas: &replicas,
+            Selector: &metav1.LabelSelector{
+                MatchLabels: lbls,
+            },
+            Template: corev1.PodTemplateSpec{
+                ObjectMeta: metav1.ObjectMeta{
+                    Labels: lbls,
+                },
+                Spec: corev1.PodSpec{
+                    Containers: []corev1.Container{{
+                        Image:   "app:alpine",
+                        Name:    "app",
+                        Command: []string{"app", "-a=64", "-b"},
+                        Ports: []corev1.ContainerPort{{
+                            ContainerPort: 10000,
+                            Name:          "app",
+                        }},
+                    }},
+                },
+            },
+        },
+    }
 
-	// Set App instance as the owner and controller.
-	// NOTE: calling SetControllerReference, and setting owner references in
-	// general, is important as it allows deleted objects to be garbage collected.
-	controllerutil.SetControllerReference(m, dep, r.scheme)
-	return dep
+    // Set App instance as the owner and controller.
+    // NOTE: calling SetControllerReference, and setting owner references in
+    // general, is important as it allows deleted objects to be garbage collected.
+    controllerutil.SetControllerReference(m, dep, r.scheme)
+    return dep
 }
 
 // labelsForApp creates a simple set of labels for App.
 func labelsForApp(name string) map[string]string {
-	return map[string]string{"app_name": "app", "app_cr": name}
+    return map[string]string{"app_name": "app", "app_cr": name}
 }
 ```
 
