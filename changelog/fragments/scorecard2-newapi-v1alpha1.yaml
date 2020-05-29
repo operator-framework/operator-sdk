@@ -1,0 +1,3 @@
+entries:
+    - description: Add scorecard new API with scorecard.operatorframework.io/v1alpha1.
+      kind: "addition"
