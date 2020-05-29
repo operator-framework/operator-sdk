@@ -25,7 +25,7 @@ import (
 	. "github.com/onsi/ginkgo" //nolint:golint
 	. "github.com/onsi/gomega" //nolint:golint
 
-	"github.com/operator-framework/operator-sdk/test/e2e-new/utils"
+	"sigs.k8s.io/kubebuilder/test/e2e/utils"
 )
 
 var _ = Describe("operator-sdk", func() {
