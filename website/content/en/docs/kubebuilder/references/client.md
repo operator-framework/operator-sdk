@@ -17,6 +17,8 @@ The SDK relies on a `manager.Manager` to create a `client.Client` interface that
 
 `controllers/<kind>_controller.go`:
 ```Go
+import ctrl "sigs.k8s.io/controller-runtime"
+
 func (r *KindReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&cachev1alpha1.Kind{}).
