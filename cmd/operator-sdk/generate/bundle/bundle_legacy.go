@@ -17,6 +17,7 @@ package bundle
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	log "github.com/sirupsen/logrus"
@@ -31,6 +32,11 @@ import (
 func (c *bundleCmd) setCommonDefaultsLegacy() {
 	if c.operatorName == "" {
 		c.operatorName = filepath.Base(projutil.MustGetwd())
+	}
+	// A default channel can be inferred if there is only one channel. Don't infer
+	// default otherwise; the user must set this value.
+	if c.defaultChannel == "" && strings.Count(c.channels, ",") == 0 {
+		c.defaultChannel = c.channels
 	}
 }
 
@@ -107,6 +113,17 @@ func (c bundleCmd) runManifestsLegacy() (err error) {
 
 	if !c.quiet {
 		log.Infoln("Bundle manifests generated successfully in", c.outputDir)
+	}
+
+	return nil
+}
+
+// validateMetadataLegacy validates c for bundle metadata generation for
+// legacy project layouts.
+func (c bundleCmd) validateMetadataLegacy() (err error) {
+	// Ensure a default channel is present.
+	if c.defaultChannel == "" {
+		return fmt.Errorf("--default-channel must be set if setting multiple channels")
 	}
 
 	return nil
