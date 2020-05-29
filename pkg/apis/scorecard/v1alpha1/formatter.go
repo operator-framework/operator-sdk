@@ -1,4 +1,4 @@
-// Copyright 2019 The Operator-SDK Authors
+// Copyright 2020 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -53,6 +53,8 @@ func (s Test) MarshalText() (string, error) {
 			sb.WriteString(fmt.Sprintf(passColor, PassState))
 		} else if result.State == FailState {
 			sb.WriteString(fmt.Sprintf(failColor, FailState))
+		} else if result.State == ErrorState {
+			sb.WriteString(fmt.Sprintf(failColor, ErrorState))
 		} else {
 			sb.WriteString(fmt.Sprintf("\n"))
 		}

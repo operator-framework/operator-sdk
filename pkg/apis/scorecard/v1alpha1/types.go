@@ -1,4 +1,4 @@
-// Copyright 2019 The Operator-SDK Authors
+// Copyright 2020 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -63,8 +63,6 @@ type TestStatus struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-// +kubebuilder:object:root=true
-// +kubebuilder:subresource:status
 
 // Test is the schema for the scorecard API
 type Test struct {
