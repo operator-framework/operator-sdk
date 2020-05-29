@@ -17,8 +17,11 @@ The SDK relies on a `manager.Manager` to create a `client.Client` interface that
 
 `controllers/<kind>_controller.go`:
 ```Go
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-    return &KindReconciler{client: mgr.GetClient(), scheme: mgr.GetScheme()}
+func (r *KindReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&cachev1alpha1.Kind{}).
+		Owns(&appsv1.Deployment{}).
+		Complete(r)
 }
 
 type KindReconciler struct {
