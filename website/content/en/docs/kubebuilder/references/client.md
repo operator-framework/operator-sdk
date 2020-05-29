@@ -117,7 +117,7 @@ import (
     ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *ReconcileApp) Reconcile(req ctrl.Request) (ctrl.Request, error) {
+func (r *AppReconciler) Reconcile(req ctrl.Request) (ctrl.Request, error) {
     ...
 
     app := &v1alpha1.App{}
@@ -149,7 +149,7 @@ import (
     ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *ReconcileApp) Reconcile(req ctrl.Request) (ctrl.Request, error) {
+func (r *AppReconciler) Reconcile(req ctrl.Request) (ctrl.Request, error) {
     ...
 
     // Return all pods in the request namespace with a label of `app=<name>`
@@ -191,7 +191,7 @@ import (
     ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *ReconcileApp) Reconcile(req ctrl.Request) (ctrl.Request, error) {
+func (r *AppReconciler) Reconcile(req ctrl.Request) (ctrl.Request, error) {
     ...
 
     app := &v1.Deployment{ // Any cluster object you want to create.
@@ -227,7 +227,7 @@ import (
     ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *ReconcileApp) Reconcile(req ctrl.Request) (ctrl.Request, error) {
+func (r *AppReconciler) Reconcile(req ctrl.Request) (ctrl.Request, error) {
     ...
 
     dep := &v1.Deployment{}
@@ -265,7 +265,7 @@ import (
     ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *ReconcileApp) Reconcile(req ctrl.Request) (ctrl.Request, error) {
+func (r *AppReconciler) Reconcile(req ctrl.Request) (ctrl.Request, error) {
     ...
 
     dep := &v1.Deployment{}
@@ -309,7 +309,7 @@ import (
     ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *ReconcileApp) Reconcile(req ctrl.Request) (ctrl.Request, error) {
+func (r *AppReconciler) Reconcile(req ctrl.Request) (ctrl.Request, error) {
     ...
 
     ctx := context.TODO()
@@ -354,7 +354,7 @@ import (
     ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *ReconcileApp) Reconcile(req ctrl.Request) (ctrl.Request, error) {
+func (r *AppReconciler) Reconcile(req ctrl.Request) (ctrl.Request, error) {
     ...
 
     pod := &v1.Pod{}
@@ -398,7 +398,7 @@ import (
     ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *ReconcileApp) Reconcile(req ctrl.Request) (ctrl.Request, error) {
+func (r *AppReconciler) Reconcile(req ctrl.Request) (ctrl.Request, error) {
     ...
 
     // Delete all pods in the request namespace with a label of `app=<name>`
@@ -426,7 +426,7 @@ import (
     "context"
     "reflect"
 
-    appv1alpha1 "github.com/example-org/app-operator/pkg/apis/app/v1alpha1"
+    appv1alpha1 "github.com/example-org/app-operator/api/v1alpha1"
 
     appsv1 "k8s.io/api/apps/v1"
     corev1 "k8s.io/api/core/v1"
@@ -440,13 +440,13 @@ import (
     ctrl "sigs.k8s.io/controller-runtime"
 )
 
-type ReconcileApp struct {
+type AppReconciler struct {
     client.Client
     Log    logr.Logger
     Scheme *runtime.Scheme
 }
 
-func (r *ReconcileApp) Reconcile(req ctrl.Request) (ctrl.Result, error) {
+func (r *AppReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
     // Fetch the App instance.
     app := &appv1alpha1.App{}
