@@ -178,6 +178,14 @@ func WithBundleBase(inputDir, apisDir string, ilvl projutil.InteractiveLevel) Le
 	}
 }
 
+// WithPackageBase sets a Generator's base CSV to a legacy-style package base.
+func WithPackageBase(inputDir, apisDir string, ilvl projutil.InteractiveLevel) LegacyOption {
+	return func(g *Generator) error {
+		g.getBase = g.makePackageBaseGetterLegacy(inputDir, apisDir, ilvl)
+		return nil
+	}
+}
+
 // GenerateLegacy configures the generator with opts then runs it. Used for
 // generating files for legacy project layouts.
 func (g *Generator) GenerateLegacy(opts ...LegacyOption) (err error) {
@@ -269,6 +277,16 @@ func (g Generator) makeBaseGetter(basePath, apisDir string, interactive bool) ge
 // for legacy project layouts.
 func (g Generator) makeBundleBaseGetterLegacy(inputDir, apisDir string, ilvl projutil.InteractiveLevel) getBaseFunc {
 	basePath := filepath.Join(inputDir, bundle.ManifestsDir, makeCSVFileName(g.OperatorName))
+	if genutil.IsNotExist(basePath) {
+		basePath = ""
+	}
+	return g.makeBaseGetterLegacy(basePath, apisDir, requiresInteraction(basePath, ilvl))
+}
+
+// makePackageBaseGetterLegacy returns a function that gets a package base
+// for legacy project layouts.
+func (g Generator) makePackageBaseGetterLegacy(inputDir, apisDir string, ilvl projutil.InteractiveLevel) getBaseFunc {
+	basePath := filepath.Join(inputDir, g.Version, makeCSVFileName(g.OperatorName))
 	if genutil.IsNotExist(basePath) {
 		basePath = ""
 	}

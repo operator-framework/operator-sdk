@@ -14,30 +14,25 @@ OPERATOR_VERSION="0.0.4"
 OPERATOR_BUNDLE_ROOT_DIR="deploy/olm-catalog/${OPERATOR_NAME}"
 DEFAULT_BUNDLE_DIR="${OPERATOR_BUNDLE_ROOT_DIR}/${OPERATOR_VERSION}"
 OUTPUT_DIR="foo"
-OUTPUT_BUNDLE_DIR="${OUTPUT_DIR}/olm-catalog/${OPERATOR_NAME}/${OPERATOR_VERSION}"
-
-function csv_file_for_dir_legacy() {
-  echo "${1}/${OPERATOR_NAME}.v${OPERATOR_VERSION}.clusterserviceversion.yaml"
-}
+OUTPUT_BUNDLE_ROOT_DIR="${OUTPUT_DIR}/olm-catalog/${OPERATOR_NAME}"
+OUTPUT_BUNDLE_DIR="${OUTPUT_BUNDLE_ROOT_DIR}/${OPERATOR_VERSION}"
 
 function check_csv_file_legacy() {
-  check_file "$1" "$(csv_file_for_dir_legacy "$2")" $3
-}
-
-function csv_file_for_dir() {
-  echo "${1}/${OPERATOR_NAME}.clusterserviceversion.yaml"
+  check_file "$1" "${2}/${OPERATOR_NAME}.v${OPERATOR_VERSION}.clusterserviceversion.yaml" $3
 }
 
 function check_csv_file() {
-  check_file "$1" "$(csv_file_for_dir "$2")" $3
+  check_file "$1" "${2}/${OPERATOR_NAME}.clusterserviceversion.yaml" $3
 }
 
-function crd_files_for_dir() {
-  echo "${1}/cache.example.com_memcacheds_crd.yaml ${1}/cache.example.com_memcachedrs_crd.yaml"
+function check_package_file() {
+  check_file "$1" "${2}/${OPERATOR_NAME}.package.yaml" $3
 }
 
 function check_crd_files() {
-  for file in $(crd_files_for_dir "$2"); do check_file "$1" "$file" $3; done
+  local memcacheds_crd_file="${2}/cache.example.com_memcacheds_crd.yaml"
+  local memcachedrs_crd_file="${2}/cache.example.com_memcachedrs_crd.yaml"
+  for file in $memcacheds_crd_file $memcachedrs_crd_file; do check_file "$1" "$file" $3; done
 }
 
 function generate_csv() {
@@ -46,6 +41,10 @@ function generate_csv() {
 
 function generate_bundle() {
   echo_run operator-sdk generate bundle --operator-name $OPERATOR_NAME --interactive=false $@
+}
+
+function generate_packagemanifests() {
+  echo_run operator-sdk generate packagemanifests --operator-name $OPERATOR_NAME --interactive=false $@
 }
 
 pushd "$TEST_DIR" > /dev/null
@@ -136,3 +135,25 @@ check_file "$TEST_NAME" "bundle.Dockerfile" 1
 cleanup_case
 
 header_text "All 'operator-sdk generate bundle' subcommand tests passed."
+
+header_text "Running 'operator-sdk generate packagemanifests' subcommand tests in $TEST_DIR."
+
+TEST_NAME="generate with version $OPERATOR_VERSION"
+header_text "$TEST_NAME"
+generate_packagemanifests --version $OPERATOR_VERSION
+check_dir "$TEST_NAME" "$DEFAULT_BUNDLE_DIR" 1
+check_package_file "$TEST_NAME" "$OPERATOR_BUNDLE_ROOT_DIR" 1
+check_csv_file "$TEST_NAME" "$DEFAULT_BUNDLE_DIR" 1
+check_crd_files "$TEST_NAME" "$DEFAULT_BUNDLE_DIR" 1
+cleanup_case
+
+TEST_NAME="generate with version $OPERATOR_VERSION and output-dir"
+header_text "$TEST_NAME"
+generate_packagemanifests --version $OPERATOR_VERSION --output-dir "$OUTPUT_DIR"
+check_dir "$TEST_NAME" "${OUTPUT_DIR}/${OPERATOR_VERSION}" 1
+check_package_file "$TEST_NAME" "$OUTPUT_DIR" 1
+check_csv_file "$TEST_NAME" "${OUTPUT_DIR}/${OPERATOR_VERSION}" 1
+check_crd_files "$TEST_NAME" "${OUTPUT_DIR}/${OPERATOR_VERSION}" 1
+cleanup_case
+
+header_text "All 'operator-sdk generate packagemanifests' subcommand tests passed."

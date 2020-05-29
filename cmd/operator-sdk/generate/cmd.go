@@ -48,6 +48,7 @@ func NewCmdLegacy() *cobra.Command {
 		newGenerateCRDsCmd(),
 		newGenerateCSVCmd(),
 		bundle.NewCmdLegacy(),
+		packagemanifests.NewCmdLegacy(),
 	)
 	return cmd
 }
