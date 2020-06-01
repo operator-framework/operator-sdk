@@ -24,9 +24,10 @@ import (
 )
 
 const (
-	redColor   = "31"
-	greenColor = "32"
-	noColor    = "%s\n"
+	redColor    = "31"
+	greenColor  = "32"
+	yellowColor = "33"
+	noColor     = "%s\n"
 )
 
 func (s Test) MarshalText() (string, error) {
@@ -35,13 +36,14 @@ func (s Test) MarshalText() (string, error) {
 
 	failColor := ": \033[1;" + redColor + "m%s\033[0m\n"
 	passColor := ": \033[1;" + greenColor + "m%s\033[0m\n"
+	warnColor := ": \033[1;" + yellowColor + "m%s\033[0m\n"
 
 	// turn off colorization if not in a terminal
 	if !isatty.IsTerminal(os.Stdout.Fd()) &&
 		!isatty.IsCygwinTerminal(os.Stdout.Fd()) {
-		isNotTty = true
 		passColor = noColor
 		failColor = noColor
+		warnColor = noColor
 	}
 
 	sb.WriteString("\tLabels: \n")
@@ -60,22 +62,16 @@ func (s Test) MarshalText() (string, error) {
 			sb.WriteString(fmt.Sprintf("\n"))
 		}
 		if len(result.Suggestions) > 0 {
-			// 33 is yellow (specifically, the same shade of yellow that logrus uses for warnings)
-			sb.WriteString(fmt.Sprintf("\t\x1b[%dmSuggestions:\x1b[0m \n", 33))
-			if isNotTty {
-				sb.WriteString(fmt.Sprintf(noColor, "Suggestions:"))
-			}
+			sb.WriteString(fmt.Sprintf(warnColor, "Suggestions:"))
+
 		}
 		for _, suggestion := range result.Suggestions {
 			sb.WriteString(fmt.Sprintf("\t\t%s\n", suggestion))
 		}
 
 		if len(result.Errors) > 0 {
-			// 31 is red (specifically, the same shade of red that logrus uses for errors)
-			sb.WriteString(fmt.Sprintf("\t\x1b[%dmErrors:\x1b[0m \n", 31))
-			if isNotTty {
-				sb.WriteString(fmt.Sprintf(noColor, "Errors:"))
-			}
+			sb.WriteString(fmt.Sprintf(failColor, "Errors:"))
+
 		}
 		for _, err := range result.Errors {
 			sb.WriteString(fmt.Sprintf("\t\t%s\n", err))

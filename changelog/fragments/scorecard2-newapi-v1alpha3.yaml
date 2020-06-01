@@ -1,0 +1,3 @@
+entries:
+    - description: Add new scorecard APIVersion "osdk.openshift.io/v1alpha3" and types.
+      kind: "addition"
