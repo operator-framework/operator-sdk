@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v1alpha1
+package v1alpha3
 
 import (
 	"bufio"
@@ -31,6 +31,7 @@ const (
 
 func (s Test) MarshalText() (string, error) {
 	var sb strings.Builder
+	var isNotTty bool
 
 	failColor := ": \033[1;" + redColor + "m%s\033[0m\n"
 	passColor := ": \033[1;" + greenColor + "m%s\033[0m\n"
@@ -38,11 +39,11 @@ func (s Test) MarshalText() (string, error) {
 	// turn off colorization if not in a terminal
 	if !isatty.IsTerminal(os.Stdout.Fd()) &&
 		!isatty.IsCygwinTerminal(os.Stdout.Fd()) {
+		isNotTty = true
 		passColor = noColor
 		failColor = noColor
 	}
 
-	sb.WriteString(fmt.Sprintf("%s:\n", s.Spec.Labels["suite"]))
 	sb.WriteString("\tLabels: \n")
 	for labelKey, labelValue := range s.Spec.Labels {
 		sb.WriteString(fmt.Sprintf("\t\t%q:%q\n", labelKey, labelValue))
@@ -61,6 +62,9 @@ func (s Test) MarshalText() (string, error) {
 		if len(result.Suggestions) > 0 {
 			// 33 is yellow (specifically, the same shade of yellow that logrus uses for warnings)
 			sb.WriteString(fmt.Sprintf("\t\x1b[%dmSuggestions:\x1b[0m \n", 33))
+			if isNotTty {
+				sb.WriteString(fmt.Sprintf(noColor, "Suggestions:"))
+			}
 		}
 		for _, suggestion := range result.Suggestions {
 			sb.WriteString(fmt.Sprintf("\t\t%s\n", suggestion))
@@ -69,6 +73,9 @@ func (s Test) MarshalText() (string, error) {
 		if len(result.Errors) > 0 {
 			// 31 is red (specifically, the same shade of red that logrus uses for errors)
 			sb.WriteString(fmt.Sprintf("\t\x1b[%dmErrors:\x1b[0m \n", 31))
+			if isNotTty {
+				sb.WriteString(fmt.Sprintf(noColor, "Errors:"))
+			}
 		}
 		for _, err := range result.Errors {
 			sb.WriteString(fmt.Sprintf("\t\t%s\n", err))

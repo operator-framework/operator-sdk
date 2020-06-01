@@ -15,4 +15,4 @@
 // +k8s:deepcopy-gen=package,register
 // +groupName=scorecard.operatorframework.io
 
-package v1alpha1
+package v1alpha3

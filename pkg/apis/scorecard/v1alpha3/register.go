@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package v1alpha1 contains API Schema definitions for the cache v1alpha1 API group
-package v1alpha1
+// Package v1alpha3 contains API Schema definitions for the cache v1alpha3 API group
+package v1alpha3
 
 import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -22,7 +22,7 @@ import (
 
 var (
 	// SchemeGroupVersion is group version used to register these objects
-	SchemeGroupVersion = schema.GroupVersion{Group: "scorecard.operatorframework.io", Version: "v1alpha1"}
+	SchemeGroupVersion = schema.GroupVersion{Group: "scorecard.operatorframework.io", Version: "v1alpha3"}
 
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
 	SchemeBuilder = &scheme.Builder{GroupVersion: SchemeGroupVersion}

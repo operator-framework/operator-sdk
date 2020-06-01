@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v1alpha1
+package v1alpha3
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,8 +22,6 @@ import (
 type State string
 
 const (
-	// NotRunState occurs when a user specifies the --list flag
-	NotRunState State = ""
 	// PassState occurs when a Test's ExpectedPoints == MaximumPoints.
 	PassState State = "pass"
 	// FailState occurs when a Test's ExpectedPoints == 0.
@@ -49,17 +47,16 @@ type TestResult struct {
 	// Log holds a log produced from the test (if applicable)
 	Log string `json:"log,omitempty"`
 	// State is the final state of the test
-	State State `json:"state,omitempty"`
+	State State `json:"state"`
 	// Errors is a list of the errors that occurred during the test (this can include both fatal and non-fatal errors)
 	Errors []string `json:"errors,omitempty"`
 	// Suggestions is a list of suggestions for the user to improve their score (if applicable)
 	Suggestions []string `json:"suggestions,omitempty"`
 }
 
-// TestStatus contains collection of testResults and test suite name.
+// TestStatus contains collection of testResults.
 type TestStatus struct {
-	SuiteName string       `json:"suitename"`
-	Results   []TestResult `json:"results"`
+	Results []TestResult `json:"results"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -73,10 +70,9 @@ type Test struct {
 
 func NewTest() *Test {
 	return &Test{
-		// The TypeMeta is mandatory because it is used to distinguish the versions (v1alpha1 and v1alpha2)
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Test",
-			APIVersion: "scorecard.operatorframework.io/v1alpha1",
+			APIVersion: SchemeGroupVersion.String(),
 		},
 	}
 }
