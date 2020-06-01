@@ -19,6 +19,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -57,6 +58,11 @@ var (
 var (
 	col *collector.Manifests
 	cfg *config.Config
+)
+
+const (
+	sdkBuilderTest = "operators.operatorframework.io.metrics.builder: operator-sdk-unknown"
+	sdkLayoutTest  = "operators.operatorframework.io.metrics.project_layout: unknown"
 )
 
 var (
@@ -121,7 +127,7 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 					WithWriter(buf),
 				}
 				Expect(g.Generate(cfg, opts...)).ToNot(HaveOccurred())
-				outputCSV := projutil.RemoveSDKStampsFromCSVString(buf.String())
+				outputCSV := removeSDKStampsFromCSVString(buf.String())
 				Expect(outputCSV).To(MatchYAML(newCSVStr))
 			})
 			It("should write a ClusterServiceVersion manifest to a base file", func() {
@@ -135,9 +141,29 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 				}
 				Expect(g.Generate(cfg, opts...)).ToNot(HaveOccurred())
 				outputFile := filepath.Join(tmp, "bases", makeCSVFileName(operatorName))
-				outputFileContents := projutil.RemoveSDKStampsFromCSVString(string(readFileHelper(outputFile)))
+				outputFileContents := removeSDKStampsFromCSVString(string(readFileHelper(outputFile)))
 				Expect(outputFile).To(BeAnExistingFile())
 				Expect(outputFileContents).To(MatchYAML(baseCSVUIMetaStr))
+			})
+			It("should have sdk stamps in annotations", func() {
+				g = Generator{
+					OperatorName: operatorName,
+					OperatorType: operatorType,
+				}
+				opts := []Option{
+					WithBase(csvBasesDir, goAPIsDir, projutil.InteractiveHardOff),
+					WithBaseWriter(tmp),
+				}
+				Expect(g.Generate(cfg, opts...)).ToNot(HaveOccurred())
+				outputFile := filepath.Join(tmp, "bases", makeCSVFileName(operatorName))
+				outputCSV, _, err := getCSVFromFile(outputFile)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(outputFile).To(BeAnExistingFile())
+
+				annotations := outputCSV.ObjectMeta.Annotations
+				Expect(annotations).ToNot(BeNil())
+				Expect(annotations).Should(HaveKey(projutil.Builder))
+				Expect(annotations).Should(HaveKey(projutil.Layout))
 			})
 			It("should write a ClusterServiceVersion manifest to a bundle file", func() {
 				g = Generator{
@@ -152,7 +178,7 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 				}
 				Expect(g.Generate(cfg, opts...)).ToNot(HaveOccurred())
 				outputFile := filepath.Join(tmp, bundle.ManifestsDir, makeCSVFileName(operatorName))
-				outputFileContents := projutil.RemoveSDKStampsFromCSVString(string(readFileHelper(outputFile)))
+				outputFileContents := removeSDKStampsFromCSVString(string(readFileHelper(outputFile)))
 				Expect(outputFile).To(BeAnExistingFile())
 				Expect(outputFileContents).To(MatchYAML(newCSVStr))
 			})
@@ -186,7 +212,7 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 				}
 				Expect(g.GenerateLegacy(opts...)).ToNot(HaveOccurred())
 				outputFile := filepath.Join(tmp, bundle.ManifestsDir, makeCSVFileName(operatorName))
-				outputFileContents := projutil.RemoveSDKStampsFromCSVString(string(readFileHelper(outputFile)))
+				outputFileContents := removeSDKStampsFromCSVString(string(readFileHelper(outputFile)))
 				Expect(outputFile).To(BeAnExistingFile())
 				Expect(outputFileContents).To(MatchYAML(newCSVStr))
 			})
@@ -254,28 +280,46 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 			})
 		})
 
-		Context("to create a new base ClusterServiceVersion", func() {
-			It("should return the default base object", func() {
-				g = Generator{
-					OperatorName: operatorName,
-					OperatorType: operatorType,
-					config:       cfg,
-					getBase:      makeBaseGetter(baseCSV),
-				}
-				csv, err := g.generate()
-				Expect(err).ToNot(HaveOccurred())
-				Expect(csv).To(Equal(baseCSV))
+		Context("to create a new", func() {
+
+			Context("bundle base", func() {
+				It("should return the default base object", func() {
+					g = Generator{
+						OperatorName: operatorName,
+						OperatorType: operatorType,
+						config:       cfg,
+						getBase:      makeBaseGetter(baseCSV),
+					}
+					csv, err := g.generate()
+					Expect(err).ToNot(HaveOccurred())
+					Expect(csv).To(Equal(baseCSV))
+				})
+				It("should return a base object with customresourcedefinitions", func() {
+					g = Generator{
+						OperatorName: operatorName,
+						OperatorType: operatorType,
+						config:       cfg,
+						getBase:      makeBaseGetter(baseCSVUIMeta),
+					}
+					csv, err := g.generate()
+					Expect(err).ToNot(HaveOccurred())
+					Expect(csv).To(Equal(baseCSVUIMeta))
+				})
 			})
-			It("should return a base object with customresourcedefinitions", func() {
-				g = Generator{
-					OperatorName: operatorName,
-					OperatorType: operatorType,
-					config:       cfg,
-					getBase:      makeBaseGetter(baseCSVUIMeta),
-				}
-				csv, err := g.generate()
-				Expect(err).ToNot(HaveOccurred())
-				Expect(csv).To(Equal(baseCSVUIMeta))
+			Context("bundle", func() {
+				It("should return the expected object", func() {
+					g = Generator{
+						OperatorName: operatorName,
+						OperatorType: operatorType,
+						Version:      version,
+						Collector:    col,
+						config:       cfg,
+						getBase:      makeBaseGetter(baseCSVUIMeta),
+					}
+					csv, err := g.generate()
+					Expect(err).ToNot(HaveOccurred())
+					Expect(csv).To(Equal(newCSV))
+				})
 			})
 		})
 
@@ -472,4 +516,12 @@ func upgradeCSV(csv *v1alpha1.ClusterServiceVersion, name, version string) *v1al
 	upgraded.Spec.Replaces = oldName
 
 	return upgraded
+}
+
+// removeSDKStampsFromCSVString to remove the sdk stamps from test CSV structs. The test
+// cases do not generate a PROJECTFILE or an entire operator to get the version or layout
+// of SDK. Hence the values of those will appear "unknown".
+func removeSDKStampsFromCSVString(csv string) string {
+	replacer := strings.NewReplacer(sdkBuilderTest, "", sdkLayoutTest, "")
+	return replacer.Replace(csv)
 }

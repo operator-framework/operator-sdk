@@ -16,15 +16,22 @@ package registry
 
 import (
 	"fmt"
+	"io/ioutil"
 
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	apivalidation "github.com/operator-framework/api/pkg/validation"
 	apierrors "github.com/operator-framework/api/pkg/validation/errors"
+	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 	k8svalidation "k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+)
+
+const (
+	defaultPermission = 0644
 )
 
 // ValidateBundleContent confirms that the CSV and CRD files inside the bundle
@@ -126,4 +133,37 @@ func appendResult(results []apierrors.ManifestResult, r apierrors.ManifestResult
 	}
 
 	return results
+}
+
+// RewriteAnnotationsYaml unmarshalls the specified yaml file, appends the content and
+// converts it again to yaml.
+func RewriteAnnotationsYaml(filename, directory string, content map[string]string) error {
+
+	f, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return err
+	}
+
+	annotationsYaml := &bundle.AnnotationMetadata{}
+	if err := yaml.Unmarshal(f, annotationsYaml); err != nil {
+		return fmt.Errorf("error parsing annotations file: %v", err)
+	}
+
+	// Append the contents to annotationsYaml
+	for key, val := range content {
+		annotationsYaml.Annotations[key] = val
+	}
+
+	file, err := yaml.Marshal(annotationsYaml)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(filename, []byte(file), defaultPermission)
+	if err != nil {
+		return fmt.Errorf("error writing modified contents to annotations file, %v", err)
+	}
+
+	return nil
+
 }

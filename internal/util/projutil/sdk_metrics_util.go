@@ -20,15 +20,15 @@ import (
 )
 
 const (
-	operatorSDK  = "operator-sdk"
+	OperatorSDK  = "operator-sdk"
 	Mediatype    = "operators.operatorframework.io.metrics.mediatype.v1"
 	Builder      = "operators.operatorframework.io.metrics.builder"
-	layout       = "operators.operatorframework.io.metrics.project_layout"
+	Layout       = "operators.operatorframework.io.metrics.project_layout"
 	sdkMediatype = "metrics+v1"
 )
 
 var (
-	sdkBuilder = operatorSDK + "-" + ver.GitVersion
+	sdkBuilder = OperatorSDK + "-" + ver.GitVersion
 )
 
 type MetricLabels struct {
@@ -40,7 +40,7 @@ func MakeMetricsLabels() MetricLabels {
 		Data: map[string]string{
 			Mediatype: sdkMediatype,
 			Builder:   sdkBuilder,
-			layout:    getSDKProjectLayout(),
+			Layout:    getSDKProjectLayout(),
 		},
 	}
 	return m
