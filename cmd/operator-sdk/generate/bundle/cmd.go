@@ -90,23 +90,31 @@ func NewCmd() *cobra.Command {
 			}
 			c.setCommonDefaults(cfg)
 
-			if c.kustomize {
-				if err = c.runKustomize(cfg); err != nil {
-					log.Fatalf("Error generating bundle bases: %v", err)
-				}
-			}
+			// Validate command args before running so a preceding mode doesn't run
+			// before a following validation fails.
 			if c.manifests {
 				if err = c.validateManifests(cfg); err != nil {
 					return fmt.Errorf("invalid command options: %v", err)
-				}
-				if err = c.runManifests(cfg); err != nil {
-					log.Fatalf("Error generating bundle manifests: %v", err)
 				}
 			}
 			if c.metadata {
 				if err = c.validateMetadata(cfg); err != nil {
 					return fmt.Errorf("invalid command options: %v", err)
 				}
+			}
+
+			// Run command logic.
+			if c.kustomize {
+				if err = c.runKustomize(cfg); err != nil {
+					log.Fatalf("Error generating bundle bases: %v", err)
+				}
+			}
+			if c.manifests {
+				if err = c.runManifests(cfg); err != nil {
+					log.Fatalf("Error generating bundle manifests: %v", err)
+				}
+			}
+			if c.metadata {
 				if err = c.runMetadata(); err != nil {
 					log.Fatalf("Error generating bundle metadata: %v", err)
 				}
@@ -158,18 +166,26 @@ func NewCmdLegacy() *cobra.Command {
 
 			c.setCommonDefaultsLegacy()
 
+			// Validate command args before running so a preceding mode doesn't run
+			// before a following validation fails.
 			if c.manifests {
 				if err = c.validateManifestsLegacy(); err != nil {
 					return fmt.Errorf("invalid command options: %v", err)
-				}
-				if err = c.runManifestsLegacy(); err != nil {
-					log.Fatalf("Error generating bundle manifests: %v", err)
 				}
 			}
 			if c.metadata {
 				if err = c.validateMetadataLegacy(); err != nil {
 					return fmt.Errorf("invalid command options: %v", err)
 				}
+			}
+
+			// Run command logic.
+			if c.manifests {
+				if err = c.runManifestsLegacy(); err != nil {
+					log.Fatalf("Error generating bundle manifests: %v", err)
+				}
+			}
+			if c.metadata {
 				if err = c.runMetadataLegacy(); err != nil {
 					log.Fatalf("Error generating bundle metadata: %v", err)
 				}
