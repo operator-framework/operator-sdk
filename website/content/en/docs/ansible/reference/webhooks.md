@@ -15,15 +15,15 @@ deploy it as a sidecar container alongside your operator. This allows you to mak
 server that the operator deploys, as well as the cache that backs it. The sidecar will be defined in the `deploy/operator.yaml` and it will look like:
 
 ```yaml
-        # This deploys the webhook
-        - name: webhook
-          # Replace this with the built image name
-          image: "REPLACE_WEBHOOK_IMAGE"
-          imagePullPolicy: "Always"
-          volumeMounts:
-          - mountPath: /etc/tls/
-            name: webhook-cert
-...            
+# This deploys the webhook
+- name: webhook
+  # Replace this with the built image name
+  image: "REPLACE_WEBHOOK_IMAGE"
+  imagePullPolicy: "Always"
+  volumeMounts:
+  - mountPath: /etc/tls/
+    name: webhook-cert
+```
 
 ## Ensuring the webhook server uses the caching proxy
 
@@ -41,43 +41,43 @@ as your webhook server is required to have a valid SSL configuration. Below is a
 specification that deploys a webhook:
 
 ```yaml
-      containers:
-        - name: my-operator
-          # Replace this with the built image name
-          image: "REPLACE_IMAGE"
-          imagePullPolicy: "Always"
-          volumeMounts:
-          - mountPath: /tmp/ansible-operator/runner
-            name: runner
-          env:
-            - name: WATCH_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-            - name: POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            - name: OPERATOR_NAME
-              value: "validating-operator"
-            - name: ANSIBLE_GATHERING
-              value: explicit
-        # This deploys the webhook
-        - name: webhook
-          # Replace this with the built image name
-          image: "REPLACE_WEBHOOK_IMAGE"
-          imagePullPolicy: "Always"
-          volumeMounts:
-          - mountPath: /etc/tls/
-            name: webhook-cert
-      volumes:
-        - name: runner
-          emptyDir: {}
-        # This assumes there is a secret called webhook-cert containing TLS certificates
-        # Projects like cert-manager can create these certificates
-        - name: webhook-cert
-          secret:
-            secretName: webhook-cert
+containers:
+  - name: my-operator
+    # Replace this with the built image name
+    image: "REPLACE_IMAGE"
+    imagePullPolicy: "Always"
+    volumeMounts:
+    - mountPath: /tmp/ansible-operator/runner
+      name: runner
+    env:
+      - name: WATCH_NAMESPACE
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.namespace
+      - name: POD_NAME
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.name
+      - name: OPERATOR_NAME
+        value: "validating-operator"
+      - name: ANSIBLE_GATHERING
+        value: explicit
+  # This deploys the webhook
+  - name: webhook
+    # Replace this with the built image name
+    image: "REPLACE_WEBHOOK_IMAGE"
+    imagePullPolicy: "Always"
+    volumeMounts:
+    - mountPath: /etc/tls/
+      name: webhook-cert
+volumes:
+  - name: runner
+    emptyDir: {}
+  # This assumes there is a secret called webhook-cert containing TLS certificates
+  # Projects like cert-manager can create these certificates
+  - name: webhook-cert
+    secret:
+      secretName: webhook-cert
 ```
 
 This will run your webhook server alongside the operator, but Kubernetes will not yet call the webhooks before
@@ -168,7 +168,7 @@ incoming resources before they are written to the Kubernetes database.
 
 ## Summary
 
-To deploy an existing admissions webhook to validate or mutate your Kubernetes resources alongside an 
+To deploy an existing admissions webhook to validate or mutate your Kubernetes resources alongside an
 Ansible-based Operator, you must
 1. Configure your admissions webhook to use the proxy server running on `http://localhost:8888` in the operator pod
 1. Add the webhook container to your operator deployment
@@ -178,5 +178,5 @@ Ansible-based Operator, you must
 
 
 [admission-controllers]:https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/
-[validating-webhook]:https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.17/#validatingwebhookconfiguration-v1-admissionregistration-k8s-io
-[mutating-webhook]:https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.17/#mutatingwebhookconfiguration-v1-admissionregistration-k8s-io
+[validating-webhook]:https://v1-17.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.17/#validatingwebhookconfiguration-v1-admissionregistration-k8s-io
+[mutating-webhook]:https://v1-17.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.17/#mutatingwebhookconfiguration-v1-admissionregistration-k8s-io
