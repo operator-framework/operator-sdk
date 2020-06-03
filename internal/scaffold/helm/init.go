@@ -26,6 +26,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/genutil"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/helm/watches"
 )
 
@@ -78,7 +79,7 @@ func Init(cfg input.Config, createOpts CreateChartOptions) error {
 	}
 
 	// nolint:staticcheck
-	if err = genutil.GenerateCRDNonGo("", *resource, createOpts.CRDVersion); err != nil {
+	if err = genutil.GenerateCRDNonGo("", *resource, createOpts.CRDVersion, projutil.OperatorTypeHelm); err != nil {
 		return err
 	}
 

@@ -40,6 +40,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
 const DefaultCRDVersion = "v1"
@@ -67,6 +68,8 @@ type Generator struct {
 	// ApisDir is for the location of the API types directory e.g "pkg/apis"
 	// The CSV annotation comments will be parsed from the types under this path.
 	ApisDir string
+	// OperatorType refers to the type of operator (go/ansible/helm)
+	OperatorType string
 }
 
 func (g Generator) validate() error {
@@ -185,9 +188,8 @@ func (g Generator) generateGo() (map[string][]byte, error) {
 			// just remove it.
 			annotations := crd.GetAnnotations()
 			delete(annotations, "controller-gen.kubebuilder.io/version")
-			if len(annotations) == 0 {
-				annotations = nil
-			}
+			// Add sdk related stamps to the cached annotations
+			addStampsToAnnotations(annotations, projutil.OperatorTypeGo)
 			crd.SetAnnotations(annotations)
 			b, err := k8sutil.GetObjectBytes(&crd, yaml.Marshal)
 			if err != nil {
@@ -273,6 +275,7 @@ func (g Generator) generateNonGo() (map[string][]byte, error) {
 
 	sort.Sort(k8sutil.CRDVersions(crd.Spec.Versions))
 	setCRDStorageVersion(crd)
+	setSDKstamps(crd, g.OperatorType)
 	if err := checkCRDVersions(crd); err != nil {
 		return nil, fmt.Errorf("invalid version in CRD %s: %w", crd.GetName(), err)
 	}
@@ -369,6 +372,28 @@ func setCRDStorageVersion(crd *apiextv1beta1.CustomResourceDefinition) {
 	// Set the first element in spec.versions to be the storage version.
 	log.Infof("Setting CRD %q storage version to %s", crd.GetName(), crd.Spec.Versions[0].Name)
 	crd.Spec.Versions[0].Storage = true
+}
+
+func setSDKstamps(crd *apiextv1beta1.CustomResourceDefinition, operatorType string) {
+	annotations := crd.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+	addStampsToAnnotations(annotations, operatorType)
+	crd.SetAnnotations(annotations)
+}
+
+func addStampsToAnnotations(mapAnnotations map[string]string, operatorType string) {
+	metricLables := projutil.MakeMetricsLabels()
+	for label, value := range metricLables.Data {
+		if label != projutil.Mediatype {
+			mapAnnotations[label] = value
+		}
+	}
+	// Modifying operator type for ansible and helm legacy operators
+	if operatorType != projutil.OperatorTypeGo {
+		projutil.SetSDKProjectLayout(operatorType, mapAnnotations)
+	}
 }
 
 // checkCRDVersions ensures version(s) generated for a CRD are in valid format.

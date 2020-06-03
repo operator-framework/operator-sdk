@@ -59,3 +59,7 @@ func getSDKProjectLayout() string {
 	}
 	return GetOperatorType()
 }
+
+func SetSDKProjectLayout(operatorType string, metricData map[string]string) {
+	metricData[Layout] = operatorType
+}

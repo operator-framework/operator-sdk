@@ -26,6 +26,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/genutil"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/helm/watches"
 )
 
@@ -62,7 +63,7 @@ func API(cfg input.Config, createOpts CreateChartOptions) error {
 	if err != nil {
 		log.Fatalf("API scaffold failed: %v", err)
 	}
-	if err = genutil.GenerateCRDNonGo("", *r, createOpts.CRDVersion); err != nil {
+	if err = genutil.GenerateCRDNonGo("", *r, createOpts.CRDVersion, projutil.OperatorTypeHelm); err != nil {
 		return err
 	}
 
