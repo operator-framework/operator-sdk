@@ -139,9 +139,10 @@ jobs:
       - (cd / && go get github.com/mattn/goveralls)
       script:
       - make test-unit
-      - $GOPATH/bin/goveralls -service=travis-ci -coverprofile=coverage.out -repotoken=$COVERALLS_TOKEN
       - make test-e2e-go
       - make test-integration
+      after_success:
+      - $GOPATH/bin/goveralls -service=travis-ci -coverprofile=coverage.out -repotoken=$COVERALLS_TOKEN
 
     # Build and test go for new project layouts
     - name: Go e2e tests for new project layouts
