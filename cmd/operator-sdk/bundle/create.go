@@ -108,7 +108,7 @@ bundle.Dockerfile for your latest operator version without building the image:
 			}
 
 			if err = c.validate(args); err != nil {
-				return fmt.Errorf("error validating args: %v", err)
+				return fmt.Errorf("invalid command args: %v", err)
 			}
 
 			if c.generateOnly {
@@ -172,7 +172,7 @@ func (c *bundleCreateCmd) setDefaults() (err error) {
 		c.directory = dir
 	}
 
-	// Ensure a default channel is present if there only one channel. Don't infer
+	// A default channel can be inferred if there is only one channel. Don't infer
 	// default otherwise; the user must set this value.
 	if c.defaultChannel == "" && strings.Count(c.channels, ",") == 0 {
 		c.defaultChannel = c.channels
@@ -199,11 +199,18 @@ func (c bundleCreateCmd) validate(args []string) error {
 	if c.packageName == "" {
 		return fmt.Errorf("--package must be set")
 	}
+
+	// Ensure a default channel is present.
+	if c.defaultChannel == "" {
+		return fmt.Errorf("--default-channel must be set")
+	}
+
 	// Bundle commands only work with bundle directory formats, not package
 	// manifests formats.
 	if isPackageManifestsDir(c.directory, c.packageName) {
 		return fmt.Errorf("bundle commands can only be used on bundle directory formats")
 	}
+
 	if c.generateOnly {
 		if len(args) != 0 {
 			return errors.New("the command does not accept any arguments if --generate-only=true")
