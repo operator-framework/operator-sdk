@@ -92,19 +92,15 @@ func (b ClusterServiceVersion) GetBase() (base *v1alpha1.ClusterServiceVersion, 
 	return base, nil
 }
 
-// addSDKstamps adds SDK stamps to CSV if they do not exist. It assumes that if sdk Builder
-// stamp is not present, then sdk stamps are also not populated in csv. Addition of Mediatype
-// stamp is skipped in csv.
+// addSDKstamps adds SDK stamps to the base if they do not exist. It assumes that if sdk Builder
+// stamp is not present, then sdk stamps are also not populated in csv.
 func addSDKstamps(csv *v1alpha1.ClusterServiceVersion) {
-	if _, exist := csv.ObjectMeta.Annotations[projutil.Builder]; !exist {
-		metricLabels := projutil.MakeMetricsLabels()
+	if _, exist := csv.ObjectMeta.Annotations[projutil.OperatorBuilder]; !exist {
+		metricLabels := projutil.MakeOperatorMetricLables()
 		for label, value := range metricLabels.Data {
-			if label != projutil.Mediatype {
-				csv.ObjectMeta.Annotations[label] = value
-			}
+			csv.ObjectMeta.Annotations[label] = value
 		}
 	}
-
 }
 
 // setDefaults sets default values in b using b's existing values.

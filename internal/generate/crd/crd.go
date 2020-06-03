@@ -384,13 +384,12 @@ func setSDKstamps(crd *apiextv1beta1.CustomResourceDefinition, operatorType stri
 }
 
 func addStampsToAnnotations(mapAnnotations map[string]string, operatorType string) {
-	metricLables := projutil.MakeMetricsLabels()
+	metricLables := projutil.MakeOperatorMetricLables()
 	for label, value := range metricLables.Data {
-		if label != projutil.Mediatype {
-			mapAnnotations[label] = value
-		}
+		mapAnnotations[label] = value
 	}
-	// Modifying operator type for ansible and helm legacy operators
+	// Modifying operator type for ansible and helm legacy operators, as during
+	// scaffolding the project directories are not written on disk
 	if operatorType != projutil.OperatorTypeGo {
 		projutil.SetSDKProjectLayout(operatorType, mapAnnotations)
 	}

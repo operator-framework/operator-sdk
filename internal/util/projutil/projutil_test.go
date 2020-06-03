@@ -90,6 +90,23 @@ var _ = Describe("Testing projutil helpers", func() {
 		})
 
 	})
+
+	Describe("Test sdk_metrics_util helpers", func() {
+		Describe("Testing SDK version", func() {
+			It("should extract sdk version", func() {
+				version := "v0.17.0-159-ge87627f4-dirty"
+				output := parseVersion(version)
+				Expect(output).To(Equal("v0.17.0"))
+			})
+			It("should extract sdk version", func() {
+				version := "v0.18.0"
+				output := parseVersion(version)
+				Expect(output).To(Equal("v0.18.0"))
+			})
+
+		})
+	})
+
 })
 
 func TestMetadata(t *testing.T) {

@@ -61,8 +61,8 @@ var (
 )
 
 const (
-	sdkBuilderTest = "operators.operatorframework.io.metrics.builder: operator-sdk-unknown"
-	sdkLayoutTest  = "operators.operatorframework.io.metrics.project_layout: unknown"
+	testSDKbuilderStamp = "operators.operatorframework.io/builder: operator-sdk-unknown"
+	testSDKlayoutStamp  = "operators.operatorframework.io/project_layout: unknown"
 )
 
 var (
@@ -162,8 +162,8 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 
 				annotations := outputCSV.ObjectMeta.Annotations
 				Expect(annotations).ToNot(BeNil())
-				Expect(annotations).Should(HaveKey(projutil.Builder))
-				Expect(annotations).Should(HaveKey(projutil.Layout))
+				Expect(annotations).Should(HaveKey(projutil.OperatorBuilder))
+				Expect(annotations).Should(HaveKey(projutil.OperatorLayout))
 			})
 			It("should write a ClusterServiceVersion manifest to a bundle file", func() {
 				g = Generator{
@@ -522,6 +522,6 @@ func upgradeCSV(csv *v1alpha1.ClusterServiceVersion, name, version string) *v1al
 // cases do not generate a PROJECTFILE or an entire operator to get the version or layout
 // of SDK. Hence the values of those will appear "unknown".
 func removeSDKStampsFromCSVString(csv string) string {
-	replacer := strings.NewReplacer(sdkBuilderTest, "", sdkLayoutTest, "")
+	replacer := strings.NewReplacer(testSDKbuilderStamp, "", testSDKlayoutStamp, "")
 	return replacer.Replace(csv)
 }

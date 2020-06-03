@@ -175,11 +175,8 @@ func TestGoCSVUpgradeWithInputsToOutput(t *testing.T) {
 
 	// Read generated CSV from outputDir path
 	csvOutputFile := filepath.Join(outputFromCSVDir, csvVersion, csvFileName)
-
 	outputCSV := getCSVFromFile(t, csvOutputFile)
-
 	removeSDKstampsFromCSVHelper(outputCSV)
-
 	expCSV := getCSVFromFile(t, expCsvFile)
 
 	assert.Equal(t, expCSV, outputCSV)
@@ -216,7 +213,7 @@ func TestGoCSVNew(t *testing.T) {
 
 		outputCSV, err := generateCSV(b)
 		if err != nil {
-			t.Errorf("error occurred %v", err)
+			t.Errorf("Error occurred while generating CSV %v", err)
 		}
 		removeSDKstampsFromCSVHelper(outputCSV)
 		assert.Equal(t, expCSV, outputCSV)
@@ -253,7 +250,7 @@ func TestGoCSVUpdate(t *testing.T) {
 
 		outputCSV, err := generateCSV(b)
 		if err != nil {
-			t.Errorf("error occurred %v", err)
+			t.Errorf("Error occurred while generating CSV, %v", err)
 		}
 		removeSDKstampsFromCSVHelper(outputCSV)
 		assert.Equal(t, expCSV, outputCSV)
@@ -290,7 +287,7 @@ func TestGoCSVUpgrade(t *testing.T) {
 
 		outputCSV, err := generateCSV(b)
 		if err != nil {
-			t.Errorf("error occurred %v", err)
+			t.Errorf("Error occurred while generating CSV, %v", err)
 		}
 		removeSDKstampsFromCSVHelper(outputCSV)
 		assert.Equal(t, expCSV, outputCSV)
@@ -327,7 +324,7 @@ func TestGoCSVNewManifests(t *testing.T) {
 		expCSV := getCSVFromFile(t, filepath.Join(OLMCatalogDir, testProjectName, noUpdateDir, csvExpFile))
 		outputCSV, err := generateCSV(b)
 		if err != nil {
-			t.Errorf("error occurred %v", err)
+			t.Errorf("Error occurred while generating CSV, %v", err)
 		}
 		removeSDKstampsFromCSVHelper(outputCSV)
 		assert.Equal(t, expCSV, outputCSV)
@@ -362,12 +359,12 @@ func TestGoCSVUpdateManifests(t *testing.T) {
 	} else {
 		expCSV := getCSVFromFile(t, filepath.Join(OLMCatalogDir, testProjectName, csvVersion, csvExpFile))
 		if err != nil {
-			t.Errorf("error occurred %v", err)
+			t.Errorf("Error occurred while generating CSV, %v", err)
 		}
 
 		outputCSV, err := generateCSV(b)
 		if err != nil {
-			t.Errorf("error occurred %v", err)
+			t.Errorf("Error occurred while generating CSV, %v", err)
 		}
 		removeSDKstampsFromCSVHelper(outputCSV)
 		assert.Equal(t, expCSV, outputCSV)
@@ -449,6 +446,31 @@ func TestGoCSVNewWithEmptyDeployDir(t *testing.T) {
 	}
 }
 
+func TestSDKStamps(t *testing.T) {
+	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
+	defer cleanupFunc()
+
+	b := bases.ClusterServiceVersion{
+		OperatorName: testProjectName,
+		OperatorType: projutil.OperatorTypeGo,
+	}
+
+	// check if base CSV has the required stamp values
+	csv, err := b.GetBase()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	annotations := csv.ObjectMeta.Annotations
+	if _, ok := annotations[projutil.OperatorBuilder]; !ok {
+		t.Errorf("CSV base does not contain SDK stamp %s", projutil.OperatorBuilder)
+	}
+
+	if _, ok := annotations[projutil.OperatorLayout]; !ok {
+		t.Errorf("CSV base does not contain SDK stamp %s", projutil.OperatorLayout)
+	}
+}
+
 func TestUpdateCSVVersion(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
@@ -511,12 +533,12 @@ func getCSVFromFile(t *testing.T, path string) *olmapiv1alpha1.ClusterServiceVer
 	csvpath := filepath.Join(path)
 	b, err := ioutil.ReadFile(csvpath)
 	if err != nil {
-		t.Errorf("error reading manifest %s: %v", path, err)
+		t.Errorf("Error reading manifest %s: %v", path, err)
 	}
 
 	csv, err := generateCSV(b)
 	if err != nil {
-		t.Errorf("error generating csv %s: %v", path, err)
+		t.Errorf("Error generating csv %s: %v", path, err)
 	}
 	return csv
 }
@@ -548,12 +570,10 @@ func generateCSV(input []byte) (*olmapiv1alpha1.ClusterServiceVersion, error) {
 // removeSDKstampsFromCSV removes the sdk stamps from CSV struct. Used for test cases where
 // we need to test the generated CSV with expected predefined CSV file on disk.
 func removeSDKstampsFromCSVHelper(csv *v1alpha1.ClusterServiceVersion) {
-	if _, exist := csv.ObjectMeta.Annotations[projutil.Builder]; exist {
-		metricLabels := projutil.MakeMetricsLabels()
+	if _, exist := csv.ObjectMeta.Annotations[projutil.OperatorBuilder]; exist {
+		metricLabels := projutil.MakeOperatorMetricLables()
 		for label := range metricLabels.Data {
-			if label != projutil.Mediatype {
-				delete(csv.ObjectMeta.Annotations, label)
-			}
+			delete(csv.ObjectMeta.Annotations, label)
 		}
 	}
 }

@@ -381,7 +381,7 @@ func getAnnotationsFilePath(outputDir, manifestsDir string) string {
 }
 
 func getSDKMetricsContent() map[string]string {
-	content := projutil.MakeMetricsLabels()
+	content := projutil.MakeBundleMetricsLabels()
 	return content.Data
 }
 
@@ -389,7 +389,7 @@ func writeMetricsToAnnotationsYaml(outputDir, manifestsDir string) error {
 	annotationsFilePath := getAnnotationsFilePath(outputDir, manifestsDir)
 
 	// Write metrics annotations
-	metricsContent := projutil.MakeMetricsLabels()
+	metricsContent := projutil.MakeBundleMetricsLabels()
 	err := registry.RewriteAnnotationsYaml(annotationsFilePath, manifestsDir, metricsContent.Data)
 	if err != nil {
 		return err

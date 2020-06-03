@@ -15,36 +15,58 @@
 package projutil
 
 import (
+	"regexp"
+
 	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
 	ver "github.com/operator-framework/operator-sdk/version"
 )
 
 const (
-	OperatorSDK  = "operator-sdk"
-	Mediatype    = "operators.operatorframework.io.metrics.mediatype.v1"
-	Builder      = "operators.operatorframework.io.metrics.builder"
-	Layout       = "operators.operatorframework.io.metrics.project_layout"
-	sdkMediatype = "metrics+v1"
-)
-
-var (
-	sdkBuilder = OperatorSDK + "-" + ver.GitVersion
+	OperatorSDK      = "operator-sdk"
+	BundleMediatype  = "operators.operatorframework.io.metrics.mediatype.v1"
+	BundleSDKBuilder = "operators.operatorframework.io.metrics.builder"
+	BundleSDKLayout  = "operators.operatorframework.io.metrics.project_layout"
+	sdkMediatype     = "metrics+v1"
+	OperatorBuilder  = "operators.operatorframework.io/builder"
+	OperatorLayout   = "operators.operatorframework.io/project_layout"
 )
 
 type MetricLabels struct {
 	Data map[string]string
 }
 
-func MakeMetricsLabels() MetricLabels {
+func MakeBundleMetricsLabels() MetricLabels {
 	m := MetricLabels{
 		Data: map[string]string{
-			Mediatype: sdkMediatype,
-			Builder:   sdkBuilder,
-			Layout:    getSDKProjectLayout(),
+			BundleMediatype:  sdkMediatype,
+			BundleSDKBuilder: getSDKBuilder(),
+			BundleSDKLayout:  getSDKProjectLayout(),
 		},
 	}
 	return m
+}
 
+func MakeOperatorMetricLables() MetricLabels {
+	m := MetricLabels{
+		Data: map[string]string{
+			OperatorBuilder: getSDKBuilder(),
+			OperatorLayout:  getSDKProjectLayout(),
+		},
+	}
+	return m
+}
+
+func getSDKBuilder() string {
+	return OperatorSDK + "-" + parseVersion(ver.GitVersion)
+}
+
+func parseVersion(input string) string {
+	re := regexp.MustCompile("v[0-9]*.[0-9]*.[0-9]*")
+	version := re.FindString(input)
+	if version == "" {
+		return "unknown"
+	}
+	return version
 }
 
 // getSDKProjectLayout returns the `layout` field in PROJECT file if it is a
@@ -60,6 +82,8 @@ func getSDKProjectLayout() string {
 	return GetOperatorType()
 }
 
+// SetSDKProjectLayout is a helper function to enable CRDs in Helm and Ansible
+// operators, to set operator layout value based on input scaffolding flag.
 func SetSDKProjectLayout(operatorType string, metricData map[string]string) {
-	metricData[Layout] = operatorType
+	metricData[OperatorLayout] = operatorType
 }

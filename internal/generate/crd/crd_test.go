@@ -212,6 +212,7 @@ func TestCRDNonGo(t *testing.T) {
 				Resource:     *r,
 				CRDVersion:   c.crdVersion,
 				IsOperatorGo: false,
+				OperatorType: "unknown",
 			}
 			fileMap, err := g.generateNonGo()
 			if err != nil {
@@ -231,6 +232,9 @@ func TestCRDNonGo(t *testing.T) {
 const crdNonGoDefaultExpV1beta1 = `apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
+  annotations:
+    operators.operatorframework.io/builder: operator-sdk-unknown
+    operators.operatorframework.io/project_layout: unknown
   name: memcacheds.cache.example.com
 spec:
   group: cache.example.com
@@ -257,6 +261,9 @@ spec:
 const crdNonGoDefaultExpV1 = `apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
+  annotations:
+    operators.operatorframework.io/builder: operator-sdk-unknown
+    operators.operatorframework.io/project_layout: unknown
   name: memcacheds.cache.example.com
 spec:
   group: cache.example.com
@@ -283,6 +290,9 @@ spec:
 const crdCustomExpV1beta1 = `apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
+  annotations:
+    operators.operatorframework.io/builder: operator-sdk-unknown
+    operators.operatorframework.io/project_layout: unknown
   name: memcacheds.cache.example.com
 spec:
   group: cache.example.com
@@ -344,6 +354,9 @@ spec:
 const crdCustomExpV1 = `apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
+  annotations:
+    operators.operatorframework.io/builder: operator-sdk-unknown
+    operators.operatorframework.io/project_layout: unknown
   name: memcacheds.cache.example.com
 spec:
   group: cache.example.com
