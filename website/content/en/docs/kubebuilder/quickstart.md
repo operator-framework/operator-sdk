@@ -69,7 +69,7 @@ If yes then add the line `multigroup: true` in the `PROJECT` file which should l
 
 ```YAML
 domain: example.com
-layout: go.kubebuilder.io/v2.0.0
+layout: go.kubebuilder.io/v2
 multigroup: true
 ...
 ```

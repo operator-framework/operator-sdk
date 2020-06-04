@@ -21,15 +21,18 @@ import (
 	kbgov2 "sigs.k8s.io/kubebuilder/pkg/plugin/v2"
 )
 
+// Plugin name/version used in this file will also be used in phase 2 plugins when we can
+// pipe kubebuilder's init/create api output into our scaffold modification
+// plugins. In phase 1 we wrap kubebuilder's Go plugin to have the same effect.
+
 const (
-	// These will be used as plugin name/version in phase 2 plugins when we can
-	// pipe kubebuilder's init/create api output into our scaffold modification
-	// plugins. In phase 1 we wrap kubebuilder's Go plugin to have the same effect.
-	pluginName    = "go" + plugins.DefaultNameQualifier
-	pluginVersion = "v2.0.0"
+	pluginName = "go" + plugins.DefaultNameQualifier
 )
 
-var pluginConfigKey = plugin.Key(pluginName, pluginVersion)
+var (
+	pluginVersion   = plugin.Version{Number: 2, Stage: plugin.AlphaStage}
+	pluginConfigKey = plugin.Key(pluginName, pluginVersion.String())
+)
 
 var (
 	_ plugin.Base                      = Plugin{}
@@ -41,7 +44,7 @@ var (
 type Plugin struct{}
 
 func (Plugin) Name() string                       { return (kbgov2.Plugin{}).Name() }
-func (Plugin) Version() string                    { return (kbgov2.Plugin{}).Version() }
+func (Plugin) Version() plugin.Version            { return (kbgov2.Plugin{}).Version() }
 func (Plugin) SupportedProjectVersions() []string { return (kbgov2.Plugin{}).SupportedProjectVersions() }
 
 func (p Plugin) GetInitPlugin() plugin.Init {
