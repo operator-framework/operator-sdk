@@ -32,6 +32,9 @@ import (
 // newAddCRDCmd - add crd command
 func newAddCRDCmd() *cobra.Command {
 	crdCmd := &cobra.Command{
+		Deprecated: `use 'operator-sdk add api' instead to create or update API definitions.
+Run 'operator-sdk add api --help' for more details.
+		`,
 		Use:   "crd",
 		Short: "Adds a Custom Resource Definition (CRD) and the Custom Resource (CR) files",
 		Long: `The operator-sdk add crd command will create a Custom Resource Definition (CRD)` +
