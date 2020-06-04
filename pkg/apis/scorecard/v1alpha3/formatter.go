@@ -32,7 +32,6 @@ const (
 
 func (s Test) MarshalText() (string, error) {
 	var sb strings.Builder
-	var isNotTty bool
 
 	failColor := ": \033[1;" + redColor + "m%s\033[0m\n"
 	passColor := ": \033[1;" + greenColor + "m%s\033[0m\n"

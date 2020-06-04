@@ -13,6 +13,6 @@
 // limitations under the License.
 
 // +k8s:deepcopy-gen=package,register
-// +groupName=osdk.openshift.io
+// +groupName=scorecard.operatorframework.io
 
 package v1alpha3
