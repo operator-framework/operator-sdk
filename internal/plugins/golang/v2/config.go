@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package golang
+package v2
 
 import "sigs.k8s.io/kubebuilder/pkg/model/config"
 
+// Config configures this plugin, and is saved in the project config file.
 type Config struct{}
 
+// hasPluginConfig returns true if cfg.Plugins contains an exact match for this plugin's key.
 func hasPluginConfig(cfg *config.Config) bool {
 	if len(cfg.Plugins) == 0 {
 		return false
