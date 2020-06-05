@@ -17,7 +17,7 @@ require (
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.9.0
 	github.com/operator-framework/api v0.3.7-0.20200602203552-431198de9fc2
-	github.com/operator-framework/operator-registry v1.12.4
+	github.com/operator-framework/operator-registry v1.12.6-0.20200605115407-01fa069730e2
 	github.com/pborman/uuid v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.5.1
@@ -46,6 +46,7 @@ require (
 	k8s.io/klog v1.0.0
 	k8s.io/kube-state-metrics v1.7.2
 	k8s.io/kubectl v0.18.2
+	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/controller-runtime v0.6.0
 	sigs.k8s.io/controller-tools v0.3.0
 	sigs.k8s.io/kubebuilder v1.0.9-0.20200604172714-cd5eed9f42b7
