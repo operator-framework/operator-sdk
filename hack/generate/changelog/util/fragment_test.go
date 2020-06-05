@@ -370,3 +370,33 @@ func TestGitPullRequestNumberGetter_parsePRNumber(t *testing.T) {
 		})
 	}
 }
+
+func Test_gitPullRequestNumberGetter_getCommitMessage(t *testing.T) {
+	tests := []struct {
+		name     string
+		filename string
+		wantErr  bool
+	}{
+		{
+			name:     "should fail when the fragment file cannot be found in any commit",
+			filename: "/does/not/exist",
+			wantErr:  true,
+		},
+		{
+			name:     "should work successfully when there is a commit with the fragment file",
+			filename: "testdata/valid/fragment1.yaml",
+			wantErr:  false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			g := &gitPullRequestNumberGetter{}
+			_, err := g.getCommitMessage(tt.filename)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("getCommitMessage() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
