@@ -232,10 +232,20 @@ func (c bundleCreateCmd) runGenerate() error {
 		c.overwrite = true
 	}
 
+	annotationsFile := getAnnotationsFilePath(c.outputDir, c.directory)
+
+	if isExist(annotationsFile) && !c.overwrite {
+		err := registry.RemoveSDKstampsInAnnotation(annotationsFile)
+		if err != nil {
+			return err
+		}
+	}
+
 	err := bundle.GenerateFunc(c.directory, c.outputDir, c.packageName, c.channels, c.defaultChannel, c.overwrite)
 	if err != nil {
 		return fmt.Errorf("error generating bundle image files: %v", err)
 	}
+
 	if err = rewriteBundleImageContents(c.outputDir, c.directory); err != nil {
 		return err
 	}
@@ -335,15 +345,10 @@ func copyScorecardConfig() error {
 
 func addSDKMetricLabels() error {
 	var sdkMetricContent string
-
-	content := getSDKMetricsContent()
-
-	for key, value := range content {
+	for key, value := range projutil.MakeBundleMetricsLabels() {
 		sdkMetricContent += fmt.Sprintf("LABEL %s=%s\n", key, value)
 	}
-
 	err := projutil.RewriteFileContents(bundle.DockerFile, "LABEL", sdkMetricContent)
-
 	if err != nil {
 		return fmt.Errorf("error rewriting dockerfile with metric labels, %v", err)
 	}
@@ -380,17 +385,11 @@ func getAnnotationsFilePath(outputDir, manifestsDir string) string {
 	return filepath.Join(filepath.Dir(manifestsDir), bundle.MetadataDir, bundle.AnnotationsFile)
 }
 
-func getSDKMetricsContent() map[string]string {
-	content := projutil.MakeBundleMetricsLabels()
-	return content.Data
-}
-
 func writeMetricsToAnnotationsYaml(outputDir, manifestsDir string) error {
 	annotationsFilePath := getAnnotationsFilePath(outputDir, manifestsDir)
 
 	// Write metrics annotations
-	metricsContent := projutil.MakeBundleMetricsLabels()
-	err := registry.RewriteAnnotationsYaml(annotationsFilePath, manifestsDir, metricsContent.Data)
+	err := registry.RewriteAnnotationsYaml(annotationsFilePath, projutil.MakeBundleMetricsLabels())
 	if err != nil {
 		return err
 	}

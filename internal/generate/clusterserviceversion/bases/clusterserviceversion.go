@@ -96,8 +96,7 @@ func (b ClusterServiceVersion) GetBase() (base *v1alpha1.ClusterServiceVersion, 
 // stamp is not present, then sdk stamps are also not populated in csv.
 func addSDKstamps(csv *v1alpha1.ClusterServiceVersion) {
 	if _, exist := csv.ObjectMeta.Annotations[projutil.OperatorBuilder]; !exist {
-		metricLabels := projutil.MakeOperatorMetricLables()
-		for label, value := range metricLabels.Data {
+		for label, value := range projutil.MakeOperatorMetricLables() {
 			csv.ObjectMeta.Annotations[label] = value
 		}
 	}

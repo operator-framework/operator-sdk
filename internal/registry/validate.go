@@ -21,17 +21,14 @@ import (
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	apivalidation "github.com/operator-framework/api/pkg/validation"
 	apierrors "github.com/operator-framework/api/pkg/validation/errors"
-	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 	k8svalidation "k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/validation/field"
-	"sigs.k8s.io/yaml"
-)
 
-const (
-	defaultPermission = 0644
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 // ValidateBundleContent confirms that the CSV and CRD files inside the bundle
@@ -137,33 +134,73 @@ func appendResult(results []apierrors.ManifestResult, r apierrors.ManifestResult
 
 // RewriteAnnotationsYaml unmarshalls the specified yaml file, appends the content and
 // converts it again to yaml.
-func RewriteAnnotationsYaml(filename, directory string, content map[string]string) error {
+func RewriteAnnotationsYaml(filename string, content map[string]string) error {
 
-	f, err := ioutil.ReadFile(filename)
+	metadata, err := getAnnotationFileContents(filename)
 	if err != nil {
 		return err
-	}
-
-	annotationsYaml := &bundle.AnnotationMetadata{}
-	if err := yaml.Unmarshal(f, annotationsYaml); err != nil {
-		return fmt.Errorf("error parsing annotations file: %v", err)
 	}
 
 	// Append the contents to annotationsYaml
 	for key, val := range content {
-		annotationsYaml.Annotations[key] = val
+		metadata.Annotations[key] = val
 	}
 
-	file, err := yaml.Marshal(annotationsYaml)
+	err = writeAnnotationFile(filename, metadata)
 	if err != nil {
 		return err
 	}
 
-	err = ioutil.WriteFile(filename, []byte(file), defaultPermission)
+	return nil
+}
+
+// RemoveSDK stamps, removes the additional stamps added to annotations file, so that
+// the number of annotation values remain the same. This is dont to pass `bundle.ValidateAnnotations`
+// function where the length of annotations is expected to be 6.
+func RemoveSDKstampsInAnnotation(filename string) error {
+	metadata, err := getAnnotationFileContents(filename)
 	if err != nil {
-		return fmt.Errorf("error writing modified contents to annotations file, %v", err)
+		return err
+	}
+
+	// Delete the contents to annotationsYaml
+	for key := range projutil.MakeBundleMetricsLabels() {
+		delete(metadata.Annotations, key)
+	}
+
+	err = writeAnnotationFile(filename, metadata)
+	if err != nil {
+		return err
 	}
 
 	return nil
+}
 
+func getAnnotationFileContents(filename string) (*registrybundle.AnnotationMetadata, error) {
+	f, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	annotationsYaml := &registrybundle.AnnotationMetadata{}
+	if err := yaml.Unmarshal(f, annotationsYaml); err != nil {
+		return nil, fmt.Errorf("error parsing annotations file: %v", err)
+	}
+	return annotationsYaml, nil
+}
+
+func writeAnnotationFile(filename string, annotation *registrybundle.AnnotationMetadata) error {
+	// TODO: replace `gopkg.in/yaml.v2` with `sigs.k8s.io/yaml`. Operator registry
+	// defines annotations with yaml format (using gopkg-yaml) and k8s-yaml takes name
+	// of field in the struct as the value of key in yaml.
+	file, err := yaml.Marshal(annotation)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(filename, []byte(file), 0644)
+	if err != nil {
+		return fmt.Errorf("error writing modified contents to annotations file, %v", err)
+	}
+	return nil
 }

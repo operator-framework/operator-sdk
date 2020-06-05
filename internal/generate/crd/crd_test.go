@@ -132,9 +132,13 @@ func TestGenerate(t *testing.T) {
 }
 
 func TestCRDGo(t *testing.T) {
+	// Setting the OperatorType to be "unknown", so that it is propagated in the
+	// sdk stamps. The project layout cannot be inferred here as the entire
+	// project scaffolding is not done.
 	g := Generator{
 		IsOperatorGo: true,
 		ApisDir:      filepath.Join(testGoDataDir, scaffold.ApisDir),
+		OperatorType: "unknown",
 	}
 
 	r, err := scaffold.NewResource(testAPIVersion, testKind)

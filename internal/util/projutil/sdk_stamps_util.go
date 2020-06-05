@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2020 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,42 +22,31 @@ import (
 )
 
 const (
-	OperatorSDK      = "operator-sdk"
-	BundleMediatype  = "operators.operatorframework.io.metrics.mediatype.v1"
-	BundleSDKBuilder = "operators.operatorframework.io.metrics.builder"
-	BundleSDKLayout  = "operators.operatorframework.io.metrics.project_layout"
-	sdkMediatype     = "metrics+v1"
-	OperatorBuilder  = "operators.operatorframework.io/builder"
-	OperatorLayout   = "operators.operatorframework.io/project_layout"
+	OperatorBuilder = "operators.operatorframework.io/builder"
+	OperatorLayout  = "operators.operatorframework.io/project_layout"
 )
 
-type MetricLabels struct {
-	Data map[string]string
+// MakeBundleMetricsLabels returns the SDK metric stamps which will be added
+// to bundle resources like bundle.Dockerfile and annotations.yaml.
+func MakeBundleMetricsLabels() map[string]string {
+	return map[string]string{
+		"operators.operatorframework.io.metrics.mediatype.v1":   "metrics+v1",
+		"operators.operatorframework.io.metrics.builder":        getSDKBuilder(),
+		"operators.operatorframework.io.metrics.project_layout": getSDKProjectLayout(),
+	}
 }
 
-func MakeBundleMetricsLabels() MetricLabels {
-	m := MetricLabels{
-		Data: map[string]string{
-			BundleMediatype:  sdkMediatype,
-			BundleSDKBuilder: getSDKBuilder(),
-			BundleSDKLayout:  getSDKProjectLayout(),
-		},
+// MakeOperatorMetricLables returns the SDK metric stamps which will be added
+// to custom resource definitions and cluster service versions.
+func MakeOperatorMetricLables() map[string]string {
+	return map[string]string{
+		OperatorBuilder: getSDKBuilder(),
+		OperatorLayout:  getSDKProjectLayout(),
 	}
-	return m
-}
-
-func MakeOperatorMetricLables() MetricLabels {
-	m := MetricLabels{
-		Data: map[string]string{
-			OperatorBuilder: getSDKBuilder(),
-			OperatorLayout:  getSDKProjectLayout(),
-		},
-	}
-	return m
 }
 
 func getSDKBuilder() string {
-	return OperatorSDK + "-" + parseVersion(ver.GitVersion)
+	return "operator-sdk" + "-" + parseVersion(ver.GitVersion)
 }
 
 func parseVersion(input string) string {
@@ -80,10 +69,4 @@ func getSDKProjectLayout() string {
 		return cfg.Layout
 	}
 	return GetOperatorType()
-}
-
-// SetSDKProjectLayout is a helper function to enable CRDs in Helm and Ansible
-// operators, to set operator layout value based on input scaffolding flag.
-func SetSDKProjectLayout(operatorType string, metricData map[string]string) {
-	metricData[OperatorLayout] = operatorType
 }

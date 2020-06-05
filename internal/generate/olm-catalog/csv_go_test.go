@@ -26,14 +26,14 @@ import (
 	"github.com/blang/semver"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	olmapiv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
-	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 	"sigs.k8s.io/yaml"
 
 	"github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion/bases"
-	"github.com/stretchr/testify/assert"
+	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
 const (
@@ -571,8 +571,7 @@ func generateCSV(input []byte) (*olmapiv1alpha1.ClusterServiceVersion, error) {
 // we need to test the generated CSV with expected predefined CSV file on disk.
 func removeSDKstampsFromCSVHelper(csv *v1alpha1.ClusterServiceVersion) {
 	if _, exist := csv.ObjectMeta.Annotations[projutil.OperatorBuilder]; exist {
-		metricLabels := projutil.MakeOperatorMetricLables()
-		for label := range metricLabels.Data {
+		for label := range projutil.MakeOperatorMetricLables() {
 			delete(csv.ObjectMeta.Annotations, label)
 		}
 	}

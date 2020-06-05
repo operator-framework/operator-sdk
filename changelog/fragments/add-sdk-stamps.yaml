@@ -1,0 +1,3 @@
+entries:
+    - description: Add sdk stamps to bundle resources (CRDs, CSVs, `annotations.yaml` and `bundle.dockerfile`).
+      kind: "addition"
