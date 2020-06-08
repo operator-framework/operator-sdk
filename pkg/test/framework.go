@@ -267,7 +267,7 @@ func (f *Framework) setupLocalCommand() (*exec.Cmd, error) {
 	outputBinName := filepath.Join(scaffold.BuildBinDir, projectName+"-local")
 	opts := projutil.GoCmdOptions{
 		BinName:     outputBinName,
-		PackagePath: filepath.Join(scaffold.ManagerDir, scaffold.CmdFile),
+		PackagePath: filepath.Join(projutil.GetGoPkg(), filepath.ToSlash(scaffold.ManagerDir)),
 	}
 	if err := projutil.GoBuild(opts); err != nil {
 		return nil, fmt.Errorf("failed to build local operator binary: %w", err)
