@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -52,9 +51,6 @@ generates a default directory layout based on the input <project-name>.
 		Example: `  # Create a new project directory
   $ mkdir $HOME/projects/example.com/
   $ cd $HOME/projects/example.com/
-
-  # Go project
-  $ operator-sdk new app-operator
 
   # Ansible project
   $ operator-sdk new app-operator --type=ansible \
@@ -95,18 +91,14 @@ generates a default directory layout based on the input <project-name>.
 `,
 		RunE: newFunc,
 	}
-	newCmd.Flags().StringVar(&operatorType, "type", "go",
-		"Type of operator to initialize (choices: \"go\", \"ansible\" or \"helm\")")
-	newCmd.Flags().StringVar(&repo, "repo", "",
-		"Project repository path for Go operators. Used as the project's Go import path. This must be set if "+
-			"outside of $GOPATH/src (e.g. github.com/example-inc/my-operator)")
+
+	newCmd.Flags().StringVar(&operatorType, "type", "",
+		"Type of operator to initialize (choices: \"ansible\" or \"helm\")")
+	if err := newCmd.MarkFlagRequired("type"); err != nil {
+		log.Fatalf("Failed to mark `type` flag for `new` subcommand as required")
+	}
 	newCmd.Flags().BoolVar(&gitInit, "git-init", false,
 		"Initialize the project directory as a git repository (default false)")
-	newCmd.Flags().StringVar(&headerFile, "header-file", "",
-		"Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt")
-	newCmd.Flags().BoolVar(&makeVendor, "vendor", false, "Use a vendor directory for dependencies")
-	newCmd.Flags().BoolVar(&skipValidation, "skip-validation", false,
-		"Do not validate the resulting project's structure and dependencies. (Only used for --type go)")
 	newCmd.Flags().BoolVar(&generatePlaybook, "generate-playbook", false,
 		"Generate a playbook skeleton. (Only used for --type ansible)")
 
@@ -120,11 +112,7 @@ var (
 	apiFlags         apiflags.APIFlags
 	operatorType     string
 	projectName      string
-	headerFile       string
-	repo             string
 	gitInit          bool
-	makeVendor       bool
-	skipValidation   bool
 	generatePlaybook bool
 )
 
@@ -140,22 +128,6 @@ func newFunc(cmd *cobra.Command, args []string) error {
 	log.Infof("Creating new %s operator '%s'.", strings.Title(operatorType), projectName)
 
 	switch operatorType {
-	case projutil.OperatorTypeGo:
-		if repo == "" {
-			repo = path.Join(projutil.GetGoPkg(), projectName)
-		}
-		if err := doGoScaffold(); err != nil {
-			log.Fatal(err)
-		}
-		if err := getDeps(); err != nil {
-			log.Fatal(err)
-		}
-		if !skipValidation {
-			if err := validateProject(); err != nil {
-				log.Fatal(err)
-			}
-		}
-
 	case projutil.OperatorTypeAnsible:
 		if err := doAnsibleScaffold(); err != nil {
 			log.Fatal(err)
@@ -227,48 +199,6 @@ func mustBeNewProject() {
 		log.Fatalf("Project (%v) in (%v) path already exists. Please use a different project name or delete "+
 			"the existing one", projectName, fp)
 	}
-}
-
-func doGoScaffold() error {
-	cfg := &input.Config{
-		Repo:           repo,
-		AbsProjectPath: filepath.Join(projutil.MustGetwd(), projectName),
-		ProjectName:    projectName,
-	}
-	s := &scaffold.Scaffold{}
-
-	if headerFile != "" {
-		err := s.Execute(cfg, &scaffold.Boilerplate{BoilerplateSrcPath: headerFile})
-		if err != nil {
-			return fmt.Errorf("boilerplate scaffold failed: %v", err)
-		}
-		s.BoilerplatePath = headerFile
-	}
-
-	if err := projutil.CheckGoModules(); err != nil {
-		return err
-	}
-
-	err := s.Execute(cfg,
-		&scaffold.GoMod{},
-		&scaffold.Tools{},
-		&scaffold.Cmd{},
-		&scaffold.Dockerfile{},
-		&scaffold.Entrypoint{},
-		&scaffold.UserSetup{},
-		&scaffold.ServiceAccount{},
-		&scaffold.Role{},
-		&scaffold.RoleBinding{},
-		&scaffold.Operator{},
-		&scaffold.Apis{},
-		&scaffold.Controller{},
-		&scaffold.Version{},
-		&scaffold.Gitignore{},
-	)
-	if err != nil {
-		return fmt.Errorf("new Go scaffold failed: %v", err)
-	}
-	return nil
 }
 
 func doAnsibleScaffold() error {
@@ -365,22 +295,12 @@ func doAnsibleScaffold() error {
 }
 
 func verifyFlags() error {
-	if operatorType != projutil.OperatorTypeGo && operatorType != projutil.OperatorTypeAnsible && operatorType !=
-		projutil.OperatorTypeHelm {
-		return fmt.Errorf("value of --type can only be `go`, `ansible`, or `helm`: %v",
+	if operatorType != projutil.OperatorTypeAnsible && operatorType != projutil.OperatorTypeHelm {
+		return fmt.Errorf("value of --type can only be `ansible`, or `helm`: %v",
 			projutil.ErrUnknownOperatorType{Type: operatorType})
 	}
 	if operatorType != projutil.OperatorTypeAnsible && generatePlaybook {
 		return fmt.Errorf("value of --generate-playbook can only be used with --type `ansible`")
-	}
-	if operatorType == projutil.OperatorTypeGo {
-		if len(apiFlags.APIVersion) != 0 || len(apiFlags.Kind) != 0 {
-			return fmt.Errorf("operators of type Go do not use --api-version or --kind")
-		}
-
-		if err := projutil.CheckRepo(repo); err != nil {
-			return err
-		}
 	}
 	if err := apiFlags.VerifyCommonFlags(operatorType); err != nil {
 		return err
@@ -395,50 +315,11 @@ func execProjCmd(cmd string, args ...string) error {
 	return projutil.ExecCmd(dc)
 }
 
-func getDeps() error {
-
-	// Only when a user requests a vendor directory be created should
-	// "go mod vendor" be run during project initialization.
-	if !makeVendor {
-		return nil
-	}
-
-	log.Info("Running go mod vendor")
-	opts := projutil.GoCmdOptions{
-		Args: []string{"-v"},
-		Dir:  filepath.Join(projutil.MustGetwd(), projectName),
-	}
-	if err := projutil.GoCmd("mod vendor", opts); err != nil {
-		return err
-	}
-	log.Info("Done getting dependencies")
-	return nil
-}
-
 func initGit() error {
 	log.Info("Running git init")
 	if err := execProjCmd("git", "init"); err != nil {
 		return fmt.Errorf("failed to run git init: %v", err)
 	}
 	log.Info("Run git init done")
-	return nil
-}
-
-func validateProject() error {
-	log.Info("Validating project")
-	// Run "go build ./..." to make sure all packages can be built
-	// correctly. From "go help build":
-	//
-	//	When compiling multiple packages or a single non-main package,
-	//	build compiles the packages but discards the resulting object,
-	//	serving only as a check that the packages can be built.
-	opts := projutil.GoCmdOptions{
-		PackagePath: "./...",
-		Dir:         filepath.Join(projutil.MustGetwd(), projectName),
-	}
-	if err := projutil.GoBuild(opts); err != nil {
-		return err
-	}
-	log.Info("Project validation successful.")
 	return nil
 }

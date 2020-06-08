@@ -196,6 +196,7 @@ func parseGoPkg(gopath string) string {
 // This function should be called after verifying the user is in project root.
 func GetOperatorType() OperatorType {
 	switch {
+	// TODO: Differentiate between legacy and KB Go projects
 	case IsOperatorGo():
 		return OperatorTypeGo
 	case IsOperatorAnsible():
@@ -314,15 +315,14 @@ func CheckGoModules() error {
 	}
 	if !goModOn {
 		return fmt.Errorf(`using go modules requires GO111MODULE="on", "auto", or unset.` +
-			` More info: https://sdk.operatorframework.io/docs/golang/quickstart/#a-note-on-dependency-management`)
+			` More info: https://sdk.operatorframework.io/docs/golang/new/quickstart/#a-note-on-dependency-management`)
 	}
 	return nil
 }
 
 // PrintDeprecationWarning prints a colored warning wrapping msg to the terminal.
 func PrintDeprecationWarning(msg string) {
-	fmt.Printf(noticeColor, "[Deprecation Notice] "+msg+". Refer to the version upgrade guide "+
-		"for more information: https://sdk.operatorframework.io/docs/migration/version-upgrade-guide/\n\n")
+	fmt.Fprintf(os.Stderr, noticeColor, "[Deprecation Notice] "+msg+"\n")
 }
 
 // RewriteFileContents adds the provided content before the last occurrence of the word label

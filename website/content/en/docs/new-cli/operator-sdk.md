@@ -73,6 +73,7 @@ operator-sdk [flags]
 * [operator-sdk create](../operator-sdk_create)	 - Scaffold a Kubernetes API or webhook
 * [operator-sdk generate](../operator-sdk_generate)	 - Invokes a specific generator
 * [operator-sdk init](../operator-sdk_init)	 - Initialize a new project
+* [operator-sdk new](../operator-sdk_new)	 - Creates a new operator application
 * [operator-sdk olm](../operator-sdk_olm)	 - Manage the Operator Lifecycle Manager installation in your cluster
 * [operator-sdk version](../operator-sdk_version)	 - Prints the version of operator-sdk
 

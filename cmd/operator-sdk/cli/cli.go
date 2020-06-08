@@ -20,6 +20,7 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/bundle"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/completion"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/new"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/olm"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/version"
 	"github.com/operator-framework/operator-sdk/internal/flags"
@@ -33,9 +34,9 @@ import (
 )
 
 var commands = []*cobra.Command{
-	// Once the KB CLI is made the default, add the "new" command as a way to
-	// scaffold the legacy project layout and mark "new" as deprecated
-	// new.NewCmd()
+	// The "new" cmd provides a way to scaffold Helm/Ansible projects
+	// from the new CLI.
+	new.NewCmd(),
 
 	alpha.NewCmd(),
 	build.NewCmd(),

@@ -79,7 +79,13 @@ operator-sdk new <project-name> [flags]
       --type string                 Type of operator to initialize (choices: "ansible" or "helm")
 ```
 
+### Options inherited from parent commands
+
+```
+      --verbose   Enable verbose logging
+```
+
 ### SEE ALSO
 
-* [operator-sdk](../operator-sdk)	 - An SDK for building operators with ease
+* [operator-sdk](../operator-sdk)	 - Development kit for building Kubernetes extensions and tools.
 
