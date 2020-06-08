@@ -1,4 +1,4 @@
-IMAGE = quay.io/username/custom-scorecard-tests
+IMAGE = quay.io/jemccorm/custom-scorecard-tests
 SHELL = /bin/bash
 
 all: build
