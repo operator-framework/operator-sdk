@@ -1,5 +1,0 @@
-entries:
-  - description: >
-      bump api validation library to 431198de9fc2cf82f369efb5c4a90a9cc079a1c3 to
-      fix "CRD key not found" validation bug.
-    kind: bugfix
