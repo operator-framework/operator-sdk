@@ -1,0 +1,6 @@
+entries:
+  - description: >
+      Remove invalid entries in the scorecard config.yaml example.
+    kind: "bugfix"
+    # Is this a breaking change?
+    breaking: false
