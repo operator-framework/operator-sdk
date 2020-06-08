@@ -1,3 +1,9 @@
+---
+title: Controller Runtime Client API
+linkTitle: Controller Runtime Client API
+weight: 10
+---
+
 ## Overview
 
 The [`controller-runtime`][repo-controller-runtime] library provides various abstractions to watch and reconcile resources in a Kubernetes cluster via CRUD (Create, Update, Delete, as well as Get and List in this case) operations. Operators use at least one controller to perform a coherent set of tasks within a cluster, usually through a combination of CRUD operations. The Operator SDK uses controller-runtime's [Client][doc-client-client] interface, which provides the interface for these operations.
@@ -568,4 +574,4 @@ func labelsForApp(name string) map[string]string {
 [doc-reconcile-reconciler]:https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Reconciler
 [doc-osdk-handle]:https://github.com/operator-framework/operator-sdk/blob/master/design/milestone-0.0.2/action-api.md#handler
 [doc-types-nsname]:https://godoc.org/k8s.io/apimachinery/pkg/types#NamespacedName
-[cr-status-subresource]:https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#status-subresource
+[cr-status-subresource]:https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#status-subresource

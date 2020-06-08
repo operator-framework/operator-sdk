@@ -1,8 +1,8 @@
-<!-- ---
+---
 title: API Markers
 linkTitle: API Markers
-weight: 5
---- -->
+weight: 40
+---
 
 This document describes [code markers][markers] supported by the SDK.
 

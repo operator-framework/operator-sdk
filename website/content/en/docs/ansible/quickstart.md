@@ -367,7 +367,7 @@ For more information, refer [cli][addcli] doc.
 [ansible-runner-http-plugin]:https://github.com/ansible/ansible-runner-http
 [ansible-runner-tool]: https://ansible-runner.readthedocs.io/en/latest/install.html
 [ansible-watches]: /docs/ansible/reference/watches
-[operator-scope]:../../operator-scope
+[operator-scope]:../../legacy-common/operator-scope
 [layout-doc]:../reference/scaffolding
 [homebrew-tool]:https://brew.sh/
 [install-guide]: /docs/install-operator-sdk

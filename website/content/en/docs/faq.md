@@ -144,8 +144,8 @@ This will work for the current environment. To persist this fix, add the above l
 
 [kube-apiserver_options]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options
 [controller-runtime_faq]: https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md#q-how-do-i-have-different-logic-in-my-reconciler-for-different-types-of-events-eg-create-update-delete
-[finalizer]: /docs/golang/quickstart/#handle-cleanup-on-deletion
-[gc-metrics]:/docs/golang/monitoring/prometheus/#garbage-collection
+[finalizer]:/docs/golang/new/advanced-topics/#handle-cleanup-on-deletion
+[gc-metrics]:/docs/golang/legacy/monitoring/prometheus/#garbage-collection
 [cr-faq]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md
 [client.Reader]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#Reader
 [rbac]:https://kubernetes.io/docs/reference/access-authn-authz/rbac/

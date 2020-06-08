@@ -1,4 +1,8 @@
-# Advanced Topics
+---
+title: Advanced Topics
+linkTitle: Advanced Topics
+weight: 50
+---
 
 ### Manage CR status conditions
 
@@ -118,7 +122,7 @@ To learn about how metrics work in the Operator SDK read the [metrics section][m
 
 To implement complex deletion logic, you can add a finalizer to your Custom Resource. This will prevent your Custom Resource from being
 deleted until you remove the finalizer (ie, after your cleanup logic has successfully run). For more information, see the
-[official Kubernetes documentation on finalizers](https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#finalizers).
+[official Kubernetes documentation on finalizers](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#finalizers).
 
 **Example:**
 

@@ -205,4 +205,4 @@ Optional:
 [doc-bundle]:https://github.com/operator-framework/operator-registry/blob/6893d19/README.md#manifest-format
 [install-modes]:https://github.com/operator-framework/operator-lifecycle-manager/blob/4197455/Documentation/design/building-your-csv.md#operator-metadata
 [olm-capabilities]:/docs/operator-capabilities/
-[csv-markers]:/docs/golang/references/markers
+[csv-markers]:/docs/golang/legacy/references/markers

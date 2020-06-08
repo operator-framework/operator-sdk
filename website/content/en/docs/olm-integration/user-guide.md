@@ -265,7 +265,7 @@ manager tool [`opm`][opm] to manage index images. Once one has been built, follo
 the OLM [docs][doc-olm-index] on adding an index to a cluster registry.
 
 
-[sdk-user-guide-go]:/docs/golang/quickstart
+[sdk-user-guide-go]:/docs/golang/legacy/quickstart
 [sdk-user-guide-ansible]:/docs/ansible/quickstart
 [sdk-user-guide-helm]:/docs/helm/quickstart
 [olm]:https://github.com/operator-framework/operator-lifecycle-manager/
@@ -286,7 +286,7 @@ the OLM [docs][doc-olm-index] on adding an index to a cluster registry.
 [cli-bundle-validate]:/docs/cli/operator-sdk_bundle_validate
 [doc-bundle-cli]:/docs/olm-integration/cli-overview
 [cli-generate-csv]:/docs/cli/operator-sdk_generate_csv
-[csv-markers]:/docs/golang/references/markers
+[csv-markers]:/docs/golang/legacy/references/markers
 [doc-run-olm]:/docs/olm-integration/olm-deployment/#operator-sdk-run-packagemanifests-command-overview
 [doc-olm-index]:https://github.com/operator-framework/operator-registry#using-the-index-with-operator-lifecycle-manager
 [index-image]:https://github.com/operator-framework/operator-registry#building-an-index-of-operators-using-opm

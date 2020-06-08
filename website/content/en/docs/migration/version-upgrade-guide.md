@@ -1197,12 +1197,12 @@ first `COPY` from `COPY /*.yaml manifests/` to `COPY deploy/olm-catalog/<operato
 [mercurial]: https://www.mercurial-scm.org/downloads
 [migrating-to-modules]: https://github.com/golang/go/wiki/Modules#migrating-to-modules
 [modules-wiki]: https://github.com/golang/go/wiki/Modules#migrating-to-modules
-[print-deps-cli]: ../../cli/operator-sdk_print-deps
+[print-deps-cli]: /docs/cli/operator-sdk_print-deps
 [changelog]: https://github.com/operator-framework/operator-sdk/blob/master/CHANGELOG.md
 [release-notes]: https://github.com/operator-framework/operator-sdk/releases
 [v0.1.0-migration-guide]: ../v0.1.0-migration-guide
 [manifest-format]: https://github.com/operator-framework/operator-registry#manifest-format
-[client-doc]: ../../golang/references/client
+[client-doc]: ../../golang/legacy/references/client
 [api-rules]: https://github.com/kubernetes/kubernetes/tree/36981002246682ed7dc4de54ccc2a96c1a0cbbdb/api/api-rules
 [generating-crd]: https://book.kubebuilder.io/reference/generating-crd.html
 [markers]: https://book.kubebuilder.io/reference/markers.html

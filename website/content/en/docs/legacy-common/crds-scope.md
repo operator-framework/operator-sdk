@@ -88,5 +88,5 @@ marker `// +kubebuilder:resource:path=<resource>,scope=Cluster`
     ```
   
 [RBAC]: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
-[manager_user_guide]: /docs/golang/quickstart/#manager
+[manager_user_guide]:/docs/golang/legacy/quickstart/#manager
 [manager_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Options
