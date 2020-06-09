@@ -30,7 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
+	scapiv1alpha3 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
 
 const (
@@ -44,11 +44,10 @@ const (
 )
 
 // BundleValidationTest validates an on-disk bundle
-func BundleValidationTest(dir string) scapiv1alpha2.ScorecardTestResult {
-	r := scapiv1alpha2.ScorecardTestResult{}
+func BundleValidationTest(dir string) scapiv1alpha3.TestResult {
+	r := scapiv1alpha3.TestResult{}
 	r.Name = OLMBundleValidationTest
-	r.Description = "Validates bundle contents"
-	r.State = scapiv1alpha2.PassState
+	r.State = scapiv1alpha3.PassState
 	r.Errors = []string{}
 	r.Suggestions = []string{}
 
@@ -65,7 +64,7 @@ func BundleValidationTest(dir string) scapiv1alpha2.ScorecardTestResult {
 
 	// Validate bundle format.
 	if err := val.ValidateBundleFormat(dir); err != nil {
-		r.State = scapiv1alpha2.FailState
+		r.State = scapiv1alpha3.FailState
 		r.Errors = append(r.Errors, err.Error())
 	}
 
@@ -73,7 +72,7 @@ func BundleValidationTest(dir string) scapiv1alpha2.ScorecardTestResult {
 	manifestsDir := filepath.Join(dir, registrybundle.ManifestsDir)
 	bundle, err := apimanifests.GetBundleFromDir(manifestsDir)
 	if err != nil {
-		r.State = scapiv1alpha2.FailState
+		r.State = scapiv1alpha3.FailState
 		r.Errors = append(r.Errors, err.Error())
 	}
 
@@ -88,7 +87,7 @@ func BundleValidationTest(dir string) scapiv1alpha2.ScorecardTestResult {
 	for _, result := range validationResults {
 		for _, e := range result.Errors {
 			r.Errors = append(r.Errors, e.Error())
-			r.State = scapiv1alpha2.FailState
+			r.State = scapiv1alpha3.FailState
 		}
 
 		for _, w := range result.Warnings {
@@ -101,18 +100,17 @@ func BundleValidationTest(dir string) scapiv1alpha2.ScorecardTestResult {
 }
 
 // CRDsHaveValidationTest verifies all CRDs have a validation section
-func CRDsHaveValidationTest(bundle *apimanifests.Bundle) scapiv1alpha2.ScorecardTestResult {
-	r := scapiv1alpha2.ScorecardTestResult{}
+func CRDsHaveValidationTest(bundle *apimanifests.Bundle) scapiv1alpha3.TestResult {
+	r := scapiv1alpha3.TestResult{}
 	r.Name = OLMCRDsHaveValidationTest
-	r.Description = "All CRDs have an OpenAPI validation subsection"
-	r.State = scapiv1alpha2.PassState
+	r.State = scapiv1alpha3.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
 
 	crs, err := GetCRs(bundle)
 	if err != nil {
 		r.Errors = append(r.Errors, err.Error())
-		r.State = scapiv1alpha2.ErrorState
+		r.State = scapiv1alpha3.ErrorState
 		return r
 	}
 	r.Log += fmt.Sprintf("Loaded %d Custom Resources from alm-examples\n", len(crs))
@@ -125,7 +123,7 @@ func CRDsHaveValidationTest(bundle *apimanifests.Bundle) scapiv1alpha2.Scorecard
 		out, err := k8sutil.Convertv1beta1Tov1CustomResourceDefinition(crd)
 		if err != nil {
 			r.Errors = append(r.Errors, err.Error())
-			r.State = scapiv1alpha2.ErrorState
+			r.State = scapiv1alpha3.ErrorState
 			return r
 		}
 		crds = append(crds, out)
@@ -139,11 +137,10 @@ func CRDsHaveValidationTest(bundle *apimanifests.Bundle) scapiv1alpha2.Scorecard
 }
 
 // CRDsHaveResourcesTest verifies CRDs have resources listed in its owned CRDs section
-func CRDsHaveResourcesTest(bundle *apimanifests.Bundle) scapiv1alpha2.ScorecardTestResult {
-	r := scapiv1alpha2.ScorecardTestResult{}
+func CRDsHaveResourcesTest(bundle *apimanifests.Bundle) scapiv1alpha3.TestResult {
+	r := scapiv1alpha3.TestResult{}
 	r.Name = OLMCRDsHaveResourcesTest
-	r.Description = "All Owned CRDs contain a resources subsection"
-	r.State = scapiv1alpha2.PassState
+	r.State = scapiv1alpha3.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
 
@@ -154,10 +151,10 @@ func CRDsHaveResourcesTest(bundle *apimanifests.Bundle) scapiv1alpha2.ScorecardT
 
 // CheckResources verified if the owned CRDs have the resources field.
 func CheckResources(crd operatorsv1alpha1.CustomResourceDefinitions,
-	r scapiv1alpha2.ScorecardTestResult) scapiv1alpha2.ScorecardTestResult {
+	r scapiv1alpha3.TestResult) scapiv1alpha3.TestResult {
 	for _, description := range crd.Owned {
 		if description.Resources == nil || len(description.Resources) == 0 {
-			r.State = scapiv1alpha2.FailState
+			r.State = scapiv1alpha3.FailState
 			r.Errors = append(r.Errors, "Owned CRDs do not have resources specified")
 			return r
 		}
@@ -166,11 +163,10 @@ func CheckResources(crd operatorsv1alpha1.CustomResourceDefinitions,
 }
 
 // SpecDescriptorsTest verifies all spec fields have descriptors
-func SpecDescriptorsTest(bundle *apimanifests.Bundle) scapiv1alpha2.ScorecardTestResult {
-	r := scapiv1alpha2.ScorecardTestResult{}
+func SpecDescriptorsTest(bundle *apimanifests.Bundle) scapiv1alpha3.TestResult {
+	r := scapiv1alpha3.TestResult{}
 	r.Name = OLMSpecDescriptorsTest
-	r.Description = "All spec fields have matching descriptors in the CSV"
-	r.State = scapiv1alpha2.PassState
+	r.State = scapiv1alpha3.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
 	r = checkCSVDescriptors(bundle, r, specDescriptor)
@@ -178,26 +174,25 @@ func SpecDescriptorsTest(bundle *apimanifests.Bundle) scapiv1alpha2.ScorecardTes
 }
 
 // StatusDescriptorsTest verifies all CRDs have status descriptors
-func StatusDescriptorsTest(bundle *apimanifests.Bundle) scapiv1alpha2.ScorecardTestResult {
-	r := scapiv1alpha2.ScorecardTestResult{}
+func StatusDescriptorsTest(bundle *apimanifests.Bundle) scapiv1alpha3.TestResult {
+	r := scapiv1alpha3.TestResult{}
 	r.Name = OLMStatusDescriptorsTest
-	r.Description = "All status fields have matching descriptors in the CSV"
-	r.State = scapiv1alpha2.PassState
+	r.State = scapiv1alpha3.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
 	r = checkCSVDescriptors(bundle, r, statusDescriptor)
 	return r
 }
 
-func checkCSVDescriptors(bundle *apimanifests.Bundle, r scapiv1alpha2.ScorecardTestResult,
-	descriptor string) scapiv1alpha2.ScorecardTestResult {
+func checkCSVDescriptors(bundle *apimanifests.Bundle, r scapiv1alpha3.TestResult,
+	descriptor string) scapiv1alpha3.TestResult {
 
 	r.Log += fmt.Sprintf("Loaded ClusterServiceVersion: %s\n", bundle.CSV.GetName())
 
 	crs, err := GetCRs(bundle)
 	if err != nil {
 		r.Errors = append(r.Errors, err.Error())
-		r.State = scapiv1alpha2.ErrorState
+		r.State = scapiv1alpha3.ErrorState
 		return r
 	}
 	r.Log += fmt.Sprintf("Loaded %d Custom Resources from alm-examples\n", len(crs))
@@ -213,10 +208,10 @@ func checkCSVDescriptors(bundle *apimanifests.Bundle, r scapiv1alpha2.ScorecardT
 // are in the example CRs, if you have a field in your CRD that isn't present in one of your examples,
 // I don't think it will be validated.
 func checkOwnedCSVDescriptors(cr unstructured.Unstructured, csv *operatorsv1alpha1.ClusterServiceVersion,
-	descriptor string, r scapiv1alpha2.ScorecardTestResult) scapiv1alpha2.ScorecardTestResult {
+	descriptor string, r scapiv1alpha3.TestResult) scapiv1alpha3.TestResult {
 
 	if cr.Object[descriptor] == nil {
-		r.State = scapiv1alpha2.FailState
+		r.State = scapiv1alpha3.FailState
 		return r
 	}
 
@@ -233,7 +228,7 @@ func checkOwnedCSVDescriptors(cr unstructured.Unstructured, csv *operatorsv1alph
 	if crd == nil {
 		msg := fmt.Sprintf("Failed to find an owned CRD for CR %s with GVK %s", cr.GetName(), cr.GroupVersionKind().String())
 		r.Errors = append(r.Errors, msg)
-		r.State = scapiv1alpha2.FailState
+		r.State = scapiv1alpha3.FailState
 		return r
 	}
 
@@ -261,7 +256,7 @@ func checkOwnedCSVDescriptors(cr unstructured.Unstructured, csv *operatorsv1alph
 	for key := range block {
 		r.Errors = append(r.Errors, fmt.Sprintf("%s does not have a %s descriptor", key, descriptor))
 		r.Suggestions = append(r.Suggestions, fmt.Sprintf("Add a %s descriptor for %s", descriptor, key))
-		r.State = scapiv1alpha2.FailState
+		r.State = scapiv1alpha3.FailState
 	}
 	return r
 }
@@ -271,7 +266,7 @@ func hasVersion(version string, crdVersion apiextv1.CustomResourceDefinitionVers
 	return strings.EqualFold(version, crdVersion.Name)
 }
 
-func hasKind(kind1, kind2 string, r scapiv1alpha2.ScorecardTestResult) bool {
+func hasKind(kind1, kind2 string, r scapiv1alpha3.TestResult) bool {
 
 	var restMapper meta.DefaultRESTMapper
 	singularKind1, err := restMapper.ResourceSingularizer(kind1)
@@ -288,7 +283,7 @@ func hasKind(kind1, kind2 string, r scapiv1alpha2.ScorecardTestResult) bool {
 }
 
 func isCRFromCRDApi(cr unstructured.Unstructured, crds []*apiextv1.CustomResourceDefinition,
-	r scapiv1alpha2.ScorecardTestResult) scapiv1alpha2.ScorecardTestResult {
+	r scapiv1alpha3.TestResult) scapiv1alpha3.TestResult {
 
 	// check if the CRD matches the testing CR
 	for _, crd := range crds {
@@ -328,7 +323,7 @@ func isCRFromCRDApi(cr unstructured.Unstructured, crds []*apiextv1.CustomResourc
 				}
 			}
 			if failed {
-				r.State = scapiv1alpha2.FailState
+				r.State = scapiv1alpha3.FailState
 				return r
 			}
 		}

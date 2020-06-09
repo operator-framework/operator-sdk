@@ -31,7 +31,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/flags"
 	scorecard "github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
-	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
+	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
 
 func NewCmd() *cobra.Command {
@@ -98,9 +98,9 @@ If the argument holds an image tag, it must be present remotely.`,
 				return fmt.Errorf("could not parse selector %w", err)
 			}
 
-			var scorecardOutput v1alpha2.ScorecardOutput
+			var scorecardTest v1alpha3.Test
 			if list {
-				scorecardOutput, err = o.ListTests()
+				scorecardTest, err = o.ListTests()
 				if err != nil {
 					return fmt.Errorf("error listing tests %w", err)
 				}
@@ -121,13 +121,13 @@ If the argument holds an image tag, it must be present remotely.`,
 				ctx, cancel := context.WithTimeout(context.Background(), waitTime)
 				defer cancel()
 
-				scorecardOutput, err = o.RunTests(ctx)
+				scorecardTest, err = o.RunTests(ctx)
 				if err != nil {
 					return fmt.Errorf("error running tests %w", err)
 				}
 			}
 
-			return printOutput(outputFormat, scorecardOutput)
+			return printOutput(outputFormat, scorecardTest)
 		},
 	}
 
@@ -147,10 +147,10 @@ If the argument holds an image tag, it must be present remotely.`,
 	return scorecardCmd
 }
 
-func printOutput(outputFormat string, output v1alpha2.ScorecardOutput) error {
+func printOutput(outputFormat string, output v1alpha3.Test) error {
 	switch outputFormat {
 	case "text":
-		if len(output.Results) == 0 {
+		if len(output.Status.Results) == 0 {
 			fmt.Println("0 tests selected")
 			return nil
 		}

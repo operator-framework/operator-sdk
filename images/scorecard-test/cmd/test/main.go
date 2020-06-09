@@ -24,7 +24,7 @@ import (
 
 	scorecard "github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
 	"github.com/operator-framework/operator-sdk/internal/scorecard/alpha/tests"
-	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
+	scapiv1alpha3 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
 
 // this is the scorecard test binary that ultimately executes the
@@ -48,7 +48,7 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	var result scapiv1alpha2.ScorecardTestResult
+	var result scapiv1alpha3.TestResult
 
 	switch entrypoint[0] {
 	case tests.OLMBundleValidationTest:
@@ -76,8 +76,8 @@ func main() {
 }
 
 // printValidTests will print out full list of test names to give a hint to the end user on what the valid tests are
-func printValidTests() (result scapiv1alpha2.ScorecardTestResult) {
-	result.State = scapiv1alpha2.FailState
+func printValidTests() (result scapiv1alpha3.TestResult) {
+	result.State = scapiv1alpha3.FailState
 	result.Errors = make([]string, 0)
 	result.Suggestions = make([]string, 0)
 

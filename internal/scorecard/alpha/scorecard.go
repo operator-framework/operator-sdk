@@ -25,12 +25,12 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
+	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
 
 type TestRunner interface {
 	Initialize(context.Context) error
-	RunTest(context.Context, Test) (*v1alpha2.ScorecardTestResult, error)
+	RunTest(context.Context, Test) (*v1alpha3.TestResult, error)
 	Cleanup(context.Context) error
 }
 
@@ -51,12 +51,12 @@ type PodTestRunner struct {
 }
 
 type FakeTestRunner struct {
-	TestResult *v1alpha2.ScorecardTestResult
+	TestResult *v1alpha3.TestResult
 	Error      error
 }
 
 // RunTests executes the scorecard tests as configured
-func (o Scorecard) RunTests(ctx context.Context) (testOutput v1alpha2.ScorecardOutput, err error) {
+func (o Scorecard) RunTests(ctx context.Context) (testOutput v1alpha3.Test, err error) {
 
 	err = o.TestRunner.Initialize(ctx)
 	if err != nil {
@@ -65,18 +65,18 @@ func (o Scorecard) RunTests(ctx context.Context) (testOutput v1alpha2.ScorecardO
 
 	tests := o.selectTests()
 	if len(tests) == 0 {
-		testOutput.Results = make([]v1alpha2.ScorecardTestResult, 0)
+		testOutput.Status.Results = make([]v1alpha3.TestResult, 0)
 		return testOutput, nil
 	}
 
-	testOutput.Results = make([]v1alpha2.ScorecardTestResult, len(tests))
+	testOutput.Status.Results = make([]v1alpha3.TestResult, len(tests))
 
 	for idx, test := range tests {
 		result, err := o.TestRunner.RunTest(ctx, test)
 		if err != nil {
-			result = convertErrorToResult(test.Name, test.Description, err)
+			result = convertErrorToResult(test.Name, err)
 		}
-		testOutput.Results[idx] = *result
+		testOutput.Status.Results[idx] = *result
 	}
 
 	if !o.SkipCleanup {
@@ -140,7 +140,7 @@ func (r PodTestRunner) Cleanup(ctx context.Context) (err error) {
 }
 
 // RunTest executes a single test
-func (r PodTestRunner) RunTest(ctx context.Context, test Test) (result *v1alpha2.ScorecardTestResult, err error) {
+func (r PodTestRunner) RunTest(ctx context.Context, test Test) (result *v1alpha3.TestResult, err error) {
 
 	// Create a Pod to run the test
 	podDef := getPodDefinition(r.configMapName, test, r)
@@ -159,7 +159,7 @@ func (r PodTestRunner) RunTest(ctx context.Context, test Test) (result *v1alpha2
 }
 
 // RunTest executes a single test
-func (r FakeTestRunner) RunTest(ctx context.Context, test Test) (result *v1alpha2.ScorecardTestResult, err error) {
+func (r FakeTestRunner) RunTest(ctx context.Context, test Test) (result *v1alpha3.TestResult, err error) {
 	return r.TestResult, r.Error
 }
 
@@ -188,12 +188,11 @@ func (r PodTestRunner) waitForTestToComplete(ctx context.Context, p *v1.Pod) (er
 
 }
 
-func convertErrorToResult(name, description string, err error) *v1alpha2.ScorecardTestResult {
-	result := v1alpha2.ScorecardTestResult{}
+func convertErrorToResult(name string, err error) *v1alpha3.TestResult {
+	result := v1alpha3.TestResult{}
 	result.Name = name
-	result.Description = description
 	result.Errors = []string{err.Error()}
 	result.Suggestions = []string{}
-	result.State = v1alpha2.FailState
+	result.State = v1alpha3.FailState
 	return &result
 }

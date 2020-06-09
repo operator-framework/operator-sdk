@@ -16,7 +16,7 @@ package tests
 
 import (
 	"github.com/operator-framework/operator-registry/pkg/registry"
-	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
+	scapiv1alpha3 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
 
 const (
@@ -28,21 +28,19 @@ const (
 // CustomTest1 and CustomTest2 are example test functions. Relevant operator specific
 // test logic is to be implemented in similarly.
 
-func CustomTest1(bundle registry.Bundle) scapiv1alpha2.ScorecardTestResult {
-	r := scapiv1alpha2.ScorecardTestResult{}
+func CustomTest1(bundle registry.Bundle) scapiv1alpha3.TestResult {
+	r := scapiv1alpha3.TestResult{}
 	r.Name = CustomTest1Name
-	r.Description = "Custom Test 1"
-	r.State = scapiv1alpha2.PassState
+	r.State = scapiv1alpha3.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
 	return r
 }
 
-func CustomTest2(bundle registry.Bundle) scapiv1alpha2.ScorecardTestResult {
-	r := scapiv1alpha2.ScorecardTestResult{}
+func CustomTest2(bundle registry.Bundle) scapiv1alpha3.TestResult {
+	r := scapiv1alpha3.TestResult{}
 	r.Name = CustomTest2Name
-	r.Description = "Custom Test 2"
-	r.State = scapiv1alpha2.PassState
+	r.State = scapiv1alpha3.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
 	return r

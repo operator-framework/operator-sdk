@@ -20,7 +20,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
+	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 	"k8s.io/apimachinery/pkg/labels"
 )
 
@@ -32,7 +32,7 @@ func TestRunTests(t *testing.T) {
 		selector        string
 		wantError       bool
 		testRunner      FakeTestRunner
-		expectedState   v1alpha2.State
+		expectedState   v1alpha3.State
 	}{
 		{
 			name:            "should execute 1 fake test",
@@ -40,7 +40,7 @@ func TestRunTests(t *testing.T) {
 			selector:        "suite=basic",
 			wantError:       false,
 			testRunner:      FakeTestRunner{},
-			expectedState:   v1alpha2.PassState,
+			expectedState:   v1alpha3.PassState,
 		},
 		{
 			name:            "should execute 1 fake test",
@@ -48,7 +48,7 @@ func TestRunTests(t *testing.T) {
 			selector:        "suite=basic",
 			wantError:       false,
 			testRunner:      FakeTestRunner{},
-			expectedState:   v1alpha2.PassState,
+			expectedState:   v1alpha3.PassState,
 		},
 	}
 
@@ -67,10 +67,10 @@ func TestRunTests(t *testing.T) {
 			}
 			o.SkipCleanup = true
 
-			mockResult := v1alpha2.ScorecardTestResult{}
+			mockResult := v1alpha3.TestResult{}
 			mockResult.Name = "mocked test"
-			mockResult.Description = "mocked test description"
-			mockResult.State = v1alpha2.PassState
+			// mockResult.Description = "mocked test description"
+			mockResult.State = v1alpha3.PassState
 			mockResult.Errors = make([]string, 0)
 			mockResult.Suggestions = make([]string, 0)
 
@@ -79,11 +79,11 @@ func TestRunTests(t *testing.T) {
 
 			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(7*time.Second))
 			defer cancel()
-			var scorecardOutput v1alpha2.ScorecardOutput
+			var scorecardOutput v1alpha3.Test
 			scorecardOutput, err = o.RunTests(ctx)
 
-			if scorecardOutput.Results[0].State != c.expectedState {
-				t.Fatalf("Wanted state %v, got %v", c.expectedState, scorecardOutput.Results[0].State)
+			if scorecardOutput.Status.Results[0].State != c.expectedState {
+				t.Fatalf("Wanted state %v, got %v", c.expectedState, scorecardOutput.Status.Results[0].State)
 			}
 
 			if err == nil && c.wantError {

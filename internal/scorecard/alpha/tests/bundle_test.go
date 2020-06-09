@@ -26,19 +26,19 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
+	scapiv1alpha3 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
 
 var _ = Describe("Basic and OLM tests", func() {
 	var (
 		testBundle = filepath.Join("..", "testdata", "bundle")
-		res        scapiv1alpha2.ScorecardTestResult
+		res        scapiv1alpha3.TestResult
 	)
 
 	BeforeEach(func() {
-		res = scapiv1alpha2.ScorecardTestResult{
+		res = scapiv1alpha3.TestResult{
 			Name:   "Scorecard result struct",
-			State:  scapiv1alpha2.PassState,
+			State:  scapiv1alpha3.PassState,
 			Errors: make([]string, 0),
 		}
 	})
@@ -78,35 +78,35 @@ var _ = Describe("Basic and OLM tests", func() {
 		Context("CheckSpecTest", func() {
 			It("returns a pass state when Spec field exists", func() {
 				res = CheckSpecTest(bundle)
-				Expect(res.State).To(Equal(scapiv1alpha2.PassState))
+				Expect(res.State).To(Equal(scapiv1alpha3.PassState))
 			})
 		})
 
 		Context("CRDsHaveValidationTest", func() {
 			It("returns a pass state when CRDs have validations", func() {
 				res = CRDsHaveValidationTest(bundle)
-				Expect(res.State).To(Equal(scapiv1alpha2.PassState))
+				Expect(res.State).To(Equal(scapiv1alpha3.PassState))
 			})
 		})
 
 		Context("CRDsHaveResourcesTest", func() {
 			It("returns a pass state when CRDs have resources", func() {
 				res = CRDsHaveResourcesTest(bundle)
-				Expect(res.State).To(Equal(scapiv1alpha2.PassState))
+				Expect(res.State).To(Equal(scapiv1alpha3.PassState))
 			})
 		})
 
 		Context("SpecDescriptorsTest", func() {
 			It("returns a pass state then spec descriptors are present", func() {
 				res = SpecDescriptorsTest(bundle)
-				Expect(res.State).To(Equal(scapiv1alpha2.PassState))
+				Expect(res.State).To(Equal(scapiv1alpha3.PassState))
 			})
 		})
 
 		Context("StatusDescriptorsTest", func() {
 			It("returns a pass state then status descriptors are present", func() {
 				res = StatusDescriptorsTest(bundle)
-				Expect(res.State).To(Equal(scapiv1alpha2.PassState))
+				Expect(res.State).To(Equal(scapiv1alpha3.PassState))
 			})
 		})
 	})
@@ -114,7 +114,7 @@ var _ = Describe("Basic and OLM tests", func() {
 	Describe("Testing OLM Bundle", func() {
 		It("should pass when test bundle is at the desired location", func() {
 			res = BundleValidationTest(testBundle)
-			Expect(res.State).To(Equal(scapiv1alpha2.PassState))
+			Expect(res.State).To(Equal(scapiv1alpha3.PassState))
 		})
 	})
 
@@ -170,7 +170,7 @@ var _ = Describe("Basic and OLM tests", func() {
 				})
 
 				res = checkOwnedCSVDescriptors(cr, &csv, descriptor, res)
-				Expect(res.State).To(Equal(scapiv1alpha2.PassState))
+				Expect(res.State).To(Equal(scapiv1alpha3.PassState))
 			})
 
 			It("should fail when CR Object Descriptor is nil", func() {
@@ -179,7 +179,7 @@ var _ = Describe("Basic and OLM tests", func() {
 				}
 
 				res = checkOwnedCSVDescriptors(cr, &csv, descriptor, res)
-				Expect(res.State).To(Equal(scapiv1alpha2.FailState))
+				Expect(res.State).To(Equal(scapiv1alpha3.FailState))
 			})
 
 			It("should fail when owned CRD for CR does not have GVK set", func() {
@@ -192,7 +192,7 @@ var _ = Describe("Basic and OLM tests", func() {
 				}
 
 				res = checkOwnedCSVDescriptors(cr, &csv, descriptor, res)
-				Expect(res.State).To(Equal(scapiv1alpha2.FailState))
+				Expect(res.State).To(Equal(scapiv1alpha3.FailState))
 			})
 
 			It("should fail when required descriptor field is not present in CR", func() {
@@ -205,7 +205,7 @@ var _ = Describe("Basic and OLM tests", func() {
 				}
 
 				res = checkOwnedCSVDescriptors(cr, &csv, descriptor, res)
-				Expect(res.State).To(Equal(scapiv1alpha2.FailState))
+				Expect(res.State).To(Equal(scapiv1alpha3.FailState))
 			})
 			It("should pass when required descriptor field is present in CR", func() {
 				cr := unstructured.Unstructured{
@@ -224,7 +224,7 @@ var _ = Describe("Basic and OLM tests", func() {
 				})
 
 				res = checkOwnedCSVDescriptors(cr, &csv, descriptor, res)
-				Expect(res.State).To(Equal(scapiv1alpha2.PassState))
+				Expect(res.State).To(Equal(scapiv1alpha3.PassState))
 			})
 			It("should fail when required spec descriptor field is not present in CR", func() {
 				cr := unstructured.Unstructured{
@@ -236,7 +236,7 @@ var _ = Describe("Basic and OLM tests", func() {
 				}
 
 				res = checkOwnedCSVDescriptors(cr, &csv, descriptor, res)
-				Expect(res.State).To(Equal(scapiv1alpha2.FailState))
+				Expect(res.State).To(Equal(scapiv1alpha3.FailState))
 			})
 			It("should fail when CRs do not have spec field specified", func() {
 				cr := []unstructured.Unstructured{
@@ -245,7 +245,7 @@ var _ = Describe("Basic and OLM tests", func() {
 					},
 				}
 				res = checkSpec(cr, res)
-				Expect(res.State).To(Equal(scapiv1alpha2.FailState))
+				Expect(res.State).To(Equal(scapiv1alpha3.FailState))
 			})
 			It("should pass when CRs do have spec field specified", func() {
 				cr := []unstructured.Unstructured{
@@ -258,7 +258,7 @@ var _ = Describe("Basic and OLM tests", func() {
 					},
 				}
 				res = checkSpec(cr, res)
-				Expect(res.State).To(Equal(scapiv1alpha2.PassState))
+				Expect(res.State).To(Equal(scapiv1alpha3.PassState))
 			})
 
 		})
@@ -317,7 +317,7 @@ var _ = Describe("Basic and OLM tests", func() {
 			})
 
 			res = isCRFromCRDApi(cr, crd, res)
-			Expect(res.State).To(Equal(scapiv1alpha2.PassState))
+			Expect(res.State).To(Equal(scapiv1alpha3.PassState))
 
 		})
 
@@ -336,7 +336,7 @@ var _ = Describe("Basic and OLM tests", func() {
 			})
 
 			res = isCRFromCRDApi(cr, crd, res)
-			Expect(res.State).To(Equal(scapiv1alpha2.FailState))
+			Expect(res.State).To(Equal(scapiv1alpha3.FailState))
 
 		})
 
@@ -355,7 +355,7 @@ var _ = Describe("Basic and OLM tests", func() {
 			})
 
 			res = isCRFromCRDApi(cr, crd, res)
-			Expect(res.State).To(Equal(scapiv1alpha2.PassState))
+			Expect(res.State).To(Equal(scapiv1alpha3.PassState))
 
 		})
 
@@ -385,7 +385,7 @@ var _ = Describe("Basic and OLM tests", func() {
 				},
 			}
 			res = CheckResources(crd, res)
-			Expect(res.State).To(Equal(scapiv1alpha2.PassState))
+			Expect(res.State).To(Equal(scapiv1alpha3.PassState))
 		})
 
 		It("Should fail when CSV does not have Owned CRD's with resources", func() {
@@ -402,7 +402,7 @@ var _ = Describe("Basic and OLM tests", func() {
 				},
 			}
 			res = CheckResources(crd, res)
-			Expect(res.State).To(Equal(scapiv1alpha2.FailState))
+			Expect(res.State).To(Equal(scapiv1alpha3.FailState))
 		})
 
 	})
