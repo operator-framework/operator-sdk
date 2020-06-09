@@ -78,12 +78,19 @@ github_repo = "https://github.com/operator-framework/operator-sdk"
 
 [[params.versions]]
   version = "master"
-  url = "/docs"
+  url = "https://master.sdk.operatorframework.io"
 
 [[params.versions]]
-  version = "v0.16"
-  url = "https://github.com/operator-framework/operator-sdk/tree/v0.16.x/doc"
+  version = "Latest Release"
+  url = "https://sdk.operatorframework.io"
 
+[[params.versions]]
+  version = "v0.18"
+  url = "https://v0-18-x.sdk.operatorframework.io"
+
+[[params.versions]]
+  version = "v0.17"
+  url = "https://github.com/operator-framework/operator-sdk/tree/v0.17.x/doc"
 
 # Specify a value here if your content directory is not in your repo's root directory
 github_subdir = "website"
