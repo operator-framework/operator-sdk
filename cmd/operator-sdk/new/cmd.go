@@ -100,8 +100,11 @@ generates a default directory layout based on the input <project-name>.
 	newCmd.Flags().StringVar(&repo, "repo", "",
 		"Project repository path for Go operators. Used as the project's Go import path. This must be set if "+
 			"outside of $GOPATH/src (e.g. github.com/example-inc/my-operator)")
+
 	newCmd.Flags().BoolVar(&gitInit, "git-init", false,
 		"Initialize the project directory as a git repository (default false)")
+	_ = newCmd.Flags().MarkDeprecated("git-init", "")
+
 	newCmd.Flags().StringVar(&headerFile, "header-file", "",
 		"Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt")
 	newCmd.Flags().BoolVar(&makeVendor, "vendor", false, "Use a vendor directory for dependencies")
