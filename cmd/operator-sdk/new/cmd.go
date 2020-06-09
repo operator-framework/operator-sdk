@@ -27,9 +27,9 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/flags/apiflags"
 	"github.com/operator-framework/operator-sdk/internal/genutil"
+	"github.com/operator-framework/operator-sdk/internal/plugins/helm"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/ansible"
-	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
@@ -100,8 +100,11 @@ generates a default directory layout based on the input <project-name>.
 	newCmd.Flags().StringVar(&repo, "repo", "",
 		"Project repository path for Go operators. Used as the project's Go import path. This must be set if "+
 			"outside of $GOPATH/src (e.g. github.com/example-inc/my-operator)")
+
 	newCmd.Flags().BoolVar(&gitInit, "git-init", false,
 		"Initialize the project directory as a git repository (default false)")
+	_ = newCmd.Flags().MarkDeprecated("git-init", "")
+
 	newCmd.Flags().StringVar(&headerFile, "header-file", "",
 		"Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt")
 	newCmd.Flags().BoolVar(&makeVendor, "vendor", false, "Use a vendor directory for dependencies")
@@ -161,32 +164,39 @@ func newFunc(cmd *cobra.Command, args []string) error {
 			log.Fatal(err)
 		}
 	case projutil.OperatorTypeHelm:
+		helmPlugin := helm.Plugin{}
+		helmInitPlugin := helmPlugin.GetInitPlugin()
+
+		// The new command ask for APIVersion (e.g app.example.com/v1alpha1)
+		// Where; app == group , example.com == domain, v1alpha1 == version
+		// However, inside of the current implementation we also will break as requested by the new layout
+		// So, we are here parsing the value and adding flags for the plugin
+		api := strings.Split(apiFlags.APIVersion, "/")
+		version := api[1]
+		group := strings.Split(api[0], ".")[0]
+		domain := string(api[0][len(group)+1 : len(api[0])])
+
+		cmd.Flags().StringVar(&group, "group", group, "")
+		cmd.Flags().StringVar(&version, "version", api[1], "")
+		cmd.Flags().StringVar(&domain, "domain", domain, "")
+
+		// bind helm flags
+		helmInitPlugin.BindFlags(cmd.Flags())
+
 		// create the project dir
 		err := os.MkdirAll(projectName, 0755)
 		if err != nil {
 			log.Fatal(err)
 		}
+
 		// go inside of the project dir
 		err = os.Chdir(filepath.Join(projutil.MustGetwd(), projectName))
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		cfg := input.Config{
-			AbsProjectPath: filepath.Join(projutil.MustGetwd()),
-			ProjectName:    projectName,
-		}
-
-		createOpts := helm.CreateChartOptions{
-			ResourceAPIVersion: apiFlags.APIVersion,
-			ResourceKind:       apiFlags.Kind,
-			Chart:              apiFlags.HelmChartRef,
-			Version:            apiFlags.HelmChartVersion,
-			Repo:               apiFlags.HelmChartRepo,
-			CRDVersion:         apiFlags.CrdVersion,
-		}
-
-		if err := helm.Init(cfg, createOpts); err != nil {
+		// call the helm init plugin to do the scalffold
+		if err := helmInitPlugin.Run(); err != nil {
 			log.Fatal(err)
 		}
 	}
