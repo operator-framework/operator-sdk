@@ -265,6 +265,38 @@ jobs:
         - make image-build-scorecard-proxy
         - make image-push-scorecard-proxy
 
+    # Build and deploy arm64 scorecard-test docker image
+    - <<: *deploy
+      name: Docker image for scorecard-test (arm64)
+      arch: arm64
+      script:
+        - make image-build-scorecard-test
+        - make image-push-scorecard-test
+
+    # Build and deploy amd64 scorecard-test docker image
+    - <<: *deploy
+      name: Docker image for scorecard-test (amd64)
+      arch: amd64
+      script:
+        - make image-build-scorecard-test
+        - make image-push-scorecard-test
+
+    # Build and deploy ppc64le scorecard-test docker image
+    - <<: *deploy
+      name: Docker image for scorecard-test (ppc64le)
+      arch: ppc64le
+      script:
+        - make image-build-scorecard-test
+        - make image-push-scorecard-test
+
+    # Build and deploy s390x scorecard-test docker image
+    - <<: *deploy
+      name: Docker image for scorecard-test (s390x)
+      arch: s390x
+      script:
+        - make image-build-scorecard-test
+        - make image-push-scorecard-test
+
     # Build and deploy ansible multi-arch manifest list
     - stage: deploy-manifest-multiarch
       <<: *manifest-deploy
@@ -283,3 +315,9 @@ jobs:
       name: Manifest list for scorecard-proxy
       script:
         - make image-push-scorecard-proxy-multiarch
+
+    # Build and deploy scorecard-test multi-arch manifest list
+    - <<: *manifest-deploy
+      name: Manifest list for scorecard-test
+      script:
+        - make image-push-scorecard-test-multiarch
