@@ -165,6 +165,17 @@ func newFunc(cmd *cobra.Command, args []string) error {
 			log.Fatal(err)
 		}
 	case projutil.OperatorTypeHelm:
+		// create the project dir
+		err := os.MkdirAll(projectName, 0755)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// go inside of the project dir
+		err = os.Chdir(filepath.Join(projutil.MustGetwd(), projectName))
+		if err != nil {
+			log.Fatal(err)
+		}
+		// generate the files
 		if err := doHelmScaffold(); err != nil {
 			log.Fatal(err)
 		}
@@ -345,7 +356,7 @@ func doAnsibleScaffold() error {
 
 func doHelmScaffold() error {
 	cfg := &input.Config{
-		AbsProjectPath: filepath.Join(projutil.MustGetwd(), projectName),
+		AbsProjectPath: filepath.Join(projutil.MustGetwd()),
 		ProjectName:    projectName,
 	}
 
@@ -401,7 +412,7 @@ func doHelmScaffold() error {
 		return fmt.Errorf("new helm scaffold failed: %v", err)
 	}
 
-	if err = genutil.GenerateCRDNonGo(projectName, *resource, apiFlags.CrdVersion); err != nil {
+	if err = genutil.GenerateCRDNonGo("", *resource, apiFlags.CrdVersion); err != nil {
 		return err
 	}
 
