@@ -26,8 +26,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/yaml"
 
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal/genutil"
 	apiflags "github.com/operator-framework/operator-sdk/internal/flags/apiflags"
+	"github.com/operator-framework/operator-sdk/internal/genutil"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"

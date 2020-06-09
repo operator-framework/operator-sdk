@@ -17,8 +17,8 @@ package generate
 import (
 	"fmt"
 
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal/genutil"
 	gencrd "github.com/operator-framework/operator-sdk/internal/generate/crd"
+	"github.com/operator-framework/operator-sdk/internal/genutil"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
