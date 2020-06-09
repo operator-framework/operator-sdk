@@ -314,6 +314,8 @@ func validate(csv *operatorsv1alpha1.ClusterServiceVersion) error {
 	if csv == nil {
 		return errors.New("empty ClusterServiceVersion")
 	}
+
+	hasErrors := false
 	results := validation.ClusterServiceVersionValidator.Validate(csv)
 	for _, r := range results {
 		for _, w := range r.Warnings {
@@ -323,8 +325,13 @@ func validate(csv *operatorsv1alpha1.ClusterServiceVersion) error {
 			log.Errorf("ClusterServiceVersion validation: [%s] %s", e.Type, e.Detail)
 		}
 		if r.HasError() {
-			return errors.New("got ClusterServiceVersion validation errors")
+			hasErrors = true
 		}
 	}
+
+	if hasErrors {
+		return errors.New("generated ClusterServiceVersion is invalid")
+	}
+
 	return nil
 }

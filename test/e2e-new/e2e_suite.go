@@ -18,6 +18,9 @@ package e2e
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -134,6 +137,34 @@ var _ = Describe("operator-sdk", func() {
 				return logOutput
 			}
 			Eventually(managerContainerLogs, time.Minute, time.Second).Should(ContainSubstring("Successfully Reconciled"))
+
+			By("generating the operator bundle")
+			// Turn off interactive prompts for all generation tasks.
+			replace := "operator-sdk generate bundle"
+			replaceInFile(filepath.Join(tc.Dir, "Makefile"), replace, replace+" --interactive=false")
+			err = tc.Make("bundle")
+			Expect(err).Should(Succeed())
+
+			By("building the operator bundle image")
+			// Use the existing image tag but with a "-bundle" suffix.
+			imageSplit := strings.SplitN(tc.ImageName, ":", 2)
+			bundleImage := path.Join("quay.io", imageSplit[0]+"-bundle")
+			if len(imageSplit) == 2 {
+				bundleImage += ":" + imageSplit[1]
+			}
+			err = tc.Make("bundle-build", "BUNDLE_IMG="+bundleImage)
+			Expect(err).Should(Succeed())
 		})
 	})
 })
+
+// replaceInFile replaces all instances of old with new in the file at path.
+func replaceInFile(path, old, new string) {
+	info, err := os.Stat(path)
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	b, err := ioutil.ReadFile(path)
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	s := strings.Replace(string(b), old, new, -1)
+	err = ioutil.WriteFile(path, []byte(s), info.Mode())
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+}
