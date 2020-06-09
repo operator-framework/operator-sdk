@@ -64,6 +64,9 @@ type CreateChartOptions struct {
 
 	// Version is the version of the chart to fetch.
 	Version string
+
+	// Version of the API which should be used to scallfold the CRDS
+	CrdVersion string
 }
 
 // CreateChart scaffolds a new helm chart for the project rooted in projectDir

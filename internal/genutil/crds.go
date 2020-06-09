@@ -43,9 +43,7 @@ func CRDGen(crdVersion string) error {
 	return nil
 }
 
-// Todo: remove the projectName string and cleanup this one when the new commands for Ansible/Helm
-// be using the plugins since this info will no longer be required.
-// GenerateCRDNonGoLegacy generates CRDs for Non-Go APIs(Eg., Ansible,Helm)
+// GenerateCRDNonGo generates CRDs for Non-Go APIs(Eg., Ansible,Helm)
 func GenerateCRDNonGo(projectName string, resource scaffold.Resource, crdVersion string) error {
 	crdsDir := filepath.Join(projectName, scaffold.CRDsDir)
 	crd := gencrd.Generator{
