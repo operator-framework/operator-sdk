@@ -113,6 +113,9 @@ generates a default directory layout based on the input <project-name>.
 	// the `new` command so that we don't fail parsing the flags.
 	newCmd.Flags().String("type", "",
 		"Type of operator to initialize (choices: \"ansible\" or \"helm\")")
+	if err := newCmd.MarkFlagRequired("type"); err != nil {
+		log.Fatalf("Failed to mark `type` flag for `new` subcommand as required")
+	}
 
 	// todo(camilamacedo86): remove before 1.0.0
 	newCmd.Flags().BoolVar(&gitInit, "git-init", false,
@@ -140,11 +143,8 @@ generates a default directory layout based on the input <project-name>.
 }
 
 var (
-	helmPlugin helm.Plugin
-	initPlugin plugin.Init
-	// todo: remove when we add Ansible plugin
-	// Deprecated: this flag is deprecated
-	apiFlags     apiflags.APIFlags
+	helmPlugin   helm.Plugin
+	initPlugin   plugin.Init
 	operatorType string
 	projectName  string
 	// todo: remove before 1.0.0
@@ -152,6 +152,7 @@ var (
 	gitInit bool
 	// todo: remove when we add Ansible plugin
 	// Deprecated: this flag is deprecated
+	apiFlags         apiflags.APIFlags
 	generatePlaybook bool
 )
 
