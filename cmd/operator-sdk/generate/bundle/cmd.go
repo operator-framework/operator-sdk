@@ -56,7 +56,7 @@ type bundleCmd struct {
 	version      string
 	inputDir     string
 	outputDir    string
-	manifestRoot string
+	deployDir    string
 	apisDir      string
 	crdsDir      string
 	stdout       bool
@@ -232,18 +232,10 @@ func (c *bundleCmd) addCommonFlagsTo(fs *pflag.FlagSet) {
 	fs.StringVarP(&c.version, "version", "v", "", "Semantic version of the operator in the generated bundle. "+
 		"Only set if creating a new bundle or upgrading your operator")
 	fs.StringVar(&c.inputDir, "input-dir", "", "Directory to read an existing bundle from. "+
-		"This directory is the parent of your bundle 'manifests' directory, and different from --manifest-root")
+		"This directory is the parent of your bundle 'manifests' directory, and different from --deploy-dir")
 	fs.StringVar(&c.outputDir, "output-dir", "", "Directory to write the bundle to")
-
-	fs.StringVar(&c.manifestRoot, "manifest-root", "", "Root directory for operator manifests such as "+
-		"Deployments and RBAC, ex. 'deploy' or 'config'. This directory is different from that passed to --input-dir")
-	// NB(estroz): still debating the name of this flag. For now, hide it as an
-	// "alpha" flag so we do not have to deprecate it if we change this name.
-	// TODO(estroz): decide on this flag's name before making 'init' default.
-	if err := fs.MarkHidden("manifest-root"); err != nil {
-		panic(err)
-	}
-
+	fs.StringVar(&c.deployDir, "deploy-dir", "", "Root directory for operator manifests such as "+
+		"Deployments and RBAC, ex. 'deploy'. This directory is different from that passed to --input-dir")
 	fs.StringVar(&c.apisDir, "apis-dir", "", "Root directory for API type defintions")
 	fs.StringVar(&c.crdsDir, "crds-dir", "", "Root directory for CustomResoureDefinition manifests")
 	fs.StringVar(&c.channels, "channels", "alpha", "A comma-separated list of channels the bundle belongs to")

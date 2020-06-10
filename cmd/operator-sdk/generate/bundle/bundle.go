@@ -163,8 +163,8 @@ func (c bundleCmd) validateManifests(*config.Config) (err error) {
 	}
 
 	if !genutil.IsPipeReader() {
-		if c.manifestRoot == "" {
-			return errors.New("--manifest-root must be set if not reading from stdin")
+		if c.deployDir == "" {
+			return errors.New("--deploy-dir must be set if not reading from stdin")
 		}
 		if c.crdsDir == "" {
 			return errors.New("--crds-dir must be set if not reading from stdin")
@@ -215,8 +215,8 @@ func (c bundleCmd) runManifests(cfg *config.Config) (err error) {
 			return err
 		}
 	}
-	if c.manifestRoot != "" {
-		if err := col.UpdateFromDirs(c.manifestRoot, c.crdsDir); err != nil {
+	if c.deployDir != "" {
+		if err := col.UpdateFromDirs(c.deployDir, c.crdsDir); err != nil {
 			return err
 		}
 	}
