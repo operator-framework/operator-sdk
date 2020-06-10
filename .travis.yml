@@ -265,7 +265,7 @@ jobs:
         - make image-build-scorecard-proxy
         - make image-push-scorecard-proxy
 
-    # Build and deploy arm64 scorecard-test docker image
+    # Build and deploy arm64 scorecard-test docker image 
     - <<: *deploy
       name: Docker image for scorecard-test (arm64)
       arch: arm64
