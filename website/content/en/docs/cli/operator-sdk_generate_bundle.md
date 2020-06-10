@@ -87,8 +87,9 @@ operator-sdk generate bundle [flags]
       --channels string          A comma-separated list of channels the bundle belongs to (default "alpha")
       --crds-dir string          Root directory for CustomResoureDefinition manifests
       --default-channel string   The default channel for the bundle
+      --deploy-dir string        Root directory for operator manifests such as Deployments and RBAC, ex. 'deploy'. This directory is different from that passed to --input-dir
   -h, --help                     help for bundle
-      --input-dir string         Directory to read an existing bundle from. This directory is the parent of your bundle 'manifests' directory, and different from --manifest-root
+      --input-dir string         Directory to read an existing bundle from. This directory is the parent of your bundle 'manifests' directory, and different from --deploy-dir
       --interactive              When set or no bundle base exists, an interactive command prompt will be presented to accept bundle ClusterServiceVersion metadata
       --manifests                Generate bundle manifests
       --metadata                 Generate bundle metadata and Dockerfile

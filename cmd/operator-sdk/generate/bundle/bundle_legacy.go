@@ -115,13 +115,13 @@ func (c bundleCmd) runManifestsLegacy() (err error) {
 	if c.apisDir == "" {
 		c.apisDir = filepath.Join("pkg", "apis")
 	}
-	if c.manifestRoot == "" {
-		c.manifestRoot = "deploy"
+	if c.deployDir == "" {
+		c.deployDir = "deploy"
 	}
 	if c.crdsDir == "" {
-		c.crdsDir = filepath.Join(c.manifestRoot, "crds")
+		c.crdsDir = filepath.Join(c.deployDir, "crds")
 	}
-	defaultBundleDir := filepath.Join(c.manifestRoot, "olm-catalog", c.operatorName)
+	defaultBundleDir := filepath.Join(c.deployDir, "olm-catalog", c.operatorName)
 	if c.inputDir == "" {
 		c.inputDir = defaultBundleDir
 	}
@@ -130,7 +130,7 @@ func (c bundleCmd) runManifestsLegacy() (err error) {
 	}
 
 	col := &collector.Manifests{}
-	if err := col.UpdateFromDirs(c.manifestRoot, c.crdsDir); err != nil {
+	if err := col.UpdateFromDirs(c.deployDir, c.crdsDir); err != nil {
 		return err
 	}
 
