@@ -578,7 +578,7 @@ func printVersion() {
 
 ```
 require (
-	github.com/operator-framework/operator-sdk v0.13.1
+	github.com/operator-framework/operator-sdk v0.13.0
 	sigs.k8s.io/controller-runtime v0.4.0
 )
 
@@ -768,7 +768,7 @@ If you are using any external helm v2 tooling with the your helm operator-manage
 
 ```
 require (
-	github.com/operator-framework/operator-sdk v0.15.1
+	github.com/operator-framework/operator-sdk v0.15.2
 	sigs.k8s.io/controller-runtime v0.4.0
 )
 // Pinned to kubernetes-1.16.2
@@ -889,7 +889,7 @@ replace github.com/openshift/api => github.com/openshift/api v0.0.0-201909241025
 
 **Bug Fixes and Improvements for Metrics**
 
-There are changes to the default implementation of the metrics export. These changes require `cmd/main.go to be updated as follows.
+There are changes to the default implementation of the metrics export. These changes require `cmd/manager/main.go` to be updated as follows.
 
 Replace:
 
@@ -1068,7 +1068,7 @@ RUN ansible-galaxy collection install -r ${HOME}/requirements.yml \
 
 ```
 require (
-	github.com/operator-framework/operator-sdk v0.17.0
+	github.com/operator-framework/operator-sdk v0.17.1
 	sigs.k8s.io/controller-runtime v0.5.2
 )
 
