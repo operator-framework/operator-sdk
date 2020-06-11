@@ -166,6 +166,6 @@ automatic deletion of dependent resources will be sufficient, so we can exit suc
 let the operator remove our finalizer and allow the resource to be deleted.
 
 ## Further reading
-• [Kubernetes finalizers](https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#finalizers)
+• [Kubernetes finalizers](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#finalizers)
 
 [ansible-watches]:/docs/ansible/reference/watches/

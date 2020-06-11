@@ -145,7 +145,7 @@ spec: {}
 
 ## Custom Resources with OpenApi Validation
 
-Currently, SDK tool does not support and will not generate automatically the CRD's using the [OpenAPI](https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#validation) spec to perform validations. 
+Currently, SDK tool does not support and will not generate automatically the CRD's using the [OpenAPI](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#validation) spec to perform validations. 
 
 However, it can be done manually by adding its validations as you can check in the following example.
 
