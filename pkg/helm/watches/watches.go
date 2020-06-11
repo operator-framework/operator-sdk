@@ -29,7 +29,6 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
-	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 )
 
@@ -176,7 +175,7 @@ func UpdateForResource(path string, r *scaffold.Resource, chartName string) (err
 	}
 	watch := Watch{
 		GroupVersionKind: gvk,
-		ChartDir:         filepath.Join(helm.HelmChartsDir, chartName),
+		ChartDir:         filepath.Join("helm-charts", chartName),
 	}
 
 	f, err := ioutil.ReadFile(path)

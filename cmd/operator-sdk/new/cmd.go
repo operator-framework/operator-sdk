@@ -27,7 +27,6 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/flags/apiflags"
 	"github.com/operator-framework/operator-sdk/internal/genutil"
-	helmscaffold "github.com/operator-framework/operator-sdk/internal/plugins/helm/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
@@ -184,10 +183,10 @@ func newFunc(cmd *cobra.Command, args []string) error {
 			Chart:              apiFlags.HelmChartRef,
 			Version:            apiFlags.HelmChartVersion,
 			Repo:               apiFlags.HelmChartRepo,
-			CrdVersion:         apiFlags.CrdVersion,
+			CRDVersion:         apiFlags.CrdVersion,
 		}
 
-		if err := helmscaffold.DoHelmScaffold(cfg, createOpts); err != nil {
+		if err := helm.Init(cfg, createOpts); err != nil {
 			log.Fatal(err)
 		}
 	}

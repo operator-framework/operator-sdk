@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scaffold
+package helm
 
 import (
 	"fmt"
@@ -20,7 +20,6 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/genutil"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
-	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/pkg/helm/watches"
 	"github.com/prometheus/common/log"
@@ -30,15 +29,15 @@ import (
 )
 
 // todo: refactory it to work in the kb layout/design
-// DoHelmScaffold will perform the helm Scaffold to init a project
-func DoHelmScaffold(cfg input.Config, createOpts helm.CreateChartOptions) error {
+// Init will perform the helm Scaffold to init a project
+func Init(cfg input.Config, createOpts CreateChartOptions) error {
 
-	resource, chart, err := helm.CreateChart(cfg.AbsProjectPath, createOpts)
+	resource, chart, err := CreateChart(cfg.AbsProjectPath, createOpts)
 	if err != nil {
 		return fmt.Errorf("failed to create helm chart: %v", err)
 	}
 
-	valuesPath := filepath.Join("<project_dir>", helm.HelmChartsDir, chart.Name(), "values.yaml")
+	valuesPath := filepath.Join("<project_dir>", HelmChartsDir, chart.Name(), "values.yaml")
 
 	rawValues, err := yaml.Marshal(chart.Values)
 	if err != nil {
@@ -46,13 +45,13 @@ func DoHelmScaffold(cfg input.Config, createOpts helm.CreateChartOptions) error 
 	}
 	crSpec := fmt.Sprintf("# Default values copied from %s\n\n%s", valuesPath, rawValues)
 
-	roleScaffold := helm.DefaultRoleScaffold
+	roleScaffold := DefaultRoleScaffold
 	if k8sCfg, err := config.GetConfig(); err != nil {
 		log.Warnf("Using default RBAC rules: failed to get Kubernetes config: %s", err)
 	} else if dc, err := discovery.NewDiscoveryClientForConfig(k8sCfg); err != nil {
 		log.Warnf("Using default RBAC rules: failed to create Kubernetes discovery client: %s", err)
 	} else {
-		roleScaffold = helm.GenerateRoleScaffold(dc, chart)
+		roleScaffold = GenerateRoleScaffold(dc, chart)
 	}
 
 	// update watch.yaml for the given resource.
@@ -63,11 +62,11 @@ func DoHelmScaffold(cfg input.Config, createOpts helm.CreateChartOptions) error 
 
 	s := &scaffold.Scaffold{}
 	err = s.Execute(&cfg,
-		&helm.Dockerfile{},
+		&Dockerfile{},
 		&scaffold.ServiceAccount{},
 		&roleScaffold,
 		&scaffold.RoleBinding{IsClusterScoped: roleScaffold.IsClusterScoped},
-		&helm.Operator{},
+		&Operator{},
 		&scaffold.CR{
 			Resource: resource,
 			Spec:     crSpec,
@@ -78,7 +77,7 @@ func DoHelmScaffold(cfg input.Config, createOpts helm.CreateChartOptions) error 
 	}
 
 	// nolint:staticcheck
-	if err = genutil.GenerateCRDNonGo("", *resource, createOpts.CrdVersion); err != nil {
+	if err = genutil.GenerateCRDNonGo("", *resource, createOpts.CRDVersion); err != nil {
 		return err
 	}
 
