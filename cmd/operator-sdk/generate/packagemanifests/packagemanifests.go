@@ -93,12 +93,16 @@ func (c packagemanifestsCmd) runKustomize(cfg *config.Config) error {
 // validateManifests validates c for package manifests generation.
 func (c packagemanifestsCmd) validateManifests() error {
 
-	if err := genutil.ValidateVersion(c.version); err != nil {
-		return err
+	if c.version != "" {
+		if err := genutil.ValidateVersion(c.version); err != nil {
+			return err
+		}
+	} else {
+		return errors.New("--version must be set")
 	}
 
 	if c.fromVersion != "" {
-		return errors.New("--from-version cannot be set for PROJECT configured projects")
+		return errors.New("--from-version cannot be set for PROJECT-configured projects")
 	}
 
 	if !genutil.IsPipeReader() {
