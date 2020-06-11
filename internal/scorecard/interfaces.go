@@ -51,9 +51,9 @@ func (p basicOrOLMPlugin) Run() scapiv1alpha2.ScorecardOutput {
 	if err != nil {
 		var name string
 		if p.pluginType == scplugins.BasicOperator {
-			name = fmt.Sprintf("Basic Tests")
+			name = "Basic Tests"
 		} else if p.pluginType == scplugins.OLMIntegration {
-			name = fmt.Sprintf("OLM Integration")
+			name = "OLM Integration"
 		}
 		logs := fmt.Sprintf("%s:\nLogs: %s", err, pluginLogs.String())
 		// output error to main logger as well for human-readable output

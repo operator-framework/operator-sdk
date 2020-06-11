@@ -58,7 +58,7 @@ func (s Test) MarshalText() (string, error) {
 		} else if result.State == ErrorState {
 			sb.WriteString(fmt.Sprintf(failColor, ErrorState))
 		} else {
-			sb.WriteString(fmt.Sprintf("\n"))
+			sb.WriteString("\n")
 		}
 		if len(result.Suggestions) > 0 {
 			sb.WriteString(fmt.Sprintf(warnColor, "Suggestions:"))
@@ -76,13 +76,13 @@ func (s Test) MarshalText() (string, error) {
 			sb.WriteString(fmt.Sprintf("\t\t%s\n", err))
 		}
 		if result.Log != "" {
-			sb.WriteString(fmt.Sprintf("\tLog:\n"))
+			sb.WriteString("\tLog:\n")
 			scanner := bufio.NewScanner(strings.NewReader(result.Log))
 			for scanner.Scan() {
 				sb.WriteString(fmt.Sprintf("\t\t%s\n", scanner.Text()))
 			}
 		}
-		sb.WriteString(fmt.Sprintf("\n"))
+		sb.WriteString("\n")
 	}
 
 	return sb.String(), nil

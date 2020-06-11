@@ -55,7 +55,7 @@ func (s ScorecardOutput) MarshalText() (string, error) {
 		} else if result.State == FailState {
 			sb.WriteString(fmt.Sprintf(failColor, FailState))
 		} else {
-			sb.WriteString(fmt.Sprintf("\n"))
+			sb.WriteString("\n")
 		}
 
 		sb.WriteString(fmt.Sprintf("\tCR: %s\n", result.CRName))
@@ -82,14 +82,14 @@ func (s ScorecardOutput) MarshalText() (string, error) {
 		}
 
 		if result.Log != "" {
-			sb.WriteString(fmt.Sprintf("\tLog:\n"))
+			sb.WriteString("\tLog:\n")
 			scanner := bufio.NewScanner(strings.NewReader(result.Log))
 			for scanner.Scan() {
 				sb.WriteString(fmt.Sprintf("\t\t%s\n", scanner.Text()))
 			}
 		}
 
-		sb.WriteString(fmt.Sprintf("\n"))
+		sb.WriteString("\n")
 	}
 
 	return sb.String(), nil
