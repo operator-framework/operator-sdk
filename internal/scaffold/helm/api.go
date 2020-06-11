@@ -29,11 +29,11 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/helm/watches"
 )
 
-// todo: refactory it to work in the kb layout/design
-// Init will perform the helm Scaffold to init a project
-func Init(cfg input.Config, createOpts CreateChartOptions) error {
+// TODO
+// Consolidate scaffold func to be used by both "new" and "add api" commands.
+func API(cfg input.Config, createOpts CreateChartOptions) error {
 
-	resource, chart, err := CreateChart(cfg.AbsProjectPath, createOpts)
+	r, chart, err := CreateChart(cfg.AbsProjectPath, createOpts)
 	if err != nil {
 		return fmt.Errorf("failed to create helm chart: %v", err)
 	}
@@ -46,7 +46,28 @@ func Init(cfg input.Config, createOpts CreateChartOptions) error {
 	}
 	crSpec := fmt.Sprintf("# Default values copied from %s\n\n%s", valuesPath, rawValues)
 
+	// update watch.yaml for the given resource.
+	watchesFile := filepath.Join(cfg.AbsProjectPath, watches.WatchesFile)
+	if err := watches.UpdateForResource(watchesFile, r, chart.Name()); err != nil {
+		return fmt.Errorf("failed to update watches.yaml: %w", err)
+	}
+
+	s := &scaffold.Scaffold{}
+	err = s.Execute(&cfg,
+		&scaffold.CR{
+			Resource: r,
+			Spec:     crSpec,
+		},
+	)
+	if err != nil {
+		log.Fatalf("API scaffold failed: %v", err)
+	}
+	if err = genutil.GenerateCRDNonGo("", *r, createOpts.CRDVersion); err != nil {
+		return err
+	}
+
 	roleScaffold := DefaultRoleScaffold
+
 	if k8sCfg, err := config.GetConfig(); err != nil {
 		log.Warnf("Using default RBAC rules: failed to get Kubernetes config: %s", err)
 	} else if dc, err := discovery.NewDiscoveryClientForConfig(k8sCfg); err != nil {
@@ -55,36 +76,10 @@ func Init(cfg input.Config, createOpts CreateChartOptions) error {
 		roleScaffold = GenerateRoleScaffold(dc, chart)
 	}
 
-	// update watch.yaml for the given resource.
-	watchesFile := filepath.Join(cfg.AbsProjectPath, watches.WatchesFile)
-	if err := watches.UpdateForResource(watchesFile, resource, chart.Name()); err != nil {
-		return fmt.Errorf("failed to create watches.yaml: %w", err)
+	if err = scaffold.MergeRoleForResource(r, cfg.AbsProjectPath, roleScaffold); err != nil {
+		return fmt.Errorf("failed to merge rules in the RBAC manifest for resource (%v, %v): %v",
+			r.APIVersion, r.Kind, err)
 	}
 
-	s := &scaffold.Scaffold{}
-	err = s.Execute(&cfg,
-		&Dockerfile{},
-		&scaffold.ServiceAccount{},
-		&roleScaffold,
-		&scaffold.RoleBinding{IsClusterScoped: roleScaffold.IsClusterScoped},
-		&Operator{},
-		&scaffold.CR{
-			Resource: resource,
-			Spec:     crSpec,
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("new helm scaffold failed: %v", err)
-	}
-
-	// nolint:staticcheck
-	if err = genutil.GenerateCRDNonGo("", *resource, createOpts.CRDVersion); err != nil {
-		return err
-	}
-
-	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
-		return fmt.Errorf("failed to update the RBAC manifest for resource (%v, %v): %v",
-			resource.APIVersion, resource.Kind, err)
-	}
 	return nil
 }

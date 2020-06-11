@@ -22,18 +22,14 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"k8s.io/client-go/discovery"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
-	"sigs.k8s.io/yaml"
 
-	apiflags "github.com/operator-framework/operator-sdk/internal/flags/apiflags"
+	"github.com/operator-framework/operator-sdk/internal/flags/apiflags"
 	"github.com/operator-framework/operator-sdk/internal/genutil"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-	"github.com/operator-framework/operator-sdk/pkg/helm/watches"
 )
 
 var apiFlags apiflags.APIFlags
@@ -143,7 +139,21 @@ func apiRun(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	case projutil.OperatorTypeHelm:
-		if err := doHelmAPIScaffold(); err != nil {
+		absProjectPath := projutil.MustGetwd()
+		projectName := filepath.Base(absProjectPath)
+		cfg := input.Config{
+			AbsProjectPath: absProjectPath,
+			ProjectName:    projectName,
+		}
+		createOpts := helm.CreateChartOptions{
+			ResourceAPIVersion: apiFlags.APIVersion,
+			ResourceKind:       apiFlags.Kind,
+			Chart:              apiFlags.HelmChartRef,
+			Version:            apiFlags.HelmChartVersion,
+			Repo:               apiFlags.HelmChartRepo,
+			CRDVersion:         apiFlags.CrdVersion,
+		}
+		if err := helm.API(cfg, createOpts); err != nil {
 			return err
 		}
 	}
@@ -206,76 +216,6 @@ func doAnsibleAPIScaffold() error {
 		return fmt.Errorf("failed to update the RBAC manifest for the resource (%v, %v): (%v)",
 			r.APIVersion, r.Kind, err)
 	}
-	return nil
-}
-
-// TODO
-// Consolidate scaffold func to be used by both "new" and "add api" commands.
-func doHelmAPIScaffold() error {
-
-	absProjectPath := projutil.MustGetwd()
-	projectName := filepath.Base(absProjectPath)
-	cfg := &input.Config{
-		AbsProjectPath: absProjectPath,
-		ProjectName:    projectName,
-	}
-
-	createOpts := helm.CreateChartOptions{
-		ResourceAPIVersion: apiFlags.APIVersion,
-		ResourceKind:       apiFlags.Kind,
-		Chart:              apiFlags.HelmChartRef,
-		Version:            apiFlags.HelmChartVersion,
-		Repo:               apiFlags.HelmChartRepo,
-	}
-
-	r, chart, err := helm.CreateChart(cfg.AbsProjectPath, createOpts)
-	if err != nil {
-		return fmt.Errorf("failed to create helm chart: %v", err)
-	}
-
-	valuesPath := filepath.Join("<project_dir>", helm.HelmChartsDir, chart.Name(), "values.yaml")
-
-	rawValues, err := yaml.Marshal(chart.Values)
-	if err != nil {
-		return fmt.Errorf("failed to get raw chart values: %v", err)
-	}
-	crSpec := fmt.Sprintf("# Default values copied from %s\n\n%s", valuesPath, rawValues)
-
-	// update watch.yaml for the given resource.
-	watchesFile := filepath.Join(cfg.AbsProjectPath, watches.WatchesFile)
-	if err := watches.UpdateForResource(watchesFile, r, chart.Name()); err != nil {
-		return fmt.Errorf("failed to update watches.yaml: %w", err)
-	}
-
-	s := &scaffold.Scaffold{}
-	err = s.Execute(cfg,
-		&scaffold.CR{
-			Resource: r,
-			Spec:     crSpec,
-		},
-	)
-	if err != nil {
-		log.Fatalf("API scaffold failed: %v", err)
-	}
-	if err = genutil.GenerateCRDNonGo("", *r, apiFlags.CrdVersion); err != nil {
-		return err
-	}
-
-	roleScaffold := helm.DefaultRoleScaffold
-
-	if k8sCfg, err := config.GetConfig(); err != nil {
-		log.Warnf("Using default RBAC rules: failed to get Kubernetes config: %s", err)
-	} else if dc, err := discovery.NewDiscoveryClientForConfig(k8sCfg); err != nil {
-		log.Warnf("Using default RBAC rules: failed to create Kubernetes discovery client: %s", err)
-	} else {
-		roleScaffold = helm.GenerateRoleScaffold(dc, chart)
-	}
-
-	if err = scaffold.MergeRoleForResource(r, absProjectPath, roleScaffold); err != nil {
-		return fmt.Errorf("failed to merge rules in the RBAC manifest for resource (%v, %v): %v",
-			r.APIVersion, r.Kind, err)
-	}
-
 	return nil
 }
 
