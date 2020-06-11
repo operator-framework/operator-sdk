@@ -24,16 +24,16 @@ import (
 
 // getTestResult fetches the test pod log and converts it into
 // Test format
-func (r PodTestRunner) getTestResult(ctx context.Context, p *v1.Pod, test Test) (output *v1alpha3.TestResult) {
+func (r PodTestRunner) getTestStatus(ctx context.Context, p *v1.Pod, test Test) (output *v1alpha3.TestStatus) {
 
 	logBytes, err := getPodLog(ctx, r.Client, p)
 	if err != nil {
-		return testResultError(err, test)
+		return testStatusError(err, test)
 	}
 	// marshal pod log into TestResult
 	err = json.Unmarshal(logBytes, &output)
 	if err != nil {
-		return testResultError(err, test)
+		return testStatusError(err, test)
 	}
 	return output
 }
@@ -41,28 +41,30 @@ func (r PodTestRunner) getTestResult(ctx context.Context, p *v1.Pod, test Test) 
 // ListTests lists the scorecard tests as configured that would be
 // run based on user selection
 func (o Scorecard) ListTests() (output v1alpha3.Test, err error) {
+	output.Spec.Labels = map[string]string{}
 	tests := o.selectTests()
 	if len(tests) == 0 {
-		output.Status.Results = make([]v1alpha3.TestResult, 0)
 		return output, err
 	}
-
-	output.Status.Results = make([]v1alpha3.TestResult, 0)
 
 	for _, test := range tests {
 		testResult := v1alpha3.TestResult{}
 		testResult.Name = test.Name
-		output.Spec.Labels = test.Labels
+		for k, v := range test.Labels {
+			output.Spec.Labels[k] = v
+		}
 		output.Status.Results = append(output.Status.Results, testResult)
 	}
 
 	return output, err
 }
 
-func testResultError(err error, test Test) *v1alpha3.TestResult {
+func testStatusError(err error, test Test) *v1alpha3.TestStatus {
 	r := v1alpha3.TestResult{}
 	r.Name = test.Name
 	r.State = v1alpha3.FailState
 	r.Errors = []string{err.Error()}
-	return &r
+	return &v1alpha3.TestStatus{
+		Results: []v1alpha3.TestResult{r},
+	}
 }

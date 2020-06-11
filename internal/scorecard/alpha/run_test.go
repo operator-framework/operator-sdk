@@ -69,7 +69,6 @@ func TestRunTests(t *testing.T) {
 
 			mockResult := v1alpha3.TestResult{}
 			mockResult.Name = "mocked test"
-			// mockResult.Description = "mocked test description"
 			mockResult.State = v1alpha3.PassState
 			mockResult.Errors = make([]string, 0)
 			mockResult.Suggestions = make([]string, 0)

@@ -25,21 +25,23 @@ const (
 )
 
 // CheckSpecTest verifies that CRs have a spec block
-func CheckSpecTest(bundle *apimanifests.Bundle) scapiv1alpha3.TestResult {
-	r := scapiv1alpha3.TestResult{}
-	r.Name = BasicCheckSpecTest
-	r.State = scapiv1alpha3.PassState
-	r.Errors = make([]string, 0)
-	r.Suggestions = make([]string, 0)
+func CheckSpecTest(bundle *apimanifests.Bundle) scapiv1alpha3.TestStatus {
+	r := scapiv1alpha3.TestResult{
+		Name:        BasicCheckSpecTest,
+		State:       scapiv1alpha3.PassState,
+		Errors:      make([]string, 0),
+		Suggestions: make([]string, 0),
+	}
 
 	crSet, err := GetCRs(bundle)
 	if err != nil {
 		r.Errors = append(r.Errors, "error getting custom resources")
 		r.State = scapiv1alpha3.FailState
-		return r
 	}
 
-	return checkSpec(crSet, r)
+	return scapiv1alpha3.TestStatus{
+		Results: []scapiv1alpha3.TestResult{checkSpec(crSet, r)},
+	}
 }
 
 func checkSpec(crSet []unstructured.Unstructured,

@@ -44,7 +44,7 @@ const (
 )
 
 // BundleValidationTest validates an on-disk bundle
-func BundleValidationTest(dir string) scapiv1alpha3.TestResult {
+func BundleValidationTest(dir string) scapiv1alpha3.TestStatus {
 	r := scapiv1alpha3.TestResult{}
 	r.Name = OLMBundleValidationTest
 	r.State = scapiv1alpha3.PassState
@@ -96,11 +96,11 @@ func BundleValidationTest(dir string) scapiv1alpha3.TestResult {
 	}
 
 	r.Log = buf.String()
-	return r
+	return wrapResult(r)
 }
 
 // CRDsHaveValidationTest verifies all CRDs have a validation section
-func CRDsHaveValidationTest(bundle *apimanifests.Bundle) scapiv1alpha3.TestResult {
+func CRDsHaveValidationTest(bundle *apimanifests.Bundle) scapiv1alpha3.TestStatus {
 	r := scapiv1alpha3.TestResult{}
 	r.Name = OLMCRDsHaveValidationTest
 	r.State = scapiv1alpha3.PassState
@@ -111,7 +111,7 @@ func CRDsHaveValidationTest(bundle *apimanifests.Bundle) scapiv1alpha3.TestResul
 	if err != nil {
 		r.Errors = append(r.Errors, err.Error())
 		r.State = scapiv1alpha3.ErrorState
-		return r
+		return wrapResult(r)
 	}
 	r.Log += fmt.Sprintf("Loaded %d Custom Resources from alm-examples\n", len(crs))
 
@@ -124,7 +124,7 @@ func CRDsHaveValidationTest(bundle *apimanifests.Bundle) scapiv1alpha3.TestResul
 		if err != nil {
 			r.Errors = append(r.Errors, err.Error())
 			r.State = scapiv1alpha3.ErrorState
-			return r
+			return wrapResult(r)
 		}
 		crds = append(crds, out)
 	}
@@ -133,11 +133,11 @@ func CRDsHaveValidationTest(bundle *apimanifests.Bundle) scapiv1alpha3.TestResul
 	for _, cr := range crs {
 		r = isCRFromCRDApi(cr, crds, r)
 	}
-	return r
+	return wrapResult(r)
 }
 
 // CRDsHaveResourcesTest verifies CRDs have resources listed in its owned CRDs section
-func CRDsHaveResourcesTest(bundle *apimanifests.Bundle) scapiv1alpha3.TestResult {
+func CRDsHaveResourcesTest(bundle *apimanifests.Bundle) scapiv1alpha3.TestStatus {
 	r := scapiv1alpha3.TestResult{}
 	r.Name = OLMCRDsHaveResourcesTest
 	r.State = scapiv1alpha3.PassState
@@ -146,7 +146,7 @@ func CRDsHaveResourcesTest(bundle *apimanifests.Bundle) scapiv1alpha3.TestResult
 
 	r.Log += fmt.Sprintf("Loaded ClusterServiceVersion: %s\n", bundle.CSV.GetName())
 
-	return CheckResources(bundle.CSV.Spec.CustomResourceDefinitions, r)
+	return wrapResult(CheckResources(bundle.CSV.Spec.CustomResourceDefinitions, r))
 }
 
 // CheckResources verified if the owned CRDs have the resources field.
@@ -163,25 +163,25 @@ func CheckResources(crd operatorsv1alpha1.CustomResourceDefinitions,
 }
 
 // SpecDescriptorsTest verifies all spec fields have descriptors
-func SpecDescriptorsTest(bundle *apimanifests.Bundle) scapiv1alpha3.TestResult {
+func SpecDescriptorsTest(bundle *apimanifests.Bundle) scapiv1alpha3.TestStatus {
 	r := scapiv1alpha3.TestResult{}
 	r.Name = OLMSpecDescriptorsTest
 	r.State = scapiv1alpha3.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
 	r = checkCSVDescriptors(bundle, r, specDescriptor)
-	return r
+	return wrapResult(r)
 }
 
 // StatusDescriptorsTest verifies all CRDs have status descriptors
-func StatusDescriptorsTest(bundle *apimanifests.Bundle) scapiv1alpha3.TestResult {
+func StatusDescriptorsTest(bundle *apimanifests.Bundle) scapiv1alpha3.TestStatus {
 	r := scapiv1alpha3.TestResult{}
 	r.Name = OLMStatusDescriptorsTest
 	r.State = scapiv1alpha3.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
 	r = checkCSVDescriptors(bundle, r, statusDescriptor)
-	return r
+	return wrapResult(r)
 }
 
 func checkCSVDescriptors(bundle *apimanifests.Bundle, r scapiv1alpha3.TestResult,
@@ -329,4 +329,10 @@ func isCRFromCRDApi(cr unstructured.Unstructured, crds []*apiextv1.CustomResourc
 		}
 	}
 	return r
+}
+
+func wrapResult(r scapiv1alpha3.TestResult) scapiv1alpha3.TestStatus {
+	return scapiv1alpha3.TestStatus{
+		Results: []scapiv1alpha3.TestResult{r},
+	}
 }

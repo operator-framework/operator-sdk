@@ -48,7 +48,7 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	var result scapiv1alpha3.TestResult
+	var result scapiv1alpha3.TestStatus
 
 	switch entrypoint[0] {
 	case tests.OLMBundleValidationTest:
@@ -76,7 +76,8 @@ func main() {
 }
 
 // printValidTests will print out full list of test names to give a hint to the end user on what the valid tests are
-func printValidTests() (result scapiv1alpha3.TestResult) {
+func printValidTests() scapiv1alpha3.TestStatus {
+	result := scapiv1alpha3.TestResult{}
 	result.State = scapiv1alpha3.FailState
 	result.Errors = make([]string, 0)
 	result.Suggestions = make([]string, 0)
@@ -89,5 +90,7 @@ func printValidTests() (result scapiv1alpha3.TestResult) {
 		tests.OLMStatusDescriptorsTest,
 		tests.BasicCheckSpecTest)
 	result.Errors = append(result.Errors, str)
-	return result
+	return scapiv1alpha3.TestStatus{
+		Results: []scapiv1alpha3.TestResult{result},
+	}
 }
