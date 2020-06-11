@@ -72,8 +72,9 @@ func TestRunTests(t *testing.T) {
 			mockResult.State = v1alpha3.PassState
 			mockResult.Errors = make([]string, 0)
 			mockResult.Suggestions = make([]string, 0)
+			mockStatus := v1alpha3.TestStatus{Results: []v1alpha3.TestResult{mockResult}}
 
-			c.testRunner.TestResult = &mockResult
+			c.testRunner.TestStatus = &mockStatus
 			o.TestRunner = c.testRunner
 
 			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(7*time.Second))
