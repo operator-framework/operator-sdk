@@ -164,14 +164,19 @@ var _ = Describe("operator-sdk", func() {
 			err = tc.Make("bundle-build", "BUNDLE_IMG="+bundleImage)
 			Expect(err).Should(Succeed())
 
-			By("generating the operator package")
-			bundlePath := filepath.Join("config", "bundle")
-			kustomizeOutput, err := tc.Run(exec.Command("kustomize", "build", bundlePath))
+			By("generating the operator package manifests")
+			var genPkgManCmd *exec.Cmd
+			Expect(tc.Make("manifests")).Should(Succeed())
+			genPkgManCmd = exec.Command(tc.BinaryName, "generate", "packagemanifests",
+				"--kustomize",
+				"--interactive=false")
+			_, err = tc.Run(genPkgManCmd)
 			Expect(err).Should(Succeed())
-			genPkgManCmd := exec.Command(tc.BinaryName, "generate", "packagemanifests",
+			kustomizeOutput, err := tc.Run(exec.Command("kustomize", "build", filepath.Join("config", "packagemanifests")))
+			Expect(err).Should(Succeed())
+			genPkgManCmd = exec.Command(tc.BinaryName, "generate", "packagemanifests",
 				"--manifests",
 				"--update-crds",
-				"--input-dir", bundlePath,
 				"--version", "0.0.1")
 			Expect(err).Should(Succeed())
 			tc.Stdin = bytes.NewBuffer(kustomizeOutput)

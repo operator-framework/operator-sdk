@@ -26,7 +26,17 @@ import (
 	gencsv "github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion"
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
 	genpkg "github.com/operator-framework/operator-sdk/internal/generate/packagemanifest"
+	"github.com/operator-framework/operator-sdk/internal/scaffold/kustomize"
 )
+
+// kustomization.yaml file contents for manifests. This should always be written to
+// config/packagemanifests/kustomization.yaml since it only references files in config.
+const manifestsKustomization = `resources:
+- ../default
+- ../samples
+`
+
+var defaultDir = filepath.Join("config", "packagemanifests")
 
 // setCommonDefaults sets defaults useful to all modes of this subcommand.
 func (c *packagemanifestsCmd) setCommonDefaults(cfg *config.Config) {
@@ -42,7 +52,6 @@ func (c packagemanifestsCmd) runKustomize(cfg *config.Config) error {
 		fmt.Println("Generating package manifests kustomize bases")
 	}
 
-	defaultDir := filepath.Join("config", "packages")
 	if c.inputDir == "" {
 		c.inputDir = defaultDir
 	}
@@ -67,6 +76,11 @@ func (c packagemanifestsCmd) runKustomize(cfg *config.Config) error {
 	}
 	if err := csvGen.Generate(cfg, opts...); err != nil {
 		return fmt.Errorf("error generating ClusterServiceVersion: %v", err)
+	}
+
+	// Write a kustomization.yaml to the config directory.
+	if err := kustomize.WriteIfNotExist(defaultDir, manifestsKustomization); err != nil {
+		return err
 	}
 
 	if !c.quiet {
@@ -116,7 +130,6 @@ func (c packagemanifestsCmd) runManifests(cfg *config.Config) error {
 		fmt.Println("Generating package manifests version", c.version)
 	}
 
-	defaultDir := filepath.Join("config", "packages")
 	if c.inputDir == "" {
 		c.inputDir = defaultDir
 	}
