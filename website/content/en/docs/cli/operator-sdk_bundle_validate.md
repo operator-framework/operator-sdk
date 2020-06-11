@@ -56,7 +56,7 @@ To build and validate an image:
 
 ```
   -h, --help                   help for validate
-  -b, --image-builder string   Tool to extract bundle image data. Only used when validating a bundle image. One of: [docker, podman] (default "docker")
+  -b, --image-builder string   Tool to pull and unpack bundle images. Only used when validating a bundle image. One of: [docker, podman, none] (default "docker")
 ```
 
 ### SEE ALSO
