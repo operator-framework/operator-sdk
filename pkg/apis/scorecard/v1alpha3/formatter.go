@@ -45,9 +45,11 @@ func (s Test) MarshalText() (string, error) {
 		warnColor = noColor
 	}
 
-	sb.WriteString("\tLabels: \n")
-	for labelKey, labelValue := range s.Spec.Labels {
-		sb.WriteString(fmt.Sprintf("\t\t%q:%q\n", labelKey, labelValue))
+	if len(s.Spec.Labels) > 0 {
+		sb.WriteString("\tLabels: \n")
+		for labelKey, labelValue := range s.Spec.Labels {
+			sb.WriteString(fmt.Sprintf("\t\t%q:%q\n", labelKey, labelValue))
+		}
 	}
 	for _, result := range s.Status.Results {
 		sb.WriteString(fmt.Sprintf("\t%-35s ", result.Name))

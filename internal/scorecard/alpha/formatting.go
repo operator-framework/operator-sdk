@@ -41,19 +41,13 @@ func (r PodTestRunner) getTestStatus(ctx context.Context, p *v1.Pod, test Test) 
 // ListTests lists the scorecard tests as configured that would be
 // run based on user selection
 func (o Scorecard) ListTests() (output v1alpha3.Test, err error) {
-	output.Spec.Labels = map[string]string{}
 	tests := o.selectTests()
 	if len(tests) == 0 {
 		return output, err
 	}
 
 	for _, test := range tests {
-		testResult := v1alpha3.TestResult{}
-		testResult.Name = test.Name
-		for k, v := range test.Labels {
-			output.Spec.Labels[k] = v
-		}
-		output.Status.Results = append(output.Status.Results, testResult)
+		output.Status.Results = append(output.Status.Results, v1alpha3.TestResult{Name: test.Name})
 	}
 
 	return output, err
