@@ -24,6 +24,7 @@ import (
 
 	"github.com/markbates/inflect"
 	"k8s.io/apimachinery/pkg/util/validation"
+	"sigs.k8s.io/kubebuilder/pkg/model/config"
 )
 
 var (
@@ -99,6 +100,56 @@ func (r *Resource) Validate() error {
 	}
 
 	return nil
+}
+
+// ResourceData holds data used to construct a Resource.
+type ResourceData struct {
+	APIVersion string
+	Domain     string
+	Group      string
+	Version    string
+	Kind       string
+}
+
+// ToResource transforms ResourceData into a full Resource.
+func (d ResourceData) ToResource() (Resource, error) {
+	if err := d.validate(); err != nil {
+		return Resource{}, fmt.Errorf("invalid resource: %v", err)
+	}
+
+	apiVersion := d.APIVersion
+	if apiVersion == "" {
+		apiVersion = fmt.Sprintf("%s.%s/%s", d.Group, d.Domain, d.Version)
+	}
+	r, err := NewResource(apiVersion, d.Kind)
+	return *r, err
+}
+
+// Validate ensures fields in ResourceData conform to their corresponding Kubernetes specs.
+func (d ResourceData) validate() error {
+	// Group and Domain can be empty if ResourceData is used to create a native k8s resource
+	// that does not require either, ex. a ConfigMap.
+	if d.Group != "" && d.Domain != "" {
+		if strings.HasSuffix(d.Group, d.Domain) {
+			return fmt.Errorf("group %q cannot contain a domain suffix", d.Group)
+		}
+		if errs := validation.IsQualifiedName(fmt.Sprintf("%s.%s", d.Group, d.Domain)); len(errs) != 0 {
+			return fmt.Errorf("%+q", errs)
+		}
+	}
+	if d.Version == "" {
+		return errors.New("version cannot be empty")
+	}
+	if d.Kind == "" {
+		return errors.New("kind cannot be empty")
+	}
+
+	return nil
+}
+
+// ToGVK transforms ResourceData into a GVK. Useful when working with a Config.
+func (d ResourceData) ToGVK() config.GVK {
+	return config.GVK{Group: d.Group, Version: d.Version, Kind: d.Kind}
 }
 
 func (r *Resource) checkAndSetKinds() error {
