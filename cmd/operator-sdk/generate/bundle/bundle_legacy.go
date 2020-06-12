@@ -28,27 +28,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
-const (
-	examplesLegacy = `
-  # Using the example 'memcached-operator' and assuming a directory structure
-  # similar to the following exists:
-  $ tree pkg/apis/ deploy/
-  pkg/apis/
-  ├── ...
-  └── cache
-      ├── group.go
-      └── v1alpha1
-          ├── ...
-          └── memcached_types.go
-  deploy/
-  ├── crds
-  │   ├── cache.example.com_memcacheds_crd.yaml
-  │   └── cache.example.com_v1alpha1_memcached_cr.yaml
-  ├── operator.yaml
-  ├── role.yaml
-  ├── role_binding.yaml
-  └── service_account.yaml
-
+const examplesLegacy = `
   # Create bundle manifests, metadata, and a bundle.Dockerfile:
   $ operator-sdk generate bundle --version 0.0.1
   INFO[0000] Generating bundle manifest version 0.0.1
@@ -76,7 +56,6 @@ const (
   ...
   $ docker push $BUNDLE_IMG
 `
-)
 
 // setCommonDefaultsLegacy sets defaults useful to all modes of this subcommand.
 func (c *bundleCmd) setCommonDefaultsLegacy() {
