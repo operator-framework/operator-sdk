@@ -23,6 +23,9 @@ import (
 
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	apierrors "github.com/operator-framework/api/pkg/validation/errors"
+	"github.com/operator-framework/operator-registry/pkg/containertools"
+	registryimage "github.com/operator-framework/operator-registry/pkg/image"
+	"github.com/operator-framework/operator-registry/pkg/image/execregistry"
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -96,30 +99,10 @@ To build and validate an image:
 				return fmt.Errorf("invalid command args: %v", err)
 			}
 
-			// If the argument isn't a directory, assume it's an image.
-			if isExist(args[0]) {
-				if c.directory, err = relWd(args[0]); err != nil {
-					logger.Fatal(err)
-				}
-			} else {
-				c.directory, err = ioutil.TempDir("", "bundle-")
-				if err != nil {
-					return err
-				}
-				defer func() {
-					if err = os.RemoveAll(c.directory); err != nil {
-						logger.Errorf("Error removing temp bundle dir: %v", err)
-					}
-				}()
-
-				logger.Info("Unpacking image layers")
-
-				if err := c.unpackImageIntoDir(args[0], c.directory); err != nil {
-					logger.Fatalf("Error unpacking image %s: %v", args[0], err)
-				}
+			result, err := c.run(logger, args[0])
+			if err != nil {
+				logger.Fatal(err)
 			}
-
-			result := c.run()
 			if err := result.PrintWithFormat(c.outputFormat); err != nil {
 				logger.Fatal(err)
 			}
@@ -152,9 +135,9 @@ func (c *bundleValidateCmd) addToFlagSet(fs *pflag.FlagSet) {
 	fs.StringVarP(&c.imageBuilder, "image-builder", "b", "docker",
 		"Tool to extract bundle image data. Only used when validating a bundle image. "+
 			"One of: [docker, podman]")
+
 	fs.StringVarP(&c.outputFormat, "output", "o", internal.Text,
 		"Result format for results. One of: [text, json-alpha1]")
-
 	// It is hidden because it is an alpha option
 	// The idea is the next versions of Operator Registry will return a List of errors
 	if err := fs.MarkHidden("output"); err != nil {
@@ -162,15 +145,49 @@ func (c *bundleValidateCmd) addToFlagSet(fs *pflag.FlagSet) {
 	}
 }
 
-func (c bundleValidateCmd) run() (res internal.Result) {
+func (c bundleValidateCmd) run(logger *log.Entry, bundle string) (res internal.Result, err error) {
+	// Create a registry to validate bundle files and optionally unpack the image with.
+	reg, err := newImageRegistryForTool(logger, c.imageBuilder)
+	if err != nil {
+		return res, fmt.Errorf("error creating image registry: %v", err)
+	}
+	defer func() {
+		if err := reg.Destroy(); err != nil {
+			logger.Errorf("Error destroying image registry: %v", err)
+		}
+	}()
+
+	// If bundle isn't a directory, assume it's an image.
+	if isExist(bundle) {
+		if c.directory, err = relWd(bundle); err != nil {
+			return res, err
+		}
+	} else {
+		c.directory, err = ioutil.TempDir("", "bundle-")
+		if err != nil {
+			return res, err
+		}
+		defer func() {
+			if err = os.RemoveAll(c.directory); err != nil {
+				logger.Errorf("Error removing temp bundle dir: %v", err)
+			}
+		}()
+
+		logger.Info("Unpacking image layers")
+
+		if err := c.unpackImageIntoDir(reg, bundle, c.directory); err != nil {
+			return res, fmt.Errorf("error unpacking image %s: %v", bundle, err)
+		}
+	}
+
 	// Create Result to be outputted
 	res = internal.NewResult()
 
-	logger := log.WithFields(log.Fields{
+	logger = logger.WithFields(log.Fields{
 		"bundle-dir":     c.directory,
 		"container-tool": c.imageBuilder,
 	})
-	val := registrybundle.NewImageValidator(c.imageBuilder, logger)
+	val := registrybundle.NewImageValidator(reg, logger)
 
 	// Validate bundle format.
 	if err := val.ValidateBundleFormat(c.directory); err != nil {
@@ -190,16 +207,30 @@ func (c bundleValidateCmd) run() (res internal.Result) {
 	// from the ValidateBundleContent to add the output(s) into the result
 	checkResults(results, &res)
 
-	return res
+	return res, nil
+}
+
+// newImageRegistryForTool returns an image registry based on what type of image tool is passed.
+// If toolStr is empty, a containerd registry is returned.
+func newImageRegistryForTool(logger *log.Entry, toolStr string) (reg registryimage.Registry, err error) {
+	switch toolStr {
+	case containertools.DockerTool.String():
+		reg, err = execregistry.NewRegistry(containertools.DockerTool, logger)
+	case containertools.PodmanTool.String():
+		reg, err = execregistry.NewRegistry(containertools.PodmanTool, logger)
+	default:
+		err = fmt.Errorf("unrecognized image-builder option: %s", toolStr)
+	}
+	return reg, err
 }
 
 // unpackImageIntoDir writes files in image layers found in image imageTag to dir.
-func (c bundleValidateCmd) unpackImageIntoDir(imageTag, dir string) error {
+func (c bundleValidateCmd) unpackImageIntoDir(reg registryimage.Registry, imageTag, dir string) error {
 	logger := log.WithFields(log.Fields{
 		"bundle-dir":     dir,
 		"container-tool": c.imageBuilder,
 	})
-	val := registrybundle.NewImageValidator(c.imageBuilder, logger)
+	val := registrybundle.NewImageValidator(reg, logger)
 
 	return val.PullBundleImage(imageTag, dir)
 }
