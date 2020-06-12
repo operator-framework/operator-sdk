@@ -135,7 +135,7 @@ test_operator() {
 
 
     header_text "verify that metrics reflect cr creation"
-    if ! timeout 60s bash -c -- "until kubectl run -it --rm --restart=Never test-metrics --image=$metrics_test_image -- curl http://memcached-operator-metrics:8686/metrics | grep example-memcached; do sleep 1; done";
+    if ! timeout 60s bash -c -- "until kubectl run --attach --rm --restart=Never test-metrics --image=$metrics_test_image -- curl -sf http://memcached-operator-metrics:8686/metrics | grep example-memcached; do sleep 1; done";
     then
         error_text "FAIL: Failed to verify custom resource metrics"
         operator_logs
