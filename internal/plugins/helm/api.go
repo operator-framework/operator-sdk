@@ -99,21 +99,44 @@ func (p *createAPIPlugin) UpdateContext(ctx *plugin.Context) {
 }
 
 func (p *createAPIPlugin) BindFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&p.Group, "group", "", "Kubernetes resource Kind Group. (e.g app)")
-	fs.StringVar(&p.Version, "version", "", "Kubernetes resource Version. (e.g v1alpha1)")
-	fs.StringVar(&p.Kind, "kind", "",
-		"Kubernetes resource Kind name. (e.g AppService)")
+	const (
+		domain           = "domain"
+		version          = "version"
+		group            = "group"
+		kind             = "kind"
+		crdVersion       = "crd-version"
+		helmChart        = "helm-chart"
+		helmChartVersion = "helm-chart-version"
+		helmChartRepo    = "helm-chart-repo"
+	)
+
+	// If the plugin be called directly the flags might defined already and then,
+	// we just need to bind their values. We cannot re-defined twice the same flag.
+	if fs.HasFlags() {
+		p.Domain, _ = fs.GetString(domain)
+		p.Version, _ = fs.GetString(version)
+		p.Group, _ = fs.GetString(group)
+		p.Kind, _ = fs.GetString(kind)
+		p.CRDVersion, _ = fs.GetString(crdVersion)
+		p.HelmChartRef, _ = fs.GetString(helmChart)
+		p.HelmChartVersion, _ = fs.GetString(helmChartVersion)
+		p.HelmChartRepo, _ = fs.GetString(helmChartRepo)
+		return
+	}
+	fs.StringVar(&p.Group, group, "", "Kubernetes resource Kind Group. (e.g app)")
+	fs.StringVar(&p.Version, version, "", "Kubernetes resource Version. (e.g v1alpha1)")
+	fs.StringVar(&p.Kind, kind, "", "Kubernetes resource Kind name. (e.g AppService)")
 	fs.StringVar(&p.CRDVersion, "crd-version", gencrd.DefaultCRDVersion,
 		"CRD version to generate")
-	fs.StringVar(&p.HelmChartRef, "helm-chart", "",
+	fs.StringVar(&p.HelmChartRef, helmChart, "",
 		"Initialize helm operator with existing helm chart (<URL>, <repo>/<name>, or local path).")
-	fs.StringVar(&p.HelmChartVersion, "helm-chart-version", "",
+	fs.StringVar(&p.HelmChartVersion, helmChartVersion, "",
 		"Specific version of the helm chart (default is latest version)")
-	fs.StringVar(&p.HelmChartRepo, "helm-chart-repo", "",
+	fs.StringVar(&p.HelmChartRepo, helmChartRepo, "",
 		"Chart repository URL for the requested helm chart")
 
 	// The domain flag is added hidden because now is not mandatory have the PROJECT file with this information
-	fs.StringVar(&p.Domain, "domain", "", "Kubernetes domain for groups. (e.g example.com)")
+	fs.StringVar(&p.Domain, domain, "", "Kubernetes domain for groups. (e.g example.com)")
 	_ = fs.MarkHidden("domain")
 }
 
@@ -147,7 +170,7 @@ func (p *createAPIPlugin) Validate() error {
 	}
 
 	// Until we support the legacy layout the PROJECT file is not mandatory
-	if hasPluginConfig(p.config) && len(p.config.Domain) > 0 {
+	if p.config != nil && hasPluginConfig(p.config) && len(p.config.Domain) > 0 {
 		p.Domain = p.config.Domain
 	}
 

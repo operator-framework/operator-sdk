@@ -19,15 +19,16 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/operator-framework/operator-sdk/internal/flags/apiflags"
 	"github.com/operator-framework/operator-sdk/internal/genutil"
+	"github.com/operator-framework/operator-sdk/internal/plugins/helm"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/ansible"
-	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
@@ -139,23 +140,30 @@ func apiRun(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	case projutil.OperatorTypeHelm:
-		absProjectPath := projutil.MustGetwd()
-		projectName := filepath.Base(absProjectPath)
-		cfg := input.Config{
-			AbsProjectPath: absProjectPath,
-			ProjectName:    projectName,
+		helmPlugin := helm.Plugin{}
+		helmCreateAPIPlugin := helmPlugin.GetCreateAPIPlugin()
+
+		// The new command ask for APIVersion (e.g app.example.com/v1alpha1)
+		// Where; app == group , example.com == domain, v1alpha1 == version
+		// However, inside of the current implementation we also will break as requested by the new layout
+		// So, we are here parsing the value and adding flags for the plugin
+		api := strings.Split(apiFlags.APIVersion, "/")
+		version := api[1]
+		group := strings.Split(api[0], ".")[0]
+		domain := string(api[0][len(group)+1 : len(api[0])])
+
+		cmd.Flags().StringVar(&group, "group", group, "")
+		cmd.Flags().StringVar(&version, "version", api[1], "")
+		cmd.Flags().StringVar(&domain, "domain", domain, "")
+
+		// bind helm flags
+		helmCreateAPIPlugin.BindFlags(cmd.Flags())
+
+		// call the helm init plugin to do the scalffold
+		if err := helmCreateAPIPlugin.Run(); err != nil {
+			log.Fatal(err)
 		}
-		createOpts := helm.CreateChartOptions{
-			ResourceAPIVersion: apiFlags.APIVersion,
-			ResourceKind:       apiFlags.Kind,
-			Chart:              apiFlags.HelmChartRef,
-			Version:            apiFlags.HelmChartVersion,
-			Repo:               apiFlags.HelmChartRepo,
-			CRDVersion:         apiFlags.CrdVersion,
-		}
-		if err := helm.API(cfg, createOpts); err != nil {
-			return err
-		}
+
 	}
 	log.Info("API generation complete.")
 	return nil
