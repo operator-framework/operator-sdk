@@ -80,6 +80,10 @@ var _ = Describe("operator-sdk", func() {
 	Count int `+"`"+`json:"count,omitempty"`+"`"+`
 `)).Should(Succeed())
 
+			By("installing the CRDs into the cluster")
+			err = tc.Make("install")
+			Expect(err).Should(Succeed())
+
 			By("building the operator image")
 			err = tc.Make("docker-build", "IMG="+tc.ImageName)
 			Expect(err).Should(Succeed())
@@ -127,6 +131,7 @@ var _ = Describe("operator-sdk", func() {
 				fmt.Sprintf("%s_%s_%s.yaml", tc.Group, tc.Version, strings.ToLower(tc.Kind)))
 			Eventually(func() error {
 				_, err = tc.Kubectl.Apply(true, "-f", sampleFile)
+				Expect(err).NotTo(HaveOccurred())
 				return err
 			}, time.Minute, time.Second).Should(Succeed())
 
