@@ -21,15 +21,18 @@ import (
 const pluginName = "helm" + plugin.DefaultNameQualifier
 
 var (
-	_ plugin.Base             = Plugin{}
-	_ plugin.InitPluginGetter = Plugin{}
+	_ plugin.Base                  = Plugin{}
+	_ plugin.InitPluginGetter      = Plugin{}
+	_ plugin.CreateAPIPluginGetter = Plugin{}
 )
 
 type Plugin struct {
 	initPlugin
+	createAPIPlugin
 }
 
-func (Plugin) Name() string                       { return pluginName }
-func (Plugin) Version() plugin.Version            { return plugin.Version{} }
-func (Plugin) SupportedProjectVersions() []string { return nil }
-func (p Plugin) GetInitPlugin() plugin.Init       { return &p.initPlugin }
+func (Plugin) Name() string                           { return pluginName }
+func (Plugin) Version() plugin.Version                { return plugin.Version{} }
+func (Plugin) SupportedProjectVersions() []string     { return nil }
+func (p Plugin) GetInitPlugin() plugin.Init           { return &p.initPlugin }
+func (p Plugin) GetCreateAPIPlugin() plugin.CreateAPI { return &p.createAPIPlugin }
