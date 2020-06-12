@@ -25,6 +25,23 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
+const longHelp = `
+  Note: while the package manifests format is not yet deprecated, the operator-framework is migrated
+  towards using bundles by default. Run 'operator-sdk generate bundle -h' for more information.
+
+  Running 'generate packagemanifests' is the first step to publishing your operator to a catalog
+  and/or deploying it with OLM. This command generates a set of manifests in a versioned directory
+  and a package manifest file for your operator. It will interactively ask for UI metadata,
+  an important component of publishing your operator, by default unless a package for your
+  operator exists or you set '--interactive=false'.
+
+  Set '--version' to supply a semantic version for your new package. This is a required flag when running
+  'generate packagemanifests --manifests'.
+
+  More information on the package manifests format:
+  https://github.com/operator-framework/operator-registry/#manifest-format
+`
+
 //nolint:maligned
 type packagemanifestsCmd struct {
 	// Options to turn on different parts of packaging.
@@ -61,8 +78,10 @@ func NewCmd() *cobra.Command {
 	c := &packagemanifestsCmd{}
 
 	cmd := &cobra.Command{
-		Use:   "packagemanifests",
-		Short: "Generates a package manifests format",
+		Use:     "packagemanifests",
+		Short:   "Generates a package manifests format",
+		Long:    longHelp,
+		Example: examples,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 0 {
 				return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())

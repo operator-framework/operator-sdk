@@ -29,6 +29,33 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold/kustomize"
 )
 
+//nolint:lll
+const examples = `
+	# Generate manifests then create the package manifests base:
+  $ make manifests
+  /home/user/go/bin/controller-gen "crd:trivialVersions=true" rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+  $ operator-sdk generate packagemanifests -q --kustomize
+
+  Display name for the operator (required):
+  > memcached-operator
+  ...
+
+  $ kustomize build config/packagemanifests | operator-sdk generate packagemanifests --manifests --metadata --overwrite --version 0.0.1
+  Generating package manifests version 0.0.1
+  ...
+
+  # After running the above commands, you should see:
+  $ tree config/packages
+  config/packages
+  ├── bases
+  │   └── memcached-operator.clusterserviceversion.yaml
+  ├── kustomization.yaml
+  ├── 0.0.1
+  │   ├── cache.my.domain_memcacheds.yaml
+  │   └── memcached-operator.clusterserviceversion.yaml
+  └── memcached-operator.package.yaml
+`
+
 // kustomization.yaml file contents for manifests. This should always be written to
 // config/packagemanifests/kustomization.yaml since it only references files in config.
 const manifestsKustomization = `resources:
@@ -150,9 +177,10 @@ func (c packagemanifestsCmd) runManifests(cfg *config.Config) (err error) {
 			c.apisDir = "api"
 		}
 	}
+	packageDir := filepath.Join(c.outputDir, c.version)
 	// When generating a new package, CRDs should be written unless --update-crds has been explicitly set to false.
 	updateCRDsOff := c.updateCRDsFlag.Changed && !c.updateCRDs
-	writeNewPackageCRDs := !updateCRDsOff && genutil.IsNotExist(filepath.Join(c.outputDir, c.version))
+	writeNewPackageCRDs := !updateCRDsOff && genutil.IsNotExist(packageDir)
 
 	if err := c.generatePackageManifest(); err != nil {
 		return err
@@ -204,8 +232,7 @@ func (c packagemanifestsCmd) runManifests(cfg *config.Config) (err error) {
 				return err
 			}
 		} else {
-			dir := filepath.Join(c.outputDir, c.version)
-			if err := genutil.WriteObjectsToFiles(dir, objs...); err != nil {
+			if err := genutil.WriteObjectsToFiles(packageDir, objs...); err != nil {
 				return err
 			}
 		}
