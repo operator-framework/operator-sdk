@@ -128,7 +128,7 @@ func (c packagemanifestsCmd) validateManifests() error {
 }
 
 // runManifests generates package manifests.
-func (c packagemanifestsCmd) runManifests(cfg *config.Config) error {
+func (c packagemanifestsCmd) runManifests(cfg *config.Config) (err error) {
 
 	if !c.quiet && !c.stdout {
 		fmt.Println("Generating package manifests version", c.version)
@@ -150,6 +150,9 @@ func (c packagemanifestsCmd) runManifests(cfg *config.Config) error {
 			c.apisDir = "api"
 		}
 	}
+	// When generating a new package, CRDs should be written unless --update-crds has been explicitly set to false.
+	updateCRDsOff := c.updateCRDsFlag.Changed && !c.updateCRDs
+	writeNewPackageCRDs := !updateCRDsOff && genutil.IsNotExist(filepath.Join(c.outputDir, c.version))
 
 	if err := c.generatePackageManifest(); err != nil {
 		return err
@@ -188,7 +191,7 @@ func (c packagemanifestsCmd) runManifests(cfg *config.Config) error {
 		return fmt.Errorf("error generating ClusterServiceVersion: %v", err)
 	}
 
-	if c.updateCRDs {
+	if c.updateCRDs || writeNewPackageCRDs {
 		var objs []interface{}
 		for _, crd := range col.V1CustomResourceDefinitions {
 			objs = append(objs, crd)

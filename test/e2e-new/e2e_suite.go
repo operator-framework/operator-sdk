@@ -176,7 +176,6 @@ var _ = Describe("operator-sdk", func() {
 			Expect(err).Should(Succeed())
 			genPkgManCmd = exec.Command(tc.BinaryName, "generate", "packagemanifests",
 				"--manifests",
-				"--update-crds",
 				"--version", "0.0.1")
 			Expect(err).Should(Succeed())
 			tc.Stdin = bytes.NewBuffer(kustomizeOutput)
