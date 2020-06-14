@@ -88,7 +88,7 @@ RUN mkdir -p ${HOME}/.ansible/tmp \
  && chown -R ${USER_UID}:0 ${HOME} \
  && chmod -R ug+rwx ${HOME}
 
-RUN TINIARCH=$(case $(arch) in x86_64) echo -n amd64 ;; ppc64le) echo -n ppc64el ;; *) echo -n $(arch) ;; esac) \
+RUN TINIARCH=$(case $(arch) in x86_64) echo -n amd64 ;; ppc64le) echo -n ppc64el ;; aarch64) echo -n arm64 ;; *) echo -n $(arch) ;; esac) \
   && curl -L -o /tini https://github.com/krallin/tini/releases/latest/download/tini-$TINIARCH \
   && chmod +x /tini
 
