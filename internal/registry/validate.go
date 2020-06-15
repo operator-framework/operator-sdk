@@ -27,7 +27,6 @@ import (
 	k8svalidation "k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
@@ -144,28 +143,6 @@ func RewriteAnnotationsYaml(filename string, content map[string]string) error {
 	// Append the contents to annotationsYaml
 	for key, val := range content {
 		metadata.Annotations[key] = val
-	}
-
-	err = writeAnnotationFile(filename, metadata)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// RemoveSDK stamps, removes the additional stamps added to annotations file, so that
-// the number of annotation values remain the same. This is dont to pass `bundle.ValidateAnnotations`
-// function where the length of annotations is expected to be 6.
-func RemoveSDKstampsInAnnotation(filename string) error {
-	metadata, err := getAnnotationFileContents(filename)
-	if err != nil {
-		return err
-	}
-
-	// Delete the contents to annotationsYaml
-	for key := range projutil.MakeBundleMetricsLabels() {
-		delete(metadata.Annotations, key)
 	}
 
 	err = writeAnnotationFile(filename, metadata)

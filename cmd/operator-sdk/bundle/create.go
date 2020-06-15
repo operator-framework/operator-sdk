@@ -232,15 +232,6 @@ func (c bundleCreateCmd) runGenerate() error {
 		c.overwrite = true
 	}
 
-	annotationsFile := getAnnotationsFilePath(c.outputDir, c.directory)
-
-	if isExist(annotationsFile) && !c.overwrite {
-		err := registry.RemoveSDKstampsInAnnotation(annotationsFile)
-		if err != nil {
-			return err
-		}
-	}
-
 	err := bundle.GenerateFunc(c.directory, c.outputDir, c.packageName, c.channels, c.defaultChannel, c.overwrite)
 	if err != nil {
 		return fmt.Errorf("error generating bundle image files: %v", err)
