@@ -32,16 +32,19 @@ ANSIBLE_BASE_IMAGE = quay.io/operator-framework/ansible-operator
 HELM_BASE_IMAGE = quay.io/operator-framework/helm-operator
 SCORECARD_PROXY_BASE_IMAGE = quay.io/operator-framework/scorecard-proxy
 SCORECARD_TEST_BASE_IMAGE = quay.io/operator-framework/scorecard-test
+SCORECARD_TEST_KUTTL_BASE_IMAGE = quay.io/operator-framework/scorecard-test-kuttl
 
 ANSIBLE_IMAGE ?= $(ANSIBLE_BASE_IMAGE)
 HELM_IMAGE ?= $(HELM_BASE_IMAGE)
 SCORECARD_PROXY_IMAGE ?= $(SCORECARD_PROXY_BASE_IMAGE)
 SCORECARD_TEST_IMAGE ?= $(SCORECARD_TEST_BASE_IMAGE)
+SCORECARD_TEST_KUTTL_IMAGE ?= $(SCORECARD_TEST_KUTTL_BASE_IMAGE)
 
 ANSIBLE_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
 HELM_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
 SCORECARD_PROXY_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
 SCORECARD_TEST_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
+SCORECARD_TEST_KUTTL_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
 
 export CGO_ENABLED:=0
 .DEFAULT_GOAL:=help
@@ -156,7 +159,7 @@ build/%.asc: ## Create release signatures for operator-sdk release binaries
 
 image: image-build image-push ## Build and push all images
 
-image-build: image-build-ansible image-build-helm image-build-scorecard-proxy image-build-scorecard-test ## Build all images
+image-build: image-build-ansible image-build-helm image-build-scorecard-proxy image-build-scorecard-test image-build-scorecard-test-kuttl## Build all images
 
 image-push: image-push-ansible image-push-helm image-push-scorecard-proxy image-push-scorecard-test ## Push all images
 
@@ -205,6 +208,9 @@ image-push-scorecard-proxy-multiarch:
 # Scorecard test image scaffold/build/push.
 .PHONY: image-build-scorecard-test image-push-scorecard-test image-push-scorecard-test-multiarch
 
+# Scorecard test kuttl image scaffold/build/push.
+.PHONY: image-build-scorecard-test-kuttl image-push-scorecard-test-kuttl image-push-scorecard-test-kuttl-multiarch
+
 image-build-scorecard-test:
 	./hack/image/build-scorecard-test-image.sh $(SCORECARD_TEST_BASE_IMAGE):dev
 
@@ -213,6 +219,15 @@ image-push-scorecard-test:
 
 image-push-scorecard-test-multiarch:
 	./hack/image/push-manifest-list.sh $(SCORECARD_TEST_IMAGE) ${SCORECARD_TEST_ARCHES}
+
+image-build-scorecard-test-kuttl:
+	./hack/image/build-scorecard-test-kuttl-image.sh $(SCORECARD_TEST_KUTTL_BASE_IMAGE):dev
+
+image-push-scorecard-test-kuttl:
+	./hack/image/push-image-tags.sh $(SCORECARD_TEST_KUTTL_BASE_IMAGE):dev $(SCORECARD_TEST_KUTTL_IMAGE)-$(shell go env GOARCH)
+
+image-push-scorecard-test-kuttl-multiarch:
+	./hack/image/push-manifest-list.sh $(SCORECARD_TEST_KUTTL_IMAGE) ${SCORECARD_TEST_KUTTL_ARCHES}
 
 ##############################
 # Tests                      #
