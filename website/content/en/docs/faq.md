@@ -154,5 +154,4 @@ A decision was made to extract this tool outside of operator-sdk in version v0.1
 [client.Reader]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#Reader
 [rbac]:https://kubernetes.io/docs/reference/access-authn-authz/rbac/
 [goroot-github-issue]:https://github.com/operator-framework/operator-sdk/issues/1854#issuecomment-525132306
-[version_17x]: /docs/migration/version-upgrade-guide/#v017x
-
+[openapi-gen]: https://github.com/kubernetes/kube-openapi/tree/master/cmd/openapi-gen
