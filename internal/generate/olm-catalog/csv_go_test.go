@@ -120,7 +120,7 @@ func TestGoCSVNewWithInputsToOutput(t *testing.T) {
 	outputBundleDir := filepath.Join(outputDir, OLMCatalogChildDir, testProjectName, csvVersion)
 
 	outputCSV := getCSVFromFile(t, filepath.Join(outputBundleDir, csvFileName))
-	removeSDKstampsFromCSVHelper(outputCSV)
+	removeSDKLabelsFromCSVHelper(outputCSV)
 
 	expCSV := getCSVFromFile(t, filepath.Join(expBundleDir, csvFileName))
 	assert.Equal(t, expCSV, outputCSV)
@@ -176,7 +176,7 @@ func TestGoCSVUpgradeWithInputsToOutput(t *testing.T) {
 	// Read generated CSV from outputDir path
 	csvOutputFile := filepath.Join(outputFromCSVDir, csvVersion, csvFileName)
 	outputCSV := getCSVFromFile(t, csvOutputFile)
-	removeSDKstampsFromCSVHelper(outputCSV)
+	removeSDKLabelsFromCSVHelper(outputCSV)
 	expCSV := getCSVFromFile(t, expCsvFile)
 
 	assert.Equal(t, expCSV, outputCSV)
@@ -215,7 +215,7 @@ func TestGoCSVNew(t *testing.T) {
 		if err != nil {
 			t.Errorf("Error occurred while generating CSV %v", err)
 		}
-		removeSDKstampsFromCSVHelper(outputCSV)
+		removeSDKLabelsFromCSVHelper(outputCSV)
 		assert.Equal(t, expCSV, outputCSV)
 	}
 }
@@ -252,7 +252,7 @@ func TestGoCSVUpdate(t *testing.T) {
 		if err != nil {
 			t.Errorf("Error occurred while generating CSV, %v", err)
 		}
-		removeSDKstampsFromCSVHelper(outputCSV)
+		removeSDKLabelsFromCSVHelper(outputCSV)
 		assert.Equal(t, expCSV, outputCSV)
 	}
 }
@@ -289,7 +289,7 @@ func TestGoCSVUpgrade(t *testing.T) {
 		if err != nil {
 			t.Errorf("Error occurred while generating CSV, %v", err)
 		}
-		removeSDKstampsFromCSVHelper(outputCSV)
+		removeSDKLabelsFromCSVHelper(outputCSV)
 		assert.Equal(t, expCSV, outputCSV)
 	}
 }
@@ -326,7 +326,7 @@ func TestGoCSVNewManifests(t *testing.T) {
 		if err != nil {
 			t.Errorf("Error occurred while generating CSV, %v", err)
 		}
-		removeSDKstampsFromCSVHelper(outputCSV)
+		removeSDKLabelsFromCSVHelper(outputCSV)
 		assert.Equal(t, expCSV, outputCSV)
 	}
 }
@@ -366,7 +366,7 @@ func TestGoCSVUpdateManifests(t *testing.T) {
 		if err != nil {
 			t.Errorf("Error occurred while generating CSV, %v", err)
 		}
-		removeSDKstampsFromCSVHelper(outputCSV)
+		removeSDKLabelsFromCSVHelper(outputCSV)
 		assert.Equal(t, expCSV, outputCSV)
 	}
 }
@@ -446,7 +446,7 @@ func TestGoCSVNewWithEmptyDeployDir(t *testing.T) {
 	}
 }
 
-func TestSDKStamps(t *testing.T) {
+func TestSDKLabels(t *testing.T) {
 	cleanupFunc := chDirWithCleanup(t, testGoDataDir)
 	defer cleanupFunc()
 
@@ -567,11 +567,11 @@ func generateCSV(input []byte) (*olmapiv1alpha1.ClusterServiceVersion, error) {
 
 }
 
-// removeSDKstampsFromCSV removes the sdk stamps from CSV struct. Used for test cases where
+// removeSDKLabelsFromCSVHelper removes the sdk labels from CSV struct. Used for test cases where
 // we need to test the generated CSV with expected predefined CSV file on disk.
-func removeSDKstampsFromCSVHelper(csv *v1alpha1.ClusterServiceVersion) {
+func removeSDKLabelsFromCSVHelper(csv *v1alpha1.ClusterServiceVersion) {
 	if _, exist := csv.ObjectMeta.Annotations[projutil.OperatorBuilder]; exist {
-		for label := range projutil.MakeOperatorMetricLables() {
+		for label := range projutil.MakeOperatorMetricLabels() {
 			delete(csv.ObjectMeta.Annotations, label)
 		}
 	}

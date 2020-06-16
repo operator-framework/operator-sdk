@@ -70,8 +70,8 @@ func (b ClusterServiceVersion) GetBase() (base *v1alpha1.ClusterServiceVersion, 
 		base = b.makeNewBase()
 	}
 
-	// Add sdk stamps to csv
-	addSDKstamps(base)
+	// Add sdk labels to csv
+	setSDKAnnotations(base)
 
 	// Interactively fill in UI metadata.
 	if b.Interactive {
@@ -92,14 +92,20 @@ func (b ClusterServiceVersion) GetBase() (base *v1alpha1.ClusterServiceVersion, 
 	return base, nil
 }
 
-// addSDKstamps adds SDK stamps to the base if they do not exist. It assumes that if sdk Builder
-// stamp is not present, then sdk stamps are also not populated in csv.
-func addSDKstamps(csv *v1alpha1.ClusterServiceVersion) {
-	if _, exist := csv.ObjectMeta.Annotations[projutil.OperatorBuilder]; !exist {
-		for label, value := range projutil.MakeOperatorMetricLables() {
-			csv.ObjectMeta.Annotations[label] = value
+// setSDKAnnotations adds SDK metric labels to the base if they do not exist. It assumes that
+// if sdk Builder annotation is not present, then all sdk labels are also not populated in csv.
+func setSDKAnnotations(csv *v1alpha1.ClusterServiceVersion) {
+	annotations := csv.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+
+	if _, exist := annotations[projutil.OperatorBuilder]; !exist {
+		for key, value := range projutil.MakeOperatorMetricLabels() {
+			annotations[key] = value
 		}
 	}
+	csv.SetAnnotations(annotations)
 }
 
 // setDefaults sets default values in b using b's existing values.

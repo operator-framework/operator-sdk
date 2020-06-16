@@ -16,6 +16,7 @@ package projutil
 
 import (
 	"regexp"
+	"strings"
 
 	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
 	ver "github.com/operator-framework/operator-sdk/version"
@@ -24,21 +25,24 @@ import (
 const (
 	OperatorBuilder = "operators.operatorframework.io/builder"
 	OperatorLayout  = "operators.operatorframework.io/project_layout"
+	bundleMediaType = "operators.operatorframework.io.metrics.mediatype.v1"
+	bundleBuilder   = "operators.operatorframework.io.metrics.builder"
+	bundleLayout    = "operators.operatorframework.io.metrics.project_layout"
 )
 
-// MakeBundleMetricsLabels returns the SDK metric stamps which will be added
+// MakeBundleMetricsLabels returns the SDK metric labels which will be added
 // to bundle resources like bundle.Dockerfile and annotations.yaml.
 func MakeBundleMetricsLabels() map[string]string {
 	return map[string]string{
-		"operators.operatorframework.io.metrics.mediatype.v1":   "metrics+v1",
-		"operators.operatorframework.io.metrics.builder":        getSDKBuilder(),
-		"operators.operatorframework.io.metrics.project_layout": getSDKProjectLayout(),
+		bundleMediaType: "metrics+v1",
+		bundleBuilder:   getSDKBuilder(),
+		bundleLayout:    getSDKProjectLayout(),
 	}
 }
 
-// MakeOperatorMetricLables returns the SDK metric stamps which will be added
+// MakeOperatorMetricLabels returns the SDK metric labels which will be added
 // to custom resource definitions and cluster service versions.
-func MakeOperatorMetricLables() map[string]string {
+func MakeOperatorMetricLabels() map[string]string {
 	return map[string]string{
 		OperatorBuilder: getSDKBuilder(),
 		OperatorLayout:  getSDKProjectLayout(),
@@ -50,10 +54,13 @@ func getSDKBuilder() string {
 }
 
 func parseVersion(input string) string {
-	re := regexp.MustCompile("v[0-9]*.[0-9]*.[0-9]*")
+	re := regexp.MustCompile(`v[0-9]+\.[0-9]+\.[0-9]+`)
 	version := re.FindString(input)
 	if version == "" {
 		return "unknown"
+	}
+	if strings.Contains(input, "dirty") {
+		version = version + "+git"
 	}
 	return version
 }
@@ -64,7 +71,7 @@ func getSDKProjectLayout() string {
 	if kbutil.HasProjectFile() {
 		cfg, err := kbutil.ReadConfig()
 		if err != nil {
-			return "Project Layout cannot be found"
+			return err.Error()
 		}
 		return cfg.Layout
 	}

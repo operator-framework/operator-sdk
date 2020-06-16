@@ -127,7 +127,7 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 					WithWriter(buf),
 				}
 				Expect(g.Generate(cfg, opts...)).ToNot(HaveOccurred())
-				outputCSV := removeSDKStampsFromCSVString(buf.String())
+				outputCSV := removeSDKLabelsFromCSVString(buf.String())
 				Expect(outputCSV).To(MatchYAML(newCSVStr))
 			})
 			It("should write a ClusterServiceVersion manifest to a base file", func() {
@@ -141,11 +141,11 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 				}
 				Expect(g.Generate(cfg, opts...)).ToNot(HaveOccurred())
 				outputFile := filepath.Join(tmp, "bases", makeCSVFileName(operatorName))
-				outputFileContents := removeSDKStampsFromCSVString(string(readFileHelper(outputFile)))
+				outputFileContents := removeSDKLabelsFromCSVString(string(readFileHelper(outputFile)))
 				Expect(outputFile).To(BeAnExistingFile())
 				Expect(outputFileContents).To(MatchYAML(baseCSVUIMetaStr))
 			})
-			It("should have sdk stamps in annotations", func() {
+			It("should have sdk labels in annotations", func() {
 				g = Generator{
 					OperatorName: operatorName,
 					OperatorType: operatorType,
@@ -178,7 +178,7 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 				}
 				Expect(g.Generate(cfg, opts...)).ToNot(HaveOccurred())
 				outputFile := filepath.Join(tmp, bundle.ManifestsDir, makeCSVFileName(operatorName))
-				outputFileContents := removeSDKStampsFromCSVString(string(readFileHelper(outputFile)))
+				outputFileContents := removeSDKLabelsFromCSVString(string(readFileHelper(outputFile)))
 				Expect(outputFile).To(BeAnExistingFile())
 				Expect(outputFileContents).To(MatchYAML(newCSVStr))
 			})
@@ -212,7 +212,7 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 				}
 				Expect(g.GenerateLegacy(opts...)).ToNot(HaveOccurred())
 				outputFile := filepath.Join(tmp, bundle.ManifestsDir, makeCSVFileName(operatorName))
-				outputFileContents := removeSDKStampsFromCSVString(string(readFileHelper(outputFile)))
+				outputFileContents := removeSDKLabelsFromCSVString(string(readFileHelper(outputFile)))
 				Expect(outputFile).To(BeAnExistingFile())
 				Expect(outputFileContents).To(MatchYAML(newCSVStr))
 			})
@@ -518,10 +518,10 @@ func upgradeCSV(csv *v1alpha1.ClusterServiceVersion, name, version string) *v1al
 	return upgraded
 }
 
-// removeSDKStampsFromCSVString to remove the sdk stamps from test CSV structs. The test
+// removeSDKLabelsFromCSVString to remove the sdk labels from test CSV structs. The test
 // cases do not generate a PROJECTFILE or an entire operator to get the version or layout
 // of SDK. Hence the values of those will appear "unknown".
-func removeSDKStampsFromCSVString(csv string) string {
+func removeSDKLabelsFromCSVString(csv string) string {
 	replacer := strings.NewReplacer(testSDKbuilderStamp, "", testSDKlayoutStamp, "")
 	return replacer.Replace(csv)
 }

@@ -188,8 +188,8 @@ func (g Generator) generateGo() (map[string][]byte, error) {
 			// just remove it.
 			annotations := crd.GetAnnotations()
 			delete(annotations, "controller-gen.kubebuilder.io/version")
-			// Add sdk related stamps to the cached annotations
-			g.addStampsToAnnotations(annotations)
+			// Add sdk related labels to the cached annotations
+			g.addSDKLabelsToAnnotations(annotations)
 			crd.SetAnnotations(annotations)
 			b, err := k8sutil.GetObjectBytes(&crd, yaml.Marshal)
 			if err != nil {
@@ -275,7 +275,7 @@ func (g Generator) generateNonGo() (map[string][]byte, error) {
 
 	sort.Sort(k8sutil.CRDVersions(crd.Spec.Versions))
 	setCRDStorageVersion(crd)
-	g.setSDKstamps(crd)
+	g.setSDKLabels(crd)
 	if err := checkCRDVersions(crd); err != nil {
 		return nil, fmt.Errorf("invalid version in CRD %s: %w", crd.GetName(), err)
 	}
@@ -374,17 +374,17 @@ func setCRDStorageVersion(crd *apiextv1beta1.CustomResourceDefinition) {
 	crd.Spec.Versions[0].Storage = true
 }
 
-func (g Generator) setSDKstamps(crd *apiextv1beta1.CustomResourceDefinition) {
+func (g Generator) setSDKLabels(crd *apiextv1beta1.CustomResourceDefinition) {
 	annotations := crd.GetAnnotations()
 	if annotations == nil {
 		annotations = make(map[string]string)
 	}
-	g.addStampsToAnnotations(annotations)
+	g.addSDKLabelsToAnnotations(annotations)
 	crd.SetAnnotations(annotations)
 }
 
-func (g Generator) addStampsToAnnotations(mapAnnotations map[string]string) {
-	for label, value := range projutil.MakeOperatorMetricLables() {
+func (g Generator) addSDKLabelsToAnnotations(mapAnnotations map[string]string) {
+	for label, value := range projutil.MakeOperatorMetricLabels() {
 		mapAnnotations[label] = value
 	}
 	// Modifying operator type for ansible and helm legacy operators, as during

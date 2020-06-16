@@ -237,7 +237,13 @@ func (c bundleCreateCmd) runGenerate() error {
 		return fmt.Errorf("error generating bundle image files: %v", err)
 	}
 
-	if err = rewriteBundleImageContents(c.outputDir, c.directory); err != nil {
+	// rootDir is the location where metadata directory is present.
+	rootDir := c.outputDir
+	if rootDir == "" {
+		rootDir = filepath.Dir(c.directory)
+	}
+
+	if err = rewriteBundleImageContents(rootDir); err != nil {
 		return err
 	}
 	return nil
@@ -334,56 +340,48 @@ func copyScorecardConfig() error {
 	return nil
 }
 
-func addSDKMetricLabels() error {
+func addLabelsToDockerfile(filename string, metricAnnotation map[string]string) error {
 	var sdkMetricContent string
-	for key, value := range projutil.MakeBundleMetricsLabels() {
+	for key, value := range metricAnnotation {
 		sdkMetricContent += fmt.Sprintf("LABEL %s=%s\n", key, value)
 	}
-	err := projutil.RewriteFileContents(bundle.DockerFile, "LABEL", sdkMetricContent)
+
+	err := projutil.RewriteFileContents(filename, "LABEL", sdkMetricContent)
 	if err != nil {
 		return fmt.Errorf("error rewriting dockerfile with metric labels, %v", err)
 	}
 	return nil
 }
 
-func rewriteBundleImageContents(outputDir, manifestDir string) error {
+func rewriteBundleImageContents(rootDir string) error {
+	metricLabels := projutil.MakeBundleMetricsLabels()
+
+	// write metric labels to bundle.Dockerfile
+	if err := addLabelsToDockerfile(bundle.DockerFile, metricLabels); err != nil {
+		return fmt.Errorf("error writing metric labels to bundle.dockerfile: %v", err)
+	}
+
+	annotationsFilePath := getAnnotationsFilePath(rootDir)
+	if err := addLabelsToAnnotations(annotationsFilePath, metricLabels); err != nil {
+		return fmt.Errorf("error writing metric labels to annotations.yaml: %v", err)
+	}
+
 	// CopyScorecardConfig to bundle.Dockerfile
 	if err := copyScorecardConfig(); err != nil {
 		return fmt.Errorf("error copying scorecardConfig to bundle image, %v", err)
 	}
-
-	// Add SDK labels to bundle.Dockerfile
-	if err := addSDKMetricLabels(); err != nil {
-		return err
-	}
-
-	// Add sdk metric annotations
-	if err := writeMetricsToAnnotationsYaml(outputDir, manifestDir); err != nil {
-		return fmt.Errorf("error writing sdk metric labels to annotations.yaml, %v", err)
-	}
-
 	return nil
-
 }
 
-// getAnnotationsFilePath return the locations of annotations.yaml. If the user had specified
-// --output dir in the command, then its location would be inside outputDir/metadataDir/. If not
-// the metadataDir is present in the same location as the manifests are present.
-func getAnnotationsFilePath(outputDir, manifestsDir string) string {
-	if outputDir != "" {
-		return filepath.Join(outputDir, bundle.MetadataDir, bundle.AnnotationsFile)
-	}
-	return filepath.Join(filepath.Dir(manifestsDir), bundle.MetadataDir, bundle.AnnotationsFile)
+// getAnnotationsFilePath return the locations of annotations.yaml.
+func getAnnotationsFilePath(rootDir string) string {
+	return filepath.Join(rootDir, bundle.MetadataDir, bundle.AnnotationsFile)
 }
 
-func writeMetricsToAnnotationsYaml(outputDir, manifestsDir string) error {
-	annotationsFilePath := getAnnotationsFilePath(outputDir, manifestsDir)
-
-	// Write metrics annotations
-	err := registry.RewriteAnnotationsYaml(annotationsFilePath, projutil.MakeBundleMetricsLabels())
+func addLabelsToAnnotations(filename string, metricLables map[string]string) error {
+	err := registry.RewriteAnnotationsYaml(filename, metricLables)
 	if err != nil {
 		return err
 	}
-
 	return nil
 }

@@ -23,7 +23,7 @@ go mod tidy
 ../../build/operator-sdk generate k8s
 ../../build/operator-sdk generate crds
 
-# Remove stamps from crds
+# Remove sdk labels/annotations from crds
 sed -i "/annotations/d" deploy/crds/cache.example.com_memcacheds_crd.yaml
 sed -i "/operators.operatorframework.io/d" deploy/crds/cache.example.com_memcacheds_crd.yaml
 sed -i "/annotations/d" deploy/crds/cache.example.com_memcachedrs_crd.yaml
