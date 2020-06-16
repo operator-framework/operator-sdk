@@ -15,16 +15,15 @@
 package main
 
 import (
-//	"encoding/json"
+	"encoding/json"
+	"encoding/xml"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
-	"time"
 
-	apimanifests "github.com/operator-framework/api/pkg/manifests"
-
-	scorecard "github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
-//	scapiv1alpha3 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
+	//scorecard "github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
+	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
 
 // this is the scorecard test binary that ultimately executes the
@@ -37,35 +36,125 @@ import (
 // test image.
 
 func main() {
-	entrypoint := os.Args[1:]
-	if len(entrypoint) == 0 {
-		log.Fatal("test name argument is required")
-	}
 
-	// Read the pod's untar'd bundle from a well-known path.
-	//cfg, err := apimanifests.GetBundleFromDir(scorecard.PodBundleRoot)
-	_, err := apimanifests.GetBundleFromDir(scorecard.PodBundleRoot)
+	jsonFile, err := os.Open("/tmp/kuttl-report.json")
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal(fmt.Errorf("could not open kuttl report %w", err))
 	}
+	defer jsonFile.Close()
 
-//	var result scapiv1alpha3.TestStatus
-
-	switch entrypoint[0] {
-	default:
-		log.Printf("entrypoint called %s", entrypoint[0])
-	}
-
-	fmt.Printf("jeff sleeping inside the container binary")
-	time.Sleep(time.Second * 10000)
-/**
-	prettyJSON, err := json.MarshalIndent(result, "", "    ")
+	var byteValue []byte
+	byteValue, err = ioutil.ReadAll(jsonFile)
 	if err != nil {
-		log.Fatal("failed to generate json", err)
+		log.Fatal(fmt.Errorf("could not read kuttl report %w", err))
 	}
-	fmt.Printf("%s\n", string(prettyJSON))
-*/
-	fmt.Printf("%s\n", "some kuttl results go here")
+
+	var jsonReport Testsuites
+	err = json.Unmarshal([]byte(byteValue), &jsonReport)
+	if err != nil {
+		log.Fatal(fmt.Errorf("could not unmarshal kuttl report %w", err))
+	}
+
+	var suite *Testsuite
+	if len(jsonReport.Testsuite) == 0 {
+		log.Fatal("empty kuttl test suite was found")
+	}
+
+	suite = jsonReport.Testsuite[0]
+
+	s := getTestStatus(suite.Testcase)
+
+	jsonOutput, err := json.MarshalIndent(s, "", "    ")
+	if err != nil {
+		log.Fatal(fmt.Errorf("could not marshal scoreard output %v", err))
+	}
+	fmt.Println(string(jsonOutput))
 
 }
 
+func getTestStatus(tc []*Testcase) (s v1alpha3.TestStatus) {
+	for i := 0; i < len(tc); i++ {
+		r := v1alpha3.TestResult{}
+		r.Name = tc[i].Name
+		r.State = v1alpha3.PassState
+		if tc[i].Failure != nil {
+			r.State = v1alpha3.FailState
+			r.Errors = []string{tc[i].Failure.Text}
+		}
+		s.Results = append(s.Results, r)
+	}
+
+	return s
+}
+
+// kuttl report format
+
+// Property are name/value pairs which can be provided in the report for things such as kuttl.version
+type Property struct {
+	Name  string `xml:"name,attr" json:"name"`
+	Value string `xml:"value,attr" json:"value"`
+}
+
+// Properties defines the collection of properties
+type Properties struct {
+	Property []Property `xml:"property" json:"property,omitempty"`
+}
+
+// Failure defines a test failure
+type Failure struct {
+	// Text provides detailed information regarding failure.  It supports multi-line output.
+	Text string `xml:",chardata" json:"text,omitempty"`
+	// Message provides the summary of the failure
+	Message string `xml:"message,attr" json:"message"`
+	Type    string `xml:"type,attr" json:"type,omitempty"`
+}
+
+// Testcase is the finest grain level of reporting, it is the kuttl test (which contains steps)
+type Testcase struct {
+	// Classname is a junit thing, for kuttl it is the testsuite name
+	Classname string `xml:"classname,attr" json:"classname"`
+	// Name is the name of the test (folder of test if not redefined by the TestStep)
+	Name string `xml:"name,attr" json:"name"`
+	// Time is the elapsed time of the test (and all of it's steps)
+	Time string `xml:"time,attr" json:"time"`
+	// Assertions is the number of asserts and errors defined in the test
+	Assertions int `xml:"assertions,attr" json:"assertions,omitempty"`
+	// Failure defines a failure in this testcase
+	Failure *Failure `xml:"failure" json:"failure,omitempty"`
+}
+
+// TestSuite is a collection of Testcase and is a summary of those details
+type Testsuite struct {
+	// Tests is the number of Testcases in the collection
+	Tests int `xml:"tests,attr" json:"tests"`
+	// Failures is the summary number of all failure in the collection testcases
+	Failures int `xml:"failures,attr" json:"failures"`
+	// Time is the duration of time for this Testsuite, this is tricky as tests run concurrently.
+	// This is the elapse time between the start of the testsuite and the end of the latest testcase in the collection.
+	Time string `xml:"time,attr" json:"time"`
+	// Name is the kuttl test name
+	Name string `xml:"name,attr" json:"name"`
+	// Properties which are specific to this suite
+	Properties *Properties `xml:"properties" json:"properties,omitempty"`
+	// Testcase is a collection of test cases
+	Testcase []*Testcase `xml:"testcase" json:"testcase,omitempty"`
+}
+
+// Testsuites is a collection of Testsuite and defines the rollup summary of all stats.
+type Testsuites struct {
+	// XMLName is required to refine the name (or case of the name)
+	//in the root xml element.  Otherwise it adds no value and is ignored for json output.
+	XMLName xml.Name `json:"-"`
+	// Name is the name of the full set of tests which is possible to set in kuttl but is rarely used :)
+	Name string `xml:"name,attr" json:"name"`
+	// Tests is a summary value of the total number of tests for all testsuites
+	Tests int `xml:"tests,attr" json:"tests"`
+	// Failures is a summary value of the total number of failures for all testsuites
+	Failures int `xml:"failures,attr" json:"failures"`
+	// Time is the elapsed time of the entire suite of tests
+	Time string `xml:"time,attr" json:"time"`
+	// Properties which are for the entire set of tests
+	Properties *Properties `xml:"properties" json:"properties,omitempty"`
+	// Testsuite is a collection of test suites
+	Testsuite []*Testsuite `xml:"testsuite" json:"testsuite,omitempty"`
+}

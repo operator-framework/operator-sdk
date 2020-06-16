@@ -1,6 +1,7 @@
-#!/bin/sh -e
+#!/bin/sh 
 
-echo "sleeping a bit ....for jeff to play around..."
-sleep 10000
+kubectl-kuttl test /bundle/tests/scorecard/kuttl --report=JSON --artifacts-dir=/tmp > /tmp/kuttl.stdout 2> /tmp/kuttl.stderr
+
+#sleep 20
 
 exec ${TESTKUTTL} $@
