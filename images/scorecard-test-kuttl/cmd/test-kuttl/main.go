@@ -69,7 +69,6 @@ func main() {
 		log.Fatal(fmt.Errorf("could not marshal scoreard output %v", err))
 	}
 	fmt.Println(string(jsonOutput))
-
 }
 
 func getTestStatus(tc []*Testcase) (s v1alpha3.TestStatus) {
