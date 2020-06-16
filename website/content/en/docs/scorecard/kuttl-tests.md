@@ -91,57 +91,87 @@ the order in which kuttl will execute the files.
 See [kuttl tests][kuttl_tests] for a detailed description of how
 kuttl tests are named and executed.
 
-### Building the project
+### kuttl test output
 
-The project makefile is to help us build the go project and test image using docker. An example of the [makefile][sample_makefile] script can be found in the sample test image.
-
-To build the project, use the `docker build` command and specify the desired name of the image in the format: `<repository_name>/<username>/<image_name>:tag`.
-
-Push the image to a remote repository by running the docker command:
-
-```
-docker push <repository_name>/<username>/<image_name>:tag
-```
-
-### Running scorecard command
-
-The `operator-sdk alpha scorecard` command is used to execute the scorecard tests by specifying the location of test bundle in the command. The name or suite of the tests which are to be executed can be specified with the `--selector` flag. The command will create scorecard pods with the image specified in `config.yaml` for the respective test. For example, the `CustomTest1Name` test provides the following json output.
-
-```console
-operator-sdk alpha scorecard bundle/ --selector=suite=custom -o json --wait-time=32s --skip-cleanup=false
+When kuttl runs, it produces output such as the following:
+```json
 {
-  "metadata": {
-    "creationTimestamp": null
-  },
-  "log": "",
-  "results": [
-    {
-      "name": "customtest1",
-      "description": "",
-      "state": "pass",
-      "log": "an ISV custom test"
-    }
-  ]
-}
+   "name": "",
+   "tests": 2,
+   "failures": 1,
+   "time": "32.638117203s",
+   "testsuite": [
+     {
+       "tests": 2,
+       "failures": 1,
+       "time": "31.523609155s",
+       "name": "/bundle/tests/scorecard/kuttl",
+       "testcase": [
+         {
+           "classname": "kuttl",
+           "name": "list-pods",
+           "time": "1.147508681s",
+           "assertions": 1
+         },
+         {
+           "classname": "kuttl",
+           "name": "list-pods2",
+           "time": "31.521237551s",
+           "assertions": 1,
+           "failure": {
+             "text": "resource Pod:kudo-test-hot-chamois/: .metadata.labels.app: value mismatch, expected: nginy != actual: nginx",
+             "message": "failed in step 0-pod"
+           }
+         }
+       ]
+     }
+   ]
+ }
 ```
 
-**Note**: More details on the usage of `operator-sdk alpha scorecard` command and its flags can be found in the [scorecard user documentation][user_doc]
+This output in JSON format is processed by scorecard and converted into
+the required scorecard output format.
 
-### Debugging scorecard custom tests
+### How kuttl tests are executed
 
-The `--skip-cleanup` flag can be used when executing the `operator-sdk alpha scorecard` command to cause the scorecard created test pods to be unremoved. 
-This is useful when debugging or writing new tests so that you can view
-the test logs or the pod manifests.
+The scorecard will run kuttl tests if you specify the kuttl
+test image in your scorecard configuration file and also
+specify the kuttl test(s) to be run.  For example, you 
+could enter the following scorecard command:
+```bash
+operator-sdk alpha scorecard deploy/olm-catalog/memcached-operator --selector=suite=custom --skip-cleanup=true --wait-time=1000s --service-account=memcached-operator
+```
 
-### Scorecard initContainer
+This command causes tests that match `suite=custom` to be executed.  In
+the scorecard configuration file, you might have the following
+definition of what `suite=custom` will translate to:
+```yaml
+```
 
-The scorecard inserts an `initContainer` into the test pods it creates. The
-`initContainer` serves the purpose of uncompressing the operator bundle
-contents, mounting them into a shared mount point accessible by test
-images.  The operator bundle contents are stored within a ConfigMap, uniquely
-built for each scorecard test execution.  Upon scorecard completion,
-the ConfigMap is removed as part of normal cleanup, along with the test
-pods created by scorecard.
+Within the scorecard-test-kuttl image, the following kuttl command
+is executed:
+```bash
+kubectl-kuttl test /bundle/tests/scorecard/kuttl/ --report=JSON --artifacts-dir=/tmp
+```
+
+This command references the bundle contents of your operator, and
+runs the kuttl tests on test definitions found under `/bundle/tests/scorecard/kuttl`, and reports the result in JSON format at `/tmp/kuttl-report.json`.
+
+The json report will then be read by the scorecard-test-kuttl binary
+which will format the kuttl test results into the expected scorecard
+test output format.
+
+### kuttl test privileges
+
+The kuttl tests can vary widely in functionality and in particular
+require special Kubernetes RBAC priviledges outside of what your
+service account might have.  So, you will want to take note of
+the service account you are going to be running scorecard and its kuttl
+tests with to see if you might require additional priveldges.  For
+example, if your kuttl test requires it create namespaces, then
+you will likely need to create a custom service account at the cluster
+scope which can create namespaces.
+
 
 ### Using Custom Service Accounts
 
@@ -163,20 +193,10 @@ operator-sdk alpha scorecard --namespace=mycustomns
 If you do not specify either of these flags, the default namespace
 and service account will be used by the scorecard to run test pods.
 
-### Returning Multiple Test Results
-
-Some custom tests might require or be better implemented to return
-more than a single test result.  For this case, scorecard's output
-API allows multiple test results to be defined for a single test.  See
-https://github.com/operator-framework/operator-sdk/blob/master/pkg/apis/scorecard/v1alpha3/types.go#L59
-
 ### Accessing the Kube API
 
-Within your custom tests you might require connecting to the Kube API.  
-In golang, you could use the [client-go][client_go] API for example to 
-check Kube resources within your tests, or even create custom resources. Your 
-custom test image is being executed within a Pod, so you can use an in-cluster 
-connection to invoke the Kube API.
+The kuttl utility wnen ran, will execute against the Kube API using
+an in-cluster Kube connection.
 
 
 [client_go]: https://github.com/kubernetes/client-go

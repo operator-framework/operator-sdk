@@ -98,6 +98,7 @@ test/ansible-operator/ansible-operator
 test/helm-operator/helm-operator
 images/scorecard-proxy/scorecard-proxy
 images/scorecard-test/scorecard-test
+images/scorecard-test-kuttl/scorecard-test-kuttl
 
 # Test artifacts
 pkg/ansible/runner/testdata/valid.yaml
