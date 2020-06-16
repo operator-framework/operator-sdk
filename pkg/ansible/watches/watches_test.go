@@ -79,6 +79,10 @@ func TestNew(t *testing.T) {
 				t.Fatalf("Unexpected watchDependentResources %v expected %v", watch.WatchDependentResources,
 					watchDependentResourcesDefault)
 			}
+			if watch.SnakeCaseParameters != snakeCaseParametersDefault {
+				t.Fatalf("Unexpected snakeCaseParameters %v expected %v", watch.SnakeCaseParameters,
+					snakeCaseParametersDefault)
+			}
 			if watch.WatchClusterScopedResources != watchClusterScopedResourcesDefault {
 				t.Fatalf("Unexpected watchClusterScopedResources %v expected %v",
 					watch.WatchClusterScopedResources, watchClusterScopedResourcesDefault)
@@ -143,6 +147,7 @@ func TestLoad(t *testing.T) {
 			ReconcilePeriod:             twoSeconds,
 			WatchDependentResources:     true,
 			WatchClusterScopedResources: false,
+			SnakeCaseParameters:         true,
 		},
 		Watch{
 			GroupVersionKind: schema.GroupVersionKind{
@@ -153,6 +158,7 @@ func TestLoad(t *testing.T) {
 			Playbook:                    validTemplate.ValidPlaybook,
 			ManageStatus:                true,
 			WatchDependentResources:     true,
+			SnakeCaseParameters:         false,
 			WatchClusterScopedResources: false,
 			Finalizer: &Finalizer{
 				Name: "finalizer.app.example.com",
