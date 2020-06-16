@@ -37,9 +37,6 @@ import (
 type runCmd struct {
 	// Common options.
 	kubeconfig string
-	//TODO: remove namespace flag before 1.0.0
-	//namespace is deprecated
-	namespace string
 
 	// Run type.
 	olm, local bool
@@ -97,16 +94,6 @@ information on these subcommands.
 				// env var to configure the namespace that the operator watches. The default is all namespaces.
 				// So this flag is unsupported for the new layout.
 				if !kbutil.HasProjectFile() {
-					//TODO: remove namespace flag before 1.0.0
-					// set --watch-namespace flag if the --namespace flag is set
-					// (only if --watch-namespace flag is not set)
-					if cmd.Flags().Changed("namespace") { // not valid for te new layout
-						log.Info("--namespace is deprecated; use --watch-namespace instead.")
-						if !cmd.Flags().Changed("watch-namespace") {
-							err := cmd.Flags().Set("watch-namespace", c.namespace)
-							return err
-						}
-					}
 					// Get default namespace to watch if unset.
 					if !cmd.Flags().Changed("watch-namespace") {
 						_, defaultNamespace, err := k8sinternal.GetKubeconfigAndNamespace(c.kubeconfig)
@@ -134,17 +121,6 @@ information on these subcommands.
 		"use --kubeconfig with 'local' or 'packagemanifests' subcommands instead")
 	if err != nil {
 		panic(err)
-	}
-	// Deprecated: namespace exists for historical compatibility. Use watch-namespace instead.
-	//TODO: remove namespace flag before 1.0.0
-	if !kbutil.HasProjectFile() { // not show for the kb layout projects
-		cmd.Flags().StringVar(&c.namespace, "namespace", "",
-			"The namespace in which operator and namespaces resources are run")
-		err := cmd.Flags().MarkDeprecated("namespace", "use --watch-namespaces (with --local) "+
-			"or --operator-namespace (with --olm) instead")
-		if err != nil {
-			panic(err)
-		}
 	}
 
 	// 'run --olm' and related flags.
