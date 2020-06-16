@@ -18,53 +18,47 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
+	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 	v1 "k8s.io/api/core/v1"
 )
 
 // getTestResult fetches the test pod log and converts it into
-// ScorecardOutput format
-func (r PodTestRunner) getTestResult(ctx context.Context, p *v1.Pod, test Test) (output *v1alpha2.ScorecardTestResult) {
+// Test format
+func (r PodTestRunner) getTestStatus(ctx context.Context, p *v1.Pod, test Test) (output *v1alpha3.TestStatus) {
 
 	logBytes, err := getPodLog(ctx, r.Client, p)
 	if err != nil {
-		return testResultError(err, test)
+		return testStatusError(err, test)
 	}
-	// marshal pod log into ScorecardTestResult
+	// marshal pod log into TestResult
 	err = json.Unmarshal(logBytes, &output)
 	if err != nil {
-		return testResultError(err, test)
+		return testStatusError(err, test)
 	}
 	return output
 }
 
 // ListTests lists the scorecard tests as configured that would be
 // run based on user selection
-func (o Scorecard) ListTests() (output v1alpha2.ScorecardOutput, err error) {
+func (o Scorecard) ListTests() (output v1alpha3.Test, err error) {
 	tests := o.selectTests()
 	if len(tests) == 0 {
-		output.Results = make([]v1alpha2.ScorecardTestResult, 0)
 		return output, err
 	}
 
-	output.Results = make([]v1alpha2.ScorecardTestResult, 0)
-
 	for _, test := range tests {
-		testResult := v1alpha2.ScorecardTestResult{}
-		testResult.Name = test.Name
-		testResult.Labels = test.Labels
-		testResult.Description = test.Description
-		output.Results = append(output.Results, testResult)
+		output.Status.Results = append(output.Status.Results, v1alpha3.TestResult{Name: test.Name})
 	}
 
 	return output, err
 }
 
-func testResultError(err error, test Test) *v1alpha2.ScorecardTestResult {
-	r := v1alpha2.ScorecardTestResult{}
+func testStatusError(err error, test Test) *v1alpha3.TestStatus {
+	r := v1alpha3.TestResult{}
 	r.Name = test.Name
-	r.State = v1alpha2.FailState
-	r.Description = test.Description
+	r.State = v1alpha3.FailState
 	r.Errors = []string{err.Error()}
-	return &r
+	return &v1alpha3.TestStatus{
+		Results: []v1alpha3.TestResult{r},
+	}
 }

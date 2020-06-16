@@ -16,7 +16,7 @@ package tests
 
 import (
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
-	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
+	scapiv1alpha3 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -25,30 +25,31 @@ const (
 )
 
 // CheckSpecTest verifies that CRs have a spec block
-func CheckSpecTest(bundle *apimanifests.Bundle) scapiv1alpha2.ScorecardTestResult {
-	r := scapiv1alpha2.ScorecardTestResult{}
-	r.Name = BasicCheckSpecTest
-	r.Description = "Custom Resource has a Spec Block"
-	r.State = scapiv1alpha2.PassState
-	r.Errors = make([]string, 0)
-	r.Suggestions = make([]string, 0)
+func CheckSpecTest(bundle *apimanifests.Bundle) scapiv1alpha3.TestStatus {
+	r := scapiv1alpha3.TestResult{
+		Name:        BasicCheckSpecTest,
+		State:       scapiv1alpha3.PassState,
+		Errors:      make([]string, 0),
+		Suggestions: make([]string, 0),
+	}
 
 	crSet, err := GetCRs(bundle)
 	if err != nil {
 		r.Errors = append(r.Errors, "error getting custom resources")
-		r.State = scapiv1alpha2.FailState
-		return r
+		r.State = scapiv1alpha3.FailState
 	}
 
-	return checkSpec(crSet, r)
+	return scapiv1alpha3.TestStatus{
+		Results: []scapiv1alpha3.TestResult{checkSpec(crSet, r)},
+	}
 }
 
 func checkSpec(crSet []unstructured.Unstructured,
-	res scapiv1alpha2.ScorecardTestResult) scapiv1alpha2.ScorecardTestResult {
+	res scapiv1alpha3.TestResult) scapiv1alpha3.TestResult {
 	for _, cr := range crSet {
 		if cr.Object["spec"] == nil {
 			res.Errors = append(res.Errors, "error spec does not exist")
-			res.State = scapiv1alpha2.FailState
+			res.State = scapiv1alpha3.FailState
 			return res
 		}
 	}

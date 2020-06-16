@@ -18,7 +18,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
+	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 	"k8s.io/apimachinery/pkg/labels"
 )
 
@@ -50,7 +50,7 @@ func TestList(t *testing.T) {
 			}
 			runner.BundlePath = c.bundlePathValue
 			o.TestRunner = &runner
-			var output v1alpha2.ScorecardOutput
+			var output v1alpha3.Test
 			output, err = o.ListTests()
 			if err == nil && c.wantError {
 				t.Fatalf("Wanted error but got no error")
@@ -60,7 +60,7 @@ func TestList(t *testing.T) {
 				}
 				return
 			}
-			actualResultCount := len(output.Results)
+			actualResultCount := len(output.Status.Results)
 			if c.resultCount != actualResultCount {
 				t.Fatalf("Wanted result count %d but got : %d", c.resultCount, actualResultCount)
 			}

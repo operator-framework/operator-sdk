@@ -103,6 +103,7 @@ images/scorecard-test/scorecard-test
 pkg/ansible/runner/testdata/valid.yaml
 /bin
 test/test-framework/go.sum
+internal/scorecard/alpha/examples/custom-scorecard-tests/go.sum
 
 # Website
 website/public/

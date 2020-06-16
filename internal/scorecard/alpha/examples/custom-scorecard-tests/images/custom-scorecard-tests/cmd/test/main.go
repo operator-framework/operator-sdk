@@ -21,7 +21,7 @@ import (
 	"os"
 
 	"github.com/jmccormick2001/custom-scorecard-tests/internal/tests"
-	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
+	scapiv1alpha3 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 	scorecard "github.com/operator-framework/operator-sdk/pkg/scorecard/tests"
 )
 
@@ -48,7 +48,7 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	var result scapiv1alpha2.ScorecardTestResult
+	var result scapiv1alpha3.TestResult
 
 	// Names of the custom tests which would be passed in the
 	// `operator-sdk alpha` command.
@@ -61,7 +61,7 @@ func main() {
 		result = printValidTests()
 	}
 
-	// Convert scapiv1alpha2.ScorecardTestResult to json.
+	// Convert scapiv1alpha3.TestResult to json.
 	prettyJSON, err := json.MarshalIndent(result, "", "    ")
 	if err != nil {
 		log.Fatal("Failed to generate json", err)
@@ -71,8 +71,8 @@ func main() {
 }
 
 // printValidTests will print out full list of test names to give a hint to the end user on what the valid tests are
-func printValidTests() (result scapiv1alpha2.ScorecardTestResult) {
-	result.State = scapiv1alpha2.FailState
+func printValidTests() (result scapiv1alpha3.TestResult) {
+	result.State = scapiv1alpha3.FailState
 	result.Errors = make([]string, 0)
 	result.Suggestions = make([]string, 0)
 
