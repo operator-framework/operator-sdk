@@ -143,7 +143,9 @@ $ export GOROOT=$(go env GOROOT)
 This will work for the current environment. To persist this fix, add the above line to your environment's config file, ex. `bashrc` file.
 
 # I cannot use the command `operator-sdk generate openapi`
-A decision was made to extract this tool outside of operator-sdk in version v0.17, see migration guide on for that version [here][version_17x] and you should know that file file `./hack/boilerplate.go.txt` is for adding a LICENCE file to the top of documents, and can be removed
+The command `operator-sdk generate openapi` was removed from the SDK tool in the version `v0.17.0`. It is now recommended to use [openapi-gen][openapi-gen] directly for OpenAPI code generation. 
+
+Note that the file `./hack/boilerplate.go.txt` is used to allow add the LICENCE comment on the top of the documents and then, it can be removed.
 
 
 [kube-apiserver_options]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options
