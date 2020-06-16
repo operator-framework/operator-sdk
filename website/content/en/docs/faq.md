@@ -145,7 +145,7 @@ This will work for the current environment. To persist this fix, add the above l
 ## I cannot use the command `operator-sdk generate openapi`
 The command `operator-sdk generate openapi` was removed from the SDK tool in the version `v0.17.0`. It is now recommended to use [openapi-gen][openapi-gen] directly for OpenAPI code generation. 
 
-Note that the file `./hack/boilerplate.go.txt` is used to allow add the LICENCE comment on the top of the documents and then, it can be removed.
+Note that in the example on the docs, the flag `-h ./hack/boilerplate.go.txt` is used to allow add the LICENCE comment on the top of the documents and then, it can be removed.
 
 
 [kube-apiserver_options]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options
