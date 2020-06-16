@@ -142,6 +142,10 @@ $ export GOROOT=$(go env GOROOT)
 
 This will work for the current environment. To persist this fix, add the above line to your environment's config file, ex. `bashrc` file.
 
+# I cannot use the command `operator-sdk generate openapi`
+A decision was made to extract this tool outside of operator-sdk in version v0.17, see migration guide on for that version [here][version_17x] and you should know that file file `./hack/boilerplate.go.txt` is for adding a LICENCE file to the top of documents, and can be removed
+
+
 [kube-apiserver_options]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options
 [controller-runtime_faq]: https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md#q-how-do-i-have-different-logic-in-my-reconciler-for-different-types-of-events-eg-create-update-delete
 [finalizer]: /docs/golang/quickstart/#handle-cleanup-on-deletion
@@ -150,3 +154,5 @@ This will work for the current environment. To persist this fix, add the above l
 [client.Reader]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#Reader
 [rbac]:https://kubernetes.io/docs/reference/access-authn-authz/rbac/
 [goroot-github-issue]:https://github.com/operator-framework/operator-sdk/issues/1854#issuecomment-525132306
+[version_17x]: /docs/migration/version-upgrade-guide/#v017x
+
