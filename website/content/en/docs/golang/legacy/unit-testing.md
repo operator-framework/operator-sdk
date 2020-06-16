@@ -253,10 +253,10 @@ func TestMemcachedController(t *testing.T) {
 <!-- NOTE: The CI has a bug and the test will not pass with _ . Use "-" instead of "_" -->
 
 [doc-e2e-test]: ../e2e-tests
-[doc-client]: /docs/golang/references/client/
+[doc-client]:/docs/golang/legacy/references/client/
 [doc-cr-fake-client]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/client/fake
 [repo-memcached-reconcile]: https://github.com/operator-framework/operator-sdk-samples/blob/4c6934448684a6953ece4d3d9f3f77494b1c125e/memcached-operator/pkg/controller/memcached/memcached_controller.go#L82
 [doc-reconcile]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/reconcile#Reconciler
 [code-test-example]: https://github.com/operator-framework/operator-sdk-samples/blob/master/go/memcached-operator/pkg/controller/memcached/memcached_controller_test.go#L25
-[user-guide]: /docs/golang/quickstart/#register-with-the-managers-scheme
+[user-guide]:/docs/golang/legacy/quickstart/#register-with-the-managers-scheme
 [ocp-doc-v1-route]: https://docs.openshift.com/container-platform/3.11/rest_api/apis-route.openshift.io/v1.Route.html

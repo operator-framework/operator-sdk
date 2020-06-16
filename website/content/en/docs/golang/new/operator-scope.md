@@ -1,4 +1,8 @@
-# Operator Scope
+---
+title: Operators Scope
+linkTitle: Operator Scope
+weight: 20
+---
 
 ## Overview
 
@@ -265,5 +269,5 @@ if strings.Contains(namespace, ",") {
 [k8s-rbac]: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
 [kube-rbac-proxy]: https://github.com/brancz/kube-rbac-proxy
 [rbac-clusterrole]: https://kubernetes.io/docs/reference/access-authn-authz/rbac/#role-and-clusterrole
-[crd-scope-doc]: crds-scope
+[crd-scope-doc]: /docs/golang/new/crds-scope/
 [rbac-markers]: https://book.kubebuilder.io/reference/markers/rbac.html

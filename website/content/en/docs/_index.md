@@ -85,7 +85,7 @@ Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file f
 [controller_runtime]: https://github.com/kubernetes-sigs/controller-runtime
 [faq]: /docs/faq/
 [getting_started]: https://github.com/operator-framework/getting-started/blob/master/README.md
-[golang-guide]: /docs/golang/quickstart/
+[golang-guide]:/docs/golang/new/quickstart/
 [helm-guide]:/docs/helm/quickstart/
 [install_guide]: /docs/install-operator-sdk/
 [license_file]:https://github.com/operator-framework/operator-sdk/blob/master/LICENSE

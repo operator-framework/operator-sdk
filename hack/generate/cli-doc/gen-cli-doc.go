@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cli"
@@ -33,9 +34,40 @@ title: "%s"
 `
 
 func main() {
-	// TODO: Generate CLI docs for plugins CLI at doc/cli/kubebuilder
-	root := cli.GetCLIRoot()
-	root.DisableAutoGenTag = true
+	currentDir, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("Failed to get current directory: %v", err)
+	}
+
+	legacyDocPath := filepath.Join(currentDir, "website", "content", "en", "docs", "cli")
+	legacyRoot := cli.GetCLIRoot()
+	legacyRoot.DisableAutoGenTag = true
+	recreateDocDir(legacyRoot, legacyDocPath)
+
+	newDocPath := filepath.Join(currentDir, "website", "content", "en", "docs", "new-cli")
+	_, newRoot := cli.GetPluginsCLIAndRoot()
+	newRoot.DisableAutoGenTag = true
+	recreateDocDir(newRoot, newDocPath)
+}
+
+// recreateDocDir removes and recreates the CLI doc directory for rootCmd
+// at docPath to ensure that stale files (e.g. from renamed or removed CLI subcommands)
+// are removed.
+func recreateDocDir(rootCmd *cobra.Command, docPath string) {
+	currentDir, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("Failed to get current directory: %v", err)
+	}
+
+	if err := os.Rename(docPath+"/_index.md", currentDir+"/tmp_index.md"); err != nil {
+		log.Fatalf("Failed to move existing index: %v", err)
+	}
+	if err := os.RemoveAll(docPath); err != nil {
+		log.Fatalf("Failed to remove existing generated docs: %v", err)
+	}
+	if err := os.MkdirAll(docPath, 0755); err != nil {
+		log.Fatalf("Failed to re-create docs directory: %v", err)
+	}
 
 	filePrepender := func(filename string) string {
 		name := filepath.Base(filename)
@@ -47,27 +79,7 @@ func main() {
 		return "../" + base
 	}
 
-	currentDir, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("Failed to get current directory: %v", err)
-	}
-
-	docPath := filepath.Join(currentDir, "website", "content", "en", "docs", "cli")
-
-	// Remove and recreate the CLI doc directory to ensure that
-	// stale files (e.g. from renamed or removed CLI subcommands)
-	// are removed.
-	if err := os.Rename(docPath+"/_index.md", currentDir+"/tmp_index.md"); err != nil {
-		log.Fatalf("Failed to move existing index: %v", err)
-	}
-	if err := os.RemoveAll(docPath); err != nil {
-		log.Fatalf("Failed to remove existing generated docs: %v", err)
-	}
-	if err := os.MkdirAll(docPath, 0755); err != nil {
-		log.Fatalf("Failed to re-create docs directory: %v", err)
-	}
-
-	err = doc.GenMarkdownTreeCustom(root, docPath, filePrepender, linkHandler)
+	err = doc.GenMarkdownTreeCustom(rootCmd, docPath, filePrepender, linkHandler)
 	if err != nil {
 		log.Fatalf("Failed to generate documentation: %v", err)
 	}

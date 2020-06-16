@@ -59,8 +59,11 @@ func main() {
 		localSDKPath = sdkTestE2EDir
 	}
 
+	// Post v0.18.1 "operator-sdk new" is not part of the new CLI
+	// so we use an older release binary that should already be present locally
+	// from hack/tests/scaffolding/e2e-go-scaffold.sh
 	log.Print("Creating new operator project")
-	cmdOut, err := exec.Command("operator-sdk",
+	cmdOut, err := exec.Command("./operator-sdk-old",
 		"new",
 		operatorName,
 		"--repo", testRepo,

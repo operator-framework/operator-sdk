@@ -1,5 +1,8 @@
-
-**NOTE:** This is a WIP doc for the Kubebuilder integration effort. This new CLI and workflow is currently alpha and there may be breaking changes.
+---
+title: Admission Webhooks
+linkTitle: Admission Webhooks
+weight: 40
+---
 
 ## Create a validating or mutating Admission Webhook
 
@@ -198,8 +201,8 @@ memcached-operator-controller-manager   1/1     1            1           10m
 memcached-sample                        5/5     5            5           3m
 ```
 
-[quickstart_run_as_deployment]: /docs/kubebuilder/quickstart/#2-run-as-a-deployment-inside-the-cluster
-[quickstart_create_a_cr]: /docs/kubebuilder/quickstart/#create-a-memcached-cr
+[quickstart_run_as_deployment]: /docs/golang/new/quickstart/#2-run-as-a-deployment-inside-the-cluster
+[quickstart_create_a_cr]: /docs/golang/new/quickstart/#create-a-memcached-cr
 
 [kubebuilder_admission_controllers]: https://book.kubebuilder.io/reference/admission-webhook.html
 [kubebuilder_cronjob_webhook]: https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html

@@ -134,4 +134,4 @@ The Operator SDK has a repo with [sample projects](https://github.com/operator-f
 [Coveralls](https://coveralls.io/) may not work well with [molecule](https://github.com/operator-framework/operator-sdk-samples/tree/master/ansible/memcached-operator/molecule), if this is the case we can just not integrate with it or we can find a similar tool.
 
 [operator-sdk-doc]:  https://sdk.operatorframework.io/
-[e2e-docs]: https://sdk.operatorframework.io/docs/golang/e2e-tests/
+[e2e-docs]: https://sdk.operatorframework.io/docs/golang/legacy/e2e-tests/

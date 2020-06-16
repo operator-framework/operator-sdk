@@ -97,6 +97,6 @@ With the above changes the specified manifests should look as follows:
     ```
   
 [RBAC]: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
-[manager_user_guide]: /docs/golang/quickstart/#manager
+[manager_user_guide]:/docs/golang/legacy/quickstart/#manager
 [manager_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Options
-[crd-scope-doc]: /docs/crds-scope
+[crd-scope-doc]: /docs/legacy-common/crds-scope

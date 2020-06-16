@@ -4,7 +4,7 @@ Implementation Owner:
 
 > Status: **implemented**
 >
-> See [metrics documentation](https://sdk.operatorframework.io/docs/golang/monitoring/).
+> See [metrics documentation](https://sdk.operatorframework.io/docs/golang/legacy/monitoring/).
 
 - [Motivation and goal](#motivation-and-goal)
 - [Overview of the metrics](#overview-of-the-metrics)

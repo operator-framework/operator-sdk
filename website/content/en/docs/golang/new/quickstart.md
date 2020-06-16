@@ -1,6 +1,10 @@
+---
+title: Golang Based Operator Quickstart
+linkTitle: Quickstart
+weight: 10
+---
 
-**NOTE:** This is a WIP doc for the Kubebuilder integration effort. This new CLI and workflow is currently alpha and there may be breaking changes.
-Please refer to the [quickstart guide][legacy_quickstart_doc] for the default CLI and workflow.
+**NOTE:** For the SDK versions prior to `v0.19.0` please consult the [legacy docs][legacy_quickstart_doc] for the [legacy CLI][legacy_CLI] and project.
 
 This guide walks through an example of building a simple memcached-operator using the operator-sdk CLI tool and controller-runtime library API.
 
@@ -55,8 +59,6 @@ mgr, err := manager.New(cfg, manager.Options{
 ```
 
 #### Operator scope
-
-> **// TODO:** Update [operator scope doc][operator_scope] and update commands that rely on WATCH_NAMESPACE being defined and sourced from `deploy/operator.yaml`.
 
 Read the [operator scope][operator_scope] documentation on how to run your operator as namespace-scoped vs cluster-scoped.
 
@@ -254,8 +256,6 @@ return ctrl.Result{RequeueAfter: time.Second*5}, nil
 
 For a guide on Reconcilers, Clients, and interacting with resource Events, see the [Client API doc][doc_client_api].
 
-> **// TODO:** Should we point to the client API doc after the integration?
-
 ### Specify permissions and generate RBAC manifests
 
 The controller needs certain RBAC permissions to interact with the resources it manages. These are specified via [RBAC markers][rbac_markers] like the following:
@@ -322,8 +322,6 @@ Push the image to a repository:
 ```sh
 $ make docker-push IMG=quay.io/$USERNAME/memcached-operator:v0.0.1
 ```
-
-> **// TODO:** Mention how to use `buildah build` by just updating the Makefile?
 
 **Note**:
 The name and tag of the image (`IMG=<some-registry>/<project-name>:tag`) in both the commands can also be set in the Makefile. Modify the line which has `IMG ?= controller:latest` to set your desired default image name.
@@ -459,16 +457,16 @@ Also see the [advanced topics][advanced_topics] doc for more use cases and under
 
 [enqueue_requests_from_map_func]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/handler#EnqueueRequestsFromMapFunc
 [event_handler_godocs]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/handler#hdr-EventHandlers
-[event_filtering]:/docs/golang/references/event-filtering/
+[event_filtering]:/docs/golang/new/references/event-filtering/
 [controller_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/controller#Options
 [controller_godocs]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/controller
-[operator_scope]:/docs/operator-scope/
+[operator_scope]:/docs/golang/new/operator-scope/
 [memcached_handler]: ../example/memcached-operator/handler.go.tmpl
 [kubebuilder_layout_doc]:https://book.kubebuilder.io/cronjob-tutorial/basic-project.html
 [homebrew_tool]:https://brew.sh/
 [go_mod_wiki]: https://github.com/golang/go/wiki/Modules
 [go_vendoring]: https://blog.gopheracademy.com/advent-2015/vendor-folder/
-[doc_client_api]:/docs/golang/references/client/
+[doc_client_api]:/docs/golang/new/references/client/
 [manager_go_doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Manager
 [controller-go-doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg#hdr-Controller
 [request-go-doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Request
@@ -481,17 +479,18 @@ Also see the [advanced topics][advanced_topics] doc for more use cases and under
 [kb_controller_doc]: https://book.kubebuilder.io/cronjob-tutorial/controller-overview.html
 [kb_api_doc]: https://book.kubebuilder.io/cronjob-tutorial/new-api.html
 [controller_tools]: https://sigs.k8s.io/controller-tools
-[doc-validation-schema]: https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#specifying-a-structural-schema
+[doc-validation-schema]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#specifying-a-structural-schema
 [generating-crd]: https://book.kubebuilder.io/reference/generating-crd.html
 [markers]: https://book.kubebuilder.io/reference/markers.html
 [crd-markers]: https://book.kubebuilder.io/reference/markers/crd-validation.html
 [rbac-markers]: https://book.kubebuilder.io/reference/markers/rbac.html
 [memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/master/example/kb-memcached-operator/memcached_controller.go.tmpl
 [builder_godocs]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/builder#example-Builder
-[legacy_quickstart_doc]: /docs/golang/quickstart/
+[legacy_quickstart_doc]:/docs/golang/legacy/quickstart/
 [activate_modules]: https://github.com/golang/go/wiki/Modules#how-to-install-and-activate-module-support
-[advanced_topics]: /docs/kubebuilder/advanced-topics/
-[create_a_webhook]: /docs/kubebuilder/webhooks.md
+[advanced_topics]: /docs/golang/new/advanced-topics/
+[create_a_webhook]: /docs/golang/new/webhooks/
 [status_marker]: https://book.kubebuilder.io/reference/generating-crd.html#status
-[status_subresource]: https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#status-subresource
+[status_subresource]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#status-subresource
 [API-groups]:https://kubernetes.io/docs/concepts/overview/kubernetes-api/#api-groups
+[legacy_CLI]:/docs/cli
