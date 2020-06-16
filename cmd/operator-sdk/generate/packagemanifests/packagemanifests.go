@@ -40,7 +40,7 @@ const examples = `
   > memcached-operator
   ...
 
-  $ kustomize build config/packagemanifests | operator-sdk generate packagemanifests --manifests --metadata --overwrite --version 0.0.1
+  $ kustomize build config/packagemanifests | operator-sdk generate packagemanifests --manifests --version 0.0.1
   Generating package manifests version 0.0.1
   ...
 
@@ -155,7 +155,7 @@ func (c packagemanifestsCmd) validateManifests() error {
 }
 
 // runManifests generates package manifests.
-func (c packagemanifestsCmd) runManifests(cfg *config.Config) (err error) {
+func (c packagemanifestsCmd) runManifests(cfg *config.Config) error {
 
 	if !c.quiet && !c.stdout {
 		fmt.Println("Generating package manifests version", c.version)
@@ -178,9 +178,6 @@ func (c packagemanifestsCmd) runManifests(cfg *config.Config) (err error) {
 		}
 	}
 	packageDir := filepath.Join(c.outputDir, c.version)
-	// When generating a new package, CRDs should be written unless --update-crds has been explicitly set to false.
-	updateCRDsOff := c.updateCRDsFlag.Changed && !c.updateCRDs
-	writeNewPackageCRDs := !updateCRDsOff && genutil.IsNotExist(packageDir)
 
 	if err := c.generatePackageManifest(); err != nil {
 		return err
@@ -219,7 +216,7 @@ func (c packagemanifestsCmd) runManifests(cfg *config.Config) (err error) {
 		return fmt.Errorf("error generating ClusterServiceVersion: %v", err)
 	}
 
-	if c.updateCRDs || writeNewPackageCRDs {
+	if c.updateCRDs {
 		var objs []interface{}
 		for _, crd := range col.V1CustomResourceDefinitions {
 			objs = append(objs, crd)

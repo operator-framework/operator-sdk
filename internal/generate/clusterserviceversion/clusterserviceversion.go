@@ -54,7 +54,7 @@ type Generator struct {
 	OperatorType projutil.OperatorType
 	// Version is the CSV current version.
 	Version string
-	// FromVersion is the version of a previous CSV to upgrade from from.
+	// FromVersion is the version of a previous CSV to upgrade from.
 	FromVersion string
 	// Collector holds all manifests relevant to the Generator.
 	Collector *collector.Manifests

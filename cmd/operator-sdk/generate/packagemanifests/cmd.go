@@ -57,12 +57,9 @@ type packagemanifestsCmd struct {
 	deployDir    string
 	apisDir      string
 	crdsDir      string
+	updateCRDs   bool
 	stdout       bool
 	quiet        bool
-
-	// CRD update options
-	updateCRDs     bool
-	updateCRDsFlag *pflag.Flag
 
 	// Interactive options.
 	interactiveLevel projutil.InteractiveLevel
@@ -152,9 +149,7 @@ func (c *packagemanifestsCmd) addCommonFlagsTo(fs *pflag.FlagSet) {
 	fs.StringVar(&c.channelName, "channel", "", "Channel name for the generated package")
 	fs.BoolVar(&c.isDefaultChannel, "default-channel", false, "Use the channel passed to --channel "+
 		"as the package manifest file's default channel")
-	fs.BoolVar(&c.updateCRDs, "update-crds", false, "Update CustomResoureDefinition manifests in this package. "+
-		"This will occur automatically when a new package is generated")
-	c.updateCRDsFlag = fs.Lookup("update-crds")
+	fs.BoolVar(&c.updateCRDs, "update-crds", true, "Update CustomResoureDefinition manifests in this package")
 	fs.BoolVarP(&c.quiet, "quiet", "q", false, "Run in quiet mode")
 	fs.BoolVar(&c.interactive, "interactive", false, "When set or no package base exists, an interactive "+
 		"command prompt will be presented to accept package ClusterServiceVersion metadata")
