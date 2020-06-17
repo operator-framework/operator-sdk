@@ -22,6 +22,7 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/new"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/olm"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/run"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/version"
 	"github.com/operator-framework/operator-sdk/internal/flags"
 	golangv2 "github.com/operator-framework/operator-sdk/internal/plugins/golang/v2"
@@ -46,8 +47,7 @@ var commands = []*cobra.Command{
 	completion.NewCmd(),
 	generate.NewCmd(),
 	olm.NewCmd(),
-	// Add back when implemented for new project layouts.
-	// run.NewCmd(),
+	run.NewCmd(),
 	version.NewCmd(),
 }
 

@@ -82,7 +82,7 @@ func GetCLIRoot() *cobra.Command {
 		new.NewCmd(),
 		olm.NewCmd(),
 		printdeps.NewCmd(),
-		run.NewCmd(),
+		run.NewCmdLegacy(),
 		scorecard.NewCmd(),
 		test.NewCmd(),
 		version.NewCmd(),
