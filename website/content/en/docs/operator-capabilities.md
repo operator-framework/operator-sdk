@@ -134,7 +134,7 @@ It should be possible to backup and restore the operand from the operator itself
 
 8. Does your operand use a rolling deployment strategy?
 
-9. Does your operator create a PodDsruptionBudget resource for your operand pods?
+9. Does your operator create a PodDisruptionBudget resource for your operand pods?
 
 10. Does your operand have CPU requests and limits set?
 
