@@ -87,7 +87,6 @@ func getTestStatus(tc []*Testcase) (s v1alpha3.TestStatus) {
 	return s
 }
 
-<<<<<<< HEAD
 func printErrorStatus(err error) {
 	s := v1alpha3.TestStatus{}
 	r := v1alpha3.TestResult{}
@@ -105,9 +104,6 @@ func printErrorStatus(err error) {
 // the kuttl structs below are copied from the kuttl master currently
 // in the future, these structs might be pulled into SDK as
 // normal golang deps if necessary
-=======
-// kuttl report format
->>>>>>> f4e9baf9a3720ac0df56d37c7243dd52ed9db459
 
 // Property are name/value pairs which can be provided in the report for things such as kuttl.version
 type Property struct {
