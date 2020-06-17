@@ -40,7 +40,6 @@ structure:
             └── list-other
                 ├── 00-assert.yaml
                 └── 00-pod.yaml
-
 ```
 
 1. `bundle/` - Contains bundle manifests and metadata under test.
