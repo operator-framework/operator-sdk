@@ -268,8 +268,7 @@ func doAnsibleScaffold() error {
 		return fmt.Errorf("new ansible scaffold failed: %v", err)
 	}
 
-	if err = genutil.GenerateCRDNonGo(projectName, *resource,
-		apiFlags.CrdVersion, projutil.OperatorTypeAnsible); err != nil {
+	if err = genutil.GenerateCRDNonGo(projectName, *resource, apiFlags.CrdVersion); err != nil {
 		return err
 	}
 

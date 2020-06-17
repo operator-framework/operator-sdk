@@ -94,5 +94,5 @@ var _ = Describe("Testing projutil helpers", func() {
 
 func TestMetadata(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Helpers suite")
+	RunSpecs(t, "Projutil Helpers suite")
 }

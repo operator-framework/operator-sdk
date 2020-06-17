@@ -243,7 +243,7 @@ func (c bundleCreateCmd) runGenerate() error {
 		rootDir = filepath.Dir(c.directory)
 	}
 
-	if err = rewriteBundleImageContents(rootDir); err != nil {
+	if err = RewriteBundleImageContents(rootDir); err != nil {
 		return err
 	}
 	return nil
@@ -341,19 +341,19 @@ func copyScorecardConfig() error {
 }
 
 func addLabelsToDockerfile(filename string, metricAnnotation map[string]string) error {
-	var sdkMetricContent string
+	var sdkMetricContent strings.Builder
 	for key, value := range metricAnnotation {
-		sdkMetricContent += fmt.Sprintf("LABEL %s=%s\n", key, value)
+		sdkMetricContent.WriteString(fmt.Sprintf("LABEL %s=%s\n", key, value))
 	}
 
-	err := projutil.RewriteFileContents(filename, "LABEL", sdkMetricContent)
+	err := projutil.RewriteFileContents(filename, "LABEL", sdkMetricContent.String())
 	if err != nil {
 		return fmt.Errorf("error rewriting dockerfile with metric labels, %v", err)
 	}
 	return nil
 }
 
-func rewriteBundleImageContents(rootDir string) error {
+func RewriteBundleImageContents(rootDir string) error {
 	metricLabels := projutil.MakeBundleMetricsLabels()
 
 	// write metric labels to bundle.Dockerfile
@@ -366,7 +366,7 @@ func rewriteBundleImageContents(rootDir string) error {
 		return fmt.Errorf("error writing metric labels to annotations.yaml: %v", err)
 	}
 
-	// CopyScorecardConfig to bundle.Dockerfile
+	// Add a COPY for the scorecard config to bundle.Dockerfile.
 	if err := copyScorecardConfig(); err != nil {
 		return fmt.Errorf("error copying scorecardConfig to bundle image, %v", err)
 	}

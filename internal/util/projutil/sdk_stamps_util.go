@@ -16,25 +16,26 @@ package projutil
 
 import (
 	"regexp"
-	"strings"
 
 	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
 	ver "github.com/operator-framework/operator-sdk/version"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
-	OperatorBuilder = "operators.operatorframework.io/builder"
-	OperatorLayout  = "operators.operatorframework.io/project_layout"
-	bundleMediaType = "operators.operatorframework.io.metrics.mediatype.v1"
-	bundleBuilder   = "operators.operatorframework.io.metrics.builder"
-	bundleLayout    = "operators.operatorframework.io.metrics.project_layout"
+	OperatorBuilder  = "operators.operatorframework.io/builder"
+	OperatorLayout   = "operators.operatorframework.io/project_layout"
+	bundleMediaType  = "operators.operatorframework.io.metrics.mediatype.v1"
+	bundleBuilder    = "operators.operatorframework.io.metrics.builder"
+	bundleLayout     = "operators.operatorframework.io.metrics.project_layout"
+	metricsMediatype = "metrics+v1"
 )
 
 // MakeBundleMetricsLabels returns the SDK metric labels which will be added
 // to bundle resources like bundle.Dockerfile and annotations.yaml.
 func MakeBundleMetricsLabels() map[string]string {
 	return map[string]string{
-		bundleMediaType: "metrics+v1",
+		bundleMediaType: metricsMediatype,
 		bundleBuilder:   getSDKBuilder(),
 		bundleLayout:    getSDKProjectLayout(),
 	}
@@ -59,10 +60,17 @@ func parseVersion(input string) string {
 	if version == "" {
 		return "unknown"
 	}
-	if strings.Contains(input, "dirty") {
+
+	if checkIfUnreleased(input) {
 		version = version + "+git"
 	}
 	return version
+}
+
+// checkIfUnreleased returns true if sdk was not built from released version.
+func checkIfUnreleased(input string) bool {
+	re := regexp.MustCompile(`v[0-9]+\.[0-9]+\.[0-9]+-.+`)
+	return re.MatchString(input)
 }
 
 // getSDKProjectLayout returns the `layout` field in PROJECT file if it is a
@@ -71,7 +79,8 @@ func getSDKProjectLayout() string {
 	if kbutil.HasProjectFile() {
 		cfg, err := kbutil.ReadConfig()
 		if err != nil {
-			return err.Error()
+			log.Debugf("Error reading config: %v", err)
+			return "unknown"
 		}
 		return cfg.Layout
 	}

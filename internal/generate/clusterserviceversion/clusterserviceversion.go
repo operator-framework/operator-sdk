@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/blang/semver"
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -160,11 +161,27 @@ func (g *Generator) Generate(cfg *config.Config, opts ...Option) (err error) {
 		return err
 	}
 
+	// Add sdk labels to csv
+	setSDKAnnotations(csv)
+
 	w, err := g.getWriter()
 	if err != nil {
 		return err
 	}
 	return genutil.WriteObject(w, csv)
+}
+
+// setSDKAnnotations adds SDK metric labels to the base if they do not exist.
+func setSDKAnnotations(csv *v1alpha1.ClusterServiceVersion) {
+	annotations := csv.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+
+	for key, value := range projutil.MakeOperatorMetricLabels() {
+		annotations[key] = value
+	}
+	csv.SetAnnotations(annotations)
 }
 
 // LegacyOption is a function that modifies a Generator for legacy project layouts.
@@ -203,6 +220,9 @@ func (g *Generator) GenerateLegacy(opts ...LegacyOption) (err error) {
 	if err != nil {
 		return err
 	}
+
+	// Add sdk labels to csv
+	setSDKAnnotations(csv)
 
 	w, err := g.getWriter()
 	if err != nil {

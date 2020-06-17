@@ -197,7 +197,7 @@ func doAnsibleAPIScaffold() error {
 	if err != nil {
 		return fmt.Errorf("new ansible api scaffold failed: %v", err)
 	}
-	if err = genutil.GenerateCRDNonGo("", *r, apiFlags.CrdVersion, projutil.OperatorTypeAnsible); err != nil {
+	if err = genutil.GenerateCRDNonGo("", *r, apiFlags.CrdVersion); err != nil {
 		return err
 	}
 

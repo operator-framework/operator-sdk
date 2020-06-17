@@ -70,9 +70,6 @@ func (b ClusterServiceVersion) GetBase() (base *v1alpha1.ClusterServiceVersion, 
 		base = b.makeNewBase()
 	}
 
-	// Add sdk labels to csv
-	setSDKAnnotations(base)
-
 	// Interactively fill in UI metadata.
 	if b.Interactive {
 		meta := &uiMetadata{}
@@ -90,22 +87,6 @@ func (b ClusterServiceVersion) GetBase() (base *v1alpha1.ClusterServiceVersion, 
 	}
 
 	return base, nil
-}
-
-// setSDKAnnotations adds SDK metric labels to the base if they do not exist. It assumes that
-// if sdk Builder annotation is not present, then all sdk labels are also not populated in csv.
-func setSDKAnnotations(csv *v1alpha1.ClusterServiceVersion) {
-	annotations := csv.GetAnnotations()
-	if annotations == nil {
-		annotations = make(map[string]string)
-	}
-
-	if _, exist := annotations[projutil.OperatorBuilder]; !exist {
-		for key, value := range projutil.MakeOperatorMetricLabels() {
-			annotations[key] = value
-		}
-	}
-	csv.SetAnnotations(annotations)
 }
 
 // setDefaults sets default values in b using b's existing values.

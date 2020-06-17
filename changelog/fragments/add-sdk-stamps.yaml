@@ -1,3 +1,3 @@
 entries:
-    - description: Add sdk annotations to bundle resources (CRDs, CSVs, `annotations.yaml` and `bundle.dockerfile`).
+    - description: Add sdk annotations to bundle resources (CSVs, `annotations.yaml` and `bundle.dockerfile`).
       kind: "addition"

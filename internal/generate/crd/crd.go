@@ -40,7 +40,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
 const DefaultCRDVersion = "v1"
@@ -68,8 +67,6 @@ type Generator struct {
 	// ApisDir is for the location of the API types directory e.g "pkg/apis"
 	// The CSV annotation comments will be parsed from the types under this path.
 	ApisDir string
-	// OperatorType refers to the type of operator (go/ansible/helm)
-	OperatorType string
 }
 
 func (g Generator) validate() error {
@@ -188,8 +185,9 @@ func (g Generator) generateGo() (map[string][]byte, error) {
 			// just remove it.
 			annotations := crd.GetAnnotations()
 			delete(annotations, "controller-gen.kubebuilder.io/version")
-			// Add sdk related labels to the cached annotations
-			g.addSDKLabelsToAnnotations(annotations)
+			if len(annotations) == 0 {
+				annotations = nil
+			}
 			crd.SetAnnotations(annotations)
 			b, err := k8sutil.GetObjectBytes(&crd, yaml.Marshal)
 			if err != nil {
@@ -275,7 +273,6 @@ func (g Generator) generateNonGo() (map[string][]byte, error) {
 
 	sort.Sort(k8sutil.CRDVersions(crd.Spec.Versions))
 	setCRDStorageVersion(crd)
-	g.setSDKLabels(crd)
 	if err := checkCRDVersions(crd); err != nil {
 		return nil, fmt.Errorf("invalid version in CRD %s: %w", crd.GetName(), err)
 	}
@@ -372,26 +369,6 @@ func setCRDStorageVersion(crd *apiextv1beta1.CustomResourceDefinition) {
 	// Set the first element in spec.versions to be the storage version.
 	log.Infof("Setting CRD %q storage version to %s", crd.GetName(), crd.Spec.Versions[0].Name)
 	crd.Spec.Versions[0].Storage = true
-}
-
-func (g Generator) setSDKLabels(crd *apiextv1beta1.CustomResourceDefinition) {
-	annotations := crd.GetAnnotations()
-	if annotations == nil {
-		annotations = make(map[string]string)
-	}
-	g.addSDKLabelsToAnnotations(annotations)
-	crd.SetAnnotations(annotations)
-}
-
-func (g Generator) addSDKLabelsToAnnotations(mapAnnotations map[string]string) {
-	for label, value := range projutil.MakeOperatorMetricLabels() {
-		mapAnnotations[label] = value
-	}
-	// Modifying operator type for ansible and helm legacy operators, as during
-	// scaffolding the project directories are not written on disk
-	if g.OperatorType != projutil.OperatorTypeGo {
-		mapAnnotations[projutil.OperatorLayout] = g.OperatorType
-	}
 }
 
 // checkCRDVersions ensures version(s) generated for a CRD are in valid format.

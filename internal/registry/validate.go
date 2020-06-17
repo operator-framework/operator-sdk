@@ -17,6 +17,7 @@ package registry
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	apivalidation "github.com/operator-framework/api/pkg/validation"
@@ -175,7 +176,12 @@ func writeAnnotationFile(filename string, annotation *registrybundle.AnnotationM
 		return err
 	}
 
-	err = ioutil.WriteFile(filename, []byte(file), 0644)
+	mode := os.FileMode(0666)
+	if info, err := os.Stat(filename); err == nil {
+		mode = info.Mode()
+	}
+
+	err = ioutil.WriteFile(filename, []byte(file), mode)
 	if err != nil {
 		return fmt.Errorf("error writing modified contents to annotations file, %v", err)
 	}

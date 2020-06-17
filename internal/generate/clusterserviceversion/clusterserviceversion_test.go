@@ -141,9 +141,8 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 				}
 				Expect(g.Generate(cfg, opts...)).ToNot(HaveOccurred())
 				outputFile := filepath.Join(tmp, "bases", makeCSVFileName(operatorName))
-				outputFileContents := removeSDKLabelsFromCSVString(string(readFileHelper(outputFile)))
 				Expect(outputFile).To(BeAnExistingFile())
-				Expect(outputFileContents).To(MatchYAML(baseCSVUIMetaStr))
+				Expect(readFileHelper(outputFile)).To(MatchYAML(baseCSVUIMetaStr))
 			})
 			It("should have sdk labels in annotations", func() {
 				g = Generator{
@@ -160,7 +159,7 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(outputFile).To(BeAnExistingFile())
 
-				annotations := outputCSV.ObjectMeta.Annotations
+				annotations := outputCSV.GetAnnotations()
 				Expect(annotations).ToNot(BeNil())
 				Expect(annotations).Should(HaveKey(projutil.OperatorBuilder))
 				Expect(annotations).Should(HaveKey(projutil.OperatorLayout))
@@ -178,9 +177,8 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 				}
 				Expect(g.Generate(cfg, opts...)).ToNot(HaveOccurred())
 				outputFile := filepath.Join(tmp, bundle.ManifestsDir, makeCSVFileName(operatorName))
-				outputFileContents := removeSDKLabelsFromCSVString(string(readFileHelper(outputFile)))
 				Expect(outputFile).To(BeAnExistingFile())
-				Expect(outputFileContents).To(MatchYAML(newCSVStr))
+				Expect(readFileHelper(outputFile)).To(MatchYAML(newCSVStr))
 			})
 			It("should write a ClusterServiceVersion manifest to a package file", func() {
 				g = Generator{
@@ -196,7 +194,7 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 				Expect(g.Generate(cfg, opts...)).ToNot(HaveOccurred())
 				outputFile := filepath.Join(tmp, g.Version, makeCSVFileName(operatorName))
 				Expect(outputFile).To(BeAnExistingFile())
-				Expect(string(readFileHelper(outputFile))).To(MatchYAML(newCSVStr))
+				Expect(readFileHelper(outputFile)).To(MatchYAML(newCSVStr))
 			})
 
 			It("should write a ClusterServiceVersion manifest to a legacy bundle file", func() {
@@ -212,9 +210,8 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 				}
 				Expect(g.GenerateLegacy(opts...)).ToNot(HaveOccurred())
 				outputFile := filepath.Join(tmp, bundle.ManifestsDir, makeCSVFileName(operatorName))
-				outputFileContents := removeSDKLabelsFromCSVString(string(readFileHelper(outputFile)))
 				Expect(outputFile).To(BeAnExistingFile())
-				Expect(outputFileContents).To(MatchYAML(newCSVStr))
+				Expect(readFileHelper(outputFile)).To(MatchYAML(newCSVStr))
 			})
 			It("should write a ClusterServiceVersion manifest as a legacy package file", func() {
 				g = Generator{
@@ -280,46 +277,28 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 			})
 		})
 
-		Context("to create a new", func() {
-
-			Context("bundle base", func() {
-				It("should return the default base object", func() {
-					g = Generator{
-						OperatorName: operatorName,
-						OperatorType: operatorType,
-						config:       cfg,
-						getBase:      makeBaseGetter(baseCSV),
-					}
-					csv, err := g.generate()
-					Expect(err).ToNot(HaveOccurred())
-					Expect(csv).To(Equal(baseCSV))
-				})
-				It("should return a base object with customresourcedefinitions", func() {
-					g = Generator{
-						OperatorName: operatorName,
-						OperatorType: operatorType,
-						config:       cfg,
-						getBase:      makeBaseGetter(baseCSVUIMeta),
-					}
-					csv, err := g.generate()
-					Expect(err).ToNot(HaveOccurred())
-					Expect(csv).To(Equal(baseCSVUIMeta))
-				})
+		Context("to create a new base ClusterServiceVersion", func() {
+			It("should return the default base object", func() {
+				g = Generator{
+					OperatorName: operatorName,
+					OperatorType: operatorType,
+					config:       cfg,
+					getBase:      makeBaseGetter(baseCSV),
+				}
+				csv, err := g.generate()
+				Expect(err).ToNot(HaveOccurred())
+				Expect(csv).To(Equal(baseCSV))
 			})
-			Context("bundle", func() {
-				It("should return the expected object", func() {
-					g = Generator{
-						OperatorName: operatorName,
-						OperatorType: operatorType,
-						Version:      version,
-						Collector:    col,
-						config:       cfg,
-						getBase:      makeBaseGetter(baseCSVUIMeta),
-					}
-					csv, err := g.generate()
-					Expect(err).ToNot(HaveOccurred())
-					Expect(csv).To(Equal(newCSV))
-				})
+			It("should return a base object with customresourcedefinitions", func() {
+				g = Generator{
+					OperatorName: operatorName,
+					OperatorType: operatorType,
+					config:       cfg,
+					getBase:      makeBaseGetter(baseCSVUIMeta),
+				}
+				csv, err := g.generate()
+				Expect(err).ToNot(HaveOccurred())
+				Expect(csv).To(Equal(baseCSVUIMeta))
 			})
 		})
 
@@ -380,7 +359,6 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 				Expect(csv).To(Equal(upgradeCSV(newCSV, g.OperatorName, g.Version)))
 			})
 		})
-
 	})
 
 })
@@ -445,10 +423,10 @@ func initTestCSVsHelper() {
 	ExpectWithOffset(1, err).ToNot(HaveOccurred())
 }
 
-func readFileHelper(path string) []byte {
+func readFileHelper(path string) string {
 	b, err := ioutil.ReadFile(path)
 	ExpectWithOffset(1, err).ToNot(HaveOccurred())
-	return b
+	return removeSDKLabelsFromCSVString(string(b))
 }
 
 func modifyCSVDepImageHelper(tag string) func(csv *v1alpha1.ClusterServiceVersion) {
