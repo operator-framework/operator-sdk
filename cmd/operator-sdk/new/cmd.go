@@ -97,8 +97,16 @@ generates a default directory layout based on the input <project-name>.
 	if err := newCmd.MarkFlagRequired("type"); err != nil {
 		log.Fatalf("Failed to mark `type` flag for `new` subcommand as required")
 	}
+
+	// todo(camilamacedo86): remove before 1.0.0
 	newCmd.Flags().BoolVar(&gitInit, "git-init", false,
 		"Initialize the project directory as a git repository (default false)")
+	err := newCmd.Flags().MarkDeprecated("git-init",
+		"instead run `git init` once your project is created to use git")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	newCmd.Flags().BoolVar(&generatePlaybook, "generate-playbook", false,
 		"Generate a playbook skeleton. (Only used for --type ansible)")
 
@@ -162,7 +170,7 @@ func newFunc(cmd *cobra.Command, args []string) error {
 			log.Fatal(err)
 		}
 	}
-
+	//todo: remove before 1.0.0
 	if gitInit {
 		if err := initGit(); err != nil {
 			log.Fatal(err)
@@ -309,12 +317,18 @@ func verifyFlags() error {
 	return nil
 }
 
+// todo(camilamacedo86): remove before 1.0.0
+// Deprecated: the git-init flag was deprecated since has no need to make the command run the git init.
+// users are allowed to easily do that when they wish. This func is just used here to run the git-init
 func execProjCmd(cmd string, args ...string) error {
 	dc := exec.Command(cmd, args...)
 	dc.Dir = filepath.Join(projutil.MustGetwd(), projectName)
 	return projutil.ExecCmd(dc)
 }
 
+// todo(camilamacedo86): remove before 1.0.0
+// Deprecated: the git-init flag was deprecated since has no need to make the command run the git init.
+// users are allowed to easily do that when they wish.
 func initGit() error {
 	log.Info("Running git init")
 	if err := execProjCmd("git", "init"); err != nil {
