@@ -17,9 +17,11 @@
 package e2e
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
@@ -33,7 +35,11 @@ import (
 
 var _ = Describe("operator-sdk", func() {
 	Context("with the new project layout", func() {
-		var tc *utils.TestContext
+		var (
+			tc          *utils.TestContext
+			projectName string
+		)
+
 		BeforeEach(func() {
 
 			By("creating a new test context")
@@ -41,6 +47,8 @@ var _ = Describe("operator-sdk", func() {
 			tc, err = utils.NewTestContext("operator-sdk", "GO111MODULE=on")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(tc.Prepare()).To(Succeed())
+
+			projectName = filepath.Base(tc.Dir)
 		})
 
 		AfterEach(func() {
@@ -56,6 +64,7 @@ var _ = Describe("operator-sdk", func() {
 			By("initializing a project")
 			err := tc.Init(
 				"--project-version", "3-alpha",
+				"--repo", path.Join("github.com", "example", projectName),
 				"--domain", tc.Domain,
 				"--fetch-deps=false")
 			Expect(err).Should(Succeed())
@@ -153,6 +162,25 @@ var _ = Describe("operator-sdk", func() {
 				bundleImage += ":" + imageSplit[1]
 			}
 			err = tc.Make("bundle-build", "BUNDLE_IMG="+bundleImage)
+			Expect(err).Should(Succeed())
+
+			By("generating the operator package manifests")
+			var genPkgManCmd *exec.Cmd
+			Expect(tc.Make("manifests")).Should(Succeed())
+			genPkgManCmd = exec.Command(tc.BinaryName, "generate", "packagemanifests",
+				"--kustomize",
+				"--interactive=false")
+			_, err = tc.Run(genPkgManCmd)
+			Expect(err).Should(Succeed())
+			kustomizeOutput, err := tc.Run(exec.Command("kustomize", "build", filepath.Join("config", "packagemanifests")))
+			Expect(err).Should(Succeed())
+			genPkgManCmd = exec.Command(tc.BinaryName, "generate", "packagemanifests",
+				"--manifests",
+				"--update-crds",
+				"--version", "0.0.1")
+			Expect(err).Should(Succeed())
+			tc.Stdin = bytes.NewBuffer(kustomizeOutput)
+			_, err = tc.Run(genPkgManCmd)
 			Expect(err).Should(Succeed())
 		})
 	})

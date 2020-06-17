@@ -328,9 +328,8 @@ func validate(csv *operatorsv1alpha1.ClusterServiceVersion) error {
 			hasErrors = true
 		}
 	}
-
 	if hasErrors {
-		return errors.New("generated ClusterServiceVersion is invalid")
+		return errors.New("invalid generated ClusterServiceVersion")
 	}
 
 	return nil

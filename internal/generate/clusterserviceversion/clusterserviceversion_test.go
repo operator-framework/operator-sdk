@@ -48,10 +48,10 @@ var (
 	// dir and a "deploy" dir that contains `kustomize build config/default`
 	// output to simulate actual manifest collection behavior. Using "config"
 	// directly is not standard behavior.
-	goTestDataDir     = filepath.Join(testDataDir, "non-standard-layout")
-	goAPIsDir         = filepath.Join(goTestDataDir, "api")
-	goManifestRootDir = filepath.Join(goTestDataDir, "config")
-	goCRDsDir         = filepath.Join(goManifestRootDir, "crds")
+	goTestDataDir = filepath.Join(testDataDir, "non-standard-layout")
+	goAPIsDir     = filepath.Join(goTestDataDir, "api")
+	goConfigDir   = filepath.Join(goTestDataDir, "config")
+	goCRDsDir     = filepath.Join(goConfigDir, "crds")
 )
 
 var (
@@ -66,7 +66,7 @@ var (
 
 var _ = BeforeSuite(func() {
 	col = &collector.Manifests{}
-	Expect(col.UpdateFromDirs(goManifestRootDir, goCRDsDir)).ToNot(HaveOccurred())
+	Expect(col.UpdateFromDirs(goConfigDir, goCRDsDir)).ToNot(HaveOccurred())
 
 	cfg = readConfigHelper(goTestDataDir)
 
@@ -100,7 +100,7 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 
 			BeforeEach(func() {
 				tmp, err = ioutil.TempDir(".", "")
-				ExpectWithOffset(1, err).ToNot(HaveOccurred())
+				Expect(err).ToNot(HaveOccurred())
 			})
 
 			AfterEach(func() {
@@ -153,8 +153,24 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 				Expect(outputFile).To(BeAnExistingFile())
 				Expect(string(readFileHelper(outputFile))).To(MatchYAML(newCSVStr))
 			})
+			It("should write a ClusterServiceVersion manifest to a package file", func() {
+				g = Generator{
+					OperatorName: operatorName,
+					OperatorType: operatorType,
+					Version:      version,
+					Collector:    col,
+				}
+				opts := []Option{
+					WithBase(csvBasesDir, goAPIsDir, projutil.InteractiveHardOff),
+					WithPackageWriter(tmp),
+				}
+				Expect(g.Generate(cfg, opts...)).ToNot(HaveOccurred())
+				outputFile := filepath.Join(tmp, g.Version, makeCSVFileName(operatorName))
+				Expect(outputFile).To(BeAnExistingFile())
+				Expect(string(readFileHelper(outputFile))).To(MatchYAML(newCSVStr))
+			})
 
-			It("should write a ClusterServiceVersion manifest to a legacy base/bundle file", func() {
+			It("should write a ClusterServiceVersion manifest to a legacy bundle file", func() {
 				g = Generator{
 					OperatorName: operatorName,
 					OperatorType: operatorType,
@@ -218,98 +234,87 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 			})
 		})
 
-		Context("to create a new", func() {
-
-			Context("bundle base", func() {
-				It("should return the default base object", func() {
-					g = Generator{
-						OperatorName: operatorName,
-						OperatorType: operatorType,
-						config:       cfg,
-						getBase:      makeBaseGetter(baseCSV),
-					}
-					csv, err := g.generate()
-					Expect(err).ToNot(HaveOccurred())
-					Expect(csv).To(Equal(baseCSV))
-				})
-				It("should return a base object with customresourcedefinitions", func() {
-					g = Generator{
-						OperatorName: operatorName,
-						OperatorType: operatorType,
-						config:       cfg,
-						getBase:      makeBaseGetter(baseCSVUIMeta),
-					}
-					csv, err := g.generate()
-					Expect(err).ToNot(HaveOccurred())
-					Expect(csv).To(Equal(baseCSVUIMeta))
-				})
+		Context("to create a new base ClusterServiceVersion", func() {
+			It("should return the default base object", func() {
+				g = Generator{
+					OperatorName: operatorName,
+					OperatorType: operatorType,
+					config:       cfg,
+					getBase:      makeBaseGetter(baseCSV),
+				}
+				csv, err := g.generate()
+				Expect(err).ToNot(HaveOccurred())
+				Expect(csv).To(Equal(baseCSV))
 			})
-
-			Context("bundle", func() {
-				It("should return the expected object", func() {
-					g = Generator{
-						OperatorName: operatorName,
-						OperatorType: operatorType,
-						Version:      version,
-						Collector:    col,
-						config:       cfg,
-						getBase:      makeBaseGetter(baseCSVUIMeta),
-					}
-					csv, err := g.generate()
-					Expect(err).ToNot(HaveOccurred())
-					Expect(csv).To(Equal(newCSV))
-				})
+			It("should return a base object with customresourcedefinitions", func() {
+				g = Generator{
+					OperatorName: operatorName,
+					OperatorType: operatorType,
+					config:       cfg,
+					getBase:      makeBaseGetter(baseCSVUIMeta),
+				}
+				csv, err := g.generate()
+				Expect(err).ToNot(HaveOccurred())
+				Expect(csv).To(Equal(baseCSVUIMeta))
 			})
-
 		})
 
-		Context("to update an existing", func() {
-			Context("bundle", func() {
-				It("should return the expected object", func() {
-					g = Generator{
-						OperatorName: operatorName,
-						OperatorType: operatorType,
-						Version:      version,
-						Collector:    &collector.Manifests{},
-						config:       cfg,
-						getBase:      makeBaseGetter(newCSV),
-					}
-					// Update the input's and expected CSV's Deployment image.
-					Expect(g.Collector.UpdateFromDirs(goManifestRootDir, goCRDsDir)).ToNot(HaveOccurred())
-					Expect(len(g.Collector.Deployments)).To(BeNumerically(">=", 1))
-					imageTag := "controller:v" + g.Version
-					modifyDepImageHelper(&g.Collector.Deployments[0].Spec, imageTag)
-					updatedCSV := updateCSV(newCSV, modifyCSVDepImageHelper(imageTag))
-
-					csv, err := g.generate()
-					Expect(err).ToNot(HaveOccurred())
-					Expect(csv).To(Equal(updatedCSV))
-				})
+		Context("to create a new ClusterServiceVersion", func() {
+			It("should return a new object", func() {
+				g = Generator{
+					OperatorName: operatorName,
+					OperatorType: operatorType,
+					Version:      version,
+					Collector:    col,
+					config:       cfg,
+					getBase:      makeBaseGetter(baseCSVUIMeta),
+				}
+				csv, err := g.generate()
+				Expect(err).ToNot(HaveOccurred())
+				Expect(csv).To(Equal(newCSV))
 			})
-
 		})
 
-		Context("to upgrade an existing", func() {
+		Context("to update an existing ClusterServiceVersion", func() {
+			It("should return an updated object", func() {
+				g = Generator{
+					OperatorName: operatorName,
+					OperatorType: operatorType,
+					Version:      version,
+					Collector:    &collector.Manifests{},
+					config:       cfg,
+					getBase:      makeBaseGetter(newCSV),
+				}
+				// Update the input's and expected CSV's Deployment image.
+				Expect(g.Collector.UpdateFromDirs(goConfigDir, goCRDsDir)).ToNot(HaveOccurred())
+				Expect(len(g.Collector.Deployments)).To(BeNumerically(">=", 1))
+				imageTag := "controller:v" + g.Version
+				modifyDepImageHelper(&g.Collector.Deployments[0].Spec, imageTag)
+				updatedCSV := updateCSV(newCSV, modifyCSVDepImageHelper(imageTag))
 
-			Context("bundle", func() {
-				It("should return the expected manifest", func() {
-					g = Generator{
-						OperatorName: operatorName,
-						OperatorType: operatorType,
-						Version:      "0.0.2",
-						Collector:    col,
-						config:       cfg,
-						getBase:      makeBaseGetter(newCSV),
-						// Bundles need a path, usually set by an Option, to an existing
-						// CSV manifest so "replaces" can be set correctly.
-						bundledPath: filepath.Join(csvNewLayoutBundleDir, "memcached-operator.clusterserviceversion.yaml"),
-					}
-					csv, err := g.generate()
-					Expect(err).ToNot(HaveOccurred())
-					Expect(csv).To(Equal(upgradeCSV(newCSV, g.OperatorName, g.Version)))
-				})
+				csv, err := g.generate()
+				Expect(err).ToNot(HaveOccurred())
+				Expect(csv).To(Equal(updatedCSV))
 			})
+		})
 
+		Context("to upgrade an existing ClusterServiceVersion", func() {
+			It("should return an upgraded object", func() {
+				g = Generator{
+					OperatorName: operatorName,
+					OperatorType: operatorType,
+					Version:      "0.0.2",
+					Collector:    col,
+					config:       cfg,
+					getBase:      makeBaseGetter(newCSV),
+					// Bundles need a path, usually set by an Option, to an existing
+					// CSV manifest so "replaces" can be set correctly.
+					bundledPath: filepath.Join(csvNewLayoutBundleDir, "memcached-operator.clusterserviceversion.yaml"),
+				}
+				csv, err := g.generate()
+				Expect(err).ToNot(HaveOccurred())
+				Expect(csv).To(Equal(upgradeCSV(newCSV, g.OperatorName, g.Version)))
+			})
 		})
 
 	})

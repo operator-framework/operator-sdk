@@ -48,12 +48,14 @@ var (
 
 // ClusterServiceVersion configures ClusterServiceVersion manifest generation.
 type Generator struct {
-	// OperatorName is the operator's name, ex. app-operator
+	// OperatorName is the operator's name, ex. app-operator.
 	OperatorName string
 	// OperatorType determines what code API types are written in for getBase.
 	OperatorType projutil.OperatorType
 	// Version is the CSV current version.
 	Version string
+	// FromVersion is the version of a previous CSV to upgrade from.
+	FromVersion string
 	// Collector holds all manifests relevant to the Generator.
 	Collector *collector.Manifests
 
@@ -120,6 +122,21 @@ func WithBundleWriter(dir string) Option {
 		g.bundledPath = filepath.Join(dir, bundle.ManifestsDir, fileName)
 		g.getWriter = func() (io.Writer, error) {
 			return genutil.Open(filepath.Join(dir, bundle.ManifestsDir), fileName)
+		}
+		return nil
+	}
+}
+
+// WithPackageWriter sets a Generator's writer to a package CSV file under
+// <dir>/<version>.
+func WithPackageWriter(dir string) Option {
+	return func(g *Generator) error {
+		fileName := makeCSVFileName(g.OperatorName)
+		if g.FromVersion != "" {
+			g.bundledPath = filepath.Join(dir, g.FromVersion, fileName)
+		}
+		g.getWriter = func() (io.Writer, error) {
+			return genutil.Open(filepath.Join(dir, g.Version), fileName)
 		}
 		return nil
 	}

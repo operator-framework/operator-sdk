@@ -18,6 +18,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate/bundle"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate/packagemanifests"
 )
 
 func newCmd() *cobra.Command {
@@ -34,6 +35,7 @@ func NewCmd() *cobra.Command {
 	cmd := newCmd()
 	cmd.AddCommand(
 		bundle.NewCmd(),
+		packagemanifests.NewCmd(),
 	)
 	return cmd
 }
