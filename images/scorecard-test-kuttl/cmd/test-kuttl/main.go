@@ -17,47 +17,47 @@ package main
 import (
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 
-	//scorecard "github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
 	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
 
-// this is the scorecard test binary that ultimately executes the
-// built-in scorecard tests (basic/olm).  The bundle that is under
-// test is expected to be mounted so that tests can inspect the
-// bundle contents as part of their test implementations.
-// The actual test is to be run is named and that name is passed
-// as an argument to this binary.  This argument mechanism allows
-// this binary to run various tests all from within a single
-// test image.
-
+// The scorecard test kuttl binary processes the
+// output from kuttl converting kuttl output into the
+// scorecard v1alpha3.TestStatus json format.
+//
+// The kuttl output is expected to be at /tmp/kuttl-report.json.
 func main() {
 
 	jsonFile, err := os.Open("/tmp/kuttl-report.json")
 	if err != nil {
-		log.Fatal(fmt.Errorf("could not open kuttl report %w", err))
+		printErrorStatus(fmt.Errorf("could not open kuttl report %w", err))
+		os.Exit(1)
 	}
 	defer jsonFile.Close()
 
 	var byteValue []byte
 	byteValue, err = ioutil.ReadAll(jsonFile)
 	if err != nil {
-		log.Fatal(fmt.Errorf("could not read kuttl report %w", err))
+		printErrorStatus(fmt.Errorf("could not read kuttl report %w", err))
+		os.Exit(1)
 	}
 
 	var jsonReport Testsuites
 	err = json.Unmarshal([]byte(byteValue), &jsonReport)
 	if err != nil {
-		log.Fatal(fmt.Errorf("could not unmarshal kuttl report %w", err))
+		printErrorStatus(fmt.Errorf("could not unmarshal kuttl report %w", err))
+		os.Exit(1)
 	}
 
 	var suite *Testsuite
 	if len(jsonReport.Testsuite) == 0 {
-		log.Fatal("empty kuttl test suite was found")
+		printErrorStatus(errors.New("empty kuttl test suite was found"))
+		os.Exit(1)
 	}
 
 	suite = jsonReport.Testsuite[0]
@@ -87,7 +87,23 @@ func getTestStatus(tc []*Testcase) (s v1alpha3.TestStatus) {
 	return s
 }
 
+func printErrorStatus(err error) {
+	s := v1alpha3.TestStatus{}
+	r := v1alpha3.TestResult{}
+	r.State = v1alpha3.FailState
+	r.Errors = []string{err.Error()}
+	s.Results = append(s.Results, r)
+	jsonOutput, err := json.MarshalIndent(s, "", "    ")
+	if err != nil {
+		log.Fatal(fmt.Errorf("could not marshal scoreard output %v", err))
+	}
+	fmt.Println(string(jsonOutput))
+}
+
 // kuttl report format
+// the kuttl structs below are copied from the kuttl master currently
+// in the future, these structs might be pulled into SDK as
+// normal golang deps if necessary
 
 // Property are name/value pairs which can be provided in the report for things such as kuttl.version
 type Property struct {

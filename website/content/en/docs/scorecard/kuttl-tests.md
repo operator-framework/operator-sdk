@@ -8,15 +8,16 @@ weight: 50
 This guide outlines the steps which can be followed to implement scorecard
 tests using the [kuttl][kuttl] project.
 
-## Run scorecard with kuttl tests:
+## Run scorecard with kuttl tests
 
 ### kuttl test image
 
-The kuttl project binary is include in the scorecard-test-kuttl test image
-which is released as part of the operator-sdk release.  You can find it
-at quay.io/operator-framework/scorecard-test-kuttl
+The kuttl project provides a Docker container which contains the 
+kubectl-kuttl binary.  That binary is included in the scorecard-test-kuttl 
+test image which is released as part of the operator-sdk release.  
+The scorecard kuttl test image is found at quay.io/operator-framework/scorecard-test-kuttl.
 
-### kuttl test directory structure
+### kuttl test directory structure within a bundle
 
 The kuttl program when run looks for tests that have the following
 structure:
@@ -36,6 +37,9 @@ structure:
             └── list-pods
                 ├── 00-assert.yaml
                 └── 00-pod.yaml
+            └── list-other
+                ├── 00-assert.yaml
+                └── 00-pod.yaml
 
 ```
 
@@ -43,7 +47,11 @@ structure:
 2. `bundle/tests/scorecard/config.yaml` - Configuration yaml to define and run scorecard tests.
 3. `tests/kuttl` - Contains tests written for kuttl to execute
 4. `tests/kuttl/kuttl-test.yaml` - Contains the kuttl configuration 
-5. `tests/kuttl/list-pods` - Contains a kuttl test suite
+5. `tests/kuttl/list-pods` - Contains a kuttl test case
+6. `tests/kuttl/list-other` - Contains another kuttl test case
+
+When the kuttl binary is executed, it will process all the test
+cases under the scorecard/kuttl directory within the bundle contents.
 
 ### kuttl Configuration file:
 
@@ -67,12 +75,15 @@ within a control plane already.
 
 ### kuttl Tests
 
-The kuttl test tool looks for tests within a test suite directory
-to follow a naming convention as follows:
+The kuttl test tool looks for tests to execute within the bundle 
+following a naming convention as follows:
 ```
         └── kuttl
             ├── kuttl-test.yaml
             └── list-pods
+                ├── 00-assert.yaml
+                └── 00-pod.yaml
+            └── list-other
                 ├── 00-assert.yaml
                 └── 00-pod.yaml
 ```
@@ -139,13 +150,23 @@ test image in your scorecard configuration file and also
 specify the kuttl test(s) to be run.  For example, you 
 could enter the following scorecard command:
 ```bash
-operator-sdk alpha scorecard deploy/olm-catalog/memcached-operator --selector=suite=custom --skip-cleanup=true --wait-time=1000s --service-account=memcached-operator
+operator-sdk alpha scorecard deploy/olm-catalog/memcached-operator --selector=suite=kuttlsuite 
 ```
 
-This command causes tests that match `suite=custom` to be executed.  In
+This command causes tests that match `suite=kuttlsuite` to be executed.  In
 the scorecard configuration file, you might have the following
-definition of what `suite=custom` will translate to:
+definition of what `suite=kuttlsuite` will translate to:
 ```yaml
+tests:
+- name: "kuttltest1"
+  image: quay.io/operator-framework/scorecard-test-kuttl:dev
+  entrypoint: 
+  - entrypoint
+  - someentrypoint
+  labels:
+    suite: kuttlsuite
+    test: kuttltest1
+  description: an ISV custom test that does...
 ```
 
 Within the scorecard-test-kuttl image, the following kuttl command
@@ -167,19 +188,13 @@ The kuttl tests can vary widely in functionality and in particular
 require special Kubernetes RBAC priviledges outside of what your
 service account might have.  So, you will want to take note of
 the service account you are going to be running scorecard and its kuttl
-tests with to see if you might require additional priveldges.  For
-example, if your kuttl test requires it create namespaces, then
-you will likely need to create a custom service account at the cluster
-scope which can create namespaces.
+tests with to see if you might require additional privileges.  For
+example, if your kuttl test requires the ability to  create namespaces, then
+you will likely need to create a custom service account to run
+scorecard with that includes the required RBAC permissions.
 
 
-### Using Custom Service Accounts
-
-Scorecard does not deploy service accounts, RBAC resources, or
-namespaces for your test but instead considers these resources
-to be outside its scope.  You can however implement whatever
-service accounts your tests require and then specify
-that service account from the command line using the service-account flag:
+You can specify a custom service account in scorecard as follows:
 ```
 operator-sdk alpha scorecard --service-account=mycustomsa
 ```
