@@ -32,31 +32,6 @@ operator-sdk generate bundle [flags]
 
 ```
 
-  # Using the example 'memcached-operator' and assuming a directory structure
-  # similar to the following exists:
-  $ tree api/ config/
-  api/
-  └── v1alpha1
-      ├── groupversion_info.go
-      ├── memcached_types.go
-      └── zz_generated.deepcopy.go
-  config/
-  ├── bundle
-  │   └── kustomization.yaml
-  ├── crd
-  │   ├── bases
-  │   │   └── cache.my.domain_memcacheds.yaml
-  │   ├── kustomization.yaml
-  │   ├── kustomizeconfig.yaml
-  │   ...
-  ├── default
-  │   ├── kustomization.yaml
-  │   ...
-  ├── manager
-  │   ├── kustomization.yaml
-  │   └── manager.yaml
-  ...
-
   # Generate bundle files and build your bundle image with these 'make' recipes:
   $ make bundle
   $ export USERNAME=<your registry username>
