@@ -1,7 +1,5 @@
-#!/bin/sh 
+#!/bin/sh
 
-kubectl-kuttl test /bundle/tests/scorecard/kuttl --report=JSON --artifacts-dir=/tmp > /tmp/kuttl.stdout 2> /tmp/kuttl.stderr
-
-#sleep 20
+kubectl-kuttl test /bundle/tests/scorecard/kuttl --namespace=$SCORECARD_NAMESPACE --report=JSON --artifacts-dir=/tmp > /tmp/kuttl.stdout 2> /tmp/kuttl.stderr
 
 exec ${TESTKUTTL} $@
