@@ -26,99 +26,77 @@ import (
 	gencsv "github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion"
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
 	genpkg "github.com/operator-framework/operator-sdk/internal/generate/packagemanifest"
-	"github.com/operator-framework/operator-sdk/internal/scaffold/kustomize"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
-//nolint:lll
-const examples = `
+const (
+	longHelp = `
+Note: while the package manifests format is not yet deprecated, the operator-framework is migrated
+towards using bundles by default. Run 'operator-sdk generate bundle -h' for more information.
+
+Running 'generate packagemanifests' is the first step to publishing your operator to a catalog and/or deploying
+it with OLM. This command generates a set of manifests in a versioned directory and a package manifest file for
+your operator. Typically one would run 'generate kustomize manifests' first to (re)generate kustomize bases
+consumed by this command.
+
+Set '--version' to supply a semantic version for your new package. This is a required flag when running
+'generate packagemanifests --manifests'.
+
+More information on the package manifests format:
+https://github.com/operator-framework/operator-registry/#manifest-format
+`
+
+	//nolint:lll
+	examples = `
   # Generate manifests then create the package manifests base:
   $ make manifests
   /home/user/go/bin/controller-gen "crd:trivialVersions=true" rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
-  $ operator-sdk generate packagemanifests -q --kustomize
+  $ operator-sdk generate kustomize manifests
 
   Display name for the operator (required):
   > memcached-operator
   ...
 
-  $ kustomize build config/packagemanifests | operator-sdk generate packagemanifests --manifests --version 0.0.1
+  $ tree config/manifests
+  config/manifests
+  ├── bases
+  │   └── memcached-operator.clusterserviceversion.yaml
+  └── kustomization.yaml
+  $ kustomize build config/manifests | operator-sdk generate packagemanifests --manifests --version 0.0.1
   Generating package manifests version 0.0.1
   ...
 
-  # After running the above commands, you should see:
-  $ tree config/packages
-  config/packages
-  ├── bases
-  │   └── memcached-operator.clusterserviceversion.yaml
-  ├── kustomization.yaml
+  # After running the above commands, you should see this directory structure:
+  $ tree packagemanifests
+  packagemanifests
   ├── 0.0.1
   │   ├── cache.my.domain_memcacheds.yaml
   │   └── memcached-operator.clusterserviceversion.yaml
   └── memcached-operator.package.yaml
 `
+)
 
-// kustomization.yaml file contents for manifests. This should always be written to
-// config/packagemanifests/kustomization.yaml since it only references files in config.
-const manifestsKustomization = `resources:
-- ../default
-- ../samples
-`
+// defaultRootDir is the default root directory in which to generate package manifests files.
+const defaultRootDir = "packagemanifests"
 
-var defaultDir = filepath.Join("config", "packagemanifests")
-
-// setCommonDefaults sets defaults useful to all modes of this subcommand.
-func (c *packagemanifestsCmd) setCommonDefaults(cfg *config.Config) {
+// setDefaults sets command defaults.
+func (c *packagemanifestsCmd) setDefaults(cfg *config.Config) {
 	if c.operatorName == "" {
 		c.operatorName = filepath.Base(cfg.Repo)
 	}
-}
-
-// runKustomize generates kustomize package bases.
-func (c packagemanifestsCmd) runKustomize(cfg *config.Config) error {
-
-	if !c.quiet {
-		fmt.Println("Generating package manifests kustomize bases")
-	}
 
 	if c.inputDir == "" {
-		c.inputDir = defaultDir
+		c.inputDir = defaultRootDir
 	}
-	if c.outputDir == "" {
-		c.outputDir = defaultDir
-	}
-	if c.apisDir == "" {
-		if cfg.MultiGroup {
-			c.apisDir = "apis"
-		} else {
-			c.apisDir = "api"
+	if !c.stdout {
+		if c.outputDir == "" {
+			c.outputDir = defaultRootDir
 		}
 	}
-
-	csvGen := gencsv.Generator{
-		OperatorName: c.operatorName,
-		OperatorType: genutil.PluginKeyToOperatorType(cfg.Layout),
-	}
-	opts := []gencsv.Option{
-		gencsv.WithBase(c.inputDir, c.apisDir, c.interactiveLevel),
-		gencsv.WithBaseWriter(c.outputDir),
-	}
-	if err := csvGen.Generate(cfg, opts...); err != nil {
-		return fmt.Errorf("error generating ClusterServiceVersion: %v", err)
-	}
-
-	// Write a kustomization.yaml to the config directory.
-	if err := kustomize.WriteIfNotExist(defaultDir, manifestsKustomization); err != nil {
-		return err
-	}
-
-	if !c.quiet {
-		fmt.Println("Bases generated successfully in", c.outputDir)
-	}
-
-	return nil
 }
 
-// validateManifests validates c for package manifests generation.
-func (c packagemanifestsCmd) validateManifests() error {
+// validate validates c for package manifests generation.
+func (c packagemanifestsCmd) validate() error {
 
 	if c.version != "" {
 		if err := genutil.ValidateVersion(c.version); err != nil {
@@ -130,6 +108,13 @@ func (c packagemanifestsCmd) validateManifests() error {
 
 	if c.fromVersion != "" {
 		return errors.New("--from-version cannot be set for PROJECT-configured projects")
+	}
+
+	if c.inputDir == "" {
+		return errors.New("--input-dir must be set")
+	}
+	if c.kustomizeDir == "" {
+		return errors.New("--kustomize-dir must be set")
 	}
 
 	if !genutil.IsPipeReader() {
@@ -154,30 +139,12 @@ func (c packagemanifestsCmd) validateManifests() error {
 	return nil
 }
 
-// runManifests generates package manifests.
-func (c packagemanifestsCmd) runManifests(cfg *config.Config) error {
+// run generates package manifests.
+func (c packagemanifestsCmd) run(cfg *config.Config) error {
 
 	if !c.quiet && !c.stdout {
 		fmt.Println("Generating package manifests version", c.version)
 	}
-
-	if c.inputDir == "" {
-		c.inputDir = defaultDir
-	}
-	if !c.stdout {
-		if c.outputDir == "" {
-			c.outputDir = defaultDir
-		}
-	}
-	// Only regenerate API definitions once.
-	if c.apisDir == "" && !c.kustomize {
-		if cfg.MultiGroup {
-			c.apisDir = "apis"
-		} else {
-			c.apisDir = "api"
-		}
-	}
-	packageDir := filepath.Join(c.outputDir, c.version)
 
 	if err := c.generatePackageManifest(); err != nil {
 		return err
@@ -204,7 +171,9 @@ func (c packagemanifestsCmd) runManifests(cfg *config.Config) error {
 
 	stdout := genutil.NewMultiManifestWriter(os.Stdout)
 	opts := []gencsv.Option{
-		gencsv.WithBase(c.inputDir, c.apisDir, c.interactiveLevel),
+		// By not passing apisDir and turning interactive prompts on, we forcibly rely on the kustomize base
+		// for UI metadata and uninferrable data.
+		gencsv.WithBase(c.kustomizeDir, "", projutil.InteractiveHardOff),
 	}
 	if c.stdout {
 		opts = append(opts, gencsv.WithWriter(stdout))
@@ -229,7 +198,8 @@ func (c packagemanifestsCmd) runManifests(cfg *config.Config) error {
 				return err
 			}
 		} else {
-			if err := genutil.WriteObjectsToFiles(packageDir, objs...); err != nil {
+			dir := filepath.Join(c.outputDir, c.version)
+			if err := genutil.WriteObjectsToFiles(dir, objs...); err != nil {
 				return err
 			}
 		}
