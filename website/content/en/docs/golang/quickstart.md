@@ -457,16 +457,16 @@ Also see the [advanced topics][advanced_topics] doc for more use cases and under
 
 [enqueue_requests_from_map_func]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/handler#EnqueueRequestsFromMapFunc
 [event_handler_godocs]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/handler#hdr-EventHandlers
-[event_filtering]:/docs/golang/new/references/event-filtering/
+[event_filtering]:/docs/golang/references/event-filtering/
 [controller_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/controller#Options
 [controller_godocs]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/controller
-[operator_scope]:/docs/golang/new/operator-scope/
+[operator_scope]:/docs/golang/operator-scope/
 [memcached_handler]: ../example/memcached-operator/handler.go.tmpl
 [kubebuilder_layout_doc]:https://book.kubebuilder.io/cronjob-tutorial/basic-project.html
 [homebrew_tool]:https://brew.sh/
 [go_mod_wiki]: https://github.com/golang/go/wiki/Modules
 [go_vendoring]: https://blog.gopheracademy.com/advent-2015/vendor-folder/
-[doc_client_api]:/docs/golang/new/references/client/
+[doc_client_api]:/docs/golang/references/client/
 [manager_go_doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Manager
 [controller-go-doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg#hdr-Controller
 [request-go-doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Request
@@ -488,8 +488,8 @@ Also see the [advanced topics][advanced_topics] doc for more use cases and under
 [builder_godocs]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/builder#example-Builder
 [legacy_quickstart_doc]:/docs/golang/legacy/quickstart/
 [activate_modules]: https://github.com/golang/go/wiki/Modules#how-to-install-and-activate-module-support
-[advanced_topics]: /docs/golang/new/advanced-topics/
-[create_a_webhook]: /docs/golang/new/webhooks/
+[advanced_topics]: /docs/golang/advanced-topics/
+[create_a_webhook]: /docs/golang/webhooks/
 [status_marker]: https://book.kubebuilder.io/reference/generating-crd.html#status
 [status_subresource]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#status-subresource
 [API-groups]:https://kubernetes.io/docs/concepts/overview/kubernetes-api/#api-groups

@@ -861,5 +861,5 @@ When the operator is not running in a cluster, the Manager will return an error 
 [typical-status-properties]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
 [godoc-conditions]: https://godoc.org/github.com/operator-framework/operator-sdk/pkg/status#Conditions
 [olm-user-guide]: /docs/olm-integration/user-guide
-[new_docs]:/docs/golang/new/quickstart
+[new_docs]:/docs/golang/quickstart
 [new_CLI]:/docs/new-cli

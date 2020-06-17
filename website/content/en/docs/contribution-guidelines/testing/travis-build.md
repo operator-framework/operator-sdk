@@ -115,4 +115,4 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
 [ansible-test]: https://github.com/operator-framework/operator-sdk/tree/master/test/ansible
 [helm-e2e]: https://github.com/operator-framework/operator-sdk/blob/master/hack/tests/e2e-helm.sh
 [helm-base]: https://github.com/operator-framework/operator-sdk/blob/master/hack/image/helm/scaffold-helm-image.go
-[deps_mgmt]: ../../../golang/new/quickstart#a-note-on-dependency-management
+[deps_mgmt]: /docs/golang/legacy/quickstart#a-note-on-dependency-management
