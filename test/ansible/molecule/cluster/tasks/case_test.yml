@@ -16,10 +16,10 @@
       type: Running
       reason: Successful
       status: "True"
-  register: case_test 
+  register: case_test
 
 - name: Assert sentinel ConfigMap has been created for Molecule Test
   assert:
-    that: cm.data.camelCaseVar == 'true'
+    that: cm.data.shouldBeCamel == 'true'
   vars:
     cm: "{{ q('k8s', api_version='v1', kind='ConfigMap', namespace=namespace, resource_name='case-test').0 }}"
