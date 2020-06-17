@@ -25,8 +25,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
-const (
-	longHelp = `
+const longHelp = `
   Running 'generate bundle' is the first step to publishing your operator to a catalog
   and/or deploying it with OLM. This command generates a set of bundle manifests,
   metadata, and a bundle.Dockerfile for your operator, and will interactively ask
@@ -42,7 +41,6 @@ const (
   More information on bundles:
   https://github.com/operator-framework/operator-registry/#manifest-format
 `
-)
 
 //nolint:maligned
 type bundleCmd struct {

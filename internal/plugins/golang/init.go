@@ -17,13 +17,10 @@ package golang
 import (
 	"fmt"
 	"io/ioutil"
-	"path/filepath"
 
 	"github.com/spf13/pflag"
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 	"sigs.k8s.io/kubebuilder/pkg/plugin"
-
-	"github.com/operator-framework/operator-sdk/internal/scaffold/kustomize"
 )
 
 type initPlugin struct {
@@ -59,11 +56,6 @@ func (p *initPlugin) Run() error {
 		return fmt.Errorf("error writing plugin config for %s: %v", pluginConfigKey, err)
 	}
 
-	// Write a kustomization.yaml to the config directory.
-	if err := kustomize.Write(filepath.Join("config", "bundle"), bundleKustomization); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -82,12 +74,6 @@ func initUpdateMakefile(filePath string) error {
 
 	return ioutil.WriteFile(filePath, makefileBytes, 0644)
 }
-
-// kustomization for bundles.
-const bundleKustomization = `resources:
-- ../default
-- ../samples
-`
 
 // Makefile fragments to add to the base Makefile.
 const (
