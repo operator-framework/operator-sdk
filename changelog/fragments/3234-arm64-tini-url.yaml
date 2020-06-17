@@ -1,0 +1,6 @@
+entries:
+  - description: >
+      Fix the download URL for the `tini` binary on ARM64 for the ansible
+      operator base image
+    kind: "bugfix"
+    breaking: false
