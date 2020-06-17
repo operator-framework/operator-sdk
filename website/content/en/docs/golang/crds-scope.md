@@ -97,5 +97,5 @@ spec:
 ``` 
   
 [RBAC]: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
-[manager_user_guide]:/docs/golang/new/quickstart/#manager
+[manager_user_guide]:/docs/golang/quickstart/#manager
 [manager_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Options

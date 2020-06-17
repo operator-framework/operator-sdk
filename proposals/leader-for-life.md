@@ -4,7 +4,7 @@ Implementation Owner:
 
 > Status: **implemented**
 >
-> See [leader election documentation](https://sdk.operatorframework.io/docs/golang/new/advanced-topics/#leader-election).
+> See [leader election documentation](https://sdk.operatorframework.io/docs/golang/advanced-topics/#leader-election).
 
 - [Background](#background)
 - [Goals](#goals)

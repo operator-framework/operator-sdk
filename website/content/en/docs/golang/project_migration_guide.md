@@ -1,7 +1,7 @@
 ---
 title: Migrating Legacy Projects
 linkTitle: Migrating Legacy Projects
-weight: 300
+weight: 200
 ---
 
 # Overview
@@ -155,7 +155,7 @@ To update `config/rbac/role.yaml` after changing the markers, run `make manifest
 The project can now be built and the operator can be deployed on cluster. For further steps regarding the deployment of operator, creation of custom resource and cleaning up of resources, refer to [quickstart guide][kb_quickstart].
 
 
-[memcached-operator]:/docs/golang/new/quickstart/
+[memcached-operator]:/docs/golang/quickstart/
 [git_tool]: https://git-scm.com/downloads
 [go_tool]: https://golang.org/dl/
 [kubectl_tool]: https://github.com/kubernetes/minikube#installation
@@ -169,5 +169,5 @@ The project can now be built and the operator can be deployed on cluster. For fu
 [memcached_cr]: https://github.com/operator-framework/operator-sdk-samples/blob/master/go/memcached-operator/deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml
 [memcached_types]: https://github.com/operator-framework/operator-sdk-samples/blob/master/go/memcached-operator/pkg/apis/cache/v1alpha1/memcached_types.go
 [kb_memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/master/example/kb-memcached-operator/memcached_controller.go.tmpl
-[kb_quickstart]: /docs/golang/new/quickstart/
+[kb_quickstart]: /docs/golang/quickstart/
 [install_guide]: /docs/install-operator-sdk/

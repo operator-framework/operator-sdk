@@ -1,4 +1,4 @@
 ---
-title: Golang Based Operators - Legacy CLI
-weight: 200
+title: Legacy CLI and Project Layout
+weight: 300
 ---

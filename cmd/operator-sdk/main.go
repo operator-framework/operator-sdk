@@ -46,9 +46,9 @@ func main() {
 		if operatorType == projutil.OperatorTypeGo {
 			depMsg := "Operator SDK has a new CLI and project layout that is aligned with Kubebuilder.\n" +
 				"See `operator-sdk init -h` and the following doc on how to scaffold a new project:\n" +
-				"https://sdk.operatorframework.io/docs/golang/new/quickstart/\n" +
+				"https://sdk.operatorframework.io/docs/golang/quickstart/\n" +
 				"To migrate existing projects to the new layout see:\n" +
-				"https://sdk.operatorframework.io/docs/golang/new/migration/project_migration_guide/\n"
+				"https://sdk.operatorframework.io/docs/golang/migration/project_migration_guide/\n"
 			projutil.PrintDeprecationWarning(depMsg)
 		}
 		if err := cli.RunLegacy(); err != nil {
