@@ -31,7 +31,7 @@ import (
 
 //nolint:lll
 const examples = `
-	# Generate manifests then create the package manifests base:
+  # Generate manifests then create the package manifests base:
   $ make manifests
   /home/user/go/bin/controller-gen "crd:trivialVersions=true" rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
   $ operator-sdk generate packagemanifests -q --kustomize
