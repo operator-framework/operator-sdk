@@ -171,7 +171,7 @@ tests:
 Within the scorecard-test-kuttl image, the following kuttl command
 is executed:
 ```bash
-kubectl-kuttl test /bundle/tests/scorecard/kuttl/ --report=JSON --artifacts-dir=/tmp
+kubectl-kuttl test /bundle/tests/scorecard/kuttl/ --namespace=$SCORECARD_NAMESPACE --report=JSON --artifacts-dir=/tmp
 ```
 
 This command references the bundle contents of your operator, and
@@ -180,6 +180,10 @@ runs the kuttl tests on test definitions found under `/bundle/tests/scorecard/ku
 The json report will then be read by the scorecard-test-kuttl binary
 which will format the kuttl test results into the expected scorecard
 test output format.
+
+Notice that we are not having kuttl create namespaces when it runs
+tests, instead we are having it execute within the namespace that
+scorecard is running within.
 
 ### kuttl test privileges
 
