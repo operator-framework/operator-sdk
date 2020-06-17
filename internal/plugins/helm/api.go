@@ -85,7 +85,6 @@ func (p *createAPIPlugin) Validate() error {
 }
 
 func (p *createAPIPlugin) Scaffold() error {
-	// Check if the project name is a valid namespace according to k8s
 	dir, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("error to get the current path: %v", err)
