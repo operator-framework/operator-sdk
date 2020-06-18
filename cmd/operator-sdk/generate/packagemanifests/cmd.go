@@ -136,6 +136,48 @@ func NewCmd() *cobra.Command {
 	return cmd
 }
 
+// NewCmdLegacy returns the 'packagemanifests' command configured for the legacy project layout.
+func NewCmdLegacy() *cobra.Command {
+	c := &packagemanifestsCmd{}
+
+	cmd := &cobra.Command{
+		Use:     "packagemanifests",
+		Short:   "Generates a package manifests format",
+		Long:    longHelp,
+		Example: examplesLegacy,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 0 {
+				return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
+			}
+
+			// Check if the user has any specific preference to enable/disable interactive prompts.
+			// Default behaviour is to disable the prompt unless a base package does not exist.
+			if cmd.Flags().Changed("interactive") {
+				if c.interactive {
+					c.interactiveLevel = projutil.InteractiveOnAll
+				} else {
+					c.interactiveLevel = projutil.InteractiveHardOff
+				}
+			}
+
+			c.setCommonDefaultsLegacy()
+
+			if err := c.validateManifestsLegacy(); err != nil {
+				return fmt.Errorf("invalid command options: %v", err)
+			}
+			if err := c.runManifestsLegacy(); err != nil {
+				log.Fatalf("Error generating package manifests: %v", err)
+			}
+
+			return nil
+		},
+	}
+
+	c.addCommonFlagsTo(cmd.Flags())
+
+	return cmd
+}
+
 func (c *packagemanifestsCmd) addCommonFlagsTo(fs *pflag.FlagSet) {
 	fs.StringVar(&c.operatorName, "operator-name", "", "Name of the packaged operator")
 	fs.StringVarP(&c.version, "version", "v", "", "Semantic version of the packaged operator")

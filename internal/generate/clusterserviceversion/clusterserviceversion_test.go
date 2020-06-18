@@ -186,6 +186,22 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 				Expect(outputFile).To(BeAnExistingFile())
 				Expect(string(readFileHelper(outputFile))).To(MatchYAML(newCSVStr))
 			})
+			It("should write a ClusterServiceVersion manifest as a legacy package file", func() {
+				g = Generator{
+					OperatorName: operatorName,
+					OperatorType: operatorType,
+					Version:      version,
+					Collector:    col,
+				}
+				opts := []LegacyOption{
+					WithPackageBase(csvBasesDir, goAPIsDir, projutil.InteractiveHardOff),
+					LegacyOption(WithPackageWriter(tmp)),
+				}
+				Expect(g.GenerateLegacy(opts...)).Should(Succeed())
+				outputFile := filepath.Join(tmp, g.Version, makeCSVFileName(operatorName))
+				Expect(outputFile).To(BeAnExistingFile())
+				Expect(string(readFileHelper(outputFile))).To(MatchYAML(newCSVStr))
+			})
 		})
 
 		Context("with incorrect Options", func() {

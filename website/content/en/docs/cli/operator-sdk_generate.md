@@ -23,4 +23,5 @@ code or manifests.
 * [operator-sdk generate crds](../operator-sdk_generate_crds)	 - Generates CRDs for API's
 * [operator-sdk generate csv](../operator-sdk_generate_csv)	 - Generates a ClusterServiceVersion YAML file for the operator
 * [operator-sdk generate k8s](../operator-sdk_generate_k8s)	 - Generates Kubernetes code for custom resource
+* [operator-sdk generate packagemanifests](../operator-sdk_generate_packagemanifests)	 - Generates a package manifests format
 
