@@ -23,12 +23,14 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+	"sigs.k8s.io/kubebuilder/pkg/plugin"
 
 	"github.com/operator-framework/operator-sdk/internal/flags/apiflags"
 	"github.com/operator-framework/operator-sdk/internal/genutil"
+	"github.com/operator-framework/operator-sdk/internal/plugins/helm"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/ansible"
-	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
@@ -40,6 +42,19 @@ func NewCmd() *cobra.Command { //nolint:golint
 		and that stutters; consider calling this Cmd"
 		which is a false positive.
 	*/
+
+	typeFs := pflag.NewFlagSet("", pflag.ContinueOnError)
+	typeFs.StringVar(&operatorType, "type", "go",
+		"Type of operator to initialize (choices: \"go\", \"ansible\" or \"helm\")")
+
+	// make the usage for this flagset a no-op (we only want to see the "real" usage from the `new` command.
+	typeFs.Usage = func() {}
+	// include dummy help flag so that we use the "real" help from the `new` command.
+	typeFs.BoolP("help", "h", false, "Get help")
+
+	typeFs.ParseErrorsWhitelist = pflag.ParseErrorsWhitelist{UnknownFlags: true}
+	_ = typeFs.Parse(os.Args[1:])
+
 	newCmd := &cobra.Command{
 		Use:   "new <project-name>",
 		Short: "Creates a new operator application",
@@ -89,9 +104,7 @@ generates a default directory layout based on the input <project-name>.
   $ operator-sdk new app-operator --type=helm \
   --helm-chart=/path/to/local/chart-archives/app-1.2.3.tgz
 `,
-		RunE: newFunc,
 	}
-
 	newCmd.Flags().StringVar(&operatorType, "type", "",
 		"Type of operator to initialize (choices: \"ansible\" or \"helm\")")
 	if err := newCmd.MarkFlagRequired("type"); err != nil {
@@ -107,24 +120,36 @@ generates a default directory layout based on the input <project-name>.
 		log.Fatal(err)
 	}
 
-	newCmd.Flags().BoolVar(&generatePlaybook, "generate-playbook", false,
-		"Generate a playbook skeleton. (Only used for --type ansible)")
-
-	// Initialize flagSet struct with common flags
-	apiFlags.AddTo(newCmd.Flags())
+	switch operatorType {
+	case projutil.OperatorTypeAnsible:
+		newCmd.Flags().BoolVar(&generatePlaybook, "generate-playbook", false,
+			"Generate a playbook skeleton. (Only used for --type ansible)")
+		// Initialize flagSet struct with common flags
+		apiFlags.AddTo(newCmd.Flags())
+		newCmd.RunE = newFuncLegacy
+	case projutil.OperatorTypeHelm:
+		initPlugin = helmPlugin.GetInitPlugin()
+		initPlugin.BindFlags(newCmd.Flags())
+		newCmd.RunE = newFunc(doInitPluginScaffold)
+	}
 
 	return newCmd
 }
 
 var (
-	apiFlags         apiflags.APIFlags
-	operatorType     string
-	projectName      string
+	helmPlugin   helm.Plugin
+	initPlugin   plugin.Init
+	apiFlags     apiflags.APIFlags
+	operatorType string
+	projectName  string
+	// todo: remove before 1.0.0
+	// Deprecated: this flag is deprecated
 	gitInit          bool
 	generatePlaybook bool
 )
 
-func newFunc(cmd *cobra.Command, args []string) error {
+// Deprecated: Kept util Ansible plugins be implemented
+func newFuncLegacy(cmd *cobra.Command, args []string) error {
 	if err := parse(cmd, args); err != nil {
 		return err
 	}
@@ -135,42 +160,10 @@ func newFunc(cmd *cobra.Command, args []string) error {
 
 	log.Infof("Creating new %s operator '%s'.", strings.Title(operatorType), projectName)
 
-	switch operatorType {
-	case projutil.OperatorTypeAnsible:
-		if err := doAnsibleScaffold(); err != nil {
-			log.Fatal(err)
-		}
-	case projutil.OperatorTypeHelm:
-		// create the project dir
-		err := os.MkdirAll(projectName, 0755)
-		if err != nil {
-			log.Fatal(err)
-		}
-		// go inside of the project dir
-		err = os.Chdir(filepath.Join(projutil.MustGetwd(), projectName))
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		cfg := input.Config{
-			AbsProjectPath: filepath.Join(projutil.MustGetwd()),
-			ProjectName:    projectName,
-		}
-
-		createOpts := helm.CreateChartOptions{
-			ResourceAPIVersion: apiFlags.APIVersion,
-			ResourceKind:       apiFlags.Kind,
-			Chart:              apiFlags.HelmChartRef,
-			Version:            apiFlags.HelmChartVersion,
-			Repo:               apiFlags.HelmChartRepo,
-			CRDVersion:         apiFlags.CrdVersion,
-		}
-
-		if err := helm.Init(cfg, createOpts); err != nil {
-			log.Fatal(err)
-		}
+	if err := doAnsibleScaffold(); err != nil {
+		log.Fatal(err)
 	}
-	//todo: remove before 1.0.0
+
 	if gitInit {
 		if err := initGit(); err != nil {
 			log.Fatal(err)
@@ -181,6 +174,35 @@ func newFunc(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+// newFunc will perform the Scaffold of the func/plugin informed
+func newFunc(doScaffoldFunc func() error) func(*cobra.Command, []string) error {
+	return func(cmd *cobra.Command, args []string) error {
+		if err := parse(cmd, args); err != nil {
+			return err
+		}
+
+		if err := verifyFlags(); err != nil {
+			return err
+		}
+
+		log.Infof("Creating new %s operator '%s'.", strings.Title(operatorType), projectName)
+
+		if err := doScaffoldFunc(); err != nil {
+			log.Fatal(err)
+		}
+
+		if gitInit {
+			if err := initGit(); err != nil {
+				log.Fatal(err)
+			}
+		}
+
+		log.Info("Project creation complete.")
+		return nil
+	}
+}
+
+// parse will parse the args and return an error if projectName was not informed
 func parse(cmd *cobra.Command, args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("command %s requires exactly one argument", cmd.CommandPath())
@@ -194,6 +216,7 @@ func parse(cmd *cobra.Command, args []string) error {
 
 // mustBeNewProject checks if the given project exists under the current diretory.
 // it exits with error when the project exists.
+// Deprecated: this check is useless for the plugins
 func mustBeNewProject() {
 	fp := filepath.Join(projutil.MustGetwd(), projectName)
 	stat, err := os.Stat(fp)
@@ -298,6 +321,27 @@ func doAnsibleScaffold() error {
 	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
 		return fmt.Errorf("failed to update the RBAC manifest for the resource (%v, %v): %v",
 			resource.APIVersion, resource.Kind, err)
+	}
+	return nil
+}
+
+// doInitPluginScaffold will create the project dir in the current directory and call the init of the plugin informed
+func doInitPluginScaffold() error {
+	// create the project dir
+	err := os.MkdirAll(projectName, 0755)
+	if err != nil {
+		return err
+	}
+
+	// go inside of the project dir
+	err = os.Chdir(filepath.Join(projutil.MustGetwd(), projectName))
+	if err != nil {
+		return err
+	}
+
+	// call the helm init plugin to do the scalffold
+	if err := initPlugin.Run(); err != nil {
+		return err
 	}
 	return nil
 }
