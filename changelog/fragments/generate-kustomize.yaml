@@ -1,0 +1,3 @@
+entries:
+  - description: add `generate kustomize manifests` subcommand for new project layouts
+    kind: addition

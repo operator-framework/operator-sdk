@@ -18,6 +18,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate/bundle"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate/kustomize"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate/packagemanifests"
 )
 
@@ -34,6 +35,7 @@ code or manifests.`,
 func NewCmd() *cobra.Command {
 	cmd := newCmd()
 	cmd.AddCommand(
+		kustomize.NewCmd(),
 		bundle.NewCmd(),
 		packagemanifests.NewCmd(),
 	)

@@ -26,5 +26,6 @@ code or manifests.
 
 * [operator-sdk](../operator-sdk)	 - Development kit for building Kubernetes extensions and tools.
 * [operator-sdk generate bundle](../operator-sdk_generate_bundle)	 - Generates bundle data for the operator
+* [operator-sdk generate kustomize](../operator-sdk_generate_kustomize)	 - Contains subcommands that generate operator-framework kustomize data for the operator
 * [operator-sdk generate packagemanifests](../operator-sdk_generate_packagemanifests)	 - Generates a package manifests format
 
