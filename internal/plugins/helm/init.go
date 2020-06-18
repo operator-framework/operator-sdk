@@ -39,12 +39,49 @@ type initPlugin struct {
 	apiFlags APIFlags
 }
 
-var (
-	_ plugin.Init = &initPlugin{}
-)
+var _ plugin.Init = &initPlugin{}
 
 func (p *initPlugin) UpdateContext(ctx *plugin.Context) {
 	ctx.Description = `Initialize a Helm project with the Helm Chart package directories.`
+	ctx.Examples = fmt.Sprintf(` # Scaffold a project using the Helm plugin
+	%s init --plugins=%s --api-version=app.example.com/v1alpha1 --kind=AppService"
+	
+$ %s init --plugins=%s \
+--api-version=app.example.com/v1alpha1 \
+--kind=AppService \
+--helm-chart=myrepo/app
+
+$ %s init --plugins=%s \
+--helm-chart=myrepo/app
+
+$ %s init --plugins=%s \
+--helm-chart=myrepo/app \
+--helm-chart-version=1.2.3
+
+$ %s init --plugins=%s \
+--helm-chart=app \
+--helm-chart-repo=https://charts.mycompany.com/
+
+$ %s init --plugins=%s \
+--helm-chart=app \
+--helm-chart-repo=https://charts.mycompany.com/ \
+--helm-chart-version=1.2.3
+
+$ %s init --plugins=%s \
+--helm-chart=/path/to/local/chart-directories/app/
+
+$ %s init --plugins=%s \
+--helm-chart=/path/to/local/chart-archives/app-1.2.3.tgz		
+	`,
+		ctx.CommandName, pluginName,
+		ctx.CommandName, pluginName,
+		ctx.CommandName, pluginName,
+		ctx.CommandName, pluginName,
+		ctx.CommandName, pluginName,
+		ctx.CommandName, pluginName,
+		ctx.CommandName, pluginName,
+		ctx.CommandName, pluginName,
+	)
 	p.commandName = ctx.CommandName
 }
 

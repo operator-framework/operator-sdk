@@ -45,6 +45,45 @@ var (
 
 func (p *createAPIPlugin) UpdateContext(ctx *plugin.Context) {
 	ctx.Description = `Create a Kubernetes API by creating a CR and CRD with the Helm Chart package directories.`
+	ctx.Examples = fmt.Sprintf(` # Scaffold a Kubernetes API using the Helm plugin
+	%s create api --plugins=%s --api-version=app.example.com/v1alpha1 --kind=AppService"
+	
+$ %s create api --plugins=%s \
+--api-version=app.example.com/v1alpha1 \
+--kind=AppService \
+--helm-chart=myrepo/app
+
+$ %s create api --plugins=%s \
+--helm-chart=myrepo/app
+
+$ %s create api --plugins=%s \
+--helm-chart=myrepo/app \
+--helm-chart-version=1.2.3
+
+$ %s create api --plugins=%s \
+--helm-chart=app \
+--helm-chart-repo=https://charts.mycompany.com/
+
+$ %s create api --plugins=%s \
+--helm-chart=app \
+--helm-chart-repo=https://charts.mycompany.com/ \
+--helm-chart-version=1.2.3
+
+$ %s create api --plugins=%s \
+--helm-chart=/path/to/local/chart-directories/app/
+
+$ %s create api --plugins=%s \
+--helm-chart=/path/to/local/chart-archives/app-1.2.3.tgz	
+	`,
+		ctx.CommandName, pluginName,
+		ctx.CommandName, pluginName,
+		ctx.CommandName, pluginName,
+		ctx.CommandName, pluginName,
+		ctx.CommandName, pluginName,
+		ctx.CommandName, pluginName,
+		ctx.CommandName, pluginName,
+		ctx.CommandName, pluginName,
+	)
 	p.commandName = ctx.CommandName
 }
 
