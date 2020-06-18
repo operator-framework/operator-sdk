@@ -44,15 +44,17 @@ func NewCmd() *cobra.Command { //nolint:golint
 	*/
 
 	typeFs := pflag.NewFlagSet("", pflag.ContinueOnError)
-	typeFs.StringVar(&operatorType, "type", "go",
-		"Type of operator to initialize (choices: \"go\", \"ansible\" or \"helm\")")
+	typeFs.StringVar(&operatorType, "type", "",
+		"Type of operator to initialize (choices: \"ansible\" or \"helm\")")
 
 	// make the usage for this flagset a no-op (we only want to see the "real" usage from the `new` command.
 	typeFs.Usage = func() {}
 	// include dummy help flag so that we use the "real" help from the `new` command.
 	typeFs.BoolP("help", "h", false, "Get help")
 
+	// ignore unknown flags
 	typeFs.ParseErrorsWhitelist = pflag.ParseErrorsWhitelist{UnknownFlags: true}
+
 	_ = typeFs.Parse(os.Args[1:])
 
 	newCmd := &cobra.Command{
@@ -105,11 +107,12 @@ generates a default directory layout based on the input <project-name>.
   --helm-chart=/path/to/local/chart-archives/app-1.2.3.tgz
 `,
 	}
-	newCmd.Flags().StringVar(&operatorType, "type", "",
+
+	// we've already pre-parsed the operator type, but we need to register the flag
+	// so that it shows up in the help and so that --type exists in the flagset of
+	// the `new` command so that we don't fail parsing the flags.
+	newCmd.Flags().String("type", "",
 		"Type of operator to initialize (choices: \"ansible\" or \"helm\")")
-	if err := newCmd.MarkFlagRequired("type"); err != nil {
-		log.Fatalf("Failed to mark `type` flag for `new` subcommand as required")
-	}
 
 	// todo(camilamacedo86): remove before 1.0.0
 	newCmd.Flags().BoolVar(&gitInit, "git-init", false,
@@ -137,18 +140,22 @@ generates a default directory layout based on the input <project-name>.
 }
 
 var (
-	helmPlugin   helm.Plugin
-	initPlugin   plugin.Init
+	helmPlugin helm.Plugin
+	initPlugin plugin.Init
+	// todo: remove when we add Ansible plugin
+	// Deprecated: this flag is deprecated
 	apiFlags     apiflags.APIFlags
 	operatorType string
 	projectName  string
 	// todo: remove before 1.0.0
 	// Deprecated: this flag is deprecated
-	gitInit          bool
+	gitInit bool
+	// todo: remove when we add Ansible plugin
+	// Deprecated: this flag is deprecated
 	generatePlaybook bool
 )
 
-// Deprecated: Kept util Ansible plugins be implemented
+// Deprecated: keep util Ansible plugins be implemented
 func newFuncLegacy(cmd *cobra.Command, args []string) error {
 	if err := parse(cmd, args); err != nil {
 		return err
@@ -180,11 +187,7 @@ func newFunc(doScaffoldFunc func() error) func(*cobra.Command, []string) error {
 		if err := parse(cmd, args); err != nil {
 			return err
 		}
-
-		if err := verifyFlags(); err != nil {
-			return err
-		}
-
+		mustBeNewProject()
 		log.Infof("Creating new %s operator '%s'.", strings.Title(operatorType), projectName)
 
 		if err := doScaffoldFunc(); err != nil {
@@ -216,7 +219,6 @@ func parse(cmd *cobra.Command, args []string) error {
 
 // mustBeNewProject checks if the given project exists under the current diretory.
 // it exits with error when the project exists.
-// Deprecated: this check is useless for the plugins
 func mustBeNewProject() {
 	fp := filepath.Join(projutil.MustGetwd(), projectName)
 	stat, err := os.Stat(fp)

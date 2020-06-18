@@ -24,6 +24,8 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
+// todo: remove when we add Ansible plugin and call it in the commands
+// Deprecated: this flag is deprecated
 type APIFlags struct {
 	SkipGeneration   bool
 	APIVersion       string
