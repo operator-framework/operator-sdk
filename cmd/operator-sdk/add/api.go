@@ -22,17 +22,22 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"sigs.k8s.io/kubebuilder/pkg/plugin"
 
 	"github.com/operator-framework/operator-sdk/internal/flags/apiflags"
 	"github.com/operator-framework/operator-sdk/internal/genutil"
+	"github.com/operator-framework/operator-sdk/internal/plugins/helm"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/ansible"
-	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
-var apiFlags apiflags.APIFlags
+var (
+	apiFlags        apiflags.APIFlags
+	helmPlugin      helm.Plugin
+	createAPIPlugin plugin.CreateAPI
+)
 
 func newAddAPICmd() *cobra.Command {
 	apiCmd := &cobra.Command{
@@ -105,19 +110,46 @@ is generated as a 'validation' object.`,
   $ operator-sdk add api \
   --helm-chart=/path/to/local/chart-archives/app-1.2.3.tgz
 `,
-		RunE: apiRun,
 	}
 
-	// Initialize flagSet struct with command flags
-	apiFlags.AddTo(apiCmd.Flags())
+	operatorType := projutil.GetOperatorType()
+	switch operatorType {
+	case projutil.OperatorTypeHelm:
+		createAPIPlugin = helmPlugin.GetInitPlugin()
+		createAPIPlugin.BindFlags(apiCmd.Flags())
+		apiCmd.RunE = apiFunc(doAPIPluginScaffold)
+	default:
+		// Initialize flagSet struct with command flags
+		apiFlags.AddTo(apiCmd.Flags())
+		apiCmd.RunE = apiRun
+	}
 
 	return apiCmd
 }
 
+// apiFunc will perform the API Scaffold of the func/plugin informed
+func apiFunc(doScaffoldFunc func() error) func(*cobra.Command, []string) error {
+	return func(cmd *cobra.Command, args []string) error {
+		projutil.MustInProjectRoot()
+		operatorType := projutil.GetOperatorType()
+		if operatorType == projutil.OperatorTypeUnknown {
+			return projutil.ErrUnknownOperatorType{}
+		}
+
+		log.Infof("Generating api version %s for kind %s.", apiFlags.APIVersion, apiFlags.Kind)
+
+		if err := doScaffoldFunc(); err != nil {
+			log.Fatal(err)
+		}
+
+		log.Info("API generation complete.")
+		return nil
+	}
+}
+
+// apiRun run the scaffolds to generate the API without the plugins
 func apiRun(cmd *cobra.Command, args []string) error {
-
 	projutil.MustInProjectRoot()
-
 	operatorType := projutil.GetOperatorType()
 	if operatorType == projutil.OperatorTypeUnknown {
 		return projutil.ErrUnknownOperatorType{}
@@ -136,24 +168,6 @@ func apiRun(cmd *cobra.Command, args []string) error {
 		}
 	case projutil.OperatorTypeAnsible:
 		if err := doAnsibleAPIScaffold(); err != nil {
-			return err
-		}
-	case projutil.OperatorTypeHelm:
-		absProjectPath := projutil.MustGetwd()
-		projectName := filepath.Base(absProjectPath)
-		cfg := input.Config{
-			AbsProjectPath: absProjectPath,
-			ProjectName:    projectName,
-		}
-		createOpts := helm.CreateChartOptions{
-			ResourceAPIVersion: apiFlags.APIVersion,
-			ResourceKind:       apiFlags.Kind,
-			Chart:              apiFlags.HelmChartRef,
-			Version:            apiFlags.HelmChartVersion,
-			Repo:               apiFlags.HelmChartRepo,
-			CRDVersion:         apiFlags.CrdVersion,
-		}
-		if err := helm.API(cfg, createOpts); err != nil {
 			return err
 		}
 	}
@@ -298,4 +312,12 @@ func scaffoldIfNoPkgFileExists(s *scaffold.Scaffold, cfg *input.Config, f input.
 	}
 	// err must be a non-existence error or no go files exist, so execute f.
 	return s.Execute(cfg, f)
+}
+
+// doAPIPluginScaffold will call the createAPI run function of the plugin informed
+func doAPIPluginScaffold() error {
+	if err := createAPIPlugin.Run(); err != nil {
+		return err
+	}
+	return nil
 }
