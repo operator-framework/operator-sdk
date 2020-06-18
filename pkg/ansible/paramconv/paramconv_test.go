@@ -117,6 +117,11 @@ func TestToCamel(t *testing.T) {
 			args: args{"var_k8s"},
 			want: "varK8s",
 		},
+		{
+			name: "zeus",
+			args: args{"egressIPs"},
+			want: "egressIPs",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -180,6 +185,11 @@ func TestToSnake(t *testing.T) {
 			name: "should be a noop",
 			args: args{"this_should_be_a_noop"},
 			want: "this_should_be_a_noop",
+		},
+		{
+			name: "zeus",
+			args: args{"egressIPs"},
+			want: "egress_ips",
 		},
 	}
 	for _, tt := range tests {

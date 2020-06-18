@@ -17,6 +17,8 @@
 package paramconv
 
 import (
+	// "fmt"
+
 	"regexp"
 	"strings"
 )
@@ -28,6 +30,7 @@ var (
 		"http": "HTTP",
 		"url":  "URL",
 		"ip":   "IP",
+		"ips":  "IPs",
 	}
 )
 
@@ -72,10 +75,14 @@ func ToCamel(s string) string {
 
 // Converts a string to snake_case
 func ToSnake(s string) string {
+	// fmt.Printf("\n#################################################\n")
+	// fmt.Printf("\nInside to snake\n")
 	s = addWordBoundariesToNumbers(s)
 	s = strings.Trim(s, " ")
+	// fmt.Printf("\nThe Value of s = %s\n", s)
 	var prefix string
 	char1 := []rune(s)[0]
+	// fmt.Printf("\nThe Value of rune = %c\n", char1)
 	if char1 >= 'A' && char1 <= 'Z' {
 		prefix = "_"
 	} else {
@@ -84,6 +91,38 @@ func ToSnake(s string) string {
 	bits := []string{}
 	n := ""
 	iReal := -1
+	count := 0
+	length := len(s)
+	for i, v := range s {
+		if i+1 < length {
+			next := s[i+1]
+			count = count + 1
+			if (v >= 'A' && v <= 'Z' && next >= 'a' && next <= 'z') || (v >= 'a' && v <= 'z' && next >= 'A' && next <= 'Z') {
+				if next >= 'A' && next <= 'Z' {
+					count = 0
+				} else if next >= 'a' && next <= 'z' && next != 's' {
+					// fmt.Printf("This is the slice: %s", s[i-count+1:i+1])
+					if _, ok := wordMapping[strings.ToLower(s[i-count+1:i+1])]; ok && i-count+1 == 0 {
+						s = s[0:i+1] + "_" + s[i+2:]
+					} else if _, ok := wordMapping[strings.ToLower(s[i-count+1:i+1])]; ok {
+						s = s[0:i-count+1] + "_" + s[i-count+1:i+1] + "_" + s[i+1:]
+					}
+					// fmt.Printf("This is the final string: %s", s)
+				} else if next >= 'a' && next <= 'z' && next == 's' {
+					if _, ok := wordMapping[strings.ToLower(s[i-count+1:i+2])]; ok && i+2 == length {
+						s = s[0:i-count+1] + "_" + s[i-count+1:i+1] + "S"
+						// fmt.Printf("\n this si the S : %s\n", s)
+					} else if _, ok := wordMapping[strings.ToLower(s[i-count+1:i+2])]; ok && i-count+1 == 0 {
+						s = s[0:i+1] + "S" + "_" + s[i+2:]
+					} else {
+						s = s[0:i-count+1] + "_" + s[i-count+1:i+1] + "S" + "_" + s[i+2:]
+					}
+				}
+
+			}
+		}
+
+	}
 
 	for i, v := range s {
 		iReal++
@@ -117,8 +156,15 @@ func ToSnake(s string) string {
 		}
 	}
 	bits = append(bits, strings.ToLower(n))
+	// fmt.Printf("\nThe Value of bits = %v\n", bits)
 	joined := strings.Join(bits, "_")
+	// fmt.Printf("\nThe Value of joined = %v\n", joined)
+	// ok := wordMapping[bits[0]]
+	// fmt.Printf("\nThe Value of ok = %v\n", ok)
+	// fmt.Printf("\nThe Value of prefix = %v\n", prefix)
+
 	if _, ok := wordMapping[bits[0]]; !ok {
+		// fmt.Printf("\nInside the if condition\n")
 		return prefix + joined
 	}
 	return joined
