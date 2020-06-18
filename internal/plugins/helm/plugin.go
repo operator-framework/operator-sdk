@@ -15,10 +15,16 @@
 package helm
 
 import (
+	"sigs.k8s.io/kubebuilder/pkg/model/config"
 	"sigs.k8s.io/kubebuilder/pkg/plugin"
 )
 
 const pluginName = "helm" + plugin.DefaultNameQualifier
+
+var (
+	supportedProjectVersions = []string{config.Version2, config.Version3Alpha}
+	pluginVersion            = plugin.Version{Number: 1, Stage: plugin.AlphaStage}
+)
 
 var (
 	_ plugin.Base                  = Plugin{}
@@ -32,7 +38,7 @@ type Plugin struct {
 }
 
 func (Plugin) Name() string                           { return pluginName }
-func (Plugin) Version() plugin.Version                { return plugin.Version{} }
-func (Plugin) SupportedProjectVersions() []string     { return nil }
+func (Plugin) Version() plugin.Version                { return pluginVersion }
+func (Plugin) SupportedProjectVersions() []string     { return supportedProjectVersions }
 func (p Plugin) GetInitPlugin() plugin.Init           { return &p.initPlugin }
 func (p Plugin) GetCreateAPIPlugin() plugin.CreateAPI { return &p.createAPIPlugin }
