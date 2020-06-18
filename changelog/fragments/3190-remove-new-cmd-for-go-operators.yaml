@@ -1,0 +1,11 @@
+entries:
+  - description: >
+      The `operator-sdk new` command no longer supports scaffolding new Go projects with the `--type=Go` flag. 
+      To scaffold new projects, users are expected to use `operator-sdk init` as part of the 
+      [new CLI]((https://sdk.operatorframework.io/docs/new-cli)) for Go operators.
+
+    kind: "removal"
+
+    breaking: false
+
+    pull_request_override: 3190
