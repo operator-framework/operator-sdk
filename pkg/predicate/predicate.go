@@ -15,6 +15,8 @@
 package predicate
 
 import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -26,6 +28,11 @@ var log = logf.Log.WithName("predicate").WithName("eventFilters")
 // (adapted from sigs.k8s.io/controller-runtime/pkg/predicate/predicate.ResourceVersionChangedPredicate)
 type GenerationChangedPredicate struct {
 	predicate.Funcs
+}
+
+type ResourceFilterPredicate struct {
+	predicate.Funcs
+	Selector labels.Selector
 }
 
 // Update implements default UpdateEvent filter for validating generation change
@@ -50,4 +57,33 @@ func (GenerationChangedPredicate) Update(e event.UpdateEvent) bool {
 		return false
 	}
 	return true
+}
+
+// Skips events that have labels matching selectors defined in watches.yaml
+func (r ResourceFilterPredicate) eventFilter(eventLabels map[string]string) bool {
+	return r.Selector.Matches(labels.Set(eventLabels))
+}
+
+func NewResourceFilterPredicate(s metav1.LabelSelector) (ResourceFilterPredicate, error) {
+	selectorSpecs, err := metav1.LabelSelectorAsSelector(&s)
+	requirements := ResourceFilterPredicate{Selector: selectorSpecs}
+	return requirements, err
+
+}
+
+// Predicate functions that call the EventFilter Function
+func (r ResourceFilterPredicate) Update(e event.UpdateEvent) bool {
+	return r.eventFilter(e.MetaNew.GetLabels())
+}
+
+func (r ResourceFilterPredicate) Create(e event.CreateEvent) bool {
+	return r.eventFilter(e.Meta.GetLabels())
+}
+
+func (r ResourceFilterPredicate) Delete(e event.DeleteEvent) bool {
+	return r.eventFilter(e.Meta.GetLabels())
+}
+
+func (r ResourceFilterPredicate) Generic(e event.GenericEvent) bool {
+	return r.eventFilter(e.Meta.GetLabels())
 }

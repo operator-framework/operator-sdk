@@ -141,6 +141,7 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 			AnsibleDebugLogs: getAnsibleDebugLog(),
 			MaxWorkers:       w.MaxWorkers,
 			ReconcilePeriod:  w.ReconcilePeriod,
+			Selector:         w.Selector,
 		})
 		if ctr == nil {
 			return fmt.Errorf("failed to add controller for GVK %v", w.GroupVersionKind.String())
