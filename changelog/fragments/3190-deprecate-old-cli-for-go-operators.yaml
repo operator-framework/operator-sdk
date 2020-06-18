@@ -2,7 +2,7 @@ entries:
   - description: >
       With the introduction of the new [Kubebuilder aligned CLI](https://sdk.operatorframework.io/docs/new-cli) 
       and project layout for Go operators, the [old CLI](https://sdk.operatorframework.io/docs/cli) 
-      will stil continue to work for Go projects scaffolded in the old layout with `operator-sdk new`.
+      will still continue to work for Go projects scaffolded in the old layout with `operator-sdk new`.
       However the old CLI is now deprecated and will be removed in a future release.
 
     kind: "deprecation"
@@ -15,4 +15,4 @@ entries:
       header: Migrating Go projects to the new Kubebuilder aligned project layout
       body: >
         See the [migration guide](https://sdk.operatorframework.io/docs/golang/project_migration_guide/) 
-        that walks through an example how to migrate a Go based operator project from the old layout to the new layout.
+        that walks through an example of how to migrate a Go based operator project from the old layout to the new layout.
