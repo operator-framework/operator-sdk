@@ -25,8 +25,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/operator-framework/operator-sdk/internal/flags/apiflags"
-	"github.com/operator-framework/operator-sdk/internal/genutil"
-	"github.com/operator-framework/operator-sdk/internal/scaffold"
+	// "github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
@@ -129,7 +128,25 @@ func newFunc(cmd *cobra.Command, args []string) error {
 
 	switch operatorType {
 	case projutil.OperatorTypeAnsible:
-		if err := doAnsibleScaffold(); err != nil {
+		err := os.MkdirAll(projectName, 0755)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// go inside of the project dir
+		err = os.Chdir(filepath.Join(projutil.MustGetwd(), projectName))
+		if err != nil {
+			log.Fatal(err)
+		}
+		cfg := input.Config{
+			AbsProjectPath: filepath.Join(projutil.MustGetwd()),
+			ProjectName:    projectName,
+		}
+
+		if err != nil {
+			return fmt.Errorf("invalid apiVersion and kind: %v", err)
+		}
+
+		if err := ansible.Init(cfg, generatePlaybook, apiFlags); err != nil {
 			log.Fatal(err)
 		}
 	case projutil.OperatorTypeHelm:
@@ -199,99 +216,6 @@ func mustBeNewProject() {
 		log.Fatalf("Project (%v) in (%v) path already exists. Please use a different project name or delete "+
 			"the existing one", projectName, fp)
 	}
-}
-
-func doAnsibleScaffold() error {
-	cfg := &input.Config{
-		AbsProjectPath: filepath.Join(projutil.MustGetwd(), projectName),
-		ProjectName:    projectName,
-	}
-
-	resource, err := scaffold.NewResource(apiFlags.APIVersion, apiFlags.Kind)
-	if err != nil {
-		return fmt.Errorf("invalid apiVersion and kind: %v", err)
-	}
-
-	roleFiles := ansible.RolesFiles{Resource: *resource}
-	roleTemplates := ansible.RolesTemplates{Resource: *resource}
-
-	s := &scaffold.Scaffold{}
-	err = s.Execute(cfg,
-		&scaffold.ServiceAccount{},
-		&scaffold.Role{},
-		&scaffold.RoleBinding{},
-		&scaffold.CR{Resource: resource},
-		&ansible.BuildDockerfile{GeneratePlaybook: generatePlaybook},
-		&ansible.RolesReadme{Resource: *resource},
-		&ansible.RolesMetaMain{Resource: *resource},
-		&roleFiles,
-		&roleTemplates,
-		&ansible.RolesVarsMain{Resource: *resource},
-		&ansible.MoleculeTestLocalConverge{Resource: *resource},
-		&ansible.RolesDefaultsMain{Resource: *resource},
-		&ansible.RolesTasksMain{Resource: *resource},
-		&ansible.MoleculeDefaultMolecule{},
-		&ansible.MoleculeDefaultPrepare{},
-		&ansible.MoleculeDefaultConverge{
-			GeneratePlaybook: generatePlaybook,
-			Resource:         *resource,
-		},
-		&ansible.MoleculeDefaultVerify{},
-		&ansible.RolesHandlersMain{Resource: *resource},
-		&ansible.Watches{
-			GeneratePlaybook: generatePlaybook,
-			Resource:         *resource,
-		},
-		&ansible.DeployOperator{},
-		&ansible.Travis{},
-		&ansible.RequirementsYml{},
-		&ansible.MoleculeTestLocalMolecule{},
-		&ansible.MoleculeTestLocalPrepare{},
-		&ansible.MoleculeTestLocalVerify{},
-		&ansible.MoleculeClusterMolecule{Resource: *resource},
-		&ansible.MoleculeClusterCreate{},
-		&ansible.MoleculeClusterPrepare{Resource: *resource},
-		&ansible.MoleculeClusterConverge{},
-		&ansible.MoleculeClusterVerify{Resource: *resource},
-		&ansible.MoleculeClusterDestroy{Resource: *resource},
-		&ansible.MoleculeTemplatesOperator{},
-	)
-	if err != nil {
-		return fmt.Errorf("new ansible scaffold failed: %v", err)
-	}
-
-	if err = genutil.GenerateCRDNonGo(projectName, *resource, apiFlags.CrdVersion); err != nil {
-		return err
-	}
-
-	// Remove placeholders from empty directories
-	err = os.Remove(filepath.Join(s.AbsProjectPath, roleFiles.Path))
-	if err != nil {
-		return fmt.Errorf("new ansible scaffold failed: %v", err)
-	}
-	err = os.Remove(filepath.Join(s.AbsProjectPath, roleTemplates.Path))
-	if err != nil {
-		return fmt.Errorf("new ansible scaffold failed: %v", err)
-	}
-
-	// Decide on playbook.
-	if generatePlaybook {
-		log.Infof("Generating %s playbook.", strings.Title(operatorType))
-
-		err := s.Execute(cfg,
-			&ansible.Playbook{Resource: *resource},
-		)
-		if err != nil {
-			return fmt.Errorf("new ansible playbook scaffold failed: %v", err)
-		}
-	}
-
-	// update deploy/role.yaml for the given resource r.
-	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
-		return fmt.Errorf("failed to update the RBAC manifest for the resource (%v, %v): %v",
-			resource.APIVersion, resource.Kind, err)
-	}
-	return nil
 }
 
 func verifyFlags() error {

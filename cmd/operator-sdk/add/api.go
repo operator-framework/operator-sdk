@@ -135,9 +135,14 @@ func apiRun(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	case projutil.OperatorTypeAnsible:
-		if err := doAnsibleAPIScaffold(); err != nil {
+		absProjectPath := projutil.MustGetwd()
+		cfg := input.Config{
+			AbsProjectPath: absProjectPath,
+		}
+		if err := ansible.API(cfg, apiFlags); err != nil {
 			return err
 		}
+
 	case projutil.OperatorTypeHelm:
 		absProjectPath := projutil.MustGetwd()
 		projectName := filepath.Base(absProjectPath)
@@ -158,64 +163,6 @@ func apiRun(cmd *cobra.Command, args []string) error {
 		}
 	}
 	log.Info("API generation complete.")
-	return nil
-}
-
-// TODO
-// Consolidate scaffold func to be used by both "new" and "add api" commands.
-func doAnsibleAPIScaffold() error {
-	// Create and validate new resource.
-	r, err := scaffold.NewResource(apiFlags.APIVersion, apiFlags.Kind)
-	if err != nil {
-		return fmt.Errorf("invalid apiVersion and kind: %v", err)
-	}
-	absProjectPath := projutil.MustGetwd()
-	cfg := &input.Config{
-		AbsProjectPath: absProjectPath,
-	}
-	roleFiles := ansible.RolesFiles{Resource: *r}
-	roleTemplates := ansible.RolesTemplates{Resource: *r}
-
-	// update watch.yaml for the given resource r.
-	if err := ansible.UpdateAnsibleWatchForResource(r, absProjectPath); err != nil {
-		return fmt.Errorf("failed to update the Watch manifest for the resource (%v, %v): (%v)",
-			r.APIVersion, r.Kind, err)
-	}
-
-	s := &scaffold.Scaffold{}
-	err = s.Execute(cfg,
-		&scaffold.CR{Resource: r},
-		&ansible.RolesReadme{Resource: *r},
-		&ansible.RolesMetaMain{Resource: *r},
-		&roleFiles,
-		&roleTemplates,
-		&ansible.RolesVarsMain{Resource: *r},
-		&ansible.RolesDefaultsMain{Resource: *r},
-		&ansible.RolesTasksMain{Resource: *r},
-		&ansible.RolesHandlersMain{Resource: *r},
-	)
-	if err != nil {
-		return fmt.Errorf("new ansible api scaffold failed: %v", err)
-	}
-	if err = genutil.GenerateCRDNonGo("", *r, apiFlags.CrdVersion); err != nil {
-		return err
-	}
-
-	// Remove placeholders from empty directories
-	err = os.Remove(filepath.Join(s.AbsProjectPath, roleFiles.Path))
-	if err != nil {
-		return fmt.Errorf("new ansible api scaffold failed: %v", err)
-	}
-	err = os.Remove(filepath.Join(s.AbsProjectPath, roleTemplates.Path))
-	if err != nil {
-		return fmt.Errorf("new ansible api scaffold failed: %v", err)
-	}
-
-	// update deploy/role.yaml for the given resource r.
-	if err := scaffold.UpdateRoleForResource(r, absProjectPath); err != nil {
-		return fmt.Errorf("failed to update the RBAC manifest for the resource (%v, %v): (%v)",
-			r.APIVersion, r.Kind, err)
-	}
 	return nil
 }
 
