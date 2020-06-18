@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package golang
+package v2
 
 import (
 	"github.com/operator-framework/operator-sdk/internal/plugins"
@@ -41,6 +41,8 @@ var (
 	_ plugin.CreateWebhookPluginGetter = Plugin{}
 )
 
+// Plugin defines an Operator SDK Go scaffold and CLI plugin. Its current purpose is to
+// add operator-framework features to the base kubebuilder Go scaffold and CLI.
 type Plugin struct{}
 
 func (Plugin) Name() string                       { return (kbgov2.Plugin{}).Name() }

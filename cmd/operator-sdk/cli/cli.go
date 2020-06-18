@@ -24,7 +24,7 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/olm"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/version"
 	"github.com/operator-framework/operator-sdk/internal/flags"
-	"github.com/operator-framework/operator-sdk/internal/plugins/golang"
+	golangv2 "github.com/operator-framework/operator-sdk/internal/plugins/golang/v2"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	log "github.com/sirupsen/logrus"
@@ -63,9 +63,11 @@ func GetPluginsCLIAndRoot() (cli.CLI, *cobra.Command) {
 	c, err := cli.New(
 		cli.WithCommandName("operator-sdk"),
 		cli.WithPlugins(
-			&golang.Plugin{},
+			&golangv2.Plugin{},
 		),
-		cli.WithDefaultPlugins(&golang.Plugin{}),
+		cli.WithDefaultPlugins(
+			&golangv2.Plugin{},
+		),
 		cli.WithExtraCommands(commands...),
 	)
 	if err != nil {
