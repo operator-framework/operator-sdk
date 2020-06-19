@@ -1,0 +1,5 @@
+entries:
+  - description: >
+      Add "--version" flag to olm subcommands (uninstall, status) to allow users to override the version
+      of olm inferred from packageserver's CSV.
+    kind: "addition"

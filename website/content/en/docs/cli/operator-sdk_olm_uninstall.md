@@ -18,6 +18,7 @@ operator-sdk olm uninstall [flags]
 ```
   -h, --help               help for uninstall
       --timeout duration   time to wait for the command to complete before failing (default 2m0s)
+      --version string     version of OLM resources to uninstall.
 ```
 
 ### SEE ALSO

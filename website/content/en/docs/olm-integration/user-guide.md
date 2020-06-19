@@ -65,6 +65,9 @@ catalogsources.operators.coreos.com                          CustomResourceDefin
 ...
 ```
 
+**Note:**
+By default the latest version of OLM is installed. However, the version of OLM can be specified in all the [olm subcommands][cli-olm] using the `--version` flag. This allows users to specify the version of OLM to install, uninstall or fetch its current status in the cluster.
+
 ## Creating a bundle
 
 Now that we have a working, simple memcached-operator, we can generate manifests

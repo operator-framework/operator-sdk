@@ -34,6 +34,7 @@ func newUninstallCmd() *cobra.Command {
 		},
 	}
 
+	cmd.Flags().StringVar(&mgr.Version, "version", "", "version of OLM resources to uninstall.")
 	mgr.AddToFlagSet(cmd.Flags())
 	return cmd
 }
