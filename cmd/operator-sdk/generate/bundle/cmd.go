@@ -114,7 +114,7 @@ func NewCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&c.kustomizeDir, "kustomize-dir", filepath.Join("config", "manifests"),
-		"Directory containing kustomize bases and a kustomization.yaml")
+		"Directory containing kustomize bases and a kustomization.yaml for operator-framework manifests")
 	cmd.Flags().BoolVar(&c.stdout, "stdout", false, "Write bundle manifest to stdout")
 
 	c.addCommonFlagsTo(cmd.Flags())

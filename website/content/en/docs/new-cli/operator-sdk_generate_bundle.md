@@ -51,7 +51,7 @@ operator-sdk generate bundle [flags]
   ├── bases
   │   └── memcached-operator.clusterserviceversion.yaml
   └── kustomization.yaml
-  $ kustomize build config/manifests | operator-sdk generate bundle --manifests --metadata --overwrite --version 0.0.1
+  $ kustomize build config/manifests | operator-sdk generate bundle --overwrite --version 0.0.1
   Generating bundle manifest version 0.0.1
   ...
 
@@ -85,7 +85,7 @@ operator-sdk generate bundle [flags]
       --deploy-dir string        Root directory for operator manifests such as Deployments and RBAC, ex. 'deploy'. This directory is different from that passed to --input-dir
   -h, --help                     help for bundle
       --input-dir string         Directory to read an existing bundle from. This directory is the parent of your bundle 'manifests' directory, and different from --deploy-dir
-      --kustomize-dir string     Directory containing kustomize bases and a kustomization.yaml (default "config/manifests")
+      --kustomize-dir string     Directory containing kustomize bases and a kustomization.yaml for operator-framework manifests (default "config/manifests")
       --manifests                Generate bundle manifests
       --metadata                 Generate bundle metadata and Dockerfile
       --operator-name string     Name of the bundle's operator

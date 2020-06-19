@@ -68,7 +68,7 @@ operator-sdk generate packagemanifests [flags]
       --deploy-dir string      Root directory for operator manifests such as Deployments and RBAC, ex. 'deploy'. This directory is different from that passed to --input-dir
   -h, --help                   help for packagemanifests
       --input-dir string       Directory to read existing package manifests from. This directory is the parent of individual versioned package directories, and different from --deploy-dir
-      --kustomize-dir string   Directory containing kustomize bases and a kustomization.yaml (default "config/manifests")
+      --kustomize-dir string   Directory containing kustomize bases and a kustomization.yaml for operator-framework manifests (default "config/manifests")
       --operator-name string   Name of the packaged operator
       --output-dir string      Directory in which to write package manifests
   -q, --quiet                  Run in quiet mode

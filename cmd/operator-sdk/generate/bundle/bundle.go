@@ -69,7 +69,7 @@ https://github.com/operator-framework/operator-registry/#manifest-format
   ├── bases
   │   └── memcached-operator.clusterserviceversion.yaml
   └── kustomization.yaml
-  $ kustomize build config/manifests | operator-sdk generate bundle --manifests --metadata --overwrite --version 0.0.1
+  $ kustomize build config/manifests | operator-sdk generate bundle --overwrite --version 0.0.1
   Generating bundle manifest version 0.0.1
   ...
 
