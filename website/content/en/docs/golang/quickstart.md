@@ -240,7 +240,7 @@ Based on the return values, [`Result`][result_go_doc] and error, the `Request` m
 return ctrl.Result{}, nil
 // Reconcile failed due to error - requeue
 return ctrl.Result{}, err
-// Requeue for any reason other than error
+// Requeue for any reason other than an error
 return ctrl.Result{Requeue: true}, nil
 ```
 
@@ -248,7 +248,7 @@ You can set the `Result.RequeueAfter` to requeue the `Request` after a grace per
 ```Go
 import "time"
 
-// Reconcile for any reason than error after 5 seconds
+// Reconcile for any reason other than an error after 5 seconds
 return ctrl.Result{RequeueAfter: time.Second*5}, nil
 ```
 
