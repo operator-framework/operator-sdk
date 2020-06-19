@@ -240,7 +240,7 @@ Based on the return values, [`Result`][result_go_doc] and error, the `Request` m
 return ctrl.Result{}, nil
 // Reconcile failed due to error - requeue
 return ctrl.Result{}, err
-// Requeue for any reason other than error
+// Requeue for any reason other than an error
 return ctrl.Result{Requeue: true}, nil
 ```
 
