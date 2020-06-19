@@ -118,7 +118,7 @@ func TestToCamel(t *testing.T) {
 			want: "varK8s",
 		},
 		{
-			name: "zeus",
+			name: "should handle special words",
 			args: args{"egressIPs"},
 			want: "egressIPs",
 		},
@@ -187,7 +187,7 @@ func TestToSnake(t *testing.T) {
 			want: "this_should_be_a_noop",
 		},
 		{
-			name: "zeus",
+			name: "should handle special words",
 			args: args{"egressIPs"},
 			want: "egress_ips",
 		},
