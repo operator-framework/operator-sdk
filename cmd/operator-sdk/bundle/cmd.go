@@ -38,10 +38,7 @@ An operator bundle is a portable operator packaging format understood by Kuberne
 native software, like the Operator Lifecycle Manager.
 
 More information about operator bundles and metadata:
-https://github.com/operator-framework/operator-registry#manifest-format.
-
-More information about the integration with OLM via SDK:
-https://sdk.operatorframework.io/docs/olm-integration/
+https://github.com/operator-framework/operator-registry/blob/master/docs/design/operator-bundle.md
 `,
 	}
 	return cmd
@@ -49,15 +46,24 @@ https://sdk.operatorframework.io/docs/olm-integration/
 
 func NewCmdLegacy() *cobra.Command {
 	cmd := newCmd()
+	// TODO(estroz): uncomment this once OLM integration docs are updated.
+	// 	cmd.Long += `
+	// More information about the integration with OLM via SDK:
+	// https://sdk.operatorframework.io/docs/olm-integration/legacy
+	// `
 	cmd.AddCommand(
 		newCreateCmd(),
-		newValidateCmd(),
+		newValidateCmdLegacy(),
 	)
 	return cmd
 }
 
 func NewCmd() *cobra.Command {
 	cmd := newCmd()
+	cmd.Long += `
+More information about the integration with OLM via SDK:
+https://sdk.operatorframework.io/docs/olm-integration
+`
 	cmd.AddCommand(
 		newValidateCmd(),
 	)

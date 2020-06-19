@@ -38,53 +38,90 @@ import (
 	internalregistry "github.com/operator-framework/operator-sdk/internal/registry"
 )
 
+const (
+	longHelp = `The 'operator-sdk bundle validate' command can validate both content and format of an operator bundle
+image or an operator bundle directory on-disk containing operator metadata and manifests. This command will exit
+with an exit code of 1 if any validation errors arise, and 0 if only warnings arise or all validators pass.
+
+More information about operator bundles and metadata:
+https://github.com/operator-framework/operator-registry/blob/master/docs/design/operator-bundle.md
+
+NOTE: if validating an image, the image must exist in a remote registry, not just locally.
+`
+
+	examples = `The following command flow will generate test-operator bundle manifests and metadata,
+then validate them for 'test-operator' version v0.1.0:
+
+  # Generate manifests and metadata locally.
+  $ make bundle
+
+  # Validate the directory containing manifests and metadata.
+  $ operator-sdk bundle validate ./bundle
+
+To build and validate an image built with the above manifests and metadata:
+
+  # Create a registry namespace or use an existing one.
+  $ export NAMESPACE=<your registry namespace>
+
+  # Build and push the image using the docker CLI.
+  $ docker build -f bundle.Dockerfile -t quay.io/$NAMESPACE/test-operator:v0.1.0 .
+  $ docker push quay.io/$NAMESPACE/test-operator:v0.1.0
+
+  # Ensure the image with modified metadata and Dockerfile is valid.
+  $ operator-sdk bundle validate quay.io/$NAMESPACE/test-operator:v0.1.0
+`
+
+	examplesLegacy = `The following command flow will generate test-operator bundle manifests and metadata,
+then validate them for 'test-operator' version v0.1.0:
+
+  # Generate manifests and metadata locally.
+  $ operator-sdk generate bundle --version 0.1.0
+
+  # Validate the directory containing manifests and metadata.
+  $ operator-sdk bundle validate ./deploy/olm-catalog/test-operator
+
+To build and validate an image built with the above manifests and metadata:
+
+  # Create a registry namespace or use an existing one.
+  $ export NAMESPACE=<your registry namespace>
+
+  # Build and push the image using the docker CLI.
+  $ docker build -f bundle.Dockerfile -t quay.io/$NAMESPACE/test-operator:v0.1.0 .
+  $ docker push quay.io/$NAMESPACE/test-operator:v0.1.0
+
+  # Ensure the image with modified metadata and Dockerfile is valid.
+  $ operator-sdk bundle validate quay.io/$NAMESPACE/test-operator:v0.1.0
+`
+)
+
 type bundleValidateCmd struct {
 	bundleCmd
 
 	outputFormat string
 }
 
-// newValidateCmd returns a command that will validate an operator bundle image.
+// newValidateCmd returns a command that will validate an operator bundle.
 func newValidateCmd() *cobra.Command {
+	cmd := makeValidateCmd()
+	cmd.Long = longHelp
+	cmd.Example = examples
+	return cmd
+}
+
+// newValidateCmdLegacy returns a command that will validate an operator bundle for the legacy CLI.
+func newValidateCmdLegacy() *cobra.Command {
+	cmd := makeValidateCmd()
+	cmd.Long = longHelp
+	cmd.Example = examplesLegacy
+	return cmd
+}
+
+// makeValidateCmd makes a command that will validate an operator bundle. Help text must be customized.
+func makeValidateCmd() *cobra.Command {
 	c := bundleValidateCmd{}
 	cmd := &cobra.Command{
 		Use:   "validate",
-		Short: "Validate an operator bundle image",
-		Long: `The 'operator-sdk bundle validate' command can validate both content and
-format of an operator bundle image or an operator bundles directory on-disk
-containing operator metadata and manifests. This command will exit with an
-exit code of 1 if any validation errors arise, and 0 if only warnings arise or
-all validators pass.
-
-More information about operator bundles and metadata:
-https://github.com/operator-framework/operator-registry#manifest-format.
-
-NOTE: if validating an image, the image must exist in a remote registry, not
-just locally.
-`,
-		Example: `The following command flow will generate test-operator bundle image manifests
-and validate them, assuming a bundle for 'test-operator' version v0.1.0 exists at
-<project-root>/deploy/olm-catalog/test-operator/manifests:
-
-  # Generate manifests locally.
-  $ operator-sdk bundle create --generate-only
-
-  # Validate the directory containing manifests and metadata.
-  $ operator-sdk bundle validate ./deploy/olm-catalog/test-operator
-
-To build and validate an image:
-
-  # Create a registry namespace or use an existing one.
-  $ export NAMESPACE=<your registry namespace>
-
-  # Build and push the image using the docker CLI.
-  $ operator-sdk bundle create quay.io/$NAMESPACE/test-operator:v0.1.0
-  $ docker push quay.io/$NAMESPACE/test-operator:v0.1.0
-
-  # Ensure the image with modified metadata and Dockerfile is valid.
-  $ operator-sdk bundle validate quay.io/$NAMESPACE/test-operator:v0.1.0
-
-`,
+		Short: "Validate an operator bundle",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			if viper.GetBool(flags.VerboseOpt) {
 				log.SetLevel(log.DebugLevel)

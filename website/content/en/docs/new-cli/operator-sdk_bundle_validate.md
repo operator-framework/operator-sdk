@@ -3,21 +3,18 @@ title: "operator-sdk bundle validate"
 ---
 ## operator-sdk bundle validate
 
-Validate an operator bundle image
+Validate an operator bundle
 
 ### Synopsis
 
-The 'operator-sdk bundle validate' command can validate both content and
-format of an operator bundle image or an operator bundles directory on-disk
-containing operator metadata and manifests. This command will exit with an
-exit code of 1 if any validation errors arise, and 0 if only warnings arise or
-all validators pass.
+The 'operator-sdk bundle validate' command can validate both content and format of an operator bundle
+image or an operator bundle directory on-disk containing operator metadata and manifests. This command will exit
+with an exit code of 1 if any validation errors arise, and 0 if only warnings arise or all validators pass.
 
 More information about operator bundles and metadata:
-https://github.com/operator-framework/operator-registry#manifest-format.
+https://github.com/operator-framework/operator-registry/blob/master/docs/design/operator-bundle.md
 
-NOTE: if validating an image, the image must exist in a remote registry, not
-just locally.
+NOTE: if validating an image, the image must exist in a remote registry, not just locally.
 
 
 ```
@@ -27,28 +24,26 @@ operator-sdk bundle validate [flags]
 ### Examples
 
 ```
-The following command flow will generate test-operator bundle image manifests
-and validate them, assuming a bundle for 'test-operator' version v0.1.0 exists at
-<project-root>/deploy/olm-catalog/test-operator/manifests:
+The following command flow will generate test-operator bundle manifests and metadata,
+then validate them for 'test-operator' version v0.1.0:
 
-  # Generate manifests locally.
-  $ operator-sdk bundle create --generate-only
+  # Generate manifests and metadata locally.
+  $ make bundle
 
   # Validate the directory containing manifests and metadata.
-  $ operator-sdk bundle validate ./deploy/olm-catalog/test-operator
+  $ operator-sdk bundle validate ./bundle
 
-To build and validate an image:
+To build and validate an image built with the above manifests and metadata:
 
   # Create a registry namespace or use an existing one.
   $ export NAMESPACE=<your registry namespace>
 
   # Build and push the image using the docker CLI.
-  $ operator-sdk bundle create quay.io/$NAMESPACE/test-operator:v0.1.0
+  $ docker build -f bundle.Dockerfile -t quay.io/$NAMESPACE/test-operator:v0.1.0 .
   $ docker push quay.io/$NAMESPACE/test-operator:v0.1.0
 
   # Ensure the image with modified metadata and Dockerfile is valid.
   $ operator-sdk bundle validate quay.io/$NAMESPACE/test-operator:v0.1.0
-
 
 ```
 

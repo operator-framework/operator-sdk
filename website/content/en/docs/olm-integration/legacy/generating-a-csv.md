@@ -15,79 +15,36 @@ next version of your Operator.
 ## Overview
 
 Several `operator-sdk` subcommands manage operator-framework manifests, in particular [`ClusterServiceVersion`'s (CSVs)][doc-csv],
-for an Operator: [`generate bundle`][cli-gen-bundle], [`generate packagemanifests`][cli-gen-packagemanifests],
-and [`generate kustomize manifests`][cli-gen-kustomize-manifests]. See this [CLI overview][cli-overview] for
-details on each command.
-
-SDK projects are scaffolded with a `Makefile` containing the `bundle` recipe by default,
-which wraps `generate kustomize manifests`, `generate bundle`, and other related commands.
-Ideally the bundle format should be used as this is the default packaging format in operator-framework.
-However the package manifests format is still supported by operator-framework tooling.
-If your Operator is already formatted as a package manifests and you do not wish to migrate yet,
-you should add the following to your `Makefile` to make development easier:
-
-```make
-# Options for "packagemanifests".
-ifneq ($(origin CHANNEL), undefined)
-PKG_CHANNELS := --channel=$(CHANNEL)
-endif
-ifeq ($(IS_CHANNEL_DEFAULT), 1)
-PKG_IS_DEFAULT_CHANNEL := --default-channel
-endif
-PKG_MAN_OPTS ?= $(PKG_CHANNELS) $(PKG_IS_DEFAULT_CHANNEL)
-
-# Generate package manifests.
-packagemanifests: manifests
-  operator-sdk generate kustomize manifests -q
-  kustomize build config/manifests | operator-sdk generate packagemanifests -q --version $(VERSION) $(PKG_MAN_OPTS)
-```
-
-### Kustomize files
-
-`operator-sdk generate kustomize manifests` generates a CSV kustomize base
-`config/manifests/bases/<operator-name>.clusterserviceversion.yaml` and a `config/manifests/bases/kustomization.yaml`
-by default. These files are required as `kustomize build` input in downstream commands.
-
-By default, the command starts an interactive prompt if a CSV base in `config/manifests/bases` is not present
-to collect [UI metadata](#csv-fields). You can disable the interactive prompt by passing `--kustomize=false`.
-
-```console
-$ operator-sdk generate kustomize manifests
-INFO[0000] Generating CSV manifest version 0.1.0
-
-Display name for the operator (required):
-> memcached
-
-Comma-separated list of keywords for your operator (required):
-> app, operator
-...
-```
-
-_For Go Operators only:_ the command parses [CSV markers][csv-markers] from Go API type definitions, located
-in `./api` for single group projects and `./apis` for multigroup projects, to populate certain CSV fields.
-You can set an alternative path to the API types root directory with `--apis-dir`. These markers are not available
-to Ansible or Helm project types.
+for an Operator: [`generate bundle`][cli-gen-bundle] and [`generate packagemanifests`][cli-gen-packagemanifests].
+See this [CLI overview][cli-overview] for details on each command.
 
 ### ClusterServiceVersion manifests
 
-CSV's are manifests that define all aspects of an Operator, from what CRDs it uses to metadata describing the
+CSVs are manifests that define all aspects of an Operator, from what CRDs it uses to metadata describing the
 Operator's maintainers. They are typically versioned by semver, much like Operator projects themselves;
 this version is present in both their `metadata.name` and `spec.version` fields. The CSV generator called by
-`generate <bundle|packagemanifests>` requires certain input manifests to construct a CSV manifest; all inputs
-are read when either command is invoked, along with a CSV's [base](#kustomize-files), to idempotently regenerate a CSV.
+`generate <bundle|packagemanifests>` requires certain input manifests to construct a CSV manifest;
+all inputs are read when either command is invoked, along with a [base](#generate-your-first-release) CSV,
+to idempotently regenerate a CSV.
 
-The following resource kinds are typically included in a CSV, which are addressed by `config/manifests/bases/kustomization.yaml`:
+The following resource kinds are typically included in a CSV:
   - `Role`: define Operator permissions within a namespace.
   - `ClusterRole`: define cluster-wide Operator permissions.
   - `Deployment`: define how the Operator's operand is run in pods.
   - `CustomResourceDefinition` (CRD): definitions of custom objects your Operator reconciles.
   - Custom resource examples: examples of objects adhering to the spec of a particular CRD.
 
+_For Go Operators only:_ these commands parse [CSV markers][csv-markers] from API type definitions, located
+in `./pkg/apis`, to populate certain CSV fields. You can set an alternative path to the API types
+root directory with `--apis-dir`. These markers are not available to Ansible or Helm project types.
+
 ## Generate your first release
 
-You've recently run `operator-sdk init` and created your APIs with `operator-sdk create api`. Now you'd like to
-package your Operator for deployment by OLM. Your Operator is at version `v0.0.1`; the `Makefile` variable `VERSION`
-should be set to `0.0.1`.
+You've recently run `operator-sdk new` and created your APIs with `operator-sdk add api`. Now you'd like to
+package your Operator for deployment by OLM. Your Operator is at version `v0.0.1`.
+
+**Note:** you must set `--version=<semver>` when running either `generate <bundle|packagemanifests>` for the first
+time, and every time when running `generate packagemanifests`.
 
 ### Bundle format
 
@@ -103,7 +60,7 @@ at a particular version. You may have also heard of a bundle image. From the bun
 At this stage in your Operator's development, we only need to worry about generating bundle files;
 bundle images become important once you're ready to [publish][operatorhub] your Operator.
 
-Bundle metadata contains information about a particular Operator version available in a registry.
+Bundle metadata contains information about a particular Operator version available in a [registry][operator-registry].
 OLM uses this information to install specific Operator versions and resolve dependencies.
 
 Of particular note are channels:
@@ -111,18 +68,19 @@ Of particular note are channels:
 > Channels allow package authors to write different upgrade paths for different users (e.g. beta vs. stable).
 
 Channels become important when publishing, but we should still be aware of them beforehand as they're required
-values in our metadata. `make bundle` writes the channel `alpha` by default.
+values in our metadata. `generate bundle` writes the channel `alpha` by default.
 
-Your `bundle/metadata/annotations.yaml` and `bundle.Dockerfile` contain the same [annotations][bundle-metadata]
-in slightly different formats. In most cases annotations do not need to be modified; if you do decide to modify them,
+Your `deploy/olm-catalog/<operator-name>/metadata/annotations.yaml` and `bundle.Dockerfile`
+contain the same [annotations][bundle-metadata] in slightly different formats.
+In most cases annotations do not need to be modified; if you do decide to modify them,
 both sets of annotations _must_ be the same to ensure consistent Operator deployment.
 
-By default `make bundle` will generate a CSV, copy CRDs, and generate metadata in the bundle format:
+By default `generate bundle` will generate a CSV, copy CRDs, and generate metadata in the bundle format:
 
 ```console
-$ make bundle
-$ tree ./bundle
-./bundle
+$ operator-sdk generate bundle --version 0.0.1
+$ tree ./deploy/olm-catalog/test-operator
+./deploy/olm-catalog/test-operator
 ├── manifests
 │   ├── cache.my.domain_memcacheds.yaml
 │   └── memcached-operator.clusterserviceversion.yaml
@@ -136,13 +94,13 @@ A [package manifests][package-manifests] format consists of on-disk manifests (C
 define an Operator at all versions of that Operator. Each version is contained in its own directory, with a parent
 package manifest YAML file containing channel-to-version mappings, much like a bundle's metadata.
 
-By default `make packagemanifests` will generate a CSV, a package manifest file, and copy CRDs in the
+By default `generate packagemanifests` will generate a CSV, a package manifest file, and copy CRDs in the
 [package manifests][package-manifests] format:
 
 ```console
-$ make packagemanifests
-$ tree ./packagemanifests
-./packagemanifests
+$ operator-sdk generate bundle --version 0.0.1
+$ tree ./deploy/olm-catalog/test-operator
+./deploy/olm-catalog/test-operator
 ├── 0.0.1
 │   ├── cache.my.domain_memcacheds.yaml
 │   └── memcached-operator.clusterserviceversion.yaml
@@ -151,19 +109,19 @@ $ tree ./packagemanifests
 
 ## Update your Operator
 
-Lets say you added a new API `App` with group `app` and version `v1alpha1` to your Operator project,
-and added a port to your manager Deployment in `config/manager/manager.yaml`.
+Let's say you added a new API `App` with group `app.example.com` and version `v1alpha1` to your Operator project,
+and added a port to your manager Deployment in `deploy/operator.yaml`.
 
 If using a bundle format, the current version of your CSV can be updated by running:
 
 ```console
-$ make bundle
+$ operator-sdk generate bundle
 ```
 
 If using a package manifests format, run:
 
 ```console
-$ make packagemanifests
+$ operator-sdk generate packagemanifests --version 0.0.1
 ```
 
 Running the command for either format will append your new CRD to `spec.customresourcedefinitions.owned`,
@@ -173,23 +131,23 @@ fields like `spec.maintainers`.
 
 ## Upgrade your Operator
 
-Lets say you're upgrading your Operator to version `v0.0.2`, and you've already updated the `VERSION` variable
-in your `Makefile` to `0.0.2`. You also want to add a new channel `beta`, and use it as the default channel.
+Let's say you're upgrading your Operator to version `v0.0.2`. You also want to add a new channel `beta`,
+and use it as the default channel.
 
 If using a bundle format, a new version of your CSV can be created by running:
 
 ```console
-$ make bundle CHANNELS=beta DEFAULT_CHANNEL=beta
+$ operator-sdk generate bundle --version 0.0.2 --channels=beta --default-channel=beta
 ```
 
 If using a package manifests format, run:
 
 ```console
-$ make packagemanifests CHANNEL=beta IS_CHANNEL_DEFAULT=1
+$ operator-sdk generate packagemanifests --from-version 0.0.1 --version 0.0.2 --channel=beta --default-channel
 ```
 
 Running the command for either format will persist user-defined fields, updates `spec.version`,
-and populates `spec.replaces` with the old CSV versions' name.
+and populates `spec.replaces` with the old CSV version's name.
 
 ## CSV fields
 
@@ -238,13 +196,15 @@ being managed, each with a `name` and `url`.
 
 [olm]:https://github.com/operator-framework/operator-lifecycle-manager
 [doc-csv]:https://github.com/operator-framework/operator-lifecycle-manager/blob/0.15.1/doc/design/building-your-csv.md
-[cli-overview]:/docs/olm-integration/cli-overview
-[cli-gen-kustomize-manifests]:/docs/new-cli/operator-sdk_generate_kustomize_manifests
-[cli-gen-bundle]:/docs/new-cli/operator-sdk_generate_bundle
-[cli-gen-packagemanifests]:/docs/new-cli/operator-sdk_generate_packagemanifests
+[cli-overview]:/docs/olm-integration/legacy/cli-overview
+[cli-gen-kustomize-manifests]:/docs/cli/operator-sdk_generate_kustomize_manifests
+[cli-gen-bundle]:/docs/cli/operator-sdk_generate_bundle
+[cli-gen-packagemanifests]:/docs/cli/operator-sdk_generate_packagemanifests
 [bundle]:https://github.com/operator-framework/operator-registry/blob/v1.12.6/docs/design/operator-bundle.md
+[bundle-metadata]:https://github.com/operator-framework/operator-registry/blob/v1.12.6/docs/design/operator-bundle.md#bundle-annotations
 [package-manifests]:https://github.com/operator-framework/operator-registry/tree/v1.5.3#manifest-format
 [install-modes]:https://github.com/operator-framework/operator-lifecycle-manager/blob/4197455/Documentation/design/building-your-csv.md#operator-metadata
 [olm-capabilities]:/docs/operator-capabilities/
-[csv-markers]:/docs/golang/references/markers
+[csv-markers]:/docs/golang/legacy/references/markers
 [operatorhub]:https://operatorhub.io/
+[operator-registry]:https://github.com/operator-framework/operator-registry/#building-an-index-of-operators-using-opm
