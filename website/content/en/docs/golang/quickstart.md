@@ -248,7 +248,7 @@ You can set the `Result.RequeueAfter` to requeue the `Request` after a grace per
 ```Go
 import "time"
 
-// Reconcile for any reason than error after 5 seconds
+// Reconcile for any reason other than error after 5 seconds
 return ctrl.Result{RequeueAfter: time.Second*5}, nil
 ```
 
