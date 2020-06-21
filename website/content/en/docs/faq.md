@@ -142,8 +142,8 @@ $ export GOROOT=$(go env GOROOT)
 
 This will work for the current environment. To persist this fix, add the above line to your environment's config file, ex. `bashrc` file.
 
-## I cannot use the command `operator-sdk generate openapi`
-The command `operator-sdk generate openapi` was removed from the SDK tool in the version `v0.17.0`. It is now recommended to use [openapi-gen][openapi-gen] directly for OpenAPI code generation. 
+## How do I generate OpenAPI Go source files for my APIs?
+It is recommended to use [openapi-gen][openapi-gen] for OpenAPI code generation.
 
 Note that in the example on the docs, the flag `-h ./hack/boilerplate.go.txt` is used to allow add the LICENCE comment on the top of the documents and then, it can be removed.
 
