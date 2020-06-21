@@ -69,7 +69,7 @@ const (
 	ReasonUpdateSuccessful    HelmAppConditionReason = "UpdateSuccessful"
 	ReasonUninstallSuccessful HelmAppConditionReason = "UninstallSuccessful"
 	ReasonInstallError        HelmAppConditionReason = "InstallError"
-	ReasonUpdateError         HelmAppConditionReason = "UpdateError"
+	ReasonUpgradeError        HelmAppConditionReason = "UpgradeError"
 	ReasonReconcileError      HelmAppConditionReason = "ReconcileError"
 	ReasonUninstallError      HelmAppConditionReason = "UninstallError"
 )

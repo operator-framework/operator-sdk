@@ -248,7 +248,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 			status.SetCondition(types.HelmAppCondition{
 				Type:    types.ConditionReleaseFailed,
 				Status:  types.StatusTrue,
-				Reason:  types.ReasonUpdateError,
+				Reason:  types.ReasonUpgradeError,
 				Message: err.Error(),
 			})
 			_ = r.updateResourceStatus(o, status)

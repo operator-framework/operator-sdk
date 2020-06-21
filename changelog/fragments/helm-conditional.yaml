@@ -1,0 +1,17 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      The status conditional `UpdateError` was renamed to `UpgradeError` to better align with Helm nomenclature.
+      This change just affects Helm based-operators.
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "change"
+
+    # Is this a breaking change?
+    breaking: false
