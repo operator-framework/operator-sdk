@@ -25,6 +25,7 @@ import (
 	apierrors "github.com/operator-framework/api/pkg/validation/errors"
 	"github.com/operator-framework/operator-registry/pkg/containertools"
 	registryimage "github.com/operator-framework/operator-registry/pkg/image"
+	"github.com/operator-framework/operator-registry/pkg/image/containerdregistry"
 	"github.com/operator-framework/operator-registry/pkg/image/execregistry"
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	log "github.com/sirupsen/logrus"
@@ -133,8 +134,8 @@ func (c bundleValidateCmd) validate(args []string) error {
 // exit code to be returned (true by default).
 func (c *bundleValidateCmd) addToFlagSet(fs *pflag.FlagSet) {
 	fs.StringVarP(&c.imageBuilder, "image-builder", "b", "docker",
-		"Tool to extract bundle image data. Only used when validating a bundle image. "+
-			"One of: [docker, podman]")
+		"Tool to pull and unpack bundle images. Only used when validating a bundle image. "+
+			"One of: [docker, podman, none]")
 
 	fs.StringVarP(&c.outputFormat, "output", "o", internal.Text,
 		"Result format for results. One of: [text, json-alpha1]")
@@ -218,6 +219,12 @@ func newImageRegistryForTool(logger *log.Entry, toolStr string) (reg registryima
 		reg, err = execregistry.NewRegistry(containertools.DockerTool, logger)
 	case containertools.PodmanTool.String():
 		reg, err = execregistry.NewRegistry(containertools.PodmanTool, logger)
+	case containertools.NoneTool.String():
+		reg, err = containerdregistry.NewRegistry(
+			containerdregistry.WithLog(logger),
+			// In case reg.Destroy() fails in the caller, make it obvious where this cache came from.
+			containerdregistry.WithCacheDir(filepath.Join(os.TempDir(), "bundle-validate-cache")),
+		)
 	default:
 		err = fmt.Errorf("unrecognized image-builder option: %s", toolStr)
 	}
