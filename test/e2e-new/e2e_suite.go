@@ -149,10 +149,10 @@ var _ = Describe("operator-sdk", func() {
 
 			By("generating the operator bundle")
 			// Turn off interactive prompts for all generation tasks.
-			replace := "operator-sdk generate bundle"
+			replace := "operator-sdk generate kustomize manifests"
 			replaceInFile(filepath.Join(tc.Dir, "Makefile"), replace, replace+" --interactive=false")
 			err = tc.Make("bundle")
-			Expect(err).Should(Succeed())
+			Expect(err).NotTo(HaveOccurred())
 
 			By("building the operator bundle image")
 			// Use the existing image tag but with a "-bundle" suffix.
@@ -162,26 +162,19 @@ var _ = Describe("operator-sdk", func() {
 				bundleImage += ":" + imageSplit[1]
 			}
 			err = tc.Make("bundle-build", "BUNDLE_IMG="+bundleImage)
-			Expect(err).Should(Succeed())
+			Expect(err).NotTo(HaveOccurred())
 
 			By("generating the operator package manifests")
-			var genPkgManCmd *exec.Cmd
 			Expect(tc.Make("manifests")).Should(Succeed())
-			genPkgManCmd = exec.Command(tc.BinaryName, "generate", "packagemanifests",
-				"--kustomize",
-				"--interactive=false")
-			_, err = tc.Run(genPkgManCmd)
-			Expect(err).Should(Succeed())
-			kustomizeOutput, err := tc.Run(exec.Command("kustomize", "build", filepath.Join("config", "packagemanifests")))
-			Expect(err).Should(Succeed())
-			genPkgManCmd = exec.Command(tc.BinaryName, "generate", "packagemanifests",
-				"--manifests",
-				"--update-crds",
-				"--version", "0.0.1")
-			Expect(err).Should(Succeed())
+			genKustomizeCmd := exec.Command(tc.BinaryName, "generate", "kustomize", "manifests")
+			_, err = tc.Run(genKustomizeCmd)
+			Expect(err).NotTo(HaveOccurred())
+			kustomizeOutput, err := tc.Run(exec.Command("kustomize", "build", filepath.Join("config", "manifests")))
+			Expect(err).NotTo(HaveOccurred())
+			genPkgManCmd := exec.Command(tc.BinaryName, "generate", "packagemanifests", "--version", "0.0.1")
 			tc.Stdin = bytes.NewBuffer(kustomizeOutput)
 			_, err = tc.Run(genPkgManCmd)
-			Expect(err).Should(Succeed())
+			Expect(err).NotTo(HaveOccurred())
 		})
 	})
 })

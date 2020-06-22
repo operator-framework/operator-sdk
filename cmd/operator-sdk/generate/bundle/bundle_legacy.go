@@ -28,7 +28,25 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
-const examplesLegacy = `
+const (
+	longHelpLegacy = `
+Running 'generate bundle' is the first step to publishing your operator to a catalog
+and/or deploying it with OLM. This command generates a set of bundle manifests,
+metadata, and a bundle.Dockerfile for your operator, and will interactively ask
+for UI metadata, an important component of publishing your operator, by default unless
+a bundle for your operator exists or you set '--interactive=false'.
+
+Set '--version' to supply a semantic version for your bundle if you are creating one
+for the first time or upgrading an existing one.
+
+If '--output-dir' is set and you wish to build bundle images from that directory,
+either manually update your bundle.Dockerfile or set '--overwrite'.
+
+More information on bundles:
+https://github.com/operator-framework/operator-registry/#manifest-format
+`
+
+	examplesLegacy = `
   # Create bundle manifests, metadata, and a bundle.Dockerfile:
   $ operator-sdk generate bundle --version 0.0.1
   INFO[0000] Generating bundle manifest version 0.0.1
@@ -56,9 +74,10 @@ const examplesLegacy = `
   ...
   $ docker push $BUNDLE_IMG
 `
+)
 
 // setCommonDefaultsLegacy sets defaults useful to all modes of this subcommand.
-func (c *bundleCmd) setCommonDefaultsLegacy() {
+func (c *bundleCmdLegacy) setCommonDefaults() {
 	if c.operatorName == "" {
 		c.operatorName = filepath.Base(projutil.MustGetwd())
 	}
@@ -71,7 +90,7 @@ func (c *bundleCmd) setCommonDefaultsLegacy() {
 
 // validateManifestsLegacy validates c for bundle manifests generation for
 // legacy project layouts.
-func (c bundleCmd) validateManifestsLegacy() error {
+func (c bundleCmdLegacy) validateManifests() error {
 	if c.version != "" {
 		if err := genutil.ValidateVersion(c.version); err != nil {
 			return err
@@ -81,7 +100,7 @@ func (c bundleCmd) validateManifestsLegacy() error {
 }
 
 // runManifestsLegacy generates bundle manifests for legacy project layouts.
-func (c bundleCmd) runManifestsLegacy() (err error) {
+func (c bundleCmdLegacy) runManifests() (err error) {
 
 	if !c.quiet {
 		if c.version == "" {
@@ -149,7 +168,7 @@ func (c bundleCmd) runManifestsLegacy() (err error) {
 
 // validateMetadataLegacy validates c for bundle metadata generation for
 // legacy project layouts.
-func (c bundleCmd) validateMetadataLegacy() (err error) {
+func (c bundleCmdLegacy) validateMetadata() (err error) {
 	// Ensure a default channel is present.
 	if c.defaultChannel == "" {
 		return fmt.Errorf("--default-channel must be set if setting multiple channels")
@@ -160,7 +179,7 @@ func (c bundleCmd) validateMetadataLegacy() (err error) {
 
 // runMetadataLegacy generates a bundle.Dockerfile and bundle metadata for
 // legacy project layouts.
-func (c bundleCmd) runMetadataLegacy() error {
+func (c bundleCmdLegacy) runMetadata() error {
 
 	directory := c.inputDir
 	if directory == "" {

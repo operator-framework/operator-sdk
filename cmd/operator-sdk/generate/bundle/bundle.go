@@ -27,11 +27,27 @@ import (
 	genutil "github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate/internal"
 	gencsv "github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion"
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
-	"github.com/operator-framework/operator-sdk/internal/scaffold/kustomize"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
-//nolint:lll
-const examples = `
+const (
+	longHelp = `
+Running 'generate bundle' is the first step to publishing your operator to a catalog and/or deploying it with OLM.
+This command generates a set of bundle manifests, metadata, and a bundle.Dockerfile for your operator.
+Typically one would run 'generate kustomize manifests' first to (re)generate kustomize bases consumed by this command.
+
+Set '--version' to supply a semantic version for your bundle if you are creating one
+for the first time or upgrading an existing one.
+
+If '--output-dir' is set and you wish to build bundle images from that directory,
+either manually update your bundle.Dockerfile or set '--overwrite'.
+
+More information on bundles:
+https://github.com/operator-framework/operator-registry/#manifest-format
+`
+
+	//nolint:lll
+	examples = `
   # Generate bundle files and build your bundle image with these 'make' recipes:
   $ make bundle
   $ export USERNAME=<your registry username>
@@ -42,22 +58,24 @@ const examples = `
   # manifests, metadata, and a bundle.Dockerfile:
   $ make manifests
   /home/user/go/bin/controller-gen "crd:trivialVersions=true" rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
-  $ operator-sdk generate bundle -q --kustomize
+  $ operator-sdk generate kustomize manifests
 
   Display name for the operator (required):
   > memcached-operator
   ...
 
-  $ kustomize build config/bundle | operator-sdk generate bundle --manifests --metadata --overwrite --version 0.0.1
+  $ tree config/manifests
+  config/manifests
+  ├── bases
+  │   └── memcached-operator.clusterserviceversion.yaml
+  └── kustomization.yaml
+  $ kustomize build config/manifests | operator-sdk generate bundle --overwrite --version 0.0.1
   Generating bundle manifest version 0.0.1
   ...
 
-  # After running the above commands, you should see:
-  $ tree config/bundle
-  config/bundle
-  ├── bases
-  │   └── memcached-operator.clusterserviceversion.yaml
-  ├── kustomization.yaml
+  # After running the above commands, you should see this directory structure:
+  $ tree bundle
+  bundle
   ├── manifests
   │   ├── cache.my.domain_memcacheds.yaml
   │   └── memcached-operator.clusterserviceversion.yaml
@@ -65,7 +83,7 @@ const examples = `
       └── annotations.yaml
 
   # Then it validates your bundle files and builds your bundle image:
-  $ operator-sdk bundle validate config/bundle
+  $ operator-sdk bundle validate ./bundle
   $ docker build -f bundle.Dockerfile -t $BUNDLE_IMG .
   Sending build context to Docker daemon  42.33MB
   Step 1/9 : FROM scratch
@@ -74,15 +92,10 @@ const examples = `
   # You can then push your bundle image:
   $ make docker-push IMG=$BUNDLE_IMG
 `
+)
 
-// kustomization.yaml file contents for manifests. This should always be written to
-// config/bundle/kustomization.yaml since it only references files in config.
-const manifestsKustomization = `resources:
-- ../default
-- ../samples
-`
-
-var defaultDir = filepath.Join("config", "bundle")
+// defaultRootDir is the default root directory in which to generate bundle files.
+const defaultRootDir = "bundle"
 
 // setCommonDefaults sets defaults useful to all modes of this subcommand.
 func (c *bundleCmd) setCommonDefaults(cfg *config.Config) {
@@ -96,57 +109,16 @@ func (c *bundleCmd) setCommonDefaults(cfg *config.Config) {
 	}
 }
 
-// runKustomize generates kustomize bundle bases.
-func (c bundleCmd) runKustomize(cfg *config.Config) error {
-
-	if !c.quiet {
-		fmt.Println("Generating bundle manifest kustomize bases")
-	}
-
-	if c.inputDir == "" {
-		c.inputDir = defaultDir
-	}
-	if c.outputDir == "" {
-		c.outputDir = defaultDir
-	}
-	if c.apisDir == "" {
-		if cfg.MultiGroup {
-			c.apisDir = "apis"
-		} else {
-			c.apisDir = "api"
-		}
-	}
-
-	csvGen := gencsv.Generator{
-		OperatorName: c.operatorName,
-		OperatorType: genutil.PluginKeyToOperatorType(cfg.Layout),
-	}
-	opts := []gencsv.Option{
-		gencsv.WithBase(c.inputDir, c.apisDir, c.interactiveLevel),
-		gencsv.WithBaseWriter(c.outputDir),
-	}
-	if err := csvGen.Generate(cfg, opts...); err != nil {
-		return fmt.Errorf("error generating ClusterServiceVersion: %v", err)
-	}
-
-	// Write a kustomization.yaml to the config directory.
-	if err := kustomize.Write(defaultDir, manifestsKustomization); err != nil {
-		return err
-	}
-
-	if !c.quiet {
-		fmt.Println("Bases generated successfully in", c.outputDir)
-	}
-
-	return nil
-}
-
 // validateManifests validates c for bundle manifests generation.
 func (c bundleCmd) validateManifests(*config.Config) (err error) {
 	if c.version != "" {
 		if err := genutil.ValidateVersion(c.version); err != nil {
 			return err
 		}
+	}
+
+	if c.kustomizeDir == "" {
+		return errors.New("--kustomize-dir must be set")
 	}
 
 	if !genutil.IsPipeReader() {
@@ -179,19 +151,11 @@ func (c bundleCmd) runManifests(cfg *config.Config) (err error) {
 	}
 
 	if c.inputDir == "" {
-		c.inputDir = defaultDir
+		c.inputDir = defaultRootDir
 	}
 	if !c.stdout {
 		if c.outputDir == "" {
-			c.outputDir = defaultDir
-		}
-	}
-	// Only regenerate API definitions once.
-	if c.apisDir == "" && !c.kustomize {
-		if cfg.MultiGroup {
-			c.apisDir = "apis"
-		} else {
-			c.apisDir = "api"
+			c.outputDir = defaultRootDir
 		}
 	}
 
@@ -216,7 +180,9 @@ func (c bundleCmd) runManifests(cfg *config.Config) (err error) {
 
 	stdout := genutil.NewMultiManifestWriter(os.Stdout)
 	opts := []gencsv.Option{
-		gencsv.WithBase(c.inputDir, c.apisDir, c.interactiveLevel),
+		// By not passing apisDir and turning interactive prompts on, we forcibly rely on the kustomize base
+		// for UI metadata and uninferrable data.
+		gencsv.WithBase(c.kustomizeDir, "", projutil.InteractiveHardOff),
 	}
 	if c.stdout {
 		opts = append(opts, gencsv.WithWriter(stdout))
@@ -270,7 +236,7 @@ func (c bundleCmd) runMetadata() error {
 	if directory == "" {
 		// There may be no existing bundle at the default path, so assume manifests
 		// only exist in the output directory.
-		defaultDirectory := filepath.Join(defaultDir, bundle.ManifestsDir)
+		defaultDirectory := filepath.Join(defaultRootDir, bundle.ManifestsDir)
 		if c.outputDir != "" && genutil.IsNotExist(defaultDirectory) {
 			directory = filepath.Join(c.outputDir, bundle.ManifestsDir)
 		} else {

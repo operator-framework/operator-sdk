@@ -8,20 +8,20 @@ Generates bundle data for the operator
 ### Synopsis
 
 
-  Running 'generate bundle' is the first step to publishing your operator to a catalog
-  and/or deploying it with OLM. This command generates a set of bundle manifests,
-  metadata, and a bundle.Dockerfile for your operator, and will interactively ask
-  for UI metadata, an important component of publishing your operator, by default unless
-  a bundle for your operator exists or you set '--interactive=false'.
+Running 'generate bundle' is the first step to publishing your operator to a catalog
+and/or deploying it with OLM. This command generates a set of bundle manifests,
+metadata, and a bundle.Dockerfile for your operator, and will interactively ask
+for UI metadata, an important component of publishing your operator, by default unless
+a bundle for your operator exists or you set '--interactive=false'.
 
-  Set '--version' to supply a semantic version for your bundle if you are creating one
-  for the first time or upgrading an existing one.
+Set '--version' to supply a semantic version for your bundle if you are creating one
+for the first time or upgrading an existing one.
 
-  If '--output-dir' is set and you wish to build bundle images from that directory,
-  either manually update your bundle.Dockerfile or set '--overwrite'.
+If '--output-dir' is set and you wish to build bundle images from that directory,
+either manually update your bundle.Dockerfile or set '--overwrite'.
 
-  More information on bundles:
-  https://github.com/operator-framework/operator-registry/#manifest-format
+More information on bundles:
+https://github.com/operator-framework/operator-registry/#manifest-format
 
 
 ```

@@ -26,7 +26,25 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
-const examplesLegacy = `
+const (
+	longHelpLegacy = `
+Note: while the package manifests format is not yet deprecated, the operator-framework is migrated
+towards using bundles by default. Run 'operator-sdk generate bundle -h' for more information.
+
+Running 'generate packagemanifests' is the first step to publishing your operator to a catalog
+and/or deploying it with OLM. This command generates a set of manifests in a versioned directory
+and a package manifest file for your operator. It will interactively ask for UI metadata,
+an important component of publishing your operator, by default unless a package for your
+operator exists or you set '--interactive=false'.
+
+Set '--version' to supply a semantic version for your new package. This is a required flag when running
+'generate packagemanifests --manifests'.
+
+More information on the package manifests format:
+https://github.com/operator-framework/operator-registry/#manifest-format
+`
+
+	examplesLegacy = `
   # Create the package manifest file and a new package:
   $ operator-sdk generate packagemanifests --version 0.0.1
   INFO[0000] Generating package manifests version 0.0.1
@@ -44,9 +62,10 @@ const examplesLegacy = `
       │   └── memcached-operator.clusterserviceversion.yaml
       └── memacached-operator.package.yaml
 `
+)
 
-// setCommonDefaultsLegacy sets defaults useful to all modes of this subcommand for legacy project layouts.
-func (c *packagemanifestsCmd) setCommonDefaultsLegacy() {
+// setDefaults sets defaults useful to all modes of this subcommand for legacy project layouts.
+func (c *packagemanifestsCmdLegacy) setDefaults() {
 	if c.operatorName == "" {
 		c.operatorName = filepath.Base(projutil.MustGetwd())
 	}
@@ -70,8 +89,8 @@ func (c *packagemanifestsCmd) setCommonDefaultsLegacy() {
 	}
 }
 
-// validateManifestsLegacy validates c for package manifests generation for legacy project layouts.
-func (c packagemanifestsCmd) validateManifestsLegacy() error {
+// validate validates c for package manifests generation for legacy project layouts.
+func (c packagemanifestsCmdLegacy) validate() error {
 
 	if err := genutil.ValidateVersion(c.version); err != nil {
 		return err
@@ -89,13 +108,12 @@ func (c packagemanifestsCmd) validateManifestsLegacy() error {
 	return nil
 }
 
-// runManifestsLegacy generates package manifests for legacy project layouts.
-func (c packagemanifestsCmd) runManifestsLegacy() error {
+// run generates package manifests for legacy project layouts.
+func (c packagemanifestsCmdLegacy) run() error {
 
 	if !c.quiet {
 		log.Infoln("Generating package manifests version", c.version)
 	}
-	packageDir := filepath.Join(c.outputDir, c.version)
 
 	if err := c.generatePackageManifest(); err != nil {
 		return err
@@ -130,7 +148,8 @@ func (c packagemanifestsCmd) runManifestsLegacy() error {
 		for _, crd := range col.V1beta1CustomResourceDefinitions {
 			objs = append(objs, crd)
 		}
-		if err := genutil.WriteObjectsToFilesLegacy(packageDir, objs...); err != nil {
+		dir := filepath.Join(c.outputDir, c.version)
+		if err := genutil.WriteObjectsToFilesLegacy(dir, objs...); err != nil {
 			return err
 		}
 	}

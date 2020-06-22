@@ -8,20 +8,20 @@ Generates a package manifests format
 ### Synopsis
 
 
-  Note: while the package manifests format is not yet deprecated, the operator-framework is migrated
-  towards using bundles by default. Run 'operator-sdk generate bundle -h' for more information.
+Note: while the package manifests format is not yet deprecated, the operator-framework is migrated
+towards using bundles by default. Run 'operator-sdk generate bundle -h' for more information.
 
-  Running 'generate packagemanifests' is the first step to publishing your operator to a catalog
-  and/or deploying it with OLM. This command generates a set of manifests in a versioned directory
-  and a package manifest file for your operator. It will interactively ask for UI metadata,
-  an important component of publishing your operator, by default unless a package for your
-  operator exists or you set '--interactive=false'.
+Running 'generate packagemanifests' is the first step to publishing your operator to a catalog
+and/or deploying it with OLM. This command generates a set of manifests in a versioned directory
+and a package manifest file for your operator. It will interactively ask for UI metadata,
+an important component of publishing your operator, by default unless a package for your
+operator exists or you set '--interactive=false'.
 
-  Set '--version' to supply a semantic version for your new package. This is a required flag when running
-  'generate packagemanifests --manifests'.
+Set '--version' to supply a semantic version for your new package. This is a required flag when running
+'generate packagemanifests --manifests'.
 
-  More information on the package manifests format:
-  https://github.com/operator-framework/operator-registry/#manifest-format
+More information on the package manifests format:
+https://github.com/operator-framework/operator-registry/#manifest-format
 
 
 ```

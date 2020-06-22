@@ -95,9 +95,9 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 	makefileBundleFragment = `
 # Generate bundle manifests and metadata, then validate generated files.
 bundle: manifests
-	operator-sdk generate bundle -q --kustomize
-	kustomize build config/bundle | operator-sdk generate bundle -q --manifests --metadata --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
-	operator-sdk bundle validate config/bundle
+	operator-sdk generate kustomize manifests -q
+	kustomize build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
+	operator-sdk bundle validate ./bundle
 `
 
 	makefileBundleBuildFragment = `
