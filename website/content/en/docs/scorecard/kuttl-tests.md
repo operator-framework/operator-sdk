@@ -6,7 +6,8 @@ weight: 50
 # Kuttl Tests using Operator SDK Scorecard
 
 This guide outlines the steps which can be followed to implement scorecard
-tests using the [kuttl][kuttl] project.
+tests using the [kuttl][kuttl] project and specifically the scorecard
+kuttl test image.
 
 ## Run scorecard with kuttl tests
 
@@ -19,9 +20,8 @@ The scorecard kuttl test image is found at quay.io/operator-framework/scorecard-
 
 ### kuttl test directory structure within a bundle
 
-The kuttl program when run looks for tests that have the following
-structure:
-
+The kuttl program when run by scorecard looks for kuttl tests in the
+bundle as follows:
 ```
 .
 ├── manifests
@@ -45,7 +45,7 @@ structure:
 1. `bundle/` - Contains bundle manifests and metadata under test.
 2. `bundle/tests/scorecard/config.yaml` - Configuration yaml to define and run scorecard tests.
 3. `tests/kuttl` - Contains tests written for kuttl to execute
-4. `tests/kuttl/kuttl-test.yaml` - Contains the kuttl configuration 
+4. `tests/kuttl/kuttl-test.yaml` - Contains the kuttl configuration, it is here that you would add any kuttl specific configuration settings that you might require.
 5. `tests/kuttl/list-pods` - Contains a kuttl test case
 6. `tests/kuttl/list-other` - Contains another kuttl test case
 
@@ -71,6 +71,8 @@ The important fields to note here are:
 1. `startControlPlane` - Set to false since scorecard assumes it is running
 within a control plane already.
 
+Other kuttl configurations settings are available for more advanced kuttl
+use cases.  See [kuttl configuration][kuttl_configuration] for more details on kuttl configuration.
 
 ### kuttl Tests
 
@@ -159,9 +161,6 @@ definition of what `suite=kuttlsuite` will translate to:
 tests:
 - name: "kuttltest1"
   image: quay.io/operator-framework/scorecard-test-kuttl:dev
-  entrypoint: 
-  - entrypoint
-  - someentrypoint
   labels:
     suite: kuttlsuite
     test: kuttltest1
@@ -221,3 +220,4 @@ an in-cluster Kube connection.
 [kuttl]: https://kuttl.dev
 [kuttl_yaml]: https://kuttl.dev/docs/cli.html#examples
 [kuttl_tests]: https://kuttl.dev/docs/kuttl-test-harness.html#writing-your-first-test
+[kuttl_configuration]:https://kuttl.dev/docs/testing/reference.html#testsuite

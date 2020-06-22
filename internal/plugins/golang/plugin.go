@@ -16,7 +16,6 @@ package golang
 
 import (
 	"github.com/operator-framework/operator-sdk/internal/plugins"
-
 	"sigs.k8s.io/kubebuilder/pkg/plugin"
 	kbgov2 "sigs.k8s.io/kubebuilder/pkg/plugin/v2"
 )
@@ -43,9 +42,15 @@ var (
 
 type Plugin struct{}
 
-func (Plugin) Name() string                       { return (kbgov2.Plugin{}).Name() }
-func (Plugin) Version() plugin.Version            { return (kbgov2.Plugin{}).Version() }
-func (Plugin) SupportedProjectVersions() []string { return (kbgov2.Plugin{}).SupportedProjectVersions() }
+func (Plugin) Name() string {
+	return (kbgov2.Plugin{}).Name()
+}
+func (Plugin) Version() plugin.Version {
+	return (kbgov2.Plugin{}).Version()
+}
+func (Plugin) SupportedProjectVersions() []string {
+	return (kbgov2.Plugin{}).SupportedProjectVersions()
+}
 
 func (p Plugin) GetInitPlugin() plugin.Init {
 	return &initPlugin{

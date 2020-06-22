@@ -32,7 +32,7 @@ require (
 	github.com/stretchr/testify v1.5.1
 	go.uber.org/zap v1.14.1
 	golang.org/x/net v0.0.0-20200301022130-244492dfa37a
-	golang.org/x/tools v0.0.0-20200403190813-44a64ad78b9b
+	golang.org/x/tools v0.0.0-20200622192924-4fd1c64487bf
 	gomodules.xyz/jsonpatch/v3 v3.0.1
 	gopkg.in/yaml.v2 v2.2.8
 	gopkg.in/yaml.v3 v3.0.0-20190905181640-827449938966
