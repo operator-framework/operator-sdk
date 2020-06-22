@@ -63,9 +63,9 @@ func getPodDefinition(configMapName string, test Test, r PodTestRunner) *v1.Pod 
 						{
 							Name: "SCORECARD_NAMESPACE",
 							ValueFrom: &v1.EnvVarSource{
-									FieldRef: &v1.ObjectFieldSelector{
+								FieldRef: &v1.ObjectFieldSelector{
 									FieldPath: "metadata.namespace",
-							},
+								},
 							},
 						},
 					},
