@@ -76,6 +76,16 @@ version_menu = "Releases"
 # Repository configuration (URLs for in-page links to opening issues and suggesting changes)
 github_repo = "https://github.com/operator-framework/operator-sdk"
 
+# Specify a value here if your content directory is not in your repo's root directory
+github_subdir = "website"
+
+# Google Custom Search Engine ID. Remove or comment out to disable search.
+gcs_engine_id = "011737558837375720776:fsdu1nryfng"
+
+# Enable Algolia DocSearch
+algolia_docsearch = false
+
+
 [[params.versions]]
   version = "master"
   url = "https://master.sdk.operatorframework.io"
@@ -91,16 +101,6 @@ github_repo = "https://github.com/operator-framework/operator-sdk"
 [[params.versions]]
   version = "v0.17"
   url = "https://github.com/operator-framework/operator-sdk/tree/v0.17.x/doc"
-
-# Specify a value here if your content directory is not in your repo's root directory
-github_subdir = "website"
-
-# Google Custom Search Engine ID. Remove or comment out to disable search.
-gcs_engine_id = "011737558837375720776:fsdu1nryfng"
-
-# Enable Algolia DocSearch
-algolia_docsearch = false
-
 
 
 # User interface configuration
