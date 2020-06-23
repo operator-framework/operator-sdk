@@ -191,6 +191,36 @@ func TestToSnake(t *testing.T) {
 			args: args{"egressIPs"},
 			want: "egress_ips",
 		},
+		{
+			name: "should handle special words",
+			args: args{"egressIPsEgress"},
+			want: "egress_ips_egress",
+		},
+		{
+			name: "should handle special words",
+			args: args{"egressIPsegress"},
+			want: "egress_ips_egress",
+		},
+		{
+			name: "should handle special words",
+			args: args{"IPsegress"},
+			want: "_ips_egress",
+		},
+		{
+			name: "should handle special words",
+			args: args{"egressIP"},
+			want: "egress_ip",
+		},
+		{
+			name: "should handle special words",
+			args: args{"egressIPEgress"},
+			want: "egress_ip_egress",
+		},
+		{
+			name: "should handle special words",
+			args: args{"egressIPegress"},
+			want: "egress_ip_egress",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

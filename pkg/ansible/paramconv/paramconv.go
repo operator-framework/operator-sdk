@@ -28,7 +28,6 @@ var (
 		"http": "HTTP",
 		"url":  "URL",
 		"ip":   "IP",
-		"ips":  "IPs",
 	}
 )
 
@@ -72,37 +71,46 @@ func ToCamel(s string) string {
 }
 
 // This function modifies the string to handle special words that are a part of wordMapping
-// Add values to handle wider number of cases
+/* In this function we process the input string and find the occurrence of the values in wordMapping
+   and we append "_" on both sides of that word so that it is considered to be one word*/
+// We even handle plurals of the values in wordMapping
+// If we find "s" i.e plural, we capitalize it so that it is considered to be a part of same abbreviation
+
 func preprocessWordMapping(s string) string {
-	count := 0
-	length := len(s)
-	for i, v := range s {
-		if i+1 >= length {
+	var x int
+	var y string
+
+	for _, v := range wordMapping {
+		x = strings.Index(s, v)
+		y = v
+		if x >= 0 {
 			break
 		}
-		next := s[i+1]
-		count++
-		if (v >= 'A' && v <= 'Z' && next >= 'a' && next <= 'z') || (v >= 'a' && v <= 'z' && next >= 'A' && next <= 'Z') {
-			if next >= 'A' && next <= 'Z' {
-				count = 0
-			} else if next >= 'a' && next <= 'z' && next != 's' {
-				if _, ok := wordMapping[strings.ToLower(s[i-count+1:i+1])]; ok && i-count+1 == 0 {
-					s = s[0:i+1] + "_" + s[i+2:]
-				} else if _, ok := wordMapping[strings.ToLower(s[i-count+1:i+1])]; ok {
-					s = s[0:i-count+1] + "_" + s[i-count+1:i+1] + "_" + s[i+1:]
-				}
-			} else if next >= 'a' && next <= 'z' && next == 's' {
-				if _, ok := wordMapping[strings.ToLower(s[i-count+1:i+2])]; ok && i+2 == length {
-					s = s[0:i-count+1] + "_" + s[i-count+1:i+1] + "S"
-				} else if _, ok := wordMapping[strings.ToLower(s[i-count+1:i+2])]; ok && i-count+1 == 0 {
-					s = s[0:i+1] + "S" + "_" + s[i+2:]
-				} else {
-					s = s[0:i-count+1] + "_" + s[i-count+1:i+1] + "S" + "_" + s[i+2:]
-				}
+	}
+	if x == -1 {
+		return s
+	}
+	// fmt.Printf("\n%d\n", x)
+	// fmt.Printf("\n%d\n", (x + len(y) - 1))
+
+	if (x + len(y) - 1) == len(s)-1 {
+		s = s[:x] + "_" + s[x:]
+	} else {
+		if s[x+len(y)] == 's' {
+			if x+len(y) == len(s)-1 {
+				s = s[:x] + "_" + s[x:(x+len(y))] + "S"
+			} else if x == 0 {
+				s = s[:(x+len(y))] + "S" + "_" + s[(x+len(y)+1):]
+			} else {
+				s = s[:x] + "_" + s[x:(x+len(y))] + "S" + "_" + s[(x+len(y)+1):]
 			}
-
+		} else {
+			if x == 0 {
+				s = s[:(x+len(y))] + "_" + s[(x+len(y)):]
+			} else {
+				s = s[:x] + "_" + s[x:(x+len(y))] + "_" + s[(x+len(y)):]
+			}
 		}
-
 	}
 	return s
 }
