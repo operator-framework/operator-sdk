@@ -70,49 +70,52 @@ func ToCamel(s string) string {
 	return ret
 }
 
-// This function modifies the string to handle special words that are a part of wordMapping
-/* In this function we process the input string and find the occurrence of the values in wordMapping
-   and we append "_" on both sides of that word so that it is considered to be one word*/
-// We even handle plurals of the values in wordMapping
-// If we find "s" i.e plural, we capitalize it so that it is considered to be a part of same abbreviation
-
-func preprocessWordMapping(s string) string {
+// preprocessWordMapping() will check if the string informed contains special words mapped in
+// the 'wordMapping' and its plurals and is returned to ToSnake() for further processing.
+// Note that, if the special word or its plural is found the character "_" is appended to
+// as prefixes and postfixes to the special world found. For example, if the string is "egressIP"
+// the IP is a special word and then, the string  egress_IP will be returned.
+// Also, beware that if the next character of the special word be an "s" (i.e plural of the word
+// found in 'wordMapping'), it will be capitalized to be considered part of the same abbreviation.
+func preprocessWordMapping(value string) string {
 	var x int
 	var y string
 
-	for _, v := range wordMapping {
-		x = strings.Index(s, v)
-		y = v
+	for _, word := range wordMapping {
+		x = strings.Index(value, word)
+		y = word
 		if x >= 0 {
 			break
 		}
 	}
 	if x == -1 {
-		return s
+		return value
 	}
-	// fmt.Printf("\n%d\n", x)
-	// fmt.Printf("\n%d\n", (x + len(y) - 1))
-
-	if (x + len(y) - 1) == len(s)-1 {
-		s = s[:x] + "_" + s[x:]
+	// This is if the special non-plural word appears at the end of the string
+	if (x + len(y) - 1) == len(value)-1 {
+		value = value[:x] + "_" + value[x:]
 	} else {
-		if s[x+len(y)] == 's' {
-			if x+len(y) == len(s)-1 {
-				s = s[:x] + "_" + s[x:(x+len(y))] + "S"
+		// Under the following if: its the cases for handling plural words if the come in End, Starting
+		// and Middle respectively
+		if value[x+len(y)] == 's' {
+			if x+len(y) == len(value)-1 {
+				value = value[:x] + "_" + value[x:(x+len(y))] + "S"
 			} else if x == 0 {
-				s = s[:(x+len(y))] + "S" + "_" + s[(x+len(y)+1):]
+				value = value[:(x+len(y))] + "S" + "_" + value[(x+len(y)+1):]
 			} else {
-				s = s[:x] + "_" + s[x:(x+len(y))] + "S" + "_" + s[(x+len(y)+1):]
+				value = value[:x] + "_" + value[x:(x+len(y))] + "S" + "_" + value[(x+len(y)+1):]
 			}
+			// Under this else condition it handles the cases for non-plural words that come in Starting
+			//  and Middle of the string
 		} else {
 			if x == 0 {
-				s = s[:(x+len(y))] + "_" + s[(x+len(y)):]
+				value = value[:(x+len(y))] + "_" + value[(x+len(y)):]
 			} else {
-				s = s[:x] + "_" + s[x:(x+len(y))] + "_" + s[(x+len(y)):]
+				value = value[:x] + "_" + value[x:(x+len(y))] + "_" + value[(x+len(y)):]
 			}
 		}
 	}
-	return s
+	return value
 }
 
 // Converts a string to snake_case
@@ -129,6 +132,8 @@ func ToSnake(s string) string {
 	bits := []string{}
 	n := ""
 	iReal := -1
+
+	// append underscore (_) as prefix and postfix to isolate special words defined in the wordMapping
 	s = preprocessWordMapping(s)
 
 	for i, v := range s {
