@@ -1,9 +1,0 @@
-tests:
-- name: "kuttl-test"
-  image: quay.io/operator-framework/scorecard-test-kuttl:dev
-  entrypoint: 
-  - entrypoint 
-  labels:
-    suite: kuttl
-    test: customtest1
-  description: a kuttl test
