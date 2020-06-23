@@ -25,7 +25,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/operator-framework/operator-sdk/internal/flags/apiflags"
-	// "github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
@@ -140,10 +139,6 @@ func newFunc(cmd *cobra.Command, args []string) error {
 		cfg := input.Config{
 			AbsProjectPath: filepath.Join(projutil.MustGetwd()),
 			ProjectName:    projectName,
-		}
-
-		if err != nil {
-			return fmt.Errorf("invalid apiVersion and kind: %v", err)
 		}
 
 		if err := ansible.Init(cfg, generatePlaybook, apiFlags); err != nil {
