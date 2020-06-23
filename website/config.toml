@@ -80,7 +80,7 @@ github_repo = "https://github.com/operator-framework/operator-sdk"
 github_subdir = "website"
 
 # Google Custom Search Engine ID. Remove or comment out to disable search.
-gcs_engine_id = "011737558837375720776:fsdu1nryfng"
+gcs_engine_id = "015999847059016081733:wlfzxjx77h8"
 
 # Enable Algolia DocSearch
 algolia_docsearch = false
