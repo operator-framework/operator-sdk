@@ -30,34 +30,35 @@ import (
 // output from kuttl converting kuttl output into the
 // scorecard v1alpha3.TestStatus json format.
 //
-// The kuttl output is expected to be at /tmp/kuttl-report.json.
+// The kuttl output is expected to be produced by kubectl-kuttl
+// at /tmp/kuttl-report.json.
 func main() {
 
 	jsonFile, err := os.Open("/tmp/kuttl-report.json")
 	if err != nil {
-		printErrorStatus(fmt.Errorf("could not open kuttl report %w", err))
-		os.Exit(1)
+		printErrorStatus(fmt.Errorf("could not open kuttl report %v", err))
+		return
 	}
 	defer jsonFile.Close()
 
 	var byteValue []byte
 	byteValue, err = ioutil.ReadAll(jsonFile)
 	if err != nil {
-		printErrorStatus(fmt.Errorf("could not read kuttl report %w", err))
-		os.Exit(1)
+		printErrorStatus(fmt.Errorf("could not read kuttl report %v", err))
+		return
 	}
 
 	var jsonReport Testsuites
 	err = json.Unmarshal([]byte(byteValue), &jsonReport)
 	if err != nil {
-		printErrorStatus(fmt.Errorf("could not unmarshal kuttl report %w", err))
-		os.Exit(1)
+		printErrorStatus(fmt.Errorf("could not unmarshal kuttl report %v", err))
+		return
 	}
 
 	var suite *Testsuite
 	if len(jsonReport.Testsuite) == 0 {
 		printErrorStatus(errors.New("empty kuttl test suite was found"))
-		os.Exit(1)
+		return
 	}
 
 	suite = jsonReport.Testsuite[0]
@@ -66,7 +67,8 @@ func main() {
 
 	jsonOutput, err := json.MarshalIndent(s, "", "    ")
 	if err != nil {
-		log.Fatal(fmt.Errorf("could not marshal scoreard output %v", err))
+		printErrorStatus(fmt.Errorf("could not marshal scoreard output %v", err))
+		return
 	}
 	fmt.Println(string(jsonOutput))
 }
@@ -94,13 +96,13 @@ func printErrorStatus(err error) {
 	s.Results = append(s.Results, r)
 	jsonOutput, err := json.MarshalIndent(s, "", "    ")
 	if err != nil {
-		log.Fatal(fmt.Errorf("could not marshal scoreard output %v", err))
+		log.Fatal(fmt.Errorf("could not marshal scorecard output %v", err))
 	}
 	fmt.Println(string(jsonOutput))
 }
 
 // kuttl report format
-// the kuttl structs below are copied from the kuttl master currently
+// the kuttl structs below are copied from the kuttl master currently,
 // in the future, these structs might be pulled into SDK as
 // normal golang deps if necessary
 
