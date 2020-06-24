@@ -23,6 +23,8 @@ import (
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	apivalidation "github.com/operator-framework/api/pkg/validation"
+	"github.com/operator-framework/operator-registry/pkg/containertools"
+	"github.com/operator-framework/operator-registry/pkg/image/execregistry"
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	"github.com/sirupsen/logrus"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -61,7 +63,18 @@ func BundleValidationTest(dir string) scapiv1alpha2.ScorecardTestResult {
 	logrus.SetLevel(logrus.DebugLevel)
 	logrus.SetOutput(buf)
 
-	val := registrybundle.NewImageValidator("", logger)
+	// Despite NewRegistry appearing to create a docker image registry, all this function does is return a type
+	// that shells out to the docker client binary. Since BundleValidationTest only ever calls ValidateBundleFormat,
+	// which does not use the underlying registry, we can use this object as a dummy registry. We shouldn't
+	// use the containerd registry because that actually creates an underlying registry.
+	// NB(estroz): previously NewImageValidator constructed a docker registry internally, which is what we've done
+	// here. However it might be nice to create a mock registry that returns an error if any method is called.
+	reg, err := execregistry.NewRegistry(containertools.DockerTool, logger)
+	if err != nil {
+		// This function should never return an error since it's wrapping the docker client binary in a struct.
+		logger.Fatalf("Scorecard: this docker registry error should never occur: %v", err)
+	}
+	val := registrybundle.NewImageValidator(reg, logger)
 
 	// Validate bundle format.
 	if err := val.ValidateBundleFormat(dir); err != nil {
