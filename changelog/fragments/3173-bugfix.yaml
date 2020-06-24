@@ -1,6 +1,5 @@
 entries:
   - description: >
-      Handle variables with certain keywords.
-      Fix Ansible based-Operators for not mangled variables with uppercase characters when they have special words (e.g IP,HTTP, etc).
+      Prevent the ansible-operator from mangling variables containing the uppercase representations of special words (e.g IP, HTTP, etc).
     kind: "bugfix"
     breaking: false

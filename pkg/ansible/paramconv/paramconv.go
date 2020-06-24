@@ -70,13 +70,13 @@ func ToCamel(s string) string {
 	return ret
 }
 
-// preprocessWordMapping() will check if the string informed contains special words mapped in
-// the 'wordMapping' and its plurals and is returned to ToSnake() for further processing.
-// Note that, if the special word or its plural is found the character "_" is appended to
-// as prefixes and postfixes to the special world found. For example, if the string is "egressIP"
-// the IP is a special word and then, the string  egress_IP will be returned.
-// Also, beware that if the next character of the special word be an "s" (i.e plural of the word
-// found in 'wordMapping'), it will be capitalized to be considered part of the same abbreviation.
+// preprocessWordMapping() will check if value contains special words mapped or its plural in
+// wordMapping, then processes it such that ToSnake() can convert it to snake case.
+// If value contains special word, the character "_" is appended as a prefix and postfix
+// to the special word found. For example, if the input string is "egressIP",
+// which contains is a special word "IP", the function will return "egress_IP".
+// If the last character of the special word is an "s" (i.e plural of the word
+// found in wordMapping), it is considered a part of that word and will be capitalized.
 func preprocessWordMapping(value string) string {
 	var x int
 	var y string
@@ -91,12 +91,11 @@ func preprocessWordMapping(value string) string {
 	if x == -1 {
 		return value
 	}
-	// This is if the special non-plural word appears at the end of the string
+	// The special non-plural word appears at the end of the string.
 	if (x + len(y) - 1) == len(value)-1 {
 		value = value[:x] + "_" + value[x:]
 	} else {
-		// Under the following if: its the cases for handling plural words if the come in End, Starting
-		// and Middle respectively
+		// The special plural word occurs at the end, start, or somewhere in the middle of value.
 		if value[x+len(y)] == 's' {
 			if x+len(y) == len(value)-1 {
 				value = value[:x] + "_" + value[x:(x+len(y))] + "S"
@@ -105,8 +104,7 @@ func preprocessWordMapping(value string) string {
 			} else {
 				value = value[:x] + "_" + value[x:(x+len(y))] + "S" + "_" + value[(x+len(y)+1):]
 			}
-			// Under this else condition it handles the cases for non-plural words that come in Starting
-			//  and Middle of the string
+			// The special non-plural word occurs at the start or somewhere in the middle of value.
 		} else {
 			if x == 0 {
 				value = value[:(x+len(y))] + "_" + value[(x+len(y)):]
