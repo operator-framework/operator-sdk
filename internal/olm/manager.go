@@ -25,8 +25,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
+// The value for DefaultVersion of OLM to install is set in Makefile
+var (
+	DefaultVersion string
+)
+
 const (
-	DefaultVersion = "latest"
 	DefaultTimeout = time.Minute * 2
 	// DefaultOLMNamespace is the namespace where OLM is installed
 	DefaultOLMNamespace = "olm"

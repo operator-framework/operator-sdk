@@ -18,6 +18,7 @@
 package olm
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -43,6 +44,7 @@ const (
 	olmOperatorName     = "olm-operator"
 	catalogOperatorName = "catalog-operator"
 	packageServerName   = "packageserver"
+	PackagedVersion     = "0.15.1"
 )
 
 type Client struct {
@@ -166,6 +168,7 @@ func (c Client) GetStatus(ctx context.Context, namespace, version string) (*olmr
 }
 
 func (c Client) getResources(ctx context.Context, version string) ([]unstructured.Unstructured, error) {
+
 	log.Infof("Fetching CRDs for version %q", version)
 	crdResources, err := c.getCRDs(ctx, version)
 	if err != nil {
@@ -183,6 +186,15 @@ func (c Client) getResources(ctx context.Context, version string) ([]unstructure
 }
 
 func (c Client) getCRDs(ctx context.Context, version string) ([]unstructured.Unstructured, error) {
+	if version == DefaultVersion {
+		log.Info("Fetching CRDs for the default version stored as bindata")
+		content, err := getPackagedCRD()
+		if err != nil {
+			return nil, err
+		}
+		reader := bytes.NewReader(content)
+		return decodeResources(reader)
+	}
 	resp, err := c.doRequest(ctx, c.crdsURL(version))
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %v", err)
@@ -192,6 +204,14 @@ func (c Client) getCRDs(ctx context.Context, version string) ([]unstructured.Uns
 }
 
 func (c Client) getOLM(ctx context.Context, version string) ([]unstructured.Unstructured, error) {
+	if version == DefaultVersion {
+		content, err := getPackagedOLM()
+		if err != nil {
+			return nil, err
+		}
+		reader := bytes.NewReader(content)
+		return decodeResources(reader)
+	}
 	resp, err := c.doRequest(ctx, c.olmURL(version))
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %v", err)
@@ -291,4 +311,20 @@ func (c Client) getSubscriptionCSV(ctx context.Context, subKey types.NamespacedN
 		return true, nil
 	}
 	return csvKey, wait.PollImmediateUntil(time.Second, subscriptionInstalledCSV, ctx.Done())
+}
+
+func getPackagedOLM() ([]byte, error) {
+	data, err := Asset("olm-manifests/olm.yaml")
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving bindata asset %v", err)
+	}
+	return data, nil
+}
+
+func getPackagedCRD() ([]byte, error) {
+	data, err := Asset("olm-manifests/crds.yaml")
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving bindata asset %v", err)
+	}
+	return data, nil
 }

@@ -12,6 +12,7 @@ endif
 VERSION = $(shell git describe --dirty --tags --always)
 GIT_COMMIT = $(shell git rev-parse HEAD)
 K8S_VERSION = v1.18.2
+OLM_VERSION = 0.15.1
 REPO = github.com/operator-framework/operator-sdk
 BUILD_PATH = $(REPO)/cmd/operator-sdk
 PKGS = $(shell go list ./... | grep -v /vendor/)
@@ -25,6 +26,7 @@ GO_BUILD_ARGS = \
     -X '$(REPO)/version.GitVersion=$(VERSION)' \
     -X '$(REPO)/version.GitCommit=$(GIT_COMMIT)' \
     -X '$(REPO)/version.KubernetesVersion=$(K8S_VERSION)' \
+	-X '$(REPO)/internal/olm.DefaultVersion=$(OLM_VERSION)' \
   " \
 
 
@@ -93,6 +95,9 @@ lint: ## Run golangci-lint with all checks enabled in the ci
 
 setup-k8s:
 	hack/ci/setup-k8s.sh ${K8S_VERSION}
+
+olm-manifests:
+	./hack/lib/update_olm_manifest.sh ${OLM_VERSION}
 
 ##############################
 # Generate Artifacts         #
