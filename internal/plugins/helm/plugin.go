@@ -22,7 +22,7 @@ import (
 const pluginName = "helm" + plugin.DefaultNameQualifier
 
 var (
-	supportedProjectVersions = []string{config.Version2, config.Version3Alpha}
+	supportedProjectVersions = []string{config.Version3Alpha}
 	pluginVersion            = plugin.Version{Number: 1}
 )
 
