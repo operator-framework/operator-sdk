@@ -87,6 +87,8 @@ func BundleValidationTest(dir string) scapiv1alpha3.TestStatus {
 	if err != nil {
 		r.State = scapiv1alpha3.FailState
 		r.Errors = append(r.Errors, err.Error())
+		r.Log = buf.String()
+		return wrapResult(r)
 	}
 
 	objs := []interface{}{bundle, bundle.CSV}
@@ -96,7 +98,7 @@ func BundleValidationTest(dir string) scapiv1alpha3.TestStatus {
 	for _, crd := range bundle.V1beta1CRDs {
 		objs = append(objs, crd)
 	}
-	validationResults := apivalidation.AllValidators.Validate(objs...)
+	validationResults := apivalidation.DefaultBundleValidators.Validate(objs...)
 	for _, result := range validationResults {
 		for _, e := range result.Errors {
 			r.Errors = append(r.Errors, e.Error())

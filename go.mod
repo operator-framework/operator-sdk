@@ -16,7 +16,7 @@ require (
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.9.0
-	github.com/operator-framework/api v0.3.7-0.20200602203552-431198de9fc2
+	github.com/operator-framework/api v0.3.8
 	github.com/operator-framework/operator-registry v1.12.6-0.20200611222234-275301b779f8
 	github.com/pborman/uuid v1.2.0
 	github.com/pkg/errors v0.9.1
