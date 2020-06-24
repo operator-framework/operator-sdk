@@ -23,7 +23,7 @@ const pluginName = "helm" + plugin.DefaultNameQualifier
 
 var (
 	supportedProjectVersions = []string{config.Version2, config.Version3Alpha}
-	pluginVersion            = plugin.Version{Number: 1, Stage: plugin.AlphaStage}
+	pluginVersion            = plugin.Version{Number: 1}
 )
 
 var (
