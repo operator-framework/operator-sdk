@@ -90,7 +90,7 @@ operator-sdk generate bundle [flags]
       --metadata                 Generate bundle metadata and Dockerfile
       --operator-name string     Name of the bundle's operator
       --output-dir string        Directory to write the bundle to
-      --overwrite                Overwrite the bundle's metadata and Dockerfile if they exist
+      --overwrite                Overwrite the bundle's metadata and Dockerfile if they exist (default true)
   -q, --quiet                    Run in quiet mode
       --stdout                   Write bundle manifest to stdout
   -v, --version string           Semantic version of the operator in the generated bundle. Only set if creating a new bundle or upgrading your operator

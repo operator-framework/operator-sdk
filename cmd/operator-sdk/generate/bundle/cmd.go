@@ -210,6 +210,6 @@ func (c *bundleCmd) addCommonFlagsTo(fs *pflag.FlagSet) {
 	fs.StringVar(&c.crdsDir, "crds-dir", "", "Root directory for CustomResoureDefinition manifests")
 	fs.StringVar(&c.channels, "channels", "alpha", "A comma-separated list of channels the bundle belongs to")
 	fs.StringVar(&c.defaultChannel, "default-channel", "", "The default channel for the bundle")
-	fs.BoolVar(&c.overwrite, "overwrite", false, "Overwrite the bundle's metadata and Dockerfile if they exist")
+	fs.BoolVar(&c.overwrite, "overwrite", true, "Overwrite the bundle's metadata and Dockerfile if they exist")
 	fs.BoolVarP(&c.quiet, "quiet", "q", false, "Run in quiet mode")
 }
