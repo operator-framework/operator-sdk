@@ -25,7 +25,6 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/version"
 	"github.com/operator-framework/operator-sdk/internal/flags"
 	golangv2 "github.com/operator-framework/operator-sdk/internal/plugins/golang/v2"
-	"github.com/operator-framework/operator-sdk/internal/plugins/helm"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	log "github.com/sirupsen/logrus"
@@ -65,7 +64,6 @@ func GetPluginsCLIAndRoot() (cli.CLI, *cobra.Command) {
 		cli.WithCommandName("operator-sdk"),
 		cli.WithPlugins(
 			&golangv2.Plugin{},
-			&helm.Plugin{},
 		),
 		cli.WithDefaultPlugins(
 			&golangv2.Plugin{},
