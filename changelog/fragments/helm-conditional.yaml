@@ -2,8 +2,7 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      The status conditional `UpdateError` was renamed to `UpgradeError` to better align with Helm nomenclature.
-      This change just affects Helm based-operators.
+      In Helm-based operators, the `UpdateError` condition reason was renamed to `UpgradeError` to better align with Helm nomenclature.
 
     # kind is one of:
     # - addition
@@ -14,4 +13,15 @@ entries:
     kind: "change"
 
     # Is this a breaking change?
-    breaking: false
+    breaking: yes
+
+    # Migration can be defined to automatically add a section to
+    # the migration guide. This is required for breaking changes.
+    migration:
+      header: "Helm: rename condition reason `UpdateError` to `UpgradeError`"
+      body: |
+        For Helm-based operators to be more aligned with Helm, the `UpdateError` condition
+        reason was renamed to `UpgradeError` for the `ReleaseFailed` condition.
+        Note that this is **NOT** a breaking change for Helm-based operators themselves.
+        However, any script or code that is depending on this condition reason must be updated
+        to use `UpgradeError` instead of `UpdateError`.
