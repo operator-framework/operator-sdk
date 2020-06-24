@@ -65,6 +65,9 @@ catalogsources.operators.coreos.com                          CustomResourceDefin
 ...
 ```
 
+**Note:**
+By default, `olm status` and `olm uninstall` auto-detect the OLM version installed in your cluster. This can fail if the installation is broken in some way, so the version of OLM can be overridden using the `--version` flag provided with these commands.
+
 ## Creating a bundle
 
 Now that we have a working, simple memcached-operator, we can generate manifests

@@ -35,6 +35,8 @@ func newStatusCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&mgr.OLMNamespace, "olm-namespace", olm.DefaultOLMNamespace, "namespace where OLM is installed")
+	cmd.Flags().StringVar(&mgr.Version, "version", "", "version of OLM installed on cluster; if unset"+
+		"operator-sdk attempts to auto-discover the version")
 	mgr.AddToFlagSet(cmd.Flags())
 	return cmd
 }

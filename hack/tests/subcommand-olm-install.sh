@@ -13,11 +13,11 @@ test_version() {
 
     # Status should fail with OLM not installed
     commandoutput=$(operator-sdk olm status 2>&1 || true)
-    echo $commandoutput | grep -F "Failed to get OLM status: no existing installation found"
+    echo $commandoutput | grep -F "Failed to get OLM status"
 
     # Uninstall should fail with OLM not installed
     commandoutput=$(operator-sdk olm uninstall 2>&1 || true)
-    echo $commandoutput | grep -F "Failed to uninstall OLM: no existing installation found"
+    echo $commandoutput | grep -F "Failed to uninstall OLM"
 
     # Install should succeed with nothing installed
     commandoutput=$(operator-sdk olm install $ver_flag 2>&1)
