@@ -403,12 +403,12 @@ TODO
 [k8s-versioning]:https://kubernetes.io/docs/concepts/overview/kubernetes-api/#api-versioning
 [deepcopy-gen]:https://godoc.org/k8s.io/gengo/examples/deepcopy-gen
 [client-gen]:https://github.com/kubernetes/community/blob/master/contributors/devel/sig-api-machinery/generating-clientset.md
-[crd-storage-version]:https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definition-versioning/#writing-reading-and-updating-versioned-customresourcedefinition-objects
+[crd-storage-version]:https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/#writing-reading-and-updating-versioned-customresourcedefinition-objects
 [crd-markers]:https://book.kubebuilder.io/reference/markers/crd.html
 [controller-tools]:https://github.com/kubernetes-sigs/controller-tools
-[crd-versions]:https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definition-versioning/
-[crd-conv]:https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definition-versioning/#webhook-conversion
-[crd-conv-webhook]:https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definition-versioning/#configure-customresourcedefinition-to-use-conversion-webhooks
+[crd-versions]:https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/
+[crd-conv]:https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/#webhook-conversion
+[crd-conv-webhook]:https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/#configure-customresourcedefinition-to-use-conversion-webhooks
 [kubebuilder-api-annotations]:https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 [crd-version-deprecated]:https://github.com/kubernetes/apiextensions-apiserver/commit/d1c6536f26319513417b12245c6e3aee5ca005ca
 [api-migrations-types-and-commonalities]: ./#go-api-migrations-types-and-commonalities
