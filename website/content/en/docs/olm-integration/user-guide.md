@@ -66,7 +66,7 @@ catalogsources.operators.coreos.com                          CustomResourceDefin
 ```
 
 **Note:**
-By default the latest version of OLM is installed. However, the version of OLM can be specified in all the [olm subcommands][cli-olm] using the `--version` flag. This allows users to specify the version of OLM to install, uninstall or fetch its current status in the cluster.
+By default, `olm status` and `olm uninstall` auto-detect the OLM version installed in your cluster. This can fail if the installation is broken in some way, so the version of OLM can be overridden using the `--version` flag provided with these commands.
 
 ## Creating a bundle
 
