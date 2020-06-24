@@ -310,12 +310,13 @@ func (r *runner) makeParameters(u *unstructured.Unstructured) map[string]interfa
 	}
 
 	parameters := map[string]interface{}{}
-	for k, v := range spec {
-		parameters[k] = v
-	}
 
 	if r.snakeCaseParameters {
 		parameters = paramconv.MapToSnake(spec)
+	} else {
+		for k, v := range spec {
+			parameters[k] = v
+		}
 	}
 
 	parameters["meta"] = map[string]string{"namespace": u.GetNamespace(), "name": u.GetName()}
