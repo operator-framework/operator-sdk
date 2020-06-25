@@ -1,3 +1,9 @@
+## v0.17.2
+
+### Bug Fixes
+
+- Fix the download URL for the `tini` binary on ARM64 for the ansible operator base image. ([#3291](https://github.com/operator-framework/operator-sdk/pull/3291))
+
 ## v0.17.1
 
 ### Changes
