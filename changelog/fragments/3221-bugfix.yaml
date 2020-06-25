@@ -1,6 +1,0 @@
-entries:
-  - description: >
-      Fix bug in `operator-sdk bundle validation` that causes erroneous validation errors when the number of
-      annotations in an existing `annotations.yaml` does not equal the number of default bundle annotations
-      by upgrading the `operator-registry` dependency.
-    kind: bugfix
