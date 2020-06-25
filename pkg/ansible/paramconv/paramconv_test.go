@@ -221,6 +221,16 @@ func TestToSnake(t *testing.T) {
 			args: args{"egressIPegress"},
 			want: "egress_ip_egress",
 		},
+		{
+			name: "should handle multiple special words",
+			args: args{"URLegressIPEgressHTTP"},
+			want: "url_egress_ip_egress_http",
+		},
+		{
+			name: "should handle multiple plural special words",
+			args: args{"URLsegressIPsEgressHTTPs"},
+			want: "_urls_egress_ips_egress_https",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

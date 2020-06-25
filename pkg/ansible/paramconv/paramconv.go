@@ -85,34 +85,31 @@ func preprocessWordMapping(value string) string {
 		x = strings.Index(value, word)
 		y = word
 		if x >= 0 {
-			break
-		}
-	}
-	if x == -1 {
-		return value
-	}
-	// The special non-plural word appears at the end of the string.
-	if (x + len(y) - 1) == len(value)-1 {
-		value = value[:x] + "_" + value[x:]
-	} else {
-		// The special plural word occurs at the end, start, or somewhere in the middle of value.
-		if value[x+len(y)] == 's' {
-			if x+len(y) == len(value)-1 {
-				value = value[:x] + "_" + value[x:(x+len(y))] + "S"
-			} else if x == 0 {
-				value = value[:(x+len(y))] + "S" + "_" + value[(x+len(y)+1):]
+			// The special non-plural word appears at the end of the string.
+			if (x + len(y) - 1) == len(value)-1 {
+				value = value[:x] + "_" + value[x:]
 			} else {
-				value = value[:x] + "_" + value[x:(x+len(y))] + "S" + "_" + value[(x+len(y)+1):]
-			}
-			// The special non-plural word occurs at the start or somewhere in the middle of value.
-		} else {
-			if x == 0 {
-				value = value[:(x+len(y))] + "_" + value[(x+len(y)):]
-			} else {
-				value = value[:x] + "_" + value[x:(x+len(y))] + "_" + value[(x+len(y)):]
+				// The special plural word occurs at the end, start, or somewhere in the middle of value.
+				if value[x+len(y)] == 's' {
+					if x+len(y) == len(value)-1 {
+						value = value[:x] + "_" + value[x:(x+len(y))] + "S"
+					} else if x == 0 {
+						value = value[:(x+len(y))] + "S" + "_" + value[(x+len(y)+1):]
+					} else {
+						value = value[:x] + "_" + value[x:(x+len(y))] + "S" + "_" + value[(x+len(y)+1):]
+					}
+					// The special non-plural word occurs at the start or somewhere in the middle of value.
+				} else {
+					if x == 0 {
+						value = value[:(x+len(y))] + "_" + value[(x+len(y)):]
+					} else {
+						value = value[:x] + "_" + value[x:(x+len(y))] + "_" + value[(x+len(y)):]
+					}
+				}
 			}
 		}
 	}
+
 	return value
 }
 
