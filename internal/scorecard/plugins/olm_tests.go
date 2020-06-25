@@ -199,7 +199,7 @@ func (t *BundleValidationTest) Run(ctx context.Context) *schelpers.TestResult {
 	for _, crd := range bundle.V1beta1CRDs {
 		objs = append(objs, crd)
 	}
-	validationResults := apivalidation.AllValidators.Validate(objs...)
+	validationResults := apivalidation.DefaultBundleValidators.Validate(objs...)
 	for _, result := range validationResults {
 		for _, e := range result.Errors {
 			res.Errors = append(res.Errors, &e)
