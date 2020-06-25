@@ -1,3 +1,11 @@
+## v0.18.2
+
+### Bug Fixes
+
+- Fix bug in `operator-sdk bundle validation` that causes erroneous validation errors when the number of annotations in an existing `annotations.yaml` does not equal the number of default bundle annotations by upgrading the `operator-registry` dependency. ([#3284](https://github.com/operator-framework/operator-sdk/pull/3284))
+- Fix the download URL for the `tini` binary on ARM64 for the ansible operator base image. ([#3286](https://github.com/operator-framework/operator-sdk/pull/3286))
+- Fix bug in `bundle validate` that erroneously causes errors when a CRD manifest contains versions not present in a bundled CSV by bumping the api library version. ([#3288](https://github.com/operator-framework/operator-sdk/pull/3288))
+
 ## v0.18.1
 
 ### Bug Fixes
