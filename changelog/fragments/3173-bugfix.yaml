@@ -1,5 +1,10 @@
 entries:
   - description: >
       Prevent the ansible-operator from mangling variables containing the uppercase representations of special words (e.g IP, HTTP, etc).
-    kind: "bugfix"
-    breaking: false
+    kind: change
+    breaking: true
+
+    migration:
+      header: This new change will fix the ansible variables that are getting mangled
+      body: >
+        _/operator-sdk/pkg/ansible/paramconv/paramconv.go will be able to handle variables properly (Camel and Snake case conversion)
