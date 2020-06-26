@@ -35,6 +35,8 @@ func newUninstallCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&mgr.Version, "version", "", "version of OLM resources to uninstall.")
+	cmd.Flags().StringVar(&mgr.OLMNamespace, "olm-namespace", olm.DefaultOLMNamespace,
+		"namespace from where OLM is to be uninstalled.")
 	mgr.AddToFlagSet(cmd.Flags())
 	return cmd
 }
