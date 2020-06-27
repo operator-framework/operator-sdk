@@ -275,18 +275,25 @@ func serveCRMetrics(cfg *rest.Config, operatorNs string, gvks []schema.GroupVers
 // getAnsibleDebugLog return the value from the ANSIBLE_DEBUG_LOGS it order to
 // print the full Ansible logs
 func getAnsibleDebugLog() bool {
-	const envVar = "ANSIBLE_DEBUG_LOGS"
+	envVars := []string{"ANSIBLE_DEBUG_LOGS", "ANSIBLE_ENABLE_TASK_DEBUGGER"}
 	val := false
-	if envVal, ok := os.LookupEnv(envVar); ok {
-		if i, err := strconv.ParseBool(envVal); err != nil {
-			log.Info("Could not parse environment variable as an boolean; using default value",
-				"envVar", envVar, "default", val)
-		} else {
-			val = i
+	unset := true
+	for _, env := range envVars {
+		envVal, ok := os.LookupEnv(env)
+		if !ok {
+			continue
 		}
-	} else if !ok {
-		log.Info("Environment variable not set; using default value", "envVar", envVar,
-			envVar, val)
+		if i, err := strconv.ParseBool(envVal); err != nil {
+			unset = false
+			log.Info("Could not parse environment variable as an boolean; using default value",
+				"envVar", env, "default", val)
+		} else {
+			return i
+		}
+	}
+	if unset {
+		log.Info("Environment variables not set; using default value", "envVar", envVars,
+			envVars, val)
 	}
 	return val
 }
