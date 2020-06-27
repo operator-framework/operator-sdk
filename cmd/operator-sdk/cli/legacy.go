@@ -108,6 +108,7 @@ func getInitCmd() *cobra.Command {
 	for _, cmd := range root.Commands() {
 		if cmd.Name() == "init" {
 			initCmd = cmd
+			break
 		}
 	}
 	return initCmd

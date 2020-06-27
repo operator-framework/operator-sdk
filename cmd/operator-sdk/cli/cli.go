@@ -86,7 +86,28 @@ func GetPluginsCLIAndRoot() (cli.CLI, *cobra.Command) {
 	}
 	root.PersistentPreRun = rootPersistentPreRun
 
+	hidePluginsFlagFromInit(root)
+
 	return c, root
+}
+
+// hidePluginsFlagFromInit will hide the --plugins from operator-sdk init
+func hidePluginsFlagFromInit(root *cobra.Command) {
+	// Looking for init command
+	var initCmd *cobra.Command
+	for _, cmd := range root.Commands() {
+		if cmd.Name() == "init" {
+			initCmd = cmd
+			break
+		}
+	}
+	// This wil hidden the plugins flag since it should not be visible to user
+	if initCmd != nil {
+		puginsFlag := initCmd.Flag("plugins")
+		if puginsFlag != nil {
+			puginsFlag.Hidden = true
+		}
+	}
 }
 
 func rootPersistentPreRun(cmd *cobra.Command, args []string) {
