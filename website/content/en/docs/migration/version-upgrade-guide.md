@@ -450,6 +450,8 @@ Upon updating the project to `v0.8.2` the following breaking changes apply:
   - `./pkg/controller/<kind>/<kind>_controller.go`
 - Replace import `sigs.k8s.io/controller-runtime/pkg/runtime/signals` with `sigs.k8s.io/controller-runtime/pkg/manager/signals` in:
   - `cmd/manager/main.go`
+- Remove import `sigs.k8s.io/controller-tools/pkg/crd/generator` from:
+  - `tools.go`
 
 **controller-runtime API updates**
 
@@ -678,6 +680,109 @@ replace github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503
 - Run `go mod tidy` to update the project modules
 - Run the command `operator-sdk generate k8s` to ensure that your resources will be updated
 - Run the command `operator-sdk generate crds` to regenerate CRDs
+
+**(Optional) Skip metrics logs when the operator is running locally**
+
+There are changes to the default implementation of the metrics export. These changes require `cmd/manager/main.go` to be updated as follows.
+
+Update imports:
+
+```go
+import (
+	...
+	"errors"
+	...
+)
+```
+
+Replace:
+
+```go
+func main() {
+	...
+	if err = serveCRMetrics(cfg); err != nil {
+		log.Info("Could not generate and serve custom resource metrics", "error", err.Error())
+	}
+
+	// Add to the below struct any other metrics ports you want to expose.
+	servicePorts := []v1.ServicePort{
+		{Port: metricsPort, Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},
+		{Port: operatorMetricsPort, Name: metrics.CRPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: operatorMetricsPort}},
+	}
+	// Create Service object to expose the metrics port(s).
+	service, err := metrics.CreateMetricsService(ctx, cfg, servicePorts)
+	if err != nil {
+		log.Info("Could not create metrics Service", "error", err.Error())
+	}
+
+	// CreateServiceMonitors will automatically create the prometheus-operator ServiceMonitor resources
+	// necessary to configure Prometheus to scrape metrics from this operator.
+	services := []*v1.Service{service}
+	_, err = metrics.CreateServiceMonitors(cfg, namespace, services)
+	if err != nil {
+		log.Info("Could not create ServiceMonitor object", "error", err.Error())
+		// If this operator is deployed to a cluster without the prometheus-operator running, it will return
+		// ErrServiceMonitorNotPresent, which can be used to safely skip ServiceMonitor creation.
+		if err == metrics.ErrServiceMonitorNotPresent {
+			log.Info("Install prometheus-operator in your cluster to create ServiceMonitor objects", "error", err.Error())
+		}
+	}
+```
+
+With:
+
+```go
+func main() {
+	...
+	// Add the Metrics Service
+	addMetrics(ctx, cfg, namespace)
+```
+
+And then, add implementation for `addMetrics`:
+
+```go
+// addMetrics will create the Services and Service Monitors to allow the operator export the metrics by using
+// the Prometheus operator
+func addMetrics(ctx context.Context, cfg *rest.Config, namespace string) {
+	if err := serveCRMetrics(cfg); err != nil {
+		if errors.Is(err, k8sutil.ErrRunLocal) {
+			log.Info("Skipping CR metrics server creation; not running in a cluster.")
+			return
+		}
+		log.Info("Could not generate and serve custom resource metrics", "error", err.Error())
+	}
+
+	// Add to the below struct any other metrics ports you want to expose.
+	servicePorts := []v1.ServicePort{
+		{Port: metricsPort, Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},
+		{Port: operatorMetricsPort, Name: metrics.CRPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: operatorMetricsPort}},
+	}
+
+	// Create Service object to expose the metrics port(s).
+	service, err := metrics.CreateMetricsService(ctx, cfg, servicePorts)
+	if err != nil {
+		log.Info("Could not create metrics Service", "error", err.Error())
+	}
+
+	// CreateServiceMonitors will automatically create the prometheus-operator ServiceMonitor resources
+	// necessary to configure Prometheus to scrape metrics from this operator.
+	services := []*v1.Service{service}
+	_, err = metrics.CreateServiceMonitors(cfg, namespace, services)
+	if err != nil {
+		log.Info("Could not create ServiceMonitor object", "error", err.Error())
+		// If this operator is deployed to a cluster without the prometheus-operator running, it will return
+		// ErrServiceMonitorNotPresent, which can be used to safely skip ServiceMonitor creation.
+		if err == metrics.ErrServiceMonitorNotPresent {
+			log.Info("Install prometheus-operator in your cluster to create ServiceMonitor objects", "error", err.Error())
+		}
+	}
+}
+
+// serveCRMetrics gets the Operator/CustomResource GVKs and generates metrics based on those types.
+...
+```
+
+**NOTE**: For more information check the PR which is responsible for the above changes [#2190](https://github.com/operator-framework/operator-sdk/pull/2190).
 
 **Deprecations**
 
@@ -984,6 +1089,69 @@ func serveCRMetrics(cfg *rest.Config, operatorNs string) error {
 ```
 
 **NOTE**: For more information check the PRs which are responsible for the above changes [#2606](https://github.com/operator-framework/operator-sdk/pull/2606),[#2603](https://github.com/operator-framework/operator-sdk/pull/2603) and [#2601](https://github.com/operator-framework/operator-sdk/pull/2601).
+
+**(Optional) Support for watching multiple namespaces**
+
+There are changes to add support for watching multiple namespaces. These changes require `cmd/manager/main.go` to be updated as follows.
+
+Update imports:
+
+```go
+import (
+	...
+	"strings"
+
+	...
+	"sigs.k8s.io/controller-runtime/pkg/cache"
+	...
+)
+```
+
+Replace:
+
+```go
+func main() {
+	...
+	// Create a new Cmd to provide shared dependencies and start components
+	mgr, err := manager.New(cfg, manager.Options{
+		Namespace:          namespace,
+		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
+	})
+	if err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+```
+
+With:
+
+```go
+func main() {
+	...
+	// Set default manager options
+	options := manager.Options{
+		Namespace:          namespace,
+		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
+	}
+
+	// Add support for MultiNamespace set in WATCH_NAMESPACE (e.g ns1,ns2)
+	// Note that this is not intended to be used for excluding namespaces, this is better done via a Predicate
+	// Also note that you may face performance issues when using this with a high number of namespaces.
+	// More Info: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
+	if strings.Contains(namespace, ",") {
+		options.Namespace = ""
+		options.NewCache = cache.MultiNamespacedCacheBuilder(strings.Split(namespace, ","))
+	}
+
+	// Create a new manager to provide shared dependencies and start components
+	mgr, err := manager.New(cfg, options)
+	if err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+```
+
+**NOTE**: For more information check the PR which is responsible for the above changes [#2522](https://github.com/operator-framework/operator-sdk/pull/2522).
 
 **Breaking changes**
 
