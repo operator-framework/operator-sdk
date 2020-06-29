@@ -7,4 +7,11 @@ entries:
     migration:
       header: This new change will fix the ansible variables that are getting mangled
       body: >
-        _/operator-sdk/pkg/ansible/paramconv/paramconv.go will be able to handle variables properly (Camel and Snake case conversion)
+        The input variables with special words such as IP,HTTP and URL in the string will get converted correctly to snake_case 
+        with all the special word(s) not being split by `_` (the special word can be plural as well).
+
+        For example: 
+
+          egressIPs                    -->  egress_ips 
+
+          URLsegressIPsEgressHTTPs     -->  _urls_egress_ips_egress_https

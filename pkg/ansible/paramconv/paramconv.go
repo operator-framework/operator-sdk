@@ -78,34 +78,27 @@ func ToCamel(s string) string {
 // If the last character of the special word is an "s" (i.e plural of the word
 // found in wordMapping), it is considered a part of that word and will be capitalized.
 func preprocessWordMapping(value string) string {
-	var x int
-	var y string
 
 	for _, word := range wordMapping {
-		x = strings.Index(value, word)
-		y = word
-		if x >= 0 {
+		idx := strings.Index(value, word)
+		if idx >= 0 {
 			// The special non-plural word appears at the end of the string.
-			if (x + len(y) - 1) == len(value)-1 {
-				value = value[:x] + "_" + value[x:]
-			} else {
+			if (idx + len(word) - 1) == len(value)-1 {
+				value = value[:idx] + "_" + value[idx:]
+			} else if value[idx+len(word)] == 's' {
 				// The special plural word occurs at the end, start, or somewhere in the middle of value.
-				if value[x+len(y)] == 's' {
-					if x+len(y) == len(value)-1 {
-						value = value[:x] + "_" + value[x:(x+len(y))] + "S"
-					} else if x == 0 {
-						value = value[:(x+len(y))] + "S" + "_" + value[(x+len(y)+1):]
-					} else {
-						value = value[:x] + "_" + value[x:(x+len(y))] + "S" + "_" + value[(x+len(y)+1):]
-					}
-					// The special non-plural word occurs at the start or somewhere in the middle of value.
+				if idx+len(word) == len(value)-1 {
+					value = value[:idx] + "_" + value[idx:(idx+len(word))] + "S"
+				} else if idx == 0 {
+					value = value[:(idx+len(word))] + "S" + "_" + value[(idx+len(word)+1):]
 				} else {
-					if x == 0 {
-						value = value[:(x+len(y))] + "_" + value[(x+len(y)):]
-					} else {
-						value = value[:x] + "_" + value[x:(x+len(y))] + "_" + value[(x+len(y)):]
-					}
+					value = value[:idx] + "_" + value[idx:(idx+len(word))] + "S" + "_" + value[(idx+len(word)+1):]
 				}
+			} else if idx == 0 {
+				// The special non-plural word occurs at the start or somewhere in the middle of value.
+				value = value[:(idx+len(word))] + "_" + value[(idx+len(word)):]
+			} else {
+				value = value[:idx] + "_" + value[idx:(idx+len(word))] + "_" + value[(idx+len(word)):]
 			}
 		}
 	}
