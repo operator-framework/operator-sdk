@@ -117,6 +117,11 @@ func TestToCamel(t *testing.T) {
 			args: args{"var_k8s"},
 			want: "varK8s",
 		},
+		{
+			name: "should handle special words",
+			args: args{"egressIPs"},
+			want: "egressIPs",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -180,6 +185,51 @@ func TestToSnake(t *testing.T) {
 			name: "should be a noop",
 			args: args{"this_should_be_a_noop"},
 			want: "this_should_be_a_noop",
+		},
+		{
+			name: "should handle special plural word at end",
+			args: args{"egressIPs"},
+			want: "egress_ips",
+		},
+		{
+			name: "should handle special plural word in middle",
+			args: args{"egressIPsEgress"},
+			want: "egress_ips_egress",
+		},
+		{
+			name: "should handle special plural word in middle followed by lowercase letter",
+			args: args{"egressIPsegress"},
+			want: "egress_ips_egress",
+		},
+		{
+			name: "should handle special plural word at the start",
+			args: args{"IPsegress"},
+			want: "_ips_egress",
+		},
+		{
+			name: "should handle special word at the end",
+			args: args{"egressIP"},
+			want: "egress_ip",
+		},
+		{
+			name: "should handle special word in the middle",
+			args: args{"egressIPEgress"},
+			want: "egress_ip_egress",
+		},
+		{
+			name: "should handle special word in the middle followed by lowercase",
+			args: args{"egressIPegress"},
+			want: "egress_ip_egress",
+		},
+		{
+			name: "should handle multiple special words",
+			args: args{"URLegressIPEgressHTTP"},
+			want: "url_egress_ip_egress_http",
+		},
+		{
+			name: "should handle multiple plural special words",
+			args: args{"URLsegressIPsEgressHTTPs"},
+			want: "_urls_egress_ips_egress_https",
 		},
 	}
 	for _, tt := range tests {

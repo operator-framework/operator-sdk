@@ -70,6 +70,42 @@ func ToCamel(s string) string {
 	return ret
 }
 
+// preprocessWordMapping() will check if value contains special words mapped or its plural in
+// wordMapping, then processes it such that ToSnake() can convert it to snake case.
+// If value contains special word, the character "_" is appended as a prefix and postfix
+// to the special word found. For example, if the input string is "egressIP",
+// which contains is a special word "IP", the function will return "egress_IP".
+// If the last character of the special word is an "s" (i.e plural of the word
+// found in wordMapping), it is considered a part of that word and will be capitalized.
+func preprocessWordMapping(value string) string {
+
+	for _, word := range wordMapping {
+		idx := strings.Index(value, word)
+		if idx >= 0 {
+			// The special non-plural word appears at the end of the string.
+			if (idx + len(word) - 1) == len(value)-1 {
+				value = value[:idx] + "_" + value[idx:]
+			} else if value[idx+len(word)] == 's' {
+				// The special plural word occurs at the end, start, or somewhere in the middle of value.
+				if idx+len(word) == len(value)-1 {
+					value = value[:idx] + "_" + value[idx:(idx+len(word))] + "S"
+				} else if idx == 0 {
+					value = value[:(idx+len(word))] + "S" + "_" + value[(idx+len(word)+1):]
+				} else {
+					value = value[:idx] + "_" + value[idx:(idx+len(word))] + "S" + "_" + value[(idx+len(word)+1):]
+				}
+			} else if idx == 0 {
+				// The special non-plural word occurs at the start or somewhere in the middle of value.
+				value = value[:(idx+len(word))] + "_" + value[(idx+len(word)):]
+			} else {
+				value = value[:idx] + "_" + value[idx:(idx+len(word))] + "_" + value[(idx+len(word)):]
+			}
+		}
+	}
+
+	return value
+}
+
 // Converts a string to snake_case
 func ToSnake(s string) string {
 	s = addWordBoundariesToNumbers(s)
@@ -84,6 +120,9 @@ func ToSnake(s string) string {
 	bits := []string{}
 	n := ""
 	iReal := -1
+
+	// append underscore (_) as prefix and postfix to isolate special words defined in the wordMapping
+	s = preprocessWordMapping(s)
 
 	for i, v := range s {
 		iReal++
@@ -118,6 +157,8 @@ func ToSnake(s string) string {
 	}
 	bits = append(bits, strings.ToLower(n))
 	joined := strings.Join(bits, "_")
+
+	// prepending an underscore (_) if the word begins with a Capital Letter
 	if _, ok := wordMapping[bits[0]]; !ok {
 		return prefix + joined
 	}
