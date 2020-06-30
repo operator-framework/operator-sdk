@@ -199,7 +199,13 @@ var _ = Describe("operator-sdk", func() {
 			_, err = tc.Run(runPkgManCmd)
 			Expect(err).NotTo(HaveOccurred())
 
-			// TODO: run 'cleanup packagemanifests' when added to the new CLI.
+			By("destroying the deployed package manifests-formatted operator")
+			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", "packagemanifests",
+				"--operator-namespace", tc.Kubectl.Namespace,
+				"--operator-version", operatorVersion,
+				"--timeout", "4m")
+			_, err = tc.Run(cleanupPkgManCmd)
+			Expect(err).NotTo(HaveOccurred())
 		})
 	})
 })

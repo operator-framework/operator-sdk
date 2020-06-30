@@ -22,5 +22,5 @@ operator-sdk cleanup [flags]
 ### SEE ALSO
 
 * [operator-sdk](../operator-sdk)	 - An SDK for building operators with ease
-* [operator-sdk cleanup packagemanifests](../operator-sdk_cleanup_packagemanifests)	 - Clean up after an Operator organized in the package manifests format running with OLM
+* [operator-sdk cleanup packagemanifests](../operator-sdk_cleanup_packagemanifests)	 - Clean up an Operator in the package manifests format deployed with OLM
 

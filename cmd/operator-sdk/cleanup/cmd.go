@@ -18,6 +18,7 @@ import (
 	"errors"
 	"path/filepath"
 
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cleanup/packagemanifests"
 	olmcatalog "github.com/operator-framework/operator-sdk/internal/generate/olm-catalog"
 	olmoperator "github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
@@ -26,6 +27,23 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
+
+func NewCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "cleanup",
+		Short: "Clean up an Operator deployed with the 'run' subcommand",
+		Long: `This command has subcommands that will destroy an Operator deployed with OLM.
+Currently only the package manifests format is supported via the 'packagemanifests' subcommand.
+Run 'operator-sdk cleanup --help' for more information.
+`,
+	}
+
+	cmd.AddCommand(
+		packagemanifests.NewCmd(),
+	)
+
+	return cmd
+}
 
 type cleanupCmd struct {
 	// Common options.
@@ -49,7 +67,7 @@ func (c *cleanupCmd) checkCleanupType() error {
 	return nil
 }
 
-func NewCmd() *cobra.Command {
+func NewCmdLegacy() *cobra.Command {
 	c := &cleanupCmd{}
 	cmd := &cobra.Command{
 		Use:   "cleanup",
@@ -122,7 +140,7 @@ func NewCmd() *cobra.Command {
 	cmd.Flags().AddFlagSet(fs)
 
 	cmd.AddCommand(
-		newPackageManifestsCmdLegacy(),
+		packagemanifests.NewCmd(),
 	)
 
 	return cmd

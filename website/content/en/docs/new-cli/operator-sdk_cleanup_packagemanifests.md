@@ -28,7 +28,13 @@ operator-sdk cleanup packagemanifests [flags]
       --timeout duration            Time to wait for the command to complete before failing (default 2m0s)
 ```
 
+### Options inherited from parent commands
+
+```
+      --verbose   Enable verbose logging
+```
+
 ### SEE ALSO
 
-* [operator-sdk cleanup](../operator-sdk_cleanup)	 - Delete and clean up after a running Operator
+* [operator-sdk cleanup](../operator-sdk_cleanup)	 - Clean up an Operator deployed with the 'run' subcommand
 

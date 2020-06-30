@@ -69,6 +69,7 @@ operator-sdk [flags]
 * [operator-sdk alpha](../operator-sdk_alpha)	 - Run an alpha subcommand
 * [operator-sdk build](../operator-sdk_build)	 - Compiles code and builds artifacts
 * [operator-sdk bundle](../operator-sdk_bundle)	 - Manage operator bundle metadata
+* [operator-sdk cleanup](../operator-sdk_cleanup)	 - Clean up an Operator deployed with the 'run' subcommand
 * [operator-sdk completion](../operator-sdk_completion)	 - Generators for shell completions
 * [operator-sdk create](../operator-sdk_create)	 - Scaffold a Kubernetes API or webhook
 * [operator-sdk generate](../operator-sdk_generate)	 - Invokes a specific generator

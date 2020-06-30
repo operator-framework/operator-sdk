@@ -74,7 +74,7 @@ func GetCLIRoot() *cobra.Command {
 		alpha.NewCmd(),
 		build.NewCmd(),
 		bundle.NewCmdLegacy(),
-		cleanup.NewCmd(),
+		cleanup.NewCmdLegacy(),
 		completion.NewCmd(),
 		execentrypoint.NewCmd(),
 		generate.NewCmdLegacy(),
