@@ -188,6 +188,7 @@ Flags that change project default paths:
 			}
 			return nil
 		},
+		Deprecated: "use 'generate bundle' or 'generate packagemanifests' instead",
 	}
 
 	cmd.Flags().StringVar(&c.csvVersion, "csv-version", "",
