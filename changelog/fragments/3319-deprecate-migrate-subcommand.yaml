@@ -2,7 +2,7 @@ entries:
   - description: >
       The migrate sub-command is deprecated
     kind: deprecation
-    breaking: true
+    breaking: false
     migration:
       header: The migrate subcommand has been deprecated 
       body: >
