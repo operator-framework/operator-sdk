@@ -34,6 +34,23 @@ import (
 	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
 )
 
+func NewCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "run",
+		Short: "Run an Operator in a variety of environments",
+		Long: `This command has subcommands that will deploy your Operator with OLM.
+Currently only the package manifests format is supported via the 'packagemanifests' subcommand.
+Run 'operator-sdk run --help' for more information.
+`,
+	}
+
+	cmd.AddCommand(
+		packagemanifests.NewCmd(),
+	)
+
+	return cmd
+}
+
 type runCmd struct {
 	// Common options.
 	kubeconfig string
@@ -57,7 +74,7 @@ func (c *runCmd) checkRunType() error {
 	return nil
 }
 
-func NewCmd() *cobra.Command {
+func NewCmdLegacy() *cobra.Command {
 	c := &runCmd{}
 	cmd := &cobra.Command{
 		Use:   "run",

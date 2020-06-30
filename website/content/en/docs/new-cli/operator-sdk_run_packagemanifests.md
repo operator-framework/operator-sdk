@@ -27,6 +27,12 @@ operator-sdk run packagemanifests [flags]
       --timeout duration            Time to wait for the command to complete before failing (default 2m0s)
 ```
 
+### Options inherited from parent commands
+
+```
+      --verbose   Enable verbose logging
+```
+
 ### SEE ALSO
 
 * [operator-sdk run](../operator-sdk_run)	 - Run an Operator in a variety of environments

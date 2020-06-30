@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/spf13/pflag"
 )
@@ -61,9 +62,18 @@ func (c *PackageManifestsCmd) validate() error {
 	if c.ManifestsDir == "" {
 		return errors.New("manifests dir must be set")
 	}
+	manDirInfo, err := os.Stat(c.ManifestsDir)
+	if err != nil {
+		return err
+	}
+	if !manDirInfo.IsDir() {
+		return fmt.Errorf("%s must be a directory", c.ManifestsDir)
+	}
+
 	if c.OperatorVersion == "" {
 		return errors.New("operator version must be set")
 	}
+
 	return c.OperatorCmd.validate()
 }
 

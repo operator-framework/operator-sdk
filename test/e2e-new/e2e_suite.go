@@ -29,26 +29,29 @@ import (
 
 	. "github.com/onsi/ginkgo" //nolint:golint
 	. "github.com/onsi/gomega" //nolint:golint
+	kbtestutils "sigs.k8s.io/kubebuilder/test/e2e/utils"
 
-	"sigs.k8s.io/kubebuilder/test/e2e/utils"
+	testutils "github.com/operator-framework/operator-sdk/test/internal"
 )
 
 var _ = Describe("operator-sdk", func() {
 	Context("with the new project layout", func() {
 		var (
-			tc          *utils.TestContext
-			projectName string
+			tc              testutils.TestContext
+			projectName     string
+			operatorVersion = "0.0.1"
 		)
 
 		BeforeEach(func() {
-
 			By("creating a new test context")
 			var err error
-			tc, err = utils.NewTestContext("operator-sdk", "GO111MODULE=on")
+			tc, err = testutils.NewTestContext("GO111MODULE=on")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(tc.Prepare()).To(Succeed())
-
 			projectName = filepath.Base(tc.Dir)
+
+			By("installing OLM")
+			Expect(tc.InstallOLM()).To(Succeed())
 		})
 
 		AfterEach(func() {
@@ -57,6 +60,9 @@ var _ = Describe("operator-sdk", func() {
 
 			By("removing container image and work dir")
 			tc.Destroy()
+
+			By("uninstalling OLM")
+			tc.UninstallOLM()
 		})
 
 		It("should generate a runnable project", func() {
@@ -81,7 +87,7 @@ var _ = Describe("operator-sdk", func() {
 			Expect(err).Should(Succeed())
 
 			By("implementing the API")
-			Expect(utils.InsertCode(
+			Expect(kbtestutils.InsertCode(
 				filepath.Join(tc.Dir, "api", tc.Version, fmt.Sprintf("%s_types.go", strings.ToLower(tc.Kind))),
 				fmt.Sprintf(`type %sSpec struct {
 `, tc.Kind),
@@ -110,7 +116,7 @@ var _ = Describe("operator-sdk", func() {
 					"-o", "go-template={{ range .items }}{{ if not .metadata.deletionTimestamp }}{{ .metadata.name }}"+
 						"{{ \"\\n\" }}{{ end }}{{ end }}")
 				Expect(err).NotTo(HaveOccurred())
-				podNames := utils.GetNonEmptyLines(podOutput)
+				podNames := kbtestutils.GetNonEmptyLines(podOutput)
 				if len(podNames) != 1 {
 					return fmt.Errorf("expect 1 controller pods running, but got %d", len(podNames))
 				}
@@ -147,6 +153,12 @@ var _ = Describe("operator-sdk", func() {
 			}
 			Eventually(managerContainerLogs, time.Minute, time.Second).Should(ContainSubstring("Successfully Reconciled"))
 
+			By("cleaning up the operator and resources")
+			defaultOutput, err := tc.KustomizeBuild(filepath.Join("config", "default"))
+			Expect(err).NotTo(HaveOccurred())
+			_, err = tc.Kubectl.WithInput(string(defaultOutput)).Command("delete", "-f", "-")
+			Expect(err).NotTo(HaveOccurred())
+
 			By("generating the operator bundle")
 			// Turn off interactive prompts for all generation tasks.
 			replace := "operator-sdk generate kustomize manifests"
@@ -169,12 +181,25 @@ var _ = Describe("operator-sdk", func() {
 			genKustomizeCmd := exec.Command(tc.BinaryName, "generate", "kustomize", "manifests")
 			_, err = tc.Run(genKustomizeCmd)
 			Expect(err).NotTo(HaveOccurred())
-			kustomizeOutput, err := tc.Run(exec.Command("kustomize", "build", filepath.Join("config", "manifests")))
+			manifestsOutput, err := tc.KustomizeBuild(filepath.Join("config", "manifests"))
 			Expect(err).NotTo(HaveOccurred())
 			genPkgManCmd := exec.Command(tc.BinaryName, "generate", "packagemanifests", "--version", "0.0.1")
-			tc.Stdin = bytes.NewBuffer(kustomizeOutput)
+			tc.Stdin = bytes.NewBuffer(manifestsOutput)
 			_, err = tc.Run(genPkgManCmd)
 			Expect(err).NotTo(HaveOccurred())
+
+			By("running the package manifests-formatted operator")
+			_, err = tc.Kubectl.Command("create", "namespace", tc.Kubectl.Namespace)
+			Expect(err).NotTo(HaveOccurred())
+			runPkgManCmd := exec.Command(tc.BinaryName, "run", "packagemanifests",
+				"--install-mode", "AllNamespaces",
+				"--operator-namespace", tc.Kubectl.Namespace,
+				"--operator-version", operatorVersion,
+				"--timeout", "4m")
+			_, err = tc.Run(runPkgManCmd)
+			Expect(err).NotTo(HaveOccurred())
+
+			// TODO: run 'cleanup packagemanifests' when added to the new CLI.
 		})
 	})
 })

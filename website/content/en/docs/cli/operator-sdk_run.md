@@ -27,5 +27,5 @@ operator-sdk run [flags]
 
 * [operator-sdk](../operator-sdk)	 - An SDK for building operators with ease
 * [operator-sdk run local](../operator-sdk_run_local)	 - Run an Operator locally
-* [operator-sdk run packagemanifests](../operator-sdk_run_packagemanifests)	 - Run an Operator organized in the package manifests format with OLM
+* [operator-sdk run packagemanifests](../operator-sdk_run_packagemanifests)	 - Deploy an Operator in the package manifests format with OLM
 
