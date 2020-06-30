@@ -78,8 +78,8 @@ RUN yum clean all && rm -rf /var/cache/yum/* \
  && yum clean all \
  && rm -rf /var/cache/yum
 
-COPY build/_output/bin/[[.ProjectName]] ${OPERATOR}
 COPY bin /usr/local/bin
+ADD build/_output/bin/base-image ${HOME}/
 
 RUN /usr/local/bin/user_setup
 

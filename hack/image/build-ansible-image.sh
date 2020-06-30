@@ -12,13 +12,15 @@ BASEIMAGEDIR="$TMPDIR/ansible-operator"
 mkdir -p "$BASEIMAGEDIR"
 go build -o $BASEIMAGEDIR/scaffold-ansible-image ./hack/image/ansible/scaffold-ansible-image.go
 
+# build binary for specific target platform (for purposes of base image only)
+env GOOS=linux GOARCH=amd64 go build -o $BASEIMAGEDIR/base-image ./hack/image/ansible/baseimage/baseimage.go
+
 # build operator binary and base image
 pushd "$BASEIMAGEDIR"
 ./scaffold-ansible-image
 
 mkdir -p build/_output/bin/
-cp $ROOTDIR/build/operator-sdk-dev-linux-gnu build/_output/bin/ansible-operator
-operator-sdk build $1
+mv $BASEIMAGEDIR/base-image build/_output/bin
 # If using a kind cluster, load the image into all nodes.
 load_image_if_kind "$1"
 popd
