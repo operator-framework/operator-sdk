@@ -16,14 +16,18 @@ package registry
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	apivalidation "github.com/operator-framework/api/pkg/validation"
 	apierrors "github.com/operator-framework/api/pkg/validation/errors"
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 	k8svalidation "k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
@@ -126,4 +130,60 @@ func appendResult(results []apierrors.ManifestResult, r apierrors.ManifestResult
 	}
 
 	return results
+}
+
+// RewriteAnnotationsYaml unmarshalls the specified yaml file, appends the content and
+// converts it again to yaml.
+func RewriteAnnotationsYaml(filename string, content map[string]string) error {
+
+	metadata, err := getAnnotationFileContents(filename)
+	if err != nil {
+		return err
+	}
+
+	// Append the contents to annotationsYaml
+	for key, val := range content {
+		metadata.Annotations[key] = val
+	}
+
+	err = writeAnnotationFile(filename, metadata)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func getAnnotationFileContents(filename string) (*registrybundle.AnnotationMetadata, error) {
+	f, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	annotationsYaml := &registrybundle.AnnotationMetadata{}
+	if err := yaml.Unmarshal(f, annotationsYaml); err != nil {
+		return nil, fmt.Errorf("error parsing annotations file: %v", err)
+	}
+	return annotationsYaml, nil
+}
+
+func writeAnnotationFile(filename string, annotation *registrybundle.AnnotationMetadata) error {
+	// TODO: replace `gopkg.in/yaml.v2` with `sigs.k8s.io/yaml`. Operator registry
+	// defines annotations with yaml format (using gopkg-yaml) and k8s-yaml takes name
+	// of field in the struct as the value of key in yaml.
+	file, err := yaml.Marshal(annotation)
+	if err != nil {
+		return err
+	}
+
+	mode := os.FileMode(0666)
+	if info, err := os.Stat(filename); err == nil {
+		mode = info.Mode()
+	}
+
+	err = ioutil.WriteFile(filename, []byte(file), mode)
+	if err != nil {
+		return fmt.Errorf("error writing modified contents to annotations file, %v", err)
+	}
+	return nil
 }

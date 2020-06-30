@@ -24,6 +24,8 @@ import (
 	catalog "github.com/operator-framework/operator-sdk/internal/generate/olm-catalog"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
+	"github.com/operator-framework/operator-sdk/internal/registry"
+
 	"github.com/blang/semver"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	scorecard "github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
@@ -234,7 +236,14 @@ func (c bundleCreateCmd) runGenerate() error {
 	if err != nil {
 		return fmt.Errorf("error generating bundle image files: %v", err)
 	}
-	if err = copyScorecardConfig(); err != nil {
+
+	// rootDir is the location where metadata directory is present.
+	rootDir := c.outputDir
+	if rootDir == "" {
+		rootDir = filepath.Dir(c.directory)
+	}
+
+	if err = RewriteBundleImageContents(rootDir); err != nil {
 		return err
 	}
 	return nil
@@ -327,6 +336,52 @@ func copyScorecardConfig() error {
 		if err != nil {
 			return fmt.Errorf("error rewriting dockerfile, %v", err)
 		}
+	}
+	return nil
+}
+
+func addLabelsToDockerfile(filename string, metricAnnotation map[string]string) error {
+	var sdkMetricContent strings.Builder
+	for key, value := range metricAnnotation {
+		sdkMetricContent.WriteString(fmt.Sprintf("LABEL %s=%s\n", key, value))
+	}
+
+	err := projutil.RewriteFileContents(filename, "LABEL", sdkMetricContent.String())
+	if err != nil {
+		return fmt.Errorf("error rewriting dockerfile with metric labels, %v", err)
+	}
+	return nil
+}
+
+func RewriteBundleImageContents(rootDir string) error {
+	metricLabels := projutil.MakeBundleMetricsLabels()
+
+	// write metric labels to bundle.Dockerfile
+	if err := addLabelsToDockerfile(bundle.DockerFile, metricLabels); err != nil {
+		return fmt.Errorf("error writing metric labels to bundle.dockerfile: %v", err)
+	}
+
+	annotationsFilePath := getAnnotationsFilePath(rootDir)
+	if err := addLabelsToAnnotations(annotationsFilePath, metricLabels); err != nil {
+		return fmt.Errorf("error writing metric labels to annotations.yaml: %v", err)
+	}
+
+	// Add a COPY for the scorecard config to bundle.Dockerfile.
+	if err := copyScorecardConfig(); err != nil {
+		return fmt.Errorf("error copying scorecardConfig to bundle image, %v", err)
+	}
+	return nil
+}
+
+// getAnnotationsFilePath return the locations of annotations.yaml.
+func getAnnotationsFilePath(rootDir string) string {
+	return filepath.Join(rootDir, bundle.MetadataDir, bundle.AnnotationsFile)
+}
+
+func addLabelsToAnnotations(filename string, metricLables map[string]string) error {
+	err := registry.RewriteAnnotationsYaml(filename, metricLables)
+	if err != nil {
+		return err
 	}
 	return nil
 }

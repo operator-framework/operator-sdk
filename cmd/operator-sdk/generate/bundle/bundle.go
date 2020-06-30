@@ -24,6 +24,7 @@ import (
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 
+	genbundle "github.com/operator-framework/operator-sdk/cmd/operator-sdk/bundle"
 	genutil "github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate/internal"
 	gencsv "github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion"
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
@@ -255,9 +256,39 @@ func (c bundleCmd) runMetadata() error {
 
 // generateMetadata wraps the operator-registry bundle Dockerfile/metadata generator.
 func (c bundleCmd) generateMetadata(manifestsDir, outputDir string) error {
+
+	metadataExists := checkMetatdataExists(outputDir, manifestsDir)
 	err := bundle.GenerateFunc(manifestsDir, outputDir, c.operatorName, c.channels, c.defaultChannel, c.overwrite)
 	if err != nil {
 		return fmt.Errorf("error generating bundle metadata: %v", err)
 	}
+
+	// Add SDK stamps if metadata is not present before or when overwrite is set to true.
+	if c.overwrite || !metadataExists {
+		rootDir := outputDir
+		if rootDir == "" {
+			rootDir = filepath.Dir(manifestsDir)
+		}
+
+		if err = genbundle.RewriteBundleImageContents(rootDir); err != nil {
+			return err
+		}
+	}
 	return nil
+}
+
+// checkMetatdataExists returns true if bundle.Dockerfile and metadataDir exist, if not
+// it returns false.
+func checkMetatdataExists(outputDir, manifestsDir string) bool {
+	var annotationsDir string
+	if outputDir == "" {
+		annotationsDir = filepath.Dir(manifestsDir) + bundle.MetadataDir
+	} else {
+		annotationsDir = outputDir + bundle.MetadataDir
+	}
+
+	if genutil.IsNotExist(bundle.DockerFile) || genutil.IsNotExist(annotationsDir) {
+		return false
+	}
+	return true
 }
