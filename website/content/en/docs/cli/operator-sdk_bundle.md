@@ -24,6 +24,5 @@ https://github.com/operator-framework/operator-registry/blob/master/docs/design/
 ### SEE ALSO
 
 * [operator-sdk](../operator-sdk)	 - An SDK for building operators with ease
-* [operator-sdk bundle create](../operator-sdk_bundle_create)	 - Create an operator bundle image
 * [operator-sdk bundle validate](../operator-sdk_bundle_validate)	 - Validate an operator bundle
 
