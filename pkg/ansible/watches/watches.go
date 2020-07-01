@@ -26,6 +26,7 @@ import (
 	"strings"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -52,6 +53,7 @@ type Watch struct {
 	ManageStatus                bool                      `yaml:"manageStatus"`
 	WatchDependentResources     bool                      `yaml:"watchDependentResources"`
 	WatchClusterScopedResources bool                      `yaml:"watchClusterScopedResources"`
+	Selector                    metav1.LabelSelector      `yaml:"selector"`
 
 	// Not configurable via watches.yaml
 	MaxWorkers       int `yaml:"-"`
@@ -74,11 +76,42 @@ var (
 	manageStatusDefault                = true
 	watchDependentResourcesDefault     = true
 	watchClusterScopedResourcesDefault = false
+	selectorDefault                    = metav1.LabelSelector{}
 
 	// these are overridden by cmdline flags
 	maxWorkersDefault       = 1
 	ansibleVerbosityDefault = 2
 )
+
+// Creates, populates and returns Label Selector object during UnmarshalYAML
+func parseLabelSelector(dls tempLabelSelector) metav1.LabelSelector {
+	obj := metav1.LabelSelector{}
+	obj.MatchLabels = dls.MatchLabels
+
+	for _, v := range dls.MatchExpressions {
+		requirement := metav1.LabelSelectorRequirement{
+			Key:      v.Key,
+			Operator: v.Operator,
+			Values:   v.Values,
+		}
+
+		obj.MatchExpressions = append(obj.MatchExpressions, requirement)
+	}
+
+	return obj
+}
+
+// Temporary structs created to store yaml parsing
+type tempLabelSelector struct {
+	MatchLabels      map[string]string `yaml:"matchLabels,omitempty"`
+	MatchExpressions []tempRequirement `yaml:"matchExpressions,omitempty"`
+}
+
+type tempRequirement struct {
+	Key      string                       `yaml:"key"`
+	Operator metav1.LabelSelectorOperator `yaml:"operator"`
+	Values   []string                     `yaml:"values,omitempty"`
+}
 
 // UnmarshalYAML - implements the yaml.Unmarshaler interface for Watch.
 // This makes it possible to verify, when loading, that the GroupVersionKind
@@ -86,6 +119,7 @@ var (
 // for values that were omitted.
 func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	// Use an alias struct to handle complex types
+
 	type alias struct {
 		Group                       string                    `yaml:"group"`
 		Version                     string                    `yaml:"version"`
@@ -100,6 +134,7 @@ func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		WatchClusterScopedResources bool                      `yaml:"watchClusterScopedResources"`
 		Blacklist                   []schema.GroupVersionKind `yaml:"blacklist"`
 		Finalizer                   *Finalizer                `yaml:"finalizer"`
+		Selector                    tempLabelSelector         `yaml:"selector"`
 	}
 	var tmp alias
 
@@ -111,6 +146,7 @@ func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	tmp.ReconcilePeriod = reconcilePeriodDefault
 	tmp.WatchClusterScopedResources = watchClusterScopedResourcesDefault
 	tmp.Blacklist = blacklistDefault
+	tmp.Selector = tempLabelSelector{}
 
 	if err := unmarshal(&tmp); err != nil {
 		return err
@@ -146,6 +182,7 @@ func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	w.AnsibleVerbosity = getAnsibleVerbosity(gvk, ansibleVerbosityDefault)
 	w.Blacklist = tmp.Blacklist
 	w.addRolePlaybookPaths()
+	w.Selector = parseLabelSelector(tmp.Selector)
 
 	return nil
 }
@@ -270,6 +307,7 @@ func New(gvk schema.GroupVersionKind, role, playbook string, vars map[string]int
 		WatchClusterScopedResources: watchClusterScopedResourcesDefault,
 		Finalizer:                   finalizer,
 		AnsibleVerbosity:            ansibleVerbosityDefault,
+		Selector:                    selectorDefault,
 	}
 }
 

@@ -19,3 +19,12 @@
   kind: Secret
   playbook: playbooks/secret.yml
   manageStatus: false
+
+- version: v1alpha1
+  group: test.example.com
+  kind: SelectorTest
+  playbook: playbooks/selector.yml
+  selector:
+    matchExpressions:
+     - {key: testLabel, operator: Exists, values: []}
+

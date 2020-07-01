@@ -49,6 +49,7 @@ type Options struct {
 	WatchDependentResources     bool
 	WatchClusterScopedResources bool
 	MaxWorkers                  int
+	Selector                    metav1.LabelSelector
 }
 
 // Add - Creates a new ansible operator controller and adds it to the manager
@@ -95,12 +96,21 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 		log.Error(err, "")
 		os.Exit(1)
 	}
+
 	u := &unstructured.Unstructured{}
 	u.SetGroupVersionKind(options.GVK)
+	filterPredicate, err := predicate.NewResourceFilterPredicate(options.Selector)
+
+	if err != nil {
+		log.Error(err, "Error in parsing selector")
+		os.Exit(1)
+	}
+
 	if err := c.Watch(&source.Kind{Type: u}, &crthandler.EnqueueRequestForObject{},
-		predicate.GenerationChangedPredicate{}); err != nil {
+		predicate.GenerationChangedPredicate{}, filterPredicate); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}
+
 	return &c
 }
