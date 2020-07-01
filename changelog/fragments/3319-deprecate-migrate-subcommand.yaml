@@ -3,7 +3,3 @@ entries:
       The migrate sub-command is deprecated
     kind: deprecation
     breaking: false
-    migration:
-      header: The migrate subcommand has been deprecated 
-      body: >
-        ```operator-sdk migrate``` has been deprecated
