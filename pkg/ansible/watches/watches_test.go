@@ -52,7 +52,6 @@ func TestNew(t *testing.T) {
 			shouldValidate: false,
 		},
 	}
-	// expectedReconcilePeriod, _ := time.ParseDuration(reconcilePeriodDefault)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -67,9 +66,9 @@ func TestNew(t *testing.T) {
 			if watch.MaxWorkers != maxWorkersDefault {
 				t.Fatalf("Unexpected maxWorkers %v expected %v", watch.MaxWorkers, maxWorkersDefault)
 			}
-			if watch.ReconcilePeriod != &reconcilePeriodDefault {
+			if watch.ReconcilePeriod != reconcilePeriodDefault {
 				t.Fatalf("Unexpected reconcilePeriod %v expected %v", watch.ReconcilePeriod,
-					&reconcilePeriodDefault)
+					reconcilePeriodDefault)
 			}
 			if watch.ManageStatus != manageStatusDefault {
 				t.Fatalf("Unexpected manageStatus %v expected %v", watch.ManageStatus, manageStatusDefault)
@@ -139,7 +138,7 @@ func TestLoad(t *testing.T) {
 			},
 			Playbook:                    validTemplate.ValidPlaybook,
 			ManageStatus:                true,
-			ReconcilePeriod:             &metav1.Duration{twoSeconds},
+			ReconcilePeriod:             metav1.Duration{twoSeconds},
 			WatchDependentResources:     true,
 			WatchClusterScopedResources: false,
 		},
@@ -166,7 +165,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "WatchClusterScoped",
 			},
 			Playbook:                    validTemplate.ValidPlaybook,
-			ReconcilePeriod:             &metav1.Duration{twoSeconds},
+			ReconcilePeriod:             metav1.Duration{twoSeconds},
 			ManageStatus:                true,
 			WatchDependentResources:     true,
 			WatchClusterScopedResources: true,
@@ -178,7 +177,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "NoReconcile",
 			},
 			Playbook:        validTemplate.ValidPlaybook,
-			ReconcilePeriod: &zeroSeconds,
+			ReconcilePeriod: zeroSeconds,
 			ManageStatus:    true,
 		},
 		Watch{
@@ -475,10 +474,10 @@ func TestLoad(t *testing.T) {
 							gotWatch.Finalizer, expectedWatch.Finalizer)
 					}
 				}
-				// if gotWatch.ReconcilePeriod != expectedWatch.ReconcilePeriod {
-				// 	t.Fatalf("The GVK: %v unexpected reconcile period: %v expected reconcile period: %v", gvk,
-				// 		gotWatch.ReconcilePeriod, expectedWatch.ReconcilePeriod)
-				// }
+				if gotWatch.ReconcilePeriod != expectedWatch.ReconcilePeriod {
+					t.Fatalf("The GVK: %v unexpected reconcile period: %v expected reconcile period: %v", gvk,
+						gotWatch.ReconcilePeriod, expectedWatch.ReconcilePeriod)
+				}
 
 				if expectedWatch.MaxWorkers == 0 {
 					if gotWatch.MaxWorkers != tc.maxWorkers {
