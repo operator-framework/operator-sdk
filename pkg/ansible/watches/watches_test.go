@@ -70,8 +70,8 @@ func TestNew(t *testing.T) {
 				t.Fatalf("Unexpected reconcilePeriod %v expected %v", watch.ReconcilePeriod,
 					reconcilePeriodDefault)
 			}
-			if watch.ManageStatus != manageStatusDefault {
-				t.Fatalf("Unexpected manageStatus %v expected %v", watch.ManageStatus, manageStatusDefault)
+			if watch.ManageStatus != &manageStatusDefault {
+				t.Fatalf("Unexpected manageStatus %v expected %v", watch.ManageStatus, &manageStatusDefault)
 			}
 			if watch.WatchDependentResources != watchDependentResourcesDefault {
 				t.Fatalf("Unexpected watchDependentResources %v expected %v", watch.WatchDependentResources,
@@ -95,6 +95,11 @@ func TestNew(t *testing.T) {
 			}
 		})
 	}
+}
+
+func ptrBool(b bool) *bool {
+	b2 := b
+	return &b2
 }
 
 func TestLoad(t *testing.T) {
@@ -137,7 +142,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "NoFinalizer",
 			},
 			Playbook:                    validTemplate.ValidPlaybook,
-			ManageStatus:                true,
+			ManageStatus:                ptrBool(true),
 			ReconcilePeriod:             metav1.Duration{twoSeconds},
 			WatchDependentResources:     true,
 			WatchClusterScopedResources: false,
@@ -149,7 +154,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "Playbook",
 			},
 			Playbook:                    validTemplate.ValidPlaybook,
-			ManageStatus:                true,
+			ManageStatus:                ptrBool(true),
 			WatchDependentResources:     true,
 			WatchClusterScopedResources: false,
 			Finalizer: &Finalizer{
@@ -166,7 +171,7 @@ func TestLoad(t *testing.T) {
 			},
 			Playbook:                    validTemplate.ValidPlaybook,
 			ReconcilePeriod:             metav1.Duration{twoSeconds},
-			ManageStatus:                true,
+			ManageStatus:                ptrBool(true),
 			WatchDependentResources:     true,
 			WatchClusterScopedResources: true,
 		},
@@ -178,7 +183,7 @@ func TestLoad(t *testing.T) {
 			},
 			Playbook:        validTemplate.ValidPlaybook,
 			ReconcilePeriod: zeroSeconds,
-			ManageStatus:    true,
+			ManageStatus:    ptrBool(true),
 		},
 		Watch{
 			GroupVersionKind: schema.GroupVersionKind{
@@ -187,7 +192,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "DefaultStatus",
 			},
 			Playbook:     validTemplate.ValidPlaybook,
-			ManageStatus: true,
+			ManageStatus: ptrBool(true),
 		},
 		Watch{
 			GroupVersionKind: schema.GroupVersionKind{
@@ -196,7 +201,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "DisableStatus",
 			},
 			Playbook:     validTemplate.ValidPlaybook,
-			ManageStatus: false,
+			ManageStatus: ptrBool(false),
 		},
 		Watch{
 			GroupVersionKind: schema.GroupVersionKind{
@@ -205,7 +210,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "EnableStatus",
 			},
 			Playbook:     validTemplate.ValidPlaybook,
-			ManageStatus: true,
+			ManageStatus: ptrBool(true),
 		},
 		Watch{
 			GroupVersionKind: schema.GroupVersionKind{
@@ -214,7 +219,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "Role",
 			},
 			Role:         validTemplate.ValidRole,
-			ManageStatus: true,
+			ManageStatus: ptrBool(true),
 			Finalizer: &Finalizer{
 				Name:     "finalizer.app.example.com",
 				Playbook: validTemplate.ValidPlaybook,
@@ -228,7 +233,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "FinalizerRole",
 			},
 			Role:         validTemplate.ValidRole,
-			ManageStatus: true,
+			ManageStatus: ptrBool(true),
 			Finalizer: &Finalizer{
 				Name: "finalizer.app.example.com",
 				Vars: map[string]interface{}{"sentinel": "finalizer_running"},
@@ -241,7 +246,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "MaxWorkersDefault",
 			},
 			Role:         validTemplate.ValidRole,
-			ManageStatus: true,
+			ManageStatus: ptrBool(true),
 			MaxWorkers:   1,
 		},
 		Watch{
@@ -251,7 +256,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "MaxWorkersIgnored",
 			},
 			Role:         validTemplate.ValidRole,
-			ManageStatus: true,
+			ManageStatus: ptrBool(true),
 			MaxWorkers:   1,
 		},
 		Watch{
@@ -261,7 +266,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "MaxWorkersEnv",
 			},
 			Role:         validTemplate.ValidRole,
-			ManageStatus: true,
+			ManageStatus: ptrBool(true),
 			MaxWorkers:   4,
 		},
 		Watch{
@@ -271,7 +276,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "AnsibleVerbosityDefault",
 			},
 			Role:             validTemplate.ValidRole,
-			ManageStatus:     true,
+			ManageStatus:     ptrBool(true),
 			AnsibleVerbosity: 2,
 		},
 		Watch{
@@ -281,7 +286,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "AnsibleVerbosityIgnored",
 			},
 			Role:             validTemplate.ValidRole,
-			ManageStatus:     true,
+			ManageStatus:     ptrBool(true),
 			AnsibleVerbosity: 2,
 		},
 		Watch{
@@ -291,7 +296,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "AnsibleVerbosityEnv",
 			},
 			Role:             validTemplate.ValidRole,
-			ManageStatus:     true,
+			ManageStatus:     ptrBool(true),
 			AnsibleVerbosity: 4,
 		},
 		Watch{
@@ -301,7 +306,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "WatchWithVars",
 			},
 			Role:         validTemplate.ValidRole,
-			ManageStatus: true,
+			ManageStatus: ptrBool(true),
 			Vars:         map[string]interface{}{"sentinel": "reconciling"},
 		},
 		Watch{
@@ -311,7 +316,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "AnsibleCollectionEnvTest",
 			},
 			Role:         filepath.Join(cwd, "testdata", "ansible_collections", "nameSpace", "collection", "roles", "someRole"),
-			ManageStatus: true,
+			ManageStatus: ptrBool(true),
 		},
 	}
 
@@ -461,10 +466,10 @@ func TestLoad(t *testing.T) {
 					t.Fatalf("The GVK: %v unexpected Playbook: %v expected Playbook: %v", gvk, gotWatch.Playbook,
 						expectedWatch.Playbook)
 				}
-				// if gotWatch.ManageStatus != expectedWatch.ManageStatus {
-				// 	t.Fatalf("The GVK: %v\nunexpected manageStatus:%#v\nexpected manageStatus: %#v", gvk,
-				// 		gotWatch.ManageStatus, expectedWatch.ManageStatus)
-				// }
+				if *gotWatch.ManageStatus != *expectedWatch.ManageStatus {
+					t.Fatalf("The GVK: %v\nunexpected manageStatus:%#v\nexpected manageStatus: %#v", gvk,
+						gotWatch.ManageStatus, expectedWatch.ManageStatus)
+				}
 				if gotWatch.Finalizer != expectedWatch.Finalizer {
 					if gotWatch.Finalizer.Name != expectedWatch.Finalizer.Name || gotWatch.Finalizer.Playbook !=
 						expectedWatch.Finalizer.Playbook || gotWatch.Finalizer.Role !=

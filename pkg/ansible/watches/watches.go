@@ -46,7 +46,7 @@ type Watch struct {
 	MaxRunnerArtifacts          int                       `json:"maxRunnerArtifacts"`
 	ReconcilePeriod             metav1.Duration           `json:"reconcilePeriod"`
 	Finalizer                   *Finalizer                `json:"finalizer"`
-	ManageStatus                bool                      `json:"manageStatus"`
+	ManageStatus                *bool                     `json:"manageStatus,omitempty"`
 	WatchDependentResources     bool                      `json:"watchDependentResources"`
 	WatchClusterScopedResources bool                      `json:"watchClusterScopedResources"`
 	Selector                    metav1.LabelSelector      `json:"selector"`
@@ -119,7 +119,7 @@ type alias struct {
 	Vars                        map[string]interface{}    `json:"vars"`
 	MaxRunnerArtifacts          int                       `json:"maxRunnerArtifacts"`
 	ReconcilePeriod             metav1.Duration           `json:"reconcilePeriod"`
-	ManageStatus                bool                      `json:"manageStatus"`
+	ManageStatus                *bool                     `json:"manageStatus,omitempty"`
 	WatchDependentResources     bool                      `json:"watchDependentResources"`
 	WatchClusterScopedResources bool                      `json:"watchClusterScopedResources"`
 	Blacklist                   []schema.GroupVersionKind `json:"blacklist"`
@@ -132,7 +132,10 @@ type alias struct {
 func buildWatch(tmp alias) (Watch, error) {
 	w := Watch{}
 	// by default, the operator will manage status and watch dependent resources
-	// tmp.ManageStatus = manageStatusDefault
+	if tmp.ManageStatus == nil {
+		tmp.ManageStatus = &manageStatusDefault
+	}
+
 	// the operator will not manage cluster scoped resources by default.
 	tmp.WatchDependentResources = watchDependentResourcesDefault
 	tmp.MaxRunnerArtifacts = maxRunnerArtifactsDefault
@@ -285,7 +288,7 @@ func New(gvk schema.GroupVersionKind, role, playbook string, vars map[string]int
 		MaxRunnerArtifacts:          maxRunnerArtifactsDefault,
 		MaxWorkers:                  maxWorkersDefault,
 		ReconcilePeriod:             reconcilePeriodDefault,
-		ManageStatus:                manageStatusDefault,
+		ManageStatus:                &manageStatusDefault,
 		WatchDependentResources:     watchDependentResourcesDefault,
 		WatchClusterScopedResources: watchClusterScopedResourcesDefault,
 		Finalizer:                   finalizer,
