@@ -126,7 +126,9 @@ func (c bundleValidateCmd) validate(args []string) error {
 	}
 	if c.outputFormat != internal.JSONAlpha1 && c.outputFormat != internal.Text {
 		return fmt.Errorf("invalid value for output flag: %v", c.outputFormat)
+
 	}
+
 	return nil
 }
 
