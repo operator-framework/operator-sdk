@@ -207,11 +207,32 @@ func GetOperatorType() OperatorType {
 	return OperatorTypeUnknown
 }
 
+// PluginKeyToOperatorType converts a plugin key string to an operator project
+// type.
+// TODO(estroz): this can probably be made more robust by checking known
+// plugin keys directly.
+func PluginKeyToOperatorType(pluginKey string) OperatorType {
+	switch {
+	case strings.HasPrefix(pluginKey, "go"):
+		return OperatorTypeGo
+	case strings.HasPrefix(pluginKey, "helm"):
+		return OperatorTypeHelm
+	case strings.HasPrefix(pluginKey, "ansible"):
+		return OperatorTypeAnsible
+	}
+	return OperatorTypeUnknown
+}
+
+// IsOperatorGo returns true when the layout field in PROJECT file has the Go prefix key.
+// NOTE: For the legacy, returns true when the project contains the cmd/manager directory and main.go file.
 func IsOperatorGo() bool {
-	// todo: in the future we should check the plugin prefix to ensure the operator type
-	// for now, we can assume that any project with the kubebuilder layout is Go Type
+	// If the project has the new layout we will check the type in the config file
 	if kbutil.HasProjectFile() {
-		return true
+		cfg, err := kbutil.ReadConfig()
+		if err != nil {
+			log.Fatalf("Error reading config: %v", err)
+		}
+		return cfg.IsV2() || PluginKeyToOperatorType(cfg.Layout) == OperatorTypeGo
 	}
 
 	// todo: remove the following code when the legacy layout is no longer supported
@@ -225,7 +246,18 @@ func IsOperatorGo() bool {
 	return err == nil || os.IsExist(err)
 }
 
+// IsOperatorAnsible returns true when the layout field in PROJECT file has the Ansible prefix key.
+// NOTE: For the legacy, returns true when the project  contains the roles and the molecule directory.
 func IsOperatorAnsible() bool {
+	//
+	if kbutil.HasProjectFile() {
+		cfg, err := kbutil.ReadConfig()
+		if err != nil {
+			log.Fatalf("Error reading config: %v", err)
+		}
+		return PluginKeyToOperatorType(cfg.Layout) == OperatorTypeAnsible
+	}
+	// todo(camilamacedo86): remove when the legacy layout is no longer supported
 	stat, err := os.Stat(rolesDir)
 	if (err == nil && stat.IsDir()) || os.IsExist(err) {
 		return true
@@ -238,7 +270,18 @@ func IsOperatorAnsible() bool {
 	return err == nil || os.IsExist(err)
 }
 
+// IsOperatorHelm returns true when the layout field in PROJECT file has the Helm prefix key.
+// NOTE: For the legacy, returns true when the project contains the helm-charts directory.
 func IsOperatorHelm() bool {
+	// If the project has the new layout we will check the type in the config file
+	if kbutil.HasProjectFile() {
+		cfg, err := kbutil.ReadConfig()
+		if err != nil {
+			log.Fatalf("Error reading config: %v", err)
+		}
+		return PluginKeyToOperatorType(cfg.Layout) == OperatorTypeHelm
+	}
+	// todo(camilamacedo86): remove when the legacy layout is no longer supported
 	stat, err := os.Stat(helmChartsDir)
 	return (err == nil && stat.IsDir()) || os.IsExist(err)
 }

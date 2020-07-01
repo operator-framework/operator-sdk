@@ -23,7 +23,6 @@ import (
 	"github.com/spf13/pflag"
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 
-	genutil "github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate/internal"
 	gencsv "github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/kustomize"
 	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
@@ -165,7 +164,7 @@ func (c manifestsCmd) run(cfg *config.Config) error {
 
 	csvGen := gencsv.Generator{
 		OperatorName: c.operatorName,
-		OperatorType: genutil.PluginKeyToOperatorType(cfg.Layout),
+		OperatorType: projutil.PluginKeyToOperatorType(cfg.Layout),
 	}
 	opts := []gencsv.Option{
 		gencsv.WithBase(c.inputDir, c.apisDir, c.interactiveLevel),
