@@ -77,6 +77,18 @@ An example Watches file:
   group: bar.example.com
   kind: Bar
   role: myNamespace.myCollection.myRole
+
+# Example filtering of resources with specific labels
+- version: v1alpha1
+  group: bar.example.com
+  kind: Bar
+  playbook: playbook.yml
+  selector:
+    matchLabels:
+      foo: bar
+    matchExpressions:
+      - {key: foo, operator: In, values: [bar]}
+      - {key: baz, operator: Exists, values: []}
 ```
 
 
@@ -110,16 +122,3 @@ Some features can be overridden per resource via an annotation on that CR. The o
     vars:
       state: absent
 ```
-#### Example
-```YaML
----
-- version: v1alpha1
-  group: test.example.com
-  kind: SelectorTest
-  playbook: playbooks/selector.yml
-  selector:
-    matchExpressions:
-     - {key: testLabel, operator: Exists, values: []}
-```
-
-
