@@ -41,7 +41,8 @@ func NewCmd() *cobra.Command {
 		Short: "Adds source code to an operator",
 		Long: `operator-sdk migrate adds a main.go source file and any associated source files` +
 			`for an operator that is not of the "go" type.`,
-		RunE: migrateRun,
+		RunE:       migrateRun,
+		Deprecated: "and will be removed prior to operator-sdk v1.0.0",
 	}
 
 	newCmd.Flags().StringVar(&headerFile, "header-file", "",

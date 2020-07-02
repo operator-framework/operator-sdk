@@ -1,0 +1,5 @@
+entries:
+  - description: >
+      The migrate sub-command is deprecated
+    kind: deprecation
+    breaking: false

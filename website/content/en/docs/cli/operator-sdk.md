@@ -24,7 +24,6 @@ An SDK for building operators with ease
 * [operator-sdk cleanup](../operator-sdk_cleanup)	 - Delete and clean up after a running Operator
 * [operator-sdk completion](../operator-sdk_completion)	 - Generators for shell completions
 * [operator-sdk generate](../operator-sdk_generate)	 - Invokes a specific generator
-* [operator-sdk migrate](../operator-sdk_migrate)	 - Adds source code to an operator
 * [operator-sdk new](../operator-sdk_new)	 - Creates a new operator application
 * [operator-sdk olm](../operator-sdk_olm)	 - Manage the Operator Lifecycle Manager installation in your cluster
 * [operator-sdk print-deps](../operator-sdk_print-deps)	 - Print Golang packages and versions required to run the operator
