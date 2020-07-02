@@ -13,14 +13,14 @@ mkdir -p "$BASEIMAGEDIR"
 go build -o $BASEIMAGEDIR/scaffold-helm-image ./hack/image/helm/scaffold-helm-image.go
 
 # build binary for specific target platform (for purposes of base image only)
-env GOOS=linux GOARCH=amd64 go build -o $BASEIMAGEDIR/base-image ./hack/image/helm/baseimage/baseimage.go
+env GOOS=linux GOARCH=amd64 go build -o $BASEIMAGEDIR/helm-operator-dev-linux-gnu ./cmd/helm-operator/main.go
 
 # build operator binary and base image
 pushd "$BASEIMAGEDIR"
 ./scaffold-helm-image
 
 mkdir -p build/_output/bin/
-mv $BASEIMAGEDIR/base-image build/_output/bin
+cp $BASEIMAGEDIR/helm-operator-dev-linux-gnu build/_output/bin/helm-operator
 operator-sdk build $1
 # If using a kind cluster, load the image into all nodes.
 load_image_if_kind "$1"

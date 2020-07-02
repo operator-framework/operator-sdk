@@ -1,4 +1,4 @@
-// Copyright 2019 The Operator-SDK Authors
+// Copyright 2020 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,17 +15,21 @@
 package main
 
 import (
-	helmImage "github.com/operator-framework/operator-sdk/pkg/helm/image"
-	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/pflag"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/operator-framework/operator-sdk/pkg/ansible"
+	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
+	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 )
 
 func main() {
+	flags := aoflags.AddTo(pflag.CommandLine)
+	pflag.Parse()
 	logf.SetLogger(zap.Logger())
 
-	err := helmImage.RunHelmOperator()
-	if err != nil {
-		log.Error(err, "error running helm operator binary")
+	if err := ansible.Run(flags); err != nil {
+		log.Fatal(err)
 	}
 }

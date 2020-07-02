@@ -37,5 +37,5 @@ func (e *Entrypoint) GetInput() (input.Input, error) {
 const entrypointTmpl = `#!/bin/sh -e
 
 cd $HOME
-./base-image --watches-file=$HOME/watches.yaml
+exec ${OPERATOR} --watches-file=$HOME/watches.yaml $@
 `
