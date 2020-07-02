@@ -79,7 +79,7 @@ var (
 	ansibleVerbosityDefault = 2
 )
 
-// Creates, populates and returns Label Selector object during UnmarshalYAML
+// Creates, populates and returns Label Selector object during unmarshall
 func parseLabelSelector(dls tempLabelSelector) metav1.LabelSelector {
 	obj := metav1.LabelSelector{}
 	obj.MatchLabels = dls.MatchLabels
@@ -127,11 +127,11 @@ type alias struct {
 	Selector                    tempLabelSelector         `json:"selector"`
 }
 
-// todo; just to test required cleanup
 // buildWatch will build Watch based on the values parsed from alias
 func buildWatch(tmp alias) (Watch, error) {
 	w := Watch{}
 	// by default, the operator will manage status and watch dependent resources
+
 	if tmp.ManageStatus == nil {
 		tmp.ManageStatus = &manageStatusDefault
 	}
@@ -307,13 +307,7 @@ func Load(path string, maxWorkers, ansibleVerbosity int) ([]Watch, error) {
 		return nil, err
 	}
 
-	// watches := []Watch{}
-	// err = yaml.Unmarshal(b, &watches)
-	// if err != nil {
-	// 	log.Error(err, "Failed to unmarshal config")
-	// 	return nil, err
-	// }
-
+	// First we unmarshall to the alias structure
 	alias := []alias{}
 	err = yaml.Unmarshal(b, &alias)
 	if err != nil {
@@ -321,6 +315,7 @@ func Load(path string, maxWorkers, ansibleVerbosity int) ([]Watch, error) {
 		return nil, err
 	}
 
+	// We copy contents from alias structure to the watch structure
 	watches := []Watch{}
 	for _, a := range alias {
 		w, _ := buildWatch(a)

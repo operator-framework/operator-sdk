@@ -97,6 +97,7 @@ func TestNew(t *testing.T) {
 	}
 }
 
+// ptrBool will return a bool pointer for the bool input
 func ptrBool(b bool) *bool {
 	b2 := b
 	return &b2
