@@ -171,7 +171,7 @@ func buildWatch(tmp alias) (Watch, error) {
 	w.addRolePlaybookPaths()
 	w.Selector = parseLabelSelector(tmp.Selector)
 
-	return w, nil
+	return w, err
 }
 
 // addRolePlaybookPaths will add the full path based on the current dir
@@ -318,17 +318,16 @@ func Load(path string, maxWorkers, ansibleVerbosity int) ([]Watch, error) {
 	// We copy contents from alias structure to the watch structure
 	watches := []Watch{}
 	for _, a := range alias {
-		w, _ := buildWatch(a)
+		w, err := buildWatch(a)
+		if err != nil {
+			log.Error(err, "Failed to build watch")
+			return nil, err
+		}
 		watches = append(watches, w)
 	}
 
 	watchesMap := make(map[schema.GroupVersionKind]bool)
 	for _, watch := range watches {
-
-		if err != nil {
-			log.Error(err, "Failed to get config file")
-			return nil, err
-		}
 		// prevent dupes
 		if _, ok := watchesMap[watch.GroupVersionKind]; ok {
 			return nil, fmt.Errorf("duplicate GVK: %v", watch.GroupVersionKind.String())
