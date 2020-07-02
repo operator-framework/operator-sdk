@@ -16,6 +16,7 @@ package clusterserviceversion
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -31,6 +32,7 @@ import (
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	appsv1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 	"sigs.k8s.io/yaml"
 
@@ -309,6 +311,42 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 				csv, err := g.generate()
 				Expect(err).ToNot(HaveOccurred())
 				Expect(csv).To(Equal(upgradeCSV(newCSV, g.OperatorName, g.Version)))
+			})
+		})
+
+		Context("generate ClusterServiceVersion", func() {
+			It("should handle CRDs with core type name", func() {
+				g = Generator{
+					OperatorName: operatorName,
+					OperatorType: operatorType,
+					Version:      version,
+					Collector:    &collector.Manifests{},
+					config:       cfg,
+					getBase:      makeBaseGetter(newCSV),
+				}
+				err := filepath.Walk(goConfigDir, func(path string, info os.FileInfo, err error) error {
+					if err != nil || info.IsDir() {
+						return err
+					}
+					file, err := os.OpenFile(path, os.O_RDONLY, 0)
+					if err != nil {
+						return err
+					}
+					defer file.Close()
+					return g.Collector.UpdateFromReader(file)
+				})
+				Expect(err).ShouldNot(HaveOccurred(), "failed to read manifests")
+				Expect(len(g.Collector.V1beta1CustomResourceDefinitions)).Should(BeEquivalentTo(2))
+				Expect(len(g.Collector.CustomResources)).Should(BeEquivalentTo(2))
+
+				csv, err := g.generate()
+				Expect(err).ToNot(HaveOccurred())
+				Expect(csv.Annotations["alm-examples"]).ShouldNot(BeEquivalentTo("[]"))
+
+				crs := []unstructured.Unstructured{}
+				err = json.Unmarshal([]byte(csv.Annotations["alm-examples"]), &crs)
+				Expect(err).ShouldNot(HaveOccurred(), "failed to parse 'alm-examples' annotations")
+				Expect(crs).Should(ConsistOf(g.Collector.CustomResources), "custom resources shall match with CSV annotations")
 			})
 		})
 	})

@@ -1,0 +1,7 @@
+apiVersion: foo.example.com/v1alpha1
+kind: Deployment
+metadata:
+  name: example-foo-deployment
+spec:
+  # Add fields here
+  size: 3
