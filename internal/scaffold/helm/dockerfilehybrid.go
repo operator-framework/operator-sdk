@@ -51,8 +51,7 @@ ENV OPERATOR=/usr/local/bin/helm-operator \
 {{- if .Watches }}
 COPY watches.yaml ${HOME}/watches.yaml{{ end }}
 
-# install operator binary
-COPY build/_output/bin/{{.ProjectName}} ${OPERATOR}
+ADD build/_output/bin/base-image ${HOME}/
 
 COPY bin /usr/local/bin
 RUN  /usr/local/bin/user_setup

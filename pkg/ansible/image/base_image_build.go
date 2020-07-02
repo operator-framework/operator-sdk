@@ -76,7 +76,7 @@ func RunAnsibleOperator() error {
 	return nil
 }
 
-// SetDefaultFlags fills the operator flags with default value. These are not user-facing.
+// setDefaultFlags fills the operator flags with default value. These are not user-facing.
 // For building base images, only `--watches-file` flag is required. The rest are available
 // and can be changed if required in future while building base image.
 func setDefaultFlags() *aoflags.AnsibleOperatorFlags {
@@ -97,7 +97,7 @@ func setDefaultFlags() *aoflags.AnsibleOperatorFlags {
 		/usr/share/ansible/collections.`)
 	flag.DurationVar(&aof.ReconcilePeriod, "reconcile-period", time.Minute, "Default reconcile"+
 		"period for controllers")
-	flag.StringVar(&aof.WatchesFile, "watches-file", "watches.yaml", "watches file location")
+	flag.StringVar(&aof.WatchesFile, "watches-file", "watches.yaml", "Path to the watches file to use")
 
 	flag.Parse()
 

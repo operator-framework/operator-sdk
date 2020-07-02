@@ -12,30 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package helm
+package main
 
 import (
-	"path/filepath"
-
-	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
+	helmImage "github.com/operator-framework/operator-sdk/pkg/helm/image"
+	"github.com/operator-framework/operator-sdk/pkg/log/zap"
+	log "github.com/sirupsen/logrus"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-// Entrypoint - entrypoint script
-type Entrypoint struct {
-	input.Input
-}
+func main() {
+	logf.SetLogger(zap.Logger())
 
-func (e *Entrypoint) GetInput() (input.Input, error) {
-	if e.Path == "" {
-		e.Path = filepath.Join("bin", "entrypoint")
+	err := helmImage.RunHelmOperator()
+	if err != nil {
+		log.Error(err, "error running helm operator binary")
 	}
-	e.TemplateBody = entrypointTmpl
-	e.IsExec = true
-	return e.Input, nil
 }
-
-const entrypointTmpl = `#!/bin/sh -e
-
-cd $HOME
-./base-image --watches-file=$HOME/watches.yaml
-`

@@ -21,6 +21,7 @@ pushd "$BASEIMAGEDIR"
 
 mkdir -p build/_output/bin/
 mv $BASEIMAGEDIR/base-image build/_output/bin
+operator-sdk build $1
 # If using a kind cluster, load the image into all nodes.
 load_image_if_kind "$1"
 popd
