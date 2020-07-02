@@ -18,6 +18,7 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/build"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/bundle"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cleanup"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/completion"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/new"
@@ -42,8 +43,7 @@ var commands = []*cobra.Command{
 	alpha.NewCmd(),
 	build.NewCmd(),
 	bundle.NewCmd(),
-	// Add back when implemented for new project layouts.
-	// cleanup.NewCmd(),
+	cleanup.NewCmd(),
 	completion.NewCmd(),
 	generate.NewCmd(),
 	olm.NewCmd(),

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cleanup
+package packagemanifests
 
 import (
 	"fmt"
@@ -23,19 +23,23 @@ import (
 
 	olmcatalog "github.com/operator-framework/operator-sdk/internal/generate/olm-catalog"
 	olmoperator "github.com/operator-framework/operator-sdk/internal/olm/operator"
+	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
-type packagemanifestsCmdLegacy struct {
+type packagemanifestsCmd struct {
 	olmoperator.PackageManifestsCmd
 }
 
-func newPackageManifestsCmdLegacy() *cobra.Command {
-	c := &packagemanifestsCmdLegacy{}
+func NewCmd() *cobra.Command {
+	c := &packagemanifestsCmd{}
 
 	cmd := &cobra.Command{
 		Use:   "packagemanifests",
-		Short: "Clean up after an Operator organized in the package manifests format running with OLM",
+		Short: "Clean up an Operator in the package manifests format deployed with OLM",
+		Long: `'cleanup packagemanifests' destroys an Operator deployed with OLM using the 'run packagemanifests' command.
+The command's argument must be set to a valid package manifests root directory,
+ex. '<project-root>/packagemanifests'.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 0 {
 				if len(args) > 1 {
@@ -43,8 +47,13 @@ func newPackageManifestsCmdLegacy() *cobra.Command {
 				}
 				c.ManifestsDir = args[0]
 			} else {
-				operatorName := filepath.Base(projutil.MustGetwd())
-				c.ManifestsDir = filepath.Join(olmcatalog.OLMCatalogDir, operatorName)
+				// Choose the default path depending on project configuration.
+				if kbutil.HasProjectFile() {
+					c.ManifestsDir = "packagemanifests"
+				} else {
+					operatorName := filepath.Base(projutil.MustGetwd())
+					c.ManifestsDir = filepath.Join(olmcatalog.OLMCatalogDir, operatorName)
+				}
 			}
 
 			log.Infof("Cleaning up operator in directory %s", c.ManifestsDir)
