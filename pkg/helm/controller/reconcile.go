@@ -275,7 +275,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		status.SetCondition(types.HelmAppCondition{
 			Type:    types.ConditionDeployed,
 			Status:  types.StatusTrue,
-			Reason:  types.ReasonUpdateSuccessful,
+			Reason:  types.ReasonUpgradeSuccessful,
 			Message: message,
 		})
 		status.DeployedRelease = &types.HelmAppRelease{
