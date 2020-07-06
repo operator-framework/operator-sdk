@@ -69,7 +69,7 @@ type Finalizer struct {
 var (
 	blacklistDefault                   = []schema.GroupVersionKind{}
 	maxRunnerArtifactsDefault          = 20
-	reconcilePeriodDefault             = metav1.Duration{Duration: 0}
+	reconcilePeriodDefault             = metav1.Duration{Duration: time.Duration(0)}
 	manageStatusDefault                = true
 	watchDependentResourcesDefault     = true
 	watchClusterScopedResourcesDefault = false

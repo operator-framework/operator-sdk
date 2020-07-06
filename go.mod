@@ -35,7 +35,6 @@ require (
 	golang.org/x/tools v0.0.0-20200403190813-44a64ad78b9b
 	gomodules.xyz/jsonpatch/v3 v3.0.1
 	gopkg.in/yaml.v2 v2.2.8
-	gopkg.in/yaml.v3 v3.0.0-20190905181640-827449938966
 	helm.sh/helm/v3 v3.2.4
 	k8s.io/api v0.18.2
 	k8s.io/apiextensions-apiserver v0.18.2
