@@ -66,7 +66,7 @@ const (
 	StatusUnknown ConditionStatus = "Unknown"
 
 	ReasonInstallSuccessful   HelmAppConditionReason = "InstallSuccessful"
-	ReasonUpdateSuccessful    HelmAppConditionReason = "UpdateSuccessful"
+	ReasonUpgradeSuccessful   HelmAppConditionReason = "UpgradeSuccessful"
 	ReasonUninstallSuccessful HelmAppConditionReason = "UninstallSuccessful"
 	ReasonInstallError        HelmAppConditionReason = "InstallError"
 	ReasonUpgradeError        HelmAppConditionReason = "UpgradeError"

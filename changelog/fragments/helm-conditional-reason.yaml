@@ -1,0 +1,27 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      In Helm-based operators, the `UpdateSuccessful` condition reason was renamed to `UpgradeSuccessful` to better align with Helm nomenclature.
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "change"
+
+    # Is this a breaking change?
+    breaking: yes
+
+    # Migration can be defined to automatically add a section to
+    # the migration guide. This is required for breaking changes.
+    migration:
+      header: "Helm: rename condition reason `UpdateSuccessful` to `UpgradeSuccessful`"
+      body: |
+        For Helm-based operators to be more aligned with Helm, the `UpdateSuccessful` condition
+        reason was renamed to `UpgradeSuccessful` for the `ReleaseFailed` condition.
+        Note that this is **NOT** a breaking change for Helm-based operators themselves.
+        However, any script or code that is depending on this condition reason must be updated
+        to use `UpgradeSuccessful` instead of `UpdateSuccessful`.
