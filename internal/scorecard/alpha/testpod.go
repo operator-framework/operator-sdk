@@ -59,6 +59,16 @@ func getPodDefinition(configMapName string, test Test, r PodTestRunner) *v1.Pod 
 							ReadOnly:  true,
 						},
 					},
+					Env: []v1.EnvVar{
+						{
+							Name: "SCORECARD_NAMESPACE",
+							ValueFrom: &v1.EnvVarSource{
+								FieldRef: &v1.ObjectFieldSelector{
+									FieldPath: "metadata.namespace",
+								},
+							},
+						},
+					},
 				},
 			},
 			InitContainers: []v1.Container{

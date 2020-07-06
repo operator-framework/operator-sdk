@@ -1,0 +1,8 @@
+#!/bin/sh
+
+kubectl-kuttl test /bundle/tests/scorecard/kuttl \
+--config=/bundle/tests/scorecard/kuttl/kuttl-test.yaml \
+--namespace=$SCORECARD_NAMESPACE \
+--report=JSON --artifacts-dir=/tmp > /tmp/kuttl.stdout 2> /tmp/kuttl.stderr
+
+exec ${TESTKUTTL} $@

@@ -174,7 +174,7 @@ func (r PodTestRunner) waitForTestToComplete(ctx context.Context, p *v1.Pod) (er
 		if err != nil {
 			return true, fmt.Errorf("error getting pod %s %w", p.Name, err)
 		}
-		if tmp.Status.Phase == v1.PodSucceeded {
+		if tmp.Status.Phase == v1.PodSucceeded || tmp.Status.Phase == v1.PodFailed {
 			return true, nil
 		}
 		return false, nil
