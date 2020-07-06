@@ -96,7 +96,9 @@ $ operator-sdk exec-entrypoint helm --max-workers 10
 
 ## Use `helm upgrade --force` for deployment
 
-By adding the annotation `helm.operator-sdk/upgrade-force: "True"` to the deployed CR, the operator uses the `force` flag of helm to replace the rendered resources. For more info see the [Helm Upgrade documentation](https://helm.sh/docs/helm/helm_upgrade/).
+By adding the annotation `helm.operator-sdk/upgrade-force: "True"` to the deployed CR, the operator uses the `--force` flag of helm to replace the rendered resources. For more info see the [Helm Upgrade documentation](https://helm.sh/docs/helm/helm_upgrade/) and this [explanation](https://github.com/helm/helm/issues/7082#issuecomment-559558318) of `--force` behavior.
+
+**Example**
 
 ```yaml
 apiVersion: example.com/v1alpha1
@@ -109,4 +111,10 @@ spec:
   replicaCount: 2
   service:
     port: 8080
+```
+
+Setting this annotation to `True` and updating the spec (for example changing to `spec.replicaCount: 3`) will cause this CR to be reconciled and upgraded with the `force` option. This can be verified in the log message when an upgrade succeeds: 
+
+```
+{"level":"info","ts":1591198931.1703992,"logger":"helm.controller","msg":"Updated release","namespace":"helm-nginx","name":"example-nginx","apiVersion":"cache.example.com/v1alpha1","kind":"Nginx","release":"example-nginx","force":true}
 ```
