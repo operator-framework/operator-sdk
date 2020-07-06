@@ -137,10 +137,10 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 		ctr := controller.Add(mgr, controller.Options{
 			GVK:              w.GroupVersionKind,
 			Runner:           runner,
-			ManageStatus:     *w.ManageStatus,
+			ManageStatus:     w.ManageStatus,
 			AnsibleDebugLogs: getAnsibleDebugLog(),
 			MaxWorkers:       w.MaxWorkers,
-			ReconcilePeriod:  w.ReconcilePeriod.Duration,
+			ReconcilePeriod:  w.ReconcilePeriod,
 			Selector:         w.Selector,
 		})
 		if ctr == nil {

@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -38,18 +39,18 @@ var log = logf.Log.WithName("watches")
 // Watch - holds data used to create a mapping of GVK to ansible playbook or role.
 // The mapping is used to compose an ansible operator.
 type Watch struct {
-	GroupVersionKind            schema.GroupVersionKind   `json:",inline"`
-	Blacklist                   []schema.GroupVersionKind `json:"blacklist"`
-	Playbook                    string                    `json:"playbook"`
-	Role                        string                    `json:"role"`
-	Vars                        map[string]interface{}    `json:"vars"`
-	MaxRunnerArtifacts          int                       `json:"maxRunnerArtifacts"`
-	ReconcilePeriod             metav1.Duration           `json:"reconcilePeriod"`
-	Finalizer                   *Finalizer                `json:"finalizer"`
-	ManageStatus                *bool                     `json:"manageStatus,omitempty"`
-	WatchDependentResources     bool                      `json:"watchDependentResources"`
-	WatchClusterScopedResources bool                      `json:"watchClusterScopedResources"`
-	Selector                    metav1.LabelSelector      `json:"selector"`
+	GroupVersionKind            schema.GroupVersionKind   `yaml:",inline"`
+	Blacklist                   []schema.GroupVersionKind `yaml:"blacklist"`
+	Playbook                    string                    `yaml:"playbook"`
+	Role                        string                    `yaml:"role"`
+	Vars                        map[string]interface{}    `yaml:"vars"`
+	MaxRunnerArtifacts          int                       `yaml:"maxRunnerArtifacts"`
+	ReconcilePeriod             time.Duration             `yaml:"reconcilePeriod"`
+	Finalizer                   *Finalizer                `yaml:"finalizer"`
+	ManageStatus                bool                      `yaml:"manageStatus"`
+	WatchDependentResources     bool                      `yaml:"watchDependentResources"`
+	WatchClusterScopedResources bool                      `yaml:"watchClusterScopedResources"`
+	Selector                    metav1.LabelSelector      `yaml:"selector"`
 
 	// Not configurable via watches.yaml
 	MaxWorkers       int `yaml:"-"`
@@ -99,7 +100,7 @@ func parseLabelSelector(dls tempLabelSelector) metav1.LabelSelector {
 
 // Temporary structs created to store yaml parsing
 type tempLabelSelector struct {
-	MatchLabels      map[string]string `json:"matchLabels,omitempty"`
+	MatchLabels      map[string]string `yaml:"matchLabels,omitempty"`
 	MatchExpressions []tempRequirement `json:"matchExpressions,omitempty"`
 }
 
@@ -111,37 +112,47 @@ type tempRequirement struct {
 
 // Use an alias struct to handle complex types
 type alias struct {
-	Group                       string                    `json:"group"`
-	Version                     string                    `json:"version"`
-	Kind                        string                    `json:"kind"`
-	Playbook                    string                    `json:"playbook"`
-	Role                        string                    `json:"role"`
-	Vars                        map[string]interface{}    `json:"vars"`
-	MaxRunnerArtifacts          int                       `json:"maxRunnerArtifacts"`
-	ReconcilePeriod             metav1.Duration           `json:"reconcilePeriod"`
-	ManageStatus                *bool                     `json:"manageStatus,omitempty"`
-	WatchDependentResources     bool                      `json:"watchDependentResources"`
-	WatchClusterScopedResources bool                      `json:"watchClusterScopedResources"`
-	Blacklist                   []schema.GroupVersionKind `json:"blacklist"`
-	Finalizer                   *Finalizer                `json:"finalizer"`
-	Selector                    tempLabelSelector         `json:"selector"`
+	Group                       string                    `yaml:"group"`
+	Version                     string                    `yaml:"version"`
+	Kind                        string                    `yaml:"kind"`
+	Playbook                    string                    `yaml:"playbook"`
+	Role                        string                    `yaml:"role"`
+	Vars                        map[string]interface{}    `yaml:"vars"`
+	MaxRunnerArtifacts          int                       `yaml:"maxRunnerArtifacts"`
+	ReconcilePeriod             *metav1.Duration          `yaml:"reconcilePeriod,omitempty"`
+	ManageStatus                *bool                     `yaml:"manageStatus,omitempty"`
+	WatchDependentResources     *bool                     `yaml:"watchDependentResources,omitempty"`
+	WatchClusterScopedResources *bool                     `yaml:"watchClusterScopedResources,omitempty"`
+	Blacklist                   []schema.GroupVersionKind `yaml:"blacklist"`
+	Finalizer                   *Finalizer                `yaml:"finalizer"`
+	Selector                    tempLabelSelector         `yaml:"selector"`
 }
 
 // buildWatch will build Watch based on the values parsed from alias
-func buildWatch(tmp alias) (Watch, error) {
-	w := Watch{}
-	// by default, the operator will manage status and watch dependent resources
+func (w *Watch) setValuesFromAlias(tmp alias) error {
 
+	// by default, the operator will manage status and watch dependent resources
 	if tmp.ManageStatus == nil {
 		tmp.ManageStatus = &manageStatusDefault
 	}
-
 	// the operator will not manage cluster scoped resources by default.
-	tmp.WatchDependentResources = watchDependentResourcesDefault
-	tmp.MaxRunnerArtifacts = maxRunnerArtifactsDefault
+	if tmp.WatchDependentResources == nil {
+		tmp.WatchDependentResources = &watchDependentResourcesDefault
+	}
+	if tmp.MaxRunnerArtifacts == 0 {
+		tmp.MaxRunnerArtifacts = maxRunnerArtifactsDefault
+	}
 
-	tmp.WatchClusterScopedResources = watchClusterScopedResourcesDefault
-	tmp.Blacklist = blacklistDefault
+	if tmp.ReconcilePeriod == nil {
+		tmp.ReconcilePeriod = &reconcilePeriodDefault
+	}
+
+	if tmp.WatchClusterScopedResources == nil {
+		tmp.WatchClusterScopedResources = &watchClusterScopedResourcesDefault
+	}
+	if tmp.Blacklist == nil {
+		tmp.Blacklist = blacklistDefault
+	}
 	tmp.Selector = tempLabelSelector{}
 
 	gvk := schema.GroupVersionKind{
@@ -151,7 +162,7 @@ func buildWatch(tmp alias) (Watch, error) {
 	}
 	err := verifyGVK(gvk)
 	if err != nil {
-		return w, fmt.Errorf("invalid GVK: %s: %w", gvk, err)
+		return fmt.Errorf("invalid GVK: %s: %w", gvk, err)
 	}
 
 	// Rewrite values to struct being unmarshalled
@@ -161,17 +172,17 @@ func buildWatch(tmp alias) (Watch, error) {
 	w.Vars = tmp.Vars
 	w.MaxRunnerArtifacts = tmp.MaxRunnerArtifacts
 	w.MaxWorkers = getMaxWorkers(gvk, maxWorkersDefault)
-	w.ReconcilePeriod = tmp.ReconcilePeriod
-	w.ManageStatus = tmp.ManageStatus
-	w.WatchDependentResources = tmp.WatchDependentResources
-	w.WatchClusterScopedResources = tmp.WatchClusterScopedResources
+	w.ReconcilePeriod = tmp.ReconcilePeriod.Duration
+	w.ManageStatus = *tmp.ManageStatus
+	w.WatchDependentResources = *tmp.WatchDependentResources
+	w.WatchClusterScopedResources = *tmp.WatchClusterScopedResources
 	w.Finalizer = tmp.Finalizer
 	w.AnsibleVerbosity = getAnsibleVerbosity(gvk, ansibleVerbosityDefault)
 	w.Blacklist = tmp.Blacklist
 	w.addRolePlaybookPaths()
 	w.Selector = parseLabelSelector(tmp.Selector)
 
-	return w, err
+	return nil
 }
 
 // addRolePlaybookPaths will add the full path based on the current dir
@@ -287,8 +298,8 @@ func New(gvk schema.GroupVersionKind, role, playbook string, vars map[string]int
 		Vars:                        vars,
 		MaxRunnerArtifacts:          maxRunnerArtifactsDefault,
 		MaxWorkers:                  maxWorkersDefault,
-		ReconcilePeriod:             reconcilePeriodDefault,
-		ManageStatus:                &manageStatusDefault,
+		ReconcilePeriod:             reconcilePeriodDefault.Duration,
+		ManageStatus:                manageStatusDefault,
 		WatchDependentResources:     watchDependentResourcesDefault,
 		WatchClusterScopedResources: watchClusterScopedResourcesDefault,
 		Finalizer:                   finalizer,
@@ -316,11 +327,12 @@ func Load(path string, maxWorkers, ansibleVerbosity int) ([]Watch, error) {
 	}
 
 	// We copy contents from alias structure to the watch structure
+
 	watches := []Watch{}
-	for _, a := range alias {
-		w, err := buildWatch(a)
+	for _, tmp := range alias {
+		w := Watch{}
+		err = w.setValuesFromAlias(tmp)
 		if err != nil {
-			log.Error(err, "Failed to build watch")
 			return nil, err
 		}
 		watches = append(watches, w)

@@ -27,7 +27,6 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -53,6 +52,8 @@ func TestNew(t *testing.T) {
 		},
 	}
 
+	expectedReconcilePeriod, _ := time.ParseDuration(reconcilePeriodDefault.String())
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			watch := New(tc.gvk, tc.role, tc.playbook, tc.vars, tc.finalizer)
@@ -66,11 +67,11 @@ func TestNew(t *testing.T) {
 			if watch.MaxWorkers != maxWorkersDefault {
 				t.Fatalf("Unexpected maxWorkers %v expected %v", watch.MaxWorkers, maxWorkersDefault)
 			}
-			if watch.ReconcilePeriod != reconcilePeriodDefault {
+			if watch.ReconcilePeriod != expectedReconcilePeriod {
 				t.Fatalf("Unexpected reconcilePeriod %v expected %v", watch.ReconcilePeriod,
 					reconcilePeriodDefault)
 			}
-			if watch.ManageStatus != &manageStatusDefault {
+			if watch.ManageStatus != manageStatusDefault {
 				t.Fatalf("Unexpected manageStatus %v expected %v", watch.ManageStatus, &manageStatusDefault)
 			}
 			if watch.WatchDependentResources != watchDependentResourcesDefault {
@@ -132,7 +133,7 @@ func TestLoad(t *testing.T) {
 		return
 	}
 
-	zeroSeconds := metav1.Duration{0}
+	zeroSeconds := time.Duration(0)
 	twoSeconds := time.Second * 2
 
 	validWatches := []Watch{
@@ -143,8 +144,8 @@ func TestLoad(t *testing.T) {
 				Kind:    "NoFinalizer",
 			},
 			Playbook:                    validTemplate.ValidPlaybook,
-			ManageStatus:                ptrBool(true),
-			ReconcilePeriod:             metav1.Duration{twoSeconds},
+			ManageStatus:                true,
+			ReconcilePeriod:             twoSeconds,
 			WatchDependentResources:     true,
 			WatchClusterScopedResources: false,
 		},
@@ -155,7 +156,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "Playbook",
 			},
 			Playbook:                    validTemplate.ValidPlaybook,
-			ManageStatus:                ptrBool(true),
+			ManageStatus:                true,
 			WatchDependentResources:     true,
 			WatchClusterScopedResources: false,
 			Finalizer: &Finalizer{
@@ -171,8 +172,8 @@ func TestLoad(t *testing.T) {
 				Kind:    "WatchClusterScoped",
 			},
 			Playbook:                    validTemplate.ValidPlaybook,
-			ReconcilePeriod:             metav1.Duration{twoSeconds},
-			ManageStatus:                ptrBool(true),
+			ReconcilePeriod:             twoSeconds,
+			ManageStatus:                true,
 			WatchDependentResources:     true,
 			WatchClusterScopedResources: true,
 		},
@@ -184,7 +185,7 @@ func TestLoad(t *testing.T) {
 			},
 			Playbook:        validTemplate.ValidPlaybook,
 			ReconcilePeriod: zeroSeconds,
-			ManageStatus:    ptrBool(true),
+			ManageStatus:    true,
 		},
 		Watch{
 			GroupVersionKind: schema.GroupVersionKind{
@@ -193,7 +194,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "DefaultStatus",
 			},
 			Playbook:     validTemplate.ValidPlaybook,
-			ManageStatus: ptrBool(true),
+			ManageStatus: true,
 		},
 		Watch{
 			GroupVersionKind: schema.GroupVersionKind{
@@ -202,7 +203,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "DisableStatus",
 			},
 			Playbook:     validTemplate.ValidPlaybook,
-			ManageStatus: ptrBool(false),
+			ManageStatus: false,
 		},
 		Watch{
 			GroupVersionKind: schema.GroupVersionKind{
@@ -211,7 +212,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "EnableStatus",
 			},
 			Playbook:     validTemplate.ValidPlaybook,
-			ManageStatus: ptrBool(true),
+			ManageStatus: true,
 		},
 		Watch{
 			GroupVersionKind: schema.GroupVersionKind{
@@ -220,7 +221,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "Role",
 			},
 			Role:         validTemplate.ValidRole,
-			ManageStatus: ptrBool(true),
+			ManageStatus: true,
 			Finalizer: &Finalizer{
 				Name:     "finalizer.app.example.com",
 				Playbook: validTemplate.ValidPlaybook,
@@ -234,7 +235,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "FinalizerRole",
 			},
 			Role:         validTemplate.ValidRole,
-			ManageStatus: ptrBool(true),
+			ManageStatus: true,
 			Finalizer: &Finalizer{
 				Name: "finalizer.app.example.com",
 				Vars: map[string]interface{}{"sentinel": "finalizer_running"},
@@ -247,7 +248,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "MaxWorkersDefault",
 			},
 			Role:         validTemplate.ValidRole,
-			ManageStatus: ptrBool(true),
+			ManageStatus: true,
 			MaxWorkers:   1,
 		},
 		Watch{
@@ -257,7 +258,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "MaxWorkersIgnored",
 			},
 			Role:         validTemplate.ValidRole,
-			ManageStatus: ptrBool(true),
+			ManageStatus: true,
 			MaxWorkers:   1,
 		},
 		Watch{
@@ -267,7 +268,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "MaxWorkersEnv",
 			},
 			Role:         validTemplate.ValidRole,
-			ManageStatus: ptrBool(true),
+			ManageStatus: true,
 			MaxWorkers:   4,
 		},
 		Watch{
@@ -277,7 +278,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "AnsibleVerbosityDefault",
 			},
 			Role:             validTemplate.ValidRole,
-			ManageStatus:     ptrBool(true),
+			ManageStatus:     true,
 			AnsibleVerbosity: 2,
 		},
 		Watch{
@@ -287,7 +288,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "AnsibleVerbosityIgnored",
 			},
 			Role:             validTemplate.ValidRole,
-			ManageStatus:     ptrBool(true),
+			ManageStatus:     true,
 			AnsibleVerbosity: 2,
 		},
 		Watch{
@@ -297,7 +298,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "AnsibleVerbosityEnv",
 			},
 			Role:             validTemplate.ValidRole,
-			ManageStatus:     ptrBool(true),
+			ManageStatus:     true,
 			AnsibleVerbosity: 4,
 		},
 		Watch{
@@ -307,7 +308,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "WatchWithVars",
 			},
 			Role:         validTemplate.ValidRole,
-			ManageStatus: ptrBool(true),
+			ManageStatus: true,
 			Vars:         map[string]interface{}{"sentinel": "reconciling"},
 		},
 		Watch{
@@ -317,7 +318,7 @@ func TestLoad(t *testing.T) {
 				Kind:    "AnsibleCollectionEnvTest",
 			},
 			Role:         filepath.Join(cwd, "testdata", "ansible_collections", "nameSpace", "collection", "roles", "someRole"),
-			ManageStatus: ptrBool(true),
+			ManageStatus: true,
 		},
 	}
 
@@ -467,7 +468,7 @@ func TestLoad(t *testing.T) {
 					t.Fatalf("The GVK: %v unexpected Playbook: %v expected Playbook: %v", gvk, gotWatch.Playbook,
 						expectedWatch.Playbook)
 				}
-				if *gotWatch.ManageStatus != *expectedWatch.ManageStatus {
+				if gotWatch.ManageStatus != expectedWatch.ManageStatus {
 					t.Fatalf("The GVK: %v\nunexpected manageStatus:%#v\nexpected manageStatus: %#v", gvk,
 						gotWatch.ManageStatus, expectedWatch.ManageStatus)
 				}
