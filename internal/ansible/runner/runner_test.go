@@ -159,7 +159,7 @@ func TestNew(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			testWatch := watches.New(tc.gvk, tc.role, tc.playbook, tc.vars, tc.finalizer)
 
-			testRunner, err := New(*testWatch)
+			testRunner, err := New(*testWatch, "")
 			if err != nil {
 				t.Fatalf("Error occurred unexpectedly: %v", err)
 			}

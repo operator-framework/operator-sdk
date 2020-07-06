@@ -89,17 +89,17 @@ func roleCmdFunc(path string) cmdFuncType {
 		// check the verbosity since the exec.Command will fail if an arg as "" or " " be informed
 		if verbosity > 0 {
 			return exec.Command("ansible-runner", ansibleVerbosityString(verbosity), "--rotate-artifacts",
-				fmt.Sprintf("%v", maxArtifacts), "--role", roleName, "--roles-path", rolePath, "--hosts",
-				"localhost", "-i", ident, "run", inputDirPath)
+				fmt.Sprintf("%v", maxArtifacts), "--role", roleName, "--roles-path", rolePath,
+				"--hosts", "localhost", "-i", ident, "run", inputDirPath)
 		}
 		return exec.Command("ansible-runner", "--rotate-artifacts",
-			fmt.Sprintf("%v", maxArtifacts), "--role", roleName, "--roles-path", rolePath, "--hosts",
-			"localhost", "-i", ident, "run", inputDirPath)
+			fmt.Sprintf("%v", maxArtifacts), "--role", roleName, "--roles-path", rolePath,
+			"--hosts", "localhost", "-i", ident, "run", inputDirPath)
 	}
 }
 
 // New - creates a Runner from a Watch struct
-func New(watch watches.Watch) (Runner, error) {
+func New(watch watches.Watch, runnerArgs string) (Runner, error) {
 	var path string
 	var cmdFunc, finalizerCmdFunc cmdFuncType
 
@@ -131,29 +131,31 @@ func New(watch watches.Watch) (Runner, error) {
 	}
 
 	return &runner{
-		Path:                path,
-		cmdFunc:             cmdFunc,
-		Vars:                watch.Vars,
-		Finalizer:           watch.Finalizer,
-		finalizerCmdFunc:    finalizerCmdFunc,
-		GVK:                 watch.GroupVersionKind,
-		maxRunnerArtifacts:  watch.MaxRunnerArtifacts,
-		ansibleVerbosity:    watch.AnsibleVerbosity,
+		Path:               path,
+		cmdFunc:            cmdFunc,
+		Vars:               watch.Vars,
+		Finalizer:          watch.Finalizer,
+		finalizerCmdFunc:   finalizerCmdFunc,
+		GVK:                watch.GroupVersionKind,
+		maxRunnerArtifacts: watch.MaxRunnerArtifacts,
+		ansibleVerbosity:   watch.AnsibleVerbosity,
+		ansibleArgs:        runnerArgs,
 		snakeCaseParameters: watch.SnakeCaseParameters,
 	}, nil
 }
 
 // runner - implements the Runner interface for a GVK that's being watched.
 type runner struct {
-	Path                string                  // path on disk to a playbook or role depending on what cmdFunc expects
-	GVK                 schema.GroupVersionKind // GVK being watched that corresponds to the Path
-	Finalizer           *watches.Finalizer
-	Vars                map[string]interface{}
-	cmdFunc             cmdFuncType // returns a Cmd that runs ansible-runner
-	finalizerCmdFunc    cmdFuncType
-	maxRunnerArtifacts  int
-	ansibleVerbosity    int
+	Path               string                  // path on disk to a playbook or role depending on what cmdFunc expects
+	GVK                schema.GroupVersionKind // GVK being watched that corresponds to the Path
+	Finalizer          *watches.Finalizer
+	Vars               map[string]interface{}
+	cmdFunc            cmdFuncType // returns a Cmd that runs ansible-runner
+	finalizerCmdFunc   cmdFuncType
+	maxRunnerArtifacts int
+	ansibleVerbosity   int
 	snakeCaseParameters bool
+	ansibleArgs        string
 }
 
 func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig string) (RunResult, error) {
@@ -188,6 +190,7 @@ func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig stri
 			"runner_http_url":  receiver.SocketPath,
 			"runner_http_path": receiver.URLPath,
 		},
+		CmdLine: r.ansibleArgs,
 	}
 	// If Path is a dir, assume it is a role path. Otherwise assume it's a
 	// playbook path
