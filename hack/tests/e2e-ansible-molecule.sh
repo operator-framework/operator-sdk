@@ -19,45 +19,46 @@ ansible-galaxy collection install community.kubernetes
 
 setup_envs $tmp_sdk_root
 
-remove_prereqs() {
-    header_text "Deleting resources"
-    kubectl delete --wait=true --ignore-not-found=true --timeout=60s -f "$OPERATORDIR/deploy/crds/ansible.example.com_memcacheds_crd.yaml"
-    kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/service_account.yaml"
-    kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/role.yaml"
-    kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/role_binding.yaml"
-}
-
 pushd "$TMPDIR"
 
 header_text "Creating memcached-operator"
-operator-sdk new memcached-operator \
-  --api-version=ansible.example.com/v1alpha1 \
-  --kind=Memcached \
-  --type=ansible \
-  --generate-playbook
-header_text "Replacing operator contents"
-cp "$ROOTDIR/test/ansible-memcached/tasks.yml" memcached-operator/roles/memcached/tasks/main.yml
-cp "$ROOTDIR/test/ansible-memcached/defaults.yml" memcached-operator/roles/memcached/defaults/main.yml
-cp "$ROOTDIR/test/ansible-memcached/verify.yml"  memcached-operator/molecule/default/verify.yml
-cp "$ROOTDIR/test/ansible-memcached/molecule.yml"  memcached-operator/molecule/test-local/molecule.yml
-cp -a "$ROOTDIR/test/ansible-memcached/memfin" memcached-operator/roles/
-cp -a "$ROOTDIR/test/ansible-memcached/secret" memcached-operator/roles/
-cat "$ROOTDIR/test/ansible-memcached/watches-finalizer.yaml" >> memcached-operator/watches.yaml
-cat "$ROOTDIR/test/ansible-memcached/prepare-test-image.yml" >> memcached-operator/molecule/test-local/prepare.yml
-header_text "Append v1 kind to watches to test watching already registered GVK"
-cat "$ROOTDIR/test/ansible-memcached/watches-v1-kind.yaml" >> memcached-operator/watches.yaml
-
-header_text "Test local"
+mkdir memcached-operator
 pushd memcached-operator
-sed -i".bak" -E -e 's/(FROM quay.io\/operator-framework\/ansible-operator)(:.*)?/\1:dev/g' build/Dockerfile; rm -f build/Dockerfile.bak
+operator-sdk init --plugins ansible.operator-sdk.io/v1 \
+  --domain example.com \
+  --group ansible \
+  --version v1alpha1 \
+  --kind Memcached \
+  --generate-playbook \
+  --generate-role
+header_text "Replacing operator contents"
+cp "$ROOTDIR/test/ansible-memcached/tasks.yml" roles/memcached/tasks/main.yml
+cp "$ROOTDIR/test/ansible-memcached/defaults.yml" roles/memcached/defaults/main.yml
+cp "$ROOTDIR/test/ansible-memcached/memcached_test.yml"  molecule/default/tasks/memcached_test.yml
+cp -a "$ROOTDIR/test/ansible-memcached/memfin" roles/
+cp -a "$ROOTDIR/test/ansible-memcached/secret" roles/
+marker=$(tail -n1 watches.yaml)
+sed -i'.bak' -e '$ d' watches.yaml;rm -f watches.yaml.bak
+cat "$ROOTDIR/test/ansible-memcached/watches-finalizer.yaml" >> watches.yaml
+header_text "Append v1 kind to watches to test watching already registered GVK"
+cat "$ROOTDIR/test/ansible-memcached/watches-v1-kind.yaml" >> watches.yaml
+echo $marker >> watches.yaml
+sed -i'.bak' -e '/- secrets/a \ \ - services' config/rbac/role.yaml; rm -f config/rbac/role.yaml.bak
+
+header_text "Test in kind"
+sed -i".bak" -E -e 's/(FROM quay.io\/operator-framework\/ansible-operator)(:.*)?/\1:dev/g' Dockerfile; rm -f Dockerfile.bak
 OPERATORDIR="$(pwd)"
-TEST_CLUSTER_PORT=24443 TEST_OPERATOR_NAMESPACE=default molecule test -s test-local
-
-remove_prereqs
+make kustomize
+if [ -f ./bin/kustomize ] ; then
+  KUSTOMIZE="$(realpath ./bin/kustomize)"
+else
+  KUSTOMIZE="$(which kustomize)"
+fi
+KUSTOMIZE_PATH=${KUSTOMIZE} TEST_OPERATOR_NAMESPACE=default molecule test -s kind
 
 popd
 popd
-
+KUSTOMIZE_PATH=${KUSTOMIZE} 
 header_text "Test Ansible Molecule scenarios"
 pushd "${ROOTDIR}/test/ansible"
 DEST_IMAGE="quay.io/example/ansible-test-operator:v0.0.1"
