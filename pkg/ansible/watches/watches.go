@@ -69,7 +69,7 @@ type Finalizer struct {
 var (
 	blacklistDefault                   = []schema.GroupVersionKind{}
 	maxRunnerArtifactsDefault          = 20
-	reconcilePeriodDefault             = metav1.Duration{0}
+	reconcilePeriodDefault             = metav1.Duration{Duration: 0}
 	manageStatusDefault                = true
 	watchDependentResourcesDefault     = true
 	watchClusterScopedResourcesDefault = false
@@ -123,7 +123,7 @@ type alias struct {
 	ManageStatus                *bool                     `yaml:"manageStatus,omitempty"`
 	WatchDependentResources     *bool                     `yaml:"watchDependentResources,omitempty"`
 	WatchClusterScopedResources *bool                     `yaml:"watchClusterScopedResources,omitempty"`
-	Blacklist                   []schema.GroupVersionKind `yaml:"blacklist"`
+	Blacklist                   []schema.GroupVersionKind `yaml:"blacklist,omitempty"`
 	Finalizer                   *Finalizer                `yaml:"finalizer"`
 	Selector                    tempLabelSelector         `yaml:"selector"`
 }
@@ -153,7 +153,6 @@ func (w *Watch) setValuesFromAlias(tmp alias) error {
 	if tmp.Blacklist == nil {
 		tmp.Blacklist = blacklistDefault
 	}
-	tmp.Selector = tempLabelSelector{}
 
 	gvk := schema.GroupVersionKind{
 		Group:   tmp.Group,

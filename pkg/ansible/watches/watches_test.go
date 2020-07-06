@@ -69,7 +69,7 @@ func TestNew(t *testing.T) {
 			}
 			if watch.ReconcilePeriod != expectedReconcilePeriod {
 				t.Fatalf("Unexpected reconcilePeriod %v expected %v", watch.ReconcilePeriod,
-					reconcilePeriodDefault)
+					expectedReconcilePeriod)
 			}
 			if watch.ManageStatus != manageStatusDefault {
 				t.Fatalf("Unexpected manageStatus %v expected %v", watch.ManageStatus, &manageStatusDefault)
@@ -96,12 +96,6 @@ func TestNew(t *testing.T) {
 			}
 		})
 	}
-}
-
-// ptrBool will return a bool pointer for the bool input
-func ptrBool(b bool) *bool {
-	b2 := b
-	return &b2
 }
 
 func TestLoad(t *testing.T) {
