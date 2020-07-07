@@ -39,6 +39,7 @@ func NewCmd() *cobra.Command {
 		Short: "Deploy an Operator in the package manifests format with OLM",
 		Long: `'run packagemanifests' deploys an Operator's package manifests with OLM. The command's argument
 must be set to a valid package manifests root directory, ex. '<project-root>/packagemanifests'.`,
+		Aliases: []string{"pm"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 0 {
 				if len(args) > 1 {
