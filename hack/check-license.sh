@@ -10,7 +10,7 @@ echo "Checking for license header..."
 allfiles=$(listFiles)
 licRes=""
 for file in $allfiles; do
-  if ! head -n3 "${file}" | grep -Eq "(Copyright|generated|GENERATED)" ; then
+  if ! head -n3 "${file}" | grep -Eq "(Copyright|generated|GENERATED|Licensed)" ; then
     licRes="${licRes}\n"$(echo -e "  ${file}")
   fi
 done
