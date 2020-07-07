@@ -12,13 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package helm
+package v1
 
 import (
+	"sigs.k8s.io/kubebuilder/pkg/model/config"
 	"sigs.k8s.io/kubebuilder/pkg/plugin"
+
+	"github.com/operator-framework/operator-sdk/internal/plugins"
 )
 
-const pluginName = "helm" + plugin.DefaultNameQualifier
+const pluginName = "helm" + plugins.DefaultNameQualifier
+
+var (
+	supportedProjectVersions = []string{config.Version3Alpha}
+	pluginVersion            = plugin.Version{Number: 1}
+)
 
 var (
 	_ plugin.Base                  = Plugin{}
@@ -32,7 +40,7 @@ type Plugin struct {
 }
 
 func (Plugin) Name() string                           { return pluginName }
-func (Plugin) Version() plugin.Version                { return plugin.Version{} }
-func (Plugin) SupportedProjectVersions() []string     { return nil }
+func (Plugin) Version() plugin.Version                { return pluginVersion }
+func (Plugin) SupportedProjectVersions() []string     { return supportedProjectVersions }
 func (p Plugin) GetInitPlugin() plugin.Init           { return &p.initPlugin }
 func (p Plugin) GetCreateAPIPlugin() plugin.CreateAPI { return &p.createAPIPlugin }
