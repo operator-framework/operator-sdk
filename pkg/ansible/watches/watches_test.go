@@ -314,6 +314,32 @@ func TestLoad(t *testing.T) {
 			Role:         filepath.Join(cwd, "testdata", "ansible_collections", "nameSpace", "collection", "roles", "someRole"),
 			ManageStatus: true,
 		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "AnsibleBlacklistTest",
+			},
+			Role: validTemplate.ValidRole,
+			Blacklist: []schema.GroupVersionKind{
+				{
+					Version: "v1alpha1.1",
+					Group:   "app.example.com/1",
+					Kind:    "AnsibleBlacklistTest_1",
+				},
+				{
+					Version: "v1alpha1.2",
+					Group:   "app.example.com/2",
+					Kind:    "AnsibleBlacklistTest_2",
+				},
+				{
+					Version: "v1alpha1.3",
+					Group:   "app.example.com/3",
+					Kind:    "AnsibleBlacklistTest_3",
+				},
+			},
+			ManageStatus: true,
+		},
 	}
 
 	testCases := []struct {
@@ -478,6 +504,13 @@ func TestLoad(t *testing.T) {
 				if gotWatch.ReconcilePeriod != expectedWatch.ReconcilePeriod {
 					t.Fatalf("The GVK: %v unexpected reconcile period: %v expected reconcile period: %v", gvk,
 						gotWatch.ReconcilePeriod, expectedWatch.ReconcilePeriod)
+				}
+
+				for i, val := range expectedWatch.Blacklist {
+					if val != gotWatch.Blacklist[i] {
+						t.Fatalf("The GVK: %v unexpected BlackList: %v expected BlackList: %v", gvk,
+							val, gotWatch.Blacklist[i])
+					}
 				}
 
 				if expectedWatch.MaxWorkers == 0 {

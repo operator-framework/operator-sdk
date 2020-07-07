@@ -154,6 +154,8 @@ func (w *Watch) setValuesFromAlias(tmp alias) error {
 		tmp.Blacklist = blacklistDefault
 	}
 
+	fmt.Printf("\n\n\nThis is the blacklist: %+v", tmp.Blacklist)
+
 	gvk := schema.GroupVersionKind{
 		Group:   tmp.Group,
 		Version: tmp.Version,
