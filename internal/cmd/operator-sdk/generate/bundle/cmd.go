@@ -72,7 +72,10 @@ func NewCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("error reading configuration: %v", err)
 			}
-			c.setDefaults(cfg)
+
+			if err := c.setDefaults(cfg); err != nil {
+				return err
+			}
 
 			// Validate command args before running so a preceding mode doesn't run
 			// before a following validation fails.

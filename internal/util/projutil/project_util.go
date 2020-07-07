@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -155,4 +156,18 @@ func appendContent(fileContents, target, newContent string) (string, error) {
 
 	index := labelIndex + separationIndex + 1
 	return fileContents[:index] + newContent + fileContents[index:], nil
+}
+
+// GetOperatorName returns the name of the operator which is by default the projectName attribute of the PROJECT file
+// However, the Go projects built with the plugin version v2 has not this attribute and then, for this case
+// the operatorName will be the current directory.
+func GetOperatorName(cfg *config.Config) (string, error) {
+	if cfg.ProjectName != "" {
+		return cfg.ProjectName, nil
+	}
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", fmt.Errorf("error getting current directory: %v", err)
+	}
+	return strings.ToLower(filepath.Base(dir)), nil
 }

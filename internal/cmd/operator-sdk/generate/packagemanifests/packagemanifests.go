@@ -79,9 +79,13 @@ https://github.com/operator-framework/operator-registry/#manifest-format
 const defaultRootDir = "packagemanifests"
 
 // setDefaults sets command defaults.
-func (c *packagemanifestsCmd) setDefaults(cfg *config.Config) {
+func (c *packagemanifestsCmd) setDefaults(cfg *config.Config) error {
 	if c.operatorName == "" {
-		c.operatorName = filepath.Base(cfg.Repo)
+		projectName, err := projutil.GetOperatorName(cfg)
+		if err != nil {
+			return err
+		}
+		c.operatorName = projectName
 	}
 
 	if c.inputDir == "" {
@@ -92,6 +96,7 @@ func (c *packagemanifestsCmd) setDefaults(cfg *config.Config) {
 			c.outputDir = defaultRootDir
 		}
 	}
+	return nil
 }
 
 // validate validates c for package manifests generation.

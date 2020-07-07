@@ -97,7 +97,10 @@ func newManifestsCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("error reading configuration: %v", err)
 			}
-			c.setDefaults(cfg)
+
+			if err := c.setDefaults(cfg); err != nil {
+				return err
+			}
 
 			// Run command logic.
 			if err = c.run(cfg); err != nil {
@@ -127,9 +130,13 @@ func (c *manifestsCmd) addFlagsTo(fs *pflag.FlagSet) {
 var defaultDir = filepath.Join("config", "manifests")
 
 // setDefaults sets command defaults.
-func (c *manifestsCmd) setDefaults(cfg *config.Config) {
+func (c *manifestsCmd) setDefaults(cfg *config.Config) error {
 	if c.operatorName == "" {
-		c.operatorName = filepath.Base(cfg.Repo)
+		projectName, err := projutil.GetOperatorName(cfg)
+		if err != nil {
+			return err
+		}
+		c.operatorName = projectName
 	}
 
 	if c.inputDir == "" {
@@ -145,6 +152,7 @@ func (c *manifestsCmd) setDefaults(cfg *config.Config) {
 			c.apisDir = "api"
 		}
 	}
+	return nil
 }
 
 // kustomization.yaml file contents for manifests. this should always be written to
