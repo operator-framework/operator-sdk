@@ -166,6 +166,25 @@ jobs:
       name: Helm on Kubernetes
       script: make test-e2e-helm
 
+    # Build and test helm for new project layouts
+    - name: Helm e2e tests for new project layouts
+      before_install:
+      # hack/ci/check-doc-only-update.sh needs to be sourced so
+      # that it can properly exit the test early with success
+      - source hack/ci/check-doc-only-update.sh
+      install:
+      - make install
+      script:
+      - make test-e2e-helm-new
+      after_success:
+      - echo "E2E tests passed"
+      after_failure:
+      - echo "E2E tests failed"
+      - kubectl get all --all-namespaces
+      - kubectl get events --all-namespaces --field-selector=type=Warning
+      services:
+      - docker
+
     ## Image deploy/push stage jobs ##
 
 

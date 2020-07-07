@@ -297,15 +297,18 @@ test-subcommand-olm-install:
 	./hack/tests/subcommand-olm-install.sh
 
 # E2E tests.
-.PHONY: test-e2e test-e2e-go test-e2e-go-new test-e2e-ansible test-e2e-ansible-molecule test-e2e-helm
+.PHONY: test-e2e test-e2e-go test-e2e-go-new test-e2e-helm-new test-e2e-ansible test-e2e-ansible-molecule test-e2e-helm
 
-test-e2e: test-e2e-go test-e2e-go-new test-e2e-ansible test-e2e-ansible-molecule test-e2e-helm ## Run the e2e tests
+test-e2e: test-e2e-go test-e2e-go-new test-e2e-helm-new test-e2e-ansible test-e2e-ansible-molecule test-e2e-helm ## Run the e2e tests
 
 test-e2e-go:
 	./hack/tests/e2e-go.sh $(ARGS)
 
 test-e2e-go-new:
 	K8S_VERSION=$(K8S_VERSION) ./hack/tests/e2e-go-new.sh
+
+test-e2e-helm-new:
+	K8S_VERSION=$(K8S_VERSION) ./hack/tests/e2e-helm-new.sh
 
 test-e2e-ansible: image-build-ansible
 	./hack/tests/e2e-ansible.sh

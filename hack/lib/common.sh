@@ -120,6 +120,14 @@ function build_sdk {
   mv ./build/operator-sdk "$1"/bin/operator-sdk
 }
 
+# Add kustomize to env
+function setup_kustomize {
+  header_text "getting kustomize"
+  curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
+  chmod u+x kustomize
+  mv kustomize "$1"/bin/kustomize
+}
+
 # Install the 'kind' binary at version $KIND_VERSION.
 function install_kind {
 
