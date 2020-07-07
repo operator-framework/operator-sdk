@@ -1,0 +1,7 @@
+entries:
+  - description: >
+      The `generate crds` subcommand now checks for the existence of the
+      `pkg/apis` directory and logs a descriptive fatal error message if
+      it does not exist or is not a directory.
+
+    kind: "bugfix"
