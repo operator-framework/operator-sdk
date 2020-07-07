@@ -19,8 +19,6 @@ package e2e
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
-	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
@@ -167,7 +165,7 @@ var _ = Describe("operator-sdk", func() {
 			By("generating the operator bundle")
 			// Turn off interactive prompts for all generation tasks.
 			replace := "operator-sdk generate kustomize manifests"
-			replaceInFile(filepath.Join(tc.Dir, "Makefile"), replace, replace+" --interactive=false")
+			testutils.ReplaceInFile(filepath.Join(tc.Dir, "Makefile"), replace, replace+" --interactive=false")
 			err = tc.Make("bundle")
 			Expect(err).NotTo(HaveOccurred())
 
@@ -214,14 +212,3 @@ var _ = Describe("operator-sdk", func() {
 		})
 	})
 })
-
-// replaceInFile replaces all instances of old with new in the file at path.
-func replaceInFile(path, old, new string) {
-	info, err := os.Stat(path)
-	ExpectWithOffset(1, err).NotTo(HaveOccurred())
-	b, err := ioutil.ReadFile(path)
-	ExpectWithOffset(1, err).NotTo(HaveOccurred())
-	s := strings.Replace(string(b), old, new, -1)
-	err = ioutil.WriteFile(path, []byte(s), info.Mode())
-	ExpectWithOffset(1, err).NotTo(HaveOccurred())
-}
