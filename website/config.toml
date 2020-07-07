@@ -85,6 +85,9 @@ gcs_engine_id = "015999847059016081733:wlfzxjx77h8"
 # Enable Algolia DocSearch
 algolia_docsearch = false
 
+# The default timeout is (10000). Increase it to avoid issues when we are checking the links from the docs
+# More info: https://www.engino.co.uk/content-text/configuration/
+timeout = 60000
 
 [[params.versions]]
   version = "master"
