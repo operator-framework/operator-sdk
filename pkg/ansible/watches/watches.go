@@ -50,8 +50,8 @@ type Watch struct {
 	ManageStatus                bool                      `yaml:"manageStatus"`
 	WatchDependentResources     bool                      `yaml:"watchDependentResources"`
 	WatchClusterScopedResources bool                      `yaml:"watchClusterScopedResources"`
-	Selector                    metav1.LabelSelector      `yaml:"selector"`
 	SnakeCaseParameters         bool                      `yaml:"snakeCaseParameters"`
+	Selector                    metav1.LabelSelector      `yaml:"selector"`
 
 	// Not configurable via watches.yaml
 	MaxWorkers       int `yaml:"-"`
@@ -74,8 +74,8 @@ var (
 	manageStatusDefault                = true
 	watchDependentResourcesDefault     = true
 	watchClusterScopedResourcesDefault = false
-	selectorDefault                    = metav1.LabelSelector{}
 	snakeCaseParametersDefault         = true
+	selectorDefault                    = metav1.LabelSelector{}
 
 	// these are overridden by cmdline flags
 	maxWorkersDefault       = 1
@@ -158,7 +158,7 @@ func (w *Watch) setValuesFromAlias(tmp alias) error {
 	}
 
 	if tmp.SnakeCaseParameters == nil {
-		tmp.SnakeCaseParameters = snakeCaseParametersDefault
+		tmp.SnakeCaseParameters = &snakeCaseParametersDefault
 	}
 
 	gvk := schema.GroupVersionKind{
