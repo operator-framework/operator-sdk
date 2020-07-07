@@ -298,33 +298,10 @@ jobs:
         - make image-build-scorecard-test
         - make image-push-scorecard-test
 
-    # Build and deploy arm64 scorecard-test-kuttl docker image 
-    - <<: *deploy
-      name: Docker image for scorecard-test-kuttl (arm64)
-      arch: arm64
-      script:
-        - make image-build-scorecard-test-kuttl
-        - make image-push-scorecard-test-kuttl
-
     # Build and deploy amd64 scorecard-test-kuttl docker image
     - <<: *deploy
       name: Docker image for scorecard-test-kuttl (amd64)
       arch: amd64
-      script:
-        - make image-build-scorecard-test-kuttl
-        - make image-push-scorecard-test-kuttl
-    # Build and deploy ppc64le scorecard-test-kuttl docker image
-    - <<: *deploy
-      name: Docker image for scorecard-test-kuttl (ppc64le)
-      arch: ppc64le
-      script:
-        - make image-build-scorecard-test-kuttl
-        - make image-push-scorecard-test-kuttl
-
-    # Build and deploy s390x scorecard-test-kuttl docker image
-    - <<: *deploy
-      name: Docker image for scorecard-test-kuttl (s390x)
-      arch: s390x
       script:
         - make image-build-scorecard-test-kuttl
         - make image-push-scorecard-test-kuttl
