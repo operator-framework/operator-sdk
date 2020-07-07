@@ -20,10 +20,10 @@ See this [CLI overview][cli-overview] for details on each command.
 
 ### ClusterServiceVersion manifests
 
-CSVs are manifests that define all aspects of an Operator, from what CRDs it uses to metadata describing the
-Operator's maintainers. They are typically versioned by semver, much like Operator projects themselves;
-this version is present in both their `metadata.name` and `spec.version` fields. The CSV generator called by
-`generate <bundle|packagemanifests>` requires certain input manifests to construct a CSV manifest;
+CSVs are manifests that define all aspects of an Operator, from what CustomResourceDefinitions (CRDs) it uses to
+metadata describing the Operator's maintainers. They are typically versioned by semver, much like Operator projects
+themselves; this version is present in both their `metadata.name` and `spec.version` fields. The CSV generator called
+by `generate <bundle|packagemanifests>` requires certain input manifests to construct a CSV manifest;
 all inputs are read when either command is invoked, along with a [base](#generate-your-first-release) CSV,
 to idempotently regenerate a CSV.
 
@@ -31,10 +31,10 @@ The following resource kinds are typically included in a CSV:
   - `Role`: define Operator permissions within a namespace.
   - `ClusterRole`: define cluster-wide Operator permissions.
   - `Deployment`: define how the Operator's operand is run in pods.
-  - `CustomResourceDefinition` (CRD): definitions of custom objects your Operator reconciles.
+  - `CustomResourceDefinition`: definitions of custom objects your Operator reconciles.
   - Custom resource examples: examples of objects adhering to the spec of a particular CRD.
 
-_For Go Operators only:_ these commands parse [CSV markers][csv-markers] from API type definitions, located
+**For Go Operators only:** these commands parse [CSV markers][csv-markers] from API type definitions, located
 in `./pkg/apis`, to populate certain CSV fields. You can set an alternative path to the API types
 root directory with `--apis-dir`. These markers are not available to Ansible or Helm project types.
 
@@ -60,21 +60,6 @@ at a particular version. You may have also heard of a bundle image. From the bun
 At this stage in your Operator's development, we only need to worry about generating bundle files;
 bundle images become important once you're ready to [publish][operatorhub] your Operator.
 
-Bundle metadata contains information about a particular Operator version available in a [registry][operator-registry].
-OLM uses this information to install specific Operator versions and resolve dependencies.
-
-Of particular note are channels:
-
-> Channels allow package authors to write different upgrade paths for different users (e.g. beta vs. stable).
-
-Channels become important when publishing, but we should still be aware of them beforehand as they're required
-values in our metadata. `generate bundle` writes the channel `alpha` by default.
-
-Your `deploy/olm-catalog/<operator-name>/metadata/annotations.yaml` and `bundle.Dockerfile`
-contain the same [annotations][bundle-metadata] in slightly different formats.
-In most cases annotations do not need to be modified; if you do decide to modify them,
-both sets of annotations _must_ be the same to ensure consistent Operator deployment.
-
 By default `generate bundle` will generate a CSV, copy CRDs, and generate metadata in the bundle format:
 
 ```console
@@ -87,6 +72,21 @@ $ tree ./deploy/olm-catalog/test-operator
 └── metadata
     └── annotations.yaml
 ```
+
+Bundle metadata in `deploy/olm-catalog/<operator-name>/metadata/annotations.yaml` contains information about a particular Operator version
+available in a registry. OLM uses this information to install specific Operator versions and resolve dependencies.
+That file and `bundle.Dockerfile` contain the same [annotations][bundle-metadata], the latter as `LABEL`s,
+which do not need to be modified in most cases; if you do decide to modify them, both sets of annotations _must_
+be the same to ensure consistent Operator deployment.
+
+##### Channels
+
+Metadata for each bundle contains channel information as well:
+
+> Channels allow package authors to write different upgrade paths for different users (e.g. beta vs. stable).
+
+Channels become important when publishing, but we should still be aware of them beforehand as they're required
+values in our metadata. `generate bundle` writes the channel `alpha` by default.
 
 ### Package manifests format
 
@@ -153,7 +153,7 @@ and populates `spec.replaces` with the old CSV version's name.
 
 Below are two lists of fields: the first is a list of all fields the SDK and OLM expect in a CSV, and the second are optional.
 
-_For Go Operators only:_ Several fields require user input (labeled _user_) or a [CSV marker][csv-markers]
+**For Go Operators only:** Several fields require user input (labeled _user_) or a [CSV marker][csv-markers]
 (labeled _marker_). This list may change as the SDK becomes better at generating CSV's.
 These markers are not available to Ansible or Helm project types.
 

@@ -18,7 +18,7 @@ once you have completed the *Setup* section below.
 
 ## Setup
 
-Lets first walk through creating an Operator for `memcached`, a distributed key-value store.
+Let's first walk through creating an Operator for `memcached`, a distributed key-value store.
 
 Follow one of the user guides to develop the memcached-operator in either [Go][sdk-user-guide-go],
 [Ansible][sdk-user-guide-ansible], or [Helm][sdk-user-guide-helm], depending on which Operator type you are interested in.
@@ -123,9 +123,10 @@ INFO[0002] running docker save                           bundle-dir=/tmp/bundle-
 INFO[0002] All validation tests have completed successfully  bundle-dir=/tmp/bundle-716785960 container-tool=docker
 ```
 
-The SDK does not build index images; instead, use the Operator package manager tool [`opm`][opm] to manage
-index images. Once one has been built, follow the index image [usage docs][doc-olm-index] to add an index to a
-cluster catalog, and the catalog [discovery docs][doc-olm-discovery] to tell OLM about your cataloged Operator.
+The SDK does not build index images; instead, use the Operator package manager tool [`opm`][opm] to
+[build][doc-index-build] one. Once one has been built, follow the index image [usage docs][doc-olm-index]
+to add an index to a cluster catalog, and the catalog [discovery docs][doc-olm-discovery] to tell OLM
+about your cataloged Operator.
 
 
 [sdk-user-guide-go]:/docs/golang/legacy/quickstart
@@ -140,6 +141,7 @@ cluster catalog, and the catalog [discovery docs][doc-olm-discovery] to tell OLM
 [doc-cli-overview]:/docs/olm-integration/legacy/cli-overview
 [doc-olm-generate]:/docs/olm-integration/legacy/generating-a-csv
 [opm]:https://github.com/operator-framework/operator-registry/blob/master/docs/design/opm-tooling.md
-[index-image]:https://github.com/operator-framework/operator-registry#building-an-index-of-operators-using-opm
+[index-image]:https://github.com/operator-framework/operator-registry/blob/master/docs/design/opm-tooling.md#index
+[doc-index-build]:https://github.com/operator-framework/operator-registry#building-an-index-of-operators-using-opm
 [doc-olm-index]:https://github.com/operator-framework/operator-registry#using-the-index-with-operator-lifecycle-manager
 [doc-olm-discovery]:https://github.com/operator-framework/operator-lifecycle-manager/#discovery-catalogs-and-automated-upgrades
