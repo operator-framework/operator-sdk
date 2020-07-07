@@ -149,6 +149,11 @@ jobs:
       name: Helm on Kubernetes
       script: make test-e2e-helm
 
+    # Build and test helm
+    - <<: *test
+      name: Helm on Kubernetes (new)
+      script: make test-e2e-helm-new
+
     ## Image deploy/push stage jobs ##
 
     # Build and deploy arm64 ansible-operator docker image

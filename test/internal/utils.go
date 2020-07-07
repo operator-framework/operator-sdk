@@ -16,9 +16,13 @@ package internal
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 	"os/exec"
+	"strings"
 
 	. "github.com/onsi/ginkgo" //nolint:golint
+	. "github.com/onsi/gomega" //nolint:golint
 
 	kbtestutils "sigs.k8s.io/kubebuilder/test/e2e/utils"
 )
@@ -52,4 +56,15 @@ func (tc TestContext) UninstallOLM() {
 // KustomizeBuild runs 'kustomize build <dir>' and returns its output and an error if any.
 func (tc TestContext) KustomizeBuild(dir string) ([]byte, error) {
 	return tc.Run(exec.Command("kustomize", "build", dir))
+}
+
+// ReplaceInFile replaces all instances of old with new in the file at path.
+func ReplaceInFile(path, old, new string) {
+	info, err := os.Stat(path)
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	b, err := ioutil.ReadFile(path)
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	s := strings.Replace(string(b), old, new, -1)
+	err = ioutil.WriteFile(path, []byte(s), info.Mode())
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
 }

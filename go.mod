@@ -9,7 +9,8 @@ require (
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.1
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
-	github.com/iancoleman/strcase v0.0.0-20190422225806-e506e3ef7365
+	github.com/iancoleman/strcase v0.0.0-20191112232945-16388991a334
+	github.com/kr/text v0.1.0
 	github.com/markbates/inflect v1.0.4
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mitchellh/go-homedir v1.1.0
@@ -28,6 +29,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.5.1
+	github.com/xenolf/lego v2.7.2+incompatible
 	go.uber.org/zap v1.14.1
 	golang.org/x/net v0.0.0-20200301022130-244492dfa37a
 	golang.org/x/tools v0.0.0-20200403190813-44a64ad78b9b
@@ -55,4 +57,5 @@ replace (
 	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible // Required by OLM
 	github.com/mattn/go-sqlite3 => github.com/mattn/go-sqlite3 v1.10.0
 	k8s.io/client-go => k8s.io/client-go v0.18.2
+
 )
