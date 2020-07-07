@@ -168,6 +168,7 @@ jobs:
 
     ## Image deploy/push stage jobs ##
 
+
     # Build and deploy arm64 ansible-operator docker image
     - stage: deploy
       <<: *deploy
