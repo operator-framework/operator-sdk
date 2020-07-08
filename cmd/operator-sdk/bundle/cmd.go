@@ -46,11 +46,10 @@ https://github.com/operator-framework/operator-registry/blob/master/docs/design/
 
 func NewCmdLegacy() *cobra.Command {
 	cmd := newCmd()
-	// TODO(estroz): uncomment this once OLM integration docs are updated.
-	// 	cmd.Long += `
-	// More information about the integration with OLM via SDK:
-	// https://sdk.operatorframework.io/docs/olm-integration/legacy
-	// `
+	cmd.Long += `
+More information about the integration with OLM via SDK:
+https://sdk.operatorframework.io/docs/olm-integration/legacy
+`
 	cmd.AddCommand(
 		newCreateCmd(),
 		newValidateCmdLegacy(),
