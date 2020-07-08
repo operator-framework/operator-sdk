@@ -13,7 +13,9 @@ VERSION = $(shell git describe --dirty --tags --always)
 GIT_COMMIT = $(shell git rev-parse HEAD)
 K8S_VERSION = v1.18.2
 REPO = github.com/operator-framework/operator-sdk
-BUILD_PATH = $(REPO)/cmd/operator-sdk
+SDK_BUILD_PATH = $(REPO)/cmd/operator-sdk
+ANSIBLE_BUILD_PATH = $(REPO)/cmd/ansible-operator
+HELM_BUILD_PATH = $(REPO)/cmd/helm-operator
 PKGS = $(shell go list ./... | grep -v /vendor/)
 TEST_PKGS = $(shell go list ./... | grep -v -E 'github.com/operator-framework/operator-sdk/test/')
 SOURCES = $(shell find . -name '*.go' -not -path "*/vendor/*")
@@ -68,7 +70,13 @@ help: ## Show this help screen
 all: format test build/operator-sdk ## Test and Build the Operator SDK
 
 install: ## Install the operator-sdk binary
-	$(Q)$(GOARGS) go install $(GO_BUILD_ARGS) $(BUILD_PATH)
+	$(Q)$(GOARGS) go install $(GO_BUILD_ARGS) $(SDK_BUILD_PATH)
+
+install-ansible: ## Install the ansible-operator binary
+	$(Q)$(GOARGS) go install $(GO_BUILD_ARGS) $(ANSIBLE_BUILD_PATH)
+
+install-helm: ## Install the helm-operator binary
+	$(Q)$(GOARGS) go install $(GO_BUILD_ARGS) $(HELM_BUILD_PATH)
 
 # Code management.
 .PHONY: format tidy clean cli-doc lint
@@ -127,7 +135,17 @@ release_builds := \
 	build/operator-sdk-$(VERSION)-x86_64-linux-gnu \
 	build/operator-sdk-$(VERSION)-x86_64-apple-darwin \
 	build/operator-sdk-$(VERSION)-ppc64le-linux-gnu \
-	build/operator-sdk-$(VERSION)-s390x-linux-gnu
+	build/operator-sdk-$(VERSION)-s390x-linux-gnu \
+	build/ansible-operator-$(VERSION)-aarch64-linux-gnu \
+	build/ansible-operator-$(VERSION)-x86_64-linux-gnu \
+	build/ansible-operator-$(VERSION)-x86_64-apple-darwin \
+	build/ansible-operator-$(VERSION)-ppc64le-linux-gnu \
+	build/ansible-operator-$(VERSION)-s390x-linux-gnu \
+	build/helm-operator-$(VERSION)-aarch64-linux-gnu \
+	build/helm-operator-$(VERSION)-x86_64-linux-gnu \
+	build/helm-operator-$(VERSION)-x86_64-apple-darwin \
+	build/helm-operator-$(VERSION)-ppc64le-linux-gnu \
+	build/helm-operator-$(VERSION)-s390x-linux-gnu
 
 release: clean $(release_builds) $(release_builds:=.asc) ## Release the Operator SDK
 
@@ -138,8 +156,28 @@ build/operator-sdk-%-ppc64le-linux-gnu: GOARGS = GOOS=linux GOARCH=ppc64le
 build/operator-sdk-%-s390x-linux-gnu: GOARGS = GOOS=linux GOARCH=s390x
 build/operator-sdk-%-linux-gnu: GOARGS = GOOS=linux
 
-build/%: $(SOURCES) ## Build the operator-sdk binary
-	$(Q)$(GOARGS) go build $(GO_BUILD_ARGS) -o $@ $(BUILD_PATH)
+build/ansible-operator-%-aarch64-linux-gnu: GOARGS = GOOS=linux GOARCH=arm64
+build/ansible-operator-%-x86_64-linux-gnu: GOARGS = GOOS=linux GOARCH=amd64
+build/ansible-operator-%-x86_64-apple-darwin: GOARGS = GOOS=darwin GOARCH=amd64
+build/ansible-operator-%-ppc64le-linux-gnu: GOARGS = GOOS=linux GOARCH=ppc64le
+build/ansible-operator-%-s390x-linux-gnu: GOARGS = GOOS=linux GOARCH=s390x
+build/ansible-operator-%-linux-gnu: GOARGS = GOOS=linux
+
+build/helm-operator-%-aarch64-linux-gnu: GOARGS = GOOS=linux GOARCH=arm64
+build/helm-operator-%-x86_64-linux-gnu: GOARGS = GOOS=linux GOARCH=amd64
+build/helm-operator-%-x86_64-apple-darwin: GOARGS = GOOS=darwin GOARCH=amd64
+build/helm-operator-%-ppc64le-linux-gnu: GOARGS = GOOS=linux GOARCH=ppc64le
+build/helm-operator-%-s390x-linux-gnu: GOARGS = GOOS=linux GOARCH=s390x
+build/helm-operator-%-linux-gnu: GOARGS = GOOS=linux
+
+build/operator-%: $(SOURCES) ## Build the operator-sdk binary
+	$(Q)$(GOARGS) go build $(GO_BUILD_ARGS) -o $@ $(SDK_BUILD_PATH)
+
+build/ansible-%: $(SOURCES) ## Build the ansible-operator binary
+	$(Q)$(GOARGS) go build $(GO_BUILD_ARGS) -o $@ $(ANSIBLE_BUILD_PATH)
+
+build/helm-%: $(SOURCES) ## Build the helm-operator binary
+	$(Q)$(GOARGS) go build $(GO_BUILD_ARGS) -o $@ $(HELM_BUILD_PATH)
 
 build/%.asc: ## Create release signatures for operator-sdk release binaries
 	$(Q){ \
@@ -169,7 +207,7 @@ image-push: image-push-ansible image-push-helm image-push-scorecard-proxy image-
 image-scaffold-ansible:
 	go run ./hack/image/ansible/scaffold-ansible-image.go
 
-image-build-ansible: build/operator-sdk-dev-linux-gnu
+image-build-ansible: build/ansible-operator-dev-linux-gnu
 	./hack/image/build-ansible-image.sh $(ANSIBLE_BASE_IMAGE):dev
 
 image-push-ansible:
@@ -184,7 +222,7 @@ image-push-ansible-multiarch:
 image-scaffold-helm:
 	go run ./hack/image/helm/scaffold-helm-image.go
 
-image-build-helm: build/operator-sdk-dev-linux-gnu
+image-build-helm: build/helm-operator-dev-linux-gnu
 	./hack/image/build-helm-image.sh $(HELM_BASE_IMAGE):dev
 
 image-push-helm:
