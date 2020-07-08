@@ -1,8 +1,3 @@
----
-title: Helm migration for the new Layout
-linkTitle: Migration 
-weight: 3
----
 
 This guide walks through an example of migrating a simple nginx-operator which was built by following the [legacy quick-start][quickstart] to the new layout.
 
