@@ -73,8 +73,8 @@
 ### Added
 
 - Added support for generating kube-state-metrics metrics for cluster-scoped resources. Also added `pkg/kubemetrics.NewNamespacedMetricsStores` and `pkg/kubemetrics.NewClusterScopedMetricsStores` to support this new feature. ([#2809](https://github.com/operator-framework/operator-sdk/pull/2809))
-- Added the [`generate csv --deploy-dir --apis-dir --crd-dir`](website/content/en/docs/cli/operator-sdk_generate_csv.md#options) flags to allow configuring input locations for operator manifests and API types directories to the CSV generator in lieu of a config. See the CLI reference doc or `generate csv -h` help text for more details. ([#2511](https://github.com/operator-framework/operator-sdk/pull/2511))
-- Added the [`generate csv --output-dir`](website/content/en/docs/cli/operator-sdk_generate_csv.md#options) flag to allow configuring the output location for the catalog directory. ([#2511](https://github.com/operator-framework/operator-sdk/pull/2511))
+- Added the [`generate csv --deploy-dir --apis-dir --crd-dir`](https://github.com/operator-framework/operator-sdk/blob/v0.17.0/website/content/en/docs/cli/operator-sdk_generate_csv.md#options) flags to allow configuring input locations for operator manifests and API types directories to the CSV generator in lieu of a config. See the CLI reference doc or `generate csv -h` help text for more details. ([#2511](https://github.com/operator-framework/operator-sdk/pull/2511))
+- Added the [`generate csv --output-dir`](https://github.com/operator-framework/operator-sdk/blob/v0.17.0/website/content/en/docs/cli/operator-sdk_generate_csv.md#options) flag to allow configuring the output location for the catalog directory. ([#2511](https://github.com/operator-framework/operator-sdk/pull/2511))
 - The flag `--watch-namespace` and `--operator-namespace` was added to `operator-sdk run --local`, `operator-sdk test --local` and `operator-sdk cleanup` commands in order to replace the flag `--namespace` which was  deprecated.([#2617](https://github.com/operator-framework/operator-sdk/pull/2617))
 - The methods `ctx.GetOperatorNamespace()` and `ctx.GetWatchNamespace()` was added `pkg/test` in order to replace `ctx.GetNamespace()` which is  deprecated. ([#2617](https://github.com/operator-framework/operator-sdk/pull/2617))
 - The `--crd-version` flag was added to the `new`, `add api`, `add crd`, and `generate crds` commands so that users can opt-in to `v1` CRDs. ([#2684](https://github.com/operator-framework/operator-sdk/pull/2684))
@@ -84,7 +84,7 @@
 - [`operator-sdk bundle validate`](./website/content/en/docs/cli/operator-sdk_bundle_validate.md) now accepts either an image tag or a directory arg. If the arg is a directory, its children must contain a `manifests/` and a `metadata/` directory. ([#2737](https://github.com/operator-framework/operator-sdk/pull/2737))
 - Add support to release SDK arm64 binaries and images. ([#2742](https://github.com/operator-framework/operator-sdk/pull/2715))
 - Add annotation `helm.operator-sdk/upgrade-force: "True"` to allow force resources replacement (`helm upgrade --force`) for Helm based-operators. ([#2773](https://github.com/operator-framework/operator-sdk/pull/2773))
-- The [`--make-manifests`](website/content/en/docs/cli/operator-sdk_generate_csv.md#options) flag directs `operator-sdk generate csv` to create a `manifests/` directory for the latest operator bundle, including CRDs. This flag is set by default. ([#2776](https://github.com/operator-framework/operator-sdk/pull/2776))
+- The [`--make-manifests`](https://github.com/operator-framework/operator-sdk/blob/v0.17.0/website/content/en/docs/cli/operator-sdk_generate_csv.md#options) flag directs `operator-sdk generate csv` to create a `manifests/` directory for the latest operator bundle, including CRDs. This flag is set by default. ([#2776](https://github.com/operator-framework/operator-sdk/pull/2776))
 - `operator-sdk run --olm` supports the new operator metadata format in `metadata/annotations.yaml`. ([#2840](https://github.com/operator-framework/operator-sdk/issues/2839))
 
 ### Changed
@@ -100,7 +100,7 @@
 - Upgrade Kind used for tests for Ansible based-operators from `1.16` to `1.17`. ([#2753](https://github.com/operator-framework/operator-sdk/pull/2715))
 - **Breaking Change:** Upgrade Molecule for Ansible-based operators from `2.22` to `3.0.2`. For instructions on upgrading your project to use the V3 Molecule version see [here](https://github.com/ansible-community/molecule/issues/2560).  ([#2749](https://github.com/operator-framework/operator-sdk/pull/2749))
 - **Breaking Change:** Changed Conditions from `map[ConditionType]Condition` to `[]Condition`. ([#2739](https://github.com/operator-framework/operator-sdk/pull/2739))
-- Setting [`operator-sdk generate csv --output-dir`](website/content/en/docs/cli/operator-sdk_generate_csv.md) will search the output directory for bundles before searching the default location. ([#2776](https://github.com/operator-framework/operator-sdk/pull/2776))
+- Setting [`operator-sdk generate csv --output-dir`](https://github.com/operator-framework/operator-sdk/blob/v0.17.0/website/content/en/docs/cli/operator-sdk_generate_csv.md) will search the output directory for bundles before searching the default location. ([#2776](https://github.com/operator-framework/operator-sdk/pull/2776))
 
 ### Deprecated
 
@@ -113,7 +113,7 @@
 
 - **Breaking Change:** remove `pkg/restmapper` which was deprecated in `v0.14.0`. Projects that use this package must switch to the `DynamicRESTMapper` implementation in [controller-runtime](https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/client/apiutil#NewDynamicRESTMapper). ([#2544](https://github.com/operator-framework/operator-sdk/pull/2544))
 - **Breaking Change:** remove deprecated `operator-sdk generate openapi` subcommand. ([#2740](https://github.com/operator-framework/operator-sdk/pull/2740))
-- **Breaking Change:** Removed CSV configuration file support (defaulting to deploy/olm-catalog/csv-config.yaml) in favor of specifying inputs to the generator via [`generate csv --deploy-dir --apis-dir --crd-dir`](website/content/en/docs/cli/operator-sdk_generate_csv.md#options), and configuring output locations via [`generate csv --output-dir`](website/content/en/docs/cli/operator-sdk_generate_csv.md#options). ([#2511](https://github.com/operator-framework/operator-sdk/pull/2511))
+- **Breaking Change:** Removed CSV configuration file support (defaulting to deploy/olm-catalog/csv-config.yaml) in favor of specifying inputs to the generator via [`generate csv --deploy-dir --apis-dir --crd-dir`](https://github.com/operator-framework/operator-sdk/blob/v0.17.0/website/content/en/docs/cli/operator-sdk_generate_csv.md#options), and configuring output locations via [`generate csv --output-dir`](https://github.com/operator-framework/operator-sdk/blob/v0.17.0/website/content/en/docs/cli/operator-sdk_generate_csv.md#options). ([#2511](https://github.com/operator-framework/operator-sdk/pull/2511))
 
 ### Bug Fixes
 
