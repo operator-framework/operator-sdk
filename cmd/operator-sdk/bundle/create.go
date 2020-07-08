@@ -126,6 +126,7 @@ bundle.Dockerfile for your latest operator version without building the image:
 
 			return nil
 		},
+		Deprecated: "use 'generate bundle' and 'docker build -f bundle.Dockerfile' instead",
 	}
 
 	c.addToFlagSet(cmd.Flags())
