@@ -332,6 +332,8 @@ jobs:
         - make image-push-scorecard-test-multiarch
 
     # Build and deploy scorecard-test-kuttl multi-arch manifest list
+    # only amd64 is supported in base kudobuilder/kuttl image
+    # which is why we only support amd64 for scorecard-test-kuttl
     - <<: *manifest-deploy
       name: Manifest list for scorecard-test-kuttl
       script:
