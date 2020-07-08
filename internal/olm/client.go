@@ -44,7 +44,6 @@ const (
 	olmOperatorName     = "olm-operator"
 	catalogOperatorName = "catalog-operator"
 	packageServerName   = "packageserver"
-	PackagedVersion     = "0.15.1"
 )
 
 type Client struct {
@@ -168,7 +167,6 @@ func (c Client) GetStatus(ctx context.Context, namespace, version string) (*olmr
 }
 
 func (c Client) getResources(ctx context.Context, version string) ([]unstructured.Unstructured, error) {
-
 	log.Infof("Fetching CRDs for version %q", version)
 	crdResources, err := c.getCRDs(ctx, version)
 	if err != nil {

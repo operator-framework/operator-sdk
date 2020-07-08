@@ -23,6 +23,10 @@ Release binaries will be built with the Go compiler version specified in the Ope
 
 As the Operator SDK interacts directly with the Kubernetes API, certain API features are assumed to exist in the target cluster. The currently supported Kubernetes version will always be listed in the SDK [prerequisites section][doc-readme-prereqs].
 
+### OLM versions
+
+With every release, the default OLM manifests shipped with SDK need to be updated with the latest successful OLM release version. To modify the default version of OLM manifests, change the `OLM_VERSION` variable in `Makefile` and run `make olm-manifests`. 
+
 ### Operating systems and architectures
 
 Release binaries will be built for the `x86_64` architecture for MacOS Darwin platform and for the following GNU Linux architectures: `x86_64`, `ppc64le`, `s390x`.

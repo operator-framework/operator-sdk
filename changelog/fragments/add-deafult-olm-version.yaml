@@ -1,0 +1,7 @@
+entries:
+  - description: >
+      Include a default version of OLM manifests with SDK. Add Makefile target to enable users to 
+      modify default OLM version and update manifests accordingly.
+    kind: "addition"
+    # Is this a breaking change?
+    breaking: true

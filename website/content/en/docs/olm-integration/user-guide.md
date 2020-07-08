@@ -46,7 +46,7 @@ subscriptions.operators.coreos.com                           CustomResourceDefin
 
 All resources listed should have status `Installed`.
 
-If OLM is not already installed, go ahead and install the latest version:
+If OLM is not already installed, go ahead and install using the `operator-sdk olm install` command.
 
 ```console
 $ operator-sdk olm install
@@ -64,6 +64,8 @@ subscriptions.operators.coreos.com                           CustomResourceDefin
 catalogsources.operators.coreos.com                          CustomResourceDefinition    Installed
 ...
 ```
+
+ The default version which is installed in the cluster, can be specified in the `Makefile`. The OLM manifests for the default version specified in the Makefile are pre-fetched and present inside the SDK repository as Go source code. Modifying the `OLM_VERSION` variable in Makefile and running `make olm-manifests` will update the current source code file `internal/olm/olm-bindata-x.x.x`, where `x.x.x` refers to the specified version of OLM manifests.
 
 **Note:**
 By default, `olm status` and `olm uninstall` auto-detect the OLM version installed in your cluster. This can fail if the installation is broken in some way, so the version of OLM can be overridden using the `--version` flag provided with these commands.
