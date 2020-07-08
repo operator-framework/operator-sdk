@@ -34,7 +34,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/pkg/handler"
 	"github.com/operator-framework/operator-sdk/pkg/helm/release"
-	"github.com/operator-framework/operator-sdk/pkg/internal/predicates"
+	"github.com/operator-framework/operator-sdk/pkg/internal/predicate"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 )
 
@@ -98,9 +98,6 @@ func watchDependentResources(mgr manager.Manager, r *HelmOperatorReconciler, c c
 	owner := &unstructured.Unstructured{}
 	owner.SetGroupVersionKind(r.GVK)
 
-	// using predefined functions for filtering events
-	dependentPredicate := predicates.DependentPredicateFuncs()
-
 	var m sync.RWMutex
 	watches := map[schema.GroupVersionKind]struct{}{}
 	releaseHook := func(release *rpb.Release) error {
@@ -130,13 +127,13 @@ func watchDependentResources(mgr manager.Manager, r *HelmOperatorReconciler, c c
 
 			if useOwnerRef { // Setup watch using owner references.
 				err = c.Watch(&source.Kind{Type: &u}, &crthandler.EnqueueRequestForOwner{OwnerType: owner},
-					dependentPredicate)
+					predicate.DependentPredicate{})
 				if err != nil {
 					return err
 				}
 			} else { // Setup watch using annotations.
 				err = c.Watch(&source.Kind{Type: &u}, &handler.EnqueueRequestForAnnotation{Type: gvk.GroupKind().String()},
-					dependentPredicate)
+					predicate.DependentPredicate{})
 				if err != nil {
 					return err
 				}

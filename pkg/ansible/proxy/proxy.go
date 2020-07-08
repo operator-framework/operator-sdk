@@ -29,11 +29,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
-	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/kubeconfig"
-	k8sRequest "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
-	osdkHandler "github.com/operator-framework/operator-sdk/pkg/handler"
-	"github.com/operator-framework/operator-sdk/pkg/internal/predicates"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -43,6 +38,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
+	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/kubeconfig"
+	k8sRequest "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
+	osdkHandler "github.com/operator-framework/operator-sdk/pkg/handler"
+	"github.com/operator-framework/operator-sdk/pkg/internal/predicate"
 )
 
 // This is the default timeout to wait for the cache to respond
@@ -226,9 +227,6 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 	u := &unstructured.Unstructured{}
 	u.SetGroupVersionKind(ownerMapping.GroupVersionKind)
 
-	// Adding dependentPredicate for avoiding reconciles when dependent objects are not changed by user
-	dependentPredicate := predicates.DependentPredicateFuncs()
-
 	// Add a watch to controller
 	if contents.WatchDependentResources && !contents.Blacklist[resource.GroupVersionKind()] {
 		// Store watch in map
@@ -245,7 +243,7 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 			log.Info("Watching child resource", "kind", resource.GroupVersionKind(),
 				"enqueue_kind", u.GroupVersionKind())
 			err := contents.Controller.Watch(&source.Kind{Type: resource},
-				&handler.EnqueueRequestForOwner{OwnerType: u}, dependentPredicate)
+				&handler.EnqueueRequestForOwner{OwnerType: u}, predicate.DependentPredicate{})
 			// Store watch in map
 			if err != nil {
 				log.Error(err, "Failed to watch child resource",
@@ -263,7 +261,7 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 			log.Info("Watching child resource", "kind", resource.GroupVersionKind(),
 				"enqueue_annotation_type", typeString)
 			err = contents.Controller.Watch(&source.Kind{Type: resource},
-				&osdkHandler.EnqueueRequestForAnnotation{Type: typeString}, dependentPredicate)
+				&osdkHandler.EnqueueRequestForAnnotation{Type: typeString}, predicate.DependentPredicate{})
 			if err != nil {
 				log.Error(err, "Failed to watch child resource",
 					"kind", resource.GroupVersionKind(), "enqueue_kind", u.GroupVersionKind())
