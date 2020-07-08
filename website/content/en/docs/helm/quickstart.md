@@ -224,7 +224,7 @@ INFO[0000] operator-sdk Version: v0.2.0+git
 
 OLM will manage creation of most if not all resources required to run your operator,
 using a bit of setup from other `operator-sdk` commands. Check out the OLM integration
-[user guide][olm-user-guide] for more information.
+[user guide][quickstart-bundle] for more information.
 
 ## Deploy the Nginx custom resource
 
@@ -313,4 +313,5 @@ For more information, refer [cli][addcli] doc.
 [helm-values]:https://helm.sh/docs/intro/using_helm/#customizing-the-chart-before-installing
 [helm-official]:https://helm.sh/docs/
 [addcli]: /docs/cli/operator-sdk_add_api
-[olm-user-guide]: /docs/olm-integration/user-guide
+<!-- TODO: update this link to the non-legacy doc once the helm plugin is publicly available -->
+[quickstart-bundle]: /docs/olm-integration/legacy/quickstart-bundle

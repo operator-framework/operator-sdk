@@ -243,7 +243,7 @@ INFO[0000] operator-sdk Version: 0.0.5+git
 
 OLM will manage creation of most if not all resources required to run your operator,
 using a bit of setup from other `operator-sdk` commands. Check out the OLM integration
-[user guide][olm-user-guide] for more information.
+[user guide][quickstart-bundle] for more information.
 
 ### Create a Memcached CR
 
@@ -376,4 +376,5 @@ For more information, refer [cli][addcli] doc.
 [docker-tool]:https://docs.docker.com/install/
 [kubectl-tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [addcli]: /docs/cli/operator-sdk_add_api
-[olm-user-guide]: /docs/olm-integration/user-guide
+<!-- TODO: update this link to the non-legacy doc once the ansible plugin is publicly available -->
+[quickstart-bundle]: /docs/olm-integration/legacy/quickstart-bundle

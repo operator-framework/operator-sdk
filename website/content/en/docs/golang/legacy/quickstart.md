@@ -319,6 +319,7 @@ if err != nil {
 		reqLogger.Info("Memcached resource not found. Ignoring since object must be deleted")
 		return reconcile.Result{}, nil
 	}
+}
 ...
 ```
 
@@ -411,7 +412,7 @@ You can use a specific kubeconfig via the flag `--kubeconfig=<path/to/kubeconfig
 
 OLM will manage creation of most if not all resources required to run your operator,
 using a bit of setup from other `operator-sdk` commands. Check out the OLM integration
-[user guide][olm-user-guide] for more information.
+[user guide][quickstart-bundle] for more information.
 
 ## Create a Memcached CR
 
@@ -639,19 +640,23 @@ By default, SDK operator projects are set up to [export metrics][metrics_doc] th
 
 ```go
 func serveCRMetrics(cfg *rest.Config) error {
-    ...
-	filteredGVK, err := k8sutil.GetGVKsFromAddToScheme(apis.AddToScheme)
+  ...
+
+  filteredGVK, err := k8sutil.GetGVKsFromAddToScheme(apis.AddToScheme)
 	if err != nil {
 		return err
 	}
 
-    ...
+  ...
 
 	// Generate and serve custom resource specific metrics.
 	err = kubemetrics.GenerateAndServeCRMetrics(cfg, ns, filteredGVK, metricsHost, operatorMetricsPort)
 	if err != nil {
 		return err
 	}
+
+  ...
+}
 ```
 
 The `kubemetrics.GenerateAndServeCRMetrics` function requires an RBAC rule to list all GroupVersionKinds in the list of watched namespaces, so you might need to [filter](https://github.com/operator-framework/operator-sdk/blob/v0.15.2/pkg/k8sutil/k8sutil.go#L161) the kinds returned by [`k8sutil.GetGVKsFromAddToScheme`](https://godoc.org/github.com/operator-framework/operator-sdk/pkg/k8sutil#GetGVKsFromAddToScheme) more stringently to avoid authorization errors such as `Failed to list *unstructured.Unstructured`.
@@ -860,6 +865,6 @@ When the operator is not running in a cluster, the Manager will return an error 
 [scheme_builder]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/scheme#Builder
 [typical-status-properties]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
 [godoc-conditions]: https://godoc.org/github.com/operator-framework/operator-sdk/pkg/status#Conditions
-[olm-user-guide]: /docs/olm-integration/user-guide
+[quickstart-bundle]: /docs/olm-integration/legacy/quickstart-bundle
 [new_docs]:/docs/golang/quickstart
 [new_CLI]:/docs/new-cli
