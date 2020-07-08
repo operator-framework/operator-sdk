@@ -91,7 +91,6 @@ endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 `
 
-	//nolint:lll
 	makefileBundleFragment = `
 # Generate bundle manifests and metadata, then validate generated files.
 bundle: manifests

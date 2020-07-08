@@ -39,7 +39,6 @@ func (m *MoleculeClusterVerify) GetInput() (input.Input, error) {
 	return m.Input, nil
 }
 
-//nolint:lll
 const moleculeClusterVerifyAnsibleTmpl = `---
 # This is an example playbook to execute Ansible tests.
 - name: Verify

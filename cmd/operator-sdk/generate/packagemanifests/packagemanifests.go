@@ -46,7 +46,6 @@ More information on the package manifests format:
 https://github.com/operator-framework/operator-registry/#manifest-format
 `
 
-	//nolint:lll
 	examples = `
   # Generate manifests then create the package manifests base:
   $ make manifests

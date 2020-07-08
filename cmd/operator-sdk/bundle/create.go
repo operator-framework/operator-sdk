@@ -43,7 +43,6 @@ type bundleCreateCmd struct {
 
 // newCreateCmd returns a command that will build operator bundle image or
 // generate metadata for them.
-//nolint:lll
 func newCreateCmd() *cobra.Command {
 	c := &bundleCreateCmd{}
 

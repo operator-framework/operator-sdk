@@ -302,17 +302,15 @@ func (g Generator) generateNonGo() (map[string][]byte, error) {
 	return fileMap, nil
 }
 
-//nolint:lll
 func convertv1Tov1beta1CustomResourceDefinition(in *apiextv1.CustomResourceDefinition) (*apiextv1beta1.CustomResourceDefinition, error) {
 	var unversioned apiext.CustomResourceDefinition
-	//nolint:lll
 	if err := apiextv1.Convert_v1_CustomResourceDefinition_To_apiextensions_CustomResourceDefinition(in, &unversioned, nil); err != nil {
 		return nil, err
 	}
+
 	var out apiextv1beta1.CustomResourceDefinition
 	out.TypeMeta.APIVersion = apiextv1beta1.SchemeGroupVersion.String()
 	out.TypeMeta.Kind = "CustomResourceDefinition"
-	//nolint:lll
 	if err := apiextv1beta1.Convert_apiextensions_CustomResourceDefinition_To_v1beta1_CustomResourceDefinition(&unversioned, &out, nil); err != nil {
 		return nil, err
 	}

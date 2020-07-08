@@ -249,7 +249,6 @@ func isPathIgnore(path string) bool {
 	return path == ignoredTag
 }
 
-//nolint:lll
 // From https://github.com/openshift/console/blob/feabd61/frontend/packages/operator-lifecycle-manager/src/components/descriptors/types.ts#L3-L26
 var specXDescriptors = map[string]string{
 	"size":                 "urn:alm:descriptor:com.tectonic.ui:podCount",
@@ -281,7 +280,6 @@ func getSpecXDescriptorsByPath(existingXDescs []string, path string) []string {
 	return getXDescriptorsByPath(specXDescriptors, existingXDescs, path)
 }
 
-//nolint:lll // the  following line is  a reference, if split it will not be clear if the whole line is a link
 // From https://github.com/openshift/console/blob/feabd61/frontend/packages/operator-lifecycle-manager/src/components/descriptors/types.ts#L28-L39
 var statusXDescriptors = map[string]string{
 	"podStatuses":        "urn:alm:descriptor:com.tectonic.ui:podStatuses",
