@@ -31,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	scapiv1alpha3 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
@@ -46,7 +47,7 @@ const (
 )
 
 // BundleValidationTest validates an on-disk bundle
-func BundleValidationTest(dir string) scapiv1alpha3.TestStatus {
+func BundleValidationTest(dir string, labels registryutil.Labels) scapiv1alpha3.TestStatus {
 	r := scapiv1alpha3.TestResult{}
 	r.Name = OLMBundleValidationTest
 	r.State = scapiv1alpha3.PassState
@@ -81,9 +82,15 @@ func BundleValidationTest(dir string) scapiv1alpha3.TestStatus {
 		r.Errors = append(r.Errors, err.Error())
 	}
 
+	// Since a custom manifests directory may be used, check labels for its base
+	// path. Use the default base path if that label doesn't exist.
+	manifestsDir := registrybundle.ManifestsDir
+	if value, hasLabel := labels.GetManifestsDir(); hasLabel {
+		manifestsDir = value
+	}
+
 	// Validate bundle content.
-	manifestsDir := filepath.Join(dir, registrybundle.ManifestsDir)
-	bundle, err := apimanifests.GetBundleFromDir(manifestsDir)
+	bundle, err := apimanifests.GetBundleFromDir(filepath.Join(dir, manifestsDir))
 	if err != nil {
 		r.State = scapiv1alpha3.FailState
 		r.Errors = append(r.Errors, err.Error())

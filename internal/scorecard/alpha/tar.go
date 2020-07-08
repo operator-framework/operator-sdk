@@ -22,50 +22,27 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
-// CreateTarFile walks paths to create tar file tarName
-func CreateTarFile(tarName string, paths []string) (err error) {
-	tarFile, err := os.Create(tarName)
-	if err != nil {
+func WriteToTar(tw *tar.Writer, r io.Reader, hdr *tar.Header) error {
+	if err := tw.WriteHeader(hdr); err != nil {
 		return err
 	}
-	defer func() {
-		err = tarFile.Close()
-	}()
+	_, err := io.Copy(tw, r)
+	return err
+}
 
-	absTar, err := filepath.Abs(tarName)
-	if err != nil {
-		return err
-	}
-
-	// enable compression if file ends in .gz
-	tw := tar.NewWriter(tarFile)
-	if strings.HasSuffix(tarName, ".gz") || strings.HasSuffix(tarName, ".gzip") {
-		gz := gzip.NewWriter(tarFile)
-		defer gz.Close()
-		tw = tar.NewWriter(gz)
-	}
-	defer tw.Close()
-
+// WritePathsToTar walks paths to create tar file tarName
+func WritePathsToTar(tw *tar.Writer, paths []string) (err error) {
 	// walk each specified path and add encountered file to tar
 	for _, path := range paths {
-		// validate path
 		path = filepath.Clean(path)
-		absPath, err := filepath.Abs(path)
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-		if absPath == absTar {
-			continue
-		}
-		if absPath == filepath.Dir(absTar) {
-			continue
-		}
 
 		walker := func(file string, finfo os.FileInfo, err error) error {
-			if err != nil {
+			if err != nil || file == path {
 				return err
 			}
 
@@ -83,14 +60,13 @@ func CreateTarFile(tarName string, paths []string) (err error) {
 				}
 			}
 			// ensure header has relative file path
-			hdr.Name = relFilePath
-
-			hdr.Name = strings.TrimPrefix(relFilePath, path)
+			hdr.Name = strings.TrimPrefix(relFilePath, path+string(filepath.Separator))
 			if err := tw.WriteHeader(hdr); err != nil {
 				return err
 			}
+
 			// if path is a dir, dont continue
-			if finfo.Mode().IsDir() {
+			if finfo.IsDir() {
 				return nil
 			}
 
@@ -99,12 +75,11 @@ func CreateTarFile(tarName string, paths []string) (err error) {
 			if err != nil {
 				return err
 			}
-			defer srcFile.Close()
 			_, err = io.Copy(tw, srcFile)
-			if err != nil {
-				return err
+			if err := srcFile.Close(); err != nil {
+				log.Error(err)
 			}
-			return nil
+			return err
 		}
 
 		// build tar
@@ -123,7 +98,9 @@ func UntarFile(tarName, target string) (err error) {
 		return err
 	}
 	defer func() {
-		err = tarFile.Close()
+		if err := tarFile.Close(); err != nil {
+			log.Error(err)
+		}
 	}()
 
 	absPath, err := filepath.Abs(target)
@@ -131,14 +108,20 @@ func UntarFile(tarName, target string) (err error) {
 		return err
 	}
 
-	tr := tar.NewReader(tarFile)
-	if strings.HasSuffix(tarName, ".gz") || strings.HasSuffix(tarName, ".gzip") {
+	var tr *tar.Reader
+	if isFileGzipped(tarName) {
 		gz, err := gzip.NewReader(tarFile)
 		if err != nil {
 			return err
 		}
-		defer gz.Close()
+		defer func() {
+			if err := gz.Close(); err != nil {
+				log.Error(err)
+			}
+		}()
 		tr = tar.NewReader(gz)
+	} else {
+		tr = tar.NewReader(tarFile)
 	}
 
 	// untar each segment
@@ -187,4 +170,32 @@ func UntarFile(tarName, target string) (err error) {
 	}
 	return nil
 
+}
+
+// isFileGzipped returns true if file is compressed with gzip.
+func isFileGzipped(file string) bool {
+	return strings.HasSuffix(file, ".gz") || strings.HasSuffix(file, ".gzip")
+}
+
+func newTarFileHeader(path string, size int64) *tar.Header {
+	return &tar.Header{
+		Typeflag: tar.TypeReg,
+		Name:     filepath.Clean(path),
+		ModTime:  time.Now(),
+		Mode:     0666,
+		Size:     size,
+		Uid:      os.Getuid(),
+		Gid:      os.Getgid(),
+	}
+}
+
+func newTarDirHeader(path string) *tar.Header {
+	return &tar.Header{
+		Typeflag: tar.TypeDir,
+		Name:     filepath.Clean(path) + "/",
+		ModTime:  time.Now(),
+		Mode:     0700,
+		Uid:      os.Getuid(),
+		Gid:      os.Getgid(),
+	}
 }

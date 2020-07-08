@@ -22,6 +22,7 @@ import (
 
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 
+	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
 	scorecard "github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
 	"github.com/operator-framework/operator-sdk/internal/scorecard/alpha/tests"
 	scapiv1alpha3 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
@@ -48,11 +49,16 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
+	labels, err := registryutil.GetMetadataLabels(scorecard.PodLabelsDir)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
 	var result scapiv1alpha3.TestStatus
 
 	switch entrypoint[0] {
 	case tests.OLMBundleValidationTest:
-		result = tests.BundleValidationTest(scorecard.PodBundleRoot)
+		result = tests.BundleValidationTest(scorecard.PodBundleRoot, labels)
 	case tests.OLMCRDsHaveValidationTest:
 		result = tests.CRDsHaveValidationTest(cfg)
 	case tests.OLMCRDsHaveResourcesTest:

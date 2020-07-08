@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 
+	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
 	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
 
@@ -45,6 +46,7 @@ type PodTestRunner struct {
 	Namespace      string
 	ServiceAccount string
 	BundlePath     string
+	BundleLabels   registryutil.Labels
 	Client         kubernetes.Interface
 
 	configMapName string
