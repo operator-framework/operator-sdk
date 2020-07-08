@@ -14,6 +14,9 @@ native software, like the Operator Lifecycle Manager.
 More information about operator bundles and metadata:
 https://github.com/operator-framework/operator-registry/blob/master/docs/design/operator-bundle.md
 
+More information about the integration with OLM via SDK:
+https://sdk.operatorframework.io/docs/olm-integration/legacy
+
 
 ### Options
 
