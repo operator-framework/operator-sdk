@@ -1,4 +1,4 @@
-// Copyright 2019 The Operator-SDK Authors
+// Copyright 2020 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,30 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package helm
+package main
 
 import (
-	"path/filepath"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/pflag"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
+	"github.com/operator-framework/operator-sdk/pkg/ansible"
+	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
+	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 )
 
-// Entrypoint - entrypoint script
-type Entrypoint struct {
-	input.Input
-}
+func main() {
+	flags := aoflags.AddTo(pflag.CommandLine)
+	pflag.Parse()
+	logf.SetLogger(zap.Logger())
 
-func (e *Entrypoint) GetInput() (input.Input, error) {
-	if e.Path == "" {
-		e.Path = filepath.Join("bin", "entrypoint")
+	if err := ansible.Run(flags); err != nil {
+		log.Fatal(err)
 	}
-	e.TemplateBody = entrypointTmpl
-	e.IsExec = true
-	return e.Input, nil
 }
-
-const entrypointTmpl = `#!/bin/sh -e
-
-cd $HOME
-exec ${OPERATOR} --watches-file=$HOME/watches.yaml $@
-`
