@@ -44,7 +44,6 @@ func (s *Register) GetInput() (input.Input, error) {
 	return s.Input, nil
 }
 
-//nolint:lll
 const registerTemplate = `// NOTE: Boilerplate only.  Ignore this file.
 
 // Package {{.Resource.Version}} contains API Schema definitions for the {{ .Resource.Group }} {{.Resource.Version}} API group

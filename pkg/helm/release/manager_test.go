@@ -142,7 +142,7 @@ func TestManagerGenerateStrategicMergePatch(t *testing.T) {
 			o2: newTestDeployment([]v1.Container{
 				{Name: "test1"},
 			}),
-			patch:     `{"spec":{"template":{"spec":{"$setElementOrder/containers":[{"name":"test1"}]}}}}`, //nolint:lll
+			patch:     `{"spec":{"template":{"spec":{"$setElementOrder/containers":[{"name":"test1"}]}}}}`,
 			patchType: apitypes.StrategicMergePatchType,
 		},
 		{
@@ -153,7 +153,7 @@ func TestManagerGenerateStrategicMergePatch(t *testing.T) {
 				{Name: "test1"},
 				{Name: "test2"},
 			}),
-			patch:     `{"spec":{"template":{"spec":{"$setElementOrder/containers":[{"name":"test1"},{"name":"test2"}],"containers":[{"name":"test2","resources":{}}]}}}}`, //nolint:lll
+			patch:     `{"spec":{"template":{"spec":{"$setElementOrder/containers":[{"name":"test1"},{"name":"test2"}],"containers":[{"name":"test2","resources":{}}]}}}}`,
 			patchType: apitypes.StrategicMergePatchType,
 		},
 		{
@@ -173,7 +173,7 @@ func TestManagerGenerateStrategicMergePatch(t *testing.T) {
 			o2: newTestDeployment([]v1.Container{
 				{Name: "test2"},
 			}),
-			patch:     `{"spec":{"template":{"spec":{"$setElementOrder/containers":[{"name":"test2"}],"containers":[{"name":"test2","resources":{}}]}}}}`, //nolint:lll
+			patch:     `{"spec":{"template":{"spec":{"$setElementOrder/containers":[{"name":"test2"}],"containers":[{"name":"test2","resources":{}}]}}}}`,
 			patchType: apitypes.StrategicMergePatchType,
 		},
 		{
@@ -196,7 +196,7 @@ func TestManagerGenerateStrategicMergePatch(t *testing.T) {
 				},
 				Spec: appsv1.DeploymentSpec{},
 			},
-			patch:     `{}`, //nolint:lll
+			patch:     `{}`,
 			patchType: apitypes.StrategicMergePatchType,
 		},
 	}

@@ -100,7 +100,6 @@ func (c *Manifests) UpdateFromDirs(deployDir, crdsDir string) error {
 
 	// Add CRDs from input.
 	if isDirExist(crdsDir) {
-		//nolint:lll
 		c.V1CustomResourceDefinitions, c.V1beta1CustomResourceDefinitions, err = k8sutil.GetCustomResourceDefinitions(crdsDir)
 		if err != nil {
 			return fmt.Errorf("error adding CustomResourceDefinitions to manifest collector: %v", err)

@@ -111,7 +111,6 @@ func GetCustomResourceDefinitions(crdsDir string) (
 
 // DefinitionsForV1CustomResourceDefinitions returns definition keys for all
 // custom resource versions in each crd in crds.
-//nolint:lll
 func DefinitionsForV1CustomResourceDefinitions(crds ...apiextv1.CustomResourceDefinition) (keys []registry.DefinitionKey) {
 	for _, crd := range crds {
 		for _, ver := range crd.Spec.Versions {
@@ -128,7 +127,6 @@ func DefinitionsForV1CustomResourceDefinitions(crds ...apiextv1.CustomResourceDe
 
 // DefinitionsForV1beta1CustomResourceDefinitions returns definition keys for all
 // custom resource versions in each crd in crds.
-//nolint:lll
 func DefinitionsForV1beta1CustomResourceDefinitions(crds ...apiextv1beta1.CustomResourceDefinition) (keys []registry.DefinitionKey) {
 	for _, crd := range crds {
 		if len(crd.Spec.Versions) == 0 {
@@ -166,7 +164,6 @@ func GVKsForV1CustomResourceDefinitions(crds ...apiextv1.CustomResourceDefinitio
 
 // GVKsForV1beta1CustomResourceDefinitions returns GroupVersionKind's for all
 // custom resource versions in each crd in crds.
-//nolint:lll
 func GVKsForV1beta1CustomResourceDefinitions(crds ...apiextv1beta1.CustomResourceDefinition) (gvks []schema.GroupVersionKind) {
 	for _, key := range DefinitionsForV1beta1CustomResourceDefinitions(crds...) {
 		gvks = append(gvks, schema.GroupVersionKind{
@@ -264,17 +261,15 @@ func (vs CRDVersions) Less(i, j int) bool {
 }
 func (vs CRDVersions) Swap(i, j int) { vs[i], vs[j] = vs[j], vs[i] }
 
-//nolint:lll
 func Convertv1beta1Tov1CustomResourceDefinition(in *apiextv1beta1.CustomResourceDefinition) (*apiextv1.CustomResourceDefinition, error) {
 	var unversioned apiext.CustomResourceDefinition
-	//nolint:lll
 	if err := apiextv1beta1.Convert_v1beta1_CustomResourceDefinition_To_apiextensions_CustomResourceDefinition(in, &unversioned, nil); err != nil {
 		return nil, err
 	}
+
 	var out apiextv1.CustomResourceDefinition
 	out.TypeMeta.APIVersion = apiextv1.SchemeGroupVersion.String()
 	out.TypeMeta.Kind = "CustomResourceDefinition"
-	//nolint:lll
 	if err := apiextv1.Convert_apiextensions_CustomResourceDefinition_To_v1_CustomResourceDefinition(&unversioned, &out, nil); err != nil {
 		return nil, err
 	}

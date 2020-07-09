@@ -36,7 +36,6 @@ func (e *Entrypoint) GetInput() (input.Input, error) {
 	return e.Input, nil
 }
 
-//nolint:lll //affects the template fi the line is trimmed
 const entrypointTmpl = `#!/bin/sh -e
 
 exec ${OPERATOR} $@

@@ -176,7 +176,6 @@ func (g *gitPullRequestNumberGetter) GetPullRequestNumberFor(filename string) (u
 }
 
 func (g *gitPullRequestNumberGetter) getCommitMessage(filename string) (string, error) {
-	//nolint:lll
 	args := fmt.Sprintf("log --follow --pretty=format:%%s --diff-filter=A --find-renames=90%% %s", filename)
 	line, err := exec.Command("git", strings.Split(args, " ")...).CombinedOutput()
 	if err != nil {

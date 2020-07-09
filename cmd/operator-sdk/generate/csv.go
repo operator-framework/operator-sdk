@@ -42,7 +42,6 @@ type csvCmd struct {
 	interactive      bool
 }
 
-//nolint:lll
 func newGenerateCSVCmd() *cobra.Command {
 	c := &csvCmd{}
 	cmd := &cobra.Command{

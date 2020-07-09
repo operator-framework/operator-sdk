@@ -119,7 +119,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
-	//nolint:lll
+
 	tmplFiles := map[string]string{
 		filepath.Join(localSDKPath, "example/memcached-operator/memcached_controller.go.tmpl"): "pkg/controller/memcached/memcached_controller.go",
 		filepath.Join(localSDKPath, "test/e2e/_incluster-test-code/main_test.go"):              "test/e2e/main_test.go",

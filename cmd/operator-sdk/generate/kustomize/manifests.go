@@ -37,7 +37,6 @@ This command will interactively ask for UI metadata, an important component of m
 by default unless a base already exists or you set '--interactive=false'.
 `
 
-//nolint:lll
 const examples = `
   $ operator-sdk generate kustomize manifests
 

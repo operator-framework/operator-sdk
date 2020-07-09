@@ -30,7 +30,6 @@ var (
 	crdVersion      string
 )
 
-//nolint:lll
 func newAddControllerCmd() *cobra.Command {
 	controllerCmd := &cobra.Command{
 		Use:   "controller",
@@ -38,14 +37,14 @@ func newAddControllerCmd() *cobra.Command {
 		Long: `
 Add a new controller package to your operator project.
 
-This command creates a new controller package under pkg/controller/<kind> that, by default, reconciles on a custom resource for the specified apiversion and kind. The controller will expect to use the custom resource type that should already be defined under pkg/apis/<group>/<version> via the "operator-sdk add api" command. 
+This command creates a new controller package under pkg/controller/<kind> that, by default, reconciles on a custom resource for the specified apiversion and kind. The controller will expect to use the custom resource type that should already be defined under pkg/apis/<group>/<version> via the "operator-sdk add api" command.
 
 Note that, if the controller pkg for that Kind already exists at pkg/controller/<kind> then the command will not overwrite and return an error.
 
 This command MUST be run from the project root directory.`,
 
 		Example: `
-The following example will create a controller to manage, watch and reconcile as primary resource the <v1.AppService> from the domain <app.example.com>.    
+The following example will create a controller to manage, watch and reconcile as primary resource the <v1.AppService> from the domain <app.example.com>.
 
 Example:
 
@@ -57,7 +56,7 @@ Example:
 	│   └── appservice_controller.go
 	└── controller.go
 
-The following example will create a controller to manage, watch and reconcile as a primary resource the <v1.Deployment> from the domain <k8s.io.api>, which is not defined in the project (external). Note that, it can be used to create controllers for any External API. 	
+The following example will create a controller to manage, watch and reconcile as a primary resource the <v1.Deployment> from the domain <k8s.io.api>, which is not defined in the project (external). Note that, it can be used to create controllers for any External API.
 
 Example:
 
@@ -66,7 +65,7 @@ Example:
 	pkg/controller/
 	├── add_deployment.go
 	├── deployment
-	│   └── deployment_controller.go 
+	│   └── deployment_controller.go
 	└── controller.go
 		`,
 		RunE: controllerRun,

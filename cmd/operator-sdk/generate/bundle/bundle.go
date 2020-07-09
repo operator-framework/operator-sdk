@@ -47,7 +47,6 @@ More information on bundles:
 https://github.com/operator-framework/operator-registry/#manifest-format
 `
 
-	//nolint:lll
 	examples = `
   # Generate bundle files and build your bundle image with these 'make' recipes:
   $ make bundle
