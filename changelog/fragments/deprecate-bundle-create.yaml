@@ -1,6 +1,0 @@
-entries:
-  - description: >
-      `bundle create` is deprecated in favor of a combination of `generate bundle`
-      and `docker build -f bundle.Dockerfile ...`
-    kind: "deprecation"
-    breaking: false

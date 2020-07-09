@@ -1,4 +1,0 @@
-entries:
-  - description: >
-      Bump api validation library to fix "CRD key not found" [validation bug](https://github.com/operator-framework/api/pull/39)
-    kind: bugfix

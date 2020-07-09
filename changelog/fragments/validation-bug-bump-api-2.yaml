@@ -1,5 +1,0 @@
-entries:
-  - description: >
-      Fix bug in `bundle validate` that erroneously causes errors when a CRD manifest contains versions
-      not present in a bundled CSV by bumping the api library version.
-    kind: bugfix

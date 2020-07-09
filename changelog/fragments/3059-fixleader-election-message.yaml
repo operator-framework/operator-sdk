@@ -1,4 +1,0 @@
-entries:
-  - description: fix leader election of follower showing that an old leader will be evicted when the current leader is healthy
-    kind: bugfix
-    breaking: false

@@ -1,3 +1,54 @@
+## v0.19.0
+
+### Additions
+
+- Add "panic" level for --zap-stacktrace-level (allows "debug", "info", "error", "panic"). ([#3040](https://github.com/operator-framework/operator-sdk/pull/3040))
+- The `operator-sdk` binary has a new CLI workflow and project layout for scaffolding Go operators that is aligned with Kubebuilder's CLI and project layout. See the new [Quickstart Guide](https://master.sdk.operatorframework.io/docs/golang/quickstart) and the new [CLI reference](https://master.sdk.operatorframework.io/docs/new-cli) for more details. ([#3190](https://github.com/operator-framework/operator-sdk/pull/3190))
+- `bundle validate` can now use a containerd image ("none") tool to unpack images, removing the need for an external image tool like docker/podman. ([#3222](https://github.com/operator-framework/operator-sdk/pull/3222))
+- The SDK `scorecard` command adds a new test image, scorecard-test-kuttl, that allows end users to write and execute kuttl based tests. ([#3278](https://github.com/operator-framework/operator-sdk/pull/3278))
+- Add "--olm-namespace" flag to olm subcommands (install, uninstall) to allow users to specify the  namespace where olm is to be installed or uninstalled. ([#3300](https://github.com/operator-framework/operator-sdk/pull/3300))
+- Add sdk annotations to bundle resources (CSVs, `annotations.yaml` and `bundle.dockerfile`). ([#3120](https://github.com/operator-framework/operator-sdk/pull/3120))
+- Add "--version" flag to olm subcommands (uninstall, status) to allow users to override the version of olm inferred from packageserver's CSV. ([#3279](https://github.com/operator-framework/operator-sdk/pull/3279))
+- Alias `run packagemanifests` as `run pm`. ([#3314](https://github.com/operator-framework/operator-sdk/pull/3314))
+- add `generate kustomize manifests` subcommand for new project layouts. ([#3258](https://github.com/operator-framework/operator-sdk/pull/3258))
+- add `generate packagemanifests` subcommand for legacy project layouts. ([#3149](https://github.com/operator-framework/operator-sdk/pull/3149))
+- add `generate packagemanifests` subcommand for new project layouts. ([#3096](https://github.com/operator-framework/operator-sdk/pull/3096))
+- Added predicate filtering function for labels based on selectors specified in watches.yaml.  Events of resources that match the selector's labels will be skipped. ([#3275](https://github.com/operator-framework/operator-sdk/pull/3275))
+- Add builds for `ansible-operator` and `helm-operator` binaries. ([#3363](https://github.com/operator-framework/operator-sdk/pull/3363))
+- Add new scorecard APIVersion "osdk.openshift.io/v1alpha3" and types. ([#3125](https://github.com/operator-framework/operator-sdk/pull/3125))
+
+### Changes
+
+- **Breaking change**: Prevent the ansible-operator from mangling variables containing the uppercase representations of special words (e.g IP, HTTP, etc). ([#3265](https://github.com/operator-framework/operator-sdk/pull/3265))
+- **Breaking change**: In Helm-based operators, the `UpdateSuccessful` condition reason was renamed to `UpgradeSuccessful` to better align with Helm nomenclature. ([#3345](https://github.com/operator-framework/operator-sdk/pull/3345))
+- **Breaking change**: In Helm-based operators, the `UpdateError` condition reason was renamed to `UpgradeError` to better align with Helm nomenclature. ([#3269](https://github.com/operator-framework/operator-sdk/pull/3269))
+- Upgrade Helm dependency for Helm based-Operators from `v3.2.0` to `v3.2.4` in order to fix CVE-2020-4053. ([#3313](https://github.com/operator-framework/operator-sdk/pull/3313))
+- Change default value of `--overwrite` flag in `operator-sdk generate bundle` to true. ([#3280](https://github.com/operator-framework/operator-sdk/pull/3280))
+- The scorecard-test-kuttl image was updated to be based off the v0.5.1 version of kudobuilder/kuttl.  This update fixes bugs found in kuttl v0.5.0. ([#3369](https://github.com/operator-framework/operator-sdk/pull/3369))
+- The `alpha scorecard` subcommand now outputs results as a [scorecard.operatorframework.io/v1alpha3 Test](https://godoc.org/github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3#Test) instead of a [scorecard.operatorframework.io/v1alpha2 ScorecardOutput](https://godoc.org/github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2#ScorecardOutput). As a result, the `--list` argument will now just output a list of tests, without associated labels. ([#3208](https://github.com/operator-framework/operator-sdk/pull/3208))
+
+### Removals
+
+- The `operator-sdk new` command no longer supports scaffolding new Go projects with the `--type=Go` flag.  To scaffold new projects, users are expected to use `operator-sdk init` as part of the  [new CLI](https://master.sdk.operatorframework.io/docs/new-cli) for Go operators. ([#3190](https://github.com/operator-framework/operator-sdk/pull/3190))
+
+### Deprecations
+
+- With the introduction of the new [Kubebuilder aligned CLI](https://master.sdk.operatorframework.io/docs/new-cli)  and project layout for Go operators, the [old CLI](https://sdk.operatorframework.io/docs/cli)  will still continue to work for Go projects scaffolded in the old layout with `operator-sdk new`. However the old CLI is now deprecated and will be removed in a future release. ([#3190](https://github.com/operator-framework/operator-sdk/pull/3190))
+- The migrate sub-command is deprecated. ([#3319](https://github.com/operator-framework/operator-sdk/pull/3319))
+- Deprecate 'operator-sdk add crd'. Use 'operator-sdk add api' instead. ([#3180](https://github.com/operator-framework/operator-sdk/pull/3180))
+- `bundle create` is deprecated in favor of a combination of `generate bundle` and `docker build -f bundle.Dockerfile ...`. ([#3323](https://github.com/operator-framework/operator-sdk/pull/3323))
+- `generate csv` is deprecated in favor of `generate bundle` or `generate packagemanifests`. ([#3322](https://github.com/operator-framework/operator-sdk/pull/3322))
+- The flag `--git-init` in the `new` command was deprecated. ([#3241](https://github.com/operator-framework/operator-sdk/pull/3241))
+
+### Bug Fixes
+
+- fix leader election of follower showing that an old leader will be evicted when the current leader is healthy. ([#3059](https://github.com/operator-framework/operator-sdk/pull/3059))
+- Fix bug in `operator-sdk bundle validation` that causes erroneous validation errors when the number of annotations in an existing `annotations.yaml` does not equal the number of default bundle annotations by upgrading the `operator-registry` dependency. ([#3221](https://github.com/operator-framework/operator-sdk/pull/3221))
+- Fix the download URL for the `tini` binary on ARM64 for the ansible operator base image. ([#3234](https://github.com/operator-framework/operator-sdk/pull/3234))
+- The `generate crds` subcommand now checks for the existence of the `pkg/apis` directory and logs a descriptive fatal error message if it does not exist or is not a directory. ([#3091](https://github.com/operator-framework/operator-sdk/pull/3091))
+- Fix bug in `bundle validate` that erroneously causes errors when a CRD manifest contains versions not present in a bundled CSV by bumping the api library version. ([#3282](https://github.com/operator-framework/operator-sdk/pull/3282))
+- Bump api validation library to fix "CRD key not found" [validation bug](https://github.com/operator-framework/api/pull/39). ([#3154](https://github.com/operator-framework/operator-sdk/pull/3154))
+
 ## v0.18.1
 
 ### Bug Fixes

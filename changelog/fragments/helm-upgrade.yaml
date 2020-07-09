@@ -1,5 +1,0 @@
-entries:
-  - description: >
-      Upgrade Helm dependency for Helm based-Operators from `v3.2.0` to `v3.2.4` in order to fix CVE-2020-4053.
-    kind: "change"
-    breaking: false

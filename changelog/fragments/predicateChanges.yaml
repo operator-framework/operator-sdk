@@ -1,8 +1,0 @@
-entries:
-  - description: >
-      Added predicate filtering function for labels based on selectors specified in watches.yaml. 
-      Events of resources that match the selector's labels will be skipped.
-
-    kind: "addition"
-
-    breaking: false

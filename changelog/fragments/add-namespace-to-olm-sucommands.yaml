@@ -1,5 +1,0 @@
-entries:
-  - description: >
-      Add "--olm-namespace" flag to olm subcommands (install, uninstall) to allow users to specify the 
-      namespace where olm is to be installed or uninstalled.
-    kind: "addition"

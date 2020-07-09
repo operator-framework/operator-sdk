@@ -1,5 +1,0 @@
-entries:
-  - description: >
-      `generate csv` is deprecated in favor of `generate bundle` or `generate packagemanifests`
-    kind: "deprecation"
-    breaking: false
