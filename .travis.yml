@@ -168,6 +168,7 @@ jobs:
 
     ## Image deploy/push stage jobs ##
 
+
     # Build and deploy arm64 ansible-operator docker image
     - stage: deploy
       <<: *deploy
@@ -297,6 +298,14 @@ jobs:
         - make image-build-scorecard-test
         - make image-push-scorecard-test
 
+    # Build and deploy amd64 scorecard-test-kuttl docker image
+    - <<: *deploy
+      name: Docker image for scorecard-test-kuttl (amd64)
+      arch: amd64
+      script:
+        - make image-build-scorecard-test-kuttl
+        - make image-push-scorecard-test-kuttl
+
     # Build and deploy ansible multi-arch manifest list
     - stage: deploy-manifest-multiarch
       <<: *manifest-deploy
@@ -321,3 +330,11 @@ jobs:
       name: Manifest list for scorecard-test
       script:
         - make image-push-scorecard-test-multiarch
+
+    # Build and deploy scorecard-test-kuttl multi-arch manifest list
+    # only amd64 is supported in base kudobuilder/kuttl image
+    # which is why we only support amd64 for scorecard-test-kuttl
+    - <<: *manifest-deploy
+      name: Manifest list for scorecard-test-kuttl
+      script:
+        - make image-push-scorecard-test-kuttl-multiarch
