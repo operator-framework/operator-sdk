@@ -42,7 +42,7 @@ var _ predicate.Predicate = DependentPredicate{}
 //     primary resource is not deleted.
 //   - Generic events are ignored.
 //
-// DependentPredicate is most often used in conjuction with
+// DependentPredicate is most often used in conjunction with
 // controller-runtime's handler.EnqueueRequestForOwner
 type DependentPredicate struct {
 	predicate.Funcs
