@@ -27,20 +27,14 @@ GO_BUILD_ARGS = \
   " \
 
 
-ANSIBLE_BASE_IMAGE = quay.io/operator-framework/ansible-operator
-HELM_BASE_IMAGE = quay.io/operator-framework/helm-operator
 SCORECARD_PROXY_BASE_IMAGE = quay.io/operator-framework/scorecard-proxy
 SCORECARD_TEST_BASE_IMAGE = quay.io/operator-framework/scorecard-test
 SCORECARD_TEST_KUTTL_BASE_IMAGE = quay.io/operator-framework/scorecard-test-kuttl
 
-ANSIBLE_IMAGE ?= $(ANSIBLE_BASE_IMAGE)
-HELM_IMAGE ?= $(HELM_BASE_IMAGE)
 SCORECARD_PROXY_IMAGE ?= $(SCORECARD_PROXY_BASE_IMAGE)
 SCORECARD_TEST_IMAGE ?= $(SCORECARD_TEST_BASE_IMAGE)
 SCORECARD_TEST_KUTTL_IMAGE ?= $(SCORECARD_TEST_KUTTL_BASE_IMAGE)
 
-ANSIBLE_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
-HELM_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
 SCORECARD_PROXY_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
 SCORECARD_TEST_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
 SCORECARD_TEST_KUTTL_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
@@ -66,8 +60,10 @@ help: ## Show this help screen
 
 all: format test build/operator-sdk ## Test and Build the Operator SDK
 
-install: ## Install the binaries
-	$(Q)$(GOARGS) go install $(GO_BUILD_ARGS) ./cmd/operator-sdk ./cmd/ansible-operator ./cmd/helm-operator
+install: ## Install the operator-sdk binary
+	$(Q)$(GOARGS) go install $(GO_BUILD_ARGS) ./cmd/operator-sdk
+	$(MAKE) -f ansible.mk install
+	$(MAKE) -f helm.mk install
 
 # Code management.
 .PHONY: format tidy clean cli-doc lint
@@ -127,18 +123,10 @@ release_builds := \
 	build/operator-sdk-$(VERSION)-x86_64-apple-darwin \
 	build/operator-sdk-$(VERSION)-ppc64le-linux-gnu \
 	build/operator-sdk-$(VERSION)-s390x-linux-gnu \
-	build/ansible-operator-$(VERSION)-aarch64-linux-gnu \
-	build/ansible-operator-$(VERSION)-x86_64-linux-gnu \
-	build/ansible-operator-$(VERSION)-x86_64-apple-darwin \
-	build/ansible-operator-$(VERSION)-ppc64le-linux-gnu \
-	build/ansible-operator-$(VERSION)-s390x-linux-gnu \
-	build/helm-operator-$(VERSION)-aarch64-linux-gnu \
-	build/helm-operator-$(VERSION)-x86_64-linux-gnu \
-	build/helm-operator-$(VERSION)-x86_64-apple-darwin \
-	build/helm-operator-$(VERSION)-ppc64le-linux-gnu \
-	build/helm-operator-$(VERSION)-s390x-linux-gnu
 
-release: clean $(release_builds) $(release_builds:=.asc) ## Release the Operator SDK
+release: clean $(release_builds) $(release_builds:=.asc) ## Release the Operator SDK and helm/ansible operators
+	$(MAKE) -f ansible.mk release
+	$(MAKE) -f helm.mk release
 
 build/operator-sdk-%-aarch64-linux-gnu: GOARGS = GOOS=linux GOARCH=arm64
 build/operator-sdk-%-x86_64-linux-gnu: GOARGS = GOOS=linux GOARCH=amd64
@@ -147,27 +135,25 @@ build/operator-sdk-%-ppc64le-linux-gnu: GOARGS = GOOS=linux GOARCH=ppc64le
 build/operator-sdk-%-s390x-linux-gnu: GOARGS = GOOS=linux GOARCH=s390x
 build/operator-sdk-%-linux-gnu: GOARGS = GOOS=linux
 
-build/ansible-operator-%-aarch64-linux-gnu: GOARGS = GOOS=linux GOARCH=arm64
-build/ansible-operator-%-x86_64-linux-gnu: GOARGS = GOOS=linux GOARCH=amd64
-build/ansible-operator-%-x86_64-apple-darwin: GOARGS = GOOS=darwin GOARCH=amd64
-build/ansible-operator-%-ppc64le-linux-gnu: GOARGS = GOOS=linux GOARCH=ppc64le
-build/ansible-operator-%-s390x-linux-gnu: GOARGS = GOOS=linux GOARCH=s390x
-build/ansible-operator-%-linux-gnu: GOARGS = GOOS=linux
-
-build/helm-operator-%-aarch64-linux-gnu: GOARGS = GOOS=linux GOARCH=arm64
-build/helm-operator-%-x86_64-linux-gnu: GOARGS = GOOS=linux GOARCH=amd64
-build/helm-operator-%-x86_64-apple-darwin: GOARGS = GOOS=darwin GOARCH=amd64
-build/helm-operator-%-ppc64le-linux-gnu: GOARGS = GOOS=linux GOARCH=ppc64le
-build/helm-operator-%-s390x-linux-gnu: GOARGS = GOOS=linux GOARCH=s390x
-build/helm-operator-%-linux-gnu: GOARGS = GOOS=linux
+# check-build ensures the calling recipe is actually running a build/operator-sdk.* recipe.
+# This prevents attempts to build other binaries (ansible/helm operators) with name operator-sdk.
+# Use a case statement to avoid shell feature issues.
+define check-build =
+case $@ in \
+build/operator-sdk*) ;; \
+*) \
+	echo "this recipe is only intended for operator-sdk builds, see {ansible,helm}.Makefile for the correct recipe"; \
+	exit 1; \
+;; \
+esac
+endef
 
 build/%: $(SOURCES) ## Build the operator-sdk binary
-	$(Q){ \
-	cmdpkg=$$(echo $* | sed "s/\(operator-sdk\|ansible-operator\|helm-operator\).*/\1/"); \
-	$(GOARGS) go build $(GO_BUILD_ARGS) -o $@ ./cmd/$$cmdpkg; \
-	}
+	@$(check-build)
+	$(Q)$(GOARGS) go build $(GO_BUILD_ARGS) -o $@ ./cmd/operator-sdk
 
 build/%.asc: ## Create release signatures for operator-sdk release binaries
+	@$(check-build)
 	$(Q){ \
 	default_key=$$(gpgconf --list-options gpg | awk -F: '$$1 == "default-key" { gsub(/"/,""); print toupper($$10)}'); \
 	git_key=$$(git config --get user.signingkey | awk '{ print toupper($$0) }'); \
@@ -193,31 +179,31 @@ image-push: image-push-ansible image-push-helm image-push-scorecard-proxy image-
 .PHONY: image-scaffold-ansible image-build-ansible image-push-ansible image-push-ansible-multiarch
 
 image-scaffold-ansible:
-	go run ./hack/image/ansible/scaffold-ansible-image.go
+	$(MAKE) -f ansible.mk image-scaffold
 
-image-build-ansible: build/ansible-operator-dev-linux-gnu
-	./hack/image/build-ansible-image.sh $(ANSIBLE_BASE_IMAGE):dev
+image-build-ansible:
+	$(MAKE) -f ansible.mk image-build
 
 image-push-ansible:
-	./hack/image/push-image-tags.sh $(ANSIBLE_BASE_IMAGE):dev $(ANSIBLE_IMAGE)-$(shell go env GOARCH)
+	$(MAKE) -f ansible.mk image-push
 
 image-push-ansible-multiarch:
-	./hack/image/push-manifest-list.sh $(ANSIBLE_IMAGE) ${ANSIBLE_ARCHES}
+	$(MAKE) -f ansible.mk image-push-multiarch
 
 # Helm operator image scaffold/build/push.
 .PHONY: image-scaffold-helm image-build-helm image-push-helm image-push-helm-multiarch
 
 image-scaffold-helm:
-	go run ./hack/image/helm/scaffold-helm-image.go
+	$(MAKE) -f helm.mk image-scaffold
 
-image-build-helm: build/helm-operator-dev-linux-gnu
-	./hack/image/build-helm-image.sh $(HELM_BASE_IMAGE):dev
+image-build-helm:
+	$(MAKE) -f helm.mk image-build
 
 image-push-helm:
-	./hack/image/push-image-tags.sh $(HELM_BASE_IMAGE):dev $(HELM_IMAGE)-$(shell go env GOARCH)
+	$(MAKE) -f helm.mk image-push
 
 image-push-helm-multiarch:
-	./hack/image/push-manifest-list.sh $(HELM_IMAGE) ${HELM_ARCHES}
+	$(MAKE) -f helm.mk image-push-multiarch
 
 # Scorecard proxy image scaffold/build/push.
 .PHONY: image-build-scorecard-proxy image-push-scorecard-proxy image-push-scorecard-proxy-multiarch
@@ -307,14 +293,14 @@ test-e2e-go:
 test-e2e-go-new:
 	K8S_VERSION=$(K8S_VERSION) ./hack/tests/e2e-go-new.sh
 
-test-e2e-ansible: image-build-ansible
-	./hack/tests/e2e-ansible.sh
+test-e2e-ansible:
+	$(MAKE) -f ansible.mk test-e2e
 
-test-e2e-ansible-molecule: image-build-ansible
-	./hack/tests/e2e-ansible-molecule.sh
+test-e2e-ansible-molecule:
+	$(MAKE) -f ansible.mk test-e2e-molecule
 
-test-e2e-helm: image-build-helm
-	./hack/tests/e2e-helm.sh
+test-e2e-helm:
+	$(MAKE) -f helm.mk test-e2e
 
 # Integration tests.
 .PHONY: test-integration
