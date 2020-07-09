@@ -145,6 +145,12 @@ operator-sdk alpha scorecard --namespace=mycustomns
 If you do not specify either of these flags, the default namespace
 and service account will be used by the scorecard to run test pods.
 
+It is worth noting that scorecard-test-kuttl specifies a namespace
+to the kubectl-kuttl command which causes kuttl to not create a
+namespace for each test.  This might impact your kuttl tests in 
+that you might need to perform resource cleanup in your tests
+instead of depending upon namespace deletion to perform that cleanup.
+
 [client_go]: https://github.com/kubernetes/client-go
 [kuttl]: https://kuttl.dev
 [kuttl_yaml]: https://kuttl.dev/docs/cli.html#examples

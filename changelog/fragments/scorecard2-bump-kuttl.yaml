@@ -1,0 +1,4 @@
+entries:
+  - description: >
+      The scorecard-test-kuttl image was updated to be based off the v0.5.1 version of kudobuilder/kuttl.  This update fixes bugs found in kuttl v0.5.0.
+    kind: "change"
