@@ -31,10 +31,10 @@ import (
 // scorecard v1alpha3.TestStatus json format.
 //
 // The kuttl output is expected to be produced by kubectl-kuttl
-// at /tmp/kuttl-report.json.
+// at /tmp/kuttl-test.json.
 func main() {
 
-	jsonFile, err := os.Open("/tmp/kuttl-report.json")
+	jsonFile, err := os.Open("/tmp/kuttl-test.json")
 	if err != nil {
 		printErrorStatus(fmt.Errorf("could not open kuttl report %v", err))
 		return
