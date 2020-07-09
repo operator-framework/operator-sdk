@@ -80,7 +80,7 @@ var (
 	ansibleVerbosityDefault = 2
 )
 
-// Creates, populates and returns Label Selector object during unmarshall
+// Creates, populates, and returns a LabelSelector object. Used in Unmarshal().
 func parseLabelSelector(dls tempLabelSelector) metav1.LabelSelector {
 	obj := metav1.LabelSelector{}
 	obj.MatchLabels = dls.MatchLabels
@@ -317,7 +317,7 @@ func Load(path string, maxWorkers, ansibleVerbosity int) ([]Watch, error) {
 		return nil, err
 	}
 
-	// First we unmarshall to the alias structure
+	// First unmarshal into a slice of aliases.
 	alias := []alias{}
 	err = yaml.Unmarshal(b, &alias)
 	if err != nil {
@@ -325,7 +325,7 @@ func Load(path string, maxWorkers, ansibleVerbosity int) ([]Watch, error) {
 		return nil, err
 	}
 
-	// We copy contents from alias structure to the watch structure
+	// Create one Watch per alias in aliases.
 
 	watches := []Watch{}
 	for _, tmp := range alias {

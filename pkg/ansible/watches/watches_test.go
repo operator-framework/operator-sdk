@@ -530,13 +530,13 @@ func TestLoad(t *testing.T) {
 
 				for i, val := range expectedWatch.Blacklist {
 					if val != gotWatch.Blacklist[i] {
-						t.Fatalf("The GVK: %v unexpected BlackList: %v expected BlackList: %v", gvk,
+						t.Fatalf("Incorrect blacklist GVK %s: got %s, expected %s", gvk,
 							val, gotWatch.Blacklist[i])
 					}
 				}
 
 				if !reflect.DeepEqual(gotWatch.Selector, expectedWatch.Selector) {
-					t.Fatalf("\n\nThe GVK: %v\nUnexpected selector: %+v\nExpected Selector: %+v\n\n", gvk,
+					t.Fatalf("Incorrect selector GVK %s:\n\tgot %s\n\texpected %s", gvk,
 						gotWatch.Selector, expectedWatch.Selector)
 				}
 
