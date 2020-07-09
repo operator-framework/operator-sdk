@@ -1,4 +1,0 @@
-entries:
-  - description: Deprecate 'operator-sdk add crd'. Use 'operator-sdk add api' instead.
-    kind: deprecation
-    breaking: false

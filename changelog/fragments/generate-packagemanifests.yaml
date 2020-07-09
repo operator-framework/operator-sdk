@@ -1,3 +1,0 @@
-entries:
-  - description: add `generate packagemanifests` subcommand for new project layouts
-    kind: addition

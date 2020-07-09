@@ -1,6 +1,0 @@
-entries:
-  - description: >
-      `bundle validate` can now use a containerd image ("none") tool to unpack images,
-      removing the need for an external image tool like docker/podman
-
-    kind: addition

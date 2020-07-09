@@ -1,4 +1,0 @@
-entries:
-  - description: Change default value of `--overwrite` flag in `operator-sdk generate bundle` to true.
-    kind: change
-    breaking: false

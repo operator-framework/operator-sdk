@@ -1,5 +1,0 @@
-entries:
-  - description: >
-      Add builds for `ansible-operator` and `helm-operator` binaries
-    kind: addition
-    breaking: false

@@ -1,9 +1,0 @@
-entries:
-  - description: >
-      The SDK `scorecard` command adds a new test image, scorecard-test-kuttl,
-      that allows end users to write and execute kuttl based
-      tests.
-
-    kind: "addition"
-
-    breaking: false
