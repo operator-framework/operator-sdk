@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 
-package olm
+package internal
 
 import (
 	"context"
@@ -43,9 +43,9 @@ var _ = Describe("RegistryPod", func() {
 
 		Context("with valid registry pod values", func() {
 			expectedPodName := "quay-io-example-example-operator-bundle-0-2-0"
-			expectedOutput := "/bin/mkdir -p index.db &&" +
-				"/bin/opm registry add -d index.db -b quay.io/example/example-operator-bundle:0.2.0 --mode=semver &&" +
-				"/bin/opm registry serve -d index.db -p 50051"
+			expectedOutput := "/bin/mkdir -p /database/index.db &&" +
+				"/bin/opm registry add -d /database/index.db -b quay.io/example/example-operator-bundle:0.2.0 --mode=semver &&" +
+				"/bin/opm registry serve -d /database/index.db -p 50051"
 
 			var rp *RegistryPod
 			var err error
