@@ -20,6 +20,5 @@ code or manifests.
 
 * [operator-sdk](../operator-sdk)	 - An SDK for building operators with ease
 * [operator-sdk generate bundle](../operator-sdk_generate_bundle)	 - Generates bundle data for the operator
-* [operator-sdk generate crds](../operator-sdk_generate_crds)	 - Generates CRDs for API's
 * [operator-sdk generate packagemanifests](../operator-sdk_generate_packagemanifests)	 - Generates a package manifests format
 

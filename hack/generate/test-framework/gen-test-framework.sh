@@ -16,6 +16,3 @@ echo -e "\nreplace github.com/operator-framework/operator-sdk => ../../" >> go.m
 go mod edit -require "github.com/operator-framework/operator-sdk@v0.0.0"
 go build ./...
 go mod tidy
-
-# Run gen commands
-../../build/operator-sdk generate crds
