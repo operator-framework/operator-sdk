@@ -1,5 +1,0 @@
-entries:
-  - description: >
-      In Helm-based operators, usages of the verb `Update` were renamed to `Upgrade` to better align with Helm nomenclature.
-    kind: "change"
-    breaking: false
