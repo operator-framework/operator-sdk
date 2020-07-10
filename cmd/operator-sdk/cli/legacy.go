@@ -28,7 +28,6 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/new"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/olm"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/printdeps"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/run"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/scorecard"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/test"
@@ -77,7 +76,6 @@ func GetCLIRoot() *cobra.Command {
 		generate.NewCmdLegacy(),
 		new.NewCmd(),
 		olm.NewCmd(),
-		printdeps.NewCmd(),
 		run.NewCmdLegacy(),
 		scorecard.NewCmd(),
 		test.NewCmd(),
@@ -136,7 +134,6 @@ var commandsToSkip = map[string]struct{}{
 	"help":         struct{}{},
 	"completion":   struct{}{},
 	"version":      struct{}{},
-	"print-deps":   struct{}{}, // Does not require this logic
 }
 
 func skipCheckForCmd(cmd *cobra.Command) (skip bool) {

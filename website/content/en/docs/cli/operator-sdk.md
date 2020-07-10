@@ -26,7 +26,6 @@ An SDK for building operators with ease
 * [operator-sdk generate](../operator-sdk_generate)	 - Invokes a specific generator
 * [operator-sdk new](../operator-sdk_new)	 - Creates a new operator application
 * [operator-sdk olm](../operator-sdk_olm)	 - Manage the Operator Lifecycle Manager installation in your cluster
-* [operator-sdk print-deps](../operator-sdk_print-deps)	 - Print Golang packages and versions required to run the operator
 * [operator-sdk run](../operator-sdk_run)	 - Run an Operator in a variety of environments
 * [operator-sdk scorecard](../operator-sdk_scorecard)	 - Run scorecard tests
 * [operator-sdk test](../operator-sdk_test)	 - Tests the operator
