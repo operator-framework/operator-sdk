@@ -69,6 +69,8 @@ func main() {
 		result = tests.StatusDescriptorsTest(cfg)
 	case tests.BasicCheckSpecTest:
 		result = tests.CheckSpecTest(cfg)
+	case tests.BasicCheckSelfRegisteredCRDTest:
+		result = tests.CheckSelfRegisteredCRDTest(cfg)
 	default:
 		result = printValidTests()
 	}
@@ -88,13 +90,14 @@ func printValidTests() scapiv1alpha3.TestStatus {
 	result.Errors = make([]string, 0)
 	result.Suggestions = make([]string, 0)
 
-	str := fmt.Sprintf("Valid tests for this image include: %s, %s, %s, %s, %s, %s",
+	str := fmt.Sprintf("Valid tests for this image include: %s, %s, %s, %s, %s, %s %s",
 		tests.OLMBundleValidationTest,
 		tests.OLMCRDsHaveValidationTest,
 		tests.OLMCRDsHaveResourcesTest,
 		tests.OLMSpecDescriptorsTest,
 		tests.OLMStatusDescriptorsTest,
-		tests.BasicCheckSpecTest)
+		tests.BasicCheckSpecTest,
+		tests.BasicCheckSelfRegisteredCRDTest)
 	result.Errors = append(result.Errors, str)
 	return scapiv1alpha3.TestStatus{
 		Results: []scapiv1alpha3.TestResult{result},

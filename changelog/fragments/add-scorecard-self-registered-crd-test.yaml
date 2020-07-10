@@ -1,0 +1,4 @@
+entries:
+   - description: >
+       Add scorecard test to check if CRDs present in bundle are referenced in CSVs and
+       notify the user through suggestions.

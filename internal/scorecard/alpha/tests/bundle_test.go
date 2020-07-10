@@ -24,6 +24,8 @@ import (
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -112,6 +114,12 @@ var _ = Describe("Basic and OLM tests", func() {
 			It("returns a pass state then status descriptors are present", func() {
 				status = StatusDescriptorsTest(bundle)
 				Expect(status.Results[0].State).To(Equal(scapiv1alpha3.PassState))
+			})
+		})
+		Context("CheckSelfRegisteredCRDTest", func() {
+			It("returns a pass state then status descriptors are present", func() {
+				status = CheckSelfRegisteredCRDTest(bundle)
+				Expect(len(status.Results[0].Suggestions)).To(Equal(0))
 			})
 		})
 	})
@@ -411,6 +419,80 @@ var _ = Describe("Basic and OLM tests", func() {
 			}
 			result = CheckResources(crd, result)
 			Expect(result.State).To(Equal(scapiv1alpha3.FailState))
+		})
+
+	})
+
+	Describe("Test self registered CRDs", func() {
+		var (
+			bundle *apimanifests.Bundle
+		)
+
+		It("returns no suggestions when all the CRDs are referenced in CSV", func() {
+			bundle = &apimanifests.Bundle{}
+			bundle.CSV = &operatorsv1alpha1.ClusterServiceVersion{
+				Spec: operatorsv1alpha1.ClusterServiceVersionSpec{
+					CustomResourceDefinitions: operatorsv1alpha1.CustomResourceDefinitions{
+						Owned: []operatorsv1alpha1.CRDDescription{
+							operatorsv1alpha1.CRDDescription{
+								Name:    "Test",
+								Version: "v1",
+								Kind:    "TestKind",
+							},
+							{
+								Name:    "Memcached",
+								Version: "v1",
+								Kind:    "MemcachedKind",
+							},
+						},
+					},
+				},
+			}
+			bundle.V1beta1CRDs = []*apiextensionsv1beta1.CustomResourceDefinition{
+				&apiextensionsv1beta1.CustomResourceDefinition{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "Test",
+					},
+				},
+				&apiextensionsv1beta1.CustomResourceDefinition{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "Memcached",
+					},
+				},
+			}
+			status = CheckSelfRegisteredCRDTest(bundle)
+			Expect(len(status.Results[0].Suggestions)).To(Equal(0))
+		})
+
+		It("returns no suggestions when all the CRDs are referenced in CSV", func() {
+			bundle = &apimanifests.Bundle{}
+			bundle.CSV = &operatorsv1alpha1.ClusterServiceVersion{
+				Spec: operatorsv1alpha1.ClusterServiceVersionSpec{
+					CustomResourceDefinitions: operatorsv1alpha1.CustomResourceDefinitions{
+						Owned: []operatorsv1alpha1.CRDDescription{
+							operatorsv1alpha1.CRDDescription{
+								Name:    "Test",
+								Version: "v1",
+								Kind:    "TestKind",
+							},
+						},
+					},
+				},
+			}
+			bundle.V1beta1CRDs = []*apiextensionsv1beta1.CustomResourceDefinition{
+				&apiextensionsv1beta1.CustomResourceDefinition{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "Test",
+					},
+				},
+				&apiextensionsv1beta1.CustomResourceDefinition{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "Memcached",
+					},
+				},
+			}
+			status = CheckSelfRegisteredCRDTest(bundle)
+			Expect(len(status.Results[0].Suggestions)).NotTo(Equal(0))
 		})
 
 	})

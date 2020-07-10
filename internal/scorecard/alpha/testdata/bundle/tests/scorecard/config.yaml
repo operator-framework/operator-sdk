@@ -8,6 +8,15 @@ tests:
     suite: basic
     test: basic-check-spec-test
   description: check the spec test
+- name: "basic-self-registered-crd"
+  image: quay.io/operator-framework/scorecard-test:dev
+  entrypoint: 
+  - scorecard-test
+  - basic-self-registered-crd
+  labels:
+    suite: basic
+    test: basic-self-registered-crd-test
+  description: check the self registered crd test
 - name: "olm-bundle-validation"
   image: quay.io/operator-framework/scorecard-test:dev
   entrypoint: 
