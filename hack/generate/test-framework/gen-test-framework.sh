@@ -18,5 +18,4 @@ go build ./...
 go mod tidy
 
 # Run gen commands
-../../build/operator-sdk generate k8s
 ../../build/operator-sdk generate crds
