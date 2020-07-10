@@ -234,38 +234,6 @@ jobs:
         - make image-build-helm
         - make image-push-helm
 
-    # Build and deploy arm64 scorecard-proxy docker image
-    - <<: *deploy
-      name: Docker image for scorecard-proxy (arm64)
-      arch: arm64
-      script:
-        - make image-build-scorecard-proxy
-        - make image-push-scorecard-proxy
-
-    # Build and deploy amd64 scorecard-proxy docker image
-    - <<: *deploy
-      name: Docker image for scorecard-proxy (amd64)
-      arch: amd64
-      script:
-        - make image-build-scorecard-proxy
-        - make image-push-scorecard-proxy
-
-    # Build and deploy ppc64le scorecard-proxy docker image
-    - <<: *deploy
-      name: Docker image for scorecard-proxy (ppc64le)
-      arch: ppc64le
-      script:
-        - make image-build-scorecard-proxy
-        - make image-push-scorecard-proxy
-
-    # Build and deploy s390x scorecard-proxy docker image
-    - <<: *deploy
-      name: Docker image for scorecard-proxy (s390x)
-      arch: s390x
-      script:
-        - make image-build-scorecard-proxy
-        - make image-push-scorecard-proxy
-
     # Build and deploy arm64 scorecard-test docker image 
     - <<: *deploy
       name: Docker image for scorecard-test (arm64)
@@ -318,12 +286,6 @@ jobs:
       name: Manifest list for helm-operator
       script:
         - make image-push-helm-multiarch
-
-    # Build and deploy scorecard-proxy multi-arch manifest list
-    - <<: *manifest-deploy
-      name: Manifest list for scorecard-proxy
-      script:
-        - make image-push-scorecard-proxy-multiarch
 
     # Build and deploy scorecard-test multi-arch manifest list
     - <<: *manifest-deploy
