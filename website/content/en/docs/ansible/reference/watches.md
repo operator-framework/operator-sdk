@@ -77,6 +77,18 @@ An example Watches file:
   group: bar.example.com
   kind: Bar
   role: myNamespace.myCollection.myRole
+
+# Example filtering of resources with specific labels
+- version: v1alpha1
+  group: bar.example.com
+  kind: Bar
+  playbook: playbook.yml
+  selector:
+    matchLabels:
+      foo: bar
+    matchExpressions:
+      - {key: foo, operator: In, values: [bar]}
+      - {key: baz, operator: Exists, values: []}
 ```
 
 
@@ -93,8 +105,7 @@ Some features can be overridden per resource via an annotation on that CR. The o
 | Watching Cluster-Scoped Resources | `watchClusterScopedResources` | Allows the ansible operator to watch cluster-scoped resources that are created by ansible | | false | |
 | Max Runner Artifacts | `maxRunnerArtifacts` | Manages the number of [artifact directories](https://ansible-runner.readthedocs.io/en/latest/intro.html#runner-artifacts-directory-hierarchy) that ansible runner will keep in the operator container for each individual resource. | ansible.operator-sdk/max-runner-artifacts | 20 | |
 | Finalizer | `finalizer`  | Sets a finalizer on the CR and maps a deletion event to a playbook or role | | | [finalizers](../finalizers)|
-
-
+| Selector | `selector`  | Identifies a set of objects based on their labels | | None Applied | [Labels and Selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/)|
 #### Example
 ```YaML
 ---
@@ -111,5 +122,3 @@ Some features can be overridden per resource via an annotation on that CR. The o
     vars:
       state: absent
 ```
-
-
