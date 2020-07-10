@@ -27,6 +27,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -51,7 +52,8 @@ func TestNew(t *testing.T) {
 			shouldValidate: false,
 		},
 	}
-	expectedReconcilePeriod, _ := time.ParseDuration(reconcilePeriodDefault)
+
+	expectedReconcilePeriod, _ := time.ParseDuration(reconcilePeriodDefault.String())
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -71,7 +73,7 @@ func TestNew(t *testing.T) {
 					expectedReconcilePeriod)
 			}
 			if watch.ManageStatus != manageStatusDefault {
-				t.Fatalf("Unexpected manageStatus %v expected %v", watch.ManageStatus, manageStatusDefault)
+				t.Fatalf("Unexpected manageStatus %v expected %v", watch.ManageStatus, &manageStatusDefault)
 			}
 			if watch.WatchDependentResources != watchDependentResourcesDefault {
 				t.Fatalf("Unexpected watchDependentResources %v expected %v", watch.WatchDependentResources,
@@ -313,6 +315,53 @@ func TestLoad(t *testing.T) {
 			Role:         filepath.Join(cwd, "testdata", "ansible_collections", "nameSpace", "collection", "roles", "someRole"),
 			ManageStatus: true,
 		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "AnsibleBlacklistTest",
+			},
+			Role: validTemplate.ValidRole,
+			Blacklist: []schema.GroupVersionKind{
+				{
+					Version: "v1alpha1.1",
+					Group:   "app.example.com/1",
+					Kind:    "AnsibleBlacklistTest_1",
+				},
+				{
+					Version: "v1alpha1.2",
+					Group:   "app.example.com/2",
+					Kind:    "AnsibleBlacklistTest_2",
+				},
+				{
+					Version: "v1alpha1.3",
+					Group:   "app.example.com/3",
+					Kind:    "AnsibleBlacklistTest_3",
+				},
+			},
+			ManageStatus: true,
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "AnsibleSelectorTest",
+			},
+			Role: validTemplate.ValidRole,
+			Selector: metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"matchLabel_1": "matchLabel_1",
+				},
+				MatchExpressions: []metav1.LabelSelectorRequirement{
+					{
+						Key:      "matchexpression_key",
+						Operator: "matchexpression_operator",
+						Values:   []string{"value1", "value2"},
+					},
+				},
+			},
+			ManageStatus: true,
+		},
 	}
 
 	testCases := []struct {
@@ -477,6 +526,18 @@ func TestLoad(t *testing.T) {
 				if gotWatch.ReconcilePeriod != expectedWatch.ReconcilePeriod {
 					t.Fatalf("The GVK: %v unexpected reconcile period: %v expected reconcile period: %v", gvk,
 						gotWatch.ReconcilePeriod, expectedWatch.ReconcilePeriod)
+				}
+
+				for i, val := range expectedWatch.Blacklist {
+					if val != gotWatch.Blacklist[i] {
+						t.Fatalf("Incorrect blacklist GVK %s: got %s, expected %s", gvk,
+							val, gotWatch.Blacklist[i])
+					}
+				}
+
+				if !reflect.DeepEqual(gotWatch.Selector, expectedWatch.Selector) {
+					t.Fatalf("Incorrect selector GVK %s:\n\tgot %s\n\texpected %s", gvk,
+						gotWatch.Selector, expectedWatch.Selector)
 				}
 
 				if expectedWatch.MaxWorkers == 0 {
