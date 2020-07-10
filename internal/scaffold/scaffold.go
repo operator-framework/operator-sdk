@@ -19,8 +19,6 @@ package scaffold
 import (
 	"bytes"
 	"fmt"
-	"go/parser"
-	"go/token"
 	"io"
 	"os"
 	"path/filepath"
@@ -73,34 +71,6 @@ func (s *Scaffold) configure(cfg *input.Config) {
 	s.Repo = cfg.Repo
 	s.AbsProjectPath = cfg.AbsProjectPath
 	s.ProjectName = cfg.ProjectName
-}
-
-func validateBoilerplateBytes(b []byte) error {
-	// Append a 'package main' so we can parse the file.
-	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, "", append([]byte("package main\n"), b...), parser.ParseComments)
-	if err != nil {
-		return fmt.Errorf("parse boilerplate comments: %v", err)
-	}
-	if len(f.Comments) == 0 {
-		return fmt.Errorf("boilerplate does not contain comments")
-	}
-	var cb []byte
-	for _, cg := range f.Comments {
-		for _, c := range cg.List {
-			cb = append(cb, []byte(strings.TrimSpace(c.Text)+"\n")...)
-		}
-	}
-	var tb []byte
-	tb, cb = bytes.TrimSpace(b), bytes.TrimSpace(cb)
-	if !bytes.Equal(tb, cb) {
-		return fmt.Errorf(`boilerplate contains text other than comments:\n"%s"\n`, tb)
-	}
-	return nil
-}
-
-func wrapBoilerplateErr(err error, bp string) error {
-	return fmt.Errorf("boilerplate file %s: %v", bp, err)
 }
 
 // Execute executes scaffolding the Files
