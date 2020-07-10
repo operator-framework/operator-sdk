@@ -20,13 +20,19 @@ import (
 	"path/filepath"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+
 	gencrd "github.com/operator-framework/operator-sdk/internal/generate/crd"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+)
 
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
+var (
+	apiVersion string
+	kind       string
+	crdVersion string
 )
 
 // newAddCRDCmd - add crd command

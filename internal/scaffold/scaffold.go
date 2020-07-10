@@ -27,12 +27,12 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
-	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"golang.org/x/tools/imports"
+
+	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
+	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 )
 
 // Scaffold writes Templates to scaffold new files
@@ -47,11 +47,6 @@ type Scaffold struct {
 	Fs afero.Fs
 	// GetWriter returns a writer for writing scaffold files.
 	GetWriter func(path string, mode os.FileMode) (io.Writer, error)
-	// BoilerplatePath is the path to a file containing Go boilerplate text.
-	BoilerplatePath string
-
-	// boilerplateBytes are bytes of Go boilerplate text.
-	boilerplateBytes []byte
 }
 
 func (s *Scaffold) setFieldsAndValidate(t input.File) error {
@@ -108,33 +103,6 @@ func wrapBoilerplateErr(err error, bp string) error {
 	return fmt.Errorf("boilerplate file %s: %v", bp, err)
 }
 
-func (s *Scaffold) setBoilerplate() (err error) {
-	// If we've already set boilerplate bytes, don't overwrite them.
-	if len(s.boilerplateBytes) == 0 {
-		bp := s.BoilerplatePath
-		if bp == "" {
-			i, err := (&Boilerplate{}).GetInput()
-			if err != nil {
-				return wrapBoilerplateErr(err, i.Path)
-			}
-			if _, err := s.Fs.Stat(i.Path); err == nil {
-				bp = i.Path
-			}
-		}
-		if bp != "" {
-			b, err := afero.ReadFile(s.Fs, bp)
-			if err != nil {
-				return wrapBoilerplateErr(err, bp)
-			}
-			if err = validateBoilerplateBytes(b); err != nil {
-				return wrapBoilerplateErr(err, bp)
-			}
-			s.boilerplateBytes = append(bytes.TrimSpace(b), '\n', '\n')
-		}
-	}
-	return nil
-}
-
 // Execute executes scaffolding the Files
 func (s *Scaffold) Execute(cfg *input.Config, files ...input.File) error {
 	if s.Fs == nil {
@@ -142,11 +110,6 @@ func (s *Scaffold) Execute(cfg *input.Config, files ...input.File) error {
 	}
 	if s.GetWriter == nil {
 		s.GetWriter = fileutil.NewFileWriterFS(s.Fs).WriteCloser
-	}
-
-	// Generate boilerplate file first so new Go files get headers.
-	if err := s.setBoilerplate(); err != nil {
-		return err
 	}
 
 	// Configure s using common fields from cfg.
@@ -252,11 +215,6 @@ func (s *Scaffold) doRender(i input.Input, e input.File, absPath string) error {
 		}
 	}
 
-	if isGoFile(absPath) && len(s.boilerplateBytes) != 0 {
-		if _, err = f.Write(s.boilerplateBytes); err != nil {
-			return err
-		}
-	}
 	_, err = f.Write(b)
 	log.Infoln("Created", i.Path)
 	return err
