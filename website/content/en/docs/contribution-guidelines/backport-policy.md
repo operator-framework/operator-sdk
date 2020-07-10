@@ -3,6 +3,14 @@ title: Backport Policy
 weight: 30
 ---
 
-Usually, only very critical issues are backported. Also, it is just done to the most recent release. This can be discussed and decided during the weekly Triage meeting. For further information about how to contact the team and attending the meetings, check the [community](https://github.com/operator-framework/community) repository.   
+Mainly critical issue fixes are backported to the most recent minor release.
+Special backport requests can be discussed during the weekly Triage meeting; this does not guarantee an exceptional backport will be created.
+Occasionally non-critical issue fixes will be backported, either at an approver's discretion or by request as noted above.
+For information on contacting maintainers and attending meetings, check the [community](https://github.com/operator-framework/community) repository.   
 
-Note that, if maintainers run across backport-able issues while working, it is possible to immediately decide to backport it. And then, the process would be to track the issue in the repository, and to do two pull requests with the fix. One should be made against the master branch, and the other should be a cherry-pick against the most recent release branch, where it will be backported.
+## Process
+
+Typically an issue will be fixed in the `master` branch, which will then be cherry-picked to the most recent release's branch.
+Those with approver permissions and above can create a cherry-pick PR, assuming no conflicts, by commenting `/cherry-pick <release branch>`
+in the PR fixing the issue in master. Fixes that are only relevant to a specific release branch can be made against
+that branch directly.
