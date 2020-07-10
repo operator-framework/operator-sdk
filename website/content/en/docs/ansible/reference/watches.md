@@ -27,8 +27,7 @@ be monitored for updates and cached.
   current project directory.
 * **vars**: This is an arbitrary map of key-value pairs. The contents will be
   passed as `extra_vars` to the playbook or role specified for this watch.
-* **reconcilePeriod** (optional): The reconciliation interval, how often the
-  role/playbook is run, for a given CR.
+* **reconcilePeriod** (optional): The maximum interval in seconds that the operator will wait before beginning another reconcile, even if no watched events are received. When an operator watches many resources, each reconcile can become expensive, and a low value here can actually reduce performance, so it is generally recommended that this is only used when `watchDependentResources` is `False`. Note that, is recommend to use this option only if your project needs to managing external resources that don't raise Kubernetes events and  only change this value if you know what you are doing.
 * **manageStatus** (optional): When true (default), the operator will manage
   the status of the CR generically. Set to false, the status of the CR is
   managed elsewhere, by the specified role/playbook or in a separate controller.
@@ -121,4 +120,31 @@ Some features can be overridden per resource via an annotation on that CR. The o
     name: finalizer.app.example.com
     vars:
       state: absent
+```
+
+**Note:** By using the command `operator-sdk add api` you are able to add additional CRDs to the project API, which can aid in designing your solution using concepts such as encapsulation, single responsibility principle, and cohesion, which could make the project easier to read, debug, and maintain. With this approach, you are able to customize and optimize the configurations more specifically per GKV via the `watches.yaml` file.
+
+**Example:** 
+
+```YaML
+---
+- version: v1alpha1
+  group: app.example.com
+  kind: AppService
+  playbook: playbook.yml
+  maxRunnerArtifacts: 30
+  reconcilePeriod: 5s
+  manageStatus: False
+  watchDependentResources: False
+  finalizer:
+    name: finalizer.app.example.com
+    vars:
+      state: absent
+
+- version: v1alpha1
+  group: app.example.com
+  kind: Database
+  playbook: playbook.yml
+  watchDependentResources: True
+  manageStatus: True
 ```

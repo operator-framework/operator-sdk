@@ -187,8 +187,7 @@ the below section for Ansible Operator specific annotations.
 #### Ansible Operator annotations
 This is the list of CR annotations which will modify the behavior of the operator:
 
-**ansible.operator-sdk/reconcile-period**: Used to specify the reconciliation
-interval for the CR. This value is parsed using the standard Golang package
+**ansible.operator-sdk/reconcile-period**: Specifies the maximum time before a reconciliation is triggered. Note that at scale, this can reduce performance, see [watches][watches] reference for more information. This value is parsed using the standard Golang package
 [time][time_pkg]. Specifically [ParseDuration][time_parse_duration] is used
 which will apply the default suffix of `s` giving the value in seconds.
 
@@ -201,6 +200,9 @@ metadata:
 annotations:
   ansible.operator-sdk/reconcile-period: "30s"
 ```
+
+Note that a lower period will correct entropy more quickly, but reduce responsiveness to change 
+if there are many watched resources. And then, if `watchDependentResources` is `True` the entropy should be corrected as it happens and the `reconcilePeriod` is no longer required. It is important to highlight that is recommend to use this option only if your project needs to managing external resources that don't raise Kubernetes events and then, alert to use this option only if you know what you are doing.
 
 ### Testing an Ansible operator locally
 
@@ -498,7 +500,7 @@ operator. The `meta` fields can be accesses via dot notation in Ansible as so:
 ```yaml
 ---
 - debug:
-    msg: "name: {{ meta.name }}, {{ meta.namespace }}"
+    msg: "name: {{ meta.name }}, {{ meta.namespace }}"f
 ```
 
 [k8s_ansible_module]:https://docs.ansible.com/ansible/2.6/modules/k8s_module.html
@@ -507,3 +509,4 @@ operator. The `meta` fields can be accesses via dot notation in Ansible as so:
 [manage_status_proposal]:../../proposals/ansible-operator-status.md
 [time_pkg]:https://golang.org/pkg/time/
 [time_parse_duration]:https://golang.org/pkg/time/#ParseDuration
+[watches]:/docs/ansible/reference/watches
