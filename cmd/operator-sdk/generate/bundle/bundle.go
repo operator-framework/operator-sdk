@@ -173,7 +173,7 @@ func (c bundleCmd) runManifests(cfg *config.Config) (err error) {
 
 	csvGen := gencsv.Generator{
 		OperatorName: c.operatorName,
-		OperatorType: genutil.PluginKeyToOperatorType(cfg.Layout),
+		OperatorType: projutil.PluginKeyToOperatorType(cfg.Layout),
 		Version:      c.version,
 		Collector:    col,
 	}

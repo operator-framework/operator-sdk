@@ -21,14 +21,11 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/blang/semver"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"sigs.k8s.io/yaml"
-
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
 // ValidateVersion returns an error if version is not a strict semantic version.
@@ -53,18 +50,6 @@ func IsPipeReader() bool {
 		return false
 	}
 	return info.Mode()&os.ModeNamedPipe != 0
-}
-
-// PluginKeyToOperatorType converts a plugin key string to an operator project
-// type.
-// TODO(estroz): this can probably be made more robust by checking known
-// plugin keys directly.
-func PluginKeyToOperatorType(pluginKey string) projutil.OperatorType {
-	switch {
-	case strings.HasPrefix(pluginKey, "go"):
-		return projutil.OperatorTypeGo
-	}
-	return ""
 }
 
 // WriteObjects writes each object in objs to w.
