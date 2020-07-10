@@ -80,29 +80,7 @@ func GetCLIRoot() *cobra.Command {
 		version.NewCmd(),
 	)
 
-	// The "init" cmd is is added as a hidden subcommand from the new KB CLI to provide
-	// a way to initialize Kubebuilder projects from the legacy CLI.
-	// TODO(hasbro17): This should be removed once the KB CLI is the default.
-	initCmd := getInitCmd()
-	if initCmd == nil {
-		log.Debug("Failed to add init cmd to CLI")
-	} else {
-		initCmd.Hidden = true
-		root.AddCommand(initCmd)
-	}
-
 	return root
-}
-
-func getInitCmd() *cobra.Command {
-	_, root := GetPluginsCLIAndRoot()
-	var initCmd *cobra.Command
-	for _, cmd := range root.Commands() {
-		if cmd.Name() == "init" {
-			initCmd = cmd
-		}
-	}
-	return initCmd
 }
 
 func checkGoModulesForCmd(cmd *cobra.Command) (err error) {
