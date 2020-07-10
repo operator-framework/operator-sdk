@@ -17,13 +17,11 @@ package printdeps
 import (
 	"fmt"
 
-	"github.com/operator-framework/operator-sdk/internal/scaffold"
-	"github.com/operator-framework/operator-sdk/internal/scaffold/ansible"
-	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/operator-framework/operator-sdk/internal/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
 func NewCmd() *cobra.Command {
@@ -55,10 +53,6 @@ func printDeps() (err error) {
 	// Migrated Ansible and Helm projects will be of type OperatorTypeGo but
 	// their deps files will differ from a vanilla Go project.
 	switch {
-	case projutil.IsOperatorAnsible():
-		return ansible.PrintGoMod()
-	case projutil.IsOperatorHelm():
-		return helm.PrintGoMod()
 	case projutil.IsOperatorGo():
 		return scaffold.PrintGoMod()
 	}

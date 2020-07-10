@@ -15,6 +15,10 @@
 package cli
 
 import (
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/add"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/build"
@@ -22,7 +26,6 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cleanup"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/completion"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/migrate"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/new"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/olm"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/printdeps"
@@ -32,10 +35,6 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/version"
 	"github.com/operator-framework/operator-sdk/internal/flags"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func RunLegacy() error {
@@ -76,7 +75,6 @@ func GetCLIRoot() *cobra.Command {
 		cleanup.NewCmdLegacy(),
 		completion.NewCmd(),
 		generate.NewCmdLegacy(),
-		migrate.NewCmd(),
 		new.NewCmd(),
 		olm.NewCmd(),
 		printdeps.NewCmd(),
@@ -134,7 +132,6 @@ func checkGoModulesForCmd(cmd *cobra.Command) (err error) {
 
 var commandsToSkip = map[string]struct{}{
 	"new":          struct{}{}, // Handles this logic in cmd/operator-sdk/new
-	"migrate":      struct{}{}, // Handles this logic in cmd/operator-sdk/migrate
 	"operator-sdk": struct{}{}, // Alias for "help"
 	"help":         struct{}{},
 	"completion":   struct{}{},
