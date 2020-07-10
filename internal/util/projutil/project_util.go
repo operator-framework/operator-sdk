@@ -249,7 +249,7 @@ func IsOperatorGo() bool {
 // IsOperatorAnsible returns true when the layout field in PROJECT file has the Ansible prefix key.
 // NOTE: For the legacy, returns true when the project  contains the roles and the molecule directory.
 func IsOperatorAnsible() bool {
-	//
+	// If the project is in the new layout, check the config file's plugin type.
 	if kbutil.HasProjectFile() {
 		cfg, err := kbutil.ReadConfig()
 		if err != nil {
