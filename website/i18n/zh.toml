@@ -1,0 +1,123 @@
+# i18n strings for the Chinese version of the site (https://kubernetes.io/zh/)
+# 注意：修改此文件时请维持字符串名称的字母顺序并与英文版保持一致
+
+[contribute]
+other = "贡献吧！"
+
+[contribute_content_1]
+other = "Operator SDK 及其组件都是开放源码的，所以请赶紧逐个了解，确定你可以为它们做点儿什么。如果你想讨论一下你的经验、提出问题或参与开发团队，请加入 "
+
+[contribute_forum]
+other = "Operator SDK 论坛"
+
+[contribute_content_2]
+other = "并访问我们位于 " 
+
+[contribute_content_3]
+other = " 上的站点。"
+
+[develop_w_ansible]
+other = "使用 Ansible 开发"
+
+[develop_w_go]
+other = "使用 Go 语言开发"
+
+[develop_w_helm]
+other = "使用 Helm 开发"
+
+[faq]
+other = "常见问题"
+
+[faq_content]
+other = "如果你是一个社区成员、应用构建者或者使用者，或者一般意义上的 Kubernetes 用户，Operator SDK 对你而言都有很多好处。"
+
+[footer_connect]
+other = "与我们联系！"
+
+[home]
+other = "主页"
+
+[home_action1]
+other = "构建一个 Operator"
+
+[home_ansible_2]
+other = "使用 Ansible 的 Playbook 和 Role 来为对象编写调解逻辑"
+
+[home_content]
+other = "构造 Kubernetes 原生应用的过程需要对特定应用具有较深的了解，Operator SDK 使得这个过程变得简单。"
+
+[home_dev_add]
+other = "作为可选步骤，使用 SDK 的 CLI 添加额外的 CRD，并重复步骤 2 和 3"
+
+[home_dev_new]
+other = "使用 SDK 的命令行界面（CLI）创建一个新的 Operator 项目"
+
+[home_dev_build]
+other = "使用 SDK 的 CLI 来构建和生成 Operator 部署用的资产和清单"
+
+[home_go_2]
+other = "通过添加定制资源定义（CRD）定义新的资源 API"
+
+[home_go_3]
+other = "定义用来监测（Watch）和调解（Reconcile）资源的 Controller"
+
+[home_go_4]
+other = "使用 SDK 和 controller-runtime 的 API，为你的 Controller 编写调解逻辑"
+
+[home_helm_2]
+other = "创建新的 Helm Chart 或者添加已有 Helm Chart 以供 Operator 的调解逻辑使用"
+
+[home_dev_lang]
+other = "使用 Go、Ansible 或 Helm 来开发"
+
+[home_page]
+other = "主页"
+
+[intro_feature_1]
+other = "高层 API 与抽象概念，便于编写更直观的操作逻辑"
+
+[intro_feature_2]
+other = "用来产生结构和生成代码的工具，便于加速项目启动"
+
+[intro_feature_3]
+other = "能够覆盖常见 Operator 使用场景的扩展插件"
+
+[intro_header]
+other = "Operator SDK 是什么?"
+
+[intro_overview]
+other = "本项目是 "
+
+[intro_overview_1]
+other = " 的一个组件，是一个开放源码的工具包，用来以高效、自动化且可扩缩的方式管理称作 Operators 的 Kubernetes 原生应用。"
+
+[intro_summary]
+other = "Operator SDK 本身是一个框架，它使用了  controller-runtime 库，并提供以下能力以简化 Operators 的编写："
+
+[main_footer]
+other = "Operator Framework 是一个开源工具包，用来以一种高效、自动且可扩缩的方式来管理称作 Operators 的 Kubernetes 原生应用"
+
+[not_found]
+other = "找不到页面"
+
+[not_found_text_1]
+other = "哇哦！页面不存在嘛。试试访问到"
+
+[not_found_text_2]
+other = "吧！"
+
+[not_found_text_3]
+other = "关于如何定制 404 页面，可参考"
+
+[not_found_text_4]
+other = "定制 404 页面"
+
+[versions]
+other = "版本"
+
+[what_can_i_do]
+other = "我可以用 Operator SDK 做什么？"
+
+[what_can_i_do_answer]
+other = "Operator SDK 提供用来构造、测试和打包 Operators 的工具。最初，SDK 通过组织 Kubernetes API 来完成应用的业务逻辑，例如完成规模扩缩、版本升级或者数据备份。随着时间推演，SDK 也可以让工程师为应用赋予智慧，为用户提供云服务的体验。诸多 Operators 首推的一些常见的实践和模式也都被纳入 SDK 实现中，从而帮助用户避免重复造车。"
+

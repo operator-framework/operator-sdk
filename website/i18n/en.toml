@@ -1,0 +1,123 @@
+# i18n strings for the English (main) site.
+# NOTE: Please keep the entries in alphabetical order when editing
+
+[contribute]
+other = "Contribute!"
+
+[contribute_content_1]
+other = "The Operator SDK and its components are open source, so please feel encouraged to jump into each individually and learn what else you can do. If you want to discuss your experience, have questions, or want to get involved, join the "
+
+[contribute_content_2]
+other = "and visit us on " 
+
+[contribute_content_3]
+other = "."
+
+[contribute_forum]
+other = "Operator SDK forum"
+
+[develop_w_ansible]
+other = "Develop with Ansible"
+
+[develop_w_go]
+other = "Develop with Go"
+
+[develop_w_helm]
+other = "Develop with Helm"
+
+[faq]
+other = "Frequently asked questions"
+
+[faq_content]
+other = "If you are a community member, builder, consumer of applications, or a user of Kubernetes overall, the Operator SDK offers a number of benefits."
+
+[footer_connect]
+other = "Connect with us!"
+
+[home]
+other = "Home"
+
+[home_action1]
+other = "Build an Operator"
+
+[home_ansible_2]
+other = "Write the reconciling logic for your object using ansible playbooks and roles"
+
+[home_content]
+other = "The Operator SDK makes it easier to build Kubernetes native applications, a process that can require deep, application-specific operational knowledge."
+
+[home_dev_add]
+other = "Optionally add additional CRD's using the SDK CLI and repeat steps 2 and 3"
+
+[home_dev_new]
+other = "Create a new operator project using the SDK Command Line Interface (CLI)"
+
+[home_dev_build]
+other = "Use the SDK CLI to build and generate the operator deployment manifests"
+
+[home_go_2]
+other = "Define new resource APIs by adding Custom Resource Definitions (CRD)"
+
+[home_go_3]
+other = "Define Controllers to watch and reconcile resources"
+
+[home_go_4]
+other = "Write the reconciling logic for your Controller using the SDK and controller-runtime APIs"
+
+[home_helm_2]
+other = "Create a new (or add your existing) Helm chart for use by the operator’s reconciling logic"
+
+[home_dev_lang]
+other = "Develop in Go, Ansible, or Helm"
+
+[home_page]
+other = "home page"
+
+[intro_feature_1]
+other = "High level APIs and abstractions to write the operational logic more intuitively"
+
+[intro_feature_2]
+other = "Tools for scaffolding and code generation to bootstrap a new project fast"
+
+[intro_feature_3]
+other = "Extensions to cover common Operator use cases"
+
+[intro_header]
+other = "WHAT IS OPERATOR SDK?"
+
+[intro_overview]
+other = "This project is a component of the "
+
+[intro_overview_1]
+other = ", an open source toolkit to manage Kubernetes native applications, called Operators, in an effective, automated, and scalable way."
+
+[intro_summary]
+other = "The Operator SDK is a framework that uses the controller-runtime library to make writing operators easier by providing:"
+
+[main_footer]
+other = "The Operator Framework is an open source toolkit to manage Kubernetes native applications, called Operators, in an effective, automated, and scalable way."
+
+[not_found]
+other = "Not found"
+
+[not_found_text_1]
+other = "Oops! This page doesn't exist. Try going back to our"
+
+[not_found_text_2]
+other = "."
+
+[not_found_text_3]
+other = "You can learn how to make a 404 page like this in "
+
+[not_found_text_4]
+other = "Custom 404 Pages"
+
+[versions]
+other = "Releases"
+
+[what_can_i_do]
+other = "WHAT CAN I DO WITH OPERATOR SDK?"
+
+[what_can_i_do_answer]
+other = "The Operator SDK provides the tools to build, test, and package Operators. Initially, the SDK facilitates the marriage of an application’s business logic (for example, how to scale, upgrade, or backup) with the Kubernetes API to execute those operations. Over time, the SDK can allow engineers to make applications smarter and have the user experience of cloud services. Leading practices and code patterns that are shared across Operators are included in the SDK to help prevent reinventing the wheel."
+

@@ -1,10 +1,10 @@
 {{ define "main"}}
-    <main id="main">
-      <div>
-       <h1 id="title">Not found</h1>
-       <p>Oops! This page doesn't exist. Try going back to our <a href="{{ "/" | relURL }}">home page</a>.</p>
+  <main id="main">
+    <div>
+      <h1 id="title">{{ T "not_found" }}</h1>
+      <p>{{ T "not_found_text_1" }}<a href="{{ "/" | relURL }}">{{ T "home_page" }}</a>{{ T "not_found_text_2" }}</p>
 
-       <p>You can learn how to make a 404 page like this in <a href="https://gohugo.io/templates/404/">Custom 404 Pages</a>.</p>      
-      </div>
-    </main>
+      <p>{{ T "not_found_text_3" }}<a href="https://gohugo.io/templates/404/">{{ T "not_found_text_4" }}</a>.</p>      
+    </div>
+  </main>
 {{ end }}

@@ -1,8 +1,9 @@
+{{ $langPage := cond (gt (len .Translations) 0) . .Site.Home }}
 <a class="of-link-list__a nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-	{{ T "versions" }}
+	{{ $langPage.Language.LanguageName }}
 </a>
 <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-	{{ range .Site.Params.versions }}
-	<a class="dropdown-item" href="{{ .url }}">{{ .version }}</a>
+	{{ range $langPage.Translations }}
+	<a class="dropdown-item" href="{{ .RelPermalink }}">{{ .Language.LanguageName }}</a>
 	{{ end }}
 </div>

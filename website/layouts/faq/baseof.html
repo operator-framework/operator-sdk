@@ -4,14 +4,14 @@
     {{ partial "head.html" . }}
   </head>
   <body class="td-{{ .Kind }}">
-      {{ partial "navbar.html" . }}
-      <section class="of-masthead of-masthead--subpage">
-      <h1 class="of-heading of-heading--xl">Frequently asked questions</h1>
+    {{ partial "navbar.html" . }}
+    <section class="of-masthead of-masthead--subpage">
+      <h1 class="of-heading of-heading--xl">{{ T "faq" }}</h1>
     </section>
     <section class="of-section-page-intro">
       <header class="of-section-page-intro__header">
-        <h2 class="of-heading of-heading--md">Frequently asked questions</h1>
-      <p>If you are a community member, builder, consumer of applications, or a user of Kubernetes overall, the Operator SDK offers a number of benefits.</p>
+        <h2 class="of-heading of-heading--md">{{ T "faq" }}</h1>
+        <p>{{ T "faq_content" }}</p>
       </header>
     </section>
     

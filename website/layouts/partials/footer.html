@@ -1,8 +1,8 @@
 {{ $links := .Site.Params.links }}
 <footer class="of-footer-main">
   <div class="of-footer-main__meta">
-    <img src="/build/images/logo.svg" alt="">
-    <p class="of-footer-main__meta__text">The Operator Framework is an open source toolkit to manage Kubernetes native applications, called Operators, in an effective, automated, and scalable way.</p>
+    <img src="/logo.svg" alt="">
+    <p class="of-footer-main__meta__text">{{ T "main_footer" }}</p>
     <ul class="of-link-list of-link-list--secondary">
       <li class="of-link-list__li"><a class="of-link-list__a" href="https://github.com/operator-framework">Operator Framework</a></li>
       <li class="of-link-list__li"><a class="of-link-list__a" href="https://github.com/operator-framework/operator-lifecycle-manager">Operator Lifecycle Manager</a></li>
@@ -10,7 +10,7 @@
     </ul>
   </div>
   <div class="of-footer-main__social">
-    <h4 class="of-heading of-heading--sm">Connect with us!</h4>
+    <h4 class="of-heading of-heading--sm">{{ T "footer_connect" }}</h4>
       {{ with $links }}
         {{ with index . "social"}}
         {{ template "footer-links-block"  . }}

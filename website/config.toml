@@ -1,5 +1,4 @@
 baseURL = "/"
-languageCode = "en-us"
 title = "Operator SDK"
 
 # Hugo allows theme composition (and inheritance). The precedence is from left to right.
@@ -59,6 +58,16 @@ description = "Go, Ansible, or Helm SDK to simplify the implementation of the op
 languageName ="English"
 # Weight used for sorting.
 weight = 1
+
+[languages.zh]
+description = "用来简化 Operator 模式实现的 Go、Ansible 或 Helm SDK"
+languageName ="中文 Chinese"
+weight = 2
+contentDir = "content/zh"
+
+[languages.zh.params]
+time_format_blog = "2006.01.02"
+language_alternatives = ["en"]
 
 # Everything below this are Site Params
 

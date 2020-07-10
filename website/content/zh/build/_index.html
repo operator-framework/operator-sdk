@@ -1,0 +1,104 @@
+---
+title: 构建
+linkTitle: 构建
+menu:
+  main:
+    weight: 1
+---
+<!--
+title: Build
+linkTitle: Build
+draft: false
+menu:
+  main:
+    weight: 1
+-->
+
+<section class="of-masthead of-masthead--subpage">
+  <h1 class="of-heading of-heading--xl">使用 Operator SDK 来构建 Operators</h1>
+</section>
+<section class="of-section-page-intro of-section-page-intro--overlay">
+  <header class="of-section-page-intro__header">
+    <h2 class="of-heading of-heading--md">我怎样才能使用 Operator SDK 来编写一个 Operator 呢？</h2>
+  <p>使用 SDK 有很多种方式来构建 Operator。如果想要现在就着手操作，请参参考此快速入门中的步骤。</p>
+  </header>
+</section>
+
+         <main role="main">
+          <section class="of-section-page-intro__content of-page--faq">
+            <section class="of-section--largetext">
+              <div class="of-section--largetext__item">
+                  <h2 class="of-heading of-heading--xl">安装 SDK CLI</h2>
+                  <div class="of-section--largetext__content">
+                    <p>按照<a href="/docs/install-operator-sdk/">安装指南</a>中所给的步骤学习如何安装 Operator SDK CLI
+                    工具。如果你在使用 SDK 的某个发行版本，请确保遵循该版本的文档。你可以使用以下几种方式来安装：</p>
+                  <ol class="of-list-ordered">
+                    <li>使用 <a href="/docs/install-operator-sdk/#install-from-homebrew-macos">Homebrew</a> 安装 (macOS)</li>
+                    <li>基于 <a href="/docs/install-operator-sdk/#install-from-github-release">GitHub</a> 发行页面安装</li>
+                    <li>使用 <a href="/docs/install-operator-sdk/#compile-and-install-from-master">master</a>
+                      分支代码编译并安装</li>
+                  </ol>
+                  </div>
+                  <a href="/docs/install-operator-sdk" class="of-button of-button--tertiary">进一步了解
+                    <svg class="of-button__icon" enable-background="new 0 0 22 22" version="1.1" viewBox="0 0 22 22" xml:space="preserve" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19.5,8l-7.3-7.6c-0.4-0.4-1.1-0.4-1.5,0L9.3,1.8c-0.4,0.4-0.4,1.1,0,1.6l5.2,5.5H1.1C0.5,8.9,0,9.3,0,10V12  c0,0.6,0.5,1.1,1.1,1.1h13.5l-5.2,5.5c-0.4,0.4-0.4,1.1,0,1.6l1.4,1.5c0.4,0.4,1.1,0.4,1.5,0l9.4-9.9c0.4-0.4,0.4-1.1,0-1.6L19.5,8z  "/>
+                        </svg>
+                  </a>
+                  <p class="large-text"><span>homebrew, </span>
+                  <span>github, </span>
+                  <span>master.</span></p>
+              </div>
+              <div class="of-section--largetext__item">
+                <h2 class="of-heading of-heading--xl">阅读用户指南</h2>
+                <p class="of-section--largetext__content">Operators 可以使用 Ansible、Helm 或者 Go
+                语言来创建。循着快速入门过程，可以逐渐深入。</p>
+                <ul>
+                  <li><a href="/docs/ansible/quickstart/" class="of-button of-button--tertiary">
+                      Ansible 快速入门
+                      <svg class="of-button__icon" enable-background="new 0 0 22 22" version="1.1" viewBox="0 0 22 22" xml:space="preserve" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M19.5,8l-7.3-7.6c-0.4-0.4-1.1-0.4-1.5,0L9.3,1.8c-0.4,0.4-0.4,1.1,0,1.6l5.2,5.5H1.1C0.5,8.9,0,9.3,0,10V12  c0,0.6,0.5,1.1,1.1,1.1h13.5l-5.2,5.5c-0.4,0.4-0.4,1.1,0,1.6l1.4,1.5c0.4,0.4,1.1,0.4,1.5,0l9.4-9.9c0.4-0.4,0.4-1.1,0-1.6L19.5,8z  "/>
+                      </svg>
+                    </a></li>
+                    <li><a href="/docs/helm/quickstart/" class="of-button of-button--tertiary">
+                      Helm 快速入门
+                      <svg class="of-button__icon" enable-background="new 0 0 22 22" version="1.1" viewBox="0 0 22 22" xml:space="preserve" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M19.5,8l-7.3-7.6c-0.4-0.4-1.1-0.4-1.5,0L9.3,1.8c-0.4,0.4-0.4,1.1,0,1.6l5.2,5.5H1.1C0.5,8.9,0,9.3,0,10V12  c0,0.6,0.5,1.1,1.1,1.1h13.5l-5.2,5.5c-0.4,0.4-0.4,1.1,0,1.6l1.4,1.5c0.4,0.4,1.1,0.4,1.5,0l9.4-9.9c0.4-0.4,0.4-1.1,0-1.6L19.5,8z  "/>
+                      </svg>
+                      </a></li>
+                      <li><a href="/docs/golang/quickstart/" class="of-button of-button--tertiary">
+                      Go 快速入门
+                      <svg class="of-button__icon" enable-background="new 0 0 22 22" version="1.1" viewBox="0 0 22 22" xml:space="preserve" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M19.5,8l-7.3-7.6c-0.4-0.4-1.1-0.4-1.5,0L9.3,1.8c-0.4,0.4-0.4,1.1,0,1.6l5.2,5.5H1.1C0.5,8.9,0,9.3,0,10V12  c0,0.6,0.5,1.1,1.1,1.1h13.5l-5.2,5.5c-0.4,0.4-0.4,1.1,0,1.6l1.4,1.5c0.4,0.4,1.1,0.4,1.5,0l9.4-9.9c0.4-0.4,0.4-1.1,0-1.6L19.5,8z  "/>
+                      </svg>
+                        </a></li>
+                </ul>
+                <p class="large-text"><span>Go </span><span>Ansible </span><span>Helm</span></p>
+              </div>
+              <div class="of-section--largetext__item">
+                <h2 class="of-heading of-heading--xl">发布你的 OPERATOR</h2>
+                <p class="of-section--largetext__content">学习如何为 Operator 打包并使用 Operator Lifecycle Manager
+                的包管理设施来将其与 Kubernetes 社区分享。</p>
+                <a href="/docs/olm-integration/quickstart-bundle" class="of-button of-button--tertiary">进一步了解
+                    <svg class="of-button__icon" enable-background="new 0 0 22 22" version="1.1" viewBox="0 0 22 22" xml:space="preserve" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M19.5,8l-7.3-7.6c-0.4-0.4-1.1-0.4-1.5,0L9.3,1.8c-0.4,0.4-0.4,1.1,0,1.6l5.2,5.5H1.1C0.5,8.9,0,9.3,0,10V12  c0,0.6,0.5,1.1,1.1,1.1h13.5l-5.2,5.5c-0.4,0.4-0.4,1.1,0,1.6l1.4,1.5c0.4,0.4,1.1,0.4,1.5,0l9.4-9.9c0.4-0.4,0.4-1.1,0-1.6L19.5,8z  "/>
+                    </svg>
+                </a>
+                <p class="large-text"><span>package & </span><span>deploy </span></p>
+              </div>
+              <div class="of-section--largetext__item">
+                <p class="large-text"><span>evolve & </span><span>mature </span></p>
+                <h2 class="of-heading of-heading--xl">改进你的 OPERATOR</h2>
+                <p class="of-section--largetext__content">了解 Operator 成熟度和实现自主操作的需求。</p>
+                <a href="/docs/operator-capabilities/" class="of-button of-button--tertiary">进一步了解
+                  <svg class="of-button__icon" enable-background="new 0 0 22 22" version="1.1" viewBox="0 0 22 22"
+                    xml:space="preserve" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M19.5,8l-7.3-7.6c-0.4-0.4-1.1-0.4-1.5,0L9.3,1.8c-0.4,0.4-0.4,1.1,0,1.6l5.2,5.5H1.1C0.5,8.9,0,9.3,0,10V12  c0,0.6,0.5,1.1,1.1,1.1h13.5l-5.2,5.5c-0.4,0.4-0.4,1.1,0,1.6l1.4,1.5c0.4,0.4,1.1,0.4,1.5,0l9.4-9.9c0.4-0.4,0.4-1.1,0-1.6L19.5,8z  " />
+                  </svg>
+                </a>
+              </div>
+          </section>
+          </section>
+          </main>
+
+<!-- 2020-07-10 4fa12a42 -->
