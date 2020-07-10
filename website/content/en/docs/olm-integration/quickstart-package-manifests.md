@@ -85,7 +85,7 @@ INFO[0001] Successfully uninstalled "memcached-operator.v0.0.1" on OLM version "
 
 [quickstart-bundle]:/docs/olm-integration/quickstart-bundle
 [operator-registry]:https://github.com/operator-framework/operator-registry
-[cli-run-packagemanifests]:/docs/new-cli/operator-sdk_run_packagemanifests
-[cli-cleanup-packagemanifests]:/docs/new-cli/operator-sdk_cleanup_packagemanifests
+[cli-run-packagemanifests]:/docs/cli/golang/operator-sdk_run_packagemanifests
+[cli-cleanup-packagemanifests]:/docs/cli/golang/operator-sdk_cleanup_packagemanifests
 [doc-olm-generate]:/docs/olm-integration/generating-a-csv#overview
 [doc-testing-deployment]:/docs/olm-integration/testing-deployment

@@ -139,15 +139,15 @@ to add an index to a cluster catalog, and the catalog [discovery docs][doc-olm-d
 about your cataloged Operator.
 
 
-[sdk-user-guide-go]:/docs/golang/quickstart
-[sdk-user-guide-ansible]:/docs/ansible/quickstart
-[sdk-user-guide-helm]:/docs/helm/quickstart
+[sdk-user-guide-go]:/docs/building-operators/golang/quickstart
+[sdk-user-guide-ansible]:/docs/building-operators/ansible/quickstart
+[sdk-user-guide-helm]:/docs/building-operators/helm/quickstart
 [quickstart-package-manifests]:/docs/olm-integration/quickstart-package-manifests
 [olm]:https://github.com/operator-framework/operator-lifecycle-manager/
 [bundle]:https://github.com/operator-framework/operator-registry/blob/v1.12.6/docs/design/operator-bundle.md
 [bundle-metadata]:https://github.com/operator-framework/operator-registry/blob/v1.12.6/docs/design/operator-bundle.md#bundle-annotations
 [bundle-dockerfile]:https://github.com/operator-framework/operator-registry/blob/v1.12.6/docs/design/operator-bundle.md#bundle-dockerfile
-[cli-olm]:/docs/new-cli/operator-sdk_olm
+[cli-olm]:/docs/cli/golang/operator-sdk_olm
 [doc-cli-overview]:/docs/olm-integration/cli-overview
 [doc-olm-generate]:/docs/olm-integration/generating-a-csv
 [opm]:https://github.com/operator-framework/operator-registry/blob/master/docs/design/opm-tooling.md

@@ -1,5 +1,5 @@
 ---
-title: Generating Manifests and Metadata
+title: Generating Manifests and Metadata 
 linkTitle: Generating Manifests and Metadata
 weight: 20
 ---
@@ -241,13 +241,13 @@ being managed, each with a `name` and `url`.
 [olm]:https://github.com/operator-framework/operator-lifecycle-manager
 [doc-csv]:https://github.com/operator-framework/operator-lifecycle-manager/blob/0.15.1/doc/design/building-your-csv.md
 [cli-overview]:/docs/olm-integration/cli-overview
-[cli-gen-kustomize-manifests]:/docs/new-cli/operator-sdk_generate_kustomize_manifests
-[cli-gen-bundle]:/docs/new-cli/operator-sdk_generate_bundle
-[cli-gen-packagemanifests]:/docs/new-cli/operator-sdk_generate_packagemanifests
+[cli-gen-kustomize-manifests]:/docs/cli/golang/operator-sdk_generate_kustomize_manifests
+[cli-gen-bundle]:/docs/cli/golang/operator-sdk_generate_bundle
+[cli-gen-packagemanifests]:/docs/cli/golang/operator-sdk_generate_packagemanifests
 [bundle]:https://github.com/operator-framework/operator-registry/blob/v1.12.6/docs/design/operator-bundle.md
 [bundle-metadata]:https://github.com/operator-framework/operator-registry/blob/v1.12.6/docs/design/operator-bundle.md#bundle-annotations
 [package-manifests]:https://github.com/operator-framework/operator-registry/tree/v1.5.3#manifest-format
 [install-modes]:https://github.com/operator-framework/operator-lifecycle-manager/blob/4197455/Documentation/design/building-your-csv.md#operator-metadata
-[olm-capabilities]:/docs/operator-capabilities/
-[csv-markers]:/docs/golang/references/markers
+[olm-capabilities]:/docs/advanced-topics/operator-capabilities/operator-capabilities
+[csv-markers]:/docs/building-operators/golang/references/markers
 [operatorhub]:https://operatorhub.io/

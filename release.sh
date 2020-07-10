@@ -38,7 +38,7 @@ if [[ "$VER" != "$CURR_VER" ]]; then
 	exit 1
 fi
 
-INSTALL_GUIDE_FILE="website/content/en/docs/install-operator-sdk.md"
+INSTALL_GUIDE_FILE="website/content/en/docs/installation/install-operator-sdk.md"
 CURR_VER_INSTALL_GUIDE_FILE="$(sed -nr 's/.*RELEASE_VERSION=(.+)/\1/p' "$INSTALL_GUIDE_FILE" | tr -d ' \t\n')"
 if [[ "$VER" != "$CURR_VER_INSTALL_GUIDE_FILE" ]]; then
 	echo "version '$VER' is not set correctly in $INSTALL_GUIDE_FILE"
