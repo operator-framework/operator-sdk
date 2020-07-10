@@ -42,15 +42,15 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/helm/internal/types"
 )
 
-// Manager manages a Helm release. It can install, update, reconcile,
+// Manager manages a Helm release. It can install, upgrade, reconcile,
 // and uninstall a release.
 type Manager interface {
 	ReleaseName() string
 	IsInstalled() bool
-	IsUpdateRequired() bool
+	IsUpgradeRequired() bool
 	Sync(context.Context) error
 	InstallRelease(context.Context, ...InstallOption) (*rpb.Release, error)
-	UpdateRelease(context.Context, ...UpdateOption) (*rpb.Release, *rpb.Release, error)
+	UpgradeRelease(context.Context, ...UpgradeOption) (*rpb.Release, *rpb.Release, error)
 	ReconcileRelease(context.Context) (*rpb.Release, error)
 	UninstallRelease(context.Context, ...UninstallOption) (*rpb.Release, error)
 }
@@ -66,14 +66,14 @@ type manager struct {
 	values map[string]interface{}
 	status *types.HelmAppStatus
 
-	isInstalled      bool
-	isUpdateRequired bool
-	deployedRelease  *rpb.Release
-	chart            *cpb.Chart
+	isInstalled       bool
+	isUpgradeRequired bool
+	deployedRelease   *rpb.Release
+	chart             *cpb.Chart
 }
 
 type InstallOption func(*action.Install) error
-type UpdateOption func(*action.Upgrade) error
+type UpgradeOption func(*action.Upgrade) error
 type UninstallOption func(*action.Uninstall) error
 
 // ReleaseName returns the name of the release.
@@ -85,8 +85,8 @@ func (m manager) IsInstalled() bool {
 	return m.isInstalled
 }
 
-func (m manager) IsUpdateRequired() bool {
-	return m.isUpdateRequired
+func (m manager) IsUpgradeRequired() bool {
+	return m.isUpgradeRequired
 }
 
 // Sync ensures the Helm storage backend is in sync with the status of the
@@ -121,13 +121,13 @@ func (m *manager) Sync(ctx context.Context) error {
 	m.deployedRelease = deployedRelease
 	m.isInstalled = true
 
-	// Get the next candidate release to determine if an update is necessary.
+	// Get the next candidate release to determine if an upgrade is necessary.
 	candidateRelease, err := m.getCandidateRelease(m.namespace, m.releaseName, m.chart, m.values)
 	if err != nil {
 		return fmt.Errorf("failed to get candidate release: %w", err)
 	}
 	if deployedRelease.Manifest != candidateRelease.Manifest {
-		m.isUpdateRequired = true
+		m.isUpgradeRequired = true
 	}
 
 	return nil
@@ -191,15 +191,15 @@ func (m manager) InstallRelease(ctx context.Context, opts ...InstallOption) (*rp
 	return installedRelease, nil
 }
 
-func ForceUpdate(force bool) UpdateOption {
+func ForceUpgrade(force bool) UpgradeOption {
 	return func(u *action.Upgrade) error {
 		u.Force = force
 		return nil
 	}
 }
 
-// UpdateRelease performs a Helm release update.
-func (m manager) UpdateRelease(ctx context.Context, opts ...UpdateOption) (*rpb.Release, *rpb.Release, error) {
+// UpgradeRelease performs a Helm release upgrade.
+func (m manager) UpgradeRelease(ctx context.Context, opts ...UpgradeOption) (*rpb.Release, *rpb.Release, error) {
 	upgrade := action.NewUpgrade(m.actionConfig)
 	upgrade.Namespace = m.namespace
 	for _, o := range opts {
@@ -208,26 +208,26 @@ func (m manager) UpdateRelease(ctx context.Context, opts ...UpdateOption) (*rpb.
 		}
 	}
 
-	updatedRelease, err := upgrade.Run(m.releaseName, m.chart, m.values)
+	upgradedRelease, err := upgrade.Run(m.releaseName, m.chart, m.values)
 	if err != nil {
 		// Workaround for helm/helm#3338
-		if updatedRelease != nil {
+		if upgradedRelease != nil {
 			rollback := action.NewRollback(m.actionConfig)
 			rollback.Force = true
 
-			// As of Helm 2.13, if UpdateRelease returns a non-nil release, that
+			// As of Helm 2.13, if UpgradeRelease returns a non-nil release, that
 			// means the release was also recorded in the release store.
 			// Therefore, we should perform the rollback when we have a non-nil
 			// release. Any rollback error here would be unexpected, so always
-			// log both the update and rollback errors.
+			// log both the upgrade and rollback errors.
 			rollbackErr := rollback.Run(m.releaseName)
 			if rollbackErr != nil {
-				return nil, nil, fmt.Errorf("failed update (%s) and failed rollback: %w", err, rollbackErr)
+				return nil, nil, fmt.Errorf("failed upgrade (%s) and failed rollback: %w", err, rollbackErr)
 			}
 		}
-		return nil, nil, fmt.Errorf("failed to update release: %w", err)
+		return nil, nil, fmt.Errorf("failed to upgrade release: %w", err)
 	}
-	return m.deployedRelease, updatedRelease, err
+	return m.deployedRelease, upgradedRelease, err
 }
 
 // ReconcileRelease creates or patches resources as necessary to match the

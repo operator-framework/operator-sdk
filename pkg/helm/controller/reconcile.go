@@ -236,13 +236,13 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		}
 	}
 
-	if manager.IsUpdateRequired() {
+	if manager.IsUpgradeRequired() {
 		for k, v := range r.OverrideValues {
 			r.EventRecorder.Eventf(o, "Warning", "OverrideValuesInUse",
 				"Chart value %q overridden to %q by operator's watches.yaml", k, v)
 		}
 		force := hasHelmUpgradeForceAnnotation(o)
-		previousRelease, updatedRelease, err := manager.UpdateRelease(context.TODO(), release.ForceUpdate(force))
+		previousRelease, upgradedRelease, err := manager.UpgradeRelease(context.TODO(), release.ForceUpgrade(force))
 		if err != nil {
 			log.Error(err, "Release failed")
 			status.SetCondition(types.HelmAppCondition{
@@ -257,20 +257,20 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		status.RemoveCondition(types.ConditionReleaseFailed)
 
 		if r.releaseHook != nil {
-			if err := r.releaseHook(updatedRelease); err != nil {
+			if err := r.releaseHook(upgradedRelease); err != nil {
 				log.Error(err, "Failed to run release hook")
 				return reconcile.Result{}, err
 			}
 		}
 
-		log.Info("Updated release", "force", force)
+		log.Info("Upgraded release", "force", force)
 		if log.V(0).Enabled() {
-			fmt.Println(diffutil.Diff(previousRelease.Manifest, updatedRelease.Manifest))
+			fmt.Println(diffutil.Diff(previousRelease.Manifest, upgradedRelease.Manifest))
 		}
-		log.V(1).Info("Config values", "values", updatedRelease.Config)
+		log.V(1).Info("Config values", "values", upgradedRelease.Config)
 		message := ""
-		if updatedRelease.Info != nil {
-			message = updatedRelease.Info.Notes
+		if upgradedRelease.Info != nil {
+			message = upgradedRelease.Info.Notes
 		}
 		status.SetCondition(types.HelmAppCondition{
 			Type:    types.ConditionDeployed,
@@ -279,8 +279,8 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 			Message: message,
 		})
 		status.DeployedRelease = &types.HelmAppRelease{
-			Name:     updatedRelease.Name,
-			Manifest: updatedRelease.Manifest,
+			Name:     upgradedRelease.Name,
+			Manifest: upgradedRelease.Manifest,
 		}
 		err = r.updateResourceStatus(o, status)
 		return reconcile.Result{RequeueAfter: r.ReconcilePeriod}, err
