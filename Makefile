@@ -284,7 +284,7 @@ test-subcommand-olm-install:
 test-e2e: test-e2e-go test-e2e-ansible test-e2e-ansible-molecule test-e2e-helm ## Run the e2e tests
 
 test-e2e-go:
-	K8S_VERSION=$(K8S_VERSION) ./hack/tests/e2e-go.sh
+	./hack/tests/e2e-go.sh
 
 test-e2e-ansible: image-build-ansible
 	./hack/tests/e2e-ansible.sh
