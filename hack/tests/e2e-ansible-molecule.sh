@@ -16,14 +16,6 @@ pip3 install --user ansible-lint yamllint
 pip3 install --user docker openshift jmespath
 ansible-galaxy collection install community.kubernetes
 
-deploy_prereqs() {
-    header_text "Deploying resources"
-    kubectl create -f "$OPERATORDIR/deploy/service_account.yaml"
-    kubectl create -f "$OPERATORDIR/deploy/role.yaml"
-    kubectl create -f "$OPERATORDIR/deploy/role_binding.yaml"
-    kubectl create -f "$OPERATORDIR/deploy/crds/ansible.example.com_memcacheds_crd.yaml"
-}
-
 remove_prereqs() {
     header_text "Deleting resources"
     kubectl delete --wait=true --ignore-not-found=true --timeout=60s -f "$OPERATORDIR/deploy/crds/ansible.example.com_memcacheds_crd.yaml"
@@ -56,7 +48,7 @@ header_text "Test local"
 pushd memcached-operator
 sed -i".bak" -E -e 's/(FROM quay.io\/operator-framework\/ansible-operator)(:.*)?/\1:dev/g' build/Dockerfile; rm -f build/Dockerfile.bak
 OPERATORDIR="$(pwd)"
-TEST_CLUSTER_PORT=24443 operator-sdk test local --operator-namespace default
+TEST_CLUSTER_PORT=24443 TEST_OPERATOR_NAMESPACE=default molecule test -s test-local
 
 remove_prereqs
 

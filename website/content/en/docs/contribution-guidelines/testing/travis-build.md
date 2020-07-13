@@ -35,53 +35,16 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
     3. Check that all error messages start with a lower case alphabetical character and do not end with punctuation, and log messages start with an upper case alphabetical character.
     4. Make sure the repo is in a clean state (this is particularly useful for making sure `go.mod` and `go.sum` are up-to-date after running `make tidy`).
 2. Run unit tests.
-    1. Run `make test`.
-3. Run [subcommand tests][subcommand].
-    1. Run `test local` with no flags enabled.
-    2. Run `test local` with most configuration flags enabled.
-    3. Run `test local` in single namespace mode.
-    4. Run `test local` with `--up-local` flag.
-    5. Run `test local` with both `--up-local` and `--kubeconfig` flags.
-    6. Create all test resources with kubectl and run `test local` with `--no-setup` flag.
-    7. Run `scorecard` subcommand and check that expected score matches actual score.
-    8. Run `scorecard` subcommand with json output enabled and verify the output.
-4. Run [go e2e tests][go-e2e].
-    1. Scaffold a project using `hack/tests/scaffolding/e2e-go-scaffold.sh`
-    2. Build `memcached-operator` image to be used in tests
-    3. Run scaffolded project e2e tests using `operator-sdk run local`
-        1. Run cluster test (namespace is auto-generated and deleted by test framework).
-            1. Deploy operator and required resources to the cluster.
-            2. Run the leader election test.
-                1. Verify that operator deployment is ready.
-                2. Verify that leader configmap specifies 1 leader and that the memcached operator has 2 pods (configuration for this is done in step 4.1).
-                3. Delete current leader and wait for memcached-operator deployment to become ready again.
-                4. Verify that leader configmap specifies 1 leader and that the memcached-operator has 2 pods.
-                5. Verify that the name of the new leader is different from the name of the old leader.
-            3. Run the memcached scale test.
-                1. Create memcached CR specifying a desired cluster size of 3 and wait until memcached cluster is of size 3.
-                2. Increase desired cluster size to 4 and wait until memcached cluster is of size 4.
-            4. Run the memcached metrics test.
-                1. Make sure the metrics Service was created.
-                2. Get metrics via proxy pod and make sure they are present.
-                3. Perform linting of the existing metrics.
-            5. Run the memcached custom resource metrics test.
-                1. Make sure the metrics Service was created.
-                2. Get metrics via proxy pod and make sure they are present.
-                3. Perform linting of the existing metrics.
-                4. Perform checks on each custom resource generated metric and makes sure the name, type, value, labels and metric are correct.
-        2. Run local test (namespace is auto-generated and deleted by test framework).
-            1. Start operator using the `run local` subcommand.
-            2. Run memcached scale test (described in step 4.3.1.3)
-    4. Run [TLS library tests][tls-tests].
-        1. This test runs multiple simple tests of the operator-sdk's TLS library. The tests run in parallel and each tests runs in its own namespace.
+    1. Run `make test-unit`.
+3. Run [go e2e tests][go-e2e].
+    1. Run `make test-e2e-go`.
 
 ### Ansible tests
 
-1. Run [ansible molecule tests][ansible-molecule]. (`make test-e2e-ansible-molecule)
+1. Run [ansible molecule tests][ansible-molecule]. (`make test-e2e-ansible-molecule`)
     1. Create and configure a new ansible type memcached-operator.
     2. Create cluster resources.
-    3. Run `operator-sdk test local` to run ansible molecule tests
-    4. Change directory to [`test/ansible`][ansible-test] and run `operator-sdk test local`
+    4. Change directory to [`test/ansible`][ansible-test] and run `molecule test -s local`
 
 **NOTE**: All created resources, including the namespace, are deleted using a bash trap when the test finishes
 
@@ -108,9 +71,7 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
 [k8s-script]: https://github.com/operator-framework/operator-sdk/blob/master/hack/ci/setup-k8s.sh
 [kind]: https://kind.sigs.k8s.io/
 [sanity]: https://github.com/operator-framework/operator-sdk/blob/master/hack/tests/sanity-check.sh
-[subcommand]: https://github.com/operator-framework/operator-sdk/blob/master/hack/tests/subcommand.sh
-[go-e2e]: https://github.com/operator-framework/operator-sdk/blob/master/hack/tests/e2e-go.sh
-[tls-tests]: https://github.com/operator-framework/operator-sdk/blob/master/test/e2e/tls_util_test.go
+[go-e2e]: https://github.com/operator-framework/operator-sdk/blob/master/test/e2e/e2e_suite.go
 [ansible-molecule]: https://github.com/operator-framework/operator-sdk/blob/master/hack/tests/e2e-ansible-molecule.sh
 [ansible-test]: https://github.com/operator-framework/operator-sdk/tree/master/test/ansible
 [helm-e2e]: https://github.com/operator-framework/operator-sdk/blob/master/hack/tests/e2e-helm.sh

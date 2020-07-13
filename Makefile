@@ -266,14 +266,11 @@ test-links:
 test-ci: test-sanity test-unit install test-subcommand test-e2e ## Run the CI test suite
 
 # Subcommand tests.
-.PHONY: test-subcommand test-subcommand-local test-subcommand-olm-install
+.PHONY: test-subcommand test-subcommand-olm-install
 
-test-subcommand: test-subcommand-local test-subcommand-olm-install
+test-subcommand: test-subcommand-olm-install
 	./hack/tests/subcommand-bundle.sh
 	./hack/tests/subcommand-generate-csv.sh
-
-test-subcommand-local:
-	./hack/tests/subcommand.sh
 
 test-subcommand-olm-install:
 	./hack/tests/subcommand-olm-install.sh

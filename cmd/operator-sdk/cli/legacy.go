@@ -29,7 +29,6 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/new"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/olm"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/run"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/test"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/version"
 	"github.com/operator-framework/operator-sdk/internal/flags"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
@@ -76,7 +75,6 @@ func GetCLIRoot() *cobra.Command {
 		new.NewCmd(),
 		olm.NewCmd(),
 		run.NewCmdLegacy(),
-		test.NewCmd(),
 		version.NewCmd(),
 	)
 
