@@ -93,9 +93,8 @@ func FindMetadataDir(bundleRoot string) (metadataDir string, err error) {
 		_, err = os.Stat(filepath.Join(path, registrybundle.AnnotationsFile))
 		if err == nil || errors.Is(err, os.ErrExist) {
 			metadataDir = path
-			return nil
 		}
-		return err
+		return nil
 	})
 	if err != nil {
 		return "", err
