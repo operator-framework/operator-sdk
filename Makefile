@@ -297,9 +297,9 @@ test-subcommand-olm-install:
 	./hack/tests/subcommand-olm-install.sh
 
 # E2E tests.
-.PHONY: test-e2e test-e2e-go test-e2e-go-new test-e2e-helm-new test-e2e-ansible test-e2e-ansible-molecule test-e2e-helm
+.PHONY: test-e2e test-e2e-go test-e2e-go-new test-e2e-helm-new test-e2e-ansible test-e2e-ansible-molecule test-e2e-helm test-e2e-helm-new-shell
 
-test-e2e: test-e2e-go test-e2e-go-new test-e2e-helm-new test-e2e-ansible test-e2e-ansible-molecule test-e2e-helm ## Run the e2e tests
+test-e2e: test-e2e-go test-e2e-go-new test-e2e-helm-new test-e2e-ansible test-e2e-ansible-molecule test-e2e-helm test-e2e-helm-new-shell ## Run the e2e tests
 
 test-e2e-go:
 	./hack/tests/e2e-go.sh $(ARGS)
@@ -318,6 +318,9 @@ test-e2e-ansible-molecule: image-build-ansible
 
 test-e2e-helm: image-build-helm
 	./hack/tests/e2e-helm.sh
+
+test-e2e-helm-new-shell: image-build-helm
+	./hack/tests/e2e-helm-new-shell.sh
 
 # Integration tests.
 .PHONY: test-integration

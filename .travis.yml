@@ -166,6 +166,11 @@ jobs:
       name: Helm on Kubernetes
       script: make test-e2e-helm
 
+    # Build and test helm new layout
+    - <<: *test
+      name: Helm on Kubernetes new layout
+      script: make test-e2e-helm-new-shell
+
     # Build and test helm for new project layouts
     - name: Helm e2e tests for new project layouts
       before_install:
