@@ -16,15 +16,11 @@ package packagemanifests
 
 import (
 	"fmt"
-	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	olmcatalog "github.com/operator-framework/operator-sdk/internal/generate/olm-catalog"
 	olmoperator "github.com/operator-framework/operator-sdk/internal/olm/operator"
-	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
 type packagemanifestsCmd struct {
@@ -47,13 +43,7 @@ ex. '<project-root>/packagemanifests'.`,
 				}
 				c.ManifestsDir = args[0]
 			} else {
-				// Choose the default path depending on project configuration.
-				if kbutil.HasProjectFile() {
-					c.ManifestsDir = "packagemanifests"
-				} else {
-					operatorName := filepath.Base(projutil.MustGetwd())
-					c.ManifestsDir = filepath.Join(olmcatalog.OLMCatalogDir, operatorName)
-				}
+				c.ManifestsDir = "packagemanifests"
 			}
 
 			log.Infof("Cleaning up operator in directory %s", c.ManifestsDir)

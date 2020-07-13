@@ -23,12 +23,10 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/build"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/bundle"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cleanup"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/completion"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/new"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/olm"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/run"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/version"
 	"github.com/operator-framework/operator-sdk/internal/flags"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
@@ -69,12 +67,10 @@ func GetCLIRoot() *cobra.Command {
 		alpha.NewCmd(),
 		build.NewCmd(),
 		bundle.NewCmdLegacy(),
-		cleanup.NewCmdLegacy(),
 		completion.NewCmd(),
 		generate.NewCmdLegacy(),
 		new.NewCmd(),
 		olm.NewCmd(),
-		run.NewCmdLegacy(),
 		version.NewCmd(),
 	)
 
