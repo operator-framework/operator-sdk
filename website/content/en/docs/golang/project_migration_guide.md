@@ -12,7 +12,8 @@ The document considers [memcached operator][memcached-operator] as an example to
 
 ## Prerequisites
 - [git][git_tool].
-- [go][go_tool] version 17.03+.
+- [go][go_tool] version 1.13+.
+- [docker][docker_tool] version 17.03+.
 - [kubectl][kubectl_tool] version v1.11.3+.
 - [kustomize][kustomize_tool] v3.1.0+.
 - Access to a Kubernetes v1.11.3+ cluster.
