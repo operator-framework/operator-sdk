@@ -20,9 +20,11 @@ import (
 	"log"
 	"os"
 
-	"github.com/jmccormick2001/custom-scorecard-tests/internal/tests"
+	scorecard "github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
+	"github.com/operator-framework/operator-sdk/internal/scorecard/alpha/examples/custom-scorecard-tests/internal/tests"
+
+	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	scapiv1alpha3 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
-	scorecard "github.com/operator-framework/operator-sdk/pkg/scorecard/tests"
 )
 
 // This is the custom scorecard test example binary
@@ -41,22 +43,20 @@ func main() {
 	}
 
 	// Read the pod's untar'd bundle from a well-known path.
-	// The location of the bundle is passed in the GetBundle path, which
-	// fetches the bundle under test.
-	cfg, err := scorecard.GetBundle("/bundle")
+	cfg, err := apimanifests.GetBundleFromDir(scorecard.PodBundleRoot)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	var result scapiv1alpha3.TestResult
+	var result scapiv1alpha3.TestStatus
 
 	// Names of the custom tests which would be passed in the
 	// `operator-sdk alpha` command.
 	switch entrypoint[0] {
 	case tests.CustomTest1Name:
-		result = tests.CustomTest1(*cfg)
+		result = tests.CustomTest1(cfg)
 	case tests.CustomTest2Name:
-		result = tests.CustomTest2(*cfg)
+		result = tests.CustomTest2(cfg)
 	default:
 		result = printValidTests()
 	}
@@ -70,15 +70,18 @@ func main() {
 
 }
 
-// printValidTests will print out full list of test names to give a hint to the end user on what the valid tests are
-func printValidTests() (result scapiv1alpha3.TestResult) {
+// printValidTests will print out full list of test names to give a hint to the end user on what the valid tests are.
+func printValidTests() scapiv1alpha3.TestStatus {
+	result := scapiv1alpha3.TestResult{}
 	result.State = scapiv1alpha3.FailState
 	result.Errors = make([]string, 0)
 	result.Suggestions = make([]string, 0)
 
-	str := fmt.Sprintf("Valid tests for this image include: %s, %s",
+	str := fmt.Sprintf("Valid tests for this image include: %s %s",
 		tests.CustomTest1Name,
 		tests.CustomTest2Name)
 	result.Errors = append(result.Errors, str)
-	return result
+	return scapiv1alpha3.TestStatus{
+		Results: []scapiv1alpha3.TestResult{result},
+	}
 }
