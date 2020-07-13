@@ -116,5 +116,5 @@ spec:
 Setting this annotation to `True` and updating the spec (for example changing to `spec.replicaCount: 3`) will cause this CR to be reconciled and upgraded with the `force` option. This can be verified in the log message when an upgrade succeeds: 
 
 ```
-{"level":"info","ts":1591198931.1703992,"logger":"helm.controller","msg":"Updated release","namespace":"helm-nginx","name":"example-nginx","apiVersion":"cache.example.com/v1alpha1","kind":"Nginx","release":"example-nginx","force":true}
+{"level":"info","ts":1591198931.1703992,"logger":"helm.controller","msg":"Upgraded release","namespace":"helm-nginx","name":"example-nginx","apiVersion":"cache.example.com/v1alpha1","kind":"Nginx","release":"example-nginx","force":true}
 ```
