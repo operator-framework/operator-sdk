@@ -13,16 +13,16 @@ Tests are implemented within test images that are configured
 and constructed to be executed by scorecard.
 
 Scorecard assumes it is being executed with access to a configured
-Kube cluster.  Each test is executed within a Pod by scorecard,
+Kubernetes cluster.  Each test is executed within a Pod by scorecard,
 from which pod logs are aggregated and test results sent to the console.
 
-Scorecard has built-in basic and OLM tests but also provides a
+Scorecard has built-in basic and OLM tests, and it also provides a
 means to execute custom test definitions.
 
 ## Requirements
 
 The scorecard tests make no assumptions as to the state of the
-operator being tested.  Creating operators and custom resources
+operator being tested. Creating operators and custom resources
 for an operator are left outside the scope of the scorecard itself.
 
 Scorecard tests can however create whatever resources they
@@ -37,7 +37,7 @@ of the configuration file format.  Unless you are executing custom
 tests, you can just copy the provided example configuration file
 into your project.
 2. Place the scorecard configuration file within your project
-bundle directory a the following location `tests/scorecard/config.yaml`.
+bundle directory at the following location `tests/scorecard/config.yaml`.
 You can override the default location of the configuration file
 by specifying the `--config` flag.
 3. Execute the [`scorecard` command][cli-scorecard]. See the
@@ -60,45 +60,66 @@ and used for running the scorecard pre-defined tests that ship with the SDK.
 A sample of the scorecard configuration file may look as follows:
 
 ```yaml
-tests:
-- image: quay.io/operator-framework/scorecard-test:dev
-  entrypoint:
-  - scorecard-test
-  - basic-check-spec
-  labels:
-    suite: basic
-    test: basic-check-spec-test
-- image: quay.io/operator-framework/scorecard-test:dev
-  entrypoint:
-  - scorecard-test
-  - olm-bundle-validation
-  labels:
-    suite: olm
-    test: olm-bundle-validation-test
+stages:
+- parallel: true
+  tests:
+  - image: quay.io/operator-framework/scorecard-test:dev
+    entrypoint:
+    - scorecard-test
+    - basic-check-spec
+    labels:
+      suite: basic
+      test: basic-check-spec-test
+  - image: quay.io/operator-framework/scorecard-test:dev
+    entrypoint:
+    - scorecard-test
+    - olm-bundle-validation
+    labels:
+      suite: olm
+      test: olm-bundle-validation-test
 ```
 
-The configuration file defines each test that scorecard can execute.  The
-following fields of the scorecard configuration file define the test
-as follows:
+The configuration file defines the tests that scorecard executes. Tests are
+grouped into stages for fine-grained control of [parallelism](#parallelism).
+The following fields of the scorecard configuration file define the test as
+follows:
 
 
-| Config Field        | Description   |
-| --------    | -------- |
-| image | the test container image name that implements a test
-| entrypoint | the command and arguments that are invoked in the test image to execute a test
-| labels | scorecard-defined or custom labels that [select](#selecting-tests) which tests to run
+| Config Field | Description
+| ------------ | -----------
+| image        | the test container image name that implements a test
+| entrypoint   | the command and arguments that are invoked in the test image to execute a test
+| labels       | scorecard-defined or custom labels that [select](#selecting-tests) which tests to run
 
 ### Command Args
 
 The scorecard command has the following syntax:
 ```
-operator-sdk alpha scorecard [bundle path] | [bundle image name] [flags]
+operator-sdk alpha scorecard <bundle_dir_or_image> [flags]
 ```
 
 The scorecard requires a positional argument that holds either the
 on-disk path to your operator bundle or the name of a bundle image.
 
 For further information about the flags see the [CLI documentation][cli-scorecard].
+
+## Parallelism
+
+The configuration file allows operator developers to define separate stages for
+their tests. Stages run sequentially in the order they are defined in the
+configuration file. A stage contains a list of tests and a configurable
+`parallel` setting.
+
+By default (or when a stage explicitly sets `parallel` to `false`), tests in
+a stage are run sequentially in the order they are defined in the configuration
+file. Running tests one at a time is helpful to guarantee that no two tests
+interact and conflict with each other.
+
+However, if tests are designed to be fully isolated, they can be parallelized.
+To run a set of isolated tests in parallel, include them in the same stage and
+set `parallel` to `true`. All tests in a parallel stage are executed
+simultaneously, and scorecard waits for all of them to finish before proceding
+to the next stage. This can make your tests run much faster.
 
 ## Selecting Tests
 
@@ -225,7 +246,7 @@ Scorecard will execute custom tests if they follow these mandated conventions:
  * tests accept an entrypoint which include a command and arguments
  * tests produce v1alpha3 scorecard output in JSON format with no extraneous logging in the test output
  * tests can obtain the bundle contents at a shared mount point of /bundle
- * tests can access the Kube API using an in-cluster client connection
+ * tests can access the Kubernetes API using an in-cluster client connection
 
 <!--- TODO(jeff): Add an example.
 See here for an example of a custom test image written in golang.

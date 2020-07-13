@@ -48,11 +48,12 @@ cases under the scorecard/kuttl directory within the bundle contents.
 In the scorecard configuration file, you might have the following
 definition of what the selector `suite=kuttlsuite` will translate to:
 ```yaml
-tests:
-- image: quay.io/operator-framework/scorecard-test-kuttl:dev
-  labels:
-    suite: kuttlsuite
-    test: kuttltest1
+stages:
+- tests:
+  - image: quay.io/operator-framework/scorecard-test-kuttl:dev
+    labels:
+      suite: kuttlsuite
+      test: kuttltest1
 ```
 
 This test configuration will execute the scorecard-test-kuttl

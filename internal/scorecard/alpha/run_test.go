@@ -16,6 +16,7 @@ package alpha
 
 import (
 	"context"
+	"errors"
 	"path/filepath"
 	"testing"
 	"time"
@@ -25,8 +26,8 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
 
+// TODO(joelanford): rewrite to use ginkgo/gomega
 func TestRunTests(t *testing.T) {
-
 	cases := []struct {
 		name            string
 		configPathValue string
@@ -98,5 +99,108 @@ func TestRunTests(t *testing.T) {
 
 		})
 
+	}
+}
+
+// TODO(joelanford): rewrite to use ginkgo/gomega
+func TestRunParallelPass(t *testing.T) {
+	scorecard := getFakeScorecard(true)
+	ctx, cancel := context.WithTimeout(context.Background(), 7*time.Millisecond)
+	defer cancel()
+
+	tests, err := scorecard.Run(ctx)
+	if err != nil {
+		t.Fatalf("Expected no error, got error: %v", err)
+	}
+	if len(tests.Items) != 2 {
+		t.Fatalf("Expected 2 tests, got %d", len(tests.Items))
+	}
+	for _, test := range tests.Items {
+		expectPass(t, test)
+	}
+}
+
+// TODO(joelanford): rewrite to use ginkgo/gomega
+func TestRunSequentialPass(t *testing.T) {
+	scorecard := getFakeScorecard(false)
+	ctx, cancel := context.WithTimeout(context.Background(), 12*time.Millisecond)
+	defer cancel()
+
+	tests, err := scorecard.Run(ctx)
+	if err != nil {
+		t.Fatalf("Expected no error, got error: %v", err)
+	}
+	if len(tests.Items) != 2 {
+		t.Fatalf("Expected 2 tests, got %d", len(tests.Items))
+	}
+	for _, test := range tests.Items {
+		expectPass(t, test)
+	}
+}
+
+// TODO(joelanford): rewrite to use ginkgo/gomega
+func TestRunSequentialFail(t *testing.T) {
+	scorecard := getFakeScorecard(false)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 7*time.Millisecond)
+	defer cancel()
+
+	_, err := scorecard.Run(ctx)
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("Expected deadline exceeded error, got:  %v", err)
+	}
+}
+
+func getFakeScorecard(parallel bool) Scorecard {
+	return Scorecard{
+		Config: Config{
+			Stages: []Stage{
+				{
+					Parallel: parallel,
+					Tests: []Test{
+						{},
+						{},
+					},
+				},
+			},
+		},
+		TestRunner: FakeTestRunner{
+			Sleep: 5 * time.Millisecond,
+			TestStatus: &v1alpha3.TestStatus{
+				Results: []v1alpha3.TestResult{
+					{
+						State: v1alpha3.PassState,
+					},
+				},
+			},
+		},
+	}
+}
+
+func expectPass(t *testing.T, test v1alpha3.Test) {
+	if len(test.Status.Results) != 1 {
+		t.Fatalf("Expected 1 results, got %d", len(test.Status.Results))
+	}
+	for _, r := range test.Status.Results {
+		if len(r.Errors) > 0 {
+			t.Fatalf("Expected no errors, got %v", r.Errors)
+		}
+		if r.State != v1alpha3.PassState {
+			t.Fatalf("Expected result state %q, got %q", v1alpha3.PassState, r.State)
+		}
+	}
+}
+
+func expectDeadlineExceeded(t *testing.T, test v1alpha3.Test) {
+	if len(test.Status.Results) != 1 {
+		t.Fatalf("Expected 1 results, got %d", len(test.Status.Results))
+	}
+	for _, r := range test.Status.Results {
+		if len(r.Errors) != 1 || r.Errors[0] != context.DeadlineExceeded.Error() {
+			t.Fatalf("Expected error %q error, got %v", context.DeadlineExceeded, r.Errors)
+		}
+		if r.State != v1alpha3.FailState {
+			t.Fatalf("Expected result state %q, got %q", v1alpha3.FailState, r.State)
+		}
 	}
 }

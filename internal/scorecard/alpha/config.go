@@ -25,6 +25,11 @@ const (
 	ConfigDirPath = "/tests/" + ConfigDirName + "/"
 )
 
+type Stage struct {
+	Parallel bool   `yaml:"parallel"`
+	Tests    []Test `yaml:"tests"`
+}
+
 type Test struct {
 	// Image is the name of the testimage
 	Image string `json:"image"`
@@ -37,7 +42,7 @@ type Test struct {
 // Config represents the set of test configurations which scorecard
 // would run based on user input
 type Config struct {
-	Tests []Test `yaml:"tests"`
+	Stages []Stage `yaml:"stages"`
 }
 
 // LoadConfig will find and return the scorecard config, the config file
