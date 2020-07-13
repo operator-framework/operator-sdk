@@ -58,7 +58,7 @@ Create a new API and its corresponding controller.
 
 In case of memcached operator, a new API for kind `Memcached` and group/version  `cache/v1aplha1` is created using the following command.
 
-`operator-sdk api --group cache --version v1alpha1 --kind Memcached`
+`operator-sdk create api --group cache --version v1alpha1 --kind Memcached`
 
 Press `y` when asked for creating resource and controller. This will scaffold the project and create the files `api/<version>/<kind>_types.go` and `controller/<kind>_types.go`.
 
