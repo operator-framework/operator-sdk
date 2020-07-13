@@ -17,7 +17,6 @@ require (
 	github.com/onsi/gomega v1.9.0
 	github.com/operator-framework/api v0.3.8
 	github.com/operator-framework/operator-registry v1.12.6-0.20200611222234-275301b779f8
-	github.com/pborman/uuid v1.2.0
 	github.com/prometheus/client_golang v1.5.1
 	github.com/prometheus/common v0.9.1
 	github.com/rogpeppe/go-internal v1.5.0
@@ -29,7 +28,6 @@ require (
 	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.5.1
 	go.uber.org/zap v1.14.1
-	golang.org/x/net v0.0.0-20200301022130-244492dfa37a
 	golang.org/x/tools v0.0.0-20200403190813-44a64ad78b9b
 	gomodules.xyz/jsonpatch/v3 v3.0.1
 	gopkg.in/yaml.v2 v2.2.8

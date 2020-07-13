@@ -27,6 +27,5 @@ An SDK for building operators with ease
 * [operator-sdk new](../operator-sdk_new)	 - Creates a new operator application
 * [operator-sdk olm](../operator-sdk_olm)	 - Manage the Operator Lifecycle Manager installation in your cluster
 * [operator-sdk run](../operator-sdk_run)	 - Run an Operator in a variety of environments
-* [operator-sdk test](../operator-sdk_test)	 - Tests the operator
 * [operator-sdk version](../operator-sdk_version)	 - Prints the version of operator-sdk
 

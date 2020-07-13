@@ -14,7 +14,7 @@ To begin, you sould have:
 - [Molecule](https://github.com/ansible/molecule) >= v3.0
 - [Ansible](https://github.com/ansible/ansible) >= v2.9
 - [The OpenShift Python client](https://github.com/openshift/openshift-restclient-python) >= v0.8
-- An initialized Ansible Operator project, with the molecule directory present. 
+- An initialized Ansible Operator project, with the molecule directory present.
 
 **NOTE**  If you initialized a project with a previous version of operator-sdk, you can generate a new dummy project and copy in the `molecule` directory. Just be sure to generate the dummy project with the same `api-version` and `kind`, or some of the generated files will not work without modification. Your top-level project structure should look like this:
 
@@ -143,9 +143,7 @@ cluster or external registry, and can run in CI environments that allow users to
 (such as Travis).
 It brings up a Kubernetes-in-docker cluster, builds your Operator, deploys it into the cluster,
 and then creates an instance of your CustomResource and runs your assertions to make sure the Operator responded properly.
-You can run this scenario with
-`molecule test -s local`, which is equivalent to `operator-sdk test local`, or with `molecule converge -s test-local`, which will leave the environment up
-afterward.
+You can run this scenario with `molecule test -s local`, or with `molecule converge -s test-local` which will leave the environment up afterward.
 
 The scenario has the following structure:
 
@@ -188,11 +186,6 @@ will reset it.
 
 - `molecule test` performs a full loop, bringing a cluster up, preparing it, running your tasks, and tearing it down.
 - `molecule converge` is more useful for iterative development, as it leaves your environment up between runs. This can cause unexpected problems if you end up corrupting your environment during testing, but running `molecule destroy` will reset it.
-
-## operator-sdk test local 
-
-The `operator-sdk test local` command kicks off an end-to-end test of your Operator. It will run the
-`test-local` molecule scenario described above.
 
 ## Writing tests
 
@@ -242,7 +235,7 @@ The file should now look like this:
 ```
 
 Now that we have a functional Operator, and an assertion of its behavior, we can verify that everything is working
-by running `operator-sdk test local`.
+by running `molecule test -s local`.
 
 #### The Ansible `assert` and `fail` modules
 These modules are handy for adding assertions and failure conditions to your Ansible Operator tests:
