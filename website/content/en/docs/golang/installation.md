@@ -9,7 +9,7 @@ Follow the steps in the [installation guide][install-guide] to learn how to inst
 ## Additional Prerequisites
 
 - [git][git_tool]
-- [go][go_tool] version v1.12+.
+- [go][go_tool] version v1.13+.
 - [mercurial][mercurial_tool] version 3.9+
 - [docker][docker_tool] version 17.03+.
 - [kubectl][kubectl_tool] version v1.11.3+.
