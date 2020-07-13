@@ -16,7 +16,6 @@ package add
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -131,9 +130,7 @@ func apiRun(cmd *cobra.Command, args []string) error {
 
 	switch operatorType {
 	case projutil.OperatorTypeGo:
-		if err := doGoAPIScaffold(); err != nil {
-			return err
-		}
+		return fmt.Errorf("the `add api` command is not supported for Go operators")
 	case projutil.OperatorTypeAnsible:
 		if err := doAnsibleAPIScaffold(); err != nil {
 			return err
@@ -217,85 +214,4 @@ func doAnsibleAPIScaffold() error {
 			r.APIVersion, r.Kind, err)
 	}
 	return nil
-}
-
-// TODO
-// Consolidate scaffold func to be used by both "new" and "add api" commands.
-func doGoAPIScaffold() error {
-
-	// Create and validate new resource.
-	r, err := scaffold.NewResource(apiFlags.APIVersion, apiFlags.Kind)
-	if err != nil {
-		return err
-	}
-
-	absProjectPath := projutil.MustGetwd()
-
-	cfg := &input.Config{
-		Repo:           projutil.GetGoPkg(),
-		AbsProjectPath: absProjectPath,
-	}
-	s := &scaffold.Scaffold{}
-
-	// Check if any package files for this API group dir exist, and if not
-	// scaffold a group.go to prevent erroneous gengo parse errors.
-	group := &scaffold.Group{Resource: r}
-	if err := scaffoldIfNoPkgFileExists(s, cfg, group); err != nil {
-		log.Fatalf("Failed to scaffold group file: %v", err)
-	}
-
-	err = s.Execute(cfg,
-		&scaffold.Types{Resource: r},
-		&scaffold.AddToScheme{Resource: r},
-		&scaffold.Register{Resource: r},
-		&scaffold.Doc{Resource: r},
-		&scaffold.CR{Resource: r},
-	)
-	if err != nil {
-		log.Fatalf("API scaffold failed: %v", err)
-	}
-
-	// update deploy/role.yaml for the given resource r.
-	if err := scaffold.UpdateRoleForResource(r, absProjectPath); err != nil {
-		log.Fatalf("Failed to update the RBAC manifest for the resource (%v, %v): (%v)",
-			r.APIVersion, r.Kind, err)
-	}
-
-	if !apiFlags.SkipGeneration {
-		// Run k8s codegen for deepcopy
-		if err := genutil.K8sCodegen(); err != nil {
-			log.Fatal(err)
-		}
-
-		// Generate a validation spec for the new CRD.
-		if err := genutil.CRDGen(apiFlags.CrdVersion); err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	log.Info("API generation complete.")
-	return nil
-}
-
-// scaffoldIfNoPkgFileExists executes f using s and cfg if no go files
-// in f's directory exist.
-func scaffoldIfNoPkgFileExists(s *scaffold.Scaffold, cfg *input.Config, f input.File) error {
-	i, err := f.GetInput()
-	if err != nil {
-		return fmt.Errorf("error getting file %s input: %v", i.Path, err)
-	}
-	groupDir := filepath.Dir(i.Path)
-	gdInfos, err := ioutil.ReadDir(groupDir)
-	if err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("error reading dir %s: %v", groupDir, err)
-	}
-	if err == nil {
-		for _, info := range gdInfos {
-			if !info.IsDir() && filepath.Ext(info.Name()) == ".go" {
-				return nil
-			}
-		}
-	}
-	// err must be a non-existence error or no go files exist, so execute f.
-	return s.Execute(cfg, f)
 }

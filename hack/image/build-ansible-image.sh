@@ -8,17 +8,12 @@ source hack/lib/image_lib.sh
 ROOTDIR="$(pwd)"
 TMPDIR="$(mktemp -d)"
 trap_add 'rm -rf $TMPDIR' EXIT
-BASEIMAGEDIR="$TMPDIR/ansible-operator"
-mkdir -p "$BASEIMAGEDIR"
-go build -o $BASEIMAGEDIR/scaffold-ansible-image ./hack/image/ansible/scaffold-ansible-image.go
 
-# build operator binary and base image
-pushd "$BASEIMAGEDIR"
-./scaffold-ansible-image
+# build the base image
+pushd $TMPDIR
+cp $ROOTDIR/build/ansible-operator-dev-linux-gnu .
+docker build -f $ROOTDIR/hack/image/ansible/Dockerfile -t $1 .
 
-mkdir -p build/_output/bin/
-cp $ROOTDIR/build/ansible-operator-dev-linux-gnu build/_output/bin/ansible-operator
-operator-sdk build $1
 # If using a kind cluster, load the image into all nodes.
 load_image_if_kind "$1"
 popd

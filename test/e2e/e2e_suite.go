@@ -99,9 +99,14 @@ var _ = Describe("operator-sdk", func() {
 			err = tc.Make("docker-build", "IMG="+tc.ImageName)
 			Expect(err).Should(Succeed())
 
-			By("loading the operator image into the test cluster")
-			err = tc.LoadImageToKindCluster()
+			kubectx, err := tc.Kubectl.Command("config", "current-context")
 			Expect(err).Should(Succeed())
+
+			if strings.Contains(kubectx, "kind") {
+				By("loading the operator image into the test cluster")
+				err = tc.LoadImageToKindCluster()
+				Expect(err).Should(Succeed())
+			}
 
 			By("deploying the controller manager")
 			err = tc.Make("deploy", "IMG="+tc.ImageName)

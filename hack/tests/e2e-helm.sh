@@ -165,29 +165,5 @@ trap_add 'remove_operator' EXIT
 test_operator
 remove_operator
 
-echo "###"
-echo "### Base image testing passed"
-echo "### Now testing migrate to hybrid operator"
-echo "###"
-
-operator-sdk migrate --repo=github.com/example-inc/nginx-operator
-
-if [[ ! -e build/Dockerfile.sdkold ]];
-then
-    echo FAIL the old Dockerfile should have been renamed to Dockerfile.sdkold
-    exit 1
-fi
-
-add_go_mod_replace "github.com/operator-framework/operator-sdk" "$ROOTDIR"
-# Build the project to resolve dependency versions in the modfile.
-go build ./...
-
-operator-sdk build "$DEST_IMAGE"
-# If using a kind cluster, load the image into all nodes.
-load_image_if_kind "$DEST_IMAGE"
-
-deploy_operator
-test_operator
-
 popd
 popd

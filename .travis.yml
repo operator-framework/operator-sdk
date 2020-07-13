@@ -51,9 +51,9 @@ x_base_steps:
       - make setup-k8s
       - export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
     after_success:
-      - echo "Build succeeded, operator was generated, memcached operator is running on $CLUSTER, and unit/integration tests pass"
+      - echo "Tests passed"
     after_failure:
-      - echo "Build failed, operator failed to generate, memcached operator is not running on $CLUSTER, or unit/integration tests failed"
+      - echo "Tests failed"
       - kubectl get all --all-namespaces
       - kubectl get events --all-namespaces --field-selector=type=Warning
     services:
@@ -132,9 +132,9 @@ jobs:
       name: Subcommands on Kubernetes
       script: make test-subcommand
 
-    # Build and test go for legacy project layouts
+    # Build and test go 
     - <<: *test
-      name: Go for legacy project layouts on Kubernetes
+      name: Go on Kubernetes
       before_script:
       - (cd / && go get github.com/mattn/goveralls)
       script:
@@ -144,30 +144,12 @@ jobs:
       after_success:
       - $GOPATH/bin/goveralls -service=travis-ci -coverprofile=coverage.out -repotoken=$COVERALLS_TOKEN
 
-    # Build and test go for new project layouts
-    - name: Go e2e tests for new project layouts
-      before_install:
-      # hack/ci/check-doc-only-update.sh needs to be sourced so
-      # that it can properly exit the test early with success
-      - source hack/ci/check-doc-only-update.sh
-      script:
-      - make test-e2e-go-new
-      after_success:
-      - echo "E2E tests passed"
-      after_failure:
-      - echo "E2E tests failed"
-      - kubectl get all --all-namespaces
-      - kubectl get events --all-namespaces --field-selector=type=Warning
-      services:
-      - docker
-
     # Build and test helm
     - <<: *test
       name: Helm on Kubernetes
       script: make test-e2e-helm
 
     ## Image deploy/push stage jobs ##
-
 
     # Build and deploy arm64 ansible-operator docker image
     - stage: deploy
@@ -234,38 +216,6 @@ jobs:
         - make image-build-helm
         - make image-push-helm
 
-    # Build and deploy arm64 scorecard-proxy docker image
-    - <<: *deploy
-      name: Docker image for scorecard-proxy (arm64)
-      arch: arm64
-      script:
-        - make image-build-scorecard-proxy
-        - make image-push-scorecard-proxy
-
-    # Build and deploy amd64 scorecard-proxy docker image
-    - <<: *deploy
-      name: Docker image for scorecard-proxy (amd64)
-      arch: amd64
-      script:
-        - make image-build-scorecard-proxy
-        - make image-push-scorecard-proxy
-
-    # Build and deploy ppc64le scorecard-proxy docker image
-    - <<: *deploy
-      name: Docker image for scorecard-proxy (ppc64le)
-      arch: ppc64le
-      script:
-        - make image-build-scorecard-proxy
-        - make image-push-scorecard-proxy
-
-    # Build and deploy s390x scorecard-proxy docker image
-    - <<: *deploy
-      name: Docker image for scorecard-proxy (s390x)
-      arch: s390x
-      script:
-        - make image-build-scorecard-proxy
-        - make image-push-scorecard-proxy
-
     # Build and deploy arm64 scorecard-test docker image 
     - <<: *deploy
       name: Docker image for scorecard-test (arm64)
@@ -318,12 +268,6 @@ jobs:
       name: Manifest list for helm-operator
       script:
         - make image-push-helm-multiarch
-
-    # Build and deploy scorecard-proxy multi-arch manifest list
-    - <<: *manifest-deploy
-      name: Manifest list for scorecard-proxy
-      script:
-        - make image-push-scorecard-proxy-multiarch
 
     # Build and deploy scorecard-test multi-arch manifest list
     - <<: *manifest-deploy

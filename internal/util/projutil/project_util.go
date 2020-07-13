@@ -25,7 +25,6 @@ import (
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/rogpeppe/go-internal/modfile"
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 
 	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
 )
@@ -103,14 +102,6 @@ func CheckProjectRoot() error {
 		return fmt.Errorf("error while checking if current directory is the project root: %v", err)
 	}
 	return nil
-}
-
-func CheckGoProjectCmd(cmd *cobra.Command) error {
-	if IsOperatorGo() {
-		return nil
-	}
-	return fmt.Errorf("'%s' can only be run for Go operators; %s or %s do not exist",
-		cmd.CommandPath(), managerMainFile, mainFile)
 }
 
 func MustGetwd() string {
@@ -286,16 +277,6 @@ func IsOperatorHelm() bool {
 	return (err == nil && stat.IsDir()) || os.IsExist(err)
 }
 
-// MustGetGopath gets GOPATH and ensures it is set and non-empty. If GOPATH
-// is not set or empty, MustGetGopath exits.
-func MustGetGopath() string {
-	gopath, ok := os.LookupEnv(GoPathEnv)
-	if !ok || len(gopath) == 0 {
-		log.Fatal("GOPATH env not set")
-	}
-	return gopath
-}
-
 // MustSetWdGopath sets GOPATH to the first element of the path list in
 // currentGopath that prefixes the wd, then returns the set path.
 // If GOPATH cannot be set, MustSetWdGopath exits.
@@ -331,21 +312,6 @@ func SetGoVerbose() error {
 	}
 	if !flagRe.MatchString(gf) {
 		return os.Setenv(GoFlagsEnv, gf+" -v")
-	}
-	return nil
-}
-
-// CheckRepo ensures dependency manager type and repo are being used in combination
-// correctly, as different dependency managers have different Go environment
-// requirements.
-func CheckRepo(repo string) error {
-	inGopathSrc, err := WdInGoPathSrc()
-	if err != nil {
-		return err
-	}
-	if !inGopathSrc && repo == "" {
-		return fmt.Errorf(`flag --repo must be set if the working directory is not in $GOPATH/src.
-		See "operator-sdk new -h"`)
 	}
 	return nil
 }

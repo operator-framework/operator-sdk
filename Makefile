@@ -29,19 +29,16 @@ GO_BUILD_ARGS = \
 
 ANSIBLE_BASE_IMAGE = quay.io/operator-framework/ansible-operator
 HELM_BASE_IMAGE = quay.io/operator-framework/helm-operator
-SCORECARD_PROXY_BASE_IMAGE = quay.io/operator-framework/scorecard-proxy
 SCORECARD_TEST_BASE_IMAGE = quay.io/operator-framework/scorecard-test
 SCORECARD_TEST_KUTTL_BASE_IMAGE = quay.io/operator-framework/scorecard-test-kuttl
 
 ANSIBLE_IMAGE ?= $(ANSIBLE_BASE_IMAGE)
 HELM_IMAGE ?= $(HELM_BASE_IMAGE)
-SCORECARD_PROXY_IMAGE ?= $(SCORECARD_PROXY_BASE_IMAGE)
 SCORECARD_TEST_IMAGE ?= $(SCORECARD_TEST_BASE_IMAGE)
 SCORECARD_TEST_KUTTL_IMAGE ?= $(SCORECARD_TEST_KUTTL_BASE_IMAGE)
 
 ANSIBLE_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
 HELM_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
-SCORECARD_PROXY_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
 SCORECARD_TEST_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
 SCORECARD_TEST_KUTTL_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
 
@@ -185,9 +182,9 @@ build/%.asc: ## Create release signatures for operator-sdk release binaries
 
 image: image-build image-push ## Build and push all images
 
-image-build: image-build-ansible image-build-helm image-build-scorecard-proxy image-build-scorecard-test image-build-scorecard-test-kuttl## Build all images
+image-build: image-build-ansible image-build-helm image-build-scorecard-test image-build-scorecard-test-kuttl## Build all images
 
-image-push: image-push-ansible image-push-helm image-push-scorecard-proxy image-push-scorecard-test ## Push all images
+image-push: image-push-ansible image-push-helm image-push-scorecard-test ## Push all images
 
 # Ansible operator image scaffold/build/push.
 .PHONY: image-scaffold-ansible image-build-ansible image-push-ansible image-push-ansible-multiarch
@@ -218,18 +215,6 @@ image-push-helm:
 
 image-push-helm-multiarch:
 	./hack/image/push-manifest-list.sh $(HELM_IMAGE) ${HELM_ARCHES}
-
-# Scorecard proxy image scaffold/build/push.
-.PHONY: image-build-scorecard-proxy image-push-scorecard-proxy image-push-scorecard-proxy-multiarch
-
-image-build-scorecard-proxy:
-	./hack/image/build-scorecard-proxy-image.sh $(SCORECARD_PROXY_BASE_IMAGE):dev
-
-image-push-scorecard-proxy:
-	./hack/image/push-image-tags.sh $(SCORECARD_PROXY_BASE_IMAGE):dev $(SCORECARD_PROXY_IMAGE)-$(shell go env GOARCH)
-
-image-push-scorecard-proxy-multiarch:
-	./hack/image/push-manifest-list.sh $(SCORECARD_PROXY_IMAGE) ${SCORECARD_PROXY_ARCHES}
 
 # Scorecard test image scaffold/build/push.
 .PHONY: image-build-scorecard-test image-push-scorecard-test image-push-scorecard-test-multiarch
@@ -281,31 +266,25 @@ test-links:
 test-ci: test-sanity test-unit install test-subcommand test-e2e ## Run the CI test suite
 
 # Subcommand tests.
-.PHONY: test-subcommand test-subcommand-local test-subcommand-scorecard test-subcommand-olm-install
+.PHONY: test-subcommand test-subcommand-local test-subcommand-olm-install
 
-test-subcommand: test-subcommand-local test-subcommand-scorecard test-subcommand-olm-install
+test-subcommand: test-subcommand-local test-subcommand-olm-install
 	./hack/tests/subcommand-bundle.sh
 	./hack/tests/subcommand-generate-csv.sh
 
 test-subcommand-local:
 	./hack/tests/subcommand.sh
 
-test-subcommand-scorecard:
-	./hack/tests/subcommand-scorecard.sh
-
 test-subcommand-olm-install:
 	./hack/tests/subcommand-olm-install.sh
 
 # E2E tests.
-.PHONY: test-e2e test-e2e-go test-e2e-go-new test-e2e-ansible test-e2e-ansible-molecule test-e2e-helm
+.PHONY: test-e2e test-e2e-go test-e2e-ansible test-e2e-ansible-molecule test-e2e-helm
 
-test-e2e: test-e2e-go test-e2e-go-new test-e2e-ansible test-e2e-ansible-molecule test-e2e-helm ## Run the e2e tests
+test-e2e: test-e2e-go test-e2e-ansible test-e2e-ansible-molecule test-e2e-helm ## Run the e2e tests
 
 test-e2e-go:
-	./hack/tests/e2e-go.sh $(ARGS)
-
-test-e2e-go-new:
-	K8S_VERSION=$(K8S_VERSION) ./hack/tests/e2e-go-new.sh
+	./hack/tests/e2e-go.sh
 
 test-e2e-ansible: image-build-ansible
 	./hack/tests/e2e-ansible.sh

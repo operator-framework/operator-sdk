@@ -221,30 +221,5 @@ deploy_operator
 test_operator
 remove_operator
 
-header_text "###"
-header_text "### Base image testing passed"
-header_text "### Now testing migrate to hybrid operator"
-header_text "###"
-
-operator-sdk migrate --repo=github.com/example-inc/memcached-operator
-
-if [[ ! -e build/Dockerfile.sdkold ]];
-then
-    error_text "FAIL the old Dockerfile should have been renamed to Dockerfile.sdkold"
-    exit 1
-fi
-
-add_go_mod_replace "github.com/operator-framework/operator-sdk" "$ROOTDIR"
-header_text "Build the project to resolve dependency versions in the modfile."
-go build ./...
-
-operator-sdk build "$DEST_IMAGE"
-
-header_text "If using a kind cluster, load the image into all nodes."
-load_image_if_kind "$DEST_IMAGE"
-
-deploy_operator
-test_operator
-
 popd
 popd
