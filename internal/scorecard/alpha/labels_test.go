@@ -55,7 +55,7 @@ func TestEmptySelector(t *testing.T) {
 				return
 			}
 
-			tests := o.selectTests()
+			tests := o.selectTests(o.Config.Stages[0])
 			testsSelected := len(tests)
 			if testsSelected != c.testsSelected {
 				t.Errorf("Wanted testsSelected %d, got: %d", c.testsSelected, testsSelected)
@@ -65,51 +65,52 @@ func TestEmptySelector(t *testing.T) {
 	}
 }
 
-const testConfig = `tests:
-- image: quay.io/someuser/customtest1:v0.0.1
-  entrypoint: 
-  - custom-test
-  labels:
-    suite: custom
-    test: customtest1
-- image: quay.io/someuser/customtest2:v0.0.1
-  entrypoint: 
-  - custom-test
-  labels:
-    suite: custom
-    test: customtest2
-- image: quay.io/redhat/basictests:v0.0.1
-  entrypoint: 
-  - scorecard-test
-  - basic-check-spec
-  labels:
-    suite: basic
-    test: basic-check-spec-test
-- image: quay.io/redhat/basictests:v0.0.1
-  entrypoint: 
-  - scorecard-test
-  - basic-check-status
-  labels:
-    suite: basic
-    test: basic-check-status-test
-- image: quay.io/redhat/olmtests:v0.0.1
-  entrypoint: 
-  - scorecard-test
-  - olm-bundle-validation
-  labels:
-    suite: olm
-    test: olm-bundle-validation-test
-- image: quay.io/redhat/olmtests:v0.0.1
-  entrypoint: 
-  - scorecard-test
-  - olm-crds-have-validation
-  labels:
-    suite: olm
-    test: olm-crds-have-validation-test
-- image: quay.io/redhat/kuttltests:v0.0.1
-  labels:
-    suite: kuttl
-  entrypoint:
-  - kuttl-test
-  - olm-status-descriptors
-  `
+const testConfig = `stages:
+- tests:
+  - image: quay.io/someuser/customtest1:v0.0.1
+    entrypoint: 
+    - custom-test
+    labels:
+      suite: custom
+      test: customtest1
+  - image: quay.io/someuser/customtest2:v0.0.1
+    entrypoint: 
+    - custom-test
+    labels:
+      suite: custom
+      test: customtest2
+  - image: quay.io/redhat/basictests:v0.0.1
+    entrypoint: 
+    - scorecard-test
+    - basic-check-spec
+    labels:
+      suite: basic
+      test: basic-check-spec-test
+  - image: quay.io/redhat/basictests:v0.0.1
+    entrypoint: 
+    - scorecard-test
+    - basic-check-status
+    labels:
+      suite: basic
+      test: basic-check-status-test
+  - image: quay.io/redhat/olmtests:v0.0.1
+    entrypoint: 
+    - scorecard-test
+    - olm-bundle-validation
+    labels:
+      suite: olm
+      test: olm-bundle-validation-test
+  - image: quay.io/redhat/olmtests:v0.0.1
+    entrypoint: 
+    - scorecard-test
+    - olm-crds-have-validation
+    labels:
+      suite: olm
+      test: olm-crds-have-validation-test
+  - image: quay.io/redhat/kuttltests:v0.0.1
+    labels:
+      suite: kuttl
+    entrypoint:
+    - kuttl-test
+    - olm-status-descriptors
+`
