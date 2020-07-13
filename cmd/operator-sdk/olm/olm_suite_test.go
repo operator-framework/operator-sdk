@@ -1,4 +1,4 @@
-// Copyright 2019 The Operator-SDK Authors
+// Copyright 2020 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,18 +15,13 @@
 package olm
 
 import (
-	"github.com/spf13/cobra"
+	"testing"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "olm",
-		Short: "Manage the Operator Lifecycle Manager installation in your cluster",
-	}
-	cmd.AddCommand(
-		newInstallCmd(),
-		newStatusCmd(),
-		newUninstallCmd(),
-	)
-	return cmd
+func TestOlm(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Olm Suite")
 }
