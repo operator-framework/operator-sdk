@@ -45,10 +45,12 @@ func initUpdateMakefile(filePath string, cfg *config.Config) error {
 
 	// Append bundle recipes.
 	operatorType := projutil.PluginKeyToOperatorType(cfg.Layout)
-	if operatorType == projutil.OperatorTypeGo {
+	switch operatorType {
+	case projutil.OperatorTypeUnknown:
+		return fmt.Errorf("unsupported plugin key %q", cfg.Layout)
+	case projutil.OperatorTypeGo:
 		makefileBytes = append(makefileBytes, []byte(makefileBundleFragmentGo)...)
-	} else {
-		// if is not go project then, has not the manifest target
+	default:
 		makefileBytes = append(makefileBytes, []byte(makefileBundleFragmentNonGo)...)
 	}
 

@@ -45,13 +45,18 @@ func (p *initPlugin) Run() error {
 		return err
 	}
 
+	// Update the scaffolded Makefile with operator-sdk recipes.
+	if err := p.run(); err != nil {
+		return err
+	}
+
 	// Update plugin config section with this plugin's configuration.
 	cfg := Config{}
 	if err := p.config.EncodePluginConfig(pluginConfigKey, cfg); err != nil {
 		return fmt.Errorf("error writing plugin config for %s: %v", pluginConfigKey, err)
 	}
 
-	return p.run()
+	return nil
 }
 
 // SDK plugin-specific scaffolds.
