@@ -81,7 +81,7 @@ type MemcachedStatus struct {
 }
 ```
 **Note**:
-If there are any any libraries or pkgs present in `pkg/apis/cache/v1alpha1`, copy them over to `api/v1alpha1`.
+If there are any libraries or pkgs present in `pkg/apis/cache/v1alpha1`, copy them over to `api/v1alpha1`.
 
 ### CRD markers
 
@@ -152,7 +152,7 @@ func (r *MemcachedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 **Note**:
 To update `config/rbac/role.yaml` after changing the markers, run `make manifests`.
 
-The project can now be built and the operator can be deployed on cluster. For further steps regarding the deployment of operator, creation of custom resource and cleaning up of resources, refer to [quickstart guide][kb_quickstart].
+The project can now be built, and the operator can be deployed on-cluster. For further steps regarding the deployment of the operator, creation of custom resources and cleaning up of resources, refer to the [quickstart guide][kb_quickstart].
 
 
 [memcached-operator]:/docs/golang/quickstart/
