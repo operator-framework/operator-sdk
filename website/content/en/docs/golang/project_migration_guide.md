@@ -159,6 +159,7 @@ The project can now be built, and the operator can be deployed on-cluster. For f
 [memcached-operator]:/docs/golang/quickstart/
 [git_tool]: https://git-scm.com/downloads
 [go_tool]: https://golang.org/dl/
+[docker_tool]:https://docs.docker.com/install/
 [kubectl_tool]: https://github.com/kubernetes/minikube#installation
 [kustomize_tool]: https://github.com/kubernetes-sigs/kustomize/blob/master/docs/INSTALL.md
 [kubebuilder_install]: https://book.kubebuilder.io/quick-start.html#installation
