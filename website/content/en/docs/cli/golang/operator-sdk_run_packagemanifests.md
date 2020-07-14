@@ -8,7 +8,7 @@ Deploy an Operator in the package manifests format with OLM
 ### Synopsis
 
 'run packagemanifests' deploys an Operator's package manifests with OLM. The command's argument
-must be set to a valid package manifests root directory, ex. '<project-root>/packagemanifests'.
+must be set to a valid package manifests root directory, ex. '&lt;project-root&gt;/packagemanifests'.
 
 ```
 operator-sdk run packagemanifests [flags]

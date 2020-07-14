@@ -8,9 +8,9 @@ Creates a new operator application
 ### Synopsis
 
 The operator-sdk new command creates a new operator application and
-generates a default directory layout based on the input <project-name>.
+generates a default directory layout based on the input &lt;project-name&gt;.
 
-<project-name> is the project name of the new operator. (e.g app-operator)
+&lt;project-name&gt; is the project name of the new operator. (e.g app-operator)
 
 
 ```

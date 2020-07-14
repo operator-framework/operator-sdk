@@ -7,7 +7,7 @@ Adds a new api definition under pkg/apis
 
 ### Synopsis
 
-operator-sdk add api --kind=<kind> --api-version<group/version> 
+operator-sdk add api --kind=&lt;kind&gt; --api-version&lt;group/version&gt; 
 creates an API definition for a new custom resource.
 This command must be run from the project root directory.
 
@@ -16,7 +16,7 @@ For Go-based operators:
   - Creates the api definition for a new custom resource under pkg/apis.
   - By default, this command runs Kubernetes deepcopy and CRD generators on
   tagged types in all paths under pkg/apis. Go code is generated under
-  pkg/apis/<group>/<version>/zz_generated.deepcopy.go. Generation can be disabled with the
+  pkg/apis/&lt;group&gt;/&lt;version&gt;/zz_generated.deepcopy.go. Generation can be disabled with the
   --skip-generation flag for Go-based operators.
 
 For Ansible-based operators:
@@ -31,7 +31,7 @@ For Helm-based operators:
   - deploy/role.yaml will be updated to reflact new rules for the incoming API.
 
 CRD's are generated, or updated if they exist for a particular group + version + kind, under
-deploy/crds/<full group>_<resource>_crd.yaml; OpenAPI V3 validation YAML
+deploy/crds/&lt;full group&gt;_&lt;resource&gt;_crd.yaml; OpenAPI V3 validation YAML
 is generated as a 'validation' object.
 
 ```
