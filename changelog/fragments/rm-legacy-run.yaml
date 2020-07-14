@@ -2,7 +2,7 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      Remove legacy run amd cleanup commands
+      Remove legacy `run` and `cleanup` subcommands
 
     kind: "removal"
 
@@ -10,5 +10,5 @@ entries:
     breaking: true
 
     migration:
-      header: Remove legacy run amd cleanup commands
+      header: Migrate to kubebuilder-style Go project
       body: TBD
