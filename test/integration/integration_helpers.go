@@ -80,83 +80,113 @@ spec:
   displayName: {{ .OperatorName }} Application
   install:
     spec:
+      clusterPermissions:
+      - rules:
+        {{- range $i, $crd := .CRDKeys }}
+        - apiGroups:
+          - {{ $crd.Group }}
+          resources:
+          - {{ $crd.Kind | tolower }}s
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - {{ $crd.Group }}
+          resources:
+          - {{ $crd.Kind | tolower }}s/status
+          verbs:
+          - get
+          - patch
+          - update
+        {{- end}}
+        serviceAccountName: {{ .OperatorName }}-manager-role
+      - rules:
+        - apiGroups:
+          - authentication.k8s.io
+          resources:
+          - tokenreviews
+          verbs:
+          - create
+        - apiGroups:
+          - authorization.k8s.io
+          resources:
+          - subjectaccessreviews
+          verbs:
+          - create
+        serviceAccountName: {{ .OperatorName }}-proxy-role
+      - rules:
+        - nonResourceURLs:
+          - /metrics
+          verbs:
+          - get
+        serviceAccountName: {{ .OperatorName }}-metrics-reader
       deployments:
-      - name: {{ .OperatorName }}
+      - name: {{ .OperatorName }}-controller-manager
         spec:
           replicas: 1
           selector:
             matchLabels:
-              name: {{ .OperatorName }}
+              control-plane: controller-manager
           strategy: {}
           template:
             metadata:
               labels:
-                name: {{ .OperatorName }}
+                control-plane: controller-manager
             spec:
               containers:
-              - command:
-                - {{ .OperatorName }}
-                env:
-                - name: WATCH_NAMESPACE
-                  valueFrom:
-                    fieldRef:
-                      fieldPath: metadata.annotations['olm.targetNamespaces']
-                - name: POD_NAME
-                  valueFrom:
-                    fieldRef:
-                      fieldPath: metadata.name
-                - name: OPERATOR_NAME
-                  value: {{ .OperatorName }}
-                image: {{ .TestImageTag }}
-                imagePullPolicy: Never
-                name: {{ .OperatorName }}
+              - args:
+                - --secure-listen-address=0.0.0.0:8443
+                - --upstream=http://127.0.0.1:8080/
+                - --logtostderr=true
+                - --v=10
+                image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+                name: kube-rbac-proxy
+                ports:
+                - containerPort: 8443
+                  name: https
                 resources: {}
-              serviceAccountName: {{ .OperatorName }}
+              - args:
+                - --metrics-addr=127.0.0.1:8080
+                - --enable-leader-election
+                command:
+                - /manager
+                image: {{ .TestImageTag }}
+                name: manager
+                resources:
+                  limits:
+                    cpu: 100m
+                    memory: 30Mi
+                  requests:
+                    cpu: 100m
+                    memory: 20Mi
+              terminationGracePeriodSeconds: 10
       permissions:
       - rules:
         - apiGroups:
           - ""
           resources:
-          - pods
-          - services
-          - endpoints
-          - persistentvolumeclaims
-          - events
           - configmaps
-          - secrets
           verbs:
-          - '*'
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
         - apiGroups:
           - ""
           resources:
-          - namespaces
+          - events
           verbs:
-          - get
-        - apiGroups:
-          - apps
-          resources:
-          - deployments
-          - daemonsets
-          - replicasets
-          - statefulsets
-          verbs:
-          - '*'
-        - apiGroups:
-          - monitoring.coreos.com
-          resources:
-          - servicemonitors
-          verbs:
-          - get
           - create
-        - apiGroups:
-          - apps
-          resourceNames:
-          - {{ .OperatorName }}
-          resources:
-          - deployments/finalizers
-          verbs:
-          - update
-        serviceAccountName: {{ .OperatorName }}
+          - patch
+        serviceAccountName: {{ .OperatorName }}-leader-election-role
     strategy: deployment
   installModes:
 {{- range $i, $mode := .InstallModes }}
@@ -195,18 +225,12 @@ func writeOperatorManifests(dir string, csvConfig CSVTemplateConfig) error {
 				Versions: key.Versions,
 			},
 		}
-		crdPath := filepath.Join(manifestDir, fmt.Sprintf("%s.crd.yaml", key.Name))
+		crdPath := filepath.Join(manifestDir, fmt.Sprintf("%s_%ss.yaml", key.Name, strings.ToLower(key.Kind)))
 		if err := writeManifest(crdPath, crd); err != nil {
 			return err
 		}
 	}
-	csvPath := ""
-	if csvConfig.IsBundle {
-		csvPath = filepath.Join(manifestDir, fmt.Sprintf("%s.csv.yaml", csvConfig.OperatorName))
-	} else {
-		csvPath = filepath.Join(manifestDir, fmt.Sprintf("%s.v%s.csv.yaml",
-			csvConfig.OperatorName, csvConfig.OperatorVersion))
-	}
+	csvPath := filepath.Join(manifestDir, fmt.Sprintf("%s.clusterserviceversion.yaml", csvConfig.OperatorName))
 	if err := execTemplateOnFile(csvPath, csvTmpl, csvConfig); err != nil {
 		return err
 	}
@@ -243,8 +267,11 @@ func execTemplateOnFile(path, tmplStr string, o interface{}) error {
 		return err
 	}
 	defer w.Close()
-	tmpl, err := template.New(path).Parse(tmplStr)
-	if err != nil {
+
+	tmpl := template.New(path).Funcs(map[string]interface{}{
+		"tolower": strings.ToLower,
+	})
+	if tmpl, err = tmpl.Parse(tmplStr); err != nil {
 		return err
 	}
 	return tmpl.Execute(w, o)

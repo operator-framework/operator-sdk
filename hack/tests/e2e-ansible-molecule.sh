@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+source hack/lib/common.sh
 source hack/lib/test_lib.sh
 source hack/lib/image_lib.sh
 
@@ -15,6 +16,8 @@ pip3 install --user molecule==3.0.2
 pip3 install --user ansible-lint yamllint
 pip3 install --user docker openshift jmespath
 ansible-galaxy collection install community.kubernetes
+
+setup_envs $tmp_sdk_root
 
 remove_prereqs() {
     header_text "Deleting resources"

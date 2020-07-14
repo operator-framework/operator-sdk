@@ -96,15 +96,12 @@ setup-k8s:
 
 ##@ Generate
 
-.PHONY: generate gen-cli-doc gen-test-framework gen-changelog
+.PHONY: generate gen-cli-doc gen-changelog
 
-generate: gen-cli-doc gen-test-framework  ## Run all non-release generate targets
+generate: gen-cli-doc  ## Run all non-release generate targets
 
 gen-cli-doc: ## Generate CLI documentation
 	./hack/generate/cli-doc/gen-cli-doc.sh
-
-gen-test-framework: build/operator-sdk ## Run generate commands to update test/test-framework
-	./hack/generate/test-framework/gen-test-framework.sh
 
 gen-changelog: ## Generate CHANGELOG.md and migration guide updates
 	./hack/generate/changelog/gen-changelog.sh
@@ -269,8 +266,6 @@ test-ci: test-sanity test-unit install test-subcommand test-e2e ## Run the CI te
 .PHONY: test-subcommand test-subcommand-olm-install
 
 test-subcommand: test-subcommand-olm-install
-	./hack/tests/subcommand-bundle.sh
-	./hack/tests/subcommand-generate-csv.sh
 
 test-subcommand-olm-install:
 	./hack/tests/subcommand-olm-install.sh

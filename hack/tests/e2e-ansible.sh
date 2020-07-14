@@ -14,6 +14,8 @@ ROOTDIR="$(pwd)"
 TMPDIR="$(mktemp -d)"
 trap_add 'rm -rf $TMPDIR' EXIT
 
+setup_envs $tmp_sdk_root
+
 deploy_operator() {
     header_text "Running deploy operator"
     kubectl create -f "$OPERATORDIR/deploy/service_account.yaml"

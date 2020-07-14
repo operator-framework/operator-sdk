@@ -10,6 +10,8 @@ ROOTDIR="$(pwd)"
 TMPDIR="$(mktemp -d)"
 trap_add 'rm -rf $TMPDIR' EXIT
 
+setup_envs $tmp_sdk_root
+
 test_namespace="test-e2e-helm"
 
 deploy_operator() {

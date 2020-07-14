@@ -42,6 +42,8 @@ var (
 	kubeconfigPath = os.Getenv(k8sutil.KubeConfigEnvVar)
 )
 
+// TODO(estroz): rewrite these in the style of e2e tests (ginkgo/gomega + scaffold a project for each scenario).
+
 func TestOLMIntegration(t *testing.T) {
 	if image, ok := os.LookupEnv(imageEnvVar); ok && image != "" {
 		testImageTag = image
