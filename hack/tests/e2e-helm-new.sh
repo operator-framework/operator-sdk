@@ -42,7 +42,7 @@ test_operator() {
     kubectl create clusterrolebinding nginx-operator-system-metrics-reader --clusterrole=nginx-operator-metrics-reader --serviceaccount=nginx-operator-system:default
 
     # verify that the metrics endpoint exists
-    if ! timeout 1m bash -c -- "until kubectl run --attach --rm --restart=Never --namespace=${test_namespace} test-metrics --image=${metrics_test_image} -- curl -sfo /dev/null  -v -s -k -H Authorization: Bearer `cat /var/run/secrets/kubernetes.io/serviceaccount/token` https://nginx-operator-controller-manager-metrics-service:8383/metrics; do sleep 1; done";
+    if ! timeout 1m bash -c -- "until kubectl run --attach --rm --restart=Never test-metrics --image=${metrics_test_image} -- curl -sfo /dev/null http://nginx-operator-metrics:8383/metrics; do sleep 1; done";
     then
         echo "Failed to verify that metrics endpoint exists"
         kubectl get events --namespace=${test_namespace}
