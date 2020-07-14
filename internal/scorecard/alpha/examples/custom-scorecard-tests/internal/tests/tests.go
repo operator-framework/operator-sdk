@@ -15,7 +15,7 @@
 package tests
 
 import (
-	"github.com/operator-framework/operator-registry/pkg/registry"
+	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	scapiv1alpha3 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
 
@@ -28,20 +28,26 @@ const (
 // CustomTest1 and CustomTest2 are example test functions. Relevant operator specific
 // test logic is to be implemented in similarly.
 
-func CustomTest1(bundle registry.Bundle) scapiv1alpha3.TestResult {
+func CustomTest1(bundle *apimanifests.Bundle) scapiv1alpha3.TestStatus {
 	r := scapiv1alpha3.TestResult{}
 	r.Name = CustomTest1Name
 	r.State = scapiv1alpha3.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
-	return r
+	return wrapResult(r)
 }
 
-func CustomTest2(bundle registry.Bundle) scapiv1alpha3.TestResult {
+func CustomTest2(bundle apimanifests.Bundle) scapiv1alpha3.TestStatus {
 	r := scapiv1alpha3.TestResult{}
 	r.Name = CustomTest2Name
 	r.State = scapiv1alpha3.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
-	return r
+	return wrapResult(r)
+}
+
+func wrapResult(r scapiv1alpha3.TestResult) scapiv1alpha3.TestStatus {
+	return scapiv1alpha3.TestStatus{
+		Results: []scapiv1alpha3.TestResult{r},
+	}
 }
