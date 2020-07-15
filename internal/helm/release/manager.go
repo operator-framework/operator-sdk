@@ -352,8 +352,7 @@ func createJSONMergePatch(existingJSON, expectedJSON []byte) ([]byte, error) {
 // UninstallRelease performs a Helm release uninstall.
 func (m manager) UninstallRelease(ctx context.Context, opts ...UninstallOption) (*rpb.Release, error) {
 	// Get history of this release
-	_, err := m.storageBackend.History(m.releaseName)
-	if err != nil {
+	if _, err := m.storageBackend.History(m.releaseName); err != nil {
 		return nil, fmt.Errorf("failed to get release history: %w", err)
 	}
 
