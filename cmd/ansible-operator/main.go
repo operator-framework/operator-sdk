@@ -67,9 +67,13 @@ func printVersion() {
 
 func main() {
 	f := &flags.Flags{}
-	f.AddTo(pflag.CommandLine)
+	err := f.AddTo(pflag.CommandLine)
+	if err != nil {
+		log.Error(err, "Failed to add ansible command line flags")
+	}
 	pflag.Parse()
 	logf.SetLogger(zap.Logger())
+	warningMsgForDeprecatedFlags()
 
 	printVersion()
 
@@ -127,7 +131,7 @@ func main() {
 
 	var gvks []schema.GroupVersionKind
 	cMap := controllermap.NewControllerMap()
-	watches, err := watches.Load(f.WatchesFile, f.MaxWorkers, f.AnsibleVerbosity)
+	watches, err := watches.Load(f.WatchesFile, f.MaxConcurrentReconciles, f.AnsibleVerbosity)
 	if err != nil {
 		log.Error(err, "Failed to load watches.")
 		os.Exit(1)
@@ -295,4 +299,16 @@ func getAnsibleDebugLog() bool {
 			envVar, val)
 	}
 	return val
+}
+
+// warningMsgForDeprecatedFlags logs warning messages if deprecated flags are used. Currently,
+// "--max-workers" is deprecated. Any value provided using this flags will not be used. Instead
+// users are directed to use "--max-concurrent-reconciles".
+func warningMsgForDeprecatedFlags() {
+	if pflag.Lookup("max-workers").Changed {
+		log.Info("Flag --max-workers has been deprecated, use --max-concurrent-reconciles instead")
+		if pflag.Lookup("max-concurrent-reconciles").Changed {
+			log.Info("Ignoring --max-workers since --max-concurrent-reconciles is set")
+		}
+	}
 }

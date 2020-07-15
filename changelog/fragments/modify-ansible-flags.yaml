@@ -1,0 +1,6 @@
+entries:
+  - description: >
+      Add "--max-concurrent-reconciles" flag and "MAX_CONCURRENT_RECONCILES_<Kind>_<Group>" global variable
+      to ansible binary. Also add deprecate message for "--max-workers" flag and "WORKERS_<Kind>_<Group>" 
+      global variable.
+    kind: "addition"

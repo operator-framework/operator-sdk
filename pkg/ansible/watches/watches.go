@@ -22,6 +22,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -77,8 +78,8 @@ var (
 	selectorDefault                    = metav1.LabelSelector{}
 
 	// these are overridden by cmdline flags
-	maxWorkersDefault       = 1
-	ansibleVerbosityDefault = 2
+	maxConcurrentReconcilesDefault = runtime.NumCPU()
+	ansibleVerbosityDefault        = 2
 )
 
 // Creates, populates, and returns a LabelSelector object. Used in Unmarshal().
@@ -171,7 +172,7 @@ func (w *Watch) setValuesFromAlias(tmp alias) error {
 	w.Role = tmp.Role
 	w.Vars = tmp.Vars
 	w.MaxRunnerArtifacts = tmp.MaxRunnerArtifacts
-	w.MaxWorkers = getMaxWorkers(gvk, maxWorkersDefault)
+	w.MaxWorkers = getMaxConcurrentReconciles(gvk, maxConcurrentReconcilesDefault)
 	w.ReconcilePeriod = tmp.ReconcilePeriod.Duration
 	w.ManageStatus = *tmp.ManageStatus
 	w.WatchDependentResources = *tmp.WatchDependentResources
@@ -297,7 +298,7 @@ func New(gvk schema.GroupVersionKind, role, playbook string, vars map[string]int
 		Role:                        role,
 		Vars:                        vars,
 		MaxRunnerArtifacts:          maxRunnerArtifactsDefault,
-		MaxWorkers:                  maxWorkersDefault,
+		MaxWorkers:                  maxConcurrentReconcilesDefault,
 		ReconcilePeriod:             reconcilePeriodDefault.Duration,
 		ManageStatus:                manageStatusDefault,
 		WatchDependentResources:     watchDependentResourcesDefault,
@@ -309,8 +310,8 @@ func New(gvk schema.GroupVersionKind, role, playbook string, vars map[string]int
 }
 
 // Load - loads a slice of Watches from the watches file from the CLI
-func Load(path string, maxWorkers, ansibleVerbosity int) ([]Watch, error) {
-	maxWorkersDefault = maxWorkers
+func Load(path string, maxReconciler, ansibleVerbosity int) ([]Watch, error) {
+	maxConcurrentReconcilesDefault = maxReconciler
 	ansibleVerbosityDefault = ansibleVerbosity
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -394,19 +395,23 @@ func verifyAnsiblePath(playbook string, role string) error {
 // number of workers based on their cluster resources. While the
 // author may use the CLI option to specify a suggested
 // configuration for the operator.
-func getMaxWorkers(gvk schema.GroupVersionKind, defValue int) int {
-	envVar := strings.ToUpper(strings.Replace(
+func getMaxConcurrentReconciles(gvk schema.GroupVersionKind, defValue int) int {
+	envVarMaxWorker := strings.ToUpper(strings.ReplaceAll(
 		fmt.Sprintf("WORKER_%s_%s", gvk.Kind, gvk.Group),
 		".",
 		"_",
-		-1,
 	))
-	maxWorkers := getIntegerEnvWithDefault(envVar, defValue)
-	if maxWorkers <= 0 {
-		log.Info("Value %v not valid. Using default %v", maxWorkers, defValue)
+	envVarMaxReconciler := strings.ToUpper(strings.ReplaceAll(
+		fmt.Sprintf("MAX_CONCURRENT_RECONCILES_%s_%s", gvk.Kind, gvk.Group),
+		".",
+		"_",
+	))
+	envVal := getIntegerEnvMaxReconcile(envVarMaxWorker, envVarMaxReconciler, defValue)
+	if envVal <= 0 {
+		log.Info("Value %v not valid. Using default %v", envVal, defValue)
 		return defValue
 	}
-	return maxWorkers
+	return envVal
 }
 
 // if the ANSIBLE_VERBOSITY_* environment variable is set, use that value.
@@ -447,4 +452,33 @@ func getIntegerEnvWithDefault(envVar string, defValue int) int {
 			"default", defValue)
 	}
 	return val
+}
+
+// getIntegerEnvMaxReconcile looks for global variable "MAX_CONCURRENT_RECONCILES_<group>_<kind>",
+// if not present it checks for "WORKER_<group>_<kind>" and logs deprecation message
+// if required. If both of them are not set, we use the default value passed on by command line
+// flags.
+func getIntegerEnvMaxReconcile(envVarMaxWorker, envVarMaxReconciler string, defValue int) int {
+	val := defValue
+	if envValRecon, ok := os.LookupEnv(envVarMaxReconciler); ok {
+		if i, err := strconv.Atoi(envValRecon); err != nil {
+			log.Info("Could not parse environment variable as an integer; using default value",
+				"envVar", envVarMaxReconciler, "default", defValue)
+		} else {
+			val = i
+		}
+	} else if !ok {
+		if envValWorker, ok := os.LookupEnv(envVarMaxWorker); ok {
+			deprecationMsg := fmt.Sprintf("Environment variable %s is deprecated, use %s instead", envVarMaxWorker, envVarMaxReconciler)
+			log.Info(deprecationMsg)
+			if i, err := strconv.Atoi(envValWorker); err != nil {
+				log.Info("Could not parse environment variable as an integer; using default value",
+					"envVar", envVarMaxWorker, "default", defValue)
+			} else {
+				val = i
+			}
+		}
+	}
+	return val
+
 }

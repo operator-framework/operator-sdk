@@ -29,14 +29,14 @@ If you have created resources without owner reference injection, it is
 possible to manually to update resources following [this
 guide.](../retroactively-owned-resources)
 
-## Max Workers
+## Max Concurrent Reconciles
 
-Increasing the number of workers allows events to be processed
+Increasing the number of concurrent reconciles allows events to be processed
 concurrently, which can improve reconciliation performance.
 
-Worker maximums can be set in two ways. Operator **authors and admins**
-can set the max workers default by including extra args to the operator
-container in `deploy/operator.yaml`. (Otherwise, the default is 1 worker.)
+The maximum number of concurrent reconciles can be set in two ways. Operator **authors and admins**
+can set the max concurrent reconciles default by including extra args to the operator
+container in `deploy/operator.yaml`. (Otherwise, the default is the maximum number of logical CPUs  available for the process obtained using `runtime.NumCPU()`.)
 
 **NOTE:** Admins using OLM should use the environment variable instead
 of the extra args.
@@ -46,12 +46,14 @@ of the extra args.
   image: "quay.io/asmacdo/memcached-operator:v0.0.0"
   imagePullPolicy: "Always"
   args:
-    - "--max-workers"
+    - "--max-concurrent-reconciles"
     - "3"
 ```
+**Note**
+Previously, `--max-workers` was used and is replaced by `--max-concurrent-reconciles`.
 
 Operator **admins** can override the value by setting an environment
-variable in the format `WORKER_<kind>_<group>`. This variable must be
+variable in the format `MAX_CONCURRENT_RECONCILES_<kind>_<group>`. This variable must be
 all uppercase, and periods (e.g. in the group name) are replaced with underscores.
 
 For the memcached operator example, the component parts are retrieved
@@ -68,7 +70,7 @@ metadata:
 ```
 
 From this data, we can see that the environment variable will be
-`WORKER_MEMCACHED_CACHE_EXAMPLE_COM`, which we can then add to
+`MAX_CONCURRENT_RECONCILES_MEMCACHED_CACHE_EXAMPLE_COM`, which we can then add to
 `deploy/operator.yaml`:
 
 ``` yaml
@@ -77,13 +79,15 @@ From this data, we can see that the environment variable will be
   imagePullPolicy: "Always"
   args:
     # This default is overridden.
-    - "--max-workers"
+    - "--max-reconciles"
     - "3"
   env:
     # This value is used
-    - name: WORKER_MEMCACHED_CACHE_EXAMPLE_COM
+    - name: MAX_CONCURRENT_RECONCILES_MEMCACHED_CACHE_EXAMPLE_COM
       value: "6"
 ```
+**Note**
+Previously, the naming convention for global variable was `WORKERS_%s_%s`. It has been updated to `MAX_CONCURRENT_RECONCILES_%s_%s`. Currently, though we accept inputs to both the variables, `MAX_CONCURRENT_RECONCILES_%s_%s` takes precedence over the formerly used one.
 
 ## Ansible Verbosity
 
