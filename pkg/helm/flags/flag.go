@@ -15,31 +15,37 @@
 package flags
 
 import (
-	"strings"
+	"runtime"
+	"time"
 
-	"github.com/operator-framework/operator-sdk/internal/flags/watch"
-	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 	"github.com/spf13/pflag"
+
+	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 )
 
-// HelmOperatorFlags - Options to be used by a helm operator
-type HelmOperatorFlags struct {
-	watch.WatchFlags
-	MaxWorkers int
+// Flags - Options to be used by a helm operator
+type Flags struct {
+	ReconcilePeriod time.Duration
+	WatchesFile     string
+	MaxWorkers      int
 }
 
 // AddTo - Add the helm operator flags to the the flagset
-// helpTextPrefix will allow you add a prefix to default help text. Joined by a space.
-func AddTo(flagSet *pflag.FlagSet, helpTextPrefix ...string) *HelmOperatorFlags {
-	hof := &HelmOperatorFlags{}
-	hof.WatchFlags.AddTo(flagSet, helpTextPrefix...)
+func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 	flagSet.AddFlagSet(zap.FlagSet())
-	flagSet.IntVar(&hof.MaxWorkers,
-		"max-workers",
-		1,
-		strings.Join(append(helpTextPrefix,
-			"Maximum number of workers to use."),
-			" "),
+	flagSet.DurationVar(&f.ReconcilePeriod,
+		"reconcile-period",
+		time.Minute,
+		"Default reconcile period for controllers",
 	)
-	return hof
+	flagSet.StringVar(&f.WatchesFile,
+		"watches-file",
+		"./watches.yaml",
+		"Path to the watches file to use",
+	)
+	flagSet.IntVar(&f.MaxWorkers,
+		"max-workers",
+		runtime.NumCPU(),
+		"Maximum number of workers to use",
+	)
 }
