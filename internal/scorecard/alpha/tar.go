@@ -194,7 +194,7 @@ func newTarDirHeader(path string) *tar.Header {
 		Typeflag: tar.TypeDir,
 		Name:     filepath.Clean(path) + "/",
 		ModTime:  time.Now(),
-		Mode:     0700,
+		Mode:     0755,
 		Uid:      os.Getuid(),
 		Gid:      os.Getgid(),
 	}
