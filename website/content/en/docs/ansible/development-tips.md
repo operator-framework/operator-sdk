@@ -202,7 +202,7 @@ annotations:
 ```
 
 Note that a lower period will correct entropy more quickly, but reduce responsiveness to change 
-if there are many watched resources. And then, if `watchDependentResources` is `True` the entropy should be corrected as it happens and the `reconcilePeriod` is no longer required. It is important to highlight that is recommend to use this option only if your project needs to managing external resources that don't raise Kubernetes events and then, alert to use this option only if you know what you are doing.
+if there are many watched resources. Typically, this option should only be used in advanced use cases where `watchDependentResources` is set to `False`  and when is not possible to use the watch feature. E.g To managing external resources that don’t raise Kubernetes events.
 
 ### Testing an Ansible operator locally
 
