@@ -190,17 +190,3 @@ func expectPass(t *testing.T, test v1alpha3.Test) {
 		}
 	}
 }
-
-func expectDeadlineExceeded(t *testing.T, test v1alpha3.Test) {
-	if len(test.Status.Results) != 1 {
-		t.Fatalf("Expected 1 results, got %d", len(test.Status.Results))
-	}
-	for _, r := range test.Status.Results {
-		if len(r.Errors) != 1 || r.Errors[0] != context.DeadlineExceeded.Error() {
-			t.Fatalf("Expected error %q error, got %v", context.DeadlineExceeded, r.Errors)
-		}
-		if r.State != v1alpha3.FailState {
-			t.Fatalf("Expected result state %q, got %q", v1alpha3.FailState, r.State)
-		}
-	}
-}
