@@ -187,8 +187,7 @@ the below section for Ansible Operator specific annotations.
 #### Ansible Operator annotations
 This is the list of CR annotations which will modify the behavior of the operator:
 
-**ansible.operator-sdk/reconcile-period**: Used to specify the reconciliation
-interval for the CR. This value is parsed using the standard Golang package
+**ansible.operator-sdk/reconcile-period**: Specifies the maximum time before a reconciliation is triggered. Note that at scale, this can reduce performance, see [watches][watches] reference for more information. This value is parsed using the standard Golang package
 [time][time_pkg]. Specifically [ParseDuration][time_parse_duration] is used
 which will apply the default suffix of `s` giving the value in seconds.
 
@@ -201,6 +200,9 @@ metadata:
 annotations:
   ansible.operator-sdk/reconcile-period: "30s"
 ```
+
+Note that a lower period will correct entropy more quickly, but reduce responsiveness to change 
+if there are many watched resources. Typically, this option should only be used in advanced use cases where `watchDependentResources` is set to `False`  and when is not possible to use the watch feature. E.g To managing external resources that don’t raise Kubernetes events.
 
 ### Testing an Ansible operator locally
 
@@ -507,3 +509,4 @@ operator. The `meta` fields can be accesses via dot notation in Ansible as so:
 [manage_status_proposal]:../../proposals/ansible-operator-status.md
 [time_pkg]:https://golang.org/pkg/time/
 [time_parse_duration]:https://golang.org/pkg/time/#ParseDuration
+[watches]:/docs/ansible/reference/watches
