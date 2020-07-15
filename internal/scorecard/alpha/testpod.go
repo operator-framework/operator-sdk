@@ -32,6 +32,7 @@ const (
 
 	// PodLabelsDir is the name of the directory containing bundle labels.
 	PodLabelsDirName = "labels"
+
 	// PodLabelsDir is the directory containing an annotations.yaml file that is
 	// the source of truth for bundle metadata. These labels come from the
 	// bundle image if applicable.
@@ -127,19 +128,18 @@ func getPodDefinition(configMapName string, test Test, r PodTestRunner) *v1.Pod 
 }
 
 // getPodLog fetches the test results which are found in the pod log
-func getPodLog(ctx context.Context, client kubernetes.Interface, pod *v1.Pod) (logOutput []byte, err error) {
-
+func getPodLog(ctx context.Context, client kubernetes.Interface, pod *v1.Pod) ([]byte, error) {
 	req := client.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &v1.PodLogOptions{})
 	podLogs, err := req.Stream(ctx)
 	if err != nil {
-		return logOutput, err
+		return nil, err
 	}
 	defer podLogs.Close()
 
 	buf := new(bytes.Buffer)
 	_, err = io.Copy(buf, podLogs)
 	if err != nil {
-		return logOutput, err
+		return nil, err
 	}
 	return buf.Bytes(), err
 }
@@ -154,5 +154,4 @@ func (r PodTestRunner) deletePods(ctx context.Context, configMapName string) err
 		return fmt.Errorf("error deleting pods selector %s %w", selector, err)
 	}
 	return nil
-
 }

@@ -18,47 +18,41 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 	v1 "k8s.io/api/core/v1"
+
+	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
 
 // getTestResult fetches the test pod log and converts it into
 // Test format
-func (r PodTestRunner) getTestStatus(ctx context.Context, p *v1.Pod, test Test) (output *v1alpha3.TestStatus) {
-
+func (r PodTestRunner) getTestStatus(ctx context.Context, p *v1.Pod) (output *v1alpha3.TestStatus) {
 	logBytes, err := getPodLog(ctx, r.Client, p)
 	if err != nil {
-		return testStatusError(err, test)
+		return convertErrorToStatus(err, string(logBytes))
 	}
 	// marshal pod log into TestResult
 	err = json.Unmarshal(logBytes, &output)
 	if err != nil {
-		return testStatusError(err, test)
+		return convertErrorToStatus(err, string(logBytes))
 	}
 	return output
 }
 
-// ListTests lists the scorecard tests as configured that would be
+// List lists the scorecard tests as configured that would be
 // run based on user selection
-func (o Scorecard) ListTests() (output v1alpha3.Test, err error) {
+func (o Scorecard) List() v1alpha3.TestList {
+	output := v1alpha3.NewTestList()
 	tests := o.selectTests()
-	if len(tests) == 0 {
-		return output, err
-	}
 
 	for _, test := range tests {
-		output.Status.Results = append(output.Status.Results, v1alpha3.TestResult{Name: test.Name})
+		item := v1alpha3.NewTest()
+		item.Spec = v1alpha3.TestSpec{
+			Image:      test.Image,
+			Entrypoint: test.Entrypoint,
+			Labels:     test.Labels,
+		}
+		output.Items = append(output.Items, item)
 	}
 
-	return output, err
-}
-
-func testStatusError(err error, test Test) *v1alpha3.TestStatus {
-	r := v1alpha3.TestResult{}
-	r.Name = test.Name
-	r.State = v1alpha3.FailState
-	r.Errors = []string{err.Error()}
-	return &v1alpha3.TestStatus{
-		Results: []v1alpha3.TestResult{r},
-	}
+	return output
 }

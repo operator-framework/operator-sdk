@@ -49,12 +49,10 @@ In the scorecard configuration file, you might have the following
 definition of what the selector `suite=kuttlsuite` will translate to:
 ```yaml
 tests:
-- name: "kuttltest1"
-  image: quay.io/operator-framework/scorecard-test-kuttl:dev
+- image: quay.io/operator-framework/scorecard-test-kuttl:dev
   labels:
     suite: kuttlsuite
     test: kuttltest1
-  description: an ISV custom test that does...
 ```
 
 This test configuration will execute the scorecard-test-kuttl

@@ -20,8 +20,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 	"k8s.io/apimachinery/pkg/labels"
+
+	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
 
 func TestRunTests(t *testing.T) {
@@ -79,11 +80,11 @@ func TestRunTests(t *testing.T) {
 
 			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(7*time.Second))
 			defer cancel()
-			var scorecardOutput v1alpha3.Test
-			scorecardOutput, err = o.RunTests(ctx)
+			var scorecardOutput v1alpha3.TestList
+			scorecardOutput, err = o.Run(ctx)
 
-			if scorecardOutput.Status.Results[0].State != c.expectedState {
-				t.Fatalf("Wanted state %v, got %v", c.expectedState, scorecardOutput.Status.Results[0].State)
+			if scorecardOutput.Items[0].Status.Results[0].State != c.expectedState {
+				t.Fatalf("Wanted state %v, got %v", c.expectedState, scorecardOutput.Items[0].Status.Results[0].State)
 			}
 
 			if err == nil && c.wantError {

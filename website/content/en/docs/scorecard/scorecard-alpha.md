@@ -61,24 +61,20 @@ A sample of the scorecard configuration file may look as follows:
 
 ```yaml
 tests:
-- name: "basic-check-spec"
-  image: quay.io/operator-framework/scorecard-test:dev
+- image: quay.io/operator-framework/scorecard-test:dev
   entrypoint:
   - scorecard-test
   - basic-check-spec
   labels:
     suite: basic
     test: basic-check-spec-test
-  description: check the spec test
-- name: "olm-bundle-validation"
-  image: quay.io/operator-framework/scorecard-test:dev
+- image: quay.io/operator-framework/scorecard-test:dev
   entrypoint:
   - scorecard-test
   - olm-bundle-validation
   labels:
     suite: olm
     test: olm-bundle-validation-test
-  description: validate the bundle test
 ```
 
 The configuration file defines each test that scorecard can execute.  The
@@ -160,20 +156,34 @@ See an example of the JSON format produced by a scorecard test:
 
 ```json
 {
-  "spec": {
-    "image": ""
-  },
-  "status": {
-    "results": [
-      {
-        "name": "olm-bundle-validation",
-        "log": "time=\"2020-06-10T19:02:49Z\" level=debug msg=\"Found manifests directory\" name=bundle-test\ntime=\"2020-06-10T19:02:49Z\" level=debug msg=\"Found metadata directory\" name=bundle-test\ntime=\"2020-06-10T19:02:49Z\" level
-=debug msg=\"Getting mediaType info from manifests directory\" name=bundle-test\ntime=\"2020-06-10T19:02:49Z\" level=info msg=\"Found annotations file\" name=bundle-test\ntime=\"2020-06-10T19:02:49Z\" level=info msg=\"Could not find optio
-nal dependencies file\" name=bundle-test\n",
-        "state": "pass"
+  "apiVersion": "scorecard.operatorframework.io/v1alpha3",
+  "kind": "TestList",
+  "items": [
+    {
+      "kind": "Test",
+      "apiVersion": "scorecard.operatorframework.io/v1alpha3",
+      "spec": {
+        "image": "quay.io/operator-framework/scorecard-test:dev",
+        "entrypoint": [
+          "scorecard-test",
+          "olm-bundle-validation"
+        ],
+        "labels": {
+          "suite": "olm",
+          "test": "olm-bundle-validation-test"
+        }
+      },
+      "status": {
+        "results": [
+          {
+            "name": "olm-bundle-validation",
+            "log": "time=\"2020-06-10T19:02:49Z\" level=debug msg=\"Found manifests directory\" name=bundle-test\ntime=\"2020-06-10T19:02:49Z\" level=debug msg=\"Found metadata directory\" name=bundle-test\ntime=\"2020-06-10T19:02:49Z\" level=debug msg=\"Getting mediaType info from manifests directory\" name=bundle-test\ntime=\"2020-06-10T19:02:49Z\" level=info msg=\"Found annotations file\" name=bundle-test\ntime=\"2020-06-10T19:02:49Z\" level=info msg=\"Could not find optional dependencies file\" name=bundle-test\n",
+            "state": "pass"
+          }
+        ]
       }
-    ]
-  }
+    }
+  ]
 }
 ```
 
@@ -182,17 +192,24 @@ nal dependencies file\" name=bundle-test\n",
 See an example of the text format produced by a scorecard test:
 
 ```
-        Labels:
-        olm-bundle-validation               : pass
-        Log:
-                time="2020-06-10T19:00:43Z" level=debug msg="Found manifests directory" name=bundle-test
-                time="2020-06-10T19:00:43Z" level=debug msg="Found metadata directory" name=bundle-test
-                time="2020-06-10T19:00:43Z" level=debug msg="Getting mediaType info from manifests directory" name=bundle-test
-                time="2020-06-10T19:00:43Z" level=info msg="Found annotations file" name=bundle-test
-                time="2020-06-10T19:00:43Z" level=info msg="Could not find optional dependencies file" name=bundle-test
+--------------------------------------------------------------------------------
+Image:      quay.io/operator-framework/scorecard-test:dev
+Entrypoint: [scorecard-test olm-bundle-validation]
+Labels:
+	"suite":"olm"
+	"test":"olm-bundle-validation-test"
+Results:
+	Name: olm-bundle-validation
+	State: pass
+	Log:
+		time="2020-07-15T03:19:02Z" level=debug msg="Found manifests directory" name=bundle-test
+		time="2020-07-15T03:19:02Z" level=debug msg="Found metadata directory" name=bundle-test
+		time="2020-07-15T03:19:02Z" level=debug msg="Getting mediaType info from manifests directory" name=bundle-test
+		time="2020-07-15T03:19:02Z" level=info msg="Found annotations file" name=bundle-test
+		time="2020-07-15T03:19:02Z" level=info msg="Could not find optional dependencies file" name=bundle-test
 ```
 
-**NOTE** The output format spec matches the [`Test`](https://godoc.org/github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3#Test) type layout.
+**NOTE** The output format spec for each test matches the [`Test`](https://godoc.org/github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3#Test) type layout.
 
 
 ## Exit Status
