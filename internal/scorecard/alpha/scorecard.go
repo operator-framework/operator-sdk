@@ -57,11 +57,11 @@ type FakeTestRunner struct {
 	Error      error
 }
 
-// RunTests executes the scorecard tests as configured
-func (o Scorecard) RunTests(ctx context.Context) (testOutput v1alpha3.Test, err error) {
+// Run executes the scorecard tests as configured
+func (o Scorecard) Run(ctx context.Context) (v1alpha3.TestList, error) {
+	testOutput := v1alpha3.NewTestList()
 
-	err = o.TestRunner.Initialize(ctx)
-	if err != nil {
+	if err := o.TestRunner.Initialize(ctx); err != nil {
 		return testOutput, err
 	}
 
@@ -73,14 +73,21 @@ func (o Scorecard) RunTests(ctx context.Context) (testOutput v1alpha3.Test, err 
 	for _, test := range tests {
 		result, err := o.TestRunner.RunTest(ctx, test)
 		if err != nil {
-			result = convertErrorToStatus(test.Name, err)
+			result = convertErrorToStatus(err, "")
 		}
-		testOutput.Status.Results = append(testOutput.Status.Results, result.Results...)
+
+		out := v1alpha3.NewTest()
+		out.Spec = v1alpha3.TestSpec{
+			Image:      test.Image,
+			Entrypoint: test.Entrypoint,
+			Labels:     test.Labels,
+		}
+		out.Status = *result
+		testOutput.Items = append(testOutput.Items, out)
 	}
 
 	if !o.SkipCleanup {
-		err = o.TestRunner.Cleanup(ctx)
-		if err != nil {
+		if err := o.TestRunner.Cleanup(ctx); err != nil {
 			return testOutput, err
 		}
 	}
@@ -102,8 +109,13 @@ func (o Scorecard) selectTests() []Test {
 	return selected
 }
 
-func (r FakeTestRunner) Initialize(ctx context.Context) (err error) {
-	return nil
+func (r FakeTestRunner) Initialize(ctx context.Context) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		return nil
+	}
 }
 
 // Initialize sets up the bundle configmap for tests
@@ -121,8 +133,13 @@ func (r *PodTestRunner) Initialize(ctx context.Context) error {
 
 }
 
-func (r FakeTestRunner) Cleanup(ctx context.Context) (err error) {
-	return nil
+func (r FakeTestRunner) Cleanup(ctx context.Context) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		return nil
+	}
 }
 
 // Cleanup deletes pods and configmap resources from this test run
@@ -139,27 +156,30 @@ func (r PodTestRunner) Cleanup(ctx context.Context) (err error) {
 }
 
 // RunTest executes a single test
-func (r PodTestRunner) RunTest(ctx context.Context, test Test) (result *v1alpha3.TestStatus, err error) {
-
+func (r PodTestRunner) RunTest(ctx context.Context, test Test) (*v1alpha3.TestStatus, error) {
 	// Create a Pod to run the test
 	podDef := getPodDefinition(r.configMapName, test, r)
 	pod, err := r.Client.CoreV1().Pods(r.Namespace).Create(ctx, podDef, metav1.CreateOptions{})
 	if err != nil {
-		return result, err
+		return nil, err
 	}
 
 	err = r.waitForTestToComplete(ctx, pod)
 	if err != nil {
-		return result, err
+		return nil, err
 	}
 
-	result = r.getTestStatus(ctx, pod, test)
-	return result, nil
+	return r.getTestStatus(ctx, pod), nil
 }
 
 // RunTest executes a single test
 func (r FakeTestRunner) RunTest(ctx context.Context, test Test) (result *v1alpha3.TestStatus, err error) {
-	return r.TestStatus, r.Error
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+		return r.TestStatus, r.Error
+	}
 }
 
 func ConfigDocLink() string {
@@ -182,17 +202,16 @@ func (r PodTestRunner) waitForTestToComplete(ctx context.Context, p *v1.Pod) (er
 		return false, nil
 	})
 
-	err = wait.PollImmediateUntil(time.Duration(1*time.Second), podCheck, ctx.Done())
+	err = wait.PollImmediateUntil(1*time.Second, podCheck, ctx.Done())
 	return err
 
 }
 
-func convertErrorToStatus(name string, err error) *v1alpha3.TestStatus {
+func convertErrorToStatus(err error, log string) *v1alpha3.TestStatus {
 	result := v1alpha3.TestResult{}
-	result.Name = name
-	result.Errors = []string{err.Error()}
-	result.Suggestions = []string{}
 	result.State = v1alpha3.FailState
+	result.Errors = []string{err.Error()}
+	result.Log = log
 	return &v1alpha3.TestStatus{
 		Results: []v1alpha3.TestResult{result},
 	}

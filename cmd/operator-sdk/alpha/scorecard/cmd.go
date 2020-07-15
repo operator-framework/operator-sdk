@@ -86,24 +86,20 @@ If the argument holds an image tag, it must be present remotely.`,
 	return scorecardCmd
 }
 
-func (c *scorecardCmd) printOutput(output v1alpha3.Test) error {
+func (c *scorecardCmd) printOutput(output v1alpha3.TestList) error {
 	switch c.outputFormat {
 	case "text":
-		if len(output.Status.Results) == 0 {
+		if len(output.Items) == 0 {
 			fmt.Println("0 tests selected")
 			return nil
 		}
-		o, err := output.MarshalText()
-		if err != nil {
-			fmt.Println(err.Error())
-			return err
+		for _, test := range output.Items {
+			fmt.Println(test.MarshalText())
 		}
-		fmt.Printf("%s\n", o)
 	case "json":
 		bytes, err := json.MarshalIndent(output, "", "  ")
 		if err != nil {
-			fmt.Println(err.Error())
-			return err
+			return fmt.Errorf("marshal json error: %v", err)
 		}
 		fmt.Printf("%s\n", string(bytes))
 	default:
@@ -154,12 +150,9 @@ func (c *scorecardCmd) run() (err error) {
 		return fmt.Errorf("could not parse selector %w", err)
 	}
 
-	var scorecardTest v1alpha3.Test
+	var scorecardTests v1alpha3.TestList
 	if c.list {
-		scorecardTest, err = o.ListTests()
-		if err != nil {
-			return fmt.Errorf("error listing tests %w", err)
-		}
+		scorecardTests = o.List()
 	} else {
 		runner := scorecard.PodTestRunner{
 			ServiceAccount: c.serviceAccount,
@@ -178,13 +171,31 @@ func (c *scorecardCmd) run() (err error) {
 		ctx, cancel := context.WithTimeout(context.Background(), c.waitTime)
 		defer cancel()
 
-		scorecardTest, err = o.RunTests(ctx)
+		scorecardTests, err = o.Run(ctx)
 		if err != nil {
 			return fmt.Errorf("error running tests %w", err)
 		}
 	}
 
-	return c.printOutput(scorecardTest)
+	if err := c.printOutput(scorecardTests); err != nil {
+		log.Fatal(err)
+	}
+
+	if hasFailingTest(scorecardTests) {
+		os.Exit(1)
+	}
+	return nil
+}
+
+func hasFailingTest(list v1alpha3.TestList) bool {
+	for _, t := range list.Items {
+		for _, r := range t.Status.Results {
+			if r.State != v1alpha3.PassState {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (c *scorecardCmd) validate(args []string) error {

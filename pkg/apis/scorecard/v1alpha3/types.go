@@ -34,8 +34,8 @@ const (
 type TestSpec struct {
 	// Image is the name of the testimage
 	Image string `json:"image"`
-	// EntryPoint is list of commands and arguments passed to the test image
-	EntryPoint []string `json:"entrypoint,omitempty"`
+	// Entrypoint is list of commands and arguments passed to the test image
+	Entrypoint []string `json:"entrypoint,omitempty"`
 	// Labels that further describe the test and enable selection
 	Labels map[string]string `json:"labels,omitempty"`
 }
@@ -43,7 +43,7 @@ type TestSpec struct {
 // TestResult contains the results of an individual scorecard test
 type TestResult struct {
 	// Name is the name of the test
-	Name string `json:"name"`
+	Name string `json:"name,omitempty"`
 	// Log holds a log produced from the test (if applicable)
 	Log string `json:"log,omitempty"`
 	// State is the final state of the test
@@ -56,23 +56,38 @@ type TestResult struct {
 
 // TestStatus contains collection of testResults.
 type TestStatus struct {
-	Results []TestResult `json:"results"`
+	Results []TestResult `json:"results,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// Test is the schema for the scorecard API
+// Test specifies a single test run.
 type Test struct {
 	metav1.TypeMeta `json:",inline"`
 	Spec            TestSpec   `json:"spec,omitempty"`
 	Status          TestStatus `json:"status,omitempty"`
 }
 
-func NewTest() *Test {
-	return &Test{
+// TestList is a list of tests.
+type TestList struct {
+	metav1.TypeMeta `json:",inline"`
+	Items           []Test `json:"items"`
+}
+
+func NewTest() Test {
+	return Test{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       "Test",
 			APIVersion: SchemeGroupVersion.String(),
+			Kind:       "Test",
+		},
+	}
+}
+
+func NewTestList() TestList {
+	return TestList{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: SchemeGroupVersion.String(),
+			Kind:       "TestList",
 		},
 	}
 }

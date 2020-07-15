@@ -26,12 +26,12 @@ const (
 )
 
 type Test struct {
-	Name  string `yaml:"name"`  // The container test name
-	Image string `yaml:"image"` // The container image name
-	// An list of commands and arguments passed to the test image
-	Entrypoint  []string          `yaml:"entrypoint,omitempty"`
-	Labels      map[string]string `yaml:"labels"`      // User defined labels used to filter tests
-	Description string            `yaml:"description"` // User readable test description
+	// Image is the name of the testimage
+	Image string `json:"image"`
+	// Entrypoint is list of commands and arguments passed to the test image
+	Entrypoint []string `json:"entrypoint,omitempty"`
+	// Labels that further describe the test and enable selection
+	Labels map[string]string `json:"labels,omitempty"`
 }
 
 // Config represents the set of test configurations which scorecard

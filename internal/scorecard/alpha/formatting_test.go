@@ -18,7 +18,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 	"k8s.io/apimachinery/pkg/labels"
 )
 
@@ -27,10 +26,9 @@ func TestList(t *testing.T) {
 	cases := []struct {
 		bundlePathValue string
 		selector        string
-		wantError       bool
 		resultCount     int
 	}{
-		{"testdata/bundle", "suite=basic", false, 1},
+		{"testdata/bundle", "suite=basic", 1},
 	}
 
 	for _, c := range cases {
@@ -50,17 +48,8 @@ func TestList(t *testing.T) {
 			}
 			runner.BundlePath = c.bundlePathValue
 			o.TestRunner = &runner
-			var output v1alpha3.Test
-			output, err = o.ListTests()
-			if err == nil && c.wantError {
-				t.Fatalf("Wanted error but got no error")
-			} else if err != nil {
-				if !c.wantError {
-					t.Fatalf("Wanted result but got error: %v", err)
-				}
-				return
-			}
-			actualResultCount := len(output.Status.Results)
+			output := o.List()
+			actualResultCount := len(output.Items)
 			if c.resultCount != actualResultCount {
 				t.Fatalf("Wanted result count %d but got : %d", c.resultCount, actualResultCount)
 			}
