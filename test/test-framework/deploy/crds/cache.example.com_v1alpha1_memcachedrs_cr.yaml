@@ -1,6 +1,0 @@
-apiVersion: cache.example.com/v1alpha1
-kind: MemcachedRS
-metadata:
-  name: example-memcachedrs
-spec:
-  numNodes: 4

@@ -129,10 +129,12 @@ jobs:
 
     # Test subcommands
     - <<: *test
-      name: Subcommands on Kubernetes
-      script: make test-subcommand
+      name: Subcommands and Integration on Kubernetes
+      script:
+      - make test-subcommand
+      - make test-integration
 
-    # Build and test go 
+    # Build and test go
     - <<: *test
       name: Go on Kubernetes
       before_script:
@@ -140,7 +142,6 @@ jobs:
       script:
       - make test-unit
       - make test-e2e-go
-      - make test-integration
       after_success:
       - $GOPATH/bin/goveralls -service=travis-ci -coverprofile=coverage.out -repotoken=$COVERALLS_TOKEN
 
@@ -216,7 +217,7 @@ jobs:
         - make image-build-helm
         - make image-push-helm
 
-    # Build and deploy arm64 scorecard-test docker image 
+    # Build and deploy arm64 scorecard-test docker image
     - <<: *deploy
       name: Docker image for scorecard-test (arm64)
       arch: arm64

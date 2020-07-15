@@ -26,6 +26,14 @@ else
   error_color=''
   reset_color=''
 fi
+# Operating system and architecture name of the local machine.
+ARCH_NAME="$(arch)"
+case "$ARCH_NAME" in
+  x86_64) ARCH_NAME="amd64" ;;
+  aarch64) ARCH_NAME="arm64" ;;
+  *);;
+esac
+OS_NAME="$(uname | awk '{ print tolower($0) }')"
 
 # Roots used by tests.
 tmp_root=/tmp
@@ -67,14 +75,13 @@ function prepare_staging_dir {
     rm -f "$1/bin/operator-sdk"
   fi
 
-  mkdir -p "$1"
+  mkdir -p "${1}/bin"
 }
 
 # Fetch k8s API gen tools and make it available under $1/bin.
 function fetch_tools {
   if [[ -z "$SKIP_FETCH_TOOLS" ]]; then
     fetch_envtest_tools $@
-    install_kind $@
   fi
 }
 
@@ -89,7 +96,7 @@ function fetch_envtest_tools {
   # curl -fL --retry 3 --keepalive-time 2 "${url}" -o "${tmp_sdk_root}/${server_tar}"
   # tar -zxvf "${tmp_sdk_root}/${server_tar}"
 
-  local tools_archive_name="kubebuilder-tools-${ENVTEST_TOOLS_VERSION}-$(go env GOOS)-$(go env GOARCH).tar.gz"
+  local tools_archive_name="kubebuilder-tools-${ENVTEST_TOOLS_VERSION}-${OS_NAME}-${ARCH_NAME}.tar.gz"
   local tools_download_url="https://storage.googleapis.com/kubebuilder-tools/$tools_archive_name"
 
   local tools_archive_path="$1/$tools_archive_name"
@@ -122,12 +129,21 @@ function build_sdk {
 
 # Install the 'kind' binary at version $KIND_VERSION.
 function install_kind {
-
   local kind_path="${1}/bin/kind"
 
   header_text "installing kind $KIND_VERSION"
-  local kind_binary="kind-$(go env GOOS)-$(go env GOARCH)"
+  local kind_binary="kind-${OS_NAME}-${ARCH_NAME}"
   local kind_url="https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/$kind_binary"
   curl -sSLo "$kind_path" $kind_url
   chmod +x "$kind_path"
+}
+
+# Install the 'kubectl' binary at version $K8S_VERSION.
+function install_kubectl() {
+  local kubectl_path="${1}/bin/kubectl"
+
+  header_text "installing kubectl $K8S_VERSION"
+  local kubectl_url="https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/${OS_NAME}/${ARCH_NAME}/kubectl"
+  curl -sSLo "$kubectl_path" $kubectl_url
+  chmod +x "$kubectl_path"
 }

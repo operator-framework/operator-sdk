@@ -42,34 +42,6 @@ function trap_add() {
     done
 }
 
-# add_go_mod_replace adds a "replace" directive from $1 to $2 with an
-# optional version version $3 to the current working directory's go.mod file.
-function add_go_mod_replace() {
-	local from_path="${1:?first path in replace statement is required}"
-	local to_path="${2:?second path in replace statement is required}"
-	local version="${3:-}"
-
-	if [[ ! -d "$to_path" && -z "$version" ]]; then
-		echo "second replace path $to_path requires a version be set because it is not a directory"
-		exit 1
-	fi
-	if [[ ! -e go.mod ]]; then
-		echo "go.mod file not found in $(pwd)"
-		exit 1
-	fi
-
-	# Check if a replace line already exists. If it does, remove. If not, append.
-	if grep -q "${from_path} =>" go.mod; then
-		sed -E -i 's|^.+'"${from_path} =>"'.+$||g' go.mod
-	fi
-	# Do not use "go mod edit" so formatting stays the same.
-	local replace="replace ${from_path} => ${to_path}"
-	if [[ -n "$version" ]]; then
-		replace="$replace $version"
-	fi
-	echo "$replace" >> go.mod
-}
-
 # check_dir accepts 3 args:
 # 1: test case string
 # 2: directory to test for existence
