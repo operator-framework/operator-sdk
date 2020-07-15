@@ -307,11 +307,11 @@ kubectl delete -f deploy/crds/example.com_nginxes_crd.yaml
 **NOTE** Additional CR/CRD's can be added to the project by running, for example, the command :`operator-sdk add api --api-version=cache.example.com/v1alpha1 --kind=AppService`
 For more information, refer [cli][addcli] doc.
 
-[operator-scope]: /docs/legacy-common/operator-scope
+[operator-scope]:https://v0-19-x.sdk.operatorframework.io/docs/legacy-common/operator-scope/
 [layout-doc]: /docs/helm/reference/scaffolding
 [helm-charts]:https://helm.sh/docs/topics/charts/
 [helm-values]:https://helm.sh/docs/intro/using_helm/#customizing-the-chart-before-installing
 [helm-official]:https://helm.sh/docs/
 [addcli]: /docs/cli/operator-sdk_add_api
 <!-- TODO: update this link to the non-legacy doc once the helm plugin is publicly available -->
-[quickstart-bundle]: /docs/olm-integration/legacy/quickstart-bundle
+[quickstart-bundle]:https://v0-19-x.sdk.operatorframework.io/docs/olm-integration/legacy/quickstart-bundle/

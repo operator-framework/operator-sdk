@@ -139,7 +139,7 @@ to add an index to a cluster catalog, and the catalog [discovery docs][doc-olm-d
 about your cataloged Operator.
 
 
-[sdk-user-guide-go]:/docs/golang/legacy/quickstart
+[sdk-user-guide-go]:/docs/golang/quickstart
 [sdk-user-guide-ansible]:/docs/ansible/quickstart
 [sdk-user-guide-helm]:/docs/helm/quickstart
 [quickstart-package-manifests]:/docs/olm-integration/quickstart-package-manifests

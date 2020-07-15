@@ -51,18 +51,14 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
 ### Helm Tests
 
 1. Run [helm e2e tests][helm-e2e].
-    1. Create base helm operator project by running [`hack/image/helm/scaffold-helm-image.go`][helm-base].
-    2. Build base helm operator image.
-    3. Create and configure a new helm type nginx-operator.
-    4. Create cluster resources.
-    5. Wait for operator to be ready.
-    6. Create nginx CR and wait for it to be ready.
-    7. Scale up the dependent deployment and verify the operator reconciles it back down.
-    8. Scale up the CR and verify the dependent deployment scales up accordingly.
-    9. Delete nginx CR and verify that finalizer (which writes a message in the operator logs) ran.
-    10. Run `operator-sdk migrate` to add go source to the operator (see this [note][deps_mgmt] on dependency management first).
-    11. Run `operator-sdk build` to compile the new binary and build a new image.
-    12. Re-run steps 4-9 to test the migrated operator.
+    1. Build base helm operator image.
+    1. Create and configure a new helm type nginx-operator.
+    1. Create cluster resources.
+    1. Wait for operator to be ready.
+    1. Create nginx CR and wait for it to be ready.
+    1. Scale up the dependent deployment and verify the operator reconciles it back down.
+    1. Scale up the CR and verify the dependent deployment scales up accordingly.
+    1. Delete nginx CR and verify that finalizer (which writes a message in the operator logs) ran.
 
 **NOTE**: All created resources, including the namespace, are deleted using a bash trap when the test finishes
 
@@ -75,5 +71,3 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
 [ansible-molecule]: https://github.com/operator-framework/operator-sdk/blob/master/hack/tests/e2e-ansible-molecule.sh
 [ansible-test]: https://github.com/operator-framework/operator-sdk/tree/master/test/ansible
 [helm-e2e]: https://github.com/operator-framework/operator-sdk/blob/master/hack/tests/e2e-helm.sh
-[helm-base]: https://github.com/operator-framework/operator-sdk/blob/master/hack/image/helm/scaffold-helm-image.go
-[deps_mgmt]: /docs/golang/legacy/quickstart#a-note-on-dependency-management
