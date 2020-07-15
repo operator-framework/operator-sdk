@@ -27,7 +27,7 @@ be monitored for updates and cached.
   current project directory.
 * **vars**: This is an arbitrary map of key-value pairs. The contents will be
   passed as `extra_vars` to the playbook or role specified for this watch.
-* **reconcilePeriod** (optional): The maximum interval in seconds that the operator will wait before beginning another reconcile, even if no watched events are received. When an operator watches many resources, each reconcile can become expensive, and a low value here can actually reduce performance, so it is generally recommended that this is only used when `watchDependentResources` is `False`. Note that, is recommend to use this option only if your project needs to managing external resources that don't raise Kubernetes events and  only change this value if you know what you are doing.
+* **reconcilePeriod** (optional): The maximum interval in seconds that the operator will wait before beginning another reconcile, even if no watched events are received. When an operator watches many resources, each reconcile can become expensive, and a low value here can actually reduce performance. Typically, this option should only be used in advanced use cases where `watchDependentResources` is set to `False`  and when is not possible to use the watch feature. E.g To managing external resources that don’t raise Kubernetes events.
 * **manageStatus** (optional): When true (default), the operator will manage
   the status of the CR generically. Set to false, the status of the CR is
   managed elsewhere, by the specified role/playbook or in a separate controller.

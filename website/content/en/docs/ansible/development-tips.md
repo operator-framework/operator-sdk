@@ -500,7 +500,7 @@ operator. The `meta` fields can be accesses via dot notation in Ansible as so:
 ```yaml
 ---
 - debug:
-    msg: "name: {{ meta.name }}, {{ meta.namespace }}"f
+    msg: "name: {{ meta.name }}, {{ meta.namespace }}"
 ```
 
 [k8s_ansible_module]:https://docs.ansible.com/ansible/2.6/modules/k8s_module.html
