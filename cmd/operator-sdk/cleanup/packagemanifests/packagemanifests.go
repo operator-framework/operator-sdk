@@ -36,26 +36,36 @@ func NewCmd() *cobra.Command {
 		Long: `'cleanup packagemanifests' destroys an Operator deployed with OLM using the 'run packagemanifests' command.
 The command's argument must be set to a valid package manifests root directory,
 ex. '<project-root>/packagemanifests'.`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return c.validate(args)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) > 0 {
-				if len(args) > 1 {
-					return fmt.Errorf("exactly one argument is required")
-				}
-				c.ManifestsDir = args[0]
-			} else {
-				c.ManifestsDir = "packagemanifests"
-			}
-
-			log.Infof("Cleaning up operator in directory %s", c.ManifestsDir)
-
-			if err := c.Cleanup(); err != nil {
-				log.Fatalf("Failed to clean up operator: %v", err)
-			}
-			return nil
+			return c.run()
 		},
 	}
 
 	c.PackageManifestsCmd.AddToFlagSet(cmd.Flags())
 
 	return cmd
+}
+
+func (c *packagemanifestsCmd) validate(args []string) error {
+	if len(args) > 0 {
+		if len(args) > 1 {
+			return fmt.Errorf("exactly one argument is required")
+		}
+		c.ManifestsDir = args[0]
+	} else {
+		c.ManifestsDir = "packagemanifests"
+	}
+	return nil
+}
+
+func (c *packagemanifestsCmd) run() error {
+	log.Infof("Cleaning up operator in directory %s", c.ManifestsDir)
+
+	if err := c.Cleanup(); err != nil {
+		log.Fatalf("Failed to clean up operator: %v", err)
+	}
+	return nil
 }
