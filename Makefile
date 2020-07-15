@@ -160,7 +160,7 @@ build/helm-operator-%-linux-gnu: GOARGS = GOOS=linux
 
 build/%: $(SOURCES) ## Build the operator-sdk binary
 	$(Q){ \
-	cmdpkg=$$(echo $* | sed "s/\(operator-sdk\|ansible-operator\|helm-operator\).*/\1/"); \
+	cmdpkg=$$(echo $* | sed -E "s/(operator-sdk|ansible-operator|helm-operator).*/\1/"); \
 	$(GOARGS) go build $(GO_BUILD_ARGS) -o $@ ./cmd/$$cmdpkg; \
 	}
 
