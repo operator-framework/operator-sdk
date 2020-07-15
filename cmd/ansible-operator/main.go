@@ -115,7 +115,7 @@ func main() {
 		os.Exit(1)
 	}
 	for _, w := range watches {
-		runner, err := runner.New(w, flags.AnsibleArgs)
+		runner, err := runner.New(w, f.AnsibleArgs)
 		if err != nil {
 			log.Error(err, "Failed to create runner")
 			os.Exit(1)

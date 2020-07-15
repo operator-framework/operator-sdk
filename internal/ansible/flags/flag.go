@@ -103,8 +103,6 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 	flagSet.StringVar(&f.AnsibleArgs,
 		"ansible-args",
 		"",
-		strings.Join(append(helpTextPrefix,
-			"Ansible args. Allows user to specify arbitrary arguments for ansible-based operators."),
-			" "),
+		"Ansible args. Allows user to specify arbitrary arguments for ansible-based operators.",
 	)
 }
