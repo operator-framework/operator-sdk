@@ -1,0 +1,30 @@
+# Adds namespace to all resources.
+namespace: osdk-test
+
+namePrefix: osdk-
+
+# Labels to add to all resources and selectors.
+#commonLabels:
+#  someName: someValue
+
+patchesJson6902:
+- path: debug_logs_patch.yaml
+  target:
+    group: apps
+    kind: Deployment
+    name: controller-manager
+    namespace: system
+    version: v1
+patchesStrategicMerge:
+- manager_image.yaml
+- pull_policy/Never.yaml
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../crd
+- ../rbac
+- ../manager
+images:
+- name: testing
+  newName: testing-operator

@@ -1,0 +1,15 @@
+---
+- name: Check for liveness probe failure events
+  # We can't directly hit the endpoint, which is not publicly exposed. If k8s sees a failing endpoint, it will create a "Killing" event.
+  k8s_info:
+    kind: Event
+    field_selectors:
+      - "involvedObject.name={{ op_pod.metadata.name }}"
+      - "reason=Killing"
+  vars:
+    op_pod: "{{ lookup('k8s', kind='Pod', label_selector='control-plane=controller-manager') }}"
+  register: liveness_failures
+
+- name: Assert that the Pod has not been liveness probe Killed
+  assert:
+    that: liveness_failures.resources|length == 0

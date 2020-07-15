@@ -1,0 +1,14 @@
+---
+- name: Build kustomize testing overlay
+  command: kustomize build .
+  args:
+    chdir: '{{ config_dir }}/testing'
+  register: resources
+  changed_when: false
+
+- name: Set resources to {{ state }}
+  k8s:
+    definition: '{{ item }}'
+    state: '{{ state }}'
+    wait: yes
+  loop: '{{ resources.stdout | from_yaml_all | list }}'

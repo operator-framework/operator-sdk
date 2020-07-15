@@ -62,9 +62,9 @@ KUSTOMIZE_PATH=${KUSTOMIZE}
 header_text "Test Ansible Molecule scenarios"
 pushd "${ROOTDIR}/test/ansible"
 DEST_IMAGE="quay.io/example/ansible-test-operator:v0.0.1"
-sed -i".bak" -E -e 's/(FROM quay.io\/operator-framework\/ansible-operator)(:.*)?/\1:dev/g' build/Dockerfile; rm -f build/Dockerfile.bak
-docker build -f build/Dockerfile -t "$DEST_IMAGE" --no-cache .
+sed -i".bak" -E -e 's/(FROM quay.io\/operator-framework\/ansible-operator)(:.*)?/\1:dev/g' Dockerfile; rm -f Dockerfile.bak
+docker build -t "$DEST_IMAGE" --image-build-args="--no-cache" .
 load_image_if_kind "$DEST_IMAGE"
-OPERATOR_PULL_POLICY=Never OPERATOR_IMAGE=${DEST_IMAGE} TEST_CLUSTER_PORT=24443 TEST_OPERATOR_NAMESPACE=osdk-test molecule test --all
+OPERATOR_PULL_POLICY=Never OPERATOR_IMAGE=${DEST_IMAGE} TEST_OPERATOR_NAMESPACE=osdk-test molecule test
 
 popd

@@ -1,0 +1,26 @@
+- op: add
+  path: /rules/-
+  value:
+    apiGroups:
+    - test.example.com
+    resources:
+    - selectortests
+    verbs:
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - update
+    - watch
+- op: add
+  path: /rules/-
+  value:
+    apiGroups:
+    - test.example.com
+    resources:
+    - selectortests/status
+    verbs:
+    - get
+    - update
+    - patch

@@ -1,0 +1,7 @@
+domain: com
+repo: wut
+resources:
+- group: cache.example.com
+  kind: Memcached
+  version: v1alpha1
+version: "2"
