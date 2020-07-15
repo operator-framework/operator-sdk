@@ -32,6 +32,7 @@ import (
 	yaml "sigs.k8s.io/yaml"
 
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/operator-framework/operator-sdk/pkg/ansible/flags"
 )
 
 var log = logf.Log.WithName("watches")
@@ -230,7 +231,7 @@ func getPossibleRolePaths(path string) []string {
 	fqcn := strings.Split(path, ".")
 	// If fqcn is a valid fully qualified collection name, it is <namespace>.<collectionName>.<roleName>
 	if len(fqcn) == 3 {
-		ansibleCollectionsPathEnv, ok := os.LookupEnv("ANSIBLE_COLLECTIONS_PATH")
+		ansibleCollectionsPathEnv, ok := os.LookupEnv(flags.AnsibleCollectionsPathEnvVar)
 		if !ok || len(ansibleCollectionsPathEnv) == 0 {
 			ansibleCollectionsPathEnv = "/usr/share/ansible/collections"
 			home, err := os.UserHomeDir()
@@ -246,7 +247,7 @@ func getPossibleRolePaths(path string) []string {
 	}
 
 	// Check for the role where Ansible would. If it exists, use it.
-	ansibleRolesPathEnv, ok := os.LookupEnv("ANSIBLE_ROLES_PATH")
+	ansibleRolesPathEnv, ok := os.LookupEnv(flags.AnsibleRolesPathEnvVar)
 	if ok && len(ansibleRolesPathEnv) > 0 {
 		for _, possiblePathParent := range strings.Split(ansibleRolesPathEnv, ":") {
 			// "roles" is optionally a part of the path. Check with, and without.
