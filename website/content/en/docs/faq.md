@@ -52,7 +52,7 @@ E0320 15:42:17.676888       1 reflector.go:280] pkg/mod/k8s.io/client-go@v0.0.0-
 {"level":"info","ts":1584718937.766342,"logger":"controller_memcached","msg":"ImageStreamTag resource not found.
 ```
 
-Using controller-runtime's split client means that read operations (gets and lists) are read from a cache, and write operators are written directly to the API server. To populate the cache for reads, controller-runtime initiates a `list` and then a `watch` even when your operator is only attempting to `get` a single resource. The above scenario occurs when the operator does not have an (RBAC)[rbac] permission to `watch` the resource. The solution is to grant permission in the `config/rbac/role.yaml` file.
+Using controller-runtime's split client means that read operations (gets and lists) are read from a cache, and write operations are written directly to the API server. To populate the cache for reads, controller-runtime initiates a `list` and then a `watch` even when your operator is only attempting to `get` a single resource. The above scenario occurs when the operator does not have an (RBAC)[rbac] permission to `watch` the resource. The solution is to grant permission in the `config/rbac/role.yaml` file.
 
 In rare cases, it also could be that the particular resource does not implement the `watch` verb. In this case, it is necessary to use the [client.Reader][client.Reader] instead of the default split client. The manager's `GetAPIReader()` function can be used to get this reader.
 
