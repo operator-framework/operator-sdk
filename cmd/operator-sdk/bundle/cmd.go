@@ -20,16 +20,11 @@ import (
 
 //nolint:structcheck
 type bundleCmd struct {
-	directory      string
-	packageName    string
-	imageTag       string
-	imageBuilder   string
-	defaultChannel string
-	channels       string
-	generateOnly   bool
+	directory    string
+	imageBuilder string
 }
 
-func newCmd() *cobra.Command {
+func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "bundle",
 		Short: "Manage operator bundle metadata",
@@ -39,17 +34,12 @@ native software, like the Operator Lifecycle Manager.
 
 More information about operator bundles and metadata:
 https://github.com/operator-framework/operator-registry/blob/master/docs/design/operator-bundle.md
-`,
-	}
-	return cmd
-}
 
-func NewCmd() *cobra.Command {
-	cmd := newCmd()
-	cmd.Long += `
 More information about the integration with OLM via SDK:
 https://sdk.operatorframework.io/docs/olm-integration
-`
+`,
+	}
+
 	cmd.AddCommand(
 		newValidateCmd(),
 	)
