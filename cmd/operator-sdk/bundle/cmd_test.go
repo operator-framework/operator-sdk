@@ -30,16 +30,4 @@ var _ = Describe("Running a bundle command", func() {
 			Expect(subcommands[0].Use).To(Equal("validate"))
 		})
 	})
-
-	Describe("NewCmdLegacy", func() {
-		It("builds and returns a cobra command with the correct subcommands", func() {
-			cmd := NewCmdLegacy()
-			Expect(cmd).NotTo(BeNil())
-
-			subcommands := cmd.Commands()
-			Expect(len(subcommands)).To(Equal(2))
-			Expect(subcommands[0].Use).To(Equal("create"))
-			Expect(subcommands[1].Use).To(Equal("validate"))
-		})
-	})
 })

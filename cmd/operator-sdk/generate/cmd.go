@@ -41,14 +41,3 @@ func NewCmd() *cobra.Command {
 	)
 	return cmd
 }
-
-// NewCmdLegacy returns the 'generate' command configured for the legacy project layout.
-func NewCmdLegacy() *cobra.Command {
-	cmd := newCmd()
-	cmd.AddCommand(
-		newGenerateCSVCmd(),
-		bundle.NewCmdLegacy(),
-		packagemanifests.NewCmdLegacy(),
-	)
-	return cmd
-}
