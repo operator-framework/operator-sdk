@@ -258,6 +258,9 @@ if the test image follows the above guidelines.
 
 
 [cli-scorecard]: /docs/cli/operator-sdk_scorecard/
+[sample-config]: https://github.com/operator-framework
+<!-- TODO jemccorm fix
 [sample-config]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/testdata/bundle/tests/scorecard/config.yaml
+-->
 [scorecard-struct]: https://github.com/operator-framework/operator-sdk/blob/master/pkg/apis/scorecard/v1alpha3/types.go
 [olm-bundle]:https://github.com/operator-framework/operator-registry#manifest-format

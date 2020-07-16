@@ -238,11 +238,32 @@ connection to invoke the Kube API.
 
 
 [client_go]: https://github.com/kubernetes/client-go
+[olm_tests]: https://github.com/operator-framework
+<!-- TODO jemccorm fix
 [olm_tests]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/tests/olm.go
+-->
+[basic_tests]: https://github.com/operator-framework
+<!-- TODO jemccorm fix
 [basic_tests]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/tests/basic.go
+-->
+[config_yaml]: https://github.com/operator-framework
+<!-- TODO jemccorm fix
 [config_yaml]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/testdata/bundle/tests/scorecard/config.yaml
+-->
+[scorecard_main_func]: https://github.com/operator-framework
+<!-- TODO jemccorm fix
 [scorecard_main_func]: https://github.com/operator-framework/operator-sdk/blob/master/images/scorecard-test/cmd/test/main.go
+-->
+[custom_scorecard_repo]: https://github.com/operator-framework
+<!-- TODO jemccorm fix
 [custom_scorecard_repo]: https://github.com/operator-framework/operator-sdk/tree/master/internal/scorecard/examples
+-->
 [user_doc]: /docs/scorecard/scorecard/
+[scorecard_binary]: https://github.com/operator-framework
+<!-- TODO jemccorm fix
 [scorecard_binary]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/examples/custom-scorecard-tests/images/custom-scorecard-tests/cmd/test/main.go
+-->
+[sample_makefile]: https://github.com/operator-framework/operator-sdk
+<!-- TODO jemccorm fix
 [sample_makefile]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/examples/custom-scorecard-tests/Makefile
+-->
