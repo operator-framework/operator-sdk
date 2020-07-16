@@ -29,27 +29,6 @@ Never seeing this warning may suggest that your watch or cache is not healthy. I
 For more information on `kube-apiserver` request timeout options, see the [Kubernetes API Server Command Line Tool Reference][kube-apiserver_options]
 
 
-## I keep seeing errors like "Failed to create metrics Service", how do I fix this?
-
-If you run into the following error message:
-
-```
-time="2019-06-05T12:29:54Z" level=fatal msg="failed to create or get service for metrics: services \"my-operator\" is forbidden: cannot set blockOwnerDeletion if an ownerReference refers to a resource you can't set finalizers on: , <nil>"
-```
-
-Add the following to your `deploy/role.yaml` file to grant the operator permissions to set owner references to the metrics Service resource. This is needed so that the metrics Service will get deleted as soon as you delete the operators Deployment. If you are using another way of deploying your operator, have a look at [this guide][gc-metrics] for more information.
-
-```
-- apiGroups:
-  - apps
-  resources:
-  - deployments/finalizers
-  resourceNames:
-  - <operator-name>
-  verbs:
-  - "update"
-```
-
 ## My Ansible module is missing a dependency. How do I add it to the image?
 
 Unfortunately, adding the entire dependency tree for all Ansible modules would be excessive. Fortunately, you can add it easily. Simply edit your build/Dockerfile. You'll want to change to root for the install command, just be sure to swap back using a series of commands like the following right after the `FROM` line.
@@ -66,20 +45,20 @@ If you aren't sure what dependencies are required, start up a container using th
 
 ## I keep seeing errors like "Failed to watch", how do I fix this?
 
-If you run into the following error message:
+If you run into the following error message, it means that your operator is unable to watch the resoruce:
 
 ```
 E0320 15:42:17.676888       1 reflector.go:280] pkg/mod/k8s.io/client-go@v0.0.0-20191016111102-bec269661e48/tools/cache/reflector.go:96: Failed to watch *v1.ImageStreamTag: unknown (get imagestreamtags.image.openshift.io)
 {"level":"info","ts":1584718937.766342,"logger":"controller_memcached","msg":"ImageStreamTag resource not found.
 ```
 
-Then, it means that your Operator is unable to watch the resource. This scenario can be faced because the Operator does not have the permission [(RBAC)[rbac]] to `Watch` the resource, or may be the Schema from the API used, did not implement this verb. In this way the solution would be to grant the permission in the `role.yaml` , or when it is not  possible, use the [client.Reader][client.Reader] instead of the client provided.
+Using controller-runtime's split client means that read operations (gets and lists) are read from a cache, and write operations are written directly to the API server. To populate the cache for reads, controller-runtime initiates a `list` and then a `watch` even when your operator is only attempting to `get` a single resource. The above scenario occurs when the operator does not have an (RBAC)[rbac] permission to `watch` the resource. The solution is to grant permission in the `config/rbac/role.yaml` file.
 
-The client provided will work with a cache, and because of this, the `WATCH` verb is required.   
+In rare cases, it also could be that the particular resource does not implement the `watch` verb. In this case, it is necessary to use the [client.Reader][client.Reader] instead of the default split client. The manager's `GetAPIReader()` function can be used to get this reader.
 
 **Example**
 
-Following are the changes in the `conttroler.go`,  to address the need to get the resource via the [client.Reader][client.Reader]. See:
+Here is an example that demonstrates how to use a `client.Reader` when a resource does not implement the `watch` verb:
 
 ```go
 
@@ -123,30 +102,9 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 	}
 ```
 
-## I see deepcopy errors and image build fails. How do I fix this?
-
-When you run the ```operator-sdk generate k8s``` command, you might see an error like this
-
-```
-INFO[0000] Running deepcopy code-generation for Custom Resource group versions: [cache:[v1alpha1], ] 
-F0523 01:18:27.122034    5157 deepcopy.go:885] Hit an unsupported type invalid type for invalid type, from github.com/example-inc/memcached-operator/pkg/apis/cache/v1alpha1.Memcached
-```
-
-This is because of the `GOROOT` environment variable not being set. More details [here][goroot-github-issue].
-
-In order to fix this, you simply need to export the `GOROOT` environment variable
-
-```
-$ export GOROOT=$(go env GOROOT)
-```
-
-This will work for the current environment. To persist this fix, add the above line to your environment's config file, ex. `bashrc` file.
-
 [kube-apiserver_options]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options
 [controller-runtime_faq]: https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md#q-how-do-i-have-different-logic-in-my-reconciler-for-different-types-of-events-eg-create-update-delete
 [finalizer]:/docs/golang/advanced-topics/#handle-cleanup-on-deletion
-[gc-metrics]:/docs/golang/legacy/monitoring/prometheus/#garbage-collection
 [cr-faq]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md
 [client.Reader]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#Reader
 [rbac]:https://kubernetes.io/docs/reference/access-authn-authz/rbac/
-[goroot-github-issue]:https://github.com/operator-framework/operator-sdk/issues/1854#issuecomment-525132306

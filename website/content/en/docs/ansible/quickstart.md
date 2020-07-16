@@ -367,7 +367,7 @@ For more information, refer [cli][addcli] doc.
 [ansible-runner-http-plugin]:https://github.com/ansible/ansible-runner-http
 [ansible-runner-tool]: https://ansible-runner.readthedocs.io/en/latest/install.html
 [ansible-watches]: /docs/ansible/reference/watches
-[operator-scope]:../../legacy-common/operator-scope
+[operator-scope]:https://v0-19-x.sdk.operatorframework.io/docs/legacy-common/operator-scope/
 [layout-doc]:../reference/scaffolding
 [homebrew-tool]:https://brew.sh/
 [install-guide]: /docs/install-operator-sdk
@@ -377,4 +377,4 @@ For more information, refer [cli][addcli] doc.
 [kubectl-tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [addcli]: /docs/cli/operator-sdk_add_api
 <!-- TODO: update this link to the non-legacy doc once the ansible plugin is publicly available -->
-[quickstart-bundle]: /docs/olm-integration/legacy/quickstart-bundle
+[quickstart-bundle]:https://v0-19-x.sdk.operatorframework.io/docs/olm-integration/legacy/quickstart-bundle/
