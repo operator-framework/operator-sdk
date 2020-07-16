@@ -27,13 +27,13 @@ else
   reset_color=''
 fi
 # Operating system and architecture name of the local machine.
-ARCH_NAME="$(arch)"
+ARCH_NAME="$(uname -m)"
 case "$ARCH_NAME" in
   x86_64) ARCH_NAME="amd64" ;;
   aarch64) ARCH_NAME="arm64" ;;
   *);;
 esac
-OS_NAME="$(uname | awk '{ print tolower($0) }')"
+OS_NAME="$(uname -s | awk '{ print tolower($0) }')"
 
 # Roots used by tests.
 tmp_root=/tmp
