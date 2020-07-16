@@ -248,19 +248,14 @@ Scorecard will execute custom tests if they follow these mandated conventions:
  * tests can obtain the bundle contents at a shared mount point of /bundle
  * tests can access the Kubernetes API using an in-cluster client connection
 
-<!--- TODO(jeff): Add an example.
-See here for an example of a custom test image written in golang.
--->
-
+See [here][custom-image] for an example of a custom test image written in golang.
 
 Writing custom tests in other programming languages is possible
 if the test image follows the above guidelines.
 
 
 [cli-scorecard]: /docs/cli/operator-sdk_scorecard/
-[sample-config]: https://github.com/operator-framework
-<!-- TODO jemccorm fix
 [sample-config]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/testdata/bundle/tests/scorecard/config.yaml
--->
+[custom-image]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/examples/custom-scorecard-tests
 [scorecard-struct]: https://github.com/operator-framework/operator-sdk/blob/master/pkg/apis/scorecard/v1alpha3/types.go
 [olm-bundle]:https://github.com/operator-framework/operator-registry#manifest-format
