@@ -23,8 +23,8 @@ import (
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 
 	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
-	scorecard "github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
-	"github.com/operator-framework/operator-sdk/internal/scorecard/alpha/tests"
+	"github.com/operator-framework/operator-sdk/internal/scorecard"
+	"github.com/operator-framework/operator-sdk/internal/scorecard/tests"
 	scapiv1alpha3 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
 

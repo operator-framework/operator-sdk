@@ -1,5 +1,5 @@
 ---
-title: Scorecard (alpha)
+title: Scorecard
 weight: 25
 ---
 
@@ -95,7 +95,7 @@ follows:
 
 The scorecard command has the following syntax:
 ```
-operator-sdk alpha scorecard <bundle_dir_or_image> [flags]
+operator-sdk scorecard <bundle_dir_or_image> [flags]
 ```
 
 The scorecard requires a positional argument that holds either the
@@ -257,7 +257,10 @@ Writing custom tests in other programming languages is possible
 if the test image follows the above guidelines.
 
 
-[cli-scorecard]: /docs/cli/operator-sdk_alpha_scorecard/
-[sample-config]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/alpha/testdata/bundle/tests/scorecard/config.yaml
+[cli-scorecard]: /docs/cli/operator-sdk_scorecard/
+[sample-config]: https://github.com/operator-framework
+<!-- TODO jemccorm fix
+[sample-config]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/testdata/bundle/tests/scorecard/config.yaml
+-->
 [scorecard-struct]: https://github.com/operator-framework/operator-sdk/blob/master/pkg/apis/scorecard/v1alpha3/types.go
 [olm-bundle]:https://github.com/operator-framework/operator-registry#manifest-format

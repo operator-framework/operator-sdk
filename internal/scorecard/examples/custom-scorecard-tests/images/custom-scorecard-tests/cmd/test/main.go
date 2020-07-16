@@ -20,8 +20,8 @@ import (
 	"log"
 	"os"
 
-	scorecard "github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
-	"github.com/operator-framework/operator-sdk/internal/scorecard/alpha/examples/custom-scorecard-tests/internal/tests"
+	"github.com/operator-framework/operator-sdk/internal/scorecard"
+	"github.com/operator-framework/operator-sdk/internal/scorecard/examples/custom-scorecard-tests/internal/tests"
 
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	scapiv1alpha3 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
@@ -51,7 +51,7 @@ func main() {
 	var result scapiv1alpha3.TestStatus
 
 	// Names of the custom tests which would be passed in the
-	// `operator-sdk alpha` command.
+	// `operator-sdk` command.
 	switch entrypoint[0] {
 	case tests.CustomTest1Name:
 		result = tests.CustomTest1(cfg)

@@ -66,7 +66,6 @@ operator-sdk [flags]
 
 ### SEE ALSO
 
-* [operator-sdk alpha](../operator-sdk_alpha)	 - Run an alpha subcommand
 * [operator-sdk build](../operator-sdk_build)	 - Compiles code and builds artifacts
 * [operator-sdk bundle](../operator-sdk_bundle)	 - Manage operator bundle metadata
 * [operator-sdk cleanup](../operator-sdk_cleanup)	 - Clean up an Operator deployed with the 'run' subcommand
@@ -77,5 +76,6 @@ operator-sdk [flags]
 * [operator-sdk new](../operator-sdk_new)	 - Creates a new operator application
 * [operator-sdk olm](../operator-sdk_olm)	 - Manage the Operator Lifecycle Manager installation in your cluster
 * [operator-sdk run](../operator-sdk_run)	 - Run an Operator in a variety of environments
+* [operator-sdk scorecard](../operator-sdk_scorecard)	 - Runs scorecard
 * [operator-sdk version](../operator-sdk_version)	 - Prints the version of operator-sdk
 

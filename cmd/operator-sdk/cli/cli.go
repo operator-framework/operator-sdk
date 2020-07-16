@@ -15,7 +15,6 @@
 package cli
 
 import (
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/build"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/bundle"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cleanup"
@@ -24,6 +23,7 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/new"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/olm"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/run"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/scorecard"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/version"
 	"github.com/operator-framework/operator-sdk/internal/flags"
 	golangv2 "github.com/operator-framework/operator-sdk/internal/plugins/golang/v2"
@@ -40,8 +40,7 @@ var commands = []*cobra.Command{
 	// The "new" cmd provides a way to scaffold Helm/Ansible projects
 	// from the new CLI.
 	new.NewCmd(),
-
-	alpha.NewCmd(),
+	scorecard.NewCmd(),
 	build.NewCmd(),
 	bundle.NewCmd(),
 	cleanup.NewCmd(),

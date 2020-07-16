@@ -1,7 +1,7 @@
 ---
-title: "operator-sdk alpha scorecard"
+title: "operator-sdk scorecard"
 ---
-## operator-sdk alpha scorecard
+## operator-sdk scorecard
 
 Runs scorecard
 
@@ -12,7 +12,7 @@ one argument, either a bundle image or directory containing manifests and metada
 If the argument holds an image tag, it must be present remotely.
 
 ```
-operator-sdk alpha scorecard [flags]
+operator-sdk scorecard [flags]
 ```
 
 ### Options
@@ -30,13 +30,7 @@ operator-sdk alpha scorecard [flags]
   -w, --wait-time duration       seconds to wait for tests to complete. Example: 35s (default 30s)
 ```
 
-### Options inherited from parent commands
-
-```
-      --verbose   Enable verbose logging
-```
-
 ### SEE ALSO
 
-* [operator-sdk alpha](../operator-sdk_alpha)	 - Run an alpha subcommand
+* [operator-sdk](../operator-sdk)	 - An SDK for building operators with ease
 

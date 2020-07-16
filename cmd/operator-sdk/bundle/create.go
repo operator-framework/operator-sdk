@@ -28,7 +28,7 @@ import (
 
 	"github.com/blang/semver"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
-	scorecard "github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
+	"github.com/operator-framework/operator-sdk/internal/scorecard"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"

@@ -19,7 +19,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Running an alpha scorecard command", func() {
+var _ = Describe("Running the scorecard command", func() {
 	Describe("NewCmd", func() {
 		It("builds and returns a cobra command", func() {
 			cmd := NewCmd()

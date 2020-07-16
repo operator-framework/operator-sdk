@@ -3,8 +3,6 @@ title: Writing Custom Scorecard Tests
 weight: 50
 ---
 
-# Custom Tests using Operator SDK Scorecard
-
 This guide outlines the steps which can be followed to extend the existing scorecard tests and implement operator specific custom tests. 
 
 ## Run scorecard with custom tests:
@@ -52,14 +50,14 @@ The sample test image repository present [here][custom_scorecard_repo] has the f
 
 Scorecard currently implements a few [basic][basic_tests] and [olm][olm_tests] tests for the image bundle, custom resources and custom resource definitions. Additional tests specific to the operator can also be included in the test suite of scorecard.
 
-The `tests.go` file is where the custom tests are implemented in the sample test image project. These tests use `scapiv1alpha2.ScorecardTestResult` struct to populate the result, which is then converted to json format for the output. For example, the format of a simple custom sample test can be as follows:
+The `tests.go` file is where the custom tests are implemented in the sample test image project. These tests use `scapiv1alpha3.TestResult` struct to populate the result, which is then converted to json format for the output. For example, the format of a simple custom sample test can be as follows:
 
 ```Go
 package tests
 
 import (
 	"github.com/operator-framework/operator-registry/pkg/registry"
-	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
+	scapiv1alpha3 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
 
 const (
@@ -67,17 +65,17 @@ const (
 )
 
 // CustomTest1 
-func CustomTest1(bundle registry.Bundle) scapiv1alpha2.ScorecardTestResult {
-	r := scapiv1alpha2.ScorecardTestResult{}
+func CustomTest1(bundle registry.Bundle) scapiv1alpha3.TestStatus {
+	r := scapiv1alpha3.TestResult{}
 	r.Name = CustomTest1Name
 	r.Description = "Custom Test 1"
-	r.State = scapiv1alpha2.PassState
+	r.State = scapiv1alpha3.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
 
   // Implement relevant custom test logic here
 
-	return r
+	return wrapResult(r)
 }
 ```
 
@@ -99,16 +97,16 @@ stages:
 
 The important fields to note here are:
 1. `image` - name and tag of the test image which was specified in the Makefile.
-2. `labels` - the name of the `test` and `suite` the test function belongs to. This can be specified in the `operator-sdk alpha scorecard` command to run the desired test.
+2. `labels` - the name of the `test` and `suite` the test function belongs to. This can be specified in the `operator-sdk scorecard` command to run the desired test.
 
 **Note**: The default location of `config.yaml` inside the bundle is `<bundle directory>/tests/scorecard/config.yaml`. It can be overridden using the `--config` flag. For more details regarding the configuration file refer to [user docs][user_doc].
 
 ### Scorecard binary:
 
-The scorecard test image implementation requires the bundle under test to be present in the test image. The `GetBundle()` function reads the pod's bundle to fetch the manifests and scorecard configuration from desired path.
+The scorecard test image implementation requires the bundle under test to be present in the test image. The `apimanifests.GetBundleFromDir()` function reads the pod's bundle to fetch the manifests and scorecard configuration from desired path.
 
 ```Go
-	cfg, err := GetBundle("/bundle")
+	cfg, err := apimanifests.GetBundleFromDir(scorecard.PodBundleRoot)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -123,13 +121,13 @@ The names with which the tests are identified in `config.yaml` and would be pass
 ...     
 switch entrypoint[0] {
 case tests.CustomTest1Name:
-    result = tests.CustomTest1(*cfg)
+    result = tests.CustomTest1(cfg)
     ...
 }
 ...
 ```
 
-The result of the custom tests which is in `scapiv1alpha2.ScorecardTestResult` format, is converted to json for output.
+The result of the custom tests which is in `scapiv1alpha3.TestResult` format, is converted to json for output.
 
 ```Go
 prettyJSON, err := json.MarshalIndent(result, "", "    ")
@@ -142,7 +140,7 @@ fmt.Printf("%s\n", string(prettyJSON))
 The names of the custom tests are also included in `printValidTests()` function:
 
 ```Go
-func printValidTests() (result v1alpha2.ScorecardTestResult) {
+func printValidTests() (result scapiv1alpha3.TestStatus) {
 ...
     str := fmt.Sprintf("Valid tests for this image include: %s,
             tests.CustomTest1Name
@@ -165,10 +163,10 @@ docker push <repository_name>/<username>/<image_name>:tag
 
 ### Running scorecard command
 
-The `operator-sdk alpha scorecard` command is used to execute the scorecard tests by specifying the location of test bundle in the command. The name or suite of the tests which are to be executed can be specified with the `--selector` flag. The command will create scorecard pods with the image specified in `config.yaml` for the respective test. For example, the `CustomTest1Name` test provides the following json output.
+The `operator-sdk scorecard` command is used to execute the scorecard tests by specifying the location of test bundle in the command. The name or suite of the tests which are to be executed can be specified with the `--selector` flag. The command will create scorecard pods with the image specified in `config.yaml` for the respective test. For example, the `CustomTest1Name` test provides the following json output.
 
 ```console
-operator-sdk alpha scorecard bundle/ --selector=suite=custom -o json --wait-time=32s --skip-cleanup=false
+operator-sdk scorecard bundle/ --selector=suite=custom -o json --wait-time=32s --skip-cleanup=false
 {
   "metadata": {
     "creationTimestamp": null
@@ -185,11 +183,11 @@ operator-sdk alpha scorecard bundle/ --selector=suite=custom -o json --wait-time
 }
 ```
 
-**Note**: More details on the usage of `operator-sdk alpha scorecard` command and its flags can be found in the [scorecard user documentation][user_doc]
+**Note**: More details on the usage of `operator-sdk scorecard` command and its flags can be found in the [scorecard user documentation][user_doc]
 
 ### Debugging scorecard custom tests
 
-The `--skip-cleanup` flag can be used when executing the `operator-sdk alpha scorecard` command to cause the scorecard created test pods to be unremoved. 
+The `--skip-cleanup` flag can be used when executing the `operator-sdk scorecard` command to cause the scorecard created test pods to be unremoved. 
 This is useful when debugging or writing new tests so that you can view
 the test logs or the pod manifests.
 
@@ -211,13 +209,13 @@ to be outside its scope.  You can however implement whatever
 service accounts your tests require and then specify
 that service account from the command line using the service-account flag:
 ```
-operator-sdk alpha scorecard --service-account=mycustomsa
+operator-sdk scorecard --service-account=mycustomsa
 ```
 
 Also, you can set up a non-default namespace that your tests
 will be executed within using the following namespace flag:
 ```
-operator-sdk alpha scorecard --namespace=mycustomns
+operator-sdk scorecard --namespace=mycustomns
 ```
 
 If you do not specify either of these flags, the default namespace
@@ -240,11 +238,32 @@ connection to invoke the Kube API.
 
 
 [client_go]: https://github.com/kubernetes/client-go
-[olm_tests]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/alpha/tests/olm.go
-[basic_tests]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/alpha/tests/basic.go
-[config_yaml]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/alpha/testdata/bundle/tests/scorecard/config.yaml
+[olm_tests]: https://github.com/operator-framework
+<!-- TODO jemccorm fix
+[olm_tests]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/tests/olm.go
+-->
+[basic_tests]: https://github.com/operator-framework
+<!-- TODO jemccorm fix
+[basic_tests]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/tests/basic.go
+-->
+[config_yaml]: https://github.com/operator-framework
+<!-- TODO jemccorm fix
+[config_yaml]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/testdata/bundle/tests/scorecard/config.yaml
+-->
+[scorecard_main_func]: https://github.com/operator-framework
+<!-- TODO jemccorm fix
 [scorecard_main_func]: https://github.com/operator-framework/operator-sdk/blob/master/images/scorecard-test/cmd/test/main.go
-[custom_scorecard_repo]: https://github.com/operator-framework/operator-sdk/tree/master/internal/scorecard/alpha/examples
-[user_doc]: /docs/scorecard/scorecard-alpha/
-[scorecard_binary]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/alpha/examples/custom-scorecard-tests/images/custom-scorecard-tests/cmd/test/main.go
-[sample_makefile]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/alpha/examples/custom-scorecard-tests/Makefile
+-->
+[custom_scorecard_repo]: https://github.com/operator-framework
+<!-- TODO jemccorm fix
+[custom_scorecard_repo]: https://github.com/operator-framework/operator-sdk/tree/master/internal/scorecard/examples
+-->
+[user_doc]: /docs/scorecard/scorecard/
+[scorecard_binary]: https://github.com/operator-framework
+<!-- TODO jemccorm fix
+[scorecard_binary]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/examples/custom-scorecard-tests/images/custom-scorecard-tests/cmd/test/main.go
+-->
+[sample_makefile]: https://github.com/operator-framework/operator-sdk
+<!-- TODO jemccorm fix
+[sample_makefile]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/examples/custom-scorecard-tests/Makefile
+-->
