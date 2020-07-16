@@ -20,19 +20,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/operator-framework/operator-sdk/pkg/ansible/events"
-	"github.com/operator-framework/operator-sdk/pkg/ansible/runner"
-	"github.com/operator-framework/operator-sdk/pkg/predicate"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-	crthandler "sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	"github.com/operator-framework/operator-sdk/pkg/ansible/events"
+	"github.com/operator-framework/operator-sdk/pkg/ansible/runner"
+	handler "github.com/operator-framework/operator-sdk/pkg/handler"
+	"github.com/operator-framework/operator-sdk/pkg/predicate"
 )
 
 var log = logf.Log.WithName("ansible-controller")
@@ -106,7 +106,7 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 		os.Exit(1)
 	}
 
-	if err := c.Watch(&source.Kind{Type: u}, &crthandler.EnqueueRequestForObject{},
+	if err := c.Watch(&source.Kind{Type: u}, &handler.InstrumentedEnqueueRequestForObject{},
 		predicate.GenerationChangedPredicate{}, filterPredicate); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
