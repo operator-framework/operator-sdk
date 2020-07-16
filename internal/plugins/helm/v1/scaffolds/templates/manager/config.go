@@ -88,6 +88,9 @@ spec:
     spec:
       containers:
       - image: {{ .Image }}
+        args:
+        - "--enable-leader-election"
+        - "--leader-election-id={{ .OperatorName }}"
         name: manager
         resources:
           limits:
@@ -99,11 +102,5 @@ spec:
         env:
           - name: WATCH_NAMESPACE
             value: ""
-          - name: POD_NAME
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.name
-          - name: OPERATOR_NAME
-            value: {{ .OperatorName }}
       terminationGracePeriodSeconds: 10
 `

@@ -18,6 +18,8 @@ limitations under the License.
 package metricsauth
 
 import (
+	"fmt"
+	"os"
 	"path/filepath"
 
 	"sigs.k8s.io/kubebuilder/pkg/model/file"
@@ -29,6 +31,8 @@ var _ file.Template = &AuthProxyPatch{}
 // prometheus metrics for manager Pod.
 type AuthProxyPatch struct {
 	file.TemplateMixin
+
+	OperatorName string
 }
 
 // SetTemplateDefaults implements input.Template
@@ -40,6 +44,14 @@ func (f *AuthProxyPatch) SetTemplateDefaults() error {
 	f.TemplateBody = kustomizeAuthProxyPatchTemplate
 
 	f.IfExistsAction = file.Error
+
+	if f.OperatorName == "" {
+		dir, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("error to get the current path: %v", err)
+		}
+		f.OperatorName = filepath.Base(dir)
+	}
 
 	return nil
 }
@@ -71,4 +83,6 @@ spec:
       - name: manager
         args:
         - "--metrics-addr=127.0.0.1:8080"
+        - "--enable-leader-election"
+        - "--leader-election-id={{ .OperatorName }}"
 `

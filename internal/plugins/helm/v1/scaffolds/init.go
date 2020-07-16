@@ -17,7 +17,6 @@ limitations under the License.
 package scaffolds
 
 import (
-	"fmt"
 	"os"
 	"strings"
 
@@ -67,18 +66,13 @@ func (s *initScaffolder) newUniverse() *model.Universe {
 
 // Scaffold implements Scaffolder
 func (s *initScaffolder) Scaffold() error {
-	switch {
-	case s.config.IsV3():
-		if err := s.scaffold(); err != nil {
-			return err
-		}
-		if s.apiScaffolder != nil {
-			return s.apiScaffolder.Scaffold()
-		}
-		return nil
-	default:
-		return fmt.Errorf("unknown project version %v", s.config.Version)
+	if err := s.scaffold(); err != nil {
+		return err
 	}
+	if s.apiScaffolder != nil {
+		return s.apiScaffolder.Scaffold()
+	}
+	return nil
 }
 
 func (s *initScaffolder) scaffold() error {

@@ -25,10 +25,13 @@ import (
 
 // Flags - Options to be used by a helm operator
 type Flags struct {
-	ReconcilePeriod time.Duration
-	WatchesFile     string
-	MaxWorkers      int
-	MetricsAddress  string
+	ReconcilePeriod         time.Duration
+	WatchesFile             string
+	MaxWorkers              int
+	MetricsAddress          string
+	EnableLeaderElection    bool
+	LeaderElectionID        string
+	LeaderElectionNamespace string
 }
 
 // AddTo - Add the helm operator flags to the the flagset
@@ -53,5 +56,20 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 		"metrics-addr",
 		":8080",
 		"The address the metric endpoint binds to",
+	)
+	flagSet.BoolVar(&f.EnableLeaderElection,
+		"enable-leader-election",
+		false,
+		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.",
+	)
+	flagSet.StringVar(&f.LeaderElectionID,
+		"leader-election-id",
+		"",
+		"Name of the configmap that is used for holding the leader lock.",
+	)
+	flagSet.StringVar(&f.LeaderElectionNamespace,
+		"leader-election-namespace",
+		"",
+		"Namespace in which to create the leader election configmap for holding the leader lock (required if running locally with leader election enabled).",
 	)
 }
