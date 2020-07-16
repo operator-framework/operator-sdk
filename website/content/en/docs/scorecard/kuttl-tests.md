@@ -64,7 +64,7 @@ end user along with any other test results.
 With the above kuttl test configuration, you can execute that
 kuttl test using scorecard as follows:
 ```bash
-operator-sdk alpha scorecard deploy/olm-catalog/memcached-operator --selector=suite=kuttlsuite 
+operator-sdk scorecard deploy/olm-catalog/memcached-operator --selector=suite=kuttlsuite 
 ```
 
 ## Defining kuttl Specific Configuration Options
@@ -132,13 +132,13 @@ that holds the required RBAC permissions.
 
 You can specify a custom service account in scorecard as follows:
 ```
-operator-sdk alpha scorecard --service-account=mycustomsa
+operator-sdk scorecard --service-account=mycustomsa
 ```
 
 Also, you can set up a non-default namespace that your tests
 will be executed within using the following namespace flag:
 ```
-operator-sdk alpha scorecard --namespace=mycustomns
+operator-sdk scorecard --namespace=mycustomns
 ```
 
 If you do not specify either of these flags, the default namespace
