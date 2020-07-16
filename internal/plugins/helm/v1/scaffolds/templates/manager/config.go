@@ -87,9 +87,7 @@ spec:
         control-plane: controller-manager
     spec:
       containers:
-      - args:
-        - manager
-        image: {{ .Image }}
+      - image: {{ .Image }}
         name: manager
         resources:
           limits:
