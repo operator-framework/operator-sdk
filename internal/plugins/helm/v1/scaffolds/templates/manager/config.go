@@ -100,7 +100,5 @@ spec:
             cpu: 100m
             memory: 60Mi
         env:
-          - name: WATCH_NAMESPACE
-            value: ""
       terminationGracePeriodSeconds: 10
 `
