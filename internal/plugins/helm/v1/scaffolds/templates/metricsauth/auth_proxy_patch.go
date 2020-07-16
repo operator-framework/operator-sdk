@@ -56,9 +56,6 @@ func (f *AuthProxyPatch) SetTemplateDefaults() error {
 	return nil
 }
 
-// todo(camilamacedo86): add the arg --enable-leader-election for the manager
-// More info: https://github.com/operator-framework/operator-sdk/issues/3356
-
 const kustomizeAuthProxyPatchTemplate = `# This patch inject a sidecar container which is a HTTP proxy for the 
 # controller manager, it performs RBAC authorization against the Kubernetes API using SubjectAccessReviews.
 apiVersion: apps/v1

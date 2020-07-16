@@ -56,12 +56,6 @@ func (f *Config) SetTemplateDefaults() error {
 	return nil
 }
 
-// todo(camilamacedo86): add the arg --enable-leader-election for the manager
-// More info: https://github.com/operator-framework/operator-sdk/issues/3356
-
-// todo(camilamacedo86): add the arg --metrics-addr for the manager
-// More info: https://github.com/operator-framework/operator-sdk/issues/3358
-
 const configTemplate = `apiVersion: v1
 kind: Namespace
 metadata:
@@ -99,6 +93,5 @@ spec:
           requests:
             cpu: 100m
             memory: 60Mi
-        env:
       terminationGracePeriodSeconds: 10
 `
