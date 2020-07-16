@@ -86,15 +86,16 @@ func CustomTest1(bundle registry.Bundle) scapiv1alpha2.ScorecardTestResult {
 The [configuration file][config_yaml] includes test definitions and metadata to run the test. For the example `CustomTest1` function, the following fields should be specified in `config.yaml`.
 
 ```yaml
-tests:
-- image: quay.io/username/custom-scorecard-tests:dev
-  entrypoint: 
-  - custom-scorecard-tests
-  - customtest1
-  labels:
-    suite: custom
-    test: customtest1
-```
+stages:
+- tests:
+  - image: quay.io/username/custom-scorecard-tests:dev
+    entrypoint:
+    - custom-scorecard-tests
+    - customtest1
+    labels:
+      suite: custom
+      test: customtest1
+ ```
 
 The important fields to note here are:
 1. `image` - name and tag of the test image which was specified in the Makefile.

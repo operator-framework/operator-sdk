@@ -17,6 +17,7 @@ package alpha
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
@@ -53,6 +54,7 @@ type PodTestRunner struct {
 }
 
 type FakeTestRunner struct {
+	Sleep      time.Duration
 	TestStatus *v1alpha3.TestStatus
 	Error      error
 }
@@ -65,25 +67,22 @@ func (o Scorecard) Run(ctx context.Context) (v1alpha3.TestList, error) {
 		return testOutput, err
 	}
 
-	tests := o.selectTests()
-	if len(tests) == 0 {
-		return testOutput, nil
-	}
-
-	for _, test := range tests {
-		result, err := o.TestRunner.RunTest(ctx, test)
-		if err != nil {
-			result = convertErrorToStatus(err, "")
+	for _, stage := range o.Config.Stages {
+		tests := o.selectTests(stage)
+		if len(tests) == 0 {
+			continue
 		}
 
-		out := v1alpha3.NewTest()
-		out.Spec = v1alpha3.TestSpec{
-			Image:      test.Image,
-			Entrypoint: test.Entrypoint,
-			Labels:     test.Labels,
+		output := make(chan v1alpha3.Test, len(tests))
+		if stage.Parallel {
+			o.runStageParallel(ctx, tests, output)
+		} else {
+			o.runStageSequential(ctx, tests, output)
 		}
-		out.Status = *result
-		testOutput.Items = append(testOutput.Items, out)
+		close(output)
+		for o := range output {
+			testOutput.Items = append(testOutput.Items, o)
+		}
 	}
 
 	if !o.SkipCleanup {
@@ -94,14 +93,46 @@ func (o Scorecard) Run(ctx context.Context) (v1alpha3.TestList, error) {
 	return testOutput, nil
 }
 
+func (o Scorecard) runStageParallel(ctx context.Context, tests []Test, results chan<- v1alpha3.Test) {
+	var wg sync.WaitGroup
+	for _, t := range tests {
+		wg.Add(1)
+		go func(test Test) {
+			results <- o.runTest(ctx, test)
+			wg.Done()
+		}(t)
+	}
+	wg.Wait()
+}
+
+func (o Scorecard) runStageSequential(ctx context.Context, tests []Test, results chan<- v1alpha3.Test) {
+	for _, test := range tests {
+		results <- o.runTest(ctx, test)
+	}
+}
+
+func (o Scorecard) runTest(ctx context.Context, test Test) v1alpha3.Test {
+	result, err := o.TestRunner.RunTest(ctx, test)
+	if err != nil {
+		result = convertErrorToStatus(err, "")
+	}
+
+	out := v1alpha3.NewTest()
+	out.Spec = v1alpha3.TestSpec{
+		Image:      test.Image,
+		Entrypoint: test.Entrypoint,
+		Labels:     test.Labels,
+	}
+	out.Status = *result
+	return out
+}
+
 // selectTests applies an optionally passed selector expression
 // against the configured set of tests, returning the selected tests
-func (o Scorecard) selectTests() []Test {
-
+func (o *Scorecard) selectTests(stage Stage) []Test {
 	selected := make([]Test, 0)
-
-	for _, test := range o.Config.Tests {
-		if o.Selector.String() == "" || o.Selector.Matches(labels.Set(test.Labels)) {
+	for _, test := range stage.Tests {
+		if o.Selector == nil || o.Selector.String() == "" || o.Selector.Matches(labels.Set(test.Labels)) {
 			// TODO olm manifests check
 			selected = append(selected, test)
 		}
@@ -175,10 +206,10 @@ func (r PodTestRunner) RunTest(ctx context.Context, test Test) (*v1alpha3.TestSt
 // RunTest executes a single test
 func (r FakeTestRunner) RunTest(ctx context.Context, test Test) (result *v1alpha3.TestStatus, err error) {
 	select {
+	case <-time.After(r.Sleep):
+		return r.TestStatus, r.Error
 	case <-ctx.Done():
 		return nil, ctx.Err()
-	default:
-		return r.TestStatus, r.Error
 	}
 }
 
