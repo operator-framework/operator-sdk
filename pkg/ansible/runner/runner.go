@@ -131,27 +131,29 @@ func New(watch watches.Watch) (Runner, error) {
 	}
 
 	return &runner{
-		Path:               path,
-		cmdFunc:            cmdFunc,
-		Vars:               watch.Vars,
-		Finalizer:          watch.Finalizer,
-		finalizerCmdFunc:   finalizerCmdFunc,
-		GVK:                watch.GroupVersionKind,
-		maxRunnerArtifacts: watch.MaxRunnerArtifacts,
-		ansibleVerbosity:   watch.AnsibleVerbosity,
+		Path:                path,
+		cmdFunc:             cmdFunc,
+		Vars:                watch.Vars,
+		Finalizer:           watch.Finalizer,
+		finalizerCmdFunc:    finalizerCmdFunc,
+		GVK:                 watch.GroupVersionKind,
+		maxRunnerArtifacts:  watch.MaxRunnerArtifacts,
+		ansibleVerbosity:    watch.AnsibleVerbosity,
+		snakeCaseParameters: watch.SnakeCaseParameters,
 	}, nil
 }
 
 // runner - implements the Runner interface for a GVK that's being watched.
 type runner struct {
-	Path               string                  // path on disk to a playbook or role depending on what cmdFunc expects
-	GVK                schema.GroupVersionKind // GVK being watched that corresponds to the Path
-	Finalizer          *watches.Finalizer
-	Vars               map[string]interface{}
-	cmdFunc            cmdFuncType // returns a Cmd that runs ansible-runner
-	finalizerCmdFunc   cmdFuncType
-	maxRunnerArtifacts int
-	ansibleVerbosity   int
+	Path                string                  // path on disk to a playbook or role depending on what cmdFunc expects
+	GVK                 schema.GroupVersionKind // GVK being watched that corresponds to the Path
+	Finalizer           *watches.Finalizer
+	Vars                map[string]interface{}
+	cmdFunc             cmdFuncType // returns a Cmd that runs ansible-runner
+	finalizerCmdFunc    cmdFuncType
+	maxRunnerArtifacts  int
+	ansibleVerbosity    int
+	snakeCaseParameters bool
 }
 
 func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig string) (RunResult, error) {
@@ -307,7 +309,16 @@ func (r *runner) makeParameters(u *unstructured.Unstructured) map[string]interfa
 		spec = map[string]interface{}{}
 	}
 
-	parameters := paramconv.MapToSnake(spec)
+	parameters := map[string]interface{}{}
+
+	if r.snakeCaseParameters {
+		parameters = paramconv.MapToSnake(spec)
+	} else {
+		for k, v := range spec {
+			parameters[k] = v
+		}
+	}
+
 	parameters["meta"] = map[string]string{"namespace": u.GetNamespace(), "name": u.GetName()}
 
 	objKey := escapeAnsibleKey(fmt.Sprintf("_%v_%v", r.GVK.Group, strings.ToLower(r.GVK.Kind)))

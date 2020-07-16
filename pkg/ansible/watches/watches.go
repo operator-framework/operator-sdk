@@ -51,6 +51,7 @@ type Watch struct {
 	ManageStatus                bool                      `yaml:"manageStatus"`
 	WatchDependentResources     bool                      `yaml:"watchDependentResources"`
 	WatchClusterScopedResources bool                      `yaml:"watchClusterScopedResources"`
+	SnakeCaseParameters         bool                      `yaml:"snakeCaseParameters"`
 	Selector                    metav1.LabelSelector      `yaml:"selector"`
 
 	// Not configurable via watches.yaml
@@ -74,6 +75,7 @@ var (
 	manageStatusDefault                = true
 	watchDependentResourcesDefault     = true
 	watchClusterScopedResourcesDefault = false
+	snakeCaseParametersDefault         = true
 	selectorDefault                    = metav1.LabelSelector{}
 
 	// these are overridden by cmdline flags
@@ -124,6 +126,7 @@ type alias struct {
 	ManageStatus                *bool                     `yaml:"manageStatus,omitempty"`
 	WatchDependentResources     *bool                     `yaml:"watchDependentResources,omitempty"`
 	WatchClusterScopedResources *bool                     `yaml:"watchClusterScopedResources,omitempty"`
+	SnakeCaseParameters         *bool                     `yaml:"snakeCaseParameters"`
 	Blacklist                   []schema.GroupVersionKind `yaml:"blacklist,omitempty"`
 	Finalizer                   *Finalizer                `yaml:"finalizer"`
 	Selector                    tempLabelSelector         `yaml:"selector"`
@@ -131,7 +134,6 @@ type alias struct {
 
 // buildWatch will build Watch based on the values parsed from alias
 func (w *Watch) setValuesFromAlias(tmp alias) error {
-
 	// by default, the operator will manage status and watch dependent resources
 	if tmp.ManageStatus == nil {
 		tmp.ManageStatus = &manageStatusDefault
@@ -151,8 +153,13 @@ func (w *Watch) setValuesFromAlias(tmp alias) error {
 	if tmp.WatchClusterScopedResources == nil {
 		tmp.WatchClusterScopedResources = &watchClusterScopedResourcesDefault
 	}
+
 	if tmp.Blacklist == nil {
 		tmp.Blacklist = blacklistDefault
+	}
+
+	if tmp.SnakeCaseParameters == nil {
+		tmp.SnakeCaseParameters = &snakeCaseParametersDefault
 	}
 
 	gvk := schema.GroupVersionKind{
@@ -175,6 +182,7 @@ func (w *Watch) setValuesFromAlias(tmp alias) error {
 	w.ReconcilePeriod = tmp.ReconcilePeriod.Duration
 	w.ManageStatus = *tmp.ManageStatus
 	w.WatchDependentResources = *tmp.WatchDependentResources
+	w.SnakeCaseParameters = *tmp.SnakeCaseParameters
 	w.WatchClusterScopedResources = *tmp.WatchClusterScopedResources
 	w.Finalizer = tmp.Finalizer
 	w.AnsibleVerbosity = getAnsibleVerbosity(gvk, ansibleVerbosityDefault)
@@ -302,6 +310,7 @@ func New(gvk schema.GroupVersionKind, role, playbook string, vars map[string]int
 		ManageStatus:                manageStatusDefault,
 		WatchDependentResources:     watchDependentResourcesDefault,
 		WatchClusterScopedResources: watchClusterScopedResourcesDefault,
+		SnakeCaseParameters:         snakeCaseParametersDefault,
 		Finalizer:                   finalizer,
 		AnsibleVerbosity:            ansibleVerbosityDefault,
 		Selector:                    selectorDefault,

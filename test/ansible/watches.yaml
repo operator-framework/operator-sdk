@@ -28,3 +28,8 @@
     matchExpressions:
      - {key: testLabel, operator: Exists, values: []}
 
+- version: v1alpha1
+  group: test.example.com
+  kind: CaseTest
+  playbook: playbooks/case.yml
+  snakeCaseParameters: false

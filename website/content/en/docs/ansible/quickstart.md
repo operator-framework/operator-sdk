@@ -92,7 +92,8 @@ Resource spec field along to Ansible as extra
 [variables](https://docs.ansible.com/ansible/2.5/user_guide/playbooks_variables.html#passing-variables-on-the-command-line).
 The names of all variables in the spec field are converted to snake_case
 by the operator before running ansible. For example, `serviceAccount` in
-the spec becomes `service_account` in ansible.
+the spec becomes `service_account` in ansible. You can disable this case conversion
+by setting the `snakeCaseParameters` option to `false` in your `watches.yaml`.
 It is recommended that you perform some type validation in Ansible on the
 variables to ensure that your application is receiving expected input.
 

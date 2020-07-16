@@ -105,6 +105,9 @@ Some features can be overridden per resource via an annotation on that CR. The o
 | Max Runner Artifacts | `maxRunnerArtifacts` | Manages the number of [artifact directories](https://ansible-runner.readthedocs.io/en/latest/intro.html#runner-artifacts-directory-hierarchy) that ansible runner will keep in the operator container for each individual resource. | ansible.operator-sdk/max-runner-artifacts | 20 | |
 | Finalizer | `finalizer`  | Sets a finalizer on the CR and maps a deletion event to a playbook or role | | | [finalizers](../finalizers)|
 | Selector | `selector`  | Identifies a set of objects based on their labels | | None Applied | [Labels and Selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/)|
+| Automatic Case Conversion | `snakeCaseParameters`  | Determines whether to convert the CR spec from camelCase to snake_case before passing the contents to Ansible as extra_vars| | true | |
+
+
 #### Example
 ```YaML
 ---
@@ -116,6 +119,7 @@ Some features can be overridden per resource via an annotation on that CR. The o
   reconcilePeriod: 5s
   manageStatus: False
   watchDependentResources: False
+  snakeCaseParameters: False
   finalizer:
     name: finalizer.app.example.com
     vars:
