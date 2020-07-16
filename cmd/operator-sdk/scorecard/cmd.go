@@ -31,7 +31,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/flags"
 	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
-	scorecard "github.com/operator-framework/operator-sdk/internal/scorecard/alpha"
+	"github.com/operator-framework/operator-sdk/internal/scorecard"
 	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
 
