@@ -36,9 +36,9 @@ the repository used by the nginx chart, you would update your `watches.yaml` to 
 following:
 
 ```yaml
----
-- version: v1alpha1
-  group: example.com
+# Use the 'create api' subcommand to add watches to this file.
+- group: example.com
+  version: v1alpha1
   kind: Nginx
   chart: helm-charts/nginx
   overrideValues:
@@ -58,7 +58,7 @@ It is now possible to reference environment variables in the `overrideValues` se
 
 By using an environment variable reference in `overrideValues` you enable these override
 values to be set at runtime by configuring the environment variable on the
-operator deployment. For example, in `deploy/operator.yaml` you could add the
+operator deployment. For example, in `config/manager/manager.yaml` you could add the
 following snippet to the container spec:
 
 ```yaml
@@ -77,6 +77,8 @@ To warn users that their CR settings may be ignored, the Helm operator creates e
 the CR that include the name and value of each overridden value. For example:
 
 ```
+$ kubectl describe nginxes.example.com
+...
 Events:
   Type     Reason               Age   From              Message
   ----     ------               ----  ----              -------
@@ -84,15 +86,22 @@ Events:
 ```
 
 
-### Changing the concurrent worker count
+### Changing the maximum number of concurrent reconciles
 
-Depending on the number of CRs of the same type, a single reconciling worker may have issues keeping up. You can increase the number of workers by passing `--max-workers <number of workers>`.
-
-For example:
+Depending on the number of CRs your operator is managing, it might be necessary to tune the maximum number of concurrent reconciles to ensure timely reconciliations. The `--max-concurrent-reconciles` flag can be used to override the default max concurrent reconciles, which by default is the number of CPUs on the node on which the operator is running. For example:
 
 ```sh
-$ operator-sdk exec-entrypoint helm --max-workers 10
+$ cat config/manager/manager.yaml 
+...
+    spec:
+      containers:
+      - args:
+        - manager
+        - --max-concurrent-reconciles=10
+...
 ```
+
+**NOTE**: If you're using the default scaffolding, it is necessary to also apply this change to the `config/default/manager_auth_proxy_patch.yaml` file. This file is a `kustomize` patch to the operator deployment that configures [kube-rbac-proxy][kube-rbac-proxy] to require authorization for accessing your operator metrics. When `kustomize` applies this patch, it overrides the args defined in `config/manager/manager.yaml`
 
 ## Use `helm upgrade --force` for deployment
 
@@ -104,7 +113,7 @@ By adding the annotation `helm.operator-sdk/upgrade-force: "True"` to the deploy
 apiVersion: example.com/v1alpha1
 kind: Nginx
 metadata:
-  name: example-nginx
+  name: nginx-sample
   annotations:
     helm.operator-sdk/upgrade-force: "True"
 spec:
@@ -118,3 +127,5 @@ Setting this annotation to `True` and updating the spec (for example changing to
 ```
 {"level":"info","ts":1591198931.1703992,"logger":"helm.controller","msg":"Upgraded release","namespace":"helm-nginx","name":"example-nginx","apiVersion":"cache.example.com/v1alpha1","kind":"Nginx","release":"example-nginx","force":true}
 ```
+
+[kube-rbac-proxy]: https://github.com/brancz/kube-rbac-proxy
