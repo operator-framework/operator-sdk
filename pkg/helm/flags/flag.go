@@ -28,6 +28,7 @@ type Flags struct {
 	ReconcilePeriod time.Duration
 	WatchesFile     string
 	MaxWorkers      int
+	MetricsAddress  string
 }
 
 // AddTo - Add the helm operator flags to the the flagset
@@ -47,5 +48,10 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 		"max-workers",
 		runtime.NumCPU(),
 		"Maximum number of workers to use",
+	)
+	flagSet.StringVar(&f.MetricsAddress,
+		"metrics-addr",
+		":8080",
+		"The address the metric endpoint binds to",
 	)
 }
