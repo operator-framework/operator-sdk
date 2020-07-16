@@ -170,6 +170,6 @@ The project can now be built, and the operator can be deployed on-cluster. For f
 [rbac_markers]: https://book.kubebuilder.io/reference/markers/rbac.html
 [memcached_cr]: https://github.com/operator-framework/operator-sdk-samples/blob/master/go/memcached-operator/deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml
 [memcached_types]: https://github.com/operator-framework/operator-sdk-samples/blob/master/go/memcached-operator/pkg/apis/cache/v1alpha1/memcached_types.go
-[kb_memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/master/example/kb-memcached-operator/memcached_controller.go.tmpl
+[kb_memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/master/example/memcached-operator/memcached_controller.go.tmpl
 [kb_quickstart]: /docs/golang/quickstart/
 [install_guide]: /docs/install-operator-sdk/
