@@ -49,7 +49,6 @@ import (
 
 var (
 	metricsHost               = "0.0.0.0"
-	metricsPort         int32 = 8383
 	operatorMetricsPort int32 = 8686
 
 	log = logf.Log.WithName("cmd")
@@ -77,7 +76,7 @@ func main() {
 
 	// Set default manager options
 	options := manager.Options{
-		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
+		MetricsBindAddress: f.MetricsAddress,
 		NewClient: func(cache cache.Cache, config *rest.Config, options crclient.Options) (crclient.Client, error) {
 			c, err := crclient.New(config, options)
 			if err != nil {
@@ -184,8 +183,6 @@ func addMetrics(ctx context.Context, cfg *rest.Config, gvks []schema.GroupVersio
 
 	// Add to the below struct any other metrics ports you want to expose.
 	servicePorts := []v1.ServicePort{
-		{Port: metricsPort, Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP,
-			TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},
 		{Port: operatorMetricsPort, Name: metrics.CRPortName, Protocol: v1.ProtocolTCP,
 			TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: operatorMetricsPort}},
 	}

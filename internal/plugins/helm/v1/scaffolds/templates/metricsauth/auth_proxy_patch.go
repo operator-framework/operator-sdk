@@ -47,9 +47,6 @@ func (f *AuthProxyPatch) SetTemplateDefaults() error {
 // todo(camilamacedo86): add the arg --enable-leader-election for the manager
 // More info: https://github.com/operator-framework/operator-sdk/issues/3356
 
-// todo(camilamacedo86): add the arg --metrics-addr for the manager
-// More info: https://github.com/operator-framework/operator-sdk/issues/3358
-
 const kustomizeAuthProxyPatchTemplate = `# This patch inject a sidecar container which is a HTTP proxy for the 
 # controller manager, it performs RBAC authorization against the Kubernetes API using SubjectAccessReviews.
 apiVersion: apps/v1
@@ -65,11 +62,13 @@ spec:
         image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
         args:
         - "--secure-listen-address=0.0.0.0:8443"
-        - "--upstream=http://127.0.0.1:8383/"
+        - "--upstream=http://127.0.0.1:8080/"
         - "--logtostderr=true"
         - "--v=10"
         ports:
         - containerPort: 8443
           name: https
       - name: manager
+	    args:
+		- "--metrics-addr=127.0.0.1:8080"
 `
