@@ -7,6 +7,7 @@ source hack/lib/image_lib.sh
 
 DEST_IMAGE="quay.io/example/nginx-operator:v0.0.2"
 TMPDIR="$(mktemp -d)"
+pushd $TMPDIR
 trap_add 'rm -rf $TMPDIR' EXIT
 
 setup_envs $tmp_sdk_root
@@ -28,7 +29,7 @@ remove_operator() {
     kubectl delete --ignore-not-found=true clusterrolebinding nginx-operator-system-metrics-reader
     kubectl delete --ignore-not-found=true --namespace=${test_namespace} -f "$OPERATORDIR/config/samples/helm.example_v1alpha1_nginx.yaml"
     kubectl delete --ignore-not-found=true namespace ${test_namespace}
-    kubectl delete --ignore-not-found=true namespace ${operator_namespace}
+    make undeploy
 }
 
 operator_logs() {
@@ -51,7 +52,7 @@ test_operator() {
     fi
 
     # verify that metrics service was created
-    if ! timeout 60s bash -c -- "until kubectl get service/nginx-operator-metrics --namespace=${operator_namespace} > /dev/null 2>&1; do sleep 1; done";
+    if ! timeout 60s bash -c -- "until kubectl get service/nginx-operator-controller-manager-metrics-service --namespace=${operator_namespace} > /dev/null 2>&1; do sleep 1; done";
     then
         error_text "Failed to get metrics service"
         operator_logs
@@ -59,7 +60,7 @@ test_operator() {
     fi
 
     # give permissions to reach the metrics endpoint
-    kubectl create clusterrolebinding nginx-operator-system-metrics-reader --clusterrole=nginx-operator-metrics-reader --serviceaccount=nginx-operator-system:default
+    kubectl create clusterrolebinding nginx-operator-system-metrics-reader --clusterrole=nginx-operator-metrics-reader --serviceaccount=${operator_namespace}:default
 
     # verify that the metrics endpoint exists
     if ! kubectl run --attach --rm --restart=Never --namespace=${operator_namespace} test-metrics --image=${metrics_test_image} -- /bin/bash -c 'curl -sfo /dev/null -v -s -k -H "Authorization: Bearer `cat /var/run/secrets/kubernetes.io/serviceaccount/token`" https://nginx-operator-controller-manager-metrics-service:8443/metrics';
@@ -130,7 +131,7 @@ test_operator() {
 
 # create and build the operator
 mkdir nginx-operator
-cd nginx-operator
+pushd nginx-operator
 log=$(operator-sdk init --plugins=helm.operator-sdk.io/v1 \
   --domain=com --group=helm.example --version=v1alpha1 --kind=Nginx \
   2>&1)
@@ -157,4 +158,3 @@ OPERATORDIR="$(pwd)"
 deploy_operator
 trap_add 'remove_operator' EXIT
 test_operator
-remove_operator
