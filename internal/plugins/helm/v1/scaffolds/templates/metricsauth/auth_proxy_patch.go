@@ -69,6 +69,6 @@ spec:
         - containerPort: 8443
           name: https
       - name: manager
-	    args:
-		- "--metrics-addr=127.0.0.1:8080"
+        args:
+        - "--metrics-addr=127.0.0.1:8080"
 `
