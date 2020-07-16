@@ -15,6 +15,7 @@
 package flags
 
 import (
+	"fmt"
 	"runtime"
 	"time"
 
@@ -25,21 +26,21 @@ import (
 
 // Flags - Options to be used by an ansible operator
 type Flags struct {
-	ReconcilePeriod        time.Duration
-	WatchesFile            string
-	InjectOwnerRef         bool
-	MaxWorkers             int
-	AnsibleVerbosity       int
-	AnsibleRolesPath       string
-	AnsibleCollectionsPath string
+	ReconcilePeriod         time.Duration
+	WatchesFile             string
+	InjectOwnerRef          bool
+	MaxConcurrentReconciles int
+	MaxWorkers              int
+	AnsibleVerbosity        int
+	AnsibleRolesPath        string
+	AnsibleCollectionsPath  string
 }
 
 const AnsibleRolesPathEnvVar = "ANSIBLE_ROLES_PATH"
 const AnsibleCollectionsPathEnvVar = "ANSIBLE_COLLECTIONS_PATH"
 
 // AddTo - Add the ansible operator flags to the the flagset
-// helpTextPrefix will allow you add a prefix to default help text. Joined by a space.
-func (f *Flags) AddTo(flagSet *pflag.FlagSet, helpTextPrefix ...string) {
+func (f *Flags) AddTo(flagSet *pflag.FlagSet) error {
 	flagSet.AddFlagSet(zap.FlagSet())
 	flagSet.DurationVar(&f.ReconcilePeriod,
 		"reconcile-period",
@@ -61,6 +62,11 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet, helpTextPrefix ...string) {
 		runtime.NumCPU(),
 		"Maximum number of workers to use. Overridden by environment variable.",
 	)
+	flagSet.IntVar(&f.MaxConcurrentReconciles,
+		"max-concurrent-reconciles",
+		runtime.NumCPU(),
+		"Maximum number of concurrent reconciles for controllers. Overridden by environment variable.",
+	)
 	flagSet.IntVar(&f.AnsibleVerbosity,
 		"ansible-verbosity",
 		2,
@@ -76,4 +82,9 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet, helpTextPrefix ...string) {
 		"",
 		"Path to installed Ansible Collections. If set, collections should be located in {{value}}/ansible_collections/. If unset, collections are assumed to be in ~/.ansible/collections or /usr/share/ansible/collections.",
 	)
+	err := flagSet.MarkDeprecated("max-workers", "use --max-concurrent-reconciles instead.")
+	if err != nil {
+		return fmt.Errorf("flag cannot be deprecated %v", err)
+	}
+	return nil
 }

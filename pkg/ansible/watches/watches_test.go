@@ -65,8 +65,8 @@ func TestNew(t *testing.T) {
 				t.Fatalf("Unexpected maxRunnerArtifacts %v expected %v", watch.MaxRunnerArtifacts,
 					maxRunnerArtifactsDefault)
 			}
-			if watch.MaxWorkers != maxWorkersDefault {
-				t.Fatalf("Unexpected maxWorkers %v expected %v", watch.MaxWorkers, maxWorkersDefault)
+			if watch.MaxWorkers != maxConcurrentReconcilesDefault {
+				t.Fatalf("Unexpected maxWorkers %v expected %v", watch.MaxWorkers, maxConcurrentReconcilesDefault)
 			}
 			if watch.ReconcilePeriod != expectedReconcilePeriod {
 				t.Fatalf("Unexpected reconcilePeriod %v expected %v", watch.ReconcilePeriod,
@@ -569,8 +569,7 @@ func TestMaxWorkers(t *testing.T) {
 		defValue      int
 		expectedValue int
 		setEnv        bool
-		envKey        string
-		envValue      int
+		envVarMap     map[string]int
 	}{
 		{
 			name: "no env, use default value",
@@ -582,7 +581,9 @@ func TestMaxWorkers(t *testing.T) {
 			defValue:      1,
 			expectedValue: 1,
 			setEnv:        false,
-			envKey:        "WORKER_MEMCACHESERVICE_CACHE_EXAMPLE_COM",
+			envVarMap: map[string]int{
+				"WORKER_MEMCACHESERVICE_CACHE_EXAMPLE_COM": 0,
+			},
 		},
 		{
 			name: "invalid env, use default value",
@@ -594,11 +595,12 @@ func TestMaxWorkers(t *testing.T) {
 			defValue:      1,
 			expectedValue: 1,
 			setEnv:        true,
-			envKey:        "WORKER_MEMCACHESERVICE_CACHE_EXAMPLE_COM",
-			envValue:      0,
+			envVarMap: map[string]int{
+				"WORKER_MEMCACHESERVICE_CACHE_EXAMPLE_COM": 0,
+			},
 		},
 		{
-			name: "env set to 3, expect 3",
+			name: "worker_%s_%s env set to 3, expect 3",
 			gvk: schema.GroupVersionKind{
 				Group:   "cache.example.com",
 				Version: "v1alpha1",
@@ -607,18 +609,50 @@ func TestMaxWorkers(t *testing.T) {
 			defValue:      1,
 			expectedValue: 3,
 			setEnv:        true,
-			envKey:        "WORKER_MEMCACHESERVICE_CACHE_EXAMPLE_COM",
-			envValue:      3,
+			envVarMap: map[string]int{
+				"WORKER_MEMCACHESERVICE_CACHE_EXAMPLE_COM": 3,
+			},
+		},
+		{
+			name: "max_concurrent_reconciler_%s_%s set to 2, expect 2",
+			gvk: schema.GroupVersionKind{
+				Group:   "cache.example.com",
+				Version: "v1alpha1",
+				Kind:    "MemCacheService",
+			},
+			defValue:      1,
+			expectedValue: 2,
+			setEnv:        true,
+			envVarMap: map[string]int{
+				"MAX_CONCURRENT_RECONCILES_MEMCACHESERVICE_CACHE_EXAMPLE_COM": 2,
+			},
+		},
+		{
+			name: "set multiple env variables",
+			gvk: schema.GroupVersionKind{
+				Group:   "cache.example.com",
+				Version: "v1alpha1",
+				Kind:    "MemCacheService",
+			},
+			defValue:      1,
+			expectedValue: 3,
+			setEnv:        true,
+			envVarMap: map[string]int{
+				"MAX_CONCURRENT_RECONCILES_MEMCACHESERVICE_CACHE_EXAMPLE_COM": 3,
+				"WORKER_MEMCACHESERVICE_CACHE_EXAMPLE_COM":                    1,
+			},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			os.Unsetenv(tc.envKey)
-			if tc.setEnv {
-				os.Setenv(tc.envKey, strconv.Itoa(tc.envValue))
+			for key, val := range tc.envVarMap {
+				os.Unsetenv(key)
+				if tc.setEnv {
+					os.Setenv(key, strconv.Itoa(val))
+				}
 			}
-			workers := getMaxWorkers(tc.gvk, tc.defValue)
+			workers := getMaxConcurrentReconciles(tc.gvk, tc.defValue)
 			if tc.expectedValue != workers {
 				t.Fatalf("Unexpected MaxWorkers: %v expected MaxWorkers: %v", workers, tc.expectedValue)
 			}
