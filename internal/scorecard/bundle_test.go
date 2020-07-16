@@ -21,83 +21,88 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"path"
 	"path/filepath"
-	"reflect"
-	"testing"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 
 	"github.com/operator-framework/operator-sdk/internal/registry"
 )
 
-func TestBundlePath(t *testing.T) {
+var _ = Describe("Tarring a bundle", func() {
+	Describe("getBundleData", func() {
 
-	cases := []struct {
-		bundlePathValue string
-		expTarFile      string
-		wantError       bool
-	}{
-		{"", "", true},
-		{
-			bundlePathValue: filepath.Join("testdata", "bundle"),
-			expTarFile:      filepath.Join("testdata", "bundle.tar.gz"),
-		},
-	}
+		var (
+			r          PodTestRunner
+			err        error
+			expTarPath = filepath.Join("testdata", "bundle.tar.gz")
+			expTarball []byte
+		)
 
-	for _, c := range cases {
-		t.Run(c.bundlePathValue, func(t *testing.T) {
-			r := PodTestRunner{}
-			r.BundlePath = c.bundlePathValue
-
-			if c.bundlePathValue != "" {
-				var err error
-				r.BundleLabels, err = registry.GetMetadataLabels(filepath.Join(c.bundlePathValue, "metadata"))
-				if err != nil {
-					t.Fatalf("Failed to get test bundle labels: %v", err)
-				}
-			}
-
-			bundleData, err := r.getBundleData()
-			if err != nil && !c.wantError {
-				t.Fatalf("Wanted result but got error: %v", err)
-			} else if err == nil {
-				if c.wantError {
-					t.Fatalf("Wanted error but got no error")
-				}
-
-				expTarData, err := ioutil.ReadFile(c.expTarFile)
-				if err != nil {
-					t.Fatalf("Failed to read expected tar file: %v", err)
-				}
-				if !cmpTarFiles(t, expTarData, bundleData) {
-					t.Error("Bundle tar file does not match the expected tar file")
-				}
-			}
+		BeforeEach(func() {
+			r = PodTestRunner{}
+			expTarball, err = ioutil.ReadFile(expTarPath)
+			Expect(err).To(BeNil())
 		})
-	}
-}
 
-func cmpTarFiles(t *testing.T, c1, c2 []byte) bool {
+		Context("with a valid on-disk bundle", func() {
+			var (
+				validBundlePath = filepath.Join("testdata", "bundle")
+			)
+
+			It("creates a tarball successfully", func() {
+				r.BundlePath = validBundlePath
+				r.BundleMetadata, _, err = registry.FindBundleMetadata(validBundlePath)
+				Expect(err).To(BeNil())
+				tarredBundleData, err := r.getBundleData()
+				Expect(err).To(BeNil())
+				cmpTarFilesHelper(expTarball, tarredBundleData)
+			})
+		})
+
+		Context("with an invalid on-disk bundle", func() {
+			It("returns an error", func() {
+				_, err = r.getBundleData()
+				Expect(err).NotTo(BeNil())
+			})
+		})
+	})
+
+})
+
+// cmpTarFilesHelper compares the byte representation of two tarballs,
+// by contents per matching header name and for non-intersecting header names.
+func cmpTarFilesHelper(c1, c2 []byte) {
 	r1, r2 := bytes.NewBuffer(c1), bytes.NewBuffer(c2)
-	w1, w2 := &bytes.Buffer{}, &bytes.Buffer{}
-	if err := untar(t, r1, w1); err != nil {
-		t.Fatalf("Error untarring first content: %v", err)
+	set1, err := untarToFileSet(r1)
+	ExpectWithOffset(1, err).To(BeNil())
+	set2, err := untarToFileSet(r2)
+	ExpectWithOffset(1, err).To(BeNil())
+
+	for fileName, contents1 := range set1 {
+		contents2, hasFileName := set2[fileName]
+		ExpectWithOffset(1, hasFileName).To(BeTrue(), "second tarball does not have file %s", fileName)
+		ExpectWithOffset(1, contents1.String()).To(Equal(contents2.String()),
+			"contents of file %s differ in first and second tarballs", fileName)
+		delete(set2, fileName)
 	}
-	if err := untar(t, r2, w2); err != nil {
-		t.Fatalf("Error untarring second content: %v", err)
-	}
-	return reflect.DeepEqual(w1.String(), w2.String())
+	ExpectWithOffset(1, set2).To(HaveLen(0), "second tarball has files not in the first")
 }
 
-func untar(t *testing.T, r io.Reader, w io.Writer) (err error) {
+// untarToFileSet reads a gizpped tarball from r and writes each object's bytes to a set, keyed by header name.
+func untarToFileSet(r io.Reader) (map[string]*bytes.Buffer, error) {
 	gz, err := gzip.NewReader(r)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer func() {
 		if err := gz.Close(); err != nil {
-			t.Fatal(err)
+			fmt.Fprintln(GinkgoWriter, "warning: error closing tarball reader:", err)
 		}
 	}()
 	tr := tar.NewReader(gz)
+	fileSet := make(map[string]*bytes.Buffer)
 
 	for {
 		hdr, err := tr.Next()
@@ -105,17 +110,19 @@ func untar(t *testing.T, r io.Reader, w io.Writer) (err error) {
 			break
 		}
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		n, err := io.Copy(w, tr)
+		buf := &bytes.Buffer{}
+		n, err := io.Copy(buf, tr)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if n != hdr.Size {
-			return fmt.Errorf("unexpected bytes written: wrote %d, want %d", n, hdr.Size)
+			return nil, fmt.Errorf("unexpected bytes written: wrote %d, want %d", n, hdr.Size)
 		}
+		fileSet[path.Clean(hdr.Name)] = buf
 	}
-	return nil
 
+	return fileSet, nil
 }

@@ -22,7 +22,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -175,27 +174,4 @@ func UntarFile(tarName, target string) (err error) {
 // isFileGzipped returns true if file is compressed with gzip.
 func isFileGzipped(file string) bool {
 	return strings.HasSuffix(file, ".gz") || strings.HasSuffix(file, ".gzip")
-}
-
-func newTarFileHeader(path string, size int64) *tar.Header {
-	return &tar.Header{
-		Typeflag: tar.TypeReg,
-		Name:     filepath.Clean(path),
-		ModTime:  time.Now(),
-		Mode:     0666,
-		Size:     size,
-		Uid:      os.Getuid(),
-		Gid:      os.Getgid(),
-	}
-}
-
-func newTarDirHeader(path string) *tar.Header {
-	return &tar.Header{
-		Typeflag: tar.TypeDir,
-		Name:     filepath.Clean(path) + "/",
-		ModTime:  time.Now(),
-		Mode:     0755,
-		Uid:      os.Getuid(),
-		Gid:      os.Getgid(),
-	}
 }

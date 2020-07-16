@@ -21,10 +21,9 @@ import (
 	"os"
 	"path/filepath"
 
-	log "github.com/sirupsen/logrus"
-
 	registryimage "github.com/operator-framework/operator-registry/pkg/image"
 	"github.com/operator-framework/operator-registry/pkg/image/containerdregistry"
+	log "github.com/sirupsen/logrus"
 )
 
 // ExtractBundleImage returns a bundle directory containing files extracted
@@ -72,4 +71,33 @@ func ExtractBundleImage(ctx context.Context, logger *log.Entry, image string, lo
 	}
 
 	return bundleDir, nil
+}
+
+// GetImageLabels returns the set of labels on image.
+func GetImageLabels(ctx context.Context, logger *log.Entry, image string, local bool) (map[string]string, error) {
+	// Create a containerd registry for socket-less image layer reading.
+	reg, err := containerdregistry.NewRegistry(containerdregistry.WithLog(logger))
+	if err != nil {
+		return nil, fmt.Errorf("error creating new image registry: %v", err)
+	}
+	defer func() {
+		if err := reg.Destroy(); err != nil {
+			logger.WithError(err).Warn("Error destroying local cache")
+		}
+	}()
+
+	// Pull the image if it isn't present locally.
+	if !local {
+		if err := reg.Pull(ctx, registryimage.SimpleReference(image)); err != nil {
+			return nil, fmt.Errorf("error pulling image %s: %v", image, err)
+		}
+	}
+
+	// Query the image reference for its labels.
+	labels, err := reg.Labels(ctx, registryimage.SimpleReference(image))
+	if err != nil {
+		return nil, fmt.Errorf("error reading image %s labels: %v", image, err)
+	}
+
+	return labels, err
 }

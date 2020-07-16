@@ -44,12 +44,12 @@ func main() {
 	}
 
 	// Read the pod's untar'd bundle from a well-known path.
-	cfg, err := apimanifests.GetBundleFromDir(scorecard.PodBundleRoot)
+	bundle, err := apimanifests.GetBundleFromDir(scorecard.PodBundleRoot)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	labels, err := registryutil.GetMetadataLabels(scorecard.PodLabelsDir)
+	metadata, _, err := registryutil.FindBundleMetadata(scorecard.PodBundleRoot)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -58,17 +58,17 @@ func main() {
 
 	switch entrypoint[0] {
 	case tests.OLMBundleValidationTest:
-		result = tests.BundleValidationTest(scorecard.PodBundleRoot, labels)
+		result = tests.BundleValidationTest(scorecard.PodBundleRoot, metadata)
 	case tests.OLMCRDsHaveValidationTest:
-		result = tests.CRDsHaveValidationTest(cfg)
+		result = tests.CRDsHaveValidationTest(bundle)
 	case tests.OLMCRDsHaveResourcesTest:
-		result = tests.CRDsHaveResourcesTest(cfg)
+		result = tests.CRDsHaveResourcesTest(bundle)
 	case tests.OLMSpecDescriptorsTest:
-		result = tests.SpecDescriptorsTest(cfg)
+		result = tests.SpecDescriptorsTest(bundle)
 	case tests.OLMStatusDescriptorsTest:
-		result = tests.StatusDescriptorsTest(cfg)
+		result = tests.StatusDescriptorsTest(bundle)
 	case tests.BasicCheckSpecTest:
-		result = tests.CheckSpecTest(cfg)
+		result = tests.CheckSpecTest(bundle)
 	default:
 		result = printValidTests()
 	}

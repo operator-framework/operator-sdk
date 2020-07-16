@@ -47,7 +47,7 @@ const (
 )
 
 // BundleValidationTest validates an on-disk bundle
-func BundleValidationTest(dir string, labels registryutil.Labels) scapiv1alpha3.TestStatus {
+func BundleValidationTest(bundleRoot string, metadata registryutil.Labels) scapiv1alpha3.TestStatus {
 	r := scapiv1alpha3.TestResult{}
 	r.Name = OLMBundleValidationTest
 	r.State = scapiv1alpha3.PassState
@@ -77,20 +77,20 @@ func BundleValidationTest(dir string, labels registryutil.Labels) scapiv1alpha3.
 	val := registrybundle.NewImageValidator(reg, logger)
 
 	// Validate bundle format.
-	if err := val.ValidateBundleFormat(dir); err != nil {
+	if err := val.ValidateBundleFormat(bundleRoot); err != nil {
 		r.State = scapiv1alpha3.FailState
 		r.Errors = append(r.Errors, err.Error())
 	}
 
-	// Since a custom manifests directory may be used, check labels for its base
+	// Since a custom manifests directory may be used, check metadata for its base
 	// path. Use the default base path if that label doesn't exist.
 	manifestsDir := registrybundle.ManifestsDir
-	if value, hasLabel := labels.GetManifestsDir(); hasLabel {
+	if value, hasKey := metadata.GetManifestsDir(); hasKey {
 		manifestsDir = value
 	}
 
 	// Validate bundle content.
-	bundle, err := apimanifests.GetBundleFromDir(filepath.Join(dir, manifestsDir))
+	bundle, err := apimanifests.GetBundleFromDir(filepath.Join(bundleRoot, manifestsDir))
 	if err != nil {
 		r.State = scapiv1alpha3.FailState
 		r.Errors = append(r.Errors, err.Error())
