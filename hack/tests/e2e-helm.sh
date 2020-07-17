@@ -14,7 +14,7 @@ setup_envs $tmp_sdk_root
 
 # kind has an issue with certain image registries (ex. redhat's), so use a
 # different test pod image.
-METRICS_TEST_IMAGE="fedora:latest"
+METRICS_TEST_IMAGE="curlimages/curl:latest"
 
 test_namespace="nginx-cr-system"
 operator_namespace="nginx-operator-system"
@@ -22,13 +22,14 @@ operator_namespace="nginx-operator-system"
 deploy_operator() {
     make install
     make deploy IMG="$DEST_IMAGE"
+    kubectl create clusterrolebinding nginx-operator-system-metrics-reader --clusterrole=nginx-operator-metrics-reader --serviceaccount=${operator_namespace}:default
     kubectl create namespace ${test_namespace}
 }
 
 remove_operator() {
-    kubectl delete --ignore-not-found=true clusterrolebinding nginx-operator-system-metrics-reader
     kubectl delete --ignore-not-found=true --namespace=${test_namespace} -f "$OPERATORDIR/config/samples/helm.example_v1alpha1_nginx.yaml"
     kubectl delete --ignore-not-found=true namespace ${test_namespace}
+    kubectl delete --ignore-not-found=true clusterrolebinding nginx-operator-system-metrics-reader
     make undeploy
 }
 
@@ -51,19 +52,22 @@ test_operator() {
         exit 1
     fi
 
+    metrics_service="nginx-operator-controller-manager-metrics-service"
+
     # verify that metrics service was created
-    if ! timeout 60s bash -c -- "until kubectl get service/nginx-operator-controller-manager-metrics-service --namespace=${operator_namespace} > /dev/null 2>&1; do sleep 1; done";
+    if ! timeout 60s bash -c -- "until kubectl get service/${metrics_service} --namespace=${operator_namespace} > /dev/null 2>&1; do sleep 1; done";
     then
         error_text "Failed to get metrics service"
         operator_logs
         exit 1
     fi
 
-    # give permissions to reach the metrics endpoint
-    kubectl create clusterrolebinding nginx-operator-system-metrics-reader --clusterrole=nginx-operator-metrics-reader --serviceaccount=${operator_namespace}:default
+
+    serviceaccount_secret=$(kubectl get serviceaccounts default -n ${operator_namespace} -o jsonpath='{.secrets[0].name}')
+    token=$(kubectl get secret ${serviceaccount_secret} -n ${operator_namespace} -o jsonpath={.data.token} | base64 -d)
 
     # verify that the metrics endpoint exists
-    if ! kubectl run --attach --rm --restart=Never --namespace=${operator_namespace} test-metrics --image=${metrics_test_image} -- /bin/bash -c 'curl -sfo /dev/null -v -s -k -H "Authorization: Bearer `cat /var/run/secrets/kubernetes.io/serviceaccount/token`" https://nginx-operator-controller-manager-metrics-service:8443/metrics';
+    if ! timeout 60s bash -c -- "until kubectl run --attach --rm --restart=Never --namespace=${operator_namespace} test-metrics --image=${metrics_test_image} -- -sfkH \"Authorization: Bearer ${token}\" https://${metrics_service}:8443/metrics; do sleep 1; done";
     then
         error_text "Failed to verify that metrics endpoint exists"
         operator_logs
