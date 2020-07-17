@@ -22,12 +22,14 @@ operator_namespace="nginx-operator-system"
 deploy_operator() {
     make install
     make deploy IMG="$DEST_IMAGE"
+    kubectl create clusterrolebinding nginx-operator-system-metrics-reader --clusterrole=nginx-operator-metrics-reader --serviceaccount=${operator_namespace}:default
     kubectl create namespace ${test_namespace}
 }
 
 remove_operator() {
     kubectl delete --ignore-not-found=true --namespace=${test_namespace} -f "$OPERATORDIR/config/samples/helm.example_v1alpha1_nginx.yaml"
     kubectl delete --ignore-not-found=true namespace ${test_namespace}
+    kubectl delete --ignore-not-found=true clusterrolebinding nginx-operator-system-metrics-reader
     make undeploy
 }
 
@@ -81,6 +83,7 @@ test_operator() {
         operator_logs
         exit 1
     fi
+
 
 
     release_name=$(kubectl get --namespace=${test_namespace} nginxes.helm.example.com nginx-sample -o jsonpath="{..status.deployedRelease.name}")
@@ -143,7 +146,9 @@ make docker-build IMG="$DEST_IMAGE"
 # If using a kind cluster, load the image into all nodes.
 load_image_if_kind "$DEST_IMAGE"
 
-
+docker pull "$METRICS_TEST_IMAGE"
+# If using a kind cluster, load the metrics test image into all nodes.
+load_image_if_kind "$METRICS_TEST_IMAGE"
 
 OPERATORDIR="$(pwd)"
 
