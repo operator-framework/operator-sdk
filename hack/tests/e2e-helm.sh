@@ -14,8 +14,6 @@ setup_envs $tmp_sdk_root
 
 # kind has an issue with certain image registries (ex. redhat's), so use a
 # different test pod image.
-METRICS_TEST_IMAGE="curlimages/curl:latest"
-
 test_namespace="nginx-cr-system"
 operator_namespace="nginx-operator-system"
 
@@ -42,34 +40,11 @@ operator_logs() {
 test_operator() {
     # kind has an issue with certain image registries (ex. redhat's), so use a
     # different test pod image.
-    local metrics_test_image="$METRICS_TEST_IMAGE"
 
     # wait for operator pod to run
     if ! timeout 1m kubectl rollout status deployment/nginx-operator-controller-manager -n ${operator_namespace} ;
     then
         error_text "Failed to rollout status"
-        operator_logs
-        exit 1
-    fi
-
-    metrics_service="nginx-operator-controller-manager-metrics-service"
-
-    # verify that metrics service was created
-    if ! timeout 60s bash -c -- "until kubectl get service/${metrics_service} --namespace=${operator_namespace} > /dev/null 2>&1; do sleep 1; done";
-    then
-        error_text "Failed to get metrics service"
-        operator_logs
-        exit 1
-    fi
-
-
-    serviceaccount_secret=$(kubectl get serviceaccounts default -n ${operator_namespace} -o jsonpath='{.secrets[0].name}')
-    token=$(kubectl get secret ${serviceaccount_secret} -n ${operator_namespace} -o jsonpath={.data.token} | base64 -d)
-
-    # verify that the metrics endpoint exists
-    if ! timeout 60s bash -c -- "until kubectl run --attach --rm --restart=Never --namespace=${operator_namespace} test-metrics --image=${metrics_test_image} -- -sfkH \"Authorization: Bearer ${token}\" https://${metrics_service}:8443/metrics; do sleep 1; done";
-    then
-        error_text "Failed to verify that metrics endpoint exists"
         operator_logs
         exit 1
     fi
@@ -84,13 +59,6 @@ test_operator() {
         exit 1
     fi
 
-    header_text "verify that the servicemonitor is created"
-    if ! timeout 1m bash -c -- "until kubectl get servicemonitors/nginx-operator-metrics --namespace=${operator_namespace} > /dev/null 2>&1; do sleep 1; done";
-    then
-        error_text "FAIL: Failed to get service monitor"
-        operator_logs
-        exit 1
-    fi
 
     release_name=$(kubectl get --namespace=${test_namespace} nginxes.helm.example.com nginx-sample -o jsonpath="{..status.deployedRelease.name}")
     nginx_deployment=$(kubectl get --namespace=${test_namespace}  deployment -l "app.kubernetes.io/instance=${release_name}" -o jsonpath="{..metadata.name}")
@@ -145,7 +113,6 @@ if echo $log | grep -q "failed to generate RBAC rules"; then
     exit 1
 fi
 
-install_service_monitor_crd
 
 sed -i".bak" -E -e 's/(FROM quay.io\/operator-framework\/helm-operator)(:.*)?/\1:dev/g' Dockerfile; rm -f Dockerfile.bak
 make docker-build IMG="$DEST_IMAGE"
@@ -153,9 +120,7 @@ make docker-build IMG="$DEST_IMAGE"
 # If using a kind cluster, load the image into all nodes.
 load_image_if_kind "$DEST_IMAGE"
 
-docker pull "$METRICS_TEST_IMAGE"
-# If using a kind cluster, load the metrics test image into all nodes.
-load_image_if_kind "$METRICS_TEST_IMAGE"
+
 
 OPERATORDIR="$(pwd)"
 
