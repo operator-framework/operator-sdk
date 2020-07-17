@@ -36,16 +36,15 @@ func NewCmd() *cobra.Command {
 		Long: `'run packagemanifests' deploys an Operator's package manifests with OLM. The command's argument
 must be set to a valid package manifests root directory, ex. '<project-root>/packagemanifests'.`,
 		Aliases: []string{"pm"},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) > 0 {
-				if len(args) > 1 {
-					return fmt.Errorf("exactly one argument is required")
-				}
-				c.ManifestsDir = args[0]
-			} else {
-				c.ManifestsDir = "packagemanifests"
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			err := c.validate(args)
+			if err != nil {
+				log.Fatalf("Failed to validate input: %v", err)
 			}
-
+			c.setDefaults(args)
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
 			log.Infof("Running operator from directory %s", c.ManifestsDir)
 
 			if err := c.Run(); err != nil {
@@ -58,4 +57,22 @@ must be set to a valid package manifests root directory, ex. '<project-root>/pac
 	c.PackageManifestsCmd.AddToFlagSet(cmd.Flags())
 
 	return cmd
+}
+
+func (c *packagemanifestsCmd) validate(args []string) error {
+	if len(args) > 0 {
+		if len(args) > 1 {
+			return fmt.Errorf("exactly one argument is required")
+		}
+	}
+
+	return nil
+}
+
+func (c *packagemanifestsCmd) setDefaults(args []string) {
+	if len(args) != 0 {
+		c.ManifestsDir = args[0]
+	} else {
+		c.ManifestsDir = "packagemanifests"
+	}
 }
