@@ -256,7 +256,7 @@ Commit the following changes:
 - `internal/scaffold/go_mod.go`, change the `require` line version for `github.com/operator-framework/operator-sdk` from `master` to `v1.3.0`.
 - `internal/scaffold/helm/go_mod.go`: same as for `internal/scaffold/go_mod.go`.
 - `internal/scaffold/ansible/go_mod.go`: same as for `internal/scaffold/go_mod.go`.
-- `website/content/en/docs/install-operator-sdk.md`: update the linux and macOS URLs to point to the new release URLs.
+- `website/content/en/docs/installation/install-operator-sdk.md`: update the linux and macOS URLs to point to the new release URLs.
 - `CHANGELOG.md`: commit changes (updated by changelog generation).
 - `website/content/en/docs/migration/v1.3.0.md`: commit changes (created by changelog generation).
 - `changelog/fragments/*`: commit deleted fragment files (deleted by changelog generation).
@@ -380,16 +380,16 @@ Add the following line to the top of the GitHub release notes for `v1.3.0`:
 **NOTE:** ensure the `v1.3.0` tag is referenced when referring to sample code in the [SDK Operator samples repo](https://github.com/operator-framework/operator-sdk-samples/tree/v1.3.0) for this release. Links in SDK documentation are currently set to the samples repo `master` branch.
 ```
 
-[install-guide]: ../../install-operator-sdk
+[install-guide]: /docs/installation/install-operator-sdk
 [doc-maintainers]: https://github.com/operator-framework/operator-sdk/blob/master/MAINTAINERS
 [doc-owners]: https://github.com/operator-framework/operator-sdk/blob/master/OWNERS
-[doc-readme-prereqs]: ../../install-operator-sdk#prerequisites
+[doc-readme-prereqs]: /docs/installation/install-operator-sdk#prerequisites
 [doc-git-default-key]:https://help.github.com/en/articles/telling-git-about-your-signing-key
 [doc-gpg-default-key]:https://lists.gnupg.org/pipermail/gnupg-users/2001-September/010163.html
 [link-github-gpg-key-upload]:https://github.com/settings/keys
 [link-git-config-gpg-key]:https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work
 [doc-changelog]: https://github.com/operator-framework/operator-sdk/blob/master/CHANGELOG.md
-[backports]:/docs/contribution-guidelines/backport-policy
+[backports]:/docs/upgrading-sdk-version/backport-policy
 [release-page]:https://github.com/operator-framework/operator-sdk/releases
 [homebrew]:https://brew.sh/
 [homebrew-formula]:https://github.com/Homebrew/homebrew-core/blob/master/Formula/operator-sdk.rb

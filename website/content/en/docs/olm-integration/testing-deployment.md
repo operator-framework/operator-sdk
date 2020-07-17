@@ -65,5 +65,5 @@ hence its intended purpose being testing only.
 [doc-cli-overview]:/docs/olm-integration/cli-overview
 [package-manifests]:https://github.com/operator-framework/operator-registry/tree/v1.5.3#manifest-format
 [csv-install-modes]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md#operator-metadata
-[cli-olm-install]:/docs/new-cli/operator-sdk_olm_install
-[cli-olm-status]:/docs/new-cli/operator-sdk_olm_status
+[cli-olm-install]:/docs/cli/golang/operator-sdk_olm_install
+[cli-olm-status]:/docs/cli/golang/operator-sdk_olm_status
