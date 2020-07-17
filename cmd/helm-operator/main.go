@@ -22,7 +22,6 @@ import (
 
 	"github.com/spf13/pflag"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -40,12 +39,7 @@ import (
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 )
 
-var (
-	metricsHost               = "0.0.0.0"
-	operatorMetricsPort int32 = 8686
-
-	log = logf.Log.WithName("cmd")
-)
+var log = logf.Log.WithName("cmd")
 
 func printVersion() {
 	log.Info(fmt.Sprintf("Go Version: %s", runtime.Version()))
@@ -129,7 +123,6 @@ func main() {
 		log.Error(err, "Failed to create new manager factories.")
 		os.Exit(1)
 	}
-	var gvks []schema.GroupVersionKind
 	for _, w := range ws {
 		// Register the controller with the factory.
 		err := controller.Add(mgr, controller.WatchOptions{
@@ -145,7 +138,6 @@ func main() {
 			log.Error(err, "Failed to add manager factory to controller.")
 			os.Exit(1)
 		}
-		gvks = append(gvks, w.GroupVersionKind)
 	}
 
 	// Start the Cmd
