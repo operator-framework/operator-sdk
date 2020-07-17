@@ -49,7 +49,7 @@ func (f *Config) SetTemplateDefaults() error {
 	if f.OperatorName == "" {
 		dir, err := os.Getwd()
 		if err != nil {
-			return fmt.Errorf("error to get the current path: %v", err)
+			return fmt.Errorf("error getting working directory: %v", err)
 		}
 		f.OperatorName = filepath.Base(dir)
 	}
@@ -94,13 +94,13 @@ spec:
             cpu: 100m
             memory: 60Mi
         env:
-        - name: WATCH_NAMESPACE
-          value: ""
-        - name: OPERATOR_NAME
-          value: "{{ .OperatorName }}"
-        - name: POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
+          - name: WATCH_NAMESPACE
+            value: ""
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: OPERATOR_NAME
+            value: "{{ .OperatorName }}"
       terminationGracePeriodSeconds: 10
 `
