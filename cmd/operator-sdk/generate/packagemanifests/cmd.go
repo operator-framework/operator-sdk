@@ -23,7 +23,6 @@ import (
 	"github.com/spf13/pflag"
 
 	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
 //nolint:maligned
@@ -44,15 +43,6 @@ type packagemanifestsCmd struct {
 	// Package manifest options.
 	channelName      string
 	isDefaultChannel bool
-}
-
-//nolint:maligned
-type packagemanifestsCmdLegacy struct {
-	packagemanifestsCmd
-
-	apisDir          string
-	interactiveLevel projutil.InteractiveLevel
-	interactive      bool
 }
 
 // NewCmd returns the 'packagemanifests' command configured for the new project layout.
@@ -89,52 +79,6 @@ func NewCmd() *cobra.Command {
 	cmd.Flags().StringVar(&c.kustomizeDir, "kustomize-dir", filepath.Join("config", "manifests"),
 		"Directory containing kustomize bases and a kustomization.yaml for operator-framework manifests")
 	cmd.Flags().BoolVar(&c.stdout, "stdout", false, "Write package to stdout")
-
-	c.addCommonFlagsTo(cmd.Flags())
-
-	return cmd
-}
-
-// NewCmdLegacy returns the 'packagemanifests' command configured for the legacy project layout.
-func NewCmdLegacy() *cobra.Command {
-	c := &packagemanifestsCmdLegacy{}
-
-	cmd := &cobra.Command{
-		Use:     "packagemanifests",
-		Short:   "Generates a package manifests format",
-		Long:    longHelpLegacy,
-		Example: examplesLegacy,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 0 {
-				return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
-			}
-
-			// Check if the user has any specific preference to enable/disable interactive prompts.
-			// Default behaviour is to disable the prompt unless a base package does not exist.
-			if cmd.Flags().Changed("interactive") {
-				if c.interactive {
-					c.interactiveLevel = projutil.InteractiveOnAll
-				} else {
-					c.interactiveLevel = projutil.InteractiveHardOff
-				}
-			}
-
-			c.setDefaults()
-
-			if err := c.validate(); err != nil {
-				return fmt.Errorf("invalid command options: %v", err)
-			}
-			if err := c.run(); err != nil {
-				log.Fatalf("Error generating package manifests: %v", err)
-			}
-
-			return nil
-		},
-	}
-
-	cmd.Flags().StringVar(&c.apisDir, "apis-dir", "", "Root directory for API type defintions")
-	cmd.Flags().BoolVar(&c.interactive, "interactive", false, "When set or no package base exists, an interactive "+
-		"command prompt will be presented to accept package ClusterServiceVersion metadata")
 
 	c.addCommonFlagsTo(cmd.Flags())
 

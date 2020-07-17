@@ -70,28 +70,6 @@ To build and validate an image built with the above manifests and metadata:
   # Ensure the image with modified metadata and Dockerfile is valid.
   $ operator-sdk bundle validate quay.io/$NAMESPACE/test-operator:v0.1.0
 `
-
-	examplesLegacy = `The following command flow will generate test-operator bundle manifests and metadata,
-then validate them for 'test-operator' version v0.1.0:
-
-  # Generate manifests and metadata locally.
-  $ operator-sdk generate bundle --version 0.1.0
-
-  # Validate the directory containing manifests and metadata.
-  $ operator-sdk bundle validate ./deploy/olm-catalog/test-operator
-
-To build and validate an image built with the above manifests and metadata:
-
-  # Create a registry namespace or use an existing one.
-  $ export NAMESPACE=<your registry namespace>
-
-  # Build and push the image using the docker CLI.
-  $ docker build -f bundle.Dockerfile -t quay.io/$NAMESPACE/test-operator:v0.1.0 .
-  $ docker push quay.io/$NAMESPACE/test-operator:v0.1.0
-
-  # Ensure the image with modified metadata and Dockerfile is valid.
-  $ operator-sdk bundle validate quay.io/$NAMESPACE/test-operator:v0.1.0
-`
 )
 
 type bundleValidateCmd struct {
@@ -105,14 +83,6 @@ func newValidateCmd() *cobra.Command {
 	cmd := makeValidateCmd()
 	cmd.Long = longHelp
 	cmd.Example = examples
-	return cmd
-}
-
-// newValidateCmdLegacy returns a command that will validate an operator bundle for the legacy CLI.
-func newValidateCmdLegacy() *cobra.Command {
-	cmd := makeValidateCmd()
-	cmd.Long = longHelp
-	cmd.Example = examplesLegacy
 	return cmd
 }
 
@@ -308,4 +278,22 @@ func checkResults(results []apierrors.ManifestResult, res *internal.Result) {
 			res.AddError(e)
 		}
 	}
+}
+
+// relWd returns the path of dir relative to the current working directory
+func relWd(dir string) (out string, err error) {
+	if out, err = filepath.Abs(dir); err != nil {
+		return "", err
+	}
+	wd, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Rel(wd, out)
+}
+
+// isExist returns true if path exists.
+func isExist(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil || os.IsExist(err)
 }
