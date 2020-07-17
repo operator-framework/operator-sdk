@@ -74,7 +74,7 @@ all: docker-build
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: helm-operator
-	$(HELM_OPERATOR) run
+	$(HELM_OPERATOR)
 
 # Install CRDs into a cluster
 install: kustomize

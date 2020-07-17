@@ -41,7 +41,6 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/helm/watches"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
-	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
@@ -74,9 +73,23 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Deprecated: OPERATOR_NAME environment variable is an artifact of the legacy operator-sdk project scaffolding.
+	//   Flag `--leader-election-id` should be used instead.
+	if operatorName, found := os.LookupEnv("OPERATOR_NAME"); found {
+		log.Info("Environment variable OPERATOR_NAME has been deprecated, use --leader-election-id instead.")
+		if pflag.CommandLine.Lookup("leader-election-id").Changed {
+			log.Info("Ignoring OPERATOR_NAME environment variable since --leader-election-id is set")
+		} else {
+			f.LeaderElectionID = operatorName
+		}
+	}
+
 	// Set default manager options
 	options := manager.Options{
-		MetricsBindAddress: f.MetricsAddress,
+		MetricsBindAddress:      f.MetricsAddress,
+		LeaderElection:          f.EnableLeaderElection,
+		LeaderElectionID:        f.LeaderElectionID,
+		LeaderElectionNamespace: f.LeaderElectionNamespace,
 		NewClient: func(cache cache.Cache, config *rest.Config, options crclient.Options) (crclient.Client, error) {
 			c, err := crclient.New(config, options)
 			if err != nil {
@@ -139,21 +152,6 @@ func main() {
 			os.Exit(1)
 		}
 		gvks = append(gvks, w.GroupVersionKind)
-	}
-
-	operatorName, err := k8sutil.GetOperatorName()
-	if err != nil {
-		log.Error(err, "Failed to get operator name")
-		os.Exit(1)
-	}
-
-	ctx := context.TODO()
-
-	// Become the leader before proceeding
-	err = leader.Become(ctx, operatorName+"-lock")
-	if err != nil {
-		log.Error(err, "Failed to become leader.")
-		os.Exit(1)
 	}
 
 	addMetrics(context.TODO(), cfg, gvks)

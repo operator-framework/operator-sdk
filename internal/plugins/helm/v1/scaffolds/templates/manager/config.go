@@ -49,18 +49,12 @@ func (f *Config) SetTemplateDefaults() error {
 	if f.OperatorName == "" {
 		dir, err := os.Getwd()
 		if err != nil {
-			return fmt.Errorf("error to get the current path: %v", err)
+			return fmt.Errorf("error getting working directory: %v", err)
 		}
 		f.OperatorName = filepath.Base(dir)
 	}
 	return nil
 }
-
-// todo(camilamacedo86): add the arg --enable-leader-election for the manager
-// More info: https://github.com/operator-framework/operator-sdk/issues/3356
-
-// todo(camilamacedo86): add the arg --metrics-addr for the manager
-// More info: https://github.com/operator-framework/operator-sdk/issues/3358
 
 const configTemplate = `apiVersion: v1
 kind: Namespace
@@ -88,6 +82,9 @@ spec:
     spec:
       containers:
       - image: {{ .Image }}
+        args:
+        - "--enable-leader-election"
+        - "--leader-election-id={{ .OperatorName }}"
         name: manager
         resources:
           limits:
@@ -104,6 +101,6 @@ spec:
               fieldRef:
                 fieldPath: metadata.name
           - name: OPERATOR_NAME
-            value: {{ .OperatorName }}
+            value: "{{ .OperatorName }}"
       terminationGracePeriodSeconds: 10
 `
