@@ -27,6 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 
+	metricsannotations "github.com/operator-framework/operator-sdk/internal/annotations/metrics"
 	"github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion/bases"
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
 	genutil "github.com/operator-framework/operator-sdk/internal/generate/internal"
@@ -162,7 +163,7 @@ func (g *Generator) Generate(cfg *config.Config, opts ...Option) (err error) {
 	}
 
 	// Add sdk labels to csv
-	setSDKAnnotations(csv)
+	g.setSDKAnnotations(csv)
 
 	w, err := g.getWriter()
 	if err != nil {
@@ -172,13 +173,13 @@ func (g *Generator) Generate(cfg *config.Config, opts ...Option) (err error) {
 }
 
 // setSDKAnnotations adds SDK metric labels to the base if they do not exist.
-func setSDKAnnotations(csv *v1alpha1.ClusterServiceVersion) {
+func (g Generator) setSDKAnnotations(csv *v1alpha1.ClusterServiceVersion) {
 	annotations := csv.GetAnnotations()
 	if annotations == nil {
 		annotations = make(map[string]string)
 	}
 
-	for key, value := range projutil.MakeOperatorMetricLabels() {
+	for key, value := range metricsannotations.MakeBundleObjectAnnotations(g.config) {
 		annotations[key] = value
 	}
 	csv.SetAnnotations(annotations)
@@ -220,9 +221,6 @@ func (g *Generator) GenerateLegacy(opts ...LegacyOption) (err error) {
 	if err != nil {
 		return err
 	}
-
-	// Add sdk labels to csv
-	setSDKAnnotations(csv)
 
 	w, err := g.getWriter()
 	if err != nil {

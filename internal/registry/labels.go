@@ -36,15 +36,8 @@ type Labels map[string]string
 // GetManifestsDir returns the manifests directory name in ls using
 // a predefined key, or false if it does not exist.
 func (ls Labels) GetManifestsDir() (string, bool) {
-	value, hasLabel := ls.getLabel(registrybundle.ManifestsLabel)
-	return filepath.Clean(value), hasLabel
-}
-
-// getLabel returns the string by key in ls, or an empty string and false
-// if key is not found in ls.
-func (ls Labels) getLabel(key string) (string, bool) {
-	value, hasLabel := ls[key]
-	return value, hasLabel
+	value, hasKey := ls[registrybundle.ManifestsLabel]
+	return filepath.Clean(value), hasKey
 }
 
 // FindBundleMetadata walks bundleRoot searching for metadata (ex. annotations.yaml),
@@ -103,7 +96,7 @@ func readAnnotations(fs afero.Fs, annotationsPath string) (Labels, error) {
 	// Use the arbitrarily-labelled bundle representation of the annotations file
 	// for forwards and backwards compatibility.
 	annotations := registrybundle.AnnotationMetadata{
-		Annotations: make(map[string]string),
+		Annotations: make(Labels),
 	}
 	if err = yaml.Unmarshal(b, &annotations); err != nil {
 		return nil, fmt.Errorf("error unmarshalling potential bundle metadata %s: %v", annotationsPath, err)

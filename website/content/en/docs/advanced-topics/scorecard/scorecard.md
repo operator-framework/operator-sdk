@@ -30,26 +30,32 @@ require if the tests are designed for resource creation.
 
 ## Running the Scorecard
 
-1. Define a scorecard configuration file `config.yaml`.  A sample
-configuration file [config.yaml][sample-config] is found within
-the SDK repository. See the [config file section](#config-file) for an explaination
-of the configuration file format.  Unless you are executing custom
-tests, you can just copy the provided example configuration file
-into your project.
-2. Place the scorecard configuration file within your project
-bundle directory at the following location `tests/scorecard/config.yaml`.
-You can override the default location of the configuration file
-by specifying the `--config` flag.
-3. Execute the [`scorecard` command][cli-scorecard]. See the
-[command args section](#command-args) for an overview of command invocation.
+1. Generate [bundle][quickstart-bundle] manifests and metadata for your Operator.
+`make bundle` will automatically add scorecard annotations to your bundle's metadata,
+which is used by the `scorecard` command to run tests.
+1. Define a scorecard configuration file `bundle/tests/scorecard/config.yaml`, the default path.
+If you choose to define this file elsewhere, you can either change the modified portion of that path in
+`annotations.yaml` and `bundle.Dockerfile`, or override that value using the `--config` flag.
+Unless executing custom tests, you may copy this [sample][sample-config] configuration file into your project.
+See the [config file section](#config-file) for an explanation of the configuration file format.
+1. Add the following line to the end of your `bundle.Dockerfile`:
+  ```docker
+  COPY bundle/tests/scorecard /tests/scorecard
+  ```
+1. Execute the [`scorecard` command][cli-scorecard]. See the [command args section](#command-args)
+for an overview of command invocation.
 
 ## Configuration
 
-The scorecard test execution is driven by a configuration file typically named
-`config.yaml`. The configuration file is located at the following
-location within your bundle:
-```
-tests/scorecard/config.yaml
+The scorecard test execution is driven by a configuration file named `config.yaml`.
+The configuration file is located at the following location within your bundle directory (`bundle/` by default):
+```sh
+$ tree ./bundle
+./bundle
+...
+└── tests
+    └── scorecard
+        └── config.yaml
 ```
 
 ### Config File
@@ -94,8 +100,8 @@ follows:
 ### Command Args
 
 The scorecard command has the following syntax:
-```
-operator-sdk scorecard <bundle_dir_or_image> [flags]
+```sh
+$ operator-sdk scorecard <bundle_dir_or_image> [flags]
 ```
 
 The scorecard requires a positional argument that holds either the
@@ -254,6 +260,7 @@ Writing custom tests in other programming languages is possible
 if the test image follows the above guidelines.
 
 
+[quickstart-bundle]: /docs/olm-integration/quickstart-bundle
 [cli-scorecard]: /docs/cli/operator-sdk_scorecard/
 [sample-config]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/testdata/bundle/tests/scorecard/config.yaml
 [custom-image]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/examples/custom-scorecard-tests

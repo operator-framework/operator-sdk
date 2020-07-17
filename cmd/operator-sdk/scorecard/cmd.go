@@ -29,6 +29,7 @@ import (
 	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/labels"
 
+	scorecardannotations "github.com/operator-framework/operator-sdk/internal/annotations/scorecard"
 	"github.com/operator-framework/operator-sdk/internal/flags"
 	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
 	"github.com/operator-framework/operator-sdk/internal/scorecard"
@@ -132,7 +133,11 @@ func (c *scorecardCmd) run() (err error) {
 
 	configPath := c.config
 	if configPath == "" {
-		configPath = filepath.Join(c.bundle, "tests", "scorecard", "config.yaml")
+		configDir, hasDir := scorecardannotations.GetConfigDir(metadata)
+		if !hasDir {
+			configDir = filepath.FromSlash(scorecard.DefaultConfigDir)
+		}
+		configPath = filepath.Join(c.bundle, configDir, scorecard.ConfigFileName)
 	}
 	o.Config, err = scorecard.LoadConfig(configPath)
 	if err != nil {
