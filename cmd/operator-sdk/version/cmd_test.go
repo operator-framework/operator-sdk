@@ -48,11 +48,11 @@ var _ = Describe("Running a version command", func() {
 			stdout, err := ioutil.ReadAll(r)
 			Expect(err).To(BeNil())
 			stdoutString := string(stdout)
-			if ver.GitVersion == "unknown" {
-				Expect(stdoutString).To(ContainSubstring(fmt.Sprintf("version: %q", ver.Version)))
-			} else {
-				Expect(stdoutString).To(ContainSubstring(fmt.Sprintf("version: %q", ver.GitVersion)))
+			version := ver.GitVersion
+			if version == "unknown" {
+				version = ver.Version
 			}
+			Expect(stdoutString).To(ContainSubstring(fmt.Sprintf("version: %q", version)))
 			Expect(stdoutString).To(ContainSubstring(fmt.Sprintf("commit: %q", ver.GitCommit)))
 			Expect(stdoutString).To(ContainSubstring(fmt.Sprintf("kubernetes version: %q", ver.KubernetesVersion)))
 			Expect(stdoutString).To(ContainSubstring(fmt.Sprintf("go version: %q", ver.GoVersion)))
