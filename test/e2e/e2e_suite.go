@@ -211,6 +211,11 @@ var _ = Describe("operator-sdk", func() {
 				"--timeout", "4m")
 			_, err = tc.Run(cleanupPkgManCmd)
 			Expect(err).NotTo(HaveOccurred())
+
+			By("running scorecard tests")
+			scorecardCmd := exec.Command(tc.BinaryName, "scorecard")
+			_, err = tc.Run(scorecardCmd)
+			Expect(err).NotTo(HaveOccurred())
 		})
 	})
 })
