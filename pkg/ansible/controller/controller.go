@@ -48,7 +48,7 @@ type Options struct {
 	AnsibleDebugLogs            bool
 	WatchDependentResources     bool
 	WatchClusterScopedResources bool
-	MaxWorkers                  int
+	MaxConcurrentReconciles     int
 	Selector                    metav1.LabelSelector
 }
 
@@ -90,7 +90,7 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 	c, err := controller.New(fmt.Sprintf("%v-controller", strings.ToLower(options.GVK.Kind)), mgr,
 		controller.Options{
 			Reconciler:              aor,
-			MaxConcurrentReconciles: options.MaxWorkers,
+			MaxConcurrentReconciles: options.MaxConcurrentReconciles,
 		})
 	if err != nil {
 		log.Error(err, "")

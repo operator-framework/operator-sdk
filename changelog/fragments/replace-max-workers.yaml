@@ -1,0 +1,4 @@
+entries:
+  - description: >
+      Add "--max-concurrent-reconciles" flag to helm binary.
+    kind: "addition"
