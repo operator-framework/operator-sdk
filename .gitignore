@@ -103,7 +103,7 @@ images/scorecard-test-kuttl/scorecard-test-kuttl
 # Test artifacts
 pkg/ansible/runner/testdata/valid.yaml
 /bin
-internal/scorecard/alpha/examples/custom-scorecard-tests/go.sum
+internal/scorecard/examples/custom-scorecard-tests/go.sum
 
 # Website
 website/public/
