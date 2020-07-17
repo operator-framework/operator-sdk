@@ -93,5 +93,14 @@ spec:
           requests:
             cpu: 100m
             memory: 60Mi
+        env:
+        - name: WATCH_NAMESPACE
+          value: ""
+        - name: OPERATOR_NAME
+          value: "{{ .OperatorName }}"
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
       terminationGracePeriodSeconds: 10
 `
