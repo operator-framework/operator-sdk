@@ -34,20 +34,20 @@ title: "%s"
 `
 
 func main() {
-    currentDir, err := os.Getwd()
-    if err != nil {
-        log.Fatalf("Failed to get current directory: %v", err)
-    }
+	currentDir, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("Failed to get current directory: %v", err)
+	}
 
-    legacyDocPath := filepath.Join(currentDir, "website", "content", "en", "docs", "cli", "ansible-helm")
-    legacyRoot := cli.GetCLIRoot()
-    legacyRoot.DisableAutoGenTag = true
-    recreateDocDir(legacyRoot, legacyDocPath)
+	legacyDocPath := filepath.Join(currentDir, "website", "content", "en", "docs", "cli", "ansible-helm")
+	legacyRoot := cli.GetCLIRoot()
+	legacyRoot.DisableAutoGenTag = true
+	recreateDocDir(legacyRoot, legacyDocPath)
 
-    newDocPath := filepath.Join(currentDir, "website", "content", "en", "docs", "cli", "golang")
-    _, newRoot := cli.GetPluginsCLIAndRoot()
-    newRoot.DisableAutoGenTag = true
-    recreateDocDir(newRoot, newDocPath)
+	newDocPath := filepath.Join(currentDir, "website", "content", "en", "docs", "cli", "golang")
+	_, newRoot := cli.GetPluginsCLIAndRoot()
+	newRoot.DisableAutoGenTag = true
+	recreateDocDir(newRoot, newDocPath)
 }
 
 // htmlFormatter will replace angular brackets (`<` and `>`) with its character entitites
