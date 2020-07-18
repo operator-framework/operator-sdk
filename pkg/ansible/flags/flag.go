@@ -15,7 +15,6 @@
 package flags
 
 import (
-	"fmt"
 	"runtime"
 	"time"
 
@@ -30,7 +29,6 @@ type Flags struct {
 	WatchesFile             string
 	InjectOwnerRef          bool
 	MaxConcurrentReconciles int
-	MaxWorkers              int
 	AnsibleVerbosity        int
 	AnsibleRolesPath        string
 	AnsibleCollectionsPath  string
@@ -40,7 +38,7 @@ const AnsibleRolesPathEnvVar = "ANSIBLE_ROLES_PATH"
 const AnsibleCollectionsPathEnvVar = "ANSIBLE_COLLECTIONS_PATH"
 
 // AddTo - Add the ansible operator flags to the the flagset
-func (f *Flags) AddTo(flagSet *pflag.FlagSet) error {
+func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 	flagSet.AddFlagSet(zap.FlagSet())
 	flagSet.DurationVar(&f.ReconcilePeriod,
 		"reconcile-period",
@@ -56,11 +54,6 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) error {
 		"inject-owner-ref",
 		true,
 		"The ansible operator will inject owner references unless this flag is false",
-	)
-	flagSet.IntVar(&f.MaxWorkers,
-		"max-workers",
-		runtime.NumCPU(),
-		"Maximum number of workers to use. Overridden by environment variable.",
 	)
 	flagSet.IntVar(&f.MaxConcurrentReconciles,
 		"max-concurrent-reconciles",
@@ -82,9 +75,4 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) error {
 		"",
 		"Path to installed Ansible Collections. If set, collections should be located in {{value}}/ansible_collections/. If unset, collections are assumed to be in ~/.ansible/collections or /usr/share/ansible/collections.",
 	)
-	err := flagSet.MarkDeprecated("max-workers", "use --max-concurrent-reconciles instead.")
-	if err != nil {
-		return fmt.Errorf("flag cannot be deprecated %v", err)
-	}
-	return nil
 }
