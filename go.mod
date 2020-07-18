@@ -57,5 +57,6 @@ require (
 replace (
 	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible // Required by OLM
 	github.com/mattn/go-sqlite3 => github.com/mattn/go-sqlite3 v1.10.0
+	golang.org/x/text => golang.org/x/text v0.3.3 // Required to fix CVE-2020-14040
 	k8s.io/client-go => k8s.io/client-go v0.18.2
 )
