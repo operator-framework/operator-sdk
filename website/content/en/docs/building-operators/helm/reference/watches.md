@@ -19,12 +19,14 @@ Please refer to [Using override values and passing environment variables to the 
 An example Watches file:
 
 ```yaml
----
-# Simple example mapping Foo to the Foo chart
-- version: v1alpha1
-  group: foo.example.com
+# Use the 'create api' subcommand to add watches to this file.
+- group: foo.example.com
+  version: v1alpha1
   kind: Foo
   chart: helm-charts/foo
+  overrideValues:
+    image.repository: quay.io/mycustomrepo
+  watchDependentResources: false   
 ```
 
 [override-values]: /docs/building-operators/helm/reference/advanced_features/#passing-environment-variables-to-the-helm-chart

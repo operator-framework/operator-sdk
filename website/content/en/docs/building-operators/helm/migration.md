@@ -1,5 +1,10 @@
+---
+title: Helm migration for the new Layout
+linkTitle: Migration 
+weight: 3
+---
 
-This guide walks through an example of migrating a simple nginx-operator which was built by following the [legacy quick-start][quickstart] to the new layout.
+This guide walks through an example of migrating a simple nginx-operator which was built by following the [legacy quick-start][quickstart-legacy] to the new layout.
 
 ## Overview
 
@@ -38,7 +43,7 @@ $ operator-sdk init --plugins=helm.operator-sdk.io/v1 --domain=com --group=examp
 ```
 
 **Note** Ensure that you use the same values for the flags to recreate the same Helm Chart and API's. If you have
-more than one chart or API's you can add them via `operator-sdk create api` command. For further information check the [quick-start][quickstart-new]. 
+more than one chart or API's you can add them via `operator-sdk create api` command. For further information check the [quick-start][quickstart]. 
  
 ### Replacing the content
 
@@ -51,9 +56,8 @@ more than one chart or API's you can add them via `operator-sdk create api` comm
 
 Now, follow the steps in the section [Build and run the operator][build-run-quick] to verify your project is running. 
 
-<!--  todo: update the following link to /docs/helm/legacy/quickstart when the PR #3326 get merged -->
+[quickstart-legacy]: https://v0-19-x.sdk.operatorframework.io/docs/helm/quickstart/
 [quickstart]: /docs/building-operators/helm/quickstart
-[quickstart-new]: /docs/building-operators/helm/quickstart
 [integration-doc]: https://github.com/kubernetes-sigs/kubebuilder/blob/master/designs/integrating-kubebuilder-and-osdk.md
 [build-run-quick]: /docs/building-operators/helm/quickstart#build-and-run-the-operator
 [kustomize]: https://github.com/kubernetes-sigs/kustomize 
