@@ -9,7 +9,7 @@ Clean up an Operator in the package manifests format deployed with OLM
 
 'cleanup packagemanifests' destroys an Operator deployed with OLM using the 'run packagemanifests' command.
 The command's argument must be set to a valid package manifests root directory,
-ex. '<project-root>/packagemanifests'.
+ex. '&lt;project-root&gt;/packagemanifests'.
 
 ```
 operator-sdk cleanup packagemanifests [flags]

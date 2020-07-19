@@ -50,6 +50,21 @@ func main() {
 	recreateDocDir(newRoot, newDocPath)
 }
 
+// htmlFormatter will replace angular brackets (`<` and `>`) with its character entitites
+// `&lt;` and `&gt;`
+func htmlFormatter(rootCmd *cobra.Command) {
+
+	for _, cmds := range rootCmd.Commands() {
+		if len(cmds.Commands()) > 0 {
+			htmlFormatter(cmds)
+		}
+
+		cmds.Long = strings.ReplaceAll(cmds.Long, "<", "&lt;")
+		cmds.Long = strings.ReplaceAll(cmds.Long, ">", "&gt;")
+	}
+
+}
+
 // recreateDocDir removes and recreates the CLI doc directory for rootCmd
 // at docPath to ensure that stale files (e.g. from renamed or removed CLI subcommands)
 // are removed.
@@ -78,6 +93,8 @@ func recreateDocDir(rootCmd *cobra.Command, docPath string) {
 		base := strings.TrimSuffix(name, path.Ext(name))
 		return "../" + base
 	}
+
+	htmlFormatter(rootCmd)
 
 	err = doc.GenMarkdownTreeCustom(rootCmd, docPath, filePrepender, linkHandler)
 	if err != nil {
