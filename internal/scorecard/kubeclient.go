@@ -88,12 +88,11 @@ func getConfigPath() string {
 	kubeconfigEnv := os.Getenv("KUBECONFIG")
 	if kubeconfigEnv != "" {
 		return kubeconfigEnv
-	} else {
-		homeConfigPath := filepath.Join(os.Getenv("HOME"), ".kube", "config")
-		_, err := os.Stat(homeConfigPath)
-		if err == nil {
-			return homeConfigPath
-		}
+	}
+	homeConfigPath := filepath.Join(os.Getenv("HOME"), ".kube", "config")
+	_, err := os.Stat(homeConfigPath)
+	if err == nil {
+		return homeConfigPath
 	}
 	return ""
 }
