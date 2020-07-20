@@ -204,6 +204,6 @@ customresourcedefinitions:
 
 [markers]:https://pkg.go.dev/sigs.k8s.io/controller-tools/pkg/markers
 [code-markers-design]:https://github.com/operator-framework/operator-sdk/blob/master/proposals/sdk-code-annotations.md
-[cli-gen-kustomize-manifests]:/docs/cli/golang/operator-sdk_generate_kustomize_manifests
+[cli-gen-kustomize-manifests]:/docs/cli/operator-sdk_generate_kustomize_manifests
 [csv-x-desc]:https://github.com/openshift/console/blob/feabd61/frontend/packages/operator-lifecycle-manager/src/components/descriptors/types.ts#L3-L39
 [csv-spec]:https://github.com/operator-framework/operator-lifecycle-manager/blob/e0eea22/doc/design/building-your-csv.md

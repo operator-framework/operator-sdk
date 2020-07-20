@@ -376,6 +376,6 @@ For more information, refer [cli][addcli] doc.
 [go-tool]:https://golang.org/dl/
 [docker-tool]:https://docs.docker.com/install/
 [kubectl-tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
-[addcli]: /docs/cli/ansible-helm/operator-sdk_add_api
-<!-- TODO: update this link to the non-legacy doc once the ansible plugin is publicly available -->
+<!-- TODO: update these links to the new docs once the ansible plugin is publicly available -->
+[addcli]: https://v0-19-x.sdk.operatorframework.io/docs/cli/operator-sdk_add_api
 [quickstart-bundle]:https://v0-19-x.sdk.operatorframework.io/docs/olm-integration/legacy/quickstart-bundle/

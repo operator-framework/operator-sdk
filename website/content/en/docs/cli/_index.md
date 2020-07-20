@@ -1,6 +1,6 @@
 ---
-title: Commands(CLI) 
-linkTitle: Commands(CLI)
+title: Command Line Interface
+linkTitle: Commands
 weight: 7
-description: Working with operator-sdk cli
+description: Working with the operator-sdk CLI
 ---

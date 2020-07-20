@@ -147,9 +147,9 @@ about your cataloged Operator.
 [bundle]:https://github.com/operator-framework/operator-registry/blob/v1.12.6/docs/design/operator-bundle.md
 [bundle-metadata]:https://github.com/operator-framework/operator-registry/blob/v1.12.6/docs/design/operator-bundle.md#bundle-annotations
 [bundle-dockerfile]:https://github.com/operator-framework/operator-registry/blob/v1.12.6/docs/design/operator-bundle.md#bundle-dockerfile
-[cli-olm]:/docs/cli/golang/operator-sdk_olm
+[cli-olm]:/docs/cli/operator-sdk_olm
 [doc-cli-overview]:/docs/olm-integration/cli-overview
-[doc-olm-generate]:/docs/olm-integration/generating-a-csv
+[doc-olm-generate]:/docs/olm-integration/generation
 [opm]:https://github.com/operator-framework/operator-registry/blob/master/docs/design/opm-tooling.md
 [index-image]:https://github.com/operator-framework/operator-registry/blob/master/docs/design/opm-tooling.md#index
 [doc-index-build]:https://github.com/operator-framework/operator-registry#building-an-index-of-operators-using-opm

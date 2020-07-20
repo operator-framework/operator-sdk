@@ -254,7 +254,7 @@ Writing custom tests in other programming languages is possible
 if the test image follows the above guidelines.
 
 
-[cli-scorecard]: /docs/cli/golang/operator-sdk_scorecard/
+[cli-scorecard]: /docs/cli/operator-sdk_scorecard/
 [sample-config]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/testdata/bundle/tests/scorecard/config.yaml
 [custom-image]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/examples/custom-scorecard-tests
 [scorecard-struct]: https://github.com/operator-framework/operator-sdk/blob/master/pkg/apis/scorecard/v1alpha3/types.go

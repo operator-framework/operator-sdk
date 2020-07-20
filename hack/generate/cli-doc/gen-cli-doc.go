@@ -39,15 +39,10 @@ func main() {
 		log.Fatalf("Failed to get current directory: %v", err)
 	}
 
-	legacyDocPath := filepath.Join(currentDir, "website", "content", "en", "docs", "cli", "ansible-helm")
-	legacyRoot := cli.GetCLIRoot()
-	legacyRoot.DisableAutoGenTag = true
-	recreateDocDir(legacyRoot, legacyDocPath)
-
-	newDocPath := filepath.Join(currentDir, "website", "content", "en", "docs", "cli", "golang")
-	_, newRoot := cli.GetPluginsCLIAndRoot()
-	newRoot.DisableAutoGenTag = true
-	recreateDocDir(newRoot, newDocPath)
+	cliDocsPath := filepath.Join(currentDir, "website", "content", "en", "docs", "cli")
+	_, cliRoot := cli.GetPluginsCLIAndRoot()
+	cliRoot.DisableAutoGenTag = true
+	recreateDocDir(cliRoot, cliDocsPath)
 }
 
 // htmlFormatter will replace angular brackets (`<` and `>`) with its character entitites
