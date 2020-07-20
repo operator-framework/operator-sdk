@@ -16,7 +16,6 @@ package scorecard
 
 import (
 	"os"
-	"path/filepath"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"k8s.io/client-go/kubernetes"
@@ -66,15 +65,13 @@ func GetKubeNamespace(kubeconfigPath, namespace string) string {
 		return namespace
 	}
 
-	rules := clientcmd.ClientConfigLoadingRules{
-		ExplicitPath: kubeconfigPath,
+	rules := clientcmd.NewDefaultClientConfigLoadingRules()
+
+	if kubeconfigPath != "" {
+		rules.ExplicitPath = kubeconfigPath
 	}
 
-	if kubeconfigPath == "" {
-		rules.ExplicitPath = getConfigPath()
-	}
-
-	kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(&rules, &clientcmd.ConfigOverrides{})
+	kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(rules, &clientcmd.ConfigOverrides{})
 
 	ns, _, err := kubeConfig.Namespace()
 	if err != nil {
@@ -82,17 +79,4 @@ func GetKubeNamespace(kubeconfigPath, namespace string) string {
 	}
 	return ns
 
-}
-
-func getConfigPath() string {
-	kubeconfigEnv := os.Getenv("KUBECONFIG")
-	if kubeconfigEnv != "" {
-		return kubeconfigEnv
-	}
-	homeConfigPath := filepath.Join(os.Getenv("HOME"), ".kube", "config")
-	_, err := os.Stat(homeConfigPath)
-	if err == nil {
-		return homeConfigPath
-	}
-	return ""
 }
