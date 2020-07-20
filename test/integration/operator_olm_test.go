@@ -22,9 +22,9 @@ import (
 	"time"
 
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
+	"github.com/operator-framework/operator-sdk/internal/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/olm"
 	operator "github.com/operator-framework/operator-sdk/internal/olm/operator"
-	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/stretchr/testify/assert"
