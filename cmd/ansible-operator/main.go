@@ -67,13 +67,9 @@ func printVersion() {
 
 func main() {
 	f := &flags.Flags{}
-	err := f.AddTo(pflag.CommandLine)
-	if err != nil {
-		log.Error(err, "Failed to add ansible command line flags")
-	}
+	f.AddTo(pflag.CommandLine)
 	pflag.Parse()
 	logf.SetLogger(zap.Logger())
-	warningMsgForDeprecatedFlags()
 
 	printVersion()
 
@@ -299,16 +295,4 @@ func getAnsibleDebugLog() bool {
 			envVar, val)
 	}
 	return val
-}
-
-// warningMsgForDeprecatedFlags logs warning messages if deprecated flags are used. Currently,
-// "--max-workers" is deprecated. Any value provided using this flags will not be used. Instead
-// users are directed to use "--max-concurrent-reconciles".
-func warningMsgForDeprecatedFlags() {
-	if pflag.Lookup("max-workers").Changed {
-		log.Info("Flag --max-workers has been deprecated, use --max-concurrent-reconciles instead")
-		if pflag.Lookup("max-concurrent-reconciles").Changed {
-			log.Info("Ignoring --max-workers since --max-concurrent-reconciles is set")
-		}
-	}
 }
