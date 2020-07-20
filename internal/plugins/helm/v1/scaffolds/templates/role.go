@@ -133,34 +133,6 @@ rules:
   {{- end }}
   {{- end }}
 {{- end }}
-- apiGroups:
-  - monitoring.coreos.com
-  resources:
-  - servicemonitors
-  verbs:
-  - "get"
-  - "create"
-- apiGroups:
-  - apps
-  resources:
-  - deployments/finalizers
-  resourceNames:
-  - ""
-  verbs:
-  - "update"
-- apiGroups:
-  - ""
-  resources:
-  - pods
-  verbs:
-  - get
-- apiGroups:
-  - apps
-  resources:
-  - replicasets
-  - deployments
-  verbs:
-  - get
 `
 
 // roleDiscoveryInterface is an interface that contains just the discovery
