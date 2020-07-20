@@ -47,7 +47,7 @@ type PodTestRunner struct {
 	Namespace      string
 	ServiceAccount string
 	BundlePath     string
-	BundleLabels   registryutil.Labels
+	BundleMetadata registryutil.Labels
 	Client         kubernetes.Interface
 
 	configMapName string

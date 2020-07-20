@@ -73,7 +73,7 @@ If the argument holds an image tag, it must be present remotely.`,
 	scorecardCmd.Flags().StringVarP(&c.config, "config", "c", "", "path to scorecard config file")
 	scorecardCmd.Flags().StringVarP(&c.namespace, "namespace", "n", "default", "namespace to run the test images in")
 	scorecardCmd.Flags().StringVarP(&c.outputFormat, "output", "o", "text",
-		"Output format for results.  Valid values: text, json")
+		"Output format for results. Valid values: text, json")
 	scorecardCmd.Flags().StringVarP(&c.serviceAccount, "service-account", "s", "default",
 		"Service account to use for tests")
 	scorecardCmd.Flags().BoolVarP(&c.list, "list", "L", false,
@@ -110,9 +110,8 @@ func (c *scorecardCmd) printOutput(output v1alpha3.TestList) error {
 
 func (c *scorecardCmd) run() (err error) {
 	// Extract bundle image contents if bundle is inferred to be an image.
-	var bundleLabels registryutil.Labels
 	if _, err = os.Stat(c.bundle); err != nil && errors.Is(err, os.ErrNotExist) {
-		if c.bundle, bundleLabels, err = getBundlePathAndLabelsFromImage(c.bundle); err != nil {
+		if c.bundle, err = extractBundleImage(c.bundle); err != nil {
 			log.Fatal(err)
 		}
 		defer func() {
@@ -120,16 +119,11 @@ func (c *scorecardCmd) run() (err error) {
 				log.Error(err)
 			}
 		}()
-	} else {
-		// Search for the metadata dir since we cannot assume its path, and
-		// use that metadata as the source of truth when testing.
-		metadataDir, err := registryutil.FindMetadataDir(c.bundle)
-		if err != nil {
-			log.Fatal(err)
-		}
-		if bundleLabels, err = registryutil.GetMetadataLabels(metadataDir); err != nil {
-			log.Fatal(err)
-		}
+	}
+
+	metadata, _, err := registryutil.FindBundleMetadata(c.bundle)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	o := scorecard.Scorecard{
@@ -158,7 +152,7 @@ func (c *scorecardCmd) run() (err error) {
 			ServiceAccount: c.serviceAccount,
 			Namespace:      c.namespace,
 			BundlePath:     c.bundle,
-			BundleLabels:   bundleLabels,
+			BundleMetadata: metadata,
 		}
 
 		// Only get the client if running tests.
@@ -212,26 +206,13 @@ func discardLogger() *log.Logger {
 	return logger
 }
 
-// getBundlePathAndLabelsFromImage returns bundleImage's path on disk post-
-// extraction and image labels.
-func getBundlePathAndLabelsFromImage(bundleImage string) (string, registryutil.Labels, error) {
+// extractBundleImage returns bundleImage's path on disk post-extraction.
+func extractBundleImage(bundleImage string) (string, error) {
 	// Discard bundle extraction logs unless user sets verbose mode.
 	logger := log.NewEntry(discardLogger())
 	if viper.GetBool(flags.VerboseOpt) {
 		logger = log.WithFields(log.Fields{"bundle": bundleImage})
 	}
 	// FEAT: enable explicit local image extraction.
-	bundlePath, err := registryutil.ExtractBundleImage(context.TODO(), logger, bundleImage, false)
-	if err != nil {
-		return "", nil, err
-	}
-
-	// Get image labels from bundleImage locally, since the bundle extraction
-	// already pulled the image.
-	bundleLabels, err := registryutil.GetImageLabels(context.TODO(), logger, bundleImage, true)
-	if err != nil {
-		return "", nil, err
-	}
-
-	return bundlePath, bundleLabels, nil
+	return registryutil.ExtractBundleImage(context.TODO(), logger, bundleImage, false)
 }

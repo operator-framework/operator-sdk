@@ -1,0 +1,5 @@
+entries:
+  - description: >
+      Use on-disk bundle metadata in scorecard (either unpacked from an image or directly if a directory is passed)
+      as the source of truth for bundle metadata, and not image labels which are informative only.
+    kind: change

@@ -15,17 +15,15 @@
 package registry
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
-	registryimage "github.com/operator-framework/operator-registry/pkg/image"
-	"github.com/operator-framework/operator-registry/pkg/image/containerdregistry"
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/afero"
 
 	// TODO: replace `gopkg.in/yaml.v3` with `sigs.k8s.io/yaml` once operator-registry has `json` tags in the
 	// annotations struct.
@@ -49,80 +47,67 @@ func (ls Labels) getLabel(key string) (string, bool) {
 	return value, hasLabel
 }
 
-// GetImageLabels returns the set of labels on image.
-func GetImageLabels(ctx context.Context, logger *log.Entry, image string, local bool) (Labels, error) {
-	// Create a containerd registry for socket-less image layer reading.
-	reg, err := containerdregistry.NewRegistry(containerdregistry.WithLog(logger))
-	if err != nil {
-		return nil, fmt.Errorf("error creating new image registry: %v", err)
-	}
-	defer func() {
-		if err := reg.Destroy(); err != nil {
-			logger.WithError(err).Warn("Error destroying local cache")
-		}
-	}()
-
-	// Pull the image if it isn't present locally.
-	if !local {
-		if err := reg.Pull(ctx, registryimage.SimpleReference(image)); err != nil {
-			return nil, fmt.Errorf("error pulling image %s: %v", image, err)
-		}
-	}
-
-	// Query the image reference for its labels.
-	labels, err := reg.Labels(ctx, registryimage.SimpleReference(image))
-	if err != nil {
-		return nil, fmt.Errorf("error reading image %s labels: %v", image, err)
-	}
-
-	return labels, err
+// FindBundleMetadata walks bundleRoot searching for metadata (ex. annotations.yaml),
+// and returns metadata and its path if found. If one is not found, an error is returned.
+func FindBundleMetadata(bundleRoot string) (Labels, string, error) {
+	return findBundleMetadata(afero.NewOsFs(), bundleRoot)
 }
 
-// FindMetadataDir walks bundleRoot searching for metadata, and returns that directory if found.
-// If one is not found, an error is returned.
-func FindMetadataDir(bundleRoot string) (metadataDir string, err error) {
-	err = filepath.Walk(bundleRoot, func(path string, info os.FileInfo, err error) error {
-		if err != nil || !info.IsDir() {
+func findBundleMetadata(fs afero.Fs, bundleRoot string) (Labels, string, error) {
+	// Check the default path first, and return annotations if they were found or an error if that error
+	// is not because the path does not exist (it exists or there was an unmarshalling error).
+	annotationsPath := filepath.Join(bundleRoot, registrybundle.MetadataDir, registrybundle.AnnotationsFile)
+	annotations, err := readAnnotations(fs, annotationsPath)
+	if (err == nil && len(annotations) != 0) || (err != nil && !errors.Is(err, os.ErrNotExist)) {
+		return annotations, annotationsPath, err
+	}
+
+	// Annotations are not at the default path, so search recursively.
+	annotations = make(Labels)
+	annotationsPath = ""
+	err = afero.Walk(fs, bundleRoot, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
 			return err
 		}
-		// Already found the first metadata dir, do not overwrite it.
-		if metadataDir != "" {
+		// Skip directories and hidden files, or if annotations were already found.
+		if len(annotations) != 0 || info.IsDir() || strings.HasPrefix(path, ".") {
 			return nil
 		}
-		// The annotations file is well-defined.
-		_, err = os.Stat(filepath.Join(path, registrybundle.AnnotationsFile))
-		if err == nil || errors.Is(err, os.ErrExist) {
-			metadataDir = path
+
+		annotationsPath = path
+		// Ignore this error, since we only care if any annotations are returned.
+		if annotations, err = readAnnotations(fs, path); err != nil {
+			log.Debug(err)
 		}
 		return nil
 	})
 	if err != nil {
-		return "", err
-	}
-	if metadataDir == "" {
-		return "", fmt.Errorf("metadata dir not found in %s", bundleRoot)
+		return nil, "", err
 	}
 
-	return metadataDir, nil
+	if len(annotations) == 0 {
+		return nil, "", fmt.Errorf("metadata not found in %s", bundleRoot)
+	}
+
+	return annotations, annotationsPath, nil
 }
 
-// GetMetadataLabels reads annotations from file(s) in metadataDir and returns them as Labels.
-func GetMetadataLabels(metadataDir string) (Labels, error) {
+// readAnnotations reads annotations from file(s) in bundleRoot and returns them as Labels.
+func readAnnotations(fs afero.Fs, annotationsPath string) (Labels, error) {
 	// The annotations file is well-defined.
-	annotationsPath := filepath.Join(metadataDir, registrybundle.AnnotationsFile)
-	b, err := ioutil.ReadFile(annotationsPath)
+	b, err := afero.ReadFile(fs, annotationsPath)
 	if err != nil {
 		return nil, err
 	}
 
 	// Use the arbitrarily-labelled bundle representation of the annotations file
 	// for forwards and backwards compatibility.
-	meta := registrybundle.AnnotationMetadata{
+	annotations := registrybundle.AnnotationMetadata{
 		Annotations: make(map[string]string),
 	}
-	if err = yaml.Unmarshal(b, &meta); err != nil {
-		return nil, err
+	if err = yaml.Unmarshal(b, &annotations); err != nil {
+		return nil, fmt.Errorf("error unmarshalling potential bundle metadata %s: %v", annotationsPath, err)
 	}
 
-	return meta.Annotations, nil
+	return annotations.Annotations, nil
 }

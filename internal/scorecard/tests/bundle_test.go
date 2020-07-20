@@ -22,7 +22,6 @@ import (
 	. "github.com/onsi/gomega"
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -118,10 +117,9 @@ var _ = Describe("Basic and OLM tests", func() {
 
 	Describe("Testing OLM Bundle", func() {
 		It("should pass when test bundle is at the desired location", func() {
-			metadataDir := filepath.Join(testBundle, registrybundle.MetadataDir)
-			labels, err := registryutil.GetMetadataLabels(metadataDir)
+			metadata, _, err := registryutil.FindBundleMetadata(testBundle)
 			Expect(err).NotTo(HaveOccurred())
-			status = BundleValidationTest(testBundle, labels)
+			status = BundleValidationTest(testBundle, metadata)
 			Expect(status.Results[0].State).To(Equal(scapiv1alpha3.PassState))
 		})
 	})
