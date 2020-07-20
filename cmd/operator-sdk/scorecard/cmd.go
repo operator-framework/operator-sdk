@@ -71,7 +71,7 @@ If the argument holds an image tag, it must be present remotely.`,
 	scorecardCmd.Flags().StringVar(&c.kubeconfig, "kubeconfig", "", "kubeconfig path")
 	scorecardCmd.Flags().StringVarP(&c.selector, "selector", "l", "", "label selector to determine which tests are run")
 	scorecardCmd.Flags().StringVarP(&c.config, "config", "c", "", "path to scorecard config file")
-	scorecardCmd.Flags().StringVarP(&c.namespace, "namespace", "n", "default", "namespace to run the test images in")
+	scorecardCmd.Flags().StringVarP(&c.namespace, "namespace", "n", "", "namespace to run the test images in")
 	scorecardCmd.Flags().StringVarP(&c.outputFormat, "output", "o", "text",
 		"Output format for results.  Valid values: text, json")
 	scorecardCmd.Flags().StringVarP(&c.serviceAccount, "service-account", "s", "default",
@@ -156,7 +156,7 @@ func (c *scorecardCmd) run() (err error) {
 	} else {
 		runner := scorecard.PodTestRunner{
 			ServiceAccount: c.serviceAccount,
-			Namespace:      c.namespace,
+			Namespace:      scorecard.GetKubeNamespace(c.kubeconfig, c.namespace),
 			BundlePath:     c.bundle,
 			BundleLabels:   bundleLabels,
 		}
