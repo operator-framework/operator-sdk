@@ -47,7 +47,6 @@ x_base_steps:
       - source hack/ci/check-doc-only-update.sh
       - travis_retry make tidy
     install:
-      - make install
       - make setup-k8s
       - export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
     after_success:
@@ -124,6 +123,9 @@ jobs:
         - pip3 install --upgrade setuptools pip
         - pip install --user ansible
       script:
+        # todo: move the `make install` to the shell when the tests be migrated to go and centralized
+        # note that it allows us run the tests locally easily
+        - make install
         - make test-e2e-ansible
         - make test-e2e-ansible-molecule
 
@@ -131,6 +133,9 @@ jobs:
     - <<: *test
       name: Subcommands and Integration on Kubernetes
       script:
+      # todo: move the `make install` to the shell when the tests be migrated to go and centralized
+      # note that it allows us run the tests locally easily
+      - make install
       - make test-subcommand
       - make test-integration
 

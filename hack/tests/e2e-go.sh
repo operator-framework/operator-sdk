@@ -7,6 +7,9 @@ set -o pipefail
 source ./hack/lib/test_lib.sh
 source ./hack/lib/image_lib.sh
 
+# install sdk binaries
+make install
+
 test_dir=./test
 tests=$test_dir/e2e
 

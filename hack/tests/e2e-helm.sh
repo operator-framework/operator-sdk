@@ -5,6 +5,9 @@ set -eux
 source hack/lib/test_lib.sh
 source hack/lib/image_lib.sh
 
+# install sdk binaries
+make install
+
 DEST_IMAGE="quay.io/example/nginx-operator:v0.0.2"
 TMPDIR="$(mktemp -d)"
 pushd $TMPDIR
