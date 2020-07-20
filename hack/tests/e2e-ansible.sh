@@ -59,37 +59,32 @@ test_operator() {
         exit 1
     fi
 
-    header_text "verify that metrics service was created"
-    if ! timeout 60s bash -c -- "until kubectl get service/memcached-operator-metrics > /dev/null 2>&1; do sleep 1; done";
-    then
-        error_text "FAIL: Failed to get metrics service"
-        operator_logs
-        exit 1
-    fi
+   # TODO @asmacdo to uncomment once new kb layout is merged.
 
-    header_text "verify that the metrics endpoint exists (Port 8383)"
-    if ! timeout 1m bash -c -- "until kubectl run --attach --rm --restart=Never test-metrics --image=$metrics_test_image -- curl -sfo /dev/null http://memcached-operator-metrics:8383/metrics; do sleep 1; done";
-    then
-        error_text "FAIL: Failed to verify that metrics endpoint exists"
-        operator_logs
-        exit 1
-    fi
+   # header_text "verify that metrics service was created"
+   # if ! timeout 60s bash -c -- "until kubectl get service/memcached-operator-metrics > /dev/null 2>&1; do sleep 1; done";
+   # then
+   #     error_text "FAIL: Failed to get metrics service"
+   #     operator_logs
+   #     exit 1
+   # fi
 
-    header_text "verify that the metrics endpoint exists (Port 8686)"
-    if ! timeout 1m bash -c -- "until kubectl run --attach --rm --restart=Never test-metrics --image=$metrics_test_image -- curl -sfo /dev/null http://memcached-operator-metrics:8686/metrics; do sleep 1; done";
-    then
-        error_text "FAIL: Failed to verify that metrics endpoint exists"
-        operator_logs
-        exit 1
-    fi
+   # header_text "verify that the metrics endpoint exists (Port 8383)"
+   # if ! timeout 1m bash -c -- "until kubectl run --attach --rm --restart=Never test-metrics --image=$metrics_test_image -- curl -sfo /dev/null http://memcached-operator-metrics:8383/metrics; do sleep 1; done";
+   # then
+   #     error_text "FAIL: Failed to verify that metrics endpoint exists"
+   #     operator_logs
+   #     exit 1
+   # fi
 
-    header_text "verify that the servicemonitor is created"
-    if ! timeout 1m bash -c -- "until kubectl get servicemonitors/memcached-operator-metrics > /dev/null 2>&1; do sleep 1; done";
-    then
-        error_text "FAIL: Failed to get service monitor"
-        operator_logs
-        exit 1
-    fi
+   # header_text "verify that the metrics endpoint exists (Port 8686)"
+   # if ! timeout 1m bash -c -- "until kubectl run --attach --rm --restart=Never test-metrics --image=$metrics_test_image -- curl -sfo /dev/null http://memcached-operator-metrics:8686/metrics; do sleep 1; done";
+   # then
+   #     error_text "FAIL: Failed to verify that metrics endpoint exists"
+   #     operator_logs
+   #     exit 1
+   # fi
+
 
     header_text "create custom resource (Memcached CR)"
     kubectl create -f deploy/crds/ansible.example.com_v1alpha1_memcached_cr.yaml
@@ -136,13 +131,13 @@ test_operator() {
     fi
 
 
-    header_text "verify that metrics reflect cr creation"
-    if ! timeout 60s bash -c -- "until kubectl run --attach --rm --restart=Never test-metrics --image=$metrics_test_image -- curl -sf http://memcached-operator-metrics:8686/metrics | grep example-memcached; do sleep 1; done";
-    then
-        error_text "FAIL: Failed to verify custom resource metrics"
-        operator_logs
-        exit 1
-    fi
+   # header_text "verify that metrics reflect cr creation"
+   # if ! timeout 60s bash -c -- "until kubectl run --attach --rm --restart=Never test-metrics --image=$metrics_test_image -- curl -sf http://memcached-operator-metrics:8686/metrics | grep example-memcached; do sleep 1; done";
+   # then
+   #     error_text "FAIL: Failed to verify custom resource metrics"
+   #     operator_logs
+   #     exit 1
+   # fi
 
     header_text "get memcached deploy by labels"
     memcached_deployment=$(kubectl get deployment -l app=memcached -o jsonpath="{..metadata.name}")
@@ -197,7 +192,6 @@ cat "$ROOTDIR/test/ansible-memcached/watches-finalizer.yaml" >> memcached-operat
 # Append Foo kind to watches to test watching multiple Kinds
 cat "$ROOTDIR/test/ansible-memcached/watches-foo-kind.yaml" >> memcached-operator/watches.yaml
 
-install_service_monitor_crd
 
 pushd memcached-operator
 

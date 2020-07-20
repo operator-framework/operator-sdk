@@ -1,0 +1,11 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+    - description: >
+        Remove legacy metrics generation code.
+      kind: "removal"
+      # Is this a breaking change?
+      breaking: true
+      migration:
+        header: Remove legacy metrics generation code from cmd/ansible-operator/main.go, and tests/e2e-anisble.sh checks for servicemonitor.
+        body: TBD
