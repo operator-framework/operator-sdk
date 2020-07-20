@@ -140,13 +140,13 @@ func main() {
 		}
 
 		ctr := controller.Add(mgr, controller.Options{
-			GVK:              w.GroupVersionKind,
-			Runner:           runner,
-			ManageStatus:     w.ManageStatus,
-			AnsibleDebugLogs: getAnsibleDebugLog(),
-			MaxWorkers:       w.MaxWorkers,
-			ReconcilePeriod:  w.ReconcilePeriod,
-			Selector:         w.Selector,
+			GVK:                     w.GroupVersionKind,
+			Runner:                  runner,
+			ManageStatus:            w.ManageStatus,
+			AnsibleDebugLogs:        getAnsibleDebugLog(),
+			MaxConcurrentReconciles: w.MaxConcurrentReconciles,
+			ReconcilePeriod:         w.ReconcilePeriod,
+			Selector:                w.Selector,
 		})
 		if ctr == nil {
 			log.Error(fmt.Errorf("failed to add controller for GVK %v", w.GroupVersionKind.String()), "")

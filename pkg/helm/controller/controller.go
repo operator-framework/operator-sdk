@@ -49,7 +49,7 @@ type WatchOptions struct {
 	ReconcilePeriod         time.Duration
 	WatchDependentResources bool
 	OverrideValues          map[string]string
-	MaxWorkers              int
+	MaxConcurrentReconciles int
 }
 
 // Add creates a new helm operator controller and adds it to the manager
@@ -71,7 +71,7 @@ func Add(mgr manager.Manager, options WatchOptions) error {
 
 	c, err := controller.New(controllerName, mgr, controller.Options{
 		Reconciler:              r,
-		MaxConcurrentReconciles: options.MaxWorkers,
+		MaxConcurrentReconciles: options.MaxConcurrentReconciles,
 	})
 	if err != nil {
 		return err

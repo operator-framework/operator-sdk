@@ -1,0 +1,12 @@
+entries:
+  - description: >
+      **(Valid only for Ansible/Helm-based Operators)**. The flag `--max-workers` is no longer supported. 
+      Use `--max-concurrent-reconciles` instead.
+    kind: "change"
+    breaking: true
+    migration:
+      header: Flag `max-workers` is no longer supported.
+      body: |
+        The flag `--max-workers` is no longer supported with ansible/helm binaries. It has been
+        renamed to `--max-concurrent-reconciles`.
+

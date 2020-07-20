@@ -132,7 +132,7 @@ func main() {
 			ReconcilePeriod:         f.ReconcilePeriod,
 			WatchDependentResources: *w.WatchDependentResources,
 			OverrideValues:          w.OverrideValues,
-			MaxWorkers:              f.MaxWorkers,
+			MaxConcurrentReconciles: f.MaxConcurrentReconciles,
 		})
 		if err != nil {
 			log.Error(err, "Failed to add manager factory to controller.")

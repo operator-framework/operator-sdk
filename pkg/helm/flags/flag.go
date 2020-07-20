@@ -27,11 +27,11 @@ import (
 type Flags struct {
 	ReconcilePeriod         time.Duration
 	WatchesFile             string
-	MaxWorkers              int
 	MetricsAddress          string
 	EnableLeaderElection    bool
 	LeaderElectionID        string
 	LeaderElectionNamespace string
+	MaxConcurrentReconciles int
 }
 
 // AddTo - Add the helm operator flags to the the flagset
@@ -46,11 +46,6 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 		"watches-file",
 		"./watches.yaml",
 		"Path to the watches file to use",
-	)
-	flagSet.IntVar(&f.MaxWorkers,
-		"max-workers",
-		runtime.NumCPU(),
-		"Maximum number of workers to use",
 	)
 	flagSet.StringVar(&f.MetricsAddress,
 		"metrics-addr",
@@ -71,5 +66,10 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 		"leader-election-namespace",
 		"",
 		"Namespace in which to create the leader election configmap for holding the leader lock (required if running locally with leader election enabled).",
+	)
+	flagSet.IntVar(&f.MaxConcurrentReconciles,
+		"max-concurrent-reconciles",
+		runtime.NumCPU(),
+		"Maximum number of concurrent reconciles for controllers.",
 	)
 }

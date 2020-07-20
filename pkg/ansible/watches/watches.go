@@ -56,8 +56,8 @@ type Watch struct {
 	Selector                    metav1.LabelSelector      `yaml:"selector"`
 
 	// Not configurable via watches.yaml
-	MaxWorkers       int `yaml:"-"`
-	AnsibleVerbosity int `yaml:"-"`
+	MaxConcurrentReconciles int `yaml:"-"`
+	AnsibleVerbosity        int `yaml:"-"`
 }
 
 // Finalizer - Expose finalizer to be used by a user.
@@ -179,7 +179,7 @@ func (w *Watch) setValuesFromAlias(tmp alias) error {
 	w.Role = tmp.Role
 	w.Vars = tmp.Vars
 	w.MaxRunnerArtifacts = tmp.MaxRunnerArtifacts
-	w.MaxWorkers = getMaxConcurrentReconciles(gvk, maxConcurrentReconcilesDefault)
+	w.MaxConcurrentReconciles = getMaxConcurrentReconciles(gvk, maxConcurrentReconcilesDefault)
 	w.ReconcilePeriod = tmp.ReconcilePeriod.Duration
 	w.ManageStatus = *tmp.ManageStatus
 	w.WatchDependentResources = *tmp.WatchDependentResources
@@ -306,7 +306,7 @@ func New(gvk schema.GroupVersionKind, role, playbook string, vars map[string]int
 		Role:                        role,
 		Vars:                        vars,
 		MaxRunnerArtifacts:          maxRunnerArtifactsDefault,
-		MaxWorkers:                  maxConcurrentReconcilesDefault,
+		MaxConcurrentReconciles:     maxConcurrentReconcilesDefault,
 		ReconcilePeriod:             reconcilePeriodDefault.Duration,
 		ManageStatus:                manageStatusDefault,
 		WatchDependentResources:     watchDependentResourcesDefault,

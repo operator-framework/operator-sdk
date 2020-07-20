@@ -65,8 +65,9 @@ func TestNew(t *testing.T) {
 				t.Fatalf("Unexpected maxRunnerArtifacts %v expected %v", watch.MaxRunnerArtifacts,
 					maxRunnerArtifactsDefault)
 			}
-			if watch.MaxWorkers != maxConcurrentReconcilesDefault {
-				t.Fatalf("Unexpected maxWorkers %v expected %v", watch.MaxWorkers, maxConcurrentReconcilesDefault)
+			if watch.MaxConcurrentReconciles != maxConcurrentReconcilesDefault {
+				t.Fatalf("Unexpected maxConcurrentReconciles %v expected %v", watch.MaxConcurrentReconciles,
+					maxConcurrentReconcilesDefault)
 			}
 			if watch.ReconcilePeriod != expectedReconcilePeriod {
 				t.Fatalf("Unexpected reconcilePeriod %v expected %v", watch.ReconcilePeriod,
@@ -246,31 +247,31 @@ func TestLoad(t *testing.T) {
 			GroupVersionKind: schema.GroupVersionKind{
 				Version: "v1alpha1",
 				Group:   "app.example.com",
-				Kind:    "MaxWorkersDefault",
+				Kind:    "MaxConcurrentReconcilesDefault",
 			},
-			Role:         validTemplate.ValidRole,
-			ManageStatus: true,
-			MaxWorkers:   1,
+			Role:                    validTemplate.ValidRole,
+			ManageStatus:            true,
+			MaxConcurrentReconciles: 1,
 		},
 		Watch{
 			GroupVersionKind: schema.GroupVersionKind{
 				Version: "v1alpha1",
 				Group:   "app.example.com",
-				Kind:    "MaxWorkersIgnored",
+				Kind:    "MaxConcurrentReconcilesIgnored",
 			},
-			Role:         validTemplate.ValidRole,
-			ManageStatus: true,
-			MaxWorkers:   1,
+			Role:                    validTemplate.ValidRole,
+			ManageStatus:            true,
+			MaxConcurrentReconciles: 1,
 		},
 		Watch{
 			GroupVersionKind: schema.GroupVersionKind{
 				Version: "v1alpha1",
 				Group:   "app.example.com",
-				Kind:    "MaxWorkersEnv",
+				Kind:    "MaxConcurrentReconcilesEnv",
 			},
-			Role:         validTemplate.ValidRole,
-			ManageStatus: true,
-			MaxWorkers:   4,
+			Role:                    validTemplate.ValidRole,
+			ManageStatus:            true,
+			MaxConcurrentReconciles: 4,
 		},
 		Watch{
 			GroupVersionKind: schema.GroupVersionKind{
@@ -373,7 +374,7 @@ func TestLoad(t *testing.T) {
 	testCases := []struct {
 		name                                 string
 		path                                 string
-		maxWorkers                           int
+		maxConcurrentReconciles              int
 		ansibleVerbosity                     int
 		expected                             []Watch
 		shouldError                          bool
@@ -453,7 +454,7 @@ func TestLoad(t *testing.T) {
 		{
 			name:                                 "valid watches file",
 			path:                                 "testdata/valid.yaml",
-			maxWorkers:                           1,
+			maxConcurrentReconciles:              1,
 			ansibleVerbosity:                     2,
 			shouldSetAnsibleCollectionPathEnvVar: true,
 			expected:                             validWatches,
@@ -461,7 +462,7 @@ func TestLoad(t *testing.T) {
 		{
 			name:                                 "should load file successfully with ANSIBLE ROLES PATH ENV VAR set",
 			path:                                 "testdata/valid.yaml",
-			maxWorkers:                           1,
+			maxConcurrentReconciles:              1,
 			ansibleVerbosity:                     2,
 			shouldSetAnsibleRolePathEnvVar:       true,
 			shouldSetAnsibleCollectionPathEnvVar: true,
@@ -469,8 +470,8 @@ func TestLoad(t *testing.T) {
 		},
 	}
 
-	os.Setenv("WORKER_MAXWORKERSENV_APP_EXAMPLE_COM", "4")
-	defer os.Unsetenv("WORKER_MAXWORKERSENV_APP_EXAMPLE_COM")
+	os.Setenv("WORKER_MAXCONCURRENTRECONCILESENV_APP_EXAMPLE_COM", "4")
+	defer os.Unsetenv("WORKER_MAXCONCURRENTRECONCILESENV_APP_EXAMPLE_COM")
 	os.Setenv("ANSIBLE_VERBOSITY_ANSIBLEVERBOSITYENV_APP_EXAMPLE_COM", "4")
 	defer os.Unsetenv("ANSIBLE_VERBOSITY_ANSIBLEVERBOSITYENV_APP_EXAMPLE_COM")
 
@@ -490,7 +491,7 @@ func TestLoad(t *testing.T) {
 				defer os.Unsetenv("ANSIBLE_COLLECTIONS_PATH")
 			}
 
-			watchSlice, err := Load(tc.path, tc.maxWorkers, tc.ansibleVerbosity)
+			watchSlice, err := Load(tc.path, tc.maxConcurrentReconciles, tc.ansibleVerbosity)
 			if err != nil && !tc.shouldError {
 				t.Fatalf("Error occurred unexpectedly: %v", err)
 			}
@@ -546,15 +547,15 @@ func TestLoad(t *testing.T) {
 						gotWatch.Selector, expectedWatch.Selector)
 				}
 
-				if expectedWatch.MaxWorkers == 0 {
-					if gotWatch.MaxWorkers != tc.maxWorkers {
-						t.Fatalf("Unexpected max workers: %v expected workers: %v", gotWatch.MaxWorkers,
-							tc.maxWorkers)
+				if expectedWatch.MaxConcurrentReconciles == 0 {
+					if gotWatch.MaxConcurrentReconciles != tc.maxConcurrentReconciles {
+						t.Fatalf("Unexpected max workers: %v expected workers: %v", gotWatch.MaxConcurrentReconciles,
+							tc.maxConcurrentReconciles)
 					}
 				} else {
-					if gotWatch.MaxWorkers != expectedWatch.MaxWorkers {
-						t.Fatalf("Unexpected max workers: %v expected workers: %v", gotWatch.MaxWorkers,
-							expectedWatch.MaxWorkers)
+					if gotWatch.MaxConcurrentReconciles != expectedWatch.MaxConcurrentReconciles {
+						t.Fatalf("Unexpected max workers: %v expected workers: %v", gotWatch.MaxConcurrentReconciles,
+							expectedWatch.MaxConcurrentReconciles)
 					}
 				}
 			}
@@ -562,7 +563,7 @@ func TestLoad(t *testing.T) {
 	}
 }
 
-func TestMaxWorkers(t *testing.T) {
+func TestMaxConcurrentReconciles(t *testing.T) {
 	testCases := []struct {
 		name          string
 		gvk           schema.GroupVersionKind
@@ -654,7 +655,8 @@ func TestMaxWorkers(t *testing.T) {
 			}
 			workers := getMaxConcurrentReconciles(tc.gvk, tc.defValue)
 			if tc.expectedValue != workers {
-				t.Fatalf("Unexpected MaxWorkers: %v expected MaxWorkers: %v", workers, tc.expectedValue)
+				t.Fatalf("Unexpected MaxConcurrentReconciles: %v expected MaxConcurrentReconciles: %v",
+					workers, tc.expectedValue)
 			}
 		})
 	}

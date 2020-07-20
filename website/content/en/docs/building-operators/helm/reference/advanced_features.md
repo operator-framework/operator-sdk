@@ -101,6 +101,11 @@ $ cat config/manager/manager.yaml
 ...
 ```
 
+While running locally, this flag can also be added to the helm binary. For example, running `helm-operator` binary with the above mentioned flag would give us a similar result:
+```
+helm-operator --max-concurrent-reconciles=10
+```
+
 **NOTE**: If you're using the default scaffolding, it is necessary to also apply this change to the `config/default/manager_auth_proxy_patch.yaml` file. This file is a `kustomize` patch to the operator deployment that configures [kube-rbac-proxy][kube-rbac-proxy] to require authorization for accessing your operator metrics. When `kustomize` applies this patch, it overrides the args defined in `config/manager/manager.yaml`
 
 ## Use `helm upgrade --force` for deployment
