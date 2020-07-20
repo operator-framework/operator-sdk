@@ -16,9 +16,11 @@ package scorecard
 
 import (
 	"os"
+	"path/filepath"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 	cruntime "sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
@@ -46,4 +48,52 @@ func GetKubeClient(kubeconfig string) (client kubernetes.Interface, err error) {
 	}
 
 	return clientset, err
+}
+
+// GetKubeNamespace returns the kubernetes namespace to use
+// for scorecard pod creation
+// the order of how the namespace is determined is as follows:
+// - a namespace command line argument
+// - a namespace determined from the kubeconfig file
+// - the kubeconfig file is determined in the following order:
+//   - from the kubeconfig flag if set
+//   - from the KUBECONFIG env var if set
+//   - from the $HOME/.kube/config path if exists
+//   - returns 'default' as the namespace if not set in the kubeconfig
+func GetKubeNamespace(kubeconfigPath, namespace string) string {
+
+	if namespace != "" {
+		return namespace
+	}
+
+	rules := clientcmd.ClientConfigLoadingRules{
+		ExplicitPath: kubeconfigPath,
+	}
+
+	if kubeconfigPath == "" {
+		rules.ExplicitPath = getConfigPath()
+	}
+
+	kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(&rules, &clientcmd.ConfigOverrides{})
+
+	ns, _, err := kubeConfig.Namespace()
+	if err != nil {
+		return "default"
+	}
+	return ns
+
+}
+
+func getConfigPath() string {
+	kubeconfigEnv := os.Getenv("KUBECONFIG")
+	if kubeconfigEnv != "" {
+		return kubeconfigEnv
+	} else {
+		homeConfigPath := filepath.Join(os.Getenv("HOME"), ".kube", "config")
+		_, err := os.Stat(homeConfigPath)
+		if err == nil {
+			return homeConfigPath
+		}
+	}
+	return ""
 }
