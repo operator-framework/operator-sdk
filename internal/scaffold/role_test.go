@@ -15,9 +15,9 @@
 package scaffold
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
@@ -90,60 +90,35 @@ func TestRoleCustomRules(t *testing.T) {
 
 func TestMergeRoleForResource(t *testing.T) {
 	clusterRoleFilePath1 := "./testdata/testroles/valid_clusterrole"
-	clusterRoleFile1 := clusterRoleFilePath1 + "/deploy/role.yaml"
-	if err := ioutil.WriteFile(clusterRoleFile1, []byte(clusterRole), fileutil.DefaultFileMode); err != nil {
-		fmt.Printf("failed to instantiate %v: %v", clusterRoleFile1, err)
-	}
-	defer remove(clusterRoleFile1)
-
 	roleFilePath1 := "./testdata/testroles/valid_role1"
-	absRoleFile1 := roleFilePath1 + "/deploy/role.yaml"
-	if err := ioutil.WriteFile(absRoleFile1, []byte(roleFile1), fileutil.DefaultFileMode); err != nil {
-		fmt.Printf("failed to instantiate %v: %v", absRoleFile1, err)
-	}
-	defer remove(absRoleFile1)
-
 	roleFilePath2 := "./testdata/testroles/valid_role2"
-	absRoleFile2 := roleFilePath2 + "/deploy/role.yaml"
-	if err := ioutil.WriteFile(absRoleFile2, []byte(roleFile2), fileutil.DefaultFileMode); err != nil {
-		fmt.Printf("failed to instantiate %v: %v", absRoleFile2, err)
-	}
-	defer remove(absRoleFile2)
-
 	roleFilePath3 := "./testdata/testroles/valid_role3"
-	absRoleFile3 := roleFilePath3 + "/deploy/role.yaml"
-	if err := ioutil.WriteFile(absRoleFile3, []byte(roleFile3), fileutil.DefaultFileMode); err != nil {
-		fmt.Printf("failed to instantiate %v: %v", absRoleFile3, err)
-	}
-	defer remove(absRoleFile3)
-
 	roleFilePath4 := "./testdata/testroles/valid_role4"
-	absRoleFile4 := roleFilePath4 + "/deploy/role.yaml"
-	if err := ioutil.WriteFile(absRoleFile4, []byte(roleFile3), fileutil.DefaultFileMode); err != nil {
-		fmt.Printf("failed to instantiate %v: %v", absRoleFile4, err)
-	}
-	defer remove(absRoleFile4)
-
 	roleFilePath5 := "./testdata/testroles/valid_role5"
-	absRoleFile5 := roleFilePath5 + "/deploy/role.yaml"
-	if err := ioutil.WriteFile(absRoleFile5, []byte(roleFile3), fileutil.DefaultFileMode); err != nil {
-		fmt.Printf("failed to instantiate %v: %v", absRoleFile5, err)
-	}
-	defer remove(absRoleFile5)
-
 	roleFilePath6 := "./testdata/testroles/valid_role6"
-	absRoleFile6 := roleFilePath6 + "/deploy/role.yaml"
-	if err := ioutil.WriteFile(absRoleFile6, []byte(roleFile3), fileutil.DefaultFileMode); err != nil {
-		fmt.Printf("failed to instantiate %v: %v", absRoleFile6, err)
+
+	testFiles := map[string]string{
+		"./testdata/testroles/valid_clusterrole/deploy/role.yaml": clusterRole,
+		"./testdata/testroles/valid_role1/deploy/role.yaml":       roleFile1,
+		"./testdata/testroles/valid_role2/deploy/role.yaml":       roleFile2,
+		"./testdata/testroles/valid_role3/deploy/role.yaml":       roleFile3,
+		"./testdata/testroles/valid_role4/deploy/role.yaml":       roleFile3,
+		"./testdata/testroles/valid_role5/deploy/role.yaml":       roleFile3,
+		"./testdata/testroles/valid_role6/deploy/role.yaml":       roleFile3,
 	}
-	defer remove(absRoleFile6)
+
+	for path, content := range testFiles {
+		assert.NoError(t, os.MkdirAll(filepath.Dir(path), 0755))
+		assert.NoError(t, ioutil.WriteFile(path, []byte(content), fileutil.DefaultFileMode))
+		defer remove(filepath.Dir(path))
+	}
 
 	testCases := []struct {
 		name           string
 		absProjectPath string
 		r              *Resource
 		roleScaffold   *Role
-		expError       error
+		expError       bool
 		existingRole   string
 		mergedRole     string
 	}{
@@ -472,6 +447,7 @@ func TestMergeRoleForResource(t *testing.T) {
 		},
 		{
 			name:           "Invalid ClusterRole",
+			expError:       true,
 			absProjectPath: roleFilePath1,
 			r: &Resource{
 				APIVersion: "charts.helm.k8s.io/v1alpha1",
@@ -499,6 +475,7 @@ func TestMergeRoleForResource(t *testing.T) {
 		},
 		{
 			name:           "Empty CustomRules",
+			expError:       true,
 			absProjectPath: "./testdata/testroles/invalid_role",
 			mergedRole:     "",
 			r: &Resource{
@@ -514,6 +491,7 @@ func TestMergeRoleForResource(t *testing.T) {
 		},
 		{
 			name:           "Empty role.yaml file",
+			expError:       true,
 			absProjectPath: "./testdata/testroles/invalid_role",
 			mergedRole:     "",
 			r: &Resource{
@@ -536,22 +514,20 @@ func TestMergeRoleForResource(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			actualErr := MergeRoleForResource(tc.r, tc.absProjectPath, *tc.roleScaffold)
+			err := MergeRoleForResource(tc.r, tc.absProjectPath, *tc.roleScaffold)
+			if tc.expError {
+				assert.Error(t, err)
+				return
+			}
+			assert.NoError(t, err)
+
 			absFilePath := tc.absProjectPath + "/deploy/role.yaml"
 			actualMergedRoleYAML, err := ioutil.ReadFile(absFilePath)
-			if err != nil {
-				fmt.Printf("failed to read actualMergedrole  %v: %v", absFilePath, err)
-			}
+			assert.NoError(t, err)
 			expectedMergedRoleYAML, err := ioutil.ReadFile(tc.mergedRole)
-			if err != nil {
-				fmt.Printf("failed to read expectedMergedrole  %v: %v", tc.mergedRole, err)
-			}
+			assert.NoError(t, err)
 
-			if actualErr != nil {
-				assert.NotNil(t, actualErr)
-			} else {
-				assert.Equal(t, string(expectedMergedRoleYAML), string(actualMergedRoleYAML))
-			}
+			assert.Equal(t, string(expectedMergedRoleYAML), string(actualMergedRoleYAML))
 		})
 	}
 }
