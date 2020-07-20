@@ -57,11 +57,6 @@ func (f *Role) SetTemplateDefaults() error {
 	return nil
 }
 
-// todo(camilamacedo86): remove the roles added after the {{- end }}
-// These roles were added because we are using the Helm pkg current implementation which
-// requires the permissions for the metrics.
-// More info: https://github.com/operator-framework/operator-sdk/issues/3354
-
 const roleTemplate = `apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
