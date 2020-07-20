@@ -1,0 +1,12 @@
+entries:
+  - description: >
+      Changes the scorecard command to look for a namespace in the
+      kubeconfig instead of defaulting to 'default' when the 
+      namespace is not defined on the command line flag.  If a namespace
+      can not be found in the kubeconfig file, then 'default' is used.
+
+    kind: "change"
+
+    # Is this a breaking change?
+    breaking: false
+
