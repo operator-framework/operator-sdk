@@ -39,7 +39,7 @@ var _ = Describe("Running the scorecard command", func() {
 			flag = cmd.Flags().Lookup("namespace")
 			Expect(flag).NotTo(BeNil())
 			Expect(flag.Shorthand).To(Equal("n"))
-			Expect(flag.DefValue).To(Equal("default"))
+			Expect(flag.DefValue).To(Equal(""))
 
 			flag = cmd.Flags().Lookup("output")
 			Expect(flag).NotTo(BeNil())
