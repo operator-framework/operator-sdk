@@ -58,6 +58,9 @@ spec:
         - name: [[.ProjectName]]
           # Replace this with the built image name
           image: "REPLACE_IMAGE"
+          args:
+          - "--enable-leader-election"
+          - "--leader-election-id=[[.ProjectName]]"
           imagePullPolicy: "Always"
           volumeMounts:
           - mountPath: /tmp/ansible-operator/runner
