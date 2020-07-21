@@ -18,7 +18,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/operator-framework/operator-sdk/internal/k8sutil"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"

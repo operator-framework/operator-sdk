@@ -17,7 +17,7 @@ package scorecard
 import (
 	"os"
 
-	"github.com/operator-framework/operator-sdk/internal/k8sutil"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"k8s.io/client-go/kubernetes"
 	cruntime "sigs.k8s.io/controller-runtime/pkg/client/config"
 )
