@@ -16,10 +16,11 @@ package clusterserviceversion
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
+	"regexp"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -33,6 +34,7 @@ import (
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 	"sigs.k8s.io/yaml"
 
+	metricsannotations "github.com/operator-framework/operator-sdk/internal/annotations/metrics"
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
 	genutil "github.com/operator-framework/operator-sdk/internal/generate/internal"
 	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
@@ -61,8 +63,8 @@ var (
 )
 
 const (
-	testSDKbuilderStamp = "operators.operatorframework.io/builder: operator-sdk-unknown"
-	testSDKlayoutStamp  = "operators.operatorframework.io/project_layout: unknown"
+	testSDKbuilderAnnotationKey = "operators.operatorframework.io/builder"
+	testSDKlayoutAnnotationKey  = "operators.operatorframework.io/project_layout"
 )
 
 var (
@@ -127,7 +129,7 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 					WithWriter(buf),
 				}
 				Expect(g.Generate(cfg, opts...)).ToNot(HaveOccurred())
-				outputCSV := removeSDKLabelsFromCSVString(buf.String())
+				outputCSV := removeSDKAnnotationsFromCSVString(buf.String())
 				Expect(outputCSV).To(MatchYAML(newCSVStr))
 			})
 			It("should write a ClusterServiceVersion manifest to a base file", func() {
@@ -161,8 +163,8 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 
 				annotations := outputCSV.GetAnnotations()
 				Expect(annotations).ToNot(BeNil())
-				Expect(annotations).Should(HaveKey(projutil.OperatorBuilder))
-				Expect(annotations).Should(HaveKey(projutil.OperatorLayout))
+				Expect(annotations).Should(HaveKey(metricsannotations.BuilderObjectAnnotation))
+				Expect(annotations).Should(HaveKey(metricsannotations.LayoutObjectAnnotation))
 			})
 			It("should write a ClusterServiceVersion manifest to a bundle file", func() {
 				g = Generator{
@@ -426,7 +428,7 @@ func initTestCSVsHelper() {
 func readFileHelper(path string) string {
 	b, err := ioutil.ReadFile(path)
 	ExpectWithOffset(1, err).ToNot(HaveOccurred())
-	return removeSDKLabelsFromCSVString(string(b))
+	return removeSDKAnnotationsFromCSVString(string(b))
 }
 
 func modifyCSVDepImageHelper(tag string) func(csv *v1alpha1.ClusterServiceVersion) {
@@ -496,10 +498,14 @@ func upgradeCSV(csv *v1alpha1.ClusterServiceVersion, name, version string) *v1al
 	return upgraded
 }
 
-// removeSDKLabelsFromCSVString to remove the sdk labels from test CSV structs. The test
-// cases do not generate a PROJECTFILE or an entire operator to get the version or layout
-// of SDK. Hence the values of those will appear "unknown".
-func removeSDKLabelsFromCSVString(csv string) string {
-	replacer := strings.NewReplacer(testSDKbuilderStamp, "", testSDKlayoutStamp, "")
-	return replacer.Replace(csv)
+// removeSDKAnnotationsFromCSVString removes SDK annotations from test CSVs.
+// These annotations will update on each new release and will cause tests to fail erroneously,
+// so they should be removed for each test case.
+func removeSDKAnnotationsFromCSVString(csv string) string {
+	builderRe := regexp.MustCompile(fmt.Sprintf(".*%s: .[^\n]+\n", regexp.QuoteMeta(testSDKbuilderAnnotationKey)))
+	layoutRe := regexp.MustCompile(fmt.Sprintf(".*%s: .[^\n]+\n", regexp.QuoteMeta(testSDKlayoutAnnotationKey)))
+
+	csv = builderRe.ReplaceAllString(csv, "")
+	csv = layoutRe.ReplaceAllString(csv, "")
+	return csv
 }

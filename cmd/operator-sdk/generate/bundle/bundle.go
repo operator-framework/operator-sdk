@@ -17,14 +17,19 @@ package bundle
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
+	yaml "gopkg.in/yaml.v3"
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 
 	genutil "github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate/internal"
+	metricsannotations "github.com/operator-framework/operator-sdk/internal/annotations/metrics"
+	scorecardannotations "github.com/operator-framework/operator-sdk/internal/annotations/scorecard"
 	gencsv "github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion"
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
 	"github.com/operator-framework/operator-sdk/internal/registry"
@@ -231,7 +236,7 @@ func (c bundleCmd) validateMetadata(*config.Config) (err error) {
 }
 
 // runMetadata generates a bundle.Dockerfile and bundle metadata.
-func (c bundleCmd) runMetadata() error {
+func (c bundleCmd) runMetadata(cfg *config.Config) error {
 
 	directory := c.inputDir
 	if directory == "" {
@@ -251,70 +256,74 @@ func (c bundleCmd) runMetadata() error {
 		outputDir = ""
 	}
 
-	return c.generateMetadata(directory, outputDir)
+	return c.generateMetadata(cfg, directory, outputDir)
 }
 
 // generateMetadata wraps the operator-registry bundle Dockerfile/metadata generator.
-func (c bundleCmd) generateMetadata(manifestsDir, outputDir string) error {
+func (c bundleCmd) generateMetadata(cfg *config.Config, manifestsDir, outputDir string) error {
 
-	metadataExists := checkMetatdataExists(outputDir, manifestsDir)
+	metadataExists := isMetatdataExist(outputDir, manifestsDir)
 	err := bundle.GenerateFunc(manifestsDir, outputDir, c.operatorName, c.channels, c.defaultChannel, c.overwrite)
 	if err != nil {
 		return fmt.Errorf("error generating bundle metadata: %v", err)
 	}
 
-	// Add SDK stamps if metadata is not present before or when overwrite is set to true.
+	// Add SDK annotations/labels if metadata did not exist before or when overwrite is true.
 	if c.overwrite || !metadataExists {
-		rootDir := outputDir
-		if rootDir == "" {
-			rootDir = filepath.Dir(manifestsDir)
+		bundleRoot := outputDir
+		if bundleRoot == "" {
+			bundleRoot = filepath.Dir(manifestsDir)
 		}
 
-		if err = rewriteBundleImageContents(rootDir); err != nil {
+		if err = updateMetadata(cfg, bundleRoot); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func rewriteBundleImageContents(rootDir string) error {
-	metricLabels := projutil.MakeBundleMetricsLabels()
-
-	// write metric labels to bundle.Dockerfile
-	if err := addLabelsToDockerfile(bundle.DockerFile, metricLabels); err != nil {
-		return fmt.Errorf("error writing metric labels to bundle.dockerfile: %v", err)
-	}
-
-	annotationsFilePath := getAnnotationsFilePath(rootDir)
-	if err := addLabelsToAnnotations(annotationsFilePath, metricLabels); err != nil {
-		return fmt.Errorf("error writing metric labels to annotations.yaml: %v", err)
-	}
-
-	// Add a COPY for the scorecard config to bundle.Dockerfile.
-	if err := copyScorecardConfig(); err != nil {
-		return fmt.Errorf("error copying scorecardConfig to bundle image, %v", err)
-	}
-	return nil
-}
-
-// copyScorecardConfigToBundle checks if bundle.Dockerfile and scorecard config exists in
-// the operator project. If it does, it injects the scorecard configuration into bundle
-// image.
-// TODO: Add labels to annotations.yaml and bundle.dockerfile.
-func copyScorecardConfig() error {
-	if isExist(bundle.DockerFile) && isExist(scorecard.ConfigDirName) {
-		scorecardFileContent := fmt.Sprintf("COPY %s %s\n", scorecard.ConfigDirName, scorecard.ConfigDirPath)
-		err := projutil.RewriteFileContents(bundle.DockerFile, "COPY", scorecardFileContent)
-		if err != nil {
-			return fmt.Errorf("error rewriting dockerfile, %v", err)
+func updateMetadata(cfg *config.Config, bundleRoot string) error {
+	bundleLabels := metricsannotations.MakeBundleMetadataLabels(cfg)
+	for key, value := range scorecardannotations.MakeBundleMetadataLabels(scorecard.DefaultConfigDir) {
+		if _, hasKey := bundleLabels[key]; hasKey {
+			return fmt.Errorf("internal error: duplicate bundle annotation key %s", key)
 		}
+		bundleLabels[key] = value
+	}
+
+	// Write labels to bundle Dockerfile.
+	// NB(estroz): these "rewrites" need to be atomic because the bundle's Dockerfile and annotations.yaml
+	// cannot be out-of-sync.
+	if err := rewriteDockerfileLabels(bundle.DockerFile, bundleLabels); err != nil {
+		return fmt.Errorf("error writing LABEL's in %s: %v", bundle.DockerFile, err)
+	}
+	if err := rewriteAnnotations(bundleRoot, bundleLabels); err != nil {
+		return fmt.Errorf("error writing LABEL's in bundle metadata: %v", err)
+	}
+
+	// Add a COPY for the scorecard config to bundle Dockerfile.
+	// TODO: change input config path to be a flag-based value.
+	err := writeDockerfileCOPYScorecardConfig(bundle.DockerFile, filepath.FromSlash(scorecard.DefaultConfigDir))
+	if err != nil {
+		return fmt.Errorf("error writing scorecard config COPY in %s: %v", bundle.DockerFile, err)
+	}
+
+	return nil
+}
+
+// writeDockerfileCOPYScorecardConfig checks if bundle.Dockerfile and scorecard config exists in
+// the operator project. If it does, it injects the scorecard configuration into bundle image.
+func writeDockerfileCOPYScorecardConfig(dockerfileName, localConfigDir string) error {
+	if isExist(bundle.DockerFile) && isExist(localConfigDir) {
+		scorecardFileContent := fmt.Sprintf("COPY %s %s\n", localConfigDir, "/"+scorecard.DefaultConfigDir)
+		return projutil.RewriteFileContents(dockerfileName, "COPY", scorecardFileContent)
 	}
 	return nil
 }
 
-// checkMetatdataExists returns true if bundle.Dockerfile and metadataDir exist, if not
+// isMetatdataExist returns true if bundle.Dockerfile and metadataDir exist, if not
 // it returns false.
-func checkMetatdataExists(outputDir, manifestsDir string) bool {
+func isMetatdataExist(outputDir, manifestsDir string) bool {
 	var annotationsDir string
 	if outputDir == "" {
 		annotationsDir = filepath.Dir(manifestsDir) + bundle.MetadataDir
@@ -328,30 +337,42 @@ func checkMetatdataExists(outputDir, manifestsDir string) bool {
 	return true
 }
 
-func addLabelsToDockerfile(filename string, metricAnnotation map[string]string) error {
-	var sdkMetricContent strings.Builder
-	for key, value := range metricAnnotation {
-		sdkMetricContent.WriteString(fmt.Sprintf("LABEL %s=%s\n", key, value))
+func rewriteDockerfileLabels(dockerfileName string, kvs map[string]string) error {
+	var labelStrings []string
+	for key, value := range kvs {
+		labelStrings = append(labelStrings, fmt.Sprintf("LABEL %s=%s\n", key, value))
+	}
+	sort.Strings(labelStrings)
+	var newBundleLabels strings.Builder
+	for _, line := range labelStrings {
+		newBundleLabels.WriteString(line)
 	}
 
-	err := projutil.RewriteFileContents(filename, "LABEL", sdkMetricContent.String())
-	if err != nil {
-		return fmt.Errorf("error rewriting dockerfile with metric labels, %v", err)
-	}
-	return nil
+	return projutil.RewriteFileContents(dockerfileName, "LABEL", newBundleLabels.String())
 }
 
-// getAnnotationsFilePath return the locations of annotations.yaml.
-func getAnnotationsFilePath(rootDir string) string {
-	return filepath.Join(rootDir, bundle.MetadataDir, bundle.AnnotationsFile)
-}
-
-func addLabelsToAnnotations(filename string, metricLables map[string]string) error {
-	err := registry.RewriteAnnotationsYaml(filename, metricLables)
+func rewriteAnnotations(bundleRoot string, kvs map[string]string) error {
+	annotations, annotationsPath, err := registry.FindBundleMetadata(bundleRoot)
 	if err != nil {
 		return err
 	}
-	return nil
+
+	for key, value := range kvs {
+		annotations[key] = value
+	}
+	annotationsFile := bundle.AnnotationMetadata{
+		Annotations: annotations,
+	}
+	b, err := yaml.Marshal(annotationsFile)
+	if err != nil {
+		return err
+	}
+
+	mode := os.FileMode(0666)
+	if info, err := os.Stat(annotationsPath); err == nil {
+		mode = info.Mode()
+	}
+	return ioutil.WriteFile(annotationsPath, b, mode)
 }
 
 // isExist returns true if path exists.

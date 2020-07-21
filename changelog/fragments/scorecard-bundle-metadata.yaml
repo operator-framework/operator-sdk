@@ -1,0 +1,6 @@
+entries:
+  - description: >
+      `generate bundle` now adds scorecard bundle metadata to bundle.Dockerfile and annotations.yaml
+      if `--overwrite` is set (the default in a project's `Makefile`) or both files do not exist.
+    kind: addition
+    breaking: false

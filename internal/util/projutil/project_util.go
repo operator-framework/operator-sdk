@@ -329,18 +329,15 @@ func PrintDeprecationWarning(msg string) {
 	fmt.Fprintf(os.Stderr, noticeColor, "[Deprecation Notice] "+msg+"\n")
 }
 
-// RewriteFileContents adds the provided content before the last occurrence of the word label
-// and rewrites the file with the new content.
-func RewriteFileContents(filename, instruction, content string) error {
+// RewriteFileContents adds newContent to the line after the last occurrence of target in filename's contents,
+// then writes the updated contents back to disk.
+func RewriteFileContents(filename, target, newContent string) error {
 	text, err := ioutil.ReadFile(filename)
-
 	if err != nil {
 		return fmt.Errorf("error in getting contents from the file, %v", err)
 	}
 
-	existingContent := string(text)
-
-	modifiedContent, err := appendContent(existingContent, instruction, content)
+	modifiedContent, err := appendContent(string(text), target, newContent)
 	if err != nil {
 		return err
 	}
@@ -352,22 +349,18 @@ func RewriteFileContents(filename, instruction, content string) error {
 	return nil
 }
 
-func appendContent(fileContents, instruction, content string) (string, error) {
-	labelIndex := strings.LastIndex(fileContents, instruction)
-
+func appendContent(fileContents, target, newContent string) (string, error) {
+	labelIndex := strings.LastIndex(fileContents, target)
 	if labelIndex == -1 {
-		return "", fmt.Errorf("instruction not present previously in dockerfile")
+		return "", fmt.Errorf("no prior string %s in newContent", target)
 	}
 
 	separationIndex := strings.Index(fileContents[labelIndex:], "\n")
 	if separationIndex == -1 {
-		return "", fmt.Errorf("no new line at the end of dockerfile command %s", fileContents[labelIndex:])
+		return "", fmt.Errorf("no new line at the end of string %s", fileContents[labelIndex:])
 	}
 
 	index := labelIndex + separationIndex + 1
-
-	newContent := fileContents[:index] + content + fileContents[index:]
-
-	return newContent, nil
+	return fileContents[:index] + newContent + fileContents[index:], nil
 
 }

@@ -9,7 +9,7 @@ The Operator SDK supports both creating manifests for OLM deployment, and testin
 Kubernetes cluster.
 
 This document succinctly walks through getting an Operator OLM-ready with [bundles][bundle], and glosses over
-explanations of certains steps for brevity. The following documents contain more detail on these steps:
+explanations of certain steps for brevity. The following documents contain more detail on these steps:
 - All operator-framework manifest commands supported by the SDK: [CLI overview][doc-cli-overview].
 - Generating operator-framework manifests: [generation overview][doc-olm-generate].
 

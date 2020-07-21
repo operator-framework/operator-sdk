@@ -21,8 +21,10 @@ import (
 )
 
 const (
-	ConfigDirName = "scorecard"
-	ConfigDirPath = "/tests/" + ConfigDirName + "/"
+	// ConfigFileName is the scorecard's hard-coded config file name.
+	ConfigFileName = "config.yaml"
+	// DefaultConfigDir is the default scorecard path within a bundle.
+	DefaultConfigDir = "tests/scorecard/"
 )
 
 type Stage struct {

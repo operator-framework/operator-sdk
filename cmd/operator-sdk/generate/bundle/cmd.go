@@ -94,7 +94,7 @@ func NewCmd() *cobra.Command {
 				}
 			}
 			if c.metadata {
-				if err = c.runMetadata(); err != nil {
+				if err = c.runMetadata(cfg); err != nil {
 					log.Fatalf("Error generating bundle metadata: %v", err)
 				}
 			}
