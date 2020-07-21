@@ -26,7 +26,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/genutil"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/ansible"
-	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
@@ -54,12 +53,6 @@ For Ansible-based operators:
   - Creates resource folder under /roles.
   - watches.yaml is updated with new resource.
   - deploy/role.yaml will be updated with apiGroup for new API.
-
-For Helm-based operators:
-  - Creates resource folder under /helm-charts.
-  - watches.yaml is updated with new resource.
-  - deploy/role.yaml will be updated to reflact new rules for the incoming API.
-
 CRD's are generated, or updated if they exist for a particular group + version + kind, under
 deploy/crds/<full group>_<resource>_crd.yaml; OpenAPI V3 validation YAML
 is generated as a 'validation' object.`,
@@ -71,38 +64,6 @@ is generated as a 'validation' object.`,
   $ operator-sdk add api  \
   --api-version=app.example.com/v1alpha1 \
   --kind=AppService
-
-# Helm Example:
-  $ operator-sdk add api \
-  --api-version=app.example.com/v1alpha1 \
-  --kind=AppService
-
-  $ operator-sdk add api \
-  --api-version=app.example.com/v1alpha1 \
-  --kind=AppService
-  --helm-chart=myrepo/app
-
-  $ operator-sdk add api \
-  --helm-chart=myrepo/app
-
-  $ operator-sdk add api \
-  --helm-chart=myrepo/app \
-  --helm-chart-version=1.2.3
-
-  $ operator-sdk add api \
-  --helm-chart=app \
-  --helm-chart-repo=https://charts.mycompany.com/
-
-  $ operator-sdk add api \
-  --helm-chart=app \
-  --helm-chart-repo=https://charts.mycompany.com/ \
-  --helm-chart-version=1.2.3
-
-  $ operator-sdk add api \
-  --helm-chart=/path/to/local/chart-directories/app/
-
-  $ operator-sdk add api \
-  --helm-chart=/path/to/local/chart-archives/app-1.2.3.tgz
 `,
 		RunE: apiRun,
 	}
@@ -131,26 +92,10 @@ func apiRun(cmd *cobra.Command, args []string) error {
 	switch operatorType {
 	case projutil.OperatorTypeGo:
 		return fmt.Errorf("the `add api` command is not supported for Go operators")
+	case projutil.OperatorTypeHelm:
+		return fmt.Errorf("the `add api` command is not supported for Helm operators")
 	case projutil.OperatorTypeAnsible:
 		if err := doAnsibleAPIScaffold(); err != nil {
-			return err
-		}
-	case projutil.OperatorTypeHelm:
-		absProjectPath := projutil.MustGetwd()
-		projectName := filepath.Base(absProjectPath)
-		cfg := input.Config{
-			AbsProjectPath: absProjectPath,
-			ProjectName:    projectName,
-		}
-		createOpts := helm.CreateChartOptions{
-			ResourceAPIVersion: apiFlags.APIVersion,
-			ResourceKind:       apiFlags.Kind,
-			Chart:              apiFlags.HelmChartRef,
-			Version:            apiFlags.HelmChartVersion,
-			Repo:               apiFlags.HelmChartRepo,
-			CRDVersion:         apiFlags.CrdVersion,
-		}
-		if err := helm.API(cfg, createOpts); err != nil {
 			return err
 		}
 	}

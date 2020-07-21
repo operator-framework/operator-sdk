@@ -42,7 +42,6 @@ const (
 	rolesDir          = "roles"
 	requirementsFile  = "requirements.yml"
 	moleculeDir       = "molecule"
-	helmChartsDir     = "helm-charts"
 	goModFile         = "go.mod"
 	defaultPermission = 0644
 
@@ -262,19 +261,15 @@ func IsOperatorAnsible() bool {
 }
 
 // IsOperatorHelm returns true when the layout field in PROJECT file has the Helm prefix key.
-// NOTE: For the legacy, returns true when the project contains the helm-charts directory.
 func IsOperatorHelm() bool {
-	// If the project has the new layout we will check the type in the config file
-	if kbutil.HasProjectFile() {
-		cfg, err := kbutil.ReadConfig()
-		if err != nil {
-			log.Fatalf("Error reading config: %v", err)
-		}
-		return PluginKeyToOperatorType(cfg.Layout) == OperatorTypeHelm
+	if !kbutil.HasProjectFile() {
+		return false
 	}
-	// todo(camilamacedo86): remove when the legacy layout is no longer supported
-	stat, err := os.Stat(helmChartsDir)
-	return (err == nil && stat.IsDir()) || os.IsExist(err)
+	cfg, err := kbutil.ReadConfig()
+	if err != nil {
+		log.Fatalf("Error reading config: %v", err)
+	}
+	return PluginKeyToOperatorType(cfg.Layout) == OperatorTypeHelm
 }
 
 // MustSetWdGopath sets GOPATH to the first element of the path list in

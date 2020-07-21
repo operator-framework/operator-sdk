@@ -22,9 +22,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	"github.com/operator-framework/operator-sdk/internal/scaffold"
-	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 )
 
 func TestLoadReader(t *testing.T) {
@@ -42,7 +39,7 @@ func TestLoadReader(t *testing.T) {
 - group: mygroup
   version: v1alpha1
   kind: MyKind
-  chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
+  chart: ../../../internal/plugins/helm/v1/chartutil/testdata/test-chart
   watchDependentResources: false
   overrideValues:
     key: value
@@ -50,7 +47,7 @@ func TestLoadReader(t *testing.T) {
 			expectWatches: []Watch{
 				{
 					GroupVersionKind:        schema.GroupVersionKind{Group: "mygroup", Version: "v1alpha1", Kind: "MyKind"},
-					ChartDir:                "../../../internal/scaffold/helm/testdata/testcharts/test-chart",
+					ChartDir:                "../../../internal/plugins/helm/v1/chartutil/testdata/test-chart",
 					WatchDependentResources: &falseVal,
 					OverrideValues:          map[string]string{"key": "value"},
 				},
@@ -63,7 +60,7 @@ func TestLoadReader(t *testing.T) {
 - group: mygroup
   version: v1alpha1
   kind: MyKind
-  chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
+  chart: ../../../internal/plugins/helm/v1/chartutil/testdata/test-chart
   watchDependentResources: false
   overrideValues:
     key: $MY_VALUE
@@ -72,7 +69,7 @@ func TestLoadReader(t *testing.T) {
 			expectWatches: []Watch{
 				{
 					GroupVersionKind:        schema.GroupVersionKind{Group: "mygroup", Version: "v1alpha1", Kind: "MyKind"},
-					ChartDir:                "../../../internal/scaffold/helm/testdata/testcharts/test-chart",
+					ChartDir:                "../../../internal/plugins/helm/v1/chartutil/testdata/test-chart",
 					WatchDependentResources: &falseVal,
 					OverrideValues:          map[string]string{"key": "value"},
 				},
@@ -85,21 +82,21 @@ func TestLoadReader(t *testing.T) {
 - group: mygroup
   version: v1alpha1
   kind: MyFirstKind
-  chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
+  chart: ../../../internal/plugins/helm/v1/chartutil/testdata/test-chart
 - group: mygroup
   version: v1alpha1
   kind: MySecondKind
-  chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
+  chart: ../../../internal/plugins/helm/v1/chartutil/testdata/test-chart
 `,
 			expectWatches: []Watch{
 				{
 					GroupVersionKind:        schema.GroupVersionKind{Group: "mygroup", Version: "v1alpha1", Kind: "MyFirstKind"},
-					ChartDir:                "../../../internal/scaffold/helm/testdata/testcharts/test-chart",
+					ChartDir:                "../../../internal/plugins/helm/v1/chartutil/testdata/test-chart",
 					WatchDependentResources: &trueVal,
 				},
 				{
 					GroupVersionKind:        schema.GroupVersionKind{Group: "mygroup", Version: "v1alpha1", Kind: "MySecondKind"},
-					ChartDir:                "../../../internal/scaffold/helm/testdata/testcharts/test-chart",
+					ChartDir:                "../../../internal/plugins/helm/v1/chartutil/testdata/test-chart",
 					WatchDependentResources: &trueVal,
 				},
 			},
@@ -111,11 +108,11 @@ func TestLoadReader(t *testing.T) {
 - group: mygroup
   version: v1alpha1
   kind: MyKind
-  chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
+  chart: ../../../internal/plugins/helm/v1/chartutil/testdata/test-chart
 - group: mygroup
   version: v1alpha1
   kind: MyKind
-  chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
+  chart: ../../../internal/plugins/helm/v1/chartutil/testdata/test-chart
 `,
 			expectErr: true,
 		},
@@ -124,7 +121,7 @@ func TestLoadReader(t *testing.T) {
 			data: `---
 - group: mygroup
   kind: MyKind
-  chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
+  chart: ../../../internal/plugins/helm/v1/chartutil/testdata/test-chart
 `,
 			expectErr: true,
 		},
@@ -133,7 +130,7 @@ func TestLoadReader(t *testing.T) {
 			data: `---
 - group: mygroup
   version: v1alpha1
-  chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
+  chart: ../../../internal/plugins/helm/v1/chartutil/testdata/test-chart
 `,
 			expectErr: true,
 		},
@@ -153,7 +150,7 @@ func TestLoadReader(t *testing.T) {
 - group: mygroup
   version: v1alpha1
   kind: MyKind
-  chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
+  chart: ../../../internal/plugins/helm/v1/chartutil/testdata/test-chart
   overrideValues:
     key1:
 		key2: value
@@ -210,7 +207,7 @@ func TestLoad(t *testing.T) {
 - group: mygroup
   version: v1alpha1
   kind: MyKind
-  chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
+  chart: ../../../internal/plugins/helm/v1/chartutil/testdata/test-chart
   watchDependentResources: false
   overrideValues:
     key: value
@@ -218,7 +215,7 @@ func TestLoad(t *testing.T) {
 			expectWatches: []Watch{
 				{
 					GroupVersionKind:        schema.GroupVersionKind{Group: "mygroup", Version: "v1alpha1", Kind: "MyKind"},
-					ChartDir:                "../../../internal/scaffold/helm/testdata/testcharts/test-chart",
+					ChartDir:                "../../../internal/plugins/helm/v1/chartutil/testdata/test-chart",
 					WatchDependentResources: &falseVal,
 					OverrideValues:          map[string]string{"key": "value"},
 				},
@@ -256,251 +253,6 @@ func TestLoad(t *testing.T) {
 					t.Fatalf("Failed to unset environment variable %q: %v", k, err)
 				}
 			}
-		})
-	}
-}
-
-func TestAppend(t *testing.T) {
-	trueVal := true
-	testCases := []struct {
-		name          string
-		data          string
-		watch         Watch
-		expectErr     bool
-		expectWatches string
-	}{
-		{
-			name: "empty_existing",
-			watch: Watch{
-				GroupVersionKind: schema.GroupVersionKind{
-					Group: "mygroup", Version: "v1alpha1", Kind: "MyNewKind",
-				},
-				ChartDir:                "helm-charts/test",
-				WatchDependentResources: &trueVal,
-				OverrideValues:          map[string]string{"key": "value"},
-			},
-			expectErr: false,
-			expectWatches: `---
-- group: mygroup
-  version: v1alpha1
-  kind: MyNewKind
-  chart: helm-charts/test
-  watchDependentResources: true
-  overrideValues:
-    "key": "value"
-`,
-		},
-		{
-			name: "empty_minimal_watch",
-			watch: Watch{
-				GroupVersionKind: schema.GroupVersionKind{
-					Group: "mygroup", Version: "v1alpha1", Kind: "MyNewKind",
-				},
-				ChartDir: "helm-charts/test",
-			},
-			expectErr: false,
-			expectWatches: `---
-- group: mygroup
-  version: v1alpha1
-  kind: MyNewKind
-  chart: helm-charts/test
-`,
-		},
-		{
-			name: "append_all_fields",
-			data: `---
-- group: mygroup
-  version: v1alpha1
-  kind: MyKind
-  chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
-  watchDependentResources: false
-  overrideValues:
-    "key": "value"
-`,
-			watch: Watch{
-				GroupVersionKind: schema.GroupVersionKind{
-					Group: "mygroup", Version: "v1alpha1", Kind: "MyNewKind",
-				},
-				ChartDir:                "helm-charts/test",
-				WatchDependentResources: &trueVal,
-				OverrideValues:          map[string]string{"key": "value"},
-			},
-			expectErr: false,
-			expectWatches: `---
-- group: mygroup
-  version: v1alpha1
-  kind: MyKind
-  chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
-  watchDependentResources: false
-  overrideValues:
-    "key": "value"
-- group: mygroup
-  version: v1alpha1
-  kind: MyNewKind
-  chart: helm-charts/test
-  watchDependentResources: true
-  overrideValues:
-    "key": "value"
-`,
-		},
-		{
-			name: "duplicate_error",
-			data: `---
-- group: mygroup
-  version: v1alpha1
-  kind: MyKind
-  chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
-  watchDependentResources: false
-  overrideValues:
-    "key": "value"
-`,
-			watch: Watch{
-				GroupVersionKind: schema.GroupVersionKind{
-					Group: "mygroup", Version: "v1alpha1", Kind: "MyKind",
-				},
-				ChartDir: "helm-charts/test",
-			},
-			expectErr: true,
-		},
-		{
-			name: "invalid_yaml_error",
-			data: `---
-group: mygroup
-version: v1alpha1
-kind: MyKind
-chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
-watchDependentResources: false
-overrideValues:
-  "key": "value"
-`,
-			watch: Watch{
-				GroupVersionKind: schema.GroupVersionKind{
-					Group: "mygroup", Version: "v1alpha1", Kind: "MyNewKind",
-				},
-				ChartDir: "helm-charts/test",
-			},
-			expectErr: true,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			data, err := Append(bytes.NewBufferString(tc.data), tc.watch)
-			if !tc.expectErr && err != nil {
-				t.Fatalf("Expected no error; got error: %v", err)
-			} else if tc.expectErr && err == nil {
-				t.Fatalf("Expected error; got no error")
-			}
-			assert.Equal(t, tc.expectWatches, string(data))
-		})
-	}
-}
-
-func TestUpdateForResource(t *testing.T) {
-	resource, err := scaffold.NewResource("mygroup/v1alpha1", "MyNewKind")
-	if err != nil {
-		t.Fatal("Invalid resource: %w", err)
-	}
-	testCases := []struct {
-		name            string
-		initialData     string
-		resource        *scaffold.Resource
-		chartName       string
-		expectWatches   string
-		expectErr       bool
-		skipInitialFile bool
-	}{
-		{
-			name:            "non-existent",
-			resource:        resource,
-			chartName:       "test",
-			skipInitialFile: true,
-			expectErr:       false,
-			expectWatches: `---
-- group: mygroup
-  version: v1alpha1
-  kind: MyNewKind
-  chart: helm-charts/test
-`,
-		},
-		{
-			name:      "empty",
-			resource:  resource,
-			chartName: "test",
-			expectErr: false,
-			expectWatches: `---
-- group: mygroup
-  version: v1alpha1
-  kind: MyNewKind
-  chart: helm-charts/test
-`,
-		},
-		{
-			name:      "existing",
-			resource:  resource,
-			chartName: "test",
-			initialData: `---
-- group: mygroup
-  version: v1alpha1
-  kind: MyKind
-  chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
-  watchDependentResources: false
-  overrideValues:
-    "key": "value"
-`,
-			expectErr: false,
-			expectWatches: `---
-- group: mygroup
-  version: v1alpha1
-  kind: MyKind
-  chart: ../../../internal/scaffold/helm/testdata/testcharts/test-chart
-  watchDependentResources: false
-  overrideValues:
-    "key": "value"
-- group: mygroup
-  version: v1alpha1
-  kind: MyNewKind
-  chart: helm-charts/test
-`,
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			wf, err := ioutil.TempFile("", "osdk-test-append-to-file")
-			if err != nil {
-				t.Fatalf("Error creating temporary watches file: %v", err)
-			}
-			defer func() {
-				if err := os.Remove(wf.Name()); err != nil {
-					t.Fatalf("Error removing temporary watches file: %v", err)
-				}
-			}()
-			if err := wf.Close(); err != nil {
-				t.Fatalf("Error closing temporary watches file: %v", err)
-			}
-			if tc.skipInitialFile {
-				if err := os.Remove(wf.Name()); err != nil {
-					t.Fatalf("Error removing temporary watches file: %v", err)
-				}
-			} else {
-				if err := ioutil.WriteFile(wf.Name(), []byte(tc.initialData), fileutil.DefaultFileMode); err != nil {
-					t.Fatalf("Error writing test initialData to temporary watches file: %v", err)
-				}
-			}
-
-			err = UpdateForResource(wf.Name(), tc.resource, tc.chartName)
-			if !tc.expectErr && err != nil {
-				t.Fatalf("Expected no error; got error: %v", err)
-			} else if tc.expectErr && err == nil {
-				t.Fatalf("Expected error; got no error")
-			}
-
-			watchesData, err := ioutil.ReadFile(wf.Name())
-			if err != nil {
-				t.Fatalf("Error reading temporary watches file: %v", err)
-			}
-
-			assert.Equal(t, tc.expectWatches, string(watchesData))
 		})
 	}
 }
