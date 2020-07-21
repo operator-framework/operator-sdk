@@ -32,13 +32,10 @@ func TestAddTo(t *testing.T) {
 			// Populate FlagSet
 			name: "Populate FlagSet",
 			apiFlags: APIFlags{
-				APIVersion:       "app.example.com/v1alpha1",
-				Kind:             "AppService",
-				SkipGeneration:   false,
-				CrdVersion:       "v1",
-				HelmChartRef:     "stable/app",
-				HelmChartVersion: "1.0.0",
-				HelmChartRepo:    "https://charts.mycompany.com/",
+				APIVersion:     "app.example.com/v1alpha1",
+				Kind:           "AppService",
+				SkipGeneration: false,
+				CrdVersion:     "v1",
 			},
 			validate: func(apiFlags APIFlags, flagSet *pflag.FlagSet) error {
 				val, err := flagSet.GetString("api-version")
@@ -71,22 +68,6 @@ func TestAddTo(t *testing.T) {
 				}
 				if apiFlags.CrdVersion != val {
 					return fmt.Errorf("crdVersion does not match")
-				}
-
-				val, err = flagSet.GetString("helm-chart-repo")
-				if err != nil {
-					return err
-				}
-				if apiFlags.HelmChartRepo != val {
-					return fmt.Errorf("helmChartRepo does not match")
-				}
-
-				val, err = flagSet.GetString("helm-chart-version")
-				if err != nil {
-					return err
-				}
-				if apiFlags.HelmChartVersion != val {
-					return fmt.Errorf("helmChartVersion does not match")
 				}
 
 				return nil
@@ -126,36 +107,6 @@ func TestVerifyCommonFlags(t *testing.T) {
 			expError:     "",
 		},
 		{
-			// Invalid Go API Flags
-			name: "Invalid Go API Flags-HelmChartRef",
-			apiFlags: APIFlags{
-				APIVersion:   "app.example.com/v1alpha1",
-				HelmChartRef: "stable/repo",
-			},
-			operatorType: "go",
-			expError:     "value of --helm-chart can only be used with --type=helm",
-		},
-		{
-			// Invalid Go API Flags
-			name: "Invalid Go API Flags-HelmChartRepo",
-			apiFlags: APIFlags{
-				APIVersion:    "app.example.com/v1alpha1",
-				HelmChartRepo: "https://charts.mycompany.com/",
-			},
-			operatorType: "go",
-			expError:     "value of --helm-chart-repo can only be used with --type=helm and --helm-chart",
-		},
-		{
-			// Invalid Go API Flags
-			name: "Invalid Go API Flags-HelmChartVersion",
-			apiFlags: APIFlags{
-				APIVersion:       "app.example.com/v1alpha1",
-				HelmChartVersion: "1.2.0",
-			},
-			operatorType: "go",
-			expError:     "value of --helm-chart-version can only be used with --type=helm and --helm-chart",
-		},
-		{
 			// Valid Ansible API Flags
 			name: "Valid Ansible API Flags",
 			apiFlags: APIFlags{
@@ -193,69 +144,6 @@ func TestVerifyCommonFlags(t *testing.T) {
 			},
 			operatorType: "ansible",
 			expError:     "value of --api-version must not have empty value",
-		},
-		{
-			// Invalid Ansible API Flags
-			name: "Invalid Ansible API Flags-HelmChartVersion is used",
-			apiFlags: APIFlags{
-				APIVersion:       "app.example.com/v1alpha1",
-				Kind:             "App",
-				HelmChartVersion: "1.2.0",
-			},
-			operatorType: "ansible",
-			expError:     "value of --helm-chart-version can only be used with --type=helm and --helm-chart",
-		},
-		{
-			// Invalid Ansible API Flags
-			name: "Invalid Ansible API Flags-HelmChartRepo is used",
-			apiFlags: APIFlags{
-				APIVersion:    "app.example.com/v1alpha1",
-				Kind:          "App",
-				HelmChartRepo: "https://charts.mycompany.com/",
-			},
-			operatorType: "ansible",
-			expError:     "value of --helm-chart-repo can only be used with --type=helm and --helm-chart",
-		},
-		{
-			// Valid HELM API Flags
-			name: "Valid HELM API Flags",
-			apiFlags: APIFlags{
-				APIVersion:     "app.example.com/v1alpha1",
-				Kind:           "App",
-				SkipGeneration: true,
-			},
-			operatorType: "helm",
-			expError:     "",
-		},
-		{
-			// Valid HELM API Flags
-			name: "Valid HELM API Flags-Helmchart used",
-			apiFlags: APIFlags{
-				HelmChartRef: "stable/repo",
-			},
-			operatorType: "helm",
-			expError:     "",
-		},
-		{
-			// Valid HELM API Flags
-			name: "Valid HELM API Flags-Helm specific flags",
-			apiFlags: APIFlags{
-				HelmChartRef:     "stable/repo",
-				HelmChartRepo:    "https://charts.mycompany.com/",
-				HelmChartVersion: "1.2.0",
-			},
-			operatorType: "helm",
-			expError:     "",
-		},
-		{
-			// Invalid HELM API Flags
-			name: "Invalid HELM API Flags-no HelmChartRef provided",
-			apiFlags: APIFlags{
-				HelmChartRepo:    "https://charts.mycompany.com/",
-				HelmChartVersion: "1.2.0",
-			},
-			operatorType: "helm",
-			expError:     "value of --helm-chart-repo can only be used with --type=helm and --helm-chart",
 		},
 	}
 	for _, tc := range testCases {

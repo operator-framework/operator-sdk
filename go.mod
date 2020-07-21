@@ -19,7 +19,6 @@ require (
 	github.com/operator-framework/api v0.3.8
 	github.com/operator-framework/operator-registry v1.12.6-0.20200611222234-275301b779f8
 	github.com/prometheus/client_golang v1.5.1
-	github.com/prometheus/common v0.9.1
 	github.com/rogpeppe/go-internal v1.5.0
 	github.com/sergi/go-diff v1.0.0
 	github.com/sirupsen/logrus v1.5.0

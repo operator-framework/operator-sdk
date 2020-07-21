@@ -28,7 +28,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/genutil"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/ansible"
-	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
@@ -56,46 +55,14 @@ generates a default directory layout based on the input <project-name>.
   $ operator-sdk new app-operator --type=ansible \
     --api-version=app.example.com/v1alpha1 \
     --kind=AppService
-
-  # Helm project
-  $ operator-sdk new app-operator --type=helm \
-  --api-version=app.example.com/v1alpha1 \
-  --kind=AppService
-
-  $ operator-sdk new app-operator --type=helm \
-  --api-version=app.example.com/v1alpha1 \
-  --kind=AppService \
-  --helm-chart=myrepo/app
-
-  $ operator-sdk new app-operator --type=helm \
-  --helm-chart=myrepo/app
-
-  $ operator-sdk new app-operator --type=helm \
-  --helm-chart=myrepo/app \
-  --helm-chart-version=1.2.3
-
-  $ operator-sdk new app-operator --type=helm \
-  --helm-chart=app \
-  --helm-chart-repo=https://charts.mycompany.com/
-
-  $ operator-sdk new app-operator --type=helm \
-  --helm-chart=app \
-  --helm-chart-repo=https://charts.mycompany.com/ \
-  --helm-chart-version=1.2.3
-
-  $ operator-sdk new app-operator --type=helm \
-  --helm-chart=/path/to/local/chart-directories/app/
-
-  $ operator-sdk new app-operator --type=helm \
-  --helm-chart=/path/to/local/chart-archives/app-1.2.3.tgz
 `,
 		RunE: newFunc,
 	}
 
-	newCmd.Flags().StringVar(&operatorType, "type", "",
-		"Type of operator to initialize (choices: \"ansible\" or \"helm\")")
-	if err := newCmd.MarkFlagRequired("type"); err != nil {
-		log.Fatalf("Failed to mark `type` flag for `new` subcommand as required")
+	newCmd.Flags().StringVar(&operatorType, "type", "ansible",
+		"Type of operator to initialize (choices: \"ansible\")")
+	if err := newCmd.Flags().MarkHidden("type"); err != nil {
+		log.Fatalf("Failed to mark `type` flag for `new` subcommand as hidden")
 	}
 
 	// todo(camilamacedo86): remove before 1.0.0
@@ -129,7 +96,7 @@ func newFunc(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	mustBeNewProject()
-	if err := verifyFlags(); err != nil {
+	if err := apiFlags.VerifyCommonFlags(operatorType); err != nil {
 		return err
 	}
 
@@ -138,35 +105,6 @@ func newFunc(cmd *cobra.Command, args []string) error {
 	switch operatorType {
 	case projutil.OperatorTypeAnsible:
 		if err := doAnsibleScaffold(); err != nil {
-			log.Fatal(err)
-		}
-	case projutil.OperatorTypeHelm:
-		// create the project dir
-		err := os.MkdirAll(projectName, 0755)
-		if err != nil {
-			log.Fatal(err)
-		}
-		// go inside of the project dir
-		err = os.Chdir(filepath.Join(projutil.MustGetwd(), projectName))
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		cfg := input.Config{
-			AbsProjectPath: filepath.Join(projutil.MustGetwd()),
-			ProjectName:    projectName,
-		}
-
-		createOpts := helm.CreateChartOptions{
-			ResourceAPIVersion: apiFlags.APIVersion,
-			ResourceKind:       apiFlags.Kind,
-			Chart:              apiFlags.HelmChartRef,
-			Version:            apiFlags.HelmChartVersion,
-			Repo:               apiFlags.HelmChartRepo,
-			CRDVersion:         apiFlags.CrdVersion,
-		}
-
-		if err := helm.Init(cfg, createOpts); err != nil {
 			log.Fatal(err)
 		}
 	}
@@ -299,21 +237,6 @@ func doAnsibleScaffold() error {
 		return fmt.Errorf("failed to update the RBAC manifest for the resource (%v, %v): %v",
 			resource.APIVersion, resource.Kind, err)
 	}
-	return nil
-}
-
-func verifyFlags() error {
-	if operatorType != projutil.OperatorTypeAnsible && operatorType != projutil.OperatorTypeHelm {
-		return fmt.Errorf("value of --type can only be `ansible`, or `helm`: %v",
-			projutil.ErrUnknownOperatorType{Type: operatorType})
-	}
-	if operatorType != projutil.OperatorTypeAnsible && generatePlaybook {
-		return fmt.Errorf("value of --generate-playbook can only be used with --type `ansible`")
-	}
-	if err := apiFlags.VerifyCommonFlags(operatorType); err != nil {
-		return err
-	}
-
 	return nil
 }
 
