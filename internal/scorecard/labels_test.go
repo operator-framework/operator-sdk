@@ -17,8 +17,9 @@ package scorecard
 import (
 	"testing"
 
-	"gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/labels"
+
+	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
 
 func TestEmptySelector(t *testing.T) {
@@ -26,25 +27,22 @@ func TestEmptySelector(t *testing.T) {
 	cases := []struct {
 		selectorValue string
 		testsSelected int
+		config        v1alpha3.ScorecardConfiguration
 		wantError     bool
 	}{
-		{"", 7, false},
-		{"suite in (kuttl)", 1, false},
-		{"test=basic-check-spec-test", 1, false},
-		{"testXwriteintocr", 0, false},
-		{"test X writeintocr", 0, true},
+		{"", 7, testConfig, false},
+		{"suite in (kuttl)", 1, testConfig, false},
+		{"test=basic-check-spec-test", 1, testConfig, false},
+		{"testXwriteintocr", 0, testConfig, false},
+		{"test X writeintocr", 0, testConfig, true},
 	}
 
 	for _, c := range cases {
 		t.Run(c.selectorValue, func(t *testing.T) {
 			o := Scorecard{}
+			o.Config = c.config
 
-			err := yaml.Unmarshal([]byte(testConfig), &o.Config)
-			if err != nil {
-				t.Log(err)
-				return
-			}
-
+			var err error
 			o.Selector, err = labels.Parse(c.selectorValue)
 			if err == nil && c.wantError {
 				t.Fatalf("Wanted error but got no error")
@@ -55,7 +53,7 @@ func TestEmptySelector(t *testing.T) {
 				return
 			}
 
-			tests := o.selectTests(o.Config.Stages[0])
+			tests := o.selectTests(o.Config.Spec.Stages[0])
 			testsSelected := len(tests)
 			if testsSelected != c.testsSelected {
 				t.Errorf("Wanted testsSelected %d, got: %d", c.testsSelected, testsSelected)
@@ -65,52 +63,85 @@ func TestEmptySelector(t *testing.T) {
 	}
 }
 
-const testConfig = `stages:
-- tests:
-  - image: quay.io/someuser/customtest1:v0.0.1
-    entrypoint: 
-    - custom-test
-    labels:
-      suite: custom
-      test: customtest1
-  - image: quay.io/someuser/customtest2:v0.0.1
-    entrypoint: 
-    - custom-test
-    labels:
-      suite: custom
-      test: customtest2
-  - image: quay.io/redhat/basictests:v0.0.1
-    entrypoint: 
-    - scorecard-test
-    - basic-check-spec
-    labels:
-      suite: basic
-      test: basic-check-spec-test
-  - image: quay.io/redhat/basictests:v0.0.1
-    entrypoint: 
-    - scorecard-test
-    - basic-check-status
-    labels:
-      suite: basic
-      test: basic-check-status-test
-  - image: quay.io/redhat/olmtests:v0.0.1
-    entrypoint: 
-    - scorecard-test
-    - olm-bundle-validation
-    labels:
-      suite: olm
-      test: olm-bundle-validation-test
-  - image: quay.io/redhat/olmtests:v0.0.1
-    entrypoint: 
-    - scorecard-test
-    - olm-crds-have-validation
-    labels:
-      suite: olm
-      test: olm-crds-have-validation-test
-  - image: quay.io/redhat/kuttltests:v0.0.1
-    labels:
-      suite: kuttl
-    entrypoint:
-    - kuttl-test
-    - olm-status-descriptors
-`
+var testConfig = v1alpha3.ScorecardConfiguration{
+	Spec: v1alpha3.ScorecardConfigurationSpec{
+		Stages: []v1alpha3.StageConfiguration{
+			{
+				Tests: []v1alpha3.TestConfiguration{
+					{Image: "quay.io/someuser/customtest1:v0.0.1",
+						Entrypoint: []string{
+							"custom-test",
+						},
+						Labels: map[string]string{
+							"suite": "custom",
+							"test":  "customtest1",
+						},
+					},
+
+					{Image: "quay.io/someuser/customtest2:v0.0.1",
+						Entrypoint: []string{
+							"custom-test",
+						},
+						Labels: map[string]string{
+							"suite": "custom",
+							"test":  "customtest2",
+						},
+					},
+
+					{Image: "quay.io/redhat/basictests:v0.0.1",
+						Entrypoint: []string{
+							"scorecard-test",
+							"basic-check-spec",
+						},
+						Labels: map[string]string{
+							"suite": "basic",
+							"test":  "basic-check-spec-test",
+						},
+					},
+
+					{Image: "quay.io/redhat/basictests:v0.0.1",
+						Entrypoint: []string{
+							"scorecard-test",
+							"basic-check-status",
+						},
+						Labels: map[string]string{
+							"suite": "basic",
+							"test":  "basic-check-status-test",
+						},
+					},
+
+					{Image: "quay.io/redhat/olmtests:v0.0.1",
+						Entrypoint: []string{
+							"scorecard-test",
+							"olm-bundle-validation",
+						},
+						Labels: map[string]string{
+							"suite": "olm",
+							"test":  "olm-bundle-validation-test",
+						},
+					},
+
+					{Image: "quay.io/redhat/olmtests:v0.0.1",
+						Entrypoint: []string{
+							"scorecard-test",
+							"olm-crds-have-validation",
+						},
+						Labels: map[string]string{
+							"suite": "olm",
+							"test":  "olm-crds-have-validation-test",
+						},
+					},
+					{Image: "quay.io/redhat/kuttltests:v0.0.1",
+						Entrypoint: []string{
+							"kuttl-test",
+							"olm-status-descriptors",
+						},
+						Labels: map[string]string{
+							"suite": "kuttl",
+						},
+					},
+				},
+			},
+		},
+	},
+}

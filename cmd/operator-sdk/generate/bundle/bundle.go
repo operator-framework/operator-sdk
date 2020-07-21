@@ -35,6 +35,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/registry"
 	"github.com/operator-framework/operator-sdk/internal/scorecard"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
 
 const (
@@ -218,11 +219,35 @@ func (c bundleCmd) runManifests(cfg *config.Config) (err error) {
 		}
 	}
 
+	// Write the scorecard config if it was passed.
+	if err := writeScorecardConfig(c.outputDir, col.ScorecardConfig); err != nil {
+		return fmt.Errorf("error writing bundle scorecard config: %v", err)
+	}
+
 	if !c.quiet && !c.stdout {
 		fmt.Println("Bundle manifests generated successfully in", c.outputDir)
 	}
 
 	return nil
+}
+
+// writeScorecardConfig writes cfg to dir at the hard-coded config path 'config.yaml'.
+func writeScorecardConfig(dir string, cfg v1alpha3.ScorecardConfiguration) error {
+	if cfg.Metadata.Name == "" {
+		return nil
+	}
+
+	b, err := yaml.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+
+	cfgDir := filepath.Join(dir, filepath.FromSlash(scorecard.DefaultConfigDir))
+	if err := os.MkdirAll(cfgDir, 0755); err != nil {
+		return err
+	}
+	scorecardConfigPath := filepath.Join(cfgDir, scorecard.ConfigFileName)
+	return ioutil.WriteFile(scorecardConfigPath, b, 0666)
 }
 
 // validateMetadata validates c for bundle metadata generation.
@@ -282,6 +307,8 @@ func (c bundleCmd) generateMetadata(cfg *config.Config, manifestsDir, outputDir 
 	return nil
 }
 
+// NB(estroz): these updates need to be atomic because the bundle's Dockerfile and annotations.yaml
+// cannot be out-of-sync.
 func updateMetadata(cfg *config.Config, bundleRoot string) error {
 	bundleLabels := metricsannotations.MakeBundleMetadataLabels(cfg)
 	for key, value := range scorecardannotations.MakeBundleMetadataLabels(scorecard.DefaultConfigDir) {
@@ -292,8 +319,6 @@ func updateMetadata(cfg *config.Config, bundleRoot string) error {
 	}
 
 	// Write labels to bundle Dockerfile.
-	// NB(estroz): these "rewrites" need to be atomic because the bundle's Dockerfile and annotations.yaml
-	// cannot be out-of-sync.
 	if err := rewriteDockerfileLabels(bundle.DockerFile, bundleLabels); err != nil {
 		return fmt.Errorf("error writing LABEL's in %s: %v", bundle.DockerFile, err)
 	}
@@ -303,7 +328,8 @@ func updateMetadata(cfg *config.Config, bundleRoot string) error {
 
 	// Add a COPY for the scorecard config to bundle Dockerfile.
 	// TODO: change input config path to be a flag-based value.
-	err := writeDockerfileCOPYScorecardConfig(bundle.DockerFile, filepath.FromSlash(scorecard.DefaultConfigDir))
+	localScorecardConfigPath := filepath.Join(bundleRoot, filepath.FromSlash(scorecard.DefaultConfigDir))
+	err := writeDockerfileCOPYScorecardConfig(bundle.DockerFile, localScorecardConfigPath)
 	if err != nil {
 		return fmt.Errorf("error writing scorecard config COPY in %s: %v", bundle.DockerFile, err)
 	}

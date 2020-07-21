@@ -30,18 +30,14 @@ require if the tests are designed for resource creation.
 
 ## Running the Scorecard
 
+1. Define a scorecard configuration file by running
+  ```sh
+  $ operator-sdk generate kustomize scorecard
+  ```
+  See the [config file section](#config-file) for an explanation of the configuration file format.
 1. Generate [bundle][quickstart-bundle] manifests and metadata for your Operator.
 `make bundle` will automatically add scorecard annotations to your bundle's metadata,
 which is used by the `scorecard` command to run tests.
-1. Define a scorecard configuration file `bundle/tests/scorecard/config.yaml`, the default path.
-If you choose to define this file elsewhere, you can either change the modified portion of that path in
-`annotations.yaml` and `bundle.Dockerfile`, or override that value using the `--config` flag.
-Unless executing custom tests, you may copy this [sample][sample-config] configuration file into your project.
-See the [config file section](#config-file) for an explanation of the configuration file format.
-1. Add the following line to the end of your `bundle.Dockerfile`:
-  ```docker
-  COPY bundle/tests/scorecard /tests/scorecard
-  ```
 1. Execute the [`scorecard` command][cli-scorecard]. See the [command args section](#command-args)
 for an overview of command invocation.
 

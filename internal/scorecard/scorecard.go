@@ -32,12 +32,12 @@ import (
 
 type TestRunner interface {
 	Initialize(context.Context) error
-	RunTest(context.Context, Test) (*v1alpha3.TestStatus, error)
+	RunTest(context.Context, v1alpha3.TestConfiguration) (*v1alpha3.TestStatus, error)
 	Cleanup(context.Context) error
 }
 
 type Scorecard struct {
-	Config      Config
+	Config      v1alpha3.ScorecardConfiguration
 	Selector    labels.Selector
 	TestRunner  TestRunner
 	SkipCleanup bool
@@ -67,7 +67,7 @@ func (o Scorecard) Run(ctx context.Context) (v1alpha3.TestList, error) {
 		return testOutput, err
 	}
 
-	for _, stage := range o.Config.Stages {
+	for _, stage := range o.Config.Spec.Stages {
 		tests := o.selectTests(stage)
 		if len(tests) == 0 {
 			continue
@@ -93,11 +93,11 @@ func (o Scorecard) Run(ctx context.Context) (v1alpha3.TestList, error) {
 	return testOutput, nil
 }
 
-func (o Scorecard) runStageParallel(ctx context.Context, tests []Test, results chan<- v1alpha3.Test) {
+func (o Scorecard) runStageParallel(ctx context.Context, tests []v1alpha3.TestConfiguration, results chan<- v1alpha3.Test) {
 	var wg sync.WaitGroup
 	for _, t := range tests {
 		wg.Add(1)
-		go func(test Test) {
+		go func(test v1alpha3.TestConfiguration) {
 			results <- o.runTest(ctx, test)
 			wg.Done()
 		}(t)
@@ -105,32 +105,30 @@ func (o Scorecard) runStageParallel(ctx context.Context, tests []Test, results c
 	wg.Wait()
 }
 
-func (o Scorecard) runStageSequential(ctx context.Context, tests []Test, results chan<- v1alpha3.Test) {
+func (o Scorecard) runStageSequential(ctx context.Context, tests []v1alpha3.TestConfiguration, results chan<- v1alpha3.Test) {
 	for _, test := range tests {
 		results <- o.runTest(ctx, test)
 	}
 }
 
-func (o Scorecard) runTest(ctx context.Context, test Test) v1alpha3.Test {
+func (o Scorecard) runTest(ctx context.Context, test v1alpha3.TestConfiguration) v1alpha3.Test {
 	result, err := o.TestRunner.RunTest(ctx, test)
 	if err != nil {
 		result = convertErrorToStatus(err, "")
 	}
 
 	out := v1alpha3.NewTest()
-	out.Spec = v1alpha3.TestSpec{
-		Image:      test.Image,
-		Entrypoint: test.Entrypoint,
-		Labels:     test.Labels,
-	}
+	out.Spec.Image = test.Image
+	out.Spec.Entrypoint = test.Entrypoint
+	out.Spec.Labels = test.Labels
 	out.Status = *result
 	return out
 }
 
 // selectTests applies an optionally passed selector expression
 // against the configured set of tests, returning the selected tests
-func (o *Scorecard) selectTests(stage Stage) []Test {
-	selected := make([]Test, 0)
+func (o *Scorecard) selectTests(stage v1alpha3.StageConfiguration) []v1alpha3.TestConfiguration {
+	selected := make([]v1alpha3.TestConfiguration, 0)
 	for _, test := range stage.Tests {
 		if o.Selector == nil || o.Selector.String() == "" || o.Selector.Matches(labels.Set(test.Labels)) {
 			// TODO olm manifests check
@@ -187,7 +185,7 @@ func (r PodTestRunner) Cleanup(ctx context.Context) (err error) {
 }
 
 // RunTest executes a single test
-func (r PodTestRunner) RunTest(ctx context.Context, test Test) (*v1alpha3.TestStatus, error) {
+func (r PodTestRunner) RunTest(ctx context.Context, test v1alpha3.TestConfiguration) (*v1alpha3.TestStatus, error) {
 	// Create a Pod to run the test
 	podDef := getPodDefinition(r.configMapName, test, r)
 	pod, err := r.Client.CoreV1().Pods(r.Namespace).Create(ctx, podDef, metav1.CreateOptions{})
@@ -204,7 +202,7 @@ func (r PodTestRunner) RunTest(ctx context.Context, test Test) (*v1alpha3.TestSt
 }
 
 // RunTest executes a single test
-func (r FakeTestRunner) RunTest(ctx context.Context, test Test) (result *v1alpha3.TestStatus, err error) {
+func (r FakeTestRunner) RunTest(ctx context.Context, test v1alpha3.TestConfiguration) (result *v1alpha3.TestStatus, err error) {
 	select {
 	case <-time.After(r.Sleep):
 		return r.TestStatus, r.Error

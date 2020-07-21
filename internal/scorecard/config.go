@@ -18,6 +18,8 @@ import (
 	"io/ioutil"
 
 	"sigs.k8s.io/yaml"
+
+	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
 
 const (
@@ -27,43 +29,20 @@ const (
 	DefaultConfigDir = "tests/scorecard/"
 )
 
-type Stage struct {
-	Parallel bool   `yaml:"parallel"`
-	Tests    []Test `yaml:"tests"`
-}
-
-type Test struct {
-	// Image is the name of the testimage
-	Image string `json:"image"`
-	// Entrypoint is list of commands and arguments passed to the test image
-	Entrypoint []string `json:"entrypoint,omitempty"`
-	// Labels that further describe the test and enable selection
-	Labels map[string]string `json:"labels,omitempty"`
-}
-
-// Config represents the set of test configurations which scorecard
-// would run based on user input
-type Config struct {
-	Stages []Stage `yaml:"stages"`
-}
-
 // LoadConfig will find and return the scorecard config, the config file
 // is found from a bundle location (TODO bundle image)
 // scorecard config.yaml is expected to be in the bundle at the following
 // location:  tests/scorecard/config.yaml
 // the user can override this location using the --config CLI flag
-func LoadConfig(configFilePath string) (Config, error) {
-	c := Config{}
+// TODO: version this.
+func LoadConfig(configFilePath string) (v1alpha3.ScorecardConfiguration, error) {
+	c := v1alpha3.ScorecardConfiguration{}
 
-	// TODO handle bundle images, not just on-disk
 	yamlFile, err := ioutil.ReadFile(configFilePath)
 	if err != nil {
 		return c, err
 	}
 
-	if err := yaml.Unmarshal(yamlFile, &c); err != nil {
-		return c, err
-	}
-
-	return c, nil
+	err = yaml.Unmarshal(yamlFile, &c)
+	return c, err
 }
