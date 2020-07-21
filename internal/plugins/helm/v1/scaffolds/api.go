@@ -23,9 +23,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/xenolf/lego/log"
-	"k8s.io/client-go/discovery"
-	crconfig "sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/kubebuilder/pkg/model"
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 	"sigs.k8s.io/kubebuilder/pkg/model/resource"
@@ -108,26 +105,12 @@ func (s *apiScaffolder) scaffold() error {
 		return fmt.Errorf("error scaffolding kustomization: %v", err)
 	}
 
-	// TODO(joelanford): encapsulate this in the role discovery/generation into the scaffold?
-	roleScaffold := templates.DefaultRoleScaffold
-	if k8sCfg, err := crconfig.GetConfig(); err != nil {
-		log.Warnf("Using default RBAC rules: failed to get Kubernetes config: %s", err)
-	} else if dc, err := discovery.NewDiscoveryClientForConfig(k8sCfg); err != nil {
-		log.Warnf("Using default RBAC rules: failed to create Kubernetes discovery client: %s", err)
-	} else {
-		roleScaffold = templates.GenerateRoleScaffold(dc, chrt)
-	}
-
 	if err := machinery.NewScaffold().Execute(
 		s.newUniverse(res),
-		&roleScaffold,
+		&templates.Role{},
+		&templates.RoleUpdater{Chart: chrt},
 	); err != nil {
 		return fmt.Errorf("error scaffolding role: %v", err)
-	}
-
-	if err = templates.MergeRoleForResource(res, projectDir, roleScaffold); err != nil {
-		return fmt.Errorf("failed to merge rules in the RBAC manifest for resource (%s/%s, %v): %v",
-			r.Group, r.Version, r.Kind, err)
 	}
 
 	return nil

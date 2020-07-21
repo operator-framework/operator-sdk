@@ -1,5 +1,5 @@
 // Copyright 2019 The Operator-SDK Authors
-// Modifications copyright 2020 The Operator-SDK Authors
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -15,12 +15,12 @@
 package templates
 
 import (
-	"errors"
+	"bytes"
 	"fmt"
-	"io/ioutil"
 	"path/filepath"
 	"sort"
 	"strings"
+	"text/template"
 
 	log "github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/action"
@@ -30,31 +30,92 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/discovery"
+	crconfig "sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/kubebuilder/pkg/model/file"
-	"sigs.k8s.io/kubebuilder/pkg/model/resource"
 	"sigs.k8s.io/yaml"
 )
 
 var _ file.Template = &Role{}
 
-// Role scaffolds the config/rbac/auth_proxy_role.yaml file
+var defaultRoleFile = filepath.Join("config", "rbac", "role.yaml")
+
+// Role scaffolds the role.yaml file
 type Role struct {
 	file.TemplateMixin
-
-	SkipDefaultRules bool
-	CustomRules      []rbacv1.PolicyRule
 }
 
 // SetTemplateDefaults implements input.Template
 func (f *Role) SetTemplateDefaults() error {
 	if f.Path == "" {
-		f.Path = filepath.Join("config", "rbac", "role.yaml")
+		f.Path = defaultRoleFile
 	}
 
-	f.TemplateBody = roleTemplate
-
+	f.TemplateBody = fmt.Sprintf(roleTemplate,
+		file.NewMarkerFor(f.Path, rulesMarker),
+	)
 	return nil
+}
+
+var _ file.Inserter = &RoleUpdater{}
+
+type RoleUpdater struct {
+	file.TemplateMixin
+	file.ResourceMixin
+
+	Chart            *chart.Chart
+	SkipDefaultRules bool
+	CustomRules      []rbacv1.PolicyRule
+}
+
+func (*RoleUpdater) GetPath() string {
+	return defaultRoleFile
+}
+
+func (*RoleUpdater) GetIfExistsAction() file.IfExistsAction {
+	return file.Overwrite
+}
+
+const (
+	rulesMarker = "rules"
+)
+
+func (f *RoleUpdater) GetMarkers() []file.Marker {
+	return []file.Marker{
+		file.NewMarkerFor(defaultRoleFile, rulesMarker),
+	}
+}
+
+func (f *RoleUpdater) GetCodeFragments() file.CodeFragmentsMap {
+	fragments := make(file.CodeFragmentsMap, 1)
+
+	// If resource is not being provided we are creating the file, not updating it
+	if f.Resource == nil {
+		return fragments
+	}
+
+	if k8sCfg, err := crconfig.GetConfig(); err != nil {
+		log.Warnf("Using default RBAC rules: failed to get Kubernetes config: %s", err)
+	} else if dc, err := discovery.NewDiscoveryClientForConfig(k8sCfg); err != nil {
+		log.Warnf("Using default RBAC rules: failed to create Kubernetes discovery client: %s", err)
+	} else {
+		f.updateForChart(dc)
+	}
+
+	buf := &bytes.Buffer{}
+	tmpl := template.Must(template.New("rules").Parse(rulesFragment))
+	err := tmpl.Execute(buf, f)
+	if err != nil {
+		panic(err)
+	}
+
+	// Generate rule fragment
+	rules := []string{buf.String()}
+
+	if len(rules) != 0 {
+		fragments[file.NewMarkerFor(defaultRoleFile, rulesMarker)] = rules
+	}
+	return fragments
 }
 
 const roleTemplate = `apiVersion: rbac.authorization.k8s.io/v1
@@ -62,6 +123,50 @@ kind: ClusterRole
 metadata:
   name: manager-role
 rules:
+##
+## Base operator rules
+##
+# We need to get namespaces so the operator can read namespaces to ensure they exist
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+# We need to manage Helm release secrets
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - "*"
+# We need to create events on CRs about things happening during reconciliation
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+
+%s
+`
+
+const rulesFragment = `##
+## Rules for {{.Resource.Domain}}/{{.Resource.Version}}, Kind: {{.Resource.Kind}}
+##
+- apiGroups:
+  - {{.Resource.Domain}}
+  resources:
+  - {{.Resource.Plural}}
+  - {{.Resource.Plural}}/status
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 {{- if not .SkipDefaultRules }}
 - apiGroups:
   - ""
@@ -128,6 +233,7 @@ rules:
   {{- end }}
   {{- end }}
 {{- end }}
+
 `
 
 // roleDiscoveryInterface is an interface that contains just the discovery
@@ -137,56 +243,27 @@ type roleDiscoveryInterface interface {
 	ServerGroupsAndResources() ([]*metav1.APIGroup, []*metav1.APIResourceList, error)
 }
 
-var DefaultRoleScaffold = Role{
-	SkipDefaultRules: false,
-	CustomRules: []rbacv1.PolicyRule{
-		// We need this rule so the operator can read namespaces to ensure they exist
-		{
-			APIGroups: []string{""},
-			Resources: []string{"namespaces"},
-			Verbs:     []string{"get"},
-		},
-
-		// We need this rule for leader election and release state storage to work
-		{
-			APIGroups: []string{""},
-			Resources: []string{"configmaps", "secrets"},
-			Verbs:     []string{rbacv1.VerbAll},
-		},
-
-		// We need this rule for creating Kubernetes events
-		{
-			APIGroups: []string{""},
-			Resources: []string{"events"},
-			Verbs:     []string{"create"},
-		},
-	},
-}
-
-// GenerateRoleScaffold generates a role scaffold from the provided helm chart. It
+// updateForChart updates the role scaffold from the provided helm chart. It
 // renders a release manifest using the chart's default values and uses the Kubernetes
 // discovery API to lookup each resource in the resulting manifest.
 // The role scaffold will have IsClusterScoped=true if the chart lists cluster scoped resources
-func GenerateRoleScaffold(dc roleDiscoveryInterface, chart *chart.Chart) Role {
+func (f *RoleUpdater) updateForChart(dc roleDiscoveryInterface) {
 	log.Info("Generating RBAC rules")
 
-	roleScaffold := DefaultRoleScaffold
-	clusterResourceRules, namespacedResourceRules, err := generateRoleRules(dc, chart)
+	clusterResourceRules, namespacedResourceRules, err := generateRoleRules(dc, f.Chart)
 	if err != nil {
 		log.Warnf("Using default RBAC rules: failed to generate RBAC rules: %s", err)
-		return roleScaffold
+		return
 	}
 
-	roleScaffold.SkipDefaultRules = true
-	roleScaffold.CustomRules = append(roleScaffold.CustomRules, append(clusterResourceRules,
+	f.SkipDefaultRules = true
+	f.CustomRules = append(f.CustomRules, append(clusterResourceRules,
 		namespacedResourceRules...)...)
 
 	log.Warn("The RBAC rules generated in config/rbac/role.yaml are based on the chart's default manifest." +
 		" Some rules may be missing for resources that are only enabled with custom values, and" +
 		" some existing rules may be overly broad. Double check the rules generated in config/rbac/role.yaml" +
 		" to ensure they meet the operator's permission requirements.")
-
-	return roleScaffold
 }
 
 func generateRoleRules(dc roleDiscoveryInterface, chart *chart.Chart) ([]rbacv1.PolicyRule,
@@ -313,161 +390,4 @@ func buildRulesFromGroups(groups map[string]map[string]struct{}) []rbacv1.Policy
 		})
 	}
 	return rules
-}
-
-func UpdateRoleForResource(r *resource.Resource, absProjectPath string) error {
-	// append rbac rule to deploy/role.yaml
-	roleFilePath := filepath.Join(absProjectPath, "config", "rbac", "role.yaml")
-	roleYAML, err := ioutil.ReadFile(roleFilePath)
-	if err != nil {
-		return fmt.Errorf("failed to read role manifest %v: %v", roleFilePath, err)
-	}
-	obj, _, err := scheme.Codecs.UniversalDeserializer().Decode(roleYAML, nil, nil)
-	if err != nil {
-		return fmt.Errorf("failed to decode role manifest %v: %v", roleFilePath, err)
-	}
-	switch role := obj.(type) {
-	case *rbacv1.ClusterRole:
-		pr := &rbacv1.PolicyRule{}
-		apiGroupFound := false
-		for i := range role.Rules {
-			if role.Rules[i].APIGroups[0] == r.Domain {
-				apiGroupFound = true
-				pr = &role.Rules[i]
-				break
-			}
-		}
-		// check if the resource already exists
-		for _, resource := range pr.Resources {
-			if resource == r.Plural {
-				log.Infof("RBAC rules in deploy/role.yaml already up to date for the resource (%s/%s, %v)", r.Group, r.Version, r.Kind)
-				return nil
-			}
-		}
-
-		pr.Resources = append(pr.Resources, r.Plural)
-		// create a new apiGroup if not found.
-		if !apiGroupFound {
-			pr.APIGroups = []string{r.Domain}
-			// Using "*" to allow access to the resource and all its subresources e.g "memcacheds" and "memcacheds/finalizers"
-			// https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#ownerreferencespermissionenforcement
-			pr.Resources = []string{"*"}
-			pr.Verbs = []string{
-				"create",
-				"delete",
-				"get",
-				"list",
-				"patch",
-				"update",
-				"watch",
-			}
-			role.Rules = append(role.Rules, *pr)
-		}
-
-		return updateRoleFile(&role, roleFilePath)
-	default:
-		return errors.New("failed to parse role.yaml as a ClusterRole")
-	}
-}
-
-// MergeRoleForResource merges incoming new API resource rules with existing deploy/role.yaml
-func MergeRoleForResource(r *resource.Resource, absProjectPath string, roleScaffold Role) error {
-	roleFilePath := filepath.Join(absProjectPath, "config", "rbac", "role.yaml")
-	roleYAML, err := ioutil.ReadFile(roleFilePath)
-	if err != nil {
-		return fmt.Errorf("failed to read role manifest %v: %v", roleFilePath, err)
-	}
-	// Check for existing role.yaml
-	if len(roleYAML) == 0 {
-		return fmt.Errorf("empty Role File at: %v", absProjectPath)
-	}
-	// Check for incoming new Role
-	if len(roleScaffold.CustomRules) == 0 {
-		return fmt.Errorf("customRules cannot be empty for new Role at: %s/%s", r.Group, r.Version)
-	}
-
-	obj, _, err := scheme.Codecs.UniversalDeserializer().Decode(roleYAML, nil, nil)
-	if err != nil {
-		return fmt.Errorf("failed to decode role manifest %v: %v", roleFilePath, err)
-	}
-	switch role := obj.(type) {
-	case *rbacv1.ClusterRole:
-		mergedClusterRoleRules := mergeRules(role.Rules, roleScaffold)
-		role.Rules = mergedClusterRoleRules
-	default:
-		log.Errorf("Failed to parse role.yaml as a role %v", err)
-	}
-
-	if err := updateRoleFile(obj, roleFilePath); err != nil {
-		return fmt.Errorf("failed to update for resource (%s/%s, %v): %v",
-			r.Group, r.Version, r.Kind, err)
-	}
-
-	return UpdateRoleForResource(r, absProjectPath)
-}
-
-func ifMatches(pr []string, newPr []string) bool {
-
-	sort.Strings(pr)
-	sort.Strings(newPr)
-
-	if len(pr) != len(newPr) {
-		return false
-	}
-	for i, v := range pr {
-		if v != newPr[i] {
-			return false
-		}
-	}
-	return true
-}
-
-func findResource(resources []string, search string) bool {
-	for _, r := range resources {
-		if r == search || r == "*" {
-			return true
-		}
-	}
-	return false
-}
-
-func mergeRules(rules1 []rbacv1.PolicyRule, rules2 Role) []rbacv1.PolicyRule {
-	for j := range rules2.CustomRules {
-		ruleFound := false
-		prj := &rules2.CustomRules[j]
-	iLoop:
-		for i, pri := range rules1 {
-			// check if apiGroup, verbs, resourceName, and nonResourceURLS matches for new resource.
-			apiGroupsEqual := ifMatches(pri.APIGroups, prj.APIGroups)
-			verbsEqual := ifMatches(pri.Verbs, prj.Verbs)
-			resourceNamesEqual := ifMatches(pri.ResourceNames, prj.ResourceNames)
-			nonResourceURLsEqual := ifMatches(pri.NonResourceURLs, prj.NonResourceURLs)
-
-			if apiGroupsEqual && verbsEqual && resourceNamesEqual && nonResourceURLsEqual {
-				for _, newResource := range prj.Resources {
-					if !findResource(pri.Resources, newResource) {
-						// append rbac rule to deploy/role.yaml
-						rules1[i].Resources = append(rules1[i].Resources, newResource)
-					}
-				}
-				ruleFound = true
-				break iLoop
-			}
-		}
-		if !ruleFound {
-			rules1 = append(rules1, *prj)
-		}
-	}
-	return rules1
-}
-func updateRoleFile(role interface{}, roleFilePath string) error {
-	data, err := yaml.Marshal(&role)
-	if err != nil {
-		return fmt.Errorf("failed to marshal role(%+v): %v", role, err)
-	}
-	if err := ioutil.WriteFile(roleFilePath, data, 0664); err != nil {
-		return fmt.Errorf("failed to update %v: %v", roleFilePath, err)
-	}
-
-	return nil
 }
