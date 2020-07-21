@@ -136,10 +136,6 @@ func (i *InputDir) Write() error {
 		 i.CmdLine = i.CmdLine[1 : len(i.CmdLine)-1]
 	}
 
-	fmt.Println("------------------------>")
-	fmt.Println(i.CmdLine)
-	fmt.Println("------------------------>")
-
 	cmdLineBytes := []byte(i.CmdLine)
 	if len(cmdLineBytes) > 0 {
 		err = i.addFile("env/cmdline", cmdLineBytes)
