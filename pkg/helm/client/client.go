@@ -18,8 +18,8 @@ import (
 	"errors"
 	"io"
 
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/handler"
-	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"helm.sh/helm/v3/pkg/kube"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
