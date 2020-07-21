@@ -133,11 +133,14 @@ func (i *InputDir) Write() error {
 	}
 
 	if strings.HasPrefix(i.CmdLine, string("'")) && i.CmdLine[0] == i.CmdLine[len(i.CmdLine)-1] {
-		i.CmdLine = i.CmdLine[1 : len(i.CmdLine)-1]
+		 i.CmdLine = i.CmdLine[1 : len(i.CmdLine)-1]
 	}
 
-	cmdLineBytes := []byte(i.CmdLine)
+	fmt.Println("------------------------>")
+	fmt.Println(i.CmdLine)
+	fmt.Println("------------------------>")
 
+	cmdLineBytes := []byte(i.CmdLine)
 	if len(cmdLineBytes) > 0 {
 		err = i.addFile("env/cmdline", cmdLineBytes)
 		if err != nil {
