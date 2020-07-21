@@ -23,7 +23,6 @@ import (
 	"github.com/spf13/pflag"
 
 	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
 //nolint:maligned
@@ -47,15 +46,6 @@ type bundleCmd struct {
 	channels       string
 	defaultChannel string
 	overwrite      bool
-}
-
-//nolint:maligned
-type bundleCmdLegacy struct {
-	bundleCmd
-
-	apisDir          string
-	interactiveLevel projutil.InteractiveLevel
-	interactive      bool
 }
 
 // NewCmd returns the 'bundle' command configured for the new project layout.
@@ -82,7 +72,7 @@ func NewCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("error reading configuration: %v", err)
 			}
-			c.setCommonDefaults(cfg)
+			c.setDefaults(cfg)
 
 			// Validate command args before running so a preceding mode doesn't run
 			// before a following validation fails.
@@ -117,85 +107,12 @@ func NewCmd() *cobra.Command {
 		"Directory containing kustomize bases and a kustomization.yaml for operator-framework manifests")
 	cmd.Flags().BoolVar(&c.stdout, "stdout", false, "Write bundle manifest to stdout")
 
-	c.addCommonFlagsTo(cmd.Flags())
+	c.addFlagsTo(cmd.Flags())
 
 	return cmd
 }
 
-// NewCmdLegacy returns the 'bundle' command configured for the legacy project layout.
-func NewCmdLegacy() *cobra.Command {
-	c := &bundleCmdLegacy{}
-	cmd := &cobra.Command{
-		Use:     "bundle",
-		Short:   "Generates bundle data for the operator",
-		Long:    longHelpLegacy,
-		Example: examplesLegacy,
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			if len(args) != 0 {
-				return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
-			}
-
-			// Check if the user has any specific preference to enable/disable
-			// interactive prompts. Default behaviour is to disable the prompt
-			// unless a base bundle does not exist.
-			if cmd.Flags().Changed("interactive") {
-				if c.interactive {
-					c.interactiveLevel = projutil.InteractiveOnAll
-				} else {
-					c.interactiveLevel = projutil.InteractiveHardOff
-				}
-			}
-
-			// Generate manifests and metadata by default if no flags are set so
-			// the default behavior is "do everything".
-			fs := cmd.Flags()
-			if !fs.Changed("metadata") && !fs.Changed("manifests") {
-				c.metadata = true
-				c.manifests = true
-			}
-
-			c.setCommonDefaults()
-
-			// Validate command args before running so a preceding mode doesn't run
-			// before a following validation fails.
-			if c.manifests {
-				if err = c.validateManifests(); err != nil {
-					return fmt.Errorf("invalid command options: %v", err)
-				}
-			}
-			if c.metadata {
-				if err = c.validateMetadata(); err != nil {
-					return fmt.Errorf("invalid command options: %v", err)
-				}
-			}
-
-			// Run command logic.
-			if c.manifests {
-				if err = c.runManifests(); err != nil {
-					log.Fatalf("Error generating bundle manifests: %v", err)
-				}
-			}
-			if c.metadata {
-				if err = c.runMetadata(); err != nil {
-					log.Fatalf("Error generating bundle metadata: %v", err)
-				}
-			}
-
-			return nil
-		},
-	}
-
-	cmd.Flags().StringVar(&c.apisDir, "apis-dir", "", "Root directory for API type defintions")
-	cmd.Flags().BoolVar(&c.interactive, "interactive", false, "When set or no bundle base exists, an interactive "+
-		"command prompt will be presented to accept bundle ClusterServiceVersion metadata")
-
-	c.addCommonFlagsTo(cmd.Flags())
-
-	return cmd
-}
-
-// TODO(estroz): add flag to skip API metadata regeneration.
-func (c *bundleCmd) addCommonFlagsTo(fs *pflag.FlagSet) {
+func (c *bundleCmd) addFlagsTo(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.manifests, "manifests", false, "Generate bundle manifests")
 	fs.BoolVar(&c.metadata, "metadata", false, "Generate bundle metadata and Dockerfile")
 

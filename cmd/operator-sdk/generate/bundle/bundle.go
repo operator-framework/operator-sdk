@@ -98,8 +98,8 @@ https://github.com/operator-framework/operator-registry/#manifest-format
 // defaultRootDir is the default root directory in which to generate bundle files.
 const defaultRootDir = "bundle"
 
-// setCommonDefaults sets defaults useful to all modes of this subcommand.
-func (c *bundleCmd) setCommonDefaults(cfg *config.Config) {
+// setDefaults sets defaults useful to all modes of this subcommand.
+func (c *bundleCmd) setDefaults(cfg *config.Config) {
 	if c.operatorName == "" {
 		c.operatorName = filepath.Base(cfg.Repo)
 	}

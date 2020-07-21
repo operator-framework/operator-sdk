@@ -80,12 +80,12 @@ func NewCmd() *cobra.Command {
 		"Directory containing kustomize bases and a kustomization.yaml for operator-framework manifests")
 	cmd.Flags().BoolVar(&c.stdout, "stdout", false, "Write package to stdout")
 
-	c.addCommonFlagsTo(cmd.Flags())
+	c.addFlagsTo(cmd.Flags())
 
 	return cmd
 }
 
-func (c *packagemanifestsCmd) addCommonFlagsTo(fs *pflag.FlagSet) {
+func (c *packagemanifestsCmd) addFlagsTo(fs *pflag.FlagSet) {
 	fs.StringVar(&c.operatorName, "operator-name", "", "Name of the packaged operator")
 	fs.StringVarP(&c.version, "version", "v", "", "Semantic version of the packaged operator")
 	fs.StringVar(&c.inputDir, "input-dir", "", "Directory to read existing package manifests from. "+
