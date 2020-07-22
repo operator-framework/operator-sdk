@@ -4,7 +4,6 @@ go 1.13
 
 require (
 	github.com/blang/semver v3.5.1+incompatible
-	github.com/coreos/prometheus-operator v0.38.1-0.20200424145508-7e176fda06cc
 	github.com/fatih/structtag v1.1.0
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.1
@@ -40,7 +39,6 @@ require (
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/gengo v0.0.0-20200114144118-36b2048a9120
 	k8s.io/klog v1.0.0
-	k8s.io/kube-state-metrics v1.7.2
 	k8s.io/kubectl v0.18.2
 	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/controller-runtime v0.6.0
