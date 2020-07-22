@@ -16,7 +16,6 @@ package kustomize
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
@@ -154,6 +153,7 @@ func (c *manifestsCmd) setDefaults(cfg *config.Config) {
 const manifestsKustomization = `resources:
 - ../default
 - ../samples
+- ../scorecard
 `
 
 // run generates kustomize bundle bases and a kustomization.yaml if one does not exist.
@@ -175,18 +175,8 @@ func (c manifestsCmd) run(cfg *config.Config) error {
 		return fmt.Errorf("error generating kustomize bases: %v", err)
 	}
 
-	// NB(estroz): this is a rather hacky way of adding scorecard componentconfigs to the bundle,
-	// and won't work if the manifests kustomization.yaml already exists. This should be improved
-	// with scaffolding markers.
-	kustomization := manifestsKustomization
-
-	// Add a scorecard kustomization if one exists.
-	info, err := os.Stat(filepath.Join(filepath.Dir(c.outputDir), "scorecard"))
-	if err == nil && info.IsDir() {
-		kustomization += "- ../scorecard\n"
-	}
 	// Write a kustomization.yaml to outputDir if one does not exist.
-	if err := kustomize.WriteIfNotExist(c.outputDir, kustomization); err != nil {
+	if err := kustomize.WriteIfNotExist(c.outputDir, manifestsKustomization); err != nil {
 		return fmt.Errorf("error writing kustomization.yaml: %v", err)
 	}
 

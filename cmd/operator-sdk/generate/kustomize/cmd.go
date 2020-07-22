@@ -16,8 +16,6 @@ package kustomize
 
 import (
 	"github.com/spf13/cobra"
-
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate/kustomize/scorecard"
 )
 
 // NewCmd returns the 'kustomize' subcommand.
@@ -29,7 +27,6 @@ func NewCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		newManifestsCmd(),
-		scorecard.NewCmd(),
 	)
 
 	return cmd

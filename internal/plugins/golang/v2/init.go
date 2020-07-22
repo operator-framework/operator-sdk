@@ -16,11 +16,15 @@ package v2
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/spf13/pflag"
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 	"sigs.k8s.io/kubebuilder/pkg/plugin"
 
+	"github.com/operator-framework/operator-sdk/internal/plugins/scorecard"
 	utilplugins "github.com/operator-framework/operator-sdk/internal/util/plugins"
 )
 
@@ -47,6 +51,17 @@ func (p *initPlugin) Run() error {
 
 	// Update the scaffolded Makefile with operator-sdk recipes.
 	if err := p.run(); err != nil {
+		return err
+	}
+
+	// Assume projectName was validated by go.kubebuilder.io.
+	wd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("error getting the current path: %v", err)
+	}
+	projectName := strings.ToLower(filepath.Base(wd))
+	// Run the scorecard "phase 2" plugin.
+	if err := scorecard.RunInit(projectName); err != nil {
 		return err
 	}
 

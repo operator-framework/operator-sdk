@@ -29,6 +29,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/chartutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds"
+	"github.com/operator-framework/operator-sdk/internal/plugins/scorecard"
 	utilplugins "github.com/operator-framework/operator-sdk/internal/util/plugins"
 )
 
@@ -128,7 +129,22 @@ func (p *initPlugin) InjectConfig(c *config.Config) {
 
 // Run will call the plugin actions
 func (p *initPlugin) Run() error {
-	return cmdutil.Run(p)
+	if err := cmdutil.Run(p); err != nil {
+		return err
+	}
+
+	// Assume projectName was validated by Validate().
+	wd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("error getting the current path: %v", err)
+	}
+	projectName := strings.ToLower(filepath.Base(wd))
+	// Run the scorecard "phase 2" plugin.
+	if err := scorecard.RunInit(projectName); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Validate perform the required validations for this plugin

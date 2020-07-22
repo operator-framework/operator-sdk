@@ -47,8 +47,28 @@ patchesJson6902:
 {{- end }}
 `
 
-// scorecardKustomization holds data required to generate a scorecard's kustomization.yaml.
-type scorecardKustomization struct {
+const (
+	// defaultTestImageTag points to the latest-released image.
+	// TODO: change the tag to "latest" once config scaffolding is in a release,
+	// as the new config spec won't work with the current latest image.
+	defaultTestImageTag = "quay.io/operator-framework/scorecard-test:master"
+
+	// scorecardConfigName is the default scorecard componentconfig's metadata.name,
+	// which must be set on all kustomize-able bases. This name is only used for
+	// `kustomize build` pattern match and not for on-cluster creation.
+	scorecardConfigName = "config"
+)
+
+// defaultDir is the default directory in which to generate kustomize bases and the kustomization.yaml.
+var defaultDir = filepath.Join("config", "scorecard")
+
+// RunInit scaffolds kustomize files for kustomizing a scorecard componentconfig.
+func RunInit(projectName string) error {
+	return generate(projectName, defaultTestImageTag, defaultDir)
+}
+
+// scorecardKustomizationValues holds data required to generate a scorecard's kustomization.yaml.
+type scorecardKustomizationValues struct {
 	ResourcePaths []string
 	JSONPatches   []kustomizationJSON6902Patch
 }
@@ -59,18 +79,11 @@ type kustomizationJSON6902Patch struct {
 	Target registry.DefinitionKey
 }
 
-const (
-	// scorecardConfigName is the default scorecard componentconfig's metadata.name,
-	// which must be set on all kustomize-able bases. This name is only used for
-	// `kustomize build` pattern match and not for "creation".
-	scorecardConfigName = "config"
-)
-
 // generate scaffolds kustomize bundle bases and a kustomization.yaml.
 // TODO(estroz): refactor this to be testable (in-mem fs) and easier to read.
 func generate(operatorName, testImageTag, outputDir string) error {
 
-	kustomization := scorecardKustomization{}
+	kustomizationValues := scorecardKustomizationValues{}
 
 	// Config bases.
 	basesDir := filepath.Join(outputDir, "bases")
@@ -88,7 +101,7 @@ func generate(operatorName, testImageTag, outputDir string) error {
 	if err := ioutil.WriteFile(basePath, b, 0666); err != nil {
 		return fmt.Errorf("error writing default scorecard config: %v", err)
 	}
-	kustomization.ResourcePaths = append(kustomization.ResourcePaths, relBasePath)
+	kustomizationValues.ResourcePaths = append(kustomizationValues.ResourcePaths, relBasePath)
 	scorecardConfigTarget := registry.DefinitionKey{
 		Group:   v1alpha3.SchemeGroupVersion.Group,
 		Version: v1alpha3.SchemeGroupVersion.Version,
@@ -112,7 +125,7 @@ func generate(operatorName, testImageTag, outputDir string) error {
 	if err := ioutil.WriteFile(filepath.Join(patchesDir, basicPatchFileName), b, 0666); err != nil {
 		return fmt.Errorf("error writing basic scorecard config patch: %v", err)
 	}
-	kustomization.JSONPatches = append(kustomization.JSONPatches, kustomizationJSON6902Patch{
+	kustomizationValues.JSONPatches = append(kustomizationValues.JSONPatches, kustomizationJSON6902Patch{
 		Path:   filepath.Join("patches", basicPatchFileName),
 		Target: scorecardConfigTarget,
 	})
@@ -127,7 +140,7 @@ func generate(operatorName, testImageTag, outputDir string) error {
 	if err := ioutil.WriteFile(filepath.Join(patchesDir, olmPatchFileName), b, 0666); err != nil {
 		return fmt.Errorf("error writing default scorecard config: %v", err)
 	}
-	kustomization.JSONPatches = append(kustomization.JSONPatches, kustomizationJSON6902Patch{
+	kustomizationValues.JSONPatches = append(kustomizationValues.JSONPatches, kustomizationJSON6902Patch{
 		Path:   filepath.Join("patches", olmPatchFileName),
 		Target: scorecardConfigTarget,
 	})
@@ -138,7 +151,7 @@ func generate(operatorName, testImageTag, outputDir string) error {
 		return fmt.Errorf("error parsing default kustomize template: %v", err)
 	}
 	buf := bytes.Buffer{}
-	if err = t.Execute(&buf, kustomization); err != nil {
+	if err = t.Execute(&buf, kustomizationValues); err != nil {
 		return fmt.Errorf("error executing on default kustomize template: %v", err)
 	}
 	if err := kustomize.Write(outputDir, buf.String()); err != nil {
