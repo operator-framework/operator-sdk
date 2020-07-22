@@ -105,7 +105,7 @@ func generate(operatorName, testImageTag, outputDir string) error {
 	scorecardConfigTarget := registry.DefinitionKey{
 		Group:   v1alpha3.SchemeGroupVersion.Group,
 		Version: v1alpha3.SchemeGroupVersion.Version,
-		Kind:    v1alpha3.ScorecardConfigurationKind,
+		Kind:    v1alpha3.ConfigurationKind,
 		Name:    scorecardConfigName,
 	}
 
@@ -174,10 +174,10 @@ type jsonPatchObject struct {
 
 // newScorecardConfigurationBase returns a scorecard componentconfig object with one parallel stage.
 // The returned object is intended to be marshaled and written to disk as a kustomize base.
-func newScorecardConfigurationBase() (cfg v1alpha3.ScorecardConfiguration) {
-	cfg.SetGroupVersionKind(v1alpha3.SchemeGroupVersion.WithKind(v1alpha3.ScorecardConfigurationKind))
+func newScorecardConfigurationBase() (cfg v1alpha3.Configuration) {
+	cfg.SetGroupVersionKind(v1alpha3.SchemeGroupVersion.WithKind(v1alpha3.ConfigurationKind))
 	cfg.Metadata.Name = scorecardConfigName
-	cfg.Spec.Stages = []v1alpha3.StageConfiguration{
+	cfg.Stages = []v1alpha3.StageConfiguration{
 		{
 			Parallel: true,
 			Tests:    []v1alpha3.TestConfiguration{},
@@ -187,7 +187,7 @@ func newScorecardConfigurationBase() (cfg v1alpha3.ScorecardConfiguration) {
 }
 
 func makeTestStageJSONPath(stageIdx, testIdx int) string {
-	return fmt.Sprintf("/spec/stages/%d/tests/%d", stageIdx, testIdx)
+	return fmt.Sprintf("/stages/%d/tests/%d", stageIdx, testIdx)
 }
 
 // newBasicScorecardConfigurationPatch returns default "basic" test configurations as JSON patch objects

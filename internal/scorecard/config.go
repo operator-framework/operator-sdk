@@ -35,8 +35,8 @@ const (
 // location:  tests/scorecard/config.yaml
 // the user can override this location using the --config CLI flag
 // TODO: version this.
-func LoadConfig(configFilePath string) (v1alpha3.ScorecardConfiguration, error) {
-	c := v1alpha3.ScorecardConfiguration{}
+func LoadConfig(configFilePath string) (v1alpha3.Configuration, error) {
+	c := v1alpha3.Configuration{}
 
 	yamlFile, err := ioutil.ReadFile(configFilePath)
 	if err != nil {

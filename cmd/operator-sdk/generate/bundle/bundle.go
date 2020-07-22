@@ -232,7 +232,7 @@ func (c bundleCmd) runManifests(cfg *config.Config) (err error) {
 }
 
 // writeScorecardConfig writes cfg to dir at the hard-coded config path 'config.yaml'.
-func writeScorecardConfig(dir string, cfg v1alpha3.ScorecardConfiguration) error {
+func writeScorecardConfig(dir string, cfg v1alpha3.Configuration) error {
 	if cfg.Metadata.Name == "" {
 		return nil
 	}

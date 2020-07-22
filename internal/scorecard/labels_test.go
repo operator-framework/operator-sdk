@@ -27,7 +27,7 @@ func TestEmptySelector(t *testing.T) {
 	cases := []struct {
 		selectorValue string
 		testsSelected int
-		config        v1alpha3.ScorecardConfiguration
+		config        v1alpha3.Configuration
 		wantError     bool
 	}{
 		{"", 7, testConfig, false},
@@ -53,7 +53,7 @@ func TestEmptySelector(t *testing.T) {
 				return
 			}
 
-			tests := o.selectTests(o.Config.Spec.Stages[0])
+			tests := o.selectTests(o.Config.Stages[0])
 			testsSelected := len(tests)
 			if testsSelected != c.testsSelected {
 				t.Errorf("Wanted testsSelected %d, got: %d", c.testsSelected, testsSelected)
@@ -63,82 +63,80 @@ func TestEmptySelector(t *testing.T) {
 	}
 }
 
-var testConfig = v1alpha3.ScorecardConfiguration{
-	Spec: v1alpha3.ScorecardConfigurationSpec{
-		Stages: []v1alpha3.StageConfiguration{
-			{
-				Tests: []v1alpha3.TestConfiguration{
-					{Image: "quay.io/someuser/customtest1:v0.0.1",
-						Entrypoint: []string{
-							"custom-test",
-						},
-						Labels: map[string]string{
-							"suite": "custom",
-							"test":  "customtest1",
-						},
+var testConfig = v1alpha3.Configuration{
+	Stages: []v1alpha3.StageConfiguration{
+		{
+			Tests: []v1alpha3.TestConfiguration{
+				{Image: "quay.io/someuser/customtest1:v0.0.1",
+					Entrypoint: []string{
+						"custom-test",
 					},
+					Labels: map[string]string{
+						"suite": "custom",
+						"test":  "customtest1",
+					},
+				},
 
-					{Image: "quay.io/someuser/customtest2:v0.0.1",
-						Entrypoint: []string{
-							"custom-test",
-						},
-						Labels: map[string]string{
-							"suite": "custom",
-							"test":  "customtest2",
-						},
+				{Image: "quay.io/someuser/customtest2:v0.0.1",
+					Entrypoint: []string{
+						"custom-test",
 					},
+					Labels: map[string]string{
+						"suite": "custom",
+						"test":  "customtest2",
+					},
+				},
 
-					{Image: "quay.io/redhat/basictests:v0.0.1",
-						Entrypoint: []string{
-							"scorecard-test",
-							"basic-check-spec",
-						},
-						Labels: map[string]string{
-							"suite": "basic",
-							"test":  "basic-check-spec-test",
-						},
+				{Image: "quay.io/redhat/basictests:v0.0.1",
+					Entrypoint: []string{
+						"scorecard-test",
+						"basic-check-spec",
 					},
+					Labels: map[string]string{
+						"suite": "basic",
+						"test":  "basic-check-spec-test",
+					},
+				},
 
-					{Image: "quay.io/redhat/basictests:v0.0.1",
-						Entrypoint: []string{
-							"scorecard-test",
-							"basic-check-status",
-						},
-						Labels: map[string]string{
-							"suite": "basic",
-							"test":  "basic-check-status-test",
-						},
+				{Image: "quay.io/redhat/basictests:v0.0.1",
+					Entrypoint: []string{
+						"scorecard-test",
+						"basic-check-status",
 					},
+					Labels: map[string]string{
+						"suite": "basic",
+						"test":  "basic-check-status-test",
+					},
+				},
 
-					{Image: "quay.io/redhat/olmtests:v0.0.1",
-						Entrypoint: []string{
-							"scorecard-test",
-							"olm-bundle-validation",
-						},
-						Labels: map[string]string{
-							"suite": "olm",
-							"test":  "olm-bundle-validation-test",
-						},
+				{Image: "quay.io/redhat/olmtests:v0.0.1",
+					Entrypoint: []string{
+						"scorecard-test",
+						"olm-bundle-validation",
 					},
+					Labels: map[string]string{
+						"suite": "olm",
+						"test":  "olm-bundle-validation-test",
+					},
+				},
 
-					{Image: "quay.io/redhat/olmtests:v0.0.1",
-						Entrypoint: []string{
-							"scorecard-test",
-							"olm-crds-have-validation",
-						},
-						Labels: map[string]string{
-							"suite": "olm",
-							"test":  "olm-crds-have-validation-test",
-						},
+				{Image: "quay.io/redhat/olmtests:v0.0.1",
+					Entrypoint: []string{
+						"scorecard-test",
+						"olm-crds-have-validation",
 					},
-					{Image: "quay.io/redhat/kuttltests:v0.0.1",
-						Entrypoint: []string{
-							"kuttl-test",
-							"olm-status-descriptors",
-						},
-						Labels: map[string]string{
-							"suite": "kuttl",
-						},
+					Labels: map[string]string{
+						"suite": "olm",
+						"test":  "olm-crds-have-validation-test",
+					},
+				},
+				{Image: "quay.io/redhat/kuttltests:v0.0.1",
+					Entrypoint: []string{
+						"kuttl-test",
+						"olm-status-descriptors",
+					},
+					Labels: map[string]string{
+						"suite": "kuttl",
 					},
 				},
 			},

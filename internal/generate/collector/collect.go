@@ -46,7 +46,7 @@ type Manifests struct {
 	ValidatingWebhooks               []admissionregv1.ValidatingWebhook
 	MutatingWebhooks                 []admissionregv1.MutatingWebhook
 	CustomResources                  []unstructured.Unstructured
-	ScorecardConfig                  scorecardv1alpha3.ScorecardConfiguration
+	ScorecardConfig                  scorecardv1alpha3.Configuration
 
 	Others []unstructured.Unstructured
 }
@@ -89,7 +89,7 @@ func (c *Manifests) UpdateFromDirs(deployDir, crdsDir string) error {
 				err = c.addValidatingWebhookConfigurations(manifest)
 			case "MutatingWebhookConfiguration":
 				err = c.addMutatingWebhookConfigurations(manifest)
-			case scorecardv1alpha3.ScorecardConfigurationKind:
+			case scorecardv1alpha3.ConfigurationKind:
 				err = c.addScorecardConfig(manifest)
 			default:
 				err = c.addOthers(manifest)
@@ -151,7 +151,7 @@ func (c *Manifests) UpdateFromReader(r io.Reader) error {
 			err = c.addValidatingWebhookConfigurations(manifest)
 		case "MutatingWebhookConfiguration":
 			err = c.addMutatingWebhookConfigurations(manifest)
-		case scorecardv1alpha3.ScorecardConfigurationKind:
+		case scorecardv1alpha3.ConfigurationKind:
 			err = c.addScorecardConfig(manifest)
 		default:
 			err = c.addOthers(manifest)
@@ -268,7 +268,7 @@ func (c *Manifests) addMutatingWebhookConfigurations(rawManifests ...[]byte) err
 // addScorecardConfig assumes manifest data in rawManifests is a ScorecardConfigs and adds it to the collector.
 // If a config has already been found, addScorecardConfig will return an error.
 func (c *Manifests) addScorecardConfig(rawManifest []byte) error {
-	cfg := scorecardv1alpha3.ScorecardConfiguration{}
+	cfg := scorecardv1alpha3.Configuration{}
 	if err := yaml.Unmarshal(rawManifest, &cfg); err != nil {
 		return err
 	}

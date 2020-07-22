@@ -37,7 +37,7 @@ type TestRunner interface {
 }
 
 type Scorecard struct {
-	Config      v1alpha3.ScorecardConfiguration
+	Config      v1alpha3.Configuration
 	Selector    labels.Selector
 	TestRunner  TestRunner
 	SkipCleanup bool
@@ -67,7 +67,7 @@ func (o Scorecard) Run(ctx context.Context) (v1alpha3.TestList, error) {
 		return testOutput, err
 	}
 
-	for _, stage := range o.Config.Spec.Stages {
+	for _, stage := range o.Config.Stages {
 		tests := o.selectTests(stage)
 		if len(tests) == 0 {
 			continue

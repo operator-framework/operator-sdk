@@ -42,7 +42,7 @@ func (r PodTestRunner) getTestStatus(ctx context.Context, p *v1.Pod) (output *v1
 // run based on user selection
 func (o Scorecard) List() v1alpha3.TestList {
 	output := v1alpha3.NewTestList()
-	for _, stage := range o.Config.Spec.Stages {
+	for _, stage := range o.Config.Stages {
 		tests := o.selectTests(stage)
 		for _, test := range tests {
 			item := v1alpha3.NewTest()
