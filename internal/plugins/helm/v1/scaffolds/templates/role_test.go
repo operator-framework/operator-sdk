@@ -66,14 +66,14 @@ func TestGenerateRoleScaffold(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s with valid discovery client", tc.name), func(t *testing.T) {
-			f := RoleUpdater{Chart: tc.chart}
+			f := ManagerRoleUpdater{Chart: tc.chart}
 			f.updateForChart(validDiscoveryClient)
 			assert.Equal(t, tc.expectSkipDefaultRules, f.SkipDefaultRules)
 			assert.Equal(t, tc.expectLenCustomRules, len(f.CustomRules))
 		})
 
 		t.Run(fmt.Sprintf("%s with broken discovery client", tc.name), func(t *testing.T) {
-			f := RoleUpdater{Chart: tc.chart}
+			f := ManagerRoleUpdater{Chart: tc.chart}
 			f.updateForChart(brokenDiscoveryClient)
 			assert.Equal(t, false, f.SkipDefaultRules)
 			assert.Equal(t, 0, len(f.CustomRules))

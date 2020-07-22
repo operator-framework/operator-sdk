@@ -105,15 +105,15 @@ func (p *createAPIPlugin) BindFlags(fs *pflag.FlagSet) {
 	p.createOptions = chartutil.CreateOptions{}
 	fs.SortFlags = false
 
-	fs.StringVar(&p.createOptions.GVK.Group, groupFlag, "", "resource Group")
-	fs.StringVar(&p.createOptions.GVK.Version, versionFlag, "", "resource Version")
-	fs.StringVar(&p.createOptions.GVK.Kind, kindFlag, "", "resource Kind")
+	fs.StringVar(&p.createOptions.GVK.Group, groupFlag, "", "resource group")
+	fs.StringVar(&p.createOptions.GVK.Version, versionFlag, "", "resource version")
+	fs.StringVar(&p.createOptions.GVK.Kind, kindFlag, "", "resource kind")
 
 	fs.StringVar(&p.createOptions.Chart, helmChartFlag, "", "helm chart")
 	fs.StringVar(&p.createOptions.Repo, helmChartRepoFlag, "", "helm chart repository")
-	fs.StringVar(&p.createOptions.Version, helmChartVersionFlag, "", "helm chart versionFlag (default: latest)")
+	fs.StringVar(&p.createOptions.Version, helmChartVersionFlag, "", "helm chart version (default: latest)")
 
-	fs.StringVar(&p.createOptions.CRDVersion, crdVersionFlag, crdVersionV1, "crd versionFlag to generate")
+	fs.StringVar(&p.createOptions.CRDVersion, crdVersionFlag, crdVersionV1, "crd version to generate")
 }
 
 // InjectConfig will inject the PROJECT file/config in the plugin

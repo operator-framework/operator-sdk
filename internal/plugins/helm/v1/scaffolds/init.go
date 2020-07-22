@@ -97,6 +97,7 @@ func (s *initScaffolder) scaffold() error {
 			HelmOperatorVersion: HelmOperatorVersion,
 		},
 		&templates.Kustomize{},
+		&templates.ManagerRole{},
 		&templates.ManagerRoleBinding{},
 		&templates.LeaderElectionRole{},
 		&templates.LeaderElectionRoleBinding{},
