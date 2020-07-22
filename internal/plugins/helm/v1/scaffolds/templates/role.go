@@ -36,17 +36,17 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-var _ file.Template = &Role{}
+var _ file.Template = &ManagerRole{}
 
 var defaultRoleFile = filepath.Join("config", "rbac", "role.yaml")
 
-// Role scaffolds the role.yaml file
-type Role struct {
+// ManagerRole scaffolds the role.yaml file
+type ManagerRole struct {
 	file.TemplateMixin
 }
 
 // SetTemplateDefaults implements input.Template
-func (f *Role) SetTemplateDefaults() error {
+func (f *ManagerRole) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = defaultRoleFile
 	}
@@ -57,9 +57,9 @@ func (f *Role) SetTemplateDefaults() error {
 	return nil
 }
 
-var _ file.Inserter = &RoleUpdater{}
+var _ file.Inserter = &ManagerRoleUpdater{}
 
-type RoleUpdater struct {
+type ManagerRoleUpdater struct {
 	file.TemplateMixin
 	file.ResourceMixin
 
@@ -68,11 +68,11 @@ type RoleUpdater struct {
 	CustomRules      []rbacv1.PolicyRule
 }
 
-func (*RoleUpdater) GetPath() string {
+func (*ManagerRoleUpdater) GetPath() string {
 	return defaultRoleFile
 }
 
-func (*RoleUpdater) GetIfExistsAction() file.IfExistsAction {
+func (*ManagerRoleUpdater) GetIfExistsAction() file.IfExistsAction {
 	return file.Overwrite
 }
 
@@ -80,13 +80,13 @@ const (
 	rulesMarker = "rules"
 )
 
-func (f *RoleUpdater) GetMarkers() []file.Marker {
+func (f *ManagerRoleUpdater) GetMarkers() []file.Marker {
 	return []file.Marker{
 		file.NewMarkerFor(defaultRoleFile, rulesMarker),
 	}
 }
 
-func (f *RoleUpdater) GetCodeFragments() file.CodeFragmentsMap {
+func (f *ManagerRoleUpdater) GetCodeFragments() file.CodeFragmentsMap {
 	fragments := make(file.CodeFragmentsMap, 1)
 
 	// If resource is not being provided we are creating the file, not updating it
@@ -247,7 +247,7 @@ type roleDiscoveryInterface interface {
 // renders a release manifest using the chart's default values and uses the Kubernetes
 // discovery API to lookup each resource in the resulting manifest.
 // The role scaffold will have IsClusterScoped=true if the chart lists cluster scoped resources
-func (f *RoleUpdater) updateForChart(dc roleDiscoveryInterface) {
+func (f *ManagerRoleUpdater) updateForChart(dc roleDiscoveryInterface) {
 	log.Info("Generating RBAC rules")
 
 	clusterResourceRules, namespacedResourceRules, err := generateRoleRules(dc, f.Chart)

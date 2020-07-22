@@ -107,8 +107,7 @@ func (s *apiScaffolder) scaffold() error {
 
 	if err := machinery.NewScaffold().Execute(
 		s.newUniverse(res),
-		&templates.Role{},
-		&templates.RoleUpdater{Chart: chrt},
+		&templates.ManagerRoleUpdater{Chart: chrt},
 	); err != nil {
 		return fmt.Errorf("error scaffolding role: %v", err)
 	}
