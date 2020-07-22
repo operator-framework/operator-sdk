@@ -23,7 +23,6 @@ import (
 	"github.com/fatih/structtag"
 	"github.com/markbates/inflect"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"github.com/operator-framework/operator-registry/pkg/registry"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/version"
 	crdmarkers "sigs.k8s.io/controller-tools/pkg/crd/markers"
@@ -31,16 +30,6 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
-
-// MakeKeyForCRDDescription creates a key unique to a crdDescription.
-func MakeKeyForCRDDescription(crd v1alpha1.CRDDescription) registry.DefinitionKey {
-	return registry.DefinitionKey{
-		Name:    crd.Name,
-		Group:   MakeFullGroupFromName(crd.Name),
-		Version: crd.Version,
-		Kind:    crd.Kind,
-	}
-}
 
 // MakeFullGroupFromName returns everything but the first element of a CRD name,
 // which by definition is <resource>.<full group>.
