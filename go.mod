@@ -36,7 +36,7 @@ require (
 	k8s.io/apiextensions-apiserver v0.18.2
 	k8s.io/apimachinery v0.18.2
 	k8s.io/cli-runtime v0.18.2
-	k8s.io/client-go v12.0.0+incompatible
+    k8s.io/client-go v0.18.2
 	k8s.io/gengo v0.0.0-20200114144118-36b2048a9120
 	k8s.io/klog v1.0.0
 	k8s.io/kubectl v0.18.2
@@ -50,5 +50,4 @@ require (
 replace (
 	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible // Required by OLM
 	github.com/mattn/go-sqlite3 => github.com/mattn/go-sqlite3 v1.10.0
-	k8s.io/client-go => k8s.io/client-go v0.18.2
 )
