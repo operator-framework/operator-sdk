@@ -15,7 +15,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"runtime"
@@ -40,7 +39,6 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/runner"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/watches"
-	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 )
@@ -71,11 +69,26 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Deprecated: OPERATOR_NAME environment variable is an artifact of the
+	// legacy operator-sdk project scaffolding. Flag `--leader-election-id`
+	// should be used instead.
+	if operatorName, found := os.LookupEnv("OPERATOR_NAME"); found {
+		log.Info("Environment variable OPERATOR_NAME has been deprecated, use --leader-election-id instead.")
+		if pflag.CommandLine.Lookup("leader-election-id").Changed {
+			log.Info("Ignoring OPERATOR_NAME environment variable since --leader-election-id is set")
+		} else {
+			f.LeaderElectionID = operatorName
+		}
+	}
+
 	// Set default manager options
 	// TODO: probably should expose the host & port as an environment variables
 	options := manager.Options{
-		HealthProbeBindAddress: fmt.Sprintf("%s:%d", metricsHost, healthProbePort),
-		MetricsBindAddress:     f.MetricsAddress,
+		HealthProbeBindAddress:  fmt.Sprintf("%s:%d", metricsHost, healthProbePort),
+		MetricsBindAddress:      f.MetricsAddress,
+		LeaderElection:          f.EnableLeaderElection,
+		LeaderElectionID:        f.LeaderElectionID,
+		LeaderElectionNamespace: f.LeaderElectionNamespace,
 		NewClient: func(cache cache.Cache, config *rest.Config, options client.Options) (client.Client, error) {
 			c, err := client.New(config, options)
 			if err != nil {
@@ -150,19 +163,6 @@ func main() {
 			OwnerWatchMap:               controllermap.NewWatchMap(),
 			AnnotationWatchMap:          controllermap.NewWatchMap(),
 		}, w.Blacklist)
-	}
-
-	operatorName, err := k8sutil.GetOperatorName()
-	if err != nil {
-		log.Error(err, "Failed to get the operator name")
-		os.Exit(1)
-	}
-
-	// Become the leader before proceeding
-	err = leader.Become(context.TODO(), operatorName+"-lock")
-	if err != nil {
-		log.Error(err, "Failed to become leader.")
-		os.Exit(1)
 	}
 
 	err = mgr.AddHealthzCheck("ping", healthz.Ping)

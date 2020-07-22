@@ -28,11 +28,14 @@ type Flags struct {
 	ReconcilePeriod         time.Duration
 	WatchesFile             string
 	InjectOwnerRef          bool
+	EnableLeaderElection    bool
 	MaxConcurrentReconciles int
 	AnsibleVerbosity        int
 	AnsibleRolesPath        string
 	AnsibleCollectionsPath  string
 	MetricsAddress          string
+	LeaderElectionID        string
+	LeaderElectionNamespace string
 }
 
 const AnsibleRolesPathEnvVar = "ANSIBLE_ROLES_PATH"
@@ -81,5 +84,22 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 		":8080",
 		"The address the metric endpoint binds to",
 	)
-
+	flagSet.BoolVar(&f.EnableLeaderElection,
+		"enable-leader-election",
+		false,
+		"Enable leader election for controller manager. Enabling this will"+
+			" ensure there is only one active controller manager.",
+	)
+	flagSet.StringVar(&f.LeaderElectionID,
+		"leader-election-id",
+		"",
+		"Name of the configmap that is used for holding the leader lock.",
+	)
+	flagSet.StringVar(&f.LeaderElectionNamespace,
+		"leader-election-namespace",
+		"",
+		"Namespace in which to create the leader election configmap for"+
+			" holding the leader lock (required if running locally with leader"+
+			" election enabled).",
+	)
 }
