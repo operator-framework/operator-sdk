@@ -18,45 +18,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/event"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
-
-var log = logf.Log.WithName("predicate").WithName("eventFilters")
-
-// GenerationChangedPredicate implements a default update predicate function on generation change
-// (adapted from sigs.k8s.io/controller-runtime/pkg/predicate/predicate.ResourceVersionChangedPredicate)
-type GenerationChangedPredicate struct {
-	predicate.Funcs
-}
 
 type ResourceFilterPredicate struct {
 	predicate.Funcs
 	Selector labels.Selector
-}
-
-// Update implements default UpdateEvent filter for validating generation change
-func (GenerationChangedPredicate) Update(e event.UpdateEvent) bool {
-	if e.MetaOld == nil {
-		log.Error(nil, "Update event has no old metadata", "event", e)
-		return false
-	}
-	if e.ObjectOld == nil {
-		log.Error(nil, "Update event has no old runtime object to update", "event", e)
-		return false
-	}
-	if e.ObjectNew == nil {
-		log.Error(nil, "Update event has no new runtime object for update", "event", e)
-		return false
-	}
-	if e.MetaNew == nil {
-		log.Error(nil, "Update event has no new metadata", "event", e)
-		return false
-	}
-	if e.MetaNew.GetGeneration() == e.MetaOld.GetGeneration() && e.MetaNew.GetGeneration() != 0 {
-		return false
-	}
-	return true
 }
 
 // Skips events that have labels matching selectors defined in watches.yaml

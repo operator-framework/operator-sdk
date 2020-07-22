@@ -27,6 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	crpredicate "sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/operator-framework/operator-sdk/pkg/ansible/events"
@@ -107,7 +108,7 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 	}
 
 	if err := c.Watch(&source.Kind{Type: u}, &handler.InstrumentedEnqueueRequestForObject{},
-		predicate.GenerationChangedPredicate{}, filterPredicate); err != nil {
+		crpredicate.GenerationChangedPredicate{}, filterPredicate); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}
