@@ -32,6 +32,7 @@ type Flags struct {
 	AnsibleVerbosity        int
 	AnsibleRolesPath        string
 	AnsibleCollectionsPath  string
+	MetricsAddress          string
 }
 
 const AnsibleRolesPathEnvVar = "ANSIBLE_ROLES_PATH"
@@ -75,4 +76,10 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 		"",
 		"Path to installed Ansible Collections. If set, collections should be located in {{value}}/ansible_collections/. If unset, collections are assumed to be in ~/.ansible/collections or /usr/share/ansible/collections.",
 	)
+	flagSet.StringVar(&f.MetricsAddress,
+		"metrics-addr",
+		":8080",
+		"The address the metric endpoint binds to",
+	)
+
 }

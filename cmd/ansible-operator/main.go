@@ -48,7 +48,6 @@ import (
 var (
 	metricsHost           = "0.0.0.0"
 	log                   = logf.Log.WithName("cmd")
-	metricsPort     int32 = 8383
 	healthProbePort int32 = 6789
 )
 
@@ -76,7 +75,7 @@ func main() {
 	// TODO: probably should expose the host & port as an environment variables
 	options := manager.Options{
 		HealthProbeBindAddress: fmt.Sprintf("%s:%d", metricsHost, healthProbePort),
-		MetricsBindAddress:     fmt.Sprintf("%s:%d", metricsHost, metricsPort),
+		MetricsBindAddress:     f.MetricsAddress,
 		NewClient: func(cache cache.Cache, config *rest.Config, options client.Options) (client.Client, error) {
 			c, err := client.New(config, options)
 			if err != nil {
