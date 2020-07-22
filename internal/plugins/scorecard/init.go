@@ -165,7 +165,7 @@ func generate(operatorName, testImageTag, outputDir string) error {
 type jsonPatches []jsonPatchObject
 
 // jsonPatchObject is a JSON 6902 patch object specific to the scorecard's test configuration.
-// See https://tools.ietf.org/html/rfc6902 for details.
+// https://kubernetes-sigs.github.io/kustomize/api-reference/kustomization/patchesjson6902/ for details.
 type jsonPatchObject struct {
 	Op    string                     `json:"op"`
 	Path  string                     `json:"path"`
