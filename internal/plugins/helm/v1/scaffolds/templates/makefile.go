@@ -115,7 +115,7 @@ ifeq (, $(shell which kustomize 2>/dev/null))
 	mkdir -p bin ;\
 	curl -sSLo - https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/{{ .KustomizeVersion }}/kustomize_{{ .KustomizeVersion }}_$(OS)_$(ARCH).tar.gz | tar xzf - -C bin/ ;\
 	}
-KUSTOMIZE=./bin/kustomize
+KUSTOMIZE=$(realpath ./bin/kustomize)
 else
 KUSTOMIZE=$(shell which kustomize)
 endif
@@ -129,7 +129,7 @@ ifeq (, $(shell which helm-operator 2>/dev/null))
 	mv helm-operator-{{ .HelmOperatorVersion }}-$(ARCHOPER)-$(OSOPER) ./bin/helm-operator ;\
 	chmod +x ./bin/helm-operator ;\
 	}
-HELM_OPERATOR=./bin/helm-operator
+HELM_OPERATOR=$(realpath ./bin/helm-operator)
 else
 HELM_OPERATOR=$(shell which helm-operator)
 endif
