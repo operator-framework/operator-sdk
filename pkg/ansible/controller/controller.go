@@ -30,9 +30,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/operator-framework/operator-sdk/pkg/ansible/events"
+	"github.com/operator-framework/operator-sdk/pkg/ansible/predicate"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/runner"
 	handler "github.com/operator-framework/operator-sdk/pkg/handler"
-	"github.com/operator-framework/operator-sdk/pkg/predicate"
 )
 
 var log = logf.Log.WithName("ansible-controller")
