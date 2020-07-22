@@ -131,31 +131,31 @@ func New(watch watches.Watch, runnerArgs string) (Runner, error) {
 	}
 
 	return &runner{
-		Path:               path,
-		cmdFunc:            cmdFunc,
-		Vars:               watch.Vars,
-		Finalizer:          watch.Finalizer,
-		finalizerCmdFunc:   finalizerCmdFunc,
-		GVK:                watch.GroupVersionKind,
-		maxRunnerArtifacts: watch.MaxRunnerArtifacts,
-		ansibleVerbosity:   watch.AnsibleVerbosity,
-		ansibleArgs:        runnerArgs,
+		Path:                path,
+		cmdFunc:             cmdFunc,
+		Vars:                watch.Vars,
+		Finalizer:           watch.Finalizer,
+		finalizerCmdFunc:    finalizerCmdFunc,
+		GVK:                 watch.GroupVersionKind,
+		maxRunnerArtifacts:  watch.MaxRunnerArtifacts,
+		ansibleVerbosity:    watch.AnsibleVerbosity,
+		ansibleArgs:         runnerArgs,
 		snakeCaseParameters: watch.SnakeCaseParameters,
 	}, nil
 }
 
 // runner - implements the Runner interface for a GVK that's being watched.
 type runner struct {
-	Path               string                  // path on disk to a playbook or role depending on what cmdFunc expects
-	GVK                schema.GroupVersionKind // GVK being watched that corresponds to the Path
-	Finalizer          *watches.Finalizer
-	Vars               map[string]interface{}
-	cmdFunc            cmdFuncType // returns a Cmd that runs ansible-runner
-	finalizerCmdFunc   cmdFuncType
-	maxRunnerArtifacts int
-	ansibleVerbosity   int
+	Path                string                  // path on disk to a playbook or role depending on what cmdFunc expects
+	GVK                 schema.GroupVersionKind // GVK being watched that corresponds to the Path
+	Finalizer           *watches.Finalizer
+	Vars                map[string]interface{}
+	cmdFunc             cmdFuncType // returns a Cmd that runs ansible-runner
+	finalizerCmdFunc    cmdFuncType
+	maxRunnerArtifacts  int
+	ansibleVerbosity    int
 	snakeCaseParameters bool
-	ansibleArgs        string
+	ansibleArgs         string
 }
 
 func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig string) (RunResult, error) {

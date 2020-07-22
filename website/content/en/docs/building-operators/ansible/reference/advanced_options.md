@@ -217,10 +217,10 @@ spec:
 You are able to use the flag `--ansible-args` to pass an arbitrary argument to the Ansible-based Operator. With this option we can, for example, allow a playbook to run a specific part of the configuration without running the whole playbook:  
 
 ```shell
-operator-sdk run local --ansible-args='--tags "configuration,packages"'
+ansible-operator run --ansible-args='--tags "configuration,packages"'
 ```
 ```
-operator-sdk run local --ansible-args='--skip-tags "notification"'
+ansible-operator run --ansible-args='--skip-tags "notification"'
 ```
 Ansible-runner will perform the task relevant to the command specified by the user in the ```---ansible-args``` flag.
 

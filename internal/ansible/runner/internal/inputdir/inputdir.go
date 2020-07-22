@@ -133,7 +133,7 @@ func (i *InputDir) Write() error {
 	}
 
 	if strings.HasPrefix(i.CmdLine, string("'")) && i.CmdLine[0] == i.CmdLine[len(i.CmdLine)-1] {
-		 i.CmdLine = i.CmdLine[1 : len(i.CmdLine)-1]
+		i.CmdLine = i.CmdLine[1 : len(i.CmdLine)-1]
 	}
 
 	cmdLineBytes := []byte(i.CmdLine)
