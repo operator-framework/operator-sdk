@@ -23,7 +23,7 @@ import (
 	"sigs.k8s.io/controller-tools/pkg/markers"
 )
 
-// getMarkedChildrenOfField collects all marked fields from type delcarations starting at root in depth-first order.
+// getMarkedChildrenOfField collects all marked fields from type declarations starting at root in depth-first order.
 func (g generator) getMarkedChildrenOfField(root markers.FieldInfo) (map[string][]*fieldInfo, error) {
 	// ast.Inspect will not traverse into fields, so iteratively collect them and to check for markers.
 	nextFields := []*fieldInfo{{FieldInfo: root}}

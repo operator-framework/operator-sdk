@@ -21,9 +21,11 @@ import (
 	"strings"
 
 	"github.com/fatih/structtag"
+	"github.com/markbates/inflect"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/pkg/registry"
 	"k8s.io/apimachinery/pkg/version"
+	crdmarkers "sigs.k8s.io/controller-tools/pkg/crd/markers"
 	"sigs.k8s.io/controller-tools/pkg/markers"
 
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
@@ -71,8 +73,7 @@ func getHalfBySep(s, sep string, half uint) string {
 
 // buildCRDDescriptionFromType builds a crdDescription for the Go API defined
 // by key from markers and type information in g.types.
-func (g generator) buildCRDDescriptionFromType(key registry.DefinitionKey,
-	kindType *markers.TypeInfo) (v1alpha1.CRDDescription, error) {
+func (g generator) buildCRDDescriptionFromType(key registry.DefinitionKey, kindType *markers.TypeInfo) (v1alpha1.CRDDescription, error) {
 
 	// Initialize the description.
 	description := MakeCRDDescriptionForKey(key)
@@ -81,7 +82,8 @@ func (g generator) buildCRDDescriptionFromType(key registry.DefinitionKey,
 	// Parse resources and displayName from the kind type's markers.
 	for _, markers := range kindType.Markers {
 		for _, marker := range markers {
-			if d, isDescription := marker.(Description); isDescription {
+			switch d := marker.(type) {
+			case Description:
 				if d.DisplayName != "" {
 					description.DisplayName = d.DisplayName
 				}
@@ -92,8 +94,16 @@ func (g generator) buildCRDDescriptionFromType(key registry.DefinitionKey,
 					}
 					description.Resources = append(description.Resources, refs...)
 				}
+			case crdmarkers.Resource:
+				if d.Path != "" {
+					description.Name = fmt.Sprintf("%s.%s", d.Path, key.Group)
+				}
 			}
 		}
+	}
+	// The default, if the resource marker's path value is not set, is to use a pluralized form of lowercase kind.
+	if description.Name == "" {
+		description.Name = fmt.Sprintf("%s.%s", inflect.Pluralize(strings.ToLower(key.Kind)), key.Group)
 	}
 	sortDescription(description.Resources)
 

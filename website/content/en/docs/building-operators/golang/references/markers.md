@@ -148,7 +148,8 @@ These examples assume `Memcached`, `MemcachedSpec`, and `MemcachedStatus` are th
 
 ## Deprecated markers
 
-_These markers are deprecated. You can migrate to the [new marker system](#clusterserviceversion-markers) by running the following script:_
+[Markers][deprecated-markers] supported by `operator-sdk` prior to v1.0.0 are deprecated.
+You can migrate to the new marker system by running the following script:
 
 ```console
 $ curl -sSLo migrate-markers.sh https://raw.githubusercontent.com/operator-framework/operator-sdk/master/hack/generate/migrate-markers.sh
@@ -156,33 +157,10 @@ $ chmod +x ./migrate-markers.sh
 $ ./migrate-markers.sh path/to/*_types.go
 ```
 
-All markers have a `+operator-sdk:gen-csv` prefix, denoting that they're parsed while executing
-[`operator-sdk generate kustomize manifests`][cli-gen-kustomize-manifests].
-
-### Paths
-
-Paths are dot-separated string hierarchies with the above prefix that map to CSV [`spec`][csv-spec] field names.
-
-Example: `+operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Pod Count"`
-
-#### customresourcedefinitions
-
-- `customresourcedefinitions`: child path token
-	- `displayName`: quoted string or string literal
-	- `resources`: quoted string or string literal, in the format `"kind,version,\"name\""` or `` `kind,version,"name"` ``, where `kind`, `version`, and `name` are fields in each CSV `resources` entry
-	- `specDescriptors`, `statusDescriptors`: bool, or child path token
-		- `displayName`: quoted string or string literal
-		- `x-descriptors`: quoted string or string literal comma-separated list of [`x-descriptor`][csv-x-desc] UI hints.
-
-**NOTES**
-- `specDescriptors` and `statusDescriptors` with a value of `true` is required for each field to be included in their respective `customresourcedefinitions` CSV fields. See the examples below.
-- `customresourcedefinitions` top-level `kind`, `name`, and `version` fields are parsed from API code.
-- All `description` fields are parsed from type declaration and `struct` type field comments.
-- `path` is parsed out of a field's JSON tag and merged with parent field path's in dot-hierarchy notation.
-
 
 [markers]:https://pkg.go.dev/sigs.k8s.io/controller-tools/pkg/markers
 [cli-gen-kustomize-manifests]:/docs/cli/operator-sdk_generate_kustomize_manifests
 [csv-x-desc]:https://github.com/openshift/console/blob/master/frontend/packages/operator-lifecycle-manager/src/components/descriptors/reference/reference.md
 [csv-spec]:https://github.com/operator-framework/operator-lifecycle-manager/blob/e0eea22/doc/design/building-your-csv.md
 [csv-crds]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md#your-custom-resource-definitions
+[deprecated-markers]:https://v0-19-x.sdk.operatorframework.io/docs/golang/references/markers/

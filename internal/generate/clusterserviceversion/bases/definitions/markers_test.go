@@ -21,6 +21,8 @@ import (
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 )
 
+// TODO(estroz): migrate to ginkgo/gomega
+
 func TestParseResource(t *testing.T) {
 	cases := []struct {
 		description string

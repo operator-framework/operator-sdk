@@ -185,50 +185,6 @@ func (g Generator) setSDKAnnotations(csv *v1alpha1.ClusterServiceVersion) {
 	csv.SetAnnotations(annotations)
 }
 
-// LegacyOption is a function that modifies a Generator for legacy project layouts.
-type LegacyOption Option
-
-// WithBundleBase sets a Generator's base CSV to a legacy-style bundle base.
-func WithBundleBase(inputDir, apisDir string, ilvl projutil.InteractiveLevel) LegacyOption {
-	return func(g *Generator) error {
-		g.getBase = g.makeBundleBaseGetterLegacy(inputDir, apisDir, ilvl)
-		return nil
-	}
-}
-
-// WithPackageBase sets a Generator's base CSV to a legacy-style package base.
-func WithPackageBase(inputDir, apisDir string, ilvl projutil.InteractiveLevel) LegacyOption {
-	return func(g *Generator) error {
-		g.getBase = g.makePackageBaseGetterLegacy(inputDir, apisDir, ilvl)
-		return nil
-	}
-}
-
-// GenerateLegacy configures the generator with opts then runs it. Used for
-// generating files for legacy project layouts.
-func (g *Generator) GenerateLegacy(opts ...LegacyOption) (err error) {
-	for _, opt := range opts {
-		if err = opt(g); err != nil {
-			return err
-		}
-	}
-
-	if g.getWriter == nil {
-		return noGetWriterError
-	}
-
-	csv, err := g.generate()
-	if err != nil {
-		return err
-	}
-
-	w, err := g.getWriter()
-	if err != nil {
-		return err
-	}
-	return genutil.WriteObject(w, csv)
-}
-
 // generate runs a configured Generator.
 func (g *Generator) generate() (*operatorsv1alpha1.ClusterServiceVersion, error) {
 	if g.getBase == nil {

@@ -24,6 +24,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TODO(estroz): migrate to ginkgo/gomega
+
 var (
 	testDataDir = filepath.Join("..", "..", "..", "testdata", "go")
 )
@@ -57,12 +59,12 @@ func TestApplyDefinitionsForKeysGo(t *testing.T) {
 			apisDir:     "api",
 			csv:         &v1alpha1.ClusterServiceVersion{},
 			keys: []registry.DefinitionKey{
-				{Name: "dummies.cache.example.com", Group: "cache.example.com", Version: "v1alpha2", Kind: "Dummy"},
+				{Name: "dummys.cache.example.com", Group: "cache.example.com", Version: "v1alpha2", Kind: "Dummy"},
 			},
 			expectedCRDs: v1alpha1.CustomResourceDefinitions{
 				Owned: []v1alpha1.CRDDescription{
 					{
-						Name:        "dummies.cache.example.com",
+						Name:        "dummys.cache.example.com",
 						Kind:        "Dummy",
 						Version:     "v1alpha2",
 						DisplayName: "Dummy App",
@@ -140,7 +142,7 @@ func TestApplyDefinitionsForKeysGo(t *testing.T) {
 					CustomResourceDefinitions: v1alpha1.CustomResourceDefinitions{
 						Owned: []v1alpha1.CRDDescription{
 							{
-								Name: "dummies.cache.example.com", Version: "v1alpha2", Kind: "Dummy",
+								Name: "dummys.cache.example.com", Version: "v1alpha2", Kind: "Dummy",
 								DisplayName: "Dummy App",
 								Description: "Dummy is the Schema for the other dummy API",
 								Resources: []v1alpha1.APIResourceReference{
@@ -160,12 +162,12 @@ func TestApplyDefinitionsForKeysGo(t *testing.T) {
 				},
 			},
 			keys: []registry.DefinitionKey{
-				{Name: "dummies.cache.example.com", Group: "cache.example.com", Version: "v1alpha2", Kind: "Dummy"},
+				{Name: "dummys.cache.example.com", Group: "cache.example.com", Version: "v1alpha2", Kind: "Dummy"},
 			},
 			expectedCRDs: v1alpha1.CustomResourceDefinitions{
 				Owned: []v1alpha1.CRDDescription{
 					{
-						Name: "dummies.cache.example.com", Version: "v1alpha2", Kind: "Dummy",
+						Name: "dummys.cache.example.com", Version: "v1alpha2", Kind: "Dummy",
 						DisplayName: "Dummy App",
 						Description: "Dummy is the Schema for the other dummy API",
 						Resources: []v1alpha1.APIResourceReference{

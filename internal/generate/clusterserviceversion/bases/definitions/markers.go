@@ -22,6 +22,7 @@ import (
 
 	"github.com/fatih/structtag"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	crdmarkers "sigs.k8s.io/controller-tools/pkg/crd/markers"
 	"sigs.k8s.io/controller-tools/pkg/markers"
 
 	sdkmarkers "github.com/operator-framework/operator-sdk/internal/markers"
@@ -41,6 +42,9 @@ var typeDefinition = markers.Must(markers.MakeDefinition(crdMarkerName, markers.
 // +operator-sdk:csv:customresourcedefinitions:type=<spec|status>,displayName="name",xDescriptors="ui:elements:foo:bar"
 var fieldDefinition = markers.Must(markers.MakeDefinition(crdMarkerName, markers.DescribesField, Descriptor{}))
 
+// See https://github.com/kubernetes-sigs/controller-tools/blob/92e95c1/pkg/crd/markers/crd.go#L40
+var crdResourceDefinition = markers.Must(markers.MakeDefinition("kubebuilder:resource", markers.DescribesType, crdmarkers.Resource{}))
+
 // registerMarkers adds type and field marker definitions to a registry.
 func registerMarkers(into *markers.Registry) error {
 	if err := into.Register(typeDefinition); err != nil {
@@ -51,6 +55,12 @@ func registerMarkers(into *markers.Registry) error {
 		return fmt.Errorf("error registering field definition: %v", err)
 	}
 	into.AddHelp(fieldDefinition, Descriptor{}.Help())
+
+	// External definitions.
+	if err := into.Register(crdResourceDefinition); err != nil {
+		return fmt.Errorf("error registering CRD resource definition: %v", err)
+	}
+	into.AddHelp(crdResourceDefinition, crdmarkers.Resource{}.Help())
 	return nil
 }
 
@@ -200,7 +210,7 @@ func getPathSegmentForField(finfo markers.FieldInfo) (string, error) {
 		return inlinedTag, nil
 	}
 	// Unexported fields should be ignored in downstream processing.
-	if isNotExported(finfo.Name) {
+	if !isExported(finfo.Name) {
 		return ignoredTag, nil
 	}
 	tags, err := structtag.Parse(string(finfo.Tag))
@@ -226,9 +236,9 @@ func getPathSegmentForField(finfo markers.FieldInfo) (string, error) {
 	return finfo.Name, nil
 }
 
-// isNotExported returns true if name is not an exported struct field name.
-func isNotExported(name string) bool {
-	return len(name) == 0 || unicode.IsLower(rune(name[0]))
+// isExported returns true if name is an exported struct field name.
+func isExported(name string) bool {
+	return len(name) != 0 && !unicode.IsLower(rune(name[0]))
 }
 
 func contains(options []string, key string) bool {

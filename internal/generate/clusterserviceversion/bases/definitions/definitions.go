@@ -16,7 +16,6 @@ package definitions
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -66,11 +65,10 @@ func ApplyDefinitionsForKeysGo(csv *v1alpha1.ClusterServiceVersion, apisRootDir 
 
 	// Create definitions for kind types found under the collected roots.
 	definitionsByKey := make(map[registry.DefinitionKey]*descriptionValues)
-	fmt.Println("building types for:", keys)
 	for _, key := range keys {
 		kindType, hasKind := g.types[key.Kind]
 		if !hasKind {
-			log.Debugf("Skipping CSV annotation parsing for API %s: type %s not found", key, key.Kind)
+			log.Warnf("Skipping CSV annotation parsing for API %s: type %s not found", key, key.Kind)
 			continue
 		}
 		crd, err := g.buildCRDDescriptionFromType(key, kindType)

@@ -15,13 +15,9 @@
 package bases
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
@@ -29,9 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/yaml"
 
-	"github.com/operator-framework/operator-sdk/internal/markers"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
@@ -87,15 +81,10 @@ func (b ClusterServiceVersion) GetBase() (base *v1alpha1.ClusterServiceVersion, 
 		switch b.OperatorType {
 		case projutil.OperatorTypeGo:
 			// Update descriptions from the APIs dir.
-			// TODO(estroz): remove this condition once old annotations are deprecated.
-			if kbutil.HasProjectFile() || areAnnotationsMigrated(b.APIsDir) {
-				err = updateDefinitions(base, b.APIsDir, b.GVKs)
-			} else {
-				err = updateDescriptionsForGVKs(base, b.APIsDir, b.GVKs)
-			}
-			if err != nil {
-				return nil, fmt.Errorf("error generating ClusterServiceVersion base metadata: %w", err)
-			}
+			err = updateDefinitions(base, b.APIsDir, b.GVKs)
+		}
+		if err != nil {
+			return nil, fmt.Errorf("error generating ClusterServiceVersion definitions metadata: %w", err)
 		}
 	}
 
@@ -209,33 +198,4 @@ func readClusterServiceVersionBase(path string) (*v1alpha1.ClusterServiceVersion
 	}
 
 	return nil, fmt.Errorf("no ClusterServiceVersion manifest in %s", path)
-}
-
-// areAnnotationsMigrated returns true if annotations have been migrated to the new markers format.
-// Errors are ignored so the caller can default to legacy behavior.
-func areAnnotationsMigrated(apisRoot string) bool {
-	if apisRoot == "" {
-		return false
-	}
-	hasMarkers := false
-	_ = filepath.Walk(apisRoot, func(path string, info os.FileInfo, err error) error {
-		if err != nil || info.IsDir() || filepath.Ext(path) != ".go" {
-			return err
-		}
-		f, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-		scanner := bufio.NewScanner(f)
-		for scanner.Scan() {
-			// The new prefix "operator-sdk:csv:" differs from the old one, "operator-sdk:gen-csv:".
-			if strings.Contains(scanner.Text(), markers.Prefix+":csv:") {
-				hasMarkers = true
-				break
-			}
-		}
-		_ = f.Close()
-		return scanner.Err()
-	})
-	return hasMarkers
 }
