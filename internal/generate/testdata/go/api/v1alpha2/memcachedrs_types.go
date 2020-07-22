@@ -12,46 +12,44 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v1alpha1
+package v1alpha2
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// MemcachedSpec defines the desired state of Memcached
-type MemcachedSpec struct {
-	// Size is the size of the memcached deployment
+// MemcachedRSSpec defines the desired state of MemcachedRS
+type MemcachedRSSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
-	Size int32 `json:"size"`
+	NumNodes int32 `json:"numNodes"`
 }
 
-// MemcachedStatus defines the observed state of Memcached
-type MemcachedStatus struct {
-	// Nodes are the names of the memcached pods
+// MemcachedRSStatus defines the observed state of MemcachedRS
+type MemcachedRSStatus struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=status
-	Nodes []string `json:"nodes"`
+	NodeList []string `json:"nodeList"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// Memcached is the Schema for the memcacheds API
+// MemcachedRS is the Schema for the memcachedrs API
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:path=memcacheds,scope=Namespaced
+// +kubebuilder:resource:path=memcachedrs,scope=Namespaced
 // +kubebuilder:storageversion
-// +operator-sdk:csv:customresourcedefinitions:displayName="Memcached App Display Name"
-type Memcached struct {
+// +operator-sdk:csv:customresourcedefinitions:displayName="MemcachedRS App"
+type MemcachedRS struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   MemcachedSpec   `json:"spec,omitempty"`
-	Status MemcachedStatus `json:"status,omitempty"`
+	Spec   MemcachedRSSpec   `json:"spec,omitempty"`
+	Status MemcachedRSStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// MemcachedList contains a list of Memcached
-type MemcachedList struct {
+// MemcachedRSList contains a list of MemcachedRS
+type MemcachedRSList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Memcached `json:"items"`
+	Items           []MemcachedRS `json:"items"`
 }

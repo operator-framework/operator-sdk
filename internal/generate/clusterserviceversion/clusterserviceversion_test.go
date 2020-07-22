@@ -198,39 +198,6 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 				Expect(outputFile).To(BeAnExistingFile())
 				Expect(readFileHelper(outputFile)).To(MatchYAML(newCSVStr))
 			})
-
-			It("should write a ClusterServiceVersion manifest to a legacy bundle file", func() {
-				g = Generator{
-					OperatorName: operatorName,
-					OperatorType: operatorType,
-					Version:      version,
-					Collector:    col,
-				}
-				opts := []LegacyOption{
-					WithBundleBase(csvBasesDir, goAPIsDir, projutil.InteractiveHardOff),
-					LegacyOption(WithBundleWriter(tmp)),
-				}
-				Expect(g.GenerateLegacy(opts...)).ToNot(HaveOccurred())
-				outputFile := filepath.Join(tmp, bundle.ManifestsDir, makeCSVFileName(operatorName))
-				Expect(outputFile).To(BeAnExistingFile())
-				Expect(readFileHelper(outputFile)).To(MatchYAML(newCSVStr))
-			})
-			It("should write a ClusterServiceVersion manifest as a legacy package file", func() {
-				g = Generator{
-					OperatorName: operatorName,
-					OperatorType: operatorType,
-					Version:      version,
-					Collector:    col,
-				}
-				opts := []LegacyOption{
-					WithPackageBase(csvBasesDir, goAPIsDir, projutil.InteractiveHardOff),
-					LegacyOption(WithPackageWriter(tmp)),
-				}
-				Expect(g.GenerateLegacy(opts...)).Should(Succeed())
-				outputFile := filepath.Join(tmp, g.Version, makeCSVFileName(operatorName))
-				Expect(outputFile).To(BeAnExistingFile())
-				Expect(string(readFileHelper(outputFile))).To(MatchYAML(newCSVStr))
-			})
 		})
 
 		Context("with incorrect Options", func() {
@@ -259,23 +226,6 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 					WithWriter(&bytes.Buffer{}),
 				}
 				Expect(g.Generate(cfg, opts...)).To(MatchError(noGetBaseError))
-			})
-
-			It("should return an error without any LegacyOptions", func() {
-				opts := []LegacyOption{}
-				Expect(g.GenerateLegacy(opts...)).To(MatchError(noGetWriterError))
-			})
-			It("should return an error without a getWriter (legacy)", func() {
-				opts := []LegacyOption{
-					WithBundleBase(csvBasesDir, goAPIsDir, projutil.InteractiveHardOff),
-				}
-				Expect(g.GenerateLegacy(opts...)).To(MatchError(noGetWriterError))
-			})
-			It("should return an error without a getBase (legacy)", func() {
-				opts := []LegacyOption{
-					LegacyOption(WithWriter(&bytes.Buffer{})),
-				}
-				Expect(g.GenerateLegacy(opts...)).To(MatchError(noGetBaseError))
 			})
 		})
 

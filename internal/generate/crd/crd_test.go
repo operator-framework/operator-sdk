@@ -31,15 +31,17 @@ import (
 )
 
 const (
-	testGroup   = "cache.example.com"
-	testVersion = "v1alpha1"
-	testKind    = "Memcached"
+	testGroup     = "cache"
+	testFullGroup = testGroup + ".example.com"
+	testVersion   = "v1alpha1"
+	testKind      = "Memcached"
 )
 
 var (
 	testDataDir    = filepath.Join("..", "testdata")
 	testGoDataDir  = filepath.Join(testDataDir, "go")
-	testAPIVersion = path.Join(testGroup, testVersion)
+	testGoAPIDir   = filepath.Join(testGoDataDir, "pkg", "apis", testGroup, testVersion)
+	testAPIVersion = path.Join(testFullGroup, testVersion)
 )
 
 func init() {
@@ -77,7 +79,7 @@ func TestGenerate(t *testing.T) {
 			description: "Generate Go CRD",
 			generator: Generator{
 				IsOperatorGo: true,
-				ApisDir:      filepath.Join(testGoDataDir, scaffold.ApisDir),
+				ApisDir:      testGoAPIDir,
 				OutputDir:    filepath.Join(tmp, randomString()),
 				CRDVersion:   "v1beta1",
 			},
@@ -87,7 +89,7 @@ func TestGenerate(t *testing.T) {
 			description: "Generate non-Go CRD",
 			generator: Generator{
 				IsOperatorGo: false,
-				ApisDir:      filepath.Join(testGoDataDir, scaffold.ApisDir),
+				ApisDir:      testGoAPIDir,
 				OutputDir:    filepath.Join(tmp, randomString()),
 				CRDVersion:   "v1beta1",
 				Resource:     *r,
@@ -98,7 +100,7 @@ func TestGenerate(t *testing.T) {
 			description: "invalid Go CRD version",
 			generator: Generator{
 				IsOperatorGo: true,
-				ApisDir:      filepath.Join(testGoDataDir, scaffold.ApisDir),
+				ApisDir:      testGoAPIDir,
 				OutputDir:    filepath.Join(tmp, randomString()),
 				CRDVersion:   "invalid",
 			},
@@ -108,7 +110,7 @@ func TestGenerate(t *testing.T) {
 			description: "invalid non-Go CRD version",
 			generator: Generator{
 				IsOperatorGo: false,
-				ApisDir:      filepath.Join(testGoDataDir, scaffold.ApisDir),
+				ApisDir:      testGoAPIDir,
 				OutputDir:    filepath.Join(tmp, randomString()),
 				CRDVersion:   "invalid",
 				Resource:     *r,
@@ -133,7 +135,7 @@ func TestGenerate(t *testing.T) {
 func TestCRDGo(t *testing.T) {
 	g := Generator{
 		IsOperatorGo: true,
-		ApisDir:      filepath.Join(testGoDataDir, scaffold.ApisDir),
+		ApisDir:      testGoAPIDir,
 	}
 
 	r, err := scaffold.NewResource(testAPIVersion, testKind)

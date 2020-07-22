@@ -18,8 +18,6 @@ spec:
       - description: Size is the size of the memcached deployment
         displayName: Size
         path: size
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:podCount
       statusDescriptors:
       - description: Nodes are the names of the memcached pods
         displayName: Nodes
