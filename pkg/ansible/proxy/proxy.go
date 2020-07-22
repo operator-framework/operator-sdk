@@ -39,11 +39,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
+	"github.com/operator-framework/operator-lib/predicate"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/kubeconfig"
 	k8sRequest "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
 	osdkHandler "github.com/operator-framework/operator-sdk/pkg/handler"
-	"github.com/operator-framework/operator-sdk/pkg/internal/predicate"
 )
 
 // This is the default timeout to wait for the cache to respond
