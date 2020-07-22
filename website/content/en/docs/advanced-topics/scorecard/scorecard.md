@@ -139,18 +139,18 @@ being aggregated by scorecard and written to stdout.
 To select a single test (`basic-check-spec-test`) you would enter the
 following:
 ```sh
-$ operator-sdk scorecard -o text --selector=test=basic-check-spec-test
+$ operator-sdk scorecard <bundle_dir_or_image> -o text --selector=test=basic-check-spec-test
 ```
 
 To select a suite of tests, olm in this case, you would specify
 a label that is used by all the OLM tests:
 ```sh
-$ operator-sdk scorecard -o text --selector=suite=olm
+$ operator-sdk scorecard <bundle_dir_or_image> -o text --selector=suite=olm
 ```
 
 To select multiple tests, you could specify them as follows:
 ```sh
-$ operator-sdk scorecard -o text --selector='test in (basic-check-spec-test,olm-bundle-validation-test)'
+$ operator-sdk scorecard <bundle_dir_or_image> -o text --selector='test in (basic-check-spec-test,olm-bundle-validation-test)'
 ```
 
 ## Built-in Tests

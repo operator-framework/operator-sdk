@@ -166,7 +166,7 @@ docker push <repository_name>/<username>/<image_name>:tag
 The `operator-sdk scorecard` command is used to execute the scorecard tests by specifying the location of test bundle in the command. The name or suite of the tests which are to be executed can be specified with the `--selector` flag. The command will create scorecard pods with the image specified in `config.yaml` for the respective test. For example, the `CustomTest1Name` test provides the following json output.
 
 ```console
-operator-sdk scorecard bundle/ --selector=suite=custom -o json --wait-time=32s --skip-cleanup=false
+operator-sdk scorecard <bundle_dir_or_image> --selector=suite=custom -o json --wait-time=32s --skip-cleanup=false
 {
   "metadata": {
     "creationTimestamp": null
@@ -209,13 +209,13 @@ to be outside its scope.  You can however implement whatever
 service accounts your tests require and then specify
 that service account from the command line using the service-account flag:
 ```
-operator-sdk scorecard --service-account=mycustomsa
+operator-sdk scorecard <bundle_dir_or_image> --service-account=mycustomsa
 ```
 
 Also, you can set up a non-default namespace that your tests
 will be executed within using the following namespace flag:
 ```
-operator-sdk scorecard --namespace=mycustomns
+operator-sdk scorecard <bundle_dir_or_image> --namespace=mycustomns
 ```
 
 If you do not specify either of these flags, the default namespace
