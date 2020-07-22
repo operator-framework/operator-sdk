@@ -118,7 +118,7 @@ func LoadEntries(fragmentsDir, repo string) ([]FragmentEntry, error) {
 			log.Warnf("Skipping directory %q", fragFile.Name())
 			continue
 		}
-		if filepath.Ext(fragFile.Name()) != ".yaml" {
+		if filepath.Ext(fragFile.Name()) != ".yaml" && filepath.Ext(fragFile.Name()) != ".yml" {
 			log.Warnf("Skipping non-YAML file %q", fragFile.Name())
 			continue
 		}
