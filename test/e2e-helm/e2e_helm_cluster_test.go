@@ -223,7 +223,7 @@ var _ = Describe("Running Helm projects", func() {
 			// it should not make any difference and work locally successfully when the flag is removed
 			// travis has been failing and the curl pod is not found when the flag is not used
 			cmdOpts := []string{
-				"run",  "--generator=run-pod/v1", "curl", "--image=curlimages/curl:7.68.0", "--restart=OnFailure", "--",
+				"run", "--generator=run-pod/v1", "curl", "--image=curlimages/curl:7.68.0", "--restart=OnFailure", "--",
 				"curl", "-v", "-k", "-H", fmt.Sprintf(`Authorization: Bearer %s`, token),
 				fmt.Sprintf("https://e2e-%v-controller-manager-metrics-service.e2e-%v-system.svc:8443/metrics",
 					tc.TestSuffix, tc.TestSuffix),
