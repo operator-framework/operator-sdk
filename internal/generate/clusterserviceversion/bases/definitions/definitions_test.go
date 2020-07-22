@@ -20,8 +20,8 @@ import (
 	"testing"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"github.com/operator-framework/operator-registry/pkg/registry"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // TODO(estroz): migrate to ginkgo/gomega
@@ -50,7 +50,7 @@ func TestApplyDefinitionsForKeysGo(t *testing.T) {
 		description  string
 		apisDir      string
 		csv          *v1alpha1.ClusterServiceVersion
-		keys         []registry.DefinitionKey
+		gvks         []schema.GroupVersionKind
 		expectedCRDs v1alpha1.CustomResourceDefinitions
 		wantErr      bool
 	}{
@@ -58,8 +58,8 @@ func TestApplyDefinitionsForKeysGo(t *testing.T) {
 			description: "Populate CRDDescription successfully",
 			apisDir:     "api",
 			csv:         &v1alpha1.ClusterServiceVersion{},
-			keys: []registry.DefinitionKey{
-				{Name: "dummys.cache.example.com", Group: "cache.example.com", Version: "v1alpha2", Kind: "Dummy"},
+			gvks: []schema.GroupVersionKind{
+				{Group: "cache.example.com", Version: "v1alpha2", Kind: "Dummy"},
 			},
 			expectedCRDs: v1alpha1.CustomResourceDefinitions{
 				Owned: []v1alpha1.CRDDescription{
@@ -104,8 +104,8 @@ func TestApplyDefinitionsForKeysGo(t *testing.T) {
 			description: "Populate CRDDescription with non-standard spec type successfully",
 			apisDir:     "api",
 			csv:         &v1alpha1.ClusterServiceVersion{},
-			keys: []registry.DefinitionKey{
-				{Name: "otherdummies.cache.example.com", Group: "cache.example.com", Version: "v1alpha2", Kind: "OtherDummy"},
+			gvks: []schema.GroupVersionKind{
+				{Group: "cache.example.com", Version: "v1alpha2", Kind: "OtherDummy"},
 			},
 			expectedCRDs: v1alpha1.CustomResourceDefinitions{
 				Owned: []v1alpha1.CRDDescription{
@@ -161,8 +161,8 @@ func TestApplyDefinitionsForKeysGo(t *testing.T) {
 					},
 				},
 			},
-			keys: []registry.DefinitionKey{
-				{Name: "dummys.cache.example.com", Group: "cache.example.com", Version: "v1alpha2", Kind: "Dummy"},
+			gvks: []schema.GroupVersionKind{
+				{Group: "cache.example.com", Version: "v1alpha2", Kind: "Dummy"},
 			},
 			expectedCRDs: v1alpha1.CustomResourceDefinitions{
 				Owned: []v1alpha1.CRDDescription{
@@ -212,8 +212,8 @@ func TestApplyDefinitionsForKeysGo(t *testing.T) {
 					},
 				},
 			},
-			keys: []registry.DefinitionKey{
-				{Name: "nokinds.cache.example.com", Group: "cache.example.com", Version: "v1alpha2", Kind: "NoKind"},
+			gvks: []schema.GroupVersionKind{
+				{Group: "cache.example.com", Version: "v1alpha2", Kind: "NoKind"},
 			},
 			expectedCRDs: v1alpha1.CustomResourceDefinitions{
 				Owned: []v1alpha1.CRDDescription{
@@ -240,7 +240,7 @@ func TestApplyDefinitionsForKeysGo(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.description, func(t *testing.T) {
-			err := ApplyDefinitionsForKeysGo(c.csv, c.apisDir, c.keys)
+			err := ApplyDefinitionsForKeysGo(c.csv, c.apisDir, c.gvks)
 			if !c.wantErr && err != nil {
 				t.Errorf("Expected nil error, got %q", err)
 			} else if c.wantErr && err == nil {

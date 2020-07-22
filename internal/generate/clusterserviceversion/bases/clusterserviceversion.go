@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/yaml"
 
+	"github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion/bases/definitions"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
@@ -81,7 +82,7 @@ func (b ClusterServiceVersion) GetBase() (base *v1alpha1.ClusterServiceVersion, 
 		switch b.OperatorType {
 		case projutil.OperatorTypeGo:
 			// Update descriptions from the APIs dir.
-			err = updateDefinitions(base, b.APIsDir, b.GVKs)
+			err = definitions.ApplyDefinitionsForKeysGo(base, b.APIsDir, b.GVKs)
 		}
 		if err != nil {
 			return nil, fmt.Errorf("error generating ClusterServiceVersion definitions metadata: %w", err)

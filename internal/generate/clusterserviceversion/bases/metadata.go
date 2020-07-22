@@ -15,15 +15,10 @@
 package bases
 
 import (
-	"fmt"
 	"strings"
 
-	"github.com/markbates/inflect"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"github.com/operator-framework/operator-registry/pkg/registry"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion/bases/definitions"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
@@ -92,19 +87,4 @@ func (s uiMetadata) apply(csv *v1alpha1.ClusterServiceVersion) {
 		}
 		csv.Spec.Provider = provider
 	}
-}
-
-// updateDefinitions parses APIs in apisDir for code and markers that can build a crdDescription and
-// updates existing crdDescriptions in csv. If no code/markers are found, the crdDescription is appended as-is.
-func updateDefinitions(csv *v1alpha1.ClusterServiceVersion, apisDir string, gvks []schema.GroupVersionKind) error {
-	keys := make([]registry.DefinitionKey, len(gvks))
-	for i, gvk := range gvks {
-		keys[i] = registry.DefinitionKey{
-			Name:    fmt.Sprintf("%s.%s", inflect.Pluralize(strings.ToLower(gvk.Kind)), gvk.Group),
-			Group:   gvk.Group,
-			Version: gvk.Version,
-			Kind:    gvk.Kind,
-		}
-	}
-	return definitions.ApplyDefinitionsForKeysGo(csv, apisDir, keys)
 }

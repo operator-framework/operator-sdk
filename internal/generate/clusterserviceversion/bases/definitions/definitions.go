@@ -20,9 +20,9 @@ import (
 	"path/filepath"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"github.com/operator-framework/operator-registry/pkg/registry"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/tools/go/packages"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-tools/pkg/genall"
 	"sigs.k8s.io/controller-tools/pkg/loader"
 	"sigs.k8s.io/controller-tools/pkg/markers"
@@ -36,14 +36,13 @@ type descriptionValues struct {
 // ApplyDefinitionsForKeysGo collects markers and AST info on Go type declarations and struct fields
 // to populate csv spec fields. Go code with relevant markers and information is expected to be
 // in a package under apisRootDir and match a GVK in keys.
-func ApplyDefinitionsForKeysGo(csv *v1alpha1.ClusterServiceVersion, apisRootDir string,
-	keys []registry.DefinitionKey) error {
+func ApplyDefinitionsForKeysGo(csv *v1alpha1.ClusterServiceVersion, apisRootDir string, gvks []schema.GroupVersionKind) error {
 
-	// Construct a set of probable paths under apisRootDir for types defined by keys.
+	// Construct a set of probable paths under apisRootDir for types defined by gvks.
 	// These are usually '(pkg/)?apis/(<group>/)?<version>'.
 	// NB(estroz): using "leaf" packages prevents type builders from searching other packages.
 	// It would be nice to implement extra-package traversal in the future.
-	paths, err := makeAPIPaths(apisRootDir, keys)
+	paths, err := makeAPIPaths(apisRootDir, gvks)
 	if err != nil {
 		return err
 	}
@@ -64,43 +63,43 @@ func ApplyDefinitionsForKeysGo(csv *v1alpha1.ClusterServiceVersion, apisRootDir 
 	}
 
 	// Create definitions for kind types found under the collected roots.
-	definitionsByKey := make(map[registry.DefinitionKey]*descriptionValues)
-	for _, key := range keys {
-		kindType, hasKind := g.types[key.Kind]
+	definitionsByGVK := make(map[schema.GroupVersionKind]*descriptionValues)
+	for _, gvk := range gvks {
+		kindType, hasKind := g.types[gvk.Kind]
 		if !hasKind {
-			log.Warnf("Skipping CSV annotation parsing for API %s: type %s not found", key, key.Kind)
+			log.Warnf("Skipping CSV annotation parsing for API %s: type %s not found", gvk, gvk.Kind)
 			continue
 		}
-		crd, err := g.buildCRDDescriptionFromType(key, kindType)
+		crd, err := g.buildCRDDescriptionFromType(gvk, kindType)
 		if err != nil {
 			return err
 		}
-		definitionsByKey[key] = &descriptionValues{
+		definitionsByGVK[gvk] = &descriptionValues{
 			crd: crd,
 		}
 	}
 
 	// Update csv with all values parsed.
-	updateDefinitionsByKey(csv, definitionsByKey)
+	updateDefinitionsByKey(csv, definitionsByGVK)
 
 	return nil
 }
 
 // makeAPIPaths creates a set of API directory paths with apisRootDir as their parent.
-func makeAPIPaths(apisRootDir string, keys []registry.DefinitionKey) (paths []string, err error) {
+func makeAPIPaths(apisRootDir string, gvks []schema.GroupVersionKind) (paths []string, err error) {
 	if apisRootDir, err = filepath.Abs(apisRootDir); err != nil {
 		return nil, err
 	}
 
-	for _, key := range keys {
+	for _, gvk := range gvks {
 		// Check if the kind pkg is at the expected layout.
-		group := MakeGroupForFullGroup(key.Group)
-		expectedPkgPath, err := getExpectedPkgLayout(apisRootDir, group, key.Version)
+		group := MakeGroupFromFullGroup(gvk.Group)
+		expectedPkgPath, err := getExpectedPkgLayout(apisRootDir, group, gvk.Version)
 		if err != nil {
 			return nil, err
 		}
 		if expectedPkgPath == "" {
-			log.Debugf("Skipping CSV annotation parsing for API %s: directory does not exist", key)
+			log.Warnf("Skipping CSV annotation parsing for API %s: directory does not exist", gvk)
 			continue
 		}
 		paths = append(paths, expectedPkgPath)
@@ -109,21 +108,24 @@ func makeAPIPaths(apisRootDir string, keys []registry.DefinitionKey) (paths []st
 }
 
 // updateDefinitionsByKey updates owned definitions that already exist in csv or adds new definitions that do not.
-func updateDefinitionsByKey(csv *v1alpha1.ClusterServiceVersion,
-	definitionsByKey map[registry.DefinitionKey]*descriptionValues) {
+func updateDefinitionsByKey(csv *v1alpha1.ClusterServiceVersion, defsByGVK map[schema.GroupVersionKind]*descriptionValues) {
 
 	// Overwrite crdDescriptions we've parsed from Go source.
 	for i := 0; i < len(csv.Spec.CustomResourceDefinitions.Owned); i++ {
 		crd := csv.Spec.CustomResourceDefinitions.Owned[i]
-		key := MakeKeyForCRDDescription(crd)
-		if values, hasKey := definitionsByKey[key]; hasKey {
+		gvk := schema.GroupVersionKind{
+			Group:   MakeFullGroupFromName(crd.Name),
+			Version: crd.Version,
+			Kind:    crd.Kind,
+		}
+		if values, hasKey := defsByGVK[gvk]; hasKey {
 			csv.Spec.CustomResourceDefinitions.Owned[i] = values.crd
-			delete(definitionsByKey, key)
+			delete(defsByGVK, gvk)
 		}
 	}
 
 	// Add any new crdDescriptions to the CSV.
-	for _, values := range definitionsByKey {
+	for _, values := range defsByGVK {
 		csv.Spec.CustomResourceDefinitions.Owned = append(csv.Spec.CustomResourceDefinitions.Owned, values.crd)
 	}
 }

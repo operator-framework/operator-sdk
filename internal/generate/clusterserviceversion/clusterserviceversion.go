@@ -31,7 +31,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion/bases"
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
 	genutil "github.com/operator-framework/operator-sdk/internal/generate/internal"
-	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
@@ -232,51 +231,6 @@ func (g Generator) makeBaseGetter(basePath, apisDir string, interactive bool) ge
 		gvks[i].Group = fmt.Sprintf("%s.%s", gvk.Group, g.config.Domain)
 		gvks[i].Version = gvk.Version
 		gvks[i].Kind = gvk.Kind
-	}
-
-	return func() (*operatorsv1alpha1.ClusterServiceVersion, error) {
-		b := bases.ClusterServiceVersion{
-			OperatorName: g.OperatorName,
-			OperatorType: g.OperatorType,
-			BasePath:     basePath,
-			APIsDir:      apisDir,
-			GVKs:         gvks,
-			Interactive:  interactive,
-		}
-		return b.GetBase()
-	}
-}
-
-// makeBundleBaseGetterLegacy returns a function that gets a bundle base
-// for legacy project layouts.
-func (g Generator) makeBundleBaseGetterLegacy(inputDir, apisDir string, ilvl projutil.InteractiveLevel) getBaseFunc {
-	basePath := filepath.Join(inputDir, bundle.ManifestsDir, makeCSVFileName(g.OperatorName))
-	if genutil.IsNotExist(basePath) {
-		basePath = ""
-	}
-	return g.makeBaseGetterLegacy(basePath, apisDir, requiresInteraction(basePath, ilvl))
-}
-
-// makePackageBaseGetterLegacy returns a function that gets a package base
-// for legacy project layouts.
-func (g Generator) makePackageBaseGetterLegacy(inputDir, apisDir string, ilvl projutil.InteractiveLevel) getBaseFunc {
-	basePath := filepath.Join(inputDir, g.Version, makeCSVFileName(g.OperatorName))
-	if genutil.IsNotExist(basePath) {
-		basePath = ""
-	}
-	return g.makeBaseGetterLegacy(basePath, apisDir, requiresInteraction(basePath, ilvl))
-}
-
-// makeBaseGetterLegacy returns a function that gets a base from inputDir.
-// apisDir is used by getBaseFunc to populate base fields. This method should
-// be used when creating LegacyOptions.
-func (g Generator) makeBaseGetterLegacy(basePath, apisDir string, interactive bool) getBaseFunc {
-	var gvks []schema.GroupVersionKind
-	if g.Collector != nil {
-		v1crdGVKs := k8sutil.GVKsForV1CustomResourceDefinitions(g.Collector.V1CustomResourceDefinitions...)
-		gvks = append(gvks, v1crdGVKs...)
-		v1beta1crdGVKs := k8sutil.GVKsForV1beta1CustomResourceDefinitions(g.Collector.V1beta1CustomResourceDefinitions...)
-		gvks = append(gvks, v1beta1crdGVKs...)
 	}
 
 	return func() (*operatorsv1alpha1.ClusterServiceVersion, error) {

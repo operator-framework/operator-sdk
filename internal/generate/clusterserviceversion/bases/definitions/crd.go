@@ -24,6 +24,7 @@ import (
 	"github.com/markbates/inflect"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/pkg/registry"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/version"
 	crdmarkers "sigs.k8s.io/controller-tools/pkg/crd/markers"
 	"sigs.k8s.io/controller-tools/pkg/markers"
@@ -35,30 +36,20 @@ import (
 func MakeKeyForCRDDescription(crd v1alpha1.CRDDescription) registry.DefinitionKey {
 	return registry.DefinitionKey{
 		Name:    crd.Name,
-		Group:   MakeFullGroupForName(crd.Name),
+		Group:   MakeFullGroupFromName(crd.Name),
 		Version: crd.Version,
 		Kind:    crd.Kind,
 	}
 }
 
-// MakeCRDDescriptionForKey creates a crdDescription from a unique key.
-func MakeCRDDescriptionForKey(key registry.DefinitionKey) v1alpha1.CRDDescription {
-	return v1alpha1.CRDDescription{
-		Name:        key.Name,
-		Version:     key.Version,
-		Kind:        key.Kind,
-		DisplayName: k8sutil.GetDisplayName(key.Kind),
-	}
-}
-
-// MakeFullGroupForName returns everything but the first element of a CRD name,
+// MakeFullGroupFromName returns everything but the first element of a CRD name,
 // which by definition is <resource>.<full group>.
-func MakeFullGroupForName(name string) string {
+func MakeFullGroupFromName(name string) string {
 	return getHalfBySep(name, ".", 1)
 }
 
-// MakeGroupForFullGroup returns the first element of an API group, ex. "foo" of "foo.example.com".
-func MakeGroupForFullGroup(group string) string {
+// MakeGroupFromFullGroup returns the first element of an API group, ex. "foo" of "foo.example.com".
+func MakeGroupFromFullGroup(group string) string {
 	return getHalfBySep(group, ".", 0)
 }
 
@@ -73,11 +64,15 @@ func getHalfBySep(s, sep string, half uint) string {
 
 // buildCRDDescriptionFromType builds a crdDescription for the Go API defined
 // by key from markers and type information in g.types.
-func (g generator) buildCRDDescriptionFromType(key registry.DefinitionKey, kindType *markers.TypeInfo) (v1alpha1.CRDDescription, error) {
+func (g generator) buildCRDDescriptionFromType(gvk schema.GroupVersionKind, kindType *markers.TypeInfo) (v1alpha1.CRDDescription, error) {
 
 	// Initialize the description.
-	description := MakeCRDDescriptionForKey(key)
-	description.Description = kindType.Doc
+	description := v1alpha1.CRDDescription{
+		Description: kindType.Doc,
+		DisplayName: k8sutil.GetDisplayName(gvk.Kind),
+		Version:     gvk.Version,
+		Kind:        gvk.Kind,
+	}
 
 	// Parse resources and displayName from the kind type's markers.
 	for _, markers := range kindType.Markers {
@@ -96,14 +91,14 @@ func (g generator) buildCRDDescriptionFromType(key registry.DefinitionKey, kindT
 				}
 			case crdmarkers.Resource:
 				if d.Path != "" {
-					description.Name = fmt.Sprintf("%s.%s", d.Path, key.Group)
+					description.Name = fmt.Sprintf("%s.%s", d.Path, gvk.Group)
 				}
 			}
 		}
 	}
 	// The default, if the resource marker's path value is not set, is to use a pluralized form of lowercase kind.
 	if description.Name == "" {
-		description.Name = fmt.Sprintf("%s.%s", inflect.Pluralize(strings.ToLower(key.Kind)), key.Group)
+		description.Name = fmt.Sprintf("%s.%s", inflect.Pluralize(strings.ToLower(gvk.Kind)), gvk.Group)
 	}
 	sortDescription(description.Resources)
 
