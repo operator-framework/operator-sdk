@@ -279,8 +279,7 @@ and service account will be used by the scorecard to run test pods.
 
 Some custom tests might require or be better implemented to return
 more than a single test result.  For this case, scorecard's output
-API allows multiple test results to be defined for a single test.  See
-https://github.com/operator-framework/operator-sdk/blob/master/pkg/apis/scorecard/v1alpha3/types.go#L59
+API allows [multiple test results][testresults] to be defined for a single test.
 
 ### Accessing the Kube API
 
@@ -301,3 +300,4 @@ connection to invoke the Kube API.
 [scorecard_binary]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/examples/custom-scorecard-tests/images/custom-scorecard-tests/cmd/test/main.go
 [sample_makefile]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/examples/custom-scorecard-tests/Makefile
 [kustomize-patchJson6902]: https://kubernetes-sigs.github.io/kustomize/api-reference/kustomization/patchesjson6902/
+[testresults]:https://github.com/operator-framework/operator-sdk/blob/ff73712/pkg/apis/scorecard/v1alpha3/test_types.go#L49
