@@ -12,27 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package e2e_helm_test
+package e2e_go_test
 
 import (
+	"fmt"
+	"path"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	. "github.com/onsi/ginkgo" //nolint:golint
+	. "github.com/onsi/gomega" //nolint:golint
+	kbtestutils "sigs.k8s.io/kubebuilder/test/e2e/utils"
 
 	testutils "github.com/operator-framework/operator-sdk/test/internal"
 )
 
-// TestE2EHelm ensures the Helm projects built with the SDK tool by using its binary.
-func TestE2EHelm(t *testing.T) {
+// TestE2EGo ensures the Go projects built with the SDK tool by using its binary.
+func TestE2EGo(t *testing.T) {
 	if testing.Short() {
-		t.Skip("skipping Operator SDK E2E Helm Suite testing in short mode")
+		t.Skip("skipping Operator SDK E2E Go Suite testing in short mode")
 	}
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "E2EHelm Suite")
+	RunSpecs(t, "E2EGo Suite")
 }
 
 var (
@@ -47,7 +50,7 @@ var (
 	projectName string
 )
 
-// BeforeSuite run before any specs are run to perform the required actions for all e2e Helm tests.
+// BeforeSuite run before any specs are run to perform the required actions for all e2e Go tests.
 var _ = BeforeSuite(func(done Done) {
 	var err error
 
@@ -89,22 +92,48 @@ var _ = BeforeSuite(func(done Done) {
 		Expect(tc.InstallOLM()).To(Succeed())
 	}
 
-	By("initializing a Helm project")
+	By("initializing a project")
+	projectName := filepath.Base(tc.Dir)
 	err = tc.Init(
-		"--plugins", "helm",
 		"--project-version", "3-alpha",
-		"--domain", tc.Domain)
+		"--repo", path.Join("github.com", "example", projectName),
+		"--domain", tc.Domain,
+		"--fetch-deps=false")
 	Expect(err).Should(Succeed())
+
+	// Todo: add to the init scaffold
+	By("by adding scorecard custom patch file")
+	err = tc.AddScorecardCustomPatchFile()
+	Expect(err).NotTo(HaveOccurred())
 
 	By("creating an API definition")
 	err = tc.CreateAPI(
 		"--group", tc.Group,
 		"--version", tc.Version,
-		"--kind", tc.Kind)
+		"--kind", tc.Kind,
+		"--namespaced",
+		"--resource",
+		"--controller",
+		"--make=false")
 	Expect(err).Should(Succeed())
 
-	By("replacing project Dockerfile to use Helm base image with the dev tag")
-	testutils.ReplaceRegexInFile(filepath.Join(tc.Dir, "Dockerfile"), "quay.io/operator-framework/helm-operator:.*", "quay.io/operator-framework/helm-operator:dev")
+	By("implementing the API")
+	Expect(kbtestutils.InsertCode(
+		filepath.Join(tc.Dir, "api", tc.Version, fmt.Sprintf("%s_types.go", strings.ToLower(tc.Kind))),
+		fmt.Sprintf(`type %sSpec struct {
+`, tc.Kind),
+		`	// +optional
+	Count int `+"`"+`json:"count,omitempty"`+"`"+`
+`)).Should(Succeed())
+
+	// todo(camilamacedo86): add sdk as lib to the project
+	// todo(camilamacedo86): replace watches in the controllers to use the InstrumentedEnqueueRequestForObject
+	// more info: https://github.com/operator-framework/operator-sdk/pull/3436/files
+
+	By("enabling Prometheus via the kustomization.yaml")
+	Expect(kbtestutils.UncommentCode(
+		filepath.Join(tc.Dir, "config", "default", "kustomization.yaml"),
+		"#- ../prometheus", "#")).To(Succeed())
 
 	By("checking the kustomize setup")
 	err = tc.Make("kustomize")

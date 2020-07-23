@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package e2e_helm_test
+package e2e_go_test
 
 import (
 	"encoding/json"
-	"fmt"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -28,7 +27,7 @@ import (
 	testutils "github.com/operator-framework/operator-sdk/test/internal"
 )
 
-var _ = Describe("Integrating Helm Projects with OLM", func() {
+var _ = Describe("Integrating Go Projects with OLM", func() {
 	Context("with operator-sdk", func() {
 		const operatorVersion = "0.0.1"
 
@@ -40,14 +39,11 @@ var _ = Describe("Integrating Helm Projects with OLM", func() {
 			OLMStatusDescriptorsTest  = "olm-status-descriptors"
 		)
 
-		BeforeEach(func() {
-			By("turning off interactive prompts for all generation tasks.")
+		It("should generate and run a valid OLM bundle and packagemanifests", func() {
+			By("generating the operator bundle")
+			// Turn off interactive prompts for all generation tasks.
 			replace := "operator-sdk generate kustomize manifests"
 			testutils.ReplaceInFile(filepath.Join(tc.Dir, "Makefile"), replace, replace+" --interactive=false")
-		})
-
-		It("should generate and run a valid OLM bundle and packagemanifests", func() {
-			By("building the bundle")
 			err := tc.Make("bundle", "IMG="+tc.ImageName)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -68,11 +64,20 @@ var _ = Describe("Integrating Helm Projects with OLM", func() {
 			}
 
 			By("adding the 'packagemanifests' rule to the Makefile")
-			err = tc.AddPackagemanifestsTargetNonGo()
+			err = tc.AddPackagemanifestsTarget()
 			Expect(err).Should(Succeed())
 
 			By("generating the operator package manifests")
 			err = tc.Make("packagemanifests", "IMG="+tc.ImageName)
+			Expect(err).NotTo(HaveOccurred())
+
+			By("running the package manifests-formatted operator")
+			Expect(err).NotTo(HaveOccurred())
+			runPkgManCmd := exec.Command(tc.BinaryName, "run", "packagemanifests",
+				"--install-mode", "AllNamespaces",
+				"--version", operatorVersion,
+				"--timeout", "4m")
+			_, err = tc.Run(runPkgManCmd)
 			Expect(err).NotTo(HaveOccurred())
 
 			By("running basic scorecard tests")
@@ -88,19 +93,16 @@ var _ = Describe("Integrating Helm Projects with OLM", func() {
 			Expect(len(scorecardOutput.Items)).To(Equal(1))
 			Expect(scorecardOutput.Items[0].Status.Results[0].State).To(Equal(v1alpha3.PassState))
 
-			By("running the package")
-			runPkgManCmd := exec.Command(tc.BinaryName, "run", "packagemanifests",
-				"--install-mode", "AllNamespaces",
-				"--version", operatorVersion,
-				"--timeout", "4m")
-			_, err = tc.Run(runPkgManCmd)
+			By("running custom scorecard tests")
+			runScorecardCmd = exec.Command(tc.BinaryName, "scorecard", "bundle",
+				"--selector=suite=custom",
+				"--output=json",
+				"--wait-time=40s")
+			scorecardOutputBytes, err = tc.Run(runScorecardCmd)
 			Expect(err).NotTo(HaveOccurred())
-
-			By("destroying the deployed package manifests-formatted operator")
-			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", projectName,
-				"--timeout", "4m")
-			_, err = tc.Run(cleanupPkgManCmd)
+			err = json.Unmarshal(scorecardOutputBytes, &scorecardOutput)
 			Expect(err).NotTo(HaveOccurred())
+			Expect(len(scorecardOutput.Items)).To(Equal(2))
 
 			By("running olm scorecard tests")
 			runOLMScorecardCmd := exec.Command(tc.BinaryName, "scorecard", "bundle",
@@ -112,20 +114,23 @@ var _ = Describe("Integrating Helm Projects with OLM", func() {
 			err = json.Unmarshal(scorecardOutputBytes, &scorecardOutput)
 			Expect(err).NotTo(HaveOccurred())
 
-			expected := make(map[string]v1alpha3.State)
-			expected[OLMBundleValidationTest] = v1alpha3.PassState
-			expected[OLMCRDsHaveResourcesTest] = v1alpha3.FailState
-			expected[OLMCRDsHaveValidationTest] = v1alpha3.FailState
-			expected[OLMSpecDescriptorsTest] = v1alpha3.FailState
-			expected[OLMStatusDescriptorsTest] = v1alpha3.FailState
+			resultTable := make(map[string]v1alpha3.State)
+			resultTable[OLMStatusDescriptorsTest] = v1alpha3.FailState
+			resultTable[OLMCRDsHaveResourcesTest] = v1alpha3.FailState
+			resultTable[OLMBundleValidationTest] = v1alpha3.PassState
+			resultTable[OLMSpecDescriptorsTest] = v1alpha3.FailState
+			resultTable[OLMCRDsHaveValidationTest] = v1alpha3.PassState
 
-			Expect(len(scorecardOutput.Items)).To(Equal(len(expected)))
+			Expect(len(scorecardOutput.Items)).To(Equal(len(resultTable)))
 			for a := 0; a < len(scorecardOutput.Items); a++ {
-				fmt.Println("    - Name: ", scorecardOutput.Items[a].Status.Results[0].Name)
-				fmt.Println("      Expected: ", expected[scorecardOutput.Items[a].Status.Results[0].Name])
-				fmt.Println("      Output: ", scorecardOutput.Items[a].Status.Results[0].State)
-				Expect(scorecardOutput.Items[a].Status.Results[0].State).To(Equal(expected[scorecardOutput.Items[a].Status.Results[0].Name]))
+				Expect(scorecardOutput.Items[a].Status.Results[0].State).To(Equal(resultTable[scorecardOutput.Items[a].Status.Results[0].Name]))
 			}
+
+			By("destroying the deployed package manifests-formatted operator")
+			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", projectName,
+				"--timeout", "4m")
+			_, err = tc.Run(cleanupPkgManCmd)
+			Expect(err).NotTo(HaveOccurred())
 		})
 	})
 })

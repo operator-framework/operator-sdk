@@ -38,8 +38,8 @@ func TestE2EAnsible(t *testing.T) {
 
 var (
 	tc testutils.TestContext
-	// isPromethuesManagedBySuite is true when the suite tests is installing/uninstalling the Prometheus
-	isPromethuesManagedBySuite = true
+	// isPrometheusManagedBySuite is true when the suite tests is installing/uninstalling the Prometheus
+	isPrometheusManagedBySuite = true
 	// isOLMManagedBySuite is true when the suite tests is installing/uninstalling the OLM
 	isOLMManagedBySuite = true
 	// kubectx stores the k8s context from where the tests are running
@@ -66,13 +66,13 @@ var _ = BeforeSuite(func(done Done) {
 	output, err := tc.Kubectl.Command("api-resources")
 	Expect(err).NotTo(HaveOccurred())
 	if strings.Contains(output, "servicemonitors") {
-		isPromethuesManagedBySuite = false
+		isPrometheusManagedBySuite = false
 	}
 	if strings.Contains(output, "clusterserviceversions") {
 		isOLMManagedBySuite = false
 	}
 
-	if isPromethuesManagedBySuite {
+	if isPrometheusManagedBySuite {
 		By("installing Prometheus")
 		Expect(tc.InstallPrometheusOperManager()).To(Succeed())
 
@@ -176,7 +176,7 @@ var _ = BeforeSuite(func(done Done) {
 // AfterSuite run after all the specs have run, regardless of whether any tests have failed to ensures that
 // all be cleaned up
 var _ = AfterSuite(func() {
-	if isPromethuesManagedBySuite {
+	if isPrometheusManagedBySuite {
 		By("uninstalling Prometheus")
 		tc.UninstallPrometheusOperManager()
 	}
