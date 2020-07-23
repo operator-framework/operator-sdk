@@ -226,6 +226,7 @@ var _ = Describe("operator-sdk", func() {
 			err = json.Unmarshal(scorecardOutputBytes, &scorecardOutput)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(scorecardOutput.Items)).To(Equal(1))
+			Expect(scorecardOutput.Items[0].Status.Results[0].State).To(Equal(v1alpha3.PassState))
 		})
 	})
 })
