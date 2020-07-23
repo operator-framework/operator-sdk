@@ -29,6 +29,11 @@ import (
 	"sync"
 	"time"
 
+	libhandler "github.com/operator-framework/operator-lib/handler"
+	"github.com/operator-framework/operator-lib/predicate"
+	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
+	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/kubeconfig"
+	k8sRequest "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -38,12 +43,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-
-	"github.com/operator-framework/operator-lib/predicate"
-	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
-	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/kubeconfig"
-	k8sRequest "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
-	osdkHandler "github.com/operator-framework/operator-sdk/pkg/handler"
 )
 
 // This is the default timeout to wait for the cache to respond
@@ -257,11 +256,14 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 				return nil
 			}
 			awMap.Store(resource.GroupVersionKind())
-			typeString := fmt.Sprintf("%v.%v", owner.Kind, ownerGV.Group)
+			ownerGK := schema.GroupKind{
+				Kind:  owner.Kind,
+				Group: ownerGV.Group,
+			}
 			log.Info("Watching child resource", "kind", resource.GroupVersionKind(),
-				"enqueue_annotation_type", typeString)
+				"enqueue_annotation_type", ownerGK.String())
 			err = contents.Controller.Watch(&source.Kind{Type: resource},
-				&osdkHandler.EnqueueRequestForAnnotation{Type: typeString}, predicate.DependentPredicate{})
+				&libhandler.EnqueueRequestForAnnotation{Type: ownerGK}, predicate.DependentPredicate{})
 			if err != nil {
 				log.Error(err, "Failed to watch child resource",
 					"kind", resource.GroupVersionKind(), "enqueue_kind", u.GroupVersionKind())

@@ -32,6 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 	"sigs.k8s.io/yaml"
 
+	libhandler "github.com/operator-framework/operator-lib/handler"
 	"github.com/operator-framework/operator-lib/predicate"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/handler"
@@ -132,7 +133,7 @@ func watchDependentResources(mgr manager.Manager, r *HelmOperatorReconciler, c c
 					return err
 				}
 			} else { // Setup watch using annotations.
-				err = c.Watch(&source.Kind{Type: &u}, &handler.EnqueueRequestForAnnotation{Type: gvk.GroupKind().String()},
+				err = c.Watch(&source.Kind{Type: &u}, &libhandler.EnqueueRequestForAnnotation{Type: gvk.GroupKind()},
 					predicate.DependentPredicate{})
 				if err != nil {
 					return err
