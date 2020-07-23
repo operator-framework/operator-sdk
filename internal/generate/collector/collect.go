@@ -90,7 +90,9 @@ func (c *Manifests) UpdateFromDirs(deployDir, crdsDir string) error {
 			case "MutatingWebhookConfiguration":
 				err = c.addMutatingWebhookConfigurations(manifest)
 			case scorecardv1alpha3.ConfigurationKind:
-				err = c.addScorecardConfig(manifest)
+				if gvk.GroupVersion() == scorecardv1alpha3.SchemeGroupVersion {
+					err = c.addScorecardConfig(manifest)
+				}
 			default:
 				err = c.addOthers(manifest)
 			}
@@ -152,7 +154,9 @@ func (c *Manifests) UpdateFromReader(r io.Reader) error {
 		case "MutatingWebhookConfiguration":
 			err = c.addMutatingWebhookConfigurations(manifest)
 		case scorecardv1alpha3.ConfigurationKind:
-			err = c.addScorecardConfig(manifest)
+			if gvk.GroupVersion() == scorecardv1alpha3.SchemeGroupVersion {
+				err = c.addScorecardConfig(manifest)
+			}
 		default:
 			err = c.addOthers(manifest)
 		}
@@ -273,7 +277,7 @@ func (c *Manifests) addScorecardConfig(rawManifest []byte) error {
 		return err
 	}
 	if c.ScorecardConfig.Metadata.Name != "" {
-		return errors.New("duplicate ScorecardConfigurations in collector input")
+		return errors.New("duplicate scorecard configurations in collector input")
 	}
 	c.ScorecardConfig = cfg
 	return nil

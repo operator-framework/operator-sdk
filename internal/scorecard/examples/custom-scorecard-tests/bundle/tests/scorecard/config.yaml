@@ -1,4 +1,4 @@
-kind: ScorecardConfiguration
+kind: Configuration
 apiversion: scorecard.operatorframework.io/v1alpha3
 metadata:
   name: config

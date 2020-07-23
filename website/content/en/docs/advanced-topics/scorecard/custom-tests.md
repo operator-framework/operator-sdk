@@ -101,7 +101,7 @@ For the example `CustomTest1` function, add the following to `config/scorecard/c
 
 ```yaml
 - op: add
-  path: /stages/0/tests/0
+  path: /stages/0/tests/-
   value:
     image: quay.io/<username>/custom-scorecard-tests:latest
     entrypoint:
@@ -126,7 +126,7 @@ patchesJson6902:
   target:
     group: scorecard.operatorframework.io
     version: v1alpha3
-    kind: ScorecardConfiguration
+    kind: Configuration
     name: config
 ```
 
@@ -206,16 +206,32 @@ The `operator-sdk scorecard` command is used to execute the scorecard tests by s
 ```console
 $ operator-sdk scorecard <bundle_dir_or_image> --selector=suite=custom -o json --wait-time=32s --skip-cleanup=false
 {
-  "metadata": {
-    "creationTimestamp": null
-  },
-  "log": "",
-  "results": [
+  "kind": "TestList",
+  "apiVersion": "scorecard.operatorframework.io/v1alpha3",
+  "items": [
     {
-      "name": "customtest1",
-      "description": "",
-      "state": "pass",
-      "log": "an ISV custom test"
+      "kind": "Test",
+      "apiVersion": "scorecard.operatorframework.io/v1alpha3",
+      "spec": {
+        "image": "quay.io/operator-framework/scorecard-test:latest",
+        "entrypoint": [
+          "custom-scorecard-tests",
+          "customtest1"
+        ],
+        "labels": {
+          "suite": "custom",
+          "test": "customtest1"
+        }
+      },
+      "status": {
+        "results": [
+          {
+            "name": "customtest1",
+            "log": "an ISV custom test",
+            "state": "pass"
+          }
+        ]
+      }
     }
   ]
 }

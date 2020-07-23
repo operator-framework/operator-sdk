@@ -133,14 +133,8 @@ func (p *initPlugin) Run() error {
 		return err
 	}
 
-	// Assume projectName was validated by Validate().
-	wd, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("error getting the current path: %v", err)
-	}
-	projectName := strings.ToLower(filepath.Base(wd))
 	// Run the scorecard "phase 2" plugin.
-	if err := scorecard.RunInit(projectName); err != nil {
+	if err := scorecard.RunInit(p.config); err != nil {
 		return err
 	}
 

@@ -307,7 +307,7 @@ func (c bundleCmd) generateMetadata(cfg *config.Config, manifestsDir, outputDir 
 	return nil
 }
 
-// NB(estroz): these updates need to be atomic because the bundle's Dockerfile and annotations.yaml
+// TODO(estroz): these updates need to be atomic because the bundle's Dockerfile and annotations.yaml
 // cannot be out-of-sync.
 func updateMetadata(cfg *config.Config, bundleRoot string) error {
 	bundleLabels := metricsannotations.MakeBundleMetadataLabels(cfg)

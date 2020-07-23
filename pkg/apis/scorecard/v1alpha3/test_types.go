@@ -30,16 +30,6 @@ const (
 	ErrorState State = "error"
 )
 
-// TestSpec contains the spec details of an individual scorecard test
-type TestSpec struct {
-	// Image is the name of the testimage
-	Image string `json:"image"`
-	// Entrypoint is list of commands and arguments passed to the test image
-	Entrypoint []string `json:"entrypoint,omitempty"`
-	// Labels that further describe the test and enable selection
-	Labels map[string]string `json:"labels,omitempty"`
-}
-
 // TestResult contains the results of an individual scorecard test
 type TestResult struct {
 	// Name is the name of the test
@@ -64,8 +54,8 @@ type TestStatus struct {
 // Test specifies a single test run.
 type Test struct {
 	metav1.TypeMeta `json:",inline"`
-	Spec            TestSpec   `json:"spec,omitempty"`
-	Status          TestStatus `json:"status,omitempty"`
+	Spec            TestConfiguration `json:"spec,omitempty"`
+	Status          TestStatus        `json:"status,omitempty"`
 }
 
 // TestList is a list of tests.

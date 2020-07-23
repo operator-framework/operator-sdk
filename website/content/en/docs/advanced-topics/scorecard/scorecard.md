@@ -67,7 +67,7 @@ $ tree ./bundle
 The following YAML spec is an example of the scorecard configuration file:
 
 ```yaml
-kind: ScorecardConfiguration
+kind: Configuration
 apiversion: scorecard.operatorframework.io/v1alpha3
 metadata:
   name: config

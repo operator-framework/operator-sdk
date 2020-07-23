@@ -118,9 +118,7 @@ func (o Scorecard) runTest(ctx context.Context, test v1alpha3.TestConfiguration)
 	}
 
 	out := v1alpha3.NewTest()
-	out.Spec.Image = test.Image
-	out.Spec.Entrypoint = test.Entrypoint
-	out.Spec.Labels = test.Labels
+	out.Spec = test
 	out.Status = *result
 	return out
 }

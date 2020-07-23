@@ -19,7 +19,7 @@ import (
 )
 
 // ConfigurationKind is the default scorecard componentconfig kind.
-const ConfigurationKind = "ScorecardConfiguration"
+const ConfigurationKind = "Configuration"
 
 // Configuration represents the set of test configurations which scorecard would run.
 type Configuration struct {
@@ -27,6 +27,7 @@ type Configuration struct {
 
 	// Do not use metav1.ObjectMeta because this "object" should not be treated as an actual object.
 	Metadata struct {
+		// Name is a required field for kustomize-able manifests, and is not used on-cluster (nor is the config itself).
 		Name string `json:"name,omitempty" yaml:"name,omitempty"`
 	} `json:"metadata,omitempty" yaml:"metadata,omitempty"`
 
