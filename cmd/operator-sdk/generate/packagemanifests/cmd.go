@@ -76,10 +76,6 @@ func NewCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&c.kustomizeDir, "kustomize-dir", filepath.Join("config", "manifests"),
-		"Directory containing kustomize bases and a kustomization.yaml for operator-framework manifests")
-	cmd.Flags().BoolVar(&c.stdout, "stdout", false, "Write package to stdout")
-
 	c.addFlagsTo(cmd.Flags())
 
 	return cmd
@@ -88,9 +84,12 @@ func NewCmd() *cobra.Command {
 func (c *packagemanifestsCmd) addFlagsTo(fs *pflag.FlagSet) {
 	fs.StringVar(&c.operatorName, "operator-name", "", "Name of the packaged operator")
 	fs.StringVarP(&c.version, "version", "v", "", "Semantic version of the packaged operator")
+	fs.StringVar(&c.fromVersion, "from-version", "", "Semantic version of the operator being upgraded from")
 	fs.StringVar(&c.inputDir, "input-dir", "", "Directory to read existing package manifests from. "+
 		"This directory is the parent of individual versioned package directories, and different from --deploy-dir")
 	fs.StringVar(&c.outputDir, "output-dir", "", "Directory in which to write package manifests")
+	fs.StringVar(&c.kustomizeDir, "kustomize-dir", filepath.Join("config", "manifests"),
+		"Directory containing kustomize bases and a kustomization.yaml for operator-framework manifests")
 	fs.StringVar(&c.deployDir, "deploy-dir", "", "Root directory for operator manifests such as "+
 		"Deployments and RBAC, ex. 'deploy'. This directory is different from that passed to --input-dir")
 	fs.StringVar(&c.crdsDir, "crds-dir", "", "Root directory for CustomResoureDefinition manifests")
@@ -99,4 +98,5 @@ func (c *packagemanifestsCmd) addFlagsTo(fs *pflag.FlagSet) {
 		"as the package manifest file's default channel")
 	fs.BoolVar(&c.updateCRDs, "update-crds", true, "Update CustomResoureDefinition manifests in this package")
 	fs.BoolVarP(&c.quiet, "quiet", "q", false, "Run in quiet mode")
+	fs.BoolVar(&c.stdout, "stdout", false, "Write package to stdout")
 }
