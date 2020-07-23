@@ -18,6 +18,7 @@ package e2e
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -31,6 +32,7 @@ import (
 	. "github.com/onsi/gomega" //nolint:golint
 	kbtestutils "sigs.k8s.io/kubebuilder/test/e2e/utils"
 
+	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 	testutils "github.com/operator-framework/operator-sdk/test/internal"
 )
 
@@ -213,9 +215,18 @@ var _ = Describe("operator-sdk", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			By("running scorecard tests")
-			scorecardCmd := exec.Command(tc.BinaryName, "scorecard")
-			_, err = tc.Run(scorecardCmd)
+			var scorecardOutput v1alpha3.TestList
+			runScorecardCmd := exec.Command(tc.BinaryName, "scorecard", "bundle",
+				"--selector=suite=basic",
+				"--output=json",
+				"--skip-cleanup=true",
+				"--wait-time=40s")
+			scorecardOutputBytes, err := tc.Run(runScorecardCmd)
 			Expect(err).NotTo(HaveOccurred())
+			err = json.Unmarshal(scorecardOutputBytes, &scorecardOutput)
+			if err != nil {
+				fmt.Printf("Error parsing JSON output")
+			}
 		})
 	})
 })
