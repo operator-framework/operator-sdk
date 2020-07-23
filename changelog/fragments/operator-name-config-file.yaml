@@ -1,0 +1,10 @@
+entries:
+  - description: >
+      Added `projectName` key to the PROJECT config file (v3-alpha+).
+    kind: addition
+    breaking: false
+    migration:
+      header: Add the `projectName` config key to your PROJECT file
+      body: >
+        Set the `projectName` key in your PROJECT file. If this key is not set,
+        the current working directory's base name will be used in various subcommands.

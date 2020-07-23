@@ -18,8 +18,6 @@ limitations under the License.
 package manager
 
 import (
-	"fmt"
-	"os"
 	"path/filepath"
 
 	"sigs.k8s.io/kubebuilder/pkg/model/file"
@@ -30,12 +28,10 @@ var _ file.Template = &Manager{}
 // Manager scaffolds yaml config for the manager.
 type Manager struct {
 	file.TemplateMixin
+	file.ProjectNameMixin
 
 	// Image is controller manager image name
 	Image string
-
-	// OperatorName will be used to create the pods
-	OperatorName string
 }
 
 // SetTemplateDefaults implements input.Template
@@ -46,13 +42,6 @@ func (f *Manager) SetTemplateDefaults() error {
 
 	f.TemplateBody = managerTemplate
 
-	if f.OperatorName == "" {
-		dir, err := os.Getwd()
-		if err != nil {
-			return fmt.Errorf("error getting working directory: %v", err)
-		}
-		f.OperatorName = filepath.Base(dir)
-	}
 	return nil
 }
 
@@ -84,7 +73,7 @@ spec:
       - image: {{ .Image }}
         args:
         - "--enable-leader-election"
-        - "--leader-election-id={{ .OperatorName }}"
+        - "--leader-election-id={{ .ProjectName }}"
         name: manager
         resources:
           limits:

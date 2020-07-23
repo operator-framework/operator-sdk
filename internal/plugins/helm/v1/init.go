@@ -62,12 +62,21 @@ Writes the following files:
 `
 	ctx.Examples = fmt.Sprintf(`  $ %s init --plugins=%s \
       --domain=example.com \
-      --group=apps --version=v1alpha1 \
+      --group=apps \
+      --version=v1alpha1 \
+      --kind=AppService
+
+  $ %s init --plugins=%s \
+      --project-name=myapp
+      --domain=example.com \
+      --group=apps \
+      --version=v1alpha1 \
       --kind=AppService
 
   $ %s init --plugins=%s \
       --domain=example.com \
-      --group=apps --version=v1alpha1 \
+      --group=apps \
+      --version=v1alpha1 \
       --kind=AppService \
       --helm-chart=myrepo/app
 
@@ -99,14 +108,15 @@ Writes the following files:
       --domain=example.com \
       --helm-chart=/path/to/local/chart-archives/app-1.2.3.tgz
 `,
-		ctx.CommandName, plugin.KeyFor(Plugin{}),
-		ctx.CommandName, plugin.KeyFor(Plugin{}),
-		ctx.CommandName, plugin.KeyFor(Plugin{}),
-		ctx.CommandName, plugin.KeyFor(Plugin{}),
-		ctx.CommandName, plugin.KeyFor(Plugin{}),
-		ctx.CommandName, plugin.KeyFor(Plugin{}),
-		ctx.CommandName, plugin.KeyFor(Plugin{}),
-		ctx.CommandName, plugin.KeyFor(Plugin{}),
+		ctx.CommandName, pluginKey,
+		ctx.CommandName, pluginKey,
+		ctx.CommandName, pluginKey,
+		ctx.CommandName, pluginKey,
+		ctx.CommandName, pluginKey,
+		ctx.CommandName, pluginKey,
+		ctx.CommandName, pluginKey,
+		ctx.CommandName, pluginKey,
+		ctx.CommandName, pluginKey,
 	)
 
 	p.commandName = ctx.CommandName
@@ -116,13 +126,14 @@ Writes the following files:
 func (p *initPlugin) BindFlags(fs *pflag.FlagSet) {
 	fs.SortFlags = false
 	fs.StringVar(&p.config.Domain, "domain", "my.domain", "domain for groups")
+	fs.StringVar(&p.config.ProjectName, "project-name", "", "name of this project, the default being directory name")
 	p.apiPlugin.BindFlags(fs)
 }
 
 // InjectConfig will inject the PROJECT file/config in the plugin
 func (p *initPlugin) InjectConfig(c *config.Config) {
 	// v3 project configs get a 'layout' value.
-	c.Layout = plugin.KeyFor(Plugin{})
+	c.Layout = pluginKey
 	p.config = c
 	p.apiPlugin.config = p.config
 }
@@ -143,14 +154,17 @@ func (p *initPlugin) Run() error {
 
 // Validate perform the required validations for this plugin
 func (p *initPlugin) Validate() error {
-	// Check if the project name is a valid namespace according to k8s
-	dir, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("error to get the current path: %v", err)
+
+	// Check if the project name is a valid k8s namespace (DNS 1123 label).
+	if p.config.ProjectName == "" {
+		dir, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("error getting current directory: %v", err)
+		}
+		p.config.ProjectName = strings.ToLower(filepath.Base(dir))
 	}
-	projectName := filepath.Base(dir)
-	if err := validation.IsDNS1123Label(strings.ToLower(projectName)); err != nil {
-		return fmt.Errorf("project name (%s) is invalid: %v", projectName, err)
+	if err := validation.IsDNS1123Label(p.config.ProjectName); err != nil {
+		return fmt.Errorf("project name (%s) is invalid: %v", p.config.ProjectName, err)
 	}
 
 	defaultOpts := chartutil.CreateOptions{CRDVersion: "v1"}
@@ -184,10 +198,10 @@ func (p *initPlugin) PostScaffold() error {
 		return err
 	}
 
-	if !p.doAPIScaffold {
-		fmt.Printf("Next: define a resource with:\n$ %s create api\n", p.commandName)
-	} else {
+	if p.doAPIScaffold {
 		return p.apiPlugin.PostScaffold()
 	}
+
+	fmt.Printf("Next: define a resource with:\n$ %s create api\n", p.commandName)
 	return nil
 }

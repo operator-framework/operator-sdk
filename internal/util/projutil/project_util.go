@@ -103,6 +103,7 @@ func CheckProjectRoot() error {
 	return nil
 }
 
+// TODO: remove this (should use os.Getwd() or Config.ProjectName).
 func MustGetwd() string {
 	wd, err := os.Getwd()
 	if err != nil {

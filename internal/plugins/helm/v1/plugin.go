@@ -26,6 +26,7 @@ const pluginName = "helm" + plugins.DefaultNameQualifier
 var (
 	supportedProjectVersions = []string{config.Version3Alpha}
 	pluginVersion            = plugin.Version{Number: 1}
+	pluginKey                = plugin.KeyFor(Plugin{})
 )
 
 var (
