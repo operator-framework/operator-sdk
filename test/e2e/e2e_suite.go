@@ -214,7 +214,7 @@ var _ = Describe("operator-sdk", func() {
 			_, err = tc.Run(cleanupPkgManCmd)
 			Expect(err).NotTo(HaveOccurred())
 
-			By("running scorecard tests")
+			By("running basic scorecard tests")
 			var scorecardOutput v1alpha3.TestList
 			runScorecardCmd := exec.Command(tc.BinaryName, "scorecard", "bundle",
 				"--selector=suite=basic",
@@ -222,6 +222,19 @@ var _ = Describe("operator-sdk", func() {
 				"--skip-cleanup=true",
 				"--wait-time=40s")
 			scorecardOutputBytes, err := tc.Run(runScorecardCmd)
+			Expect(err).NotTo(HaveOccurred())
+			err = json.Unmarshal(scorecardOutputBytes, &scorecardOutput)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(scorecardOutput.Items)).To(Equal(1))
+			Expect(scorecardOutput.Items[0].Status.Results[0].State).To(Equal(v1alpha3.PassState))
+
+			By("running olm scorecard tests")
+			runOLMScorecardCmd := exec.Command(tc.BinaryName, "scorecard", "bundle",
+				"--selector=suite=basic",
+				"--output=json",
+				"--skip-cleanup=true",
+				"--wait-time=40s")
+			scorecardOutputBytes, err = tc.Run(runOLMScorecardCmd)
 			Expect(err).NotTo(HaveOccurred())
 			err = json.Unmarshal(scorecardOutputBytes, &scorecardOutput)
 			Expect(err).NotTo(HaveOccurred())
