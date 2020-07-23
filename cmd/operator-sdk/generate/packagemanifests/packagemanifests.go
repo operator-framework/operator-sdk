@@ -121,7 +121,7 @@ func (c packagemanifestsCmd) validate() error {
 			return errors.New("--deploy-dir must be set if not reading from stdin")
 		}
 		if c.crdsDir == "" {
-			return errors.New("--crd-dir must be set if not reading from stdin")
+			return errors.New("--crds-dir must be set if not reading from stdin")
 		}
 	}
 
