@@ -1,0 +1,9 @@
+entries:
+  - description: Implemented the scorecard config as a componentconfig object
+    kind: change
+    breaking: true
+    migration:
+      header: Update your scorecard config file to the new format
+      body: See the updated scorecard [config documentation](https://sdk.operatorframework.io/docs/scorecard/scorecard/#config-file) for details.
+  - description: Added `config/scorecard` kustomize scaffolds to `init`
+    kind: addition

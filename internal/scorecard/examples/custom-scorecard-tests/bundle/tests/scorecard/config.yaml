@@ -1,3 +1,7 @@
+kind: Configuration
+apiversion: scorecard.operatorframework.io/v1alpha3
+metadata:
+  name: config
 stages:
 - tests:
   - image: quay.io/username/custom-scorecard-tests:dev

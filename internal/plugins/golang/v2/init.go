@@ -21,6 +21,7 @@ import (
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 	"sigs.k8s.io/kubebuilder/pkg/plugin"
 
+	"github.com/operator-framework/operator-sdk/internal/plugins/scorecard"
 	utilplugins "github.com/operator-framework/operator-sdk/internal/util/plugins"
 )
 
@@ -47,6 +48,11 @@ func (p *initPlugin) Run() error {
 
 	// Update the scaffolded Makefile with operator-sdk recipes.
 	if err := p.run(); err != nil {
+		return err
+	}
+
+	// Run the scorecard "phase 2" plugin.
+	if err := scorecard.RunInit(p.config); err != nil {
 		return err
 	}
 

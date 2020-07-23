@@ -46,11 +46,7 @@ func (o Scorecard) List() v1alpha3.TestList {
 		tests := o.selectTests(stage)
 		for _, test := range tests {
 			item := v1alpha3.NewTest()
-			item.Spec = v1alpha3.TestSpec{
-				Image:      test.Image,
-				Entrypoint: test.Entrypoint,
-				Labels:     test.Labels,
-			}
+			item.Spec = test
 			output.Items = append(output.Items, item)
 		}
 	}

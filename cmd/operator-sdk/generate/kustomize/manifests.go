@@ -153,6 +153,7 @@ func (c *manifestsCmd) setDefaults(cfg *config.Config) {
 const manifestsKustomization = `resources:
 - ../default
 - ../samples
+- ../scorecard
 `
 
 // run generates kustomize bundle bases and a kustomization.yaml if one does not exist.

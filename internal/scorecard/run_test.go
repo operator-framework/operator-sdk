@@ -153,11 +153,11 @@ func TestRunSequentialFail(t *testing.T) {
 
 func getFakeScorecard(parallel bool) Scorecard {
 	return Scorecard{
-		Config: Config{
-			Stages: []Stage{
+		Config: v1alpha3.Configuration{
+			Stages: []v1alpha3.StageConfiguration{
 				{
 					Parallel: parallel,
-					Tests: []Test{
+					Tests: []v1alpha3.TestConfiguration{
 						{},
 						{},
 					},

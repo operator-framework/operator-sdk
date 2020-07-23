@@ -16,6 +16,7 @@ package collector
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -32,6 +33,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
+	scorecardv1alpha3 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
 
 // Manifests holds a collector of all manifests relevant to CSV updates.
@@ -44,7 +46,9 @@ type Manifests struct {
 	ValidatingWebhooks               []admissionregv1.ValidatingWebhook
 	MutatingWebhooks                 []admissionregv1.MutatingWebhook
 	CustomResources                  []unstructured.Unstructured
-	Others                           []unstructured.Unstructured
+	ScorecardConfig                  scorecardv1alpha3.Configuration
+
+	Others []unstructured.Unstructured
 }
 
 // UpdateFromDirs adds Roles, ClusterRoles, Deployments, and Custom Resource examples
@@ -85,6 +89,10 @@ func (c *Manifests) UpdateFromDirs(deployDir, crdsDir string) error {
 				err = c.addValidatingWebhookConfigurations(manifest)
 			case "MutatingWebhookConfiguration":
 				err = c.addMutatingWebhookConfigurations(manifest)
+			case scorecardv1alpha3.ConfigurationKind:
+				if gvk.GroupVersion() == scorecardv1alpha3.SchemeGroupVersion {
+					err = c.addScorecardConfig(manifest)
+				}
 			default:
 				err = c.addOthers(manifest)
 			}
@@ -145,6 +153,10 @@ func (c *Manifests) UpdateFromReader(r io.Reader) error {
 			err = c.addValidatingWebhookConfigurations(manifest)
 		case "MutatingWebhookConfiguration":
 			err = c.addMutatingWebhookConfigurations(manifest)
+		case scorecardv1alpha3.ConfigurationKind:
+			if gvk.GroupVersion() == scorecardv1alpha3.SchemeGroupVersion {
+				err = c.addScorecardConfig(manifest)
+			}
 		default:
 			err = c.addOthers(manifest)
 		}
@@ -167,7 +179,7 @@ func (c *Manifests) UpdateFromReader(r io.Reader) error {
 	return nil
 }
 
-// addRoles assumes add manifest data in rawManifests are Roles and adds them
+// addRoles assumes all manifest data in rawManifests are Roles and adds them
 // to the collector.
 func (c *Manifests) addRoles(rawManifests ...[]byte) error {
 	for _, rawManifest := range rawManifests {
@@ -180,7 +192,7 @@ func (c *Manifests) addRoles(rawManifests ...[]byte) error {
 	return nil
 }
 
-// addClusterRoles assumes add manifest data in rawManifests are ClusterRoles
+// addClusterRoles assumes all manifest data in rawManifests are ClusterRoles
 // and adds them to the collector.
 func (c *Manifests) addClusterRoles(rawManifests ...[]byte) error {
 	for _, rawManifest := range rawManifests {
@@ -193,7 +205,7 @@ func (c *Manifests) addClusterRoles(rawManifests ...[]byte) error {
 	return nil
 }
 
-// addDeployments assumes add manifest data in rawManifests are Deployments
+// addDeployments assumes all manifest data in rawManifests are Deployments
 // and adds them to the collector.
 func (c *Manifests) addDeployments(rawManifests ...[]byte) error {
 	for _, rawManifest := range rawManifests {
@@ -206,7 +218,7 @@ func (c *Manifests) addDeployments(rawManifests ...[]byte) error {
 	return nil
 }
 
-// addCustomResourceDefinitions assumes add manifest data in rawManifests are
+// addCustomResourceDefinitions assumes all manifest data in rawManifests are
 // CustomResourceDefinitions and adds them to the collector. version determines
 // which CustomResourceDefinition type is used for all manifests in rawManifests.
 func (c *Manifests) addCustomResourceDefinitions(version string, rawManifests ...[]byte) (err error) {
@@ -257,7 +269,21 @@ func (c *Manifests) addMutatingWebhookConfigurations(rawManifests ...[]byte) err
 	return nil
 }
 
-// addOthers assumes add manifest data in rawManifests are able to be
+// addScorecardConfig assumes manifest data in rawManifests is a ScorecardConfigs and adds it to the collector.
+// If a config has already been found, addScorecardConfig will return an error.
+func (c *Manifests) addScorecardConfig(rawManifest []byte) error {
+	cfg := scorecardv1alpha3.Configuration{}
+	if err := yaml.Unmarshal(rawManifest, &cfg); err != nil {
+		return err
+	}
+	if c.ScorecardConfig.Metadata.Name != "" {
+		return errors.New("duplicate scorecard configurations in collector input")
+	}
+	c.ScorecardConfig = cfg
+	return nil
+}
+
+// addOthers assumes all manifest data in rawManifests are able to be
 // unmarshalled into an Unstructured object and adds them to the collector.
 func (c *Manifests) addOthers(rawManifests ...[]byte) error {
 	for _, rawManifest := range rawManifests {
