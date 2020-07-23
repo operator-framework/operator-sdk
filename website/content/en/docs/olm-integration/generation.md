@@ -25,7 +25,7 @@ However the package manifests format is still supported by operator-framework to
 ### Kustomize files
 
 `operator-sdk generate kustomize manifests` generates a CSV kustomize base
-`config/manifests/bases/<operator-name>.clusterserviceversion.yaml` and a `config/manifests/bases/kustomization.yaml`
+`config/manifests/bases/<project-name>.clusterserviceversion.yaml` and a `config/manifests/bases/kustomization.yaml`
 by default. These files are required as `kustomize build` input in downstream commands.
 
 By default, the command starts an interactive prompt if a CSV base in `config/manifests/bases` is not present
@@ -160,7 +160,7 @@ endif
 PKG_MAN_OPTS ?= $(FROM_VERSION) $(PKG_CHANNELS) $(PKG_IS_DEFAULT_CHANNEL)
 
 # Generate package manifests.
-packagemanifests: kustomize 
+packagemanifests: kustomize
   operator-sdk generate kustomize manifests -q
   $(KUSTOMIZE) build config/manifests | operator-sdk generate packagemanifests -q --version $(VERSION) $(PKG_MAN_OPTS)
 ```
@@ -228,7 +228,7 @@ Below are two lists of fields: the first is a list of all fields the SDK and OLM
 These markers are not available to Ansible or Helm project types.
 
 Required:
-- `metadata.name`: a *unique* name for this CSV of the format `<operator-name>.vX.Y.Z`, ex. `app-operator.v0.0.1`.
+- `metadata.name`: a *unique* name for this CSV of the format `<project-name>.vX.Y.Z`, ex. `app-operator.v0.0.1`.
 - `spec.version`: semantic version of the Operator, ex. `0.0.1`.
 - `spec.installModes`: what mode of [installation namespacing][install-modes] OLM should use.
 Currently all but `MultiNamespace` are supported by SDK Operators.

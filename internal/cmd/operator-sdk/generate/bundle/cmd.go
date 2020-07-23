@@ -32,7 +32,7 @@ type bundleCmd struct {
 	metadata  bool
 
 	// Common options.
-	operatorName string
+	projectName  string
 	version      string
 	inputDir     string
 	outputDir    string
@@ -119,7 +119,6 @@ func (c *bundleCmd) addFlagsTo(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.manifests, "manifests", false, "Generate bundle manifests")
 	fs.BoolVar(&c.metadata, "metadata", false, "Generate bundle metadata and Dockerfile")
 
-	fs.StringVar(&c.operatorName, "operator-name", "", "Name of the bundle's operator")
 	fs.StringVarP(&c.version, "version", "v", "", "Semantic version of the operator in the generated bundle. "+
 		"Only set if creating a new bundle or upgrading your operator")
 	fs.StringVar(&c.inputDir, "input-dir", "", "Directory to read an existing bundle from. "+

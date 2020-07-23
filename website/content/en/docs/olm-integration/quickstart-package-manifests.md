@@ -19,7 +19,7 @@ kustomize build config/manifests | operator-sdk generate packagemanifests -q --v
 ```
 
 A versioned manifests directory `packagemanifests/0.0.1` containing a CSV and all CRDs in `config/crds` and a
-package manifest YAML file `packagemanifests/<operator-name>.package.yaml` have been created in the Operator project.
+package manifest YAML file `packagemanifests/<project-name>.package.yaml` have been created in the Operator project.
 
 ## Deploying an Operator with OLM
 

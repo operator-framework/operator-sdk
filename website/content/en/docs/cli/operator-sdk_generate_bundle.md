@@ -88,7 +88,6 @@ operator-sdk generate bundle [flags]
       --kustomize-dir string     Directory containing kustomize bases and a kustomization.yaml for operator-framework manifests (default "config/manifests")
       --manifests                Generate bundle manifests
       --metadata                 Generate bundle metadata and Dockerfile
-      --operator-name string     Name of the bundle's operator
       --output-dir string        Directory to write the bundle to
       --overwrite                Overwrite the bundle's metadata and Dockerfile if they exist (default true)
   -q, --quiet                    Run in quiet mode

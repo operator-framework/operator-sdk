@@ -60,11 +60,11 @@ const examples = `
 
 //nolint:maligned
 type manifestsCmd struct {
-	operatorName string
-	inputDir     string
-	outputDir    string
-	apisDir      string
-	quiet        bool
+	projectName string
+	inputDir    string
+	outputDir   string
+	apisDir     string
+	quiet       bool
 
 	// Interactive options.
 	interactiveLevel projutil.InteractiveLevel
@@ -118,7 +118,6 @@ func newManifestsCmd() *cobra.Command {
 }
 
 func (c *manifestsCmd) addFlagsTo(fs *pflag.FlagSet) {
-	fs.StringVar(&c.operatorName, "operator-name", "", "Name of the operator")
 	fs.StringVar(&c.inputDir, "input-dir", "", "Directory containing existing kustomize files")
 	fs.StringVar(&c.outputDir, "output-dir", "", "Directory to write kustomize files")
 	fs.StringVar(&c.apisDir, "apis-dir", "", "Root directory for API type defintions")
@@ -131,13 +130,9 @@ func (c *manifestsCmd) addFlagsTo(fs *pflag.FlagSet) {
 var defaultDir = filepath.Join("config", "manifests")
 
 // setDefaults sets command defaults.
-func (c *manifestsCmd) setDefaults(cfg *config.Config) error {
-	if c.operatorName == "" {
-		projectName, err := genutil.GetOperatorName(cfg)
-		if err != nil {
-			return err
-		}
-		c.operatorName = projectName
+func (c *manifestsCmd) setDefaults(cfg *config.Config) (err error) {
+	if c.projectName, err = genutil.GetOperatorName(cfg); err != nil {
+		return err
 	}
 
 	if c.inputDir == "" {
@@ -172,7 +167,7 @@ func (c manifestsCmd) run(cfg *config.Config) error {
 	}
 
 	csvGen := gencsv.Generator{
-		OperatorName: c.operatorName,
+		OperatorName: c.projectName,
 		OperatorType: projutil.PluginKeyToOperatorType(cfg.Layout),
 	}
 	opts := []gencsv.Option{
