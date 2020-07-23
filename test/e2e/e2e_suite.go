@@ -230,7 +230,7 @@ var _ = Describe("operator-sdk", func() {
 
 			By("running olm scorecard tests")
 			runOLMScorecardCmd := exec.Command(tc.BinaryName, "scorecard", "bundle",
-				"--selector=suite=basic",
+				"--selector=suite=olm",
 				"--output=json",
 				"--skip-cleanup=true",
 				"--wait-time=40s")
