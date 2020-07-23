@@ -224,9 +224,8 @@ var _ = Describe("operator-sdk", func() {
 			scorecardOutputBytes, err := tc.Run(runScorecardCmd)
 			Expect(err).NotTo(HaveOccurred())
 			err = json.Unmarshal(scorecardOutputBytes, &scorecardOutput)
-			if err != nil {
-				fmt.Printf("Error parsing JSON output")
-			}
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(scorecardOutput.Items)).To(Equal(1))
 		})
 	})
 })
