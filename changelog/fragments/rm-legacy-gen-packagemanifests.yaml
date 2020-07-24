@@ -2,7 +2,7 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      Remove legacy generate packagemanifests command
+      Removed legacy `generate packagemanifests` command
     kind: "removal"
     # Is this a breaking change?
     breaking: true
