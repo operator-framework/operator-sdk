@@ -227,11 +227,20 @@ var _ = Describe("operator-sdk", func() {
 				"--skip-cleanup=true",
 				"--wait-time=40s")
 			scorecardOutputBytes, err = tc.Run(runOLMScorecardCmd)
-			Expect(err).NotTo(HaveOccurred())
-			err = json.Unmarshal(scorecardOutputBytes, &scorecardOutput)
 			Expect(err).To(HaveOccurred())
-			Expect(len(scorecardOutput.Items)).To(Equal(1))
-			Expect(scorecardOutput.Items[0].Status.Results[0].State).To(Equal(v1alpha3.PassState))
+			err = json.Unmarshal(scorecardOutputBytes, &scorecardOutput)
+			Expect(err).NotTo(HaveOccurred())
+
+			var resultTable map[string]v1alpha3.State
+			resultTable["olm-status-descriptors"] = v1alpha3.FailState
+			resultTable["olm-crds-have-resources"] = v1alpha3.FailState
+			resultTable["olm-bundle-validation"] = v1alpha3.PassState
+			resultTable["olm-spec-descriptors"] = v1alpha3.FailState
+			resultTable["olm-crds-have-validation"] = v1alpha3.PassState
+
+			for a := 0; a < len(scorecardOutput.Items); a++ {
+				Expect(scorecardOutput.Items[a].Status.Results[0].State).To(Equal(resultTable[scorecardOutput.Items[a].Status.Results[0].Name]))
+			}
 
 			By("destroying the deployed package manifests-formatted operator")
 			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", "packagemanifests",
