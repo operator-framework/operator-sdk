@@ -24,7 +24,7 @@ testbin:
 ```
 
 
-The above script sets these environment variables to specify where test binaries can be found. Then, see that if you would like to NOT use the script you can use the same configuration by informing the path of your binaries: 
+The above script sets these environment variables to specify where test binaries can be found. In case you would like to not use the script then, is possible to do the same configuration to inform the path of your binaries: 
 
 ```shell
 $ export TEST_ASSET_KUBECTL=<kubectl-bin-path>
