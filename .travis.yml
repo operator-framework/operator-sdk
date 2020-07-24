@@ -127,6 +127,13 @@ jobs:
         - make test-e2e-ansible
         - make test-e2e-ansible-molecule
 
+    # Build and run an sample using the go plugin
+    - stage: test
+      name: Go sample (mac)
+      os: osx
+      script:
+        - ./hack/tests/go-samples.sh
+
     # Test subcommands
     - <<: *test
       name: Subcommands and Integration on Kubernetes
