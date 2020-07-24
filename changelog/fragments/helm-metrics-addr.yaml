@@ -1,7 +1,7 @@
 entries:
   - description: >
-      Added `--metrics-addr` flag to helm operator to make it configurable, and
-      changed the default from `:8383` to `:8080`
+      Added `--metrics-addr` flag to the Helm operator to make it configurable, and
+      changed the default port from `:8383` to `:8080`
 
     kind: "change"
 
@@ -9,6 +9,6 @@ entries:
     breaking: true
 
     migration:
-      header: Default helm operator metrics port changed
+      header: Default Helm operator metrics port has changed
       body: >
         To continue using port 8383, specify `--metrics-addr=:8383` when you start the operator.
