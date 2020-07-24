@@ -24,7 +24,7 @@ pushd "$TMPDIR"
 header_text "Creating memcached-operator"
 mkdir memcached-operator
 pushd memcached-operator
-operator-sdk init --plugins ansible.operator-sdk.io/v1 \
+operator-sdk init --plugins ansible.sdk.operatorframework.io/v1 \
   --domain example.com \
   --group ansible \
   --version v1alpha1 \
