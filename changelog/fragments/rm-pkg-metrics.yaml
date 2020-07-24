@@ -2,8 +2,8 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      Removed `pkg/metrics` and its helpers "GenerateAndServeCRMetrics()" and 
-      "GetNamespacesForMetrics()".
+      Removed `pkg/metrics` and its helpers `GenerateAndServeCRMetrics()` and
+      `GetNamespacesForMetrics()`.
 
     kind: "removal"
 
