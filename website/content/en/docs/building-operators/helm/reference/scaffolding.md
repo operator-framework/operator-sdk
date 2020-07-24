@@ -5,7 +5,7 @@ weight: 20
 ---
 
 After creating a new operator project using
-`operator-sdk init --plugins=helm.operator-sdk.io/v1`, 
+`operator-sdk init --plugins=helm.sdk.operatorframework.io/v1`,
 the project directory has numerous generated folders and files.
 The following table describes a basic rundown of each generated file/directory.
 

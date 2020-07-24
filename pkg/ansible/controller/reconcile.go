@@ -45,9 +45,9 @@ import (
 
 const (
 	// ReconcilePeriodAnnotation - annotation used by a user to specify the reconciliation interval for the CR.
-	// To use create a CR with an annotation "ansible.operator-sdk/reconcile-period: 30s" or some other valid
+	// To use create a CR with an annotation "ansible.sdk.operatorframework.io/reconcile-period: 30s" or some other valid
 	// Duration. This will override the operators/or controllers reconcile period for that particular CR.
-	ReconcilePeriodAnnotation = "ansible.operator-sdk/reconcile-period"
+	ReconcilePeriodAnnotation = "ansible.sdk.operatorframework.io/reconcile-period"
 )
 
 // AnsibleOperatorReconciler - object to reconcile runner requests

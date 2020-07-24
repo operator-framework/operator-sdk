@@ -309,7 +309,7 @@ In the `deploy/operator.yaml`:
 
 Occasionally while developing additional debug in the Operator logs is nice to have.
 Using the memcached operator as an example, we can simply add the
-`"ansible.operator-sdk/verbosity"` annotation to the Custom
+`"ansible.sdk.operatorframework.io/verbosity"` annotation to the Custom
 Resource with the desired verbosity.
 
 ```yaml
@@ -318,7 +318,7 @@ kind: "Memcached"
 metadata:
   name: "example-memcached"
   annotations:
-    "ansible.operator-sdk/verbosity": "4"
+    "ansible.sdk.operatorframework.io/verbosity": "4"
 spec:
   size: 4
 ```

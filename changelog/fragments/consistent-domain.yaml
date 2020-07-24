@@ -1,0 +1,41 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Changed domain suffix used for plugins and CR annotations to
+      consistently use `.sdk.operatorframework.io`.
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "change"
+
+    # Is this a breaking change?
+    breaking: true
+
+    # Migration can be defined to automatically add a section to
+    # the migration guide. This is required for breaking changes.
+    migration:
+      header: Update references to legacy operator-sdk domain strings
+      body: |
+        Update various usages of domains in plugin keys and annotations:
+
+          * In Kubebuilder-style projects, change the `.operator-sdk.io` suffix to `.sdk.operatorframework.io` in the `PROJECT` file.
+
+          * In Ansible and Helm projects, change legacy annotation keys to new annotation keys in sample CR files in your repository.
+
+          * In live clusters containing CRs for Ansible and Helm-based operators:
+            1. Patch all existing CRs that use a legacy annotation to ADD the new equivalent annotations alongside the legacy annotations.
+            2. Upgrade the operator
+            3. Patch all existing CRs that used a legacy annotation to REMOVE the legacy annotations.
+
+        | Location         | Legacy                                      | New                                                     |
+        |------------------|---------------------------------------------|---------------------------------------------------------|
+        | `PROJECT` file   | `go.operator-sdk.io`                        | `go.sdk.operatorframework.io`                           |
+        | Custom resources | `ansible.operator-sdk/reconcile-period`     | `ansible.sdk.operatorframework.io/reconcile-period`     |
+        | Custom resources | `ansible.operator-sdk/max-runner-artifacts` | `ansible.sdk.operatorframework.io/max-runner-artifacts` |
+        | Custom resources | `ansible.operator-sdk/verbosity`            | `ansible.sdk.operatorframework.io/verbosity`            |
+        | Custom resources | `helm.operator-sdk/upgrade-force`           | `helm.sdk.operatorframework.io/upgrade-force`           |

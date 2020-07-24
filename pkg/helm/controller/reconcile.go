@@ -327,7 +327,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 // returns the boolean representation of the annotation string
 // will return false if annotation is not set
 func hasHelmUpgradeForceAnnotation(o *unstructured.Unstructured) bool {
-	const helmUpgradeForceAnnotation = "helm.operator-sdk/upgrade-force"
+	const helmUpgradeForceAnnotation = "helm.sdk.operatorframework.io/upgrade-force"
 	force := o.GetAnnotations()[helmUpgradeForceAnnotation]
 	if force == "" {
 		return false
