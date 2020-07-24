@@ -20,7 +20,7 @@ import (
 
 	"github.com/spf13/pflag"
 
-	"github.com/operator-framework/operator-sdk/pkg/log/zap"
+	"github.com/operator-framework/operator-sdk/internal/log/zap"
 )
 
 // Flags - Options to be used by an ansible operator
