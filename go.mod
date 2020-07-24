@@ -16,7 +16,7 @@ require (
 	github.com/onsi/ginkgo v1.12.1
 	github.com/onsi/gomega v1.10.1
 	github.com/operator-framework/api v0.3.8
-	github.com/operator-framework/operator-lib v0.0.0-20200724152139-f4e8074e89d3
+	github.com/operator-framework/operator-lib v0.0.0-20200724203809-f6728cc91ac6
 	github.com/operator-framework/operator-registry v1.12.6-0.20200611222234-275301b779f8
 	github.com/prometheus/client_golang v1.5.1
 	github.com/rogpeppe/go-internal v1.5.0
@@ -52,3 +52,7 @@ replace (
 	github.com/mattn/go-sqlite3 => github.com/mattn/go-sqlite3 v1.10.0
 	golang.org/x/text => golang.org/x/text v0.3.3 // Required to fix CVE-2020-14040
 )
+
+// This replaced version includes controller-runtime predicate utilities necessary for v1.0.0 that are still in master.
+// Remove this and require the next minor/patch version of controller-runtime (>v0.6.1) when released.
+replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.6.1-0.20200724132623-e50c7b819263

@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/operator-framework/operator-lib/handler"
+	libpredicate "github.com/operator-framework/operator-lib/predicate"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -28,11 +29,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	ctrlpredicate "sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/operator-framework/operator-sdk/pkg/ansible/events"
+	"github.com/operator-framework/operator-sdk/pkg/ansible/predicate"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/runner"
-	"github.com/operator-framework/operator-sdk/pkg/predicate"
 )
 
 var log = logf.Log.WithName("ansible-controller")
@@ -97,17 +99,21 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 		os.Exit(1)
 	}
 
-	u := &unstructured.Unstructured{}
-	u.SetGroupVersionKind(options.GVK)
+	// Set up predicates.
+	predicates := []ctrlpredicate.Predicate{
+		ctrlpredicate.Or(ctrlpredicate.GenerationChangedPredicate{}, libpredicate.NoGenerationPredicate{}),
+	}
 	filterPredicate, err := predicate.NewResourceFilterPredicate(options.Selector)
-
 	if err != nil {
-		log.Error(err, "Error in parsing selector")
+		log.Error(err, "Error creating resource filter predicate")
 		os.Exit(1)
 	}
+	predicates = append(predicates, filterPredicate)
 
-	if err := c.Watch(&source.Kind{Type: u}, &handler.InstrumentedEnqueueRequestForObject{},
-		predicate.GenerationChangedPredicate{}, filterPredicate); err != nil {
+	u := &unstructured.Unstructured{}
+	u.SetGroupVersionKind(options.GVK)
+	err = c.Watch(&source.Kind{Type: u}, &handler.InstrumentedEnqueueRequestForObject{}, predicates...)
+	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}
