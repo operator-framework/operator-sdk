@@ -1,5 +1,5 @@
 /*
-Copyright 2018 The Kubernetes Authors.
+Copyright 2019 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package templates
+package rbac
 
 import (
 	"path/filepath"
@@ -22,35 +22,34 @@ import (
 	"sigs.k8s.io/kubebuilder/pkg/model/file"
 )
 
-var _ file.Template = &AuthProxyRole{}
+var _ file.Template = &ManagerRoleBinding{}
 
-// AuthProxyRole scaffolds the config/rbac/auth_proxy_role.yaml file
-type AuthProxyRole struct {
+// ManagerRoleBinding scaffolds the config/rbac/role_binding.yaml file
+type ManagerRoleBinding struct {
 	file.TemplateMixin
 }
 
 // SetTemplateDefaults implements input.Template
-func (f *AuthProxyRole) SetTemplateDefaults() error {
+func (f *ManagerRoleBinding) SetTemplateDefaults() error {
 	if f.Path == "" {
-		f.Path = filepath.Join("config", "rbac", "auth_proxy_role.yaml")
+		f.Path = filepath.Join("config", "rbac", "role_binding.yaml")
 	}
 
-	f.TemplateBody = proxyRoleTemplate
+	f.TemplateBody = managerBindingTemplate
 
 	return nil
 }
 
-const proxyRoleTemplate = `apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+const managerBindingTemplate = `apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
 metadata:
-  name: proxy-role
-rules:
-- apiGroups: ["authentication.k8s.io"]
-  resources:
-  - tokenreviews
-  verbs: ["create"]
-- apiGroups: ["authorization.k8s.io"]
-  resources:
-  - subjectaccessreviews
-  verbs: ["create"]
+  name: manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: manager-role
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: system
 `

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package templates
+package rbac
 
 import (
 	"path/filepath"
@@ -22,47 +22,48 @@ import (
 	"sigs.k8s.io/kubebuilder/pkg/model/file"
 )
 
-var _ file.Template = &LeaderElectionRole{}
+var _ file.Template = &CRDEditorRole{}
 
-// LeaderElectionRole scaffolds the config/rbac/leader_election_role.yaml file
-type LeaderElectionRole struct {
+// CRDEditorRole scaffolds the config/rbac/<kind>_editor_role.yaml
+type CRDEditorRole struct {
 	file.TemplateMixin
+	file.ResourceMixin
 }
 
 // SetTemplateDefaults implements input.Template
-func (f *LeaderElectionRole) SetTemplateDefaults() error {
+func (f *CRDEditorRole) SetTemplateDefaults() error {
 	if f.Path == "" {
-		f.Path = filepath.Join("config", "rbac", "leader_election_role.yaml")
+		f.Path = filepath.Join("config", "rbac", "%[kind]_editor_role.yaml")
 	}
+	f.Path = f.Resource.Replacer().Replace(f.Path)
 
-	f.TemplateBody = leaderElectionRoleTemplate
+	f.TemplateBody = crdRoleEditorTemplate
 
 	return nil
 }
 
-const leaderElectionRoleTemplate = `# permissions to do leader election.
+const crdRoleEditorTemplate = `# permissions for end users to edit {{ .Resource.Plural }}.
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+kind: ClusterRole
 metadata:
-  name: leader-election-role
+  name: {{ lower .Resource.Kind }}-editor-role
 rules:
 - apiGroups:
-  - ""
+  - {{ .Resource.Domain }}
   resources:
-  - configmaps
+  - {{ .Resource.Plural }}
   verbs:
+  - create
+  - delete
   - get
   - list
-  - watch
-  - create
+  - patch
   - update
-  - patch
-  - delete
+  - watch
 - apiGroups:
-  - ""
+  - {{ .Resource.Domain }}
   resources:
-  - events
+  - {{ .Resource.Plural }}/status
   verbs:
-  - create
-  - patch
+  - get
 `

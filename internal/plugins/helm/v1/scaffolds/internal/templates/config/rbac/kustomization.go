@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package templates
+package rbac
 
 import (
 	"path/filepath"
@@ -22,15 +22,15 @@ import (
 	"sigs.k8s.io/kubebuilder/pkg/model/file"
 )
 
-var _ file.Template = &KustomizeRBAC{}
+var _ file.Template = &Kustomization{}
 
-// KustomizeRBAC scaffolds the Kustomization file in rbac folder.
-type KustomizeRBAC struct {
+// Kustomization scaffolds the Kustomization file in rbac folder.
+type Kustomization struct {
 	file.TemplateMixin
 }
 
 // SetTemplateDefaults implements input.Template
-func (f *KustomizeRBAC) SetTemplateDefaults() error {
+func (f *Kustomization) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = filepath.Join("config", "rbac", "kustomization.yaml")
 	}

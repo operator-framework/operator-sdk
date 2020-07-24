@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package manager
+package kdefault
 
 import (
 	"fmt"
@@ -25,73 +25,61 @@ import (
 	"sigs.k8s.io/kubebuilder/pkg/model/file"
 )
 
-var _ file.Template = &Config{}
+var _ file.Template = &AuthProxyPatch{}
 
-// Config scaffolds yaml config for the manager.
-type Config struct {
+// AuthProxyPatch scaffolds the patch file for enabling
+// prometheus metrics for manager Pod.
+type AuthProxyPatch struct {
 	file.TemplateMixin
 
-	// Image is controller manager image name
-	Image string
-
-	// OperatorName will be used to create the pods
 	OperatorName string
 }
 
 // SetTemplateDefaults implements input.Template
-func (f *Config) SetTemplateDefaults() error {
+func (f *AuthProxyPatch) SetTemplateDefaults() error {
 	if f.Path == "" {
-		f.Path = filepath.Join("config", "manager", "manager.yaml")
+		f.Path = filepath.Join("config", "default", "manager_auth_proxy_patch.yaml")
 	}
 
-	f.TemplateBody = configTemplate
+	f.TemplateBody = kustomizeAuthProxyPatchTemplate
+
+	f.IfExistsAction = file.Error
 
 	if f.OperatorName == "" {
 		dir, err := os.Getwd()
 		if err != nil {
-			return fmt.Errorf("error getting working directory: %v", err)
+			return fmt.Errorf("error to get the current path: %v", err)
 		}
 		f.OperatorName = filepath.Base(dir)
 	}
+
 	return nil
 }
 
-const configTemplate = `apiVersion: v1
-kind: Namespace
-metadata:
-  labels:
-    control-plane: controller-manager
-  name: system
----
+const kustomizeAuthProxyPatchTemplate = `# This patch inject a sidecar container which is a HTTP proxy for the 
+# controller manager, it performs RBAC authorization against the Kubernetes API using SubjectAccessReviews.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: controller-manager
   namespace: system
-  labels:
-    control-plane: controller-manager
 spec:
-  selector:
-    matchLabels:
-      control-plane: controller-manager
-  replicas: 1
   template:
-    metadata:
-      labels:
-        control-plane: controller-manager
     spec:
       containers:
-      - image: {{ .Image }}
+      - name: kube-rbac-proxy
+        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
         args:
+        - "--secure-listen-address=0.0.0.0:8443"
+        - "--upstream=http://127.0.0.1:8080/"
+        - "--logtostderr=true"
+        - "--v=10"
+        ports:
+        - containerPort: 8443
+          name: https
+      - name: manager
+        args:
+        - "--metrics-addr=127.0.0.1:8080"
         - "--enable-leader-election"
         - "--leader-election-id={{ .OperatorName }}"
-        name: manager
-        resources:
-          limits:
-            cpu: 100m
-            memory: 90Mi
-          requests:
-            cpu: 100m
-            memory: 60Mi
-      terminationGracePeriodSeconds: 10
 `

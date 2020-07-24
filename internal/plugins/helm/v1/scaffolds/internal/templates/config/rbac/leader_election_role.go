@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package templates
+package rbac
 
 import (
 	"path/filepath"
@@ -22,44 +22,47 @@ import (
 	"sigs.k8s.io/kubebuilder/pkg/model/file"
 )
 
-var _ file.Template = &CRDViewerRole{}
+var _ file.Template = &LeaderElectionRole{}
 
-// CRDViewerRole scaffolds the config/rbac/<kind>_viewer_role.yaml
-type CRDViewerRole struct {
+// LeaderElectionRole scaffolds the config/rbac/leader_election_role.yaml file
+type LeaderElectionRole struct {
 	file.TemplateMixin
-	file.ResourceMixin
 }
 
 // SetTemplateDefaults implements input.Template
-func (f *CRDViewerRole) SetTemplateDefaults() error {
+func (f *LeaderElectionRole) SetTemplateDefaults() error {
 	if f.Path == "" {
-		f.Path = filepath.Join("config", "rbac", "%[kind]_viewer_role.yaml")
+		f.Path = filepath.Join("config", "rbac", "leader_election_role.yaml")
 	}
-	f.Path = f.Resource.Replacer().Replace(f.Path)
 
-	f.TemplateBody = crdRoleViewerTemplate
+	f.TemplateBody = leaderElectionRoleTemplate
 
 	return nil
 }
 
-const crdRoleViewerTemplate = `# permissions for end users to view {{ .Resource.Plural }}.
+const leaderElectionRoleTemplate = `# permissions to do leader election.
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+kind: Role
 metadata:
-  name: {{ lower .Resource.Kind }}-viewer-role
+  name: leader-election-role
 rules:
 - apiGroups:
-  - {{ .Resource.Domain }}
+  - ""
   resources:
-  - {{ .Resource.Plural }}
+  - configmaps
   verbs:
   - get
   - list
   - watch
+  - create
+  - update
+  - patch
+  - delete
 - apiGroups:
-  - {{ .Resource.Domain }}
+  - ""
   resources:
-  - {{ .Resource.Plural }}/status
+  - events
   verbs:
-  - get
+  - create
+  - patch
 `

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package metricsauth
+package rbac
 
 import (
 	"path/filepath"
@@ -22,29 +22,44 @@ import (
 	"sigs.k8s.io/kubebuilder/pkg/model/file"
 )
 
-var _ file.Template = &ClientClusterRole{}
+var _ file.Template = &CRDViewerRole{}
 
-// ClientClusterRole scaffolds the config/rbac/client_clusterrole.yaml file
-type ClientClusterRole struct {
+// CRDViewerRole scaffolds the config/rbac/<kind>_viewer_role.yaml
+type CRDViewerRole struct {
 	file.TemplateMixin
+	file.ResourceMixin
 }
 
 // SetTemplateDefaults implements input.Template
-func (f *ClientClusterRole) SetTemplateDefaults() error {
+func (f *CRDViewerRole) SetTemplateDefaults() error {
 	if f.Path == "" {
-		f.Path = filepath.Join("config", "rbac", "auth_proxy_client_clusterrole.yaml")
+		f.Path = filepath.Join("config", "rbac", "%[kind]_viewer_role.yaml")
 	}
+	f.Path = f.Resource.Replacer().Replace(f.Path)
 
-	f.TemplateBody = clientClusterRoleTemplate
+	f.TemplateBody = crdRoleViewerTemplate
 
 	return nil
 }
 
-const clientClusterRoleTemplate = `apiVersion: rbac.authorization.k8s.io/v1beta1
+const crdRoleViewerTemplate = `# permissions for end users to view {{ .Resource.Plural }}.
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: metrics-reader
+  name: {{ lower .Resource.Kind }}-viewer-role
 rules:
-- nonResourceURLs: ["/metrics"]
-  verbs: ["get"]
+- apiGroups:
+  - {{ .Resource.Domain }}
+  resources:
+  - {{ .Resource.Plural }}
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - {{ .Resource.Domain }}
+  resources:
+  - {{ .Resource.Plural }}/status
+  verbs:
+  - get
 `
