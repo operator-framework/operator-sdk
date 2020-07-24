@@ -18,8 +18,6 @@ limitations under the License.
 package kdefault
 
 import (
-	"fmt"
-	"os"
 	"path/filepath"
 
 	"sigs.k8s.io/kubebuilder/pkg/model/file"
@@ -31,8 +29,7 @@ var _ file.Template = &AuthProxyPatch{}
 // prometheus metrics for manager Pod.
 type AuthProxyPatch struct {
 	file.TemplateMixin
-
-	OperatorName string
+	file.ProjectNameMixin
 }
 
 // SetTemplateDefaults implements input.Template
@@ -45,18 +42,10 @@ func (f *AuthProxyPatch) SetTemplateDefaults() error {
 
 	f.IfExistsAction = file.Error
 
-	if f.OperatorName == "" {
-		dir, err := os.Getwd()
-		if err != nil {
-			return fmt.Errorf("error to get the current path: %v", err)
-		}
-		f.OperatorName = filepath.Base(dir)
-	}
-
 	return nil
 }
 
-const kustomizeAuthProxyPatchTemplate = `# This patch inject a sidecar container which is a HTTP proxy for the 
+const kustomizeAuthProxyPatchTemplate = `# This patch inject a sidecar container which is a HTTP proxy for the
 # controller manager, it performs RBAC authorization against the Kubernetes API using SubjectAccessReviews.
 apiVersion: apps/v1
 kind: Deployment
@@ -81,5 +70,5 @@ spec:
         args:
         - "--metrics-addr=127.0.0.1:8080"
         - "--enable-leader-election"
-        - "--leader-election-id={{ .OperatorName }}"
+        - "--leader-election-id={{ .ProjectName }}"
 `

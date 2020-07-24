@@ -152,7 +152,7 @@ func CreateChart(projectDir string, opts CreateOptions) (*resource.Options, *cha
 		return nil, nil, fmt.Errorf("failed to load chart: %v", err)
 	}
 
-	log.Infof("Created %s", relChartPath)
+	fmt.Printf("Created %s\n", relChartPath)
 	return r, c, nil
 }
 

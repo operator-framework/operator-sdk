@@ -248,7 +248,7 @@ type roleDiscoveryInterface interface {
 // discovery API to lookup each resource in the resulting manifest.
 // The role scaffold will have IsClusterScoped=true if the chart lists cluster scoped resources
 func (f *ManagerRoleUpdater) updateForChart(dc roleDiscoveryInterface) {
-	log.Info("Generating RBAC rules")
+	fmt.Println("Generating RBAC rules")
 
 	clusterResourceRules, namespacedResourceRules, err := generateRoleRules(dc, f.Chart)
 	if err != nil {
