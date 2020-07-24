@@ -125,13 +125,16 @@ you should add the following to your `Makefile` to make development easier:
 
 ```make
 # Options for "packagemanifests".
+ifneq ($(origin FROM_VERSION), undefined)
+PKG_FROM_VERSION := --from-version=$(FROM_VERSION)
+endif
 ifneq ($(origin CHANNEL), undefined)
 PKG_CHANNELS := --channel=$(CHANNEL)
 endif
 ifeq ($(IS_CHANNEL_DEFAULT), 1)
 PKG_IS_DEFAULT_CHANNEL := --default-channel
 endif
-PKG_MAN_OPTS ?= $(PKG_CHANNELS) $(PKG_IS_DEFAULT_CHANNEL)
+PKG_MAN_OPTS ?= $(FROM_VERSION) $(PKG_CHANNELS) $(PKG_IS_DEFAULT_CHANNEL)
 
 # Generate package manifests.
 packagemanifests: manifests
@@ -187,11 +190,11 @@ $ make bundle CHANNELS=beta DEFAULT_CHANNEL=beta
 If using a package manifests format, run:
 
 ```console
-$ make packagemanifests CHANNEL=beta IS_CHANNEL_DEFAULT=1
+$ make packagemanifests FROM_VERSION=0.0.1 CHANNEL=beta IS_CHANNEL_DEFAULT=1
 ```
 
 Running the command for either format will persist user-defined fields, updates `spec.version`,
-and populates `spec.replaces` with the old CSV versions' name.
+and populates `spec.replaces` with the old CSV version's name.
 
 ## CSV fields
 

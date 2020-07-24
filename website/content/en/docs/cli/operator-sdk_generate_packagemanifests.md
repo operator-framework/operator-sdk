@@ -59,6 +59,7 @@ operator-sdk generate packagemanifests [flags]
       --crds-dir string        Root directory for CustomResoureDefinition manifests
       --default-channel        Use the channel passed to --channel as the package manifest file's default channel
       --deploy-dir string      Root directory for operator manifests such as Deployments and RBAC, ex. 'deploy'. This directory is different from that passed to --input-dir
+      --from-version string    Semantic version of the operator being upgraded from
   -h, --help                   help for packagemanifests
       --input-dir string       Directory to read existing package manifests from. This directory is the parent of individual versioned package directories, and different from --deploy-dir
       --interactive            When set or no package base exists, an interactive command prompt will be presented to accept package ClusterServiceVersion metadata

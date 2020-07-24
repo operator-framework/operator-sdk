@@ -40,7 +40,7 @@ func ValidateVersion(version string) error {
 	// Ensures numerical values composing csvVersion don't contain leading 0's,
 	// ex. 01.01.01
 	if v.String() != version {
-		return fmt.Errorf("provided CSV version %s contains bad values (parses to %s)", version, v)
+		return fmt.Errorf("version %s contains bad values (parses to %s)", version, v)
 	}
 	return nil
 }

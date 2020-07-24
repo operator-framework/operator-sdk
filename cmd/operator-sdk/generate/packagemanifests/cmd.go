@@ -144,6 +144,7 @@ func NewCmdLegacy() *cobra.Command {
 func (c *packagemanifestsCmd) addCommonFlagsTo(fs *pflag.FlagSet) {
 	fs.StringVar(&c.operatorName, "operator-name", "", "Name of the packaged operator")
 	fs.StringVarP(&c.version, "version", "v", "", "Semantic version of the packaged operator")
+	fs.StringVar(&c.fromVersion, "from-version", "", "Semantic version of the operator being upgraded from")
 	fs.StringVar(&c.inputDir, "input-dir", "", "Directory to read existing package manifests from. "+
 		"This directory is the parent of individual versioned package directories, and different from --deploy-dir")
 	fs.StringVar(&c.outputDir, "output-dir", "", "Directory in which to write package manifests")
