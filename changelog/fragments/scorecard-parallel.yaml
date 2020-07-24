@@ -1,6 +1,6 @@
 entries:
   - description: >
-      Changes the scorecard configuration format to include a new top-level
+      Changed the scorecard configuration format to include a new top-level
       `stages` field, which allows users to define stages of tests and to
       enable parallelism within each stage.
 
@@ -28,7 +28,7 @@ entries:
         stages field, and move your test definitions under one or more stages.
 
         **Example**
-          
+
         ```yaml
         tests:
         - image: quay.io/operator-framework/scorecard-test:dev
