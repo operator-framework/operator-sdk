@@ -89,7 +89,7 @@ var _ = BeforeSuite(func(done Done) {
 
 	By("initializing a Helm project")
 	err = tc.Init(
-		"--plugins", "helm.sdk.operatorframework.io/v1",
+		"--plugins", "helm",
 		"--project-version", "3-alpha",
 		"--domain", tc.Domain)
 	Expect(err).Should(Succeed())

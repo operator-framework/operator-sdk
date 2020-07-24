@@ -13,7 +13,7 @@ Use the CLI to create a new Helm-based nginx-operator project:
 ```sh
 $ mkdir nginx-operator
 $ cd nginx-operator
-$ operator-sdk init --plugins=helm.sdk.operatorframework.io/v1 --domain=com --group=example --version=v1alpha1 --kind=Nginx
+$ operator-sdk init --plugins=helm --domain=com --group=example --version=v1alpha1 --kind=Nginx
 ```
 
 This creates the nginx-operator project specifically for watching the
@@ -62,7 +62,7 @@ If a custom repository URL is specified by `--helm-chart-repo`, the only support
 
 If `--helm-chart-version` is not set, the SDK will fetch the latest available version of the helm chart. Otherwise, it will fetch the specified version. The option `--helm-chart-version` is not used when `--helm-chart` itself refers to a specific version, for example when it is a local path or a URL.
 
-**Note:** For more details and examples run `operator-sdk init --plugins=helm.sdk.operatorframework.io/v1 --help`.
+**Note:** For more details and examples run `operator-sdk init --plugins=helm --help`.
 
 ### Operator scope
 
