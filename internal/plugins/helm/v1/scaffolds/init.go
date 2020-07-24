@@ -26,10 +26,11 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/machinery"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/chartutil"
-	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/templates"
-	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/templates/manager"
-	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/templates/metricsauth"
-	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/templates/prometheus"
+	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates"
+	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/kdefault"
+	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/manager"
+	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/prometheus"
+	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/rbac"
 	"github.com/operator-framework/operator-sdk/version"
 )
 
@@ -81,30 +82,30 @@ func (s *initScaffolder) scaffold() error {
 	}
 	return machinery.NewScaffold().Execute(
 		s.newUniverse(),
+		&templates.Dockerfile{
+			HelmOperatorVersion: HelmOperatorVersion,
+		},
 		&templates.GitIgnore{},
-		&templates.AuthProxyRole{},
-		&templates.AuthProxyRoleBinding{},
-		&metricsauth.AuthProxyPatch{},
-		&metricsauth.AuthProxyService{},
-		&metricsauth.ClientClusterRole{},
-		&manager.Config{Image: imageName},
 		&templates.Makefile{
 			Image:               imageName,
 			KustomizeVersion:    KustomizeVersion,
 			HelmOperatorVersion: HelmOperatorVersion,
 		},
-		&templates.Dockerfile{
-			HelmOperatorVersion: HelmOperatorVersion,
-		},
-		&templates.Kustomize{},
-		&templates.ManagerRole{},
-		&templates.ManagerRoleBinding{},
-		&templates.LeaderElectionRole{},
-		&templates.LeaderElectionRoleBinding{},
-		&templates.KustomizeRBAC{},
 		&templates.Watches{},
+		&rbac.AuthProxyRole{},
+		&rbac.AuthProxyRoleBinding{},
+		&rbac.AuthProxyService{},
+		&rbac.ClientClusterRole{},
+		&rbac.Kustomization{},
+		&rbac.LeaderElectionRole{},
+		&rbac.LeaderElectionRoleBinding{},
+		&rbac.ManagerRole{},
+		&rbac.ManagerRoleBinding{},
 		&manager.Kustomization{},
+		&manager.Manager{Image: imageName},
 		&prometheus.Kustomization{},
 		&prometheus.ServiceMonitor{},
+		&kdefault.AuthProxyPatch{},
+		&kdefault.Kustomization{},
 	)
 }

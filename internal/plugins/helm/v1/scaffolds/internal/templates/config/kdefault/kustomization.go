@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package templates
+package kdefault
 
 import (
 	"os"
@@ -24,10 +24,10 @@ import (
 	"sigs.k8s.io/kubebuilder/pkg/model/file"
 )
 
-var _ file.Template = &Kustomize{}
+var _ file.Template = &Kustomization{}
 
-// Kustomize scaffolds the Kustomization file for the default overlay
-type Kustomize struct {
+// Kustomization scaffolds the Kustomization file for the default overlay
+type Kustomization struct {
 	file.TemplateMixin
 
 	// Prefix to use for name prefix customization
@@ -35,7 +35,7 @@ type Kustomize struct {
 }
 
 // SetTemplateDefaults implements input.Template
-func (f *Kustomize) SetTemplateDefaults() error {
+func (f *Kustomization) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = filepath.Join("config", "default", "kustomization.yaml")
 	}

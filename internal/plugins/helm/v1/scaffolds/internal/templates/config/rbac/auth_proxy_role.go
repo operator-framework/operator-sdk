@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package templates
+package rbac
 
 import (
 	"path/filepath"
@@ -22,48 +22,35 @@ import (
 	"sigs.k8s.io/kubebuilder/pkg/model/file"
 )
 
-var _ file.Template = &CRDEditorRole{}
+var _ file.Template = &AuthProxyRole{}
 
-// CRDEditorRole scaffolds the config/rbac/<kind>_editor_role.yaml
-type CRDEditorRole struct {
+// AuthProxyRole scaffolds the config/rbac/auth_proxy_role.yaml file
+type AuthProxyRole struct {
 	file.TemplateMixin
-	file.ResourceMixin
 }
 
 // SetTemplateDefaults implements input.Template
-func (f *CRDEditorRole) SetTemplateDefaults() error {
+func (f *AuthProxyRole) SetTemplateDefaults() error {
 	if f.Path == "" {
-		f.Path = filepath.Join("config", "rbac", "%[kind]_editor_role.yaml")
+		f.Path = filepath.Join("config", "rbac", "auth_proxy_role.yaml")
 	}
-	f.Path = f.Resource.Replacer().Replace(f.Path)
 
-	f.TemplateBody = crdRoleEditorTemplate
+	f.TemplateBody = proxyRoleTemplate
 
 	return nil
 }
 
-const crdRoleEditorTemplate = `# permissions for end users to edit {{ .Resource.Plural }}.
-apiVersion: rbac.authorization.k8s.io/v1
+const proxyRoleTemplate = `apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ lower .Resource.Kind }}-editor-role
+  name: proxy-role
 rules:
-- apiGroups:
-  - {{ .Resource.Domain }}
+- apiGroups: ["authentication.k8s.io"]
   resources:
-  - {{ .Resource.Plural }}
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - {{ .Resource.Domain }}
+  - tokenreviews
+  verbs: ["create"]
+- apiGroups: ["authorization.k8s.io"]
   resources:
-  - {{ .Resource.Plural }}/status
-  verbs:
-  - get
+  - subjectaccessreviews
+  verbs: ["create"]
 `

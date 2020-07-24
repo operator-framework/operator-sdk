@@ -30,8 +30,10 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/machinery"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/chartutil"
-	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/templates"
-	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/templates/crd"
+	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates"
+	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/crd"
+	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/rbac"
+	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/samples"
 )
 
 var _ scaffold.Scaffolder = &apiScaffolder{}
@@ -89,27 +91,15 @@ func (s *apiScaffolder) scaffold() error {
 	chartPath := filepath.Join(chartutil.HelmChartsDir, chrt.Metadata.Name)
 	if err := machinery.NewScaffold().Execute(
 		s.newUniverse(res),
-		&templates.CRDSample{ChartPath: chartPath, Chart: chrt},
-		&templates.CRDEditorRole{},
-		&templates.CRDViewerRole{},
 		&templates.WatchesUpdater{ChartPath: chartPath},
 		&crd.CRD{CRDVersion: s.opts.CRDVersion},
+		&crd.Kustomization{},
+		&rbac.CRDEditorRole{},
+		&rbac.CRDViewerRole{},
+		&rbac.ManagerRoleUpdater{Chart: chrt},
+		&samples.CRDSample{ChartPath: chartPath, Chart: chrt},
 	); err != nil {
 		return fmt.Errorf("error scaffolding APIs: %v", err)
-	}
-
-	if err := machinery.NewScaffold().Execute(
-		s.newUniverse(res),
-		&crd.Kustomization{},
-	); err != nil {
-		return fmt.Errorf("error scaffolding kustomization: %v", err)
-	}
-
-	if err := machinery.NewScaffold().Execute(
-		s.newUniverse(res),
-		&templates.ManagerRoleUpdater{Chart: chrt},
-	); err != nil {
-		return fmt.Errorf("error scaffolding role: %v", err)
 	}
 
 	return nil
