@@ -106,7 +106,9 @@ func (c packagemanifestsCmd) validate() error {
 	}
 
 	if c.fromVersion != "" {
-		return errors.New("--from-version cannot be set for PROJECT-configured projects")
+		if err := genutil.ValidateVersion(c.fromVersion); err != nil {
+			return err
+		}
 	}
 
 	if c.inputDir == "" {
@@ -165,6 +167,7 @@ func (c packagemanifestsCmd) run(cfg *config.Config) error {
 		OperatorName: c.operatorName,
 		OperatorType: genutil.PluginKeyToOperatorType(cfg.Layout),
 		Version:      c.version,
+		FromVersion:  c.fromVersion,
 		Collector:    col,
 	}
 
