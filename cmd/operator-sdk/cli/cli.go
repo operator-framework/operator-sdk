@@ -20,7 +20,6 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cleanup"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/completion"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/new"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/olm"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/run"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/scorecard"
@@ -38,9 +37,6 @@ import (
 )
 
 var commands = []*cobra.Command{
-	// The "new" cmd provides a way to scaffold Helm/Ansible projects
-	// from the new CLI.
-	new.NewCmd(),
 	scorecard.NewCmd(),
 	build.NewCmd(),
 	bundle.NewCmd(),

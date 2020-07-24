@@ -19,10 +19,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/add"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/build"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/completion"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/new"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/olm"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/scorecard"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/version"
@@ -61,11 +59,9 @@ func GetCLIRoot() *cobra.Command {
 	}
 
 	root.AddCommand(
-		add.NewCmd(),
 		build.NewCmd(),
 		scorecard.NewCmd(),
 		completion.NewCmd(),
-		new.NewCmd(),
 		olm.NewCmd(),
 		version.NewCmd(),
 	)
@@ -95,7 +91,6 @@ func checkGoModulesForCmd(cmd *cobra.Command) (err error) {
 }
 
 var commandsToSkip = map[string]struct{}{
-	"new":          struct{}{}, // Handles this logic in cmd/operator-sdk/new
 	"operator-sdk": struct{}{}, // Alias for "help"
 	"help":         struct{}{},
 	"completion":   struct{}{},
