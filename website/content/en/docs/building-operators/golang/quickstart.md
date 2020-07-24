@@ -288,6 +288,17 @@ Once this is done, there are two ways to run the operator:
 - As Go program outside a cluster
 - As a Deployment inside a Kubernetes cluster
 
+### Configuring your test environment
+
+Before you deploy your project see that the Makefile target `docker-build` will also calls the `test` one. So, run the following commands to setup the requirements for your envtest.
+
+```
+$ curl -sSLo setup_envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/kubebuilder/master/scripts/setup_envtest_bins.sh 
+$ chmod +x setup_envtest.sh
+$ ./setup_envtest.sh v1.18.2 v3.4.3
+```
+For further information and options see: [EnvTest Setup][env-test-setup]. 
+
 ### 1. Run locally outside the cluster
 
 To run the operator locally execute the following command:
@@ -493,3 +504,4 @@ Also see the [advanced topics][advanced_topics] doc for more use cases and under
 [status_subresource]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#status-subresource
 [API-groups]:https://kubernetes.io/docs/concepts/overview/kubernetes-api/#api-groups
 [legacy_CLI]:https://v0-19-x.sdk.operatorframework.io/docs/cli/
+[env-test-setup]: /docs/building-operators/golang/references/env-test-setup
