@@ -6,29 +6,30 @@ weight: 50
 
 ## Overview 
 
-This document describes how to configure the environment for the [controller tests][controller-test] supported by the SDK.
+This document describes how to configure the environment for the [controller tests][controller-test] which uses [envtest][envtest] and is supported by the SDK. 
 
-## Configuring your test 
+## Installing prerequisites
 
-The suite test requires specify the `kubectl`, `api-server` and `etcd` the k8s binaries which are used by it. You can use the following script as a helper which will create the `testbin/` directory with these binaries. Following an example by adding a new target in your Makefile. 
+[Envtest][envtest] requires that the `kubectl`, `api-server` and `etcd` be present locally. You can use this [script][script] to download these binaries into the `testbin/` directory. It may be convenient to add this script your Makefile as follows:
 
 ```sh
 # Setup binaries required to run the tests
-# The script will create the testbin dir and add on it the required binaries
 # See that it expects the Kubernetes and ETCD version
-testsetup:
+K8S_VERSION = v1.18.2
+ETCD_VERSION = v3.4.3
+testbin:
 	curl -sSLo setup_envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/kubebuilder/master/scripts/setup_envtest_bins.sh 
 	chmod +x setup_envtest.sh
-	./setup_envtest.sh v1.18.2 v3.4.3
+	./setup_envtest.sh $(K8S_VERSION) $(ETCD_VERSION)
 ```
 
 
-Also, note that the above script will use environment variables to specify the place where its binaries can be found:
+The above script sets these environment variables to specify where test binaries can be found:
 
 ```shell
-  export TEST_ASSET_KUBECTL=<kubectl bin path>
-  export TEST_ASSET_KUBE_APISERVER=<api-server bin path>
-  export TEST_ASSET_ETCD=/<etd bin path>
+$ export TEST_ASSET_KUBECTL=<kubectl-bin-path>
+$ export TEST_ASSET_KUBE_APISERVER=<api-server-bin-path>
+$ export TEST_ASSET_ETCD=<etcd-bin-path>
 ``` 
 
 See that the environment variables also can be specified via your `controllers/suite_test.go` such as the following example. 
@@ -58,5 +59,6 @@ var _ = AfterSuite(func() {
 
 })
 ```
- 
+[envtest]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/envtest
 [controller-test]: https://book.kubebuilder.io/reference/writing-tests.html
+[script]: https://raw.githubusercontent.com/kubernetes-sigs/kubebuilder/master/scripts/setup_envtest_bins.sh

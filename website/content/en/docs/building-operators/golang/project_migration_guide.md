@@ -124,13 +124,9 @@ Run [`make manifests`][generate_crd] to generate CRD manifests. They would be ge
 
 ## Configuring your test environment
 
-Before you deploy your project see that the Makefile target `docker-build` will also calls the `test` one. So, run the following commands to setup the requirements for your envtest.
-
-```
-$ curl -sSLo setup_envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/kubebuilder/master/scripts/setup_envtest_bins.sh 
-$ chmod +x setup_envtest.sh
-$ ./setup_envtest.sh v1.18.2 v3.4.3
-```
+Projects are scaffolded with unit tests that utilize the [envtest](https://godoc.org/sigs.k8s.io/controller-runtime/pkg/envtest)
+library, which requires certain Kubernetes server binaries be present locally.
+Installation instructions can be found [here][env-test-setup].
 
 ## Operator Manifests
 
