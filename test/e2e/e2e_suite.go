@@ -206,14 +206,6 @@ var _ = Describe("operator-sdk", func() {
 			_, err = tc.Run(runPkgManCmd)
 			Expect(err).NotTo(HaveOccurred())
 
-			By("destroying the deployed package manifests-formatted operator")
-			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", "packagemanifests",
-				"--operator-namespace", tc.Kubectl.Namespace,
-				"--operator-version", operatorVersion,
-				"--timeout", "4m")
-			_, err = tc.Run(cleanupPkgManCmd)
-			Expect(err).NotTo(HaveOccurred())
-
 			By("running basic scorecard tests")
 			var scorecardOutput v1alpha3.TestList
 			runScorecardCmd := exec.Command(tc.BinaryName, "scorecard", "bundle",
@@ -240,6 +232,14 @@ var _ = Describe("operator-sdk", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(scorecardOutput.Items)).To(Equal(1))
 			Expect(scorecardOutput.Items[0].Status.Results[0].State).To(Equal(v1alpha3.PassState))
+
+			By("destroying the deployed package manifests-formatted operator")
+			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", "packagemanifests",
+				"--operator-namespace", tc.Kubectl.Namespace,
+				"--operator-version", operatorVersion,
+				"--timeout", "4m")
+			_, err = tc.Run(cleanupPkgManCmd)
+			Expect(err).NotTo(HaveOccurred())
 		})
 	})
 })
