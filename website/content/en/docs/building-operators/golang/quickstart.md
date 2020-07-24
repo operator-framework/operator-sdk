@@ -288,8 +288,6 @@ Once this is done, there are two ways to run the operator:
 - As Go program outside a cluster
 - As a Deployment inside a Kubernetes cluster
 
-### Configuring your test environment
-
 ## Configuring your test environment
 
 Projects are scaffolded with unit tests that utilize the [envtest](https://godoc.org/sigs.k8s.io/controller-runtime/pkg/envtest)

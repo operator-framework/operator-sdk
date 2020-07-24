@@ -10,7 +10,7 @@ This document describes how to configure the environment for the [controller tes
 
 ## Installing prerequisites
 
-[Envtest][envtest] requires that the `kubectl`, `api-server` and `etcd` be present locally. You can use this [script][script] to download these binaries into the `testbin/` directory. It may be convenient to add this script your Makefile as follows:
+[Envtest][envtest] requires that `kubectl`, `api-server` and `etcd` be present locally. You can use this [script][script] to download these binaries into the `testbin/` directory. It may be convenient to add this script your Makefile as follows:
 
 ```sh
 # Setup binaries required to run the tests
@@ -24,7 +24,7 @@ testbin:
 ```
 
 
-The above script sets these environment variables to specify where test binaries can be found:
+The above script sets these environment variables to specify where test binaries can be found. Then, see that if you would like to NOT use the script you can use the same configuration by informing the path of your binaries: 
 
 ```shell
 $ export TEST_ASSET_KUBECTL=<kubectl-bin-path>
