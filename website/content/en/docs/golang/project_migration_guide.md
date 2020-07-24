@@ -12,7 +12,8 @@ The document considers [memcached operator][memcached-operator] as an example to
 
 ## Prerequisites
 - [git][git_tool].
-- [go][go_tool] version 17.03+.
+- [go][go_tool] version 1.13+.
+- [docker][docker_tool] version 17.03+.
 - [kubectl][kubectl_tool] version v1.11.3+.
 - [kustomize][kustomize_tool] v3.1.0+.
 - Access to a Kubernetes v1.11.3+ cluster.
@@ -57,7 +58,7 @@ Create a new API and its corresponding controller.
 
 In case of memcached operator, a new API for kind `Memcached` and group/version  `cache/v1aplha1` is created using the following command.
 
-`operator-sdk api --group cache --version v1alpha1 --kind Memcached`
+`operator-sdk create api --group cache --version v1alpha1 --kind Memcached`
 
 Press `y` when asked for creating resource and controller. This will scaffold the project and create the files `api/<version>/<kind>_types.go` and `controller/<kind>_types.go`.
 
@@ -81,7 +82,7 @@ type MemcachedStatus struct {
 }
 ```
 **Note**:
-If there are any any libraries or pkgs present in `pkg/apis/cache/v1alpha1`, copy them over to `api/v1alpha1`.
+If there are any libraries or pkgs present in `pkg/apis/cache/v1alpha1`, copy them over to `api/v1alpha1`.
 
 ### CRD markers
 
@@ -152,12 +153,13 @@ func (r *MemcachedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 **Note**:
 To update `config/rbac/role.yaml` after changing the markers, run `make manifests`.
 
-The project can now be built and the operator can be deployed on cluster. For further steps regarding the deployment of operator, creation of custom resource and cleaning up of resources, refer to [quickstart guide][kb_quickstart].
+The project can now be built, and the operator can be deployed on-cluster. For further steps regarding the deployment of the operator, creation of custom resources and cleaning up of resources, refer to the [quickstart guide][kb_quickstart].
 
 
 [memcached-operator]:/docs/golang/quickstart/
 [git_tool]: https://git-scm.com/downloads
 [go_tool]: https://golang.org/dl/
+[docker_tool]:https://docs.docker.com/install/
 [kubectl_tool]: https://github.com/kubernetes/minikube#installation
 [kustomize_tool]: https://github.com/kubernetes-sigs/kustomize/blob/master/docs/INSTALL.md
 [kubebuilder_install]: https://book.kubebuilder.io/quick-start.html#installation
@@ -168,6 +170,6 @@ The project can now be built and the operator can be deployed on cluster. For fu
 [rbac_markers]: https://book.kubebuilder.io/reference/markers/rbac.html
 [memcached_cr]: https://github.com/operator-framework/operator-sdk-samples/blob/master/go/memcached-operator/deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml
 [memcached_types]: https://github.com/operator-framework/operator-sdk-samples/blob/master/go/memcached-operator/pkg/apis/cache/v1alpha1/memcached_types.go
-[kb_memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/master/example/kb-memcached-operator/memcached_controller.go.tmpl
+[kb_memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/v0.19.x/example/kb-memcached-operator/memcached_controller.go.tmpl
 [kb_quickstart]: /docs/golang/quickstart/
 [install_guide]: /docs/install-operator-sdk/
