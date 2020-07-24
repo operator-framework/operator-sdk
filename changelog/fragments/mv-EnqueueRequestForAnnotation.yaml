@@ -1,9 +1,9 @@
 entries:
     - description: >
-        Remove the implementation for `EnqueueRequestForAnnotation` handler from sdk repository and
+        Remove the implementation for `EnqueueRequestForAnnotation` handler from the SDK repository and
         reference it from operator-lib instead.
       kind: "change"
-  
+
       # Is this a breaking change?
       breaking: true
 
@@ -12,5 +12,5 @@ entries:
       migration:
         header: Move the implementation of `EnqueueRequestForAnnotation` handler
         body: >
-          The implementation of `EnqueueRequestForAnnotation` handler has been removed from Operator SDK repository 
-          and is now imported from Operator-lib.
+          The implementation of `EnqueueRequestForAnnotation` handler has been removed from the
+          Operator SDK repository and is now imported from operator-lib.
