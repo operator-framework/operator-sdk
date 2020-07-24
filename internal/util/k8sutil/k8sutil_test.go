@@ -15,9 +15,6 @@
 package k8sutil
 
 import (
-	"fmt"
-	"os"
-	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -51,60 +48,6 @@ func TestGetDisplayName(t *testing.T) {
 		if dn != c.wanted {
 			t.Errorf("Wanted %s, got %s", c.wanted, dn)
 		}
-	}
-}
-
-func TestGetOperatorName(t *testing.T) {
-	type Output struct {
-		operatorName string
-		err          error
-	}
-
-	type Scenario struct {
-		name           string
-		envVarKey      string
-		envVarValue    string
-		expectedOutput Output
-	}
-
-	tests := []Scenario{
-		{
-			name:        "Simple case",
-			envVarKey:   OperatorNameEnvVar,
-			envVarValue: "myoperator",
-			expectedOutput: Output{
-				operatorName: "myoperator",
-				err:          nil,
-			},
-		},
-		{
-			name:        "Unset env var",
-			envVarKey:   "",
-			envVarValue: "",
-			expectedOutput: Output{
-				operatorName: "",
-				err:          fmt.Errorf("%s must be set", OperatorNameEnvVar),
-			},
-		},
-		{
-			name:        "Empty env var",
-			envVarKey:   OperatorNameEnvVar,
-			envVarValue: "",
-			expectedOutput: Output{
-				operatorName: "",
-				err:          fmt.Errorf("%s must not be empty", OperatorNameEnvVar),
-			},
-		},
-	}
-
-	for _, test := range tests {
-		_ = os.Setenv(test.envVarKey, test.envVarValue)
-		operatorName, err := GetOperatorName()
-		if !(operatorName == test.expectedOutput.operatorName && reflect.DeepEqual(err, test.expectedOutput.err)) {
-			t.Errorf("Test %s failed, expected output: %s,%v; got: %s,%v", test.name,
-				test.expectedOutput.operatorName, test.expectedOutput.err, operatorName, err)
-		}
-		_ = os.Unsetenv(test.envVarKey)
 	}
 }
 
