@@ -49,6 +49,7 @@ func initUpdateMakefile(filePath string, cfg *config.Config) error {
 	case projutil.OperatorTypeUnknown:
 		return fmt.Errorf("unsupported plugin key %q", cfg.Layout)
 	case projutil.OperatorTypeGo:
+		makefileBytes = append(makefileBytes, []byte(makefileUndeployFragmentGo)...)
 		makefileBytes = append(makefileBytes, []byte(makefileBundleFragmentGo)...)
 	default:
 		makefileBytes = append(makefileBytes, []byte(makefileBundleFragmentNonGo)...)
@@ -97,5 +98,11 @@ bundle: kustomize
 # Build the bundle image.
 bundle-build:
 	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+`
+	//todo(camilamcedo86): remove it when we get v3 plugin (it is implemented there)
+	makefileUndeployFragmentGo = `
+# UnDeploy controller from the configured Kubernetes cluster in ~/.kube/config
+undeploy:
+	$(KUSTOMIZE) build config/default | kubectl delete -f -
 `
 )

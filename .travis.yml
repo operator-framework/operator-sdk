@@ -129,8 +129,8 @@ jobs:
 
     # Build and run an sample using the go plugin
     - stage: test
-      name: Go sample (mac)
-      os: osx
+      <<: *test
+      name: Go sample quick start steps
       script:
         - ./hack/tests/go-samples.sh
 
