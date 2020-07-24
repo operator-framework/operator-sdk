@@ -16,16 +16,16 @@ package eventapi
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 
 	"github.com/go-logr/logr"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -97,7 +97,7 @@ func (e *EventReceiver) Close() {
 	e.stopped = true
 	e.mutex.Unlock()
 	e.logger.V(1).Info("Event API stopped")
-	if err := e.server.Close(); err != nil && !fileutil.IsClosedError(err) {
+	if err := e.server.Close(); err != nil && !errors.Is(err, os.ErrClosed) {
 		e.logger.Error(err, "Failed to close event receiver")
 	}
 	close(e.Events)

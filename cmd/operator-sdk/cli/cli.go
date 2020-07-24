@@ -37,7 +37,6 @@ import (
 )
 
 var commands = []*cobra.Command{
-	scorecard.NewCmd(),
 	build.NewCmd(),
 	bundle.NewCmd(),
 	cleanup.NewCmd(),
@@ -45,6 +44,7 @@ var commands = []*cobra.Command{
 	generate.NewCmd(),
 	olm.NewCmd(),
 	run.NewCmd(),
+	scorecard.NewCmd(),
 	version.NewCmd(),
 }
 

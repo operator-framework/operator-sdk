@@ -34,7 +34,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
+	"github.com/operator-framework/operator-sdk/pkg/helm/internal/diff"
 	"github.com/operator-framework/operator-sdk/pkg/helm/internal/types"
 	"github.com/operator-framework/operator-sdk/pkg/helm/release"
 )
@@ -121,7 +121,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		} else {
 			log.Info("Uninstalled release")
 			if log.V(0).Enabled() {
-				fmt.Println(diffutil.Diff(uninstalledRelease.Manifest, ""))
+				fmt.Println(diff.Generate(uninstalledRelease.Manifest, ""))
 			}
 			status.SetCondition(types.HelmAppCondition{
 				Type:   types.ConditionDeployed,
@@ -206,7 +206,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 
 		log.Info("Installed release")
 		if log.V(0).Enabled() {
-			fmt.Println(diffutil.Diff("", installedRelease.Manifest))
+			fmt.Println(diff.Generate("", installedRelease.Manifest))
 		}
 		log.V(1).Info("Config values", "values", installedRelease.Config)
 		message := ""
@@ -265,7 +265,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 
 		log.Info("Upgraded release", "force", force)
 		if log.V(0).Enabled() {
-			fmt.Println(diffutil.Diff(previousRelease.Manifest, upgradedRelease.Manifest))
+			fmt.Println(diff.Generate(previousRelease.Manifest, upgradedRelease.Manifest))
 		}
 		log.V(1).Info("Config values", "values", upgradedRelease.Config)
 		message := ""

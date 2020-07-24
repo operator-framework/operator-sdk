@@ -17,11 +17,12 @@ package proxy
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 
-	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
 
 	kcorev1 "k8s.io/api/core/v1"
@@ -70,7 +71,7 @@ func TestHandler(t *testing.T) {
 		t.Fatalf("Error getting pod from proxy: %v", err)
 	}
 	defer func() {
-		if err := resp.Body.Close(); err != nil && !fileutil.IsClosedError(err) {
+		if err := resp.Body.Close(); err != nil && !errors.Is(err, os.ErrClosed) {
 			t.Errorf("Failed to close response body: (%v)", err)
 		}
 	}()

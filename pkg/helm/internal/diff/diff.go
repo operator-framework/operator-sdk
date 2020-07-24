@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package diffutil
+package diff
 
 import (
 	"bytes"
@@ -22,7 +22,8 @@ import (
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
-func Diff(a, b string) string {
+// Generate generates a diff between a and b, in color.
+func Generate(a, b string) string {
 	dmp := diffmatchpatch.New()
 
 	wSrc, wDst, warray := dmp.DiffLinesToRunes(a, b)

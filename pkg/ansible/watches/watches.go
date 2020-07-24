@@ -32,7 +32,6 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	yaml "sigs.k8s.io/yaml"
 
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/flags"
 )
 
@@ -188,20 +187,25 @@ func (w *Watch) setValuesFromAlias(tmp alias) error {
 	w.Finalizer = tmp.Finalizer
 	w.AnsibleVerbosity = getAnsibleVerbosity(gvk, ansibleVerbosityDefault)
 	w.Blacklist = tmp.Blacklist
-	w.addRolePlaybookPaths()
+
+	wd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	w.addRolePlaybookPaths(wd)
 	w.Selector = parseLabelSelector(tmp.Selector)
 
 	return nil
 }
 
 // addRolePlaybookPaths will add the full path based on the current dir
-func (w *Watch) addRolePlaybookPaths() {
+func (w *Watch) addRolePlaybookPaths(rootDir string) {
 	if len(w.Playbook) > 0 {
-		w.Playbook = getFullPath(w.Playbook)
+		w.Playbook = getFullPath(rootDir, w.Playbook)
 	}
 
 	if len(w.Role) > 0 {
-		possibleRolePaths := getPossibleRolePaths(w.Role)
+		possibleRolePaths := getPossibleRolePaths(rootDir, w.Role)
 		for _, possiblePath := range possibleRolePaths {
 			if _, err := os.Stat(possiblePath); err == nil {
 				w.Role = possiblePath
@@ -210,7 +214,7 @@ func (w *Watch) addRolePlaybookPaths() {
 		}
 	}
 	if w.Finalizer != nil && len(w.Finalizer.Role) > 0 {
-		possibleRolePaths := getPossibleRolePaths(w.Finalizer.Role)
+		possibleRolePaths := getPossibleRolePaths(rootDir, w.Finalizer.Role)
 		for _, possiblePath := range possibleRolePaths {
 			if _, err := os.Stat(possiblePath); err == nil {
 				w.Finalizer.Role = possiblePath
@@ -219,20 +223,20 @@ func (w *Watch) addRolePlaybookPaths() {
 		}
 	}
 	if w.Finalizer != nil && len(w.Finalizer.Playbook) > 0 {
-		w.Finalizer.Playbook = getFullPath(w.Finalizer.Playbook)
+		w.Finalizer.Playbook = getFullPath(rootDir, w.Finalizer.Playbook)
 	}
 }
 
 // getFullPath returns an absolute path for the playbook
-func getFullPath(path string) string {
+func getFullPath(rootDir, path string) string {
 	if len(path) > 0 && !filepath.IsAbs(path) {
-		return filepath.Join(projutil.MustGetwd(), path)
+		return filepath.Join(rootDir, path)
 	}
 	return path
 }
 
 // getPossibleRolePaths returns list of possible absolute paths derived from a user provided value.
-func getPossibleRolePaths(path string) []string {
+func getPossibleRolePaths(rootDir, path string) []string {
 	possibleRolePaths := []string{}
 	if filepath.IsAbs(path) || len(path) == 0 {
 		return append(possibleRolePaths, path)
@@ -265,7 +269,7 @@ func getPossibleRolePaths(path string) []string {
 		}
 	}
 	// Roles can also live in the current working directory.
-	return append(possibleRolePaths, getFullPath(filepath.Join("roles", path)))
+	return append(possibleRolePaths, getFullPath(rootDir, filepath.Join("roles", path)))
 }
 
 // Validate - ensures that a Watch is valid

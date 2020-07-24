@@ -16,14 +16,9 @@ package build
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
-	"strings"
 
-	"github.com/operator-framework/operator-sdk/internal/scaffold"
-	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	"github.com/google/shlex"
@@ -65,7 +60,7 @@ For example:
 		"Tool to build OCI images. One of: [docker, podman, buildah]")
 
 	// todo: remove when the legacy layout is no longer supported
-	if !kbutil.HasProjectFile() {
+	if !projutil.HasProjectFile() {
 		buildCmd.Flags().StringVar(&goBuildArgs, "go-build-args", "",
 			"Extra Go build arguments as one string such as \"-ldflags -X=main.xyz=abc\"")
 	}
@@ -104,9 +99,8 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 	}
 
 	image := args[0]
-	projutil.MustInProjectRoot()
 
-	if kbutil.HasProjectFile() {
+	if projutil.HasProjectFile() {
 		if err := doImageBuild("Dockerfile", image); err != nil {
 			log.Fatalf("Failed to build image %s: %v", image, err)
 		}
@@ -115,46 +109,10 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 
 	// todo: remove when the legacy layout is no longer supported
 	// note that the above if will no longer be required as well.
-	if err := doLegacyBuild(image); err != nil {
+	if err := doImageBuild(filepath.Join("build", "Dockerfile"), image); err != nil {
 		log.Fatalf("Failed to build image %s: %v", image, err)
 	}
 	return nil
-}
-
-// todo: remove when the legacy layout is no longer supported
-// Deprecated: Used just for the legacy layout
-// --
-// doLegacyBuild will build projects with the legacy layout.
-func doLegacyBuild(image string) error {
-	goBuildEnv := append(os.Environ(), "GOOS=linux")
-	// If CGO_ENABLED is not set, set it to '0'.
-	if _, ok := os.LookupEnv("CGO_ENABLED"); !ok {
-		goBuildEnv = append(goBuildEnv, "CGO_ENABLED=0")
-	}
-	absProjectPath := projutil.MustGetwd()
-	projectName := filepath.Base(absProjectPath)
-
-	// Don't need to build Go code if a non-Go Operator.
-	if projutil.IsOperatorGo() {
-		trimPath := fmt.Sprintf("all=-trimpath=%s", filepath.Dir(absProjectPath))
-		args := []string{"-gcflags", trimPath, "-asmflags", trimPath}
-
-		if goBuildArgs != "" {
-			splitArgs := strings.Fields(goBuildArgs)
-			args = append(args, splitArgs...)
-		}
-
-		opts := projutil.GoCmdOptions{
-			BinName:     filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName),
-			PackagePath: path.Join(projutil.GetGoPkg(), filepath.ToSlash(scaffold.ManagerDir)),
-			Args:        args,
-			Env:         goBuildEnv,
-		}
-		if err := projutil.GoBuild(opts); err != nil {
-			log.Fatalf("Failed to build operator binary: %v", err)
-		}
-	}
-	return doImageBuild("build/Dockerfile", image)
 }
 
 // doImageBuild will execute the build command for the given Dockerfile path and image
