@@ -51,6 +51,17 @@ type Manifests struct {
 	Others []unstructured.Unstructured
 }
 
+var (
+	roleGK                 = rbacv1.SchemeGroupVersion.WithKind("Role").GroupKind()
+	clusterRoleGK          = rbacv1.SchemeGroupVersion.WithKind("ClusterRole").GroupKind()
+	deploymentGK           = appsv1.SchemeGroupVersion.WithKind("Deployment").GroupKind()
+	v1crdGK                = apiextv1.SchemeGroupVersion.WithKind("CustomResourceDefinition").GroupKind()
+	v1beta1crdGK           = apiextv1beta1.SchemeGroupVersion.WithKind("CustomResourceDefinition").GroupKind()
+	validatingWebhookCfgGK = admissionregv1.SchemeGroupVersion.WithKind("ValidatingWebhookConfiguration").GroupKind()
+	mutatingWebhookCfgGK   = admissionregv1.SchemeGroupVersion.WithKind("MutatingWebhookConfiguration").GroupKind()
+	v1alpha3ScorecardCfgGK = scorecardv1alpha3.SchemeGroupVersion.WithKind("Configuration").GroupKind()
+)
+
 // UpdateFromDirs adds Roles, ClusterRoles, Deployments, and Custom Resource examples
 // found in deployDir, and CustomResourceDefinitions found in crdsDir,
 // to their respective fields in a Manifests, then filters and deduplicates them.
@@ -76,23 +87,21 @@ func (c *Manifests) UpdateFromDirs(deployDir, crdsDir string) error {
 			}
 
 			gvk := typeMeta.GroupVersionKind()
-			switch gvk.Kind {
-			case "Role":
+			switch gvk.GroupKind() {
+			case roleGK:
 				err = c.addRoles(manifest)
-			case "ClusterRole":
+			case clusterRoleGK:
 				err = c.addClusterRoles(manifest)
-			case "Deployment":
+			case deploymentGK:
 				err = c.addDeployments(manifest)
-			case "CustomResourceDefinition":
+			case v1crdGK, v1beta1crdGK:
 				// Skip for now and add explicitly from CRDsDir input.
-			case "ValidatingWebhookConfiguration":
+			case validatingWebhookCfgGK:
 				err = c.addValidatingWebhookConfigurations(manifest)
-			case "MutatingWebhookConfiguration":
+			case mutatingWebhookCfgGK:
 				err = c.addMutatingWebhookConfigurations(manifest)
-			case scorecardv1alpha3.ConfigurationKind:
-				if gvk.GroupVersion() == scorecardv1alpha3.SchemeGroupVersion {
-					err = c.addScorecardConfig(manifest)
-				}
+			case v1alpha3ScorecardCfgGK:
+				err = c.addScorecardConfig(manifest)
 			default:
 				err = c.addOthers(manifest)
 			}
@@ -140,23 +149,21 @@ func (c *Manifests) UpdateFromReader(r io.Reader) error {
 		}
 
 		gvk := typeMeta.GroupVersionKind()
-		switch gvk.Kind {
-		case "Role":
+		switch gvk.GroupKind() {
+		case roleGK:
 			err = c.addRoles(manifest)
-		case "ClusterRole":
+		case clusterRoleGK:
 			err = c.addClusterRoles(manifest)
-		case "Deployment":
+		case deploymentGK:
 			err = c.addDeployments(manifest)
-		case "CustomResourceDefinition":
+		case v1crdGK, v1beta1crdGK:
 			err = c.addCustomResourceDefinitions(gvk.Version, manifest)
-		case "ValidatingWebhookConfiguration":
+		case validatingWebhookCfgGK:
 			err = c.addValidatingWebhookConfigurations(manifest)
-		case "MutatingWebhookConfiguration":
+		case mutatingWebhookCfgGK:
 			err = c.addMutatingWebhookConfigurations(manifest)
-		case scorecardv1alpha3.ConfigurationKind:
-			if gvk.GroupVersion() == scorecardv1alpha3.SchemeGroupVersion {
-				err = c.addScorecardConfig(manifest)
-			}
+		case v1alpha3ScorecardCfgGK:
+			err = c.addScorecardConfig(manifest)
 		default:
 			err = c.addOthers(manifest)
 		}
