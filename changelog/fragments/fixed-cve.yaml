@@ -1,0 +1,14 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Fixed CVE-2020-14040 by updating to `golang.org/x/text/0.3.3`
+
+    # - bugfix
+    kind: "bugfix"
+
+    # Is this a breaking change?
+    breaking: false
+
+    # What is the pull request number (without the "#")?
+    pull_request_override: 3458
