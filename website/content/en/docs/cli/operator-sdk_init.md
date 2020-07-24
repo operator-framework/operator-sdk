@@ -42,7 +42,7 @@ operator-sdk init [flags]
   -h, --help                     help for init
       --license string           license to use to boilerplate, may be one of 'apache2', 'none' (default "apache2")
       --owner string             owner to add to the copyright
-      --plugins strings          Name and optionally version of the plugin to initialize the project with. Available plugins: ("go.kubebuilder.io/v2", "helm.operator-sdk.io/v1")
+      --plugins strings          Name and optionally version of the plugin to initialize the project with. Available plugins: ("go.kubebuilder.io/v2", "helm.sdk.operatorframework.io/v1")
       --project-version string   project version, possible values: ("2", "3-alpha") (default "3-alpha")
       --repo string              name to use for go module (e.g., github.com/user/repo), defaults to the go package of the current working directory.
       --skip-go-version-check    if specified, skip checking the Go version

@@ -41,13 +41,13 @@ const (
 	// MaxRunnerArtifactsAnnotation - annotation used by a user to specify the max artifacts to keep
 	// in the runner directory. This will override the value provided by the watches file for a
 	// particular CR. Setting this to zero will cause all artifact directories to be kept.
-	// Example usage "ansible.operator-sdk/max-runner-artifacts: 100"
-	MaxRunnerArtifactsAnnotation = "ansible.operator-sdk/max-runner-artifacts"
+	// Example usage "ansible.sdk.operatorframework.io/max-runner-artifacts: 100"
+	MaxRunnerArtifactsAnnotation = "ansible.sdk.operatorframework.io/max-runner-artifacts"
 
 	// AnsibleVerbosityAnnotation - annotation used by a user to specify the verbosity given
 	// to the ansible-runner command. This will override the value for a particular CR.
-	// Example usage "ansible.operator-sdk/verbosity: 5"
-	AnsibleVerbosityAnnotation = "ansible.operator-sdk/verbosity"
+	// Example usage "ansible.sdk.operatorframework.io/verbosity: 5"
+	AnsibleVerbosityAnnotation = "ansible.sdk.operatorframework.io/verbosity"
 )
 
 // Runner - a runnable that should take the parameters and name and namespace

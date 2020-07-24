@@ -30,42 +30,42 @@ func TestHasHelmUpgradeForceAnnotation(t *testing.T) {
 	}{
 		{
 			input: map[string]interface{}{
-				"helm.operator-sdk/upgrade-force": "True",
+				"helm.sdk.operatorframework.io/upgrade-force": "True",
 			},
 			expectedVal: true,
 			name:        "base case true",
 		},
 		{
 			input: map[string]interface{}{
-				"helm.operator-sdk/upgrade-force": "False",
+				"helm.sdk.operatorframework.io/upgrade-force": "False",
 			},
 			expectedVal: false,
 			name:        "base case false",
 		},
 		{
 			input: map[string]interface{}{
-				"helm.operator-sdk/upgrade-force": "1",
+				"helm.sdk.operatorframework.io/upgrade-force": "1",
 			},
 			expectedVal: true,
 			name:        "true as int",
 		},
 		{
 			input: map[string]interface{}{
-				"helm.operator-sdk/upgrade-force": "0",
+				"helm.sdk.operatorframework.io/upgrade-force": "0",
 			},
 			expectedVal: false,
 			name:        "false as int",
 		},
 		{
 			input: map[string]interface{}{
-				"helm.operator-sdk/wrong-annotation": "true",
+				"helm.sdk.operatorframework.io/wrong-annotation": "true",
 			},
 			expectedVal: false,
 			name:        "annotation not set",
 		},
 		{
 			input: map[string]interface{}{
-				"helm.operator-sdk/upgrade-force": "invalid",
+				"helm.sdk.operatorframework.io/upgrade-force": "invalid",
 			},
 			expectedVal: false,
 			name:        "invalid value",

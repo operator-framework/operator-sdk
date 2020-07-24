@@ -107,7 +107,7 @@ command:
    be all uppercase and all periods (e.g. in the group name) are replaced with
    underscore.
 1. Operator **users, authors, and admins** can set the Ansible verbosity by
-   setting the `"ansible.operator-sdk/verbosity"` annotation on the Custom
+   setting the `"ansible.sdk.operatorframework.io/verbosity"` annotation on the Custom
    Resource.
 
 ### Examples
@@ -134,7 +134,7 @@ spec in our `deploy/operator.yaml` might look something like:
 ```
 
 Once the Operator is deployed, the only way to change the verbosity is via the
-`"ansible.operator-sdk/verbosity"` annotation. Continuing with our example, our
+`"ansible.sdk.operatorframework.io/verbosity"` annotation. Continuing with our example, our
 CR may look like:
 
 ```yaml
@@ -143,7 +143,7 @@ kind: "PostgreSQL"
 metadata:
   name: "example-db"
   annotations:
-    "ansible.operator-sdk/verbosity": "5"
+    "ansible.sdk.operatorframework.io/verbosity": "5"
 spec: {}
 ```
 

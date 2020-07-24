@@ -3,7 +3,7 @@ kind: InventoryTest
 metadata:
   name: example-inventory
   annotations:
-    "ansible.operator-sdk/verbosity": "0"
+    "ansible.sdk.operatorframework.io/verbosity": "0"
 spec:
   # Add fields here
   size: 3

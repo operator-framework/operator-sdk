@@ -110,7 +110,7 @@ helm-operator --max-concurrent-reconciles=10
 
 ## Use `helm upgrade --force` for deployment
 
-By adding the annotation `helm.operator-sdk/upgrade-force: "True"` to the deployed CR, the operator uses the `--force` flag of helm to replace the rendered resources. For more info see the [Helm Upgrade documentation](https://helm.sh/docs/helm/helm_upgrade/) and this [explanation](https://github.com/helm/helm/issues/7082#issuecomment-559558318) of `--force` behavior.
+By adding the annotation `helm.sdk.operatorframework.io/upgrade-force: "True"` to the deployed CR, the operator uses the `--force` flag of helm to replace the rendered resources. For more info see the [Helm Upgrade documentation](https://helm.sh/docs/helm/helm_upgrade/) and this [explanation](https://github.com/helm/helm/issues/7082#issuecomment-559558318) of `--force` behavior.
 
 **Example**
 
@@ -120,7 +120,7 @@ kind: Nginx
 metadata:
   name: nginx-sample
   annotations:
-    helm.operator-sdk/upgrade-force: "True"
+    helm.sdk.operatorframework.io/upgrade-force: "True"
 spec:
   replicaCount: 2
   service:

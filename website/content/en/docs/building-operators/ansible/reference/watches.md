@@ -98,11 +98,11 @@ Some features can be overridden per resource via an annotation on that CR. The o
 
 | Feature | Yaml Key | Description| Annotation for override | default | Documentation |
 |---------|----------|------------|-------------------------|---------|---------------|
-| Reconcile Period | `reconcilePeriod`  | time between reconcile runs for a particular CR  | ansible.operator-sdk/reconcile-period  | 1m | |
+| Reconcile Period | `reconcilePeriod`  | time between reconcile runs for a particular CR  | ansible.sdk.operatorframework.io/reconcile-period  | 1m | |
 | Manage Status | `manageStatus` | Allows the ansible operator to manage the conditions section of each resource's status section. | | true | |
 | Watching Dependent Resources | `watchDependentResources` | Allows the ansible operator to dynamically watch resources that are created by ansible | | true | [dependent watches](../dependent-watches) |
 | Watching Cluster-Scoped Resources | `watchClusterScopedResources` | Allows the ansible operator to watch cluster-scoped resources that are created by ansible | | false | |
-| Max Runner Artifacts | `maxRunnerArtifacts` | Manages the number of [artifact directories](https://ansible-runner.readthedocs.io/en/latest/intro.html#runner-artifacts-directory-hierarchy) that ansible runner will keep in the operator container for each individual resource. | ansible.operator-sdk/max-runner-artifacts | 20 | |
+| Max Runner Artifacts | `maxRunnerArtifacts` | Manages the number of [artifact directories](https://ansible-runner.readthedocs.io/en/latest/intro.html#runner-artifacts-directory-hierarchy) that ansible runner will keep in the operator container for each individual resource. | ansible.sdk.operatorframework.io/max-runner-artifacts | 20 | |
 | Finalizer | `finalizer`  | Sets a finalizer on the CR and maps a deletion event to a playbook or role | | | [finalizers](../finalizers)|
 | Selector | `selector`  | Identifies a set of objects based on their labels | | None Applied | [Labels and Selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/)|
 | Automatic Case Conversion | `snakeCaseParameters`  | Determines whether to convert the CR spec from camelCase to snake_case before passing the contents to Ansible as extra_vars| | true | |

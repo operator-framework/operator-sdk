@@ -39,7 +39,7 @@ Let's create the same project but with the Helm plugin:
 ```sh
 $ mkdir nginx-operator
 $ cd nginx-operator
-$ operator-sdk init --plugins=helm.operator-sdk.io/v1 --domain=com --group=example --version=v1alpha1 --kind=Nginx
+$ operator-sdk init --plugins=helm.sdk.operatorframework.io/v1 --domain=com --group=example --version=v1alpha1 --kind=Nginx
 ```
 
 **Note** Ensure that you use the same values for the flags to recreate the same Helm Chart and API's. If you have
