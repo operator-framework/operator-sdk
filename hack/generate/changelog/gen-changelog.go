@@ -56,6 +56,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("flag '-tag' is not a valid semantic version: %v", err)
 	}
+	if len(version.Build) > 0 {
+		log.Fatalf("flag '-tag' must not include a build number")
+	}
 
 	cl := util.ChangelogFromEntries(version, entries)
 	if err := cl.WriteFile(changelogFile); err != nil {
