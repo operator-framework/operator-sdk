@@ -28,14 +28,7 @@ type MyAppStatus struct {
 }
 ```
 
-<!-- todo(camilamacedo) 
-the following link was comment for do no broke the CI
-this impl probably will came from operator-lib
-however, we also need to check if we would not like to just let them use
-https://github.com/kubernetes/kubernetes/pull/92717/files 
-
 Then, in your controller, you can use [`Conditions`][godoc-conditions] methods to make it easier to set and remove conditions or check their current values.
--->
 
 ### Adding 3rd Party Resources To Your Operator
 
@@ -294,14 +287,7 @@ func main() {
 When the operator is not running in a cluster, the Manager will return an error on starting since it can't detect the operator's namespace in order to create the configmap for leader election. You can override this namespace by setting the Manager's `LeaderElectionNamespace` option.
 
 [typical-status-properties]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
-
-<!-- todo(camilamacedo) 
-the following link was comment for do no broke the CI
-this impl probably will came from operator-lib
-however, we also need to check if we would not like to just let them use
-https://github.com/kubernetes/kubernetes/pull/92717/files 
-[godoc-conditions]: https://godoc.org/github.com/operator-framework/operator-sdk/pkg/status#Conditions
--->
+[godoc-conditions]: https://godoc.org/github.com/operator-framework/operator-lib/status#Conditions
 [scheme_package]:https://github.com/kubernetes/client-go/blob/master/kubernetes/scheme/register.go
 [deployments_register]: https://github.com/kubernetes/api/blob/master/apps/v1/register.go#L41
 [runtime_package]: https://godoc.org/k8s.io/apimachinery/pkg/runtime
