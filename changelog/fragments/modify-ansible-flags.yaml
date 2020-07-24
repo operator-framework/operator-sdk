@@ -1,5 +1,7 @@
 entries:
   - description: >
-      Rename "--max-workers" flag to "--max-concurrent-reconciles", and add "MAX_CONCURRENT_RECONCILES_<Kind>_<Group>" global variable
-      to ansible binary. Also include deprecation message for "--max-workers" flag and "WORKERS_<Kind>_<Group>" global variable.
+      Renamed `--max-workers` flag to `--max-concurrent-reconciles`. Added
+      `MAX_CONCURRENT_RECONCILES_<Kind>_<Group>` environment variable to Ansible-based
+      operators. Also includes a deprecation message for `--max-workers` flag and
+      `WORKERS_<Kind>_<Group>` environment variable.
     kind: "addition"
