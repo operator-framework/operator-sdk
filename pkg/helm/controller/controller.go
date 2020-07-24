@@ -20,6 +20,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/operator-framework/operator-lib/handler"
 	rpb "helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/releaseutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,7 +36,6 @@ import (
 	libhandler "github.com/operator-framework/operator-lib/handler"
 	"github.com/operator-framework/operator-lib/predicate"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-	"github.com/operator-framework/operator-sdk/pkg/handler"
 	"github.com/operator-framework/operator-sdk/pkg/helm/release"
 )
 

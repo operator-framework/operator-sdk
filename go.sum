@@ -586,8 +586,8 @@ github.com/operator-framework/api v0.3.7-0.20200602203552-431198de9fc2 h1:2KtDe3
 github.com/operator-framework/api v0.3.7-0.20200602203552-431198de9fc2/go.mod h1:Xbje9x0SHmh0nihE21kpesB38vk3cyxnE6JdDS8Jo1Q=
 github.com/operator-framework/api v0.3.8 h1:tJykTCmwGKZBsPVTCfxbwz6nTF6dzmKydWJtC40erc8=
 github.com/operator-framework/api v0.3.8/go.mod h1:Xbje9x0SHmh0nihE21kpesB38vk3cyxnE6JdDS8Jo1Q=
-github.com/operator-framework/operator-lib v0.0.0-20200723212032-525cb9a9ed70 h1:FU2KAQyEmH/Gx8Nh8bfs6qFpxg+t4Un777hMdR5/5sg=
-github.com/operator-framework/operator-lib v0.0.0-20200723212032-525cb9a9ed70/go.mod h1:rgkZhbXdfdeZhjXWbl1lUzOfh3m7Fwj5DUYRihyf/w4=
+github.com/operator-framework/operator-lib v0.0.0-20200724152139-f4e8074e89d3 h1:of4TVUV5Eg/xTDkoDKsERDKYrzY5nCy/e9QknvGyiF8=
+github.com/operator-framework/operator-lib v0.0.0-20200724152139-f4e8074e89d3/go.mod h1:3xYWtjZXmIi9LikMmxqwLWjROJVVoil47sDJ1HD0pAI=
 github.com/operator-framework/operator-registry v1.12.6-0.20200611222234-275301b779f8 h1:F3zzxoBJJANdKMxmSOi5z/HWiVT+gwOdhROkEwDWD2M=
 github.com/operator-framework/operator-registry v1.12.6-0.20200611222234-275301b779f8/go.mod h1:loVINznYhgBIkmv83kU4yee88RS0BBk+hqOw9r4bhJk=
 github.com/otiai10/copy v1.2.0 h1:HvG945u96iNadPoG2/Ja2+AUJeW5YuFQMixq9yirC+k=
