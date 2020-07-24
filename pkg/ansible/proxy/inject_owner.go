@@ -22,10 +22,10 @@ import (
 	"net/http"
 	"net/http/httputil"
 
+	"github.com/operator-framework/operator-lib/handler"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
 	k8sRequest "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
-	"github.com/operator-framework/operator-sdk/pkg/handler"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -146,7 +146,13 @@ func (i *injectOwnerReferenceHandler) ServeHTTP(w http.ResponseWriter, req *http
 			if addOwnerRef {
 				data.SetOwnerReferences(append(data.GetOwnerReferences(), owner.OwnerReference))
 			} else {
-				handler.SetOwnerAnnotation(data, ownerObject)
+				err := handler.SetOwnerAnnotations(data, ownerObject)
+				if err != nil {
+					m := "Could not set owner annotations"
+					log.Error(err, m)
+					http.Error(w, m, http.StatusBadRequest)
+					return
+				}
 			}
 			newBody, err := json.Marshal(data.Object)
 			if err != nil {

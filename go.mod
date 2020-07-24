@@ -13,10 +13,10 @@ require (
 	github.com/markbates/inflect v1.0.4
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/onsi/ginkgo v1.12.0
-	github.com/onsi/gomega v1.9.0
+	github.com/onsi/ginkgo v1.12.1
+	github.com/onsi/gomega v1.10.1
 	github.com/operator-framework/api v0.3.8
-	github.com/operator-framework/operator-lib v0.0.0-20200722145423-0ffd6fc49593
+	github.com/operator-framework/operator-lib v0.0.0-20200723212032-525cb9a9ed70
 	github.com/operator-framework/operator-registry v1.12.6-0.20200611222234-275301b779f8
 	github.com/prometheus/client_golang v1.5.1
 	github.com/rogpeppe/go-internal v1.5.0
@@ -30,18 +30,18 @@ require (
 	go.uber.org/zap v1.14.1
 	golang.org/x/tools v0.0.0-20200403190813-44a64ad78b9b
 	gomodules.xyz/jsonpatch/v3 v3.0.1
-	gopkg.in/yaml.v2 v2.2.8
+	gopkg.in/yaml.v2 v2.3.0
 	gopkg.in/yaml.v3 v3.0.0-20190905181640-827449938966
 	helm.sh/helm/v3 v3.2.4
-	k8s.io/api v0.18.2
-	k8s.io/apiextensions-apiserver v0.18.2
-	k8s.io/apimachinery v0.18.2
+	k8s.io/api v0.18.4
+	k8s.io/apiextensions-apiserver v0.18.4
+	k8s.io/apimachinery v0.18.4
 	k8s.io/cli-runtime v0.18.2
-	k8s.io/client-go v0.18.2
+	k8s.io/client-go v0.18.4
 	k8s.io/klog v1.0.0
 	k8s.io/kubectl v0.18.2
 	rsc.io/letsencrypt v0.0.3 // indirect
-	sigs.k8s.io/controller-runtime v0.6.0
+	sigs.k8s.io/controller-runtime v0.6.1
 	sigs.k8s.io/controller-tools v0.3.0
 	sigs.k8s.io/kubebuilder v1.0.9-0.20200618125005-36aa113dbe99
 	sigs.k8s.io/yaml v1.2.0

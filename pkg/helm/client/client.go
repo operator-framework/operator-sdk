@@ -18,8 +18,8 @@ import (
 	"errors"
 	"io"
 
+	"github.com/operator-framework/operator-lib/handler"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-	"github.com/operator-framework/operator-sdk/pkg/handler"
 	"helm.sh/helm/v3/pkg/kube"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -148,7 +148,10 @@ func (c *ownerRefInjectingClient) Build(reader io.Reader, validate bool) (kube.R
 			ownerRef := metav1.NewControllerRef(c.owner, c.owner.GroupVersionKind())
 			u.SetOwnerReferences([]metav1.OwnerReference{*ownerRef})
 		} else {
-			handler.SetOwnerAnnotation(u, c.owner)
+			err := handler.SetOwnerAnnotations(u, c.owner)
+			if err != nil {
+				return err
+			}
 		}
 		return nil
 	})

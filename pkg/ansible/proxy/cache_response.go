@@ -23,10 +23,10 @@ import (
 	"regexp"
 	"strings"
 
+	libhandler "github.com/operator-framework/operator-lib/handler"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
 	k8sRequest "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
-	osdkHandler "github.com/operator-framework/operator-sdk/pkg/handler"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalscheme "k8s.io/apimachinery/pkg/apis/meta/internalversion/scheme"
@@ -224,7 +224,7 @@ func (c *cacheResponseHandler) recoverDependentWatches(req *http.Request, un *un
 			}
 		}
 	}
-	if typeString, ok := un.GetAnnotations()[osdkHandler.TypeAnnotation]; ok {
+	if typeString, ok := un.GetAnnotations()[libhandler.TypeAnnotation]; ok {
 		ownerGV, err := schema.ParseGroupVersion(ownerRef.APIVersion)
 		if err != nil {
 			m := fmt.Sprintf("could not get group version for: %v", ownerGV)
