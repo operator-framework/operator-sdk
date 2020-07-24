@@ -27,28 +27,30 @@ import (
 )
 
 // TODO(joelanford): rewrite to use ginkgo/gomega
-func TestRunTests(t *testing.T) {
+func TestRun(t *testing.T) {
 	cases := []struct {
 		name            string
 		configPathValue string
 		selector        string
-		wantError       bool
+		timeout         time.Duration
+		wantedError     error
 		testRunner      FakeTestRunner
 		expectedState   v1alpha3.State
 	}{
 		{
-			name:            "should execute 1 fake test",
+			name:            "should execute 1 fake test successfully",
 			configPathValue: "testdata/bundle",
 			selector:        "suite=basic",
-			wantError:       false,
+			timeout:         time.Second * 7,
 			testRunner:      FakeTestRunner{},
 			expectedState:   v1alpha3.PassState,
 		},
 		{
-			name:            "should execute 1 fake test",
+			name:            "should fail to execute 1 test with short timeout",
 			configPathValue: "testdata/bundle",
 			selector:        "suite=basic",
-			wantError:       false,
+			timeout:         time.Second * 0,
+			wantedError:     context.DeadlineExceeded,
 			testRunner:      FakeTestRunner{},
 			expectedState:   v1alpha3.PassState,
 		},
@@ -79,24 +81,25 @@ func TestRunTests(t *testing.T) {
 			c.testRunner.TestStatus = &mockStatus
 			o.TestRunner = c.testRunner
 
-			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(7*time.Second))
+			ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 			defer cancel()
-			var scorecardOutput v1alpha3.TestList
-			scorecardOutput, err = o.Run(ctx)
 
-			if scorecardOutput.Items[0].Status.Results[0].State != c.expectedState {
-				t.Fatalf("Wanted state %v, got %v", c.expectedState, scorecardOutput.Items[0].Status.Results[0].State)
-			}
-
-			if err == nil && c.wantError {
-				t.Fatalf("Wanted error but got no error")
-			} else if err != nil {
-				if !c.wantError {
-					t.Fatalf("Wanted result but got error: %v", err)
+			scorecardOutput, err := o.Run(ctx)
+			if err == nil {
+				if c.wantedError != nil {
+					t.Errorf("Wanted error %s but got no error", c.wantedError)
+					return
 				}
-				return
+				if scorecardOutput.Items[0].Status.Results[0].State != c.expectedState {
+					t.Errorf("Wanted state %v, got %v", c.expectedState, scorecardOutput.Items[0].Status.Results[0].State)
+				}
+			} else if err != nil {
+				if c.wantedError == nil {
+					t.Errorf("Wanted result but got error %v", err)
+				} else if !errors.Is(err, c.wantedError) {
+					t.Errorf("Wanted error %v but got error %v", c.wantedError, err)
+				}
 			}
-
 		})
 
 	}

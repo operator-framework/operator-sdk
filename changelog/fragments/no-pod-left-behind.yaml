@@ -1,0 +1,5 @@
+entries:
+  - description: >
+      The `scorecard` subcommand now removes existing pods if the `--wait-time` deadline is exceeded
+      and `--skip-cleanup=false` (the default). Fixes [#3419](https://github.com/operator-framework/operator-sdk/issues/3419).
+    kind: bugfix

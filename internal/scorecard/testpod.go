@@ -132,9 +132,6 @@ func getPodLog(ctx context.Context, client kubernetes.Interface, pod *v1.Pod) ([
 
 	buf := new(bytes.Buffer)
 	_, err = io.Copy(buf, podLogs)
-	if err != nil {
-		return nil, err
-	}
 	return buf.Bytes(), err
 }
 
@@ -145,7 +142,7 @@ func (r PodTestRunner) deletePods(ctx context.Context, configMapName string) err
 	lo := metav1.ListOptions{LabelSelector: selector}
 	err := r.Client.CoreV1().Pods(r.Namespace).DeleteCollection(ctx, do, lo)
 	if err != nil {
-		return fmt.Errorf("error deleting pods selector %s %w", selector, err)
+		return fmt.Errorf("error deleting pods (label selector %q): %w", selector, err)
 	}
 	return nil
 }

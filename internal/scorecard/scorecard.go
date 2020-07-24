@@ -59,9 +59,12 @@ type FakeTestRunner struct {
 	Error      error
 }
 
+// cleanupTimeout is the time given to clean up resources, regardless of how long ctx's deadline is.
+var cleanupTimeout = time.Second * 30
+
 // Run executes the scorecard tests as configured
-func (o Scorecard) Run(ctx context.Context) (v1alpha3.TestList, error) {
-	testOutput := v1alpha3.NewTestList()
+func (o Scorecard) Run(ctx context.Context) (testOutput v1alpha3.TestList, err error) {
+	testOutput = v1alpha3.NewTestList()
 
 	if err := o.TestRunner.Initialize(ctx); err != nil {
 		return testOutput, err
@@ -85,12 +88,23 @@ func (o Scorecard) Run(ctx context.Context) (v1alpha3.TestList, error) {
 		}
 	}
 
+	// Get timeout error, if any, before calling Cleanup() so deletes don't cause a timeout.
+	select {
+	case <-ctx.Done():
+		err = ctx.Err()
+	default:
+	}
+
 	if !o.SkipCleanup {
-		if err := o.TestRunner.Cleanup(ctx); err != nil {
+		// Use a separate context for cleanup, which needs to run regardless of a prior timeout.
+		clctx, cancel := context.WithTimeout(context.Background(), cleanupTimeout)
+		defer cancel()
+		if err := o.TestRunner.Cleanup(clctx); err != nil {
 			return testOutput, err
 		}
 	}
-	return testOutput, nil
+
+	return testOutput, err
 }
 
 func (o Scorecard) runStageParallel(ctx context.Context, tests []v1alpha3.TestConfiguration, results chan<- v1alpha3.Test) {
