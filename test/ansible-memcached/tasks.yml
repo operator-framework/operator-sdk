@@ -5,8 +5,8 @@
       kind: Deployment
       apiVersion: apps/v1
       metadata:
-        name: '{{ meta.name }}-memcached'
-        namespace: '{{ meta.namespace }}'
+        name: '{{ ansible_operator_meta.name }}-memcached'
+        namespace: '{{ ansible_operator_meta.namespace }}'
         labels:
           app: memcached
       spec:
@@ -39,8 +39,8 @@
 - operator_sdk.util.k8s_status:
     api_version: ansible.example.com/v1alpha1
     kind: Memcached
-    name: "{{ meta.name }}"
-    namespace: "{{ meta.namespace }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
     status:
       test: "hello world"
 
@@ -50,7 +50,7 @@
       apiVersion: v1
       metadata:
         name: test-secret
-        namespace: "{{ meta.namespace }}"
+        namespace: "{{ ansible_operator_meta.namespace }}"
       data:
         test: aGVsbG8K
 - name: Get cluster api_groups
@@ -73,7 +73,7 @@
       apiVersion: v1
       metadata:
         name: test-blacklist-watches
-        namespace: "{{ meta.namespace }}"
+        namespace: "{{ ansible_operator_meta.namespace }}"
       data:
         arbitrary: afdasdfsajsafj
     state: present

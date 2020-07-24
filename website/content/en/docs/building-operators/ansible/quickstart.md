@@ -122,8 +122,8 @@ Modify `roles/memcached/tasks/main.yml` to look like the following:
       kind: Deployment
       apiVersion: apps/v1
       metadata:
-        name: '{{ meta.name }}-memcached'
-        namespace: '{{ meta.namespace }}'
+        name: '{{ ansible_operator_meta.name }}-memcached'
+        namespace: '{{ ansible_operator_meta.namespace }}'
       spec:
         replicas: "{{size}}"
         selector:

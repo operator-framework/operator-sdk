@@ -409,8 +409,8 @@ used as shown:
 - operator_sdk.util.k8s_status:
     api_version: app.example.com/v1
     kind: Foo
-    name: "{{ meta.name }}"
-    namespace: "{{ meta.namespace }}"
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
     status:
       foo: bar
 ```
@@ -480,7 +480,7 @@ The structure passed to Ansible as extra vars is:
 
 
 ```json
-{ "meta": {
+{ "ansible_operator_meta": {
         "name": "<cr-name>",
         "namespace": "<cr-namespace>",
   },
@@ -500,7 +500,7 @@ operator. The `meta` fields can be accesses via dot notation in Ansible as so:
 ```yaml
 ---
 - debug:
-    msg: "name: {{ meta.name }}, {{ meta.namespace }}"
+    msg: "name: {{ ansible_operator_meta.name }}, {{ ansible_operator_meta.namespace }}"
 ```
 
 [k8s_ansible_module]:https://docs.ansible.com/ansible/2.6/modules/k8s_module.html
