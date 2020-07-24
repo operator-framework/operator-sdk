@@ -28,7 +28,14 @@ type MyAppStatus struct {
 }
 ```
 
+<!-- todo(camilamacedo) 
+the following link was comment for do no broke the CI
+this impl probably will came from operator-lib
+however, we also need to check if we would not like to just let them use
+https://github.com/kubernetes/kubernetes/pull/92717/files 
+
 Then, in your controller, you can use [`Conditions`][godoc-conditions] methods to make it easier to set and remove conditions or check their current values.
+-->
 
 ### Adding 3rd Party Resources To Your Operator
 
@@ -231,38 +238,7 @@ func contains(list []string, s string) bool {
 During the lifecycle of an operator it's possible that there may be more than 1 instance running at any given time e.g when rolling out an upgrade for the operator.
 In such a scenario it is necessary to avoid contention between multiple operator instances via leader election so that only one leader instance handles the reconciliation while the other instances are inactive but ready to take over when the leader steps down.
 
-There are two different leader election implementations to choose from, each with its own tradeoff.
-
-- [Leader-with-lease][leader_with_lease]: The leader pod periodically renews the leader lease and gives up leadership when it can't renew the lease. This implementation allows for a faster transition to a new leader when the existing leader is isolated, but there is a possibility of split brain in [certain situations][lease_split_brain].
-- [Leader-for-life][leader_for_life]: The leader pod only gives up leadership (via garbage collection) when it is deleted. This implementation precludes the possibility of 2 instances mistakenly running as leaders (split brain). However, this method can be subject to a delay in electing a new leader. For instance when the leader pod is on an unresponsive or partitioned node, the [`pod-eviction-timeout`][pod_eviction_timeout] dictates how long it takes for the leader pod to be deleted from the node and step down (default 5m).
-
-By default the SDK enables the leader-with-lease implementation. However you should consult the docs above for both approaches to consider the tradeoffs that make sense for your use case.
-
-The following examples illustrate how to use the two options:
-
-#### Leader for life
-
-A call to `leader.Become()` will block the operator as it retries until it can become the leader by creating the configmap named `memcached-operator-lock`.
-
-```Go
-import (
-    ...
-    "github.com/operator-framework/operator-sdk/pkg/leader"
-)
-
-func main() {
-    ...
-    err = leader.Become(context.TODO(), "memcached-operator-lock")
-    if err != nil {
-        log.Error(err, "Failed to retry for leader lock")
-        os.Exit(1)
-    }
-    ...
-}
-```
-If the operator is not running inside a cluster `leader.Become()` will simply return without error to skip the leader election since it can't detect the operator's namespace.
-
-#### Leader with lease
+By default the SDK enables the [Leader-with-lease][leader_with_lease] implementation. The leader pod periodically renews the leader lease and gives up leadership when it can't renew the lease. This implementation allows for a faster transition to a new leader when the existing leader is isolated, but there is a possibility of split brain in [certain situations][lease_split_brain].
 
 The leader-with-lease approach can be enabled via the [Manager Options][manager_options] for leader election.
 
@@ -287,14 +263,20 @@ func main() {
 When the operator is not running in a cluster, the Manager will return an error on starting since it can't detect the operator's namespace in order to create the configmap for leader election. You can override this namespace by setting the Manager's `LeaderElectionNamespace` option.
 
 [typical-status-properties]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
+
+<!-- todo(camilamacedo) 
+the following link was comment for do no broke the CI
+this impl probably will came from operator-lib
+however, we also need to check if we would not like to just let them use
+https://github.com/kubernetes/kubernetes/pull/92717/files 
 [godoc-conditions]: https://godoc.org/github.com/operator-framework/operator-sdk/pkg/status#Conditions
+-->
 [scheme_package]:https://github.com/kubernetes/client-go/blob/master/kubernetes/scheme/register.go
 [deployments_register]: https://github.com/kubernetes/api/blob/master/apps/v1/register.go#L41
 [runtime_package]: https://godoc.org/k8s.io/apimachinery/pkg/runtime
 [scheme_builder]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/scheme#Builder
 [metrics_doc]: https://book.kubebuilder.io/reference/metrics.html
 [lease_split_brain]: https://github.com/kubernetes/client-go/blob/30b06a83d67458700a5378239df6b96948cb9160/tools/leaderelection/leaderelection.go#L21-L24
-[leader_for_life]: https://godoc.org/github.com/operator-framework/operator-sdk/pkg/leader
 [leader_with_lease]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/leaderelection
 [pod_eviction_timeout]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#options
 [manager_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Options
