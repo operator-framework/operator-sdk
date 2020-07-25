@@ -1,7 +1,7 @@
 entries:
     - description: >
-        Remove the implementation for `EnqueueRequestForAnnotation` handler from the SDK repository and
-        reference it from operator-lib instead.
+        Removed the implementation for `EnqueueRequestForAnnotation` handler from the SDK repository and
+        referenced it from [operator-lib](https://github.com/operator-framework/operator-lib/blob/main/handler/enqueue_annotation.go) instead.
       kind: "change"
 
       # Is this a breaking change?
