@@ -2,7 +2,7 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      The commands `operator-sdk new --type=helm` and `operator-sdk add api` are no longer supported for Helm-based Operators.
+      Removed legacy `new` and `add api` commands from Helm-based Operators.
 
     # kind is one of:
     # - addition

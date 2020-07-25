@@ -2,7 +2,7 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      The commands `operator-sdk new --type=ansible` and `operator-sdk add api` are no longer supported for Ansible-based Operators.
+      Removed legacy `new` and `add api` commands from Ansible-based Operators.
 
     # kind is one of:
     # - addition
