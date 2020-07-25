@@ -42,7 +42,7 @@
 
 - name: Wait for 30 seconds
   wait_for:
-    timeout: 300
+    timeout: 30
 
 - name: Assert sentinel ConfigMap has not been created for Molecule Test
   assert:
