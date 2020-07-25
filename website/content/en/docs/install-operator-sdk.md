@@ -111,8 +111,6 @@ $ cd operator-sdk
 $ git checkout master
 $ make tidy
 $ make install
-$ make install-ansible
-$ make install-helm
 ```
 
 **Note:** Ensure that your `GOPROXY` is set with its default value for Go
