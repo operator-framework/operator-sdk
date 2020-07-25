@@ -1,12 +1,14 @@
 entries:
   - description: >
-      **(Valid only for Ansible/Helm-based Operators)**. The flag `--max-workers` is no longer supported. 
-      Use `--max-concurrent-reconciles` instead.
+      **(Valid only for Ansible/Helm-based Operators)**. The `--max-workers` flag and `WORKERS_<Kind>_<Group>`
+      environment variable have been renamed to `--max-concurrent-reconciles` and
+      `MAX_CONCURRENT_RECONCILES_<Kind>_<Group>` respectively.
     kind: "change"
     breaking: true
     migration:
-      header: Flag `max-workers` is no longer supported.
+      header: Flag `max-workers` and `WORKERS_<Kind>_<Group>` environment variable are no longer supported.
       body: |
-        The flag `--max-workers` is no longer supported with ansible/helm binaries. It has been
-        renamed to `--max-concurrent-reconciles`.
+        The `--max-workers` flag and `WORKERS_<Kind>_<Group>` environment variable are no longer supported
+        with the Ansible and Helm-based Operators. They have been renamed to
+        `--max-concurrent-reconciles` and `MAX_CONCURRENT_RECONCILES_<Kind>_<Group>` respectively.
 
