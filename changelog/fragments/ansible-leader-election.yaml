@@ -2,7 +2,7 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      In the Ansible operator, use controller-runtime's lease-based leader
+      The Ansible operator now uses the controller-runtime's lease-based leader
       election instead of SDK's leader-for-life mechanism.
 
     kind: "change"
