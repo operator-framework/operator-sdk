@@ -1,6 +1,6 @@
 entries:
   - description: >
-      Remove `pkg/predicate`: `ResourceFilterPredicate` is now available via
+      Removed `pkg/predicate`: `ResourceFilterPredicate` is now available via
       `pkg/ansible/predicate.NewResourceFilterPredicate()`; `GenerationChangedPredicate` has been renamed,
       modified, and moved (see this [operator-lib PR](https://github.com/operator-framework/operator-lib/pull/11)
       for details).
