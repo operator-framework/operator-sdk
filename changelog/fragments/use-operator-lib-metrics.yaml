@@ -2,18 +2,11 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      Remove the implementation for `InstrumentedEnqueueRequestForObject`
-      handler from SDK repository and reference it from operator-lib instead.
+      Ansible & Helm-based Operators switched to using the `InstrumentedEnqueueRequestForObject` from
+      [operator-lib](https://github.com/operator-framework/operator-lib/blob/main/handler/instrumented_enqueue_object.go)
+      instead of controller-runtime's `EnqueueRequestForObject`.
 
     kind: "change"
 
     # Is this a breaking change?
-    breaking: true
-
-    # Migration can be defined to automatically add a section to
-    # the migration guide. This is required for breaking changes.
-    migration:
-      header: Move the implementation of `InstrumentedEnqueueRequestForObject` handler
-      body: >
-        The implementation of `InstrumentedEnqueueRequestForObject` handler has been
-        removed from Operator SDK repository and is now imported from operator-lib.
+    breaking: false
