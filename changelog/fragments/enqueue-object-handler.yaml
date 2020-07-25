@@ -1,7 +1,7 @@
 entries:
     - description: >
        Added a new handler for metrics which can be registered with the controller-runtime registry.
-       It wraps the existing `EnqueueResuestForObject` for both Ansible and Helm controllers.
+       It wraps the existing `InstrumentedEnqueueRequestForObject` for both Ansible and Helm controllers.
 
       kind: "addition"
       breaking: false
