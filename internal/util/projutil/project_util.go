@@ -39,9 +39,6 @@ const (
 	mainFile          = "main.go"
 	managerMainFile   = "cmd" + fsep + "manager" + fsep + mainFile
 	buildDockerfile   = "build" + fsep + "Dockerfile"
-	rolesDir          = "roles"
-	requirementsFile  = "requirements.yml"
-	moleculeDir       = "molecule"
 	goModFile         = "go.mod"
 	defaultPermission = 0644
 
@@ -238,27 +235,16 @@ func IsOperatorGo() bool {
 }
 
 // IsOperatorAnsible returns true when the layout field in PROJECT file has the Ansible prefix key.
-// NOTE: For the legacy, returns true when the project  contains the roles and the molecule directory.
 func IsOperatorAnsible() bool {
-	// If the project is in the new layout, check the config file's plugin type.
-	if kbutil.HasProjectFile() {
-		cfg, err := kbutil.ReadConfig()
-		if err != nil {
-			log.Fatalf("Error reading config: %v", err)
-		}
-		return PluginKeyToOperatorType(cfg.Layout) == OperatorTypeAnsible
+	if !kbutil.HasProjectFile() {
+		return false
 	}
-	// todo(camilamacedo86): remove when the legacy layout is no longer supported
-	stat, err := os.Stat(rolesDir)
-	if (err == nil && stat.IsDir()) || os.IsExist(err) {
-		return true
+	cfg, err := kbutil.ReadConfig()
+	if err != nil {
+		log.Fatalf("Error reading config: %v", err)
 	}
-	stat, err = os.Stat(moleculeDir)
-	if (err == nil && stat.IsDir()) || os.IsExist(err) {
-		return true
-	}
-	_, err = os.Stat(requirementsFile)
-	return err == nil || os.IsExist(err)
+	return PluginKeyToOperatorType(cfg.Layout) == OperatorTypeAnsible
+
 }
 
 // IsOperatorHelm returns true when the layout field in PROJECT file has the Helm prefix key.

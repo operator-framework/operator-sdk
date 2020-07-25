@@ -58,7 +58,6 @@ func main() {
 	}
 
 	// Run the KB CLI when not running in either legacy or new projects
-	// The new CLI still supports "operator-sdk new --type=Ansible/Helm"
 	if err := cli.Run(); err != nil {
 		log.Fatal(err)
 	}
