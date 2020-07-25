@@ -122,6 +122,12 @@ Refer to [`memcached_controller.go`][kb_memcached_controller] for the example im
 
 Run [`make manifests`][generate_crd] to generate CRD manifests. They would be generated inside the `config/crd/bases` folder.
 
+## Configuring your test environment
+
+Projects are scaffolded with unit tests that utilize the [envtest](https://godoc.org/sigs.k8s.io/controller-runtime/pkg/envtest)
+library, which requires certain Kubernetes server binaries be present locally.
+Installation instructions can be found [here][env-test-setup].
+
 ## Operator Manifests
 
 ### Operator deployment manifests
@@ -173,3 +179,4 @@ The project can now be built, and the operator can be deployed on-cluster. For f
 [kb_memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/master/example/memcached-operator/memcached_controller.go.tmpl
 [kb_quickstart]: /docs/building-operators/golang/quickstart/
 [install_guide]: /docs/installation/install-operator-sdk/
+[env-test-setup]: /docs/building-operators/golang/references/env-test-setup
