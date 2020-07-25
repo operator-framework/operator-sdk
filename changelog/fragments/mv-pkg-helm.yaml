@@ -1,0 +1,15 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Move pkg/helm to internal/helm
+
+    kind: "removal"
+
+    # Is this a breaking change?
+    breaking: yes
+
+    migration:
+      header: Move pkg/helm to internal/helm
+      body: >
+        TBD
