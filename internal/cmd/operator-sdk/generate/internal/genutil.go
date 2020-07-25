@@ -99,40 +99,6 @@ func makeCRDFileName(group, resource string) string {
 	return fmt.Sprintf("%s_%s.yaml", group, resource)
 }
 
-// WriteObjectsToFilesLegacy creates dir then writes each object in objs to a
-// file in legacy format in dir.
-func WriteObjectsToFilesLegacy(dir string, objs ...interface{}) error {
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return err
-	}
-
-	seenFiles := make(map[string]struct{})
-	for _, obj := range objs {
-		var fileName string
-		switch t := obj.(type) {
-		case apiextv1.CustomResourceDefinition:
-			fileName = makeCRDFileNameLegacy(t.Spec.Group, t.Spec.Names.Plural)
-		case apiextv1beta1.CustomResourceDefinition:
-			fileName = makeCRDFileNameLegacy(t.Spec.Group, t.Spec.Names.Plural)
-		default:
-			return fmt.Errorf("unknown object type: %T", t)
-		}
-
-		if _, hasFile := seenFiles[fileName]; hasFile {
-			return fmt.Errorf("duplicate file cannot be written: %s", fileName)
-		}
-		if err := writeObjectToFile(dir, obj, fileName); err != nil {
-			return err
-		}
-		seenFiles[fileName] = struct{}{}
-	}
-	return nil
-}
-
-func makeCRDFileNameLegacy(group, resource string) string {
-	return fmt.Sprintf("%s_%s_crd.yaml", group, resource)
-}
-
 // writeObjectToFile marshals crd to bytes and writes them to dir in file.
 func writeObjectToFile(dir string, obj interface{}, fileName string) error {
 	f, err := os.Create(filepath.Join(dir, fileName))

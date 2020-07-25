@@ -26,10 +26,7 @@ import (
 )
 
 const (
-	// Useful file modes.
-	DirMode      = 0755
-	FileMode     = 0644
-	ExecFileMode = 0755
+	FileMode = 0644
 )
 
 const (
@@ -37,6 +34,9 @@ const (
 	GoFlagsEnv = "GOFLAGS"
 	GoModEnv   = "GO111MODULE"
 )
+
+// Default config file path.
+const configFile = "PROJECT"
 
 // OperatorType - the type of operator
 type OperatorType = string
@@ -75,9 +75,6 @@ func HasProjectFile() bool {
 	}
 	return true
 }
-
-// Default config file path.
-const configFile = "PROJECT"
 
 // ReadConfig returns a configuration if a file containing one exists at the
 // default path (project root).
