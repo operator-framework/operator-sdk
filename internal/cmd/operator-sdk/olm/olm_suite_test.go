@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package olm
+package olm_test
 
 import (
 	"testing"
@@ -23,5 +23,5 @@ import (
 
 func TestOlm(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Olm Suite")
+	RunSpecs(t, "Olm Cmd Suite")
 }
