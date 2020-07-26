@@ -27,7 +27,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/chartutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds"
-	utilplugins "github.com/operator-framework/operator-sdk/internal/util/plugins"
+	"github.com/operator-framework/operator-sdk/internal/plugins/manifests"
 )
 
 type createAPIPlugin struct {
@@ -123,7 +123,21 @@ func (p *createAPIPlugin) InjectConfig(c *config.Config) {
 
 // Run will call the plugin actions according to the definitions done in RunOptions interface
 func (p *createAPIPlugin) Run() error {
-	return cmdutil.Run(p)
+	if err := cmdutil.Run(p); err != nil {
+		return err
+	}
+
+	// Run SDK phase 2 plugins.
+	if err := p.runPhase2(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// SDK phase 2 plugins.
+func (p *createAPIPlugin) runPhase2() error {
+	return manifests.RunCreateAPI(p.config)
 }
 
 // Validate perform the required validations for this plugin
@@ -173,7 +187,5 @@ func (p *createAPIPlugin) GetScaffolder() (scaffold.Scaffolder, error) {
 
 // PostScaffold runs all actions that should be executed after the default plugin scaffold
 func (p *createAPIPlugin) PostScaffold() error {
-	// Run the specific customizations for SDK
-	// TODO: rewrite this when plugins phase 2 is implemented.
-	return utilplugins.WriteSamplesKustomization(p.config)
+	return nil
 }

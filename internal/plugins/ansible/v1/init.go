@@ -31,6 +31,8 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds"
+	"github.com/operator-framework/operator-sdk/internal/plugins/manifests"
+	"github.com/operator-framework/operator-sdk/internal/plugins/scorecard"
 )
 
 type initPlugin struct {
@@ -86,11 +88,11 @@ Optionally creates a new API, using the same flags as "create api"
       --generate-playbook \
       --generate-role
 `,
-		ctx.CommandName, plugin.KeyFor(Plugin{}),
-		ctx.CommandName, plugin.KeyFor(Plugin{}),
-		ctx.CommandName, plugin.KeyFor(Plugin{}),
-		ctx.CommandName, plugin.KeyFor(Plugin{}),
-		ctx.CommandName, plugin.KeyFor(Plugin{}),
+		ctx.CommandName, pluginKey,
+		ctx.CommandName, pluginKey,
+		ctx.CommandName, pluginKey,
+		ctx.CommandName, pluginKey,
+		ctx.CommandName, pluginKey,
 	)
 	p.commandName = ctx.CommandName
 }
@@ -98,28 +100,51 @@ Optionally creates a new API, using the same flags as "create api"
 func (p *initPlugin) BindFlags(fs *pflag.FlagSet) {
 	fs.SortFlags = false
 	fs.StringVar(&p.config.Domain, "domain", "my.domain", "domain for groups")
+	fs.StringVar(&p.config.ProjectName, "project-name", "", "name of this project, the default being directory name")
 	p.apiPlugin.BindFlags(fs)
 }
 
 func (p *initPlugin) InjectConfig(c *config.Config) {
-	c.Layout = plugin.KeyFor(Plugin{})
+	c.Layout = pluginKey
 	p.config = c
 	p.apiPlugin.config = p.config
 }
 
 func (p *initPlugin) Run() error {
-	return cmdutil.Run(p)
+	if err := cmdutil.Run(p); err != nil {
+		return err
+	}
+
+	// Run SDK phase 2 plugins.
+	if err := p.runPhase2(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// SDK phase 2 plugins.
+func (p *initPlugin) runPhase2() error {
+	if err := manifests.RunInit(p.config); err != nil {
+		return err
+	}
+	if err := scorecard.RunInit(p.config); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (p *initPlugin) Validate() error {
-	// Check if the project name is a valid namespace according to k8s
-	dir, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("error to get the current path: %v", err)
+	// Check if the project name is a valid k8s namespace (DNS 1123 label).
+	if p.config.ProjectName == "" {
+		dir, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("error getting current directory: %v", err)
+		}
+		p.config.ProjectName = strings.ToLower(filepath.Base(dir))
 	}
-	projectName := filepath.Base(dir)
-	if err := validation.IsDNS1123Label(strings.ToLower(projectName)); err != nil {
-		return fmt.Errorf("project name (%s) is invalid: %v", projectName, err)
+	if err := validation.IsDNS1123Label(p.config.ProjectName); err != nil {
+		return fmt.Errorf("project name (%s) is invalid: %v", p.config.ProjectName, err)
 	}
 
 	defaultOpts := scaffolds.CreateOptions{CRDVersion: "v1"}

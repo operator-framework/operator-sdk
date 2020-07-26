@@ -26,7 +26,7 @@ import (
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 	"sigs.k8s.io/yaml"
 
-	"github.com/operator-framework/operator-sdk/internal/scaffold/kustomize"
+	"github.com/operator-framework/operator-sdk/internal/plugins/util/kustomize"
 	"github.com/operator-framework/operator-sdk/internal/scorecard"
 	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
