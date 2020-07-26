@@ -115,15 +115,14 @@ If your certificates are properly configured, you should be able to start your o
 $ make run ENABLE_WEBHOOKS=true
 ```
 
-### Run as a Deployment inside the cluster
+## Build and run the operator
 
-For instructions on deploying your operator into a cluster, refer to the [quickstart guide][quickstart_run_as_deployment] instructions.
-Adding webhooks does not alter this step.
-
+See the [quickstart guide][quickstart] to know how to build the project and run it. Also, 
+ensure that you have your test environment configured before run the targets to build the project.
 
 ## Create a Memcached CR to exercise your webhook
 
-First, follow the instructions for creating your Memcached CR in the [quickstart guide][quickstart_create_a_cr].
+First, follow the instructions for creating your Memcached CR in the [tutorial_guide][tutorial_create_a_cr].
 
 Once you have completed this step, you should have a Memcached CR with a size of 3 and a Memcached deployment
 with 3 replicas in your cluster.
@@ -201,8 +200,8 @@ memcached-operator-controller-manager   1/1     1            1           10m
 memcached-sample                        5/5     5            5           3m
 ```
 
-[quickstart_run_as_deployment]: /docs/building-operators/golang/quickstart/#2-run-as-a-deployment-inside-the-cluster
-[quickstart_create_a_cr]: /docs/building-operators/golang/quickstart/#create-a-memcached-cr
+[quickstart]: /docs/building-operators/golang/quickstart/
+[tutorial_create_a_cr]: /docs/building-operators/golang/tutorial/#create-a-memcached-cr
 
 [kubebuilder_admission_controllers]: https://book.kubebuilder.io/reference/admission-webhook.html
 [kubebuilder_cronjob_webhook]: https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html

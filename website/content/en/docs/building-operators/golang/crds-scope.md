@@ -1,7 +1,7 @@
 ---
 title: CRD Scope
 linkTitle: CRD Scope
-weight: 30
+weight: 60
 ---
 
 ## Overview
@@ -97,5 +97,5 @@ spec:
 ``` 
   
 [RBAC]: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
-[manager_user_guide]:/docs/building-operators/golang/quickstart/#manager
+[manager_user_guide]:/docs/building-operators/golang/tutorial/#manager
 [manager_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Options

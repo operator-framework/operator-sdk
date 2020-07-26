@@ -1,7 +1,7 @@
 ---
 title: Operators Scope
 linkTitle: Operator Scope
-weight: 20
+weight: 50
 ---
 
 ## Overview
