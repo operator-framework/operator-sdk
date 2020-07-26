@@ -454,8 +454,8 @@ its reconciliation procedure. There are only a few main conditions:
 Please look over the following sections for help debugging an Ansible Operator:
 
 
-* [View the Ansible logs](../quickstart#view-the-ansible-logs)
-* [Additional Ansible debug](../quickstart#additional-ansible-debug)
+* [View the Ansible logs](../tutorial#view-the-ansible-logs)
+* [Additional Ansible debug](../tutorial#additional-ansible-debug)
 * [Testing Ansible Operators with Molecule](../testing-guide)
 
 ## Extra vars sent to Ansible
@@ -505,7 +505,7 @@ operator. The `meta` fields can be accesses via dot notation in Ansible as so:
 
 [k8s_ansible_module]:https://docs.ansible.com/ansible/2.6/modules/k8s_module.html
 [openshift_restclient_python]:https://github.com/openshift/openshift-restclient-python
-[ansible_operator_user_guide]:../quickstart
+[ansible_operator_user_guide]:../tutorial
 [manage_status_proposal]:../../proposals/ansible-operator-status.md
 [time_pkg]:https://golang.org/pkg/time/
 [time_parse_duration]:https://golang.org/pkg/time/#ParseDuration
