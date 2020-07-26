@@ -1,6 +1,6 @@
 ---
 title: Helm migration for the new Layout
-linkTitle: Migration 
+linkTitle: Migration Guide
 weight: 3
 ---
 
@@ -23,9 +23,12 @@ The `build/Dockerfile` directory was replaced by the `Dockerfile` in the root di
 
 ### What is new
 
-- Now users are able to use [kustomize][kustomize] in the configurations files
-- PROJECT file in the root directory has all information about the project
-- Users are able to customize commands for your own projects via the Makefile which is added on the root directory
+To bring a little context, projects are now scaffold using
+
+- [kustomize][kustomize] to perform the configurations 
+- Makefile with helpers which brings more flexibility and allows customizations
+- Protect by default via [kube-auth-proxy][kube-auth-proxy] 
+- Prometheus metrics configured via [kustomize][kustomize] 
 
 ## How to migrate
 
@@ -34,7 +37,15 @@ just replace with your customizations and implementations. Following an example.
  
 ### Creating a new project
 
-Let's create the same project but with the Helm plugin:
+Let's check our domain first for we create a new project which will have the same `<group>.<domain>/<version>` API's. We can find our domain value in the CRD's, see:
+
+```yaml
+...
+  group: cache.example.com
+...
+```
+
+Then, let's create a new project with the same domain (`example.com`):
 
 ```sh
 $ mkdir nginx-operator
@@ -51,7 +62,14 @@ more than one chart or API's you can add them via `operator-sdk create api` comm
 - Check if you have customizations options in the `watch.yaml` file of your previous project and then, update the new `watch.yaml` file with the same ones
 - Ensure that all roles configured in the `/deploy/roles.yaml` will be applied in the new project in the file `config/rbac/role.yaml`
 - If you have customizations in your `helm-charts` then, apply them in the new `helm-charts`. Note that this directory was not changed at all.
- 
+
+## Exporting metrics 
+
+If you are using metrics and would like to keep them exported you will need to configure 
+it in the `config/default/kustomization.yaml`. Please see the [metrics][metrics] doc to know how you can perform this setup. 
+
+The default port used by the metric endpoint binds to was changed from `:8383` to `:8080`. To continue using port `8383`, specify `--metrics-addr=:8383` when you start the operator. 
+
 ### Checking the changes
 
 Now, follow the steps in the section [Build and run the operator][build-run-quick] to verify your project is running. 
@@ -61,3 +79,5 @@ Now, follow the steps in the section [Build and run the operator][build-run-quic
 [integration-doc]: https://github.com/kubernetes-sigs/kubebuilder/blob/master/designs/integrating-kubebuilder-and-osdk.md
 [build-run-quick]: /docs/building-operators/helm/quickstart#build-and-run-the-operator
 [kustomize]: https://github.com/kubernetes-sigs/kustomize 
+[kube-auth-proxy]: https://github.com/brancz/kube-rbac-proxy 
+[metrics]: https://book.kubebuilder.io/reference/metrics.html?highlight=metr#metrics
