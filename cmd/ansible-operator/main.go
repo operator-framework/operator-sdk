@@ -50,7 +50,7 @@ var (
 )
 
 func printVersion() {
-	log.Info("version",
+	log.Info("Version",
 		"Go Version", runtime.Version(),
 		"GOOS", runtime.GOOS,
 		"GOARCH", runtime.GOARCH,
