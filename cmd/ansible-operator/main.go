@@ -123,6 +123,12 @@ func main() {
 		options.Namespace = metav1.NamespaceAll
 	}
 
+	err = setAnsibleEnvVars(f)
+	if err != nil {
+		log.Error(err, "Failed to set environment variable.")
+		os.Exit(1)
+	}
+
 	// Create a new manager to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, options)
 	if err != nil {
@@ -219,4 +225,24 @@ func getAnsibleDebugLog() bool {
 			envVar, val)
 	}
 	return val
+}
+
+// setAnsibleEnvVars will set environment variables based on CLI flags
+func setAnsibleEnvVars(f *flags.Flags) error {
+	if len(f.AnsibleRolesPath) > 0 {
+		if err := os.Setenv(flags.AnsibleRolesPathEnvVar, f.AnsibleRolesPath); err != nil {
+			return fmt.Errorf("failed to set environment variable %s: %v", flags.AnsibleRolesPathEnvVar, err)
+		}
+		log.Info("Set the environment variable", "envVar", flags.AnsibleRolesPathEnvVar,
+			"value", f.AnsibleRolesPath)
+	}
+
+	if len(f.AnsibleCollectionsPath) > 0 {
+		if err := os.Setenv(flags.AnsibleCollectionsPathEnvVar, f.AnsibleCollectionsPath); err != nil {
+			return fmt.Errorf("failed to set environment variable %s: %v", flags.AnsibleCollectionsPathEnvVar, err)
+		}
+		log.Info("Set the environment variable", "envVar", flags.AnsibleCollectionsPathEnvVar,
+			"value", f.AnsibleCollectionsPath)
+	}
+	return nil
 }
