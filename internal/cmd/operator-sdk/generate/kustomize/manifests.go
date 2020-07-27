@@ -23,6 +23,7 @@ import (
 	"github.com/spf13/pflag"
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 
+	genutil "github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/generate/internal"
 	gencsv "github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion"
 	"github.com/operator-framework/operator-sdk/internal/plugins/util/kustomize"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
@@ -97,7 +98,10 @@ func newManifestsCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("error reading configuration: %v", err)
 			}
-			c.setDefaults(cfg)
+
+			if err := c.setDefaults(cfg); err != nil {
+				return err
+			}
 
 			// Run command logic.
 			if err = c.run(cfg); err != nil {
@@ -127,9 +131,13 @@ func (c *manifestsCmd) addFlagsTo(fs *pflag.FlagSet) {
 var defaultDir = filepath.Join("config", "manifests")
 
 // setDefaults sets command defaults.
-func (c *manifestsCmd) setDefaults(cfg *config.Config) {
+func (c *manifestsCmd) setDefaults(cfg *config.Config) error {
 	if c.operatorName == "" {
-		c.operatorName = filepath.Base(cfg.Repo)
+		projectName, err := genutil.GetOperatorName(cfg)
+		if err != nil {
+			return err
+		}
+		c.operatorName = projectName
 	}
 
 	if c.inputDir == "" {
@@ -145,6 +153,7 @@ func (c *manifestsCmd) setDefaults(cfg *config.Config) {
 			c.apisDir = "api"
 		}
 	}
+	return nil
 }
 
 // kustomization.yaml file contents for manifests. this should always be written to

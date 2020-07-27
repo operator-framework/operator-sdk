@@ -123,6 +123,8 @@ package manifest YAML file containing channel-to-version mappings, much like a b
 If your Operator is already formatted as a package manifests and you do not wish to migrate to the bundle format yet,
 you should add the following to your `Makefile` to make development easier:
 
+**For Go-based Operator projects**
+
 ```make
 # Options for "packagemanifests".
 ifneq ($(origin FROM_VERSION), undefined)
@@ -137,9 +139,30 @@ endif
 PKG_MAN_OPTS ?= $(FROM_VERSION) $(PKG_CHANNELS) $(PKG_IS_DEFAULT_CHANNEL)
 
 # Generate package manifests.
-packagemanifests: manifests
+packagemanifests: kustomize manifests
   operator-sdk generate kustomize manifests -q
-  kustomize build config/manifests | operator-sdk generate packagemanifests -q --version $(VERSION) $(PKG_MAN_OPTS)
+  $(KUSTOMIZE) build config/manifests | operator-sdk generate packagemanifests -q --version $(VERSION) $(PKG_MAN_OPTS)
+```
+
+**For Helm/Ansible-based Operator projects**
+
+```make
+# Options for "packagemanifests".
+ifneq ($(origin FROM_VERSION), undefined)
+PKG_FROM_VERSION := --from-version=$(FROM_VERSION)
+endif
+ifneq ($(origin CHANNEL), undefined)
+PKG_CHANNELS := --channel=$(CHANNEL)
+endif
+ifeq ($(IS_CHANNEL_DEFAULT), 1)
+PKG_IS_DEFAULT_CHANNEL := --default-channel
+endif
+PKG_MAN_OPTS ?= $(FROM_VERSION) $(PKG_CHANNELS) $(PKG_IS_DEFAULT_CHANNEL)
+
+# Generate package manifests.
+packagemanifests: kustomize 
+  operator-sdk generate kustomize manifests -q
+  $(KUSTOMIZE) build config/manifests | operator-sdk generate packagemanifests -q --version $(VERSION) $(PKG_MAN_OPTS)
 ```
 
 By default `make packagemanifests` will generate a CSV, a package manifest file, and copy CRDs in the package manifests format:

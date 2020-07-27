@@ -105,15 +105,20 @@ https://github.com/operator-framework/operator-registry/#manifest-format
 const defaultRootDir = "bundle"
 
 // setDefaults sets defaults useful to all modes of this subcommand.
-func (c *bundleCmd) setDefaults(cfg *config.Config) {
+func (c *bundleCmd) setDefaults(cfg *config.Config) error {
 	if c.operatorName == "" {
-		c.operatorName = filepath.Base(cfg.Repo)
+		projectName, err := genutil.GetOperatorName(cfg)
+		if err != nil {
+			return err
+		}
+		c.operatorName = projectName
 	}
 	// A default channel can be inferred if there is only one channel. Don't infer
 	// default otherwise; the user must set this value.
 	if c.defaultChannel == "" && strings.Count(c.channels, ",") == 0 {
 		c.defaultChannel = c.channels
 	}
+	return nil
 }
 
 // validateManifests validates c for bundle manifests generation.
