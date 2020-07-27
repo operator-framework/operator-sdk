@@ -23,15 +23,15 @@ import (
 	"net/http/httputil"
 
 	"github.com/operator-framework/operator-lib/handler"
-	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
-	k8sRequest "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
-
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
+
+	"github.com/operator-framework/operator-sdk/internal/ansible/proxy/controllermap"
+	k8sRequest "github.com/operator-framework/operator-sdk/internal/ansible/proxy/requestfactory"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
 
 // injectOwnerReferenceHandler will handle proxied requests and inject the

@@ -23,14 +23,14 @@ import (
 	"os"
 	"testing"
 
-	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
-
 	kcorev1 "k8s.io/api/core/v1"
 	kmetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+
+	"github.com/operator-framework/operator-sdk/internal/ansible/proxy/controllermap"
 )
 
 func TestHandler(t *testing.T) {

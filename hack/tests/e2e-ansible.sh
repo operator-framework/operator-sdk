@@ -7,7 +7,7 @@ source hack/lib/image_lib.sh
 source ./hack/lib/common.sh
 
 # ansible proxy test require a running cluster; run during e2e instead
-go test -count=1 ./pkg/ansible/proxy/...
+go test -count=1 ./internal/ansible/proxy/...
 
 DEST_IMAGE="quay.io/example/memcached-operator:v0.0.2"
 ROOTDIR="$(pwd)"

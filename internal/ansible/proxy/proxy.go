@@ -14,9 +14,6 @@
 
 package proxy
 
-// This file contains this project's custom code, as opposed to kubectl.go
-// which contains code retrieved from the kubernetes project.
-
 import (
 	"bytes"
 	"encoding/base64"
@@ -31,9 +28,6 @@ import (
 
 	libhandler "github.com/operator-framework/operator-lib/handler"
 	"github.com/operator-framework/operator-lib/predicate"
-	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
-	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/kubeconfig"
-	k8sRequest "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -43,6 +37,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	"github.com/operator-framework/operator-sdk/internal/ansible/proxy/controllermap"
+	"github.com/operator-framework/operator-sdk/internal/ansible/proxy/kubeconfig"
+	k8sRequest "github.com/operator-framework/operator-sdk/internal/ansible/proxy/requestfactory"
 )
 
 // This is the default timeout to wait for the cache to respond

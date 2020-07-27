@@ -32,7 +32,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	yaml "sigs.k8s.io/yaml"
 
-	"github.com/operator-framework/operator-sdk/pkg/ansible/flags"
+	"github.com/operator-framework/operator-sdk/internal/ansible/flags"
 )
 
 var log = logf.Log.WithName("watches")

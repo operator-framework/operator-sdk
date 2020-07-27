@@ -24,15 +24,15 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/pkg/ansible/metrics"
-	"github.com/operator-framework/operator-sdk/pkg/ansible/paramconv"
-	"github.com/operator-framework/operator-sdk/pkg/ansible/runner/eventapi"
-	"github.com/operator-framework/operator-sdk/pkg/ansible/runner/internal/inputdir"
-	"github.com/operator-framework/operator-sdk/pkg/ansible/watches"
-
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/operator-framework/operator-sdk/internal/ansible/metrics"
+	"github.com/operator-framework/operator-sdk/internal/ansible/paramconv"
+	"github.com/operator-framework/operator-sdk/internal/ansible/runner/eventapi"
+	"github.com/operator-framework/operator-sdk/internal/ansible/runner/internal/inputdir"
+	"github.com/operator-framework/operator-sdk/internal/ansible/watches"
 )
 
 var log = logf.Log.WithName("runner")
