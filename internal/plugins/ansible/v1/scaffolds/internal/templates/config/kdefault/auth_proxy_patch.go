@@ -29,6 +29,7 @@ var _ file.Template = &AuthProxyPatch{}
 // prometheus metrics for manager Pod.
 type AuthProxyPatch struct {
 	file.TemplateMixin
+	file.ProjectNameMixin
 }
 
 // SetTemplateDefaults implements input.Template
