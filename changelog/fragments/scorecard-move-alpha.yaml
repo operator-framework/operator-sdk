@@ -1,6 +1,6 @@
 entries:
   - description: >
-      The `alpha scorecard` comand has been promoted to the standard scorecard command.
+      The `alpha scorecard` command has been promoted to the standard scorecard command.
 
     kind: "change"
 
