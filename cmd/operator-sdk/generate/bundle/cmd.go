@@ -22,7 +22,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
 //nolint:maligned
@@ -68,7 +68,7 @@ func NewCmd() *cobra.Command {
 				c.metadata = true
 			}
 
-			cfg, err := kbutil.ReadConfig()
+			cfg, err := projutil.ReadConfig()
 			if err != nil {
 				return fmt.Errorf("error reading configuration: %v", err)
 			}

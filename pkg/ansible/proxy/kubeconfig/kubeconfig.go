@@ -18,12 +18,11 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"html/template"
 	"io/ioutil"
 	"net/url"
 	"os"
-
-	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -103,7 +102,7 @@ func Create(ownerRef metav1.OwnerReference, proxyURL string, namespace string) (
 	// but we don't want to lose the error because we are
 	// writing to the file, so we will call close twice.
 	defer func() {
-		if err := file.Close(); err != nil && !fileutil.IsClosedError(err) {
+		if err := file.Close(); err != nil && !errors.Is(err, os.ErrClosed) {
 			log.Error(err, "Failed to close generated kubeconfig file")
 		}
 	}()

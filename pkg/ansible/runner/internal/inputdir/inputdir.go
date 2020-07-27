@@ -16,15 +16,14 @@ package inputdir
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/spf13/afero"
-
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -176,7 +175,7 @@ func (i *InputDir) Write() error {
 			return err
 		}
 		defer func() {
-			if err := f.Close(); err != nil && !fileutil.IsClosedError(err) {
+			if err := f.Close(); err != nil && !errors.Is(err, os.ErrClosed) {
 				log.Error(err, "Failed to close playbook file")
 			}
 		}()

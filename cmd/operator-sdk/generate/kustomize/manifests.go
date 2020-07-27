@@ -25,7 +25,6 @@ import (
 
 	gencsv "github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion"
 	"github.com/operator-framework/operator-sdk/internal/plugins/util/kustomize"
-	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
@@ -94,7 +93,7 @@ func newManifestsCmd() *cobra.Command {
 				}
 			}
 
-			cfg, err := kbutil.ReadConfig()
+			cfg, err := projutil.ReadConfig()
 			if err != nil {
 				return fmt.Errorf("error reading configuration: %v", err)
 			}

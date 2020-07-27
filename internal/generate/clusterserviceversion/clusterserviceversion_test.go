@@ -39,7 +39,6 @@ import (
 	metricsannotations "github.com/operator-framework/operator-sdk/internal/annotations/metrics"
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
 	genutil "github.com/operator-framework/operator-sdk/internal/generate/internal"
-	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
@@ -394,7 +393,7 @@ func readConfigHelper(dir string) *config.Config {
 	wd, err := os.Getwd()
 	ExpectWithOffset(1, err).ToNot(HaveOccurred())
 	ExpectWithOffset(1, os.Chdir(dir)).ToNot(HaveOccurred())
-	cfg, err := kbutil.ReadConfig()
+	cfg, err := projutil.ReadConfig()
 	ExpectWithOffset(1, err).ToNot(HaveOccurred())
 	ExpectWithOffset(1, os.Chdir(wd)).ToNot(HaveOccurred())
 	return cfg

@@ -25,8 +25,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -475,18 +473,22 @@ func TestLoad(t *testing.T) {
 	os.Setenv("ANSIBLE_VERBOSITY_ANSIBLEVERBOSITYENV_APP_EXAMPLE_COM", "4")
 	defer os.Unsetenv("ANSIBLE_VERBOSITY_ANSIBLEVERBOSITYENV_APP_EXAMPLE_COM")
 
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 
 			// Test Load with ANSIBLE_ROLES_PATH var
 			if tc.shouldSetAnsibleRolePathEnvVar {
-				anisbleEnvVar := "path/invalid:/path/invalid/myroles:" + projutil.MustGetwd()
+				anisbleEnvVar := "path/invalid:/path/invalid/myroles:" + wd
 				os.Setenv("ANSIBLE_ROLES_PATH", anisbleEnvVar)
 				defer os.Unsetenv("ANSIBLE_ROLES_PATH")
 			}
 			if tc.shouldSetAnsibleCollectionPathEnvVar {
 
-				ansibleCollectionPathEnv := filepath.Join(projutil.MustGetwd(), "testdata")
+				ansibleCollectionPathEnv := filepath.Join(wd, "testdata")
 				os.Setenv("ANSIBLE_COLLECTIONS_PATH", ansibleCollectionPathEnv)
 				defer os.Unsetenv("ANSIBLE_COLLECTIONS_PATH")
 			}
@@ -767,9 +769,16 @@ func TestAnsibleVerbosity(t *testing.T) {
 
 // Test the func getPossibleRolePaths.
 func TestGetPossibleRolePaths(t *testing.T) {
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
 	// Mock default Full Path based in the current directory
-	rolesPath := filepath.Join(projutil.MustGetwd(), "roles")
-	home, _ := os.UserHomeDir()
+	rolesPath := filepath.Join(wd, "roles")
+	home, err := os.UserHomeDir()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	type args struct {
 		path           string
@@ -847,7 +856,7 @@ func TestGetPossibleRolePaths(t *testing.T) {
 				defer os.Unsetenv("ANSIBLE_COLLECTIONS_PATH")
 			}
 
-			allPathsToCheck := getPossibleRolePaths(tt.args.path)
+			allPathsToCheck := getPossibleRolePaths(wd, tt.args.path)
 			sort.Strings(tt.want)
 			sort.Strings(allPathsToCheck)
 			if !reflect.DeepEqual(allPathsToCheck, tt.want) {

@@ -18,31 +18,24 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 
-	homedir "github.com/mitchellh/go-homedir"
-	"github.com/rogpeppe/go-internal/modfile"
 	log "github.com/sirupsen/logrus"
-
-	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
+	"sigs.k8s.io/kubebuilder/pkg/model/config"
 )
 
 const (
-	GoPathEnv  = "GOPATH"
+	// Useful file modes.
+	DirMode      = 0755
+	FileMode     = 0644
+	ExecFileMode = 0755
+)
+
+const (
+	// Go env vars.
 	GoFlagsEnv = "GOFLAGS"
 	GoModEnv   = "GO111MODULE"
-	SrcDir     = "src"
-
-	fsep              = string(filepath.Separator)
-	mainFile          = "main.go"
-	managerMainFile   = "cmd" + fsep + "manager" + fsep + mainFile
-	buildDockerfile   = "build" + fsep + "Dockerfile"
-	goModFile         = "go.mod"
-	defaultPermission = 0644
-
-	noticeColor = "\033[1;36m%s\033[0m"
 )
 
 // OperatorType - the type of operator
@@ -70,135 +63,38 @@ func (e ErrUnknownOperatorType) Error() string {
 	return fmt.Sprintf(`unknown operator type "%v"`, e.Type)
 }
 
-// MustInProjectRoot checks if the current dir is the project root, and exits
-// if not.
-func MustInProjectRoot() {
-	if err := CheckProjectRoot(); err != nil {
-		log.Fatal(err)
-	}
-}
-
-// CheckProjectRoot checks if the current dir is the project root, and returns
-// an error if not.
-// "build/Dockerfile" may not be present in all projects
-// todo: scaffold Project file for Ansible and Helm with the type information
-func CheckProjectRoot() error {
-	if kbutil.HasProjectFile() {
-		return nil
-	}
-
-	// todo(camilamacedo86): remove the following check when we no longer support the legacy scaffold layout
-	// If the current directory has a "build/Dockerfile", then it is safe to say
-	// we are at the project root.
-	if _, err := os.Stat(buildDockerfile); err != nil {
+// HasProjectFile returns true if the project is configured as a kubebuilder
+// project.
+func HasProjectFile() bool {
+	_, err := os.Stat(configFile)
+	if err != nil {
 		if os.IsNotExist(err) {
-			return fmt.Errorf("must run command in project root dir: project structure requires %s",
-				buildDockerfile)
+			return false
 		}
-		return fmt.Errorf("error while checking if current directory is the project root: %v", err)
+		log.Fatalf("Failed to read PROJECT file to detect kubebuilder project: %v", err)
 	}
-	return nil
+	return true
 }
 
-// TODO: remove this (should use os.Getwd() or Config.ProjectName).
-func MustGetwd() string {
-	wd, err := os.Getwd()
+// Default config file path.
+const configFile = "PROJECT"
+
+// ReadConfig returns a configuration if a file containing one exists at the
+// default path (project root).
+func ReadConfig() (*config.Config, error) {
+	b, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		log.Fatalf("Failed to get working directory: (%v)", err)
+		return nil, err
 	}
-	return wd
+	c := &config.Config{}
+	if err = c.Unmarshal(b); err != nil {
+		return nil, err
+	}
+	return c, nil
 }
 
-func getHomeDir() (string, error) {
-	hd, err := homedir.Dir()
-	if err != nil {
-		return "", err
-	}
-	return homedir.Expand(hd)
-}
-
-// TODO(hasbro17): If this function is called in the subdir of
-// a module project it will fail to parse go.mod and return
-// the correct import path.
-// This needs to be fixed to return the pkg import path for any subdir
-// in order for `generate csv` to correctly form pkg imports
-// for API pkg paths that are not relative to the root dir.
-// This might not be fixable since there is no good way to
-// get the project root from inside the subdir of a module project.
-//
-// GetGoPkg returns the current directory's import path by parsing it from
-// wd if this project's repository path is rooted under $GOPATH/src, or
-// from go.mod the project uses Go modules to manage dependencies.
-// If the project has a go.mod then wd must be the project root.
-//
-// Example: "github.com/example-inc/app-operator"
-func GetGoPkg() string {
-	// Default to reading from go.mod, as it should usually have the (correct)
-	// package path, and no further processing need be done on it if so.
-	if _, err := os.Stat(goModFile); err != nil && !os.IsNotExist(err) {
-		log.Fatalf("Failed to read go.mod: %v", err)
-	} else if err == nil {
-		b, err := ioutil.ReadFile(goModFile)
-		if err != nil {
-			log.Fatalf("Read go.mod: %v", err)
-		}
-		mf, err := modfile.Parse(goModFile, b, nil)
-		if err != nil {
-			log.Fatalf("Parse go.mod: %v", err)
-		}
-		if mf.Module != nil && mf.Module.Mod.Path != "" {
-			return mf.Module.Mod.Path
-		}
-	}
-
-	// Then try parsing package path from $GOPATH (set env or default).
-	goPath, ok := os.LookupEnv(GoPathEnv)
-	if !ok || goPath == "" {
-		hd, err := getHomeDir()
-		if err != nil {
-			log.Fatal(err)
-		}
-		goPath = filepath.Join(hd, "go", "src")
-	} else {
-		// MustSetWdGopath is necessary here because the user has set GOPATH,
-		// which could be a path list.
-		goPath = MustSetWdGopath(goPath)
-	}
-	if !strings.HasPrefix(MustGetwd(), goPath) {
-		log.Fatal("Could not determine project repository path: $GOPATH not set, wd in default $HOME/go/src," +
-			" or wd does not contain a go.mod")
-	}
-	return parseGoPkg(goPath)
-}
-
-func parseGoPkg(gopath string) string {
-	goSrc := filepath.Join(gopath, SrcDir)
-	wd := MustGetwd()
-	pathedPkg := strings.Replace(wd, goSrc, "", 1)
-	// Make sure package only contains the "/" separator and no others, and
-	// trim any leading/trailing "/".
-	return strings.Trim(filepath.ToSlash(pathedPkg), "/")
-}
-
-// GetOperatorType returns type of operator is in cwd.
-// This function should be called after verifying the user is in project root.
-func GetOperatorType() OperatorType {
-	switch {
-	// TODO: Differentiate between legacy and KB Go projects
-	case IsOperatorGo():
-		return OperatorTypeGo
-	case IsOperatorAnsible():
-		return OperatorTypeAnsible
-	case IsOperatorHelm():
-		return OperatorTypeHelm
-	}
-	return OperatorTypeUnknown
-}
-
-// PluginKeyToOperatorType converts a plugin key string to an operator project
-// type.
-// TODO(estroz): this can probably be made more robust by checking known
-// plugin keys directly.
+// PluginKeyToOperatorType converts a plugin key string to an operator project type.
+// TODO(estroz): this can probably be made more robust by checking known plugin keys directly.
 func PluginKeyToOperatorType(pluginKey string) OperatorType {
 	switch {
 	case strings.HasPrefix(pluginKey, "go"):
@@ -209,78 +105,6 @@ func PluginKeyToOperatorType(pluginKey string) OperatorType {
 		return OperatorTypeAnsible
 	}
 	return OperatorTypeUnknown
-}
-
-// IsOperatorGo returns true when the layout field in PROJECT file has the Go prefix key.
-// NOTE: For the legacy, returns true when the project contains the cmd/manager directory and main.go file.
-func IsOperatorGo() bool {
-	// If the project has the new layout we will check the type in the config file
-	if kbutil.HasProjectFile() {
-		cfg, err := kbutil.ReadConfig()
-		if err != nil {
-			log.Fatalf("Error reading config: %v", err)
-		}
-		return cfg.IsV2() || PluginKeyToOperatorType(cfg.Layout) == OperatorTypeGo
-	}
-
-	// todo: remove the following code when the legacy layout is no longer supported
-	// we can check it using the Project File
-	_, err := os.Stat(managerMainFile)
-	if err == nil || os.IsExist(err) {
-		return true
-	}
-	// Aware of an alternative location for main.go.
-	_, err = os.Stat(mainFile)
-	return err == nil || os.IsExist(err)
-}
-
-// IsOperatorAnsible returns true when the layout field in PROJECT file has the Ansible prefix key.
-func IsOperatorAnsible() bool {
-	if !kbutil.HasProjectFile() {
-		return false
-	}
-	cfg, err := kbutil.ReadConfig()
-	if err != nil {
-		log.Fatalf("Error reading config: %v", err)
-	}
-	return PluginKeyToOperatorType(cfg.Layout) == OperatorTypeAnsible
-
-}
-
-// IsOperatorHelm returns true when the layout field in PROJECT file has the Helm prefix key.
-func IsOperatorHelm() bool {
-	if !kbutil.HasProjectFile() {
-		return false
-	}
-	cfg, err := kbutil.ReadConfig()
-	if err != nil {
-		log.Fatalf("Error reading config: %v", err)
-	}
-	return PluginKeyToOperatorType(cfg.Layout) == OperatorTypeHelm
-}
-
-// MustSetWdGopath sets GOPATH to the first element of the path list in
-// currentGopath that prefixes the wd, then returns the set path.
-// If GOPATH cannot be set, MustSetWdGopath exits.
-func MustSetWdGopath(currentGopath string) string {
-	var (
-		newGopath   string
-		cwdInGopath bool
-		wd          = MustGetwd()
-	)
-	for _, newGopath = range filepath.SplitList(currentGopath) {
-		if strings.HasPrefix(filepath.Dir(wd), newGopath) {
-			cwdInGopath = true
-			break
-		}
-	}
-	if !cwdInGopath {
-		log.Fatalf("Project not in $GOPATH")
-	}
-	if err := os.Setenv(GoPathEnv, newGopath); err != nil {
-		log.Fatal(err)
-	}
-	return newGopath
 }
 
 var flagRe = regexp.MustCompile("(.* )?-v(.* )?")
@@ -298,24 +122,6 @@ func SetGoVerbose() error {
 	return nil
 }
 
-// CheckGoModules ensures that go modules are enabled.
-func CheckGoModules() error {
-	goModOn, err := GoModOn()
-	if err != nil {
-		return err
-	}
-	if !goModOn {
-		return fmt.Errorf(`using go modules requires GO111MODULE="on", "auto", or unset.` +
-			` More info: https://sdk.operatorframework.io/docs/golang/quickstart/#a-note-on-dependency-management`)
-	}
-	return nil
-}
-
-// PrintDeprecationWarning prints a colored warning wrapping msg to the terminal.
-func PrintDeprecationWarning(msg string) {
-	fmt.Fprintf(os.Stderr, noticeColor, "[Deprecation Notice] "+msg+"\n")
-}
-
 // RewriteFileContents adds newContent to the line after the last occurrence of target in filename's contents,
 // then writes the updated contents back to disk.
 func RewriteFileContents(filename, target, newContent string) error {
@@ -329,7 +135,7 @@ func RewriteFileContents(filename, target, newContent string) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(filename, []byte(modifiedContent), defaultPermission)
+	err = ioutil.WriteFile(filename, []byte(modifiedContent), FileMode)
 	if err != nil {
 		return fmt.Errorf("error writing modified contents to file, %v", err)
 	}
@@ -349,5 +155,4 @@ func appendContent(fileContents, target, newContent string) (string, error) {
 
 	index := labelIndex + separationIndex + 1
 	return fileContents[:index] + newContent + fileContents[index:], nil
-
 }
