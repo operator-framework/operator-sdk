@@ -29,7 +29,7 @@ import (
 	crmanager "sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/operator-framework/operator-sdk/internal/helm/client"
-	"github.com/operator-framework/operator-sdk/internal/helm/types"
+	"github.com/operator-framework/operator-sdk/internal/helm/internal/types"
 )
 
 // ManagerFactory creates Managers that are specific to custom resources. It is
