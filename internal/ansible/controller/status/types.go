@@ -18,11 +18,11 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/operator-framework/operator-sdk/pkg/ansible/runner/eventapi"
-
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/operator-framework/operator-sdk/internal/ansible/runner/eventapi"
 )
 
 var log = logf.Log.WithName("controller.status")

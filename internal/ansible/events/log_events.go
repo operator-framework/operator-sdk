@@ -18,10 +18,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/operator-framework/operator-sdk/pkg/ansible/runner/eventapi"
-
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/operator-framework/operator-sdk/internal/ansible/runner/eventapi"
 )
 
 // LogLevel - Levelt for the logging to take place.

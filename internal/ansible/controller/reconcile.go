@@ -25,13 +25,6 @@ import (
 	"strings"
 	"time"
 
-	ansiblestatus "github.com/operator-framework/operator-sdk/pkg/ansible/controller/status"
-	"github.com/operator-framework/operator-sdk/pkg/ansible/events"
-	"github.com/operator-framework/operator-sdk/pkg/ansible/metrics"
-	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/kubeconfig"
-	"github.com/operator-framework/operator-sdk/pkg/ansible/runner"
-	"github.com/operator-framework/operator-sdk/pkg/ansible/runner/eventapi"
-
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,6 +34,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	ansiblestatus "github.com/operator-framework/operator-sdk/internal/ansible/controller/status"
+	"github.com/operator-framework/operator-sdk/internal/ansible/events"
+	"github.com/operator-framework/operator-sdk/internal/ansible/metrics"
+	"github.com/operator-framework/operator-sdk/internal/ansible/proxy/kubeconfig"
+	"github.com/operator-framework/operator-sdk/internal/ansible/runner"
+	"github.com/operator-framework/operator-sdk/internal/ansible/runner/eventapi"
 )
 
 const (

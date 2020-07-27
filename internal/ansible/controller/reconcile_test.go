@@ -20,19 +20,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/operator-framework/operator-sdk/pkg/ansible/controller"
-	ansiblestatus "github.com/operator-framework/operator-sdk/pkg/ansible/controller/status"
-	"github.com/operator-framework/operator-sdk/pkg/ansible/events"
-	"github.com/operator-framework/operator-sdk/pkg/ansible/runner"
-	"github.com/operator-framework/operator-sdk/pkg/ansible/runner/eventapi"
-	"github.com/operator-framework/operator-sdk/pkg/ansible/runner/fake"
-
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	"github.com/operator-framework/operator-sdk/internal/ansible/controller"
+	ansiblestatus "github.com/operator-framework/operator-sdk/internal/ansible/controller/status"
+	"github.com/operator-framework/operator-sdk/internal/ansible/events"
+	"github.com/operator-framework/operator-sdk/internal/ansible/runner"
+	"github.com/operator-framework/operator-sdk/internal/ansible/runner/eventapi"
+	"github.com/operator-framework/operator-sdk/internal/ansible/runner/fake"
 )
 
 func TestReconcile(t *testing.T) {

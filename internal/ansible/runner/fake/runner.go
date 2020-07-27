@@ -18,9 +18,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/operator-framework/operator-sdk/pkg/ansible/runner"
-	"github.com/operator-framework/operator-sdk/pkg/ansible/runner/eventapi"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/operator-framework/operator-sdk/internal/ansible/runner"
+	"github.com/operator-framework/operator-sdk/internal/ansible/runner/eventapi"
 )
 
 // Runner - implements the Runner interface for a GVK that's being watched.

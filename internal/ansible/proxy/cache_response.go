@@ -24,10 +24,6 @@ import (
 	"strings"
 
 	libhandler "github.com/operator-framework/operator-lib/handler"
-	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
-	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
-	k8sRequest "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
-
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalscheme "k8s.io/apimachinery/pkg/apis/meta/internalversion/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,6 +34,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/operator-framework/operator-sdk/internal/ansible/proxy/controllermap"
+	k8sRequest "github.com/operator-framework/operator-sdk/internal/ansible/proxy/requestfactory"
 )
 
 type marshaler interface {
@@ -150,7 +149,7 @@ func (c *cacheResponseHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 }
 
 // skipCacheLookup - determine if we should skip the cache lookup
-func (c *cacheResponseHandler) skipCacheLookup(r *requestfactory.RequestInfo, gvk schema.GroupVersionKind,
+func (c *cacheResponseHandler) skipCacheLookup(r *k8sRequest.RequestInfo, gvk schema.GroupVersionKind,
 	req *http.Request) bool {
 
 	skip := matchesRegexp(req.URL.String(), c.skipPathRegexp)
@@ -241,7 +240,7 @@ func (c *cacheResponseHandler) recoverDependentWatches(req *http.Request, un *un
 	}
 }
 
-func (c *cacheResponseHandler) getListFromCache(r *requestfactory.RequestInfo, req *http.Request,
+func (c *cacheResponseHandler) getListFromCache(r *k8sRequest.RequestInfo, req *http.Request,
 	k schema.GroupVersionKind) (marshaler, error) {
 	k8sListOpts := &metav1.ListOptions{}
 	if err := metainternalscheme.ParameterCodec.DecodeParameters(req.URL.Query(), metav1.SchemeGroupVersion,
@@ -283,7 +282,7 @@ func (c *cacheResponseHandler) getListFromCache(r *requestfactory.RequestInfo, r
 	return &un, nil
 }
 
-func (c *cacheResponseHandler) getObjectFromCache(r *requestfactory.RequestInfo, req *http.Request,
+func (c *cacheResponseHandler) getObjectFromCache(r *k8sRequest.RequestInfo, req *http.Request,
 	k schema.GroupVersionKind) (marshaler, error) {
 	un := &unstructured.Unstructured{}
 	un.SetGroupVersionKind(k)
