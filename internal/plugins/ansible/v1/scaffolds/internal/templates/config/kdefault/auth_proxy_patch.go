@@ -29,6 +29,7 @@ var _ file.Template = &AuthProxyPatch{}
 // prometheus metrics for manager Pod.
 type AuthProxyPatch struct {
 	file.TemplateMixin
+	file.ProjectNameMixin
 }
 
 // SetTemplateDefaults implements input.Template
@@ -65,4 +66,9 @@ spec:
         ports:
         - containerPort: 8443
           name: https
+      - name: manager
+        args:
+        - "--metrics-addr=127.0.0.1:8080"
+        - "--enable-leader-election"
+        - "--leader-election-id={{ .ProjectName }}"
 `
