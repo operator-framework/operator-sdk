@@ -37,7 +37,7 @@ just replace with your customizations and implementations. Following an example.
 ### Creating a new project
 
 In Kubebuilder-style projects, CRD groups are defined using two different flags
-(`--group` and `--domain).
+(`--group` and `--domain`).
 
 When we initialize a new project, we need to specify the domain that _all_ APIs in
 our project will share, so before creating the new project, we need to determine which
