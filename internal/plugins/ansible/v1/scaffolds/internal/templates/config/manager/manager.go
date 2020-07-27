@@ -74,14 +74,6 @@ spec:
           args:
             - "--enable-leader-election"
             - "--leader-election-id={{ .ProjectName }}"
-            - "--metrics-addr=127.0.0.1:8080"
           image: {{ .Image }}
-          env:
-            - name: WATCH_NAMESPACE
-              value: ""
-            - name: POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
       terminationGracePeriodSeconds: 10
 `

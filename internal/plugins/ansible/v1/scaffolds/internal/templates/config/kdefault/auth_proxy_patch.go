@@ -65,4 +65,9 @@ spec:
         ports:
         - containerPort: 8443
           name: https
+      - name: manager
+        args:
+        - "--metrics-addr=127.0.0.1:8080"
+        - "--enable-leader-election"
+        - "--leader-election-id={{ .ProjectName }}"
 `
