@@ -54,7 +54,7 @@ var _ = Describe("Integrating Helm Projects with OLM", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			By("validating the bundle")
-			bundleValidateCmd := exec.Command(tc.BinaryName, "bundle", "validate", "./bundle")
+			bundleValidateCmd := exec.Command(tc.BinaryName, "bundle", "validate", "bundle")
 			_, err = tc.Run(bundleValidateCmd)
 			Expect(err).NotTo(HaveOccurred())
 

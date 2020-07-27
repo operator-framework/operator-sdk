@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	genutil "github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate/internal"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -132,7 +134,7 @@ var defaultDir = filepath.Join("config", "manifests")
 // setDefaults sets command defaults.
 func (c *manifestsCmd) setDefaults(cfg *config.Config) error {
 	if c.operatorName == "" {
-		projectName, err := projutil.GetOperatorName(cfg)
+		projectName, err := genutil.GetOperatorName(cfg)
 		if err != nil {
 			return err
 		}

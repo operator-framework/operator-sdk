@@ -107,7 +107,7 @@ const defaultRootDir = "bundle"
 // setDefaults sets defaults useful to all modes of this subcommand.
 func (c *bundleCmd) setDefaults(cfg *config.Config) error {
 	if c.operatorName == "" {
-		projectName, err := projutil.GetOperatorName(cfg)
+		projectName, err := genutil.GetOperatorName(cfg)
 		if err != nil {
 			return err
 		}

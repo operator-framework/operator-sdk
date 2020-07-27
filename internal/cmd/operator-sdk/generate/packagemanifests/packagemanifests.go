@@ -81,7 +81,7 @@ const defaultRootDir = "packagemanifests"
 // setDefaults sets command defaults.
 func (c *packagemanifestsCmd) setDefaults(cfg *config.Config) error {
 	if c.operatorName == "" {
-		projectName, err := projutil.GetOperatorName(cfg)
+		projectName, err := genutil.GetOperatorName(cfg)
 		if err != nil {
 			return err
 		}
