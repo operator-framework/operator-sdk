@@ -27,9 +27,9 @@ import (
 	yaml "gopkg.in/yaml.v3"
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 
-	genutil "github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate/internal"
 	metricsannotations "github.com/operator-framework/operator-sdk/internal/annotations/metrics"
 	scorecardannotations "github.com/operator-framework/operator-sdk/internal/annotations/scorecard"
+	genutil "github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/generate/internal"
 	gencsv "github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion"
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
 	"github.com/operator-framework/operator-sdk/internal/registry"

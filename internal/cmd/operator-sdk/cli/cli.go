@@ -15,14 +15,14 @@
 package cli
 
 import (
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/bundle"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cleanup"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/completion"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/olm"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/run"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/scorecard"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/version"
+	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/bundle"
+	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/cleanup"
+	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/completion"
+	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/generate"
+	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/olm"
+	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/run"
+	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/scorecard"
+	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/version"
 	"github.com/operator-framework/operator-sdk/internal/flags"
 	ansiblev1 "github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1"
 	golangv2 "github.com/operator-framework/operator-sdk/internal/plugins/golang/v2"

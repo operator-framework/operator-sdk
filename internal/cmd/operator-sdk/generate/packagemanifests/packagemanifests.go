@@ -22,7 +22,7 @@ import (
 
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 
-	genutil "github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate/internal"
+	genutil "github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/generate/internal"
 	gencsv "github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion"
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
 	genpkg "github.com/operator-framework/operator-sdk/internal/generate/packagemanifest"

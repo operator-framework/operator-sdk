@@ -17,7 +17,7 @@ package cleanup
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cleanup/packagemanifests"
+	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/cleanup/packagemanifests"
 )
 
 func NewCmd() *cobra.Command {

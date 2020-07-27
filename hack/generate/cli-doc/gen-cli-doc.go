@@ -25,7 +25,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cli"
+	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/cli"
 )
 
 const fmTemplate = `---
