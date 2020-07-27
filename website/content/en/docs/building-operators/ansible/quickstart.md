@@ -7,7 +7,6 @@ weight: 2
 
 - [docker][docker_tool] version 17.03+.
 - [kubectl][kubectl_tool] version v1.11.3+.
-- [operator-sdk][operator_install] v1.0.0+
 - [Ansible Operator SDK Installation][ansible-operator-install] v1.0.0+
 - Access to a Kubernetes v1.11.3+ cluster.
 
@@ -91,7 +90,7 @@ Now, follow up the [Tutorial][tutorial] to better understand how it works by dev
 
 [docker_tool]:https://docs.docker.com/install/
 [kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
-[ansible-operator-install]: installation
+[ansible-operator-install]: /docs/building-operators/ansible/installation
 [helm-repo-add]: https://helm.sh/docs/helm/helm_repo_add
 [helm-chart-memcached]: https://github.com/helm/charts/tree/master/stable/memcached
 [tutorial]: /docs/building-operators/ansible/tutorial/ 
