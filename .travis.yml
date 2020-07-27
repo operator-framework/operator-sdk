@@ -125,9 +125,7 @@ jobs:
         - pip install --user ansible
       script:
         - make test-e2e-ansible
-        # todo: the following test needs to be port for the new layout
-        # More info: https://github.com/operator-framework/operator-sdk/issues/3540
-        # - make test-e2e-ansible-molecule
+        - make test-e2e-ansible-molecule
 
     # Test subcommands
     - <<: *test
