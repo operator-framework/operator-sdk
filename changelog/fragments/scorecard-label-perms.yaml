@@ -1,5 +1,0 @@
-entries:
-  - description: >
-      Fixed a bug in scorecard that caused tests to fail with permission errors
-      when loading the bundle.
-    kind: "bugfix"

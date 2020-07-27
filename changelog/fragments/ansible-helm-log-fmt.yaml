@@ -1,6 +1,0 @@
-entries:
-  - description: >
-      Use structure logging in Helm and Ansible operator base images
-      when printing version information.
-    kind: "change"
-    breaking: false

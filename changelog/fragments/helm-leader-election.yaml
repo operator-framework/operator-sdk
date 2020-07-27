@@ -1,7 +1,0 @@
-entries:
-  - description: >
-      In the Helm operator, use controller-runtime's lease-based leader
-      election instead of SDK's leader-for-life mechanism.
-
-    kind: "change"
-    breaking: false

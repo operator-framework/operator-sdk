@@ -1,5 +1,0 @@
-entries:
-    - description: >
-        Use group and kind instead of only kind when parsing manifests in the CSV generator to avoid marshaling them into the wrong Go types.
-      kind: "bugfix"
-      breaking: false

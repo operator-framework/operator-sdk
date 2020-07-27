@@ -1,8 +1,0 @@
-entries:
-  - description: Remove `test` subcommand and the test framework `pkg/test`.
-    kind: "removal"
-    pull_request_override: 3409
-    breaking: true
-    migration:
-      header: Remove `test` subcommand and the test framework `pkg/test`
-      body: TBD
