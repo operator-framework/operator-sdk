@@ -1,7 +1,7 @@
 ---
 title: Ansible Based Operator Testing with Molecule
 linkTitle: Testing with Molecule
-weight: 4
+weight: 5
 ---
 
 ## Getting started
