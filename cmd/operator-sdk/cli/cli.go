@@ -15,7 +15,6 @@
 package cli
 
 import (
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/build"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/bundle"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cleanup"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/completion"
@@ -37,7 +36,6 @@ import (
 )
 
 var commands = []*cobra.Command{
-	build.NewCmd(),
 	bundle.NewCmd(),
 	cleanup.NewCmd(),
 	completion.NewCmd(),
