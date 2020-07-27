@@ -18,6 +18,8 @@ limitations under the License.
 package scaffolds
 
 import (
+	"strings"
+
 	"sigs.k8s.io/kubebuilder/pkg/model"
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 	"sigs.k8s.io/kubebuilder/pkg/plugin/scaffold"
@@ -35,14 +37,18 @@ import (
 	ansibleroles "github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/roles"
 
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/machinery"
+	"github.com/operator-framework/operator-sdk/internal/version"
 )
 
 const (
+	imageName = "controller:latest"
+
 	// KustomizeVersion is the kubernetes-sigs/kustomize version to be used in the project
 	KustomizeVersion = "v3.5.4"
-
-	imageName = "controller:latest"
 )
+
+// AnsibleOperatorVersion is the version of the base image and operator binary used in the Makefile
+var AnsibleOperatorVersion = strings.TrimSuffix(version.Version, "+git")
 
 var _ scaffold.Scaffolder = &initScaffolder{}
 
@@ -79,8 +85,12 @@ func (s *initScaffolder) Scaffold() error {
 func (s *initScaffolder) scaffold() error {
 	return machinery.NewScaffold().Execute(
 		s.newUniverse(),
-		&templates.Dockerfile{},
+
+		&templates.Dockerfile{
+			AnsibleOperatorVersion: AnsibleOperatorVersion,
+		},
 		&templates.GitIgnore{},
+
 		&templates.RequirementsYml{},
 		&templates.Watches{},
 
@@ -103,7 +113,10 @@ func (s *initScaffolder) scaffold() error {
 		&kdefault.Kustomize{},
 		&kdefault.AuthProxyPatch{},
 
-		&templates.Makefile{},
+		&templates.Makefile{
+			AnsibleOperatorVersion: AnsibleOperatorVersion,
+			Image:                  imageName,
+		},
 		&ansibleroles.Placeholder{},
 		&playbooks.Placeholder{},
 

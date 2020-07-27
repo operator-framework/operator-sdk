@@ -15,12 +15,9 @@
 package templates
 
 import (
-	"strings"
-
 	"sigs.k8s.io/kubebuilder/pkg/model/file"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/constants"
-	"github.com/operator-framework/operator-sdk/internal/version"
 )
 
 var _ file.Template = &Dockerfile{}
@@ -28,7 +25,9 @@ var _ file.Template = &Dockerfile{}
 // Dockerfile scaffolds a Dockerfile for building a main
 type Dockerfile struct {
 	file.TemplateMixin
-	ImageTag string
+
+	// AnsibleOperatorVersion is the version of the base image and operator binary used in the project
+	AnsibleOperatorVersion string
 
 	RolesDir     string
 	PlaybooksDir string
@@ -43,11 +42,14 @@ func (f *Dockerfile) SetTemplateDefaults() error {
 	f.TemplateBody = dockerfileTemplate
 	f.RolesDir = constants.RolesDir
 	f.PlaybooksDir = constants.PlaybooksDir
-	f.ImageTag = strings.TrimSuffix(version.Version, "+git")
+
+	if f.AnsibleOperatorVersion == "" {
+		panic("docker file scaffold: ansible-operator version must be set")
+	}
 	return nil
 }
 
-const dockerfileTemplate = `FROM quay.io/operator-framework/ansible-operator:{{.ImageTag}}
+const dockerfileTemplate = `FROM quay.io/operator-framework/ansible-operator:{{.AnsibleOperatorVersion}}
 
 COPY requirements.yml ${HOME}/requirements.yml
 RUN ansible-galaxy collection install -r ${HOME}/requirements.yml \

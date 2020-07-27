@@ -18,11 +18,11 @@ limitations under the License.
 package templates
 
 import (
-	"strings"
+	"errors"
 
 	"sigs.k8s.io/kubebuilder/pkg/model/file"
 
-	"github.com/operator-framework/operator-sdk/internal/version"
+	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds"
 )
 
 var _ file.Template = &Makefile{}
@@ -48,21 +48,14 @@ func (f *Makefile) SetTemplateDefaults() error {
 	}
 
 	f.TemplateBody = makefileTemplate
-
 	f.IfExistsAction = file.Error
-
+	f.KustomizeVersion = scaffolds.KustomizeVersion
 	if f.Image == "" {
-		f.Image = "controller:latest"
+		return errors.New("makefile scaffold: ansible-operator image must be set")
 	}
-
-	if f.KustomizeVersion == "" {
-		f.KustomizeVersion = "v3.5.4"
-	}
-
 	if f.AnsibleOperatorVersion == "" {
-		f.AnsibleOperatorVersion = strings.TrimSuffix(version.Version, "+git")
+		return errors.New("makefile scaffold: ansible-operator version must be set")
 	}
-
 	return nil
 }
 

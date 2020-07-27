@@ -18,11 +18,9 @@ limitations under the License.
 package templates
 
 import (
-	"strings"
+	"errors"
 
 	"sigs.k8s.io/kubebuilder/pkg/model/file"
-
-	"github.com/operator-framework/operator-sdk/internal/version"
 )
 
 var _ file.Template = &Makefile{}
@@ -52,17 +50,12 @@ func (f *Makefile) SetTemplateDefaults() error {
 	f.IfExistsAction = file.Error
 
 	if f.Image == "" {
-		f.Image = "controller:latest"
-	}
-
-	if f.KustomizeVersion == "" {
-		f.KustomizeVersion = "v3.5.4"
+		return errors.New("makefile scaffold: helm-operator image name is needed")
 	}
 
 	if f.HelmOperatorVersion == "" {
-		f.HelmOperatorVersion = strings.TrimSuffix(version.Version, "+git")
+		return errors.New("makefile scaffold: helm-operator version is not set")
 	}
-
 	return nil
 }
 

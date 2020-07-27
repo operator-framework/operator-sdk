@@ -37,6 +37,7 @@ import (
 
 const (
 	// KustomizeVersion is the kubernetes-sigs/kustomize version to be used in the project
+	// TODO: consolidate this with Ansible
 	KustomizeVersion = "v3.5.4"
 
 	imageName = "controller:latest"
@@ -88,9 +89,9 @@ func (s *initScaffolder) scaffold() error {
 		},
 		&templates.GitIgnore{},
 		&templates.Makefile{
+			HelmOperatorVersion: HelmOperatorVersion,
 			Image:               imageName,
 			KustomizeVersion:    KustomizeVersion,
-			HelmOperatorVersion: HelmOperatorVersion,
 		},
 		&templates.Watches{},
 		&rbac.AuthProxyRole{},

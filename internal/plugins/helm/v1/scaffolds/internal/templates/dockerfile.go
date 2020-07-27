@@ -15,6 +15,8 @@
 package templates
 
 import (
+	"errors"
+
 	"sigs.k8s.io/kubebuilder/pkg/model/file"
 )
 
@@ -35,7 +37,9 @@ func (f *Dockerfile) SetTemplateDefaults() error {
 	}
 
 	f.TemplateBody = dockerfileTemplate
-
+	if f.HelmOperatorVersion == "" {
+		return errors.New("dockerfile scaffold: helm-operator version is not set")
+	}
 	return nil
 }
 
