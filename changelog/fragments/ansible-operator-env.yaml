@@ -1,0 +1,9 @@
+entries:
+  - description: >
+      Fixed a bug that caused the Ansible operator not to set the environment
+      variables `ANSIBLE_ROLES_PATH` and `ANSIBLE_COLLECTIONS_PATH` based on  the
+      flags `--ansible-roles-path` and `--ansible-collections-path`
+
+    kind: bugfix
+
+    breaking: false
