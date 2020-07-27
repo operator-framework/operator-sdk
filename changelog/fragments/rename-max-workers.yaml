@@ -1,6 +1,6 @@
 entries:
   - description: >
-      **(Valid only for Ansible/Helm-based Operators)**. The `--max-workers` flag and `WORKERS_<Kind>_<Group>`
+      The Ansible operator's `--max-workers` flag and `WORKERS_<Kind>_<Group>`
       environment variable have been renamed to `--max-concurrent-reconciles` and
       `MAX_CONCURRENT_RECONCILES_<Kind>_<Group>` respectively.
     kind: "change"
@@ -9,6 +9,6 @@ entries:
       header: Flag `max-workers` and `WORKERS_<Kind>_<Group>` environment variable are no longer supported.
       body: |
         The `--max-workers` flag and `WORKERS_<Kind>_<Group>` environment variable are no longer supported
-        with the Ansible and Helm-based Operators. They have been renamed to
-        `--max-concurrent-reconciles` and `MAX_CONCURRENT_RECONCILES_<Kind>_<Group>` respectively.
+        with the Ansible operator. They have been renamed to `--max-concurrent-reconciles` and
+        `MAX_CONCURRENT_RECONCILES_<Kind>_<Group>` respectively.
 
