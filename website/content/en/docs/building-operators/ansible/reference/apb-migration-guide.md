@@ -123,11 +123,11 @@ Ansible Operator does not respect the Service Bundle contract that exists betwee
 - `cluster`: Operators ideally work on both Kubernetes and OpenShift, so any uses of openshift-specific resources should handle errors and fallback
 - `_apb_plan_id`: Operators have no concept of a plan
 - `_apb_service_class_id`: This concept is replaced by the group/version/kind specified in your CRD
-- `_apb_service_instance_id`: This concept is replaced by `meta.name`, the name of the Custom Resource created by the user requesting the action.
+- `_apb_service_instance_id`: This concept is replaced by `ansible_operator_meta.name`, the name of the Custom Resource created by the user requesting the action.
 - `_apb_last_requesting_user`: There is no analogue to this.
 - `_apb_provision_creds`: There is no analogue to this.
-- `_apb_service_binding_id`: This concept is replaced by the `meta.name` of a `<kind>Binding` resource
-- `namespace`: This is accessible via the `meta.namespace` variable
+- `_apb_service_binding_id`: This concept is replaced by the `ansible_operator_meta.name` of a `<kind>Binding` resource
+- `namespace`: This is accessible via the `ansible_operator_meta.namespace` variable
 
 Instead, the Ansible Operator will pass in a field called `meta`, which contains the `name` and `namespace` of the Custom Resource that the user created.
 
@@ -164,8 +164,8 @@ would become:
       apiVersion: v1
       kind: Secret
       metadata:
-        name: '{{ meta.name }}-credentials'
-        namespace: '{{ meta.namespace }}'
+        name: '{{ ansible_operator_meta.name }}-credentials'
+        namespace: '{{ ansible_operator_meta.namespace }}'
       data:
         DB_TYPE: "{{ 'postgres' | b64encode }}"
         DB_HOST: "{{ app_name | b64encode }}"
@@ -178,10 +178,10 @@ would become:
   operator_sdk.util.k8s_status:
     api_version: apps.example.com/v1alpha1
     kind: PostgreSQL
-    name: '{{ meta.name }}'
-    namespace: '{{ meta.namespace }}'
+    name: '{{ ansible_operator_meta.name }}'
+    namespace: '{{ ansible_operator_meta.namespace }}'
     status:
-      bind_credentials_secret: '{{ meta.name }}-credentials'
+      bind_credentials_secret: '{{ ansible_operator_meta.name }}-credentials'
 ```
 
 ### ansible_kubernetes_modules

@@ -205,7 +205,7 @@ We'll be adding the task to `roles/example/tasks/main.yml`, which should now loo
       kind: ConfigMap
       metadata:
         name: 'test-data'
-        namespace: '{{ meta.namespace }}'
+        namespace: '{{ ansible_operator_meta.namespace }}'
       data:
         hello: world
 ```

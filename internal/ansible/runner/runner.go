@@ -286,7 +286,7 @@ func (r *runner) isFinalizerRun(u *unstructured.Unstructured) bool {
 
 // makeParameters - creates the extravars parameters for ansible
 // The resulting structure in json is:
-// { "meta": {
+// { "ansible_operator_meta": {
 //      "name": <object_name>,
 //      "namespace": <object_namespace>,
 //   },
@@ -319,7 +319,7 @@ func (r *runner) makeParameters(u *unstructured.Unstructured) map[string]interfa
 		}
 	}
 
-	parameters["meta"] = map[string]string{"namespace": u.GetNamespace(), "name": u.GetName()}
+	parameters["ansible_operator_meta"] = map[string]string{"namespace": u.GetNamespace(), "name": u.GetName()}
 
 	objKey := escapeAnsibleKey(fmt.Sprintf("_%v_%v", r.GVK.Group, strings.ToLower(r.GVK.Kind)))
 	parameters[objKey] = u.Object
