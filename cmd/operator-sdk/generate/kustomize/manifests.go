@@ -24,7 +24,7 @@ import (
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 
 	gencsv "github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion"
-	"github.com/operator-framework/operator-sdk/internal/scaffold/kustomize"
+	"github.com/operator-framework/operator-sdk/internal/plugins/util/kustomize"
 	kbutil "github.com/operator-framework/operator-sdk/internal/util/kubebuilder"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )

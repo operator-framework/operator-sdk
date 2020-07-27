@@ -19,7 +19,7 @@ import (
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 	"sigs.k8s.io/kubebuilder/pkg/plugin"
 
-	utilplugins "github.com/operator-framework/operator-sdk/internal/util/plugins"
+	"github.com/operator-framework/operator-sdk/internal/plugins/manifests"
 )
 
 type createAPIPlugin struct {
@@ -49,10 +49,11 @@ func (p *createAPIPlugin) Run() error {
 		return nil
 	}
 
-	return p.run()
+	// Run SDK phase 2 plugins.
+	return p.runPhase2()
 }
 
-// SDK plugin-specific scaffolds.
-func (p *createAPIPlugin) run() error {
-	return utilplugins.WriteSamplesKustomization(p.config)
+// SDK phase 2 plugins.
+func (p *createAPIPlugin) runPhase2() error {
+	return manifests.RunCreateAPI(p.config)
 }

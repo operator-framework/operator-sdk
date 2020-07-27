@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // TODO: rewrite this when plugins phase 2 is implemented.
-package plugins
+package manifests
 
 import (
 	"fmt"
@@ -24,17 +24,17 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
-// UpdateMakefile modifies the project scaffolded by kubebuilder's Init plugin.
-func UpdateMakefile(cfg *config.Config) error {
+// RunInit modifies the project scaffolded by kubebuilder's Init plugin.
+func RunInit(cfg *config.Config) error {
 	// Update the scaffolded Makefile with operator-sdk recipes.
-	if err := initUpdateMakefile("Makefile", cfg); err != nil {
+	if err := initUpdateMakefile(cfg, "Makefile"); err != nil {
 		return fmt.Errorf("error updating Makefile: %v", err)
 	}
 	return nil
 }
 
 // initUpdateMakefile updates a vanilla kubebuilder Makefile with operator-sdk recipes.
-func initUpdateMakefile(filePath string, cfg *config.Config) error {
+func initUpdateMakefile(cfg *config.Config, filePath string) error {
 	makefileBytes, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		return err
@@ -74,7 +74,7 @@ BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
 endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
-.PHONY: bundle	
+.PHONY: bundle
 `
 
 	makefileBundleFragmentGo = `

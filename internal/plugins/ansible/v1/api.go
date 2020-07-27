@@ -29,6 +29,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds"
+	"github.com/operator-framework/operator-sdk/internal/plugins/manifests"
 )
 
 const (
@@ -105,7 +106,21 @@ func (p *createAPIPlugin) InjectConfig(c *config.Config) {
 }
 
 func (p *createAPIPlugin) Run() error {
-	return cmdutil.Run(p)
+	if err := cmdutil.Run(p); err != nil {
+		return err
+	}
+
+	// Run SDK phase 2 plugins.
+	if err := p.runPhase2(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// SDK phase 2 plugins.
+func (p *createAPIPlugin) runPhase2() error {
+	return manifests.RunCreateAPI(p.config)
 }
 
 func (p *createAPIPlugin) Validate() error {

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // TODO: rewrite this when plugins phase 2 is implemented.
-package plugins
+package manifests
 
 import (
 	"fmt"
@@ -22,7 +22,7 @@ import (
 
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 
-	"github.com/operator-framework/operator-sdk/internal/scaffold/kustomize"
+	"github.com/operator-framework/operator-sdk/internal/plugins/util/kustomize"
 )
 
 // sampleKustomizationFragment is a template for samples/kustomization.yaml.
@@ -30,8 +30,8 @@ const sampleKustomizationFragment = `## This file is auto-generated, do not modi
 resources:
 `
 
-// WriteSamplesKustomization perform the SDK plugin-specific scaffolds.
-func WriteSamplesKustomization(cfg *config.Config) error {
+// RunCreateAPI perform the SDK plugin-specific scaffolds.
+func RunCreateAPI(cfg *config.Config) error {
 
 	// Write CR paths to the samples' kustomization file. This file has a
 	// "do not modify" comment so it is safe to overwrite.
