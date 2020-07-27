@@ -1,6 +1,6 @@
 ---
-title: Helm migration for the new Layout
-linkTitle: Migration Guide
+title: Migrating Legacy Projects
+linkTitle: Migrating Legacy Projects
 weight: 3
 ---
 
@@ -23,12 +23,11 @@ The `build/Dockerfile` directory was replaced by the `Dockerfile` in the root di
 
 ### What is new
 
-To bring a little context, projects are now scaffold using
+Projects are now scaffold using:
 
-- [kustomize][kustomize] to perform the configurations 
-- Makefile with helpers which brings more flexibility and allows customizations
-- Protect by default via [kube-auth-proxy][kube-auth-proxy] 
-- Prometheus metrics configured via [kustomize][kustomize] 
+- [kustomize][kustomize] to manage Kubernetes resources needed to deploy your operator
+- A `Makefile` with helpful targets for build, test, and deployment, and to give you flexibility to tailor things to your project's needs
+- Updated metrics configuration using [kube-auth-proxy][kube-auth-proxy], a `--metrics-addr` flag, and [kustomize][kustomize]-based deployment of a Kubernetes `Service` and prometheus operator `ServiceMonitor`
 
 ## How to migrate
 
@@ -37,20 +36,38 @@ just replace with your customizations and implementations. Following an example.
  
 ### Creating a new project
 
-Let's check our domain first for we create a new project which will have the same `<group>.<domain>/<version>` API's. We can find our domain value in the CRD's, see:
+In Kubebuilder-style projects, CRD groups are defined using two different flags
+(`--group` and `--domain).
 
-```yaml
-...
-  group: cache.example.com
-...
-```
+When we initialize a new project, we need to specify the domain that _all_ APIs in
+our project will share, so before creating the new project, we need to determine which
+domain we're using for the APIs in our existing project.
 
-Then, let's create a new project with the same domain (`example.com`):
+To determine the domain, look at the `spec.group` field in your CRDs in the
+`deploy/crds` directory.
+
+The domain is everything after the first DNS segment. Using `cache.example.com` as an
+example, the `--domain` would be `example.com`.
+
+So let's create a new project with the same domain (`example.com`):
 
 ```sh
 $ mkdir nginx-operator
 $ cd nginx-operator
-$ operator-sdk init --plugins=helm --domain=com --group=example --version=v1alpha1 --kind=Nginx
+$ operator-sdk init --plugins=helm --domain=example.com
+```
+
+Now that we have our new project initialized, we need to re-create each of our APIs. 
+Using our API example from earlier (`cache.example.com`), we'll use `cache` for the
+`--group` flag.
+
+For each API in the existing project, run:
+```sh
+$ operator-sdk create api \
+    --group=cache \
+    --api-version=<apiVersion> \
+    --kind=<Kind> \
+    --helm-chart=<path_to_existing_project>/helm-charts/<chart>
 ```
 
 **Note** Ensure that you use the same values for the flags to recreate the same Helm Chart and API's. If you have
