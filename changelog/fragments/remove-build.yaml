@@ -1,0 +1,12 @@
+entries:
+  - description: Removed the `build` subcommand.
+    kind: removal
+    breaking: true
+    migration:
+      header: Remove `operator-sdk build` references from project
+      body: >
+        `operator-sdk build` was removed in favor of `make docker-build`. Any image build args passed
+        to the removed command can be directly added to the `docker-build` Makefile rule.
+        Any Go build args passed to the removed command can be directly added to the project's Dockerfile.
+        The image builder can be substituted for `docker` in the `docker-build` Makefile rule, assuming
+        flags are the same.

@@ -66,7 +66,6 @@ operator-sdk [flags]
 
 ### SEE ALSO
 
-* [operator-sdk build](../operator-sdk_build)	 - Compiles code and builds artifacts
 * [operator-sdk bundle](../operator-sdk_bundle)	 - Manage operator bundle metadata
 * [operator-sdk cleanup](../operator-sdk_cleanup)	 - Clean up an Operator deployed with the 'run' subcommand
 * [operator-sdk completion](../operator-sdk_completion)	 - Generators for shell completions
