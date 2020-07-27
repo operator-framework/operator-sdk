@@ -33,7 +33,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/bundle/internal"
+	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/bundle/internal"
 	"github.com/operator-framework/operator-sdk/internal/flags"
 	internalregistry "github.com/operator-framework/operator-sdk/internal/registry"
 )

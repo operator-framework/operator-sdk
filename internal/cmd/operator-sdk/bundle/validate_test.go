@@ -17,7 +17,7 @@ package bundle
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/bundle/internal"
+	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/bundle/internal"
 )
 
 var _ = Describe("Running a bundle validate command", func() {

@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2019 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,29 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package generate
+package run
 
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate/bundle"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate/kustomize"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate/packagemanifests"
+	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/run/packagemanifests"
 )
 
-// NewCmd returns the 'generate' command configured for the new project layout.
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "generate <generator>",
-		Short: "Invokes a specific generator",
-		Long: `The 'operator-sdk generate' command invokes a specific generator to generate
-code or manifests.`,
+		Use:   "run",
+		Short: "Run an Operator in a variety of environments",
+		Long: `This command has subcommands that will deploy your Operator with OLM.
+Currently only the package manifests format is supported via the 'packagemanifests' subcommand.
+Run 'operator-sdk run --help' for more information.
+`,
 	}
 
 	cmd.AddCommand(
-		kustomize.NewCmd(),
-		bundle.NewCmd(),
 		packagemanifests.NewCmd(),
 	)
+
 	return cmd
 }
