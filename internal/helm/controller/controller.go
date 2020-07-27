@@ -35,8 +35,8 @@ import (
 
 	libhandler "github.com/operator-framework/operator-lib/handler"
 	"github.com/operator-framework/operator-lib/predicate"
+	"github.com/operator-framework/operator-sdk/internal/helm/release"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-	"github.com/operator-framework/operator-sdk/pkg/helm/release"
 )
 
 var log = logf.Log.WithName("helm.controller")

@@ -39,7 +39,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/cli-runtime/pkg/resource"
 
-	"github.com/operator-framework/operator-sdk/pkg/helm/internal/types"
+	"github.com/operator-framework/operator-sdk/internal/helm/internal/types"
 )
 
 // Manager manages a Helm release. It can install, upgrade, reconcile,
