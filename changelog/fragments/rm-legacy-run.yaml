@@ -2,7 +2,7 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      Removed legacy `run` and `cleanup` subcommands
+      Removed `run` and `cleanup` subcommands support in legacy projects
 
     kind: "removal"
 

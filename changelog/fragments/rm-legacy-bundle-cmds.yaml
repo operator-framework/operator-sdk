@@ -2,10 +2,10 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      Removed legacy `bundle create/validate` commands
+      Removed `bundle create` command and `bundle validate` support in legacy projects
     kind: "removal"
     # Is this a breaking change?
     breaking: true
     migration:
-      header: Remove legacy "bundle create/validate" commands
+      header: Remove `bundle create` command and `bundle validate` support in legacy projects
       body: TBD

@@ -1,6 +1,6 @@
 entries:
   - description: >
-      Removed legacy Go CLI subcommands and features: `add`, `migrate`
+      Removed support in legacy Go projects for CLI subcommands and features: `add`, `migrate`
       `print-deps`, `generate k8s`, `generate crds`, and `scorecard`.
     kind: removal
     breaking: true
