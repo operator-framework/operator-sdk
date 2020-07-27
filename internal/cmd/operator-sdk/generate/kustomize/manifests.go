@@ -18,13 +18,12 @@ import (
 	"fmt"
 	"path/filepath"
 
-	genutil "github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate/internal"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 
+	genutil "github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/generate/internal"
 	gencsv "github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion"
 	"github.com/operator-framework/operator-sdk/internal/plugins/util/kustomize"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
