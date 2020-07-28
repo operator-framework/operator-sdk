@@ -48,6 +48,16 @@
 - The `scorecard` subcommand now removes existing pods if the `--wait-time` deadline is exceeded and `--skip-cleanup=false` (the default). Fixes [#3419](https://github.com/operator-framework/operator-sdk/issues/3419). ([#3526](https://github.com/operator-framework/operator-sdk/pull/3526))
 - Fixed a bug in scorecard that caused tests to fail with permission errors when loading the bundle. ([#3428](https://github.com/operator-framework/operator-sdk/pull/3428))
 
+## v0.19.1
+
+### Additions
+
+- Added the `--from-version` flag to `generate packagemanifests`. ([#3524](https://github.com/operator-framework/operator-sdk/pull/3524))
+
+### Bug Fixes
+
+- Fixed a bug that caused the Ansible operator not to set the environment variables `ANSIBLE_ROLES_PATH` and `ANSIBLE_COLLECTIONS_PATH` based on  the flags `--ansible-roles-path` and `--ansible-collections-path`. ([#3565](https://github.com/operator-framework/operator-sdk/pull/3565))
+
 ## v0.19.0
 
 ### Additions
