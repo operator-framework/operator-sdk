@@ -25,19 +25,19 @@ table describes a basic rundown of each generated file/directory.
 container image that wraps the operator binary, and make targets for
 installing and uninstalling the CRD. |
 | PROJECT | A YAML file containing meta information for the operator. |
-| config/crd | The base CRD file and the kustomization settings. |
-| config/default | A sidecar container to be injected to the controller
+| config/crd | The base CRD files and the kustomization settings. |
+| config/default | Collects all operator manifests for deployment, used by `make deploy`. |
 manager for RBAC authorization against K8S API. | 
 | config/manager | The controller manager deployment. |
 | config/prometheus | The ServiceMonitor resource for monitoring the
 operator. |
 | config/rbac | The role, role binding for leader election and authentication
 proxy. |
-| config/sample | The sample resource created for the CRD. |
+| config/samples | The sample resources created for the CRDs. |
 | config/testing | Some sample configurations for testing. |
-| playbooks/ | A subdirectory for the playbook to run. |
+| playbooks/ | A subdirectory for the playbooks to run. |
 | roles/ | A subdirectory for the roles tree to run. |
-| watches.yaml | The Group, Version, and Kind of the resource to watch, and
+| watches.yaml | The Group, Version, and Kind of the resources to watch, and
 the Ansible invocation method. New entries are added via the 'create api'
 command. |
 | requirements.yml | A YAML file containing the Ansible collections and role
@@ -87,21 +87,14 @@ some special environment variables:
     This is the default value if the `WATCH_NAMESPACE` environment variable is
     not set. It is especially useful for watching cluster-scoped resources.
 
-  - '&lt;foo&gt;': The operator will watch the namespace named '&lt;foo&gt;'.
+  - `foo`: The operator will watch the namespace named `foo`.
     This is the setting you will use if you are operating a namespaced resource
-    which is deployed into a namespace different from the one your operator is
-    running in.
+    which is deployed into a specific namespace.
 
-  - '&lt;foo&gt;,&lt;bar&gt;': The operator checks the value of the
-    environment variable and realizes that it is a comma-separated list. This
-    means the operator is about to watch more than one namespace, as listed in
-    the string value.
+  - `foo,bar`: The operator checks the value of the environment variable and
+    realizes that it is a comma-separated list. This means the operator will
+    watch for resources in each of the listed namespaces.
 
-- `POD_NAME` (**Deprecated**): The name of the operator Pod. This was used
-  for leader election among multiple operator instanes.
-
-- `OPERATOR_NAME` (**Deprecated**): The name of the operator. Similar to the
-  `POD_NAME`,  this was used for leader election among operator instances.
 
 - `ANSIBLE_DEBUG_LOGS`: A boolean value for toggling the Ansible output during
   reconciliation. When set to True, the operator dumps the Ansible result into
@@ -144,4 +137,3 @@ some special environment variables:
 [ansible_env]: https://docs.ansible.com/ansible/latest/reference_appendices/config.html#environment-variables
 [runner_input_dir]: https://ansible-runner.readthedocs.io/en/latest/intro.html#runner-input-directory-hierarchy
 [watches_doc]: /docs/building-operators/ansible/reference/watches/
-
