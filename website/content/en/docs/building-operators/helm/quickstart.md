@@ -324,7 +324,7 @@ $ make undeploy
 todo(camilamacedo86): https://github.com/operator-framework/operator-sdk/issues/3447 
 -->
 [operator-scope]: /docs/building-operators/golang/operator-scope
-[layout-doc]: /docs/building-operators/helm/reference/scaffolding
+[layout-doc]: /docs/building-operators/helm/reference/project_layout/
 [helm-charts]:https://helm.sh/docs/topics/charts/
 [helm-values]:https://helm.sh/docs/intro/using_helm/#customizing-the-chart-before-installing
 [helm-official]:https://helm.sh/docs/
