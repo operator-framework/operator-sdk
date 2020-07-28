@@ -1,10 +1,17 @@
 ---
-title: Helm Based Operator Quickstart
+title: Quickstart for Helm-based Operators
 linkTitle: Quickstart
-weight: 2
+weight: 100
+description: A simple set of instructions that demonstrates the basics of setting up and running a Helm-based operator.
 ---
 
 This guide walks through an example of building a simple nginx-operator powered by [Helm][helm-official] using tools and libraries provided by the Operator SDK.
+
+**Note**: This guide uses [minikube][minikube-tool] version v0.25.0+ as the
+local Kubernetes cluster and [quay.io][quay-link] for the public registry.
+
+[minikube-tool]:https://github.com/kubernetes/minikube#installation
+[quay-link]:https://quay.io
 
 ## Create a new project
 
@@ -317,7 +324,7 @@ $ make undeploy
 todo(camilamacedo86): https://github.com/operator-framework/operator-sdk/issues/3447 
 -->
 [operator-scope]: /docs/building-operators/golang/operator-scope
-[layout-doc]: /docs/building-operators/helm/reference/scaffolding
+[layout-doc]: /docs/building-operators/helm/reference/project_layout/
 [helm-charts]:https://helm.sh/docs/topics/charts/
 [helm-values]:https://helm.sh/docs/intro/using_helm/#customizing-the-chart-before-installing
 [helm-official]:https://helm.sh/docs/

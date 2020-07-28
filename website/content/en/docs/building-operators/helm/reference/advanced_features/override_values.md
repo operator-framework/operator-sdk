@@ -1,12 +1,9 @@
 ---
-title: Helm Based Operator Advanced Features
-linkTitle: Advanced Features
-weight: 20
+title: Setting Overide Values in Helm-based Operators
+linkTitle: Override Values
+weight: 100
+description: Learn how to set override values and pass environment variables to your Helm chart.
 ---
-
-This document shows the advanced features available to a developer of helm operator.
-
-### Passing environment variables to the Helm chart
 
 Sometimes it is useful to pass down environment variables from the Operators `Deployment`
 all the way to the helm charts templates. This allows the Operator to be configured at a global
@@ -84,53 +81,3 @@ Events:
   ----     ------               ----  ----              -------
   Warning  OverrideValuesInUse  1m    nginx-controller  Chart value "image.repository" overridden to "quay.io/mycustomrepo" by operator's watches.yaml
 ```
-
-
-### Changing the maximum number of concurrent reconciles
-
-Depending on the number of CRs your operator is managing, it might be necessary to tune the maximum number of concurrent reconciles to ensure timely reconciliations. The `--max-concurrent-reconciles` flag can be used to override the default max concurrent reconciles, which by default is the number of CPUs on the node on which the operator is running. For example:
-
-```sh
-$ cat config/manager/manager.yaml 
-...
-    spec:
-      containers:
-      - args:
-        - manager
-        - --max-concurrent-reconciles=10
-...
-```
-
-While running locally, this flag can also be added to the helm binary. For example, running `helm-operator` binary with the above mentioned flag would give us a similar result:
-```
-helm-operator --max-concurrent-reconciles=10
-```
-
-**NOTE**: If you're using the default scaffolding, it is necessary to also apply this change to the `config/default/manager_auth_proxy_patch.yaml` file. This file is a `kustomize` patch to the operator deployment that configures [kube-rbac-proxy][kube-rbac-proxy] to require authorization for accessing your operator metrics. When `kustomize` applies this patch, it overrides the args defined in `config/manager/manager.yaml`
-
-## Use `helm upgrade --force` for deployment
-
-By adding the annotation `helm.sdk.operatorframework.io/upgrade-force: "True"` to the deployed CR, the operator uses the `--force` flag of helm to replace the rendered resources. For more info see the [Helm Upgrade documentation](https://helm.sh/docs/helm/helm_upgrade/) and this [explanation](https://github.com/helm/helm/issues/7082#issuecomment-559558318) of `--force` behavior.
-
-**Example**
-
-```yaml
-apiVersion: example.com/v1alpha1
-kind: Nginx
-metadata:
-  name: nginx-sample
-  annotations:
-    helm.sdk.operatorframework.io/upgrade-force: "True"
-spec:
-  replicaCount: 2
-  service:
-    port: 8080
-```
-
-Setting this annotation to `True` and updating the spec (for example changing to `spec.replicaCount: 3`) will cause this CR to be reconciled and upgraded with the `force` option. This can be verified in the log message when an upgrade succeeds: 
-
-```
-{"level":"info","ts":1591198931.1703992,"logger":"helm.controller","msg":"Upgraded release","namespace":"helm-nginx","name":"example-nginx","apiVersion":"cache.example.com/v1alpha1","kind":"Nginx","release":"example-nginx","force":true}
-```
-
-[kube-rbac-proxy]: https://github.com/brancz/kube-rbac-proxy
