@@ -14,8 +14,8 @@ new Ansible-based memcached-operator project:
 
 ```sh
 $ mkdir memcached-operator && cd memcached-operator
-$ operator-sdk new init --plugins=ansible --domain=example.com
-$ operator sdk create api --group=cache --version=v1alpha1 --kind=Memcached
+$ operator-sdk init --plugins=ansible --domain=example.com
+$ operator sdk create api --group=cache --version=v1alpha1 --kind=Memcached --generate-role
 ```
 
 This creates the memcached-operator project specifically for watching the

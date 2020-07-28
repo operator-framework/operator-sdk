@@ -56,7 +56,7 @@ local machine as opposed to running/rebuilding the operator each time. To do
 this, initialize a new project:
 ```bash
 $ mkdir foo-operator && cd foo-operator
-$ operator-sdk init --plugins=ansible --domain=example.com --group=foo --version=v1alpha1 --kind=Foo
+$ operator-sdk init --plugins=ansible --domain=example.com --group=foo --version=v1alpha1 --kind=Foo --generate-role
 $ ansible-galaxy collection install -r requirements.yml
 ```
 Modify `roles/Foo/tasks/main.yml` with desired Ansible logic. For this example
