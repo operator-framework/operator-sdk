@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package bundle
+package bundle_test
 
 import (
 	"testing"
@@ -23,5 +23,5 @@ import (
 
 func TestBundle(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Bundle Suite")
+	RunSpecs(t, "Bundle Cmd Suite")
 }

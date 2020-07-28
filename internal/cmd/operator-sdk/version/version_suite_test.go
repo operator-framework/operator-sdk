@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package version
+package version_test
 
 import (
 	"testing"
@@ -23,5 +23,5 @@ import (
 
 func TestVersion(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Version Suite")
+	RunSpecs(t, "Version Cmd Suite")
 }

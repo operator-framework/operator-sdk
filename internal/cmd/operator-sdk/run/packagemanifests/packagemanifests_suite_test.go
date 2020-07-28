@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package packagemanifests
+package packagemanifests_test
 
 import (
 	"testing"
@@ -23,5 +23,5 @@ import (
 
 func TestRun(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Packagemanifests Suite")
+	RunSpecs(t, "Packagemanifests Cmd Suite")
 }
