@@ -434,7 +434,7 @@ Please look over the following sections for help debugging an Ansible Operator:
 The extra vars that are sent to Ansible are managed by the operator. The `spec`
 section will pass along the key-value pairs as extra vars.  This is equivalent
 to how above extra vars are passed in to `ansible-playbook`. The operator also
-passes along additional variables under the `ansibl_operator_meta` field for
+passes along additional variables under the `ansible_operator_meta` field for
 the name of the CR and the namespace of the CR.
 
 For the CR example:
