@@ -1,7 +1,0 @@
-entries:
-  - description: Remove the `add crd` subcommand.
-    kind: removal
-    breaking: true
-    migration:
-      header: Remove the `add crd` subcommand
-      body: TBD

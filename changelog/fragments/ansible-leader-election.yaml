@@ -1,9 +1,0 @@
-# entries is a list of entries to include in
-# release notes and/or the migration guide
-entries:
-  - description: >
-      In the Ansible operator, use controller-runtime's lease-based leader
-      election instead of SDK's leader-for-life mechnism.
-
-    kind: "change"
-    breaking: false

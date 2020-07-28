@@ -1,7 +1,0 @@
-entries:
-    - description: >
-       Add new handler for metrics which can be registered with controller-runtime registry, 
-       and wraps existing EnqueueResuestForObject, for both Ansible and Helm controllers.      
-  
-      kind: "addition"
-      breaking: false
