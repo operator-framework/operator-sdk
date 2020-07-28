@@ -4,7 +4,7 @@ linkTitle: Admission Webhooks
 weight: 40
 ---
 
-## Create a validating or mutating Admission Webhook
+## Creating a validating or mutating Admission Webhook
 
 An admission webhook is an HTTP callback that is registered with Kubernetes, and will be called by Kubernetes to validate or mutate
 a resource before being stored. There are two types of admission webhooks, validating and mutating. Validating webhooks can be used
@@ -73,7 +73,7 @@ func (r *Memcached) ValidateUpdate(old runtime.Object) error {
 }
 ```
 
-### Generate webhook manifests and enable webhook deployment
+## Generating webhook manifests 
 
 Once your webhooks are implemented, all that's left is to create the `WebhookConfiguration` manifests
 required to register your webhooks with Kubernetes:
@@ -86,7 +86,7 @@ You will need to enable cert-manager and webhook deployment in order to deploy t
 To do so, edit the `config/default/kustomize.yaml` and uncomment the sections marked by `[WEBHOOK]` and `[CERTMANAGER]` comments. More detail on this step can be found in the 
 [Kubebuilder documentation][kubebuilder_running_webhook].
 
-### Update main.go so that running locally works
+## Updating main.go so that running locally works
 
 To ensure that running locally continues working, ensure that there is a check that prevents
 the webhooks from being started when the `ENABLE_WEBHOOKS` flag is set to false. To do so,
@@ -101,7 +101,11 @@ if os.Getenv("ENABLE_WEBHOOKS") != "false" {
 }
 ```
 
-## Run your operator and webhooks
+## Running your operator with Webhooks
+
+### Configuring Cert-Manager
+
+Please follow [this][certmanager] guide to install cert-mamager into cluster prior to deployment.
 
 ### Run locally
 
@@ -115,12 +119,12 @@ If your certificates are properly configured, you should be able to start your o
 $ make run ENABLE_WEBHOOKS=true
 ```
 
-## Build and run the operator
+### Building and runnning the operator
 
 See the [quickstart guide][quickstart] to know how to build the project and run it. Also, 
 ensure that you have your test environment configured before run the targets to build the project.
 
-## Create a Memcached CR to exercise your webhook
+### Creating a Memcached CR to exercise your webhook
 
 First, follow the instructions for creating your Memcached CR in the [tutorial_guide][tutorial_create_a_cr].
 
@@ -159,7 +163,7 @@ memcached-operator-controller-manager   1/1     1            1           8m
 memcached-sample                        3/3     3            3           1m
 ```
 
-### Update the size
+### Updating the size
 
 Update `config/samples/cache_v1alpha1_memcached.yaml` to change the `spec.size` field in the Memcached CR from 3 to 5:
 
@@ -176,7 +180,7 @@ memcached-operator-controller-manager   1/1     1            1           10m
 memcached-sample                        5/5     5            5           3m
 ```
 
-#### Update the size to an even number
+### Updating the size to an even number
 
 Update `config/samples/cache_v1alpha1_memcached.yaml` to change the `spec.size` field in the Memcached CR from 3 to 4:
 
@@ -207,3 +211,4 @@ memcached-sample                        5/5     5            5           3m
 [kubebuilder_cronjob_webhook]: https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html
 [kubebuilder_running_webhook]: https://book.kubebuilder.io/cronjob-tutorial/running-webhook.html
 [kubernetes_admission_controllers]: https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/
+[certmanager]: https://cert-manager.io/docs/installation/kubernetes/

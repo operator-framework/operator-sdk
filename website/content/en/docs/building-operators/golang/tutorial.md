@@ -8,63 +8,36 @@ weight: 30
 
 This guide walks through an example of building a simple memcached-operator using the operator-sdk CLI tool and controller-runtime library API.
 
-## Prerequisites
+## Creating a new project
 
-- [go][go_tool] version v1.13+.
-- [docker][docker_tool] version 17.03+.
-- [kubectl][kubectl_tool] version v1.11.3+.
-- [kustomize][kustomize_tool] v3.1.0+
-- Access to a Kubernetes v1.11.3+ cluster.
+In Kubebuilder-style projects, CRD groups are defined using two different flags
+(`--group` and `--domain`).
 
-## Create a new project
+When we initialize a new project, we need to specify the domain that _all_ APIs in
+our project will share, so before creating the new project, we can to determine which
+domain we're using for the APIs in our existing project.
 
-Use the CLI to create a new memcached-operator project:
+The domain is everything after the first DNS segment. Using `cache.example.com` as an
+example, the `--domain` would be `example.com`.
 
+In this example, we also will use the flag `--repo` which will set the path for its go module. Note that `operator-sdk init` generates a `go.mod` file to be used with [Go modules][go_mod_wiki]. The `--repo=<path>` flag is required when creating a project outside of `$GOPATH/src`, as scaffolded files require a valid module path. Ensure you [activate module support][activate_modules] by running `export GO111MODULE=on` before using the SDK.
+
+ 
 ```sh
-$ mkdir -p $HOME/projects/memcached-operator
-$ cd $HOME/projects/memcached-operator
-# we'll use a domain of example.com
-# so all API groups will be <group>.example.com
+$ mkdir $GOPATH/src/memcached-operator
+$ cd $GOPATH/src/memcached-operator
 $ operator-sdk init --domain=example.com --repo=github.com/example-inc/memcached-operator
 ```
 
-To learn about the project directory structure, see [Kubebuilder project layout][kubebuilder_layout_doc] doc.
+**Note** If you’re not in GOPATH, you’ll need to run `go mod init <modulename>` in order to tell kubebuilder and Go the base import path of your module. For further information see the [How to Write Go Code][godoc] into the Golang doc page.
 
-#### A note on dependency management
-
-`operator-sdk init` generates a `go.mod` file to be used with [Go modules][go_mod_wiki]. The `--repo=<path>` flag is required when creating a project outside of `$GOPATH/src`, as scaffolded files require a valid module path. Ensure you [activate module support][activate_modules] by running `export GO111MODULE=on` before using the SDK.
-
-### Manager
+## Customizing the initialization
+ 
 The main program for the operator `main.go` initializes and runs the [Manager][manager_go_doc].
 
-See the [Kubebuilder entrypoint doc][kubebuilder_entrypoint_doc] for more details on how the manager registers the Scheme for the custom resource API defintions, and sets up and runs controllers and webhooks.
+See the [Kubebuilder entrypoint doc][kubebuilder_entrypoint_doc] for more details over the options to instantiate a manager.
 
-
-The Manager can restrict the namespace that all controllers will watch for resources:
-```Go
-mgr, err := manager.New(cfg, manager.Options{Namespace: namespace})
-```
-By default this will be the namespace that the operator is running in. To watch all namespaces leave the namespace option empty:
-```Go
-mgr, err := manager.New(cfg, manager.Options{Namespace: ""})
-```
-
-It is also possible to use the [MultiNamespacedCacheBuilder][multi-namespaced-cache-builder] to watch a specific set of namespaces:
-```Go
-var namespaces []string // List of Namespaces
-// Create a new Cmd to provide shared dependencies and start components
-mgr, err := manager.New(cfg, manager.Options{
-   NewCache: cache.MultiNamespacedCacheBuilder(namespaces),
-})
-```
-
-#### Operator scope
-
-Read the [operator scope][operator_scope] documentation on how to run your operator as namespace-scoped vs cluster-scoped.
-
-By default the main program will set the manager's namespace using the value of `WATCH_NAMESPACE` env defined in `deploy/operator.yaml`.
-
-### Multi-Group APIs
+## Multi-Group APIs
 
 Before creating an API and controller, consider if your operator's API requires multiple [groups][API-groups].
 If yes then add the line `multigroup: true` in the `PROJECT` file which should look like the following:
@@ -79,7 +52,7 @@ For multi-group projects, the API Go type files are created under `apis/<group>/
 
 This guide will cover the default case of a single group API.
 
-## Create a new API and Controller
+## Creating a new API and Controller
 
 Create a new Custom Resource Definition(CRD) API with group `cache` version `v1alpha1` and Kind Memcached.
 When prompted, enter yes `y` for creating both the resource and controller.
@@ -102,7 +75,7 @@ See the [API terminology doc][api_terms_doc] for details on the CRD API conventi
 
 To understand the API Go types and controller scaffolding see the Kubebuilder [api doc][kb_api_doc] and [controller doc][kb_controller_doc].
 
-### Define the API
+## Defining the API
 
 Define the API for the Memcached Custom Resource(CR) by modifying the Go type definitions at `api/v1alpha1/memcached_types.go` to have the following spec and status:
 
@@ -143,7 +116,7 @@ $ make generate
 
 The above makefile target will invoke the [controller-gen][controller_tools] utility to update the `api/v1alpha1/zz_generated.deepcopy.go` file to ensure our API's Go type definitons implement the `runtime.Object` interface that all Kind types must implement.
 
-### Generating CRD manifests
+## Generating CRD manifests
 
 Once the API is defined with spec/status fields and CRD validation markers, the CRD manifests can be generated and updated with the following command:
 
@@ -153,7 +126,7 @@ $ make manifests
 
 This makefile target will invoke controller-gen to generate the CRD manifests at `config/crd/bases/cache.example.com_memcacheds.yaml`.
 
-#### OpenAPI validation
+### OpenAPI validation
 
 OpenAPIv3 schemas are added to CRD manifests in the `spec.validation` block when the manifests are generated. This validation block allows Kubernetes to validate the properties in a Memcached Custom Resource when it is created or updated.
 
@@ -163,7 +136,7 @@ Usage of markers in API code is discussed in the kubebuilder [CRD generation][ge
 
 To learn more about OpenAPI v3.0 validation schemas in CRDs, refer to the [Kubernetes Documentation][doc-validation-schema].
 
-### Implement the Controller
+## Implementing the Controller
 
 For this example replace the generated controller file `controllers/memcached_controller.go` with the example [`memcached_controller.go`][memcached_controller] implementation.
 
@@ -174,7 +147,7 @@ The example controller executes the following reconciliation logic for each Memc
 
 The next two subsections explain how the controller watches resources and how the reconcile loop is triggered. Skip to the [Build](#build-and-run-the-operator) section to see how to build and run the operator.
 
-#### Resources watched by the Controller
+### Resources watched by the Controller
 
 The `SetupWithManager()` function in `controllers/memcached_controller.go` specifies how the controller is built to watch a CR and other resources that are owned and managed by that controller.
 
@@ -193,7 +166,7 @@ The `NewControllerManagedBy()` provides a controller builder that allows various
 
 `Owns(&appsv1.Deployment{})` specifies the Deployments type as the secondary resource to watch. For each Deployment type Add/Update/Delete event, the event handler will map each event to a reconcile `Request` for the owner of the Deployment. Which in this case is the Memcached object for which the Deployment was created.
 
-#### Controller Configurations
+### Controller Configurations
 
 There are a number of other useful configurations that can be made when initialzing a controller. For more details on these configurations consult the upstream [builder][builder_godocs] and [controller][controller_godocs] godocs.
 
@@ -213,7 +186,7 @@ There are a number of other useful configurations that can be made when initialz
 - Choose the type of [EventHandler][event_handler_godocs] to change how a watch event will translate to reconcile requests for the reconcile loop. For operator relationships that are more complex than primary and secondary resources, the [`EnqueueRequestsFromMapFunc`][enqueue_requests_from_map_func] handler can be used to transform a watch event into an arbitrary set of reconcile requests.
 
 
-#### Reconcile loop
+### Reconcile loop
 
 Every Controller has a Reconciler object with a `Reconcile()` method that implements the reconcile loop. The reconcile loop is passed the [`Request`][request-go-doc] argument which is a Namespace/Name key used to lookup the primary resource object, Memcached, from the cache:
 
@@ -275,12 +248,14 @@ The `ClusterRole` manifest at `config/rbac/role.yaml` is updated from the above 
 $ make manifests
 ```
 
-## Build and run the operator
+By default, the projects are `cluster-scoped`. Check that your role is of the `ClusterRole` Kind. For further information check the [operator-scope][operator-scope] doc. 
+
+## Building and running the operator
 
 See the [quickstart guide][quickstart] to know how to build the project and run it. Also, 
 ensure that you have your test environment configured before run the targets to build the project.
 
-## Customize your Operator image
+## Customizing your Operator image
 
 Before building the operator image, ensure the generated Dockerfile references
 the base image you want. You can change the default "runner" image `gcr.io/distroless/static:nonroot`
@@ -290,7 +265,7 @@ the `USER: nonroot:nonroot` directive for example.
 **Note**:
 The name and tag of the image (`IMG=<some-registry>/<project-name>:tag`) in both the commands can also be set in the Makefile. Modify the line which has `IMG ?= controller:latest` to set your desired default image name.
 
-#### Deploy the operator
+## Deploying the Operator
 
 For this example we will run the operator in the `default` namespace which can be specified for all resources in `config/default/kustomization.yaml`:
 
@@ -304,9 +279,6 @@ Run the following to deploy the operator. This will also install the RBAC manife
 $ make deploy IMG=quay.io/$USERNAME/memcached-operator:v0.0.1
 ```
 
-*NOTE* If you have enabled webhooks in your deployments, you will need to have cert-manager already installed
-in the cluster or `make deploy` will fail when creating the cert-manager resources.
-
 Verify that the memcached-operator is up and running:
 
 ```console
@@ -315,11 +287,7 @@ NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE
 memcached-operator-controller-manager   1/1     1            1           8m
 ```
 
-### 3. Deploy your Operator with the Operator Lifecycle Manager (OLM)
-
-OLM will manage creation of most if not all resources required to run your operator, using a bit of setup from other `operator-sdk` commands. Check out the [docs][cli-run-olm] for more information.
-
-## Create a Memcached CR
+## Creating an instance of a Memcached CR
 
 Update the sample Memcached CR manifest at `config/samples/cache_v1alpha1_memcached.yaml` and define the `spec` as the following:
 
@@ -379,7 +347,7 @@ status:
   - memcached-sample-6fd7c98d8-m7vn7
 ```
 
-### Update the size
+## Updating the size of the Memcached instances
 
 Update `config/samples/cache_v1alpha1_memcached.yaml` to change the `spec.size` field in the Memcached CR from 3 to 5:
 
@@ -448,3 +416,4 @@ Also see the [advanced topics][advanced_topics] doc for more use cases and under
 [API-groups]:https://kubernetes.io/docs/concepts/overview/kubernetes-api/#api-groups
 [legacy_CLI]:https://v0-19-x.sdk.operatorframework.io/docs/cli/
 [env-test-setup]: /docs/building-operators/golang/references/env-test-setup
+[godoc]:https://golang.org/doc/code.html
