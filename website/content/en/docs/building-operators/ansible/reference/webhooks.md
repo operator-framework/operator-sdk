@@ -12,7 +12,8 @@ webhook server. You will likely need to make a few modifications to the webhook 
 
 When integrating an admission webhook server into your Ansible-based Operator, we recommend that you
 deploy it as a sidecar container alongside your operator. This allows you to make use of the proxy
-server that the operator deploys, as well as the cache that backs it. The sidecar will be defined in the `deploy/operator.yaml` and it will look like:
+server that the operator deploys, as well as the cache that backs it. The sidecar will be defined in
+`config/manager/manager.yaml` and it will look like:
 
 ```yaml
 # This deploys the webhook
@@ -36,30 +37,19 @@ be hitting the real API server and will not get caching for free.
 ## Deploying the webhook server
 
 To deploy the webhook server as a sidecar alongside your operator, all you need to do is add the container
-specification to your `deploy/operator.yaml`. You may also need to add a volume for mounting in TLS secrets,
+specification to your `config/manager/manager.yaml`. You may also need to add a volume for mounting in TLS secrets,
 as your webhook server is required to have a valid SSL configuration. Below is a sample updated container
 specification that deploys a webhook:
 
 ```yaml
 containers:
-  - name: my-operator
-    # Replace this with the built image name
-    image: "REPLACE_IMAGE"
+  - name: manager
+    image: controller:latest
     imagePullPolicy: "Always"
     volumeMounts:
     - mountPath: /tmp/ansible-operator/runner
       name: runner
     env:
-      - name: WATCH_NAMESPACE
-        valueFrom:
-          fieldRef:
-            fieldPath: metadata.namespace
-      - name: POD_NAME
-        valueFrom:
-          fieldRef:
-            fieldPath: metadata.name
-      - name: OPERATOR_NAME
-        value: "validating-operator"
       - name: ANSIBLE_GATHERING
         value: explicit
   # This deploys the webhook
