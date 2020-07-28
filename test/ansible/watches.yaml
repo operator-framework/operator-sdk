@@ -52,3 +52,10 @@
   playbook: playbooks/args.yml
   vars:
     meta: '{{ ansible_operator_meta }}'
+
+- version: v1alpha1
+  group: test.example.com
+  kind: ReconciliationTest
+  playbook: playbooks/reconciliation.yml
+  vars:
+    meta: '{{ ansible_operator_meta }}'
