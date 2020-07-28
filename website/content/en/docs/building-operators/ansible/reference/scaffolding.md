@@ -27,7 +27,6 @@ installing and uninstalling the CRD. |
 | PROJECT | A YAML file containing meta information for the operator. |
 | config/crd | The base CRD files and the kustomization settings. |
 | config/default | Collects all operator manifests for deployment, used by `make deploy`. |
-manager for RBAC authorization against K8S API. | 
 | config/manager | The controller manager deployment. |
 | config/prometheus | The ServiceMonitor resource for monitoring the
 operator. |
