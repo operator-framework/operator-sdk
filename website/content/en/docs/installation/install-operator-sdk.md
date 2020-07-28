@@ -3,13 +3,21 @@ title: "Installation"
 linkTitle: "Installation"
 date: 2020-03-25
 weight: 2
-description: >
-  Install the Operator SDK CLI
+description: Install the Operator SDK CLI
 ---
 
+- [Prerequisites](#prerequisites)
 - [Install from Homebrew (macOS)](#install-from-homebrew-macos)
 - [Install from GitHub release](#install-from-github-release)
 - [Compile and install from master](#compile-and-install-from-master)
+
+## Prerequisites
+
+- [docker][docker-tool] version 17.03+ (or another tool compatible with multi-stage Dockerfiles).
+- [kubectl][kubectl-tool] version v1.11.3+ (v1.16.0+ if using `apiextensions.k8s.io/v1` CRDs).
+
+[docker-tool]:https://docs.docker.com/install/
+[kubectl-tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 
 ## Install from Homebrew (macOS)
 
@@ -101,7 +109,7 @@ $ chmod +x helm-operator-${RELEASE_VERSION}-x86_64-apple-darwin && sudo mkdir -p
 
 ## Compile and install from master
 
-### Prerequisites
+### Prerequisites for compilation
 
 - [git][git_tool]
 - [mercurial][mercurial_tool] version 3.9+

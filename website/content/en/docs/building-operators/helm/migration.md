@@ -1,7 +1,8 @@
 ---
-title: Migrating Legacy Projects
+title: Migrating Helm-based Legacy Projects
 linkTitle: Migrating Legacy Projects
-weight: 3
+weight: 300
+description: Instructions for migrating a legacy Helm-based project to use the new Kubebuilder-style layout.
 ---
 
 This guide walks through an example of migrating a simple nginx-operator which was built by following the [legacy quick-start][quickstart-legacy] to the new layout.

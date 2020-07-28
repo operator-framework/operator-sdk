@@ -1,10 +1,17 @@
 ---
-title: Helm Based Operator Quickstart
+title: Quickstart for Helm-based Operators
 linkTitle: Quickstart
-weight: 2
+weight: 100
+description: A simple set of instructions that demonstrates the basics of setting up and running a Helm-based operator.
 ---
 
 This guide walks through an example of building a simple nginx-operator powered by [Helm][helm-official] using tools and libraries provided by the Operator SDK.
+
+**Note**: This guide uses [minikube][minikube-tool] version v0.25.0+ as the
+local Kubernetes cluster and [quay.io][quay-link] for the public registry.
+
+[minikube-tool]:https://github.com/kubernetes/minikube#installation
+[quay-link]:https://quay.io
 
 ## Create a new project
 
