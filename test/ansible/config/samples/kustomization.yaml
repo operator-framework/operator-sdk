@@ -1,0 +1,3 @@
+## This file is auto-generated, do not modify ##
+resources:
+- test.example.com_v1alpha1_inventorytest_cr.yaml

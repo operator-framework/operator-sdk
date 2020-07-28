@@ -1,9 +1,0 @@
-apiVersion: test.example.com/v1
-kind: InventoryTest
-metadata:
-  name: example-inventorytest
-  annotations:
-    "ansible.operator-sdk/verbosity": "3"
-spec:
-  # Add fields here
-  size: 3

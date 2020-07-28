@@ -13,16 +13,16 @@
       when: not operator_image
 
     - name: Set testing image
-      command: kustomize edit set image testing={{ operator_image }}
+      command: '{{ kustomize }} edit set image testing={{ operator_image }}'
       args:
         chdir: '{{ config_dir }}/testing'
 
     - name: Set pull policy
-      command: kustomize edit add patch pull_policy/{{ pull_policy }}.yaml
+      command: '{{ kustomize }} edit add patch pull_policy/{{ pull_policy }}.yaml'
       args:
         chdir: '{{ config_dir }}/testing'
 
     - name: Set testing namespace
-      command: kustomize edit set namespace {{ namespace }}
+      command: '{{ kustomize }} edit set namespace {{ namespace }}'
       args:
         chdir: '{{ config_dir }}/testing'

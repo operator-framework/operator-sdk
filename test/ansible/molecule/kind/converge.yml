@@ -5,6 +5,13 @@
   gather_facts: no
 
   tasks:
+    - name: Build Ansible dev base image
+      make:
+        chdir: '{{ project_dir }}/../../'
+        target: image-build-ansible
+      # Not important, but maybe should fix someday
+      changed_when: false
+
     - name: Build operator image
       docker_image:
         build:
@@ -14,6 +21,7 @@
         tag: latest
         push: no
         source: build
+        force_source: yes
 
     - name: Load image into kind cluster
       command: kind load docker-image --name osdk-test '{{ operator_image }}'

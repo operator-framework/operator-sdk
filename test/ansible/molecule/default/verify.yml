@@ -8,10 +8,10 @@
 
   tasks:
     - block:
-      - name: Import all test files from tasks/
-        include_tasks: '{{ item }}'
-        with_fileglob:
-          - tasks/*_test.yml
+        - name: Import all test files from tasks/
+          include_tasks: '{{ item }}'
+          with_fileglob:
+            - tasks/*_test.yml
       rescue:
         - name: Retrieve relevant resources
           k8s_info:
@@ -29,14 +29,15 @@
               kind: ConfigMap
           register: debug_resources
 
-        - name: Retrieve Pod logs
+        - name: Retrieve Operator logs
           k8s_log:
             name: '{{ item.metadata.name }}'
             namespace: '{{ namespace }}'
-          loop: '{{ q("k8s", api_version="v1", kind="Pod", namespace=namespace) }}'
+            container: manager
+          loop: "{{ q('k8s', api_version='v1', kind='Pod', namespace=namespace) }}"
           register: debug_logs
 
-        - name: Ouput gathered resources
+        - name: Output gathered resources
           debug:
             var: debug_resources
 

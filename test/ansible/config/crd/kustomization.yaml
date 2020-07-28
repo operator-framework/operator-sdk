@@ -2,9 +2,9 @@
 # since it depends on service name and namespace that are out of this kustomize package.
 # It should be run by config/default
 resources:
-- test.example.com_collectiontests_crd.yaml
-- test.example.com_inventorytests_crd.yaml
-- test.example.com_selectortests_crd.yaml
-- test.example.com_subresourcestests_crd.yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
+  - bases/test.example.com_casetest_crd.yaml
+  - bases/test.example.com_collectiontests_crd.yaml
+  - bases/test.example.com_inventorytests_crd.yaml
+  - bases/test.example.com_selectortests_crd.yaml
+  - bases/test.example.com_subresourcestests_crd.yaml
+# +kubebuilder:scaffold:crdkustomizeresource
