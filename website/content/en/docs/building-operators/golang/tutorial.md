@@ -145,7 +145,7 @@ The example controller executes the following reconciliation logic for each Memc
 - Ensure that the Deployment size is the same as specified by the Memcached CR spec
 - Update the Memcached CR status using the status writer with the names of the memcached pods
 
-The next two subsections explain how the controller watches resources and how the reconcile loop is triggered. Skip to the [Build](#build-and-run-the-operator) section to see how to build and run the operator.
+The next two subsections explain how the controller watches resources and how the reconcile loop is triggered. 
 
 ### Resources watched by the Controller
 

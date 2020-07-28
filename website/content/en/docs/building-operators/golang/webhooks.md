@@ -205,7 +205,7 @@ memcached-sample                        5/5     5            5           3m
 ```
 
 [quickstart]: /docs/building-operators/golang/quickstart/
-[tutorial_create_a_cr]: /docs/building-operators/golang/tutorial/#create-a-memcached-cr
+[tutorial_create_a_cr]: /docs/building-operators/golang/tutorial/#creating-a-new-api-and-controller
 
 [kubebuilder_admission_controllers]: https://book.kubebuilder.io/reference/admission-webhook.html
 [kubebuilder_cronjob_webhook]: https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html

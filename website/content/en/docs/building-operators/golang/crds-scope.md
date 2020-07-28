@@ -26,8 +26,7 @@ one namespace in a cluster.
 **NOTE**: When a `Manager` instance is created in the `main.go` file, it receives the namespace(s) as Options. 
 These namespace(s) should be watched and cached for the Client which is provided by the Controllers. Only clients 
 provided by cluster-scoped projects where the `Namespace` attribute is `""` will be able to manage cluster-scoped CRD's. 
-For more information see the [Manager][manager_user_guide] topic in the user guide and the 
-[Manager Options][manager_options].
+For more information over the [Manager][manager_go_doc] see the [Kubebuilder entrypoint doc][kubebuilder_entrypoint_doc].
 
 ## Example for changing the CRD scope from Namespaced to Cluster 
 
@@ -97,5 +96,5 @@ spec:
 ``` 
   
 [RBAC]: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
-[manager_user_guide]:/docs/building-operators/golang/tutorial/#manager
+[kubebuilder_entrypoint_doc]:https://book.kubebuilder.io/cronjob-tutorial/empty-main.html
 [manager_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Options
