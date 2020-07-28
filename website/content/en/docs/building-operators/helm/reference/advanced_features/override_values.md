@@ -1,5 +1,5 @@
 ---
-title: Setting Overide Values in Helm-based Operators
+title: Setting Override Values in Helm-based Operators
 linkTitle: Override Values
 weight: 100
 description: Learn how to set override values and pass environment variables to your Helm chart.
