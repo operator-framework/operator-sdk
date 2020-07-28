@@ -1,4 +1,0 @@
-entries:
-  - description: >
-      Added the `--from-version` flag to `generate packagemanifests`.
-    kind: addition
