@@ -24,10 +24,10 @@ import (
 	apierrors "github.com/operator-framework/api/pkg/validation/errors"
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 	k8svalidation "k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"sigs.k8s.io/yaml"
 )
 
 // ValidateBundleContent confirms that the CSV and CRD files inside the bundle
@@ -35,8 +35,7 @@ import (
 // also validated to confirm if they are "kubectl-able" to a cluster meaning
 // if they can be applied to a cluster using `kubectl` provided users have all
 // necessary permissions and configurations.
-func ValidateBundleContent(logger *log.Entry, bundle *apimanifests.Bundle,
-	mediaType string) []apierrors.ManifestResult {
+func ValidateBundleContent(logger *log.Entry, bundle *apimanifests.Bundle, mediaType string) []apierrors.ManifestResult {
 
 	// Use errs to collect bundle-level validation errors.
 	errs := apierrors.ManifestResult{
@@ -167,9 +166,6 @@ func getAnnotationFileContents(filename string) (*registrybundle.AnnotationMetad
 }
 
 func writeAnnotationFile(filename string, annotation *registrybundle.AnnotationMetadata) error {
-	// TODO: replace `gopkg.in/yaml.v2` with `sigs.k8s.io/yaml`. Operator registry
-	// defines annotations with yaml format (using gopkg-yaml) and k8s-yaml takes name
-	// of field in the struct as the value of key in yaml.
 	file, err := yaml.Marshal(annotation)
 	if err != nil {
 		return err
