@@ -192,6 +192,10 @@ if there are many watched resources. Typically, this option should only be used 
 
 ### Testing an Ansible operator locally
 
+**Prerequisites**: Ensure that [Ansible Runner][ansible-runner-tool] and [Ansible Runner
+HTTP Plugin][ansible-runner-http-plugin] is installed or else you will see
+unexpected errors from Ansible Runner when a Custom Resource is created.
+
 Once a developer is comfortable working with the above workflow, it will be
 beneficial to test the logic inside of an operator. To accomplish this, we can
 use `make run` from the top-level directory of our project. The `make run`
@@ -324,6 +328,22 @@ In `config/manager/manager.yaml` and `config/default/manager_auth_proxy_patch.ya
         - name: ANSIBLE_DEBUG_LOGS
           value: "True"
 ...
+
+
+Occasionally while developing additional debug in the Operator logs is nice to have.
+Using the memcached operator as an example, we can simply add the
+`"ansible.sdk.operatorframework.io/verbosity"` annotation to the Custom
+Resource with the desired verbosity.
+
+```yaml
+apiVersion: "cache.example.com/v1alpha1"
+kind: "Memcached"
+metadata:
+  name: "example-memcached"
+  annotations:
+    "ansible.sdk.operatorframework.io/verbosity": "4"
+spec:
+  size: 4
 ```
 
 ## Custom Resource Status Management
