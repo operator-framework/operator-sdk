@@ -197,7 +197,7 @@ var _ = Describe("operator-sdk", func() {
 			runPkgManCmd := exec.Command(tc.BinaryName, "run", "packagemanifests",
 				"--install-mode", "AllNamespaces",
 				"--operator-namespace", tc.Kubectl.Namespace,
-				"--operator-version", operatorVersion,
+				"--version", operatorVersion,
 				"--timeout", "4m")
 			_, err = tc.Run(runPkgManCmd)
 			Expect(err).NotTo(HaveOccurred())
@@ -205,7 +205,7 @@ var _ = Describe("operator-sdk", func() {
 			By("destroying the deployed package manifests-formatted operator")
 			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", "packagemanifests",
 				"--operator-namespace", tc.Kubectl.Namespace,
-				"--operator-version", operatorVersion,
+				"--version", operatorVersion,
 				"--timeout", "4m")
 			_, err = tc.Run(cleanupPkgManCmd)
 			Expect(err).NotTo(HaveOccurred())

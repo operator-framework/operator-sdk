@@ -37,7 +37,7 @@ to make sure OLM can deploy our Operator successfully before attempting real pro
 most use cases the following invocation is all we need:
 
 ```console
-$ operator-sdk run packagemanifests --operator-version 0.0.1
+$ operator-sdk run packagemanifests --version 0.0.1
 INFO[0000] Running operator from directory packagemanifests
 INFO[0000] Creating memcached-operator registry         
 INFO[0000]   Creating ConfigMap "olm/memcached-operator-registry-manifests-package"
@@ -71,7 +71,7 @@ Now that we're done testing the memcached-operator, we should probably clean up 
 [`operator-sdk cleanup packagemanifests`][cli-cleanup-packagemanifests] will do this for you:
 
 ```console
-$ operator-sdk cleanup packagemanifests --operator-version 0.0.1
+$ operator-sdk cleanup packagemanifests --version 0.0.1
 INFO[0000] Deleting resources
 INFO[0000]   Deleting CatalogSource "default/memcached-operator-ocs"
 INFO[0000]   Deleting Subscription "default/memcached-operator-v0-0-1-sub"

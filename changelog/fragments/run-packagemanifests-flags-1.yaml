@@ -1,0 +1,16 @@
+entries:
+  - description: Removed the `--include-paths` flag from `run packagemanifests`.
+    kind: removal
+    breaking: true
+    migration:
+      header: Create resources manually that were passed to `run packagemanifests --include-paths`
+      body: >
+        The `run packagemanifests` subcommand no longer has the `--include-paths` flag to create
+        additional resources. Instead, use `kubectl apply -f <paths>` before invoking `run packagemanifests`.
+  - description: Changed the `--operator-version` flag to `--version` in `run packagemanifests`.
+    kind: change
+    breaking: true
+    migration:
+      header: Change the `run packagemanifests` flag `--operator-version` to `--version`
+      body: >
+        `--operator-version` is now `--version`.

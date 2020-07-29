@@ -58,7 +58,7 @@ func PackageManifestsAllNamespaces(t *testing.T) {
 
 	csvConfig := CSVTemplateConfig{
 		OperatorName:    defaultOperatorName,
-		OperatorVersion: defaultOperatorVersion,
+		Version:         defaultOperatorVersion,
 		TestImageTag:    testImageTag,
 		ReplacesCSVName: "",
 		CRDKeys: []DefinitionKey{
@@ -102,8 +102,8 @@ func PackageManifestsAllNamespaces(t *testing.T) {
 			OLMNamespace:   olm.DefaultOLMNamespace,
 			InstallMode:    string(operatorsv1alpha1.InstallModeTypeAllNamespaces),
 		},
-		ManifestsDir:    manifestsDir,
-		OperatorVersion: defaultOperatorVersion,
+		ManifestsDir: manifestsDir,
+		Version:      defaultOperatorVersion,
 	}
 	// Cleanup.
 	defer func() {
@@ -121,7 +121,7 @@ func PackageManifestsBasic(t *testing.T) {
 
 	csvConfig := CSVTemplateConfig{
 		OperatorName:    defaultOperatorName,
-		OperatorVersion: defaultOperatorVersion,
+		Version:         defaultOperatorVersion,
 		TestImageTag:    testImageTag,
 		ReplacesCSVName: "",
 		CRDKeys: []DefinitionKey{
@@ -164,8 +164,8 @@ func PackageManifestsBasic(t *testing.T) {
 			Timeout:        defaultTimeout,
 			OLMNamespace:   olm.DefaultOLMNamespace,
 		},
-		ManifestsDir:    manifestsDir,
-		OperatorVersion: defaultOperatorVersion,
+		ManifestsDir: manifestsDir,
+		Version:      defaultOperatorVersion,
 	}
 	// Cleanup.
 	defer func() {
@@ -196,7 +196,7 @@ func PackageManifestsMultiplePackages(t *testing.T) {
 	csvConfigs := []CSVTemplateConfig{
 		{
 			OperatorName:    defaultOperatorName,
-			OperatorVersion: operatorVersion1,
+			Version:         operatorVersion1,
 			TestImageTag:    testImageTag,
 			ReplacesCSVName: "",
 			CRDKeys: []DefinitionKey{
@@ -218,7 +218,7 @@ func PackageManifestsMultiplePackages(t *testing.T) {
 		},
 		{
 			OperatorName:    defaultOperatorName,
-			OperatorVersion: operatorVersion2,
+			Version:         operatorVersion2,
 			TestImageTag:    testImageTag,
 			ReplacesCSVName: fmt.Sprintf("%s.v%s", defaultOperatorName, operatorVersion1),
 			CRDKeys: []DefinitionKey{
@@ -267,8 +267,8 @@ func PackageManifestsMultiplePackages(t *testing.T) {
 			Timeout:        defaultTimeout,
 			OLMNamespace:   olm.DefaultOLMNamespace,
 		},
-		ManifestsDir:    manifestsDir,
-		OperatorVersion: operatorVersion2,
+		ManifestsDir: manifestsDir,
+		Version:      operatorVersion2,
 	}
 	// Cleanup.
 	defer func() {
