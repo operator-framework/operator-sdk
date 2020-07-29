@@ -58,28 +58,83 @@ $ cd nginx-operator
 $ operator-sdk init --plugins=helm --domain=example.com
 ```
 
-Now that we have our new project initialized, we need to re-create each of our APIs. 
+Now that we have our new project initialized, we need to re-create each of our APIs.
 Using our API example from earlier (`cache.example.com`), we'll use `cache` for the
 `--group` flag.
+
+For `--version` and `--kind`, we use `spec.versions[0].name` and `spec.names.kind`, respectively.
 
 For each API in the existing project, run:
 ```sh
 $ operator-sdk create api \
     --group=cache \
-    --api-version=<apiVersion> \
+    --version=<apiVersion> \
     --kind=<Kind> \
     --helm-chart=<path_to_existing_project>/helm-charts/<chart>
 ```
 
-**Note** Ensure that you use the same values for the flags to recreate the same Helm Chart and API's. If you have
-more than one chart or API's you can add them via `operator-sdk create api` command. For further information check the [quick-start][quickstart]. 
- 
-### Replacing the content
+Now that we have our new project initialized, we need to re-create each of our APIs.
+Using our API example from earlier (`cache.example.com`), we'll use `cache` for the
+`--group` flag.
 
-- Update the CR manifests in `config/samples` with the values of the CR's in your old project which are in `deploy/crds/`
-- Check if you have customizations options in the `watch.yaml` file of your previous project and then, update the new `watch.yaml` file with the same ones
-- Ensure that all roles configured in the `/deploy/roles.yaml` will be applied in the new project in the file `config/rbac/role.yaml`
-- If you have customizations in your `helm-charts` then, apply them in the new `helm-charts`. Note that this directory was not changed at all.
+For `--version` and `--kind`, we use `spec.versions[0].name` and `spec.names.kind`, respectively. 
+
+### Migrating your Custom Resource samples
+
+Update the CR manifests in `config/samples` with the values of the CRs in your existing project which are in `deploy/crds/<group>_<version>_<kind>_cr.yaml`
+
+### Migrating `watches.yaml`
+
+Check if you have custom options in the `watches.yaml` file of your existing project. If so, update the new `watches.yaml` file to match. In our example, it will look like:
+
+```yaml
+# Use the 'create api' subcommand to add watches to this file.
+- group: example.com
+  version: v1alpha1
+  kind: Nginx
+  chart: helm-charts/nginx
+# +kubebuilder:scaffold:watch
+```
+
+**NOTE**: Do not remove the `+kubebuilder:scaffold:watch` [marker][marker]. It allows the tool to update the watches file when new APIs are created. 
+
+### Checking the Permissions (RBAC)
+
+In your new project, roles are automatically generated in `config/rbac/role.yaml`.
+If you modified these permissions manually in `deploy/role.yaml` in your existing
+project, you need to re-apply them in `config/rbac/role.yaml`.
+
+New projects are configured to watch all namespaces by default, so they need a `ClusterRole` to have the necessary permissions. Ensure that `config/rbac/role.yaml` remains a `ClusterRole` if you want to retain the default behavior of the new project conventions. For further information refer to the [operator scope][operator-scope] documentation.  
+
+The following rules were used in earlier versions of helm-operator to automatically create and manage services and servicemonitors for metrics collection. If your operator's charts don't require these rules, they can safely be left out of the new `config/rbac/role.yaml` file:
+
+```  
+  - apiGroups:
+    - monitoring.coreos.com
+    resources:
+    - servicemonitors
+    verbs:
+    - get
+    - create
+  - apiGroups:
+    - apps
+    resourceNames:
+    - memcached-operator
+    resources:
+    - deployments/finalizers
+    verbs:
+    - update
+```
+
+### Configuring your Operator
+
+If your existing project has customizations in `deploy/operator.yaml`, they need to be ported to 
+`config/manager/manager.yaml`. If you are passing custom arguments in your deployment, make sure to also update `config/default/auth_proxy_patch.yaml`.
+
+Note that the following environment variables are no longer used. 
+
+- `OPERATOR_NAME` is deprecated. It is used to define the name for a leader election config map. Operator authors should begin using `--leader-election-id` instead.
+- `POD_NAME` was used to enable a particular pod to hold the leader election lock when the Helm operator used the leader for life mechanism. Helm operator now uses controller-runtime's leader with lease mechanism, and `POD_NAME` is no longer necessary.
 
 ## Exporting metrics 
 
@@ -88,14 +143,15 @@ it in the `config/default/kustomization.yaml`. Please see the [metrics][metrics]
 
 The default port used by the metric endpoint binds to was changed from `:8383` to `:8080`. To continue using port `8383`, specify `--metrics-addr=:8383` when you start the operator. 
 
-### Checking the changes
+## Checking the changes
 
-Now, follow the steps in the section [Build and run the operator][build-run-quick] to verify your project is running. 
+Finally, follow the steps in the section [Build and run the operator][build-and-run-the-operator] to verify your project is running. 
 
 [quickstart-legacy]: https://v0-19-x.sdk.operatorframework.io/docs/helm/quickstart/
 [quickstart]: /docs/building-operators/helm/quickstart
 [integration-doc]: https://github.com/kubernetes-sigs/kubebuilder/blob/master/designs/integrating-kubebuilder-and-osdk.md
-[build-run-quick]: /docs/building-operators/helm/quickstart#build-and-run-the-operator
+[build-and-run-the-operator]: /docs/building-operators/helm/tutorial#build-and-run-the-operator
 [kustomize]: https://github.com/kubernetes-sigs/kustomize 
 [kube-auth-proxy]: https://github.com/brancz/kube-rbac-proxy 
 [metrics]: https://book.kubebuilder.io/reference/metrics.html?highlight=metr#metrics
+[marker]: https://book.kubebuilder.io/reference/markers.html?highlight=markers#marker-syntax
