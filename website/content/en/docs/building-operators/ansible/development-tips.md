@@ -488,6 +488,9 @@ operator. The `ansible_operator_meta` fields can be accessed via dot notation in
     msg: "name: {{ ansible_operator_meta.name }}, {{ ansible_operator_meta.namespace }}"
 ```
 
+
+[ansible-runner-http-plugin]:https://github.com/ansible/ansible-runner-http
+[ansible-runner-tool]: https://ansible-runner.readthedocs.io/en/latest/install.html
 [k8s_ansible_module]:https://docs.ansible.com/ansible/2.6/modules/k8s_module.html
 [openshift_restclient_python]:https://github.com/openshift/openshift-restclient-python
 [ansible_operator_user_guide]:../tutorial

@@ -209,7 +209,7 @@ $ make undeploy
 ## Next Steps
 
 We recommend reading through the our [Ansible development
-section][ansible-developer-tops] for tips and tricks, including how to
+section][ansible-developer-tips] for tips and tricks, including how to
 run the operator locally.
 
 In this tutorial, the scaffolded `watches.yaml` could be used as-is, but
@@ -225,8 +225,6 @@ OLM will manage creation of most if not all resources required to run your opera
 
 [ansible-operator-install]: /docs/building-operators/ansible/installation
 [ansible-developer-tips]: /docs/building-operators/ansible/development-tips/
-[ansible-runner-http-plugin]:https://github.com/ansible/ansible-runner-http
-[ansible-runner-tool]: https://ansible-runner.readthedocs.io/en/latest/install.html
 [ansible-watches]: /docs/building-operators/ansible/reference/watches
 [custom-resources]: https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/
 [operator-scope]:https://v0-19-x.sdk.operatorframework.io/docs/legacy-common/operator-scope/
