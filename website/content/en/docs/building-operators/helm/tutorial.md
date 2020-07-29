@@ -2,25 +2,26 @@
 title: Tutorial for Helm-based Operators
 linkTitle: Tutorial
 weight: 200
-description: A simple set of instructions that demonstrates the basics of setting up and running a Helm-based operator.
+description: An in-depth walkthough that demonstrates how to build and run a Helm-based operator.
 ---
+
+## Overview
 
 This guide walks through an example of building a simple nginx-operator powered by [Helm][helm-official] using tools and libraries provided by the Operator SDK.
 
-**Note**: This guide uses [minikube][minikube-tool] version v0.25.0+ as the
-local Kubernetes cluster and [quay.io][quay-link] for the public registry.
+## Prerequisites
 
-[minikube-tool]:https://github.com/kubernetes/minikube#installation
-[quay-link]:https://quay.io
+- [Install `operator-sdk`][operator_install] and its prequisites.
+- Access to a Kubernetes v1.16.0+ cluster.
 
 ## Create a new project
 
 Use the CLI to create a new Helm-based nginx-operator project:
 
 ```sh
-$ mkdir nginx-operator
-$ cd nginx-operator
-$ operator-sdk init --plugins=helm --domain=com --group=example --version=v1alpha1 --kind=Nginx
+mkdir nginx-operator
+cd nginx-operator
+operator-sdk init --plugins=helm --domain=com --group=example --version=v1alpha1 --kind=Nginx
 ```
 
 This creates the nginx-operator project specifically for watching the
@@ -233,7 +234,7 @@ using a bit of setup from other `operator-sdk` commands. Check out the OLM integ
 Apply the nginx CR that we modified earlier:
 
 ```sh
-$ kubectl apply -f config/samples/example_v1alpha1_nginx.yaml
+kubectl apply -f config/samples/example_v1alpha1_nginx.yaml
 ```
 
 Ensure that the nginx-operator creates the deployment for the CR:
@@ -276,8 +277,9 @@ spec:
 ```
 
 And apply the change:
+
 ```sh
-$ kubectl apply -f config/samples/example_v1alpha1_nginx.yaml
+kubectl apply -f config/samples/example_v1alpha1_nginx.yaml
 ```
 
 Confirm that the operator changes the deployment size:
@@ -301,13 +303,13 @@ nginx-sample                              ClusterIP   10.96.152.76    <none>    
 Use the following command to check the operator logs.
 
 ```sh
-$ kubectl logs deployment.apps/nginx-operator-controller-manager  -n nginx-operator-system -c manager
+kubectl logs deployment.apps/nginx-operator-controller-manager  -n nginx-operator-system -c manager
 ```
 
 Use the following command to check the CR status and events.
 
 ```sh
-$ kubectl describe nginxes.example.com 
+kubectl describe nginxes.example.com 
 ```
 
 ### Cleanup
@@ -315,8 +317,8 @@ $ kubectl describe nginxes.example.com
 Clean up the resources:
 
 ```sh
-$ kubectl delete -f config/samples/example_v1alpha1_nginx.yaml
-$ make undeploy
+kubectl delete -f config/samples/example_v1alpha1_nginx.yaml
+make undeploy
 ```
 **NOTE** Additional CR/CRD's can be added to the project by running, for example, the command :`operator-sdk create api --group=example --version=v1alpha1 --kind=AppService`
 
@@ -328,3 +330,4 @@ todo(camilamacedo86): https://github.com/operator-framework/operator-sdk/issues/
 [helm-charts]:https://helm.sh/docs/topics/charts/
 [helm-values]:https://helm.sh/docs/intro/using_helm/#customizing-the-chart-before-installing
 [helm-official]:https://helm.sh/docs/
+[operator_install]: /docs/installation/install-operator-sdk
