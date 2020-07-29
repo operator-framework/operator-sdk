@@ -22,7 +22,6 @@ import (
 	"time"
 
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
-	"github.com/operator-framework/operator-sdk/internal/olm"
 	operator "github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 
@@ -99,7 +98,6 @@ func PackageManifestsAllNamespaces(t *testing.T) {
 		OperatorCmd: operator.OperatorCmd{
 			KubeconfigPath: kubeconfigPath,
 			Timeout:        defaultTimeout,
-			OLMNamespace:   olm.DefaultOLMNamespace,
 			InstallMode:    string(operatorsv1alpha1.InstallModeTypeAllNamespaces),
 		},
 		ManifestsDir: manifestsDir,
@@ -162,7 +160,6 @@ func PackageManifestsBasic(t *testing.T) {
 		OperatorCmd: operator.OperatorCmd{
 			KubeconfigPath: kubeconfigPath,
 			Timeout:        defaultTimeout,
-			OLMNamespace:   olm.DefaultOLMNamespace,
 		},
 		ManifestsDir: manifestsDir,
 		Version:      defaultOperatorVersion,
@@ -265,7 +262,6 @@ func PackageManifestsMultiplePackages(t *testing.T) {
 		OperatorCmd: operator.OperatorCmd{
 			KubeconfigPath: kubeconfigPath,
 			Timeout:        defaultTimeout,
-			OLMNamespace:   olm.DefaultOLMNamespace,
 		},
 		ManifestsDir: manifestsDir,
 		Version:      operatorVersion2,

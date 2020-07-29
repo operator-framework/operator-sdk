@@ -30,8 +30,7 @@ Ensure OLM is enabled on your cluster before following this guide. [`operator-sd
 has several subcommands that can install, uninstall, and check the status of particular OLM versions in a cluster.
 
 **Note:** Certain cluster types may already have OLM enabled, but under a non-default (`"olm"`) namespace,
-which can be configured by setting `--olm-namespace=[non-default-olm-namespace]` for `operator-sdk olm` subcommands
-and `operator-sdk run packagemanifests`.
+which can be configured by setting `--olm-namespace=[non-default-olm-namespace]` for `operator-sdk olm` subcommands.
 
 You can check if OLM is already installed by running the following command,
 which will detect the installed OLM version automatically (0.15.1 in this example):
