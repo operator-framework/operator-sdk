@@ -58,8 +58,11 @@ $ cd nginx-operator
 $ operator-sdk init --plugins=helm --domain=example.com
 ```
 
-**Note** Ensure that you use the same values for the flags to recreate the same Helm chart and API. If you have
-more than one chart or API you can add them via `operator-sdk create api` command. For further information check the [Helm Quickstart][quickstart]. 
+Now that we have our new project initialized, we need to re-create each of our APIs.
+Using our API example from earlier (`cache.example.com`), we'll use `cache` for the
+`--group` flag.
+
+For `--version` and `--kind`, we use `spec.versions[0].name` and `spec.names.kind`, respectively.
 
 For each API in the existing project, run:
 ```sh

@@ -100,6 +100,8 @@ in `watches.yaml` and executes Helm releases using the specified chart:
 # +kubebuilder:scaffold:watch
 ```
 
+**NOTE** Additional CR/CRD's can be added to the project by running, for example, the command :`operator-sdk create api --group=example --version=v1alpha1 --kind=AppService`
+
 ### Reviewing the Nginx Helm Chart
 
 When a Helm operator project is created, the SDK creates an example Helm chart
