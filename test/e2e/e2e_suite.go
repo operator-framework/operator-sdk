@@ -231,8 +231,7 @@ var _ = Describe("operator-sdk", func() {
 			err = json.Unmarshal(scorecardOutputBytes, &scorecardOutput)
 			Expect(err).NotTo(HaveOccurred())
 
-			var resultTable map[string]v1alpha3.State
-			resultTable = make(map[string]v1alpha3.State)
+			resultTable := make(map[string]v1alpha3.State)
 			resultTable["olm-status-descriptors"] = v1alpha3.FailState
 			resultTable["olm-crds-have-resources"] = v1alpha3.FailState
 			resultTable["olm-bundle-validation"] = v1alpha3.PassState
