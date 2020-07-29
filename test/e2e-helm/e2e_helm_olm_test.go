@@ -40,7 +40,7 @@ var _ = Describe("Integrating Helm Projects with OLM", func() {
 		AfterEach(func() {
 			By("destroying the deployed package manifests-formatted operator")
 			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", "packagemanifests",
-				"--operator-version", operatorVersion,
+				"--version", operatorVersion,
 				"--timeout", "4m")
 			_, _ = tc.Run(cleanupPkgManCmd)
 
@@ -93,7 +93,7 @@ var _ = Describe("Integrating Helm Projects with OLM", func() {
 			By("running the package")
 			runPkgManCmd := exec.Command(tc.BinaryName, "run", "packagemanifests",
 				"--install-mode", "AllNamespaces",
-				"--operator-version", operatorVersion,
+				"--version", operatorVersion,
 				"--timeout", "4m")
 			_, err = tc.Run(runPkgManCmd)
 			Expect(err).NotTo(HaveOccurred())

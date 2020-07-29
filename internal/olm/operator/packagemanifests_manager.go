@@ -41,30 +41,11 @@ type packageManifestsManager struct {
 
 func (c *PackageManifestsCmd) newManager() (m *packageManifestsManager, err error) {
 	m = &packageManifestsManager{
-		version:       c.OperatorVersion,
+		version:       c.Version,
 		forceRegistry: c.ForceRegistry,
 	}
 	if m.operatorManager, err = c.OperatorCmd.newManager(); err != nil {
 		return nil, err
-	}
-
-	// Parse k8s objects.
-	for _, path := range c.IncludePaths {
-		if path != "" {
-			objs, err := readObjectsFromFile(path)
-			if err != nil {
-				return nil, err
-			}
-			for _, obj := range objs {
-				m.olmObjects = append(m.olmObjects, obj)
-			}
-		}
-	}
-	// Since a Subscription refers to a CatalogSource, supplying one but
-	// not the other is an error.
-	hasSub, hasCatSrc := m.hasSubscription(), m.hasCatalogSource()
-	if hasSub || hasCatSrc && !(hasSub && hasCatSrc) {
-		return nil, errors.New("both a CatalogSource and Subscription must be supplied if one is supplied")
 	}
 
 	// Operator bundles and metadata.
@@ -135,39 +116,22 @@ func (m *packageManifestsManager) run(ctx context.Context) (err error) {
 		return fmt.Errorf("error creating registry resources: %w", err)
 	}
 
+	// New CatalogSource.
+	registryGRPCAddr := internalregistry.GetRegistryServiceAddr(pkgName, m.olmNamespace)
+	catsrc := newCatalogSource(pkgName, m.operatorNamespace, withGRPC(registryGRPCAddr))
+	// New Subscription.
+	channel, err := getChannelForCSVName(m.pkg, csv.GetName())
+	if err != nil {
+		return err
+	}
+	sub := newSubscription(csv.GetName(), m.operatorNamespace,
+		withPackageChannel(pkgName, channel),
+		withCatalogSource(getCatalogSourceName(pkgName), m.operatorNamespace))
+	// New SDK-managed OperatorGroup.
+	og := newSDKOperatorGroup(m.operatorNamespace,
+		withTargetNamespaces(m.targetNamespaces...))
+	objects := []runtime.Object{catsrc, sub, og}
 	log.Info("Creating resources")
-	if !m.hasCatalogSource() {
-		registryGRPCAddr := internalregistry.GetRegistryServiceAddr(pkgName, m.olmNamespace)
-		catsrc := newCatalogSource(pkgName, m.operatorNamespace, withGRPC(registryGRPCAddr))
-		m.olmObjects = append(m.olmObjects, catsrc)
-	}
-	if !m.hasSubscription() {
-		channel, err := getChannelForCSVName(m.pkg, csv.GetName())
-		if err != nil {
-			return err
-		}
-		sub := newSubscription(csv.GetName(), m.operatorNamespace,
-			withPackageChannel(pkgName, channel),
-			withCatalogSource(getCatalogSourceName(pkgName), m.operatorNamespace))
-		m.olmObjects = append(m.olmObjects, sub)
-	}
-	if !m.hasOperatorGroup() {
-		og := newSDKOperatorGroup(m.operatorNamespace,
-			withTargetNamespaces(m.targetNamespaces...))
-		m.olmObjects = append(m.olmObjects, og)
-	}
-	// Check for Namespace objects and create those first.
-	namespaces, objects := []runtime.Object{}, []runtime.Object{}
-	for _, obj := range m.olmObjects {
-		if obj.GetObjectKind().GroupVersionKind().Kind == "Namespace" {
-			namespaces = append(namespaces, obj)
-		} else {
-			objects = append(objects, obj)
-		}
-	}
-	if err = m.client.DoCreate(ctx, namespaces...); err != nil {
-		return fmt.Errorf("error creating operator resources: %w", err)
-	}
 	if err = m.client.DoCreate(ctx, objects...); err != nil {
 		return fmt.Errorf("error creating operator resources: %w", err)
 	}
@@ -213,25 +177,18 @@ func (m *packageManifestsManager) cleanup(ctx context.Context) (err error) {
 		return fmt.Errorf("error removing registry resources: %w", err)
 	}
 
-	log.Info("Deleting resources")
-	if !m.hasCatalogSource() {
-		m.olmObjects = append(m.olmObjects, newCatalogSource(pkgName, m.operatorNamespace))
-	}
-	if !m.hasSubscription() {
-		m.olmObjects = append(m.olmObjects, newSubscription(csv.GetName(), m.operatorNamespace))
-	}
-	if !m.hasOperatorGroup() {
-		m.olmObjects = append(m.olmObjects, newSDKOperatorGroup(m.operatorNamespace))
-	}
-	toDelete := []runtime.Object{}
-	for _, obj := range m.olmObjects {
-		toDelete = append(toDelete, obj.DeepCopyObject())
+	// Delete CatalogSource, Subscription, the SDK-managed OperatorGroup, and any bundle objects.
+	toDelete := []runtime.Object{
+		newCatalogSource(pkgName, m.operatorNamespace),
+		newSubscription(csv.GetName(), m.operatorNamespace),
+		newSDKOperatorGroup(m.operatorNamespace),
 	}
 	for _, obj := range bundle.Objects {
 		objc := obj.DeepCopy()
 		objc.SetNamespace(m.operatorNamespace)
 		toDelete = append(toDelete, objc)
 	}
+	log.Info("Deleting resources")
 	if err = m.client.DoDelete(ctx, toDelete...); err != nil {
 		return fmt.Errorf("error deleting operator resources: %w", err)
 	}

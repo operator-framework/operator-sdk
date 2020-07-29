@@ -49,7 +49,7 @@ type DefinitionKey struct {
 
 type CSVTemplateConfig struct {
 	OperatorName    string
-	OperatorVersion string
+	Version         string
 	TestImageTag    string
 	ReplacesCSVName string
 	CRDKeys         []DefinitionKey
@@ -63,7 +63,7 @@ kind: ClusterServiceVersion
 metadata:
   annotations:
     capabilities: Basic Install
-  name: {{ .OperatorName }}.v{{ .OperatorVersion }}
+  name: {{ .OperatorName }}.v{{ .Version }}
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -196,7 +196,7 @@ spec:
 {{- if .ReplacesCSVName }}
   replaces: {{ .ReplacesCSVName }}
 {{- end }}
-  version: {{ .OperatorVersion }}
+  version: {{ .Version }}
 `
 
 func writeOperatorManifests(dir string, csvConfig CSVTemplateConfig) error {
@@ -204,7 +204,7 @@ func writeOperatorManifests(dir string, csvConfig CSVTemplateConfig) error {
 	if csvConfig.IsBundle {
 		manifestDir = filepath.Join(dir, bundle.ManifestsDir)
 	} else {
-		manifestDir = filepath.Join(dir, csvConfig.OperatorVersion)
+		manifestDir = filepath.Join(dir, csvConfig.Version)
 	}
 	for _, key := range csvConfig.CRDKeys {
 		crd := apiextv1beta1.CustomResourceDefinition{

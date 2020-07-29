@@ -15,10 +15,8 @@
 package olm
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"sync"
 	"time"
@@ -30,7 +28,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
-	"sigs.k8s.io/yaml"
 
 	"github.com/operator-framework/operator-sdk/internal/olm"
 	internalolmclient "github.com/operator-framework/operator-sdk/internal/olm/client"
@@ -64,8 +61,7 @@ type OperatorCmd struct {
 	KubeconfigPath string
 	// OperatorNamespace is the cluster namespace in which operator resources
 	// are created.
-	// OperatorNamespace must already exist in the cluster or be defined in
-	// a manifest passed to IncludePaths.
+	// OperatorNamespace must already exist in the cluster.
 	OperatorNamespace string
 	// OLMNamespace is the namespace in which OLM is installed.
 	OLMNamespace string
@@ -75,9 +71,8 @@ type OperatorCmd struct {
 	// "InstallModeType=[ns1,ns2[, ...]]"
 	//
 	// The InstallModeType string passed must be marked as "supported" in the
-	// CSV being installed. The namespaces passed must exist or be created by
-	// passing a Namespace manifest to IncludePaths. An empty set of namespaces
-	// can be used for AllNamespaces.
+	// CSV being installed. The namespaces passed must exist in the cluster.
+	// An empty set of namespaces can be used for AllNamespaces.
 	InstallMode string
 	// Timeout dictates how long to wait for a REST call to complete. A call
 	// exceeding Timeout will generate an error.
@@ -95,8 +90,7 @@ func (c *OperatorCmd) AddToFlagSet(fs *pflag.FlagSet) {
 	fs.StringVar(&c.OLMNamespace, "olm-namespace", olm.DefaultOLMNamespace,
 		"The namespace where OLM is installed")
 	fs.StringVar(&c.OperatorNamespace, "operator-namespace", "",
-		"The namespace where operator resources are created. It must already exist "+
-			"in the cluster or be defined in a manifest passed to --include")
+		"The namespace where operator resources are created. It must already exist in the cluster")
 	fs.StringVar(&c.InstallMode, "install-mode", "",
 		"InstallMode to create OperatorGroup with. Format: "+installModeFormat)
 	fs.DurationVar(&c.Timeout, "timeout", defaultTimeout,
@@ -129,7 +123,6 @@ type operatorManager struct {
 
 	installMode      operatorsv1alpha1.InstallModeType //nolint:structcheck
 	targetNamespaces []string                          //nolint:structcheck
-	olmObjects       []runtime.Object
 }
 
 func (c *OperatorCmd) newManager() (*operatorManager, error) {
@@ -170,51 +163,4 @@ func (m *operatorManager) status(ctx context.Context, us ...*unstructured.Unstru
 		objs = append(objs, uc)
 	}
 	return m.client.GetObjectsStatus(ctx, objs...)
-}
-
-func (m operatorManager) hasCatalogSource() bool {
-	return containsKind(m.olmObjects, operatorsv1alpha1.CatalogSourceKind)
-}
-
-func (m operatorManager) hasSubscription() bool {
-	return containsKind(m.olmObjects, operatorsv1alpha1.SubscriptionKind)
-}
-
-func (m operatorManager) hasOperatorGroup() bool {
-	return containsKind(m.olmObjects, operatorsv1.OperatorGroupKind)
-}
-
-func containsKind(objs []runtime.Object, kind string) bool {
-	for _, obj := range objs {
-		if obj.GetObjectKind().GroupVersionKind().Kind == kind {
-			return true
-		}
-	}
-	return false
-}
-
-func readObjectsFromFile(path string) (objs []*unstructured.Unstructured, err error) {
-	b, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	scanner := k8sutil.NewYAMLScanner(bytes.NewBuffer(b))
-	for scanner.Scan() {
-		b, err := yaml.YAMLToJSON(scanner.Bytes())
-		if err != nil {
-			return nil, fmt.Errorf("failed to convert YAML to JSON before decode: %v", err)
-		}
-		u := &unstructured.Unstructured{}
-		if err := u.UnmarshalJSON(b); err != nil {
-			return nil, fmt.Errorf("failed to decode object from manifest %s: %w", path, err)
-		}
-		objs = append(objs, u)
-	}
-	if scanner.Err() != nil {
-		return nil, fmt.Errorf("failed to scan manifest %s: %w", path, scanner.Err())
-	}
-	if len(objs) == 0 {
-		return nil, fmt.Errorf("no objects found in manifest %s", path)
-	}
-	return objs, nil
 }
