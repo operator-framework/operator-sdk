@@ -1,0 +1,26 @@
+- op: add
+  path: /rules/-
+  value:
+    apiGroups:
+    - test.example.com
+    resources:
+    - casetests
+    verbs:
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - update
+    - watch
+- op: add
+  path: /rules/-
+  value:
+    apiGroups:
+    - test.example.com
+    resources:
+    - casetests/status
+    verbs:
+    - get
+    - update
+    - patch

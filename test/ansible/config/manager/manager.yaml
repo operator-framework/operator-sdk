@@ -28,4 +28,7 @@ spec:
             - "--enable-leader-election"
             - "--leader-election-id=ansible"
           image: controller:latest
+          env:
+            - name: ANSIBLE_INVENTORY
+              value: /opt/ansible/inventory
       terminationGracePeriodSeconds: 10

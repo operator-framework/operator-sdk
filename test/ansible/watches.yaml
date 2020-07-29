@@ -34,7 +34,7 @@
   playbook: playbooks/selector.yml
   selector:
     matchExpressions:
-     - {key: testLabel, operator: Exists, values: []}
+      - {key: testLabel, operator: Exists, values: []}
   vars:
     meta: '{{ ansible_operator_meta }}'
 

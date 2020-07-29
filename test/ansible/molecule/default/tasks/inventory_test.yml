@@ -11,7 +11,10 @@
       reason: Successful
       status: "True"
   vars:
-    custom_resource: "{{ lookup('template', '/'.join([config_dir, 'samples/test.example.com_v1alpha1_inventorytest_cr.yaml'])) | from_yaml }}"
+    custom_resource: "{{ lookup('template', '/'.join([
+      config_dir,
+      'samples/test.example.com_v1alpha1_inventorytest_cr.yaml'
+    ])) | from_yaml }}"
 
 - name: Assert sentinel ConfigMap has been created for Molecule Test
   assert:

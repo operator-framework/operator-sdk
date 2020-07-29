@@ -19,4 +19,9 @@
   assert:
     that: cm.data.did_it_work == 'indeed'
   vars:
-    cm: "{{ q('k8s', api_version='v1', kind='ConfigMap', namespace=namespace, resource_name='test-this-collection').0 }}"
+    cm: "{{ q('k8s',
+      api_version='v1',
+      kind='ConfigMap',
+      namespace=namespace,
+      resource_name='test-this-collection'
+    ).0 }}"
