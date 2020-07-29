@@ -64,6 +64,12 @@ Now, when deploying the operator with `make deploy`, your webhook server will ru
 operator, but Kubernetes will not yet call the webhooks before resources can be created. In order
 to let Kubernetes know about your webhooks, you must create specific API resources.
 
+
+<!--
+   TODO(fabianvf,asmacdo) update these sections to direct the user
+     to create files in the config directory and make use of kustomize.
+     The Go plugin's webhook scaffolding might be a good reference.
+-->
 ## Making Kubernetes call your webhooks
 
 In order to make your webhooks callable at all, first you must create a `Service` that points at your
