@@ -89,4 +89,4 @@ Read the [tutorial][tutorial] for an in-depth walkthough of building a Helm oper
 [operator_install]: /docs/installation/install-operator-sdk
 [project_layout]: /docs/building-operators/helm/reference/project_layout/
 [tutorial]: /docs/building-operators/helm/tutorial/
-[helm-official]: [helm-official]:https://helm.sh/docs/
+[helm-official]: https://helm.sh/docs/
