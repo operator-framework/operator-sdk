@@ -28,7 +28,7 @@ import (
 //nolint:maligned
 type packagemanifestsCmd struct {
 	// Common options.
-	operatorName string
+	projectName  string
 	version      string
 	fromVersion  string
 	inputDir     string
@@ -84,7 +84,6 @@ func NewCmd() *cobra.Command {
 }
 
 func (c *packagemanifestsCmd) addFlagsTo(fs *pflag.FlagSet) {
-	fs.StringVar(&c.operatorName, "operator-name", "", "Name of the packaged operator")
 	fs.StringVarP(&c.version, "version", "v", "", "Semantic version of the packaged operator")
 	fs.StringVar(&c.fromVersion, "from-version", "", "Semantic version of the operator being upgraded from")
 	fs.StringVar(&c.inputDir, "input-dir", "", "Directory to read existing package manifests from. "+

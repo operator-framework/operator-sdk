@@ -105,14 +105,11 @@ https://github.com/operator-framework/operator-registry/#manifest-format
 const defaultRootDir = "bundle"
 
 // setDefaults sets defaults useful to all modes of this subcommand.
-func (c *bundleCmd) setDefaults(cfg *config.Config) error {
-	if c.operatorName == "" {
-		projectName, err := genutil.GetOperatorName(cfg)
-		if err != nil {
-			return err
-		}
-		c.operatorName = projectName
+func (c *bundleCmd) setDefaults(cfg *config.Config) (err error) {
+	if c.projectName, err = genutil.GetOperatorName(cfg); err != nil {
+		return err
 	}
+
 	// A default channel can be inferred if there is only one channel. Don't infer
 	// default otherwise; the user must set this value.
 	if c.defaultChannel == "" && strings.Count(c.channels, ",") == 0 {
@@ -184,7 +181,7 @@ func (c bundleCmd) runManifests(cfg *config.Config) (err error) {
 	}
 
 	csvGen := gencsv.Generator{
-		OperatorName: c.operatorName,
+		OperatorName: c.projectName,
 		OperatorType: projutil.PluginKeyToOperatorType(cfg.Layout),
 		Version:      c.version,
 		Collector:    col,
@@ -293,7 +290,7 @@ func (c bundleCmd) runMetadata(cfg *config.Config) error {
 func (c bundleCmd) generateMetadata(cfg *config.Config, manifestsDir, outputDir string) error {
 
 	metadataExists := isMetatdataExist(outputDir, manifestsDir)
-	err := bundle.GenerateFunc(manifestsDir, outputDir, c.operatorName, c.channels, c.defaultChannel, c.overwrite)
+	err := bundle.GenerateFunc(manifestsDir, outputDir, c.projectName, c.channels, c.defaultChannel, c.overwrite)
 	if err != nil {
 		return fmt.Errorf("error generating bundle metadata: %v", err)
 	}

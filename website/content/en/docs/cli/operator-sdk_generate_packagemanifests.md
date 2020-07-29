@@ -70,7 +70,6 @@ operator-sdk generate packagemanifests [flags]
   -h, --help                   help for packagemanifests
       --input-dir string       Directory to read existing package manifests from. This directory is the parent of individual versioned package directories, and different from --deploy-dir
       --kustomize-dir string   Directory containing kustomize bases and a kustomization.yaml for operator-framework manifests (default "config/manifests")
-      --operator-name string   Name of the packaged operator
       --output-dir string      Directory in which to write package manifests
   -q, --quiet                  Run in quiet mode
       --stdout                 Write package to stdout

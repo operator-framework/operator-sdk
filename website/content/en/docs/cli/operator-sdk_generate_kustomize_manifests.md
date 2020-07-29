@@ -47,13 +47,12 @@ operator-sdk generate kustomize manifests [flags]
 ### Options
 
 ```
-      --apis-dir string        Root directory for API type defintions
-  -h, --help                   help for manifests
-      --input-dir string       Directory containing existing kustomize files
-      --interactive            When set or no kustomize base exists, an interactive command prompt will be presented to accept non-inferrable metadata
-      --operator-name string   Name of the operator
-      --output-dir string      Directory to write kustomize files
-  -q, --quiet                  Run in quiet mode
+      --apis-dir string     Root directory for API type defintions
+  -h, --help                help for manifests
+      --input-dir string    Directory containing existing kustomize files
+      --interactive         When set or no kustomize base exists, an interactive command prompt will be presented to accept non-inferrable metadata
+      --output-dir string   Directory to write kustomize files
+  -q, --quiet               Run in quiet mode
 ```
 
 ### Options inherited from parent commands

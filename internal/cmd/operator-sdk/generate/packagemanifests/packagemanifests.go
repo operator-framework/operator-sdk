@@ -79,13 +79,9 @@ https://github.com/operator-framework/operator-registry/#manifest-format
 const defaultRootDir = "packagemanifests"
 
 // setDefaults sets command defaults.
-func (c *packagemanifestsCmd) setDefaults(cfg *config.Config) error {
-	if c.operatorName == "" {
-		projectName, err := genutil.GetOperatorName(cfg)
-		if err != nil {
-			return err
-		}
-		c.operatorName = projectName
+func (c *packagemanifestsCmd) setDefaults(cfg *config.Config) (err error) {
+	if c.projectName, err = genutil.GetOperatorName(cfg); err != nil {
+		return err
 	}
 
 	if c.inputDir == "" {
@@ -169,7 +165,7 @@ func (c packagemanifestsCmd) run(cfg *config.Config) error {
 	}
 
 	csvGen := gencsv.Generator{
-		OperatorName: c.operatorName,
+		OperatorName: c.projectName,
 		OperatorType: projutil.PluginKeyToOperatorType(cfg.Layout),
 		Version:      c.version,
 		FromVersion:  c.fromVersion,
@@ -221,7 +217,7 @@ func (c packagemanifestsCmd) run(cfg *config.Config) error {
 
 func (c packagemanifestsCmd) generatePackageManifest() error {
 	pkgGen := genpkg.Generator{
-		OperatorName:     c.operatorName,
+		OperatorName:     c.projectName,
 		Version:          c.version,
 		ChannelName:      c.channelName,
 		IsDefaultChannel: c.isDefaultChannel,

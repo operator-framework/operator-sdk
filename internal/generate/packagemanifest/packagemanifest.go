@@ -20,7 +20,6 @@ import (
 	"io"
 	"path/filepath"
 	"sort"
-	"strings"
 
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	"github.com/operator-framework/api/pkg/validation"
@@ -173,7 +172,7 @@ func (g Generator) makeBaseGetter(inputDir string) func() (*apimanifests.Package
 
 // makePkgManFileName will return the file name of a PackageManifest.
 func makePkgManFileName(operatorName string) string {
-	return strings.ToLower(operatorName) + packageManifestFileExt
+	return operatorName + packageManifestFileExt
 }
 
 // sortChannelsByName sorts pkg.Channels by each element's name.
