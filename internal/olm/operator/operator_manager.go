@@ -29,7 +29,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 
-	"github.com/operator-framework/operator-sdk/internal/olm"
 	internalolmclient "github.com/operator-framework/operator-sdk/internal/olm/client"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
@@ -59,12 +58,9 @@ type OperatorCmd struct {
 	// KubeconfigPath is the local path to a kubeconfig. This uses well-defined
 	// default loading rules to load the config if empty.
 	KubeconfigPath string
-	// OperatorNamespace is the cluster namespace in which operator resources
-	// are created.
-	// OperatorNamespace must already exist in the cluster.
-	OperatorNamespace string
-	// OLMNamespace is the namespace in which OLM is installed.
-	OLMNamespace string
+	// Namespace is the cluster namespace in which operator resources are created.
+	// Namespace must already exist in the cluster.
+	Namespace string
 	// InstallMode specifies which supported installMode should be used to
 	// create an OperatorGroup. The format for this field is as follows:
 	//
@@ -87,9 +83,7 @@ func (c *OperatorCmd) AddToFlagSet(fs *pflag.FlagSet) {
 	fs.StringVar(&c.KubeconfigPath, "kubeconfig", "",
 		"The file path to kubernetes configuration file. Defaults to location "+
 			"specified by $KUBECONFIG, or to default file rules if not set")
-	fs.StringVar(&c.OLMNamespace, "olm-namespace", olm.DefaultOLMNamespace,
-		"The namespace where OLM is installed")
-	fs.StringVar(&c.OperatorNamespace, "operator-namespace", "",
+	fs.StringVar(&c.Namespace, "namespace", "",
 		"The namespace where operator resources are created. It must already exist in the cluster")
 	fs.StringVar(&c.InstallMode, "install-mode", "",
 		"InstallMode to create OperatorGroup with. Format: "+installModeFormat)
@@ -116,10 +110,8 @@ func (c *OperatorCmd) initialize() {
 
 type operatorManager struct {
 	client *internalolmclient.Client
-	// olmNamespace is the namespace where olm is installed
-	// and operator registry server resources are created
-	olmNamespace      string
-	operatorNamespace string
+	// Namespace in which operator and OLM objects are created.
+	namespace string
 
 	installMode      operatorsv1alpha1.InstallModeType //nolint:structcheck
 	targetNamespaces []string                          //nolint:structcheck
@@ -127,11 +119,6 @@ type operatorManager struct {
 
 func (c *OperatorCmd) newManager() (*operatorManager, error) {
 	m := &operatorManager{}
-
-	// Namespace in which OLM is deployed.
-	if m.olmNamespace = c.OLMNamespace; m.olmNamespace == "" {
-		m.olmNamespace = olm.DefaultOLMNamespace
-	}
 
 	// Cluster and operator namespace info.
 	rc, ns, err := k8sutil.GetKubeconfigAndNamespace(c.KubeconfigPath)
@@ -141,8 +128,8 @@ func (c *OperatorCmd) newManager() (*operatorManager, error) {
 	if ns == "" {
 		ns = defaultNamespace
 	}
-	if m.operatorNamespace = c.OperatorNamespace; m.operatorNamespace == "" {
-		m.operatorNamespace = ns
+	if m.namespace = c.Namespace; m.namespace == "" {
+		m.namespace = ns
 	}
 	if m.client == nil {
 		m.client, err = internalolmclient.ClientForConfig(rc)
@@ -159,7 +146,7 @@ func (m *operatorManager) status(ctx context.Context, us ...*unstructured.Unstru
 	objs := []runtime.Object{}
 	for _, u := range us {
 		uc := u.DeepCopy()
-		uc.SetNamespace(m.operatorNamespace)
+		uc.SetNamespace(m.namespace)
 		objs = append(objs, uc)
 	}
 	return m.client.GetObjectsStatus(ctx, objs...)

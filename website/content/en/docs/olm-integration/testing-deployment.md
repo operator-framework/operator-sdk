@@ -22,9 +22,8 @@ Let's look at the anatomy of the `run packagemanifests` (which is the same for `
 
 - **kubeconfig-path**: the local path to a kubeconfig.
   - This uses well-defined default loading rules to load the config if empty.
-- **olm-namespace**: the namespace in which OLM is installed.
-- **operator-namespace**: the cluster namespace in which Operator resources are created.
-  - This namespace must already exist in the cluster or be defined in a manifest passed to **include-paths**.
+- **namespace**: the cluster namespace in which Operator resources are created.
+  - This namespace must already exist in the cluster.
 - **manifests-dir**: a directory containing the Operator's package manifests.
 - **version**: the version of the Operator to deploy. It must be a semantic version, ex. 0.0.1.
   - This version must match the version of the CSV manifest found in **manifests-dir**,
@@ -34,8 +33,7 @@ Let's look at the anatomy of the `run packagemanifests` (which is the same for `
   - The `InstallModeType` string passed must be marked as "supported" in the CSV being installed.
     The namespaces passed must exist or be created by passing a `Namespace` manifest to IncludePaths.
   - This option understands the following strings (assuming your CSV does as well):
-      - `OwnNamespace`: the Operator will watch its own namespace (from **operator-namespace** or the kubeconfig default).
-      This is the default.
+      - `OwnNamespace`: the Operator will watch its own namespace (from **namespace** or the kubeconfig default). This is the default.
       - `SingleNamespace="my-ns"`: the Operator will watch a namespace, not necessarily its own.
       - `AllNamespaces=""`: the Operator will watch all namespaces (cluster-scoped Operators).
 - **timeout**: a time string dictating the maximum time that `run` can run. The command will

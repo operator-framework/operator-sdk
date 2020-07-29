@@ -64,7 +64,7 @@ func (c *PackageManifestsCmd) newManager() (m *packageManifestsManager, err erro
 	if c.InstallMode == "" {
 		// Default to OwnNamespace.
 		m.installMode = operatorsv1alpha1.InstallModeTypeOwnNamespace
-		m.targetNamespaces = []string{m.operatorNamespace}
+		m.targetNamespaces = []string{m.namespace}
 	} else {
 		m.installMode, m.targetNamespaces, err = parseInstallModeKV(c.InstallMode)
 		if err != nil {
@@ -77,7 +77,7 @@ func (c *PackageManifestsCmd) newManager() (m *packageManifestsManager, err erro
 	if err != nil {
 		return nil, err
 	}
-	if err := installModeCompatible(bundle.CSV, m.installMode, m.operatorNamespace, m.targetNamespaces); err != nil {
+	if err := installModeCompatible(bundle.CSV, m.installMode, m.namespace, m.targetNamespaces); err != nil {
 		return nil, err
 	}
 
@@ -85,11 +85,7 @@ func (c *PackageManifestsCmd) newManager() (m *packageManifestsManager, err erro
 }
 
 func (m *packageManifestsManager) run(ctx context.Context) (err error) {
-	// Ensure OLM is installed.
-	olmVer, err := m.client.GetInstalledVersion(ctx, m.olmNamespace)
-	if err != nil {
-		return fmt.Errorf("error getting installed OLM version: %w", err)
-	}
+	// TODO: ensure OLM is installed by checking OLM CRDs.
 
 	pkgName := m.pkg.PackageName
 	bundle, err := getPackageForVersion(m.bundles, m.version)
@@ -112,23 +108,23 @@ func (m *packageManifestsManager) run(ctx context.Context) (err error) {
 		return fmt.Errorf("an operator with name %q is present and has resource errors\n%s", pkgName, status)
 	}
 
-	if err = m.registryUp(ctx, m.olmNamespace); err != nil {
+	if err = m.registryUp(ctx, m.namespace); err != nil {
 		return fmt.Errorf("error creating registry resources: %w", err)
 	}
 
 	// New CatalogSource.
-	registryGRPCAddr := internalregistry.GetRegistryServiceAddr(pkgName, m.olmNamespace)
-	catsrc := newCatalogSource(pkgName, m.operatorNamespace, withGRPC(registryGRPCAddr))
+	registryGRPCAddr := internalregistry.GetRegistryServiceAddr(pkgName, m.namespace)
+	catsrc := newCatalogSource(pkgName, m.namespace, withGRPC(registryGRPCAddr))
 	// New Subscription.
 	channel, err := getChannelForCSVName(m.pkg, csv.GetName())
 	if err != nil {
 		return err
 	}
-	sub := newSubscription(csv.GetName(), m.operatorNamespace,
+	sub := newSubscription(csv.GetName(), m.namespace,
 		withPackageChannel(pkgName, channel),
-		withCatalogSource(getCatalogSourceName(pkgName), m.operatorNamespace))
+		withCatalogSource(getCatalogSourceName(pkgName), m.namespace))
 	// New SDK-managed OperatorGroup.
-	og := newSDKOperatorGroup(m.operatorNamespace,
+	og := newSDKOperatorGroup(m.namespace,
 		withTargetNamespaces(m.targetNamespaces...))
 	objects := []runtime.Object{catsrc, sub, og}
 	log.Info("Creating resources")
@@ -136,11 +132,11 @@ func (m *packageManifestsManager) run(ctx context.Context) (err error) {
 		return fmt.Errorf("error creating operator resources: %w", err)
 	}
 
-	// BUG(estroz): if operatorNamespace is not contained in targetNamespaces,
-	// DoCSVWait will fail because the CSV is not deployed in operatorNamespace.
+	// BUG(estroz): if namespace is not contained in targetNamespaces,
+	// DoCSVWait will fail because the CSV is not deployed in namespace.
 	nn := types.NamespacedName{
 		Name:      csv.GetName(),
-		Namespace: m.operatorNamespace,
+		Namespace: m.namespace,
 	}
 	log.Printf("Waiting for ClusterServiceVersion %q to reach 'Succeeded' phase", nn)
 	if err = m.client.DoCSVWait(ctx, nn); err != nil {
@@ -153,19 +149,13 @@ func (m *packageManifestsManager) run(ctx context.Context) (err error) {
 	} else if err != nil {
 		return fmt.Errorf("operator %q has resource errors\n%s", pkgName, status)
 	}
-	log.Infof("Successfully installed %q on OLM version %q", csv.GetName(), olmVer)
+	log.Infof("OLM has successfully installed %q", csv.GetName())
 	fmt.Print(status)
 
 	return nil
 }
 
 func (m *packageManifestsManager) cleanup(ctx context.Context) (err error) {
-	// Ensure OLM is installed.
-	olmVer, err := m.client.GetInstalledVersion(ctx, m.olmNamespace)
-	if err != nil {
-		return fmt.Errorf("error getting installed OLM version: %w", err)
-	}
-
 	pkgName := m.pkg.PackageName
 	bundle, err := getPackageForVersion(m.bundles, m.version)
 	if err != nil {
@@ -173,19 +163,19 @@ func (m *packageManifestsManager) cleanup(ctx context.Context) (err error) {
 	}
 	csv := bundle.CSV
 
-	if err = m.registryDown(ctx, m.olmNamespace); err != nil {
+	if err = m.registryDown(ctx, m.namespace); err != nil {
 		return fmt.Errorf("error removing registry resources: %w", err)
 	}
 
 	// Delete CatalogSource, Subscription, the SDK-managed OperatorGroup, and any bundle objects.
 	toDelete := []runtime.Object{
-		newCatalogSource(pkgName, m.operatorNamespace),
-		newSubscription(csv.GetName(), m.operatorNamespace),
-		newSDKOperatorGroup(m.operatorNamespace),
+		newCatalogSource(pkgName, m.namespace),
+		newSubscription(csv.GetName(), m.namespace),
+		newSDKOperatorGroup(m.namespace),
 	}
 	for _, obj := range bundle.Objects {
 		objc := obj.DeepCopy()
-		objc.SetNamespace(m.operatorNamespace)
+		objc.SetNamespace(m.namespace)
 		toDelete = append(toDelete, objc)
 	}
 	log.Info("Deleting resources")
@@ -199,7 +189,7 @@ func (m *packageManifestsManager) cleanup(ctx context.Context) (err error) {
 	} else if err != nil {
 		return fmt.Errorf("operator %q still exists and has resource errors\n%s", pkgName, status)
 	}
-	log.Infof("Successfully uninstalled %q on OLM version %q", csv.GetName(), olmVer)
+	log.Infof("OLM has successfully uninstalled %q and related resources have been deleted", csv.GetName())
 
 	return nil
 }
