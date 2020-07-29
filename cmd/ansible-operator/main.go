@@ -21,6 +21,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
@@ -58,9 +59,44 @@ func printVersion() {
 }
 
 func main() {
+	root := cobra.Command{
+		Use: "ansible-operator",
+	}
+
+	root.AddCommand(newRunCmd())
+	root.AddCommand(newVersionCmd())
+
+	if err := root.Execute(); err != nil {
+		log.Error(err, "Failed to run ansible-operator")
+		os.Exit(1)
+	}
+}
+
+func newRunCmd() *cobra.Command {
 	f := &flags.Flags{}
-	f.AddTo(pflag.CommandLine)
-	pflag.Parse()
+	cmd := &cobra.Command{
+		Use:   "run",
+		Short: "Run the operator",
+		Run: func(_ *cobra.Command, _ []string) {
+			run(f)
+		},
+	}
+	f.AddTo(cmd.Flags())
+	return cmd
+}
+
+func newVersionCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "version",
+		Short: "Print version information",
+		Run: func(_ *cobra.Command, _ []string) {
+			logf.SetLogger(zap.Logger())
+			printVersion()
+		},
+	}
+}
+
+func run(f *flags.Flags) {
 	logf.SetLogger(zap.Logger())
 
 	printVersion()
