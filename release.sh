@@ -9,12 +9,15 @@ fi
 
 VER=$1
 
-if ! [[ "$VER" =~ ^v[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+$ ]]; then
+NUMRE="0|[1-9][0-9]*"
+PRERE="\-(alpha|beta|rc)\.[1-9][0-9]*"
+
+if ! [[ "$VER" =~ ^v($NUMRE)\.($NUMRE)\.($NUMRE)($PRERE)?$ ]]; then
 	echo "malformed version: \"$VER\""
 	exit 1
 fi
 
-if git ls-files --others | grep -Ev 'build/operator-sdk-v.+'; then
+if git ls-files --others --exclude-standard | grep -Ev 'build/operator-sdk-v.+'; then
 	echo "directory has untracked files"
 	exit 1
 fi
@@ -51,3 +54,6 @@ git verify-tag --verbose "$VER"
 
 # Run the release builds.
 make release V=1
+
+# Verify the signatures
+for f in $(ls build/*.asc); do gpg --verify $f; done

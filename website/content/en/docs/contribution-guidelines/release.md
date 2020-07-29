@@ -253,9 +253,6 @@ $ GEN_CHANGELOG_TAG=v1.3.0 make gen-changelog
 Commit the following changes:
 
 - `version/version.go`: update `Version` to `v1.3.0`.
-- `internal/scaffold/go_mod.go`, change the `require` line version for `github.com/operator-framework/operator-sdk` from `master` to `v1.3.0`.
-- `internal/scaffold/helm/go_mod.go`: same as for `internal/scaffold/go_mod.go`.
-- `internal/scaffold/ansible/go_mod.go`: same as for `internal/scaffold/go_mod.go`.
 - `website/content/en/docs/installation/install-operator-sdk.md`: update the linux and macOS URLs to point to the new release URLs.
 - `CHANGELOG.md`: commit changes (updated by changelog generation).
 - `website/content/en/docs/migration/v1.3.0.md`: commit changes (created by changelog generation).
@@ -301,10 +298,10 @@ To verify binaries and tags, see the [verification section](#verifying-a-release
 `ansible-operator` and `helm-operator` release binaries and signatures are similarly built for upload so `make run`
 can download them in their respective operator type projects. See [#3327](https://github.com/operator-framework/operator-sdk/issues/3327) for details.
 
-Push tag `v1.3.0` upstream:
+Push tag `v1.3.0` upstream, assuming `origin` is the name of the upstream remote:
 
 ```sh
-$ git push --tags
+$ git push origin v1.3.0
 ```
 
 Once this tag passes CI, go to step 3. For more info on tagging, see the [release tags section](#release-tags).
@@ -335,9 +332,6 @@ $ git push -f origin v1.3.x
 Check out a new branch from `master` or release branch and commit the following changes:
 
 - `version/version.go`: update `Version` to `v1.3.0+git`.
-- `internal/scaffold/go_mod.go`, change the `require` line version for `github.com/operator-framework/operator-sdk` from `v1.3.0` to `master`.
-- `internal/scaffold/helm/go_mod.go`: same as for `internal/scaffold/go_mod.go`.
-- `internal/scaffold/ansible/go_mod.go`: same as for `internal/scaffold/go_mod.go`.
 - **(Major and minor releases only)** `website/config.toml`: update `version_menu = "v1.3"` to `version_menu = "Releases"`.
 
 ---
@@ -369,7 +363,10 @@ The release process for the samples repo is simple:
     $ git checkout master && git pull
     $ export VER="v1.3.0"
     $ git tag --sign --message "Operator SDK Samples $VER" "$VER"
-    $ git push --tags
+    ```
+1. Push the tag to the remote, assuming `origin` is the name of the upstream remote:
+    ```sh
+    $ git push origin $VER
     ```
 
 ### (Post-release) Updating the release notes
