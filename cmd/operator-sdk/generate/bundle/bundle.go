@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
@@ -101,11 +100,6 @@ const defaultRootDir = "bundle"
 func (c *bundleCmd) setCommonDefaults(cfg *config.Config) {
 	if c.operatorName == "" {
 		c.operatorName = filepath.Base(cfg.Repo)
-	}
-	// A default channel can be inferred if there is only one channel. Don't infer
-	// default otherwise; the user must set this value.
-	if c.defaultChannel == "" && strings.Count(c.channels, ",") == 0 {
-		c.defaultChannel = c.channels
 	}
 }
 
@@ -221,11 +215,6 @@ func (c bundleCmd) runManifests(cfg *config.Config) (err error) {
 
 // validateMetadata validates c for bundle metadata generation.
 func (c bundleCmd) validateMetadata(*config.Config) (err error) {
-	// Ensure a default channel is present.
-	if c.defaultChannel == "" {
-		return fmt.Errorf("--default-channel must be set if setting multiple channels")
-	}
-
 	return nil
 }
 
