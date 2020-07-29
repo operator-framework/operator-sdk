@@ -27,6 +27,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	admissionregv1 "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
@@ -40,7 +41,10 @@ import (
 type Manifests struct {
 	Roles                            []rbacv1.Role
 	ClusterRoles                     []rbacv1.ClusterRole
+	RoleBindings                     []rbacv1.RoleBinding
+	ClusterRoleBindings              []rbacv1.ClusterRoleBinding
 	Deployments                      []appsv1.Deployment
+	ServiceAccounts                  []corev1.ServiceAccount
 	V1CustomResourceDefinitions      []apiextv1.CustomResourceDefinition
 	V1beta1CustomResourceDefinitions []apiextv1beta1.CustomResourceDefinition
 	ValidatingWebhooks               []admissionregv1.ValidatingWebhook
@@ -54,9 +58,11 @@ type Manifests struct {
 var (
 	roleGK                 = rbacv1.SchemeGroupVersion.WithKind("Role").GroupKind()
 	clusterRoleGK          = rbacv1.SchemeGroupVersion.WithKind("ClusterRole").GroupKind()
+	roleBindingGK          = rbacv1.SchemeGroupVersion.WithKind("RoleBinding").GroupKind()
+	clusterRoleBindingGK   = rbacv1.SchemeGroupVersion.WithKind("ClusterRoleBinding").GroupKind()
+	serviceAccountGK       = corev1.SchemeGroupVersion.WithKind("ServiceAccount").GroupKind()
 	deploymentGK           = appsv1.SchemeGroupVersion.WithKind("Deployment").GroupKind()
-	v1crdGK                = apiextv1.SchemeGroupVersion.WithKind("CustomResourceDefinition").GroupKind()
-	v1beta1crdGK           = apiextv1beta1.SchemeGroupVersion.WithKind("CustomResourceDefinition").GroupKind()
+	crdGK                  = apiextv1.SchemeGroupVersion.WithKind("CustomResourceDefinition").GroupKind()
 	validatingWebhookCfgGK = admissionregv1.SchemeGroupVersion.WithKind("ValidatingWebhookConfiguration").GroupKind()
 	mutatingWebhookCfgGK   = admissionregv1.SchemeGroupVersion.WithKind("MutatingWebhookConfiguration").GroupKind()
 	v1alpha3ScorecardCfgGK = scorecardv1alpha3.GroupVersion.WithKind("Configuration").GroupKind()
@@ -92,9 +98,15 @@ func (c *Manifests) UpdateFromDirs(deployDir, crdsDir string) error {
 				err = c.addRoles(manifest)
 			case clusterRoleGK:
 				err = c.addClusterRoles(manifest)
+			case roleBindingGK:
+				err = c.addRoleBindings(manifest)
+			case clusterRoleBindingGK:
+				err = c.addClusterRoleBindings(manifest)
+			case serviceAccountGK:
+				err = c.addServiceAccounts(manifest)
 			case deploymentGK:
 				err = c.addDeployments(manifest)
-			case v1crdGK, v1beta1crdGK:
+			case crdGK:
 				// Skip for now and add explicitly from CRDsDir input.
 			case validatingWebhookCfgGK:
 				err = c.addValidatingWebhookConfigurations(manifest)
@@ -154,9 +166,15 @@ func (c *Manifests) UpdateFromReader(r io.Reader) error {
 			err = c.addRoles(manifest)
 		case clusterRoleGK:
 			err = c.addClusterRoles(manifest)
+		case roleBindingGK:
+			err = c.addRoleBindings(manifest)
+		case clusterRoleBindingGK:
+			err = c.addClusterRoleBindings(manifest)
+		case serviceAccountGK:
+			err = c.addServiceAccounts(manifest)
 		case deploymentGK:
 			err = c.addDeployments(manifest)
-		case v1crdGK, v1beta1crdGK:
+		case crdGK:
 			err = c.addCustomResourceDefinitions(gvk.Version, manifest)
 		case validatingWebhookCfgGK:
 			err = c.addValidatingWebhookConfigurations(manifest)
@@ -208,6 +226,42 @@ func (c *Manifests) addClusterRoles(rawManifests ...[]byte) error {
 			return err
 		}
 		c.ClusterRoles = append(c.ClusterRoles, role)
+	}
+	return nil
+}
+
+// addRoleBindings assumes all manifest data in rawManifests are RoleBindings and adds them to the collector.
+func (c *Manifests) addRoleBindings(rawManifests ...[]byte) error {
+	for _, rawManifest := range rawManifests {
+		binding := rbacv1.RoleBinding{}
+		if err := yaml.Unmarshal(rawManifest, &binding); err != nil {
+			return err
+		}
+		c.RoleBindings = append(c.RoleBindings, binding)
+	}
+	return nil
+}
+
+// addClusterRoleBindings assumes all manifest data in rawManifests are ClusterRoleBindings and adds them to the collector.
+func (c *Manifests) addClusterRoleBindings(rawManifests ...[]byte) error {
+	for _, rawManifest := range rawManifests {
+		binding := rbacv1.ClusterRoleBinding{}
+		if err := yaml.Unmarshal(rawManifest, &binding); err != nil {
+			return err
+		}
+		c.ClusterRoleBindings = append(c.ClusterRoleBindings, binding)
+	}
+	return nil
+}
+
+// addServiceAccounts assumes all manifest data in rawManifests are ServiceAccounts and adds them to the collector.
+func (c *Manifests) addServiceAccounts(rawManifests ...[]byte) error {
+	for _, rawManifest := range rawManifests {
+		sa := corev1.ServiceAccount{}
+		if err := yaml.Unmarshal(rawManifest, &sa); err != nil {
+			return err
+		}
+		c.ServiceAccounts = append(c.ServiceAccounts, sa)
 	}
 	return nil
 }

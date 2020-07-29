@@ -8,10 +8,10 @@ metadata:
           "apiVersion": "cache.example.com/v1alpha1",
           "kind": "Memcached",
           "metadata": {
-            "name": "example-memcached"
+            "name": "memcached-sample"
           },
           "spec": {
-            "size": 3
+            "foo": "bar"
           }
         }
       ]
@@ -42,97 +42,111 @@ spec:
     mediatype: ""
   install:
     spec:
+      clusterPermissions:
+      - rules:
+        - apiGroups:
+          - cache.example.com
+          resources:
+          - memcacheds
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - cache.example.com
+          resources:
+          - memcacheds/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - authentication.k8s.io
+          resources:
+          - tokenreviews
+          verbs:
+          - create
+        - apiGroups:
+          - authorization.k8s.io
+          resources:
+          - subjectaccessreviews
+          verbs:
+          - create
+        serviceAccountName: default
       deployments:
-      - name: memcached-operator
+      - name: memcached-operator-controller-manager
         spec:
           replicas: 1
           selector:
             matchLabels:
-              name: memcached-operator
+              control-plane: controller-manager
           strategy: {}
           template:
             metadata:
               labels:
-                name: memcached-operator
+                control-plane: controller-manager
             spec:
               containers:
-              - command:
-                - memcached-operator
-                env:
-                - name: WATCH_NAMESPACE
-                  valueFrom:
-                    fieldRef:
-                      fieldPath: metadata.annotations['olm.targetNamespaces']
-                - name: POD_NAME
-                  valueFrom:
-                    fieldRef:
-                      fieldPath: metadata.name
-                - name: OPERATOR_NAME
-                  value: memcached-operator
-                image: quay.io/example/memcached-operator:v0.0.3
-                imagePullPolicy: Never
-                name: memcached-operator
+              - args:
+                - --secure-listen-address=0.0.0.0:8443
+                - --upstream=http://127.0.0.1:8080/
+                - --logtostderr=true
+                - --v=10
+                image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+                name: kube-rbac-proxy
+                ports:
+                - containerPort: 8443
+                  name: https
                 resources: {}
-              serviceAccountName: memcached-operator
+              - args:
+                - --metrics-addr=127.0.0.1:8080
+                - --enable-leader-election
+                command:
+                - /manager
+                image: controller:latest
+                name: manager
+                resources:
+                  limits:
+                    cpu: 100m
+                    memory: 30Mi
+                  requests:
+                    cpu: 100m
+                    memory: 20Mi
+              terminationGracePeriodSeconds: 10
       permissions:
       - rules:
         - apiGroups:
           - ""
           resources:
-          - pods
-          - services
-          - services/finalizers
-          - endpoints
-          - persistentvolumeclaims
-          - events
           - configmaps
-          - secrets
-          verbs:
-          - '*'
-        - apiGroups:
-          - apps
-          resources:
-          - deployments
-          - daemonsets
-          - replicasets
-          - statefulsets
-          verbs:
-          - '*'
-        - apiGroups:
-          - monitoring.coreos.com
-          resources:
-          - servicemonitors
           verbs:
           - get
+          - list
+          - watch
           - create
-        - apiGroups:
-          - apps
-          resourceNames:
-          - memcached-operator
-          resources:
-          - deployments/finalizers
-          verbs:
           - update
+          - patch
+          - delete
         - apiGroups:
           - ""
           resources:
-          - pods
+          - configmaps/status
           verbs:
           - get
+          - update
+          - patch
         - apiGroups:
-          - apps
+          - ""
           resources:
-          - replicasets
-          - deployments
+          - events
           verbs:
-          - get
-        - apiGroups:
-          - cache.example.com
-          resources:
-          - '*'
-          verbs:
-          - '*'
-        serviceAccountName: memcached-operator
+          - create
+          - patch
+        serviceAccountName: default
     strategy: deployment
   installModes:
   - supported: true

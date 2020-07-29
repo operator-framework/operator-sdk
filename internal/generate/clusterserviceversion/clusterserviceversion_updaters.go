@@ -28,6 +28,7 @@ import (
 	admissionregv1 "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/version"
 
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
@@ -39,11 +40,10 @@ import (
 func ApplyTo(c *collector.Manifests, csv *operatorsv1alpha1.ClusterServiceVersion) error {
 	// Apply manifests to the CSV object.
 	if err := apply(c, csv); err != nil {
-		return fmt.Errorf("error updating ClusterServiceVersion: %v", err)
+		return err
 	}
 
-	// Set fields required by namespaced operators. This is a no-op for cluster-
-	// scoped operators.
+	// Set fields required by namespaced operators. This is a no-op for cluster-scoped operators.
 	setNamespacedFields(csv)
 
 	// Sort all updated fields.
@@ -65,7 +65,7 @@ func apply(c *collector.Manifests, csv *operatorsv1alpha1.ClusterServiceVersion)
 
 	applyCustomResourceDefinitions(c, csv)
 	if err := applyCustomResources(c, csv); err != nil {
-		return fmt.Errorf("error applying Custom Resource: %v", err)
+		return fmt.Errorf("error applying Custom Resource examples to CSV %s: %v", csv.GetName(), err)
 	}
 	applyWebhooks(c, csv)
 	return nil
@@ -80,29 +80,97 @@ func getCSVInstallStrategy(csv *operatorsv1alpha1.ClusterServiceVersion) operato
 	return csv.Spec.InstallStrategy
 }
 
-// applyRoles updates strategy's permissions with the Roles in the collector.
-func applyRoles(c *collector.Manifests, strategy *operatorsv1alpha1.StrategyDetailsDeployment) {
+// This service account exists in every namespace as the default.
+const defaultServiceAccountName = "default"
+
+// applyRoles applies Roles to strategy's permissions field by combining Roles bound to ServiceAccounts
+// into one set of permissions.
+func applyRoles(c *collector.Manifests, strategy *operatorsv1alpha1.StrategyDetailsDeployment) { //nolint:dupl
+	// Create a set of all service accounts for deployments. These are the only CSV-relevant service accounts.
+	saNamesToRoleNames := make(map[string]map[string]struct{})
+	for _, dep := range c.Deployments {
+		saName := dep.Spec.Template.Spec.ServiceAccountName
+		if saName == "" {
+			saName = defaultServiceAccountName
+		}
+		saNamesToRoleNames[saName] = make(map[string]struct{})
+	}
+
+	// Collect all role names by their corresponding service accounts via bindings. This lets us
+	// look up all service accounts a role is bound to and create one set of permissions per service account.
+	for _, binding := range c.RoleBindings {
+		roleRef := binding.RoleRef
+		if roleRef.Kind == "Role" && (roleRef.APIGroup == "" || roleRef.APIGroup == rbacv1.SchemeGroupVersion.Group) {
+			for _, name := range getSubjectServiceAccountNames(binding.Subjects) {
+				if _, hasName := saNamesToRoleNames[name]; hasName {
+					saNamesToRoleNames[name][roleRef.Name] = struct{}{}
+				}
+			}
+		}
+	}
+
+	// Apply relevant roles to each service account.
 	perms := []operatorsv1alpha1.StrategyDeploymentPermissions{}
-	for _, role := range c.Roles {
-		perms = append(perms, operatorsv1alpha1.StrategyDeploymentPermissions{
-			ServiceAccountName: role.GetName(),
-			Rules:              role.Rules,
-		})
+	for saName, roleNames := range saNamesToRoleNames {
+		p := operatorsv1alpha1.StrategyDeploymentPermissions{ServiceAccountName: saName}
+		for _, role := range c.Roles {
+			if _, ok := roleNames[role.GetName()]; ok {
+				p.Rules = append(p.Rules, role.Rules...)
+			}
+		}
+		perms = append(perms, p)
 	}
 	strategy.Permissions = perms
 }
 
-// applyClusterRoles updates strategy's cluserPermissions with the ClusterRoles
-// in the collector.
-func applyClusterRoles(c *collector.Manifests, strategy *operatorsv1alpha1.StrategyDetailsDeployment) {
-	perms := []operatorsv1alpha1.StrategyDeploymentPermissions{}
-	for _, role := range c.ClusterRoles {
-		perms = append(perms, operatorsv1alpha1.StrategyDeploymentPermissions{
-			ServiceAccountName: role.GetName(),
-			Rules:              role.Rules,
-		})
+// applyClusterRoles applies ClusterRoles to strategy's clusterPermissions field by combining ClusterRoles
+// bound to ServiceAccounts into one set of clusterPermissions.
+func applyClusterRoles(c *collector.Manifests, strategy *operatorsv1alpha1.StrategyDetailsDeployment) { //nolint:dupl
+	// Create a set of all service accounts for deployments. These are the only CSV-relevant service accounts.
+	saNamesToClusterRoleNames := make(map[string]map[string]struct{})
+	for _, dep := range c.Deployments {
+		saName := dep.Spec.Template.Spec.ServiceAccountName
+		if saName == "" {
+			saName = defaultServiceAccountName
+		}
+		saNamesToClusterRoleNames[saName] = make(map[string]struct{})
 	}
-	strategy.ClusterPermissions = perms
+
+	// Collect all cluster role names by their corresponding service accounts via bindings. This lets us
+	// look up all service accounts a cluster role is bound to and create one set of permissions per service account.
+	for _, binding := range c.ClusterRoleBindings {
+		roleRef := binding.RoleRef
+		if roleRef.Kind == "ClusterRole" && (roleRef.APIGroup == "" || roleRef.APIGroup == rbacv1.SchemeGroupVersion.Group) {
+			for _, name := range getSubjectServiceAccountNames(binding.Subjects) {
+				if _, hasName := saNamesToClusterRoleNames[name]; hasName {
+					saNamesToClusterRoleNames[name][roleRef.Name] = struct{}{}
+				}
+			}
+		}
+	}
+
+	// Apply relevant cluster roles to each service account.
+	clusterPerms := []operatorsv1alpha1.StrategyDeploymentPermissions{}
+	for saName, clusterRoleNames := range saNamesToClusterRoleNames {
+		p := operatorsv1alpha1.StrategyDeploymentPermissions{ServiceAccountName: saName}
+		for _, clusterRole := range c.ClusterRoles {
+			if _, ok := clusterRoleNames[clusterRole.GetName()]; ok {
+				p.Rules = append(p.Rules, clusterRole.Rules...)
+			}
+		}
+		clusterPerms = append(clusterPerms, p)
+	}
+	strategy.ClusterPermissions = clusterPerms
+}
+
+// getSubjectServiceAccountNames returns a list of all ServiceAccount subject names.
+func getSubjectServiceAccountNames(subjects []rbacv1.Subject) (saNames []string) {
+	for _, subject := range subjects {
+		if subject.Kind == "ServiceAccount" {
+			saNames = append(saNames, subject.Name)
+		}
+	}
+	return saNames
 }
 
 // applyDeployments updates strategy's deployments with the Deployments
