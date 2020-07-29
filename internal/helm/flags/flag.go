@@ -19,8 +19,6 @@ import (
 	"time"
 
 	"github.com/spf13/pflag"
-
-	"github.com/operator-framework/operator-sdk/internal/log/zap"
 )
 
 // Flags - Options to be used by a helm operator
@@ -36,7 +34,6 @@ type Flags struct {
 
 // AddTo - Add the helm operator flags to the the flagset
 func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
-	flagSet.AddFlagSet(zap.FlagSet())
 	flagSet.DurationVar(&f.ReconcilePeriod,
 		"reconcile-period",
 		time.Minute,

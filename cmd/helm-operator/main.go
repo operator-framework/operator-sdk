@@ -15,6 +15,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"runtime"
@@ -28,6 +29,7 @@ import (
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	zapf "sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 
@@ -35,7 +37,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/helm/flags"
 	"github.com/operator-framework/operator-sdk/internal/helm/release"
 	"github.com/operator-framework/operator-sdk/internal/helm/watches"
-	"github.com/operator-framework/operator-sdk/internal/log/zap"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 )
@@ -65,14 +66,20 @@ func main() {
 }
 
 func newRunCmd() *cobra.Command {
+	opts := &zapf.Options{}
+	logFlags := flag.NewFlagSet("logging", flag.ExitOnError)
+	opts.BindFlags(logFlags)
+
 	f := &flags.Flags{}
 	cmd := &cobra.Command{
 		Use:   "run",
 		Short: "Run the operator",
 		Run: func(_ *cobra.Command, _ []string) {
+			logf.SetLogger(zapf.New(zapf.UseFlagOptions(opts)))
 			run(f)
 		},
 	}
+	cmd.Flags().AddGoFlagSet(logFlags)
 	f.AddTo(cmd.Flags())
 	return cmd
 }
@@ -82,15 +89,13 @@ func newVersionCmd() *cobra.Command {
 		Use:   "version",
 		Short: "Print version information",
 		Run: func(_ *cobra.Command, _ []string) {
-			logf.SetLogger(zap.Logger())
+			logf.SetLogger(zapf.New())
 			printVersion()
 		},
 	}
 }
 
 func run(f *flags.Flags) {
-	logf.SetLogger(zap.Logger())
-
 	printVersion()
 
 	cfg, err := config.GetConfig()

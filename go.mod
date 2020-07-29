@@ -6,7 +6,7 @@ require (
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/fatih/structtag v1.1.0
 	github.com/go-logr/logr v0.1.0
-	github.com/go-logr/zapr v0.1.1
+	github.com/go-logr/zapr v0.1.1 // indirect
 	github.com/iancoleman/strcase v0.0.0-20191112232945-16388991a334
 	github.com/kr/text v0.1.0
 	github.com/markbates/inflect v1.0.4
@@ -24,7 +24,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.5.1
-	go.uber.org/zap v1.14.1
+	go.uber.org/zap v1.14.1 // indirect
 	golang.org/x/tools v0.0.0-20200403190813-44a64ad78b9b
 	gomodules.xyz/jsonpatch/v3 v3.0.1
 	helm.sh/helm/v3 v3.2.4
@@ -33,7 +33,6 @@ require (
 	k8s.io/apimachinery v0.18.4
 	k8s.io/cli-runtime v0.18.2
 	k8s.io/client-go v0.18.4
-	k8s.io/klog v1.0.0
 	k8s.io/kubectl v0.18.2
 	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/controller-runtime v0.6.1

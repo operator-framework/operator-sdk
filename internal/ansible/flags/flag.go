@@ -19,8 +19,6 @@ import (
 	"time"
 
 	"github.com/spf13/pflag"
-
-	"github.com/operator-framework/operator-sdk/internal/log/zap"
 )
 
 // Flags - Options to be used by an ansible operator
@@ -43,7 +41,6 @@ const AnsibleCollectionsPathEnvVar = "ANSIBLE_COLLECTIONS_PATH"
 
 // AddTo - Add the ansible operator flags to the the flagset
 func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
-	flagSet.AddFlagSet(zap.FlagSet())
 	flagSet.DurationVar(&f.ReconcilePeriod,
 		"reconcile-period",
 		time.Minute,
