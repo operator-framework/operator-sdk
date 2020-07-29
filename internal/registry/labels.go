@@ -24,10 +24,7 @@ import (
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
-
-	// TODO: replace `gopkg.in/yaml.v3` with `sigs.k8s.io/yaml` once operator-registry has `json` tags in the
-	// annotations struct.
-	yaml "gopkg.in/yaml.v3"
+	"sigs.k8s.io/yaml"
 )
 
 // Labels is a set of key:value labels from an operator-registry object.
