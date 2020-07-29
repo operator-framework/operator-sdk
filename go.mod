@@ -8,7 +8,6 @@ require (
 	github.com/go-logr/logr v0.1.0
 	github.com/iancoleman/strcase v0.0.0-20191112232945-16388991a334
 	github.com/kr/text v0.1.0
-	github.com/kubernetes-sigs/kustomize v2.0.3+incompatible // indirect
 	github.com/markbates/inflect v1.0.4
 	github.com/mattn/go-isatty v0.0.12
 	github.com/onsi/ginkgo v1.12.1
