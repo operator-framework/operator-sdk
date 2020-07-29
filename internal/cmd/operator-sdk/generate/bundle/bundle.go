@@ -24,8 +24,8 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
-	yaml "gopkg.in/yaml.v3"
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
+	"sigs.k8s.io/yaml"
 
 	metricsannotations "github.com/operator-framework/operator-sdk/internal/annotations/metrics"
 	scorecardannotations "github.com/operator-framework/operator-sdk/internal/annotations/scorecard"
@@ -108,12 +108,6 @@ const defaultRootDir = "bundle"
 func (c *bundleCmd) setDefaults(cfg *config.Config) (err error) {
 	if c.projectName, err = genutil.GetOperatorName(cfg); err != nil {
 		return err
-	}
-
-	// A default channel can be inferred if there is only one channel. Don't infer
-	// default otherwise; the user must set this value.
-	if c.defaultChannel == "" && strings.Count(c.channels, ",") == 0 {
-		c.defaultChannel = c.channels
 	}
 	return nil
 }
@@ -254,11 +248,6 @@ func writeScorecardConfig(dir string, cfg v1alpha3.Configuration) error {
 
 // validateMetadata validates c for bundle metadata generation.
 func (c bundleCmd) validateMetadata(*config.Config) (err error) {
-	// Ensure a default channel is present.
-	if c.defaultChannel == "" {
-		return fmt.Errorf("--default-channel must be set if setting multiple channels")
-	}
-
 	return nil
 }
 

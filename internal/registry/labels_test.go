@@ -111,8 +111,9 @@ var _ = Describe("Labels", func() {
 			It("returns a YAML error", func() {
 				writeMetadataHelper(fs, defaultPath, annotationsStringInvalidBadIndent)
 				_, _, err = findBundleMetadata(fs, "/bundle")
-				Expect(err).To(MatchError(fmt.Sprintf("error unmarshalling potential bundle metadata %s: ", defaultPath) +
-					"yaml: line 2: found character that cannot start any token"))
+				// err should contain both of the following parts.
+				Expect(err.Error()).To(ContainSubstring(fmt.Sprintf("error unmarshalling potential bundle metadata %s: ", defaultPath)))
+				Expect(err.Error()).To(ContainSubstring("yaml: line 2: found character that cannot start any token"))
 			})
 			It("returns an error for no metadata file (empty file)", func() {
 				writeMetadataHelper(fs, defaultPath, annotationsStringInvalidEmpty)

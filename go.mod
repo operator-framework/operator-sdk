@@ -15,7 +15,7 @@ require (
 	github.com/onsi/gomega v1.10.1
 	github.com/operator-framework/api v0.3.8
 	github.com/operator-framework/operator-lib v0.0.0-20200724203809-f6728cc91ac6
-	github.com/operator-framework/operator-registry v1.12.6-0.20200611222234-275301b779f8
+	github.com/operator-framework/operator-registry v1.13.4
 	github.com/prometheus/client_golang v1.5.1
 	github.com/sergi/go-diff v1.0.0
 	github.com/sirupsen/logrus v1.5.0
@@ -27,8 +27,6 @@ require (
 	go.uber.org/zap v1.14.1
 	golang.org/x/tools v0.0.0-20200403190813-44a64ad78b9b
 	gomodules.xyz/jsonpatch/v3 v3.0.1
-	gopkg.in/yaml.v2 v2.3.0
-	gopkg.in/yaml.v3 v3.0.0-20190905181640-827449938966
 	helm.sh/helm/v3 v3.2.4
 	k8s.io/api v0.18.4
 	k8s.io/apiextensions-apiserver v0.18.4
