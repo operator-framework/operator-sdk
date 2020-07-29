@@ -23,7 +23,6 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
@@ -82,9 +81,9 @@ func newRunCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "run",
 		Short: "Run the operator",
-		Run: func(_ *cobra.Command, _ []string) {
+		Run: func(cmd *cobra.Command, _ []string) {
 			logf.SetLogger(zapf.New(zapf.UseFlagOptions(opts)))
-			run(f)
+			run(cmd, f)
 		},
 	}
 	cmd.Flags().AddGoFlagSet(logFlags)
@@ -103,7 +102,7 @@ func newVersionCmd() *cobra.Command {
 	}
 }
 
-func run(f *flags.Flags) {
+func run(cmd *cobra.Command, f *flags.Flags) {
 	printVersion()
 
 	cfg, err := config.GetConfig()
@@ -117,7 +116,7 @@ func run(f *flags.Flags) {
 	// should be used instead.
 	if operatorName, found := os.LookupEnv("OPERATOR_NAME"); found {
 		log.Info("Environment variable OPERATOR_NAME has been deprecated, use --leader-election-id instead.")
-		if pflag.CommandLine.Lookup("leader-election-id").Changed {
+		if cmd.Flags().Lookup("leader-election-id").Changed {
 			log.Info("Ignoring OPERATOR_NAME environment variable since --leader-election-id is set")
 		} else {
 			f.LeaderElectionID = operatorName
