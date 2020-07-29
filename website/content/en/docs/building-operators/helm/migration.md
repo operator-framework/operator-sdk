@@ -73,12 +73,6 @@ $ operator-sdk create api \
     --helm-chart=<path_to_existing_project>/helm-charts/<chart>
 ```
 
-Now that we have our new project initialized, we need to re-create each of our APIs.
-Using our API example from earlier (`cache.example.com`), we'll use `cache` for the
-`--group` flag.
-
-For `--version` and `--kind`, we use `spec.versions[0].name` and `spec.names.kind`, respectively. 
-
 ### Migrating your Custom Resource samples
 
 Update the CR manifests in `config/samples` with the values of the CRs in your existing project which are in `deploy/crds/<group>_<version>_<kind>_cr.yaml`
@@ -108,7 +102,7 @@ New projects are configured to watch all namespaces by default, so they need a `
 
 The following rules were used in earlier versions of helm-operator to automatically create and manage services and servicemonitors for metrics collection. If your operator's charts don't require these rules, they can safely be left out of the new `config/rbac/role.yaml` file:
 
-```  
+```yaml  
   - apiGroups:
     - monitoring.coreos.com
     resources:
