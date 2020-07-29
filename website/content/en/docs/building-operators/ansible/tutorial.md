@@ -13,12 +13,13 @@ After [installing the Operator SDK CLI][install-guide] and
 new Ansible-based memcached-operator project:
 
 ```sh
-$ operator-sdk new memcached-operator --api-version=cache.example.com/v1alpha1 --kind=Memcached --type=ansible
-$ cd memcached-operator
+$ mkdir memcached-operator && cd memcached-operator
+$ operator-sdk init --plugins=ansible --domain=example.com
+$ operator sdk create api --group=cache --version=v1alpha1 --kind=Memcached --generate-role
 ```
 
 This creates the memcached-operator project specifically for watching the
-Memcached resource with APIVersion `cache.example.com/v1apha1` and Kind
+Memcached resource with APIVersion `cache.example.com/v1alpha1` and Kind
 `Memcached`.
 
 To learn more about the project directory structure, see [project
@@ -160,13 +161,13 @@ resource definition the operator will be watching.
 Deploy the CRD:
 
 ```sh
-$ kubectl create -f deploy/crds/cache.example.com_memcacheds_crd.yaml
+$ make install
 ```
 
 Once this is done, there are two ways to run the operator:
 
 - As a pod inside a Kubernetes cluster
-- As a go program outside the cluster using `operator-sdk`
+- As a go program outside the cluster
 
 #### 1. Run as a pod inside a Kubernetes cluster
 
@@ -174,38 +175,23 @@ Running as a pod inside a Kubernetes cluster is preferred for production use.
 
 Build the memcached-operator image and push it to a registry:
 ```
-$ operator-sdk build quay.io/example/memcached-operator:v0.0.1
-$ docker push quay.io/example/memcached-operator:v0.0.1
+$ make docker-build docker-push IMG=quay.io/example/memcached-operator:v0.0.1
 ```
 
-Kubernetes deployment manifests are generated in `deploy/operator.yaml`. The
-deployment image in this file needs to be modified from the placeholder
-`REPLACE_IMAGE` to the previous built image. To do this run:
-```
-$ sed -i 's|REPLACE_IMAGE|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
-```
-
-**Note**
-If you are performing these steps on OSX, use the following `sed` commands instead:
-```
-$ sed -i "" 's|REPLACE_IMAGE|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
-```
+Kubernetes deployment manifests are generated in `config/manager/manager.yaml`.
 
 Deploy the memcached-operator:
 
 ```sh
-$ kubectl create -f deploy/service_account.yaml
-$ kubectl create -f deploy/role.yaml
-$ kubectl create -f deploy/role_binding.yaml
-$ kubectl create -f deploy/operator.yaml
+$ make deploy IMG=quay.io/example/memcached-operator:v0.0.1
 ```
 
 Verify that the memcached-operator is up and running:
 
 ```sh
-$ kubectl get deployment
-NAME                     DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
-memcached-operator       1         1         1            1           1m
+$ kubectl get deployment -n memcached-operator-system
+NAME                                        DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
+memcached-operator-controller-manager       1         1         1            1           1m
 ```
 
 #### 2. Run outside the cluster
@@ -216,28 +202,11 @@ This method is preferred during the development cycle to speed up deployment and
 HTTP Plugin][ansible-runner-http-plugin] is installed or else you will see
 unexpected errors from Ansible Runner when a Custom Resource is created.
 
-It is also important that the `role` path referenced in `watches.yaml` exists
-on your machine. Since we are normally used to using a container where the Role
-is put on disk for us, we need to manually copy our role to the configured
-Ansible Roles path (e.g `/etc/ansible/roles`.
-
 Run the operator locally with the default Kubernetes config file present at
 `$HOME/.kube/config`:
 
 ```sh
-$ operator-sdk run local
-INFO[0000] Go Version: go1.10
-INFO[0000] Go OS/Arch: darwin/amd64
-INFO[0000] operator-sdk Version: 0.0.5+git
-```
-
-Run the operator locally with a provided Kubernetes config file:
-
-```sh
-$ operator-sdk run local --kubeconfig=config
-INFO[0000] Go Version: go1.10
-INFO[0000] Go OS/Arch: darwin/amd64
-INFO[0000] operator-sdk Version: 0.0.5+git
+$ make run
 ```
 
 ### 3. Deploy your Operator with the Operator Lifecycle Manager (OLM)
@@ -248,27 +217,26 @@ using a bit of setup from other `operator-sdk` commands. Check out the OLM integ
 
 ### Create a Memcached CR
 
-Modify `deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml` as shown and create a `Memcached` custom resource:
+Modify `config/samples/cache_v1alpha1_memcached.yaml` as shown and create a `Memcached` custom resource:
 
 ```sh
-$ cat deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml
+$ cat config/samples/cache_v1alpha1_memcached.yaml
 apiVersion: "cache.example.com/v1alpha1"
 kind: "Memcached"
 metadata:
-  name: "example-memcached"
+  name: "memcached-sample"
 spec:
   size: 3
 
-$ kubectl apply -f deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml
+$ kubectl apply -f config/samples/cache_v1alpha1_memcached.yaml
 ```
 
 Ensure that the memcached-operator creates the deployment for the CR:
 
 ```sh
 $ kubectl get deployment
-NAME                     DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
-memcached-operator       1         1         1            1           2m
-example-memcached        3         3         3            3           1m
+NAME                    DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
+memcached-sample        3         3         3            3           1m
 ```
 
 Check the pods to confirm 3 replicas were created:
@@ -276,10 +244,9 @@ Check the pods to confirm 3 replicas were created:
 ```sh
 $ kubectl get pods
 NAME                                  READY     STATUS    RESTARTS   AGE
-example-memcached-6fd7c98d8-7dqdr     1/1       Running   0          1m
-example-memcached-6fd7c98d8-g5k7v     1/1       Running   0          1m
-example-memcached-6fd7c98d8-m7vn7     1/1       Running   0          1m
-memcached-operator-7cc7cfdf86-vvjqk   2/2       Running   0          2m
+memcached-sample-6fd7c98d8-7dqdr     1/1       Running   0          1m
+memcached-sample-6fd7c98d8-g5k7v     1/1       Running   0          1m
+memcached-sample-6fd7c98d8-m7vn7     1/1       Running   0          1m
 ```
 
 ### View the Ansible logs
@@ -287,7 +254,7 @@ memcached-operator-7cc7cfdf86-vvjqk   2/2       Running   0          2m
 In order to see the logs from a particular you can run:
 
 ```sh
-kubectl logs deployment/memcached-operator
+kubectl logs deployment/memcached-operator-controller-manager
 ```
 
 The logs contain the information about the Ansible run and will make it much easier to debug issues within your Ansible tasks.
@@ -297,11 +264,14 @@ Also, you can use the environment variable `ANSIBLE_DEBUG_LOGS` set as `True` to
 
 **Example**
 
-In the `deploy/operator.yaml`:
+In `config/manager/manager.yaml` and `config/default/manager_auth_proxy_patch.yaml:
 ```yaml
 ...
-- name: ANSIBLE_DEBUG_LOGS
-  value: "True"
+      containers:
+      - name: manager
+        env:
+        - name: ANSIBLE_DEBUG_LOGS
+          value: "True"
 ...
 ```
 
@@ -316,7 +286,7 @@ Resource with the desired verbosity.
 apiVersion: "cache.example.com/v1alpha1"
 kind: "Memcached"
 metadata:
-  name: "example-memcached"
+  name: "memcached-sample"
   annotations:
     "ansible.sdk.operatorframework.io/verbosity": "4"
 spec:
@@ -329,23 +299,23 @@ Change the `spec.size` field in the memcached CR from 3 to 4 and apply the
 change:
 
 ```sh
-$ cat deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml
+$ cat config/samples/cache_v1alpha1_memcached.yaml
 apiVersion: "cache.example.com/v1alpha1"
 kind: "Memcached"
 metadata:
-  name: "example-memcached"
+  name: "memcached-sample"
 spec:
   size: 4
 
-$ kubectl apply -f deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml
+$ kubectl apply -f config/samples/cache_v1alpha1_memcached.yaml
 ```
 
 Confirm that the operator changes the deployment size:
 
 ```sh
 $ kubectl get deployment
-NAME                 DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
-example-memcached    4         4         4            4           5m
+NAME                DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
+memcached-sample    4         4         4            4           5m
 ```
 
 ### Cleanup
@@ -353,16 +323,11 @@ example-memcached    4         4         4            4           5m
 Clean up the resources:
 
 ```sh
-$ kubectl delete -f deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml
-$ kubectl delete -f deploy/operator.yaml
-$ kubectl delete -f deploy/role_binding.yaml
-$ kubectl delete -f deploy/role.yaml
-$ kubectl delete -f deploy/service_account.yaml
-$ kubectl delete -f deploy/crds/cache.example.com_memcacheds_crd.yaml
+$ make undeploy
 ```
 
-**NOTE** Additional CR/CRD's can be added to the project by running, for example, the command :`operator-sdk add api --api-version=cache.example.com/v1alpha1 --kind=AppService`
-For more information, refer [cli][addcli] doc.
+**NOTE** Additional CR/CRD's can be added to the project by running the command `operator-sdk add api --api-version=cache.example.com/v1alpha1 --kind=AppService`
+For more information, refer to the [`create api` CLI][create_api_cli] doc.
 
 [ansible-install-guide]: /docs/building-operators/ansible/installation
 [ansible-runner-http-plugin]:https://github.com/ansible/ansible-runner-http
@@ -376,6 +341,6 @@ For more information, refer [cli][addcli] doc.
 [go-tool]:https://golang.org/dl/
 [docker-tool]:https://docs.docker.com/install/
 [kubectl-tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
-<!-- TODO: update these links to the new docs once the ansible plugin is publicly available -->
-[addcli]: https://v0-19-x.sdk.operatorframework.io/docs/cli/operator-sdk_add_api
-[quickstart-bundle]:https://v0-19-x.sdk.operatorframework.io/docs/olm-integration/legacy/quickstart-bundle/
+<!-- TODO: update these links to sdk.operatorframework.io once 1.0.0 is released -->
+[create_api_cli]: https://master.sdk.operatorframework.io/docs/cli/operator-sdk_create_api/
+[quickstart-bundle]:https://master.sdk.operatorframework.io/docs/olm-integration/quickstart-bundle/

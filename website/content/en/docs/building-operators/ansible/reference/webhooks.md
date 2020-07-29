@@ -12,18 +12,7 @@ webhook server. You will likely need to make a few modifications to the webhook 
 
 When integrating an admission webhook server into your Ansible-based Operator, we recommend that you
 deploy it as a sidecar container alongside your operator. This allows you to make use of the proxy
-server that the operator deploys, as well as the cache that backs it. The sidecar will be defined in the `deploy/operator.yaml` and it will look like:
-
-```yaml
-# This deploys the webhook
-- name: webhook
-  # Replace this with the built image name
-  image: "REPLACE_WEBHOOK_IMAGE"
-  imagePullPolicy: "Always"
-  volumeMounts:
-  - mountPath: /etc/tls/
-    name: webhook-cert
-```
+server that the operator deploys, as well as the cache that backs it.
 
 ## Ensuring the webhook server uses the caching proxy
 
@@ -35,54 +24,52 @@ be hitting the real API server and will not get caching for free.
 
 ## Deploying the webhook server
 
-To deploy the webhook server as a sidecar alongside your operator, all you need to do is add the container
-specification to your `deploy/operator.yaml`. You may also need to add a volume for mounting in TLS secrets,
-as your webhook server is required to have a valid SSL configuration. Below is a sample updated container
-specification that deploys a webhook:
+Create a new file called `config/default/manager_webhook_patch.yaml` with the following content
+(making sure to replace the image reference placeholder string):
 
 ```yaml
-containers:
-  - name: my-operator
-    # Replace this with the built image name
-    image: "REPLACE_IMAGE"
-    imagePullPolicy: "Always"
-    volumeMounts:
-    - mountPath: /tmp/ansible-operator/runner
-      name: runner
-    env:
-      - name: WATCH_NAMESPACE
-        valueFrom:
-          fieldRef:
-            fieldPath: metadata.namespace
-      - name: POD_NAME
-        valueFrom:
-          fieldRef:
-            fieldPath: metadata.name
-      - name: OPERATOR_NAME
-        value: "validating-operator"
-      - name: ANSIBLE_GATHERING
-        value: explicit
-  # This deploys the webhook
-  - name: webhook
-    # Replace this with the built image name
-    image: "REPLACE_WEBHOOK_IMAGE"
-    imagePullPolicy: "Always"
-    volumeMounts:
-    - mountPath: /etc/tls/
-      name: webhook-cert
-volumes:
-  - name: runner
-    emptyDir: {}
-  # This assumes there is a secret called webhook-cert containing TLS certificates
-  # Projects like cert-manager can create these certificates
-  - name: webhook-cert
-    secret:
-      secretName: webhook-cert
+# This patch injects a sidecar container which is an admission webhook for the
+# controller manager.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: controller-manager
+  namespace: system
+spec:
+  template:
+    spec:
+      containers:
+      - name: webhook
+        # Replace this with the built image name
+        image: "REPLACE_WEBHOOK_IMAGE"
+        volumeMounts:
+        - mountPath: /etc/tls/
+          name: webhook-cert
+      volumes:
+      # This assumes there is a secret called webhook-cert containing TLS certificates
+      # Projects like cert-manager can create these certificates
+      - name: webhook-cert
+        secret:
+          secretName: webhook-cert
 ```
 
-This will run your webhook server alongside the operator, but Kubernetes will not yet call the webhooks before
-resources can be created. In order to let Kubernetes know about your webhooks, you must create specific API resources.
+Then, update `config/default/kustomization.yaml` to include this patch:
 
+```yaml
+patchesStrategicMerge:
+- manager_webhook_patch.yaml # Add this line
+```
+
+Now, when deploying the operator with `make deploy`, your webhook server will run alongside the
+operator, but Kubernetes will not yet call the webhooks before resources can be created. In order
+to let Kubernetes know about your webhooks, you must create specific API resources.
+
+
+<!--
+   TODO(fabianvf,asmacdo) update these sections to direct the user
+     to create files in the config directory and make use of kustomize.
+     The Go plugin's webhook scaffolding might be a good reference.
+-->
 ## Making Kubernetes call your webhooks
 
 In order to make your webhooks callable at all, first you must create a `Service` that points at your

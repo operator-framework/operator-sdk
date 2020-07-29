@@ -20,17 +20,21 @@ To begin, you sould have:
 
     ```
     .
-    ├── build/
-    ├── deploy/
-    ├── molecule/
-    ├── roles/
-    ├── playbook.yml (optional)
+    ├── config
+    ├── Dockerfile
+    ├── Makefile
+    ├── molecule
+    ├── playbooks
+    ├── PROJECT
     ├── requirements.yml
+    ├── roles
     └── watches.yaml
+
     ```
 
 - The Ansible content specified in `requirements.yml` will also need to be installed. You can install them with `ansible-galaxy collection install -r requirements.yml`
 
+<!-- TODO(fabianvf, asmacdo): update this section based on the new molecule scaffolding -->
 ### Molecule scenarios
 If you look into the `molecule` directory, you will see four directories (`default`, `test-local`,`cluster`, `templates`). The `default`, `test-local`, and `cluster` directories contain a set of files that together make up what is known as a molecule *scenario*. The `templates` directory contains Jinja templates that are used by multiple scenarios to configure the Kubernetes cluster.
 

@@ -62,8 +62,6 @@ mgr, err := manager.New(cfg, manager.Options{
 
 Read the [operator scope][operator_scope] documentation on how to run your operator as namespace-scoped vs cluster-scoped.
 
-By default the main program will set the manager's namespace using the value of `WATCH_NAMESPACE` env defined in `deploy/operator.yaml`.
-
 ### Multi-Group APIs
 
 Before creating an API and controller, consider if your operator's API requires multiple [groups][API-groups].

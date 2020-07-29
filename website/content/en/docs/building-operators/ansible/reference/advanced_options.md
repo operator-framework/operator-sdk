@@ -16,7 +16,7 @@ Owner references enable [Kubernetes Garbage Collection](https://kubernetes.io/do
 
 Owner references only apply to resources in the same namespace as the CR. Resources outside the namespace of the CR will automatically be annotated with `operator-sdk/primary-resource` and `operator-sdk/primary-resource-type` to track creation. These resources will not be automatically garbage collected. To handle deletion of these resources, use a [finalizer](../finalizers).
 
-You may want to manage what your operator watches and the owner references. This means that your operator will need to understand how to clean up after itself when your CR is deleted. To disable these features you will need to edit your `build/Dockerfile` to include the line below.
+You may want to manage what your operator watches and the owner references. This means that your operator will need to understand how to clean up after itself when your CR is deleted. To disable these features you will need to edit your `Dockerfile` to include the line below.
 
 **NOTE**: That if you use this feature there will be a warning that dependent watches is turned off but there will be no error.
 **WARNING**: Once a CR is deployed without owner reference injection, there is no automatic way to add those references.
@@ -36,22 +36,21 @@ concurrently, which can improve reconciliation performance.
 
 The maximum number of concurrent reconciles can be set in two ways. Operator **authors and admins**
 can set the max concurrent reconciles default by including extra args to the operator
-container in `deploy/operator.yaml`. (Otherwise, the default is the maximum number of logical CPUs  available for the process obtained using `runtime.NumCPU()`.)
+container in `config/manager/manager.yaml` and the patch in `config/default/auth_proxy_patch.yaml`.
+(Otherwise, the default is the maximum number of logical CPUs available for the process obtained
+using `runtime.NumCPU()`.)
 
 **NOTE:** Admins using OLM should use the environment variable instead
 of the extra args.
 
 ``` yaml
-- name: operator
+- name: manager
   image: "quay.io/asmacdo/memcached-operator:v0.0.0"
   imagePullPolicy: "Always"
   args:
     - "--max-concurrent-reconciles"
     - "3"
 ```
-**Note**
-Previously, `--max-workers` was used and is replaced by `--max-concurrent-reconciles`.
-
 Operator **admins** can override the value by setting an environment
 variable in the format `MAX_CONCURRENT_RECONCILES_<kind>_<group>`. This variable must be
 all uppercase, and periods (e.g. in the group name) are replaced with underscores.
@@ -71,23 +70,21 @@ metadata:
 
 From this data, we can see that the environment variable will be
 `MAX_CONCURRENT_RECONCILES_MEMCACHED_CACHE_EXAMPLE_COM`, which we can then add to
-`deploy/operator.yaml`:
+`config/manager/manager.yaml` and `config/default/auth_proxy_patch.yaml`:
 
 ``` yaml
-- name: operator
+- name: manager
   image: "quay.io/asmacdo/memcached-operator:v0.0.0"
   imagePullPolicy: "Always"
   args:
     # This default is overridden.
-    - "--max-reconciles"
+    - "--max-concurrent-reconciles"
     - "3"
   env:
     # This value is used
     - name: MAX_CONCURRENT_RECONCILES_MEMCACHED_CACHE_EXAMPLE_COM
       value: "6"
 ```
-**Note**
-Previously, the naming convention for global variable was `WORKERS_%s_%s`. It has been updated to `MAX_CONCURRENT_RECONCILES_%s_%s`. Currently, though we accept inputs to both the variables, `MAX_CONCURRENT_RECONCILES_%s_%s` takes precedence over the formerly used one.
 
 ## Ansible Verbosity
 
@@ -116,10 +113,11 @@ For demonstration purposes, let us assume that we have a database operator that
 supports two Kinds -- `MongoDB` and `PostgreSQL` -- in the `db.example.com`
 Group. We have only recently implemented the support for the `MongoDB` Kind so
 we want reconciles for this Kind to be more verbose. Our operator container's
-spec in our `deploy/operator.yaml` might look something like:
+spec in our `config/manager/manager.yaml` and `config/default/auth_proxy_patch.yaml`
+files might contiain something like:
 
 ```yaml
-- name: operator
+- name: manager
   image: "quay.io/example/database-operator:v1.0.0"
   imagePullPolicy: "Always"
   args:
@@ -147,7 +145,7 @@ metadata:
 spec: {}
 ```
 
-## Custom Resources with OpenApi Validation
+## Custom Resources with OpenAPI Validation
 
 Currently, SDK tool does not support and will not generate automatically the CRD's using the [OpenAPI](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#validation) spec to perform validations. 
 

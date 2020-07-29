@@ -55,35 +55,19 @@ Sometimes it is beneficial for a developer to run the Ansible code from their
 local machine as opposed to running/rebuilding the operator each time. To do
 this, initialize a new project:
 ```bash
-$ operator-sdk new --type ansible --kind Foo --api-version foo.example.com/v1alpha1 foo-operator
-Create foo-operator/tmp/init/galaxy-init.sh
-Create foo-operator/tmp/build/Dockerfile
-Create foo-operator/tmp/build/test-framework/Dockerfile
-Create foo-operator/tmp/build/go-test.sh
-Rendering Ansible Galaxy role [foo-operator/roles/Foo]...
-Cleaning up foo-operator/tmp/init
-Create foo-operator/watches.yaml
-Create foo-operator/requirements.yml
-Create foo-operator/deploy/rbac.yaml
-Create foo-operator/deploy/crd.yaml
-Create foo-operator/deploy/cr.yaml
-Create foo-operator/deploy/operator.yaml
-Run git init ...
-Initialized empty Git repository in /home/dymurray/go/src/github.com/dymurray/opsdk/foo-operator/.git/
-Run git init done
-
-$ cd foo-operator
+$ mkdir foo-operator && cd foo-operator
+$ operator-sdk init --plugins=ansible --domain=example.com --group=foo --version=v1alpha1 --kind=Foo --generate-role
 $ ansible-galaxy collection install -r requirements.yml
 ```
 Modify `roles/Foo/tasks/main.yml` with desired Ansible logic. For this example
 we will create and delete a namespace with the switch of a variable:
 ```yaml
 ---
-- name: set example-memcached namespace to {{ state }}
+- name: set foo-sample namespace to {{ state }}
   community.kubernetes.k8s:
     api_version: v1
     kind: Namespace
-    name: example-memcached
+    name: foo-sample
     state: "{{ state }}"
   ignore_errors: true
 ```
@@ -116,7 +100,7 @@ PLAY [localhost] ***************************************************************
 TASK [Gathering Facts] *********************************************************************
 ok: [localhost]
 
-Task [Foo : set example-memcached namespace to present]
+Task [Foo : set foo-sample namespace to present]
 changed: [localhost]
 
 PLAY RECAP *********************************************************************************
@@ -131,7 +115,7 @@ NAME          	           STATUS    AGE
 default       	           Active    28d
 kube-public   		   Active    28d
 kube-system   	           Active    28d
-example-memcached          Active    3s
+foo-sample                 Active    3s
 ```
 
 Rerun the playbook setting `state` to `absent`:
@@ -145,7 +129,7 @@ PLAY [localhost] ***************************************************************
 TASK [Gathering Facts] *********************************************************************
 ok: [localhost]
 
-Task [Foo : set example-memcached namespace to absent]
+Task [Foo : set foo-sample namespace to absent]
 changed: [localhost]
 
 PLAY RECAP *********************************************************************************
@@ -161,7 +145,9 @@ default       Active    28d
 kube-public   Active    28d
 kube-system   Active    28d
 ```
+
 ## Using Ansible inside of an Operator
+
 Now that we have demonstrated using the Ansible Kubernetes modules, we want to
 trigger this Ansible logic when a custom resource changes. In the above
 example, we want to map a role to a specific Kubernetes resource that the
@@ -196,7 +182,7 @@ Example:
 apiVersion: "foo.example.com/v1alpha1"
 kind: "Foo"
 metadata:
-  name: "example"
+  name: "foo-sample"
 annotations:
   ansible.sdk.operatorframework.io/reconcile-period: "30s"
 ```
@@ -208,44 +194,44 @@ if there are many watched resources. Typically, this option should only be used 
 
 Once a developer is comfortable working with the above workflow, it will be
 beneficial to test the logic inside of an operator. To accomplish this, we can
-use `operator-sdk run local` from the top-level directory of our project. The
-`run local` command reads from `./watches.yaml` and uses `~/.kube/config` to
-communicate with a Kubernetes cluster just as the `k8s` modules do. This
-section assumes the developer has read the [Ansible Operator user
-guide][ansible_operator_user_guide] and has the proper dependencies installed.
+use `make run` from the top-level directory of our project. The `make run`
+Makefile target runs the `ansible-operator` binary locally, which reads from
+`./watches.yaml` and uses `~/.kube/config` to communicate with a Kubernetes
+cluster just as the `k8s` modules do. This section assumes the developer has
+read the [Ansible Operator user guide][ansible_operator_user_guide] and has
+the proper dependencies installed.
 
-**NOTE:** You can customize the roles path by setting the environment variable `ANSIBLE_ROLES_PATH` or using the flag `ansible-roles-path`. Note that, if the role not be found in the
-customized path informed in `ANSIBLE_ROLES_PATH` then, the operator will look for it in the `{{current directory}}/roles`.   
+**NOTE:** You can customize the roles path by setting the environment variable
+`ANSIBLE_ROLES_PATH` or using the flag `ansible-roles-path`. Note that if the
+role is not found in `ANSIBLE_ROLES_PATH`, then the operator will look for it
+in `{{current directory}}/roles`.   
 
 Create a Custom Resource Definition (CRD) and proper Role-Based Access Control
-(RBAC) definitions for resource Foo. `operator-sdk` auto-generates these files
-inside of the `deploy` folder:
+(RBAC) definitions for resource Foo.
 ```bash
-$ kubectl create -f deploy/crds/foo.example.com_foos_crd.yaml
-$ kubectl create -f deploy/service_account.yaml
-$ kubectl create -f deploy/role.yaml
-$ kubectl create -f deploy/role_binding.yaml
+$ make install
 ```
 
-Run the `run local` command:
+Run the `make run` command:
 ```bash
-$ operator-sdk run local
-INFO[0000] Go Version: go1.10.3
-INFO[0000] Go OS/Arch: linux/amd64
-INFO[0000] operator-sdk Version: 0.0.6+git
-INFO[0000] Starting to serve on 127.0.0.1:8888
-
-INFO[0000] Watching foo.example.com/v1alpha1, Foo, default
+$ make run
+/home/user/go/bin/ansible-operator
+{"level":"info","ts":1595899073.9861593,"logger":"cmd","msg":"Version","Go Version":"go1.13.12","GOOS":"linux","GOARCH":"amd64","ansible-operator":"v0.19.0+git"}
+{"level":"info","ts":1595899073.987384,"logger":"cmd","msg":"WATCH_NAMESPACE environment variable not set. Watching all namespaces.","Namespace":""}
+{"level":"info","ts":1595899074.9504397,"logger":"controller-runtime.metrics","msg":"metrics server is starting to listen","addr":":8080"}
+{"level":"info","ts":1595899074.9522583,"logger":"watches","msg":"Environment variable not set; using default value","envVar":"ANSIBLE_VERBOSITY_MEMCACHED_CACHE_EXAMPLE_COM","default":2}
+{"level":"info","ts":1595899074.9524004,"logger":"cmd","msg":"Environment variable not set; using default value","Namespace":"","envVar":"ANSIBLE_DEBUG_LOGS","ANSIBLE_DEBUG_LOGS":false}
+{"level":"info","ts":1595899074.9524298,"logger":"ansible-controller","msg":"Watching resource","Options.Group":"cache.example.com","Options.Version":"v1","Options.Kind":"Memcached"}
 ```
 
 Now that the operator is watching resource `Foo` for events, the creation of a
 Custom Resource will trigger our Ansible Role to be executed. Take a look at
-`deploy/cr.yaml`:
+`config/samples/foo_v1alpha1_foo.yaml`:
 ```yaml
 apiVersion: "foo.example.com/v1alpha1"
 kind: "Foo"
 metadata:
-  name: "example"
+  name: "foo-sample"
 ```
 
 Since `spec` is not set, Ansible is invoked with no extra variables. The next
@@ -255,32 +241,32 @@ Ansible. This is why it is important to set sane defaults for the operator.
 Create a Custom Resource instance of Foo with default var `state` set to
 `present`:
 ```bash
-$ kubectl create -f deploy/cr.yaml
+$ kubectl create -f config/samples/foo_v1alpha1_foo.yaml
 ```
 
-Check that namespace `example-memcached` was created:
+Check that namespace `foo-sample` was created:
 ```bash
 $ kubectl get namespace
 NAME          	           STATUS    AGE
 default       		   Active    28d
 kube-public   		   Active    28d
 kube-system   		   Active    28d
-example-memcached          Active    3s
+foo-sample                 Active    3s
 ```
 
-Modify `deploy/cr.yaml` to set `state` to `absent`:
+Modify `config/samples/foo_v1alpha1_foo.yaml` to set `state` to `absent`:
 ```yaml
 apiVersion: "foo.example.com/v1alpha1"
 kind: "Foo"
 metadata:
-  name: "example"
+  name: foo-sample
 spec:
   state: "absent"
 ```
 
 Apply the changes to Kubernetes and confirm that the namespace is deleted:
 ```bash
-$ kubectl apply -f deploy/cr.yaml
+$ kubectl apply -f config/samples/foo_v1alpha1_foo.yaml
 $ kubectl get namespace
 NAME          STATUS    AGE
 default       Active    28d
@@ -296,37 +282,20 @@ Kubernetes cluster is preferred for production use.
 
 To build the `foo-operator` image and push it to a registry:
 ```
-$ operator-sdk build quay.io/example/foo-operator:v0.0.1
-$ docker push quay.io/example/foo-operator:v0.0.1
-```
-
-Kubernetes deployment manifests are generated in `deploy/operator.yaml`. The
-deployment image in this file needs to be modified from the placeholder
-`REPLACE_IMAGE` to the previous built image. To do this run:
-```
-$ sed -i 's|REPLACE_IMAGE|quay.io/example/foo-operator:v0.0.1|g' deploy/operator.yaml
-```
-
-**Note**
-If you are performing these steps on OSX, use the following command:
-```
-$ sed -i "" 's|REPLACE_IMAGE|quay.io/example/foo-operator:v0.0.1|g' deploy/operator.yaml
+$ make docker-build docker-push IMG=quay.io/example/foo-operator:v0.0.1
 ```
 
 Deploy the foo-operator:
 
 ```sh
-$ kubectl create -f deploy/crds/foo.example.com_foos_crd.yaml # if CRD doesn't exist already
-$ kubectl create -f deploy/service_account.yaml
-$ kubectl create -f deploy/role.yaml
-$ kubectl create -f deploy/role_binding.yaml
-$ kubectl create -f deploy/operator.yaml
+$ make install
+$ make deploy IMG=quay.io/example/foo-operator:v0.0.1
 ```
 
 Verify that the foo-operator is up and running:
 
 ```sh
-$ kubectl get deployment
+$ kubectl get deployment -n foo-operator-system
 NAME                     DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
 foo-operator       1         1         1            1           1m
 ```
@@ -336,7 +305,7 @@ foo-operator       1         1         1            1           1m
 In order to see the logs from a particular you can run:
 
 ```sh
-kubectl logs deployment/foo-operator
+kubectl logs deployment/foo-operator-controller-manager -n foo-operator-system
 ```
 
 The logs contain the information about the Ansible run and will make it much easier to debug issues within your Ansible tasks.
@@ -346,11 +315,14 @@ Also, you can use the environment variable `ANSIBLE_DEBUG_LOGS` set as `True` to
 
 **Example**
 
-In the `deploy/operator.yaml`:
+In `config/manager/manager.yaml` and `config/default/manager_auth_proxy_patch.yaml`:
 ```yaml
 ...
-- name: ANSIBLE_DEBUG_LOGS
-  value: "True"
+      containers:
+      - name: manager
+        env:
+        - name: ANSIBLE_DEBUG_LOGS
+          value: "True"
 ...
 ```
 
@@ -462,15 +434,15 @@ Please look over the following sections for help debugging an Ansible Operator:
 The extra vars that are sent to Ansible are managed by the operator. The `spec`
 section will pass along the key-value pairs as extra vars.  This is equivalent
 to how above extra vars are passed in to `ansible-playbook`. The operator also
-passes along additional variables under the `meta` field for the name of the CR
-and the namespace of the CR.
+passes along additional variables under the `ansible_operator_meta` field for
+the name of the CR and the namespace of the CR.
 
 For the CR example:
 ```yaml
-apiVersion: "app.example.com/v1alpha1"
-kind: "Database"
+apiVersion: "foo.example.com/v1alpha1"
+kind: "Foo"
 metadata:
-  name: "example"
+  name: "foo-sample"
 spec:
   message:"Hello world 2"
   newParameter: "newParam"
@@ -495,8 +467,8 @@ The structure passed to Ansible as extra vars is:
 }
 ```
 `message` and `newParameter` are set in the top level as extra variables, and
-`meta` provides the relevant metadata for the Custom Resource as defined in the
-operator. The `meta` fields can be accesses via dot notation in Ansible as so:
+`ansible_operator_meta` provides the relevant metadata for the Custom Resource as defined in the
+operator. The `ansible_operator_meta` fields can be accessed via dot notation in Ansible as so:
 ```yaml
 ---
 - debug:
