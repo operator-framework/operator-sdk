@@ -12,26 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package version_test
 
 import (
-	"log"
+	"testing"
 
-	"github.com/spf13/cobra"
-
-	"github.com/operator-framework/operator-sdk/internal/cmd/helm-operator/run"
-	"github.com/operator-framework/operator-sdk/internal/cmd/helm-operator/version"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
-func main() {
-	root := cobra.Command{
-		Use: "helm-operator",
-	}
-
-	root.AddCommand(run.NewCmd())
-	root.AddCommand(version.NewCmd())
-
-	if err := root.Execute(); err != nil {
-		log.Fatal(err)
-	}
+func TestVersion(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Version Cmd Suite")
 }
