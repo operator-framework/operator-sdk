@@ -63,7 +63,7 @@ provisioner:
         config_dir: ${MOLECULE_PROJECT_DIRECTORY}/config
         samples_dir: ${MOLECULE_PROJECT_DIRECTORY}/config/samples
         operator_image: ${OPERATOR_IMAGE:-""}
-        operator_pull_policy: ${OPERATOR_PULL_POLICY:-"Always"}
+        pull_policy: ${OPERATOR_PULL_POLICY:-"Always"}
         kustomize: ${KUSTOMIZE_PATH:-kustomize}
   env:
     K8S_AUTH_KUBECONFIG: ${KUBECONFIG:-"~/.kube/config"}
