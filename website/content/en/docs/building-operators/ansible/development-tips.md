@@ -304,7 +304,7 @@ NAME                     DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
 foo-operator       1         1         1            1           1m
 ```
 
-#### Viewing the Ansible logs
+### Viewing the Ansible logs
 
 In order to see the logs from a particular you can run:
 
@@ -442,13 +442,6 @@ its reconciliation procedure. There are only a few main conditions:
   caused this condition. The error message is the raw output from the Ansible
   run for reconciliation. If the failure is intermittent, often times the
   situation can be resolved when the Operator reruns the reconciliation loop.
-
-Please look over the following sections for help debugging an Ansible Operator:
-
-
-* [View the Ansible logs](../tutorial#view-the-ansible-logs)
-* [Additional Ansible debug](../tutorial#additional-ansible-debug)
-* [Testing Ansible Operators with Molecule](../testing-guide)
 
 ## Extra vars sent to Ansible
 The extra vars that are sent to Ansible are managed by the operator. The `spec`
