@@ -1,3 +1,10 @@
+## v0.19.2
+
+### Changes
+
+- The `generate bundle` subcommand no longer requires a default channel be set nor defaults to the first channel provided to `--channels`. ([#3605](https://github.com/operator-framework/operator-sdk/pull/3605))
+- The `bundle validate` subcommand no longer returns an error if a bundle does not have a default channel. ([#3605](https://github.com/operator-framework/operator-sdk/pull/3605))
+
 ## v0.19.1
 
 ### Additions
