@@ -2,8 +2,10 @@
 title: Quickstart for Helm-based Operators
 linkTitle: Quickstart
 weight: 100
-description: This guide walks through an example that demonstrates the basics of setting up and running a Helm-based operator powered by [Helm][helm-official]  using tools and libraries provided by the Operator SDK
+description: A simple set of instructions that demonstrates the basics of setting up and running a Helm-based operator.
 ---
+
+This guide walks through an example of building a simple nginx-operator powered by [Helm][helm-official] using tools and libraries provided by the Operator SDK.
 
 ## Prerequisites
 
