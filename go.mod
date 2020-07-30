@@ -13,7 +13,7 @@ require (
 	github.com/onsi/ginkgo v1.12.1
 	github.com/onsi/gomega v1.10.1
 	github.com/operator-framework/api v0.3.8
-	github.com/operator-framework/operator-lib v0.0.0-20200724203809-f6728cc91ac6
+	github.com/operator-framework/operator-lib v0.1.0
 	github.com/operator-framework/operator-registry v1.13.4
 	github.com/prometheus/client_golang v1.5.1
 	github.com/sergi/go-diff v1.0.0
