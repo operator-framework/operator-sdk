@@ -8,10 +8,8 @@ This guide walks through an example of building a simple memcached-operator powe
 
 ## Prerequisites
 
-- [docker][docker-tool] version 17.03+.
-- [kubectl][kubectl-tool] version v1.11.3+.
-- [Ansible Operator SDK Installation][ansible-operator-install] v1.0.0+
-- Access to a Kubernetes v1.11.3+ cluster.
+- [Install `operator-sdk`][operator_install] and the [Ansible prequisites][ansible-operator-install] 
+- Access to a Kubernetes v1.16.0+ cluster.
 
 ## Creating an Operator
 
@@ -19,7 +17,7 @@ In this section we will:
   - extend the Kubernetes API with a [Custom Resource Definition][custom-resources] that allows users to create `Memcached` resources.
   - create a manager that updates the state of the cluster to the desired state defined by `Memcached` resources.
 
-#### Scaffold a New Operator
+#### Scaffold a New Project
 
 Begin by generating a new project from a new directory.
 
@@ -42,7 +40,7 @@ $ operator-sdk create api -h
 Next, we will create a `Memcached` API.
 
 ```sh
-$ operator-sdk create api --generate-playbook --group cache --version v1alpha1 --kind Memcached --generate-role
+$ operator-sdk create api --group cache --version v1alpha1 --kind Memcached --generate-role
 ```
 
 The scaffolded operator has the following structure:
@@ -136,10 +134,10 @@ application is receiving expected input.
 All that remains is building and pushing the operator container to your favorite registry.
 
 ``` sh
-$ IMG=quay.io/someuser/image:v1.0.0 make docker-build && make docker-push
+$  make docker-build docker-push IMG=<some-registry>/<project-name>:tag
 ```
 
-**Note** To allow the cluster to pull the image, the repository needs to be set to public. 
+NOTE: To allow the cluster pull the image the repository needs to be set as public or you must configure an image pull secret
 
 
 ## Using the Operator
