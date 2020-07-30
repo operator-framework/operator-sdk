@@ -40,7 +40,7 @@ Use the built-in Makefile targets to build and push your operator. Make
 sure to define `IMG` when you call `make`:
 
 ```sh
-make docker-build docker-push IMG=<some-registry>/<project-name>:tag
+make docker-build docker-push IMG=<some-registry>/<project-name>:<tag>
 ```
 
 **NOTE**: To allow the cluster pull the image the repository needs to be
@@ -54,7 +54,7 @@ Install the CRD and deploy the project to the cluster. Set `IMG` with
 
 ```sh
 make install
-make deploy IMG=<some-registry>/<project-name>:tag
+make deploy IMG=<some-registry>/<project-name>:<tag>
 ```
 
 ### Create a sample custom resource

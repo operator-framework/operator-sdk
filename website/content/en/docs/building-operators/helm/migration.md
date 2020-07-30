@@ -5,8 +5,6 @@ weight: 300
 description: Instructions for migrating a legacy Helm-based project to use the new Kubebuilder-style layout.
 ---
 
-This guide walks through an example of migrating a simple nginx-operator which was built by following the [legacy quick-start][quickstart-legacy] to the new layout.
-
 ## Overview
 
 The motivations for the new layout are related to bringing more flexibility to users and 
@@ -14,13 +12,13 @@ part of the process to [Integrating Kubebuilder and Operator SDK][integration-do
 
 ### What was changed
  
-The `deploy` directory was replaced with the `config` directory including a new layout of Kubernetes manifests files
-- CRD's manifests in `deploy/crds/` are now in `config/crd/bases`
-- CR's manifests in `deploy/crds/` are now in `config/samples`
-- Controller manifest `deploy/operator.yaml` was replaced for `config/manager/manager.yaml` 
-- RBCA's manifests in `deploy` are in `config/rbac/`
-
-The `build/Dockerfile` directory was replaced by the `Dockerfile` in the root directory
+- The `deploy` directory was replaced with the `config` directory including a new layout of Kubernetes manifests files:
+    * CRD manifests in `deploy/crds/` are now in `config/crd/bases`
+    * CR manifests in `deploy/crds/` are now in `config/samples`
+    * Controller manifest `deploy/operator.yaml` is now in `config/manager/manager.yaml` 
+    * RBAC manifests in `deploy` are now in `config/rbac/`
+    
+- `build/Dockerfile` is moved to `Dockerfile` in the project root directory
 
 ### What is new
 
@@ -53,9 +51,9 @@ example, the `--domain` would be `example.com`.
 So let's create a new project with the same domain (`example.com`):
 
 ```sh
-$ mkdir nginx-operator
-$ cd nginx-operator
-$ operator-sdk init --plugins=helm --domain=example.com
+mkdir nginx-operator
+cd nginx-operator
+operator-sdk init --plugins=helm --domain=example.com
 ```
 
 Now that we have our new project initialized, we need to re-create each of our APIs.
@@ -66,9 +64,9 @@ For `--version` and `--kind`, we use `spec.versions[0].name` and `spec.names.kin
 
 For each API in the existing project, run:
 ```sh
-$ operator-sdk create api \
+operator-sdk create api \
     --group=cache \
-    --version=<apiVersion> \
+    --version=<version> \
     --kind=<Kind> \
     --helm-chart=<path_to_existing_project>/helm-charts/<chart>
 ```
@@ -141,7 +139,6 @@ The default port used by the metric endpoint binds to was changed from `:8383` t
 
 Finally, follow the steps in the section [Build and run the operator][build-and-run-the-operator] to verify your project is running. 
 
-[quickstart-legacy]: https://v0-19-x.sdk.operatorframework.io/docs/helm/quickstart/
 [quickstart]: /docs/building-operators/helm/quickstart
 [integration-doc]: https://github.com/kubernetes-sigs/kubebuilder/blob/master/designs/integrating-kubebuilder-and-osdk.md
 [build-and-run-the-operator]: /docs/building-operators/helm/tutorial#build-and-run-the-operator
