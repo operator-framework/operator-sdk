@@ -74,7 +74,7 @@ all: docker-build
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: ansible-operator
-	$(ANSIBLE_OPERATOR)
+	$(ANSIBLE_OPERATOR) run
 
 # Install CRDs into a cluster
 install: kustomize

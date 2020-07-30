@@ -9,4 +9,4 @@ COPY helm-operator-dev-linux-gnu /usr/local/bin/helm-operator
 
 WORKDIR ${HOME}
 USER ${USER_UID}
-ENTRYPOINT ["/usr/local/bin/helm-operator", "--watches-file=./watches.yaml"]
+ENTRYPOINT ["/usr/local/bin/helm-operator", "run", "--watches-file=./watches.yaml"]

@@ -40,4 +40,4 @@ RUN TINIARCH=$(case $(arch) in x86_64) echo -n amd64 ;; ppc64le) echo -n ppc64el
 
 WORKDIR ${HOME}
 USER ${USER_UID}
-ENTRYPOINT ["/tini", "--", "/usr/local/bin/ansible-operator", "--watches-file=./watches.yaml"]
+ENTRYPOINT ["/tini", "--", "/usr/local/bin/ansible-operator", "run", "--watches-file=./watches.yaml"]
