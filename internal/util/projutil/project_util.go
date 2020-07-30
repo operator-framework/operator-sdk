@@ -38,6 +38,9 @@ const (
 	GoModEnv   = "GO111MODULE"
 )
 
+// Default config file path.
+const configFile = "PROJECT"
+
 // OperatorType - the type of operator
 type OperatorType = string
 
@@ -75,9 +78,6 @@ func HasProjectFile() bool {
 	}
 	return true
 }
-
-// Default config file path.
-const configFile = "PROJECT"
 
 // ReadConfig returns a configuration if a file containing one exists at the
 // default path (project root).
