@@ -21,28 +21,20 @@ table describes a basic rundown of each generated file/directory.
 | File/Folders   | Purpose |
 | :---           | :---    |
 | Dockerfile | The Dockerfile for building the container image for the operator. |
-| Makefile | Contains make targets for building, publishing, deploying the
-container image that wraps the operator binary, and make targets for
-installing and uninstalling the CRD. |
+| Makefile | Contains make targets for building, publishing, deploying the container image that wraps the operator binary, and make targets for installing and uninstalling the CRD. |
 | PROJECT | A YAML file containing meta information for the operator. |
 | config/crd | The base CRD files and the kustomization settings. |
 | config/default | Collects all operator manifests for deployment, used by `make deploy`. |
 | config/manager | The controller manager deployment. |
-| config/prometheus | The ServiceMonitor resource for monitoring the
-operator. |
-| config/rbac | The role, role binding for leader election and authentication
-proxy. |
+| config/prometheus | The ServiceMonitor resource for monitoring the operator. |
+| config/rbac | The role, role binding for leader election and authentication proxy. |
 | config/samples | The sample resources created for the CRDs. |
 | config/testing | Some sample configurations for testing. |
 | playbooks/ | A subdirectory for the playbooks to run. |
 | roles/ | A subdirectory for the roles tree to run. |
-| watches.yaml | The Group, Version, and Kind of the resources to watch, and
-the Ansible invocation method. New entries are added via the 'create api'
-command. |
-| requirements.yml | A YAML file containing the Ansible collections and role
-dependencies to install during build. |
-| molecule/ | The [Molecule](https://molecule.readthedocs.io/) scenarios
-for end-to-end testing of your role and operator |
+| watches.yaml | The Group, Version, and Kind of the resources to watch, and the Ansible invocation method. New entries are added via the 'create api' command. |
+| requirements.yml | A YAML file containing the Ansible collections and role dependencies to install during build. |
+| molecule/ | The [Molecule](https://molecule.readthedocs.io/) scenarios for end-to-end testing of your role and operator |
 
 
 ## The Deployment
