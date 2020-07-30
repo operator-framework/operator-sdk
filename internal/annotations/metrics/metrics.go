@@ -20,7 +20,7 @@ import (
 
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 
-	sdkversion "github.com/operator-framework/operator-sdk/version"
+	sdkversion "github.com/operator-framework/operator-sdk/internal/version"
 )
 
 // Static bundle annotation values.

@@ -37,7 +37,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/helm/release"
 	"github.com/operator-framework/operator-sdk/internal/helm/watches"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-	sdkVersion "github.com/operator-framework/operator-sdk/version"
+	sdkVersion "github.com/operator-framework/operator-sdk/internal/version"
 )
 
 var log = logf.Log.WithName("cmd")

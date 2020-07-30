@@ -23,7 +23,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	ver "github.com/operator-framework/operator-sdk/version"
+	ver "github.com/operator-framework/operator-sdk/internal/version"
 )
 
 var _ = Describe("Running a version command", func() {

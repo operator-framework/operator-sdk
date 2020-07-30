@@ -31,7 +31,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/manager"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/prometheus"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/rbac"
-	"github.com/operator-framework/operator-sdk/version"
+	"github.com/operator-framework/operator-sdk/internal/version"
 )
 
 const (

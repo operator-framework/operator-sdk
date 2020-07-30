@@ -22,7 +22,7 @@ import (
 
 	"sigs.k8s.io/kubebuilder/pkg/model/file"
 
-	"github.com/operator-framework/operator-sdk/version"
+	"github.com/operator-framework/operator-sdk/internal/version"
 )
 
 var _ file.Template = &Makefile{}
