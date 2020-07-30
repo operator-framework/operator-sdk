@@ -1,96 +1,91 @@
 ---
-title: Ansible Operator QuickStart
-linkTitle: QuickStart
+title: Quickstart for Ansible-based Operators
+linkTitle: Quickstart
 weight: 2
+description: A simple set of instructions that demonstrates the basics of setting up and running a Ansible-based operator.
 ---
+
+This guide walks through an example of building a simple memcached-operator powered by [Ansible][ansible-link] using tools and libraries provided by the Operator SDK.
+
 ## Prerequisites
 
-- [docker][docker_tool] version 17.03+.
-- [kubectl][kubectl_tool] version v1.11.3+.
-- [Ansible Operator SDK Installation][ansible-operator-install] v1.0.0+
-- Access to a Kubernetes v1.11.3+ cluster.
+- [Install `operator-sdk`][operator_install] and the [Ansible prequisites][ansible-operator-install] 
+- Access to a Kubernetes v1.16.0+ cluster.
+- User authorized with `cluster-admin` permissions.
 
-## Creating a Project
+## Quickstart Steps
 
-Create a directory, and then run the init command inside of it to generate a new project.
- 
-```sh
-$ mkdir $GOPATH/src/memcached-operator
-$ cd $GOPATH/src/memcached-operator
-$ operator-sdk init --plugins=ansible
-```
+### Create a project
 
-## Creating an API
-
-Let's create a new API with a default role for it:
+Create and change into a directory for your project. Then call `operator-sdk init`
+with the Ansible plugin to initialize the [base project layout][layout-doc]:
 
 ```sh
-$ operator-sdk create api --group cache --version v1 --kind Memcached --generate-role 
+mkdir memcached-operator
+cd memcached-operator
+operator-sdk init --plugins=ansible --domain=example.com
 ```
 
-## Applying the CRDs into the cluster:
+### Create an API
 
-To apply the `Memcached` Kind(CRD): 
+Let's create a new API with a role for it:
 
 ```sh
-$ make install
+operator-sdk create api --group cache --version v1 --kind Memcached --generate-role 
 ```
 
-## Running it locally
+### Build and push the operator image
 
-To run the project out of the cluster:
+Use the built-in Makefile targets to build and push your operator. Make
+sure to define `IMG` when you call `make`:
 
 ```sh
-$ make run
+make docker-build docker-push IMG=<some-registry>/<project-name>:<tag>
 ```
 
-## Building and Pushing the Project Image
+**NOTE**: To allow the cluster pull the image the repository needs to be
+          set as public or you must configure an image pull secret.
 
-To build and push your image to your repository :
+
+### Run the operator
+
+Install the CRD and deploy the project to the cluster. Set `IMG` with
+`make deploy` to use the image you just pushed:
 
 ```sh
-$ make docker-build docker-push IMG=<some-registry>/<project-name>:tag
+make install
+make deploy IMG=<some-registry>/<project-name>:<tag>
 ```
 
-**Note** To allow the cluster pull the image the repository needs to be set as public. 
+### Create a sample custom resource
 
-## Running it on Cluster
-
-Deploy the project to the cluster:
-
+Create a sample CR:
 ```sh
-$ make deploy IMG=<some-registry>/<project-name>:tag
+kubectl apply -f config/samples/cache_v1_memcached.yaml
 ```
 
-## Applying the CR's into the cluster:
-
-To create instances (CR's) of the `Memcached` Kind (CRD) in the same namespaced of the operator 
-
+Watch for the CR be reconciled by the operator:
 ```sh
-$ kubectl apply -f config/samples/cache_v1alpha1_memcached.yaml -n memcached-operator-system
+kubectl logs deployment.apps/memcached-operator-controller-manager -n memcached-operator-system -c manager
 ```
 
-## Uninstall CRDs
+### Clean up
 
-To delete your CRDs from the cluster:
-
+Delete the CR to uninstall memcached:
 ```sh
-$ make uninstall
+kubectl delete -f config/samples/cache_v1_memcached.yaml 
 ```
 
-## Undeploy Project
-
+Use `make undeploy` to uninstall the operator and its CRDs:
 ```sh
-$ make undeploy
+make undeploy
 ```
 
-## Next Step
+## Next Steps
 
-Now, follow up the [Tutorial][tutorial] to better understand how it works by developing a demo project.
+Read the [tutorial][tutorial] for an in-depth walkthough of building a Ansible operator.
 
-[docker_tool]:https://docs.docker.com/install/
-[kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
-[ansible-operator-install]: /docs/building-operators/ansible/installation
-[helm-repo-add]: https://helm.sh/docs/helm/helm_repo_add
-[helm-chart-memcached]: https://github.com/helm/charts/tree/master/stable/memcached
-[tutorial]: /docs/building-operators/ansible/tutorial/ 
+[operator_install]: /docs/installation/install-operator-sdk
+[layout-doc]:../reference/scaffolding
+[tutorial]: /docs/building-operators/ansible/tutorial/
+[ansible-link]: https://www.ansible.com/ 

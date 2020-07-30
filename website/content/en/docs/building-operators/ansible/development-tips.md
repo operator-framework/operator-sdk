@@ -1,6 +1,6 @@
 ---
 title: Development Tips
-weight: 12
+weight: 5
 ---
 
 This document provides some useful information and tips for a developer
