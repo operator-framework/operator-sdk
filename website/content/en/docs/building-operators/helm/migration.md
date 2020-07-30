@@ -18,7 +18,7 @@ part of the process to [Integrating Kubebuilder and Operator SDK][integration-do
     * Controller manifest `deploy/operator.yaml` is now in `config/manager/manager.yaml` 
     * RBAC manifests in `deploy` are now in `config/rbac/`
     
--`build/Dockerfile` is moved to `Dockerfile` in the project root directory
+- `build/Dockerfile` is moved to `Dockerfile` in the project root directory
 
 ### What is new
 
