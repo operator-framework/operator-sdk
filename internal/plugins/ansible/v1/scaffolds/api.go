@@ -97,8 +97,9 @@ func (s *apiScaffolder) scaffold() error {
 
 	var createAPITemplates []file.Builder
 	createAPITemplates = append(createAPITemplates,
+		&rbac.CRDViewerRole{},
 		&rbac.CRDEditorRole{},
-		&rbac.KustomizeUpdater{},
+		&rbac.ManagerRoleUpdater{},
 
 		&crd.CRD{CRDVersion: s.opts.CRDVersion},
 		&crd.Kustomization{},
