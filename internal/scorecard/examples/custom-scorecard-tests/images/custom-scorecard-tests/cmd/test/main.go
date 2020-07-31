@@ -20,11 +20,11 @@ import (
 	"log"
 	"os"
 
+	scapiv1alpha3 "github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
+	apimanifests "github.com/operator-framework/api/pkg/manifests"
+
 	"github.com/operator-framework/operator-sdk/internal/scorecard"
 	"github.com/operator-framework/operator-sdk/internal/scorecard/examples/custom-scorecard-tests/internal/tests"
-
-	apimanifests "github.com/operator-framework/api/pkg/manifests"
-	scapiv1alpha3 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
 
 // This is the custom scorecard test example binary

@@ -21,9 +21,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 	"k8s.io/apimachinery/pkg/labels"
-
-	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
 
 // TODO(joelanford): rewrite to use ginkgo/gomega

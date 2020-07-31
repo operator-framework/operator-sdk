@@ -70,7 +70,7 @@ package tests
 
 import (
   "github.com/operator-framework/operator-registry/pkg/registry"
-  scapiv1alpha3 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
+  scapiv1alpha3 "github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 )
 
 const (
@@ -300,4 +300,4 @@ connection to invoke the Kube API.
 [scorecard_binary]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/examples/custom-scorecard-tests/images/custom-scorecard-tests/cmd/test/main.go
 [sample_makefile]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/examples/custom-scorecard-tests/Makefile
 [kustomize-patchJson6902]: https://kubernetes-sigs.github.io/kustomize/api-reference/kustomization/patchesjson6902/
-[testresults]:https://github.com/operator-framework/operator-sdk/blob/ff73712/pkg/apis/scorecard/v1alpha3/test_types.go#L49
+[testresults]:https://github.com/operator-framework/api/blob/333d064/pkg/apis/scorecard/v1alpha3/test_types.go#L35

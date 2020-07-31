@@ -23,7 +23,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
+	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 )
 
 // The scorecard test kuttl binary processes the

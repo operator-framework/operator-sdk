@@ -23,6 +23,7 @@ import (
 	"os"
 	"path/filepath"
 
+	scorecardv1alpha3 "github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 	log "github.com/sirupsen/logrus"
 	admissionregv1 "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -33,7 +34,6 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-	scorecardv1alpha3 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
 
 // Manifests holds a collector of all manifests relevant to CSV updates.
@@ -59,7 +59,7 @@ var (
 	v1beta1crdGK           = apiextv1beta1.SchemeGroupVersion.WithKind("CustomResourceDefinition").GroupKind()
 	validatingWebhookCfgGK = admissionregv1.SchemeGroupVersion.WithKind("ValidatingWebhookConfiguration").GroupKind()
 	mutatingWebhookCfgGK   = admissionregv1.SchemeGroupVersion.WithKind("MutatingWebhookConfiguration").GroupKind()
-	v1alpha3ScorecardCfgGK = scorecardv1alpha3.SchemeGroupVersion.WithKind("Configuration").GroupKind()
+	v1alpha3ScorecardCfgGK = scorecardv1alpha3.GroupVersion.WithKind("Configuration").GroupKind()
 )
 
 // UpdateFromDirs adds Roles, ClusterRoles, Deployments, and Custom Resource examples

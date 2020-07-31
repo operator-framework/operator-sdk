@@ -18,9 +18,8 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 	v1 "k8s.io/api/core/v1"
-
-	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
 
 // getTestResult fetches the test pod log and converts it into

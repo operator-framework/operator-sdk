@@ -17,9 +17,8 @@ package scorecard
 import (
 	"testing"
 
+	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 	"k8s.io/apimachinery/pkg/labels"
-
-	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
 
 func TestEmptySelector(t *testing.T) {
