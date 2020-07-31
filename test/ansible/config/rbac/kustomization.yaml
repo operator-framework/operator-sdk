@@ -41,4 +41,10 @@ patchesJson6902:
       kind: ClusterRole
       name: manager-role
     path: patches/casetests_editor_role.yaml
+  - target:
+      group: rbac.authorization.k8s.io
+      version: v1
+      kind: ClusterRole
+      name: manager-role
+    path: patches/argstests_editor_role.yaml
 # +kubebuilder:scaffold:patch6902
