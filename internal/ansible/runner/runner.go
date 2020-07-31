@@ -89,17 +89,17 @@ func roleCmdFunc(path string) cmdFuncType {
 		// check the verbosity since the exec.Command will fail if an arg as "" or " " be informed
 		if verbosity > 0 {
 			return exec.Command("ansible-runner", ansibleVerbosityString(verbosity), "--rotate-artifacts",
-				fmt.Sprintf("%v", maxArtifacts), "--role", roleName, "--roles-path", rolePath, "--hosts",
-				"localhost", "-i", ident, "run", inputDirPath)
+				fmt.Sprintf("%v", maxArtifacts), "--role", roleName, "--roles-path", rolePath,
+				"--hosts", "localhost", "-i", ident, "run", inputDirPath)
 		}
 		return exec.Command("ansible-runner", "--rotate-artifacts",
-			fmt.Sprintf("%v", maxArtifacts), "--role", roleName, "--roles-path", rolePath, "--hosts",
-			"localhost", "-i", ident, "run", inputDirPath)
+			fmt.Sprintf("%v", maxArtifacts), "--role", roleName, "--roles-path", rolePath,
+			"--hosts", "localhost", "-i", ident, "run", inputDirPath)
 	}
 }
 
 // New - creates a Runner from a Watch struct
-func New(watch watches.Watch) (Runner, error) {
+func New(watch watches.Watch, runnerArgs string) (Runner, error) {
 	var path string
 	var cmdFunc, finalizerCmdFunc cmdFuncType
 
@@ -139,6 +139,7 @@ func New(watch watches.Watch) (Runner, error) {
 		GVK:                 watch.GroupVersionKind,
 		maxRunnerArtifacts:  watch.MaxRunnerArtifacts,
 		ansibleVerbosity:    watch.AnsibleVerbosity,
+		ansibleArgs:         runnerArgs,
 		snakeCaseParameters: watch.SnakeCaseParameters,
 	}, nil
 }
@@ -154,6 +155,7 @@ type runner struct {
 	maxRunnerArtifacts  int
 	ansibleVerbosity    int
 	snakeCaseParameters bool
+	ansibleArgs         string
 }
 
 func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig string) (RunResult, error) {
@@ -188,6 +190,7 @@ func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig stri
 			"runner_http_url":  receiver.SocketPath,
 			"runner_http_path": receiver.URLPath,
 		},
+		CmdLine: r.ansibleArgs,
 	}
 	// If Path is a dir, assume it is a role path. Otherwise assume it's a
 	// playbook path

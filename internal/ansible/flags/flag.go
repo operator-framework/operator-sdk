@@ -34,6 +34,7 @@ type Flags struct {
 	MetricsAddress          string
 	LeaderElectionID        string
 	LeaderElectionNamespace string
+	AnsibleArgs             string
 }
 
 const AnsibleRolesPathEnvVar = "ANSIBLE_ROLES_PATH"
@@ -98,5 +99,10 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 		"Namespace in which to create the leader election configmap for"+
 			" holding the leader lock (required if running locally with leader"+
 			" election enabled).",
+	)
+	flagSet.StringVar(&f.AnsibleArgs,
+		"ansible-args",
+		"",
+		"Ansible args. Allows user to specify arbitrary arguments for ansible-based operators.",
 	)
 }

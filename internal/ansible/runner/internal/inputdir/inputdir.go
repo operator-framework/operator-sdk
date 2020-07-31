@@ -36,6 +36,7 @@ type InputDir struct {
 	Parameters   map[string]interface{}
 	EnvVars      map[string]string
 	Settings     map[string]string
+	CmdLine      string
 }
 
 // makeDirs creates the required directory structure.
@@ -129,6 +130,19 @@ func (i *InputDir) Write() error {
 	err = i.addFile("env/settings", settingsBytes)
 	if err != nil {
 		return err
+	}
+
+	// Trimming off the first and last characters if the command is wrapped by single quotations
+	if strings.HasPrefix(i.CmdLine, string("'")) && i.CmdLine[0] == i.CmdLine[len(i.CmdLine)-1] {
+		i.CmdLine = i.CmdLine[1 : len(i.CmdLine)-1]
+	}
+
+	cmdLineBytes := []byte(i.CmdLine)
+	if len(cmdLineBytes) > 0 {
+		err = i.addFile("env/cmdline", cmdLineBytes)
+		if err != nil {
+			return err
+		}
 	}
 
 	// ANSIBLE_INVENTORY takes precedence over our generated hosts file

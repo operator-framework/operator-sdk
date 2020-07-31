@@ -48,6 +48,7 @@ spec:
               port: 6789
             initialDelaySeconds: 5
             periodSeconds: 3
+          args: ["--ansible-args='--vault-password-file /opt/ansible/pwd.yml'"]
       volumes:
         - name: runner
           emptyDir: {}

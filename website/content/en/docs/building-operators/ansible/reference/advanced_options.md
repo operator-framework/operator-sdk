@@ -211,3 +211,51 @@ spec:
     served: true
     storage: true
 ```
+
+## Passing Arbitrary Arguments to Ansible
+
+You are able to use the flag `--ansible-args` to pass an arbitrary argument to the Ansible-based Operator. With this option we can, for example, allow a playbook to run a specific part of the configuration without running the whole playbook:  
+
+```shell
+ansible-operator run --ansible-args='--tags "configuration,packages"'
+```
+```
+ansible-operator run --ansible-args='--skip-tags "notification"'
+```
+Ansible-runner will perform the task relevant to the command specified by the user in the ```---ansible-args``` flag.
+
+
+## Using Ansible-Vault
+
+[Ansible Vault][ansible-vault-doc] allows you to keep sensitive data such as passwords or keys in encrypted files, rather than as plaintext in playbooks or roles. You can specify Ansible-Vault file via an arbitrary argument by using the `--ansible-args` flag. For example, let's assume that a playbook reads in a file `vars.yml` which contains an encrypted text and stores it in a variable `secret`:
+
+```
+---
+- name: Playbook to print debug messages
+  gather_facts: false
+  hosts: localhost
+  tasks:
+    - name: Get the decrypted message variable
+      include_vars:
+        file: vars.yml
+        name: secret
+    - debug:
+        msg: The decrypted value is {{secret.the_secret}}
+```
+
+Now, let's also assume that we have a password file, `pwd.yml`, that contains the password to decrypt the encrypted text. Then, by running the command `ansible-operator run --ansible-args='--vault-password-file pwd.yml'` the operator will read in the encrypted text from the file and perform decryption using the password stored in the `pwd.yml` file:
+
+```
+--------------------------- Ansible Task StdOut -------------------------------
+
+ TASK [debug] ******************************** 
+ok: [localhost] => {
+    "msg": "The decrypted value is DECRYPTED-TEST-VALUE"
+}
+
+-------------------------------------------------------------------------------
+```
+[ansible-vault-doc]: https://docs.ansible.com/ansible/latest/user_guide/vault.html
+
+
+

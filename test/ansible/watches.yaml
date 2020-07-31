@@ -45,3 +45,10 @@
   snakeCaseParameters: false
   vars:
     meta: '{{ ansible_operator_meta }}'
+
+- version: v1alpha1
+  group: test.example.com
+  kind: ArgsTest
+  playbook: playbooks/args.yml
+  vars:
+    meta: '{{ ansible_operator_meta }}'
