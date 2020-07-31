@@ -16,7 +16,7 @@ package tests
 
 import (
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
-	scapiv1alpha3 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
+	scapiv1alpha3 "github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 )
 
 const (

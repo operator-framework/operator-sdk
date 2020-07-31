@@ -15,8 +15,8 @@
 package tests
 
 import (
+	scapiv1alpha3 "github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
-	scapiv1alpha3 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 

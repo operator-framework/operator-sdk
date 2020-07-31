@@ -20,6 +20,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	scapiv1alpha3 "github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	apivalidation "github.com/operator-framework/api/pkg/validation"
@@ -33,7 +34,6 @@ import (
 
 	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-	scapiv1alpha3 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
 
 const (

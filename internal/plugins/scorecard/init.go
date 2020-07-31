@@ -22,13 +22,13 @@ import (
 	"path/filepath"
 	"text/template"
 
+	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 	"sigs.k8s.io/yaml"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/util/kustomize"
 	"github.com/operator-framework/operator-sdk/internal/scorecard"
-	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
 
 const (
@@ -115,7 +115,7 @@ func generate(testImageTag, outputDir string) error {
 	}
 	kustomizationValues.ResourcePaths = append(kustomizationValues.ResourcePaths, relBasePath)
 	scorecardConfigTarget := patchTarget{
-		GroupVersionKind: v1alpha3.SchemeGroupVersion.WithKind(v1alpha3.ConfigurationKind),
+		GroupVersionKind: v1alpha3.GroupVersion.WithKind(v1alpha3.ConfigurationKind),
 		Name:             defaultConfigName,
 	}
 
@@ -187,7 +187,7 @@ type jsonPatchObject struct {
 // newConfigurationBase returns a scorecard componentconfig object with one parallel stage.
 // The returned object is intended to be marshaled and written to disk as a kustomize base.
 func newConfigurationBase(configName string) (cfg v1alpha3.Configuration) {
-	cfg.SetGroupVersionKind(v1alpha3.SchemeGroupVersion.WithKind(v1alpha3.ConfigurationKind))
+	cfg.SetGroupVersionKind(v1alpha3.GroupVersion.WithKind(v1alpha3.ConfigurationKind))
 	cfg.Metadata.Name = configName
 	cfg.Stages = []v1alpha3.StageConfiguration{
 		{

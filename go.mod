@@ -9,10 +9,9 @@ require (
 	github.com/iancoleman/strcase v0.0.0-20191112232945-16388991a334
 	github.com/kr/text v0.1.0
 	github.com/markbates/inflect v1.0.4
-	github.com/mattn/go-isatty v0.0.12
 	github.com/onsi/ginkgo v1.12.1
 	github.com/onsi/gomega v1.10.1
-	github.com/operator-framework/api v0.3.8
+	github.com/operator-framework/api v0.3.12-0.20200731162302-333d0644352a
 	github.com/operator-framework/operator-lib v0.1.0
 	github.com/operator-framework/operator-registry v1.13.4
 	github.com/prometheus/client_golang v1.5.1

@@ -20,6 +20,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -27,7 +28,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
-	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
 
 type TestRunner interface {

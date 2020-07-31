@@ -17,9 +17,8 @@ package scorecard
 import (
 	"io/ioutil"
 
+	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 	"sigs.k8s.io/yaml"
-
-	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 )
 
 const (

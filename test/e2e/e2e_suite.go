@@ -28,9 +28,9 @@ import (
 
 	. "github.com/onsi/ginkgo" //nolint:golint
 	. "github.com/onsi/gomega" //nolint:golint
+	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 	kbtestutils "sigs.k8s.io/kubebuilder/test/e2e/utils"
 
-	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 	testutils "github.com/operator-framework/operator-sdk/test/internal"
 )
 
