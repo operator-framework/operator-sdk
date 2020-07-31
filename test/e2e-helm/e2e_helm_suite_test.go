@@ -20,11 +20,11 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/onsi/ginkgo" //nolint:golint
-	. "github.com/onsi/gomega" //nolint:golint
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 
+	"github.com/operator-framework/operator-sdk/internal/version"
 	testutils "github.com/operator-framework/operator-sdk/test/internal"
-	"github.com/operator-framework/operator-sdk/version"
 )
 
 // TestE2EHelm ensures the Helm projects built with the SDK tool by using its binary.
