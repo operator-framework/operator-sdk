@@ -43,7 +43,7 @@ cat "$ROOTDIR/test/ansible-memcached/watches-finalizer.yaml" >> watches.yaml
 header_text "Append v1 kind to watches to test watching already registered GVK"
 cat "$ROOTDIR/test/ansible-memcached/watches-v1-kind.yaml" >> watches.yaml
 echo $marker >> watches.yaml
-sed -i'.bak' -e '/- secrets/a \ \ - services' config/rbac/role.yaml; rm -f config/rbac/role.yaml.bak
+sed -i'.bak' -e '/- secrets/a \ \ \ \ \ \ - services' config/rbac/role.yaml; rm -f config/rbac/role.yaml.bak
 
 header_text "Test in kind"
 sed -i".bak" -E -e 's/(FROM quay.io\/operator-framework\/ansible-operator)(:.*)?/\1:dev/g' Dockerfile; rm -f Dockerfile.bak

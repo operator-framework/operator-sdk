@@ -90,7 +90,7 @@ func (s *initScaffolder) scaffold() error {
 		&rbac.AuthProxyService{},
 		&rbac.LeaderElectionRole{},
 		&rbac.LeaderElectionRoleBinding{},
-		&rbac.Role{},
+		&rbac.ManagerRole{},
 		&rbac.RoleBinding{},
 
 		&prometheus.Kustomization{},

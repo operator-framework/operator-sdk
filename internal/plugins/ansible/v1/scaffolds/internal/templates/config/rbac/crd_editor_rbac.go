@@ -1,5 +1,5 @@
 /*
-Copyright 2020 The Operator-SDK Authors
+Copyright 2018 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ type CRDEditorRole struct {
 // SetTemplateDefaults implements input.Template
 func (f *CRDEditorRole) SetTemplateDefaults() error {
 	if f.Path == "" {
-		f.Path = filepath.Join("config", "rbac", "patches", "%[kind]_editor_role.yaml")
+		f.Path = filepath.Join("config", "rbac", "%[kind]_editor_role.yaml")
 	}
 	f.Path = f.Resource.Replacer().Replace(f.Path)
 
@@ -42,31 +42,28 @@ func (f *CRDEditorRole) SetTemplateDefaults() error {
 	return nil
 }
 
-const crdRoleEditorTemplate = `---
-- op: add
-  path: /rules/-
-  value:
-    apiGroups:
-      - {{ .Resource.Domain }}
-    resources:
-      - {{ .Resource.Plural }}
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-- op: add
-  path: /rules/-
-  value:
-    apiGroups:
-      - {{ .Resource.Domain }}
-    resources:
-      - {{ .Resource.Plural }}/status
-    verbs:
-      - get
-      - patch
-      - update
+const crdRoleEditorTemplate = `# permissions for end users to edit {{ .Resource.Plural }}.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ lower .Resource.Kind }}-editor-role
+rules:
+- apiGroups:
+  - {{ .Resource.Domain }}
+  resources:
+  - {{ .Resource.Plural }}
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - {{ .Resource.Domain }}
+  resources:
+  - {{ .Resource.Plural }}/status
+  verbs:
+  - get
 `
