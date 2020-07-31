@@ -189,7 +189,7 @@ func (c packagemanifestsCmd) run(cfg *config.Config) error {
 	}
 
 	if c.updateObjects {
-		objs := col.GetNonCSVObjects()
+		objs := genutil.GetManifestObjects(col)
 		if c.stdout {
 			if err := genutil.WriteObjects(stdout, objs...); err != nil {
 				return err

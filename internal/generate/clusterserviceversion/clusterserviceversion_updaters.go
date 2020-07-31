@@ -86,24 +86,32 @@ const defaultServiceAccountName = "default"
 // applyRoles applies Roles to strategy's permissions field by combining Roles bound to ServiceAccounts
 // into one set of permissions.
 func applyRoles(c *collector.Manifests, strategy *operatorsv1alpha1.StrategyDetailsDeployment) { //nolint:dupl
-	// Create a set of all service accounts for deployments. These are the only CSV-relevant service accounts.
-	saNamesToRoleNames := make(map[string]map[string]struct{})
+	objs, _ := c.SplitCSVPermissionsObjects()
+	roleSet := make(map[string]*rbacv1.Role)
+	for i := range objs {
+		switch t := objs[i].(type) {
+		case *rbacv1.Role:
+			roleSet[t.GetName()] = t
+		}
+	}
+
+	saToPermissions := make(map[string]operatorsv1alpha1.StrategyDeploymentPermissions)
 	for _, dep := range c.Deployments {
 		saName := dep.Spec.Template.Spec.ServiceAccountName
 		if saName == "" {
 			saName = defaultServiceAccountName
 		}
-		saNamesToRoleNames[saName] = make(map[string]struct{})
+		saToPermissions[saName] = operatorsv1alpha1.StrategyDeploymentPermissions{ServiceAccountName: saName}
 	}
 
 	// Collect all role names by their corresponding service accounts via bindings. This lets us
 	// look up all service accounts a role is bound to and create one set of permissions per service account.
 	for _, binding := range c.RoleBindings {
-		roleRef := binding.RoleRef
-		if roleRef.Kind == "Role" && (roleRef.APIGroup == "" || roleRef.APIGroup == rbacv1.SchemeGroupVersion.Group) {
-			for _, name := range getSubjectServiceAccountNames(binding.Subjects) {
-				if _, hasName := saNamesToRoleNames[name]; hasName {
-					saNamesToRoleNames[name][roleRef.Name] = struct{}{}
+		if role, hasRole := roleSet[binding.RoleRef.Name]; hasRole {
+			for _, subject := range binding.Subjects {
+				if perm, hasSA := saToPermissions[subject.Name]; hasSA && subject.Kind == "ServiceAccount" {
+					perm.Rules = append(perm.Rules, role.Rules...)
+					saToPermissions[subject.Name] = perm
 				}
 			}
 		}
@@ -111,14 +119,8 @@ func applyRoles(c *collector.Manifests, strategy *operatorsv1alpha1.StrategyDeta
 
 	// Apply relevant roles to each service account.
 	perms := []operatorsv1alpha1.StrategyDeploymentPermissions{}
-	for saName, roleNames := range saNamesToRoleNames {
-		p := operatorsv1alpha1.StrategyDeploymentPermissions{ServiceAccountName: saName}
-		for _, role := range c.Roles {
-			if _, ok := roleNames[role.GetName()]; ok {
-				p.Rules = append(p.Rules, role.Rules...)
-			}
-		}
-		perms = append(perms, p)
+	for _, perm := range saToPermissions {
+		perms = append(perms, perm)
 	}
 	strategy.Permissions = perms
 }
@@ -126,51 +128,43 @@ func applyRoles(c *collector.Manifests, strategy *operatorsv1alpha1.StrategyDeta
 // applyClusterRoles applies ClusterRoles to strategy's clusterPermissions field by combining ClusterRoles
 // bound to ServiceAccounts into one set of clusterPermissions.
 func applyClusterRoles(c *collector.Manifests, strategy *operatorsv1alpha1.StrategyDetailsDeployment) { //nolint:dupl
-	// Create a set of all service accounts for deployments. These are the only CSV-relevant service accounts.
-	saNamesToClusterRoleNames := make(map[string]map[string]struct{})
+	objs, _ := c.SplitCSVClusterPermissionsObjects()
+	roleSet := make(map[string]*rbacv1.ClusterRole)
+	for i := range objs {
+		switch t := objs[i].(type) {
+		case *rbacv1.ClusterRole:
+			roleSet[t.GetName()] = t
+		}
+	}
+
+	saToPermissions := make(map[string]operatorsv1alpha1.StrategyDeploymentPermissions)
 	for _, dep := range c.Deployments {
 		saName := dep.Spec.Template.Spec.ServiceAccountName
 		if saName == "" {
 			saName = defaultServiceAccountName
 		}
-		saNamesToClusterRoleNames[saName] = make(map[string]struct{})
+		saToPermissions[saName] = operatorsv1alpha1.StrategyDeploymentPermissions{ServiceAccountName: saName}
 	}
 
-	// Collect all cluster role names by their corresponding service accounts via bindings. This lets us
-	// look up all service accounts a cluster role is bound to and create one set of permissions per service account.
+	// Collect all role names by their corresponding service accounts via bindings. This lets us
+	// look up all service accounts a role is bound to and create one set of permissions per service account.
 	for _, binding := range c.ClusterRoleBindings {
-		roleRef := binding.RoleRef
-		if roleRef.Kind == "ClusterRole" && (roleRef.APIGroup == "" || roleRef.APIGroup == rbacv1.SchemeGroupVersion.Group) {
-			for _, name := range getSubjectServiceAccountNames(binding.Subjects) {
-				if _, hasName := saNamesToClusterRoleNames[name]; hasName {
-					saNamesToClusterRoleNames[name][roleRef.Name] = struct{}{}
+		if role, hasRole := roleSet[binding.RoleRef.Name]; hasRole {
+			for _, subject := range binding.Subjects {
+				if perm, hasSA := saToPermissions[subject.Name]; hasSA && subject.Kind == "ServiceAccount" {
+					perm.Rules = append(perm.Rules, role.Rules...)
+					saToPermissions[subject.Name] = perm
 				}
 			}
 		}
 	}
 
-	// Apply relevant cluster roles to each service account.
-	clusterPerms := []operatorsv1alpha1.StrategyDeploymentPermissions{}
-	for saName, clusterRoleNames := range saNamesToClusterRoleNames {
-		p := operatorsv1alpha1.StrategyDeploymentPermissions{ServiceAccountName: saName}
-		for _, clusterRole := range c.ClusterRoles {
-			if _, ok := clusterRoleNames[clusterRole.GetName()]; ok {
-				p.Rules = append(p.Rules, clusterRole.Rules...)
-			}
-		}
-		clusterPerms = append(clusterPerms, p)
+	// Apply relevant roles to each service account.
+	perms := []operatorsv1alpha1.StrategyDeploymentPermissions{}
+	for _, perm := range saToPermissions {
+		perms = append(perms, perm)
 	}
-	strategy.ClusterPermissions = clusterPerms
-}
-
-// getSubjectServiceAccountNames returns a list of all ServiceAccount subject names.
-func getSubjectServiceAccountNames(subjects []rbacv1.Subject) (saNames []string) {
-	for _, subject := range subjects {
-		if subject.Kind == "ServiceAccount" {
-			saNames = append(saNames, subject.Name)
-		}
-	}
-	return saNames
+	strategy.ClusterPermissions = perms
 }
 
 // applyDeployments updates strategy's deployments with the Deployments

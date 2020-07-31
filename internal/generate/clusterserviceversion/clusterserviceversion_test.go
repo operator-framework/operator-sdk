@@ -48,7 +48,7 @@ var (
 	goTestDataDir       = filepath.Join(testDataDir, "go")
 	goAPIsDir           = filepath.Join(goTestDataDir, "api")
 	goStaticDir         = filepath.Join(goTestDataDir, "static")
-	goBasicOperatorPath = filepath.Join(goStaticDir, "basic.operatory.yaml")
+	goBasicOperatorPath = filepath.Join(goStaticDir, "basic.operator.yaml")
 )
 
 var (

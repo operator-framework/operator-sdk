@@ -197,7 +197,7 @@ func (c bundleCmd) runManifests(cfg *config.Config) (err error) {
 		return fmt.Errorf("error generating ClusterServiceVersion: %v", err)
 	}
 
-	objs := col.GetNonCSVObjects()
+	objs := genutil.GetManifestObjects(col)
 	if c.stdout {
 		if err := genutil.WriteObjects(stdout, objs...); err != nil {
 			return err
