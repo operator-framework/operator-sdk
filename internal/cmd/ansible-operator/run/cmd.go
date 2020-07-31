@@ -161,7 +161,7 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 		os.Exit(1)
 	}
 	for _, w := range watches {
-		runner, err := runner.New(w, "")
+		runner, err := runner.New(w, f.AnsibleArgs)
 		if err != nil {
 			log.Error(err, "Failed to create runner")
 			os.Exit(1)
