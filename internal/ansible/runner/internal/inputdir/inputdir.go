@@ -132,11 +132,12 @@ func (i *InputDir) Write() error {
 		return err
 	}
 
-	argValue := i.CmdLine
-	argValue = strings.TrimLeft(argValue, "'")
-	argValue = strings.TrimRight(argValue, "'")
+	// Trimming off the first and last characters if the command is wrapped by single quotations
+	if strings.HasPrefix(i.CmdLine, string("'")) && i.CmdLine[0] == i.CmdLine[len(i.CmdLine)-1] {
+		i.CmdLine = i.CmdLine[1 : len(i.CmdLine)-1]
+	}
 
-	cmdLineBytes := []byte(argValue)
+	cmdLineBytes := []byte(i.CmdLine)
 	if len(cmdLineBytes) > 0 {
 		err = i.addFile("env/cmdline", cmdLineBytes)
 		if err != nil {
