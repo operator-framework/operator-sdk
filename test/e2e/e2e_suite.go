@@ -18,6 +18,7 @@ package e2e
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os/exec"
 	"path"
@@ -29,7 +30,16 @@ import (
 	. "github.com/onsi/gomega" //nolint:golint
 	kbtestutils "sigs.k8s.io/kubebuilder/test/e2e/utils"
 
+	"github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3"
 	testutils "github.com/operator-framework/operator-sdk/test/internal"
+)
+
+const (
+	OLMBundleValidationTest   = "olm-bundle-validation"
+	OLMCRDsHaveValidationTest = "olm-crds-have-validation"
+	OLMCRDsHaveResourcesTest  = "olm-crds-have-resources"
+	OLMSpecDescriptorsTest    = "olm-spec-descriptors"
+	OLMStatusDescriptorsTest  = "olm-status-descriptors"
 )
 
 var _ = Describe("operator-sdk", func() {
@@ -201,6 +211,41 @@ var _ = Describe("operator-sdk", func() {
 				"--timeout", "4m")
 			_, err = tc.Run(runPkgManCmd)
 			Expect(err).NotTo(HaveOccurred())
+
+			By("running basic scorecard tests")
+			var scorecardOutput v1alpha3.TestList
+			runScorecardCmd := exec.Command(tc.BinaryName, "scorecard", "bundle",
+				"--selector=suite=basic",
+				"--output=json",
+				"--wait-time=40s")
+			scorecardOutputBytes, err := tc.Run(runScorecardCmd)
+			Expect(err).NotTo(HaveOccurred())
+			err = json.Unmarshal(scorecardOutputBytes, &scorecardOutput)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(scorecardOutput.Items)).To(Equal(1))
+			Expect(scorecardOutput.Items[0].Status.Results[0].State).To(Equal(v1alpha3.PassState))
+
+			By("running olm scorecard tests")
+			runOLMScorecardCmd := exec.Command(tc.BinaryName, "scorecard", "bundle",
+				"--selector=suite=olm",
+				"--output=json",
+				"--wait-time=40s")
+			scorecardOutputBytes, err = tc.Run(runOLMScorecardCmd)
+			Expect(err).To(HaveOccurred())
+			err = json.Unmarshal(scorecardOutputBytes, &scorecardOutput)
+			Expect(err).NotTo(HaveOccurred())
+
+			resultTable := make(map[string]v1alpha3.State)
+			resultTable[OLMStatusDescriptorsTest] = v1alpha3.FailState
+			resultTable[OLMCRDsHaveResourcesTest] = v1alpha3.FailState
+			resultTable[OLMBundleValidationTest] = v1alpha3.PassState
+			resultTable[OLMSpecDescriptorsTest] = v1alpha3.FailState
+			resultTable[OLMCRDsHaveValidationTest] = v1alpha3.PassState
+
+			Expect(len(scorecardOutput.Items)).To(Equal(len(resultTable)))
+			for a := 0; a < len(scorecardOutput.Items); a++ {
+				Expect(scorecardOutput.Items[a].Status.Results[0].State).To(Equal(resultTable[scorecardOutput.Items[a].Status.Results[0].Name]))
+			}
 
 			By("destroying the deployed package manifests-formatted operator")
 			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", "packagemanifests",
