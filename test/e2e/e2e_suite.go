@@ -36,6 +36,14 @@ import (
 	testutils "github.com/operator-framework/operator-sdk/test/internal"
 )
 
+const (
+	OLMBundleValidationTest   = "olm-bundle-validation"
+	OLMCRDsHaveValidationTest = "olm-crds-have-validation"
+	OLMCRDsHaveResourcesTest  = "olm-crds-have-resources"
+	OLMSpecDescriptorsTest    = "olm-spec-descriptors"
+	OLMStatusDescriptorsTest  = "olm-status-descriptors"
+)
+
 var _ = Describe("operator-sdk", func() {
 	Context("with the new project layout", func() {
 		var (
@@ -211,7 +219,6 @@ var _ = Describe("operator-sdk", func() {
 			runScorecardCmd := exec.Command(tc.BinaryName, "scorecard", "bundle",
 				"--selector=suite=basic",
 				"--output=json",
-				"--skip-cleanup=true",
 				"--wait-time=40s")
 			scorecardOutputBytes, err := tc.Run(runScorecardCmd)
 			Expect(err).NotTo(HaveOccurred())
@@ -224,7 +231,6 @@ var _ = Describe("operator-sdk", func() {
 			runOLMScorecardCmd := exec.Command(tc.BinaryName, "scorecard", "bundle",
 				"--selector=suite=olm",
 				"--output=json",
-				"--skip-cleanup=true",
 				"--wait-time=40s")
 			scorecardOutputBytes, err = tc.Run(runOLMScorecardCmd)
 			Expect(err).To(HaveOccurred())
@@ -232,12 +238,13 @@ var _ = Describe("operator-sdk", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			resultTable := make(map[string]v1alpha3.State)
-			resultTable["olm-status-descriptors"] = v1alpha3.FailState
-			resultTable["olm-crds-have-resources"] = v1alpha3.FailState
-			resultTable["olm-bundle-validation"] = v1alpha3.PassState
-			resultTable["olm-spec-descriptors"] = v1alpha3.FailState
-			resultTable["olm-crds-have-validation"] = v1alpha3.PassState
+			resultTable[OLMStatusDescriptorsTest] = v1alpha3.FailState
+			resultTable[OLMCRDsHaveResourcesTest] = v1alpha3.FailState
+			resultTable[OLMBundleValidationTest] = v1alpha3.PassState
+			resultTable[OLMSpecDescriptorsTest] = v1alpha3.FailState
+			resultTable[OLMCRDsHaveValidationTest] = v1alpha3.PassState
 
+			Expect(len(scorecardOutput.Items)).To(Equal(len(resultTable)))
 			for a := 0; a < len(scorecardOutput.Items); a++ {
 				Expect(scorecardOutput.Items[a].Status.Results[0].State).To(Equal(resultTable[scorecardOutput.Items[a].Status.Results[0].Name]))
 			}
