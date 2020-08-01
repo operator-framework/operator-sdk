@@ -73,7 +73,7 @@ operator-sdk generate packagemanifests [flags]
       --output-dir string      Directory in which to write package manifests
   -q, --quiet                  Run in quiet mode
       --stdout                 Write package to stdout
-      --update-crds            Update CustomResoureDefinition manifests in this package (default true)
+      --update-objects         Update non-CSV objects in this package, ex. CustomResoureDefinitions, Roles (default true)
   -v, --version string         Semantic version of the packaged operator
 ```
 

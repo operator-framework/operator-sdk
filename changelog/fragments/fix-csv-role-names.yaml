@@ -1,0 +1,19 @@
+entries:
+  - description: >
+      `generate <bundle|packagemanifests>` will write RBAC objects (Roles, RoleBindings, their Cluster equivalents,
+      and ServiceAccounts) not bound to CSV deployment service accounts
+      to the resulting manifests directory.
+    kind: addition
+  - description: >
+      The `--update-crds` flag has been renamed to `--update-objects` for the `generate packagemanifests` subcommand.
+    kind: change
+    breaking: true
+    migration:
+      header: Rename `--update-crds` flag to `--update-objects` in `generate packagemanifests` invocations
+      body: >
+        This flag has been renamed to account for all objects that can be written to the package directory,
+        ex. Roles.
+  - description: >
+      Fixed incorrect (cluster) role name assignments in generated CSVs
+      [#3600](https://github.com/operator-framework/operator-sdk/issues/3600).
+    kind: bugfix

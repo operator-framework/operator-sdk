@@ -188,14 +188,8 @@ func (c packagemanifestsCmd) run(cfg *config.Config) error {
 		return fmt.Errorf("error generating ClusterServiceVersion: %v", err)
 	}
 
-	if c.updateCRDs {
-		var objs []interface{}
-		for _, crd := range col.V1CustomResourceDefinitions {
-			objs = append(objs, crd)
-		}
-		for _, crd := range col.V1beta1CustomResourceDefinitions {
-			objs = append(objs, crd)
-		}
+	if c.updateObjects {
+		objs := genutil.GetManifestObjects(col)
 		if c.stdout {
 			if err := genutil.WriteObjects(stdout, objs...); err != nil {
 				return err

@@ -28,17 +28,17 @@ import (
 //nolint:maligned
 type packagemanifestsCmd struct {
 	// Common options.
-	projectName  string
-	version      string
-	fromVersion  string
-	inputDir     string
-	outputDir    string
-	kustomizeDir string
-	deployDir    string
-	crdsDir      string
-	updateCRDs   bool
-	stdout       bool
-	quiet        bool
+	projectName   string
+	version       string
+	fromVersion   string
+	inputDir      string
+	outputDir     string
+	kustomizeDir  string
+	deployDir     string
+	crdsDir       string
+	updateObjects bool
+	stdout        bool
+	quiet         bool
 
 	// Package manifest options.
 	channelName      string
@@ -97,7 +97,8 @@ func (c *packagemanifestsCmd) addFlagsTo(fs *pflag.FlagSet) {
 	fs.StringVar(&c.channelName, "channel", "", "Channel name for the generated package")
 	fs.BoolVar(&c.isDefaultChannel, "default-channel", false, "Use the channel passed to --channel "+
 		"as the package manifest file's default channel")
-	fs.BoolVar(&c.updateCRDs, "update-crds", true, "Update CustomResoureDefinition manifests in this package")
+	fs.BoolVar(&c.updateObjects, "update-objects", true, "Update non-CSV objects in this package, "+
+		"ex. CustomResoureDefinitions, Roles")
 	fs.BoolVarP(&c.quiet, "quiet", "q", false, "Run in quiet mode")
 	fs.BoolVar(&c.stdout, "stdout", false, "Write package to stdout")
 }
