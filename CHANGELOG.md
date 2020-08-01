@@ -1,3 +1,33 @@
+## v1.0.0-alpha.2
+
+### Additions
+
+- The Ansible and Helm operators have a `version` subcommand that prints the version information for the `ansible-operator` and `helm-operator` binaries. ([#3596](https://github.com/operator-framework/operator-sdk/pull/3596))
+- Added `--ansible-args` command-line flag that allows users to specify arbitrary CLI arguments for Ansible-based operators that are passed through ansible-runner. For example, passing `--ansible-vault` as an arbitrary argument allows user to store sensitive data in encrypted files. ([#3374](https://github.com/operator-framework/operator-sdk/pull/3374))
+- `generate bundle` and `generate packagemanifests` will write RBAC objects (Roles, RoleBindings, their Cluster equivalents, and ServiceAccounts) not bound to CSV deployment service accounts to the resulting manifests directory. ([#3610](https://github.com/operator-framework/operator-sdk/pull/3610))
+
+### Changes
+
+- **Breaking change**: The Ansible and Helm operators now use controller-runtime's zap package to define logging flags. ([#3596](https://github.com/operator-framework/operator-sdk/pull/3596))
+- **Breaking change**: The Ansible and Helm operators now use a `run` subcommand to run the operator. ([#3596](https://github.com/operator-framework/operator-sdk/pull/3596))
+- The `generate bundle` subcommand no longer requires a default channel be set nor defaults to the first channel provided to `--channels`. ([#3602](https://github.com/operator-framework/operator-sdk/pull/3602))
+- The `bundle validate` subcommand no longer returns an error if a bundle does not have a default channel. ([#3602](https://github.com/operator-framework/operator-sdk/pull/3602))
+- **Breaking change**: The `--update-crds` flag has been renamed to `--update-objects` for the `generate packagemanifests` subcommand. ([#3610](https://github.com/operator-framework/operator-sdk/pull/3610))
+- **Breaking change**: Changed `--operator-version` flag to `--version` in `run packagemanifests`. ([#3599](https://github.com/operator-framework/operator-sdk/pull/3599))
+- **Breaking change**: Changed `--operator-namespace` flag to `--namespace` in `run packagemanifests`. ([#3601](https://github.com/operator-framework/operator-sdk/pull/3601))
+
+### Removals
+
+- **Breaking change**: Moved scorecard API v1alpha3 to the [api repo](https://github.com/operator-framework/api) under `pkg/apis/scorecard/v1alpha3`. All future scorecard APIs will be released in this repo. ([#3622](https://github.com/operator-framework/operator-sdk/pull/3622))
+- **Breaking change**: Removed package `version`. ([#3617](https://github.com/operator-framework/operator-sdk/pull/3617))
+- **Breaking change**: Removed `--operator-name` from `generate` subcommands in favor of using `project-name` from the PROJECT config file (v3-alpha+). ([#3530](https://github.com/operator-framework/operator-sdk/pull/3530))
+- **Breaking change**: Removed `--include-paths` flag from `run packagemanifests`. ([#3599](https://github.com/operator-framework/operator-sdk/pull/3599))
+- **Breaking change**: Removed `--olm-namespace` flag from `run packagemanifests`. ([#3601](https://github.com/operator-framework/operator-sdk/pull/3601))
+
+### Bug Fixes
+
+- Fixed incorrect (cluster) role name assignments in generated CSVs [#3600](https://github.com/operator-framework/operator-sdk/issues/3600). ([#3610](https://github.com/operator-framework/operator-sdk/pull/3610))
+
 ## v1.0.0-alpha.1
 
 ### Additions
