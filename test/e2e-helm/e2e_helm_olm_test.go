@@ -15,6 +15,7 @@
 package e2e_helm_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"os/exec"
 	"path"
@@ -23,6 +24,7 @@ import (
 
 	. "github.com/onsi/ginkgo" //nolint:golint
 	. "github.com/onsi/gomega" //nolint:golint
+	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 
 	testutils "github.com/operator-framework/operator-sdk/test/internal"
 )
@@ -30,6 +32,14 @@ import (
 var _ = Describe("Integrating Helm Projects with OLM", func() {
 	Context("with operator-sdk", func() {
 		const operatorVersion = "0.0.1"
+
+		const (
+			OLMBundleValidationTest   = "olm-bundle-validation"
+			OLMCRDsHaveValidationTest = "olm-crds-have-validation"
+			OLMCRDsHaveResourcesTest  = "olm-crds-have-resources"
+			OLMSpecDescriptorsTest    = "olm-spec-descriptors"
+			OLMStatusDescriptorsTest  = "olm-status-descriptors"
+		)
 
 		BeforeEach(func() {
 			By("turning off interactive prompts for all generation tasks.")
@@ -90,6 +100,19 @@ var _ = Describe("Integrating Helm Projects with OLM", func() {
 			err = tc.Make("install")
 			Expect(err).NotTo(HaveOccurred())
 
+			By("running basic scorecard tests")
+			var scorecardOutput v1alpha3.TestList
+			runScorecardCmd := exec.Command(tc.BinaryName, "scorecard", "bundle",
+				"--selector=suite=basic",
+				"--output=json",
+				"--wait-time=40s")
+			scorecardOutputBytes, err := tc.Run(runScorecardCmd)
+			Expect(err).NotTo(HaveOccurred())
+			err = json.Unmarshal(scorecardOutputBytes, &scorecardOutput)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(scorecardOutput.Items)).To(Equal(1))
+			Expect(scorecardOutput.Items[0].Status.Results[0].State).To(Equal(v1alpha3.PassState))
+
 			By("running the package")
 			runPkgManCmd := exec.Command(tc.BinaryName, "run", "packagemanifests",
 				"--install-mode", "AllNamespaces",
@@ -97,6 +120,28 @@ var _ = Describe("Integrating Helm Projects with OLM", func() {
 				"--timeout", "4m")
 			_, err = tc.Run(runPkgManCmd)
 			Expect(err).NotTo(HaveOccurred())
+
+			By("running olm scorecard tests")
+			runOLMScorecardCmd := exec.Command(tc.BinaryName, "scorecard", "bundle",
+				"--selector=suite=olm",
+				"--output=json",
+				"--wait-time=40s")
+			scorecardOutputBytes, err = tc.Run(runOLMScorecardCmd)
+			Expect(err).To(HaveOccurred())
+			err = json.Unmarshal(scorecardOutputBytes, &scorecardOutput)
+			Expect(err).NotTo(HaveOccurred())
+
+			resultTable := make(map[string]v1alpha3.State)
+			resultTable[OLMStatusDescriptorsTest] = v1alpha3.FailState
+			resultTable[OLMCRDsHaveResourcesTest] = v1alpha3.FailState
+			resultTable[OLMBundleValidationTest] = v1alpha3.PassState
+			resultTable[OLMSpecDescriptorsTest] = v1alpha3.FailState
+			resultTable[OLMCRDsHaveValidationTest] = v1alpha3.PassState
+
+			Expect(len(scorecardOutput.Items)).To(Equal(len(resultTable)))
+			for a := 0; a < len(scorecardOutput.Items); a++ {
+				Expect(scorecardOutput.Items[a].Status.Results[0].State).To(Equal(resultTable[scorecardOutput.Items[a].Status.Results[0].Name]))
+			}
 		})
 	})
 })
