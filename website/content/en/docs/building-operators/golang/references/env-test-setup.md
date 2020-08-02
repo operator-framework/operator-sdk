@@ -10,29 +10,17 @@ This document describes how to configure the environment for the [controller tes
 
 ## Installing prerequisites
 
-[Envtest][envtest] requires that `kubectl`, `api-server` and `etcd` be present locally. You can use this [script][script] to download these binaries into the `testbin/` directory. It may be convenient to add this script your Makefile as follows:
+[Envtest][envtest] requires that `kubectl`, `api-server` and `etcd` binaries be present locally. To download and configure these binaries, run the following:
 
 ```sh
-# Setup binaries required to run the tests
-# See that it expects the Kubernetes and ETCD version
-K8S_VERSION = v1.18.2
-ETCD_VERSION = v3.4.3
-testbin:
-	curl -sSLo setup_envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/kubebuilder/master/scripts/setup_envtest_bins.sh 
-	chmod +x setup_envtest.sh
-	./setup_envtest.sh $(K8S_VERSION) $(ETCD_VERSION)
+OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+ARCH=$(uname -m | sed 's/x86_64/amd64/')
+curl -fsL "https://storage.googleapis.com/kubebuilder-tools/kubebuilder-tools-1.16.4-${OS}-${ARCH}.tar.gz" -o kubebuilder-tools
+tar -zvxf kubebuilder-tools
+sudo mv kubebuilder/ /usr/local/kubebuilder
 ```
 
-
-The above script sets these environment variables to specify where test binaries can be found. In case you would like to not use the script then, is possible to do the same configuration to inform the path of your binaries: 
-
-```shell
-$ export TEST_ASSET_KUBECTL=<kubectl-bin-path>
-$ export TEST_ASSET_KUBE_APISERVER=<api-server-bin-path>
-$ export TEST_ASSET_ETCD=<etcd-bin-path>
-``` 
-
-See that the environment variables also can be specified via your `controllers/suite_test.go` such as the following example. 
+See that you can also use your own binaries and change the location via setting up the the following environment variables in your `controllers/suite_test.go`: 
 
 ```go 
 var _ = BeforeSuite(func(done Done) {

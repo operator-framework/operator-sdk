@@ -40,9 +40,11 @@ Projects are scaffolded with tests that utilize the [`envtest`][env-test]
 library, which requires certain Kubernetes server binaries to be present locally:
 
 ```sh
-curl -sSLo setup_envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/kubebuilder/master/scripts/setup_envtest_bins.sh 
-chmod +x setup_envtest.sh
-./setup_envtest.sh v1.18.2 v3.4.3
+OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+ARCH=$(uname -m | sed 's/x86_64/amd64/')
+curl -fsL "https://storage.googleapis.com/kubebuilder-tools/kubebuilder-tools-1.16.4-${OS}-${ARCH}.tar.gz" -o kubebuilder-tools
+tar -zvxf kubebuilder-tools
+sudo mv kubebuilder/ /usr/local/kubebuilder
 ```
 
 **Note:** More info can be found [here][env-test-setup].
