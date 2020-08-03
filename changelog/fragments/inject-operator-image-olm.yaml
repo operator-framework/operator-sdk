@@ -1,0 +1,17 @@
+entries:
+  - description: >
+      Added `IMG` argument to `bundle` make rule that accepts an operator image tag. This tag will be inserted
+      into the manager's deployment manifest when `make bundle IMG=<tag>` is run.
+    kind: change
+    breaking: true
+    migration:
+      header: Update your Makefile's `bundle` recipe to inject an operator image tag.
+      body: >
+        Make the following update to your Makefile's `bundle` recipe, which will allow you to set `make bundle IMG=<tag>`:
+
+        ```make
+        bundle: ...
+          operator-sdk generate kustomize manifests -q
+          cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG) # Add this line
+          ...
+        ```

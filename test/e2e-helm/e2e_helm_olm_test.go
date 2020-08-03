@@ -15,7 +15,6 @@
 package e2e_helm_test
 
 import (
-	"fmt"
 	"os/exec"
 	"path"
 	"path/filepath"
@@ -50,12 +49,7 @@ var _ = Describe("Integrating Helm Projects with OLM", func() {
 
 		It("should generate and run a valid OLM bundle and packagemanifests", func() {
 			By("building the bundle")
-			err := tc.Make("bundle")
-			Expect(err).NotTo(HaveOccurred())
-
-			By("validating the bundle")
-			bundleValidateCmd := exec.Command(tc.BinaryName, "bundle", "validate", "bundle")
-			_, err = tc.Run(bundleValidateCmd)
+			err := tc.Make("bundle", "IMG="+tc.ImageName)
 			Expect(err).NotTo(HaveOccurred())
 
 			By("building the operator bundle image")
@@ -77,17 +71,7 @@ var _ = Describe("Integrating Helm Projects with OLM", func() {
 			Expect(err).Should(Succeed())
 
 			By("generating the operator package manifests")
-			err = tc.Make("packagemanifests")
-			Expect(err).NotTo(HaveOccurred())
-
-			By("updating clusterserviceversion with the manager image")
-			testutils.ReplaceInFile(
-				filepath.Join(tc.Dir, "packagemanifests", operatorVersion,
-					fmt.Sprintf("e2e-%s.clusterserviceversion.yaml", tc.TestSuffix)),
-				"controller:latest", tc.ImageName)
-
-			By("installing crds to run packagemanifests")
-			err = tc.Make("install")
+			err = tc.Make("packagemanifests", "IMG="+tc.ImageName)
 			Expect(err).NotTo(HaveOccurred())
 
 			By("running the package")

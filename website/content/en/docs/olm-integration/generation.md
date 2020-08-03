@@ -67,7 +67,7 @@ The following resource kinds are typically included in a CSV, which are addresse
 
 You've recently run `operator-sdk init` and created your APIs with `operator-sdk create api`. Now you'd like to
 package your Operator for deployment by OLM. Your Operator is at version `v0.0.1`; the `Makefile` variable `VERSION`
-should be set to `0.0.1`.
+should be set to `0.0.1`. You've also built your operator image, `quay.io/<user>/memcached-operator:v0.0.1`.
 
 ### Bundle format
 
@@ -141,6 +141,7 @@ PKG_MAN_OPTS ?= $(FROM_VERSION) $(PKG_CHANNELS) $(PKG_IS_DEFAULT_CHANNEL)
 # Generate package manifests.
 packagemanifests: kustomize manifests
   operator-sdk generate kustomize manifests -q
+  cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
   $(KUSTOMIZE) build config/manifests | operator-sdk generate packagemanifests -q --version $(VERSION) $(PKG_MAN_OPTS)
 ```
 
@@ -162,13 +163,14 @@ PKG_MAN_OPTS ?= $(FROM_VERSION) $(PKG_CHANNELS) $(PKG_IS_DEFAULT_CHANNEL)
 # Generate package manifests.
 packagemanifests: kustomize
   operator-sdk generate kustomize manifests -q
+  cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
   $(KUSTOMIZE) build config/manifests | operator-sdk generate packagemanifests -q --version $(VERSION) $(PKG_MAN_OPTS)
 ```
 
 By default `make packagemanifests` will generate a CSV, a package manifest file, and copy CRDs in the package manifests format:
 
 ```console
-$ make packagemanifests
+$ make packagemanifests IMG=quay.io/<user>/memcached-operator:v0.0.1
 $ tree ./packagemanifests
 ./packagemanifests
 ├── 0.0.1
@@ -185,13 +187,13 @@ and added a port to your manager Deployment in `config/manager/manager.yaml`.
 If using a bundle format, the current version of your CSV can be updated by running:
 
 ```console
-$ make bundle
+$ make bundle IMG=quay.io/<user>/memcached-operator:v0.0.1
 ```
 
 If using a package manifests format, run:
 
 ```console
-$ make packagemanifests
+$ make packagemanifests IMG=quay.io/<user>/memcached-operator:v0.0.1
 ```
 
 Running the command for either format will append your new CRD to `spec.customresourcedefinitions.owned`,
@@ -201,19 +203,20 @@ fields like `spec.maintainers`.
 
 ## Upgrade your Operator
 
-Let's say you're upgrading your Operator to version `v0.0.2`, and you've already updated the `VERSION` variable
-in your `Makefile` to `0.0.2`. You also want to add a new channel `beta`, and use it as the default channel.
+Let's say you're upgrading your Operator to version `v0.0.2`, you've already updated the `VERSION` variable
+in your `Makefile` to `0.0.2`, and built a new operator image `quay.io/<user>/memcached-operator:v0.0.2`.
+You also want to add a new channel `beta`, and use it as the default channel.
 
 If using a bundle format, a new version of your CSV can be created by running:
 
 ```console
-$ make bundle CHANNELS=beta DEFAULT_CHANNEL=beta
+$ make bundle CHANNELS=beta DEFAULT_CHANNEL=beta IMG=quay.io/<user>/memcached-operator:v0.0.2
 ```
 
 If using a package manifests format, run:
 
 ```console
-$ make packagemanifests FROM_VERSION=0.0.1 CHANNEL=beta IS_CHANNEL_DEFAULT=1
+$ make packagemanifests FROM_VERSION=0.0.1 CHANNEL=beta IS_CHANNEL_DEFAULT=1 IMG=quay.io/<user>/memcached-operator:v0.0.2
 ```
 
 Running the command for either format will persist user-defined fields, updates `spec.version`,
