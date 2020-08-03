@@ -176,7 +176,7 @@ var _ = Describe("operator-sdk", func() {
 			// Turn off interactive prompts for all generation tasks.
 			replace := "operator-sdk generate kustomize manifests"
 			testutils.ReplaceInFile(filepath.Join(tc.Dir, "Makefile"), replace, replace+" --interactive=false")
-			err = tc.Make("bundle")
+			err = tc.Make("bundle", "IMG="+tc.ImageName)
 			Expect(err).NotTo(HaveOccurred())
 
 			By("building the operator bundle image")
