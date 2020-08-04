@@ -2,16 +2,20 @@
 package generatefakes
 
 import (
+	"io"
 	"sync"
 
 	"github.com/operator-framework/operator-sdk/internal/generate"
 )
 
 type FakeGeneratorSDK struct {
-	GeneratePackageManifestStub        func(*generate.PkgOptions) error
+	GeneratePackageManifestStub        func(string, string, io.Writer, ...*generate.PkgOptions) error
 	generatePackageManifestMutex       sync.RWMutex
 	generatePackageManifestArgsForCall []struct {
-		arg1 *generate.PkgOptions
+		arg1 string
+		arg2 string
+		arg3 io.Writer
+		arg4 []*generate.PkgOptions
 	}
 	generatePackageManifestReturns struct {
 		result1 error
@@ -23,16 +27,19 @@ type FakeGeneratorSDK struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeGeneratorSDK) GeneratePackageManifest(arg1 *generate.PkgOptions) error {
+func (fake *FakeGeneratorSDK) GeneratePackageManifest(arg1 string, arg2 string, arg3 io.Writer, arg4 ...*generate.PkgOptions) error {
 	fake.generatePackageManifestMutex.Lock()
 	ret, specificReturn := fake.generatePackageManifestReturnsOnCall[len(fake.generatePackageManifestArgsForCall)]
 	fake.generatePackageManifestArgsForCall = append(fake.generatePackageManifestArgsForCall, struct {
-		arg1 *generate.PkgOptions
-	}{arg1})
-	fake.recordInvocation("GeneratePackageManifest", []interface{}{arg1})
+		arg1 string
+		arg2 string
+		arg3 io.Writer
+		arg4 []*generate.PkgOptions
+	}{arg1, arg2, arg3, arg4})
+	fake.recordInvocation("GeneratePackageManifest", []interface{}{arg1, arg2, arg3, arg4})
 	fake.generatePackageManifestMutex.Unlock()
 	if fake.GeneratePackageManifestStub != nil {
-		return fake.GeneratePackageManifestStub(arg1)
+		return fake.GeneratePackageManifestStub(arg1, arg2, arg3, arg4...)
 	}
 	if specificReturn {
 		return ret.result1
@@ -47,17 +54,17 @@ func (fake *FakeGeneratorSDK) GeneratePackageManifestCallCount() int {
 	return len(fake.generatePackageManifestArgsForCall)
 }
 
-func (fake *FakeGeneratorSDK) GeneratePackageManifestCalls(stub func(*generate.PkgOptions) error) {
+func (fake *FakeGeneratorSDK) GeneratePackageManifestCalls(stub func(string, string, io.Writer, ...*generate.PkgOptions) error) {
 	fake.generatePackageManifestMutex.Lock()
 	defer fake.generatePackageManifestMutex.Unlock()
 	fake.GeneratePackageManifestStub = stub
 }
 
-func (fake *FakeGeneratorSDK) GeneratePackageManifestArgsForCall(i int) *generate.PkgOptions {
+func (fake *FakeGeneratorSDK) GeneratePackageManifestArgsForCall(i int) (string, string, io.Writer, []*generate.PkgOptions) {
 	fake.generatePackageManifestMutex.RLock()
 	defer fake.generatePackageManifestMutex.RUnlock()
 	argsForCall := fake.generatePackageManifestArgsForCall[i]
-	return argsForCall.arg1
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3, argsForCall.arg4
 }
 
 func (fake *FakeGeneratorSDK) GeneratePackageManifestReturns(result1 error) {

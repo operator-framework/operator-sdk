@@ -72,25 +72,16 @@ packageName: memcached-operator
 		})
 		Context("when writing a new package manifest", func() {
 			It("writes a package manifest", func() {
-				opts := &generate.PkgOptions{
-					OperatorName: "memcached-operator",
-					OutputWriter: buffer,
-					Version:      "0.0.1",
-				}
-
-				err := g.GeneratePackageManifest(opts)
+				err := g.GeneratePackageManifest("memcached-operator", "0.0.1", buffer)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(string(buffer.String())).To(Equal(pkgManDefault))
 			})
 			It("writes a package manifest with a non-default channel", func() {
 				opts := &generate.PkgOptions{
-					OperatorName: "memcached-operator",
-					OutputWriter: buffer,
-					Version:      "0.0.1",
-					ChannelName:  "stable",
+					ChannelName: "stable",
 				}
 
-				err := g.GeneratePackageManifest(opts)
+				err := g.GeneratePackageManifest("memcached-operator", "0.0.1", buffer, opts)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(string(buffer.String())).To(Equal(pkgManOneChannel))
 			})
@@ -98,77 +89,51 @@ packageName: memcached-operator
 		Context("when updating an existing package manifest", func() {
 			It("updates an existing package manifest with a updated channel", func() {
 				opts := &generate.PkgOptions{
-					OperatorName: "memcached-operator",
-					OutputWriter: buffer,
-					BaseDir:      "testdata",
-					ChannelName:  "alpha",
-					Version:      "0.0.2",
+					BaseDir:     "testdata",
+					ChannelName: "alpha",
 				}
 
-				err := g.GeneratePackageManifest(opts)
+				err := g.GeneratePackageManifest("memcached-operator", "0.0.2", buffer, opts)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(string(buffer.String())).To(Equal(pkgManUpdatedOneChannel))
 			})
 			It("updates an existing package manifest with a new channel", func() {
 				opts := &generate.PkgOptions{
-					OperatorName: "memcached-operator",
-					OutputWriter: buffer,
-					BaseDir:      "testdata",
-					ChannelName:  "stable",
-					Version:      "0.0.2",
+					BaseDir:     "testdata",
+					ChannelName: "stable",
 				}
 
-				err := g.GeneratePackageManifest(opts)
+				err := g.GeneratePackageManifest("memcached-operator", "0.0.2", buffer, opts)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(string(buffer.String())).To(Equal(pkgManUpdatedSecondChannel))
 			})
 			It("updates an existing package manifest with a new channel and an updated default channel", func() {
 				opts := &generate.PkgOptions{
-					OperatorName:     "memcached-operator",
-					OutputWriter:     buffer,
 					BaseDir:          "testdata",
 					ChannelName:      "stable",
-					Version:          "0.0.2",
 					IsDefaultChannel: true,
 				}
 
-				err := g.GeneratePackageManifest(opts)
+				err := g.GeneratePackageManifest("memcached-operator", "0.0.2", buffer, opts)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(string(buffer.String())).To(Equal(pkgManUpdatedSecondChannelNewDefault))
 			})
 		})
 		Context("when incorrect params are provided", func() {
-			It("fails if provided nil ops", func() {
-				err := g.GeneratePackageManifest(nil)
-				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(ContainSubstring("generator options must be set"))
-			})
 			It("fails if no operator name is specified", func() {
-				opts := &generate.PkgOptions{}
-
-				err := g.GeneratePackageManifest(opts)
+				err := g.GeneratePackageManifest("", "", nil)
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("operator name must be set"))
 			})
-			It("fails if no output writer is set", func() {
-				opts := &generate.PkgOptions{
-					OperatorName: "memcached-operator",
-				}
-
-				err := g.GeneratePackageManifest(opts)
-				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(ContainSubstring("output writer must be set"))
-			})
 			It("fails if no version is specified", func() {
-				opts := &generate.PkgOptions{
-					OperatorName: "memcached-operator",
-					OutputWriter: buffer,
-					BaseDir:      "testdata",
-				}
-
-				err := g.GeneratePackageManifest(opts)
+				err := g.GeneratePackageManifest("memcached-operator", "", nil)
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("version must be set"))
+			})
+			It("fails if no output writer is set", func() {
+				err := g.GeneratePackageManifest("memcached-operator", "0.0.1", nil)
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("output writer must be set"))
 			})
 		})
 	})

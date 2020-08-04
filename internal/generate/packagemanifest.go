@@ -40,17 +40,15 @@ var (
 	errNoVersion = errors.New("version must be set")
 
 	// Internal errors.
-	errNoOpts   = genutil.InternalError("generator options must be set")
 	errNoOpName = genutil.InternalError("operator name must be set")
 	//errNoBase      = genutil.InternalError("base directory must be set")
 	errNoOutputWriter = genutil.InternalError("output writer must be set")
 )
 
 type PkgOptions struct {
-	// OperatorName is the operator's name, ex. app-operator.
-	OperatorName string
-	// Version is the version of the operator being updated.
-	Version string
+	// BaseDir is a directory to look for an existing base package manifest
+	// to update.
+	BaseDir string
 	// ChannelName is operator's PackageManifest channel. If a new PackageManifest is generated
 	// or ChannelName is the only channel in the generated PackageManifest,
 	// this channel will be set to the PackageManifest's default.
@@ -59,46 +57,44 @@ type PkgOptions struct {
 	// generated PackageManifest. If true, ChannelName will be the PackageManifest's default channel.
 	// Setting this field is only necessary when more than one channel exists.
 	IsDefaultChannel bool
-
-	//BaseDir directory to look for a base package manifest
-	BaseDir      string
-	OutputWriter io.Writer
 }
 
 // Generate configures the Generator with opts then runs it.
-func (g Generator) GeneratePackageManifest(opts *PkgOptions) error {
-	if opts == nil {
-		return errNoOpts
-	} else if opts.OperatorName == "" {
+func (g Generator) GeneratePackageManifest(operatorName, version string, outputWriter io.Writer, opts ...*PkgOptions) error {
+	if operatorName == "" {
 		return errNoOpName
-	} else if opts.OutputWriter == nil {
-		return errNoOutputWriter
-	} else if opts.Version == "" {
+	} else if version == "" {
 		return errNoVersion
+	} else if outputWriter == nil {
+		return errNoOutputWriter
+	}
+	myOpts := &PkgOptions{}
+	if len(opts) > 0 {
+		myOpts = opts[0]
 	}
 
-	pkg, err := g.generatePackageManifest(opts)
+	pkg, err := g.generatePackageManifest(operatorName, version, myOpts)
 	if err != nil {
 		return err
 	}
 
-	return genutil.WriteYAML(opts.OutputWriter, pkg)
+	return genutil.WriteYAML(outputWriter, pkg)
 }
 
 // generatePackageManifest takes the input and generates the populated package manifest object
-func (g *Generator) generatePackageManifest(opts *PkgOptions) (*apimanifests.PackageManifest, error) {
+func (g *Generator) generatePackageManifest(operatorName, version string, opts *PkgOptions) (*apimanifests.PackageManifest, error) {
 	b := bases.PackageManifest{
-		PackageName: opts.OperatorName,
+		PackageName: operatorName,
 	}
 	if opts.BaseDir != "" {
-		b.BasePath = filepath.Join(opts.BaseDir, makePkgManFileName(opts.OperatorName))
+		b.BasePath = filepath.Join(opts.BaseDir, makePkgManFileName(operatorName))
 	}
 	base, err := b.GetBase()
 	if err != nil {
 		return nil, fmt.Errorf("error getting PackageManifest base: %v", err)
 	}
 
-	csvName := genutil.MakeCSVName(opts.OperatorName, opts.Version)
+	csvName := genutil.MakeCSVName(operatorName, version)
 	if opts.ChannelName != "" {
 		setChannels(base, opts.ChannelName, csvName)
 		sortChannelsByName(base)

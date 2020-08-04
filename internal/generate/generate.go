@@ -14,6 +14,8 @@
 
 package generate
 
+import "io"
+
 // Generator is an implementation of the GeneratorSDK interface
 type Generator struct{}
 
@@ -21,5 +23,6 @@ type Generator struct{}
 // to generate and write various OperatorSDK types such as
 // package manifests
 type GeneratorSDK interface {
-	GeneratePackageManifest(opts *PkgOptions) error
+	//GeneratePackageManifest(opts *PkgOptions) error
+	GeneratePackageManifest(operatorName, version string, outputWriter io.Writer, opts ...*PkgOptions) error
 }
