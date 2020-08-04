@@ -186,6 +186,9 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 				return reconcile.Result{}, err
 			}
 		}
+		if event.Rescued() {
+			return reconcileResult, nil
+		}
 		if event.Event == eventapi.EventRunnerOnFailed && !event.IgnoreError() {
 			failureMessages = append(failureMessages, event.GetFailedPlaybookMessage())
 		}
