@@ -99,7 +99,7 @@ func (u *Uninstall) Run(ctx context.Context) error {
 		if err != nil && !apierrors.IsNotFound(err) {
 			return err
 		}
-		if !apierrors.IsNotFound(err) {
+		if err == nil {
 			fmt.Printf("%s %q deleted\n", strings.ToLower(obj.GetObjectKind().GroupVersionKind().Kind), obj.GetName())
 		}
 	}
