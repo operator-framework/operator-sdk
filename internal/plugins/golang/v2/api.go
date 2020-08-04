@@ -39,6 +39,11 @@ func (p *createAPIPlugin) InjectConfig(c *config.Config) {
 }
 
 func (p *createAPIPlugin) Run() error {
+	// Run() may add a new resource to the config, so we can compare resources before/after to get the new resource.
+	oldResources := make(map[config.GVK]struct{}, len(p.config.Resources))
+	for _, r := range p.config.Resources {
+		oldResources[r] = struct{}{}
+	}
 	if err := p.CreateAPI.Run(); err != nil {
 		return err
 	}
@@ -49,11 +54,21 @@ func (p *createAPIPlugin) Run() error {
 		return nil
 	}
 
+	// Find the new resource. Here we shouldn't worry about checking if one was found, since downstream
+	// plugins will do so.
+	var newResource config.GVK
+	for _, r := range p.config.Resources {
+		if _, hasResource := oldResources[r]; !hasResource {
+			newResource = r
+			break
+		}
+	}
+
 	// Run SDK phase 2 plugins.
-	return p.runPhase2()
+	return p.runPhase2(newResource)
 }
 
 // SDK phase 2 plugins.
-func (p *createAPIPlugin) runPhase2() error {
-	return manifests.RunCreateAPI(p.config)
+func (p *createAPIPlugin) runPhase2(gvk config.GVK) error {
+	return manifests.RunCreateAPI(p.config, gvk)
 }
