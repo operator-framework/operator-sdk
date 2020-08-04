@@ -22,6 +22,7 @@ import (
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 
 	"github.com/operator-framework/operator-sdk/internal/operator"
+	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
 )
 
 type IndexImageCatalogCreator struct {
@@ -39,7 +40,13 @@ func NewIndexImageCatalogCreator(cfg *operator.Configuration) *IndexImageCatalog
 }
 
 func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string) (*v1alpha1.CatalogSource, error) {
+	dbPath, err := c.getDBPath(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get database path: %v", err)
+	}
+
 	fmt.Printf("IndexImageCatalogCreator.IndexImage:        %q\n", c.IndexImage)
+	fmt.Printf("IndexImageCatalogCreator.IndexImageDBPath:  %v\n", dbPath)
 	fmt.Printf("IndexImageCatalogCreator.InjectBundles:     %q\n", strings.Join(c.InjectBundles, ","))
 	fmt.Printf("IndexImageCatalogCreator.InjectBundleMode:  %q\n", c.InjectBundleMode)
 
@@ -59,4 +66,17 @@ func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string
 
 	// Return the catalog source
 	return nil, nil
+}
+
+const defaultDBPath = "/database/index.db"
+
+func (c IndexImageCatalogCreator) getDBPath(ctx context.Context) (string, error) {
+	labels, err := registryutil.GetImageLabels(ctx, nil, c.IndexImage, false)
+	if err != nil {
+		return "", fmt.Errorf("get index image labels: %v", err)
+	}
+	if dbPath, ok := labels["operators.operatorframework.io.index.database.v1"]; ok {
+		return dbPath, nil
+	}
+	return defaultDBPath, nil
 }

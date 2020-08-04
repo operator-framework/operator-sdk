@@ -29,6 +29,9 @@ import (
 // ExtractBundleImage returns a bundle directory containing files extracted
 // from image. If local is true, the image will not be pulled.
 func ExtractBundleImage(ctx context.Context, logger *log.Entry, image string, local bool) (string, error) {
+	if logger == nil {
+		logger = DiscardLogger()
+	}
 	// Use a temp directory for bundle files. This will likely be removed by
 	// the caller.
 	wd, err := os.Getwd()
@@ -75,6 +78,10 @@ func ExtractBundleImage(ctx context.Context, logger *log.Entry, image string, lo
 
 // GetImageLabels returns the set of labels on image.
 func GetImageLabels(ctx context.Context, logger *log.Entry, image string, local bool) (map[string]string, error) {
+	if logger == nil {
+		logger = DiscardLogger()
+	}
+
 	// Create a containerd registry for socket-less image layer reading.
 	reg, err := containerdregistry.NewRegistry(containerdregistry.WithLog(logger))
 	if err != nil {

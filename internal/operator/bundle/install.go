@@ -17,14 +17,12 @@ package bundle
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/pkg/registry"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 
 	"github.com/operator-framework/operator-sdk/internal/operator"
@@ -85,7 +83,7 @@ func (i *Install) setup(ctx context.Context) error {
 }
 
 func loadBundle(ctx context.Context, bundleImage string) (labels registryutil.Labels, csv *registry.ClusterServiceVersion, err error) {
-	bundlePath, err := registryutil.ExtractBundleImage(ctx, discardLogger(), bundleImage, false)
+	bundlePath, err := registryutil.ExtractBundleImage(ctx, nil, bundleImage, false)
 	if err != nil {
 		return nil, nil, fmt.Errorf("pull bundle image: %v", err)
 	}
@@ -106,11 +104,4 @@ func loadBundle(ctx context.Context, bundleImage string) (labels registryutil.La
 	}
 
 	return labels, csv, nil
-}
-
-// discardLogger returns a logger that throws away input.
-func discardLogger() *log.Entry {
-	logger := log.New()
-	logger.SetOutput(ioutil.Discard)
-	return log.NewEntry(logger)
 }
