@@ -1,4 +1,4 @@
-// Copyright 2019 The Operator-SDK Authors
+// Copyright 2020 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,26 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package run
+package internal
 
 import (
-	"github.com/spf13/cobra"
+	"context"
 
-	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/run/packagemanifests"
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 )
 
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "run",
-		Short: "Run an Operator in a variety of environments",
-		Long:  "This command has subcommands that will deploy your Operator with OLM.",
-	}
-
-	cmd.AddCommand(
-		// TODO(joelanford): enable bundle command when implementation is complete
-		//bundle.NewCmd(),
-		packagemanifests.NewCmd(),
-	)
-
-	return cmd
+type CatalogCreator interface {
+	CreateCatalog(ctx context.Context, name string) (*v1alpha1.CatalogSource, error)
 }

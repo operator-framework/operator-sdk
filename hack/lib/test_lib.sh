@@ -3,7 +3,7 @@
 source hack/lib/common.sh
 
 function listPkgDirs() {
-	go list -f '{{.Dir}}' ./cmd/... ./pkg/... ./test/... ./internal/... | grep -v generated
+	go list -f '{{.Dir}}' ./cmd/... ./test/... ./internal/... | grep -v generated
 }
 
 function listFiles() {
