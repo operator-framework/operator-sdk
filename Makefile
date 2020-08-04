@@ -21,9 +21,9 @@ GO_BUILD_ARGS = \
   -gcflags "all=-trimpath=$(shell go env GOPATH)" \
   -asmflags "all=-trimpath=$(shell go env GOPATH)" \
   -ldflags " \
-    -X '$(REPO)/version.GitVersion=$(VERSION)' \
-    -X '$(REPO)/version.GitCommit=$(GIT_COMMIT)' \
-    -X '$(REPO)/version.KubernetesVersion=$(K8S_VERSION)' \
+    -X '$(REPO)/internal/version.GitVersion=$(VERSION)' \
+    -X '$(REPO)/internal/version.GitCommit=$(GIT_COMMIT)' \
+    -X '$(REPO)/internal/version.KubernetesVersion=$(K8S_VERSION)' \
   " \
 
 
@@ -65,6 +65,7 @@ all: format test build/operator-sdk ## Test and Build the Operator SDK
 
 install: ## Install the binaries
 	$(Q)$(GOARGS) go install $(GO_BUILD_ARGS) ./cmd/operator-sdk ./cmd/ansible-operator ./cmd/helm-operator
+
 
 # Code management.
 .PHONY: format tidy clean cli-doc lint
