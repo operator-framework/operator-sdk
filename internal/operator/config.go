@@ -5,7 +5,6 @@ import (
 
 	v1 "github.com/operator-framework/api/pkg/operators/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	operatorsv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 	"github.com/spf13/pflag"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -63,7 +62,6 @@ func (c *Configuration) Load() error {
 	sch := scheme.Scheme
 	for _, f := range []func(*runtime.Scheme) error{
 		v1alpha1.AddToScheme,
-		operatorsv1.AddToScheme,
 		v1.AddToScheme,
 		apiextv1.AddToScheme,
 	} {
@@ -91,6 +89,6 @@ type operatorClient struct {
 }
 
 func (c *operatorClient) Create(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
-	opts = append(opts, client.FieldOwner("kubectl-operator"))
+	opts = append(opts, client.FieldOwner("operator-sdk"))
 	return c.Client.Create(ctx, obj, opts...)
 }
