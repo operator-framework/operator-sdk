@@ -15,24 +15,43 @@
 package cleanup
 
 import (
+	"context"
+	"fmt"
+	"os"
+	"time"
+
 	"github.com/spf13/cobra"
 
-	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/cleanup/packagemanifests"
+	"github.com/operator-framework/operator-sdk/internal/operator"
 )
 
 func NewCmd() *cobra.Command {
+	var timeout time.Duration
+	cfg := &operator.Configuration{}
+	u := operator.NewUninstall(cfg)
 	cmd := &cobra.Command{
-		Use:   "cleanup",
+		Use:   "cleanup <operatorPackageName>",
 		Short: "Clean up an Operator deployed with the 'run' subcommand",
-		Long: `This command has subcommands that will destroy an Operator deployed with OLM.
-Currently only the package manifests format is supported via the 'packagemanifests' subcommand.
-Run 'operator-sdk cleanup --help' for more information.
-`,
-	}
+		Long:  "This command has subcommands that will destroy an Operator deployed with OLM.",
+		Args:  cobra.ExactArgs(1),
+		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
+			return cfg.Load()
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			u.Package = args[0]
 
-	cmd.AddCommand(
-		packagemanifests.NewCmd(),
-	)
+			ctx, cancel := context.WithTimeout(cmd.Context(), timeout)
+			defer cancel()
+
+			if err := u.Run(ctx); err != nil {
+				fmt.Printf("uninstall operator: %v\n", err)
+				os.Exit(1)
+			}
+			fmt.Printf("operator %q uninstalled\n", u.Package)
+		},
+	}
+	cmd.Flags().DurationVar(&timeout, "timeout", 2*time.Minute, "Time to wait for the command to complete before failing")
+	cfg.BindFlags(cmd.PersistentFlags())
 
 	return cmd
 }

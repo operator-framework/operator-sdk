@@ -31,7 +31,7 @@ type PackageManifestsCmd struct {
 	// ManifestsDir is a directory containing 1..N package directories and
 	// a package manifest.
 	// Version can be set to the version of the desired operator package
-	// and Run()/Cleanup() will deploy that operator version.
+	// and Run() will deploy that operator version.
 	ManifestsDir string
 	// Version is the version of the operator to deploy. It must be
 	// a semantic version, ex. 0.0.1.
@@ -79,20 +79,4 @@ func (c *PackageManifestsCmd) Run() error {
 	ctx, cancel := context.WithTimeout(context.Background(), c.Timeout)
 	defer cancel()
 	return m.run(ctx)
-}
-
-func (c *PackageManifestsCmd) Cleanup() (err error) {
-	c.initialize()
-	if err := c.validate(); err != nil {
-		return fmt.Errorf("validation error: %w", err)
-	}
-	m, err := c.newManager()
-	if err != nil {
-		return fmt.Errorf("error initializing operator manager: %w", err)
-	}
-	// Cleanups should clean up all resources, which includes the registry.
-	m.forceRegistry = true
-	ctx, cancel := context.WithTimeout(context.Background(), c.Timeout)
-	defer cancel()
-	return m.cleanup(ctx)
 }
