@@ -10,17 +10,29 @@ This document describes how to configure the environment for the [controller tes
 
 ## Installing prerequisites
 
-[Envtest][envtest] requires that `kubectl`, `api-server` and `etcd` binaries be present locally. To download and configure these binaries, run the following:
+[Envtest][envtest] requires that `kubectl`, `api-server` and `etcd` be present locally. You can use this [script][script] to download these binaries into the `test/assets/` directory which will be created in your project. Update your Makefile as follows.
+
+- Add the new `setup-envtest` makefile target:
 
 ```sh
-OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-ARCH=$(uname -m | sed 's/x86_64/amd64/')
-curl -fsL "https://storage.googleapis.com/kubebuilder-tools/kubebuilder-tools-1.16.4-${OS}-${ARCH}.tar.gz" -o kubebuilder-tools
-tar -zvxf kubebuilder-tools
-sudo mv kubebuilder/ /usr/local/kubebuilder
+# Setup binaries required to run the tests
+setup-envtest:
+        curl -sSLo setup_envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/master/hack/setup-envtest.sh
+        chmod +x setup_envtest.sh
 ```
 
-See that you can also use your own binaries and change the location via setting up the the following environment variables in your `controllers/suite_test.go`: 
+Then, replace your `test` target with: 
+
+```sh
+# Run tests
+ENV_TEST_ASSETS_DIR=$(shell pwd)/test/assets
+test: setup-envtest generate fmt vet manifests
+        source setup_envtest.sh; fetch_envtest_tools $(ENV_TEST_ASSETS_DIR); setup_envtest_env $(ENV_TEST_ASSETS_DIR); go test ./... -coverprofile cover.out
+```
+
+Also, it is recommended add into the `.gitignore` a new line with `/test/assets/*` for you do not commit these binaries. 
+
+See that you can also use your own binaries and change the location via setting up the following environment variables in your `controllers/suite_test.go`: 
 
 ```go 
 var _ = BeforeSuite(func(done Done) {

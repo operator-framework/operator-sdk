@@ -37,14 +37,22 @@ operator-sdk create api --group cache --version v1 --kind Memcached --resource=t
 ### Configuring your test environment
 
 Projects are scaffolded with tests that utilize the [`envtest`][env-test]
-library, which requires certain Kubernetes server binaries to be present locally:
+library, which requires certain Kubernetes server binaries to be present locally. Update the Makefile scaffolded in your project by adding the new `setup-envtest` makefile target:
 
 ```sh
-OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-ARCH=$(uname -m | sed 's/x86_64/amd64/')
-curl -fsL "https://storage.googleapis.com/kubebuilder-tools/kubebuilder-tools-1.16.4-${OS}-${ARCH}.tar.gz" -o kubebuilder-tools
-tar -zvxf kubebuilder-tools
-sudo mv kubebuilder/ /usr/local/kubebuilder
+# Setup binaries required to run the tests
+setup-envtest:
+        curl -sSLo setup_envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/master/hack/setup-envtest.sh
+        chmod +x setup_envtest.sh
+```
+
+Then, replace your `test` target with: 
+
+```sh
+# Run tests
+ENV_TEST_ASSETS_DIR=$(shell pwd)/test/assets
+test: setup-envtest generate fmt vet manifests
+        source setup_envtest.sh; fetch_envtest_tools $(ENV_TEST_ASSETS_DIR); setup_envtest_env $(ENV_TEST_ASSETS_DIR); go test ./... -coverprofile cover.out
 ```
 
 **Note:** More info can be found [here][env-test-setup].
