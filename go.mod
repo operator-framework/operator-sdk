@@ -13,7 +13,6 @@ require (
 	github.com/onsi/gomega v1.10.1
 	github.com/operator-framework/api v0.3.12-0.20200731162302-333d0644352a
 	github.com/operator-framework/operator-lib v0.1.0
-	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20200521062108-408ca95d458f
 	github.com/operator-framework/operator-registry v1.13.4
 	github.com/prometheus/client_golang v1.5.1
 	github.com/sergi/go-diff v1.0.0
@@ -32,6 +31,7 @@ require (
 	k8s.io/cli-runtime v0.18.2
 	k8s.io/client-go v0.18.4
 	k8s.io/kubectl v0.18.2
+	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/controller-runtime v0.6.1
 	sigs.k8s.io/controller-tools v0.3.0
 	sigs.k8s.io/kubebuilder v1.0.9-0.20200724202016-21f9343e992e
