@@ -50,7 +50,8 @@ func (u *Uninstall) Run(ctx context.Context) error {
 	}
 
 	var sub *v1alpha1.Subscription
-	for _, s := range subs.Items {
+	for i := range subs.Items {
+		s := subs.Items[i]
 		if u.Package == s.Spec.Package {
 			sub = &s
 			break

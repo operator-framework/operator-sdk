@@ -207,6 +207,10 @@ func getPackageForVersion(bundles []*apimanifests.Bundle, version string) (*apim
 	return nil, fmt.Errorf("no package found for version %s; valid versions: %+q", version, versions)
 }
 
+// updateCatalogSource gets the registry address of the newly created
+// ephemeral packagemanifest index pod and updates the catalog source
+// with the necessary address and source type fields to enable the
+// catalog source to connect to the registry.
 func (m *packageManifestsManager) updateCatalogSource(ctx context.Context, pkgName string, catsrc *operatorsv1alpha1.CatalogSource) error {
 	registryGRPCAddr := internalregistry.GetRegistryServiceAddr(pkgName, m.namespace)
 	catsrcKey := types.NamespacedName{

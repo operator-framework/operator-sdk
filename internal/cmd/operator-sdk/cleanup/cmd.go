@@ -28,7 +28,6 @@ import (
 func NewCmd() *cobra.Command {
 	var timeout time.Duration
 	cfg := &operator.Configuration{}
-	u := operator.NewUninstall(cfg)
 	cmd := &cobra.Command{
 		Use:   "cleanup <operatorPackageName>",
 		Short: "Clean up an Operator deployed with the 'run' subcommand",
@@ -38,6 +37,7 @@ func NewCmd() *cobra.Command {
 			return cfg.Load()
 		},
 		Run: func(cmd *cobra.Command, args []string) {
+			u := operator.NewUninstall(cfg)
 			u.Package = args[0]
 
 			ctx, cancel := context.WithTimeout(cmd.Context(), timeout)
