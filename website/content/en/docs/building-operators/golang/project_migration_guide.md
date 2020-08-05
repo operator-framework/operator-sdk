@@ -248,7 +248,7 @@ to `config/samples/cache_v1alpha1_memcached.yaml`
 ## Configure your Operator
 
 In case your project has customizations in the `deploy/operator.yaml` then, it needs to be port to 
-`config/manager/manager.yaml`. Note that, `OPERATOR_NAME` and `POD_NAME` env vars are no longer used. For further information came back to the section [`main.go` ][migration-guide-main-section].
+`config/manager/manager.yaml`. Note that, `OPERATOR_NAME` and `POD_NAME` env vars are no longer used. For further information came back to the section [Migrate `main.go` ][migration-guide-main-section].
 
 ## Export Metrics 
 
