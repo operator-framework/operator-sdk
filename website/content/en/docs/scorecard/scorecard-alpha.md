@@ -192,7 +192,7 @@ See an example of the text format produced by a scorecard test:
                 time="2020-06-10T19:00:43Z" level=info msg="Could not find optional dependencies file" name=bundle-test
 ```
 
-**NOTE** The output format spec matches the [`Test`](https://godoc.org/github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3#Test) type layout.
+**NOTE** The output format spec matches the [`Test`](https://pkg.go.dev/github.com/operator-framework/operator-sdk@v0.19.1/pkg/apis/scorecard/v1alpha3?tab=doc#Test) type layout.
 
 
 ## Exit Status

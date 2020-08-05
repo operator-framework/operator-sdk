@@ -42,7 +42,7 @@
 - Upgrade Helm dependency for Helm based-Operators from `v3.2.0` to `v3.2.4` in order to fix CVE-2020-4053. ([#3313](https://github.com/operator-framework/operator-sdk/pull/3313))
 - Change default value of `--overwrite` flag in `operator-sdk generate bundle` to true. ([#3280](https://github.com/operator-framework/operator-sdk/pull/3280))
 - The scorecard-test-kuttl image was updated to be based off the v0.5.1 version of kudobuilder/kuttl.  This update fixes bugs found in kuttl v0.5.0. ([#3369](https://github.com/operator-framework/operator-sdk/pull/3369))
-- The `alpha scorecard` subcommand now outputs results as a [scorecard.operatorframework.io/v1alpha3 Test](https://godoc.org/github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3#Test) instead of a [scorecard.operatorframework.io/v1alpha2 ScorecardOutput](https://godoc.org/github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2#ScorecardOutput). As a result, the `--list` argument will now just output a list of tests, without associated labels. ([#3208](https://github.com/operator-framework/operator-sdk/pull/3208))
+- The `alpha scorecard` subcommand now outputs results as a [scorecard.operatorframework.io/v1alpha3 Test](https://pkg.go.dev/github.com/operator-framework/operator-sdk@v0.19.1/pkg/apis/scorecard/v1alpha3?tab=doc#Test) instead of a [scorecard.operatorframework.io/v1alpha2 ScorecardOutput](https://pkg.go.dev/github.com/operator-framework/operator-sdk@v0.19.1/pkg/apis/scorecard/v1alpha2?tab=doc#ScorecardOutput). As a result, the `--list` argument will now just output a list of tests, without associated labels. ([#3208](https://github.com/operator-framework/operator-sdk/pull/3208))
 
 ### Removals
 
