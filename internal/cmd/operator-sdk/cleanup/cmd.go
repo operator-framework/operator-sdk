@@ -44,9 +44,9 @@ func NewCmd() *cobra.Command {
 			defer cancel()
 
 			if err := u.Run(ctx); err != nil {
-				log.Fatalf("uninstall operator: %v\n", err)
+				log.Fatalf("Uninstall operator: %v\n", err)
 			}
-			log.Infof("operator %q uninstalled\n", u.Package)
+			log.Infof("Operator %q uninstalled\n", u.Package)
 		},
 	}
 	cmd.Flags().DurationVar(&timeout, "timeout", 2*time.Minute, "Time to wait for the command to complete before failing")
