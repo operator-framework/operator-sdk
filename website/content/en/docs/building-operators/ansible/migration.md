@@ -155,12 +155,7 @@ To:
     └── molecule.yml
 ```
 
-And now:
-
-- Use the var `${MOLECULE_PROJECT_DIRECTORY}` instead of `${MOLECULE_EPHEMERAL_DIRECTORY}`
-- Use the var `${KUBECONFIG:-"~/.kube/config"}` instead of `${MOLECULE_EPHEMERAL_DIRECTORY}/kubeconfig` to get the kubeconfig
-
-Also, ensure that the `provisioner.host_vars.localhost` has the following `host_vars`: 
+Ensure that the `provisioner.host_vars.localhost` has the following `host_vars`: 
 
 ```
 ....
