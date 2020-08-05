@@ -126,7 +126,7 @@ Run [`make manifests`][generate_crd] to generate CRD manifests. They would be ge
 
 Projects are scaffolded with unit tests that utilize the [envtest](https://godoc.org/sigs.k8s.io/controller-runtime/pkg/envtest)
 library, which requires certain Kubernetes server binaries be present locally.
-Installation instructions can be found [here][env-test-setup].
+Installation instructions can be found [here][envtest-setup].
 
 ## Operator Manifests
 
@@ -159,10 +159,10 @@ func (r *MemcachedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 **Note**:
 To update `config/rbac/role.yaml` after changing the markers, run `make manifests`.
 
-The project can now be built, and the operator can be deployed on-cluster. For further steps regarding the deployment of the operator, creation of custom resources and cleaning up of resources, refer to the [quickstart guide][kb_quickstart].
+The project can now be built, and the operator can be deployed on-cluster. For further steps regarding the deployment of the operator, creation of custom resources and cleaning up of resources, refer to the [tutorial][tutorial].
 
 
-[memcached-operator]:/docs/building-operators/golang/quickstart/
+[quickstart-legacy]:https://v0-19-x.sdk.operatorframework.io/docs/golang/quickstart/
 [git_tool]: https://git-scm.com/downloads
 [go_tool]: https://golang.org/dl/
 [docker_tool]:https://docs.docker.com/install/
@@ -177,6 +177,6 @@ The project can now be built, and the operator can be deployed on-cluster. For f
 [memcached_cr]: https://github.com/operator-framework/operator-sdk-samples/blob/master/go/memcached-operator/deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml
 [memcached_types]: https://github.com/operator-framework/operator-sdk-samples/blob/master/go/memcached-operator/pkg/apis/cache/v1alpha1/memcached_types.go
 [kb_memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/master/example/memcached-operator/memcached_controller.go.tmpl
-[kb_quickstart]: /docs/building-operators/golang/quickstart/
+[tutorial]: /docs/building-operators/golang/tutorial/
 [install_guide]: /docs/installation/install-operator-sdk/
-[env-test-setup]: /docs/building-operators/golang/references/env-test-setup
+[envtest-setup]: /docs/building-operators/golang/references/envtest-setup
