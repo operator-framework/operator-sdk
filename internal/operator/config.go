@@ -15,10 +15,11 @@ import (
 )
 
 type Configuration struct {
-	RESTConfig *rest.Config
-	Client     client.Client
-	Namespace  string
-	Scheme     *runtime.Scheme
+	Namespace      string
+	KubeconfigPath string
+	RESTConfig     *rest.Config
+	Client         client.Client
+	Scheme         *runtime.Scheme
 
 	overrides *clientcmd.ConfigOverrides
 }
@@ -37,6 +38,8 @@ func (c *Configuration) BindFlags(fs *pflag.FlagSet) {
 			},
 		},
 	})
+	fs.StringVar(&c.KubeconfigPath, "kubeconfig", clientcmd.RecommendedHomeFile,
+		"Path to the kubeconfig file to use for CLI requests.")
 }
 
 func (c *Configuration) Load() error {
@@ -44,6 +47,7 @@ func (c *Configuration) Load() error {
 		c.overrides = &clientcmd.ConfigOverrides{}
 	}
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	loadingRules.ExplicitPath = c.KubeconfigPath
 	mergedConfig, err := loadingRules.Load()
 	if err != nil {
 		return err
@@ -78,7 +82,9 @@ func (c *Configuration) Load() error {
 
 	c.Scheme = sch
 	c.Client = &operatorClient{cl}
-	c.Namespace = ns
+	if c.Namespace == "" {
+		c.Namespace = ns
+	}
 	c.RESTConfig = cc
 
 	return nil
