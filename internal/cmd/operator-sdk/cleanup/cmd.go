@@ -20,6 +20,7 @@ import (
 	"os"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/operator-framework/operator-sdk/internal/operator"
@@ -28,6 +29,7 @@ import (
 func NewCmd() *cobra.Command {
 	var timeout time.Duration
 	cfg := &operator.Configuration{}
+	cfg.Log = log.Infof
 	cmd := &cobra.Command{
 		Use:   "cleanup <operatorPackageName>",
 		Short: "Clean up an Operator deployed with the 'run' subcommand",
@@ -47,7 +49,7 @@ func NewCmd() *cobra.Command {
 				fmt.Printf("uninstall operator: %v\n", err)
 				os.Exit(1)
 			}
-			fmt.Printf("operator %q uninstalled\n", u.Package)
+			cfg.Log("operator %q uninstalled\n", u.Package)
 		},
 	}
 	cmd.Flags().DurationVar(&timeout, "timeout", 2*time.Minute, "Time to wait for the command to complete before failing")

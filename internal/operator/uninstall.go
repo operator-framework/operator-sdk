@@ -88,7 +88,7 @@ func (u *Uninstall) Run(ctx context.Context) error {
 	if err := u.config.Client.Delete(ctx, sub); err != nil {
 		return fmt.Errorf("delete subscription %q: %v", sub.Name, err)
 	}
-	fmt.Printf("subscription %q deleted\n", sub.Name)
+	u.config.Log("subscription %q deleted\n", sub.Name)
 
 	// Ensure CustomResourceDefinitions are deleted first, so that the operator
 	// has a chance to handle CRs that have finalizers.
@@ -101,7 +101,7 @@ func (u *Uninstall) Run(ctx context.Context) error {
 			return err
 		}
 		if err == nil {
-			fmt.Printf("%s %q deleted\n", strings.ToLower(obj.GetObjectKind().GroupVersionKind().Kind), obj.GetName())
+			u.config.Log("%s %q deleted\n", strings.ToLower(obj.GetObjectKind().GroupVersionKind().Kind), obj.GetName())
 		}
 	}
 
@@ -111,7 +111,7 @@ func (u *Uninstall) Run(ctx context.Context) error {
 	if err := u.config.Client.Delete(ctx, catsrc); err != nil {
 		return fmt.Errorf("delete catalog source: %v", err)
 	}
-	fmt.Printf("catalogsource %q deleted\n", catsrc.Name)
+	u.config.Log("catalogsource %q deleted\n", catsrc.Name)
 
 	// If this was the last subscription in the namespace and the operator group is
 	// the one we created, delete it
@@ -125,7 +125,7 @@ func (u *Uninstall) Run(ctx context.Context) error {
 				if err := u.config.Client.Delete(ctx, &og); err != nil {
 					return fmt.Errorf("delete operatorgroup %q: %v", og.Name, err)
 				}
-				fmt.Printf("operatorgroup %q deleted\n", og.Name)
+				u.config.Log("operatorgroup %q deleted\n", og.Name)
 			}
 		}
 	}

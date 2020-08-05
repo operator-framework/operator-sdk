@@ -34,6 +34,7 @@ type Configuration struct {
 	RESTConfig     *rest.Config
 	Client         client.Client
 	Scheme         *runtime.Scheme
+	Log            func(string, ...interface{})
 
 	overrides *clientcmd.ConfigOverrides
 }
@@ -59,6 +60,9 @@ func (c *Configuration) BindFlags(fs *pflag.FlagSet) {
 func (c *Configuration) Load() error {
 	if c.overrides == nil {
 		c.overrides = &clientcmd.ConfigOverrides{}
+	}
+	if c.Log == nil {
+		c.Log = func(_ string, _ ...interface{}) {}
 	}
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
 	loadingRules.ExplicitPath = c.KubeconfigPath
