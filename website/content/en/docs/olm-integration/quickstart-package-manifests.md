@@ -68,24 +68,26 @@ As long as both the `ClusterServiceVersion` and all `CustomResourceDefinition`'s
 the memcached-operator has been deployed successfully.
 
 Now that we're done testing the memcached-operator, we should probably clean up the Operator's resources.
-[`operator-sdk cleanup packagemanifests`][cli-cleanup-packagemanifests] will do this for you:
+[`operator-sdk cleanup`][cli-cleanup] will do this for you:
 
 ```console
-$ operator-sdk cleanup packagemanifests --version 0.0.1
-INFO[0000] Deleting resources
-INFO[0000]   Deleting CatalogSource "default/memcached-operator-ocs"
-INFO[0000]   Deleting Subscription "default/memcached-operator-v0-0-1-sub"
-INFO[0000]   Deleting OperatorGroup "default/operator-sdk-og"
-INFO[0000]   Deleting CustomResourceDefinition "default/memcacheds.example.com"
-INFO[0000]   Deleting ClusterServiceVersion "default/memcached-operator.v0.0.1"
-INFO[0000]   Waiting for deleted resources to disappear
-INFO[0001] Successfully uninstalled "memcached-operator.v0.0.1" on OLM version "0.15.1"
+$ operator-sdk cleanup memcached-operator
+subscription "memcached-operator-v0-0-1-sub" deleted
+customresourcedefinition "memcacheds.cache.example.com" deleted
+clusterserviceversion "memcached-operator.v0.0.1" deleted
+clusterrole "memcached-operator-metrics-reader" deleted
+serviceaccount "default" deleted
+role "memcached-operator.v0.0.1-jhjk7" deleted
+rolebinding "memcached-operator.v0.0.1-jhjk7-default-mxv6m" deleted
+catalogsource "memcached-operator-ocs" deleted
+operatorgroup "operator-sdk-og" deleted
+operator "memcached-operator" uninstalled
 ```
 
 
 [quickstart-bundle]:/docs/olm-integration/quickstart-bundle
 [operator-registry]:https://github.com/operator-framework/operator-registry
 [cli-run-packagemanifests]:/docs/cli/operator-sdk_run_packagemanifests
-[cli-cleanup-packagemanifests]:/docs/cli/operator-sdk_cleanup_packagemanifests
+[cli-cleanup]:/docs/cli/operator-sdk_cleanup
 [doc-olm-generate]:/docs/olm-integration/generation#overview
 [doc-testing-deployment]:/docs/olm-integration/testing-deployment

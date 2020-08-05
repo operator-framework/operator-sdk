@@ -153,7 +153,7 @@ func (u *Uninstall) getInstallPlanResources(ctx context.Context, installPlanKey 
 
 		// TODO(joelanford): This seems necessary for service accounts tied to
 		//    cluster roles and cluster role bindings because the SA namespace
-		//    is not get in the manifest in this case.
+		//    is not set in the manifest in this case.
 		//    See: https://github.com/operator-framework/operator-lifecycle-manager/blob/c9405d035bc50d9aa290220cb8d75b0402e72707/pkg/controller/registry/resolver/rbac.go#L133
 		if step.Resource.Kind == "ServiceAccount" && obj.GetNamespace() == "" {
 			obj.SetNamespace(installPlanKey.Namespace)
