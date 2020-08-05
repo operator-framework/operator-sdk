@@ -16,8 +16,6 @@ package cleanup
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -46,10 +44,9 @@ func NewCmd() *cobra.Command {
 			defer cancel()
 
 			if err := u.Run(ctx); err != nil {
-				fmt.Printf("uninstall operator: %v\n", err)
-				os.Exit(1)
+				log.Fatalf("uninstall operator: %v\n", err)
 			}
-			cfg.Log("operator %q uninstalled\n", u.Package)
+			log.Infof("operator %q uninstalled\n", u.Package)
 		},
 	}
 	cmd.Flags().DurationVar(&timeout, "timeout", 2*time.Minute, "Time to wait for the command to complete before failing")
