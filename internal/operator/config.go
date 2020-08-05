@@ -52,7 +52,7 @@ func (c *Configuration) BindFlags(fs *pflag.FlagSet) {
 			},
 		},
 	})
-	fs.StringVar(&c.KubeconfigPath, "kubeconfig", clientcmd.RecommendedHomeFile,
+	fs.StringVar(&c.KubeconfigPath, "kubeconfig", "",
 		"Path to the kubeconfig file to use for CLI requests.")
 }
 
