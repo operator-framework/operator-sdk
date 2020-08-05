@@ -14,7 +14,7 @@
 
 // Modified from https://github.com/kubernetes-sigs/kubebuilder/tree/39224f0/test/e2e/v3
 
-package e2e
+package e2e_test
 
 import (
 	"bytes"
