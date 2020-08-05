@@ -11,7 +11,7 @@ This guide walks through an example of building a simple memcached-operator usin
 
 - [Install operator-sdk][operator_install] and its prequisites.
 - Access to a Kubernetes v1.11.3+ cluster (v1.16.0+ if using `apiextensions.k8s.io/v1` CRDs).
-- User logged with admin permission. 
+- User authorized with `cluster-admin` permissions
 
 ## Quickstart Steps
 

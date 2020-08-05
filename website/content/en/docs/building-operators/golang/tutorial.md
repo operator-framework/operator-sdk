@@ -494,5 +494,5 @@ Also see the [advanced topics][advanced_topics] doc for more use cases and under
 [status_subresource]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#status-subresource
 [API-groups]:https://kubernetes.io/docs/concepts/overview/kubernetes-api/#api-groups
 [legacy_CLI]:https://v0-19-x.sdk.operatorframework.io/docs/cli/
-[env-test-setup]: /docs/building-operators/golang/references/env-test-setup
+[env-test-setup]: /docs/building-operators/golang/references/envtest-setup
 [role-based-access-control]: https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control#iam-rolebinding-bootstrap
