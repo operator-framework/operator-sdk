@@ -22,11 +22,9 @@ import (
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/operator-framework/operator-sdk/internal/operator"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
-
-// General OperatorGroup for operators created with the SDK.
-const sdkOperatorGroupName = "operator-sdk-og"
 
 func getSubscriptionName(csvName string) string {
 	name := k8sutil.FormatOperatorNameDNS1123(csvName)
@@ -151,7 +149,7 @@ func newSDKOperatorGroup(namespace string, opts ...func(*operatorsv1.OperatorGro
 			Kind:       operatorsv1.OperatorGroupKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      sdkOperatorGroupName,
+			Name:      operator.SDKOperatorGroupName,
 			Namespace: namespace,
 		},
 	}

@@ -112,17 +112,20 @@ func (u *Uninstall) Run(ctx context.Context) error {
 	}
 	fmt.Printf("catalogsource %q deleted\n", catsrc.Name)
 
-	// If this was the last subscription in the namespace, delete the operator group.
+	// If this was the last subscription in the namespace and the operator group is
+	// the one we created, delete it
 	if len(subs.Items) == 1 {
 		ogs := v1.OperatorGroupList{}
 		if err := u.config.Client.List(ctx, &ogs, client.InNamespace(u.config.Namespace)); err != nil {
 			return fmt.Errorf("list operatorgroups: %v", err)
 		}
 		for _, og := range ogs.Items {
-			if err := u.config.Client.Delete(ctx, &og); err != nil {
-				return fmt.Errorf("delete operatorgroup %q: %v", og.Name, err)
+			if og.GetName() == SDKOperatorGroupName {
+				if err := u.config.Client.Delete(ctx, &og); err != nil {
+					return fmt.Errorf("delete operatorgroup %q: %v", og.Name, err)
+				}
+				fmt.Printf("operatorgroup %q deleted\n", og.Name)
 			}
-			fmt.Printf("operatorgroup %q deleted\n", og.Name)
 		}
 	}
 
