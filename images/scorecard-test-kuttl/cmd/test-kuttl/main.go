@@ -74,9 +74,22 @@ func main() {
 }
 
 func getTestStatus(tc []*Testcase) (s v1alpha3.TestStatus) {
+
+	logMessage := getKuttlLogs()
+
+	// report the kuttl logs when kuttl tests can not be run
+	// (e.g. RBAC is not sufficient)
+	if len(tc) == 0 {
+		r := v1alpha3.TestResult{}
+		r.Log = logMessage
+		s.Results = append(s.Results, r)
+		return s
+	}
+
 	for i := 0; i < len(tc); i++ {
 		r := v1alpha3.TestResult{}
 		r.Name = tc[i].Name
+		r.Log = logMessage
 		r.State = v1alpha3.PassState
 		if tc[i].Failure != nil {
 			r.State = v1alpha3.FailState
@@ -174,4 +187,34 @@ type Testsuites struct {
 	Properties *Properties `xml:"properties" json:"properties,omitempty"`
 	// Testsuite is a collection of test suites
 	Testsuite []*Testsuite `xml:"testsuite" json:"testsuite,omitempty"`
+}
+
+func getKuttlLogs() string {
+	stderrFile, err := os.Open("/tmp/kuttl.stderr")
+	if err != nil {
+		printErrorStatus(fmt.Errorf("could not open kuttl stderr file %v", err))
+		return err.Error()
+	}
+	defer stderrFile.Close()
+
+	var byteValue []byte
+	byteValue, err = ioutil.ReadAll(stderrFile)
+	if err != nil {
+		printErrorStatus(fmt.Errorf("could not read kuttl stderr file %v", err))
+		return err.Error()
+	}
+	stdoutFile, err := os.Open("/tmp/kuttl.stdout")
+	if err != nil {
+		printErrorStatus(fmt.Errorf("could not open kuttl stdout file %v", err))
+		return err.Error()
+	}
+	defer stdoutFile.Close()
+
+	var stdoutByteValue []byte
+	stdoutByteValue, err = ioutil.ReadAll(stdoutFile)
+	if err != nil {
+		printErrorStatus(fmt.Errorf("could not read kuttl stdout file %v", err))
+		return err.Error()
+	}
+	return string(byteValue) + string(stdoutByteValue)
 }
