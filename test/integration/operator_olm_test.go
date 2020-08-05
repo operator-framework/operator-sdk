@@ -15,6 +15,7 @@
 package e2e
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -22,12 +23,13 @@ import (
 	"time"
 
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
-	operator "github.com/operator-framework/operator-sdk/internal/olm/operator"
-	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+
+	operator "github.com/operator-framework/operator-sdk/internal/olm/operator"
+	operator2 "github.com/operator-framework/operator-sdk/internal/operator"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
 
 const (
@@ -104,9 +106,12 @@ func PackageManifestsAllNamespaces(t *testing.T) {
 		Version:      defaultOperatorVersion,
 	}
 	// Cleanup.
+	cfg := &operator2.Configuration{KubeconfigPath: kubeconfigPath}
+	assert.NoError(t, cfg.Load())
+	uninstall := operator2.NewUninstall(cfg)
+	uninstall.Package = defaultOperatorName
 	defer func() {
-		opcmd.ForceRegistry = true
-		if err := opcmd.Cleanup(); err != nil {
+		if err := doUninstall(uninstall, opcmd.Timeout); err != nil {
 			t.Fatal(err)
 		}
 	}()
@@ -165,15 +170,13 @@ func PackageManifestsBasic(t *testing.T) {
 		Version:      defaultOperatorVersion,
 	}
 	// Cleanup.
-	defer func() {
-		opcmd.ForceRegistry = true
-		if err := opcmd.Cleanup(); err != nil {
-			t.Fatal(err)
-		}
-	}()
+	cfg := &operator2.Configuration{KubeconfigPath: kubeconfigPath}
+	assert.NoError(t, cfg.Load())
+	uninstall := operator2.NewUninstall(cfg)
+	uninstall.Package = defaultOperatorName
 
 	// "Remove operator before deploy"
-	assert.NoError(t, opcmd.Cleanup())
+	assert.Error(t, doUninstall(uninstall, opcmd.Timeout))
 
 	// "Deploy operator"
 	assert.NoError(t, opcmd.Run())
@@ -181,9 +184,9 @@ func PackageManifestsBasic(t *testing.T) {
 	assert.Error(t, opcmd.Run())
 
 	// "Remove operator after deploy"
-	assert.NoError(t, opcmd.Cleanup())
+	assert.NoError(t, doUninstall(uninstall, opcmd.Timeout))
 	// "Remove operator after removal"
-	assert.NoError(t, opcmd.Cleanup())
+	assert.Error(t, doUninstall(uninstall, opcmd.Timeout))
 }
 
 func PackageManifestsMultiplePackages(t *testing.T) {
@@ -267,15 +270,19 @@ func PackageManifestsMultiplePackages(t *testing.T) {
 		Version:      operatorVersion2,
 	}
 	// Cleanup.
-	defer func() {
-		opcmd.ForceRegistry = true
-		if err := opcmd.Cleanup(); err != nil {
-			t.Fatal(err)
-		}
-	}()
+	cfg := &operator2.Configuration{KubeconfigPath: kubeconfigPath}
+	assert.NoError(t, cfg.Load())
+	uninstall := operator2.NewUninstall(cfg)
+	uninstall.Package = defaultOperatorName
 
 	// "Deploy operator"
 	assert.NoError(t, opcmd.Run())
 	// "Remove operator after deploy"
-	assert.NoError(t, opcmd.Cleanup())
+	assert.NoError(t, doUninstall(uninstall, opcmd.Timeout))
+}
+
+func doUninstall(u *operator2.Uninstall, timeout time.Duration) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	return u.Run(ctx)
 }

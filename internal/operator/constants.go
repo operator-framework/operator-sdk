@@ -12,18 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Modified from https://github.com/kubernetes-sigs/kubebuilder/tree/39224f0/test/e2e/v3
+package operator
 
-package e2e_test
-
-import (
-	"testing"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+const (
+	SDKOperatorGroupName = "operator-sdk-og"
 )
-
-func TestE2E(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Operator SDK e2e suite")
-}

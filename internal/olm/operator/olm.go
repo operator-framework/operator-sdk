@@ -22,11 +22,9 @@ import (
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/operator-framework/operator-sdk/internal/operator"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
-
-// General OperatorGroup for operators created with the SDK.
-const sdkOperatorGroupName = "operator-sdk-og"
 
 func getSubscriptionName(csvName string) string {
 	name := k8sutil.FormatOperatorNameDNS1123(csvName)
@@ -94,15 +92,6 @@ func getCatalogSourceName(pkgName string) string {
 	return fmt.Sprintf("%s-ocs", name)
 }
 
-// withGRPC returns a function that sets the CatalogSource argument's
-// server type to GRPC and address at addr.
-func withGRPC(addr string) func(*operatorsv1alpha1.CatalogSource) {
-	return func(catsrc *operatorsv1alpha1.CatalogSource) {
-		catsrc.Spec.SourceType = operatorsv1alpha1.SourceTypeGrpc
-		catsrc.Spec.Address = addr
-	}
-}
-
 // newCatalogSource creates a new CatalogSource with a name derived from
 // pkgName, the package manifest's packageName, in namespace. opts will
 // be applied to the CatalogSource object.
@@ -151,7 +140,7 @@ func newSDKOperatorGroup(namespace string, opts ...func(*operatorsv1.OperatorGro
 			Kind:       operatorsv1.OperatorGroupKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      sdkOperatorGroupName,
+			Name:      operator.SDKOperatorGroupName,
 			Namespace: namespace,
 		},
 	}

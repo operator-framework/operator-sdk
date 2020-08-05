@@ -20,8 +20,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	. "github.com/onsi/ginkgo" //nolint:golint
-	. "github.com/onsi/gomega" //nolint:golint
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 
 	testutils "github.com/operator-framework/operator-sdk/test/internal"
 )
@@ -34,17 +34,6 @@ var _ = Describe("Integrating Helm Projects with OLM", func() {
 			By("turning off interactive prompts for all generation tasks.")
 			replace := "operator-sdk generate kustomize manifests"
 			testutils.ReplaceInFile(filepath.Join(tc.Dir, "Makefile"), replace, replace+" --interactive=false")
-		})
-
-		AfterEach(func() {
-			By("destroying the deployed package manifests-formatted operator")
-			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", "packagemanifests",
-				"--version", operatorVersion,
-				"--timeout", "4m")
-			_, _ = tc.Run(cleanupPkgManCmd)
-
-			By("uninstalling CRD's")
-			_ = tc.Make("uninstall")
 		})
 
 		It("should generate and run a valid OLM bundle and packagemanifests", func() {
@@ -80,6 +69,12 @@ var _ = Describe("Integrating Helm Projects with OLM", func() {
 				"--version", operatorVersion,
 				"--timeout", "4m")
 			_, err = tc.Run(runPkgManCmd)
+			Expect(err).NotTo(HaveOccurred())
+
+			By("destroying the deployed package manifests-formatted operator")
+			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", projectName,
+				"--timeout", "4m")
+			_, err = tc.Run(cleanupPkgManCmd)
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})

@@ -20,11 +20,13 @@ import (
 	"path"
 
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	olmclient "github.com/operator-framework/operator-sdk/internal/olm/client"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
@@ -110,13 +112,21 @@ func (rr *RegistryResources) IsRegistryDataStale(ctx context.Context, namespace 
 
 // CreatePackageManifestsRegistry creates all registry objects required to serve
 // manifests from rr.manifests in namespace.
-func (rr *RegistryResources) CreatePackageManifestsRegistry(ctx context.Context, namespace string) error {
+func (rr *RegistryResources) CreatePackageManifestsRegistry(ctx context.Context, catsrc *v1alpha1.CatalogSource, namespace string) error {
 	pkgName := rr.Pkg.PackageName
 	labels := makeRegistryLabels(pkgName)
 
 	binaryDataByConfigMap, err := makeConfigMapsForPackageManifests(rr.Pkg, rr.Bundles)
 	if err != nil {
 		return err
+	}
+
+	catsrcKey := types.NamespacedName{
+		Namespace: catsrc.Namespace,
+		Name:      catsrc.Name,
+	}
+	if err := rr.Client.KubeClient.Get(ctx, catsrcKey, catsrc); err != nil {
+		return fmt.Errorf("get catalog source: %v", err)
 	}
 
 	// Objects to create.
@@ -129,6 +139,9 @@ func (rr *RegistryResources) CreatePackageManifestsRegistry(ctx context.Context,
 	for cmName, binaryData := range binaryDataByConfigMap {
 		cm := newConfigMap(cmName, namespace, withBinaryData(binaryData))
 		cm.SetLabels(labels)
+		if err := controllerutil.SetOwnerReference(catsrc, cm, olmclient.Scheme); err != nil {
+			return fmt.Errorf("set configmap %q owner reference: %v", cm.GetName(), err)
+		}
 		objs = append(objs, cm)
 
 		volName := k8sutil.TrimDNS1123Label(cmName + "-volume")
@@ -141,8 +154,14 @@ func (rr *RegistryResources) CreatePackageManifestsRegistry(ctx context.Context,
 	// Add registry Deployment and Service to objects.
 	dep := newRegistryDeployment(pkgName, namespace, opts...)
 	dep.SetLabels(labels)
+	if err := controllerutil.SetOwnerReference(catsrc, dep, olmclient.Scheme); err != nil {
+		return fmt.Errorf("set deployment %q owner reference: %v", dep.GetName(), err)
+	}
 	service := newRegistryService(pkgName, namespace, withTCPPort("grpc", registryGRPCPort))
 	service.SetLabels(labels)
+	if err := controllerutil.SetOwnerReference(catsrc, service, olmclient.Scheme); err != nil {
+		return fmt.Errorf("set service %q owner reference: %v", service.GetName(), err)
+	}
 	objs = append(objs, dep, service)
 
 	if err := rr.Client.DoCreate(ctx, objs...); err != nil {
