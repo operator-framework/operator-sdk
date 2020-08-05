@@ -36,7 +36,8 @@ type initPlugin struct {
 	config    *config.Config
 	apiPlugin createAPIPlugin
 
-	doAPIScaffold bool
+	// If true, run the `create api` plugin.
+	doCreateAPI bool
 
 	// For help text.
 	commandName string
@@ -128,6 +129,13 @@ func (p *initPlugin) runPhase2() error {
 	if err := scorecard.RunInit(p.config); err != nil {
 		return err
 	}
+
+	if p.doCreateAPI {
+		if err := p.apiPlugin.runPhase2(); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -146,7 +154,7 @@ func (p *initPlugin) Validate() error {
 
 	defaultOpts := scaffolds.CreateOptions{CRDVersion: "v1"}
 	if !p.apiPlugin.createOptions.GVK.Empty() || p.apiPlugin.createOptions != defaultOpts {
-		p.doAPIScaffold = true
+		p.doCreateAPI = true
 		return p.apiPlugin.Validate()
 	}
 	return nil
@@ -157,7 +165,7 @@ func (p *initPlugin) GetScaffolder() (scaffold.Scaffolder, error) {
 		apiScaffolder scaffold.Scaffolder
 		err           error
 	)
-	if p.doAPIScaffold {
+	if p.doCreateAPI {
 		apiScaffolder, err = p.apiPlugin.GetScaffolder()
 		if err != nil {
 			return nil, err
@@ -167,7 +175,7 @@ func (p *initPlugin) GetScaffolder() (scaffold.Scaffolder, error) {
 }
 
 func (p *initPlugin) PostScaffold() error {
-	if !p.doAPIScaffold {
+	if !p.doCreateAPI {
 		fmt.Printf("Next: define a resource with:\n$ %s create api\n", p.commandName)
 	}
 
