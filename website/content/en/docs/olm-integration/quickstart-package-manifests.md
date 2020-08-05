@@ -72,16 +72,16 @@ Now that we're done testing the memcached-operator, we should probably clean up 
 
 ```console
 $ operator-sdk cleanup memcached-operator
-subscription "memcached-operator-v0-0-1-sub" deleted
-customresourcedefinition "memcacheds.cache.example.com" deleted
-clusterserviceversion "memcached-operator.v0.0.1" deleted
-clusterrole "memcached-operator-metrics-reader" deleted
-serviceaccount "default" deleted
-role "memcached-operator.v0.0.1-jhjk7" deleted
-rolebinding "memcached-operator.v0.0.1-jhjk7-default-mxv6m" deleted
-catalogsource "memcached-operator-ocs" deleted
-operatorgroup "operator-sdk-og" deleted
-operator "memcached-operator" uninstalled
+INFO[0000] subscription "memcached-operator-v0-0-1-sub" deleted
+INFO[0000] customresourcedefinition "memcacheds.cache.example.com" deleted
+INFO[0000] clusterserviceversion "memcached-operator.v0.0.1" deleted
+INFO[0000] clusterrole "memcached-operator-metrics-reader" deleted
+INFO[0000] serviceaccount "default" deleted
+INFO[0000] role "memcached-operator.v0.0.1-jhjk7" deleted
+INFO[0000] rolebinding "memcached-operator.v0.0.1-jhjk7-default-mxv6m" deleted
+INFO[0000] catalogsource "memcached-operator-ocs" deleted
+INFO[0000] operatorgroup "operator-sdk-og" deleted
+INFO[0001] operator "memcached-operator" uninstalled
 ```
 
 
