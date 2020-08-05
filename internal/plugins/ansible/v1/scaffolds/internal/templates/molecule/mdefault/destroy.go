@@ -57,7 +57,7 @@ const destroyTemplate = `---
         state: absent
 
     - name: Unset pull policy
-      command: '{{ "{{ kustomize }}" }} edit remove patch pull_policy/{{ "{{ pull_policy }}" }}.yaml'
+      command: '{{ "{{ kustomize }}" }} edit remove patch pull_policy/{{ "{{ operator_pull_policy }}" }}.yaml'
       args:
         chdir: '{{ "{{ config_dir }}" }}/testing'
 `
