@@ -1,0 +1,6 @@
+entries:
+  - description: >
+      Updated the scorecard-test-kuttl image to be based off of
+      v0.5.2 version of the kuttl image.
+    kind: change
+    breaking: false
