@@ -165,7 +165,7 @@ Ensure that the `provisioner.host_vars.localhost` has the following `host_vars`:
         config_dir: ${MOLECULE_PROJECT_DIRECTORY}/config
         samples_dir: ${MOLECULE_PROJECT_DIRECTORY}/config/samples
         operator_image: ${OPERATOR_IMAGE:-""}
-        pull_policy: ${OPERATOR_PULL_POLICY:-"Always"}
+        operator_pull_policy: ${OPERATOR_PULL_POLICY:-"Always"}
         kustomize: ${KUSTOMIZE_PATH:-kustomize}
 ...
 ```
