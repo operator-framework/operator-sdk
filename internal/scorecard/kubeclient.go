@@ -29,6 +29,7 @@ import (
 // - the user's $HOME/.kube/config file
 // - in-cluster connection for when the sdk is run within a cluster instead of
 //   the command line
+// TODO(joelanford): migrate scorecard use `internal/operator.Configuration`
 func GetKubeClient(kubeconfig string) (client kubernetes.Interface, err error) {
 
 	if kubeconfig != "" {
@@ -59,6 +60,7 @@ func GetKubeClient(kubeconfig string) (client kubernetes.Interface, err error) {
 //   - from the KUBECONFIG env var if set
 //   - from the $HOME/.kube/config path if exists
 //   - returns 'default' as the namespace if not set in the kubeconfig
+// TODO(joelanford): migrate scorecard to use `internal/operator.Configuration`
 func GetKubeNamespace(kubeconfigPath, namespace string) string {
 
 	if namespace != "" {

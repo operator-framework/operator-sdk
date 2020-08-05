@@ -121,6 +121,7 @@ func (c *OperatorCmd) newManager() (*operatorManager, error) {
 	m := &operatorManager{}
 
 	// Cluster and operator namespace info.
+	// TODO(joelanford): Migrate this to use `internal/operator.Configuration`
 	rc, ns, err := k8sutil.GetKubeconfigAndNamespace(c.KubeconfigPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get namespace from kubeconfig %s: %w", c.KubeconfigPath, err)
