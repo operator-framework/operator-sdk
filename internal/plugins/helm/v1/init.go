@@ -142,34 +142,7 @@ func (p *initPlugin) InjectConfig(c *config.Config) {
 
 // Run will call the plugin actions
 func (p *initPlugin) Run() error {
-	if err := cmdutil.Run(p); err != nil {
-		return err
-	}
-
-	// Run SDK phase 2 plugins.
-	if err := p.runPhase2(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// SDK phase 2 plugins.
-func (p *initPlugin) runPhase2() error {
-	if err := manifests.RunInit(p.config); err != nil {
-		return err
-	}
-	if err := scorecard.RunInit(p.config); err != nil {
-		return err
-	}
-
-	if p.doCreateAPI {
-		if err := p.apiPlugin.runPhase2(); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return cmdutil.Run(p)
 }
 
 // Validate perform the required validations for this plugin
@@ -198,26 +171,23 @@ func (p *initPlugin) Validate() error {
 
 // GetScaffolder returns scaffold.Scaffolder which will be executed due the RunOptions interface implementation
 func (p *initPlugin) GetScaffolder() (scaffold.Scaffolder, error) {
-	var (
-		apiScaffolder scaffold.Scaffolder
-		err           error
-	)
-	if p.doCreateAPI {
-		apiScaffolder, err = p.apiPlugin.GetScaffolder()
-		if err != nil {
-			return nil, err
-		}
-	}
-	return scaffolds.NewInitScaffolder(p.config, apiScaffolder), nil
+	return scaffolds.NewInitScaffolder(p.config), nil
 }
 
 // PostScaffold will run the required actions after the default plugin scaffold
 func (p *initPlugin) PostScaffold() error {
 
-	if p.doCreateAPI {
-		return p.apiPlugin.PostScaffold()
+	// SDK phase 2 plugins.
+	if err := manifests.RunInit(p.config); err != nil {
+		return err
+	}
+	if err := scorecard.RunInit(p.config); err != nil {
+		return err
 	}
 
+	if p.doCreateAPI {
+		return p.apiPlugin.Run()
+	}
 	fmt.Printf("Next: define a resource with:\n$ %s create api\n", p.commandName)
 	return nil
 }

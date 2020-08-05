@@ -103,22 +103,7 @@ func (p *createAPIPlugin) InjectConfig(c *config.Config) {
 }
 
 func (p *createAPIPlugin) Run() error {
-	if err := cmdutil.Run(p); err != nil {
-		return err
-	}
-
-	// Run SDK phase 2 plugins.
-	if err := p.runPhase2(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// SDK phase 2 plugins.
-func (p *createAPIPlugin) runPhase2() error {
-	gvk := p.createOptions.GVK
-	return manifests.RunCreateAPI(p.config, config.GVK{Group: gvk.Group, Version: gvk.Version, Kind: gvk.Kind})
+	return cmdutil.Run(p)
 }
 
 func (p *createAPIPlugin) Validate() error {
@@ -155,5 +140,7 @@ func (p *createAPIPlugin) GetScaffolder() (scaffold.Scaffolder, error) {
 }
 
 func (p *createAPIPlugin) PostScaffold() error {
-	return nil
+	// SDK phase 2 plugins.
+	gvk := p.createOptions.GVK
+	return manifests.RunCreateAPI(p.config, config.GVK{Group: gvk.Group, Version: gvk.Version, Kind: gvk.Kind})
 }

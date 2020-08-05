@@ -53,10 +53,9 @@ type initScaffolder struct {
 }
 
 // NewInitScaffolder returns a new Scaffolder for project initialization operations
-func NewInitScaffolder(config *config.Config, apiScaffolder scaffold.Scaffolder) scaffold.Scaffolder {
+func NewInitScaffolder(config *config.Config) scaffold.Scaffolder {
 	return &initScaffolder{
-		config:        config,
-		apiScaffolder: apiScaffolder,
+		config: config,
 	}
 }
 
