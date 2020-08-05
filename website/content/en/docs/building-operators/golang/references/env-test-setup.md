@@ -10,27 +10,18 @@ This document describes how to configure the environment for the [controller tes
 
 ## Installing prerequisites
 
-[Envtest][envtest] requires that `kubectl`, `api-server` and `etcd` be present locally. You can use this [script][script] to download these binaries into the `test/assets/` directory which will be created in your project. Update your Makefile as follows.
-
-- Add the new `setup-envtest` makefile target:
-
-```sh
-# Setup binaries required to run the tests
-setup-envtest:
-        curl -sSLo setup_envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/master/hack/setup-envtest.sh
-        chmod +x setup_envtest.sh
-```
-
-Then, replace your `test` target with: 
+[Envtest][envtest] requires that `kubectl`, `api-server` and `etcd` be present locally. You can use this [script][script] to download these binaries into the `testbin/` directory which will be created in your project. Update your Makefile by replacing your `test` target with: 
 
 ```sh
 # Run tests
-ENV_TEST_ASSETS_DIR=$(shell pwd)/test/assets
-test: setup-envtest generate fmt vet manifests
-        source setup_envtest.sh; fetch_envtest_tools $(ENV_TEST_ASSETS_DIR); setup_envtest_env $(ENV_TEST_ASSETS_DIR); go test ./... -coverprofile cover.out
+ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
+test: generate fmt vet manifests
+        mkdir -p ${ENVTEST_ASSETS_DIR}
+        test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/master/hack/setup-envtest.sh
+        source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
 ```
 
-Also, it is recommended add into the `.gitignore` a new line with `/test/assets/*` for you do not commit these binaries. 
+Also, it is recommended add into the `.gitignore` a new line with `testbin/*` for you do not commit these binaries. 
 
 See that you can also use your own binaries and change the location via setting up the following environment variables in your `controllers/suite_test.go`: 
 

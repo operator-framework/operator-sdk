@@ -37,22 +37,15 @@ operator-sdk create api --group cache --version v1 --kind Memcached --resource=t
 ### Configuring your test environment
 
 Projects are scaffolded with tests that utilize the [`envtest`][env-test]
-library, which requires certain Kubernetes server binaries to be present locally. Update the Makefile scaffolded in your project by adding the new `setup-envtest` makefile target:
-
-```sh
-# Setup binaries required to run the tests
-setup-envtest:
-        curl -sSLo setup_envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/master/hack/setup-envtest.sh
-        chmod +x setup_envtest.sh
-```
-
-Then, replace your `test` target with: 
+library, which requires certain Kubernetes server binaries to be present locally. Update your Makefile by replacing your `test` target with: 
 
 ```sh
 # Run tests
-ENV_TEST_ASSETS_DIR=$(shell pwd)/test/assets
-test: setup-envtest generate fmt vet manifests
-        source setup_envtest.sh; fetch_envtest_tools $(ENV_TEST_ASSETS_DIR); setup_envtest_env $(ENV_TEST_ASSETS_DIR); go test ./... -coverprofile cover.out
+ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
+test: generate fmt vet manifests
+        mkdir -p ${ENVTEST_ASSETS_DIR}
+        test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/master/hack/setup-envtest.sh
+        source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
 ```
 
 **Note:** More info can be found [here][env-test-setup].
