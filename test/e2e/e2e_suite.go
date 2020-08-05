@@ -26,8 +26,8 @@ import (
 	"strings"
 	"time"
 
-	. "github.com/onsi/ginkgo" //nolint:golint
-	. "github.com/onsi/gomega" //nolint:golint
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 	kbtestutils "sigs.k8s.io/kubebuilder/test/e2e/utils"
 
@@ -248,9 +248,8 @@ var _ = Describe("operator-sdk", func() {
 			}
 
 			By("destroying the deployed package manifests-formatted operator")
-			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", "packagemanifests",
+			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", projectName,
 				"--namespace", tc.Kubectl.Namespace,
-				"--version", operatorVersion,
 				"--timeout", "4m")
 			_, err = tc.Run(cleanupPkgManCmd)
 			Expect(err).NotTo(HaveOccurred())
