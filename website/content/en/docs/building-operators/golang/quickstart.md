@@ -11,7 +11,7 @@ This guide walks through an example of building a simple memcached-operator usin
 
 - [Install operator-sdk][operator_install] and its prequisites.
 - Access to a Kubernetes v1.11.3+ cluster (v1.16.0+ if using `apiextensions.k8s.io/v1` CRDs).
-- User logged with admin permission. See [how to grant yourself cluster-admin privileges or be logged in as admin][role-based-access-control]
+- User logged with admin permission. 
 
 ## Quickstart Steps
 
@@ -36,19 +36,17 @@ operator-sdk create api --group cache --version v1 --kind Memcached --resource=t
 
 ### Configuring your test environment
 
-Projects are scaffolded with tests that utilize the [`envtest`][env-test]
-library, which requires certain Kubernetes server binaries to be present locally. Update your Makefile by replacing your `test` target with: 
+[Setup the `envtest` binaries and environment][envtest-setup] for your project.
+Update your `test` Makefile target to the following:
 
 ```sh
 # Run tests
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
 test: generate fmt vet manifests
-        mkdir -p ${ENVTEST_ASSETS_DIR}
-        test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/master/hack/setup-envtest.sh
-        source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
+	mkdir -p ${ENVTEST_ASSETS_DIR}
+	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/master/hack/setup-envtest.sh
+	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
 ```
-
-**Note:** More info can be found [here][env-test-setup].
 
 ### Build and push the operator image
 
@@ -87,12 +85,12 @@ kubectl logs deployment.apps/memcached-operator-controller-manager -n memcached-
 
 ## Clean up
 
-Delete the CR to uninstall the release:
+Delete the CR to uninstall memcached:
 ```sh 
 kubectl delete -f config/samples/cache_v1_memcached.yaml
 ```
 
-To uninstall the operator and its CRDs:
+Uninstall the operator and its CRDs:
 ```sh
 kustomize build config/default | kubectl delete -f -
 ```
@@ -104,7 +102,6 @@ Read the [tutorial][tutorial] for an in-depth walkthough of building a Go operat
 [docker_tool]:https://docs.docker.com/install/
 [kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [operator_install]: /docs/installation/install-operator-sdk
-[env-test-setup]: /docs/building-operators/golang/references/env-test-setup
+[envtest-setup]: /docs/building-operators/golang/references/envtest-setup
 [tutorial]: /docs/building-operators/golang/tutorial/ 
-[env-test]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/envtest
-[role-based-access-control]: https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control#iam-rolebinding-bootstrap
+

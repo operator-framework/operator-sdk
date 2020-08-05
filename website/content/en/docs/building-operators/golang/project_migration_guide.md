@@ -126,7 +126,7 @@ Run [`make manifests`][generate_crd] to generate CRD manifests. They would be ge
 
 Projects are scaffolded with unit tests that utilize the [envtest](https://godoc.org/sigs.k8s.io/controller-runtime/pkg/envtest)
 library, which requires certain Kubernetes server binaries be present locally.
-Installation instructions can be found [here][env-test-setup].
+Installation instructions can be found [here][envtest-setup].
 
 ## Operator Manifests
 
@@ -179,4 +179,4 @@ The project can now be built, and the operator can be deployed on-cluster. For f
 [kb_memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/master/example/memcached-operator/memcached_controller.go.tmpl
 [tutorial]: /docs/building-operators/golang/tutorial/
 [install_guide]: /docs/installation/install-operator-sdk/
-[env-test-setup]: /docs/building-operators/golang/references/env-test-setup
+[envtest-setup]: /docs/building-operators/golang/references/envtest-setup
