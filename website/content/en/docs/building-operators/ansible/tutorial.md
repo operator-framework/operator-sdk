@@ -2,6 +2,7 @@
 title: Ansible Operator Tutorial
 linkTitle: Tutorial
 weight: 3
+description: An in-depth walkthough that demonstrates how to build and run a Ansible-based operator.
 ---
 
 This guide walks through an example of building a simple memcached-operator powered by Ansible using tools and libraries provided by the Operator SDK.
@@ -10,6 +11,7 @@ This guide walks through an example of building a simple memcached-operator powe
 
 - [Install `operator-sdk`][operator_install] and the [Ansible prequisites][ansible-operator-install] 
 - Access to a Kubernetes v1.16.0+ cluster.
+- User authorized with `cluster-admin` permissions.
 
 ## Creating an Operator
 
@@ -230,3 +232,4 @@ OLM will manage creation of most if not all resources required to run your opera
 [docker-tool]:https://docs.docker.com/install/
 [kubectl-tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [quickstart-bundle]: /docs/olm-integration/quickstart-bundle/
+[operator_install]: /docs/installation/install-operator-sdk
