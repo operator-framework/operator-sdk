@@ -67,7 +67,7 @@ provisioner:
         samples_dir: ${MOLECULE_PROJECT_DIRECTORY}/config/samples
         project_dir: ${MOLECULE_PROJECT_DIRECTORY}
         operator_image: testing-operator
-        pull_policy: "Never"
+        operator_pull_policy: "Never"
         kubeconfig: "{{ "{{ lookup('env', 'KUBECONFIG') }}" }}"
         kustomize: ${KUSTOMIZE_PATH:-kustomize}
   env:
