@@ -92,15 +92,6 @@ func getCatalogSourceName(pkgName string) string {
 	return fmt.Sprintf("%s-ocs", name)
 }
 
-// withGRPC returns a function that sets the CatalogSource argument's
-// server type to GRPC and address at addr.
-func withGRPC(addr string) func(*operatorsv1alpha1.CatalogSource) {
-	return func(catsrc *operatorsv1alpha1.CatalogSource) {
-		catsrc.Spec.SourceType = operatorsv1alpha1.SourceTypeGrpc
-		catsrc.Spec.Address = addr
-	}
-}
-
 // newCatalogSource creates a new CatalogSource with a name derived from
 // pkgName, the package manifest's packageName, in namespace. opts will
 // be applied to the CatalogSource object.
