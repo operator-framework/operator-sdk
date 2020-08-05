@@ -117,7 +117,8 @@ func (p *createAPIPlugin) Run() error {
 
 // SDK phase 2 plugins.
 func (p *createAPIPlugin) runPhase2() error {
-	return manifests.RunCreateAPI(p.config)
+	gvk := p.createOptions.GVK
+	return manifests.RunCreateAPI(p.config, config.GVK{Group: gvk.Group, Version: gvk.Version, Kind: gvk.Kind})
 }
 
 func (p *createAPIPlugin) Validate() error {
