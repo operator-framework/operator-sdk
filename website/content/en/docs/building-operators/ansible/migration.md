@@ -19,7 +19,7 @@ part of the process to [Integrating Kubebuilder and Operator SDK][integration-do
     * RBAC manifests in `deploy` are now in `config/rbac/`
     
 - `build/Dockerfile` is moved to `Dockerfile` in the project root directory
-- The `molecue/` directory is now more aligned to Ansible and the new Layout
+- The `molecule/` directory is now more aligned to Ansible and the new Layout
 
 ### What is new
 
@@ -31,7 +31,7 @@ Scaffolded projects now use:
 
 ## How to migrate
 
-The easy migration path is to create a new project from the scratch and let the tool scaffold the new layout. Then, add your customizations and implementations. See below for an example.
+The easy migration path is to a project from the scratch and let the tool scaffold the new layout. Then, add your customizations and implementations. See below for an example.
  
 ### Creating a new project
 
