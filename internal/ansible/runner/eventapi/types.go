@@ -123,7 +123,7 @@ func (je JobEvent) IgnoreError() bool {
 	return false
 }
 
-// Rescued - Stops reconciliation when an event is rescued
+// Rescued - Detects whether or not a task was rescued
 func (je JobEvent) Rescued() bool {
 	if rescued, contains := je.EventData["rescued"]; contains {
 		for _, v := range rescued.(map[string]interface{}) {
