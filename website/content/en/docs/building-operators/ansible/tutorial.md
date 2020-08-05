@@ -229,4 +229,4 @@ OLM will manage creation of most if not all resources required to run your opera
 [layout-doc]:../reference/scaffolding
 [docker-tool]:https://docs.docker.com/install/
 [kubectl-tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
-[quickstart-bundle]:https://master.sdk.operatorframework.io/docs/olm-integration/quickstart-bundle/
+[quickstart-bundle]: /docs/olm-integration/quickstart-bundle/
