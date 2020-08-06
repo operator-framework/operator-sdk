@@ -106,12 +106,8 @@ func PackageManifestsAllNamespaces(t *testing.T) {
 		Version:      defaultOperatorVersion,
 	}
 	// Cleanup.
-	cfg := &operator2.Configuration{KubeconfigPath: kubeconfigPath}
-	assert.NoError(t, cfg.Load())
-	uninstall := operator2.NewUninstall(cfg)
-	uninstall.Package = defaultOperatorName
 	defer func() {
-		if err := doUninstall(uninstall, opcmd.Timeout); err != nil {
+		if err := doUninstall(t, kubeconfigPath, opcmd.Timeout); err != nil {
 			t.Fatal(err)
 		}
 	}()
@@ -169,14 +165,9 @@ func PackageManifestsBasic(t *testing.T) {
 		ManifestsDir: manifestsDir,
 		Version:      defaultOperatorVersion,
 	}
-	// Cleanup.
-	cfg := &operator2.Configuration{KubeconfigPath: kubeconfigPath}
-	assert.NoError(t, cfg.Load())
-	uninstall := operator2.NewUninstall(cfg)
-	uninstall.Package = defaultOperatorName
 
 	// "Remove operator before deploy"
-	assert.Error(t, doUninstall(uninstall, opcmd.Timeout))
+	assert.Error(t, doUninstall(t, kubeconfigPath, opcmd.Timeout))
 
 	// "Deploy operator"
 	assert.NoError(t, opcmd.Run())
@@ -184,9 +175,9 @@ func PackageManifestsBasic(t *testing.T) {
 	assert.Error(t, opcmd.Run())
 
 	// "Remove operator after deploy"
-	assert.NoError(t, doUninstall(uninstall, opcmd.Timeout))
+	assert.NoError(t, doUninstall(t, kubeconfigPath, opcmd.Timeout))
 	// "Remove operator after removal"
-	assert.Error(t, doUninstall(uninstall, opcmd.Timeout))
+	assert.Error(t, doUninstall(t, kubeconfigPath, opcmd.Timeout))
 }
 
 func PackageManifestsMultiplePackages(t *testing.T) {
@@ -269,20 +260,22 @@ func PackageManifestsMultiplePackages(t *testing.T) {
 		ManifestsDir: manifestsDir,
 		Version:      operatorVersion2,
 	}
-	// Cleanup.
-	cfg := &operator2.Configuration{KubeconfigPath: kubeconfigPath}
-	assert.NoError(t, cfg.Load())
-	uninstall := operator2.NewUninstall(cfg)
-	uninstall.Package = defaultOperatorName
 
 	// "Deploy operator"
 	assert.NoError(t, opcmd.Run())
 	// "Remove operator after deploy"
-	assert.NoError(t, doUninstall(uninstall, opcmd.Timeout))
+	assert.NoError(t, doUninstall(t, kubeconfigPath, opcmd.Timeout))
 }
 
-func doUninstall(u *operator2.Uninstall, timeout time.Duration) error {
+func doUninstall(t *testing.T, kubeconfigPath string, timeout time.Duration) error {
+	cfg := &operator2.Configuration{KubeconfigPath: kubeconfigPath}
+	assert.NoError(t, cfg.Load())
+	uninstall := operator2.NewUninstall(cfg)
+	uninstall.DeleteAll = true
+	uninstall.DeleteOperatorGroupNames = []string{operator2.SDKOperatorGroupName}
+	uninstall.Package = defaultOperatorName
+
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	return u.Run(ctx)
+	return uninstall.Run(ctx)
 }
