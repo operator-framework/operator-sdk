@@ -24,6 +24,7 @@ import (
 
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 
@@ -269,6 +270,7 @@ func PackageManifestsMultiplePackages(t *testing.T) {
 
 func doUninstall(t *testing.T, kubeconfigPath string, timeout time.Duration) error {
 	cfg := &operator2.Configuration{KubeconfigPath: kubeconfigPath}
+	cfg.Log = logrus.Infof
 	assert.NoError(t, cfg.Load())
 	uninstall := operator2.NewUninstall(cfg)
 	uninstall.DeleteAll = true
