@@ -1,0 +1,11 @@
+entries:
+  - description: Removed `olm-namespace` flag from `operator-sdk olm install` command
+    kind: removal
+    breaking: true
+    migration:
+      header: Remove `olm-namespace` flag from `operator-sdk olm install` command
+      body: |
+        The `olm-namespace` flag has been removed from `operator-sdk olm install`
+        command, as the olm manifests published in github have a hardcoded
+        namespace value. Hence, the olm operators can only be installed in `olm`
+        namespace using this command.
