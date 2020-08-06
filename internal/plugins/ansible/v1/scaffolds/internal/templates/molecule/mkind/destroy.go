@@ -47,4 +47,9 @@ const destroyTemplate = `---
   tasks:
     - name: Destroy test kind cluster
       command: kind delete cluster --name osdk-test --kubeconfig {{ "{{ kubeconfig }}" }}
+
+    - name: Unset pull policy
+      command: '{{ "{{ kustomize }}" }} edit remove patch pull_policy/{{ "{{ operator_pull_policy }}" }}.yaml'
+      args:
+        chdir: '{{ "{{ config_dir }}" }}/testing'
 `
