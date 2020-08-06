@@ -52,7 +52,6 @@ namePrefix: osdk-
 
 patchesStrategicMerge:
 - manager_image.yaml
-- pull_policy/Never.yaml
 - debug_logs_patch.yaml
 - ../default/manager_auth_proxy_patch.yaml
 
