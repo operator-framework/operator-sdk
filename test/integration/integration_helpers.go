@@ -58,6 +58,9 @@ type CSVTemplateConfig struct {
 	IsBundle bool
 }
 
+// TODO(estroz): devise a way for "make bundle" to be called, then update the generated bundle with correct
+// install modes within integration tests themselves.
+
 const csvTmpl = `apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
@@ -104,7 +107,7 @@ spec:
           - patch
           - update
         {{- end}}
-        serviceAccountName: {{ .OperatorName }}-manager-role
+        serviceAccountName: default
       - rules:
         - apiGroups:
           - authentication.k8s.io
@@ -118,13 +121,7 @@ spec:
           - subjectaccessreviews
           verbs:
           - create
-        serviceAccountName: {{ .OperatorName }}-proxy-role
-      - rules:
-        - nonResourceURLs:
-          - /metrics
-          verbs:
-          - get
-        serviceAccountName: {{ .OperatorName }}-metrics-reader
+        serviceAccountName: default
       deployments:
       - name: {{ .OperatorName }}-controller-manager
         spec:
@@ -186,7 +183,7 @@ spec:
           verbs:
           - create
           - patch
-        serviceAccountName: {{ .OperatorName }}-leader-election-role
+        serviceAccountName: default
     strategy: deployment
   installModes:
 {{- range $i, $mode := .InstallModes }}
