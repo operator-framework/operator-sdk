@@ -1,0 +1,4 @@
+entries:
+  - description: Updated scorecard-test-kuttl image to kuttl v0.5.2
+    kind: change
+    breaking: false
