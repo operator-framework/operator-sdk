@@ -56,6 +56,7 @@ func TestRun(t *testing.T) {
 	}
 
 	for _, c := range cases {
+		c := c
 		t.Run(c.configPathValue, func(t *testing.T) {
 			o := Scorecard{}
 			var err error

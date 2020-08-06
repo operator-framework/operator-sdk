@@ -49,6 +49,7 @@ func TestUserInput(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := getRequiredInput(bytes.NewBuffer(tt.args.content), tt.args.msg); got != tt.want {
 				t.Errorf("GetRequiredInput() = %v, want %v", got, tt.want)
@@ -86,6 +87,7 @@ func TestUserInputStringArray(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := getStringArray(bytes.NewBuffer(tt.args.content), tt.args.msg); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("GetRequiredInput() = %v, want %v", got, tt.want)

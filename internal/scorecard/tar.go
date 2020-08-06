@@ -38,6 +38,7 @@ func WriteToTar(tw *tar.Writer, r io.Reader, hdr *tar.Header) error {
 func WritePathsToTar(tw *tar.Writer, paths []string) (err error) {
 	// walk each specified path and add encountered file to tar
 	for _, path := range paths {
+		path := path
 		path = filepath.Clean(path)
 
 		walker := func(file string, finfo os.FileInfo, err error) error {

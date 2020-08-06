@@ -124,6 +124,7 @@ func TestFragment_LoadEntries(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			prGetter = tc.prGetter
 			entries, err := LoadEntries(tc.fragmentsDir, repoLink)
@@ -267,6 +268,7 @@ func TestFragmentEntry_Validate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			err := tc.fragmentEntry.Validate()
 
@@ -310,6 +312,7 @@ func TestFragmentEntry_PullRequestLink(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			link := tc.fragmentEntry.pullRequestLink(tc.repo)
 			assert.Equal(t, tc.link, link)
@@ -353,6 +356,7 @@ func TestGitPullRequestNumberGetter_parsePRNumber(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			prNum, err := prg.parsePRNumber(tc.msg)
 
@@ -389,6 +393,7 @@ func Test_gitPullRequestNumberGetter_getCommitMessage(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 
 			g := &gitPullRequestNumberGetter{}

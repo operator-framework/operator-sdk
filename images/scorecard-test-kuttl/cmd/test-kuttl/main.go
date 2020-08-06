@@ -49,7 +49,7 @@ func main() {
 	}
 
 	var jsonReport Testsuites
-	err = json.Unmarshal([]byte(byteValue), &jsonReport)
+	err = json.Unmarshal(byteValue, &jsonReport)
 	if err != nil {
 		printErrorStatus(fmt.Errorf("could not unmarshal kuttl report %v", err))
 		return

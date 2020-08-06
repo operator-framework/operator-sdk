@@ -239,6 +239,7 @@ func TestApplyDefinitionsForKeysGo(t *testing.T) {
 	}
 
 	for _, c := range cases {
+		c := c
 		t.Run(c.description, func(t *testing.T) {
 			err := ApplyDefinitionsForKeysGo(c.csv, c.apisDir, c.gvks)
 			if !c.wantErr && err != nil {

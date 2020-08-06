@@ -535,6 +535,7 @@ func TestReconcile(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
 			var aor reconcile.Reconciler = &controller.AnsibleOperatorReconciler{
 				GVK:             tc.GVK,

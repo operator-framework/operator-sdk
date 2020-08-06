@@ -241,6 +241,7 @@ func checkOwnedCSVDescriptors(cr unstructured.Unstructured, csv *operatorsv1alph
 
 	var crd *operatorsv1alpha1.CRDDescription
 	for _, owned := range csv.Spec.CustomResourceDefinitions.Owned {
+		owned := owned
 		if owned.Kind == cr.GetKind() {
 			crd = &owned
 			break

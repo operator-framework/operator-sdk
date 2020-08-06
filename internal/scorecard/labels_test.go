@@ -37,6 +37,7 @@ func TestEmptySelector(t *testing.T) {
 	}
 
 	for _, c := range cases {
+		c := c
 		t.Run(c.selectorValue, func(t *testing.T) {
 			o := Scorecard{}
 			o.Config = c.config

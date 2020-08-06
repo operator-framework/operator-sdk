@@ -75,7 +75,7 @@ func playbookCmdFunc(path string) cmdFuncType {
 		// check the verbosity since the exec.Command will fail if an arg as "" or " " be informed
 		if verbosity > 0 {
 			return exec.Command("ansible-runner", ansibleVerbosityString(verbosity), "--rotate-artifacts",
-				fmt.Sprintf("%v", maxArtifacts), "-p", path, "-i", ident, "run", inputDirPath)
+				fmt.Sprintf("%v", maxArtifacts), "-p", path, "-i", ident, "run", inputDirPath) //nolint:gosec
 		}
 		return exec.Command("ansible-runner", "--rotate-artifacts",
 			fmt.Sprintf("%v", maxArtifacts), "-p", path, "-i", ident, "run", inputDirPath)

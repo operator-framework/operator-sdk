@@ -77,7 +77,10 @@ func NewAnsibleResultFromMap(sm map[string]interface{}) *AnsibleResult {
 		a.Failures = int(v.(int64))
 	}
 	if v, ok := sm["completion"]; ok {
-		s := v.(string)
+		s, ok := v.(string)
+		if !ok {
+			log.V(0).Info("Unexpected non-string value for `completion` key")
+		}
 		if err := a.TimeOfCompletion.UnmarshalJSON([]byte(s)); err != nil {
 			log.Error(err, "Failed to unmarshal time of completion for ansible result")
 		}
