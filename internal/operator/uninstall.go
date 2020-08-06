@@ -109,8 +109,7 @@ func (u *Uninstall) Run(ctx context.Context) error {
 	}
 
 	if u.DeleteCRDs {
-
-		// Ensure CustomResourceDefinitions are deleted first, so that the operator
+		// Ensure CustomResourceDefinitions are deleted next, so that the operator
 		// has a chance to handle CRs that have finalizers.
 		if err := u.deleteObjects(ctx, true, crds...); err != nil {
 			return err
@@ -132,15 +131,21 @@ func (u *Uninstall) Run(ctx context.Context) error {
 
 	// If this was the last subscription in the namespace and the operator group is
 	// the one we created, delete it
-	if u.DeleteOperatorGroups && len(subs.Items) == 1 {
-		ogs := v1.OperatorGroupList{}
-		if err := u.config.Client.List(ctx, &ogs, client.InNamespace(u.config.Namespace)); err != nil {
-			return fmt.Errorf("list operatorgroups: %v", err)
+	if u.DeleteOperatorGroups {
+		if err := u.config.Client.List(ctx, &subs, client.InNamespace(u.config.Namespace)); err != nil {
+			return fmt.Errorf("list subscriptions: %v", err)
 		}
-		for _, og := range ogs.Items {
-			if len(u.DeleteOperatorGroupNames) == 0 || slice.ContainsString(u.DeleteOperatorGroupNames, og.GetName(), nil) {
-				if err := u.deleteObjects(ctx, false, &og); err != nil {
-					return err
+		if len(subs.Items) == 0 {
+			ogs := v1.OperatorGroupList{}
+			if err := u.config.Client.List(ctx, &ogs, client.InNamespace(u.config.Namespace)); err != nil {
+				return fmt.Errorf("list operatorgroups: %v", err)
+			}
+			for _, og := range ogs.Items {
+				og := og
+				if len(u.DeleteOperatorGroupNames) == 0 || slice.ContainsString(u.DeleteOperatorGroupNames, og.GetName(), nil) {
+					if err := u.deleteObjects(ctx, false, &og); err != nil {
+						return err
+					}
 				}
 			}
 		}
