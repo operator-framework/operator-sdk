@@ -39,18 +39,18 @@ See the [Kubebuilder entrypoint doc][kubebuilder_entrypoint_doc] for more detail
 
 The Manager can restrict the namespace that all controllers will watch for resources:
 ```Go
-mgr, err := manager.New(cfg, manager.Options{Namespace: namespace})
+mgr, err := ctrl.NewManager(cfg, manager.Options{Namespace: namespace})
 ```
 By default this will be the namespace that the operator is running in. To watch all namespaces leave the namespace option empty:
 ```Go
-mgr, err := manager.New(cfg, manager.Options{Namespace: ""})
+mgr, err := ctrl.NewManager(cfg, manager.Options{Namespace: ""})
 ```
 
 It is also possible to use the [MultiNamespacedCacheBuilder][multi-namespaced-cache-builder] to watch a specific set of namespaces:
 ```Go
 var namespaces []string // List of Namespaces
 // Create a new Cmd to provide shared dependencies and start components
-mgr, err := manager.New(cfg, manager.Options{
+mgr, err := ctrl.NewManager(cfg, manager.Options{
    NewCache: cache.MultiNamespacedCacheBuilder(namespaces),
 })
 ```
