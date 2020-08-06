@@ -93,7 +93,7 @@ func (c *OperatorCmd) AddToFlagSet(fs *pflag.FlagSet) {
 
 func (c *OperatorCmd) validate() error {
 	if c.InstallMode != "" {
-		if _, _, err := parseInstallModeKV(c.InstallMode); err != nil {
+		if _, _, err := parseInstallModeKV(c.InstallMode, c.Namespace); err != nil {
 			return err
 		}
 	}

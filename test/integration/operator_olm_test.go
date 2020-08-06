@@ -55,11 +55,11 @@ func TestOLMIntegration(t *testing.T) {
 	}
 
 	t.Run("PackageManifestsBasic", PackageManifestsBasic)
-	t.Run("PackageManifestsAllNamespaces", PackageManifestsAllNamespaces)
+	t.Run("PackageManifestsOwnNamespace", PackageManifestsOwnNamespace)
 	t.Run("PackageManifestsMultiplePackages", PackageManifestsMultiplePackages)
 }
 
-func PackageManifestsAllNamespaces(t *testing.T) {
+func PackageManifestsOwnNamespace(t *testing.T) {
 
 	csvConfig := CSVTemplateConfig{
 		OperatorName:    defaultOperatorName,
@@ -77,10 +77,10 @@ func PackageManifestsAllNamespaces(t *testing.T) {
 			},
 		},
 		InstallModes: []operatorsv1alpha1.InstallMode{
-			{Type: operatorsv1alpha1.InstallModeTypeOwnNamespace, Supported: false},
+			{Type: operatorsv1alpha1.InstallModeTypeOwnNamespace, Supported: true},
 			{Type: operatorsv1alpha1.InstallModeTypeSingleNamespace, Supported: false},
 			{Type: operatorsv1alpha1.InstallModeTypeMultiNamespace, Supported: false},
-			{Type: operatorsv1alpha1.InstallModeTypeAllNamespaces, Supported: true},
+			{Type: operatorsv1alpha1.InstallModeTypeAllNamespaces, Supported: false},
 		},
 	}
 	tmp, cleanup := mkTempDirWithCleanup(t, "")
@@ -104,7 +104,7 @@ func PackageManifestsAllNamespaces(t *testing.T) {
 		OperatorCmd: operator.OperatorCmd{
 			KubeconfigPath: kubeconfigPath,
 			Timeout:        defaultTimeout,
-			InstallMode:    string(operatorsv1alpha1.InstallModeTypeAllNamespaces),
+			InstallMode:    string(operatorsv1alpha1.InstallModeTypeOwnNamespace),
 		},
 		ManifestsDir: manifestsDir,
 		Version:      defaultOperatorVersion,
@@ -138,10 +138,10 @@ func PackageManifestsBasic(t *testing.T) {
 			},
 		},
 		InstallModes: []operatorsv1alpha1.InstallMode{
-			{Type: operatorsv1alpha1.InstallModeTypeOwnNamespace, Supported: true},
+			{Type: operatorsv1alpha1.InstallModeTypeOwnNamespace, Supported: false},
 			{Type: operatorsv1alpha1.InstallModeTypeSingleNamespace, Supported: false},
 			{Type: operatorsv1alpha1.InstallModeTypeMultiNamespace, Supported: false},
-			{Type: operatorsv1alpha1.InstallModeTypeAllNamespaces, Supported: false},
+			{Type: operatorsv1alpha1.InstallModeTypeAllNamespaces, Supported: true},
 		},
 	}
 	tmp, cleanup := mkTempDirWithCleanup(t, "")
@@ -205,10 +205,10 @@ func PackageManifestsMultiplePackages(t *testing.T) {
 				},
 			},
 			InstallModes: []operatorsv1alpha1.InstallMode{
-				{Type: operatorsv1alpha1.InstallModeTypeOwnNamespace, Supported: true},
+				{Type: operatorsv1alpha1.InstallModeTypeOwnNamespace, Supported: false},
 				{Type: operatorsv1alpha1.InstallModeTypeSingleNamespace, Supported: false},
 				{Type: operatorsv1alpha1.InstallModeTypeMultiNamespace, Supported: false},
-				{Type: operatorsv1alpha1.InstallModeTypeAllNamespaces, Supported: false},
+				{Type: operatorsv1alpha1.InstallModeTypeAllNamespaces, Supported: true},
 			},
 		},
 		{
@@ -228,10 +228,10 @@ func PackageManifestsMultiplePackages(t *testing.T) {
 				},
 			},
 			InstallModes: []operatorsv1alpha1.InstallMode{
-				{Type: operatorsv1alpha1.InstallModeTypeOwnNamespace, Supported: true},
+				{Type: operatorsv1alpha1.InstallModeTypeOwnNamespace, Supported: false},
 				{Type: operatorsv1alpha1.InstallModeTypeSingleNamespace, Supported: false},
 				{Type: operatorsv1alpha1.InstallModeTypeMultiNamespace, Supported: false},
-				{Type: operatorsv1alpha1.InstallModeTypeAllNamespaces, Supported: false},
+				{Type: operatorsv1alpha1.InstallModeTypeAllNamespaces, Supported: true},
 			},
 		},
 	}

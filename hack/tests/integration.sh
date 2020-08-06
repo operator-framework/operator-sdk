@@ -10,6 +10,18 @@ TMPDIR="$(mktemp -d -p /tmp memcached-operator-XXXX)"
 trap_add 'rm -rf $TMPDIR' EXIT
 pushd "$TMPDIR"
 
+###########################################################################
+### DO NOT UNCOMMENT THESE LINES UNLESS YOU KNOW WHAT YOU'RE DOING !!!! ###
+###                                                                     ###
+### They cause the integration image not to be loaded into kind in      ###
+### TravisCI.                                                           ###
+###                                                                     ###
+###########################################################################
+###
+###    #prepare_staging_dir $tmp_sdk_root
+###    #fetch_envtest_tools $tmp_sdk_root
+###
+###########################################################################
 setup_envs $tmp_sdk_root
 
 header_text "Initializing test project"
