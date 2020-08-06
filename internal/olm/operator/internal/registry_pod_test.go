@@ -22,14 +22,16 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/kubernetes/fake"
+
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-// newFakeClient() returns a clientset
-func newFakeClient() kubernetes.Interface {
-	return fake.NewSimpleClientset()
+// newFakeClient() returns a fake controller runtime client
+func newFakeClient() client.Client {
+	return fakeclient.NewFakeClient()
 }
+
 func TestCreateRegistryPod(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Test Registry Pod Suite")
@@ -186,22 +188,10 @@ var _ = Describe("RegistryPod", func() {
 
 			It("Create should fail when registry pod is not initialized", func() {
 				rp := RegistryPod{}
-				expectedErr := "internal error: uninitialized RegistryPod cannot be used"
-
 				err := rp.Create(context.Background())
 
 				Expect(err).NotTo(BeNil())
-				Expect(err.Error()).Should(ContainSubstring(expectedErr))
-			})
-
-			It("should not be able to get pod logs if pod is not initialized", func() {
-				rp := RegistryPod{}
-				expectedErr := "a registry pod must be created before getting pod logs"
-
-				_, err := rp.GetLogs(context.Background())
-
-				Expect(err).ToNot(BeNil())
-				Expect(err.Error()).Should(ContainSubstring(expectedErr))
+				Expect(err).To(MatchError(errPodNotInit))
 			})
 
 			// todo(rashmigottipati): add test to check VerifyPodRunning returning error
