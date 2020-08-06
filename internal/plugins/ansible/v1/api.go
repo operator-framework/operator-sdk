@@ -58,6 +58,8 @@ func (p *createAPIPlugin) UpdateContext(ctx *plugin.Context) {
     - optionally generates Ansible Role tree
     - optionally generates Ansible playbook
 
+    For the scaffolded operator to be runnable with no changes, specify either --generate-role or --generate-playbook.
+
 `
 	ctx.Examples = fmt.Sprintf(`# Create a new API, without Ansible roles or playbooks
   $ %s create api \
