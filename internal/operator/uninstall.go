@@ -185,9 +185,6 @@ func (u *Uninstall) getInstallPlanResources(ctx context.Context, installPlanKey 
 	}
 
 	for _, step := range installPlan.Status.Plan {
-		if step.Status != v1alpha1.StepStatusCreated {
-			continue
-		}
 		lowerKind := strings.ToLower(step.Resource.Kind)
 		obj := &unstructured.Unstructured{Object: map[string]interface{}{}}
 		if err := yaml.Unmarshal([]byte(step.Resource.Manifest), &obj.Object); err != nil {
@@ -212,6 +209,11 @@ func (u *Uninstall) getInstallPlanResources(ctx context.Context, installPlanKey 
 		case "ClusterServiceVersion":
 			csvs = append(csvs, obj)
 		default:
+			// Skip non-CRD/non-CSV resources in the install plan that were not created by the install plan.
+			// This means we avoid deleting things like the default service account.
+			if step.Status != v1alpha1.StepStatusCreated {
+				continue
+			}
 			others = append(others, obj)
 		}
 	}
