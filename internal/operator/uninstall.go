@@ -185,11 +185,12 @@ func (u *Uninstall) getInstallPlanResources(ctx context.Context, installPlanKey 
 	}
 
 	for _, step := range installPlan.Status.Plan {
+		lowerKind := strings.ToLower(step.Resource.Kind)
+		u.config.Log("found %s %q in install plan with status %q", lowerKind, step.Resource.Name, step.Status)
 		if step.Status != v1alpha1.StepStatusCreated {
 			continue
 		}
 		obj := &unstructured.Unstructured{Object: map[string]interface{}{}}
-		lowerKind := strings.ToLower(step.Resource.Kind)
 		if err := yaml.Unmarshal([]byte(step.Resource.Manifest), &obj.Object); err != nil {
 			return nil, nil, nil, fmt.Errorf("parse %s manifest %q: %v", lowerKind, step.Resource.Name, err)
 		}
