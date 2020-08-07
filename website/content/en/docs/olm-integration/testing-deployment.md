@@ -33,9 +33,9 @@ Let's look at the anatomy of the `run packagemanifests` (which is the same for `
   - The `InstallModeType` string passed must be marked as "supported" in the CSV being installed.
     The namespaces passed must exist or be created by passing a `Namespace` manifest to IncludePaths.
   - This option understands the following strings (assuming your CSV does as well):
-      - `OwnNamespace`: the Operator will watch its own namespace (from **namespace** or the kubeconfig default). This is the default.
+      - `AllNamespaces`: the Operator will watch all namespaces (cluster-scoped Operators). This is the default.
+      - `OwnNamespace`: the Operator will watch its own namespace (from **namespace** or the kubeconfig default).
       - `SingleNamespace="my-ns"`: the Operator will watch a namespace, not necessarily its own.
-      - `AllNamespaces=""`: the Operator will watch all namespaces (cluster-scoped Operators).
 - **timeout**: a time string dictating the maximum time that `run` can run. The command will
   return an error if the timeout is exceeded.
 

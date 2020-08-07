@@ -63,11 +63,11 @@ func (c *PackageManifestsCmd) newManager() (m *packageManifestsManager, err erro
 
 	// Handle installModes.
 	if c.InstallMode == "" {
-		// Default to OwnNamespace.
-		m.installMode = operatorsv1alpha1.InstallModeTypeOwnNamespace
-		m.targetNamespaces = []string{m.namespace}
+		// Default to AllNamespaces.
+		m.installMode = operatorsv1alpha1.InstallModeTypeAllNamespaces
+		m.targetNamespaces = []string{}
 	} else {
-		m.installMode, m.targetNamespaces, err = parseInstallModeKV(c.InstallMode)
+		m.installMode, m.targetNamespaces, err = parseInstallModeKV(c.InstallMode, m.namespace)
 		if err != nil {
 			return nil, err
 		}
