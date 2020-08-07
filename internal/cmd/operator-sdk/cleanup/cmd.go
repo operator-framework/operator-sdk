@@ -39,6 +39,8 @@ func NewCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			u := operator.NewUninstall(cfg)
 			u.Package = args[0]
+			u.DeleteAll = true
+			u.DeleteOperatorGroupNames = []string{operator.SDKOperatorGroupName}
 
 			ctx, cancel := context.WithTimeout(cmd.Context(), timeout)
 			defer cancel()
