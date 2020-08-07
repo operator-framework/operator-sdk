@@ -114,14 +114,14 @@ func (u *Uninstall) Run(ctx context.Context) error {
 
 	// Delete CSVs and all other objects created by the install plan.
 	objects := append(csvs, others...)
-	if err := u.deleteObjects(ctx, false, objects...); err != nil {
+	if err := u.deleteObjects(ctx, true, objects...); err != nil {
 		return err
 	}
 
 	// Delete the catalog source. This assumes that all underlying resources related
 	// to this catalog source have an owner reference to this catalog source so that
 	// they are automatically garbage-collected.
-	if err := u.deleteObjects(ctx, false, catsrc); err != nil {
+	if err := u.deleteObjects(ctx, true, catsrc); err != nil {
 		return err
 	}
 
@@ -185,11 +185,10 @@ func (u *Uninstall) getInstallPlanResources(ctx context.Context, installPlanKey 
 	}
 
 	for _, step := range installPlan.Status.Plan {
-		lowerKind := strings.ToLower(step.Resource.Kind)
-		u.config.Log("found %s %q in install plan with status %q", lowerKind, step.Resource.Name, step.Status)
 		if step.Status != v1alpha1.StepStatusCreated {
 			continue
 		}
+		lowerKind := strings.ToLower(step.Resource.Kind)
 		obj := &unstructured.Unstructured{Object: map[string]interface{}{}}
 		if err := yaml.Unmarshal([]byte(step.Resource.Manifest), &obj.Object); err != nil {
 			return nil, nil, nil, fmt.Errorf("parse %s manifest %q: %v", lowerKind, step.Resource.Name, err)

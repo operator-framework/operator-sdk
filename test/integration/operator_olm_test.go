@@ -26,7 +26,10 @@ import (
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	operator "github.com/operator-framework/operator-sdk/internal/olm/operator"
 	operator2 "github.com/operator-framework/operator-sdk/internal/operator"
@@ -279,5 +282,22 @@ func doUninstall(t *testing.T, kubeconfigPath string, timeout time.Duration) err
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	return uninstall.Run(ctx)
+	if err := uninstall.Run(ctx); err != nil {
+		return err
+	}
+	return waitForPackageManifestConfigMapDeletion(ctx, cfg, defaultOperatorName)
+}
+
+func waitForPackageManifestConfigMapDeletion(ctx context.Context, cfg *operator2.Configuration, packageName string) error {
+	cfgmaps := corev1.ConfigMapList{}
+	opts := []client.ListOption{
+		client.InNamespace(cfg.Namespace),
+		client.MatchingLabels{"owner": "operator-sdk", "package-name": packageName},
+	}
+	return wait.PollImmediateUntil(250*time.Millisecond, func() (bool, error) {
+		if err := cfg.Client.List(ctx, &cfgmaps, opts...); err != nil {
+			return false, err
+		}
+		return len(cfgmaps.Items) == 0, nil
+	}, ctx.Done())
 }
