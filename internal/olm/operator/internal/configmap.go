@@ -16,7 +16,7 @@ package olm
 
 import (
 	"context"
-	"crypto/md5"
+	"crypto/sha256"
 	"encoding/base32"
 	"fmt"
 	"strings"
@@ -122,7 +122,7 @@ func makeObjectFileName(b []byte, names ...string) string {
 
 // hashContents creates a base32-encoded md5 digest of b's bytes.
 func hashContents(b []byte) string {
-	h := md5.New()
+	h := sha256.New()
 	_, _ = h.Write(b)
 	enc := base32.StdEncoding.WithPadding(base32.NoPadding)
 	return enc.EncodeToString(h.Sum(nil))
