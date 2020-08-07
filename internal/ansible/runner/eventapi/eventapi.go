@@ -18,17 +18,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/go-logr/logr"
 	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/go-logr/logr"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // EventReceiver serves the event API
@@ -100,6 +99,7 @@ func (e *EventReceiver) Close() {
 	if err := e.server.Close(); err != nil && !errors.Is(err, os.ErrClosed) {
 		e.logger.Error(err, "Failed to close event receiver")
 	}
+	os.Remove(e.SocketPath)
 	close(e.Events)
 }
 
