@@ -21,13 +21,13 @@ By default, `zap.Options{}` will return a logger that is ready for production us
 * `--zap-encoder`: Zap log encoding ('json' or 'console')
 * `--zap-log-level`: Zap Level to configure the verbosity of logging. Can be one of 'debug', 'info', 'error',
 			       or any integer value > 0 which corresponds to custom debug levels of increasing verbosity")
-* `--zap-stacktrace-level`: Zap Level at and above which stacktraces are captured (one of 'warn' or 'error')
+* `--zap-stacktrace-level`: Zap Level at and above which stacktraces are captured (one of 'info' or 'error')
 
 Consult the controller-runtime [godocs][logging_godocs] for more detailed flag information.
 
 ### A simple example
 
-Operators set the logger for all operator logging in [`cmd/manager/main.go`][code_set_logger]. To illustrate how this works, try out this simple example:
+Operators set the logger for all operator logging in `main.go`. To illustrate how this works, try out this simple example:
 
 ```Go
 package main
@@ -253,7 +253,7 @@ Log records will look like the following (from `log.Error()` above):
 
 ## Non-default logging
 
-If you do not want to use `logr` as your logging tool, you can remove `logr`-specific statements without issue from your operator's code, including the `logr` [setup code][code_set_logger] in `main.go`, and add your own. Note that removing `logr` setup code will prevent `controller-runtime` from logging.
+If you do not want to use `logr` as your logging tool, you can remove `logr`-specific statements without issue from your operator's code, including the `logr` setup code in `main.go`, and add your own. Note that removing `logr` setup code will prevent `controller-runtime` from logging.
 
 
 [godoc_logr]:https://godoc.org/github.com/go-logr/logr
@@ -261,7 +261,6 @@ If you do not want to use `logr` as your logging tool, you can remove `logr`-spe
 [godoc_logr_logger]:https://godoc.org/github.com/go-logr/logr#Logger
 [site_struct_logging]:https://www.client9.com/structured-logging-in-golang/
 [code_memcached_controller]:https://github.com/operator-framework/operator-sdk/blob/master/example/memcached-operator/memcached_controller.go.tmpl
-[code_set_logger]:https://github.com/operator-framework/operator-sdk/blob/4d66be409a69d169aaa29d470242a1defbaf08bb/internal/pkg/scaffold/cmd.go#L92-L96
 [logfmt_repo]:https://github.com/jsternberg/zap-logfmt
 [controller_runtime_zap]:https://github.com/kubernetes-sigs/controller-runtime/tree/master/pkg/log/zap
 [logging_godocs]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/log/zap#Options.BindFlags
