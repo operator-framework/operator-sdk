@@ -32,11 +32,6 @@ var _ = Describe("Running an olm install command", func() {
 			Expect(flag).NotTo(BeNil())
 			Expect(flag.DefValue).To(Equal(olm.DefaultVersion))
 			Expect(flag.Usage).NotTo(BeNil())
-
-			flag = cmd.Flags().Lookup("olm-namespace")
-			Expect(flag).NotTo(BeNil())
-			Expect(flag.DefValue).To(Equal(olm.DefaultOLMNamespace))
-			Expect(flag.Usage).NotTo(BeNil())
 		})
 	})
 })
