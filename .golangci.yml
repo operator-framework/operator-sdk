@@ -1,0 +1,31 @@
+linters:
+  auto-fix: false
+  enable:
+    - nakedret 
+    - interfacer
+    - varcheck
+    - deadcode 
+    - structcheck 
+    - misspell
+    - maligned 
+    - ineffassign
+    - goconst
+    - goimports
+    - errcheck 
+    - dupl 
+    - unparam 
+    - golint 
+    - staticcheck
+    - unused
+    - gosimple
+    # missing to be added
+    # - lll (250), errcheck, gocyclo, gosec, scopelint, unconvert, stylecheck
+run:
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+  lll:
+    line-length: 250
+  dupl:
+    threshold: 400
+

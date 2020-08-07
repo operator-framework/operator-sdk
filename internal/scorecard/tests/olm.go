@@ -237,7 +237,12 @@ func checkOwnedCSVDescriptors(cr unstructured.Unstructured, csv *operatorsv1alph
 		return r
 	}
 
-	block := cr.Object[descriptor].(map[string]interface{})
+	block, ok := cr.Object[descriptor].(map[string]interface{})
+	if !ok {
+		r.Errors = append(r.Errors, fmt.Sprintf("key %q in cr map is not an interface{}", descriptor))
+		r.State = scapiv1alpha3.FailState
+		return r
+	}
 
 	var crd *operatorsv1alpha1.CRDDescription
 	for _, owned := range csv.Spec.CustomResourceDefinitions.Owned {
@@ -324,7 +329,10 @@ func isCRFromCRDApi(cr unstructured.Unstructured, crds []*apiextv1.CustomResourc
 			}
 			failed := false
 			if cr.Object["spec"] != nil {
-				spec := cr.Object["spec"].(map[string]interface{})
+				spec, ok := cr.Object["spec"].(map[string]interface{})
+				if !ok {
+					failed = true
+				}
 				for key := range spec {
 					if _, ok := version.Schema.OpenAPIV3Schema.Properties["spec"].Properties[key]; !ok {
 						failed = true
@@ -335,7 +343,10 @@ func isCRFromCRDApi(cr unstructured.Unstructured, crds []*apiextv1.CustomResourc
 				}
 			}
 			if cr.Object["status"] != nil {
-				status := cr.Object["status"].(map[string]interface{})
+				status, ok := cr.Object["status"].(map[string]interface{})
+				if !ok {
+					failed = true
+				}
 				for key := range status {
 					if _, ok := version.Schema.OpenAPIV3Schema.Properties["status"].Properties[key]; !ok {
 						failed = true
