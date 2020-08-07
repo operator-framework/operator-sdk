@@ -97,7 +97,6 @@ func (c Client) DoCreate(ctx context.Context, objs ...runtime.Object) error {
 
 func (c Client) DoDelete(ctx context.Context, objs ...runtime.Object) error {
 	for _, obj := range objs {
-		obj := obj
 		a, err := meta.Accessor(obj)
 		if err != nil {
 			return err

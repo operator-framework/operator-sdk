@@ -47,7 +47,6 @@ func TestMapToCamel(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := MapToCamel(tt.args.in); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("MapToCamel() = %v, want %v", got, tt.want)
@@ -82,7 +81,6 @@ func TestMapToSnake(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := MapToSnake(tt.args.in); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("MapToSnake() = %v, want %v", got, tt.want)
@@ -126,7 +124,6 @@ func TestToCamel(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := ToCamel(tt.args.s); got != tt.want {
 				t.Errorf("ToCamel() = %v, want %v", got, tt.want)
@@ -236,7 +233,6 @@ func TestToSnake(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := ToSnake(tt.args.s); got != tt.want {
 				t.Errorf("ToSnake() = %v, want %v", got, tt.want)

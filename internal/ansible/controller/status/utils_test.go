@@ -74,7 +74,6 @@ func TestNewCondition(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			ac := NewCondition(tc.condType, tc.status, tc.ansibleResult, tc.reason, tc.message)
 			tc.expectedCondtion.LastTransitionTime = ac.LastTransitionTime
@@ -147,7 +146,6 @@ func TestGetCondition(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			ac := GetCondition(tc.status, tc.condType)
 			if !reflect.DeepEqual(ac, tc.expectedCondition) {
@@ -215,7 +213,6 @@ func TestRemoveCondition(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			RemoveCondition(&tc.status, tc.condType)
 			if tc.expectedSize != len(tc.status.Conditions) {
@@ -284,7 +281,6 @@ func TestSetCondition(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			SetCondition(tc.status, *tc.condition)
 			if tc.expectedNewSize != len(tc.status.Conditions) {

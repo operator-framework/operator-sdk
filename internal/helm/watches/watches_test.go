@@ -167,7 +167,6 @@ foo: bar
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			for k, v := range tc.env {
 				if err := os.Setenv(k, v); err != nil {
@@ -226,7 +225,6 @@ func TestLoad(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			for k, v := range tc.env {
 				if err := os.Setenv(k, v); err != nil {

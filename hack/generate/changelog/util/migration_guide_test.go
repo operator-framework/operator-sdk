@@ -98,7 +98,6 @@ There are no migrations for this release! :tada:
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			d, err := tc.mg.Template()
 			if err != nil {
@@ -151,7 +150,6 @@ Migration body 1
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			tmpFile, err := ioutil.TempFile("", "go-test-changelog")
 			assert.NoError(t, err)
@@ -271,7 +269,6 @@ func TestMigrationGuide_MigrationGuideFromEntries(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			mg := MigrationGuideFromEntries(tc.version, tc.entries)
 			assert.Equal(t, tc.mg, mg)

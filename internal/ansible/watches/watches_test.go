@@ -54,7 +54,6 @@ func TestNew(t *testing.T) {
 	expectedReconcilePeriod, _ := time.ParseDuration(reconcilePeriodDefault.String())
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			watch := New(tc.gvk, tc.role, tc.playbook, tc.vars, tc.finalizer)
 			if watch.GroupVersionKind != tc.gvk {
@@ -479,7 +478,6 @@ func TestLoad(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 
 			// Test Load with ANSIBLE_ROLES_PATH var
@@ -650,7 +648,6 @@ func TestMaxConcurrentReconciles(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			for key, val := range tc.envVarMap {
 				os.Unsetenv(key)
@@ -757,7 +754,6 @@ func TestAnsibleVerbosity(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			os.Unsetenv(tc.envKey)
 			if tc.setEnv {
@@ -849,7 +845,6 @@ func TestGetPossibleRolePaths(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 
 			if len(tt.args.rolesEnv) > 0 {

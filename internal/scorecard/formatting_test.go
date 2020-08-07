@@ -32,7 +32,6 @@ func TestList(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		c := c
 		t.Run(c.bundlePathValue, func(t *testing.T) {
 			o := Scorecard{}
 			runner := PodTestRunner{}

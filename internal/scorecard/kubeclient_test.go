@@ -47,7 +47,6 @@ func TestGetKubeNamespace(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		c := c
 		t.Run(c.kubeconfigPath, func(t *testing.T) {
 
 			oNamespace := GetKubeNamespace(c.kubeconfigPath, c.namespace)
@@ -89,7 +88,6 @@ func TestGetKubeNamespaceEnvVar(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		c := c
 		t.Run(c.kubeconfigPath, func(t *testing.T) {
 			oNamespace := GetKubeNamespace(c.kubeconfigPath, c.namespace)
 			if oNamespace != c.expectedValue {

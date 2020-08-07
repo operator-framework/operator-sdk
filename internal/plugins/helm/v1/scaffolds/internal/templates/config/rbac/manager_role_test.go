@@ -65,7 +65,6 @@ func TestGenerateRoleScaffold(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(fmt.Sprintf("%s with valid discovery client", tc.name), func(t *testing.T) {
 			f := ManagerRoleUpdater{Chart: tc.chart}
 			f.updateForChart(validDiscoveryClient)

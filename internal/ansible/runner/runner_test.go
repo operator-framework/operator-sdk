@@ -156,7 +156,6 @@ func TestNew(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			testWatch := watches.New(tc.gvk, tc.role, tc.playbook, tc.vars, tc.finalizer)
 

@@ -31,7 +31,6 @@ func (g generator) getMarkedChildrenOfField(root markers.FieldInfo) (map[string]
 	for len(nextFields) > 0 {
 		fields := []*fieldInfo{}
 		for _, field := range nextFields {
-			field := field
 			errs := []error{}
 			ast.Inspect(field.RawField, func(n ast.Node) bool {
 				if n == nil {

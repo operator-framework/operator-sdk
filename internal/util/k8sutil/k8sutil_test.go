@@ -231,7 +231,6 @@ func TestSupportsOwnerReference(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		c := c
 		t.Run(c.name, func(t *testing.T) {
 			useOwner, err := SupportsOwnerReference(c.restMapper, c.owner, c.dependent)
 			if err != nil {

@@ -28,7 +28,6 @@ func TestInvalidConfigPath(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		c := c
 		t.Run(c.configPathValue, func(t *testing.T) {
 			_, err := LoadConfig(c.configPathValue)
 			if err == nil && c.wantError {

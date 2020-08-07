@@ -58,7 +58,6 @@ func (c *Manifests) deduplicate() error {
 
 	roles := []rbacv1.Role{}
 	for _, role := range c.Roles {
-		role := role
 		hasHash, err := addToHashes(&role, hashes)
 		if err != nil {
 			return err
@@ -71,7 +70,6 @@ func (c *Manifests) deduplicate() error {
 
 	clusterRoles := []rbacv1.ClusterRole{}
 	for _, clusterRole := range c.ClusterRoles {
-		clusterRole := clusterRole
 		hasHash, err := addToHashes(&clusterRole, hashes)
 		if err != nil {
 			return err
@@ -84,7 +82,6 @@ func (c *Manifests) deduplicate() error {
 
 	deps := []appsv1.Deployment{}
 	for _, dep := range c.Deployments {
-		dep := dep
 		hasHash, err := addToHashes(&dep, hashes)
 		if err != nil {
 			return err
@@ -97,7 +94,6 @@ func (c *Manifests) deduplicate() error {
 
 	v1crds := []apiextv1.CustomResourceDefinition{}
 	for _, crd := range c.V1CustomResourceDefinitions {
-		crd := crd
 		hasHash, err := addToHashes(&crd, hashes)
 		if err != nil {
 			return err
@@ -110,7 +106,6 @@ func (c *Manifests) deduplicate() error {
 
 	v1beta1crds := []apiextv1beta1.CustomResourceDefinition{}
 	for _, crd := range c.V1beta1CustomResourceDefinitions {
-		crd := crd
 		hasHash, err := addToHashes(&crd, hashes)
 		if err != nil {
 			return err
@@ -123,7 +118,6 @@ func (c *Manifests) deduplicate() error {
 
 	validatingWebhooks := []admissionregv1.ValidatingWebhook{}
 	for _, webhook := range c.ValidatingWebhooks {
-		webhook := webhook
 		hasHash, err := addToHashes(&webhook, hashes)
 		if err != nil {
 			return err
@@ -136,7 +130,6 @@ func (c *Manifests) deduplicate() error {
 
 	mutatingWebhooks := []admissionregv1.MutatingWebhook{}
 	for _, webhook := range c.MutatingWebhooks {
-		webhook := webhook
 		hasHash, err := addToHashes(&webhook, hashes)
 		if err != nil {
 			return err

@@ -283,7 +283,6 @@ No changes for this release!
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			d, err := tc.changelog.Template()
 			if err != nil {
@@ -435,7 +434,6 @@ func TestChangelog_WriteFile(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			tmpFile, err := ioutil.TempFile("", "go-test-changelog")
 			assert.NoError(t, err)
@@ -530,7 +528,6 @@ func TestChangelog_ChangelogFromEntries(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			cl := ChangelogFromEntries(tc.version, tc.entries)
 			assert.Equal(t, tc.changelog, cl)
