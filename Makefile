@@ -26,7 +26,7 @@ GO_BUILD_ARGS = \
     -X '$(REPO)/internal/version.KubernetesVersion=$(K8S_VERSION)' \
   " \
 
-GOLANGCI_LINT_VER = "1.27.0"
+GOLANGCI_LINT_VER = "1.30.0"
 
 ANSIBLE_BASE_IMAGE = quay.io/operator-framework/ansible-operator
 HELM_BASE_IMAGE = quay.io/operator-framework/helm-operator
