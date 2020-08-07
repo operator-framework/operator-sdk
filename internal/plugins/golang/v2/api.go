@@ -48,14 +48,13 @@ func (p *createAPIPlugin) Run() error {
 		return err
 	}
 
-	// Emulate plugins phase 2 behavior by checking the config for this plugin's
-	// config object.
+	// Emulate plugins phase 2 behavior by checking the config for this plugin's config object.
 	if !hasPluginConfig(p.config) {
 		return nil
 	}
 
-	// Find the new resource. Here we shouldn't worry about checking if one was found, since downstream
-	// plugins will do so.
+	// Find the new resource. Here we shouldn't worry about checking if one was found,
+	// since downstream plugins will do so.
 	var newResource config.GVK
 	for _, r := range p.config.Resources {
 		if _, hasResource := oldResources[r]; !hasResource {

@@ -26,6 +26,11 @@ import (
 
 // RunInit modifies the project scaffolded by kubebuilder's Init plugin.
 func RunInit(cfg *config.Config) error {
+	// Only run these if project version is v3.
+	if !cfg.IsV3() {
+		return nil
+	}
+
 	// Update the scaffolded Makefile with operator-sdk recipes.
 	if err := initUpdateMakefile(cfg, "Makefile"); err != nil {
 		return fmt.Errorf("error updating Makefile: %v", err)

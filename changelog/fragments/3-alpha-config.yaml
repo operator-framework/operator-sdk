@@ -1,0 +1,12 @@
+entries:
+  - description: >
+      Changed the go.sdk.operatorframework.io plugin to only write a `plugins` PROJECT field if the
+      project version is 3-alpha or above, as this field was introduced in this project version.
+    kind: change
+    breaking: false
+    migration:
+      header: Remove the `plugins` field from Go project's PROJECT file if it has `version: "2"`
+      body: >
+        The SDK's default Go plugin no longer write a `plugins` PROJECT field if the
+        project version is "2", as this field was introduced in project version "3-alpha",
+        so remove this field and any data within it.
