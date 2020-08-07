@@ -23,7 +23,6 @@ import (
 	v1 "github.com/operator-framework/api/pkg/operators/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -81,10 +80,7 @@ func (u *Uninstall) Run(ctx context.Context) error {
 	if err := u.config.Client.Get(ctx, catsrcKey, catsrc); err != nil {
 		return fmt.Errorf("get catalog source: %v", err)
 	}
-	catsrc.TypeMeta = metav1.TypeMeta{
-		Kind:       v1alpha1.CatalogSourceKind,
-		APIVersion: v1alpha1.CatalogSourceCRDAPIVersion,
-	}
+	catsrc.SetGroupVersionKind(v1alpha1.SchemeGroupVersion.WithKind(v1alpha1.CatalogSourceKind))
 
 	// Since the install plan is owned by the subscription, we need to
 	// read all of the resource references from the install plan before

@@ -1,4 +1,0 @@
-entries:
-  - description: In `operator-sdk cleanup`, wait for CRD deletion and only delete objects created by install plan.
-    kind: bugfix
-    breaking: false
