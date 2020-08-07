@@ -78,12 +78,11 @@ ifneq ($(origin DEFAULT_CHANNEL), undefined)
 BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
 endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
-
-.PHONY: bundle
 `
 
 	makefileBundleFragmentGo = `
 # Generate bundle manifests and metadata, then validate generated files.
+.PHONY: bundle
 bundle: manifests
 	operator-sdk generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
@@ -93,6 +92,7 @@ bundle: manifests
 
 	makefileBundleFragmentNonGo = `
 # Generate bundle manifests and metadata, then validate generated files.
+.PHONY: bundle
 bundle: kustomize
 	operator-sdk generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
@@ -102,6 +102,7 @@ bundle: kustomize
 
 	makefileBundleBuildFragment = `
 # Build the bundle image.
+.PHONY: bundle-build
 bundle-build:
 	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
 `
