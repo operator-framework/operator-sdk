@@ -28,7 +28,7 @@ import (
 const (
 	// Useful file modes.
 	DirMode      = 0755
-	FileMode     = 0644
+	FileMode     = 0600
 	ExecFileMode = 0755
 )
 

@@ -51,7 +51,7 @@ func (mg *MigrationGuide) WriteFile(path string) error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(path, data, 0644)
+	return ioutil.WriteFile(path, data, 0600)
 }
 
 func MigrationGuideFromEntries(version semver.Version, entries []FragmentEntry) MigrationGuide {

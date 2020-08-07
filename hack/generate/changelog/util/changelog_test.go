@@ -441,7 +441,7 @@ func TestChangelog_WriteFile(t *testing.T) {
 			defer assert.NoError(t, os.Remove(tmpFile.Name()))
 
 			if tc.existingFile || len(tc.existingFileContents) > 0 {
-				assert.NoError(t, ioutil.WriteFile(tmpFile.Name(), []byte(tc.existingFileContents), 0644))
+				assert.NoError(t, ioutil.WriteFile(tmpFile.Name(), []byte(tc.existingFileContents), 0600))
 			}
 
 			assert.NoError(t, tc.changelog.WriteFile(tmpFile.Name()))

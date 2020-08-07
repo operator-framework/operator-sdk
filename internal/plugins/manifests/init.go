@@ -56,7 +56,7 @@ func initUpdateMakefile(cfg *config.Config, filePath string) error {
 
 	makefileBytes = append(makefileBytes, []byte(makefileBundleBuildFragment)...)
 
-	return ioutil.WriteFile(filePath, makefileBytes, 0644)
+	return ioutil.WriteFile(filePath, makefileBytes, 0600)
 }
 
 // Makefile fragments to add to the base Makefile.

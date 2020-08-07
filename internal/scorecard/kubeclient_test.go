@@ -31,7 +31,7 @@ func TestGetKubeNamespace(t *testing.T) {
 	defer os.Remove(file.Name())
 
 	data := []byte(testKubeconfig)
-	err = ioutil.WriteFile(file.Name(), data, 0644)
+	err = ioutil.WriteFile(file.Name(), data, 0600)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -68,7 +68,7 @@ func TestGetKubeNamespaceEnvVar(t *testing.T) {
 	defer os.Remove(file.Name())
 
 	data := []byte(testKubeconfig)
-	err = ioutil.WriteFile(file.Name(), data, 0644)
+	err = ioutil.WriteFile(file.Name(), data, 0600)
 	if err != nil {
 		log.Fatal(err)
 	}

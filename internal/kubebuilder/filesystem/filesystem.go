@@ -28,7 +28,7 @@ const (
 	createOrUpdate = os.O_WRONLY | os.O_CREATE | os.O_TRUNC
 
 	defaultDirectoryPermission os.FileMode = 0755
-	defaultFilePermission      os.FileMode = 0644
+	defaultFilePermission      os.FileMode = 0600
 )
 
 // FileSystem is an IO wrapper to create files

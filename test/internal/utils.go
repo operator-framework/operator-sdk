@@ -87,7 +87,7 @@ func (tc TestContext) AddPackagemanifestsTarget() error {
 	}
 
 	makefileBytes = append([]byte(makefilePackagemanifests), makefileBytes...)
-	err = ioutil.WriteFile(filepath.Join(tc.Dir, "Makefile"), makefileBytes, 0644)
+	err = ioutil.WriteFile(filepath.Join(tc.Dir, "Makefile"), makefileBytes, 0600)
 	if err != nil {
 		return err
 	}

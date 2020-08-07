@@ -55,7 +55,7 @@ func (i *InputDir) makeDirs() error {
 // addFile adds a file to the given relative path within the input directory.
 func (i *InputDir) addFile(path string, content []byte) error {
 	fullPath := filepath.Join(i.Path, path)
-	err := ioutil.WriteFile(fullPath, content, 0644)
+	err := ioutil.WriteFile(fullPath, content, 0600)
 	if err != nil {
 		log.Error(err, "Unable to write file", "Path", fullPath)
 	}

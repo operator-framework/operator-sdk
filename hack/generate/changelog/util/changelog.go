@@ -84,12 +84,12 @@ func (c *Changelog) WriteFile(path string) error {
 		return err
 	}
 	if errors.Is(err, os.ErrNotExist) || len(existingFile) == 0 {
-		return ioutil.WriteFile(path, data, 0644)
+		return ioutil.WriteFile(path, data, 0600)
 	}
 
 	data = append(data, '\n')
 	data = append(data, existingFile...)
-	return ioutil.WriteFile(path, data, 0644)
+	return ioutil.WriteFile(path, data, 0600)
 }
 
 func ChangelogFromEntries(version semver.Version, entries []FragmentEntry) Changelog {

@@ -252,7 +252,7 @@ func writeManifest(path string, o interface{}) error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(path, b, 0644)
+	return ioutil.WriteFile(path, b, 0600)
 }
 
 func execTemplateOnFile(path, tmplStr string, o interface{}) error {
