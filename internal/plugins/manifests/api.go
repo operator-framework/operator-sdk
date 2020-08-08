@@ -27,6 +27,10 @@ import (
 
 // RunCreateAPI runs the manifests SDK phase 2 plugin.
 func RunCreateAPI(cfg *config.Config, gvk config.GVK) error {
+	// Only run these if project version is v3.
+	if !cfg.IsV3() {
+		return nil
+	}
 
 	if err := newAPIScaffolder(cfg, gvk).scaffold(); err != nil {
 		return err

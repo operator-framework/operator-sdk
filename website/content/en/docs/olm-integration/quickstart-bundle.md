@@ -16,6 +16,10 @@ explanations of certain steps for brevity. The following documents contain more 
 If you are working with package manifests, see the [package manifests quickstart][quickstart-package-manifests]
 once you have completed the *Setup* section below.
 
+**Important:** this guide assumes your project was scaffolded with `operator-sdk init --project-version=3-alpha`.
+These features are unavailable to projects of version `2` or less; this information can be found by inspecting
+your `PROJECT` file's `version` value.
+
 ## Setup
 
 Let's first walk through creating an Operator for `memcached`, a distributed key-value store.
