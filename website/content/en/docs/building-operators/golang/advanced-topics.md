@@ -19,7 +19,7 @@ To use conditions in your custom resource, add a Conditions field to the Status 
 
 ```Go
 import (
-    "github.com/operator-framework/operator-sdk/pkg/status"
+    "github.com/operator-framework/operator-lib/status"
 )
 
 type MyAppStatus struct {
