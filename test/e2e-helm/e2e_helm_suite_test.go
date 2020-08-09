@@ -44,8 +44,6 @@ var (
 	isOLMManagedBySuite = true
 	// kubectx stores the k8s context from where the tests are running
 	kubectx string
-	// projectName is the name of the test project
-	projectName string
 )
 
 // BeforeSuite run before any specs are run to perform the required actions for all e2e Helm tests.
@@ -56,7 +54,6 @@ var _ = BeforeSuite(func(done Done) {
 	tc, err = testutils.NewTestContext("GO111MODULE=on")
 	Expect(err).NotTo(HaveOccurred())
 	Expect(tc.Prepare()).To(Succeed())
-	projectName = filepath.Base(tc.Dir)
 
 	By("checking the cluster type")
 	kubectx, err = tc.Kubectl.Command("config", "current-context")

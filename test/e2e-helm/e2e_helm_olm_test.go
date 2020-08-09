@@ -15,6 +15,7 @@
 package e2e_helm_test
 
 import (
+	"fmt"
 	"os/exec"
 	"path"
 	"path/filepath"
@@ -39,6 +40,11 @@ var _ = Describe("Integrating Helm Projects with OLM", func() {
 		It("should generate and run a valid OLM bundle and packagemanifests", func() {
 			By("building the bundle")
 			err := tc.Make("bundle", "IMG="+tc.ImageName)
+			Expect(err).NotTo(HaveOccurred())
+
+			By("validating the bundle")
+			bundleValidateCmd := exec.Command(tc.BinaryName, "bundle", "validate", "bundle")
+			_, err = tc.Run(bundleValidateCmd)
 			Expect(err).NotTo(HaveOccurred())
 
 			By("building the operator bundle image")
@@ -72,7 +78,7 @@ var _ = Describe("Integrating Helm Projects with OLM", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			By("destroying the deployed package manifests-formatted operator")
-			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", projectName,
+			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", fmt.Sprintf("e2e-%s", tc.TestSuffix),
 				"--timeout", "4m")
 			_, err = tc.Run(cleanupPkgManCmd)
 			Expect(err).NotTo(HaveOccurred())
