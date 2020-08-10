@@ -17,7 +17,3 @@ linters:
     - staticcheck
     - unused
     - gosimple
-run:
-linters-settings:
-  errcheck:
-    check-type-assertions: true
