@@ -17,4 +17,4 @@ linters:
     - staticcheck
     - unused
     - gosimple
-    
+  
