@@ -80,7 +80,7 @@ tidy: ## Update dependencies
 clean: ## Clean up the build artifacts
 	$(Q)rm -rf build
 
-lint: ## Run golangci-lint with all checks enabled in the ci
+lint: ## Install and run golangci-lint checks
 ifneq (${GOLANGCI_LINT_VER}, "$(shell ./hack/bin/golangci-lint --version 2>/dev/null | cut -b 27-32)")
 	@echo "golangci-lint missing or not version '${GOLANGCI_LINT_VER}', downloading..."
 	curl -sSfL "https://raw.githubusercontent.com/golangci/golangci-lint/v${GOLANGCI_LINT_VER}/install.sh" | sh -s -- -b ./hack/bin "v${GOLANGCI_LINT_VER}"
