@@ -53,7 +53,7 @@ var _ = Describe("Integrating Helm Projects with OLM", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			By("destroying the deployed package manifests-formatted operator")
-			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", tc.ProjectName,
+			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup",
 				"--timeout", "4m")
 			_, err = tc.Run(cleanupPkgManCmd)
 			Expect(err).NotTo(HaveOccurred())

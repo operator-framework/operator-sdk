@@ -19,6 +19,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
@@ -32,13 +34,26 @@ func NewCmd() *cobra.Command {
 		Use:   "cleanup <operatorPackageName>",
 		Short: "Clean up an Operator deployed with the 'run' subcommand",
 		Long:  "This command has subcommands that will destroy an Operator deployed with OLM.",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MaximumNArgs(1),
 		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
 			return cfg.Load()
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			u := operator.NewUninstall(cfg)
-			u.Package = args[0]
+
+			// If there is no `packageName` command line argument, attempt to
+			// use `projectName` from the PROJECT file as the package name.
+			if len(args) == 0 {
+				projectCfg, err := projutil.ReadConfig()
+				if err != nil {
+					log.Fatalf("Error reading configuration. If you are NOT in the root directory of the project "+
+						"then, you must inform the project name: %v", err)
+				}
+				u.Package = projectCfg.ProjectName
+			} else {
+				u.Package = args[0]
+			}
+
 			u.DeleteAll = true
 			u.DeleteOperatorGroupNames = []string{operator.SDKOperatorGroupName}
 			u.Logf = log.Infof
