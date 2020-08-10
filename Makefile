@@ -29,18 +29,21 @@ GO_BUILD_ARGS = \
 
 ANSIBLE_BASE_IMAGE = quay.io/operator-framework/ansible-operator
 HELM_BASE_IMAGE = quay.io/operator-framework/helm-operator
+CUSTOM_SCORECARD_TESTS_BASE_IMAGE = quay.io/operator-framework/custom-scorecard-tests
 SCORECARD_TEST_BASE_IMAGE = quay.io/operator-framework/scorecard-test
 SCORECARD_TEST_KUTTL_BASE_IMAGE = quay.io/operator-framework/scorecard-test-kuttl
 
 ANSIBLE_IMAGE ?= $(ANSIBLE_BASE_IMAGE)
 HELM_IMAGE ?= $(HELM_BASE_IMAGE)
+CUSTOM_SCORECARD_TESTS_IMAGE ?= $(CUSTOM_SCORECARD_TESTS_BASE_IMAGE)
 SCORECARD_TEST_IMAGE ?= $(SCORECARD_TEST_BASE_IMAGE)
 SCORECARD_TEST_KUTTL_IMAGE ?= $(SCORECARD_TEST_KUTTL_BASE_IMAGE)
 
-ANSIBLE_ARCHES:="amd64" "ppc64le" "arm64"
-HELM_ARCHES:="amd64" "ppc64le" "arm64"
-SCORECARD_TEST_ARCHES:="amd64" "ppc64le" "arm64"
-SCORECARD_TEST_KUTTL_ARCHES:="amd64" "ppc64le" "arm64"
+ANSIBLE_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
+HELM_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
+CUSTOM_SCORECARD_TESTS_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
+SCORECARD_TEST_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
+SCORECARD_TEST_KUTTL_ARCHES:="amd64" "ppc64le" "s390x" "arm64"
 
 export CGO_ENABLED:=0
 .DEFAULT_GOAL:=help
@@ -180,7 +183,7 @@ build/%.asc: ## Create release signatures for operator-sdk release binaries
 
 image: image-build image-push ## Build and push all images
 
-image-build: image-build-ansible image-build-helm image-build-scorecard-test image-build-scorecard-test-kuttl## Build all images
+image-build: image-build-ansible image-build-helm image-build-scorecard-test image-build-scorecard-test-kuttl image-build-custom-scorecard-tests ## Build all images
 
 image-push: image-push-ansible image-push-helm image-push-scorecard-test ## Push all images
 
@@ -217,8 +220,14 @@ image-push-helm-multiarch:
 # Scorecard test image scaffold/build/push.
 .PHONY: image-build-scorecard-test image-push-scorecard-test image-push-scorecard-test-multiarch
 
+# Scorecard custom test image scaffold/build/push.
+.PHONY: image-build-custom-scorecard-tests image-push-custom-scorecard-tests image-push-custom-scorecard-tests-multiarch
+
 # Scorecard test kuttl image scaffold/build/push.
 .PHONY: image-build-scorecard-test-kuttl image-push-scorecard-test-kuttl image-push-scorecard-test-kuttl-multiarch
+
+image-build-custom-scorecard-tests:
+	./hack/image/build-custom-scorecard-tests-image.sh $(CUSTOM_SCORECARD_TESTS_BASE_IMAGE):dev
 
 image-build-scorecard-test:
 	./hack/image/build-scorecard-test-image.sh $(SCORECARD_TEST_BASE_IMAGE):dev
