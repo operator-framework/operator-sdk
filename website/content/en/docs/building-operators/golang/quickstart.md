@@ -34,7 +34,7 @@ Create a simple Memcached API:
 operator-sdk create api --group cache --version v1 --kind Memcached --resource=true --controller=true
 ```
 
-### Configuring your test environment
+### You must configure your test environment
 
 [Setup the `envtest` binaries and environment][envtest-setup] for your project.
 Update your `test` Makefile target to the following:
