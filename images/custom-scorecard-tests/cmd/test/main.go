@@ -100,6 +100,11 @@ func CustomTest1(bundle *apimanifests.Bundle) scapiv1alpha3.TestStatus {
 	r.State = scapiv1alpha3.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
+	almExamples := bundle.CSV.GetAnnotations()["alm-examples"]
+	if almExamples == "" {
+		fmt.Println("no alm-examples in the bundle CSV")
+	}
+
 	return wrapResult(r)
 }
 
@@ -109,6 +114,10 @@ func CustomTest2(bundle *apimanifests.Bundle) scapiv1alpha3.TestStatus {
 	r.State = scapiv1alpha3.PassState
 	r.Errors = make([]string, 0)
 	r.Suggestions = make([]string, 0)
+	almExamples := bundle.CSV.GetAnnotations()["alm-examples"]
+	if almExamples == "" {
+		fmt.Println("no alm-examples in the bundle CSV")
+	}
 	return wrapResult(r)
 }
 
