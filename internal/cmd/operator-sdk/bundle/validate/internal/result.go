@@ -20,9 +20,9 @@ import (
 	"fmt"
 	"os"
 
+	apierrors "github.com/operator-framework/api/pkg/validation/errors"
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	"github.com/sirupsen/logrus"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -43,8 +43,20 @@ type output struct {
 }
 
 // NewResult return a new result object which starts with passed == true since has no errors
-func NewResult() Result {
-	return Result{Passed: true}
+func NewResult() *Result {
+	return &Result{Passed: true}
+}
+
+// AddManifestResults adds warnings and errors in results to Results.
+func (o *Result) AddManifestResults(results ...apierrors.ManifestResult) {
+	for _, r := range results {
+		for _, w := range r.Warnings {
+			o.AddWarn(w)
+		}
+		for _, e := range r.Errors {
+			o.AddError(e)
+		}
+	}
 }
 
 // AddInfo will add a log to the result with the Info Level
@@ -141,7 +153,7 @@ func (o *Result) PrintWithFormat(format string) (err error) {
 	}
 
 	printf := o.getPrintFuncFormat(format)
-	if err = printf(*o); err == nil && !o.Passed {
+	if err = printf(o); err == nil && !o.Passed {
 		os.Exit(1) // Exit with error when any Error type was added
 	}
 	return err
@@ -149,18 +161,18 @@ func (o *Result) PrintWithFormat(format string) (err error) {
 
 // getPrintFuncFormat returns a function that writes an Result to w in a given
 // format, defaulting to "text" if format is not recognized.
-func (o *Result) getPrintFuncFormat(format string) func(Result) error {
+func (o *Result) getPrintFuncFormat(format string) func(*Result) error {
 	// PrintWithFormat output in desired format.
 	switch format {
 	case JSONAlpha1:
-		return func(o Result) error {
+		return func(o *Result) error {
 			return o.printJSON()
 		}
 	}
 
 	// Address all to the Stdout when the type is not JSON
-	logger := log.NewEntry(NewLoggerTo(os.Stdout))
-	return func(o Result) error {
+	logger := logrus.NewEntry(NewLoggerTo(os.Stdout))
+	return func(o *Result) error {
 		return o.printText(logger)
 	}
 }

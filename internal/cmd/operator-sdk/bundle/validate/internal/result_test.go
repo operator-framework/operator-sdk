@@ -32,7 +32,7 @@ func TestResult(t *testing.T) {
 }
 
 var _ = Describe("Output Result", func() {
-	var result Result
+	var result *Result
 
 	BeforeEach(func() {
 		result = NewResult()

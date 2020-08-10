@@ -16,13 +16,9 @@ package bundle
 
 import (
 	"github.com/spf13/cobra"
-)
 
-//nolint:structcheck
-type bundleCmd struct {
-	directory    string
-	imageBuilder string
-}
+	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/bundle/validate"
+)
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -41,7 +37,7 @@ https://sdk.operatorframework.io/docs/olm-integration
 	}
 
 	cmd.AddCommand(
-		newValidateCmd(),
+		validate.NewCmd(),
 	)
 	return cmd
 }

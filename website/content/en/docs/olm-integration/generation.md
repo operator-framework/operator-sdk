@@ -114,6 +114,36 @@ Metadata for each bundle contains channel information as well:
 Channels become important when publishing, but we should still be aware of them beforehand as they're required
 values in our metadata. `make bundle` writes the channel `alpha` by default.
 
+#### Validation
+
+The `bundle` recipe includes a call to `operator-sdk bundle validate`, which runs a set of required object
+validators on your bundle that ensure both its format and content meet the [bundle specification][bundle].
+These will always be run and cannot be disabled.
+
+You may also have added [CSV fields](#csv-fields) containing useful UI metadata for cluster console display,
+and want to ensure that metadata matches some hosted catalog's submission requirements.
+The `bundle validate` command supports optional validators that can validate these bundle metadata.
+These validators are disabled by default, and can be selectively enabled with `--select-optional <label-selector>`.
+You can list all available optional validators by setting the `--list-optional` flag:
+
+```console
+$ operator-sdk bundle validate --list-optional
+NAME           LABELS                     DESCRIPTION
+operatorhub    name=operatorhub           OperatorHub.io metadata validation
+               suite=operatorframework
+...
+```
+
+For example, you want to turn on the `operatorhub` validator shown above so you can publish the `0.0.1` operator
+you recently created on [OperatorHub.io][operatorhub]. To do so, you can modify your Makefile's `bundle` recipe
+to validate any further changes you make to bundle UI metadata related to OperatorHub requirements:
+
+```make
+bundle: ...
+  ...
+  operator-sdk bundle validate ./bundle --select-optional name=operatorhub
+```
+
 ### Package manifests format
 
 A [package manifests][package-manifests] format consists of on-disk manifests (CSV and CRDs) and metadata that
