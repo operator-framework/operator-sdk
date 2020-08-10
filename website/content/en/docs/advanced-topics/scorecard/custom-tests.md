@@ -69,7 +69,7 @@ The `tests.go` file is where the custom tests are implemented in the sample test
 package tests
 
 import (
-  apimanifests "github.com/operator-framework/api/pkg/manifests"
+  "github.com/operator-framework/operator-registry/pkg/registry"
   scapiv1alpha3 "github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 )
 
@@ -78,7 +78,7 @@ const (
 )
 
 // CustomTest1
-func CustomTest1(bundle *apimanifests.Bundle) scapiv1alpha3.TestStatus {
+func CustomTest1(bundle registry.Bundle) scapiv1alpha3.TestStatus {
   r := scapiv1alpha3.TestResult{}
   r.Name = CustomTest1Name
   r.Description = "Custom Test 1"
@@ -144,7 +144,7 @@ $ kustomize build config/scorecard > path/to/config.yaml
 The scorecard test image implementation requires the bundle under test to be present in the test image. The `apimanifests.GetBundleFromDir()` function reads the pod's bundle to fetch the manifests and scorecard configuration from desired path.
 
 ```Go
-cfg, err := apimanifests.GetBundleFromDir(PodBundleRoot)
+cfg, err := apimanifests.GetBundleFromDir(scorecard.PodBundleRoot)
 if err != nil {
   log.Fatal(err.Error())
 }
@@ -158,8 +158,8 @@ The names with which the tests are identified in `config.yaml` and would be pass
 ```Go
 ...
 switch entrypoint[0] {
-case CustomTest1Name:
-  result = CustomTest1(cfg)
+case tests.CustomTest1Name:
+  result = tests.CustomTest1(cfg)
   ...
 }
 ...
@@ -189,10 +189,14 @@ func printValidTests() (result scapiv1alpha3.TestStatus) {
 
 ### Building the project
 
-The sample custom-scorecard-tests image can be built using the
-operator-sdk [Makefile][sample_makefile] target as follows:
+The project makefile is to help us build the go project and test image using docker. An example of the [makefile][sample_makefile] script can be found in the sample test image.
+
+To build the project, use the `docker build` command and specify the desired name of the image in the format: `<repository_name>/<username>/<image_name>:tag`.
+
+Push the image to a remote repository by running the docker command:
+
 ```
-make image-build-custom-scorecard-tests
+docker push <repository_name>/<username>/<image_name>:tag
 ```
 
 ### Running scorecard command
@@ -291,9 +295,9 @@ connection to invoke the Kube API.
 [basic_tests]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/tests/basic.go
 [config_yaml]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/testdata/bundle/tests/scorecard/config.yaml
 [scorecard_main_func]: https://github.com/operator-framework/operator-sdk/blob/master/images/scorecard-test/cmd/test/main.go
-[custom_scorecard_repo]: https://github.com/operator-framework/operator-sdk/tree/master/images/custom-scorecard-tests
+[custom_scorecard_repo]: https://github.com/operator-framework/operator-sdk/tree/master/internal/scorecard/examples
 [user_doc]: /docs/advanced-topics/scorecard/scorecard/
-[scorecard_binary]: https://github.com/operator-framework/operator-sdk/blob/master/images/custom-scorecard-tests/cmd/test/main.go
-[sample_makefile]: https://github.com/operator-framework/operator-sdk/blob/master/Makefile
+[scorecard_binary]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/examples/custom-scorecard-tests/images/custom-scorecard-tests/cmd/test/main.go
+[sample_makefile]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/examples/custom-scorecard-tests/Makefile
 [kustomize-patchJson6902]: https://kubernetes-sigs.github.io/kustomize/api-reference/kustomization/patchesjson6902/
 [testresults]:https://github.com/operator-framework/api/blob/333d064/pkg/apis/scorecard/v1alpha3/test_types.go#L35
