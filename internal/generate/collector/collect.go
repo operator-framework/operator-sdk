@@ -25,6 +25,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	admissionregv1 "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
@@ -34,11 +35,22 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
 
+const (
+	roleKind               = "Role"
+	roleBindingKind        = "RoleBinding"
+	clusterRoleKind        = "ClusterRole"
+	clusterRoleBindingKind = "ClusterRoleBinding"
+	serviceAccountKind     = "ServiceAccount"
+)
+
 // Manifests holds a collector of all manifests relevant to CSV updates.
 type Manifests struct {
 	Roles                            []rbacv1.Role
 	ClusterRoles                     []rbacv1.ClusterRole
+	RoleBindings                     []rbacv1.RoleBinding
+	ClusterRoleBindings              []rbacv1.ClusterRoleBinding
 	Deployments                      []appsv1.Deployment
+	ServiceAccounts                  []corev1.ServiceAccount
 	V1CustomResourceDefinitions      []apiextv1.CustomResourceDefinition
 	V1beta1CustomResourceDefinitions []apiextv1beta1.CustomResourceDefinition
 	ValidatingWebhooks               []admissionregv1.ValidatingWebhook
@@ -73,10 +85,16 @@ func (c *Manifests) UpdateFromDirs(deployDir, crdsDir string) error {
 
 			gvk := typeMeta.GroupVersionKind()
 			switch gvk.Kind {
-			case "Role":
+			case roleKind:
 				err = c.addRoles(manifest)
-			case "ClusterRole":
+			case clusterRoleKind:
 				err = c.addClusterRoles(manifest)
+			case roleBindingKind:
+				err = c.addRoleBindings(manifest)
+			case clusterRoleBindingKind:
+				err = c.addClusterRoleBindings(manifest)
+			case "ServiceAccount":
+				err = c.addServiceAccounts(manifest)
 			case "Deployment":
 				err = c.addDeployments(manifest)
 			case "CustomResourceDefinition":
@@ -133,10 +151,16 @@ func (c *Manifests) UpdateFromReader(r io.Reader) error {
 
 		gvk := typeMeta.GroupVersionKind()
 		switch gvk.Kind {
-		case "Role":
+		case roleKind:
 			err = c.addRoles(manifest)
-		case "ClusterRole":
+		case clusterRoleKind:
 			err = c.addClusterRoles(manifest)
+		case roleBindingKind:
+			err = c.addRoleBindings(manifest)
+		case clusterRoleBindingKind:
+			err = c.addClusterRoleBindings(manifest)
+		case "ServiceAccount":
+			err = c.addServiceAccounts(manifest)
 		case "Deployment":
 			err = c.addDeployments(manifest)
 		case "CustomResourceDefinition":
@@ -167,7 +191,7 @@ func (c *Manifests) UpdateFromReader(r io.Reader) error {
 	return nil
 }
 
-// addRoles assumes add manifest data in rawManifests are Roles and adds them
+// addRoles assumes all manifest data in rawManifests are Roles and adds them
 // to the collector.
 func (c *Manifests) addRoles(rawManifests ...[]byte) error {
 	for _, rawManifest := range rawManifests {
@@ -180,7 +204,7 @@ func (c *Manifests) addRoles(rawManifests ...[]byte) error {
 	return nil
 }
 
-// addClusterRoles assumes add manifest data in rawManifests are ClusterRoles
+// addClusterRoles assumes all manifest data in rawManifests are ClusterRoles
 // and adds them to the collector.
 func (c *Manifests) addClusterRoles(rawManifests ...[]byte) error {
 	for _, rawManifest := range rawManifests {
@@ -193,7 +217,43 @@ func (c *Manifests) addClusterRoles(rawManifests ...[]byte) error {
 	return nil
 }
 
-// addDeployments assumes add manifest data in rawManifests are Deployments
+// addRoleBindings assumes all manifest data in rawManifests are RoleBindings and adds them to the collector.
+func (c *Manifests) addRoleBindings(rawManifests ...[]byte) error {
+	for _, rawManifest := range rawManifests {
+		binding := rbacv1.RoleBinding{}
+		if err := yaml.Unmarshal(rawManifest, &binding); err != nil {
+			return err
+		}
+		c.RoleBindings = append(c.RoleBindings, binding)
+	}
+	return nil
+}
+
+// addClusterRoleBindings assumes all manifest data in rawManifests are ClusterRoleBindings and adds them to the collector.
+func (c *Manifests) addClusterRoleBindings(rawManifests ...[]byte) error {
+	for _, rawManifest := range rawManifests {
+		binding := rbacv1.ClusterRoleBinding{}
+		if err := yaml.Unmarshal(rawManifest, &binding); err != nil {
+			return err
+		}
+		c.ClusterRoleBindings = append(c.ClusterRoleBindings, binding)
+	}
+	return nil
+}
+
+// addServiceAccounts assumes all manifest data in rawManifests are ServiceAccounts and adds them to the collector.
+func (c *Manifests) addServiceAccounts(rawManifests ...[]byte) error {
+	for _, rawManifest := range rawManifests {
+		sa := corev1.ServiceAccount{}
+		if err := yaml.Unmarshal(rawManifest, &sa); err != nil {
+			return err
+		}
+		c.ServiceAccounts = append(c.ServiceAccounts, sa)
+	}
+	return nil
+}
+
+// addDeployments assumes all manifest data in rawManifests are Deployments
 // and adds them to the collector.
 func (c *Manifests) addDeployments(rawManifests ...[]byte) error {
 	for _, rawManifest := range rawManifests {
@@ -206,7 +266,7 @@ func (c *Manifests) addDeployments(rawManifests ...[]byte) error {
 	return nil
 }
 
-// addCustomResourceDefinitions assumes add manifest data in rawManifests are
+// addCustomResourceDefinitions assumes all manifest data in rawManifests are
 // CustomResourceDefinitions and adds them to the collector. version determines
 // which CustomResourceDefinition type is used for all manifests in rawManifests.
 func (c *Manifests) addCustomResourceDefinitions(version string, rawManifests ...[]byte) (err error) {
@@ -257,7 +317,7 @@ func (c *Manifests) addMutatingWebhookConfigurations(rawManifests ...[]byte) err
 	return nil
 }
 
-// addOthers assumes add manifest data in rawManifests are able to be
+// addOthers assumes all manifest data in rawManifests are able to be
 // unmarshalled into an Unstructured object and adds them to the collector.
 func (c *Manifests) addOthers(rawManifests ...[]byte) error {
 	for _, rawManifest := range rawManifests {
