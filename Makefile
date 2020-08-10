@@ -81,11 +81,11 @@ clean: ## Clean up the build artifacts
 	$(Q)rm -rf build
 
 lint: ## Install and run golangci-lint checks
-ifneq (${GOLANGCI_LINT_VER}, "$(shell ./hack/bin/golangci-lint --version 2>/dev/null | cut -b 27-32)")
+ifneq (${GOLANGCI_LINT_VER}, "$(shell ./bin/golangci-lint --version 2>/dev/null | cut -b 27-32)")
 	@echo "golangci-lint missing or not version '${GOLANGCI_LINT_VER}', downloading..."
-	curl -sSfL "https://raw.githubusercontent.com/golangci/golangci-lint/v${GOLANGCI_LINT_VER}/install.sh" | sh -s -- -b ./hack/bin "v${GOLANGCI_LINT_VER}"
+	curl -sSfL "https://raw.githubusercontent.com/golangci/golangci-lint/v${GOLANGCI_LINT_VER}/install.sh" | sh -s -- -b ./bin "v${GOLANGCI_LINT_VER}"
 endif
-	./hack/bin/golangci-lint --timeout 5m run
+	./bin/golangci-lint --timeout 5m run
 
 setup-k8s:
 	hack/ci/setup-k8s.sh ${K8S_VERSION}
