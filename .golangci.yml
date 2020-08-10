@@ -1,5 +1,4 @@
 linters:
-  auto-fix: false
   enable:
     - nakedret 
     - interfacer
@@ -18,8 +17,6 @@ linters:
     - staticcheck
     - unused
     - gosimple
-    # missing to be added
-    # - lll (250), gocyclo, gosec, scopelint, unconvert, stylecheck
 run:
 linters-settings:
   errcheck:
