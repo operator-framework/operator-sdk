@@ -1,3 +1,18 @@
+## v1.0.0
+
+### Changes
+
+- **Breaking change**: Changed the `go.sdk.operatorframework.io` plugin to only write a `plugins` PROJECT field and run the OLM integration and scorecard plugins if the project version is "3-alpha" or above. ([#3697](https://github.com/operator-framework/operator-sdk/pull/3697))
+- **Breaking change**: Added a scaffold marker `+kubebuilder:scaffold:manifestskustomizesamples` to `config/samples/kustomization.yaml` that allows updates without overwriting the entire file. ([#3645](https://github.com/operator-framework/operator-sdk/pull/3645))
+- **Breaking change**: Added `IMG` argument to `bundle` make rule that accepts an operator image tag. This tag will be inserted into the manager's deployment manifest when `make bundle IMG=<tag>` is run. ([#3634](https://github.com/operator-framework/operator-sdk/pull/3634))
+- **Breaking change**: Updated `operator-sdk cleanup` command to be more generic. ([#3644](https://github.com/operator-framework/operator-sdk/pull/3644))
+- **Breaking change**: Default install mode for `run packagemanifests` changed from `OwnNamespace` to `AllNamespaces`. ([#3663](https://github.com/operator-framework/operator-sdk/pull/3663))
+
+### Removals
+
+- **Breaking change**: Removed `olm-namespace` flag from `operator-sdk olm install` command. ([#3670](https://github.com/operator-framework/operator-sdk/pull/3670))
+- **Breaking change**: Docker images for s390x architecture are removed due to issues with s390x machines failing to be scheduled and run in Travis CI. ([#3710](https://github.com/operator-framework/operator-sdk/pull/3710))
+
 ## v1.0.0-alpha.2
 
 ### Additions
