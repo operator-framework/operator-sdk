@@ -44,16 +44,17 @@ func (p *initPlugin) Run() error {
 		return err
 	}
 
-	// Update the scaffolded Makefile with operator-sdk recipes.
-	// TODO: rewrite this when plugins phase 2 is implemented.
-	if err := initUpdateMakefile("Makefile"); err != nil {
-		return fmt.Errorf("error updating Makefile: %v", err)
-	}
+	// Run the Makefile updater and update plugin config section with this plugin's configuration for v3 projects.
+	if p.config.IsV3() {
+		// TODO: rewrite this when plugins phase 2 is implemented.
+		if err := initUpdateMakefile("Makefile"); err != nil {
+			return fmt.Errorf("error updating Makefile: %v", err)
+		}
 
-	// Update plugin config section with this plugin's configuration.
-	cfg := Config{}
-	if err := p.config.EncodePluginConfig(pluginConfigKey, cfg); err != nil {
-		return fmt.Errorf("error writing plugin config for %s: %v", pluginConfigKey, err)
+		cfg := Config{}
+		if err := p.config.EncodePluginConfig(pluginConfigKey, cfg); err != nil {
+			return fmt.Errorf("error writing plugin config for %s: %v", pluginConfigKey, err)
+		}
 	}
 
 	return nil
