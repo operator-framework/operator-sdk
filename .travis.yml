@@ -178,12 +178,12 @@ jobs:
         - make image-push-ansible
 
     # Build and deploy s390x ansible-operator docker image
-    - <<: *deploy
-      name: Docker image for ansible-operator (s390x)
-      arch: s390x
-      script:
-        - make image-build-ansible
-        - make image-push-ansible
+    #- <<: *deploy
+    #  name: Docker image for ansible-operator (s390x)
+    #  arch: s390x
+    #  script:
+    #    - make image-build-ansible
+    #    - make image-push-ansible
 
     # Build and deploy arm64 helm-operator docker image
     - <<: *deploy
@@ -210,12 +210,12 @@ jobs:
         - make image-push-helm
 
     # Build and deploy s390x helm-operator docker image
-    - <<: *deploy
-      name: Docker image for helm-operator (s390x)
-      arch: s390x
-      script:
-        - make image-build-helm
-        - make image-push-helm
+    #- <<: *deploy
+    #  name: Docker image for helm-operator (s390x)
+    #  arch: s390x
+    #  script:
+    #    - make image-build-helm
+    #    - make image-push-helm
 
     # Build and deploy arm64 scorecard-test docker image
     - <<: *deploy
@@ -242,12 +242,12 @@ jobs:
         - make image-push-scorecard-test
 
     # Build and deploy s390x scorecard-test docker image
-    - <<: *deploy
-      name: Docker image for scorecard-test (s390x)
-      arch: s390x
-      script:
-        - make image-build-scorecard-test
-        - make image-push-scorecard-test
+    #- <<: *deploy
+    #  name: Docker image for scorecard-test (s390x)
+    #  arch: s390x
+    #  script:
+    #    - make image-build-scorecard-test
+    #    - make image-push-scorecard-test
 
     # Build and deploy amd64 scorecard-test-kuttl docker image
     - <<: *deploy
