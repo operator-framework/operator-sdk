@@ -34,7 +34,9 @@ Create a simple Memcached API:
 operator-sdk create api --group cache --version v1 --kind Memcached --resource=true --controller=true
 ```
 
-### You must configure your test environment
+### Configuring your test environment 
+
+**(REQUIRED for building the operator)**
 
 [Setup the `envtest` binaries and environment][envtest-setup] for your project.
 Update your `test` Makefile target to the following:
@@ -50,7 +52,7 @@ test: generate fmt vet manifests
 
 ### Build and push the operator image
 
-Use the built-in Makefile targets to build and push your operator. Make
+Ensure that you performed the [`envtest` setup][envtest-setup] described above and use the built-in Makefile targets to build and push your operator. Make
 sure to define `IMG` when you call `make`:
 
 ```sh
