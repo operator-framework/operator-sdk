@@ -247,7 +247,7 @@ A call to `leader.Become()` will block the operator as it retries until it can b
 ```Go
 import (
     ...
-    "github.com/operator-framework/operator-sdk/pkg/leader"
+    "github.com/operator-framework/operator-lib/leader"
 )
 
 func main() {
