@@ -102,7 +102,7 @@ func TestNew(t *testing.T) {
 	}
 }
 
-func TestLoad(t *testing.T) {
+func TestLoad(t *testing.T) { //nolint:gocyclo
 	cwd, err := os.Getwd()
 	if err != nil {
 		t.Fatalf("Unable to get working director: %v", err)

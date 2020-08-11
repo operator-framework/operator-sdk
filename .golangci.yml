@@ -18,3 +18,4 @@ linters:
     - unused
     - gosimple
     - unconvert
+    - gocyclo

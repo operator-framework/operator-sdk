@@ -63,7 +63,7 @@ type AnsibleOperatorReconciler struct {
 }
 
 // Reconcile - handle the event.
-func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.Result, error) { //nolint:gocyclo
 	u := &unstructured.Unstructured{}
 	u.SetGroupVersionKind(r.GVK)
 	err := r.Client.Get(context.TODO(), request.NamespacedName, u)
