@@ -12,6 +12,7 @@ endif
 VERSION = $(shell git describe --dirty --tags --always)
 GIT_COMMIT = $(shell git rev-parse HEAD)
 K8S_VERSION = v1.18.2
+GOLANGCI_LINT_VER = "1.30.0"
 REPO = github.com/operator-framework/operator-sdk
 PKGS = $(shell go list ./... | grep -v /vendor/)
 TEST_PKGS = $(shell go list ./... | grep -v -E 'github.com/operator-framework/operator-sdk/test/')
@@ -25,7 +26,6 @@ GO_BUILD_ARGS = \
     -X '$(REPO)/internal/version.GitCommit=$(GIT_COMMIT)' \
     -X '$(REPO)/internal/version.KubernetesVersion=$(K8S_VERSION)' \
   " \
-
 
 ANSIBLE_BASE_IMAGE = quay.io/operator-framework/ansible-operator
 HELM_BASE_IMAGE = quay.io/operator-framework/helm-operator
@@ -79,14 +79,12 @@ tidy: ## Update dependencies
 clean: ## Clean up the build artifacts
 	$(Q)rm -rf build
 
-lint-dev:  ## Run golangci-lint with all checks enabled (development purpose only)
-	./hack/tests/check-lint.sh dev
-
-lint-fix: ## Run golangci-lint automatically fix (development purpose only)
-	./hack/tests/check-lint.sh fix
-
-lint: ## Run golangci-lint with all checks enabled in the ci
-	./hack/tests/check-lint.sh ci
+lint: ## Install and run golangci-lint checks
+ifneq (${GOLANGCI_LINT_VER}, "$(shell ./bin/golangci-lint --version 2>/dev/null | cut -b 27-32)")
+	@echo "golangci-lint missing or not version '${GOLANGCI_LINT_VER}', downloading..."
+	curl -sSfL "https://raw.githubusercontent.com/golangci/golangci-lint/v${GOLANGCI_LINT_VER}/install.sh" | sh -s -- -b ./bin "v${GOLANGCI_LINT_VER}"
+endif
+	./bin/golangci-lint --timeout 5m run
 
 setup-k8s:
 	hack/ci/setup-k8s.sh ${K8S_VERSION}

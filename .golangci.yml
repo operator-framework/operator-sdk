@@ -1,0 +1,20 @@
+linters:
+  enable:
+    - nakedret
+    - interfacer
+    - varcheck
+    - deadcode
+    - structcheck
+    - misspell
+    - maligned
+    - ineffassign
+    - goconst
+    - goimports
+    - errcheck
+    - dupl
+    - unparam
+    - golint
+    - staticcheck
+    - unused
+    - gosimple
+  
