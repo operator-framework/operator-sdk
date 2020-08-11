@@ -79,7 +79,7 @@ func Create(ownerRef metav1.OwnerReference, proxyURL string, namespace string) (
 	if err != nil {
 		return nil, err
 	}
-	username := base64.URLEncoding.EncodeToString([]byte(ownerRefJSON))
+	username := base64.URLEncoding.EncodeToString(ownerRefJSON)
 	parsedURL.User = url.User(username)
 	v := values{
 		Username:  username,
