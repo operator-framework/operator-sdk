@@ -15,14 +15,13 @@
 package e2e_helm_test
 
 import (
-	"fmt"
 	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
 
-	. "github.com/onsi/ginkgo" //nolint:golint
-	. "github.com/onsi/gomega" //nolint:golint
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 
 	testutils "github.com/operator-framework/operator-sdk/test/internal"
 )
@@ -37,25 +36,9 @@ var _ = Describe("Integrating Helm Projects with OLM", func() {
 			testutils.ReplaceInFile(filepath.Join(tc.Dir, "Makefile"), replace, replace+" --interactive=false")
 		})
 
-		AfterEach(func() {
-			By("destroying the deployed package manifests-formatted operator")
-			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", "packagemanifests",
-				"--version", operatorVersion,
-				"--timeout", "4m")
-			_, _ = tc.Run(cleanupPkgManCmd)
-
-			By("uninstalling CRD's")
-			_ = tc.Make("uninstall")
-		})
-
 		It("should generate and run a valid OLM bundle and packagemanifests", func() {
 			By("building the bundle")
-			err := tc.Make("bundle")
-			Expect(err).NotTo(HaveOccurred())
-
-			By("validating the bundle")
-			bundleValidateCmd := exec.Command(tc.BinaryName, "bundle", "validate", "bundle")
-			_, err = tc.Run(bundleValidateCmd)
+			err := tc.Make("bundle", "IMG="+tc.ImageName)
 			Expect(err).NotTo(HaveOccurred())
 
 			By("building the operator bundle image")
@@ -77,17 +60,7 @@ var _ = Describe("Integrating Helm Projects with OLM", func() {
 			Expect(err).Should(Succeed())
 
 			By("generating the operator package manifests")
-			err = tc.Make("packagemanifests")
-			Expect(err).NotTo(HaveOccurred())
-
-			By("updating clusterserviceversion with the manager image")
-			testutils.ReplaceInFile(
-				filepath.Join(tc.Dir, "packagemanifests", operatorVersion,
-					fmt.Sprintf("e2e-%s.clusterserviceversion.yaml", tc.TestSuffix)),
-				"controller:latest", tc.ImageName)
-
-			By("installing crds to run packagemanifests")
-			err = tc.Make("install")
+			err = tc.Make("packagemanifests", "IMG="+tc.ImageName)
 			Expect(err).NotTo(HaveOccurred())
 
 			By("running the package")
@@ -96,6 +69,12 @@ var _ = Describe("Integrating Helm Projects with OLM", func() {
 				"--version", operatorVersion,
 				"--timeout", "4m")
 			_, err = tc.Run(runPkgManCmd)
+			Expect(err).NotTo(HaveOccurred())
+
+			By("destroying the deployed package manifests-formatted operator")
+			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", projectName,
+				"--timeout", "4m")
+			_, err = tc.Run(cleanupPkgManCmd)
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})

@@ -1,9 +1,0 @@
-entries:
-  - description: Removed package `version`
-    kind: removal
-    breaking: true
-    migration:
-      header: Package `version` is no longer public
-      body: |
-        It is no longer possible to import package `version`. To
-        determine the version of operator-sdk, run `operator-sdk version`.

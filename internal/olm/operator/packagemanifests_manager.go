@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/util/retry"
 
 	internalregistry "github.com/operator-framework/operator-sdk/internal/olm/operator/internal"
 )
@@ -62,11 +63,11 @@ func (c *PackageManifestsCmd) newManager() (m *packageManifestsManager, err erro
 
 	// Handle installModes.
 	if c.InstallMode == "" {
-		// Default to OwnNamespace.
-		m.installMode = operatorsv1alpha1.InstallModeTypeOwnNamespace
-		m.targetNamespaces = []string{m.namespace}
+		// Default to AllNamespaces.
+		m.installMode = operatorsv1alpha1.InstallModeTypeAllNamespaces
+		m.targetNamespaces = []string{}
 	} else {
-		m.installMode, m.targetNamespaces, err = parseInstallModeKV(c.InstallMode)
+		m.installMode, m.targetNamespaces, err = parseInstallModeKV(c.InstallMode, m.namespace)
 		if err != nil {
 			return nil, err
 		}
@@ -108,13 +109,21 @@ func (m *packageManifestsManager) run(ctx context.Context) (err error) {
 		return fmt.Errorf("an operator with name %q is present and has resource errors\n%s", pkgName, status)
 	}
 
-	if err = m.registryUp(ctx, m.namespace); err != nil {
+	// New CatalogSource.
+	catsrc := newCatalogSource(pkgName, m.namespace)
+	log.Info("Creating catalog source")
+	if err = m.client.DoCreate(ctx, catsrc); err != nil {
+		return fmt.Errorf("error creating catalog source: %w", err)
+	}
+
+	if err = m.registryUp(ctx, catsrc, m.namespace); err != nil {
 		return fmt.Errorf("error creating registry resources: %w", err)
 	}
 
-	// New CatalogSource.
-	registryGRPCAddr := internalregistry.GetRegistryServiceAddr(pkgName, m.namespace)
-	catsrc := newCatalogSource(pkgName, m.namespace, withGRPC(registryGRPCAddr))
+	if err := m.updateCatalogSource(ctx, pkgName, catsrc); err != nil {
+		return fmt.Errorf("error updating catalog source: %w", err)
+	}
+
 	// New Subscription.
 	channel, err := getChannelForCSVName(m.pkg, csv.GetName())
 	if err != nil {
@@ -126,7 +135,7 @@ func (m *packageManifestsManager) run(ctx context.Context) (err error) {
 	// New SDK-managed OperatorGroup.
 	og := newSDKOperatorGroup(m.namespace,
 		withTargetNamespaces(m.targetNamespaces...))
-	objects := []runtime.Object{catsrc, sub, og}
+	objects := []runtime.Object{sub, og}
 	log.Info("Creating resources")
 	if err = m.client.DoCreate(ctx, objects...); err != nil {
 		return fmt.Errorf("error creating operator resources: %w", err)
@@ -155,46 +164,7 @@ func (m *packageManifestsManager) run(ctx context.Context) (err error) {
 	return nil
 }
 
-func (m *packageManifestsManager) cleanup(ctx context.Context) (err error) {
-	pkgName := m.pkg.PackageName
-	bundle, err := getPackageForVersion(m.bundles, m.version)
-	if err != nil {
-		return fmt.Errorf("error getting package for version %s: %w", m.version, err)
-	}
-	csv := bundle.CSV
-
-	if err = m.registryDown(ctx, m.namespace); err != nil {
-		return fmt.Errorf("error removing registry resources: %w", err)
-	}
-
-	// Delete CatalogSource, Subscription, the SDK-managed OperatorGroup, and any bundle objects.
-	toDelete := []runtime.Object{
-		newCatalogSource(pkgName, m.namespace),
-		newSubscription(csv.GetName(), m.namespace),
-		newSDKOperatorGroup(m.namespace),
-	}
-	for _, obj := range bundle.Objects {
-		objc := obj.DeepCopy()
-		objc.SetNamespace(m.namespace)
-		toDelete = append(toDelete, objc)
-	}
-	log.Info("Deleting resources")
-	if err = m.client.DoDelete(ctx, toDelete...); err != nil {
-		return fmt.Errorf("error deleting operator resources: %w", err)
-	}
-
-	status := m.status(ctx, bundle.Objects...)
-	if installed, err := status.HasInstalledResources(); installed {
-		return fmt.Errorf("operator %q still exists", pkgName)
-	} else if err != nil {
-		return fmt.Errorf("operator %q still exists and has resource errors\n%s", pkgName, status)
-	}
-	log.Infof("OLM has successfully uninstalled %q and related resources have been deleted", csv.GetName())
-
-	return nil
-}
-
-func (m packageManifestsManager) registryUp(ctx context.Context, namespace string) error {
+func (m packageManifestsManager) registryUp(ctx context.Context, catsrc *operatorsv1alpha1.CatalogSource, namespace string) error {
 	rr := internalregistry.RegistryResources{
 		Client:  m.client,
 		Pkg:     m.pkg,
@@ -218,25 +188,8 @@ func (m packageManifestsManager) registryUp(ctx context.Context, namespace strin
 		}
 	}
 	log.Infof("Creating %s registry", m.pkg.PackageName)
-	if err := rr.CreatePackageManifestsRegistry(ctx, namespace); err != nil {
+	if err := rr.CreatePackageManifestsRegistry(ctx, catsrc, namespace); err != nil {
 		return fmt.Errorf("error registering package: %w", err)
-	}
-
-	return nil
-}
-
-func (m *packageManifestsManager) registryDown(ctx context.Context, namespace string) error {
-	rr := internalregistry.RegistryResources{
-		Client:  m.client,
-		Pkg:     m.pkg,
-		Bundles: m.bundles,
-	}
-
-	if m.forceRegistry {
-		log.Print("Deleting registry")
-		if err := rr.DeletePackageManifestsRegistry(ctx, namespace); err != nil {
-			return fmt.Errorf("error deleting registered package: %w", err)
-		}
 	}
 
 	return nil
@@ -252,4 +205,30 @@ func getPackageForVersion(bundles []*apimanifests.Bundle, version string) (*apim
 		versions = append(versions, verStr)
 	}
 	return nil, fmt.Errorf("no package found for version %s; valid versions: %+q", version, versions)
+}
+
+// updateCatalogSource gets the registry address of the newly created
+// ephemeral packagemanifest index pod and updates the catalog source
+// with the necessary address and source type fields to enable the
+// catalog source to connect to the registry.
+func (m *packageManifestsManager) updateCatalogSource(ctx context.Context, pkgName string, catsrc *operatorsv1alpha1.CatalogSource) error {
+	registryGRPCAddr := internalregistry.GetRegistryServiceAddr(pkgName, m.namespace)
+	catsrcKey := types.NamespacedName{
+		Namespace: catsrc.Namespace,
+		Name:      catsrc.Name,
+	}
+	if err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		if err := m.client.KubeClient.Get(ctx, catsrcKey, catsrc); err != nil {
+			return err
+		}
+		catsrc.Spec.Address = registryGRPCAddr
+		catsrc.Spec.SourceType = operatorsv1alpha1.SourceTypeGrpc
+		if err := m.client.KubeClient.Update(ctx, catsrc); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return fmt.Errorf("error setting grpc address on catalog source: %v", err)
+	}
+	return nil
 }

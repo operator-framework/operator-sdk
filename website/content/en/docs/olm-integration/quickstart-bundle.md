@@ -16,6 +16,10 @@ explanations of certain steps for brevity. The following documents contain more 
 If you are working with package manifests, see the [package manifests quickstart][quickstart-package-manifests]
 once you have completed the *Setup* section below.
 
+**Important:** this guide assumes your project was scaffolded with `operator-sdk init --project-version=3-alpha`.
+These features are unavailable to projects of version `2` or less; this information can be found by inspecting
+your `PROJECT` file's `version` value.
+
 ## Setup
 
 Let's first walk through creating an Operator for `memcached`, a distributed key-value store.
@@ -30,7 +34,7 @@ Ensure OLM is enabled on your cluster before following this guide. [`operator-sd
 has several subcommands that can install, uninstall, and check the status of particular OLM versions in a cluster.
 
 **Note:** Certain cluster types may already have OLM enabled, but under a non-default (`"olm"`) namespace,
-which can be configured by setting `--olm-namespace=[non-default-olm-namespace]` for `operator-sdk olm` subcommands.
+which can be configured by setting `--olm-namespace=[non-default-olm-namespace]` for `operator-sdk olm status|uninstall` subcommands.
 
 You can check if OLM is already installed by running the following command,
 which will detect the installed OLM version automatically (0.15.1 in this example):

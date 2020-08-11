@@ -26,9 +26,9 @@ As the Operator SDK interacts directly with the Kubernetes API, certain API feat
 
 ### Operating systems and architectures
 
-Release binaries will be built for the `x86_64` architecture for MacOS Darwin platform and for the following GNU Linux architectures: `x86_64`, `ppc64le`, `s390x`.
+Release binaries will be built for the `x86_64` architecture for MacOS Darwin platform and for the following GNU Linux architectures: `x86_64`, `ppc64le`, `arm64`, and `s390x`.
 
-Base images for ansible-operator, helm-operator, and scorecard-test will be built for the following GNU Linux architectures: `x86_64`, `ppc64le`, `s390x`.
+Base images for ansible-operator, helm-operator, and scorecard-test will be built for the following GNU Linux architectures: `x86_64`, `ppc64le`, and `arm64`.
 
 Support for the Windows platform is not on the roadmap at this time.
 
@@ -255,7 +255,7 @@ Commit the following changes:
 - `internal/version/version.go`: update `Version` to `v1.3.0`.
 - `website/content/en/docs/installation/install-operator-sdk.md`: update the linux and macOS URLs to point to the new release URLs.
 - `CHANGELOG.md`: commit changes (updated by changelog generation).
-- `website/content/en/docs/migration/v1.3.0.md`: commit changes (created by changelog generation).
+- `website/content/en/docs/upgrading-sdk-version/v1.3.0.md`: commit changes (created by changelog generation).
 - `changelog/fragments/*`: commit deleted fragment files (deleted by changelog generation).
 - **(Major and minor releases only)** `website/config.toml`: update `version_menu = "Releases"` with the patch-less version string `version_menu = "v1.3"`,
 and add the following lines under `[[params.versions]]` for `master`:

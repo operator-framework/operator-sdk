@@ -1,7 +1,7 @@
 ---
 title: Advanced Topics
 linkTitle: Advanced Topics
-weight: 50
+weight: 70
 ---
 
 ### Manage CR status conditions
@@ -19,7 +19,7 @@ To use conditions in your custom resource, add a Conditions field to the Status 
 
 ```Go
 import (
-    "github.com/operator-framework/operator-sdk/pkg/status"
+    "github.com/operator-framework/operator-lib/status"
 )
 
 type MyAppStatus struct {
@@ -247,7 +247,7 @@ A call to `leader.Become()` will block the operator as it retries until it can b
 ```Go
 import (
     ...
-    "github.com/operator-framework/operator-sdk/pkg/leader"
+    "github.com/operator-framework/operator-lib/leader"
 )
 
 func main() {

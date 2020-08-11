@@ -54,10 +54,13 @@ func installModeCompatible(csv *olmapiv1alpha1.ClusterServiceVersion, installMod
 
 // parseInstallModeKV parses an installMode string of the format
 // installModeFormat.
-func parseInstallModeKV(raw string) (olmapiv1alpha1.InstallModeType, []string, error) {
+func parseInstallModeKV(raw, operatorNs string) (olmapiv1alpha1.InstallModeType, []string, error) {
 	modeSplit := strings.Split(raw, "=")
 	if allNs := string(olmapiv1alpha1.InstallModeTypeAllNamespaces); raw == allNs || modeSplit[0] == allNs {
 		return olmapiv1alpha1.InstallModeTypeAllNamespaces, nil, nil
+	}
+	if ownNs := string(olmapiv1alpha1.InstallModeTypeOwnNamespace); raw == ownNs || modeSplit[0] == ownNs {
+		return olmapiv1alpha1.InstallModeTypeOwnNamespace, []string{operatorNs}, nil
 	}
 	if len(modeSplit) != 2 {
 		return "", nil, fmt.Errorf("installMode string %q is malformatted, must be: %s", raw, installModeFormat)

@@ -1,19 +1,16 @@
-/*
-Copyright 2020 The Kubernetes Authors.
-Modifications copyright 2020 The Operator-SDK Authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2020 The Operator-SDK Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 package ansible
 
@@ -60,6 +57,8 @@ func (p *createAPIPlugin) UpdateContext(ctx *plugin.Context) {
     - Updates watches.yaml
     - optionally generates Ansible Role tree
     - optionally generates Ansible playbook
+
+    For the scaffolded operator to be runnable with no changes, specify either --generate-role or --generate-playbook.
 
 `
 	ctx.Examples = fmt.Sprintf(`# Create a new API, without Ansible roles or playbooks
@@ -120,7 +119,8 @@ func (p *createAPIPlugin) Run() error {
 
 // SDK phase 2 plugins.
 func (p *createAPIPlugin) runPhase2() error {
-	return manifests.RunCreateAPI(p.config)
+	gvk := p.createOptions.GVK
+	return manifests.RunCreateAPI(p.config, config.GVK{Group: gvk.Group, Version: gvk.Version, Kind: gvk.Kind})
 }
 
 func (p *createAPIPlugin) Validate() error {

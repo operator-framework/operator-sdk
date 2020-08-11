@@ -69,7 +69,12 @@ const (
 var defaultDir = filepath.Join("config", "scorecard")
 
 // RunInit scaffolds kustomize files for kustomizing a scorecard componentconfig.
-func RunInit(*config.Config) error {
+func RunInit(cfg *config.Config) error {
+	// Only run these if project version is v3.
+	if !cfg.IsV3() {
+		return nil
+	}
+
 	return generate(defaultTestImageTag, defaultDir)
 }
 

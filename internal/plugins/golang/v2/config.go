@@ -21,7 +21,7 @@ type Config struct{}
 
 // hasPluginConfig returns true if cfg.Plugins contains an exact match for this plugin's key.
 func hasPluginConfig(cfg *config.Config) bool {
-	if len(cfg.Plugins) == 0 {
+	if !cfg.IsV3() || len(cfg.Plugins) == 0 {
 		return false
 	}
 	_, hasKey := cfg.Plugins[pluginConfigKey]

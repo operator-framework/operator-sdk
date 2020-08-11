@@ -17,41 +17,57 @@ package manifests
 
 import (
 	"fmt"
-	"path/filepath"
-	"strings"
 
+	"sigs.k8s.io/kubebuilder/pkg/model"
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
+	"sigs.k8s.io/kubebuilder/pkg/model/file"
 
-	"github.com/operator-framework/operator-sdk/internal/plugins/util/kustomize"
+	"github.com/operator-framework/operator-sdk/internal/kubebuilder/machinery"
 )
 
-// sampleKustomizationFragment is a template for samples/kustomization.yaml.
-const sampleKustomizationFragment = `## This file is auto-generated, do not modify ##
-resources:
-`
-
-// RunCreateAPI perform the SDK plugin-specific scaffolds.
-func RunCreateAPI(cfg *config.Config) error {
-
-	// Write CR paths to the samples' kustomization file. This file has a
-	// "do not modify" comment so it is safe to overwrite.
-	samplesKustomization := sampleKustomizationFragment
-	for _, gvk := range cfg.Resources {
-		samplesKustomization += fmt.Sprintf("- %s\n", makeCRFileName(gvk))
+// RunCreateAPI runs the manifests SDK phase 2 plugin.
+func RunCreateAPI(cfg *config.Config, gvk config.GVK) error {
+	// Only run these if project version is v3.
+	if !cfg.IsV3() {
+		return nil
 	}
-	kpath := filepath.Join("config", "samples")
-	if err := kustomize.Write(kpath, samplesKustomization); err != nil {
+
+	if err := newAPIScaffolder(cfg, gvk).scaffold(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// todo(camilamacedo86): Now that we have the Kubebuilder scaffolding machinery included in our repo, we could make
-// this an actual template that supports both file.Template and file.Inserter for init and create api, respectively.
-// More info: https://github.com/operator-framework/operator-sdk/issues/3370
-// makeCRFileName returns a Custom Resource example file name in the same format
-// as kubebuilder's CreateAPI plugin for a gvk.
-func makeCRFileName(gvk config.GVK) string {
-	return fmt.Sprintf("%s_%s_%s.yaml", gvk.Group, gvk.Version, strings.ToLower(gvk.Kind))
+type apiScaffolder struct {
+	config *config.Config
+	gvk    config.GVK
+}
+
+func newAPIScaffolder(config *config.Config, gvk config.GVK) *apiScaffolder {
+	return &apiScaffolder{
+		config: config,
+		gvk:    gvk,
+	}
+}
+
+func (s *apiScaffolder) newUniverse() *model.Universe {
+	return model.NewUniverse(
+		model.WithConfig(s.config),
+	)
+}
+
+func (s *apiScaffolder) scaffold() error {
+	var builders []file.Builder
+	// If the gvk is non-empty, add relevant builders.
+	if s.gvk.Group != "" || s.gvk.Version != "" || s.gvk.Kind != "" {
+		builders = append(builders, &kustomization{GroupVersionKind: s.gvk})
+	}
+
+	err := machinery.NewScaffold().Execute(s.newUniverse(), builders...)
+	if err != nil {
+		return fmt.Errorf("error scaffolding manifests: %v", err)
+	}
+
+	return nil
 }

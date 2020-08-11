@@ -44,6 +44,9 @@ const verifyTemplate = `---
   collections:
     - community.kubernetes
 
+  vars:
+    ctrl_label: control-plane=controller-manager
+
   tasks:
     - block:
         - name: Import all test files from tasks/
@@ -71,7 +74,8 @@ const verifyTemplate = `---
           k8s_log:
             name: '{{ "{{ item.metadata.name }}" }}'
             namespace: '{{ "{{ namespace }}" }}'
-          loop: "{{ "{{ q('k8s', api_version='v1', kind='Pod', namespace=namespace) }}" }}"
+            container: manager
+          loop: "{{ "{{ q('k8s', api_version='v1', kind='Pod', namespace=namespace, label_selector=ctrl_label) }}" }}"
           register: debug_logs
 
         - name: Output gathered resources

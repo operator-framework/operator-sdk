@@ -23,11 +23,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/util/validation"
-
 	"github.com/blang/semver"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	"k8s.io/apimachinery/pkg/util/validation"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 	"sigs.k8s.io/yaml"
 )
@@ -57,7 +57,7 @@ func IsPipeReader() bool {
 }
 
 // WriteObjects writes each object in objs to w.
-func WriteObjects(w io.Writer, objs ...interface{}) error {
+func WriteObjects(w io.Writer, objs ...controllerutil.Object) error {
 	for _, obj := range objs {
 		if err := writeObject(w, obj); err != nil {
 			return err
@@ -67,7 +67,7 @@ func WriteObjects(w io.Writer, objs ...interface{}) error {
 }
 
 // WriteObjectsToFiles creates dir then writes each object in objs to a file in dir.
-func WriteObjectsToFiles(dir string, objs ...interface{}) error {
+func WriteObjectsToFiles(dir string, objs ...controllerutil.Object) error {
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
@@ -76,12 +76,12 @@ func WriteObjectsToFiles(dir string, objs ...interface{}) error {
 	for _, obj := range objs {
 		var fileName string
 		switch t := obj.(type) {
-		case apiextv1.CustomResourceDefinition:
+		case *apiextv1.CustomResourceDefinition:
 			fileName = makeCRDFileName(t.Spec.Group, t.Spec.Names.Plural)
-		case apiextv1beta1.CustomResourceDefinition:
+		case *apiextv1beta1.CustomResourceDefinition:
 			fileName = makeCRDFileName(t.Spec.Group, t.Spec.Names.Plural)
 		default:
-			return fmt.Errorf("unknown object type: %T", t)
+			fileName = makeObjectFileName(t)
 		}
 
 		if _, hasFile := seenFiles[fileName]; hasFile {
@@ -97,6 +97,14 @@ func WriteObjectsToFiles(dir string, objs ...interface{}) error {
 
 func makeCRDFileName(group, resource string) string {
 	return fmt.Sprintf("%s_%s.yaml", group, resource)
+}
+
+func makeObjectFileName(obj controllerutil.Object) string {
+	gvk := obj.GetObjectKind().GroupVersionKind()
+	if gvk.Group == "" {
+		return fmt.Sprintf("%s_%s_%s.yaml", obj.GetName(), gvk.Version, strings.ToLower(gvk.Kind))
+	}
+	return fmt.Sprintf("%s_%s_%s_%s.yaml", obj.GetName(), gvk.Group, gvk.Version, strings.ToLower(gvk.Kind))
 }
 
 // writeObjectToFile marshals crd to bytes and writes them to dir in file.

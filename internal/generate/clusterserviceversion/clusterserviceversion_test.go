@@ -16,7 +16,6 @@ package clusterserviceversion
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -31,7 +30,6 @@ import (
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 	"sigs.k8s.io/yaml"
 
@@ -45,16 +43,12 @@ var (
 	testDataDir           = filepath.Join("..", "testdata")
 	csvDir                = filepath.Join(testDataDir, "clusterserviceversions")
 	csvBasesDir           = filepath.Join(csvDir, "bases")
-	csvNewLayoutBundleDir = filepath.Join(csvDir, "newlayout", "manifests")
+	csvNewLayoutBundleDir = filepath.Join(csvDir, "output")
 
-	// TODO: create a new testdata dir (top level?) that has both a "config"
-	// dir and a "deploy" dir that contains `kustomize build config/default`
-	// output to simulate actual manifest collection behavior. Using "config"
-	// directly is not standard behavior.
-	goTestDataDir = filepath.Join(testDataDir, "non-standard-layout")
-	goAPIsDir     = filepath.Join(goTestDataDir, "api")
-	goConfigDir   = filepath.Join(goTestDataDir, "config")
-	goCRDsDir     = filepath.Join(goConfigDir, "crds")
+	goTestDataDir       = filepath.Join(testDataDir, "go")
+	goAPIsDir           = filepath.Join(goTestDataDir, "api")
+	goStaticDir         = filepath.Join(goTestDataDir, "static")
+	goBasicOperatorPath = filepath.Join(goStaticDir, "basic.operator.yaml")
 )
 
 var (
@@ -74,7 +68,7 @@ var (
 
 var _ = BeforeSuite(func() {
 	col = &collector.Manifests{}
-	Expect(col.UpdateFromDirs(goConfigDir, goCRDsDir)).ToNot(HaveOccurred())
+	collectManifestsFromFileHelper(col, goBasicOperatorPath)
 
 	cfg = readConfigHelper(goTestDataDir)
 
@@ -97,7 +91,7 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 		buf = &bytes.Buffer{}
 	})
 
-	Describe("for the new Go project layout", func() {
+	Describe("for a Go project", func() {
 
 		Context("with correct Options", func() {
 
@@ -281,7 +275,7 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 					getBase:      makeBaseGetter(newCSV),
 				}
 				// Update the input's and expected CSV's Deployment image.
-				Expect(g.Collector.UpdateFromDirs(goConfigDir, goCRDsDir)).ToNot(HaveOccurred())
+				collectManifestsFromFileHelper(g.Collector, goBasicOperatorPath)
 				Expect(len(g.Collector.Deployments)).To(BeNumerically(">=", 1))
 				imageTag := "controller:v" + g.Version
 				modifyDepImageHelper(&g.Collector.Deployments[0].Spec, imageTag)
@@ -309,42 +303,6 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 				csv, err := g.generate()
 				Expect(err).ToNot(HaveOccurred())
 				Expect(csv).To(Equal(upgradeCSV(newCSV, g.OperatorName, g.Version)))
-			})
-		})
-
-		Context("generate ClusterServiceVersion", func() {
-			It("should handle CRDs with core type name", func() {
-				g = Generator{
-					OperatorName: operatorName,
-					OperatorType: operatorType,
-					Version:      version,
-					Collector:    &collector.Manifests{},
-					config:       cfg,
-					getBase:      makeBaseGetter(newCSV),
-				}
-				err := filepath.Walk(goConfigDir, func(path string, info os.FileInfo, err error) error {
-					if err != nil || info.IsDir() {
-						return err
-					}
-					file, err := os.OpenFile(path, os.O_RDONLY, 0)
-					if err != nil {
-						return err
-					}
-					defer file.Close()
-					return g.Collector.UpdateFromReader(file)
-				})
-				Expect(err).ShouldNot(HaveOccurred(), "failed to read manifests")
-				Expect(len(g.Collector.V1beta1CustomResourceDefinitions)).Should(BeEquivalentTo(2))
-				Expect(len(g.Collector.CustomResources)).Should(BeEquivalentTo(2))
-
-				csv, err := g.generate()
-				Expect(err).ToNot(HaveOccurred())
-				Expect(csv.Annotations["alm-examples"]).ShouldNot(BeEquivalentTo("[]"))
-
-				crs := []unstructured.Unstructured{}
-				err = json.Unmarshal([]byte(csv.Annotations["alm-examples"]), &crs)
-				Expect(err).ShouldNot(HaveOccurred(), "failed to parse 'alm-examples' annotations")
-				Expect(crs).Should(ConsistOf(g.Collector.CustomResources), "custom resources shall match with CSV annotations")
 			})
 		})
 	})
@@ -387,6 +345,13 @@ var _ = Describe("Generation requires interaction", func() {
 		})
 	})
 })
+
+func collectManifestsFromFileHelper(col *collector.Manifests, path string) {
+	f, err := os.Open(path)
+	ExpectWithOffset(1, err).ToNot(HaveOccurred())
+	ExpectWithOffset(1, col.UpdateFromReader(f)).ToNot(HaveOccurred())
+	ExpectWithOffset(1, f.Close()).Should(Succeed())
+}
 
 func readConfigHelper(dir string) *config.Config {
 	wd, err := os.Getwd()

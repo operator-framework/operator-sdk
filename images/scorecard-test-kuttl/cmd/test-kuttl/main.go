@@ -74,6 +74,16 @@ func main() {
 }
 
 func getTestStatus(tc []*Testcase) (s v1alpha3.TestStatus) {
+
+	// report the kuttl logs when kuttl tests can not be run
+	// (e.g. RBAC is not sufficient)
+	if len(tc) == 0 {
+		r := v1alpha3.TestResult{}
+		r.Log = getKuttlLogs()
+		s.Results = append(s.Results, r)
+		return s
+	}
+
 	for i := 0; i < len(tc); i++ {
 		r := v1alpha3.TestResult{}
 		r.Name = tc[i].Name
@@ -174,4 +184,20 @@ type Testsuites struct {
 	Properties *Properties `xml:"properties" json:"properties,omitempty"`
 	// Testsuite is a collection of test suites
 	Testsuite []*Testsuite `xml:"testsuite" json:"testsuite,omitempty"`
+}
+
+func getKuttlLogs() string {
+	stderrFile, err := ioutil.ReadFile("/tmp/kuttl.stderr")
+	if err != nil {
+		printErrorStatus(fmt.Errorf("could not open kuttl stderr file %v", err))
+		return err.Error()
+	}
+
+	stdoutFile, err := ioutil.ReadFile("/tmp/kuttl.stdout")
+	if err != nil {
+		printErrorStatus(fmt.Errorf("could not open kuttl stdout file %v", err))
+		return err.Error()
+	}
+
+	return string(stderrFile) + string(stdoutFile)
 }

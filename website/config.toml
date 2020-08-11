@@ -95,6 +95,10 @@ algolia_docsearch = false
   url = "https://sdk.operatorframework.io"
 
 [[params.versions]]
+  version = "v1.0"
+  url = "https://v1-0-x.sdk.operatorframework.io"
+
+[[params.versions]]
   version = "v0.19"
   url = "https://v0-19-x.sdk.operatorframework.io"
 

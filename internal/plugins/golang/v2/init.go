@@ -51,10 +51,12 @@ func (p *initPlugin) Run() error {
 		return err
 	}
 
-	// Update plugin config section with this plugin's configuration.
-	cfg := Config{}
-	if err := p.config.EncodePluginConfig(pluginConfigKey, cfg); err != nil {
-		return fmt.Errorf("error writing plugin config for %s: %v", pluginConfigKey, err)
+	// Update plugin config section with this plugin's configuration for v3 projects.
+	if p.config.IsV3() {
+		cfg := Config{}
+		if err := p.config.EncodePluginConfig(pluginConfigKey, cfg); err != nil {
+			return fmt.Errorf("error writing plugin config for %s: %v", pluginConfigKey, err)
+		}
 	}
 
 	return nil

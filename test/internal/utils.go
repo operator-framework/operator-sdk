@@ -40,8 +40,9 @@ endif
 PKG_MAN_OPTS ?= $(PKG_CHANNELS) $(PKG_IS_DEFAULT_CHANNEL)
 
 # Generate package manifests.
-packagemanifests: kustomize 
+packagemanifests: kustomize
 	operator-sdk generate kustomize manifests -q --interactive=false
+	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/manifests | operator-sdk generate packagemanifests -q --version $(VERSION) $(PKG_MAN_OPTS)
 `
 

@@ -93,7 +93,7 @@ func (c *OperatorCmd) AddToFlagSet(fs *pflag.FlagSet) {
 
 func (c *OperatorCmd) validate() error {
 	if c.InstallMode != "" {
-		if _, _, err := parseInstallModeKV(c.InstallMode); err != nil {
+		if _, _, err := parseInstallModeKV(c.InstallMode, c.Namespace); err != nil {
 			return err
 		}
 	}
@@ -121,6 +121,7 @@ func (c *OperatorCmd) newManager() (*operatorManager, error) {
 	m := &operatorManager{}
 
 	// Cluster and operator namespace info.
+	// TODO(joelanford): Migrate this to use `internal/operator.Configuration`
 	rc, ns, err := k8sutil.GetKubeconfigAndNamespace(c.KubeconfigPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get namespace from kubeconfig %s: %w", c.KubeconfigPath, err)

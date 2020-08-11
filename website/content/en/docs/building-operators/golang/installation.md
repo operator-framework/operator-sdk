@@ -13,10 +13,7 @@ Follow the steps in the [installation guide][install-guide] to learn how to inst
 - [mercurial][mercurial_tool] version 3.9+
 - [docker][docker_tool] version 17.03+.
 - [kubectl][kubectl_tool] version v1.11.3+.
-- Access to a Kubernetes v1.11.3+ cluster.
-
-**Note**: This guide uses [minikube][minikube-tool] version v0.25.0+ as the
-local Kubernetes cluster and [quay.io][quay-link] for the public registry.
+- Access to a Kubernetes v1.11.3+ cluster (v1.16.0+ if using `apiextensions.k8s.io/v1` CRDs).
 
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/
@@ -24,5 +21,4 @@ local Kubernetes cluster and [quay.io][quay-link] for the public registry.
 [mercurial_tool]:https://www.mercurial-scm.org/downloads
 [kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [install-guide]: /docs/installation/install-operator-sdk
-[minikube-tool]:https://github.com/kubernetes/minikube#installation
 [quay-link]:https://quay.io
