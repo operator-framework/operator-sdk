@@ -120,7 +120,7 @@ func makeObjectFileName(b []byte, names ...string) string {
 	return fileName + "yaml"
 }
 
-// hashContents creates a base32-encoded md5 digest of b's bytes.
+// hashContents creates a sha256 digest of b's bytes.
 func hashContents(b []byte) string {
 	h := sha256.New()
 	_, _ = h.Write(b)
