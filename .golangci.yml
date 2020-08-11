@@ -19,3 +19,9 @@ linters:
     - gosimple
     - unconvert
     - gocyclo
+    - gosec
+issues:
+  exclude-rules:
+    - linters:
+      - gosec
+      text: "G110|G601|G404|G204|G306"
