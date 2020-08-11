@@ -12,6 +12,7 @@ endif
 VERSION = $(shell git describe --dirty --tags --always)
 GIT_COMMIT = $(shell git rev-parse HEAD)
 K8S_VERSION = v1.18.2
+GOLANGCI_LINT_VER = "1.30.0"
 REPO = github.com/operator-framework/operator-sdk
 PKGS = $(shell go list ./... | grep -v /vendor/)
 TEST_PKGS = $(shell go list ./... | grep -v -E 'github.com/operator-framework/operator-sdk/test/')
@@ -25,8 +26,6 @@ GO_BUILD_ARGS = \
     -X '$(REPO)/internal/version.GitCommit=$(GIT_COMMIT)' \
     -X '$(REPO)/internal/version.KubernetesVersion=$(K8S_VERSION)' \
   " \
-
-GOLANGCI_LINT_VER = "1.30.0"
 
 ANSIBLE_BASE_IMAGE = quay.io/operator-framework/ansible-operator
 HELM_BASE_IMAGE = quay.io/operator-framework/helm-operator
