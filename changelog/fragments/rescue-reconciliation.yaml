@@ -1,0 +1,8 @@
+entries:
+  - description: >
+      Added checks for rescued tasks during reconciliation
+      to avoid adding rescued tasks to the list of failures.
+
+    kind: "addition"
+
+    breaking: false
