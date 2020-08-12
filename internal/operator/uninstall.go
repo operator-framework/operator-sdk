@@ -41,6 +41,8 @@ type Uninstall struct {
 	DeleteCRDs               bool
 	DeleteOperatorGroups     bool
 	DeleteOperatorGroupNames []string
+
+	Logf func(string, ...interface{})
 }
 
 func NewUninstall(cfg *Configuration) *Uninstall {
@@ -156,7 +158,7 @@ func (u *Uninstall) deleteObjects(ctx context.Context, waitForDelete bool, objs 
 		if err := u.config.Client.Delete(ctx, obj); err != nil && !apierrors.IsNotFound(err) {
 			return fmt.Errorf("delete %s %q: %v", lowerKind, obj.GetName(), err)
 		} else if err == nil {
-			u.config.Log("%s %q deleted", lowerKind, obj.GetName())
+			u.Logf("%s %q deleted", lowerKind, obj.GetName())
 		}
 		if waitForDelete {
 			key, err := client.ObjectKeyFromObject(obj)

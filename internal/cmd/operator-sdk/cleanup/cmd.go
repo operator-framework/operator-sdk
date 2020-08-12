@@ -27,7 +27,6 @@ import (
 func NewCmd() *cobra.Command {
 	var timeout time.Duration
 	cfg := &operator.Configuration{}
-	cfg.Log = log.Infof
 	cmd := &cobra.Command{
 		Use:   "cleanup <operatorPackageName>",
 		Short: "Clean up an Operator deployed with the 'run' subcommand",
@@ -41,6 +40,7 @@ func NewCmd() *cobra.Command {
 			u.Package = args[0]
 			u.DeleteAll = true
 			u.DeleteOperatorGroupNames = []string{operator.SDKOperatorGroupName}
+			u.Logf = log.Infof
 
 			ctx, cancel := context.WithTimeout(cmd.Context(), timeout)
 			defer cancel()
