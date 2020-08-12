@@ -8,6 +8,7 @@ Run an Operator in a variety of environments
 ### Synopsis
 
 This command has subcommands that will deploy your Operator with OLM.
+Currently only the package manifests format is supported via the 'packagemanifests' subcommand.
 
 ### Options
 
