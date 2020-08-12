@@ -76,18 +76,8 @@ $ echo "test" | gpg2 --clearsign
 Each minor release has a corresponding release branch of the form `vX.Y.x`, where `X` and `Y` are the major and minor
 release version numbers and the `x` is literal. This branch accepts bug fixes according to our [backport policy][backports].
 
-This branch must be created before the release occurs to appease the Netlify website configuration demons.
-You can do so by running the following before proceeding with the release, assuming the upstream SDK is the `origin` remote repo:
-
-```sh
-$ git checkout master
-$ git pull
-$ git checkout -b v1.3.x
-$ git push -u origin v1.3.x
-```
-
 After the minor release is made, this branch must be fast-forwarded to that release's tag and a post-release PR made
-against this branch. See the [release process](#4-create-a-pr-for-post-release-version-updates) for more details.
+against this branch. See the [release process](#7-create-a-pr-for-post-release-version-updates) for more details.
 
 #### Cherry-picking
 
@@ -98,7 +88,7 @@ Fixes can be added automatically by posting a `/cherry-pick v1.3.x` comment in t
 $ git checkout v1.3.x
 $ git checkout -b cherrypick/some-bug
 $ git cherry-pick "$GIT_COMMIT_HASH" # Hash of the merge commit to master.
-$ git push origin cherrypick/some-bug
+$ git push upstream cherrypick/some-bug
 ```
 
 Create and merge a PR from your branch to `v1.3.x`.
@@ -116,19 +106,12 @@ should be locked so commits cannot happen between the release PR and release tag
 
 Now only administrators (maintainers) should be able to force merge PRs. Make sure everyone in the relevant Slack channel is aware of the release so they do not force merge by accident.
 
-Unlock `master` or release branch after the release has completed (after step 3 is complete) by changing the number of required approving reviewers back to 1.
+Unlock `master` or release branch after the release has completed (after step 6 is complete) by changing the number of required approving reviewers back to 1.
 
 ### Releasing
 
-The GitHub [`Releases` tab][release-page] in the operator-sdk repo is where all SDK releases live. To create a GitHub release:
-
-1. Go to the SDK [`Releases` tab][release-page] and click the `Draft a new release` button in the top right corner.
-1. Select the tag version `v1.3.0`, and set the title to `v1.3.0`.
-1. Copy and paste `CHANGELOG.md` updates under the `v1.3.0` header into the description form (see [below](#release-notes)).
-1. Attach all binaries and `.asc` signature files to the release by dragging and dropping them.
-1. Click the `Publish release` button.
-
-**Note:** if this is a pre-release, make sure to check the `This is a pre-release` box under the file attachment frame. If you are not sure what this means, ask another maintainer.
+The GitHub [`Releases` tab][release-page] in the operator-sdk repo is where all SDK releases live.
+To create a GitHub release see the [releasing binaries section](#8-releasing-binaries-signatures-and-release-notes).
 
 #### Release notes
 
@@ -214,15 +197,29 @@ To verify a release binary using the provided asc files see the [installation gu
 These steps describe how to conduct a release of the SDK, upgrading from `v1.2.0` to `v1.3.0`.
 Replace these versions with the current and new version you are releasing, respectively.
 
-For major and minor releases, `master` should be locked between steps 1 and 3 so that all commits will be either in the new release
+For major and minor releases, `master` should be locked between steps 3 and 6 so that all commits will be either in the new release
 or have a pre-release version, ex. `v1.2.0+git`. Otherwise commits might be built into a release that shouldn't be.
 For patch releases, ensure all required bugs are [cherry-picked](#cherry-picking), then the release branch `v1.3.x` should be locked down.
+
+### 1. Netlify configuration
 
 **Important:** ensure a release branch-to-subdomain mapping exists in the SDK's Netlify configuration _prior to creating a release_,
 ex. `v1.3.x` to `https://v1-3-x.sdk.operatorframework.io`. You can ping SDK [approvers][doc-owners] to ensure a
 [release branch](#release-branches) is created prior to the release and that this mapping is created.
 
-### 1. Create a PR for release version, CHANGELOG.md, and migration guide updates
+### 2. Create release branch for Netlify
+
+The release branch must be created before the release occurs to appease the Netlify website configuration demons.
+You can do so by running the following before proceeding with the release, assuming the upstream SDK is the `upstream` remote repo:
+
+```sh
+$ git checkout master
+$ git pull
+$ git checkout -b v1.3.x
+$ git push -u upstream v1.3.x
+```
+
+### 3. Create a PR for release version, CHANGELOG.md, and migration guide updates
 
 Once all PR's needed for a release have been merged, branch from `master`:
 
@@ -265,14 +262,13 @@ and add the following lines under `[[params.versions]]` for `master`:
     url = "https://v1-3-x.sdk.operatorframework.io"
   ```
 
----
-
+### 4. Lock down proper branch
 Create and merge a new PR for `release-v1.3.0`. Once this PR is merged, lock down the master or release branch
-to prevent further commits between this and step 4. See [this section](#locking-down-branches) for steps to do so.
+to prevent further commits between this and step 7. See [this section](#locking-down-branches) for steps to do so.
 
-### 2. Create a release tag, binaries, and signatures
+### 5. Create a release tag, binaries, and signatures
 
-The top-level `release.sh` script will take care of verifying versions in files described in step 1, and tagging and verifying the tag, as well as building binaries and generating signatures by calling `make release`.
+The top-level `release.sh` script will take care of verifying versions in files described in step 3, and tagging and verifying the tag, as well as building binaries and generating signatures by calling `make release`.
 
 Prerequisites:
 - [`git`][doc-git-default-key] and [`gpg`][doc-gpg-default-key] default PGP keys are set locally.
@@ -298,17 +294,17 @@ To verify binaries and tags, see the [verification section](#verifying-a-release
 `ansible-operator` and `helm-operator` release binaries and signatures are similarly built for upload so `make run`
 can download them in their respective operator type projects. See [#3327](https://github.com/operator-framework/operator-sdk/issues/3327) for details.
 
-Push tag `v1.3.0` upstream, assuming `origin` is the name of the upstream remote:
+Push tag `v1.3.0` upstream, assuming `upstream` is the name of the upstream remote:
 
 ```sh
-$ git push origin v1.3.0
+$ git push upstream v1.3.0
 ```
 
-Once this tag passes CI, go to step 3. For more info on tagging, see the [release tags section](#release-tags).
+Once this tag passes CI, go to step 6. For more info on tagging, see the [release tags section](#release-tags).
 
 **Note:** If CI fails for some reason, you will have to revert the tagged commit, re-commit, and make a new PR.
 
-### 3. Fast-forward the `latest` and release branches
+### 6. Fast-forward the `latest` and release branches
 
 The `latest` branch points to the latest release tag to keep the main website subdomain up-to-date.
 Run the following commands to do so:
@@ -316,7 +312,7 @@ Run the following commands to do so:
 ```sh
 $ git checkout latest
 $ git reset --hard tags/v1.3.0
-$ git push -f origin latest
+$ git push -f upstream latest
 ```
 
 Similarly, to update the release branch, run:
@@ -324,10 +320,10 @@ Similarly, to update the release branch, run:
 ```sh
 $ git checkout v1.3.x
 $ git reset --hard tags/v1.3.0
-$ git push -f origin v1.3.x
+$ git push -f upstream v1.3.x
 ```
 
-### 4. Create a PR for post-release version updates
+### 7. Create a PR for post-release version updates
 
 Check out a new branch from `master` or release branch and commit the following changes:
 
@@ -338,11 +334,20 @@ Check out a new branch from `master` or release branch and commit the following 
 
 Create a new PR for this branch targeting the `master` or release branch.
 
-### 5. Releasing binaries, signatures, and release notes
+### 8. Releasing binaries, signatures, and release notes
 
 The final step is to upload binaries, their signature files, and release notes from `CHANGELOG.md` for `v1.3.0`.
-See [this section](#releasing) for steps to do so.
+To create a GitHub release:
 
+1. Go to the SDK [`Releases` tab][release-page] and click the `Draft a new release` button in the top right corner.
+1. Select the tag version `v1.3.0`, and set the title to `v1.3.0`.
+1. Copy and paste `CHANGELOG.md` updates under the `v1.3.0` header into the description form (see [below](#release-notes)).
+1. Attach all binaries and `.asc` signature files to the release by dragging and dropping them.
+1. Click the `Publish release` button.
+
+**Note:** if this is a pre-release, make sure to check the `This is a pre-release` box under the file attachment frame. If you are not sure what this means, ask another maintainer.
+
+### 9. Unlock proper branch
 Unlock the `master` or release branch after the Github release is complete.
 See [this section](#locking-down-branches) for steps to do so.
 
@@ -364,9 +369,9 @@ The release process for the samples repo is simple:
     $ export VER="v1.3.0"
     $ git tag --sign --message "Operator SDK Samples $VER" "$VER"
     ```
-1. Push the tag to the remote, assuming `origin` is the name of the upstream remote:
+1. Push the tag to the remote, assuming `upstream` is the name of the upstream remote:
     ```sh
-    $ git push origin $VER
+    $ git push upstream $VER
     ```
 
 ### (Post-release) Updating the release notes
@@ -380,7 +385,7 @@ Add the following line to the top of the GitHub release notes for `v1.3.0`:
 [install-guide]: /docs/installation/install-operator-sdk
 [doc-maintainers]: https://github.com/operator-framework/operator-sdk/blob/master/MAINTAINERS
 [doc-owners]: https://github.com/operator-framework/operator-sdk/blob/master/OWNERS
-[doc-readme-prereqs]: /docs/installation/install-operator-sdk#prerequisites
+[doc-readme-prereqs]: /docs/installation/install-operator-sdk#prerequisites-for-compilation
 [doc-git-default-key]:https://help.github.com/en/articles/telling-git-about-your-signing-key
 [doc-gpg-default-key]:https://lists.gnupg.org/pipermail/gnupg-users/2001-September/010163.html
 [link-github-gpg-key-upload]:https://github.com/settings/keys
