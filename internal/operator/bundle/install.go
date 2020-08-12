@@ -98,7 +98,7 @@ func loadBundle(ctx context.Context, bundleImage string) (labels registryutil.La
 
 	relManifestsDir, ok := labels.GetManifestsDir()
 	if !ok {
-		relManifestsDir = "manifests"
+		return nil, nil, fmt.Errorf("manifests directory not defined in bundle metadata")
 	}
 	manifestsDir := filepath.Join(bundlePath, relManifestsDir)
 	csv, err = registry.ReadCSVFromBundleDirectory(manifestsDir)

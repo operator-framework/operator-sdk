@@ -50,9 +50,9 @@ func NewCmd() *cobra.Command {
 			// TODO(joelanford): Add cleanup logic if this fails?
 			csv, err := i.Run(ctx)
 			if err != nil {
-				logrus.Fatalf("failed to run bundle: %v\n", err)
+				logrus.Fatalf("Failed to run bundle: %v\n", err)
 			}
-			logrus.Infof("csv %q installed\n", csv.Name)
+			logrus.Infof("CSV %q installed\n", csv.Name)
 		},
 	}
 	cmd.Flags().SortFlags = false
