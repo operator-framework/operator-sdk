@@ -16,10 +16,9 @@ package bundle
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/operator-framework/operator-sdk/internal/operator"
@@ -28,55 +27,38 @@ import (
 
 func NewCmd() *cobra.Command {
 	var timeout time.Duration
-	var cleanupTimeout time.Duration
 
-	// TODO(joelanford): the initialization of cfg up to
+	// TODO(joelanford): move the initialization of cfg up to
 	//   the "run" subcommand when migrating packagemanifests
 	//   to this design.
 	cfg := &operator.Configuration{}
 
 	i := bundle.NewInstall(cfg)
-	u := bundle.NewUninstall(cfg)
 	cmd := &cobra.Command{
-		Use:    "bundle <bundle-image>",
-		Short:  "Deploy an Operator in the bundle format with OLM",
-		Hidden: true,
-		Args:   cobra.ExactArgs(1),
+		Use:   "bundle <bundle-image>",
+		Short: "Deploy an Operator in the bundle format with OLM",
+		Args:  cobra.ExactArgs(1),
 		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
 			return cfg.Load()
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			runCtx, runCancel := context.WithTimeout(cmd.Context(), timeout)
-			defer runCancel()
+			ctx, cancel := context.WithTimeout(cmd.Context(), timeout)
+			defer cancel()
 
 			i.BundleImage = args[0]
-			u.BundleImage = args[0]
-			u.DeleteAll = true
 
-			csv, err := i.Run(runCtx)
+			// TODO(joelanford): Add cleanup logic if this fails?
+			csv, err := i.Run(ctx)
 			if err != nil {
-				func() {
-					cancelCtx, cancelCancel := context.WithTimeout(cmd.Context(), cleanupTimeout)
-					defer cancelCancel()
-
-					cleanupErr := u.Run(cancelCtx)
-					if cleanupErr != nil {
-						defer func() {
-							fmt.Printf("cleanup error: %v\n", cleanupErr)
-						}()
-					}
-					fmt.Printf("failed to run bundle: %v\n", err)
-				}()
-				os.Exit(1)
+				logrus.Fatalf("failed to run bundle: %v\n", err)
 			}
-			fmt.Printf("csv %q installed\n", csv.Name)
+			logrus.Infof("csv %q installed\n", csv.Name)
 		},
 	}
 	cmd.Flags().SortFlags = false
 	cfg.BindFlags(cmd.PersistentFlags())
 	i.BindFlags(cmd.Flags())
 
-	cmd.Flags().DurationVar(&timeout, "timeout", 60*time.Second, "install timeout")
-	cmd.Flags().DurationVar(&cleanupTimeout, "cleanup-timeout", 10*time.Second, "cleanup timeout")
+	cmd.Flags().DurationVar(&timeout, "timeout", 2*time.Minute, "install timeout")
 	return cmd
 }
