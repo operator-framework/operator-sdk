@@ -96,7 +96,10 @@ func loadBundle(ctx context.Context, bundleImage string) (labels registryutil.La
 		return nil, nil, fmt.Errorf("load bundle metadata: %v", err)
 	}
 
-	relManifestsDir := labels["operators.operatorframework.io.bundle.manifests.v1"]
+	relManifestsDir, ok := labels.GetManifestsDir()
+	if !ok {
+		relManifestsDir = "manifests"
+	}
 	manifestsDir := filepath.Join(bundlePath, relManifestsDir)
 	csv, err = registry.ReadCSVFromBundleDirectory(manifestsDir)
 	if err != nil {

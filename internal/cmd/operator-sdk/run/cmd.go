@@ -24,7 +24,9 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "run",
 		Short: "Run an Operator in a variety of environments",
-		Long:  "This command has subcommands that will deploy your Operator with OLM.",
+		// TODO(joelanford): remove the second sentence when `run bundle` implementation is complete
+		Long: `This command has subcommands that will deploy your Operator with OLM.
+Currently only the package manifests format is supported via the 'packagemanifests' subcommand.`,
 	}
 
 	cmd.AddCommand(
