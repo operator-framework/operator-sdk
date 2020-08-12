@@ -176,7 +176,7 @@ func writeAnnotationFile(filename string, annotation *registrybundle.AnnotationM
 		mode = info.Mode()
 	}
 
-	err = ioutil.WriteFile(filename, []byte(file), mode)
+	err = ioutil.WriteFile(filename, file, mode)
 	if err != nil {
 		return fmt.Errorf("error writing modified contents to annotations file, %v", err)
 	}

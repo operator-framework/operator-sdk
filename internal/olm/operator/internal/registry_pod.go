@@ -179,8 +179,7 @@ func (rp *RegistryPod) VerifyPodRunning(ctx context.Context) error {
 // checkPodStatus polls and verifies that the pod status is running
 func (rp *RegistryPod) checkPodStatus(ctx context.Context, podCheck wait.ConditionFunc) error {
 	// poll every 200 ms until podCheck is true or context is done
-	err := wait.PollImmediateUntil(time.Duration(200*time.Millisecond),
-		podCheck, ctx.Done())
+	err := wait.PollImmediateUntil(200*time.Millisecond, podCheck, ctx.Done())
 	if err != nil {
 		return fmt.Errorf("error waiting for registry pod %s to run: %v", rp.pod.Name, err)
 	}

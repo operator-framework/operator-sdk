@@ -81,7 +81,7 @@ If the argument holds an image tag, it must be present remotely.`,
 		"Option to enable listing which tests are run")
 	scorecardCmd.Flags().BoolVarP(&c.skipCleanup, "skip-cleanup", "x", false,
 		"Disable resource cleanup after tests are run")
-	scorecardCmd.Flags().DurationVarP(&c.waitTime, "wait-time", "w", time.Duration(30*time.Second),
+	scorecardCmd.Flags().DurationVarP(&c.waitTime, "wait-time", "w", 30*time.Second,
 		"seconds to wait for tests to complete. Example: 35s")
 
 	return scorecardCmd
