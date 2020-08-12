@@ -186,6 +186,23 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 				return reconcile.Result{}, err
 			}
 		}
+
+		if module, found := event.EventData["task_action"]; found {
+			if module == "operator_sdk.util.requeue_after" && event.Event != eventapi.EventRunnerOnFailed {
+				if data, exists := event.EventData["res"]; exists {
+					if fields, check := data.(map[string]interface{}); check {
+						requeueDuration, err := time.ParseDuration(fields["period"].(string))
+						if err != nil {
+							logger.Error(err, "Unable to parse time input")
+							return reconcileResult, err
+						}
+						reconcileResult.RequeueAfter = requeueDuration
+						logger.Info(fmt.Sprintf("Set the reconciliation to occur after %s", requeueDuration))
+						return reconcileResult, nil
+					}
+				}
+			}
+		}
 		if event.Event == eventapi.EventRunnerOnFailed && !event.IgnoreError() && !event.Rescued() {
 			failureMessages = append(failureMessages, event.GetFailedPlaybookMessage())
 		}
