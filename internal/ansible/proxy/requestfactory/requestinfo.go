@@ -128,6 +128,7 @@ type RequestInfoFactory struct {
 // /healthz
 
 func (r *RequestInfoFactory) NewRequestInfo(req *http.Request) (*RequestInfo, error) { //nolint:gocyclo
+	// TODO: Try to reduce the complexity of this last measured at 33 (failing at > 30) and remove the // nolint:gocyclo
 	// start with a non-resource request until proven otherwise
 	requestInfo := RequestInfo{
 		IsResourceRequest: false,

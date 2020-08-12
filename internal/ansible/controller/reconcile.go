@@ -64,6 +64,7 @@ type AnsibleOperatorReconciler struct {
 
 // Reconcile - handle the event.
 func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.Result, error) { //nolint:gocyclo
+	// TODO: Try to reduce the complexity of this last measured at 42 (failing at > 30) and remove the // nolint:gocyclo
 	u := &unstructured.Unstructured{}
 	u.SetGroupVersionKind(r.GVK)
 	err := r.Client.Get(context.TODO(), request.NamespacedName, u)
