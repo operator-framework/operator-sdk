@@ -1,8 +1,8 @@
 entries:
   - description: >
-      Added checks for rescued tasks during reconciliation
-      to avoid adding rescued tasks to the list of failures.
+      Stop reconciling tasks when the event raised is a rescue in Ansible-based Operators. 
+      More info: [Bugzilla 1856714](https://bugzilla.redhat.com/show_bug.cgi?id=1856714)
 
-    kind: "addition"
+    kind: "bugfix"
 
     breaking: false
