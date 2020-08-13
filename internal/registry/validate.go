@@ -36,6 +36,9 @@ import (
 // if they can be applied to a cluster using `kubectl` provided users have all
 // necessary permissions and configurations.
 func ValidateBundleContent(logger *log.Entry, bundle *apimanifests.Bundle, mediaType string) []apierrors.ManifestResult {
+	if logger == nil {
+		logger = DiscardLogger()
+	}
 
 	// Use errs to collect bundle-level validation errors.
 	errs := apierrors.ManifestResult{

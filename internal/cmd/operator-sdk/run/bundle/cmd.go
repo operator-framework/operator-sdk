@@ -12,47 +12,53 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cleanup
+package bundle
 
 import (
 	"context"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/operator-framework/operator-sdk/internal/operator"
+	"github.com/operator-framework/operator-sdk/internal/operator/bundle"
 )
 
 func NewCmd() *cobra.Command {
 	var timeout time.Duration
+
+	// TODO(joelanford): move the initialization of cfg up to
+	//   the "run" subcommand when migrating packagemanifests
+	//   to this design.
 	cfg := &operator.Configuration{}
+
+	i := bundle.NewInstall(cfg)
 	cmd := &cobra.Command{
-		Use:   "cleanup <operatorPackageName>",
-		Short: "Clean up an Operator deployed with the 'run' subcommand",
-		Long:  "This command has subcommands that will destroy an Operator deployed with OLM.",
+		Use:   "bundle <bundle-image>",
+		Short: "Deploy an Operator in the bundle format with OLM",
 		Args:  cobra.ExactArgs(1),
 		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
 			return cfg.Load()
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			u := operator.NewUninstall(cfg)
-			u.Package = args[0]
-			u.DeleteAll = true
-			u.DeleteOperatorGroupNames = []string{operator.SDKOperatorGroupName}
-			u.Logf = log.Infof
-
 			ctx, cancel := context.WithTimeout(cmd.Context(), timeout)
 			defer cancel()
 
-			if err := u.Run(ctx); err != nil {
-				log.Fatalf("Uninstall operator: %v\n", err)
+			i.BundleImage = args[0]
+
+			// TODO(joelanford): Add cleanup logic if this fails?
+			csv, err := i.Run(ctx)
+			if err != nil {
+				logrus.Fatalf("Failed to run bundle: %v\n", err)
 			}
-			log.Infof("Operator %q uninstalled\n", u.Package)
+			logrus.Infof("CSV %q installed\n", csv.Name)
 		},
 	}
-	cmd.Flags().DurationVar(&timeout, "timeout", 2*time.Minute, "Time to wait for the command to complete before failing")
+	cmd.Flags().SortFlags = false
 	cfg.BindFlags(cmd.PersistentFlags())
+	i.BindFlags(cmd.Flags())
 
+	cmd.Flags().DurationVar(&timeout, "timeout", 2*time.Minute, "install timeout")
 	return cmd
 }

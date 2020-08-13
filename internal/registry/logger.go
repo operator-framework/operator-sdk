@@ -12,25 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package run
+package registry
 
 import (
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"io/ioutil"
+
+	log "github.com/sirupsen/logrus"
 )
 
-var _ = Describe("Running a run command", func() {
-	Describe("NewCmd", func() {
-		It("builds a cobra command with the correct subcommands", func() {
-			cmd := NewCmd()
-			Expect(cmd).NotTo(BeNil())
-			Expect(cmd.Use).NotTo(BeNil())
-			Expect(cmd.Short).NotTo(BeNil())
-			Expect(cmd.Long).NotTo(BeNil())
-
-			subcommands := cmd.Commands()
-			Expect(len(subcommands)).To(Equal(1))
-			Expect(subcommands[0].Use).To(Equal("packagemanifests <packagemanifests-root-dir>"))
-		})
-	})
-})
+// DiscardLogger returns a logger that throws away input.
+func DiscardLogger() *log.Entry {
+	logger := log.New()
+	logger.SetOutput(ioutil.Discard)
+	return log.NewEntry(logger)
+}

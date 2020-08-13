@@ -31,7 +31,7 @@ func NewCmd() *cobra.Command {
 	c := &packagemanifestsCmd{}
 
 	cmd := &cobra.Command{
-		Use:   "packagemanifests",
+		Use:   "packagemanifests <packagemanifests-root-dir>",
 		Short: "Deploy an Operator in the package manifests format with OLM",
 		Long: `'run packagemanifests' deploys an Operator's package manifests with OLM. The command's argument
 must be set to a valid package manifests root directory, ex. '<project-root>/packagemanifests'.`,

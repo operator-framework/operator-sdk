@@ -11,7 +11,7 @@ Deploy an Operator in the package manifests format with OLM
 must be set to a valid package manifests root directory, ex. '&lt;project-root&gt;/packagemanifests'.
 
 ```
-operator-sdk run packagemanifests [flags]
+operator-sdk run packagemanifests <packagemanifests-root-dir> [flags]
 ```
 
 ### Options

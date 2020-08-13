@@ -273,12 +273,12 @@ func PackageManifestsMultiplePackages(t *testing.T) {
 
 func doUninstall(t *testing.T, kubeconfigPath string, timeout time.Duration) error {
 	cfg := &operator2.Configuration{KubeconfigPath: kubeconfigPath}
-	cfg.Log = logrus.Infof
 	assert.NoError(t, cfg.Load())
 	uninstall := operator2.NewUninstall(cfg)
 	uninstall.DeleteAll = true
 	uninstall.DeleteOperatorGroupNames = []string{operator2.SDKOperatorGroupName}
 	uninstall.Package = defaultOperatorName
+	uninstall.Logf = logrus.Infof
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()

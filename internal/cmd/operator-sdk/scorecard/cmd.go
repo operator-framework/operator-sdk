@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
@@ -204,17 +203,10 @@ func (c *scorecardCmd) validate(args []string) error {
 	return nil
 }
 
-// discardLogger returns a logger that throws away input.
-func discardLogger() *log.Logger {
-	logger := log.New()
-	logger.SetOutput(ioutil.Discard)
-	return logger
-}
-
 // extractBundleImage returns bundleImage's path on disk post-extraction.
 func extractBundleImage(bundleImage string) (string, error) {
 	// Discard bundle extraction logs unless user sets verbose mode.
-	logger := log.NewEntry(discardLogger())
+	logger := registryutil.DiscardLogger()
 	if viper.GetBool(flags.VerboseOpt) {
 		logger = log.WithFields(log.Fields{"bundle": bundleImage})
 	}
