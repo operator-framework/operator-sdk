@@ -129,18 +129,6 @@ func (s *HelmAppStatus) RemoveCondition(conditionType HelmAppConditionType) *Hel
 	return s
 }
 
-// ContainsCondition checks if the condition with the passed condition type from
-// the status object is already present. If present then return true.
-// Otherwise, return false.
-func (s *HelmAppStatus) ContainsCondition(conditionType HelmAppConditionType) bool {
-	for i := range s.Conditions {
-		if s.Conditions[i].Type == conditionType {
-			return true
-		}
-	}
-	return false
-}
-
 // StatusFor safely returns a typed status block from a custom resource.
 func StatusFor(cr *unstructured.Unstructured) *HelmAppStatus {
 	switch s := cr.Object["status"].(type) {

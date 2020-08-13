@@ -59,14 +59,6 @@ func TestRemoveCondition(t *testing.T) {
 	assert.Empty(t, actual.Conditions)
 }
 
-func TestContainsCondition(t *testing.T) {
-	contains := newTestStatus().ContainsCondition(ConditionDeployed)
-	assert.True(t, contains)
-
-	contains = newTestStatus().ContainsCondition(ConditionReleaseFailed)
-	assert.False(t, contains)
-}
-
 func TestStatusForEmpty(t *testing.T) {
 	status := StatusFor(newTestResource())
 
