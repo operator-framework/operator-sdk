@@ -1,0 +1,4 @@
+entries:
+  - description: Fixed a bug that caused the Helm operator not to set the `InstallSuccessful` status.
+    kind: "bugfix"
+    breaking: false
