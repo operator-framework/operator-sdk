@@ -100,6 +100,7 @@ func (e *EventReceiver) Close() {
 	if err := e.server.Close(); err != nil && !errors.Is(err, os.ErrClosed) {
 		e.logger.Error(err, "Failed to close event receiver")
 	}
+	os.Remove(e.SocketPath)
 	close(e.Events)
 }
 
