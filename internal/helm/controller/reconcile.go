@@ -320,11 +320,15 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 	if expectedRelease.Version == 1 {
 		reason = types.ReasonInstallSuccessful
 	}
+	message := ""
+	if expectedRelease.Info != nil {
+		message = expectedRelease.Info.Notes
+	}
 	status.SetCondition(types.HelmAppCondition{
 		Type:    types.ConditionDeployed,
 		Status:  types.StatusTrue,
 		Reason:  reason,
-		Message: expectedRelease.Info.Notes,
+		Message: message,
 	})
 	status.DeployedRelease = &types.HelmAppRelease{
 		Name:     expectedRelease.Name,
