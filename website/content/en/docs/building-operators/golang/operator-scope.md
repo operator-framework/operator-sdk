@@ -106,7 +106,7 @@ To change the scope of the RBAC permissions from cluster-wide to a specific name
 
 - Inform the Namespace to the [Manager][ctrl-manager] 
 
-By default, the [Manager][ctrl-manager] in the `main.go` is initialized with no Namespace option specified which mean that will watch all Namespaces. Update the `NewManager` to inform the Namespace, in our `Memcahced` example it would like: 
+By default, the [Manager][ctrl-manager] does not have any namespace specified in `main.go`, and hence it will watch all the namespaces. In order to restrict the controllers to watch a specific namespace, specify it while creating the manager. Update the `NewManager` to inform the Namespace, in our `Memcahced` example it would like: 
 
 ```go
 ...
@@ -131,7 +131,7 @@ and `RoleBinding`s instead of `ClusterRole`s and `ClusterRoleBinding`s, respecti
 are used to generate the operator's [RBAC ClusterRole][rbac-clusterrole] (e.g `config/rbac/role.yaml`). The default
  markers don't specify a `namespace` property and will result in a `ClusterRole`.
 
-Update the [`RBAC markers`][rbac-markers] in `<kind>_controller.go` with `namespace=<namespace>` where the `Role` should be applied such as:
+Update the [`RBAC markers`][rbac-markers] in `<kind>_controller.go` with `namespace=<namespace>` where the `Role` is to be applied, such as:
 
 ```go
 // +kubebuilder:rbac:groups=cache.example.com,namespace=memcached-operator-system,resources=memcacheds,verbs=get;list;watch;create;update;patch;delete
