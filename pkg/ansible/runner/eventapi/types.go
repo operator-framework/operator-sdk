@@ -122,3 +122,15 @@ func (je JobEvent) IgnoreError() bool {
 	}
 	return false
 }
+
+// Rescued - Detects whether or not a task was rescued
+func (je JobEvent) Rescued() bool {
+	if rescued, contains := je.EventData["rescued"]; contains {
+		for _, v := range rescued.(map[string]interface{}) {
+			if int(v.(float64)) == 1 {
+				return true
+			}
+		}
+	}
+	return false
+}

@@ -315,7 +315,7 @@ func CheckGoModules() error {
 	}
 	if !goModOn {
 		return fmt.Errorf(`using go modules requires GO111MODULE="on", "auto", or unset.` +
-			` More info: https://sdk.operatorframework.io/docs/golang/quickstart/#a-note-on-dependency-management`)
+			` More info: https://v0-19-x.sdk.operatorframework.io/docs/golang/quickstart/#a-note-on-dependency-management`)
 	}
 	return nil
 }

@@ -20,7 +20,7 @@
 ### Additions
 
 - Add "panic" level for --zap-stacktrace-level (allows "debug", "info", "error", "panic"). ([#3040](https://github.com/operator-framework/operator-sdk/pull/3040))
-- The `operator-sdk` binary has a new CLI workflow and project layout for scaffolding Go operators that is aligned with Kubebuilder's CLI and project layout. See the new [Quickstart Guide](https://sdk.operatorframework.io/docs/golang/quickstart/) and the new [CLI reference](https://v0-19-x.sdk.operatorframework.io/docs/new-cli/) for more details. ([#3190](https://github.com/operator-framework/operator-sdk/pull/3190))
+The `operator-sdk` binary has a new CLI workflow and project layout for scaffolding Go operators that is aligned with Kubebuilder's CLI and project layout. See the new [Quickstart Guide](https://sdk.operatorframework.io/docs/building-operators/golang/quickstart/) and the new [CLI reference](https://v0-19-x.sdk.operatorframework.io/docs/new-cli/) for more details. ([#3190](https://github.com/operator-framework/operator-sdk/pull/3190))
 - `bundle validate` can now use a containerd image ("none") tool to unpack images, removing the need for an external image tool like docker/podman. ([#3222](https://github.com/operator-framework/operator-sdk/pull/3222))
 - The SDK `scorecard` command adds a new test image, scorecard-test-kuttl, that allows end users to write and execute kuttl based tests. ([#3278](https://github.com/operator-framework/operator-sdk/pull/3278))
 - Add "--olm-namespace" flag to olm subcommands (install, uninstall) to allow users to specify the  namespace where olm is to be installed or uninstalled. ([#3300](https://github.com/operator-framework/operator-sdk/pull/3300))
