@@ -151,7 +151,7 @@ if err != nil {
 ```
 The scorecard binary uses `config.yaml` file to locate tests and execute the them as Pods which scorecard creates. Custom test images are included into Pods that scorecard creates, passing in the bundle contents on a shared mount point to the test image container. The specific custom test that is executed is driven by the config.yaml's entry-point command and arguments.
 
-An example scorecard binary is present [here][scorecard_binary].
+An example custom scorecard test implementation is present [here][scorecard_binary].
 
 The names with which the tests are identified in `config.yaml` and would be passed in the `scorecard` command, are to be specified here.
 
@@ -189,14 +189,11 @@ func printValidTests() (result scapiv1alpha3.TestStatus) {
 
 ### Building the project
 
-The project makefile is to help us build the go project and test image using docker. An example of the [makefile][sample_makefile] script can be found in the sample test image.
+The SDK project makefile contains targets to build the sample custom test image.  The current makefile is found [here][sample_makefile].  You can use this makefile as a reference for your own custom test image makefile.
 
-To build the project, use the `docker build` command and specify the desired name of the image in the format: `<repository_name>/<username>/<image_name>:tag`.
-
-Push the image to a remote repository by running the docker command:
-
+To build the sample custom test image, run:
 ```
-docker push <repository_name>/<username>/<image_name>:tag
+make image-build-custom-scorecard-tests
 ```
 
 ### Running scorecard command
@@ -297,7 +294,7 @@ connection to invoke the Kube API.
 [scorecard_main_func]: https://github.com/operator-framework/operator-sdk/blob/master/images/scorecard-test/cmd/test/main.go
 [custom_scorecard_repo]: https://github.com/operator-framework/operator-sdk
 [user_doc]: /docs/advanced-topics/scorecard/scorecard/
-[scorecard_binary]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard
-[sample_makefile]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard
+[scorecard_binary]: https://github.com/operator-framework/operator-sdk/blob/master/images/custom-scorecard-tests/cmd/test/main.go
+[sample_makefile]: https://github.com/operator-framework/operator-sdk/blob/master/Makefile
 [kustomize-patchJson6902]: https://kubernetes-sigs.github.io/kustomize/api-reference/kustomization/patchesjson6902/
 [testresults]:https://github.com/operator-framework/api/blob/333d064/pkg/apis/scorecard/v1alpha3/test_types.go#L35
