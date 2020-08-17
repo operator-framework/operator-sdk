@@ -18,10 +18,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
+	v1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-sdk/internal/operator"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type OperatorInstaller struct {
@@ -56,9 +56,54 @@ func (o OperatorInstaller) InstallOperator(ctx context.Context) (*v1alpha1.Clust
 	}
 
 	// Ensure Operator Group
+
 	// Create Subscription
+	subName := fmt.Sprintf("%s-sub", k8sutil.FormatOperatorNameDNS1123(o.CatalogSourceName))
+	sub := newSubscription(subName, o.cfg.Namespace,
+		withCatalogSource(o.CatalogSourceName, o.cfg.Namespace),
+		withBundleChannel(o.PackageName, o.Channel, o.StartingCSV))
+
 	// Approve Install Plan (if necessary)
 	// Wait for successfully installed CSV
 
 	return todo, nil
+}
+
+type subscriptionOption func(*v1alpha1.Subscription)
+
+func withBundleChannel(packageName, channelName, startingCSV string) subscriptionOption {
+	return func(sub *v1alpha1.Subscription) {
+		sub.Spec = &v1alpha1.SubscriptionSpec{
+			Package:     packageName,
+			Channel:     channelName,
+			StartingCSV: startingCSV,
+		}
+	}
+}
+
+func withCatalogSource(catSrcName, catSrcNamespace string) subscriptionOption {
+	return func(sub *v1alpha1.Subscription) {
+		sub.Spec = &v1alpha1.SubscriptionSpec{
+			CatalogSource:          catSrcName,
+			CatalogSourceNamespace: catSrcNamespace,
+		}
+	}
+}
+
+func newSubscription(name, namespace string, opts ...subscriptionOption) *v1alpha1.Subscription {
+	sub := &v1alpha1.Subscription{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: v1alpha1.SchemeGroupVersion.String(),
+			Kind:       v1alpha1.SubscriptionKind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+	}
+
+	for _, opt := range opts {
+		opt(sub)
+	}
+	return sub
 }
