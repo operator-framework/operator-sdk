@@ -1,0 +1,5 @@
+entries:
+  - description: >
+      Fixed incorrect (cluster) role name assignments in generated CSVs
+      [#3600](https://github.com/operator-framework/operator-sdk/issues/3600).
+    kind: bugfix
