@@ -43,7 +43,8 @@ ANSIBLE_ARCHES:="amd64" "ppc64le" "arm64"
 HELM_ARCHES:="amd64" "ppc64le" "arm64"
 SCORECARD_TEST_ARCHES:="amd64" "ppc64le" "arm64"
 SCORECARD_TEST_KUTTL_ARCHES:="amd64" "ppc64le" "arm64"
-# the custom scorecard test image is a scorecard example only
+# the custom scorecard test image is a scorecard example only and
+# is not pushed to an official registry
 CUSTOM_SCORECARD_TESTS_ARCHES:="amd64" "ppc64le" "arm64"
 
 export CGO_ENABLED:=0
