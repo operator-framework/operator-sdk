@@ -23,13 +23,13 @@ These markers populate [owned `customresourcedefinitions`][csv-crds] in your CSV
 Possible type-level markers:
 - `+operator-sdk:csv:customresourcedefinitions:displayName="some display name"`
 	- Configures the kind's display name.
-- `+operator-sdk:csv:customresourcedefinitions:resources={{Kind1,v1alpha1,"dns-name-1"},{Kind2,v1,"dns-name-2"},...}`
+- `+operator-sdk:csv:customresourcedefinitions:resources={{Kind1,v1alpha1,dns-name-1},{Kind2,v1,"dns-name-2"},...}`
 	- Configures the kind's resources.
 
 Possible field-level markers, all of which must contain the `type=[spec,status]` key-value pair:
 - `+operator-sdk:csv:customresourcedefinitions:type=[spec,status],displayName="some field display name"`
 	- Configures the field's display name.
-- `+operator-sdk:csv:customresourcedefinitions:type=[spec,status],xDescriptors="urn:alm:descriptor:com.tectonic.ui:podCount,urn:alm:descriptor:io.kubernetes:custom"`
+- `+operator-sdk:csv:customresourcedefinitions:type=[spec,status],xDescriptors={"urn:alm:descriptor:com.tectonic.ui:podCount","urn:alm:descriptor:io.kubernetes:custom"}`
 	- Configures the field's x-descriptors.
 
 
@@ -64,7 +64,7 @@ These examples assume `Memcached`, `MemcachedSpec`, and `MemcachedStatus` are th
 	```go
 	type MemcachedSpec struct {
 		// Size is the size of the memcached deployment. <-- This will become Size's specDescriptors.description.
-		// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Number of pods",xDescriptors="urn:alm:descriptor:com.tectonic.ui:podCount,urn:alm:descriptor:io.kubernetes:custom"
+		// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Number of pods",xDescriptors={"urn:alm:descriptor:com.tectonic.ui:podCount","urn:alm:descriptor:io.kubernetes:custom"}
 		Size int32 `json:"size"` // <-- Size's specDescriptors.path is inferred from this JSON tag.
 	}
 	```
