@@ -15,7 +15,7 @@ metadata:
           },
           "status": {
             "nodes": null
-          }          
+          }
         }
       ]
     capabilities: Basic Install
@@ -43,7 +43,7 @@ spec:
         displayName: Nodes
         path: nodes
         x-descriptors:
-        - 'urn:alm:descriptor:com.tectonic.ui:nodes'           
+        - 'urn:alm:descriptor:com.tectonic.ui:nodes'
   description: Placeholder description
   displayName: Memcached Operator
   icon:
@@ -162,9 +162,9 @@ spec:
         serviceAccountName: memcached-operator
     strategy: deployment
   installModes:
-  - supported: true
+  - supported: false
     type: OwnNamespace
-  - supported: true
+  - supported: false
     type: SingleNamespace
   - supported: false
     type: MultiNamespace
