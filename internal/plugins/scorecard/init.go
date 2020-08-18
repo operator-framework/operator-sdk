@@ -58,6 +58,7 @@ const (
 	// TODO: change the tag to "latest" once config scaffolding is in a release,
 	// as the new config spec won't work with the current latest image.
 	defaultTestImageTag = "quay.io/operator-framework/scorecard-test:master"
+	customTestImageTag  = "quay.io/operator-framework/custom-scorecard-tests:master"
 
 	// defaultConfigName is the default scorecard componentconfig's metadata.name,
 	// which must be set on all kustomize-able bases. This name is only used for
@@ -157,6 +158,21 @@ func generate(testImageTag, outputDir string) error {
 	}
 	kustomizationValues.JSONPatches = append(kustomizationValues.JSONPatches, kustomizationJSON6902Patch{
 		Path:   filepath.Join("patches", olmPatchFileName),
+		Target: scorecardConfigTarget,
+	})
+
+	// custom scorecard tests patch.
+	customPatch := newCustomConfigurationPatch(customTestImageTag)
+	b, err = yaml.Marshal(customPatch)
+	if err != nil {
+		return fmt.Errorf("error marshaling custom tests patch config: %v", err)
+	}
+	customPatchFileName := fmt.Sprintf("custom.%s", scorecard.ConfigFileName)
+	if err := ioutil.WriteFile(filepath.Join(patchesDir, customPatchFileName), b, 0666); err != nil {
+		return fmt.Errorf("error writing default scorecard config: %v", err)
+	}
+	kustomizationValues.JSONPatches = append(kustomizationValues.JSONPatches, kustomizationJSON6902Patch{
+		Path:   filepath.Join("patches", customPatchFileName),
 		Target: scorecardConfigTarget,
 	})
 
@@ -264,6 +280,39 @@ func makeDefaultOLMTestConfigs(testImageTag string) (cfgs []v1alpha3.TestConfigu
 			Labels: map[string]string{
 				"suite": "olm",
 				"test":  fmt.Sprintf("%s-test", testName),
+			},
+		})
+	}
+
+	return cfgs
+}
+
+// newCustomConfigurationPatch returns default "custom" test configurations as JSON patch objects
+// to be inserted into the componentconfig base as a first stage test element.
+// The returned patches are intended to be marshaled and written to disk as in a kustomize patch file.
+func newCustomConfigurationPatch(testImageTag string) (ps jsonPatches) {
+	for _, cfg := range makeDefaultCustomTestConfigs(testImageTag) {
+		ps = append(ps, jsonPatchObject{
+			Op:    "add",
+			Path:  defaultJSONPath,
+			Value: cfg,
+		})
+	}
+	return ps
+}
+
+// makeDefaultCustomTestConfigs returns all default "custom" test configurations.
+func makeDefaultCustomTestConfigs(testImageTag string) (cfgs []v1alpha3.TestConfiguration) {
+	for _, testName := range []string{
+		"customtest1",
+		"customtest2"} {
+
+		cfgs = append(cfgs, v1alpha3.TestConfiguration{
+			Image:      testImageTag,
+			Entrypoint: []string{"custom-scorecard-tests", testName},
+			Labels: map[string]string{
+				"suite": "custom",
+				"test":  testName,
 			},
 		})
 	}
