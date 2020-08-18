@@ -161,8 +161,8 @@ func (b ClusterServiceVersion) makeNewBase() *v1alpha1.ClusterServiceVersion {
 			Keywords:    b.Keywords,
 			Icon:        b.Icon,
 			InstallModes: []v1alpha1.InstallMode{
-				{Type: v1alpha1.InstallModeTypeOwnNamespace, Supported: true},
-				{Type: v1alpha1.InstallModeTypeSingleNamespace, Supported: true},
+				{Type: v1alpha1.InstallModeTypeOwnNamespace, Supported: false},
+				{Type: v1alpha1.InstallModeTypeSingleNamespace, Supported: false},
 				{Type: v1alpha1.InstallModeTypeMultiNamespace, Supported: false},
 				{Type: v1alpha1.InstallModeTypeAllNamespaces, Supported: true},
 			},
