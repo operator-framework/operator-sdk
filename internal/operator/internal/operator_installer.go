@@ -24,6 +24,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// InstallPlanApproval - type of InstallPlan approval for the subscription
+type InstallPlanApproval = string
+
+const (
+	// ManualApproval is the manual install plan approval
+	ManualApproval InstallPlanApproval = "Manual"
+	// AutomaticApproval is the automatic install plan approval
+	AutomaticApproval InstallPlanApproval = "Automatic"
+)
+
 type OperatorInstaller struct {
 	CatalogSourceName string
 	PackageName       string
@@ -58,10 +68,7 @@ func (o OperatorInstaller) InstallOperator(ctx context.Context) (*v1alpha1.Clust
 	// Ensure Operator Group
 
 	// Create Subscription
-	subName := fmt.Sprintf("%s-sub", k8sutil.FormatOperatorNameDNS1123(o.CatalogSourceName))
-	sub := newSubscription(subName, o.cfg.Namespace,
-		withCatalogSource(o.CatalogSourceName, o.cfg.Namespace),
-		withBundleChannel(o.PackageName, o.Channel, o.StartingCSV))
+	_ = o.createSubscription()
 
 	// Approve Install Plan (if necessary)
 	// Wait for successfully installed CSV
@@ -71,27 +78,53 @@ func (o OperatorInstaller) InstallOperator(ctx context.Context) (*v1alpha1.Clust
 
 type subscriptionOption func(*v1alpha1.Subscription)
 
-func withBundleChannel(packageName, channelName, startingCSV string) subscriptionOption {
+func withCatalogSource(catSrcName, catSrcNamespace string) subscriptionOption {
 	return func(sub *v1alpha1.Subscription) {
-		sub.Spec = &v1alpha1.SubscriptionSpec{
-			Package:     packageName,
-			Channel:     channelName,
-			StartingCSV: startingCSV,
+		if sub.Spec == nil {
+			sub.Spec = &v1alpha1.SubscriptionSpec{}
 		}
+		sub.Spec.CatalogSource = catSrcName
+		sub.Spec.CatalogSourceNamespace = catSrcNamespace
+
 	}
 }
 
-func withCatalogSource(catSrcName, catSrcNamespace string) subscriptionOption {
+func withBundleChannel(packageName, channelName, startingCSV string) subscriptionOption {
 	return func(sub *v1alpha1.Subscription) {
-		sub.Spec = &v1alpha1.SubscriptionSpec{
-			CatalogSource:          catSrcName,
-			CatalogSourceNamespace: catSrcNamespace,
+		if sub.Spec == nil {
+			sub.Spec = &v1alpha1.SubscriptionSpec{}
 		}
+		sub.Spec.Package = packageName
+		sub.Spec.Channel = channelName
+		sub.Spec.StartingCSV = startingCSV
 	}
+}
+
+func withInstallPlanApproval(approval string) subscriptionOption {
+	return func(sub *v1alpha1.Subscription) {
+		if sub.Spec == nil {
+			sub.Spec = &v1alpha1.SubscriptionSpec{}
+		}
+		// set the install plan approval to manual
+		sub.Spec.InstallPlanApproval = v1alpha1.Approval(approval)
+	}
+}
+
+func (o OperatorInstaller) createSubscription() *v1alpha1.Subscription {
+	// Create Subscription with catalog source, channel, package and starting csv
+	subName := fmt.Sprintf("%s-sub", k8sutil.FormatOperatorNameDNS1123(o.CatalogSourceName))
+	sub := newSubscription(subName, o.cfg.Namespace,
+		withCatalogSource(o.CatalogSourceName, o.cfg.Namespace),
+		withBundleChannel(o.PackageName, o.Channel, o.StartingCSV),
+		withInstallPlanApproval(ManualApproval))
+
+	fmt.Printf("Creating Subscription: %s", sub.Name)
+
+	return sub
 }
 
 func newSubscription(name, namespace string, opts ...subscriptionOption) *v1alpha1.Subscription {
-	sub := &v1alpha1.Subscription{
+	s := &v1alpha1.Subscription{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: v1alpha1.SchemeGroupVersion.String(),
 			Kind:       v1alpha1.SubscriptionKind,
@@ -102,8 +135,8 @@ func newSubscription(name, namespace string, opts ...subscriptionOption) *v1alph
 		},
 	}
 
-	for _, opt := range opts {
-		opt(sub)
+	for _, option := range opts {
+		option(s)
 	}
-	return sub
+	return s
 }
