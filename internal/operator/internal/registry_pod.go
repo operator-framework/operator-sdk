@@ -12,14 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package olm
+package internal
 
 import (
 	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"path"
 	"strings"
 	"text/template"
 	"time"
@@ -43,10 +42,11 @@ const (
 	ReplacesBundleAddMode BundleAddModeType = "replaces"
 )
 const (
+	// defaultGRPCPort is the default grpc container port that the registry pod exposes
+	defaultGRPCPort          = 50051
 	defaultIndexImage        = "quay.io/operator-framework/upstream-opm-builder:latest"
 	defaultContainerName     = "registry-grpc"
 	defaultContainerPortName = "grpc"
-	defaultGRPCPort          = 50051
 )
 
 var (
@@ -74,7 +74,7 @@ type RegistryPod struct {
 	// Namespace refers to the specific namespace in which the registry pod will be created and scoped to
 	Namespace string
 
-	// GRPCPort is the container grpc port which is defaulted to 50051
+	// GRPCPort is the container grpc port
 	GRPCPort int32
 
 	// client refers to a controller runtime client
@@ -259,9 +259,9 @@ func (rp *RegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 // getContainerCmd uses templating to construct the container command
 // and throws error if unable to parse and execute the container command
 func (rp *RegistryPod) getContainerCmd() (string, error) {
-	const containerCommand = "/bin/mkdir -p {{ .DBPath | basename }} &&" +
-		"/bin/opm registry add -d {{ .DBPath | basename }} -b {{.BundleImage}} --mode={{.BundleAddMode}} &&" +
-		"/bin/opm registry serve -d {{ .DBPath | basename }} -p {{.GRPCPort}}"
+	const containerCommand = "/bin/mkdir -p {{ .DBPath }} &&" +
+		"/bin/opm registry add -d {{ .DBPath }} -b {{.BundleImage}} --mode={{.BundleAddMode}} &&" +
+		"/bin/opm registry serve -d {{ .DBPath }} -p {{.GRPCPort}}"
 	type bundleCmd struct {
 		BundleImage, DBPath, BundleAddMode string
 		GRPCPort                           int32
@@ -272,14 +272,9 @@ func (rp *RegistryPod) getContainerCmd() (string, error) {
 
 	out := &bytes.Buffer{}
 
-	// create a custom basename template function
-	funcMap := template.FuncMap{
-		"basename": path.Base,
-	}
-
 	// add the custom basename template function to the
 	// template's FuncMap and parse the containerCommand
-	tmp := template.Must(template.New("containerCommand").Funcs(funcMap).Parse(containerCommand))
+	tmp := template.Must(template.New("containerCommand").Parse(containerCommand))
 
 	// execute the command by applying the parsed tmp to command
 	// and write command output to out
@@ -288,4 +283,12 @@ func (rp *RegistryPod) getContainerCmd() (string, error) {
 	}
 
 	return out.String(), nil
+}
+
+// GetPod returns the registry pod
+func (rp *RegistryPod) GetPod() (*corev1.Pod, error) {
+	if rp == nil {
+		return nil, errPodNotInit
+	}
+	return rp.pod, nil
 }
