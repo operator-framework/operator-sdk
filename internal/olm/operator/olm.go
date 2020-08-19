@@ -66,10 +66,10 @@ func withPackageChannel(pkgName string, channel apimanifests.PackageChannel) fun
 	}
 }
 
-// newSubscription creates a new Subscription for a CSV with a name derived
-// from csvName, the CSV's objectmeta.name, in namespace. opts will be applied
+// NewSubscription creates a new Subscription for a CSV with a name derived
+// from resourceName, the CSV's objectmeta.name, in namespace. opts will be applied
 // to the Subscription object.
-func newSubscription(csvName, namespace string,
+func NewSubscription(resourceName, namespace string,
 	opts ...func(*operatorsv1alpha1.Subscription)) *operatorsv1alpha1.Subscription {
 	sub := &operatorsv1alpha1.Subscription{
 		TypeMeta: metav1.TypeMeta{
@@ -77,7 +77,7 @@ func newSubscription(csvName, namespace string,
 			Kind:       operatorsv1alpha1.SubscriptionKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      getSubscriptionName(csvName),
+			Name:      getSubscriptionName(resourceName),
 			Namespace: namespace,
 		},
 	}
@@ -92,10 +92,10 @@ func getCatalogSourceName(pkgName string) string {
 	return fmt.Sprintf("%s-ocs", name)
 }
 
-// newCatalogSource creates a new CatalogSource with a name derived from
-// pkgName, the package manifest's packageName, in namespace. opts will
+// NewCatalogSource creates a new CatalogSource with a name derived from
+// resourceName, the package manifest's packageName, in namespace. opts will
 // be applied to the CatalogSource object.
-func newCatalogSource(pkgName, namespace string,
+func NewCatalogSource(resourceName, namespace string,
 	opts ...func(*operatorsv1alpha1.CatalogSource)) *operatorsv1alpha1.CatalogSource {
 	cs := &operatorsv1alpha1.CatalogSource{
 		TypeMeta: metav1.TypeMeta{
@@ -103,11 +103,11 @@ func newCatalogSource(pkgName, namespace string,
 			Kind:       operatorsv1alpha1.CatalogSourceKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      getCatalogSourceName(pkgName),
+			Name:      getCatalogSourceName(resourceName),
 			Namespace: namespace,
 		},
 		Spec: operatorsv1alpha1.CatalogSourceSpec{
-			DisplayName: pkgName,
+			DisplayName: resourceName,
 			Publisher:   "operator-sdk",
 		},
 	}

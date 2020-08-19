@@ -110,7 +110,7 @@ func (m *packageManifestsManager) run(ctx context.Context) (err error) {
 	}
 
 	// New CatalogSource.
-	catsrc := newCatalogSource(pkgName, m.namespace)
+	catsrc := NewCatalogSource(pkgName, m.namespace)
 	log.Info("Creating catalog source")
 	if err = m.client.DoCreate(ctx, catsrc); err != nil {
 		return fmt.Errorf("error creating catalog source: %w", err)
@@ -129,7 +129,7 @@ func (m *packageManifestsManager) run(ctx context.Context) (err error) {
 	if err != nil {
 		return err
 	}
-	sub := newSubscription(csv.GetName(), m.namespace,
+	sub := NewSubscription(csv.GetName(), m.namespace,
 		withPackageChannel(pkgName, channel),
 		withCatalogSource(getCatalogSourceName(pkgName), m.namespace))
 	// New SDK-managed OperatorGroup.

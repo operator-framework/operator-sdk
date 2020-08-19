@@ -22,14 +22,13 @@ import (
 	"time"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
+	internalolm "github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/operator"
 	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
-	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
 
 const (
@@ -62,8 +61,11 @@ func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string
 	fmt.Printf("IndexImageCatalogCreator.InjectBundles:     %q\n", strings.Join(c.InjectBundles, ","))
 	fmt.Printf("IndexImageCatalogCreator.InjectBundleMode:  %q\n", c.InjectBundleMode)
 
-	// create a basic catalog source type
-	cs := newCatalogSource(name, c.cfg.Namespace)
+	// create catalog source
+	cs, err := c.createCatalogSource(ctx, name, c.cfg.Namespace)
+	if err != nil {
+		return nil, fmt.Errorf("error in creating catalog source: %v", err)
+	}
 
 	// initialize and create the registry pod with provided index image
 	registryPod, err := c.createRegistryPod(ctx, dbPath)
@@ -100,22 +102,14 @@ func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string
 	return cs, nil
 }
 
-// newCatalogSource creates a new catalog source with name and namespace
-func newCatalogSource(name, namespace string) *v1alpha1.CatalogSource {
-	return &v1alpha1.CatalogSource{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-cs", k8sutil.FormatOperatorNameDNS1123(name)),
-			Namespace: namespace,
-		},
-		Spec: v1alpha1.CatalogSourceSpec{
-			DisplayName: "CatalogSource",
-			Publisher:   "operator-sdk",
-		},
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: v1alpha1.SchemeGroupVersion.String(),
-			Kind:       v1alpha1.CatalogSourceKind,
-		},
+// createCatalogSource creates the catalog source object
+func (c IndexImageCatalogCreator) createCatalogSource(ctx context.Context, name, namespace string) (*v1alpha1.CatalogSource, error) {
+	cs := internalolm.NewCatalogSource(name, namespace)
+	if err := c.cfg.Client.Create(ctx, cs); err != nil {
+		return nil, fmt.Errorf("error in creating catalog source: %v", err)
 	}
+
+	return cs, nil
 }
 
 const defaultDBPath = "/database/index.db"

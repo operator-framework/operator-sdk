@@ -19,8 +19,9 @@ import (
 	"fmt"
 
 	v1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	internalolm "github.com/operator-framework/operator-sdk/internal/olm/operator"
+
 	"github.com/operator-framework/operator-sdk/internal/operator"
-	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -76,6 +77,16 @@ func (o OperatorInstaller) InstallOperator(ctx context.Context) (*v1alpha1.Clust
 	return todo, nil
 }
 
+func (o OperatorInstaller) createSubscription() *v1alpha1.Subscription {
+	sub := internalolm.NewSubscription(o.CatalogSourceName, o.cfg.Namespace,
+		withCatalogSource(o.CatalogSourceName, o.cfg.Namespace),
+		withBundleChannel(o.PackageName, o.Channel, o.StartingCSV),
+		withInstallPlanApproval(ManualApproval))
+
+	fmt.Printf("Creating Subscription: %s", sub.Name)
+	return sub
+}
+
 type subscriptionOption func(*v1alpha1.Subscription)
 
 func withCatalogSource(catSrcName, catSrcNamespace string) subscriptionOption {
@@ -108,35 +119,4 @@ func withInstallPlanApproval(approval string) subscriptionOption {
 		// set the install plan approval to manual
 		sub.Spec.InstallPlanApproval = v1alpha1.Approval(approval)
 	}
-}
-
-func (o OperatorInstaller) createSubscription() *v1alpha1.Subscription {
-	// Create Subscription with catalog source, channel, package and starting csv
-	subName := fmt.Sprintf("%s-sub", k8sutil.FormatOperatorNameDNS1123(o.CatalogSourceName))
-	sub := newSubscription(subName, o.cfg.Namespace,
-		withCatalogSource(o.CatalogSourceName, o.cfg.Namespace),
-		withBundleChannel(o.PackageName, o.Channel, o.StartingCSV),
-		withInstallPlanApproval(ManualApproval))
-
-	fmt.Printf("Creating Subscription: %s", sub.Name)
-
-	return sub
-}
-
-func newSubscription(name, namespace string, opts ...subscriptionOption) *v1alpha1.Subscription {
-	s := &v1alpha1.Subscription{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: v1alpha1.SchemeGroupVersion.String(),
-			Kind:       v1alpha1.SubscriptionKind,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-	}
-
-	for _, option := range opts {
-		option(s)
-	}
-	return s
 }
