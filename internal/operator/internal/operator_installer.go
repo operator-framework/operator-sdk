@@ -17,12 +17,15 @@ package internal
 import (
 	"context"
 	"fmt"
+	"time"
 
 	v1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	internalolm "github.com/operator-framework/operator-sdk/internal/olm/operator"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/operator-sdk/internal/operator"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 // InstallPlanApproval - type of InstallPlan approval for the subscription
@@ -69,9 +72,17 @@ func (o OperatorInstaller) InstallOperator(ctx context.Context) (*v1alpha1.Clust
 	// Ensure Operator Group
 
 	// Create Subscription
-	_ = o.createSubscription()
+	sub := o.createSubscription()
+
+	// Verify that InstallPlan was successfully generated for the subscription
+	// through subscription status
+	err = o.verifyInstallPlanGeneration(ctx, sub)
+	if err != nil {
+		return nil, fmt.Errorf("error in verifying install plan: %v", err)
+	}
 
 	// Approve Install Plan (if necessary)
+
 	// Wait for successfully installed CSV
 
 	return todo, nil
@@ -119,4 +130,26 @@ func withInstallPlanApproval(approval string) subscriptionOption {
 		// set the install plan approval to manual
 		sub.Spec.InstallPlanApproval = v1alpha1.Approval(approval)
 	}
+}
+
+func (o OperatorInstaller) verifyInstallPlanGeneration(ctx context.Context, sub *v1alpha1.Subscription) error {
+	subKey, err := client.ObjectKeyFromObject(sub)
+	if err != nil {
+		return fmt.Errorf("error in getting subscription key: %v", err)
+	}
+
+	ipCheck := wait.ConditionFunc(func() (done bool, err error) {
+		if err := o.cfg.Client.Get(ctx, subKey, sub); err != nil {
+			return false, err
+		}
+		if sub.Status.InstallPlanRef != nil {
+			return true, nil
+		}
+		return false, nil
+	})
+
+	if err := wait.PollImmediateUntil(200*time.Millisecond, ipCheck, ctx.Done()); err != nil {
+		return fmt.Errorf("install plan is not available for the subscription %s: %v", sub.Name, err)
+	}
+	return nil
 }
