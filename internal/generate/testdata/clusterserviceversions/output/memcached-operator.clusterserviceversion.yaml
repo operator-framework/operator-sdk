@@ -109,6 +109,10 @@ spec:
                 - /manager
                 image: controller:latest
                 name: manager
+                ports:
+                - containerPort: 9443
+                  name: webhook-server
+                  protocol: TCP
                 resources:
                   limits:
                     cpu: 100m
@@ -116,7 +120,16 @@ spec:
                   requests:
                     cpu: 100m
                     memory: 20Mi
+                volumeMounts:
+                - mountPath: /tmp/k8s-webhook-server/serving-certs
+                  name: cert
+                  readOnly: true
               terminationGracePeriodSeconds: 10
+              volumes:
+              - name: cert
+                secret:
+                  defaultMode: 420
+                  secretName: webhook-server-cert
       permissions:
       - rules:
         - apiGroups:
@@ -170,3 +183,38 @@ spec:
     name: Provider Name
     url: https://your.domain
   version: 0.0.1
+  webhookdefinitions:
+  - admissionReviewVersions: null
+    deploymentName: memcached-operator-controller-manager
+    failurePolicy: Fail
+    generateName: vmemcached.kb.io
+    rules:
+    - apiGroups:
+      - cache.example.com
+      apiVersions:
+      - v1alpha1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - memcacheds
+    sideEffects: null
+    type: ValidatingAdmissionWebhook
+    webhookPath: /validate-cache-my-domain-v1alpha1-memcached
+  - admissionReviewVersions: null
+    deploymentName: memcached-operator-controller-manager
+    failurePolicy: Fail
+    generateName: mmemcached.kb.io
+    rules:
+    - apiGroups:
+      - cache.example.com
+      apiVersions:
+      - v1alpha1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - memcacheds
+    sideEffects: null
+    type: MutatingAdmissionWebhook
+    webhookPath: /mutate-cache-my-domain-v1alpha1-memcached
