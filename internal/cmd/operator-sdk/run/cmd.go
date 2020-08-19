@@ -18,6 +18,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/run/packagemanifests"
+	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 )
 
 func NewCmd() *cobra.Command {
@@ -29,10 +30,12 @@ func NewCmd() *cobra.Command {
 Currently only the package manifests format is supported via the 'packagemanifests' subcommand.`,
 	}
 
+	cfg := &operator.Configuration{}
+
 	cmd.AddCommand(
 		// TODO(joelanford): enable bundle command when implementation is complete
 		//bundle.NewCmd(),
-		packagemanifests.NewCmd(),
+		packagemanifests.NewCmd(cfg),
 	)
 
 	return cmd

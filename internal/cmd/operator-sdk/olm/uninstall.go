@@ -15,14 +15,14 @@
 package olm
 
 import (
-	"github.com/operator-framework/operator-sdk/internal/olm"
+	"github.com/operator-framework/operator-sdk/internal/olm/installer"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 func newUninstallCmd() *cobra.Command {
-	mgr := olm.Manager{}
+	mgr := installer.Manager{}
 	cmd := &cobra.Command{
 		Use:   "uninstall",
 		Short: "Uninstall Operator Lifecycle Manager from your cluster",
@@ -35,7 +35,7 @@ func newUninstallCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&mgr.Version, "version", "", "version of OLM resources to uninstall.")
-	cmd.Flags().StringVar(&mgr.OLMNamespace, "olm-namespace", olm.DefaultOLMNamespace,
+	cmd.Flags().StringVar(&mgr.OLMNamespace, "olm-namespace", installer.DefaultOLMNamespace,
 		"namespace from where OLM is to be uninstalled.")
 	mgr.AddToFlagSet(cmd.Flags())
 	return cmd

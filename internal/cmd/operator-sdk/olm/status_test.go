@@ -17,7 +17,8 @@ package olm
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/operator-framework/operator-sdk/internal/olm"
+
+	"github.com/operator-framework/operator-sdk/internal/olm/installer"
 )
 
 var _ = Describe("Running an olm status command", func() {
@@ -30,7 +31,7 @@ var _ = Describe("Running an olm status command", func() {
 
 			flag := cmd.Flags().Lookup("olm-namespace")
 			Expect(flag).NotTo(BeNil())
-			Expect(flag.DefValue).To(Equal(olm.DefaultOLMNamespace))
+			Expect(flag.DefValue).To(Equal(installer.DefaultOLMNamespace))
 			Expect(flag.Usage).NotTo(BeNil())
 
 			flag = cmd.Flags().Lookup("version")

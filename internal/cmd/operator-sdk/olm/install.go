@@ -15,14 +15,14 @@
 package olm
 
 import (
-	"github.com/operator-framework/operator-sdk/internal/olm"
+	"github.com/operator-framework/operator-sdk/internal/olm/installer"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 func newInstallCmd() *cobra.Command {
-	mgr := &olm.Manager{}
+	mgr := &installer.Manager{}
 	cmd := &cobra.Command{
 		Use:   "install",
 		Short: "Install Operator Lifecycle Manager in your cluster",
@@ -34,7 +34,7 @@ func newInstallCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&mgr.Version, "version", olm.DefaultVersion, "version of OLM resources to install")
+	cmd.Flags().StringVar(&mgr.Version, "version", installer.DefaultVersion, "version of OLM resources to install")
 	mgr.AddToFlagSet(cmd.Flags())
 	return cmd
 }

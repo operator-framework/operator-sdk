@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package internal
+package index
 
 import (
 	"bytes"
@@ -211,6 +211,10 @@ func (rp *RegistryPod) validate() error {
 	}
 
 	return nil
+}
+
+func GetRegistryPodHost(ipStr string) string {
+	return fmt.Sprintf("%s:%d", ipStr, defaultGRPCPort)
 }
 
 // getPodName will return a string constructed from the bundle Image name

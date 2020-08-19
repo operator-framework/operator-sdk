@@ -21,17 +21,12 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/operator-framework/operator-sdk/internal/operator"
-	"github.com/operator-framework/operator-sdk/internal/operator/bundle"
+	"github.com/operator-framework/operator-sdk/internal/olm/operator"
+	"github.com/operator-framework/operator-sdk/internal/olm/operator/bundle"
 )
 
-func NewCmd() *cobra.Command {
+func NewCmd(cfg *operator.Configuration) *cobra.Command {
 	var timeout time.Duration
-
-	// TODO(joelanford): move the initialization of cfg up to
-	//   the "run" subcommand when migrating packagemanifests
-	//   to this design.
-	cfg := &operator.Configuration{}
 
 	i := bundle.NewInstall(cfg)
 	cmd := &cobra.Command{
@@ -48,11 +43,10 @@ func NewCmd() *cobra.Command {
 			i.BundleImage = args[0]
 
 			// TODO(joelanford): Add cleanup logic if this fails?
-			csv, err := i.Run(ctx)
+			_, err := i.Run(ctx)
 			if err != nil {
 				logrus.Fatalf("Failed to run bundle: %v\n", err)
 			}
-			logrus.Infof("CSV %q installed\n", csv.Name)
 		},
 	}
 	cmd.Flags().SortFlags = false

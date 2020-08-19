@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package internal
+package registry
 
 import (
 	"context"
@@ -22,4 +22,9 @@ import (
 
 type CatalogCreator interface {
 	CreateCatalog(ctx context.Context, name string) (*v1alpha1.CatalogSource, error)
+}
+
+// TODO: modify this as necessary.
+type InstallPlanApprover interface {
+	Approve(ctx context.Context, name string) error
 }
