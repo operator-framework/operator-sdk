@@ -57,6 +57,7 @@ var _ = Describe("Operator Installer", func() {
 				Expect(sub.Name).Should(Equal(oi.CatalogSourceName + "-sub"))
 				Expect(sub.Namespace).Should(Equal(oi.cfg.Namespace))
 				Expect(sub.Spec.InstallPlanApproval).NotTo(BeNil())
+				Expect(sub.Spec.InstallPlanApproval).Should(Equal(v1alpha1.ApprovalManual))
 				Expect(sub.Spec.CatalogSource).Should(Equal(oi.CatalogSourceName))
 				Expect(sub.Spec.CatalogSourceNamespace).Should(Equal(oi.cfg.Namespace))
 				Expect(sub.Spec.Channel).Should(Equal(oi.Channel))

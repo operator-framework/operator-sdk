@@ -19,23 +19,14 @@ import (
 	"fmt"
 	"time"
 
-	v1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	internalolm "github.com/operator-framework/operator-sdk/internal/olm/operator"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	v1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	internalolm "github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/operator"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
-)
-
-// InstallPlanApproval - type of InstallPlan approval for the subscription
-type InstallPlanApproval = string
-
-const (
-	// ManualApproval is the manual install plan approval
-	ManualApproval InstallPlanApproval = "Manual"
-	// AutomaticApproval is the automatic install plan approval
-	AutomaticApproval InstallPlanApproval = "Automatic"
 )
 
 type OperatorInstaller struct {
@@ -58,6 +49,7 @@ func (o OperatorInstaller) InstallOperator(ctx context.Context) (*v1alpha1.Clust
 	if err != nil {
 		return nil, fmt.Errorf("create catalog: %v", err)
 	}
+
 	_ = cs
 
 	fmt.Printf("OperatorInstaller.CatalogSourceName: %q\n", o.CatalogSourceName)
@@ -74,25 +66,41 @@ func (o OperatorInstaller) InstallOperator(ctx context.Context) (*v1alpha1.Clust
 	// Create Subscription
 	sub := o.createSubscription()
 
-	// Verify that InstallPlan was successfully generated for the subscription
-	// through subscription status
+	// Verify that InstallPlan was successfully generated for the
+	// subscription through status
 	err = o.verifyInstallPlanGeneration(ctx, sub)
 	if err != nil {
 		return nil, fmt.Errorf("error in verifying install plan: %v", err)
 	}
 
-	// Approve Install Plan (if necessary)
+	ipKey := types.NamespacedName{
+		Name:      sub.Status.InstallPlanRef.Name,
+		Namespace: sub.Status.InstallPlanRef.Namespace,
+	}
+
+	// Get Install Plan for the subscription
+	ip, err := o.getInstallPlan(ctx, ipKey)
+	if err != nil {
+		return nil, fmt.Errorf("error in fetching the install plan: %v", err)
+	}
+
+	// Update the Install Plan for CSV generation
+	err = o.updateInstallPlan(ctx, ip, withApproval(true))
+	if err != nil {
+		return nil, fmt.Errorf("error in setting install plan approval: %v", err)
+	}
 
 	// Wait for successfully installed CSV
 
 	return todo, nil
 }
 
+// createSubscription creates a new subscription for a catalog
 func (o OperatorInstaller) createSubscription() *v1alpha1.Subscription {
 	sub := internalolm.NewSubscription(o.CatalogSourceName, o.cfg.Namespace,
 		withCatalogSource(o.CatalogSourceName, o.cfg.Namespace),
 		withBundleChannel(o.PackageName, o.Channel, o.StartingCSV),
-		withInstallPlanApproval(ManualApproval))
+		withInstallPlanApproval(v1alpha1.ApprovalManual))
 
 	fmt.Printf("Creating Subscription: %s", sub.Name)
 	return sub
@@ -100,6 +108,7 @@ func (o OperatorInstaller) createSubscription() *v1alpha1.Subscription {
 
 type subscriptionOption func(*v1alpha1.Subscription)
 
+// withCatalogSource sets the catalog source name and namespace for a subscription
 func withCatalogSource(catSrcName, catSrcNamespace string) subscriptionOption {
 	return func(sub *v1alpha1.Subscription) {
 		if sub.Spec == nil {
@@ -111,6 +120,7 @@ func withCatalogSource(catSrcName, catSrcNamespace string) subscriptionOption {
 	}
 }
 
+// withBundleChannel sets the package name, channel name and starting CSV for a subscription
 func withBundleChannel(packageName, channelName, startingCSV string) subscriptionOption {
 	return func(sub *v1alpha1.Subscription) {
 		if sub.Spec == nil {
@@ -122,16 +132,18 @@ func withBundleChannel(packageName, channelName, startingCSV string) subscriptio
 	}
 }
 
-func withInstallPlanApproval(approval string) subscriptionOption {
+// withInstallPlanApproval sets the subscription's install plan approval to manual
+func withInstallPlanApproval(approval v1alpha1.Approval) subscriptionOption {
 	return func(sub *v1alpha1.Subscription) {
 		if sub.Spec == nil {
 			sub.Spec = &v1alpha1.SubscriptionSpec{}
 		}
 		// set the install plan approval to manual
-		sub.Spec.InstallPlanApproval = v1alpha1.Approval(approval)
+		sub.Spec.InstallPlanApproval = approval
 	}
 }
 
+// verifyInstallPlanGeneration verifies if an Install Plan exists through subscription status
 func (o OperatorInstaller) verifyInstallPlanGeneration(ctx context.Context, sub *v1alpha1.Subscription) error {
 	subKey, err := client.ObjectKeyFromObject(sub)
 	if err != nil {
@@ -151,5 +163,40 @@ func (o OperatorInstaller) verifyInstallPlanGeneration(ctx context.Context, sub 
 	if err := wait.PollImmediateUntil(200*time.Millisecond, ipCheck, ctx.Done()); err != nil {
 		return fmt.Errorf("install plan is not available for the subscription %s: %v", sub.Name, err)
 	}
+	return nil
+}
+
+// getInstallPlan returns the install plan
+func (o OperatorInstaller) getInstallPlan(ctx context.Context, ipKey types.NamespacedName) (*v1alpha1.InstallPlan, error) {
+	var ip *v1alpha1.InstallPlan
+
+	err := o.cfg.Client.Get(ctx, ipKey, ip)
+	if err != nil {
+		return nil, fmt.Errorf("error in getting install plan: %v", err)
+	}
+	return ip, nil
+}
+
+type installPlanOption func(*v1alpha1.InstallPlan)
+
+// withApproval sets the approved field to true
+func withApproval(approval bool) installPlanOption {
+	return func(ip *v1alpha1.InstallPlan) {
+		// approve the install plan by setting Approved to true
+		ip.Spec.Approved = true
+	}
+}
+
+// updateInstallPlan updates the install plan by setting the approval to true
+func (o OperatorInstaller) updateInstallPlan(ctx context.Context, ip *v1alpha1.InstallPlan, opts ...installPlanOption) error {
+	for _, opt := range opts {
+		opt(ip)
+	}
+
+	err := o.cfg.Client.Update(ctx, ip)
+	if err != nil {
+		return fmt.Errorf("error in approving install plan: %v", err)
+	}
+
 	return nil
 }
