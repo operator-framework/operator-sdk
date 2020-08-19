@@ -227,6 +227,7 @@ image-push-helm-multiarch:
 
 image-build-custom-scorecard-tests:
 	./hack/image/build-custom-scorecard-tests-image.sh $(CUSTOM_SCORECARD_TESTS_BASE_IMAGE):dev
+
 image-push-custom-scorecard-tests:
 	./hack/image/push-image-tags.sh $(CUSTOM_SCORECARD_TESTS_BASE_IMAGE):dev $(CUSTOM_SCORECARD_TESTS_IMAGE)-$(shell go env GOARCH)
 
