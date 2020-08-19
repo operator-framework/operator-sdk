@@ -289,6 +289,7 @@ jobs:
         - make image-build-custom-scorecard-tests
         - make image-push-custom-scorecard-tests
 
+
     # Build and deploy ppc64le custom-scorecard-tests docker image
     - <<: *deploy
       name: Docker image for custom-scorecard-tests (ppc64le)
