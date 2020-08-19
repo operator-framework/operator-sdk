@@ -186,6 +186,8 @@ spec:
   webhookdefinitions:
   - admissionReviewVersions:
     - v1beta1
+    conversionCRDs:
+    - memcacheds.cache.example.com
     deploymentName: memcached-operator-controller-manager
     failurePolicy: Fail
     generateName: vmemcached.kb.io
@@ -204,6 +206,8 @@ spec:
     webhookPath: /validate-cache-my-domain-v1alpha1-memcached
   - admissionReviewVersions:
     - v1beta1
+    conversionCRDs:
+    - memcacheds.cache.example.com
     deploymentName: memcached-operator-controller-manager
     failurePolicy: Fail
     generateName: mmemcached.kb.io

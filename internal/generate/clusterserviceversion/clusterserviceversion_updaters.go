@@ -272,7 +272,8 @@ func applyWebhooks(c *collector.Manifests, csv *operatorsv1alpha1.ClusterService
 		} else if depName == "" {
 			log.Infof("No deployment is selected by service %q for validating webhook %q", serviceName, webhook.Name)
 		}
-		webhookDescriptions = append(webhookDescriptions, validatingToWebhookDescription(webhook, depName))
+		crdNames := findCRDNamesWithConversionForWebhook(c, serviceName)
+		webhookDescriptions = append(webhookDescriptions, validatingToWebhookDescription(webhook, depName, crdNames...))
 	}
 	for _, webhook := range c.MutatingWebhooks {
 		depName, serviceName := findMatchingDeploymentAndServiceForWebhook(c, webhook.ClientConfig)
@@ -281,7 +282,8 @@ func applyWebhooks(c *collector.Manifests, csv *operatorsv1alpha1.ClusterService
 		} else if depName == "" {
 			log.Infof("No deployment is selected by service %q for mutating webhook %q", serviceName, webhook.Name)
 		}
-		webhookDescriptions = append(webhookDescriptions, mutatingToWebhookDescription(webhook, depName))
+		crdNames := findCRDNamesWithConversionForWebhook(c, serviceName)
+		webhookDescriptions = append(webhookDescriptions, mutatingToWebhookDescription(webhook, depName, crdNames...))
 	}
 	csv.Spec.WebhookDefinitions = webhookDescriptions
 }
@@ -289,7 +291,7 @@ func applyWebhooks(c *collector.Manifests, csv *operatorsv1alpha1.ClusterService
 var defaultAdmissionReviewVersions = []string{"v1beta1"}
 
 // validatingToWebhookDescription transforms webhook into a WebhookDescription.
-func validatingToWebhookDescription(webhook admissionregv1.ValidatingWebhook, depName string) operatorsv1alpha1.WebhookDescription {
+func validatingToWebhookDescription(webhook admissionregv1.ValidatingWebhook, depName string, conversionCRDs ...string) operatorsv1alpha1.WebhookDescription {
 	description := operatorsv1alpha1.WebhookDescription{
 		Type:                    operatorsv1alpha1.ValidatingAdmissionWebhook,
 		GenerateName:            webhook.Name,
@@ -303,6 +305,9 @@ func validatingToWebhookDescription(webhook admissionregv1.ValidatingWebhook, de
 	}
 	if len(description.AdmissionReviewVersions) == 0 {
 		description.AdmissionReviewVersions = defaultAdmissionReviewVersions
+	}
+	if len(conversionCRDs) != 0 {
+		description.ConversionCRDs = conversionCRDs
 	}
 
 	if serviceRef := webhook.ClientConfig.Service; serviceRef != nil {
@@ -319,7 +324,7 @@ func validatingToWebhookDescription(webhook admissionregv1.ValidatingWebhook, de
 }
 
 // mutatingToWebhookDescription transforms webhook into a WebhookDescription.
-func mutatingToWebhookDescription(webhook admissionregv1.MutatingWebhook, depName string) operatorsv1alpha1.WebhookDescription {
+func mutatingToWebhookDescription(webhook admissionregv1.MutatingWebhook, depName string, conversionCRDs ...string) operatorsv1alpha1.WebhookDescription {
 	description := operatorsv1alpha1.WebhookDescription{
 		Type:                    operatorsv1alpha1.MutatingAdmissionWebhook,
 		GenerateName:            webhook.Name,
@@ -334,6 +339,9 @@ func mutatingToWebhookDescription(webhook admissionregv1.MutatingWebhook, depNam
 	}
 	if len(description.AdmissionReviewVersions) == 0 {
 		description.AdmissionReviewVersions = defaultAdmissionReviewVersions
+	}
+	if len(conversionCRDs) != 0 {
+		description.ConversionCRDs = conversionCRDs
 	}
 
 	if serviceRef := webhook.ClientConfig.Service; serviceRef != nil {
@@ -405,6 +413,34 @@ func findMatchingDeploymentAndServiceForWebhook(c *collector.Manifests, wcc admi
 	}
 
 	return depName, serviceName
+}
+
+// findCRDNamesWithConversionForWebhook returns the names of CRDs that specify a conversion webhook with
+// a service whose name matches serviceName
+func findCRDNamesWithConversionForWebhook(c *collector.Manifests, serviceName string) (crdNames []string) {
+	if serviceName == "" {
+		return
+	}
+
+	for _, crd := range c.V1CustomResourceDefinitions {
+		whConv := crd.Spec.Conversion.Webhook
+		if whConv != nil && whConv.ClientConfig != nil && whConv.ClientConfig.Service != nil {
+			if whConv.ClientConfig.Service.Name == serviceName {
+				crdNames = append(crdNames, crd.GetName())
+			}
+		}
+	}
+
+	for _, crd := range c.V1beta1CustomResourceDefinitions {
+		whConv := crd.Spec.Conversion
+		if whConv != nil && whConv.WebhookClientConfig != nil && whConv.WebhookClientConfig.Service != nil {
+			if whConv.WebhookClientConfig.Service.Name == serviceName {
+				crdNames = append(crdNames, crd.GetName())
+			}
+		}
+	}
+
+	return crdNames
 }
 
 // applyCustomResources updates csv's "alm-examples" annotation with the

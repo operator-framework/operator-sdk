@@ -13,6 +13,14 @@ metadata:
   creationTimestamp: null
   name: memcacheds.cache.example.com
 spec:
+  conversion:
+    strategy: Webhook
+    webhookClientConfig:
+      caBundle: Cg==
+      service:
+        name: memcached-operator-webhook-service
+        namespace: memcached-operator-system
+        path: /convert
   group: cache.example.com
   names:
     kind: Memcached
