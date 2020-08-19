@@ -60,7 +60,7 @@ Now we need to provide the reconcile logic, in the form of an Ansible
 Role, which will run every time a `Memcached` resource is created,
 updated, or delete.
 
-Update `roles/memecached/tasks/main.yml`:
+Update `roles/memcached/tasks/main.yml`:
 
 
 ```yaml
@@ -101,7 +101,7 @@ This memcached role will:
 - Set the Deployment size
 
 It is good practice to set default values for variables used in Ansible
-Roles, so edit `memcached-operator/roles/memecached/defaults/main.yml`:
+Roles, so edit `memcached-operator/roles/memcached/defaults/main.yml`:
 
 ```yaml
 ---
