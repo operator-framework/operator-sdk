@@ -265,6 +265,7 @@ jobs:
         - make image-build-scorecard-test-kuttl
         - make image-push-scorecard-test-kuttl
 
+
     # Build and deploy ppc64le scorecard-test-kuttl docker image
     - <<: *deploy
       name: Docker image for scorecard-test-kuttl (ppc64le)
