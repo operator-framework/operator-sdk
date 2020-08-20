@@ -109,6 +109,7 @@ var _ = Describe("Integrating Helm Projects with OLM", func() {
 			scorecardOutputBytes, err = tc.Run(runOLMScorecardCmd)
 			Expect(err).To(HaveOccurred())
 			err = json.Unmarshal(scorecardOutputBytes, &scorecardOutput)
+			Expect(err).NotTo(HaveOccurred())
 
 			expected := make(map[string]v1alpha3.State)
 			expected[OLMBundleValidationTest] = v1alpha3.PassState
