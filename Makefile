@@ -184,7 +184,7 @@ image: image-build image-push ## Build and push all images
 
 image-build: image-build-ansible image-build-helm image-build-scorecard-test image-build-scorecard-test-kuttl image-build-custom-scorecard-tests ## Build all images
 
-image-push: image-push-ansible image-push-helm image-push-scorecard-test image-build-scorecard-test-kuttl ## Push all images
+image-push: image-push-ansible image-push-helm image-push-scorecard-test image-push-scorecard-test-kuttl ## Push all images
 
 # Ansible operator image scaffold/build/push.
 .PHONY: image-scaffold-ansible image-build-ansible image-push-ansible image-push-ansible-multiarch
