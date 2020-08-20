@@ -11,6 +11,7 @@ Follow the steps in the [installation guide][install-guide] to learn how to inst
 - [ansible][ansible-tool] version v2.9.0+
 - [ansible-runner][ansible-runner-tool] version v1.1.0+
 - [ansible-runner-http][ansible-runner-http-plugin] version v1.0.0+
+- [openshift python client][openshift_restclient_python] v0.11.2+
 
 **Note**: This guide uses [minikube][minikube-tool] version v0.25.0+ as the
 local Kubernetes cluster and [quay.io][quay-link] for the public registry.
@@ -21,4 +22,5 @@ local Kubernetes cluster and [quay.io][quay-link] for the public registry.
 [ansible-runner-http-plugin]:https://github.com/ansible/ansible-runner-http
 [install-guide]: /docs/installation/install-operator-sdk
 [minikube-tool]:https://github.com/kubernetes/minikube#installation
+[openshift_restclient_python]:https://github.com/openshift/openshift-restclient-python
 [quay-link]:https://quay.io
