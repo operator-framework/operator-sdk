@@ -274,30 +274,12 @@ jobs:
         - make image-build-scorecard-test-kuttl
         - make image-push-scorecard-test-kuttl
 
-    # Build and deploy amd64 custom-scorecard-tests docker image
+    # Build the amd64 custom-scorecard-tests docker image
     - <<: *deploy
       name: Docker image for custom-scorecard-tests (amd64)
       arch: amd64
       script:
         - make image-build-custom-scorecard-tests
-        - make image-push-custom-scorecard-tests
-
-    # Build and deploy arm64 custom-scorecard-tests docker image
-    - <<: *deploy
-      name: Docker image for custom-scorecard-tests (arm64)
-      arch: arm64
-      script:
-        - make image-build-custom-scorecard-tests
-        - make image-push-custom-scorecard-tests
-
-
-    # Build and deploy ppc64le custom-scorecard-tests docker image
-    - <<: *deploy
-      name: Docker image for custom-scorecard-tests (ppc64le)
-      arch: ppc64le
-      script:
-        - make image-build-custom-scorecard-tests
-        - make image-push-custom-scorecard-tests
 
     # Build and deploy ansible multi-arch manifest list
     - stage: deploy-manifest-multiarch
@@ -317,12 +299,6 @@ jobs:
       name: Manifest list for scorecard-test
       script:
         - make image-push-scorecard-test-multiarch
-
-    # Build and deploy custom-scorecard-tests multi-arch manifest list
-    - <<: *manifest-deploy
-      name: Manifest list for custom-scorecard-tests
-      script:
-        - make image-push-custom-scorecard-tests-multiarch
 
     # Build and deploy scorecard-test-kuttl multi-arch manifest list
     - <<: *manifest-deploy

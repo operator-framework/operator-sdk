@@ -184,7 +184,7 @@ image: image-build image-push ## Build and push all images
 
 image-build: image-build-ansible image-build-helm image-build-scorecard-test image-build-scorecard-test-kuttl image-build-custom-scorecard-tests ## Build all images
 
-image-push: image-push-ansible image-push-helm image-push-scorecard-test image-build-scorecard-test-kuttl image-push-custom-scorecard-tests ## Push all images
+image-push: image-push-ansible image-push-helm image-push-scorecard-test image-build-scorecard-test-kuttl ## Push all images
 
 # Ansible operator image scaffold/build/push.
 .PHONY: image-scaffold-ansible image-build-ansible image-push-ansible image-push-ansible-multiarch
@@ -220,16 +220,13 @@ image-push-helm-multiarch:
 .PHONY: image-build-scorecard-test image-push-scorecard-test image-push-scorecard-test-multiarch
 
 # Scorecard custom test image scaffold/build/push.
-.PHONY: image-build-custom-scorecard-tests image-push-custom-scorecard-tests image-push-custom-scorecard-tests-multiarch
+.PHONY: image-build-custom-scorecard-tests
 
 # Scorecard test kuttl image scaffold/build/push.
 .PHONY: image-build-scorecard-test-kuttl image-push-scorecard-test-kuttl image-push-scorecard-test-kuttl-multiarch
 
 image-build-custom-scorecard-tests:
 	./hack/image/build-custom-scorecard-tests-image.sh $(CUSTOM_SCORECARD_TESTS_BASE_IMAGE):dev
-
-image-push-custom-scorecard-tests:
-	./hack/image/push-image-tags.sh $(CUSTOM_SCORECARD_TESTS_BASE_IMAGE):dev $(CUSTOM_SCORECARD_TESTS_IMAGE)-$(shell go env GOARCH)
 
 image-build-scorecard-test:
 	./hack/image/build-scorecard-test-image.sh $(SCORECARD_TEST_BASE_IMAGE):dev
@@ -248,8 +245,6 @@ image-push-scorecard-test-kuttl:
 
 image-push-scorecard-test-kuttl-multiarch:
 	./hack/image/push-manifest-list.sh $(SCORECARD_TEST_KUTTL_IMAGE) ${SCORECARD_TEST_KUTTL_ARCHES}
-image-push-custom-scorecard-tests-multiarch:
-	./hack/image/push-manifest-list.sh $(CUSTOM_SCORECARD_TESTS_IMAGE) ${CUSTOM_SCORECARD_TESTS_ARCHES}
 
 ##############################
 # Tests                      #
