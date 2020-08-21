@@ -120,7 +120,9 @@ func applyRoles(c *collector.Manifests, strategy *operatorsv1alpha1.StrategyDeta
 	// Apply relevant roles to each service account.
 	perms := []operatorsv1alpha1.StrategyDeploymentPermissions{}
 	for _, perm := range saToPermissions {
-		perms = append(perms, perm)
+		if len(perm.Rules) != 0 {
+			perms = append(perms, perm)
+		}
 	}
 	strategy.Permissions = perms
 }
@@ -162,7 +164,9 @@ func applyClusterRoles(c *collector.Manifests, strategy *operatorsv1alpha1.Strat
 	// Apply relevant roles to each service account.
 	perms := []operatorsv1alpha1.StrategyDeploymentPermissions{}
 	for _, perm := range saToPermissions {
-		perms = append(perms, perm)
+		if len(perm.Rules) != 0 {
+			perms = append(perms, perm)
+		}
 	}
 	strategy.ClusterPermissions = perms
 }
