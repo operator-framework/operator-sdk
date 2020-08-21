@@ -19,11 +19,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"k8s.io/apimachinery/pkg/util/wait"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
@@ -89,11 +86,6 @@ func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string
 		return nil, fmt.Errorf("error in updating catalog source: %v", err)
 	}
 
-	// wait for catalog source to be ready
-	if err := waitForCatalogSource(ctx, c.cfg, cs); err != nil {
-		return nil, err
-	}
-
 	return cs, nil
 }
 
@@ -139,32 +131,6 @@ func (c IndexImageCatalogCreator) updateCatalogSource(podAddr string, cs *v1alph
 		"operators.operatorframework.io/index-image":        c.IndexImage,
 		"operators.operatorframework.io/inject-bundle-mode": c.InjectBundleMode,
 		"operators.operatorframework.io/injected-bundles":   string(injectedBundlesJSON),
-	}
-
-	return nil
-}
-
-func waitForCatalogSource(ctx context.Context, cfg *operator.Configuration, cs *v1alpha1.CatalogSource) error {
-	catSrcKey, err := client.ObjectKeyFromObject(cs)
-	if err != nil {
-		return fmt.Errorf("error in getting catalog source key: %v", err)
-	}
-
-	// verify that catalog source connection status is READY
-	catSrcCheck := wait.ConditionFunc(func() (done bool, err error) {
-		if err := cfg.Client.Get(ctx, catSrcKey, cs); err != nil {
-			return false, err
-		}
-		if cs.Status.GRPCConnectionState != nil {
-			if cs.Status.GRPCConnectionState.LastObservedState == "READY" {
-				return true, nil
-			}
-		}
-		return false, nil
-	})
-
-	if err := wait.PollImmediateUntil(200*time.Millisecond, catSrcCheck, ctx.Done()); err != nil {
-		return fmt.Errorf("catalog source connection is not ready: %v", err)
 	}
 
 	return nil

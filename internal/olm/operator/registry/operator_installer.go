@@ -17,10 +17,13 @@ package registry
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	olmclient "github.com/operator-framework/operator-sdk/internal/olm/client"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
@@ -47,6 +50,14 @@ func (o OperatorInstaller) InstallOperator(ctx context.Context) (*v1alpha1.Clust
 	if err != nil {
 		return nil, fmt.Errorf("create catalog: %v", err)
 	}
+
+	// TODO: OLM doesn't appear to propagate the "READY" connection status to the catalogsource in a timely manner
+	// even though its catalog-operator reports a connection almost immediately. This condition either needs to
+	// be propagated more quickly by OLM or we need to find a different resource to probe for readiness.
+	//
+	// if err := o.waitForCatalogSource(ctx, cs); err != nil {
+	// 	return nil, err
+	// }
 
 	log.Infof("OperatorInstaller.CatalogSourceName: %q\n", o.CatalogSourceName)
 	log.Infof("OperatorInstaller.PackageName:       %q\n", o.PackageName)
@@ -80,6 +91,36 @@ func (o OperatorInstaller) InstallOperator(ctx context.Context) (*v1alpha1.Clust
 	log.Infof("OLM has successfully installed %q", o.StartingCSV)
 
 	return csv, nil
+}
+
+//nolint:unused
+func (o OperatorInstaller) waitForCatalogSource(ctx context.Context, cs *v1alpha1.CatalogSource) error {
+	catSrcKey, err := client.ObjectKeyFromObject(cs)
+	if err != nil {
+		return fmt.Errorf("error in getting catalog source key: %v", err)
+	}
+
+	// verify that catalog source connection status is READY
+	catSrcCheck := wait.ConditionFunc(func() (done bool, err error) {
+		if err := o.cfg.Client.Get(ctx, catSrcKey, cs); err != nil {
+			return false, err
+		}
+		if cs.Status.GRPCConnectionState != nil {
+			fmt.Println("grpc connection state:", cs.Status.GRPCConnectionState.LastObservedState)
+			if cs.Status.GRPCConnectionState.LastObservedState == "READY" {
+				return true, nil
+			}
+		} else {
+			fmt.Println("grpc connection state: <nil>")
+		}
+		return false, nil
+	})
+
+	if err := wait.PollImmediateUntil(200*time.Millisecond, catSrcCheck, ctx.Done()); err != nil {
+		return fmt.Errorf("catalog source connection is not ready: %v", err)
+	}
+
+	return nil
 }
 
 func (o OperatorInstaller) createOperatorGroup(ctx context.Context) error {

@@ -58,11 +58,6 @@ func (c ConfigMapCatalogCreator) CreateCatalog(ctx context.Context, name string)
 		return nil, fmt.Errorf("error updating catalog source: %w", err)
 	}
 
-	// wait for catalog source to be ready
-	if err := waitForCatalogSource(ctx, c.cfg, cs); err != nil {
-		return nil, err
-	}
-
 	return cs, nil
 }
 

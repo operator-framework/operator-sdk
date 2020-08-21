@@ -17,9 +17,8 @@ package registry
 import (
 	"fmt"
 
-	operatorsv1 "github.com/operator-framework/api/pkg/operators/v1"
-	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "github.com/operator-framework/api/pkg/operators/v1"
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
@@ -32,8 +31,8 @@ func getSubscriptionName(csvName string) string {
 
 // withCatalogSource returns a function that sets the Subscription argument's
 // target CatalogSource's name and namespace.
-func withCatalogSource(csName, csNamespace string) func(*operatorsv1alpha1.Subscription) {
-	return func(sub *operatorsv1alpha1.Subscription) {
+func withCatalogSource(csName, csNamespace string) func(*v1alpha1.Subscription) {
+	return func(sub *v1alpha1.Subscription) {
 		sub.Spec.CatalogSource = csName
 		sub.Spec.CatalogSourceNamespace = csNamespace
 	}
@@ -41,11 +40,8 @@ func withCatalogSource(csName, csNamespace string) func(*operatorsv1alpha1.Subsc
 
 // withPackageChannel returns a function that sets the Subscription argument's
 // target package, channel, and starting CSV to those in channel.
-func withPackageChannel(pkgName, channelName, startingCSV string) func(*operatorsv1alpha1.Subscription) {
-	return func(sub *operatorsv1alpha1.Subscription) {
-		if sub.Spec == nil {
-			sub.Spec = &operatorsv1alpha1.SubscriptionSpec{}
-		}
+func withPackageChannel(pkgName, channelName, startingCSV string) func(*v1alpha1.Subscription) {
+	return func(sub *v1alpha1.Subscription) {
 		sub.Spec.Package = pkgName
 		sub.Spec.Channel = channelName
 		sub.Spec.StartingCSV = startingCSV
@@ -55,26 +51,20 @@ func withPackageChannel(pkgName, channelName, startingCSV string) func(*operator
 // newSubscription creates a new Subscription for a CSV with a name derived
 // from csvName, the CSV's objectmeta.name, in namespace. opts will be applied
 // to the Subscription object.
-func newSubscription(csvName, namespace string,
-	opts ...func(*operatorsv1alpha1.Subscription)) *operatorsv1alpha1.Subscription {
-	sub := &operatorsv1alpha1.Subscription{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: operatorsv1alpha1.SchemeGroupVersion.String(),
-			Kind:       operatorsv1alpha1.SubscriptionKind,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      getSubscriptionName(csvName),
-			Namespace: namespace,
-		},
-	}
+func newSubscription(csvName, namespace string, opts ...func(*v1alpha1.Subscription)) *v1alpha1.Subscription {
+	sub := &v1alpha1.Subscription{}
+	sub.SetGroupVersionKind(v1alpha1.SchemeGroupVersion.WithKind(v1alpha1.SubscriptionKind))
+	sub.SetName(getSubscriptionName(csvName))
+	sub.SetNamespace(namespace)
+	sub.Spec = &v1alpha1.SubscriptionSpec{}
 	for _, opt := range opts {
 		opt(sub)
 	}
 	return sub
 }
 
-func withSDKPublisher(pkgName string) func(*operatorsv1alpha1.CatalogSource) {
-	return func(cs *operatorsv1alpha1.CatalogSource) {
+func withSDKPublisher(pkgName string) func(*v1alpha1.CatalogSource) {
+	return func(cs *v1alpha1.CatalogSource) {
 		cs.Spec.DisplayName = pkgName
 		cs.Spec.Publisher = "operator-sdk"
 	}
@@ -83,30 +73,21 @@ func withSDKPublisher(pkgName string) func(*operatorsv1alpha1.CatalogSource) {
 // newCatalogSource creates a new CatalogSource with a name derived from
 // pkgName, the package manifest's packageName, in namespace. opts will
 // be applied to the CatalogSource object.
-func newCatalogSource(name, namespace string,
-	opts ...func(*operatorsv1alpha1.CatalogSource)) *operatorsv1alpha1.CatalogSource {
-	cs := &operatorsv1alpha1.CatalogSource{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: operatorsv1alpha1.SchemeGroupVersion.String(),
-			Kind:       operatorsv1alpha1.CatalogSourceKind,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-	}
+func newCatalogSource(name, namespace string, opts ...func(*v1alpha1.CatalogSource)) *v1alpha1.CatalogSource {
+	cs := &v1alpha1.CatalogSource{}
+	cs.SetGroupVersionKind(v1alpha1.SchemeGroupVersion.WithKind(v1alpha1.CatalogSourceKind))
+	cs.SetName(name)
+	cs.SetNamespace(namespace)
 	for _, opt := range opts {
 		opt(cs)
 	}
 	return cs
 }
 
-// withGRPC returns a function that sets the OperatorGroup argument's
-// targetNamespaces to namespaces. namespaces can be length 0..N; if
-// namespaces length is 0, targetNamespaces is set to an empty string,
-// indicating a global scope.
-func withTargetNamespaces(namespaces ...string) func(*operatorsv1.OperatorGroup) {
-	return func(og *operatorsv1.OperatorGroup) {
+// withTargetNamespaces returns a function that sets the OperatorGroup argument's targetNamespaces to namespaces.
+// namespaces can be length 0..N; if namespaces length is 0, targetNamespaces is unset, indicating a global scope.
+func withTargetNamespaces(namespaces ...string) func(*v1.OperatorGroup) {
+	return func(og *v1.OperatorGroup) {
 		if len(namespaces) != 0 && namespaces[0] != "" {
 			og.Spec.TargetNamespaces = namespaces
 		}
@@ -117,17 +98,11 @@ func withTargetNamespaces(namespaces ...string) func(*operatorsv1.OperatorGroup)
 // sdkOperatorGroupName in namespace. opts will be applied to the
 // OperatorGroup object. Note that the default OperatorGroup has a global
 // scope.
-func newSDKOperatorGroup(namespace string, opts ...func(*operatorsv1.OperatorGroup)) *operatorsv1.OperatorGroup {
-	og := &operatorsv1.OperatorGroup{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: operatorsv1.SchemeGroupVersion.String(),
-			Kind:       operatorsv1.OperatorGroupKind,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      operator.SDKOperatorGroupName,
-			Namespace: namespace,
-		},
-	}
+func newSDKOperatorGroup(namespace string, opts ...func(*v1.OperatorGroup)) *v1.OperatorGroup {
+	og := &v1.OperatorGroup{}
+	og.SetGroupVersionKind(v1.SchemeGroupVersion.WithKind(v1.OperatorGroupKind))
+	og.SetName(operator.SDKOperatorGroupName)
+	og.SetNamespace(namespace)
 	for _, opt := range opts {
 		opt(og)
 	}
