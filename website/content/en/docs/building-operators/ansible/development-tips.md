@@ -312,7 +312,7 @@ $ make docker-build docker-push IMG=quay.io/example/foo-operator:v0.0.1
 
 Deploy the foo-operator:
 
-```bassh
+```bash
 $ make install
 $ make deploy IMG=quay.io/example/foo-operator:v0.0.1
 ```
