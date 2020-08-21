@@ -19,7 +19,7 @@ Jinja templating so that you can customize deployments with the simplicity of
 a few variables in Ansible.
 
 The easiest way to get started is to install the collection on your local
-machine and test them using a playbook.
+machine and test it using a playbook.
 
 ### Installing the Kubernetes Collection for Ansible
 
@@ -526,4 +526,3 @@ operator. The `ansible_operator_meta` fields can be accessed via dot notation in
 [time_pkg]:https://golang.org/pkg/time/
 [time_parse_duration]:https://golang.org/pkg/time/#ParseDuration
 [watches]:/docs/building-operators/ansible/reference/watches
-
