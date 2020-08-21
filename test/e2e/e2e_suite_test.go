@@ -83,7 +83,7 @@ var _ = Describe("operator-sdk", func() {
 				"--domain", tc.Domain,
 				"--fetch-deps=false")
 			Expect(err).Should(Succeed())
-			err = e2e.ScorecardAddCustomPatchFile(projectName)
+			err = e2e.AddScorecardCustomPatchFile()
 			Expect(err).NotTo(HaveOccurred())
 
 			By("creating an API definition")
