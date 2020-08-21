@@ -1,4 +1,0 @@
-entries:
-  - description: Added a e2e test for scorecard custom test.
-    kind: change
-    breaking: false

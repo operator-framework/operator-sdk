@@ -29,7 +29,6 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
-	"github.com/operator-framework/operator-sdk/test/e2e"
 	kbtestutils "sigs.k8s.io/kubebuilder/test/e2e/utils"
 
 	testutils "github.com/operator-framework/operator-sdk/test/internal"
@@ -83,7 +82,7 @@ var _ = Describe("operator-sdk", func() {
 				"--domain", tc.Domain,
 				"--fetch-deps=false")
 			Expect(err).Should(Succeed())
-			err = e2e.AddScorecardCustomPatchFile()
+			err = tc.AddScorecardCustomPatchFile()
 			Expect(err).NotTo(HaveOccurred())
 
 			By("creating an API definition")

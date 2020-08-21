@@ -14,7 +14,7 @@
 
 // Modified from https://github.com/kubernetes-sigs/kubebuilder/tree/39224f0/test/e2e/v3
 
-package e2e
+package internal
 
 import (
 	"fmt"
@@ -55,9 +55,9 @@ const customScorecardKustomize = `
     name: config
 `
 
-func ScorecardAddCustomPatchFile(projectName string) error {
+func (tc TestContext) AddScorecardCustomPatchFile() error {
 	// drop in the patch file
-	customScorecardPatchFile := filepath.Join(projectName, "config", "scorecard", "patches", "custom.config.yaml")
+	customScorecardPatchFile := filepath.Join(tc.Dir, "config", "scorecard", "patches", "custom.config.yaml")
 	patchBytes := []byte(customScorecardPatch)
 	err := ioutil.WriteFile(customScorecardPatchFile, patchBytes, 0777)
 	if err != nil {
@@ -66,7 +66,7 @@ func ScorecardAddCustomPatchFile(projectName string) error {
 	}
 
 	// append to config/scorecard/kustomization.yaml
-	kustomizeFile := filepath.Join(projectName, "config", "scorecard", "kustomization.yaml")
+	kustomizeFile := filepath.Join(tc.Dir, "config", "scorecard", "kustomization.yaml")
 	f, err := os.OpenFile(kustomizeFile, os.O_APPEND|os.O_WRONLY, 0777)
 	if err != nil {
 		fmt.Printf("error in opening scorecard kustomization.yaml file %s\n", err.Error())
