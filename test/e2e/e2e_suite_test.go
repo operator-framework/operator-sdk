@@ -29,6 +29,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
+	"github.com/operator-framework/operator-sdk/test/e2e"
 	kbtestutils "sigs.k8s.io/kubebuilder/test/e2e/utils"
 
 	testutils "github.com/operator-framework/operator-sdk/test/internal"
@@ -82,6 +83,8 @@ var _ = Describe("operator-sdk", func() {
 				"--domain", tc.Domain,
 				"--fetch-deps=false")
 			Expect(err).Should(Succeed())
+			err = e2e.ScorecardAddCustomPatchFile(projectName)
+			Expect(err).NotTo(HaveOccurred())
 
 			By("creating an API definition")
 			err = tc.CreateAPI(
@@ -224,6 +227,17 @@ var _ = Describe("operator-sdk", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(scorecardOutput.Items)).To(Equal(1))
 			Expect(scorecardOutput.Items[0].Status.Results[0].State).To(Equal(v1alpha3.PassState))
+
+			By("running custom scorecard tests")
+			runScorecardCmd = exec.Command(tc.BinaryName, "scorecard", "bundle",
+				"--selector=suite=custom",
+				"--output=json",
+				"--wait-time=40s")
+			scorecardOutputBytes, err = tc.Run(runScorecardCmd)
+			Expect(err).NotTo(HaveOccurred())
+			err = json.Unmarshal(scorecardOutputBytes, &scorecardOutput)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(scorecardOutput.Items)).To(Equal(2))
 
 			By("running olm scorecard tests")
 			runOLMScorecardCmd := exec.Command(tc.BinaryName, "scorecard", "bundle",
