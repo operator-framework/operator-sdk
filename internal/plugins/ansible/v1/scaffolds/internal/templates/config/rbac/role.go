@@ -111,6 +111,8 @@ rules:
       - pods
       - pods/exec
       - pods/log
+      - serviceaccounts
+      - services
     verbs:
       - create
       - delete
@@ -145,6 +147,7 @@ const rulesFragment = `  ##
     resources:
       - {{.Resource.Plural}}
       - {{.Resource.Plural}}/status
+      - {{.Resource.Plural}}/finalizers
     verbs:
       - create
       - delete
