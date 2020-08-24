@@ -102,7 +102,7 @@ operator-sdk create api \
 
 Now let’s copy the API definition from `pkg/apis/<group>/<version>/<kind>_types.go` to `api/<version>/<kind>_types.go`. For our example, it is only required to copy the code from the `Spec` and `Status` fields.
 
-Observer that this file is quite similar to the old one. You ought to copy all for your new API and it will be pretty much verbatim, however, it requires some attention with the [Markers][markers]:
+This file is quite similar to the old one. Once you copy over your API definitions, they should be identical. However, pay close attention to these kubebuilder [Markers][markers]:
 
 - The `+k8s:deepcopy-gen:interfaces=...` marker was replaced with `+kubebuilder:object:root=true`.
 - If you are not using [openapi-gen][openapi-gen] to generate OpenAPI Go code, then `// +k8s:openapi-gen=true` and other related openapi markers can be removed.
@@ -195,9 +195,9 @@ func main() {
 
 In order to use the previous one ensure that you have the [operator-lib][operator-lib] as a dependency of your project.
 
-- The default port used by the metric endpoint binds to from `:8383` to `:8080`. To continue using port `8383`, specify `--metrics-addr=:8383` when you start the operator.
+- The default port used by the metric endpoint binds to `:8080` from the previous `:8383`. To continue using port `8383`, specify `--metrics-addr=:8383` when you start the operator.
 
-- `OPERATOR_NAME` and `POD_NAME` environment variable are no longer used. `OPERATOR_NAME` was used to define the name for a leader election config map. Operator authors should use the `LeaderElectionID` attribute from the [Manager Options][ctrl-options] which is set hardcoded into the `main.go`:
+- `OPERATOR_NAME` and `POD_NAME` environment variables are no longer used. `OPERATOR_NAME` was used to define the name for a leader election config map. Operator authors should use the `LeaderElectionID` attribute from the [Manager Options][ctrl-options] which is hardcoded in `main.go`:
 
 ```go
 func main() {
@@ -220,7 +220,7 @@ For the new layout, you will see that `controllers/suite_test.go` is created whe
 
 Operator SDK 1.0.0+ removes support for the legacy test framework and no longer supports the `operator-sdk test` subcommand. All affected tests should be migrated to use `envtest`.
 
-The Operator SDK project recommends using controller-runtime's [envtest][envtest] to write tests for your Operators projects. Envtest has a more active contributor community, it is more mature than Operator SDK's test framework, and it does not require an actual cluster to run tests which can be a huge benefit in CI scenarios.
+The Operator SDK project recommends controller-runtime's [envtest][envtest] because it has a more active contributor community, it is more mature than Operator SDK's test framework, and it does not require an actual cluster to run tests, which can be a huge benefit in CI scenarios.
 
 To learn more about how you can test your controllers, see the documentation about [writing controller tests][writing-controller-tests].
 
