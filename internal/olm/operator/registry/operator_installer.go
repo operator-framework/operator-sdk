@@ -17,8 +17,11 @@ package registry
 import (
 	"context"
 	"fmt"
+	"reflect"
+	"sort"
 	"time"
 
+	"github.com/operator-framework/api/pkg/operators/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/types"
@@ -123,16 +126,69 @@ func (o OperatorInstaller) waitForCatalogSource(ctx context.Context, cs *v1alpha
 	return nil
 }
 
+// createOperatorGroup creates an OperatorGroup using package name if an OperatorGroup does not exist.
+// If one exists in the desired namespace and it's target namespaces do not match the desired set,
+// createOperatorGroup will return an error.
 func (o OperatorInstaller) createOperatorGroup(ctx context.Context) error {
-	og := newSDKOperatorGroup(o.cfg.Namespace,
-		withTargetNamespaces(o.InstallMode.TargetNamespaces...))
-	log.Info("Creating OperatorGroup")
-	if err := o.cfg.Client.Create(ctx, og); err != nil {
-		return fmt.Errorf("error creating OperatorGroup: %w", err)
+	targetNamespaces := make([]string, len(o.InstallMode.TargetNamespaces), cap(o.InstallMode.TargetNamespaces))
+	copy(targetNamespaces, o.InstallMode.TargetNamespaces)
+	// Check OperatorGroup existence, since we cannot create a second OperatorGroup in namespace.
+	og, ogFound, err := o.getOperatorGroup(ctx)
+	if err != nil {
+		return err
 	}
-	// TODO: ensure operator group created successfully and no 2 operator groups exist.
-	// https://github.com/operator-framework/operator-sdk/pull/3689
+	// TODO: we may need to poll for status updates, since status.namespaces may not be updated immediately.
+	if ogFound {
+		// targetNamespaces will always be initialized, but the operator group's namespaces may not be
+		// (required for comparison).
+		if og.Status.Namespaces == nil {
+			og.Status.Namespaces = []string{}
+		}
+		// Simple check for OperatorGroup compatibility: if namespaces are not an exact match,
+		// the user must manage the resource themselves.
+		sort.Strings(og.Status.Namespaces)
+		sort.Strings(targetNamespaces)
+		if !reflect.DeepEqual(og.Status.Namespaces, targetNamespaces) {
+			msg := fmt.Sprintf("namespaces %+q do not match desired namespaces %+q", og.Status.Namespaces, targetNamespaces)
+			if og.GetName() == operator.SDKOperatorGroupName {
+				return fmt.Errorf("existing SDK-managed operator group's %s, "+
+					"please clean up existing operators `operator-sdk cleanup` before running package %q", msg, o.PackageName)
+			}
+			return fmt.Errorf("existing operator group %q's %s, "+
+				"please ensure it has the exact namespace set before running package %q", og.GetName(), msg, o.PackageName)
+		}
+		log.Infof("Using existing operator group %q", og.GetName())
+	} else {
+		// New SDK-managed OperatorGroup.
+		og = newSDKOperatorGroup(o.cfg.Namespace,
+			withTargetNamespaces(targetNamespaces...))
+		log.Info("Creating OperatorGroup")
+		if err = o.cfg.Client.Create(ctx, og); err != nil {
+			return fmt.Errorf("error creating OperatorGroup: %w", err)
+		}
+	}
 	return nil
+}
+
+// getOperatorGroup returns true if an OperatorGroup in the desired namespace was found.
+// If more than one operator group exists in namespace, this function will return an error
+// since CSVs in namespace will have an error status in that case.
+func (o OperatorInstaller) getOperatorGroup(ctx context.Context) (*v1.OperatorGroup, bool, error) {
+	ogList := &v1.OperatorGroupList{}
+	if err := o.cfg.Client.List(ctx, ogList, client.InNamespace(o.cfg.Namespace)); err != nil {
+		return nil, false, err
+	}
+	if len(ogList.Items) == 0 {
+		return nil, false, nil
+	}
+	if len(ogList.Items) != 1 {
+		var names []string
+		for _, og := range ogList.Items {
+			names = append(names, og.GetName())
+		}
+		return nil, true, fmt.Errorf("more than one operator group in namespace %s: %+q", o.cfg.Namespace, names)
+	}
+	return &ogList.Items[0], true, nil
 }
 
 func (o OperatorInstaller) createSubscription(ctx context.Context, cs *v1alpha1.CatalogSource) error {

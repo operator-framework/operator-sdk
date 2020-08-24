@@ -43,8 +43,7 @@ ANSIBLE_ARCHES:="amd64" "ppc64le" "arm64"
 HELM_ARCHES:="amd64" "ppc64le" "arm64"
 SCORECARD_TEST_ARCHES:="amd64" "ppc64le" "arm64"
 SCORECARD_TEST_KUTTL_ARCHES:="amd64" "ppc64le" "arm64"
-# the custom scorecard test image is a scorecard example only and
-# is not pushed to an official registry
+# the custom scorecard test image is a scorecard example only
 CUSTOM_SCORECARD_TESTS_ARCHES:="amd64" "ppc64le" "arm64"
 
 export CGO_ENABLED:=0
@@ -185,7 +184,7 @@ image: image-build image-push ## Build and push all images
 
 image-build: image-build-ansible image-build-helm image-build-scorecard-test image-build-scorecard-test-kuttl image-build-custom-scorecard-tests ## Build all images
 
-image-push: image-push-ansible image-push-helm image-push-scorecard-test ## Push all images
+image-push: image-push-ansible image-push-helm image-push-scorecard-test image-push-scorecard-test-kuttl ## Push all images
 
 # Ansible operator image scaffold/build/push.
 .PHONY: image-scaffold-ansible image-build-ansible image-push-ansible image-push-ansible-multiarch
@@ -221,7 +220,7 @@ image-push-helm-multiarch:
 .PHONY: image-build-scorecard-test image-push-scorecard-test image-push-scorecard-test-multiarch
 
 # Scorecard custom test image scaffold/build/push.
-.PHONY: image-build-custom-scorecard-tests image-push-custom-scorecard-tests image-push-custom-scorecard-tests-multiarch
+.PHONY: image-build-custom-scorecard-tests
 
 # Scorecard test kuttl image scaffold/build/push.
 .PHONY: image-build-scorecard-test-kuttl image-push-scorecard-test-kuttl image-push-scorecard-test-kuttl-multiarch

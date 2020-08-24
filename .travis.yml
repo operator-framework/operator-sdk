@@ -133,6 +133,7 @@ jobs:
       script:
       - make test-subcommand
       - make test-integration
+      - make image-build-custom-scorecard-tests
 
     # Build and test go
     - <<: *test
@@ -257,6 +258,23 @@ jobs:
         - make image-build-scorecard-test-kuttl
         - make image-push-scorecard-test-kuttl
 
+    # Build and deploy arm64 scorecard-test-kuttl docker image
+    - <<: *deploy
+      name: Docker image for scorecard-test-kuttl (arm64)
+      arch: arm64
+      script:
+        - make image-build-scorecard-test-kuttl
+        - make image-push-scorecard-test-kuttl
+
+
+    # Build and deploy ppc64le scorecard-test-kuttl docker image
+    - <<: *deploy
+      name: Docker image for scorecard-test-kuttl (ppc64le)
+      arch: ppc64le
+      script:
+        - make image-build-scorecard-test-kuttl
+        - make image-push-scorecard-test-kuttl
+
     # Build and deploy ansible multi-arch manifest list
     - stage: deploy-manifest-multiarch
       <<: *manifest-deploy
@@ -277,8 +295,6 @@ jobs:
         - make image-push-scorecard-test-multiarch
 
     # Build and deploy scorecard-test-kuttl multi-arch manifest list
-    # only amd64 is supported in base kudobuilder/kuttl image
-    # which is why we only support amd64 for scorecard-test-kuttl
     - <<: *manifest-deploy
       name: Manifest list for scorecard-test-kuttl
       script:
