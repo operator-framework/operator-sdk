@@ -109,9 +109,14 @@ func (m *packageManifestsManager) run(ctx context.Context) (err error) {
 		return fmt.Errorf("an operator with name %q is present and has resource errors\n%s", pkgName, status)
 	}
 
+	log.Info("Creating resources")
+	// Create OperatorGroup first to ensure no conflicts exist in m.namespace.
+	if err := m.createOperatorGroup(ctx, pkgName); err != nil {
+		return err
+	}
+
 	// New CatalogSource.
 	catsrc := newCatalogSource(pkgName, m.namespace)
-	log.Info("Creating catalog source")
 	if err = m.client.DoCreate(ctx, catsrc); err != nil {
 		return fmt.Errorf("error creating catalog source: %w", err)
 	}
@@ -132,12 +137,7 @@ func (m *packageManifestsManager) run(ctx context.Context) (err error) {
 	sub := newSubscription(csv.GetName(), m.namespace,
 		withPackageChannel(pkgName, channel),
 		withCatalogSource(getCatalogSourceName(pkgName), m.namespace))
-	// New SDK-managed OperatorGroup.
-	og := newSDKOperatorGroup(m.namespace,
-		withTargetNamespaces(m.targetNamespaces...))
-	objects := []runtime.Object{sub, og}
-	log.Info("Creating resources")
-	if err = m.client.DoCreate(ctx, objects...); err != nil {
+	if err = m.client.DoCreate(ctx, sub); err != nil {
 		return fmt.Errorf("error creating operator resources: %w", err)
 	}
 
