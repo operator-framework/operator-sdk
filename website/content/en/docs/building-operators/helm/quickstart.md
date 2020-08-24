@@ -11,6 +11,7 @@ This guide walks through an example of building a simple nginx-operator powered 
 
 - [Install `operator-sdk`][operator_install] and its prequisites.
 - Access to a Kubernetes v1.16.0+ cluster.
+- User authorized with `cluster-admin` permissions
 
 ## Quickstart Steps
 
