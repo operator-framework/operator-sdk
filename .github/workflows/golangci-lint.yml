@@ -26,4 +26,3 @@ jobs:
 
           # Optional: golangci-lint command line arguments.
           args: --timeout 5m
-          
