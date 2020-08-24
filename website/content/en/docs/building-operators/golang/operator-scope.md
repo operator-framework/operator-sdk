@@ -97,12 +97,10 @@ in `role_binding.yaml` are used to grant the operator permissions to access and 
 For the purposes of this doc, the other RBAC manifests `<kind>_editor_role.yaml`, `<kind>_viewer_role.yaml`,
 and `auth_proxy_*.yaml` are not relevant to changing the operator's resource permissions.
 
-<<<<<<< HEAD
-### Changing the permissions
+### Changing the permissions to Namespaced
 
 To change the scope of the RBAC permissions from cluster-wide to a specific namespace, you will need to use `Role`s
 =======
-### Changing the permissions to Namespaced
 
 - Inform the Namespace to the [Manager][ctrl-manager] 
 
@@ -123,9 +121,7 @@ mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 
 - Change the scope of the RBAC permissions from cluster-wide to a specific namespace
 
-You will need to use `Role`s 
->>>>>>> doc: cleanup operator-scope
-and `RoleBinding`s instead of `ClusterRole`s and `ClusterRoleBinding`s, respectively.
+You will need to use `Role`s and `RoleBinding`s instead of `ClusterRole`s and `ClusterRoleBinding`s, respectively.
 
 [`RBAC markers`][rbac-markers] defined in the controller (e.g `controllers/memcached_controller.go`)
 are used to generate the operator's [RBAC ClusterRole][rbac-clusterrole] (e.g `config/rbac/role.yaml`). The default
@@ -149,11 +145,7 @@ metadata:
   namespace: memcached-operator-system
 ```
 
-<<<<<<< HEAD
-We also need to update our `ClusterRoleBindings` to `RoleBindings` since they are not regenerated:
-=======
 - Replace `ClusterRoleBinding`  with `RoleBinding` and `ClusterRole` with `Role` in the `config/rbac/role_binding.yaml` file such as:
->>>>>>> doc: cleanup operator-scope
 
 ```yaml
 
