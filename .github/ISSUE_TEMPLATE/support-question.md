@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-<!-- 
+<!--
 Thanks for filing an issue! Before hitting the button, please answer these questions.
 
 Fill in as much of the template below as you can. If you leave out information, we can't help you as well.
@@ -17,31 +17,53 @@ We will try our best to answer the question, but we also have a mailing list and
 
 ## Type of question
 
-**Are you asking about community best practices, how to implement a specific feature, or about general context and help around the operator-sdk?**
+<!-- Uncomment one or more of the following lines depending on what you are asking about: -->
 
+<!-- Best practices -->
+<!-- How to implement a specific feature -->
+<!-- General operator-related help -->
+<!-- Open question -->
 
 ## Question
 
-**What did you do?**
-A clear and concise description of the steps you took (or insert a code snippet).
+#### What did you do?
 
-**What did you expect to see?**
-A clear and concise description of what you expected to happen (or insert a code snippet).
+<!-- A clear and concise description of the steps you took (or insert a code snippet). -->
 
-**What did you see instead? Under which circumstances?**
-A clear and concise description of what you expected to happen (or insert a code snippet).
+#### What did you expect to see?
 
+<!-- A clear and concise description of what you expected to happen (or insert a code snippet). -->
 
-**Environment**
-* operator-sdk version:
+#### What did you see instead? Under which circumstances?
 
-  insert release or Git SHA here
+<!-- A clear and concise description of what you expected to happen (or insert a code snippet). -->
 
-* Kubernetes version information:
+#### Environment
 
-  insert output of `kubectl version` here
+**Operator type:**
 
-* Kubernetes cluster kind: 
+<!-- Uncomment one or more of the following lines corresponding to the language of the operator type -->
 
-**Additional context**
-Add any other context about the question here.
+<!-- /language go -->
+<!-- /language ansible -->
+<!-- /language helm -->
+
+**Kubernetes cluster type:**
+
+<!-- The type of cluster used for testing/deployment, ex. "vanilla", "OpenShift" -->
+
+`$ operator-sdk version`
+
+<!-- Insert the output of `operator-sdk version` here. -->
+
+`$ go version` (if language is Go)
+
+<!-- Insert the output of `go version` here -->
+
+`$ kubectl version`
+
+<!-- Insert the output of `kubectl version` here -->
+
+#### Additional context
+
+<!-- Add any other context about the question here. -->

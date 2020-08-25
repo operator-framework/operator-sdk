@@ -9,8 +9,20 @@ assignees: ''
 
 ## Feature Request
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Example: "I have an issue when (...)"
+#### Describe the problem you need a feature to resolve.
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen. Add any considered drawbacks.
+<!--
+A clear and concise description of what the problem is. Example:
+
+I have an issue when ...
+-->
+
+#### Describe the solution you'd like.
+
+<!-- A clear and concise description of what you want to happen. Add any considered drawbacks. -->
+
+<!-- If your request relates to a particular operator type, uncomment one or more of the following lines corresponding to the language of that type -->
+
+<!-- /language go -->
+<!-- /language ansible -->
+<!-- /language helm -->
