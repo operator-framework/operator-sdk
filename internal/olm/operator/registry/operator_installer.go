@@ -21,7 +21,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/operator-framework/api/pkg/operators/v1"
+	v1 "github.com/operator-framework/api/pkg/operators/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/types"
