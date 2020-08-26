@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package internal
+package operator
 
 import (
 	"flag"
@@ -86,6 +86,21 @@ func (i InstallMode) Validate() error {
 		errs := validation.IsDNS1123Label(ns)
 		if len(errs) > 0 {
 			return fmt.Errorf("invalid target namespace %q: %v", ns, strings.Join(errs, ", "))
+		}
+	}
+	return nil
+}
+
+// CheckCompatibility checks if an InstallMode is compatible with the operator's namespace and is supported by csv.
+func (i InstallMode) CheckCompatibility(csv *v1alpha1.ClusterServiceVersion, operatorNamespace string) error {
+	if i.InstallModeType == v1alpha1.InstallModeTypeOwnNamespace {
+		if i.TargetNamespaces[0] != operatorNamespace {
+			return fmt.Errorf("install mode %s must match operator namespace %q", i, operatorNamespace)
+		}
+	}
+	for _, mode := range csv.Spec.InstallModes {
+		if mode.Type == i.InstallModeType && !mode.Supported {
+			return fmt.Errorf("install mode type %q not supported in CSV %q", i.InstallModeType, csv.GetName())
 		}
 	}
 	return nil

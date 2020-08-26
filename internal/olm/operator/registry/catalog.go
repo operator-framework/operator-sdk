@@ -12,16 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package olm
+package registry
 
 import (
-	"testing"
+	"context"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 )
 
-func TestOperator(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Operator Suite")
+type CatalogCreator interface {
+	CreateCatalog(ctx context.Context, name string) (*v1alpha1.CatalogSource, error)
+}
+
+// TODO: modify this as necessary.
+type InstallPlanApprover interface {
+	Approve(ctx context.Context, name string) error
 }

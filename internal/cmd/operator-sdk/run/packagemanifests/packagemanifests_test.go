@@ -17,12 +17,15 @@ package packagemanifests
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 )
 
 var _ = Describe("Running a run packagemanifests command", func() {
 	Describe("NewCmd", func() {
 		It("builds a cobra command", func() {
-			cmd := NewCmd()
+			cfg := &operator.Configuration{}
+			cmd := NewCmd(cfg)
 			Expect(cmd).NotTo(BeNil())
 			Expect(cmd.Use).NotTo(BeNil())
 			Expect(cmd.Short).NotTo(BeNil())
@@ -30,41 +33,6 @@ var _ = Describe("Running a run packagemanifests command", func() {
 			aliases := cmd.Aliases
 			Expect(len(aliases)).To(Equal(1))
 			Expect(aliases[0]).To(Equal("pm"))
-		})
-	})
-	Describe("validate", func() {
-		var (
-			c   packagemanifestsCmd
-			err error
-		)
-		BeforeEach(func() {
-			c = packagemanifestsCmd{}
-		})
-		It("fails if provided more than 1 arg", func() {
-			err = c.validate([]string{"foo", "bar"})
-			Expect(err).NotTo(BeNil())
-			Expect(err.Error()).To(ContainSubstring("exactly one argument is required"))
-		})
-		It("succeeds and if exactly 1 arg is provided", func() {
-			arg := "baz"
-			err = c.validate([]string{arg})
-			Expect(err).To(BeNil())
-		})
-	})
-	Describe("setDefaults", func() {
-		var (
-			c packagemanifestsCmd
-		)
-		BeforeEach(func() {
-			c = packagemanifestsCmd{}
-		})
-		It("defaults to 'packagemanifests' if no args are provided", func() {
-			c.setDefaults([]string{})
-			Expect(c.ManifestsDir).To(Equal("packagemanifests"))
-		})
-		It("sets ManifestDir to the first arg if provided more than 0", func() {
-			c.setDefaults([]string{"config/potato"})
-			Expect(c.ManifestsDir).To(Equal("config/potato"))
 		})
 	})
 })

@@ -12,14 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package internal
+package registry
 
 import (
-	"context"
+	"testing"
 
-	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
-type CatalogCreator interface {
-	CreateCatalog(ctx context.Context, name string) (*v1alpha1.CatalogSource, error)
+func TestRegistry(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Registry Suite")
 }

@@ -30,7 +30,7 @@ var _ = Describe("Running a run command", func() {
 
 			subcommands := cmd.Commands()
 			Expect(len(subcommands)).To(Equal(1))
-			Expect(subcommands[0].Use).To(Equal("packagemanifests <packagemanifests-root-dir>"))
+			Expect(subcommands[0].Use).To(Equal("packagemanifests [packagemanifests-root-dir]"))
 		})
 	})
 })

@@ -15,7 +15,7 @@
 // Package olm provides an API to install, uninstall, and check the
 // status of an Operator Lifecycle Manager installation.
 // TODO: move to OLM repository?
-package olm
+package installer
 
 import (
 	"context"
@@ -52,7 +52,7 @@ type Client struct {
 }
 
 func ClientForConfig(cfg *rest.Config) (*Client, error) {
-	cl, err := olmresourceclient.ClientForConfig(cfg)
+	cl, err := olmresourceclient.NewClientForConfig(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get OLM resource client: %v", err)
 	}

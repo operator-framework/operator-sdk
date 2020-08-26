@@ -12,25 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package olm
+package registry
 
 import (
 	"context"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	operatorsv1 "github.com/operator-framework/api/pkg/operators/v1"
+	v1 "github.com/operator-framework/api/pkg/operators/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	olmclient "github.com/operator-framework/operator-sdk/internal/olm/client"
-	"github.com/operator-framework/operator-sdk/internal/operator"
+	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 )
 
 var _ = Describe("Tenancy", func() {
 	Describe("createOperatorGroup", func() {
 		var (
-			m   *packageManifestsManager
+			o   *OperatorInstaller
 			ctx context.Context
 			err error
 
@@ -40,10 +40,14 @@ var _ = Describe("Tenancy", func() {
 		)
 
 		BeforeEach(func() {
-			m = &packageManifestsManager{
-				operatorManager: &operatorManager{
-					namespace: namespace,
-					client:    &olmclient.Client{KubeClient: fake.NewFakeClient()},
+			sch := runtime.NewScheme()
+			Expect(v1.AddToScheme(sch)).To(Succeed())
+			o = &OperatorInstaller{
+				PackageName: packageName,
+				cfg: &operator.Configuration{
+					Scheme:    sch,
+					Namespace: namespace,
+					Client:    fake.NewFakeClientWithScheme(sch),
 				},
 			}
 			ctx = context.TODO()
@@ -51,9 +55,8 @@ var _ = Describe("Tenancy", func() {
 
 		Context("with no existing OperatorGroup", func() {
 			It("creates one successfully", func() {
-				err = m.createOperatorGroup(ctx, packageName)
-				Expect(err).To(BeNil())
-				og, ogExists, err := getOperatorGroup(ctx, m.client, m.namespace)
+				Expect(o.createOperatorGroup(ctx)).To(Succeed())
+				og, ogExists, err := o.getOperatorGroup(ctx)
 				Expect(err).To(BeNil())
 				Expect(ogExists).To(BeTrue())
 				Expect(og.GetName()).To(Equal(operator.SDKOperatorGroupName))
@@ -61,30 +64,37 @@ var _ = Describe("Tenancy", func() {
 		})
 
 		Context("with an existing, valid OperatorGroup", func() {
-			It("returns no error and the existing SDK OperatorGroup is unchanged", func() {
-				existingOG := createOperatorGroupHelper(ctx, m.client.KubeClient, operator.SDKOperatorGroupName, namespace)
-				err = m.createOperatorGroup(ctx, packageName)
+			It("returns no error and the existing SDK OperatorGroup with no target namespaces is unchanged", func() {
+				existingOG := createOperatorGroupHelper(ctx, o.cfg.Client, operator.SDKOperatorGroupName, namespace)
+				Expect(o.createOperatorGroup(ctx)).To(Succeed())
+				og, ogExists, err := o.getOperatorGroup(ctx)
 				Expect(err).To(BeNil())
-				og, ogExists, err := getOperatorGroup(ctx, m.client, m.namespace)
+				Expect(ogExists).To(BeTrue())
+				Expect(og.GetName()).To(Equal(existingOG.GetName()))
+			})
+			It("returns no error and the existing SDK OperatorGroup with the same set of target namespaces is unchanged", func() {
+				targetNamespaces := []string{"foo", "bar"}
+				o.InstallMode.TargetNamespaces = targetNamespaces
+				existingOG := createOperatorGroupHelper(ctx, o.cfg.Client, operator.SDKOperatorGroupName, namespace, targetNamespaces...)
+				Expect(o.createOperatorGroup(ctx)).To(Succeed())
+				og, ogExists, err := o.getOperatorGroup(ctx)
 				Expect(err).To(BeNil())
 				Expect(ogExists).To(BeTrue())
 				Expect(og.GetName()).To(Equal(existingOG.GetName()))
 			})
 			It("returns no error and the existing non-SDK OperatorGroup is unchanged", func() {
-				existingOG := createOperatorGroupHelper(ctx, m.client.KubeClient, nonSDKOperatorGroupName, namespace)
-				err = m.createOperatorGroup(ctx, packageName)
-				Expect(err).To(BeNil())
-				og, ogExists, err := getOperatorGroup(ctx, m.client, m.namespace)
+				existingOG := createOperatorGroupHelper(ctx, o.cfg.Client, nonSDKOperatorGroupName, namespace)
+				Expect(o.createOperatorGroup(ctx)).To(Succeed())
+				og, ogExists, err := o.getOperatorGroup(ctx)
 				Expect(err).To(BeNil())
 				Expect(ogExists).To(BeTrue())
 				Expect(og.GetName()).To(Equal(existingOG.GetName()))
 			})
 			It("returns no error and the existing OperatorGroup in another namespace is unchanged", func() {
 				otherNS := "my-ns"
-				existingOG := createOperatorGroupHelper(ctx, m.client.KubeClient, operator.SDKOperatorGroupName, otherNS)
-				err = m.createOperatorGroup(ctx, packageName)
-				Expect(err).To(BeNil())
-				og, ogExists, err := getOperatorGroup(ctx, m.client, m.namespace)
+				existingOG := createOperatorGroupHelper(ctx, o.cfg.Client, operator.SDKOperatorGroupName, otherNS)
+				Expect(o.createOperatorGroup(ctx)).To(Succeed())
+				og, ogExists, err := o.getOperatorGroup(ctx)
 				Expect(err).To(BeNil())
 				Expect(ogExists).To(BeTrue())
 				Expect(og.GetName()).To(Equal(existingOG.GetName()))
@@ -94,13 +104,13 @@ var _ = Describe("Tenancy", func() {
 
 		Context("with an existing, invalid OperatorGroup", func() {
 			It("returns an error for an SDK OperatorGroup", func() {
-				_ = createOperatorGroupHelper(ctx, m.client.KubeClient, operator.SDKOperatorGroupName, namespace, "foo")
-				err = m.createOperatorGroup(ctx, packageName)
+				_ = createOperatorGroupHelper(ctx, o.cfg.Client, operator.SDKOperatorGroupName, namespace, "foo")
+				err = o.createOperatorGroup(ctx)
 				Expect(err.Error()).To(ContainSubstring(`existing SDK-managed operator group's namespaces ["foo"] do not match desired namespaces []`))
 			})
 			It("returns an error for a non-SDK OperatorGroup", func() {
-				_ = createOperatorGroupHelper(ctx, m.client.KubeClient, nonSDKOperatorGroupName, namespace, "foo")
-				err = m.createOperatorGroup(ctx, packageName)
+				_ = createOperatorGroupHelper(ctx, o.cfg.Client, nonSDKOperatorGroupName, namespace, "foo")
+				err = o.createOperatorGroup(ctx)
 				Expect(err.Error()).To(ContainSubstring(`existing operator group "my-og"'s namespaces ["foo"] do not match desired namespaces []`))
 			})
 		})
@@ -108,8 +118,8 @@ var _ = Describe("Tenancy", func() {
 
 })
 
-func createOperatorGroupHelper(ctx context.Context, c client.Client, name, namespace string, targetNamespaces ...string) (og operatorsv1.OperatorGroup) {
-	og.SetGroupVersionKind(operatorsv1.SchemeGroupVersion.WithKind("OperatorGroup"))
+func createOperatorGroupHelper(ctx context.Context, c client.Client, name, namespace string, targetNamespaces ...string) (og v1.OperatorGroup) {
+	og.SetGroupVersionKind(v1.SchemeGroupVersion.WithKind("OperatorGroup"))
 	og.SetName(name)
 	og.SetNamespace(namespace)
 	og.Status.Namespaces = targetNamespaces

@@ -15,14 +15,14 @@
 package olm
 
 import (
-	"github.com/operator-framework/operator-sdk/internal/olm"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"github.com/operator-framework/operator-sdk/internal/olm/installer"
 )
 
 func newStatusCmd() *cobra.Command {
-	mgr := olm.Manager{}
+	mgr := installer.Manager{}
 	cmd := &cobra.Command{
 		Use:   "status",
 		Short: "Get the status of the Operator Lifecycle Manager installation in your cluster",
@@ -34,7 +34,7 @@ func newStatusCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&mgr.OLMNamespace, "olm-namespace", olm.DefaultOLMNamespace, "namespace where OLM is installed")
+	cmd.Flags().StringVar(&mgr.OLMNamespace, "olm-namespace", installer.DefaultOLMNamespace, "namespace where OLM is installed")
 	cmd.Flags().StringVar(&mgr.Version, "version", "", "version of OLM installed on cluster; if unset"+
 		"operator-sdk attempts to auto-discover the version")
 	mgr.AddToFlagSet(cmd.Flags())

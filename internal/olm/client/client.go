@@ -15,7 +15,7 @@
 // Package olm provides an API to install, uninstall, and check the
 // status of an Operator Lifecycle Manager installation.
 // TODO: move to OLM repository?
-package olm
+package client
 
 import (
 	"context"
@@ -56,7 +56,7 @@ type Client struct {
 	KubeClient client.Client
 }
 
-func ClientForConfig(cfg *rest.Config) (*Client, error) {
+func NewClientForConfig(cfg *rest.Config) (*Client, error) {
 	rm, err := apiutil.NewDynamicRESTMapper(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create dynamic rest mapper: %v", err)

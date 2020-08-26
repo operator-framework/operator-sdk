@@ -21,27 +21,30 @@ import (
 	"path/filepath"
 	"strings"
 
+	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"github.com/operator-framework/operator-registry/pkg/registry"
 	"github.com/spf13/pflag"
 
-	"github.com/operator-framework/operator-sdk/internal/operator"
-	"github.com/operator-framework/operator-sdk/internal/operator/internal"
+	"github.com/operator-framework/operator-sdk/internal/olm/operator"
+	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry"
 	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
 )
 
 type Install struct {
 	BundleImage string
 
-	*internal.IndexImageCatalogCreator
-	*internal.OperatorInstaller
+	*registry.IndexImageCatalogCreator
+	*registry.OperatorInstaller
+
+	cfg *operator.Configuration
 }
 
 func NewInstall(cfg *operator.Configuration) Install {
 	i := Install{
-		OperatorInstaller: internal.NewOperatorInstaller(cfg),
+		OperatorInstaller: registry.NewOperatorInstaller(cfg),
+		cfg:               cfg,
 	}
-	i.IndexImageCatalogCreator = internal.NewIndexImageCatalogCreator(cfg)
+	i.IndexImageCatalogCreator = registry.NewIndexImageCatalogCreator(cfg)
 	i.CatalogCreator = i.IndexImageCatalogCreator
 	return i
 }
@@ -65,7 +68,11 @@ func (i Install) Run(ctx context.Context) (*v1alpha1.ClusterServiceVersion, erro
 func (i *Install) setup(ctx context.Context) error {
 	labels, csv, err := loadBundle(ctx, i.BundleImage)
 	if err != nil {
-		return fmt.Errorf("load bundle: %v", err)
+		return err
+	}
+
+	if err := i.InstallMode.CheckCompatibility(csv, i.cfg.Namespace); err != nil {
+		return err
 	}
 
 	i.OperatorInstaller.PackageName = labels["operators.operatorframework.io.bundle.package.v1"]
@@ -73,6 +80,7 @@ func (i *Install) setup(ctx context.Context) error {
 	i.OperatorInstaller.StartingCSV = csv.Name
 	i.OperatorInstaller.Channel = strings.Split(labels["operators.operatorframework.io.bundle.channels.v1"], ",")[0]
 
+	i.IndexImageCatalogCreator.PackageName = i.OperatorInstaller.PackageName
 	i.IndexImageCatalogCreator.InjectBundles = []string{i.BundleImage}
 	i.IndexImageCatalogCreator.InjectBundleMode = "replaces"
 	if i.IndexImageCatalogCreator.IndexImage == defaultIndexImage {
@@ -82,7 +90,7 @@ func (i *Install) setup(ctx context.Context) error {
 	return nil
 }
 
-func loadBundle(ctx context.Context, bundleImage string) (labels registryutil.Labels, csv *registry.ClusterServiceVersion, err error) {
+func loadBundle(ctx context.Context, bundleImage string) (registryutil.Labels, *v1alpha1.ClusterServiceVersion, error) {
 	bundlePath, err := registryutil.ExtractBundleImage(ctx, nil, bundleImage, false)
 	if err != nil {
 		return nil, nil, fmt.Errorf("pull bundle image: %v", err)
@@ -91,7 +99,7 @@ func loadBundle(ctx context.Context, bundleImage string) (labels registryutil.La
 		_ = os.RemoveAll(bundlePath)
 	}()
 
-	labels, _, err = registryutil.FindBundleMetadata(bundlePath)
+	labels, _, err := registryutil.FindBundleMetadata(bundlePath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("load bundle metadata: %v", err)
 	}
@@ -101,10 +109,10 @@ func loadBundle(ctx context.Context, bundleImage string) (labels registryutil.La
 		return nil, nil, fmt.Errorf("manifests directory not defined in bundle metadata")
 	}
 	manifestsDir := filepath.Join(bundlePath, relManifestsDir)
-	csv, err = registry.ReadCSVFromBundleDirectory(manifestsDir)
+	bundle, err := apimanifests.GetBundleFromDir(manifestsDir)
 	if err != nil {
-		return nil, nil, fmt.Errorf("read bundle csv: %v", err)
+		return nil, nil, fmt.Errorf("load bundle: %v", err)
 	}
 
-	return labels, csv, nil
+	return labels, bundle.CSV, nil
 }
