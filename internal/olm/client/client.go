@@ -137,6 +137,7 @@ func getName(namespace, name string) string {
 }
 
 func (c Client) DoRolloutWait(ctx context.Context, key types.NamespacedName) error {
+	onceNotFound := sync.Once{}
 	onceReplicasUpdated := sync.Once{}
 	oncePendingTermination := sync.Once{}
 	onceNotAvailable := sync.Once{}
@@ -146,6 +147,12 @@ func (c Client) DoRolloutWait(ctx context.Context, key types.NamespacedName) err
 		deployment := appsv1.Deployment{}
 		err := c.KubeClient.Get(ctx, key, &deployment)
 		if err != nil {
+			if apierrors.IsNotFound(err) {
+				onceNotFound.Do(func() {
+					log.Printf("  Waiting for Deployment %q to appear", key)
+				})
+				return false, nil
+			}
 			return false, err
 		}
 		if deployment.Generation <= deployment.Status.ObservedGeneration {
