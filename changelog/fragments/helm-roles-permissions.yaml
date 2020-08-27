@@ -13,4 +13,4 @@ entries:
     kind: "bugfix"
 
     # Is this a breaking change?
-    breaking: no
+    breaking: false
