@@ -7,7 +7,7 @@ weight: 60
 ## Overview
 
 The CustomResourceDefinition (CRD) scope can also be changed for cluster-scoped operators so that there is only a single 
-instance (for a given name) of the CRD to manage across the cluster.
+instance (for a given name) of the Custom Resource (CR) to manage across the cluster.
 
 The CRD manifests are generated in `config/crd/bases`. For each CRD that needs to be cluster-scoped, its manifest 
 should specify `spec.scope: Cluster`.
@@ -16,12 +16,7 @@ To ensure that the CRD is always generated with `scope: Cluster`, add the marker
 `// +kubebuilder:resource:path=<resource>,scope=Cluster`, or if already present replace `scope={Namespaced -> Cluster}`, 
 above the CRD's Go type definition in `api/<version>/<kind>_types.go` or `apis/<group>/<version>/<kind>_types.go` 
 if you are using the `multigroup` layout. Note that the `<resource>` 
-element must be the same lower-case plural value of the CRD's Kind, `spec.names.plural`. 
-
-## CRD cluster-scoped usage 
-
-A cluster scope is ideal for operators that manage custom resources (CR's) that can be created in more than 
-one namespace in a cluster. 
+element must be the same lower-case plural value of the CRD's Kind, `spec.names.plural`.  
 
 **NOTE**: When a `Manager` instance is created in the `main.go` file, it receives the namespace(s) as Options. 
 These namespace(s) should be watched and cached for the Client which is provided by the Controllers. Only clients 
