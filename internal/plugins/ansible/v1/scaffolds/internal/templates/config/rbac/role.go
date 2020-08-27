@@ -145,6 +145,7 @@ const rulesFragment = `  ##
     resources:
       - {{.Resource.Plural}}
       - {{.Resource.Plural}}/status
+      - {{.Resource.Plural}}/finalizers
     verbs:
       - create
       - delete
