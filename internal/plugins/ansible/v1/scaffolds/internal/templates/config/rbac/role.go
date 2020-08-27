@@ -111,8 +111,6 @@ rules:
       - pods
       - pods/exec
       - pods/log
-      - serviceaccounts
-      - services
     verbs:
       - create
       - delete
