@@ -101,7 +101,7 @@ This memcached role will:
 - Set the Deployment size
 
 It is good practice to set default values for variables used in Ansible
-Roles, so edit `memcached-operator/roles/memcached/defaults/main.yml`:
+Roles, so edit `roles/memcached/defaults/main.yml`:
 
 ```yaml
 ---
@@ -109,7 +109,7 @@ Roles, so edit `memcached-operator/roles/memcached/defaults/main.yml`:
 size: 1
 ```
 
-Finally, update the `Memcached` sample, `memcached-operator/config/samples/cache_v1alpha1_memcached.yaml`:
+Finally, update the `Memcached` sample, `config/samples/cache_v1alpha1_memcached.yaml`:
 
 ```yaml
 apiVersion: cache.example.com/v1alpha1
