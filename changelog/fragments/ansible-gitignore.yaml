@@ -2,7 +2,7 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      For Ansible-based Operator, add `.gitignore` file which was missing.
+      For Ansible-based Operator, add `.gitignore` file.
 
     # kind is one of:
     # - addition
@@ -10,7 +10,7 @@ entries:
     # - deprecation
     # - removal
     # - bugfix
-    kind: "bugfix"
+    kind: "addition"
 
     # Is this a breaking change?
     breaking: false
