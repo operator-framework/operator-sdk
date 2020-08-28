@@ -31,12 +31,13 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/machinery"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/constants"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates"
-	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/crd"
-	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/rbac"
+	ansiblerbac "github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/rbac"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/samples"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/molecule/mdefault"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/playbooks"
 	ansibleroles "github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/roles"
+	"github.com/operator-framework/operator-sdk/internal/plugins/configbase/config/crd"
+	"github.com/operator-framework/operator-sdk/internal/plugins/configbase/config/rbac"
 )
 
 var _ scaffold.Scaffolder = &apiScaffolder{}
@@ -99,10 +100,13 @@ func (s *apiScaffolder) scaffold() error {
 	createAPITemplates = append(createAPITemplates,
 		&rbac.CRDViewerRole{},
 		&rbac.CRDEditorRole{},
-		&rbac.ManagerRoleUpdater{},
+		// The role is customized for Ansible
+		&ansiblerbac.ManagerRoleUpdater{},
 
 		&crd.CRD{CRDVersion: s.opts.CRDVersion},
 		&crd.Kustomization{},
+
+		// The Sample is customized for Ansible
 		&samples.CR{},
 		&templates.WatchesUpdater{GeneratePlaybook: s.opts.GeneratePlaybook, GenerateRole: s.opts.GenerateRole, PlaybooksDir: constants.PlaybooksDir},
 		&mdefault.ResourceTest{},

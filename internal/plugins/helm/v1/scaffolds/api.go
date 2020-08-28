@@ -29,10 +29,11 @@ import (
 	"sigs.k8s.io/kubebuilder/pkg/plugin/scaffold"
 
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/machinery"
+	"github.com/operator-framework/operator-sdk/internal/plugins/configbase/config/crd"
+	"github.com/operator-framework/operator-sdk/internal/plugins/configbase/config/rbac"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/chartutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates"
-	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/crd"
-	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/rbac"
+	helmrbac "github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/rbac"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/samples"
 )
 
@@ -96,7 +97,9 @@ func (s *apiScaffolder) scaffold() error {
 		&crd.Kustomization{},
 		&rbac.CRDEditorRole{},
 		&rbac.CRDViewerRole{},
-		&rbac.ManagerRoleUpdater{Chart: chrt},
+
+		// The role and sample are customized for Helm
+		&helmrbac.ManagerRoleUpdater{Chart: chrt},
 		&samples.CRDSample{ChartPath: chartPath, Chart: chrt},
 	); err != nil {
 		return fmt.Errorf("error scaffolding APIs: %v", err)

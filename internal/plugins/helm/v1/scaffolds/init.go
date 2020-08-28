@@ -26,12 +26,13 @@ import (
 	"sigs.k8s.io/kubebuilder/pkg/plugin/scaffold"
 
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/machinery"
+	"github.com/operator-framework/operator-sdk/internal/plugins/configbase/config/kdefault"
+	"github.com/operator-framework/operator-sdk/internal/plugins/configbase/config/manager"
+	"github.com/operator-framework/operator-sdk/internal/plugins/configbase/config/prometheus"
+	"github.com/operator-framework/operator-sdk/internal/plugins/configbase/config/rbac"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/chartutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates"
-	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/kdefault"
-	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/manager"
-	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/prometheus"
-	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/rbac"
+	helmrbac "github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/rbac"
 	"github.com/operator-framework/operator-sdk/internal/version"
 )
 
@@ -100,7 +101,8 @@ func (s *initScaffolder) scaffold() error {
 		&rbac.Kustomization{},
 		&rbac.LeaderElectionRole{},
 		&rbac.LeaderElectionRoleBinding{},
-		&rbac.ManagerRole{},
+		// The role is customized for Helm
+		&helmrbac.ManagerRole{},
 		&rbac.ManagerRoleBinding{},
 		&manager.Kustomization{},
 		&manager.Manager{Image: imageName},

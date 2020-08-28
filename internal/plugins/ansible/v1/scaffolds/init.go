@@ -23,16 +23,18 @@ import (
 	"sigs.k8s.io/kubebuilder/pkg/plugin/scaffold"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates"
-	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/kdefault"
-	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/manager"
-	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/prometheus"
-	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/rbac"
+	ansiblemanager "github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/manager"
+	ansiblerbac "github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/rbac"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/testing"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/testing/pullpolicy"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/molecule/mdefault"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/molecule/mkind"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/playbooks"
 	ansibleroles "github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/roles"
+	"github.com/operator-framework/operator-sdk/internal/plugins/configbase/config/kdefault"
+	"github.com/operator-framework/operator-sdk/internal/plugins/configbase/config/manager"
+	"github.com/operator-framework/operator-sdk/internal/plugins/configbase/config/prometheus"
+	"github.com/operator-framework/operator-sdk/internal/plugins/configbase/config/rbac"
 
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/machinery"
 )
@@ -90,16 +92,22 @@ func (s *initScaffolder) scaffold() error {
 		&rbac.AuthProxyService{},
 		&rbac.LeaderElectionRole{},
 		&rbac.LeaderElectionRoleBinding{},
-		&rbac.ManagerRole{},
-		&rbac.RoleBinding{},
+		&rbac.ManagerRoleBinding{},
+		// The role is customized for Ansible
+		&ansiblerbac.ManagerRole{},
 
 		&prometheus.Kustomization{},
 		&prometheus.ServiceMonitor{},
 
-		&manager.Manager{Image: imageName},
+		// Ansible do not use the default Manager because of the
+		// the resources limit configuration them do not work with it.
+		// Todo: https://github.com/operator-framework/operator-sdk/issues/3807
+		// When we do the above task we can centralize the manager and pass the limits
+		// as arg here.
+		&ansiblemanager.Manager{Image: imageName},
 		&manager.Kustomization{},
 
-		&kdefault.Kustomize{},
+		&kdefault.Kustomization{},
 		&kdefault.AuthProxyPatch{},
 
 		&templates.Makefile{},
