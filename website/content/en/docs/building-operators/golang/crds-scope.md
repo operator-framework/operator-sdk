@@ -20,7 +20,7 @@ element must be the same lower-case plural value of the CRD's Kind, `spec.names.
 
 **NOTE**: When a `Manager` instance is created in the `main.go` file, it receives the namespace(s) as Options. 
 These namespace(s) should be watched and cached for the Client which is provided by the Controllers. Only clients 
-provided by cluster-scoped projects where the `Namespace` attribute is `""` will be able to manage cluster-scoped CRD's. 
+provided by cluster-scoped projects where the `Namespace` attribute is `""` will be able to manage cluster-scoped CRs. 
 For more information see the [Manager][manager_user_guide] topic in the user guide and the 
 [Manager Options][manager_options].
 
