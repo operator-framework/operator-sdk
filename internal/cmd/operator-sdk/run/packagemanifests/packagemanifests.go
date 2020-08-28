@@ -35,9 +35,8 @@ func NewCmd(cfg *operator.Configuration) *cobra.Command {
 		Long: `'run packagemanifests' deploys an Operator's package manifests with OLM. The command's argument
 will default to './packagemanifests' if unset; if set, the argument must be a package manifests root directory,
 ex. '<project-root>/packagemanifests'.`,
-		Aliases:           []string{"pm"},
-		Args:              cobra.MaximumNArgs(1),
-		PersistentPreRunE: func(_ *cobra.Command, _ []string) error { return cfg.Load() },
+		Aliases: []string{"pm"},
+		Args:    cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx, cancel := context.WithTimeout(cmd.Context(), timeout)
 			defer cancel()

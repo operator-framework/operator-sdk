@@ -28,9 +28,11 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/kubernetes"
 
 	scorecardannotations "github.com/operator-framework/operator-sdk/internal/annotations/scorecard"
 	"github.com/operator-framework/operator-sdk/internal/flags"
+	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
 	"github.com/operator-framework/operator-sdk/internal/scorecard"
 )
@@ -38,21 +40,22 @@ import (
 type scorecardCmd struct {
 	bundle         string
 	config         string
-	kubeconfig     string
-	namespace      string
 	outputFormat   string
 	selector       string
 	serviceAccount string
 	list           bool
 	skipCleanup    bool
 	waitTime       time.Duration
+
+	cfg *operator.Configuration
 }
 
 func NewCmd() *cobra.Command {
-	c := scorecardCmd{}
-
+	c := scorecardCmd{
+		cfg: &operator.Configuration{},
+	}
 	scorecardCmd := &cobra.Command{
-		Use:   "scorecard",
+		Use:   "scorecard <bundle>",
 		Short: "Runs scorecard",
 		// TODO: describe what the purpose of the command is, why someone would want
 		// to run it, etc.
@@ -60,7 +63,10 @@ func NewCmd() *cobra.Command {
 one argument, either a bundle image or directory containing manifests and metadata.
 If the argument holds an image tag, it must be present remotely.`,
 		PreRunE: func(cmd *cobra.Command, args []string) (err error) {
-			return c.validate(args)
+			if err := c.validate(args); err != nil {
+				return err
+			}
+			return c.cfg.Load()
 		},
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			c.bundle = args[0]
@@ -68,10 +74,9 @@ If the argument holds an image tag, it must be present remotely.`,
 		},
 	}
 
-	scorecardCmd.Flags().StringVar(&c.kubeconfig, "kubeconfig", "", "kubeconfig path")
+	c.cfg.BindFlags(scorecardCmd.Flags())
 	scorecardCmd.Flags().StringVarP(&c.selector, "selector", "l", "", "label selector to determine which tests are run")
 	scorecardCmd.Flags().StringVarP(&c.config, "config", "c", "", "path to scorecard config file")
-	scorecardCmd.Flags().StringVarP(&c.namespace, "namespace", "n", "", "namespace to run the test images in")
 	scorecardCmd.Flags().StringVarP(&c.outputFormat, "output", "o", "text",
 		"Output format for results. Valid values: text, json")
 	scorecardCmd.Flags().StringVarP(&c.serviceAccount, "service-account", "s", "default",
@@ -152,19 +157,19 @@ func (c *scorecardCmd) run() (err error) {
 	if c.list {
 		scorecardTests = o.List()
 	} else {
-		runner := scorecard.PodTestRunner{
-			ServiceAccount: c.serviceAccount,
-			Namespace:      scorecard.GetKubeNamespace(c.kubeconfig, c.namespace),
-			BundlePath:     c.bundle,
-			BundleMetadata: metadata,
-		}
-
 		// Only get the client if running tests.
-		if runner.Client, err = scorecard.GetKubeClient(c.kubeconfig); err != nil {
+		kubeClient, err := kubernetes.NewForConfig(c.cfg.RESTConfig)
+		if err != nil {
 			return fmt.Errorf("error getting kubernetes client: %w", err)
 		}
 
-		o.TestRunner = &runner
+		o.TestRunner = &scorecard.PodTestRunner{
+			ServiceAccount: c.serviceAccount,
+			Namespace:      c.cfg.Namespace,
+			BundlePath:     c.bundle,
+			BundleMetadata: metadata,
+			Client:         kubeClient,
+		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), c.waitTime)
 		defer cancel()
