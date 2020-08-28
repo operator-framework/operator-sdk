@@ -20,4 +20,4 @@ If using `git`, it is recommended to add `testbin/*` to your `.gitignore` file t
 
 [envtest]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/envtest
 [controller-test]: https://book.kubebuilder.io/reference/writing-tests.html
-[script]: https://raw.githubusercontent.com/kubernetes-sigs/kubebuilder/master/scripts/setup_envtest_bins.sh
+[script]: https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/master/hack/setup-envtest.sh
