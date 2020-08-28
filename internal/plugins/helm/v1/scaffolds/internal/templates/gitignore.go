@@ -1,5 +1,6 @@
 /*
 Copyright 2018 The Kubernetes Authors.
+Modifications copyright 2020 The Operator-SDK Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -46,16 +47,6 @@ const gitignoreTemplate = `
 *.so
 *.dylib
 bin
-
-# Test binary, build with ` + "`go test -c`" + `
-*.test
-
-# Output of the go coverage tool, specifically when used with LiteIDE
-*.out
-
-# Kubernetes Generated files - skip generated files, except for vendored files
-
-!vendor/**/zz_generated.*
 
 # editor and IDE paraphernalia
 .idea
