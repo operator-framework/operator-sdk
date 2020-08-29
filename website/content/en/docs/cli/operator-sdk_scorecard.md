@@ -12,7 +12,7 @@ one argument, either a bundle image or directory containing manifests and metada
 If the argument holds an image tag, it must be present remotely.
 
 ```
-operator-sdk scorecard [flags]
+operator-sdk scorecard <bundle> [flags]
 ```
 
 ### Options
@@ -20,9 +20,9 @@ operator-sdk scorecard [flags]
 ```
   -c, --config string            path to scorecard config file
   -h, --help                     help for scorecard
-      --kubeconfig string        kubeconfig path
+      --kubeconfig string        Path to the kubeconfig file to use for CLI requests.
   -L, --list                     Option to enable listing which tests are run
-  -n, --namespace string         namespace to run the test images in
+  -n, --namespace string         If present, namespace scope for this CLI request
   -o, --output string            Output format for results. Valid values: text, json (default "text")
   -l, --selector string          label selector to determine which tests are run
   -s, --service-account string   Service account to use for tests (default "default")
