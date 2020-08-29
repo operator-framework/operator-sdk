@@ -212,6 +212,7 @@ func (c *Manifests) addRoles(rawManifests ...[]byte) error {
 		if err := yaml.Unmarshal(rawManifest, &role); err != nil {
 			return err
 		}
+		role.SetNamespace("")
 		c.Roles = append(c.Roles, role)
 	}
 	return nil
@@ -237,6 +238,7 @@ func (c *Manifests) addRoleBindings(rawManifests ...[]byte) error {
 		if err := yaml.Unmarshal(rawManifest, &binding); err != nil {
 			return err
 		}
+		binding.SetNamespace("")
 		c.RoleBindings = append(c.RoleBindings, binding)
 	}
 	return nil
@@ -261,6 +263,7 @@ func (c *Manifests) addServiceAccounts(rawManifests ...[]byte) error {
 		if err := yaml.Unmarshal(rawManifest, &sa); err != nil {
 			return err
 		}
+		sa.SetNamespace("")
 		c.ServiceAccounts = append(c.ServiceAccounts, sa)
 	}
 	return nil
@@ -274,6 +277,7 @@ func (c *Manifests) addDeployments(rawManifests ...[]byte) error {
 		if err := yaml.Unmarshal(rawManifest, &dep); err != nil {
 			return err
 		}
+		dep.SetNamespace("")
 		c.Deployments = append(c.Deployments, dep)
 	}
 	return nil
@@ -352,6 +356,7 @@ func (c *Manifests) addOthers(rawManifests ...[]byte) error {
 		if err := yaml.Unmarshal(rawManifest, &u); err != nil {
 			return err
 		}
+		u.SetNamespace("")
 		c.Others = append(c.Others, u)
 	}
 	return nil
