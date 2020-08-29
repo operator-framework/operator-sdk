@@ -26,6 +26,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
 type Configuration struct {
@@ -87,8 +88,13 @@ func (c *Configuration) Load() error {
 			return err
 		}
 	}
+	rm, err := apiutil.NewDynamicRESTMapper(cc, apiutil.WithLazyDiscovery)
+	if err != nil {
+		return err
+	}
 	cl, err := client.New(cc, client.Options{
 		Scheme: sch,
+		Mapper: rm,
 	})
 	if err != nil {
 		return err
