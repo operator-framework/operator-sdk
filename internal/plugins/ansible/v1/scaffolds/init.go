@@ -101,7 +101,7 @@ func (s *initScaffolder) scaffold() error {
 
 		// Ansible do not use the default Manager because of the
 		// the resources limit configuration them do not work with it.
-		// Todo: https://github.com/operator-framework/operator-sdk/issues/3807
+		// Todo: https://github.com/operator-framework/operator-sdk/issues/3573
 		// When we do the above task we can centralize the manager and pass the limits
 		// as arg here.
 		&ansiblemanager.Manager{Image: imageName},
