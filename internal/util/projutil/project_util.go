@@ -35,7 +35,6 @@ const (
 const (
 	// Go env vars.
 	GoFlagsEnv = "GOFLAGS"
-	GoModEnv   = "GO111MODULE"
 )
 
 // Default config file path.
