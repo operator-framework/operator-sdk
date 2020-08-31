@@ -31,6 +31,8 @@ type InstallMode struct {
 
 var _ flag.Value = &InstallMode{}
 
+// Set is called when the --install-mode flag is passed to the CLI. It will
+// configure the InstallMode based on the values passed in.
 func (i *InstallMode) Set(str string) error {
 	split := strings.SplitN(str, "=", 2)
 	i.InstallModeType = v1alpha1.InstallModeType(split[0])
@@ -40,10 +42,13 @@ func (i *InstallMode) Set(str string) error {
 			i.TargetNamespaces = append(i.TargetNamespaces, strings.TrimSpace(ns))
 		}
 		sort.Strings(i.TargetNamespaces)
+	} else {
+		i.TargetNamespaces = []string{}
 	}
 	return i.Validate()
 }
 
+// IsEmpty returns true if the InstallModeType is empty.
 func (i InstallMode) IsEmpty() bool {
 	return i.InstallModeType == ""
 }
@@ -94,7 +99,7 @@ func (i InstallMode) Validate() error {
 // CheckCompatibility checks if an InstallMode is compatible with the operator's namespace and is supported by csv.
 func (i InstallMode) CheckCompatibility(csv *v1alpha1.ClusterServiceVersion, operatorNamespace string) error {
 	if i.InstallModeType == v1alpha1.InstallModeTypeOwnNamespace {
-		if i.TargetNamespaces[0] != operatorNamespace {
+		if len(i.TargetNamespaces) > 0 && i.TargetNamespaces[0] != operatorNamespace {
 			return fmt.Errorf("install mode %s must match operator namespace %q", i, operatorNamespace)
 		}
 	}
