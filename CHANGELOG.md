@@ -1,3 +1,16 @@
+## v0.19.3
+
+### Changes
+
+- **Breaking change**: Changed the `go.operator-sdk.io` plugin to only write a `plugins` PROJECT field and run the OLM integration plugin if the project version is "3-alpha" or above. ([#3716](https://github.com/operator-framework/operator-sdk/pull/3716))
+- Fix CVE-2020-14040 by upgrading to golang.org/x/text v0.3.3. ([#3459](https://github.com/operator-framework/operator-sdk/pull/3459))
+
+### Bug Fixes
+
+- Fixed debug logging in the `bundle validate` subcommand of `operator-sdk`. ([#3812](https://github.com/operator-framework/operator-sdk/pull/3812))
+- Fixed incorrect (cluster) role name assignments in generated CSVs [#3600](https://github.com/operator-framework/operator-sdk/issues/3600). ([#3714](https://github.com/operator-framework/operator-sdk/pull/3714))
+- Stop reconciling tasks when the event raised is a rescue in Ansible-based Operators.  More info: [Bugzilla 1856714](https://bugzilla.redhat.com/show_bug.cgi?id=1856714). ([#3727](https://github.com/operator-framework/operator-sdk/pull/3727))
+
 ## v0.19.2
 
 ### Changes
