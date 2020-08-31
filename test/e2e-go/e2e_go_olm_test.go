@@ -18,13 +18,16 @@ import (
 	"encoding/json"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 
 	testutils "github.com/operator-framework/operator-sdk/test/internal"
+)
+
+var (
+	runBundleImg = "quay.io/vnarsing/memcached-operator:v1"
 )
 
 var _ = Describe("Integrating Go Projects with OLM", func() {
@@ -44,24 +47,33 @@ var _ = Describe("Integrating Go Projects with OLM", func() {
 			// Turn off interactive prompts for all generation tasks.
 			replace := "operator-sdk generate kustomize manifests"
 			testutils.ReplaceInFile(filepath.Join(tc.Dir, "Makefile"), replace, replace+" --interactive=false")
-			err := tc.Make("bundle", "IMG="+tc.ImageName)
+
+			// Specifying stable channel
+			replace = "operator-sdk generate bundle"
+			testutils.ReplaceInFile(filepath.Join(tc.Dir, "Makefile"), replace, replace+"  --default-channel stable")
+			err := tc.Make("bundle")
 			Expect(err).NotTo(HaveOccurred())
 
 			By("building the operator bundle image")
-			// Use the existing image tag but with a "-bundle" suffix.
-			imageSplit := strings.SplitN(tc.ImageName, ":", 2)
-			bundleImage := imageSplit[0] + "-bundle"
-			if len(imageSplit) == 2 {
-				bundleImage += ":" + imageSplit[1]
-			}
-			err = tc.Make("bundle-build", "BUNDLE_IMG="+bundleImage)
+			err = tc.Make("bundle-build", "BUNDLE_IMG="+runBundleImg)
 			Expect(err).NotTo(HaveOccurred())
 
-			if isRunningOnKind() {
-				By("loading the bundle image into Kind cluster")
-				err = tc.LoadImageToKindClusterWithName(bundleImage)
-				Expect(err).NotTo(HaveOccurred())
-			}
+			// bundle image should be present in the remote repository in run bundle
+			// implementation.
+			By("push the image to a remote repository")
+			err = tc.Make("docker-push", "IMG="+runBundleImg)
+			Expect(err).NotTo(HaveOccurred())
+
+			By("running the operator bundle using `run bundle` command")
+			runBundleCmd := exec.Command(tc.BinaryName, "run", "bundle", runBundleImg, "--namespace", tc.Kubectl.Namespace)
+			_, err = tc.Run(runBundleCmd)
+			Expect(err).NotTo(HaveOccurred())
+
+			By("destroying the Operator deployed with the 'run' subcommand")
+			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", projectName,
+				"--timeout", "4m")
+			_, err = tc.Run(cleanupPkgManCmd)
+			Expect(err).NotTo(HaveOccurred())
 
 			By("adding the 'packagemanifests' rule to the Makefile")
 			err = tc.AddPackagemanifestsTarget()
@@ -127,7 +139,7 @@ var _ = Describe("Integrating Go Projects with OLM", func() {
 			}
 
 			By("destroying the deployed package manifests-formatted operator")
-			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", projectName,
+			cleanupPkgManCmd = exec.Command(tc.BinaryName, "cleanup", projectName,
 				"--timeout", "4m")
 			_, err = tc.Run(cleanupPkgManCmd)
 			Expect(err).NotTo(HaveOccurred())
