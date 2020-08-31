@@ -24,6 +24,7 @@ import (
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/spf13/pflag"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry"
@@ -78,6 +79,7 @@ func (i *Install) setup(ctx context.Context) error {
 	i.OperatorInstaller.PackageName = labels["operators.operatorframework.io.bundle.package.v1"]
 	i.OperatorInstaller.CatalogSourceName = fmt.Sprintf("%s-catalog", i.OperatorInstaller.PackageName)
 	i.OperatorInstaller.StartingCSV = csv.Name
+	i.OperatorInstaller.SupportedInstallModes = getSupportedInstallModes(csv.Spec.InstallModes)
 	i.OperatorInstaller.Channel = strings.Split(labels["operators.operatorframework.io.bundle.channels.v1"], ",")[0]
 	i.IndexImageCatalogCreator.BundleImage = i.BundleImage
 	i.IndexImageCatalogCreator.PackageName = i.OperatorInstaller.PackageName
@@ -115,4 +117,14 @@ func loadBundle(ctx context.Context, bundleImage string) (registryutil.Labels, *
 	}
 
 	return labels, bundle.CSV, nil
+}
+
+func getSupportedInstallModes(csvInstallModes []v1alpha1.InstallMode) sets.String {
+	supported := sets.NewString()
+	for _, im := range csvInstallModes {
+		if im.Supported {
+			supported.Insert(string(im.Type))
+		}
+	}
+	return supported
 }
