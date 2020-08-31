@@ -29,6 +29,8 @@ import (
 	olmapiv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -194,8 +196,8 @@ func (c Client) DoCSVWait(ctx context.Context, key types.NamespacedName) error {
 	)
 	once := sync.Once{}
 
+	csv := olmapiv1alpha1.ClusterServiceVersion{}
 	csvPhaseSucceeded := func() (bool, error) {
-		csv := olmapiv1alpha1.ClusterServiceVersion{}
 		err := c.KubeClient.Get(ctx, key, &csv)
 		if err != nil {
 			if apierrors.IsNotFound(err) {
@@ -222,7 +224,72 @@ func (c Client) DoCSVWait(ctx context.Context, key types.NamespacedName) error {
 		}
 	}
 
-	return wait.PollImmediateUntil(time.Second, csvPhaseSucceeded, ctx.Done())
+	err := wait.PollImmediateUntil(time.Second, csvPhaseSucceeded, ctx.Done())
+	if err != nil && errors.Is(err, context.DeadlineExceeded) {
+		if depCheckErr := c.printDeploymentErrors(ctx, key, csv); depCheckErr != nil {
+			return fmt.Errorf("failed to run operator: %v %v", err, depCheckErr)
+		}
+	}
+	return err
+}
+
+// printDeploymentErrors function loops through deployment specs of a given CSV, and prints reason
+// in case of failures, based on deployment condition.
+func (c Client) printDeploymentErrors(ctx context.Context, key types.NamespacedName, csv olmapiv1alpha1.ClusterServiceVersion) error {
+	if key.Namespace == "" {
+		return fmt.Errorf("no namespace provided to get deployment failures")
+	}
+	dep := &appsv1.Deployment{}
+	for _, ds := range csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
+		depKey := types.NamespacedName{
+			Namespace: key.Namespace,
+			Name:      ds.Name,
+		}
+		depSelectors := ds.Spec.Selector
+		if err := c.KubeClient.Get(ctx, depKey, dep); err != nil {
+			log.Printf("failed to run operator, deployment not found for : %v\n", ds.Name)
+			continue
+		}
+		for _, s := range dep.Status.Conditions {
+			if s.Type == appsv1.DeploymentAvailable && s.Status == corev1.ConditionFalse {
+				log.Printf("failed to run operator: deployment failed for : %v\n, with reason %v\n", ds.Name, s.Reason)
+				if err := c.printPodErrors(ctx, depSelectors); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// printPodErrors loops through pods, and prints pod errors if any.
+func (c Client) printPodErrors(ctx context.Context, depSelectors *metav1.LabelSelector) error {
+	// loop through pods and return specific error message.
+	podErrors := make(map[string]string)
+	podList := &corev1.PodList{}
+	podLabelSelectors, err := metav1.LabelSelectorAsSelector(depSelectors)
+	if err != nil {
+		return err
+	}
+	options := client.ListOptions{
+		LabelSelector: podLabelSelectors,
+	}
+	if err := c.KubeClient.List(ctx, podList, &options); err != nil {
+		return fmt.Errorf("error getting Pods: %v", err)
+	}
+	for _, p := range podList.Items {
+		if p.Status.Phase != corev1.PodSucceeded {
+			for _, cs := range p.Status.ContainerStatuses {
+				if !cs.Ready {
+					podErrors[p.Name] = cs.State.Waiting.Message
+				}
+			}
+		}
+	}
+	if len(podErrors) > 0 {
+		log.Printf("pod errors: %v\n", podErrors)
+	}
+	return nil
 }
 
 // GetInstalledVersion returns the OLM version installed in the namespace informed.
