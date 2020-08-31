@@ -17,6 +17,7 @@ package run
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/run/bundle"
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/run/packagemanifests"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 )
@@ -34,7 +35,7 @@ Currently only the package manifests format is supported via the 'packagemanifes
 
 	cmd.AddCommand(
 		// TODO(joelanford): enable bundle command when implementation is complete
-		// bundle.NewCmd(cfg),
+		bundle.NewCmd(cfg),
 		packagemanifests.NewCmd(cfg),
 	)
 

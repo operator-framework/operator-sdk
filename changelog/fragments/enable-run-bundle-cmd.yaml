@@ -1,0 +1,4 @@
+entries:
+  - description: >
+      Enable `run bundle` command and include e2e tests.
+    kind: addition

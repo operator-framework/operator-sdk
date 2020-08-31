@@ -29,8 +29,7 @@ var _ = Describe("Running a run command", func() {
 			Expect(cmd.Long).NotTo(BeNil())
 
 			subcommands := cmd.Commands()
-			Expect(len(subcommands)).To(Equal(1))
-			Expect(subcommands[0].Use).To(Equal("packagemanifests [packagemanifests-root-dir]"))
+			Expect(len(subcommands)).To(Equal(2))
 		})
 	})
 })

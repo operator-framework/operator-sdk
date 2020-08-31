@@ -63,6 +63,17 @@ var _ = Describe("Integrating Go Projects with OLM", func() {
 				Expect(err).NotTo(HaveOccurred())
 			}
 
+			By("running the operator bundle using `run bundle` command")
+			runBundleCmd := exec.Command(tc.BinaryName, "run", "bundle", bundleImage, "--namespace", tc.Kubectl.Namespace)
+			_, err = tc.Run(runBundleCmd)
+			Expect(err).NotTo(HaveOccurred())
+
+			By("destroying the Operator deployed with the 'run' subcommand")
+			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", projectName,
+				"--timeout", "4m")
+			_, err = tc.Run(cleanupPkgManCmd)
+			Expect(err).NotTo(HaveOccurred())
+
 			By("adding the 'packagemanifests' rule to the Makefile")
 			err = tc.AddPackagemanifestsTarget()
 			Expect(err).NotTo(HaveOccurred())
@@ -127,7 +138,7 @@ var _ = Describe("Integrating Go Projects with OLM", func() {
 			}
 
 			By("destroying the deployed package manifests-formatted operator")
-			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", projectName,
+			cleanupPkgManCmd = exec.Command(tc.BinaryName, "cleanup", projectName,
 				"--timeout", "4m")
 			_, err = tc.Run(cleanupPkgManCmd)
 			Expect(err).NotTo(HaveOccurred())
