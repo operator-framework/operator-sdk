@@ -489,7 +489,7 @@ Also see the [advanced topics][advanced_topics] doc for more use cases and under
 [legacy_quickstart_doc]:https://v0-19-x.sdk.operatorframework.io/docs/golang/legacy/quickstart/
 [activate_modules]: https://github.com/golang/go/wiki/Modules#how-to-install-and-activate-module-support
 [advanced_topics]: /docs/building-operators/golang/advanced-topics/
-[create_a_webhook]: /docs/building-operators/golang/webhooks/
+[create_a_webhook]: https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html
 [status_marker]: https://book.kubebuilder.io/reference/generating-crd.html#status
 [status_subresource]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#status-subresource
 [API-groups]:https://kubernetes.io/docs/concepts/overview/kubernetes-api/#api-groups
