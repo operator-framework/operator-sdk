@@ -80,6 +80,7 @@ func (s *initScaffolder) scaffold() error {
 	return machinery.NewScaffold().Execute(
 		s.newUniverse(),
 		&templates.Dockerfile{},
+		&templates.GitIgnore{},
 		&templates.RequirementsYml{},
 		&templates.Watches{},
 
