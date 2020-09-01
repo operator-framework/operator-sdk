@@ -41,5 +41,19 @@ func GetManifestObjects(c *collector.Manifests) (objs []controllerutil.Object) {
 	_, clusterRoleObjs := c.SplitCSVClusterPermissionsObjects()
 	objs = append(objs, clusterRoleObjs...)
 
+	removeNamespace(objs)
 	return objs
+}
+
+// removeNamespace removes the namespace field of resources intended to be inserted into
+// an OLM manifests directory.
+//
+// This is required to pass OLM validations which require that namespaced resources do
+// not include explicit namespace settings. OLM automatically installs namespaced
+// resources in the same namespace that the operator is installed in, which is determined
+// at runtime, not bundle/packagemanifests creation time.
+func removeNamespace(objs []controllerutil.Object) {
+	for _, obj := range objs {
+		obj.SetNamespace("")
+	}
 }
