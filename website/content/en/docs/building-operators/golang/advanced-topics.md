@@ -1,7 +1,7 @@
 ---
 title: Advanced Topics
 linkTitle: Advanced Topics
-weight: 70
+weight: 80
 ---
 
 ### Manage CR status conditions
