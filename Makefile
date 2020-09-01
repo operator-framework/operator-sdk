@@ -39,6 +39,7 @@ generate: build # Generate CLI docs and samples
 	go run ./hack/generate/cncf-maintainers/main.go
 	go run ./hack/generate/cli-doc/gen-cli-doc.go
 	go run ./hack/generate/samples/generate_testdata.go
+	go generate ./...
 
 .PHONY: bindata
 OLM_VERSIONS = 0.16.1 0.15.1 0.17.0

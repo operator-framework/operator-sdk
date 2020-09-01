@@ -1,0 +1,14 @@
+domain: example.com
+layout: go.kubebuilder.io/v3-alpha
+projectName: memcached-operator
+repo: github.com/example/memcached-operator
+resources:
+    - crdVersion: v1
+  group: cache
+  kind: Memcached
+  version: v1alpha1
+  webhookVersion: v1
+version: 3-alpha
+plugins:
+  manifests.sdk.operatorframework.io/v2: {}
+  scorecard.sdk.operatorframework.io/v2: {}
