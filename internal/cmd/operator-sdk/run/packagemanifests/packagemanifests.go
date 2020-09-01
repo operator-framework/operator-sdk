@@ -55,7 +55,6 @@ ex. '<project-root>/packagemanifests'.`,
 		},
 	}
 	cmd.Flags().SortFlags = false
-	cfg.BindFlags(cmd.PersistentFlags())
 	i.BindFlags(cmd.Flags())
 
 	cmd.Flags().DurationVar(&timeout, "timeout", 2*time.Minute, "install timeout")

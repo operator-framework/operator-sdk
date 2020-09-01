@@ -13,7 +13,9 @@ Currently only the package manifests format is supported via the 'packagemanifes
 ### Options
 
 ```
-  -h, --help   help for run
+  -h, --help                help for run
+      --kubeconfig string   Path to the kubeconfig file to use for CLI requests.
+  -n, --namespace string    If present, namespace scope for this CLI request
 ```
 
 ### Options inherited from parent commands

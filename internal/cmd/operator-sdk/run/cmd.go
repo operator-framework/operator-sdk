@@ -39,5 +39,7 @@ Currently only the package manifests format is supported via the 'packagemanifes
 		packagemanifests.NewCmd(cfg),
 	)
 
+	cfg.BindFlags(cmd.PersistentFlags())
+
 	return cmd
 }

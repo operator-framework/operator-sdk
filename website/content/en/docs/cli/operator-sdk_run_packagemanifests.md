@@ -21,15 +21,15 @@ operator-sdk run packagemanifests [packagemanifests-root-dir] [flags]
       --install-mode InstallModeValue   install mode
       --version string                  Packaged version of the operator to deploy
       --timeout duration                install timeout (default 2m0s)
-      --kubeconfig string               Path to the kubeconfig file to use for CLI requests.
-  -n, --namespace string                If present, namespace scope for this CLI request
   -h, --help                            help for packagemanifests
 ```
 
 ### Options inherited from parent commands
 
 ```
-      --verbose   Enable verbose logging
+      --kubeconfig string   Path to the kubeconfig file to use for CLI requests.
+  -n, --namespace string    If present, namespace scope for this CLI request
+      --verbose             Enable verbose logging
 ```
 
 ### SEE ALSO
