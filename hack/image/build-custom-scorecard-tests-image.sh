@@ -9,20 +9,11 @@ ROOTDIR="$(pwd)"
 TMPDIR="$(mktemp -d)"
 trap_add 'rm -rf $TMPDIR' EXIT
 
-# build scorecard test image
-WD="$(dirname "$(pwd)")"
-GOOS=linux CGO_ENABLED=0 \
-  go build \
-  -gcflags "all=-trimpath=${WD}" \
-  -asmflags "all=-trimpath=${WD}" \
-  -o $TMPDIR/custom-scorecard-tests \
-  images/custom-scorecard-tests/cmd/test/main.go
-
-# Build base image
+# build the base image
 pushd $TMPDIR
-cp -r $ROOTDIR/images/custom-scorecard-tests/bin .
+cp $ROOTDIR/build/custom-scorecard-test-dev-linux-gnu .
+docker build -f $ROOTDIR/hack/image/scorecard/custom-scorecard-test/Dockerfile -t $1 .
 
-docker build -f $ROOTDIR/images/custom-scorecard-tests/Dockerfile -t $1 .
 # If using a kind cluster, load the image into all nodes.
 setup_envs $tmp_sdk_root
 load_image_if_kind "$1"

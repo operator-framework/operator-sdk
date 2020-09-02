@@ -118,7 +118,7 @@ gen-changelog: ## Generate CHANGELOG.md and migration guide updates
 ##@ Release
 
 # Build/install/release the SDK.
-.PHONY: release_builds release
+.PHONY: release_builds release_builds_scorecard release
 
 release_builds := \
 	build/operator-sdk-$(GIT_VERSION)-aarch64-linux-gnu \
@@ -160,10 +160,30 @@ build/helm-operator-%-ppc64le-linux-gnu: GOARGS = GOOS=linux GOARCH=ppc64le
 build/helm-operator-%-s390x-linux-gnu: GOARGS = GOOS=linux GOARCH=s390x
 build/helm-operator-%-linux-gnu: GOARGS = GOOS=linux
 
+build/custom-scorecard-test-%-linux-gnu: GOARGS = GOOS=linux
+build/scorecard-test-def-%-linux-gnu: GOARGS = GOOS=linux
+build/scorecard-test-kuttl-%-linux-gnu: GOARGS = GOOS=linux
+
 build/%: $(SOURCES) ## Build the operator-sdk binary
 	$(Q){ \
 	cmdpkg=$$(echo $* | sed -E "s/(operator-sdk|ansible-operator|helm-operator).*/\1/"); \
 	$(GOARGS) go build $(GO_BUILD_ARGS) -o $@ ./cmd/$$cmdpkg; \
+	}
+
+
+build/scorecard-test-kuttl%: $(SOURCES) ## Build the scorecard scorecard-test-kuttll binary
+	$(Q){ \
+	$(GOARGS) go build $(GO_BUILD_ARGS) -o $@ ./hack/image/scorecard/scorecard-test-kuttl/cmd/test/main.go; \
+	}
+
+build/custom-scorecard-test%: $(SOURCES) ## Build the scorecard custom-scorecard-test binary
+	$(Q){ \
+	$(GOARGS) go build $(GO_BUILD_ARGS) -o $@ ./hack/image/scorecard/custom-scorecard-test/cmd/test/main.go; \
+	}
+
+build/scorecard-test-def%: $(SOURCES) ## Build the scorecard scorecard-test-def binary
+	$(Q){ \
+	$(GOARGS) go build $(GO_BUILD_ARGS) -o $@ ./hack/image/scorecard/scorecard-test/cmd/test/main.go; \
 	}
 
 build/%.asc: ## Create release signatures for operator-sdk release binaries
@@ -227,10 +247,10 @@ image-push-helm-multiarch:
 # Scorecard test kuttl image scaffold/build/push.
 .PHONY: image-build-scorecard-test-kuttl image-push-scorecard-test-kuttl image-push-scorecard-test-kuttl-multiarch
 
-image-build-custom-scorecard-tests:
+image-build-custom-scorecard-tests: build/custom-scorecard-test-dev-linux-gnu
 	./hack/image/build-custom-scorecard-tests-image.sh $(CUSTOM_SCORECARD_TESTS_BASE_IMAGE):dev
 
-image-build-scorecard-test:
+image-build-scorecard-test: build/scorecard-test-def-dev-linux-gnu
 	./hack/image/build-scorecard-test-image.sh $(SCORECARD_TEST_BASE_IMAGE):dev
 
 image-push-scorecard-test:
@@ -239,7 +259,7 @@ image-push-scorecard-test:
 image-push-scorecard-test-multiarch:
 	./hack/image/push-manifest-list.sh $(SCORECARD_TEST_IMAGE) ${SCORECARD_TEST_ARCHES}
 
-image-build-scorecard-test-kuttl:
+image-build-scorecard-test-kuttl: build/scorecard-test-kuttl-dev-linux-gnu
 	./hack/image/build-scorecard-test-kuttl-image.sh $(SCORECARD_TEST_KUTTL_BASE_IMAGE):dev
 
 image-push-scorecard-test-kuttl:

@@ -96,9 +96,9 @@ tags
 /build
 test/ansible-operator/ansible-operator
 test/helm-operator/helm-operator
-images/scorecard-proxy/scorecard-proxy
-images/scorecard-test/scorecard-test
-images/scorecard-test-kuttl/scorecard-test-kuttl
+hack/image/scorecard/scorecard-test/scorecard-test
+hack/image/scorecard/custom-scorecard-test/custom-scorecard-test
+hack/image/scorecard/scorecard-test-kuttl/scorecard-test-kuttl
 
 # Test artifacts
 internal/ansible/runner/testdata/valid.yaml
