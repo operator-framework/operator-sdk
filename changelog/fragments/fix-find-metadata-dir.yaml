@@ -1,7 +1,0 @@
-# entries is a list of entries to include in
-# release notes and/or the migration guide
-entries:
-  - description: >
-      Fixed issue that caused scorecard to fail loading local bundle due to a
-      bug search method for the bundle metadata directory.
-    kind: bugfix
