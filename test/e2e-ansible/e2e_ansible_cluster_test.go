@@ -25,7 +25,7 @@ import (
 	. "github.com/onsi/gomega"
 	kbtestutils "sigs.k8s.io/kubebuilder/test/e2e/utils"
 
-	testutils "github.com/operator-framework/operator-sdk/test/internal"
+	testutils "github.com/operator-framework/operator-sdk/test/utils"
 )
 
 var _ = Describe("Running ansible projects", func() {
@@ -223,7 +223,8 @@ var _ = Describe("Running ansible projects", func() {
 			Eventually(verifyMemcachedScalesBack, time.Minute, time.Second).Should(Succeed())
 
 			By("updating size to 2 in the CR manifest")
-			testutils.ReplaceInFile(memcachedSampleFile, "size: 1", "size: 2")
+			err = testutils.ReplaceInFile(memcachedSampleFile, "size: 1", "size: 2")
+			Expect(err).NotTo(HaveOccurred())
 
 			By("applying CR manifest with size: 2")
 			_, err = tc.Kubectl.Apply(false, "-f", memcachedSampleFile)

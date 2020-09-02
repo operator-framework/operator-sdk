@@ -26,7 +26,7 @@ import (
 	. "github.com/onsi/gomega" //nolint:golint
 	kbtestutils "sigs.k8s.io/kubebuilder/test/e2e/utils"
 
-	testutils "github.com/operator-framework/operator-sdk/test/internal"
+	testutils "github.com/operator-framework/operator-sdk/test/utils"
 )
 
 // TestE2EGo ensures the Go projects built with the SDK tool by using its binary.
@@ -46,8 +46,6 @@ var (
 	isOLMManagedBySuite = true
 	// kubectx stores the k8s context from where the tests are running
 	kubectx string
-	// projectName is the name of the test project
-	projectName string
 )
 
 // BeforeSuite run before any specs are run to perform the required actions for all e2e Go tests.
@@ -55,10 +53,11 @@ var _ = BeforeSuite(func(done Done) {
 	var err error
 
 	By("creating a new test context")
-	tc, err = testutils.NewTestContext("GO111MODULE=on")
+	tc, err = testutils.NewTestContext(testutils.BinaryName, "GO111MODULE=on")
 	Expect(err).NotTo(HaveOccurred())
+
+	By("creating a new directory")
 	Expect(tc.Prepare()).To(Succeed())
-	projectName = filepath.Base(tc.Dir)
 
 	By("checking the cluster type")
 	kubectx, err = tc.Kubectl.Command("config", "current-context")
@@ -129,6 +128,10 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(kbtestutils.UncommentCode(
 		filepath.Join(tc.Dir, "config", "default", "kustomization.yaml"),
 		"#- ../prometheus", "#")).To(Succeed())
+
+	By("turning off interactive prompts for all generation tasks.")
+	err = tc.DisableOLMBundleInteractiveMode()
+	Expect(err).NotTo(HaveOccurred())
 
 	By("checking the kustomize setup")
 	err = tc.Make("kustomize")

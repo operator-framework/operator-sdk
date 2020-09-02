@@ -12,23 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package e2e_ansible_test
+package e2e_helm_test
 
 import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
-	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
 	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 )
 
-var _ = Describe("Integrating ansible Projects with OLM", func() {
+var _ = Describe("Testing Helm Projects with Scorecard", func() {
 	Context("with operator-sdk", func() {
-		const operatorVersion = "0.0.1"
-
 		const (
 			OLMBundleValidationTest   = "olm-bundle-validation"
 			OLMCRDsHaveValidationTest = "olm-crds-have-validation"
@@ -37,35 +35,7 @@ var _ = Describe("Integrating ansible Projects with OLM", func() {
 			OLMStatusDescriptorsTest  = "olm-status-descriptors"
 		)
 
-		It("should generate and run a valid OLM bundle and packagemanifests", func() {
-			By("building the bundle")
-			err := tc.Make("bundle", "IMG="+tc.ImageName)
-			Expect(err).NotTo(HaveOccurred())
-
-			By("building the operator bundle image")
-			// Use the existing image tag but with a "-bundle" suffix.
-			imageSplit := strings.SplitN(tc.ImageName, ":", 2)
-			bundleImage := imageSplit[0] + "-bundle"
-			if len(imageSplit) == 2 {
-				bundleImage += ":" + imageSplit[1]
-			}
-			err = tc.Make("bundle-build", "BUNDLE_IMG="+bundleImage)
-			Expect(err).NotTo(HaveOccurred())
-
-			if isRunningOnKind() {
-				By("loading the bundle image into Kind cluster")
-				err = tc.LoadImageToKindClusterWithName(bundleImage)
-				Expect(err).NotTo(HaveOccurred())
-			}
-
-			By("adding the 'packagemanifests' rule to the Makefile")
-			err = tc.AddPackagemanifestsTarget()
-			Expect(err).NotTo(HaveOccurred())
-
-			By("generating the operator package manifests")
-			err = tc.Make("packagemanifests", "IMG="+tc.ImageName)
-			Expect(err).NotTo(HaveOccurred())
-
+		It("should pass in all scorecard tests", func() {
 			By("running basic scorecard tests")
 			var scorecardOutput v1alpha3.TestList
 			runScorecardCmd := exec.Command(tc.BinaryName, "scorecard", "bundle",
@@ -78,14 +48,6 @@ var _ = Describe("Integrating ansible Projects with OLM", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(scorecardOutput.Items)).To(Equal(1))
 			Expect(scorecardOutput.Items[0].Status.Results[0].State).To(Equal(v1alpha3.PassState))
-
-			By("running the package")
-			runPkgManCmd := exec.Command(tc.BinaryName, "run", "packagemanifests",
-				"--install-mode", "AllNamespaces",
-				"--version", operatorVersion,
-				"--timeout", "4m")
-			_, err = tc.Run(runPkgManCmd)
-			Expect(err).NotTo(HaveOccurred())
 
 			By("running olm scorecard tests")
 			runOLMScorecardCmd := exec.Command(tc.BinaryName, "scorecard", "bundle",
@@ -111,12 +73,6 @@ var _ = Describe("Integrating ansible Projects with OLM", func() {
 				fmt.Println("      Output: ", scorecardOutput.Items[a].Status.Results[0].State)
 				Expect(scorecardOutput.Items[a].Status.Results[0].State).To(Equal(expected[scorecardOutput.Items[a].Status.Results[0].Name]))
 			}
-
-			By("destroying the deployed package manifests-formatted operator")
-			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", tc.ProjectName,
-				"--timeout", "4m")
-			_, err = tc.Run(cleanupPkgManCmd)
-			Expect(err).NotTo(HaveOccurred())
 		})
 	})
 })

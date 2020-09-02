@@ -14,7 +14,7 @@
 
 // Modified from https://github.com/kubernetes-sigs/kubebuilder/tree/39224f0/test/e2e/v3
 
-package internal
+package utils
 
 import (
 	"fmt"

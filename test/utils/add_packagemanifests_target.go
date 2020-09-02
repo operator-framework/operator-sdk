@@ -14,7 +14,7 @@
 
 // Modified from https://github.com/kubernetes-sigs/kubebuilder/tree/39224f0/test/e2e/v3
 
-package internal
+package utils
 
 import (
 	"fmt"
@@ -37,7 +37,6 @@ ifeq ($(IS_CHANNEL_DEFAULT), 1)
 PKG_IS_DEFAULT_CHANNEL := --default-channel
 endif
 PKG_MAN_OPTS ?= $(FROM_VERSION) $(PKG_CHANNELS) $(PKG_IS_DEFAULT_CHANNEL)
-
 # Generate package manifests.
 packagemanifests: kustomize %s
 	operator-sdk generate kustomize manifests -q --interactive=false

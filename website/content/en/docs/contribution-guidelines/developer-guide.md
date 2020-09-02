@@ -50,6 +50,14 @@ $ make lint
 
 **NOTE** Note that for it is required to install `golangci-lint` locally. For more info see its [doc](https://github.com/golangci/golangci-lint#install)
 
+## Generating Samples
+
+To generate the samples run:
+
+```sh
+$ make gen-samples
+```
+
 ## How the operator-sdk binaries are built
 
 In the release process, the script [.release.sh][release-sh] is executed and it will call the [makefile][makefile] target [make release](https://github.com/operator-framework/operator-sdk/blob/master/Makefile#L113). To know more about the release process, see the [doc][release-doc] also see [operator-sdk releases](https://github.com/operator-framework/operator-sdk/releases).

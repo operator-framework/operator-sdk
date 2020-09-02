@@ -12,29 +12,39 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package internal
+package utils
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strings"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	. "github.com/onsi/ginkgo" //nolint:golint
+
 	kbtestutils "sigs.k8s.io/kubebuilder/test/e2e/utils"
 )
+
+const BinaryName = "operator-sdk"
 
 // TestContext wraps kubebuilder's e2e TestContext.
 type TestContext struct {
 	*kbtestutils.TestContext
+	BundleImageName string
+	ProjectName     string
 }
 
 // NewTestContext returns a TestContext containing a new kubebuilder TestContext.
-func NewTestContext(env ...string) (tc TestContext, err error) {
-	tc.TestContext, err = kbtestutils.NewTestContext("operator-sdk", env...)
+func NewTestContext(binary string, env ...string) (tc TestContext, err error) {
+	tc.TestContext, err = kbtestutils.NewTestContext(binary, env...)
+	tc.ProjectName = strings.ToLower(filepath.Base(tc.Dir))
+	tc.ImageName = fmt.Sprintf("quay.io/example/%s:v0.0.1", tc.ProjectName)
+	tc.BundleImageName = fmt.Sprintf("quay.io/example/%s-bundle:v0.0.1", tc.ProjectName)
 	return tc, err
 }
 
@@ -59,30 +69,50 @@ func (tc TestContext) KustomizeBuild(dir string) ([]byte, error) {
 }
 
 // ReplaceInFile replaces all instances of old with new in the file at path.
-func ReplaceInFile(path, old, new string) {
+func ReplaceInFile(path, old, new string) error {
 	info, err := os.Stat(path)
-	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	if err != nil {
+		return err
+	}
 	b, err := ioutil.ReadFile(path)
-	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	if err != nil {
+		return err
+	}
+	if !strings.Contains(string(b), old) {
+		return errors.New("unable to find the content to be replaced")
+	}
 	s := strings.Replace(string(b), old, new, -1)
-	ExpectWithOffset(1, s).NotTo(Equal(string(b)), "No replacement occurred")
 	err = ioutil.WriteFile(path, []byte(s), info.Mode())
-	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // ReplaceRegexInFile finds all strings that match `match` and replaces them
 // with `replace` in the file at path.
-func ReplaceRegexInFile(path, match, replace string) {
+func ReplaceRegexInFile(path, match, replace string) error {
 	matcher, err := regexp.Compile(match)
-	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	if err != nil {
+		return err
+	}
 	info, err := os.Stat(path)
-	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	if err != nil {
+		return err
+	}
 	b, err := ioutil.ReadFile(path)
-	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	if err != nil {
+		return err
+	}
 	s := matcher.ReplaceAllString(string(b), replace)
-	ExpectWithOffset(1, s).NotTo(Equal(string(b)), "No replacement occurred")
+	if err != nil {
+		return errors.New("unable to find the content to be replaced")
+	}
 	err = ioutil.WriteFile(path, []byte(s), info.Mode())
-	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // LoadImageToKindCluster loads a local docker image with the name informed to the kind cluster
@@ -91,4 +121,42 @@ func (tc TestContext) LoadImageToKindClusterWithName(image string) error {
 	cmd := exec.Command("kind", kindOptions...)
 	_, err := tc.Run(cmd)
 	return err
+}
+
+// UncommentCode searches for target in the file and remove the comment prefix
+// of the target content. The target content may span multiple lines.
+func UncommentCode(filename, target, prefix string) error {
+	content, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return err
+	}
+	strContent := string(content)
+
+	idx := strings.Index(strContent, target)
+	if idx < 0 {
+		// todo: push this check to upstream for we do not need have this func here
+		return fmt.Errorf("unable to find the code %s to be uncomment", target)
+	}
+
+	out := new(bytes.Buffer)
+	_, err = out.Write(content[:idx])
+	if err != nil {
+		return err
+	}
+
+	strs := strings.Split(target, "\n")
+	for _, str := range strs {
+		_, err := out.WriteString(strings.TrimPrefix(str, prefix) + "\n")
+		if err != nil {
+			return err
+		}
+	}
+
+	_, err = out.Write(content[idx+len(target):])
+	if err != nil {
+		return err
+	}
+	// false positive
+	// nolint:gosec
+	return ioutil.WriteFile(filename, out.Bytes(), 0644)
 }
