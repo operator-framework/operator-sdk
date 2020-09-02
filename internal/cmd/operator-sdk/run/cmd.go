@@ -34,7 +34,7 @@ Currently only the package manifests format is supported via the 'packagemanifes
 
 	cmd.AddCommand(
 		// TODO(joelanford): enable bundle command when implementation is complete
-		//bundle.NewCmd(),
+		// bundle.NewCmd(cfg),
 		packagemanifests.NewCmd(cfg),
 	)
 

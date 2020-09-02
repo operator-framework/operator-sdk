@@ -26,6 +26,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	olmclient "github.com/operator-framework/operator-sdk/internal/olm/client"
@@ -73,16 +74,20 @@ func (o OperatorInstaller) InstallOperator(ctx context.Context) (*v1alpha1.Clust
 		return nil, err
 	}
 
+	var subscription *v1alpha1.Subscription
 	// Create Subscription
-	if err = o.createSubscription(ctx, cs); err != nil {
+	if subscription, err = o.createSubscription(ctx, cs); err != nil {
 		return nil, err
 	}
 
-	// Approve Install Plan (if necessary)
-	if approver, ok := o.CatalogCreator.(InstallPlanApprover); ok {
-		if err = approver.Approve(ctx, o.PackageName); err != nil {
-			return nil, err
-		}
+	// Wait for the Install Plan to be generated
+	if err = o.waitForInstallPlan(ctx, subscription); err != nil {
+		return nil, err
+	}
+
+	// Approve Install Plan for the subscription
+	if err = o.approveInstallPlan(ctx, subscription); err != nil {
+		return nil, err
 	}
 
 	// Wait for successfully installed CSV
@@ -191,15 +196,17 @@ func (o OperatorInstaller) getOperatorGroup(ctx context.Context) (*v1.OperatorGr
 	return &ogList.Items[0], true, nil
 }
 
-func (o OperatorInstaller) createSubscription(ctx context.Context, cs *v1alpha1.CatalogSource) error {
+func (o OperatorInstaller) createSubscription(ctx context.Context, cs *v1alpha1.CatalogSource) (*v1alpha1.Subscription, error) {
 	sub := newSubscription(o.StartingCSV, o.cfg.Namespace,
 		withPackageChannel(o.PackageName, o.Channel, o.StartingCSV),
-		withCatalogSource(cs.GetName(), o.cfg.Namespace))
+		withCatalogSource(cs.GetName(), o.cfg.Namespace),
+		withInstallPlanApproval(v1alpha1.ApprovalManual))
+
 	log.Info("Creating Subscription")
 	if err := o.cfg.Client.Create(ctx, sub); err != nil {
-		return fmt.Errorf("error creating OperatorGroup: %w", err)
+		return nil, fmt.Errorf("error creating subscription: %w", err)
 	}
-	return nil
+	return sub, nil
 }
 
 func (o OperatorInstaller) getInstalledCSV(ctx context.Context) (*v1alpha1.ClusterServiceVersion, error) {
@@ -225,4 +232,54 @@ func (o OperatorInstaller) getInstalledCSV(ctx context.Context) (*v1alpha1.Clust
 		return nil, fmt.Errorf("error getting installed CSV: %w", err)
 	}
 	return csv, nil
+}
+
+// approveInstallPlan approves the install plan for a subscription, which will
+// generate a CSV
+func (o OperatorInstaller) approveInstallPlan(ctx context.Context, sub *v1alpha1.Subscription) error {
+	ip := v1alpha1.InstallPlan{}
+
+	ipKey := types.NamespacedName{
+		Name:      sub.Status.InstallPlanRef.Name,
+		Namespace: sub.Status.InstallPlanRef.Namespace,
+	}
+
+	if err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		if err := o.cfg.Client.Get(ctx, ipKey, &ip); err != nil {
+			return fmt.Errorf("error in getting install plan: %v", err)
+		}
+		// approve the install plan by setting Approved to true
+		ip.Spec.Approved = true
+		if err := o.cfg.Client.Update(ctx, &ip); err != nil {
+			return fmt.Errorf("error in approving install plan: %v", err)
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// waitForInstallPlan verifies if an Install Plan exists through subscription status
+func (o OperatorInstaller) waitForInstallPlan(ctx context.Context, sub *v1alpha1.Subscription) error {
+	subKey := types.NamespacedName{
+		Namespace: sub.GetNamespace(),
+		Name:      sub.GetName(),
+	}
+
+	ipCheck := wait.ConditionFunc(func() (done bool, err error) {
+		if err := o.cfg.Client.Get(ctx, subKey, sub); err != nil {
+			return false, err
+		}
+		if sub.Status.InstallPlanRef != nil {
+			return true, nil
+		}
+		return false, nil
+	})
+
+	if err := wait.PollImmediateUntil(200*time.Millisecond, ipCheck, ctx.Done()); err != nil {
+		return fmt.Errorf("install plan is not available for the subscription %s: %v", sub.Name, err)
+	}
+	return nil
 }

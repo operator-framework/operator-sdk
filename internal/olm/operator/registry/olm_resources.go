@@ -48,6 +48,17 @@ func withPackageChannel(pkgName, channelName, startingCSV string) func(*v1alpha1
 	}
 }
 
+// withInstallPlanApproval sets the Subscription's install plan approval field
+// to manual
+func withInstallPlanApproval(approval v1alpha1.Approval) func(*v1alpha1.Subscription) {
+	return func(sub *v1alpha1.Subscription) {
+		if sub.Spec == nil {
+			sub.Spec = &v1alpha1.SubscriptionSpec{}
+		}
+		sub.Spec.InstallPlanApproval = approval
+	}
+}
+
 // newSubscription creates a new Subscription for a CSV with a name derived
 // from csvName, the CSV's objectmeta.name, in namespace. opts will be applied
 // to the Subscription object.
