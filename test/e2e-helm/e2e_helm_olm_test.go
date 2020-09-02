@@ -95,12 +95,6 @@ var _ = Describe("Integrating Helm Projects with OLM", func() {
 			_, err = tc.Run(runPkgManCmd)
 			Expect(err).NotTo(HaveOccurred())
 
-			By("destroying the deployed package manifests-formatted operator")
-			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", projectName,
-				"--timeout", "4m")
-			_, err = tc.Run(cleanupPkgManCmd)
-			Expect(err).NotTo(HaveOccurred())
-
 			By("running olm scorecard tests")
 			runOLMScorecardCmd := exec.Command(tc.BinaryName, "scorecard", "bundle",
 				"--selector=suite=olm",
@@ -125,6 +119,12 @@ var _ = Describe("Integrating Helm Projects with OLM", func() {
 				fmt.Println("      Output: ", scorecardOutput.Items[a].Status.Results[0].State)
 				Expect(scorecardOutput.Items[a].Status.Results[0].State).To(Equal(expected[scorecardOutput.Items[a].Status.Results[0].Name]))
 			}
+
+			By("destroying the deployed package manifests-formatted operator")
+			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", projectName,
+				"--timeout", "4m")
+			_, err = tc.Run(cleanupPkgManCmd)
+			Expect(err).NotTo(HaveOccurred())
 		})
 	})
 })
