@@ -241,8 +241,6 @@
 
 ## v0.19.1
 
-## v0.19.1
-
 ### Additions
 
 - Added the `--from-version` flag to `generate packagemanifests`. ([#3524](https://github.com/operator-framework/operator-sdk/pull/3524))
