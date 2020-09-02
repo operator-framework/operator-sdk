@@ -19,16 +19,20 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path"
 	"strings"
 	"text/template"
 	"time"
 
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
+	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
 
@@ -71,21 +75,17 @@ type RegistryPod struct {
 	// if an index image is provided, the existing registry DB is located at /database/index.db
 	DBPath string
 
-	// Namespace refers to the specific namespace in which the registry pod will be created and scoped to
-	Namespace string
-
 	// GRPCPort is the container grpc port
 	GRPCPort int32
 
-	// client refers to a controller runtime client
-	client client.Client
-
 	// pod represents a kubernetes *corev1.pod that will be created on a cluster using an index image
 	pod *corev1.Pod
+
+	cfg *operator.Configuration
 }
 
 // NewRegistryPod initializes the RegistryPod struct and sets defaults for empty fields
-func NewRegistryPod(client client.Client, dbPath, bundleImage, namespace string) (*RegistryPod, error) {
+func NewRegistryPod(cfg *operator.Configuration, dbPath, bundleImage string) (*RegistryPod, error) {
 	rp := &RegistryPod{}
 
 	if rp.GRPCPort == 0 {
@@ -104,76 +104,63 @@ func NewRegistryPod(client client.Client, dbPath, bundleImage, namespace string)
 		}
 	}
 
-	rp.client = client
+	rp.cfg = cfg
 	rp.DBPath = dbPath
 	rp.BundleImage = bundleImage
-	rp.Namespace = namespace
 
 	// validate the RegistryPod struct and ensure required fields are set
 	if err := rp.validate(); err != nil {
-		return nil, fmt.Errorf("error in validating registry pod struct: %v", err)
+		return nil, fmt.Errorf("error validating registry pod struct: %v", err)
 	}
 
-	// call podForBundleRegistry() to make the pod definition
+	// podForBundleRegistry() to make the pod definition
 	pod, err := rp.podForBundleRegistry()
 	if err != nil {
-		return nil, fmt.Errorf("error in building registry pod definition: %v", err)
+		return nil, fmt.Errorf("error building registry pod definition: %v", err)
 	}
 	rp.pod = pod
 
 	return rp, nil
 }
 
-// Create creates a bundle registry pod built from an index image
-// and returns error
-func (rp *RegistryPod) Create(ctx context.Context) error {
+// Create creates a bundle registry pod built from an index image,
+// sets the catalog source as the owner for the pod and verifies that
+// the pod is running
+func (rp *RegistryPod) Create(ctx context.Context, cs *v1alpha1.CatalogSource) (*corev1.Pod, error) {
 	if rp.pod == nil {
-		return errPodNotInit
+		return nil, errPodNotInit
 	}
 
-	podKey, err := client.ObjectKeyFromObject(rp.pod)
-	if err != nil {
-		return fmt.Errorf("error in getting object key from the registry pod name %s: %v", rp.pod.Name, err)
+	// make catalog source the owner of registry pod object
+	if err := controllerutil.SetOwnerReference(cs, rp.pod, rp.cfg.Scheme); err != nil {
+		return nil, fmt.Errorf("set registry pod owner reference: %v", err)
 	}
 
-	if err := rp.client.Get(ctx, podKey, rp.pod); err != nil {
-		if k8serrors.IsNotFound(err) {
-			if err = rp.client.Create(ctx, rp.pod); err != nil {
-				return fmt.Errorf("error creating registry pod: %v", err)
-			}
-		} else {
-			return fmt.Errorf("registry pod name %s already exists: %v", rp.pod.Name, err)
-		}
-	}
-	return nil
-}
-
-// VerifyPodRunning calls checkPodStatus to verify pod status
-// and returns error if pod is not running
-func (rp *RegistryPod) VerifyPodRunning(ctx context.Context) error {
-	if rp.pod == nil {
-		return errPodNotInit
+	if err := rp.cfg.Client.Create(ctx, rp.pod); err != nil {
+		return nil, fmt.Errorf("create registry pod: %v", err)
 	}
 
-	podKey, err := client.ObjectKeyFromObject(rp.pod)
-	if err != nil {
-		return fmt.Errorf("error in getting object key from the registry pod name %s: %v", rp.pod.Name, err)
+	// get registry pod key
+	podKey := types.NamespacedName{
+		Namespace: rp.cfg.Namespace,
+		Name:      getPodName(rp.BundleImage),
 	}
 
-	// upon creation of new pod, poll and verify that pod status is running
+	// poll and verify that pod is running
 	podCheck := wait.ConditionFunc(func() (done bool, err error) {
-		err = rp.client.Get(ctx, podKey, rp.pod)
+		err = rp.cfg.Client.Get(ctx, podKey, rp.pod)
 		if err != nil {
 			return false, fmt.Errorf("error getting pod %s: %w", rp.pod.Name, err)
 		}
 		return rp.pod.Status.Phase == corev1.PodRunning, nil
 	})
 
-	// check pod status to be Running
+	// check pod status to be `Running`
 	if err := rp.checkPodStatus(ctx, podCheck); err != nil {
-		return fmt.Errorf("registry pod did not become ready: %w", err)
+		return nil, fmt.Errorf("registry pod did not become ready: %w", err)
 	}
-	return nil
+	log.Infof("Successfully created registry pod: %s", rp.pod.Name)
+	return rp.pod, nil
 }
 
 // checkPodStatus polls and verifies that the pod status is running
@@ -195,10 +182,6 @@ func (rp *RegistryPod) validate() error {
 	}
 	if len(strings.TrimSpace(rp.DBPath)) < 1 {
 		return errors.New("registry database path cannot be empty")
-	}
-
-	if len(strings.TrimSpace(rp.Namespace)) < 1 {
-		return errors.New("pod namespace cannot be empty")
 	}
 
 	if len(strings.TrimSpace(rp.BundleAddMode)) < 1 {
@@ -230,14 +213,14 @@ func (rp *RegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 	// construct the container command for pod spec
 	containerCmd, err := rp.getContainerCmd()
 	if err != nil {
-		return nil, fmt.Errorf("error in parsing container command: %v", err)
+		return nil, fmt.Errorf("error parsing container command: %v", err)
 	}
 
 	// make the pod definition
 	rp.pod = &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      getPodName(rp.BundleImage),
-			Namespace: rp.Namespace,
+			Namespace: rp.cfg.Namespace,
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
@@ -263,7 +246,7 @@ func (rp *RegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 // getContainerCmd uses templating to construct the container command
 // and throws error if unable to parse and execute the container command
 func (rp *RegistryPod) getContainerCmd() (string, error) {
-	const containerCommand = "/bin/mkdir -p {{ .DBPath }} &&" +
+	const containerCommand = "/bin/mkdir -p {{ .DBPath | dirname }} &&" +
 		"/bin/opm registry add -d {{ .DBPath }} -b {{.BundleImage}} --mode={{.BundleAddMode}} &&" +
 		"/bin/opm registry serve -d {{ .DBPath }} -p {{.GRPCPort}}"
 	type bundleCmd struct {
@@ -276,23 +259,20 @@ func (rp *RegistryPod) getContainerCmd() (string, error) {
 
 	out := &bytes.Buffer{}
 
-	// add the custom basename template function to the
+	// create a custom dirname template function
+	funcMap := template.FuncMap{
+		"dirname": path.Dir,
+	}
+
+	// add the custom dirname template function to the
 	// template's FuncMap and parse the containerCommand
-	tmp := template.Must(template.New("containerCommand").Parse(containerCommand))
+	tmp := template.Must(template.New("containerCommand").Funcs(funcMap).Parse(containerCommand))
 
 	// execute the command by applying the parsed tmp to command
 	// and write command output to out
 	if err := tmp.Execute(out, command); err != nil {
-		return "", fmt.Errorf("error in parsing container command: %w", err)
+		return "", fmt.Errorf("parse container command: %w", err)
 	}
 
 	return out.String(), nil
-}
-
-// GetPod returns the registry pod
-func (rp *RegistryPod) GetPod() (*corev1.Pod, error) {
-	if rp == nil {
-		return nil, errPodNotInit
-	}
-	return rp.pod, nil
 }

@@ -49,25 +49,19 @@ func NewOperatorInstaller(cfg *operator.Configuration) *OperatorInstaller {
 }
 
 func (o OperatorInstaller) InstallOperator(ctx context.Context) (*v1alpha1.ClusterServiceVersion, error) {
-	log.Info("Creating CatalogSource")
 	cs, err := o.CatalogCreator.CreateCatalog(ctx, o.CatalogSourceName)
 	if err != nil {
 		return nil, fmt.Errorf("create catalog: %v", err)
 	}
+	log.Infof("Created CatalogSource: %s", cs.GetName())
 
 	// TODO: OLM doesn't appear to propagate the "READY" connection status to the catalogsource in a timely manner
-	// even though its catalog-operator reports a connection almost immediately. This condition either needs to
-	// be propagated more quickly by OLM or we need to find a different resource to probe for readiness.
-	//
+	// even though its catalog-operator reports a connection almost immediately. This condition either needs
+	// to be propagated more quickly by OLM or we need to find a different resource to probe for readiness.
+	// wait for catalog source to be ready
 	// if err := o.waitForCatalogSource(ctx, cs); err != nil {
 	// 	return nil, err
 	// }
-
-	log.Infof("OperatorInstaller.CatalogSourceName: %q\n", o.CatalogSourceName)
-	log.Infof("OperatorInstaller.PackageName:       %q\n", o.PackageName)
-	log.Infof("OperatorInstaller.StartingCSV:       %q\n", o.StartingCSV)
-	log.Infof("OperatorInstaller.Channel:           %q\n", o.Channel)
-	log.Infof("OperatorInstaller.InstallMode:       %q\n", o.InstallMode)
 
 	// Ensure Operator Group
 	if err = o.createOperatorGroup(ctx); err != nil {
@@ -105,7 +99,7 @@ func (o OperatorInstaller) InstallOperator(ctx context.Context) (*v1alpha1.Clust
 func (o OperatorInstaller) waitForCatalogSource(ctx context.Context, cs *v1alpha1.CatalogSource) error {
 	catSrcKey, err := client.ObjectKeyFromObject(cs)
 	if err != nil {
-		return fmt.Errorf("error in getting catalog source key: %v", err)
+		return fmt.Errorf("error getting catalog source key: %v", err)
 	}
 
 	// verify that catalog source connection status is READY
@@ -114,12 +108,9 @@ func (o OperatorInstaller) waitForCatalogSource(ctx context.Context, cs *v1alpha
 			return false, err
 		}
 		if cs.Status.GRPCConnectionState != nil {
-			fmt.Println("grpc connection state:", cs.Status.GRPCConnectionState.LastObservedState)
 			if cs.Status.GRPCConnectionState.LastObservedState == "READY" {
 				return true, nil
 			}
-		} else {
-			fmt.Println("grpc connection state: <nil>")
 		}
 		return false, nil
 	})
@@ -167,10 +158,11 @@ func (o OperatorInstaller) createOperatorGroup(ctx context.Context) error {
 		// New SDK-managed OperatorGroup.
 		og = newSDKOperatorGroup(o.cfg.Namespace,
 			withTargetNamespaces(targetNamespaces...))
-		log.Info("Creating OperatorGroup")
 		if err = o.cfg.Client.Create(ctx, og); err != nil {
 			return fmt.Errorf("error creating OperatorGroup: %w", err)
 		}
+		log.Infof("Created OperatorGroup: %s", og.GetName())
+
 	}
 	return nil
 }
@@ -202,10 +194,11 @@ func (o OperatorInstaller) createSubscription(ctx context.Context, cs *v1alpha1.
 		withCatalogSource(cs.GetName(), o.cfg.Namespace),
 		withInstallPlanApproval(v1alpha1.ApprovalManual))
 
-	log.Info("Creating Subscription")
 	if err := o.cfg.Client.Create(ctx, sub); err != nil {
 		return nil, fmt.Errorf("error creating subscription: %w", err)
 	}
+	log.Infof("Created Subscription: %s", sub.Name)
+
 	return sub, nil
 }
 
@@ -221,7 +214,7 @@ func (o OperatorInstaller) getInstalledCSV(ctx context.Context) (*v1alpha1.Clust
 		Name:      o.StartingCSV,
 		Namespace: o.cfg.Namespace,
 	}
-	log.Printf("Waiting for ClusterServiceVersion %q to reach 'Succeeded' phase", nn)
+	log.Infof("Waiting for ClusterServiceVersion %q to reach 'Succeeded' phase", nn)
 	if err = c.DoCSVWait(ctx, nn); err != nil {
 		return nil, fmt.Errorf("error waiting for CSV to install: %w", err)
 	}
@@ -246,17 +239,19 @@ func (o OperatorInstaller) approveInstallPlan(ctx context.Context, sub *v1alpha1
 
 	if err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		if err := o.cfg.Client.Get(ctx, ipKey, &ip); err != nil {
-			return fmt.Errorf("error in getting install plan: %v", err)
+			return fmt.Errorf("error getting install plan: %v", err)
 		}
 		// approve the install plan by setting Approved to true
 		ip.Spec.Approved = true
 		if err := o.cfg.Client.Update(ctx, &ip); err != nil {
-			return fmt.Errorf("error in approving install plan: %v", err)
+			return fmt.Errorf("error approving install plan: %v", err)
 		}
 		return nil
 	}); err != nil {
 		return err
 	}
+
+	log.Infof("Approved InstallPlan %s for the Subscription: %s", ipKey.Name, sub.Name)
 
 	return nil
 }
