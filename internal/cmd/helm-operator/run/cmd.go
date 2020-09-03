@@ -47,7 +47,8 @@ func printVersion() {
 		"Go Version", runtime.Version(),
 		"GOOS", runtime.GOOS,
 		"GOARCH", runtime.GOARCH,
-		"helm-operator", sdkVersion.Version)
+		"helm-operator", sdkVersion.Version,
+		"commit", sdkVersion.GitCommit)
 }
 
 func NewCmd() *cobra.Command {
