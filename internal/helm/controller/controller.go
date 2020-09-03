@@ -57,6 +57,15 @@ type WatchOptions struct {
 func Add(mgr manager.Manager, options WatchOptions) error {
 	controllerName := fmt.Sprintf("%v-controller", strings.ToLower(options.GVK.Kind))
 
+
+
+
+
+	// JUST ADD SPACE HERE TO RUN THE JOBs
+
+
+
+
 	r := &HelmOperatorReconciler{
 		Client:          mgr.GetClient(),
 		EventRecorder:   mgr.GetEventRecorderFor(controllerName),
