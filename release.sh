@@ -14,7 +14,7 @@ if ! [[ "$VER" =~ ^v[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+$ ]]; then
 	exit 1
 fi
 
-if git ls-files --others | grep -Ev 'build/operator-sdk-v.+'; then
+if git ls-files --others  --exclude-standard | grep -Ev 'build/operator-sdk-v.+'; then
 	echo "directory has untracked files"
 	exit 1
 fi
