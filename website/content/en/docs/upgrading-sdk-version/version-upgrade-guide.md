@@ -726,6 +726,8 @@ func main() {
 			log.Info("Install prometheus-operator in your cluster to create ServiceMonitor objects", "error", err.Error())
 		}
 	}
+  ...
+}
 ```
 
 With:
@@ -735,6 +737,8 @@ func main() {
 	...
 	// Add the Metrics Service
 	addMetrics(ctx, cfg, namespace)
+  ...
+}
 ```
 
 And then, add implementation for `addMetrics`:
@@ -776,9 +780,6 @@ func addMetrics(ctx context.Context, cfg *rest.Config, namespace string) {
 		}
 	}
 }
-
-// serveCRMetrics gets the Operator/CustomResource GVKs and generates metrics based on those types.
-...
 ```
 
 **NOTE**: For more information check the PR which is responsible for the above changes [#2190](https://github.com/operator-framework/operator-sdk/pull/2190).
@@ -997,20 +998,24 @@ There are changes to the default implementation of the metrics export. These cha
 
 Replace:
 
-```
+```go
 func main() {
-    ...
-	// Add the Metrics Service
+  ...
+  // Add the Metrics Service
 	addMetrics(ctx, cfg, namespace)
+  ...
+}
 ```
 
 With:
 
-```
+```go
 func main() {
-    ...
+  ...
 	// Add the Metrics Service
 	addMetrics(ctx, cfg)
+  ...
+}
 ```
 
 And then, update the default implementation of `addMetrics` and `serveCRMetrics` with:
@@ -1120,6 +1125,8 @@ func main() {
 		log.Error(err, "")
 		os.Exit(1)
 	}
+  ...
+}
 ```
 
 With:
@@ -1148,6 +1155,8 @@ func main() {
 		log.Error(err, "")
 		os.Exit(1)
 	}
+  ...
+}
 ```
 
 **NOTE**: For more information check the PR which is responsible for the above changes [#2522](https://github.com/operator-framework/operator-sdk/pull/2522).
@@ -1235,7 +1244,7 @@ RUN ansible-galaxy collection install -r ${HOME}/requirements.yml \
 
 ```
 require (
-	github.com/operator-framework/operator-sdk v0.17.1
+	github.com/operator-framework/operator-sdk v0.17.2
 	sigs.k8s.io/controller-runtime v0.5.2
 )
 
@@ -1261,10 +1270,10 @@ To generate CRDs, use `operator-sdk generate crds`.
 To generate Go OpenAPI code, use `openapi-gen` directly. For example:
 
 ```bash
-&#35 Build the latest openapi-gen from source
+# Build the latest openapi-gen from source
 which ./bin/openapi-gen > /dev/null || go build -o ./bin/openapi-gen k8s.io/kube-openapi/cmd/openapi-gen
 
-&#35 Run openapi-gen for each of your API group/version packages
+# Run openapi-gen for each of your API group/version packages
 ./bin/openapi-gen --logtostderr=true \
                   -i ./pkg/apis/<group>/<version> \
                   -o "" \
