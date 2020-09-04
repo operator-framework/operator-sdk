@@ -55,7 +55,8 @@ func printVersion() {
 		"Go Version", runtime.Version(),
 		"GOOS", runtime.GOOS,
 		"GOARCH", runtime.GOARCH,
-		"ansible-operator", sdkVersion.Version)
+		"ansible-operator", sdkVersion.Version,
+		"commit", sdkVersion.GitCommit)
 }
 
 func NewCmd() *cobra.Command {

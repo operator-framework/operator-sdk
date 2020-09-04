@@ -1,0 +1,7 @@
+entries:
+  - description: >
+      In `ansible-operator` and `helm-operator` run commands, print git commit
+      when logging version information.
+
+    kind: "change"
+    breaking: false
