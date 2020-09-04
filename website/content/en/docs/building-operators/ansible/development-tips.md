@@ -177,7 +177,7 @@ has some mandatory fields:
 - `spec`:  This is the key-value list of variables which are passed to Ansible.
   This field is optional and empty by default.
 - `annotations`: Kubernetes specific annotations to be appended to the CR. See
-  the below section for Ansible Operator specific annotations.
+  the below section for Ansible Operator specific annotations. This field is optional.
 
 #### Annotations for Custom Resource
 
@@ -197,8 +197,8 @@ This is the list of CR annotations which will modify the behavior of the operato
   kind: Foo
   metadata:
     name: example
-  annotations:
-    ansible.operator-sdk/reconcile-period: "30s"
+    annotations:
+      ansible.operator-sdk/reconcile-period: "30s"
   ```
 
 Note that a lower period will correct entropy more quickly, but reduce
