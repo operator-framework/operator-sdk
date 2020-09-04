@@ -211,6 +211,9 @@ func (c Client) DoCSVWait(ctx context.Context, key types.NamespacedName) error {
 			curPhase = newPhase
 			log.Printf("  Found ClusterServiceVersion %q phase: %s", key, curPhase)
 		}
+		if curPhase == olmapiv1alpha1.CSVPhaseFailed {
+			return false, fmt.Errorf("csv failed: reason: %q, message: %q", csv.Status.Reason, csv.Status.Message)
+		}
 		return curPhase == olmapiv1alpha1.CSVPhaseSucceeded, nil
 	}
 
