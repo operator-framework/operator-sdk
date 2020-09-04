@@ -46,6 +46,7 @@ x_base_steps:
       # that it can properly exit the test early with success
       - source hack/ci/check-doc-only-update.sh
       - travis_retry make tidy
+      - git fetch origin --unshallow --tags
     install:
       - make install
       - make setup-k8s
@@ -63,10 +64,8 @@ x_base_steps:
   - &deploy
     before_install:
       - travis_retry make tidy
+      - git fetch origin --unshallow --tags
     install: make install
-    before_script:
-      - git config remote.origin.fetch +refs/heads/*:refs/remotes/origin/*
-      - git fetch --unshallow --tags
     after_success:
       - echo "Image build succeeded, and docker image tagged and pushed to repository"
     after_failure:
@@ -77,8 +76,7 @@ x_base_steps:
   # Manifest list deploy job
   - &manifest-deploy
     before_script:
-      - git config remote.origin.fetch +refs/heads/*:refs/remotes/origin/*
-      - git fetch --unshallow --tags
+      - git fetch origin --unshallow --tags
       # TODO: remove the chmod command when docker-ce on travis is upgraded to 18.09.0+.
       # We need /etc/docker to be accessible to non-root users.
       # See https://github.com/moby/moby/pull/37847.
@@ -106,6 +104,8 @@ jobs:
     # Run the sanity tests
     - stage: check
       name: Sanity Tests
+      before_install:
+        - git fetch origin --unshallow --tags
       script:
         - make test-sanity
 

@@ -249,7 +249,6 @@ $ GEN_CHANGELOG_TAG=v1.3.0 make gen-changelog
 
 Commit the following changes:
 
-- `internal/version/version.go`: update `Version` to `v1.3.0`.
 - `website/content/en/docs/installation/install-operator-sdk.md`: update the linux and macOS URLs to point to the new release URLs.
 - `CHANGELOG.md`: commit changes (updated by changelog generation).
 - `website/content/en/docs/upgrading-sdk-version/v1.3.0.md`: commit changes (created by changelog generation).
@@ -327,7 +326,6 @@ $ git push -f upstream v1.3.x
 
 Check out a new branch from `master` or release branch and commit the following changes:
 
-- `internal/version/version.go`: update `Version` to `v1.3.0+git`.
 - **(Major and minor releases only)** `website/config.toml`: update `version_menu = "v1.3"` to `version_menu = "Releases"`.
 
 ---
