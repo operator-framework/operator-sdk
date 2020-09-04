@@ -346,16 +346,6 @@ func (o OperatorInstaller) waitForInstallPlan(ctx context.Context, sub *v1alpha1
 	return nil
 }
 
-func getSupportedInstallModes(csvInstallModes []v1alpha1.InstallMode) sets.String {
-	supported := sets.NewString()
-	for _, im := range csvInstallModes {
-		if im.Supported {
-			supported.Insert(string(im.Type))
-		}
-	}
-	return supported
-}
-
 func (o *OperatorInstaller) getTargetNamespaces(supported sets.String) ([]string, error) {
 	switch {
 	case supported.Has(string(v1alpha1.InstallModeTypeAllNamespaces)):
@@ -375,4 +365,14 @@ func (o *OperatorInstaller) getTargetNamespaces(supported sets.String) ([]string
 	default:
 		return nil, fmt.Errorf("no supported install modes")
 	}
+}
+
+func getSupportedInstallModes(csvInstallModes []v1alpha1.InstallMode) sets.String {
+	supported := sets.NewString()
+	for _, im := range csvInstallModes {
+		if im.Supported {
+			supported.Insert(string(im.Type))
+		}
+	}
+	return supported
 }
