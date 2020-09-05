@@ -66,9 +66,12 @@ func (o OperatorInstaller) InstallOperator(ctx context.Context) (*v1alpha1.Clust
 	// }
 
 	// Ensure Operator Group
+	fmt.Println("XXX enter ensureOperatorGroup")
 	if _, err = o.ensureOperatorGroup(ctx); err != nil {
+		fmt.Printf("XXX error from ensureOpreatorGroup: %v\n", err)
 		return nil, err
 	}
+	fmt.Println("XXX returned ensureOperatorGroup")
 
 	var subscription *v1alpha1.Subscription
 	// Create Subscription
@@ -159,34 +162,58 @@ func (o OperatorInstaller) ensureOperatorGroup(ctx context.Context) (*v1.Operato
 			return nil, fmt.Errorf("operator %q does not support install mode %q", o.StartingCSV, o.InstallMode.InstallModeType)
 		}
 
-		if og == nil {
-			targetNamespaces, err := o.getTargetNamespaces(supported)
-			if err != nil {
-				return nil, err
-			}
-			if og, err = o.createOperatorGroup(ctx, targetNamespaces); err != nil {
-				return nil, fmt.Errorf("create operator group: %v", err)
-			}
-			log.Infof("operatorgroup %q created", og.Name)
+	}
+	if !ogFound {
+		targetNamespaces, err := o.getTargetNamespaces(supported)
+		if err != nil {
+			return nil, err
 		}
-		// else if err := o.validateOperatorGroup(*og, supported); err != nil {
-		//     return nil, err
-		// }
+		if og, err = o.createOperatorGroup(ctx, targetNamespaces); err != nil {
+			return nil, fmt.Errorf("create operator group: %v", err)
+		}
+		log.Infof("operatorgroup %q created", og.Name)
+	} else if err := o.validateOperatorGroup(*og, supported); err != nil {
+		return nil, err
 	}
 
 	return og, nil
 }
 
 func (o *OperatorInstaller) createOperatorGroup(ctx context.Context, targetNamespaces []string) (*v1.OperatorGroup, error) {
+	fmt.Printf("XXX name %v - namespaces %v = namespaces: %v\n", o.cfg.Namespace, o.cfg.Namespace, targetNamespaces)
 	og := &v1.OperatorGroup{}
-	og.SetName(o.cfg.Namespace)
+	og.SetName(operator.SDKOperatorGroupName)
 	og.SetNamespace(o.cfg.Namespace)
 	og.Spec.TargetNamespaces = targetNamespaces
 
 	if err := o.cfg.Client.Create(ctx, og); err != nil {
+		fmt.Printf("XXX failed to create og: %v\n", err)
 		return nil, err
 	}
 	return og, nil
+}
+
+func (o *OperatorInstaller) validateOperatorGroup(og v1.OperatorGroup, supported sets.String) error {
+	ogTargetNs := sets.NewString(og.Spec.TargetNamespaces...)
+	imTargetNs := sets.NewString(o.InstallMode.TargetNamespaces...)
+	ownNamespaceNs := sets.NewString(o.cfg.Namespace)
+
+	if supported.Has(string(v1alpha1.InstallModeTypeAllNamespaces)) && len(og.Spec.TargetNamespaces) == 0 ||
+		supported.Has(string(v1alpha1.InstallModeTypeOwnNamespace)) && ogTargetNs.Equal(ownNamespaceNs) ||
+		supported.Has(string(v1alpha1.InstallModeTypeSingleNamespace)) && ogTargetNs.Equal(imTargetNs) ||
+		supported.Has(string(v1alpha1.InstallModeTypeMultiNamespace)) && ogTargetNs.Equal(imTargetNs) {
+		return nil
+	}
+
+	switch o.InstallMode.InstallModeType {
+	case v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeOwnNamespace,
+		v1alpha1.InstallModeTypeSingleNamespace, v1alpha1.InstallModeTypeMultiNamespace:
+		return fmt.Errorf("existing operatorgroup %q is not compatible with install mode %q", og.Name, o.InstallMode)
+	case "":
+		return fmt.Errorf("existing operatorgroup %q is not compatible with any supported package install modes", og.Name)
+	}
+
+	return fmt.Errorf("unknown install mode %q", o.InstallMode.InstallModeType)
 }
 
 // createOperatorGroup creates an OperatorGroup using package name if an OperatorGroup does not exist.
@@ -355,11 +382,6 @@ func (o *OperatorInstaller) getTargetNamespaces(supported sets.String) ([]string
 	case supported.Has(string(v1alpha1.InstallModeTypeSingleNamespace)):
 		if len(o.InstallMode.TargetNamespaces) != 1 {
 			return nil, fmt.Errorf("install mode %q requires explicit target namespace", v1alpha1.InstallModeTypeSingleNamespace)
-		}
-		return o.InstallMode.TargetNamespaces, nil
-	case supported.Has(string(v1alpha1.InstallModeTypeMultiNamespace)):
-		if len(o.InstallMode.TargetNamespaces) == 0 {
-			return nil, fmt.Errorf("install mode %q requires explicit target namespaces", v1alpha1.InstallModeTypeMultiNamespace)
 		}
 		return o.InstallMode.TargetNamespaces, nil
 	default:
