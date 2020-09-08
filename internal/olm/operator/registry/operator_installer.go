@@ -144,9 +144,7 @@ func (o OperatorInstaller) ensureOperatorGroup(ctx context.Context) (*v1.Operato
 	// --install-mode was given
 	if !o.InstallMode.IsEmpty() {
 		// TODO: probably remove multinamespace
-		if o.InstallMode.InstallModeType == v1alpha1.InstallModeTypeSingleNamespace ||
-			o.InstallMode.InstallModeType == v1alpha1.InstallModeTypeMultiNamespace {
-
+		if o.InstallMode.InstallModeType == v1alpha1.InstallModeTypeSingleNamespace {
 			targetNsSet := sets.NewString(o.InstallMode.TargetNamespaces...)
 			if !supported.Has(string(v1alpha1.InstallModeTypeOwnNamespace)) && targetNsSet.Has(o.cfg.Namespace) {
 				return nil, fmt.Errorf("cannot watch namespace %q: operator %q does not support install mode %q", o.cfg.Namespace, o.StartingCSV, v1alpha1.InstallModeTypeOwnNamespace)
@@ -200,14 +198,13 @@ func (o *OperatorInstaller) validateOperatorGroup(og v1.OperatorGroup, supported
 
 	if supported.Has(string(v1alpha1.InstallModeTypeAllNamespaces)) && len(og.Spec.TargetNamespaces) == 0 ||
 		supported.Has(string(v1alpha1.InstallModeTypeOwnNamespace)) && ogTargetNs.Equal(ownNamespaceNs) ||
-		supported.Has(string(v1alpha1.InstallModeTypeSingleNamespace)) && ogTargetNs.Equal(imTargetNs) ||
-		supported.Has(string(v1alpha1.InstallModeTypeMultiNamespace)) && ogTargetNs.Equal(imTargetNs) {
+		supported.Has(string(v1alpha1.InstallModeTypeSingleNamespace)) && ogTargetNs.Equal(imTargetNs) {
 		return nil
 	}
 
 	switch o.InstallMode.InstallModeType {
 	case v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeOwnNamespace,
-		v1alpha1.InstallModeTypeSingleNamespace, v1alpha1.InstallModeTypeMultiNamespace:
+		v1alpha1.InstallModeTypeSingleNamespace:
 		return fmt.Errorf("existing operatorgroup %q is not compatible with install mode %q", og.Name, o.InstallMode)
 	case "":
 		return fmt.Errorf("existing operatorgroup %q is not compatible with any supported package install modes", og.Name)
