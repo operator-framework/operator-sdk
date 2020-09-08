@@ -18,7 +18,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -55,16 +54,18 @@ var _ = Describe("Integrating Helm Projects with OLM", func() {
 			By("building the operator bundle image")
 			// Use the existing image tag but with a "-bundle" suffix.
 			imageSplit := strings.SplitN(tc.ImageName, ":", 2)
-			bundleImage := path.Join("quay.io", imageSplit[0]+"-bundle")
+			bundleImage := imageSplit[0] + "-bundle"
 			if len(imageSplit) == 2 {
 				bundleImage += ":" + imageSplit[1]
 			}
 			err = tc.Make("bundle-build", "BUNDLE_IMG="+bundleImage)
 			Expect(err).NotTo(HaveOccurred())
 
-			By("loading the project image into Kind cluster")
-			err = tc.LoadImageToKindClusterWithName(bundleImage)
-			Expect(err).Should(Succeed())
+			if isRunningOnKind() {
+				By("loading the bundle image into Kind cluster")
+				err = tc.LoadImageToKindClusterWithName(bundleImage)
+				Expect(err).Should(Succeed())
+			}
 
 			By("adding the 'packagemanifests' rule to the Makefile")
 			err = tc.AddPackagemanifestsTarget()

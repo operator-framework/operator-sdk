@@ -211,7 +211,15 @@ func (c Client) DoCSVWait(ctx context.Context, key types.NamespacedName) error {
 			curPhase = newPhase
 			log.Printf("  Found ClusterServiceVersion %q phase: %s", key, curPhase)
 		}
-		return curPhase == olmapiv1alpha1.CSVPhaseSucceeded, nil
+
+		switch curPhase {
+		case olmapiv1alpha1.CSVPhaseFailed:
+			return false, fmt.Errorf("csv failed: reason: %q, message: %q", csv.Status.Reason, csv.Status.Message)
+		case olmapiv1alpha1.CSVPhaseSucceeded:
+			return true, nil
+		default:
+			return false, nil
+		}
 	}
 
 	return wait.PollImmediateUntil(time.Second, csvPhaseSucceeded, ctx.Done())
