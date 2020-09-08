@@ -169,7 +169,7 @@ var _ = Describe("operator-sdk", func() {
 			By("building the operator bundle image")
 			// Use the existing image tag but with a "-bundle" suffix.
 			imageSplit := strings.SplitN(tc.ImageName, ":", 2)
-			bundleImage := path.Join("quay.io", imageSplit[0]+"-bundle")
+			bundleImage := imageSplit[0] + "-bundle"
 			if len(imageSplit) == 2 {
 				bundleImage += ":" + imageSplit[1]
 			}
