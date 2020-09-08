@@ -22,6 +22,8 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -44,15 +46,20 @@ var _ = Describe("RegistryPod", func() {
 
 		Context("with valid registry pod values", func() {
 			expectedPodName := "quay-io-example-example-operator-bundle-0-2-0"
-			expectedOutput := "/bin/mkdir -p /database/index.db &&" +
+			expectedOutput := "/bin/mkdir -p /database &&" +
 				"/bin/opm registry add -d /database/index.db -b quay.io/example/example-operator-bundle:0.2.0 --mode=semver &&" +
 				"/bin/opm registry serve -d /database/index.db -p 50051"
 
 			var rp *RegistryPod
+			var cfg *operator.Configuration
 			var err error
 
 			BeforeEach(func() {
-				rp, err = NewRegistryPod(newFakeClient(), "/database/index.db", "quay.io/example/example-operator-bundle:0.2.0", "default")
+				cfg = &operator.Configuration{
+					Client:    newFakeClient(),
+					Namespace: "test-default",
+				}
+				rp, err = NewRegistryPod(cfg, "/database/index.db", "quay.io/example/example-operator-bundle:0.2.0")
 				Expect(err).To(BeNil())
 			})
 
@@ -65,7 +72,7 @@ var _ = Describe("RegistryPod", func() {
 			It("should create the RegistryPod successfully", func() {
 				Expect(rp).NotTo(BeNil())
 				Expect(rp.pod.Name).To(Equal(expectedPodName))
-				Expect(rp.pod.Namespace).To(Equal(rp.Namespace))
+				Expect(rp.pod.Namespace).To(Equal(rp.cfg.Namespace))
 				Expect(rp.pod.Spec.Containers[0].Name).To(Equal(defaultContainerName))
 				if len(rp.pod.Spec.Containers) > 0 {
 					if len(rp.pod.Spec.Containers[0].Ports) > 0 {
@@ -86,19 +93,13 @@ var _ = Describe("RegistryPod", func() {
 
 				Expect(rp.pod).NotTo(BeNil())
 				Expect(rp.pod.Name).To(Equal(expectedPodName))
-				Expect(rp.pod.Namespace).To(Equal(rp.Namespace))
+				Expect(rp.pod.Namespace).To(Equal(rp.cfg.Namespace))
 				Expect(rp.pod.Spec.Containers[0].Name).To(Equal(defaultContainerName))
 				if len(rp.pod.Spec.Containers) > 0 {
 					if len(rp.pod.Spec.Containers[0].Ports) > 0 {
 						Expect(rp.pod.Spec.Containers[0].Ports[0].ContainerPort).To(Equal(rp.GRPCPort))
 					}
 				}
-			})
-
-			It("should create registry pod successfully", func() {
-				err := rp.Create(context.Background())
-
-				Expect(err).To(BeNil())
 			})
 
 			It("check pod status should return successfully when pod check is true", func() {
@@ -113,22 +114,18 @@ var _ = Describe("RegistryPod", func() {
 		})
 
 		Context("with invalid registry pod values", func() {
+			var cfg *operator.Configuration
+			BeforeEach(func() {
+				cfg = &operator.Configuration{
+					Client:    newFakeClient(),
+					Namespace: "test-default",
+				}
+			})
 
 			It("should error when bundle image is not provided", func() {
 				expectedErr := "bundle image cannot be empty"
 
-				_, err := NewRegistryPod(newFakeClient(), "/database/index.db",
-					"", "default")
-
-				Expect(err).NotTo(BeNil())
-				Expect(err.Error()).Should(ContainSubstring(expectedErr))
-			})
-
-			It("should not create a registry pod when namespace is not provided", func() {
-				expectedErr := "namespace cannot be empty"
-
-				_, err := NewRegistryPod(newFakeClient(), "/database/index.db",
-					"quay.io/example/example-operator-bundle:0.2.0", "")
+				_, err := NewRegistryPod(cfg, "/database/index.db", "")
 
 				Expect(err).NotTo(BeNil())
 				Expect(err.Error()).Should(ContainSubstring(expectedErr))
@@ -137,8 +134,8 @@ var _ = Describe("RegistryPod", func() {
 			It("should not create a registry pod when database path is not provided", func() {
 				expectedErr := "registry database path cannot be empty"
 
-				_, err := NewRegistryPod(newFakeClient(), "",
-					"quay.io/example/example-operator-bundle:0.2.0", "default")
+				_, err := NewRegistryPod(cfg, "",
+					"quay.io/example/example-operator-bundle:0.2.0")
 
 				Expect(err).NotTo(BeNil())
 				Expect(err.Error()).Should(ContainSubstring(expectedErr))
@@ -147,8 +144,8 @@ var _ = Describe("RegistryPod", func() {
 			It("should not create a registry pod when bundle add mode is empty", func() {
 				expectedErr := "bundle add mode cannot be empty"
 
-				rp, _ := NewRegistryPod(newFakeClient(), "/database/index.db",
-					"quay.io/example/example-operator-bundle:0.2.0", "default")
+				rp, _ := NewRegistryPod(cfg, "/database/index.db",
+					"quay.io/example/example-operator-bundle:0.2.0")
 				rp.BundleAddMode = ""
 
 				err := rp.validate()
@@ -159,8 +156,8 @@ var _ = Describe("RegistryPod", func() {
 			It("should not accept any other bundle add mode other than semver or replaces", func() {
 				expectedErr := "invalid bundle mode"
 
-				rp, _ := NewRegistryPod(newFakeClient(), "/database/index.db",
-					"quay.io/example/example-operator-bundle:0.2.0", "default")
+				rp, _ := NewRegistryPod(cfg, "/database/index.db",
+					"quay.io/example/example-operator-bundle:0.2.0")
 				rp.BundleAddMode = "invalid"
 
 				err := rp.validate()
@@ -169,8 +166,8 @@ var _ = Describe("RegistryPod", func() {
 			})
 
 			It("checkPodStatus should return error when pod check is false and context is done", func() {
-				rp, _ := NewRegistryPod(newFakeClient(), "/database/index.db",
-					"quay.io/example/example-operator-bundle:0.2.0", "default")
+				rp, _ := NewRegistryPod(cfg, "/database/index.db",
+					"quay.io/example/example-operator-bundle:0.2.0")
 
 				mockBadPodCheck := wait.ConditionFunc(func() (done bool, err error) {
 					return false, fmt.Errorf("error waiting for registry pod")
@@ -189,13 +186,14 @@ var _ = Describe("RegistryPod", func() {
 
 			It("Create should fail when registry pod is not initialized", func() {
 				rp := RegistryPod{}
-				err := rp.Create(context.Background())
+				cs := &v1alpha1.CatalogSource{}
+				pod, err := rp.Create(context.Background(), cs)
 
 				Expect(err).NotTo(BeNil())
+				Expect(pod).To(BeNil())
 				Expect(err).To(MatchError(errPodNotInit))
 			})
 
-			// todo(rashmigottipati): add test to check VerifyPodRunning returning error
 		})
 	})
 })
