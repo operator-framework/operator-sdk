@@ -368,7 +368,7 @@ E.g `kubectl logs deployment.apps/memcached-operator-controller-manager -n memca
 [controller-runtime-leader]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/manager#LeaderElectionRunnable
 [operator-lib]: https://github.com/operator-framework/operator-lib/
 [leader-lib-doc]: https://pkg.go.dev/github.com/operator-framework/operator-lib@v0.1.0/leader?tab=doc
-[migration-guide-main-section]: /docs/building-operators/golang/project_migration_guide/#migrate-maingo
+[migration-guide-main-section]: /docs/building-operators/golang/migration/#migrate-maingo
 [kustomize]: https://github.com/kubernetes-sigs/kustomize 
 [ctrl-options]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/manager#Options 
 [envtest]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/envtest
