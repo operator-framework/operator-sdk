@@ -363,7 +363,7 @@ E.g `kubectl logs deployment.apps/memcached-operator-controller-manager -n memca
 [ginkgo]: https://onsi.github.io/ginkgo/
 [gomega]: https://onsi.github.io/gomega/
 [builder]: https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.6.1/pkg/builder?tab=doc
-[writing-controller-tests]: https://book.kubebuilder.io/reference/writing-tests.html?highlight=controller,test#writing-controller-tests
+[writing-controller-tests]: https://book.kubebuilder.io/cronjob-tutorial/writing-tests.html
 [openapi-gen]: https://github.com/kubernetes/kube-openapi/tree/master/cmd/openapi-gen 
 [controller-runtime-leader]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/manager#LeaderElectionRunnable
 [operator-lib]: https://github.com/operator-framework/operator-lib/
