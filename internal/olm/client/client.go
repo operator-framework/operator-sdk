@@ -253,7 +253,7 @@ func (c Client) printDeploymentErrors(ctx context.Context, key types.NamespacedN
 		for _, s := range dep.Status.Conditions {
 			if s.Type == appsv1.DeploymentAvailable && s.Status == corev1.ConditionFalse {
 				log.Printf("failed to run operator: deployment failed for : %v\n, with reason %v\n", ds.Name, s.Reason)
-				if err := c.printPodErrors(ctx, depSelectors); err != nil {
+				if err := c.printPodErrors(ctx, depSelectors, key); err != nil {
 					return err
 				}
 			}
@@ -263,7 +263,7 @@ func (c Client) printDeploymentErrors(ctx context.Context, key types.NamespacedN
 }
 
 // printPodErrors loops through pods, and prints pod errors if any.
-func (c Client) printPodErrors(ctx context.Context, depSelectors *metav1.LabelSelector) error {
+func (c Client) printPodErrors(ctx context.Context, depSelectors *metav1.LabelSelector, key types.NamespacedName) error {
 	// loop through pods and return specific error message.
 	podErrors := make(map[string]string)
 	podList := &corev1.PodList{}
@@ -273,6 +273,7 @@ func (c Client) printPodErrors(ctx context.Context, depSelectors *metav1.LabelSe
 	}
 	options := client.ListOptions{
 		LabelSelector: podLabelSelectors,
+		Namespace:     key.Namespace,
 	}
 	if err := c.KubeClient.List(ctx, podList, &options); err != nil {
 		return fmt.Errorf("error getting Pods: %v", err)
