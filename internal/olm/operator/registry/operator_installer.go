@@ -66,12 +66,9 @@ func (o OperatorInstaller) InstallOperator(ctx context.Context) (*v1alpha1.Clust
 	// }
 
 	// Ensure Operator Group
-	fmt.Println("XXX enter ensureOperatorGroup")
 	if _, err = o.ensureOperatorGroup(ctx); err != nil {
-		fmt.Printf("XXX error from ensureOpreatorGroup: %v\n", err)
 		return nil, err
 	}
-	fmt.Println("XXX returned ensureOperatorGroup")
 
 	var subscription *v1alpha1.Subscription
 	// Create Subscription
@@ -133,7 +130,6 @@ func (o OperatorInstaller) ensureOperatorGroup(ctx context.Context) (*v1.Operato
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("XXX OperatorGroup found? %v\n", ogFound)
 
 	supported := o.SupportedInstallModes
 
@@ -178,14 +174,8 @@ func (o OperatorInstaller) ensureOperatorGroup(ctx context.Context) (*v1.Operato
 }
 
 func (o *OperatorInstaller) createOperatorGroup(ctx context.Context, targetNamespaces []string) (*v1.OperatorGroup, error) {
-	fmt.Printf("XXX name %v - namespaces %v = namespaces: %v\n", o.cfg.Namespace, o.cfg.Namespace, targetNamespaces)
-	og := &v1.OperatorGroup{}
-	og.SetName(operator.SDKOperatorGroupName)
-	og.SetNamespace(o.cfg.Namespace)
-	og.Spec.TargetNamespaces = targetNamespaces
-
+	og := newSDKOperatorGroup(o.cfg.Namespace, withTargetNamespaces(targetNamespaces...))
 	if err := o.cfg.Client.Create(ctx, og); err != nil {
-		fmt.Printf("XXX failed to create og: %v\n", err)
 		return nil, err
 	}
 	return og, nil
@@ -212,51 +202,6 @@ func (o *OperatorInstaller) validateOperatorGroup(og v1.OperatorGroup, supported
 
 	return fmt.Errorf("unknown install mode %q", o.InstallMode.InstallModeType)
 }
-
-// createOperatorGroup creates an OperatorGroup using package name if an OperatorGroup does not exist.
-// If one exists in the desired namespace and it's target namespaces do not match the desired set,
-// createOperatorGroup will return an error.
-// func (o OperatorInstaller) createOperatorGroup(ctx context.Context) error {
-//     fmt.Printf("XXX targetnamespaces: %v\n", o.InstallMode.TargetNamespaces)
-//     targetNamespaces := make([]string, len(o.InstallMode.TargetNamespaces), cap(o.InstallMode.TargetNamespaces))
-//     copy(targetNamespaces, o.InstallMode.TargetNamespaces)
-//     // Check OperatorGroup existence, since we cannot create a second OperatorGroup in namespace.
-//     og, ogFound, err := o.getOperatorGroup(ctx)
-//     if err != nil {
-//         return err
-//     }
-//     // TODO: we may need to poll for status updates, since status.namespaces may not be updated immediately.
-//     if ogFound {
-//         // targetNamespaces will always be initialized, but the operator group's namespaces may not be
-//         // (required for comparison).
-//         if og.Status.Namespaces == nil {
-//             og.Status.Namespaces = []string{}
-//         }
-//         // Simple check for OperatorGroup compatibility: if namespaces are not an exact match,
-//         // the user must manage the resource themselves.
-//         sort.Strings(og.Status.Namespaces)
-//         sort.Strings(targetNamespaces)
-//         if !reflect.DeepEqual(og.Status.Namespaces, targetNamespaces) {
-//             msg := fmt.Sprintf("namespaces %+q do not match desired namespaces %+q", og.Status.Namespaces, targetNamespaces)
-//             if og.GetName() == operator.SDKOperatorGroupName {
-//                 return fmt.Errorf("existing SDK-managed operator group's %s, "+
-//                     "please clean up existing operators `operator-sdk cleanup` before running package %q", msg, o.PackageName)
-//             }
-//             return fmt.Errorf("existing operator group %q's %s, "+
-//                 "please ensure it has the exact namespace set before running package %q", og.GetName(), msg, o.PackageName)
-//         }
-//         log.Infof("Using existing operator group %q", og.GetName())
-//     } else {
-//         // New SDK-managed OperatorGroup.
-//         og = newSDKOperatorGroup(o.cfg.Namespace,
-//             withTargetNamespaces(targetNamespaces...))
-//         log.Info("Creating OperatorGroup")
-//         if err = o.cfg.Client.Create(ctx, og); err != nil {
-//             return fmt.Errorf("error creating OperatorGroup: %w", err)
-//         }
-//     }
-//     return nil
-// }
 
 // getOperatorGroup returns true if an OperatorGroup in the desired namespace was found.
 // If more than one operator group exists in namespace, this function will return an error
