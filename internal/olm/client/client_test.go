@@ -127,7 +127,7 @@ var _ = Describe("Client", func() {
 		Context("with a valid csv", func() {
 			It("should validate the csv successfully", func() {
 				key := types.NamespacedName{
-					Name:      "test.clusterserviceversion.yaml",
+					Name:      "test.operator",
 					Namespace: "test-operator-system",
 				}
 				csv := olmapiv1alpha1.ClusterServiceVersion{

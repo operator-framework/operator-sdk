@@ -227,12 +227,13 @@ func (c Client) DoCSVWait(ctx context.Context, key types.NamespacedName) error {
 	err := wait.PollImmediateUntil(time.Second, csvPhaseSucceeded, ctx.Done())
 	if err != nil && errors.Is(err, context.DeadlineExceeded) {
 		if depCheckErr := c.printDeploymentErrors(ctx, key, csv); depCheckErr != nil {
-			return fmt.Errorf("failed to run operator: %v %v", err, depCheckErr)
+			return fmt.Errorf("error printing operator resource errors: %v %v", err, depCheckErr)
 		}
 	}
 	return err
 }
 
+// TODO(btenneti) Refactor function to collect errors into customized error and return.
 // printDeploymentErrors function loops through deployment specs of a given CSV, and prints reason
 // in case of failures, based on deployment condition.
 func (c Client) printDeploymentErrors(ctx context.Context, key types.NamespacedName, csv olmapiv1alpha1.ClusterServiceVersion) error {
@@ -247,12 +248,12 @@ func (c Client) printDeploymentErrors(ctx context.Context, key types.NamespacedN
 		}
 		depSelectors := ds.Spec.Selector
 		if err := c.KubeClient.Get(ctx, depKey, dep); err != nil {
-			log.Printf("failed to run operator, deployment not found for : %v\n", ds.Name)
+			log.Printf("error getting operator deployment %q: %v", ds.Name, err)
 			continue
 		}
 		for _, s := range dep.Status.Conditions {
 			if s.Type == appsv1.DeploymentAvailable && s.Status == corev1.ConditionFalse {
-				log.Printf("failed to run operator: deployment failed for : %v\n, with reason %v\n", ds.Name, s.Reason)
+				log.Printf("operator deployment %q not available: %s", ds.Name, s.Reason)
 				if err := c.printPodErrors(ctx, depSelectors, key); err != nil {
 					return err
 				}
