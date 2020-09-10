@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
 
 	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
@@ -29,6 +30,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/util/kustomize"
 	"github.com/operator-framework/operator-sdk/internal/scorecard"
+	"github.com/operator-framework/operator-sdk/internal/version"
 )
 
 const (
@@ -54,16 +56,15 @@ patchesJson6902:
 )
 
 const (
-	// defaultTestImageTag points to the latest-released image.
-	// TODO: change the tag to "latest" once config scaffolding is in a release,
-	// as the new config spec won't work with the current latest image.
-	defaultTestImageTag = "quay.io/operator-framework/scorecard-test:master"
-
 	// defaultConfigName is the default scorecard componentconfig's metadata.name,
 	// which must be set on all kustomize-able bases. This name is only used for
 	// `kustomize build` pattern match and not for on-cluster creation.
 	defaultConfigName = "config"
 )
+
+// defaultTestImageTag points to the latest-released image.
+var defaultTestImageTag = fmt.Sprintf("quay.io/operator-framework/scorecard-test:%s",
+	strings.TrimSuffix(version.Version, "+git"))
 
 // defaultDir is the default directory in which to generate kustomize bases and the kustomization.yaml.
 var defaultDir = filepath.Join("config", "scorecard")
