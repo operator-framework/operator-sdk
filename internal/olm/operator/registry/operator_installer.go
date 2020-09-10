@@ -165,7 +165,7 @@ func (o OperatorInstaller) ensureOperatorGroup(ctx context.Context) (*v1.Operato
 		if og, err = o.createOperatorGroup(ctx, targetNamespaces); err != nil {
 			return nil, fmt.Errorf("create operator group: %v", err)
 		}
-		log.Infof("operatorgroup %q created", og.Name)
+		log.Infof("OperatorGroup %q created", og.Name)
 	} else if err := o.validateOperatorGroup(*og, supported); err != nil {
 		return nil, err
 	}
