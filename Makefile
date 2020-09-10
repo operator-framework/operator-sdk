@@ -9,7 +9,8 @@ else
   Q = @
 endif
 
-VERSION = $(shell git describe --dirty --tags --always)
+SIMPLE_VERSION=$(shell (test "$(shell git describe)" = "$(shell git describe --abbrev=0)" && echo $(shell git describe)) || echo $(shell git describe --abbrev=0)+git)
+GIT_VERSION = $(shell git describe --dirty --tags --always)
 GIT_COMMIT = $(shell git rev-parse HEAD)
 K8S_VERSION = v1.18.2
 GOLANGCI_LINT_VER = "1.30.0"
@@ -22,7 +23,8 @@ GO_BUILD_ARGS = \
   -gcflags "all=-trimpath=$(shell go env GOPATH)" \
   -asmflags "all=-trimpath=$(shell go env GOPATH)" \
   -ldflags " \
-    -X '$(REPO)/internal/version.GitVersion=$(VERSION)' \
+    -X '$(REPO)/internal/version.Version=$(SIMPLE_VERSION)' \
+    -X '$(REPO)/internal/version.GitVersion=$(GIT_VERSION)' \
     -X '$(REPO)/internal/version.GitCommit=$(GIT_COMMIT)' \
     -X '$(REPO)/internal/version.KubernetesVersion=$(K8S_VERSION)' \
   " \
@@ -119,21 +121,21 @@ gen-changelog: ## Generate CHANGELOG.md and migration guide updates
 .PHONY: release_builds release
 
 release_builds := \
-	build/operator-sdk-$(VERSION)-aarch64-linux-gnu \
-	build/operator-sdk-$(VERSION)-x86_64-linux-gnu \
-	build/operator-sdk-$(VERSION)-x86_64-apple-darwin \
-	build/operator-sdk-$(VERSION)-ppc64le-linux-gnu \
-	build/operator-sdk-$(VERSION)-s390x-linux-gnu \
-	build/ansible-operator-$(VERSION)-aarch64-linux-gnu \
-	build/ansible-operator-$(VERSION)-x86_64-linux-gnu \
-	build/ansible-operator-$(VERSION)-x86_64-apple-darwin \
-	build/ansible-operator-$(VERSION)-ppc64le-linux-gnu \
-	build/ansible-operator-$(VERSION)-s390x-linux-gnu \
-	build/helm-operator-$(VERSION)-aarch64-linux-gnu \
-	build/helm-operator-$(VERSION)-x86_64-linux-gnu \
-	build/helm-operator-$(VERSION)-x86_64-apple-darwin \
-	build/helm-operator-$(VERSION)-ppc64le-linux-gnu \
-	build/helm-operator-$(VERSION)-s390x-linux-gnu
+	build/operator-sdk-$(GIT_VERSION)-aarch64-linux-gnu \
+	build/operator-sdk-$(GIT_VERSION)-x86_64-linux-gnu \
+	build/operator-sdk-$(GIT_VERSION)-x86_64-apple-darwin \
+	build/operator-sdk-$(GIT_VERSION)-ppc64le-linux-gnu \
+	build/operator-sdk-$(GIT_VERSION)-s390x-linux-gnu \
+	build/ansible-operator-$(GIT_VERSION)-aarch64-linux-gnu \
+	build/ansible-operator-$(GIT_VERSION)-x86_64-linux-gnu \
+	build/ansible-operator-$(GIT_VERSION)-x86_64-apple-darwin \
+	build/ansible-operator-$(GIT_VERSION)-ppc64le-linux-gnu \
+	build/ansible-operator-$(GIT_VERSION)-s390x-linux-gnu \
+	build/helm-operator-$(GIT_VERSION)-aarch64-linux-gnu \
+	build/helm-operator-$(GIT_VERSION)-x86_64-linux-gnu \
+	build/helm-operator-$(GIT_VERSION)-x86_64-apple-darwin \
+	build/helm-operator-$(GIT_VERSION)-ppc64le-linux-gnu \
+	build/helm-operator-$(GIT_VERSION)-s390x-linux-gnu
 
 release: clean $(release_builds) $(release_builds:=.asc) ## Release the Operator SDK
 
