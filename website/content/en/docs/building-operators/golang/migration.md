@@ -172,7 +172,7 @@ To update `config/rbac/role.yaml` after changing the markers, run `make manifest
 
 By default, new projects are cluster-scoped (i.e. they have cluster-scoped permissions and watch all namespaces). Read the [operator scope documentation][operator-scope] for more information about changing the scope of your operator.
 
-See the complete migrated `memecached_controller.go` code [here][memcached_controller].
+See the complete migrated `memcached_controller.go` code [here][memcached_controller].
 
 ## Migrate `main.go`
 
