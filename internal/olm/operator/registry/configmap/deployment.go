@@ -114,9 +114,10 @@ func getDBContainerCmd(dbPath, logPath string) string {
 // pod template spec.
 func withRegistryGRPCContainer(pkgName string) func(*appsv1.Deployment) {
 	container := corev1.Container{
-		Name:    getRegistryServerName(pkgName),
-		Image:   registryBaseImage,
-		Command: []string{"/bin/sh"},
+		Name:       getRegistryServerName(pkgName),
+		Image:      registryBaseImage,
+		WorkingDir: "/tmp",
+		Command:    []string{"/bin/sh"},
 		Args: []string{
 			"-c",
 			// TODO(estroz): grab logs and print if error
