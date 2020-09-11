@@ -69,9 +69,6 @@ func (i *Install) setup() error {
 		return err
 	}
 
-	if i.InstallMode.IsEmpty() {
-		i.InstallMode.InstallModeType = v1alpha1.InstallModeTypeAllNamespaces
-	}
 	if err := i.InstallMode.CheckCompatibility(bundle.CSV, i.cfg.Namespace); err != nil {
 		return err
 	}
