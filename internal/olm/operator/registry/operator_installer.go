@@ -322,9 +322,6 @@ func (o *OperatorInstaller) getTargetNamespaces(supported sets.String) ([]string
 	case supported.Has(string(v1alpha1.InstallModeTypeOwnNamespace)):
 		return []string{o.cfg.Namespace}, nil
 	case supported.Has(string(v1alpha1.InstallModeTypeSingleNamespace)):
-		if len(o.InstallMode.TargetNamespaces) != 1 {
-			return nil, fmt.Errorf("install mode %q requires explicit target namespace", v1alpha1.InstallModeTypeSingleNamespace)
-		}
 		return o.InstallMode.TargetNamespaces, nil
 	default:
 		return nil, fmt.Errorf("no supported install modes")
