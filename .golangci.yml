@@ -22,6 +22,12 @@ linters:
     - gosec
 issues:
   exclude-rules:
+    # Allow dot imports for ginkgo and gomega
+    - source: ginkgo|gomega
+      linters:
+      - golint
+      text: "should not use dot imports"
+
     - linters:
       - gosec
       # these exclusion rules are for current failures in the code base for gosec which are

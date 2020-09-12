@@ -24,7 +24,6 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/operator-framework/operator-sdk/internal/version"
 	testutils "github.com/operator-framework/operator-sdk/test/internal"
 )
 
@@ -114,8 +113,7 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).Should(Succeed())
 
 	By("replacing project Dockerfile to use ansible base image with the dev tag")
-	version := strings.TrimSuffix(version.Version, "+git")
-	testutils.ReplaceInFile(filepath.Join(tc.Dir, "Dockerfile"), version, "dev")
+	testutils.ReplaceRegexInFile(filepath.Join(tc.Dir, "Dockerfile"), "quay.io/operator-framework/ansible-operator:.*", "quay.io/operator-framework/ansible-operator:dev")
 
 	By("adding Memcached mock task to the role")
 	testutils.ReplaceInFile(filepath.Join(tc.Dir, "roles", strings.ToLower(tc.Kind), "tasks", "main.yml"),
