@@ -21,8 +21,8 @@ import (
 	"strings"
 	"time"
 
-	. "github.com/onsi/ginkgo" //nolint:golint
-	. "github.com/onsi/gomega" //nolint:golint
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 	kbtestutils "sigs.k8s.io/kubebuilder/test/e2e/utils"
 
 	testutils "github.com/operator-framework/operator-sdk/test/internal"

@@ -17,8 +17,8 @@ package e2e_helm_test
 import (
 	"os/exec"
 
-	. "github.com/onsi/ginkgo" //nolint:golint
-	. "github.com/onsi/gomega" //nolint:golint
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Running Helm projects", func() {
