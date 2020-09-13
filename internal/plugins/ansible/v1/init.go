@@ -105,8 +105,6 @@ func (p *initPlugin) BindFlags(fs *pflag.FlagSet) {
 func (p *initPlugin) InjectConfig(c *config.Config) {
 	c.Layout = pluginKey
 	p.config = c
-	// Just go projects make sense not support multigroup by default
-	p.config.MultiGroup = true
 	p.apiPlugin.config = p.config
 }
 

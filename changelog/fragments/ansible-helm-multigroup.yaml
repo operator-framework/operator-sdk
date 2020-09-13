@@ -2,7 +2,7 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      For Ansible/Helm, add support to multigroup API by default.
+      For Ansible/Helm, fix multigroup message.
 
     # kind is one of:
     # - addition
@@ -10,7 +10,7 @@ entries:
     # - deprecation
     # - removal
     # - bugfix
-    kind: "change"
+    kind: "bugfix"
 
     # Is this a breaking change?
     breaking: false
