@@ -326,24 +326,6 @@ var _ = Describe("OperatorInstaller", func() {
 			Expect(target[0]).To(Equal("test-ns"))
 			Expect(err).To(BeNil())
 		})
-		It("should return an error when SingleNamespace has no target namespaces", func() {
-
-			supported.Insert(string(v1alpha1.InstallModeTypeSingleNamespace))
-			target, err := oi.getTargetNamespaces(supported)
-			Expect(target).To(BeNil())
-			Expect(err).To(HaveOccurred())
-		})
-		It("should return an error when SingleNamespace has more than one target namespace", func() {
-			oi.InstallMode = operator.InstallMode{
-				InstallModeType:  v1alpha1.InstallModeTypeSingleNamespace,
-				TargetNamespaces: []string{"test-ns", "test2", "default"},
-			}
-
-			supported.Insert(string(v1alpha1.InstallModeTypeSingleNamespace))
-			target, err := oi.getTargetNamespaces(supported)
-			Expect(target).To(BeNil())
-			Expect(err).To(HaveOccurred())
-		})
 		It("should return configured namespace when SingleNamespace is passed in", func() {
 
 			oi.InstallMode = operator.InstallMode{
