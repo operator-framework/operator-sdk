@@ -31,8 +31,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 )
 
-var _ runtime.Object = (*v1.OperatorGroup)(nil)
-
 var _ = Describe("OperatorInstaller", func() {
 	Describe("InstallOperator", func() {
 		// TODO: fill this in once run bundle is done
