@@ -68,7 +68,7 @@ var _ = Describe("OperatorInstaller", func() {
 					Supported: true,
 				},
 			}
-			oi.SupportedInstallModes = getSupportedInstallModes(modes)
+			oi.SupportedInstallModes = operator.GetSupportedInstallModes(modes)
 		})
 		It("should return an error when problems finding OperatorGroup", func() {
 			oi.cfg.Client = fake.NewFakeClient()
@@ -77,7 +77,7 @@ var _ = Describe("OperatorInstaller", func() {
 			Expect(err).To(HaveOccurred())
 		})
 		It("should return an error if there are no supported modes", func() {
-			oi.SupportedInstallModes = getSupportedInstallModes([]v1alpha1.InstallMode{})
+			oi.SupportedInstallModes = operator.GetSupportedInstallModes([]v1alpha1.InstallMode{})
 			grp, err := oi.ensureOperatorGroup(context.TODO())
 			Expect(grp).To(BeNil())
 			Expect(err).To(HaveOccurred())
@@ -336,48 +336,6 @@ var _ = Describe("OperatorInstaller", func() {
 			Expect(len(target)).To(Equal(1))
 			Expect(target[0]).To(Equal("test-ns"))
 			Expect(err).To(BeNil())
-		})
-	})
-
-	Describe("getSupportedInstallModes", func() {
-		It("should return empty set if empty installmodes", func() {
-			supported := getSupportedInstallModes([]v1alpha1.InstallMode{})
-			Expect(supported.Len()).To(Equal(0))
-		})
-		It("should return empty set if no installmodes are supported", func() {
-			installModes := []v1alpha1.InstallMode{
-				{
-					Type:      v1alpha1.InstallModeTypeSingleNamespace,
-					Supported: false,
-				},
-				{
-					Type:      v1alpha1.InstallModeTypeOwnNamespace,
-					Supported: false,
-				},
-			}
-			supported := getSupportedInstallModes(installModes)
-			Expect(supported.Len()).To(Equal(0))
-		})
-		It("should return set with supported installmodes", func() {
-			installModes := []v1alpha1.InstallMode{
-				{
-					Type:      v1alpha1.InstallModeTypeSingleNamespace,
-					Supported: true,
-				},
-				{
-					Type:      v1alpha1.InstallModeTypeOwnNamespace,
-					Supported: true,
-				},
-				{
-					Type:      v1alpha1.InstallModeTypeAllNamespaces,
-					Supported: false,
-				},
-			}
-			supported := getSupportedInstallModes(installModes)
-			Expect(supported.Len()).To(Equal(2))
-			Expect(supported.Has(string(v1alpha1.InstallModeTypeSingleNamespace))).Should(BeTrue())
-			Expect(supported.Has(string(v1alpha1.InstallModeTypeOwnNamespace))).Should(BeTrue())
-			Expect(supported.Has(string(v1alpha1.InstallModeTypeAllNamespaces))).Should(BeFalse())
 		})
 	})
 })

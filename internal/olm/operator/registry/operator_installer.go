@@ -327,13 +327,3 @@ func (o *OperatorInstaller) getTargetNamespaces(supported sets.String) ([]string
 		return nil, fmt.Errorf("no supported install modes")
 	}
 }
-
-func getSupportedInstallModes(csvInstallModes []v1alpha1.InstallMode) sets.String {
-	supported := sets.NewString()
-	for _, im := range csvInstallModes {
-		if im.Supported {
-			supported.Insert(string(im.Type))
-		}
-	}
-	return supported
-}
