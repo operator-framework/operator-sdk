@@ -81,8 +81,7 @@ func (s *apiScaffolder) scaffold() error {
 	}
 	// Check that the provided group can be added to the project
 	if !s.config.MultiGroup && len(s.config.Resources) != 0 && !s.config.HasGroup(r.Group) {
-		return fmt.Errorf("multiple groups are not allowed by default, %s",
-			"to enable multi-group add multigroup: true into the PROJECT file.")
+		return errors.New("support for multiple groups is disabled; to enable, set `multigroup: true` in the PROJECT file.")
 	}
 
 	res := r.NewResource(s.config, true)
