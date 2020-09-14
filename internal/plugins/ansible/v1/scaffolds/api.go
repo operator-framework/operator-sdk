@@ -19,7 +19,6 @@ package scaffolds
 
 import (
 	"errors"
-	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/kubebuilder/pkg/model"
@@ -88,7 +87,7 @@ func (s *apiScaffolder) scaffold() error {
 
 	// Check that the provided group can be added to the project
 	if !s.config.MultiGroup && len(s.config.Resources) != 0 && !s.config.HasGroup(resourceOptions.Group) {
-		return errors.New("support for multiple groups is disabled; to enable, set `multigroup: true` in the PROJECT file.")
+		return errors.New("support for multiple groups is disabled; to enable, set `multigroup: true` in the PROJECT file")
 	}
 
 	resource := resourceOptions.NewResource(s.config, true)
