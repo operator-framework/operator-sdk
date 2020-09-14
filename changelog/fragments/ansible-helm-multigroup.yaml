@@ -10,8 +10,7 @@ entries:
     # - deprecation
     # - removal
     # - bugfix
-    kind: "bugfix"
+    kind: "change"
 
     # Is this a breaking change?
     breaking: false
-
