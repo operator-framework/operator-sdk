@@ -19,27 +19,12 @@ package internal
 import (
 	"io/ioutil"
 	"path/filepath"
+	"strings"
+
+	"sigs.k8s.io/kubebuilder/pkg/model/config"
 )
 
-// Makefile fragments to add to the base Makefile just to ensure the packagemanifests feature
-const makefilePackagemanifestsNonGoFragment = `
-# Options for "packagemanifests".
-ifneq ($(origin CHANNEL), undefined)
-PKG_CHANNELS := --channel=$(CHANNEL)
-endif
-ifeq ($(IS_CHANNEL_DEFAULT), 1)
-PKG_IS_DEFAULT_CHANNEL := --default-channel
-endif
-PKG_MAN_OPTS ?= $(PKG_CHANNELS) $(PKG_IS_DEFAULT_CHANNEL)
-
-# Generate package manifests.
-packagemanifests: kustomize
-	operator-sdk generate kustomize manifests -q --interactive=false
-	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
-	$(KUSTOMIZE) build config/manifests | operator-sdk generate packagemanifests -q --version $(VERSION) $(PKG_MAN_OPTS)
-`
-
-const makefilePackagemanifestsFragment = `
+var makefilePackagemanifestsFragment = `
 # Options for "packagemanifests".
 ifneq ($(origin FROM_VERSION), undefined)
 PKG_FROM_VERSION := --from-version=$(FROM_VERSION)
@@ -54,35 +39,34 @@ PKG_MAN_OPTS ?= $(FROM_VERSION) $(PKG_CHANNELS) $(PKG_IS_DEFAULT_CHANNEL)
 
 # Generate package manifests.
 packagemanifests: kustomize manifests
-	operator-sdk generate kustomize manifests -q
+	operator-sdk generate kustomize manifests -q --interactive=false
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/manifests | operator-sdk generate packagemanifests -q --version $(VERSION) $(PKG_MAN_OPTS)
 `
 
-// AddPackagemanifestsTargetNonGo will append the packagemanifests target to the makefile
-// in order to test the steps described in the docs.
-// More info:  https://master.sdk.operatorframework.io/docs/olm-integration/generation/#package-manifests-formats
-func (tc TestContext) AddPackagemanifestsTargetNonGo() error {
-	makefileBytes, err := ioutil.ReadFile(filepath.Join(tc.Dir, "Makefile"))
-	if err != nil {
-		return err
-	}
-
-	makefileBytes = append([]byte(makefilePackagemanifestsNonGoFragment), makefileBytes...)
-	err = ioutil.WriteFile(filepath.Join(tc.Dir, "Makefile"), makefileBytes, 0644)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // AddPackagemanifestsTarget will append the packagemanifests target to the makefile
 // in order to test the steps described in the docs.
-// More info:  https://master.sdk.operatorframework.io/docs/olm-integration/generation/#package-manifests-formats
+// More info:  https://v1-0-x.sdk.operatorframework.io/docs/olm-integration/generation/#package-manifests-formats
 func (tc TestContext) AddPackagemanifestsTarget() error {
 	makefileBytes, err := ioutil.ReadFile(filepath.Join(tc.Dir, "Makefile"))
 	if err != nil {
 		return err
+	}
+
+	b, err := ioutil.ReadFile(filepath.Join(tc.Dir, "PROJECT"))
+	if err != nil {
+		return err
+	}
+	c := &config.Config{}
+	if err = c.Unmarshal(b); err != nil {
+		return err
+	}
+
+	if !strings.HasPrefix(c.Layout, "go") {
+		// The target is equals for all types but NonGo projects has not the manifests target which
+		// needs to be replaced here.
+		makefilePackagemanifestsFragment = strings.Replace(makefilePackagemanifestsFragment,
+			"packagemanifests: kustomize manifests", "packagemanifests: kustomize", 1)
 	}
 
 	makefileBytes = append([]byte(makefilePackagemanifestsFragment), makefileBytes...)

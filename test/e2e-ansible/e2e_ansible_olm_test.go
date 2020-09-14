@@ -68,7 +68,7 @@ var _ = Describe("Integrating ansible Projects with OLM", func() {
 			}
 
 			By("adding the 'packagemanifests' rule to the Makefile")
-			err = tc.AddPackagemanifestsTargetNonGo()
+			err = tc.AddPackagemanifestsTarget()
 			Expect(err).Should(Succeed())
 
 			By("generating the operator package manifests")
