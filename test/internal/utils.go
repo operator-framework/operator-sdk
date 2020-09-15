@@ -19,7 +19,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -27,24 +26,6 @@ import (
 	. "github.com/onsi/gomega"
 	kbtestutils "sigs.k8s.io/kubebuilder/test/e2e/utils"
 )
-
-// Makefile fragments to add to the base Makefile just to ensure the packagemanifests feature
-const makefilePackagemanifests = `
-# Options for "packagemanifests".
-ifneq ($(origin CHANNEL), undefined)
-PKG_CHANNELS := --channel=$(CHANNEL)
-endif
-ifeq ($(IS_CHANNEL_DEFAULT), 1)
-PKG_IS_DEFAULT_CHANNEL := --default-channel
-endif
-PKG_MAN_OPTS ?= $(PKG_CHANNELS) $(PKG_IS_DEFAULT_CHANNEL)
-
-# Generate package manifests.
-packagemanifests: kustomize
-	operator-sdk generate kustomize manifests -q --interactive=false
-	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
-	$(KUSTOMIZE) build config/manifests | operator-sdk generate packagemanifests -q --version $(VERSION) $(PKG_MAN_OPTS)
-`
 
 // TestContext wraps kubebuilder's e2e TestContext.
 type TestContext struct {
@@ -75,23 +56,6 @@ func (tc TestContext) UninstallOLM() {
 // KustomizeBuild runs 'kustomize build <dir>' and returns its output and an error if any.
 func (tc TestContext) KustomizeBuild(dir string) ([]byte, error) {
 	return tc.Run(exec.Command("kustomize", "build", dir))
-}
-
-// AddPackagemanifestsTarget will append the packagemanifests target to the makefile
-// in order to test the steps described in the docs.
-// More info:  https://master.sdk.operatorframework.io/docs/olm-integration/generation/#package-manifests-formats
-func (tc TestContext) AddPackagemanifestsTarget() error {
-	makefileBytes, err := ioutil.ReadFile(filepath.Join(tc.Dir, "Makefile"))
-	if err != nil {
-		return err
-	}
-
-	makefileBytes = append([]byte(makefilePackagemanifests), makefileBytes...)
-	err = ioutil.WriteFile(filepath.Join(tc.Dir, "Makefile"), makefileBytes, 0644)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // ReplaceInFile replaces all instances of old with new in the file at path.
