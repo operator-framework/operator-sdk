@@ -1,5 +1,6 @@
 ---
 title: Release Guide
+linkTitle: Releasing
 weight: 30
 ---
 
