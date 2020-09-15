@@ -290,6 +290,9 @@ func applyWebhooks(c *collector.Manifests, csv *operatorsv1alpha1.ClusterService
 	csv.Spec.WebhookDefinitions = webhookDescriptions
 }
 
+// The default AdmissionReviewVersions set in a CSV if not set in the source webhook.
+var defaultAdmissionReviewVersions = []string{"v1beta1"}
+
 // validatingToWebhookDescription transforms webhook into a WebhookDescription.
 func validatingToWebhookDescription(webhook admissionregv1.ValidatingWebhook, depName string) operatorsv1alpha1.WebhookDescription {
 	description := operatorsv1alpha1.WebhookDescription{
@@ -302,6 +305,13 @@ func validatingToWebhookDescription(webhook admissionregv1.ValidatingWebhook, de
 		SideEffects:             webhook.SideEffects,
 		TimeoutSeconds:          webhook.TimeoutSeconds,
 		AdmissionReviewVersions: webhook.AdmissionReviewVersions,
+	}
+	if len(description.AdmissionReviewVersions) == 0 {
+		description.AdmissionReviewVersions = defaultAdmissionReviewVersions
+	}
+	if description.SideEffects == nil {
+		seNone := admissionregv1.SideEffectClassNone
+		description.SideEffects = &seNone
 	}
 
 	if serviceRef := webhook.ClientConfig.Service; serviceRef != nil {
@@ -330,6 +340,13 @@ func mutatingToWebhookDescription(webhook admissionregv1.MutatingWebhook, depNam
 		TimeoutSeconds:          webhook.TimeoutSeconds,
 		AdmissionReviewVersions: webhook.AdmissionReviewVersions,
 		ReinvocationPolicy:      webhook.ReinvocationPolicy,
+	}
+	if len(description.AdmissionReviewVersions) == 0 {
+		description.AdmissionReviewVersions = defaultAdmissionReviewVersions
+	}
+	if description.SideEffects == nil {
+		seNone := admissionregv1.SideEffectClassNone
+		description.SideEffects = &seNone
 	}
 
 	if serviceRef := webhook.ClientConfig.Service; serviceRef != nil {
