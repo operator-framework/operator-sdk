@@ -81,8 +81,7 @@ func (s *apiScaffolder) scaffold() error {
 	}
 	// Check that the provided group can be added to the project
 	if !s.config.MultiGroup && len(s.config.Resources) != 0 && !s.config.HasGroup(r.Group) {
-		return fmt.Errorf("multiple groups are not allowed by default, to enable multi-group visit %s",
-			"kubebuilder.io/migration/multi-group.html")
+		return errors.New("multiple groups are not allowed by default, to enable multi-group set 'multigroup: true' in your PROJECT file")
 	}
 
 	res := r.NewResource(s.config, true)
