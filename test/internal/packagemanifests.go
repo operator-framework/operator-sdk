@@ -17,7 +17,7 @@
 package internal
 
 import (
-	"errors"
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
@@ -39,7 +39,7 @@ endif
 PKG_MAN_OPTS ?= $(FROM_VERSION) $(PKG_CHANNELS) $(PKG_IS_DEFAULT_CHANNEL)
 
 # Generate package manifests.
-packagemanifests: kustomize manifests
+packagemanifests: kustomize %s
 	operator-sdk generate kustomize manifests -q --interactive=false
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/manifests | operator-sdk generate packagemanifests -q --version $(VERSION) $(PKG_MAN_OPTS)
@@ -63,17 +63,14 @@ func (tc TestContext) AddPackagemanifestsTarget() error {
 		return err
 	}
 
-	if !strings.HasPrefix(c.Layout, "go") {
-		// The target is equals for all types but NonGo projects has not the manifests target which
-		// needs to be replaced here.
-		manifestsTarget := "packagemanifests: kustomize manifests"
-		if !strings.Contains(makefilePackagemanifestsFragment, manifestsTarget) {
-			return errors.New("unable to find the manifests target to be replaced")
-		}
-		makefilePackagemanifestsFragment = strings.Replace(makefilePackagemanifestsFragment,
-			manifestsTarget, "packagemanifests: kustomize", 1)
+	// add the manifests target when is a Go project.
+	replaceTarget := ""
+	if strings.HasPrefix(c.Layout, "go") {
+		replaceTarget = "manifests"
 	}
+	makefilePackagemanifestsFragment = fmt.Sprintf(makefilePackagemanifestsFragment, replaceTarget)
 
+	// update makefile by adding the packagemanifests target
 	makefileBytes = append([]byte(makefilePackagemanifestsFragment), makefileBytes...)
 	err = ioutil.WriteFile(filepath.Join(tc.Dir, "Makefile"), makefileBytes, 0644)
 	if err != nil {
