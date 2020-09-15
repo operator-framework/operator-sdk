@@ -133,13 +133,8 @@ func (o OperatorInstaller) ensureOperatorGroup(ctx context.Context) error {
 
 	supported := o.SupportedInstallModes
 
-	if supported.Len() == 0 {
-		return fmt.Errorf("operator %q is not installable: no supported install modes", o.StartingCSV)
-	}
-
 	// --install-mode was given
 	if !o.InstallMode.IsEmpty() {
-		// TODO: probably remove multinamespace
 		if o.InstallMode.InstallModeType == v1alpha1.InstallModeTypeSingleNamespace {
 			targetNsSet := sets.NewString(o.InstallMode.TargetNamespaces...)
 			if !supported.Has(string(v1alpha1.InstallModeTypeOwnNamespace)) && targetNsSet.Has(o.cfg.Namespace) {
@@ -155,7 +150,6 @@ func (o OperatorInstaller) ensureOperatorGroup(ctx context.Context) error {
 		if supported.Len() == 0 {
 			return fmt.Errorf("operator %q does not support install mode %q", o.StartingCSV, o.InstallMode.InstallModeType)
 		}
-
 	}
 
 	targetNamespaces, err := o.getTargetNamespaces(supported)

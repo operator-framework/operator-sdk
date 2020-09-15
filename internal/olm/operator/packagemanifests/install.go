@@ -77,6 +77,11 @@ func (i *Install) setup() error {
 	i.OperatorInstaller.CatalogSourceName = fmt.Sprintf("%s-catalog", i.OperatorInstaller.PackageName)
 	i.OperatorInstaller.StartingCSV = bundle.CSV.GetName()
 	i.OperatorInstaller.SupportedInstallModes = operator.GetSupportedInstallModes(bundle.CSV.Spec.InstallModes)
+
+	if i.OperatorInstaller.SupportedInstallModes.Len() == 0 {
+		return fmt.Errorf("operator %q is not installable: no supported install modes", bundle.CSV.GetName())
+	}
+
 	i.OperatorInstaller.Channel, err = getChannelForCSVName(pkg, i.OperatorInstaller.StartingCSV)
 	if err != nil {
 		return err
