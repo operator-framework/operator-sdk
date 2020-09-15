@@ -1,0 +1,7 @@
+entries:
+  - description: >
+      Default a CSV's `spec.webhookDefinition[].admissionReviewVersions` to "v1beta1".
+    kind: addition
+  - description: >
+      Default a CSV's `spec.webhookDefinition[].sideEffects` to "None".
+    kind: addition
