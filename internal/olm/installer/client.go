@@ -229,6 +229,10 @@ func (c Client) doRequest(ctx context.Context, url string) (*http.Response, erro
 		defer resp.Body.Close()
 		body, err := ioutil.ReadAll(resp.Body)
 		msg := fmt.Sprintf("failed GET '%s': unexpected status code %d, expected %d", url, resp.StatusCode, http.StatusOK)
+		if resp.StatusCode == 404 {
+			return nil, fmt.Errorf("%s; manifests may not exist for this OLM release,"+
+				"please check https://github.com/operator-framework/operator-lifecycle-manager/releases for olm.yaml and crds.yaml", msg)
+		}
 		if err != nil {
 			return nil, fmt.Errorf("%s: %v", msg, err)
 		}
