@@ -17,6 +17,7 @@
 package internal
 
 import (
+	"errors"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
@@ -65,8 +66,12 @@ func (tc TestContext) AddPackagemanifestsTarget() error {
 	if !strings.HasPrefix(c.Layout, "go") {
 		// The target is equals for all types but NonGo projects has not the manifests target which
 		// needs to be replaced here.
+		manifestsTarget := "packagemanifests: kustomize manifests"
+		if !strings.Contains(makefilePackagemanifestsFragment, manifestsTarget) {
+			return errors.New("unable to find the manifests target to be replaced")
+		}
 		makefilePackagemanifestsFragment = strings.Replace(makefilePackagemanifestsFragment,
-			"packagemanifests: kustomize manifests", "packagemanifests: kustomize", 1)
+			manifestsTarget, "packagemanifests: kustomize", 1)
 	}
 
 	makefileBytes = append([]byte(makefilePackagemanifestsFragment), makefileBytes...)

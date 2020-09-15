@@ -101,7 +101,6 @@ var _ = BeforeSuite(func(done Done) {
 		"--fetch-deps=false")
 	Expect(err).Should(Succeed())
 
-	// Todo: add to the init scaffold
 	By("by adding scorecard custom patch file")
 	err = tc.AddScorecardCustomPatchFile()
 	Expect(err).NotTo(HaveOccurred())
@@ -125,10 +124,6 @@ var _ = BeforeSuite(func(done Done) {
 		`	// +optional
 	Count int `+"`"+`json:"count,omitempty"`+"`"+`
 `)).Should(Succeed())
-
-	// todo(camilamacedo86): add sdk as lib to the project
-	// todo(camilamacedo86): replace watches in the controllers to use the InstrumentedEnqueueRequestForObject
-	// more info: https://github.com/operator-framework/operator-sdk/pull/3436/files
 
 	By("enabling Prometheus via the kustomization.yaml")
 	Expect(kbtestutils.UncommentCode(

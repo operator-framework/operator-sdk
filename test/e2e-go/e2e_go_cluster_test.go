@@ -186,8 +186,6 @@ var _ = Describe("operator-sdk", func() {
 				return logOutput
 			}
 			Eventually(getCurlLogs, time.Minute, time.Second).Should(ContainSubstring("< HTTP/2 200"))
-
-			// todo: check here if the sdk metric was exported as we do in the helm test
 		})
 	})
 })
