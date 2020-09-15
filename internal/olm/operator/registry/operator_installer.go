@@ -157,16 +157,18 @@ func (o OperatorInstaller) ensureOperatorGroup(ctx context.Context) error {
 		}
 
 	}
+
+	targetNamespaces, err := o.getTargetNamespaces(supported)
+	if err != nil {
+		return err
+	}
+
 	if !ogFound {
-		targetNamespaces, err := o.getTargetNamespaces(supported)
-		if err != nil {
-			return err
-		}
 		if og, err = o.createOperatorGroup(ctx, targetNamespaces); err != nil {
 			return fmt.Errorf("create operator group: %v", err)
 		}
 		log.Infof("OperatorGroup %q created", og.Name)
-	} else if err := o.validateOperatorGroup(*og, supported); err != nil {
+	} else if err := o.isOperatorGroupCompatible(*og, targetNamespaces); err != nil {
 		return err
 	}
 
@@ -181,26 +183,14 @@ func (o *OperatorInstaller) createOperatorGroup(ctx context.Context, targetNames
 	return og, nil
 }
 
-func (o *OperatorInstaller) validateOperatorGroup(og v1.OperatorGroup, supported sets.String) error {
-	ogTargetNs := sets.NewString(og.Spec.TargetNamespaces...)
-	imTargetNs := sets.NewString(o.InstallMode.TargetNamespaces...)
-	ownNamespaceNs := sets.NewString(o.cfg.Namespace)
-
-	if supported.Has(string(v1alpha1.InstallModeTypeAllNamespaces)) && len(og.Spec.TargetNamespaces) == 0 ||
-		supported.Has(string(v1alpha1.InstallModeTypeOwnNamespace)) && ogTargetNs.Equal(ownNamespaceNs) ||
-		supported.Has(string(v1alpha1.InstallModeTypeSingleNamespace)) && ogTargetNs.Equal(imTargetNs) {
-		return nil
-	}
-
-	switch o.InstallMode.InstallModeType {
-	case v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeOwnNamespace,
-		v1alpha1.InstallModeTypeSingleNamespace:
+func (o *OperatorInstaller) isOperatorGroupCompatible(og v1.OperatorGroup, targetNamespaces []string) error {
+	targets := sets.NewString(targetNamespaces...)
+	ogtargets := sets.NewString(og.Spec.TargetNamespaces...)
+	if !ogtargets.Equal(targets) {
 		return fmt.Errorf("existing operatorgroup %q is not compatible with install mode %q", og.Name, o.InstallMode)
-	case "":
-		return fmt.Errorf("existing operatorgroup %q is not compatible with any supported package install modes", og.Name)
 	}
 
-	return fmt.Errorf("unknown install mode %q", o.InstallMode.InstallModeType)
+	return nil
 }
 
 // getOperatorGroup returns true if an OperatorGroup in the desired namespace was found.
