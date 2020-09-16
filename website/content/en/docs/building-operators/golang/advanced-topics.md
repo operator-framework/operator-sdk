@@ -44,7 +44,7 @@ import (
 func init() {
 
     // Setup Scheme for all resources
-    utilruntime.Must(cachev1alpha1.AddToScheme(mgr.GetScheme()))
+    utilruntime.Must(cachev1alpha1.AddToScheme(scheme))
     // +kubebuilder:scaffold:scheme
 }
 ```
@@ -64,9 +64,9 @@ func init() {
     ...
 
     // Adding the routev1
-    utilruntime.Must(clientgoscheme.AddToScheme(mgr.GetScheme()))
+    utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-    utilruntime.Must(routev1.AddToScheme(mgr.GetScheme()))
+    utilruntime.Must(routev1.AddToScheme(scheme))
     // +kubebuilder:scaffold:scheme
 
     ...
