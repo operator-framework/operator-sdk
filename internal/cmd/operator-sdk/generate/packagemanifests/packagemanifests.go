@@ -39,8 +39,7 @@ it with OLM. This command generates a set of manifests in a versioned directory 
 your operator. Typically one would run 'generate kustomize manifests' first to (re)generate kustomize bases
 consumed by this command.
 
-Set '--version' to supply a semantic version for your new package. This is a required flag when running
-'generate packagemanifests --manifests'.
+Set '--version' to supply a semantic version for your new package.
 
 More information on the package manifests format:
 https://github.com/operator-framework/operator-registry/#manifest-format
@@ -61,7 +60,7 @@ https://github.com/operator-framework/operator-registry/#manifest-format
   ├── bases
   │   └── memcached-operator.clusterserviceversion.yaml
   └── kustomization.yaml
-  $ kustomize build config/manifests | operator-sdk generate packagemanifests --manifests --version 0.0.1
+  $ kustomize build config/manifests | operator-sdk generate packagemanifests --version 0.0.1
   Generating package manifests version 0.0.1
   ...
 
