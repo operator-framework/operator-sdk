@@ -266,21 +266,32 @@ func applyCustomResourceDefinitions(c *collector.Manifests, csv *operatorsv1alph
 	csv.Spec.CustomResourceDefinitions.Owned = ownedDescs
 }
 
-// applyWebhooks updates csv's webhookDefinitions with any
-// mutating and validating webhooks in the collector.
+// applyWebhooks updates csv's webhookDefinitions with any mutating and validating webhooks in the collector.
 func applyWebhooks(c *collector.Manifests, csv *operatorsv1alpha1.ClusterServiceVersion) {
 	webhookDescriptions := []operatorsv1alpha1.WebhookDescription{}
 	for _, webhook := range c.ValidatingWebhooks {
-		webhookDescriptions = append(webhookDescriptions, validatingToWebhookDescription(webhook))
+		depName, serviceName := findMatchingDeploymentAndServiceForWebhook(c, webhook.ClientConfig)
+		if serviceName == "" && depName == "" {
+			log.Infof("No service found for validating webhook %q", webhook.Name)
+		} else if depName == "" {
+			log.Infof("No deployment is selected by service %q for validating webhook %q", serviceName, webhook.Name)
+		}
+		webhookDescriptions = append(webhookDescriptions, validatingToWebhookDescription(webhook, depName))
 	}
 	for _, webhook := range c.MutatingWebhooks {
-		webhookDescriptions = append(webhookDescriptions, mutatingToWebhookDescription(webhook))
+		depName, serviceName := findMatchingDeploymentAndServiceForWebhook(c, webhook.ClientConfig)
+		if serviceName == "" && depName == "" {
+			log.Infof("No service found for mutating webhook %q", webhook.Name)
+		} else if depName == "" {
+			log.Infof("No deployment is selected by service %q for mutating webhook %q", serviceName, webhook.Name)
+		}
+		webhookDescriptions = append(webhookDescriptions, mutatingToWebhookDescription(webhook, depName))
 	}
 	csv.Spec.WebhookDefinitions = webhookDescriptions
 }
 
 // validatingToWebhookDescription transforms webhook into a WebhookDescription.
-func validatingToWebhookDescription(webhook admissionregv1.ValidatingWebhook) operatorsv1alpha1.WebhookDescription {
+func validatingToWebhookDescription(webhook admissionregv1.ValidatingWebhook, depName string) operatorsv1alpha1.WebhookDescription {
 	description := operatorsv1alpha1.WebhookDescription{
 		Type:                    operatorsv1alpha1.ValidatingAdmissionWebhook,
 		GenerateName:            webhook.Name,
@@ -292,18 +303,22 @@ func validatingToWebhookDescription(webhook admissionregv1.ValidatingWebhook) op
 		TimeoutSeconds:          webhook.TimeoutSeconds,
 		AdmissionReviewVersions: webhook.AdmissionReviewVersions,
 	}
+
 	if serviceRef := webhook.ClientConfig.Service; serviceRef != nil {
 		if serviceRef.Port != nil {
 			description.ContainerPort = *serviceRef.Port
 		}
-		description.DeploymentName = strings.TrimSuffix(serviceRef.Name, "-service")
+		description.DeploymentName = depName
+		if description.DeploymentName == "" {
+			description.DeploymentName = strings.TrimSuffix(serviceRef.Name, "-service")
+		}
 		description.WebhookPath = serviceRef.Path
 	}
 	return description
 }
 
 // mutatingToWebhookDescription transforms webhook into a WebhookDescription.
-func mutatingToWebhookDescription(webhook admissionregv1.MutatingWebhook) operatorsv1alpha1.WebhookDescription {
+func mutatingToWebhookDescription(webhook admissionregv1.MutatingWebhook, depName string) operatorsv1alpha1.WebhookDescription {
 	description := operatorsv1alpha1.WebhookDescription{
 		Type:                    operatorsv1alpha1.MutatingAdmissionWebhook,
 		GenerateName:            webhook.Name,
@@ -316,14 +331,75 @@ func mutatingToWebhookDescription(webhook admissionregv1.MutatingWebhook) operat
 		AdmissionReviewVersions: webhook.AdmissionReviewVersions,
 		ReinvocationPolicy:      webhook.ReinvocationPolicy,
 	}
+
 	if serviceRef := webhook.ClientConfig.Service; serviceRef != nil {
 		if serviceRef.Port != nil {
 			description.ContainerPort = *serviceRef.Port
 		}
-		description.DeploymentName = strings.TrimSuffix(serviceRef.Name, "-service")
+		description.DeploymentName = depName
+		if description.DeploymentName == "" {
+			description.DeploymentName = strings.TrimSuffix(serviceRef.Name, "-service")
+		}
 		description.WebhookPath = serviceRef.Path
 	}
 	return description
+}
+
+// findMatchingDeploymentAndServiceForWebhook matches a Service to a webhook's client config (if it uses a service)
+// then matches that Service to a Deployment by comparing label selectors (if the Service uses label selectors).
+// The names of both Service and Deployment are returned if found.
+func findMatchingDeploymentAndServiceForWebhook(c *collector.Manifests, wcc admissionregv1.WebhookClientConfig) (depName, serviceName string) {
+	// Return if a service reference is not specified, since a URL will be in that case.
+	if wcc.Service == nil {
+		return
+	}
+
+	// Find the matching service, if any. The webhook server may be externally managed
+	// if no service is created by the operator.
+	var ws *corev1.Service
+	for i, service := range c.Services {
+		if service.GetName() == wcc.Service.Name {
+			ws = &c.Services[i]
+			break
+		}
+	}
+	if ws == nil {
+		return
+	}
+	serviceName = ws.GetName()
+
+	// Only ExternalName-type services cannot have selectors.
+	if ws.Spec.Type == corev1.ServiceTypeExternalName {
+		return
+	}
+
+	// If a selector does not exist, there is either an Endpoint or EndpointSlice object accompanying
+	// the service so it should not be added to the CSV.
+	if len(ws.Spec.Selector) == 0 {
+		return
+	}
+
+	// Match service against pod labels, in which the webhook server will be running.
+	for _, dep := range c.Deployments {
+		podTemplateLabels := dep.Spec.Template.GetLabels()
+		if len(podTemplateLabels) == 0 {
+			continue
+		}
+
+		depName = dep.GetName()
+		// Check that all labels match.
+		for key, serviceValue := range ws.Spec.Selector {
+			if podTemplateValue, hasKey := podTemplateLabels[key]; !hasKey || podTemplateValue != serviceValue {
+				depName = ""
+				break
+			}
+		}
+		if depName != "" {
+			break
+		}
+	}
+
+	return depName, serviceName
 }
 
 // applyCustomResources updates csv's "alm-examples" annotation with the
