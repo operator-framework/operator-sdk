@@ -27,7 +27,7 @@ import (
 
 const (
 	DefaultVersion = "latest"
-	DefaultTimeout = time.Minute * 2
+	DefaultTimeout = time.Minute * 3
 	// DefaultOLMNamespace is the namespace where OLM is installed
 	DefaultOLMNamespace = "olm"
 )

@@ -95,6 +95,7 @@ func (s Status) HasInstalledResources() (bool, error) {
 	})
 	for _, r := range s.Resources {
 		if r.Resource != nil {
+			log.Infof("Exists olm resource:%v, project:%v, GVK:%v", r.Resource, r.NamespacedName, r.GVK)
 			return true, nil
 		} else if r.Error != nil && !apierrors.IsNotFound(r.Error) {
 			// We know the error is not a "resource not found" error at this point.
