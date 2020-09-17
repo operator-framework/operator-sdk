@@ -31,6 +31,7 @@ GO_BUILD_ARGS = \
 
 ANSIBLE_BASE_IMAGE = quay.io/operator-framework/ansible-operator
 HELM_BASE_IMAGE = quay.io/operator-framework/helm-operator
+OPERATOR_SDK_IMAGE = quay.io/operator-framework/operator-sdk
 CUSTOM_SCORECARD_TESTS_BASE_IMAGE = quay.io/operator-framework/custom-scorecard-tests
 SCORECARD_TEST_BASE_IMAGE = quay.io/operator-framework/scorecard-test
 SCORECARD_TEST_KUTTL_BASE_IMAGE = quay.io/operator-framework/scorecard-test-kuttl
@@ -217,6 +218,12 @@ image-push-helm:
 
 image-push-helm-multiarch:
 	./hack/image/push-manifest-list.sh $(HELM_IMAGE) ${HELM_ARCHES}
+
+image-build-sdk: build/operator-sdk-dev-linux-gnu
+	./hack/image/build-sdk-image.sh $(OPERATOR_SDK_IMAGE):dev
+
+image-push-sdk:
+	./hack/image/push-image-tags.sh $(OPERATOR_SDK_IMAGE):dev $(OPERATOR_SDK_IMAGE)
 
 # Scorecard test image scaffold/build/push.
 .PHONY: image-build-scorecard-test image-push-scorecard-test image-push-scorecard-test-multiarch
