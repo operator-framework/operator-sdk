@@ -30,7 +30,7 @@ const customScorecardPatch = `
     entrypoint:
     - custom-scorecard-tests
     - customtest1
-    image: quay.io/operator-framework/custom-scorecard-tests:master
+    image: quay.io/operator-framework/custom-scorecard-tests:dev
     labels:
       suite: custom
       test: customtest1
@@ -40,7 +40,7 @@ const customScorecardPatch = `
     entrypoint:
     - custom-scorecard-tests
     - customtest2
-    image: quay.io/operator-framework/custom-scorecard-tests:master
+    image: quay.io/operator-framework/custom-scorecard-tests:dev
     labels:
       suite: custom
       test: customtest2
