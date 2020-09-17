@@ -59,7 +59,7 @@ var _ = BeforeSuite(func(done Done) {
 
 	By("checking the cluster type")
 	kubectx, err = tc.Kubectl.Command("config", "current-context")
-	Expect(err).Should(Succeed())
+	Expect(err).NotTo(HaveOccurred())
 
 	By("checking API resources applied on Cluster")
 	output, err := tc.Kubectl.Command("api-resources")
@@ -94,30 +94,30 @@ var _ = BeforeSuite(func(done Done) {
 		"--plugins", "helm",
 		"--project-version", "3-alpha",
 		"--domain", tc.Domain)
-	Expect(err).Should(Succeed())
+	Expect(err).NotTo(HaveOccurred())
 
 	By("creating an API definition")
 	err = tc.CreateAPI(
 		"--group", tc.Group,
 		"--version", tc.Version,
 		"--kind", tc.Kind)
-	Expect(err).Should(Succeed())
+	Expect(err).NotTo(HaveOccurred())
 
 	By("replacing project Dockerfile to use Helm base image with the dev tag")
 	testutils.ReplaceRegexInFile(filepath.Join(tc.Dir, "Dockerfile"), "quay.io/operator-framework/helm-operator:.*", "quay.io/operator-framework/helm-operator:dev")
 
 	By("checking the kustomize setup")
 	err = tc.Make("kustomize")
-	Expect(err).Should(Succeed())
+	Expect(err).NotTo(HaveOccurred())
 
 	By("building the project image")
 	err = tc.Make("docker-build", "IMG="+tc.ImageName)
-	Expect(err).Should(Succeed())
+	Expect(err).NotTo(HaveOccurred())
 
 	if isRunningOnKind() {
 		By("loading the project image into Kind cluster")
 		err = tc.LoadImageToKindCluster()
-		Expect(err).Should(Succeed())
+		Expect(err).NotTo(HaveOccurred())
 	}
 
 	close(done)
