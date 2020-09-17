@@ -60,7 +60,7 @@ var _ = BeforeSuite(func(done Done) {
 
 	By("checking the cluster type")
 	kubectx, err = tc.Kubectl.Command("config", "current-context")
-	Expect(err).Should(Succeed())
+	Expect(err).NotTo(HaveOccurred())
 
 	By("checking API resources applied on Cluster")
 	output, err := tc.Kubectl.Command("api-resources")
@@ -101,7 +101,7 @@ var _ = BeforeSuite(func(done Done) {
 		"--plugins", "ansible",
 		"--project-version", "3-alpha",
 		"--domain", tc.Domain)
-	Expect(err).Should(Succeed())
+	Expect(err).NotTo(HaveOccurred())
 
 	By("creating the Memcached API")
 	err = tc.CreateAPI(
@@ -110,7 +110,7 @@ var _ = BeforeSuite(func(done Done) {
 		"--kind", tc.Kind,
 		"--generate-playbook",
 		"--generate-role")
-	Expect(err).Should(Succeed())
+	Expect(err).NotTo(HaveOccurred())
 
 	By("replacing project Dockerfile to use ansible base image with the dev tag")
 	testutils.ReplaceRegexInFile(filepath.Join(tc.Dir, "Dockerfile"), "quay.io/operator-framework/ansible-operator:.*", "quay.io/operator-framework/ansible-operator:dev")
@@ -134,7 +134,7 @@ var _ = BeforeSuite(func(done Done) {
 		"--version", tc.Version,
 		"--kind", "Memfin",
 		"--generate-role")
-	Expect(err).Should(Succeed())
+	Expect(err).NotTo(HaveOccurred())
 
 	By("adding task to delete config map")
 	testutils.ReplaceInFile(filepath.Join(tc.Dir, "roles", "memfin", "tasks", "main.yml"),
@@ -150,7 +150,7 @@ var _ = BeforeSuite(func(done Done) {
 		"--version", tc.Version,
 		"--kind", "Foo",
 		"--generate-role")
-	Expect(err).Should(Succeed())
+	Expect(err).NotTo(HaveOccurred())
 
 	By("adding RBAC permissions for the Memcached Kind")
 	testutils.ReplaceInFile(filepath.Join(tc.Dir, "config", "rbac", "role.yaml"),
@@ -158,16 +158,16 @@ var _ = BeforeSuite(func(done Done) {
 
 	By("checking the kustomize setup")
 	err = tc.Make("kustomize")
-	Expect(err).Should(Succeed())
+	Expect(err).NotTo(HaveOccurred())
 
 	By("building the project image")
 	err = tc.Make("docker-build", "IMG="+tc.ImageName)
-	Expect(err).Should(Succeed())
+	Expect(err).NotTo(HaveOccurred())
 
 	if isRunningOnKind() {
 		By("loading the project image into Kind cluster")
 		err = tc.LoadImageToKindCluster()
-		Expect(err).Should(Succeed())
+		Expect(err).NotTo(HaveOccurred())
 	}
 
 	close(done)

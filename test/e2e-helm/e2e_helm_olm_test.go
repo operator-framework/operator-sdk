@@ -64,12 +64,12 @@ var _ = Describe("Integrating Helm Projects with OLM", func() {
 			if isRunningOnKind() {
 				By("loading the bundle image into Kind cluster")
 				err = tc.LoadImageToKindClusterWithName(bundleImage)
-				Expect(err).Should(Succeed())
+				Expect(err).NotTo(HaveOccurred())
 			}
 
 			By("adding the 'packagemanifests' rule to the Makefile")
 			err = tc.AddPackagemanifestsTarget()
-			Expect(err).Should(Succeed())
+			Expect(err).NotTo(HaveOccurred())
 
 			By("generating the operator package manifests")
 			err = tc.Make("packagemanifests", "IMG="+tc.ImageName)

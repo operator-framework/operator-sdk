@@ -40,7 +40,7 @@ var _ = Describe("Running Helm projects", func() {
 
 			By("deploying project on the cluster")
 			err := tc.Make("deploy", "IMG="+tc.ImageName)
-			Expect(err).Should(Succeed())
+			Expect(err).NotTo(HaveOccurred())
 		})
 		AfterEach(func() {
 			By("deleting Curl Pod created")

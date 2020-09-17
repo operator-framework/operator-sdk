@@ -62,7 +62,7 @@ var _ = BeforeSuite(func(done Done) {
 
 	By("checking the cluster type")
 	kubectx, err = tc.Kubectl.Command("config", "current-context")
-	Expect(err).Should(Succeed())
+	Expect(err).NotTo(HaveOccurred())
 
 	By("checking API resources applied on Cluster")
 	output, err := tc.Kubectl.Command("api-resources")
@@ -99,7 +99,7 @@ var _ = BeforeSuite(func(done Done) {
 		"--repo", path.Join("github.com", "example", projectName),
 		"--domain", tc.Domain,
 		"--fetch-deps=false")
-	Expect(err).Should(Succeed())
+	Expect(err).NotTo(HaveOccurred())
 
 	By("by adding scorecard custom patch file")
 	err = tc.AddScorecardCustomPatchFile()
@@ -114,7 +114,7 @@ var _ = BeforeSuite(func(done Done) {
 		"--resource",
 		"--controller",
 		"--make=false")
-	Expect(err).Should(Succeed())
+	Expect(err).NotTo(HaveOccurred())
 
 	By("implementing the API")
 	Expect(kbtestutils.InsertCode(
@@ -132,16 +132,16 @@ var _ = BeforeSuite(func(done Done) {
 
 	By("checking the kustomize setup")
 	err = tc.Make("kustomize")
-	Expect(err).Should(Succeed())
+	Expect(err).NotTo(HaveOccurred())
 
 	By("building the project image")
 	err = tc.Make("docker-build", "IMG="+tc.ImageName)
-	Expect(err).Should(Succeed())
+	Expect(err).NotTo(HaveOccurred())
 
 	if isRunningOnKind() {
 		By("loading the project image into Kind cluster")
 		err = tc.LoadImageToKindCluster()
-		Expect(err).Should(Succeed())
+		Expect(err).NotTo(HaveOccurred())
 	}
 
 	close(done)
