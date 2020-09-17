@@ -21,7 +21,7 @@ import (
 
 //var needs to be used instead of const for ldflags
 var (
-	Version           = "v0.19.3+git"
+	Version           = "v0.19.4"
 	GitVersion        = "unknown"
 	GitCommit         = "unknown"
 	KubernetesVersion = "unknown"

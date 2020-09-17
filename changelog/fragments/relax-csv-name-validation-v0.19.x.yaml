@@ -1,8 +1,0 @@
-# entries is a list of entries to include in
-# release notes and/or the migration guide
-entries:
-  - description: >
-      Resolved an issue that caused bundle validation to unnecessarily restrict CSV names
-      to a specific format. Now, only DNS-1123 subdomain validity is verified.
-    kind: "bugfix"
-    breaking: false

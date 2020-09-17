@@ -1,5 +1,0 @@
-entries:
-  - description: >
-      Fix the migration guide link in the deprecation message of `operator-sdk`
-    kind: "bugfix"
-    breaking: false

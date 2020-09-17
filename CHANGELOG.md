@@ -1,3 +1,17 @@
+## v0.19.4
+
+### Changes
+
+- In `ansible-operator` and `helm-operator`, print git commit when logging version information. ([#3850](https://github.com/operator-framework/operator-sdk/pull/3850))
+
+### Bug Fixes
+
+- Resolved an issue that caused bundle validation to unnecessarily restrict CSV names to a specific format. Now, only DNS-1123 subdomain validity is verified. ([#3886](https://github.com/operator-framework/operator-sdk/pull/3886))
+- Fixed a bug with `run packagemanifests` that caused the underlying registry pod to fail to start. Changed the registry pod image from `quay.io/openshift/origin-operator-registry:latest` to `quay.io/operator-framework/upstream-registry-builder:latest`. ([#3894](https://github.com/operator-framework/operator-sdk/pull/3894))
+- Fix an issue in `run packagemanifests` where the registry server writes files in locations that require root. ([#3894](https://github.com/operator-framework/operator-sdk/pull/3894))
+- Fix the migration guide link in the deprecation message of `operator-sdk`. ([#3876](https://github.com/operator-framework/operator-sdk/pull/3876))
+
+
 ## v0.19.3
 
 ### Changes
