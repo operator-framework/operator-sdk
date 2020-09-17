@@ -115,6 +115,11 @@ func (i InstallMode) CheckCompatibility(csv *v1alpha1.ClusterServiceVersion, ope
 		}
 	}
 
+	// ensure the CSV has an installmode
+	if len(csv.Spec.InstallModes) == 0 {
+		return fmt.Errorf("operator %q is not installable: no supported install modes", csv.Name)
+	}
+
 	// ensure the CSV supports the given installmode
 	for _, mode := range csv.Spec.InstallModes {
 		if mode.Type == i.InstallModeType && !mode.Supported {

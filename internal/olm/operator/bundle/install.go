@@ -79,11 +79,6 @@ func (i *Install) setup(ctx context.Context) error {
 	i.OperatorInstaller.CatalogSourceName = fmt.Sprintf("%s-catalog", i.OperatorInstaller.PackageName)
 	i.OperatorInstaller.StartingCSV = csv.Name
 	i.OperatorInstaller.SupportedInstallModes = operator.GetSupportedInstallModes(csv.Spec.InstallModes)
-
-	if i.OperatorInstaller.SupportedInstallModes.Len() == 0 {
-		return fmt.Errorf("operator %q is not installable: no supported install modes", csv.Name)
-	}
-
 	i.OperatorInstaller.Channel = strings.Split(labels["operators.operatorframework.io.bundle.channels.v1"], ",")[0]
 	i.IndexImageCatalogCreator.BundleImage = i.BundleImage
 	i.IndexImageCatalogCreator.PackageName = i.OperatorInstaller.PackageName
