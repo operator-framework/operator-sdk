@@ -291,13 +291,13 @@ connection to invoke the Kube API.
 
 
 [client_go]: https://github.com/kubernetes/client-go
-[olm_tests]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/tests/olm.go
-[basic_tests]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/tests/basic.go
-[config_yaml]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/testdata/bundle/tests/scorecard/config.yaml
-[scorecard_main_func]: https://github.com/operator-framework/operator-sdk/blob/master/images/scorecard-test/cmd/test/main.go
-[custom_scorecard_repo]: https://github.com/operator-framework/operator-sdk/tree/master/internal/scorecard/examples
+[olm_tests]: https://github.com/operator-framework/operator-sdk/blob/v1.0.x/internal/scorecard/tests/olm.go
+[basic_tests]: https://github.com/operator-framework/operator-sdk/blob/v1.0.x/internal/scorecard/tests/basic.go
+[config_yaml]: https://github.com/operator-framework/operator-sdk/blob/v1.0.x/internal/scorecard/testdata/bundle/tests/scorecard/config.yaml
+[scorecard_main_func]: https://github.com/operator-framework/operator-sdk/blob/v1.0.x/images/scorecard-test/cmd/test/main.go
+[custom_scorecard_repo]: https://github.com/operator-framework/operator-sdk/tree/v1.0.x/internal/scorecard/examples
 [user_doc]: /docs/advanced-topics/scorecard/scorecard/
-[scorecard_binary]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/examples/custom-scorecard-tests/images/custom-scorecard-tests/cmd/test/main.go
-[sample_makefile]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/examples/custom-scorecard-tests/Makefile
+[scorecard_binary]: https://github.com/operator-framework/operator-sdk/blob/v1.0.x/internal/scorecard/examples/custom-scorecard-tests/images/custom-scorecard-tests/cmd/test/main.go
+[sample_makefile]: https://github.com/operator-framework/operator-sdk/blob/v1.0.x/internal/scorecard/examples/custom-scorecard-tests/Makefile
 [kustomize-patchJson6902]: https://kubernetes-sigs.github.io/kustomize/api-reference/kustomization/patchesjson6902/
 [testresults]:https://github.com/operator-framework/api/blob/333d064/pkg/apis/scorecard/v1alpha3/test_types.go#L35
