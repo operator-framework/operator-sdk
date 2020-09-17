@@ -18,6 +18,7 @@
 package installer
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -27,6 +28,7 @@ import (
 	"time"
 
 	olmapiv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	olmmanifests "github.com/operator-framework/operator-sdk/internal/olmbindata"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -40,9 +42,11 @@ import (
 )
 
 const (
-	olmOperatorName     = "olm-operator"
-	catalogOperatorName = "catalog-operator"
-	packageServerName   = "packageserver"
+	olmOperatorName        = "olm-operator"
+	catalogOperatorName    = "catalog-operator"
+	packageServerName      = "packageserver"
+	olmManifestBindataPath = "internal/olmbindata/olm.yaml"
+	crdManifestBindataPath = "internal/olmbindata/crds.yaml"
 )
 
 type Client struct {
@@ -167,15 +171,33 @@ func (c Client) GetStatus(ctx context.Context, namespace, version string) (*olmr
 
 func (c Client) getResources(ctx context.Context, version string) ([]unstructured.Unstructured, error) {
 	log.Infof("Fetching CRDs for version %q", version)
-	crdResources, err := c.getCRDs(ctx, version)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch CRDs: %v", err)
-	}
 
-	log.Infof("Fetching resources for version %q", version)
-	olmResources, err := c.getOLM(ctx, version)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch resources: %v", err)
+	var crdResources, olmResources []unstructured.Unstructured
+	var err error
+
+	if isAvailableLocally(version) {
+		log.Infof("Fetching crd.yaml from locally stored bindata in SDK")
+		crdResources, err = getPackagedManifests("crd")
+		if err != nil {
+			return nil, err
+		}
+
+		log.Infof("Fetching olm.yaml from locally stored bindata in SDK")
+		olmResources, err = getPackagedManifests("olm")
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		log.Infof("Fetching resources for version %q", version)
+		crdResources, err = c.getCRDs(ctx, version)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch CRDs: %v", err)
+		}
+
+		olmResources, err = c.getOLM(ctx, version)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch resources: %v", err)
+		}
 	}
 
 	resources := append(crdResources, olmResources...)
@@ -198,6 +220,35 @@ func (c Client) getOLM(ctx context.Context, version string) ([]unstructured.Unst
 	}
 	defer resp.Body.Close()
 	return decodeResources(resp.Body)
+}
+
+func isAvailableLocally(version string) bool {
+	availableManifests := olmmanifests.GetAvailableOLMVersions()
+	_, ok := availableManifests[version]
+	return ok
+}
+
+func getPackagedManifests(manifestName string) ([]unstructured.Unstructured, error) {
+	var manifestPath string
+	if manifestName == "olm" {
+		manifestPath = olmManifestBindataPath
+	} else if manifestName == "crd" {
+		manifestPath = crdManifestBindataPath
+	} else {
+		return nil, fmt.Errorf("unexpected manifest name %s", manifestName)
+	}
+
+	data, err := olmmanifests.Asset(manifestPath)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving bindata asset %v", err)
+	}
+
+	reader := bytes.NewReader(data)
+	resources, err := decodeResources(reader)
+	if err != nil {
+		return nil, err
+	}
+	return resources, nil
 }
 
 func (c Client) crdsURL(version string) string {
