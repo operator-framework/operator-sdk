@@ -45,6 +45,7 @@ type Manifests struct {
 	ClusterRoleBindings              []rbacv1.ClusterRoleBinding
 	Deployments                      []appsv1.Deployment
 	ServiceAccounts                  []corev1.ServiceAccount
+	Services                         []corev1.Service
 	V1CustomResourceDefinitions      []apiextv1.CustomResourceDefinition
 	V1beta1CustomResourceDefinitions []apiextv1beta1.CustomResourceDefinition
 	ValidatingWebhooks               []admissionregv1.ValidatingWebhook
@@ -61,6 +62,7 @@ var (
 	roleBindingGK          = rbacv1.SchemeGroupVersion.WithKind("RoleBinding").GroupKind()
 	clusterRoleBindingGK   = rbacv1.SchemeGroupVersion.WithKind("ClusterRoleBinding").GroupKind()
 	serviceAccountGK       = corev1.SchemeGroupVersion.WithKind("ServiceAccount").GroupKind()
+	serviceGK              = corev1.SchemeGroupVersion.WithKind("Service").GroupKind()
 	deploymentGK           = appsv1.SchemeGroupVersion.WithKind("Deployment").GroupKind()
 	crdGK                  = apiextv1.SchemeGroupVersion.WithKind("CustomResourceDefinition").GroupKind()
 	validatingWebhookCfgGK = admissionregv1.SchemeGroupVersion.WithKind("ValidatingWebhookConfiguration").GroupKind()
@@ -104,6 +106,8 @@ func (c *Manifests) UpdateFromDirs(deployDir, crdsDir string) error {
 				err = c.addClusterRoleBindings(manifest)
 			case serviceAccountGK:
 				err = c.addServiceAccounts(manifest)
+			case serviceGK:
+				err = c.addServices(manifest)
 			case deploymentGK:
 				err = c.addDeployments(manifest)
 			case crdGK:
@@ -172,6 +176,8 @@ func (c *Manifests) UpdateFromReader(r io.Reader) error {
 			err = c.addClusterRoleBindings(manifest)
 		case serviceAccountGK:
 			err = c.addServiceAccounts(manifest)
+		case serviceGK:
+			err = c.addServices(manifest)
 		case deploymentGK:
 			err = c.addDeployments(manifest)
 		case crdGK:
@@ -262,6 +268,18 @@ func (c *Manifests) addServiceAccounts(rawManifests ...[]byte) error {
 			return err
 		}
 		c.ServiceAccounts = append(c.ServiceAccounts, sa)
+	}
+	return nil
+}
+
+// addServices assumes all manifest data in rawManifests are Services and adds them to the collector.
+func (c *Manifests) addServices(rawManifests ...[]byte) error {
+	for _, rawManifest := range rawManifests {
+		s := corev1.Service{}
+		if err := yaml.Unmarshal(rawManifest, &s); err != nil {
+			return err
+		}
+		c.Services = append(c.Services, s)
 	}
 	return nil
 }

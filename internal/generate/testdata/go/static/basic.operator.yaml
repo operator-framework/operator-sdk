@@ -62,6 +62,31 @@ status:
   conditions: []
   storedVersions: []
 ---
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  creationTimestamp: null
+  name: memcached-operator-mutating-webhook-configuration
+webhooks:
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: memcached-operator-webhook-service
+      namespace: memcached-operator-system
+      path: /mutate-cache-my-domain-v1alpha1-memcached
+  failurePolicy: Fail
+  name: mmemcached.kb.io
+  rules:
+  - apiGroups:
+    - cache.example.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - memcacheds
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -206,6 +231,18 @@ spec:
   selector:
     control-plane: controller-manager
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: memcached-operator-webhook-service
+  namespace: memcached-operator-system
+spec:
+  ports:
+  - port: 443
+    targetPort: 9443
+  selector:
+    control-plane: controller-manager
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -241,6 +278,10 @@ spec:
         - /manager
         image: controller:latest
         name: manager
+        ports:
+        - containerPort: 9443
+          name: webhook-server
+          protocol: TCP
         resources:
           limits:
             cpu: 100m
@@ -248,7 +289,16 @@ spec:
           requests:
             cpu: 100m
             memory: 20Mi
+        volumeMounts:
+        - mountPath: /tmp/k8s-webhook-server/serving-certs
+          name: cert
+          readOnly: true
       terminationGracePeriodSeconds: 10
+      volumes:
+      - name: cert
+        secret:
+          defaultMode: 420
+          secretName: webhook-server-cert
 ---
 apiVersion: cache.example.com/v1alpha1
 kind: Memcached
@@ -256,3 +306,28 @@ metadata:
   name: memcached-sample
 spec:
   foo: bar
+---
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: ValidatingWebhookConfiguration
+metadata:
+  creationTimestamp: null
+  name: memcached-operator-validating-webhook-configuration
+webhooks:
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: memcached-operator-webhook-service
+      namespace: memcached-operator-system
+      path: /validate-cache-my-domain-v1alpha1-memcached
+  failurePolicy: Fail
+  name: vmemcached.kb.io
+  rules:
+  - apiGroups:
+    - cache.example.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - memcacheds
