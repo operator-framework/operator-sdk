@@ -67,7 +67,7 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
 [k8s-script]: https://github.com/operator-framework/operator-sdk/blob/master/hack/ci/setup-k8s.sh
 [kind]: https://kind.sigs.k8s.io/
 [sanity]: https://github.com/operator-framework/operator-sdk/blob/master/hack/tests/sanity-check.sh
-[go-e2e]: https://github.com/operator-framework/operator-sdk/blob/master/test/e2e/e2e_suite_test.go
+[go-e2e]: https://github.com/operator-framework/operator-sdk/blob/master/hack/tests/e2e-go.sh
 [ansible-molecule]: https://github.com/operator-framework/operator-sdk/blob/master/hack/tests/e2e-ansible-molecule.sh
 [ansible-test]: https://github.com/operator-framework/operator-sdk/tree/master/test/ansible
 [helm-e2e]: https://github.com/operator-framework/operator-sdk/blob/master/hack/tests/e2e-helm.sh
