@@ -99,11 +99,23 @@ func (i InstallMode) Validate() error {
 
 // CheckCompatibility checks if an InstallMode is compatible with the operator's namespace and is supported by csv.
 func (i InstallMode) CheckCompatibility(csv *v1alpha1.ClusterServiceVersion, operatorNamespace string) error {
+	// allnamespace was validated in Validate()
+
+	// own namespace and targetns != opname
 	if i.InstallModeType == v1alpha1.InstallModeTypeOwnNamespace {
 		if len(i.TargetNamespaces) > 0 && i.TargetNamespaces[0] != operatorNamespace {
 			return fmt.Errorf("install mode %s must match operator namespace %q", i, operatorNamespace)
 		}
 	}
+
+	// single namespace and targetns == opname
+	if i.InstallModeType == v1alpha1.InstallModeTypeSingleNamespace {
+		if len(i.TargetNamespaces) < 1 || i.TargetNamespaces[0] == operatorNamespace {
+			return fmt.Errorf("use install mode %q to watch operator's namespace %q", v1alpha1.InstallModeTypeOwnNamespace, i.TargetNamespaces[0])
+		}
+	}
+
+	// ensure the CSV supports the given installmode
 	for _, mode := range csv.Spec.InstallModes {
 		if mode.Type == i.InstallModeType && !mode.Supported {
 			return fmt.Errorf("install mode type %q not supported in CSV %q", i.InstallModeType, csv.GetName())

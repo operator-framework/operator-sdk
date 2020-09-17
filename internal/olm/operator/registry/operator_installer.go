@@ -135,12 +135,6 @@ func (o OperatorInstaller) ensureOperatorGroup(ctx context.Context) error {
 
 	// --install-mode was given
 	if !o.InstallMode.IsEmpty() {
-		if o.InstallMode.InstallModeType == v1alpha1.InstallModeTypeSingleNamespace {
-			targetNsSet := sets.NewString(o.InstallMode.TargetNamespaces...)
-			if !supported.Has(string(v1alpha1.InstallModeTypeOwnNamespace)) && targetNsSet.Has(o.cfg.Namespace) {
-				return fmt.Errorf("cannot watch namespace %q: operator %q does not support install mode %q", o.cfg.Namespace, o.StartingCSV, v1alpha1.InstallModeTypeOwnNamespace)
-			}
-		}
 		if o.InstallMode.InstallModeType == v1alpha1.InstallModeTypeSingleNamespace &&
 			o.InstallMode.TargetNamespaces[0] == o.cfg.Namespace {
 			return fmt.Errorf("use install mode %q to watch operator's namespace %q", v1alpha1.InstallModeTypeOwnNamespace, o.cfg.Namespace)
