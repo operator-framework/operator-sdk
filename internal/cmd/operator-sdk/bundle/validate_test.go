@@ -18,6 +18,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/bundle/internal"
+	log "github.com/sirupsen/logrus"
 )
 
 var _ = Describe("Running a bundle validate command", func() {
@@ -35,6 +36,19 @@ var _ = Describe("Running a bundle validate command", func() {
 			Expect(flag).NotTo(BeNil())
 			Expect(flag.Shorthand).To(Equal("o"))
 			Expect(flag.DefValue).To(Equal(internal.Text))
+		})
+	})
+
+	Describe("Creating a logger", func() {
+		It("that is Info Level when not verbose", func() {
+			verbose := false
+			logger := createLogger(verbose)
+			Expect(logger.Logger.GetLevel()).To(Equal(log.InfoLevel))
+		})
+		It("that is Debug level if verbose", func() {
+			verbose := true
+			logger := createLogger(verbose)
+			Expect(logger.Logger.GetLevel()).To(Equal(log.DebugLevel))
 		})
 	})
 

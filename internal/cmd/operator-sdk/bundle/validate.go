@@ -93,16 +93,11 @@ func makeValidateCmd() *cobra.Command {
 		Use:   "validate",
 		Short: "Validate an operator bundle",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			if viper.GetBool(flags.VerboseOpt) {
-				log.SetLevel(log.DebugLevel)
-			}
-
 			// Always print non-output logs to stderr as to not pollute actual command output.
 			// Note that it allows the JSON result be redirected to the Stdout. E.g
 			// if we run the command with `| jq . > result.json` the command will print just the logs
 			// and the file will have only the JSON result.
-			logger := log.NewEntry(internal.NewLoggerTo(os.Stderr))
-
+			logger := createLogger(viper.GetBool(flags.VerboseOpt))
 			if err = c.validate(args); err != nil {
 				return fmt.Errorf("invalid command args: %v", err)
 			}
@@ -124,6 +119,15 @@ func makeValidateCmd() *cobra.Command {
 	c.addToFlagSet(cmd.Flags())
 
 	return cmd
+}
+
+// createLogger creates a new logrus Entry that is optionally verbose.
+func createLogger(verbose bool) *log.Entry {
+	logger := log.NewEntry(internal.NewLoggerTo(os.Stderr))
+	if verbose {
+		logger.Logger.SetLevel(log.DebugLevel)
+	}
+	return logger
 }
 
 // validate verifies the command args
