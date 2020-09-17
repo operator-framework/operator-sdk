@@ -15,8 +15,6 @@
 package registry
 
 import (
-	// "context"
-
 	"context"
 
 	. "github.com/onsi/ginkgo"
@@ -81,14 +79,6 @@ var _ = Describe("OperatorInstaller", func() {
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).Should(ContainSubstring("no supported install modes"))
 		})
-		// It("should return an error if OwnNamespace is used and target does not match", func() {
-		//     oi.InstallMode.Set(string(v1alpha1.InstallModeTypeOwnNamespace))
-		//     oi.InstallMode.TargetNamespaces = []string{"notownns"}
-		//     og, err := oi.ensureOperatorGroup(context.TODO())
-		//     Expect(og).To(BeNil())
-		//     Expect(err).ToNot(BeNil())
-		//     Expect(err.Error()).Should(ContainSubstring("use install mode \"OwnNamespace\""))
-		// })
 		Context("with no existing OperatorGroup", func() {
 			Context("given SingleNamespace", func() {
 				It("should create one with the given target namespaces", func() {
@@ -309,6 +299,7 @@ var _ = Describe("OperatorInstaller", func() {
 	})
 
 	Describe("createSubscription", func() {
+		// TODO: add them as part of a different story
 	})
 
 	Describe("getTargetNamespaces", func() {
