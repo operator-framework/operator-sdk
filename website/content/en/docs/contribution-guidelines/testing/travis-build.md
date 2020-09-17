@@ -64,10 +64,10 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
 
 [branches]: https://travis-ci.org/operator-framework/operator-sdk/branches
 [pr-builds]: https://travis-ci.org/operator-framework/operator-sdk/pull_requests
-[k8s-script]: https://github.com/operator-framework/operator-sdk/blob/master/hack/ci/setup-k8s.sh
+[k8s-script]: https://github.com/operator-framework/operator-sdk/blob/v1.0.x/hack/ci/setup-k8s.sh
 [kind]: https://kind.sigs.k8s.io/
-[sanity]: https://github.com/operator-framework/operator-sdk/blob/master/hack/tests/sanity-check.sh
-[go-e2e]: https://github.com/operator-framework/operator-sdk/blob/master/test/e2e/e2e_suite_test.go
-[ansible-molecule]: https://github.com/operator-framework/operator-sdk/blob/master/hack/tests/e2e-ansible-molecule.sh
-[ansible-test]: https://github.com/operator-framework/operator-sdk/tree/master/test/ansible
-[helm-e2e]: https://github.com/operator-framework/operator-sdk/blob/master/hack/tests/e2e-helm.sh
+[sanity]: https://github.com/operator-framework/operator-sdk/blob/v1.0.x/hack/tests/sanity-check.sh
+[go-e2e]: https://github.com/operator-framework/operator-sdk/blob/v1.0.x/test/e2e/e2e_suite_test.go
+[ansible-molecule]: https://github.com/operator-framework/operator-sdk/blob/v1.0.x/hack/tests/e2e-ansible-molecule.sh
+[ansible-test]: https://github.com/operator-framework/operator-sdk/tree/v1.0.x/test/ansible
+[helm-e2e]: https://github.com/operator-framework/operator-sdk/blob/v1.0.x/hack/tests/e2e-helm.sh
