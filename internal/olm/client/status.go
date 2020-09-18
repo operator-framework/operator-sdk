@@ -93,10 +93,11 @@ func (s Status) HasInstalledResources() (bool, error) {
 	sort.Slice(s.Resources, func(i int, j int) bool {
 		return s.Resources[i].Resource != nil
 	})
+	existOLM := false
 	for _, r := range s.Resources {
 		if r.Resource != nil {
-			log.Infof("Exists olm resource:%v, project:%v, GVK:%v", r.Resource, r.NamespacedName, r.GVK)
-			return true, nil
+			log.Infof("	Should remove exist OLM resource： Kind:%s, Name:%s", r.GVK.Kind, r.NamespacedName.Name)
+			existOLM = true
 		} else if r.Error != nil && !apierrors.IsNotFound(r.Error) {
 			// We know the error is not a "resource not found" error at this point.
 			// It still may be the equivalent for a CR, "no kind match", if its
@@ -109,6 +110,9 @@ func (s Status) HasInstalledResources() (bool, error) {
 				return false, r.Error
 			}
 		}
+	}
+	if existOLM {
+		return true, nil
 	}
 	return false, nil
 }
