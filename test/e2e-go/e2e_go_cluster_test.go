@@ -83,9 +83,7 @@ var _ = Describe("operator-sdk", func() {
 
 				By("ensuring the created controller-manager Pod")
 				podNames := kbtestutils.GetNonEmptyLines(podOutput)
-				if len(podNames) != 1 {
-					return fmt.Errorf("expect 1 controller pods running, but got %d", len(podNames))
-				}
+				Expect(podNames).To(HaveLen(1))
 				controllerPodName = podNames[0]
 				Expect(controllerPodName).Should(ContainSubstring("controller-manager"))
 
