@@ -53,7 +53,7 @@ To add a 3rd party resource to an operator, you must add it to the Manager's sch
 
 #### Register with the Manager's scheme
 
-Call the `AddToScheme()` function for your 3rd party resource and pass it the Manager's scheme via `mgr.GetScheme()` in `main.go`.
+Call the `AddToScheme()` function for your 3rd party resource and pass it the Manager's scheme via `mgr.GetScheme()` or `scheme` in `main.go`.
 Example:
 ```go
 import (
