@@ -1,3 +1,20 @@
+## v1.0.1
+
+### Bug Fixes
+
+- Fixed a bug with `run packagemanifests` that caused the underlying registry pod to fail to start. Changed the registry pod image from `quay.io/openshift/origin-operator-registry:latest` to `quay.io/operator-framework/upstream-registry-builder:latest`. ([#3895](https://github.com/operator-framework/operator-sdk/pull/3895))
+- Resolved an issue that caused bundle validation to unnecessarily restrict CSV names to a specific format. Now, only DNS-1123 subdomain validity is verified. ([#3888](https://github.com/operator-framework/operator-sdk/pull/3888))
+- Fix an issue in `run packagemanifests` where the registry server writes files in locations that require root. ([#3895](https://github.com/operator-framework/operator-sdk/pull/3895))
+- Fixed debug logging in the `bundle validate` subcommand of `operator-sdk`. ([#3899](https://github.com/operator-framework/operator-sdk/pull/3899))
+- `generate <bundle|packagemanifests>` now generates a CSV base with only the `AllNamespaces` install mode supported by default, since projects are cluster-scoped by default. ([#3899](https://github.com/operator-framework/operator-sdk/pull/3899))
+- When generating bundles and packagemanifests, remove `metadata.namespace` from namespaced resources when writing them into the `manifests` directory to avoid validation errors. ([#3899](https://github.com/operator-framework/operator-sdk/pull/3899))
+- Fixed a bug that caused the Helm operator not to set the `InstallSuccessful` and `UpgradeSuccessful` status reasons when the status update fails during installation and upgrade. ([#3899](https://github.com/operator-framework/operator-sdk/pull/3899))
+- In Helm projects, fix operator permissions for Openshift deployments by adding a `<resource>/finalizers` rule in the operator's role. ([#3899](https://github.com/operator-framework/operator-sdk/pull/3899))
+- Prevent `run packagemanifests` from creating an OperatorGroup if one already exists in a namespace, and use that OperatorGroup if its target namespaces exactly match those passed in `--install-mode`. See [#3681](https://github.com/operator-framework/operator-sdk/issues/3681). ([#3899](https://github.com/operator-framework/operator-sdk/pull/3899))
+- Stop reconciling tasks when the event raised is a rescue in Ansible-based Operators. More info: [Bugzilla 1856714](https://bugzilla.redhat.com/show_bug.cgi?id=1856714). ([#3650](https://github.com/operator-framework/operator-sdk/pull/3650))
+- When scaffolding scorecard configurations, use release versions instead of `latest` in image tags. ([#3899](https://github.com/operator-framework/operator-sdk/pull/3899))
+- `generate <bundle|packagemanifests>` will populate a CSV's `webhookDefinition[].deploymentName` by selecting an input Deployment via its PodTemplate labels using a webhook Service's label selectors, defaulting to "<service.metadata.name>-service" if none is selected. ([#3904](https://github.com/operator-framework/operator-sdk/pull/3904))
+
 ## v1.0.0
 
 ### Since v0.19
@@ -217,6 +234,19 @@
 - Fixed CVE-2020-14040 by updating to `golang.org/x/text/0.3.3`. ([#3458](https://github.com/operator-framework/operator-sdk/pull/3458))
 - The `scorecard` subcommand now removes existing pods if the `--wait-time` deadline is exceeded and `--skip-cleanup=false` (the default). Fixes [#3419](https://github.com/operator-framework/operator-sdk/issues/3419). ([#3526](https://github.com/operator-framework/operator-sdk/pull/3526))
 - Fixed a bug in scorecard that caused tests to fail with permission errors when loading the bundle. ([#3428](https://github.com/operator-framework/operator-sdk/pull/3428))
+
+## v0.19.4
+
+### Changes
+
+- In `ansible-operator` and `helm-operator`, print git commit when logging version information. ([#3850](https://github.com/operator-framework/operator-sdk/pull/3850))
+
+### Bug Fixes
+
+- Resolved an issue that caused bundle validation to unnecessarily restrict CSV names to a specific format. Now, only DNS-1123 subdomain validity is verified. ([#3886](https://github.com/operator-framework/operator-sdk/pull/3886))
+- Fixed a bug with `run packagemanifests` that caused the underlying registry pod to fail to start. Changed the registry pod image from `quay.io/openshift/origin-operator-registry:latest` to `quay.io/operator-framework/upstream-registry-builder:latest`. ([#3894](https://github.com/operator-framework/operator-sdk/pull/3894))
+- Fix an issue in `run packagemanifests` where the registry server writes files in locations that require root. ([#3894](https://github.com/operator-framework/operator-sdk/pull/3894))
+- Fix the migration guide link in the deprecation message of `operator-sdk`. ([#3876](https://github.com/operator-framework/operator-sdk/pull/3876))
 
 ## v0.19.3
 
