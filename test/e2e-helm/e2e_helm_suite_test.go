@@ -96,6 +96,18 @@ var _ = BeforeSuite(func(done Done) {
 		"--domain", tc.Domain)
 	Expect(err).NotTo(HaveOccurred())
 
+	By("using dev image for scorecard-test")
+	testutils.ReplaceRegexInFile(
+		filepath.Join(tc.Dir, "config", "scorecard", "patches", "basic.config.yaml"),
+		"quay.io/operator-framework/scorecard-test:.*",
+		"quay.io/operator-framework/scorecard-test:dev",
+	)
+	testutils.ReplaceRegexInFile(
+		filepath.Join(tc.Dir, "config", "scorecard", "patches", "olm.config.yaml"),
+		"quay.io/operator-framework/scorecard-test:.*",
+		"quay.io/operator-framework/scorecard-test:dev",
+	)
+
 	By("creating an API definition")
 	err = tc.CreateAPI(
 		"--group", tc.Group,

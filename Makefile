@@ -286,16 +286,16 @@ test-subcommand-olm-install:
 
 test-e2e: test-e2e-go test-e2e-ansible test-e2e-ansible-molecule test-e2e-helm ## Run the e2e tests
 
-test-e2e-go:
+test-e2e-go: image-build-scorecard-test image-build-custom-scorecard-tests
 	./hack/tests/e2e-go.sh
 
-test-e2e-ansible: image-build-ansible
+test-e2e-ansible: image-build-ansible image-build-scorecard-test
 	./hack/tests/e2e-ansible.sh
 
 test-e2e-ansible-molecule: image-build-ansible
 	./hack/tests/e2e-ansible-molecule.sh
 
-test-e2e-helm: image-build-helm
+test-e2e-helm: image-build-helm image-build-scorecard-test
 	./hack/tests/e2e-helm.sh
 
 # Integration tests.
