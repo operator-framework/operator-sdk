@@ -15,5 +15,6 @@ cp $ROOTDIR/build/ansible-operator-dev-linux-gnu .
 docker build -f $ROOTDIR/hack/image/ansible/Dockerfile -t $1 .
 
 # If using a kind cluster, load the image into all nodes.
+setup_envs $tmp_sdk_root
 load_image_if_kind "$1"
 popd

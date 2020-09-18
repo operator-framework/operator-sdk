@@ -20,6 +20,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	. "github.com/onsi/ginkgo" //nolint:golint
@@ -101,6 +102,22 @@ func ReplaceInFile(path, old, new string) {
 	b, err := ioutil.ReadFile(path)
 	ExpectWithOffset(1, err).NotTo(HaveOccurred())
 	s := strings.Replace(string(b), old, new, -1)
+	ExpectWithOffset(1, s).NotTo(Equal(string(b)), "No replacement occurred")
+	err = ioutil.WriteFile(path, []byte(s), info.Mode())
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+}
+
+// ReplaceRegexInFile finds all strings that match `match` and replaces them
+// with `replace` in the file at path.
+func ReplaceRegexInFile(path, match, replace string) {
+	matcher, err := regexp.Compile(match)
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	info, err := os.Stat(path)
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	b, err := ioutil.ReadFile(path)
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	s := matcher.ReplaceAllString(string(b), replace)
+	ExpectWithOffset(1, s).NotTo(Equal(string(b)), "No replacement occurred")
 	err = ioutil.WriteFile(path, []byte(s), info.Mode())
 	ExpectWithOffset(1, err).NotTo(HaveOccurred())
 }

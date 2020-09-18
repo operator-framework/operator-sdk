@@ -184,6 +184,8 @@ header_text "Adding a second Kind to test watching multiple GVKs"
 operator-sdk create api --kind=Foo --group ansible --version=v1alpha1
 sed -i".bak" -e 's/# FIXME.*/role: \/dev\/null/g' watches.yaml;rm -f watches.yaml.bak
 
+sed -i".bak" -E -e 's/(FROM quay.io\/operator-framework\/scorecard-test)(:.*)?/\1:dev/g' config/scorecard/patches/basic.config.yaml; rm -f config/scorecard/patches/basic.config.yaml.bak
+sed -i".bak" -E -e 's/(FROM quay.io\/operator-framework\/scorecard-test)(:.*)?/\1:dev/g' config/scorecard/patches/olm.config.yaml; rm -f config/scorecard/patches/olm.config.yaml.bak
 sed -i".bak" -E -e 's/(FROM quay.io\/operator-framework\/ansible-operator)(:.*)?/\1:dev/g' Dockerfile; rm -f Dockerfile.bak
 IMG=$DEST_IMAGE make docker-build
 # If using a kind cluster, load the image into all nodes.
