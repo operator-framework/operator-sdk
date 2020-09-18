@@ -1,9 +1,0 @@
-entries:
-  - description: >
-      Stop reconciling tasks when the event raised is a rescue in Ansible-based Operators.
-      More info: [Bugzilla 1856714](https://bugzilla.redhat.com/show_bug.cgi?id=1856714)
-
-    kind: "bugfix"
-
-    breaking: false
-    pull_request_override: 3650

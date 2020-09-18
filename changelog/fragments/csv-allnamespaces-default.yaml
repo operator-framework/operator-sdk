@@ -1,5 +1,0 @@
-entries:
-  - description: >
-      `generate <bundle|packagemanifests>` now generates a CSV base with only the `AllNamespaces` install mode
-      supported by default, since projects are cluster-scoped by default.
-    kind: bugfix
