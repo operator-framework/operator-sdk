@@ -17,7 +17,7 @@ operator-sdk olm install [flags]
 
 ```
   -h, --help               help for install
-      --timeout duration   time to wait for the command to complete before failing (default 2m0s)
+      --timeout duration   time to wait for the command to complete before failing (default 3m0s)
       --version string     version of OLM resources to install (default "latest")
 ```
 
