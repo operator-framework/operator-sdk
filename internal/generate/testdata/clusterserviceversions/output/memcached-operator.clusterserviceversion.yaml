@@ -184,7 +184,8 @@ spec:
     url: https://your.domain
   version: 0.0.1
   webhookdefinitions:
-  - admissionReviewVersions: null
+  - admissionReviewVersions:
+    - v1beta1
     deploymentName: memcached-operator-controller-manager
     failurePolicy: Fail
     generateName: vmemcached.kb.io
@@ -198,10 +199,11 @@ spec:
       - UPDATE
       resources:
       - memcacheds
-    sideEffects: null
+    sideEffects: None
     type: ValidatingAdmissionWebhook
     webhookPath: /validate-cache-my-domain-v1alpha1-memcached
-  - admissionReviewVersions: null
+  - admissionReviewVersions:
+    - v1beta1
     deploymentName: memcached-operator-controller-manager
     failurePolicy: Fail
     generateName: mmemcached.kb.io
@@ -215,6 +217,6 @@ spec:
       - UPDATE
       resources:
       - memcacheds
-    sideEffects: null
+    sideEffects: None
     type: MutatingAdmissionWebhook
     webhookPath: /mutate-cache-my-domain-v1alpha1-memcached
