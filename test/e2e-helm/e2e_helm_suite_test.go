@@ -110,6 +110,11 @@ var _ = BeforeSuite(func(done Done) {
 	err = testutils.ReplaceRegexInFile(filepath.Join(tc.Dir, "Dockerfile"), "quay.io/operator-framework/helm-operator:.*", "quay.io/operator-framework/helm-operator:dev")
 	Expect(err).Should(Succeed())
 
+	By("turning off interactive prompts for all generation tasks.")
+	replace := "operator-sdk generate kustomize manifests"
+	err = testutils.ReplaceInFile(filepath.Join(tc.Dir, "Makefile"), replace, replace+" --interactive=false")
+	Expect(err).Should(Succeed())
+
 	By("checking the kustomize setup")
 	err = tc.Make("kustomize")
 	Expect(err).NotTo(HaveOccurred())
@@ -123,6 +128,10 @@ var _ = BeforeSuite(func(done Done) {
 		err = tc.LoadImageToKindCluster()
 		Expect(err).NotTo(HaveOccurred())
 	}
+
+	By("generating the operator bundle")
+	err = tc.Make("bundle", "IMG="+tc.ImageName)
+	Expect(err).NotTo(HaveOccurred())
 
 	close(done)
 }, 360)

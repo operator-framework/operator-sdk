@@ -166,6 +166,11 @@ var _ = BeforeSuite(func(done Done) {
 		"# +kubebuilder:scaffold:rules", rolesForBaseOperator)
 	Expect(err).NotTo(HaveOccurred())
 
+	By("turning off interactive prompts for all generation tasks.")
+	replace := "operator-sdk generate kustomize manifests"
+	err = testutils.ReplaceInFile(filepath.Join(tc.Dir, "Makefile"), replace, replace+" --interactive=false")
+	Expect(err).NotTo(HaveOccurred())
+
 	By("checking the kustomize setup")
 	err = tc.Make("kustomize")
 	Expect(err).NotTo(HaveOccurred())
@@ -179,6 +184,10 @@ var _ = BeforeSuite(func(done Done) {
 		err = tc.LoadImageToKindCluster()
 		Expect(err).NotTo(HaveOccurred())
 	}
+
+	By("building the bundle")
+	err = tc.Make("bundle", "IMG="+tc.ImageName)
+	Expect(err).NotTo(HaveOccurred())
 
 	close(done)
 }, 360)

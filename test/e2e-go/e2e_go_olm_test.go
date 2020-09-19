@@ -15,25 +15,15 @@
 package e2e_go_test
 
 import (
-	"encoding/json"
 	"os/exec"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 )
 
 var _ = Describe("Integrating Go Projects with OLM", func() {
 	Context("with operator-sdk", func() {
 		const operatorVersion = "0.0.1"
-
-		const (
-			OLMBundleValidationTest   = "olm-bundle-validation"
-			OLMCRDsHaveValidationTest = "olm-crds-have-validation"
-			OLMCRDsHaveResourcesTest  = "olm-crds-have-resources"
-			OLMSpecDescriptorsTest    = "olm-spec-descriptors"
-			OLMStatusDescriptorsTest  = "olm-status-descriptors"
-		)
 
 		It("should generate and run a valid OLM bundle and packagemanifests", func() {
 			By("turning off interactive prompts for all generation tasks.")
@@ -70,52 +60,6 @@ var _ = Describe("Integrating Go Projects with OLM", func() {
 				"--timeout", "4m")
 			_, err = tc.Run(runPkgManCmd)
 			Expect(err).NotTo(HaveOccurred())
-
-			By("running basic scorecard tests")
-			var scorecardOutput v1alpha3.TestList
-			runScorecardCmd := exec.Command(tc.BinaryName, "scorecard", "bundle",
-				"--selector=suite=basic",
-				"--output=json",
-				"--wait-time=40s")
-			scorecardOutputBytes, err := tc.Run(runScorecardCmd)
-			Expect(err).NotTo(HaveOccurred())
-			err = json.Unmarshal(scorecardOutputBytes, &scorecardOutput)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(scorecardOutput.Items).To(HaveLen(1))
-			Expect(scorecardOutput.Items[0].Status.Results[0].State).To(Equal(v1alpha3.PassState))
-
-			By("running custom scorecard tests")
-			runScorecardCmd = exec.Command(tc.BinaryName, "scorecard", "bundle",
-				"--selector=suite=custom",
-				"--output=json",
-				"--wait-time=40s")
-			scorecardOutputBytes, err = tc.Run(runScorecardCmd)
-			Expect(err).NotTo(HaveOccurred())
-			err = json.Unmarshal(scorecardOutputBytes, &scorecardOutput)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(scorecardOutput.Items).To(HaveLen(2))
-
-			By("running olm scorecard tests")
-			runOLMScorecardCmd := exec.Command(tc.BinaryName, "scorecard", "bundle",
-				"--selector=suite=olm",
-				"--output=json",
-				"--wait-time=40s")
-			scorecardOutputBytes, err = tc.Run(runOLMScorecardCmd)
-			Expect(err).To(HaveOccurred())
-			err = json.Unmarshal(scorecardOutputBytes, &scorecardOutput)
-			Expect(err).NotTo(HaveOccurred())
-
-			resultTable := make(map[string]v1alpha3.State)
-			resultTable[OLMStatusDescriptorsTest] = v1alpha3.FailState
-			resultTable[OLMCRDsHaveResourcesTest] = v1alpha3.FailState
-			resultTable[OLMBundleValidationTest] = v1alpha3.PassState
-			resultTable[OLMSpecDescriptorsTest] = v1alpha3.FailState
-			resultTable[OLMCRDsHaveValidationTest] = v1alpha3.PassState
-
-			Expect(len(scorecardOutput.Items)).To(Equal(len(resultTable)))
-			for a := 0; a < len(scorecardOutput.Items); a++ {
-				Expect(scorecardOutput.Items[a].Status.Results[0].State).To(Equal(resultTable[scorecardOutput.Items[a].Status.Results[0].Name]))
-			}
 
 			By("destroying the deployed package manifests-formatted operator")
 			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", tc.ProjectName,
