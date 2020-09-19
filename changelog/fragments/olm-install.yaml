@@ -1,6 +1,5 @@
 entries:
   - description: >
-      Increase DefaultTimeout to 3 mins to fix the `context deadline exceeded` errors
-      See [Bug 1879917](https://bugzilla.redhat.com/show_bug.cgi?id=1879917).
+      Increase the default timeout of the `operator-sdk olm install` command from 2 to 3 mins to fix the `context deadline exceeded` error faced on OCP clusters. More info: [Bug 1879917](https://bugzilla.redhat.com/show_bug.cgi?id=1879917).
     kind: bugfix
     breaking: false
