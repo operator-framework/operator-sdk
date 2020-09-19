@@ -23,6 +23,9 @@ import (
 	"path/filepath"
 )
 
+const scorecardImage = "quay.io/operator-framework/scorecard-test:.*"
+const scorecardImageReplace = "quay.io/operator-framework/scorecard-test:dev"
+
 const customScorecardPatch = `
 - op: add
   path: /stages/0/tests/-
@@ -78,4 +81,17 @@ func (tc TestContext) AddScorecardCustomPatchFile() error {
 		return err
 	}
 	return nil
+}
+
+// ReplaceScorecardImagesForDev will replaces the scorecard images in the manifests per dev tag which is built
+// in the CI based on the code changes made.
+func (tc TestContext) ReplaceScorecardImagesForDev() {
+	ReplaceRegexInFile(
+		filepath.Join(tc.Dir, "config", "scorecard", "patches", "basic.config.yaml"),
+		scorecardImage, scorecardImageReplace,
+	)
+	ReplaceRegexInFile(
+		filepath.Join(tc.Dir, "config", "scorecard", "patches", "olm.config.yaml"),
+		scorecardImage, scorecardImageReplace,
+	)
 }
