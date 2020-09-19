@@ -85,7 +85,7 @@ var _ = Describe("Integrating Helm Projects with OLM", func() {
 			Expect(err).NotTo(HaveOccurred())
 			err = json.Unmarshal(scorecardOutputBytes, &scorecardOutput)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(len(scorecardOutput.Items)).To(Equal(1))
+			Expect(scorecardOutput.Items).To(HaveLen(1))
 			Expect(scorecardOutput.Items[0].Status.Results[0].State).To(Equal(v1alpha3.PassState))
 
 			By("running the package")
