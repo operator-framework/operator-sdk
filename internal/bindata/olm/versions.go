@@ -12,10 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package olmbindata
+package olm
 
-func GetAvailableOLMVersions() map[string]struct{} {
-	return map[string]struct{}{
-		"0.15.1": struct{}{},
-	}
+var availableVersions = map[string]struct{}{
+	"0.15.1": struct{}{},
+}
+
+// HasVersion returns whether version maps to released OLM manifests as bindata.
+func HasVersion(version string) bool {
+	_, ok := availableVersions[version]
+	return ok
 }

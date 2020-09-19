@@ -28,7 +28,7 @@ import (
 	"time"
 
 	olmapiv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	olmmanifests "github.com/operator-framework/operator-sdk/internal/olmbindata"
+	olmmanifests "github.com/operator-framework/operator-sdk/internal/bindata/olm"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -42,11 +42,13 @@ import (
 )
 
 const (
-	olmOperatorName        = "olm-operator"
-	catalogOperatorName    = "catalog-operator"
-	packageServerName      = "packageserver"
-	olmManifestBindataPath = "internal/olmbindata/olm.yaml"
-	crdManifestBindataPath = "internal/olmbindata/crds.yaml"
+	olmOperatorName     = "olm-operator"
+	catalogOperatorName = "catalog-operator"
+	packageServerName   = "packageserver"
+
+	// These paths are keys to look up internal OLM bindata.
+	olmManifestBindataPath = "olm-manifests/olm.yaml"
+	crdManifestBindataPath = "olm-manifests/crds.yaml"
 )
 
 type Client struct {
@@ -175,15 +177,16 @@ func (c Client) getResources(ctx context.Context, version string) ([]unstructure
 	var crdResources, olmResources []unstructured.Unstructured
 	var err error
 
-	if isAvailableLocally(version) {
-		log.Infof("Fetching crd.yaml from locally stored bindata in SDK")
-		crdResources, err = getPackagedManifests("crd")
+	// If the manifests for the requested version are saved as bindata in SDK, use
+	// them instead of fetching them from
+	if olmmanifests.HasVersion(version) {
+		log.Infof("Using locally stored resource manifests")
+		crdResources, err = getPackagedManifests(crdManifestBindataPath)
 		if err != nil {
 			return nil, err
 		}
 
-		log.Infof("Fetching olm.yaml from locally stored bindata in SDK")
-		olmResources, err = getPackagedManifests("olm")
+		olmResources, err = getPackagedManifests(olmManifestBindataPath)
 		if err != nil {
 			return nil, err
 		}
@@ -222,25 +225,10 @@ func (c Client) getOLM(ctx context.Context, version string) ([]unstructured.Unst
 	return decodeResources(resp.Body)
 }
 
-func isAvailableLocally(version string) bool {
-	availableManifests := olmmanifests.GetAvailableOLMVersions()
-	_, ok := availableManifests[version]
-	return ok
-}
-
-func getPackagedManifests(manifestName string) ([]unstructured.Unstructured, error) {
-	var manifestPath string
-	if manifestName == "olm" {
-		manifestPath = olmManifestBindataPath
-	} else if manifestName == "crd" {
-		manifestPath = crdManifestBindataPath
-	} else {
-		return nil, fmt.Errorf("unexpected manifest name %s", manifestName)
-	}
-
+func getPackagedManifests(manifestPath string) ([]unstructured.Unstructured, error) {
 	data, err := olmmanifests.Asset(manifestPath)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving bindata asset %v", err)
+		return nil, fmt.Errorf("error retrieving bindata asset: %v", err)
 	}
 
 	reader := bytes.NewReader(data)

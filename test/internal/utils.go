@@ -40,7 +40,14 @@ func NewTestContext(env ...string) (tc TestContext, err error) {
 
 // InstallOLM runs 'operator-sdk olm install' and returns any errors emitted by that command.
 func (tc TestContext) InstallOLM() error {
-	cmd := exec.Command(tc.BinaryName, "olm", "install", "--timeout", "4m")
+	err := tc.InstallOLMVersion("latest")
+	return err
+}
+
+// InstallOLM runs 'operator-sdk olm install' for specific version
+// and returns any errors emitted by that command.
+func (tc TestContext) InstallOLMVersion(version string) error {
+	cmd := exec.Command(tc.BinaryName, "olm", "install", "--version", version, "--timeout", "4m")
 	_, err := tc.Run(cmd)
 	return err
 }

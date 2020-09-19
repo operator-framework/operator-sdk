@@ -7,7 +7,7 @@ set -o pipefail
 source "hack/lib/test_lib.sh"
 
 echo "Checking for license header..."
-allfiles=$(listFiles)
+allfiles=$(listFiles|grep -v ./internal/bindata/...)
 licRes=""
 for file in $allfiles; do
   if ! head -n3 "${file}" | grep -Eq "(Copyright|generated|GENERATED|Licensed)" ; then
