@@ -108,7 +108,11 @@ var _ = BeforeSuite(func(done Done) {
 
 	By("replacing project Dockerfile to use Helm base image with the dev tag")
 	err = testutils.ReplaceRegexInFile(filepath.Join(tc.Dir, "Dockerfile"), "quay.io/operator-framework/helm-operator:.*", "quay.io/operator-framework/helm-operator:dev")
-	Expect(err).Should(Succeed())
+	Expect(err).NotTo(HaveOccurred())
+
+	By("turning off interactive prompts for all generation tasks.")
+	err = tc.DisableOLMBundleInteractiveMode()
+	Expect(err).NotTo(HaveOccurred())
 
 	By("checking the kustomize setup")
 	err = tc.Make("kustomize")

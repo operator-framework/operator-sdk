@@ -36,12 +36,8 @@ var _ = Describe("Integrating Go Projects with OLM", func() {
 		)
 
 		It("should generate and run a valid OLM bundle and packagemanifests", func() {
-			By("turning off interactive prompts for all generation tasks.")
-			err := tc.DisableOLMBundleInteractiveMode()
-			Expect(err).NotTo(HaveOccurred())
-
-			By("building the bundle")
-			err = tc.Make("bundle", "IMG="+tc.ImageName)
+			By("generating the operator bundle")
+			err := tc.Make("bundle", "IMG="+tc.ImageName)
 			Expect(err).NotTo(HaveOccurred())
 
 			By("building the operator bundle image")

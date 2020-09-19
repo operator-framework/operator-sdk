@@ -18,13 +18,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
-	"path/filepath"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 
-	testutils "github.com/operator-framework/operator-sdk/test/utils"
+	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 )
 
 var _ = Describe("Integrating Helm Projects with OLM", func() {
@@ -38,13 +36,6 @@ var _ = Describe("Integrating Helm Projects with OLM", func() {
 			OLMSpecDescriptorsTest    = "olm-spec-descriptors"
 			OLMStatusDescriptorsTest  = "olm-status-descriptors"
 		)
-
-		BeforeEach(func() {
-			By("turning off interactive prompts for all generation tasks.")
-			replace := "operator-sdk generate kustomize manifests"
-			err := testutils.ReplaceInFile(filepath.Join(tc.Dir, "Makefile"), replace, replace+" --interactive=false")
-			Expect(err).NotTo(HaveOccurred())
-		})
 
 		It("should generate and run a valid OLM bundle and packagemanifests", func() {
 			By("building the bundle")

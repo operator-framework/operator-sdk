@@ -117,7 +117,7 @@ var _ = BeforeSuite(func(done Done) {
 
 	By("replacing project Dockerfile to use ansible base image with the dev tag")
 	err = testutils.ReplaceRegexInFile(filepath.Join(tc.Dir, "Dockerfile"), "quay.io/operator-framework/ansible-operator:.*", "quay.io/operator-framework/ansible-operator:dev")
-	Expect(err).Should(Succeed())
+	Expect(err).NotTo(HaveOccurred())
 
 	By("adding Memcached mock task to the role")
 	err = testutils.ReplaceInFile(filepath.Join(tc.Dir, "roles", strings.ToLower(tc.Kind), "tasks", "main.yml"),
@@ -164,6 +164,10 @@ var _ = BeforeSuite(func(done Done) {
 	By("adding RBAC permissions for the Memcached Kind")
 	err = testutils.ReplaceInFile(filepath.Join(tc.Dir, "config", "rbac", "role.yaml"),
 		"# +kubebuilder:scaffold:rules", rolesForBaseOperator)
+	Expect(err).NotTo(HaveOccurred())
+
+	By("turning off interactive prompts for all generation tasks.")
+	err = tc.DisableOLMBundleInteractiveMode()
 	Expect(err).NotTo(HaveOccurred())
 
 	By("checking the kustomize setup")
