@@ -133,6 +133,10 @@ var _ = BeforeSuite(func(done Done) {
 		filepath.Join(tc.Dir, "config", "default", "kustomization.yaml"),
 		"#- ../prometheus", "#")).To(Succeed())
 
+	By("turning off interactive prompts for all generation tasks.")
+	replace := "operator-sdk generate kustomize manifests"
+	testutils.ReplaceInFile(filepath.Join(tc.Dir, "Makefile"), replace, replace+" --interactive=false")
+
 	By("checking the kustomize setup")
 	err = tc.Make("kustomize")
 	Expect(err).NotTo(HaveOccurred())
