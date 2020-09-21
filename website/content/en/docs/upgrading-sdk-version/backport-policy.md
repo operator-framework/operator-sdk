@@ -1,6 +1,5 @@
 ---
-title: Backport for Operator SDK
-linkTitle: Backport Policy
+title: Backport Policy
 weight: 2
 ---
 
