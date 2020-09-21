@@ -1,7 +1,7 @@
 ---
 title: Operator SDK Version upgrade guide
 linkTitle: v0.2.x to v0.17.x
-weight: 4
+weight: 999983000
 description: A guide to upgrading the Operator SDK version for an existing operator project from v0.2.x all the way through to 0.17.x.
 ---
 
