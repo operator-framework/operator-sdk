@@ -44,6 +44,7 @@ SCORECARD_TEST_KUTTL_IMAGE ?= $(SCORECARD_TEST_KUTTL_BASE_IMAGE)
 
 ANSIBLE_ARCHES:="amd64" "ppc64le" "arm64" "s390x"
 HELM_ARCHES:="amd64" "ppc64le" "arm64" "s390x"
+OPERATOR_SDK_ARCHES:="amd64" "ppc64le" "arm64" "s390x"
 SCORECARD_TEST_ARCHES:="amd64" "ppc64le" "arm64" "s390x"
 SCORECARD_TEST_KUTTL_ARCHES:="amd64" "ppc64le" "arm64"
 # the custom scorecard test image is a scorecard example only
@@ -224,6 +225,10 @@ image-build-sdk: build/operator-sdk-dev-linux-gnu
 
 image-push-sdk:
 	./hack/image/push-image-tags.sh $(OPERATOR_SDK_IMAGE):dev $(OPERATOR_SDK_IMAGE)
+
+image-push-sdk-multiarch:
+	./hack/image/push-manifest-list.sh $(OPERATOR_SDK_IMAGE) ${OPERATOR_SDK_ARCHES}
+
 
 # Scorecard test image scaffold/build/push.
 .PHONY: image-build-scorecard-test image-push-scorecard-test image-push-scorecard-test-multiarch
