@@ -1,6 +1,6 @@
 ---
 title: Versioning for Operator SDK
-linkTitle: Versioning
+linkTitle: Versioning Policy
 weight: 1
 description: A concise explanation of how Operator SDK versions are determined.
 ---
