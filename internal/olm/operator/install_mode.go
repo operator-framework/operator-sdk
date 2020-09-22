@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 
@@ -31,6 +32,8 @@ type InstallMode struct {
 
 var _ flag.Value = &InstallMode{}
 
+// Set is called when the --install-mode flag is passed to the CLI. It will
+// configure the InstallMode based on the values passed in.
 func (i *InstallMode) Set(str string) error {
 	split := strings.SplitN(str, "=", 2)
 	i.InstallModeType = v1alpha1.InstallModeType(split[0])
@@ -40,10 +43,13 @@ func (i *InstallMode) Set(str string) error {
 			i.TargetNamespaces = append(i.TargetNamespaces, strings.TrimSpace(ns))
 		}
 		sort.Strings(i.TargetNamespaces)
+	} else {
+		i.TargetNamespaces = []string{}
 	}
 	return i.Validate()
 }
 
+// IsEmpty returns true if the InstallModeType is empty.
 func (i InstallMode) IsEmpty() bool {
 	return i.InstallModeType == ""
 }
@@ -93,15 +99,44 @@ func (i InstallMode) Validate() error {
 
 // CheckCompatibility checks if an InstallMode is compatible with the operator's namespace and is supported by csv.
 func (i InstallMode) CheckCompatibility(csv *v1alpha1.ClusterServiceVersion, operatorNamespace string) error {
+	// allnamespace was validated in Validate()
+
+	// own namespace and targetns != opname
 	if i.InstallModeType == v1alpha1.InstallModeTypeOwnNamespace {
-		if i.TargetNamespaces[0] != operatorNamespace {
+		if len(i.TargetNamespaces) > 0 && i.TargetNamespaces[0] != operatorNamespace {
 			return fmt.Errorf("install mode %s must match operator namespace %q", i, operatorNamespace)
 		}
 	}
+
+	// single namespace and targetns == opname
+	if i.InstallModeType == v1alpha1.InstallModeTypeSingleNamespace {
+		if len(i.TargetNamespaces) < 1 || i.TargetNamespaces[0] == operatorNamespace {
+			return fmt.Errorf("use install mode %q to watch operator's namespace %q", v1alpha1.InstallModeTypeOwnNamespace, i.TargetNamespaces[0])
+		}
+	}
+
+	// ensure the CSV has an installmode
+	if len(csv.Spec.InstallModes) == 0 {
+		return fmt.Errorf("operator %q is not installable: no supported install modes", csv.Name)
+	}
+
+	// ensure the CSV supports the given installmode
 	for _, mode := range csv.Spec.InstallModes {
 		if mode.Type == i.InstallModeType && !mode.Supported {
 			return fmt.Errorf("install mode type %q not supported in CSV %q", i.InstallModeType, csv.GetName())
 		}
 	}
 	return nil
+}
+
+// GetSupportedInstallModes returns the given slice of InstallModes as a
+// String set.
+func GetSupportedInstallModes(csvInstallModes []v1alpha1.InstallMode) sets.String {
+	supported := sets.NewString()
+	for _, im := range csvInstallModes {
+		if im.Supported {
+			supported.Insert(string(im.Type))
+		}
+	}
+	return supported
 }

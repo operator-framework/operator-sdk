@@ -69,9 +69,6 @@ func (i *Install) setup() error {
 		return err
 	}
 
-	if i.InstallMode.IsEmpty() {
-		i.InstallMode.InstallModeType = v1alpha1.InstallModeTypeAllNamespaces
-	}
 	if err := i.InstallMode.CheckCompatibility(bundle.CSV, i.cfg.Namespace); err != nil {
 		return err
 	}
@@ -79,6 +76,12 @@ func (i *Install) setup() error {
 	i.OperatorInstaller.PackageName = pkg.PackageName
 	i.OperatorInstaller.CatalogSourceName = fmt.Sprintf("%s-catalog", i.OperatorInstaller.PackageName)
 	i.OperatorInstaller.StartingCSV = bundle.CSV.GetName()
+	i.OperatorInstaller.SupportedInstallModes = operator.GetSupportedInstallModes(bundle.CSV.Spec.InstallModes)
+
+	if i.OperatorInstaller.SupportedInstallModes.Len() == 0 {
+		return fmt.Errorf("operator %q is not installable: no supported install modes", bundle.CSV.GetName())
+	}
+
 	i.OperatorInstaller.Channel, err = getChannelForCSVName(pkg, i.OperatorInstaller.StartingCSV)
 	if err != nil {
 		return err

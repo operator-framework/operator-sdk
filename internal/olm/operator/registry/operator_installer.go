@@ -17,14 +17,13 @@ package registry
 import (
 	"context"
 	"fmt"
-	"reflect"
-	"sort"
 	"time"
 
 	v1 "github.com/operator-framework/api/pkg/operators/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -34,12 +33,13 @@ import (
 )
 
 type OperatorInstaller struct {
-	CatalogSourceName string
-	PackageName       string
-	StartingCSV       string
-	Channel           string
-	InstallMode       operator.InstallMode
-	CatalogCreator    CatalogCreator
+	CatalogSourceName     string
+	PackageName           string
+	StartingCSV           string
+	Channel               string
+	InstallMode           operator.InstallMode
+	CatalogCreator        CatalogCreator
+	SupportedInstallModes sets.String
 
 	cfg *operator.Configuration
 }
@@ -55,16 +55,18 @@ func (o OperatorInstaller) InstallOperator(ctx context.Context) (*v1alpha1.Clust
 	}
 	log.Infof("Created CatalogSource: %s", cs.GetName())
 
-	// TODO: OLM doesn't appear to propagate the "READY" connection status to the catalogsource in a timely manner
-	// even though its catalog-operator reports a connection almost immediately. This condition either needs
-	// to be propagated more quickly by OLM or we need to find a different resource to probe for readiness.
-	// wait for catalog source to be ready
+	// TODO: OLM doesn't appear to propagate the "READY" connection status to the
+	// catalogsource in a timely manner even though its catalog-operator reports
+	// a connection almost immediately. This condition either needs to be
+	// propagated more quickly by OLM or we need to find a different resource to
+	// probe for readiness.
+	//
 	// if err := o.waitForCatalogSource(ctx, cs); err != nil {
 	// 	return nil, err
 	// }
 
 	// Ensure Operator Group
-	if err = o.createOperatorGroup(ctx); err != nil {
+	if err = o.ensureOperatorGroup(ctx); err != nil {
 		return nil, err
 	}
 
@@ -122,48 +124,66 @@ func (o OperatorInstaller) waitForCatalogSource(ctx context.Context, cs *v1alpha
 	return nil
 }
 
-// createOperatorGroup creates an OperatorGroup using package name if an OperatorGroup does not exist.
-// If one exists in the desired namespace and it's target namespaces do not match the desired set,
-// createOperatorGroup will return an error.
-func (o OperatorInstaller) createOperatorGroup(ctx context.Context) error {
-	targetNamespaces := make([]string, len(o.InstallMode.TargetNamespaces), cap(o.InstallMode.TargetNamespaces))
-	copy(targetNamespaces, o.InstallMode.TargetNamespaces)
+func (o OperatorInstaller) ensureOperatorGroup(ctx context.Context) error {
 	// Check OperatorGroup existence, since we cannot create a second OperatorGroup in namespace.
 	og, ogFound, err := o.getOperatorGroup(ctx)
 	if err != nil {
 		return err
 	}
-	// TODO: we may need to poll for status updates, since status.namespaces may not be updated immediately.
-	if ogFound {
-		// targetNamespaces will always be initialized, but the operator group's namespaces may not be
-		// (required for comparison).
-		if og.Status.Namespaces == nil {
-			og.Status.Namespaces = []string{}
-		}
-		// Simple check for OperatorGroup compatibility: if namespaces are not an exact match,
-		// the user must manage the resource themselves.
-		sort.Strings(og.Status.Namespaces)
-		sort.Strings(targetNamespaces)
-		if !reflect.DeepEqual(og.Status.Namespaces, targetNamespaces) {
-			msg := fmt.Sprintf("namespaces %+q do not match desired namespaces %+q", og.Status.Namespaces, targetNamespaces)
-			if og.GetName() == operator.SDKOperatorGroupName {
-				return fmt.Errorf("existing SDK-managed operator group's %s, "+
-					"please clean up existing operators `operator-sdk cleanup` before running package %q", msg, o.PackageName)
-			}
-			return fmt.Errorf("existing operator group %q's %s, "+
-				"please ensure it has the exact namespace set before running package %q", og.GetName(), msg, o.PackageName)
-		}
-		log.Infof("Using existing operator group %q", og.GetName())
-	} else {
-		// New SDK-managed OperatorGroup.
-		og = newSDKOperatorGroup(o.cfg.Namespace,
-			withTargetNamespaces(targetNamespaces...))
-		if err = o.cfg.Client.Create(ctx, og); err != nil {
-			return fmt.Errorf("error creating OperatorGroup: %w", err)
-		}
-		log.Infof("Created OperatorGroup: %s", og.GetName())
 
+	supported := o.SupportedInstallModes
+
+	// --install-mode was given
+	if !o.InstallMode.IsEmpty() {
+		if o.InstallMode.InstallModeType == v1alpha1.InstallModeTypeSingleNamespace &&
+			o.InstallMode.TargetNamespaces[0] == o.cfg.Namespace {
+			return fmt.Errorf("use install mode %q to watch operator's namespace %q", v1alpha1.InstallModeTypeOwnNamespace, o.cfg.Namespace)
+		}
+
+		supported = supported.Intersection(sets.NewString(string(o.InstallMode.InstallModeType)))
+		if supported.Len() == 0 {
+			return fmt.Errorf("operator %q does not support install mode %q", o.StartingCSV, o.InstallMode.InstallModeType)
+		}
 	}
+
+	targetNamespaces, err := o.getTargetNamespaces(supported)
+	if err != nil {
+		return err
+	}
+
+	if !ogFound {
+		if og, err = o.createOperatorGroup(ctx, targetNamespaces); err != nil {
+			return fmt.Errorf("create operator group: %v", err)
+		}
+		log.Infof("OperatorGroup %q created", og.Name)
+	} else if err := o.isOperatorGroupCompatible(*og, targetNamespaces); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (o *OperatorInstaller) createOperatorGroup(ctx context.Context, targetNamespaces []string) (*v1.OperatorGroup, error) {
+	og := newSDKOperatorGroup(o.cfg.Namespace, withTargetNamespaces(targetNamespaces...))
+	if err := o.cfg.Client.Create(ctx, og); err != nil {
+		return nil, err
+	}
+	return og, nil
+}
+
+func (o *OperatorInstaller) isOperatorGroupCompatible(og v1.OperatorGroup, targetNamespaces []string) error {
+	// no install mode use the existing operator group
+	if o.InstallMode.IsEmpty() {
+		return nil
+	}
+
+	// otherwise, check that the target namespaces match
+	targets := sets.NewString(targetNamespaces...)
+	ogtargets := sets.NewString(og.Spec.TargetNamespaces...)
+	if !ogtargets.Equal(targets) {
+		return fmt.Errorf("existing operatorgroup %q is not compatible with install mode %q", og.Name, o.InstallMode)
+	}
+
 	return nil
 }
 
@@ -277,4 +297,17 @@ func (o OperatorInstaller) waitForInstallPlan(ctx context.Context, sub *v1alpha1
 		return fmt.Errorf("install plan is not available for the subscription %s: %v", sub.Name, err)
 	}
 	return nil
+}
+
+func (o *OperatorInstaller) getTargetNamespaces(supported sets.String) ([]string, error) {
+	switch {
+	case supported.Has(string(v1alpha1.InstallModeTypeAllNamespaces)):
+		return nil, nil
+	case supported.Has(string(v1alpha1.InstallModeTypeOwnNamespace)):
+		return []string{o.cfg.Namespace}, nil
+	case supported.Has(string(v1alpha1.InstallModeTypeSingleNamespace)):
+		return o.InstallMode.TargetNamespaces, nil
+	default:
+		return nil, fmt.Errorf("no supported install modes")
+	}
 }

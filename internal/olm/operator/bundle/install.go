@@ -23,6 +23,7 @@ import (
 
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	"github.com/spf13/pflag"
 
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
@@ -75,10 +76,11 @@ func (i *Install) setup(ctx context.Context) error {
 		return err
 	}
 
-	i.OperatorInstaller.PackageName = labels["operators.operatorframework.io.bundle.package.v1"]
+	i.OperatorInstaller.PackageName = labels[registrybundle.PackageLabel]
 	i.OperatorInstaller.CatalogSourceName = fmt.Sprintf("%s-catalog", i.OperatorInstaller.PackageName)
 	i.OperatorInstaller.StartingCSV = csv.Name
-	i.OperatorInstaller.Channel = strings.Split(labels["operators.operatorframework.io.bundle.channels.v1"], ",")[0]
+	i.OperatorInstaller.SupportedInstallModes = operator.GetSupportedInstallModes(csv.Spec.InstallModes)
+	i.OperatorInstaller.Channel = strings.Split(labels[registrybundle.ChannelsLabel], ",")[0]
 	i.IndexImageCatalogCreator.BundleImage = i.BundleImage
 	i.IndexImageCatalogCreator.PackageName = i.OperatorInstaller.PackageName
 	i.IndexImageCatalogCreator.InjectBundles = []string{i.BundleImage}
