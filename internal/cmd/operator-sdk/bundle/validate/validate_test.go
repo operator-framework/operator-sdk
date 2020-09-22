@@ -12,25 +12,37 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package bundle
+package validate
 
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/bundle/internal"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/pflag"
+
+	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/bundle/validate/internal"
 )
 
 var _ = Describe("Running a bundle validate command", func() {
-	Describe("newValidateCmd", func() {
+	Describe("NewCmd", func() {
+		var (
+			cmd  = NewCmd()
+			flag *pflag.Flag
+		)
+
 		It("builds and returns a cobra command", func() {
-			cmd := newValidateCmd()
 			Expect(cmd).NotTo(BeNil())
 
-			flag := cmd.Flags().Lookup("image-builder")
+			flag = cmd.Flags().Lookup("image-builder")
 			Expect(flag).NotTo(BeNil())
 			Expect(flag.Shorthand).To(Equal("b"))
 			Expect(flag.DefValue).To(Equal("docker"))
+
+			flag = cmd.Flags().Lookup("select-optional")
+			Expect(flag).NotTo(BeNil())
+
+			flag = cmd.Flags().Lookup("list-optional")
+			Expect(flag).NotTo(BeNil())
 
 			flag = cmd.Flags().Lookup("output")
 			Expect(flag).NotTo(BeNil())

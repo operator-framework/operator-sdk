@@ -24,34 +24,42 @@ operator-sdk bundle validate [flags]
 ### Examples
 
 ```
-The following command flow will generate test-operator bundle manifests and metadata,
-then validate them for 'test-operator' version v0.1.0:
+This example assumes you either have a *pullable* bundle image,
+or something similar to the following operator bundle layout present locally:
 
-  # Generate manifests and metadata locally.
-  $ make bundle
+  $ tree ./bundle
+  ./bundle
+  ├── manifests
+  │   ├── cache.my.domain_memcacheds.yaml
+  │   └── memcached-operator.clusterserviceversion.yaml
+  └── metadata
+      └── annotations.yaml
 
-  # Validate the directory containing manifests and metadata.
+To validate a local bundle:
+
   $ operator-sdk bundle validate ./bundle
 
-To build and validate an image built with the above manifests and metadata:
+To build and validate a *pullable* bundle image:
 
-  # Create a registry namespace or use an existing one.
-  $ export NAMESPACE=<your registry namespace>
+  $ operator-sdk bundle validate <some-registry>/<operator-bundle-name>:<tag>
 
-  # Build and push the image using the docker CLI.
-  $ docker build -f bundle.Dockerfile -t quay.io/$NAMESPACE/test-operator:v0.1.0 .
-  $ docker push quay.io/$NAMESPACE/test-operator:v0.1.0
+To list and run optional validators, which are specified by a label selector:
 
-  # Ensure the image with modified metadata and Dockerfile is valid.
-  $ operator-sdk bundle validate quay.io/$NAMESPACE/test-operator:v0.1.0
+  $ operator-sdk bundle validate --list-optional
+  NAME           LABELS                     DESCRIPTION
+  operatorhub    name=operatorhub           OperatorHub.io metadata validation
+                 suite=operatorframework
+  $ operator-sdk bundle validate ./bundle --select-optional suite=operatorframework
 
 ```
 
 ### Options
 
 ```
-  -h, --help                   help for validate
-  -b, --image-builder string   Tool to pull and unpack bundle images. Only used when validating a bundle image. One of: [docker, podman, none] (default "docker")
+  -h, --help                     help for validate
+  -b, --image-builder string     Tool to pull and unpack bundle images. Only used when validating a bundle image. One of: [docker, podman, none] (default "docker")
+      --list-optional            List all optional validators available. When set, no validators will be run
+      --select-optional string   Label selector to select optional validators to run. Run this command with '--list-optional' to list available optional validators
 ```
 
 ### Options inherited from parent commands
