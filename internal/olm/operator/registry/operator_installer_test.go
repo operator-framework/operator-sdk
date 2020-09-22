@@ -247,6 +247,43 @@ var _ = Describe("OperatorInstaller", func() {
 		})
 	})
 
+	Describe("isOperatorGroupCompatible", func() {
+		var (
+			oi OperatorInstaller
+			og v1.OperatorGroup
+		)
+		BeforeEach(func() {
+			oi = OperatorInstaller{}
+			og = createOperatorGroupHelper(context.TODO(), nil, "existing-og", "default", "default")
+		})
+		It("should return an error if namespaces do not match", func() {
+			oi.InstallMode = operator.InstallMode{
+				InstallModeType:  v1alpha1.InstallModeTypeOwnNamespace,
+				TargetNamespaces: []string{"wontmatchns"},
+			}
+
+			err := oi.isOperatorGroupCompatible(og, oi.InstallMode.TargetNamespaces)
+			Expect(err).ShouldNot(BeNil())
+			Expect(err.Error()).Should(ContainSubstring("is not compatible"))
+		})
+		It("should return nil if no installmode is empty", func() {
+			// empty install mode
+			oi.InstallMode = operator.InstallMode{}
+			Expect(oi.InstallMode.IsEmpty()).To(BeTrue())
+			err := oi.isOperatorGroupCompatible(og, oi.InstallMode.TargetNamespaces)
+			Expect(err).Should(BeNil())
+		})
+		It("should return nil if namespaces match", func() {
+			oi.InstallMode = operator.InstallMode{
+				InstallModeType:  v1alpha1.InstallModeTypeOwnNamespace,
+				TargetNamespaces: []string{"matchingns"},
+			}
+			aog := createOperatorGroupHelper(context.TODO(), nil, "existing-og", "testns", "matchingns")
+			err := oi.isOperatorGroupCompatible(aog, oi.InstallMode.TargetNamespaces)
+			Expect(err).Should(BeNil())
+		})
+	})
+
 	Describe("getOperatorGroup", func() {
 		var (
 			oi     OperatorInstaller

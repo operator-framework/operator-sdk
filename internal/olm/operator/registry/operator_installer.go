@@ -172,6 +172,12 @@ func (o *OperatorInstaller) createOperatorGroup(ctx context.Context, targetNames
 }
 
 func (o *OperatorInstaller) isOperatorGroupCompatible(og v1.OperatorGroup, targetNamespaces []string) error {
+	// no install mode use the existing operator group
+	if o.InstallMode.IsEmpty() {
+		return nil
+	}
+
+	// otherwise, check that the target namespaces match
 	targets := sets.NewString(targetNamespaces...)
 	ogtargets := sets.NewString(og.Spec.TargetNamespaces...)
 	if !ogtargets.Equal(targets) {
