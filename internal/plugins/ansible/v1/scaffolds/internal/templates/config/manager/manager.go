@@ -74,6 +74,9 @@ spec:
           args:
             - "--enable-leader-election"
             - "--leader-election-id={{ .ProjectName }}"
+          env:
+            - name: ANSIBLE_GATHERING
+              value: explicit
           image: {{ .Image }}
       terminationGracePeriodSeconds: 10
 `
