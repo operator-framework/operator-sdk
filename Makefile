@@ -31,13 +31,14 @@ GO_BUILD_ARGS = \
 
 ANSIBLE_BASE_IMAGE = quay.io/operator-framework/ansible-operator
 HELM_BASE_IMAGE = quay.io/operator-framework/helm-operator
-OPERATOR_SDK_IMAGE = quay.io/operator-framework/operator-sdk
+OPERATOR_SDK_BASE_IMAGE = quay.io/operator-framework/operator-sdk
 CUSTOM_SCORECARD_TESTS_BASE_IMAGE = quay.io/operator-framework/custom-scorecard-tests
 SCORECARD_TEST_BASE_IMAGE = quay.io/operator-framework/scorecard-test
 SCORECARD_TEST_KUTTL_BASE_IMAGE = quay.io/operator-framework/scorecard-test-kuttl
 
 ANSIBLE_IMAGE ?= $(ANSIBLE_BASE_IMAGE)
 HELM_IMAGE ?= $(HELM_BASE_IMAGE)
+OPERATOR_SDK_IMAGE ?= $(OPERATOR_SDK_BASE_IMAGE)
 CUSTOM_SCORECARD_TESTS_IMAGE ?= $(CUSTOM_SCORECARD_TESTS_BASE_IMAGE)
 SCORECARD_TEST_IMAGE ?= $(SCORECARD_TEST_BASE_IMAGE)
 SCORECARD_TEST_KUTTL_IMAGE ?= $(SCORECARD_TEST_KUTTL_BASE_IMAGE)
@@ -224,7 +225,7 @@ image-build-sdk: build/operator-sdk-dev-linux-gnu
 	./hack/image/build-sdk-image.sh $(OPERATOR_SDK_IMAGE):dev
 
 image-push-sdk:
-	./hack/image/push-image-tags.sh $(OPERATOR_SDK_IMAGE):dev $(OPERATOR_SDK_IMAGE)
+	./hack/image/push-image-tags.sh $(OPERATOR_SDK_BASE_IMAGE):dev $(OPERATOR_SDK_IMAGE)
 
 image-push-sdk-multiarch:
 	./hack/image/push-manifest-list.sh $(OPERATOR_SDK_IMAGE) ${OPERATOR_SDK_ARCHES}
