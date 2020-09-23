@@ -191,4 +191,4 @@ jobs:
       <<: *manifest-deploy
       name: Manifest lists
       script:
-        - make image-push-ansible-multiarch image-push-helm-multiarch image-push-scorecard-test-multiarch image-push-scorecard-test-kuttl-multiarch
+        - make image-push-ansible-multiarch image-push-helm-multiarch image-push-scorecard-test-multiarch image-push-scorecard-test-kuttl-multiarch image-push-sdk-multiarch

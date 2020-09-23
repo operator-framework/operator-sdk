@@ -187,9 +187,9 @@ build/%.asc: ## Create release signatures for operator-sdk release binaries
 
 image: image-build image-push ## Build and push all images
 
-image-build: image-build-ansible image-build-helm image-build-scorecard-test image-build-scorecard-test-kuttl image-build-custom-scorecard-tests ## Build all images
+image-build: image-build-ansible image-build-helm image-build-scorecard-test image-build-scorecard-test-kuttl image-build-custom-scorecard-tests image-build-sdk ## Build all images
 
-image-push: image-push-ansible image-push-helm image-push-scorecard-test image-push-scorecard-test-kuttl ## Push all images
+image-push: image-push-ansible image-push-helm image-push-scorecard-test image-push-scorecard-test-kuttl image-push-sdk ## Push all images
 
 # Ansible operator image scaffold/build/push.
 .PHONY: image-scaffold-ansible image-build-ansible image-push-ansible image-push-ansible-multiarch
@@ -220,6 +220,8 @@ image-push-helm:
 
 image-push-helm-multiarch:
 	./hack/image/push-manifest-list.sh $(HELM_IMAGE) ${HELM_ARCHES}
+
+.PHONY: image-build-sdk image-push-sdk image-push-sdk-multiarch
 
 image-build-sdk: build/operator-sdk-dev-linux-gnu
 	./hack/image/build-sdk-image.sh $(OPERATOR_SDK_IMAGE):dev
