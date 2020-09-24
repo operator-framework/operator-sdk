@@ -44,8 +44,6 @@ var (
 	isPrometheusManagedBySuite = true
 	// isOLMManagedBySuite is true when the suite tests is installing/uninstalling the OLM
 	isOLMManagedBySuite = true
-	// kubectx stores the k8s context from where the tests are running
-	kubectx string
 	// projectName is the name of the test project
 	projectName string
 )
@@ -61,7 +59,7 @@ var _ = BeforeSuite(func(done Done) {
 	projectName = filepath.Base(tc.Dir)
 
 	By("checking the cluster type")
-	kubectx, err = tc.Kubectl.Command("config", "current-context")
+	tc.Kubectx, err = tc.Kubectl.Command("config", "current-context")
 	Expect(err).NotTo(HaveOccurred())
 
 	By("checking API resources applied on Cluster")
@@ -141,7 +139,7 @@ var _ = BeforeSuite(func(done Done) {
 	err = tc.Make("docker-build", "IMG="+tc.ImageName)
 	Expect(err).NotTo(HaveOccurred())
 
-	if isRunningOnKind() {
+	if tc.IsRunningOnKind() {
 		By("loading the project image into Kind cluster")
 		err = tc.LoadImageToKindCluster()
 		Expect(err).NotTo(HaveOccurred())
@@ -165,8 +163,3 @@ var _ = AfterSuite(func() {
 	By("destroying container image and work dir")
 	tc.Destroy()
 })
-
-// isRunningOnKind returns true when the tests are executed in a Kind Cluster
-func isRunningOnKind() bool {
-	return strings.Contains(kubectx, "kind")
-}

@@ -61,7 +61,7 @@ var _ = Describe("Integrating Helm Projects with OLM", func() {
 			err = tc.Make("bundle-build", "BUNDLE_IMG="+bundleImage)
 			Expect(err).NotTo(HaveOccurred())
 
-			if isRunningOnKind() {
+			if tc.IsRunningOnKind() {
 				By("loading the bundle image into Kind cluster")
 				err = tc.LoadImageToKindClusterWithName(bundleImage)
 				Expect(err).NotTo(HaveOccurred())

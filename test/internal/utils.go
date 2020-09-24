@@ -30,6 +30,9 @@ import (
 // TestContext wraps kubebuilder's e2e TestContext.
 type TestContext struct {
 	*kbtestutils.TestContext
+
+	// kubectx stores the k8s context from where the tests are running
+	Kubectx string
 }
 
 // NewTestContext returns a TestContext containing a new kubebuilder TestContext.
@@ -87,8 +90,17 @@ func ReplaceRegexInFile(path, match, replace string) {
 
 // LoadImageToKindCluster loads a local docker image with the name informed to the kind cluster
 func (tc TestContext) LoadImageToKindClusterWithName(image string) error {
-	kindOptions := []string{"load", "docker-image", image}
+	cluster := "kind"
+	if v, ok := os.LookupEnv("KIND_CLUSTER"); ok {
+		cluster = v
+	}
+	kindOptions := []string{"load", "docker-image", image, "--name", cluster}
 	cmd := exec.Command("kind", kindOptions...)
 	_, err := tc.Run(cmd)
 	return err
+}
+
+// IsRunningOnKind returns true when the tests are executed in a Kind Cluster
+func (tc TestContext) IsRunningOnKind() bool {
+	return strings.Contains(tc.Kubectx, "kind")
 }
