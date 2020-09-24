@@ -27,6 +27,7 @@ import (
 
 	"github.com/blang/semver"
 	olmapiv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"github.com/operator-framework/operator-sdk/internal/util/resultutil"
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -47,22 +48,6 @@ import (
 var ErrOLMNotInstalled = errors.New("no existing installation found")
 
 var Scheme = scheme.Scheme
-
-// custom error struct to capture deployment errors
-// while verifying CSV installs.
-type deploymentError struct {
-	depName string
-	issue   string
-}
-type deploymentVerifyError []deploymentError
-
-func (e deploymentVerifyError) Error() string {
-	var sb strings.Builder
-	for _, i := range e {
-		sb.WriteString(i.depName + " has errors: \n" + i.issue + "\n")
-	}
-	return sb.String()
-}
 
 func init() {
 	if err := olmapiv1alpha1.AddToScheme(Scheme); err != nil {
@@ -241,9 +226,12 @@ func (c Client) DoCSVWait(ctx context.Context, key types.NamespacedName) error {
 	}
 	err := wait.PollImmediateUntil(time.Second, csvPhaseSucceeded, ctx.Done())
 	if err != nil && errors.Is(err, context.DeadlineExceeded) {
-		depCheckErr := c.checkDeploymentErrors(ctx, key, csv)
-		if _, ok := depCheckErr.(deploymentVerifyError); ok {
-			return depCheckErr
+		result, err := c.checkDeploymentErrors(ctx, key, csv)
+		if len(result.Outputs) > 0 {
+			result.PrintWithFormat("json-alpha1")
+		}
+		if err != nil {
+			return err
 		}
 	}
 	return err
@@ -251,10 +239,10 @@ func (c Client) DoCSVWait(ctx context.Context, key types.NamespacedName) error {
 
 // checkDeploymentErrors function loops through deployment specs of a given CSV, and returns reason
 // in case of failures, based on deployment condition.
-func (c Client) checkDeploymentErrors(ctx context.Context, key types.NamespacedName, csv olmapiv1alpha1.ClusterServiceVersion) error {
-	depErr := deploymentVerifyError{}
+func (c Client) checkDeploymentErrors(ctx context.Context, key types.NamespacedName, csv olmapiv1alpha1.ClusterServiceVersion) (resultutil.Result, error) {
+	result := resultutil.NewResult()
 	if key.Namespace == "" {
-		return fmt.Errorf("no namespace provided to get deployment failures")
+		return *result, fmt.Errorf("no namespace provided to get deployment failures")
 	}
 	dep := &appsv1.Deployment{}
 	for _, ds := range csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
@@ -264,62 +252,58 @@ func (c Client) checkDeploymentErrors(ctx context.Context, key types.NamespacedN
 		}
 		depSelectors := ds.Spec.Selector
 		if err := c.KubeClient.Get(ctx, depKey, dep); err != nil {
-			depErr = append(depErr, deploymentError{
-				depName: ds.Name,
-				issue:   err.Error(),
-			})
+			result.AddError(fmt.Errorf("error getting operator deployment %s : %s", ds.Name, err.Error()))
 			continue
 		}
 		for _, s := range dep.Status.Conditions {
-			if s.Type == appsv1.DeploymentAvailable && s.Status == corev1.ConditionFalse {
-				podError := c.checkPodErrors(ctx, depSelectors, key)
-				if podError.Error() == "" {
-					depErr = append(depErr, deploymentError{
-						depName: ds.Name,
-						issue:   s.Reason,
-					})
-					return depErr
+			if s.Type == appsv1.DeploymentAvailable && s.Status != corev1.ConditionTrue {
+				podResult, err := c.checkPodErrors(ctx, depSelectors, key)
+				if len(podResult.Outputs) == 0 {
+					if err != nil {
+						result.AddError(fmt.Errorf("error getting operator deployment %s : %s", ds.Name, s.Reason+err.Error()))
+					}
+					result.AddError(fmt.Errorf("error getting operator deployment %s : %s", ds.Name, s.Reason))
+					return *result, nil
 				}
-				if _, ok := podError.(deploymentVerifyError); ok {
-					depErr = append(depErr, deploymentError{
-						depName: ds.Name,
-						issue:   podError.Error(),
-					})
-					return depErr
+				var podErrors []string
+				for _, p := range podResult.Outputs {
+					podErrors = append(podErrors, p.Message)
 				}
+				result.AddError(fmt.Errorf("error getting operator deployment %s : %s", ds.Name, podErrors))
+				return *result, nil
 			}
 		}
 	}
-	return depErr
+	return *result, nil
 }
 
 // checkPodErrors loops through pods, and returns pod errors if any.
-func (c Client) checkPodErrors(ctx context.Context, depSelectors *metav1.LabelSelector, key types.NamespacedName) error {
+func (c Client) checkPodErrors(ctx context.Context, depSelectors *metav1.LabelSelector, key types.NamespacedName) (resultutil.Result, error) {
 	// loop through pods and return specific error message.
-	podErr := deploymentVerifyError{}
+	//podErr := deploymentVerifyError{}
+	result := resultutil.NewResult()
 	podList := &corev1.PodList{}
 	podLabelSelectors, err := metav1.LabelSelectorAsSelector(depSelectors)
 	if err != nil {
-		return err
+		return *result, err
 	}
 	options := client.ListOptions{
 		LabelSelector: podLabelSelectors,
 		Namespace:     key.Namespace,
 	}
 	if err := c.KubeClient.List(ctx, podList, &options); err != nil {
-		return fmt.Errorf("error getting Pods: %v", err)
+		return *result, fmt.Errorf("error getting Pods: %v", err)
 	}
 	for _, p := range podList.Items {
 		for _, cs := range p.Status.ContainerStatuses {
 			if !cs.Ready {
-				podErr = append(podErr, deploymentError{
-					depName: p.Name + cs.Name,
-					issue:   cs.State.Waiting.Message,
-				})
+				if cs.State.Waiting != nil {
+					result.AddError(fmt.Errorf("pod errors: %s, %s", p.Name+cs.Name, cs.State.Waiting.Message))
+				}
 			}
 		}
 	}
-	return podErr
+	return *result, nil
 }
 
 // GetInstalledVersion returns the OLM version installed in the namespace informed.

@@ -31,8 +31,8 @@ import (
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/labels"
 
-	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/bundle/validate/internal"
 	internalregistry "github.com/operator-framework/operator-sdk/internal/registry"
+	"github.com/operator-framework/operator-sdk/internal/util/resultutil"
 )
 
 type bundleValidateCmd struct {
@@ -53,7 +53,7 @@ func (c bundleValidateCmd) validate(args []string) error {
 	if len(args) != 1 {
 		return errors.New("an image tag or directory is a required argument")
 	}
-	if c.outputFormat != internal.JSONAlpha1 && c.outputFormat != internal.Text {
+	if c.outputFormat != resultutil.JSONAlpha1 && c.outputFormat != resultutil.Text {
 		return fmt.Errorf("invalid value for output flag: %v", c.outputFormat)
 	}
 
@@ -79,7 +79,7 @@ func (c *bundleValidateCmd) addToFlagSet(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.listOptional, "list-optional", false,
 		"List all optional validators available. When set, no validators will be run")
 
-	fs.StringVarP(&c.outputFormat, "output", "o", internal.Text,
+	fs.StringVarP(&c.outputFormat, "output", "o", resultutil.Text,
 		"Result format for results. One of: [text, json-alpha1]")
 	// It is hidden because it is an alpha option
 	// The idea is the next versions of Operator Registry will return a List of errors
@@ -88,7 +88,7 @@ func (c *bundleValidateCmd) addToFlagSet(fs *pflag.FlagSet) {
 	}
 }
 
-func (c bundleValidateCmd) run(logger *log.Entry, bundleRaw string) (res *internal.Result, err error) {
+func (c bundleValidateCmd) run(logger *log.Entry, bundleRaw string) (res *resultutil.Result, err error) {
 	// Create a registry to validate bundle files and optionally unpack the image with.
 	reg, err := newImageRegistryForTool(logger, c.imageBuilder)
 	if err != nil {
@@ -130,7 +130,7 @@ func (c bundleValidateCmd) run(logger *log.Entry, bundleRaw string) (res *intern
 	}
 
 	// Create Result to be output.
-	res = internal.NewResult()
+	res = resultutil.NewResult()
 
 	logger = logger.WithFields(log.Fields{
 		"bundle-dir":     c.directory,

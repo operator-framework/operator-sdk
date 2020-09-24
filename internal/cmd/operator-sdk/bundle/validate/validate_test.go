@@ -17,10 +17,9 @@ package validate
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/operator-framework/operator-sdk/internal/util/resultutil"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
-
-	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/bundle/validate/internal"
 )
 
 var _ = Describe("Running a bundle validate command", func() {
@@ -47,7 +46,7 @@ var _ = Describe("Running a bundle validate command", func() {
 			flag = cmd.Flags().Lookup("output")
 			Expect(flag).NotTo(BeNil())
 			Expect(flag.Shorthand).To(Equal("o"))
-			Expect(flag.DefValue).To(Equal(internal.Text))
+			Expect(flag.DefValue).To(Equal(resultutil.Text))
 		})
 	})
 

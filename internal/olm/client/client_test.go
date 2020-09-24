@@ -123,8 +123,9 @@ var _ = Describe("Client", func() {
 					Namespace: "test-operator-system",
 				}
 				olmclient := Client{KubeClient: fakeClient}
-				err := olmclient.checkDeploymentErrors(context.TODO(), key, csv)
-				Expect(err.Error()).To(ContainSubstring("back-off 5m0s restarting failed container"))
+				result, err := olmclient.checkDeploymentErrors(context.TODO(), key, csv)
+				Expect(err).To(BeNil())
+				Expect(result.Outputs[0].Message).To(ContainSubstring("back-off 5m0s restarting failed container"))
 			})
 
 			It("check error string for multiple pod failures", func() {
@@ -198,9 +199,10 @@ var _ = Describe("Client", func() {
 					Namespace: "test-operator-system",
 				}
 				olmclient := Client{KubeClient: fakeClt}
-				err := olmclient.checkDeploymentErrors(context.TODO(), key, csv)
-				Expect(err.Error()).To(ContainSubstring("ImageErrPull"))
-				Expect(err.Error()).To(ContainSubstring("Restarting container"))
+				result, err := olmclient.checkDeploymentErrors(context.TODO(), key, csv)
+				Expect(err).To(BeNil())
+				Expect(result.Outputs[0].Message).To(ContainSubstring("ImageErrPull"))
+				Expect(result.Outputs[0].Message).To(ContainSubstring("Restarting container"))
 			})
 
 			It("check error string for deployment errors,when no pods exist", func() {
@@ -229,8 +231,10 @@ var _ = Describe("Client", func() {
 					Namespace: "test-operator-system",
 				}
 				olmclient := Client{KubeClient: fakeClient}
-				err := olmclient.checkDeploymentErrors(context.TODO(), key, csv)
-				Expect(err.Error()).To(ContainSubstring("Pods not available"))
+				result, err := olmclient.checkDeploymentErrors(context.TODO(), key, csv)
+				Expect(err).To(BeNil())
+				Expect(result.Outputs[0].Message).To(ContainSubstring("error getting operator deployment test-operator-controller-manager"))
+
 			})
 
 			It("check error string,when no deployments exist for given CSV", func() {
@@ -240,9 +244,11 @@ var _ = Describe("Client", func() {
 					Name:      "test-operator",
 					Namespace: "test-operator-system",
 				}
-				err := olmclient.checkDeploymentErrors(context.TODO(), key, csv)
-				Expect(err.Error()).To(ContainSubstring("\"test-operator-controller-manager\" not found"))
-				Expect(err.Error()).To(ContainSubstring("\"dummy-operator\" not found"))
+				result, err := olmclient.checkDeploymentErrors(context.TODO(), key, csv)
+				Expect(err).To(BeNil())
+				Expect(result.Outputs[0].Message).To(ContainSubstring("\"test-operator-controller-manager\" not found"))
+				Expect(result.Outputs[1].Message).To(ContainSubstring("\"dummy-operator\" not found"))
+
 			})
 			It("check error string,when no namespace provided", func() {
 				fakeClient = fake.NewFakeClient()
@@ -250,9 +256,58 @@ var _ = Describe("Client", func() {
 				key := types.NamespacedName{
 					Name: "test-operator",
 				}
-				err := olmclient.checkDeploymentErrors(context.TODO(), key, csv)
+				result, err := olmclient.checkDeploymentErrors(context.TODO(), key, csv)
+				Expect(result.Outputs).To(BeNil())
 				Expect(err.Error()).To(ContainSubstring("no namespace provided to get deployment failures"))
 			})
+			It("check error string for pod failure with no Message", func() {
+				fakeClt := fake.NewFakeClient(
+					&corev1.Pod{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "test-operator-jjj",
+							Namespace: "test-operator-system",
+							Labels: map[string]string{
+								"control-plane": "controller-manager",
+							},
+						},
+						Status: corev1.PodStatus{
+							ContainerStatuses: []corev1.ContainerStatus{
+								{
+									Ready: false,
+									State: corev1.ContainerState{},
+								},
+							},
+						},
+					},
+					&appsv1.Deployment{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "test-operator-controller-manager",
+							Namespace: "test-operator-system",
+							Labels: map[string]string{
+								"control-plane": "controller-manager",
+							},
+						},
+						Status: appsv1.DeploymentStatus{
+							Conditions: []appsv1.DeploymentCondition{
+								{
+									Type:   "Available",
+									Status: "Unknown",
+								},
+							},
+						},
+					})
+
+				olmclient := Client{KubeClient: fakeClt}
+				key := types.NamespacedName{
+					Name:      "test-operator",
+					Namespace: "test-operator-system",
+				}
+				result, err := olmclient.checkDeploymentErrors(context.TODO(), key, csv)
+				Expect(err).To(BeNil())
+				Expect(result.Outputs[0].Message).To(ContainSubstring("error getting operator deployment test-operator-controller-manager : "))
+
+			})
+
 		})
 	})
 })

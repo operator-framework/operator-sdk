@@ -23,8 +23,8 @@ import (
 	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/labels"
 
-	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/bundle/validate/internal"
 	"github.com/operator-framework/operator-sdk/internal/flags"
+	"github.com/operator-framework/operator-sdk/internal/util/resultutil"
 )
 
 const (
@@ -118,7 +118,7 @@ func NewCmd() *cobra.Command {
 
 // createLogger creates a new logrus Entry that is optionally verbose.
 func createLogger(verbose bool) *log.Entry {
-	logger := log.NewEntry(internal.NewLoggerTo(os.Stderr))
+	logger := log.NewEntry(resultutil.NewLoggerTo(os.Stderr))
 	if verbose {
 		logger.Logger.SetLevel(log.DebugLevel)
 	}
