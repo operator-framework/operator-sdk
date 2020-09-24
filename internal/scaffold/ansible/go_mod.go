@@ -46,7 +46,7 @@ require (
 )
 
 replace (
-	k8s.io/client-go => k8s.io/client-go v0.18.2 // Required by prometheus-operator
+	k8s.io/client-go => k8s.io/client-go v0.18.8 // Required by prometheus-operator
 	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible // Required by OLM
 )
 `
