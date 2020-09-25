@@ -145,6 +145,7 @@ var _ = Describe("Running ansible projects", func() {
 			Eventually(managerContainerLogs, time.Minute, time.Second).Should(ContainSubstring(
 				"Ansible-runner exited successfully"))
 			Eventually(managerContainerLogs, time.Minute, time.Second).ShouldNot(ContainSubstring("failed=1"))
+			Eventually(managerContainerLogs, time.Minute, time.Second).ShouldNot(ContainSubstring("[Gathering Facts]"))
 
 			By("ensuring no liveness probe fail events")
 			verifyControllerProbe := func() string {
