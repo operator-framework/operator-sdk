@@ -23,7 +23,9 @@ Namespaces are set via [Manager Options][ctrl-options] as described below. These
 cached for the Client which is provided by the Manager.Only clients provided by cluster-scoped Managers are able
 to manage cluster-scoped CRD's. For further information see: [CRD scope doc][crd-scope-doc].
 
-## Watching resources in all Namespaces (default)
+## Manager watching options
+
+### Watching resources in all Namespaces (default)
 
 A [Manager][ctrl-manager] is initialized with no Namespace option specified, or `Namespace: ""` will
 watch all Namespaces:
@@ -40,22 +42,25 @@ mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 ...
 ```
 
-## Watching resources in a single Namespace
+### Watching resources in a single Namespace
 
 To restrict the scope of the [Manager's][ctrl-manager] cache to a specific Namespace set the `Namespace` field
 in [Options][ctrl-options]:
 
 ```go
 ...
-mgr, err = ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
     Scheme:             scheme,
-    Namespace:          "operator-namespace",
     MetricsBindAddress: metricsAddr,
+    Port:               9443,
+    LeaderElection:     enableLeaderElection, 
+    LeaderElectionID:   "f1c5ece8.example.com",
+    Namespace:          "operator-namespace",
 })
 ...
 ```
 
-## Watching resources in a set of Namespaces
+### Watching resources in a set of Namespaces
 
 It is possible to use [`MultiNamespacedCacheBuilder`][multi-namespaced-cache-builder] from
 [Options][ctrl-options] to watch and manage resources in a set of Namespaces:
@@ -63,11 +68,14 @@ It is possible to use [`MultiNamespacedCacheBuilder`][multi-namespaced-cache-bui
 ```go
 ...
 namespaces := []string{"foo", "bar"} // List of Namespaces
-
-mgr, err = ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+...
+mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
     Scheme:             scheme,
+    MetricsBindAddress: metricsAddr,
+    Port:               9443,
+    LeaderElection:     enableLeaderElection, 
+    LeaderElectionID:   "f1c5ece8.example.com",
     NewCache:           cache.MultiNamespacedCacheBuilder(namespaces),
-    MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
 })
 ...
 ```
@@ -89,42 +97,55 @@ in `role_binding.yaml` are used to grant the operator permissions to access and 
 For the purposes of this doc, the other RBAC manifests `<kind>_editor_role.yaml`, `<kind>_viewer_role.yaml`,
 and `auth_proxy_*.yaml` are not relevant to changing the operator's resource permissions.
 
-### Changing the permissions
+### Changing the permissions to Namespaced
 
 To change the scope of the RBAC permissions from cluster-wide to a specific namespace, you will need to use `Role`s
-and `RoleBinding`s instead of `ClusterRole`s and `ClusterRoleBinding`s, respectively.
+=======
+
+- Inform the Namespace to the [Manager][ctrl-manager] 
+
+By default, the [Manager][ctrl-manager] does not have any namespace specified in `main.go`, and hence it will watch all the namespaces. In order to restrict the controllers to watch a specific namespace, specify it while creating the manager. Update the `NewManager` to inform the Namespace, in our `Memcahced` example it would like: 
+
+```go
+...
+mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+    Scheme:             scheme,
+    MetricsBindAddress: metricsAddr,
+    Port:               9443,
+    LeaderElection:     enableLeaderElection, 
+    LeaderElectionID:   "f1c5ece8.example.com",
+    Namespace:          "memcached-operator-system", // operator namespace
+})
+...
+```
+
+- Change the scope of the RBAC permissions from cluster-wide to a specific namespace
+
+You will need to use `Role`s and `RoleBinding`s instead of `ClusterRole`s and `ClusterRoleBinding`s, respectively.
 
 [`RBAC markers`][rbac-markers] defined in the controller (e.g `controllers/memcached_controller.go`)
 are used to generate the operator's [RBAC ClusterRole][rbac-clusterrole] (e.g `config/rbac/role.yaml`). The default
  markers don't specify a `namespace` property and will result in a `ClusterRole`.
 
-Update the RBAC markers to specify a `namespace` property so that `config/rbac/role.yaml` is generated as a `Role`
- instead of a `ClusterRole`.
-
-Replace:
+Update the [`RBAC markers`][rbac-markers] in `<kind>_controller.go` with `namespace=<namespace>` where the `Role` is to be applied, such as:
 
 ```go
-// +kubebuilder:rbac:groups=cache.example.com,resources=memcacheds,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=cache.example.com,resources=memcacheds/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=cache.example.com,namespace=memcached-operator-system,resources=memcacheds,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=cache.example.com,namespace=memcached-operator-system,resources=memcacheds/status,verbs=get;update;patch
 ```
 
-With namespaced markers:
-
-```go
-// +kubebuilder:rbac:groups=cache.example.com,namespace="my-namespace",resources=memcacheds,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=cache.example.com,namespace="my-namespace",resources=memcacheds/status,verbs=get;update;patch
-```
-
-And then, run `make manifests` to update `config/rbac/role.yaml`:
+- Run `make manifests` to update `config/rbac/role.yaml`. In our example it would like:
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-...
+  creationTimestamp: null
+  name: manager-role
+  namespace: memcached-operator-system
 ```
 
-We also need to update our `ClusterRoleBindings` to `RoleBindings` since they are not regenerated:
+- Replace `ClusterRoleBinding`  with `RoleBinding` and `ClusterRole` with `Role` in the `config/rbac/role_binding.yaml` file such as:
 
 ```yaml
 
