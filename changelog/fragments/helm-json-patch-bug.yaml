@@ -1,0 +1,6 @@
+entries:
+  - description: >
+      Bumped helm and k8s dependencies to v3.3.4 and v1.18.8
+      to fix [this upstream bug](https://github.com/kubernetes/kubernetes/issues/91615)
+    kind: bugfix
+    pull_request_override: 3936
