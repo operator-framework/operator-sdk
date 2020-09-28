@@ -228,7 +228,9 @@ func (c Client) DoCSVWait(ctx context.Context, key types.NamespacedName) error {
 	if err != nil && errors.Is(err, context.DeadlineExceeded) {
 		result, err := c.checkDeploymentErrors(ctx, key, csv)
 		if len(result.Outputs) > 0 {
-			result.PrintWithFormat("json-alpha1")
+			if err := result.PrintWithFormat("json-alpha1"); err != nil {
+				return err
+			}
 		}
 		if err != nil {
 			return err
@@ -280,7 +282,6 @@ func (c Client) checkDeploymentErrors(ctx context.Context, key types.NamespacedN
 // checkPodErrors loops through pods, and returns pod errors if any.
 func (c Client) checkPodErrors(ctx context.Context, depSelectors *metav1.LabelSelector, key types.NamespacedName) (resultutil.Result, error) {
 	// loop through pods and return specific error message.
-	//podErr := deploymentVerifyError{}
 	result := resultutil.NewResult()
 	podList := &corev1.PodList{}
 	podLabelSelectors, err := metav1.LabelSelectorAsSelector(depSelectors)
