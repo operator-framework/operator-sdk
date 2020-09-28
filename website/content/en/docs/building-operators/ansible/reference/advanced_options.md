@@ -232,7 +232,6 @@ Ansible-runner will perform the task relevant to the command specified by the us
 ```
 ---
 - name: Playbook to print debug messages
-  gather_facts: false
   hosts: localhost
   tasks:
     - name: Get the decrypted message variable

@@ -72,14 +72,19 @@ type cmdFuncType func(ident, inputDirPath string, maxArtifacts, verbosity int) *
 
 func playbookCmdFunc(path string) cmdFuncType {
 	return func(ident, inputDirPath string, maxArtifacts, verbosity int) *exec.Cmd {
+		cmdOptions := []string{
+			"--rotate-artifacts", fmt.Sprintf("%v", maxArtifacts),
+			"-p", path,
+			"-i", ident,
+		}
+		cmdArgs := []string{"run", inputDirPath}
+
 		// check the verbosity since the exec.Command will fail if an arg as "" or " " be informed
 		if verbosity > 0 {
-			return exec.Command("ansible-runner", ansibleVerbosityString(verbosity), "--rotate-artifacts",
-				fmt.Sprintf("%v", maxArtifacts), "-p", path, "-i", ident, "run", inputDirPath)
+			cmdOptions = append(cmdOptions, ansibleVerbosityString(verbosity))
 		}
-		return exec.Command("ansible-runner", "--rotate-artifacts",
-			fmt.Sprintf("%v", maxArtifacts), "-p", path, "-i", ident, "run", inputDirPath)
 
+		return exec.Command("ansible-runner", append(cmdOptions, cmdArgs...)...)
 	}
 }
 
@@ -87,14 +92,28 @@ func roleCmdFunc(path string) cmdFuncType {
 	rolePath, roleName := filepath.Split(path)
 	return func(ident, inputDirPath string, maxArtifacts, verbosity int) *exec.Cmd {
 		// check the verbosity since the exec.Command will fail if an arg as "" or " " be informed
-		if verbosity > 0 {
-			return exec.Command("ansible-runner", ansibleVerbosityString(verbosity), "--rotate-artifacts",
-				fmt.Sprintf("%v", maxArtifacts), "--role", roleName, "--roles-path", rolePath,
-				"--hosts", "localhost", "-i", ident, "run", inputDirPath)
+
+		cmdOptions := []string{
+			"--rotate-artifacts", fmt.Sprintf("%v", maxArtifacts),
+			"--role", roleName,
+			"--roles-path", rolePath,
+			"--hosts", "localhost",
+			"-i", ident,
 		}
-		return exec.Command("ansible-runner", "--rotate-artifacts",
-			fmt.Sprintf("%v", maxArtifacts), "--role", roleName, "--roles-path", rolePath,
-			"--hosts", "localhost", "-i", ident, "run", inputDirPath)
+		cmdArgs := []string{"run", inputDirPath}
+
+		if verbosity > 0 {
+			cmdOptions = append(cmdOptions, ansibleVerbosityString(verbosity))
+		}
+		ansibleGathering := os.Getenv("ANSIBLE_GATHERING")
+
+		// When running a role directly, ansible-runner does not respect the ANSIBLE_GATHERING
+		// environment variable, so we need to skip fact collection manually
+		if ansibleGathering == "explicit" {
+			cmdOptions = append(cmdOptions, "--role-skip-facts")
+		}
+
+		return exec.Command("ansible-runner", append(cmdOptions, cmdArgs...)...)
 	}
 }
 
