@@ -244,5 +244,5 @@ by running `molecule test -s local`.
 #### The Ansible `assert` and `fail` modules
 These modules are handy for adding assertions and failure conditions to your Ansible Operator tests:
 
-- [assert](https://docs.ansible.com/ansible/latest/modules/assert_module.html)
-- [fail](https://docs.ansible.com/ansible/latest/modules/fail_module.html)
+- [assert](https://docs.ansible.com/ansible/2.9/modules/assert_module.html)
+- [fail](https://docs.ansible.com/ansible/2.9/modules/fail_module.html)
