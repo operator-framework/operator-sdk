@@ -150,6 +150,12 @@ namespace for each test.  This might impact your kuttl tests in
 that you might need to perform resource cleanup in your tests
 instead of depending upon namespace deletion to perform that cleanup.
 
+Also of note is that in our example [kuttl configuration][kuttl_configuration]
+file, we add the *suppressLog: event* setting which means that
+kuttl will not log kubernetes events and thereby means you do not
+have to provide RBAC access for reading kubernetes events to the
+service account used to run kuttl tests.
+
 [client_go]: https://github.com/kubernetes/client-go
 [kuttl]: https://kuttl.dev
 [kuttl_yaml]: https://kuttl.dev/docs/cli.html#examples

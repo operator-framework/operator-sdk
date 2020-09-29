@@ -1,0 +1,9 @@
+entries:
+  - description: >
+      Updated the sample kuttl-test.yaml scorecard configuration
+      file to specify 'suppressLog: event' which disables kuttl
+      from logging k8s events and allows for RBAC priviledge descalation.
+
+    kind: "change"
+
+    breaking: false
