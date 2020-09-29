@@ -1,6 +1,6 @@
 # Base image
 #FROM docker.io/kudobuilder/kuttl@sha256:c9c5edc27ba6e5e994ffd8cea03368c0d4e274f3c7a00f51c1e360feb573f24e
-FROM kudobuilder/kuttl:v0.5.2
+FROM kudobuilder/kuttl:v0.6.1
 
 ENV TESTKUTTL=/usr/local/bin/scorecard-test-kuttl \
     USER_UID=1001 \
