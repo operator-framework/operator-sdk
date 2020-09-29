@@ -31,18 +31,21 @@ GO_BUILD_ARGS = \
 
 ANSIBLE_BASE_IMAGE = quay.io/operator-framework/ansible-operator
 HELM_BASE_IMAGE = quay.io/operator-framework/helm-operator
+OPERATOR_SDK_BASE_IMAGE = quay.io/operator-framework/operator-sdk
 CUSTOM_SCORECARD_TESTS_BASE_IMAGE = quay.io/operator-framework/custom-scorecard-tests
 SCORECARD_TEST_BASE_IMAGE = quay.io/operator-framework/scorecard-test
 SCORECARD_TEST_KUTTL_BASE_IMAGE = quay.io/operator-framework/scorecard-test-kuttl
 
 ANSIBLE_IMAGE ?= $(ANSIBLE_BASE_IMAGE)
 HELM_IMAGE ?= $(HELM_BASE_IMAGE)
+OPERATOR_SDK_IMAGE ?= $(OPERATOR_SDK_BASE_IMAGE)
 CUSTOM_SCORECARD_TESTS_IMAGE ?= $(CUSTOM_SCORECARD_TESTS_BASE_IMAGE)
 SCORECARD_TEST_IMAGE ?= $(SCORECARD_TEST_BASE_IMAGE)
 SCORECARD_TEST_KUTTL_IMAGE ?= $(SCORECARD_TEST_KUTTL_BASE_IMAGE)
 
 ANSIBLE_ARCHES:="amd64" "ppc64le" "arm64" "s390x"
 HELM_ARCHES:="amd64" "ppc64le" "arm64" "s390x"
+OPERATOR_SDK_ARCHES:="amd64" "ppc64le" "arm64" "s390x"
 SCORECARD_TEST_ARCHES:="amd64" "ppc64le" "arm64" "s390x"
 SCORECARD_TEST_KUTTL_ARCHES:="amd64" "ppc64le" "arm64"
 # the custom scorecard test image is a scorecard example only
@@ -184,9 +187,9 @@ build/%.asc: ## Create release signatures for operator-sdk release binaries
 
 image: image-build image-push ## Build and push all images
 
-image-build: image-build-ansible image-build-helm image-build-scorecard-test image-build-scorecard-test-kuttl image-build-custom-scorecard-tests ## Build all images
+image-build: image-build-ansible image-build-helm image-build-scorecard-test image-build-scorecard-test-kuttl image-build-custom-scorecard-tests image-build-sdk ## Build all images
 
-image-push: image-push-ansible image-push-helm image-push-scorecard-test image-push-scorecard-test-kuttl ## Push all images
+image-push: image-push-ansible image-push-helm image-push-scorecard-test image-push-scorecard-test-kuttl image-push-sdk ## Push all images
 
 # Ansible operator image scaffold/build/push.
 .PHONY: image-scaffold-ansible image-build-ansible image-push-ansible image-push-ansible-multiarch
@@ -217,6 +220,18 @@ image-push-helm:
 
 image-push-helm-multiarch:
 	./hack/image/push-manifest-list.sh $(HELM_IMAGE) ${HELM_ARCHES}
+
+.PHONY: image-build-sdk image-push-sdk image-push-sdk-multiarch
+
+image-build-sdk: build/operator-sdk-dev-linux-gnu
+	./hack/image/build-sdk-image.sh $(OPERATOR_SDK_BASE_IMAGE):dev
+
+image-push-sdk:
+	./hack/image/push-image-tags.sh $(OPERATOR_SDK_BASE_IMAGE):dev $(OPERATOR_SDK_IMAGE)-$(shell go env GOARCH)
+
+image-push-sdk-multiarch:
+	./hack/image/push-manifest-list.sh $(OPERATOR_SDK_IMAGE) ${OPERATOR_SDK_ARCHES}
+
 
 # Scorecard test image scaffold/build/push.
 .PHONY: image-build-scorecard-test image-push-scorecard-test image-push-scorecard-test-multiarch
