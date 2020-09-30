@@ -16,22 +16,233 @@ package registry
 
 import (
 	"context"
+	"fmt"
+	// TODO(asmacdo) why doesnt vimgo do this for me
+	"os"
 
+	// "github.com/fatih/color"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	v1 "github.com/operator-framework/api/pkg/operators/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
+	// apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	// "k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
 
+type FakeCatalogCreator struct {
+	client crclient.Client
+}
+
+func (f FakeCatalogCreator) CreateCatalog(ctx context.Context, name string) (*v1alpha1.CatalogSource, error) {
+	cs := &v1alpha1.CatalogSource{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "MockCatalogSource",
+		},
+	}
+	if err := f.client.Create(ctx, cs); err != nil {
+		return nil, fmt.Errorf("Unable to create CatalogSource with fake client: %v", err)
+	}
+	return cs, nil
+}
+
 var _ = Describe("OperatorInstaller", func() {
-	Describe("InstallOperator", func() {
-		// TODO: fill this in once run bundle is done
+	Describe("NewOperatorInstaller", func() {
+		It("should create an OperatorInstaller", func() {
+			kubeconfigPath := os.Getenv(k8sutil.KubeConfigEnvVar)
+			cfg := &operator.Configuration{KubeconfigPath: kubeconfigPath}
+			// TODO(asmacdo) Is there anything I can test here that wouldnt be caught by the compiler?
+			// TODO(asmacdo)It doesnt even throw an err.
+			_ = NewOperatorInstaller(cfg)
+		})
+	})
+
+	Describe("createSubscription", func() {
+		var (
+			oi  *OperatorInstaller
+			sch *runtime.Scheme
+		)
+		BeforeEach(func() {
+			// Setup and fake client
+			kubeconfigPath := os.Getenv(k8sutil.KubeConfigEnvVar)
+			cfg := &operator.Configuration{KubeconfigPath: kubeconfigPath}
+			sch = runtime.NewScheme()
+			Expect(v1.AddToScheme(sch)).To(Succeed())
+			Expect(v1alpha1.AddToScheme(sch)).To(Succeed())
+			cfg.Client = fake.NewFakeClientWithScheme(sch)
+
+			// Create OperatorInstaller struct
+			oi = NewOperatorInstaller(cfg)
+			oi.CatalogCreator = FakeCatalogCreator{
+				client: cfg.Client,
+			}
+			oi.StartingCSV = "fakeName"
+			oi.cfg.Namespace = "fakeNS"
+		})
+
+		It("should create the subscription with the fake client", func() {
+			sub, err := oi.createSubscription(context.TODO(), "huzzah")
+			Expect(err).ToNot(HaveOccurred())
+
+			retSub := &v1alpha1.Subscription{}
+			subKey := types.NamespacedName{
+				Namespace: sub.GetNamespace(),
+				Name:      sub.GetName(),
+			}
+			err = oi.cfg.Client.Get(context.TODO(), subKey, retSub)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(retSub.GetName()).To(Equal(sub.GetName()))
+			Expect(retSub.GetNamespace()).To(Equal(sub.GetNamespace()))
+		})
+
+		It("should pass through any client errors (duplicate)", func() {
+
+			sub := newSubscription(oi.StartingCSV, oi.cfg.Namespace,
+				withPackageChannel(oi.PackageName, oi.Channel, oi.StartingCSV),
+				withCatalogSource("duplicate", oi.cfg.Namespace),
+				withInstallPlanApproval(v1alpha1.ApprovalManual))
+			oi.cfg.Client = fake.NewFakeClientWithScheme(sch, sub)
+
+			_, err := oi.createSubscription(context.TODO(), "duplicate")
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).Should(ContainSubstring("error creating subscription"))
+		})
+	})
+
+	// TODO(asmacdo) Since this uses the olm client can/should this be unit tested?
+	// Describe("getInstalledCSV", func() {
+	// 	})
+	// })
+	Describe("approveInstallPlan", func() {
+		var (
+			oi  *OperatorInstaller
+			sch *runtime.Scheme
+		)
+		BeforeEach(func() {
+			kubeconfigPath := os.Getenv(k8sutil.KubeConfigEnvVar)
+			cfg := &operator.Configuration{KubeconfigPath: kubeconfigPath}
+			sch = runtime.NewScheme()
+			Expect(v1alpha1.AddToScheme(sch)).To(Succeed())
+			oi = NewOperatorInstaller(cfg)
+		})
+
+		It("should update the install plan", func() {
+			existingIp := &v1alpha1.InstallPlan{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "fakeName",
+					Namespace: "fakeNS",
+				},
+			}
+			oi.cfg.Client = fake.NewFakeClientWithScheme(sch, existingIp)
+
+			ip := &v1alpha1.InstallPlan{}
+			ipKey := types.NamespacedName{
+				Namespace: "fakeNS",
+				Name:      "fakeName",
+			}
+
+			err := oi.cfg.Client.Get(context.TODO(), ipKey, ip)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(ip.Name).To(Equal("fakeName"))
+			Expect(ip.Namespace).To(Equal("fakeNS"))
+			// Sanity Check
+			Expect(ip.Spec.Approved).To(Equal(false))
+
+			// Test
+			sub := &v1alpha1.Subscription{
+				Status: v1alpha1.SubscriptionStatus{
+					InstallPlanRef: &corev1.ObjectReference{
+						Name:      "fakeName",
+						Namespace: "fakeNS",
+					},
+				},
+			}
+			err = oi.approveInstallPlan(context.TODO(), sub)
+			Expect(err).ToNot(HaveOccurred())
+			err = oi.cfg.Client.Get(context.TODO(), ipKey, ip)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(ip.Name).To(Equal("fakeName"))
+			Expect(ip.Namespace).To(Equal("fakeNS"))
+			Expect(ip.Spec.Approved).To(Equal(true))
+		})
+		It("should return an error if the install plan does not exist.", func() {
+			oi.cfg.Client = fake.NewFakeClientWithScheme(sch)
+			sub := &v1alpha1.Subscription{
+				Status: v1alpha1.SubscriptionStatus{
+					InstallPlanRef: &corev1.ObjectReference{
+						Name:      "fakeName",
+						Namespace: "fakeNS",
+					},
+				},
+			}
+			err := oi.approveInstallPlan(context.TODO(), sub)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).Should(ContainSubstring("error getting install plan"))
+		})
+		// TODO(asmacdo) How to throw an err on update?
+		// It("should return an error if the install plan fails to update.", func() {
+		// 	Expect(err.Error()).Should(ContainSubstring("error approving install plan"))
+		// })
+	})
+
+	Describe("waitForInstallPlan", func() {
+		var (
+			oi  *OperatorInstaller
+			sch *runtime.Scheme
+		)
+		BeforeEach(func() {
+			// Setup and fake client
+			kubeconfigPath := os.Getenv(k8sutil.KubeConfigEnvVar)
+			cfg := &operator.Configuration{KubeconfigPath: kubeconfigPath}
+			sch = runtime.NewScheme()
+			Expect(v1alpha1.AddToScheme(sch)).To(Succeed())
+			cfg.Client = fake.NewFakeClientWithScheme(sch)
+
+			oi = NewOperatorInstaller(cfg)
+			oi.CatalogCreator = FakeCatalogCreator{
+				client: cfg.Client,
+			}
+			oi.StartingCSV = "fakeName"
+			oi.cfg.Namespace = "fakeNS"
+		})
+		It("should return an error if the subscription does not exist.", func() {
+			sub := newSubscription(oi.StartingCSV, oi.cfg.Namespace,
+				withPackageChannel(oi.PackageName, oi.Channel, oi.StartingCSV),
+				withCatalogSource("duplicate", oi.cfg.Namespace),
+				withInstallPlanApproval(v1alpha1.ApprovalManual))
+
+			err := oi.waitForInstallPlan(context.TODO(), sub)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).Should(ContainSubstring("install plan is not available for the subscription"))
+
+		})
+		It("should return if subscription has an install plan.", func() {
+			sub := &v1alpha1.Subscription{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "fakeName",
+					Namespace: "fakeNS",
+				},
+				Status: v1alpha1.SubscriptionStatus{
+					InstallPlanRef: &corev1.ObjectReference{
+						Name:      "fakeName",
+						Namespace: "fakeNS",
+					},
+				},
+			}
+			err := oi.cfg.Client.Create(context.TODO(), sub)
+			Expect(err).ToNot(HaveOccurred())
+			err = oi.waitForInstallPlan(context.TODO(), sub)
+			Expect(err).ToNot(HaveOccurred())
+		})
 	})
 
 	Describe("ensureOperatorGroup", func() {
@@ -212,7 +423,6 @@ var _ = Describe("OperatorInstaller", func() {
 			})
 		})
 	})
-
 	Describe("createOperatorGroup", func() {
 		var (
 			oi     OperatorInstaller
@@ -333,10 +543,6 @@ var _ = Describe("OperatorInstaller", func() {
 			Expect(found).To(BeTrue())
 			Expect(err).Should(BeNil())
 		})
-	})
-
-	Describe("createSubscription", func() {
-		// TODO: add them as part of a different story
 	})
 
 	Describe("getTargetNamespaces", func() {

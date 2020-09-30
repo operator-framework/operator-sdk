@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"time"
 
+	// "github.com/fatih/color"
 	v1 "github.com/operator-framework/api/pkg/operators/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
@@ -72,7 +73,7 @@ func (o OperatorInstaller) InstallOperator(ctx context.Context) (*v1alpha1.Clust
 
 	var subscription *v1alpha1.Subscription
 	// Create Subscription
-	if subscription, err = o.createSubscription(ctx, cs); err != nil {
+	if subscription, err = o.createSubscription(ctx, cs.GetName()); err != nil {
 		return nil, err
 	}
 
@@ -208,15 +209,17 @@ func (o OperatorInstaller) getOperatorGroup(ctx context.Context) (*v1.OperatorGr
 	return &ogList.Items[0], true, nil
 }
 
-func (o OperatorInstaller) createSubscription(ctx context.Context, cs *v1alpha1.CatalogSource) (*v1alpha1.Subscription, error) {
+func (o OperatorInstaller) createSubscription(ctx context.Context, csName string) (*v1alpha1.Subscription, error) {
 	sub := newSubscription(o.StartingCSV, o.cfg.Namespace,
 		withPackageChannel(o.PackageName, o.Channel, o.StartingCSV),
-		withCatalogSource(cs.GetName(), o.cfg.Namespace),
+		withCatalogSource(csName, o.cfg.Namespace),
 		withInstallPlanApproval(v1alpha1.ApprovalManual))
 
 	if err := o.cfg.Client.Create(ctx, sub); err != nil {
 		return nil, fmt.Errorf("error creating subscription: %w", err)
 	}
+	// TODO(asmacdo) remove dev artifact
+	// color.Yellow("%+v\n", sub)
 	log.Infof("Created Subscription: %s", sub.Name)
 
 	return sub, nil
@@ -287,9 +290,11 @@ func (o OperatorInstaller) waitForInstallPlan(ctx context.Context, sub *v1alpha1
 		if err := o.cfg.Client.Get(ctx, subKey, sub); err != nil {
 			return false, err
 		}
+
 		if sub.Status.InstallPlanRef != nil {
 			return true, nil
 		}
+
 		return false, nil
 	})
 

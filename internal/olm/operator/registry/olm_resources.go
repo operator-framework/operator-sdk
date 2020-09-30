@@ -68,6 +68,7 @@ func newSubscription(csvName, namespace string, opts ...func(*v1alpha1.Subscript
 	sub.SetName(getSubscriptionName(csvName))
 	sub.SetNamespace(namespace)
 	sub.Spec = &v1alpha1.SubscriptionSpec{}
+	// TODO(asmacdo) This pattern freaks me out. Ask someone about it.
 	for _, opt := range opts {
 		opt(sub)
 	}
@@ -84,6 +85,7 @@ func withSDKPublisher(pkgName string) func(*v1alpha1.CatalogSource) {
 // newCatalogSource creates a new CatalogSource with a name derived from
 // pkgName, the package manifest's packageName, in namespace. opts will
 // be applied to the CatalogSource object.
+// TODO(asmacdo): Test me. TODO ask jesus is this what is meant by CatalogSourceCreator structs????
 func newCatalogSource(name, namespace string, opts ...func(*v1alpha1.CatalogSource)) *v1alpha1.CatalogSource {
 	cs := &v1alpha1.CatalogSource{}
 	cs.SetGroupVersionKind(v1alpha1.SchemeGroupVersion.WithKind(v1alpha1.CatalogSourceKind))

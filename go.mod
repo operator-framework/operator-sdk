@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	github.com/blang/semver v3.5.1+incompatible
+	github.com/fatih/color v1.7.0
 	github.com/fatih/structtag v1.1.0
 	github.com/go-logr/logr v0.1.0
 	github.com/iancoleman/strcase v0.0.0-20191112232945-16388991a334
