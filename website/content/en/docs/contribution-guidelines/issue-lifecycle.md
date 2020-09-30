@@ -25,7 +25,7 @@ in the following order:
 - Issues in other milestones/backlog if specifically requested
 
 
-[gh-issues](https://github.com/operator-framework/operator-sdk/issues)
-[gh-milestones](https://github.com/operator-framework/operator-sdk/milestones)
-[grooming-meeting](https://github.com/operator-framework/community#operator-sdk-grooming-meeting)
-[triage-meeting](https://github.com/operator-framework/community#operator-sdk-issue-triage)
+[gh-issues]:https://github.com/operator-framework/operator-sdk/issues
+[gh-milestones]:https://github.com/operator-framework/operator-sdk/milestones
+[grooming-meeting]:https://github.com/operator-framework/community#operator-sdk-grooming-meeting
+[triage-meeting]:https://github.com/operator-framework/community#operator-sdk-issue-triage
