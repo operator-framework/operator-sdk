@@ -27,7 +27,7 @@ import (
 )
 
 var (
-	runBundleImg = "quay.io/vnarsing/memcached-operator:v1"
+	runBundleImg = "quay.io/vnarsing/run-bundle-test-img:v1"
 )
 
 var _ = Describe("Integrating Go Projects with OLM", func() {
@@ -48,14 +48,18 @@ var _ = Describe("Integrating Go Projects with OLM", func() {
 			replace := "operator-sdk generate kustomize manifests"
 			testutils.ReplaceInFile(filepath.Join(tc.Dir, "Makefile"), replace, replace+" --interactive=false")
 
-			// Specifying stable channel
+			// Specifying stable channel.
+			// work around for Bug 1883377 - opm fails with FOREIGN KEY constraint when bundle default channel is empty
 			replace = "operator-sdk generate bundle"
-			testutils.ReplaceInFile(filepath.Join(tc.Dir, "Makefile"), replace, replace+"  --default-channel stable")
+			testutils.ReplaceInFile(filepath.Join(tc.Dir, "Makefile"), replace, replace+"  --default-channel stable --channels stable")
 			err := tc.Make("bundle")
 			Expect(err).NotTo(HaveOccurred())
 
 			By("building the operator bundle image")
 			err = tc.Make("bundle-build", "BUNDLE_IMG="+runBundleImg)
+			Expect(err).NotTo(HaveOccurred())
+
+			_, err = tc.Kubectl.Command("create", "namespace", tc.Kubectl.Namespace)
 			Expect(err).NotTo(HaveOccurred())
 
 			// bundle image should be present in the remote repository in run bundle
@@ -65,7 +69,7 @@ var _ = Describe("Integrating Go Projects with OLM", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			By("running the operator bundle using `run bundle` command")
-			runBundleCmd := exec.Command(tc.BinaryName, "run", "bundle", runBundleImg, "--namespace", tc.Kubectl.Namespace)
+			runBundleCmd := exec.Command(tc.BinaryName, "run", "bundle", runBundleImg, "--namespace", tc.Kubectl.Namespace, "--timeout", "4m")
 			_, err = tc.Run(runBundleCmd)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -142,6 +146,9 @@ var _ = Describe("Integrating Go Projects with OLM", func() {
 			cleanupPkgManCmd = exec.Command(tc.BinaryName, "cleanup", projectName,
 				"--timeout", "4m")
 			_, err = tc.Run(cleanupPkgManCmd)
+			Expect(err).NotTo(HaveOccurred())
+
+			_, err = tc.Kubectl.Command("delete", "namespace", tc.Kubectl.Namespace)
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
