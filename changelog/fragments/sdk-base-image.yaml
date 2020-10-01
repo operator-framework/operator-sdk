@@ -2,7 +2,7 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      Added new base image assets containing the Operator-SDK CLI at quay.io/repository/operator-framework/operator-sdk-$ARCH (amd64 s390x ppc64le arm64).
+      Added new base image assets containing the Operator-SDK CLI at quay.io/repository/operator-framework/operator-sdk
 
     # kind is one of:
     # - addition
