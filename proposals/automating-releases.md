@@ -9,7 +9,7 @@ reviewers:
 approvers:
   - TBD
 creation-date: 2020-09-19
-last-updated: 2020-09-24
+last-updated: 2020-10-01
 status: implementable
 ---
 
@@ -25,14 +25,14 @@ status: implementable
 
 ## Open Questions
 
-1. We currently build images for an architecture on machines of that architecture.
+1. [RESOLVED] We currently build images for an architecture on machines of that architecture.
 This is not a requirement for Go binaries themselves, but might be for Ansible/Helm
 dependencies since they install binaries for particular architectures. What are
 these dependencies and can they be installed in a container during image build?
 1. This proposal encompasses all binaries/images currently built for an operator-sdk release.
 Once Ansible- and Helm-related code are split into their respective repos, will
 this release process follow?
-1. Continue using our [changelog generator][sdk-changelog-generator], or use goreleaser's
+1. [RESOLVED] Continue using our [changelog generator][sdk-changelog-generator], or use goreleaser's
 [generator][goreleaser-changelog]?
 
 ## Summary
@@ -83,18 +83,65 @@ comprehensible, and centralized.
 ### Implementation Details/Notes/Constraints
 
 The [`goreleaser`][goreleaser] release tool satisfies the above goals and user stories:
-- Manages code tags
-- Builds and pushes [binaries][goreleaser-build] and [images][goreleaser-docker]
-  - Applies to `operator-sdk`, `ansible-operator`, and `helm-operator`
+- Release from semver code tags
+- Encapsulates most release process complexity in one command
+  - Builds [binaries][goreleaser-builds]
+    - Applies to `operator-sdk`, `ansible-operator`, and `helm-operator`
+  - Publishes GitHub releases
 - Centralized configuration and a well-documented [configuration spec][goreleaser-config]
-- Handles the full release process with one click
 
 `goreleaser` configuration is CI-agnostic, so if we choose to switch CI systems in the future
 we can bring our configuration with us verbatim.
 
-Additionally it supports generating release notes based on commits, or from a
-[custom source][goreleaser-custom-changelog]; we currently use a custom changelog generator
-which we can continue using.
+Additionally it supports generating release notes from a [custom source][goreleaser-custom-changelog];
+we currently use a custom changelog generator which we can continue using.
+
+#### Release steps
+
+These new release steps delegate releasing completely to CI infrastructure.
+
+1. Commit to master:
+  - Regenerated `CHANGELOG.md`
+  - Removed fragments in `changelog/`
+  - New migration guide `website/content/en/docs/upgrading-sdk-version/vX.Y.Z.md`
+  - Updated version in `website/content/en/docs/installation/install-operator-sdk.md`
+1. `git tag vX.Y.Z && git push --tags`
+    1. CI runs tests on tag
+    1. CI runs `make release TAG=<tag>`
+
+Currently the `make release` only builds binaries; this new rule will set up and run `goreleaser` to:
+- Build multi-arch binaries and images
+- Publish a Github release with binaries and signed SHA256 hashes for each binary
+  - We'll need to create a PGP key for CI
+- Push images to the remote registry.
+
+##### Binary builds
+
+Building `operator-sdk`, `ansible-operator`, and `helm-operator` binaries is straightforward because they
+can be cross-compiled locally under their own [`builds`][goreleaser-builds] task. These binaries will
+be published as they are now.
+
+##### Image builds
+
+`goreleaser` does not yet have support for multi-arch image builds. Instead, the release config will have a
+post-build hook for each task in `builds` that runs an image build script leveraging [`docker buildx`][docker-buildx],
+a Docker plugin that can build an image for each arch of a multi-arch manifest list in one command.
+`buildx` should be available in almost every CI environment by default as it is built into
+the `docker` CLI and server v19.03+.
+
+This removes the need for our CI to create and push manifest lists from images built on machines of the target arch.
+
+###### Multi-stage builds
+
+Currently our Dockerfiles require binaries be built externally with a specific name.
+We should instead be encapsulating the full image build process in a multi-stage build,
+in which our Dockerfiles are set up such that they first build the desired binary in a builder image (`golang:alpine`)
+then copy that binary into the final image (`ubi8/ubi-minimal:latest`).
+
+##### Publishing releases
+
+All `goreleaser` requires to publish a release is a [Github access token][github-token] with the `repo` privilege,
+and a quay.io push-enabled token (Travis CI already has one).
 
 ### Risks and Mitigations
 
@@ -102,6 +149,7 @@ which we can continue using.
 [config file format][goreleaser-config] is straightforward and has great documentation.
 - Release tool development is controlled by another organization, which can lead to undesirable bugs/changes.
 This is a manageable risk because the project is open source, to which we can contribute.
+- [`docker buildx`][docker-buildx] is experimental and may not be easy to set up in CI.
 
 ## Design Details
 
@@ -109,11 +157,11 @@ This is a manageable risk because the project is open source, to which we can co
 
 1. Create a goreleaser configuration that creates the exact same release artifacts the current process does.
 1. Push configuration to a test repository.
-1. Run a test release.
+1. Run a [test release][goreleaser-dry-run].
 1. Ensure:
-  1. Tag is present remotely.
-  1. Release notes/binaries are published as expected.
-  1. Images are pullable and run on the desired architectures.
+    1. Tag is present remotely.
+    1. Release notes/binaries are published as expected.
+    1. Images are pullable and run on the desired architectures.
 
 ### Graduation Criteria
 
@@ -122,23 +170,15 @@ operator-sdk repo and unused release scripts/code removed.
 
 #### Examples
 
-TBD
+N/A
 
 ##### Dev Preview -> Tech Preview
 
-- Ability to utilize the enhancement end to end
-- End user documentation, relative API stability
-- Sufficient test coverage
-- Gather feedback from users rather than just developers
+N/A
 
 ##### Tech Preview -> GA
 
-- More testing (upgrade, downgrade, scale)
-- Sufficient time for feedback
-- Available by default
-
-**For non-optional features moving to GA, the graduation criteria must include
-end to end tests.**
+N/A
 
 ##### Removing a deprecated feature
 
@@ -178,8 +218,11 @@ None, this can continue using our current CI infrastructure.
 [sdk-release-doc]:https://v1-0-x.sdk.operatorframework.io/docs/contribution-guidelines/release/
 [goreleaser]:https://goreleaser.com/customization/
 [goreleaser-config]:https://goreleaser.com/customization/
-[goreleaser-build]:https://goreleaser.com/customization/build/
+[goreleaser-builds]:https://goreleaser.com/customization/build/
 [goreleaser-docker]:https://goreleaser.com/customization/docker/
 [goreleaser-changelog]:https://goreleaser.com/customization/release/#customize-the-changelog
 [goreleaser-custom-changelog]:https://goreleaser.com/customization/release/#custom-release-notes
+[goreleaser-dry-run]:https://goreleaser.com/quick-start/#dry-run
 [bazel]:https://docs.bazel.build/versions/3.5.0/bazel-overview.html
+[github-token]:https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/creating-a-personal-access-token
+[docker-buildx]:https://github.com/docker/buildx#building-multi-platform-images
