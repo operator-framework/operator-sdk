@@ -105,6 +105,7 @@ func addObjectToBinaryData(binaryData map[string][]byte, obj interface{}, names 
 		return fmt.Errorf("error creating %s binary data: %w", names, err)
 	}
 	binaryData[makeObjectFileName(b, names...)] = b
+	fmt.Printf("%+v", binaryData)
 	return nil
 }
 
