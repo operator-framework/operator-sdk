@@ -78,7 +78,7 @@ Each minor release has a corresponding release branch of the form `vX.Y.x`, wher
 release version numbers and the `x` is literal. This branch accepts bug fixes according to our [backport policy][backports].
 
 After the minor release is made, this branch must be fast-forwarded to that release's tag and a post-release PR made
-against this branch. See the [release process](#7-create-a-pr-for-post-release-version-updates) for more details.
+against this branch. See the [release process](#8-create-a-pr-for-post-release-version-updates) for more details.
 
 #### Cherry-picking
 
@@ -112,7 +112,7 @@ Unlock `master` or release branch after the release has completed (after step 6 
 ### Releasing
 
 The GitHub [`Releases` tab][release-page] in the operator-sdk repo is where all SDK releases live.
-To create a GitHub release see the [releasing binaries section](#8-releasing-binaries-signatures-and-release-notes).
+To create a GitHub release see the [releasing binaries section](#9-releasing-binaries-signatures-and-release-notes).
 
 #### Release notes
 
@@ -202,13 +202,23 @@ For major and minor releases, `master` should be locked between steps 3 and 6 so
 or have a pre-release version, ex. `v1.2.0+git`. Otherwise commits might be built into a release that shouldn't be.
 For patch releases, ensure all required bugs are [cherry-picked](#cherry-picking), then the release branch `v1.3.x` should be locked down.
 
-### 1. Netlify configuration
+### 1. Update OLM bindata
+
+This step is to be preferably performed only during major releases. Update the `OLM_VERSION` variable in Makefile to the latest successful release of OLM. Run `make bindata` so that `internal/bindata/olm` is updated. Also, update the `availableVersions` map in `internal/bindata/olm/versions.go` to contain the version of OLM which you have specified in the Makefile.
+
+Submit a PR with the changes and merge it with master.
+
+**Important:**
+- Update OLM bindata just before starting the release so that we have the latest OLM version.
+- Verify that the release of OLM version which you specify in Makefile is successful.
+
+### 2. Netlify configuration
 
 **Important:** ensure a release branch-to-subdomain mapping exists in the SDK's Netlify configuration _prior to creating a release_,
 ex. `v1.3.x` to `https://v1-3-x.sdk.operatorframework.io`. You can ping SDK [approvers][doc-owners] to ensure a
 [release branch](#release-branches) is created prior to the release and that this mapping is created.
 
-### 2. Create release branch for Netlify
+### 3. Create release branch for Netlify
 
 The release branch must be created before the release occurs to appease the Netlify website configuration demons.
 You can do so by running the following before proceeding with the release, assuming the upstream SDK is the `upstream` remote repo:
@@ -220,7 +230,7 @@ $ git checkout -b v1.3.x
 $ git push -u upstream v1.3.x
 ```
 
-### 3. Create a PR for release version, CHANGELOG.md, and migration guide updates
+### 4. Create a PR for release version, CHANGELOG.md, and migration guide updates
 
 Once all PR's needed for a release have been merged, branch from `master`:
 
@@ -262,11 +272,11 @@ and add the following lines under `[[params.versions]]` for `master`:
     url = "https://v1-3-x.sdk.operatorframework.io"
   ```
 
-### 4. Lock down proper branch
+### 5. Lock down proper branch
 Create and merge a new PR for `release-v1.3.0`. Once this PR is merged, lock down the master or release branch
 to prevent further commits between this and step 7. See [this section](#locking-down-branches) for steps to do so.
 
-### 5. Create a release tag, binaries, and signatures
+### 6. Create a release tag, binaries, and signatures
 
 The top-level `release.sh` script will take care of verifying versions in files described in step 3, and tagging and verifying the tag, as well as building binaries and generating signatures by calling `make release`.
 
@@ -304,7 +314,7 @@ Once this tag passes CI, go to step 6. For more info on tagging, see the [releas
 
 **Note:** If CI fails for some reason, you will have to revert the tagged commit, re-commit, and make a new PR.
 
-### 6. Fast-forward the `latest` and release branches
+### 7. Fast-forward the `latest` and release branches
 
 The `latest` branch points to the latest release tag to keep the main website subdomain up-to-date.
 Run the following commands to do so:
@@ -323,7 +333,7 @@ $ git reset --hard tags/v1.3.0
 $ git push -f upstream v1.3.x
 ```
 
-### 7. Create a PR for post-release version updates
+### 8. Create a PR for post-release version updates
 
 Check out a new branch from `master` or release branch and commit the following changes:
 
@@ -333,7 +343,7 @@ Check out a new branch from `master` or release branch and commit the following 
 
 Create a new PR for this branch targeting the `master` or release branch.
 
-### 8. Releasing binaries, signatures, and release notes
+### 9. Releasing binaries, signatures, and release notes
 
 The final step is to upload binaries, their signature files, and release notes from `CHANGELOG.md` for `v1.3.0`.
 To create a GitHub release:
@@ -346,7 +356,7 @@ To create a GitHub release:
 
 **Note:** if this is a pre-release, make sure to check the `This is a pre-release` box under the file attachment frame. If you are not sure what this means, ask another maintainer.
 
-### 9. Unlock proper branch
+### 10. Unlock proper branch
 Unlock the `master` or release branch after the Github release is complete.
 See [this section](#locking-down-branches) for steps to do so.
 

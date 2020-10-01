@@ -14,6 +14,7 @@ GIT_VERSION = $(shell git describe --dirty --tags --always)
 GIT_COMMIT = $(shell git rev-parse HEAD)
 K8S_VERSION = v1.18.2
 GOLANGCI_LINT_VER = "1.30.0"
+OLM_VERSION = "0.15.1"
 REPO = github.com/operator-framework/operator-sdk
 PKGS = $(shell go list ./... | grep -v /vendor/)
 TEST_PKGS = $(shell go list ./... | grep -v -E 'github.com/operator-framework/operator-sdk/test/')
@@ -113,6 +114,9 @@ gen-cli-doc: ## Generate CLI documentation
 
 gen-changelog: ## Generate CHANGELOG.md and migration guide updates
 	./hack/generate/changelog/gen-changelog.sh
+
+bindata:
+	./hack/generate/olm_bindata.sh $(OLM_VERSION)
 
 ##############################
 # Release                    #
