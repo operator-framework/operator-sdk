@@ -50,16 +50,32 @@ var Scheme = scheme.Scheme
 
 // custom error struct to capture deployment errors
 // while verifying CSV installs.
-type deploymentError struct {
+type resourceError struct {
 	name  string
 	issue string
 }
-type deploymentVerifyError []deploymentError
+type podError struct {
+	resourceError
+}
+type deploymentError struct {
+	resourceError
+	podErrs podErrors
+}
+type deploymentErrors []deploymentError
+type podErrors []podError
 
-func (e deploymentVerifyError) Error() string {
+func (e deploymentErrors) Error() string {
 	var sb strings.Builder
 	for _, i := range e {
-		sb.WriteString(i.name + " has errors: \n" + i.issue + "\n")
+		sb.WriteString(fmt.Sprintf("deployment %s has error: %s\n%s", i.name, i.issue, i.podErrs.Error()))
+	}
+	return sb.String()
+}
+
+func (e podErrors) Error() string {
+	var sb strings.Builder
+	for _, i := range e {
+		sb.WriteString(fmt.Sprintf("\tpod %s has error: %s\n", i.name, i.issue))
 	}
 	return sb.String()
 }
@@ -243,7 +259,7 @@ func (c Client) DoCSVWait(ctx context.Context, key types.NamespacedName) error {
 	err := wait.PollImmediateUntil(time.Second, csvPhaseSucceeded, ctx.Done())
 	if err != nil && errors.Is(err, context.DeadlineExceeded) {
 		depCheckErr := c.checkDeploymentErrors(ctx, key, csv)
-		if _, ok := depCheckErr.(deploymentVerifyError); ok {
+		if depCheckErr != nil {
 			return depCheckErr
 		}
 	}
@@ -253,12 +269,13 @@ func (c Client) DoCSVWait(ctx context.Context, key types.NamespacedName) error {
 // checkDeploymentErrors function loops through deployment specs of a given CSV, and prints reason
 // in case of failures, based on deployment condition.
 func (c Client) checkDeploymentErrors(ctx context.Context, key types.NamespacedName, csv olmapiv1alpha1.ClusterServiceVersion) error {
-	depErr := deploymentVerifyError{}
+	depErr := deploymentErrors{}
 	if key.Namespace == "" {
 		return fmt.Errorf("no namespace provided to get deployment failures")
 	}
 	dep := &appsv1.Deployment{}
 	for _, ds := range csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
+		podErr := podErrors{}
 		depKey := types.NamespacedName{
 			Namespace: key.Namespace,
 			Name:      ds.Name,
@@ -266,28 +283,25 @@ func (c Client) checkDeploymentErrors(ctx context.Context, key types.NamespacedN
 		depSelectors := ds.Spec.Selector
 		if err := c.KubeClient.Get(ctx, depKey, dep); err != nil {
 			depErr = append(depErr, deploymentError{
-				name:  ds.Name,
-				issue: err.Error(),
+				resourceError{
+					name:  ds.Name,
+					issue: err.Error(),
+				},
+				podErr,
 			})
 			continue
 		}
 		for _, s := range dep.Status.Conditions {
 			if s.Type == appsv1.DeploymentAvailable && s.Status != corev1.ConditionTrue {
 				podError := c.checkPodErrors(ctx, depSelectors, key)
-				if podError.Error() == "" {
-					depErr = append(depErr, deploymentError{
+				podErr = podError.(podErrors)
+				depErr = append(depErr, deploymentError{
+					resourceError{
 						name:  ds.Name,
 						issue: s.Reason,
-					})
-					return depErr
-				}
-				if _, ok := podError.(deploymentVerifyError); ok {
-					depErr = append(depErr, deploymentError{
-						name:  ds.Name,
-						issue: podError.Error(),
-					})
-					return depErr
-				}
+					},
+					podErr,
+				})
 			}
 		}
 	}
@@ -297,7 +311,7 @@ func (c Client) checkDeploymentErrors(ctx context.Context, key types.NamespacedN
 // checkPodErrors loops through pods, and returns pod errors if any.
 func (c Client) checkPodErrors(ctx context.Context, depSelectors *metav1.LabelSelector, key types.NamespacedName) error {
 	// loop through pods and return specific error message.
-	podErr := deploymentVerifyError{}
+	podErr := podErrors{}
 	podList := &corev1.PodList{}
 	podLabelSelectors, err := metav1.LabelSelectorAsSelector(depSelectors)
 	if err != nil {
@@ -314,9 +328,12 @@ func (c Client) checkPodErrors(ctx context.Context, depSelectors *metav1.LabelSe
 		for _, cs := range p.Status.ContainerStatuses {
 			if !cs.Ready {
 				if cs.State.Waiting != nil {
-					podErr = append(podErr, deploymentError{
-						name:  p.Name + cs.Name,
-						issue: cs.State.Waiting.Message,
+					containerName := p.Name + ":" + cs.Name
+					podErr = append(podErr, podError{
+						resourceError{
+							name:  containerName,
+							issue: cs.State.Waiting.Message,
+						},
 					})
 				}
 			}

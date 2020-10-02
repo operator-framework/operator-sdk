@@ -46,21 +46,22 @@ var _ = Describe("Client", func() {
 						StrategySpec: olmapiv1alpha1.StrategyDetailsDeployment{
 							DeploymentSpecs: []olmapiv1alpha1.StrategyDeploymentSpec{
 								{
-									Name: "test-operator-controller-manager",
-									Spec: appsv1.DeploymentSpec{
-										Selector: &metav1.LabelSelector{
-											MatchLabels: map[string]string{
-												"control-plane": "controller-manager",
-											},
-										},
-									},
-								},
-								{
 									Name: "dummy-operator",
 									Spec: appsv1.DeploymentSpec{
 										Selector: &metav1.LabelSelector{
 											MatchLabels: map[string]string{
 												"dummylabel": "dummyvalue",
+											},
+										},
+									},
+								},
+
+								{
+									Name: "test-operator-controller-manager",
+									Spec: appsv1.DeploymentSpec{
+										Selector: &metav1.LabelSelector{
+											MatchLabels: map[string]string{
+												"control-plane": "controller-manager",
 											},
 										},
 									},
@@ -86,6 +87,7 @@ var _ = Describe("Client", func() {
 						Status: corev1.PodStatus{
 							ContainerStatuses: []corev1.ContainerStatus{
 								{
+									Name:  "container1",
 									Ready: false,
 									State: corev1.ContainerState{
 										Waiting: &corev1.ContainerStateWaiting{
@@ -140,6 +142,7 @@ var _ = Describe("Client", func() {
 						Status: corev1.PodStatus{
 							ContainerStatuses: []corev1.ContainerStatus{
 								{
+									Name:  "container1",
 									Ready: false,
 									State: corev1.ContainerState{
 										Waiting: &corev1.ContainerStateWaiting{
@@ -161,6 +164,7 @@ var _ = Describe("Client", func() {
 						Status: corev1.PodStatus{
 							ContainerStatuses: []corev1.ContainerStatus{
 								{
+									Name:  "container2",
 									Ready: false,
 									State: corev1.ContainerState{
 										Waiting: &corev1.ContainerStateWaiting{
