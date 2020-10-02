@@ -85,7 +85,7 @@ var _ = BeforeSuite(func(done Done) {
 
 	if isOLMManagedBySuite {
 		By("installing OLM")
-		Expect(tc.InstallOLM()).To(Succeed())
+		Expect(tc.InstallOLMVersion(testutils.OlmVersionForTestSuite)).To(Succeed())
 	}
 
 	By("initializing a Helm project")
