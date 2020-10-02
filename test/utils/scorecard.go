@@ -14,7 +14,7 @@
 
 // Modified from https://github.com/kubernetes-sigs/kubebuilder/tree/39224f0/test/e2e/v3
 
-package internal
+package utils
 
 import (
 	"fmt"
@@ -85,13 +85,18 @@ func (tc TestContext) AddScorecardCustomPatchFile() error {
 
 // ReplaceScorecardImagesForDev will replaces the scorecard images in the manifests per dev tag which is built
 // in the CI based on the code changes made.
-func (tc TestContext) ReplaceScorecardImagesForDev() {
-	ReplaceRegexInFile(
+func (tc TestContext) ReplaceScorecardImagesForDev() error {
+	err := ReplaceRegexInFile(
 		filepath.Join(tc.Dir, "config", "scorecard", "patches", "basic.config.yaml"),
 		scorecardImage, scorecardImageReplace,
 	)
-	ReplaceRegexInFile(
+	if err != nil {
+		return err
+	}
+
+	err = ReplaceRegexInFile(
 		filepath.Join(tc.Dir, "config", "scorecard", "patches", "olm.config.yaml"),
 		scorecardImage, scorecardImageReplace,
 	)
+	return err
 }

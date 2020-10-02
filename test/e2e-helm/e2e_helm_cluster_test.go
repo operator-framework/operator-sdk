@@ -25,7 +25,7 @@ import (
 	. "github.com/onsi/gomega"
 	kbtestutils "sigs.k8s.io/kubebuilder/test/e2e/utils"
 
-	testutils "github.com/operator-framework/operator-sdk/test/internal"
+	testutils "github.com/operator-framework/operator-sdk/test/utils"
 )
 
 var _ = Describe("Running Helm projects", func() {
@@ -169,7 +169,8 @@ var _ = Describe("Running Helm projects", func() {
 			Eventually(verifyRelease, time.Minute, time.Second).Should(Succeed())
 
 			By("updating replicaCount to 2 in the CR manifest")
-			testutils.ReplaceInFile(filepath.Join(tc.Dir, sampleFile), "replicaCount: 1", "replicaCount: 2")
+			err = testutils.ReplaceInFile(filepath.Join(tc.Dir, sampleFile), "replicaCount: 1", "replicaCount: 2")
+			Expect(err).NotTo(HaveOccurred())
 
 			By("applying CR manifest with replicaCount: 2")
 			_, err = tc.Kubectl.Apply(false, "-f", sampleFile)

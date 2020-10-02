@@ -12,9 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Modified from https://github.com/kubernetes-sigs/kubebuilder/tree/39224f0/test/e2e/v3
-
-package internal
+package utils
 
 import (
 	"fmt"
@@ -77,4 +75,13 @@ func (tc TestContext) AddPackagemanifestsTarget() error {
 		return err
 	}
 	return nil
+}
+
+// DisableOLMBundleInterativeMode will update the Makefile to disable the interactive mode
+func (tc TestContext) DisableOLMBundleInteractiveMode() error {
+	// Todo: check if we cannot improve it since the replace/content will exists in the
+	// pkgmanifest target if it be scaffolded before this call
+	content := "operator-sdk generate kustomize manifests"
+	replace := content + " --interactive=false"
+	return ReplaceInFile(filepath.Join(tc.Dir, "Makefile"), content, replace)
 }

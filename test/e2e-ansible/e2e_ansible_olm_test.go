@@ -18,14 +18,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
-
-	testutils "github.com/operator-framework/operator-sdk/test/internal"
 )
 
 var _ = Describe("Integrating ansible Projects with OLM", func() {
@@ -40,15 +37,13 @@ var _ = Describe("Integrating ansible Projects with OLM", func() {
 			OLMStatusDescriptorsTest  = "olm-status-descriptors"
 		)
 
-		BeforeEach(func() {
-			By("turning off interactive prompts for all generation tasks.")
-			replace := "operator-sdk generate kustomize manifests"
-			testutils.ReplaceInFile(filepath.Join(tc.Dir, "Makefile"), replace, replace+" --interactive=false")
-		})
-
 		It("should generate and run a valid OLM bundle and packagemanifests", func() {
+			By("turning off interactive prompts for all generation tasks.")
+			err := tc.DisableOLMBundleInteractiveMode()
+			Expect(err).NotTo(HaveOccurred())
+
 			By("building the bundle")
-			err := tc.Make("bundle", "IMG="+tc.ImageName)
+			err = tc.Make("bundle", "IMG="+tc.ImageName)
 			Expect(err).NotTo(HaveOccurred())
 
 			By("building the operator bundle image")
@@ -122,7 +117,7 @@ var _ = Describe("Integrating ansible Projects with OLM", func() {
 			}
 
 			By("destroying the deployed package manifests-formatted operator")
-			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", projectName,
+			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", tc.ProjectName,
 				"--timeout", "4m")
 			_, err = tc.Run(cleanupPkgManCmd)
 			Expect(err).NotTo(HaveOccurred())

@@ -17,14 +17,10 @@ package e2e_go_test
 import (
 	"encoding/json"
 	"os/exec"
-	"path/filepath"
-	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
-
-	testutils "github.com/operator-framework/operator-sdk/test/internal"
 )
 
 var _ = Describe("Integrating Go Projects with OLM", func() {
@@ -40,26 +36,21 @@ var _ = Describe("Integrating Go Projects with OLM", func() {
 		)
 
 		It("should generate and run a valid OLM bundle and packagemanifests", func() {
-			By("generating the operator bundle")
-			// Turn off interactive prompts for all generation tasks.
-			replace := "operator-sdk generate kustomize manifests"
-			testutils.ReplaceInFile(filepath.Join(tc.Dir, "Makefile"), replace, replace+" --interactive=false")
-			err := tc.Make("bundle", "IMG="+tc.ImageName)
+			By("turning off interactive prompts for all generation tasks.")
+			err := tc.DisableOLMBundleInteractiveMode()
+			Expect(err).NotTo(HaveOccurred())
+
+			By("building the bundle")
+			err = tc.Make("bundle", "IMG="+tc.ImageName)
 			Expect(err).NotTo(HaveOccurred())
 
 			By("building the operator bundle image")
-			// Use the existing image tag but with a "-bundle" suffix.
-			imageSplit := strings.SplitN(tc.ImageName, ":", 2)
-			bundleImage := imageSplit[0] + "-bundle"
-			if len(imageSplit) == 2 {
-				bundleImage += ":" + imageSplit[1]
-			}
-			err = tc.Make("bundle-build", "BUNDLE_IMG="+bundleImage)
+			err = tc.Make("bundle-build", "BUNDLE_IMG="+tc.BundleImageName)
 			Expect(err).NotTo(HaveOccurred())
 
 			if isRunningOnKind() {
 				By("loading the bundle image into Kind cluster")
-				err = tc.LoadImageToKindClusterWithName(bundleImage)
+				err = tc.LoadImageToKindClusterWithName(tc.BundleImageName)
 				Expect(err).NotTo(HaveOccurred())
 			}
 
@@ -127,7 +118,7 @@ var _ = Describe("Integrating Go Projects with OLM", func() {
 			}
 
 			By("destroying the deployed package manifests-formatted operator")
-			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", projectName,
+			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", tc.ProjectName,
 				"--timeout", "4m")
 			_, err = tc.Run(cleanupPkgManCmd)
 			Expect(err).NotTo(HaveOccurred())

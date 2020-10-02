@@ -23,7 +23,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	testutils "github.com/operator-framework/operator-sdk/test/internal"
+	testutils "github.com/operator-framework/operator-sdk/test/utils"
 )
 
 // TestE2EHelm ensures the Helm projects built with the SDK tool by using its binary.
@@ -43,8 +43,6 @@ var (
 	isOLMManagedBySuite = true
 	// kubectx stores the k8s context from where the tests are running
 	kubectx string
-	// projectName is the name of the test project
-	projectName string
 )
 
 // BeforeSuite run before any specs are run to perform the required actions for all e2e Helm tests.
@@ -52,10 +50,11 @@ var _ = BeforeSuite(func(done Done) {
 	var err error
 
 	By("creating a new test context")
-	tc, err = testutils.NewTestContext("GO111MODULE=on")
+	tc, err = testutils.NewTestContext(testutils.BinaryName, "GO111MODULE=on")
 	Expect(err).NotTo(HaveOccurred())
+
+	By("creating a new directory")
 	Expect(tc.Prepare()).To(Succeed())
-	projectName = filepath.Base(tc.Dir)
 
 	By("checking the cluster type")
 	kubectx, err = tc.Kubectl.Command("config", "current-context")
@@ -97,7 +96,8 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).NotTo(HaveOccurred())
 
 	By("using dev image for scorecard-test")
-	tc.ReplaceScorecardImagesForDev()
+	err = tc.ReplaceScorecardImagesForDev()
+	Expect(err).NotTo(HaveOccurred())
 
 	By("creating an API definition")
 	err = tc.CreateAPI(
@@ -107,7 +107,8 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).NotTo(HaveOccurred())
 
 	By("replacing project Dockerfile to use Helm base image with the dev tag")
-	testutils.ReplaceRegexInFile(filepath.Join(tc.Dir, "Dockerfile"), "quay.io/operator-framework/helm-operator:.*", "quay.io/operator-framework/helm-operator:dev")
+	err = testutils.ReplaceRegexInFile(filepath.Join(tc.Dir, "Dockerfile"), "quay.io/operator-framework/helm-operator:.*", "quay.io/operator-framework/helm-operator:dev")
+	Expect(err).Should(Succeed())
 
 	By("checking the kustomize setup")
 	err = tc.Make("kustomize")

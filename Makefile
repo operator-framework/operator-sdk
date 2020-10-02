@@ -105,12 +105,15 @@ setup-k8s:
 
 ##@ Generate
 
-.PHONY: generate gen-cli-doc gen-changelog
+.PHONY: generate gen-cli-doc gen-changelog gen-samples
 
-generate: gen-cli-doc  ## Run all non-release generate targets
+generate: gen-cli-doc gen-samples ## Run all non-release generate targets
 
 gen-cli-doc: ## Generate CLI documentation
 	./hack/generate/cli-doc/gen-cli-doc.sh
+
+gen-samples: ## Generate samples
+	go run ./hack/generate/samples/generate_all.go
 
 gen-changelog: ## Generate CHANGELOG.md and migration guide updates
 	./hack/generate/changelog/gen-changelog.sh
