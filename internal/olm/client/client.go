@@ -51,15 +51,15 @@ var Scheme = scheme.Scheme
 // custom error struct to capture deployment errors
 // while verifying CSV installs.
 type deploymentError struct {
-	depName string
-	issue   string
+	name  string
+	issue string
 }
 type deploymentVerifyError []deploymentError
 
 func (e deploymentVerifyError) Error() string {
 	var sb strings.Builder
 	for _, i := range e {
-		sb.WriteString(i.depName + " has errors: \n" + i.issue + "\n")
+		sb.WriteString(i.name + " has errors: \n" + i.issue + "\n")
 	}
 	return sb.String()
 }
@@ -250,8 +250,7 @@ func (c Client) DoCSVWait(ctx context.Context, key types.NamespacedName) error {
 	return err
 }
 
-// TODO(btenneti) Refactor function to collect errors into customized error and return.
-// printDeploymentErrors function loops through deployment specs of a given CSV, and prints reason
+// checkDeploymentErrors function loops through deployment specs of a given CSV, and prints reason
 // in case of failures, based on deployment condition.
 func (c Client) checkDeploymentErrors(ctx context.Context, key types.NamespacedName, csv olmapiv1alpha1.ClusterServiceVersion) error {
 	depErr := deploymentVerifyError{}
@@ -267,25 +266,25 @@ func (c Client) checkDeploymentErrors(ctx context.Context, key types.NamespacedN
 		depSelectors := ds.Spec.Selector
 		if err := c.KubeClient.Get(ctx, depKey, dep); err != nil {
 			depErr = append(depErr, deploymentError{
-				depName: ds.Name,
-				issue:   err.Error(),
+				name:  ds.Name,
+				issue: err.Error(),
 			})
 			continue
 		}
 		for _, s := range dep.Status.Conditions {
-			if s.Type == appsv1.DeploymentAvailable && s.Status == corev1.ConditionFalse {
+			if s.Type == appsv1.DeploymentAvailable && s.Status != corev1.ConditionTrue {
 				podError := c.checkPodErrors(ctx, depSelectors, key)
 				if podError.Error() == "" {
 					depErr = append(depErr, deploymentError{
-						depName: ds.Name,
-						issue:   s.Reason,
+						name:  ds.Name,
+						issue: s.Reason,
 					})
 					return depErr
 				}
 				if _, ok := podError.(deploymentVerifyError); ok {
 					depErr = append(depErr, deploymentError{
-						depName: ds.Name,
-						issue:   podError.Error(),
+						name:  ds.Name,
+						issue: podError.Error(),
 					})
 					return depErr
 				}
@@ -314,10 +313,12 @@ func (c Client) checkPodErrors(ctx context.Context, depSelectors *metav1.LabelSe
 	for _, p := range podList.Items {
 		for _, cs := range p.Status.ContainerStatuses {
 			if !cs.Ready {
-				podErr = append(podErr, deploymentError{
-					depName: p.Name + cs.Name,
-					issue:   cs.State.Waiting.Message,
-				})
+				if cs.State.Waiting != nil {
+					podErr = append(podErr, deploymentError{
+						name:  p.Name + cs.Name,
+						issue: cs.State.Waiting.Message,
+					})
+				}
 			}
 		}
 	}
