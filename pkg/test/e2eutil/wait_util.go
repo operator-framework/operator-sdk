@@ -75,6 +75,36 @@ func waitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace,
 	return nil
 }
 
+func waitForStatefulSet(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, replicas int,
+	retryInterval, timeout time.Duration, isOperator bool) error {
+	if isOperator && test.Global.LocalOperator {
+		t.Log("Operator is running locally; skip waitForStatefulSet")
+		return nil
+	}
+	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		statefulSets, err := kubeclient.AppsV1().StatefulSets(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				t.Logf("Waiting for availability of StatefulSet: %s in Namespace: %s \n", name, namespace)
+				return false, nil
+			}
+			return false, err
+		}
+
+		if int(statefulSets.Status.ReadyReplicas) >= replicas {
+			return true, nil
+		}
+		t.Logf("Waiting for full availability of %s statefulset (%d/%d)\n", name,
+			statefulSets.Status.ReadyReplicas, replicas)
+		return false, nil
+	})
+	if err != nil {
+		return err
+	}
+	t.Logf("StatefulSet available (%d/%d)\n", replicas, replicas)
+	return nil
+}
+
 func WaitForDeletion(t *testing.T, dynclient client.Client, obj runtime.Object, retryInterval,
 	timeout time.Duration) error {
 	key, err := client.ObjectKeyFromObject(obj)
