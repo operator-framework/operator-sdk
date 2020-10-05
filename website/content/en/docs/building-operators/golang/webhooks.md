@@ -12,7 +12,7 @@ to perform validations that go beyond the capabilities of OpenAPI schema validat
 creation or higher level permissions checks based on the user that is making the request to the API server. Mutating webhooks are
 most frequently used for defaulting, by adding default values for unset fields in the resource on creation.
 
-For more background on Admission webhooks, refer to the [Kubebuilder documentation][kubebuilder_admission_controllers] 
+For more background on Admission webhooks, refer to the [Kubebuilder documentation][kubebuilder_admission_controllers]
 or the [official Kubernetes documentation][kubernetes_admission_controllers] on the topic. You can also refer to the
 [Kubebuilder webhook walkthrough][kubebuilder_cronjob_webhook], which is similar in content to this guide.
 Kubebuilder also has a guide
@@ -32,7 +32,7 @@ contain some boilerplate to set up the logger and register your webhook with the
 well as a variety of unimplemented methods (marked with `TODO`s). The mutating webhook implementation
 belongs in the `Default` function. The validating webhook implementation will be split between the
 `ValidateCreate`, `ValidateUpdate`, and `ValidateDelete` functions, which allows you to perform different
-validations based on the operation being performed, ie, preventing a field from being changed on `Update`. 
+validations based on the operation being performed, ie, preventing a field from being changed on `Update`.
 
 The memcached operator we are building in this example is too simple to require defaulting or
 additional validations, but as an example, we can reinforce that the default value for `spec.size` should be `3`, by adding the following logic to the `Default` function (note that this is already handled by the CRD defaulting and is technically completely superfluous):
@@ -83,7 +83,7 @@ $ make manifests
 ```
 
 You will need to enable cert-manager and webhook deployment in order to deploy these webhooks properly.
-To do so, edit the `config/default/kustomize.yaml` and uncomment the sections marked by `[WEBHOOK]` and `[CERTMANAGER]` comments. More detail on this step can be found in the 
+To do so, edit the `config/default/kustomize.yaml` and uncomment the sections marked by `[WEBHOOK]` and `[CERTMANAGER]` comments. More detail on this step can be found in the
 [Kubebuilder documentation][kubebuilder_running_webhook].
 
 ### Update main.go so that running locally works
@@ -202,7 +202,7 @@ memcached-sample                        5/5     5            5           3m
 ```
 
 [tutorial_run_as_deployment]: /docs/building-operators/golang/tutorial/#2-run-as-a-deployment-inside-the-cluster
-[tutoria_create_a_cr]: /docs/building-operators/golang/tutorial/#create-a-memcached-cr
+[tutorial_create_a_cr]: /docs/building-operators/golang/tutorial/#create-a-memcached-cr
 
 [kubebuilder_admission_controllers]: https://book.kubebuilder.io/reference/admission-webhook.html
 [kubebuilder_cronjob_webhook]: https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html
