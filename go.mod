@@ -1,6 +1,6 @@
 module github.com/operator-framework/operator-sdk
 
-go 1.13
+go 1.15
 
 require (
 	github.com/blang/semver v3.5.1+incompatible
