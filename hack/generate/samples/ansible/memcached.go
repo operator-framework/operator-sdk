@@ -40,7 +40,7 @@ func NewMemcachedAnsible(ctx *pkg.SampleContext) MemcachedAnsible {
 
 // Prepare the Context for the Memcached Ansible Sample
 // Note that sample directory will be re-created and the context data for the sample
-// will be set such as the domain and GKV.
+// will be set such as the domain and GVK.
 func (ma *MemcachedAnsible) Prepare() {
 	log.Infof("destroying directory for memcached Ansible samples")
 	ma.ctx.Destroy()
@@ -49,7 +49,7 @@ func (ma *MemcachedAnsible) Prepare() {
 	err := ma.ctx.Prepare()
 	pkg.CheckError("creating directory for Ansible Sample", err)
 
-	log.Infof("setting domain and GKV")
+	log.Infof("setting domain and GVK")
 	ma.ctx.Domain = "example.com"
 	ma.ctx.Version = "v1alpha1"
 	ma.ctx.Group = "cache"

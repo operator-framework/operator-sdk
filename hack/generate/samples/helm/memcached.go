@@ -38,7 +38,7 @@ func NewMemcachedHelm(ctx *pkg.SampleContext) MemcachedHelm {
 
 // Prepare the Context for the Memcached Helm Sample
 // Note that sample directory will be re-created and the context data for the sample
-// will be set such as the domain and GKV.
+// will be set such as the domain and GVK.
 func (mh *MemcachedHelm) Prepare() {
 	log.Infof("destroying directory for memcached helm samples")
 	mh.ctx.Destroy()
@@ -47,7 +47,7 @@ func (mh *MemcachedHelm) Prepare() {
 	err := mh.ctx.Prepare()
 	pkg.CheckError("creating directory", err)
 
-	log.Infof("setting domain and GKV")
+	log.Infof("setting domain and GVK")
 	mh.ctx.Domain = "example.com"
 	mh.ctx.Version = "v1alpha1"
 	mh.ctx.Group = "cache"

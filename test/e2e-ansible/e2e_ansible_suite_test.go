@@ -89,7 +89,7 @@ var _ = BeforeSuite(func(done Done) {
 		Expect(tc.InstallOLMVersion(testutils.OlmVersionForTestSuite)).To(Succeed())
 	}
 
-	By("setting domain and GKV")
+	By("setting domain and GVK")
 	tc.Domain = "example.com"
 	tc.Version = "v1alpha1"
 	tc.Group = "ansible"
