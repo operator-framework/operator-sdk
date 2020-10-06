@@ -18,6 +18,7 @@ import (
 	"log"
 
 	"github.com/spf13/cobra"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"github.com/operator-framework/operator-sdk/internal/cmd/ansible-operator/run"
 	"github.com/operator-framework/operator-sdk/internal/cmd/ansible-operator/version"
