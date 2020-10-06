@@ -255,7 +255,7 @@ $ git checkout -b release-v1.3.0
 Run the CHANGELOG and migration guide generator:
 
 ```sh
-$ GEN_CHANGELOG_TAG=v1.3.0 make gen-changelog
+$ GEN_CHANGELOG_TAG=v1.3.0 make changelog
 ```
 
 Commit the following changes:

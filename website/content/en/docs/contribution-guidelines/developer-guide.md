@@ -60,7 +60,7 @@ showing a successful deployment stage with your changes.
 To generate the samples run:
 
 ```sh
-$ make gen-samples
+$ make samples
 ```
 
 ## Generating the docs
@@ -68,7 +68,7 @@ $ make gen-samples
 To generate the CLI docs run:
 
 ```sh
-$ make gen-cli-doc
+$ make cli-doc
 ```
 
 [git-tool]:https://git-scm.com/downloads

@@ -105,17 +105,17 @@ setup-k8s:
 
 ##@ Generate
 
-.PHONY: generate gen-cli-doc gen-changelog gen-samples
+.PHONY: generate cli-doc changelog samples
 
-generate: gen-cli-doc gen-samples ## Run all non-release generate targets
+generate: cli-doc samples bindata ## Run all non-release generate targets
 
-gen-cli-doc: ## Generate CLI documentation
-	./hack/generate/cli-doc/gen-cli-doc.sh
+cli-doc: ## Generate CLI documentation
+	./hack/generate/cli-doc/cli-doc.sh
 
-gen-samples: ## Generate samples
+samples: ## Generate samples
 	go run ./hack/generate/samples/generate_all.go
 
-gen-changelog: ## Generate CHANGELOG.md and migration guide updates
+changelog: ## Generate CHANGELOG.md and migration guide updates
 	./hack/generate/changelog/gen-changelog.sh
 
 bindata:
@@ -189,20 +189,17 @@ build/%.asc: ## Create release signatures for operator-sdk release binaries
 	fi; \
 	}
 
-# Image scaffold/build/push.
+# Image build/push.
 .PHONY: image image-build image-push
 
 image: image-build image-push ## Build and push all images
 
-image-build: image-build-ansible image-build-helm image-build-scorecard-test image-build-scorecard-test-kuttl image-build-custom-scorecard-tests image-build-sdk ## Build all images
+image-build: image-build-ansible image-build-helm image-build-scorecard-test image-build-scorecard-test-kuttl image-build-sdk ## Build all images
 
 image-push: image-push-ansible image-push-helm image-push-scorecard-test image-push-scorecard-test-kuttl image-push-sdk ## Push all images
 
-# Ansible operator image scaffold/build/push.
-.PHONY: image-scaffold-ansible image-build-ansible image-push-ansible image-push-ansible-multiarch
-
-image-scaffold-ansible:
-	go run ./hack/image/ansible/scaffold-ansible-image.go
+# Ansible operator image build/push.
+.PHONY: image-build-ansible image-push-ansible image-push-ansible-multiarch
 
 image-build-ansible: build/ansible-operator-dev-linux-gnu
 	./hack/image/build-ansible-image.sh $(ANSIBLE_BASE_IMAGE):dev
@@ -213,11 +210,8 @@ image-push-ansible:
 image-push-ansible-multiarch:
 	./hack/image/push-manifest-list.sh $(ANSIBLE_IMAGE) ${ANSIBLE_ARCHES}
 
-# Helm operator image scaffold/build/push.
-.PHONY: image-scaffold-helm image-build-helm image-push-helm image-push-helm-multiarch
-
-image-scaffold-helm:
-	go run ./hack/image/helm/scaffold-helm-image.go
+# Helm operator image build/push.
+.PHONY: image-build-helm image-push-helm image-push-helm-multiarch
 
 image-build-helm: build/helm-operator-dev-linux-gnu
 	./hack/image/build-helm-image.sh $(HELM_BASE_IMAGE):dev
@@ -240,17 +234,14 @@ image-push-sdk-multiarch:
 	./hack/image/push-manifest-list.sh $(OPERATOR_SDK_IMAGE) ${OPERATOR_SDK_ARCHES}
 
 
-# Scorecard test image scaffold/build/push.
-.PHONY: image-build-scorecard-test image-push-scorecard-test image-push-scorecard-test-multiarch
-
-# Scorecard custom test image scaffold/build/push.
+# Scorecard custom test image build/push.
 .PHONY: image-build-custom-scorecard-tests
-
-# Scorecard test kuttl image scaffold/build/push.
-.PHONY: image-build-scorecard-test-kuttl image-push-scorecard-test-kuttl image-push-scorecard-test-kuttl-multiarch
 
 image-build-custom-scorecard-tests:
 	./hack/image/build-custom-scorecard-tests-image.sh $(CUSTOM_SCORECARD_TESTS_BASE_IMAGE):dev
+
+# Scorecard test image build/push.
+.PHONY: image-build-scorecard-test image-push-scorecard-test image-push-scorecard-test-multiarch
 
 image-build-scorecard-test:
 	./hack/image/build-scorecard-test-image.sh $(SCORECARD_TEST_BASE_IMAGE):dev
@@ -260,6 +251,9 @@ image-push-scorecard-test:
 
 image-push-scorecard-test-multiarch:
 	./hack/image/push-manifest-list.sh $(SCORECARD_TEST_IMAGE) ${SCORECARD_TEST_ARCHES}
+
+# Scorecard test kuttl image build/push.
+.PHONY: image-build-scorecard-test-kuttl image-push-scorecard-test-kuttl image-push-scorecard-test-kuttl-multiarch
 
 image-build-scorecard-test-kuttl:
 	./hack/image/build-scorecard-test-kuttl-image.sh $(SCORECARD_TEST_KUTTL_BASE_IMAGE):dev
