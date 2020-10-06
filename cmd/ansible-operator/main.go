@@ -17,6 +17,7 @@ package main
 import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/operator-framework/operator-sdk/pkg/ansible"
