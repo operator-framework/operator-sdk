@@ -30,7 +30,7 @@ Also you can write tests for your operator in a declarative using the [kuttl](ht
 To implement application-specific tests, the test harness of the SDK, [scorecard][scorecard], provides the ability to ship custom code in container images as well, which can be referenced in the test suite. Because this test suite definition metadata travels with the Operator Bundle, it allows for functional testing of the Operator without the source code or the project layout being available. See [Writing Custom Scorecard Tests][writing-custom-scorecard-tests].
 
 [envtest]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/envtest
-[writing-controller-tests]: https://book.kubebuilder.io/reference/writing-tests.html
+[writing-controller-tests]: https://book.kubebuilder.io/cronjob-tutorial/writing-tests.html
 [envtest-setup]: /docs/building-operators/golang/references/envtest-setup
 [writing-kuttl-scorecard-tests]: /docs/advanced-topics/scorecard/kuttl-tests
 [writing-custom-scorecard-tests]: /docs/advanced-topics/scorecard/custom-tests
