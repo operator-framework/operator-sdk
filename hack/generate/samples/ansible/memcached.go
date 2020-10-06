@@ -122,7 +122,7 @@ func (ma *MemcachedAnsible) addingAnsibleTask() {
 func GenerateMemcachedAnsibleSample(samplesPath string) {
 	ctx, err := pkg.NewSampleContext(testutils.BinaryName, filepath.Join(samplesPath, "ansible", "memcached-operator"),
 		"GO111MODULE=on")
-	pkg.CheckError("generating ansible memcached context", err)
+	pkg.CheckError("generating Ansible memcached context", err)
 
 	memcached := NewMemcachedAnsible(&ctx)
 	memcached.Prepare()
