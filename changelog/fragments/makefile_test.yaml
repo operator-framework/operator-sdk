@@ -1,0 +1,17 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Change the makefile target test for no longer be required manually changes and
+      steps to setup the envtest.
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "bugfix"
+
+    # Is this a breaking change?
+    breaking: false
