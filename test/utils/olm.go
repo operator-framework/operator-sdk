@@ -23,6 +23,10 @@ import (
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 )
 
+const (
+	OlmVersionForTestSuite = "0.15.1"
+)
+
 var makefilePackagemanifestsFragment = `
 # Options for "packagemanifests".
 ifneq ($(origin FROM_VERSION), undefined)
