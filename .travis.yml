@@ -133,7 +133,6 @@ jobs:
       script:
       - make test-subcommand
       - make test-integration
-      - make image-build-custom-scorecard-tests
 
     # Build and test go
     - <<: *test
