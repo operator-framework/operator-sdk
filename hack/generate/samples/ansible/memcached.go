@@ -120,7 +120,7 @@ func (ma *MemcachedAnsible) addingAnsibleTask() {
 // be called in the e2e tests since it will call the Prepare() to set the sample context and generate the files
 // in the testdata directory. The e2e tests only ought to use the Run() method with the TestContext.
 func GenerateMemcachedAnsibleSample(samplesPath string) {
-	ctx, err := pkg.NewSampleContext(testutils.BinaryName, filepath.Join(samplesPath, "ansible/memcached-operator"),
+	ctx, err := pkg.NewSampleContext(testutils.BinaryName, filepath.Join(samplesPath, "ansible", "memcached-operator"),
 		"GO111MODULE=on")
 	pkg.CheckError("generating ansible memcached context", err)
 
