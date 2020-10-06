@@ -44,7 +44,7 @@ import (
 func init() {
 
     // Setup Scheme for all resources
-    utilruntime.Must(cachev1alpha1.AddToScheme(mgr.GetScheme()))
+    utilruntime.Must(cachev1alpha1.AddToScheme(scheme))
     // +kubebuilder:scaffold:scheme
 }
 ```
@@ -53,7 +53,7 @@ To add a 3rd party resource to an operator, you must add it to the Manager's sch
 
 #### Register with the Manager's scheme
 
-Call the `AddToScheme()` function for your 3rd party resource and pass it the Manager's scheme via `mgr.GetScheme()` in `main.go`.
+Call the `AddToScheme()` function for your 3rd party resource and pass it the Manager's scheme via `mgr.GetScheme()` or `scheme` in `main.go`.
 Example:
 ```go
 import (
@@ -64,9 +64,9 @@ func init() {
     ...
 
     // Adding the routev1
-    utilruntime.Must(clientgoscheme.AddToScheme(mgr.GetScheme()))
+    utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-    utilruntime.Must(routev1.AddToScheme(mgr.GetScheme()))
+    utilruntime.Must(routev1.AddToScheme(scheme))
     // +kubebuilder:scaffold:scheme
 
     ...
