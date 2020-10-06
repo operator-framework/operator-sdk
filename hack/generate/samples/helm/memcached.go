@@ -23,8 +23,10 @@ import (
 
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/pkg"
 	"github.com/operator-framework/operator-sdk/test/utils"
+	testutils "github.com/operator-framework/operator-sdk/test/utils"
 )
 
+// MemcachedHelm defines the Memcached Sample in Helm
 type MemcachedHelm struct {
 	ctx *pkg.SampleContext
 }
@@ -34,13 +36,16 @@ func NewMemcachedHelm(ctx *pkg.SampleContext) MemcachedHelm {
 	return MemcachedHelm{ctx}
 }
 
+// Prepare the Context for the Memcached Helm Sample
+// Note that sample directory will be re-created and the context data for the sample
+// will be set such as the domain and GKV.
 func (mh *MemcachedHelm) Prepare() {
 	log.Infof("destroying directory for memcached helm samples")
 	mh.ctx.Destroy()
 
-	log.Infof("creating directory for Helm Sample")
+	log.Infof("creating directory")
 	err := mh.ctx.Prepare()
-	pkg.CheckError("error to creating directory for Helm Sample", err)
+	pkg.CheckError("creating directory", err)
 
 	log.Infof("setting domain and GKV")
 	mh.ctx.Domain = "example.com"
@@ -49,6 +54,7 @@ func (mh *MemcachedHelm) Prepare() {
 	mh.ctx.Kind = "Memcached"
 }
 
+// Run runs the steps to generate the sample
 func (mh *MemcachedHelm) Run() {
 	current, err := os.Getwd()
 	if err != nil {
@@ -76,7 +82,7 @@ func (mh *MemcachedHelm) Run() {
 	pkg.CheckError("scaffolding apis", err)
 
 	err = mh.ctx.Make("kustomize")
-	pkg.CheckError("error to scaffold api", err)
+	pkg.CheckError("running make kustomize", err)
 
 	log.Infof("customizing the sample")
 	log.Infof("enabling prometheus metrics")
@@ -90,21 +96,18 @@ func (mh *MemcachedHelm) Run() {
 		"# +kubebuilder:scaffold:rules", policyRolesFragment)
 	pkg.CheckError("adding customized roles", err)
 
-	log.Infof("generating OLM bundle")
-	err = mh.ctx.DisableOLMBundleInteractiveMode()
-	pkg.CheckError("generating OLM bundle", err)
-
-	err = mh.ctx.Make("bundle", "IMG="+mh.ctx.ImageName)
-	pkg.CheckError("running make bundle", err)
-
-	err = mh.ctx.Make("bundle-build", "BUNDLE_IMG="+mh.ctx.BundleImageName)
-	pkg.CheckError("running make bundle-build", err)
+	pkg.RunOlmIntegration(mh.ctx)
 }
 
 // GenerateMemcachedHelmSample will call all actions to create the directory and generate the sample
-// Note that it should NOT be called in the e2e tests.
-func GenerateMemcachedHelmSample(ctx *pkg.SampleContext) {
-	memcached := NewMemcachedHelm(ctx)
+// The Context to run the samples are not the same in the e2e test. In this way, note that it should NOT
+// be called in the e2e tests since it will call the Prepare() to set the sample context and generate the files
+// in the testdata directory. The e2e tests only ought to use the Run() method with the TestContext.
+func GenerateMemcachedHelmSample(samplesPath string) {
+	ctx, err := pkg.NewSampleContext(testutils.BinaryName, filepath.Join(samplesPath, "helm/memcached-operator"), "GO111MODULE=on")
+	pkg.CheckError("generate helm memcached sample context", err)
+
+	memcached := NewMemcachedHelm(&ctx)
 	memcached.Prepare()
 	memcached.Run()
 }

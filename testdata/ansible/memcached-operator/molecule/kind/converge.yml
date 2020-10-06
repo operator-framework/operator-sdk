@@ -1,0 +1,24 @@
+---
+- name: Converge
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  tasks:
+    - name: Build operator image
+      docker_image:
+        build:
+          path: '{{ project_dir }}'
+          pull: no
+        name: '{{ operator_image }}'
+        tag: latest
+        push: no
+        source: build
+        force_source: yes
+
+    - name: Load image into kind cluster
+      command: kind load docker-image --name osdk-test '{{ operator_image }}'
+      register: result
+      changed_when: '"not yet present" in result.stdout'
+
+- import_playbook: ../default/converge.yml

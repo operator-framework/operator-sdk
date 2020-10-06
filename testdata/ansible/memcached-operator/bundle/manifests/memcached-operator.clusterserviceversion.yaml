@@ -11,53 +11,13 @@ metadata:
             "name": "memcached-sample"
           },
           "spec": {
-            "AntiAffinity": "soft",
-            "affinity": {},
-            "extraContainers": "",
-            "extraVolumes": "",
-            "image": "memcached:1.5.20",
-            "kind": "StatefulSet",
-            "memcached": {
-              "extendedOptions": "modern",
-              "extraArgs": [],
-              "maxItemMemory": 64,
-              "verbosity": "v"
-            },
-            "metrics": {
-              "enabled": false,
-              "image": "quay.io/prometheus/memcached-exporter:v0.6.0",
-              "resources": {},
-              "serviceMonitor": {
-                "enabled": false,
-                "interval": "15s"
-              }
-            },
-            "nodeSelector": {},
-            "pdbMinAvailable": 2,
-            "podAnnotations": {},
-            "replicaCount": 3,
-            "resources": {
-              "requests": {
-                "cpu": "50m",
-                "memory": "64Mi"
-              }
-            },
-            "securityContext": {
-              "enabled": true,
-              "fsGroup": 1001,
-              "runAsUser": 1001
-            },
-            "serviceAnnotations": {},
-            "tolerations": {},
-            "updateStrategy": {
-              "type": "RollingUpdate"
-            }
+            "size": 1
           }
         }
       ]
     capabilities: Basic Install
     operators.operatorframework.io/builder: operator-sdk-v1.0.0+git
-    operators.operatorframework.io/project_layout: helm.sdk.operatorframework.io/v1
+    operators.operatorframework.io/project_layout: ansible.sdk.operatorframework.io/v1
   name: memcached-operator.v0.0.1
   namespace: placeholder
 spec:
@@ -79,45 +39,10 @@ spec:
         - apiGroups:
           - ""
           resources:
-          - namespaces
-          verbs:
-          - get
-        - apiGroups:
-          - ""
-          resources:
           - secrets
-          verbs:
-          - '*'
-        - apiGroups:
-          - ""
-          resources:
-          - events
-          verbs:
-          - create
-        - apiGroups:
-          - cache.example.com
-          resources:
-          - memcacheds
-          - memcacheds/status
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - ""
-          resources:
           - pods
-          - services
-          - services/finalizers
-          - endpoints
-          - persistentvolumeclaims
-          - events
-          - configmaps
-          - secrets
+          - pods/exec
+          - pods/log
           verbs:
           - create
           - delete
@@ -142,23 +67,11 @@ spec:
           - update
           - watch
         - apiGroups:
-          - policy
+          - cache.example.com
           resources:
-          - events
-          - poddisruptionbudgets
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - ""
-          resources:
-          - serviceaccounts
-          - services
+          - memcacheds
+          - memcacheds/status
+          - memcacheds/finalizers
           verbs:
           - create
           - delete
@@ -209,15 +122,12 @@ spec:
                 - --metrics-addr=127.0.0.1:8080
                 - --enable-leader-election
                 - --leader-election-id=memcached-operator
+                env:
+                - name: ANSIBLE_GATHERING
+                  value: explicit
                 image: quay.io/example/memcached-operator:v0.0.1
                 name: manager
-                resources:
-                  limits:
-                    cpu: 100m
-                    memory: 90Mi
-                  requests:
-                    cpu: 100m
-                    memory: 60Mi
+                resources: {}
               terminationGracePeriodSeconds: 10
       permissions:
       - rules:

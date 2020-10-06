@@ -1,0 +1,28 @@
+---
+- name: Prepare
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Ensure operator image is set
+      fail:
+        msg: |
+          You must specify the OPERATOR_IMAGE environment variable in order to run the
+          'default' scenario
+      when: not operator_image
+
+    - name: Set testing image
+      command: '{{ kustomize }} edit set image testing={{ operator_image }}'
+      args:
+        chdir: '{{ config_dir }}/testing'
+
+    - name: Set pull policy
+      command: '{{ kustomize }} edit add patch pull_policy/{{ operator_pull_policy }}.yaml'
+      args:
+        chdir: '{{ config_dir }}/testing'
+
+    - name: Set testing namespace
+      command: '{{ kustomize }} edit set namespace {{ namespace }}'
+      args:
+        chdir: '{{ config_dir }}/testing'
