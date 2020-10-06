@@ -151,6 +151,10 @@ var _ = BeforeSuite(func(done Done) {
 		Expect(err).NotTo(HaveOccurred())
 	}
 
+	By("generating the operator bundle")
+	err = tc.Make("bundle", "IMG="+tc.ImageName)
+	Expect(err).NotTo(HaveOccurred())
+
 	close(done)
 }, 360)
 
