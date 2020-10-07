@@ -19,12 +19,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/operator-framework/operator-sdk/hack/generate/samples/ansible"
-
 	log "github.com/sirupsen/logrus"
 
-	"github.com/operator-framework/operator-sdk/hack/generate/samples/helm"
-	testutils "github.com/operator-framework/operator-sdk/test/utils"
+	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/ansible"
+	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/helm"
+	"github.com/operator-framework/operator-sdk/internal/testutils"
 )
 
 const testdata = "/testdata/"

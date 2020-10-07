@@ -21,9 +21,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/operator-framework/operator-sdk/hack/generate/samples/pkg"
-	"github.com/operator-framework/operator-sdk/test/utils"
-	testutils "github.com/operator-framework/operator-sdk/test/utils"
+	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
+	"github.com/operator-framework/operator-sdk/internal/testutils"
 )
 
 // MemcachedHelm defines the Memcached Sample in Helm
@@ -62,6 +61,8 @@ func (mh *MemcachedHelm) Run() {
 		os.Exit(1)
 	}
 
+	os.Setenv("KUBECONFIG", "broken_so_we_generate_static_default_rules")
+
 	log.Infof("creating the project")
 	err = mh.ctx.Init(
 		"--plugins", "helm",
@@ -71,7 +72,7 @@ func (mh *MemcachedHelm) Run() {
 	log.Infof("handling work path to get helm chart mock data")
 	projectPath := strings.Split(current, "operator-sdk/")[0]
 	projectPath = strings.Replace(projectPath, "operator-sdk", "", 1)
-	helmChartPath := filepath.Join(projectPath, "operator-sdk/hack/generate/samples/helm/testdata/memcached-0.0.1.tgz")
+	helmChartPath := filepath.Join(projectPath, "operator-sdk/hack/generate/samples/internal/helm/testdata/memcached-0.0.1.tgz")
 	log.Infof("using the helm chart in: (%v)", helmChartPath)
 
 	err = mh.ctx.CreateAPI(
@@ -86,13 +87,13 @@ func (mh *MemcachedHelm) Run() {
 
 	log.Infof("customizing the sample")
 	log.Infof("enabling prometheus metrics")
-	err = utils.UncommentCode(
+	err = testutils.UncommentCode(
 		filepath.Join(mh.ctx.Dir, "config", "default", "kustomization.yaml"),
 		"#- ../prometheus", "#")
 	pkg.CheckError("enabling prometheus metrics", err)
 
 	log.Infof("adding customized roles")
-	err = utils.ReplaceInFile(filepath.Join(mh.ctx.Dir, "config", "rbac", "role.yaml"),
+	err = testutils.ReplaceInFile(filepath.Join(mh.ctx.Dir, "config", "rbac", "role.yaml"),
 		"# +kubebuilder:scaffold:rules", policyRolesFragment)
 	pkg.CheckError("adding customized roles", err)
 

@@ -24,7 +24,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	testutils "github.com/operator-framework/operator-sdk/test/utils"
+	"github.com/operator-framework/operator-sdk/internal/testutils"
 )
 
 // TestE2EAnsible ensures the ansible projects built with the SDK tool by using its binary.

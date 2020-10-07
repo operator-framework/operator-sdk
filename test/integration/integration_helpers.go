@@ -40,19 +40,19 @@ var (
 	testImageTag = "memcached-operator"
 )
 
-type DefinitionKey struct {
+type definitionKey struct {
 	Kind     string
 	Name     string
 	Group    string
 	Versions []apiextv1beta1.CustomResourceDefinitionVersion
 }
 
-type CSVTemplateConfig struct {
+type csvTemplateConfig struct {
 	OperatorName    string
 	Version         string
 	TestImageTag    string
 	ReplacesCSVName string
-	CRDKeys         []DefinitionKey
+	CRDKeys         []definitionKey
 	InstallModes    []operatorsv1alpha1.InstallMode
 
 	IsBundle bool
@@ -196,7 +196,7 @@ spec:
   version: {{ .Version }}
 `
 
-func writeOperatorManifests(dir string, csvConfig CSVTemplateConfig) error {
+func writeOperatorManifests(dir string, csvConfig csvTemplateConfig) error {
 	manifestDir := ""
 	if csvConfig.IsBundle {
 		manifestDir = filepath.Join(dir, bundle.ManifestsDir)

@@ -19,13 +19,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
 	kbtestutils "sigs.k8s.io/kubebuilder/test/e2e/utils"
 
-	log "github.com/sirupsen/logrus"
-
-	"github.com/operator-framework/operator-sdk/hack/generate/samples/pkg"
-	"github.com/operator-framework/operator-sdk/test/utils"
-	testutils "github.com/operator-framework/operator-sdk/test/utils"
+	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
+	"github.com/operator-framework/operator-sdk/internal/testutils"
 )
 
 // MemcachedAnsible defines the context for the sample
@@ -72,7 +70,7 @@ func (ma *MemcachedAnsible) Run() {
 	pkg.CheckError("error to scaffold api", err)
 
 	log.Infof("customizing the sample")
-	err = utils.UncommentCode(
+	err = testutils.UncommentCode(
 		filepath.Join(ma.ctx.Dir, "config", "default", "kustomization.yaml"),
 		"#- ../prometheus", "#")
 	pkg.CheckError("enabling prometheus metrics", err)
@@ -89,7 +87,7 @@ func (ma *MemcachedAnsible) addingMoleculeMockData() {
 	moleculeTaskPath := filepath.Join(ma.ctx.Dir, "molecule", "default", "tasks",
 		fmt.Sprintf("%s_test.yml", strings.ToLower(ma.ctx.Kind)))
 
-	err := utils.ReplaceInFile(moleculeTaskPath,
+	err := testutils.ReplaceInFile(moleculeTaskPath,
 		moleculeAssertions, moleculeTaskFragment)
 	pkg.CheckError("replacing molecule default tasks", err)
 }
@@ -103,13 +101,13 @@ func (ma *MemcachedAnsible) addingAnsibleTask() {
 		roleFragment)
 	pkg.CheckError("adding task", err)
 
-	err = utils.ReplaceInFile(filepath.Join(ma.ctx.Dir, "roles", strings.ToLower(ma.ctx.Kind),
+	err = testutils.ReplaceInFile(filepath.Join(ma.ctx.Dir, "roles", strings.ToLower(ma.ctx.Kind),
 		"defaults", "main.yml"),
 		fmt.Sprintf("# defaults file for %s", ma.ctx.Kind),
 		defaultsFragment)
 	pkg.CheckError("adding defaulting", err)
 
-	err = utils.ReplaceInFile(filepath.Join(ma.ctx.Dir, "config", "samples",
+	err = testutils.ReplaceInFile(filepath.Join(ma.ctx.Dir, "config", "samples",
 		fmt.Sprintf("%s_%s_%s.yaml", ma.ctx.Group, ma.ctx.Version, strings.ToLower(ma.ctx.Kind))),
 		"foo: bar", "size: 1")
 	pkg.CheckError("updating sample CR", err)

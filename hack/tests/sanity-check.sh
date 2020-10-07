@@ -14,6 +14,4 @@ make install
 go run ./hack/generate/samples/generate_all.go
 
 # Make sure repo is still in a clean state.
-# Note that we are ignoring helm manifests with roles.
-# More info: https://github.com/operator-framework/operator-sdk/issues/3873
-git diff --exit-code -- . ':!testdata/helm/memcached-operator/bundle/manifests/memcached-operator.clusterserviceversion.yaml' ':!testdata/helm/memcached-operator/config/rbac/role.yaml'
+git diff --exit-code
