@@ -27,3 +27,16 @@ func CheckError(msg string, err error) {
 		os.Exit(1)
 	}
 }
+
+// RunOlmIntegration runs all commands to integrate the project with OLM
+func RunOlmIntegration(ctx *SampleContext) {
+	log.Infof("integrating project with OLM")
+	err := ctx.DisableOLMBundleInteractiveMode()
+	CheckError("disabling the OLM bundle", err)
+
+	err = ctx.Make("bundle", "IMG="+ctx.ImageName)
+	CheckError("running make bundle", err)
+
+	err = ctx.Make("bundle-build", "BUNDLE_IMG="+ctx.BundleImageName)
+	CheckError("running make bundle-build", err)
+}

@@ -19,33 +19,36 @@ import (
 	"os"
 	"path/filepath"
 
-	testutils "github.com/operator-framework/operator-sdk/test/utils"
+	"github.com/operator-framework/operator-sdk/hack/generate/samples/ansible"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/helm"
-	"github.com/operator-framework/operator-sdk/hack/generate/samples/pkg"
-	log "github.com/sirupsen/logrus"
+	testutils "github.com/operator-framework/operator-sdk/test/utils"
+)
+
+const testdata = "/testdata/"
+
+var (
+	binaryName string
 )
 
 func main() {
-	var (
-		binaryName string
-	)
-
 	flag.StringVar(&binaryName, "bin", testutils.BinaryName, "Binary path that should be used")
 	flag.Parse()
 
-	current, err := os.Getwd()
+	currentPath, err := os.Getwd()
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
 	}
-	samplesPath := filepath.Join(current, "/testdata/helm/memcached-operator")
+
+	samplesPath := filepath.Join(currentPath, testdata)
 	log.Infof("using the path: (%v)", samplesPath)
 
-	log.Infof("starting to generate helm memcached sample")
-	ctx, err := pkg.NewSampleContext(binaryName, samplesPath, "GO111MODULE=on")
-	pkg.CheckError("error to generate helm memcached sample", err)
+	log.Infof("creating Helm Memcached Sample")
+	helm.GenerateMemcachedHelmSample(samplesPath)
 
-	log.Infof("creating Memcached Sample")
-	helm.GenerateMemcachedHelmSample(&ctx)
+	log.Infof("creating Ansible Memcached Sample")
+	ansible.GenerateMemcachedAnsibleSample(samplesPath)
 }
