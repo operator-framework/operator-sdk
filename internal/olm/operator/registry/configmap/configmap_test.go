@@ -7,10 +7,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/blang/semver"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/operator-framework/api/pkg/lib/version"
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 func TestConfigmap(t *testing.T) {
@@ -88,6 +92,7 @@ var _ = Describe("Testing configmap.go", func() {
 
 			Expect(addObjectToBinaryData(b, obj, userInput...)).Should(BeNil())
 		})
+
 	})
 
 	Describe("Creating the binary data", func() {
@@ -110,62 +115,122 @@ var _ = Describe("Testing configmap.go", func() {
 
 			b := make(map[string][]byte)
 			b, e := makeObjectBinaryData(obj, userInput...)
-			// Expect(func() return_struct {
-			// 	b, e := makeObjectBinaryData(obj, userInput...)
-			// 	return return_struct{b, e}
-			// }).Should(BeEquivalentTo(return_struct{binaryData, err}))
-			Expect(b).Should(Equal(binaryData))
+
 			Expect(e).Should(BeNil())
+			Expect(b).Should(Equal(binaryData))
+
 		})
 	})
 
 	Describe("BUNDLE", func() {
 		It("Test", func() {
 
-			// binaryData := make(map[string][]byte)
-			// type return_struct struct {
-			// 	val1 map[string][]byte
-			// 	val2 error
-			// }
-			// type test_struct struct {
-			// 	val1 string
-			// 	val2 string
-			// }
-
-			// obj := test_struct{"val1", "val2"}
-			// userInput := []string{"userInput", "userInput2"}
-
-			// addObjectToBinaryData(binaryData, obj, userInput...)
-
-			// b := make(map[string][]byte)
-			// b, e := makeObjectBinaryData(obj, userInput...)
-			// // Expect(func() return_struct {
-			// // 	b, e := makeObjectBinaryData(obj, userInput...)
-			// // 	return return_struct{b, e}
-			// // }).Should(BeEquivalentTo(return_struct{binaryData, err}))
-			// Expect(b).Should(Equal(binaryData))
-			// Expect(e).Should(BeNil())
-
+			var e error
 			b := apimanifests.Bundle{
 				Name: "testbundle",
+				Objects: []*unstructured.Unstructured{
+					{
+						Object: map[string]interface{}{"val1": "val1"},
+					},
+					{
+						Object: map[string]interface{}{"val2": "va2"},
+					},
+				},
 			}
 
 			binaryData, err := makeBundleBinaryData(&b)
 
-			fmt.Printf("%+v\n", binaryData)
-			fmt.Printf("%+v\n", err)
+			val := make(map[string][]byte)
+			for _, obj := range b.Objects {
+				e = addObjectToBinaryData(val, obj, obj.GetName(), obj.GetKind())
+			}
+
+			Expect(e).Should(BeNil())
+			Expect(err).Should(BeNil())
+			Expect(binaryData).Should(Equal(val))
+
 		})
 	})
 
-})
+	Describe("Package manifest", func() {
+		It("Test", func() {
 
-// Bundle{
-// 	Name: "testbundle",
-// 	CSV: &operatorsv1alpha1.ClusterServiceVersion{
-// 		ObjectMeta: metav1.ObjectMeta{
-// 			Name: "testbundle",
-// 			Namespace: "default",
-// 		}
-// 		Spec: {}
-// 	},
-// }
+			var e error
+			b := []*apimanifests.Bundle{
+				{
+					Name: "testbundle",
+					Objects: []*unstructured.Unstructured{
+						{
+							Object: map[string]interface{}{"val1": "val1"},
+						},
+						{
+							Object: map[string]interface{}{"val2": "va2"},
+						},
+					},
+					CSV: &v1alpha1.ClusterServiceVersion{
+						Spec: v1alpha1.ClusterServiceVersionSpec{
+							Version: version.OperatorVersion{
+								Version: semver.SpecVersion,
+							},
+						},
+					},
+				},
+				{
+					Name: "testbundle_2",
+					Objects: []*unstructured.Unstructured{
+						{
+							Object: map[string]interface{}{"val1": "val1"},
+						},
+						{
+							Object: map[string]interface{}{"val2": "va2"},
+						},
+					},
+					CSV: &v1alpha1.ClusterServiceVersion{
+						Spec: v1alpha1.ClusterServiceVersionSpec{
+							Version: version.OperatorVersion{
+								Version: semver.SpecVersion,
+							},
+						},
+					},
+				},
+			}
+
+			p := apimanifests.PackageManifest{
+				PackageName: "test_package_manifest",
+				Channels: []apimanifests.PackageChannel{
+					{Name: "test_1",
+						CurrentCSVName: "test_csv_1",
+					},
+					{Name: "test_2",
+						CurrentCSVName: "test_csv_2",
+					},
+				},
+				DefaultChannelName: "test_channel_name",
+			}
+
+			binaryDataByConfigMap, err := makeConfigMapsForPackageManifests(&p, b)
+
+			val := make(map[string]map[string][]byte)
+
+			cmName := getRegistryConfigMapName(p.PackageName) + "-package"
+			val[cmName], err = makeObjectBinaryData(p)
+
+			// Create Bundle ConfigMaps.
+			for _, bundle := range b {
+				version := bundle.CSV.Spec.Version.String()
+				e = fmt.Errorf("bundle ClusterServiceVersion %s has no version", bundle.CSV.GetName())
+
+				cmName := getRegistryConfigMapName(p.PackageName) + "-" + k8sutil.FormatOperatorNameDNS1123(version)
+				val[cmName], e = makeBundleBinaryData(bundle)
+
+			}
+
+			fmt.Printf("%+v", e)
+			Expect(e).Should(BeNil())
+			Expect(err).Should(BeNil())
+			Expect(binaryDataByConfigMap).Should(Equal(val))
+
+		})
+
+	})
+})
