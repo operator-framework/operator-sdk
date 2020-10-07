@@ -27,7 +27,7 @@ if ! git diff-index --quiet HEAD --; then
 	exit 1
 fi
 
-GO_VER="1.13"
+GO_VER="1.15"
 if ! go version | cut -d" " -f3 | grep -q "$GO_VER"; then
 	echo "must compile binaries with Go compiler version v${GO_VER}"
 	exit 1
