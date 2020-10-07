@@ -25,7 +25,7 @@ import (
 	. "github.com/onsi/gomega"
 	kbtestutils "sigs.k8s.io/kubebuilder/test/e2e/utils"
 
-	testutils "github.com/operator-framework/operator-sdk/test/utils"
+	"github.com/operator-framework/operator-sdk/internal/testutils"
 )
 
 var _ = Describe("Running ansible projects", func() {

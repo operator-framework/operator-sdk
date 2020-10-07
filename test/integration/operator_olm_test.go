@@ -61,12 +61,12 @@ func TestOLMIntegration(t *testing.T) {
 
 func PackageManifestsOwnNamespace(t *testing.T) {
 
-	csvConfig := CSVTemplateConfig{
+	csvConfig := csvTemplateConfig{
 		OperatorName:    defaultOperatorName,
 		Version:         defaultOperatorVersion,
 		TestImageTag:    testImageTag,
 		ReplacesCSVName: "",
-		CRDKeys: []DefinitionKey{
+		CRDKeys: []definitionKey{
 			{
 				Kind:  "Memcached",
 				Name:  "memcacheds.cache.example.com",
@@ -124,12 +124,12 @@ func PackageManifestsOwnNamespace(t *testing.T) {
 
 func PackageManifestsBasic(t *testing.T) {
 
-	csvConfig := CSVTemplateConfig{
+	csvConfig := csvTemplateConfig{
 		OperatorName:    defaultOperatorName,
 		Version:         defaultOperatorVersion,
 		TestImageTag:    testImageTag,
 		ReplacesCSVName: "",
-		CRDKeys: []DefinitionKey{
+		CRDKeys: []definitionKey{
 			{
 				Kind:  "Memcached",
 				Name:  "memcacheds.cache.example.com",
@@ -187,13 +187,13 @@ func PackageManifestsMultiplePackages(t *testing.T) {
 
 	operatorVersion1 := defaultOperatorVersion
 	operatorVersion2 := "0.0.3"
-	csvConfigs := []CSVTemplateConfig{
+	csvConfigs := []csvTemplateConfig{
 		{
 			OperatorName:    defaultOperatorName,
 			Version:         operatorVersion1,
 			TestImageTag:    testImageTag,
 			ReplacesCSVName: "",
-			CRDKeys: []DefinitionKey{
+			CRDKeys: []definitionKey{
 				{
 					Kind:  "Memcached",
 					Name:  "memcacheds.cache.example.com",
@@ -215,7 +215,7 @@ func PackageManifestsMultiplePackages(t *testing.T) {
 			Version:         operatorVersion2,
 			TestImageTag:    testImageTag,
 			ReplacesCSVName: fmt.Sprintf("%s.v%s", defaultOperatorName, operatorVersion1),
-			CRDKeys: []DefinitionKey{
+			CRDKeys: []definitionKey{
 				{
 					Kind:  "Memcached",
 					Name:  "memcacheds.cache.example.com",

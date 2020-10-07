@@ -19,17 +19,17 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/test/utils"
+	"github.com/operator-framework/operator-sdk/internal/testutils"
 )
 
 // SampleContext represents the Context used to generate the samples
 type SampleContext struct {
-	utils.TestContext
+	testutils.TestContext
 }
 
 // NewSampleContext returns a SampleContext containing a new kubebuilder TestContext.
 func NewSampleContext(binary string, path string, env ...string) (s SampleContext, err error) {
-	s.TestContext, err = utils.NewTestContext(binary, env...)
+	s.TestContext, err = testutils.NewTestContext(binary, env...)
 	// If the path was informed then this should be the dir used
 	if strings.TrimSpace(path) != "" {
 		path, err = filepath.Abs(path)
@@ -47,7 +47,7 @@ func NewSampleContext(binary string, path string, env ...string) (s SampleContex
 
 // NewSampleContextWithTestContext returns a SampleContext containing the kubebuilder TestContext informed
 // It is useful to allow the samples code be re-used in the e2e tests.
-func NewSampleContextWithTestContext(tc *utils.TestContext) (s SampleContext, err error) {
+func NewSampleContextWithTestContext(tc *testutils.TestContext) (s SampleContext, err error) {
 	s.TestContext = *tc
 	return s, err
 }

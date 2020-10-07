@@ -22,11 +22,11 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/onsi/ginkgo" //nolint:golint
-	. "github.com/onsi/gomega" //nolint:golint
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 	kbtestutils "sigs.k8s.io/kubebuilder/test/e2e/utils"
 
-	testutils "github.com/operator-framework/operator-sdk/test/utils"
+	"github.com/operator-framework/operator-sdk/internal/testutils"
 )
 
 // TestE2EGo ensures the Go projects built with the SDK tool by using its binary.
