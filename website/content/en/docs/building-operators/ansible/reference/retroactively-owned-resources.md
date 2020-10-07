@@ -64,9 +64,9 @@ resource is a cluster level resource.
   * operator-sdk/primary-resource: {metadata.namespace}/{metadata.name}
   * operator-sdk/primary-resource-type: {kind}.{group}
 
-**NOTE**: The {group} can be found by splitting the `apiVersion`
+**NOTE**: The `{group}` can be found by splitting the `apiVersion`
 metadata of the CR, into `group` and `version`. As an example, 
-[this apiVersion field](https://github.com/operator-framework/operator-sdk-samples/blob/938fd148ba106ca9811925e4956d6bb70c36b29d/ansible/memcached-operator/config/samples/cache_v1alpha1_memcached.yaml#L1)
+`apiVersion: cache.example.com/v1alpha1` in the `config/samples` directory
 gives us the group `cache.example.com`.
 
 **Example Annotation:**
