@@ -122,14 +122,14 @@ OLM and Operator Registry consumes Operator bundles via an [index image][index-i
 which are composed of one or more bundles. To build a memcached-operator bundle, run:
 
 ```console
-$ docker build -f bundle.Dockerfile -t quay.io/<username>/memcached-operator:v0.1.0 .
+make bundle-build BUNDLE_IMG=quay.io/<username>/memcached-operator-bundle:<tag>
+docker push quay.io/<username>/memcached-operator-bundle:<tag>
 ```
 
 Although we've validated on-disk manifests and metadata, we also must make sure the bundle itself is valid:
 
 ```console
-$ docker push quay.io/<username>/memcached-operator:v0.1.0
-$ operator-sdk bundle validate quay.io/<username>/memcached-operator:v0.1.0
+$ operator-sdk bundle validate quay.io/<username>/memcached-operator-bundle:<tag>
 INFO[0000] Unpacked image layers                         bundle-dir=/tmp/bundle-716785960 container-tool=docker
 INFO[0000] running docker pull                           bundle-dir=/tmp/bundle-716785960 container-tool=docker
 INFO[0002] running docker save                           bundle-dir=/tmp/bundle-716785960 container-tool=docker
