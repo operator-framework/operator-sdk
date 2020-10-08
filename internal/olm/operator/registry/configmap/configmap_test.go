@@ -19,6 +19,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/yaml"
 )
 
 var _ = Describe("Testing ConfigMap.go", func() {
@@ -84,9 +85,17 @@ var _ = Describe("Testing ConfigMap.go", func() {
 				val2 string
 			}
 			b := make(binaryData)
+			fmt.Printf("%+v", b)
 			obj := test_struct{"val1", "val2"}
 
+			binaryData_local := make(binaryData)
+			b_local, err := yaml.Marshal(obj)
+
+			binaryData_local[makeObjectFileName(b_local, userInput...)] = b_local
+
+			Expect(err).Should(BeNil())
 			Expect(addObjectToBinaryData(b, obj, userInput...)).Should(BeNil())
+			Expect(b).Should(Equal(binaryData_local))
 		})
 
 	})
