@@ -269,43 +269,46 @@ func (c Client) DoCSVWait(ctx context.Context, key types.NamespacedName) error {
 // checkDeploymentErrors function loops through deployment specs of a given CSV, and prints reason
 // in case of failures, based on deployment condition.
 func (c Client) checkDeploymentErrors(ctx context.Context, key types.NamespacedName, csv olmapiv1alpha1.ClusterServiceVersion) error {
-	depErr := deploymentErrors{}
+	depErrs := deploymentErrors{}
 	if key.Namespace == "" {
 		return fmt.Errorf("no namespace provided to get deployment failures")
 	}
 	dep := &appsv1.Deployment{}
 	for _, ds := range csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
-		podErr := podErrors{}
 		depKey := types.NamespacedName{
 			Namespace: key.Namespace,
 			Name:      ds.Name,
 		}
 		depSelectors := ds.Spec.Selector
 		if err := c.KubeClient.Get(ctx, depKey, dep); err != nil {
-			depErr = append(depErr, deploymentError{
-				resourceError{
+			depErrs = append(depErrs, deploymentError{
+				resourceError: resourceError{
 					name:  ds.Name,
 					issue: err.Error(),
 				},
-				podErr,
 			})
 			continue
 		}
 		for _, s := range dep.Status.Conditions {
 			if s.Type == appsv1.DeploymentAvailable && s.Status != corev1.ConditionTrue {
-				podError := c.checkPodErrors(ctx, depSelectors, key)
-				podErr = podError.(podErrors)
-				depErr = append(depErr, deploymentError{
-					resourceError{
+				depErr := deploymentError{
+					resourceError: resourceError{
 						name:  ds.Name,
 						issue: s.Reason,
 					},
-					podErr,
-				})
+				}
+				podErr := c.checkPodErrors(ctx, depSelectors, key)
+				podErrs := podErrors{}
+				if errors.As(podErr, &podErrs) {
+					depErr.podErrs = append(depErr.podErrs, podErrs...)
+				} else {
+					return podErr
+				}
+				depErrs = append(depErrs, depErr)
 			}
 		}
 	}
-	return depErr
+	return depErrs
 }
 
 // checkPodErrors loops through pods, and returns pod errors if any.
