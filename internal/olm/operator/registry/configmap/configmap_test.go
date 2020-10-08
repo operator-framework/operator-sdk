@@ -1,11 +1,11 @@
 package configmap
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/base32"
 	"fmt"
 	"strings"
-	"testing"
 
 	"github.com/blang/semver"
 	. "github.com/onsi/ginkgo"
@@ -13,19 +13,18 @@ import (
 	"github.com/operator-framework/api/pkg/lib/version"
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"github.com/operator-framework/operator-sdk/internal/olm/client"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-func TestConfigmap(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Configmap Suite")
-}
+var _ = Describe("Testing ConfigMap.go", func() {
 
-var _ = Describe("Testing configmap.go", func() {
-
-	Describe("Hash function", func() {
-		It("tests the hash function", func() {
+	Describe("hashContents", func() {
+		It("should return the hash of the byte array without any error", func() {
 			val := []byte("Hello")
 			h := sha256.New()
 			_, _ = h.Write(val)
@@ -36,8 +35,8 @@ var _ = Describe("Testing configmap.go", func() {
 		})
 	})
 
-	Describe("Return the registry name for the configmap", func() {
-		It("returns the registry configmap name", func() {
+	Describe("getRegistryConfigMapName", func() {
+		It("should return the registry configmap name", func() {
 			val := "Test"
 			name := k8sutil.FormatOperatorNameDNS1123(val)
 			ans := fmt.Sprintf("%s-registry-manifests", name)
@@ -46,22 +45,20 @@ var _ = Describe("Testing configmap.go", func() {
 		})
 	})
 
-	Describe("Return a unique yaml filename", func() {
+	Describe("makeObjectFileName", func() {
 
 		var (
 			fileName  string
 			testVal   []byte
 			userInput []string
 		)
-
 		BeforeEach(func() {
 			testVal = []byte("test")
 			userInput = []string{"userInput", "userInput2"}
 			fileName = hashContents(testVal) + "."
 		})
 
-		It("returns the filename with extra  usergiven string", func() {
-
+		It("returns the filename with extra user given string", func() {
 			for _, name := range userInput {
 				if name != "" {
 					fileName += strings.ToLower(name) + "."
@@ -69,17 +66,16 @@ var _ = Describe("Testing configmap.go", func() {
 			}
 			fileName = fileName + "yaml"
 			Expect(makeObjectFileName(testVal, userInput...)).Should(Equal(fileName))
-
 		})
 
-		It("returns the filename without extra  usergiven string", func() {
+		It("returns the filename without extra user given string", func() {
 			fileName = fileName + "yaml"
 			Expect(makeObjectFileName(testVal)).Should(Equal(fileName))
 		})
 	})
 
-	Describe("Adding object to binary data ", func() {
-		It("Test", func() {
+	Describe("addObjectToBinaryData ", func() {
+		It("should add given object to the given binaryData", func() {
 			type binaryData map[string][]byte
 			userInput := []string{"userInput", "userInput2"}
 
@@ -95,8 +91,8 @@ var _ = Describe("Testing configmap.go", func() {
 
 	})
 
-	Describe("Creating the binary data", func() {
-		It("Test", func() {
+	Describe("makeObjectBinaryData", func() {
+		It("creates the binary data", func() {
 
 			binaryData := make(map[string][]byte)
 			type return_struct struct {
@@ -122,8 +118,8 @@ var _ = Describe("Testing configmap.go", func() {
 		})
 	})
 
-	Describe("BUNDLE", func() {
-		It("Test", func() {
+	Describe("makeBundleBinaryData", func() {
+		It("should serialize bundle to binary data", func() {
 
 			var e error
 			b := apimanifests.Bundle{
@@ -145,14 +141,14 @@ var _ = Describe("Testing configmap.go", func() {
 				e = addObjectToBinaryData(val, obj, obj.GetName(), obj.GetKind())
 			}
 
+			Expect(binaryData).Should(Equal(val))
 			Expect(e).Should(BeNil())
 			Expect(err).Should(BeNil())
-			Expect(binaryData).Should(Equal(val))
 
 		})
 	})
 
-	Describe("Package manifest", func() {
+	Describe("makeConfigMapsForPackageManifests", func() {
 		It("Test", func() {
 
 			var e error
@@ -225,10 +221,49 @@ var _ = Describe("Testing configmap.go", func() {
 
 			}
 
-			fmt.Printf("%+v", e)
 			Expect(e).Should(BeNil())
 			Expect(err).Should(BeNil())
 			Expect(binaryDataByConfigMap).Should(Equal(val))
+
+		})
+
+	})
+
+	Describe("getRegistryConfigMaps", func() {
+		It("performs operations and returns all the configmaps", func() {
+			var fclient RegistryResources
+
+			fakeclient := fake.NewFakeClient(
+				&corev1.ConfigMapList{
+					Items: []corev1.ConfigMap{
+						corev1.ConfigMap{
+							ObjectMeta: metav1.ObjectMeta{
+								Namespace: "testns",
+							},
+						},
+						corev1.ConfigMap{
+							ObjectMeta: metav1.ObjectMeta{
+								Namespace: "testns2",
+							},
+						},
+					},
+				},
+			)
+
+			fclient = RegistryResources{
+				Client: &client.Client{
+					KubeClient: fakeclient,
+				},
+				Pkg: &apimanifests.PackageManifest{
+					PackageName: "test",
+				},
+				Bundles: fclient.Bundles,
+			}
+
+			configmaps, err := fclient.getRegistryConfigMaps(context.TODO(), "testns")
+
+			fmt.Printf("\n\n%v", configmaps)
+			fmt.Printf("\n\n%v", err)
 
 		})
 
