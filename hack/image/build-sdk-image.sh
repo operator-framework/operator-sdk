@@ -11,6 +11,6 @@ trap_add 'rm -rf $TMPDIR' EXIT
 
 # build the base image
 pushd $TMPDIR
-cp $ROOTDIR/build/operator-sdk-dev-linux-gnu .
+cp $ROOTDIR/build/operator-sdk .
 docker build -f $ROOTDIR/hack/image/sdk/Dockerfile -t $1 .
 popd

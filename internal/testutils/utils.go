@@ -125,7 +125,11 @@ func ReplaceRegexInFile(path, match, replace string) error {
 
 // LoadImageToKindCluster loads a local docker image with the name informed to the kind cluster
 func (tc TestContext) LoadImageToKindClusterWithName(image string) error {
-	kindOptions := []string{"load", "docker-image", image}
+	cluster := "kind"
+	if v, ok := os.LookupEnv("KIND_CLUSTER"); ok {
+		cluster = v
+	}
+	kindOptions := []string{"load", "docker-image", "--name", cluster, image}
 	cmd := exec.Command("kind", kindOptions...)
 	_, err := tc.Run(cmd)
 	return err

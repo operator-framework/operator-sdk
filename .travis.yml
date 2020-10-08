@@ -1,13 +1,6 @@
 os: linux
-branches:
-  except:
-    - release-4.2
-    - release-4.3
-
 language: go
 go_import_path: github.com/operator-framework/operator-sdk
-
-# go modules require xenial for mercurial TLS 1.2 support
 dist: xenial
 
 # Python 3.6 is the default Python when language: python.
@@ -39,18 +32,12 @@ x_base_steps:
   # Base go, ansbile, and helm job
   - &test
     env:
-    - CLUSTER=k8s
     # before_install for jobs that require go builds and do not run for doc-only changes
     before_install:
       # hack/ci/check-doc-only-update.sh needs to be sourced so
       # that it can properly exit the test early with success
       - source hack/ci/check-doc-only-update.sh
-      - travis_retry make tidy
       - git fetch origin --unshallow --tags
-    install:
-      - make install
-      - make setup-k8s
-      - export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
     after_success:
       - echo "Tests passed"
     after_failure:
@@ -63,9 +50,7 @@ x_base_steps:
   # Base deploy job
   - &deploy
     before_install:
-      - travis_retry make tidy
       - git fetch origin --unshallow --tags
-    install: make install
     after_success:
       - echo "Image build succeeded, and docker image tagged and pushed to repository"
     after_failure:
@@ -124,15 +109,13 @@ jobs:
         - pip3 install --upgrade setuptools pip
         - pip install --user ansible~=2.9.13
       script:
-        - make test-e2e-ansible
-        - make test-e2e-ansible-molecule
+        - make test-e2e-ansible test-e2e-ansible-molecule
 
     # Test subcommands
     - <<: *test
       name: Subcommands and Integration on Kubernetes
       script:
-      - make test-subcommand
-      - make test-integration
+      - make test-e2e-integration
 
     # Build and test go
     - <<: *test

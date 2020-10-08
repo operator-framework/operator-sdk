@@ -1,6 +1,6 @@
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 
-COPY operator-sdk-dev-linux-gnu  /usr/local/bin/operator-sdk
+COPY operator-sdk /usr/local/bin/operator-sdk
 
 RUN microdnf install -y golang make which
 

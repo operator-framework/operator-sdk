@@ -94,6 +94,7 @@ tags
 
 # Build artifacts
 /build
+/tools/bin
 test/ansible-operator/ansible-operator
 test/helm-operator/helm-operator
 images/scorecard-proxy/scorecard-proxy
@@ -102,7 +103,6 @@ images/scorecard-test-kuttl/scorecard-test-kuttl
 
 # Test artifacts
 internal/ansible/runner/testdata/valid.yaml
-/bin
 internal/scorecard/examples/custom-scorecard-tests/go.sum
 
 # Website

@@ -5,7 +5,7 @@ ENV HOME=/opt/helm \
     USER_UID=1001
 
 RUN echo "${USER_NAME}:x:${USER_UID}:0:${USER_NAME} user:${HOME}:/sbin/nologin" >> /etc/passwd
-COPY helm-operator-dev-linux-gnu /usr/local/bin/helm-operator
+COPY helm-operator /usr/local/bin/helm-operator
 
 WORKDIR ${HOME}
 USER ${USER_UID}

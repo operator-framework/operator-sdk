@@ -90,19 +90,27 @@ var _ = Describe("Running ansible projects", func() {
 					"pods", "-l", "control-plane=controller-manager",
 					"-o", "go-template={{ range .items }}{{ if not .metadata.deletionTimestamp }}{{ .metadata.name }}"+
 						"{{ \"\\n\" }}{{ end }}{{ end }}")
-				Expect(err).NotTo(HaveOccurred())
+				if err != nil {
+					return fmt.Errorf("could not get pods: %v", err)
+				}
 
 				By("ensuring the created controller-manager Pod")
 				podNames := kbtestutils.GetNonEmptyLines(podOutput)
-				Expect(podNames).To(HaveLen(1))
+				if len(podNames) != 1 {
+					return fmt.Errorf("expecting 1 pod, have %d", len(podNames))
+				}
 				controllerPodName = podNames[0]
-				Expect(controllerPodName).Should(ContainSubstring("controller-manager"))
+				if !strings.Contains(controllerPodName, "controller-manager") {
+					return fmt.Errorf("expecting pod name %q to contain %q", controllerPodName, "controller-manager")
+				}
 
 				By("checking the controller-manager Pod is running")
 				status, err := tc.Kubectl.Get(
 					true,
 					"pods", controllerPodName, "-o", "jsonpath={.status.phase}")
-				Expect(err).NotTo(HaveOccurred())
+				if err != nil {
+					return fmt.Errorf("failed to get pod stauts for %q: %v", controllerPodName, err)
+				}
 				if status != "Running" {
 					return fmt.Errorf("controller pod in %s status", status)
 				}
