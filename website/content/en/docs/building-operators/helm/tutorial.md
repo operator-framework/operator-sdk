@@ -315,4 +315,4 @@ todo(camilamacedo86): https://github.com/operator-framework/operator-sdk/issues/
 [helm-charts]:https://helm.sh/docs/topics/charts/
 [helm-values]:https://helm.sh/docs/intro/using_helm/#customizing-the-chart-before-installing
 [helm-official]:https://helm.sh/docs/
-[operator_install]: /docs/installation/install-operator-sdk
+[operator_install]: /docs/installation/

@@ -85,7 +85,7 @@ make undeploy
 
 Read the [tutorial][tutorial] for an in-depth walkthough of building a Ansible operator.
 
-[operator_install]: /docs/installation/install-operator-sdk
+[operator_install]: /docs/installation/
 [ansible-operator-install]: /docs/building-operators/ansible/installation
 [layout-doc]:../reference/scaffolding
 [tutorial]: /docs/building-operators/ansible/tutorial/

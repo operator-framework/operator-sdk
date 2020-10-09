@@ -20,7 +20,7 @@ local Kubernetes cluster and [quay.io][quay-link] for the public registry.
 [ansible-tool]:https://docs.ansible.com/ansible/latest/index.html
 [ansible-runner-tool]:https://ansible-runner.readthedocs.io/en/latest/install.html
 [ansible-runner-http-plugin]:https://github.com/ansible/ansible-runner-http
-[install-guide]: /docs/installation/install-operator-sdk
+[install-guide]: /docs/installation/
 [minikube-tool]:https://github.com/kubernetes/minikube#installation
 [quay-link]:https://quay.io
 [openshift-module]:https://pypi.org/project/openshift/

@@ -374,10 +374,10 @@ following release.
 
 You've now fully released a new version of the Operator SDK. Good work! 
 
-[install-guide]: /docs/installation/install-operator-sdk
+[install-guide]: /docs/installation/
 [doc-maintainers]: https://github.com/operator-framework/operator-sdk/blob/master/MAINTAINERS
 [doc-owners]: https://github.com/operator-framework/operator-sdk/blob/master/OWNERS
-[doc-readme-prereqs]: /docs/installation/install-operator-sdk#prerequisites-for-compilation
+[doc-readme-prereqs]: /docs/installation/#prerequisites-for-compilation
 [doc-git-default-key]:https://help.github.com/en/articles/telling-git-about-your-signing-key
 [doc-gpg-default-key]:https://lists.gnupg.org/pipermail/gnupg-users/2001-September/010163.html
 [link-github-gpg-key-upload]:https://github.com/settings/keys

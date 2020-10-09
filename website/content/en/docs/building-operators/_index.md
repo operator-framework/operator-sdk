@@ -1,4 +1,3 @@
-
 ---
 title: "Building Operators"
 linkTitle: "Building Operators"

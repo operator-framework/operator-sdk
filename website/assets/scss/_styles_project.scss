@@ -14,10 +14,8 @@
 @import "../../themes/docsy/assets/scss/blog";
 @import "../../themes/docsy/assets/scss/code";
 @import "../../themes/docsy/assets/scss/nav";
-@import "../../themes/docsy/assets/scss/sidebar-tree";
 @import "../../themes/docsy/assets/scss/sidebar-toc";
 @import "../../themes/docsy/assets/scss/buttons";
-@import "../../themes/docsy/assets/scss/breadcrumb";
 @import "../../themes/docsy/assets/scss/alerts";
 @import "../../themes/docsy/assets/scss/content";
 @import "../../themes/docsy/assets/scss/search";
@@ -61,6 +59,8 @@ footer {
 @import "variables";
 @import "reset";
 @import "type";
+@import "sidebar-tree";
+@import "breadcrumb";
 
 //components
 @import "header";

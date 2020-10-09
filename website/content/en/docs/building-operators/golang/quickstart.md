@@ -87,6 +87,6 @@ Read the [tutorial][tutorial] for an in-depth walkthough of building a Go operat
 [go_tool]:https://golang.org/dl/
 [docker_tool]:https://docs.docker.com/install/
 [kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
-[operator_install]: /docs/installation/install-operator-sdk
+[operator_install]: /docs/installation/
 [tutorial]: /docs/building-operators/golang/tutorial/ 
 
