@@ -18,7 +18,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	clientlocal "sigs.k8s.io/controller-runtime/pkg/client"
+	client_cr "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/yaml"
 )
@@ -48,7 +48,6 @@ var _ = Describe("ConfigMap", func() {
 	})
 
 	Describe("makeObjectFileName", func() {
-
 		var (
 			fileName  string
 			testVal   []byte
@@ -103,7 +102,6 @@ var _ = Describe("ConfigMap", func() {
 
 	Describe("makeObjectBinaryData", func() {
 		It("creates the binary data", func() {
-
 			binaryData := make(map[string][]byte)
 			type return_struct struct {
 				val1 map[string][]byte
@@ -116,11 +114,10 @@ var _ = Describe("ConfigMap", func() {
 
 			obj := test_struct{"val1", "val2"}
 			userInput := []string{"userInput", "userInput2"}
-
-			addObjectToBinaryData(binaryData, obj, userInput...)
-
 			b := make(map[string][]byte)
 			b, e := makeObjectBinaryData(obj, userInput...)
+
+			addObjectToBinaryData(binaryData, obj, userInput...)
 
 			Expect(e).Should(BeNil())
 			Expect(b).Should(Equal(binaryData))
@@ -130,7 +127,6 @@ var _ = Describe("ConfigMap", func() {
 
 	Describe("makeBundleBinaryData", func() {
 		It("should serialize bundle to binary data", func() {
-
 			var e error
 			b := apimanifests.Bundle{
 				Name: "testbundle",
@@ -145,7 +141,6 @@ var _ = Describe("ConfigMap", func() {
 			}
 
 			binaryData, err := makeBundleBinaryData(&b)
-
 			val := make(map[string][]byte)
 			for _, obj := range b.Objects {
 				e = addObjectToBinaryData(val, obj, obj.GetName(), obj.GetKind())
@@ -160,7 +155,6 @@ var _ = Describe("ConfigMap", func() {
 
 	Describe("makeConfigMapsForPackageManifests", func() {
 		It("should serialize packagemanifest to binary data", func() {
-
 			var e error
 			b := []*apimanifests.Bundle{
 				{
@@ -217,18 +211,14 @@ var _ = Describe("ConfigMap", func() {
 			binaryDataByConfigMap, err := makeConfigMapsForPackageManifests(&p, b)
 
 			val := make(map[string]map[string][]byte)
-
 			cmName := getRegistryConfigMapName(p.PackageName) + "-package"
 			val[cmName], err = makeObjectBinaryData(p)
-
-			// Create Bundle ConfigMaps.
 			for _, bundle := range b {
 				version := bundle.CSV.Spec.Version.String()
 				e = fmt.Errorf("bundle ClusterServiceVersion %s has no version", bundle.CSV.GetName())
 
 				cmName := getRegistryConfigMapName(p.PackageName) + "-" + k8sutil.FormatOperatorNameDNS1123(version)
 				val[cmName], e = makeBundleBinaryData(bundle)
-
 			}
 
 			Expect(e).Should(BeNil())
@@ -242,7 +232,6 @@ var _ = Describe("ConfigMap", func() {
 	Describe("getRegistryConfigMaps", func() {
 		It("performs operations and returns all the configmaps", func() {
 			var fclient RegistryResources
-
 			fakeclient := fake.NewFakeClient(
 				&corev1.ConfigMapList{
 					Items: []corev1.ConfigMap{
@@ -261,7 +250,6 @@ var _ = Describe("ConfigMap", func() {
 					},
 				},
 			)
-
 			fclient = RegistryResources{
 				Client: &client.Client{
 					KubeClient: fakeclient,
@@ -273,12 +261,11 @@ var _ = Describe("ConfigMap", func() {
 			}
 
 			list := corev1.ConfigMapList{}
-			opts := []clientlocal.ListOption{
-				clientlocal.MatchingLabels(makeRegistryLabels(fclient.Pkg.PackageName)),
-				clientlocal.InNamespace("testns"),
+			opts := []client_cr.ListOption{
+				client_cr.MatchingLabels(makeRegistryLabels(fclient.Pkg.PackageName)),
+				client_cr.InNamespace("testns"),
 			}
 			e := fclient.Client.KubeClient.List(context.TODO(), &list, opts...)
-
 			configmaps, err := fclient.getRegistryConfigMaps(context.TODO(), "testns")
 
 			Expect(e).Should(BeNil())
