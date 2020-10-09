@@ -18,11 +18,12 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	clientlocal "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/yaml"
 )
 
-var _ = Describe("Testing ConfigMap.go", func() {
+var _ = Describe("ConfigMap", func() {
 
 	Describe("hashContents", func() {
 		It("should return the hash of the byte array without any error", func() {
@@ -85,7 +86,7 @@ var _ = Describe("Testing ConfigMap.go", func() {
 				val2 string
 			}
 			b := make(binaryData)
-			fmt.Printf("%+v", b)
+			// fmt.Printf("%+v", b)
 			obj := test_struct{"val1", "val2"}
 
 			binaryData_local := make(binaryData)
@@ -158,7 +159,7 @@ var _ = Describe("Testing ConfigMap.go", func() {
 	})
 
 	Describe("makeConfigMapsForPackageManifests", func() {
-		It("Test", func() {
+		It("should serialize packagemanifest to binary data", func() {
 
 			var e error
 			b := []*apimanifests.Bundle{
@@ -245,14 +246,16 @@ var _ = Describe("Testing ConfigMap.go", func() {
 			fakeclient := fake.NewFakeClient(
 				&corev1.ConfigMapList{
 					Items: []corev1.ConfigMap{
-						corev1.ConfigMap{
+						{
 							ObjectMeta: metav1.ObjectMeta{
 								Namespace: "testns",
+								Labels:    makeRegistryLabels("test"),
 							},
 						},
-						corev1.ConfigMap{
+						{
 							ObjectMeta: metav1.ObjectMeta{
 								Namespace: "testns2",
+								Labels:    makeRegistryLabels("test"),
 							},
 						},
 					},
@@ -269,11 +272,18 @@ var _ = Describe("Testing ConfigMap.go", func() {
 				Bundles: fclient.Bundles,
 			}
 
+			list := corev1.ConfigMapList{}
+			opts := []clientlocal.ListOption{
+				clientlocal.MatchingLabels(makeRegistryLabels(fclient.Pkg.PackageName)),
+				clientlocal.InNamespace("testns"),
+			}
+			e := fclient.Client.KubeClient.List(context.TODO(), &list, opts...)
+
 			configmaps, err := fclient.getRegistryConfigMaps(context.TODO(), "testns")
 
-			fmt.Printf("\n\n%v", configmaps)
-			fmt.Printf("\n\n%v", err)
-
+			Expect(e).Should(BeNil())
+			Expect(err).Should(BeNil())
+			Expect(configmaps).Should(Equal(list.Items))
 		})
 
 	})
