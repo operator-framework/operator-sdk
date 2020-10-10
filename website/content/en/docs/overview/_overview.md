@@ -58,7 +58,7 @@ Find more details about the various levels and the feature requirements for them
 
 ## Samples
 
-To explore any operator samples built using the operator-sdk, see the [operator-sdk-samples][samples].
+To explore any operator samples built using the operator-sdk, see the samples in [operator-sdk/testdata/][testdata_samples].
 
 ## FAQ
 
@@ -93,5 +93,5 @@ Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file f
 [of-home]: https://github.com/operator-framework
 [operator_link]: https://coreos.com/operators/
 [proposals_docs]: https://github.com/operator-framework/operator-sdk/tree/master/proposals
-[samples]: https://github.com/operator-framework/operator-sdk-samples
+[testdata_samples]: https://github.com/operator-framework/operator-sdk/tree/master/testdata
 [sdk_cli_ref]: /docs/cli/
