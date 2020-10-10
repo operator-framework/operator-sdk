@@ -128,9 +128,8 @@ var _ = Describe("Basic and OLM tests", func() {
 
 		Describe("Test Status and Spec Descriptors", func() {
 			var (
-				cr         unstructured.Unstructured
-				descriptor string
-				csv        operatorsv1alpha1.ClusterServiceVersion
+				cr  unstructured.Unstructured
+				csv operatorsv1alpha1.ClusterServiceVersion
 			)
 
 			csv = operatorsv1alpha1.ClusterServiceVersion{
@@ -157,8 +156,6 @@ var _ = Describe("Basic and OLM tests", func() {
 				},
 			}
 
-			descriptor = "status"
-
 			It("should pass when csv with owned cr and required fields is present", func() {
 				cr = unstructured.Unstructured{
 					Object: map[string]interface{}{
@@ -175,16 +172,33 @@ var _ = Describe("Basic and OLM tests", func() {
 					Group: "test.example.com",
 				})
 
-				result = checkOwnedCSVDescriptors(cr, &csv, descriptor, result)
+				result = checkOwnedCSVStatusDescriptor(cr, &csv, result)
 				Expect(result.State).To(Equal(scapiv1alpha3.PassState))
 			})
 
-			It("should fail when CR Object Descriptor is nil", func() {
+			It("should pass when CR Object Descriptor is nil", func() {
 				cr := unstructured.Unstructured{
 					Object: nil,
 				}
+				cr.SetGroupVersionKind(schema.GroupVersionKind{
+					Kind:  "TestKind",
+					Group: "test.example.com",
+				})
 
-				result = checkOwnedCSVDescriptors(cr, &csv, descriptor, result)
+				result = checkOwnedCSVStatusDescriptor(cr, &csv, result)
+				Expect(result.State).To(Equal(scapiv1alpha3.PassState))
+			})
+
+			It("should fail when CR Object Descriptor is nil and CRD with given GVK cannot be found", func() {
+				cr := unstructured.Unstructured{
+					Object: nil,
+				}
+				cr.SetGroupVersionKind(schema.GroupVersionKind{
+					Kind:  "TestKindNotPresent",
+					Group: "testnotpresent.example.com",
+				})
+
+				result = checkOwnedCSVStatusDescriptor(cr, &csv, result)
 				Expect(result.State).To(Equal(scapiv1alpha3.FailState))
 			})
 
@@ -197,7 +211,7 @@ var _ = Describe("Basic and OLM tests", func() {
 					},
 				}
 
-				result = checkOwnedCSVDescriptors(cr, &csv, descriptor, result)
+				result = checkOwnedCSVStatusDescriptor(cr, &csv, result)
 				Expect(result.State).To(Equal(scapiv1alpha3.FailState))
 			})
 
@@ -210,7 +224,7 @@ var _ = Describe("Basic and OLM tests", func() {
 					},
 				}
 
-				result = checkOwnedCSVDescriptors(cr, &csv, descriptor, result)
+				result = checkOwnedCSVStatusDescriptor(cr, &csv, result)
 				Expect(result.State).To(Equal(scapiv1alpha3.FailState))
 			})
 			It("should pass when required descriptor field is present in CR", func() {
@@ -229,7 +243,7 @@ var _ = Describe("Basic and OLM tests", func() {
 					Group: "test.example.com",
 				})
 
-				result = checkOwnedCSVDescriptors(cr, &csv, descriptor, result)
+				result = checkOwnedCSVSpecDescriptors(cr, &csv, result)
 				Expect(result.State).To(Equal(scapiv1alpha3.PassState))
 			})
 			It("should fail when required spec descriptor field is not present in CR", func() {
@@ -241,7 +255,7 @@ var _ = Describe("Basic and OLM tests", func() {
 					},
 				}
 
-				result = checkOwnedCSVDescriptors(cr, &csv, descriptor, result)
+				result = checkOwnedCSVSpecDescriptors(cr, &csv, result)
 				Expect(result.State).To(Equal(scapiv1alpha3.FailState))
 			})
 			It("should fail when CRs do not have spec field specified", func() {
