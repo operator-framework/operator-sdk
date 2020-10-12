@@ -33,7 +33,7 @@ var _ = Describe("ConfigMap", func() {
 			enc := base32.StdEncoding.WithPadding(base32.NoPadding)
 			ans := enc.EncodeToString(h.Sum(nil))
 
-			Expect(hashContents([]byte("Hello"))).Should(Equal(ans))
+			Expect(hashContents(val)).Should(Equal(ans))
 		})
 	})
 
@@ -43,7 +43,7 @@ var _ = Describe("ConfigMap", func() {
 			name := k8sutil.FormatOperatorNameDNS1123(val)
 			ans := fmt.Sprintf("%s-registry-manifests", name)
 
-			Expect(getRegistryConfigMapName("Test")).Should(Equal(ans))
+			Expect(getRegistryConfigMapName(val)).Should(Equal(ans))
 		})
 	})
 
@@ -58,17 +58,13 @@ var _ = Describe("ConfigMap", func() {
 			userInput = []string{"userInput", "userInput2"}
 			fileName = hashContents(testVal) + "."
 		})
-
 		It("returns the filename with extra user given string", func() {
 			for _, name := range userInput {
-				if name != "" {
-					fileName += strings.ToLower(name) + "."
-				}
+				fileName += strings.ToLower(name) + "."
 			}
 			fileName = fileName + "yaml"
 			Expect(makeObjectFileName(testVal, userInput...)).Should(Equal(fileName))
 		})
-
 		It("returns the filename without extra user given string", func() {
 			fileName = fileName + "yaml"
 			Expect(makeObjectFileName(testVal)).Should(Equal(fileName))
@@ -77,25 +73,24 @@ var _ = Describe("ConfigMap", func() {
 
 	Describe("addObjectToBinaryData ", func() {
 		It("should add given object to the given binaryData", func() {
-			type binaryData map[string][]byte
 			userInput := []string{"userInput", "userInput2"}
 
-			type test_struct struct {
+			b := make(map[string][]byte)
+			obj := struct {
 				val1 string
 				val2 string
+			}{
+				val1: "val1",
+				val2: "val2",
 			}
-			b := make(binaryData)
-			// fmt.Printf("%+v", b)
-			obj := test_struct{"val1", "val2"}
 
-			binaryData_local := make(binaryData)
-			b_local, err := yaml.Marshal(obj)
-
-			binaryData_local[makeObjectFileName(b_local, userInput...)] = b_local
-
+			binaryData := make(map[string][]byte)
+			expected, err := yaml.Marshal(obj)
 			Expect(err).Should(BeNil())
+			binaryData[makeObjectFileName(expected, userInput...)] = expected
+			// Test and verify function
 			Expect(addObjectToBinaryData(b, obj, userInput...)).Should(BeNil())
-			Expect(b).Should(Equal(binaryData_local))
+			Expect(b).Should(Equal(binaryData))
 		})
 
 	})
@@ -103,22 +98,19 @@ var _ = Describe("ConfigMap", func() {
 	Describe("makeObjectBinaryData", func() {
 		It("creates the binary data", func() {
 			binaryData := make(map[string][]byte)
-			type return_struct struct {
-				val1 map[string][]byte
-				val2 error
-			}
-			type test_struct struct {
+			obj := struct {
 				val1 string
 				val2 string
+			}{
+				val1: "val1",
+				val2: "val2",
 			}
 
-			obj := test_struct{"val1", "val2"}
 			userInput := []string{"userInput", "userInput2"}
-			b := make(map[string][]byte)
 			b, e := makeObjectBinaryData(obj, userInput...)
-
-			addObjectToBinaryData(binaryData, obj, userInput...)
-
+			Expect(e).Should(BeNil())
+			// Test and verify function
+			e = addObjectToBinaryData(binaryData, obj, userInput...)
 			Expect(e).Should(BeNil())
 			Expect(b).Should(Equal(binaryData))
 
@@ -141,22 +133,25 @@ var _ = Describe("ConfigMap", func() {
 			}
 
 			binaryData, err := makeBundleBinaryData(&b)
+			Expect(err).Should(BeNil())
 			val := make(map[string][]byte)
 			for _, obj := range b.Objects {
 				e = addObjectToBinaryData(val, obj, obj.GetName(), obj.GetKind())
+				Expect(e).Should(BeNil())
 			}
 
 			Expect(binaryData).Should(Equal(val))
-			Expect(e).Should(BeNil())
-			Expect(err).Should(BeNil())
-
 		})
 	})
 
 	Describe("makeConfigMapsForPackageManifests", func() {
-		It("should serialize packagemanifest to binary data", func() {
-			var e error
-			b := []*apimanifests.Bundle{
+		var (
+			p apimanifests.PackageManifest
+			e error
+			b []*apimanifests.Bundle
+		)
+		BeforeEach(func() {
+			b = []*apimanifests.Bundle{
 				{
 					Name: "testbundle",
 					Objects: []*unstructured.Unstructured{
@@ -194,8 +189,7 @@ var _ = Describe("ConfigMap", func() {
 					},
 				},
 			}
-
-			p := apimanifests.PackageManifest{
+			p = apimanifests.PackageManifest{
 				PackageName: "test_package_manifest",
 				Channels: []apimanifests.PackageChannel{
 					{Name: "test_1",
@@ -207,31 +201,34 @@ var _ = Describe("ConfigMap", func() {
 				},
 				DefaultChannelName: "test_channel_name",
 			}
-
+		})
+		It("should serialize packagemanifest to binary data", func() {
 			binaryDataByConfigMap, err := makeConfigMapsForPackageManifests(&p, b)
+			Expect(err).Should(BeNil())
 
 			val := make(map[string]map[string][]byte)
 			cmName := getRegistryConfigMapName(p.PackageName) + "-package"
 			val[cmName], err = makeObjectBinaryData(p)
+			Expect(err).Should(BeNil())
 			for _, bundle := range b {
 				version := bundle.CSV.Spec.Version.String()
-				e = fmt.Errorf("bundle ClusterServiceVersion %s has no version", bundle.CSV.GetName())
-
 				cmName := getRegistryConfigMapName(p.PackageName) + "-" + k8sutil.FormatOperatorNameDNS1123(version)
 				val[cmName], e = makeBundleBinaryData(bundle)
+				Expect(e).Should(BeNil())
 			}
 
-			Expect(e).Should(BeNil())
-			Expect(err).Should(BeNil())
 			Expect(binaryDataByConfigMap).Should(Equal(val))
-
 		})
 
 	})
 
 	Describe("getRegistryConfigMaps", func() {
-		It("performs operations and returns all the configmaps", func() {
-			var fclient RegistryResources
+		var (
+			rr   RegistryResources
+			list corev1.ConfigMapList
+			e    error
+		)
+		BeforeEach(func() {
 			fakeclient := fake.NewFakeClient(
 				&corev1.ConfigMapList{
 					Items: []corev1.ConfigMap{
@@ -250,26 +247,28 @@ var _ = Describe("ConfigMap", func() {
 					},
 				},
 			)
-			fclient = RegistryResources{
+			rr = RegistryResources{
 				Client: &client.Client{
 					KubeClient: fakeclient,
 				},
 				Pkg: &apimanifests.PackageManifest{
 					PackageName: "test",
 				},
-				Bundles: fclient.Bundles,
+				Bundles: rr.Bundles,
 			}
 
-			list := corev1.ConfigMapList{}
+			list = corev1.ConfigMapList{}
+		})
+		It("performs operations and returns all the configmaps", func() {
 			opts := []client_cr.ListOption{
-				client_cr.MatchingLabels(makeRegistryLabels(fclient.Pkg.PackageName)),
+				client_cr.MatchingLabels(makeRegistryLabels(rr.Pkg.PackageName)),
 				client_cr.InNamespace("testns"),
 			}
-			e := fclient.Client.KubeClient.List(context.TODO(), &list, opts...)
-			configmaps, err := fclient.getRegistryConfigMaps(context.TODO(), "testns")
-
+			e = rr.Client.KubeClient.List(context.TODO(), &list, opts...)
 			Expect(e).Should(BeNil())
+			configmaps, err := rr.getRegistryConfigMaps(context.TODO(), "testns")
 			Expect(err).Should(BeNil())
+
 			Expect(configmaps).Should(Equal(list.Items))
 		})
 
