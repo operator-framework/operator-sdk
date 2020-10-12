@@ -37,4 +37,4 @@ test_version() {
 }
 
 test_version "latest"
-test_version "0.10.1"
+test_version "0.15.1"
