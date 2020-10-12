@@ -102,7 +102,7 @@ operator-sdk create api \
 
 Now let’s copy the API definition from `pkg/apis/<group>/<version>/<kind>_types.go` to `api/<version>/<kind>_types.go`. For our example, it is only required to copy the code from the `Spec` and `Status` fields.
 
-This file is quite similar to the old one. Once you copy over your API definitions, they should be identical. However, pay close attention to these kubebuilder [Markers][markers]:
+This file is quite similar to the old one. Once you copy over your API definitions and generate manifests, you should end up with an identical API for your custom resource type. However, pay close attention to these kubebuilder [Markers][markers]:
 
 - The `+k8s:deepcopy-gen:interfaces=...` marker was replaced with `+kubebuilder:object:root=true`.
 - If you are not using [openapi-gen][openapi-gen] to generate OpenAPI Go code, then `// +k8s:openapi-gen=true` and other related openapi markers can be removed.
