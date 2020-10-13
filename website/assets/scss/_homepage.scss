@@ -158,3 +158,17 @@
     }
 
 }
+
+.of-section-page-message {
+    background: var(--of--color-black--300);
+    color: #fff;
+    display: flex;
+    text-align: center;
+    flex-direction: column;
+    justify-content: center;
+    padding: var(--of--spacer--xl);
+    &__title {
+        margin-bottom: var(--of--spacer--md);
+    }
+
+}
