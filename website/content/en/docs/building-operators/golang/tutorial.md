@@ -14,6 +14,16 @@ please [migrate][migration-guide], or consult the [legacy docs][legacy-quickstar
 - Access to a Kubernetes v1.11.3+ cluster (v1.16.0+ if using `apiextensions.k8s.io/v1` CRDs).
 - User logged with admin permission. See [how to grant yourself cluster-admin privileges or be logged in as admin][role-based-access-control]
 
+## Overview
+
+By using operators, it’s possible not only to provide all expected resources but also to manage them dynamically, programmatically, and at execution time. To illustrate this idea, imagine if someone accidentally changed a configuration or removed a resource by mistake; in this case, the operator could fix it without any human intervention. 
+
+We will create a sample project to let you know how it works and this sample will:
+
+- Create a memcached Deployment if it doesn't exist
+- Ensure that the Deployment size is the same as specified by the Memcached CR spec
+- Update the Memcached CR status using the status writer with the names of the memcached pods
+
 ## Create a new project
 
 Use the CLI to create a new memcached-operator project:
@@ -48,32 +58,7 @@ By default this will be the namespace that the operator is running in. To watch 
 mgr, err := ctrl.NewManager(cfg, manager.Options{Namespace: ""})
 ```
 
-It is also possible to use the [MultiNamespacedCacheBuilder][multi-namespaced-cache-builder] to watch a specific set of namespaces:
-```Go
-var namespaces []string // List of Namespaces
-// Create a new Cmd to provide shared dependencies and start components
-mgr, err := ctrl.NewManager(cfg, manager.Options{
-   NewCache: cache.MultiNamespacedCacheBuilder(namespaces),
-})
-```
-
-#### Operator scope
-
 Read the [operator scope][operator_scope] documentation on how to run your operator as namespace-scoped vs cluster-scoped.
-
-### Multi-Group APIs
-
-Before creating an API and controller, consider if your operator requires multiple API [groups][api-groups]. Then to change the layout of your project to support multi-group run the command `operator-sdk edit --multigroup`. It will update the `PROJECT` file which should look like the following:
-
-```YAML
-domain: example.com
-layout: go.kubebuilder.io/v3
-multigroup: true
-...
-```
-For multi-group projects, the API Go type files are created under `apis/<group>/<version>/` and the controllers under `controllers/<group>/` and then, the Dockerfile will be updated accordingly. For further information see the [multi-group migration doc][multigroup-kubebuilder-doc]
-
-This guide will cover the default case of a single group API.
 
 ## Create a new API and Controller
 
@@ -90,11 +75,27 @@ controllers/memcached_controller.go
 
 This will scaffold the Memcached resource API at `api/v1alpha1/memcached_types.go` and the controller at `controllers/memcached_controller.go`.
 
-See the [API terminology doc][api_terms_doc] for details on the CRD API conventions.
+**Note:** This guide will cover the default case of a single group API. If you would like to support Multi-Group APIs see the [Single Group to Multi-Group][multigroup-kubebuilder-doc] doc.
 
-To understand the API Go types and controller scaffolding see the Kubebuilder [api doc][kb_api_doc] and [controller doc][kb_controller_doc].
+#### Understanding API’s
+
+The goal of this command is to create Custom Resource (CR) and Custom Resource Definition (CRD) resources for the Memcached Kind. This command is creating the API with the group `cache.example.com`, and version `v1alpha1`  which uniquely identifies the new CRD of the Memcached Kind. For more info see [Extend the Kubernetes API with CustomResourceDefinitions][[kubernetes-extend-api]]. 
+
+Consequently, by using the Operator SDK tool, we can create our APIs and objects that will represent our solutions on these platforms. Here will adds only a single kind of resource; however, it could have as many Kinds as needed (1…N). Basically, the CRDs are a definition of our customized Objects, and the CRs are an instance of it.
+
+#### Getting a better idea
+
+Let’s think about the classic scenario where the goal is to have an application and its database running on the platform with Kubernetes. Then, one object could represent the App, and another one could represent the DB. By having one CRD to describe the App and another one for the DB, we will not be hurting concepts such as encapsulation, the single responsibility principle, and cohesion. Damaging these concepts could cause unexpected side effects, such as difficulty in extending, reuse, or maintenance, just to mention a few.
+
+In conclusion, the App CRD will have as its controller the DB CRD. Imagine, that a Deployment and Service are required for the application run so that the App’s Controller will provide these resources in this example. Similarly, the DB’s controller will have the business logic implementation of its objects.
+
+In this way, for each CRD, one controller should be produced according to the design set by the controller-runtime.
 
 ### Define the API
+
+In this example, we will define that the Memcached Kind (CRD) will have the attribute size which will specify the quantity of Memcached instances will be deployed. Also, we will create an attribute to its Status which will store the Pod Names. 
+
+**NOTE** The status field here is just to illustrate the idea but for it would be recommended use [Conditionals][conditionals] instead of that.
 
 Define the API for the Memcached Custom Resource(CR) by modifying the Go type definitions at `api/v1alpha1/memcached_types.go` to have the following spec and status:
 
@@ -133,7 +134,7 @@ After modifying the `*_types.go` file always run the following command to update
 make generate
 ```
 
-The above makefile target will invoke the [controller-gen][controller_tools] utility to update the `api/v1alpha1/zz_generated.deepcopy.go` file to ensure our API's Go type definitons implement the `runtime.Object` interface that all Kind types must implement.
+**Note**: The above makefile target will invoke the [controller-gen][controller_tools] utility to update the `api/v1alpha1/zz_generated.deepcopy.go` file to ensure our API's Go type definitons implement the `runtime.Object` interface that all Kind types must implement.
 
 ### Generating CRD manifests
 
@@ -143,30 +144,17 @@ Once the API is defined with spec/status fields and CRD validation markers, the 
 make manifests
 ```
 
-This makefile target will invoke controller-gen to generate the CRD manifests at `config/crd/bases/cache.example.com_memcacheds.yaml`.
+This makefile target will invoke [controller-gen][controller_tools] to generate the CRD manifests at `config/crd/bases/cache.example.com_memcacheds.yaml`.
 
-#### OpenAPI validation
+**Note** If you would like to define validations for the CRD's fields see the [OpenAPI valiation][openapi-validation] doc.
 
-OpenAPIv3 schemas are added to CRD manifests in the `spec.validation` block when the manifests are generated. This validation block allows Kubernetes to validate the properties in a Memcached Custom Resource when it is created or updated.
-
-Markers (annotations) are available to configure validations for your API. These markers will always have a `+kubebuilder:validation` prefix.
-
-Usage of markers in API code is discussed in the kubebuilder [CRD generation][generating-crd] and [marker][markers] documentation. A full list of OpenAPIv3 validation markers can be found [here][crd-markers].
-
-To learn more about OpenAPI v3.0 validation schemas in CRDs, refer to the [Kubernetes Documentation][doc-validation-schema].
-
-### Implement the Controller
+## Implement the Controller
 
 For this example replace the generated controller file `controllers/memcached_controller.go` with the example [`memcached_controller.go`][memcached_controller] implementation.
 
-The example controller executes the following reconciliation logic for each Memcached CR:
-- Create a memcached Deployment if it doesn't exist
-- Ensure that the Deployment size is the same as specified by the Memcached CR spec
-- Update the Memcached CR status using the status writer with the names of the memcached pods
+**Note**: The next two subsections explain how the controller watches resources and how the reconcile loop is triggered. Skip to the [Build](#build-and-run-the-operator) section to see how to build and run the operator.
 
-The next two subsections explain how the controller watches resources and how the reconcile loop is triggered. Skip to the ["run the Operator"](#run-the-operator) section to see how to build and run the operator.
-
-#### Resources watched by the Controller
+### Resources watched by the Controller
 
 The `SetupWithManager()` function in `controllers/memcached_controller.go` specifies how the controller is built to watch a CR and other resources that are owned and managed by that controller.
 
@@ -191,7 +179,7 @@ The `NewControllerManagedBy()` provides a controller builder that allows various
 
 `Owns(&appsv1.Deployment{})` specifies the Deployments type as the secondary resource to watch. For each Deployment type Add/Update/Delete event, the event handler will map each event to a reconcile `Request` for the owner of the Deployment. Which in this case is the Memcached object for which the Deployment was created.
 
-#### Controller Configurations
+### Controller Configurations
 
 There are a number of other useful configurations that can be made when initialzing a controller. For more details on these configurations consult the upstream [builder][builder_godocs] and [controller][controller_godocs] godocs.
 
@@ -208,10 +196,66 @@ There are a number of other useful configurations that can be made when initialz
 - Filter watch events using [predicates][event_filtering]
 - Choose the type of [EventHandler][event_handler_godocs] to change how a watch event will translate to reconcile requests for the reconcile loop. For operator relationships that are more complex than primary and secondary resources, the [`EnqueueRequestsFromMapFunc`][enqueue_requests_from_map_func] handler can be used to transform a watch event into an arbitrary set of reconcile requests.
 
+### Reconcile loop
 
-#### Reconcile loop
+The reconcile function is responsible for synchronizing the resources and their specifications according to the business logic implemented on them. In this way, it works like a loop, and it does not stop until all conditionals match its implementation. The following is pseudo-code with an example that clarifies it.
 
-Every Controller has a Reconciler object with a `Reconcile()` method that implements the reconcile loop. The reconcile loop is passed the [`Request`][request-go-doc] argument which is a Namespace/Name key used to lookup the primary resource object, Memcached, from the cache:
+```go
+reconcile App {
+ 
+   // Check if a Deployment for the app exists, if not create one
+   // If has an error, then go to the beginning of the reconcile
+   if err != nil {
+       return reconcile.Result{}, err 
+   } 
+    
+   // Check if a Service for the app exists, if not create one 
+   // If has an error, then go to the beginning of the reconcile
+   if err != nil {
+       return reconcile.Result{}, err 
+   }  
+ 
+   // Looking for Database CR/CRD 
+   // Check the Database Deployments Replicas size
+   // If deployment.replicas size != cr.size, then update it
+   // Then, go to the beginning of the reconcile
+   if err != nil {
+       return reconcile.Result{Requeue: true}, nil
+   }  
+   ...
+    
+   // If it is at the end of the loop, then:
+   // All was done successfully and the reconcile can stop  
+   return reconcile.Result{}, nil
+ 
+}
+```
+
+The following are a few possible return options to restart the Reconcile:
+
+- With the error:
+```go
+return ctrl.Result{}, err
+```
+
+- Without an error:
+```go
+return ctrl.Result{Requeue: true}, nil
+```
+
+- Therefore, to stop the Reconcile, use:
+```go
+return ctrl.Result{}, nil
+```
+
+- Reconcile again after X time:
+```go
+return ctrl.Result{RequeueAfter: nextRun.Sub(r.Now())}, nil
+```
+
+**Note:** For more details, check the Reconcile and its [Reconcile godoc][reconcile-godoc].
+
+In this way, every Controller has a Reconciler object with a `Reconcile()` method that implements the reconcile loop. The reconcile loop is passed the [`Request`][request-go-doc] argument which is a Namespace/Name key used to lookup the primary resource object, Memcached, from the cache:
 
 ```Go
 import (
@@ -229,32 +273,11 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 }
 ```
 
-Based on the return values, [`Result`][result_go_doc] and error, the `Request` may be requeued and the reconcile loop may be triggered again:
-
-```Go
-// Reconcile successful - don't requeue
-return ctrl.Result{}, nil
-// Reconcile failed due to error - requeue
-return ctrl.Result{}, err
-// Requeue for any reason other than an error
-return ctrl.Result{Requeue: true}, nil
-```
-
-You can set the `Result.RequeueAfter` to requeue the `Request` after a grace period as well:
-```Go
-import "time"
-
-// Reconcile for any reason other than an error after 5 seconds
-return ctrl.Result{RequeueAfter: time.Second*5}, nil
-```
-
-**Note:** Returning `Result` with `RequeueAfter` set is how you can periodically reconcile a CR.
-
 For a guide on Reconcilers, Clients, and interacting with resource Events, see the [Client API doc][doc_client_api].
 
 ### Specify permissions and generate RBAC manifests
 
-The controller needs certain RBAC permissions to interact with the resources it manages. These are specified via [RBAC markers][rbac_markers] like the following:
+The controller needs certain [RBAC][rbac-k8s-doc] permissions to interact with the resources it manages. These are specified via [RBAC markers][rbac_markers] like the following:
 
 ```Go
 // +kubebuilder:rbac:groups=cache.example.com,resources=memcacheds,verbs=get;list;watch;create;update;patch;delete
@@ -282,17 +305,10 @@ There are three ways to run the operator:
 - As a Deployment inside a Kubernetes cluster
 - Managed by the [Operator Lifecycle Manager (OLM)][doc-olm] in [bundle][quickstart-bundle] format
 
-### 1. Run locally outside the cluster
 
-Execute the following command, which install your CRDs and run the manager locally:
+The following steps will show how to deploy the operator on the Cluster. However, to run locally for development purposes and outside of a Cluster use the target `make run`.
 
-```sh
-make install run ENABLE_WEBHOOKS=false
-```
-
-### 2. Run as a Deployment inside the cluster
-
-#### Build and push the image
+### Build and push the image
 
 Before building the operator image, ensure the generated Dockerfile references
 the base image you want. You can change the default "runner" image `gcr.io/distroless/static:nonroot`
@@ -323,9 +339,6 @@ Run the following to deploy the operator. This will also install the RBAC manife
 ```sh
 make deploy IMG=quay.io/$USERNAME/memcached-operator:v0.0.1
 ```
-
-*NOTE* If you have enabled webhooks in your deployments, you will need to have cert-manager already installed
-in the cluster or `make deploy` will fail when creating the cert-manager resources.
 
 Verify that the memcached-operator is up and running:
 
@@ -449,11 +462,9 @@ make undeploy
 
 ## Further steps
 
-The following guides build off the operator created in this example, adding advanced features:
+Now, check how to integrate your project with [OLM][olm-integration] to know how to distribute your project and, for example, publish your projects in the https://operatorhub.io/. 
 
-- [Create a validating or mutating Admission Webhook][create_a_webhook]
-
-Also see the [advanced topics][advanced_topics] doc for more use cases and under the hood details.
+Also see the [advanced topics][advanced_topics] doc for more use cases and under the hood details. 
 
 
 [legacy-quickstart-doc]:https://v0-19-x.sdk.operatorframework.io/docs/golang/legacy/quickstart/
@@ -488,8 +499,15 @@ Also see the [advanced topics][advanced_topics] doc for more use cases and under
 [create_a_webhook]: https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html
 [status_marker]: https://book.kubebuilder.io/reference/generating-crd.html#status
 [status_subresource]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#status-subresource
-[env-test-setup]: /docs/building-operators/golang/references/envtest-setup
+[API-groups]:https://kubernetes.io/docs/concepts/overview/kubernetes-api/#api-groups
+[legacy_CLI]:https://v0-19-x.sdk.operatorframework.io/docs/cli/
 [role-based-access-control]: https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control#iam-rolebinding-bootstrap
 [multigroup-kubebuilder-doc]: https://book.kubebuilder.io/migration/multi-group.html
 [quickstart-bundle]:/docs/olm-integration/quickstart-bundle
 [doc-olm]:/docs/olm-integration/quickstart-bundle/#enabling-olm
+[conditionals]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
+[kubernetes-extend-api]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/
+[reconcile-godoc]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/reconcile
+[rbac-k8s-doc]: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
+[olm-integration]: /docs/olm-integration
+[openapi-validation]: /docs/building-operators/golang/references/openapi-validation
