@@ -49,8 +49,9 @@ func (rr *RegistryResources) getRegistryConfigMaps(ctx context.Context, namespac
 // for a given PackageManifest and Bundles. Each ConfigMaps's binary data is
 // indexed by the ConfigMap's name.
 func makeConfigMapsForPackageManifests(pkg *apimanifests.PackageManifest,
-	bundles []*apimanifests.Bundle) (_ map[string]map[string][]byte, err error) {
+	bundles []*apimanifests.Bundle) (map[string]map[string][]byte, error) {
 
+	var err error
 	binaryDataByConfigMap := make(map[string]map[string][]byte)
 	// Create a PackageManifest ConfigMap.
 	cmName := getRegistryConfigMapName(pkg.PackageName) + "-package"
