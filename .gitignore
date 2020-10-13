@@ -3,6 +3,7 @@
 
 # Build artifacts
 /build
+/dist
 /tools/bin
 
 # Website

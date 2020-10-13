@@ -56,4 +56,4 @@ git verify-tag --verbose "$VER"
 make release
 
 # Verify the signatures
-for f in $(ls build/*.asc); do gpg --verify $f; done
+for f in $(ls dist/*.asc); do gpg --verify $f; done
