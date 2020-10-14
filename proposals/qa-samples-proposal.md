@@ -11,7 +11,7 @@ last-updated: 2019-11-22
 status: implementable
 ---
 
-# QA Samples Proposal  
+# QA Samples Proposal
 
 ## Release Signoff Checklist
 
@@ -38,7 +38,7 @@ The Operator SDK has a repo with [sample projects](https://github.com/operator-f
 - As an operator developer, I would like to know how to cover the projects with tests
 - As an operator developer, I would like to know how to use the [test-framework][e2e-docs] to do unit and integration tests
 - As an operator developer, I would like to know how to call the tests in the CI and integrate them with Travis
-- As an operator developer, I would like to know good practices to ensure the quality of my operators projects 
+- As an operator developer, I would like to know good practices to ensure the quality of my operators projects
 
 **NOTE** The above goals are valid for the 3 types/projects Go, Ansible and Helm
 
@@ -48,32 +48,32 @@ The Operator SDK has a repo with [sample projects](https://github.com/operator-f
 
 ## Proposal
 
-- Cover the projects with unit and integration tests. 
+- Cover the projects with unit and integration tests.
 - Integrate projects with Travis
 - Integrate projects with Coveralls
 
-### User Stories 
+### User Stories
 
 #### Unit tests for Go Memcached Sample
 
 - I as a GO operator developer, I would like to know how to cover the projects with unit tests using the test-framework
 
-**Acceptance Criteria** 
-- The GO project should have a minimum of 70% of its implementation covered by unit tests. 
+**Acceptance Criteria**
+- The GO project should have a minimum of 70% of its implementation covered by unit tests.
 - The tests should all pass.
 - The project should have a makefile target to call the tests
 - A section with a short info over how to tests and the links for its documents in the README of the project
 - The tests should be done using the default GO testing lib and the [test-framework][e2e-docs] provided by SDK
- 
-**NOTES** 
+
+**NOTES**
 - See [here](https://github.com/dev4devs-com/postgresql-operator/blob/master/pkg/controller/database/controller_test.go) an example of how to cover the controller.
-- See [here](https://github.com/dev4devs-com/postgresql-operator/blob/master/pkg/controller/database/fakeclient_test.go) an example of how to create the fake client. 
+- See [here](https://github.com/dev4devs-com/postgresql-operator/blob/master/pkg/controller/database/fakeclient_test.go) an example of how to create the fake client.
 
 #### e2e tests for Go Memcached Sample
 
 - I as a Go dev operator user, I'd like to know how to cover the projects with integration tests using the test-framework
 
-**Acceptance Criteria** 
+**Acceptance Criteria**
 - The GO project should be covered with a few basic integration tests
 - The tests should all pass.
 - The project should have a makefile target to call the integration test
@@ -84,7 +84,7 @@ The Operator SDK has a repo with [sample projects](https://github.com/operator-f
 
 - As an Ansible operator developer, I would like to know how to cover the projects with unit tests using molecule
 
-**Acceptance Criteria** 
+**Acceptance Criteria**
 - The Ansible project should be covered by tests using [molecule](https://github.com/operator-framework/operator-sdk-samples/tree/master/ansible/memcached-operator/molecule) which by default is scaffold
 - The tests should all pass.
 - A section with a short info over how to tests and the links for its documents in the README of the project
@@ -94,7 +94,7 @@ The Operator SDK has a repo with [sample projects](https://github.com/operator-f
 
 - As an Helm operator developer, I would like to how to cover the projects with tests
 
-**Acceptance Criteria** 
+**Acceptance Criteria**
 - The Helm project should have test shell scripts as seen [here](https://github.com/operator-framework/operator-sdk/blob/master/hack/tests/e2e-helm.sh).- The tests should all pass.
 - A section with a short info over how to tests and the links for its documents in the README of the project
 - The project should have a makefile target to call the tests
@@ -104,7 +104,7 @@ The Operator SDK has a repo with [sample projects](https://github.com/operator-f
 
 - As an Ansible operator developer, I'd like to how to cover the projects with integration tests using molecule
 
-**Acceptance Criteria** 
+**Acceptance Criteria**
 - The Ansible project should have a few integration tests using [molecule](https://github.com/operator-framework/operator-sdk-samples/tree/master/ansible/memcached-operator/molecule) which by default is scaffold
 - The tests should all pass.
 - A section with a short info over how to tests and the links for its documents in the README of the project
@@ -115,7 +115,7 @@ The Operator SDK has a repo with [sample projects](https://github.com/operator-f
 - As an operator-sdk maintainer, I would like ensure that samples continue to work after the changes performed in the PR are applied.
 - As an operator developer, I would like to know how to call the tests in the CI and integrate them with Travis
 
-**Acceptance Criteria** 
+**Acceptance Criteria**
 - The Ansible, Helm and Go project should be integrated with Travis
 - All PRs against the master branch should trigger the CI
 - The unit and integration tests should be checked in the CI
@@ -123,9 +123,9 @@ The Operator SDK has a repo with [sample projects](https://github.com/operator-f
 
 #### Coveralls Integration
 
-- As an operator developer, I'd like to know good practices to ensure the quality of my operators projects 
+- As an operator developer, I'd like to know good practices to ensure the quality of my operators projects
 
-**Acceptance Criteria** 
+**Acceptance Criteria**
 - Ansible and GO Memcached samples should be integrated with [Coveralls](https://coveralls.io/)
 - All above stories should be achieved successfully
 

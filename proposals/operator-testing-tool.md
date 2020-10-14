@@ -12,7 +12,7 @@ creation-date: 2019-09-13
 last-updated: 2019-11-07
 status: provisional|implementable|implemented|deferred|rejected|withdrawn|replaced
 see-also:
-  - "/enhancements/this-other-neat-thing.md"  
+  - "/enhancements/this-other-neat-thing.md"
 replaces:
   - "/enhancements/that-less-than-great-idea.md"
 superseded-by:
@@ -56,10 +56,10 @@ not in scope: Operator Developers can use the same tool to run custom, functiona
 
 ## Proposal
 
-### User Stories 
+### User Stories
 
 #### Story 1 - Show pass/fail in Scorecard Output
-Today, the scorecard output shows a percentage of tests that were successful to the end user. This story is to change the scorecard output to show a pass or fail for each test that is run in the output instead of a success percentage. 
+Today, the scorecard output shows a percentage of tests that were successful to the end user. This story is to change the scorecard output to show a pass or fail for each test that is run in the output instead of a success percentage.
 
 The scorecard would by default run all tests regardless if a single test fails.  Using a CLI flag such as below would cause the test execution to stop on a failure:
  * operator-sdk scorecard -l ‘necessity=required’ --fail-fast
@@ -68,7 +68,7 @@ Tasks for this story include:
  * change scorecard by removing earnedPoints and maximumPoints from each test
  * change scorecard output by removing totalScorePercent, partialPass, earnedPoints, maximumPoints from scorecard output
  * change scorecard existing tests to remove partialPass, instead only returning a pass or fail
- * change scorecard CLI to return an exit code based on the pass/fail results from the set of executed tests 
+ * change scorecard CLI to return an exit code based on the pass/fail results from the set of executed tests
  * (stretch goal) add support for --fast-fail CLI flag
 
 
@@ -82,8 +82,8 @@ This story would introduce labels for each test and then allow the scorecard CLI
 
 Tests can fall into 3 groups: required, recommended, or optional. Tests can also be categorized as static or runtime. Labels for these groups and categories would allow a test to be more precisely specified by an end user.
 
-Possible examples of specifying what tests to run are as follows: 
- * operator-sdk scorecard -l ‘testgroup in (required,recommended,optional)’ 
+Possible examples of specifying what tests to run are as follows:
+ * operator-sdk scorecard -l ‘testgroup in (required,recommended,optional)’
  * operator-sdk scorecard -l ‘testtype in (runtime,static)’
  * operator-sdk scorecard -l updatecrtest=true
  * operator-sdk scorecard -l someplugintest=true
@@ -229,7 +229,7 @@ maturity levels.
 - Sufficient test coverage
 - Gather feedback from users rather than just developers
 
-##### Tech Preview -> GA 
+##### Tech Preview -> GA
 
 - More testing (upgrade, downgrade, scale)
 - Sufficient time for feedback

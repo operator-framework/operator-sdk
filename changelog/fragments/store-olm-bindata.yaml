@@ -1,8 +1,8 @@
 entries:
   - description: >
-      Added feature to the command `operator-sdk olm install` that allows installing OLM version 0.15.1 without 
+      Added feature to the command `operator-sdk olm install` that allows installing OLM version 0.15.1 without
       fetching the manifest from Github.
-      
+
     kind: "addition"
 
     breaking: false

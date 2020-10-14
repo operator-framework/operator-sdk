@@ -142,7 +142,7 @@ to reuse Kubebuilder’s CLI and plugins so that the SDK workflow for developing
 Go operators is identical to Kubebuilder’s workflow.
 
 Project initialization and api/webhook scaffolding would be provided by the
-upstream Kubebuilder CLI and plugins:  
+upstream Kubebuilder CLI and plugins:
 
 - `operator-sdk new` ==> `operator-sdk init`
 - `operator-sdk add api/controller` ==> `operator-sdk create api`

@@ -14,7 +14,7 @@ creation-date: 2019-09-12
 last-updated: 2019-09-12
 status: implementable
 see-also:
-  - "./cli-ux-phase1.md"  
+  - "./cli-ux-phase1.md"
 ---
 
 # sdk integration with olm

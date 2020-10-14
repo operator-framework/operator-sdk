@@ -41,7 +41,7 @@ Contributing scaffolding enhancements to Kubebuilder that cover the SDK’s use 
 ### Goals
 
 - The packages and features that are suitable for upstream contribution should be made available in the controller-runtime such that they cover the same use cases.
-- Downstream SDK users can easily switch over to using those features in the controller-runtime. In most cases this should amount to just changing the import paths. For function signature changes there should be documentation to explain the breaking changes.  
+- Downstream SDK users can easily switch over to using those features in the controller-runtime. In most cases this should amount to just changing the import paths. For function signature changes there should be documentation to explain the breaking changes.
 - The contributed features should have sufficient documentation in the upstream godocs.
 - Once available upstream, those packages and APIs should be marked as deprecated and eventually removed from the SDK.
 
@@ -94,7 +94,7 @@ Operator SDK scaffolds a project Dockerfile such that it runs as non-root by def
 - [internal/pkg/scaffold/entrypoint.go][sdk-scaffold-entrypoint]
 - [internal/pkg/scaffold/usersetup.go][sdk-scaffold-user-setup]
 
-Kubebuilder should support scaffolding projects that will allow the base image to run as non-root and support arbitrary user ids. 
+Kubebuilder should support scaffolding projects that will allow the base image to run as non-root and support arbitrary user ids.
 Currently with [kubebuilder #983][kubebuilder-983], a non-root base image should be supported by Kubebuilder.
 
 

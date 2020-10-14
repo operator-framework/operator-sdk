@@ -1,7 +1,7 @@
 # Helm based-Operator Proposal for Operator SDK
 
 > Status: **implemented**
-> 
+>
 > See also: [Helm documentation][helm_docs].
 
 - [Background](#background)

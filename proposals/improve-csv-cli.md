@@ -14,7 +14,7 @@ creation-date: 2019-11-27
 last-updated: 2019-11-27
 status: implementable
 see-also:
-  - "doc/user/olm-catalog/generating-a-csv.md"  
+  - "doc/user/olm-catalog/generating-a-csv.md"
 ---
 
 # Improve `generate csv` CLI

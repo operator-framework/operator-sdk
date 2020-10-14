@@ -1,7 +1,7 @@
 # Ansible-based Operator Status Proposal for Operator SDK
 
 > Status: **implemented**
-> 
+>
 > The operator can surface basic information from the Ansible code in a generic fashion - it can set the conditions and it can surface a failure message if the run failed. See documentation in the Developer Guide: [Custom Resource Status Management](https://sdk.operatorframework.io/docs/ansible/development-tips/#custom-resource-status-management)
 
 - [Problem](#problem)

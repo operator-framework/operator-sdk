@@ -1,4 +1,4 @@
-# Plugin System for the `operator-sdk scorecard` feature Proposal for Operator SDK 
+# Plugin System for the `operator-sdk scorecard` feature Proposal for Operator SDK
 
 Implementation Owner: AlexNPavel
 

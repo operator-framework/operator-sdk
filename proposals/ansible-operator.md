@@ -1,7 +1,7 @@
 # Ansible based-Operator Proposal for Operator SDK
 
 > Status: **implemented**
-> 
+>
 > This proposal has been implemented, please see the [Ansible User Guide for Operator SDK](http://sdk.operatorframework.io/docs/ansible/) for current documentation.
 
 - [Background](#background)

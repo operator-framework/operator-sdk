@@ -24,7 +24,7 @@ status: TBD
 ## Motivation
 
 Hosted documentation will improve the Operator SDK user experience by
-increasing the visibility and accessibility of the content. 
+increasing the visibility and accessibility of the content.
 
 ## Summary
 
@@ -32,7 +32,7 @@ This enhancement proposes a technology stack that will be used to write,
 build, and host the documentation for the Operator SDK project.
 
 Hugo will be used for static site generation from Markdown. Neflify will
-be used to host the site. 
+be used to host the site.
 
 Highlights:
   - Files will remain markdown, few syntax changes necessary.
@@ -49,7 +49,7 @@ Highlights:
 1. Implementation of this proposal will result in a website that hosts
    the documentation that currently exists in the `doc` directory of
    [the Operator SDK
-   project](https://github.com/operator-framework/operator-sdk/). 
+   project](https://github.com/operator-framework/operator-sdk/).
 1. A minimal landing page will be created.
 1. Docs will build automatically when code merges to master branch.
 
@@ -65,7 +65,7 @@ Docs will be built with [Hugo](https://gohugo.io/). Highlights:
  - Static site generator
  - Files will remain markdown, with minor syntactical changes.
  - Fast builds
- - Commonly used for Golang projects, including Docker and Kubernetes. 
+ - Commonly used for Golang projects, including Docker and Kubernetes.
  - Open source (Apache 2.0)
  - Multi-language support
 

@@ -22,7 +22,7 @@ status: implementable
 - \[ \] Design details are appropriately documented from clear requirements
 - \[ \] Test plan is defined
 - \[ \] Graduation criteria for dev preview, tech preview, GA
-- \[ \] User-facing documentation is created 
+- \[ \] User-facing documentation is created
 
 ## Summary
 
@@ -75,9 +75,9 @@ Scorecard internal tests will be converted to the custom test format and therefo
 
 Scorecard would process tests based on an on-disk directory or bundle image that contains the scorecard configuration.
 
-#### Story 5 
+#### Story 5
 
-- I am as an Operator developer, would like to be able to create tests using the same Assert syntax adopted by [Kuttl](https://github.com/kudobuilder/kuttl) and check its results aggregated within scorecard results. 
+- I am as an Operator developer, would like to be able to create tests using the same Assert syntax adopted by [Kuttl](https://github.com/kudobuilder/kuttl) and check its results aggregated within scorecard results.
 
 **Implementation Notes**
 
@@ -106,7 +106,7 @@ The test image must produce container log output that conforms to the scorecard 
 		"Add a spec descriptor for size"
 	      ],
 	      "crname": "example-memcached"
-      } 
+      }
 ```
 
 The test image will be executed as a Pod by the scorecard with a restart policy of `never`.
@@ -119,12 +119,12 @@ the bundle image contents into the following location inside the test pod:
 /scorecard/bundle/
 ```
 
-This allows tests to have access to all the bundle contents if they 
+This allows tests to have access to all the bundle contents if they
 are required for the test logic.  The scorecard does not make assumptions about what the test does with this proposed design.  The test could for example:
 
  * not use the CR's at all (e.g. doing a static bundle validation)
  * use the CRs in the CSVs alm-examples annotation (e.g. to verify they validate the associated CRD schema)
- * use some other CRs built (or maybe mounted) into the test image 
+ * use some other CRs built (or maybe mounted) into the test image
 
 For the case of executing a test, the bundle image will be passed as a scorecard command flag:
 ```
@@ -148,7 +148,7 @@ the end user would want to see in the aggregated scorecard results.
 ### Custom Test Development Model
 
 The developer of a custom test would have a workflow similar to:
- 
+
  * write a custom test binary in the language of their choice, sample custom test within the SDK repository would be available as a starting point
  * test the custom test binary locally (out-of-cluster) to make sure the output is produced that matches v1alpha2 ScorecardTestResult format
  * scorecard creates a scorecard DSL config file for their test image
@@ -169,7 +169,7 @@ In this design proposal, custom tests are container images, described in the sco
 
 ### Scorecard Configuration
 
-The scorecard DSL yaml file would be accessible from a local disk location to scorecard or from within a bundle image. 
+The scorecard DSL yaml file would be accessible from a local disk location to scorecard or from within a bundle image.
 
 Scorecard would assume that the scorecard DSL yaml file would be located in the bundle image at the following location:
 ```
@@ -256,18 +256,18 @@ operator-sdk scorecard -o text --selector=suite=isvcustom --bundle='some/bundle/
 ```
 
 Running the above command would have scorecard perform the following:
- 
+
  * fetch the scorecard DSL yaml configuration from the bundle image
  * select the tests to run based on the scorecard DSL configuration and the selector
- * iterate through each test, 
-   * construct a test Pod 
+ * iterate through each test,
+   * construct a test Pod
    * create the test Pod
    * when the test pod completes, fetch the test image Pod log output for aggregation of test results
- * display the test results 
+ * display the test results
 
 ### Custom Test Environments
 
-Scorecard would allow you to run tests on a local Kube cluster as is the case today.  Provisioning the test cluster is external to the scope of the scorecard itself.  Note, that with this proposal, scorecard would not be responsible for installing OLM or depend on OLM being installed in order to run. 
+Scorecard would allow you to run tests on a local Kube cluster as is the case today.  Provisioning the test cluster is external to the scope of the scorecard itself.  Note, that with this proposal, scorecard would not be responsible for installing OLM or depend on OLM being installed in order to run.
 
 
 #### Migrating Scorecard Internal Tests to Custom Test Images
