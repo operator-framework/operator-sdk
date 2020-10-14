@@ -230,11 +230,11 @@ test: generate fmt vet manifests
 
 ## Migrate your tests
 
-For the new layout, you will see that `controllers/suite_test.go` is created. This file contains boilerplate for executing integration tests using [envtest][envtest] with [ginkgo](https://onsi.github.io/ginkgo/) and [gomega](https://onsi.github.io/gomega/).
+For the new layout, you will see that `controllers/suite_test.go` is created when a controller is scaffolded by the tool. This file contains boilerplate for executing integration tests using [envtest][envtest] with [ginkgo](https://onsi.github.io/ginkgo/) and [gomega][gomega].
 
 Operator SDK 1.0.0+ removes support for the legacy test framework and no longer supports the `operator-sdk test` subcommand. All affected tests should be migrated to use `envtest`.
 
-The Operator SDK project recommends controller-runtime's [envtest][envtest] because it has a more active contributor community, it has become more mature than Operator SDK's test framework, and it does not require an actual cluster to run tests, which can be a huge benefit in CI scenarios. 
+The Operator SDK project recommends using controller-runtime's [envtest][envtest] to write tests for your Operators projects. Envtest has a more active contributor community, it is more mature than Operator SDK's test framework, and it does not require an actual cluster to run tests which can be a huge benefit in CI scenarios.
 
 To learn more about how you can test your controllers, see the documentation about [writing controller tests][writing-controller-tests].
 
@@ -372,3 +372,4 @@ E.g `kubectl logs deployment.apps/memcached-operator-controller-manager -n memca
 [kustomize]: https://github.com/kubernetes-sigs/kustomize 
 [ctrl-options]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/manager#Options 
 [envtest]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/envtest
+[gomega]: https://onsi.github.io/gomega/
