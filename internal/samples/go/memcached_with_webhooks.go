@@ -23,7 +23,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	kbtestutils "sigs.k8s.io/kubebuilder/test/e2e/utils"
 
-	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
+	"github.com/operator-framework/operator-sdk/internal/samples/pkg"
 	"github.com/operator-framework/operator-sdk/internal/testutils"
 )
 
@@ -436,7 +436,7 @@ func (r *Memcached) ValidateDelete() error {
 }
 func validateOdd(n int32) error {
 	if n%2 == 0 {
-		return errors.New("Cluster size must be an odd number")
+		return errors.New("cluster size must be an odd number")
 	}
 	return nil
 }

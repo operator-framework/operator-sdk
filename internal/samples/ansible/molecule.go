@@ -22,7 +22,7 @@ import (
 
 	kbtestutils "sigs.k8s.io/kubebuilder/test/e2e/utils"
 
-	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
+	"github.com/operator-framework/operator-sdk/internal/samples/pkg"
 	"github.com/operator-framework/operator-sdk/internal/testutils"
 	log "github.com/sirupsen/logrus"
 )

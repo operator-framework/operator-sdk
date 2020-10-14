@@ -22,7 +22,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/ansible"
+	"github.com/operator-framework/operator-sdk/internal/samples/ansible"
 	"github.com/operator-framework/operator-sdk/internal/testutils"
 )
 

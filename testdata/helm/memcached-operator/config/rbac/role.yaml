@@ -82,7 +82,7 @@ rules:
 
 
 ##
-## Rules customized for cache.example.com/v1alpha1, Kind: Memcached
+## Rules customized
 ##
 - apiGroups:
   - policy

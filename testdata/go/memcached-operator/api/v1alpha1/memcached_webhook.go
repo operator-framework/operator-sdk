@@ -72,7 +72,7 @@ func (r *Memcached) ValidateDelete() error {
 }
 func validateOdd(n int32) error {
 	if n%2 == 0 {
-		return errors.New("Cluster size must be an odd number")
+		return errors.New("cluster size must be an odd number")
 	}
 	return nil
 }

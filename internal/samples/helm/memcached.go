@@ -21,9 +21,11 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
+	"github.com/operator-framework/operator-sdk/internal/samples/pkg"
 	"github.com/operator-framework/operator-sdk/internal/testutils"
 )
+
+const chartPath = "internal/samples/helm/testdata/memcached-0.0.1.tgz"
 
 // MemcachedHelm defines the Memcached Sample in Helm
 type MemcachedHelm struct {
@@ -70,7 +72,11 @@ func (mh *MemcachedHelm) Run() {
 	// required to make Helm project generation idempotent because contributors and CI environments
 	// can all have slightly different environments that can affect the content of the generated
 	// role and cause sanity testing to fail.
-	os.Setenv("KUBECONFIG", "broken_so_we_generate_static_default_rules")
+	if !mh.isRunningEe2() {
+		// Set the env var only when it is running to gen the sample
+		// For the e2e test the following should not be set
+		os.Setenv("KUBECONFIG", "broken_so_we_generate_static_default_rules")
+	}
 
 	log.Infof("creating the project")
 	err = mh.ctx.Init(
@@ -79,9 +85,12 @@ func (mh *MemcachedHelm) Run() {
 	pkg.CheckError("creating the project", err)
 
 	log.Infof("handling work path to get helm chart mock data")
-	projectPath := strings.Split(current, "operator-sdk/")[0]
-	projectPath = strings.Replace(projectPath, "operator-sdk", "", 1)
-	helmChartPath := filepath.Join(projectPath, "operator-sdk/hack/generate/samples/internal/helm/testdata/memcached-0.0.1.tgz")
+	helmChartPath := filepath.Join(current, chartPath)
+	if mh.isRunningEe2() {
+		// the current path for the e2e test is not the same to gen the samples
+		helmChartPath = filepath.Join(strings.Split(current, "operator-sdk/")[0],
+			"internal/samples/helm/testdata/memcached-0.0.1.tgz")
+	}
 	log.Infof("using the helm chart in: (%v)", helmChartPath)
 
 	err = mh.ctx.CreateAPI(
@@ -106,6 +115,11 @@ func (mh *MemcachedHelm) Run() {
 	pkg.RunOlmIntegration(mh.ctx)
 }
 
+// isRunningEe2 return true when context dir iss
+func (mh *MemcachedHelm) isRunningEe2() bool {
+	return strings.Contains(mh.ctx.Dir, "e2e-helm")
+}
+
 // GenerateMemcachedHelmSample will call all actions to create the directory and generate the sample
 // The Context to run the samples are not the same in the e2e test. In this way, note that it should NOT
 // be called in the e2e tests since it will call the Prepare() to set the sample context and generate the files
@@ -121,7 +135,7 @@ func GenerateMemcachedHelmSample(samplesPath string) {
 
 const policyRolesFragment = `
 ##
-## Rules customized for cache.example.com/v1alpha1, Kind: Memcached
+## Rules customized
 ##
 - apiGroups:
   - policy

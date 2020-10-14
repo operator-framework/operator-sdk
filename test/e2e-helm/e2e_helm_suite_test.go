@@ -21,6 +21,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/operator-framework/operator-sdk/internal/samples/helm"
+	"github.com/operator-framework/operator-sdk/internal/samples/pkg"
 	"github.com/operator-framework/operator-sdk/internal/testutils"
 )
 
@@ -55,31 +57,14 @@ var _ = BeforeSuite(func() {
 	By("preparing the prerequisites on cluster")
 	tc.InstallPrerequisites()
 
-	By("initializing a Helm project")
-	err = tc.Init(
-		"--plugins", "helm",
-		"--project-version", "3-alpha",
-		"--domain", tc.Domain)
-	Expect(err).NotTo(HaveOccurred())
-
-	By("using dev image for scorecard-test")
-	err = tc.ReplaceScorecardImagesForDev()
-	Expect(err).NotTo(HaveOccurred())
-
-	By("creating an API definition")
-	err = tc.CreateAPI(
-		"--group", tc.Group,
-		"--version", tc.Version,
-		"--kind", tc.Kind)
-	Expect(err).NotTo(HaveOccurred())
+	By("mocking Helm Memcached Sample")
+	ctx, err := pkg.NewSampleContextWithTestContext(&tc)
+	Expect(err).Should(Succeed())
+	sample := helm.NewMemcachedHelm(&ctx)
+	sample.Run()
 
 	By("replacing project Dockerfile to use Helm base image with the dev tag")
 	err = testutils.ReplaceRegexInFile(filepath.Join(tc.Dir, "Dockerfile"), "quay.io/operator-framework/helm-operator:.*", "quay.io/operator-framework/helm-operator:dev")
-	Expect(err).Should(Succeed())
-
-	By("turning off interactive prompts for all generation tasks.")
-	replace := "operator-sdk generate kustomize manifests"
-	err = testutils.ReplaceInFile(filepath.Join(tc.Dir, "Makefile"), replace, replace+" --interactive=false")
 	Expect(err).Should(Succeed())
 
 	By("checking the kustomize setup")
@@ -95,6 +80,10 @@ var _ = BeforeSuite(func() {
 		Expect(tc.LoadImageToKindCluster()).To(Succeed())
 		Expect(tc.LoadImageToKindClusterWithName("quay.io/operator-framework/scorecard-test:dev")).To(Succeed())
 	}
+
+	By("using dev image for scorecard-test")
+	err = tc.ReplaceScorecardImagesForDev()
+	Expect(err).NotTo(HaveOccurred())
 
 	By("generating the operator bundle")
 	err = tc.Make("bundle", "IMG="+tc.ImageName)

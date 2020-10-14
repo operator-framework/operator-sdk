@@ -33,11 +33,6 @@ var _ = Describe("Running Helm projects", func() {
 
 	Context("built with operator-sdk", func() {
 		BeforeEach(func() {
-			By("enabling Prometheus via the kustomization.yaml")
-			Expect(kbtestutils.UncommentCode(
-				filepath.Join(tc.Dir, "config", "default", "kustomization.yaml"),
-				"#- ../prometheus", "#")).To(Succeed())
-
 			By("deploying project on the cluster")
 			err := tc.Make("deploy", "IMG="+tc.ImageName)
 			Expect(err).NotTo(HaveOccurred())
@@ -141,14 +136,15 @@ var _ = Describe("Running Helm projects", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(releaseName)).NotTo(BeIdenticalTo(0))
 
-			By("checking the release(CR) deployment status")
+			statefulsetName := fmt.Sprintf("%s-%s", releaseName, "memcached")
+			By("checking the release(CR) statefulset status")
 			verifyReleaseUp := func() string {
 				output, err := tc.Kubectl.Command(
-					"rollout", "status", "deployment", releaseName)
+					"rollout", "status", "statefulset", statefulsetName)
 				Expect(err).NotTo(HaveOccurred())
 				return output
 			}
-			Eventually(verifyReleaseUp, time.Minute, time.Second).Should(ContainSubstring("successfully rolled out"))
+			Eventually(verifyReleaseUp, time.Minute, time.Second).Should(ContainSubstring("statefulset rolling update complete 3 pods"))
 
 			By("ensuring the created Service for the release(CR)")
 			crServiceName, err := tc.Kubectl.Get(
@@ -158,26 +154,26 @@ var _ = Describe("Running Helm projects", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(crServiceName)).NotTo(BeIdenticalTo(0))
 
-			By("scaling deployment replicas to 2")
+			By("scaling statefulset replicas to 2")
 			_, err = tc.Kubectl.Command(
-				"scale", "deployment", releaseName, "--replicas", "2")
+				"scale", "statefulset", statefulsetName, "--replicas", "2")
 			Expect(err).NotTo(HaveOccurred())
 
-			By("verifying the deployment automatically scales back down to 1")
+			By("verifying the statefulset automatically scales back to 3")
 			verifyRelease := func() error {
 				replicas, err := tc.Kubectl.Get(
 					false,
-					"deployment", releaseName, "-o", "jsonpath={..spec.replicas}")
+					"statefulset", statefulsetName, "-o", "jsonpath={..spec.replicas}")
 				Expect(err).NotTo(HaveOccurred())
-				if replicas != "1" {
-					return fmt.Errorf("release(CR) deployment with %s replicas", replicas)
+				if replicas != "3" {
+					return fmt.Errorf("release(CR) statefulset with %s replicas", replicas)
 				}
 				return nil
 			}
-			Eventually(verifyRelease, time.Minute, time.Second).Should(Succeed())
+			Eventually(verifyRelease, 4*time.Minute, 3*time.Second).Should(Succeed())
 
 			By("updating replicaCount to 2 in the CR manifest")
-			err = testutils.ReplaceInFile(filepath.Join(tc.Dir, sampleFile), "replicaCount: 1", "replicaCount: 2")
+			err = testutils.ReplaceInFile(filepath.Join(tc.Dir, sampleFile), "replicaCount: 3", "replicaCount: 2")
 			Expect(err).NotTo(HaveOccurred())
 
 			By("applying CR manifest with replicaCount: 2")
@@ -193,14 +189,14 @@ var _ = Describe("Running Helm projects", func() {
 			Eventually(managerContainerLogsAfterUpdateCR, time.Minute, time.Second).Should(
 				ContainSubstring("Upgraded release"))
 
-			By("checking Deployment replicas spec is equals 2")
+			By("checking statefulset replicas spec is equals 2")
 			verifyReleaseUpgrade := func() error {
 				replicas, err := tc.Kubectl.Get(
 					false,
-					"deployment", releaseName, "-o", "jsonpath={..spec.replicas}")
+					"statefulset", statefulsetName, "-o", "jsonpath={..spec.replicas}")
 				Expect(err).NotTo(HaveOccurred())
 				if replicas != "2" {
-					return fmt.Errorf("release(CR) deployment with %s replicas", replicas)
+					return fmt.Errorf("release(CR) statefulset with %s replicas", replicas)
 				}
 				return nil
 			}
