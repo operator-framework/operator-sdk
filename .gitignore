@@ -110,3 +110,5 @@ website/public/
 website/resources/
 website/node_modules/
 website/tech-doc-hugo
+
+*\.DS_Store
