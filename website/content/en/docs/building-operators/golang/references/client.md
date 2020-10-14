@@ -481,7 +481,7 @@ func (r *AppReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
             }
             return ctrl.Result{Requeue: true}, nil
         } else {
-            return ctrl.Result{}, err            
+            return ctrl.Result{}, err
         }
     }
 

@@ -7,17 +7,17 @@ description: Instructions for migrating a Ansible-based project built prior to 1
 
 ## Overview
 
-The motivations for the new layout are related to bringing more flexibility to users and 
+The motivations for the new layout are related to bringing more flexibility to users and
 part of the process to [Integrating Kubebuilder and Operator SDK][integration-doc].
 
 ### What was changed
- 
+
 - The `deploy` directory was replaced with the `config` directory including a new layout of Kubernetes manifests files:
     * CRD manifests in `deploy/crds/` are now in `config/crd/bases`
     * CR manifests in `deploy/crds/` are now in `config/samples`
-    * Controller manifest `deploy/operator.yaml` is now in `config/manager/manager.yaml` 
+    * Controller manifest `deploy/operator.yaml` is now in `config/manager/manager.yaml`
     * RBAC manifests in `deploy` are now in `config/rbac/`
-    
+
 - `build/Dockerfile` is moved to `Dockerfile` in the project root directory
 - The `molecule/` directory is now more aligned to Ansible and the new Layout
 
@@ -32,7 +32,7 @@ Scaffolded projects now use:
 ## How to migrate
 
 The easy migration path is to a project from the scratch and let the tool scaffold the new layout. Then, add your customizations and implementations. See below for an example.
- 
+
 ### Creating a new project
 
 In Kubebuilder-style projects, CRD groups are defined using two different flags
@@ -56,7 +56,7 @@ cd memcached-operator
 operator-sdk init --plugins=ansible --domain=example.com
 ```
 
-Now that we have our new project initialized, we need to recreate each of our APIs. 
+Now that we have our new project initialized, we need to recreate each of our APIs.
 Using our API example from earlier (`cache.example.com`), we'll use `cache` for the
 `--group` flag.
 
@@ -68,14 +68,14 @@ For each API in the existing project, run:
 operator-sdk create api \
     --group=cache \
     --version=v1 \
-    --kind=Memcached 
+    --kind=Memcached
 ```
 
-Running the above command creates an empty `roles/<kind>`. We can copy over the content of our old `roles/<kind>` to the new one.   
- 
+Running the above command creates an empty `roles/<kind>`. We can copy over the content of our old `roles/<kind>` to the new one.
+
 ### Migrating your Custom Resource samples
 
-Update the CR manifests in `config/samples` with the values of the CRs in your existing project which are in `deploy/crds/<group>_<version>_<kind>_cr.yaml` In our example 
+Update the CR manifests in `config/samples` with the values of the CRs in your existing project which are in `deploy/crds/<group>_<version>_<kind>_cr.yaml` In our example
 the `config/samples/cache_v1alpha1_memcached.yaml` will look like:
 
 ```yaml
@@ -90,7 +90,7 @@ spec:
 
 ### Migrating `watches.yaml
 
-Update the `watches.yaml` file with your `roles/playbooks` and check if you have custom options in the `watches.yaml` file of your existing project. If so, update the new `watches.yaml file to match. 
+Update the `watches.yaml` file with your `roles/playbooks` and check if you have custom options in the `watches.yaml` file of your existing project. If so, update the new `watches.yaml file to match.
 
 In our example, we will replace `# FIXME: Specify the role or playbook for this resource.` with our previous role and it will look like:
 
@@ -100,15 +100,15 @@ In our example, we will replace `# FIXME: Specify the role or playbook for this 
 - version: v1alpha1
   group: cache.example.com
   kind: Memcached
-  role: memcached 
+  role: memcached
 # +kubebuilder:scaffold:watch
 ```
 
-**NOTE**: Do not remove the `+kubebuilder:scaffold:watch` [marker][marker]. It allows the tool to update the watches file when new APIs are created. 
+**NOTE**: Do not remove the `+kubebuilder:scaffold:watch` [marker][marker]. It allows the tool to update the watches file when new APIs are created.
 
 ### Migrating your Molecule tests
 
-If you are using [Molecule][molecule] in your project will be required to port the tests for the new layout.  
+If you are using [Molecule][molecule] in your project will be required to port the tests for the new layout.
 
 See that default structure changed from:
 
@@ -135,7 +135,7 @@ See that default structure changed from:
 
 ```
 
-To: 
+To:
 
 ```
 ├── default
@@ -155,7 +155,7 @@ To:
     └── molecule.yml
 ```
 
-Ensure that the `provisioner.host_vars.localhost` has the following `host_vars`: 
+Ensure that the `provisioner.host_vars.localhost` has the following `host_vars`:
 
 ```
 ....
@@ -178,11 +178,11 @@ In your new project, roles are automatically generated in `config/rbac/role.yaml
 If you modified these permissions manually in `deploy/role.yaml` in your existing
 project, you need to re-apply them in `config/rbac/role.yaml`.
 
-New projects are configured to watch all namespaces by default, so they need a `ClusterRole` to have the necessary permissions. Ensure that `config/rbac/role.yaml` remains a `ClusterRole` if you want to retain the default behavior of the new project conventions. For further information refer to the [operator scope][operator-scope] documentation.  
+New projects are configured to watch all namespaces by default, so they need a `ClusterRole` to have the necessary permissions. Ensure that `config/rbac/role.yaml` remains a `ClusterRole` if you want to retain the default behavior of the new project conventions. For further information refer to the [operator scope][operator-scope] documentation.
 
 The following rules were used in earlier versions of anisible-operator to automatically create and manage services and `servicemonitors` for metrics collection. If your operator's don't require these rules, they can safely be left out of the new `config/rbac/role.yaml` file:
 
-```yaml  
+```yaml
   - apiGroups:
     - monitoring.coreos.com
     resources:
@@ -202,36 +202,36 @@ The following rules were used in earlier versions of anisible-operator to automa
 
 ### Configuring your Operator
 
-If your existing project has customizations in `deploy/operator.yaml`, they need to be ported to 
+If your existing project has customizations in `deploy/operator.yaml`, they need to be ported to
 `config/manager/manager.yaml`. If you are passing custom arguments in your deployment, make sure to also update `config/default/auth_proxy_patch.yaml`.
 
-Note that the following environment variables are no longer used. 
+Note that the following environment variables are no longer used.
 
 - `OPERATOR_NAME` is deprecated. It is used to define the name for a leader election config map. Operator authors should begin using `--leader-election-id` instead.
 - `POD_NAME` has been removed. It was used to enable a particular pod to hold the leader election lock when the Ansible operator used the leader for life mechanism. Ansible operator now uses controller-runtime's leader with lease mechanism.
 
-## Exporting metrics 
+## Exporting metrics
 
-If you are using metrics and would like to keep them exported you will need to configure 
-it in the `config/default/kustomization.yaml`. Please see the [metrics][metrics] doc to know how you can perform this setup. 
+If you are using metrics and would like to keep them exported you will need to configure
+it in the `config/default/kustomization.yaml`. Please see the [metrics][metrics] doc to know how you can perform this setup.
 
-The default port used by the metric endpoint binds to was changed from `:8383` to `:8080`. To continue using port `8383`, specify `--metrics-addr=:8383` when you start the operator. 
+The default port used by the metric endpoint binds to was changed from `:8383` to `:8080`. To continue using port `8383`, specify `--metrics-addr=:8383` when you start the operator.
 
 ## Checking the changes
 
-Finally, follow the steps in the section [Build and run the Operator][build-and-run-the-operator] to verify your project is running. 
+Finally, follow the steps in the section [Build and run the Operator][build-and-run-the-operator] to verify your project is running.
 
-Note that, you also can troubleshooting by checking the container logs. 
-E.g `$ kubectl logs deployment.apps/memcached-operator-controller-manager -n memcached-operator-system -c manager`  
+Note that, you also can troubleshooting by checking the container logs.
+E.g `$ kubectl logs deployment.apps/memcached-operator-controller-manager -n memcached-operator-system -c manager`
 
 [quickstart-legacy]: https://v0-19-x.sdk.operatorframework.io/docs/ansible/quickstart/
 [quickstart]: /docs/building-operators/ansible/quickstart
 [integration-doc]: https://github.com/kubernetes-sigs/kubebuilder/blob/master/designs/integrating-kubebuilder-and-osdk.md
 [build-and-run-the-operator]: /docs/building-operators/ansible/tutorial/#deploy-the-operator
-[kustomize]: https://github.com/kubernetes-sigs/kustomize 
-[kube-auth-proxy]: https://github.com/brancz/kube-rbac-proxy 
+[kustomize]: https://github.com/kubernetes-sigs/kustomize
+[kube-auth-proxy]: https://github.com/brancz/kube-rbac-proxy
 [metrics]: https://book.kubebuilder.io/reference/metrics.html?highlight=metr#metrics
 [marker]: https://book.kubebuilder.io/reference/markers.html?highlight=markers#marker-syntax
 [operator-scope]: /docs/building-operators/golang/operator-scope
-[molecule]: https://molecule.readthedocs.io/en/latest/# 
+[molecule]: https://molecule.readthedocs.io/en/latest/#
 [testing-guide]: /docs/building-operators/ansible/testing-guide

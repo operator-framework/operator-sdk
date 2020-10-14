@@ -50,7 +50,7 @@ If `--helm-chart` is specified, the `--group`, `--version`, and `--kind` flags b
 | kind |  deduce from the specified chart |
 | version | v1alpha1 |
 
-If `--helm-chart` is a local chart archive (e.g `example-chart-1.2.0.tgz`) or directory, 
+If `--helm-chart` is a local chart archive (e.g `example-chart-1.2.0.tgz`) or directory,
 it will be validated and unpacked or copied into the project.
 
 Otherwise, the SDK will attempt to fetch the specified helm chart from a remote repository.
@@ -310,7 +310,7 @@ kubectl logs deployment.apps/nginx-operator-controller-manager  -n nginx-operato
 Use the following command to check the CR status and events.
 
 ```sh
-kubectl describe nginxes.example.com 
+kubectl describe nginxes.example.com
 ```
 
 ### Cleanup
@@ -324,7 +324,7 @@ make undeploy
 **NOTE** Additional CR/CRD's can be added to the project by running, for example, the command :`operator-sdk create api --group=example --version=v1alpha1 --kind=AppService`
 
 <!--
-todo(camilamacedo86): https://github.com/operator-framework/operator-sdk/issues/3447 
+todo(camilamacedo86): https://github.com/operator-framework/operator-sdk/issues/3447
 -->
 [operator-scope]: /docs/building-operators/golang/operator-scope
 [layout-doc]: /docs/building-operators/helm/reference/project_layout/

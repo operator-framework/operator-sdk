@@ -65,7 +65,7 @@ resource is a cluster level resource.
   * operator-sdk/primary-resource-type: {kind}.{group}
 
 **NOTE**: The `{group}` can be found by splitting the `apiVersion`
-metadata of the CR, into `group` and `version`. As an example, 
+metadata of the CR, into `group` and `version`. As an example,
 `apiVersion: cache.example.com/v1alpha1` in the `config/samples` directory
 gives us the group `cache.example.com`.
 
@@ -79,7 +79,7 @@ metadata:
     operator-sdk/primary-resource-type: Memcached.cache.example.com
 ```
 
-## Migration using Ansible assets 
+## Migration using Ansible assets
 
 If you have many resources to update, it may be easier to use the
 following Ansible assets, which **should be considered an example rather

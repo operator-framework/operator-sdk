@@ -6,25 +6,25 @@ weight: 60
 
 ## Overview
 
-The CustomResourceDefinition (CRD) scope can also be changed for cluster-scoped operators so that there is only a single 
+The CustomResourceDefinition (CRD) scope can also be changed for cluster-scoped operators so that there is only a single
 instance (for a given name) of the Custom Resource (CR) to manage across the cluster.
 
-The CRD manifests are generated in `config/crd/bases`. For each CRD that needs to be cluster-scoped, its manifest 
+The CRD manifests are generated in `config/crd/bases`. For each CRD that needs to be cluster-scoped, its manifest
 should specify `spec.scope: Cluster`.
 
-To ensure that the CRD is always generated with `scope: Cluster`, add the marker 
-`// +kubebuilder:resource:path=<resource>,scope=Cluster`, or if already present replace `scope={Namespaced -> Cluster}`, 
-above the CRD's Go type definition in `api/<version>/<kind>_types.go` or `apis/<group>/<version>/<kind>_types.go` 
-if you are using the `multigroup` layout. Note that the `<resource>` 
-element must be the same lower-case plural value of the CRD's Kind, `spec.names.plural`.  
+To ensure that the CRD is always generated with `scope: Cluster`, add the marker
+`// +kubebuilder:resource:path=<resource>,scope=Cluster`, or if already present replace `scope={Namespaced -> Cluster}`,
+above the CRD's Go type definition in `api/<version>/<kind>_types.go` or `apis/<group>/<version>/<kind>_types.go`
+if you are using the `multigroup` layout. Note that the `<resource>`
+element must be the same lower-case plural value of the CRD's Kind, `spec.names.plural`.
 
-**NOTE**: When a `Manager` instance is created in the `main.go` file, it receives the namespace(s) as Options. 
-These namespace(s) should be watched and cached for the Client which is provided by the Controllers. Only clients 
-provided by cluster-scoped projects where the `Namespace` attribute is `""` will be able to manage cluster-scoped CRs. 
-For more information see the [Manager][manager_user_guide] topic in the user guide and the 
+**NOTE**: When a `Manager` instance is created in the `main.go` file, it receives the namespace(s) as Options.
+These namespace(s) should be watched and cached for the Client which is provided by the Controllers. Only clients
+provided by cluster-scoped projects where the `Namespace` attribute is `""` will be able to manage cluster-scoped CRs.
+For more information see the [Manager][manager_user_guide] topic in the user guide and the
 [Manager Options][manager_options].
 
-## Example for changing the CRD scope from Namespaced to Cluster 
+## Example for changing the CRD scope from Namespaced to Cluster
 
 - Check the `spec.names.plural` in the  CRD's Kind YAML file
 
@@ -47,10 +47,10 @@ spec:
   scope: Namespaced
   subresources:
     status: {}
-...   
-``` 
+...
+```
 
-- Update the `apis/<version>/<kind>_types.go` by adding the 
+- Update the `apis/<version>/<kind>_types.go` by adding the
 marker `// +kubebuilder:resource:path=<resource>,scope=Cluster`
 
 * `api/v1alpha1/memcached_types.go`
@@ -65,9 +65,9 @@ type Memcached struct {
   Spec   MemcachedSpec   `json:"spec,omitempty"`
   Status MemcachedStatus `json:"status,omitempty"`
 }
-``` 
+```
 - Run `make manifests`, to update the CRD manifest with the cluster scope setting, as in the following example:
-  
+
 * `/config/crd/bases/cache.example.com_memcacheds.yaml`
 
 ```YAML
@@ -88,9 +88,9 @@ spec:
   scope: Cluster
   subresources:
     status: {}
-...   
-``` 
-  
+...
+```
+
 [RBAC]: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
 [manager_user_guide]:/docs/building-operators/golang/tutorial/#manager
 [manager_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Options

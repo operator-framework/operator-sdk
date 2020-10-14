@@ -5,7 +5,7 @@ ENV TEST=/usr/local/bin/scorecard-test \
     USER_UID=1001 \
     USER_NAME=test
 
-# install test binary 
+# install test binary
 COPY scorecard-test ${TEST}
 
 COPY bin /usr/local/bin

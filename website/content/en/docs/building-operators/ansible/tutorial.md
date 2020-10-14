@@ -9,7 +9,7 @@ This guide walks through an example of building a simple memcached-operator powe
 
 ## Prerequisites
 
-- [Install `operator-sdk`][operator_install] and the [Ansible prequisites][ansible-operator-install] 
+- [Install `operator-sdk`][operator_install] and the [Ansible prequisites][ansible-operator-install]
 - Access to a Kubernetes v1.16.0+ cluster.
 - User authorized with `cluster-admin` permissions.
 
@@ -24,7 +24,7 @@ In this section we will:
 Begin by generating a new project from a new directory.
 
 ```sh
-$ mkdir memcached-operator 
+$ mkdir memcached-operator
 $ cd memcached-operator
 $ operator-sdk init --plugins=ansible --domain example.com
 ```
@@ -163,7 +163,7 @@ $ make deploy
 ```
 
 We are using the `memcached-operator-system` Namespace, so let's set
-that context. 
+that context.
 
 ```sh
 $ kubectl config set-context --current --namespace=memcached-operator-system
@@ -172,7 +172,7 @@ $ kubectl config set-context --current --namespace=memcached-operator-system
 Verify that the memcached-operator is up and running:
 
 ```sh
-$ kubectl get deployment 
+$ kubectl get deployment
 
 NAME                     DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
 memcached-operator       1         1         1            1           1m

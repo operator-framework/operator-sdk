@@ -33,7 +33,7 @@ Operators set the logger for all operator logging in `main.go`. To illustrate ho
 package main
 
 import (
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"  
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 

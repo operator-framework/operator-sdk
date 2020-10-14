@@ -465,7 +465,7 @@ All method signatures for [`sigs.k8s.io/controller-runtime/pkg/client.Client`](h
     with:
     ```go
     listOpts := []client.ListOption{
-      client.InNamespace("namespace"),        
+      client.InNamespace("namespace"),
     }
     err = r.client.List(context.TODO(), podList, listOpts...)
     ```
@@ -1341,7 +1341,7 @@ install:
   - pip3 install docker molecule ansible-lint yamllint flake8 openshift jmespath
 ```
 
-**NOTE** To know more about how to upgrade your project to use the V3 Molecule version see [here](https://github.com/ansible-community/molecule/issues/2560).  
+**NOTE** To know more about how to upgrade your project to use the V3 Molecule version see [here](https://github.com/ansible-community/molecule/issues/2560).
 
 **Deprecations**
 

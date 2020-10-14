@@ -128,7 +128,7 @@ Some features can be overridden per resource via an annotation on that CR. The o
 
 **Note:** By using the command `operator-sdk add api` you are able to add additional CRDs to the project API, which can aid in designing your solution using concepts such as encapsulation, single responsibility principle, and cohesion, which could make the project easier to read, debug, and maintain. With this approach, you are able to customize and optimize the configurations more specifically per GVK via the `watches.yaml` file.
 
-**Example:** 
+**Example:**
 
 ```YaML
 ---

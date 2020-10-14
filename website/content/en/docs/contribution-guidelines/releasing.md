@@ -362,7 +362,7 @@ See [this section](#locking-down-branches) for steps to do so.
 
 ---
 
-You've now fully released a new version of the Operator SDK. Good work! 
+You've now fully released a new version of the Operator SDK. Good work!
 
 [install-guide]: /docs/installation/install-operator-sdk
 [doc-maintainers]: https://github.com/operator-framework/operator-sdk/blob/master/MAINTAINERS

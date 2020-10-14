@@ -280,7 +280,7 @@ API allows [multiple test results][testresults] to be defined for a single test.
 
 ### Accessing the Kube API
 
-Within your custom tests you might require connecting to the Kube API.  
+Within your custom tests you might require connecting to the Kube API.
 In golang, you could use the [client-go][client_go] API for example to
 check Kube resources within your tests, or even create custom resources. Your
 custom test image is being executed within a Pod, so you can use an in-cluster

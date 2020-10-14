@@ -11,7 +11,7 @@ spec:
         fieldRef:
           apiVersion: v1
           fieldPath: metadata.namespace
-    image: quay.io/operator-framework/scorecard-test:dev 
+    image: quay.io/operator-framework/scorecard-test:dev
     imagePullPolicy: IfNotPresent
     name: scorecard-test
     command: ["/usr/local/bin/scorecard-test"]

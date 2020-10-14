@@ -168,7 +168,7 @@ In the Memcached example, they look like the following:
 // +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list
 ```
 
-To update `config/rbac/role.yaml` after changing the markers, run `make manifests`.  
+To update `config/rbac/role.yaml` after changing the markers, run `make manifests`.
 
 By default, new projects are cluster-scoped (i.e. they have cluster-scoped permissions and watch all namespaces). Read the [operator scope documentation][operator-scope] for more information about changing the scope of your operator.
 
@@ -273,7 +273,7 @@ kubectl apply -f https://raw.githubusercontent.com/coreos/prometheus-operator/re
 
 ### Use Handler from `operator-lib`
 
-By using the [InstrumentedEnqueueRequestForObject](https://pkg.go.dev/github.com/operator-framework/operator-lib@v0.1.0/handler?tab=doc#InstrumentedEnqueueRequestForObject) you will able to export metrics from your Custom Resources.  In our example, it would like:  
+By using the [InstrumentedEnqueueRequestForObject](https://pkg.go.dev/github.com/operator-framework/operator-lib@v0.1.0/handler?tab=doc#InstrumentedEnqueueRequestForObject) you will able to export metrics from your Custom Resources.  In our example, it would like:
 
 ```go
 import (
@@ -302,7 +302,7 @@ func (r *MemcachedReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 In this way, the following metric with the resource info will be exported:
 
-```shell             
+```shell
 resource_created_at_seconds{"name", "namespace", "group", "version", "kind"}
 ```
 
@@ -347,7 +347,7 @@ make docker-build IMG=<some-registry>/<project-name>:<tag>
 The project can now be built, and the operator can be deployed on-cluster. For further steps regarding the deployment of the operator, creation of custom resources, and cleaning up of resources, see the [quickstart guide][quickstart].
 
 Note that, you also can troubleshooting by checking the container logs.
-E.g `kubectl logs deployment.apps/memcached-operator-controller-manager -n memcached-operator-system -c manager`  
+E.g `kubectl logs deployment.apps/memcached-operator-controller-manager -n memcached-operator-system -c manager`
 
 [quickstart-legacy]: https://v0-19-x.sdk.operatorframework.io/docs/golang/legacy/quickstart/
 [integration-doc]: https://github.com/kubernetes-sigs/kubebuilder/blob/master/designs/integrating-kubebuilder-and-osdk.md

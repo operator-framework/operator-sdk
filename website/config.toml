@@ -153,7 +153,7 @@ no = 'Sorry to hear that. Please <a href="https://github.com/operator-framework/
 	name = "github"
 	url = "https://github.com/operator-framework/operator-sdk"
 	icon = "fab fa-github"
-	
+
 #[[params.links.social]]
 #	name = "slack"
 #	url = "https://example.org/mail"

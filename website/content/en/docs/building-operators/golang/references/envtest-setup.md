@@ -5,7 +5,7 @@ description: Learn how to setup your project to run integration tests using envt
 weight: 50
 ---
 
-By default, Go-based operators are scaffolded to make use of controller-runtime's [`envtest`][envtest] framework, which uses `kubectl`, `kube-apiserver`, and `etcd` to simulate the API portions of a real cluster. You can use [this script][script] to download these binaries into the `testbin/` directory and configure your environment to use them. Update your `Makefile` by replacing your `test` target with: 
+By default, Go-based operators are scaffolded to make use of controller-runtime's [`envtest`][envtest] framework, which uses `kubectl`, `kube-apiserver`, and `etcd` to simulate the API portions of a real cluster. You can use [this script][script] to download these binaries into the `testbin/` directory and configure your environment to use them. Update your `Makefile` by replacing your `test` target with:
 
 ```sh
 # Run tests
@@ -16,7 +16,7 @@ test: generate fmt vet manifests
         source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
 ```
 
-If using `git`, it is recommended to add `testbin/*` to your `.gitignore` file to avoid committing these binaries. 
+If using `git`, it is recommended to add `testbin/*` to your `.gitignore` file to avoid committing these binaries.
 
 [envtest]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/envtest
 [controller-test]: https://book.kubebuilder.io/cronjob-tutorial/writing-tests.html

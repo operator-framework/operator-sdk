@@ -53,7 +53,7 @@ mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
     Scheme:             scheme,
     MetricsBindAddress: metricsAddr,
     Port:               9443,
-    LeaderElection:     enableLeaderElection, 
+    LeaderElection:     enableLeaderElection,
     LeaderElectionID:   "f1c5ece8.example.com",
     Namespace:          "operator-namespace",
 })
@@ -73,7 +73,7 @@ mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
     Scheme:             scheme,
     MetricsBindAddress: metricsAddr,
     Port:               9443,
-    LeaderElection:     enableLeaderElection, 
+    LeaderElection:     enableLeaderElection,
     LeaderElectionID:   "f1c5ece8.example.com",
     NewCache:           cache.MultiNamespacedCacheBuilder(namespaces),
 })
@@ -102,9 +102,9 @@ and `auth_proxy_*.yaml` are not relevant to changing the operator's resource per
 To change the scope of the RBAC permissions from cluster-wide to a specific namespace, you will need to use `Role`s
 =======
 
-- Inform the Namespace to the [Manager][ctrl-manager] 
+- Inform the Namespace to the [Manager][ctrl-manager]
 
-By default, the [Manager][ctrl-manager] does not have any namespace specified in `main.go`, and hence it will watch all the namespaces. In order to restrict the controllers to watch a specific namespace, specify it while creating the manager. Update the `NewManager` to inform the Namespace, in our `Memcahced` example it would like: 
+By default, the [Manager][ctrl-manager] does not have any namespace specified in `main.go`, and hence it will watch all the namespaces. In order to restrict the controllers to watch a specific namespace, specify it while creating the manager. Update the `NewManager` to inform the Namespace, in our `Memcahced` example it would like:
 
 ```go
 ...
@@ -112,7 +112,7 @@ mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
     Scheme:             scheme,
     MetricsBindAddress: metricsAddr,
     Port:               9443,
-    LeaderElection:     enableLeaderElection, 
+    LeaderElection:     enableLeaderElection,
     LeaderElectionID:   "f1c5ece8.example.com",
     Namespace:          "memcached-operator-system", // operator namespace
 })

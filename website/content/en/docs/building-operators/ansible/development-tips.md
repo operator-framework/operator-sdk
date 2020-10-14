@@ -227,7 +227,7 @@ the proper dependencies installed.
 You can customize the roles path by setting the environment variable
 `ANSIBLE_ROLES_PATH` or using the flag `ansible-roles-path`. Note that if the
 role is not found in `ANSIBLE_ROLES_PATH`, then the operator will look for it
-in `{{current directory}}/roles`.   
+in `{{current directory}}/roles`.
 {{% /alert %}}
 
 Create a Custom Resource Definition (CRD) and proper Role-Based Access Control

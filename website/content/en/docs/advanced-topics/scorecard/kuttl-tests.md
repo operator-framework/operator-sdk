@@ -64,7 +64,7 @@ end user along with any other test results.
 With the above kuttl test configuration, you can execute that
 kuttl test using scorecard as follows:
 ```bash
-operator-sdk scorecard <bundle_dir_or_image> --selector=suite=kuttlsuite 
+operator-sdk scorecard <bundle_dir_or_image> --selector=suite=kuttlsuite
 ```
 
 ## Defining kuttl Specific Configuration Options
@@ -92,7 +92,7 @@ use cases.  See [kuttl configuration][kuttl_configuration] for more details on k
 
 ### kuttl Tests Explained
 
-The kuttl test tool looks for tests to execute within the bundle 
+The kuttl test tool looks for tests to execute within the bundle
 following a naming convention as follows:
 ```
         └── kuttl
@@ -111,7 +111,7 @@ The important fields to note here are:
  * `list-pods, list-other` - The names given by you for these test cases.
  * `00-assert.yaml` - The assert file is executed to test whether or
 not the test was successful, this assertion determines whether or not
-the test passed or failed.  
+the test passed or failed.
  * `00-pod.yaml` - The pod file is used to define what the test will
 create, in this case a pod will be created based on the manifest within
 00-pod.yaml.
@@ -124,8 +124,8 @@ kuttl tests are named and executed.
 
 ### kuttl Test Privileges
 
-The kuttl tests a user might write can vary widely in functionality 
-and in particular require special Kubernetes RBAC priviledges outside 
+The kuttl tests a user might write can vary widely in functionality
+and in particular require special Kubernetes RBAC priviledges outside
 of what your default service account might have.  It is therefore very likely
 you will be required to run scorecard with a custom service account
 that holds the required RBAC permissions.
@@ -146,7 +146,7 @@ and service account will be used by the scorecard to run test pods.
 
 It is worth noting that scorecard-test-kuttl specifies a namespace
 to the kubectl-kuttl command which causes kuttl to not create a
-namespace for each test.  This might impact your kuttl tests in 
+namespace for each test.  This might impact your kuttl tests in
 that you might need to perform resource cleanup in your tests
 instead of depending upon namespace deletion to perform that cleanup.
 

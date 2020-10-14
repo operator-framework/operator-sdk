@@ -31,7 +31,7 @@ For reference, here is an example of a simple `watches.yaml` file:
   chart: helm-charts/foo
   overrideValues:
     image.repository: quay.io/mycustomrepo
-  watchDependentResources: false   
+  watchDependentResources: false
 ```
 
 [override-values]: /docs/building-operators/helm/reference/advanced_features/override_values/

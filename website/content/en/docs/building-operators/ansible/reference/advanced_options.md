@@ -147,7 +147,7 @@ spec: {}
 
 ## Custom Resources with OpenAPI Validation
 
-Currently, SDK tool does not support and will not generate automatically the CRD's using the [OpenAPI](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#validation) spec to perform validations. 
+Currently, SDK tool does not support and will not generate automatically the CRD's using the [OpenAPI](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#validation) spec to perform validations.
 
 However, it can be done manually by adding its validations as you can check in the following example.
 
@@ -214,7 +214,7 @@ spec:
 
 ## Passing Arbitrary Arguments to Ansible
 
-You are able to use the flag `--ansible-args` to pass an arbitrary argument to the Ansible-based Operator. With this option we can, for example, allow a playbook to run a specific part of the configuration without running the whole playbook:  
+You are able to use the flag `--ansible-args` to pass an arbitrary argument to the Ansible-based Operator. With this option we can, for example, allow a playbook to run a specific part of the configuration without running the whole playbook:
 
 ```shell
 ansible-operator run --ansible-args='--tags "configuration,packages"'
@@ -247,7 +247,7 @@ Now, let's also assume that we have a password file, `pwd.yml`, that contains th
 ```
 --------------------------- Ansible Task StdOut -------------------------------
 
- TASK [debug] ******************************** 
+ TASK [debug] ********************************
 ok: [localhost] => {
     "msg": "The decrypted value is DECRYPTED-TEST-VALUE"
 }

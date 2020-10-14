@@ -7,7 +7,7 @@ ENV TESTKUTTL=/usr/local/bin/scorecard-test-kuttl \
     USER_NAME=test \
     KUBECONFIG=
 
-# install test binary 
+# install test binary
 COPY scorecard-test-kuttl ${TESTKUTTL}
 
 COPY bin /usr/local/bin

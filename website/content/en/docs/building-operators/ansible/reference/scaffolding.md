@@ -89,7 +89,7 @@ some special environment variables:
 
 - `ANSIBLE_DEBUG_LOGS`: A boolean value for toggling the Ansible output during
   reconciliation. When set to True, the operator dumps the Ansible result into
-  its standard output. 
+  its standard output.
 
 - `ANSIBLE_ROLES_PATH`: The parent path(s) for the Ansible roles. When there
   are more than one path to set, you can use ":" to separate them. Given a
@@ -109,7 +109,7 @@ some special environment variables:
   name set to `example.com.bar`, the Ansible operator searches for the roles
   under `/foo/ansible_collections/example/com/roles/bar`.
 
-  This value takes precedence over the `--ansible-collections-path` flag. 
+  This value takes precedence over the `--ansible-collections-path` flag.
 
 - `MAX_CONCURRENT_RECONCILES_<kind>_<group>`: This specifies the maximum number
   of concurrent reconciliations for the operator. It defaults to the number of
@@ -120,7 +120,7 @@ some special environment variables:
 
 - `ANSIBLE_VERBOSITY_<kind>_<group>`: This is used to customize the verbosity
   of the ansible-runner command. The default value is 2.
-  The value must be no less than  0 and no greater than 7. 
+  The value must be no less than  0 and no greater than 7.
   This value takes precedence over the global `--ansible-verbosity` flag,
   and it can be overridden by the per-resource annotation named
   `ansible.operator-sdk/verbosity`.

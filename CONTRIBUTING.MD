@@ -4,7 +4,7 @@ Operator SDK is Apache 2.0 licensed and accepts contributions via GitHub pull re
 
 # Email and Chat
 
-- Email: [operator-framework][operator_framework]  
+- Email: [operator-framework][operator_framework]
 
 ## Getting started
 

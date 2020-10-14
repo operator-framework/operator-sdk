@@ -6,7 +6,7 @@ description: >
     What is Operator SDK? Why should I use it?
 ---
 
-## What is Operator SDK and why should I use it? 
+## What is Operator SDK and why should I use it?
 
 This project is a component of the [Operator Framework][of-home], an open source toolkit to manage Kubernetes native applications, called Operators, in an effective, automated, and scalable way. Read more in the [introduction blog post][of-blog].
 
