@@ -16,6 +16,7 @@ package gosamples
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -93,6 +94,9 @@ func (mh *MemcachedGoWithWebhooks) Run() {
 	mh.uncommentKustomizationFile()
 
 	pkg.RunOlmIntegration(mh.ctx)
+
+	// Clean up built binaries, if any.
+	pkg.CheckError("cleaning up", os.RemoveAll(filepath.Join(mh.ctx.Dir, "bin")))
 }
 
 // uncommentKustomizationFile will uncomment the file kustomization.yaml
@@ -225,7 +229,7 @@ func (mh *MemcachedGoWithWebhooks) implementingAPI() {
 		filepath.Join(mh.ctx.Dir, "api", mh.ctx.Version, fmt.Sprintf("%s_types.go", strings.ToLower(mh.ctx.Kind))),
 		fmt.Sprintf("type %sSpec struct {\n\t// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster\n\t// Important: Run \"make\" to regenerate code after modifying this file", mh.ctx.Kind),
 		`
-	
+
 	// Size defines the number of Memcached instances
 	Size int32 `+"`"+`json:"size,omitempty"`+"`"+`
 `)
@@ -236,8 +240,8 @@ func (mh *MemcachedGoWithWebhooks) implementingAPI() {
 		filepath.Join(mh.ctx.Dir, "api", mh.ctx.Version, fmt.Sprintf("%s_types.go", strings.ToLower(mh.ctx.Kind))),
 		fmt.Sprintf("type %sStatus struct {\n\t// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster\n\t// Important: Run \"make\" to regenerate code after modifying this file", mh.ctx.Kind),
 		`
-	
-	// Nodes store the name of the pods which are running Memcached instances 
+
+	// Nodes store the name of the pods which are running Memcached instances
 	Nodes []string `+"`"+`json:"nodes,omitempty"`+"`"+`
 `)
 	pkg.CheckError("inserting Node Status", err)

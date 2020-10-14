@@ -44,7 +44,7 @@ func main() {
 	opts := zap.Options{}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
-    
+
 	logger := zap.New(zap.UseFlagOptions(&opts))
 	logf.SetLogger(logger)
 
@@ -60,7 +60,7 @@ func main() {
 #### Output using the defaults
 ```console
 $ go run main.go
-INFO[0000] Running the operator locally in namespace default. 
+INFO[0000] Running the operator locally in namespace default.
 {"level":"info","ts":1587741740.407766,"logger":"global","msg":"Printing at INFO level"}
 {"level":"info","ts":1587741740.407855,"logger":"scoped","msg":"Printing at INFO level"}
 ```
@@ -68,7 +68,7 @@ INFO[0000] Running the operator locally in namespace default.
 #### Output overriding the log level to 1 (debug)
 ```console
 $ go run main.go --zap-log-level=debug
-INFO[0000] Running the operator locally in namespace default. 
+INFO[0000] Running the operator locally in namespace default.
 {"level":"info","ts":1587741837.602911,"logger":"global","msg":"Printing at INFO level"}
 {"level":"debug","ts":1587741837.602964,"logger":"global","msg":"Printing at DEBUG level"}
 {"level":"info","ts":1587741837.6029708,"logger":"scoped","msg":"Printing at INFO level"}
@@ -260,7 +260,7 @@ If you do not want to use `logr` as your logging tool, you can remove `logr`-spe
 [repo_zapr]:https://godoc.org/github.com/go-logr/zapr
 [godoc_logr_logger]:https://godoc.org/github.com/go-logr/logr#Logger
 [site_struct_logging]:https://www.client9.com/structured-logging-in-golang/
-[code_memcached_controller]:https://github.com/operator-framework/operator-sdk/blob/master/example/memcached-operator/memcached_controller.go.tmpl
+[code_memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/memcached-operator/controllers/memcached_controller.go
 [logfmt_repo]:https://github.com/jsternberg/zap-logfmt
 [controller_runtime_zap]:https://github.com/kubernetes-sigs/controller-runtime/tree/master/pkg/log/zap
 [logging_godocs]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/log/zap#Options.BindFlags

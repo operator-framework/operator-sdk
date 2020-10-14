@@ -44,10 +44,3 @@ func NewSampleContext(binary string, path string, env ...string) (s SampleContex
 
 	return s, err
 }
-
-// NewSampleContextWithTestContext returns a SampleContext containing the kubebuilder TestContext informed
-// It is useful to allow the samples code be re-used in the e2e tests.
-func NewSampleContextWithTestContext(tc *testutils.TestContext) (s SampleContext, err error) {
-	s.TestContext = *tc
-	return s, err
-}
