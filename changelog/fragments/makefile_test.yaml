@@ -2,8 +2,8 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      Change the makefile target test for no longer be required manually changes and
-      steps to setup the envtest.
+      In Go projects, resolved an issue that caused failing tests by changing the Makefile's `test` target to
+      automatically download and configure the necessary `envtest` binaries.
 
     # kind is one of:
     # - addition

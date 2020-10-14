@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// TODO: it will no longer required when the default plugin be v3+
+// TODO: This implementation is already done for v3+. Also, it might be
+// addressed on v2 as well. More info: https://github.com/kubernetes-sigs/kubebuilder/pull/1711
 package envtest
 
 import (
@@ -23,8 +24,8 @@ import (
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 )
 
-// ControllerRuntimeEnvTestVersion version to be used to download the envtest setup script
-const controllerRuntimeEnvTestVersion = "v0.6.3"
+// controllerRuntimeVersion version to be used to download the envtest setup script
+const controllerRuntimeVersion = "v0.6.3"
 
 // RunInit modifies the project scaffolded by kubebuilder's Init plugin.
 func RunInit(cfg *config.Config) error {
@@ -49,14 +50,14 @@ func initUpdateMakefile(filePath string) error {
 
 	makefileBytes = []byte(strings.Replace(string(makefileBytes),
 		"# Run tests\ntest: generate fmt vet manifests\n\tgo test ./... -coverprofile cover.out",
-		fmt.Sprintf(makefileTestTarget, controllerRuntimeEnvTestVersion), 1))
+		fmt.Sprintf(makefileTestTarget, controllerRuntimeVersion), 1))
 
 	return ioutil.WriteFile(filePath, makefileBytes, 0644)
 }
 
 const makefileTestTarget = `# Run tests
-ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
+ENVTEST_ASSETS_DIR = $(shell pwd)/testbin
 test: generate fmt vet manifests
-	mkdir -p ${ENVTEST_ASSETS_DIR}
-	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/%s/hack/setup-envtest.sh
-	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out`
+	mkdir -p $(ENVTEST_ASSETS_DIR)
+	test -f $(ENVTEST_ASSETS_DIR)/setup-envtest.sh || curl -sSLo $(ENVTEST_ASSETS_DIR)/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/%s/hack/setup-envtest.sh
+	source $(ENVTEST_ASSETS_DIR)/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out`
