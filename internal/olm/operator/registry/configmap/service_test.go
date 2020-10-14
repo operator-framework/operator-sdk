@@ -24,8 +24,7 @@ import (
 var _ = Describe("Service", func() {
 	Describe("withTCPPort", func() {
 		It("should append the portnumber in the service", func() {
-			var ser *corev1.Service
-			ser = &corev1.Service{
+			ser := &corev1.Service{
 				Spec: corev1.ServiceSpec{
 					Ports: []corev1.ServicePort{
 						corev1.ServicePort{
@@ -39,6 +38,7 @@ var _ = Describe("Service", func() {
 			x := withTCPPort("testport", 8080)
 			x(ser)
 			Expect(ser.Spec.Ports[1].Port).To(Equal(int32(8080)))
+			Expect(ser.Spec.Ports[0].Port).To(Equal(int32(8000)))
 		})
 	})
 
