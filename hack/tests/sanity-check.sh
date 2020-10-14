@@ -14,4 +14,4 @@ make install
 go run ./hack/generate/samples/generate_all.go
 
 # Make sure repo is still in a clean state.
-git diff --exit-code
+git diff --exit-code -- . ':!testdata/go/memcached-operator/bin/*'
