@@ -16,14 +16,14 @@ package v2
 
 import (
 	"fmt"
-	
+
 	"github.com/spf13/pflag"
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 	"sigs.k8s.io/kubebuilder/pkg/plugin"
 
+	"github.com/operator-framework/operator-sdk/internal/plugins/envtest"
 	"github.com/operator-framework/operator-sdk/internal/plugins/manifests"
 	"github.com/operator-framework/operator-sdk/internal/plugins/scorecard"
-	"github.com/operator-framework/operator-sdk/internal/plugins/envtest"
 )
 
 type initPlugin struct {
