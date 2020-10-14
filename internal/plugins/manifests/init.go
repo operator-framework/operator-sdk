@@ -18,6 +18,7 @@ package manifests
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 
@@ -61,7 +62,11 @@ func initUpdateMakefile(cfg *config.Config, filePath string) error {
 
 	makefileBytes = append(makefileBytes, []byte(makefileBundleBuildFragment)...)
 
-	return ioutil.WriteFile(filePath, makefileBytes, 0644)
+	var mode os.FileMode = 0644
+	if info, err := os.Stat(filePath); err != nil {
+		mode = info.Mode()
+	}
+	return ioutil.WriteFile(filePath, makefileBytes, mode)
 }
 
 // Makefile fragments to add to the base Makefile.
