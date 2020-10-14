@@ -19,6 +19,7 @@ package envtest
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
 
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
@@ -52,7 +53,11 @@ func initUpdateMakefile(filePath string) error {
 		"# Run tests\ntest: generate fmt vet manifests\n\tgo test ./... -coverprofile cover.out",
 		fmt.Sprintf(makefileTestTarget, controllerRuntimeVersion), 1))
 
-	return ioutil.WriteFile(filePath, makefileBytes, 0644)
+	var mode os.FileMode = 0644
+	if info, err := os.Stat(filePath); err != nil {
+		mode = info.Mode()
+	}
+	return ioutil.WriteFile(filePath, makefileBytes, mode)
 }
 
 const makefileTestTarget = `# Run tests
