@@ -110,3 +110,7 @@ website/public/
 website/resources/
 website/node_modules/
 website/tech-doc-hugo
+
+# samples bin
+testdata/go/memcached-operator/bin/*
+
