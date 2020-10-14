@@ -19,5 +19,5 @@ test: generate fmt vet manifests
 If using `git`, it is recommended to add `testbin/*` to your `.gitignore` file to avoid committing these binaries. 
 
 [envtest]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/envtest
-[controller-test]: https://book.kubebuilder.io/reference/writing-tests.html
+[controller-test]: https://book.kubebuilder.io/cronjob-tutorial/writing-tests.html
 [script]: https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/master/hack/setup-envtest.sh

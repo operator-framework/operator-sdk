@@ -114,3 +114,6 @@ website/tech-doc-hugo
 # samples bin
 testdata/go/memcached-operator/bin/*
 
+
+*\.DS_Store
+

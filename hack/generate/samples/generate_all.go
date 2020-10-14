@@ -27,8 +27,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/testutils"
 )
 
-const testdata = "/testdata/"
-
 var (
 	binaryName string
 )
@@ -43,7 +41,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	samplesPath := filepath.Join(currentPath, testdata)
+	samplesPath := filepath.Join(currentPath, "testdata")
 	log.Infof("using the path: (%v)", samplesPath)
 
 	log.Infof("creating Helm Memcached Sample")
