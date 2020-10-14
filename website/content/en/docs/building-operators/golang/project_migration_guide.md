@@ -214,20 +214,6 @@ func main() {
 
 - Ensure that you copy all customizations made in `cmd/manager/main.go` to `main.go`. You’ll also need to ensure that all needed schemes have been registered, if you have been using third-party API's (i.e Route Api from OpenShift).
 
-### Configuring your test environment
-
-[Setup the `envtest` binaries and environment][envtest-setup] for your project.
-Update your `test` Makefile target to the following:
-
-```sh
-# Run tests
-ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
-test: generate fmt vet manifests
-	mkdir -p ${ENVTEST_ASSETS_DIR}
-	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/master/hack/setup-envtest.sh
-	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
-```
-
 ## Migrate your tests
 
 For the new layout, you will see that `controllers/suite_test.go` is created. This file contains boilerplate for executing integration tests using [envtest][envtest] with [ginkgo](https://onsi.github.io/ginkgo/) and [gomega](https://onsi.github.io/gomega/).
@@ -355,7 +341,6 @@ E.g `kubectl logs deployment.apps/memcached-operator-controller-manager -n memca
 [metrics]: https://book.kubebuilder.io/reference/metrics.html?highlight=metr#metrics
 [memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/master/example/memcached-operator/memcached_controller.go.tmpl
 [rbac_markers]: https://book.kubebuilder.io/reference/markers/rbac.html
-[envtest-setup]: /docs/building-operators/golang/references/envtest-setup
 [kube-auth-proxy]: https://github.com/brancz/kube-rbac-proxy
 [markers]: https://book.kubebuilder.io/reference/markers.html?highlight=markers#marker-syntax
 [operator-scope]: /docs/building-operators/golang/operator-scope

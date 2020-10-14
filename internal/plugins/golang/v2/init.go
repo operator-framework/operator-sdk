@@ -21,6 +21,7 @@ import (
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 	"sigs.k8s.io/kubebuilder/pkg/plugin"
 
+	"github.com/operator-framework/operator-sdk/internal/plugins/envtest"
 	"github.com/operator-framework/operator-sdk/internal/plugins/manifests"
 	"github.com/operator-framework/operator-sdk/internal/plugins/scorecard"
 )
@@ -64,6 +65,9 @@ func (p *initPlugin) Run() error {
 
 // SDK phase 2 plugins.
 func (p *initPlugin) runPhase2() error {
+	if err := envtest.RunInit(p.config); err != nil {
+		return err
+	}
 	if err := manifests.RunInit(p.config); err != nil {
 		return err
 	}

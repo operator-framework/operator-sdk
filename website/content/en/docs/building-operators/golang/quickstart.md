@@ -34,20 +34,6 @@ Create a simple Memcached API:
 operator-sdk create api --group cache --version v1 --kind Memcached --resource=true --controller=true
 ```
 
-### Configuring your test environment
-
-[Setup the `envtest` binaries and environment][envtest-setup] for your project.
-Update your `test` Makefile target to the following:
-
-```sh
-# Run tests
-ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
-test: generate fmt vet manifests
-	mkdir -p ${ENVTEST_ASSETS_DIR}
-	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/master/hack/setup-envtest.sh
-	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
-```
-
 ### Build and push the operator image
 
 Use the built-in Makefile targets to build and push your operator. Make
@@ -102,6 +88,5 @@ Read the [tutorial][tutorial] for an in-depth walkthough of building a Go operat
 [docker_tool]:https://docs.docker.com/install/
 [kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [operator_install]: /docs/installation/install-operator-sdk
-[envtest-setup]: /docs/building-operators/golang/references/envtest-setup
 [tutorial]: /docs/building-operators/golang/tutorial/ 
 
