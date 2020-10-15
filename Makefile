@@ -51,8 +51,8 @@ build: ## Build operator-sdk, ansible-operator, and helm-operator.
 
 .PHONY: install
 GOBIN ?= $(shell go env GOPATH)/bin
-install: build ## Install operator-sdk, ansible-operator, and helm-operator in $GOBIN
-	install -t $(GOBIN) $(BUILD_DIR)/{operator-sdk,ansible-operator,helm-operator}
+install: ## Install operator-sdk, ansible-operator, and helm-operator in $GOBIN
+	go install $(GO_BUILD_ARGS) ./cmd/{operator-sdk,ansible-operator,helm-operator}
 
 .PHONY: image-build-sdk image-push-sdk image-push-sdk-multiarch
 OPERATOR_SDK_CI_IMAGE = quay.io/operator-framework/operator-sdk
@@ -152,8 +152,8 @@ export KUBECONFIG := $(HOME)/.kube/kind-$(KIND_CLUSTER).config
 export KUBEBUILDER_ASSETS := $(PWD)/tools/bin
 test-e2e-setup: build
 	./tools/scripts/fetch kind 0.9.0
-	./tools/scripts/fetch kubectl ${K8S_VERSION}
 	./tools/scripts/fetch envtest 0.6.3
+	./tools/scripts/fetch kubectl ${K8S_VERSION} # Install kubectl AFTER envtest because envtest includes its own kubectl binary
 	[[ "`./tools/bin/kind get clusters`" =~ "$(KIND_CLUSTER)" ]] || ./tools/bin/kind create cluster --image="kindest/node:v$(K8S_VERSION)" --name $(KIND_CLUSTER)
 
 .PHONY: test-e2e-teardown

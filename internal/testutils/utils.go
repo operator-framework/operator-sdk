@@ -123,7 +123,7 @@ func ReplaceRegexInFile(path, match, replace string) error {
 	return nil
 }
 
-// LoadImageToKindCluster loads a local docker image with the name informed to the kind cluster
+// LoadImageToKindClusterWithName loads a local docker image with the name informed to the kind cluster
 func (tc TestContext) LoadImageToKindClusterWithName(image string) error {
 	cluster := "kind"
 	if v, ok := os.LookupEnv("KIND_CLUSTER"); ok {
