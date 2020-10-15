@@ -1,4 +1,0 @@
-entries:
-  - description: Fixed a bug that caused the Helm operator not to set the `InstallSuccessful` and `UpgradeSuccessful` status reasons when the status update fails during installation and upgrade.
-    kind: "bugfix"
-    breaking: false

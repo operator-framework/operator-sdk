@@ -1,6 +1,0 @@
-entries:
-  - description: >
-      `generate <bundle|packagemanifests>` will populate a CSV's `webhookDefinition[].deploymentName`
-      by selecting an input Deployment via its PodTemplate labels using a webhook Service's label selectors,
-      defaulting to "<service.metadata.name>-service" if none is selected.
-    kind: bugfix

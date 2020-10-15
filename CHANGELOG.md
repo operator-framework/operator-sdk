@@ -1,3 +1,49 @@
+## v1.1.0
+
+### Additions
+
+- For Ansible-based Operator, add `.gitignore` file. ([#3806](https://github.com/operator-framework/operator-sdk/pull/3806))
+- Added the `--select-optional` flag to `bundle validate` to pass a label selector that runs any matching optional validator on top of required validators, and `--list-optional` to display optional validators, their selectors, and a short explanation of what each does. ([#3719](https://github.com/operator-framework/operator-sdk/pull/3719))
+- Added the OperatorHub.io optional validator to `bundle validate`, which can be run by setting `--select-optional=name=operatorhub` or `--select-optional=suite=operatorframework`. ([#3719](https://github.com/operator-framework/operator-sdk/pull/3719))
+- Added the `run bundle` command. ([#3988](https://github.com/operator-framework/operator-sdk/pull/3988))
+- Added new base image assets containing the Operator-SDK CLI at quay.io/repository/operator-framework/operator-sdk. ([#3902](https://github.com/operator-framework/operator-sdk/pull/3902))
+- Removed stale unix sockets. This allows for smoother  initialization during the start-up of an Ansible operator,  as each operator will clean up its sockets during termination. ([#3721](https://github.com/operator-framework/operator-sdk/pull/3721))
+- Added feature to the command `operator-sdk olm install` that allows installing OLM version 0.15.1 without  fetching the manifest from Github. ([#3906](https://github.com/operator-framework/operator-sdk/pull/3906))
+- Re-enabled s390x docker image builds. ([#3855](https://github.com/operator-framework/operator-sdk/pull/3855))
+
+### Changes
+
+- In `ansible-operator` and `helm-operator` run commands, print git commit when logging version information. ([#3849](https://github.com/operator-framework/operator-sdk/pull/3849))
+- For Ansible/Helm, fix multigroup message. ([#3822](https://github.com/operator-framework/operator-sdk/pull/3822))
+- For Helm-based Operators, cleanup the file `.gitignore` in order to not have invalid instructions for the type. ([#3810](https://github.com/operator-framework/operator-sdk/pull/3810))
+- Updated scorecard-test-kuttl image to kuttl v0.6.1. ([#3659](https://github.com/operator-framework/operator-sdk/pull/3659))
+- Updated scorecard-test-kuttl image to kuttl v0.5.2. ([#3659](https://github.com/operator-framework/operator-sdk/pull/3659))
+- Updated scorecard-test-kuttl image to use latest kuttl. ([#3711](https://github.com/operator-framework/operator-sdk/pull/3711))
+- Updated the Makefile to build multiarch versions of the scorecard-test-kuttl and custom-scorecard-tests images to match the scorecard-test image. ([#3821](https://github.com/operator-framework/operator-sdk/pull/3821))
+
+### Bug Fixes
+
+- `generate <bundle|packagemanifests>` will populate a CSV's `webhookDefinition[].deploymentName` by selecting an input Deployment via its PodTemplate labels using a webhook Service's label selectors, defaulting to "<service.metadata.name>-service" if none is selected. ([#3761](https://github.com/operator-framework/operator-sdk/pull/3761))
+- Resolves an issue with default channel bundle validation. The default channel label is not required. ([#3953](https://github.com/operator-framework/operator-sdk/pull/3953))
+- Fixed debug logging in the `bundle validate` subcommand of `operator-sdk`. ([#3795](https://github.com/operator-framework/operator-sdk/pull/3795))
+- `generate <bundle|packagemanifests>` now generates a CSV base with only the `AllNamespaces` install mode supported by default, since projects are cluster-scoped by default. ([#3746](https://github.com/operator-framework/operator-sdk/pull/3746))
+- `generate <bundle|packagemanifests>` now defaults a CSV's `spec.webhookDefinition[].admissionReviewVersions` to []string{"v1beta1"}, as an empty or null value is invalid. ([#3903](https://github.com/operator-framework/operator-sdk/pull/3903))
+- `generate <bundle|packagemanifests>` now defaults a CSV's `spec.webhookDefinition[].sideEffects` to "None", as an empty or null value is invalid. ([#3903](https://github.com/operator-framework/operator-sdk/pull/3903))
+- The scaffolded manager deployment for Ansible-based Operators now has the `ANSIBLE_GATHERING` option set to `explicit`. Additionally, if the `ANSIBLE_GATHERING` environment variable is set to explicit when running a role directly, the `--role-skip-facts` argument will be passed to `ansible-runner`. ([#3933](https://github.com/operator-framework/operator-sdk/pull/3933))
+- Added kubernetes authentication clients to `ansible-operator` and  `helm-operator` to enable authentication to gcp, azure, etc. kubernetes  clusters. ([#3974](https://github.com/operator-framework/operator-sdk/pull/3974))
+- Fixed a bug with `run packagemanifests` that caused the underlying registry pod to fail to start. Changed the registry pod image from `quay.io/openshift/origin-operator-registry:latest` to `quay.io/operator-framework/upstream-registry-builder:latest`. ([#3856](https://github.com/operator-framework/operator-sdk/pull/3856))
+- When generating bundles and packagemanifests, remove `metadata.namespace` from namespaced resources when writing them into the `manifests` directory to avoid validation errors. ([#3813](https://github.com/operator-framework/operator-sdk/pull/3813))
+- Fixed a bug that caused the Helm operator not to set the `InstallSuccessful` and `UpgradeSuccessful` status reasons when the status update fails during installation and upgrade. ([#3735](https://github.com/operator-framework/operator-sdk/pull/3735))
+- Bumped helm and k8s dependencies to v3.3.4 and v1.18.8 to fix [this upstream bug](https://github.com/kubernetes/kubernetes/issues/91615). ([#3936](https://github.com/operator-framework/operator-sdk/pull/3936))
+- In Helm projects, fix operator permissions for Openshift deployments by adding a `<resource>/finalizers` rule in the operator's role. ([#3779](https://github.com/operator-framework/operator-sdk/pull/3779))
+- In Go projects, resolved an issue that caused failing tests by changing the Makefile's `test` target to automatically download and configure the necessary `envtest` binaries. ([#3983](https://github.com/operator-framework/operator-sdk/pull/3983))
+- Inform user to verify the presence of olm deployment manifests in github when `olm install` command gives a 404 http error. ([#3907](https://github.com/operator-framework/operator-sdk/pull/3907))
+- Prevent `run packagemanifests` from creating an OperatorGroup if one already exists in a namespace, and use that OperatorGroup if its target namespaces exactly match those passed in `--install-mode`. See [#3681](https://github.com/operator-framework/operator-sdk/issues/3681). ([#3689](https://github.com/operator-framework/operator-sdk/pull/3689))
+- Resolved an issue that caused bundle validation to unnecessarily restrict CSV names to a specific format. Now, only DNS-1123 subdomain validity is verified. ([#3887](https://github.com/operator-framework/operator-sdk/pull/3887))
+- Stop reconciling tasks when the event raised is a rescue in Ansible-based Operators. More info: [Bugzilla 1856714](https://bugzilla.redhat.com/show_bug.cgi?id=1856714). ([#3650](https://github.com/operator-framework/operator-sdk/pull/3650))
+- Fix an issue in `run packagemanifests` where the registry server writes files in locations that require root. ([#3867](https://github.com/operator-framework/operator-sdk/pull/3867))
+- When scaffolding scorecard configurations, use release versions instead of `latest` in image tags. ([#3845](https://github.com/operator-framework/operator-sdk/pull/3845))
+
 ## v1.0.1
 
 ### Bug Fixes

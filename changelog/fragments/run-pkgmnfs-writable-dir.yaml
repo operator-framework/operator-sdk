@@ -1,5 +1,0 @@
-entries:
-  - description: >
-      Fix an issue in `run packagemanifests` where the registry server
-      writes files in locations that require root.
-    kind: bugfix
