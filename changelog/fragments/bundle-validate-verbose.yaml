@@ -1,4 +1,0 @@
-entries:
-  - description: Fixed debug logging in the `bundle validate` subcommand of `operator-sdk`
-    kind: "bugfix"
-    breaking: false

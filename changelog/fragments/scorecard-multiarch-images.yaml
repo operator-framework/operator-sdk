@@ -1,4 +1,0 @@
-entries:
-  - description: Updated the Makefile to build multiarch versions of the scorecard-test-kuttl and custom-scorecard-tests images to match the scorecard-test image
-    kind: change
-    breaking: false

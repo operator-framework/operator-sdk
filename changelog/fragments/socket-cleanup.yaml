@@ -1,9 +1,0 @@
-entries:
-  - description: >
-      Removed stale unix sockets. This allows for smoother 
-      initialization during the start-up of an Ansible operator, 
-      as each operator will clean up its sockets during termination.
-
-    kind: "addition"
-
-    breaking: false

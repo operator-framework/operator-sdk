@@ -33,7 +33,7 @@ $ brew install operator-sdk
 
 ```sh
 # Set the release version variable
-$ RELEASE_VERSION=v1.0.0
+$ RELEASE_VERSION=v1.1.0
 # Linux
 $ curl -LO https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu
 $ curl -LO https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/ansible-operator-${RELEASE_VERSION}-x86_64-linux-gnu
@@ -125,7 +125,7 @@ $ make install
 ```
 
 **Note:** Ensure that your `GOPROXY` is set with its default value for Go
-versions 1.13+ which is `https://proxy.golang.org,direct`.
+versions 1.15+ which is `https://proxy.golang.org,direct`.
 
 [homebrew_tool]:https://brew.sh/
 [git_tool]:https://git-scm.com/downloads

@@ -1,8 +1,0 @@
-entries:
-  - description: >
-      Added kubernetes authentication clients to `ansible-operator` and 
-      `helm-operator` to enable authentication to gcp, azure, etc. kubernetes 
-      clusters.
-
-    kind: bugfix
-    breaking: false

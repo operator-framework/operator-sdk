@@ -1,7 +1,0 @@
-entries:
-  - description: >
-      Prevent `run packagemanifests` from creating an OperatorGroup if one already exists in a namespace,
-      and use that OperatorGroup if its target namespaces exactly match those passed in `--install-mode`.
-      See [#3681](https://github.com/operator-framework/operator-sdk/issues/3681).
-    kind: bugfix
-    breaking: false
