@@ -9,8 +9,8 @@ SHELL=/bin/bash
 REPO=$(shell go list -m)
 BUILD_DIR=$(PWD)/build
 GO_BUILD_ARGS = \
-  -gcflags "all=-trimpath=$(shell pwd)" \
-  -asmflags "all=-trimpath=$(shell pwd)" \
+  -gcflags "all=-trimpath=$(shell dirname $(shell pwd))" \
+  -asmflags "all=-trimpath=$(shell dirname $(shell pwd))" \
   -ldflags " \
     -X '$(REPO)/internal/version.Version=$(SIMPLE_VERSION)' \
     -X '$(REPO)/internal/version.GitVersion=$(GIT_VERSION)' \
