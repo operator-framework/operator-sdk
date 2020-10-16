@@ -10,7 +10,6 @@ go fmt ./...
 make cli-doc
 go run ./hack/generate/changelog/gen-changelog.go -validate-only
 
-make install
 make samples
 
 # Make sure repo is still in a clean state.

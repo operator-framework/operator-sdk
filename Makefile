@@ -112,7 +112,7 @@ generate: cli-doc samples bindata ## Run all non-release generate targets
 cli-doc: ## Generate CLI documentation
 	go run ./hack/generate/cli-doc/gen-cli-doc.go
 
-samples: ## Generate samples
+samples: install ## Generate samples
 	go run ./hack/generate/samples/generate_all.go
 
 changelog: ## Generate CHANGELOG.md and migration guide updates
