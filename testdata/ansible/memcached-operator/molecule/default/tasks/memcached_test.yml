@@ -1,98 +1,130 @@
 ---
+- name: Load CR
+  set_fact:
+    custom_resource: "{{ lookup('template', '/'.join([samples_dir, cr_file])) | from_yaml }}"
+  vars:
+    cr_file: 'cache_v1alpha1_memcached.yaml'
+
 - name: Create the cache.example.com/v1alpha1.Memcached
   k8s:
     state: present
     namespace: '{{ namespace }}'
-    definition: "{{ lookup('template', '/'.join([samples_dir, cr_file])) | from_yaml }}"
+    definition: '{{ custom_resource }}'
     wait: yes
     wait_timeout: 300
     wait_condition:
       type: Running
       reason: Successful
       status: "True"
-  vars:
-    cr_file: 'cache_v1alpha1_memcached.yaml'
 
-- name: Create the cache.example.com/v1alpha1.Memcached
-  k8s:
-    state: present
-    namespace: "{{ namespace }}"
-    definition: "{{ lookup('template', '/'.join([samples_dir, cr_file])) | from_yaml }}"
-    wait: yes
-    wait_timeout: 300
-    wait_condition:
-      type: Running
-      reason: Successful
-      status: "True"
-  vars:
-    cr_file: 'cache_v1alpha1_memcached.yaml'
-
-- name: Wait 2 minutes for memcached pod to start
-  k8s_info:
-    kind: "Pod"
-    api_version: "v1"
-    namespace: "osdk-test"
-    label_selectors:
-      - app = memcached
-  register: pod_list
+- name: Wait 2 minutes for memcached deployment
+  debug:
+    var: deploy
   until:
-    - pod_list.resources is defined
-    - pod_list.resources|length == 1
+  - deploy is defined
+  - deploy.status is defined
+  - deploy.status.replicas is defined
+  - deploy.status.replicas == deploy.status.get("availableReplicas", 0)
   retries: 12
   delay: 10
+  vars:
+    deploy: '{{ lookup("k8s",
+      kind="Deployment",
+      api_version="apps/v1",
+      namespace=namespace,
+      label_selector="app=memcached"
+    )}}'
 
-- name: Delete memcached pod
-  community.kubernetes.k8s:
-    state: absent
-    definition:
-      kind: Pod
+- name: Verify custom status exists
+  assert:
+    that: debug_cr.status.get("test") == "hello world"
+  vars:
+    debug_cr: '{{ lookup("k8s",
+      kind=custom_resource.kind,
+      api_version=custom_resource.apiVersion,
+      namespace=namespace,
+      resource_name=custom_resource.metadata.name
+    )}}'
+
+- when: molecule_yml.scenario.name == "test-local"
+  block:
+  - name: Restart the operator by killing the pod
+    k8s:
+      state: absent
+      definition:
+        api_version: v1
+        kind: Pod
+        metadata:
+          namespace: '{{ namespace }}'
+          name: '{{ pod.metadata.name }}'
+    vars:
+      pod: '{{ q("k8s", api_version="v1", kind="Pod", namespace=namespace, label_selector="name=memcached-operator").0 }}'
+
+  - name: Wait 2 minutes for operator deployment
+    debug:
+      var: deploy
+    until:
+    - deploy is defined
+    - deploy.status is defined
+    - deploy.status.replicas is defined
+    - deploy.status.replicas == deploy.status.get("availableReplicas", 0)
+    retries: 12
+    delay: 10
+    vars:
+      deploy: '{{ lookup("k8s",
+        kind="Deployment",
+        api_version="apps/v1",
+        namespace=namespace,
+        resource_name="memcached-operator"
+      )}}'
+
+  - name: Wait for reconciliation to have a chance at finishing
+    pause:
+      seconds:  15
+
+  - name: Delete the service that is created.
+    k8s:
+      kind: Service
       api_version: v1
-      metadata:
-        namespace: "{{ namespace }}"
-        name: "{{ item.metadata.name }}"
-  loop: "{{ pod_list.resources }}"
+      namespace: '{{ namespace }}'
+      name: test-service
+      state: absent
 
-- name: pause
-  pause:
-    seconds: 10
+  - name: Verify that test-service was re-created
+    debug:
+      var: service
+    until: service
+    retries: 12
+    delay: 10
+    vars:
+      service: '{{ lookup("k8s",
+        kind="Service",
+        api_version="v1",
+        namespace=namespace,
+        resource_name="test-service",
+      )}}'
 
-- name: Wait 2 minutes for memcached pod to restart
-  k8s_info:
-    kind: "Pod"
-    api_version: "v1"
-    namespace: "osdk-test"
-    label_selectors:
-      - app = memcached
-  register: pod_list
-  until:
-    - pod_list.resources is defined
-    - pod_list.resources|length == 1
-  retries: 12
-  delay: 10
-
-
-- name: Edit Memcached size
+- name: Delete the custom resource
   k8s:
-    state: present
-    namespace: "{{ namespace }}"
-    definition:
-      apiVersion: cache.example.com/v1alpha1
-      kind: Memcached
-      metadata:
-        name: memcached-sample
-      spec:
-        size: 3
+    state: absent
+    namespace: '{{ namespace }}'
+    definition: '{{ custom_resource }}'
 
-- name: Wait 2 minutes for 3 memcached pods
+- name: Wait for the custom resource to be deleted
   k8s_info:
-    kind: "Pod"
-    api_version: "v1"
-    namespace: "osdk-test"
-    label_selectors:
-      - app = memcached
-  register: pod_list
-  until:
-    - pod_list.resources is defined
-    - pod_list.resources|length == 1
-  retries: 12
-  delay: 10
+    api_version: '{{ custom_resource.apiVersion }}'
+    kind: '{{ custom_resource.kind }}'
+    namespace: '{{ namespace }}'
+    name: '{{ custom_resource.metadata.name }}'
+  register: cr
+  retries: 10
+  delay: 6
+  until: not cr.resources
+  failed_when: cr.resources
+
+- name: Verify the Deployment was deleted (wait 30s)
+  assert:
+    that: not lookup('k8s', kind='Deployment', api_version='apps/v1', namespace=namespace, label_selector='app=memcached')
+  retries: 10
+  delay: 3
+

@@ -236,3 +236,23 @@ func (tc TestContext) UninstallPrerequisites() {
 		tc.UninstallOLM()
 	}
 }
+
+// AllowProjectBeMultiGroup will update the PROJECT file with the information to allow we scaffold
+// apis with different groups.
+// todo(camilamacedo86) : remove this helper when the edit plugin via the bin
+// be available. See the Pr: https://github.com/kubernetes-sigs/kubebuilder/pull/1691
+func (tc TestContext) AllowProjectBeMultiGroup() error {
+	const multiGroup = `multigroup: true
+`
+	projectBytes, err := ioutil.ReadFile(filepath.Join(tc.Dir, "PROJECT"))
+	if err != nil {
+		return err
+	}
+
+	projectBytes = append([]byte(multiGroup), projectBytes...)
+	err = ioutil.WriteFile(filepath.Join(tc.Dir, "PROJECT"), projectBytes, 0644)
+	if err != nil {
+		return err
+	}
+	return nil
+}

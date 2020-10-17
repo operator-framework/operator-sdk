@@ -17,35 +17,14 @@ pip3 install --user ansible-lint yamllint
 pip3 install --user docker==4.2.2 openshift jmespath
 ansible-galaxy collection install 'community.kubernetes:<1.0.0'
 
+header_text "Creating molecule sample"
+go run ./hack/generate/samples/molecule/generate.go --path=$TMPDIR
+
 pushd "$TMPDIR"
+popd
+cd $TMPDIR/memcached-molecule-operator
 
-header_text "Creating memcached-operator"
-mkdir memcached-operator
-pushd memcached-operator
-operator-sdk init --plugins ansible.sdk.operatorframework.io/v1 \
-  --domain example.com \
-  --group ansible \
-  --version v1alpha1 \
-  --kind Memcached \
-  --generate-playbook \
-  --generate-role
-header_text "Replacing operator contents"
-cp "$ROOTDIR/test/ansible-memcached/tasks.yml" roles/memcached/tasks/main.yml
-cp "$ROOTDIR/test/ansible-memcached/defaults.yml" roles/memcached/defaults/main.yml
-cp "$ROOTDIR/test/ansible-memcached/memcached_test.yml"  molecule/default/tasks/memcached_test.yml
-cp -a "$ROOTDIR/test/ansible-memcached/memfin" roles/
-cp -a "$ROOTDIR/test/ansible-memcached/secret" roles/
-marker=$(tail -n1 watches.yaml)
-sed -i'.bak' -e '$ d' watches.yaml;rm -f watches.yaml.bak
-cat "$ROOTDIR/test/ansible-memcached/watches-finalizer.yaml" >> watches.yaml
-header_text "Append v1 kind to watches to test watching already registered GVK"
-cat "$ROOTDIR/test/ansible-memcached/watches-v1-kind.yaml" >> watches.yaml
-echo $marker >> watches.yaml
-sed -i'.bak' -e '/- secrets/a \ \ \ \ \ \ - services' config/rbac/role.yaml; rm -f config/rbac/role.yaml.bak
-
-header_text "Test in kind"
-sed -i".bak" -E -e 's/(FROM quay.io\/operator-framework\/ansible-operator)(:.*)?/\1:dev/g' Dockerfile; rm -f Dockerfile.bak
-OPERATORDIR="$(pwd)"
+header_text "Test Kind"
 make kustomize
 if [ -f ./bin/kustomize ] ; then
   KUSTOMIZE="$(realpath ./bin/kustomize)"
@@ -54,8 +33,7 @@ else
 fi
 KUSTOMIZE_PATH=${KUSTOMIZE} TEST_OPERATOR_NAMESPACE=default molecule test -s kind
 
-popd
-popd
+cd $TMPDIR
 KUSTOMIZE_PATH=${KUSTOMIZE}
 header_text "Test Ansible Molecule scenarios"
 pushd "${ROOTDIR}/test/ansible"
@@ -64,5 +42,3 @@ sed -i".bak" -E -e 's/(FROM quay.io\/operator-framework\/ansible-operator)(:.*)?
 docker build -f build/Dockerfile -t "$DEST_IMAGE" --no-cache .
 load_image_if_kind "$DEST_IMAGE"
 OPERATOR_PULL_POLICY=Never OPERATOR_IMAGE=${DEST_IMAGE} TEST_CLUSTER_PORT=24443 TEST_OPERATOR_NAMESPACE=osdk-test molecule test --all
-
-popd

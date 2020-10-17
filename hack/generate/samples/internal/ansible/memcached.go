@@ -63,7 +63,8 @@ func (ma *MemcachedAnsible) Run() {
 		"--version", ma.ctx.Version,
 		"--kind", ma.ctx.Kind,
 		"--domain", ma.ctx.Domain,
-		"--generate-role")
+		"--generate-role",
+		"--generate-playbook")
 	pkg.CheckError("creating the project", err)
 
 	err = ma.ctx.Make("kustomize")
@@ -88,7 +89,7 @@ func (ma *MemcachedAnsible) addingMoleculeMockData() {
 		fmt.Sprintf("%s_test.yml", strings.ToLower(ma.ctx.Kind)))
 
 	err := testutils.ReplaceInFile(moleculeTaskPath,
-		moleculeAssertions, moleculeTaskFragment)
+		originaMemcachedMoleculeTask, fmt.Sprintf(moleculeTaskFragment, ma.ctx.ProjectName, ma.ctx.ProjectName))
 	pkg.CheckError("replacing molecule default tasks", err)
 }
 
@@ -126,128 +127,3 @@ func GenerateMemcachedAnsibleSample(samplesPath string) {
 	memcached.Prepare()
 	memcached.Run()
 }
-
-const roleFragment = `
-- name: start memcached
-  community.kubernetes.k8s:
-    definition:
-      kind: Deployment
-      apiVersion: apps/v1
-      metadata:
-        name: '{{ ansible_operator_meta.name }}-memcached'
-        namespace: '{{ ansible_operator_meta.namespace }}'
-      spec:
-        replicas: "{{size}}"
-        selector:
-          matchLabels:
-            app: memcached
-        template:
-          metadata:
-            labels:
-              app: memcached
-          spec:
-            containers:
-            - name: memcached
-              command:
-              - memcached
-              - -m=64
-              - -o
-              - modern
-              - -v
-              image: "docker.io/memcached:1.4.36-alpine"
-              ports:
-                - containerPort: 11211
-`
-
-const defaultsFragment = `size: 1`
-
-const moleculeAssertions = `- name: Add assertions here
-  assert:
-    that: false
-    fail_msg: FIXME Add real assertions for your operator
-`
-
-const moleculeTaskFragment = `- name: Create the cache.example.com/v1alpha1.Memcached
-  k8s:
-    state: present
-    namespace: "{{ namespace }}"
-    definition: "{{ lookup('template', '/'.join([samples_dir, cr_file])) | from_yaml }}"
-    wait: yes
-    wait_timeout: 300
-    wait_condition:
-      type: Running
-      reason: Successful
-      status: "True"
-  vars:
-    cr_file: 'cache_v1alpha1_memcached.yaml'
-
-- name: Wait 2 minutes for memcached pod to start
-  k8s_info:
-    kind: "Pod"
-    api_version: "v1"
-    namespace: "osdk-test"
-    label_selectors:
-      - app = memcached
-  register: pod_list
-  until:
-    - pod_list.resources is defined
-    - pod_list.resources|length == 1
-  retries: 12
-  delay: 10
-
-- name: Delete memcached pod
-  community.kubernetes.k8s:
-    state: absent
-    definition:
-      kind: Pod
-      api_version: v1
-      metadata:
-        namespace: "{{ namespace }}"
-        name: "{{ item.metadata.name }}"
-  loop: "{{ pod_list.resources }}"
-
-- name: pause
-  pause:
-    seconds: 10
-
-- name: Wait 2 minutes for memcached pod to restart
-  k8s_info:
-    kind: "Pod"
-    api_version: "v1"
-    namespace: "osdk-test"
-    label_selectors:
-      - app = memcached
-  register: pod_list
-  until:
-    - pod_list.resources is defined
-    - pod_list.resources|length == 1
-  retries: 12
-  delay: 10
-
-
-- name: Edit Memcached size
-  k8s:
-    state: present
-    namespace: "{{ namespace }}"
-    definition:
-      apiVersion: cache.example.com/v1alpha1
-      kind: Memcached
-      metadata:
-        name: memcached-sample
-      spec:
-        size: 3
-
-- name: Wait 2 minutes for 3 memcached pods
-  k8s_info:
-    kind: "Pod"
-    api_version: "v1"
-    namespace: "osdk-test"
-    label_selectors:
-      - app = memcached
-  register: pod_list
-  until:
-    - pod_list.resources is defined
-    - pod_list.resources|length == 1
-  retries: 12
-  delay: 10
-`

@@ -1,7 +1,0 @@
-  finalizer:
-    name: finalizer.ansible.example.com
-    role: memfin
-  blacklist:
-    - group: ""
-      version: v1
-      kind: ConfigMap
