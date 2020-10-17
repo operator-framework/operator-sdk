@@ -34,9 +34,12 @@ var _ = Describe("Running ansible projects", func() {
 	var fooSampleFile string
 	var memfinSampleFile string
 	var memcachedDeployment string
+	var metricsClusterRoleBindingName string
 
 	Context("built with operator-sdk", func() {
 		BeforeEach(func() {
+			metricsClusterRoleBindingName = fmt.Sprintf("%s-metrics-reader", tc.ProjectName)
+
 			By("checking samples")
 			memcachedSampleFile = filepath.Join(tc.Dir, "config", "samples",
 				fmt.Sprintf("%s_%s_%s.yaml", tc.Group, tc.Version, strings.ToLower(tc.Kind)))
@@ -44,11 +47,6 @@ var _ = Describe("Running ansible projects", func() {
 				fmt.Sprintf("%s_%s_foo.yaml", tc.Group, tc.Version))
 			memfinSampleFile = filepath.Join(tc.Dir, "config", "samples",
 				fmt.Sprintf("%s_%s_memfin.yaml", tc.Group, tc.Version))
-
-			By("enabling Prometheus via the kustomization.yaml")
-			Expect(kbtestutils.UncommentCode(
-				filepath.Join(tc.Dir, "config", "default", "kustomization.yaml"),
-				"#- ../prometheus", "#")).To(Succeed())
 
 			By("deploying project on the cluster")
 			err := tc.Make("deploy", "IMG="+tc.ImageName)
@@ -65,7 +63,7 @@ var _ = Describe("Running ansible projects", func() {
 
 			By("cleaning up permissions")
 			_, _ = tc.Kubectl.Command("delete", "clusterrolebinding",
-				fmt.Sprintf("metrics-%s", tc.TestSuffix))
+				metricsClusterRoleBindingName)
 
 			By("undeploy project")
 			_ = tc.Make("undeploy")
@@ -122,14 +120,14 @@ var _ = Describe("Running ansible projects", func() {
 			_, err := tc.Kubectl.Get(
 				true,
 				"ServiceMonitor",
-				fmt.Sprintf("e2e-%s-controller-manager-metrics-monitor", tc.TestSuffix))
+				fmt.Sprintf("%s-controller-manager-metrics-monitor", tc.ProjectName))
 			Expect(err).NotTo(HaveOccurred())
 
 			By("ensuring the created metrics Service for the manager")
 			_, err = tc.Kubectl.Get(
 				true,
 				"Service",
-				fmt.Sprintf("e2e-%s-controller-manager-metrics-service", tc.TestSuffix))
+				fmt.Sprintf("%s-controller-manager-metrics-service", tc.ProjectName))
 			Expect(err).NotTo(HaveOccurred())
 
 			By("create custom resource (Memcached CR)")

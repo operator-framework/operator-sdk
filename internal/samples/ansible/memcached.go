@@ -22,7 +22,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	kbtestutils "sigs.k8s.io/kubebuilder/test/e2e/utils"
 
-	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
+	"github.com/operator-framework/operator-sdk/internal/samples/pkg"
 	"github.com/operator-framework/operator-sdk/internal/testutils"
 )
 
@@ -40,14 +40,14 @@ func NewMemcachedAnsible(ctx *pkg.SampleContext) MemcachedAnsible {
 // Note that sample directory will be re-created and the context data for the sample
 // will be set such as the domain and GVK.
 func (ma *MemcachedAnsible) Prepare() {
-	log.Infof("destroying directory for memcached Ansible samples")
+	log.Infof("Destroying directory for memcached Ansible samples")
 	ma.ctx.Destroy()
 
-	log.Infof("creating directory")
+	log.Infof("Creating directory")
 	err := ma.ctx.Prepare()
 	pkg.CheckError("creating directory for Ansible Sample", err)
 
-	log.Infof("setting domain and GVK")
+	log.Infof("Setting domain and GVK")
 	ma.ctx.Domain = "example.com"
 	ma.ctx.Version = "v1alpha1"
 	ma.ctx.Group = "cache"
@@ -56,7 +56,7 @@ func (ma *MemcachedAnsible) Prepare() {
 
 // Run the steps to create the Memcached Ansible Sample
 func (ma *MemcachedAnsible) Run() {
-	log.Infof("creating the project")
+	log.Infof("Creating the project")
 	err := ma.ctx.Init(
 		"--plugins", "ansible",
 		"--group", ma.ctx.Group,
@@ -67,7 +67,7 @@ func (ma *MemcachedAnsible) Run() {
 		"--generate-playbook")
 	pkg.CheckError("creating the project", err)
 
-	log.Infof("customizing the sample")
+	log.Infof("Customizing the sample")
 	err = testutils.UncommentCode(
 		filepath.Join(ma.ctx.Dir, "config", "default", "kustomization.yaml"),
 		"#- ../prometheus", "#")
@@ -75,24 +75,22 @@ func (ma *MemcachedAnsible) Run() {
 
 	ma.addingAnsibleTask()
 	ma.addingMoleculeMockData()
-
-	pkg.RunOlmIntegration(ma.ctx)
 }
 
 // addingMoleculeMockData will customize the molecule data
 func (ma *MemcachedAnsible) addingMoleculeMockData() {
-	log.Infof("adding molecule test for Ansible task")
+	log.Infof("Adding molecule test for Ansible task")
 	moleculeTaskPath := filepath.Join(ma.ctx.Dir, "molecule", "default", "tasks",
 		fmt.Sprintf("%s_test.yml", strings.ToLower(ma.ctx.Kind)))
 
 	err := testutils.ReplaceInFile(moleculeTaskPath,
-		originaMemcachedMoleculeTask, fmt.Sprintf(moleculeTaskFragment, ma.ctx.ProjectName, ma.ctx.ProjectName))
+		originalMemcachedMoleculeTask, fmt.Sprintf(moleculeTaskFragment, ma.ctx.ProjectName, ma.ctx.ProjectName))
 	pkg.CheckError("replacing molecule default tasks", err)
 }
 
 // addingAnsibleTask will add the Ansible Task and update the sample
 func (ma *MemcachedAnsible) addingAnsibleTask() {
-	log.Infof("adding Ansible task and variable")
+	log.Infof("Adding Ansible task and variable")
 	err := kbtestutils.InsertCode(filepath.Join(ma.ctx.Dir, "roles", strings.ToLower(ma.ctx.Kind),
 		"tasks", "main.yml"),
 		fmt.Sprintf("# tasks file for %s", ma.ctx.Kind),
@@ -123,4 +121,8 @@ func GenerateMemcachedAnsibleSample(samplesPath string) {
 	memcached := NewMemcachedAnsible(&ctx)
 	memcached.Prepare()
 	memcached.Run()
+
+	log.Infof("Running OLM integration steps")
+	err = ctx.RunOlmIntegration()
+	pkg.CheckError("running olm integration", err)
 }

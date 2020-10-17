@@ -23,7 +23,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	kbtestutils "sigs.k8s.io/kubebuilder/test/e2e/utils"
 
-	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
+	"github.com/operator-framework/operator-sdk/internal/samples/pkg"
 	"github.com/operator-framework/operator-sdk/internal/testutils"
 )
 
@@ -41,14 +41,14 @@ func NewMemcachedGoWithWebhooks(ctx *pkg.SampleContext) MemcachedGoWithWebhooks 
 // Note that sample directory will be re-created and the context data for the sample
 // will be set such as the domain and GVK.
 func (mh *MemcachedGoWithWebhooks) Prepare() {
-	log.Infof("destroying directory for Memcached with Webhooks Go samples")
+	log.Infof("Destroying directory for Memcached with Webhooks Go samples")
 	mh.ctx.Destroy()
 
-	log.Infof("creating directory")
+	log.Infof("Creating directory")
 	err := mh.ctx.Prepare()
 	pkg.CheckError("creating directory for Go Sample", err)
 
-	log.Infof("setting domain and GVK")
+	log.Infof("Setting domain and GVK")
 	mh.ctx.Domain = "example.com"
 	mh.ctx.Version = "v1alpha1"
 	mh.ctx.Group = "cache"
@@ -57,12 +57,12 @@ func (mh *MemcachedGoWithWebhooks) Prepare() {
 
 // Run the steps to create the Memcached with Webhooks Go Sample
 func (mh *MemcachedGoWithWebhooks) Run() {
-	log.Infof("creating the project")
+	log.Infof("Creating the project")
 	err := mh.ctx.Init(
 		"--repo", "github.com/example/memcached-operator",
 		"--domain",
 		mh.ctx.Domain)
-	pkg.CheckError("creating the project", err)
+	pkg.CheckError("Creating the project", err)
 
 	err = mh.ctx.CreateAPI(
 		"--group", mh.ctx.Group,
@@ -70,15 +70,15 @@ func (mh *MemcachedGoWithWebhooks) Run() {
 		"--kind", mh.ctx.Kind,
 		"--controller", "true",
 		"--resource", "true")
-	pkg.CheckError("scaffolding apis", err)
+	pkg.CheckError("Scaffolding apis", err)
 
-	log.Infof("implementing the API")
+	log.Infof("Implementing the API")
 	mh.implementingAPI()
 
-	log.Infof("implementing the Controller")
+	log.Infof("Implementing the Controller")
 	mh.implementingController()
 
-	log.Infof("scaffolding webhook")
+	log.Infof("Scaffolding webhook")
 	err = mh.ctx.CreateWebhook(
 		"--group", mh.ctx.Group,
 		"--version", mh.ctx.Version,
@@ -90,15 +90,13 @@ func (mh *MemcachedGoWithWebhooks) Run() {
 	mh.implementingWebhooks()
 	mh.uncommentKustomizationFile()
 
-	pkg.RunOlmIntegration(mh.ctx)
-
 	// Clean up built binaries, if any.
 	pkg.CheckError("cleaning up", os.RemoveAll(filepath.Join(mh.ctx.Dir, "bin")))
 }
 
 // uncommentKustomizationFile will uncomment the file kustomization.yaml
 func (mh *MemcachedGoWithWebhooks) uncommentKustomizationFile() {
-	log.Infof("uncomment kustomization.yaml to enable webhook and ca injection")
+	log.Infof("Uncomment kustomization.yaml to enable webhook and ca injection")
 	err := testutils.UncommentCode(
 		filepath.Join(mh.ctx.Dir, "config", "default", "kustomization.yaml"),
 		"#- ../webhook", "#")
@@ -156,7 +154,7 @@ func (mh *MemcachedGoWithWebhooks) uncommentKustomizationFile() {
 
 // implementingWebhooks will customize the kind wekbhok file
 func (mh *MemcachedGoWithWebhooks) implementingWebhooks() {
-	log.Infof("implementing webhooks")
+	log.Infof("Implementing webhooks")
 	webhookPath := filepath.Join(mh.ctx.Dir, "api", mh.ctx.Version, fmt.Sprintf("%s_webhook.go",
 		strings.ToLower(mh.ctx.Kind)))
 
@@ -232,7 +230,7 @@ func (mh *MemcachedGoWithWebhooks) implementingAPI() {
 `)
 	pkg.CheckError("inserting spec Status", err)
 
-	log.Infof("implementing MemcachedStatus")
+	log.Infof("Implementing MemcachedStatus")
 	err = kbtestutils.InsertCode(
 		filepath.Join(mh.ctx.Dir, "api", mh.ctx.Version, fmt.Sprintf("%s_types.go", strings.ToLower(mh.ctx.Kind))),
 		fmt.Sprintf("type %sStatus struct {\n\t// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster\n\t// Important: Run \"make\" to regenerate code after modifying this file", mh.ctx.Kind),
@@ -247,13 +245,17 @@ func (mh *MemcachedGoWithWebhooks) implementingAPI() {
 // GenerateMemcachedGoWithWebhooksSample will call all actions to create the directory and generate the sample
 // Note that it should NOT be called in the e2e tests.
 func GenerateMemcachedGoWithWebhooksSample(samplesPath string) {
-	log.Infof("starting to generate Go memcached sample with webhooks")
+	log.Infof("Starting to generate Go memcached sample with webhooks")
 	ctx, err := pkg.NewSampleContext(testutils.BinaryName, filepath.Join(samplesPath, "go/memcached-operator"), "GO111MODULE=on")
 	pkg.CheckError("generating Go memcached with webhooks context", err)
 
 	memcached := NewMemcachedGoWithWebhooks(&ctx)
 	memcached.Prepare()
 	memcached.Run()
+
+	log.Infof("Running OLM integration steps")
+	err = ctx.RunOlmIntegration()
+	pkg.CheckError("running olm integration", err)
 }
 
 const rbacFragment = `
@@ -416,27 +418,27 @@ var _ webhook.Validator = &Memcached{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *Memcached) ValidateCreate() error {
-	memcachedlog.Info("validate create", "name", r.Name)
+	memcachedlog.Info("Validate create", "name", r.Name)
 
 	return validateOdd(r.Spec.Size)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *Memcached) ValidateUpdate(old runtime.Object) error {
-	memcachedlog.Info("validate update", "name", r.Name)
+	memcachedlog.Info("Validate update", "name", r.Name)
 
 	return validateOdd(r.Spec.Size)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
 func (r *Memcached) ValidateDelete() error {
-	memcachedlog.Info("validate delete", "name", r.Name)
+	memcachedlog.Info("Validate delete", "name", r.Name)
 
 	return nil
 }
 func validateOdd(n int32) error {
 	if n%2 == 0 {
-		return errors.New("Cluster size must be an odd number")
+		return errors.New("cluster size must be an odd number")
 	}
 	return nil
 }

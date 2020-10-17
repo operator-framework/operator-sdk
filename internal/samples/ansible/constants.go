@@ -229,12 +229,6 @@ const taskForSecret = `- name: Create test service
           port: 8332
           targetPort: 8332
           name: rpc
-
-- name: Check if jmespath is installed
-  set_fact:
-    instance_tags: '{{app | json_query(query)}}'
-  vars:
-    query: 'app[*]."memcached"'
 `
 
 // false positive: G101: Potential hardcoded credentials (gosec)
@@ -249,7 +243,7 @@ const fixmeAssert = `
     fail_msg: FIXME Add real assertions for your operator
 `
 
-const originaMemcachedMoleculeTask = `- name: Create the cache.example.com/v1alpha1.Memcached
+const originalMemcachedMoleculeTask = `- name: Create the cache.example.com/v1alpha1.Memcached
   k8s:
     state: present
     namespace: '{{ namespace }}'

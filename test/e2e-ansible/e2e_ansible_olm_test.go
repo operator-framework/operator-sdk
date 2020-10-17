@@ -26,26 +26,14 @@ var _ = Describe("Integrating ansible Projects with OLM", func() {
 		const operatorVersion = "0.0.1"
 
 		It("should generate and run a valid OLM bundle and packagemanifests", func() {
-			By("turning off interactive prompts for all generation tasks.")
-			err := tc.DisableOLMBundleInteractiveMode()
-			Expect(err).NotTo(HaveOccurred())
-
-			By("building the bundle")
-			err = tc.Make("bundle", "IMG="+tc.ImageName)
-			Expect(err).NotTo(HaveOccurred())
-
-			By("building the operator bundle image")
-			err = tc.Make("bundle-build", "BUNDLE_IMG="+tc.BundleImageName)
-			Expect(err).NotTo(HaveOccurred())
-
 			if tc.IsRunningOnKind() {
 				By("loading the bundle image into Kind cluster")
-				err = tc.LoadImageToKindClusterWithName(tc.BundleImageName)
+				err := tc.LoadImageToKindClusterWithName(tc.BundleImageName)
 				Expect(err).NotTo(HaveOccurred())
 			}
 
 			By("adding the 'packagemanifests' rule to the Makefile")
-			err = tc.AddPackagemanifestsTarget()
+			err := tc.AddPackagemanifestsTarget()
 			Expect(err).NotTo(HaveOccurred())
 
 			By("generating the operator package manifests")

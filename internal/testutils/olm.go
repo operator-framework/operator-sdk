@@ -89,3 +89,22 @@ func (tc TestContext) DisableOLMBundleInteractiveMode() error {
 	replace := content + " --interactive=false"
 	return ReplaceInFile(filepath.Join(tc.Dir, "Makefile"), content, replace)
 }
+
+// RunOlmIntegration runs all commands to integrate the project with OLM
+func (tc TestContext) RunOlmIntegration() error {
+	err := tc.DisableOLMBundleInteractiveMode()
+	if err != nil {
+		return err
+	}
+
+	err = tc.Make("bundle", "IMG="+tc.ImageName)
+	if err != nil {
+		return err
+	}
+
+	err = tc.Make("bundle-build", "BUNDLE_IMG="+tc.BundleImageName)
+	if err != nil {
+		return err
+	}
+	return nil
+}

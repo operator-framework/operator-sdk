@@ -52,27 +52,27 @@ var _ webhook.Validator = &Memcached{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *Memcached) ValidateCreate() error {
-	memcachedlog.Info("validate create", "name", r.Name)
+	memcachedlog.Info("Validate create", "name", r.Name)
 
 	return validateOdd(r.Spec.Size)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *Memcached) ValidateUpdate(old runtime.Object) error {
-	memcachedlog.Info("validate update", "name", r.Name)
+	memcachedlog.Info("Validate update", "name", r.Name)
 
 	return validateOdd(r.Spec.Size)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
 func (r *Memcached) ValidateDelete() error {
-	memcachedlog.Info("validate delete", "name", r.Name)
+	memcachedlog.Info("Validate delete", "name", r.Name)
 
 	return nil
 }
 func validateOdd(n int32) error {
 	if n%2 == 0 {
-		return errors.New("Cluster size must be an odd number")
+		return errors.New("cluster size must be an odd number")
 	}
 	return nil
 }

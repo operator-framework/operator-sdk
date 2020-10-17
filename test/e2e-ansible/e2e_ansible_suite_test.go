@@ -16,13 +16,15 @@ package e2e_ansible_test
 
 import (
 	"fmt"
+	"os/exec"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/operator-framework/operator-sdk/internal/samples/ansible"
+	"github.com/operator-framework/operator-sdk/internal/samples/pkg"
 	"github.com/operator-framework/operator-sdk/internal/testutils"
 )
 
@@ -47,8 +49,21 @@ var _ = BeforeSuite(func() {
 	tc, err = testutils.NewTestContext(testutils.BinaryName, "GO111MODULE=on")
 	Expect(err).NotTo(HaveOccurred())
 
-	By("creating the repository")
-	Expect(tc.Prepare()).To(Succeed())
+	tc.Domain = "example.com"
+	tc.Version = "v1alpha1"
+	tc.Group = "cache"
+	tc.Kind = "Memcached"
+	tc.ProjectName = "memcached-operator"
+	tc.Kubectl.Namespace = fmt.Sprintf("%s-system", tc.ProjectName)
+
+	By("copying sample to a temporary e2e directory")
+	Expect(exec.Command("cp", "-r", "../../testdata/ansible/memcached-operator", tc.Dir).Run()).To(Succeed())
+
+	By("adding molecule sample steps")
+	ctx, err := pkg.NewSampleContextWithTestContext(&tc)
+	Expect(err).Should(Succeed())
+	molecule := ansible.NewMoleculeAnsible(&ctx)
+	molecule.Run()
 
 	By("fetching the current-context")
 	tc.Kubectx, err = tc.Kubectl.Command("config", "current-context")
@@ -57,91 +72,13 @@ var _ = BeforeSuite(func() {
 	By("preparing the prerequisites on cluster")
 	tc.InstallPrerequisites()
 
-	By("setting domain and GVK")
-	tc.Domain = "example.com"
-	tc.Version = "v1alpha1"
-	tc.Group = "ansible"
-	tc.Kind = "Memcached"
-
-	By("initializing a ansible project")
-	err = tc.Init(
-		"--plugins", "ansible",
-		"--project-version", "3-alpha",
-		"--domain", tc.Domain)
-	Expect(err).NotTo(HaveOccurred())
-
 	By("using dev image for scorecard-test")
 	err = tc.ReplaceScorecardImagesForDev()
-	Expect(err).NotTo(HaveOccurred())
-
-	By("creating the Memcached API")
-	err = tc.CreateAPI(
-		"--group", tc.Group,
-		"--version", tc.Version,
-		"--kind", tc.Kind,
-		"--generate-playbook",
-		"--generate-role")
 	Expect(err).NotTo(HaveOccurred())
 
 	By("replacing project Dockerfile to use ansible base image with the dev tag")
 	err = testutils.ReplaceRegexInFile(filepath.Join(tc.Dir, "Dockerfile"), "quay.io/operator-framework/ansible-operator:.*", "quay.io/operator-framework/ansible-operator:dev")
 	Expect(err).Should(Succeed())
-
-	By("adding Memcached mock task to the role")
-	err = testutils.ReplaceInFile(filepath.Join(tc.Dir, "roles", strings.ToLower(tc.Kind), "tasks", "main.yml"),
-		fmt.Sprintf("# tasks file for %s", tc.Kind), memcachedWithBlackListTask)
-	Expect(err).NotTo(HaveOccurred())
-
-	By("setting defaults to Memcached")
-	err = testutils.ReplaceInFile(filepath.Join(tc.Dir, "roles", strings.ToLower(tc.Kind), "defaults", "main.yml"),
-		fmt.Sprintf("# defaults file for %s", tc.Kind), "size: 1")
-	Expect(err).NotTo(HaveOccurred())
-
-	By("updating Memcached sample")
-	memcachedSampleFile := filepath.Join(tc.Dir, "config", "samples",
-		fmt.Sprintf("%s_%s_%s.yaml", tc.Group, tc.Version, strings.ToLower(tc.Kind)))
-	err = testutils.ReplaceInFile(memcachedSampleFile, "foo: bar", "size: 1")
-	Expect(err).NotTo(HaveOccurred())
-
-	By("creating an API definition to add a task to delete the config map")
-	err = tc.CreateAPI(
-		"--group", tc.Group,
-		"--version", tc.Version,
-		"--kind", "Memfin",
-		"--generate-role")
-	Expect(err).NotTo(HaveOccurred())
-
-	By("adding task to delete config map")
-	err = testutils.ReplaceInFile(filepath.Join(tc.Dir, "roles", "memfin", "tasks", "main.yml"),
-		"# tasks file for Memfin", taskToDeleteConfigMap)
-	Expect(err).NotTo(HaveOccurred())
-
-	By("adding to watches finalizer and blacklist")
-	err = testutils.ReplaceInFile(filepath.Join(tc.Dir, "watches.yaml"),
-		"playbook: playbooks/memcached.yml", memcachedWatchCustomizations)
-	Expect(err).NotTo(HaveOccurred())
-
-	By("create API to test watching multiple GVKs")
-	err = tc.CreateAPI(
-		"--group", tc.Group,
-		"--version", tc.Version,
-		"--kind", "Foo",
-		"--generate-role")
-	Expect(err).NotTo(HaveOccurred())
-
-	By("adding RBAC permissions for the Memcached Kind")
-	err = testutils.ReplaceInFile(filepath.Join(tc.Dir, "config", "rbac", "role.yaml"),
-		"# +kubebuilder:scaffold:rules", rolesForBaseOperator)
-	Expect(err).NotTo(HaveOccurred())
-
-	By("turning off interactive prompts for all generation tasks.")
-	replace := "operator-sdk generate kustomize manifests"
-	err = testutils.ReplaceInFile(filepath.Join(tc.Dir, "Makefile"), replace, replace+" --interactive=false")
-	Expect(err).NotTo(HaveOccurred())
-
-	By("checking the kustomize setup")
-	err = tc.Make("kustomize")
-	Expect(err).NotTo(HaveOccurred())
 
 	By("building the project image")
 	err = tc.Make("docker-build", "IMG="+tc.ImageName)
@@ -153,8 +90,8 @@ var _ = BeforeSuite(func() {
 		Expect(tc.LoadImageToKindClusterWithName("quay.io/operator-framework/scorecard-test:dev")).To(Succeed())
 	}
 
-	By("building the bundle")
-	err = tc.Make("bundle", "IMG="+tc.ImageName)
+	By("running OLM integration steps")
+	err = tc.RunOlmIntegration()
 	Expect(err).NotTo(HaveOccurred())
 })
 
@@ -167,118 +104,3 @@ var _ = AfterSuite(func() {
 	By("destroying container image and work dir")
 	tc.Destroy()
 })
-
-const memcachedWithBlackListTask = `- name: start memcached
-  community.kubernetes.k8s:
-    definition:
-      kind: Deployment
-      apiVersion: apps/v1
-      metadata:
-        name: '{{ ansible_operator_meta.name }}-memcached'
-        namespace: '{{ ansible_operator_meta.namespace }}'
-        labels:
-          app: memcached
-      spec:
-        replicas: "{{size}}"
-        selector:
-          matchLabels:
-            app: memcached
-        template:
-          metadata:
-            labels:
-              app: memcached
-          spec:
-            containers:
-            - name: memcached
-              command:
-              - memcached
-              - -m=64
-              - -o
-              - modern
-              - -v
-              image: "docker.io/memcached:1.4.36-alpine"
-              ports:
-                - containerPort: 11211
-              readinessProbe:
-                tcpSocket:
-                  port: 11211
-                initialDelaySeconds: 3
-                periodSeconds: 3
-
-- operator_sdk.util.k8s_status:
-    api_version: ansible.example.com/v1alpha1
-    kind: Memcached
-    name: "{{ ansible_operator_meta.name }}"
-    namespace: "{{ ansible_operator_meta.namespace }}"
-    status:
-      test: "hello world"
-
-- community.kubernetes.k8s:
-    definition:
-      kind: Secret
-      apiVersion: v1
-      metadata:
-        name: test-secret
-        namespace: "{{ ansible_operator_meta.namespace }}"
-      data:
-        test: aGVsbG8K
-- name: Get cluster api_groups
-  set_fact:
-    api_groups: "{{ lookup('community.kubernetes.k8s', cluster_info='api_groups', kubeconfig=lookup('env', 'K8S_AUTH_KUBECONFIG')) }}"
-
-- name: create project if projects are available
-  community.kubernetes.k8s:
-    definition:
-      apiVersion: project.openshift.io/v1
-      kind: Project
-      metadata:
-        name: testing-foo
-  when: "'project.openshift.io' in api_groups"
-
-- name: Create ConfigMap to test blacklisted watches
-  community.kubernetes.k8s:
-    definition:
-      kind: ConfigMap
-      apiVersion: v1
-      metadata:
-        name: test-blacklist-watches
-        namespace: "{{ ansible_operator_meta.namespace }}"
-      data:
-        arbitrary: afdasdfsajsafj
-    state: present`
-
-const taskToDeleteConfigMap = `- name: delete configmap for test
-  community.kubernetes.k8s:
-    kind: ConfigMap
-    api_version: v1
-    name: deleteme
-    namespace: default
-    state: absent`
-
-const memcachedWatchCustomizations = `playbook: playbooks/memcached.yml
-  finalizer:
-    name: finalizer.ansible.example.com
-    role: memfin
-  blacklist:
-    - group: ""
-      version: v1
-      kind: ConfigMap`
-
-const rolesForBaseOperator = `
-  ##
-  ## Apply customize roles for base operator
-  ##
-  - apiGroups:
-      - ""
-    resources:
-      - configmaps
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-# +kubebuilder:scaffold:rules
-`

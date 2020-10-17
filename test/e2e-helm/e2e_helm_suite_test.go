@@ -45,13 +45,6 @@ var _ = BeforeSuite(func() {
 	tc, err = testutils.NewTestContext(testutils.BinaryName, "GO111MODULE=on")
 	Expect(err).NotTo(HaveOccurred())
 
-	By("creating a new directory")
-	Expect(tc.Prepare()).To(Succeed())
-
-	By("fetching the current-context")
-	tc.Kubectx, err = tc.Kubectl.Command("config", "current-context")
-	Expect(err).NotTo(HaveOccurred())
-
 	By("preparing the prerequisites on cluster")
 	tc.InstallPrerequisites()
 
@@ -96,8 +89,8 @@ var _ = BeforeSuite(func() {
 		Expect(tc.LoadImageToKindClusterWithName("quay.io/operator-framework/scorecard-test:dev")).To(Succeed())
 	}
 
-	By("generating the operator bundle")
-	err = tc.Make("bundle", "IMG="+tc.ImageName)
+	By("running OLM integration steps")
+	err = tc.RunOlmIntegration()
 	Expect(err).NotTo(HaveOccurred())
 })
 
