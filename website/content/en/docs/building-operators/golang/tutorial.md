@@ -29,7 +29,7 @@ To learn about the project directory structure, see [Kubebuilder project layout]
 
 #### A note on dependency management
 
-`operator-sdk init` generates a `go.mod` file to be used with [Go modules][go_mod_wiki]. The `--repo=<path>` flag is required when creating a project outside of `$GOPATH/src`, as scaffolded files require a valid module path. Ensure you [activate module support][activate_modules] by running `export GO111MODULE=on` before using the SDK.
+`operator-sdk init` generates a `go.mod` file to be used with [Go modules][go_mod_wiki]. The `--repo=<path>` flag is required when creating a project outside of `$GOPATH/src`, as scaffolded files require a valid module path. With go versions prior to 1.13 ensure you [activate module support][activate_modules] by running `export GO111MODULE=on` before using the SDK.
 
 ### Manager
 The main program for the operator `main.go` initializes and runs the [Manager][manager_go_doc].
