@@ -11,10 +11,6 @@ trap_add 'rm -rf $TMPDIR' EXIT
 
 # build the base image
 pushd $TMPDIR
-cp $ROOTDIR/build/ansible-operator-dev-linux-gnu .
+cp $ROOTDIR/build/ansible-operator .
 docker build -f $ROOTDIR/hack/image/ansible/Dockerfile -t $1 .
-
-# If using a kind cluster, load the image into all nodes.
-setup_envs $tmp_sdk_root
-load_image_if_kind "$1"
 popd

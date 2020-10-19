@@ -17,8 +17,6 @@ pip3 install --user ansible-lint yamllint
 pip3 install --user docker==4.2.2 openshift jmespath
 ansible-galaxy collection install 'community.kubernetes:<1.0.0'
 
-setup_envs $tmp_sdk_root
-
 pushd "$TMPDIR"
 
 header_text "Creating memcached-operator"

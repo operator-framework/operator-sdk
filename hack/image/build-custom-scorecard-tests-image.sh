@@ -21,9 +21,5 @@ GOOS=linux CGO_ENABLED=0 \
 # Build base image
 pushd $TMPDIR
 cp -r $ROOTDIR/images/custom-scorecard-tests/bin .
-
 docker build -f $ROOTDIR/images/custom-scorecard-tests/Dockerfile -t $1 .
-# If using a kind cluster, load the image into all nodes.
-setup_envs $tmp_sdk_root
-load_image_if_kind "$1"
 popd

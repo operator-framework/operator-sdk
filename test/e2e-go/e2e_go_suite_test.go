@@ -49,7 +49,7 @@ var (
 )
 
 // BeforeSuite run before any specs are run to perform the required actions for all e2e Go tests.
-var _ = BeforeSuite(func(done Done) {
+var _ = BeforeSuite(func() {
 	var err error
 
 	By("creating a new test context")
@@ -146,17 +146,16 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).NotTo(HaveOccurred())
 
 	if isRunningOnKind() {
-		By("loading the project image into Kind cluster")
-		err = tc.LoadImageToKindCluster()
-		Expect(err).NotTo(HaveOccurred())
+		By("loading the required images into Kind cluster")
+		Expect(tc.LoadImageToKindCluster()).To(Succeed())
+		Expect(tc.LoadImageToKindClusterWithName("quay.io/operator-framework/scorecard-test:dev")).To(Succeed())
+		Expect(tc.LoadImageToKindClusterWithName("quay.io/operator-framework/custom-scorecard-tests:dev")).To(Succeed())
 	}
 
 	By("generating the operator bundle")
 	err = tc.Make("bundle", "IMG="+tc.ImageName)
 	Expect(err).NotTo(HaveOccurred())
-
-	close(done)
-}, 360)
+})
 
 // AfterSuite run after all the specs have run, regardless of whether any tests have failed to ensures that
 // all be cleaned up
