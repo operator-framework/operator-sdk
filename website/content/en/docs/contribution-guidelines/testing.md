@@ -15,6 +15,23 @@ Cluster tests consist of several test types:
 bound to external projects, such as [OLM][olm].
 - Subcommand: ensure individual subcommands function as intended with a variety of input options.
 
+## Before submitting a PR
+
+Always run tests before submitting a PR to reduce the number of needless CI errors.
+
+##### Docs only
+
+```sh
+make test-static
+```
+
+##### Code
+
+```sh
+make test-all
+```
+
+
 ## Local Test Environment
 
 If running tests locally, access to a Kubernetes cluster of server version v1.11.3 or higher is required.
@@ -25,17 +42,9 @@ for setup instructions.
 
 ### Local clusters
 
-Two options for testing with a local cluster are [minikube][minikube] and [kind][kind].
-Ensure `KUBECONFIG` is set correctly for the chosen cluster type.
+A local [kind][kind] cluster is used for running tests.
 
 ## Running Tests
-
-On any PR, the entire test suite is run against your changes in a CI environment.
-Therefore it is advantageous to run all tests before pushing changes to the remote repo:
-
-```sh
-make test-sanity test-links test-unit test-subcommand test-integration test-e2e
-```
 
 All the tests are run through the [`Makefile`][makefile]. Run `make help` for a full list of available tests.
 

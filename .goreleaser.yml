@@ -1,0 +1,90 @@
+# Global environment variables for builds.
+env:
+  - CGO_ENABLED=0
+  - GO111MODULE=on
+  - GOPROXY=https://proxy.golang.org|direct
+  - REPO=github.com/operator-framework/operator-sdk
+
+# Hooks to run before any build is run.
+before:
+  hooks:
+    - go version | grep --quiet "go1\.15\.5" || echo "Go binary version must be 1.15.5"
+    - go mod download
+
+# Binary builds.
+builds:
+  # operator-sdk build steps
+  - id: operator-sdk
+    main: ./cmd/operator-sdk
+    binary: operator-sdk
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    asmflags: &build-asmflags
+      - all=-trimpath={{ .Env.PWD }}
+    gcflags: &build-gcflags
+      - all=-trimpath={{ .Env.PWD }}
+    ldflags: &build-ldflags
+      - -X {{ .Env.REPO }}/internal/version.Version={{ .Env.SIMPLE_VERSION }}
+      - -X {{ .Env.REPO }}/internal/version.GitVersion={{ .Env.GIT_VERSION }}
+      - -X {{ .Env.REPO }}/internal/version.GitCommit={{ .Env.GIT_COMMIT }}
+      - -X {{ .Env.REPO }}/internal/version.KubernetesVersion={{ .Env.K8S_VERSION }}
+      - -X {{ .Env.REPO }}/internal/version.ImageVersion={{ .Env.IMAGE_VERSION }}
+    targets: &build-targets
+      - darwin_amd64
+      - linux_amd64
+      - linux_arm64
+      - linux_ppc64le
+      - linux_s390x
+
+  # ansible-operator build steps
+  - id: ansible-operator
+    main: ./cmd/ansible-operator
+    binary: ansible-operator
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    asmflags: *build-asmflags
+    gcflags: *build-gcflags
+    ldflags: *build-ldflags
+    targets: *build-targets
+
+  # helm-operator build steps
+  - id: helm-operator
+    main: ./cmd/helm-operator
+    binary: helm-operator
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    asmflags: *build-asmflags
+    gcflags: *build-gcflags
+    ldflags: *build-ldflags
+    targets: *build-targets
+
+# Use most recent tag and short commit for snapshot version.
+snapshot:
+  name_template: "{{ .Env.GIT_VERSION }}"
+
+# We don't use archives, so skip creating them.
+archives:
+  - format: binary
+    name_template: "{{ .Binary }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}"
+
+checksum:
+  name_template: "checksums.txt"
+
+# Sign the checksum file with the CI GPG key.
+signs:
+  - signature: "${artifact}.asc"
+    artifacts: checksum
+    # Use the CI signing subkey A20B5C7E decrypted into .ci/gpg/keyring to sign the release.
+    args: ["--home", ".ci/gpg/keyring", "-u", "A20B5C7E", "--output", "${signature}", "--detach-sign", "${artifact}"]
+
+# We use a custom changelog generator.
+changelog:
+
+# TODO(estroz): configure homebrew publishing
+# brews:
+#   - name: operator-sdk
+#     ids:
+#     - operator-sdk
+
+# Uncomment for testing
+# release:
+#   github:
+#     owner: <your-github-namespace>
+#     name: operator-sdk

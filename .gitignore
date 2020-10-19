@@ -7,6 +7,9 @@
 /tools/bin
 /images/*/bin
 
+# CI GPG keyring
+/.ci/gpg/keyring
+
 # Website
 website/public/
 website/resources/

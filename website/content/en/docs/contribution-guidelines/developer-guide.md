@@ -55,22 +55,6 @@ as an environment variable in `.travis.yml`, ex. `export SCORECARD_TEST_IMAGE=<r
 - Create a PR to the operator-sdk repo with a description containing a link to the Travis build page
 showing a successful deployment stage with your changes.
 
-## Generating Samples
-
-To generate the samples run:
-
-```sh
-$ make samples
-```
-
-## Generating the docs
-
-To generate the CLI docs run:
-
-```sh
-$ make cli-doc
-```
-
 [git-tool]:https://git-scm.com/downloads
 [go-tool]:https://golang.org/dl/
 [repo-sdk]:https://github.com/operator-framework/operator-sdk
