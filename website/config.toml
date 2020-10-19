@@ -71,7 +71,7 @@ copyright = "The Operator SDK Authors"
 
 # Menu title if your navbar has a versions selector to access old versions of your site.
 # This menu appears only if you have at least one [params.versions] set.
-version_menu = "v1.1"
+version_menu = "Releases"
 
 # Repository configuration (URLs for in-page links to opening issues and suggesting changes)
 github_repo = "https://github.com/operator-framework/operator-sdk"
