@@ -50,7 +50,7 @@ var _ = BeforeSuite(func() {
 	By("creating the repository")
 	Expect(tc.Prepare()).To(Succeed())
 
-	By("getting the cluster Kind")
+	By("fetching the current-context")
 	tc.Kubectx, err = tc.Kubectl.Command("config", "current-context")
 	Expect(err).NotTo(HaveOccurred())
 
