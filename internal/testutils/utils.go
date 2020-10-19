@@ -41,12 +41,12 @@ type TestContext struct {
 	BundleImageName string
 	// ProjectName store the project name
 	ProjectName string
-	// IsPrometheusManagedBySuite is true when the suite tests is installing/uninstalling the Prometheus
-	IsPrometheusManagedBySuite bool
-	// IsOLMManagedBySuite is true when the suite tests is installing/uninstalling the OLM
-	IsOLMManagedBySuite bool
 	// Kubectx stores the k8s context from where the tests are running
 	Kubectx string
+	// isPrometheusManagedBySuite is true when the suite tests is installing/uninstalling the Prometheus
+	isPrometheusManagedBySuite bool
+	// isOLMManagedBySuite is true when the suite tests is installing/uninstalling the OLM
+	isOLMManagedBySuite bool
 }
 
 // NewTestContext returns a TestContext containing a new kubebuilder TestContext.
@@ -55,8 +55,8 @@ func NewTestContext(binary string, env ...string) (tc TestContext, err error) {
 	tc.ProjectName = strings.ToLower(filepath.Base(tc.Dir))
 	tc.ImageName = fmt.Sprintf("quay.io/example/%s:v0.0.1", tc.ProjectName)
 	tc.BundleImageName = fmt.Sprintf("quay.io/example/%s-bundle:v0.0.1", tc.ProjectName)
-	tc.IsOLMManagedBySuite = true
-	tc.IsPrometheusManagedBySuite = true
+	tc.isOLMManagedBySuite = true
+	tc.isPrometheusManagedBySuite = true
 	return tc, err
 }
 
@@ -195,13 +195,13 @@ func (tc TestContext) InstallPrerequisites() {
 	output, err := tc.Kubectl.Command("api-resources")
 	Expect(err).NotTo(HaveOccurred())
 	if strings.Contains(output, "servicemonitors") {
-		tc.IsPrometheusManagedBySuite = false
+		tc.isPrometheusManagedBySuite = false
 	}
 	if strings.Contains(output, "clusterserviceversions") {
-		tc.IsOLMManagedBySuite = false
+		tc.isOLMManagedBySuite = false
 	}
 
-	if tc.IsPrometheusManagedBySuite {
+	if tc.isPrometheusManagedBySuite {
 		By("installing Prometheus")
 		Expect(tc.InstallPrometheusOperManager()).To(Succeed())
 
@@ -214,7 +214,7 @@ func (tc TestContext) InstallPrerequisites() {
 		}, 3*time.Minute, time.Second).Should(Succeed())
 	}
 
-	if tc.IsOLMManagedBySuite {
+	if tc.isOLMManagedBySuite {
 		By("installing OLM")
 		Expect(tc.InstallOLMVersion(OlmVersionForTestSuite)).To(Succeed())
 	}
@@ -227,11 +227,11 @@ func (tc TestContext) IsRunningOnKind() bool {
 
 // UninstallPrerequisites will uninstall all prerequisites installed via InstallPrerequisites()
 func (tc TestContext) UninstallPrerequisites() {
-	if tc.IsPrometheusManagedBySuite {
+	if tc.isPrometheusManagedBySuite {
 		By("uninstalling Prometheus")
 		tc.UninstallPrometheusOperManager()
 	}
-	if tc.IsOLMManagedBySuite {
+	if tc.isOLMManagedBySuite {
 		By("uninstalling OLM")
 		tc.UninstallOLM()
 	}
