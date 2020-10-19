@@ -1,4 +1,4 @@
-// Copyright 2019 The Operator-SDK Authors
+// Copyright 2020 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,11 +28,8 @@ var _ = Describe("Deployment", func() {
 
 	Describe("getRegistryServerName", func() {
 		It("should return the formatted servername", func() {
-			name := k8sutil.FormatOperatorNameDNS1123("pkgName")
-			name = fmt.Sprintf("%s-registry-server", name)
-
-			Expect(getRegistryServerName("pkgName")).Should(Equal(name))
 			Expect(getRegistryServerName("pkgName")).Should(Equal("pkgName-registry-server"))
+			// This checks if all the special characters are handled correctly
 			Expect(getRegistryServerName("$abc.foo$@(&#(&!*)@&#")).Should(Equal("-abc-foo--registry-server"))
 		})
 	})
@@ -42,11 +38,11 @@ var _ = Describe("Deployment", func() {
 		It("should return the deployment labels for the given package name", func() {
 			labels := map[string]string{
 				"owner":        "operator-sdk",
-				"package-name": "pkgName",
-				"server-name":  "pkgName-registry-server",
+				"package-name": "$abc.foo$@(&#(&!*)@&#",
+				"server-name":  "-abc-foo--registry-server",
 			}
 
-			Expect(getRegistryDeploymentLabels("pkgName")).Should(Equal(labels))
+			Expect(getRegistryDeploymentLabels("$abc.foo$@(&#(&!*)@&#")).Should(Equal(labels))
 		})
 	})
 
@@ -161,13 +157,8 @@ var _ = Describe("Deployment", func() {
 
 	Describe("getDBContainerCmd", func() {
 		It("should apply f to dep's pod template spec and apply volumes", func() {
-			initCmd := fmt.Sprintf("/bin/initializer -o %s -m %s", registryDBName, containerManifestsDir)
-			srvCmd := fmt.Sprintf("/bin/registry-server -d %s -t %s", registryDBName, registryLogFile)
-
-			Expect(getDBContainerCmd(registryDBName, registryLogFile)).Should(Equal(fmt.Sprintf("%s && %s", initCmd, srvCmd)))
-
-			initCmd = "/bin/initializer -o /path/to/database.db -m /registry/manifests"
-			srvCmd = "/bin/registry-server -d /path/to/database.db -t /var/log/temp.log"
+			initCmd := "/bin/initializer -o /path/to/database.db -m /registry/manifests"
+			srvCmd := "/bin/registry-server -d /path/to/database.db -t /var/log/temp.log"
 
 			Expect(getDBContainerCmd("/path/to/database.db", "/var/log/temp.log")).Should(Equal(fmt.Sprintf("%s && %s", initCmd, srvCmd)))
 		})
@@ -261,6 +252,17 @@ var _ = Describe("Deployment", func() {
 			f(dep)
 
 			Expect(dep).Should(Equal(newRegistryDeployment("testPkg", "testns", f)))
+		})
+		It("should return a dployment for a multiple functions", func() {
+			f1 := withRegistryGRPCContainer("testPkg")
+			f1(dep)
+
+			f2 := func(d *appsv1.Deployment) {
+				d.ObjectMeta.Namespace = "testns2"
+			}
+			f2(dep)
+
+			Expect(dep).Should(Equal(newRegistryDeployment("testPkg", "testns", f1, f2)))
 		})
 	})
 })
