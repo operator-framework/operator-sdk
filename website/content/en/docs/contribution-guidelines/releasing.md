@@ -360,6 +360,16 @@ To create a GitHub release:
 Unlock the `master` or release branch after the Github release is complete.
 See [this section](#locking-down-branches) for steps to do so.
 
+### 11. Announce the release
+
+Send an email to the [mailing list][mailing-list]
+Post to Kubernetes slack in #kubernetes-operators.
+
+### 12. Bump open issues to the next release.
+
+In the [GitHub milestone][gh-milestones], bump any open issues to the
+following release.
+
 ---
 
 You've now fully released a new version of the Operator SDK. Good work! 
@@ -380,3 +390,5 @@ You've now fully released a new version of the Operator SDK. Good work!
 [homebrew-readme]:https://github.com/Homebrew/homebrew-core/blob/master/CONTRIBUTING.md#to-submit-a-version-upgrade-for-the-foo-formula
 [homebrew-repo]:https://github.com/Homebrew/homebrew-core
 [sdk-samples-repo]:https://github.com/operator-framework/operator-sdk-samples
+[mailing-list]:https://groups.google.com/g/operator-framework
+[gh-milestones]:https://github.com/operator-framework/operator-sdk/milestones
