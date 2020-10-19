@@ -46,7 +46,7 @@ const (
 func MakeBundleMetadataLabels(cfg *config.Config) map[string]string {
 	return map[string]string{
 		mediaTypeBundleAnnotation: mediaTypeV1,
-		builderBundleAnnotation:   getSDKBuilder(strings.TrimSuffix(sdkversion.Version, "+git")),
+		builderBundleAnnotation:   getSDKBuilder(sdkversion.Version),
 		layoutBundleAnnotation:    getSDKProjectLayout(cfg),
 	}
 }
@@ -55,7 +55,7 @@ func MakeBundleMetadataLabels(cfg *config.Config) map[string]string {
 // to CustomResourceDefinitions and ClusterServiceVersions.
 func MakeBundleObjectAnnotations(cfg *config.Config) map[string]string {
 	return map[string]string{
-		BuilderObjectAnnotation: getSDKBuilder(strings.TrimSuffix(sdkversion.Version, "+git")),
+		BuilderObjectAnnotation: getSDKBuilder(sdkversion.Version),
 		LayoutObjectAnnotation:  getSDKProjectLayout(cfg),
 	}
 }
