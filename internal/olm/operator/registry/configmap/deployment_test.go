@@ -1,3 +1,17 @@
+// Copyright 2019 The Operator-SDK Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package configmap
 
 import (
@@ -19,13 +33,18 @@ var _ = Describe("Deployment", func() {
 			name = fmt.Sprintf("%s-registry-server", name)
 
 			Expect(getRegistryServerName("pkgName")).Should(Equal(name))
+			Expect(getRegistryServerName("pkgName")).Should(Equal("pkgName-registry-server"))
+			Expect(getRegistryServerName("$abc.foo$@(&#(&!*)@&#")).Should(Equal("-abc-foo--registry-server"))
 		})
 	})
 
 	Describe("getRegistryDeploymentLabels", func() {
 		It("should return the deployment labels for the given package name", func() {
-			labels := makeRegistryLabels("pkgName")
-			labels["server-name"] = getRegistryServerName("pkgName")
+			labels := map[string]string{
+				"owner":        "operator-sdk",
+				"package-name": "pkgName",
+				"server-name":  "pkgName-registry-server",
+			}
 
 			Expect(getRegistryDeploymentLabels("pkgName")).Should(Equal(labels))
 		})
@@ -64,7 +83,7 @@ var _ = Describe("Deployment", func() {
 					},
 				},
 			}
-			dep2 := &appsv1.Deployment{
+			expecteddep := &appsv1.Deployment{
 				Spec: appsv1.DeploymentSpec{
 					Replicas: nil,
 					Template: corev1.PodTemplateSpec{
@@ -84,11 +103,11 @@ var _ = Describe("Deployment", func() {
 					},
 				},
 			}
-			dep2.Spec.Template.Spec.Volumes = append(dep2.Spec.Template.Spec.Volumes, volume)
+			expecteddep.Spec.Template.Spec.Volumes = append(expecteddep.Spec.Template.Spec.Volumes, volume)
 			f := withConfigMapVolume("testVolName", "testCmName")
 			f(dep)
 
-			Expect(dep.Spec.Template.Spec.Volumes).Should(Equal(dep2.Spec.Template.Spec.Volumes))
+			Expect(dep.Spec.Template.Spec.Volumes).Should(Equal(expecteddep.Spec.Template.Spec.Volumes))
 		})
 	})
 
@@ -109,7 +128,7 @@ var _ = Describe("Deployment", func() {
 					},
 				},
 			}
-			dep2 := &appsv1.Deployment{
+			expecteddep := &appsv1.Deployment{
 				Spec: appsv1.DeploymentSpec{
 					Replicas: nil,
 					Template: corev1.PodTemplateSpec{
@@ -130,13 +149,13 @@ var _ = Describe("Deployment", func() {
 					MountPath: p,
 				})
 			}
-			for i := range dep2.Spec.Template.Spec.Containers {
-				dep2.Spec.Template.Spec.Containers[i].VolumeMounts = append(dep2.Spec.Template.Spec.Containers[i].VolumeMounts, volumeMounts...)
+			for i := range expecteddep.Spec.Template.Spec.Containers {
+				expecteddep.Spec.Template.Spec.Containers[i].VolumeMounts = append(expecteddep.Spec.Template.Spec.Containers[i].VolumeMounts, volumeMounts...)
 			}
 			f := withContainerVolumeMounts("testVolName", paths...)
 			f(dep)
 
-			Expect(dep.Spec.Template.Spec.Containers).Should(Equal(dep2.Spec.Template.Spec.Containers))
+			Expect(dep.Spec.Template.Spec.Containers).Should(Equal(expecteddep.Spec.Template.Spec.Containers))
 		})
 	})
 
@@ -146,6 +165,11 @@ var _ = Describe("Deployment", func() {
 			srvCmd := fmt.Sprintf("/bin/registry-server -d %s -t %s", registryDBName, registryLogFile)
 
 			Expect(getDBContainerCmd(registryDBName, registryLogFile)).Should(Equal(fmt.Sprintf("%s && %s", initCmd, srvCmd)))
+
+			initCmd = "/bin/initializer -o /path/to/database.db -m /registry/manifests"
+			srvCmd = "/bin/registry-server -d /path/to/database.db -t /var/log/temp.log"
+
+			Expect(getDBContainerCmd("/path/to/database.db", "/var/log/temp.log")).Should(Equal(fmt.Sprintf("%s && %s", initCmd, srvCmd)))
 		})
 	})
 
@@ -175,7 +199,7 @@ var _ = Describe("Deployment", func() {
 					},
 				},
 			}
-			dep2 := &appsv1.Deployment{
+			expecteddep := &appsv1.Deployment{
 				Spec: appsv1.DeploymentSpec{
 					Replicas: nil,
 					Template: corev1.PodTemplateSpec{
@@ -187,18 +211,22 @@ var _ = Describe("Deployment", func() {
 				},
 			}
 
-			dep2.Spec.Template.Spec.Containers = append(dep2.Spec.Template.Spec.Containers, container)
+			expecteddep.Spec.Template.Spec.Containers = append(expecteddep.Spec.Template.Spec.Containers, container)
 			f := withRegistryGRPCContainer("testPkg")
 			f(dep)
 
-			Expect(dep.Spec.Template.Spec.Containers).Should(Equal(dep2.Spec.Template.Spec.Containers))
+			Expect(dep.Spec.Template.Spec.Containers).Should(Equal(expecteddep.Spec.Template.Spec.Containers))
 		})
 	})
 
 	Describe("newRegistryDeployment", func() {
-		It("should return a dployment", func() {
-			var replicas int32 = 1
-			dep := &appsv1.Deployment{
+		var (
+			replicas int32
+			dep      *appsv1.Deployment
+		)
+		BeforeEach(func() {
+			replicas = 1
+			dep = &appsv1.Deployment{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: appsv1.SchemeGroupVersion.String(),
 					Kind:       "Deployment",
@@ -219,8 +247,17 @@ var _ = Describe("Deployment", func() {
 					},
 				},
 			}
-
+		})
+		It("should return a dployment", func() {
 			f := withRegistryGRPCContainer("testPkg")
+			f(dep)
+
+			Expect(dep).Should(Equal(newRegistryDeployment("testPkg", "testns", f)))
+		})
+		It("should return a dployment for a custom made function", func() {
+			f := func(d *appsv1.Deployment) {
+				d.ObjectMeta.Namespace = "testns2"
+			}
 			f(dep)
 
 			Expect(dep).Should(Equal(newRegistryDeployment("testPkg", "testns", f)))
