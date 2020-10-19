@@ -9,7 +9,7 @@ import (
 	"github.com/blang/semver"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/operator-framework/operator-sdk/hack/generate/changelog/internal/util"
+	util "github.com/operator-framework/operator-sdk/release/changelog/internal"
 )
 
 const repo = "github.com/operator-framework/operator-sdk"

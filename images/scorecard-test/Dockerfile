@@ -1,16 +1,16 @@
-# Base image
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 
-ENV TEST=/usr/local/bin/scorecard-test \
-    USER_UID=1001 \
-    USER_NAME=test
+ENV HOME=/opt/scorecard-test \
+    USER_NAME=scorecard-test \
+    USER_UID=1001
 
-# install test binary 
-COPY scorecard-test ${TEST}
+RUN echo "${USER_NAME}:x:${USER_UID}:0:${USER_NAME} user:${HOME}:/sbin/nologin" >> /etc/passwd
 
-COPY bin /usr/local/bin
-RUN  /usr/local/bin/user_setup
+WORKDIR ${HOME}
 
-ENTRYPOINT ["/usr/local/bin/entrypoint"]
+ARG BIN=scorecard-test
+COPY $BIN /usr/local/bin/scorecard-test
+
+ENTRYPOINT ["/usr/local/bin/scorecard-test"]
 
 USER ${USER_UID}

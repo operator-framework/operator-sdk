@@ -40,7 +40,7 @@ var _ = Describe("Testing Go Projects with Scorecard", func() {
 			runScorecardCmd := exec.Command(tc.BinaryName, "scorecard", "bundle",
 				"--selector=suite=basic",
 				"--output=json",
-				"--wait-time=40s")
+				"--wait-time=60s")
 			scorecardOutputBytes, err := tc.Run(runScorecardCmd)
 			Expect(err).NotTo(HaveOccurred())
 			err = json.Unmarshal(scorecardOutputBytes, &scorecardOutput)
@@ -52,7 +52,7 @@ var _ = Describe("Testing Go Projects with Scorecard", func() {
 			runScorecardCmd = exec.Command(tc.BinaryName, "scorecard", "bundle",
 				"--selector=suite=custom",
 				"--output=json",
-				"--wait-time=40s")
+				"--wait-time=60s")
 			scorecardOutputBytes, err = tc.Run(runScorecardCmd)
 			Expect(err).NotTo(HaveOccurred())
 			err = json.Unmarshal(scorecardOutputBytes, &scorecardOutput)
@@ -63,7 +63,7 @@ var _ = Describe("Testing Go Projects with Scorecard", func() {
 			runOLMScorecardCmd := exec.Command(tc.BinaryName, "scorecard", "bundle",
 				"--selector=suite=olm",
 				"--output=json",
-				"--wait-time=40s")
+				"--wait-time=60s")
 			scorecardOutputBytes, err = tc.Run(runOLMScorecardCmd)
 			Expect(err).To(HaveOccurred())
 			err = json.Unmarshal(scorecardOutputBytes, &scorecardOutput)

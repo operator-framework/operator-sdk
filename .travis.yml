@@ -1,7 +1,12 @@
 os: linux
-language: go
-go_import_path: github.com/operator-framework/operator-sdk
 dist: xenial
+
+# Install python3 and utilities dependencies
+addons:
+  apt:
+    packages:
+      - "python3"
+      - "python3-pip"
 
 # Python 3.6 is the default Python when language: python.
 # But when not language: python, Python 3 can not be used by default.
@@ -11,19 +16,15 @@ env:
   global:
     - PATH=/opt/python/3.6.7/bin:$PATH
 
-# Install python3 and utilities dependencies
-addons:
-  apt:
-    packages:
-      - "python3"
-      - "python3-pip"
+language: go
+go:
+- 1.15.x
+go_import_path: github.com/operator-framework/operator-sdk
 
 cache:
   directories:
-    - $HOME/.cache/go-build
-
-go:
-- 1.15.x
+    - ${HOME}/.cache/go-build
+    - $(go env GOPATH)/pkg/mod
 
 # The `x_base_steps` top-level key is unknown to travis,
 # so we can use it to create a bunch of common build step
@@ -31,17 +32,12 @@ go:
 x_base_steps:
   # Base go, ansbile, and helm job
   - &test
-    env:
-    # before_install for jobs that require go builds and do not run for doc-only changes
     before_install:
       # hack/ci/check-doc-only-update.sh needs to be sourced so
       # that it can properly exit the test early with success
       - source hack/ci/check-doc-only-update.sh
       - git fetch origin --unshallow --tags
-    after_success:
-      - echo "Tests passed"
     after_failure:
-      - echo "Tests failed"
       - kubectl get all --all-namespaces
       - kubectl get events --all-namespaces --field-selector=type=Warning
     services:
@@ -51,10 +47,6 @@ x_base_steps:
   - &deploy
     before_install:
       - git fetch origin --unshallow --tags
-    after_success:
-      - echo "Image build succeeded, and docker image tagged and pushed to repository"
-    after_failure:
-      - echo "Image build, docker image tagging, or docker image pushing to repository failed"
     services:
       - docker
 
@@ -66,10 +58,6 @@ x_base_steps:
       # We need /etc/docker to be accessible to non-root users.
       # See https://github.com/moby/moby/pull/37847.
       - sudo chmod 0755 /etc/docker
-    after_success:
-      - echo "Manifest list push to registry succeeded"
-    after_failure:
-      - echo "Manifest list creation or push to registry failed"
     services:
       - docker
 
@@ -88,14 +76,14 @@ jobs:
 
     # Run the sanity tests
     - stage: check
-      name: Sanity Tests
+      name: sanity
       before_install:
         - git fetch origin --unshallow --tags
       script:
         - make test-sanity
 
     # Run website checks
-    - name: Doc Checks
+    - name: doc links
       script:
         - make test-links
 
@@ -103,8 +91,8 @@ jobs:
 
     # Build and test ansible and test ansible using molecule
     - stage: test
+      name: ansible e2e
       <<: *test
-      name: Ansible on Kubernetes
       before_script:
         - pip3 install --upgrade setuptools pip
         - pip install --user ansible~=2.9.13
@@ -112,14 +100,14 @@ jobs:
         - make test-e2e-ansible test-e2e-ansible-molecule
 
     # Test subcommands
-    - <<: *test
-      name: Subcommands and Integration on Kubernetes
+    - name: subcommand and integration
+      <<: *test
       script:
       - make test-e2e-integration
 
     # Build and test go
-    - <<: *test
-      name: Go on Kubernetes
+    - name: go unit and e2e
+      <<: *test
       before_script:
       - (cd / && go get github.com/mattn/goveralls)
       script:
@@ -129,48 +117,48 @@ jobs:
       - $GOPATH/bin/goveralls -service=travis-ci -coverprofile=coverage.out -repotoken=$COVERALLS_TOKEN
 
     # Build and test helm
-    - <<: *test
-      name: Helm on Kubernetes
+    - name: helm e2e
+      <<: *test
       script: make test-e2e-helm
 
     ## Image deploy/push stage jobs ##
 
     # Build and deploy arm64 docker images
     - stage: deploy
-      <<: *deploy
-      name: Docker images for arm64
+      name: build and push images
       arch: arm64
+      <<: *deploy
       script:
-        - make image-build-ansible image-build-helm image-build-scorecard-test image-build-scorecard-test-kuttl image-build-sdk
-        - make image-push-ansible image-push-helm image-push-scorecard-test image-push-scorecard-test-kuttl image-push-sdk
+        - make image-build
+        - make -f release/Makefile image-push
 
     # Build and deploy amd64 docker images
-    - <<: *deploy
-      name: Docker images for amd64
+    - name: build and push images
       arch: amd64
+      <<: *deploy
       script:
-        - make image-build-ansible image-build-helm image-build-scorecard-test image-build-scorecard-test-kuttl image-build-sdk
-        - make image-push-ansible image-push-helm image-push-scorecard-test image-push-scorecard-test-kuttl image-push-sdk
+        - make image-build
+        - make -f release/Makefile image-push
 
     # Build and deploy ppc64le docker images
-    - <<: *deploy
-      name: Docker images for ppc64le
+    - name: build and push images
       arch: ppc64le
+      <<: *deploy
       script:
-        - make image-build-ansible image-build-helm image-build-scorecard-test image-build-scorecard-test-kuttl image-build-sdk
-        - make image-push-ansible image-push-helm image-push-scorecard-test image-push-scorecard-test-kuttl image-push-sdk
+        - make image-build
+        - make -f release/Makefile image-push
 
     # Build and deploy s390x docker images
-    - <<: *deploy
-      name: Docker images for s390x
+    - name: build and push images
       arch: s390x
+      <<: *deploy
       script:
-        - make image-build-ansible image-build-helm image-build-scorecard-test image-build-sdk
-        - make image-push-ansible image-push-helm image-push-scorecard-test image-push-sdk
+        # Use targets directly since kuttl doesn't support s390x.
+        - make image/ansible-operator image/helm-operator image/operator-sdk image/scorecard-test
+        - make -f release/Makefile image-push/ansible-operator image-push/helm-operator image-push/operator-sdk image-push/scorecard-test
 
     # Build and deploy ansible multi-arch manifest list
     - stage: deploy-manifest-multiarch
+      name: push manifest lists
       <<: *manifest-deploy
-      name: Manifest lists
-      script:
-        - make image-push-ansible-multiarch image-push-helm-multiarch image-push-scorecard-test-multiarch image-push-scorecard-test-kuttl-multiarch image-push-sdk-multiarch
+      script: make -f release/Makefile image-push-multiarch
