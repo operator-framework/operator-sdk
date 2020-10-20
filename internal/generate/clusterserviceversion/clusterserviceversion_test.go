@@ -122,7 +122,7 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 					WithBase(csvBasesDir, goAPIsDir, projutil.InteractiveHardOff),
 					WithWriter(buf),
 				}
-				Expect(g.Generate(cfg, opts...)).ToNot(HaveOccurred())
+				Expect(g.Generate(opts...)).ToNot(HaveOccurred())
 				outputCSV := removeSDKAnnotationsFromCSVString(buf.String())
 				Expect(outputCSV).To(MatchYAML(newCSVStr))
 			})
@@ -132,10 +132,10 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 					OperatorType: operatorType,
 				}
 				opts := []Option{
-					WithBase(csvBasesDir, goAPIsDir, projutil.InteractiveHardOff),
+					WithBaseCreator(cfg, csvBasesDir, goAPIsDir, projutil.InteractiveHardOff),
 					WithBaseWriter(tmp),
 				}
-				Expect(g.Generate(cfg, opts...)).ToNot(HaveOccurred())
+				Expect(g.Generate(opts...)).ToNot(HaveOccurred())
 				outputFile := filepath.Join(tmp, "bases", makeCSVFileName(operatorName))
 				Expect(outputFile).To(BeAnExistingFile())
 				Expect(readFileHelper(outputFile)).To(MatchYAML(baseCSVUIMetaStr))
@@ -149,7 +149,27 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 					WithBase(csvBasesDir, goAPIsDir, projutil.InteractiveHardOff),
 					WithBaseWriter(tmp),
 				}
-				Expect(g.Generate(cfg, opts...)).ToNot(HaveOccurred())
+				Expect(g.Generate(opts...)).ToNot(HaveOccurred())
+				outputFile := filepath.Join(tmp, "bases", makeCSVFileName(operatorName))
+				outputCSV, _, err := getCSVFromFile(outputFile)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(outputFile).To(BeAnExistingFile())
+
+				annotations := outputCSV.GetAnnotations()
+				Expect(annotations).ToNot(BeNil())
+				Expect(annotations).Should(HaveKey(metricsannotations.BuilderObjectAnnotation))
+				Expect(annotations).Should(HaveKey(metricsannotations.LayoutObjectAnnotation))
+			})
+			It("should have sdk labels in annotations when generating with config", func() {
+				g = Generator{
+					OperatorName: operatorName,
+					OperatorType: operatorType,
+				}
+				opts := []Option{
+					WithBaseCreator(cfg, csvBasesDir, goAPIsDir, projutil.InteractiveHardOff),
+					WithBaseWriter(tmp),
+				}
+				Expect(g.Generate(opts...)).ToNot(HaveOccurred())
 				outputFile := filepath.Join(tmp, "bases", makeCSVFileName(operatorName))
 				outputCSV, _, err := getCSVFromFile(outputFile)
 				Expect(err).ToNot(HaveOccurred())
@@ -171,7 +191,7 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 					WithBase(csvBasesDir, goAPIsDir, projutil.InteractiveHardOff),
 					WithBundleWriter(tmp),
 				}
-				Expect(g.Generate(cfg, opts...)).ToNot(HaveOccurred())
+				Expect(g.Generate(opts...)).ToNot(HaveOccurred())
 				outputFile := filepath.Join(tmp, bundle.ManifestsDir, makeCSVFileName(operatorName))
 				Expect(outputFile).To(BeAnExistingFile())
 				Expect(readFileHelper(outputFile)).To(MatchYAML(newCSVStr))
@@ -187,7 +207,7 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 					WithBase(csvBasesDir, goAPIsDir, projutil.InteractiveHardOff),
 					WithPackageWriter(tmp),
 				}
-				Expect(g.Generate(cfg, opts...)).ToNot(HaveOccurred())
+				Expect(g.Generate(opts...)).ToNot(HaveOccurred())
 				outputFile := filepath.Join(tmp, g.Version, makeCSVFileName(operatorName))
 				Expect(outputFile).To(BeAnExistingFile())
 				Expect(readFileHelper(outputFile)).To(MatchYAML(newCSVStr))
@@ -207,19 +227,19 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 
 			It("should return an error without any Options", func() {
 				opts := []Option{}
-				Expect(g.Generate(cfg, opts...)).To(MatchError(noGetWriterError))
+				Expect(g.Generate(opts...)).To(MatchError(noGetWriterError))
 			})
 			It("should return an error without a getWriter", func() {
 				opts := []Option{
 					WithBase(csvBasesDir, goAPIsDir, projutil.InteractiveHardOff),
 				}
-				Expect(g.Generate(cfg, opts...)).To(MatchError(noGetWriterError))
+				Expect(g.Generate(opts...)).To(MatchError(noGetWriterError))
 			})
 			It("should return an error without a getBase", func() {
 				opts := []Option{
 					WithWriter(&bytes.Buffer{}),
 				}
-				Expect(g.Generate(cfg, opts...)).To(MatchError(noGetBaseError))
+				Expect(g.Generate(opts...)).To(MatchError(noGetBaseError))
 			})
 		})
 
@@ -458,5 +478,6 @@ func removeSDKAnnotationsFromCSVString(csv string) string {
 
 	csv = builderRe.ReplaceAllString(csv, "")
 	csv = layoutRe.ReplaceAllString(csv, "")
+
 	return csv
 }

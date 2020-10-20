@@ -51,7 +51,6 @@ var (
 type Generator struct {
 	// OperatorName is the operator's name, ex. app-operator.
 	OperatorName string
-	// OperatorType determines what code API types are written in for getBase.
 	OperatorType projutil.OperatorType
 	// Version is the CSV current version.
 	Version string
@@ -77,6 +76,20 @@ type getBaseFunc func() (*operatorsv1alpha1.ClusterServiceVersion, error)
 
 // Option is a function that modifies a Generator.
 type Option func(*Generator) error
+
+// WithBaseCreator creates a Generator's base CSV to a kustomize-style base.
+func WithBaseCreator(cfg *config.Config, inputDir, apisDir string, ilvl projutil.InteractiveLevel) Option {
+	return func(g *Generator) error {
+		//g.getBase = g.makeKustomizeBaseGetter(inputDir, apisDir, ilvl)
+		basePath := filepath.Join(inputDir, "bases", makeCSVFileName(g.OperatorName))
+		if genutil.IsNotExist(basePath) {
+			basePath = ""
+		}
+
+		g.getBase = g.makeBaseCreator(cfg, basePath, apisDir, requiresInteraction(basePath, ilvl))
+		return nil
+	}
+}
 
 // WithBase sets a Generator's base CSV to a kustomize-style base.
 func WithBase(inputDir, apisDir string, ilvl projutil.InteractiveLevel) Option {
@@ -143,9 +156,12 @@ func WithPackageWriter(dir string) Option {
 	}
 }
 
-// Generate configures the generator with cfg and opts then runs it.
-func (g *Generator) Generate(cfg *config.Config, opts ...Option) (err error) {
-	g.config = cfg
+// Generate configures the generator with col and opts then runs it.
+func (g *Generator) Generate(opts ...Option) (err error) {
+	g.config, err = projutil.ReadConfig()
+	if err == nil {
+		fmt.Printf("config %+v\n", g.config)
+	}
 	for _, opt := range opts {
 		if err = opt(g); err != nil {
 			return err
@@ -160,6 +176,7 @@ func (g *Generator) Generate(cfg *config.Config, opts ...Option) (err error) {
 	if err != nil {
 		return err
 	}
+	fmt.Printf("\ncsv after g.generate()\n%+v\n", csv)
 
 	// Add sdk labels to csv
 	g.setSDKAnnotations(csv)
@@ -190,9 +207,20 @@ func (g *Generator) generate() (*operatorsv1alpha1.ClusterServiceVersion, error)
 		return nil, noGetBaseError
 	}
 
-	base, err := g.getBase()
-	if err != nil {
-		return nil, fmt.Errorf("error getting ClusterServiceVersion base: %v", err)
+	if base == nil && oldBase == nil {
+		return nil, fmt.Errorf("no CSV found with name prefix %q", csvNamePrefix)
+	} else if oldBase != nil {
+		// Only update versions in the old way to preserve existing behavior.
+		base = oldBase
+		if err := g.updateVersionsWithReplaces(base); err != nil {
+			return nil, err
+		}
+	} else if g.Version != "" {
+		// Use the existing version/name unless g.Version is set.
+		base.SetName(genutil.MakeCSVName(g.OperatorName, g.Version))
+		if base.Spec.Version.Version, err = semver.Parse(g.Version); err != nil {
+			return nil, err
+		}
 	}
 
 	if err = g.updateVersions(base); err != nil {
@@ -223,14 +251,53 @@ func (g Generator) makeKustomizeBaseGetter(inputDir, apisDir string, ilvl projut
 	return g.makeBaseGetter(basePath, apisDir, requiresInteraction(basePath, ilvl))
 }
 
+func (g Generator) makeBaseCreator(cfg *config.Config, basePath, apisDir string, interactive bool) getBaseFunc {
+	gvks := make([]schema.GroupVersionKind, len(cfg.Resources))
+	for i, gvk := range cfg.Resources {
+		gvks[i].Group = fmt.Sprintf("%s.%s", gvk.Group, cfg.Domain)
+		gvks[i].Version = gvk.Version
+		gvks[i].Kind = gvk.Kind
+	}
+	return func() (*operatorsv1alpha1.ClusterServiceVersion, error) {
+		b := bases.ClusterServiceVersion{
+			OperatorName: g.OperatorName,
+			OperatorType: g.OperatorType,
+			BasePath:     basePath,
+			APIsDir:      apisDir,
+			GVKs:         gvks,
+			Interactive:  interactive,
+		}
+		return b.GetBase()
+	}
+}
+
 // makeBaseGetter returns a function that gets a base from inputDir.
 // apisDir is used by getBaseFunc to populate base fields.
 func (g Generator) makeBaseGetter(basePath, apisDir string, interactive bool) getBaseFunc {
-	gvks := make([]schema.GroupVersionKind, len(g.config.Resources))
-	for i, gvk := range g.config.Resources {
-		gvks[i].Group = fmt.Sprintf("%s.%s", gvk.Group, g.config.Domain)
-		gvks[i].Version = gvk.Version
-		gvks[i].Kind = gvk.Kind
+	var gvks []schema.GroupVersionKind
+	if g.Collector != nil {
+		if g.Collector.V1CustomResourceDefinitions != nil {
+			for _, crd := range g.Collector.V1CustomResourceDefinitions {
+				for _, version := range crd.Spec.Versions {
+					gvks = append(gvks, schema.GroupVersionKind{
+						Group:   crd.Spec.Group,
+						Version: version.Name,
+						Kind:    crd.Spec.Names.Kind,
+					})
+				}
+			}
+		}
+		if g.Collector.V1beta1CustomResourceDefinitions != nil {
+			for _, crd := range g.Collector.V1beta1CustomResourceDefinitions {
+				for _, version := range crd.Spec.Versions {
+					gvks = append(gvks, schema.GroupVersionKind{
+						Group:   crd.Spec.Group,
+						Version: version.Name,
+						Kind:    crd.Spec.Names.Kind,
+					})
+				}
+			}
+		}
 	}
 
 	return func() (*operatorsv1alpha1.ClusterServiceVersion, error) {
@@ -252,10 +319,10 @@ func requiresInteraction(basePath string, ilvl projutil.InteractiveLevel) bool {
 	return (ilvl == projutil.InteractiveSoftOff && genutil.IsNotExist(basePath)) || ilvl == projutil.InteractiveOnAll
 }
 
-// updateVersions updates csv's version and data involving the version,
+// updateVersionsWithReplaces updates csv's version and data involving the version,
 // ex. ObjectMeta.Name, and place the old version in the `replaces` object,
 // if there is an old version to replace.
-func (g Generator) updateVersions(csv *operatorsv1alpha1.ClusterServiceVersion) (err error) {
+func (g Generator) updateVersionsWithReplaces(csv *operatorsv1alpha1.ClusterServiceVersion) (err error) {
 
 	oldVer, newVer := csv.Spec.Version.String(), g.Version
 	newName := genutil.MakeCSVName(g.OperatorName, newVer)
@@ -279,7 +346,10 @@ func (g Generator) updateVersions(csv *operatorsv1alpha1.ClusterServiceVersion) 
 	}
 
 	// Set replaces by default.
+<<<<<<< HEAD
 	// TODO: consider all possible CSV versioning schemes supported  by OLM.
+=======
+>>>>>>> cad71a15... added changelog
 	if oldVer != "0.0.0" && newVer != oldVer {
 		csv.Spec.Replaces = oldName
 	}

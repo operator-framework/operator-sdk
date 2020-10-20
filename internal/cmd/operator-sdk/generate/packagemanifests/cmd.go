@@ -63,7 +63,7 @@ func NewCmd() *cobra.Command {
 			if err != nil {
 				log.Fatal(fmt.Errorf("error reading configuration: %v", err))
 			}
-			if err := c.setDefaults(cfg); err != nil {
+			if err := c.setDefaults(); err != nil {
 				return err
 			}
 

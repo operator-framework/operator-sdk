@@ -21,6 +21,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/kubebuilder/pkg/model/config"
 	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
 
 	genutil "github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/generate/internal"
@@ -99,7 +101,7 @@ func newManifestsCmd() *cobra.Command {
 				return fmt.Errorf("error reading configuration: %v", err)
 			}
 
-			if err := c.setDefaults(cfg); err != nil {
+			if err = c.setDefaults(cfg); err != nil {
 				return err
 			}
 
@@ -131,7 +133,7 @@ var defaultDir = filepath.Join("config", "manifests")
 
 // setDefaults sets command defaults.
 func (c *manifestsCmd) setDefaults(cfg *config.Config) (err error) {
-	if c.projectName, err = genutil.GetOperatorName(cfg); err != nil {
+	if c.projectName, err = genutil.GetOperatorName(); err != nil {
 		return err
 	}
 
@@ -141,6 +143,7 @@ func (c *manifestsCmd) setDefaults(cfg *config.Config) (err error) {
 	if c.outputDir == "" {
 		c.outputDir = defaultDir
 	}
+
 	if c.apisDir == "" {
 		if cfg.MultiGroup {
 			c.apisDir = "apis"
@@ -171,12 +174,37 @@ func (c manifestsCmd) run(cfg *config.Config) error {
 		OperatorType: projutil.PluginKeyToOperatorType(cfg.Layout),
 	}
 	opts := []gencsv.Option{
-		gencsv.WithBase(c.inputDir, c.apisDir, c.interactiveLevel),
+		gencsv.WithBaseCreator(cfg, c.inputDir, c.apisDir, c.interactiveLevel),
 		gencsv.WithBaseWriter(c.outputDir),
 	}
-	if err := csvGen.Generate(cfg, opts...); err != nil {
+	if err := csvGen.Generate(opts...); err != nil {
 		return fmt.Errorf("error generating kustomize bases: %v", err)
 	}
+
+	/*
+		basePath := filepath.Join(c.outputDir, "bases", cfg.ProjectName+".clusterserviceversion.yaml")
+
+		base := bases.ClusterServiceVersion{
+			BasePath:     basePath,
+			OperatorName: c.projectName,
+			OperatorType: projutil.PluginKeyToOperatorType(cfg.Layout),
+			APIsDir:      c.apisDir,
+			Interactive:  isInteractive(c.interactiveLevel),
+			GVKs:         getGVKs(cfg),
+		}
+		csv, err := base.GetBase()
+		if err != nil {
+			return fmt.Errorf("error getting ClusterServiceVersion base: %v", err)
+		}
+
+		csvBytes, err := yaml.Marshal(csv)
+		if err != nil {
+			return fmt.Errorf("error marshaling CSV base: %v", err)
+		}
+		if err = ioutil.WriteFile(basePath, csvBytes, 0644); err != nil {
+			return fmt.Errorf("error writing CSV base: %v", err)
+		}
+	*/
 
 	// Write a kustomization.yaml to outputDir if one does not exist.
 	if err := kustomize.WriteIfNotExist(c.outputDir, manifestsKustomization); err != nil {
@@ -188,4 +216,19 @@ func (c manifestsCmd) run(cfg *config.Config) error {
 	}
 
 	return nil
+}
+
+func isInteractive(ilvl projutil.InteractiveLevel) bool {
+	return (ilvl == projutil.InteractiveSoftOff || ilvl == projutil.InteractiveOnAll)
+}
+
+func getGVKs(cfg *config.Config) []schema.GroupVersionKind {
+	gvks := make([]schema.GroupVersionKind, len(cfg.Resources))
+	for i, gvk := range cfg.Resources {
+		gvks[i].Group = fmt.Sprintf("%s.%s", gvk.Group, cfg.Domain)
+		gvks[i].Version = gvk.Version
+		gvks[i].Kind = gvk.Kind
+		fmt.Printf("\n\nGVK's in cfg: \n\n%+v\n\n", gvk)
+	}
+	return gvks
 }

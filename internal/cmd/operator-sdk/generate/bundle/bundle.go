@@ -105,15 +105,15 @@ https://github.com/operator-framework/operator-registry/#manifest-format
 const defaultRootDir = "bundle"
 
 // setDefaults sets defaults useful to all modes of this subcommand.
-func (c *bundleCmd) setDefaults(cfg *config.Config) (err error) {
-	if c.projectName, err = genutil.GetOperatorName(cfg); err != nil {
+func (c *bundleCmd) setDefaults() (err error) {
+	if c.projectName, err = genutil.GetOperatorName(); err != nil {
 		return err
 	}
 	return nil
 }
 
 // validateManifests validates c for bundle manifests generation.
-func (c bundleCmd) validateManifests(*config.Config) (err error) {
+func (c bundleCmd) validateManifests() (err error) {
 	if c.version != "" {
 		if err := genutil.ValidateVersion(c.version); err != nil {
 			return err
@@ -143,7 +143,7 @@ func (c bundleCmd) validateManifests(*config.Config) (err error) {
 }
 
 // runManifests generates bundle manifests.
-func (c bundleCmd) runManifests(cfg *config.Config) (err error) {
+func (c bundleCmd) runManifests() (err error) {
 
 	if !c.quiet && !c.stdout {
 		if c.version == "" {
@@ -174,9 +174,14 @@ func (c bundleCmd) runManifests(cfg *config.Config) (err error) {
 		}
 	}
 
+	operatorType := ""
+	cfg, err := projutil.ReadConfig()
+	if err == nil {
+		operatorType = cfg.Layout
+	}
 	csvGen := gencsv.Generator{
 		OperatorName: c.projectName,
-		OperatorType: projutil.PluginKeyToOperatorType(cfg.Layout),
+		OperatorType: projutil.PluginKeyToOperatorType(operatorType),
 		Version:      c.version,
 		Collector:    col,
 	}
@@ -193,7 +198,7 @@ func (c bundleCmd) runManifests(cfg *config.Config) (err error) {
 		opts = append(opts, gencsv.WithBundleWriter(c.outputDir))
 	}
 
-	if err := csvGen.Generate(cfg, opts...); err != nil {
+	if err := csvGen.Generate(opts...); err != nil {
 		return fmt.Errorf("error generating ClusterServiceVersion: %v", err)
 	}
 
@@ -241,12 +246,12 @@ func writeScorecardConfig(dir string, cfg v1alpha3.Configuration) error {
 }
 
 // validateMetadata validates c for bundle metadata generation.
-func (c bundleCmd) validateMetadata(*config.Config) (err error) {
+func (c bundleCmd) validateMetadata() (err error) {
 	return nil
 }
 
 // runMetadata generates a bundle.Dockerfile and bundle metadata.
-func (c bundleCmd) runMetadata(cfg *config.Config) error {
+func (c bundleCmd) runMetadata() error {
 
 	directory := c.inputDir
 	if directory == "" {
@@ -265,7 +270,7 @@ func (c bundleCmd) runMetadata(cfg *config.Config) error {
 	if filepath.Clean(outputDir) == filepath.Clean(directory) {
 		outputDir = ""
 	}
-
+	cfg, _ := projutil.ReadConfig()
 	return c.generateMetadata(cfg, directory, outputDir)
 }
 

@@ -21,8 +21,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
 //nolint:maligned
@@ -68,36 +66,31 @@ func NewCmd() *cobra.Command {
 				c.metadata = true
 			}
 
-			cfg, err := projutil.ReadConfig()
-			if err != nil {
-				return fmt.Errorf("error reading configuration: %v", err)
-			}
-
-			if err := c.setDefaults(cfg); err != nil {
+			if err := c.setDefaults(); err != nil {
 				return err
 			}
 
 			// Validate command args before running so a preceding mode doesn't run
 			// before a following validation fails.
 			if c.manifests {
-				if err = c.validateManifests(cfg); err != nil {
+				if err := c.validateManifests(); err != nil {
 					return fmt.Errorf("invalid command options: %v", err)
 				}
 			}
 			if c.metadata {
-				if err = c.validateMetadata(cfg); err != nil {
+				if err := c.validateMetadata(); err != nil {
 					return fmt.Errorf("invalid command options: %v", err)
 				}
 			}
 
 			// Run command logic.
 			if c.manifests {
-				if err = c.runManifests(cfg); err != nil {
+				if err := c.runManifests(); err != nil {
 					log.Fatalf("Error generating bundle manifests: %v", err)
 				}
 			}
 			if c.metadata {
-				if err = c.runMetadata(cfg); err != nil {
+				if err := c.runMetadata(); err != nil {
 					log.Fatalf("Error generating bundle metadata: %v", err)
 				}
 			}

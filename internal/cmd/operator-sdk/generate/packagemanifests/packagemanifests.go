@@ -78,8 +78,8 @@ https://github.com/operator-framework/operator-registry/#manifest-format
 const defaultRootDir = "packagemanifests"
 
 // setDefaults sets command defaults.
-func (c *packagemanifestsCmd) setDefaults(cfg *config.Config) (err error) {
-	if c.projectName, err = genutil.GetOperatorName(cfg); err != nil {
+func (c *packagemanifestsCmd) setDefaults() (err error) {
+	if c.projectName, err = genutil.GetOperatorName(); err != nil {
 		return err
 	}
 
@@ -183,7 +183,7 @@ func (c packagemanifestsCmd) run(cfg *config.Config) error {
 		opts = append(opts, gencsv.WithPackageWriter(c.outputDir))
 	}
 
-	if err := csvGen.Generate(cfg, opts...); err != nil {
+	if err := csvGen.Generate(opts...); err != nil {
 		return fmt.Errorf("error generating ClusterServiceVersion: %v", err)
 	}
 

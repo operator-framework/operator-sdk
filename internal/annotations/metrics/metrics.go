@@ -89,7 +89,7 @@ func isUnreleased(input string) bool {
 // getSDKProjectLayout returns the `layout` field in PROJECT file that is v3.
 // If not, it will return "go" because that was the only project type supported for project versions < v3.
 func getSDKProjectLayout(cfg *config.Config) string {
-	if !cfg.IsV3() || cfg.Layout == "" {
+	if cfg == nil || !cfg.IsV3() || cfg.Layout == "" {
 		return "go"
 	}
 	return cfg.Layout
