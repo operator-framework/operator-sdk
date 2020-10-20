@@ -37,7 +37,9 @@ bindata: ## Update project bindata
 .PHONY: fix
 fix: ## Fixup files in the repo.
 	go mod tidy
-	go fmt ./...
+	# the golangci-lint run --fix automatically fix issues when the linter/check supports auto-fix
+	# Note: only gofmt, gosimple and goimport checks used supports auto-fix
+	./tools/scripts/fetch golangci-lint 1.31.0 && ./tools/bin/golangci-lint run --fix
 
 .PHONY: clean
 clean: ## Cleanup build artifacts and tool binaries.
@@ -129,7 +131,6 @@ test-sanity: generate fix ## Test repo formatting, linting, etc.
 	./hack/check-license.sh
 	./hack/check-error-log-msg-format.sh
 	go run ./hack/generate/changelog/gen-changelog.go -validate-only
-	go vet ./...
 	./tools/scripts/fetch golangci-lint 1.31.0 && ./tools/bin/golangci-lint run
 	git diff --exit-code # diff again to ensure other checks don't change repo
 

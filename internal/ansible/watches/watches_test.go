@@ -135,7 +135,7 @@ func TestLoad(t *testing.T) { //nolint:gocyclo
 	twoSeconds := time.Second * 2
 
 	validWatches := []Watch{
-		Watch{
+		{
 			GroupVersionKind: schema.GroupVersionKind{
 				Version: "v1alpha1",
 				Group:   "app.example.com",
@@ -148,7 +148,7 @@ func TestLoad(t *testing.T) { //nolint:gocyclo
 			WatchClusterScopedResources: false,
 			SnakeCaseParameters:         true,
 		},
-		Watch{
+		{
 			GroupVersionKind: schema.GroupVersionKind{
 				Version: "v1alpha1",
 				Group:   "app.example.com",
@@ -165,7 +165,7 @@ func TestLoad(t *testing.T) { //nolint:gocyclo
 				Vars: map[string]interface{}{"sentinel": "finalizer_running"},
 			},
 		},
-		Watch{
+		{
 			GroupVersionKind: schema.GroupVersionKind{
 				Version: "v1alpha1",
 				Group:   "app.example.com",
@@ -177,7 +177,7 @@ func TestLoad(t *testing.T) { //nolint:gocyclo
 			WatchDependentResources:     true,
 			WatchClusterScopedResources: true,
 		},
-		Watch{
+		{
 			GroupVersionKind: schema.GroupVersionKind{
 				Version: "v1alpha1",
 				Group:   "app.example.com",
@@ -187,7 +187,7 @@ func TestLoad(t *testing.T) { //nolint:gocyclo
 			ReconcilePeriod: zeroSeconds,
 			ManageStatus:    true,
 		},
-		Watch{
+		{
 			GroupVersionKind: schema.GroupVersionKind{
 				Version: "v1alpha1",
 				Group:   "app.example.com",
@@ -196,7 +196,7 @@ func TestLoad(t *testing.T) { //nolint:gocyclo
 			Playbook:     validTemplate.ValidPlaybook,
 			ManageStatus: true,
 		},
-		Watch{
+		{
 			GroupVersionKind: schema.GroupVersionKind{
 				Version: "v1alpha1",
 				Group:   "app.example.com",
@@ -205,7 +205,7 @@ func TestLoad(t *testing.T) { //nolint:gocyclo
 			Playbook:     validTemplate.ValidPlaybook,
 			ManageStatus: false,
 		},
-		Watch{
+		{
 			GroupVersionKind: schema.GroupVersionKind{
 				Version: "v1alpha1",
 				Group:   "app.example.com",
@@ -214,7 +214,7 @@ func TestLoad(t *testing.T) { //nolint:gocyclo
 			Playbook:     validTemplate.ValidPlaybook,
 			ManageStatus: true,
 		},
-		Watch{
+		{
 			GroupVersionKind: schema.GroupVersionKind{
 				Version: "v1alpha1",
 				Group:   "app.example.com",
@@ -228,7 +228,7 @@ func TestLoad(t *testing.T) { //nolint:gocyclo
 				Vars:     map[string]interface{}{"sentinel": "finalizer_running"},
 			},
 		},
-		Watch{
+		{
 			GroupVersionKind: schema.GroupVersionKind{
 				Version: "v1alpha1",
 				Group:   "app.example.com",
@@ -241,7 +241,7 @@ func TestLoad(t *testing.T) { //nolint:gocyclo
 				Vars: map[string]interface{}{"sentinel": "finalizer_running"},
 			},
 		},
-		Watch{
+		{
 			GroupVersionKind: schema.GroupVersionKind{
 				Version: "v1alpha1",
 				Group:   "app.example.com",
@@ -251,7 +251,7 @@ func TestLoad(t *testing.T) { //nolint:gocyclo
 			ManageStatus:            true,
 			MaxConcurrentReconciles: 1,
 		},
-		Watch{
+		{
 			GroupVersionKind: schema.GroupVersionKind{
 				Version: "v1alpha1",
 				Group:   "app.example.com",
@@ -261,7 +261,7 @@ func TestLoad(t *testing.T) { //nolint:gocyclo
 			ManageStatus:            true,
 			MaxConcurrentReconciles: 1,
 		},
-		Watch{
+		{
 			GroupVersionKind: schema.GroupVersionKind{
 				Version: "v1alpha1",
 				Group:   "app.example.com",
@@ -271,7 +271,7 @@ func TestLoad(t *testing.T) { //nolint:gocyclo
 			ManageStatus:            true,
 			MaxConcurrentReconciles: 4,
 		},
-		Watch{
+		{
 			GroupVersionKind: schema.GroupVersionKind{
 				Version: "v1alpha1",
 				Group:   "app.example.com",
@@ -281,7 +281,7 @@ func TestLoad(t *testing.T) { //nolint:gocyclo
 			ManageStatus:     true,
 			AnsibleVerbosity: 2,
 		},
-		Watch{
+		{
 			GroupVersionKind: schema.GroupVersionKind{
 				Version: "v1alpha1",
 				Group:   "app.example.com",
@@ -291,7 +291,7 @@ func TestLoad(t *testing.T) { //nolint:gocyclo
 			ManageStatus:     true,
 			AnsibleVerbosity: 2,
 		},
-		Watch{
+		{
 			GroupVersionKind: schema.GroupVersionKind{
 				Version: "v1alpha1",
 				Group:   "app.example.com",
@@ -301,7 +301,7 @@ func TestLoad(t *testing.T) { //nolint:gocyclo
 			ManageStatus:     true,
 			AnsibleVerbosity: 4,
 		},
-		Watch{
+		{
 			GroupVersionKind: schema.GroupVersionKind{
 				Version: "v1alpha1",
 				Group:   "app.example.com",
@@ -311,7 +311,7 @@ func TestLoad(t *testing.T) { //nolint:gocyclo
 			ManageStatus: true,
 			Vars:         map[string]interface{}{"sentinel": "reconciling"},
 		},
-		Watch{
+		{
 			GroupVersionKind: schema.GroupVersionKind{
 				Version: "v1alpha1",
 				Group:   "app.example.com",
@@ -320,7 +320,7 @@ func TestLoad(t *testing.T) { //nolint:gocyclo
 			Role:         filepath.Join(cwd, "testdata", "ansible_collections", "nameSpace", "collection", "roles", "someRole"),
 			ManageStatus: true,
 		},
-		Watch{
+		{
 			GroupVersionKind: schema.GroupVersionKind{
 				Version: "v1alpha1",
 				Group:   "app.example.com",
@@ -346,7 +346,7 @@ func TestLoad(t *testing.T) { //nolint:gocyclo
 			},
 			ManageStatus: true,
 		},
-		Watch{
+		{
 			GroupVersionKind: schema.GroupVersionKind{
 				Version: "v1alpha1",
 				Group:   "app.example.com",

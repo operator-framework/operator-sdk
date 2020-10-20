@@ -73,7 +73,7 @@ func (c *cacheResponseHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 		}
 
 		if c.restMapper == nil {
-			c.restMapper = meta.NewDefaultRESTMapper([]schema.GroupVersion{schema.GroupVersion{
+			c.restMapper = meta.NewDefaultRESTMapper([]schema.GroupVersion{{
 				Group:   r.APIGroup,
 				Version: r.APIVersion,
 			}})

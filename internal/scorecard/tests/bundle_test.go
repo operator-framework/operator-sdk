@@ -137,17 +137,17 @@ var _ = Describe("Basic and OLM tests", func() {
 				Spec: operatorsv1alpha1.ClusterServiceVersionSpec{
 					CustomResourceDefinitions: operatorsv1alpha1.CustomResourceDefinitions{
 						Owned: []operatorsv1alpha1.CRDDescription{
-							operatorsv1alpha1.CRDDescription{
+							{
 								Name:    "Test",
 								Version: "v1",
 								Kind:    "TestKind",
 								StatusDescriptors: []operatorsv1alpha1.StatusDescriptor{
-									operatorsv1alpha1.StatusDescriptor{
+									{
 										Path: "status",
 									},
 								},
 								SpecDescriptors: []operatorsv1alpha1.SpecDescriptor{
-									operatorsv1alpha1.SpecDescriptor{
+									{
 										Path: "spec",
 									},
 								},
@@ -246,7 +246,7 @@ var _ = Describe("Basic and OLM tests", func() {
 			})
 			It("should fail when CRs do not have spec field specified", func() {
 				cr := []unstructured.Unstructured{
-					unstructured.Unstructured{
+					{
 						Object: map[string]interface{}{},
 					},
 				}
@@ -255,7 +255,7 @@ var _ = Describe("Basic and OLM tests", func() {
 			})
 			It("should pass when CRs do have spec field specified", func() {
 				cr := []unstructured.Unstructured{
-					unstructured.Unstructured{
+					{
 						Object: map[string]interface{}{
 							"spec": map[string]interface{}{
 								"spec": "val",
@@ -278,10 +278,10 @@ var _ = Describe("Basic and OLM tests", func() {
 		)
 
 		crd = []*apiextv1.CustomResourceDefinition{
-			&apiextv1.CustomResourceDefinition{
+			{
 				Spec: apiextv1.CustomResourceDefinitionSpec{
 					Versions: []apiextv1.CustomResourceDefinitionVersion{
-						apiextv1.CustomResourceDefinitionVersion{
+						{
 							Name: "v1",
 							Schema: &apiextv1.CustomResourceValidation{
 								OpenAPIV3Schema: &apiextv1.JSONSchemaProps{
@@ -289,9 +289,9 @@ var _ = Describe("Basic and OLM tests", func() {
 									Schema:      "URL",
 									Description: "Schema for test",
 									Properties: map[string]apiextv1.JSONSchemaProps{
-										"spec": apiextv1.JSONSchemaProps{
+										"spec": {
 											Properties: map[string]apiextv1.JSONSchemaProps{
-												"node": apiextv1.JSONSchemaProps{
+												"node": {
 													ID: "node",
 												},
 											},
@@ -375,13 +375,13 @@ var _ = Describe("Basic and OLM tests", func() {
 		It("Should pass when CSV has Owned CRD's with resources", func() {
 			crd = operatorsv1alpha1.CustomResourceDefinitions{
 				Owned: []operatorsv1alpha1.CRDDescription{
-					operatorsv1alpha1.CRDDescription{
+					{
 						Name:              "Test",
 						Version:           "v1",
 						Kind:              "Test",
 						StatusDescriptors: make([]operatorsv1alpha1.StatusDescriptor, 0),
 						Resources: []operatorsv1alpha1.APIResourceReference{
-							operatorsv1alpha1.APIResourceReference{
+							{
 								Name:    "operator",
 								Kind:    "Test",
 								Version: "v1",
@@ -398,7 +398,7 @@ var _ = Describe("Basic and OLM tests", func() {
 
 			crd = operatorsv1alpha1.CustomResourceDefinitions{
 				Owned: []operatorsv1alpha1.CRDDescription{
-					operatorsv1alpha1.CRDDescription{
+					{
 						Name:              "Test",
 						Version:           "v1",
 						Kind:              "Test",

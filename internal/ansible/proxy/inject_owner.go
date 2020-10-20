@@ -65,7 +65,7 @@ func (i *injectOwnerReferenceHandler) ServeHTTP(w http.ResponseWriter, req *http
 		}
 
 		if i.restMapper == nil {
-			i.restMapper = meta.NewDefaultRESTMapper([]schema.GroupVersion{schema.GroupVersion{
+			i.restMapper = meta.NewDefaultRESTMapper([]schema.GroupVersion{{
 				Group:   r.APIGroup,
 				Version: r.APIVersion,
 			}})

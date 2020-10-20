@@ -96,7 +96,7 @@ func TestGetCondition(t *testing.T) {
 			condType: RunningConditionType,
 			status: Status{
 				Conditions: []Condition{
-					Condition{
+					{
 						Type: RunningConditionType,
 					},
 				},
@@ -110,7 +110,7 @@ func TestGetCondition(t *testing.T) {
 			condType: RunningConditionType,
 			status: Status{
 				Conditions: []Condition{
-					Condition{
+					{
 						Type: FailureConditionType,
 					},
 				},
@@ -122,7 +122,7 @@ func TestGetCondition(t *testing.T) {
 			condType: FailureConditionType,
 			status: Status{
 				Conditions: []Condition{
-					Condition{
+					{
 						Type: FailureConditionType,
 					},
 				},
@@ -136,7 +136,7 @@ func TestGetCondition(t *testing.T) {
 			condType: FailureConditionType,
 			status: Status{
 				Conditions: []Condition{
-					Condition{
+					{
 						Type: RunningConditionType,
 					},
 				},
@@ -167,7 +167,7 @@ func TestRemoveCondition(t *testing.T) {
 			condType: RunningConditionType,
 			status: Status{
 				Conditions: []Condition{
-					Condition{
+					{
 						Type: RunningConditionType,
 					},
 				},
@@ -179,7 +179,7 @@ func TestRemoveCondition(t *testing.T) {
 			condType: RunningConditionType,
 			status: Status{
 				Conditions: []Condition{
-					Condition{
+					{
 						Type: FailureConditionType,
 					},
 				},
@@ -191,7 +191,7 @@ func TestRemoveCondition(t *testing.T) {
 			condType: FailureConditionType,
 			status: Status{
 				Conditions: []Condition{
-					Condition{
+					{
 						Type: FailureConditionType,
 					},
 				},
@@ -203,7 +203,7 @@ func TestRemoveCondition(t *testing.T) {
 			condType: FailureConditionType,
 			status: Status{
 				Conditions: []Condition{
-					Condition{
+					{
 						Type: RunningConditionType,
 					},
 				},
@@ -247,7 +247,7 @@ func TestSetCondition(t *testing.T) {
 			name: "update running condition",
 			status: &Status{
 				Conditions: []Condition{
-					Condition{
+					{
 						Type:               RunningConditionType,
 						Status:             v1.ConditionTrue,
 						Reason:             SuccessfulReason,
@@ -264,7 +264,7 @@ func TestSetCondition(t *testing.T) {
 			name: "do not update running condition",
 			status: &Status{
 				Conditions: []Condition{
-					Condition{
+					{
 						Type:               RunningConditionType,
 						Status:             v1.ConditionTrue,
 						Reason:             RunningReason,

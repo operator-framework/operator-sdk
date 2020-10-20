@@ -1,5 +1,10 @@
 run:
+  # required because the CI/Travis sometimes take to long to run
   timeout: 5m
+
+  # skip files that should not be checked
+  skip-files:
+    - internal/bindata/olm/manifests-0.15.1.go
 linters:
   enable:
     - nakedret
@@ -22,6 +27,8 @@ linters:
     - unconvert
     - gocyclo
     - gosec
+    - govet
+    - gofmt
 issues:
   exclude-rules:
     # Allow dot imports for ginkgo and gomega
