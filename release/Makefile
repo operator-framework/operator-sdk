@@ -1,11 +1,16 @@
+## This Makefile should only be called from the project root ##
+
 # Needed for glob expansion.
 SHELL = /bin/bash
 .SHELLFLAGS = -O extglob -c
 
-GIT_VERSION = $(shell git describe --dirty --always --tags)
 ifneq ($(DRY_RUN),)
-SNAPSHOT_FLAGS = --snapshot --skip-publish --rm-dist
 TAG ?= $(GIT_VERSION)
+endif
+
+# Ensure that this Makefile is run from the project root (always contains the 'cmd/' directory).
+ifeq (,$(wildcard cmd))
+$(error "This Makefile must be invoked from the operator-sdk project root")
 endif
 
 .PHONY: all
@@ -19,7 +24,6 @@ endif
 
 .PHONY: changelog
 changelog: check_tag ## Generate the changelog.
-	mkdir -p changelog/generated
 	go run ./release/changelog/gen-changelog.go -tag=$(TAG) -changelog=CHANGELOG.md
 ifeq ($(DRY_RUN),)
 	rm -f ./changelog/fragments/!(00-template.yaml)

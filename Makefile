@@ -49,19 +49,22 @@ clean: ## Cleanup build artifacts and tool binaries.
 
 ##@ Build
 
-.PHONY: build
-build: build/operator-sdk build/ansible-operator build/helm-operator ## Build operator-sdk, ansible-operator, and helm-operator.
-
 .PHONY: install
-GOBIN ?= $(shell go env GOPATH)/bin
-install: ## Install operator-sdk, ansible-operator, and helm-operator in $GOBIN
+install: ## Install operator-sdk, ansible-operator, and helm-operator.
 	go install $(GO_BUILD_ARGS) ./cmd/{operator-sdk,ansible-operator,helm-operator}
 
-# Build operator-sdk project binaries
+.PHONY: build
+build: ## Build operator-sdk, ansible-operator, and helm-operator.
+	@mkdir -p $(BUILD_DIR)
+	go build $(GO_BUILD_ARGS) -o $(BUILD_DIR) ./cmd/{operator-sdk,ansible-operator,helm-operator}
+
+# Build scorecard binaries.
+.PHONY: build/scorecard-test build/scorecard-test-kuttl build/custom-scorecard-tests
 build/scorecard-test build/scorecard-test-kuttl build/custom-scorecard-tests:
-	go build $(GO_GCFLAGS) $(GO_ASMFLAGS) -o $@ ./images/$(@F)
-build/%:
-	go build $(GO_BUILD_ARGS) -o $@ ./cmd/$*
+	go build $(GO_GCFLAGS) $(GO_ASMFLAGS) -o $(BUILD_DIR)/$(@F) ./images/$(@F)
+.PHONY: build/operator-sdk build/ansible-operator build/helm-operator
+build/operator-sdk build/ansible-operator build/helm-operator:
+	go build $(GO_BUILD_ARGS) -o $(BUILD_DIR)/$(@F) ./cmd/$(@F)
 
 ##@ Dev images
 
@@ -73,8 +76,9 @@ image-build: $(foreach i,$(IMAGE_TARGET_LIST),image/$(i)) ## Build all images.
 # Build an image.
 IMAGE_REPO ?= quay.io/operator-framework
 image/%: build/%
-	rm -rf build/_image && mkdir -p build/_image && mv build/$* build/_image
+	rm -rf build/_image && mkdir -p build/_image && cp build/$* build/_image
 	docker build -t $(IMAGE_REPO)/$*:dev -f ./images/$*/Dockerfile build/_image
+	@rm -rf build/_image
 
 ##@ Test
 
@@ -115,9 +119,7 @@ test-e2e-setup: build
 	$(SCRIPTS_DIR)/fetch kind 0.9.0
 	$(SCRIPTS_DIR)/fetch envtest 0.6.3
 	$(SCRIPTS_DIR)/fetch kubectl $(K8S_VERSION) # Install kubectl AFTER envtest because envtest includes its own kubectl binary
-ifeq (,$(findstring $(KIND_CLUSTER),$(shell $(TOOLS_DIR)/kind get clusters -q)))
-	$(TOOLS_DIR)/kind create cluster --image="kindest/node:v$(K8S_VERSION)" --name $(KIND_CLUSTER)
-endif
+	[[ "`$(TOOLS_DIR)/kind get clusters`" =~ "$(KIND_CLUSTER)" ]] || $(TOOLS_DIR)/kind create cluster --image="kindest/node:v$(K8S_VERSION)" --name $(KIND_CLUSTER)
 
 .PHONY: test-e2e-teardown
 test-e2e-teardown:
@@ -126,7 +128,7 @@ test-e2e-teardown:
 	rm -f $(KUBECONFIG)
 
 # Double colon rules allow repeated rule declarations.
-# Repeated rules are exectured in the order they appear.
+# Repeated rules are executed in the order they appear.
 $(e2e_targets):: test-e2e-setup image/scorecard-test
 
 test-e2e:: $(e2e_tests) ## Run e2e tests

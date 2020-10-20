@@ -1,7 +1,5 @@
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 
-ENV CGO_ENABLED=0
-
 RUN microdnf install -y golang make which
 
 ARG BIN=operator-sdk
