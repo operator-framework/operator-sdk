@@ -24,8 +24,8 @@ entries:
         In the `go.mod` file replace `sigs.k8s.io/controller-runtime v0.6.2`
         with `sigs.k8s.io/controller-runtime v0.6.3` and then run `go mod tidy`.
   - description: >
-      Upgrade the Kubebuilder CLI dependecy version from `f7a3b65dd250` to `c993a2a221fe`.
-      More info: https://github.com/kubernetes-sigs/kubebuilder/compare/f7a3b65dd250..c993a2a221fe
+      For Golang based operators with multigroup support, fix scaffolded `controllers/<group>/suite_test.go` to have
+            a correct `envtest.Environment.CRDDirectoryPaths` ([kubebuilder#1665](https://github.com/kubernetes-sigs/kubebuilder/pull/1665)).
 
     # kind is one of:
     # - addition
@@ -50,7 +50,5 @@ entries:
         this EnvTest will not be looking for the CRD's in the correct location. For more info, see
         [kubebuilder#1665](https://github.com/kubernetes-sigs/kubebuilder/issues/1665).
 
-        **NOTE** To check if your project has multigroup support ensure that
-        your PROJECT file has the `multigroup: true` attribute.
 
 
