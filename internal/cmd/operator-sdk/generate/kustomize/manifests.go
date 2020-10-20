@@ -187,16 +187,15 @@ func (c manifestsCmd) run(cfg *config.Config) error {
 		}
 	}
 
+	relBasePath := filepath.Join("bases", c.packageName+".clusterserviceversion.yaml")
+	basePath := filepath.Join(c.inputDir, relBasePath)
 	base := bases.ClusterServiceVersion{
 		OperatorName: c.packageName,
 		OperatorType: projutil.PluginKeyToOperatorType(cfg.Layout),
 		APIsDir:      c.apisDir,
-		Interactive:  isInteractive(c.interactiveLevel),
+		Interactive:  requiresInteraction(basePath, c.interactiveLevel),
 		GVKs:         getGVKs(cfg),
 	}
-	relBasePath := filepath.Join("bases", c.packageName+".clusterserviceversion.yaml")
-	basePath := filepath.Join(c.inputDir, relBasePath)
-
 	// Set BasePath only if it exists. If it doesn't, a new base will be generated
 	// if BasePath is empty.
 	if genutil.IsExist(basePath) {
@@ -231,8 +230,10 @@ func (c manifestsCmd) run(cfg *config.Config) error {
 	return nil
 }
 
-func isInteractive(ilvl projutil.InteractiveLevel) bool {
-	return (ilvl == projutil.InteractiveSoftOff || ilvl == projutil.InteractiveOnAll)
+// requiresInteraction checks if the combination of ilvl and basePath existence
+// requires the generator prompt a user interactively.
+func requiresInteraction(basePath string, ilvl projutil.InteractiveLevel) bool {
+	return (ilvl == projutil.InteractiveSoftOff && genutil.IsNotExist(basePath)) || ilvl == projutil.InteractiveOnAll
 }
 
 func getGVKs(cfg *config.Config) []schema.GroupVersionKind {

@@ -45,7 +45,6 @@ var (
 type Generator struct {
 	// OperatorName is the operator's name, ex. app-operator.
 	OperatorName string
-	OperatorType projutil.OperatorType
 	// Version is the CSV current version.
 	Version string
 	// FromVersion is the version of a previous CSV to upgrade from.
@@ -57,10 +56,6 @@ type Generator struct {
 
 	// Func that returns the writer the generated CSV's bytes are written to.
 	getWriter func() (io.Writer, error)
-	// If the CSV is destined for a bundle this will be the path of the updated
-	// CSV. Used to bring over data from an existing CSV that is not captured
-	// in a base. Not set if a non-file or base writer is returned by getWriter.
-	bundledPath string
 }
 
 // Option is a function that modifies a Generator.
@@ -81,7 +76,6 @@ func WithWriter(w io.Writer) Option {
 func WithBundleWriter(dir string) Option {
 	return func(g *Generator) error {
 		fileName := makeCSVFileName(g.OperatorName)
-		g.bundledPath = filepath.Join(dir, bundle.ManifestsDir, fileName)
 		g.getWriter = func() (io.Writer, error) {
 			return genutil.Open(filepath.Join(dir, bundle.ManifestsDir), fileName)
 		}
@@ -94,9 +88,6 @@ func WithBundleWriter(dir string) Option {
 func WithPackageWriter(dir string) Option {
 	return func(g *Generator) error {
 		fileName := makeCSVFileName(g.OperatorName)
-		if g.FromVersion != "" {
-			g.bundledPath = filepath.Join(dir, g.FromVersion, fileName)
-		}
 		g.getWriter = func() (io.Writer, error) {
 			return genutil.Open(filepath.Join(dir, g.Version), fileName)
 		}
@@ -149,33 +140,27 @@ func (g *Generator) generate() (base *operatorsv1alpha1.ClusterServiceVersion, e
 		return nil, fmt.Errorf("cannot generate CSV without a manifests collection")
 	}
 
-	// Search for a CSV in the collector with a name matching the package name,
-	// but prefer an exact match "<package name>.vX.Y.Z" to preserve existing behavior.
-	var oldBase *operatorsv1alpha1.ClusterServiceVersion
+	// Search for a CSV in the collector with a name matching the package name.
 	csvNamePrefix := g.OperatorName + "."
-	oldBaseCSVName := genutil.MakeCSVName(g.OperatorName, "X.Y.Z")
 	for _, csv := range g.Collector.ClusterServiceVersions {
-		if csv.GetName() == oldBaseCSVName {
-			oldBase = csv.DeepCopy()
-		} else if base == nil && strings.HasPrefix(csv.GetName(), csvNamePrefix) {
+		if base == nil && strings.HasPrefix(csv.GetName(), csvNamePrefix) {
 			base = csv.DeepCopy()
 		}
 	}
 
-	if base == nil && oldBase == nil {
-		return nil, fmt.Errorf("no CSV found with name prefix %q", csvNamePrefix)
-	} else if oldBase != nil {
-		// Only update versions in the old way to preserve existing behavior.
-		base = oldBase
-		if err := g.updateVersionsWithReplaces(base); err != nil {
-			return nil, err
-		}
-	} else if g.Version != "" {
+	// Use a default base if none was supplied.
+	if base == nil {
+		base = bases.New(g.OperatorName)
+	}
+	if g.Version != "" {
 		// Use the existing version/name unless g.Version is set.
 		base.SetName(genutil.MakeCSVName(g.OperatorName, g.Version))
 		if base.Spec.Version.Version, err = semver.Parse(g.Version); err != nil {
 			return nil, err
 		}
+	}
+	if g.FromVersion != "" {
+		base.Spec.Replaces = genutil.MakeCSVName(g.OperatorName, g.Version)
 	}
 
 	if err := ApplyTo(g.Collector, base); err != nil {
@@ -194,40 +179,4 @@ func makeCSVFileName(name string) string {
 // requires the generator prompt a user interactively.
 func requiresInteraction(basePath string, ilvl projutil.InteractiveLevel) bool {
 	return (ilvl == projutil.InteractiveSoftOff && genutil.IsNotExist(basePath)) || ilvl == projutil.InteractiveOnAll
-}
-
-// updateVersionsWithReplaces updates csv's version and data involving the version,
-// ex. ObjectMeta.Name, and place the old version in the `replaces` object,
-// if there is an old version to replace.
-func (g Generator) updateVersionsWithReplaces(csv *operatorsv1alpha1.ClusterServiceVersion) (err error) {
-
-	oldVer, newVer := csv.Spec.Version.String(), g.Version
-	newName := genutil.MakeCSVName(g.OperatorName, newVer)
-	oldName := csv.GetName()
-
-	// A bundled CSV may not have a base containing the previous version to use,
-	// so use the current bundled CSV for version information.
-	if genutil.IsExist(g.bundledPath) {
-		existing, err := (bases.ClusterServiceVersion{BasePath: g.bundledPath}).GetBase()
-		if err != nil {
-			return fmt.Errorf("error reading existing ClusterServiceVersion: %v", err)
-		}
-		oldVer = existing.Spec.Version.String()
-		oldName = existing.GetName()
-	}
-
-	// If the new version is empty, either because a CSV is only being updated or
-	// a base was generated, no update is needed.
-	if newVer == "0.0.0" || newVer == "" {
-		return nil
-	}
-
-	// Set replaces by default.
-	if oldVer != "0.0.0" && newVer != oldVer {
-		csv.Spec.Replaces = oldName
-	}
-
-	csv.SetName(newName)
-	csv.Spec.Version.Version, err = semver.Parse(newVer)
-	return err
 }
