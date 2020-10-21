@@ -267,5 +267,5 @@ if the test image follows the above guidelines.
 
 [quickstart-bundle]: /docs/olm-integration/quickstart-bundle
 [cli-scorecard]: /docs/cli/operator-sdk_scorecard/
-[custom-image]: https://github.com/operator-framework/operator-sdk/blob/master/images/custom-scorecard-tests/cmd/test/main.go
+[custom-image]: https://github.com/operator-framework/operator-sdk/blob/09c3aa14625965af9f22f513cd5c891471dbded2/images/custom-scorecard-tests/main.go
 [olm-bundle]:https://github.com/operator-framework/operator-registry#manifest-format
