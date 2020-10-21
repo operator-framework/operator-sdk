@@ -65,8 +65,8 @@ jobs:
       before_install:
         - git fetch origin --unshallow --tags
       script:
-        - curl -s "https://raw.githubusercontent.com/\
-          kubernetes-sigs/kustomize/v3.5.4/hack/install_kustomize.sh"  | bash
+        # install kustomize before run the sanity to try avoid flake
+        - curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/kustomize/v3.5.4/hack/install_kustomize.sh"  | bash
         - make test-sanity
 
     # Run website checks
