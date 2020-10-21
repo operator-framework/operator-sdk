@@ -68,9 +68,9 @@ build/operator-sdk build/ansible-operator build/helm-operator:
 
 ##@ Dev images
 
-# Convenience wrappers for building/pushing all images.
+# Convenience wrapper for building all remotely hosted images.
 .PHONY: image-build
-IMAGE_TARGET_LIST := operator-sdk helm-operator ansible-operator scorecard-test scorecard-test-kuttl custom-scorecard-tests
+IMAGE_TARGET_LIST = operator-sdk helm-operator ansible-operator scorecard-test scorecard-test-kuttl
 image-build: $(foreach i,$(IMAGE_TARGET_LIST),image/$(i)) ## Build all images.
 
 # Build an image.
