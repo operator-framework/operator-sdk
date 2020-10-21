@@ -120,7 +120,6 @@ $ chmod +x helm-operator-${RELEASE_VERSION}-x86_64-apple-darwin && sudo mkdir -p
 $ git clone https://github.com/operator-framework/operator-sdk
 $ cd operator-sdk
 $ git checkout master
-$ make tidy
 $ make install
 ```
 
