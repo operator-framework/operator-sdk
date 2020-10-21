@@ -32,9 +32,9 @@ require (
 	k8s.io/client-go v0.18.8
 	k8s.io/kubectl v0.18.8
 	rsc.io/letsencrypt v0.0.3 // indirect
-	sigs.k8s.io/controller-runtime v0.6.2
+	sigs.k8s.io/controller-runtime v0.6.3
 	sigs.k8s.io/controller-tools v0.3.0
-	sigs.k8s.io/kubebuilder v1.0.9-0.20200805184228-f7a3b65dd250
+	sigs.k8s.io/kubebuilder v1.0.9-0.20201014221150-c993a2a221fe
 	sigs.k8s.io/yaml v1.2.0
 )
 
