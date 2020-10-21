@@ -65,6 +65,7 @@ jobs:
       before_install:
         - git fetch origin --unshallow --tags
       script:
+        - go get sigs.k8s.io/kustomize/kustomize/v3@v3.5.4
         - make test-sanity
 
     # Run website checks
