@@ -29,12 +29,13 @@ ifeq ($(DRY_RUN),)
 	rm -f ./changelog/fragments/!(00-template.yaml)
 endif
 
+# Convenience wrappers for pushing all remotely hosted images.
 .PHONY: image-push image-push-multiarch
-IMAGE_TARGET_LIST = operator-sdk helm-operator ansible-operator scorecard-test scorecard-test-kuttl custom-scorecard-tests
+IMAGE_TARGET_LIST = operator-sdk helm-operator ansible-operator scorecard-test scorecard-test-kuttl
 image-push: $(foreach i,$(IMAGE_TARGET_LIST),image-push/$(i)) ## Push all images for the host architecture.
 image-push-multiarch: $(foreach i,$(IMAGE_TARGET_LIST),image-push-multiarch/$(i)) ## Push the manifest list for all architectures.
 
-# Push image for an architecture.
+# Push an image for an architecture.
 IMAGE_REPO ?= quay.io/operator-framework
 GO_ARCH := $(shell go env GOARCH)
 image-push/%: IMAGE_PUSH_TAG = $(IMAGE_REPO)/$*-$(GO_ARCH)
