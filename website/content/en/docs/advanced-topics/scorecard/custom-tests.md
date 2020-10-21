@@ -193,7 +193,7 @@ The SDK project makefile contains targets to build the sample custom test image.
 
 To build the sample custom test image, run:
 ```
-make image-build-custom-scorecard-tests
+make image/custom-scorecard-tests
 ```
 
 ### Running scorecard command

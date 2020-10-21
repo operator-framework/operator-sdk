@@ -15,7 +15,7 @@ website/tech-doc-hugo
 # samples bin
 testdata/go/memcached-operator/bin/*
 
-
+# Trash files
 *\.DS_Store
 
 # Created by https://www.toptal.com/developers/gitignore/api/go,vim,emacs,visualstudiocode
