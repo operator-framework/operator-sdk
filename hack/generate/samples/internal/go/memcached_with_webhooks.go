@@ -64,9 +64,6 @@ func (mh *MemcachedGoWithWebhooks) Run() {
 		mh.ctx.Domain)
 	pkg.CheckError("creating the project", err)
 
-	err = mh.ctx.Make("kustomize")
-	pkg.CheckError("error to scaffold api", err)
-
 	err = mh.ctx.CreateAPI(
 		"--group", mh.ctx.Group,
 		"--version", mh.ctx.Version,

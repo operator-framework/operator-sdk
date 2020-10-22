@@ -67,9 +67,6 @@ func (ma *MemcachedAnsible) Run() {
 		"--generate-playbook")
 	pkg.CheckError("creating the project", err)
 
-	err = ma.ctx.Make("kustomize")
-	pkg.CheckError("error to scaffold api", err)
-
 	log.Infof("customizing the sample")
 	err = testutils.UncommentCode(
 		filepath.Join(ma.ctx.Dir, "config", "default", "kustomization.yaml"),
