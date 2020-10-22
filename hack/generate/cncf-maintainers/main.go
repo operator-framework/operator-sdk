@@ -39,6 +39,8 @@ func main() {
 		for _, alias := range ownersAliases {
 			if members, ok := aliases.Aliases[alias]; ok {
 				expandedOwners[group].Insert(members...)
+			} else {
+				log.Fatalf("alias %q is listed in OWNERS group %q but was not found in OWNERS_ALIASES", alias, group)
 			}
 		}
 	}
