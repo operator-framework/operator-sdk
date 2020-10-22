@@ -74,7 +74,7 @@ func (i *Install) setup() error {
 	}
 
 	i.OperatorInstaller.PackageName = pkg.PackageName
-	i.OperatorInstaller.CatalogSourceName = fmt.Sprintf("%s-catalog", i.OperatorInstaller.PackageName)
+	i.OperatorInstaller.CatalogSourceName = operator.CatalogNameForPackage(i.OperatorInstaller.PackageName)
 	i.OperatorInstaller.StartingCSV = bundle.CSV.GetName()
 	i.OperatorInstaller.SupportedInstallModes = operator.GetSupportedInstallModes(bundle.CSV.Spec.InstallModes)
 
