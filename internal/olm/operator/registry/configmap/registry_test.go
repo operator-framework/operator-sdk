@@ -1,0 +1,458 @@
+// Copyright 2020 The Operator-SDK Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package configmap
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/blang/semver"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+	"github.com/operator-framework/api/pkg/lib/version"
+	"github.com/operator-framework/api/pkg/manifests"
+	apimanifests "github.com/operator-framework/api/pkg/manifests"
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"github.com/operator-framework/operator-sdk/internal/olm/client"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+)
+
+var _ = Describe("Registry", func() {
+
+	Describe("makeRegistryLabels", func() {
+		It("should return the registry label", func() {
+			labels := map[string]string{
+				"package-name": k8sutil.TrimDNS1123Label("pkgName"),
+			}
+			for k, v := range SDKLabels {
+				labels[k] = v
+			}
+
+			Expect(makeRegistryLabels("pkgName")).Should(Equal(labels))
+		})
+	})
+
+	Describe("GetRegistryServiceAddr", func() {
+		It("should return a Service's DNS name + port for a given pkgName and namespace", func() {
+			name := getRegistryServerName("pkgName")
+
+			Expect(GetRegistryServiceAddr("pkgName", "testns")).Should(Equal(fmt.Sprintf("%s.%s.svc.cluster.local:%d", name, "testns", registryGRPCPort)))
+		})
+	})
+
+	Describe("IsRegistryExist and DeletePackageManifestsRegistry", func() {
+		It("should delete the package manifest registry", func() {
+			pkgName := "pkgName"
+			testns := "testns"
+			fakeclient := fake.NewFakeClient(
+				&corev1.ConfigMapList{
+					Items: []corev1.ConfigMap{
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Namespace: testns,
+								Labels:    makeRegistryLabels("test"),
+							},
+						},
+					},
+				},
+				newRegistryDeployment(pkgName, testns),
+				newRegistryService(pkgName, testns),
+			)
+			rr := RegistryResources{
+				Pkg: &manifests.PackageManifest{
+					PackageName: "pkgName",
+					Channels: []manifests.PackageChannel{
+						manifests.PackageChannel{
+							Name: "pkgChannelTest",
+						},
+					},
+				},
+				Bundles: []*apimanifests.Bundle{
+					{
+						Name: "testbundle",
+						Objects: []*unstructured.Unstructured{
+							{
+								Object: map[string]interface{}{"val1": "val1"},
+							},
+							{
+								Object: map[string]interface{}{"val2": "va2"},
+							},
+						},
+						CSV: &v1alpha1.ClusterServiceVersion{
+							Spec: v1alpha1.ClusterServiceVersionSpec{
+								Version: version.OperatorVersion{
+									Version: semver.SpecVersion,
+								},
+							},
+						},
+					},
+				},
+				Client: &client.Client{
+					KubeClient: fakeclient,
+				},
+			}
+			dep := appsv1.Deployment{}
+			err := rr.Client.KubeClient.Get(context.TODO(), types.NamespacedName{Name: getRegistryServerName("pkgName"), Namespace: testns}, &dep)
+			Expect(err).Should(BeNil())
+
+			rr.DeletePackageManifestsRegistry(context.TODO(), testns)
+			err = rr.Client.KubeClient.Get(context.TODO(), types.NamespacedName{Name: "pkgName-registry-server", Namespace: testns}, &dep)
+
+			Expect(apierrors.IsNotFound(err)).Should(BeTrue())
+		})
+	})
+
+	Describe("IsRegistryExist", func() {
+		var (
+			pkgName string
+			testns  string
+			rr      RegistryResources
+		)
+		BeforeEach(func() {
+			pkgName = "pkgName"
+			testns = "testns"
+			fakeclient := fake.NewFakeClient(
+				&corev1.ConfigMapList{
+					Items: []corev1.ConfigMap{
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Namespace: testns,
+								Labels:    makeRegistryLabels("test"),
+							},
+						},
+					},
+				},
+				newRegistryDeployment(pkgName, testns),
+				newRegistryService(pkgName, testns),
+			)
+			rr = RegistryResources{
+				Pkg: &manifests.PackageManifest{
+					PackageName: "pkgName",
+					Channels: []manifests.PackageChannel{
+						manifests.PackageChannel{
+							Name: "pkgChannelTest",
+						},
+					},
+				},
+				Bundles: []*apimanifests.Bundle{
+					{
+						Name: "testbundle",
+						Objects: []*unstructured.Unstructured{
+							{
+								Object: map[string]interface{}{"val1": "val1"},
+							},
+							{
+								Object: map[string]interface{}{"val2": "va2"},
+							},
+						},
+						CSV: &v1alpha1.ClusterServiceVersion{
+							Spec: v1alpha1.ClusterServiceVersionSpec{
+								Version: version.OperatorVersion{
+									Version: semver.SpecVersion,
+								},
+							},
+						},
+					},
+				},
+				Client: &client.Client{
+					KubeClient: fakeclient,
+				},
+			}
+		})
+
+		It("should return true if a deployment exitsts in the registry", func() {
+			temp, err := rr.IsRegistryExist(context.TODO(), testns)
+			Expect(err).Should(BeNil())
+			Expect(temp).Should(BeTrue())
+		})
+
+		It("should return false if a deployment does not exitst in the registry", func() {
+			rr.DeletePackageManifestsRegistry(context.TODO(), testns)
+			temp, err := rr.IsRegistryExist(context.TODO(), testns)
+
+			Expect(err).Should(BeNil())
+			Expect(temp).Should(BeFalse())
+		})
+	})
+
+	Describe("IsRegistryDataStale", func() {
+		var (
+			pkgName string
+			testns  string
+			rr      RegistryResources
+		)
+		BeforeEach(func() {
+			pkgName = "pkgName"
+			testns = "testns"
+			fakeclient := fake.NewFakeClient(
+				&corev1.ConfigMapList{
+					Items: []corev1.ConfigMap{
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Name:      "config1",
+								Namespace: testns,
+								Labels:    makeRegistryLabels(pkgName),
+							},
+						},
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Name:      "config2",
+								Namespace: testns,
+								Labels:    makeRegistryLabels(pkgName),
+							},
+						},
+					},
+				},
+				newRegistryDeployment(pkgName, testns),
+				newRegistryService(pkgName, testns),
+			)
+			rr = RegistryResources{
+				Pkg: &manifests.PackageManifest{
+					PackageName: pkgName,
+					Channels: []manifests.PackageChannel{
+						manifests.PackageChannel{
+							Name: "pkgChannelTest",
+						},
+					},
+				},
+				Bundles: []*apimanifests.Bundle{
+					{
+						Package: pkgName,
+						Name:    "testbundle",
+						Objects: []*unstructured.Unstructured{
+							{
+								Object: map[string]interface{}{"val1": "val1"},
+							},
+							{
+								Object: map[string]interface{}{"val2": "va2"},
+							},
+						},
+						CSV: &v1alpha1.ClusterServiceVersion{
+							Spec: v1alpha1.ClusterServiceVersionSpec{
+								Version: version.OperatorVersion{
+									Version: semver.SpecVersion,
+								},
+							},
+						},
+					},
+				},
+				Client: &client.Client{
+					KubeClient: fakeclient,
+				},
+			}
+		})
+
+		It("should return true if a registry is stale if there are no configmaps in the cluster", func() {
+			fakeclient := fake.NewFakeClient()
+			rr.Client.KubeClient = fakeclient
+			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
+			Expect(temp).Should(BeTrue())
+			Expect(err).Should(BeNil())
+		})
+
+		It("should return true if a registry is stale", func() {
+			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
+			Expect(temp).Should(BeTrue())
+			Expect(err).Should(BeNil())
+		})
+
+		It("should return true if a registry is stale", func() {
+			fakeclient := fake.NewFakeClient(
+				&corev1.ConfigMapList{
+					Items: []corev1.ConfigMap{
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Name:      getRegistryConfigMapName(pkgName) + "-package",
+								Namespace: testns,
+								Labels:    makeRegistryLabels(pkgName),
+							},
+						},
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Name:      "config2",
+								Namespace: testns,
+								Labels:    makeRegistryLabels(pkgName),
+							},
+						},
+					},
+				},
+				newRegistryDeployment(pkgName, testns),
+				newRegistryService(pkgName, testns),
+			)
+			rr.Client.KubeClient = fakeclient
+			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
+			Expect(temp).Should(BeTrue())
+			Expect(err).Should(BeNil())
+		})
+
+		It("should return true if the binary data does not have a filekey", func() {
+			binarydata, err := makeObjectBinaryData(struct {
+				val1 string
+				val2 string
+			}{
+				val1: "val1",
+				val2: "val2",
+			}, "userInput")
+			fakeclient := fake.NewFakeClient(
+				&corev1.ConfigMapList{
+					Items: []corev1.ConfigMap{
+						{
+							BinaryData: binarydata,
+							ObjectMeta: metav1.ObjectMeta{
+								Name:      getRegistryConfigMapName(pkgName) + "-package",
+								Namespace: testns,
+								Labels:    makeRegistryLabels(pkgName),
+							},
+						},
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Name:      "config2",
+								Namespace: testns,
+								Labels:    makeRegistryLabels(pkgName),
+							},
+						},
+					},
+				},
+				newRegistryDeployment(pkgName, testns),
+				newRegistryService(pkgName, testns),
+			)
+			rr.Client.KubeClient = fakeclient
+			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
+			Expect(temp).Should(BeTrue())
+			Expect(err).Should(BeNil())
+		})
+
+		It("should return true if the binary data does not have a filekey", func() {
+			binarydata, err := makeObjectBinaryData(&manifests.PackageManifest{
+				PackageName: pkgName,
+				Channels: []manifests.PackageChannel{
+					manifests.PackageChannel{
+						Name: "pkgChannelTest",
+					},
+				},
+			})
+			fakeclient := fake.NewFakeClient(
+				&corev1.ConfigMapList{
+					Items: []corev1.ConfigMap{
+						{
+							BinaryData: binarydata,
+							ObjectMeta: metav1.ObjectMeta{
+								Name:      getRegistryConfigMapName(pkgName) + "-package",
+								Namespace: testns,
+								Labels:    makeRegistryLabels(pkgName),
+							},
+						},
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Name:      getRegistryConfigMapName("pkgName2") + "-package",
+								Namespace: testns,
+								Labels:    makeRegistryLabels("pkgName"),
+							},
+						},
+					},
+				},
+				newRegistryDeployment(pkgName, testns),
+				newRegistryService(pkgName, testns),
+			)
+			rr.Client.KubeClient = fakeclient
+			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
+			Expect(temp).Should(BeTrue())
+			Expect(err).Should(BeNil())
+		})
+	})
+
+	// Describe("CreatePackageManifestsRegistry", func() {
+	// 	var (
+	// 		pkgName string
+	// 		testns  string
+	// 		rr      RegistryResources
+	// 		cs      v1alpha1.CatalogSource
+	// 	)
+	// 	BeforeEach(func() {
+	// 		pkgName = "pkgName"
+	// 		testns = "testns"
+	// 		fakeclient := fake.NewFakeClient(
+	// 			&cs,
+	// 			&corev1.ConfigMapList{
+	// 				Items: []corev1.ConfigMap{
+	// 					{
+	// 						ObjectMeta: metav1.ObjectMeta{
+	// 							Name:      "config1",
+	// 							Namespace: testns,
+	// 							Labels:    makeRegistryLabels(pkgName),
+	// 						},
+	// 					},
+	// 					{
+	// 						ObjectMeta: metav1.ObjectMeta{
+	// 							Name:      "config2",
+	// 							Namespace: testns,
+	// 							Labels:    makeRegistryLabels(pkgName),
+	// 						},
+	// 					},
+	// 				},
+	// 			},
+	// 			newRegistryDeployment(pkgName, testns),
+	// 			newRegistryService(pkgName, testns),
+	// 		)
+	// 		rr = RegistryResources{
+	// 			Pkg: &manifests.PackageManifest{
+	// 				PackageName: pkgName,
+	// 				Channels: []manifests.PackageChannel{
+	// 					manifests.PackageChannel{
+	// 						Name: "pkgChannelTest",
+	// 					},
+	// 				},
+	// 			},
+	// 			Bundles: []*apimanifests.Bundle{
+	// 				{
+	// 					Package: pkgName,
+	// 					Name:    "testbundle",
+	// 					Objects: []*unstructured.Unstructured{
+	// 						{
+	// 							Object: map[string]interface{}{"val1": "val1"},
+	// 						},
+	// 						{
+	// 							Object: map[string]interface{}{"val2": "va2"},
+	// 						},
+	// 					},
+	// 					CSV: &v1alpha1.ClusterServiceVersion{
+	// 						Spec: v1alpha1.ClusterServiceVersionSpec{
+	// 							Version: version.OperatorVersion{
+	// 								Version: semver.SpecVersion,
+	// 							},
+	// 						},
+	// 					},
+	// 				},
+	// 			},
+	// 			Client: &client.Client{
+	// 				KubeClient: fakeclient,
+	// 			},
+	// 		}
+	// 	})
+	// 	It("abcdefghijklmnopqrstuvwxyz", func() {
+	// 		rr.CreatePackageManifestsRegistry(context.TODO(), &cs, testns)
+
+	// 		fmt.Printf("\n\n%+v", cs)
+	// 	})
+	// })
+
+})
