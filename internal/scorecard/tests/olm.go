@@ -236,10 +236,6 @@ func checkOwnedCSVStatusDescriptor(cr unstructured.Unstructured, csv *operatorsv
 
 	var crd *operatorsv1alpha1.CRDDescription
 
-	if cr.Object[statusDescriptor] == nil {
-		r.Suggestions = append(r.Suggestions, fmt.Sprintf("Status field can be added to the CR %s", cr.GetName()))
-	}
-
 	for _, owned := range csv.Spec.CustomResourceDefinitions.Owned {
 		if owned.Kind == cr.GetKind() {
 			crd = &owned
