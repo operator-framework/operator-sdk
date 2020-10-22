@@ -20,7 +20,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 	"text/template"
 
 	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
@@ -32,6 +31,9 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scorecard"
 	"github.com/operator-framework/operator-sdk/internal/version"
 )
+
+// scorecardVersion is set to the version of scorecard at compile-time.
+var scorecardVersion = version.ImageVersion
 
 const (
 	// kustomization.yaml file template for the scorecard componentconfig. This should always be written to
@@ -63,8 +65,7 @@ const (
 )
 
 // defaultTestImageTag points to the latest-released image.
-var defaultTestImageTag = fmt.Sprintf("quay.io/operator-framework/scorecard-test:%s",
-	strings.TrimSuffix(version.Version, "+git"))
+var defaultTestImageTag = fmt.Sprintf("quay.io/operator-framework/scorecard-test:%s", scorecardVersion)
 
 // defaultDir is the default directory in which to generate kustomize bases and the kustomization.yaml.
 var defaultDir = filepath.Join("config", "scorecard")

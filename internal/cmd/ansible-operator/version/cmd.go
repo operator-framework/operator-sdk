@@ -40,5 +40,5 @@ func run() {
 		version = ver.Version
 	}
 	fmt.Printf("ansible-operator version: %q, commit: %q, kubernetes version: %q, go version: %q, GOOS: %q, GOARCH: %q\n",
-		version, ver.GitCommit, ver.KubernetesVersion, ver.GoVersion, runtime.GOOS, runtime.GOARCH)
+		version, ver.GitCommit, ver.KubernetesVersion, runtime.Version(), runtime.GOOS, runtime.GOARCH)
 }

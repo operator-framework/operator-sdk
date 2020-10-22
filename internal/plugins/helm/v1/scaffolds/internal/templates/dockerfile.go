@@ -15,6 +15,8 @@
 package templates
 
 import (
+	"errors"
+
 	"sigs.k8s.io/kubebuilder/pkg/model/file"
 )
 
@@ -24,7 +26,7 @@ var _ file.Template = &Dockerfile{}
 type Dockerfile struct {
 	file.TemplateMixin
 
-	// HelmOperatorVersion is the version of the base image and operator binary used in the project
+	// HelmOperatorVersion is the version of the Dockerfile's base image.
 	HelmOperatorVersion string
 }
 
@@ -35,6 +37,10 @@ func (f *Dockerfile) SetTemplateDefaults() error {
 	}
 
 	f.TemplateBody = dockerfileTemplate
+
+	if f.HelmOperatorVersion == "" {
+		return errors.New("helm-operator version is required in scaffold")
+	}
 
 	return nil
 }
