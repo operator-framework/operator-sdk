@@ -16,6 +16,7 @@ package cleanup
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -45,10 +46,16 @@ func NewCmd() *cobra.Command {
 			ctx, cancel := context.WithTimeout(cmd.Context(), timeout)
 			defer cancel()
 
-			if err := u.Run(ctx); err != nil {
-				log.Fatalf("Uninstall operator: %v\n", err)
+			err := u.Run(ctx)
+			var pkgErr *operator.ErrPackageNotFound
+			switch {
+			case errors.As(err, &pkgErr):
+				log.Warnf("Cleanup operator: %v\n", pkgErr)
+			case err != nil:
+				log.Fatalf("Cleanup operator: %v\n", err)
+			default:
+				log.Infof("Operator %q uninstalled\n", u.Package)
 			}
-			log.Infof("Operator %q uninstalled\n", u.Package)
 		},
 	}
 	cmd.Flags().DurationVar(&timeout, "timeout", 2*time.Minute, "Time to wait for the command to complete before failing")
