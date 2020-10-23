@@ -91,9 +91,6 @@ func (mh *MemcachedHelm) Run() {
 		"--helm-chart", helmChartPath)
 	pkg.CheckError("scaffolding apis", err)
 
-	err = mh.ctx.Make("kustomize")
-	pkg.CheckError("running make kustomize", err)
-
 	log.Infof("customizing the sample")
 	log.Infof("enabling prometheus metrics")
 	err = testutils.UncommentCode(
