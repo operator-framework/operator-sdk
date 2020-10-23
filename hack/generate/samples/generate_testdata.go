@@ -27,11 +27,14 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/testutils"
 )
 
-var (
-	binaryName string
-)
-
 func main() {
+	// testdata is the path where all samples should be generate
+	const testdata = "/testdata/"
+
+	// binaryName allow inform the binary that should be used.
+	// By default it is operator-sdk
+	var binaryName string
+
 	flag.StringVar(&binaryName, "bin", testutils.BinaryName, "Binary path that should be used")
 	flag.Parse()
 
@@ -41,7 +44,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	samplesPath := filepath.Join(currentPath, "testdata")
+	samplesPath := filepath.Join(currentPath, testdata)
 	log.Infof("using the path: (%v)", samplesPath)
 
 	log.Infof("creating Helm Memcached Sample")

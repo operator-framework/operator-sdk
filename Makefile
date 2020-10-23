@@ -32,7 +32,7 @@ export PATH := $(PWD)/$(BUILD_DIR):$(PWD)/$(TOOLS_DIR):$(PATH)
 generate: build # Generate CLI docs and samples
 	go run ./hack/generate/cncf-maintainers/main.go
 	go run ./hack/generate/cli-doc/gen-cli-doc.go
-	go run ./hack/generate/samples/generate_all.go
+	go run ./hack/generate/samples/generate_testdata.go
 
 .PHONY: bindata
 OLM_VERSION=0.15.1
