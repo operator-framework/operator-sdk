@@ -1,0 +1,165 @@
+name: CI
+on:
+  pull_request: {}
+  push:
+    branches:
+    - master
+    tags:
+    - v[0-9]+.[0-9]+.[0-9]+
+
+jobs:
+  ##
+  ## Stage 1
+  ##
+  test-sanity:
+    name: sanity
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/setup-go@v2
+      with:
+        go-version: 1.15
+      id: go
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - run: make test-sanity
+
+  test-links:
+    name: doc links
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+        submodules: recursive
+    - run: make test-links
+
+  ##
+  ## Stage 2
+  ##
+  ansible:
+    needs: [test-sanity, test-links]
+    name: ansible e2e
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.15
+      - run: |
+          sudo apt-get install python3 python3-pip
+          pip3 install --upgrade setuptools pip
+          pip install --user ansible~=2.9.13
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - run: make test-e2e-ansible test-e2e-ansible-molecule
+
+  integration:
+    needs: [ test-sanity, test-links ]
+    name: subcommand and integration
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.15
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - run: make test-e2e-integration
+
+  go:
+    needs: [test-sanity, test-links]
+    name: go unit and e2e
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.15
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - run: make test-unit test-e2e-go
+      - uses: shogo82148/actions-goveralls@v1
+        with:
+          path-to-profile: coverage.out
+
+  helm:
+    needs: [test-sanity, test-links]
+    name: helm e2e
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.15
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - run: make test-e2e-helm
+
+#  deploy-helm:
+#    name: deploy / helm-operator
+#    if: github.event_name == 'push'
+#    runs-on: ubuntu-latest
+#    needs:
+#    - sanity-checks
+#    - unit-tests
+#    - marker-test
+#    - go
+#    - subcommands
+#    - helm
+#    - ansible
+#    - ansible-molecule
+#    steps:
+#    - name: Set up Go 1.13
+#      uses: actions/setup-go@v1
+#      with:
+#        go-version: 1.13
+#      id: go
+#    - name: Check out code into the Go module directory
+#      uses: actions/checkout@v1
+#    - name: Build SDK binary
+#      run: make install
+#    - name: Build helm-operator base image
+#      run: |
+#        export PATH=$(go env GOPATH)/bin:$PATH
+#        make image-build-helm
+#    - name: Push helm-operator base image
+#      run: make image-push-helm
+#      env: # Or as an environment variable
+#        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+#        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+#        HELM_IMAGE:      ${{ secrets.HELM_IMAGE }}
+#
+#  deploy-ansible:
+#    name: deploy / ansible-operator
+#    if: github.event_name == 'push'
+#    runs-on: ubuntu-latest
+#    needs:
+#    - sanity-checks
+#    - unit-tests
+#    - marker-test
+#    - go
+#    - subcommands
+#    - helm
+#    - ansible
+#    - ansible-molecule
+#    steps:
+#    - name: Set up Go 1.13
+#      uses: actions/setup-go@v1
+#      with:
+#        go-version: 1.13
+#      id: go
+#    - name: Check out code into the Go module directory
+#      uses: actions/checkout@v1
+#    - name: Build SDK binary
+#      run: make install
+#    - name: Build ansible-operator base image
+#      run: |
+#        export PATH=$(go env GOPATH)/bin:$PATH
+#        make image-build-ansible
+#    - name: Push ansible-operator base image
+#      run: make image-push-ansible
+#      env: # Or as an environment variable
+#        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+#        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+#        ANSIBLE_IMAGE:   ${{ secrets.ANSIBLE_IMAGE }}
