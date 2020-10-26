@@ -247,7 +247,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 			log.Error(err, "Release failed")
 			status.SetCondition(types.HelmAppCondition{
 				Type:    types.ConditionReleaseFailed,
-				Status:  types.StatusTrue,
+				Status:  types.StatusFalse,
 				Reason:  types.ReasonUpgradeError,
 				Message: err.Error(),
 			})
