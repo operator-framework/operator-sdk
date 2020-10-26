@@ -1,97 +1,83 @@
 ---
-title: Development Environment
-weight: 30
+title: Development
+linkTitle: Development
+weight: 1
 ---
 
-This document explains how to setup your dev environment.
+## Installation
 
-## Prerequisites
+### Prerequisites
+
 - [git][git-tool]
-- [go][go-tool] version v1.13+
+- [go][go-tool] v1.15+
 
-## Download Operator SDK
+### Download Operator SDK
 
-Go to the [Operator SDK repo][repo-sdk] and follow the [fork guide][fork-guide] to fork, clone, and setup the local operator-sdk repository.
+Go to the [operator-sdk repo][repo-sdk] and follow the [fork guide][fork-guide] to fork and set up a local repository.
 
-## Build the Operator SDK CLI
+### Build the Operator SDK CLI
 
 Build the Operator SDK CLI `operator-sdk` binary:
 
 ```sh
-$ make install
+make install
 ```
-
-Then, now you are able to test and use the operator-sdk build using the source code.
 
 ## Testing
 
-The SDK includes many tests that are run as part of CI.
-To build the binary and run all tests (assuming you have a correctly configured environment),
-you can simple run:
+See the [testing][dev-testing] and [documentation][dev-docs] guides for more information.
+
+## Releasing
+
+See the [release guide][dev-release] for more information.
+
+## Continuous Integration (CI)
+
+The operator-sdk repo uses [Travis CI][travis] to test each pull request and build images for both master commits
+and releases. You can alter these processes by modifying this [`.travis.yml`][travis.yml] config file.
+
+### Testing builds with new architectures
+
+Follow these steps to execute the Travis `Deploy` stage against your branch
+to demonstrate that the merge build will complete as expected.
+
+- Enable Travis in your fork repository. See [this guide][travis-setup] for more information.
+- Create public image repos for each image built by `make image-build`; make sure the registry used supports
+multi-arch images, like quay.io.
+  - For each image type, you need one repo for the manifest list and one for each architecture being tested.
+- Set each image variable (that ends in `_IMAGE`, not `_BASE_IMAGE`) found in the Makefile
+as an environment variable in `.travis.yml`, ex. `export SCORECARD_TEST_IMAGE=<registry>/<username>/scorecard-test:latest`
+- Create a PR with your configuration changes to _your_ fork, with the first commit message containing
+`[travis deploy]`.
+  - This commit is only for testing on your fork's PR. This commit/message should not be present in an operator-sdk
+  repo PR.
+- Ensure the image builds for that PR pass.
+- Create a PR to the operator-sdk repo with a description containing a link to the Travis build page
+showing a successful deployment stage with your changes.
+
+## Generating Samples
+
+To generate the samples run:
 
 ```sh
-$ make test-ci
+$ make samples
 ```
 
-If you simply want to run the unit tests, you can run:
+## Generating the docs
+
+To generate the CLI docs run:
 
 ```sh
-$ make test
+$ make cli-doc
 ```
-
-For more information on running testing and correctly configuring your environment,
-refer to the [`Running the Tests Locally`][running-the-tests] document. To incorporate code changes in your development environment see the [`Testing changes Locally`][testing-changes-locally] document.
-
-To run the lint checks done in the CI locally, run:
-
-```sh
-$ make lint
-```
-
-**NOTE** Note that for it is required to install `golangci-lint` locally. For more info see its [doc](https://github.com/golangci/golangci-lint#install)
-
-## How the operator-sdk binaries are built
-
-In the release process, the script [.release.sh][release-sh] is executed and it will call the [makefile][makefile] target [make release](https://github.com/operator-framework/operator-sdk/blob/master/Makefile#L113). To know more about the release process, see the [doc][release-doc] also see [operator-sdk releases](https://github.com/operator-framework/operator-sdk/releases).
-
-**NOTE** The Deploy stage (configured in [.travis.yml ][travis]) builds also execute the same [makefile][makefile] targets. This stage is executed against the master branch when a Pull Request is merged.
-
-## How to test the build of operator-sdk binaries
-
-Follow these steps to execute the Travis `Deploy` stage against your branch to demonstrate that the merge build will complete as expected.
-
-- Enable the Travis in your fork repository. For more info see [`To get started with Travis CI using GitHub`](https://docs.travis-ci.com/user/tutorial/#to-get-started-with-travis-ci-using-github) 
-- Create image repos in quay (or another registry that supports multi-arch images) for ansible, helm, and scorecard proxy. For each image type, you need repos for the manifest list and one for each architecture (e.g. `ansible-operator`, `ansible-operator-amd64`, `ansible-operator-s390x`, etc.)
-
-**NOTE** Be sure to make each repository public.
-
-- Set the following environment variables in the Travis settings for your fork:
-
-    - `ANSIBLE_IMAGE` docker image name (e.g. `quay.io/joelanford/ansible-operator`)
-    - `HELM_IMAGE` same as above, but for helm
-    - `SCORECARD_PROXY_IMAGE` same as above, but for scorecard proxy
-    - `DOCKER_USERNAME` credentials for your repo
-    - `DOCKER_PASSWORD` credentials for your repo
-    - `DOCKER_CLI_EXPERIMENTAL`  set to `enabled` 
-    - `COVERALLS_TOKEN`  token to integrate the project with `https://coveralls.io/`. So, enable your fork in `https://coveralls.io/` and generate a token to allow it. 
-
-- Make a commit with `[travis deploy]` in the commit message on the branch with the changes.
-- Check the travis build for your branch in your fork (not the PR build in the operator-sdk repo, since we don't allow PRs to build images in the `operator-framework` quay repo.)
-
-**NOTE** Post a link in the Pull Request to the Travis build page showing successful `Deploy` and `Deploy multi-arch manifest lists` stages with your changes.
-
-See the project [README][sdk-readme] for more details.
 
 [git-tool]:https://git-scm.com/downloads
 [go-tool]:https://golang.org/dl/
 [repo-sdk]:https://github.com/operator-framework/operator-sdk
 [fork-guide]:https://help.github.com/en/articles/fork-a-repo
-[docker-tool]:https://docs.docker.com/install/
-[kubectl-tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
-[sdk-readme]: https://github.com/operator-framework/operator-sdk/blob/master/README.md
-[running-the-tests]: ../testing/running-the-tests
-[testing-changes-locally]: ../local-changes 
-[makefile]: https://github.com/operator-framework/operator-sdk/blob/master/Makefile
-[travis]: https://github.com/operator-framework/operator-sdk/blob/master/.travis.yml
-[release-sh]: https://github.com/operator-framework/operator-sdk/blob/master/release.sh
-[release-doc]: ../release
+[dev-testing]: /docs/contribution-guidelines/testing
+[dev-docs]: /docs/contribution-guidelines/documentation
+[dev-release]: /docs/contribution-guidelines/releasing
+[travis]: https://docs.travis-ci.com/
+[travis.yml]: https://github.com/operator-framework/operator-sdk/blob/master/.travis.yml
+[travis-setup]: https://docs.travis-ci.com/user/tutorial/#to-get-started-with-travis-ci-using-github

@@ -16,11 +16,16 @@ code or manifests.
   -h, --help   help for generate
 ```
 
+### Options inherited from parent commands
+
+```
+      --verbose   Enable verbose logging
+```
+
 ### SEE ALSO
 
-* [operator-sdk](../operator-sdk)	 - An SDK for building operators with ease
+* [operator-sdk](../operator-sdk)	 - Development kit for building Kubernetes extensions and tools.
 * [operator-sdk generate bundle](../operator-sdk_generate_bundle)	 - Generates bundle data for the operator
-* [operator-sdk generate crds](../operator-sdk_generate_crds)	 - Generates CRDs for API's
-* [operator-sdk generate csv](../operator-sdk_generate_csv)	 - Generates a ClusterServiceVersion YAML file for the operator
-* [operator-sdk generate k8s](../operator-sdk_generate_k8s)	 - Generates Kubernetes code for custom resource
+* [operator-sdk generate kustomize](../operator-sdk_generate_kustomize)	 - Contains subcommands that generate operator-framework kustomize data for the operator
+* [operator-sdk generate packagemanifests](../operator-sdk_generate_packagemanifests)	 - Generates package manifests data for the operator
 

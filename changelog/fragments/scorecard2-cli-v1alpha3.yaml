@@ -1,6 +1,0 @@
-entries:
-  - description: >
-      The `alpha scorecard` subcommand now outputs results as a [scorecard.operatorframework.io/v1alpha3 Test](https://godoc.org/github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha3#Test)
-      instead of a [scorecard.operatorframework.io/v1alpha2 ScorecardOutput](https://godoc.org/github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2#ScorecardOutput). As a result, the `--list` argument
-      will now just output a list of tests, without associated labels.
-    kind: "change"

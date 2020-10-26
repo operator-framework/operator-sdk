@@ -19,7 +19,13 @@ operator-sdk version [flags]
   -h, --help   help for version
 ```
 
+### Options inherited from parent commands
+
+```
+      --verbose   Enable verbose logging
+```
+
 ### SEE ALSO
 
-* [operator-sdk](../operator-sdk)	 - An SDK for building operators with ease
+* [operator-sdk](../operator-sdk)	 - Development kit for building Kubernetes extensions and tools.
 

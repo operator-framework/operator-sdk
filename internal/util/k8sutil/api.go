@@ -18,9 +18,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"path"
 	"path/filepath"
-	"regexp"
 
 	"github.com/operator-framework/operator-registry/pkg/registry"
 	log "github.com/sirupsen/logrus"
@@ -111,7 +109,6 @@ func GetCustomResourceDefinitions(crdsDir string) (
 
 // DefinitionsForV1CustomResourceDefinitions returns definition keys for all
 // custom resource versions in each crd in crds.
-//nolint:lll
 func DefinitionsForV1CustomResourceDefinitions(crds ...apiextv1.CustomResourceDefinition) (keys []registry.DefinitionKey) {
 	for _, crd := range crds {
 		for _, ver := range crd.Spec.Versions {
@@ -128,7 +125,6 @@ func DefinitionsForV1CustomResourceDefinitions(crds ...apiextv1.CustomResourceDe
 
 // DefinitionsForV1beta1CustomResourceDefinitions returns definition keys for all
 // custom resource versions in each crd in crds.
-//nolint:lll
 func DefinitionsForV1beta1CustomResourceDefinitions(crds ...apiextv1beta1.CustomResourceDefinition) (keys []registry.DefinitionKey) {
 	for _, crd := range crds {
 		if len(crd.Spec.Versions) == 0 {
@@ -166,7 +162,6 @@ func GVKsForV1CustomResourceDefinitions(crds ...apiextv1.CustomResourceDefinitio
 
 // GVKsForV1beta1CustomResourceDefinitions returns GroupVersionKind's for all
 // custom resource versions in each crd in crds.
-//nolint:lll
 func GVKsForV1beta1CustomResourceDefinitions(crds ...apiextv1beta1.CustomResourceDefinition) (gvks []schema.GroupVersionKind) {
 	for _, key := range DefinitionsForV1beta1CustomResourceDefinitions(crds...) {
 		gvks = append(gvks, schema.GroupVersionKind{
@@ -178,84 +173,6 @@ func GVKsForV1beta1CustomResourceDefinitions(crds ...apiextv1beta1.CustomResourc
 	return gvks
 }
 
-// ParseGroupSubpackages parses the apisDir directory tree and returns a map of
-// all found API groups to subpackages.
-func ParseGroupSubpackages(apisDir string) (map[string][]string, error) {
-	return parseGroupSubdirs(apisDir, false)
-}
-
-// ParseGroupVersions parses the apisDir directory tree and returns a map of
-// all found API groups to versions.
-func ParseGroupVersions(apisDir string) (map[string][]string, error) {
-	return parseGroupSubdirs(apisDir, true)
-}
-
-// versionRegexp defines a kube-like version:
-// https://kubernetes.io/docs/concepts/overview/kubernetes-api/#api-versioning
-var versionRegexp = regexp.MustCompile("^v[1-9][0-9]*((alpha|beta)[1-9][0-9]*)?$")
-
-// parseGroupSubdirs searches apisDir for all groups and potential version
-// subdirs directly beneath each group dir, and returns a map of each group
-// dir name to all children version dir names. If strictVersionMatch is true,
-// all potential version dir names must strictly match versionRegexp. If
-// false, all subdir names are considered valid.
-func parseGroupSubdirs(apisDir string, strictVersionMatch bool) (map[string][]string, error) {
-	gvs := make(map[string][]string)
-	groups, err := ioutil.ReadDir(apisDir)
-	if err != nil {
-		return nil, fmt.Errorf("error reading directory %q to find API groups: %v", apisDir, err)
-	}
-
-	for _, g := range groups {
-		if g.IsDir() {
-			groupDir := filepath.Join(apisDir, g.Name())
-			versions, err := ioutil.ReadDir(groupDir)
-			if err != nil {
-				return nil, fmt.Errorf("error reading directory %q to find API versions: %v", groupDir, err)
-			}
-
-			gvs[g.Name()] = make([]string, 0)
-			for _, v := range versions {
-				if v.IsDir() {
-					// Ignore directories that do not contain any files, so generators
-					// do not get empty directories as arguments.
-					verDir := filepath.Join(groupDir, v.Name())
-					files, err := ioutil.ReadDir(verDir)
-					if err != nil {
-						return nil, fmt.Errorf("error reading directory %q to find API source files: %v", verDir, err)
-					}
-					for _, f := range files {
-						if !f.IsDir() && filepath.Ext(f.Name()) == ".go" {
-							// If strictVersionMatch is true, strictly check if v.Name()
-							// is a Kubernetes API version.
-							if !strictVersionMatch || versionRegexp.MatchString(v.Name()) {
-								gvs[g.Name()] = append(gvs[g.Name()], v.Name())
-							}
-							break
-						}
-					}
-				}
-			}
-		}
-	}
-
-	if len(gvs) == 0 {
-		return nil, fmt.Errorf("no groups or versions found in %s", apisDir)
-	}
-	return gvs, nil
-}
-
-// CreateFQAPIs return a slice of all fully qualified pkg + groups + versions
-// of pkg and gvs in the format "pkg/groupA/v1".
-func CreateFQAPIs(pkg string, gvs map[string][]string) (apis []string) {
-	for g, vs := range gvs {
-		for _, v := range vs {
-			apis = append(apis, path.Join(pkg, g, v))
-		}
-	}
-	return apis
-}
-
 type CRDVersions []apiextv1beta1.CustomResourceDefinitionVersion
 
 func (vs CRDVersions) Len() int { return len(vs) }
@@ -264,17 +181,15 @@ func (vs CRDVersions) Less(i, j int) bool {
 }
 func (vs CRDVersions) Swap(i, j int) { vs[i], vs[j] = vs[j], vs[i] }
 
-//nolint:lll
 func Convertv1beta1Tov1CustomResourceDefinition(in *apiextv1beta1.CustomResourceDefinition) (*apiextv1.CustomResourceDefinition, error) {
 	var unversioned apiext.CustomResourceDefinition
-	//nolint:lll
 	if err := apiextv1beta1.Convert_v1beta1_CustomResourceDefinition_To_apiextensions_CustomResourceDefinition(in, &unversioned, nil); err != nil {
 		return nil, err
 	}
+
 	var out apiextv1.CustomResourceDefinition
 	out.TypeMeta.APIVersion = apiextv1.SchemeGroupVersion.String()
 	out.TypeMeta.Kind = "CustomResourceDefinition"
-	//nolint:lll
 	if err := apiextv1.Convert_apiextensions_CustomResourceDefinition_To_v1_CustomResourceDefinition(&unversioned, &out, nil); err != nil {
 		return nil, err
 	}

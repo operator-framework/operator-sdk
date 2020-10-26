@@ -1,36 +1,15 @@
 os: linux
-branches:
-  except:
-    - release-4.2
-    - release-4.3
-
-language: go
-go_import_path: github.com/operator-framework/operator-sdk
-
-# go modules require xenial for mercurial TLS 1.2 support
 dist: xenial
 
-# Python 3.6 is the default Python when language: python.
-# But when not language: python, Python 3 can not be used by default.
-# There is pip (/usr/bin/pip), but not pip3.
-# Because of it the global env is required.
-env:
-  global:
-    - PATH=/opt/python/3.6.7/bin:$PATH
-
-# Install python3 and utilities dependencies
-addons:
-  apt:
-    packages:
-      - "python3"
-      - "python3-pip"
+language: go
+go:
+- 1.15.x
+go_import_path: github.com/operator-framework/operator-sdk
 
 cache:
   directories:
-    - $HOME/.cache/go-build
-
-go:
-- 1.13.x
+    - ${HOME}/.cache/go-build
+    - $(go env GOPATH)/pkg/mod
 
 # The `x_base_steps` top-level key is unknown to travis,
 # so we can use it to create a bunch of common build step
@@ -38,22 +17,12 @@ go:
 x_base_steps:
   # Base go, ansbile, and helm job
   - &test
-    env:
-    - CLUSTER=k8s
-    # before_install for jobs that require go builds and do not run for doc-only changes
     before_install:
       # hack/ci/check-doc-only-update.sh needs to be sourced so
       # that it can properly exit the test early with success
       - source hack/ci/check-doc-only-update.sh
-      - travis_retry make tidy
-    install:
-      - make install
-      - make setup-k8s
-      - export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
-    after_success:
-      - echo "Build succeeded, operator was generated, memcached operator is running on $CLUSTER, and unit/integration tests pass"
+      - git fetch origin --unshallow --tags
     after_failure:
-      - echo "Build failed, operator failed to generate, memcached operator is not running on $CLUSTER, or unit/integration tests failed"
       - kubectl get all --all-namespaces
       - kubectl get events --all-namespaces --field-selector=type=Warning
     services:
@@ -62,31 +31,18 @@ x_base_steps:
   # Base deploy job
   - &deploy
     before_install:
-      - travis_retry make tidy
-    install: make install
-    before_script:
-      - git config remote.origin.fetch +refs/heads/*:refs/remotes/origin/*
-      - git fetch --unshallow --tags
-    after_success:
-      - echo "Image build succeeded, and docker image tagged and pushed to repository"
-    after_failure:
-      - echo "Image build, docker image tagging, or docker image pushing to repository failed"
+      - git fetch origin --unshallow --tags
     services:
       - docker
 
   # Manifest list deploy job
   - &manifest-deploy
     before_script:
-      - git config remote.origin.fetch +refs/heads/*:refs/remotes/origin/*
-      - git fetch --unshallow --tags
+      - git fetch origin --unshallow --tags
       # TODO: remove the chmod command when docker-ce on travis is upgraded to 18.09.0+.
       # We need /etc/docker to be accessible to non-root users.
       # See https://github.com/moby/moby/pull/37847.
       - sudo chmod 0755 /etc/docker
-    after_success:
-      - echo "Manifest list push to registry succeeded"
-    after_failure:
-      - echo "Manifest list creation or push to registry failed"
     services:
       - docker
 
@@ -105,12 +61,14 @@ jobs:
 
     # Run the sanity tests
     - stage: check
-      name: Sanity Tests
+      name: sanity
+      before_install:
+        - git fetch origin --unshallow --tags
       script:
         - make test-sanity
 
     # Run website checks
-    - name: Doc Checks
+    - name: doc links
       script:
         - make test-links
 
@@ -118,206 +76,78 @@ jobs:
 
     # Build and test ansible and test ansible using molecule
     - stage: test
+      name: ansible e2e
       <<: *test
-      name: Ansible on Kubernetes
+      env:
+        # Required to set python3 as the default python interpreter.
+        - PATH=/opt/python/3.6.7/bin:${PATH}
       before_script:
+        - sudo apt-get install python3 python3-pip
         - pip3 install --upgrade setuptools pip
-        - pip install --user ansible
+        - pip install --user ansible~=2.9.13
       script:
-        - make test-e2e-ansible
-        - make test-e2e-ansible-molecule
+        - make test-e2e-ansible test-e2e-ansible-molecule
 
     # Test subcommands
-    - <<: *test
-      name: Subcommands on Kubernetes
-      script: make test-subcommand
+    - name: subcommand and integration
+      <<: *test
+      script:
+      - make test-e2e-integration
 
-    # Build and test go for legacy project layouts
-    - <<: *test
-      name: Go for legacy project layouts on Kubernetes
+    # Build and test go
+    - name: go unit and e2e
+      <<: *test
       before_script:
       - (cd / && go get github.com/mattn/goveralls)
       script:
       - make test-unit
       - make test-e2e-go
-      - make test-integration
       after_success:
       - $GOPATH/bin/goveralls -service=travis-ci -coverprofile=coverage.out -repotoken=$COVERALLS_TOKEN
 
-    # Build and test go for new project layouts
-    - name: Go e2e tests for new project layouts
-      before_install:
-      # hack/ci/check-doc-only-update.sh needs to be sourced so
-      # that it can properly exit the test early with success
-      - source hack/ci/check-doc-only-update.sh
-      script:
-      - make test-e2e-go-new
-      after_success:
-      - echo "E2E tests passed"
-      after_failure:
-      - echo "E2E tests failed"
-      - kubectl get all --all-namespaces
-      - kubectl get events --all-namespaces --field-selector=type=Warning
-      services:
-      - docker
-
     # Build and test helm
-    - <<: *test
-      name: Helm on Kubernetes
+    - name: helm e2e
+      <<: *test
       script: make test-e2e-helm
 
     ## Image deploy/push stage jobs ##
 
-    # Build and deploy arm64 ansible-operator docker image
+    # Build and deploy arm64 docker images
     - stage: deploy
+      name: build and push images
+      arch: arm64
       <<: *deploy
-      name: Docker image for ansible-operator (arm64)
-      arch: arm64
       script:
-        - make image-build-ansible
-        - make image-push-ansible
+        - make image-build
+        - make -f release/Makefile image-push
 
-    # Build and deploy amd64 ansible-operator docker image
-    - <<: *deploy
-      name: Docker image for ansible-operator (amd64)
+    # Build and deploy amd64 docker images
+    - name: build and push images
       arch: amd64
+      <<: *deploy
       script:
-        - make image-build-ansible
-        - make image-push-ansible
+        - make image-build
+        - make -f release/Makefile image-push
 
-    # Build and deploy ppc64le ansible-operator docker image
-    - <<: *deploy
-      name: Docker image for ansible-operator (ppc64le)
+    # Build and deploy ppc64le docker images
+    - name: build and push images
       arch: ppc64le
+      <<: *deploy
       script:
-        - make image-build-ansible
-        - make image-push-ansible
+        - make image-build
+        - make -f release/Makefile image-push
 
-    # Build and deploy s390x ansible-operator docker image
-    - <<: *deploy
-      name: Docker image for ansible-operator (s390x)
+    # Build and deploy s390x docker images
+    - name: build and push images
       arch: s390x
+      <<: *deploy
       script:
-        - make image-build-ansible
-        - make image-push-ansible
-
-    # Build and deploy arm64 helm-operator docker image
-    - <<: *deploy
-      name: Docker image for helm-operator (arm64)
-      arch: arm64
-      script:
-        - make image-build-helm
-        - make image-push-helm
-
-    # Build and deploy amd64 helm-operator docker image
-    - <<: *deploy
-      name: Docker image for helm-operator (amd64)
-      arch: amd64
-      script:
-        - make image-build-helm
-        - make image-push-helm
-
-    # Build and deploy ppc64le helm-operator docker image
-    - <<: *deploy
-      name: Docker image for helm-operator (ppc64le)
-      arch: ppc64le
-      script:
-        - make image-build-helm
-        - make image-push-helm
-
-    # Build and deploy s390x helm-operator docker image
-    - <<: *deploy
-      name: Docker image for helm-operator (s390x)
-      arch: s390x
-      script:
-        - make image-build-helm
-        - make image-push-helm
-
-    # Build and deploy arm64 scorecard-proxy docker image
-    - <<: *deploy
-      name: Docker image for scorecard-proxy (arm64)
-      arch: arm64
-      script:
-        - make image-build-scorecard-proxy
-        - make image-push-scorecard-proxy
-
-    # Build and deploy amd64 scorecard-proxy docker image
-    - <<: *deploy
-      name: Docker image for scorecard-proxy (amd64)
-      arch: amd64
-      script:
-        - make image-build-scorecard-proxy
-        - make image-push-scorecard-proxy
-
-    # Build and deploy ppc64le scorecard-proxy docker image
-    - <<: *deploy
-      name: Docker image for scorecard-proxy (ppc64le)
-      arch: ppc64le
-      script:
-        - make image-build-scorecard-proxy
-        - make image-push-scorecard-proxy
-
-    # Build and deploy s390x scorecard-proxy docker image
-    - <<: *deploy
-      name: Docker image for scorecard-proxy (s390x)
-      arch: s390x
-      script:
-        - make image-build-scorecard-proxy
-        - make image-push-scorecard-proxy
-
-    # Build and deploy arm64 scorecard-test docker image 
-    - <<: *deploy
-      name: Docker image for scorecard-test (arm64)
-      arch: arm64
-      script:
-        - make image-build-scorecard-test
-        - make image-push-scorecard-test
-
-    # Build and deploy amd64 scorecard-test docker image
-    - <<: *deploy
-      name: Docker image for scorecard-test (amd64)
-      arch: amd64
-      script:
-        - make image-build-scorecard-test
-        - make image-push-scorecard-test
-
-    # Build and deploy ppc64le scorecard-test docker image
-    - <<: *deploy
-      name: Docker image for scorecard-test (ppc64le)
-      arch: ppc64le
-      script:
-        - make image-build-scorecard-test
-        - make image-push-scorecard-test
-
-    # Build and deploy s390x scorecard-test docker image
-    - <<: *deploy
-      name: Docker image for scorecard-test (s390x)
-      arch: s390x
-      script:
-        - make image-build-scorecard-test
-        - make image-push-scorecard-test
+        # Use targets directly since kuttl doesn't support s390x.
+        - make image/ansible-operator image/helm-operator image/operator-sdk image/scorecard-test
+        - make -f release/Makefile image-push/ansible-operator image-push/helm-operator image-push/operator-sdk image-push/scorecard-test
 
     # Build and deploy ansible multi-arch manifest list
     - stage: deploy-manifest-multiarch
+      name: push manifest lists
       <<: *manifest-deploy
-      name: Manifest list for ansible-operator
-      script:
-        - make image-push-ansible-multiarch
-
-    # Build and deploy helm multi-arch manifest list
-    - <<: *manifest-deploy
-      name: Manifest list for helm-operator
-      script:
-        - make image-push-helm-multiarch
-
-    # Build and deploy scorecard-proxy multi-arch manifest list
-    - <<: *manifest-deploy
-      name: Manifest list for scorecard-proxy
-      script:
-        - make image-push-scorecard-proxy-multiarch
-
-    # Build and deploy scorecard-test multi-arch manifest list
-    - <<: *manifest-deploy
-      name: Manifest list for scorecard-test
-      script:
-        - make image-push-scorecard-test-multiarch
+      script: make -f release/Makefile image-push-multiarch

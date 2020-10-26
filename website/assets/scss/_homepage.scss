@@ -1,9 +1,3 @@
-.of-message {
-    background: var(--of--color-black--300);
-    display: flex;
-    justify-content: center;
-}
-
 .of-masthead--home {   
     background: var(--of--color-black--100) url("/build/images/bg-masthead-SDK.svg") no-repeat;
     background-position: -22vw -30vw ;
@@ -161,6 +155,20 @@
             color: var(--of--color-white--100);
             padding:var(--of--spacer--lg) var(--of--spacer--md);
         }
+    }
+
+}
+
+.of-section-page-message {
+    background: var(--of--color-black--300);
+    color: #fff;
+    display: flex;
+    text-align: center;
+    flex-direction: column;
+    justify-content: center;
+    padding: var(--of--spacer--xl);
+    &__title {
+        margin-bottom: var(--of--spacer--md);
     }
 
 }

@@ -1,4 +1,0 @@
-- version: v1alpha1
-  group: ansible.example.com
-  kind: Foo
-  role: /dev/null

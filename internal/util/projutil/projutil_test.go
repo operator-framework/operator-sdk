@@ -67,7 +67,7 @@ var _ = Describe("Testing projutil helpers", func() {
 
 			_, err := appendContent(fileContents, instruction, content)
 
-			Expect(err).Should(MatchError(errors.New("instruction not present previously in dockerfile")))
+			Expect(err).Should(MatchError(errors.New("no prior string ADD in newContent")))
 		})
 
 		It("Should result in error as no new line at the end of dockerfile command", func() {

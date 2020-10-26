@@ -1,0 +1,49 @@
+kind: Configuration
+apiversion: scorecard.operatorframework.io/v1alpha3
+metadata:
+  name: config
+stages:
+- parallel: true
+  tests:
+  - image: quay.io/operator-framework/scorecard-test:dev
+    entrypoint:
+    - scorecard-test
+    - basic-check-spec
+    labels:
+      suite: basic
+      test: basic-check-spec-test
+  - image: quay.io/operator-framework/scorecard-test:dev
+    entrypoint:
+    - scorecard-test
+    - olm-bundle-validation
+    labels:
+      suite: olm
+      test: olm-bundle-validation-test
+  - image: quay.io/operator-framework/scorecard-test:dev
+    entrypoint:
+    - scorecard-test
+    - olm-crds-have-validation
+    labels:
+      suite: olm
+      test: olm-crds-have-validation-test
+  - image: quay.io/operator-framework/scorecard-test:dev
+    entrypoint:
+    - scorecard-test
+    - olm-crds-have-resources
+    labels:
+      suite: olm
+      test: olm-crds-have-resources-test
+  - image: quay.io/operator-framework/scorecard-test:dev
+    entrypoint:
+    - scorecard-test
+    - olm-spec-descriptors
+    labels:
+      suite: olm
+      test: olm-spec-descriptors-test
+  - image: quay.io/operator-framework/scorecard-test:dev
+    entrypoint:
+    - scorecard-test
+    - olm-status-descriptors
+    labels:
+      suite: olm
+      test: olm-status-descriptors-test

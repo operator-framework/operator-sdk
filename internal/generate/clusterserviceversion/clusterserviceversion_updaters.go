@@ -28,6 +28,7 @@ import (
 	admissionregv1 "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/version"
 
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
@@ -39,11 +40,10 @@ import (
 func ApplyTo(c *collector.Manifests, csv *operatorsv1alpha1.ClusterServiceVersion) error {
 	// Apply manifests to the CSV object.
 	if err := apply(c, csv); err != nil {
-		return fmt.Errorf("error updating ClusterServiceVersion: %v", err)
+		return err
 	}
 
-	// Set fields required by namespaced operators. This is a no-op for cluster-
-	// scoped operators.
+	// Set fields required by namespaced operators. This is a no-op for cluster-scoped operators.
 	setNamespacedFields(csv)
 
 	// Sort all updated fields.
@@ -65,7 +65,7 @@ func apply(c *collector.Manifests, csv *operatorsv1alpha1.ClusterServiceVersion)
 
 	applyCustomResourceDefinitions(c, csv)
 	if err := applyCustomResources(c, csv); err != nil {
-		return fmt.Errorf("error applying Custom Resource: %v", err)
+		return fmt.Errorf("error applying Custom Resource examples to CSV %s: %v", csv.GetName(), err)
 	}
 	applyWebhooks(c, csv)
 	return nil
@@ -80,27 +80,93 @@ func getCSVInstallStrategy(csv *operatorsv1alpha1.ClusterServiceVersion) operato
 	return csv.Spec.InstallStrategy
 }
 
-// applyRoles updates strategy's permissions with the Roles in the collector.
-func applyRoles(c *collector.Manifests, strategy *operatorsv1alpha1.StrategyDetailsDeployment) {
+// This service account exists in every namespace as the default.
+const defaultServiceAccountName = "default"
+
+// applyRoles applies Roles to strategy's permissions field by combining Roles bound to ServiceAccounts
+// into one set of permissions.
+func applyRoles(c *collector.Manifests, strategy *operatorsv1alpha1.StrategyDetailsDeployment) { //nolint:dupl
+	objs, _ := c.SplitCSVPermissionsObjects()
+	roleSet := make(map[string]*rbacv1.Role)
+	for i := range objs {
+		switch t := objs[i].(type) {
+		case *rbacv1.Role:
+			roleSet[t.GetName()] = t
+		}
+	}
+
+	saToPermissions := make(map[string]operatorsv1alpha1.StrategyDeploymentPermissions)
+	for _, dep := range c.Deployments {
+		saName := dep.Spec.Template.Spec.ServiceAccountName
+		if saName == "" {
+			saName = defaultServiceAccountName
+		}
+		saToPermissions[saName] = operatorsv1alpha1.StrategyDeploymentPermissions{ServiceAccountName: saName}
+	}
+
+	// Collect all role names by their corresponding service accounts via bindings. This lets us
+	// look up all service accounts a role is bound to and create one set of permissions per service account.
+	for _, binding := range c.RoleBindings {
+		if role, hasRole := roleSet[binding.RoleRef.Name]; hasRole {
+			for _, subject := range binding.Subjects {
+				if perm, hasSA := saToPermissions[subject.Name]; hasSA && subject.Kind == "ServiceAccount" {
+					perm.Rules = append(perm.Rules, role.Rules...)
+					saToPermissions[subject.Name] = perm
+				}
+			}
+		}
+	}
+
+	// Apply relevant roles to each service account.
 	perms := []operatorsv1alpha1.StrategyDeploymentPermissions{}
-	for _, role := range c.Roles {
-		perms = append(perms, operatorsv1alpha1.StrategyDeploymentPermissions{
-			ServiceAccountName: role.GetName(),
-			Rules:              role.Rules,
-		})
+	for _, perm := range saToPermissions {
+		if len(perm.Rules) != 0 {
+			perms = append(perms, perm)
+		}
 	}
 	strategy.Permissions = perms
 }
 
-// applyClusterRoles updates strategy's cluserPermissions with the ClusterRoles
-// in the collector.
-func applyClusterRoles(c *collector.Manifests, strategy *operatorsv1alpha1.StrategyDetailsDeployment) {
+// applyClusterRoles applies ClusterRoles to strategy's clusterPermissions field by combining ClusterRoles
+// bound to ServiceAccounts into one set of clusterPermissions.
+func applyClusterRoles(c *collector.Manifests, strategy *operatorsv1alpha1.StrategyDetailsDeployment) { //nolint:dupl
+	objs, _ := c.SplitCSVClusterPermissionsObjects()
+	roleSet := make(map[string]*rbacv1.ClusterRole)
+	for i := range objs {
+		switch t := objs[i].(type) {
+		case *rbacv1.ClusterRole:
+			roleSet[t.GetName()] = t
+		}
+	}
+
+	saToPermissions := make(map[string]operatorsv1alpha1.StrategyDeploymentPermissions)
+	for _, dep := range c.Deployments {
+		saName := dep.Spec.Template.Spec.ServiceAccountName
+		if saName == "" {
+			saName = defaultServiceAccountName
+		}
+		saToPermissions[saName] = operatorsv1alpha1.StrategyDeploymentPermissions{ServiceAccountName: saName}
+	}
+
+	// Collect all role names by their corresponding service accounts via bindings. This lets us
+	// look up all service accounts a role is bound to and create one set of permissions per service account.
+	for _, binding := range c.ClusterRoleBindings {
+		if role, hasRole := roleSet[binding.RoleRef.Name]; hasRole {
+			for _, subject := range binding.Subjects {
+				if perm, hasSA := saToPermissions[subject.Name]; hasSA && subject.Kind == "ServiceAccount" {
+					perm.Rules = append(perm.Rules, role.Rules...)
+					saToPermissions[subject.Name] = perm
+				}
+			}
+		}
+	}
+
+	// Apply relevant roles to each service account.
 	perms := []operatorsv1alpha1.StrategyDeploymentPermissions{}
-	for _, role := range c.ClusterRoles {
-		perms = append(perms, operatorsv1alpha1.StrategyDeploymentPermissions{
-			ServiceAccountName: role.GetName(),
-			Rules:              role.Rules,
-		})
+	for _, perm := range saToPermissions {
+		if len(perm.Rules) != 0 {
+			perms = append(perms, perm)
+		}
 	}
 	strategy.ClusterPermissions = perms
 }
@@ -200,21 +266,35 @@ func applyCustomResourceDefinitions(c *collector.Manifests, csv *operatorsv1alph
 	csv.Spec.CustomResourceDefinitions.Owned = ownedDescs
 }
 
-// applyWebhooks updates csv's webhookDefinitions with any
-// mutating and validating webhooks in the collector.
+// applyWebhooks updates csv's webhookDefinitions with any mutating and validating webhooks in the collector.
 func applyWebhooks(c *collector.Manifests, csv *operatorsv1alpha1.ClusterServiceVersion) {
 	webhookDescriptions := []operatorsv1alpha1.WebhookDescription{}
 	for _, webhook := range c.ValidatingWebhooks {
-		webhookDescriptions = append(webhookDescriptions, validatingToWebhookDescription(webhook))
+		depName, serviceName := findMatchingDeploymentAndServiceForWebhook(c, webhook.ClientConfig)
+		if serviceName == "" && depName == "" {
+			log.Infof("No service found for validating webhook %q", webhook.Name)
+		} else if depName == "" {
+			log.Infof("No deployment is selected by service %q for validating webhook %q", serviceName, webhook.Name)
+		}
+		webhookDescriptions = append(webhookDescriptions, validatingToWebhookDescription(webhook, depName))
 	}
 	for _, webhook := range c.MutatingWebhooks {
-		webhookDescriptions = append(webhookDescriptions, mutatingToWebhookDescription(webhook))
+		depName, serviceName := findMatchingDeploymentAndServiceForWebhook(c, webhook.ClientConfig)
+		if serviceName == "" && depName == "" {
+			log.Infof("No service found for mutating webhook %q", webhook.Name)
+		} else if depName == "" {
+			log.Infof("No deployment is selected by service %q for mutating webhook %q", serviceName, webhook.Name)
+		}
+		webhookDescriptions = append(webhookDescriptions, mutatingToWebhookDescription(webhook, depName))
 	}
 	csv.Spec.WebhookDefinitions = webhookDescriptions
 }
 
+// The default AdmissionReviewVersions set in a CSV if not set in the source webhook.
+var defaultAdmissionReviewVersions = []string{"v1beta1"}
+
 // validatingToWebhookDescription transforms webhook into a WebhookDescription.
-func validatingToWebhookDescription(webhook admissionregv1.ValidatingWebhook) operatorsv1alpha1.WebhookDescription {
+func validatingToWebhookDescription(webhook admissionregv1.ValidatingWebhook, depName string) operatorsv1alpha1.WebhookDescription {
 	description := operatorsv1alpha1.WebhookDescription{
 		Type:                    operatorsv1alpha1.ValidatingAdmissionWebhook,
 		GenerateName:            webhook.Name,
@@ -226,18 +306,29 @@ func validatingToWebhookDescription(webhook admissionregv1.ValidatingWebhook) op
 		TimeoutSeconds:          webhook.TimeoutSeconds,
 		AdmissionReviewVersions: webhook.AdmissionReviewVersions,
 	}
+	if len(description.AdmissionReviewVersions) == 0 {
+		description.AdmissionReviewVersions = defaultAdmissionReviewVersions
+	}
+	if description.SideEffects == nil {
+		seNone := admissionregv1.SideEffectClassNone
+		description.SideEffects = &seNone
+	}
+
 	if serviceRef := webhook.ClientConfig.Service; serviceRef != nil {
 		if serviceRef.Port != nil {
 			description.ContainerPort = *serviceRef.Port
 		}
-		description.DeploymentName = strings.TrimSuffix(serviceRef.Name, "-service")
+		description.DeploymentName = depName
+		if description.DeploymentName == "" {
+			description.DeploymentName = strings.TrimSuffix(serviceRef.Name, "-service")
+		}
 		description.WebhookPath = serviceRef.Path
 	}
 	return description
 }
 
 // mutatingToWebhookDescription transforms webhook into a WebhookDescription.
-func mutatingToWebhookDescription(webhook admissionregv1.MutatingWebhook) operatorsv1alpha1.WebhookDescription {
+func mutatingToWebhookDescription(webhook admissionregv1.MutatingWebhook, depName string) operatorsv1alpha1.WebhookDescription {
 	description := operatorsv1alpha1.WebhookDescription{
 		Type:                    operatorsv1alpha1.MutatingAdmissionWebhook,
 		GenerateName:            webhook.Name,
@@ -250,14 +341,82 @@ func mutatingToWebhookDescription(webhook admissionregv1.MutatingWebhook) operat
 		AdmissionReviewVersions: webhook.AdmissionReviewVersions,
 		ReinvocationPolicy:      webhook.ReinvocationPolicy,
 	}
+	if len(description.AdmissionReviewVersions) == 0 {
+		description.AdmissionReviewVersions = defaultAdmissionReviewVersions
+	}
+	if description.SideEffects == nil {
+		seNone := admissionregv1.SideEffectClassNone
+		description.SideEffects = &seNone
+	}
+
 	if serviceRef := webhook.ClientConfig.Service; serviceRef != nil {
 		if serviceRef.Port != nil {
 			description.ContainerPort = *serviceRef.Port
 		}
-		description.DeploymentName = strings.TrimSuffix(serviceRef.Name, "-service")
+		description.DeploymentName = depName
+		if description.DeploymentName == "" {
+			description.DeploymentName = strings.TrimSuffix(serviceRef.Name, "-service")
+		}
 		description.WebhookPath = serviceRef.Path
 	}
 	return description
+}
+
+// findMatchingDeploymentAndServiceForWebhook matches a Service to a webhook's client config (if it uses a service)
+// then matches that Service to a Deployment by comparing label selectors (if the Service uses label selectors).
+// The names of both Service and Deployment are returned if found.
+func findMatchingDeploymentAndServiceForWebhook(c *collector.Manifests, wcc admissionregv1.WebhookClientConfig) (depName, serviceName string) {
+	// Return if a service reference is not specified, since a URL will be in that case.
+	if wcc.Service == nil {
+		return
+	}
+
+	// Find the matching service, if any. The webhook server may be externally managed
+	// if no service is created by the operator.
+	var ws *corev1.Service
+	for i, service := range c.Services {
+		if service.GetName() == wcc.Service.Name {
+			ws = &c.Services[i]
+			break
+		}
+	}
+	if ws == nil {
+		return
+	}
+	serviceName = ws.GetName()
+
+	// Only ExternalName-type services cannot have selectors.
+	if ws.Spec.Type == corev1.ServiceTypeExternalName {
+		return
+	}
+
+	// If a selector does not exist, there is either an Endpoint or EndpointSlice object accompanying
+	// the service so it should not be added to the CSV.
+	if len(ws.Spec.Selector) == 0 {
+		return
+	}
+
+	// Match service against pod labels, in which the webhook server will be running.
+	for _, dep := range c.Deployments {
+		podTemplateLabels := dep.Spec.Template.GetLabels()
+		if len(podTemplateLabels) == 0 {
+			continue
+		}
+
+		depName = dep.GetName()
+		// Check that all labels match.
+		for key, serviceValue := range ws.Spec.Selector {
+			if podTemplateValue, hasKey := podTemplateLabels[key]; !hasKey || podTemplateValue != serviceValue {
+				depName = ""
+				break
+			}
+		}
+		if depName != "" {
+			break
+		}
+	}
+
+	return depName, serviceName
 }
 
 // applyCustomResources updates csv's "alm-examples" annotation with the
@@ -328,9 +487,8 @@ func validate(csv *operatorsv1alpha1.ClusterServiceVersion) error {
 			hasErrors = true
 		}
 	}
-
 	if hasErrors {
-		return errors.New("generated ClusterServiceVersion is invalid")
+		return errors.New("invalid generated ClusterServiceVersion")
 	}
 
 	return nil

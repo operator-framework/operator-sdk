@@ -1,24 +1,7 @@
 approvers:
-  - hasbro17
-  - estroz
-  - shawn-hurley
-  - joelanford
-  - theishshah
-  - camilamacedo86
-  - jmccormick2001
-  - jmrodri
-  - fabianvf
-  - varshaprasad96
-  - rashmigottipati
+- sdk-admins
+- sdk-approvers
 reviewers:
-  - hasbro17
-  - estroz
-  - shawn-hurley
-  - joelanford
-  - theishshah
-  - camilamacedo86
-  - jmccormick2001
-  - jmrodri
-  - fabianvf
-  - varshaprasad96
-  - rashmigottipati
+- sdk-admins
+- sdk-approvers
+- sdk-reviewers

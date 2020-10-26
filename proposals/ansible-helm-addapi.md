@@ -257,8 +257,8 @@ and subsequently [`func doAnsibleScaffold()`][doansible] or [`func doHelmScaffol
   kind: Mykind
   role: /opt/ansible/roles/mykind
 ```
-[addapidoc]: https://sdk.operatorframework.io/docs/cli/operator-sdk_add_api/
-[sdkclidoc]: https://sdk.operatorframework.io/docs/cli/
+[addapidoc]: https://v0-19-x.sdk.operatorframework.io/docs/cli/operator-sdk_add_api/
+[sdkclidoc]: https://v0-19-x.sdk.operatorframework.io/docs/cli/
 [onlygorestriction]:https://github.com/operator-framework/operator-sdk/blob/master/cmd/operator-sdk/add/api.go#L95
 [doansible]:https://github.com/operator-framework/operator-sdk/blob/master/cmd/operator-sdk/new/cmd.go#L228
 [dohelm]:https://github.com/operator-framework/operator-sdk/blob/master/cmd/operator-sdk/new/cmd.go#L320

@@ -21,14 +21,14 @@ import (
 // MemcachedSpec defines the desired state of Memcached
 type MemcachedSpec struct {
 	// Size is the size of the memcached deployment
-	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	Size int32 `json:"size"`
 }
 
 // MemcachedStatus defines the observed state of Memcached
 type MemcachedStatus struct {
 	// Nodes are the names of the memcached pods
-	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors=true
+	// +operator-sdk:csv:customresourcedefinitions:type=status
 	Nodes []string `json:"nodes"`
 }
 
@@ -38,7 +38,7 @@ type MemcachedStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=memcacheds,scope=Namespaced
 // +kubebuilder:storageversion
-// +operator-sdk:gen-csv:customresourcedefinitions.displayName="Memcached App"
+// +operator-sdk:csv:customresourcedefinitions:displayName="Memcached App Display Name"
 type Memcached struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

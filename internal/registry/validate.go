@@ -16,6 +16,8 @@ package registry
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	apivalidation "github.com/operator-framework/api/pkg/validation"
@@ -25,6 +27,7 @@ import (
 	k8svalidation "k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"sigs.k8s.io/yaml"
 )
 
 // ValidateBundleContent confirms that the CSV and CRD files inside the bundle
@@ -32,8 +35,10 @@ import (
 // also validated to confirm if they are "kubectl-able" to a cluster meaning
 // if they can be applied to a cluster using `kubectl` provided users have all
 // necessary permissions and configurations.
-func ValidateBundleContent(logger *log.Entry, bundle *apimanifests.Bundle,
-	mediaType string) []apierrors.ManifestResult {
+func ValidateBundleContent(logger *log.Entry, bundle *apimanifests.Bundle, mediaType string) []apierrors.ManifestResult {
+	if logger == nil {
+		logger = DiscardLogger()
+	}
 
 	// Use errs to collect bundle-level validation errors.
 	errs := apierrors.ManifestResult{
@@ -126,4 +131,57 @@ func appendResult(results []apierrors.ManifestResult, r apierrors.ManifestResult
 	}
 
 	return results
+}
+
+// RewriteAnnotationsYaml unmarshalls the specified yaml file, appends the content and
+// converts it again to yaml.
+func RewriteAnnotationsYaml(filename string, content map[string]string) error {
+
+	metadata, err := getAnnotationFileContents(filename)
+	if err != nil {
+		return err
+	}
+
+	// Append the contents to annotationsYaml
+	for key, val := range content {
+		metadata.Annotations[key] = val
+	}
+
+	err = writeAnnotationFile(filename, metadata)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func getAnnotationFileContents(filename string) (*registrybundle.AnnotationMetadata, error) {
+	f, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	annotationsYaml := &registrybundle.AnnotationMetadata{}
+	if err := yaml.Unmarshal(f, annotationsYaml); err != nil {
+		return nil, fmt.Errorf("error parsing annotations file: %v", err)
+	}
+	return annotationsYaml, nil
+}
+
+func writeAnnotationFile(filename string, annotation *registrybundle.AnnotationMetadata) error {
+	file, err := yaml.Marshal(annotation)
+	if err != nil {
+		return err
+	}
+
+	mode := os.FileMode(0666)
+	if info, err := os.Stat(filename); err == nil {
+		mode = info.Mode()
+	}
+
+	err = ioutil.WriteFile(filename, file, mode)
+	if err != nil {
+		return fmt.Errorf("error writing modified contents to annotations file, %v", err)
+	}
+	return nil
 }

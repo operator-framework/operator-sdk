@@ -3,24 +3,32 @@ title: "operator-sdk cleanup"
 ---
 ## operator-sdk cleanup
 
-Delete and clean up after a running Operator
+Clean up an Operator deployed with the 'run' subcommand
 
 ### Synopsis
 
-Delete and clean up after a running Operator
+This command has subcommands that will destroy an Operator deployed with OLM.
 
 ```
-operator-sdk cleanup [flags]
+operator-sdk cleanup <operatorPackageName> [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for cleanup
+  -h, --help                help for cleanup
+      --kubeconfig string   Path to the kubeconfig file to use for CLI requests.
+  -n, --namespace string    If present, namespace scope for this CLI request
+      --timeout duration    Time to wait for the command to complete before failing (default 2m0s)
+```
+
+### Options inherited from parent commands
+
+```
+      --verbose   Enable verbose logging
 ```
 
 ### SEE ALSO
 
-* [operator-sdk](../operator-sdk)	 - An SDK for building operators with ease
-* [operator-sdk cleanup packagemanifests](../operator-sdk_cleanup_packagemanifests)	 - Clean up after an Operator organized in the package manifests format running with OLM
+* [operator-sdk](../operator-sdk)	 - Development kit for building Kubernetes extensions and tools.
 

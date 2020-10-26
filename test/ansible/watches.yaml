@@ -3,19 +3,59 @@
   group: test.example.com
   kind: InventoryTest
   playbook: playbooks/inventory.yml
+  vars:
+    meta: '{{ ansible_operator_meta }}'
 
 - version: v1alpha1
   group: test.example.com
   kind: CollectionTest
   role: operator_sdk.test_fixtures.dummy
+  vars:
+    meta: '{{ ansible_operator_meta }}'
 
 - version: v1alpha1
   group: test.example.com
   kind: SubresourcesTest
   playbook: playbooks/subresources.yml
+  vars:
+    meta: '{{ ansible_operator_meta }}'
 
 - version: v1
   group: ""
   kind: Secret
   playbook: playbooks/secret.yml
   manageStatus: false
+  vars:
+    meta: '{{ ansible_operator_meta }}'
+
+- version: v1alpha1
+  group: test.example.com
+  kind: SelectorTest
+  playbook: playbooks/selector.yml
+  selector:
+    matchExpressions:
+     - {key: testLabel, operator: Exists, values: []}
+  vars:
+    meta: '{{ ansible_operator_meta }}'
+
+- version: v1alpha1
+  group: test.example.com
+  kind: CaseTest
+  playbook: playbooks/case.yml
+  snakeCaseParameters: false
+  vars:
+    meta: '{{ ansible_operator_meta }}'
+
+- version: v1alpha1
+  group: test.example.com
+  kind: ArgsTest
+  playbook: playbooks/args.yml
+  vars:
+    meta: '{{ ansible_operator_meta }}'
+
+- version: v1alpha1
+  group: test.example.com
+  kind: ReconciliationTest
+  playbook: playbooks/reconciliation.yml
+  vars:
+    meta: '{{ ansible_operator_meta }}'

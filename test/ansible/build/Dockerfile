@@ -15,4 +15,6 @@ USER root
 RUN chmod -R ug+rwx /tmp/fixture_collection
 USER 1001
 RUN ansible-galaxy collection build /tmp/fixture_collection/ --output-path /tmp/fixture_collection/ \
- && ansible-galaxy collection install /tmp/fixture_collection/operator_sdk-test_fixtures-0.0.0.tar.gz
+ && ansible-galaxy collection install /tmp/fixture_collection/operator_sdk-test_fixtures-0.0.0.tar.gz 
+RUN echo abc123 > /opt/ansible/pwd.yml \
+ && ansible-vault encrypt_string --vault-password-file /opt/ansible/pwd.yml 'thisisatest' --name 'the_secret' > /opt/ansible/vars.yml

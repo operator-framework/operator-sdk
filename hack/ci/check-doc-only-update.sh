@@ -12,6 +12,7 @@ fi
 declare -a DOC_PATTERNS
 DOC_PATTERNS=(
   "(\.md)"
+  "(\.go.tmpl)"
   "(\.MD)"
   "(\.png)"
   "(\.pdf)"

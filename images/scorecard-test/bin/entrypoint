@@ -1,6 +1,0 @@
-#!/bin/sh -e
-
-# This is documented here:
-# https://docs.openshift.com/container-platform/3.11/creating_images/guidelines.html#openshift-specific-guidelines
-
-exec ${TEST} $@

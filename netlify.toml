@@ -5,9 +5,9 @@
 [build]
   publish = "public"
   base = "website"
-  command = "cd themes/docsy && git submodule update -f --init && cd ../.. && npm install postcss-cli autoprefixer && hugo version && hugo"
+  command = "cd themes/docsy && git submodule update -f --init && cd ../.. && npm install postcss-cli autoprefixer@^9.0.0 && hugo version && hugo"
 
 # "production" environment specific build settings
 [build.environment]
   HUGO_ENV = "production"
-  HUGO_VERSION = "0.70.0"
+  HUGO_VERSION = "0.73.0"

@@ -1,0 +1,8 @@
+domain: example.com
+layout: ansible.sdk.operatorframework.io/v1
+projectName: memcached-operator
+resources:
+- group: cache
+  kind: Memcached
+  version: v1alpha1
+version: 3-alpha

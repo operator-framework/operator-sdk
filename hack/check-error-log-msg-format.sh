@@ -6,7 +6,7 @@ set -o pipefail
 source "hack/lib/test_lib.sh"
 
 echo "Checking format of error and log messages..."
-allfiles=$(listFiles)
+allfiles=$(listFiles|grep -v ./internal/bindata/...)
 log_case_output=$(grep -PRn '(Error\((.*[Ee]rr|nil), |^(?!.*(fmt|errors)).+\.Error(f)?\(|Fatal(f)?\(|Info(f)?\(|Warn(f)?\()"[[:lower:]]' $allfiles | sort -u)
 if [ -n "${log_case_output}" ]; then
   echo -e "Log messages do not begin with upper case:\n${log_case_output}"

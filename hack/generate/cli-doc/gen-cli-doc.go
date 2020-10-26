@@ -25,7 +25,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cli"
+	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/cli"
 )
 
 const fmTemplate = `---
@@ -39,15 +39,25 @@ func main() {
 		log.Fatalf("Failed to get current directory: %v", err)
 	}
 
-	legacyDocPath := filepath.Join(currentDir, "website", "content", "en", "docs", "cli")
-	legacyRoot := cli.GetCLIRoot()
-	legacyRoot.DisableAutoGenTag = true
-	recreateDocDir(legacyRoot, legacyDocPath)
+	cliDocsPath := filepath.Join(currentDir, "website", "content", "en", "docs", "cli")
+	_, cliRoot := cli.GetPluginsCLIAndRoot()
+	cliRoot.DisableAutoGenTag = true
+	recreateDocDir(cliRoot, cliDocsPath)
+}
 
-	newDocPath := filepath.Join(currentDir, "website", "content", "en", "docs", "new-cli")
-	_, newRoot := cli.GetPluginsCLIAndRoot()
-	newRoot.DisableAutoGenTag = true
-	recreateDocDir(newRoot, newDocPath)
+// htmlFormatter will replace angular brackets (`<` and `>`) with its character entitites
+// `&lt;` and `&gt;`
+func htmlFormatter(rootCmd *cobra.Command) {
+
+	for _, cmds := range rootCmd.Commands() {
+		if len(cmds.Commands()) > 0 {
+			htmlFormatter(cmds)
+		}
+
+		cmds.Long = strings.ReplaceAll(cmds.Long, "<", "&lt;")
+		cmds.Long = strings.ReplaceAll(cmds.Long, ">", "&gt;")
+	}
+
 }
 
 // recreateDocDir removes and recreates the CLI doc directory for rootCmd
@@ -78,6 +88,8 @@ func recreateDocDir(rootCmd *cobra.Command, docPath string) {
 		base := strings.TrimSuffix(name, path.Ext(name))
 		return "../" + base
 	}
+
+	htmlFormatter(rootCmd)
 
 	err = doc.GenMarkdownTreeCustom(rootCmd, docPath, filePrepender, linkHandler)
 	if err != nil {

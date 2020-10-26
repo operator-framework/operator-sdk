@@ -7,15 +7,7 @@ Run an Operator in a variety of environments
 
 ### Synopsis
 
-This command has subcommands that will run or deploy your Operator in two
-different modes: locally and using OLM. These modes are controlled by using 'local'
-or 'packagemanifests' subcommands. Run 'operator-sdk run --help' for more
-information on these subcommands.
-
-
-```
-operator-sdk run [flags]
-```
+This command has subcommands that will deploy your Operator with OLM.
 
 ### Options
 
@@ -23,9 +15,15 @@ operator-sdk run [flags]
   -h, --help   help for run
 ```
 
+### Options inherited from parent commands
+
+```
+      --verbose   Enable verbose logging
+```
+
 ### SEE ALSO
 
-* [operator-sdk](../operator-sdk)	 - An SDK for building operators with ease
-* [operator-sdk run local](../operator-sdk_run_local)	 - Run an Operator locally
-* [operator-sdk run packagemanifests](../operator-sdk_run_packagemanifests)	 - Run an Operator organized in the package manifests format with OLM
+* [operator-sdk](../operator-sdk)	 - Development kit for building Kubernetes extensions and tools.
+* [operator-sdk run bundle](../operator-sdk_run_bundle)	 - Deploy an Operator in the bundle format with OLM
+* [operator-sdk run packagemanifests](../operator-sdk_run_packagemanifests)	 - Deploy an Operator in the package manifests format with OLM
 

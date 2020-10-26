@@ -1,0 +1,54 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Upgrade sigs.k8s.io/controller-runtime dependency version from `v0.6.2` to
+      [`v0.6.3`](https://github.com/kubernetes-sigs/controller-runtime/releases/tag/v0.6.3).
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "change"
+
+    # Is this a breaking change?
+    breaking: false
+
+    # Migration can be defined to automatically add a section to
+    # the migration guide. This is required for breaking changes.
+    migration:
+      header: (Golang based operators)  Upgrade sigs.k8s.io/controller-runtime version to v0.6.3
+      body: >
+        In the `go.mod` file replace `sigs.k8s.io/controller-runtime v0.6.2`
+        with `sigs.k8s.io/controller-runtime v0.6.3` and then run `go mod tidy`.
+  - description: >
+      For Golang based operators with multigroup support, fix scaffolded `controllers/<group>/suite_test.go` to have
+            a correct `envtest.Environment.CRDDirectoryPaths` ([kubebuilder#1665](https://github.com/kubernetes-sigs/kubebuilder/pull/1665)).
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "change"
+
+    # Is this a breaking change?
+    breaking: false
+
+    # Migration can be defined to automatically add a section to
+    # the migration guide. This is required for breaking changes.
+    migration:
+      header: (Golang based operators with multigroup support) Fix `CRDDirectoryPath` in `controllers/<group>/suite_test.go`
+      body: >
+        If your project is multi-group, then replace
+        `CRDDirectoryPaths: []string{filepath.Join("..", "config", "crd", "bases")},` with
+        `CRDDirectoryPaths: []string{filepath.Join("..", "..", "config", "crd", "bases")},`
+        in `suite_test.go` files found in `controllers/<group>/` directories. Otherwise, the tests will fail since
+        this EnvTest will not be looking for the CRD's in the correct location. For more info, see
+        [kubebuilder#1665](https://github.com/kubernetes-sigs/kubebuilder/issues/1665).
+
+
+

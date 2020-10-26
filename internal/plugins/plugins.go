@@ -16,4 +16,4 @@ package plugins
 
 // DefaultNameQualifier is the Operator SDK plugin name suffix. Appending
 // this suffix to a short name, ex. "go", makes it fully qualified.
-const DefaultNameQualifier = ".operator-sdk.io"
+const DefaultNameQualifier = ".sdk.operatorframework.io"

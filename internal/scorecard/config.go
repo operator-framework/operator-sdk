@@ -1,4 +1,4 @@
-// Copyright 2019 The Operator-SDK Authors
+// Copyright 2020 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,32 +15,33 @@
 package scorecard
 
 import (
-	"fmt"
+	"io/ioutil"
 
+	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 	"sigs.k8s.io/yaml"
 )
 
-// ValidateConfig takes a config for a plugin and returns a nil error if valid or an error
-// explaining why the config is invalid
-func (config PluginConfig) ValidateConfig(idx int) error {
-	// find plugin config type
-	pluginType := ""
-	if config.Basic != nil {
-		pluginType = "basic"
+const (
+	// ConfigFileName is the scorecard's hard-coded config file name.
+	ConfigFileName = "config.yaml"
+	// DefaultConfigDir is the default scorecard path within a bundle.
+	DefaultConfigDir = "tests/scorecard/"
+)
+
+// LoadConfig will find and return the scorecard config, the config file
+// is found from a bundle location (TODO bundle image)
+// scorecard config.yaml is expected to be in the bundle at the following
+// location:  tests/scorecard/config.yaml
+// the user can override this location using the --config CLI flag
+// TODO: version this.
+func LoadConfig(configFilePath string) (v1alpha3.Configuration, error) {
+	c := v1alpha3.Configuration{}
+
+	yamlFile, err := ioutil.ReadFile(configFilePath)
+	if err != nil {
+		return c, err
 	}
-	if config.Olm != nil {
-		if pluginType != "" {
-			return fmt.Errorf("plugin config can only contain one of: basic, olm")
-		}
-		pluginType = "olm"
-	}
-	if pluginType == "" {
-		marshalledConfig, err := yaml.Marshal(config)
-		if err != nil {
-			return fmt.Errorf("plugin #%d has a missing or incorrect type", idx)
-		}
-		return fmt.Errorf("plugin #%d has a missing or incorrect type. Invalid plugin config: %s",
-			idx, marshalledConfig)
-	}
-	return nil
+
+	err = yaml.Unmarshal(yamlFile, &c)
+	return c, err
 }

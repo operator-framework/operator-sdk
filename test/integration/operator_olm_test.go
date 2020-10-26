@@ -15,6 +15,7 @@
 package e2e
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -22,13 +23,17 @@ import (
 	"time"
 
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
-	"github.com/operator-framework/operator-sdk/internal/olm"
-	operator "github.com/operator-framework/operator-sdk/internal/olm/operator"
-	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
-
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/operator-framework/operator-sdk/internal/olm/operator"
+	"github.com/operator-framework/operator-sdk/internal/olm/operator/packagemanifests"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
 
 const (
@@ -42,87 +47,26 @@ var (
 	kubeconfigPath = os.Getenv(k8sutil.KubeConfigEnvVar)
 )
 
+// TODO(estroz): rewrite these in the style of e2e tests (ginkgo/gomega + scaffold a project for each scenario).
+
 func TestOLMIntegration(t *testing.T) {
 	if image, ok := os.LookupEnv(imageEnvVar); ok && image != "" {
 		testImageTag = image
 	}
 
 	t.Run("PackageManifestsBasic", PackageManifestsBasic)
-	t.Run("PackageManifestsAllNamespaces", PackageManifestsAllNamespaces)
+	t.Run("PackageManifestsOwnNamespace", PackageManifestsOwnNamespace)
 	t.Run("PackageManifestsMultiplePackages", PackageManifestsMultiplePackages)
 }
 
-func PackageManifestsAllNamespaces(t *testing.T) {
+func PackageManifestsOwnNamespace(t *testing.T) {
 
-	csvConfig := CSVTemplateConfig{
+	csvConfig := csvTemplateConfig{
 		OperatorName:    defaultOperatorName,
-		OperatorVersion: defaultOperatorVersion,
+		Version:         defaultOperatorVersion,
 		TestImageTag:    testImageTag,
 		ReplacesCSVName: "",
-		CRDKeys: []DefinitionKey{
-			{
-				Kind:  "Memcached",
-				Name:  "memcacheds.cache.example.com",
-				Group: "cache.example.com",
-				Versions: []apiextv1beta1.CustomResourceDefinitionVersion{
-					{Name: "v1alpha1", Storage: true, Served: true},
-				},
-			},
-		},
-		InstallModes: []operatorsv1alpha1.InstallMode{
-			{Type: operatorsv1alpha1.InstallModeTypeOwnNamespace, Supported: false},
-			{Type: operatorsv1alpha1.InstallModeTypeSingleNamespace, Supported: false},
-			{Type: operatorsv1alpha1.InstallModeTypeMultiNamespace, Supported: false},
-			{Type: operatorsv1alpha1.InstallModeTypeAllNamespaces, Supported: true},
-		},
-	}
-	tmp, cleanup := mkTempDirWithCleanup(t, "")
-	defer cleanup()
-
-	channels := []apimanifests.PackageChannel{
-		{Name: "alpha", CurrentCSVName: fmt.Sprintf("%s.v%s", defaultOperatorName, defaultOperatorVersion)},
-	}
-	manifestsDir := filepath.Join(tmp, defaultOperatorName)
-	err := writeOperatorManifests(manifestsDir, csvConfig)
-	if err != nil {
-		os.RemoveAll(tmp)
-		t.Fatal(err)
-	}
-	err = writePackageManifest(manifestsDir, defaultOperatorName, channels)
-	if err != nil {
-		os.RemoveAll(tmp)
-		t.Fatal(err)
-	}
-	opcmd := operator.PackageManifestsCmd{
-		OperatorCmd: operator.OperatorCmd{
-			KubeconfigPath: kubeconfigPath,
-			Timeout:        defaultTimeout,
-			OLMNamespace:   olm.DefaultOLMNamespace,
-			InstallMode:    string(operatorsv1alpha1.InstallModeTypeAllNamespaces),
-		},
-		ManifestsDir:    manifestsDir,
-		OperatorVersion: defaultOperatorVersion,
-	}
-	// Cleanup.
-	defer func() {
-		opcmd.ForceRegistry = true
-		if err := opcmd.Cleanup(); err != nil {
-			t.Fatal(err)
-		}
-	}()
-
-	// Deploy operator.
-	assert.NoError(t, opcmd.Run())
-}
-
-func PackageManifestsBasic(t *testing.T) {
-
-	csvConfig := CSVTemplateConfig{
-		OperatorName:    defaultOperatorName,
-		OperatorVersion: defaultOperatorVersion,
-		TestImageTag:    testImageTag,
-		ReplacesCSVName: "",
-		CRDKeys: []DefinitionKey{
+		CRDKeys: []definitionKey{
 			{
 				Kind:  "Memcached",
 				Name:  "memcacheds.cache.example.com",
@@ -156,48 +100,100 @@ func PackageManifestsBasic(t *testing.T) {
 		os.RemoveAll(tmp)
 		t.Fatal(err)
 	}
-	opcmd := operator.PackageManifestsCmd{
-		OperatorCmd: operator.OperatorCmd{
-			KubeconfigPath: kubeconfigPath,
-			Timeout:        defaultTimeout,
-			OLMNamespace:   olm.DefaultOLMNamespace,
-		},
-		ManifestsDir:    manifestsDir,
-		OperatorVersion: defaultOperatorVersion,
+
+	cfg := &operator.Configuration{KubeconfigPath: kubeconfigPath}
+	assert.NoError(t, cfg.Load())
+	i := packagemanifests.NewInstall(cfg)
+	i.PackageManifestsDirectory = manifestsDir
+	i.Version = defaultOperatorVersion
+	i.InstallMode = operator.InstallMode{
+		InstallModeType:  operatorsv1alpha1.InstallModeTypeOwnNamespace,
+		TargetNamespaces: []string{"default"},
 	}
+
 	// Cleanup.
 	defer func() {
-		opcmd.ForceRegistry = true
-		if err := opcmd.Cleanup(); err != nil {
+		if err := doUninstall(t, kubeconfigPath); err != nil {
 			t.Fatal(err)
 		}
 	}()
 
-	// "Remove operator before deploy"
-	assert.NoError(t, opcmd.Cleanup())
+	// Deploy operator.
+	assert.NoError(t, doInstall(i))
+}
 
-	// "Deploy operator"
-	assert.NoError(t, opcmd.Run())
-	// "Fail to deploy operator after deploy"
-	assert.Error(t, opcmd.Run())
+func PackageManifestsBasic(t *testing.T) {
 
-	// "Remove operator after deploy"
-	assert.NoError(t, opcmd.Cleanup())
-	// "Remove operator after removal"
-	assert.NoError(t, opcmd.Cleanup())
+	csvConfig := csvTemplateConfig{
+		OperatorName:    defaultOperatorName,
+		Version:         defaultOperatorVersion,
+		TestImageTag:    testImageTag,
+		ReplacesCSVName: "",
+		CRDKeys: []definitionKey{
+			{
+				Kind:  "Memcached",
+				Name:  "memcacheds.cache.example.com",
+				Group: "cache.example.com",
+				Versions: []apiextv1beta1.CustomResourceDefinitionVersion{
+					{Name: "v1alpha1", Storage: true, Served: true},
+				},
+			},
+		},
+		InstallModes: []operatorsv1alpha1.InstallMode{
+			{Type: operatorsv1alpha1.InstallModeTypeOwnNamespace, Supported: false},
+			{Type: operatorsv1alpha1.InstallModeTypeSingleNamespace, Supported: false},
+			{Type: operatorsv1alpha1.InstallModeTypeMultiNamespace, Supported: false},
+			{Type: operatorsv1alpha1.InstallModeTypeAllNamespaces, Supported: true},
+		},
+	}
+	tmp, cleanup := mkTempDirWithCleanup(t, "")
+	defer cleanup()
+
+	channels := []apimanifests.PackageChannel{
+		{Name: "alpha", CurrentCSVName: fmt.Sprintf("%s.v%s", defaultOperatorName, defaultOperatorVersion)},
+	}
+	manifestsDir := filepath.Join(tmp, defaultOperatorName)
+	err := writeOperatorManifests(manifestsDir, csvConfig)
+	if err != nil {
+		os.RemoveAll(tmp)
+		t.Fatal(err)
+	}
+	err = writePackageManifest(manifestsDir, defaultOperatorName, channels)
+	if err != nil {
+		os.RemoveAll(tmp)
+		t.Fatal(err)
+	}
+	cfg := &operator.Configuration{KubeconfigPath: kubeconfigPath}
+	assert.NoError(t, cfg.Load())
+	i := packagemanifests.NewInstall(cfg)
+	i.PackageManifestsDirectory = manifestsDir
+	i.Version = defaultOperatorVersion
+
+	// Remove operator before deploy
+	assert.Error(t, doUninstall(t, kubeconfigPath))
+
+	// Deploy operator
+	assert.NoError(t, doInstall(i))
+	// Fail to deploy operator after deploy
+	assert.Error(t, doInstall(i))
+
+	// Remove operator after deploy
+	assert.NoError(t, doUninstall(t, kubeconfigPath))
+	// Remove operator after removal
+	assert.Error(t, doUninstall(t, kubeconfigPath))
 }
 
 func PackageManifestsMultiplePackages(t *testing.T) {
 
 	operatorVersion1 := defaultOperatorVersion
 	operatorVersion2 := "0.0.3"
-	csvConfigs := []CSVTemplateConfig{
+	csvConfigs := []csvTemplateConfig{
 		{
 			OperatorName:    defaultOperatorName,
-			OperatorVersion: operatorVersion1,
+			Version:         operatorVersion1,
 			TestImageTag:    testImageTag,
 			ReplacesCSVName: "",
-			CRDKeys: []DefinitionKey{
+			CRDKeys: []definitionKey{
 				{
 					Kind:  "Memcached",
 					Name:  "memcacheds.cache.example.com",
@@ -208,18 +204,18 @@ func PackageManifestsMultiplePackages(t *testing.T) {
 				},
 			},
 			InstallModes: []operatorsv1alpha1.InstallMode{
-				{Type: operatorsv1alpha1.InstallModeTypeOwnNamespace, Supported: true},
+				{Type: operatorsv1alpha1.InstallModeTypeOwnNamespace, Supported: false},
 				{Type: operatorsv1alpha1.InstallModeTypeSingleNamespace, Supported: false},
 				{Type: operatorsv1alpha1.InstallModeTypeMultiNamespace, Supported: false},
-				{Type: operatorsv1alpha1.InstallModeTypeAllNamespaces, Supported: false},
+				{Type: operatorsv1alpha1.InstallModeTypeAllNamespaces, Supported: true},
 			},
 		},
 		{
 			OperatorName:    defaultOperatorName,
-			OperatorVersion: operatorVersion2,
+			Version:         operatorVersion2,
 			TestImageTag:    testImageTag,
 			ReplacesCSVName: fmt.Sprintf("%s.v%s", defaultOperatorName, operatorVersion1),
-			CRDKeys: []DefinitionKey{
+			CRDKeys: []definitionKey{
 				{
 					Kind:  "Memcached",
 					Name:  "memcacheds.cache.example.com",
@@ -231,10 +227,10 @@ func PackageManifestsMultiplePackages(t *testing.T) {
 				},
 			},
 			InstallModes: []operatorsv1alpha1.InstallMode{
-				{Type: operatorsv1alpha1.InstallModeTypeOwnNamespace, Supported: true},
+				{Type: operatorsv1alpha1.InstallModeTypeOwnNamespace, Supported: false},
 				{Type: operatorsv1alpha1.InstallModeTypeSingleNamespace, Supported: false},
 				{Type: operatorsv1alpha1.InstallModeTypeMultiNamespace, Supported: false},
-				{Type: operatorsv1alpha1.InstallModeTypeAllNamespaces, Supported: false},
+				{Type: operatorsv1alpha1.InstallModeTypeAllNamespaces, Supported: true},
 			},
 		},
 	}
@@ -259,25 +255,57 @@ func PackageManifestsMultiplePackages(t *testing.T) {
 		os.RemoveAll(tmp)
 		t.Fatal(err)
 	}
-	opcmd := operator.PackageManifestsCmd{
-		OperatorCmd: operator.OperatorCmd{
-			KubeconfigPath: kubeconfigPath,
-			Timeout:        defaultTimeout,
-			OLMNamespace:   olm.DefaultOLMNamespace,
-		},
-		ManifestsDir:    manifestsDir,
-		OperatorVersion: operatorVersion2,
-	}
-	// Cleanup.
-	defer func() {
-		opcmd.ForceRegistry = true
-		if err := opcmd.Cleanup(); err != nil {
-			t.Fatal(err)
-		}
-	}()
+	cfg := &operator.Configuration{KubeconfigPath: kubeconfigPath}
+	assert.NoError(t, cfg.Load())
+	i := packagemanifests.NewInstall(cfg)
+	i.PackageManifestsDirectory = manifestsDir
+	i.Version = operatorVersion2
 
-	// "Deploy operator"
-	assert.NoError(t, opcmd.Run())
-	// "Remove operator after deploy"
-	assert.NoError(t, opcmd.Cleanup())
+	// Deploy operator
+	assert.NoError(t, doInstall(i))
+	// Remove operator after deploy
+	assert.NoError(t, doUninstall(t, kubeconfigPath))
+}
+
+func doUninstall(t *testing.T, kubeconfigPath string) error {
+	cfg := &operator.Configuration{KubeconfigPath: kubeconfigPath}
+	assert.NoError(t, cfg.Load())
+	uninstall := operator.NewUninstall(cfg)
+	uninstall.DeleteAll = true
+	uninstall.DeleteOperatorGroupNames = []string{operator.SDKOperatorGroupName}
+	uninstall.Package = defaultOperatorName
+	uninstall.Logf = logrus.Infof
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	defer cancel()
+	if err := uninstall.Run(ctx); err != nil {
+		return err
+	}
+	return waitForPackageManifestConfigMapDeletion(ctx, cfg, defaultOperatorName)
+}
+
+type installer interface {
+	Run(context.Context) (*operatorsv1alpha1.ClusterServiceVersion, error)
+}
+
+func doInstall(i installer) error {
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	defer cancel()
+
+	_, err := i.Run(ctx)
+	return err
+}
+
+func waitForPackageManifestConfigMapDeletion(ctx context.Context, cfg *operator.Configuration, packageName string) error {
+	cfgmaps := corev1.ConfigMapList{}
+	opts := []client.ListOption{
+		client.InNamespace(cfg.Namespace),
+		client.MatchingLabels{"owner": "operator-sdk", "package-name": packageName},
+	}
+	return wait.PollImmediateUntil(250*time.Millisecond, func() (bool, error) {
+		if err := cfg.Client.List(ctx, &cfgmaps, opts...); err != nil {
+			return false, err
+		}
+		return len(cfgmaps.Items) == 0, nil
+	}, ctx.Done())
 }

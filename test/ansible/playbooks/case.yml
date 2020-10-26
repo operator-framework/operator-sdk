@@ -1,0 +1,17 @@
+---
+- hosts: localhost
+  gather_facts: no
+  collections:
+    - community.kubernetes
+
+  tasks:
+    - name: Create configmap
+      k8s:
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: '{{ meta.name }}'
+            namespace: '{{ meta.namespace }}'
+          data:
+            shouldBeCamel: '{{ camelCaseVar | default("false") }}'

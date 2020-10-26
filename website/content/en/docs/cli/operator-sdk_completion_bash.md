@@ -19,6 +19,12 @@ operator-sdk completion bash [flags]
   -h, --help   help for bash
 ```
 
+### Options inherited from parent commands
+
+```
+      --verbose   Enable verbose logging
+```
+
 ### SEE ALSO
 
 * [operator-sdk completion](../operator-sdk_completion)	 - Generators for shell completions

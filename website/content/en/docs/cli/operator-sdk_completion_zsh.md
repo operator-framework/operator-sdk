@@ -19,6 +19,12 @@ operator-sdk completion zsh [flags]
   -h, --help   help for zsh
 ```
 
+### Options inherited from parent commands
+
+```
+      --verbose   Enable verbose logging
+```
+
 ### SEE ALSO
 
 * [operator-sdk completion](../operator-sdk_completion)	 - Generators for shell completions

@@ -3,7 +3,7 @@
 source hack/lib/common.sh
 
 function listPkgDirs() {
-	go list -f '{{.Dir}}' ./cmd/... ./pkg/... ./test/... ./internal/... | grep -v generated
+	go list -f '{{.Dir}}' ./cmd/... ./test/... ./internal/... | grep -v generated
 }
 
 function listFiles() {
@@ -40,75 +40,4 @@ function trap_add() {
          trap   "${new_cmd}" "${trap_add_name}" || \
                 fatal "unable to add to trap ${trap_add_name}"
     done
-}
-
-# add_go_mod_replace adds a "replace" directive from $1 to $2 with an
-# optional version version $3 to the current working directory's go.mod file.
-function add_go_mod_replace() {
-	local from_path="${1:?first path in replace statement is required}"
-	local to_path="${2:?second path in replace statement is required}"
-	local version="${3:-}"
-
-	if [[ ! -d "$to_path" && -z "$version" ]]; then
-		echo "second replace path $to_path requires a version be set because it is not a directory"
-		exit 1
-	fi
-	if [[ ! -e go.mod ]]; then
-		echo "go.mod file not found in $(pwd)"
-		exit 1
-	fi
-
-	# Check if a replace line already exists. If it does, remove. If not, append.
-	if grep -q "${from_path} =>" go.mod; then
-		sed -E -i 's|^.+'"${from_path} =>"'.+$||g' go.mod
-	fi
-	# Do not use "go mod edit" so formatting stays the same.
-	local replace="replace ${from_path} => ${to_path}"
-	if [[ -n "$version" ]]; then
-		replace="$replace $version"
-	fi
-	echo "$replace" >> go.mod
-}
-
-# check_dir accepts 3 args:
-# 1: test case string
-# 2: directory to test for existence
-# 3: either 0 or 1, where 0 means "dir should exist", and 1 means
-#   "dir should not exist". The command fails if the condition is not met.
-function check_dir() {
-  if [[ $3 == 0 ]]; then
-    if [[ -d "$2" ]]; then
-      error_text "${1}: directory ${2} should not exist"
-      exit 1
-    fi
-  else
-    if [[ ! -d "$2" ]]; then
-      error_text "${1}: directory ${2} should exist"
-      exit 1
-    fi
-  fi
-}
-
-# check_file accepts 3 args:
-# 1: test case string
-# 2: file to test for existence
-# 3: either 0 or 1, where 0 means "file should exist", and 1 means
-#   "file should not exist". The command fails if the condition is not met.
-function check_file() {
-  if [[ $3 == 0 ]]; then
-    if [[ -f "$2" ]]; then
-      error_text "${1}: file ${2} should not exist"
-      exit 1
-    fi
-  else
-    if [[ ! -f "$2" ]]; then
-      error_text "${1}: file ${2} should exist"
-      exit 1
-    fi
-  fi
-}
-
-function echo_run() {
-	echo "$@"
-	$@
 }

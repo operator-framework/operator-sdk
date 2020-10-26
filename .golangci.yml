@@ -1,0 +1,42 @@
+run:
+  timeout: 5m
+linters:
+  enable:
+    - nakedret
+    - interfacer
+    - varcheck
+    - deadcode
+    - structcheck
+    - misspell
+    - maligned
+    - ineffassign
+    - goconst
+    - goimports
+    - errcheck
+    - dupl
+    - unparam
+    - golint
+    - staticcheck
+    - unused
+    - gosimple
+    - unconvert
+    - gocyclo
+    - gosec
+issues:
+  exclude-rules:
+    # Allow dot imports for ginkgo and gomega
+    - source: ginkgo|gomega
+      linters:
+      - golint
+      text: "should not use dot imports"
+
+    - linters:
+      - gosec
+      # these exclusion rules are for current failures in the code base for gosec which are
+      # excluded for future PRs which include:
+      # G110: Potential DoS vulnerability via decompression bomb
+      # G204: Audit use of command execution
+      # G306: Poor file permissions used when writing to a new file
+      # G404: Insecure random number source (rand)
+      # G601: Implicit memory aliasing of items from a range statement
+      text: "G110|G601|G404|G204|G306"

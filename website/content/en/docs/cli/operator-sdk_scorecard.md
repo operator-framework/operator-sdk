@@ -3,12 +3,13 @@ title: "operator-sdk scorecard"
 ---
 ## operator-sdk scorecard
 
-Run scorecard tests
+Runs scorecard
 
 ### Synopsis
 
-Runs blackbox scorecard tests on an operator
-
+Has flags to configure dsl, bundle, and selector. This command takes
+one argument, either a bundle image or directory containing manifests and metadata.
+If the argument holds an image tag, it must be present remotely.
 
 ```
 operator-sdk scorecard [flags]
@@ -17,17 +18,25 @@ operator-sdk scorecard [flags]
 ### Options
 
 ```
-  -b, --bundle string       OLM bundle directory path, when specified runs bundle validation
-      --config string       config file (default is '<project_dir>/.osdk-scorecard.yaml'; the config file's extension and format must be .yaml
-  -h, --help                help for scorecard
-      --kubeconfig string   Path to kubeconfig of custom resource created in cluster
-  -L, --list                If true, only print the test names that would be run based on selector filtering
-  -o, --output string       Output format for results. Valid values: text, json (default "text")
-  -l, --selector string     selector (label query) to filter tests on
-      --version string      scorecard version. Valid values: v1alpha2 (default "v1alpha2")
+  -c, --config string            path to scorecard config file
+  -h, --help                     help for scorecard
+      --kubeconfig string        kubeconfig path
+  -L, --list                     Option to enable listing which tests are run
+  -n, --namespace string         namespace to run the test images in
+  -o, --output string            Output format for results. Valid values: text, json (default "text")
+  -l, --selector string          label selector to determine which tests are run
+  -s, --service-account string   Service account to use for tests (default "default")
+  -x, --skip-cleanup             Disable resource cleanup after tests are run
+  -w, --wait-time duration       seconds to wait for tests to complete. Example: 35s (default 30s)
+```
+
+### Options inherited from parent commands
+
+```
+      --verbose   Enable verbose logging
 ```
 
 ### SEE ALSO
 
-* [operator-sdk](../operator-sdk)	 - An SDK for building operators with ease
+* [operator-sdk](../operator-sdk)	 - Development kit for building Kubernetes extensions and tools.
 

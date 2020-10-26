@@ -21,6 +21,12 @@ operator-sdk olm install [flags]
       --version string     version of OLM resources to install (default "latest")
 ```
 
+### Options inherited from parent commands
+
+```
+      --verbose   Enable verbose logging
+```
+
 ### SEE ALSO
 
 * [operator-sdk olm](../operator-sdk_olm)	 - Manage the Operator Lifecycle Manager installation in your cluster

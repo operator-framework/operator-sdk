@@ -3,21 +3,18 @@ title: "operator-sdk bundle validate"
 ---
 ## operator-sdk bundle validate
 
-Validate an operator bundle image
+Validate an operator bundle
 
 ### Synopsis
 
-The 'operator-sdk bundle validate' command can validate both content and
-format of an operator bundle image or an operator bundles directory on-disk
-containing operator metadata and manifests. This command will exit with an
-exit code of 1 if any validation errors arise, and 0 if only warnings arise or
-all validators pass.
+The 'operator-sdk bundle validate' command can validate both content and format of an operator bundle
+image or an operator bundle directory on-disk containing operator metadata and manifests. This command will exit
+with an exit code of 1 if any validation errors arise, and 0 if only warnings arise or all validators pass.
 
 More information about operator bundles and metadata:
-https://github.com/operator-framework/operator-registry#manifest-format.
+https://github.com/operator-framework/operator-registry/blob/master/docs/design/operator-bundle.md
 
-NOTE: if validating an image, the image must exist in a remote registry, not
-just locally.
+NOTE: if validating an image, the image must exist in a remote registry, not just locally.
 
 
 ```
@@ -27,36 +24,48 @@ operator-sdk bundle validate [flags]
 ### Examples
 
 ```
-The following command flow will generate test-operator bundle image manifests
-and validate them, assuming a bundle for 'test-operator' version v0.1.0 exists at
-<project-root>/deploy/olm-catalog/test-operator/manifests:
+This example assumes you either have a *pullable* bundle image,
+or something similar to the following operator bundle layout present locally:
 
-  # Generate manifests locally.
-  $ operator-sdk bundle create --generate-only
+  $ tree ./bundle
+  ./bundle
+  ├── manifests
+  │   ├── cache.my.domain_memcacheds.yaml
+  │   └── memcached-operator.clusterserviceversion.yaml
+  └── metadata
+      └── annotations.yaml
 
-  # Validate the directory containing manifests and metadata.
-  $ operator-sdk bundle validate ./deploy/olm-catalog/test-operator
+To validate a local bundle:
 
-To build and validate an image:
+  $ operator-sdk bundle validate ./bundle
 
-  # Create a registry namespace or use an existing one.
-  $ export NAMESPACE=<your registry namespace>
+To build and validate a *pullable* bundle image:
 
-  # Build and push the image using the docker CLI.
-  $ operator-sdk bundle create quay.io/$NAMESPACE/test-operator:v0.1.0
-  $ docker push quay.io/$NAMESPACE/test-operator:v0.1.0
+  $ operator-sdk bundle validate <some-registry>/<operator-bundle-name>:<tag>
 
-  # Ensure the image with modified metadata and Dockerfile is valid.
-  $ operator-sdk bundle validate quay.io/$NAMESPACE/test-operator:v0.1.0
+To list and run optional validators, which are specified by a label selector:
 
+  $ operator-sdk bundle validate --list-optional
+  NAME           LABELS                     DESCRIPTION
+  operatorhub    name=operatorhub           OperatorHub.io metadata validation
+                 suite=operatorframework
+  $ operator-sdk bundle validate ./bundle --select-optional suite=operatorframework
 
 ```
 
 ### Options
 
 ```
-  -h, --help                   help for validate
-  -b, --image-builder string   Tool to extract bundle image data. Only used when validating a bundle image. One of: [docker, podman] (default "docker")
+  -h, --help                     help for validate
+  -b, --image-builder string     Tool to pull and unpack bundle images. Only used when validating a bundle image. One of: [docker, podman, none] (default "docker")
+      --list-optional            List all optional validators available. When set, no validators will be run
+      --select-optional string   Label selector to select optional validators to run. Run this command with '--list-optional' to list available optional validators
+```
+
+### Options inherited from parent commands
+
+```
+      --verbose   Enable verbose logging
 ```
 
 ### SEE ALSO

@@ -21,15 +21,16 @@ import (
 	"strings"
 
 	"github.com/blang/semver"
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 
+	metricsannotations "github.com/operator-framework/operator-sdk/internal/annotations/metrics"
 	"github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion/bases"
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
 	genutil "github.com/operator-framework/operator-sdk/internal/generate/internal"
-	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
@@ -48,12 +49,14 @@ var (
 
 // ClusterServiceVersion configures ClusterServiceVersion manifest generation.
 type Generator struct {
-	// OperatorName is the operator's name, ex. app-operator
+	// OperatorName is the operator's name, ex. app-operator.
 	OperatorName string
 	// OperatorType determines what code API types are written in for getBase.
 	OperatorType projutil.OperatorType
 	// Version is the CSV current version.
 	Version string
+	// FromVersion is the version of a previous CSV to upgrade from.
+	FromVersion string
 	// Collector holds all manifests relevant to the Generator.
 	Collector *collector.Manifests
 
@@ -125,6 +128,21 @@ func WithBundleWriter(dir string) Option {
 	}
 }
 
+// WithPackageWriter sets a Generator's writer to a package CSV file under
+// <dir>/<version>.
+func WithPackageWriter(dir string) Option {
+	return func(g *Generator) error {
+		fileName := makeCSVFileName(g.OperatorName)
+		if g.FromVersion != "" {
+			g.bundledPath = filepath.Join(dir, g.FromVersion, fileName)
+		}
+		g.getWriter = func() (io.Writer, error) {
+			return genutil.Open(filepath.Join(dir, g.Version), fileName)
+		}
+		return nil
+	}
+}
+
 // Generate configures the generator with cfg and opts then runs it.
 func (g *Generator) Generate(cfg *config.Config, opts ...Option) (err error) {
 	g.config = cfg
@@ -143,6 +161,9 @@ func (g *Generator) Generate(cfg *config.Config, opts ...Option) (err error) {
 		return err
 	}
 
+	// Add sdk labels to csv
+	g.setSDKAnnotations(csv)
+
 	w, err := g.getWriter()
 	if err != nil {
 		return err
@@ -150,40 +171,17 @@ func (g *Generator) Generate(cfg *config.Config, opts ...Option) (err error) {
 	return genutil.WriteObject(w, csv)
 }
 
-// LegacyOption is a function that modifies a Generator for legacy project layouts.
-type LegacyOption Option
-
-// WithBundleBase sets a Generator's base CSV to a legacy-style bundle base.
-func WithBundleBase(inputDir, apisDir string, ilvl projutil.InteractiveLevel) LegacyOption {
-	return func(g *Generator) error {
-		g.getBase = g.makeBundleBaseGetterLegacy(inputDir, apisDir, ilvl)
-		return nil
-	}
-}
-
-// GenerateLegacy configures the generator with opts then runs it. Used for
-// generating files for legacy project layouts.
-func (g *Generator) GenerateLegacy(opts ...LegacyOption) (err error) {
-	for _, opt := range opts {
-		if err = opt(g); err != nil {
-			return err
-		}
+// setSDKAnnotations adds SDK metric labels to the base if they do not exist.
+func (g Generator) setSDKAnnotations(csv *v1alpha1.ClusterServiceVersion) {
+	annotations := csv.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
 	}
 
-	if g.getWriter == nil {
-		return noGetWriterError
+	for key, value := range metricsannotations.MakeBundleObjectAnnotations(g.config) {
+		annotations[key] = value
 	}
-
-	csv, err := g.generate()
-	if err != nil {
-		return err
-	}
-
-	w, err := g.getWriter()
-	if err != nil {
-		return err
-	}
-	return genutil.WriteObject(w, csv)
+	csv.SetAnnotations(annotations)
 }
 
 // generate runs a configured Generator.
@@ -233,41 +231,6 @@ func (g Generator) makeBaseGetter(basePath, apisDir string, interactive bool) ge
 		gvks[i].Group = fmt.Sprintf("%s.%s", gvk.Group, g.config.Domain)
 		gvks[i].Version = gvk.Version
 		gvks[i].Kind = gvk.Kind
-	}
-
-	return func() (*operatorsv1alpha1.ClusterServiceVersion, error) {
-		b := bases.ClusterServiceVersion{
-			OperatorName: g.OperatorName,
-			OperatorType: g.OperatorType,
-			BasePath:     basePath,
-			APIsDir:      apisDir,
-			GVKs:         gvks,
-			Interactive:  interactive,
-		}
-		return b.GetBase()
-	}
-}
-
-// makeBundleBaseGetterLegacy returns a function that gets a bundle base
-// for legacy project layouts.
-func (g Generator) makeBundleBaseGetterLegacy(inputDir, apisDir string, ilvl projutil.InteractiveLevel) getBaseFunc {
-	basePath := filepath.Join(inputDir, bundle.ManifestsDir, makeCSVFileName(g.OperatorName))
-	if genutil.IsNotExist(basePath) {
-		basePath = ""
-	}
-	return g.makeBaseGetterLegacy(basePath, apisDir, requiresInteraction(basePath, ilvl))
-}
-
-// makeBaseGetterLegacy returns a function that gets a base from inputDir.
-// apisDir is used by getBaseFunc to populate base fields. This method should
-// be used when creating LegacyOptions.
-func (g Generator) makeBaseGetterLegacy(basePath, apisDir string, interactive bool) getBaseFunc {
-	var gvks []schema.GroupVersionKind
-	if g.Collector != nil {
-		v1crdGVKs := k8sutil.GVKsForV1CustomResourceDefinitions(g.Collector.V1CustomResourceDefinitions...)
-		gvks = append(gvks, v1crdGVKs...)
-		v1beta1crdGVKs := k8sutil.GVKsForV1beta1CustomResourceDefinitions(g.Collector.V1beta1CustomResourceDefinitions...)
-		gvks = append(gvks, v1beta1crdGVKs...)
 	}
 
 	return func() (*operatorsv1alpha1.ClusterServiceVersion, error) {

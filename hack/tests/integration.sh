@@ -2,31 +2,44 @@
 
 set -eu
 
+source hack/lib/common.sh
+source hack/lib/test_lib.sh
 source hack/lib/image_lib.sh
 
-export OSDK_INTEGRATION_IMAGE="quay.io/example/memcached-operator:latest"
+TMPDIR="$(mktemp -d -p /tmp memcached-operator-XXXX)"
+trap_add 'rm -rf $TMPDIR' EXIT
+pushd "$TMPDIR"
 
-# Build the operator image.
-pushd test/test-framework
-operator-sdk build "$OSDK_INTEGRATION_IMAGE"
-# If using a kind cluster, load the image into all nodes.
+header_text "Initializing test project"
+
+# Initialize a basic memcached-operator project
+operator-sdk init --repo github.com/example/memcached-operator --domain example.com --fetch-deps=false
+operator-sdk create api --group cache --version v1alpha1 --kind Memcached --controller --resource
+sed -i 's@Foo string `json:"foo,omitempty"`@// +optional\
+        Count int `json:"count,omitempty"`@' api/v1alpha1/memcached_types.go
+
+# Build the operator's image.
+export OSDK_INTEGRATION_IMAGE="quay.io/example/memcached-operator:integration"
+make docker-build IMG="$OSDK_INTEGRATION_IMAGE"
 load_image_if_kind "$OSDK_INTEGRATION_IMAGE"
+
 popd
 
 # Install OLM on the cluster if not installed.
 olm_latest_exists=0
 if ! operator-sdk olm status > /dev/null 2>&1; then
-  operator-sdk olm install
+  operator-sdk olm install --version=0.15.1
   olm_latest_exists=1
 fi
 
-# Integration tests will use default loading rules for the kubeconfig if
-# KUBECONFIG is not set.
+header_text "Running integration tests"
+
+# Integration tests will use default loading rules for the kubeconfig if KUBECONFIG is not set.
 go test -v ./test/integration
+
+header_text "Integration tests succeeded"
 
 # Uninstall OLM if it was installed for test purposes.
 if eval "(( $olm_latest_exists ))"; then
-  operator-sdk olm uninstall
+  operator-sdk olm uninstall --version=0.15.1
 fi
-
-echo -e "\n=== Integration tests succeeded ===\n"

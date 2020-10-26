@@ -1,12 +1,28 @@
 # Folders
-vendor
-_obj
-_test
-_output
-.kube
 .idea
 
-# Created by https://www.gitignore.io/api/go,vim,emacs,visualstudiocode
+# Build artifacts
+/build
+/dist
+/tools/bin
+
+# Website
+website/public/
+website/resources/
+website/node_modules/
+website/tech-doc-hugo
+
+# Ensure that will not commit the bin gen in the go sample
+testdata/go/memcached-operator/bin/*
+
+# Ignore molecule samples testdata if it be generated in the testdata/ diretory
+testdata/ansible/memcached-molecule-operator
+
+# Trash files
+*\.DS_Store
+
+# Created by https://www.toptal.com/developers/gitignore/api/go,vim,emacs,visualstudiocode
+# Edit at https://www.toptal.com/developers/gitignore?templates=go,vim,emacs,visualstudiocode
 
 ### Emacs ###
 # -*- mode: gitignore; -*-
@@ -55,6 +71,10 @@ flycheck_*.el
 # directory configuration
 .dir-locals.el
 
+# network security
+/network-security.data
+
+
 ### Go ###
 # Binaries for programs and plugins
 *.exe
@@ -63,7 +83,7 @@ flycheck_*.el
 *.so
 *.dylib
 
-# Test binary, build with `go test -c`
+# Test binary, built with `go test -c`
 *.test
 
 # Output of the go coverage tool, specifically when used with LiteIDE
@@ -72,6 +92,7 @@ flycheck_*.el
 ### Vim ###
 # Swap
 [._]*.s[a-v][a-z]
+!*.svg  # comment out if you don't need vector files
 [._]*.sw[a-p]
 [._]s[a-rt-v][a-z]
 [._]ss[a-gi-z]
@@ -79,6 +100,7 @@ flycheck_*.el
 
 # Session
 Session.vim
+Sessionx.vim
 
 # Temporary
 .netrwhist
@@ -89,24 +111,15 @@ tags
 
 ### VisualStudioCode ###
 .vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
 
-# End of https://www.gitignore.io/api/go,vim,emacs,visualstudiocode
+### VisualStudioCode Patch ###
+# Ignore all local history of files
+.history
+.ionide
 
-# Build artifacts
-/build
-test/ansible-operator/ansible-operator
-test/helm-operator/helm-operator
-images/scorecard-proxy/scorecard-proxy
-images/scorecard-test/scorecard-test
-
-# Test artifacts
-pkg/ansible/runner/testdata/valid.yaml
-/bin
-test/test-framework/go.sum
-internal/scorecard/alpha/examples/custom-scorecard-tests/go.sum
-
-# Website
-website/public/
-website/resources/
-website/node_modules/
-website/tech-doc-hugo
+# End of https://www.toptal.com/developers/gitignore/api/go,vim,emacs,visualstudiocode

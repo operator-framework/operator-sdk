@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/yaml"
 
+	"github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion/bases/definitions"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
@@ -80,9 +81,11 @@ func (b ClusterServiceVersion) GetBase() (base *v1alpha1.ClusterServiceVersion, 
 	if b.APIsDir != "" {
 		switch b.OperatorType {
 		case projutil.OperatorTypeGo:
-			if err := updateDescriptionsForGVKs(base, b.APIsDir, b.GVKs); err != nil {
-				return nil, fmt.Errorf("error generating ClusterServiceVersion base metadata: %w", err)
-			}
+			// Update descriptions from the APIs dir.
+			err = definitions.ApplyDefinitionsForKeysGo(base, b.APIsDir, b.GVKs)
+		}
+		if err != nil {
+			return nil, fmt.Errorf("error generating ClusterServiceVersion definitions metadata: %w", err)
 		}
 	}
 
@@ -158,8 +161,8 @@ func (b ClusterServiceVersion) makeNewBase() *v1alpha1.ClusterServiceVersion {
 			Keywords:    b.Keywords,
 			Icon:        b.Icon,
 			InstallModes: []v1alpha1.InstallMode{
-				{Type: v1alpha1.InstallModeTypeOwnNamespace, Supported: true},
-				{Type: v1alpha1.InstallModeTypeSingleNamespace, Supported: true},
+				{Type: v1alpha1.InstallModeTypeOwnNamespace, Supported: false},
+				{Type: v1alpha1.InstallModeTypeSingleNamespace, Supported: false},
 				{Type: v1alpha1.InstallModeTypeMultiNamespace, Supported: false},
 				{Type: v1alpha1.InstallModeTypeAllNamespaces, Supported: true},
 			},
