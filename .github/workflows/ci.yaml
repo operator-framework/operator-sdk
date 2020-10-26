@@ -53,7 +53,6 @@ jobs:
         with:
           fetch-depth: 0
       - run: |
-          export PATH=/opt/python/3.6.7/bin:${PATH}
           make test-e2e-ansible test-e2e-ansible-molecule
 
   integration:
