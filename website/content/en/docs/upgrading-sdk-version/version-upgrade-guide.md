@@ -636,7 +636,7 @@ Replace `*` per verbs in order to solve the issue [671](https://github.com/opera
 - **Breaking change:** An existing CSV's `spec.customresourcedefinitions.owned` is now always overwritten except for each name, version, and kind on invoking olm-catalog gen-csv when Go API code annotations are present.
 - **Potentially Breaking change:** Be aware that there are potentially other breaking changes due to the controller-runtime and Kubernetes version be upgraded from `v0.4.0` to `v1.16.2, respectively. There may be breaking changes to Go client code due to both of those changes.
 
-For further detailed information see [CHANGELOG](https://github.com/operator-framework/operator-sdk/blob/master/CHANGELOG.md#v0130)
+For further detailed information see [CHANGELOG](https://github.com/operator-framework/operator-sdk/blob/v1.1.x/CHANGELOG.md#v0130)
 
 ## `v0.14.x`
 
@@ -839,7 +839,7 @@ You can also use the fully-qualified name without declaring the collection:
 
 **Notable Changes**
 
-These notable changes contain just the most important user-facing changes. See the [CHANGELOG](https://github.com/operator-framework/operator-sdk/blob/master/CHANGELOG.md#v0141) for details of the release.
+These notable changes contain just the most important user-facing changes. See the [CHANGELOG](https://github.com/operator-framework/operator-sdk/blob/v1.1.x/CHANGELOG.md#v0141) for details of the release.
 
 **Ansible version update**
 
@@ -945,7 +945,7 @@ With:
 oprator-sdk run exec-entrypoint helm --watches-file=$HOME/watches.yaml
 ```
 
-See the [CHANGELOG](https://github.com/operator-framework/operator-sdk/blob/master/CHANGELOG.md#v0151) for details of the release.
+See the [CHANGELOG](https://github.com/operator-framework/operator-sdk/blob/v1.1.x/CHANGELOG.md#v0151) for details of the release.
 
 ## v0.16.x
 
@@ -1374,7 +1374,7 @@ first `COPY` from `COPY /*.yaml manifests/` to `COPY deploy/olm-catalog/<operato
 [migrating-to-modules]: https://github.com/golang/go/wiki/Modules#migrating-to-modules
 [modules-wiki]: https://github.com/golang/go/wiki/Modules#migrating-to-modules
 [print-deps-cli]: https://v0-19-x.sdk.operatorframework.io/docs/cli/operator-sdk_print-deps/
-[changelog]: https://github.com/operator-framework/operator-sdk/blob/master/CHANGELOG.md
+[changelog]: https://github.com/operator-framework/operator-sdk/blob/v1.1.x/CHANGELOG.md
 [release-notes]: https://github.com/operator-framework/operator-sdk/releases
 [v0.1.0-migration-guide]: ../v0.1.0-migration-guide
 [manifest-format]: https://github.com/operator-framework/operator-registry#manifest-format

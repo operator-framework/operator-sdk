@@ -81,14 +81,14 @@ Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file f
 [ansible-guide]:/docs/building-operators/ansible/quickstart/
 [bug_guide]:/docs/contribution-guidelines/reporting-issues/
 [capability_levels]: /docs/advanced-topics/operator-capabilities/operator-capabilities
-[contrib]: https://github.com/operator-framework/operator-sdk/blob/master/CONTRIBUTING.MD
+[contrib]: https://github.com/operator-framework/operator-sdk/blob/v1.1.x/CONTRIBUTING.MD
 [controller_runtime]: https://github.com/kubernetes-sigs/controller-runtime
 [faq]: /docs/faqs/faqs
 [getting_started]: https://github.com/operator-framework/getting-started/blob/master/README.md
 [golang-guide]:/docs/building-operators/golang/quickstart/
 [helm-guide]:/docs/building-operators/helm/quickstart/
 [install_guide]: /docs/installation/install-operator-sdk/
-[license_file]:https://github.com/operator-framework/operator-sdk/blob/master/LICENSE
+[license_file]:https://github.com/operator-framework/operator-sdk/blob/v1.1.x/LICENSE
 [of-blog]: https://coreos.com/blog/introducing-operator-framework
 [of-home]: https://github.com/operator-framework
 [operator_link]: https://coreos.com/operators/

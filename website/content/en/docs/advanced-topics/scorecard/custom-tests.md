@@ -288,13 +288,13 @@ connection to invoke the Kube API.
 
 
 [client_go]: https://github.com/kubernetes/client-go
-[olm_tests]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/tests/olm.go
-[basic_tests]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/tests/basic.go
-[config_yaml]: https://github.com/operator-framework/operator-sdk/blob/master/internal/scorecard/testdata/bundle/tests/scorecard/config.yaml
-[scorecard_main_func]: https://github.com/operator-framework/operator-sdk/blob/master/images/scorecard-test/cmd/test/main.go
+[olm_tests]: https://github.com/operator-framework/operator-sdk/blob/v1.1.x/internal/scorecard/tests/olm.go
+[basic_tests]: https://github.com/operator-framework/operator-sdk/blob/v1.1.x/internal/scorecard/tests/basic.go
+[config_yaml]: https://github.com/operator-framework/operator-sdk/blob/v1.1.x/internal/scorecard/testdata/bundle/tests/scorecard/config.yaml
+[scorecard_main_func]: https://github.com/operator-framework/operator-sdk/blob/v1.1.x/images/scorecard-test/cmd/test/main.go
 [custom_scorecard_repo]: https://github.com/operator-framework/operator-sdk
 [user_doc]: /docs/advanced-topics/scorecard/scorecard/
-[scorecard_binary]: https://github.com/operator-framework/operator-sdk/blob/master/images/custom-scorecard-tests/cmd/test/main.go
-[sample_makefile]: https://github.com/operator-framework/operator-sdk/blob/master/Makefile
+[scorecard_binary]: https://github.com/operator-framework/operator-sdk/blob/v1.1.x/images/custom-scorecard-tests/cmd/test/main.go
+[sample_makefile]: https://github.com/operator-framework/operator-sdk/blob/v1.1.x/Makefile
 [kustomize-patchJson6902]: https://kubernetes-sigs.github.io/kustomize/api-reference/kustomization/patchesjson6902/
 [testresults]:https://github.com/operator-framework/api/blob/333d064/pkg/apis/scorecard/v1alpha3/test_types.go#L35

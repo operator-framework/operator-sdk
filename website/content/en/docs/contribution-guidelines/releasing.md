@@ -365,14 +365,14 @@ See [this section](#locking-down-branches) for steps to do so.
 You've now fully released a new version of the Operator SDK. Good work! 
 
 [install-guide]: /docs/installation/install-operator-sdk
-[doc-maintainers]: https://github.com/operator-framework/operator-sdk/blob/master/MAINTAINERS
-[doc-owners]: https://github.com/operator-framework/operator-sdk/blob/master/OWNERS
+[doc-maintainers]: https://github.com/operator-framework/operator-sdk/blob/v1.1.x/MAINTAINERS
+[doc-owners]: https://github.com/operator-framework/operator-sdk/blob/v1.1.x/OWNERS
 [doc-readme-prereqs]: /docs/installation/install-operator-sdk#prerequisites-for-compilation
 [doc-git-default-key]:https://help.github.com/en/articles/telling-git-about-your-signing-key
 [doc-gpg-default-key]:https://lists.gnupg.org/pipermail/gnupg-users/2001-September/010163.html
 [link-github-gpg-key-upload]:https://github.com/settings/keys
 [link-git-config-gpg-key]:https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work
-[doc-changelog]: https://github.com/operator-framework/operator-sdk/blob/master/CHANGELOG.md
+[doc-changelog]: https://github.com/operator-framework/operator-sdk/blob/v1.1.x/CHANGELOG.md
 [backports]:/docs/upgrading-sdk-version/backport-policy
 [release-page]:https://github.com/operator-framework/operator-sdk/releases
 [homebrew]:https://brew.sh/
