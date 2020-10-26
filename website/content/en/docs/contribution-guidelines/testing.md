@@ -44,4 +44,4 @@ All the tests are run through the [`Makefile`][makefile]. Run `make help` for a 
 [minikube]: https://kubernetes.io/docs/setup/learning-environment/minikube/
 [kind]: https://kind.sigs.k8s.io/
 [envtest-setup]: /docs/building-operators/golang/references/envtest-setup
-[makefile]: https://github.com/operator-framework/operator-sdk/blob/master/Makefile
+[makefile]: https://github.com/operator-framework/operator-sdk/blob/v1.1.x/Makefile

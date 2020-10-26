@@ -79,5 +79,5 @@ $ make cli-doc
 [dev-docs]: /docs/contribution-guidelines/documentation
 [dev-release]: /docs/contribution-guidelines/releasing
 [travis]: https://docs.travis-ci.com/
-[travis.yml]: https://github.com/operator-framework/operator-sdk/blob/master/.travis.yml
+[travis.yml]: https://github.com/operator-framework/operator-sdk/blob/v1.1.x/.travis.yml
 [travis-setup]: https://docs.travis-ci.com/user/tutorial/#to-get-started-with-travis-ci-using-github

@@ -572,6 +572,6 @@ func labelsForApp(name string) map[string]string {
 [code-scheme-default]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/client/client.go#L51
 [doc-k8s-core]:https://godoc.org/k8s.io/api/core/v1
 [doc-reconcile-reconciler]:https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Reconciler
-[doc-osdk-handle]:https://github.com/operator-framework/operator-sdk/blob/master/design/milestone-0.0.2/action-api.md#handler
+[doc-osdk-handle]:https://github.com/operator-framework/operator-sdk/blob/v1.1.x/design/milestone-0.0.2/action-api.md#handler
 [doc-types-nsname]:https://godoc.org/k8s.io/apimachinery/pkg/types#NamespacedName
 [cr-status-subresource]:https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#status-subresource

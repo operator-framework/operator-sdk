@@ -50,7 +50,7 @@ hence its intended purpose being testing only.
 
 
 [olm]:https://github.com/operator-framework/operator-lifecycle-manager/
-[sdk-olm-design]:https://github.com/operator-framework/operator-sdk/blob/master/proposals/sdk-integration-with-olm.md
+[sdk-olm-design]:https://github.com/operator-framework/operator-sdk/blob/v1.1.x/proposals/sdk-integration-with-olm.md
 [doc-cli-overview]:/docs/olm-integration/cli-overview
 [package-manifests]:https://github.com/operator-framework/operator-registry/tree/v1.5.3#manifest-format
 [csv-install-modes]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md#operator-metadata

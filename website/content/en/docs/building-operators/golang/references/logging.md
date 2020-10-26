@@ -260,7 +260,7 @@ If you do not want to use `logr` as your logging tool, you can remove `logr`-spe
 [repo_zapr]:https://godoc.org/github.com/go-logr/zapr
 [godoc_logr_logger]:https://godoc.org/github.com/go-logr/logr#Logger
 [site_struct_logging]:https://www.client9.com/structured-logging-in-golang/
-[code_memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/memcached-operator/controllers/memcached_controller.go
+[code_memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/v1.1.x/testdata/go/memcached-operator/controllers/memcached_controller.go
 [logfmt_repo]:https://github.com/jsternberg/zap-logfmt
 [controller_runtime_zap]:https://github.com/kubernetes-sigs/controller-runtime/tree/master/pkg/log/zap
 [logging_godocs]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/log/zap#Options.BindFlags
