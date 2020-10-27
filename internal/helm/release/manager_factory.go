@@ -16,6 +16,7 @@ package release
 
 import (
 	"fmt"
+	"time"
 
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart/loader"
@@ -37,17 +38,32 @@ import (
 // improves decoupling between reconciliation logic and the Helm backend
 // components used to manage releases.
 type ManagerFactory interface {
-	NewManager(r *unstructured.Unstructured, overrideValues map[string]string) (Manager, error)
+	NewManager(*unstructured.Unstructured, map[string]string) (Manager, error)
 }
 
 type managerFactory struct {
 	mgr      crmanager.Manager
 	chartDir string
+	timeout  time.Duration
 }
 
 // NewManagerFactory returns a new Helm manager factory capable of installing and uninstalling releases.
-func NewManagerFactory(mgr crmanager.Manager, chartDir string) ManagerFactory {
-	return &managerFactory{mgr, chartDir}
+func NewManagerFactory(opts ManagerFactoryOptions) ManagerFactory {
+	return &managerFactory{
+		mgr:      opts.CRManager,
+		chartDir: opts.ChartDir,
+		timeout:  opts.Timeout,
+	}
+}
+
+// ManagerFactoryOptions enable configuration of Helm operators
+type ManagerFactoryOptions struct {
+	// Timeout specifies how long helm should attempt an action ie. install --timeout 5m
+	Timeout time.Duration
+	// CRManager is the controller-runtime manager
+	CRManager crmanager.Manager
+	// ChartDir is the directory containing directories of helm charts
+	ChartDir string
 }
 
 func (f managerFactory) NewManager(cr *unstructured.Unstructured, overrideValues map[string]string) (Manager, error) {
@@ -104,6 +120,7 @@ func (f managerFactory) NewManager(cr *unstructured.Unstructured, overrideValues
 		actionConfig:   actionConfig,
 		storageBackend: storageBackend,
 		kubeClient:     ownerRefClient,
+		timeout:        f.timeout,
 
 		releaseName: releaseName,
 		namespace:   cr.GetNamespace(),

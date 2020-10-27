@@ -145,9 +145,13 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 	for _, w := range ws {
 		// Register the controller with the factory.
 		err := controller.Add(mgr, controller.WatchOptions{
-			Namespace:               namespace,
-			GVK:                     w.GroupVersionKind,
-			ManagerFactory:          release.NewManagerFactory(mgr, w.ChartDir),
+			Namespace: namespace,
+			GVK:       w.GroupVersionKind,
+			ManagerFactory: release.NewManagerFactory(release.ManagerFactoryOptions{
+				ChartDir:  w.ChartDir,
+				CRManager: mgr,
+				Timeout:   f.Timeout,
+			}),
 			ReconcilePeriod:         f.ReconcilePeriod,
 			WatchDependentResources: *w.WatchDependentResources,
 			OverrideValues:          w.OverrideValues,

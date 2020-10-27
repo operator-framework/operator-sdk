@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	jsonpatch "gomodules.xyz/jsonpatch/v3"
 	"helm.sh/helm/v3/pkg/action"
@@ -66,6 +67,7 @@ type manager struct {
 	values map[string]interface{}
 	status *types.HelmAppStatus
 
+	timeout           time.Duration
 	isInstalled       bool
 	isUpgradeRequired bool
 	deployedRelease   *rpb.Release
@@ -152,6 +154,7 @@ func (m manager) getCandidateRelease(namespace, name string, chart *cpb.Chart,
 	values map[string]interface{}) (*rpb.Release, error) {
 	upgrade := action.NewUpgrade(m.actionConfig)
 	upgrade.Namespace = namespace
+	upgrade.Timeout = m.timeout
 	upgrade.DryRun = true
 	return upgrade.Run(name, chart, values)
 }
@@ -159,6 +162,7 @@ func (m manager) getCandidateRelease(namespace, name string, chart *cpb.Chart,
 // InstallRelease performs a Helm release install.
 func (m manager) InstallRelease(ctx context.Context, opts ...InstallOption) (*rpb.Release, error) {
 	install := action.NewInstall(m.actionConfig)
+	install.Timeout = m.timeout
 	install.ReleaseName = m.releaseName
 	install.Namespace = m.namespace
 	for _, o := range opts {
@@ -172,6 +176,7 @@ func (m manager) InstallRelease(ctx context.Context, opts ...InstallOption) (*rp
 		// Workaround for helm/helm#3338
 		if installedRelease != nil {
 			uninstall := action.NewUninstall(m.actionConfig)
+			uninstall.Timeout = m.timeout
 			_, uninstallErr := uninstall.Run(m.releaseName)
 
 			// In certain cases, InstallRelease will return a partial release in
@@ -202,6 +207,7 @@ func ForceUpgrade(force bool) UpgradeOption {
 func (m manager) UpgradeRelease(ctx context.Context, opts ...UpgradeOption) (*rpb.Release, *rpb.Release, error) {
 	upgrade := action.NewUpgrade(m.actionConfig)
 	upgrade.Namespace = m.namespace
+	upgrade.Timeout = m.timeout
 	for _, o := range opts {
 		if err := o(upgrade); err != nil {
 			return nil, nil, fmt.Errorf("failed to apply upgrade option: %w", err)
@@ -213,6 +219,7 @@ func (m manager) UpgradeRelease(ctx context.Context, opts ...UpgradeOption) (*rp
 		// Workaround for helm/helm#3338
 		if upgradedRelease != nil {
 			rollback := action.NewRollback(m.actionConfig)
+			rollback.Timeout = m.timeout
 			rollback.Force = true
 
 			// As of Helm 2.13, if UpgradeRelease returns a non-nil release, that
@@ -364,6 +371,7 @@ func (m manager) UninstallRelease(ctx context.Context, opts ...UninstallOption) 
 	}
 
 	uninstall := action.NewUninstall(m.actionConfig)
+	uninstall.Timeout = m.timeout
 	for _, o := range opts {
 		if err := o(uninstall); err != nil {
 			return nil, fmt.Errorf("failed to apply uninstall option: %w", err)

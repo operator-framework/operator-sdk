@@ -15,6 +15,7 @@
 package flags
 
 import (
+	"flag"
 	"runtime"
 	"time"
 
@@ -24,6 +25,7 @@ import (
 // Flags - Options to be used by a helm operator
 type Flags struct {
 	ReconcilePeriod         time.Duration
+	Timeout                 time.Duration
 	WatchesFile             string
 	MetricsAddress          string
 	EnableLeaderElection    bool
@@ -34,6 +36,11 @@ type Flags struct {
 
 // AddTo - Add the helm operator flags to the the flagset
 func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
+	flag.DurationVar(&f.Timeout,
+		"timeout",
+		time.Minute*5,
+		"time to wait for any individual Kubernetes operation (like Jobs for hooks)",
+	)
 	flagSet.DurationVar(&f.ReconcilePeriod,
 		"reconcile-period",
 		time.Minute,
