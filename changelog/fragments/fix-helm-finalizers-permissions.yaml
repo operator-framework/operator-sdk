@@ -5,7 +5,3 @@ entries:
       In Helm projects, fix operator RBAC permissions to support the OwnerReferencesPermissionEnforcement admission plugin by adding a `<resource>/finalizers` rule in the operator's role.
     kind: "bugfix"
     breaking: false
-  - description: >
-      In Ansible projects, remove operator RBAC permissions for `<resource>/finalizers` because the Ansible operator does not use finalizers on the main CR.
-    kind: "bugfix"
-    breaking: false
