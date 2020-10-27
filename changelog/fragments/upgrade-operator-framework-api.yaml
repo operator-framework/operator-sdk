@@ -2,7 +2,8 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      Upgrade operator-framework/api version from `v0.3.13` to `0.3.18`.
+      Enabled definition of custom categories encoded as [JSON file(s)](https://olm.operatorframework.io/docs/tasks/validate-package/#validation)
+      for the `operatorhub` validator.
 
     # kind is one of:
     # - addition
@@ -10,7 +11,21 @@ entries:
     # - deprecation
     # - removal
     # - bugfix
-    kind: "change"
+    kind: "addition"
+
+    # Is this a breaking change?
+    breaking: false
+
+  - description: >
+      Webhook container port specified in CSV defaults to `443` if not specified by the user.
+ 
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "bugfix"
 
     # Is this a breaking change?
     breaking: false

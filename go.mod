@@ -11,7 +11,7 @@ require (
 	github.com/markbates/inflect v1.0.4
 	github.com/onsi/ginkgo v1.12.1
 	github.com/onsi/gomega v1.10.1
-	github.com/operator-framework/api v0.3.18
+	github.com/operator-framework/api v0.3.20
 	github.com/operator-framework/operator-lib v0.1.0
 	github.com/operator-framework/operator-registry v1.14.3
 	github.com/prometheus/client_golang v1.5.1
