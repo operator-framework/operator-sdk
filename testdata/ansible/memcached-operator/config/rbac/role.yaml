@@ -45,6 +45,7 @@ rules:
     resources:
       - memcacheds
       - memcacheds/status
+      - memcacheds/finalizers
     verbs:
       - create
       - delete
