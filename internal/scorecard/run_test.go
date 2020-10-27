@@ -107,7 +107,7 @@ func TestRun(t *testing.T) {
 // TODO(joelanford): rewrite to use ginkgo/gomega
 func TestRunParallelPass(t *testing.T) {
 	scorecard := getFakeScorecard(true)
-	ctx, cancel := context.WithTimeout(context.Background(), 7*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 70*time.Millisecond)
 	defer cancel()
 
 	tests, err := scorecard.Run(ctx)
@@ -125,7 +125,7 @@ func TestRunParallelPass(t *testing.T) {
 // TODO(joelanford): rewrite to use ginkgo/gomega
 func TestRunSequentialPass(t *testing.T) {
 	scorecard := getFakeScorecard(false)
-	ctx, cancel := context.WithTimeout(context.Background(), 12*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Millisecond)
 	defer cancel()
 
 	tests, err := scorecard.Run(ctx)
@@ -144,7 +144,7 @@ func TestRunSequentialPass(t *testing.T) {
 func TestRunSequentialFail(t *testing.T) {
 	scorecard := getFakeScorecard(false)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 7*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 70*time.Millisecond)
 	defer cancel()
 
 	_, err := scorecard.Run(ctx)
@@ -167,7 +167,7 @@ func getFakeScorecard(parallel bool) Scorecard {
 			},
 		},
 		TestRunner: FakeTestRunner{
-			Sleep: 5 * time.Millisecond,
+			Sleep: 50 * time.Millisecond,
 			TestStatus: &v1alpha3.TestStatus{
 				Results: []v1alpha3.TestResult{
 					{
