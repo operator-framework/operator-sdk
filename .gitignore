@@ -5,6 +5,7 @@
 /build
 /dist
 /tools/bin
+/images/*/bin
 
 # Website
 website/public/

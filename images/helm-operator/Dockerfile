@@ -9,7 +9,7 @@ RUN echo "${USER_NAME}:x:${USER_UID}:0:${USER_NAME} user:${HOME}:/sbin/nologin" 
 WORKDIR ${HOME}
 USER ${USER_UID}
 
-ARG BIN=helm-operator
+ARG BIN=bin/helm-operator
 COPY $BIN /usr/local/bin/helm-operator
 
 ENTRYPOINT ["/usr/local/bin/helm-operator", "run", "--watches-file=./watches.yaml"]
