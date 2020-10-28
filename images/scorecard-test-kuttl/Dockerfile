@@ -13,6 +13,6 @@ WORKDIR ${HOME}
 ARG BIN=scorecard-test-kuttl
 COPY $BIN /usr/local/bin/scorecard-test-kuttl
 
-ENTRYPOINT ["/usr/local/bin/scorecard-test-kuttl"]
+ENTRYPOINT ["/usr/local/bin/entrypoint"]
 
 USER ${USER_UID}

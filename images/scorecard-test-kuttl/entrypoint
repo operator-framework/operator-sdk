@@ -1,0 +1,11 @@
+#!/bin/sh
+
+KUTTL_PATH=${KUTTL_PATH:-"/bundle/tests/scorecard/kuttl"}
+KUTTL_CONFIG=${KUTTL_CONFIG:-"${KUTTL_PATH}/kuttl-test.yaml"}
+
+kubectl-kuttl test ${KUTTL_PATH} \
+  --config=${KUTTL_CONFIG} \
+  --namespace=${SCORECARD_NAMESPACE} \
+  --report=JSON --artifacts-dir=/tmp > /tmp/kuttl.stdout 2> /tmp/kuttl.stderr
+
+exec scorecard-test-kuttl $@
