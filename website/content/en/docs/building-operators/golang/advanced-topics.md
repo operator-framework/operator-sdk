@@ -6,7 +6,7 @@ weight: 70
 
 ### Manage CR status conditions
 
-An often-used pattern is to include `Conditions` in the status of custom resources. Conditions represent the latest available observations of an object's state (see the [Kubernetes API conventionsdocumentation][typical-status-properties] for more information).
+An often-used pattern is to include `Conditions` in the status of custom resources. Conditions represent the latest available observations of an object's state (see the [Kubernetes API conventions documentation][typical-status-properties] for more information).
 
 The `Conditions` field added to the `MemcachedStatus` struct simplifies the management of your CR's conditions. It:
 - Enables callers to add and remove conditions.
@@ -15,7 +15,13 @@ The `Conditions` field added to the `MemcachedStatus` struct simplifies the mana
 - Automatically handles the each condition's `LastTransitionTime`.
 - Provides helper methods to make it easy to determine the state of a condition.
 
-To use conditions in your custom resource, add a Conditions field to the Status struct in `_types.go`:
+To use conditions in your custom resource, pull the `v0.1.0` operator-lib library:
+
+```sh
+go get github.com/operator-framework/operator-lib@v0.1.0
+```
+
+Then add a Conditions field to the Status struct in `_types.go`:
 
 ```Go
 import (
@@ -287,7 +293,7 @@ func main() {
 When the operator is not running in a cluster, the Manager will return an error on starting since it can't detect the operator's namespace in order to create the configmap for leader election. You can override this namespace by setting the Manager's `LeaderElectionNamespace` option.
 
 [typical-status-properties]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
-[godoc-conditions]: https://godoc.org/github.com/operator-framework/operator-lib/status#Conditions
+[godoc-conditions]: https://pkg.go.dev/github.com/operator-framework/operator-lib@v0.1.0/status#Conditions
 [scheme_package]:https://github.com/kubernetes/client-go/blob/master/kubernetes/scheme/register.go
 [deployments_register]: https://github.com/kubernetes/api/blob/master/apps/v1/register.go#L41
 [runtime_package]: https://godoc.org/k8s.io/apimachinery/pkg/runtime

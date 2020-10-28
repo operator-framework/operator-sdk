@@ -339,7 +339,7 @@ E.g `kubectl logs deployment.apps/memcached-operator-controller-manager -n memca
 [integration-doc]: https://github.com/kubernetes-sigs/kubebuilder/blob/master/designs/integrating-kubebuilder-and-osdk.md
 [quickstart]: /docs/building-operators/golang/quickstart/
 [metrics]: https://book.kubebuilder.io/reference/metrics.html?highlight=metr#metrics
-[memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/master/example/memcached-operator/memcached_controller.go.tmpl
+[memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/v1.0.x/example/memcached-operator/memcached_controller.go.tmpl
 [rbac_markers]: https://book.kubebuilder.io/reference/markers/rbac.html
 [kube-auth-proxy]: https://github.com/brancz/kube-rbac-proxy
 [markers]: https://book.kubebuilder.io/reference/markers.html?highlight=markers#marker-syntax
