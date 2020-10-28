@@ -40,7 +40,7 @@ RUN TINIARCH=$(case $(arch) in x86_64) echo -n amd64 ;; ppc64le) echo -n ppc64el
 WORKDIR ${HOME}
 USER ${USER_UID}
 
-ARG BIN=ansible-operator
+ARG BIN=bin/ansible-operator
 COPY $BIN /usr/local/bin/ansible-operator
 
 ENTRYPOINT ["/tini", "--", "/usr/local/bin/ansible-operator", "run", "--watches-file=./watches.yaml"]

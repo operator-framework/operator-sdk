@@ -9,7 +9,7 @@ RUN echo "${USER_NAME}:x:${USER_UID}:0:${USER_NAME} user:${HOME}:/sbin/nologin" 
 
 WORKDIR ${HOME}
 
-ARG BIN=custom-scorecard-tests
+ARG BIN=bin/custom-scorecard-tests
 COPY $BIN /usr/local/bin/custom-scorecard-tests
 
 ENTRYPOINT ["/usr/local/bin/custom-scorecard-tests"]

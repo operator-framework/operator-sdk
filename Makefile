@@ -80,7 +80,8 @@ image/%: BUILD_DIR = build/_image
 # Images run on the linux kernel, so binaries must always target linux.
 image/%: export GOOS = linux
 image/%: build/%
-	docker build -t $(IMAGE_REPO)/$*:dev -f ./images/$*/Dockerfile $(BUILD_DIR)
+	mkdir -p ./images/$*/bin && mv $(BUILD_DIR)/$* ./images/$*/bin
+	docker build -t $(IMAGE_REPO)/$*:dev -f ./images/$*/Dockerfile ./images/$*
 	rm -rf $(BUILD_DIR)
 
 ##@ Test
