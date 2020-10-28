@@ -6,7 +6,7 @@ weight: 70
 
 ### Manage CR status conditions
 
-An often-used pattern is to include Conditions in the status of custom resources. A [`Condition`][apimachinery_condition] represents the latest available observations of an object's state (see the [Kubernetes API conventions documentation][typical-status-properties] for more information).
+An often-used pattern is to include `Conditions` in the status of custom resources. Conditions represent the latest available observations of an object's state (see the [Kubernetes API conventionsdocumentation][typical-status-properties] for more information).
 
 The `Conditions` field added to the `MemcachedStatus` struct simplifies the management of your CR's conditions. It:
 - Enables callers to add and remove conditions.
@@ -19,16 +19,16 @@ To use conditions in your custom resource, add a Conditions field to the Status 
 
 ```Go
 import (
-    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+    "github.com/operator-framework/operator-lib/status"
 )
 
 type MyAppStatus struct {
     // Conditions represent the latest available observations of an object's state
-    Conditions []metav1.Condition `json:"conditions"`
+    Conditions status.Conditions `json:"conditions"`
 }
 ```
 
-Then, in your controller, you can use [`Conditions`][helpers-conditions] methods to make it easier to set and remove conditions or check their current values.
+Then, in your controller, you can use [`Conditions`][godoc-conditions] methods to make it easier to set and remove conditions or check their current values.
 
 ### Adding 3rd Party Resources To Your Operator
 
@@ -287,7 +287,7 @@ func main() {
 When the operator is not running in a cluster, the Manager will return an error on starting since it can't detect the operator's namespace in order to create the configmap for leader election. You can override this namespace by setting the Manager's `LeaderElectionNamespace` option.
 
 [typical-status-properties]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
-[helpers-conditions]: https://github.com/kubernetes/apimachinery/blob/master/pkg/api/meta/conditions.go
+[godoc-conditions]: https://godoc.org/github.com/operator-framework/operator-lib/status#Conditions
 [scheme_package]:https://github.com/kubernetes/client-go/blob/master/kubernetes/scheme/register.go
 [deployments_register]: https://github.com/kubernetes/api/blob/master/apps/v1/register.go#L41
 [runtime_package]: https://godoc.org/k8s.io/apimachinery/pkg/runtime
@@ -298,4 +298,3 @@ When the operator is not running in a cluster, the Manager will return an error 
 [leader_with_lease]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/leaderelection
 [pod_eviction_timeout]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#options
 [manager_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Options
-[apimachinery_condition]: https://github.com/kubernetes/apimachinery/blob/d4f471b82f0a17cda946aeba446770563f92114d/pkg/apis/meta/v1/types.go#L1368
