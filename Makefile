@@ -76,10 +76,12 @@ image-build: $(foreach i,$(IMAGE_TARGET_LIST),image/$(i)) ## Build all images.
 
 # Build an image.
 IMAGE_REPO ?= quay.io/operator-framework
+image/%: BUILD_DIR = build/_image
+# Images run on the linux kernel, so binaries must always target linux.
+image/%: export GOOS = linux
 image/%: build/%
-	rm -rf build/_image && mkdir -p build/_image && cp build/$* build/_image
-	docker build -t $(IMAGE_REPO)/$*:dev -f ./images/$*/Dockerfile build/_image
-	@rm -rf build/_image
+	docker build -t $(IMAGE_REPO)/$*:dev -f ./images/$*/Dockerfile $(BUILD_DIR)
+	rm -rf $(BUILD_DIR)
 
 ##@ Test
 
