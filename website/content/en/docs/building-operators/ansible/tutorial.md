@@ -42,7 +42,7 @@ $ operator-sdk create api -h
 Next, we will create a `Memcached` API.
 
 ```sh
-$ operator-sdk create api --group cache --version v1alpha1 --kind Memcached --generate-role
+$ operator-sdk create api --group cache --version v1 --kind Memcached --generate-role
 ```
 
 The scaffolded operator has the following structure:
@@ -109,10 +109,10 @@ Roles, so edit `roles/memcached/defaults/main.yml`:
 size: 1
 ```
 
-Finally, update the `Memcached` sample, `config/samples/cache_v1alpha1_memcached.yaml`:
+Finally, update the `Memcached` sample, `config/samples/cache_v1_memcached.yaml`:
 
 ```yaml
-apiVersion: cache.example.com/v1alpha1
+apiVersion: cache.example.com/v1
 kind: Memcached
 metadata:
   name: memcached-sample
@@ -183,7 +183,7 @@ memcached-operator       1         1         1            1           1m
 Create the resource, the operator will do the rest.
 
 ```sh
-$ kubectl apply -f config/samples/cache_v1alpha1_memcached.yaml
+$ kubectl apply -f config/samples/cache_v1_memcached.yaml
 ```
 
 Verify that Memcached pods are created
