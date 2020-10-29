@@ -16,6 +16,8 @@ package genutil
 
 import (
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
+	admissionregv1 "k8s.io/api/admissionregistration/v1"
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
@@ -36,9 +38,13 @@ func GetManifestObjects(c *collector.Manifests) (objs []controllerutil.Object) {
 		objs = append(objs, &c.ServiceAccounts[i])
 	}
 
-	// All Services passed in should be written.
+	// All non-webhook Services passed in should be written.
 	for i := range c.Services {
-		objs = append(objs, &c.Services[i])
+		svc := &c.Services[i]
+		removeWebhookServicePorts(c, svc)
+		if len(svc.Spec.Ports) > 0 {
+			objs = append(objs, svc)
+		}
 	}
 
 	// Add all other supported kinds
@@ -69,5 +75,36 @@ func GetManifestObjects(c *collector.Manifests) (objs []controllerutil.Object) {
 func removeNamespace(objs []controllerutil.Object) {
 	for _, obj := range objs {
 		obj.SetNamespace("")
+	}
+}
+
+// removeWebhookServicePorts filters ports out of svc that correspond to ports used
+// by Validating and Mutating Webhooks present in c.
+func removeWebhookServicePorts(c *collector.Manifests, svc *corev1.Service) {
+	filter := func(ref *admissionregv1.ServiceReference, s *corev1.Service) {
+		if ref == nil {
+			return
+		}
+		if ref.Namespace == s.Namespace && ref.Name == s.Name {
+			// Port 443 is the default.
+			// See: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.18/#servicereference-v1-admissionregistration-k8s-io
+			webhookPort := int32(443)
+			if ref.Port != nil {
+				webhookPort = *ref.Port
+			}
+			keep := s.Spec.Ports[:0]
+			for _, p := range s.Spec.Ports {
+				if p.Port != webhookPort {
+					keep = append(keep, p)
+				}
+			}
+			s.Spec.Ports = keep
+		}
+	}
+	for _, w := range c.ValidatingWebhooks {
+		filter(w.ClientConfig.Service, svc)
+	}
+	for _, w := range c.MutatingWebhooks {
+		filter(w.ClientConfig.Service, svc)
 	}
 }
