@@ -1,0 +1,31 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Enabled definition of custom categories encoded as [JSON file(s)](https://olm.operatorframework.io/docs/tasks/validate-package/#validation)
+      for the `operatorhub` validator.
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "addition"
+
+    # Is this a breaking change?
+    breaking: false
+
+  - description: >
+      Webhook container port specified in CSV defaults to `443` if not specified by the user.
+ 
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "bugfix"
+
+    # Is this a breaking change?
+    breaking: false
