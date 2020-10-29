@@ -87,8 +87,8 @@ var _ = BeforeSuite(func() {
 		Expect(tc.LoadImageToKindClusterWithName("quay.io/operator-framework/scorecard-test:dev")).To(Succeed())
 	}
 
-	By("generating the operator bundle")
-	err = tc.Make("bundle", "IMG="+tc.ImageName)
+	By("creating bundle image")
+	err = tc.CreateBundle()
 	Expect(err).NotTo(HaveOccurred())
 })
 

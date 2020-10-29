@@ -34,19 +34,6 @@ func CheckError(msg string, err error) {
 	}
 }
 
-// CreateBundle runs all commands to create an operator bundle.
-func (ctx *SampleContext) CreateBundle() {
-	log.Infof("integrating project with OLM")
-	err := ctx.DisableManifestsInteractiveMode()
-	CheckError("disabling `generate kustomize manifests` interactive mode", err)
-
-	err = ctx.Make("bundle", "IMG="+ctx.ImageName)
-	CheckError("running make bundle", err)
-
-	err = ctx.StripBundleAnnotations()
-	CheckError("stripping bundle annotations", err)
-}
-
 // StripBundleAnnotations removes all annotations applied to bundle manifests and metadata
 // by operator-sdk/internal/annotations/metrics annotators. Doing so decouples samples
 // from which operator-sdk version they were build with, as this information is already

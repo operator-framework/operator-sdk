@@ -93,7 +93,13 @@ func (mh *MemcachedHelm) Run() {
 		"# +kubebuilder:scaffold:rules", policyRolesFragment)
 	pkg.CheckError("adding customized roles", err)
 
-	mh.ctx.CreateBundle()
+	log.Infof("creating the bundle")
+	err = mh.ctx.CreateBundle()
+	pkg.CheckError("creating the bundle", err)
+
+	log.Infof("striping bundle annotations")
+	err = mh.ctx.StripBundleAnnotations()
+	pkg.CheckError("striping bundle annotations", err)
 }
 
 // GenerateMemcachedHelmSample will call all actions to create the directory and generate the sample

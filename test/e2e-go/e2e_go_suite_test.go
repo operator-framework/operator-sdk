@@ -83,19 +83,9 @@ var _ = BeforeSuite(func() {
 		Expect(tc.LoadImageToKindClusterWithName("quay.io/operator-framework/custom-scorecard-tests:dev")).To(Succeed())
 	}
 
-	By("generating the operator bundle")
-	err = tc.Make("bundle", "IMG="+tc.ImageName)
+	By("creating bundle image")
+	err = tc.CreateBundle()
 	Expect(err).NotTo(HaveOccurred())
-
-	By("building the operator bundle image")
-	err = tc.Make("bundle-build", "BUNDLE_IMG="+tc.BundleImageName)
-	Expect(err).NotTo(HaveOccurred())
-
-	if tc.IsRunningOnKind() {
-		By("loading the bundle image into Kind cluster")
-		err = tc.LoadImageToKindClusterWithName(tc.BundleImageName)
-		Expect(err).NotTo(HaveOccurred())
-	}
 
 	By("installing cert manager bundle")
 	Expect(tc.InstallCertManager(true)).To(Succeed())
