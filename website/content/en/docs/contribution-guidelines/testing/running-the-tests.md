@@ -110,5 +110,5 @@ testing process, the cleanup functions for the go tests will not run. To manuall
 [minikube-binary]: https://github.com/kubernetes/minikube/releases
 [kind]: https://github.com/kubernetes-sigs/kind
 [kind-binary]: https://github.com/kubernetes-sigs/kind/releases
-[k8s-script]: https://github.com/operator-framework/operator-sdk/blob/master/hack/ci/setup-k8s.sh
+[k8s-script]: https://github.com/operator-framework/operator-sdk/blob/v1.0.x/hack/ci/setup-k8s.sh
 [makefile]: https://github.com/operator-framework/operator-sdk/blob/master/Makefile
