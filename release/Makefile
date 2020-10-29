@@ -36,11 +36,12 @@ image-push: $(foreach i,$(IMAGE_TARGET_LIST),image-push/$(i)) ## Push all images
 image-push-multiarch: $(foreach i,$(IMAGE_TARGET_LIST),image-push-multiarch/$(i)) ## Push the manifest list for all architectures.
 
 # Push an image for an architecture.
-IMAGE_REPO ?= quay.io/operator-framework
+BUILD_IMAGE_REPO = quay.io/operator-framework
+IMAGE_REPO ?= $(BUILD_IMAGE_REPO)
 GO_ARCH := $(shell go env GOARCH)
 image-push/%: IMAGE_PUSH_TAG = $(IMAGE_REPO)/$*-$(GO_ARCH)
 image-push/%:
-	./hack/image/push-image-tags.sh $(IMAGE_REPO)/$*:dev $(IMAGE_PUSH_TAG)
+	./hack/image/push-image-tags.sh $(BUILD_IMAGE_REPO)/$*:dev $(IMAGE_PUSH_TAG)
 
 # Push multiarch images.
 ARCHES ?= amd64 arm64 ppc64le s390x

@@ -75,13 +75,13 @@ IMAGE_TARGET_LIST = operator-sdk helm-operator ansible-operator scorecard-test s
 image-build: $(foreach i,$(IMAGE_TARGET_LIST),image/$(i)) ## Build all images.
 
 # Build an image.
-IMAGE_REPO ?= quay.io/operator-framework
+BUILD_IMAGE_REPO = quay.io/operator-framework
 image/%: BUILD_DIR = build/_image
 # Images run on the linux kernel, so binaries must always target linux.
 image/%: export GOOS = linux
 image/%: build/%
 	mkdir -p ./images/$*/bin && mv $(BUILD_DIR)/$* ./images/$*/bin
-	docker build -t $(IMAGE_REPO)/$*:dev -f ./images/$*/Dockerfile ./images/$*
+	docker build -t $(BUILD_IMAGE_REPO)/$*:dev -f ./images/$*/Dockerfile ./images/$*
 	rm -rf $(BUILD_DIR)
 
 ##@ Test
