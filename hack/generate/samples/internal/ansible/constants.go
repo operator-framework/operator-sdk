@@ -230,11 +230,6 @@ const taskForSecret = `- name: Create test service
           targetPort: 8332
           name: rpc
 
-- name: Check if jmespath is installed
-  set_fact:
-    instance_tags: '{{app | json_query(query)}}'
-  vars:
-    query: 'app[*]."memcached"'
 `
 
 // false positive: G101: Potential hardcoded credentials (gosec)
