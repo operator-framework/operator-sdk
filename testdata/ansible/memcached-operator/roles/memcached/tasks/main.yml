@@ -8,6 +8,8 @@
       metadata:
         name: '{{ ansible_operator_meta.name }}-memcached'
         namespace: '{{ ansible_operator_meta.namespace }}'
+        labels:
+          app: memcached
       spec:
         replicas: "{{size}}"
         selector:
@@ -29,4 +31,9 @@
               image: "docker.io/memcached:1.4.36-alpine"
               ports:
                 - containerPort: 11211
+              readinessProbe:
+                tcpSocket:
+                  port: 11211
+                initialDelaySeconds: 3
+                periodSeconds: 3
 

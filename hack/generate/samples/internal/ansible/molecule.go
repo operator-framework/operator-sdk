@@ -85,7 +85,7 @@ func (ma *MoleculeAnsible) Run() {
 	pkg.CheckError("replacing in role.yml", err)
 
 	log.Infof("adding Memcached mock task to the role with black list")
-	err = testutils.ReplaceInFile(filepath.Join(ma.ctx.Dir, "roles", strings.ToLower(ma.ctx.Kind), "tasks", "main.yml"),
+	err = kbtestutils.InsertCode(filepath.Join(ma.ctx.Dir, "roles", strings.ToLower(ma.ctx.Kind), "tasks", "main.yml"),
 		roleFragment, memcachedWithBlackListTask)
 	pkg.CheckError("replacing in tasks/main.yml", err)
 

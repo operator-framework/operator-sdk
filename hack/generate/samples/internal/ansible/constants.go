@@ -23,6 +23,8 @@ const roleFragment = `
       metadata:
         name: '{{ ansible_operator_meta.name }}-memcached'
         namespace: '{{ ansible_operator_meta.namespace }}'
+        labels:
+          app: memcached
       spec:
         replicas: "{{size}}"
         selector:
@@ -44,6 +46,11 @@ const roleFragment = `
               image: "docker.io/memcached:1.4.36-alpine"
               ports:
                 - containerPort: 11211
+              readinessProbe:
+                tcpSocket:
+                  port: 11211
+                initialDelaySeconds: 3
+                periodSeconds: 3
 `
 
 const defaultsFragment = `size: 1`
@@ -296,43 +303,6 @@ const molecuTaskToCheckConfigMap = `
 `
 
 const memcachedWithBlackListTask = `
-- name: start memcached
-  community.kubernetes.k8s:
-    definition:
-      kind: Deployment
-      apiVersion: apps/v1
-      metadata:
-        name: '{{ ansible_operator_meta.name }}-memcached'
-        namespace: '{{ ansible_operator_meta.namespace }}'
-        labels:
-          app: memcached
-      spec:
-        replicas: "{{size}}"
-        selector:
-          matchLabels:
-            app: memcached
-        template:
-          metadata:
-            labels:
-              app: memcached
-          spec:
-            containers:
-            - name: memcached
-              command:
-              - memcached
-              - -m=64
-              - -o
-              - modern
-              - -v
-              image: "docker.io/memcached:1.4.36-alpine"
-              ports:
-                - containerPort: 11211
-              readinessProbe:
-                tcpSocket:
-                  port: 11211
-                initialDelaySeconds: 3
-                periodSeconds: 3
-
 - operator_sdk.util.k8s_status:
     api_version: cache.example.com/v1alpha1
     kind: Memcached
