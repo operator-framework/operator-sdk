@@ -15,13 +15,7 @@ The `Conditions` field added to the `MemcachedStatus` struct simplifies the mana
 - Automatically handles the each condition's `LastTransitionTime`.
 - Provides helper methods to make it easy to determine the state of a condition.
 
-To use conditions in your custom resource, pull the `v0.1.0` operator-lib library:
-
-```sh
-go get github.com/operator-framework/operator-lib@v0.1.0
-```
-
-Then add a Conditions field to the Status struct in `_types.go`:
+To use conditions in your custom resource, add a Conditions field to the Status struct in `_types.go`:
 
 ```Go
 import (
@@ -35,6 +29,12 @@ type MyAppStatus struct {
 ```
 
 Then, in your controller, you can use [`Conditions`][godoc-conditions] methods to make it easier to set and remove conditions or check their current values.
+
+**NOTE:** The `status` package was removed in operator-lib `v0.2.0` in deference to the upstream [`metav1.Condition`][apimachinery_condition] type, so your project must depend on version [`v0.1.0`][operator-lib-0.1.0] to use `status.Conditions`:
+
+```sh
+go get github.com/operator-framework/operator-lib@v0.1.0
+```
 
 ### Adding 3rd Party Resources To Your Operator
 
@@ -304,3 +304,5 @@ When the operator is not running in a cluster, the Manager will return an error 
 [leader_with_lease]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/leaderelection
 [pod_eviction_timeout]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#options
 [manager_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Options
+[apimachinery_condition]: https://github.com/kubernetes/apimachinery/blob/d4f471b82f0a17cda946aeba446770563f92114d/pkg/apis/meta/v1/types.go#L1368
+[operator-lib-0.1.0]: https://github.com/operator-framework/operator-lib/releases/tag/v0.1.0
