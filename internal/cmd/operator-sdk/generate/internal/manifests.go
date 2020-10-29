@@ -15,6 +15,7 @@
 package genutil
 
 import (
+	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
@@ -33,6 +34,19 @@ func GetManifestObjects(c *collector.Manifests) (objs []controllerutil.Object) {
 	// All ServiceAccounts passed in should be written.
 	for i := range c.ServiceAccounts {
 		objs = append(objs, &c.ServiceAccounts[i])
+	}
+
+	// All Services passed in should be written.
+	for i := range c.Services {
+		objs = append(objs, &c.Services[i])
+	}
+
+	// Add all other supported kinds
+	for i := range c.Others {
+		obj := &c.Others[i]
+		if supported, _ := bundle.IsSupported(obj.GroupVersionKind().Kind); supported {
+			objs = append(objs, obj)
+		}
 	}
 
 	// RBAC objects that are not a part of the CSV should be written.
