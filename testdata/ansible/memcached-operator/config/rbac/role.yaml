@@ -54,4 +54,73 @@ rules:
       - patch
       - update
       - watch
+
+  ##
+  ## Apply customize roles for base operator
+  ##
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+      - services
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  ##
+  ## Rules for cache.example.com/v1alpha1, Kind: Foo
+  ##
+  - apiGroups:
+      - cache.example.com
+    resources:
+      - foos
+      - foos/status
+      - foos/finalizers
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  ##
+  ## Rules for cache.example.com/v1alpha1, Kind: Memfin
+  ##
+  - apiGroups:
+      - cache.example.com
+    resources:
+      - memfins
+      - memfins/status
+      - memfins/finalizers
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  ##
+  ## Rules for ignore.example.com/v1, Kind: Secret
+  ##
+  - apiGroups:
+      - ignore.example.com
+    resources:
+      - secrets
+      - secrets/status
+      - secrets/finalizers
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
 # +kubebuilder:scaffold:rules
+

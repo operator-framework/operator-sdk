@@ -3,4 +3,7 @@
 # It should be run by config/default
 resources:
 - bases/cache.example.com_memcacheds.yaml
+- bases/cache.example.com_foos.yaml
+- bases/cache.example.com_memfins.yaml
+- bases/ignore.example.com_secrets.yaml
 # +kubebuilder:scaffold:crdkustomizeresource

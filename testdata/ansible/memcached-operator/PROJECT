@@ -1,8 +1,18 @@
 domain: example.com
 layout: ansible.sdk.operatorframework.io/v1
+multigroup: true
 projectName: memcached-operator
 resources:
 - group: cache
   kind: Memcached
   version: v1alpha1
+- group: cache
+  kind: Foo
+  version: v1alpha1
+- group: cache
+  kind: Memfin
+  version: v1alpha1
+- group: ignore
+  kind: Secret
+  version: v1
 version: 3-alpha

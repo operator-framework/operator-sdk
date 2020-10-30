@@ -1,0 +1,20 @@
+# permissions for end users to view foos.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: foo-viewer-role
+rules:
+- apiGroups:
+  - cache.example.com
+  resources:
+  - foos
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - cache.example.com
+  resources:
+  - foos/status
+  verbs:
+  - get

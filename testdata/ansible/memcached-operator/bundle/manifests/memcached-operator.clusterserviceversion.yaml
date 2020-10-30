@@ -5,6 +5,26 @@ metadata:
     alm-examples: |-
       [
         {
+          "apiVersion": "ignore.example.com/v1",
+          "kind": "Secret",
+          "metadata": {
+            "name": "secret-sample"
+          },
+          "spec": {
+            "foo": "bar"
+          }
+        },
+        {
+          "apiVersion": "cache.example.com/v1alpha1",
+          "kind": "Foo",
+          "metadata": {
+            "name": "foo-sample"
+          },
+          "spec": {
+            "foo": "bar"
+          }
+        },
+        {
           "apiVersion": "cache.example.com/v1alpha1",
           "kind": "Memcached",
           "metadata": {
@@ -12,6 +32,16 @@ metadata:
           },
           "spec": {
             "size": 1
+          }
+        },
+        {
+          "apiVersion": "cache.example.com/v1alpha1",
+          "kind": "Memfin",
+          "metadata": {
+            "name": "memfin-sample"
+          },
+          "spec": {
+            "foo": "bar"
           }
         }
       ]
@@ -24,9 +54,18 @@ spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
+    - kind: Foo
+      name: foos.cache.example.com
+      version: v1alpha1
     - kind: Memcached
       name: memcacheds.cache.example.com
       version: v1alpha1
+    - kind: Memfin
+      name: memfins.cache.example.com
+      version: v1alpha1
+    - kind: Secret
+      name: secrets.ignore.example.com
+      version: v1
   description: Memcached Operator description. TODO.
   displayName: Memcached Operator
   icon:
@@ -72,6 +111,61 @@ spec:
           - memcacheds
           - memcacheds/status
           - memcacheds/finalizers
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - ""
+          resources:
+          - configmaps
+          - services
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - cache.example.com
+          resources:
+          - foos
+          - foos/status
+          - foos/finalizers
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - cache.example.com
+          resources:
+          - memfins
+          - memfins/status
+          - memfins/finalizers
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - ignore.example.com
+          resources:
+          - secrets
+          - secrets/status
+          - secrets/finalizers
           verbs:
           - create
           - delete

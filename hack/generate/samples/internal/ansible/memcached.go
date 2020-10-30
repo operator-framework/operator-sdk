@@ -16,6 +16,7 @@ package ansible
 
 import (
 	"fmt"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -73,8 +74,103 @@ func (ma *MemcachedAnsible) Run() {
 		"#- ../prometheus", "#")
 	pkg.CheckError("enabling prometheus metrics", err)
 
-	ma.addingAnsibleTask()
+	log.Infof("adding Memcached mock task to the role with black list")
+	err = kbtestutils.InsertCode(filepath.Join(ma.ctx.Dir, "roles", strings.ToLower(ma.ctx.Kind),
+		"tasks", "main.yml"),
+		fmt.Sprintf("# tasks file for %s", ma.ctx.Kind),
+		memcachedWithBlackListTask)
+	pkg.CheckError("adding task", err)
+
+	err = testutils.ReplaceInFile(filepath.Join(ma.ctx.Dir, "roles", strings.ToLower(ma.ctx.Kind),
+		"defaults", "main.yml"),
+		fmt.Sprintf("# defaults file for %s", ma.ctx.Kind),
+		defaultsFragment)
+	pkg.CheckError("adding defaulting", err)
+
+	err = testutils.ReplaceInFile(filepath.Join(ma.ctx.Dir, "config", "samples",
+		fmt.Sprintf("%s_%s_%s.yaml", ma.ctx.Group, ma.ctx.Version, strings.ToLower(ma.ctx.Kind))),
+		"foo: bar", "size: 1")
+	pkg.CheckError("updating sample CR", err)
+
 	ma.addingMoleculeMockData()
+
+	log.Infof("adding RBAC permissions")
+	err = testutils.ReplaceInFile(filepath.Join(ma.ctx.Dir, "config", "rbac", "role.yaml"),
+		"# +kubebuilder:scaffold:rules", rolesForBaseOperator)
+	pkg.CheckError("replacing in role.yml", err)
+
+	log.Infof("creating an API definition Foo")
+	err = ma.ctx.CreateAPI(
+		"--group", ma.ctx.Group,
+		"--version", ma.ctx.Version,
+		"--kind", "Foo",
+		"--generate-role")
+	pkg.CheckError("creating api", err)
+
+	log.Infof("creating an API definition to add a task to delete the config map")
+	err = ma.ctx.CreateAPI(
+		"--group", ma.ctx.Group,
+		"--version", ma.ctx.Version,
+		"--kind", "Memfin",
+		"--generate-role")
+	pkg.CheckError("creating api", err)
+
+	log.Infof("adding task to delete config map")
+	err = testutils.ReplaceInFile(filepath.Join(ma.ctx.Dir, "roles", "memfin", "tasks", "main.yml"),
+		"# tasks file for Memfin", taskToDeleteConfigMap)
+	pkg.CheckError("replacing in tasks/main.yml", err)
+
+	log.Infof("adding to watches finalizer and blacklist")
+	err = testutils.ReplaceInFile(filepath.Join(ma.ctx.Dir, "watches.yaml"),
+		"playbook: playbooks/memcached.yml", memcachedWatchCustomizations)
+	pkg.CheckError("replacing in watches", err)
+
+	log.Infof("enabling multigroup support")
+	err = ma.ctx.AllowProjectBeMultiGroup()
+	pkg.CheckError("updating PROJECT file", err)
+
+	log.Infof("creating core Secret API")
+	err = ma.ctx.CreateAPI(
+		// the tool do not allow we crate an API with a group nil for v2+
+		// which is required here to mock the tests.
+		// however, it is done already for v3+. More info: https://github.com/kubernetes-sigs/kubebuilder/issues/1404
+		// and the tests should be changed when the tool allows we create API's for core types.
+		// todo: replace the ignore value when the tool provide a solution for it.
+		"--group", "ignore",
+		"--version", "v1",
+		"--kind", "Secret",
+		"--generate-role")
+	pkg.CheckError("creating api", err)
+
+	log.Infof("removing ignore group for the secret from watches as an workaround to work with core types")
+	err = testutils.ReplaceInFile(filepath.Join(ma.ctx.Dir, "watches.yaml"),
+		"ignore.example.com", "\"\"")
+	pkg.CheckError("replacing the watches file", err)
+
+	log.Infof("removing molecule test for the Secret since it is a core type")
+	cmd := exec.Command("rm", "-rf", filepath.Join(ma.ctx.Dir, "molecule", "default", "tasks", "secret_test.yml"))
+	_, err = ma.ctx.Run(cmd)
+	pkg.CheckError("removing secret test file", err)
+
+	log.Infof("adding Secret task to the role")
+	err = testutils.ReplaceInFile(filepath.Join(ma.ctx.Dir, "roles", "secret", "tasks", "main.yml"),
+		originalTaskSecret, taskForSecret)
+	pkg.CheckError("replacing in secret/tasks/main.yml file", err)
+
+	log.Infof("adding ManageStatus == false for role secret")
+	err = testutils.ReplaceInFile(filepath.Join(ma.ctx.Dir, "watches.yaml"),
+		"role: secret", manageStatusFalseForRoleSecret)
+	pkg.CheckError("replacing in watches.yaml", err)
+
+	log.Infof("removing FIXME asserts from memfin_test.yml")
+	err = testutils.ReplaceInFile(filepath.Join(ma.ctx.Dir, "molecule", "default", "tasks", "memfin_test.yml"),
+		fixmeAssert, "")
+	pkg.CheckError("replacing memfin_test.yml", err)
+
+	log.Infof("removing FIXME asserts from foo_test.yml")
+	err = testutils.ReplaceInFile(filepath.Join(ma.ctx.Dir, "molecule", "default", "tasks", "foo_test.yml"),
+		fixmeAssert, "")
+	pkg.CheckError("replacing foo_test.yml", err)
 
 	pkg.RunOlmIntegration(ma.ctx)
 }
@@ -88,27 +184,18 @@ func (ma *MemcachedAnsible) addingMoleculeMockData() {
 	err := testutils.ReplaceInFile(moleculeTaskPath,
 		originaMemcachedMoleculeTask, fmt.Sprintf(moleculeTaskFragment, ma.ctx.ProjectName, ma.ctx.ProjectName))
 	pkg.CheckError("replacing molecule default tasks", err)
-}
 
-// addingAnsibleTask will add the Ansible Task and update the sample
-func (ma *MemcachedAnsible) addingAnsibleTask() {
-	log.Infof("adding Ansible task and variable")
-	err := kbtestutils.InsertCode(filepath.Join(ma.ctx.Dir, "roles", strings.ToLower(ma.ctx.Kind),
-		"tasks", "main.yml"),
-		fmt.Sprintf("# tasks file for %s", ma.ctx.Kind),
-		roleFragment)
-	pkg.CheckError("adding task", err)
+	log.Infof("insert molecule task to ensure that ConfigMap will be deleted")
+	err = kbtestutils.InsertCode(moleculeTaskPath, targetMoleculeCheckDeployment, molecuTaskToCheckConfigMap)
+	pkg.CheckError("replacing memcached task to add config map check", err)
 
-	err = testutils.ReplaceInFile(filepath.Join(ma.ctx.Dir, "roles", strings.ToLower(ma.ctx.Kind),
-		"defaults", "main.yml"),
-		fmt.Sprintf("# defaults file for %s", ma.ctx.Kind),
-		defaultsFragment)
-	pkg.CheckError("adding defaulting", err)
+	log.Infof("insert molecule task to ensure to check secret")
+	err = kbtestutils.InsertCode(moleculeTaskPath, memcachedCustomStatusMoleculeTarget, testSecretMoleculeCheck)
+	pkg.CheckError("replacing memcached task to add secret check", err)
 
-	err = testutils.ReplaceInFile(filepath.Join(ma.ctx.Dir, "config", "samples",
-		fmt.Sprintf("%s_%s_%s.yaml", ma.ctx.Group, ma.ctx.Version, strings.ToLower(ma.ctx.Kind))),
-		"foo: bar", "size: 1")
-	pkg.CheckError("updating sample CR", err)
+	log.Infof("insert molecule task to ensure to foo ")
+	err = kbtestutils.InsertCode(moleculeTaskPath, testSecretMoleculeCheck, testFooMoleculeCheck)
+	pkg.CheckError("replacing memcached task to add foo check", err)
 }
 
 // GenerateMemcachedAnsibleSample will call all actions to create the directory and generate the sample

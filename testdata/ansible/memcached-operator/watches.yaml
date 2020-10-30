@@ -4,4 +4,24 @@
   group: cache.example.com
   kind: Memcached
   playbook: playbooks/memcached.yml
+  finalizer:
+    name: finalizer.cache.example.com
+    role: memfin
+  blacklist:
+    - group: ""
+      version: v1
+      kind: ConfigMap
+- version: v1alpha1
+  group: cache.example.com
+  kind: Foo
+  role: foo
+- version: v1alpha1
+  group: cache.example.com
+  kind: Memfin
+  role: memfin
+- version: v1
+  group: ""
+  kind: Secret
+  role: secret
+  manageStatus: false
 # +kubebuilder:scaffold:watch
