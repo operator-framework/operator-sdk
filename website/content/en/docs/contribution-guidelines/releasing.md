@@ -363,7 +363,7 @@ See [this section](#locking-down-branches) for steps to do so.
 ### 11. Announce the release
 
 Send an email to the [mailing list][mailing-list]
-Post to Kubernetes slack in #kubernetes-operators.
+Post to Kubernetes slack in #kubernetes-operators and #operator-sdk-dev.
 
 ### 12. Bump open issues to the next release.
 
