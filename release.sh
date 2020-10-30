@@ -33,14 +33,6 @@ if ! go version | cut -d" " -f3 | grep -q "$GO_VER"; then
 	exit 1
 fi
 
-# Detect whether versions in code were updated.
-VER_FILE="internal/version/version.go"
-CURR_VER="$(sed -nr 's|\s+Version\s+= "(.+)"|\1|p' "$VER_FILE" | tr -d ' \t\n')"
-if [[ "$VER" != "$CURR_VER" ]]; then
-	echo "version is not set correctly in $VER_FILE"
-	exit 1
-fi
-
 INSTALL_GUIDE_FILE="website/content/en/docs/installation/install-operator-sdk.md"
 CURR_VER_INSTALL_GUIDE_FILE="$(sed -nr 's/.*RELEASE_VERSION=(.+)/\1/p' "$INSTALL_GUIDE_FILE" | tr -d ' \t\n')"
 if [[ "$VER" != "$CURR_VER_INSTALL_GUIDE_FILE" ]]; then
