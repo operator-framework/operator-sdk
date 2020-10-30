@@ -33,6 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	apiutilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
@@ -84,6 +85,7 @@ func (c Client) GetObjectsStatus(ctx context.Context, objs ...runtime.Object) St
 // for Custom Resources, will result in HasInstalledResources returning
 // false and the error.
 func (s Status) HasInstalledResources() (bool, error) {
+	errs := []error{}
 	crdKindSet, err := s.getCRDKindSet()
 	if err != nil {
 		return false, fmt.Errorf("error getting set of CRD kinds in resources: %v", err)
@@ -105,11 +107,11 @@ func (s Status) HasInstalledResources() (bool, error) {
 			// crdKindSet for existence of a resource's kind.
 			nkmerr := &meta.NoKindMatchError{}
 			if !errors.As(r.Error, &nkmerr) || !crdKindSet.Has(r.GVK.Kind) {
-				return false, r.Error
+				errs = append(errs, r.Error)
 			}
 		}
 	}
-	return false, nil
+	return false, apiutilerrors.NewAggregate(errs)
 }
 
 // getCRDKindSet returns the set of all kinds specified by all CRDs in s.
