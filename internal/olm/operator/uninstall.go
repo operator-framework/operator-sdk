@@ -22,6 +22,7 @@ import (
 
 	v1 "github.com/operator-framework/api/pkg/operators/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -211,13 +212,12 @@ func (u *Uninstall) getInstallPlanResources(ctx context.Context, installPlanKey 
 			Kind:    step.Resource.Kind,
 		})
 
-		// TODO(joelanford): This seems necessary for service accounts tied to
-		//    cluster roles and cluster role bindings because the SA namespace
-		//    is not set in the manifest in this case.
+		// TODO(joelanford): This seems necessary for namespaced resources
 		//    See: https://github.com/operator-framework/operator-lifecycle-manager/blob/c9405d035bc50d9aa290220cb8d75b0402e72707/pkg/controller/registry/resolver/rbac.go#L133
-		if step.Resource.Kind == "ServiceAccount" && obj.GetNamespace() == "" {
+		if supported, namespaced := bundle.IsSupported(step.Resource.Kind); supported && bool(namespaced) {
 			obj.SetNamespace(installPlanKey.Namespace)
 		}
+
 		switch step.Resource.Kind {
 		case "CustomResourceDefinition":
 			crds = append(crds, obj)

@@ -1,0 +1,13 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: memcached-operator-controller-manager-metrics-monitor
+spec:
+  endpoints:
+  - path: /metrics
+    port: https
+  selector:
+    matchLabels:
+      control-plane: controller-manager

@@ -71,8 +71,9 @@ should be set to `0.0.1`. You've also built your operator image, `quay.io/<user>
 
 ### Bundle format
 
-A [bundle][bundle] consists of manifests (CSV and CRDs) and metadata that define an Operator
-at a particular version. You may have also heard of a bundle image. From the bundle docs:
+A [bundle][bundle] consists of manifests (CSV, CRDs, and other supported kinds) and metadata that define an Operator
+at a particular version, and an optional [scorecard][scorecard] configuration file. You may have also heard of a
+bundle image. From the bundle docs:
 
 > An Operator Bundle is built as a scratch (non-runnable) container image that
 > contains operator manifests and specific metadata in designated directories
@@ -86,17 +87,25 @@ bundle images become important once you're ready to [publish][operatorhub] your 
 SDK projects are scaffolded with a `Makefile` containing the `bundle` recipe by default,
 which wraps `generate kustomize manifests`, `generate bundle`, and other related commands.
 
-By default `make bundle` will generate a CSV, copy CRDs, and generate metadata in the bundle format:
+By default `make bundle` will generate a CSV, copy CRDs and other supported kinds, generate metadata,
+and add your scorecard configuration in the bundle format:
 
 ```console
 $ make bundle
 $ tree ./bundle
 ./bundle
 ├── manifests
-│   ├── cache.my.domain_memcacheds.yaml
-│   └── memcached-operator.clusterserviceversion.yaml
-└── metadata
-    └── annotations.yaml
+│   ├── cache.example.com_memcacheds.yaml
+│   ├── memcached-operator.clusterserviceversion.yaml
+│   ├── memcached-operator-controller-manager-metrics-monitor_monitoring.coreos.com_v1_servicemonitor.yaml
+│   ├── memcached-operator-controller-manager-metrics-service_v1_service.yaml
+│   ├── memcached-operator-metrics-reader_rbac.authorization.k8s.io_v1beta1_clusterrole.yaml
+│   └── memcached-operator-webhook-service_v1_service.yaml
+├── metadata
+│   └── annotations.yaml
+└── tests
+    └── scorecard
+        └── config.yaml
 ```
 
 Bundle metadata in `bundle/metadata/annotations.yaml` contains information about a particular Operator version
@@ -146,9 +155,9 @@ bundle: ...
 
 ### Package manifests format
 
-A [package manifests][package-manifests] format consists of on-disk manifests (CSV and CRDs) and metadata that
-define an Operator at all versions of that Operator. Each version is contained in its own directory, with a parent
-package manifest YAML file containing channel-to-version mappings, much like a bundle's metadata.
+A [package manifests][package-manifests] format consists of on-disk manifests (CSV, CRDs and other supported kinds)
+and metadata that define an Operator at all versions of that Operator. Each version is contained in its own directory,
+with a parent package manifest YAML file containing channel-to-version mappings, much like a bundle's metadata.
 
 If your Operator is already formatted as a package manifests and you do not wish to migrate to the bundle format yet,
 you should add the following to your `Makefile` to make development easier:
@@ -310,3 +319,4 @@ being managed, each with a `name` and `url`.
 [olm-capabilities]:/docs/advanced-topics/operator-capabilities/operator-capabilities
 [csv-markers]:/docs/building-operators/golang/references/markers
 [operatorhub]:https://operatorhub.io/
+[scorecard]:/docs/advanced-topics/scorecard
