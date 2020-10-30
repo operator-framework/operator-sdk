@@ -1,0 +1,5 @@
+entries:
+  - description: >
+      `olm` and `run` subcommands will print aggregated resource errors when either OLM or an operator fail to install, respectively.
+    kind: change
+
