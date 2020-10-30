@@ -1,0 +1,3 @@
+entries:
+  - description: Resolves an issue with default channel bundle validation. The default channel label is not required.
+    kind: "bugfix"

@@ -13,7 +13,7 @@ require (
 	github.com/onsi/gomega v1.10.1
 	github.com/operator-framework/api v0.3.13
 	github.com/operator-framework/operator-lib v0.1.0
-	github.com/operator-framework/operator-registry v1.13.4
+	github.com/operator-framework/operator-registry v1.14.3
 	github.com/prometheus/client_golang v1.5.1
 	github.com/sergi/go-diff v1.0.0
 	github.com/sirupsen/logrus v1.6.0
