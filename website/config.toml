@@ -113,7 +113,7 @@ algolia_docsearch = false
 
 # User interface configuration
 [params.ui]
-#  Set to true to disable breadcrumb navigation.
+#  Set to true to disable breadcrumb navigation. 
 breadcrumb_disable = false
 #  Set to true to hide the sidebar search box (the top nav search box will still be displayed if search is enabled)
 sidebar_search_disable = true
