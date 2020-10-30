@@ -14,6 +14,14 @@
 
 package operator
 
+import (
+	"fmt"
+)
+
 const (
 	SDKOperatorGroupName = "operator-sdk-og"
 )
+
+func CatalogNameForPackage(pkg string) string {
+	return fmt.Sprintf("%s-catalog", pkg)
+}

@@ -77,7 +77,7 @@ func (i *Install) setup(ctx context.Context) error {
 	}
 
 	i.OperatorInstaller.PackageName = labels[registrybundle.PackageLabel]
-	i.OperatorInstaller.CatalogSourceName = fmt.Sprintf("%s-catalog", i.OperatorInstaller.PackageName)
+	i.OperatorInstaller.CatalogSourceName = operator.CatalogNameForPackage(i.OperatorInstaller.PackageName)
 	i.OperatorInstaller.StartingCSV = csv.Name
 	i.OperatorInstaller.SupportedInstallModes = operator.GetSupportedInstallModes(csv.Spec.InstallModes)
 	i.OperatorInstaller.Channel = strings.Split(labels[registrybundle.ChannelsLabel], ",")[0]
