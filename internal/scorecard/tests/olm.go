@@ -219,8 +219,40 @@ func checkCSVDescriptors(bundle *apimanifests.Bundle, r scapiv1alpha3.TestResult
 	}
 	r.Log += fmt.Sprintf("Loaded %d Custom Resources from alm-examples\n", len(crs))
 
+	// if the descriptor is status then check the status
+	// otherwise check the spec
 	for _, cr := range crs {
-		r = checkOwnedCSVDescriptors(cr, bundle.CSV, descriptor, r)
+		if descriptor == statusDescriptor {
+			r = checkOwnedCSVStatusDescriptor(cr, bundle.CSV, r)
+		} else {
+			r = checkOwnedCSVSpecDescriptors(cr, bundle.CSV, r)
+		}
+	}
+	return r
+}
+
+func checkOwnedCSVStatusDescriptor(cr unstructured.Unstructured, csv *operatorsv1alpha1.ClusterServiceVersion,
+	r scapiv1alpha3.TestResult) scapiv1alpha3.TestResult {
+
+	var crd *operatorsv1alpha1.CRDDescription
+
+	for _, owned := range csv.Spec.CustomResourceDefinitions.Owned {
+		if owned.Kind == cr.GetKind() {
+			crd = &owned
+			break
+		}
+	}
+
+	if crd == nil {
+		msg := fmt.Sprintf("Failed to find an owned CRD for CR %s with GVK %s", cr.GetName(), cr.GroupVersionKind().String())
+		r.Errors = append(r.Errors, msg)
+		r.State = scapiv1alpha3.FailState
+		return r
+	}
+
+	if len(crd.StatusDescriptors) == 0 {
+		r.Errors = append(r.Errors, fmt.Sprintf("%s does not have a status descriptor", crd.Name))
+		r.State = scapiv1alpha3.FailState
 	}
 
 	return r
@@ -229,15 +261,14 @@ func checkCSVDescriptors(bundle *apimanifests.Bundle, r scapiv1alpha3.TestResult
 // TODO This is the validation we did in v1, but it looks like it only validates fields that
 // are in the example CRs, if you have a field in your CRD that isn't present in one of your examples,
 // I don't think it will be validated.
-func checkOwnedCSVDescriptors(cr unstructured.Unstructured, csv *operatorsv1alpha1.ClusterServiceVersion,
-	descriptor string, r scapiv1alpha3.TestResult) scapiv1alpha3.TestResult {
-
-	if cr.Object[descriptor] == nil {
+func checkOwnedCSVSpecDescriptors(cr unstructured.Unstructured, csv *operatorsv1alpha1.ClusterServiceVersion,
+	r scapiv1alpha3.TestResult) scapiv1alpha3.TestResult {
+	if cr.Object[specDescriptor] == nil {
 		r.State = scapiv1alpha3.FailState
 		return r
 	}
 
-	block := cr.Object[descriptor].(map[string]interface{})
+	block := cr.Object[specDescriptor].(map[string]interface{})
 
 	var crd *operatorsv1alpha1.CRDDescription
 	for _, owned := range csv.Spec.CustomResourceDefinitions.Owned {
@@ -254,30 +285,18 @@ func checkOwnedCSVDescriptors(cr unstructured.Unstructured, csv *operatorsv1alph
 		return r
 	}
 
-	if descriptor == statusDescriptor {
-		for key := range block {
-			for _, statDesc := range crd.StatusDescriptors {
-				if statDesc.Path == key {
-					delete(block, key)
-					break
-				}
-			}
-		}
-	}
-	if descriptor == specDescriptor {
-		for key := range block {
-			for _, specDesc := range crd.SpecDescriptors {
-				if specDesc.Path == key {
-					delete(block, key)
-					break
-				}
+	for key := range block {
+		for _, specDesc := range crd.SpecDescriptors {
+			if specDesc.Path == key {
+				delete(block, key)
+				break
 			}
 		}
 	}
 
 	for key := range block {
-		r.Errors = append(r.Errors, fmt.Sprintf("%s does not have a %s descriptor", key, descriptor))
-		r.Suggestions = append(r.Suggestions, fmt.Sprintf("Add a %s descriptor for %s", descriptor, key))
+		r.Errors = append(r.Errors, fmt.Sprintf("%s does not have a %s descriptor", key, specDescriptor))
+		r.Suggestions = append(r.Suggestions, fmt.Sprintf("Add a %s descriptor for %s", specDescriptor, key))
 		r.State = scapiv1alpha3.FailState
 	}
 	return r
