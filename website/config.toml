@@ -80,6 +80,7 @@ github_repo = "https://github.com/operator-framework/operator-sdk"
 github_subdir = "website"
 
 
+
 # Enable Algolia DocSearch
 algolia_docsearch = true
 
