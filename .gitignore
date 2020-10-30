@@ -124,3 +124,6 @@ tags
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/go,vim,emacs,visualstudiocode
+
+# Python cache (Ansible molecule)
+test/ansible/plugins/filter/__pycache__/
