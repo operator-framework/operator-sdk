@@ -30,25 +30,27 @@ import (
 
 var _ = Describe("operator-sdk", func() {
 	var controllerPodName string
+	var metricsClusterRoleBindingName string
 
 	Context("built with operator-sdk", func() {
 		BeforeEach(func() {
-			By("enabling Prometheus via the kustomization.yaml")
-			Expect(kbtestutils.UncommentCode(
-				filepath.Join(tc.Dir, "config", "default", "kustomization.yaml"),
-				"#- ../prometheus", "#")).To(Succeed())
+			metricsClusterRoleBindingName = fmt.Sprintf("%s-metrics-reader", tc.ProjectName)
 
 			By("deploying project on the cluster")
 			err := tc.Make("deploy", "IMG="+tc.ImageName)
 			Expect(err).NotTo(HaveOccurred())
+
 		})
 		AfterEach(func() {
+			By("deleting Curl Pod created")
+			_, _ = tc.Kubectl.Delete(false, "pod", "curl")
+
 			By("cleaning up permissions")
 			_, _ = tc.Kubectl.Command("delete", "clusterrolebinding",
-				fmt.Sprintf("metrics-%s", tc.TestSuffix))
+				metricsClusterRoleBindingName)
 
-			By("cleaning up the operator and resources")
-			_ = tc.Make("undeploy")
+			By("cleaning up created API objects during test process")
+			tc.CleanupManifests(filepath.Join("config", "default"))
 
 			By("ensuring that the namespace was deleted")
 			verifyNamespaceDeleted := func() error {
@@ -102,14 +104,14 @@ var _ = Describe("operator-sdk", func() {
 			_, err := tc.Kubectl.Get(
 				true,
 				"ServiceMonitor",
-				fmt.Sprintf("e2e-%s-controller-manager-metrics-monitor", tc.TestSuffix))
+				fmt.Sprintf("%s-controller-manager-metrics-monitor", tc.ProjectName))
 			Expect(err).NotTo(HaveOccurred())
 
 			By("ensuring the created metrics Service for the manager")
 			_, err = tc.Kubectl.Get(
 				true,
 				"Service",
-				fmt.Sprintf("e2e-%s-controller-manager-metrics-service", tc.TestSuffix))
+				fmt.Sprintf("%s-controller-manager-metrics-service", tc.ProjectName))
 			Expect(err).NotTo(HaveOccurred())
 
 			By("creating an instance of CR")
@@ -122,12 +124,19 @@ var _ = Describe("operator-sdk", func() {
 				return err
 			}, time.Minute, time.Second).Should(Succeed())
 
+			By("ensuring the created resource object gets reconciled in controller")
+			managerContainerLogs := func() string {
+				logOutput, err := tc.Kubectl.Logs(controllerPodName, "-c", "manager")
+				Expect(err).NotTo(HaveOccurred())
+				return logOutput
+			}
+			Eventually(managerContainerLogs, time.Minute, time.Second).Should(ContainSubstring("Successfully Reconciled"))
+
 			By("granting permissions to access the metrics and read the token")
 			_, err = tc.Kubectl.Command(
 				"create",
-				"clusterrolebinding",
-				fmt.Sprintf("metrics-%s", tc.TestSuffix),
-				fmt.Sprintf("--clusterrole=e2e-%s-metrics-reader", tc.TestSuffix),
+				"clusterrolebinding", metricsClusterRoleBindingName,
+				fmt.Sprintf("--clusterrole=%s-metrics-reader", tc.ProjectName),
 				fmt.Sprintf("--serviceaccount=%s:default", tc.Kubectl.Namespace))
 			Expect(err).NotTo(HaveOccurred())
 
@@ -148,8 +157,7 @@ var _ = Describe("operator-sdk", func() {
 			cmdOpts := []string{
 				"run", "--generator=run-pod/v1", "curl", "--image=curlimages/curl:7.68.0", "--restart=OnFailure", "--",
 				"curl", "-v", "-k", "-H", fmt.Sprintf(`Authorization: Bearer %s`, token),
-				fmt.Sprintf("https://e2e-%v-controller-manager-metrics-service.e2e-%v-system.svc:8443/metrics",
-					tc.TestSuffix, tc.TestSuffix),
+				fmt.Sprintf("https://%s-controller-manager-metrics-service.%s.svc:8443/metrics", tc.ProjectName, tc.Kubectl.Namespace),
 			}
 			_, err = tc.Kubectl.CommandInNamespace(cmdOpts...)
 			Expect(err).NotTo(HaveOccurred())
@@ -177,13 +185,9 @@ var _ = Describe("operator-sdk", func() {
 			}
 			Eventually(getCurlLogs, time.Minute, time.Second).Should(ContainSubstring("< HTTP/2 200"))
 
-			By("cleaning up the curl pod")
-			_, err = tc.Kubectl.Delete(true, "pods", "curl")
-			Expect(err).NotTo(HaveOccurred())
-
 			By("validating that the created resource object gets reconciled in the controller")
 			Expect(metricsOutput).To(ContainSubstring(fmt.Sprintf(
-				`controller_runtime_reconcile_total{controller="%s",result="success"} 1`,
+				`controller_runtime_reconcile_total{controller="%s",result="success"} 3`,
 				strings.ToLower(tc.Kind),
 			)))
 		})

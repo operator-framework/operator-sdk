@@ -16,36 +16,53 @@ package e2e_go_test
 
 import (
 	"os/exec"
+	"path/filepath"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/operator-framework/operator-sdk/internal/testutils"
 )
 
 var _ = Describe("Integrating Go Projects with OLM", func() {
+
+	// OLM does not work with cert-manager. In this way, we need to generate
+	// the pkg manifest after we comment cert-manager options into the kustomization file.
+	// More info: https://olm.operatorframework.io/docs/advanced-tasks/adding-admission-and-conversion-webhooks/#certificate-authority-requirements
+	BeforeEach(func() {
+		By("commenting cert-manager")
+		err := testutils.ReplaceInFile(
+			filepath.Join(tc.Dir, "config", "default", "kustomization.yaml"),
+			"- ../certmanager", "#- ../certmanager")
+		Expect(err).NotTo(HaveOccurred())
+
+		By("commenting cert-manager")
+		err = testutils.ReplaceInFile(
+			filepath.Join(tc.Dir, "config", "default", "kustomization.yaml"),
+			uncommentedCertManager, commentedCertMaagerKustomizeFields)
+		Expect(err).NotTo(HaveOccurred())
+	})
+
+	AfterEach(func() {
+		By("commenting cert-manager")
+		err := testutils.ReplaceInFile(
+			filepath.Join(tc.Dir, "config", "default", "kustomization.yaml"),
+			"#- ../certmanager", "- ../certmanager")
+		Expect(err).NotTo(HaveOccurred())
+
+		By("commenting cert-manager")
+		err = testutils.ReplaceInFile(
+			filepath.Join(tc.Dir, "config", "default", "kustomization.yaml"),
+			commentedCertMaagerKustomizeFields, uncommentedCertManager)
+		Expect(err).NotTo(HaveOccurred())
+	})
+
 	Context("with operator-sdk", func() {
 		const operatorVersion = "0.0.1"
 
 		It("should generate and run a valid OLM bundle and packagemanifests", func() {
-			By("turning off interactive prompts for all generation tasks.")
-			err := tc.DisableManifestsInteractiveMode()
-			Expect(err).NotTo(HaveOccurred())
-
-			By("building the bundle")
-			err = tc.Make("bundle", "IMG="+tc.ImageName)
-			Expect(err).NotTo(HaveOccurred())
-
-			By("building the operator bundle image")
-			err = tc.Make("bundle-build", "BUNDLE_IMG="+tc.BundleImageName)
-			Expect(err).NotTo(HaveOccurred())
-
-			if tc.IsRunningOnKind() {
-				By("loading the bundle image into Kind cluster")
-				err = tc.LoadImageToKindClusterWithName(tc.BundleImageName)
-				Expect(err).NotTo(HaveOccurred())
-			}
-
 			By("adding the 'packagemanifests' rule to the Makefile")
-			err = tc.AddPackagemanifestsTarget()
+			err := tc.AddPackagemanifestsTarget()
 			Expect(err).NotTo(HaveOccurred())
 
 			By("generating the operator package manifests")
@@ -69,3 +86,75 @@ var _ = Describe("Integrating Go Projects with OLM", func() {
 		})
 	})
 })
+
+const uncommentedCertManager = `# [CERTMANAGER] To enable cert-manager, uncomment all sections with 'CERTMANAGER'.
+# Uncomment 'CERTMANAGER' sections in crd/kustomization.yaml to enable the CA injection in the admission webhooks.
+# 'CERTMANAGER' needs to be enabled to use ca injection
+- webhookcainjection_patch.yaml
+
+
+# the following config is for teaching kustomize how to do var substitution
+vars:
+# [CERTMANAGER] To enable cert-manager, uncomment all sections with 'CERTMANAGER' prefix.
+- name: CERTIFICATE_NAMESPACE # namespace of the certificate CR
+  objref:
+    kind: Certificate
+    group: cert-manager.io
+    version: v1alpha2
+    name: serving-cert # this name should match the one in certificate.yaml
+  fieldref:
+    fieldpath: metadata.namespace
+- name: CERTIFICATE_NAME
+  objref:
+    kind: Certificate
+    group: cert-manager.io
+    version: v1alpha2
+    name: serving-cert # this name should match the one in certificate.yaml
+- name: SERVICE_NAMESPACE # namespace of the service
+  objref:
+    kind: Service
+    version: v1
+    name: webhook-service
+  fieldref:
+    fieldpath: metadata.namespace
+- name: SERVICE_NAME
+  objref:
+    kind: Service
+    version: v1
+    name: webhook-service`
+
+const commentedCertMaagerKustomizeFields = `# [CERTMANAGER] To enable cert-manager, uncomment all sections with 'CERTMANAGER'.
+# Uncomment 'CERTMANAGER' sections in crd/kustomization.yaml to enable the CA injection in the admission webhooks.
+# 'CERTMANAGER' needs to be enabled to use ca injection
+# - webhookcainjection_patch.yaml
+
+
+# the following config is for teaching kustomize how to do var substitution
+vars:
+# [CERTMANAGER] To enable cert-manager, uncomment all sections with 'CERTMANAGER' prefix.
+#- name: CERTIFICATE_NAMESPACE # namespace of the certificate CR
+#  objref:
+#    kind: Certificate
+#    group: cert-manager.io
+#    version: v1alpha2
+#    name: serving-cert # this name should match the one in certificate.yaml
+#  fieldref:
+#    fieldpath: metadata.namespace
+#- name: CERTIFICATE_NAME
+#  objref:
+#    kind: Certificate
+#    group: cert-manager.io
+#    version: v1alpha2
+#    name: serving-cert # this name should match the one in certificate.yaml
+#- name: SERVICE_NAMESPACE # namespace of the service
+#  objref:
+#    kind: Service
+#    version: v1
+#    name: webhook-service
+#  fieldref:
+#    fieldpath: metadata.namespace
+#- name: SERVICE_NAME
+#  objref:
+#    kind: Service
+#    version: v1
+#    name: webhook-service`
