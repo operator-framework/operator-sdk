@@ -1,5 +1,10 @@
 SHELL = /bin/bash
 
+# IMAGE_VERSION represents the ansible-operator, helm-operator, and scorecard subproject versions.
+# This value must be updated to the release tag of the most recent release, a change that must
+# occur in the release commit. IMAGE_VERSION will be removed once each subproject that uses this
+# version is moved to a separate repo and release process.
+export IMAGE_VERSION = v1.1.0
 # Build-time variables to inject into binaries
 export SIMPLE_VERSION = $(shell (test "$(shell git describe)" = "$(shell git describe --abbrev=0)" && echo $(shell git describe)) || echo $(shell git describe --abbrev=0)+git)
 export GIT_VERSION = $(shell git describe --dirty --tags --always)
@@ -20,6 +25,7 @@ GO_BUILD_ARGS = \
     -X '$(REPO)/internal/version.GitVersion=$(GIT_VERSION)' \
     -X '$(REPO)/internal/version.GitCommit=$(GIT_COMMIT)' \
     -X '$(REPO)/internal/version.KubernetesVersion=v$(K8S_VERSION)' \
+    -X '$(REPO)/internal/version.ImageVersion=$(IMAGE_VERSION)' \
   " \
 
 export GO111MODULE = on

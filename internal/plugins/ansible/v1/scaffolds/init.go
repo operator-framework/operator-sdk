@@ -22,6 +22,7 @@ import (
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
 	"sigs.k8s.io/kubebuilder/pkg/plugin/scaffold"
 
+	"github.com/operator-framework/operator-sdk/internal/kubebuilder/machinery"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/kdefault"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/manager"
@@ -32,17 +33,19 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/molecule/mdefault"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/molecule/mkind"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/playbooks"
-	ansibleroles "github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/roles"
-
-	"github.com/operator-framework/operator-sdk/internal/kubebuilder/machinery"
+	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/roles"
+	"github.com/operator-framework/operator-sdk/internal/version"
 )
 
 const (
-	// KustomizeVersion is the kubernetes-sigs/kustomize version to be used in the project
-	KustomizeVersion = "v3.5.4"
+	// kustomizeVersion is the sigs.k8s.io/kustomize version to be used in the project
+	kustomizeVersion = "v3.5.4"
 
 	imageName = "controller:latest"
 )
+
+// ansibleOperatorVersion is set to the version of ansible-operator at compile-time.
+var ansibleOperatorVersion = version.ImageVersion
 
 var _ scaffold.Scaffolder = &initScaffolder{}
 
@@ -79,7 +82,12 @@ func (s *initScaffolder) Scaffold() error {
 func (s *initScaffolder) scaffold() error {
 	return machinery.NewScaffold().Execute(
 		s.newUniverse(),
-		&templates.Dockerfile{},
+		&templates.Dockerfile{AnsibleOperatorVersion: ansibleOperatorVersion},
+		&templates.Makefile{
+			Image:                  imageName,
+			KustomizeVersion:       kustomizeVersion,
+			AnsibleOperatorVersion: ansibleOperatorVersion,
+		},
 		&templates.GitIgnore{},
 		&templates.RequirementsYml{},
 		&templates.Watches{},
@@ -103,8 +111,7 @@ func (s *initScaffolder) scaffold() error {
 		&kdefault.Kustomize{},
 		&kdefault.AuthProxyPatch{},
 
-		&templates.Makefile{},
-		&ansibleroles.Placeholder{},
+		&roles.Placeholder{},
 		&playbooks.Placeholder{},
 
 		&mdefault.Converge{},
