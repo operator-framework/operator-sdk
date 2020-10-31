@@ -13,7 +13,9 @@
           <div class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
             {{ partial "sidebar.html" . }}
           </div>
-
+          <div class="d-none d-xl-block col-xl-2 td-toc d-print-none">
+            {{ partial "toc.html" . }}
+          </div>
           <main class="col-12 col-md-9 col-xl-8 pl-md-5 of-docs__wrapper" role="main">
             {{ partial "version-banner.html" . }}
             {{ if not .Site.Params.ui.breadcrumb_disable }}{{ partial "breadcrumb.html" . }}{{ end }}
