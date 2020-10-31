@@ -1,0 +1,4 @@
+entries:
+  - description: >
+      Removed redundant platform information from `operator-sdk version` output
+    kind: bugfix

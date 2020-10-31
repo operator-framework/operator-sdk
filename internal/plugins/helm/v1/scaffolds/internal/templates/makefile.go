@@ -18,11 +18,9 @@ limitations under the License.
 package templates
 
 import (
-	"strings"
+	"errors"
 
 	"sigs.k8s.io/kubebuilder/pkg/model/file"
-
-	"github.com/operator-framework/operator-sdk/internal/version"
 )
 
 var _ file.Template = &Makefile{}
@@ -37,7 +35,7 @@ type Makefile struct {
 	// Kustomize version to use in the project
 	KustomizeVersion string
 
-	// HelmOperatorVersion is the version of the base image and operator binary used in the project
+	// HelmOperatorVersion is the version of the helm-operator binary downloaded by the Makefile.
 	HelmOperatorVersion string
 }
 
@@ -56,11 +54,11 @@ func (f *Makefile) SetTemplateDefaults() error {
 	}
 
 	if f.KustomizeVersion == "" {
-		f.KustomizeVersion = "v3.5.4"
+		return errors.New("kustomize version is required in scaffold")
 	}
 
 	if f.HelmOperatorVersion == "" {
-		f.HelmOperatorVersion = strings.TrimSuffix(version.Version, "+git")
+		return errors.New("helm-operator version is required in scaffold")
 	}
 
 	return nil

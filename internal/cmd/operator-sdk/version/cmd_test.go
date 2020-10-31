@@ -57,7 +57,7 @@ var _ = Describe("Running a version command", func() {
 			Expect(stdoutString).To(ContainSubstring(fmt.Sprintf("version: %q", version)))
 			Expect(stdoutString).To(ContainSubstring(fmt.Sprintf("commit: %q", ver.GitCommit)))
 			Expect(stdoutString).To(ContainSubstring(fmt.Sprintf("kubernetes version: %q", ver.KubernetesVersion)))
-			Expect(stdoutString).To(ContainSubstring(fmt.Sprintf("go version: %q", ver.GoVersion)))
+			Expect(stdoutString).To(ContainSubstring(fmt.Sprintf("go version: %q", runtime.Version())))
 			Expect(stdoutString).To(ContainSubstring(fmt.Sprintf("GOOS: %q", runtime.GOOS)))
 			Expect(stdoutString).To(ContainSubstring(fmt.Sprintf("GOARCH: %q", runtime.GOARCH)))
 		})

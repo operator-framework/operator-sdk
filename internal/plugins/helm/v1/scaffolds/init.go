@@ -19,7 +19,6 @@ package scaffolds
 
 import (
 	"os"
-	"strings"
 
 	"sigs.k8s.io/kubebuilder/pkg/model"
 	"sigs.k8s.io/kubebuilder/pkg/model/config"
@@ -36,14 +35,14 @@ import (
 )
 
 const (
-	// KustomizeVersion is the kubernetes-sigs/kustomize version to be used in the project
-	KustomizeVersion = "v3.5.4"
+	// kustomizeVersion is the sigs.k8s.io/kustomize version to be used in the project
+	kustomizeVersion = "v3.5.4"
 
 	imageName = "controller:latest"
 )
 
-// HelmOperatorVersion is the version of the helm binary used in the Makefile
-var HelmOperatorVersion = strings.TrimSuffix(version.Version, "+git")
+// helmOperatorVersion is set to the version of helm-operator at compile-time.
+var helmOperatorVersion = version.ImageVersion
 
 var _ scaffold.Scaffolder = &initScaffolder{}
 
@@ -84,13 +83,13 @@ func (s *initScaffolder) scaffold() error {
 	return machinery.NewScaffold().Execute(
 		s.newUniverse(),
 		&templates.Dockerfile{
-			HelmOperatorVersion: HelmOperatorVersion,
+			HelmOperatorVersion: helmOperatorVersion,
 		},
 		&templates.GitIgnore{},
 		&templates.Makefile{
 			Image:               imageName,
-			KustomizeVersion:    KustomizeVersion,
-			HelmOperatorVersion: HelmOperatorVersion,
+			KustomizeVersion:    kustomizeVersion,
+			HelmOperatorVersion: helmOperatorVersion,
 		},
 		&templates.Watches{},
 		&rbac.AuthProxyRole{},
