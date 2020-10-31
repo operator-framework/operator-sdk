@@ -153,6 +153,9 @@ bundle: ...
   operator-sdk bundle validate ./bundle --select-optional name=operatorhub
 ```
 
+Documentation on optional validators:
+- [`operatorhub`][operatorhub_validator]
+
 ### Package manifests format
 
 A [package manifests][package-manifests] format consists of on-disk manifests (CSV, CRDs and other supported kinds)
@@ -320,3 +323,4 @@ being managed, each with a `name` and `url`.
 [csv-markers]:/docs/building-operators/golang/references/markers
 [operatorhub]:https://operatorhub.io/
 [scorecard]:/docs/advanced-topics/scorecard
+[operatorhub_validator]: https://olm.operatorframework.io/docs/tasks/validate-package/#validation
