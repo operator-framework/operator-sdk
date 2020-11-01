@@ -60,12 +60,6 @@ func NewTestContext(binary string, env ...string) (tc TestContext, err error) {
 	return tc, err
 }
 
-// InstallOLM runs 'operator-sdk olm install' and returns any errors emitted by that command.
-func (tc TestContext) InstallOLM() error {
-	err := tc.InstallOLMVersion("latest")
-	return err
-}
-
 // InstallOLM runs 'operator-sdk olm install' for specific version
 // and returns any errors emitted by that command.
 func (tc TestContext) InstallOLMVersion(version string) error {
