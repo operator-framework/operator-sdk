@@ -15,7 +15,7 @@ should specify `spec.scope: Cluster`.
 To ensure that the CRD is always generated with `scope: Cluster`, add the marker 
 `// +kubebuilder:resource:path=<resource>,scope=Cluster`, or if already present replace `scope={Namespaced -> Cluster}`, 
 above the CRD's Go type definition in `api/<version>/<kind>_types.go` or `apis/<group>/<version>/<kind>_types.go` 
-if you are using the `multigroup` layout. Note that the `<resource>` 
+if you are using the [multigroup][multigroup-kubebuilder-doc] layout. Note that the `<resource>` 
 element must be the same lower-case plural value of the CRD's Kind, `spec.names.plural`.  
 
 **NOTE**: When a `Manager` instance is created in the `main.go` file, it receives the namespace(s) as Options. 
@@ -94,3 +94,4 @@ spec:
 [RBAC]: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
 [manager_user_guide]:/docs/building-operators/golang/tutorial/#manager
 [manager_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Options
+[multigroup-kubebuilder-doc]: https://book.kubebuilder.io/migration/multi-group.html

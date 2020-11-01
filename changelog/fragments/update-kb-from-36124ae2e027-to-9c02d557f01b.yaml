@@ -1,0 +1,19 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      (go/v2) Added the command `òperator-sdk edit` which allows users edit the project layout to support Multi-Group.
+      More info: https://book.kubebuilder.io/migration/multi-group.html
+    kind: "addition"
+    breaking: false
+  - description: >
+      (go/v2) Fix `create webhook` subcommand for the defaulting webhooks by removing import that is not used.
+      More info: https://github.com/kubernetes-sigs/kubebuilder/pull/1718
+    kind: "bugfix"
+    breaking: false
+  - description: >
+      (go/v2) Fix `copyright` info on the license of the generated files when the owner is not informed.
+      More info: https://github.com/kubernetes-sigs/kubebuilder/pull/1749
+    kind: "bugfix"
+    # Is this a breaking change?
+    breaking: false

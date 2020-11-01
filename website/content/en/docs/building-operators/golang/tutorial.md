@@ -61,8 +61,7 @@ Read the [operator scope][operator_scope] documentation on how to run your opera
 
 ### Multi-Group APIs
 
-Before creating an API and controller, consider if your operator's API requires multiple [groups][API-groups].
-If yes then add the line `multigroup: true` in the `PROJECT` file which should look like the following:
+Before creating an API and controller, consider if your operator's API requires multiple [groups][API-groups]. Then to change the layout of your project to support Multi-Group run the command `operator-sdk edit --multigroup=true`. It will update the `PROJECT` file which should look like the following:
 
 ```YAML
 domain: example.com
@@ -70,7 +69,7 @@ layout: go.kubebuilder.io/v2
 multigroup: true
 ...
 ```
-For multi-group projects, the API Go type files are created under `apis/<group>/<version>/` and the controllers under `controllers/<group>/`.
+For multi-group projects, the API Go type files are created under `apis/<group>/<version>/` and the controllers under `controllers/<group>/` and then, the Dockerfile will be also updated accordingly. For further information see the [Single Group to Multi-Group][multigroup-kubebuilder-doc]
 
 This guide will cover the default case of a single group API.
 
@@ -500,3 +499,4 @@ Also see the [advanced topics][advanced_topics] doc for more use cases and under
 [legacy_CLI]:https://v0-19-x.sdk.operatorframework.io/docs/cli/
 [env-test-setup]: /docs/building-operators/golang/references/envtest-setup
 [role-based-access-control]: https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control#iam-rolebinding-bootstrap
+[multigroup-kubebuilder-doc]: https://book.kubebuilder.io/migration/multi-group.html
