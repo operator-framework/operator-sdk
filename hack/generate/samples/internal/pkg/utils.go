@@ -22,7 +22,7 @@ import (
 	"regexp"
 
 	log "github.com/sirupsen/logrus"
-	"sigs.k8s.io/kubebuilder/pkg/model/config"
+	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
 
 	"github.com/operator-framework/operator-sdk/internal/annotations/metrics"
 )

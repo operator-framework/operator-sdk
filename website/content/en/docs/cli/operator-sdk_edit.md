@@ -7,7 +7,8 @@ This command will edit the project configuration
 
 ### Synopsis
 
-This command will edit the project configuration. You can have single or multi group project.
+Edit the project configuration.
+
 Note: unable to find configuration file, project must be initialized
 
 ```

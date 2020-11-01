@@ -1,0 +1,8 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      (go/v2) Fix `create api` when only the controller is created.
+      More info: https://github.com/kubernetes-sigs/kubebuilder/pull/1770
+    kind: "bugfix"
+    breaking: false

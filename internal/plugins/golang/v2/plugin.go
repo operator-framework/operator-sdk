@@ -17,8 +17,8 @@ package v2
 import (
 	"github.com/operator-framework/operator-sdk/internal/plugins"
 
-	"sigs.k8s.io/kubebuilder/pkg/plugin"
-	kbgov2 "sigs.k8s.io/kubebuilder/pkg/plugin/v2"
+	"sigs.k8s.io/kubebuilder/v2/pkg/plugin"
+	kbgov2 "sigs.k8s.io/kubebuilder/v2/pkg/plugin/v2"
 )
 
 // Plugin name/version used in this file will also be used in phase 2 plugins when we can
@@ -35,11 +35,11 @@ var (
 )
 
 var (
-	_ plugin.Base                      = Plugin{}
-	_ plugin.InitPluginGetter          = Plugin{}
-	_ plugin.CreateAPIPluginGetter     = Plugin{}
-	_ plugin.CreateWebhookPluginGetter = Plugin{}
-	_ plugin.EditPluginGetter          = Plugin{}
+	_ plugin.Plugin        = Plugin{}
+	_ plugin.Init          = Plugin{}
+	_ plugin.CreateAPI     = Plugin{}
+	_ plugin.CreateWebhook = Plugin{}
+	_ plugin.Edit          = Plugin{}
 )
 
 // Plugin defines an Operator SDK Go scaffold and CLI plugin. Its current purpose is to
@@ -52,22 +52,22 @@ func (Plugin) SupportedProjectVersions() []string {
 	return (kbgov2.Plugin{}).SupportedProjectVersions()
 }
 
-func (p Plugin) GetInitPlugin() plugin.Init {
-	return &initPlugin{
-		Init: (kbgov2.Plugin{}).GetInitPlugin(),
+func (p Plugin) GetInitSubcommand() plugin.InitSubcommand {
+	return &initSubcommand{
+		InitSubcommand: (kbgov2.Plugin{}).GetInitSubcommand(),
 	}
 }
 
-func (p Plugin) GetCreateAPIPlugin() plugin.CreateAPI {
-	return &createAPIPlugin{
-		CreateAPI: (kbgov2.Plugin{}).GetCreateAPIPlugin(),
+func (p Plugin) GetCreateAPISubcommand() plugin.CreateAPISubcommand {
+	return &createAPISubcommand{
+		CreateAPISubcommand: (kbgov2.Plugin{}).GetCreateAPISubcommand(),
 	}
 }
 
-func (p Plugin) GetCreateWebhookPlugin() plugin.CreateWebhook {
-	return (kbgov2.Plugin{}).GetCreateWebhookPlugin()
+func (p Plugin) GetCreateWebhookSubcommand() plugin.CreateWebhookSubcommand {
+	return (kbgov2.Plugin{}).GetCreateWebhookSubcommand()
 }
 
-func (p Plugin) GetEditPlugin() plugin.Edit {
-	return (kbgov2.Plugin{}).GetEditPlugin()
+func (p Plugin) GetEditSubcommand() plugin.EditSubcommand {
+	return (kbgov2.Plugin{}).GetEditSubcommand()
 }

@@ -32,7 +32,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"sigs.k8s.io/kubebuilder/pkg/cli"
+	"sigs.k8s.io/kubebuilder/v2/pkg/cli"
 )
 
 var commands = []*cobra.Command{
