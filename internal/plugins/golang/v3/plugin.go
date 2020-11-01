@@ -15,9 +15,8 @@
 package v3
 
 import (
-
-	"sigs.k8s.io/kubebuilder/pkg/plugin"
-	kbgov3 "sigs.k8s.io/kubebuilder/pkg/plugin/v3"
+	"sigs.k8s.io/kubebuilder/v2/pkg/plugin"
+	kbgov3 "sigs.k8s.io/kubebuilder/v2/pkg/plugin/v3"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins"
 )
@@ -36,11 +35,8 @@ var (
 )
 
 var (
-	_ plugin.Base                      = Plugin{}
-	_ plugin.InitPluginGetter          = Plugin{}
-	_ plugin.CreateAPIPluginGetter     = Plugin{}
-	_ plugin.CreateWebhookPluginGetter = Plugin{}
-	_ plugin.EditPluginGetter          = Plugin{}
+	_ plugin.Plugin = Plugin{}
+	_ plugin.Full   = Plugin{}
 )
 
 // Plugin defines an Operator SDK Go scaffold and CLI plugin. Its current purpose is to
@@ -53,22 +49,22 @@ func (Plugin) SupportedProjectVersions() []string {
 	return (kbgov3.Plugin{}).SupportedProjectVersions()
 }
 
-func (p Plugin) GetInitPlugin() plugin.Init {
-	return &initPlugin{
-		Init: (kbgov3.Plugin{}).GetInitPlugin(),
+func (p Plugin) GetInitSubcommand() plugin.InitSubcommand {
+	return &initSubcommand{
+		InitSubcommand: (kbgov3.Plugin{}).GetInitSubcommand(),
 	}
 }
 
-func (p Plugin) GetCreateAPIPlugin() plugin.CreateAPI {
-	return &createAPIPlugin{
-		CreateAPI: (kbgov3.Plugin{}).GetCreateAPIPlugin(),
+func (p Plugin) GetCreateAPISubcommand() plugin.CreateAPISubcommand {
+	return &createAPISubcommand{
+		CreateAPISubcommand: (kbgov3.Plugin{}).GetCreateAPISubcommand(),
 	}
 }
 
-func (p Plugin) GetCreateWebhookPlugin() plugin.CreateWebhook {
-	return (kbgov3.Plugin{}).GetCreateWebhookPlugin()
+func (p Plugin) GetCreateWebhookSubcommand() plugin.CreateWebhookSubcommand {
+	return (kbgov3.Plugin{}).GetCreateWebhookSubcommand()
 }
 
-func (p Plugin) GetEditPlugin() plugin.Edit {
-	return (kbgov3.Plugin{}).GetEditPlugin()
+func (p Plugin) GetEditSubcommand() plugin.EditSubcommand {
+	return (kbgov3.Plugin{}).GetEditSubcommand()
 }

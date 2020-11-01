@@ -26,7 +26,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/flags"
 	ansiblev1 "github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1"
 	golangv2 "github.com/operator-framework/operator-sdk/internal/plugins/golang/v2"
-	golangv3 "github.com/operator-framework/operator-sdk/internal/plugins/golang/v2"
+	golangv3 "github.com/operator-framework/operator-sdk/internal/plugins/golang/v3"
 	helmv1 "github.com/operator-framework/operator-sdk/internal/plugins/helm/v1"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
