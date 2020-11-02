@@ -329,11 +329,7 @@ The name and tag of the image (`IMG=<some-registry>/<project-name>:tag`) in both
 
 #### Deploy the operator
 
-For this example we will run the operator in the `default` namespace which can be specified for all resources in `config/default/kustomization.yaml`:
-
-```sh
-$ cd config/default/ && kustomize edit set namespace "default" && cd ../..
-```
+By default, a new namespace is created with name `<project-name>-system`, i.e. memcached-operator-system and will be used for the deployment.
 
 Run the following to deploy the operator. This will also install the RBAC manifests from `config/rbac`.
 
@@ -347,7 +343,7 @@ in the cluster or `make deploy` will fail when creating the cert-manager resourc
 Verify that the memcached-operator is up and running:
 
 ```console
-$ kubectl get deployment
+$ kubectl get deployment -n memcached-operator-system
 NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE
 memcached-operator-controller-manager   1/1     1            1           8m
 ```
@@ -435,12 +431,19 @@ memcached-sample                        5/5     5            5           3m
 
 ### Cleanup
 
-```sh
-$ kubectl delete -f config/samples/cache_v1alpha1_memcached.yaml
-$ kubectl delete deployments,service -l control-plane=controller-manager
-$ kubectl delete role,rolebinding --all
+A new target can be added into the Makefile for cleaning up the resources that have been created along this tutorial:
+
+```make
+# Undeploy controller from the configured Kubernetes cluster
+undeploy:
+	$(KUSTOMIZE) build config/default | kubectl delete -f -
 ```
 
+Once that's done the simple command below will delete all the resources:
+
+```sh
+$ make undeploy
+```
 
 ## Further steps
 
