@@ -67,8 +67,6 @@ spec:
           resources:
           - memcacheds/finalizers
           verbs:
-          - get
-          - patch
           - update
         - apiGroups:
           - cache.example.com
