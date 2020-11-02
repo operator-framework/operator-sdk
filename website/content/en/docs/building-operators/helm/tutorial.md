@@ -206,23 +206,7 @@ nginx-operator-controller-manager   1/1       1         1            1          
 This method is preferred during the development cycle to speed up deployment and testing.
 
 Run the operator locally with the default Kubernetes config file present at
-`$HOME/.kube/config`:
-
-```sh
-$ make run
-INFO[0000] Go Version: go1.10.3
-INFO[0000] Go OS/Arch: linux/amd64
-INFO[0000] operator-sdk Version: v0.1.1+git
-```
-
-Run the operator locally with a provided Kubernetes config file:
-
-```sh
-$ operator-sdk run local --kubeconfig=<path_to_config>
-INFO[0000] Go Version: go1.10.3
-INFO[0000] Go OS/Arch: linux/amd64
-INFO[0000] operator-sdk Version: v0.2.0+git
-```
+`$HOME/.kube/config` via the Makefile target `make run`.
 
 ### 3. Deploy your Operator with the Operator Lifecycle Manager (OLM)
 
