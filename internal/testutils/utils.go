@@ -28,7 +28,6 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
 	kbtestutils "sigs.k8s.io/kubebuilder/test/e2e/utils"
 )
 
