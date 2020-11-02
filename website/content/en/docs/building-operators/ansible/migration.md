@@ -88,9 +88,9 @@ spec:
   size: 3
 ```
 
-### Migrating `watches.yaml
+### Migrating `watches.yaml`
 
-Update the `watches.yaml` file with your `roles/playbooks` and check if you have custom options in the `watches.yaml` file of your existing project. If so, update the new `watches.yaml file to match. 
+Update the `watches.yaml` file with your `roles/playbooks` and check if you have custom options in the `watches.yaml` file of your existing project. If so, update the new `watches.yaml` file to match.
 
 In our example, we will replace `# FIXME: Specify the role or playbook for this resource.` with our previous role and it will look like:
 
