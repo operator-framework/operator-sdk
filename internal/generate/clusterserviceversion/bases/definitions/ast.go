@@ -66,7 +66,7 @@ func (g generator) getMarkedChildrenOfField(root markers.FieldInfo) (map[string]
 						}
 						// Create a new set of path segments using the parent's segments
 						// and add the field to the next fields to search.
-						parentSegments := make([]string, len(field.pathSegments))
+						parentSegments := make([]string, len(field.pathSegments), len(field.pathSegments)+1)
 						copy(parentSegments, field.pathSegments)
 						f := &fieldInfo{
 							FieldInfo:    finfo,
