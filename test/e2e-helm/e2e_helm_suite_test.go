@@ -15,6 +15,8 @@
 package e2e_helm_test
 
 import (
+	"fmt"
+	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -45,8 +47,16 @@ var _ = BeforeSuite(func() {
 	tc, err = testutils.NewTestContext(testutils.BinaryName, "GO111MODULE=on")
 	Expect(err).NotTo(HaveOccurred())
 
-	By("creating a new directory")
-	Expect(tc.Prepare()).To(Succeed())
+	tc.Domain = "example.com"
+	tc.Group = "cache"
+	tc.Version = "v1alpha1"
+	tc.Kind = "Memcached"
+	tc.Resources = "memcacheds"
+	tc.ProjectName = "memcached-operator"
+	tc.Kubectl.Namespace = fmt.Sprintf("%s-system", tc.ProjectName)
+
+	By("copying sample to a temporary e2e directory")
+	Expect(exec.Command("cp", "-r", "../../testdata/helm/memcached-operator", tc.Dir).Run()).To(Succeed())
 
 	By("fetching the current-context")
 	tc.Kubectx, err = tc.Kubectl.Command("config", "current-context")
@@ -55,31 +65,12 @@ var _ = BeforeSuite(func() {
 	By("preparing the prerequisites on cluster")
 	tc.InstallPrerequisites()
 
-	By("initializing a Helm project")
-	err = tc.Init(
-		"--plugins", "helm",
-		"--project-version", "3-alpha",
-		"--domain", tc.Domain)
-	Expect(err).NotTo(HaveOccurred())
-
 	By("using dev image for scorecard-test")
 	err = tc.ReplaceScorecardImagesForDev()
 	Expect(err).NotTo(HaveOccurred())
 
-	By("creating an API definition")
-	err = tc.CreateAPI(
-		"--group", tc.Group,
-		"--version", tc.Version,
-		"--kind", tc.Kind)
-	Expect(err).NotTo(HaveOccurred())
-
 	By("replacing project Dockerfile to use Helm base image with the dev tag")
 	err = testutils.ReplaceRegexInFile(filepath.Join(tc.Dir, "Dockerfile"), "quay.io/operator-framework/helm-operator:.*", "quay.io/operator-framework/helm-operator:dev")
-	Expect(err).Should(Succeed())
-
-	By("turning off interactive prompts for all generation tasks.")
-	replace := "operator-sdk generate kustomize manifests"
-	err = testutils.ReplaceInFile(filepath.Join(tc.Dir, "Makefile"), replace, replace+" --interactive=false")
 	Expect(err).Should(Succeed())
 
 	By("checking the kustomize setup")

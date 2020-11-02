@@ -30,13 +30,11 @@ import (
 
 var _ = Describe("Running Helm projects", func() {
 	var controllerPodName string
+	var metricsClusterRoleBindingName string
 
 	Context("built with operator-sdk", func() {
 		BeforeEach(func() {
-			By("enabling Prometheus via the kustomization.yaml")
-			Expect(kbtestutils.UncommentCode(
-				filepath.Join(tc.Dir, "config", "default", "kustomization.yaml"),
-				"#- ../prometheus", "#")).To(Succeed())
+			metricsClusterRoleBindingName = fmt.Sprintf("%s-metrics-reader", tc.ProjectName)
 
 			By("deploying project on the cluster")
 			err := tc.Make("deploy", "IMG="+tc.ImageName)
@@ -53,7 +51,7 @@ var _ = Describe("Running Helm projects", func() {
 
 			By("cleaning up permissions")
 			_, _ = tc.Kubectl.Command("delete", "clusterrolebinding",
-				fmt.Sprintf("metrics-%s", tc.TestSuffix))
+				metricsClusterRoleBindingName)
 
 			By("undeploy project")
 			_ = tc.Make("undeploy")
@@ -110,19 +108,24 @@ var _ = Describe("Running Helm projects", func() {
 			_, err := tc.Kubectl.Get(
 				true,
 				"ServiceMonitor",
-				fmt.Sprintf("e2e-%s-controller-manager-metrics-monitor", tc.TestSuffix))
+				fmt.Sprintf("%s-controller-manager-metrics-monitor", tc.ProjectName))
 			Expect(err).NotTo(HaveOccurred())
 
 			By("ensuring the created metrics Service for the manager")
 			_, err = tc.Kubectl.Get(
 				true,
 				"Service",
-				fmt.Sprintf("e2e-%s-controller-manager-metrics-service", tc.TestSuffix))
+				fmt.Sprintf("%s-controller-manager-metrics-service", tc.ProjectName))
+			Expect(err).NotTo(HaveOccurred())
+
+			sampleFile := filepath.Join("config", "samples",
+				fmt.Sprintf("%s_%s_%s.yaml", tc.Group, tc.Version, strings.ToLower(tc.Kind)))
+
+			By("updating replicaCount to 1 in the CR manifest")
+			err = testutils.ReplaceInFile(filepath.Join(tc.Dir, sampleFile), "replicaCount: 3", "replicaCount: 1")
 			Expect(err).NotTo(HaveOccurred())
 
 			By("creating an instance of release(CR)")
-			sampleFile := filepath.Join("config", "samples",
-				fmt.Sprintf("%s_%s_%s.yaml", tc.Group, tc.Version, strings.ToLower(tc.Kind)))
 			_, err = tc.Kubectl.Apply(false, "-f", sampleFile)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -141,14 +144,14 @@ var _ = Describe("Running Helm projects", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(releaseName)).NotTo(BeIdenticalTo(0))
 
-			By("checking the release(CR) deployment status")
+			By("checking the release(CR) statefulset status")
 			verifyReleaseUp := func() string {
 				output, err := tc.Kubectl.Command(
-					"rollout", "status", "deployment", releaseName)
+					"rollout", "status", "statefulset", releaseName)
 				Expect(err).NotTo(HaveOccurred())
 				return output
 			}
-			Eventually(verifyReleaseUp, time.Minute, time.Second).Should(ContainSubstring("successfully rolled out"))
+			Eventually(verifyReleaseUp, time.Minute, time.Second).Should(ContainSubstring("statefulset rolling update complete"))
 
 			By("ensuring the created Service for the release(CR)")
 			crServiceName, err := tc.Kubectl.Get(
@@ -158,19 +161,19 @@ var _ = Describe("Running Helm projects", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(crServiceName)).NotTo(BeIdenticalTo(0))
 
-			By("scaling deployment replicas to 2")
+			By("scaling statefulset replicas to 2")
 			_, err = tc.Kubectl.Command(
-				"scale", "deployment", releaseName, "--replicas", "2")
+				"scale", "statefulset", releaseName, "--replicas", "2")
 			Expect(err).NotTo(HaveOccurred())
 
-			By("verifying the deployment automatically scales back down to 1")
+			By("verifying the statefulset automatically scales back down to 1")
 			verifyRelease := func() error {
 				replicas, err := tc.Kubectl.Get(
 					false,
-					"deployment", releaseName, "-o", "jsonpath={..spec.replicas}")
+					"statefulset", releaseName, "-o", "jsonpath={..spec.replicas}")
 				Expect(err).NotTo(HaveOccurred())
 				if replicas != "1" {
-					return fmt.Errorf("release(CR) deployment with %s replicas", replicas)
+					return fmt.Errorf("release(CR) statefulset with %s replicas", replicas)
 				}
 				return nil
 			}
@@ -193,14 +196,14 @@ var _ = Describe("Running Helm projects", func() {
 			Eventually(managerContainerLogsAfterUpdateCR, time.Minute, time.Second).Should(
 				ContainSubstring("Upgraded release"))
 
-			By("checking Deployment replicas spec is equals 2")
+			By("checking StatefulSet replicas spec is equals 2")
 			verifyReleaseUpgrade := func() error {
 				replicas, err := tc.Kubectl.Get(
 					false,
-					"deployment", releaseName, "-o", "jsonpath={..spec.replicas}")
+					"statefulset", releaseName, "-o", "jsonpath={..spec.replicas}")
 				Expect(err).NotTo(HaveOccurred())
 				if replicas != "2" {
-					return fmt.Errorf("release(CR) deployment with %s replicas", replicas)
+					return fmt.Errorf("release(CR) statefulset with %s replicas", replicas)
 				}
 				return nil
 			}
@@ -209,9 +212,8 @@ var _ = Describe("Running Helm projects", func() {
 			By("granting permissions to access the metrics and read the token")
 			_, err = tc.Kubectl.Command(
 				"create",
-				"clusterrolebinding",
-				fmt.Sprintf("metrics-%s", tc.TestSuffix),
-				fmt.Sprintf("--clusterrole=e2e-%s-metrics-reader", tc.TestSuffix),
+				"clusterrolebinding", metricsClusterRoleBindingName,
+				fmt.Sprintf("--clusterrole=%s-metrics-reader", tc.ProjectName),
 				fmt.Sprintf("--serviceaccount=%s:default", tc.Kubectl.Namespace))
 			Expect(err).NotTo(HaveOccurred())
 
@@ -232,8 +234,7 @@ var _ = Describe("Running Helm projects", func() {
 			cmdOpts := []string{
 				"run", "--generator=run-pod/v1", "curl", "--image=curlimages/curl:7.68.0", "--restart=OnFailure", "--",
 				"curl", "-v", "-k", "-H", fmt.Sprintf(`Authorization: Bearer %s`, token),
-				fmt.Sprintf("https://e2e-%v-controller-manager-metrics-service.e2e-%v-system.svc:8443/metrics",
-					tc.TestSuffix, tc.TestSuffix),
+				fmt.Sprintf("https://%s-controller-manager-metrics-service.%s.svc:8443/metrics", tc.ProjectName, tc.Kubectl.Namespace),
 			}
 			_, err = tc.Kubectl.CommandInNamespace(cmdOpts...)
 			Expect(err).NotTo(HaveOccurred())
