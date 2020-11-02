@@ -27,6 +27,35 @@ spec:
       kind: Memcached
       name: memcacheds.cache.example.com
       specDescriptors:
+      - description: List of Providers
+        displayName: Providers
+        path: providers
+      - description: Foo represents the Foo provider
+        displayName: Foo Provider
+        path: providers[0].foo
+      - description: CredentialsSecret is a reference to a secret containing authentication details for the Foo server
+        displayName: Secret Containing the Credentials
+        path: providers[0].foo.credentialsSecret
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Secret
+      - description: Key represents the specific key to reference from the secret
+        displayName: Key within the secret
+        path: providers[0].foo.credentialsSecret.key
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: Name represents the name of the secret
+        displayName: Name of the secret
+        path: providers[0].foo.credentialsSecret.name
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: Namespace represents the namespace containing the secret
+        displayName: Namespace containing the secret
+        path: providers[0].foo.credentialsSecret.namespace
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+        - urn:alm:descriptor:com.tectonic.ui:text
       - description: Size is the size of the memcached deployment
         displayName: Size
         path: size
