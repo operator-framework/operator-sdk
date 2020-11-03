@@ -1,0 +1,25 @@
+name: Rerun-Travis-Jobs
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  rerun-travis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: khan/pull-request-comment-trigger@master
+        id: check
+        with:
+          trigger: '/rerun-tests'
+          reaction: rocket
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+      - uses: actions/checkout@v2
+      - uses: actions/setup-ruby@v1
+      - run: |
+          gem install travis
+          travis restart --no-interactive --pro --token "$TRAVIS_TOKEN"
+        if: steps.check.outputs.triggered == 'true'
+        env:
+          TRAVIS_TOKEN: '${{ secrets.TRAVIS_TOKEN }}'
