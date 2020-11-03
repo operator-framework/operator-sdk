@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"time"
 
-	// "github.com/fatih/color"
 	v1 "github.com/operator-framework/api/pkg/operators/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
@@ -218,8 +217,6 @@ func (o OperatorInstaller) createSubscription(ctx context.Context, csName string
 	if err := o.cfg.Client.Create(ctx, sub); err != nil {
 		return nil, fmt.Errorf("error creating subscription: %w", err)
 	}
-	// TODO(asmacdo) remove dev artifact
-	// color.Yellow("%+v\n", sub)
 	log.Infof("Created Subscription: %s", sub.Name)
 
 	return sub, nil
