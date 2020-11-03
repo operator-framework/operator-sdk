@@ -16,50 +16,26 @@ package registry
 
 import (
 	"context"
-	"fmt"
-	// TODO(asmacdo) why doesnt vimgo do this for me
-	"os"
 
-	// "github.com/fatih/color"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	v1 "github.com/operator-framework/api/pkg/operators/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
-	// apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	// "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
-	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
-
-type FakeCatalogCreator struct {
-	client crclient.Client
-}
-
-func (f FakeCatalogCreator) CreateCatalog(ctx context.Context, name string) (*v1alpha1.CatalogSource, error) {
-	cs := &v1alpha1.CatalogSource{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "MockCatalogSource",
-		},
-	}
-	if err := f.client.Create(ctx, cs); err != nil {
-		return nil, fmt.Errorf("Unable to create CatalogSource with fake client: %v", err)
-	}
-	return cs, nil
-}
 
 var _ = Describe("OperatorInstaller", func() {
 	Describe("NewOperatorInstaller", func() {
 		It("should create an OperatorInstaller", func() {
-			kubeconfigPath := os.Getenv(k8sutil.KubeConfigEnvVar)
-			cfg := &operator.Configuration{KubeconfigPath: kubeconfigPath}
+			cfg := &operator.Configuration{}
 			// TODO(asmacdo) Is there anything I can test here that wouldnt be caught by the compiler?
 			// TODO(asmacdo)It doesnt even throw an err.
 			_ = NewOperatorInstaller(cfg)
@@ -73,18 +49,13 @@ var _ = Describe("OperatorInstaller", func() {
 		)
 		BeforeEach(func() {
 			// Setup and fake client
-			kubeconfigPath := os.Getenv(k8sutil.KubeConfigEnvVar)
-			cfg := &operator.Configuration{KubeconfigPath: kubeconfigPath}
+			cfg := &operator.Configuration{}
 			sch = runtime.NewScheme()
 			Expect(v1.AddToScheme(sch)).To(Succeed())
 			Expect(v1alpha1.AddToScheme(sch)).To(Succeed())
 			cfg.Client = fake.NewFakeClientWithScheme(sch)
 
-			// Create OperatorInstaller struct
 			oi = NewOperatorInstaller(cfg)
-			oi.CatalogCreator = FakeCatalogCreator{
-				client: cfg.Client,
-			}
 			oi.StartingCSV = "fakeName"
 			oi.cfg.Namespace = "fakeNS"
 		})
@@ -106,10 +77,7 @@ var _ = Describe("OperatorInstaller", func() {
 
 		It("should pass through any client errors (duplicate)", func() {
 
-			sub := newSubscription(oi.StartingCSV, oi.cfg.Namespace,
-				withPackageChannel(oi.PackageName, oi.Channel, oi.StartingCSV),
-				withCatalogSource("duplicate", oi.cfg.Namespace),
-				withInstallPlanApproval(v1alpha1.ApprovalManual))
+			sub := newSubscription(oi.StartingCSV, oi.cfg.Namespace, withCatalogSource("duplicate", oi.cfg.Namespace))
 			oi.cfg.Client = fake.NewFakeClientWithScheme(sch, sub)
 
 			_, err := oi.createSubscription(context.TODO(), "duplicate")
@@ -118,31 +86,27 @@ var _ = Describe("OperatorInstaller", func() {
 		})
 	})
 
-	// TODO(asmacdo) Since this uses the olm client can/should this be unit tested?
-	// Describe("getInstalledCSV", func() {
-	// 	})
-	// })
 	Describe("approveInstallPlan", func() {
 		var (
 			oi  *OperatorInstaller
 			sch *runtime.Scheme
 		)
 		BeforeEach(func() {
-			kubeconfigPath := os.Getenv(k8sutil.KubeConfigEnvVar)
-			cfg := &operator.Configuration{KubeconfigPath: kubeconfigPath}
+			cfg := &operator.Configuration{}
 			sch = runtime.NewScheme()
 			Expect(v1alpha1.AddToScheme(sch)).To(Succeed())
 			oi = NewOperatorInstaller(cfg)
 		})
 
 		It("should update the install plan", func() {
-			existingIp := &v1alpha1.InstallPlan{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "fakeName",
-					Namespace: "fakeNS",
+			oi.cfg.Client = fake.NewFakeClientWithScheme(sch,
+				&v1alpha1.InstallPlan{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "fakeName",
+						Namespace: "fakeNS",
+					},
 				},
-			}
-			oi.cfg.Client = fake.NewFakeClientWithScheme(sch, existingIp)
+			)
 
 			ip := &v1alpha1.InstallPlan{}
 			ipKey := types.NamespacedName{
@@ -154,8 +118,6 @@ var _ = Describe("OperatorInstaller", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(ip.Name).To(Equal("fakeName"))
 			Expect(ip.Namespace).To(Equal("fakeNS"))
-			// Sanity Check
-			Expect(ip.Spec.Approved).To(Equal(false))
 
 			// Test
 			sub := &v1alpha1.Subscription{
@@ -201,24 +163,20 @@ var _ = Describe("OperatorInstaller", func() {
 		)
 		BeforeEach(func() {
 			// Setup and fake client
-			kubeconfigPath := os.Getenv(k8sutil.KubeConfigEnvVar)
-			cfg := &operator.Configuration{KubeconfigPath: kubeconfigPath}
+			cfg := &operator.Configuration{}
 			sch = runtime.NewScheme()
 			Expect(v1alpha1.AddToScheme(sch)).To(Succeed())
 			cfg.Client = fake.NewFakeClientWithScheme(sch)
 
 			oi = NewOperatorInstaller(cfg)
-			oi.CatalogCreator = FakeCatalogCreator{
-				client: cfg.Client,
-			}
+			// oi.CatalogCreator = FakeCatalogCreator{
+			// 	client: cfg.Client,
+			// }
 			oi.StartingCSV = "fakeName"
 			oi.cfg.Namespace = "fakeNS"
 		})
 		It("should return an error if the subscription does not exist.", func() {
-			sub := newSubscription(oi.StartingCSV, oi.cfg.Namespace,
-				withPackageChannel(oi.PackageName, oi.Channel, oi.StartingCSV),
-				withCatalogSource("duplicate", oi.cfg.Namespace),
-				withInstallPlanApproval(v1alpha1.ApprovalManual))
+			sub := newSubscription(oi.StartingCSV, oi.cfg.Namespace, withCatalogSource("duplicate", oi.cfg.Namespace))
 
 			err := oi.waitForInstallPlan(context.TODO(), sub)
 			Expect(err).To(HaveOccurred())
@@ -240,6 +198,7 @@ var _ = Describe("OperatorInstaller", func() {
 			}
 			err := oi.cfg.Client.Create(context.TODO(), sub)
 			Expect(err).ToNot(HaveOccurred())
+
 			err = oi.waitForInstallPlan(context.TODO(), sub)
 			Expect(err).ToNot(HaveOccurred())
 		})

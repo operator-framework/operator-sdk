@@ -290,11 +290,9 @@ func (o OperatorInstaller) waitForInstallPlan(ctx context.Context, sub *v1alpha1
 		if err := o.cfg.Client.Get(ctx, subKey, sub); err != nil {
 			return false, err
 		}
-
 		if sub.Status.InstallPlanRef != nil {
 			return true, nil
 		}
-
 		return false, nil
 	})
 

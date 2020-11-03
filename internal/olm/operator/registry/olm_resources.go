@@ -68,7 +68,6 @@ func newSubscription(csvName, namespace string, opts ...func(*v1alpha1.Subscript
 	sub.SetName(getSubscriptionName(csvName))
 	sub.SetNamespace(namespace)
 	sub.Spec = &v1alpha1.SubscriptionSpec{}
-	// TODO(asmacdo) This pattern freaks me out. Ask someone about it.
 	for _, opt := range opts {
 		opt(sub)
 	}
