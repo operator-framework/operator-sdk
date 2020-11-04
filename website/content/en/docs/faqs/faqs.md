@@ -102,9 +102,26 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 	}
 ```
 
+## I keep hitting errors like "is forbidden: cannot set blockOwnerDeletion if an ownerReference refers to a resource you can't set finalizers on:", how do I fix this?
+
+If you are facing this issue, it means that the operator is missing the required RBAC permissions to update finalizers on the APIs it manages. This permission is necessary if the [OwnerReferencesPermissionEnforcement][owner-references-permission-enforcement] plugin is enabled in your cluster.
+
+For Helm and Ansible operators, this permission is configured by default. However for Go operators, it may be necessary to add this permission yourself.
+
+In Go operators, RBAC permissions are configured via [RBAC markers][rbac-markers], which are used to generate and update the manifest files present in `config/rbac/`. Add the following marker line on your controller's `Reconcile()` method:
+
+```go
+// +kubebuilder:rbac:groups=cache.example.com,resources=memcacheds/finalizers,verbs=update
+```
+
+To update `config/rbac/role.yaml` after changing the markers, run `make manifests`. 
+
+
 [kube-apiserver_options]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options
 [controller-runtime_faq]: https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md#q-how-do-i-have-different-logic-in-my-reconciler-for-different-types-of-events-eg-create-update-delete
 [finalizer]:/docs/building-operators/golang/advanced-topics/#handle-cleanup-on-deletion
 [cr-faq]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md
 [client.Reader]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#Reader
 [rbac]:https://kubernetes.io/docs/reference/access-authn-authz/rbac/
+[owner-references-permission-enforcement]: https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#ownerreferencespermissionenforcement
+[rbac-markers]: https://book.kubebuilder.io/reference/markers/rbac.html
