@@ -27,6 +27,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/blang/semver"
 	olmapiv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	olmmanifests "github.com/operator-framework/operator-sdk/internal/bindata/olm"
 	log "github.com/sirupsen/logrus"
@@ -174,13 +175,15 @@ func (c Client) GetStatus(ctx context.Context, namespace, version string) (*olmr
 func (c Client) getResources(ctx context.Context, version string) ([]unstructured.Unstructured, error) {
 	log.Infof("Fetching CRDs for version %q", version)
 
+	version = formatVersion(version)
+
 	var crdResources, olmResources []unstructured.Unstructured
 	var err error
 
 	// If the manifests for the requested version are saved as bindata in SDK, use
 	// them instead of fetching them from
 	if olmmanifests.HasVersion(version) {
-		log.Infof("Using locally stored resource manifests")
+		log.Infof("Using locally stored resource manifests for resolved version %q", version)
 		crdResources, err = getPackagedManifests(crdManifestBindataPath)
 		if err != nil {
 			return nil, err
@@ -191,7 +194,7 @@ func (c Client) getResources(ctx context.Context, version string) ([]unstructure
 			return nil, err
 		}
 	} else {
-		log.Infof("Fetching resources for version %q", version)
+		log.Infof("Fetching resources for resolved version %q", version)
 		crdResources, err = c.getCRDs(ctx, version)
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch CRDs: %v", err)
@@ -237,6 +240,20 @@ func getPackagedManifests(manifestPath string) ([]unstructured.Unstructured, err
 		return nil, err
 	}
 	return resources, nil
+}
+
+// formatVersion returns version if version is not semver, or version prepended with "v"
+// if version < 0.17.0 (when OLM changed release tag formats).
+func formatVersion(version string) string {
+	sv, err := semver.ParseTolerant(version)
+	if err != nil {
+		// Use version as-is, since it might not be semver intentionally.
+		return version
+	}
+	if sv.Major == 0 && sv.Minor < 17 {
+		return sv.String()
+	}
+	return "v" + sv.String()
 }
 
 func (c Client) crdsURL(version string) string {
