@@ -102,9 +102,26 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 	}
 ```
 
+## I keep hitting errors like "is forbidden: cannot set blockOwnerDeletion if an ownerReference refers to a resource you can't set finalizers on:", how do I fix this?
+
+If you are facing this issue it means that the project is missing the RBAC required permissions to update the finalizer of the API's managed by it on the cluster. The need for this permission is based on the [OwnerReferencesPermissionEnforcement][owner-references-permission-enforcement] plugin which can be enabled in any Kubernetes cluster because it is a feature of the upstream kube-apiserver. 
+
+For Helm/Ansible based operators, this permission is available by default in the projects which are scaffolded with `v1`+ plugin version. However, for Go based operators, it will only be added in the future plugins versions supported by SDK (v3+). In this way, to fix set the RBAC permission.
+
+Note that, the RBAC permissions are configured via [RBAC markers][rbac_markers], which are used to generate and update the manifest files present in `config/rbac/`. These markers can be found (and should be defined) on the `Reconcile()` method of each controller. In the Memcached example, they look like the following:
+
+```go
+// +kubebuilder:rbac:groups=cache.example.com,resources=memcacheds/finalizers,verbs=update
+```
+
+To update `config/rbac/role.yaml` after changing the markers, run `make manifests`. 
+
+
 [kube-apiserver_options]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options
 [controller-runtime_faq]: https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md#q-how-do-i-have-different-logic-in-my-reconciler-for-different-types-of-events-eg-create-update-delete
 [finalizer]:/docs/building-operators/golang/advanced-topics/#handle-cleanup-on-deletion
 [cr-faq]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md
 [client.Reader]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#Reader
 [rbac]:https://kubernetes.io/docs/reference/access-authn-authz/rbac/
+[owner-references-permission-enforcement]: https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#ownerreferencespermissionenforcement
+[rbac_markers]: https://book.kubebuilder.io/reference/markers/rbac.html

@@ -34,12 +34,6 @@ Create a simple Memcached API:
 operator-sdk create api --group cache --version v1 --kind Memcached --resource=true --controller=true
 ```
 
-**Note** If your cluster is a non-vanilla one then such as OpenShift then, add the RBAC finalizer permission on the `controllers/memcached_controller.go` file and run `make manifests` before continue. 
-
-```go
-// +kubebuilder:rbac:groups=cache.example.com,resources=memcacheds/finalizers,verbs=update
-```
-
 ### Build and push the operator image
 
 Use the built-in Makefile targets to build and push your operator. Make
