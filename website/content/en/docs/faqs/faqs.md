@@ -124,4 +124,4 @@ To update `config/rbac/role.yaml` after changing the markers, run `make manifest
 [client.Reader]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#Reader
 [rbac]:https://kubernetes.io/docs/reference/access-authn-authz/rbac/
 [owner-references-permission-enforcement]: https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#ownerreferencespermissionenforcement
-[rbac_markers]: https://book.kubebuilder.io/reference/markers/rbac.html
+[rbac-markers]: https://book.kubebuilder.io/reference/markers/rbac.html
