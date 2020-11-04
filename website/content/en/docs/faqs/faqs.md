@@ -104,11 +104,11 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 
 ## I keep hitting errors like "is forbidden: cannot set blockOwnerDeletion if an ownerReference refers to a resource you can't set finalizers on:", how do I fix this?
 
-If you are facing this issue it means that the project is missing the RBAC required permissions to update the finalizer of the API's managed by it on the cluster. The need for this permission is based on the [OwnerReferencesPermissionEnforcement][owner-references-permission-enforcement] plugin which can be enabled in any Kubernetes cluster because it is a feature of the upstream kube-apiserver. 
+If you are facing this issue, it means that the operator is missing the required RBAC permissions to update finalizers on the APIs it manages. This permission is necessary if the [OwnerReferencesPermissionEnforcement][owner-references-permission-enforcement] plugin is enabled in your cluster.
 
-For Helm/Ansible based operators, this permission is available by default in the projects which are scaffolded with `v1`+ plugin version. However, for Go based operators, it will only be added in the future plugins versions supported by SDK (v3+). In this way, to fix set the RBAC permission.
+For Helm and Ansible operators, this permission is configured by default. However for Go operators, it may be necessary to add this permission yourself.
 
-Note that, the RBAC permissions are configured via [RBAC markers][rbac_markers], which are used to generate and update the manifest files present in `config/rbac/`. These markers can be found (and should be defined) on the `Reconcile()` method of each controller. In the Memcached example, they look like the following:
+In Go operators, RBAC permissions are configured via [RBAC markers][rbac-markers], which are used to generate and update the manifest files present in `config/rbac/`. Add the following marker line on your controller's `Reconcile()` method:
 
 ```go
 // +kubebuilder:rbac:groups=cache.example.com,resources=memcacheds/finalizers,verbs=update
