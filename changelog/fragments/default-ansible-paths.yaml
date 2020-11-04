@@ -1,0 +1,7 @@
+entries:
+  - description: >
+      Set default ansible-operator role path to `<project-root>/roles/<lower-kind>`
+    kind: bugfix
+  - description: >
+      Pass the Ansible roles path to ansible-runner when called from the ansible-operator binary
+    kind: bugfix

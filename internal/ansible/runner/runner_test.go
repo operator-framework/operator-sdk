@@ -15,6 +15,7 @@
 package runner
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -34,7 +35,8 @@ func checkCmdFunc(t *testing.T, cmdFunc cmdFuncType, playbook, role string, verb
 	var expectedCmd, gotCmd *exec.Cmd
 	switch {
 	case playbook != "":
-		expectedCmd = playbookCmdFunc(playbook)(ident, inputDirPath, maxArtifacts, verbosity)
+		rolesDir, _ := filepath.Split(role)
+		expectedCmd = playbookCmdFunc(playbook, rolesDir)(ident, inputDirPath, maxArtifacts, verbosity)
 	case role != "":
 		expectedCmd = roleCmdFunc(role)(ident, inputDirPath, maxArtifacts, verbosity)
 	}
@@ -57,6 +59,11 @@ func TestNew(t *testing.T) {
 	}
 	validPlaybook := filepath.Join(cwd, "testdata", "playbook.yml")
 	validRole := filepath.Join(cwd, "testdata", "roles", "role")
+	gvk := schema.GroupVersionKind{
+		Group:   "operator.example.com",
+		Version: "v1alpha1",
+		Kind:    "Example",
+	}
 	testCases := []struct {
 		name             string
 		gvk              schema.GroupVersionKind
@@ -65,45 +72,33 @@ func TestNew(t *testing.T) {
 		vars             map[string]interface{}
 		finalizer        *watches.Finalizer
 		desiredObjectKey string
+		wantedErr        error
 	}{
 		{
-			name: "basic runner with playbook",
-			gvk: schema.GroupVersionKind{
-				Group:   "operator.example.com",
-				Version: "v1alpha1",
-				Kind:    "Example",
-			},
+			name:     "basic runner with playbook",
+			gvk:      gvk,
 			playbook: validPlaybook,
+			role:     validRole,
 		},
 		{
 			name: "basic runner with role",
-			gvk: schema.GroupVersionKind{
-				Group:   "operator.example.com",
-				Version: "v1alpha1",
-				Kind:    "Example",
-			},
+			gvk:  gvk,
 			role: validRole,
 		},
 		{
-			name: "basic runner with playbook + finalizer playbook",
-			gvk: schema.GroupVersionKind{
-				Group:   "operator.example.com",
-				Version: "v1alpha1",
-				Kind:    "Example",
-			},
+			name:     "basic runner with playbook + finalizer playbook",
+			gvk:      gvk,
 			playbook: validPlaybook,
+			role:     validRole,
 			finalizer: &watches.Finalizer{
 				Name:     "example.finalizer.com",
 				Playbook: validPlaybook,
+				Role:     validRole,
 			},
 		},
 		{
 			name: "basic runner with role + finalizer role",
-			gvk: schema.GroupVersionKind{
-				Group:   "operator.example.com",
-				Version: "v1alpha1",
-				Kind:    "Example",
-			},
+			gvk:  gvk,
 			role: validRole,
 			finalizer: &watches.Finalizer{
 				Name: "example.finalizer.com",
@@ -111,13 +106,10 @@ func TestNew(t *testing.T) {
 			},
 		},
 		{
-			name: "basic runner with playbook + finalizer vars",
-			gvk: schema.GroupVersionKind{
-				Group:   "operator.example.com",
-				Version: "v1alpha1",
-				Kind:    "Example",
-			},
+			name:     "basic runner with playbook + finalizer vars",
+			gvk:      gvk,
 			playbook: validPlaybook,
+			role:     validRole,
 			finalizer: &watches.Finalizer{
 				Name: "example.finalizer.com",
 				Vars: map[string]interface{}{
@@ -126,13 +118,10 @@ func TestNew(t *testing.T) {
 			},
 		},
 		{
-			name: "basic runner with playbook, vars + finalizer vars",
-			gvk: schema.GroupVersionKind{
-				Group:   "operator.example.com",
-				Version: "v1alpha1",
-				Kind:    "Example",
-			},
+			name:     "basic runner with playbook, vars + finalizer vars",
+			gvk:      gvk,
 			playbook: validPlaybook,
+			role:     validRole,
 			vars: map[string]interface{}{
 				"type": "this",
 			},
@@ -151,7 +140,25 @@ func TestNew(t *testing.T) {
 				Kind:    "Example",
 			},
 			playbook:         validPlaybook,
+			role:             validRole,
 			desiredObjectKey: "_operator_with_dash_example_com_example",
+		},
+		{
+			name:      "invalid basic runner with playbook and no role",
+			gvk:       gvk,
+			playbook:  validPlaybook,
+			wantedErr: fmt.Errorf("watch for %q cannot have empty roles dir", gvk),
+		},
+		{
+			name:     "invalid basic runner with finalizer + playbook and no finalizer role",
+			gvk:      gvk,
+			playbook: validPlaybook,
+			role:     validRole,
+			finalizer: &watches.Finalizer{
+				Name:     "example.finalizer.com",
+				Playbook: validPlaybook,
+			},
+			wantedErr: fmt.Errorf("watch for %q cannot have empty finalizer roles dir", gvk),
 		},
 	}
 
@@ -160,8 +167,15 @@ func TestNew(t *testing.T) {
 			testWatch := watches.New(tc.gvk, tc.role, tc.playbook, tc.vars, tc.finalizer)
 
 			testRunner, err := New(*testWatch, "")
-			if err != nil {
+			if tc.wantedErr == nil && err != nil {
 				t.Fatalf("Error occurred unexpectedly: %v", err)
+			} else if tc.wantedErr != nil {
+				if err == nil {
+					t.Error("Error was expected to occur")
+				} else if err.Error() != tc.wantedErr.Error() {
+					t.Errorf("Expected error %q, got %q", tc.wantedErr, err)
+				}
+				return
 			}
 			testRunnerStruct, ok := testRunner.(*runner)
 			if !ok {

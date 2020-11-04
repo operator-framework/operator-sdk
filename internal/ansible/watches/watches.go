@@ -199,20 +199,26 @@ func (w *Watch) setValuesFromAlias(tmp alias) error {
 }
 
 // addRolePlaybookPaths will add the full path based on the current dir
+// FIXME(estroz): this function mutates user input values (ex. role name -> path) when instead
+// it should set separate internal fields.
 func (w *Watch) addRolePlaybookPaths(rootDir string) {
 	if len(w.Playbook) > 0 {
 		w.Playbook = getFullPath(rootDir, w.Playbook)
 	}
 
-	if len(w.Role) > 0 {
-		possibleRolePaths := getPossibleRolePaths(rootDir, w.Role)
-		for _, possiblePath := range possibleRolePaths {
-			if _, err := os.Stat(possiblePath); err == nil {
-				w.Role = possiblePath
-				break
-			}
+	// Default the role to the kind being watched, since a role must always be specified.
+	role := w.Role
+	if role == "" {
+		role = strings.ToLower(w.GroupVersionKind.Kind)
+	}
+	possibleRolePaths := getPossibleRolePaths(rootDir, role)
+	for _, possiblePath := range possibleRolePaths {
+		if _, err := os.Stat(possiblePath); err == nil {
+			w.Role = possiblePath
+			break
 		}
 	}
+
 	if w.Finalizer != nil && len(w.Finalizer.Role) > 0 {
 		possibleRolePaths := getPossibleRolePaths(rootDir, w.Finalizer.Role)
 		for _, possiblePath := range possibleRolePaths {

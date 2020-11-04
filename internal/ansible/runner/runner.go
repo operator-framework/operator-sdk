@@ -70,11 +70,12 @@ func ansibleVerbosityString(verbosity int) string {
 
 type cmdFuncType func(ident, inputDirPath string, maxArtifacts, verbosity int) *exec.Cmd
 
-func playbookCmdFunc(path string) cmdFuncType {
+func playbookCmdFunc(playbookPath, rolesPath string) cmdFuncType {
 	return func(ident, inputDirPath string, maxArtifacts, verbosity int) *exec.Cmd {
 		cmdOptions := []string{
 			"--rotate-artifacts", fmt.Sprintf("%v", maxArtifacts),
-			"-p", path,
+			"--roles-path", rolesPath,
+			"-p", playbookPath,
 			"-i", ident,
 		}
 		cmdArgs := []string{"run", inputDirPath}
@@ -89,19 +90,18 @@ func playbookCmdFunc(path string) cmdFuncType {
 }
 
 func roleCmdFunc(path string) cmdFuncType {
-	rolePath, roleName := filepath.Split(path)
+	rolesPath, roleName := filepath.Split(path)
 	return func(ident, inputDirPath string, maxArtifacts, verbosity int) *exec.Cmd {
-		// check the verbosity since the exec.Command will fail if an arg as "" or " " be informed
-
 		cmdOptions := []string{
 			"--rotate-artifacts", fmt.Sprintf("%v", maxArtifacts),
 			"--role", roleName,
-			"--roles-path", rolePath,
+			"--roles-path", rolesPath,
 			"--hosts", "localhost",
 			"-i", ident,
 		}
 		cmdArgs := []string{"run", inputDirPath}
 
+		// check the verbosity since the exec.Command will fail if an arg as "" or " " be informed
 		if verbosity > 0 {
 			cmdOptions = append(cmdOptions, ansibleVerbosityString(verbosity))
 		}
@@ -131,7 +131,11 @@ func New(watch watches.Watch, runnerArgs string) (Runner, error) {
 	switch {
 	case watch.Playbook != "":
 		path = watch.Playbook
-		cmdFunc = playbookCmdFunc(path)
+		rolesPath, _ := filepath.Split(watch.Role)
+		if rolesPath == "" {
+			return nil, fmt.Errorf("watch for %q cannot have empty roles dir", watch.GroupVersionKind)
+		}
+		cmdFunc = playbookCmdFunc(path, rolesPath)
 	case watch.Role != "":
 		path = watch.Role
 		cmdFunc = roleCmdFunc(path)
@@ -142,7 +146,11 @@ func New(watch watches.Watch, runnerArgs string) (Runner, error) {
 	case watch.Finalizer == nil:
 		finalizerCmdFunc = nil
 	case watch.Finalizer.Playbook != "":
-		finalizerCmdFunc = playbookCmdFunc(watch.Finalizer.Playbook)
+		finalizerRolesPath, _ := filepath.Split(watch.Finalizer.Role)
+		if finalizerRolesPath == "" {
+			return nil, fmt.Errorf("watch for %q cannot have empty finalizer roles dir", watch.GroupVersionKind)
+		}
+		finalizerCmdFunc = playbookCmdFunc(watch.Finalizer.Playbook, finalizerRolesPath)
 	case watch.Finalizer.Role != "":
 		finalizerCmdFunc = roleCmdFunc(watch.Finalizer.Role)
 	default:
