@@ -26,7 +26,8 @@ import (
 
 func main() {
 	root := cobra.Command{
-		Use: "ansible-operator",
+		Short: "**NOTE** This executable is for use by operator-sdk and is not intended to be used manually",
+		Use:   "ansible-operator",
 	}
 
 	root.AddCommand(run.NewCmd())

@@ -26,7 +26,8 @@ import (
 
 func main() {
 	root := cobra.Command{
-		Use: "helm-operator",
+		Short: "**NOTE** This executable is for use by operator-sdk and is not intended to be used manually",
+		Use:   "helm-operator",
 	}
 
 	root.AddCommand(run.NewCmd())
