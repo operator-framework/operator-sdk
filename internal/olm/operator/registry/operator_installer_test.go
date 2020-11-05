@@ -36,8 +36,6 @@ var _ = Describe("OperatorInstaller", func() {
 	Describe("NewOperatorInstaller", func() {
 		It("should create an OperatorInstaller", func() {
 			cfg := &operator.Configuration{}
-			// TODO(asmacdo) Is there anything I can test here that wouldnt be caught by the compiler?
-			// TODO(asmacdo)It doesnt even throw an err.
 			_ = NewOperatorInstaller(cfg)
 		})
 	})
@@ -150,10 +148,6 @@ var _ = Describe("OperatorInstaller", func() {
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).Should(ContainSubstring("error getting install plan"))
 		})
-		// TODO(asmacdo) How to throw an err on update?
-		// It("should return an error if the install plan fails to update.", func() {
-		// 	Expect(err.Error()).Should(ContainSubstring("error approving install plan"))
-		// })
 	})
 
 	Describe("waitForInstallPlan", func() {
