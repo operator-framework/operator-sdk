@@ -114,7 +114,7 @@ supports two Kinds -- `MongoDB` and `PostgreSQL` -- in the `db.example.com`
 Group. We have only recently implemented the support for the `MongoDB` Kind so
 we want reconciles for this Kind to be more verbose. Our operator container's
 spec in our `config/manager/manager.yaml` and `config/default/auth_proxy_patch.yaml`
-files might contiain something like:
+files might contain something like:
 
 ```yaml
 - name: manager
