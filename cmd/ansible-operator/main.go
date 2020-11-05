@@ -27,11 +27,11 @@ import (
 func main() {
 	root := cobra.Command{
 		Short: "Reconcile an Ansible operator project using ansible-runner",
-		Long:  `This binary runs an Ansible operator that reconciles Kubernetes resources
+		Long: `This binary runs an Ansible operator that reconciles Kubernetes resources
 managed by the ansible-runner program. It can be run either directly or from an Ansible
 operator project's image entrypoint
 `,
-		Use:   "ansible-operator",
+		Use: "ansible-operator",
 	}
 
 	root.AddCommand(run.NewCmd())

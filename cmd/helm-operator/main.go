@@ -27,11 +27,11 @@ import (
 func main() {
 	root := cobra.Command{
 		Short: "Reconcile an Helm operator project using helm",
-		Long:  `This binary runs a Helm operator that reconciles Kubernetes resources
+		Long: `This binary runs a Helm operator that reconciles Kubernetes resources
 managed by the helm program. It can be run either directly or from a Helm operator
 project's image entrypoint
 `,
-		Use:   "helm-operator",
+		Use: "helm-operator",
 	}
 
 	root.AddCommand(run.NewCmd())
