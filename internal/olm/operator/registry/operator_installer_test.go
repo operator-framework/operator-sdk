@@ -169,9 +169,6 @@ var _ = Describe("OperatorInstaller", func() {
 			cfg.Client = fake.NewFakeClientWithScheme(sch)
 
 			oi = NewOperatorInstaller(cfg)
-			// oi.CatalogCreator = FakeCatalogCreator{
-			// 	client: cfg.Client,
-			// }
 			oi.StartingCSV = "fakeName"
 			oi.cfg.Namespace = "fakeNS"
 		})
