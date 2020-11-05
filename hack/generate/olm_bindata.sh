@@ -29,9 +29,8 @@ delete_old_olmbindata
 # get go-bindata tool
 go get -u github.com/go-bindata/go-bindata/...
 
-eval "arr=($1)"
 mkdir olm-manifests
-for v in "${arr[@]}"; do 
+for v in $@; do
     echo "processing version $v"
     get_olm_manifests $v
 done

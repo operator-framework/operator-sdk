@@ -181,7 +181,7 @@ func (c Client) getResources(ctx context.Context, version string) ([]unstructure
 	var err error
 
 	// If the manifests for the requested version are saved as bindata in SDK, use
-	// them instead of fetching them from.
+	// them instead of fetching them from github.
 	if olmmanifests.HasVersion(version) {
 		log.Infof("Using locally stored resource manifests")
 		crdManifestBindataPath := filepath.Join(bindataManifestPath, version+"-crds.yaml")
