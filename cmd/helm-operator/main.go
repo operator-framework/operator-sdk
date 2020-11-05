@@ -26,7 +26,11 @@ import (
 
 func main() {
 	root := cobra.Command{
-		Short: "**NOTE** This executable is for use by operator-sdk and is not intended to be used manually",
+		Short: "Reconcile an Helm operator project using helm",
+		Long:  `This binary runs a Helm operator that reconciles Kubernetes resources
+managed by the helm program. It can be run either directly or from a Helm operator
+project's image entrypoint
+`,
 		Use:   "helm-operator",
 	}
 
