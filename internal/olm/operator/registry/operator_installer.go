@@ -72,7 +72,7 @@ func (o OperatorInstaller) InstallOperator(ctx context.Context) (*v1alpha1.Clust
 
 	var subscription *v1alpha1.Subscription
 	// Create Subscription
-	if subscription, err = o.createSubscription(ctx, cs); err != nil {
+	if subscription, err = o.createSubscription(ctx, cs.GetName()); err != nil {
 		return nil, err
 	}
 
@@ -208,10 +208,10 @@ func (o OperatorInstaller) getOperatorGroup(ctx context.Context) (*v1.OperatorGr
 	return &ogList.Items[0], true, nil
 }
 
-func (o OperatorInstaller) createSubscription(ctx context.Context, cs *v1alpha1.CatalogSource) (*v1alpha1.Subscription, error) {
+func (o OperatorInstaller) createSubscription(ctx context.Context, csName string) (*v1alpha1.Subscription, error) {
 	sub := newSubscription(o.StartingCSV, o.cfg.Namespace,
 		withPackageChannel(o.PackageName, o.Channel, o.StartingCSV),
-		withCatalogSource(cs.GetName(), o.cfg.Namespace),
+		withCatalogSource(csName, o.cfg.Namespace),
 		withInstallPlanApproval(v1alpha1.ApprovalManual))
 
 	if err := o.cfg.Client.Create(ctx, sub); err != nil {
