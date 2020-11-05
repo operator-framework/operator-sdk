@@ -36,7 +36,8 @@ var _ = Describe("OperatorInstaller", func() {
 	Describe("NewOperatorInstaller", func() {
 		It("should create an OperatorInstaller", func() {
 			cfg := &operator.Configuration{}
-			_ = NewOperatorInstaller(cfg)
+			oi := NewOperatorInstaller(cfg)
+			Expect(oi).ToNot(BeNil())
 		})
 	})
 
