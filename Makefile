@@ -110,6 +110,7 @@ test-sanity: generate fix ## Test repo formatting, linting, etc.
 
 .PHONY: test-links
 test-links: ## Test doc links
+	git submodule update --init --recursive website/
 	./hack/check-links.sh
 
 .PHONY: test-unit
