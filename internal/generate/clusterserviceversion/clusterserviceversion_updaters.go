@@ -29,7 +29,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/version"
 
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
@@ -307,9 +306,6 @@ func applyWebhooks(c *collector.Manifests, csv *operatorsv1alpha1.ClusterService
 // The default AdmissionReviewVersions set in a CSV if not set in the source webhook.
 var defaultAdmissionReviewVersions = []string{"v1beta1"}
 
-// The default webhook port set in a CSV if not set in webhook service.
-const defaultWebhookPort = 443
-
 // validatingToWebhookDescription transforms webhook into a WebhookDescription.
 func validatingToWebhookDescription(webhook admissionregv1.ValidatingWebhook, depName string, ws *corev1.Service) operatorsv1alpha1.WebhookDescription {
 	description := operatorsv1alpha1.WebhookDescription{
@@ -331,10 +327,15 @@ func validatingToWebhookDescription(webhook admissionregv1.ValidatingWebhook, de
 		description.SideEffects = &seNone
 	}
 
+	var webhookServiceRefPort int32 = 443
+
 	if serviceRef := webhook.ClientConfig.Service; serviceRef != nil {
-		if serviceRef.Port != nil && ws != nil {
+		if serviceRef.Port != nil {
+			webhookServiceRefPort = *serviceRef.Port
+		}
+		if ws != nil {
 			for _, port := range ws.Spec.Ports {
-				if *serviceRef.Port == port.Port {
+				if webhookServiceRefPort == port.Port {
 					description.ContainerPort = port.Port
 					description.TargetPort = &port.TargetPort
 					break
@@ -347,16 +348,6 @@ func validatingToWebhookDescription(webhook admissionregv1.ValidatingWebhook, de
 		}
 		description.WebhookPath = serviceRef.Path
 	}
-
-	// If port values have not been set, then default to 443
-	if description.ContainerPort == 0 && description.TargetPort == nil {
-		description.ContainerPort = defaultWebhookPort
-		description.TargetPort = &intstr.IntOrString{
-			Type:   intstr.Int,
-			IntVal: defaultWebhookPort,
-		}
-	}
-
 	return description
 }
 
@@ -382,10 +373,15 @@ func mutatingToWebhookDescription(webhook admissionregv1.MutatingWebhook, depNam
 		description.SideEffects = &seNone
 	}
 
+	var webhookServiceRefPort int32 = 443
+
 	if serviceRef := webhook.ClientConfig.Service; serviceRef != nil {
-		if serviceRef.Port != nil && ws != nil {
+		if serviceRef.Port != nil {
+			webhookServiceRefPort = *serviceRef.Port
+		}
+		if ws != nil {
 			for _, port := range ws.Spec.Ports {
-				if *serviceRef.Port == port.Port {
+				if webhookServiceRefPort == port.Port {
 					description.ContainerPort = port.Port
 					description.TargetPort = &port.TargetPort
 					break
@@ -397,15 +393,6 @@ func mutatingToWebhookDescription(webhook admissionregv1.MutatingWebhook, depNam
 			description.DeploymentName = strings.TrimSuffix(serviceRef.Name, "-service")
 		}
 		description.WebhookPath = serviceRef.Path
-	}
-
-	// If port values have not been set, then default to 443
-	if description.ContainerPort == 0 && description.TargetPort == nil {
-		description.ContainerPort = defaultWebhookPort
-		description.TargetPort = &intstr.IntOrString{
-			Type:   intstr.Int,
-			IntVal: defaultWebhookPort,
-		}
 	}
 	return description
 }
