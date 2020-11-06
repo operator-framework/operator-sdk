@@ -49,9 +49,9 @@ var _ = Describe("findMatchingDeploymentAndServiceForWebhook", func() {
 			c.Deployments = []appsv1.Deployment{newDeployment(depName1, labels)}
 			c.Services = []corev1.Service{newService(serviceName1, labels)}
 			wcc.Service.Name = serviceName1
-			depName, serviceName := findMatchingDeploymentAndServiceForWebhook(c, wcc)
+			depName, service := findMatchingDeploymentAndServiceForWebhook(c, wcc)
 			Expect(depName).To(Equal(depName1))
-			Expect(serviceName).To(Equal(serviceName1))
+			Expect(service.GetName()).To(Equal(serviceName1))
 		})
 
 		By("parsing two deployments and two services with non-intersecting labels")
@@ -67,9 +67,9 @@ var _ = Describe("findMatchingDeploymentAndServiceForWebhook", func() {
 				newService(serviceName2, labels2),
 			}
 			wcc.Service.Name = serviceName1
-			depName, serviceName := findMatchingDeploymentAndServiceForWebhook(c, wcc)
+			depName, service := findMatchingDeploymentAndServiceForWebhook(c, wcc)
 			Expect(depName).To(Equal(depName1))
-			Expect(serviceName).To(Equal(serviceName1))
+			Expect(service.GetName()).To(Equal(serviceName1))
 		})
 
 		By("parsing two deployments and two services with a label subset")
@@ -82,9 +82,9 @@ var _ = Describe("findMatchingDeploymentAndServiceForWebhook", func() {
 			}
 			c.Services = []corev1.Service{newService(serviceName1, labels1)}
 			wcc.Service.Name = serviceName1
-			depName, serviceName := findMatchingDeploymentAndServiceForWebhook(c, wcc)
+			depName, service := findMatchingDeploymentAndServiceForWebhook(c, wcc)
 			Expect(depName).To(Equal(depName2))
-			Expect(serviceName).To(Equal(serviceName1))
+			Expect(service.GetName()).To(Equal(serviceName1))
 		})
 	})
 
@@ -95,9 +95,9 @@ var _ = Describe("findMatchingDeploymentAndServiceForWebhook", func() {
 			c.Deployments = []appsv1.Deployment{newDeployment(depName1, labels)}
 			c.Services = []corev1.Service{newService(serviceName1, labels)}
 			wcc.Service.Name = serviceName2
-			depName, serviceName := findMatchingDeploymentAndServiceForWebhook(c, wcc)
+			depName, service := findMatchingDeploymentAndServiceForWebhook(c, wcc)
 			Expect(depName).To(BeEmpty())
-			Expect(serviceName).To(BeEmpty())
+			Expect(service).To(BeNil())
 		})
 	})
 
@@ -109,9 +109,9 @@ var _ = Describe("findMatchingDeploymentAndServiceForWebhook", func() {
 			c.Deployments = []appsv1.Deployment{newDeployment(depName1, labels1)}
 			c.Services = []corev1.Service{newService(serviceName1, labels2)}
 			wcc.Service.Name = serviceName1
-			depName, serviceName := findMatchingDeploymentAndServiceForWebhook(c, wcc)
+			depName, service := findMatchingDeploymentAndServiceForWebhook(c, wcc)
 			Expect(depName).To(BeEmpty())
-			Expect(serviceName).To(Equal(serviceName1))
+			Expect(service.GetName()).To(Equal(serviceName1))
 		})
 
 		By("parsing one deployment and one service with two intersecting labels")
@@ -121,9 +121,9 @@ var _ = Describe("findMatchingDeploymentAndServiceForWebhook", func() {
 			c.Deployments = []appsv1.Deployment{newDeployment(depName1, labels1)}
 			c.Services = []corev1.Service{newService(serviceName1, labels2)}
 			wcc.Service.Name = serviceName1
-			depName, serviceName := findMatchingDeploymentAndServiceForWebhook(c, wcc)
+			depName, service := findMatchingDeploymentAndServiceForWebhook(c, wcc)
 			Expect(depName).To(BeEmpty())
-			Expect(serviceName).To(Equal(serviceName1))
+			Expect(service.GetName()).To(Equal(serviceName1))
 		})
 	})
 })
