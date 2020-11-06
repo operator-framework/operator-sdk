@@ -97,7 +97,7 @@ var _ = Describe("findMatchingDeploymentAndServiceForWebhook", func() {
 			wcc.Service.Name = serviceName2
 			depName, service := findMatchingDeploymentAndServiceForWebhook(c, wcc)
 			Expect(depName).To(BeEmpty())
-			Expect(service.GetName()).To(BeEmpty())
+			Expect(service).To(BeNil())
 		})
 	})
 

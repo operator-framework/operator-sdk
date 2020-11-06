@@ -327,9 +327,8 @@ func validatingToWebhookDescription(webhook admissionregv1.ValidatingWebhook, de
 		description.SideEffects = &seNone
 	}
 
-	var webhookServiceRefPort int32 = 443
-
 	if serviceRef := webhook.ClientConfig.Service; serviceRef != nil {
+		var webhookServiceRefPort int32 = 443
 		if serviceRef.Port != nil {
 			webhookServiceRefPort = *serviceRef.Port
 		}
@@ -373,9 +372,8 @@ func mutatingToWebhookDescription(webhook admissionregv1.MutatingWebhook, depNam
 		description.SideEffects = &seNone
 	}
 
-	var webhookServiceRefPort int32 = 443
-
 	if serviceRef := webhook.ClientConfig.Service; serviceRef != nil {
+		var webhookServiceRefPort int32 = 443
 		if serviceRef.Port != nil {
 			webhookServiceRefPort = *serviceRef.Port
 		}
