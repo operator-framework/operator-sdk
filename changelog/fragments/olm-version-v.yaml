@@ -1,4 +1,0 @@
-entries:
-  - description: >
-      Format version string passed to `olm` subcommands so releases download correctly.
-    kind: bugfix

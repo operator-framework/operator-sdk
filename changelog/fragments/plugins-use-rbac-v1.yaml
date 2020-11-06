@@ -1,6 +1,0 @@
-entries:
-  - description: >
-      In Go, Ansible, and Helm operators, updated the `metrics-reader` ClusterRole
-      to use `rbac.authorization.k8s.io/v1` to be consistent with all other
-      scaffolded RBAC resources.
-    kind: "bugfix"

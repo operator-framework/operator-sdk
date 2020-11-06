@@ -1,3 +1,31 @@
+## v1.2.0
+
+### Additions
+
+- Enabled definition of custom categories encoded as [JSON file(s)](https://olm.operatorframework.io/docs/tasks/validate-package/#validation) for the `operatorhub` validator. ([#4109](https://github.com/operator-framework/operator-sdk/pull/4109))
+
+### Changes
+
+- Improved `ansible-operator` and `helm-operator` help text. ([#4187](https://github.com/operator-framework/operator-sdk/pull/4187))
+- When generating bundles and package manifests, add all resources supported by OLM. ([#4137](https://github.com/operator-framework/operator-sdk/pull/4137))
+- `olm` and `run` subcommands will print aggregated resource errors when either OLM or an operator fail to install, respectively. ([#3787](https://github.com/operator-framework/operator-sdk/pull/3787))
+- Upgraded `sigs.k8s.io/controller-runtime` from `v0.6.2` to [`v0.6.3`](https://github.com/kubernetes-sigs/controller-runtime/releases/tag/v0.6.3). ([#4062](https://github.com/operator-framework/operator-sdk/pull/4062))
+
+### Bug Fixes
+
+- Set a generated CSV's `.spec.webhookdefinitions[].{targetPort,containerPort}` values from webhook `Service` ports. ([#4178](https://github.com/operator-framework/operator-sdk/pull/4178))
+- Excluded `github.com/spf13/viper@v1.3.2` to fix CVE-2018-1098. ([#4199](https://github.com/operator-framework/operator-sdk/pull/4199))
+- Added the `kustomize` make dependency to the `bundle` target scaffolded for Golang projects to install `kustomize` before running. ([#4090](https://github.com/operator-framework/operator-sdk/pull/4090))
+- Fixed an issue in `operator-sdk cleanup` that caused `CatalogSource` and `OperatorGroup` objects not to be cleaned up if a previous `operator-sdk run` command failed. ([#4089](https://github.com/operator-framework/operator-sdk/pull/4089))
+- Fixed an issue during CSV generation that caused incorrect paths to be used in `specDescriptors` and `statusDescriptors`. ([#4166](https://github.com/operator-framework/operator-sdk/pull/4166))
+- In Helm projects, fixed operator RBAC permissions to support the OwnerReferencesPermissionEnforcement admission plugin by adding a `<resource>/finalizers` rule in the operator's role. ([#4105](https://github.com/operator-framework/operator-sdk/pull/4105))
+- Removed redundant platform information from `operator-sdk version` output. ([#4083](https://github.com/operator-framework/operator-sdk/pull/4083))
+- Format version string passed to `olm` subcommands so releases download correctly. ([#4181](https://github.com/operator-framework/operator-sdk/pull/4181))
+- In Go, Ansible, and Helm operators, updated the `metrics-reader` ClusterRole to use `rbac.authorization.k8s.io/v1` to be consistent with all other scaffolded RBAC resources. ([#4136](https://github.com/operator-framework/operator-sdk/pull/4136))
+- Modified `olm-status-descriptors-test` to only validate if the status-descriptors are present in CRD. ([#4009](https://github.com/operator-framework/operator-sdk/pull/4009))
+- Webhook container port specified in CSV defaults to `443` if not specified by the user. ([#4109](https://github.com/operator-framework/operator-sdk/pull/4109))
+- For Golang based operators with multigroup support, fixed `envtest.Environment.CRDDirectoryPaths` in scaffolded `controllers/<group>/suite_test.go` files. ([#4062](https://github.com/operator-framework/operator-sdk/pull/4062))
+
 ## v1.1.0
 
 ### Additions

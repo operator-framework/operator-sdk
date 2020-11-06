@@ -33,7 +33,7 @@ $ brew install operator-sdk
 
 ```sh
 # Set the release version variable
-$ RELEASE_VERSION=v1.1.0
+$ RELEASE_VERSION=v1.2.0
 # Linux
 $ curl -LO https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu
 $ curl -LO https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/ansible-operator-${RELEASE_VERSION}-x86_64-linux-gnu

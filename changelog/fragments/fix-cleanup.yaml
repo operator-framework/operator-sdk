@@ -1,7 +1,0 @@
-entries:
-  - description: >
-      Fixed an issue in `operator-sdk cleanup` that caused `CatalogSource`
-      and `OperatorGroup` objects not to be cleaned up if a
-      previous `operator-sdk run` command failed.
-    kind: bugfix
-    breaking: false
