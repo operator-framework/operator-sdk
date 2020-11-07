@@ -26,6 +26,8 @@ endif
 all: manager
 
 # Run tests
+# Set default shell as bash
+SHELL := /bin/bash
 ENVTEST_ASSETS_DIR = $(shell pwd)/testbin
 test: generate fmt vet manifests
 	mkdir -p $(ENVTEST_ASSETS_DIR)
