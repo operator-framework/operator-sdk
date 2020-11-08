@@ -3,7 +3,6 @@
 set -eu
 
 source hack/lib/common.sh
-source hack/lib/test_lib.sh
 source hack/lib/image_lib.sh
 
 TMPDIR="$(mktemp -d -p /tmp memcached-operator-XXXX)"
