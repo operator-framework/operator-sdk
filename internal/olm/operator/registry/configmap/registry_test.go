@@ -61,20 +61,19 @@ var _ = Describe("Registry", func() {
 
 	Describe("DeletePackageManifestsRegistry", func() {
 		It("should delete the package manifest registry", func() {
-			testns := "testns"
 			fakeclient := fake.NewFakeClient(
 				&corev1.ConfigMapList{
 					Items: []corev1.ConfigMap{
 						{
 							ObjectMeta: metav1.ObjectMeta{
-								Namespace: testns,
+								Namespace: "testns",
 								Labels:    makeRegistryLabels("test"),
 							},
 						},
 					},
 				},
-				newRegistryDeployment("pkgName", testns),
-				newRegistryService("pkgName", testns),
+				newRegistryDeployment("pkgName", "testns"),
+				newRegistryService("pkgName", "testns"),
 			)
 			rr := RegistryResources{
 				Pkg: &manifests.PackageManifest{
@@ -110,12 +109,13 @@ var _ = Describe("Registry", func() {
 				},
 			}
 			dep := appsv1.Deployment{}
-			err := rr.Client.KubeClient.Get(context.TODO(), types.NamespacedName{Name: getRegistryServerName("pkgName"), Namespace: testns}, &dep)
+			err := rr.Client.KubeClient.Get(context.TODO(), types.NamespacedName{Name: getRegistryServerName("pkgName"), Namespace: "testns"}, &dep)
 			Expect(err).Should(BeNil())
 
-			rr.DeletePackageManifestsRegistry(context.TODO(), testns)
+			err = rr.DeletePackageManifestsRegistry(context.TODO(), "testns")
+			Expect(err).Should(BeNil())
 
-			err = rr.Client.KubeClient.Get(context.TODO(), types.NamespacedName{Name: "pkgName-registry-server", Namespace: testns}, &dep)
+			err = rr.Client.KubeClient.Get(context.TODO(), types.NamespacedName{Name: "pkgName-registry-server", Namespace: "testns"}, &dep)
 			Expect(apierrors.IsNotFound(err)).Should(BeTrue())
 		})
 	})
@@ -183,9 +183,15 @@ var _ = Describe("Registry", func() {
 		})
 
 		It("should return false if a deployment does not exitst in the registry", func() {
-			rr.DeletePackageManifestsRegistry(context.TODO(), testns)
+			var (
+				err  error
+				temp bool
+			)
 
-			temp, err := rr.IsRegistryExist(context.TODO(), testns)
+			err = rr.DeletePackageManifestsRegistry(context.TODO(), testns)
+			Expect(err).Should(BeNil())
+
+			temp, err = rr.IsRegistryExist(context.TODO(), testns)
 			Expect(err).Should(BeNil())
 			Expect(temp).Should(BeFalse())
 		})
@@ -294,14 +300,13 @@ var _ = Describe("Registry", func() {
 				newRegistryDeployment("pkgName", testns),
 				newRegistryService("pkgName", testns),
 			)
-			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
+			temp, _ := rr.IsRegistryDataStale(context.TODO(), testns)
 
-			Expect(err).Should(BeNil())
 			Expect(temp).Should(BeTrue())
 		})
 
 		It("should return true if the binary data does not have a filekey", func() {
-			binarydata, err := makeObjectBinaryData(struct {
+			binarydata, _ := makeObjectBinaryData(struct {
 				val1 string
 				val2 string
 			}{
@@ -331,9 +336,8 @@ var _ = Describe("Registry", func() {
 				newRegistryDeployment("pkgName", testns),
 				newRegistryService("pkgName", testns),
 			)
-			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
+			temp, _ := rr.IsRegistryDataStale(context.TODO(), testns)
 
-			Expect(err).Should(BeNil())
 			Expect(temp).Should(BeTrue())
 		})
 
