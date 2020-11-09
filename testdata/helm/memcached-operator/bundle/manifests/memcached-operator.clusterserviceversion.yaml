@@ -56,7 +56,7 @@ metadata:
         }
       ]
     capabilities: Basic Install
-    operators.operatorframework.io/builder: operator-sdk-v1.1.0+git
+    operators.operatorframework.io/builder: operator-sdk-v1.2.0+git
     operators.operatorframework.io/project_layout: helm.sdk.operatorframework.io/v1
   name: memcached-operator.v0.0.1
   namespace: placeholder
