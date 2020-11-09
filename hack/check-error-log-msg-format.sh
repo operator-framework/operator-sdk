@@ -3,7 +3,7 @@
 set -o nounset
 set -o pipefail
 
-source "hack/lib/test_lib.sh"
+source "hack/lib/common.sh"
 
 echo "Checking format of error and log messages..."
 allfiles=$(listFiles|grep -v ./internal/bindata/...)
