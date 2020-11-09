@@ -1,3 +1,0 @@
-entries:
-  - description: When generating bundles and packagemanifests, add all resources supported by OLM.
-    kind: change

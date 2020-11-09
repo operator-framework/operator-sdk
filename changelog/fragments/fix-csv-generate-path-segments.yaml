@@ -1,5 +1,0 @@
-entries:
-  - description: >
-      Fixed an issue during CSV generation that caused incorrect paths to
-      be used in `specDescriptors` and `statusDescriptors`.
-    kind: "bugfix"

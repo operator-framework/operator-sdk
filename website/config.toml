@@ -95,6 +95,10 @@ algolia_docsearch = false
   url = "https://sdk.operatorframework.io"
 
 [[params.versions]]
+  version = "v1.2"
+  url = "https://v1-2-x.sdk.operatorframework.io"
+
+[[params.versions]]
   version = "v1.1"
   url = "https://v1-1-x.sdk.operatorframework.io"
 
@@ -119,7 +123,7 @@ algolia_docsearch = false
 [params.ui]
 # Enable to show the side bar menu in its compact state.
 sidebar_menu_compact = true
-#  Set to true to disable breadcrumb navigation. 
+#  Set to true to disable breadcrumb navigation.
 breadcrumb_disable = false
 #  Set to true to hide the sidebar search box (the top nav search box will still be displayed if search is enabled)
 sidebar_search_disable = true
@@ -157,7 +161,7 @@ no = 'Sorry to hear that. Please <a href="https://github.com/operator-framework/
 	name = "github"
 	url = "https://github.com/operator-framework/operator-sdk"
 	icon = "fab fa-github"
-	
+
 #[[params.links.social]]
 #	name = "slack"
 #	url = "https://example.org/mail"

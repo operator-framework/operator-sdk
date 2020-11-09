@@ -1,5 +1,0 @@
-entries:
-  - description: >
-      Improved `ansible-operator` and `helm-operator` help text
-    kind: change
-    breaking: false
