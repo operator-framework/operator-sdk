@@ -90,7 +90,7 @@ func (mh *MemcachedGoWithWebhooks) Run() {
 	mh.implementingWebhooks()
 	mh.uncommentKustomizationFile()
 
-	pkg.RunOlmIntegration(mh.ctx)
+	mh.ctx.CreateBundle()
 
 	// Clean up built binaries, if any.
 	pkg.CheckError("cleaning up", os.RemoveAll(filepath.Join(mh.ctx.Dir, "bin")))
