@@ -257,15 +257,16 @@ var _ = Describe("Registry", func() {
 		})
 
 		It("should return true if there are no registry configmaps", func() {
-			fakeclient := fake.NewFakeClient()
-			rr.Client.KubeClient = fakeclient
+			rr.Client.KubeClient = fake.NewFakeClient()
 			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
-			Expect(temp).Should(BeTrue())
+
 			Expect(err).Should(BeNil())
+			Expect(temp).Should(BeTrue())
 		})
 
 		It("should return true if the configmap does not exist", func() {
 			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
+
 			Expect(err).Should(BeNil())
 			Expect(temp).Should(BeTrue())
 		})
@@ -294,8 +295,9 @@ var _ = Describe("Registry", func() {
 				newRegistryService("pkgName", testns),
 			)
 			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
-			Expect(temp).Should(BeTrue())
+
 			Expect(err).Should(BeNil())
+			Expect(temp).Should(BeTrue())
 		})
 
 		It("should return true if the binary data does not have a filekey", func() {
@@ -330,8 +332,9 @@ var _ = Describe("Registry", func() {
 				newRegistryService("pkgName", testns),
 			)
 			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
-			Expect(temp).Should(BeTrue())
+
 			Expect(err).Should(BeNil())
+			Expect(temp).Should(BeTrue())
 		})
 
 		It("should return true if it fails in the next iteration", func() {
@@ -343,7 +346,7 @@ var _ = Describe("Registry", func() {
 					},
 				},
 			})
-			fakeclient := fake.NewFakeClient(
+			rr.Client.KubeClient = fake.NewFakeClient(
 				&corev1.ConfigMapList{
 					Items: []corev1.ConfigMap{
 						{
@@ -366,10 +369,10 @@ var _ = Describe("Registry", func() {
 				newRegistryDeployment("pkgName", testns),
 				newRegistryService("pkgName", testns),
 			)
-			rr.Client.KubeClient = fakeclient
 			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
-			Expect(temp).Should(BeTrue())
+
 			Expect(err).Should(BeNil())
+			Expect(temp).Should(BeTrue())
 		})
 	})
 
