@@ -4,7 +4,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-source "hack/lib/test_lib.sh"
+source "hack/lib/common.sh"
 
 echo "Checking for license header..."
 allfiles=$(listFiles|grep -v ./internal/bindata/...)
