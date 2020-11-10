@@ -300,8 +300,9 @@ var _ = Describe("Registry", func() {
 				newRegistryDeployment("pkgName", testns),
 				newRegistryService("pkgName", testns),
 			)
-			temp, _ := rr.IsRegistryDataStale(context.TODO(), testns)
+			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
 
+			Expect(err).Should(BeNil())
 			Expect(temp).Should(BeTrue())
 		})
 
@@ -336,8 +337,9 @@ var _ = Describe("Registry", func() {
 				newRegistryDeployment("pkgName", testns),
 				newRegistryService("pkgName", testns),
 			)
-			temp, _ := rr.IsRegistryDataStale(context.TODO(), testns)
+			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
 
+			Expect(err).Should(BeNil())
 			Expect(temp).Should(BeTrue())
 		})
 
@@ -373,8 +375,9 @@ var _ = Describe("Registry", func() {
 				newRegistryDeployment("pkgName", testns),
 				newRegistryService("pkgName", testns),
 			)
-			temp, _ := rr.IsRegistryDataStale(context.TODO(), testns)
+			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
 
+			Expect(err).Should(BeNil())
 			Expect(temp).Should(BeTrue())
 		})
 	})
