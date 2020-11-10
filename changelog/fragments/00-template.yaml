@@ -7,6 +7,11 @@ entries:
       the YAML string '>' operator means you can write your entry
       multiple lines and it will still be parsed as a single line.
 
+      If the change is specific for an Operator Type then, use the prefix
+      standard `(<language/plugin version>), ...` such as `(go/v2) ...`
+      when is a plugin change and the `For <type>-based operators,..."
+      when is Operator runtime change.
+
     # kind is one of:
     # - addition
     # - change
