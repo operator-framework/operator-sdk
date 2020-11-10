@@ -342,7 +342,7 @@ var _ = Describe("Registry", func() {
 		})
 
 		It("should return true if it fails in the next iteration", func() {
-			binarydata, err := makeObjectBinaryData(&manifests.PackageManifest{
+			binarydata, _ := makeObjectBinaryData(&manifests.PackageManifest{
 				PackageName: "pkgName",
 				Channels: []manifests.PackageChannel{
 					manifests.PackageChannel{
@@ -373,9 +373,8 @@ var _ = Describe("Registry", func() {
 				newRegistryDeployment("pkgName", testns),
 				newRegistryService("pkgName", testns),
 			)
-			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
+			temp, _ := rr.IsRegistryDataStale(context.TODO(), testns)
 
-			Expect(err).Should(BeNil())
 			Expect(temp).Should(BeTrue())
 		})
 	})
