@@ -15,12 +15,19 @@
 package pkg
 
 import (
+	"fmt"
+	"io/ioutil"
 	"os"
+	"path/filepath"
+	"regexp"
 
 	log "github.com/sirupsen/logrus"
+	"sigs.k8s.io/kubebuilder/pkg/model/config"
+
+	"github.com/operator-framework/operator-sdk/internal/annotations/metrics"
 )
 
-// CheckError will check the error and exit with 1 when as errors
+// CheckError will exit with exit code 1 when err is not nil.
 func CheckError(msg string, err error) {
 	if err != nil {
 		log.Errorf("error %s: %s", msg, err)
@@ -28,15 +35,73 @@ func CheckError(msg string, err error) {
 	}
 }
 
-// RunOlmIntegration runs all commands to integrate the project with OLM
-func RunOlmIntegration(ctx *SampleContext) {
+// CreateBundle runs all commands to create an operator bundle.
+func (ctx *SampleContext) CreateBundle() {
 	log.Infof("integrating project with OLM")
-	err := ctx.DisableOLMBundleInteractiveMode()
-	CheckError("disabling the OLM bundle", err)
+	err := ctx.DisableManifestsInteractiveMode()
+	CheckError("disabling `generate kustomize manifests` interactive mode", err)
 
 	err = ctx.Make("bundle", "IMG="+ctx.ImageName)
 	CheckError("running make bundle", err)
 
+	err = ctx.StripBundleAnnotations()
+	CheckError("stripping bundle annotations", err)
+
 	err = ctx.Make("bundle-build", "BUNDLE_IMG="+ctx.BundleImageName)
 	CheckError("running make bundle-build", err)
+}
+
+// StripBundleAnnotations removes all annotations applied to bundle manifests and metadata
+// by operator-sdk/internal/annotations/metrics annotators. Doing so decouples samples
+// from which operator-sdk version they were build with, as this information is already
+// available in git history.
+func (ctx SampleContext) StripBundleAnnotations() (err error) {
+	// Remove metadata labels.
+	metadataAnnotations := metrics.MakeBundleMetadataLabels(&config.Config{})
+	metadataFiles := []string{
+		filepath.Join(ctx.Dir, "bundle", "metadata", "annotations.yaml"),
+		filepath.Join(ctx.Dir, "bundle.Dockerfile"),
+	}
+	if err = removeAllAnnotationLines(metadataAnnotations, metadataFiles); err != nil {
+		return err
+	}
+
+	// Remove manifests annotations.
+	manifestsAnnotations := metrics.MakeBundleObjectAnnotations(&config.Config{})
+	manifestsFiles := []string{
+		filepath.Join(ctx.Dir, "bundle", "manifests", ctx.ProjectName+".clusterserviceversion.yaml"),
+		filepath.Join(ctx.Dir, "config", "manifests", "bases", ctx.ProjectName+".clusterserviceversion.yaml"),
+	}
+	if err = removeAllAnnotationLines(manifestsAnnotations, manifestsFiles); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// removeAllAnnotationLines removes each line containing a key in annotations from all files at filePaths.
+func removeAllAnnotationLines(annotations map[string]string, filePaths []string) error {
+	var annotationREs []*regexp.Regexp
+	for annotation := range annotations {
+		re, err := regexp.Compile(".+" + regexp.QuoteMeta(annotation) + ".+\n")
+		if err != nil {
+			return fmt.Errorf("compiling annotation regexp: %v", err)
+		}
+		annotationREs = append(annotationREs, re)
+	}
+
+	for _, file := range filePaths {
+		b, err := ioutil.ReadFile(file)
+		if err != nil {
+			return err
+		}
+		for _, re := range annotationREs {
+			b = re.ReplaceAll(b, []byte{})
+		}
+		err = ioutil.WriteFile(file, b, 0644)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

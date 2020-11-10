@@ -82,7 +82,7 @@ func (tc TestContext) AddPackagemanifestsTarget() error {
 }
 
 // DisableOLMBundleInterativeMode will update the Makefile to disable the interactive mode
-func (tc TestContext) DisableOLMBundleInteractiveMode() error {
+func (tc TestContext) DisableManifestsInteractiveMode() error {
 	// Todo: check if we cannot improve it since the replace/content will exists in the
 	// pkgmanifest target if it be scaffolded before this call
 	content := "operator-sdk generate kustomize manifests"

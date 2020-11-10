@@ -76,7 +76,7 @@ func (ma *MemcachedAnsible) Run() {
 	ma.addingAnsibleTask()
 	ma.addingMoleculeMockData()
 
-	pkg.RunOlmIntegration(ma.ctx)
+	ma.ctx.CreateBundle()
 }
 
 // addingMoleculeMockData will customize the molecule data
