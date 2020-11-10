@@ -101,7 +101,7 @@ var _ = BeforeSuite(func() {
 		"#- ../prometheus", "#")).To(Succeed())
 
 	By("turning off interactive prompts for all generation tasks.")
-	err = tc.DisableOLMBundleInteractiveMode()
+	err = tc.DisableManifestsInteractiveMode()
 	Expect(err).NotTo(HaveOccurred())
 
 	By("checking the kustomize setup")
