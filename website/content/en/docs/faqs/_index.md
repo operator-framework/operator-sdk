@@ -16,7 +16,7 @@ You should not have separate logic. Instead design your reconciler to be idempot
 
 Use a [finalizer].
 
-## I keep seeing the following intermittent warning in my Operator's logs: `The resourceVersion for the provided watch is too old.` What's wrong?
+## I see the warning in my Operator's logs: `The resourceVersion for the provided watch is too old.` What's wrong?
 
 This is completely normal and expected behavior.
 

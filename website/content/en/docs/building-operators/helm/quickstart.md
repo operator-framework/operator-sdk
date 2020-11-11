@@ -87,7 +87,7 @@ make undeploy
 
 Read the [tutorial][tutorial] for an in-depth walkthough of building a Helm operator.
 
-[operator_install]: /docs/installation/install-operator-sdk
+[operator_install]: /docs/installation/
 [project_layout]: /docs/building-operators/helm/reference/project_layout/
 [tutorial]: /docs/building-operators/helm/tutorial/
 [helm-official]: https://helm.sh/docs/
