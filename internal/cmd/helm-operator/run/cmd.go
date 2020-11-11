@@ -31,9 +31,11 @@ import (
 	zapf "sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
+	crmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 
 	"github.com/operator-framework/operator-sdk/internal/helm/controller"
 	"github.com/operator-framework/operator-sdk/internal/helm/flags"
+	"github.com/operator-framework/operator-sdk/internal/helm/metrics"
 	"github.com/operator-framework/operator-sdk/internal/helm/release"
 	"github.com/operator-framework/operator-sdk/internal/helm/watches"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
@@ -73,6 +75,7 @@ func NewCmd() *cobra.Command {
 
 func run(cmd *cobra.Command, f *flags.Flags) {
 	printVersion()
+	metrics.RegisterBuildInfo(crmetrics.Registry)
 
 	cfg, err := config.GetConfig()
 	if err != nil {
