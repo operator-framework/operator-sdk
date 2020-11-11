@@ -20,5 +20,5 @@ Follow the steps in the [installation guide][install-guide] to learn how to inst
 [docker_tool]:https://docs.docker.com/install/
 [mercurial_tool]:https://www.mercurial-scm.org/downloads
 [kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
-[install-guide]: /docs/installation/install-operator-sdk
+[install-guide]: /docs/installation/
 [quay-link]:https://quay.io

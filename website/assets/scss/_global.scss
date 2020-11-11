@@ -30,10 +30,8 @@ ol {
  li {
   counter-increment: ordered-list-counter;
   position: relative;
-  padding-left: var(--of--spacer--lg);
 }
  li::before {
-  content: counter(ordered-list-counter) ". ";
   position: absolute;
   left: 0;
   top: 0;
