@@ -68,18 +68,10 @@ operator-sdk init --domain example.com --repo github.com/example-inc/memcached-o
 
 ## Check if your project is multi-group
 
-Before we start to create the APIs, check if your project has more than one group such as : `foo.example.com/v1` and `crew.example.com/v1`. If you intend to still working on with multiple groups in your project, then add the line
-`multigroup: true` in the `PROJECT` file. The `PROJECT` file for the above example would look like:
-
-```YAML
-domain: example.com
-repo: github.com/example-inc/memcached-operator
-multigroup: true
-version: 2
-...
-```
+Before we start to create the APIs, check if your project has more than one group such as : `foo.example.com/v1` and `crew.example.com/v1`. If you intend to work with multiple groups in your project, then to change the project's layout to support multi-group, run the command `operator-sdk edit --multigroup=true`
 
 **Note:** In multi-group projects, APIs are defined in `apis/<group>/<version>` and controllers are defined in `controllers/<group>`.
+For further information see the [Single Group to Multi-Group][multigroup-kubebuilder-doc]
 
 ## Migrate APIs and Controllers
 
@@ -358,3 +350,4 @@ E.g `kubectl logs deployment.apps/memcached-operator-controller-manager -n memca
 [ctrl-options]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/manager#Options
 [envtest]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/envtest
 [gomega]: https://onsi.github.io/gomega/
+[multigroup-kubebuilder-doc]: https://book.kubebuilder.io/migration/multi-group.html
