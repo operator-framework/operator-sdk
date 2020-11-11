@@ -46,6 +46,8 @@ func (mh *MemcachedHelm) Prepare() {
 	err := mh.ctx.Prepare()
 	pkg.CheckError("creating directory", err)
 
+	mh.ctx.CleanLocalDependencies()
+
 	log.Infof("setting domain and GVK")
 	mh.ctx.Domain = "example.com"
 	mh.ctx.Version = "v1alpha1"

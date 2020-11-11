@@ -48,6 +48,8 @@ func (mh *MemcachedGoWithWebhooks) Prepare() {
 	err := mh.ctx.Prepare()
 	pkg.CheckError("creating directory for Go Sample", err)
 
+	mh.ctx.CleanLocalDependencies()
+
 	log.Infof("setting domain and GVK")
 	mh.ctx.Domain = "example.com"
 	mh.ctx.Version = "v1alpha1"

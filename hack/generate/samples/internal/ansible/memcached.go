@@ -47,6 +47,8 @@ func (ma *MemcachedAnsible) Prepare() {
 	err := ma.ctx.Prepare()
 	pkg.CheckError("creating directory for Ansible Sample", err)
 
+	ma.ctx.CleanLocalDependencies()
+
 	log.Infof("setting domain and GVK")
 	ma.ctx.Domain = "example.com"
 	ma.ctx.Version = "v1alpha1"

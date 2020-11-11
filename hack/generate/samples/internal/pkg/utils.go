@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 
@@ -104,4 +105,16 @@ func removeAllAnnotationLines(annotations map[string]string, filePaths []string)
 		}
 	}
 	return nil
+}
+
+// CleanLocalDependencies will remove tool binaries so the correct versions are used for each plugin version.
+func (ctx SampleContext) CleanLocalDependencies() {
+	log.Infof("cleaning local dependencies")
+	cmd := exec.Command("rm", "-f", "which", "controller-gen")
+	_, err := ctx.Run(cmd)
+	CheckError("removing controller-gen from local env", err)
+
+	cmd = exec.Command("rm", "-f", "which", "kustomize")
+	_, err = ctx.Run(cmd)
+	CheckError("removing kustomize from local env", err)
 }
