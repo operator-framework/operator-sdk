@@ -39,7 +39,7 @@ undeploy: kustomize
 
 # Build the docker image
 docker-build:
-	docker build . -t ${IMG}
+	docker build -t ${IMG} .
 
 # Push the docker image
 docker-push:
