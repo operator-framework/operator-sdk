@@ -39,6 +39,7 @@ var (
 	_ plugin.InitPluginGetter          = Plugin{}
 	_ plugin.CreateAPIPluginGetter     = Plugin{}
 	_ plugin.CreateWebhookPluginGetter = Plugin{}
+	_ plugin.EditPluginGetter          = Plugin{}
 )
 
 // Plugin defines an Operator SDK Go scaffold and CLI plugin. Its current purpose is to
@@ -65,4 +66,8 @@ func (p Plugin) GetCreateAPIPlugin() plugin.CreateAPI {
 
 func (p Plugin) GetCreateWebhookPlugin() plugin.CreateWebhook {
 	return (kbgov2.Plugin{}).GetCreateWebhookPlugin()
+}
+
+func (p Plugin) GetEditPlugin() plugin.Edit {
+	return (kbgov2.Plugin{}).GetEditPlugin()
 }
