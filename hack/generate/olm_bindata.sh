@@ -2,8 +2,8 @@
 
 function get_olm_manifests() {
     echo "downloading olm manifests for version ${1}"
-    wget -O olm-manifests/$1-olm.yaml "https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${1}/olm.yaml"
-    wget -O olm-manifests/$1-crds.yaml "https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${1}/crds.yaml"
+    curl -L -o olm-manifests/$1-olm.yaml "https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${1}/olm.yaml"
+    curl -L -o olm-manifests/$1-crds.yaml "https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${1}/crds.yaml"
 }
 
 function remove_olm_manifests {
