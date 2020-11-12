@@ -25,6 +25,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"path/filepath"
 	"time"
 
 	"github.com/blang/semver"
@@ -46,10 +47,7 @@ const (
 	olmOperatorName     = "olm-operator"
 	catalogOperatorName = "catalog-operator"
 	packageServerName   = "packageserver"
-
-	// These paths are keys to look up internal OLM bindata.
-	olmManifestBindataPath = "olm-manifests/olm.yaml"
-	crdManifestBindataPath = "olm-manifests/crds.yaml"
+	bindataManifestPath = "olm-manifests"
 )
 
 type Client struct {
@@ -183,14 +181,16 @@ func (c Client) getResources(ctx context.Context, version string) ([]unstructure
 	var err error
 
 	// If the manifests for the requested version are saved as bindata in SDK, use
-	// them instead of fetching them from
+	// them instead of fetching them from github.
 	if olmmanifests.HasVersion(version) {
-		log.Infof("Using locally stored resource manifests for resolved version %q", version)
+		log.Infof("Using locally stored resource manifests")
+		crdManifestBindataPath := filepath.Join(bindataManifestPath, version+"-crds.yaml")
 		crdResources, err = getPackagedManifests(crdManifestBindataPath)
 		if err != nil {
 			return nil, err
 		}
 
+		olmManifestBindataPath := filepath.Join(bindataManifestPath, version+"-olm.yaml")
 		olmResources, err = getPackagedManifests(olmManifestBindataPath)
 		if err != nil {
 			return nil, err
