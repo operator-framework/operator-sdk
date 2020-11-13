@@ -56,13 +56,23 @@ func (mh *MemcachedGoWithWebhooks) Prepare() {
 }
 
 // Run the steps to create the Memcached with Webhooks Go Sample
-func (mh *MemcachedGoWithWebhooks) Run() {
+func (mh *MemcachedGoWithWebhooks) Run(plugin string) {
 	log.Infof("creating the project")
-	err := mh.ctx.Init(
-		"--repo", "github.com/example/memcached-operator",
-		"--domain",
-		mh.ctx.Domain)
-	pkg.CheckError("creating the project", err)
+	var err error
+	if plugin != "" {
+		err = mh.ctx.Init(
+			"--plugins", plugin,
+			"--repo", "github.com/example/memcached-operator",
+			"--domain",
+			mh.ctx.Domain)
+		pkg.CheckError("creating the project", err)
+	} else {
+		err := mh.ctx.Init(
+			"--repo", "github.com/example/memcached-operator",
+			"--domain",
+			mh.ctx.Domain)
+		pkg.CheckError("creating the project", err)
+	}
 
 	err = mh.ctx.CreateAPI(
 		"--group", mh.ctx.Group,
@@ -244,16 +254,28 @@ func (mh *MemcachedGoWithWebhooks) implementingAPI() {
 	pkg.CheckError("inserting Node Status", err)
 }
 
-// GenerateMemcachedGoWithWebhooksSample will call all actions to create the directory and generate the sample
+// GenerateMemcachedGoWithWebhooksSampleV2 will call all actions to create the directory and generate the sample
 // Note that it should NOT be called in the e2e tests.
-func GenerateMemcachedGoWithWebhooksSample(samplesPath string) {
+func GenerateMemcachedGoWithWebhooksSampleV2(samplesPath string) {
 	log.Infof("starting to generate Go memcached sample with webhooks")
-	ctx, err := pkg.NewSampleContext(testutils.BinaryName, filepath.Join(samplesPath, "go/memcached-operator"), "GO111MODULE=on")
+	ctx, err := pkg.NewSampleContext(testutils.BinaryName, filepath.Join(samplesPath, "go", "v2", "memcached-operator"), "GO111MODULE=on")
 	pkg.CheckError("generating Go memcached with webhooks context", err)
 
 	memcached := NewMemcachedGoWithWebhooks(&ctx)
 	memcached.Prepare()
-	memcached.Run()
+	memcached.Run("")
+}
+
+// GenerateMemcachedGoWithWebhooksSampleV2 will call all actions to create the directory and generate the sample
+// Note that it should NOT be called in the e2e tests.
+func GenerateMemcachedGoWithWebhooksSampleV3(samplesPath string) {
+	log.Infof("starting to generate Go memcached sample with webhooks")
+	ctx, err := pkg.NewSampleContext(testutils.BinaryName, filepath.Join(samplesPath, "go", "v3", "memcached-operator"), "GO111MODULE=on")
+	pkg.CheckError("generating Go memcached with webhooks context", err)
+
+	memcached := NewMemcachedGoWithWebhooks(&ctx)
+	memcached.Prepare()
+	memcached.Run("v3/alpha")
 }
 
 const rbacFragment = `

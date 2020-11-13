@@ -53,6 +53,9 @@ func main() {
 	log.Infof("creating Ansible Memcached Sample")
 	ansible.GenerateMemcachedAnsibleSample(samplesPath)
 
-	log.Infof("creating Go Memcached Sample with Webhooks")
-	gosamples.GenerateMemcachedGoWithWebhooksSample(samplesPath)
+	log.Infof("creating Go Memcached Sample with Webhooks v2")
+	gosamples.GenerateMemcachedGoWithWebhooksSampleV2(samplesPath)
+
+	log.Infof("creating Go Memcached Sample with Webhooks v3")
+	gosamples.GenerateMemcachedGoWithWebhooksSampleV3(samplesPath)
 }
