@@ -25,7 +25,7 @@ import (
 
 	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
-	"sigs.k8s.io/kubebuilder/pkg/model/config"
+	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
 	"sigs.k8s.io/yaml"
 
 	metricsannotations "github.com/operator-framework/operator-sdk/internal/annotations/metrics"

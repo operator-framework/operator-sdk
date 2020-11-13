@@ -20,7 +20,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"sigs.k8s.io/kubebuilder/pkg/model/config"
+	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
 
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )

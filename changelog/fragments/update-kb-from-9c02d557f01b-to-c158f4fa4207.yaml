@@ -1,0 +1,8 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      (go/v2) Fixed controller imports scaffolded by `create api` when `--resource=false`
+            ([kubebuilder#1770](https://github.com/kubernetes-sigs/kubebuilder/pull/1770))
+    kind: "bugfix"
+    breaking: false

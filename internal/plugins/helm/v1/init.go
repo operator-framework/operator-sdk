@@ -22,9 +22,9 @@ import (
 
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/util/validation"
-	"sigs.k8s.io/kubebuilder/pkg/model/config"
-	"sigs.k8s.io/kubebuilder/pkg/plugin"
-	"sigs.k8s.io/kubebuilder/pkg/plugin/scaffold"
+	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
+	"sigs.k8s.io/kubebuilder/v2/pkg/plugin"
+	"sigs.k8s.io/kubebuilder/v2/pkg/plugin/scaffold"
 
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/chartutil"
@@ -33,9 +33,9 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/plugins/scorecard"
 )
 
-type initPlugin struct {
+type initSubcommand struct {
 	config    *config.Config
-	apiPlugin createAPIPlugin
+	apiPlugin createAPISubcommand
 
 	// If true, run the `create api` plugin.
 	doCreateAPI bool
@@ -45,12 +45,12 @@ type initPlugin struct {
 }
 
 var (
-	_ plugin.Init        = &initPlugin{}
-	_ cmdutil.RunOptions = &initPlugin{}
+	_ plugin.InitSubcommand = &initSubcommand{}
+	_ cmdutil.RunOptions    = &initSubcommand{}
 )
 
 // UpdateContext define plugin context
-func (p *initPlugin) UpdateContext(ctx *plugin.Context) {
+func (p *initSubcommand) UpdateContext(ctx *plugin.Context) {
 	ctx.Description = `Initialize a new Helm-based operator project.
 
 Writes the following files:
@@ -125,7 +125,7 @@ Writes the following files:
 }
 
 // BindFlags will set the flags for the plugin
-func (p *initPlugin) BindFlags(fs *pflag.FlagSet) {
+func (p *initSubcommand) BindFlags(fs *pflag.FlagSet) {
 	fs.SortFlags = false
 	fs.StringVar(&p.config.Domain, "domain", "my.domain", "domain for groups")
 	fs.StringVar(&p.config.ProjectName, "project-name", "", "name of this project, the default being directory name")
@@ -133,7 +133,7 @@ func (p *initPlugin) BindFlags(fs *pflag.FlagSet) {
 }
 
 // InjectConfig will inject the PROJECT file/config in the plugin
-func (p *initPlugin) InjectConfig(c *config.Config) {
+func (p *initSubcommand) InjectConfig(c *config.Config) {
 	// v3 project configs get a 'layout' value.
 	c.Layout = pluginKey
 	p.config = c
@@ -141,7 +141,7 @@ func (p *initPlugin) InjectConfig(c *config.Config) {
 }
 
 // Run will call the plugin actions
-func (p *initPlugin) Run() error {
+func (p *initSubcommand) Run() error {
 	if err := cmdutil.Run(p); err != nil {
 		return err
 	}
@@ -155,7 +155,7 @@ func (p *initPlugin) Run() error {
 }
 
 // SDK phase 2 plugins.
-func (p *initPlugin) runPhase2() error {
+func (p *initSubcommand) runPhase2() error {
 	if err := manifests.RunInit(p.config); err != nil {
 		return err
 	}
@@ -173,7 +173,7 @@ func (p *initPlugin) runPhase2() error {
 }
 
 // Validate perform the required validations for this plugin
-func (p *initPlugin) Validate() error {
+func (p *initSubcommand) Validate() error {
 
 	// Check if the project name is a valid k8s namespace (DNS 1123 label).
 	if p.config.ProjectName == "" {
@@ -197,7 +197,7 @@ func (p *initPlugin) Validate() error {
 }
 
 // GetScaffolder returns scaffold.Scaffolder which will be executed due the RunOptions interface implementation
-func (p *initPlugin) GetScaffolder() (scaffold.Scaffolder, error) {
+func (p *initSubcommand) GetScaffolder() (scaffold.Scaffolder, error) {
 	var (
 		apiScaffolder scaffold.Scaffolder
 		err           error
@@ -212,7 +212,7 @@ func (p *initPlugin) GetScaffolder() (scaffold.Scaffolder, error) {
 }
 
 // PostScaffold will run the required actions after the default plugin scaffold
-func (p *initPlugin) PostScaffold() error {
+func (p *initSubcommand) PostScaffold() error {
 
 	if p.doCreateAPI {
 		return p.apiPlugin.PostScaffold()

@@ -20,7 +20,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	kbtestutils "sigs.k8s.io/kubebuilder/test/e2e/utils"
+	kbtestutils "sigs.k8s.io/kubebuilder/v2/test/e2e/utils"
 
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
 	"github.com/operator-framework/operator-sdk/internal/testutils"

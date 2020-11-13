@@ -15,7 +15,7 @@
 package roles
 
 import (
-	"sigs.k8s.io/kubebuilder/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v2/pkg/model/file"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/constants"
 )
