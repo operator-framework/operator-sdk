@@ -55,7 +55,7 @@ func (ma *MoleculeAnsible) Prepare() {
 	ma.ctx.Kind = "Memcached"
 }
 
-// Run the steps to create the Memcached Ansible Sample
+// RunV2 the steps to create the Memcached Ansible Sample
 func (ma *MoleculeAnsible) Run() {
 	memcached := NewMemcachedAnsible(ma.ctx)
 	memcached.Run()
@@ -166,7 +166,7 @@ func (ma *MoleculeAnsible) Run() {
 // GenerateMoleculeAnsibleSample will call all actions to create the directory and generate the sample
 // The Context to run the samples are not the same in the e2e test. In this way, note that it should NOT
 // be called in the e2e tests since it will call the Prepare() to set the sample context and generate the files
-// in the testdata directory. The e2e tests only ought to use the Run() method with the TestContext.
+// in the testdata directory. The e2e tests only ought to use the RunV2() method with the TestContext.
 func GenerateMoleculeAnsibleSample(path string) {
 	ctx, err := pkg.NewSampleContext(testutils.BinaryName, filepath.Join(path, "memcached-molecule-operator"),
 		"GO111MODULE=on")

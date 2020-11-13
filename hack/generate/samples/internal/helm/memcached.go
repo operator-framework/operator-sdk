@@ -53,7 +53,7 @@ func (mh *MemcachedHelm) Prepare() {
 	mh.ctx.Kind = "Memcached"
 }
 
-// Run runs the steps to generate the sample
+// RunV2 runs the steps to generate the sample
 func (mh *MemcachedHelm) Run() {
 	current, err := os.Getwd()
 	if err != nil {
@@ -109,7 +109,7 @@ func (mh *MemcachedHelm) Run() {
 // GenerateMemcachedHelmSample will call all actions to create the directory and generate the sample
 // The Context to run the samples are not the same in the e2e test. In this way, note that it should NOT
 // be called in the e2e tests since it will call the Prepare() to set the sample context and generate the files
-// in the testdata directory. The e2e tests only ought to use the Run() method with the TestContext.
+// in the testdata directory. The e2e tests only ought to use the RunV2() method with the TestContext.
 func GenerateMemcachedHelmSample(samplesPath string) {
 	ctx, err := pkg.NewSampleContext(testutils.BinaryName, filepath.Join(samplesPath, "helm", "memcached-operator"), "GO111MODULE=on")
 	pkg.CheckError("generating Helm memcached context", err)
