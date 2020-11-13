@@ -16,35 +16,37 @@ package v2
 
 import (
 	"github.com/spf13/pflag"
-	"sigs.k8s.io/kubebuilder/pkg/model/config"
-	"sigs.k8s.io/kubebuilder/pkg/plugin"
+	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
+	"sigs.k8s.io/kubebuilder/v2/pkg/plugin"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/manifests"
 )
 
-type createAPIPlugin struct {
-	plugin.CreateAPI
+type createAPISubcommand struct {
+	plugin.CreateAPISubcommand
 
 	config *config.Config
 }
 
-var _ plugin.CreateAPI = &createAPIPlugin{}
+var _ plugin.CreateAPISubcommand = &createAPISubcommand{}
 
-func (p *createAPIPlugin) UpdateContext(ctx *plugin.Context) { p.CreateAPI.UpdateContext(ctx) }
-func (p *createAPIPlugin) BindFlags(fs *pflag.FlagSet)       { p.CreateAPI.BindFlags(fs) }
+func (p *createAPISubcommand) UpdateContext(ctx *plugin.Context) {
+	p.CreateAPISubcommand.UpdateContext(ctx)
+}
+func (p *createAPISubcommand) BindFlags(fs *pflag.FlagSet) { p.CreateAPISubcommand.BindFlags(fs) }
 
-func (p *createAPIPlugin) InjectConfig(c *config.Config) {
-	p.CreateAPI.InjectConfig(c)
+func (p *createAPISubcommand) InjectConfig(c *config.Config) {
+	p.CreateAPISubcommand.InjectConfig(c)
 	p.config = c
 }
 
-func (p *createAPIPlugin) Run() error {
+func (p *createAPISubcommand) Run() error {
 	// Run() may add a new resource to the config, so we can compare resources before/after to get the new resource.
 	oldResources := make(map[config.GVK]struct{}, len(p.config.Resources))
 	for _, r := range p.config.Resources {
 		oldResources[r] = struct{}{}
 	}
-	if err := p.CreateAPI.Run(); err != nil {
+	if err := p.CreateAPISubcommand.Run(); err != nil {
 		return err
 	}
 
@@ -68,6 +70,6 @@ func (p *createAPIPlugin) Run() error {
 }
 
 // SDK phase 2 plugins.
-func (p *createAPIPlugin) runPhase2(gvk config.GVK) error {
+func (p *createAPISubcommand) runPhase2(gvk config.GVK) error {
 	return manifests.RunCreateAPI(p.config, gvk)
 }

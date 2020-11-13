@@ -20,7 +20,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"sigs.k8s.io/kubebuilder/pkg/model/config"
+	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
 
 	genutil "github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/generate/internal"
 	gencsv "github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion"

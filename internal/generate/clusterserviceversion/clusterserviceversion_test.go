@@ -30,7 +30,7 @@ import (
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	appsv1 "k8s.io/api/apps/v1"
-	"sigs.k8s.io/kubebuilder/pkg/model/config"
+	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
 	"sigs.k8s.io/yaml"
 
 	metricsannotations "github.com/operator-framework/operator-sdk/internal/annotations/metrics"

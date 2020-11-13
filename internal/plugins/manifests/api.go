@@ -18,9 +18,9 @@ package manifests
 import (
 	"fmt"
 
-	"sigs.k8s.io/kubebuilder/pkg/model"
-	"sigs.k8s.io/kubebuilder/pkg/model/config"
-	"sigs.k8s.io/kubebuilder/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v2/pkg/model"
+	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
+	"sigs.k8s.io/kubebuilder/v2/pkg/model/file"
 
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/machinery"
 )

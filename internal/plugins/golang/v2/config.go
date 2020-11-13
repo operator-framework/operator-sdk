@@ -14,7 +14,7 @@
 
 package v2
 
-import "sigs.k8s.io/kubebuilder/pkg/model/config"
+import "sigs.k8s.io/kubebuilder/v2/pkg/model/config"
 
 // Config configures this plugin, and is saved in the project config file.
 type Config struct{}
