@@ -25,7 +25,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	kbtestutils "sigs.k8s.io/kubebuilder/test/e2e/utils"
+	kbtestutils "sigs.k8s.io/kubebuilder/v2/test/e2e/utils"
 )
 
 var _ = Describe("operator-sdk", func() {

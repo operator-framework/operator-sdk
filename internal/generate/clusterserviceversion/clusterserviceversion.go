@@ -25,7 +25,7 @@ import (
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"sigs.k8s.io/kubebuilder/pkg/model/config"
+	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
 
 	metricsannotations "github.com/operator-framework/operator-sdk/internal/annotations/metrics"
 	"github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion/bases"

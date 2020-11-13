@@ -24,7 +24,7 @@ import (
 
 	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"sigs.k8s.io/kubebuilder/pkg/model/config"
+	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
 	"sigs.k8s.io/yaml"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/util/kustomize"

@@ -24,7 +24,7 @@ import (
 	"text/template"
 
 	"helm.sh/helm/v3/pkg/chart"
-	"sigs.k8s.io/kubebuilder/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v2/pkg/model/file"
 	"sigs.k8s.io/yaml"
 )
 

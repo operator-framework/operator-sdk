@@ -32,7 +32,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/discovery"
 	crconfig "sigs.k8s.io/controller-runtime/pkg/client/config"
-	"sigs.k8s.io/kubebuilder/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v2/pkg/model/file"
 	"sigs.k8s.io/yaml"
 )
 

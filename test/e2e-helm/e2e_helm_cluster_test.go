@@ -23,7 +23,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	kbtestutils "sigs.k8s.io/kubebuilder/test/e2e/utils"
+	kbtestutils "sigs.k8s.io/kubebuilder/v2/test/e2e/utils"
 
 	"github.com/operator-framework/operator-sdk/internal/testutils"
 )
