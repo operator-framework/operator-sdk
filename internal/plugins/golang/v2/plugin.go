@@ -35,11 +35,8 @@ var (
 )
 
 var (
-	_ plugin.Plugin        = Plugin{}
-	_ plugin.Init          = Plugin{}
-	_ plugin.CreateAPI     = Plugin{}
-	_ plugin.CreateWebhook = Plugin{}
-	_ plugin.Edit          = Plugin{}
+	_ plugin.Plugin = Plugin{}
+	_ plugin.Full   = Plugin{}
 )
 
 // Plugin defines an Operator SDK Go scaffold and CLI plugin. Its current purpose is to
