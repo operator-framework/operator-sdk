@@ -1,9 +1,20 @@
 #!/usr/bin/env bash
 
+base_version=0.16.1
+
+function version_gt() {
+    test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1";
+}
+
 function get_olm_manifests() {
     echo "downloading olm manifests for version ${1}"
-    curl -L -o olm-manifests/$1-olm.yaml "https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${1}/olm.yaml"
-    curl -L -o olm-manifests/$1-crds.yaml "https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${1}/crds.yaml"
+    tag=$1
+    if version_gt ${1} $base_version; then
+        tag="v"$1
+    fi
+    echo "using the olm tag ${tag}"
+    curl -L -o olm-manifests/$1-olm.yaml "https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${tag}/olm.yaml"
+    curl -L -o olm-manifests/$1-crds.yaml "https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${tag}/crds.yaml"
 }
 
 function remove_olm_manifests {

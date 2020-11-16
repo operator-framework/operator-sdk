@@ -37,4 +37,4 @@ test_version() {
 }
 
 test_version "latest"
-test_version "0.15.1" # Check installation of OLM for locally stored version of binaries
+test_version "0.17.0" # Check installation of OLM for locally stored version of binaries

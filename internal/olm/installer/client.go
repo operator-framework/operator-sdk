@@ -175,7 +175,7 @@ func (c Client) GetStatus(ctx context.Context, namespace, version string) (*olmr
 func (c Client) getResources(ctx context.Context, version string) ([]unstructured.Unstructured, error) {
 	log.Infof("Fetching CRDs for version %q", version)
 
-	version = formatVersion(version)
+	resolvedVersion := formatVersion(version)
 
 	var crdResources, olmResources []unstructured.Unstructured
 	var err error
@@ -196,13 +196,13 @@ func (c Client) getResources(ctx context.Context, version string) ([]unstructure
 			return nil, err
 		}
 	} else {
-		log.Infof("Fetching resources for resolved version %q", version)
-		crdResources, err = c.getCRDs(ctx, version)
+		log.Infof("Fetching resources for resolved version %q", resolvedVersion)
+		crdResources, err = c.getCRDs(ctx, resolvedVersion)
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch CRDs: %v", err)
 		}
 
-		olmResources, err = c.getOLM(ctx, version)
+		olmResources, err = c.getOLM(ctx, resolvedVersion)
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch resources: %v", err)
 		}
