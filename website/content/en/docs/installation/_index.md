@@ -36,12 +36,8 @@ $ brew install operator-sdk
 $ RELEASE_VERSION=v1.2.0
 # Linux
 $ curl -LO https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu
-$ curl -LO https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/ansible-operator-${RELEASE_VERSION}-x86_64-linux-gnu
-$ curl -LO https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/helm-operator-${RELEASE_VERSION}-x86_64-linux-gnu
 # macOS
 $ curl -LO https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin
-$ curl -LO https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/ansible-operator-${RELEASE_VERSION}-x86_64-apple-darwin
-$ curl -LO https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/helm-operator-${RELEASE_VERSION}-x86_64-apple-darwin
 ```
 
 #### Verify the downloaded release binaries
@@ -49,12 +45,8 @@ $ curl -LO https://github.com/operator-framework/operator-sdk/releases/download/
 ```sh
 # Linux
 $ curl -LO https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu.asc
-$ curl -LO https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/ansible-operator-${RELEASE_VERSION}-x86_64-linux-gnu.asc
-$ curl -LO https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/helm-operator-${RELEASE_VERSION}-x86_64-linux-gnu.asc
 # macOS
 $ curl -LO https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin.asc
-$ curl -LO https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/ansible-operator-${RELEASE_VERSION}-x86_64-apple-darwin.asc
-$ curl -LO https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/helm-operator-${RELEASE_VERSION}-x86_64-apple-darwin.asc
 ```
 
 To verify a release binary using the provided asc files, place the binary and corresponding asc file into the same directory and use the corresponding command:
@@ -62,12 +54,8 @@ To verify a release binary using the provided asc files, place the binary and co
 ```sh
 # Linux
 $ gpg --verify operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu.asc
-$ gpg --verify ansible-operator-${RELEASE_VERSION}-x86_64-linux-gnu.asc
-$ gpg --verify helm-operator-${RELEASE_VERSION}-x86_64-linux-gnu.asc
 # macOS
 $ gpg --verify operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin.asc
-$ gpg --verify ansible-operator-${RELEASE_VERSION}-x86_64-apple-darwin.asc
-$ gpg --verify helm-operator-${RELEASE_VERSION}-x86_64-apple-darwin.asc
 ```
 
 If you do not have the maintainers public key on your machine, you will get an error message similar to this:
@@ -99,12 +87,8 @@ Now you should be able to verify the binary.
 ```sh
 # Linux
 $ chmod +x operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu && sudo mkdir -p /usr/local/bin/ && sudo cp operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu /usr/local/bin/operator-sdk && rm operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu
-$ chmod +x ansible-operator-${RELEASE_VERSION}-x86_64-linux-gnu && sudo mkdir -p /usr/local/bin/ && sudo cp ansible-operator-${RELEASE_VERSION}-x86_64-linux-gnu /usr/local/bin/ansible-operator && rm ansible-operator-${RELEASE_VERSION}-x86_64-linux-gnu
-$ chmod +x helm-operator-${RELEASE_VERSION}-x86_64-linux-gnu && sudo mkdir -p /usr/local/bin/ && sudo cp helm-operator-${RELEASE_VERSION}-x86_64-linux-gnu /usr/local/bin/helm-operator && rm helm-operator-${RELEASE_VERSION}-x86_64-linux-gnu
 # macOS
 $ chmod +x operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin && sudo mkdir -p /usr/local/bin/ && sudo cp operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin /usr/local/bin/operator-sdk && rm operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin
-$ chmod +x ansible-operator-${RELEASE_VERSION}-x86_64-apple-darwin && sudo mkdir -p /usr/local/bin/ && sudo cp ansible-operator-${RELEASE_VERSION}-x86_64-apple-darwin /usr/local/bin/ansible-operator && rm ansible-operator-${RELEASE_VERSION}-x86_64-apple-darwin
-$ chmod +x helm-operator-${RELEASE_VERSION}-x86_64-apple-darwin && sudo mkdir -p /usr/local/bin/ && sudo cp helm-operator-${RELEASE_VERSION}-x86_64-apple-darwin /usr/local/bin/helm-operator && rm helm-operator-${RELEASE_VERSION}-x86_64-apple-darwin
 ```
 
 ## Compile and install from master
