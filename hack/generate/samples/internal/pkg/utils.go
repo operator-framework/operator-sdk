@@ -46,9 +46,6 @@ func (ctx *SampleContext) CreateBundle() {
 
 	err = ctx.StripBundleAnnotations()
 	CheckError("stripping bundle annotations", err)
-
-	err = ctx.Make("bundle-build", "BUNDLE_IMG="+ctx.BundleImageName)
-	CheckError("running make bundle-build", err)
 }
 
 // StripBundleAnnotations removes all annotations applied to bundle manifests and metadata
