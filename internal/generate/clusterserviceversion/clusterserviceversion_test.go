@@ -16,11 +16,9 @@ package clusterserviceversion
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"regexp"
 
 	"github.com/blang/semver"
 	. "github.com/onsi/ginkgo"
@@ -30,10 +28,8 @@ import (
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	appsv1 "k8s.io/api/apps/v1"
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
 	"sigs.k8s.io/yaml"
 
-	metricsannotations "github.com/operator-framework/operator-sdk/internal/annotations/metrics"
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
 	genutil "github.com/operator-framework/operator-sdk/internal/generate/internal"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
@@ -46,31 +42,27 @@ var (
 	csvNewLayoutBundleDir = filepath.Join(csvDir, "output")
 
 	goTestDataDir       = filepath.Join(testDataDir, "go")
-	goAPIsDir           = filepath.Join(goTestDataDir, "api")
 	goStaticDir         = filepath.Join(goTestDataDir, "static")
 	goBasicOperatorPath = filepath.Join(goStaticDir, "basic.operator.yaml")
 )
 
 var (
 	col *collector.Manifests
-	cfg *config.Config
-)
-
-const (
-	testSDKbuilderAnnotationKey = "operators.operatorframework.io/builder"
-	testSDKlayoutAnnotationKey  = "operators.operatorframework.io/project_layout"
 )
 
 var (
-	baseCSV, baseCSVUIMeta, newCSV          *v1alpha1.ClusterServiceVersion
-	baseCSVStr, baseCSVUIMetaStr, newCSVStr string
+	// Base CSVs
+	baseCSV, baseCSVUIMeta       *v1alpha1.ClusterServiceVersion
+	baseCSVStr, baseCSVUIMetaStr string
+
+	// Updated CSVs
+	newCSV, newCSVUIMeta *v1alpha1.ClusterServiceVersion
+	newCSVUIMetaStr      string
 )
 
 var _ = BeforeSuite(func() {
 	col = &collector.Manifests{}
 	collectManifestsFromFileHelper(col, goBasicOperatorPath)
-
-	cfg = readConfigHelper(goTestDataDir)
 
 	initTestCSVsHelper()
 })
@@ -83,8 +75,8 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 		g            Generator
 		buf          *bytes.Buffer
 		operatorName = "memcached-operator"
-		operatorType = projutil.OperatorTypeGo
-		version      = "0.0.1"
+		zeroZeroOne  = "0.0.1"
+		zeroZeroTwo  = "0.0.2"
 	)
 
 	BeforeEach(func() {
@@ -103,114 +95,55 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 			BeforeEach(func() {
 				tmp, err = ioutil.TempDir(".", "")
 				Expect(err).ToNot(HaveOccurred())
+				col.ClusterServiceVersions = []v1alpha1.ClusterServiceVersion{*baseCSVUIMeta}
 			})
 
 			AfterEach(func() {
 				if tmp != "" {
 					os.RemoveAll(tmp)
 				}
+				col.ClusterServiceVersions = nil
 			})
 
 			It("should write a ClusterServiceVersion manifest to an io.Writer", func() {
 				g = Generator{
 					OperatorName: operatorName,
-					OperatorType: operatorType,
-					Version:      version,
+					Version:      zeroZeroOne,
 					Collector:    col,
 				}
 				opts := []Option{
-					WithBase(csvBasesDir, goAPIsDir, projutil.InteractiveHardOff),
 					WithWriter(buf),
 				}
 				Expect(g.Generate(opts...)).ToNot(HaveOccurred())
-				outputCSV := removeSDKAnnotationsFromCSVString(buf.String())
-				Expect(outputCSV).To(MatchYAML(newCSVStr))
-			})
-			It("should write a ClusterServiceVersion manifest to a base file", func() {
-				g = Generator{
-					OperatorName: operatorName,
-					OperatorType: operatorType,
-				}
-				opts := []Option{
-					WithBaseCreator(cfg, csvBasesDir, goAPIsDir, projutil.InteractiveHardOff),
-					WithBaseWriter(tmp),
-				}
-				Expect(g.Generate(opts...)).ToNot(HaveOccurred())
-				outputFile := filepath.Join(tmp, "bases", makeCSVFileName(operatorName))
-				Expect(outputFile).To(BeAnExistingFile())
-				Expect(readFileHelper(outputFile)).To(MatchYAML(baseCSVUIMetaStr))
-			})
-			It("should have sdk labels in annotations", func() {
-				g = Generator{
-					OperatorName: operatorName,
-					OperatorType: operatorType,
-				}
-				opts := []Option{
-					WithBase(csvBasesDir, goAPIsDir, projutil.InteractiveHardOff),
-					WithBaseWriter(tmp),
-				}
-				Expect(g.Generate(opts...)).ToNot(HaveOccurred())
-				outputFile := filepath.Join(tmp, "bases", makeCSVFileName(operatorName))
-				outputCSV, _, err := getCSVFromFile(outputFile)
-				Expect(err).ToNot(HaveOccurred())
-				Expect(outputFile).To(BeAnExistingFile())
-
-				annotations := outputCSV.GetAnnotations()
-				Expect(annotations).ToNot(BeNil())
-				Expect(annotations).Should(HaveKey(metricsannotations.BuilderObjectAnnotation))
-				Expect(annotations).Should(HaveKey(metricsannotations.LayoutObjectAnnotation))
-			})
-			It("should have sdk labels in annotations when generating with config", func() {
-				g = Generator{
-					OperatorName: operatorName,
-					OperatorType: operatorType,
-				}
-				opts := []Option{
-					WithBaseCreator(cfg, csvBasesDir, goAPIsDir, projutil.InteractiveHardOff),
-					WithBaseWriter(tmp),
-				}
-				Expect(g.Generate(opts...)).ToNot(HaveOccurred())
-				outputFile := filepath.Join(tmp, "bases", makeCSVFileName(operatorName))
-				outputCSV, _, err := getCSVFromFile(outputFile)
-				Expect(err).ToNot(HaveOccurred())
-				Expect(outputFile).To(BeAnExistingFile())
-
-				annotations := outputCSV.GetAnnotations()
-				Expect(annotations).ToNot(BeNil())
-				Expect(annotations).Should(HaveKey(metricsannotations.BuilderObjectAnnotation))
-				Expect(annotations).Should(HaveKey(metricsannotations.LayoutObjectAnnotation))
+				Expect(buf.String()).To(MatchYAML(newCSVUIMetaStr))
 			})
 			It("should write a ClusterServiceVersion manifest to a bundle file", func() {
 				g = Generator{
 					OperatorName: operatorName,
-					OperatorType: operatorType,
-					Version:      version,
+					Version:      zeroZeroOne,
 					Collector:    col,
 				}
 				opts := []Option{
-					WithBase(csvBasesDir, goAPIsDir, projutil.InteractiveHardOff),
 					WithBundleWriter(tmp),
 				}
 				Expect(g.Generate(opts...)).ToNot(HaveOccurred())
 				outputFile := filepath.Join(tmp, bundle.ManifestsDir, makeCSVFileName(operatorName))
 				Expect(outputFile).To(BeAnExistingFile())
-				Expect(readFileHelper(outputFile)).To(MatchYAML(newCSVStr))
+				Expect(readFileHelper(outputFile)).To(MatchYAML(newCSVUIMetaStr))
 			})
 			It("should write a ClusterServiceVersion manifest to a package file", func() {
 				g = Generator{
 					OperatorName: operatorName,
-					OperatorType: operatorType,
-					Version:      version,
+					Version:      zeroZeroOne,
 					Collector:    col,
 				}
 				opts := []Option{
-					WithBase(csvBasesDir, goAPIsDir, projutil.InteractiveHardOff),
 					WithPackageWriter(tmp),
 				}
 				Expect(g.Generate(opts...)).ToNot(HaveOccurred())
 				outputFile := filepath.Join(tmp, g.Version, makeCSVFileName(operatorName))
 				Expect(outputFile).To(BeAnExistingFile())
-				Expect(readFileHelper(outputFile)).To(MatchYAML(newCSVStr))
+				Expect(readFileHelper(outputFile)).To(MatchYAML(newCSVUIMetaStr))
 			})
 		})
 
@@ -219,8 +152,7 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 			BeforeEach(func() {
 				g = Generator{
 					OperatorName: operatorName,
-					OperatorType: operatorType,
-					Version:      version,
+					Version:      zeroZeroOne,
 					Collector:    col,
 				}
 			})
@@ -229,58 +161,59 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 				opts := []Option{}
 				Expect(g.Generate(opts...)).To(MatchError(noGetWriterError))
 			})
-			It("should return an error without a getWriter", func() {
-				opts := []Option{
-					WithBase(csvBasesDir, goAPIsDir, projutil.InteractiveHardOff),
-				}
-				Expect(g.Generate(opts...)).To(MatchError(noGetWriterError))
-			})
-			It("should return an error without a getBase", func() {
-				opts := []Option{
-					WithWriter(&bytes.Buffer{}),
-				}
-				Expect(g.Generate(opts...)).To(MatchError(noGetBaseError))
-			})
-		})
-
-		Context("to create a new base ClusterServiceVersion", func() {
-			It("should return the default base object", func() {
-				g = Generator{
-					OperatorName: operatorName,
-					OperatorType: operatorType,
-					config:       cfg,
-					getBase:      makeBaseGetter(baseCSV),
-				}
-				csv, err := g.generate()
-				Expect(err).ToNot(HaveOccurred())
-				Expect(csv).To(Equal(baseCSV))
-			})
-			It("should return a base object with customresourcedefinitions", func() {
-				g = Generator{
-					OperatorName: operatorName,
-					OperatorType: operatorType,
-					config:       cfg,
-					getBase:      makeBaseGetter(baseCSVUIMeta),
-				}
-				csv, err := g.generate()
-				Expect(err).ToNot(HaveOccurred())
-				Expect(csv).To(Equal(baseCSVUIMeta))
-			})
 		})
 
 		Context("to create a new ClusterServiceVersion", func() {
-			It("should return a new object", func() {
+			It("should return a valid object", func() {
+				col.ClusterServiceVersions = []v1alpha1.ClusterServiceVersion{*baseCSV}
 				g = Generator{
 					OperatorName: operatorName,
-					OperatorType: operatorType,
-					Version:      version,
+					Version:      zeroZeroOne,
 					Collector:    col,
-					config:       cfg,
-					getBase:      makeBaseGetter(baseCSVUIMeta),
 				}
 				csv, err := g.generate()
 				Expect(err).ToNot(HaveOccurred())
 				Expect(csv).To(Equal(newCSV))
+			})
+			It("should return an object with '.spec.replaces' and '.metadata.annotations['olm.skipRange']'", func() {
+				baseCSVUIMetaIn := baseCSVUIMeta.DeepCopy()
+				baseCSVUIMetaIn.GetAnnotations()["olm.skipRange"] = "<0.0.2"
+				baseCSVUIMetaIn.Spec.Replaces = "memcached-operator.v0.0.2"
+				col.ClusterServiceVersions = []v1alpha1.ClusterServiceVersion{*baseCSVUIMetaIn}
+				g = Generator{
+					OperatorName: operatorName,
+					Version:      "0.0.3",
+					Collector:    col,
+				}
+				csv, err := g.generate()
+				Expect(err).ToNot(HaveOccurred())
+				csvExp := newCSVUIMeta.DeepCopy()
+				csvExp.SetName("memcached-operator.v0.0.3")
+				csvExp.GetAnnotations()["olm.skipRange"] = "<0.0.2"
+				csvExp.Spec.Replaces = "memcached-operator.v0.0.2"
+				csvExp.Spec.Version.Patch = 3
+				Expect(csv).To(Equal(csvExp))
+			})
+			It("should return a new object with version set", func() {
+				col.ClusterServiceVersions = []v1alpha1.ClusterServiceVersion{*baseCSVUIMeta}
+				g = Generator{
+					OperatorName: operatorName,
+					Version:      zeroZeroOne,
+					Collector:    col,
+				}
+				csv, err := g.generate()
+				Expect(err).ToNot(HaveOccurred())
+				Expect(csv).To(Equal(newCSVUIMeta))
+			})
+			It("should return a new object with base version and name preserved", func() {
+				col.ClusterServiceVersions = []v1alpha1.ClusterServiceVersion{*newCSVUIMeta}
+				g = Generator{
+					OperatorName: operatorName,
+					Collector:    col,
+				}
+				csv, err := g.generate()
+				Expect(err).ToNot(HaveOccurred())
+				Expect(csv).To(Equal(newCSVUIMeta))
 			})
 		})
 
@@ -288,18 +221,17 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 			It("should return an updated object", func() {
 				g = Generator{
 					OperatorName: operatorName,
-					OperatorType: operatorType,
-					Version:      version,
-					Collector:    &collector.Manifests{},
-					config:       cfg,
-					getBase:      makeBaseGetter(newCSV),
+					Version:      zeroZeroOne,
+					Collector: &collector.Manifests{
+						ClusterServiceVersions: []v1alpha1.ClusterServiceVersion{*newCSVUIMeta},
+					},
 				}
 				// Update the input's and expected CSV's Deployment image.
 				collectManifestsFromFileHelper(g.Collector, goBasicOperatorPath)
 				Expect(len(g.Collector.Deployments)).To(BeNumerically(">=", 1))
 				imageTag := "controller:v" + g.Version
 				modifyDepImageHelper(&g.Collector.Deployments[0].Spec, imageTag)
-				updatedCSV := updateCSV(newCSV, modifyCSVDepImageHelper(imageTag))
+				updatedCSV := updateCSV(newCSVUIMeta, modifyCSVDepImageHelper(imageTag))
 
 				csv, err := g.generate()
 				Expect(err).ToNot(HaveOccurred())
@@ -309,24 +241,30 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 
 		Context("to upgrade an existing ClusterServiceVersion", func() {
 			It("should return an upgraded object", func() {
+				col.ClusterServiceVersions = []v1alpha1.ClusterServiceVersion{*newCSVUIMeta}
 				g = Generator{
 					OperatorName: operatorName,
-					OperatorType: operatorType,
-					Version:      "0.0.2",
+					Version:      zeroZeroTwo,
 					Collector:    col,
-					config:       cfg,
-					getBase:      makeBaseGetter(newCSV),
-					// Bundles need a path, usually set by an Option, to an existing
-					// CSV manifest so "replaces" can be set correctly.
-					bundledPath: filepath.Join(csvNewLayoutBundleDir, "memcached-operator.clusterserviceversion.yaml"),
 				}
 				csv, err := g.generate()
 				Expect(err).ToNot(HaveOccurred())
-				Expect(csv).To(Equal(upgradeCSV(newCSV, g.OperatorName, g.Version)))
+				Expect(csv).To(Equal(upgradeCSV(newCSVUIMeta, g.OperatorName, g.Version)))
 			})
 		})
 	})
 
+	Context("with incorrect configuration", func() {
+		It("should return an error when a base CSV has an invalid name", func() {
+			col.ClusterServiceVersions = []v1alpha1.ClusterServiceVersion{*baseCSV}
+			g = Generator{
+				OperatorName: operatorName,
+				Collector:    col,
+			}
+			_, err := g.generate()
+			Expect(err).To(HaveOccurred())
+		})
+	})
 })
 
 var _ = Describe("Generation requires interaction", func() {
@@ -373,16 +311,6 @@ func collectManifestsFromFileHelper(col *collector.Manifests, path string) {
 	ExpectWithOffset(1, f.Close()).Should(Succeed())
 }
 
-func readConfigHelper(dir string) *config.Config {
-	wd, err := os.Getwd()
-	ExpectWithOffset(1, err).ToNot(HaveOccurred())
-	ExpectWithOffset(1, os.Chdir(dir)).ToNot(HaveOccurred())
-	cfg, err := projutil.ReadConfig()
-	ExpectWithOffset(1, err).ToNot(HaveOccurred())
-	ExpectWithOffset(1, os.Chdir(wd)).ToNot(HaveOccurred())
-	return cfg
-}
-
 func initTestCSVsHelper() {
 	var err error
 	path := filepath.Join(csvBasesDir, "memcached-operator.clusterserviceversion.yaml")
@@ -392,14 +320,17 @@ func initTestCSVsHelper() {
 	baseCSVUIMeta, baseCSVUIMetaStr, err = getCSVFromFile(path)
 	ExpectWithOffset(1, err).ToNot(HaveOccurred())
 	path = filepath.Join(csvNewLayoutBundleDir, "memcached-operator.clusterserviceversion.yaml")
-	newCSV, newCSVStr, err = getCSVFromFile(path)
+	newCSV, _, err = getCSVFromFile(path)
+	ExpectWithOffset(1, err).ToNot(HaveOccurred())
+	path = filepath.Join(csvNewLayoutBundleDir, "with-ui-metadata.clusterserviceversion.yaml")
+	newCSVUIMeta, newCSVUIMetaStr, err = getCSVFromFile(path)
 	ExpectWithOffset(1, err).ToNot(HaveOccurred())
 }
 
 func readFileHelper(path string) string {
 	b, err := ioutil.ReadFile(path)
 	ExpectWithOffset(1, err).ToNot(HaveOccurred())
-	return removeSDKAnnotationsFromCSVString(string(b))
+	return string(b)
 }
 
 func modifyCSVDepImageHelper(tag string) func(csv *v1alpha1.ClusterServiceVersion) {
@@ -414,12 +345,6 @@ func modifyDepImageHelper(depSpec *appsv1.DeploymentSpec, tag string) {
 	containers := depSpec.Template.Spec.Containers
 	ExpectWithOffset(1, len(containers)).To(BeNumerically(">=", 1))
 	containers[0].Image = tag
-}
-
-func makeBaseGetter(csv *v1alpha1.ClusterServiceVersion) getBaseFunc {
-	return func() (*v1alpha1.ClusterServiceVersion, error) {
-		return csv.DeepCopy(), nil
-	}
 }
 
 func getCSVFromFile(path string) (*v1alpha1.ClusterServiceVersion, string, error) {
@@ -460,24 +385,9 @@ func updateCSV(csv *v1alpha1.ClusterServiceVersion,
 func upgradeCSV(csv *v1alpha1.ClusterServiceVersion, name, version string) *v1alpha1.ClusterServiceVersion {
 	upgraded := csv.DeepCopy()
 
-	// Update CSV name and upgrade version, then add "replaces" for the old CSV name.
-	oldName := upgraded.GetName()
+	// Update CSV name and upgrade version.
 	upgraded.SetName(genutil.MakeCSVName(name, version))
 	upgraded.Spec.Version = operatorversion.OperatorVersion{Version: semver.MustParse(version)}
-	upgraded.Spec.Replaces = oldName
 
 	return upgraded
-}
-
-// removeSDKAnnotationsFromCSVString removes SDK annotations from test CSVs.
-// These annotations will update on each new release and will cause tests to fail erroneously,
-// so they should be removed for each test case.
-func removeSDKAnnotationsFromCSVString(csv string) string {
-	builderRe := regexp.MustCompile(fmt.Sprintf(".*%s: .[^\n]+\n", regexp.QuoteMeta(testSDKbuilderAnnotationKey)))
-	layoutRe := regexp.MustCompile(fmt.Sprintf(".*%s: .[^\n]+\n", regexp.QuoteMeta(testSDKlayoutAnnotationKey)))
-
-	csv = builderRe.ReplaceAllString(csv, "")
-	csv = layoutRe.ReplaceAllString(csv, "")
-
-	return csv
 }

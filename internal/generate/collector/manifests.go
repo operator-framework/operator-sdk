@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 
 	scorecardv1alpha3 "github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
+	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	admissionregv1 "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -39,6 +40,7 @@ import (
 
 // Manifests holds a collector of all manifests relevant to CSV updates.
 type Manifests struct {
+	ClusterServiceVersions           []operatorsv1alpha1.ClusterServiceVersion
 	Roles                            []rbacv1.Role
 	ClusterRoles                     []rbacv1.ClusterRole
 	RoleBindings                     []rbacv1.RoleBinding
@@ -57,6 +59,7 @@ type Manifests struct {
 }
 
 var (
+	csvGK                  = operatorsv1alpha1.SchemeGroupVersion.WithKind("ClusterServiceVersion").GroupKind()
 	roleGK                 = rbacv1.SchemeGroupVersion.WithKind("Role").GroupKind()
 	clusterRoleGK          = rbacv1.SchemeGroupVersion.WithKind("ClusterRole").GroupKind()
 	roleBindingGK          = rbacv1.SchemeGroupVersion.WithKind("RoleBinding").GroupKind()
@@ -96,6 +99,8 @@ func (c *Manifests) UpdateFromDirs(deployDir, crdsDir string) error {
 
 			gvk := typeMeta.GroupVersionKind()
 			switch gvk.GroupKind() {
+			case csvGK:
+				err = c.addClusterServiceVersions(manifest)
 			case roleGK:
 				err = c.addRoles(manifest)
 			case clusterRoleGK:
@@ -166,6 +171,8 @@ func (c *Manifests) UpdateFromReader(r io.Reader) error {
 
 		gvk := typeMeta.GroupVersionKind()
 		switch gvk.GroupKind() {
+		case csvGK:
+			err = c.addClusterServiceVersions(manifest)
 		case roleGK:
 			err = c.addRoles(manifest)
 		case clusterRoleGK:
@@ -207,6 +214,19 @@ func (c *Manifests) UpdateFromReader(r io.Reader) error {
 		return fmt.Errorf("error removing duplicate manifests: %v", err)
 	}
 
+	return nil
+}
+
+// addClusterServiceVersions assumes all manifest data in rawManifests are ClusterServiceVersions
+// and adds them to the collector.
+func (c *Manifests) addClusterServiceVersions(rawManifests ...[]byte) error {
+	for _, rawManifest := range rawManifests {
+		csv := operatorsv1alpha1.ClusterServiceVersion{}
+		if err := yaml.Unmarshal(rawManifest, &csv); err != nil {
+			return err
+		}
+		c.ClusterServiceVersions = append(c.ClusterServiceVersions, csv)
+	}
 	return nil
 }
 

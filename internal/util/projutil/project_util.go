@@ -89,26 +89,6 @@ func ReadConfig() (*config.Config, error) {
 	if err = c.Unmarshal(b); err != nil {
 		return nil, err
 	}
-
-	fmt.Printf("config %+v\n", c)
-	/*
-		TODO: remove
-
-			config &{
-				Version:3-alpha
-				Domain:example.com
-				Repo:github.com/example-inc/memcached-operator
-				ProjectName:memcached-operator
-				Resources:
-					[{Group:cache
-					Version:v1alpha1
-					Kind:Memcached}]
-				MultiGroup:false
-				Layout:go.kubebuilder.io/v2
-				Plugins:map[go.sdk.operatorframework.io/v2-alpha:map[]
-			}
-
-	*/
 	return c, nil
 }
 
@@ -124,6 +104,15 @@ func PluginKeyToOperatorType(pluginKey string) OperatorType {
 		return OperatorTypeAnsible
 	}
 	return OperatorTypeUnknown
+}
+
+// GetProjectLayout returns the `layout` field in PROJECT file that is v3.
+// If not, it will return "go" because that was the only project type supported for project versions < v3.
+func GetProjectLayout(cfg *config.Config) string {
+	if cfg == nil || !cfg.IsV3() || cfg.Layout == "" {
+		return "go"
+	}
+	return cfg.Layout
 }
 
 var flagRe = regexp.MustCompile("(.* )?-v(.* )?")

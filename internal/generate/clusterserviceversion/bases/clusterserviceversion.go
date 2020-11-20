@@ -62,7 +62,6 @@ type ClusterServiceVersion struct {
 // GetBase returns a base v1alpha1.ClusterServiceVersion, populated
 // either with default values or, if b.BasePath is set, bytes from disk.
 func (b ClusterServiceVersion) GetBase() (base *v1alpha1.ClusterServiceVersion, err error) {
-	fmt.Printf("\nb.basepath:\t%v\n", b.BasePath)
 	if b.BasePath != "" {
 		if base, err = readClusterServiceVersionBase(b.BasePath); err != nil {
 			return nil, fmt.Errorf("error reading existing ClusterServiceVersion base %s: %v", b.BasePath, err)
@@ -80,7 +79,6 @@ func (b ClusterServiceVersion) GetBase() (base *v1alpha1.ClusterServiceVersion, 
 	}
 
 	if b.APIsDir != "" {
-		fmt.Printf("\nb.ApisDir:\t%v\nb.opty:\t%v\n\n", b.APIsDir, b.OperatorName)
 		switch b.OperatorType {
 		case projutil.OperatorTypeGo:
 			// Update descriptions from the APIs dir.

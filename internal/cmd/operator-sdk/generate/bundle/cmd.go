@@ -30,7 +30,6 @@ type bundleCmd struct {
 	metadata  bool
 
 	// Common options.
-	projectName  string
 	version      string
 	inputDir     string
 	outputDir    string
@@ -44,6 +43,10 @@ type bundleCmd struct {
 	channels       string
 	defaultChannel string
 	overwrite      bool
+
+	// These are set if a PROJECT config is not present.
+	layout      string
+	packageName string
 }
 
 // NewCmd returns the 'bundle' command configured for the new project layout.
@@ -124,4 +127,6 @@ func (c *bundleCmd) addFlagsTo(fs *pflag.FlagSet) {
 	fs.StringVar(&c.defaultChannel, "default-channel", "", "The default channel for the bundle")
 	fs.BoolVar(&c.overwrite, "overwrite", true, "Overwrite the bundle's metadata and Dockerfile if they exist")
 	fs.BoolVarP(&c.quiet, "quiet", "q", false, "Run in quiet mode")
+
+	fs.StringVar(&c.packageName, "package", "", "Bundle's package name")
 }

@@ -25,13 +25,13 @@ import (
 
 	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
 	"sigs.k8s.io/yaml"
 
 	metricsannotations "github.com/operator-framework/operator-sdk/internal/annotations/metrics"
 	scorecardannotations "github.com/operator-framework/operator-sdk/internal/annotations/scorecard"
 	genutil "github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/generate/internal"
 	gencsv "github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion"
+	"github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion/bases"
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
 	"github.com/operator-framework/operator-sdk/internal/registry"
 	"github.com/operator-framework/operator-sdk/internal/scorecard"
@@ -105,9 +105,21 @@ https://github.com/operator-framework/operator-registry/#manifest-format
 const defaultRootDir = "bundle"
 
 // setDefaults sets defaults useful to all modes of this subcommand.
-func (c *bundleCmd) setDefaults() (err error) {
-	if c.projectName, err = genutil.GetOperatorName(); err != nil {
-		return err
+func (c *bundleCmd) setDefaults() error {
+	if projutil.HasProjectFile() {
+		cfg, err := projutil.ReadConfig()
+		if err != nil {
+			return err
+		}
+		if c.packageName == "" {
+			c.packageName = cfg.ProjectName
+		}
+		c.layout = projutil.GetProjectLayout(cfg)
+	} else {
+		if c.packageName == "" {
+			return fmt.Errorf("package name is required if PROJECT config file is not present")
+		}
+		c.layout = "unknown"
 	}
 	return nil
 }
@@ -174,30 +186,30 @@ func (c bundleCmd) runManifests() (err error) {
 		}
 	}
 
-	operatorType := ""
-	cfg, err := projutil.ReadConfig()
-	if err == nil {
-		operatorType = cfg.Layout
-	}
-	csvGen := gencsv.Generator{
-		OperatorName: c.projectName,
-		OperatorType: projutil.PluginKeyToOperatorType(operatorType),
-		Version:      c.version,
-		Collector:    col,
+	// If no CSV is passed via stdin, an on-disk base is expected at basePath.
+	if len(col.ClusterServiceVersions) == 0 {
+		basePath := filepath.Join(c.kustomizeDir, "bases", c.packageName+".clusterserviceversion.yaml")
+		base, err := bases.ClusterServiceVersion{BasePath: basePath}.GetBase()
+		if err != nil {
+			return fmt.Errorf("error reading CSV base: %v", err)
+		}
+		col.ClusterServiceVersions = append(col.ClusterServiceVersions, *base)
 	}
 
+	var opts []gencsv.Option
 	stdout := genutil.NewMultiManifestWriter(os.Stdout)
-	opts := []gencsv.Option{
-		// By not passing apisDir and turning interactive prompts on, we forcibly rely on the kustomize base
-		// for UI metadata and uninferrable data.
-		gencsv.WithBase(c.kustomizeDir, "", projutil.InteractiveHardOff),
-	}
 	if c.stdout {
 		opts = append(opts, gencsv.WithWriter(stdout))
 	} else {
 		opts = append(opts, gencsv.WithBundleWriter(c.outputDir))
 	}
 
+	csvGen := gencsv.Generator{
+		OperatorName: c.packageName,
+		Version:      c.version,
+		Collector:    col,
+		Annotations:  metricsannotations.MakeBundleObjectAnnotations(c.layout),
+	}
 	if err := csvGen.Generate(opts...); err != nil {
 		return fmt.Errorf("error generating ClusterServiceVersion: %v", err)
 	}
@@ -270,15 +282,15 @@ func (c bundleCmd) runMetadata() error {
 	if filepath.Clean(outputDir) == filepath.Clean(directory) {
 		outputDir = ""
 	}
-	cfg, _ := projutil.ReadConfig()
-	return c.generateMetadata(cfg, directory, outputDir)
+
+	return c.generateMetadata(directory, outputDir)
 }
 
 // generateMetadata wraps the operator-registry bundle Dockerfile/metadata generator.
-func (c bundleCmd) generateMetadata(cfg *config.Config, manifestsDir, outputDir string) error {
+func (c bundleCmd) generateMetadata(manifestsDir, outputDir string) error {
 
 	metadataExists := isMetatdataExist(outputDir, manifestsDir)
-	err := bundle.GenerateFunc(manifestsDir, outputDir, c.projectName, c.channels, c.defaultChannel, c.overwrite)
+	err := bundle.GenerateFunc(manifestsDir, outputDir, c.packageName, c.channels, c.defaultChannel, c.overwrite)
 	if err != nil {
 		return fmt.Errorf("error generating bundle metadata: %v", err)
 	}
@@ -290,7 +302,7 @@ func (c bundleCmd) generateMetadata(cfg *config.Config, manifestsDir, outputDir 
 			bundleRoot = filepath.Dir(manifestsDir)
 		}
 
-		if err = updateMetadata(cfg, bundleRoot); err != nil {
+		if err = updateMetadata(c.layout, bundleRoot); err != nil {
 			return err
 		}
 	}
@@ -299,8 +311,8 @@ func (c bundleCmd) generateMetadata(cfg *config.Config, manifestsDir, outputDir 
 
 // TODO(estroz): these updates need to be atomic because the bundle's Dockerfile and annotations.yaml
 // cannot be out-of-sync.
-func updateMetadata(cfg *config.Config, bundleRoot string) error {
-	bundleLabels := metricsannotations.MakeBundleMetadataLabels(cfg)
+func updateMetadata(layout, bundleRoot string) error {
+	bundleLabels := metricsannotations.MakeBundleMetadataLabels(layout)
 	for key, value := range scorecardannotations.MakeBundleMetadataLabels(scorecard.DefaultConfigDir) {
 		if _, hasKey := bundleLabels[key]; hasKey {
 			return fmt.Errorf("internal error: duplicate bundle annotation key %s", key)
