@@ -10,10 +10,6 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: 1.15
-      - run: |
-          sudo apt-get install python3 python3-pip
-          pip3 install --upgrade setuptools pip
-          pip install --user ansible~=2.9.13
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
@@ -27,12 +23,15 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: 1.15
-      - run: |
-          sudo apt-get install python3 python3-pip
-          pip3 install --upgrade setuptools pip
-          pip install --user ansible~=2.9.13
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
       - run: sudo rm -rf /usr/local/bin/kustomize
-      - run: make test-e2e-ansible-molecule
+      - run: |
+          env
+          export PATH=/opt/python/3.6.7/bin:${PATH}
+          sudo apt-get install python3 python3-pip
+          pip3 install wheel
+          pip3 install --upgrade setuptools pip
+          pip install --user ansible~=2.9.13
+          make test-e2e-ansible-molecule
