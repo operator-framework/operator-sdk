@@ -24,8 +24,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	olmclient "github.com/operator-framework/operator-sdk/internal/olm/client"
@@ -130,7 +130,7 @@ func (rr *RegistryResources) CreatePackageManifestsRegistry(ctx context.Context,
 	}
 
 	// Objects to create.
-	objs := make([]runtime.Object, 0, len(binaryDataByConfigMap)+2)
+	objs := make([]client.Object, 0, len(binaryDataByConfigMap)+2)
 	// Options for creating a Deployment, since we need to mount all package
 	// ConfigMaps as volumes into pods.
 	opts := make([]func(*appsv1.Deployment), 0, 2*len(binaryDataByConfigMap)+1)
@@ -193,7 +193,7 @@ func (rr *RegistryResources) DeletePackageManifestsRegistry(ctx context.Context,
 	}
 
 	// Delete registry Deployment, Service, and ConfigMaps by type.
-	objs := make([]runtime.Object, len(configMaps)+2)
+	objs := make([]client.Object, len(configMaps)+2)
 	for i := range configMaps {
 		objs[i] = &configMaps[i]
 	}

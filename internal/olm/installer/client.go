@@ -33,12 +33,12 @@ import (
 	olmmanifests "github.com/operator-framework/operator-sdk/internal/bindata/olm"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	olmresourceclient "github.com/operator-framework/operator-sdk/internal/olm/client"
 )
@@ -299,7 +299,7 @@ func (c Client) doRequest(ctx context.Context, url string) (*http.Response, erro
 	return resp, nil
 }
 
-func toObjects(us ...unstructured.Unstructured) (objs []runtime.Object) {
+func toObjects(us ...unstructured.Unstructured) (objs []client.Object) {
 	for i := range us {
 		objs = append(objs, &us[i])
 	}
