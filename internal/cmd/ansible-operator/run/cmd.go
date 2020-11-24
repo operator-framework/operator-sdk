@@ -116,11 +116,10 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 			if err != nil {
 				return nil, err
 			}
-			return &client.DelegatingClient{
-				Reader:       cache,
-				Writer:       c,
-				StatusClient: c,
-			}, nil
+			delegatingClient := &client.NewDelegatingClientInput{
+				Client: c,
+			}
+			return client.NewDelegatingClient(*delegatingClient), nil
 		},
 	}
 

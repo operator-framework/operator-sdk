@@ -25,6 +25,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -105,11 +106,10 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 			if err != nil {
 				return nil, err
 			}
-			return &crclient.DelegatingClient{
-				Reader:       cache,
-				Writer:       c,
-				StatusClient: c,
-			}, nil
+			delegatingClient := &client.NewDelegatingClientInput{
+				Client: c,
+			}
+			return client.NewDelegatingClient(*delegatingClient), nil
 		},
 	}
 
