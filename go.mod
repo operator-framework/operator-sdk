@@ -16,7 +16,7 @@ require (
 	github.com/operator-framework/operator-registry v1.14.3
 	github.com/prometheus/client_golang v1.7.1
 	github.com/sergi/go-diff v1.0.0
-	github.com/sirupsen/logrus v1.6.0
+	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/afero v1.2.2
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
@@ -24,7 +24,7 @@ require (
 	github.com/stretchr/testify v1.6.1
 	golang.org/x/tools v0.0.0-20201014231627-1610a49f37af
 	gomodules.xyz/jsonpatch/v3 v3.0.1
-	helm.sh/helm/v3 v3.3.4
+	helm.sh/helm/v3 v3.4.1
 	k8s.io/api v0.19.4
 	k8s.io/apiextensions-apiserver v0.19.4
 	k8s.io/apimachinery v0.19.4
