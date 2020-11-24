@@ -20,6 +20,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
+
+	sdkVersion "github.com/operator-framework/operator-sdk/internal/version"
 )
 
 const (
@@ -27,6 +29,17 @@ const (
 )
 
 var (
+	buildInfo = prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Subsystem: subsystem,
+			Name:      "build_info",
+			Help:      "Build information for the ansible-operator binary",
+			ConstLabels: map[string]string{
+				"commit":  sdkVersion.GitCommit,
+				"version": sdkVersion.Version,
+			},
+		})
+
 	reconcileResults = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Subsystem: subsystem,
@@ -62,6 +75,11 @@ func recoverMetricPanic() {
 		logf.Log.WithName("metrics").Error(fmt.Errorf("%v", r),
 			"Recovering from metric function")
 	}
+}
+
+func RegisterBuildInfo(r prometheus.Registerer) {
+	buildInfo.Set(1)
+	r.MustRegister(buildInfo)
 }
 
 func ReconcileSucceeded(gvk string) {
