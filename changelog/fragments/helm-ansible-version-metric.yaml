@@ -1,0 +1,9 @@
+entries:
+  - description: >
+      In Ansible-based operators, added the `ansible_operator_build_info`
+      metric to instrument commit and version information.
+    kind: "addition"
+  - description: >
+      In Helm-based operators, added the `helm_operator_build_info`
+      metric to instrument commit and version information.
+    kind: "addition"

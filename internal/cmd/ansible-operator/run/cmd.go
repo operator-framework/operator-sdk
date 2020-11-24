@@ -33,9 +33,11 @@ import (
 	zapf "sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
+	crmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 
 	"github.com/operator-framework/operator-sdk/internal/ansible/controller"
 	"github.com/operator-framework/operator-sdk/internal/ansible/flags"
+	"github.com/operator-framework/operator-sdk/internal/ansible/metrics"
 	"github.com/operator-framework/operator-sdk/internal/ansible/proxy"
 	"github.com/operator-framework/operator-sdk/internal/ansible/proxy/controllermap"
 	"github.com/operator-framework/operator-sdk/internal/ansible/runner"
@@ -81,6 +83,7 @@ func NewCmd() *cobra.Command {
 
 func run(cmd *cobra.Command, f *flags.Flags) {
 	printVersion()
+	metrics.RegisterBuildInfo(crmetrics.Registry)
 
 	cfg, err := config.GetConfig()
 	if err != nil {
