@@ -171,10 +171,7 @@ func (u *Uninstall) deleteObjects(ctx context.Context, waitForDelete bool, objs 
 			u.Logf("%s %q deleted", lowerKind, obj.GetName())
 		}
 		if waitForDelete {
-			key, err := client.ObjectKeyFromObject(obj)
-			if err != nil {
-				return fmt.Errorf("get %s key: %v", lowerKind, err)
-			}
+			key := client.ObjectKeyFromObject(obj)
 			if err := wait.PollImmediateUntil(250*time.Millisecond, func() (bool, error) {
 				if err := u.config.Client.Get(ctx, key, obj); apierrors.IsNotFound(err) {
 					return true, nil
