@@ -1,0 +1,38 @@
+name: ansible
+on:
+  pull_request: {}
+
+jobs:
+  e2e:
+    name: e2e
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.15
+      - run: |
+          sudo apt-get install python3 python3-pip
+          pip3 install --upgrade setuptools pip
+          pip install --user ansible~=2.9.13
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - run: sudo rm -rf /usr/local/bin/kustomize
+      - run: make test-e2e-ansible
+
+  e2e-molecule:
+    name: e2e-molecule
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.15
+      - run: |
+          sudo apt-get install python3 python3-pip
+          pip3 install --upgrade setuptools pip
+          pip install --user ansible~=2.9.13
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - run: sudo rm -rf /usr/local/bin/kustomize
+      - run: make test-e2e-ansible-molecule

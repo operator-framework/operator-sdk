@@ -1,0 +1,32 @@
+name: go
+on:
+  pull_request: {}
+
+jobs:
+  e2e:
+    name: e2e
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.15
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - run: sudo rm -rf /usr/local/bin/kustomize
+      - run: make test-e2e-go
+
+  unit:
+    name: unit
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.15
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - run: make test-unit
+      - uses: shogo82148/actions-goveralls@v1
+        with:
+          path-to-profile: coverage.out
