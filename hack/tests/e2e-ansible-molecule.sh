@@ -10,6 +10,7 @@ header_text "Running tests to check ansible molecule"
 ROOTDIR="$(pwd)"
 TMPDIR="$(mktemp -d)"
 trap_add 'rm -rf $TMPDIR' EXIT
+export PATH=${HOME}/.local/bin:${PATH}
 pip3 install --user pyasn1==0.4.7 pyasn1-modules==0.2.6 idna==2.8 ipaddress==1.0.22
 pip3 install --user molecule==3.0.2
 pip3 install --user ansible-lint yamllint
