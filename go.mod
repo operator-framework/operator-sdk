@@ -12,7 +12,7 @@ require (
 	github.com/onsi/ginkgo v1.14.1
 	github.com/onsi/gomega v1.10.2
 	github.com/operator-framework/api v0.3.20
-	github.com/operator-framework/operator-lib v0.1.0
+	github.com/operator-framework/operator-lib v0.2.1-0.20201119204525-6700ae54da56
 	github.com/operator-framework/operator-registry v1.14.3
 	github.com/prometheus/client_golang v1.7.1
 	github.com/sergi/go-diff v1.0.0
@@ -25,12 +25,12 @@ require (
 	golang.org/x/tools v0.0.0-20201014231627-1610a49f37af
 	gomodules.xyz/jsonpatch/v3 v3.0.1
 	helm.sh/helm/v3 v3.3.4
-	k8s.io/api v0.19.2
-	k8s.io/apiextensions-apiserver v0.19.2
-	k8s.io/apimachinery v0.19.2
-	k8s.io/cli-runtime v0.19.2
-	k8s.io/client-go v0.19.2
-	k8s.io/kubectl v0.19.2
+	k8s.io/api v0.19.4
+	k8s.io/apiextensions-apiserver v0.19.4
+	k8s.io/apimachinery v0.19.4
+	k8s.io/cli-runtime v0.19.4
+	k8s.io/client-go v0.19.4
+	k8s.io/kubectl v0.19.4
 	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/controller-runtime v0.7.0-alpha.6
 	sigs.k8s.io/controller-tools v0.3.0

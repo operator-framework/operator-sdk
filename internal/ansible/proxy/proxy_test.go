@@ -25,7 +25,6 @@ import (
 
 	kcorev1 "k8s.io/api/core/v1"
 	kmetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -99,7 +98,7 @@ func TestHandler(t *testing.T) {
 	}
 }
 
-func createPod(name, namespace string, cl client.Client) (runtime.Object, error) {
+func createPod(name, namespace string, cl client.Client) (client.Object, error) {
 	three := int64(3)
 	pod := &kcorev1.Pod{
 		ObjectMeta: kmetav1.ObjectMeta{
