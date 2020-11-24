@@ -16,6 +16,7 @@ package definitions
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 	"sort"
 	"strings"
@@ -53,7 +54,7 @@ func getHalfBySep(s, sep string, half uint) string {
 
 // buildCRDDescriptionFromType builds a crdDescription for the Go API defined
 // by key from markers and type information in g.types.
-func (g generator) buildCRDDescriptionFromType(gvk schema.GroupVersionKind, kindType *markers.TypeInfo) (v1alpha1.CRDDescription, error) {
+func (g generator) buildCRDDescriptionFromType(gvk schema.GroupVersionKind, kindType *markers.TypeInfo) (v1alpha1.CRDDescription, int, error) {
 
 	// Initialize the description.
 	description := v1alpha1.CRDDescription{
@@ -64,17 +65,21 @@ func (g generator) buildCRDDescriptionFromType(gvk schema.GroupVersionKind, kind
 	}
 
 	// Parse resources and displayName from the kind type's markers.
+	descriptionOrder := math.MaxInt32
 	for _, markers := range kindType.Markers {
 		for _, marker := range markers {
 			switch d := marker.(type) {
 			case Description:
+				if d.Order != nil {
+					descriptionOrder = *d.Order
+				}
 				if d.DisplayName != "" {
 					description.DisplayName = d.DisplayName
 				}
 				if len(d.Resources) != 0 {
 					refs, err := d.Resources.toResourceReferences()
 					if err != nil {
-						return v1alpha1.CRDDescription{}, err
+						return v1alpha1.CRDDescription{}, 0, err
 					}
 					description.Resources = append(description.Resources, refs...)
 				}
@@ -89,113 +94,106 @@ func (g generator) buildCRDDescriptionFromType(gvk schema.GroupVersionKind, kind
 	if description.Name == "" {
 		description.Name = fmt.Sprintf("%s.%s", inflect.Pluralize(strings.ToLower(gvk.Kind)), gvk.Group)
 	}
-	sortDescription(description.Resources)
+	sortResources(description.Resources)
 
-	// Find spec and status in the kind type.
-	spec, err := findChildForDescType(kindType, specDescType)
+	specDescriptors, err := g.getTypedDescriptors(kindType, reflect.TypeOf(v1alpha1.SpecDescriptor{}), spec)
 	if err != nil {
-		return v1alpha1.CRDDescription{}, err
+		return v1alpha1.CRDDescription{}, 0, err
 	}
-	status, err := findChildForDescType(kindType, statusDescType)
-	if err != nil {
-		return v1alpha1.CRDDescription{}, err
+	for _, d := range specDescriptors {
+		description.SpecDescriptors = append(description.SpecDescriptors, d.(v1alpha1.SpecDescriptor))
 	}
 
-	// Find annotated fields of spec and parse them into specDescriptors.
-	markedFields, err := g.getMarkedChildrenOfField(spec)
+	statusDescriptors, err := g.getTypedDescriptors(kindType, reflect.TypeOf(v1alpha1.StatusDescriptor{}), status)
 	if err != nil {
-		return v1alpha1.CRDDescription{}, err
+		return v1alpha1.CRDDescription{}, 0, err
 	}
-	specDescriptors := []v1alpha1.SpecDescriptor{}
+	for _, d := range statusDescriptors {
+		description.StatusDescriptors = append(description.StatusDescriptors, d.(v1alpha1.StatusDescriptor))
+	}
+
+	return description, descriptionOrder, nil
+}
+
+func (g generator) getTypedDescriptors(kindType *markers.TypeInfo, t reflect.Type, descType string) ([]interface{}, error) {
+	// Find child in the kind type.
+	child, err := findChildForDescType(kindType, descType)
+	if err != nil {
+		return nil, err
+	}
+
+	// Find annotated fields of child and parse them into descriptors.
+	markedFields, err := g.getMarkedChildrenOfField(child)
+	if err != nil {
+		return nil, err
+	}
+
+	return getTypedDescriptors(markedFields, t, descType), nil
+}
+
+func getTypedDescriptors(markedFields map[string][]*fieldInfo, t reflect.Type, descType string) (descriptors []interface{}) {
+	descriptorBuckets := make(map[int][]reflect.Value)
+	orders := make([]int, 0)
 	for _, fields := range markedFields {
 		for _, field := range fields {
-			if descriptor, include := field.toSpecDescriptor(); include {
-				specDescriptors = append(specDescriptors, descriptor)
+			v := reflect.New(t)
+			if order, include := field.setDescriptorFields(v, descType); include {
+				descriptorBuckets[order] = append(descriptorBuckets[order], reflect.Indirect(v))
+				orders = append(orders, order)
 			}
 		}
 	}
-	sortDescriptors(specDescriptors)
-	description.SpecDescriptors = specDescriptors
+	sort.Ints(orders)
 
-	// Find annotated fields of status and parse them into statusDescriptors.
-	markedFields, err = g.getMarkedChildrenOfField(status)
-	if err != nil {
-		return v1alpha1.CRDDescription{}, err
-	}
-	statusDescriptors := []v1alpha1.StatusDescriptor{}
-	for _, fields := range markedFields {
-		for _, field := range fields {
-			if descriptor, include := field.toStatusDescriptor(); include {
-				statusDescriptors = append(statusDescriptors, descriptor)
-			}
+	descriptorVals := make([]reflect.Value, 0)
+	for _, order := range orders {
+		if bucket, hasOrder := descriptorBuckets[order]; hasOrder {
+			sortDescriptors(bucket)
+			descriptorVals = append(descriptorVals, bucket...)
+			delete(descriptorBuckets, order)
 		}
 	}
-	sortDescriptors(statusDescriptors)
-	description.StatusDescriptors = statusDescriptors
 
-	return description, nil
+	for _, v := range descriptorVals {
+		descriptors = append(descriptors, v.Interface())
+	}
+
+	return descriptors
 }
 
 // findChildForDescType returns a field with a tag matching string(typ) by searching all top-level fields in info.
 // If no field is found, an error is returned.
-func findChildForDescType(info *markers.TypeInfo, typ descType) (markers.FieldInfo, error) {
+func findChildForDescType(info *markers.TypeInfo, descType string) (markers.FieldInfo, error) {
 	for _, field := range info.Fields {
 		tags, err := structtag.Parse(string(field.Tag))
 		if err != nil {
 			return markers.FieldInfo{}, err
 		}
 		jsonTag, err := tags.Get("json")
-		if err == nil && jsonTag.Name == string(typ) {
+		if err == nil && jsonTag.Name == descType {
 			return field, nil
 		}
 	}
-	return markers.FieldInfo{}, fmt.Errorf("no %s found for type %s", typ, info.Name)
+	return markers.FieldInfo{}, fmt.Errorf("no %s found for type %s", descType, info.Name)
 }
 
 // sortDescriptors sorts a slice of structs with a Path field by comparing Path strings naturally.
-func sortDescriptors(v interface{}) {
-	slice := reflect.ValueOf(v)
-	values := toValueSlice(slice)
+func sortDescriptors(values []reflect.Value) {
 	sort.Slice(values, func(i, j int) bool {
 		return values[i].FieldByName("Path").String() < values[j].FieldByName("Path").String()
 	})
-	for i := 0; i < slice.Len(); i++ {
-		slice.Index(i).Set(values[i])
-	}
 }
 
-// sortDescription sorts a slice of structs with Name, Kind, and Version fields
+// sortResources sorts a slice of structs with Name, Kind, and Version fields
 // by comparing those field's strings in natural order.
-func sortDescription(v interface{}) {
-	slice := reflect.ValueOf(v)
-	values := toValueSlice(slice)
-	sort.Slice(values, func(i, j int) bool {
-		nameI := values[i].FieldByName("Name").String()
-		nameJ := values[j].FieldByName("Name").String()
-		if nameI == nameJ {
-			kindI := values[i].FieldByName("Kind").String()
-			kindJ := values[j].FieldByName("Kind").String()
-			if kindI == kindJ {
-				versionI := values[i].FieldByName("Version").String()
-				versionJ := values[j].FieldByName("Version").String()
-				return version.CompareKubeAwareVersionStrings(versionI, versionJ) > 0
+func sortResources(rs []v1alpha1.APIResourceReference) {
+	sort.Slice(rs, func(i, j int) bool {
+		if rs[i].Name == rs[j].Name {
+			if rs[i].Kind == rs[j].Kind {
+				return version.CompareKubeAwareVersionStrings(rs[i].Version, rs[j].Version) > 0
 			}
-			return kindI < kindJ
+			return rs[i].Kind < rs[j].Kind
 		}
-		return nameI < nameJ
+		return rs[i].Name < rs[j].Name
 	})
-	for i := 0; i < slice.Len(); i++ {
-		slice.Index(i).Set(values[i])
-	}
-}
-
-// toValueSlice creates a slice of values that can be sorted by arbitrary fields.
-func toValueSlice(slice reflect.Value) []reflect.Value {
-	sliceCopy := reflect.MakeSlice(slice.Type(), slice.Len(), slice.Len())
-	reflect.Copy(sliceCopy, slice)
-	values := make([]reflect.Value, sliceCopy.Len())
-	for i := 0; i < sliceCopy.Len(); i++ {
-		values[i] = sliceCopy.Index(i)
-	}
-	return values
 }

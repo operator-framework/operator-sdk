@@ -25,13 +25,16 @@ Possible type-level markers:
 	- Configures the kind's display name.
 - `+operator-sdk:csv:customresourcedefinitions:resources={{Kind1,v1alpha1,dns-name-1},{Kind2,v1,"dns-name-2"},...}`
 	- Configures the kind's resources.
+- `+operator-sdk:csv:customresourcedefinitions:order=1`
+	- Configures the order of this type in the list. Markers with order omitted have the highest order, i.e. are at the end of the list. If more than one marker has the same order, the corresponding descriptions will be sorted alphabetically and placed above others with higher orders. Pre-existing list elements in the CSV will be appended to the set of other elements in the order corresponding to its index.
 
 Possible field-level markers, all of which must contain the `type=[spec,status]` key-value pair:
 - `+operator-sdk:csv:customresourcedefinitions:type=[spec,status],displayName="some field display name"`
 	- Configures the field's display name.
 - `+operator-sdk:csv:customresourcedefinitions:type=[spec,status],xDescriptors={"urn:alm:descriptor:com.tectonic.ui:podCount","urn:alm:descriptor:io.kubernetes:custom"}`
 	- Configures the field's x-descriptors.
-
+- `+operator-sdk:csv:customresourcedefinitions:type=[spec,status],order=1`
+	- Configures the order of this type in the list. Markers with order omitted have the highest order, i.e. are at the end of the list. If more than one marker has the same order, the corresponding descriptions will be sorted alphabetically and placed above others with higher orders.
 
 Top-level `kind`, `name`, and `version` fields are parsed from API code.
 All `description` fields are parsed from type declaration and `struct` type field comments.
