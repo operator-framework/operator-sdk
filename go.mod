@@ -5,7 +5,7 @@ go 1.15
 require (
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/fatih/structtag v1.1.0
-	github.com/go-logr/logr v0.2.1
+	github.com/go-logr/logr v0.3.0
 	github.com/iancoleman/strcase v0.0.0-20191112232945-16388991a334
 	github.com/kr/text v0.1.0
 	github.com/markbates/inflect v1.0.4
@@ -32,7 +32,7 @@ require (
 	k8s.io/client-go v0.19.4
 	k8s.io/kubectl v0.19.4
 	rsc.io/letsencrypt v0.0.3 // indirect
-	sigs.k8s.io/controller-runtime v0.7.0-alpha.6
+	sigs.k8s.io/controller-runtime v0.7.0-alpha.7
 	sigs.k8s.io/controller-tools v0.3.0
 	sigs.k8s.io/kubebuilder/v2 v2.3.2-0.20201111001842-c158f4fa4207
 	sigs.k8s.io/yaml v1.2.0

@@ -29,7 +29,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/kubectl/pkg/util/slice"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 const (
@@ -161,7 +160,7 @@ func (u *Uninstall) Run(ctx context.Context) error {
 	return nil
 }
 
-func (u *Uninstall) deleteObjects(ctx context.Context, waitForDelete bool, objs ...controllerutil.Object) error {
+func (u *Uninstall) deleteObjects(ctx context.Context, waitForDelete bool, objs ...client.Object) error {
 	for _, obj := range objs {
 		obj := obj
 		lowerKind := strings.ToLower(obj.GetObjectKind().GroupVersionKind().Kind)
@@ -204,7 +203,7 @@ func (u *Uninstall) getInstalledCSV(ctx context.Context, subscription *v1alpha1.
 }
 
 // getCRDs returns the list of CRDs required by a CSV.
-func getCRDs(csv *v1alpha1.ClusterServiceVersion) (crds []controllerutil.Object) {
+func getCRDs(csv *v1alpha1.ClusterServiceVersion) (crds []client.Object) {
 	for _, resource := range csv.Status.RequirementStatus {
 		if resource.Kind == crdKind {
 			obj := &unstructured.Unstructured{}

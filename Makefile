@@ -9,7 +9,7 @@ export IMAGE_VERSION = v1.2.0
 export SIMPLE_VERSION = $(shell (test "$(shell git describe)" = "$(shell git describe --abbrev=0)" && echo $(shell git describe)) || echo $(shell git describe --abbrev=0)+git)
 export GIT_VERSION = $(shell git describe --dirty --tags --always)
 export GIT_COMMIT = $(shell git rev-parse HEAD)
-export K8S_VERSION = 1.19.2
+export K8S_VERSION = 1.19.4
 
 # Build settings
 export TOOLS_DIR = tools/bin

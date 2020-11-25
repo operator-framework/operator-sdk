@@ -23,10 +23,8 @@ import (
 
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	zapf "sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -97,20 +95,12 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 
 	// Set default manager options
 	options := manager.Options{
-		MetricsBindAddress:      f.MetricsAddress,
-		LeaderElection:          f.EnableLeaderElection,
-		LeaderElectionID:        f.LeaderElectionID,
-		LeaderElectionNamespace: f.LeaderElectionNamespace,
-		NewClient: func(cache cache.Cache, config *rest.Config, options crclient.Options) (crclient.Client, error) {
-			c, err := crclient.New(config, options)
-			if err != nil {
-				return nil, err
-			}
-			delegatingClient := &client.NewDelegatingClientInput{
-				Client: c,
-			}
-			return client.NewDelegatingClient(*delegatingClient), nil
-		},
+		MetricsBindAddress:         f.MetricsAddress,
+		LeaderElection:             f.EnableLeaderElection,
+		LeaderElectionID:           f.LeaderElectionID,
+		LeaderElectionResourceLock: resourcelock.ConfigMapsResourceLock,
+		LeaderElectionNamespace:    f.LeaderElectionNamespace,
+		ClientBuilder:              manager.NewClientBuilder(),
 	}
 
 	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)

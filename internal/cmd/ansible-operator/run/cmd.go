@@ -24,9 +24,8 @@ import (
 
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -106,21 +105,13 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 	// Set default manager options
 	// TODO: probably should expose the host & port as an environment variables
 	options := manager.Options{
-		HealthProbeBindAddress:  fmt.Sprintf("%s:%d", metricsHost, healthProbePort),
-		MetricsBindAddress:      f.MetricsAddress,
-		LeaderElection:          f.EnableLeaderElection,
-		LeaderElectionID:        f.LeaderElectionID,
-		LeaderElectionNamespace: f.LeaderElectionNamespace,
-		NewClient: func(cache cache.Cache, config *rest.Config, options client.Options) (client.Client, error) {
-			c, err := client.New(config, options)
-			if err != nil {
-				return nil, err
-			}
-			delegatingClient := &client.NewDelegatingClientInput{
-				Client: c,
-			}
-			return client.NewDelegatingClient(*delegatingClient), nil
-		},
+		HealthProbeBindAddress:     fmt.Sprintf("%s:%d", metricsHost, healthProbePort),
+		MetricsBindAddress:         f.MetricsAddress,
+		LeaderElection:             f.EnableLeaderElection,
+		LeaderElectionID:           f.LeaderElectionID,
+		LeaderElectionResourceLock: resourcelock.ConfigMapsResourceLock,
+		LeaderElectionNamespace:    f.LeaderElectionNamespace,
+		ClientBuilder:              manager.NewClientBuilder(),
 	}
 
 	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
