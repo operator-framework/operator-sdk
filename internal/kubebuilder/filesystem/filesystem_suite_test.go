@@ -12,7 +12,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package machinery
+package filesystem
 
 import (
 	"testing"
@@ -23,5 +23,5 @@ import (
 
 func TestScaffold(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Machinery Suite")
+	RunSpecs(t, "Filesystem Suite")
 }
