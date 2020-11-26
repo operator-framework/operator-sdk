@@ -22,7 +22,6 @@ import (
 
 	v1 "github.com/operator-framework/api/pkg/operators/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -31,7 +30,11 @@ import (
 	"k8s.io/kubectl/pkg/util/slice"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/yaml"
+)
+
+const (
+	csvKind = "ClusterServiceVersion"
+	crdKind = "CustomResourceDefinition"
 )
 
 type Uninstall struct {
@@ -91,21 +94,12 @@ func (u *Uninstall) Run(ctx context.Context) error {
 			return fmt.Errorf("get catalog source: %v", err)
 		}
 
-		// Since the install plan is owned by the subscription, we need to
-		// read all of the resource references from the install plan before
-		// deleting the subscription.
-		var crds, csvs, others []controllerutil.Object
-		if sub.Status.InstallPlanRef != nil {
-			ipKey := types.NamespacedName{
-				Namespace: sub.Status.InstallPlanRef.Namespace,
-				Name:      sub.Status.InstallPlanRef.Name,
-			}
-			var err error
-			crds, csvs, others, err = u.getInstallPlanResources(ctx, ipKey)
-			if err != nil {
-				return fmt.Errorf("get install plan resources: %v", err)
-			}
+		csv, err := u.getInstalledCSV(ctx, sub)
+		if err != nil {
+			return fmt.Errorf("get installed CSV %q: %v", sub.Status.InstalledCSV, err)
 		}
+
+		crds := getCRDs(csv)
 
 		// Delete the subscription first, so that no further installs or upgrades
 		// of the operator occur while we're cleaning up.
@@ -121,11 +115,13 @@ func (u *Uninstall) Run(ctx context.Context) error {
 			}
 		}
 
-		// Delete CSVs and all other objects created by the install plan.
-		objects := append(csvs, others...)
-		if err := u.deleteObjects(ctx, true, objects...); err != nil {
+		// OLM puts an ownerref on every namespaced resource to the CSV,
+		// and an owner label on every cluster scoped resource. When CSV is deleted
+		// kube and olm gc will remove all the referenced resources.
+		if err := u.deleteObjects(ctx, true, csv); err != nil {
 			return err
 		}
+
 	} else {
 		catsrc.SetNamespace(u.config.Namespace)
 		catsrc.SetName(CatalogNameForPackage(u.Package))
@@ -194,43 +190,35 @@ func (u *Uninstall) deleteObjects(ctx context.Context, waitForDelete bool, objs 
 	return nil
 }
 
-func (u *Uninstall) getInstallPlanResources(ctx context.Context, installPlanKey types.NamespacedName) (crds, csvs, others []controllerutil.Object, err error) {
-	installPlan := &v1alpha1.InstallPlan{}
-	if err := u.config.Client.Get(ctx, installPlanKey, installPlan); err != nil {
-		return nil, nil, nil, fmt.Errorf("get install plan: %v", err)
+// getInstalledCSV looks up the installed CSV name from the provided subscription and fetches it.
+func (u *Uninstall) getInstalledCSV(ctx context.Context, subscription *v1alpha1.Subscription) (*v1alpha1.ClusterServiceVersion, error) {
+	key := types.NamespacedName{
+		Name:      subscription.Status.InstalledCSV,
+		Namespace: subscription.GetNamespace(),
 	}
 
-	for _, step := range installPlan.Status.Plan {
-		lowerKind := strings.ToLower(step.Resource.Kind)
-		obj := &unstructured.Unstructured{Object: map[string]interface{}{}}
-		if err := yaml.Unmarshal([]byte(step.Resource.Manifest), &obj.Object); err != nil {
-			return nil, nil, nil, fmt.Errorf("parse %s manifest %q: %v", lowerKind, step.Resource.Name, err)
-		}
-		obj.SetGroupVersionKind(schema.GroupVersionKind{
-			Group:   step.Resource.Group,
-			Version: step.Resource.Version,
-			Kind:    step.Resource.Kind,
-		})
+	installedCSV := &v1alpha1.ClusterServiceVersion{}
+	if err := u.config.Client.Get(ctx, key, installedCSV); err != nil {
+		return nil, err
+	}
 
-		// TODO(joelanford): This seems necessary for namespaced resources
-		//    See: https://github.com/operator-framework/operator-lifecycle-manager/blob/c9405d035bc50d9aa290220cb8d75b0402e72707/pkg/controller/registry/resolver/rbac.go#L133
-		if supported, namespaced := bundle.IsSupported(step.Resource.Kind); supported && bool(namespaced) {
-			obj.SetNamespace(installPlanKey.Namespace)
-		}
+	installedCSV.SetGroupVersionKind(v1alpha1.SchemeGroupVersion.WithKind(csvKind))
+	return installedCSV, nil
+}
 
-		switch step.Resource.Kind {
-		case "CustomResourceDefinition":
+// getCRDs returns the list of CRDs required by a CSV.
+func getCRDs(csv *v1alpha1.ClusterServiceVersion) (crds []controllerutil.Object) {
+	for _, resource := range csv.Status.RequirementStatus {
+		if resource.Kind == crdKind {
+			obj := &unstructured.Unstructured{}
+			obj.SetGroupVersionKind(schema.GroupVersionKind{
+				Group:   resource.Group,
+				Version: resource.Version,
+				Kind:    resource.Kind,
+			})
+			obj.SetName(resource.Name)
 			crds = append(crds, obj)
-		case "ClusterServiceVersion":
-			csvs = append(csvs, obj)
-		default:
-			// Skip non-CRD/non-CSV resources in the install plan that were not created by the install plan.
-			// This means we avoid deleting things like the default service account.
-			if step.Status != v1alpha1.StepStatusCreated {
-				continue
-			}
-			others = append(others, obj)
 		}
 	}
-	return crds, csvs, others, nil
+	return
 }
