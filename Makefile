@@ -12,10 +12,10 @@ export GIT_COMMIT = $(shell git rev-parse HEAD)
 export K8S_VERSION = 1.18.8
 
 # Build settings
+export TOOLS_DIR = tools/bin
+export SCRIPTS_DIR = tools/scripts
 REPO = $(shell go list -m)
 BUILD_DIR = build
-TOOLS_DIR = tools/bin
-SCRIPTS_DIR = tools/scripts
 GO_ASMFLAGS = -asmflags "all=-trimpath=$(shell dirname $(PWD))"
 GO_GCFLAGS = -gcflags "all=-trimpath=$(shell dirname $(PWD))"
 GO_BUILD_ARGS = \
@@ -73,7 +73,7 @@ build/scorecard-test build/scorecard-test-kuttl build/custom-scorecard-tests:
 build/operator-sdk build/ansible-operator build/helm-operator:
 	go build $(GO_BUILD_ARGS) -o $(BUILD_DIR)/$(@F) ./cmd/$(@F)
 
-##@ Dev images
+##@ Dev image build
 
 # Convenience wrapper for building all remotely hosted images.
 .PHONY: image-build
@@ -89,6 +89,23 @@ image/%: build/%
 	mkdir -p ./images/$*/bin && mv $(BUILD_DIR)/$* ./images/$*/bin
 	docker build -t $(BUILD_IMAGE_REPO)/$*:dev -f ./images/$*/Dockerfile ./images/$*
 	rm -rf $(BUILD_DIR)
+
+##@ Release
+
+.PHONY: release
+release: ## Release target. See 'make -f release/Makefile help' for more information.
+	$(MAKE) -f release/Makefile $@
+
+.PHONY: prerelease
+prerelease: ## Write release commit changes. See 'make -f release/Makefile help' for more information.
+ifneq ($(RELEASE_VERSION),$(IMAGE_VERSION))
+	$(error "IMAGE_VERSION "$(IMAGE_VERSION)" must be updated to match RELEASE_VERSION "$(RELEASE_VERSION)" prior to creating a release commit")
+endif
+	$(MAKE) -f release/Makefile $@
+
+.PHONY: tag
+tag: ## Tag a release commit. See 'make -f release/Makefile help' for more information.
+	$(MAKE) -f release/Makefile $@
 
 ##@ Test
 
@@ -155,16 +172,6 @@ test-e2e-helm:: image/helm-operator ## Run Helm e2e tests
 test-e2e-integration:: ## Run integration tests
 	./hack/tests/integration.sh
 	./hack/tests/subcommand-olm-install.sh
-
-# TODO(estroz): remove changelog/release when goreleaser is added as release tool (they shouldn't be exposed as dev targets).
-
-.PHONY: changelog
-changelog: ## Generate CHANGELOG.md and migration guide updates
-	$(MAKE) -f release/Makefile changelog
-
-.PHONY: release
-release: clean ## Release the Operator SDK
-	$(MAKE) -f release/Makefile GO_BUILD_ARGS='$(GO_BUILD_ARGS)'
 
 .DEFAULT_GOAL := help
 .PHONY: help

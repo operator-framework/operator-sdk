@@ -3,7 +3,7 @@ dist: xenial
 
 language: go
 go:
-- 1.15.x
+- 1.15.5
 go_import_path: github.com/operator-framework/operator-sdk
 
 cache:
@@ -47,12 +47,16 @@ x_base_steps:
       - docker
 
 stages:
-  - check
-  - test
+  - name: check
+    if: type == pull_request
+  - name: test
+    if: type == pull_request
   - name: deploy
     if: type != pull_request AND ( tag IS present OR branch = master OR commit_message =~ /\[travis deploy\]/ )
   - name: deploy-manifest-multiarch
     if: type != pull_request AND ( tag IS present OR branch = master OR commit_message =~ /\[travis deploy\]/ )
+  - name: release
+    if: type != pull_request AND tag IS present
 
 jobs:
   include:
@@ -151,3 +155,12 @@ jobs:
       name: push manifest lists
       <<: *manifest-deploy
       script: make -f release/Makefile image-push-multiarch
+
+    ## Release jobs ##
+
+    - stage: release
+      name: publish release
+      before_install: git fetch origin --unshallow --tags
+      install: sudo ln -sf $(command -v gpg2) $(dirname $(command -v gpg2))/gpg
+      before_script: .ci/gpg/create-keyring.sh
+      script: make release

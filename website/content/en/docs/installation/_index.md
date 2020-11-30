@@ -1,99 +1,91 @@
 ---
-title: "Installation"
-linkTitle: "Installation"
-date: 2020-03-25
+title: Installation
+linkTitle: Installation
 weight: 2
 description: Install the Operator SDK CLI
 ---
 
-- [Prerequisites](#prerequisites)
 - [Install from Homebrew (macOS)](#install-from-homebrew-macos)
 - [Install from GitHub release](#install-from-github-release)
 - [Compile and install from master](#compile-and-install-from-master)
-
-## Prerequisites
-
-- [docker][docker-tool] version 17.03+ (or another tool compatible with multi-stage Dockerfiles).
-- [kubectl][kubectl-tool] version v1.11.3+ (v1.16.0+ if using `apiextensions.k8s.io/v1` CRDs).
-
-[docker-tool]:https://docs.docker.com/install/
-[kubectl-tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 
 ## Install from Homebrew (macOS)
 
 If you are using [Homebrew][homebrew_tool], you can install the SDK CLI tool with the following command:
 
 ```sh
-$ brew install operator-sdk
+brew install operator-sdk
 ```
 
 ## Install from GitHub release
 
-### Download the release binaries
+#### Prerequisites
+
+- [curl](https://curl.haxx.se/)
+- [gpg](https://gnupg.org/) version 2.0+
+
+#### 1. Download the release binary
+
+Set platform information:
 
 ```sh
-# Set the release version variable
-$ RELEASE_VERSION=v1.2.0
-# Linux
-$ curl -LO https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu
-# macOS
-$ curl -LO https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin
+export ARCH=$(case $(arch) in x86_64) echo -n amd64 ;; aarch64) echo -n arm64 ;; *) echo -n $(arch) ;; esac)
+export OS=$(uname | awk '{print tolower($0)}')
 ```
 
-#### Verify the downloaded release binaries
+Download the binary for your platform:
 
 ```sh
-# Linux
-$ curl -LO https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu.asc
-# macOS
-$ curl -LO https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin.asc
+export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/latest/download
+curl -LO ${OPERATOR_SDK_DL_URL}/operator-sdk_${OS}_${ARCH}
 ```
 
-To verify a release binary using the provided asc files, place the binary and corresponding asc file into the same directory and use the corresponding command:
+#### 2. Verify the downloaded binary
+
+Import the operator-sdk release GPG key:
 
 ```sh
-# Linux
-$ gpg --verify operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu.asc
-# macOS
-$ gpg --verify operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin.asc
+gpg --recv-keys 052996E2A20B5C7E
 ```
 
-If you do not have the maintainers public key on your machine, you will get an error message similar to this:
+Download the checksums file and its signature, then verify the signature:
 
 ```sh
-$ gpg --verify operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin.asc
-$ gpg: assuming signed data in 'operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin'
-$ gpg: Signature made Fri Apr  5 20:03:22 2019 CEST
-$ gpg:                using RSA key <KEY_ID>
-$ gpg: Can't check signature: No public key
+curl -LO ${OPERATOR_SDK_DL_URL}/checksums.txt
+curl -LO ${OPERATOR_SDK_DL_URL}/checksums.txt.asc
+gpg -u "Operator SDK (release) <cncf-operator-sdk@cncf.io>" --verify checksums.txt.asc
 ```
 
-To download the key, use the following command, replacing `$KEY_ID` with the RSA key string provided in the output of the previous command:
+You should see something similar to the following:
 
-```sh
-$ gpg --recv-key "$KEY_ID"
+```console
+gpg: assuming signed data in 'checksums.txt'
+gpg: Signature made Fri 30 Oct 2020 12:15:15 PM PDT
+gpg:                using RSA key ADE83605E945FA5A1BD8639C59E5B47624962185
+gpg: Good signature from "Operator SDK (release) <cncf-operator-sdk@cncf.io>" [ultimate]
 ```
 
-You'll need to specify a key server if one hasn't been configured. For example:
+Make sure the checksums match:
 
 ```sh
-$ gpg --keyserver keyserver.ubuntu.com --recv-key "$KEY_ID"
+grep operator-sdk_${OS}_${ARCH} checksums.txt | sha256sum -c -
 ```
 
-Now you should be able to verify the binary.
+You should see something similar to the following:
 
-### Install the release binary in your PATH
+```console
+operator-sdk_linux_amd64: OK
+```
+
+#### 3. Install the release binary in your PATH
 
 ```sh
-# Linux
-$ chmod +x operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu && sudo mkdir -p /usr/local/bin/ && sudo cp operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu /usr/local/bin/operator-sdk && rm operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu
-# macOS
-$ chmod +x operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin && sudo mkdir -p /usr/local/bin/ && sudo cp operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin /usr/local/bin/operator-sdk && rm operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin
+chmod +x operator-sdk_${OS}_${ARCH} && sudo mv operator-sdk_${OS}_${ARCH} /usr/local/bin/operator-sdk
 ```
 
 ## Compile and install from master
 
-### Prerequisites for compilation
+#### Prerequisites
 
 - [git][git_tool]
 - [mercurial][mercurial_tool] version 3.9+
@@ -101,14 +93,14 @@ $ chmod +x operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin && sudo mkdir -p 
 - [go][go_tool] version v1.15+.
 
 ```sh
-$ git clone https://github.com/operator-framework/operator-sdk
-$ cd operator-sdk
-$ git checkout master
-$ make install
+git clone https://github.com/operator-framework/operator-sdk
+cd operator-sdk
+git checkout master
+make install
 ```
 
 **Note:** Ensure that your `GOPROXY` is set with its default value for Go
-versions 1.15+ which is `https://proxy.golang.org,direct`.
+versions 1.15+ which is `"https://proxy.golang.org|direct"`.
 
 [homebrew_tool]:https://brew.sh/
 [git_tool]:https://git-scm.com/downloads
