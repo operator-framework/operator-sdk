@@ -28,6 +28,39 @@ operators easier by providing:
 - Tools for scaffolding and code generation to bootstrap a new project fast
 - Extensions to cover common operator use cases
 
+## Dependency and platform support
+
+### Go version
+
+Release binaries will be built with the Go compiler version specified in the Operator SDK's [prerequisites section][doc-readme-prereqs].
+
+### Kubernetes versions
+
+As the Operator SDK interacts directly with the Kubernetes API, certain API features are assumed to exist in the target cluster.
+The currently supported Kubernetes version will always be listed in the SDK [prerequisites section][doc-readme-prereqs].
+
+### Platforms
+
+The following matrix defines which architectures are supported for GNU Linux:
+
+|                               |     `amd64`     |     `arm64`     |    `ppc64le`    |     `s390x`     |
+|-------------------------------|-----------------|-----------------|-----------------|-----------------|
+| `operator-sdk`                | ✓               | ✓               | ✓               | ✓               |
+| `ansible-operator`            | ✓               | ✓               | ✓               | ✓               |
+| `helm-operator`               | ✓               | ✓               | ✓               | ✓               |
+| `scorecard-test` image        | ✓               | ✓               | ✓               | ✓               |
+| `scorecard-test-kuttl` image  | ✓               | ✓               | ✓               | -               |
+
+The following matrix defines which architectures are supported for MacOS Darwin:
+
+|                               |     `amd64`     |
+|-------------------------------|-----------------|
+| `operator-sdk`                | ✓               |
+| `ansible-operator`            | ✓               |
+| `helm-operator`               | ✓               |
+
+Support for the Windows platform is not on the roadmap at this time.
+
 ## License
 
 Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file for details.

@@ -1,3 +1,5 @@
+**This file will no longer be updated. Instead, refer to generated `changelog/generated/<version>.md`**
+
 ## v1.2.0
 
 ### Additions
