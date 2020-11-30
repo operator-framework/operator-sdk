@@ -28,12 +28,12 @@ function push_manifest_list() {
 }
 
 function get_arch_images(){
-    image=$1; shift || fatal "${FUNCNAME} usage error"
-    tag=$1; shift || fatal "${FUNCNAME} usage error"
-    arches="$@"
-    for arch in $arches; do
-        echo "$image-$arch:$tag"
-    done
+  image=$1; shift || fatal "${FUNCNAME} usage error"
+  tag=$1; shift || fatal "${FUNCNAME} usage error"
+  arches="$@"
+  for arch in $arches; do
+    echo "$image-$arch:$tag"
+  done
 }
 
 push_manifest_list "$@"
