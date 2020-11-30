@@ -23,3 +23,7 @@ import (
 type CatalogCreator interface {
 	CreateCatalog(ctx context.Context, name string) (*v1alpha1.CatalogSource, error)
 }
+
+type CatalogUpdater interface {
+	UpdateCatalog(ctx context.Context, cs *v1alpha1.CatalogSource) error
+}
