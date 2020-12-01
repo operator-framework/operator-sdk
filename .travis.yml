@@ -20,7 +20,7 @@ x_base_steps:
     before_install:
       # hack/ci/check-doc-only-update.sh needs to be sourced so
       # that it can properly exit the test early with success
-      - source hack/ci/check-doc-only-update.sh
+      - source hack/ci/check-doc-only-update.sh "$TRAVIS_COMMIT_RANGE"
       - git fetch origin --unshallow --tags
     after_failure:
       - kubectl get all --all-namespaces
