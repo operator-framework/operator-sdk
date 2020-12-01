@@ -2,11 +2,9 @@
 
 set -e
 
-# Make sure the TRAVIS_COMMIT_RANGE is valid, by catching any errors and exiting.
-if [ -z "$TRAVIS_COMMIT_RANGE" ] || ! git rev-list --quiet $TRAVIS_COMMIT_RANGE; then
-  echo "Invalid commit range. Skipping check for doc only update"
-  return 0
-fi
+# If running in Github actions: this should be set to "github.base_ref".
+# If running in Travis CI: this should be set to "$TRAVIS_COMMIT_RANGE".
+: ${1?"the first argument must be set to a commit-ish reference"}
 
 # Patterns to ignore.
 declare -a DOC_PATTERNS
@@ -23,9 +21,10 @@ DOC_PATTERNS=(
   "^(MAINTAINERS)"
   "^(SECURITY)"
   "^(LICENSE)"
+  "^(\.github/workflows/)"
 )
 
-if ! git diff --name-only $TRAVIS_COMMIT_RANGE | grep -qvE "$(IFS="|"; echo "${DOC_PATTERNS[*]}")"; then
-  echo "Only doc files were updated, not running the CI."
+if ! git diff --name-only $1 | grep -qvE "$(IFS="|"; echo "${DOC_PATTERNS[*]}")"; then
+  echo "true"
   exit 0
 fi
