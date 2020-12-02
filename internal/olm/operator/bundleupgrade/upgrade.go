@@ -71,7 +71,6 @@ func (u *Upgrade) setup(ctx context.Context) error {
 		return err
 	}
 
-	// TODO: Remove adding annotations here.
 	u.OperatorInstaller.PackageName = labels[registrybundle.PackageLabel]
 	u.OperatorInstaller.CatalogSourceName = operator.CatalogNameForPackage(u.OperatorInstaller.PackageName)
 	u.OperatorInstaller.StartingCSV = csv.Name

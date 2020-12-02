@@ -19,12 +19,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry/index"
@@ -125,6 +129,7 @@ func (c IndexImageCatalogCreator) updateCatalogSource(ctx context.Context, cs *v
 		"operators.operatorframework.io/injected-bundles":   string(injectedBundlesJSON),
 		"operators.operatorframework.io/registry-pod-name":  podName,
 	}
+
 	// Update catalog source with source type as grpc and address as the pod IP,
 	// and annotations for index image, injected bundles, and registry bundle add mode
 	if err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
@@ -157,15 +162,6 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 	// create new pod, delete existing registry pod based on annotation name found in catalog source object
 	// link new registry pod in catalog source by updating the address and annotations
 
-	const (
-		injectedBundlesAnnotation     = "operators.operatorframework.io/injected-bundles"
-		injectedBundlesModeAnnotation = "operators.operatorframework.io/inject-bundle-mode"
-		addedBundlesAnnotation        = "operators.operatorframework.io/added-bundles"
-	)
-
-	var addedBundlesList []map[string]string
-	var imageReferenceExists bool
-
 	dbPath, err := c.getDBPath(ctx)
 	if err != nil {
 		return fmt.Errorf("get database path: %v", err)
@@ -182,60 +178,20 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 		Name:      cs.Name,
 	}
 
-	previousaddedBundles := cs.GetAnnotations()[addedBundlesAnnotation]
-	if previousaddedBundles == "" {
-		// added bundles annotations doesn't exist
-		previousInjectedBundles := cs.GetAnnotations()[injectedBundlesAnnotation]
-		previousInjectedBundlesMode := cs.GetAnnotations()[injectedBundlesModeAnnotation]
-
-		if previousInjectedBundles == "" || previousInjectedBundlesMode == "" {
-			return errors.New("one of the annotations in {InjectedBundles, InjectedBundlesMode} are missing on the catalog source")
-		} else if previousInjectedBundles == "" && previousInjectedBundlesMode == "" {
-			// previous version of operator was installed in traditional means without executing `run bundle`,
-			// in which case, catalog source image reference would have been be set
-			if cs.Spec.Image != "" {
-				imageReferenceExists = true
-			}
-			addedBundlesList = []map[string]string{
-				{
-					"bundle": c.BundleImage,
-					"mode":   c.InjectBundleMode,
-				},
-			}
-
-		} else {
-			// if both injected-bundles and inject-bundle-mode annotations are present
-			var injectedBundles []string
-			if err = json.Unmarshal([]byte(previousInjectedBundles), &injectedBundles); err != nil {
-				return fmt.Errorf("injected bundles unmarshal error: %v", err)
-			}
-
-			if len(injectedBundles) > 1 {
-				return fmt.Errorf("length of injected bundles is %v", len(injectedBundles))
-			}
-			addedBundlesList = []map[string]string{
-				{
-					"bundle": injectedBundles[0],
-					"mode":   previousInjectedBundlesMode,
-				},
-				{
-					"bundle": c.BundleImage,
-					"mode":   c.InjectBundleMode,
-				},
-			}
-		}
-
-	} else {
-		// if added bundles annotation already exists, add the current bundle to the existing list
-		newBundle := map[string]string{
-			"bundle": c.BundleImage,
-			"mode":   c.InjectBundleMode,
-		}
-		addedBundlesList = append(addedBundlesList, newBundle)
+	var (
+		prevRegistryPodName string
+		prevPodExists       bool
+	)
+	if podName, ok := cs.GetAnnotations()[registryPodNameAnnotation]; ok {
+		prevPodExists = true
+		prevRegistryPodName = podName
 	}
 
+	// set annotations
+	addedBundles, imageReferenceExists, err := c.setAnnotations(ctx, cs)
+
 	// JSON marshal injected bundles
-	addedBundlesJSON, err := json.Marshal(addedBundlesList)
+	addedBundlesJSON, err := json.Marshal(addedBundles)
 	if err != nil {
 		return fmt.Errorf("error marshaling added bundles: %v", err)
 	}
@@ -274,7 +230,130 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 		return fmt.Errorf("error setting address, source type and annotations for catalog source: %v", err)
 	}
 
-	log.Infof("Successfully updated the catalog source %s with address and annotations", cs.Name)
+	log.Infof("Updated catalog source %s with address and annotations", cs.Name)
+
+	if prevPodExists {
+		if err = c.deleteRegistryPod(ctx, prevRegistryPodName); err != nil {
+			return fmt.Errorf("error cleaning up previous registry pod: %v", err)
+		}
+
+	}
+
+	return nil
+}
+
+const (
+	injectedBundlesAnnotation     = "operators.operatorframework.io/injected-bundles"
+	injectedBundlesModeAnnotation = "operators.operatorframework.io/inject-bundle-mode"
+	addedBundlesAnnotation        = "operators.operatorframework.io/added-bundles"
+	registryPodNameAnnotation     = "operators.operatorframework.io/registry-pod-name"
+)
+
+func (c IndexImageCatalogCreator) setAnnotations(ctx context.Context, cs *v1alpha1.CatalogSource) ([]map[string]string, bool, error) {
+	var (
+		addedBundlesList     []map[string]string
+		imageReferenceExists bool
+	)
+
+	previousaddedBundles := cs.GetAnnotations()[addedBundlesAnnotation]
+	if previousaddedBundles == "" {
+		// added-bundles annotations doesn't exist, fetch injected-bundles and inject-bundle-mode annotations
+		previousInjectedBundles := cs.GetAnnotations()[injectedBundlesAnnotation]
+		previousInjectedBundlesMode := cs.GetAnnotations()[injectedBundlesModeAnnotation]
+
+		if previousInjectedBundles == "" || previousInjectedBundlesMode == "" {
+			// either both should be present, or both should be absent
+			return []map[string]string{}, imageReferenceExists,
+				errors.New("one of the annotations in {InjectedBundles, InjectedBundlesMode} is missing on the catalog source")
+		} else if previousInjectedBundles == "" && previousInjectedBundlesMode == "" {
+			// previous version of operator was installed in traditional means without executing `run bundle`,
+			// in which case, catalog source image reference would have been be set
+			if cs.Spec.Image != "" {
+				imageReferenceExists = true
+			}
+			addedBundlesList = []map[string]string{
+				{
+					"bundle": c.BundleImage,
+					"mode":   c.InjectBundleMode,
+				},
+			}
+
+		} else {
+			// if both injected-bundles and inject-bundle-mode annotations are present,
+			// construct added bundles from previous bundle and current bundle values
+			var injectedBundles []string
+			if err := json.Unmarshal([]byte(previousInjectedBundles), &injectedBundles); err != nil {
+				return []map[string]string{}, imageReferenceExists, fmt.Errorf("injected bundles unmarshal error: %v", err)
+			}
+
+			if len(injectedBundles) > 1 {
+				return []map[string]string{}, imageReferenceExists, fmt.Errorf("length of injected bundles is %v", len(injectedBundles))
+			}
+			addedBundlesList = []map[string]string{
+				{
+					"bundle": injectedBundles[0],
+					"mode":   previousInjectedBundlesMode,
+				},
+				{
+					"bundle": c.BundleImage,
+					"mode":   c.InjectBundleMode,
+				},
+			}
+		}
+
+	} else {
+		// if added-bundles annotation already exists,
+		// add the current bundle to the existing list of added bundles
+		newBundle := map[string]string{
+			"bundle": c.BundleImage,
+			"mode":   c.InjectBundleMode,
+		}
+		addedBundlesList = append(addedBundlesList, newBundle)
+	}
+
+	return addedBundlesList, imageReferenceExists, nil
+
+}
+
+func (c IndexImageCatalogCreator) deleteRegistryPod(ctx context.Context, podName string) error {
+	// get registry pod key
+	podKey := types.NamespacedName{
+		Namespace: c.cfg.Namespace,
+		Name:      podName,
+	}
+
+	pod := corev1.Pod{}
+	podCheck := wait.ConditionFunc(func() (done bool, err error) {
+		if err := c.cfg.Client.Get(ctx, podKey, &pod); err != nil {
+			return false, fmt.Errorf("error getting previous registry pod %s: %w", podName, err)
+		}
+		return true, nil
+	})
+
+	if err := wait.PollImmediateUntil(200*time.Millisecond, podCheck, ctx.Done()); err != nil {
+		return fmt.Errorf("error getting previous registry pod: %v", err)
+	}
+
+	if err := c.cfg.Client.Delete(ctx, &pod); err != nil && !apierrors.IsNotFound(err) {
+		return fmt.Errorf("delete %q: %v", pod.GetName(), err)
+	} else if err == nil {
+		log.Infof("Deleted previous registry pod with name %q", pod.GetName())
+	}
+
+	podKey, err := client.ObjectKeyFromObject(&pod)
+	if err != nil {
+		return fmt.Errorf("get pod key: %v", err)
+	}
+	if err := wait.PollImmediateUntil(200*time.Millisecond, func() (bool, error) {
+		if err := c.cfg.Client.Get(ctx, podKey, &pod); apierrors.IsNotFound(err) {
+			return true, nil
+		} else if err != nil {
+			return false, err
+		}
+		return false, nil
+	}, ctx.Done()); err != nil {
+		return fmt.Errorf("wait for %q deleted: %v", pod.GetName(), err)
+	}
 
 	return nil
 }
