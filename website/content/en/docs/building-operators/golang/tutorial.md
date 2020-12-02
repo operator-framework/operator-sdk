@@ -173,6 +173,12 @@ The next two subsections explain how the controller watches resources and how th
 The `SetupWithManager()` function in `controllers/memcached_controller.go` specifies how the controller is built to watch a CR and other resources that are owned and managed by that controller.
 
 ```Go
+import (
+	...
+	appsv1 "k8s.io/api/apps/v1"
+	...
+)
+
 func (r *MemcachedReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&cachev1alpha1.Memcached{}).
