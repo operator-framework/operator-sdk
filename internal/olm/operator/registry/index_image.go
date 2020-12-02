@@ -188,7 +188,10 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 	}
 
 	// set annotations
-	addedBundles, imageReferenceExists, err := c.setAnnotations(ctx, cs)
+	addedBundles, imageReferenceExists, err := c.setAnnotations(cs)
+	if err != nil {
+		return fmt.Errorf("error setting annotations on catalog source: %q", cs.GetName())
+	}
 
 	// JSON marshal injected bundles
 	addedBundlesJSON, err := json.Marshal(addedBundles)
@@ -249,7 +252,7 @@ const (
 	registryPodNameAnnotation     = "operators.operatorframework.io/registry-pod-name"
 )
 
-func (c IndexImageCatalogCreator) setAnnotations(ctx context.Context, cs *v1alpha1.CatalogSource) ([]map[string]string, bool, error) {
+func (c IndexImageCatalogCreator) setAnnotations(cs *v1alpha1.CatalogSource) ([]map[string]string, bool, error) {
 	var (
 		addedBundlesList     []map[string]string
 		imageReferenceExists bool
