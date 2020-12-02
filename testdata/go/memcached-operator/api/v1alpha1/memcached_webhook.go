@@ -16,7 +16,9 @@ limitations under the License.
 
 package v1alpha1
 
-import ("errors"
+import (
+	"errors"
+	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -24,6 +26,13 @@ import ("errors"
 
 // log is for logging in this package.
 var memcachedlog = logf.Log.WithName("memcached-resource")
+
+func validateOdd(n int32) error {
+	if n%2 == 0 {
+		return errors.New("Cluster size must be an odd number")
+	}
+	return nil
+}
 
 func (r *Memcached) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
@@ -44,7 +53,9 @@ func (r *Memcached) Default() {
 	if r.Spec.Size == 0 {
 		r.Spec.Size = 3
 	}
-}// TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
+}
+
+// TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 // +kubebuilder:webhook:verbs=create;update,path=/validate-cache-example-com-v1alpha1-memcached,mutating=false,failurePolicy=fail,groups=cache.example.com,resources=memcacheds,versions=v1alpha1,name=vmemcached.kb.io
 
 var _ webhook.Validator = &Memcached{}
@@ -67,12 +78,6 @@ func (r *Memcached) ValidateUpdate(old runtime.Object) error {
 func (r *Memcached) ValidateDelete() error {
 	memcachedlog.Info("validate delete", "name", r.Name)
 
+	// TODO(user): fill in your validation logic upon object deletion.
 	return nil
 }
-func validateOdd(n int32) error {
-	if n%2 == 0 {
-		return errors.New("Cluster size must be an odd number")
-	}
-	return nil
-}
-

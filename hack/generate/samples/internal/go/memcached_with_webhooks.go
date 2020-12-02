@@ -84,7 +84,7 @@ func (mh *MemcachedGoWithWebhooks) Run() {
 		"--version", mh.ctx.Version,
 		"--kind", mh.ctx.Kind,
 		"--defaulting",
-		"--defaulting")
+		"--programmatic-validation")
 	pkg.CheckError("scaffolding webhook", err)
 
 	mh.implementingWebhooks()
@@ -160,21 +160,33 @@ func (mh *MemcachedGoWithWebhooks) implementingWebhooks() {
 	webhookPath := filepath.Join(mh.ctx.Dir, "api", mh.ctx.Version, fmt.Sprintf("%s_webhook.go",
 		strings.ToLower(mh.ctx.Kind)))
 
-	// Add webhook methods
-	err := kbtestutils.InsertCode(webhookPath,
-		"// TODO(user): fill in your defaulting logic.\n}",
-		webhooksFragment)
-	pkg.CheckError("replacing reconcile", err)
-
-	err = testutils.ReplaceInFile(webhookPath,
+	err := testutils.ReplaceInFile(webhookPath,
 		"// TODO(user): fill in your defaulting logic.", "if r.Spec.Size == 0 {\n\t\tr.Spec.Size = 3\n\t}")
 	pkg.CheckError("replacing default webhook implementation", err)
+
+	err = testutils.ReplaceInFile(webhookPath,
+		"// TODO(user): fill in your validation logic upon object creation.\n\treturn nil",
+		"return validateOdd(r.Spec.Size)",
+	)
+	pkg.CheckError("replacing validation logic upon object creation", err)
+
+	err = testutils.ReplaceInFile(webhookPath,
+		"// TODO(user): fill in your validation logic upon object update.\n\treturn nil",
+		"return validateOdd(r.Spec.Size)",
+	)
+	pkg.CheckError("replacing validation logic upon object update", err)
 
 	// Add imports
 	err = kbtestutils.InsertCode(webhookPath,
 		"import (",
-		"\"errors\"")
+		"\n	\"errors\"")
 	pkg.CheckError("adding imports", err)
+
+	err = kbtestutils.InsertCode(webhookPath,
+		"var memcachedlog = logf.Log.WithName(\"memcached-resource\")",
+		validateOddFragment,
+	)
+	pkg.CheckError("adding validate odd", err)
 }
 
 // implementingController will customize the Controller
@@ -410,35 +422,11 @@ const watchCustomizedFragment = `return ctrl.NewControllerManagedBy(mgr).
 		Complete(r)
 `
 
-const webhooksFragment = `// TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-// +kubebuilder:webhook:verbs=create;update,path=/validate-cache-example-com-v1alpha1-memcached,mutating=false,failurePolicy=fail,groups=cache.example.com,resources=memcacheds,versions=v1alpha1,name=vmemcached.kb.io
+const validateOddFragment = `
 
-var _ webhook.Validator = &Memcached{}
-
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *Memcached) ValidateCreate() error {
-	memcachedlog.Info("validate create", "name", r.Name)
-
-	return validateOdd(r.Spec.Size)
-}
-
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *Memcached) ValidateUpdate(old runtime.Object) error {
-	memcachedlog.Info("validate update", "name", r.Name)
-
-	return validateOdd(r.Spec.Size)
-}
-
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *Memcached) ValidateDelete() error {
-	memcachedlog.Info("validate delete", "name", r.Name)
-
-	return nil
-}
 func validateOdd(n int32) error {
 	if n%2 == 0 {
 		return errors.New("Cluster size must be an odd number")
 	}
 	return nil
-}
-`
+}`
