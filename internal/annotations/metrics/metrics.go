@@ -18,8 +18,6 @@ import (
 	"regexp"
 	"strings"
 
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
-
 	sdkversion "github.com/operator-framework/operator-sdk/internal/version"
 )
 
@@ -43,20 +41,20 @@ const (
 
 // MakeBundleMetadataLabels returns the SDK metric labels which will be added
 // to bundle resources like bundle.Dockerfile and annotations.yaml.
-func MakeBundleMetadataLabels(cfg *config.Config) map[string]string {
+func MakeBundleMetadataLabels(layout string) map[string]string {
 	return map[string]string{
 		mediaTypeBundleAnnotation: mediaTypeV1,
 		builderBundleAnnotation:   getSDKBuilder(sdkversion.Version),
-		layoutBundleAnnotation:    getSDKProjectLayout(cfg),
+		layoutBundleAnnotation:    layout,
 	}
 }
 
 // MakeObjectAnnotations returns the SDK metric annotations which will be added
 // to CustomResourceDefinitions and ClusterServiceVersions.
-func MakeBundleObjectAnnotations(cfg *config.Config) map[string]string {
+func MakeBundleObjectAnnotations(layout string) map[string]string {
 	return map[string]string{
 		BuilderObjectAnnotation: getSDKBuilder(sdkversion.Version),
-		LayoutObjectAnnotation:  getSDKProjectLayout(cfg),
+		LayoutObjectAnnotation:  layout,
 	}
 }
 
@@ -84,13 +82,4 @@ func isUnreleased(input string) bool {
 	}
 	re := regexp.MustCompile(`v[0-9]+\.[0-9]+\.[0-9]+-.+`)
 	return re.MatchString(input)
-}
-
-// getSDKProjectLayout returns the `layout` field in PROJECT file that is v3.
-// If not, it will return "go" because that was the only project type supported for project versions < v3.
-func getSDKProjectLayout(cfg *config.Config) string {
-	if !cfg.IsV3() || cfg.Layout == "" {
-		return "go"
-	}
-	return cfg.Layout
 }

@@ -16,16 +16,23 @@ package kustomize
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 	"path/filepath"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
+	"sigs.k8s.io/yaml"
 
 	genutil "github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/generate/internal"
-	gencsv "github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion"
+	"github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion/bases"
 	"github.com/operator-framework/operator-sdk/internal/plugins/util/kustomize"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
@@ -60,7 +67,7 @@ const examples = `
 
 //nolint:maligned
 type manifestsCmd struct {
-	projectName string
+	packageName string
 	inputDir    string
 	outputDir   string
 	apisDir     string
@@ -99,7 +106,7 @@ func newManifestsCmd() *cobra.Command {
 				return fmt.Errorf("error reading configuration: %v", err)
 			}
 
-			if err := c.setDefaults(cfg); err != nil {
+			if err = c.setDefaults(cfg); err != nil {
 				return err
 			}
 
@@ -118,11 +125,12 @@ func newManifestsCmd() *cobra.Command {
 }
 
 func (c *manifestsCmd) addFlagsTo(fs *pflag.FlagSet) {
+	fs.StringVar(&c.packageName, "package", "", "Package name")
 	fs.StringVar(&c.inputDir, "input-dir", "", "Directory containing existing kustomize files")
 	fs.StringVar(&c.outputDir, "output-dir", "", "Directory to write kustomize files")
 	fs.StringVar(&c.apisDir, "apis-dir", "", "Root directory for API type defintions")
 	fs.BoolVarP(&c.quiet, "quiet", "q", false, "Run in quiet mode")
-	fs.BoolVar(&c.interactive, "interactive", false, "When set or no kustomize base exists, an interactive "+
+	fs.BoolVar(&c.interactive, "interactive", false, "When set to false, if no kustomize base exists, an interactive "+
 		"command prompt will be presented to accept non-inferrable metadata")
 }
 
@@ -130,9 +138,9 @@ func (c *manifestsCmd) addFlagsTo(fs *pflag.FlagSet) {
 var defaultDir = filepath.Join("config", "manifests")
 
 // setDefaults sets command defaults.
-func (c *manifestsCmd) setDefaults(cfg *config.Config) (err error) {
-	if c.projectName, err = genutil.GetOperatorName(cfg); err != nil {
-		return err
+func (c *manifestsCmd) setDefaults(cfg *config.Config) error {
+	if c.packageName == "" {
+		c.packageName = cfg.ProjectName
 	}
 
 	if c.inputDir == "" {
@@ -141,6 +149,7 @@ func (c *manifestsCmd) setDefaults(cfg *config.Config) (err error) {
 	if c.outputDir == "" {
 		c.outputDir = defaultDir
 	}
+
 	if c.apisDir == "" {
 		if cfg.MultiGroup {
 			c.apisDir = "apis"
@@ -166,16 +175,48 @@ func (c manifestsCmd) run(cfg *config.Config) error {
 		fmt.Println("Generating kustomize files in", c.outputDir)
 	}
 
-	csvGen := gencsv.Generator{
-		OperatorName: c.projectName,
+	// Older config layouts do not have a ProjectName field, so use the current directory name.
+	if c.packageName == "" {
+		dir, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("error getting current directory: %v", err)
+		}
+		c.packageName = strings.ToLower(filepath.Base(dir))
+		if err := validation.IsDNS1123Label(c.packageName); err != nil {
+			return fmt.Errorf("project name (%s) is invalid: %v", c.packageName, err)
+		}
+	}
+
+	base := bases.ClusterServiceVersion{
+		OperatorName: c.packageName,
 		OperatorType: projutil.PluginKeyToOperatorType(cfg.Layout),
+		APIsDir:      c.apisDir,
+		Interactive:  isInteractive(c.interactiveLevel),
+		GVKs:         getGVKs(cfg),
 	}
-	opts := []gencsv.Option{
-		gencsv.WithBase(c.inputDir, c.apisDir, c.interactiveLevel),
-		gencsv.WithBaseWriter(c.outputDir),
+	relBasePath := filepath.Join("bases", c.packageName+".clusterserviceversion.yaml")
+	basePath := filepath.Join(c.inputDir, relBasePath)
+
+	// Set BasePath only if it exists. If it doesn't, a new base will be generated
+	// if BasePath is empty.
+	if genutil.IsExist(basePath) {
+		base.BasePath = basePath
 	}
-	if err := csvGen.Generate(cfg, opts...); err != nil {
-		return fmt.Errorf("error generating kustomize bases: %v", err)
+	csv, err := base.GetBase()
+	if err != nil {
+		return fmt.Errorf("error getting ClusterServiceVersion base: %v", err)
+	}
+
+	csvBytes, err := k8sutil.GetObjectBytes(csv, yaml.Marshal)
+	if err != nil {
+		return fmt.Errorf("error marshaling CSV base: %v", err)
+	}
+	if err = os.MkdirAll(filepath.Join(c.outputDir, "bases"), 0755); err != nil {
+		return err
+	}
+	outputPath := filepath.Join(c.outputDir, relBasePath)
+	if err = ioutil.WriteFile(outputPath, csvBytes, 0644); err != nil {
+		return fmt.Errorf("error writing CSV base: %v", err)
 	}
 
 	// Write a kustomization.yaml to outputDir if one does not exist.
@@ -188,4 +229,18 @@ func (c manifestsCmd) run(cfg *config.Config) error {
 	}
 
 	return nil
+}
+
+func isInteractive(ilvl projutil.InteractiveLevel) bool {
+	return (ilvl == projutil.InteractiveSoftOff || ilvl == projutil.InteractiveOnAll)
+}
+
+func getGVKs(cfg *config.Config) []schema.GroupVersionKind {
+	gvks := make([]schema.GroupVersionKind, len(cfg.Resources))
+	for i, gvk := range cfg.Resources {
+		gvks[i].Group = fmt.Sprintf("%s.%s", gvk.Group, cfg.Domain)
+		gvks[i].Version = gvk.Version
+		gvks[i].Kind = gvk.Kind
+	}
+	return gvks
 }
