@@ -106,6 +106,15 @@ func PluginKeyToOperatorType(pluginKey string) OperatorType {
 	return OperatorTypeUnknown
 }
 
+// GetProjectLayout returns the `layout` field in PROJECT file that is v3.
+// If not, it will return "go" because that was the only project type supported for project versions < v3.
+func GetProjectLayout(cfg *config.Config) string {
+	if cfg == nil || !cfg.IsV3() || cfg.Layout == "" {
+		return "go"
+	}
+	return cfg.Layout
+}
+
 var flagRe = regexp.MustCompile("(.* )?-v(.* )?")
 
 // SetGoVerbose sets GOFLAGS="${GOFLAGS} -v" if GOFLAGS does not

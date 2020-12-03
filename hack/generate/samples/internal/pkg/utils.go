@@ -22,7 +22,6 @@ import (
 	"regexp"
 
 	log "github.com/sirupsen/logrus"
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
 
 	"github.com/operator-framework/operator-sdk/internal/annotations/metrics"
 )
@@ -54,7 +53,7 @@ func (ctx *SampleContext) CreateBundle() {
 // available in git history.
 func (ctx SampleContext) StripBundleAnnotations() (err error) {
 	// Remove metadata labels.
-	metadataAnnotations := metrics.MakeBundleMetadataLabels(&config.Config{})
+	metadataAnnotations := metrics.MakeBundleMetadataLabels("")
 	metadataFiles := []string{
 		filepath.Join(ctx.Dir, "bundle", "metadata", "annotations.yaml"),
 		filepath.Join(ctx.Dir, "bundle.Dockerfile"),
@@ -64,7 +63,7 @@ func (ctx SampleContext) StripBundleAnnotations() (err error) {
 	}
 
 	// Remove manifests annotations.
-	manifestsAnnotations := metrics.MakeBundleObjectAnnotations(&config.Config{})
+	manifestsAnnotations := metrics.MakeBundleObjectAnnotations("")
 	manifestsFiles := []string{
 		filepath.Join(ctx.Dir, "bundle", "manifests", ctx.ProjectName+".clusterserviceversion.yaml"),
 		filepath.Join(ctx.Dir, "config", "manifests", "bases", ctx.ProjectName+".clusterserviceversion.yaml"),

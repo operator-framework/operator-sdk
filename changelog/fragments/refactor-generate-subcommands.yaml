@@ -1,0 +1,9 @@
+entries:
+    - description: >
+        Added the `--package <name>` flag to all `generate` subcommands. This flag is required by `generate bundle|packagemanifests` when not run in a project.
+      kind: "addition"
+      breaking: false 
+    - description: >
+        Refactored the `generate bundle|packagemanifest` commands to generate bundles/package manifest data outside of projects.
+      kind: "bugfix"
+      breaking: false
