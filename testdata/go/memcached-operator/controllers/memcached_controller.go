@@ -24,7 +24,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"reflect"
 
-
 	"context"
 
 	"github.com/go-logr/logr"
@@ -47,9 +46,18 @@ type MemcachedReconciler struct {
 // +kubebuilder:rbac:groups=cache.example.com,resources=memcacheds/finalizers,verbs=update
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;
+// +kubebuilder:rbac:groups=cache.example.com,resources=memcacheds/finalizers,verbs=update
 
-func (r *MemcachedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
+// Reconcile is part of the main kubernetes reconciliation loop which aims to
+// move the current state of the cluster closer to the desired state.
+// TODO(user): Modify the Reconcile function to compare the state specified by
+// the Memcached object against the actual cluster state, and then
+// perform operations to make the cluster state reflect the state specified by
+// the user.
+//
+// For more details, check Reconcile and its Result here:
+// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.0-alpha.8/pkg/reconcile
+func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("memcached", req.NamespacedName)
 
 	// Fetch the Memcached instance
@@ -123,7 +131,6 @@ func (r *MemcachedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		}
 	}
 
-
 	return ctrl.Result{}, nil
 }
 
@@ -180,7 +187,7 @@ func getPodNames(pods []corev1.Pod) []string {
 	return podNames
 }
 
-
+// SetupWithManager sets up the controller with the Manager.
 func (r *MemcachedReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&cachev1alpha1.Memcached{}).

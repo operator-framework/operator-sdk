@@ -12,26 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v2
+package v3
 
 import (
-	"github.com/operator-framework/operator-sdk/internal/plugins"
-
 	"sigs.k8s.io/kubebuilder/v2/pkg/plugin"
-	kbgov2 "sigs.k8s.io/kubebuilder/v2/pkg/plugins/golang/v2"
-)
-
-// Plugin name/version used in this file will also be used in phase 2 plugins when we can
-// pipe kubebuilder's init/create api output into our scaffold modification
-// plugins. In phase 1 we wrap kubebuilder's Go plugin to have the same effect.
-
-const (
-	pluginName = "go" + plugins.DefaultNameQualifier
-)
-
-var (
-	pluginVersion   = plugin.Version{Number: 2, Stage: plugin.AlphaStage}
-	pluginConfigKey = plugin.Key(pluginName, pluginVersion.String())
+	kbgov3 "sigs.k8s.io/kubebuilder/v2/pkg/plugins/golang/v3"
 )
 
 var (
@@ -43,28 +28,28 @@ var (
 // add operator-framework features to the base kubebuilder Go scaffold and CLI.
 type Plugin struct{}
 
-func (Plugin) Name() string            { return (kbgov2.Plugin{}).Name() }
-func (Plugin) Version() plugin.Version { return (kbgov2.Plugin{}).Version() }
+func (Plugin) Name() string            { return (kbgov3.Plugin{}).Name() }
+func (Plugin) Version() plugin.Version { return (kbgov3.Plugin{}).Version() }
 func (Plugin) SupportedProjectVersions() []string {
-	return (kbgov2.Plugin{}).SupportedProjectVersions()
+	return (kbgov3.Plugin{}).SupportedProjectVersions()
 }
 
 func (p Plugin) GetInitSubcommand() plugin.InitSubcommand {
 	return &initSubcommand{
-		InitSubcommand: (kbgov2.Plugin{}).GetInitSubcommand(),
+		InitSubcommand: (kbgov3.Plugin{}).GetInitSubcommand(),
 	}
 }
 
 func (p Plugin) GetCreateAPISubcommand() plugin.CreateAPISubcommand {
 	return &createAPISubcommand{
-		CreateAPISubcommand: (kbgov2.Plugin{}).GetCreateAPISubcommand(),
+		CreateAPISubcommand: (kbgov3.Plugin{}).GetCreateAPISubcommand(),
 	}
 }
 
 func (p Plugin) GetCreateWebhookSubcommand() plugin.CreateWebhookSubcommand {
-	return (kbgov2.Plugin{}).GetCreateWebhookSubcommand()
+	return (kbgov3.Plugin{}).GetCreateWebhookSubcommand()
 }
 
 func (p Plugin) GetEditSubcommand() plugin.EditSubcommand {
-	return (kbgov2.Plugin{}).GetEditSubcommand()
+	return (kbgov3.Plugin{}).GetEditSubcommand()
 }

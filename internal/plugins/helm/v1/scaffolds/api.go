@@ -26,8 +26,8 @@ import (
 	"sigs.k8s.io/kubebuilder/v2/pkg/model"
 	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
 	"sigs.k8s.io/kubebuilder/v2/pkg/model/resource"
-	"sigs.k8s.io/kubebuilder/v2/pkg/plugin/scaffold"
 
+	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/machinery"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/chartutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates"
@@ -36,7 +36,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/samples"
 )
 
-var _ scaffold.Scaffolder = &apiScaffolder{}
+var _ cmdutil.Scaffolder = &apiScaffolder{}
 
 // apiScaffolder contains configuration for generating scaffolding for Go type
 // representing the API and controller that implements the behavior for the API.
@@ -46,7 +46,7 @@ type apiScaffolder struct {
 }
 
 // NewAPIScaffolder returns a new Scaffolder for API/controller creation operations
-func NewAPIScaffolder(config *config.Config, opts chartutil.CreateOptions) scaffold.Scaffolder {
+func NewAPIScaffolder(config *config.Config, opts chartutil.CreateOptions) cmdutil.Scaffolder {
 	return &apiScaffolder{
 		config: config,
 		opts:   opts,
@@ -85,7 +85,7 @@ func (s *apiScaffolder) scaffold() error {
 	}
 
 	res := r.NewResource(s.config, true)
-	s.config.AddResource(res.GVK())
+	s.config.UpdateResources(res.GVK())
 
 	chartPath := filepath.Join(chartutil.HelmChartsDir, chrt.Metadata.Name)
 	if err := machinery.NewScaffold().Execute(

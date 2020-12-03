@@ -17,6 +17,7 @@ package gosamples
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -59,6 +60,8 @@ func (mh *MemcachedGoWithWebhooks) Prepare() {
 func (mh *MemcachedGoWithWebhooks) Run() {
 	log.Infof("creating the project")
 	err := mh.ctx.Init(
+		// TODO(estroz): remove this once go/v3-alpha is stabilized and the default plugin.
+		"--plugins", "go/v3-alpha",
 		"--repo", "github.com/example/memcached-operator",
 		"--domain",
 		mh.ctx.Domain)
@@ -91,6 +94,9 @@ func (mh *MemcachedGoWithWebhooks) Run() {
 	mh.uncommentKustomizationFile()
 
 	mh.ctx.CreateBundle()
+
+	_, err = mh.ctx.Run(exec.Command("go", "fmt", "./..."))
+	pkg.CheckError("formatting project", err)
 
 	// Clean up built binaries, if any.
 	pkg.CheckError("cleaning up", os.RemoveAll(filepath.Join(mh.ctx.Dir, "bin")))
@@ -129,7 +135,7 @@ func (mh *MemcachedGoWithWebhooks) uncommentKustomizationFile() {
 #  objref:
 #    kind: Certificate
 #    group: cert-manager.io
-#    version: v1alpha2
+#    version: v1
 #    name: serving-cert # this name should match the one in certificate.yaml
 #  fieldref:
 #    fieldpath: metadata.namespace
@@ -137,7 +143,7 @@ func (mh *MemcachedGoWithWebhooks) uncommentKustomizationFile() {
 #  objref:
 #    kind: Certificate
 #    group: cert-manager.io
-#    version: v1alpha2
+#    version: v1
 #    name: serving-cert # this name should match the one in certificate.yaml
 #- name: SERVICE_NAMESPACE # namespace of the service
 #  objref:
@@ -173,7 +179,8 @@ func (mh *MemcachedGoWithWebhooks) implementingWebhooks() {
 	// Add imports
 	err = kbtestutils.InsertCode(webhookPath,
 		"import (",
-		"\"errors\"")
+		// TODO(estroz): remove runtime dep when --programmatic-validation is added to `ccreate webhook` above.
+		"\"errors\"\n\n\"k8s.io/apimachinery/pkg/runtime\"")
 	pkg.CheckError("adding imports", err)
 }
 
@@ -195,9 +202,6 @@ func (mh *MemcachedGoWithWebhooks) implementingController() {
 	pkg.CheckError("adding rbac", err)
 
 	// Replace reconcile content
-	err = testutils.ReplaceInFile(controllerPath, "_ = context.Background()", "ctx := context.Background()")
-	pkg.CheckError("replacing reconcile content", err)
-
 	err = testutils.ReplaceInFile(controllerPath,
 		fmt.Sprintf("_ = r.Log.WithValues(\"%s\", req.NamespacedName)", strings.ToLower(mh.ctx.Kind)),
 		fmt.Sprintf("log := r.Log.WithValues(\"%s\", req.NamespacedName)", strings.ToLower(mh.ctx.Kind)))
@@ -410,8 +414,9 @@ const watchCustomizedFragment = `return ctrl.NewControllerManagedBy(mgr).
 		Complete(r)
 `
 
-const webhooksFragment = `// TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-// +kubebuilder:webhook:verbs=create;update,path=/validate-cache-example-com-v1alpha1-memcached,mutating=false,failurePolicy=fail,groups=cache.example.com,resources=memcacheds,versions=v1alpha1,name=vmemcached.kb.io
+const webhooksFragment = `
+// TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
+// +kubebuilder:webhook:path=/validate-cache-example-com-v1alpha1-memcached,mutating=false,failurePolicy=fail,sideEffects=None,groups=cache.example.com,resources=memcacheds,verbs=create;update,versions=v1alpha1,name=vmemcached.kb.io,admissionReviewVersions={v1beta1}
 
 var _ webhook.Validator = &Memcached{}
 

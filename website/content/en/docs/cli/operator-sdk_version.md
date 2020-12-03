@@ -3,14 +3,20 @@ title: "operator-sdk version"
 ---
 ## operator-sdk version
 
-Prints the version of operator-sdk
+Print the operator-sdk version
 
 ### Synopsis
 
-Prints the version of operator-sdk
+Print the operator-sdk version
 
 ```
 operator-sdk version [flags]
+```
+
+### Examples
+
+```
+operator-sdk version
 ```
 
 ### Options

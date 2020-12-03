@@ -24,7 +24,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation"
 	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
 	"sigs.k8s.io/kubebuilder/v2/pkg/plugin"
-	"sigs.k8s.io/kubebuilder/v2/pkg/plugin/scaffold"
 
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/chartutil"
@@ -62,62 +61,54 @@ Writes the following files:
 - a Patch file for customizing image for manager manifests
 - a Patch file for enabling prometheus metrics
 `
-	ctx.Examples = fmt.Sprintf(`  $ %s init --plugins=%s \
+	ctx.Examples = fmt.Sprintf(`  $ %[1]s init --plugins=%[2]s \
       --domain=example.com \
       --group=apps \
       --version=v1alpha1 \
       --kind=AppService
 
-  $ %s init --plugins=%s \
+  $ %[1]s init --plugins=%[2]s \
       --project-name=myapp
       --domain=example.com \
       --group=apps \
       --version=v1alpha1 \
       --kind=AppService
 
-  $ %s init --plugins=%s \
+  $ %[1]s init --plugins=%[2]s \
       --domain=example.com \
       --group=apps \
       --version=v1alpha1 \
       --kind=AppService \
       --helm-chart=myrepo/app
 
-  $ %s init --plugins=%s \
+  $ %[1]s init --plugins=%[2]s \
       --domain=example.com \
       --helm-chart=myrepo/app
 
-  $ %s init --plugins=%s \
+  $ %[1]s init --plugins=%[2]s \
       --domain=example.com \
       --helm-chart=myrepo/app \
       --helm-chart-version=1.2.3
 
-  $ %s init --plugins=%s \
+  $ %[1]s init --plugins=%[2]s \
       --domain=example.com \
       --helm-chart=app \
       --helm-chart-repo=https://charts.mycompany.com/
 
-  $ %s init --plugins=%s \
+  $ %[1]s init --plugins=%[2]s \
       --domain=example.com \
       --helm-chart=app \
       --helm-chart-repo=https://charts.mycompany.com/ \
       --helm-chart-version=1.2.3
 
-  $ %s init --plugins=%s \
+  $ %[1]s init --plugins=%[2]s \
       --domain=example.com \
       --helm-chart=/path/to/local/chart-directories/app/
 
-  $ %s init --plugins=%s \
+  $ %[1]s init --plugins=%[2]s \
       --domain=example.com \
       --helm-chart=/path/to/local/chart-archives/app-1.2.3.tgz
 `,
-		ctx.CommandName, pluginKey,
-		ctx.CommandName, pluginKey,
-		ctx.CommandName, pluginKey,
-		ctx.CommandName, pluginKey,
-		ctx.CommandName, pluginKey,
-		ctx.CommandName, pluginKey,
-		ctx.CommandName, pluginKey,
-		ctx.CommandName, pluginKey,
 		ctx.CommandName, pluginKey,
 	)
 
@@ -196,10 +187,10 @@ func (p *initSubcommand) Validate() error {
 	return nil
 }
 
-// GetScaffolder returns scaffold.Scaffolder which will be executed due the RunOptions interface implementation
-func (p *initSubcommand) GetScaffolder() (scaffold.Scaffolder, error) {
+// GetScaffolder returns cmdutil.Scaffolder which will be executed due the RunOptions interface implementation
+func (p *initSubcommand) GetScaffolder() (cmdutil.Scaffolder, error) {
 	var (
-		apiScaffolder scaffold.Scaffolder
+		apiScaffolder cmdutil.Scaffolder
 		err           error
 	)
 	if p.doCreateAPI {

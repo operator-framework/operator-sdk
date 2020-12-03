@@ -76,5 +76,5 @@ operator-sdk [flags]
 * [operator-sdk olm](../operator-sdk_olm)	 - Manage the Operator Lifecycle Manager installation in your cluster
 * [operator-sdk run](../operator-sdk_run)	 - Run an Operator in a variety of environments
 * [operator-sdk scorecard](../operator-sdk_scorecard)	 - Runs scorecard
-* [operator-sdk version](../operator-sdk_version)	 - Prints the version of operator-sdk
+* [operator-sdk version](../operator-sdk_version)	 - Print the operator-sdk version
 

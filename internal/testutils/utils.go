@@ -49,14 +49,48 @@ type TestContext struct {
 }
 
 // NewTestContext returns a TestContext containing a new kubebuilder TestContext.
-func NewTestContext(binary string, env ...string) (tc TestContext, err error) {
-	tc.TestContext, err = kbtestutils.NewTestContext(binary, env...)
+// Construct if your environment is connected to a live cluster, ex. for e2e tests.
+func NewTestContext(binaryName string, env ...string) (tc TestContext, err error) {
+	if tc.TestContext, err = kbtestutils.NewTestContext(binaryName, env...); err != nil {
+		return tc, err
+	}
 	tc.ProjectName = strings.ToLower(filepath.Base(tc.Dir))
-	tc.ImageName = fmt.Sprintf("quay.io/example/%s:v0.0.1", tc.ProjectName)
-	tc.BundleImageName = fmt.Sprintf("quay.io/example/%s-bundle:v0.0.1", tc.ProjectName)
+	tc.ImageName = makeImageName(tc.ProjectName)
+	tc.BundleImageName = makeBundleImageName(tc.ProjectName)
 	tc.isOLMManagedBySuite = true
 	tc.isPrometheusManagedBySuite = true
-	return tc, err
+	return tc, nil
+}
+
+// NewPartialTestContext returns a TestContext containing a partial kubebuilder TestContext.
+// This object needs to be populated with GVK information. The underlying TestContext is
+// created directly rather than through a constructor so cluster-based setup is skipped.
+func NewPartialTestContext(binaryName, dir string, env ...string) (tc TestContext, err error) {
+	cc := &kbtestutils.CmdContext{
+		Env: env,
+	}
+	if cc.Dir, err = filepath.Abs(dir); err != nil {
+		return tc, err
+	}
+	projectName := strings.ToLower(filepath.Base(dir))
+
+	return TestContext{
+		TestContext: &kbtestutils.TestContext{
+			CmdContext: cc,
+			BinaryName: binaryName,
+			ImageName:  makeImageName(projectName),
+		},
+		ProjectName:     projectName,
+		BundleImageName: makeBundleImageName(projectName),
+	}, nil
+}
+
+func makeImageName(projectName string) string {
+	return fmt.Sprintf("quay.io/example/%s:v0.0.1", projectName)
+}
+
+func makeBundleImageName(projectName string) string {
+	return fmt.Sprintf("quay.io/example/%s-bundle:v0.0.1", projectName)
 }
 
 // InstallOLM runs 'operator-sdk olm install' for specific version
@@ -73,11 +107,6 @@ func (tc TestContext) UninstallOLM() {
 	if _, err := tc.Run(cmd); err != nil {
 		fmt.Fprintln(GinkgoWriter, "warning: error when uninstalling OLM:", err)
 	}
-}
-
-// KustomizeBuild runs 'kustomize build <dir>' and returns its output and an error if any.
-func (tc TestContext) KustomizeBuild(dir string) ([]byte, error) {
-	return tc.Run(exec.Command("kustomize", "build", dir))
 }
 
 // ReplaceInFile replaces all instances of old with new in the file at path.

@@ -12,29 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package version
+package cli
 
 import (
 	"fmt"
 	"runtime"
 
-	"github.com/spf13/cobra"
-
 	ver "github.com/operator-framework/operator-sdk/internal/version"
 )
 
-func NewCmd() *cobra.Command {
-	versionCmd := &cobra.Command{
-		Use:   "version",
-		Short: "Prints the version of operator-sdk",
-		Run: func(cmd *cobra.Command, args []string) {
-			run()
-		},
-	}
-	return versionCmd
-}
-
-func run() {
-	fmt.Printf("operator-sdk version: %q, commit: %q, kubernetes version: %q, go version: %q, GOOS: %q, GOARCH: %q\n",
+func makeVersionString() string {
+	return fmt.Sprintf("operator-sdk version: %q, commit: %q, kubernetes version: %q, go version: %q, GOOS: %q, GOARCH: %q",
 		ver.GitVersion, ver.GitCommit, ver.KubernetesVersion, runtime.Version(), runtime.GOOS, runtime.GOARCH)
 }

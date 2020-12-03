@@ -22,10 +22,10 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/olm"
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/run"
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/scorecard"
-	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/version"
 	"github.com/operator-framework/operator-sdk/internal/flags"
 	ansiblev1 "github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1"
 	golangv2 "github.com/operator-framework/operator-sdk/internal/plugins/golang/v2"
+	golangv3 "github.com/operator-framework/operator-sdk/internal/plugins/golang/v3"
 	helmv1 "github.com/operator-framework/operator-sdk/internal/plugins/helm/v1"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
@@ -43,7 +43,6 @@ var commands = []*cobra.Command{
 	olm.NewCmd(),
 	run.NewCmd(),
 	scorecard.NewCmd(),
-	version.NewCmd(),
 }
 
 func Run() error {
@@ -57,12 +56,15 @@ func Run() error {
 func GetPluginsCLIAndRoot() (cli.CLI, *cobra.Command) {
 	c, err := cli.New(
 		cli.WithCommandName("operator-sdk"),
+		cli.WithVersion(makeVersionString()),
 		cli.WithPlugins(
 			&golangv2.Plugin{},
+			&golangv3.Plugin{},
 			&helmv1.Plugin{},
 			&ansiblev1.Plugin{},
 		),
 		cli.WithDefaultPlugins(
+			// TODO(estroz): make go/v3-alpha plugin the default once stabilized.
 			&golangv2.Plugin{},
 		),
 		cli.WithExtraCommands(commands...),

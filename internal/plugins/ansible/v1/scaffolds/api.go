@@ -25,8 +25,8 @@ import (
 	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
 	"sigs.k8s.io/kubebuilder/v2/pkg/model/file"
 	"sigs.k8s.io/kubebuilder/v2/pkg/model/resource"
-	"sigs.k8s.io/kubebuilder/v2/pkg/plugin/scaffold"
 
+	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/machinery"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/constants"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates"
@@ -38,7 +38,7 @@ import (
 	ansibleroles "github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/roles"
 )
 
-var _ scaffold.Scaffolder = &apiScaffolder{}
+var _ cmdutil.Scaffolder = &apiScaffolder{}
 
 type CreateOptions struct {
 	GVK schema.GroupVersionKind
@@ -54,7 +54,7 @@ type apiScaffolder struct {
 }
 
 // NewCreateAPIScaffolder returns a new Scaffolder for project initialization operations
-func NewCreateAPIScaffolder(config *config.Config, opts CreateOptions) scaffold.Scaffolder {
+func NewCreateAPIScaffolder(config *config.Config, opts CreateOptions) cmdutil.Scaffolder {
 	return &apiScaffolder{
 		config: config,
 		opts:   opts,
@@ -91,7 +91,7 @@ func (s *apiScaffolder) scaffold() error {
 	}
 
 	resource := resourceOptions.NewResource(s.config, true)
-	s.config.AddResource(resource.GVK())
+	s.config.UpdateResources(resource.GVK())
 
 	var createAPITemplates []file.Builder
 	createAPITemplates = append(createAPITemplates,

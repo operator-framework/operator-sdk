@@ -16,7 +16,10 @@ limitations under the License.
 
 package v1alpha1
 
-import ("errors"
+import (
+	"errors"
+
+	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -33,7 +36,7 @@ func (r *Memcached) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 
-// +kubebuilder:webhook:path=/mutate-cache-example-com-v1alpha1-memcached,mutating=true,failurePolicy=fail,groups=cache.example.com,resources=memcacheds,verbs=create;update,versions=v1alpha1,name=mmemcached.kb.io
+// +kubebuilder:webhook:path=/mutate-cache-example-com-v1alpha1-memcached,mutating=true,failurePolicy=fail,sideEffects=None,groups=cache.example.com,resources=memcacheds,verbs=create;update,versions=v1alpha1,name=mmemcached.kb.io,admissionReviewVersions={v1beta1}
 
 var _ webhook.Defaulter = &Memcached{}
 
@@ -44,8 +47,10 @@ func (r *Memcached) Default() {
 	if r.Spec.Size == 0 {
 		r.Spec.Size = 3
 	}
-}// TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-// +kubebuilder:webhook:verbs=create;update,path=/validate-cache-example-com-v1alpha1-memcached,mutating=false,failurePolicy=fail,groups=cache.example.com,resources=memcacheds,versions=v1alpha1,name=vmemcached.kb.io
+}
+
+// TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
+// +kubebuilder:webhook:path=/validate-cache-example-com-v1alpha1-memcached,mutating=false,failurePolicy=fail,sideEffects=None,groups=cache.example.com,resources=memcacheds,verbs=create;update,versions=v1alpha1,name=vmemcached.kb.io,admissionReviewVersions={v1beta1}
 
 var _ webhook.Validator = &Memcached{}
 
@@ -75,4 +80,3 @@ func validateOdd(n int32) error {
 	}
 	return nil
 }
-

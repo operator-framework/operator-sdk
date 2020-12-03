@@ -22,7 +22,6 @@ import (
 	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
 	"sigs.k8s.io/kubebuilder/v2/pkg/model/resource"
 	"sigs.k8s.io/kubebuilder/v2/pkg/plugin"
-	"sigs.k8s.io/kubebuilder/v2/pkg/plugin/scaffold"
 
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds"
@@ -152,7 +151,7 @@ func (p *createAPIPSubcommand) Validate() error {
 	return nil
 }
 
-func (p *createAPIPSubcommand) GetScaffolder() (scaffold.Scaffolder, error) {
+func (p *createAPIPSubcommand) GetScaffolder() (cmdutil.Scaffolder, error) {
 	return scaffolds.NewCreateAPIScaffolder(p.config, p.createOptions), nil
 }
 
