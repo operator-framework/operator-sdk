@@ -18,6 +18,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
@@ -29,7 +30,8 @@ import (
 )
 
 type descriptionValues struct {
-	crd v1alpha1.CRDDescription
+	crdOrder int
+	crd      v1alpha1.CRDDescription
 	// TODO(estroz): support apiServiceDescriptions
 }
 
@@ -70,12 +72,13 @@ func ApplyDefinitionsForKeysGo(csv *v1alpha1.ClusterServiceVersion, apisRootDir 
 			log.Warnf("Skipping CSV annotation parsing for API %s: type %s not found", gvk, gvk.Kind)
 			continue
 		}
-		crd, err := g.buildCRDDescriptionFromType(gvk, kindType)
+		crd, crdOrder, err := g.buildCRDDescriptionFromType(gvk, kindType)
 		if err != nil {
 			return err
 		}
 		definitionsByGVK[gvk] = &descriptionValues{
-			crd: crd,
+			crdOrder: crdOrder,
+			crd:      crd,
 		}
 	}
 
@@ -109,25 +112,49 @@ func makeAPIPaths(apisRootDir string, gvks []schema.GroupVersionKind) (paths []s
 
 // updateDefinitionsByKey updates owned definitions that already exist in csv or adds new definitions that do not.
 func updateDefinitionsByKey(csv *v1alpha1.ClusterServiceVersion, defsByGVK map[schema.GroupVersionKind]*descriptionValues) {
-
-	// Overwrite crdDescriptions we've parsed from Go source.
-	for i := 0; i < len(csv.Spec.CustomResourceDefinitions.Owned); i++ {
-		crd := csv.Spec.CustomResourceDefinitions.Owned[i]
-		gvk := schema.GroupVersionKind{
-			Group:   MakeFullGroupFromName(crd.Name),
-			Version: crd.Version,
-			Kind:    crd.Kind,
-		}
-		if values, hasKey := defsByGVK[gvk]; hasKey {
-			csv.Spec.CustomResourceDefinitions.Owned[i] = values.crd
-			delete(defsByGVK, gvk)
-		}
-	}
-
-	// Add any new crdDescriptions to the CSV.
+	// Create a set of buckets for all generated descriptions.
+	// Multiple descriptions can belong to the same order.
+	crdBuckets := make(map[int][]v1alpha1.CRDDescription)
 	for _, values := range defsByGVK {
-		csv.Spec.CustomResourceDefinitions.Owned = append(csv.Spec.CustomResourceDefinitions.Owned, values.crd)
+		crdBuckets[values.crdOrder] = append(crdBuckets[values.crdOrder], values.crd)
 	}
+
+	// Sort generated buckets before adding non-generated descriptions so users can
+	// set their order manually.
+	for _, bucket := range crdBuckets {
+		sort.Slice(bucket, func(i, j int) bool {
+			return bucket[i].Name < bucket[j].Name
+		})
+	}
+
+	// Append non-generated descriptions to the end of their buckets,
+	// treating their indices as order.
+	for i, crd := range csv.Spec.CustomResourceDefinitions.Owned {
+		if _, hasKey := defsByGVK[descToGVK(crd)]; !hasKey {
+			crdBuckets[i] = append(crdBuckets[i], csv.Spec.CustomResourceDefinitions.Owned[i])
+		}
+	}
+
+	// De-duplciate and sort order ints for appending bucket contents in-order.
+	crdOrders := make([]int, 0, len(crdBuckets))
+	for order := range crdBuckets {
+		crdOrders = append(crdOrders, order)
+	}
+	sort.Ints(crdOrders)
+
+	// Update descriptions.
+	csv.Spec.CustomResourceDefinitions.Owned = make([]v1alpha1.CRDDescription, 0, len(crdBuckets))
+	for _, order := range crdOrders {
+		csv.Spec.CustomResourceDefinitions.Owned = append(csv.Spec.CustomResourceDefinitions.Owned, crdBuckets[order]...)
+	}
+}
+
+// descToGVK convert desc to a GVK type.
+func descToGVK(desc v1alpha1.CRDDescription) (gvk schema.GroupVersionKind) {
+	gvk.Group = MakeFullGroupFromName(desc.Name)
+	gvk.Version = desc.Version
+	gvk.Kind = desc.Kind
+	return gvk
 }
 
 func isDirExist(path string) (bool, error) {
