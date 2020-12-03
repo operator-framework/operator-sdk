@@ -17,8 +17,11 @@ package definitions
 import (
 	"os"
 	"path/filepath"
+	"sort"
 	"testing"
 
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -88,13 +91,11 @@ func TestApplyDefinitionsForKeysGo(t *testing.T) {
 								}},
 						},
 						StatusDescriptors: []v1alpha1.StatusDescriptor{
-							{Path: "hog.engine", DisplayName: "boss-hog-engine", XDescriptors: []string{},
-								Description: "Should be in status but not spec, since Hog isn't in DummySpec"},
-							{Path: "hog.foo", DisplayName: "Public", XDescriptors: []string{}},
-							{Path: "hog.seatMaterial", DisplayName: "Seat Material", XDescriptors: []string{}},
-							{Path: "hog.seatMaterial", DisplayName: "Seat Material", XDescriptors: []string{}},
-							{Path: "nodes", DisplayName: "Nodes", XDescriptors: []string{},
-								Description: "Should be in status but not spec, since DummyStatus isn't in DummySpec"},
+							{Path: "hog.engine", DisplayName: "boss-hog-engine", Description: "Should be in status but not spec, since Hog isn't in DummySpec"},
+							{Path: "hog.foo", DisplayName: "Public"},
+							{Path: "hog.seatMaterial", DisplayName: "Seat Material"},
+							{Path: "hog.seatMaterial", DisplayName: "Seat Material"},
+							{Path: "nodes", DisplayName: "Nodes", Description: "Should be in status but not spec, since DummyStatus isn't in DummySpec"},
 						},
 					},
 				},
@@ -120,15 +121,13 @@ func TestApplyDefinitionsForKeysGo(t *testing.T) {
 							{Name: "other-dummy-service", Kind: "Service", Version: "v1"},
 						},
 						SpecDescriptors: []v1alpha1.SpecDescriptor{
-							{Path: "engine", DisplayName: "Engine", XDescriptors: []string{},
-								Description: "Should be in status but not spec, since Hog isn't in DummySpec"},
-							{Path: "foo", DisplayName: "Public", XDescriptors: []string{}},
-							{Path: "seatMaterial", DisplayName: "Seat Material", XDescriptors: []string{}},
-							{Path: "seatMaterial", DisplayName: "Seat Material", XDescriptors: []string{}},
+							{Path: "engine", DisplayName: "Engine", Description: "Should be in status but not spec, since Hog isn't in DummySpec"},
+							{Path: "foo", DisplayName: "Public"},
+							{Path: "seatMaterial", DisplayName: "Seat Material"},
+							{Path: "seatMaterial", DisplayName: "Seat Material"},
 						},
 						StatusDescriptors: []v1alpha1.StatusDescriptor{
-							{Path: "nothing", DisplayName: "Nothing", XDescriptors: []string{},
-								Description: "Should be in status but not spec, since this isn't a spec type"},
+							{Path: "nothing", DisplayName: "Nothing", Description: "Should be in status but not spec, since this isn't a spec type"},
 						},
 					},
 				},
@@ -149,12 +148,10 @@ func TestApplyDefinitionsForKeysGo(t *testing.T) {
 									{Name: "dummy-pod", Kind: "Pod", Version: "v1"},
 								},
 								SpecDescriptors: []v1alpha1.SpecDescriptor{
-									{Path: "foo", DisplayName: "Foo", XDescriptors: []string{},
-										Description: "Should not be removed"},
+									{Path: "foo", DisplayName: "Foo", Description: "Should not be removed"},
 								},
 								StatusDescriptors: []v1alpha1.StatusDescriptor{
-									{Path: "bar", DisplayName: "Bar", XDescriptors: []string{},
-										Description: "Should not be removed"},
+									{Path: "bar", DisplayName: "Bar", Description: "Should not be removed"},
 								},
 							},
 						},
@@ -174,12 +171,10 @@ func TestApplyDefinitionsForKeysGo(t *testing.T) {
 							{Name: "dummy-pod", Kind: "Pod", Version: "v1"},
 						},
 						SpecDescriptors: []v1alpha1.SpecDescriptor{
-							{Path: "foo", DisplayName: "Foo", XDescriptors: []string{},
-								Description: "Should not be removed"},
+							{Path: "foo", DisplayName: "Foo", Description: "Should not be removed"},
 						},
 						StatusDescriptors: []v1alpha1.StatusDescriptor{
-							{Path: "bar", DisplayName: "Bar", XDescriptors: []string{},
-								Description: "Should not be removed"},
+							{Path: "bar", DisplayName: "Bar", Description: "Should not be removed"},
 						},
 					},
 				},
@@ -200,12 +195,10 @@ func TestApplyDefinitionsForKeysGo(t *testing.T) {
 									{Name: "no-kind-pod", Kind: "Pod", Version: "v1"},
 								},
 								SpecDescriptors: []v1alpha1.SpecDescriptor{
-									{Path: "foo", DisplayName: "Foo", XDescriptors: []string{},
-										Description: "Should not be removed"},
+									{Path: "foo", DisplayName: "Foo", Description: "Should not be removed"},
 								},
 								StatusDescriptors: []v1alpha1.StatusDescriptor{
-									{Path: "bar", DisplayName: "Bar", XDescriptors: []string{},
-										Description: "Should not be removed"},
+									{Path: "bar", DisplayName: "Bar", Description: "Should not be removed"},
 								},
 							},
 						},
@@ -225,12 +218,10 @@ func TestApplyDefinitionsForKeysGo(t *testing.T) {
 							{Name: "no-kind-pod", Kind: "Pod", Version: "v1"},
 						},
 						SpecDescriptors: []v1alpha1.SpecDescriptor{
-							{Path: "foo", DisplayName: "Foo", XDescriptors: []string{},
-								Description: "Should not be removed"},
+							{Path: "foo", DisplayName: "Foo", Description: "Should not be removed"},
 						},
 						StatusDescriptors: []v1alpha1.StatusDescriptor{
-							{Path: "bar", DisplayName: "Bar", XDescriptors: []string{},
-								Description: "Should not be removed"},
+							{Path: "bar", DisplayName: "Bar", Description: "Should not be removed"},
 						},
 					},
 				},
@@ -251,3 +242,158 @@ func TestApplyDefinitionsForKeysGo(t *testing.T) {
 		})
 	}
 }
+
+var _ = Describe("updateDefinitionsByKey", func() {
+	var (
+		startingCSV *v1alpha1.ClusterServiceVersion
+		defsByGVK   map[schema.GroupVersionKind]*descriptionValues
+	)
+
+	BeforeEach(func() {
+		startingCSV = &v1alpha1.ClusterServiceVersion{}
+		defsByGVK = make(map[schema.GroupVersionKind]*descriptionValues)
+	})
+
+	It("handles an empty CSV and descriptions without error", func() {
+		updateDefinitionsByKey(startingCSV, defsByGVK)
+		Expect(startingCSV.Spec.CustomResourceDefinitions.Owned).To(Equal([]v1alpha1.CRDDescription{}))
+	})
+	It("preserves ordering of two existing descriptions with no new descriptions", func() {
+		owned := []v1alpha1.CRDDescription{
+			{Name: "memcacheds.cache.example.com", Version: "v1alpha1", Kind: "Memcached"},
+			{Name: "memcached2s.cache.example.com", Version: "v1alpha1", Kind: "Memcached2"},
+		}
+		startingCSV.Spec.CustomResourceDefinitions.Owned = owned
+		csv := startingCSV.DeepCopy()
+		updateDefinitionsByKey(csv, defsByGVK)
+		Expect(csv.Spec.CustomResourceDefinitions.Owned).To(Equal(owned))
+	})
+	It("orders two unordered existing descriptions with no new descriptions", func() {
+		owned := []v1alpha1.CRDDescription{
+			{Name: "memcached2s.cache.example.com", Version: "v1alpha1", Kind: "Memcached2"},
+			{Name: "memcacheds.cache.example.com", Version: "v1alpha1", Kind: "Memcached"},
+		}
+		startingCSV.Spec.CustomResourceDefinitions.Owned = owned
+		csv := startingCSV.DeepCopy()
+		updateDefinitionsByKey(csv, defsByGVK)
+		sort.Slice(owned, func(i, j int) bool { return owned[i].Name < owned[j].Name })
+		Expect(csv.Spec.CustomResourceDefinitions.Owned).To(Equal(owned))
+	})
+	It("orders two new descriptions with increasing orders with no existing descriptions", func() {
+		desc1 := v1alpha1.CRDDescription{Name: "memcached3s.cache.example.com", Version: "v1alpha1", Kind: "Memcached3"}
+		desc2 := v1alpha1.CRDDescription{Name: "memcached4s.cache.example.com", Version: "v1alpha1", Kind: "Memcached4"}
+		defsByGVK[descToGVK(desc1)] = &descriptionValues{crdOrder: 0, crd: desc1}
+		defsByGVK[descToGVK(desc2)] = &descriptionValues{crdOrder: 1, crd: desc2}
+
+		expected := []v1alpha1.CRDDescription{desc1, desc2}
+		updateDefinitionsByKey(startingCSV, defsByGVK)
+		Expect(startingCSV.Spec.CustomResourceDefinitions.Owned).To(Equal(expected))
+	})
+	It("orders two new descriptions with decreasing orders with no existing descriptions", func() {
+		desc1 := v1alpha1.CRDDescription{Name: "memcached3s.cache.example.com", Version: "v1alpha1", Kind: "Memcached3"}
+		desc2 := v1alpha1.CRDDescription{Name: "memcached4s.cache.example.com", Version: "v1alpha1", Kind: "Memcached4"}
+		defsByGVK[descToGVK(desc1)] = &descriptionValues{crdOrder: 1, crd: desc1}
+		defsByGVK[descToGVK(desc2)] = &descriptionValues{crdOrder: 0, crd: desc2}
+
+		expected := []v1alpha1.CRDDescription{desc2, desc1}
+		updateDefinitionsByKey(startingCSV, defsByGVK)
+		Expect(startingCSV.Spec.CustomResourceDefinitions.Owned).To(Equal(expected))
+	})
+	It("orders two new descriptions with the same order with no existing descriptions", func() {
+		desc1 := v1alpha1.CRDDescription{Name: "memcached3s.cache.example.com", Version: "v1alpha1", Kind: "Memcached3"}
+		desc2 := v1alpha1.CRDDescription{Name: "memcached4s.cache.example.com", Version: "v1alpha1", Kind: "Memcached4"}
+		defsByGVK[descToGVK(desc1)] = &descriptionValues{crdOrder: 0, crd: desc1}
+		defsByGVK[descToGVK(desc2)] = &descriptionValues{crdOrder: 0, crd: desc2}
+
+		expected := []v1alpha1.CRDDescription{desc1, desc2}
+		updateDefinitionsByKey(startingCSV, defsByGVK)
+		Expect(startingCSV.Spec.CustomResourceDefinitions.Owned).To(Equal(expected))
+	})
+
+	It("orders one new description after two existing descriptions", func() {
+		desc1 := v1alpha1.CRDDescription{Name: "memcached3s.cache.example.com", Version: "v1alpha1", Kind: "Memcached3"}
+		defsByGVK[descToGVK(desc1)] = &descriptionValues{crdOrder: 2, crd: desc1}
+
+		owned := []v1alpha1.CRDDescription{
+			{Name: "memcached2s.cache.example.com", Version: "v1alpha1", Kind: "Memcached2"},
+			{Name: "memcacheds.cache.example.com", Version: "v1alpha1", Kind: "Memcached"},
+		}
+		expected := []v1alpha1.CRDDescription{owned[0], owned[1], desc1}
+		startingCSV.Spec.CustomResourceDefinitions.Owned = owned
+		csv := startingCSV.DeepCopy()
+		updateDefinitionsByKey(csv, defsByGVK)
+		Expect(csv.Spec.CustomResourceDefinitions.Owned).To(Equal(expected))
+	})
+	It("orders one new description between two existing descriptions", func() {
+		desc1 := v1alpha1.CRDDescription{Name: "memcached3s.cache.example.com", Version: "v1alpha1", Kind: "Memcached3"}
+		defsByGVK[descToGVK(desc1)] = &descriptionValues{crdOrder: 0, crd: desc1}
+
+		owned := []v1alpha1.CRDDescription{
+			{Name: "memcached2s.cache.example.com", Version: "v1alpha1", Kind: "Memcached2"},
+			{Name: "memcacheds.cache.example.com", Version: "v1alpha1", Kind: "Memcached"},
+		}
+		expected := []v1alpha1.CRDDescription{desc1, owned[0], owned[1]}
+		startingCSV.Spec.CustomResourceDefinitions.Owned = owned
+		csv := startingCSV.DeepCopy()
+		updateDefinitionsByKey(csv, defsByGVK)
+		Expect(csv.Spec.CustomResourceDefinitions.Owned).To(Equal(expected))
+	})
+	It("orders two new descriptions with the same order with overlapping orders of two existing descriptions", func() {
+		desc1 := v1alpha1.CRDDescription{Name: "memcached3s.cache.example.com", Version: "v1alpha1", Kind: "Memcached3"}
+		desc2 := v1alpha1.CRDDescription{Name: "memcached4s.cache.example.com", Version: "v1alpha1", Kind: "Memcached4"}
+		defsByGVK[descToGVK(desc1)] = &descriptionValues{crdOrder: 0, crd: desc1}
+		defsByGVK[descToGVK(desc2)] = &descriptionValues{crdOrder: 0, crd: desc2}
+
+		owned := []v1alpha1.CRDDescription{
+			{Name: "memcached2s.cache.example.com", Version: "v1alpha1", Kind: "Memcached2"},
+			{Name: "memcacheds.cache.example.com", Version: "v1alpha1", Kind: "Memcached"},
+		}
+		expected := []v1alpha1.CRDDescription{desc1, desc2, owned[0], owned[1]}
+		startingCSV.Spec.CustomResourceDefinitions.Owned = owned
+		csv := startingCSV.DeepCopy()
+		updateDefinitionsByKey(csv, defsByGVK)
+		Expect(csv.Spec.CustomResourceDefinitions.Owned).To(Equal(expected))
+	})
+	It("orders one new description with two existing descriptions, one of which is in defsByGVK", func() {
+		desc1 := v1alpha1.CRDDescription{Name: "memcached1s.cache.example.com", Version: "v1alpha1", Kind: "Memcached1"}
+		desc2 := v1alpha1.CRDDescription{Name: "memcached2s.cache.example.com", Version: "v1alpha1", Kind: "Memcached2"}
+		defsByGVK[descToGVK(desc1)] = &descriptionValues{crdOrder: 1, crd: desc1}
+		defsByGVK[descToGVK(desc2)] = &descriptionValues{crdOrder: 0, crd: desc2}
+
+		owned := []v1alpha1.CRDDescription{
+			desc1,
+			{Name: "memcacheds.cache.example.com", Version: "v1alpha1", Kind: "Memcached"},
+		}
+		expected := []v1alpha1.CRDDescription{desc2, desc1, owned[1]}
+		startingCSV.Spec.CustomResourceDefinitions.Owned = owned
+		csv := startingCSV.DeepCopy()
+		updateDefinitionsByKey(csv, defsByGVK)
+		Expect(csv.Spec.CustomResourceDefinitions.Owned).To(Equal(expected))
+	})
+	It("orders multiple new descriptions and existing descriptions", func() {
+		desc1 := v1alpha1.CRDDescription{Name: "memcached3s.cache.example.com", Version: "v1alpha1", Kind: "Memcached3"}
+		desc2 := v1alpha1.CRDDescription{Name: "memcached4s.cache.example.com", Version: "v1alpha1", Kind: "Memcached4"}
+		desc3 := v1alpha1.CRDDescription{Name: "foo1s.bar.example.com", Version: "v1alpha1", Kind: "Foo1"}
+		desc4 := v1alpha1.CRDDescription{Name: "foo2s.bar.example.com", Version: "v1alpha1", Kind: "Foo2"}
+		desc5 := v1alpha1.CRDDescription{Name: "bazs.bar.example.com", Version: "v1alpha1", Kind: "Baz"}
+		defsByGVK[descToGVK(desc1)] = &descriptionValues{crdOrder: 0, crd: desc1}
+		defsByGVK[descToGVK(desc2)] = &descriptionValues{crdOrder: 3, crd: desc2}
+		defsByGVK[descToGVK(desc3)] = &descriptionValues{crdOrder: 1, crd: desc3}
+		defsByGVK[descToGVK(desc4)] = &descriptionValues{crdOrder: 0, crd: desc4}
+		defsByGVK[descToGVK(desc5)] = &descriptionValues{crdOrder: 10000, crd: desc5}
+
+		owned := []v1alpha1.CRDDescription{
+			desc2, // Has order 3 above.
+			{Name: "memcached2s.cache.example.com", Version: "v1alpha1", Kind: "Memcached2"},
+			{Name: "memcacheds.cache.example.com", Version: "v1alpha1", Kind: "Memcached"},
+			desc1, // Has order 0 above
+			{Name: "bar2.cache.example.com", Version: "v1alpha1", Kind: "Bar2"},
+			{Name: "bar1.cache.example.com", Version: "v1alpha1", Kind: "Bar1"},
+		}
+		expected := []v1alpha1.CRDDescription{desc4, desc1, desc3, owned[1], owned[2], desc2, owned[4], owned[5], desc5}
+		startingCSV.Spec.CustomResourceDefinitions.Owned = owned
+		csv := startingCSV.DeepCopy()
+		updateDefinitionsByKey(csv, defsByGVK)
+		Expect(csv.Spec.CustomResourceDefinitions.Owned).To(Equal(expected))
+	})
+})

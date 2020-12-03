@@ -38,6 +38,10 @@ func (Description) Help() *markers.DefinitionHelp {
 				Summary: "is the displayName of a CRD description.",
 				Details: "",
 			},
+			"Order": markers.DetailedHelp{
+				Summary: "determines which position in the list this description will take. Markers with Order omitted have the highest Order. If more than one marker has the same Order, the corresponding descriptions will be sorted alphabetically and placed above others with higher Orders.",
+				Details: "",
+			},
 		},
 	}
 }
@@ -60,6 +64,10 @@ func (Descriptor) Help() *markers.DefinitionHelp {
 			},
 			"XDescriptors": markers.DetailedHelp{
 				Summary: "is a list of UI path strings. The marker format is: \"ui:element:foo,ui:element:bar\"",
+				Details: "",
+			},
+			"Order": markers.DetailedHelp{
+				Summary: "determines which position in the list this descriptor will take. Markers with Order omitted have the highest Order. If more than one marker has the same Order, the corresponding descriptors will be sorted alphabetically and placed above others with higher Orders.",
 				Details: "",
 			},
 		},
