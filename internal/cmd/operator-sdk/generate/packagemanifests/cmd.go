@@ -21,14 +21,11 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
 //nolint:maligned
 type packagemanifestsCmd struct {
 	// Common options.
-	projectName   string
 	version       string
 	fromVersion   string
 	inputDir      string
@@ -43,6 +40,10 @@ type packagemanifestsCmd struct {
 	// Package manifest options.
 	channelName      string
 	isDefaultChannel bool
+
+	// These are set if a PROJECT config is not present.
+	layout      string
+	packageName string
 }
 
 // NewCmd returns the 'packagemanifests' command configured for the new project layout.
@@ -59,18 +60,14 @@ func NewCmd() *cobra.Command {
 				return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 			}
 
-			cfg, err := projutil.ReadConfig()
-			if err != nil {
-				log.Fatal(fmt.Errorf("error reading configuration: %v", err))
-			}
-			if err := c.setDefaults(cfg); err != nil {
+			if err := c.setDefaults(); err != nil {
 				return err
 			}
 
-			if err = c.validate(); err != nil {
+			if err := c.validate(); err != nil {
 				return fmt.Errorf("invalid command options: %v", err)
 			}
-			if err = c.run(cfg); err != nil {
+			if err := c.run(); err != nil {
 				log.Fatalf("Error generating package manifests: %v", err)
 			}
 
@@ -101,4 +98,6 @@ func (c *packagemanifestsCmd) addFlagsTo(fs *pflag.FlagSet) {
 		"ex. CustomResoureDefinitions, Roles")
 	fs.BoolVarP(&c.quiet, "quiet", "q", false, "Run in quiet mode")
 	fs.BoolVar(&c.stdout, "stdout", false, "Write package to stdout")
+
+	fs.StringVar(&c.packageName, "package", "", "Package name")
 }

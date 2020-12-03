@@ -26,9 +26,7 @@ import (
 	"github.com/blang/semver"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-	"k8s.io/apimachinery/pkg/util/validation"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
 	"sigs.k8s.io/yaml"
 )
 
@@ -152,23 +150,11 @@ func IsNotExist(path string) bool {
 	return err != nil && errors.Is(err, os.ErrNotExist)
 }
 
-// GetOperatorName returns the name of the operator which is by default the projectName attribute of the PROJECT file
-// However, the Go projects built with the plugin version v2 has not this attribute and then, for this case
-// the operatorName will be the current directory.
-func GetOperatorName(cfg *config.Config) (string, error) {
-	if cfg.ProjectName != "" {
-		return cfg.ProjectName, nil
+// IsExist returns true if path exists on disk.
+func IsExist(path string) bool {
+	if path == "" {
+		return false
 	}
-	if cfg.IsV3() {
-		return "", errors.New("project config file must contain 'projectName'")
-	}
-	dir, err := os.Getwd()
-	if err != nil {
-		return "", fmt.Errorf("error getting current directory: %v", err)
-	}
-	projectName := strings.ToLower(filepath.Base(dir))
-	if err := validation.IsDNS1123Label(projectName); err != nil {
-		return "", fmt.Errorf("project name (%s) is invalid: %v", projectName, err)
-	}
-	return projectName, nil
+	_, err := os.Stat(path)
+	return err == nil || errors.Is(err, os.ErrExist)
 }
