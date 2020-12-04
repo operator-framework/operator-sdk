@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package gosamples
+package v3
 
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -60,7 +59,7 @@ func (mh *MemcachedGoWithWebhooks) Prepare() {
 func (mh *MemcachedGoWithWebhooks) Run() {
 	log.Infof("creating the project")
 	err := mh.ctx.Init(
-		// TODO(estroz): remove this once go/v3-alpha is stabilized and the default plugin.
+		// TODO(estroz): change this to go/v3 is stabilized.
 		"--plugins", "go/v3-alpha",
 		"--repo", "github.com/example/memcached-operator",
 		"--domain",
@@ -95,8 +94,7 @@ func (mh *MemcachedGoWithWebhooks) Run() {
 
 	mh.ctx.CreateBundle()
 
-	_, err = mh.ctx.Run(exec.Command("go", "fmt", "./..."))
-	pkg.CheckError("formatting project", err)
+	pkg.CheckError("formatting project", mh.ctx.Make("fmt"))
 
 	// Clean up built binaries, if any.
 	pkg.CheckError("cleaning up", os.RemoveAll(filepath.Join(mh.ctx.Dir, "bin")))
@@ -197,7 +195,7 @@ func (mh *MemcachedGoWithWebhooks) implementingController() {
 
 	// Add RBAC permissions on top of reconcile
 	err = kbtestutils.InsertCode(controllerPath,
-		"verbs=get;update;patch",
+		"/finalizers,verbs=update",
 		rbacFragment)
 	pkg.CheckError("adding rbac", err)
 
@@ -252,7 +250,8 @@ func (mh *MemcachedGoWithWebhooks) implementingAPI() {
 // Note that it should NOT be called in the e2e tests.
 func GenerateMemcachedGoWithWebhooksSample(samplesPath string) {
 	log.Infof("starting to generate Go memcached sample with webhooks")
-	ctx, err := pkg.NewSampleContext(testutils.BinaryName, filepath.Join(samplesPath, "go/memcached-operator"), "GO111MODULE=on")
+	path := filepath.Join(samplesPath, "memcached-operator")
+	ctx, err := pkg.NewSampleContext(testutils.BinaryName, path, "GO111MODULE=on")
 	pkg.CheckError("generating Go memcached with webhooks context", err)
 
 	memcached := NewMemcachedGoWithWebhooks(&ctx)
@@ -261,7 +260,6 @@ func GenerateMemcachedGoWithWebhooksSample(samplesPath string) {
 }
 
 const rbacFragment = `
-// +kubebuilder:rbac:groups=cache.example.com,resources=memcacheds/finalizers,verbs=update
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;`
 

@@ -225,7 +225,7 @@ import (
 	...
 )
 
-func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *MemcachedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
   // Lookup the Memcached instance for this reconcile request
   memcached := &cachev1alpha1.Memcached{}
   err := r.Get(ctx, req.NamespacedName, memcached)
@@ -267,7 +267,7 @@ The controller needs certain RBAC permissions to interact with the resources it 
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;
 
-func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {}
+func (r *MemcachedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 ```
 
 The `ClusterRole` manifest at `config/rbac/role.yaml` is generated from the above markers via controller-gen with the following command:
@@ -437,7 +437,15 @@ memcached-sample                        5/5     5            5           3m
 
 ### Cleanup
 
-Clean up the resources:
+A new target can be added into the Makefile for cleaning up the resources that have been created along this tutorial:
+
+```make
+# Undeploy controller from the configured Kubernetes cluster
+undeploy:
+	$(KUSTOMIZE) build config/default | kubectl delete -f -
+```
+
+Once that's done the simple command below will delete all the resources:
 
 ```sh
 $ make undeploy
