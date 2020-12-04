@@ -1,4 +1,4 @@
-name: ansible
+name: ansible-molecule
 on:
   pull_request: {}
 
@@ -30,4 +30,11 @@ jobs:
         with:
           fetch-depth: 0
       - run: sudo rm -rf /usr/local/bin/kustomize
-      - run: make test-e2e-ansible
+      - run: |
+          env
+          export PATH=/opt/python/3.6.7/bin:${PATH}
+          sudo apt-get install python3 python3-pip
+          sudo pip3 install wheel
+          sudo pip3 install --upgrade setuptools pip
+          sudo pip3 install ansible~=2.9.13
+          make test-e2e-ansible-molecule

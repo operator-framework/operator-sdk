@@ -14,7 +14,6 @@ DOC_PATTERNS=(
   "(\.MD)"
   "(\.png)"
   "(\.pdf)"
-  "^(doc/)"
   "^(website/)"
   "^(changelog/)"
   "^(OWNERS)"
