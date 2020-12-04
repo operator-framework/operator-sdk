@@ -1,7 +1,7 @@
 apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
-  name: memcached-operator.vX.Y.Z
+  name: memcached-operator.v0.0.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}

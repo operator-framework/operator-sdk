@@ -189,11 +189,13 @@ func (c bundleCmd) runManifests() (err error) {
 	// If no CSV is passed via stdin, an on-disk base is expected at basePath.
 	if len(col.ClusterServiceVersions) == 0 {
 		basePath := filepath.Join(c.kustomizeDir, "bases", c.packageName+".clusterserviceversion.yaml")
-		base, err := bases.ClusterServiceVersion{BasePath: basePath}.GetBase()
-		if err != nil {
-			return fmt.Errorf("error reading CSV base: %v", err)
+		if genutil.IsExist(basePath) {
+			base, err := bases.ClusterServiceVersion{BasePath: basePath}.GetBase()
+			if err != nil {
+				return fmt.Errorf("error reading CSV base: %v", err)
+			}
+			col.ClusterServiceVersions = append(col.ClusterServiceVersions, *base)
 		}
-		col.ClusterServiceVersions = append(col.ClusterServiceVersions, *base)
 	}
 
 	var opts []gencsv.Option
@@ -255,11 +257,6 @@ func writeScorecardConfig(dir string, cfg v1alpha3.Configuration) error {
 	}
 	scorecardConfigPath := filepath.Join(cfgDir, scorecard.ConfigFileName)
 	return ioutil.WriteFile(scorecardConfigPath, b, 0666)
-}
-
-// validateMetadata validates c for bundle metadata generation.
-func (c bundleCmd) validateMetadata() (err error) {
-	return nil
 }
 
 // runMetadata generates a bundle.Dockerfile and bundle metadata.
@@ -342,7 +339,7 @@ func updateMetadata(layout, bundleRoot string) error {
 // writeDockerfileCOPYScorecardConfig checks if bundle.Dockerfile and scorecard config exists in
 // the operator project. If it does, it injects the scorecard configuration into bundle image.
 func writeDockerfileCOPYScorecardConfig(dockerfileName, localConfigDir string) error {
-	if isExist(bundle.DockerFile) && isExist(localConfigDir) {
+	if genutil.IsExist(bundle.DockerFile) && genutil.IsExist(localConfigDir) {
 		scorecardFileContent := fmt.Sprintf("COPY %s %s\n", localConfigDir, "/"+scorecard.DefaultConfigDir)
 		return projutil.RewriteFileContents(dockerfileName, "COPY", scorecardFileContent)
 	}
@@ -401,10 +398,4 @@ func rewriteAnnotations(bundleRoot string, kvs map[string]string) error {
 		mode = info.Mode()
 	}
 	return ioutil.WriteFile(annotationsPath, b, mode)
-}
-
-// isExist returns true if path exists.
-func isExist(path string) bool {
-	_, err := os.Stat(path)
-	return err == nil || os.IsExist(err)
 }

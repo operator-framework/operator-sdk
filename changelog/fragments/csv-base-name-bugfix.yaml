@@ -1,0 +1,6 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      `generate kustomize manifests` will (re)generate a base `ClusterServiceVersion` manifest with a valid name.
+    kind: bugfix

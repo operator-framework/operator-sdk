@@ -43,6 +43,8 @@ Comma-separated list of keywords for your operator (required):
 ...
 ```
 
+Once this base is written, you may modify any of the fields labeled _user_ in the [fields section](#csv-fields) below.
+
 **For Go Operators only:** the command parses [CSV markers][csv-markers] from Go API type definitions, located
 in `./api` for single group projects and `./apis` for multigroup projects, to populate certain CSV fields.
 You can set an alternative path to the API types root directory with `--apis-dir`. These markers are not available
@@ -62,6 +64,12 @@ The following resource kinds are typically included in a CSV, which are addresse
   - `Deployment`: define how the Operator's operand is run in pods.
   - `CustomResourceDefinition`: definitions of custom objects your Operator reconciles.
   - Custom resource examples: examples of objects adhering to the spec of a particular CRD.
+
+You can optionally specify an input `ClusterServiceVersion` manifest to the set of manifests passed to
+these `generate` subcommands instead of having them read from the [base path](#kustomize-files).
+This is advantageous for those who would like to take full advantage of `kustomize` for their base.
+All fields unlabeled or labeled with _marker_ [below](#csv-fields) will be overwritten by these command,
+so make sure you do not `kustomize build` those fields!
 
 ## Generate your first release
 
@@ -249,7 +257,16 @@ Let's say you're upgrading your Operator to version `v0.0.2`, you've already upd
 in your `Makefile` to `0.0.2`, and built a new operator image `quay.io/<user>/memcached-operator:v0.0.2`.
 You also want to add a new channel `beta`, and use it as the default channel.
 
-If using a bundle format, a new version of your CSV can be created by running:
+First, update `spec.replaces` in your [base CSV manifest](#kustomize-files) to the _current_ CSV name.
+In this case, the change would look like:
+
+```yaml
+spec:
+  ...
+  replaces: memcached-operator.v0.0.1
+```
+
+Next, upgrade your bundle. If using a bundle format, a new version of your CSV can be created by running:
 
 ```console
 $ make bundle CHANNELS=beta DEFAULT_CHANNEL=beta IMG=quay.io/<user>/memcached-operator:v0.0.2
@@ -261,8 +278,9 @@ If using a package manifests format, run:
 $ make packagemanifests FROM_VERSION=0.0.1 CHANNEL=beta IS_CHANNEL_DEFAULT=1 IMG=quay.io/<user>/memcached-operator:v0.0.2
 ```
 
-Running the command for either format will persist user-defined fields, updates `spec.version`,
-and populates `spec.replaces` with the old CSV version's name.
+Running the command for either format will persist user-defined fields, and updates `spec.version` and `metadata.name`.
+
+**For `packagemanifests` only** The command will also populate `spec.replaces` with the old CSV version's name.
 
 ## CSV fields
 
@@ -273,9 +291,10 @@ Below are two lists of fields: the first is a list of all fields the SDK and OLM
 These markers are not available to Ansible or Helm project types.
 
 Required:
-- `metadata.name`: a *unique* name for this CSV of the format `<project-name>.vX.Y.Z`, ex. `app-operator.v0.0.1`.
-- `spec.version`: semantic version of the Operator, ex. `0.0.1`.
-- `spec.installModes`: what mode of [installation namespacing][install-modes] OLM should use.
+- `metadata.name` _(user*)_: a *unique* name for this CSV of the format `<project-name>.vX.Y.Z`, ex. `app-operator.v0.0.1`.
+- `spec.displayName` _(user)_ : a name to display for the Operator in Operator Hub.
+- `spec.version` _(user*)_: semantic version of the Operator, ex. `0.0.1`.
+- `spec.installModes` _(user)_: what mode of [installation namespacing][install-modes] OLM should use.
 Currently all but `MultiNamespace` are supported by SDK Operators.
 - `spec.customresourcedefinitions`: any CRDs the Operator uses. Certain fields in elements of `owned` will be filled by the SDK.
     - `owned`: all CRDs the Operator deploys itself from it's bundle.
@@ -293,7 +312,6 @@ Currently all but `MultiNamespace` are supported by SDK Operators.
 
 Optional:
 - `spec.description` _(user)_ : a thorough description of the Operator's functionality.
-- `spec.displayName` _(user)_ : a name to display for the Operator in Operator Hub.
 - `spec.keywords` _(user)_ : a list of keywords describing the Operator.
 - `spec.maintainers` _(user)_ : a list of human or organizational entities maintaining the Operator, with a `name` and `email`.
 - `spec.provider` _(user)_ : the Operator provider, with a `name`; usually an organization.
@@ -301,13 +319,15 @@ Optional:
 - `metadata.annotations.alm-examples`: CR examples, in JSON string literal format, for your CRD's. Ideally one per CRD.
 - `metadata.annotations.capabilities`: level of Operator capability. See the [Operator maturity model][olm-capabilities]
 for a list of valid values.
-- `spec.replaces`: the name of the CSV being replaced by this CSV.
+- `spec.replaces` _(user)_: the name of the CSV being replaced by this CSV.
 - `spec.links` _(user)_ : a list of URL's to websites, documentation, etc. pertaining to the Operator or application
 being managed, each with a `name` and `url`.
 - `spec.selector` _(user)_ : selectors by which the Operator can pair resources in a cluster.
 - `spec.icon` _(user)_ : a base64-encoded icon unique to the Operator, set in a `base64data` field with a `mediatype`.
-- `spec.maturity`: the Operator's maturity, ex. `alpha`.
+- `spec.maturity` _(user)_: the Operator's maturity, ex. `alpha`.
 
+**\*** `metadata.name` and `spec.version` will only be automatically updated from the base CSV
+when you set `--version` when running `generate <bundle|packagemanifests>`.
 
 [olm]:https://github.com/operator-framework/operator-lifecycle-manager
 [doc-csv]:https://github.com/operator-framework/operator-lifecycle-manager/blob/0.15.1/doc/design/building-your-csv.md
