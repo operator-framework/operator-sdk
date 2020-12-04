@@ -1,0 +1,31 @@
+name: rerun_tests
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  rerun_tests:
+    if:  ${{ contains(github.event.comment.body, '/rerun-tests') && github.event.issue.pull_request }}
+    runs-on: ubuntu-18.04
+    steps:
+      - run: |
+          PR=${{ github.event.issue.pull_request.url}}
+          PR_SHA="$(curl $PR | jq '.head.sha')"
+          
+          WORKFLOW_RUN_NUMBER="$(curl --oauth2-bearer $GITHUB_TOKEN https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/integration.yml/runs?event=pull_request | jq '.workflow_runs[] | select(.head_sha=='$PR_SHA')' | jq '.id')"
+          curl -u estroz:$ACTION_ADMIN_TOKEN -X POST https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$WORKFLOW_RUN_NUMBER/rerun
+         
+          WORKFLOW_RUN_NUMBER="$(curl --oauth2-bearer $GITHUB_TOKEN https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/test-ansible.yml/runs?event=pull_request | jq '.workflow_runs[] | select(.head_sha=='$PR_SHA')' | jq '.id')"
+          curl -u estroz:$ACTION_ADMIN_TOKEN -X POST https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$WORKFLOW_RUN_NUMBER/rerun
+          
+          WORKFLOW_RUN_NUMBER="$(curl --oauth2-bearer $GITHUB_TOKEN https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/test-go.yml/runs?event=pull_request | jq '.workflow_runs[] | select(.head_sha=='$PR_SHA')' | jq '.id')"
+          curl -u estroz:$ACTION_ADMIN_TOKEN -X POST https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$WORKFLOW_RUN_NUMBER/rerun
+        
+          WORKFLOW_RUN_NUMBER="$(curl --oauth2-bearer $GITHUB_TOKEN https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/test-helm.yml/runs?event=pull_request | jq '.workflow_runs[] | select(.head_sha=='$PR_SHA')' | jq '.id')"
+          curl -u estroz:$ACTION_ADMIN_TOKEN -X POST https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$WORKFLOW_RUN_NUMBER/rerun
+          
+          WORKFLOW_RUN_NUMBER="$(curl --oauth2-bearer $GITHUB_TOKEN https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/test-sanity.yml/runs?event=pull_request | jq '.workflow_runs[] | select(.head_sha=='$PR_SHA')' | jq '.id')"
+          curl -u estroz:$ACTION_ADMIN_TOKEN -X POST https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$WORKFLOW_RUN_NUMBER/rerun
+        env:
+           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}' 
+           ACTION_ADMIN_TOKEN: '${{ secrets.ACTION_ADMIN_TOKEN }}'
