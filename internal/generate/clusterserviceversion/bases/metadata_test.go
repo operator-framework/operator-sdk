@@ -55,7 +55,7 @@ var _ = Describe("Metadata", func() {
 	It("populates a CSV with existing values", func() {
 		b := ClusterServiceVersion{OperatorName: "test-operator"}
 		b.setDefaults()
-		csv := b.makeNewBase()
+		csv := b.newBase()
 
 		meta.apply(csv)
 
