@@ -80,11 +80,6 @@ func NewCmd() *cobra.Command {
 					return fmt.Errorf("invalid command options: %v", err)
 				}
 			}
-			if c.metadata {
-				if err := c.validateMetadata(); err != nil {
-					return fmt.Errorf("invalid command options: %v", err)
-				}
-			}
 
 			// Run command logic.
 			if c.manifests {

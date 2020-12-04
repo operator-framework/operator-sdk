@@ -30,6 +30,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	"sigs.k8s.io/yaml"
 
+	"github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion/bases"
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
 	genutil "github.com/operator-framework/operator-sdk/internal/generate/internal"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
@@ -164,7 +165,22 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 		})
 
 		Context("to create a new ClusterServiceVersion", func() {
-			It("should return a valid object", func() {
+			It("should return a default object when no base is supplied", func() {
+				col.ClusterServiceVersions = nil
+				g = Generator{
+					OperatorName: operatorName,
+					Version:      zeroZeroOne,
+					Collector:    col,
+				}
+				csv, err := g.generate()
+				Expect(err).ToNot(HaveOccurred())
+				col.ClusterServiceVersions = []v1alpha1.ClusterServiceVersion{*(bases.New(operatorName))}
+				csvExp, err := g.generate()
+				Expect(err).ToNot(HaveOccurred())
+				Expect(csv).To(Equal(csvExp))
+			})
+
+			It("should return a default object", func() {
 				col.ClusterServiceVersions = []v1alpha1.ClusterServiceVersion{*baseCSV}
 				g = Generator{
 					OperatorName: operatorName,
@@ -251,18 +267,6 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(csv).To(Equal(upgradeCSV(newCSVUIMeta, g.OperatorName, g.Version)))
 			})
-		})
-	})
-
-	Context("with incorrect configuration", func() {
-		It("should return an error when a base CSV has an invalid name", func() {
-			col.ClusterServiceVersions = []v1alpha1.ClusterServiceVersion{*baseCSV}
-			g = Generator{
-				OperatorName: operatorName,
-				Collector:    col,
-			}
-			_, err := g.generate()
-			Expect(err).To(HaveOccurred())
 		})
 	})
 })

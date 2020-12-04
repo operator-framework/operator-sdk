@@ -178,11 +178,13 @@ func (c packagemanifestsCmd) run() error {
 	// If no CSV is passed via stdin, an on-disk base is expected at basePath.
 	if len(col.ClusterServiceVersions) == 0 {
 		basePath := filepath.Join(c.kustomizeDir, "bases", c.packageName+".clusterserviceversion.yaml")
-		base, err := bases.ClusterServiceVersion{BasePath: basePath}.GetBase()
-		if err != nil {
-			return fmt.Errorf("error reading CSV base: %v", err)
+		if genutil.IsExist(basePath) {
+			base, err := bases.ClusterServiceVersion{BasePath: basePath}.GetBase()
+			if err != nil {
+				return fmt.Errorf("error reading CSV base: %v", err)
+			}
+			col.ClusterServiceVersions = append(col.ClusterServiceVersions, *base)
 		}
-		col.ClusterServiceVersions = append(col.ClusterServiceVersions, *base)
 	}
 
 	var opts []gencsv.Option
