@@ -33,6 +33,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"sigs.k8s.io/kubebuilder/v2/pkg/cli"
+	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
 )
 
 var commands = []*cobra.Command{
@@ -57,16 +58,16 @@ func GetPluginsCLIAndRoot() (cli.CLI, *cobra.Command) {
 	c, err := cli.New(
 		cli.WithCommandName("operator-sdk"),
 		cli.WithVersion(makeVersionString()),
+		cli.WithDefaultProjectVersion(config.Version3Alpha),
 		cli.WithPlugins(
 			&golangv2.Plugin{},
 			&golangv3.Plugin{},
 			&helmv1.Plugin{},
 			&ansiblev1.Plugin{},
 		),
-		cli.WithDefaultPlugins(
-			// TODO(estroz): make go/v3-alpha plugin the default once stabilized.
-			&golangv2.Plugin{},
-		),
+		cli.WithDefaultPlugins(config.Version2, &golangv2.Plugin{}),
+		// TODO(estroz): make go/v3-alpha plugin the default once stabilized.
+		cli.WithDefaultPlugins(config.Version3Alpha, &golangv2.Plugin{}),
 		cli.WithExtraCommands(commands...),
 	)
 	if err != nil {
