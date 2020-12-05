@@ -62,14 +62,10 @@ var _ = Describe("Registry", func() {
 	Describe("DeletePackageManifestsRegistry", func() {
 		It("should delete the package manifest registry", func() {
 			fakeclient := fake.NewFakeClient(
-				&corev1.ConfigMapList{
-					Items: []corev1.ConfigMap{
-						{
-							ObjectMeta: metav1.ObjectMeta{
-								Namespace: "testns",
-								Labels:    makeRegistryLabels("test"),
-							},
-						},
+				&corev1.ConfigMap{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "testns",
+						Labels:    makeRegistryLabels("test"),
 					},
 				},
 				newRegistryDeployment("pkgName", "testns"),
@@ -128,14 +124,10 @@ var _ = Describe("Registry", func() {
 		BeforeEach(func() {
 			testns = "testns"
 			fakeclient := fake.NewFakeClient(
-				&corev1.ConfigMapList{
-					Items: []corev1.ConfigMap{
-						{
-							ObjectMeta: metav1.ObjectMeta{
-								Namespace: testns,
-								Labels:    makeRegistryLabels("test"),
-							},
-						},
+				&corev1.ConfigMap{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: testns,
+						Labels:    makeRegistryLabels("test"),
 					},
 				},
 				newRegistryDeployment("pkgName", testns),
@@ -205,22 +197,18 @@ var _ = Describe("Registry", func() {
 		BeforeEach(func() {
 			testns = "testns"
 			fakeclient := fake.NewFakeClient(
-				&corev1.ConfigMapList{
-					Items: []corev1.ConfigMap{
-						{
-							ObjectMeta: metav1.ObjectMeta{
-								Name:      "config1",
-								Namespace: testns,
-								Labels:    makeRegistryLabels("pkgName"),
-							},
-						},
-						{
-							ObjectMeta: metav1.ObjectMeta{
-								Name:      "config2",
-								Namespace: testns,
-								Labels:    makeRegistryLabels("pkgName"),
-							},
-						},
+				&corev1.ConfigMap{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "config1",
+						Namespace: testns,
+						Labels:    makeRegistryLabels("pkgName"),
+					},
+				},
+				&corev1.ConfigMap{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "config2",
+						Namespace: testns,
+						Labels:    makeRegistryLabels("pkgName"),
 					},
 				},
 				newRegistryDeployment("pkgName", testns),
@@ -279,22 +267,18 @@ var _ = Describe("Registry", func() {
 
 		It("should return true if the number of files to be added to the registry don't match the numberof files currently in the registry", func() {
 			rr.Client.KubeClient = fake.NewFakeClient(
-				&corev1.ConfigMapList{
-					Items: []corev1.ConfigMap{
-						{
-							ObjectMeta: metav1.ObjectMeta{
-								Name:      getRegistryConfigMapName("pkgName") + "-package",
-								Namespace: testns,
-								Labels:    makeRegistryLabels("pkgName"),
-							},
-						},
-						{
-							ObjectMeta: metav1.ObjectMeta{
-								Name:      "config2",
-								Namespace: testns,
-								Labels:    makeRegistryLabels("pkgName"),
-							},
-						},
+				&corev1.ConfigMap{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      getRegistryConfigMapName("pkgName") + "-package",
+						Namespace: testns,
+						Labels:    makeRegistryLabels("pkgName"),
+					},
+				},
+				&corev1.ConfigMap{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "config2",
+						Namespace: testns,
+						Labels:    makeRegistryLabels("pkgName"),
 					},
 				},
 				newRegistryDeployment("pkgName", testns),
@@ -315,23 +299,19 @@ var _ = Describe("Registry", func() {
 				val2: "val2",
 			}, "userInput")
 			rr.Client.KubeClient = fake.NewFakeClient(
-				&corev1.ConfigMapList{
-					Items: []corev1.ConfigMap{
-						{
-							BinaryData: binarydata,
-							ObjectMeta: metav1.ObjectMeta{
-								Name:      getRegistryConfigMapName("pkgName") + "-package",
-								Namespace: testns,
-								Labels:    makeRegistryLabels("pkgName"),
-							},
-						},
-						{
-							ObjectMeta: metav1.ObjectMeta{
-								Name:      "config2",
-								Namespace: testns,
-								Labels:    makeRegistryLabels("pkgName"),
-							},
-						},
+				&corev1.ConfigMap{
+					BinaryData: binarydata,
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      getRegistryConfigMapName("pkgName") + "-package",
+						Namespace: testns,
+						Labels:    makeRegistryLabels("pkgName"),
+					},
+				},
+				&corev1.ConfigMap{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "config2",
+						Namespace: testns,
+						Labels:    makeRegistryLabels("pkgName"),
 					},
 				},
 				newRegistryDeployment("pkgName", testns),
@@ -353,23 +333,19 @@ var _ = Describe("Registry", func() {
 				},
 			})
 			rr.Client.KubeClient = fake.NewFakeClient(
-				&corev1.ConfigMapList{
-					Items: []corev1.ConfigMap{
-						{
-							BinaryData: binarydata,
-							ObjectMeta: metav1.ObjectMeta{
-								Name:      getRegistryConfigMapName("pkgName") + "-package",
-								Namespace: testns,
-								Labels:    makeRegistryLabels("pkgName"),
-							},
-						},
-						{
-							ObjectMeta: metav1.ObjectMeta{
-								Name:      getRegistryConfigMapName("pkgName2") + "-package",
-								Namespace: testns,
-								Labels:    makeRegistryLabels("pkgName"),
-							},
-						},
+				&corev1.ConfigMap{
+					BinaryData: binarydata,
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      getRegistryConfigMapName("pkgName") + "-package",
+						Namespace: testns,
+						Labels:    makeRegistryLabels("pkgName"),
+					},
+				},
+				&corev1.ConfigMap{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      getRegistryConfigMapName("pkgName2") + "-package",
+						Namespace: testns,
+						Labels:    makeRegistryLabels("pkgName"),
 					},
 				},
 				newRegistryDeployment("pkgName", testns),

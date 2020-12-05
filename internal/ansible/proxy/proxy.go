@@ -16,6 +16,7 @@ package proxy
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -128,15 +129,15 @@ func Run(done chan error, o Options) error {
 		if err != nil {
 			return err
 		}
-		stop := make(chan struct{})
+		ctx, cancel := context.WithCancel(context.TODO())
 		go func() {
-			if err := informerCache.Start(stop); err != nil {
+			if err := informerCache.Start(ctx); err != nil {
 				log.Error(err, "Failed to start informer cache")
 			}
-			defer close(stop)
+			defer cancel()
 		}()
 		log.Info("Waiting for cache to sync...")
-		synced := informerCache.WaitForCacheSync(stop)
+		synced := informerCache.WaitForCacheSync(context.TODO())
 		if !synced {
 			return fmt.Errorf("failed to sync cache")
 		}

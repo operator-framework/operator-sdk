@@ -25,7 +25,6 @@ import (
 	"sort"
 	"text/tabwriter"
 
-	log "github.com/sirupsen/logrus"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -35,6 +34,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	apiutilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Status struct {
@@ -50,17 +50,13 @@ type ResourceStatus struct {
 	requestObject runtime.Object // Needed for context on errors from requests on an object.
 }
 
-func (c Client) GetObjectsStatus(ctx context.Context, objs ...runtime.Object) Status {
+func (c Client) GetObjectsStatus(ctx context.Context, objs ...client.Object) Status {
 	var rss []ResourceStatus
 	for _, obj := range objs {
 		gvk := obj.GetObjectKind().GroupVersionKind()
-		a, aerr := meta.Accessor(obj)
-		if aerr != nil {
-			log.Fatalf("Object %s: %v", gvk, aerr)
-		}
 		nn := types.NamespacedName{
-			Namespace: a.GetNamespace(),
-			Name:      a.GetName(),
+			Namespace: obj.GetNamespace(),
+			Name:      obj.GetName(),
 		}
 		rs := ResourceStatus{
 			NamespacedName: nn,

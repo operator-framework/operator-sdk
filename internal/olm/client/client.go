@@ -34,7 +34,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -110,44 +109,33 @@ func NewClientForConfig(cfg *rest.Config) (*Client, error) {
 	return c, nil
 }
 
-func (c Client) DoCreate(ctx context.Context, objs ...runtime.Object) error {
+func (c Client) DoCreate(ctx context.Context, objs ...client.Object) error {
 	for _, obj := range objs {
-		a, err := meta.Accessor(obj)
-		if err != nil {
-			return err
-		}
 		kind := obj.GetObjectKind().GroupVersionKind().Kind
-		log.Infof("  Creating %s %q", kind, getName(a.GetNamespace(), a.GetName()))
-		err = c.KubeClient.Create(ctx, obj)
+		log.Infof("  Creating %s %q", kind, getName(obj.GetNamespace(), obj.GetName()))
+		err := c.KubeClient.Create(ctx, obj)
 		if err != nil {
 			if !apierrors.IsAlreadyExists(err) {
 				return err
 			}
-			log.Infof("    %s %q already exists", kind, getName(a.GetNamespace(), a.GetName()))
+			log.Infof("    %s %q already exists", kind, getName(obj.GetNamespace(), obj.GetName()))
 		}
 	}
 	return nil
 }
 
-func (c Client) DoDelete(ctx context.Context, objs ...runtime.Object) error {
+func (c Client) DoDelete(ctx context.Context, objs ...client.Object) error {
 	for _, obj := range objs {
-		a, err := meta.Accessor(obj)
-		if err != nil {
-			return err
-		}
 		kind := obj.GetObjectKind().GroupVersionKind().Kind
-		log.Infof("  Deleting %s %q", kind, getName(a.GetNamespace(), a.GetName()))
-		err = c.KubeClient.Delete(ctx, obj, client.PropagationPolicy(metav1.DeletePropagationBackground))
+		log.Infof("  Deleting %s %q", kind, getName(obj.GetNamespace(), obj.GetName()))
+		err := c.KubeClient.Delete(ctx, obj, client.PropagationPolicy(metav1.DeletePropagationBackground))
 		if err != nil {
 			if !apierrors.IsNotFound(err) {
 				return err
 			}
-			log.Infof("    %s %q does not exist", kind, getName(a.GetNamespace(), a.GetName()))
+			log.Infof("    %s %q does not exist", kind, getName(obj.GetNamespace(), obj.GetName()))
 		}
-		key, err := client.ObjectKeyFromObject(obj)
-		if err != nil {
-			return err
-		}
+		key := client.ObjectKeyFromObject(obj)
 		if err := wait.PollImmediateUntil(time.Millisecond*100, func() (bool, error) {
 			err := c.KubeClient.Get(ctx, key, obj)
 			if apierrors.IsNotFound(err) {

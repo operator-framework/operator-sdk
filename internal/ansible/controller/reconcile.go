@@ -63,11 +63,11 @@ type AnsibleOperatorReconciler struct {
 }
 
 // Reconcile - handle the event.
-func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.Result, error) { //nolint:gocyclo
+func (r *AnsibleOperatorReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) { //nolint:gocyclo
 	// TODO: Try to reduce the complexity of this last measured at 42 (failing at > 30) and remove the // nolint:gocyclo
 	u := &unstructured.Unstructured{}
 	u.SetGroupVersionKind(r.GVK)
-	err := r.Client.Get(context.TODO(), request.NamespacedName, u)
+	err := r.Client.Get(ctx, request.NamespacedName, u)
 	if apierrors.IsNotFound(err) {
 		return reconcile.Result{}, nil
 	}
@@ -106,7 +106,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		logger.V(1).Info("Adding finalizer to resource", "Finalizer", finalizer)
 		finalizers := append(pendingFinalizers, finalizer)
 		u.SetFinalizers(finalizers)
-		err := r.Client.Update(context.TODO(), u)
+		err := r.Client.Update(ctx, u)
 		if err != nil {
 			logger.Error(err, "Unable to update cr with finalizer")
 			return reconcileResult, err
@@ -232,7 +232,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 
 	// Need to get the unstructured object after the Ansible runner finishes.
 	// This needs to hit the API server to retrieve updates.
-	err = r.APIReader.Get(context.TODO(), request.NamespacedName, u)
+	err = r.APIReader.Get(ctx, request.NamespacedName, u)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return reconcile.Result{}, nil

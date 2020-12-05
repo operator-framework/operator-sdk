@@ -40,17 +40,17 @@ func NewResourceFilterPredicate(s metav1.LabelSelector) (predicate.Predicate, er
 
 // Predicate functions that call the EventFilter Function
 func (r resourceFilterPredicate) Update(e event.UpdateEvent) bool {
-	return r.eventFilter(e.MetaNew.GetLabels())
+	return r.eventFilter(e.ObjectNew.GetLabels())
 }
 
 func (r resourceFilterPredicate) Create(e event.CreateEvent) bool {
-	return r.eventFilter(e.Meta.GetLabels())
+	return r.eventFilter(e.Object.GetLabels())
 }
 
 func (r resourceFilterPredicate) Delete(e event.DeleteEvent) bool {
-	return r.eventFilter(e.Meta.GetLabels())
+	return r.eventFilter(e.Object.GetLabels())
 }
 
 func (r resourceFilterPredicate) Generic(e event.GenericEvent) bool {
-	return r.eventFilter(e.Meta.GetLabels())
+	return r.eventFilter(e.Object.GetLabels())
 }
