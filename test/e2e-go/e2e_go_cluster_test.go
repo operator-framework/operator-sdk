@@ -43,20 +43,11 @@ var _ = Describe("operator-sdk", func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 		AfterEach(func() {
-			By("cleaning up the operator and resources")
-			defaultOutput, err := tc.KustomizeBuild(filepath.Join("config", "default"))
-			Expect(err).NotTo(HaveOccurred())
-			_, err = tc.Kubectl.WithInput(string(defaultOutput)).Command("delete", "-f", "-")
-			Expect(err).NotTo(HaveOccurred())
-
-			By("deleting Curl Pod created")
-			_, _ = tc.Kubectl.Delete(true, "pod", "curl")
-
 			By("cleaning up permissions")
 			_, _ = tc.Kubectl.Command("delete", "clusterrolebinding",
 				fmt.Sprintf("metrics-%s", tc.TestSuffix))
 
-			By("undeploy project")
+			By("cleaning up the operator and resources")
 			_ = tc.Make("undeploy")
 
 			By("ensuring that the namespace was deleted")
@@ -131,14 +122,6 @@ var _ = Describe("operator-sdk", func() {
 				return err
 			}, time.Minute, time.Second).Should(Succeed())
 
-			By("ensuring the created resource object gets reconciled in controller")
-			managerContainerLogs := func() string {
-				logOutput, err := tc.Kubectl.Logs(controllerPodName, "-c", "manager")
-				Expect(err).NotTo(HaveOccurred())
-				return logOutput
-			}
-			Eventually(managerContainerLogs, time.Minute, time.Second).Should(ContainSubstring("Successfully Reconciled"))
-
 			By("granting permissions to access the metrics and read the token")
 			_, err = tc.Kubectl.Command(
 				"create",
@@ -148,7 +131,7 @@ var _ = Describe("operator-sdk", func() {
 				fmt.Sprintf("--serviceaccount=%s:default", tc.Kubectl.Namespace))
 			Expect(err).NotTo(HaveOccurred())
 
-			By("getting the token")
+			By("reading the token")
 			b64Token, err := tc.Kubectl.Get(
 				true,
 				"secrets",
@@ -156,12 +139,12 @@ var _ = Describe("operator-sdk", func() {
 			Expect(err).NotTo(HaveOccurred())
 			token, err := base64.StdEncoding.DecodeString(strings.TrimSpace(b64Token))
 			Expect(err).NotTo(HaveOccurred())
-			Expect(token).NotTo(HaveLen(0))
+			Expect(len(token)).To(BeNumerically(">", 0))
 
-			By("creating a pod with curl image")
-			// todo: the flag --generator=run-pod/v1 is deprecated, however, shows that besides
+			By("creating a curl pod")
+			// TODO: the flag --generator=run-pod/v1 is deprecated, however, shows that besides
 			// it should not make any difference and work locally successfully when the flag is removed
-			// travis has been failing and the curl pod is not found when the flag is not used
+			// the test will fail and the curl pod is not found when the flag is not used
 			cmdOpts := []string{
 				"run", "--generator=run-pod/v1", "curl", "--image=curlimages/curl:7.68.0", "--restart=OnFailure", "--",
 				"curl", "-v", "-k", "-H", fmt.Sprintf(`Authorization: Bearer %s`, token),
@@ -171,27 +154,38 @@ var _ = Describe("operator-sdk", func() {
 			_, err = tc.Kubectl.CommandInNamespace(cmdOpts...)
 			Expect(err).NotTo(HaveOccurred())
 
-			By("validating the curl pod running as expected")
+			By("validating that the curl pod is running as expected")
 			verifyCurlUp := func() error {
 				// Validate pod status
 				status, err := tc.Kubectl.Get(
 					true,
 					"pods", "curl", "-o", "jsonpath={.status.phase}")
-				Expect(err).NotTo(HaveOccurred())
+				ExpectWithOffset(1, err).NotTo(HaveOccurred())
 				if status != "Completed" && status != "Succeeded" {
 					return fmt.Errorf("curl pod in %s status", status)
 				}
 				return nil
 			}
-			Eventually(verifyCurlUp, 4*time.Minute, time.Second).Should(Succeed())
+			Eventually(verifyCurlUp, 2*time.Minute, time.Second).Should(Succeed())
 
-			By("checking metrics endpoint serving as expected")
+			By("validating that the metrics endpoint is serving as expected")
+			var metricsOutput string
 			getCurlLogs := func() string {
-				logOutput, err := tc.Kubectl.Logs("curl")
-				Expect(err).NotTo(HaveOccurred())
-				return logOutput
+				metricsOutput, err = tc.Kubectl.Logs("curl")
+				ExpectWithOffset(1, err).NotTo(HaveOccurred())
+				return metricsOutput
 			}
 			Eventually(getCurlLogs, time.Minute, time.Second).Should(ContainSubstring("< HTTP/2 200"))
+
+			By("cleaning up the curl pod")
+			_, err = tc.Kubectl.Delete(true, "pods", "curl")
+			Expect(err).NotTo(HaveOccurred())
+
+			By("validating that the created resource object gets reconciled in the controller")
+			Expect(metricsOutput).To(ContainSubstring(fmt.Sprintf(
+				`controller_runtime_reconcile_total{controller="%s",result="success"} 1`,
+				strings.ToLower(tc.Kind),
+			)))
 		})
 	})
 })

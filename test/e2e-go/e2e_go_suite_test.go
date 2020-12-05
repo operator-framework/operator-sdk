@@ -62,6 +62,8 @@ var _ = BeforeSuite(func() {
 	By("initializing a project")
 	err = tc.Init(
 		"--project-version", "3-alpha",
+		// TODO(estroz): remove this once go/v3-alpha is stabilized and the default plugin.
+		"--plugins", "go/v3-alpha",
 		"--repo", path.Join("github.com", "example", tc.ProjectName),
 		"--domain", tc.Domain,
 		"--fetch-deps=false")
