@@ -16,13 +16,13 @@ package genutil
 
 import (
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
 )
 
 // GetManifestObjects returns all objects to be written to a manifests directory from collector.Manifests.
-func GetManifestObjects(c *collector.Manifests) (objs []controllerutil.Object) {
+func GetManifestObjects(c *collector.Manifests) (objs []client.Object) {
 	// All CRDs passed in should be written.
 	for i := range c.V1CustomResourceDefinitions {
 		objs = append(objs, &c.V1CustomResourceDefinitions[i])
@@ -66,7 +66,7 @@ func GetManifestObjects(c *collector.Manifests) (objs []controllerutil.Object) {
 // not include explicit namespace settings. OLM automatically installs namespaced
 // resources in the same namespace that the operator is installed in, which is determined
 // at runtime, not bundle/packagemanifests creation time.
-func removeNamespace(objs []controllerutil.Object) {
+func removeNamespace(objs []client.Object) {
 	for _, obj := range objs {
 		obj.SetNamespace("")
 	}

@@ -30,7 +30,7 @@ import (
 )
 
 func TestCreateChart(t *testing.T) {
-	srv, err := repotest.NewTempServer("testdata/*.tgz")
+	srv, err := repotest.NewTempServerWithCleanup(t, "testdata/*.tgz")
 	if err != nil {
 		t.Fatalf("Failed to create new temp server: %s", err)
 	}
