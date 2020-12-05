@@ -9,9 +9,6 @@ Scaffold a webhook for an API resource
 
 Scaffold a webhook for an API resource.
 
-For project-specific information, run this command in the root directory of a
-project.
-
 Note: unable to find configuration file, project must be initialized
 
 ```

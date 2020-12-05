@@ -24,7 +24,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation"
 	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
 	"sigs.k8s.io/kubebuilder/v2/pkg/plugin"
-	"sigs.k8s.io/kubebuilder/v2/pkg/plugin/scaffold"
 
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds"
@@ -63,33 +62,29 @@ Optionally creates a new API, using the same flags as "create api"
 `
 	ctx.Examples = fmt.Sprintf(`
   # Scaffold a project with no API
-  $ %s init --plugins=%s --domain=my.domain \
+  $ %[1]s init --plugins=%[2]s --domain=my.domain \
 
   # Invokes "create api"
-  $ %s init --plugins=%s \
+  $ %[1]s init --plugins=%[2]s \
       --domain=my.domain \
       --group=apps --version=v1alpha1 --kind=AppService
 
-  $ %s init --plugins=%s \
+  $ %[1]s init --plugins=%[2]s \
       --domain=my.domain \
       --group=apps --version=v1alpha1 --kind=AppService \
       --generate-role
 
-  $ %s init --plugins=%s \
+  $ %[1]s init --plugins=%[2]s \
       --domain=my.domain \
       --group=apps --version=v1alpha1 --kind=AppService \
       --generate-playbook
 
-  $ %s init --plugins=%s \
+  $ %[1]s init --plugins=%[2]s \
       --domain=my.domain \
       --group=apps --version=v1alpha1 --kind=AppService \
       --generate-playbook \
       --generate-role
 `,
-		ctx.CommandName, pluginKey,
-		ctx.CommandName, pluginKey,
-		ctx.CommandName, pluginKey,
-		ctx.CommandName, pluginKey,
 		ctx.CommandName, pluginKey,
 	)
 	p.commandName = ctx.CommandName
@@ -160,9 +155,9 @@ func (p *initSubcommand) Validate() error {
 	return nil
 }
 
-func (p *initSubcommand) GetScaffolder() (scaffold.Scaffolder, error) {
+func (p *initSubcommand) GetScaffolder() (cmdutil.Scaffolder, error) {
 	var (
-		apiScaffolder scaffold.Scaffolder
+		apiScaffolder cmdutil.Scaffolder
 		err           error
 	)
 	if p.doCreateAPI {

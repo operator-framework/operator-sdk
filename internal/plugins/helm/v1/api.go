@@ -22,7 +22,6 @@ import (
 	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
 	"sigs.k8s.io/kubebuilder/v2/pkg/model/resource"
 	"sigs.k8s.io/kubebuilder/v2/pkg/plugin"
-	"sigs.k8s.io/kubebuilder/v2/pkg/plugin/scaffold"
 
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/chartutil"
@@ -181,8 +180,8 @@ func (p *createAPISubcommand) Validate() error {
 	return nil
 }
 
-// GetScaffolder returns scaffold.Scaffolder which will be executed due the RunOptions interface implementation
-func (p *createAPISubcommand) GetScaffolder() (scaffold.Scaffolder, error) {
+// GetScaffolder returns cmdutil.Scaffolder which will be executed due the RunOptions interface implementation
+func (p *createAPISubcommand) GetScaffolder() (cmdutil.Scaffolder, error) {
 	return scaffolds.NewAPIScaffolder(p.config, p.createOptions), nil
 }
 
