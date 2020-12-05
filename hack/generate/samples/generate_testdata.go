@@ -22,7 +22,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/ansible"
-	gosamples "github.com/operator-framework/operator-sdk/hack/generate/samples/internal/go"
+	golang "github.com/operator-framework/operator-sdk/hack/generate/samples/internal/go"
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/helm"
 	"github.com/operator-framework/operator-sdk/internal/testutils"
 )
@@ -54,5 +54,5 @@ func main() {
 	ansible.GenerateMemcachedAnsibleSample(samplesPath)
 
 	log.Infof("creating Go Memcached Sample with Webhooks")
-	gosamples.GenerateMemcachedGoWithWebhooksSample(samplesPath)
+	golang.GenerateMemcachedGoWithWebhooksSample(samplesPath)
 }

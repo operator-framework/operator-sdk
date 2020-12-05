@@ -15,10 +15,6 @@
 package pkg
 
 import (
-	"fmt"
-	"path/filepath"
-	"strings"
-
 	"github.com/operator-framework/operator-sdk/internal/testutils"
 )
 
@@ -29,18 +25,6 @@ type SampleContext struct {
 
 // NewSampleContext returns a SampleContext containing a new kubebuilder TestContext.
 func NewSampleContext(binary string, path string, env ...string) (s SampleContext, err error) {
-	s.TestContext, err = testutils.NewTestContext(binary, env...)
-	// If the path was informed then this should be the dir used
-	if strings.TrimSpace(path) != "" {
-		path, err = filepath.Abs(path)
-		if err != nil {
-			return s, err
-		}
-		s.CmdContext.Dir = path
-		s.ProjectName = strings.ToLower(filepath.Base(s.Dir))
-		s.ImageName = fmt.Sprintf("quay.io/example/%s:v0.0.1", s.ProjectName)
-		s.BundleImageName = fmt.Sprintf("quay.io/example/%s-bundle:v0.0.1", s.ProjectName)
-	}
-
+	s.TestContext, err = testutils.NewPartialTestContext(binary, path, env...)
 	return s, err
 }

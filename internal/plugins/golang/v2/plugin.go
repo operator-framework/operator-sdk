@@ -18,7 +18,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/plugins"
 
 	"sigs.k8s.io/kubebuilder/v2/pkg/plugin"
-	kbgov2 "sigs.k8s.io/kubebuilder/v2/pkg/plugin/v2"
+	kbgov2 "sigs.k8s.io/kubebuilder/v2/pkg/plugins/golang/v2"
 )
 
 // Plugin name/version used in this file will also be used in phase 2 plugins when we can

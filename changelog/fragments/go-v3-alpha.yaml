@@ -1,0 +1,8 @@
+entries:
+  - description: >
+      (go/v2) bumped controller-runtime from v0.6.3 to v0.6.4
+    kind: change
+    migration:
+      header: Go projects should update their controller-runtime version to v0.6.4
+      body: >
+        In your go.mod file, update the sigs.k8s.io/controller-runtime version to v0.6.4

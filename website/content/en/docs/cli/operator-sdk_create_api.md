@@ -9,9 +9,6 @@ Scaffold a Kubernetes API
 
 Scaffold a Kubernetes API.
 
-For project-specific information, run this command in the root directory of a
-project.
-
 Note: unable to find configuration file, project must be initialized
 
 ```

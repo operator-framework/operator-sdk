@@ -22,8 +22,8 @@ import (
 
 	"sigs.k8s.io/kubebuilder/v2/pkg/model"
 	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
-	"sigs.k8s.io/kubebuilder/v2/pkg/plugin/scaffold"
 
+	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/machinery"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/chartutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates"
@@ -44,15 +44,15 @@ const (
 // helmOperatorVersion is set to the version of helm-operator at compile-time.
 var helmOperatorVersion = version.ImageVersion
 
-var _ scaffold.Scaffolder = &initScaffolder{}
+var _ cmdutil.Scaffolder = &initScaffolder{}
 
 type initScaffolder struct {
 	config        *config.Config
-	apiScaffolder scaffold.Scaffolder
+	apiScaffolder cmdutil.Scaffolder
 }
 
 // NewInitScaffolder returns a new Scaffolder for project initialization operations
-func NewInitScaffolder(config *config.Config, apiScaffolder scaffold.Scaffolder) scaffold.Scaffolder {
+func NewInitScaffolder(config *config.Config, apiScaffolder cmdutil.Scaffolder) cmdutil.Scaffolder {
 	return &initScaffolder{
 		config:        config,
 		apiScaffolder: apiScaffolder,
