@@ -20,13 +20,13 @@ import (
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var _ = Describe("ClusterServiceVersion", func() {
 	var (
 		c       *Manifests
-		in, out []controllerutil.Object
+		in, out []client.Object
 	)
 
 	BeforeEach(func() {
@@ -244,23 +244,23 @@ var _ = Describe("ClusterServiceVersion", func() {
 
 })
 
-func getRoleNames(objs []controllerutil.Object) []string {
+func getRoleNames(objs []client.Object) []string {
 	return getNamesForKind("Role", objs)
 }
 
-func getRoleBindingNames(objs []controllerutil.Object) []string {
+func getRoleBindingNames(objs []client.Object) []string {
 	return getNamesForKind("RoleBinding", objs)
 }
 
-func getClusterRoleNames(objs []controllerutil.Object) []string {
+func getClusterRoleNames(objs []client.Object) []string {
 	return getNamesForKind("ClusterRole", objs)
 }
 
-func getClusterRoleBindingNames(objs []controllerutil.Object) []string {
+func getClusterRoleBindingNames(objs []client.Object) []string {
 	return getNamesForKind("ClusterRoleBinding", objs)
 }
 
-func getNamesForKind(kind string, objs []controllerutil.Object) (names []string) {
+func getNamesForKind(kind string, objs []client.Object) (names []string) {
 	for _, obj := range objs {
 		if obj.GetObjectKind().GroupVersionKind().Kind == kind {
 			names = append(names, obj.GetName())

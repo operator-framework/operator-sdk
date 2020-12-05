@@ -99,10 +99,7 @@ func (o OperatorInstaller) InstallOperator(ctx context.Context) (*v1alpha1.Clust
 
 //nolint:unused
 func (o OperatorInstaller) waitForCatalogSource(ctx context.Context, cs *v1alpha1.CatalogSource) error {
-	catSrcKey, err := client.ObjectKeyFromObject(cs)
-	if err != nil {
-		return fmt.Errorf("error getting catalog source key: %v", err)
-	}
+	catSrcKey := client.ObjectKeyFromObject(cs)
 
 	// verify that catalog source connection status is READY
 	catSrcCheck := wait.ConditionFunc(func() (done bool, err error) {

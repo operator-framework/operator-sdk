@@ -16,7 +16,7 @@ package collector
 
 import (
 	rbacv1 "k8s.io/api/rbac/v1"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // TODO(estroz): there's a significant amount of code dupliation here, a byproduct of Go's type system.
@@ -31,7 +31,7 @@ const (
 
 // SplitCSVPermissionsObjects splits roles that should be written to a CSV as permissions (in)
 // from roles and role bindings that should be written directly to the bundle (out).
-func (c *Manifests) SplitCSVPermissionsObjects() (in, out []controllerutil.Object) { //nolint:dupl
+func (c *Manifests) SplitCSVPermissionsObjects() (in, out []client.Object) { //nolint:dupl
 	roleMap := make(map[string]*rbacv1.Role)
 	for i := range c.Roles {
 		roleMap[c.Roles[i].GetName()] = &c.Roles[i]
@@ -127,7 +127,7 @@ func (c *Manifests) SplitCSVPermissionsObjects() (in, out []controllerutil.Objec
 
 // SplitCSVClusterPermissionsObjects splits cluster roles that should be written to a CSV as clusterPermissions (in)
 // from cluster roles and cluster role bindings that should be written directly to the bundle (out).
-func (c *Manifests) SplitCSVClusterPermissionsObjects() (in, out []controllerutil.Object) { //nolint:dupl
+func (c *Manifests) SplitCSVClusterPermissionsObjects() (in, out []client.Object) { //nolint:dupl
 	roleMap := make(map[string]*rbacv1.ClusterRole)
 	for i := range c.ClusterRoles {
 		roleMap[c.ClusterRoles[i].GetName()] = &c.ClusterRoles[i]

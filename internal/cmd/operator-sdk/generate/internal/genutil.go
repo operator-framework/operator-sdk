@@ -26,7 +26,7 @@ import (
 	"github.com/blang/semver"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
 
@@ -55,7 +55,7 @@ func IsPipeReader() bool {
 }
 
 // WriteObjects writes each object in objs to w.
-func WriteObjects(w io.Writer, objs ...controllerutil.Object) error {
+func WriteObjects(w io.Writer, objs ...client.Object) error {
 	for _, obj := range objs {
 		if err := writeObject(w, obj); err != nil {
 			return err
@@ -65,7 +65,7 @@ func WriteObjects(w io.Writer, objs ...controllerutil.Object) error {
 }
 
 // WriteObjectsToFiles creates dir then writes each object in objs to a file in dir.
-func WriteObjectsToFiles(dir string, objs ...controllerutil.Object) error {
+func WriteObjectsToFiles(dir string, objs ...client.Object) error {
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
@@ -97,7 +97,7 @@ func makeCRDFileName(group, resource string) string {
 	return fmt.Sprintf("%s_%s.yaml", group, resource)
 }
 
-func makeObjectFileName(obj controllerutil.Object) string {
+func makeObjectFileName(obj client.Object) string {
 	gvk := obj.GetObjectKind().GroupVersionKind()
 	if gvk.Group == "" {
 		return fmt.Sprintf("%s_%s_%s.yaml", obj.GetName(), gvk.Version, strings.ToLower(gvk.Kind))

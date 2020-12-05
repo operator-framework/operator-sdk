@@ -108,7 +108,7 @@ type operatorClient struct {
 	client.Client
 }
 
-func (c *operatorClient) Create(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
+func (c *operatorClient) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
 	opts = append(opts, client.FieldOwner("operator-sdk"))
 	return c.Client.Create(ctx, obj, opts...)
 }

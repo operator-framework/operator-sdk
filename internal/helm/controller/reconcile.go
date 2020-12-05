@@ -25,7 +25,6 @@ import (
 	"helm.sh/helm/v3/pkg/storage/driver"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/record"
@@ -65,7 +64,7 @@ const (
 // release changes are necessary, Reconcile will create or patch the underlying
 // resources to match the expected release manifest.
 
-func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.Result, error) { //nolint:gocyclo
+func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) { //nolint:gocyclo
 	o := &unstructured.Unstructured{}
 	o.SetGroupVersionKind(r.GVK)
 	o.SetNamespace(request.Namespace)
@@ -78,7 +77,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 	)
 	log.V(1).Info("Reconciling")
 
-	err := r.Client.Get(context.TODO(), request.NamespacedName, o)
+	err := r.Client.Get(ctx, request.NamespacedName, o)
 	if apierrors.IsNotFound(err) {
 		return reconcile.Result{}, nil
 	}
@@ -102,7 +101,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 			return reconcile.Result{}, nil
 		}
 
-		uninstalledRelease, err := manager.UninstallRelease(context.TODO())
+		uninstalledRelease, err := manager.UninstallRelease(ctx)
 		if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
 			log.Error(err, "Failed to uninstall release")
 			status.SetCondition(types.HelmAppCondition{
@@ -158,7 +157,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		Status: types.StatusTrue,
 	})
 
-	if err := manager.Sync(context.TODO()); err != nil {
+	if err := manager.Sync(ctx); err != nil {
 		log.Error(err, "Failed to sync release")
 		status.SetCondition(types.HelmAppCondition{
 			Type:    types.ConditionIrreconcilable,
@@ -176,7 +175,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 			r.EventRecorder.Eventf(o, "Warning", "OverrideValuesInUse",
 				"Chart value %q overridden to %q by operator's watches.yaml", k, v)
 		}
-		installedRelease, err := manager.InstallRelease(context.TODO())
+		installedRelease, err := manager.InstallRelease(ctx)
 		if err != nil {
 			log.Error(err, "Release failed")
 			status.SetCondition(types.HelmAppCondition{
@@ -242,7 +241,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 				"Chart value %q overridden to %q by operator's watches.yaml", k, v)
 		}
 		force := hasHelmUpgradeForceAnnotation(o)
-		previousRelease, upgradedRelease, err := manager.UpgradeRelease(context.TODO(), release.ForceUpgrade(force))
+		previousRelease, upgradedRelease, err := manager.UpgradeRelease(ctx, release.ForceUpgrade(force))
 		if err != nil {
 			log.Error(err, "Release failed")
 			status.SetCondition(types.HelmAppCondition{
@@ -294,7 +293,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 	// no longer being attempted.
 	status.RemoveCondition(types.ConditionReleaseFailed)
 
-	expectedRelease, err := manager.ReconcileRelease(context.TODO())
+	expectedRelease, err := manager.ReconcileRelease(ctx)
 	if err != nil {
 		log.Error(err, "Failed to reconcile release")
 		status.SetCondition(types.HelmAppCondition{
@@ -356,7 +355,7 @@ func hasHelmUpgradeForceAnnotation(o *unstructured.Unstructured) bool {
 	return value
 }
 
-func (r HelmOperatorReconciler) updateResource(o runtime.Object) error {
+func (r HelmOperatorReconciler) updateResource(o client.Object) error {
 	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		return r.Client.Update(context.TODO(), o)
 	})
@@ -369,11 +368,8 @@ func (r HelmOperatorReconciler) updateResourceStatus(o *unstructured.Unstructure
 	})
 }
 
-func (r HelmOperatorReconciler) waitForDeletion(o runtime.Object) error {
-	key, err := client.ObjectKeyFromObject(o)
-	if err != nil {
-		return err
-	}
+func (r HelmOperatorReconciler) waitForDeletion(o client.Object) error {
+	key := client.ObjectKeyFromObject(o)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()

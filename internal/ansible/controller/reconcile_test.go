@@ -545,7 +545,7 @@ func TestReconcile(t *testing.T) {
 				ReconcilePeriod: tc.ReconcilePeriod,
 				ManageStatus:    tc.ManageStatus,
 			}
-			result, err := aor.Reconcile(tc.Request)
+			result, err := aor.Reconcile(context.TODO(), tc.Request)
 			if err != nil && !tc.ShouldError {
 				t.Fatalf("Unexpected error: %v", err)
 			}
