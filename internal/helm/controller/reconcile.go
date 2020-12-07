@@ -119,7 +119,7 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 			log.Info("Release not found, removing finalizer")
 		} else {
 			log.Info("Uninstalled release")
-			if log.V(0).Enabled() {
+			if log.V(0).Enabled() && uninstalledRelease != nil {
 				fmt.Println(diff.Generate(uninstalledRelease.Manifest, ""))
 			}
 			status.SetCondition(types.HelmAppCondition{
