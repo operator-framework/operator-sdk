@@ -5,9 +5,12 @@ set -eu
 source hack/lib/common.sh
 source hack/lib/image_lib.sh
 
-TMPDIR="$(mktemp -d -p /tmp memcached-operator-XXXX)"
+TMPDIR="$(mktemp -d)"
 trap_add 'rm -rf $TMPDIR' EXIT
 pushd "$TMPDIR"
+cd $TMPDIR
+mkdir memcached-operator-XXXX
+cd memcached-operator-XXXX
 
 header_text "Initializing test project"
 
