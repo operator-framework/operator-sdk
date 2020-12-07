@@ -28,7 +28,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry/index"
@@ -94,15 +93,34 @@ func (c IndexImageCatalogCreator) getDBPath(ctx context.Context) (string, error)
 }
 
 func (c IndexImageCatalogCreator) createRegistryPod(ctx context.Context, dbPath string, cs *v1alpha1.CatalogSource) (*corev1.Pod, error) {
-	// Initialize registry pod
-	registryPod, err := index.NewRegistryPod(c.cfg, dbPath, c.BundleImage)
-	if err != nil {
-		return nil, fmt.Errorf("error initializing registry pod: %v", err)
+	indexImage := c.IndexImage
+	bundleImages := make([]string, len(c.InjectBundles))
+	copy(bundleImages, c.InjectBundles)
+	if annotations := cs.GetAnnotations(); annotations != nil {
+		if value, hasAnnotation := annotations[indexImageAnnotation]; hasAnnotation {
+			indexImage = value
+		}
+		if value, hasAnnotation := annotations[injectedBundlesAnnotation]; hasAnnotation {
+			bundles := []string{}
+			if err := json.Unmarshal([]byte(value), &bundles); err != nil {
+				return nil, err
+			}
+			bundleImages = append(bundles, bundleImages...)
+		}
 	}
 
-	var pod *corev1.Pod
+	// Initialize registry pod
+	registryPod := index.RegistryPod{
+		// TODO: combine these with existing injected bundles from registry pod annotation intelligently, like in c.setAnnotations()
+		BundleImages:  bundleImages,
+		BundleAddMode: c.InjectBundleMode,
+		IndexImage:    indexImage,
+		DBPath:        dbPath,
+	}
+
 	// Create registry pod
-	if pod, err = registryPod.Create(ctx, cs); err != nil {
+	pod, err := registryPod.Create(ctx, c.cfg, cs)
+	if err != nil {
 		return nil, fmt.Errorf("error creating registry pod: %v", err)
 	}
 
@@ -124,10 +142,10 @@ func (c IndexImageCatalogCreator) updateCatalogSource(ctx context.Context, cs *v
 
 	// Annotations for catalog source
 	annotationMapping := map[string]string{
-		"operators.operatorframework.io/index-image":        c.IndexImage,
-		"operators.operatorframework.io/inject-bundle-mode": c.InjectBundleMode,
-		"operators.operatorframework.io/injected-bundles":   string(injectedBundlesJSON),
-		"operators.operatorframework.io/registry-pod-name":  podName,
+		indexImageAnnotation:          c.IndexImage,
+		injectedBundlesModeAnnotation: c.InjectBundleMode,
+		injectedBundlesAnnotation:     string(injectedBundlesJSON),
+		registryPodNameAnnotation:     podName,
 	}
 
 	// Update catalog source with source type as grpc and address as the pod IP,
@@ -200,9 +218,9 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 	}
 	// Annotations for catalog source
 	annotationMapping := map[string]string{
-		"operators.operatorframework.io/index-image":       c.IndexImage,
-		"operators.operatorframework.io/registry-pod-name": pod.Name,
-		"operators.operatorframework.io/added-bundles":     string(addedBundlesJSON),
+		indexImageAnnotation:      c.IndexImage,
+		registryPodNameAnnotation: pod.Name,
+		addedBundlesAnnotation:    string(addedBundlesJSON),
 	}
 
 	// Update catalog source with source type as grpc and new registry pod address as the pod IP,
@@ -246,8 +264,9 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 }
 
 const (
+	indexImageAnnotation          = "operators.operatorframework.io/index-image"
 	injectedBundlesAnnotation     = "operators.operatorframework.io/injected-bundles"
-	injectedBundlesModeAnnotation = "operators.operatorframework.io/inject-bundle-mode"
+	injectedBundlesModeAnnotation = "operators.operatorframework.io/injected-bundles-mode"
 	addedBundlesAnnotation        = "operators.operatorframework.io/added-bundles"
 	registryPodNameAnnotation     = "operators.operatorframework.io/registry-pod-name"
 )
@@ -266,8 +285,8 @@ func (c IndexImageCatalogCreator) setAnnotations(cs *v1alpha1.CatalogSource) ([]
 
 		if previousInjectedBundles == "" || previousInjectedBundlesMode == "" {
 			// either both should be present, or both should be absent
-			return []map[string]string{}, imageReferenceExists,
-				errors.New("one of the annotations in {InjectedBundles, InjectedBundlesMode} is missing on the catalog source")
+			err := errors.New("one of the annotations in {InjectedBundles, InjectedBundlesMode} is missing on the catalog source")
+			return []map[string]string{}, imageReferenceExists, err
 		} else if previousInjectedBundles == "" && previousInjectedBundlesMode == "" {
 			// previous version of operator was installed in traditional means without executing `run bundle`,
 			// in which case, catalog source image reference would have been be set
@@ -343,10 +362,6 @@ func (c IndexImageCatalogCreator) deleteRegistryPod(ctx context.Context, podName
 		log.Infof("Deleted previous registry pod with name %q", pod.GetName())
 	}
 
-	podKey, err := client.ObjectKeyFromObject(&pod)
-	if err != nil {
-		return fmt.Errorf("get pod key: %v", err)
-	}
 	if err := wait.PollImmediateUntil(200*time.Millisecond, func() (bool, error) {
 		if err := c.cfg.Client.Get(ctx, podKey, &pod); apierrors.IsNotFound(err) {
 			return true, nil

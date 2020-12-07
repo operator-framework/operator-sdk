@@ -47,7 +47,6 @@ func NewUpgrade(cfg *operator.Configuration) Upgrade {
 	}
 	u.IndexImageCatalogCreator = registry.NewIndexImageCatalogCreator(cfg)
 	u.CatalogCreator = u.IndexImageCatalogCreator
-	u.CatalogUpdater = u.IndexImageCatalogCreator
 	return u
 }
 

@@ -64,8 +64,8 @@ type RegistryPod struct {
 	// It is of the type BundleAddModeType
 	BundleAddMode BundleAddModeType
 
-	// BundleImage specifies the container image that opm uses to generate and incrementally update the database
-	BundleImage string
+	// BundleImages specifies the bundle images that opm will add to the existing database
+	BundleImages []string
 
 	// Index image contains a database of pointers to operator manifest content that is queriable via an API.
 	// new version of an operator bundle when published can be added to an index image
@@ -84,10 +84,8 @@ type RegistryPod struct {
 	cfg *operator.Configuration
 }
 
-// NewRegistryPod initializes the RegistryPod struct and sets defaults for empty fields
-func NewRegistryPod(cfg *operator.Configuration, dbPath, bundleImage string) (*RegistryPod, error) {
-	rp := &RegistryPod{}
-
+// init initializes the RegistryPod struct and sets defaults for empty fields
+func (rp *RegistryPod) init(cfg *operator.Configuration) error {
 	if rp.GRPCPort == 0 {
 		rp.GRPCPort = defaultGRPCPort
 	}
@@ -105,30 +103,28 @@ func NewRegistryPod(cfg *operator.Configuration, dbPath, bundleImage string) (*R
 	}
 
 	rp.cfg = cfg
-	rp.DBPath = dbPath
-	rp.BundleImage = bundleImage
 
 	// validate the RegistryPod struct and ensure required fields are set
 	if err := rp.validate(); err != nil {
-		return nil, fmt.Errorf("error validating registry pod struct: %v", err)
+		return fmt.Errorf("error validating registry pod struct: %v", err)
 	}
 
 	// podForBundleRegistry() to make the pod definition
 	pod, err := rp.podForBundleRegistry()
 	if err != nil {
-		return nil, fmt.Errorf("error building registry pod definition: %v", err)
+		return fmt.Errorf("error building registry pod definition: %v", err)
 	}
 	rp.pod = pod
 
-	return rp, nil
+	return nil
 }
 
 // Create creates a bundle registry pod built from an index image,
 // sets the catalog source as the owner for the pod and verifies that
 // the pod is running
-func (rp *RegistryPod) Create(ctx context.Context, cs *v1alpha1.CatalogSource) (*corev1.Pod, error) {
-	if rp.pod == nil {
-		return nil, errPodNotInit
+func (rp *RegistryPod) Create(ctx context.Context, cfg *operator.Configuration, cs *v1alpha1.CatalogSource) (*corev1.Pod, error) {
+	if err := rp.init(cfg); err != nil {
+		return nil, err
 	}
 
 	// make catalog source the owner of registry pod object
@@ -143,7 +139,7 @@ func (rp *RegistryPod) Create(ctx context.Context, cs *v1alpha1.CatalogSource) (
 	// get registry pod key
 	podKey := types.NamespacedName{
 		Namespace: rp.cfg.Namespace,
-		Name:      getPodName(rp.BundleImage),
+		Name:      rp.pod.GetName(),
 	}
 
 	// poll and verify that pod is running
@@ -177,8 +173,8 @@ func (rp *RegistryPod) checkPodStatus(ctx context.Context, podCheck wait.Conditi
 // validate will ensure that RegistryPod required fields are set
 // and throws error if not set
 func (rp *RegistryPod) validate() error {
-	if len(strings.TrimSpace(rp.BundleImage)) < 1 {
-		return errors.New("bundle image cannot be empty")
+	if len(rp.BundleImages) == 0 {
+		return errors.New("bundle images cannot be empty")
 	}
 	if len(strings.TrimSpace(rp.DBPath)) < 1 {
 		return errors.New("registry database path cannot be empty")
@@ -210,6 +206,9 @@ func getPodName(bundleImage string) string {
 // podForBundleRegistry constructs and returns the registry pod definition
 // and throws error when unable to build the pod definition successfully
 func (rp *RegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
+	// rp was already validated so len(rp.BundleImages) must be greater than 0.
+	bundleImage := rp.BundleImages[len(rp.BundleImages)-1]
+
 	// construct the container command for pod spec
 	containerCmd, err := rp.getContainerCmd()
 	if err != nil {
@@ -219,7 +218,7 @@ func (rp *RegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 	// make the pod definition
 	rp.pod = &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      getPodName(rp.BundleImage),
+			Name:      getPodName(bundleImage),
 			Namespace: rp.cfg.Namespace,
 		},
 		Spec: corev1.PodSpec{
@@ -246,15 +245,15 @@ func (rp *RegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 // getContainerCmd uses templating to construct the container command
 // and throws error if unable to parse and execute the container command
 func (rp *RegistryPod) getContainerCmd() (string, error) {
-	const containerCommand = "/bin/mkdir -p {{ .DBPath | dirname }} &&" +
-		"/bin/opm registry add -d {{ .DBPath }} -b {{.BundleImage}} --mode={{.BundleAddMode}} &&" +
+	const containerCommand = "/bin/mkdir -p {{ .DBPath | dirname }} && " +
+		"/bin/opm registry add -d {{ .DBPath }} -b {{.BundleImage}} --mode={{.BundleAddMode}} && " +
 		"/bin/opm registry serve -d {{ .DBPath }} -p {{.GRPCPort}}"
 	type bundleCmd struct {
 		BundleImage, DBPath, BundleAddMode string
 		GRPCPort                           int32
 	}
 
-	var command = bundleCmd{rp.BundleImage, rp.DBPath,
+	var command = bundleCmd{strings.Join(rp.BundleImages, ","), rp.DBPath,
 		rp.BundleAddMode, rp.GRPCPort}
 
 	out := &bytes.Buffer{}

@@ -46,21 +46,23 @@ var _ = Describe("RegistryPod", func() {
 
 		Context("with valid registry pod values", func() {
 			expectedPodName := "quay-io-example-example-operator-bundle-0-2-0"
-			expectedOutput := "/bin/mkdir -p /database &&" +
-				"/bin/opm registry add -d /database/index.db -b quay.io/example/example-operator-bundle:0.2.0 --mode=semver &&" +
+			expectedOutput := "/bin/mkdir -p /database && " +
+				"/bin/opm registry add -d /database/index.db -b quay.io/example/example-operator-bundle:0.2.0 --mode=semver && " +
 				"/bin/opm registry serve -d /database/index.db -p 50051"
 
 			var rp *RegistryPod
 			var cfg *operator.Configuration
-			var err error
 
 			BeforeEach(func() {
 				cfg = &operator.Configuration{
 					Client:    newFakeClient(),
 					Namespace: "test-default",
 				}
-				rp, err = NewRegistryPod(cfg, "/database/index.db", "quay.io/example/example-operator-bundle:0.2.0")
-				Expect(err).To(BeNil())
+				rp = &RegistryPod{
+					DBPath:       "/database/index.db",
+					BundleImages: []string{"quay.io/example/example-operator-bundle:0.2.0"},
+				}
+				Expect(rp.init(cfg)).NotTo(HaveOccurred())
 			})
 
 			It("should validate the RegistryPod successfully", func() {
@@ -89,8 +91,10 @@ var _ = Describe("RegistryPod", func() {
 			})
 
 			It("should return a pod definition successfully", func() {
+				var err error
 				rp.pod, err = rp.podForBundleRegistry()
 
+				Expect(err).NotTo(HaveOccurred())
 				Expect(rp.pod).NotTo(BeNil())
 				Expect(rp.pod.Name).To(Equal(expectedPodName))
 				Expect(rp.pod.Namespace).To(Equal(rp.cfg.Namespace))
@@ -124,50 +128,40 @@ var _ = Describe("RegistryPod", func() {
 
 			It("should error when bundle image is not provided", func() {
 				expectedErr := "bundle image cannot be empty"
-
-				_, err := NewRegistryPod(cfg, "/database/index.db", "")
-
+				rp := &RegistryPod{DBPath: "/database/index.db"}
+				err := rp.init(cfg)
 				Expect(err).NotTo(BeNil())
 				Expect(err.Error()).Should(ContainSubstring(expectedErr))
 			})
 
 			It("should not create a registry pod when database path is not provided", func() {
 				expectedErr := "registry database path cannot be empty"
-
-				_, err := NewRegistryPod(cfg, "",
-					"quay.io/example/example-operator-bundle:0.2.0")
-
-				Expect(err).NotTo(BeNil())
-				Expect(err.Error()).Should(ContainSubstring(expectedErr))
-			})
-
-			It("should not create a registry pod when bundle add mode is empty", func() {
-				expectedErr := "bundle add mode cannot be empty"
-
-				rp, _ := NewRegistryPod(cfg, "/database/index.db",
-					"quay.io/example/example-operator-bundle:0.2.0")
-				rp.BundleAddMode = ""
-
-				err := rp.validate()
+				rp := &RegistryPod{
+					BundleImages: []string{"quay.io/example/example-operator-bundle:0.2.0"},
+				}
+				err := rp.init(cfg)
 				Expect(err).NotTo(BeNil())
 				Expect(err.Error()).Should(ContainSubstring(expectedErr))
 			})
 
 			It("should not accept any other bundle add mode other than semver or replaces", func() {
 				expectedErr := "invalid bundle mode"
-
-				rp, _ := NewRegistryPod(cfg, "/database/index.db",
-					"quay.io/example/example-operator-bundle:0.2.0")
-				rp.BundleAddMode = "invalid"
-
-				err := rp.validate()
+				rp := &RegistryPod{
+					BundleImages:  []string{"quay.io/example/example-operator-bundle:0.2.0"},
+					BundleAddMode: "invalid",
+					DBPath:        "/database/index.db",
+				}
+				err := rp.init(cfg)
 				Expect(err).NotTo(BeNil())
 				Expect(err.Error()).Should(ContainSubstring(expectedErr))
 			})
 
 			It("checkPodStatus should return error when pod check is false and context is done", func() {
-				rp, _ := NewRegistryPod(cfg, "/database/index.db",
-					"quay.io/example/example-operator-bundle:0.2.0")
+				rp := &RegistryPod{
+					BundleImages: []string{"quay.io/example/example-operator-bundle:0.2.0"},
+					DBPath:       "/database/index.db",
+				}
+				_ = rp.init(cfg)
 
 				mockBadPodCheck := wait.ConditionFunc(func() (done bool, err error) {
 					return false, fmt.Errorf("error waiting for registry pod")
@@ -187,7 +181,7 @@ var _ = Describe("RegistryPod", func() {
 			It("Create should fail when registry pod is not initialized", func() {
 				rp := RegistryPod{}
 				cs := &v1alpha1.CatalogSource{}
-				pod, err := rp.Create(context.Background(), cs)
+				pod, err := rp.Create(context.Background(), cfg, cs)
 
 				Expect(err).NotTo(BeNil())
 				Expect(pod).To(BeNil())
