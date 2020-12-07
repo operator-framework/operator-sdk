@@ -251,7 +251,7 @@ func (mh *MemcachedGoWithWebhooks) implementingAPI() {
 // Note that it should NOT be called in the e2e tests.
 func GenerateMemcachedGoWithWebhooksSample(samplesPath string) {
 	log.Infof("starting to generate Go memcached sample with webhooks")
-	ctx, err := pkg.NewSampleContext(testutils.BinaryName, filepath.Join(samplesPath, "go/memcached-operator"), "GO111MODULE=on")
+	ctx, err := pkg.NewSampleContext(testutils.BinaryName, filepath.Join(samplesPath, "memcached-operator"), "GO111MODULE=on")
 	pkg.CheckError("generating Go memcached with webhooks context", err)
 
 	memcached := NewMemcachedGoWithWebhooks(&ctx)
