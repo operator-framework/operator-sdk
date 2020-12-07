@@ -370,5 +370,8 @@ func (m manager) UninstallRelease(ctx context.Context, opts ...UninstallOption) 
 		}
 	}
 	uninstallResponse, err := uninstall.Run(m.releaseName)
+	if uninstallResponse == nil {
+		return nil, err
+	}
 	return uninstallResponse.Release, err
 }
