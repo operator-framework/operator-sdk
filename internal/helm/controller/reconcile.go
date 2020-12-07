@@ -175,7 +175,7 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 			r.EventRecorder.Eventf(o, "Warning", "OverrideValuesInUse",
 				"Chart value %q overridden to %q by operator's watches.yaml", k, v)
 		}
-		installedRelease, err := manager.InstallRelease(ctx)
+		installedRelease, err := manager.InstallRelease(ctx, release.AtomicInstall())
 		if err != nil {
 			log.Error(err, "Release failed")
 			status.SetCondition(types.HelmAppCondition{
@@ -241,7 +241,7 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 				"Chart value %q overridden to %q by operator's watches.yaml", k, v)
 		}
 		force := hasHelmUpgradeForceAnnotation(o)
-		previousRelease, upgradedRelease, err := manager.UpgradeRelease(ctx, release.ForceUpgrade(force))
+		previousRelease, upgradedRelease, err := manager.UpgradeRelease(ctx, release.AtomicUpgrade(), release.ForceUpgrade(force))
 		if err != nil {
 			log.Error(err, "Release failed")
 			status.SetCondition(types.HelmAppCondition{

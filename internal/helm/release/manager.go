@@ -169,23 +169,6 @@ func (m manager) InstallRelease(ctx context.Context, opts ...InstallOption) (*rp
 
 	installedRelease, err := install.Run(m.chart, m.values)
 	if err != nil {
-		// Workaround for helm/helm#3338
-		if installedRelease != nil {
-			uninstall := action.NewUninstall(m.actionConfig)
-			_, uninstallErr := uninstall.Run(m.releaseName)
-
-			// In certain cases, InstallRelease will return a partial release in
-			// the response even when it doesn't record the release in its release
-			// store (e.g. when there is an error rendering the release manifest).
-			// In that case the rollback will fail with a not found error because
-			// there was nothing to rollback.
-			//
-			// Only log a message about a rollback failure if the failure was caused
-			// by something other than the release not being found.
-			if uninstallErr != nil && !notFoundErr(uninstallErr) {
-				return nil, fmt.Errorf("failed installation (%s) and failed rollback: %w", err, uninstallErr)
-			}
-		}
 		return nil, fmt.Errorf("failed to install release: %w", err)
 	}
 	return installedRelease, nil
@@ -194,6 +177,20 @@ func (m manager) InstallRelease(ctx context.Context, opts ...InstallOption) (*rp
 func ForceUpgrade(force bool) UpgradeOption {
 	return func(u *action.Upgrade) error {
 		u.Force = force
+		return nil
+	}
+}
+
+func AtomicUpgrade() UpgradeOption {
+	return func(u *action.Upgrade) error {
+		u.Atomic = true
+		return nil
+	}
+}
+
+func AtomicInstall() InstallOption {
+	return func(u *action.Install) error {
+		u.Atomic = true
 		return nil
 	}
 }
@@ -210,21 +207,6 @@ func (m manager) UpgradeRelease(ctx context.Context, opts ...UpgradeOption) (*rp
 
 	upgradedRelease, err := upgrade.Run(m.releaseName, m.chart, m.values)
 	if err != nil {
-		// Workaround for helm/helm#3338
-		if upgradedRelease != nil {
-			rollback := action.NewRollback(m.actionConfig)
-			rollback.Force = true
-
-			// As of Helm 2.13, if UpgradeRelease returns a non-nil release, that
-			// means the release was also recorded in the release store.
-			// Therefore, we should perform the rollback when we have a non-nil
-			// release. Any rollback error here would be unexpected, so always
-			// log both the upgrade and rollback errors.
-			rollbackErr := rollback.Run(m.releaseName)
-			if rollbackErr != nil {
-				return nil, nil, fmt.Errorf("failed upgrade (%s) and failed rollback: %w", err, rollbackErr)
-			}
-		}
 		return nil, nil, fmt.Errorf("failed to upgrade release: %w", err)
 	}
 	return m.deployedRelease, upgradedRelease, err
