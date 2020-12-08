@@ -124,14 +124,6 @@ var _ = Describe("operator-sdk", func() {
 				return err
 			}, time.Minute, time.Second).Should(Succeed())
 
-			By("ensuring the created resource object gets reconciled in controller")
-			managerContainerLogs := func() string {
-				logOutput, err := tc.Kubectl.Logs(controllerPodName, "-c", "manager")
-				Expect(err).NotTo(HaveOccurred())
-				return logOutput
-			}
-			Eventually(managerContainerLogs, time.Minute, time.Second).Should(ContainSubstring("Successfully Reconciled"))
-
 			By("granting permissions to access the metrics and read the token")
 			_, err = tc.Kubectl.Command(
 				"create",
