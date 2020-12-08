@@ -35,7 +35,7 @@ func TestE2EGo(t *testing.T) {
 }
 
 var (
-	tc testutils.TestContext
+	tc             testutils.TestContext
 	reconcileCount = 0
 )
 
