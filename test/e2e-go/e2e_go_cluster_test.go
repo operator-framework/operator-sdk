@@ -35,7 +35,7 @@ var _ = Describe("operator-sdk", func() {
 	Context("built with operator-sdk", func() {
 		BeforeEach(func() {
 			metricsClusterRoleBindingName = fmt.Sprintf("%s-metrics-reader", tc.ProjectName)
-
+			reconcileCount++
 			By("deploying project on the cluster")
 			err := tc.Make("deploy", "IMG="+tc.ImageName)
 			Expect(err).NotTo(HaveOccurred())
@@ -179,8 +179,8 @@ var _ = Describe("operator-sdk", func() {
 
 			By("validating that the created resource object gets reconciled in the controller")
 			Expect(metricsOutput).To(ContainSubstring(fmt.Sprintf(
-				`controller_runtime_reconcile_total{controller="%s",result="success"} 3`,
-				strings.ToLower(tc.Kind),
+				`controller_runtime_reconcile_total{controller="%s",result="success"} %d`,
+				strings.ToLower(tc.Kind), reconcileCount,
 			)))
 		})
 	})

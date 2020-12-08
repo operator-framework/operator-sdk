@@ -92,13 +92,6 @@ func (mh *MemcachedGoWithWebhooks) Run() {
 	mh.implementingWebhooks()
 	mh.uncommentKustomizationFile()
 
-	sampleFile := filepath.Join("config", "samples",
-		fmt.Sprintf("%s_%s_%s.yaml", mh.ctx.Group, mh.ctx.Version, strings.ToLower(mh.ctx.Kind)))
-
-	log.Infof("updating sample to have size attribute")
-	err = testutils.ReplaceInFile(filepath.Join(mh.ctx.Dir, sampleFile), "foo: bar", "size: 1")
-	pkg.CheckError("updating sample", err)
-
 	mh.ctx.CreateBundle()
 
 	pkg.CheckError("formatting project", mh.ctx.Make("fmt"))
@@ -251,6 +244,13 @@ func (mh *MemcachedGoWithWebhooks) implementingAPI() {
 	Nodes []string `+"`"+`json:"nodes,omitempty"`+"`"+`
 `)
 	pkg.CheckError("inserting Node Status", err)
+
+	sampleFile := filepath.Join("config", "samples",
+		fmt.Sprintf("%s_%s_%s.yaml", mh.ctx.Group, mh.ctx.Version, strings.ToLower(mh.ctx.Kind)))
+
+	log.Infof("updating sample to have size attribute")
+	err = testutils.ReplaceInFile(filepath.Join(mh.ctx.Dir, sampleFile), "foo: bar", "size: 1")
+	pkg.CheckError("updating sample", err)
 }
 
 // GenerateMemcachedGoWithWebhooksSample will call all actions to create the directory and generate the sample

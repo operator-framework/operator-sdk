@@ -30,6 +30,7 @@ var _ = Describe("Integrating Go Projects with OLM", func() {
 	// the pkg manifest after we comment cert-manager options into the kustomization file.
 	// More info: https://olm.operatorframework.io/docs/advanced-tasks/adding-admission-and-conversion-webhooks/#certificate-authority-requirements
 	BeforeEach(func() {
+		reconcileCount++
 		By("commenting cert-manager")
 		err := testutils.ReplaceInFile(
 			filepath.Join(tc.Dir, "config", "default", "kustomization.yaml"),
@@ -39,7 +40,7 @@ var _ = Describe("Integrating Go Projects with OLM", func() {
 		By("commenting cert-manager")
 		err = testutils.ReplaceInFile(
 			filepath.Join(tc.Dir, "config", "default", "kustomization.yaml"),
-			uncommentedCertManager, commentedCertMaagerKustomizeFields)
+			uncommentedCertManagerKustomizeFields, commentedCertManagerKustomizeFields)
 		Expect(err).NotTo(HaveOccurred())
 	})
 
@@ -53,7 +54,7 @@ var _ = Describe("Integrating Go Projects with OLM", func() {
 		By("commenting cert-manager")
 		err = testutils.ReplaceInFile(
 			filepath.Join(tc.Dir, "config", "default", "kustomization.yaml"),
-			commentedCertMaagerKustomizeFields, uncommentedCertManager)
+			commentedCertManagerKustomizeFields, uncommentedCertManagerKustomizeFields)
 		Expect(err).NotTo(HaveOccurred())
 	})
 
@@ -87,7 +88,7 @@ var _ = Describe("Integrating Go Projects with OLM", func() {
 	})
 })
 
-const uncommentedCertManager = `# [CERTMANAGER] To enable cert-manager, uncomment all sections with 'CERTMANAGER'.
+const uncommentedCertManagerKustomizeFields = `# [CERTMANAGER] To enable cert-manager, uncomment all sections with 'CERTMANAGER'.
 # Uncomment 'CERTMANAGER' sections in crd/kustomization.yaml to enable the CA injection in the admission webhooks.
 # 'CERTMANAGER' needs to be enabled to use ca injection
 - webhookcainjection_patch.yaml
@@ -123,7 +124,7 @@ vars:
     version: v1
     name: webhook-service`
 
-const commentedCertMaagerKustomizeFields = `# [CERTMANAGER] To enable cert-manager, uncomment all sections with 'CERTMANAGER'.
+const commentedCertManagerKustomizeFields = `# [CERTMANAGER] To enable cert-manager, uncomment all sections with 'CERTMANAGER'.
 # Uncomment 'CERTMANAGER' sections in crd/kustomization.yaml to enable the CA injection in the admission webhooks.
 # 'CERTMANAGER' needs to be enabled to use ca injection
 # - webhookcainjection_patch.yaml
