@@ -176,8 +176,13 @@ func (mh *MemcachedGoWithWebhooks) implementingWebhooks() {
 	// Add imports
 	err = kbtestutils.InsertCode(webhookPath,
 		"import (",
-		"\"errors\"")
-	pkg.CheckError("adding imports", err)
+		"\n\t\"errors\"")
+	pkg.CheckError("adding errors import", err)
+
+	err = kbtestutils.InsertCode(webhookPath,
+		"\n\t\"errors\"",
+		"\n\t\"k8s.io/apimachinery/pkg/runtime\"")
+	pkg.CheckError("adding k8s.io/apimachinery/pkg/runtime import", err)
 }
 
 // implementingController will customize the Controller
@@ -225,8 +230,11 @@ func (mh *MemcachedGoWithWebhooks) implementingController() {
 
 // implementingAPI will customize the API
 func (mh *MemcachedGoWithWebhooks) implementingAPI() {
+	typeFilePath := filepath.Join(mh.ctx.Dir, "api", mh.ctx.Version, fmt.Sprintf("%s_types.go", strings.ToLower(mh.ctx.Kind)))
+
+	log.Infof("implementing api spec")
 	err := kbtestutils.InsertCode(
-		filepath.Join(mh.ctx.Dir, "api", mh.ctx.Version, fmt.Sprintf("%s_types.go", strings.ToLower(mh.ctx.Kind))),
+		typeFilePath,
 		fmt.Sprintf("type %sSpec struct {\n\t// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster\n\t// Important: Run \"make\" to regenerate code after modifying this file", mh.ctx.Kind),
 		`
 
@@ -235,9 +243,9 @@ func (mh *MemcachedGoWithWebhooks) implementingAPI() {
 `)
 	pkg.CheckError("inserting spec Status", err)
 
-	log.Infof("implementing MemcachedStatus")
+	log.Infof("implementing api status")
 	err = kbtestutils.InsertCode(
-		filepath.Join(mh.ctx.Dir, "api", mh.ctx.Version, fmt.Sprintf("%s_types.go", strings.ToLower(mh.ctx.Kind))),
+		typeFilePath,
 		fmt.Sprintf("type %sStatus struct {\n\t// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster\n\t// Important: Run \"make\" to regenerate code after modifying this file", mh.ctx.Kind),
 		`
 
@@ -245,6 +253,13 @@ func (mh *MemcachedGoWithWebhooks) implementingAPI() {
 	Nodes []string `+"`"+`json:"nodes,omitempty"`+"`"+`
 `)
 	pkg.CheckError("inserting Node Status", err)
+
+	sampleFile := filepath.Join("config", "samples",
+		fmt.Sprintf("%s_%s_%s.yaml", mh.ctx.Group, mh.ctx.Version, strings.ToLower(mh.ctx.Kind)))
+
+	log.Infof("updating sample to have size attribute")
+	err = testutils.ReplaceInFile(filepath.Join(mh.ctx.Dir, sampleFile), "foo: bar", "size: 1")
+	pkg.CheckError("updating sample", err)
 }
 
 // GenerateMemcachedGoWithWebhooksSample will call all actions to create the directory and generate the sample

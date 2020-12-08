@@ -11,7 +11,7 @@ metadata:
             "name": "memcached-sample"
           },
           "spec": {
-            "foo": "bar"
+            "size": 1
           }
         }
       ]
