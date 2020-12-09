@@ -171,11 +171,20 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 	status.RemoveCondition(types.ConditionIrreconcilable)
 
 	if !manager.IsInstalled() {
+		// If all the Helm release records are deleted, then the Helm operator will try to install the release again.
+		// In that case, if the install errors, then don't perform the uninstall rollback because it might lead to unintended data loss.
+		// See: https://github.com/operator-framework/operator-sdk/issues/4296
+		rollbackByUninstall := true
+		if status.DeployedRelease != nil {
+			log.Info("Release is not installed but status.DeployedRelease is populated. If the install error, skip rollback")
+			rollbackByUninstall = false
+		}
+
 		for k, v := range r.OverrideValues {
 			r.EventRecorder.Eventf(o, "Warning", "OverrideValuesInUse",
 				"Chart value %q overridden to %q by operator's watches.yaml", k, v)
 		}
-		installedRelease, err := manager.InstallRelease(ctx)
+		installedRelease, err := manager.InstallRelease(ctx, rollbackByUninstall)
 		if err != nil {
 			log.Error(err, "Release failed")
 			status.SetCondition(types.HelmAppCondition{

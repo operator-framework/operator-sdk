@@ -49,7 +49,7 @@ type Manager interface {
 	IsInstalled() bool
 	IsUpgradeRequired() bool
 	Sync(context.Context) error
-	InstallRelease(context.Context, ...InstallOption) (*rpb.Release, error)
+	InstallRelease(context.Context, bool, ...InstallOption) (*rpb.Release, error)
 	UpgradeRelease(context.Context, ...UpgradeOption) (*rpb.Release, *rpb.Release, error)
 	ReconcileRelease(context.Context) (*rpb.Release, error)
 	UninstallRelease(context.Context, ...UninstallOption) (*rpb.Release, error)
@@ -157,7 +157,7 @@ func (m manager) getCandidateRelease(namespace, name string, chart *cpb.Chart,
 }
 
 // InstallRelease performs a Helm release install.
-func (m manager) InstallRelease(ctx context.Context, opts ...InstallOption) (*rpb.Release, error) {
+func (m manager) InstallRelease(ctx context.Context, rollbackByUninstall bool, opts ...InstallOption) (*rpb.Release, error) {
 	install := action.NewInstall(m.actionConfig)
 	install.ReleaseName = m.releaseName
 	install.Namespace = m.namespace
@@ -170,7 +170,7 @@ func (m manager) InstallRelease(ctx context.Context, opts ...InstallOption) (*rp
 	installedRelease, err := install.Run(m.chart, m.values)
 	if err != nil {
 		// Workaround for helm/helm#3338
-		if installedRelease != nil {
+		if installedRelease != nil && rollbackByUninstall {
 			uninstall := action.NewUninstall(m.actionConfig)
 			_, uninstallErr := uninstall.Run(m.releaseName)
 

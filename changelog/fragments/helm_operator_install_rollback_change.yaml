@@ -1,0 +1,5 @@
+entries:
+  - description: >
+      For Helm-based operators, if the release is not installed but status.DeployedRelease is populated, skip the rollback(uninstall) if the install errors.
+    kind: "change"
+    breaking: false
