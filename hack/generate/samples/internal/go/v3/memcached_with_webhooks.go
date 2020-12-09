@@ -61,8 +61,7 @@ func (mh *MemcachedGoWithWebhooks) Run() {
 	err := mh.ctx.Init(
 		// TODO(estroz): change this to 3 when stabilized.
 		"--project-version", "3-alpha",
-		// TODO(estroz): change this to go/v3 when stabilized.
-		"--plugins", "go/v3-alpha",
+		"--plugins", "go/v3",
 		"--repo", "github.com/example/memcached-operator",
 		"--domain",
 		mh.ctx.Domain)

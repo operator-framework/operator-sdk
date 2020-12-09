@@ -4,8 +4,10 @@
 # Build artifacts
 /build
 /dist
-/tools/bin
-/images/*/bin
+**/bin/
+
+# Test artifacts
+**/testbin/
 
 # CI GPG keyring
 /.ci/gpg/keyring
@@ -15,12 +17,6 @@ website/public/
 website/resources/
 website/node_modules/
 website/tech-doc-hugo
-
-# Ensure that will not commit the bin gen in the go sample
-testdata/go/v2/memcached-operator/bin/*
-testdata/go/v3/memcached-operator/bin/*
-testdata/ansible/memcached-operator/bin/*
-testdata/helm/memcached-operator/bin/*
 
 # Ignore molecule samples testdata if it be generated in the testdata/ diretory
 testdata/ansible/memcached-molecule-operator

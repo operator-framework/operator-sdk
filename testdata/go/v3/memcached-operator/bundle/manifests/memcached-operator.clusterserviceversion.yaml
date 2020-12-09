@@ -128,7 +128,7 @@ spec:
                 image: quay.io/example/memcached-operator:v0.0.1
                 livenessProbe:
                   httpGet:
-                    path: /readyz
+                    path: /healthz
                     port: 8081
                   initialDelaySeconds: 15
                   periodSeconds: 20
@@ -139,7 +139,7 @@ spec:
                   protocol: TCP
                 readinessProbe:
                   httpGet:
-                    path: /healthz
+                    path: /readyz
                     port: 8081
                   initialDelaySeconds: 5
                   periodSeconds: 10
