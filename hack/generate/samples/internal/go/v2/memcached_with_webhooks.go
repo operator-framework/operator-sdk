@@ -59,6 +59,8 @@ func (mh *MemcachedGoWithWebhooks) Prepare() {
 func (mh *MemcachedGoWithWebhooks) Run() {
 	log.Infof("creating the project")
 	err := mh.ctx.Init(
+		// TODO(estroz): change this to 3 when stabilized.
+		"--project-version", "3-alpha",
 		"--plugins", "go/v2",
 		"--repo", "github.com/example/memcached-operator",
 		"--domain",
@@ -176,13 +178,8 @@ func (mh *MemcachedGoWithWebhooks) implementingWebhooks() {
 	// Add imports
 	err = kbtestutils.InsertCode(webhookPath,
 		"import (",
-		"\n\t\"errors\"")
-	pkg.CheckError("adding errors import", err)
-
-	err = kbtestutils.InsertCode(webhookPath,
-		"\n\t\"errors\"",
-		"\n\t\"k8s.io/apimachinery/pkg/runtime\"")
-	pkg.CheckError("adding k8s.io/apimachinery/pkg/runtime import", err)
+		"\"errors\"\n\n\"k8s.io/apimachinery/pkg/runtime\"")
+	pkg.CheckError("adding webhook imports", err)
 }
 
 // implementingController will customize the Controller

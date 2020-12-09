@@ -62,7 +62,7 @@ func TestReconcile(t *testing.T) {
 			Runner: &fake.Runner{
 				JobEvents: []eventapi.JobEvent{},
 			},
-			Client: fakeclient.NewFakeClient(),
+			Client: fakeclient.NewClientBuilder().Build(),
 			Result: reconcile.Result{},
 			Request: reconcile.Request{
 				NamespacedName: types.NamespacedName{
@@ -84,7 +84,7 @@ func TestReconcile(t *testing.T) {
 					},
 				},
 			},
-			Client: fakeclient.NewFakeClient(&unstructured.Unstructured{
+			Client: fakeclient.NewClientBuilder().WithObjects(&unstructured.Unstructured{
 				Object: map[string]interface{}{
 					"metadata": map[string]interface{}{
 						"name":      "reconcile",
@@ -93,7 +93,7 @@ func TestReconcile(t *testing.T) {
 					"apiVersion": "operator-sdk/v1beta1",
 					"kind":       "Testing",
 				},
-			}),
+			}).Build(),
 			Result: reconcile.Result{
 				RequeueAfter: 5 * time.Second,
 			},
@@ -153,7 +153,7 @@ func TestReconcile(t *testing.T) {
 					},
 				},
 			},
-			Client: fakeclient.NewFakeClient(&unstructured.Unstructured{
+			Client: fakeclient.NewClientBuilder().WithObjects(&unstructured.Unstructured{
 				Object: map[string]interface{}{
 					"metadata": map[string]interface{}{
 						"name":      "reconcile",
@@ -163,7 +163,7 @@ func TestReconcile(t *testing.T) {
 					"kind":       "Testing",
 					"spec":       map[string]interface{}{},
 				},
-			}),
+			}).Build(),
 			Request: reconcile.Request{
 				NamespacedName: types.NamespacedName{
 					Name:      "reconcile",
@@ -227,7 +227,7 @@ func TestReconcile(t *testing.T) {
 					},
 				},
 			},
-			Client: fakeclient.NewFakeClient(&unstructured.Unstructured{
+			Client: fakeclient.NewClientBuilder().WithObjects(&unstructured.Unstructured{
 				Object: map[string]interface{}{
 					"metadata": map[string]interface{}{
 						"name":      "reconcile",
@@ -237,7 +237,7 @@ func TestReconcile(t *testing.T) {
 					"kind":       "Testing",
 					"spec":       map[string]interface{}{},
 				},
-			}),
+			}).Build(),
 			Request: reconcile.Request{
 				NamespacedName: types.NamespacedName{
 					Name:      "reconcile",
@@ -260,7 +260,7 @@ func TestReconcile(t *testing.T) {
 				},
 				Finalizer: "testing.io",
 			},
-			Client: fakeclient.NewFakeClient(&unstructured.Unstructured{
+			Client: fakeclient.NewClientBuilder().WithObjects(&unstructured.Unstructured{
 				Object: map[string]interface{}{
 					"metadata": map[string]interface{}{
 						"name":      "reconcile",
@@ -273,7 +273,7 @@ func TestReconcile(t *testing.T) {
 					"kind":       "Testing",
 					"spec":       map[string]interface{}{},
 				},
-			}),
+			}).Build(),
 			Result: reconcile.Result{
 				RequeueAfter: 3 * time.Second,
 			},
@@ -331,7 +331,7 @@ func TestReconcile(t *testing.T) {
 				},
 				Finalizer: "testing.io",
 			},
-			Client: fakeclient.NewFakeClient(&unstructured.Unstructured{
+			Client: fakeclient.NewClientBuilder().WithObjects(&unstructured.Unstructured{
 				Object: map[string]interface{}{
 					"metadata": map[string]interface{}{
 						"name":      "reconcile",
@@ -345,7 +345,7 @@ func TestReconcile(t *testing.T) {
 					"kind":       "Testing",
 					"spec":       map[string]interface{}{},
 				},
-			}),
+			}).Build(),
 			Result: reconcile.Result{},
 			Request: reconcile.Request{
 				NamespacedName: types.NamespacedName{
@@ -368,7 +368,7 @@ func TestReconcile(t *testing.T) {
 				},
 				Finalizer: "testing.io",
 			},
-			Client: fakeclient.NewFakeClient(&unstructured.Unstructured{
+			Client: fakeclient.NewClientBuilder().WithObjects(&unstructured.Unstructured{
 				Object: map[string]interface{}{
 					"metadata": map[string]interface{}{
 						"name":      "reconcile",
@@ -399,7 +399,7 @@ func TestReconcile(t *testing.T) {
 						},
 					},
 				},
-			}),
+			}).Build(),
 			Result: reconcile.Result{
 				RequeueAfter: 5 * time.Second,
 			},
@@ -449,7 +449,7 @@ func TestReconcile(t *testing.T) {
 					},
 				},
 			},
-			Client: fakeclient.NewFakeClient(&unstructured.Unstructured{
+			Client: fakeclient.NewClientBuilder().WithObjects(&unstructured.Unstructured{
 				Object: map[string]interface{}{
 					"metadata": map[string]interface{}{
 						"name":      "reconcile",
@@ -475,7 +475,7 @@ func TestReconcile(t *testing.T) {
 						},
 					},
 				},
-			}),
+			}).Build(),
 			Result: reconcile.Result{
 				RequeueAfter: 5 * time.Second,
 			},
@@ -500,7 +500,7 @@ func TestReconcile(t *testing.T) {
 					},
 				},
 			},
-			Client: fakeclient.NewFakeClient(&unstructured.Unstructured{
+			Client: fakeclient.NewClientBuilder().WithObjects(&unstructured.Unstructured{
 				Object: map[string]interface{}{
 					"metadata": map[string]interface{}{
 						"name":      "reconcile",
@@ -509,7 +509,7 @@ func TestReconcile(t *testing.T) {
 					"apiVersion": "operator-sdk/v1beta1",
 					"kind":       "Testing",
 				},
-			}),
+			}).Build(),
 			Result: reconcile.Result{
 				RequeueAfter: 5 * time.Second,
 			},
