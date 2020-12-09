@@ -20,7 +20,6 @@ import (
 	"errors"
 	"fmt"
 	"path"
-	"strings"
 	"text/template"
 	"time"
 
@@ -36,36 +35,39 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
 
-// BundleAddModeType - type of BundleAddMode in RegistryPod struct
-type BundleAddModeType = string
+// BundleAddMode - type of BundleAddMode in RegistryPod struct
+type BundleAddMode = string
 
 const (
 	// SemverBundleAddMode - bundle add mode for semver
-	SemverBundleAddMode BundleAddModeType = "semver"
+	SemverBundleAddMode BundleAddMode = "semver"
 	// ReplacesBundleAddMode - bundle add mode for replaces
-	ReplacesBundleAddMode BundleAddModeType = "replaces"
+	ReplacesBundleAddMode BundleAddMode = "replaces"
 )
 const (
+	// DefaultIndexImage is the index base image used if none is specified. It contains no bundles.
+	DefaultIndexImage = "quay.io/operator-framework/upstream-opm-builder:latest"
+
 	// defaultGRPCPort is the default grpc container port that the registry pod exposes
-	defaultGRPCPort          = 50051
-	defaultIndexImage        = "quay.io/operator-framework/upstream-opm-builder:latest"
+	defaultGRPCPort = 50051
+	defaultDBPath   = "/database/index.db"
+
 	defaultContainerName     = "registry-grpc"
 	defaultContainerPortName = "grpc"
 )
 
-var (
-	// Internal error
-	errPodNotInit = errors.New("internal error: RegistryPod not initialized")
-)
+// BundleItem contains the metadata of a bundle image relevant to the registry pod.
+type BundleItem struct {
+	// ImageTag is the bundle image's tag.
+	ImageTag string `json:"imageTag"`
+	// AddMode describes how the bundle should be added to an index image.
+	AddMode BundleAddMode `json:"mode"`
+}
 
 // RegistryPod holds resources necessary for creation of a registry server
 type RegistryPod struct {
-	// BundleAddMode specifies the graph update mode that defines how channel graphs are updated
-	// It is of the type BundleAddModeType
-	BundleAddMode BundleAddModeType
-
-	// BundleImages specifies the bundle images that opm will add to the existing database
-	BundleImages []string
+	// BundleItems contains all bundles to be added to a registry pod.
+	BundleItems []BundleItem
 
 	// Index image contains a database of pointers to operator manifest content that is queriable via an API.
 	// new version of an operator bundle when published can be added to an index image
@@ -89,24 +91,17 @@ func (rp *RegistryPod) init(cfg *operator.Configuration) error {
 	if rp.GRPCPort == 0 {
 		rp.GRPCPort = defaultGRPCPort
 	}
-
-	if len(strings.TrimSpace(rp.IndexImage)) < 1 {
-		rp.IndexImage = defaultIndexImage
+	if rp.DBPath == "" {
+		rp.DBPath = defaultDBPath
 	}
-
-	if len(strings.TrimSpace(rp.BundleAddMode)) < 1 {
-		if rp.IndexImage == defaultIndexImage {
-			rp.BundleAddMode = SemverBundleAddMode
-		} else {
-			rp.BundleAddMode = ReplacesBundleAddMode
-		}
+	if rp.IndexImage == "" {
+		rp.IndexImage = DefaultIndexImage
 	}
-
 	rp.cfg = cfg
 
 	// validate the RegistryPod struct and ensure required fields are set
 	if err := rp.validate(); err != nil {
-		return fmt.Errorf("error validating registry pod struct: %v", err)
+		return fmt.Errorf("invalid registry pod: %v", err)
 	}
 
 	// podForBundleRegistry() to make the pod definition
@@ -173,20 +168,20 @@ func (rp *RegistryPod) checkPodStatus(ctx context.Context, podCheck wait.Conditi
 // validate will ensure that RegistryPod required fields are set
 // and throws error if not set
 func (rp *RegistryPod) validate() error {
-	if len(rp.BundleImages) == 0 {
-		return errors.New("bundle images cannot be empty")
+	if len(rp.BundleItems) == 0 {
+		return errors.New("bundle image set cannot be empty")
 	}
-	if len(strings.TrimSpace(rp.DBPath)) < 1 {
-		return errors.New("registry database path cannot be empty")
-	}
-
-	if len(strings.TrimSpace(rp.BundleAddMode)) < 1 {
-		return errors.New("bundle add mode cannot be empty")
-	}
-
-	if rp.BundleAddMode != SemverBundleAddMode && rp.BundleAddMode != ReplacesBundleAddMode {
-		return fmt.Errorf("invalid bundle mode %q: must be one of [%q, %q]",
-			rp.BundleAddMode, ReplacesBundleAddMode, SemverBundleAddMode)
+	for _, item := range rp.BundleItems {
+		if item.ImageTag == "" {
+			return errors.New("bundle image cannot be empty")
+		}
+		if item.AddMode == "" {
+			return fmt.Errorf("bundle add mode for %q cannot be empty", item.ImageTag)
+		}
+		if item.AddMode != SemverBundleAddMode && item.AddMode != ReplacesBundleAddMode {
+			return fmt.Errorf("invalid bundle mode %q: must be one of [%q, %q]",
+				item.AddMode, ReplacesBundleAddMode, SemverBundleAddMode)
+		}
 	}
 
 	return nil
@@ -206,13 +201,13 @@ func getPodName(bundleImage string) string {
 // podForBundleRegistry constructs and returns the registry pod definition
 // and throws error when unable to build the pod definition successfully
 func (rp *RegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
-	// rp was already validated so len(rp.BundleImages) must be greater than 0.
-	bundleImage := rp.BundleImages[len(rp.BundleImages)-1]
+	// rp was already validated so len(rp.BundleItems) must be greater than 0.
+	bundleImage := rp.BundleItems[len(rp.BundleItems)-1].ImageTag
 
 	// construct the container command for pod spec
 	containerCmd, err := rp.getContainerCmd()
 	if err != nil {
-		return nil, fmt.Errorf("error parsing container command: %v", err)
+		return nil, err
 	}
 
 	// make the pod definition
@@ -242,21 +237,16 @@ func (rp *RegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 	return rp.pod, nil
 }
 
+const containerCommand = `/bin/mkdir -p {{ .DBPath | dirname }} && \
+{{- range $i, $item := .BundleItems }}
+/bin/opm registry add -d {{ $.DBPath }} -b {{ $item.ImageTag }} --mode={{ $item.AddMode }} && \
+{{- end }}
+/bin/opm registry serve -d {{ .DBPath }} -p {{ .GRPCPort }}
+`
+
 // getContainerCmd uses templating to construct the container command
 // and throws error if unable to parse and execute the container command
 func (rp *RegistryPod) getContainerCmd() (string, error) {
-	const containerCommand = "/bin/mkdir -p {{ .DBPath | dirname }} && " +
-		"/bin/opm registry add -d {{ .DBPath }} -b {{.BundleImage}} --mode={{.BundleAddMode}} && " +
-		"/bin/opm registry serve -d {{ .DBPath }} -p {{.GRPCPort}}"
-	type bundleCmd struct {
-		BundleImage, DBPath, BundleAddMode string
-		GRPCPort                           int32
-	}
-
-	var command = bundleCmd{strings.Join(rp.BundleImages, ","), rp.DBPath,
-		rp.BundleAddMode, rp.GRPCPort}
-
-	out := &bytes.Buffer{}
 
 	// create a custom dirname template function
 	funcMap := template.FuncMap{
@@ -265,11 +255,12 @@ func (rp *RegistryPod) getContainerCmd() (string, error) {
 
 	// add the custom dirname template function to the
 	// template's FuncMap and parse the containerCommand
-	tmp := template.Must(template.New("containerCommand").Funcs(funcMap).Parse(containerCommand))
+	tmp := template.Must(template.New("cmd").Funcs(funcMap).Parse(containerCommand))
 
 	// execute the command by applying the parsed tmp to command
 	// and write command output to out
-	if err := tmp.Execute(out, command); err != nil {
+	out := &bytes.Buffer{}
+	if err := tmp.Execute(out, rp); err != nil {
 		return "", fmt.Errorf("parse container command: %w", err)
 	}
 

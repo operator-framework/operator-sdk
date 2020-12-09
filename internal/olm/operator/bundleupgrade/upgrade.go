@@ -16,19 +16,15 @@ package bundleupgrade
 
 import (
 	"context"
-	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
-	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	"github.com/spf13/pflag"
 
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry"
-	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
+	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry/index"
 )
 
 type Upgrade struct {
@@ -46,14 +42,12 @@ func NewUpgrade(cfg *operator.Configuration) Upgrade {
 		cfg:               cfg,
 	}
 	u.IndexImageCatalogCreator = registry.NewIndexImageCatalogCreator(cfg)
-	u.CatalogCreator = u.IndexImageCatalogCreator
+	u.CatalogUpdater = u.IndexImageCatalogCreator
 	return u
 }
 
-const defaultIndexImage = "quay.io/operator-framework/upstream-opm-builder:latest"
-
 func (u *Upgrade) BindFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&u.InjectBundleMode, "mode", "", "mode to use for adding new bundle version to index")
+	fs.StringVar(&u.BundleAddMode, "mode", "", "mode to use for adding new bundle version to index")
 	_ = fs.MarkHidden("mode")
 }
 
@@ -65,51 +59,23 @@ func (u Upgrade) Run(ctx context.Context) (*v1alpha1.ClusterServiceVersion, erro
 }
 
 func (u *Upgrade) setup(ctx context.Context) error {
-	labels, csv, err := loadBundle(ctx, u.BundleImage)
+	labels, bundle, err := operator.LoadBundle(ctx, u.BundleImage)
 	if err != nil {
 		return err
 	}
+	csv := bundle.CSV
 
 	u.OperatorInstaller.PackageName = labels[registrybundle.PackageLabel]
 	u.OperatorInstaller.CatalogSourceName = operator.CatalogNameForPackage(u.OperatorInstaller.PackageName)
 	u.OperatorInstaller.StartingCSV = csv.Name
 	u.OperatorInstaller.SupportedInstallModes = operator.GetSupportedInstallModes(csv.Spec.InstallModes)
 	u.OperatorInstaller.Channel = strings.Split(labels[registrybundle.ChannelsLabel], ",")[0]
-	u.IndexImageCatalogCreator.IndexImage = defaultIndexImage
-	u.IndexImageCatalogCreator.BundleImage = u.BundleImage
+
+	// Since an existing CatalogSource will have an annotation containing the existing index image,
+	// defer defaulting the bundle add mode to after the existing CatalogSource is retrieved.
 	u.IndexImageCatalogCreator.PackageName = u.OperatorInstaller.PackageName
-	u.IndexImageCatalogCreator.InjectBundles = []string{u.BundleImage}
-	u.IndexImageCatalogCreator.InjectBundleMode = "replaces"
-	if u.IndexImageCatalogCreator.IndexImage == defaultIndexImage {
-		u.IndexImageCatalogCreator.InjectBundleMode = "semver"
-	}
+	u.IndexImageCatalogCreator.BundleImage = u.BundleImage
+	u.IndexImageCatalogCreator.IndexImage = index.DefaultIndexImage
 
 	return nil
-}
-
-func loadBundle(ctx context.Context, bundleImage string) (registryutil.Labels, *v1alpha1.ClusterServiceVersion, error) {
-	bundlePath, err := registryutil.ExtractBundleImage(ctx, nil, bundleImage, false)
-	if err != nil {
-		return nil, nil, fmt.Errorf("pull bundle image: %v", err)
-	}
-	defer func() {
-		_ = os.RemoveAll(bundlePath)
-	}()
-
-	labels, _, err := registryutil.FindBundleMetadata(bundlePath)
-	if err != nil {
-		return nil, nil, fmt.Errorf("load bundle metadata: %v", err)
-	}
-
-	relManifestsDir, ok := labels.GetManifestsDir()
-	if !ok {
-		return nil, nil, fmt.Errorf("manifests directory not defined in bundle metadata")
-	}
-	manifestsDir := filepath.Join(bundlePath, relManifestsDir)
-	bundle, err := apimanifests.GetBundleFromDir(manifestsDir)
-	if err != nil {
-		return nil, nil, fmt.Errorf("load bundle: %v", err)
-	}
-
-	return labels, bundle.CSV, nil
 }
