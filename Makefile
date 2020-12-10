@@ -141,7 +141,6 @@ e2e_targets := test-e2e $(e2e_tests)
 
 .PHONY: test-e2e-setup
 export KIND_CLUSTER := operator-sdk-e2e
-export KUBECONFIG := $(HOME)/.kube/kind-$(KIND_CLUSTER).config
 export KUBEBUILDER_ASSETS := $(PWD)/$(TOOLS_DIR)
 test-e2e-setup: build
 	$(SCRIPTS_DIR)/fetch kind 0.9.0
