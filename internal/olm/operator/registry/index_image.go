@@ -74,50 +74,17 @@ func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string
 		return nil, fmt.Errorf("error creating catalog source: %v", err)
 	}
 
-	// update catalog source with source type, address and annotations
-	if err := c.updateNewCatalogSource(ctx, cs); err != nil {
-		return nil, fmt.Errorf("error updating catalog source: %v", err)
+	newItems := []index.BundleItem{{ImageTag: c.BundleImage, AddMode: c.BundleAddMode}}
+	if err := c.createAnnotatedRegistry(ctx, cs, newItems, updateFeildsNoOp); err != nil {
+		return nil, fmt.Errorf("error creating registry pod: %v", err)
 	}
 
 	return cs, nil
 }
 
-func (c IndexImageCatalogCreator) updateNewCatalogSource(ctx context.Context, cs *v1alpha1.CatalogSource) error {
-	// create registry pod
-	pod, err := c.createRegistryPod(ctx, cs)
-	if err != nil {
-		return fmt.Errorf("error creating registry pod: %v", err)
-	}
-
-	// JSON marshal injected bundles
-	injectedBundlesJSON, err := json.Marshal([]index.BundleItem{{ImageTag: c.BundleImage, AddMode: c.BundleAddMode}})
-	if err != nil {
-		return fmt.Errorf("error marshaling injected bundles: %v", err)
-	}
-
-	// Annotations for catalog source
-	newAnnotations := map[string]string{
-		indexImageAnnotation:      c.IndexImage,
-		injectedBundlesAnnotation: string(injectedBundlesJSON),
-		registryPodNameAnnotation: pod.GetName(),
-	}
-
-	// Update catalog source with source type as grpc and address as the pod IP,
-	// and annotations for index image, injected bundles, and registry bundle add mode
-	updateFunc := c.updateFuncFor(ctx, cs, func(*v1alpha1.CatalogSource) {
-		updateCatalogSourceFields(cs, pod, newAnnotations)
-	})
-	if err := retry.RetryOnConflict(retry.DefaultBackoff, updateFunc); err != nil {
-		return err
-	}
-
-	return nil
-}
-
+// UpdateCatalog links a new registry pod in catalog source by updating the address and annotations,
+// then deletes existing registry pod based on annotation name found in catalog source object
 func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha1.CatalogSource) error {
-	// create new pod, delete existing registry pod based on annotation name found in catalog source object
-	// link new registry pod in catalog source by updating the address and annotations
-
 	var prevRegistryPodName string
 	if annotations := cs.GetAnnotations(); len(annotations) != 0 {
 		if value, hasAnnotation := annotations[indexImageAnnotation]; hasAnnotation && value != "" {
@@ -134,46 +101,28 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 		}
 	}
 
-	// create registry pod
-	pod, err := c.createRegistryPod(ctx, cs)
-	if err != nil {
-		return fmt.Errorf("error creating registry pod: %v", err)
-	}
-
-	// set annotations
 	existingItems, err := getExistingBundleItems(cs.GetAnnotations())
 	if err != nil {
-		return fmt.Errorf("error getting existing bundles from CatalogSource %q annotations: %v", client.ObjectKeyFromObject(cs), err)
+		key, _ := client.ObjectKeyFromObject(cs)
+		return fmt.Errorf("error getting existing bundles from CatalogSource %q annotations: %v", key, err)
 	}
 	imageReferenceExists := len(existingItems) == 0
 
-	// JSON marshal injected bundles
 	newItem := index.BundleItem{ImageTag: c.BundleImage, AddMode: c.BundleAddMode}
-	injectedBundlesJSON, err := json.Marshal(append(existingItems, newItem))
-	if err != nil {
-		return fmt.Errorf("error marshaling added bundles: %v", err)
-	}
-	// Annotations for catalog source
-	updatedAnnotations := map[string]string{
-		indexImageAnnotation:      c.IndexImage,
-		injectedBundlesAnnotation: string(injectedBundlesJSON),
-		registryPodNameAnnotation: pod.GetName(),
-	}
+	existingItems = append(existingItems, newItem)
 
-	// Update catalog source with source type as grpc and new registry pod address as the pod IP,
-	updateFunc := c.updateFuncFor(ctx, cs, func(*v1alpha1.CatalogSource) {
+	updateFields := func(*v1alpha1.CatalogSource) {
 		// set `spec.Image` field to empty as we will be setting the address field in
 		// catalog source to point to the new new registry pod
 		if imageReferenceExists {
 			cs.Spec.Image = ""
 		}
-		updateCatalogSourceFields(cs, pod, updatedAnnotations)
-	})
-	if err := retry.RetryOnConflict(retry.DefaultBackoff, updateFunc); err != nil {
-		return err
+	}
+	if err := c.createAnnotatedRegistry(ctx, cs, existingItems, updateFields); err != nil {
+		return fmt.Errorf("error creating registry pod: %v", err)
 	}
 
-	log.Infof("Updated catalog source %s with address and annotations", cs.Name)
+	log.Infof("Updated catalog source %s with address and annotations", cs.GetName())
 
 	if prevRegistryPodName != "" {
 		if err = c.deleteRegistryPod(ctx, prevRegistryPodName); err != nil {
@@ -184,59 +133,66 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 	return nil
 }
 
-func (c IndexImageCatalogCreator) createRegistryPod(ctx context.Context, cs *v1alpha1.CatalogSource) (pod *corev1.Pod, err error) {
-	indexImage := c.IndexImage
-	bundleItems := []index.BundleItem{{ImageTag: c.BundleImage, AddMode: c.BundleAddMode}}
-	if annotations := cs.GetAnnotations(); len(annotations) != 0 {
-		if value, hasAnnotation := annotations[indexImageAnnotation]; hasAnnotation {
-			indexImage = value
-		}
-		existingItems, err := getExistingBundleItems(cs.GetAnnotations())
-		if err != nil {
-			return nil, fmt.Errorf("error getting existing bundles from CatalogSource %q annotations: %v", client.ObjectKeyFromObject(cs), err)
-		}
-		// TODO: combine these with existing injected bundles from registry pod annotation intelligently (error if bundle already exists).
-		bundleItems = append(existingItems, bundleItems...)
-	}
+// createAnnotatedRegistry creates a registry pod and updates cs with annotations constructed
+// from items and that pod, then applies updateFields.
+func (c IndexImageCatalogCreator) createAnnotatedRegistry(ctx context.Context, cs *v1alpha1.CatalogSource,
+	items []index.BundleItem, updateFields func(*v1alpha1.CatalogSource)) (err error) {
 
-	// Initialize registry pod
+	// Initialize and create registry pod
 	registryPod := index.RegistryPod{
-		BundleItems: bundleItems,
-		IndexImage:  indexImage,
+		BundleItems: items,
+		IndexImage:  c.IndexImage,
 	}
 	if registryPod.DBPath, err = c.getDBPath(ctx); err != nil {
-		return nil, fmt.Errorf("get database path: %v", err)
+		return fmt.Errorf("get database path: %v", err)
+	}
+	pod, err := registryPod.Create(ctx, c.cfg, cs)
+	if err != nil {
+		return fmt.Errorf("error creating registry pod: %v", err)
 	}
 
-	// Create registry pod
-	if pod, err = registryPod.Create(ctx, c.cfg, cs); err != nil {
-		return nil, fmt.Errorf("error creating registry pod: %v", err)
+	// JSON marshal injected bundles
+	injectedBundlesJSON, err := json.Marshal(items)
+	if err != nil {
+		return fmt.Errorf("error marshaling added bundles: %v", err)
+	}
+	// Annotations for catalog source
+	updatedAnnotations := map[string]string{
+		indexImageAnnotation:      c.IndexImage,
+		injectedBundlesAnnotation: string(injectedBundlesJSON),
+		registryPodNameAnnotation: pod.GetName(),
 	}
 
-	return pod, nil
+	// Update catalog source with source type as grpc, new registry pod address as the pod IP,
+	// and annotations from items and the pod.
+	key := types.NamespacedName{Namespace: cs.GetNamespace(), Name: cs.GetName()}
+	if err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		if err := c.cfg.Client.Get(ctx, key, cs); err != nil {
+			return fmt.Errorf("error getting catalog source: %w", err)
+		}
+		updateCatalogSourceFields(cs, pod, updatedAnnotations)
+		updateFields(cs)
+		if err := c.cfg.Client.Update(ctx, cs); err != nil {
+			return fmt.Errorf("error updating catalog source: %w", err)
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	return nil
 }
 
+// Use if no extra updates need to be made to an annotated CatalogSource.
+func updateFeildsNoOp(*v1alpha1.CatalogSource) {}
+
+// getDBPath returns the database path from the index image's labels.
 func (c IndexImageCatalogCreator) getDBPath(ctx context.Context) (string, error) {
 	labels, err := registryutil.GetImageLabels(ctx, nil, c.IndexImage, false)
 	if err != nil {
 		return "", fmt.Errorf("get index image labels: %v", err)
 	}
 	return labels["operators.operatorframework.io.index.database.v1"], nil
-}
-
-// updateFuncFor returns a function that updates cs by retrying updateFields.
-func (c IndexImageCatalogCreator) updateFuncFor(ctx context.Context, cs *v1alpha1.CatalogSource, updateFields func(*v1alpha1.CatalogSource)) func() error {
-	key := types.NamespacedName{Namespace: cs.GetNamespace(), Name: cs.GetName()}
-	return func() error {
-		if err := c.cfg.Client.Get(ctx, key, cs); err != nil {
-			return fmt.Errorf("error getting catalog source: %w", err)
-		}
-		updateFields(cs)
-		if err := c.cfg.Client.Update(ctx, cs); err != nil {
-			return fmt.Errorf("error updating catalog source: %w", err)
-		}
-		return nil
-	}
 }
 
 // updateCatalogSourceFields updates cs's spec to reference targetPod's IP address for a gRPC connection
@@ -298,8 +254,8 @@ func (c IndexImageCatalogCreator) deleteRegistryPod(ctx context.Context, podName
 		log.Infof("Deleted previous registry pod with name %q", pod.GetName())
 	}
 
-	// FIXME: failure of a pod to clean up should not cause callers to error out,
-	// since the "create registry pod" action probably succeeded.
+	// Failure of the old pod to clean up should block and cause the caller to error out if it fails,
+	// since the old pod may still be connected to OLM.
 	if err := wait.PollImmediateUntil(200*time.Millisecond, func() (bool, error) {
 		if err := c.cfg.Client.Get(ctx, podKey, &pod); apierrors.IsNotFound(err) {
 			return true, nil
@@ -308,7 +264,7 @@ func (c IndexImageCatalogCreator) deleteRegistryPod(ctx context.Context, podName
 		}
 		return false, nil
 	}, ctx.Done()); err != nil {
-		return fmt.Errorf("wait for %q deleted: %v", pod.GetName(), err)
+		return fmt.Errorf("old registry pod %q failed to delete (%v), requires manual cleanup", pod.GetName(), err)
 	}
 
 	return nil
