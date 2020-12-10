@@ -22,9 +22,11 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/cli"
+	"github.com/operator-framework/operator-sdk/internal/notification"
 )
 
 func main() {
+	notification.PrintUpdateNotification()
 	if err := cli.Run(); err != nil {
 		log.Fatal(err)
 	}

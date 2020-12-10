@@ -22,9 +22,11 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/cmd/ansible-operator/run"
 	"github.com/operator-framework/operator-sdk/internal/cmd/ansible-operator/version"
+	"github.com/operator-framework/operator-sdk/internal/notification"
 )
 
 func main() {
+	notification.PrintUpdateNotification()
 	root := cobra.Command{
 		Short: "Reconcile an Ansible operator project using ansible-runner",
 		Long: `This binary runs an Ansible operator that reconciles Kubernetes resources
