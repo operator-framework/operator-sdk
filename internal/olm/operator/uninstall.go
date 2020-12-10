@@ -83,7 +83,6 @@ func (u *Uninstall) Run(ctx context.Context) error {
 	}
 
 	catsrc := &v1alpha1.CatalogSource{}
-	catsrc.SetGroupVersionKind(v1alpha1.SchemeGroupVersion.WithKind(v1alpha1.CatalogSourceKind))
 	if sub != nil {
 		catsrcKey := types.NamespacedName{
 			Namespace: sub.Spec.CatalogSourceNamespace,
@@ -129,6 +128,7 @@ func (u *Uninstall) Run(ctx context.Context) error {
 	// Delete the catalog source. This assumes that all underlying resources related
 	// to this catalog source have an owner reference to this catalog source so that
 	// they are automatically garbage-collected.
+	catsrc.SetGroupVersionKind(v1alpha1.SchemeGroupVersion.WithKind(v1alpha1.CatalogSourceKind))
 	if err := u.deleteObjects(ctx, true, catsrc); err != nil {
 		return err
 	}
