@@ -27,7 +27,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry/index"
@@ -103,8 +102,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 
 	existingItems, err := getExistingBundleItems(cs.GetAnnotations())
 	if err != nil {
-		key, _ := client.ObjectKeyFromObject(cs)
-		return fmt.Errorf("error getting existing bundles from CatalogSource %q annotations: %v", key, err)
+		return fmt.Errorf("error getting existing bundles from CatalogSource %s annotations: %v", cs.GetName(), err)
 	}
 	imageReferenceExists := len(existingItems) == 0
 

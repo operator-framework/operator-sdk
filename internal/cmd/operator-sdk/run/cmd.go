@@ -34,7 +34,6 @@ func NewCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		bundle.NewCmd(cfg),
-		// TODO (rashmigottipati): enable this later.
 		bundleupgrade.NewCmd(cfg),
 		packagemanifests.NewCmd(cfg),
 	)
