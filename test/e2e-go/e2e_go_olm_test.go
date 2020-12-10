@@ -30,7 +30,6 @@ var _ = Describe("Integrating Go Projects with OLM", func() {
 	// the pkg manifest after we comment cert-manager options into the kustomization file.
 	// More info: https://olm.operatorframework.io/docs/advanced-tasks/adding-admission-and-conversion-webhooks/#certificate-authority-requirements
 	BeforeEach(func() {
-		reconcileCount++
 		By("commenting cert-manager")
 		err := testutils.ReplaceInFile(
 			filepath.Join(tc.Dir, "config", "default", "kustomization.yaml"),
