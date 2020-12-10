@@ -26,7 +26,6 @@ import (
 
 var _ = Describe("Testing Go Projects with Scorecard", func() {
 	Context("with operator-sdk", func() {
-		reconcileCount++
 		const (
 			OLMBundleValidationTest   = "olm-bundle-validation"
 			OLMCRDsHaveValidationTest = "olm-crds-have-validation"

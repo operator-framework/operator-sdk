@@ -35,8 +35,7 @@ func TestE2EGo(t *testing.T) {
 }
 
 var (
-	tc             testutils.TestContext
-	reconcileCount = 0
+	tc testutils.TestContext
 )
 
 // BeforeSuite run before any specs are run to perform the required actions for all e2e Go tests.
