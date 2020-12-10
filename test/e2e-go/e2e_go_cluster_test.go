@@ -18,6 +18,7 @@ package e2e_go_test
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -35,7 +36,6 @@ var _ = Describe("operator-sdk", func() {
 	Context("built with operator-sdk", func() {
 		BeforeEach(func() {
 			metricsClusterRoleBindingName = fmt.Sprintf("%s-metrics-reader", tc.ProjectName)
-			reconcileCount++
 			By("deploying project on the cluster")
 			err := tc.Make("deploy", "IMG="+tc.ImageName)
 			Expect(err).NotTo(HaveOccurred())
@@ -91,7 +91,7 @@ var _ = Describe("operator-sdk", func() {
 					true,
 					"pods", controllerPodName, "-o", "jsonpath={.status.phase}")
 				if err != nil {
-					return fmt.Errorf("failed to get pod stauts for %q: %v", controllerPodName, err)
+					return fmt.Errorf("failed to get pod status for %q: %v", controllerPodName, err)
 				}
 				if status != "Running" {
 					return fmt.Errorf("controller pod in %s status", status)
@@ -177,11 +177,14 @@ var _ = Describe("operator-sdk", func() {
 			}
 			Eventually(getCurlLogs, time.Minute, time.Second).Should(ContainSubstring("< HTTP/2 200"))
 
+			// The controller updates memcacheds' status.nodes with a list of pods it is replicated across
+			// on a successful reconcile.
 			By("validating that the created resource object gets reconciled in the controller")
-			Expect(metricsOutput).To(ContainSubstring(fmt.Sprintf(
-				`controller_runtime_reconcile_total{controller="%s",result="success"} %d`,
-				strings.ToLower(tc.Kind), reconcileCount,
-			)))
+			status, err := tc.Kubectl.Get(true, "memcacheds", "memcached-sample", "-o", "jsonpath={.status.nodes}")
+			Expect(err).NotTo(HaveOccurred())
+			var nodes []string
+			Expect(json.Unmarshal([]byte(status), &nodes)).To(Succeed())
+			Expect(len(nodes)).To(BeNumerically(">", 0))
 		})
 	})
 })
