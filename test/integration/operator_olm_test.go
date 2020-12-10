@@ -33,7 +33,6 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/packagemanifests"
-	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
 
 const (
@@ -41,10 +40,6 @@ const (
 
 	defaultOperatorName    = "memcached-operator"
 	defaultOperatorVersion = "0.0.2"
-)
-
-var (
-	kubeconfigPath = os.Getenv(k8sutil.KubeConfigEnvVar)
 )
 
 // TODO(estroz): rewrite these in the style of e2e tests (ginkgo/gomega + scaffold a project for each scenario).
@@ -101,7 +96,7 @@ func PackageManifestsOwnNamespace(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cfg := &operator.Configuration{KubeconfigPath: kubeconfigPath}
+	cfg := &operator.Configuration{}
 	assert.NoError(t, cfg.Load())
 	i := packagemanifests.NewInstall(cfg)
 	i.PackageManifestsDirectory = manifestsDir
@@ -113,8 +108,8 @@ func PackageManifestsOwnNamespace(t *testing.T) {
 
 	// Cleanup.
 	defer func() {
-		if err := doUninstall(t, kubeconfigPath); err != nil {
-			t.Fatal(err)
+		if err := doUninstall(cfg); err != nil {
+			t.Log(err)
 		}
 	}()
 
@@ -163,14 +158,21 @@ func PackageManifestsBasic(t *testing.T) {
 		os.RemoveAll(tmp)
 		t.Fatal(err)
 	}
-	cfg := &operator.Configuration{KubeconfigPath: kubeconfigPath}
+	cfg := &operator.Configuration{}
 	assert.NoError(t, cfg.Load())
 	i := packagemanifests.NewInstall(cfg)
 	i.PackageManifestsDirectory = manifestsDir
 	i.Version = defaultOperatorVersion
 
+	// Cleanup.
+	defer func() {
+		if err := doUninstall(cfg); err != nil {
+			t.Log(err)
+		}
+	}()
+
 	// Remove operator before deploy
-	assert.Error(t, doUninstall(t, kubeconfigPath))
+	assert.Error(t, doUninstall(cfg))
 
 	// Deploy operator
 	assert.NoError(t, doInstall(i))
@@ -178,9 +180,9 @@ func PackageManifestsBasic(t *testing.T) {
 	assert.Error(t, doInstall(i))
 
 	// Remove operator after deploy
-	assert.NoError(t, doUninstall(t, kubeconfigPath))
+	assert.NoError(t, doUninstall(cfg))
 	// Remove operator after removal
-	assert.Error(t, doUninstall(t, kubeconfigPath))
+	assert.Error(t, doUninstall(cfg))
 }
 
 func PackageManifestsMultiplePackages(t *testing.T) {
@@ -255,21 +257,24 @@ func PackageManifestsMultiplePackages(t *testing.T) {
 		os.RemoveAll(tmp)
 		t.Fatal(err)
 	}
-	cfg := &operator.Configuration{KubeconfigPath: kubeconfigPath}
+	cfg := &operator.Configuration{}
 	assert.NoError(t, cfg.Load())
 	i := packagemanifests.NewInstall(cfg)
 	i.PackageManifestsDirectory = manifestsDir
 	i.Version = operatorVersion2
 
+	// Cleanup.
+	defer func() {
+		if err := doUninstall(cfg); err != nil {
+			t.Log(err)
+		}
+	}()
+
 	// Deploy operator
 	assert.NoError(t, doInstall(i))
-	// Remove operator after deploy
-	assert.NoError(t, doUninstall(t, kubeconfigPath))
 }
 
-func doUninstall(t *testing.T, kubeconfigPath string) error {
-	cfg := &operator.Configuration{KubeconfigPath: kubeconfigPath}
-	assert.NoError(t, cfg.Load())
+func doUninstall(cfg *operator.Configuration) error {
 	uninstall := operator.NewUninstall(cfg)
 	uninstall.DeleteAll = true
 	uninstall.DeleteOperatorGroupNames = []string{operator.SDKOperatorGroupName}
