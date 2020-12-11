@@ -60,17 +60,12 @@ var _ = Describe("Configmap", func() {
 	Describe("updateCatalogSource", func() {
 		It("should update the catalog source", func() {
 			cs := newCatalogSource("pkgName", "testns", withSDKPublisher("pkgName"))
-			ctlog := &ConfigMapCatalogCreator{
-				cfg: &operator.Configuration{
-					Namespace: "testns",
-					Client:    fake.NewClientBuilder().WithObjects(cs).Build(),
-				},
-				Package: &apimanifests.PackageManifest{
-					PackageName: "pkgName",
-				},
+			cfg := &operator.Configuration{
+				Namespace: "testns",
+				Client:    fake.NewClientBuilder().WithObjects(cs).Build(),
 			}
 			expected := cs.DeepCopy()
-			err := ctlog.updateCatalogSource(context.TODO(), cs)
+			err := updateCatalogSource(context.TODO(), cfg, cs, updateFieldsNoOp)
 
 			Expect(err).Should(BeNil())
 			Expect(expected.Spec.Address).ShouldNot(Equal(cs.Spec.Address))

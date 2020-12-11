@@ -27,12 +27,12 @@ import (
 	"github.com/operator-framework/api/pkg/lib/version"
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"github.com/operator-framework/operator-sdk/internal/olm/client"
+	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	client_cr "sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/yaml"
 )
@@ -160,12 +160,11 @@ var _ = Describe("ConfigMap", func() {
 
 	Describe("makeConfigMapsForPackageManifests", func() {
 		var (
-			p apimanifests.PackageManifest
-			e error
-			b []*apimanifests.Bundle
+			pkg     apimanifests.PackageManifest
+			bundles []*apimanifests.Bundle
 		)
 		BeforeEach(func() {
-			b = []*apimanifests.Bundle{
+			bundles = []*apimanifests.Bundle{
 				{
 					Name: "testbundle",
 					Objects: []*unstructured.Unstructured{
@@ -203,7 +202,7 @@ var _ = Describe("ConfigMap", func() {
 					},
 				},
 			}
-			p = apimanifests.PackageManifest{
+			pkg = apimanifests.PackageManifest{
 				PackageName: "test_package_manifest",
 				Channels: []apimanifests.PackageChannel{
 					{Name: "test_1",
@@ -217,18 +216,18 @@ var _ = Describe("ConfigMap", func() {
 			}
 		})
 		It("should serialize packagemanifest to binary data", func() {
-			binaryDataByConfigMap, err := makeConfigMapsForPackageManifests(&p, b)
+			binaryDataByConfigMap, err := makeConfigMapsForPackageManifests(&pkg, bundles)
 			Expect(err).Should(BeNil())
 
 			val := make(map[string]map[string][]byte)
-			cmName := getRegistryConfigMapName(p.PackageName) + "-package"
-			val[cmName], err = makeObjectBinaryData(p)
+			cmName := getRegistryConfigMapName(pkg.PackageName) + "-package"
+			val[cmName], err = makeObjectBinaryData(pkg)
 			Expect(err).Should(BeNil())
-			for _, bundle := range b {
+			for _, bundle := range bundles {
 				version := bundle.CSV.Spec.Version.String()
-				cmName := getRegistryConfigMapName(p.PackageName) + "-" + k8sutil.FormatOperatorNameDNS1123(version)
-				val[cmName], e = makeBundleBinaryData(bundle)
-				Expect(e).Should(BeNil())
+				cmName := getRegistryConfigMapName(pkg.PackageName) + "-" + k8sutil.FormatOperatorNameDNS1123(version)
+				val[cmName], err = makeBundleBinaryData(bundle)
+				Expect(err).Should(BeNil())
 			}
 
 			Expect(binaryDataByConfigMap).Should(Equal(val))
@@ -238,9 +237,8 @@ var _ = Describe("ConfigMap", func() {
 
 	Describe("getRegistryConfigMaps", func() {
 		var (
-			rr   RegistryResources
+			m    Manager
 			list corev1.ConfigMapList
-			e    error
 		)
 		BeforeEach(func() {
 			fakeclient := fake.NewClientBuilder().WithObjects(
@@ -257,26 +255,26 @@ var _ = Describe("ConfigMap", func() {
 					},
 				},
 			).Build()
-			rr = RegistryResources{
-				Client: &client.Client{
-					KubeClient: fakeclient,
+			m = Manager{
+				cfg: &operator.Configuration{
+					Namespace: "testns",
+					Client:    fakeclient,
 				},
-				Pkg: &apimanifests.PackageManifest{
+				pkg: &apimanifests.PackageManifest{
 					PackageName: "test",
 				},
-				Bundles: rr.Bundles,
 			}
 
 			list = corev1.ConfigMapList{}
 		})
 		It("performs operations and returns all the configmaps", func() {
-			opts := []client_cr.ListOption{
-				client_cr.MatchingLabels(makeRegistryLabels(rr.Pkg.PackageName)),
-				client_cr.InNamespace("testns"),
+			opts := []client.ListOption{
+				client.MatchingLabels(makeRegistryLabels(m.pkg.PackageName)),
+				client.InNamespace("testns"),
 			}
-			e = rr.Client.KubeClient.List(context.TODO(), &list, opts...)
-			Expect(e).Should(BeNil())
-			configmaps, err := rr.getRegistryConfigMaps(context.TODO(), "testns")
+			err := m.cfg.Client.List(context.TODO(), &list, opts...)
+			Expect(err).Should(BeNil())
+			configmaps, err := m.getRegistryConfigMaps(context.TODO())
 			Expect(err).Should(BeNil())
 
 			Expect(configmaps).Should(Equal(list.Items))

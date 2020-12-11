@@ -32,15 +32,15 @@ import (
 
 // getRegistryConfigMaps performs a List operation to get all ConfigMaps
 // labelled as belonging to an operator's registry created by operator-sdk.
-func (rr *RegistryResources) getRegistryConfigMaps(ctx context.Context, namespace string) ([]corev1.ConfigMap, error) {
+func (m *Manager) getRegistryConfigMaps(ctx context.Context) ([]corev1.ConfigMap, error) {
 	list := corev1.ConfigMapList{}
 	opts := []client.ListOption{
-		client.MatchingLabels(makeRegistryLabels(rr.Pkg.PackageName)),
-		client.InNamespace(namespace),
+		client.MatchingLabels(makeRegistryLabels(m.pkg.PackageName)),
+		client.InNamespace(m.cfg.Namespace),
 	}
-	err := rr.Client.KubeClient.List(ctx, &list, opts...)
+	err := m.cfg.Client.List(ctx, &list, opts...)
 	if err != nil {
-		return nil, fmt.Errorf("error listing operator %q ConfigMaps: %w", rr.Pkg.PackageName, err)
+		return nil, fmt.Errorf("error listing operator %q ConfigMaps: %w", m.pkg.PackageName, err)
 	}
 	return list.Items, nil
 }

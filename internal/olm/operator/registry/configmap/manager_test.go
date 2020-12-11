@@ -16,7 +16,6 @@ package configmap
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/blang/semver"
 	. "github.com/onsi/ginkgo"
@@ -25,9 +24,7 @@ import (
 	"github.com/operator-framework/api/pkg/manifests"
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"github.com/operator-framework/operator-sdk/internal/olm/client"
-	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-	appsv1 "k8s.io/api/apps/v1"
+	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,91 +35,10 @@ import (
 
 var _ = Describe("Registry", func() {
 
-	Describe("makeRegistryLabels", func() {
-		It("should return the registry label", func() {
-			labels := map[string]string{
-				"package-name": k8sutil.TrimDNS1123Label("pkgName"),
-			}
-			for k, v := range SDKLabels {
-				labels[k] = v
-			}
+	const testns = "testns"
 
-			Expect(makeRegistryLabels("pkgName")).Should(Equal(labels))
-		})
-	})
-
-	Describe("GetRegistryServiceAddr", func() {
-		It("should return a Service's DNS name + port for a given pkgName and namespace", func() {
-			name := fmt.Sprintf("%s.%s.svc.cluster.local:%d", getRegistryServerName("pkgName"), "testns", registryGRPCPort)
-
-			Expect(GetRegistryServiceAddr("pkgName", "testns")).Should(Equal(name))
-		})
-	})
-
-	Describe("DeletePackageManifestsRegistry", func() {
+	Describe("DeleteRegistry", func() {
 		It("should delete the package manifest registry", func() {
-			fakeclient := fake.NewClientBuilder().WithObjects(
-				&corev1.ConfigMap{
-					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "testns",
-						Labels:    makeRegistryLabels("test"),
-					},
-				},
-				newRegistryDeployment("pkgName", "testns"),
-				newRegistryService("pkgName", "testns"),
-			).Build()
-			rr := RegistryResources{
-				Pkg: &manifests.PackageManifest{
-					PackageName: "pkgName",
-					Channels: []manifests.PackageChannel{
-						manifests.PackageChannel{
-							Name: "pkgChannelTest",
-						},
-					},
-				},
-				Bundles: []*apimanifests.Bundle{
-					{
-						Name: "testbundle",
-						Objects: []*unstructured.Unstructured{
-							{
-								Object: map[string]interface{}{"val1": "val1"},
-							},
-							{
-								Object: map[string]interface{}{"val2": "va2"},
-							},
-						},
-						CSV: &v1alpha1.ClusterServiceVersion{
-							Spec: v1alpha1.ClusterServiceVersionSpec{
-								Version: version.OperatorVersion{
-									Version: semver.SpecVersion,
-								},
-							},
-						},
-					},
-				},
-				Client: &client.Client{
-					KubeClient: fakeclient,
-				},
-			}
-			dep := appsv1.Deployment{}
-			err := rr.Client.KubeClient.Get(context.TODO(), types.NamespacedName{Name: getRegistryServerName("pkgName"), Namespace: "testns"}, &dep)
-			Expect(err).Should(BeNil())
-
-			err = rr.DeletePackageManifestsRegistry(context.TODO(), "testns")
-			Expect(err).Should(BeNil())
-
-			err = rr.Client.KubeClient.Get(context.TODO(), types.NamespacedName{Name: "pkgName-registry-server", Namespace: "testns"}, &dep)
-			Expect(apierrors.IsNotFound(err)).Should(BeTrue())
-		})
-	})
-
-	Describe("IsRegistryExist", func() {
-		var (
-			testns string
-			rr     RegistryResources
-		)
-		BeforeEach(func() {
-			testns = "testns"
 			fakeclient := fake.NewClientBuilder().WithObjects(
 				&corev1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
@@ -130,11 +46,10 @@ var _ = Describe("Registry", func() {
 						Labels:    makeRegistryLabels("test"),
 					},
 				},
-				newRegistryDeployment("pkgName", testns),
-				newRegistryService("pkgName", testns),
+				newRegistryPod("pkgName", testns),
 			).Build()
-			rr = RegistryResources{
-				Pkg: &manifests.PackageManifest{
+			m := Manager{
+				pkg: &manifests.PackageManifest{
 					PackageName: "pkgName",
 					Channels: []manifests.PackageChannel{
 						manifests.PackageChannel{
@@ -142,7 +57,7 @@ var _ = Describe("Registry", func() {
 						},
 					},
 				},
-				Bundles: []*apimanifests.Bundle{
+				bundles: []*apimanifests.Bundle{
 					{
 						Name: "testbundle",
 						Objects: []*unstructured.Unstructured{
@@ -162,14 +77,78 @@ var _ = Describe("Registry", func() {
 						},
 					},
 				},
-				Client: &client.Client{
-					KubeClient: fakeclient,
+				cfg: &operator.Configuration{
+					Namespace: testns,
+					Client:    fakeclient,
+				},
+			}
+			pod := corev1.Pod{}
+			err := m.cfg.Client.Get(context.TODO(), types.NamespacedName{Name: getRegistryPodName("pkgName"), Namespace: testns}, &pod)
+			Expect(err).Should(BeNil())
+
+			cs := &v1alpha1.CatalogSource{}
+			cs.SetName("foo")
+			err = m.DeleteRegistry(context.TODO(), cs)
+			Expect(err).Should(BeNil())
+
+			err = m.cfg.Client.Get(context.TODO(), types.NamespacedName{Name: "pkgName-registry-server", Namespace: testns}, &pod)
+			Expect(apierrors.IsNotFound(err)).Should(BeTrue())
+		})
+	})
+
+	Describe("IsRegistryExist", func() {
+		var (
+			testns string
+			m      Manager
+		)
+		BeforeEach(func() {
+			fakeclient := fake.NewClientBuilder().WithObjects(
+				&corev1.ConfigMap{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: testns,
+						Labels:    makeRegistryLabels("test"),
+					},
+				},
+				newRegistryPod("pkgName", testns),
+			).Build()
+			m = Manager{
+				pkg: &manifests.PackageManifest{
+					PackageName: "pkgName",
+					Channels: []manifests.PackageChannel{
+						manifests.PackageChannel{
+							Name: "pkgChannelTest",
+						},
+					},
+				},
+				bundles: []*apimanifests.Bundle{
+					{
+						Name: "testbundle",
+						Objects: []*unstructured.Unstructured{
+							{
+								Object: map[string]interface{}{"val1": "val1"},
+							},
+							{
+								Object: map[string]interface{}{"val2": "va2"},
+							},
+						},
+						CSV: &v1alpha1.ClusterServiceVersion{
+							Spec: v1alpha1.ClusterServiceVersionSpec{
+								Version: version.OperatorVersion{
+									Version: semver.SpecVersion,
+								},
+							},
+						},
+					},
+				},
+				cfg: &operator.Configuration{
+					Namespace: testns,
+					Client:    fakeclient,
 				},
 			}
 		})
 
 		It("should return true if a deployment exitsts in the registry", func() {
-			temp, err := rr.IsRegistryExist(context.TODO(), testns)
+			temp, err := m.IsRegistryExist(context.TODO())
 			Expect(err).Should(BeNil())
 			Expect(temp).Should(BeTrue())
 		})
@@ -180,10 +159,12 @@ var _ = Describe("Registry", func() {
 				temp bool
 			)
 
-			err = rr.DeletePackageManifestsRegistry(context.TODO(), testns)
+			cs := &v1alpha1.CatalogSource{}
+			cs.SetName("foo")
+			err = m.DeleteRegistry(context.TODO(), cs)
 			Expect(err).Should(BeNil())
 
-			temp, err = rr.IsRegistryExist(context.TODO(), testns)
+			temp, err = m.IsRegistryExist(context.TODO())
 			Expect(err).Should(BeNil())
 			Expect(temp).Should(BeFalse())
 		})
@@ -192,10 +173,9 @@ var _ = Describe("Registry", func() {
 	Describe("IsRegistryDataStale", func() {
 		var (
 			testns string
-			rr     RegistryResources
+			m      Manager
 		)
 		BeforeEach(func() {
-			testns = "testns"
 			fakeclient := fake.NewClientBuilder().WithObjects(
 				&corev1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
@@ -211,11 +191,10 @@ var _ = Describe("Registry", func() {
 						Labels:    makeRegistryLabels("pkgName"),
 					},
 				},
-				newRegistryDeployment("pkgName", testns),
-				newRegistryService("pkgName", testns),
+				newRegistryPod("pkgName", testns),
 			).Build()
-			rr = RegistryResources{
-				Pkg: &manifests.PackageManifest{
+			m = Manager{
+				pkg: &manifests.PackageManifest{
 					PackageName: "pkgName",
 					Channels: []manifests.PackageChannel{
 						manifests.PackageChannel{
@@ -223,7 +202,7 @@ var _ = Describe("Registry", func() {
 						},
 					},
 				},
-				Bundles: []*apimanifests.Bundle{
+				bundles: []*apimanifests.Bundle{
 					{
 						Package: "pkgName",
 						Name:    "testbundle",
@@ -244,29 +223,30 @@ var _ = Describe("Registry", func() {
 						},
 					},
 				},
-				Client: &client.Client{
-					KubeClient: fakeclient,
+				cfg: &operator.Configuration{
+					Namespace: testns,
+					Client:    fakeclient,
 				},
 			}
 		})
 
 		It("should return true if there are no registry configmaps", func() {
-			rr.Client.KubeClient = fake.NewClientBuilder().Build()
-			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
+			m.cfg.Client = fake.NewClientBuilder().Build()
+			temp, err := m.IsRegistryDataStale(context.TODO())
 
 			Expect(err).Should(BeNil())
 			Expect(temp).Should(BeTrue())
 		})
 
 		It("should return true if the configmap does not exist", func() {
-			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
+			temp, err := m.IsRegistryDataStale(context.TODO())
 
 			Expect(err).Should(BeNil())
 			Expect(temp).Should(BeTrue())
 		})
 
 		It("should return true if the number of files to be added to the registry don't match the numberof files currently in the registry", func() {
-			rr.Client.KubeClient = fake.NewClientBuilder().WithObjects(
+			m.cfg.Client = fake.NewClientBuilder().WithObjects(
 				&corev1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      getRegistryConfigMapName("pkgName") + "-package",
@@ -281,10 +261,9 @@ var _ = Describe("Registry", func() {
 						Labels:    makeRegistryLabels("pkgName"),
 					},
 				},
-				newRegistryDeployment("pkgName", testns),
-				newRegistryService("pkgName", testns),
+				newRegistryPod("pkgName", testns),
 			).Build()
-			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
+			temp, err := m.IsRegistryDataStale(context.TODO())
 
 			Expect(err).Should(BeNil())
 			Expect(temp).Should(BeTrue())
@@ -298,7 +277,7 @@ var _ = Describe("Registry", func() {
 				val1: "val1",
 				val2: "val2",
 			}, "userInput")
-			rr.Client.KubeClient = fake.NewClientBuilder().WithObjects(
+			m.cfg.Client = fake.NewClientBuilder().WithObjects(
 				&corev1.ConfigMap{
 					BinaryData: binarydata,
 					ObjectMeta: metav1.ObjectMeta{
@@ -314,10 +293,9 @@ var _ = Describe("Registry", func() {
 						Labels:    makeRegistryLabels("pkgName"),
 					},
 				},
-				newRegistryDeployment("pkgName", testns),
-				newRegistryService("pkgName", testns),
+				newRegistryPod("pkgName", testns),
 			).Build()
-			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
+			temp, err := m.IsRegistryDataStale(context.TODO())
 
 			Expect(err).Should(BeNil())
 			Expect(temp).Should(BeTrue())
@@ -332,7 +310,7 @@ var _ = Describe("Registry", func() {
 					},
 				},
 			})
-			rr.Client.KubeClient = fake.NewClientBuilder().WithObjects(
+			m.cfg.Client = fake.NewClientBuilder().WithObjects(
 				&corev1.ConfigMap{
 					BinaryData: binarydata,
 					ObjectMeta: metav1.ObjectMeta{
@@ -348,10 +326,9 @@ var _ = Describe("Registry", func() {
 						Labels:    makeRegistryLabels("pkgName"),
 					},
 				},
-				newRegistryDeployment("pkgName", testns),
-				newRegistryService("pkgName", testns),
+				newRegistryPod("pkgName", testns),
 			).Build()
-			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
+			temp, err := m.IsRegistryDataStale(context.TODO())
 
 			Expect(err).Should(BeNil())
 			Expect(temp).Should(BeTrue())

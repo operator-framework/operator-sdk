@@ -32,6 +32,8 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 )
 
+const defaultGRPCPort = 50051
+
 type OperatorInstaller struct {
 	CatalogSourceName     string
 	PackageName           string

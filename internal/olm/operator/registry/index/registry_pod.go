@@ -21,17 +21,12 @@ import (
 	"fmt"
 	"path"
 	"text/template"
-	"time"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/wait"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
+	registrypod "github.com/operator-framework/operator-sdk/internal/olm/operator/registry/pod"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
 
@@ -79,15 +74,10 @@ type RegistryPod struct {
 
 	// GRPCPort is the container grpc port
 	GRPCPort int32
-
-	// pod represents a kubernetes *corev1.pod that will be created on a cluster using an index image
-	pod *corev1.Pod
-
-	cfg *operator.Configuration
 }
 
 // init initializes the RegistryPod struct and sets defaults for empty fields
-func (rp *RegistryPod) init(cfg *operator.Configuration) error {
+func (rp *RegistryPod) init() error {
 	if rp.GRPCPort == 0 {
 		rp.GRPCPort = defaultGRPCPort
 	}
@@ -97,19 +87,11 @@ func (rp *RegistryPod) init(cfg *operator.Configuration) error {
 	if rp.IndexImage == "" {
 		rp.IndexImage = DefaultIndexImage
 	}
-	rp.cfg = cfg
 
 	// validate the RegistryPod struct and ensure required fields are set
 	if err := rp.validate(); err != nil {
 		return fmt.Errorf("invalid registry pod: %v", err)
 	}
-
-	// podForBundleRegistry() to make the pod definition
-	pod, err := rp.podForBundleRegistry()
-	if err != nil {
-		return fmt.Errorf("error building registry pod definition: %v", err)
-	}
-	rp.pod = pod
 
 	return nil
 }
@@ -118,51 +100,21 @@ func (rp *RegistryPod) init(cfg *operator.Configuration) error {
 // sets the catalog source as the owner for the pod and verifies that
 // the pod is running
 func (rp *RegistryPod) Create(ctx context.Context, cfg *operator.Configuration, cs *v1alpha1.CatalogSource) (*corev1.Pod, error) {
-	if err := rp.init(cfg); err != nil {
+	if err := rp.init(); err != nil {
 		return nil, err
 	}
 
-	// make catalog source the owner of registry pod object
-	if err := controllerutil.SetOwnerReference(cs, rp.pod, rp.cfg.Scheme); err != nil {
-		return nil, fmt.Errorf("set registry pod owner reference: %v", err)
-	}
-
-	if err := rp.cfg.Client.Create(ctx, rp.pod); err != nil {
-		return nil, fmt.Errorf("create registry pod: %v", err)
-	}
-
-	// get registry pod key
-	podKey := types.NamespacedName{
-		Namespace: rp.cfg.Namespace,
-		Name:      rp.pod.GetName(),
-	}
-
-	// poll and verify that pod is running
-	podCheck := wait.ConditionFunc(func() (done bool, err error) {
-		err = rp.cfg.Client.Get(ctx, podKey, rp.pod)
-		if err != nil {
-			return false, fmt.Errorf("error getting pod %s: %w", rp.pod.Name, err)
-		}
-		return rp.pod.Status.Phase == corev1.PodRunning, nil
-	})
-
-	// check pod status to be `Running`
-	if err := rp.checkPodStatus(ctx, podCheck); err != nil {
-		return nil, fmt.Errorf("registry pod did not become ready: %w", err)
-	}
-	log.Infof("Successfully created registry pod: %s", rp.pod.Name)
-	return rp.pod, nil
-}
-
-// checkPodStatus polls and verifies that the pod status is running
-func (rp *RegistryPod) checkPodStatus(ctx context.Context, podCheck wait.ConditionFunc) error {
-	// poll every 200 ms until podCheck is true or context is done
-	err := wait.PollImmediateUntil(200*time.Millisecond, podCheck, ctx.Done())
+	// newPod() to make the pod definition
+	pod, err := rp.newPod()
 	if err != nil {
-		return fmt.Errorf("error waiting for registry pod %s to run: %v", rp.pod.Name, err)
+		return nil, fmt.Errorf("error building registry pod definition: %v", err)
 	}
 
-	return err
+	if err := registrypod.CreateOwnedPod(ctx, cfg, pod, cs); err != nil {
+		return nil, fmt.Errorf("error creating registry pod: %w", err)
+	}
+
+	return pod, nil
 }
 
 // validate will ensure that RegistryPod required fields are set
@@ -187,10 +139,6 @@ func (rp *RegistryPod) validate() error {
 	return nil
 }
 
-func GetRegistryPodHost(ipStr string) string {
-	return fmt.Sprintf("%s:%d", ipStr, defaultGRPCPort)
-}
-
 // getPodName will return a string constructed from the bundle Image name
 func getPodName(bundleImage string) string {
 	// todo(rashmigottipati): need to come up with human-readable references
@@ -198,9 +146,9 @@ func getPodName(bundleImage string) string {
 	return k8sutil.TrimDNS1123Label(k8sutil.FormatOperatorNameDNS1123(bundleImage))
 }
 
-// podForBundleRegistry constructs and returns the registry pod definition
+// newPod constructs and returns the registry pod definition
 // and throws error when unable to build the pod definition successfully
-func (rp *RegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
+func (rp *RegistryPod) newPod() (*corev1.Pod, error) {
 	// rp was already validated so len(rp.BundleItems) must be greater than 0.
 	bundleImage := rp.BundleItems[len(rp.BundleItems)-1].ImageTag
 
@@ -211,11 +159,7 @@ func (rp *RegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 	}
 
 	// make the pod definition
-	rp.pod = &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      getPodName(bundleImage),
-			Namespace: rp.cfg.Namespace,
-		},
+	pod := &corev1.Pod{
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
 				{
@@ -233,8 +177,9 @@ func (rp *RegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 			},
 		},
 	}
+	pod.SetName(getPodName(bundleImage))
 
-	return rp.pod, nil
+	return pod, nil
 }
 
 const containerCommand = `/bin/mkdir -p {{ .DBPath | dirname }} && \

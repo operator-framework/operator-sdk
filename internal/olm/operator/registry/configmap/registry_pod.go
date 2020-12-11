@@ -17,9 +17,7 @@ package configmap
 import (
 	"fmt"
 
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
@@ -39,28 +37,23 @@ const (
 	registryLogFile = "/tmp/termination.log"
 )
 
-func getRegistryServerName(pkgName string) string {
+func getRegistryPodName(pkgName string) string {
 	name := k8sutil.FormatOperatorNameDNS1123(pkgName)
 	return fmt.Sprintf("%s-registry-server", name)
 }
 
-// getRegistryDeploymentLabels creates a set of labels to identify
-// operator-registry Deployment objects.
-func getRegistryDeploymentLabels(pkgName string) map[string]string {
+// getRegistryPodLabels creates a set of labels to identify
+// operator-registry Pod objects.
+func getRegistryPodLabels(pkgName string) map[string]string {
 	labels := makeRegistryLabels(pkgName)
-	labels["server-name"] = getRegistryServerName(pkgName)
+	labels["server-name"] = getRegistryPodName(pkgName)
 	return labels
-}
-
-// applyToDeploymentPodSpec applies f to dep's pod template spec.
-func applyToDeploymentPodSpec(dep *appsv1.Deployment, f func(*corev1.PodSpec)) {
-	f(&dep.Spec.Template.Spec)
 }
 
 // withConfigMapVolume returns a function that appends a volume with name
 // volName containing a reference to a ConfigMap with name cmName to the
-// Deployment argument's pod template spec.
-func withConfigMapVolume(volName, cmName string) func(*appsv1.Deployment) {
+// Pod argument's spec.
+func withConfigMapVolume(volName, cmName string) func(*corev1.Pod) {
 	volume := corev1.Volume{
 		Name: volName,
 		VolumeSource: corev1.VolumeSource{
@@ -71,18 +64,16 @@ func withConfigMapVolume(volName, cmName string) func(*appsv1.Deployment) {
 			},
 		},
 	}
-	return func(dep *appsv1.Deployment) {
-		applyToDeploymentPodSpec(dep, func(spec *corev1.PodSpec) {
-			spec.Volumes = append(spec.Volumes, volume)
-		})
+	return func(pod *corev1.Pod) {
+		pod.Spec.Volumes = append(pod.Spec.Volumes, volume)
 	}
 }
 
 // withContainerVolumeMounts returns a function that appends volumeMounts
-// to each container in the Deployment argument's pod template spec. One
+// to each container in the Pod argument's spec. One
 // volumeMount is appended for each path in paths from volume with name
 // volName.
-func withContainerVolumeMounts(volName string, paths ...string) func(*appsv1.Deployment) {
+func withContainerVolumeMounts(volName string, paths ...string) func(*corev1.Pod) {
 	volumeMounts := []corev1.VolumeMount{}
 	for _, p := range paths {
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
@@ -90,12 +81,10 @@ func withContainerVolumeMounts(volName string, paths ...string) func(*appsv1.Dep
 			MountPath: p,
 		})
 	}
-	return func(dep *appsv1.Deployment) {
-		applyToDeploymentPodSpec(dep, func(spec *corev1.PodSpec) {
-			for i := range spec.Containers {
-				spec.Containers[i].VolumeMounts = append(spec.Containers[i].VolumeMounts, volumeMounts...)
-			}
-		})
+	return func(pod *corev1.Pod) {
+		for i := range pod.Spec.Containers {
+			pod.Spec.Containers[i].VolumeMounts = append(pod.Spec.Containers[i].VolumeMounts, volumeMounts...)
+		}
 	}
 }
 
@@ -110,11 +99,11 @@ func getDBContainerCmd(dbPath, logPath string) string {
 }
 
 // withRegistryGRPCContainer returns a function that appends a container
-// running an operator-registry GRPC server to the Deployment argument's
-// pod template spec.
-func withRegistryGRPCContainer(pkgName string) func(*appsv1.Deployment) {
+// running an operator-registry GRPC server to the Pod argument's
+// spec.
+func withRegistryGRPCContainer(pkgName string) func(*corev1.Pod) {
 	container := corev1.Container{
-		Name:       getRegistryServerName(pkgName),
+		Name:       getRegistryPodName(pkgName),
 		Image:      registryBaseImage,
 		WorkingDir: "/tmp",
 		Command:    []string{"/bin/sh"},
@@ -127,42 +116,23 @@ func withRegistryGRPCContainer(pkgName string) func(*appsv1.Deployment) {
 			{Name: "registry-grpc", ContainerPort: registryGRPCPort},
 		},
 	}
-	return func(dep *appsv1.Deployment) {
-		applyToDeploymentPodSpec(dep, func(spec *corev1.PodSpec) {
-			spec.Containers = append(spec.Containers, container)
-		})
+	return func(pod *corev1.Pod) {
+		pod.Spec.Containers = append(pod.Spec.Containers, container)
 	}
 }
 
-// newRegistryDeployment creates a new Deployment with a name derived from
-// pkgName, the package manifest's packageName, in namespace. The Deployment
+// newRegistryPod creates a new Pod with a name derived from
+// pkgName, the package manifest's packageName, in namespace. The Pod
 // and replicas are created with labels derived from pkgName. opts will be
-// applied to the Deployment object.
-func newRegistryDeployment(pkgName, namespace string, opts ...func(*appsv1.Deployment)) *appsv1.Deployment {
-	var replicas int32 = 1
-	dep := &appsv1.Deployment{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: appsv1.SchemeGroupVersion.String(),
-			Kind:       "Deployment",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      getRegistryServerName(pkgName),
-			Namespace: namespace,
-		},
-		Spec: appsv1.DeploymentSpec{
-			Selector: &metav1.LabelSelector{
-				MatchLabels: getRegistryDeploymentLabels(pkgName),
-			},
-			Replicas: &replicas,
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: getRegistryDeploymentLabels(pkgName),
-				},
-			},
-		},
-	}
+// applied to the Pod object.
+func newRegistryPod(pkgName, namespace string, opts ...func(*corev1.Pod)) *corev1.Pod {
+	pod := &corev1.Pod{}
+	pod.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("Pod"))
+	pod.SetName(getRegistryPodName(pkgName))
+	pod.SetNamespace(namespace)
+	pod.SetLabels(getRegistryPodLabels(pkgName))
 	for _, opt := range opts {
-		opt(dep)
+		opt(pod)
 	}
-	return dep
+	return pod
 }

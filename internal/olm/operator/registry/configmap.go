@@ -22,10 +22,7 @@ import (
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/util/retry"
 
-	olmclient "github.com/operator-framework/operator-sdk/internal/olm/client"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry/configmap"
 )
@@ -44,78 +41,40 @@ func NewConfigMapCatalogCreator(cfg *operator.Configuration) *ConfigMapCatalogCr
 }
 
 func (c ConfigMapCatalogCreator) CreateCatalog(ctx context.Context, name string) (*v1alpha1.CatalogSource, error) {
-	cs := newCatalogSource(name, c.cfg.Namespace,
-		withSDKPublisher(c.Package.PackageName))
+	cs := newCatalogSource(name, c.cfg.Namespace, withSDKPublisher(c.Package.PackageName))
+
+	m := configmap.NewManager(c.cfg, c.Package, c.Bundles)
+	if exists, err := m.IsRegistryExist(ctx); err != nil {
+		return nil, fmt.Errorf("error checking registry existence: %v", err)
+	} else if exists {
+		if isRegistryStale, err := m.IsRegistryDataStale(ctx); err == nil {
+			if !isRegistryStale {
+				log.Infof("%s registry data is current", c.Package.PackageName)
+				return cs, nil
+			}
+			log.Infof("A stale %s registry exists, deleting", c.Package.PackageName)
+			if err = m.DeleteRegistry(ctx, cs); err != nil {
+				return nil, fmt.Errorf("error deleting registered package: %w", err)
+			}
+		} else if !apierrors.IsNotFound(err) {
+			return nil, fmt.Errorf("error checking registry data: %w", err)
+		}
+	}
+
 	if err := c.cfg.Client.Create(ctx, cs); err != nil {
 		return nil, fmt.Errorf("error creating catalog source: %w", err)
 	}
 
-	if err := c.registryUp(ctx, cs); err != nil {
-		return nil, fmt.Errorf("error creating registry resources: %w", err)
+	log.Infof("Creating %s registry", c.Package.PackageName)
+	pod, err := m.CreateRegistry(ctx, cs)
+	if err != nil {
+		return nil, fmt.Errorf("error registering package: %w", err)
 	}
 
-	if err := c.updateCatalogSource(ctx, cs); err != nil {
-		return nil, fmt.Errorf("error updating catalog source: %w", err)
+	// Update catalog source with source type as grpc and new registry pod address as the pod IP.
+	if err := updateCatalogSource(ctx, c.cfg, cs, updateGRPCFieldsFunc(pod)); err != nil {
+		return nil, err
 	}
 
 	return cs, nil
-}
-
-func (c ConfigMapCatalogCreator) registryUp(ctx context.Context, cs *v1alpha1.CatalogSource) (err error) {
-	rr := configmap.RegistryResources{
-		Pkg:     c.Package,
-		Bundles: c.Bundles,
-	}
-	if rr.Client, err = olmclient.NewClientForConfig(c.cfg.RESTConfig); err != nil {
-		return err
-	}
-
-	if exists, err := rr.IsRegistryExist(ctx, c.cfg.Namespace); err != nil {
-		return fmt.Errorf("error checking registry existence: %v", err)
-	} else if exists {
-		if isRegistryStale, err := rr.IsRegistryDataStale(ctx, c.cfg.Namespace); err == nil {
-			if !isRegistryStale {
-				log.Infof("%s registry data is current", c.Package.PackageName)
-				return nil
-			}
-			log.Infof("A stale %s registry exists, deleting", c.Package.PackageName)
-			if err = rr.DeletePackageManifestsRegistry(ctx, c.cfg.Namespace); err != nil {
-				return fmt.Errorf("error deleting registered package: %w", err)
-			}
-		} else if !apierrors.IsNotFound(err) {
-			return fmt.Errorf("error checking registry data: %w", err)
-		}
-	}
-	log.Infof("Creating %s registry", c.Package.PackageName)
-	if err := rr.CreatePackageManifestsRegistry(ctx, cs, c.cfg.Namespace); err != nil {
-		return fmt.Errorf("error registering package: %w", err)
-	}
-
-	return nil
-}
-
-// updateCatalogSource gets the registry address of the newly created
-// ephemeral packagemanifest index pod and updates the catalog source
-// with the necessary address and source type fields to enable the
-// catalog source to connect to the registry.
-func (c *ConfigMapCatalogCreator) updateCatalogSource(ctx context.Context, cs *v1alpha1.CatalogSource) error {
-	registryGRPCAddr := configmap.GetRegistryServiceAddr(c.Package.PackageName, c.cfg.Namespace)
-	catsrcKey := types.NamespacedName{
-		Namespace: c.cfg.Namespace,
-		Name:      cs.GetName(),
-	}
-	if err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		if err := c.cfg.Client.Get(ctx, catsrcKey, cs); err != nil {
-			return err
-		}
-		cs.Spec.Address = registryGRPCAddr
-		cs.Spec.SourceType = v1alpha1.SourceTypeGrpc
-		if err := c.cfg.Client.Update(ctx, cs); err != nil {
-			return err
-		}
-		return nil
-	}); err != nil {
-		return fmt.Errorf("error setting grpc address on catalog source: %v", err)
-	}
-	return nil
 }
