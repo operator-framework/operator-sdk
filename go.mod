@@ -11,9 +11,9 @@ require (
 	github.com/markbates/inflect v1.0.4
 	github.com/onsi/ginkgo v1.14.1
 	github.com/onsi/gomega v1.10.2
-	github.com/operator-framework/api v0.3.20
-	github.com/operator-framework/operator-lib v0.2.1-0.20201119204525-6700ae54da56
-	github.com/operator-framework/operator-registry v1.14.3
+	github.com/operator-framework/api v0.4.0
+	github.com/operator-framework/operator-lib v0.3.0
+	github.com/operator-framework/operator-registry v1.15.3
 	github.com/prometheus/client_golang v1.7.1
 	github.com/sergi/go-diff v1.0.0
 	github.com/sirupsen/logrus v1.7.0
@@ -32,9 +32,9 @@ require (
 	k8s.io/client-go v0.19.4
 	k8s.io/kubectl v0.19.4
 	rsc.io/letsencrypt v0.0.3 // indirect
-	sigs.k8s.io/controller-runtime v0.7.0-alpha.7
-	sigs.k8s.io/controller-tools v0.3.0
-	sigs.k8s.io/kubebuilder/v2 v2.3.2-0.20201204230216-593f2e80cdf6
+	sigs.k8s.io/controller-runtime v0.7.0
+	sigs.k8s.io/controller-tools v0.4.1
+	sigs.k8s.io/kubebuilder/v2 v2.3.2-0.20201211222127-503ba3b7e4ad
 	sigs.k8s.io/yaml v1.2.0
 )
 

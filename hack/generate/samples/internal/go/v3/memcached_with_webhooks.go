@@ -59,7 +59,9 @@ func (mh *MemcachedGoWithWebhooks) Prepare() {
 func (mh *MemcachedGoWithWebhooks) Run() {
 	log.Infof("creating the project")
 	err := mh.ctx.Init(
-		// TODO(estroz): change this to go/v3 is stabilized.
+		// TODO(estroz): change this to 3 when stabilized.
+		"--project-version", "3-alpha",
+		// TODO(estroz): change this to go/v3 when stabilized.
 		"--plugins", "go/v3-alpha",
 		"--repo", "github.com/example/memcached-operator",
 		"--domain",
@@ -168,11 +170,11 @@ func (mh *MemcachedGoWithWebhooks) implementingWebhooks() {
 	err := kbtestutils.InsertCode(webhookPath,
 		"// TODO(user): fill in your defaulting logic.\n}",
 		webhooksFragment)
-	pkg.CheckError("replacing reconcile", err)
+	pkg.CheckError("replacing webhook validate implementation", err)
 
 	err = testutils.ReplaceInFile(webhookPath,
 		"// TODO(user): fill in your defaulting logic.", "if r.Spec.Size == 0 {\n\t\tr.Spec.Size = 3\n\t}")
-	pkg.CheckError("replacing default webhook implementation", err)
+	pkg.CheckError("replacing webhook default implementation", err)
 
 	// Add imports
 	err = kbtestutils.InsertCode(webhookPath,
@@ -420,7 +422,7 @@ const watchCustomizedFragment = `return ctrl.NewControllerManagedBy(mgr).
 
 const webhooksFragment = `
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-// +kubebuilder:webhook:path=/validate-cache-example-com-v1alpha1-memcached,mutating=false,failurePolicy=fail,sideEffects=None,groups=cache.example.com,resources=memcacheds,verbs=create;update,versions=v1alpha1,name=vmemcached.kb.io,admissionReviewVersions={v1beta1}
+// +kubebuilder:webhook:path=/validate-cache-example-com-v1alpha1-memcached,mutating=false,failurePolicy=fail,sideEffects=None,groups=cache.example.com,resources=memcacheds,verbs=create;update,versions=v1alpha1,name=vmemcached.kb.io,admissionReviewVersions={v1,v1beta1}
 
 var _ webhook.Validator = &Memcached{}
 

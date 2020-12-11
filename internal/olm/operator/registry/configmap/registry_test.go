@@ -61,7 +61,7 @@ var _ = Describe("Registry", func() {
 
 	Describe("DeletePackageManifestsRegistry", func() {
 		It("should delete the package manifest registry", func() {
-			fakeclient := fake.NewFakeClient(
+			fakeclient := fake.NewClientBuilder().WithObjects(
 				&corev1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "testns",
@@ -70,7 +70,7 @@ var _ = Describe("Registry", func() {
 				},
 				newRegistryDeployment("pkgName", "testns"),
 				newRegistryService("pkgName", "testns"),
-			)
+			).Build()
 			rr := RegistryResources{
 				Pkg: &manifests.PackageManifest{
 					PackageName: "pkgName",
@@ -123,7 +123,7 @@ var _ = Describe("Registry", func() {
 		)
 		BeforeEach(func() {
 			testns = "testns"
-			fakeclient := fake.NewFakeClient(
+			fakeclient := fake.NewClientBuilder().WithObjects(
 				&corev1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: testns,
@@ -132,7 +132,7 @@ var _ = Describe("Registry", func() {
 				},
 				newRegistryDeployment("pkgName", testns),
 				newRegistryService("pkgName", testns),
-			)
+			).Build()
 			rr = RegistryResources{
 				Pkg: &manifests.PackageManifest{
 					PackageName: "pkgName",
@@ -196,7 +196,7 @@ var _ = Describe("Registry", func() {
 		)
 		BeforeEach(func() {
 			testns = "testns"
-			fakeclient := fake.NewFakeClient(
+			fakeclient := fake.NewClientBuilder().WithObjects(
 				&corev1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "config1",
@@ -213,7 +213,7 @@ var _ = Describe("Registry", func() {
 				},
 				newRegistryDeployment("pkgName", testns),
 				newRegistryService("pkgName", testns),
-			)
+			).Build()
 			rr = RegistryResources{
 				Pkg: &manifests.PackageManifest{
 					PackageName: "pkgName",
@@ -251,7 +251,7 @@ var _ = Describe("Registry", func() {
 		})
 
 		It("should return true if there are no registry configmaps", func() {
-			rr.Client.KubeClient = fake.NewFakeClient()
+			rr.Client.KubeClient = fake.NewClientBuilder().Build()
 			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
 
 			Expect(err).Should(BeNil())
@@ -266,7 +266,7 @@ var _ = Describe("Registry", func() {
 		})
 
 		It("should return true if the number of files to be added to the registry don't match the numberof files currently in the registry", func() {
-			rr.Client.KubeClient = fake.NewFakeClient(
+			rr.Client.KubeClient = fake.NewClientBuilder().WithObjects(
 				&corev1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      getRegistryConfigMapName("pkgName") + "-package",
@@ -283,7 +283,7 @@ var _ = Describe("Registry", func() {
 				},
 				newRegistryDeployment("pkgName", testns),
 				newRegistryService("pkgName", testns),
-			)
+			).Build()
 			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
 
 			Expect(err).Should(BeNil())
@@ -298,7 +298,7 @@ var _ = Describe("Registry", func() {
 				val1: "val1",
 				val2: "val2",
 			}, "userInput")
-			rr.Client.KubeClient = fake.NewFakeClient(
+			rr.Client.KubeClient = fake.NewClientBuilder().WithObjects(
 				&corev1.ConfigMap{
 					BinaryData: binarydata,
 					ObjectMeta: metav1.ObjectMeta{
@@ -316,7 +316,7 @@ var _ = Describe("Registry", func() {
 				},
 				newRegistryDeployment("pkgName", testns),
 				newRegistryService("pkgName", testns),
-			)
+			).Build()
 			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
 
 			Expect(err).Should(BeNil())
@@ -332,7 +332,7 @@ var _ = Describe("Registry", func() {
 					},
 				},
 			})
-			rr.Client.KubeClient = fake.NewFakeClient(
+			rr.Client.KubeClient = fake.NewClientBuilder().WithObjects(
 				&corev1.ConfigMap{
 					BinaryData: binarydata,
 					ObjectMeta: metav1.ObjectMeta{
@@ -350,7 +350,7 @@ var _ = Describe("Registry", func() {
 				},
 				newRegistryDeployment("pkgName", testns),
 				newRegistryService("pkgName", testns),
-			)
+			).Build()
 			temp, err := rr.IsRegistryDataStale(context.TODO(), testns)
 
 			Expect(err).Should(BeNil())
