@@ -243,7 +243,7 @@ var _ = Describe("ConfigMap", func() {
 			e    error
 		)
 		BeforeEach(func() {
-			fakeclient := fake.NewFakeClient(
+			fakeclient := fake.NewClientBuilder().WithObjects(
 				&corev1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "testns",
@@ -256,7 +256,7 @@ var _ = Describe("ConfigMap", func() {
 						Labels:    makeRegistryLabels("test"),
 					},
 				},
-			)
+			).Build()
 			rr = RegistryResources{
 				Client: &client.Client{
 					KubeClient: fakeclient,

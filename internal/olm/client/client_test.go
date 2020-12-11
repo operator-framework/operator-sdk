@@ -74,8 +74,7 @@ var _ = Describe("Client", func() {
 		})
 		Context("with a valid csv", func() {
 			It("check error string for pod errors", func() {
-				fakeClient = fake.NewFakeClient(
-
+				fakeClient = fake.NewClientBuilder().WithObjects(
 					&corev1.Pod{
 						ObjectMeta: metav1.ObjectMeta{
 							Name:      "test-operator-kc44t",
@@ -119,7 +118,7 @@ var _ = Describe("Client", func() {
 							},
 						},
 					},
-				)
+				).Build()
 				key := types.NamespacedName{
 					Name:      "test.operator",
 					Namespace: "test-operator-system",
@@ -130,7 +129,7 @@ var _ = Describe("Client", func() {
 			})
 
 			It("check error string for multiple pod failures", func() {
-				fakeClt := fake.NewFakeClient(
+				fakeClt := fake.NewClientBuilder().WithObjects(
 					&corev1.Pod{
 						ObjectMeta: metav1.ObjectMeta{
 							Name:      "test-operator-jjj",
@@ -196,7 +195,7 @@ var _ = Describe("Client", func() {
 							},
 						},
 					},
-				)
+				).Build()
 				key := types.NamespacedName{
 					Name:      "test.operator",
 					Namespace: "test-operator-system",
@@ -208,7 +207,7 @@ var _ = Describe("Client", func() {
 			})
 
 			It("check error string for deployment errors,when no pods exist", func() {
-				fakeClient = fake.NewFakeClient(
+				fakeClient = fake.NewClientBuilder().WithObjects(
 					&appsv1.Deployment{
 						ObjectMeta: metav1.ObjectMeta{
 							Name:      "test-operator-controller-manager",
@@ -227,7 +226,7 @@ var _ = Describe("Client", func() {
 							},
 						},
 					},
-				)
+				).Build()
 				key := types.NamespacedName{
 					Name:      "test-operator",
 					Namespace: "test-operator-system",
@@ -238,7 +237,7 @@ var _ = Describe("Client", func() {
 			})
 
 			It("check error string,when no deployments exist for given CSV", func() {
-				fakeClient = fake.NewFakeClient()
+				fakeClient = fake.NewClientBuilder().Build()
 				olmclient := Client{KubeClient: fakeClient}
 				key := types.NamespacedName{
 					Name:      "test-operator",
@@ -249,7 +248,7 @@ var _ = Describe("Client", func() {
 				Expect(err.Error()).To(ContainSubstring("\"dummy-operator\" not found"))
 			})
 			It("check error string,when no namespace provided", func() {
-				fakeClient = fake.NewFakeClient()
+				fakeClient = fake.NewClientBuilder().Build()
 				olmclient := Client{KubeClient: fakeClient}
 				key := types.NamespacedName{
 					Name: "test-operator",

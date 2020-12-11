@@ -213,6 +213,7 @@ spec:
   version: 0.0.1
   webhookdefinitions:
   - admissionReviewVersions:
+    - v1
     - v1beta1
     containerPort: 443
     deploymentName: memcached-operator-controller-manager
@@ -233,6 +234,7 @@ spec:
     type: ValidatingAdmissionWebhook
     webhookPath: /validate-cache-example-com-v1alpha1-memcached
   - admissionReviewVersions:
+    - v1
     - v1beta1
     containerPort: 443
     deploymentName: memcached-operator-controller-manager
