@@ -52,7 +52,7 @@ var _ = Describe("OperatorInstaller", func() {
 			sch = runtime.NewScheme()
 			Expect(v1.AddToScheme(sch)).To(Succeed())
 			Expect(v1alpha1.AddToScheme(sch)).To(Succeed())
-			cfg.Client = fake.NewFakeClientWithScheme(sch)
+			cfg.Client = fake.NewClientBuilder().WithScheme(sch).Build()
 
 			oi = NewOperatorInstaller(cfg)
 			oi.StartingCSV = "fakeName"
@@ -77,7 +77,7 @@ var _ = Describe("OperatorInstaller", func() {
 		It("should pass through any client errors (duplicate)", func() {
 
 			sub := newSubscription(oi.StartingCSV, oi.cfg.Namespace, withCatalogSource("duplicate", oi.cfg.Namespace))
-			oi.cfg.Client = fake.NewFakeClientWithScheme(sch, sub)
+			oi.cfg.Client = fake.NewClientBuilder().WithScheme(sch).WithObjects(sub).Build()
 
 			_, err := oi.createSubscription(context.TODO(), "duplicate")
 			Expect(err).To(HaveOccurred())
@@ -98,14 +98,14 @@ var _ = Describe("OperatorInstaller", func() {
 		})
 
 		It("should update the install plan", func() {
-			oi.cfg.Client = fake.NewFakeClientWithScheme(sch,
+			oi.cfg.Client = fake.NewClientBuilder().WithScheme(sch).WithObjects(
 				&v1alpha1.InstallPlan{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "fakeName",
 						Namespace: "fakeNS",
 					},
 				},
-			)
+			).Build()
 
 			ip := &v1alpha1.InstallPlan{}
 			ipKey := types.NamespacedName{
@@ -136,7 +136,7 @@ var _ = Describe("OperatorInstaller", func() {
 			Expect(ip.Spec.Approved).To(Equal(true))
 		})
 		It("should return an error if the install plan does not exist.", func() {
-			oi.cfg.Client = fake.NewFakeClientWithScheme(sch)
+			oi.cfg.Client = fake.NewClientBuilder().WithScheme(sch).Build()
 			sub := &v1alpha1.Subscription{
 				Status: v1alpha1.SubscriptionStatus{
 					InstallPlanRef: &corev1.ObjectReference{
@@ -161,7 +161,7 @@ var _ = Describe("OperatorInstaller", func() {
 			cfg := &operator.Configuration{}
 			sch = runtime.NewScheme()
 			Expect(v1alpha1.AddToScheme(sch)).To(Succeed())
-			cfg.Client = fake.NewFakeClientWithScheme(sch)
+			cfg.Client = fake.NewClientBuilder().WithScheme(sch).Build()
 
 			oi = NewOperatorInstaller(cfg)
 			oi.StartingCSV = "fakeName"
@@ -204,7 +204,7 @@ var _ = Describe("OperatorInstaller", func() {
 		BeforeEach(func() {
 			sch := runtime.NewScheme()
 			Expect(v1.AddToScheme(sch)).To(Succeed())
-			client = fake.NewFakeClientWithScheme(sch)
+			client = fake.NewClientBuilder().WithScheme(sch).Build()
 			oi = OperatorInstaller{
 				cfg: &operator.Configuration{
 					Scheme:    sch,
@@ -231,7 +231,7 @@ var _ = Describe("OperatorInstaller", func() {
 			oi.SupportedInstallModes = operator.GetSupportedInstallModes(modes)
 		})
 		It("should return an error when problems finding OperatorGroup", func() {
-			oi.cfg.Client = fake.NewFakeClient()
+			oi.cfg.Client = fake.NewClientBuilder().Build()
 			err := oi.ensureOperatorGroup(context.TODO())
 			Expect(err).To(HaveOccurred())
 		})
@@ -382,7 +382,7 @@ var _ = Describe("OperatorInstaller", func() {
 		BeforeEach(func() {
 			sch := runtime.NewScheme()
 			Expect(v1.AddToScheme(sch)).To(Succeed())
-			client = fake.NewFakeClientWithScheme(sch)
+			client = fake.NewClientBuilder().WithScheme(sch).Build()
 			oi = OperatorInstaller{
 				cfg: &operator.Configuration{
 					Scheme:    sch,
@@ -453,7 +453,7 @@ var _ = Describe("OperatorInstaller", func() {
 		BeforeEach(func() {
 			sch := runtime.NewScheme()
 			Expect(v1.AddToScheme(sch)).To(Succeed())
-			client = fake.NewFakeClientWithScheme(sch)
+			client = fake.NewClientBuilder().WithScheme(sch).Build()
 			oi = OperatorInstaller{
 				cfg: &operator.Configuration{
 					Scheme:    sch,
@@ -463,7 +463,7 @@ var _ = Describe("OperatorInstaller", func() {
 			}
 		})
 		It("should return an error if no OperatorGroups exist", func() {
-			oi.cfg.Client = fake.NewFakeClient()
+			oi.cfg.Client = fake.NewClientBuilder().Build()
 			grp, found, err := oi.getOperatorGroup(context.TODO())
 			Expect(grp).To(BeNil())
 			Expect(found).To(BeFalse())

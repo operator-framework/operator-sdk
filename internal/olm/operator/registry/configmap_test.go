@@ -42,7 +42,9 @@ var _ = Describe("Configmap", func() {
 			ctlog := &ConfigMapCatalogCreator{
 				cfg: &operator.Configuration{
 					Namespace: "testns",
-					Client:    fake.NewFakeClient(newCatalogSource("pkgName", "testns", withSDKPublisher("pkgName"))),
+					Client: fake.NewClientBuilder().WithObjects(
+						newCatalogSource("pkgName", "testns", withSDKPublisher("pkgName")),
+					).Build(),
 				},
 				Package: &apimanifests.PackageManifest{
 					PackageName: "pkgName",
@@ -61,7 +63,7 @@ var _ = Describe("Configmap", func() {
 			ctlog := &ConfigMapCatalogCreator{
 				cfg: &operator.Configuration{
 					Namespace: "testns",
-					Client:    fake.NewFakeClient(cs),
+					Client:    fake.NewClientBuilder().WithObjects(cs).Build(),
 				},
 				Package: &apimanifests.PackageManifest{
 					PackageName: "pkgName",

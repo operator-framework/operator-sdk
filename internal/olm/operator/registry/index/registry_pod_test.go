@@ -32,7 +32,7 @@ import (
 
 // newFakeClient() returns a fake controller runtime client
 func newFakeClient() client.Client {
-	return fakeclient.NewFakeClient()
+	return fakeclient.NewClientBuilder().Build()
 }
 
 func TestCreateRegistryPod(t *testing.T) {
