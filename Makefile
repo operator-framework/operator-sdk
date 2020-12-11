@@ -169,7 +169,7 @@ test-e2e-ansible-molecule:: image/ansible-operator ## Run molecule-based Ansible
 test-e2e-helm:: image/helm-operator ## Run Helm e2e tests
 	go test ./test/e2e-helm -v -ginkgo.v
 test-e2e-integration:: ## Run integration tests
-	./hack/tests/integration.sh
+	go test ./test/integration -v -ginkgo.v
 	./hack/tests/subcommand-olm-install.sh
 
 .DEFAULT_GOAL := help
