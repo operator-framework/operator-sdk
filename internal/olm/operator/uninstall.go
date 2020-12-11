@@ -32,7 +32,6 @@ import (
 )
 
 const (
-	csvKind = "ClusterServiceVersion"
 	crdKind = "CustomResourceDefinition"
 )
 
@@ -73,7 +72,15 @@ func (u *Uninstall) Run(ctx context.Context) error {
 		return fmt.Errorf("list subscriptions: %v", err)
 	}
 
+	// Use nil objects to determine if the underlying was found.
+	// If it was, the object will != nil.
+	var subObj, csvObj, csObj client.Object
 	var sub *v1alpha1.Subscription
+	var crds []client.Object
+	catsrc := &v1alpha1.CatalogSource{}
+	catsrc.SetNamespace(u.config.Namespace)
+	catsrc.SetName(CatalogNameForPackage(u.Package))
+
 	for i := range subs.Items {
 		s := subs.Items[i]
 		if u.Package == s.Spec.Package {
@@ -82,88 +89,116 @@ func (u *Uninstall) Run(ctx context.Context) error {
 		}
 	}
 
-	catsrc := &v1alpha1.CatalogSource{}
+	catsrcKey := client.ObjectKeyFromObject(catsrc)
 	if sub != nil {
-		catsrcKey := types.NamespacedName{
+		subObj = sub
+		// Use the subscription's catalog source data only if available.
+		keyFromSpec := types.NamespacedName{
 			Namespace: sub.Spec.CatalogSourceNamespace,
 			Name:      sub.Spec.CatalogSource,
 		}
-		if err := u.config.Client.Get(ctx, catsrcKey, catsrc); err != nil {
-			return fmt.Errorf("get catalog source: %v", err)
+		if catsrcKey.Name != "" && catsrcKey.Namespace != "" {
+			catsrcKey = keyFromSpec
 		}
 
-		csv, err := u.getInstalledCSV(ctx, sub)
-		if err != nil {
-			return fmt.Errorf("get installed CSV %q: %v", sub.Status.InstalledCSV, err)
+		// CSV name may either be the installed or current name in a subscription's status,
+		// depending on installation state.
+		csvKey := types.NamespacedName{
+			Name:      sub.Status.InstalledCSV,
+			Namespace: u.config.Namespace,
 		}
-
-		crds := getCRDs(csv)
-
-		// Delete the subscription first, so that no further installs or upgrades
-		// of the operator occur while we're cleaning up.
-		if err := u.deleteObjects(ctx, false, sub); err != nil {
-			return err
+		if csvKey.Name == "" {
+			csvKey.Name = sub.Status.CurrentCSV
 		}
-
-		if u.DeleteCRDs {
-			// Ensure CustomResourceDefinitions are deleted next, so that the operator
-			// has a chance to handle CRs that have finalizers.
-			if err := u.deleteObjects(ctx, true, crds...); err != nil {
-				return err
+		// This value can be empty which will cause errors.
+		if csvKey.Name != "" {
+			csv := &v1alpha1.ClusterServiceVersion{}
+			if err := u.config.Client.Get(ctx, csvKey, csv); err != nil && !apierrors.IsNotFound(err) {
+				return fmt.Errorf("error getting installed CSV %q: %v", csvKey.Name, err)
+			} else if err == nil {
+				crds = getCRDs(csv)
 			}
+			csvObj = csv
 		}
-
-		// OLM puts an ownerref on every namespaced resource to the CSV,
-		// and an owner label on every cluster scoped resource. When CSV is deleted
-		// kube and olm gc will remove all the referenced resources.
-		if err := u.deleteObjects(ctx, true, csv); err != nil {
-			return err
-		}
-
-	} else {
-		catsrc.SetNamespace(u.config.Namespace)
-		catsrc.SetName(CatalogNameForPackage(u.Package))
 	}
 
-	// Delete the catalog source. This assumes that all underlying resources related
-	// to this catalog source have an owner reference to this catalog source so that
-	// they are automatically garbage-collected.
-	catsrc.SetGroupVersionKind(v1alpha1.SchemeGroupVersion.WithKind(v1alpha1.CatalogSourceKind))
-	if err := u.deleteObjects(ctx, true, catsrc); err != nil {
+	// Get the catalog source to make sure the correct error is returned.
+	if err := u.config.Client.Get(ctx, catsrcKey, catsrc); err == nil {
+		csObj = catsrc
+	} else if !apierrors.IsNotFound(err) {
+		return fmt.Errorf("error get catalog source: %v", err)
+	}
+
+	// Deletion order:
+	//
+	// 1. Subscription to prevent further installs or upgrades of the operator while cleaning up.
+	// 2. CustomResourceDefinitions so the operator has a chance to handle CRs that have finalizers.
+	// 3. ClusterServiceVersion. OLM puts an ownerref on every namespaced resource to the CSV,
+	//    and an owner label on every cluster scoped resource so they get gc'd on deletion.
+	// 4. CatalogSource. All other resources installed by OLM or operator-sdk related to this
+	//    package will be gc'd.
+
+	// Subscriptions can be deleted asynchronously.
+	if err := u.deleteObjects(ctx, false, subObj); err != nil {
+		return err
+	}
+	var objs []client.Object
+	if u.DeleteCRDs {
+		objs = append(objs, crds...)
+	}
+	objs = append(objs, csvObj, csObj)
+	// These objects may have owned resources/finalizers, so block on deletion.
+	if err := u.deleteObjects(ctx, true, objs...); err != nil {
 		return err
 	}
 
-	// If this was the last subscription in the namespace and the operator group is
-	// the one we created, delete it
+	// If the last subscription in the namespace was deleted and the operator group is
+	// the one operator-sdk created, delete it.
 	if u.DeleteOperatorGroups {
-		if err := u.config.Client.List(ctx, &subs, client.InNamespace(u.config.Namespace)); err != nil {
-			return fmt.Errorf("list subscriptions: %v", err)
-		}
-		if len(subs.Items) == 0 {
-			ogs := v1.OperatorGroupList{}
-			if err := u.config.Client.List(ctx, &ogs, client.InNamespace(u.config.Namespace)); err != nil {
-				return fmt.Errorf("list operatorgroups: %v", err)
-			}
-			for _, og := range ogs.Items {
-				og := og
-				if len(u.DeleteOperatorGroupNames) == 0 || slice.ContainsString(u.DeleteOperatorGroupNames, og.GetName(), nil) {
-					if err := u.deleteObjects(ctx, false, &og); err != nil {
-						return err
-					}
-				}
-			}
+		if err := u.deleteOperatorGroup(ctx); err != nil {
+			return err
 		}
 	}
-	if sub == nil {
+
+	// If no objects were cleaned up, the package was not found.
+	if subObj == nil && csObj == nil && csvObj == nil && len(crds) == 0 {
 		return &ErrPackageNotFound{u.Package}
+	}
+	return nil
+}
+
+func (u *Uninstall) deleteOperatorGroup(ctx context.Context) error {
+	subs := v1alpha1.SubscriptionList{}
+	if err := u.config.Client.List(ctx, &subs, client.InNamespace(u.config.Namespace)); err != nil {
+		return fmt.Errorf("list subscriptions: %v", err)
+	}
+	if len(subs.Items) != 0 {
+		return nil
+	}
+	ogs := v1.OperatorGroupList{}
+	if err := u.config.Client.List(ctx, &ogs, client.InNamespace(u.config.Namespace)); err != nil {
+		return fmt.Errorf("list operatorgroups: %v", err)
+	}
+	for _, og := range ogs.Items {
+		if len(u.DeleteOperatorGroupNames) == 0 || slice.ContainsString(u.DeleteOperatorGroupNames, og.GetName(), nil) {
+			if err := u.deleteObjects(ctx, false, &og); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }
 
 func (u *Uninstall) deleteObjects(ctx context.Context, waitForDelete bool, objs ...client.Object) error {
 	for _, obj := range objs {
-		obj := obj
-		lowerKind := strings.ToLower(obj.GetObjectKind().GroupVersionKind().Kind)
+		if obj == nil {
+			continue
+		}
+		gvks, _, err := u.config.Scheme.ObjectKinds(obj)
+		if err != nil {
+			return err
+		}
+		lowerKind := strings.ToLower(gvks[0].Kind)
 		if err := u.config.Client.Delete(ctx, obj); err != nil && !apierrors.IsNotFound(err) {
 			return fmt.Errorf("delete %s %q: %v", lowerKind, obj.GetName(), err)
 		} else if err == nil {
@@ -184,22 +219,6 @@ func (u *Uninstall) deleteObjects(ctx context.Context, waitForDelete bool, objs 
 		}
 	}
 	return nil
-}
-
-// getInstalledCSV looks up the installed CSV name from the provided subscription and fetches it.
-func (u *Uninstall) getInstalledCSV(ctx context.Context, subscription *v1alpha1.Subscription) (*v1alpha1.ClusterServiceVersion, error) {
-	key := types.NamespacedName{
-		Name:      subscription.Status.InstalledCSV,
-		Namespace: subscription.GetNamespace(),
-	}
-
-	installedCSV := &v1alpha1.ClusterServiceVersion{}
-	if err := u.config.Client.Get(ctx, key, installedCSV); err != nil {
-		return nil, err
-	}
-
-	installedCSV.SetGroupVersionKind(v1alpha1.SchemeGroupVersion.WithKind(csvKind))
-	return installedCSV, nil
 }
 
 // getCRDs returns the list of CRDs required by a CSV.
