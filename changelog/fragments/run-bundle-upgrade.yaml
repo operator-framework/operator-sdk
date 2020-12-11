@@ -1,0 +1,4 @@
+entries:
+  - description: >
+      Added the `run bundle-upgrade` subcommand to automate testing upgrades of an operator from one version to another using OLM.
+    kind: addition

@@ -16,19 +16,15 @@ package bundle
 
 import (
 	"context"
-	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
-	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	"github.com/spf13/pflag"
 
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry"
-	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
+	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry/index"
 )
 
 type Install struct {
@@ -50,12 +46,10 @@ func NewInstall(cfg *operator.Configuration) Install {
 	return i
 }
 
-const defaultIndexImage = "quay.io/operator-framework/upstream-opm-builder:latest"
-
 func (i *Install) BindFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&i.IndexImage, "index-image", defaultIndexImage, "index image in which to inject bundle")
+	fs.StringVar(&i.IndexImage, "index-image", index.DefaultIndexImage, "index image in which to inject bundle")
 	fs.Var(&i.InstallMode, "install-mode", "install mode")
-	fs.StringVar(&i.InjectBundleMode, "mode", "", "mode to use for adding bundle to index")
+	fs.StringVar(&i.BundleAddMode, "mode", "", "mode to use for adding bundle to index")
 	_ = fs.MarkHidden("mode")
 }
 
@@ -67,10 +61,11 @@ func (i Install) Run(ctx context.Context) (*v1alpha1.ClusterServiceVersion, erro
 }
 
 func (i *Install) setup(ctx context.Context) error {
-	labels, csv, err := loadBundle(ctx, i.BundleImage)
+	labels, bundle, err := operator.LoadBundle(ctx, i.BundleImage)
 	if err != nil {
 		return err
 	}
+	csv := bundle.CSV
 
 	if err := i.InstallMode.CheckCompatibility(csv, i.cfg.Namespace); err != nil {
 		return err
@@ -81,40 +76,15 @@ func (i *Install) setup(ctx context.Context) error {
 	i.OperatorInstaller.StartingCSV = csv.Name
 	i.OperatorInstaller.SupportedInstallModes = operator.GetSupportedInstallModes(csv.Spec.InstallModes)
 	i.OperatorInstaller.Channel = strings.Split(labels[registrybundle.ChannelsLabel], ",")[0]
-	i.IndexImageCatalogCreator.BundleImage = i.BundleImage
+
 	i.IndexImageCatalogCreator.PackageName = i.OperatorInstaller.PackageName
-	i.IndexImageCatalogCreator.InjectBundles = []string{i.BundleImage}
-	i.IndexImageCatalogCreator.InjectBundleMode = "replaces"
-	if i.IndexImageCatalogCreator.IndexImage == defaultIndexImage {
-		i.IndexImageCatalogCreator.InjectBundleMode = "semver"
+	i.IndexImageCatalogCreator.BundleImage = i.BundleImage
+	if i.IndexImageCatalogCreator.BundleAddMode == "" {
+		i.IndexImageCatalogCreator.BundleAddMode = index.ReplacesBundleAddMode
+		if i.IndexImageCatalogCreator.IndexImage == index.DefaultIndexImage {
+			i.IndexImageCatalogCreator.BundleAddMode = index.SemverBundleAddMode
+		}
 	}
 
 	return nil
-}
-
-func loadBundle(ctx context.Context, bundleImage string) (registryutil.Labels, *v1alpha1.ClusterServiceVersion, error) {
-	bundlePath, err := registryutil.ExtractBundleImage(ctx, nil, bundleImage, false)
-	if err != nil {
-		return nil, nil, fmt.Errorf("pull bundle image: %v", err)
-	}
-	defer func() {
-		_ = os.RemoveAll(bundlePath)
-	}()
-
-	labels, _, err := registryutil.FindBundleMetadata(bundlePath)
-	if err != nil {
-		return nil, nil, fmt.Errorf("load bundle metadata: %v", err)
-	}
-
-	relManifestsDir, ok := labels.GetManifestsDir()
-	if !ok {
-		return nil, nil, fmt.Errorf("manifests directory not defined in bundle metadata")
-	}
-	manifestsDir := filepath.Join(bundlePath, relManifestsDir)
-	bundle, err := apimanifests.GetBundleFromDir(manifestsDir)
-	if err != nil {
-		return nil, nil, fmt.Errorf("load bundle: %v", err)
-	}
-
-	return labels, bundle.CSV, nil
 }

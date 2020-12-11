@@ -39,6 +39,7 @@ type OperatorInstaller struct {
 	Channel               string
 	InstallMode           operator.InstallMode
 	CatalogCreator        CatalogCreator
+	CatalogUpdater        CatalogUpdater
 	SupportedInstallModes sets.String
 
 	cfg *operator.Configuration
@@ -93,6 +94,79 @@ func (o OperatorInstaller) InstallOperator(ctx context.Context) (*v1alpha1.Clust
 	}
 
 	log.Infof("OLM has successfully installed %q", o.StartingCSV)
+
+	return csv, nil
+}
+
+func (o OperatorInstaller) UpgradeOperator(ctx context.Context) (*v1alpha1.ClusterServiceVersion, error) {
+	subList := &v1alpha1.SubscriptionList{}
+
+	options := client.ListOptions{
+		Namespace: o.cfg.Namespace,
+	}
+	if err := o.cfg.Client.List(ctx, subList, &options); err != nil {
+		return nil, fmt.Errorf("error getting list of subscriptions: %v", err)
+	}
+
+	var subscription *v1alpha1.Subscription
+	for i := range subList.Items {
+		s := subList.Items[i]
+		if o.PackageName == s.Spec.Package {
+			subscription = &s
+			break
+		}
+	}
+
+	log.Infof("Found existing subscription with name %s and namespace %s", subscription.Name, subscription.Namespace)
+
+	// todo: attempt #1 to trigger install plan for the subscription and
+	// to make it detect catalog changes, as per OLM suggestion
+	if err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		// set the startingCSV to empty
+		subscription.Spec.StartingCSV = ""
+		if err := o.cfg.Client.Update(ctx, subscription); err != nil {
+			return fmt.Errorf("error updating subscription: %v", err)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	// Get existing catalog source from the subsription
+	catsrcKey := types.NamespacedName{
+		Namespace: subscription.Spec.CatalogSourceNamespace,
+		Name:      subscription.Spec.CatalogSource,
+	}
+
+	cs := &v1alpha1.CatalogSource{}
+	if err := o.cfg.Client.Get(ctx, catsrcKey, cs); err != nil {
+		return nil, fmt.Errorf("error getting catalog source matching the existing subscription: %w", err)
+	}
+	log.Infof("Found existing catalog source with name %s and namespace %s", cs.Name, cs.Namespace)
+
+	// Update catalog source
+	err := o.CatalogUpdater.UpdateCatalog(ctx, cs)
+	if err != nil {
+		return nil, fmt.Errorf("update catalog error: %v", err)
+	}
+
+	// Wait for the Install Plan to be generated
+	if err = o.waitForInstallPlan(ctx, subscription); err != nil {
+		return nil, err
+	}
+
+	// Approve Install Plan for the subscription
+	if err = o.approveInstallPlan(ctx, subscription); err != nil {
+		return nil, err
+	}
+
+	// Wait for successfully installed CSV
+	csv, err := o.getInstalledCSV(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Infof("Successfully upgraded to %q", o.StartingCSV)
 
 	return csv, nil
 }
