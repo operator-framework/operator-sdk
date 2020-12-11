@@ -160,7 +160,7 @@ func (g *Generator) generate() (base *operatorsv1alpha1.ClusterServiceVersion, e
 		}
 	}
 	if g.FromVersion != "" {
-		base.Spec.Replaces = genutil.MakeCSVName(g.OperatorName, g.Version)
+		base.Spec.Replaces = genutil.MakeCSVName(g.OperatorName, g.FromVersion)
 	}
 
 	if err := ApplyTo(g.Collector, base); err != nil {
