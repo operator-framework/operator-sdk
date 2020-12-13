@@ -335,7 +335,7 @@ func (o OperatorInstaller) approveInstallPlan(ctx context.Context, sub *v1alpha1
 		// approve the install plan by setting Approved to true
 		ip.Spec.Approved = true
 		if err := o.cfg.Client.Update(ctx, &ip); err != nil {
-			return fmt.Errorf("error approving install plan: %v", err)
+			return fmt.Errorf("error approving install plan: %w", err)
 		}
 		return nil
 	}); err != nil {
