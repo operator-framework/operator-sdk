@@ -6,8 +6,8 @@
   publish = "public"
   base = "website"
   command = """
-git submodule update -f --init themes/docsy && \
-npm install postcss-cli autoprefixer@^9.0.0 && \
+git submodule update -f --init --recursive themes/docsy && \
+npm install postcss@^8.0.0 postcss-cli@^8.0.0 autoprefixer@^9.0.0 && \
 ./scripts/set_menu_version.sh && \
 hugo version && \
 hugo
