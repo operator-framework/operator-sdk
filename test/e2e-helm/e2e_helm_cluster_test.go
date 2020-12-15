@@ -29,42 +29,36 @@ import (
 )
 
 var _ = Describe("Running Helm projects", func() {
-	var controllerPodName string
-	var metricsClusterRoleBindingName string
+	var (
+		controllerPodName, metricsClusterRoleBindingName string
+		memcachedSampleFile                              string
+	)
 
 	Context("built with operator-sdk", func() {
 		BeforeEach(func() {
 			metricsClusterRoleBindingName = fmt.Sprintf("%s-metrics-reader", tc.ProjectName)
+			memcachedSampleFile = filepath.Join(tc.Dir, "config", "samples",
+				fmt.Sprintf("%s_%s_%s.yaml", tc.Group, tc.Version, strings.ToLower(tc.Kind)))
 
 			By("deploying project on the cluster")
-			err := tc.Make("deploy", "IMG="+tc.ImageName)
-			Expect(err).NotTo(HaveOccurred())
+			Expect(tc.Make("deploy", "IMG="+tc.ImageName)).To(Succeed())
 		})
-		AfterEach(func() {
-			By("deleting Curl Pod created")
-			_, _ = tc.Kubectl.Delete(true, "pod", "curl")
 
-			By("deleting CR instances created")
-			sampleFile := filepath.Join("config", "samples",
-				fmt.Sprintf("%s_%s_%s.yaml", tc.Group, tc.Version, strings.ToLower(tc.Kind)))
-			_, _ = tc.Kubectl.Delete(false, "-f", sampleFile)
+		AfterEach(func() {
+			By("deleting curl pod")
+			testutils.WrapWarnOutput(tc.Kubectl.Delete(false, "pod", "curl"))
+
+			By("deleting test CR instances")
+			testutils.WrapWarnOutput(tc.Kubectl.Delete(false, "-f", memcachedSampleFile))
 
 			By("cleaning up permissions")
-			_, _ = tc.Kubectl.Command("delete", "clusterrolebinding",
-				metricsClusterRoleBindingName)
+			testutils.WrapWarnOutput(tc.Kubectl.Command("delete", "clusterrolebinding", metricsClusterRoleBindingName))
 
 			By("undeploy project")
-			_ = tc.Make("undeploy")
+			testutils.WrapWarn(tc.Make("undeploy"))
 
 			By("ensuring that the namespace was deleted")
-			verifyNamespaceDeleted := func() error {
-				_, err := tc.Kubectl.Command("get", "namespace", tc.Kubectl.Namespace)
-				if strings.Contains(err.Error(), "(NotFound): namespaces") {
-					return err
-				}
-				return nil
-			}
-			Eventually(verifyNamespaceDeleted, 2*time.Minute, time.Second).ShouldNot(Succeed())
+			testutils.WrapWarnOutput(tc.Kubectl.Wait(false, "namespace", "foo", "--for", "delete", "--timeout", "2m"))
 		})
 
 		It("should run correctly in a cluster", func() {
