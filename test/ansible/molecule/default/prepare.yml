@@ -1,27 +1,28 @@
 ---
 - name: Prepare
-  hosts: k8s
-  gather_facts: no
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
   tasks:
-    - name: Fetch the kubeconfig
-      fetch:
-        dest: '{{ kubeconfig_file }}'
-        flat: yes
-        src: /root/.kube/config
+    - name: Ensure operator image is set
+      fail:
+        msg: |
+          You must specify the OPERATOR_IMAGE environment variable in order to run the
+          'default' scenario
+      when: not operator_image
 
-    - name: Change the kubeconfig port to the proper value
-      replace:
-        regexp: '8443'
-        replace: "{{ lookup('env', 'KIND_PORT') }}"
-        path: '{{ kubeconfig_file }}'
-      delegate_to: localhost
+    - name: Set testing image
+      command: '{{ kustomize }} edit set image testing={{ operator_image }}'
+      args:
+        chdir: '{{ config_dir }}/testing'
 
-    - name: Wait for the Kubernetes API to become available (this could take a minute)
-      uri:
-        url: "http://localhost:10080/kubernetes-ready"
-        status_code: 200
-        validate_certs: no
-      register: result
-      until: (result.status|default(-1)) == 200
-      retries: 60
-      delay: 5
+    - name: Set pull policy
+      command: '{{ kustomize }} edit add patch pull_policy/{{ operator_pull_policy }}.yaml'
+      args:
+        chdir: '{{ config_dir }}/testing'
+
+    - name: Set testing namespace
+      command: '{{ kustomize }} edit set namespace {{ namespace }}'
+      args:
+        chdir: '{{ config_dir }}/testing'
