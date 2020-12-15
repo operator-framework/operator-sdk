@@ -15,12 +15,18 @@
 package mdefault
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"sigs.k8s.io/kubebuilder/v2/pkg/model/file"
 )
 
 var _ file.Template = &Verify{}
+
+var (
+	defaultVerifyFile = filepath.Join("molecule", "default", "verify.yaml")
+	verifyMarker      = "failed_task_name"
+)
 
 // Verify scaffolds a Verify for building a main
 type Verify struct {
@@ -30,10 +36,62 @@ type Verify struct {
 // SetTemplateDefaults implements input.Template
 func (f *Verify) SetTemplateDefaults() error {
 	if f.Path == "" {
-		f.Path = filepath.Join("molecule", "default", "verify.yml")
+		f.Path = defaultVerifyFile
 	}
-	f.TemplateBody = verifyTemplate
+
+	f.TemplateBody = fmt.Sprintf(verifyTemplate,
+		file.NewMarkerFor(defaultVerifyFile, verifyMarker),
+	)
 	return nil
+}
+
+var _ file.Inserter = &VerifyUpdater{}
+
+type VerifyUpdater struct {
+	file.TemplateMixin
+	file.ResourceMixin
+
+	// WireResource defines the api resources are generated or not.
+	WireResource bool
+}
+
+func (f *VerifyUpdater) GetPath() string {
+	return defaultVerifyFile
+}
+
+func (f *VerifyUpdater) GetIfExistsAction() file.IfExistsAction {
+	return file.Overwrite
+}
+
+func (f *VerifyUpdater) GetMarkers() []file.Marker {
+	return []file.Marker{
+		file.NewMarkerFor(defaultVerifyFile, verifyMarker),
+	}
+}
+
+var taskNameCodeFragment = `%s`
+var ansibleTask = `name: '{{ ansible_failed_task.name }}'`
+
+func (f *VerifyUpdater) GetCodeFragments() file.CodeFragmentsMap {
+	fragments := make(file.CodeFragmentsMap, 1)
+
+	// If resource is not being provided we are creating the file, not updating it
+	if f.Resource == nil {
+		return fragments
+	}
+
+	// Generate import code fragments
+	imports := make([]string, 0)
+	if f.WireResource {
+		fragments[file.NewMarkerFor(f.Path, verifyMarker)] = imports
+	}
+
+	// Only store code fragments in the map if the slices are non-empty
+	if len(imports) != 0 {
+		fragments[file.NewMarkerFor(defaultVerifyFile, verifyMarker)] = imports
+	}
+
+	return fragments
 }
 
 const verifyTemplate = `---
@@ -90,6 +148,7 @@ const verifyTemplate = `---
         - name: Re-emit failure
           vars:
             failed_task:
+			  %s	
               result: '{{ "{{ ansible_failed_result }}" }}'
           fail:
             msg: '{{ "{{ failed_task }}" }}'

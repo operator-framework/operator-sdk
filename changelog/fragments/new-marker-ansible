@@ -1,0 +1,43 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      For Ansible-based operators, add new marker to add the name of the molecule task in failure cases.
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "addition"
+
+    # Is this a breaking change?
+    breaking: false
+
+    # NOTE: ONLY USE `pull_request_override` WHEN ADDING THIS
+    # FILE FOR A PREVIOUSLY MERGED PULL_REQUEST!
+    #
+    # The generator auto-detects the PR number from the commit
+    # message in which this file was originally added.
+    #
+    # What is the pull request number (without the "#")?
+    # pull_request_override: 0
+
+
+    # Migration can be defined to automatically add a section to
+    # the migration guide. This is required for breaking changes.
+    migration:
+      header: (Optional) For Ansible-based operators, raise the name of the molecule task in failure cases.
+      body: >
+        Add the variable `name: '{{ ansible_failed_task.name }}'` to the `Re-emit failure` in the `molecule/default/verify.yml` file which would like:
+
+        ```yml
+        - name: Re-emit failure
+          vars:
+            failed_task:
+              name: '{{ ansible_failed_task.name }}'
+              result: '{{ "{{ ansible_failed_result }}" }}'
+            fail:
+              msg: '{{ "{{ failed_task }}" }}'
+        ```

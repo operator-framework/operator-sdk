@@ -104,6 +104,7 @@ func (s *apiScaffolder) scaffold() error {
 		&samples.CR{},
 		&templates.WatchesUpdater{GeneratePlaybook: s.opts.GeneratePlaybook, GenerateRole: s.opts.GenerateRole, PlaybooksDir: constants.PlaybooksDir},
 		&mdefault.ResourceTest{},
+		&mdefault.VerifyUpdater{WireResource: true},
 	)
 	if s.opts.GenerateRole {
 		createAPITemplates = append(createAPITemplates,
