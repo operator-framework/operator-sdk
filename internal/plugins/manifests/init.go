@@ -84,8 +84,8 @@ BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
 endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 # this allows running the command with the container image instead
-# the command for that will be 'docker run --rm --workdir /root/tmp --interactive --volume $(pwd):/root/tmp quay.io/operator-framework/operator-sdk:v1.2.0'
-OPERATOR_SDK_CLI_COMMAND ?= operator-sdk
+# the command for that will be 'docker run --rm --workdir /root/tmp --interactive --volume $(pwd):/root/tmp quay.io/operator-framework/operator-sdk'
+OPERATOR_SDK ?= operator-sdk
 `
 
 	makefileBundleFragmentGo = `
@@ -102,10 +102,10 @@ bundle: manifests kustomize
 # Generate bundle manifests and metadata, then validate generated files.
 .PHONY: bundle
 bundle: kustomize
-	$(OPERATOR_SDK_CLI_COMMAND) generate kustomize manifests -q
+	$(OPERATOR_SDK) generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
-	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK_CLI_COMMAND) generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
-	$(OPERATOR_SDK_CLI_COMMAND) bundle validate ./bundle
+	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
+	$(OPERATOR_SDK) bundle validate ./bundle
 `
 
 	makefileBundleBuildFragment = `
