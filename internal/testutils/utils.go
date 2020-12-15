@@ -278,3 +278,15 @@ func (tc TestContext) AllowProjectBeMultiGroup() error {
 	}
 	return nil
 }
+
+// WrapWarnOutput is a one-liner to wrap an error from a command that returns (string, error) in a warning.
+func WrapWarnOutput(_ string, err error) {
+	if err != nil {
+		fmt.Fprintf(GinkgoWriter, "warning: %s", err)
+	}
+}
+
+// WrapWarn is a one-liner to wrap an error from a command that returns (error) in a warning.
+func WrapWarn(err error) {
+	WrapWarnOutput("", err)
+}
