@@ -29,54 +29,42 @@ import (
 )
 
 var _ = Describe("Running ansible projects", func() {
-	var controllerPodName string
-	var memcachedSampleFile string
-	var fooSampleFile string
-	var memfinSampleFile string
-	var memcachedDeployment string
-	var metricsClusterRoleBindingName string
+
+	var (
+		controllerPodName, memcachedDeploymentName, metricsClusterRoleBindingName string
+		fooSampleFile, memfinSampleFile, memcachedSampleFile                      string
+	)
 
 	Context("built with operator-sdk", func() {
 		BeforeEach(func() {
 			metricsClusterRoleBindingName = fmt.Sprintf("%s-metrics-reader", tc.ProjectName)
-
-			By("checking samples")
-			memcachedSampleFile = filepath.Join(tc.Dir, "config", "samples",
+			samplesDir := filepath.Join(tc.Dir, "config", "samples")
+			fooSampleFile = filepath.Join(samplesDir, fmt.Sprintf("%s_%s_foo.yaml", tc.Group, tc.Version))
+			memfinSampleFile = filepath.Join(samplesDir, fmt.Sprintf("%s_%s_memfin.yaml", tc.Group, tc.Version))
+			memcachedSampleFile = filepath.Join(samplesDir,
 				fmt.Sprintf("%s_%s_%s.yaml", tc.Group, tc.Version, strings.ToLower(tc.Kind)))
-			fooSampleFile = filepath.Join(tc.Dir, "config", "samples",
-				fmt.Sprintf("%s_%s_foo.yaml", tc.Group, tc.Version))
-			memfinSampleFile = filepath.Join(tc.Dir, "config", "samples",
-				fmt.Sprintf("%s_%s_memfin.yaml", tc.Group, tc.Version))
 
 			By("deploying project on the cluster")
-			err := tc.Make("deploy", "IMG="+tc.ImageName)
-			Expect(err).NotTo(HaveOccurred())
+			Expect(tc.Make("deploy", "IMG="+tc.ImageName)).To(Succeed())
 		})
-		AfterEach(func() {
-			By("deleting Curl Pod created")
-			_, _ = tc.Kubectl.Delete(false, "pod", "curl")
 
-			By("deleting CR instances created")
-			_, _ = tc.Kubectl.Delete(false, "-f", memcachedSampleFile)
-			_, _ = tc.Kubectl.Delete(false, "-f", fooSampleFile)
-			_, _ = tc.Kubectl.Delete(false, "-f", memfinSampleFile)
+		AfterEach(func() {
+			By("deleting curl pod")
+			testutils.WrapWarnOutput(tc.Kubectl.Delete(false, "pod", "curl"))
+
+			By("deleting test CR instances")
+			for _, sample := range []string{memcachedSampleFile, fooSampleFile, memfinSampleFile} {
+				testutils.WrapWarnOutput(tc.Kubectl.Delete(false, "-f", sample))
+			}
 
 			By("cleaning up permissions")
-			_, _ = tc.Kubectl.Command("delete", "clusterrolebinding",
-				metricsClusterRoleBindingName)
+			testutils.WrapWarnOutput(tc.Kubectl.Command("delete", "clusterrolebinding", metricsClusterRoleBindingName))
 
 			By("undeploy project")
-			_ = tc.Make("undeploy")
+			testutils.WrapWarn(tc.Make("undeploy"))
 
 			By("ensuring that the namespace was deleted")
-			verifyNamespaceDeleted := func() error {
-				_, err := tc.Kubectl.Command("get", "namespace", tc.Kubectl.Namespace)
-				if strings.Contains(err.Error(), "(NotFound): namespaces") {
-					return err
-				}
-				return nil
-			}
-			Eventually(verifyNamespaceDeleted, 2*time.Minute, time.Second).ShouldNot(Succeed())
+			testutils.WrapWarnOutput(tc.Kubectl.Wait(false, "namespace", "foo", "--for", "delete", "--timeout", "2m"))
 		})
 
 		It("should run correctly in a cluster", func() {
@@ -165,19 +153,19 @@ var _ = Describe("Running ansible projects", func() {
 			Eventually(verifyControllerProbe, time.Minute, time.Second).ShouldNot(ContainSubstring("Killing"))
 
 			By("getting memcached deploy by labels")
-			getMencachedDeploument := func() string {
-				memcachedDeployment, err = tc.Kubectl.Get(
+			getMemcachedDeploymentName := func() string {
+				memcachedDeploymentName, err = tc.Kubectl.Get(
 					false, "deployment",
 					"-l", "app=memcached", "-o", "jsonpath={..metadata.name}")
 				Expect(err).NotTo(HaveOccurred())
-				return memcachedDeployment
+				return memcachedDeploymentName
 			}
-			Eventually(getMencachedDeploument, 2*time.Minute, time.Second).ShouldNot(BeEmpty())
+			Eventually(getMemcachedDeploymentName, 2*time.Minute, time.Second).ShouldNot(BeEmpty())
 
 			By("checking the Memcached CR deployment status")
 			verifyCRUp := func() string {
 				output, err := tc.Kubectl.Command(
-					"rollout", "status", "deployment", memcachedDeployment)
+					"rollout", "status", "deployment", memcachedDeploymentName)
 				Expect(err).NotTo(HaveOccurred())
 				return output
 			}
@@ -211,14 +199,14 @@ var _ = Describe("Running ansible projects", func() {
 
 			By("scaling deployment replicas to 2")
 			_, err = tc.Kubectl.Command(
-				"scale", "deployment", memcachedDeployment, "--replicas", "2")
+				"scale", "deployment", memcachedDeploymentName, "--replicas", "2")
 			Expect(err).NotTo(HaveOccurred())
 
 			By("verifying the deployment automatically scales back down to 1")
 			verifyMemcachedScalesBack := func() error {
 				replicas, err := tc.Kubectl.Get(
 					false,
-					"deployment", memcachedDeployment, "-o", "jsonpath={..spec.replicas}")
+					"deployment", memcachedDeploymentName, "-o", "jsonpath={..spec.replicas}")
 				Expect(err).NotTo(HaveOccurred())
 				if replicas != "1" {
 					return fmt.Errorf("memcached(CR) deployment with %s replicas", replicas)
@@ -249,7 +237,7 @@ var _ = Describe("Running ansible projects", func() {
 			verifyMemcachedPatch := func() error {
 				replicas, err := tc.Kubectl.Get(
 					false,
-					"deployment", memcachedDeployment, "-o", "jsonpath={..spec.replicas}")
+					"deployment", memcachedDeploymentName, "-o", "jsonpath={..spec.replicas}")
 				Expect(err).NotTo(HaveOccurred())
 				if replicas != "2" {
 					return fmt.Errorf("memcached(CR) deployment with %s replicas", replicas)
@@ -381,7 +369,7 @@ var _ = Describe("Running ansible projects", func() {
 			getMemcachedDeployment := func() error {
 				_, err := tc.Kubectl.Get(
 					false, "deployment",
-					memcachedDeployment)
+					memcachedDeploymentName)
 				return err
 			}
 			Eventually(getMemcachedDeployment, time.Minute*2, time.Second).ShouldNot(Succeed())

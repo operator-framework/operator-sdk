@@ -27,40 +27,34 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	kbtestutils "sigs.k8s.io/kubebuilder/v2/test/e2e/utils"
+
+	"github.com/operator-framework/operator-sdk/internal/testutils"
 )
 
 var _ = Describe("operator-sdk", func() {
-	var controllerPodName string
-	var metricsClusterRoleBindingName string
+	var controllerPodName, metricsClusterRoleBindingName string
 
 	Context("built with operator-sdk", func() {
+
 		BeforeEach(func() {
 			metricsClusterRoleBindingName = fmt.Sprintf("%s-metrics-reader", tc.ProjectName)
-			By("deploying project on the cluster")
-			err := tc.Make("deploy", "IMG="+tc.ImageName)
-			Expect(err).NotTo(HaveOccurred())
 
+			By("deploying project on the cluster")
+			Expect(tc.Make("deploy", "IMG="+tc.ImageName)).To(Succeed())
 		})
+
 		AfterEach(func() {
-			By("deleting Curl Pod created")
-			_, _ = tc.Kubectl.Delete(false, "pod", "curl")
+			By("deleting curl pod")
+			testutils.WrapWarnOutput(tc.Kubectl.Delete(false, "pod", "curl"))
 
 			By("cleaning up permissions")
-			_, _ = tc.Kubectl.Command("delete", "clusterrolebinding",
-				metricsClusterRoleBindingName)
+			testutils.WrapWarnOutput(tc.Kubectl.Command("delete", "clusterrolebinding", metricsClusterRoleBindingName))
 
 			By("cleaning up created API objects during test process")
 			tc.CleanupManifests(filepath.Join("config", "default"))
 
 			By("ensuring that the namespace was deleted")
-			verifyNamespaceDeleted := func() error {
-				_, err := tc.Kubectl.Command("get", "namespace", tc.Kubectl.Namespace)
-				if strings.Contains(err.Error(), "(NotFound): namespaces") {
-					return err
-				}
-				return nil
-			}
-			Eventually(verifyNamespaceDeleted, 2*time.Minute, time.Second).ShouldNot(Succeed())
+			testutils.WrapWarnOutput(tc.Kubectl.Wait(false, "namespace", "foo", "--for", "delete", "--timeout", "2m"))
 		})
 
 		It("should run correctly in a cluster", func() {
