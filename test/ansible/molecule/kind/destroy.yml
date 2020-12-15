@@ -1,0 +1,12 @@
+---
+- name: Destroy
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  collections:
+    - community.kubernetes
+
+  tasks:
+    - name: Destroy test kind cluster
+      command: kind delete cluster --name osdk-test --kubeconfig {{ kubeconfig }}
+
