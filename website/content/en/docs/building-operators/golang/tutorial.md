@@ -16,11 +16,9 @@ please [migrate][migration-guide], or consult the [legacy docs][legacy-quickstar
 
 ## Overview
 
-By using operators, it’s possible not only to provide all expected resources but also to manage them dynamically, programmatically, and at execution time. To illustrate this idea, imagine if someone accidentally changed a configuration or removed a resource by mistake; in this case, the operator could fix it without any human intervention. 
-
 We will create a sample project to let you know how it works and this sample will:
 
-- Create a memcached Deployment if it doesn't exist
+- Create a Memcached Deployment if it doesn't exist
 - Ensure that the Deployment size is the same as specified by the Memcached CR spec
 - Update the Memcached CR status using the status writer with the names of the memcached pods
 
@@ -77,7 +75,7 @@ This will scaffold the Memcached resource API at `api/v1alpha1/memcached_types.g
 
 **Note:** This guide will cover the default case of a single group API. If you would like to support Multi-Group APIs see the [Single Group to Multi-Group][multigroup-kubebuilder-doc] doc.
 
-#### Understanding API’s
+#### Understanding API
 
 The goal of this command is to create Custom Resource (CR) and Custom Resource Definition (CRD) resources for the Memcached Kind. This command is creating the API with the group `cache.example.com`, and version `v1alpha1`  which uniquely identifies the new CRD of the Memcached Kind. For more info see [Extend the Kubernetes API with CustomResourceDefinitions][[kubernetes-extend-api]]. 
 
@@ -87,15 +85,16 @@ Consequently, by using the Operator SDK tool, we can create our APIs and objects
 
 Let’s think about the classic scenario where the goal is to have an application and its database running on the platform with Kubernetes. Then, one object could represent the App, and another one could represent the DB. By having one CRD to describe the App and another one for the DB, we will not be hurting concepts such as encapsulation, the single responsibility principle, and cohesion. Damaging these concepts could cause unexpected side effects, such as difficulty in extending, reuse, or maintenance, just to mention a few.
 
-In conclusion, the App CRD will have as its controller the DB CRD. Imagine, that a Deployment and Service are required for the application run so that the App’s Controller will provide these resources in this example. Similarly, the DB’s controller will have the business logic implementation of its objects.
+In conclusion, the App CRD will have its controller which would be responsible for things like creating Deployments that contain the App and creating Services to access it. Similarly, we would create a CRD to represent the DB, and deploy a controller that would manage DB instances. 
 
-In this way, for each CRD, one controller should be produced according to the design set by the controller-runtime.
+In general, it's recommended to have one controller responsible for manage each API(CRD) created on the project in order to 
+not go against the design goals set by [controller-runtime][controller-runtime].
 
 ### Define the API
 
-In this example, we will define that the Memcached Kind (CRD) will have the attribute size which will specify the quantity of Memcached instances will be deployed. Also, we will create an attribute to its Status which will store the Pod Names. 
+In this example, we will define that the Memcached Kind (CRD) will have a size Spec which will specify the quantity of Memcached instances will be deployed. Also, we will add a nodes Status that will store the Pod names.
 
-**NOTE** The status field here is just to illustrate the idea but for it would be recommended use [Conditionals][conditionals] instead of that.
+**NOTE** The Node field is just to illustrate an example of a Status field. In real cases, it would be recommended to use [Conditions][conditionals].
 
 Define the API for the Memcached Custom Resource(CR) by modifying the Go type definitions at `api/v1alpha1/memcached_types.go` to have the following spec and status:
 
@@ -198,7 +197,7 @@ There are a number of other useful configurations that can be made when initialz
 
 ### Reconcile loop
 
-The reconcile function is responsible for synchronizing the resources and their specifications according to the business logic implemented on them. In this way, it works like a loop, and it does not stop until all conditionals match its implementation. The following is pseudo-code with an example that clarifies it.
+The reconcile function is responsible for synchronizing the desired state as represented by their Specs and the actual state of the system. In this way, it works like a loop, and it does not stop until all conditionals match its implementation. The following is pseudo-code with an example that clarifies it.
 
 ```go
 reconcile App {
@@ -511,3 +510,4 @@ Also see the [advanced topics][advanced_topics] doc for more use cases and under
 [rbac-k8s-doc]: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
 [olm-integration]: /docs/olm-integration
 [openapi-validation]: /docs/building-operators/golang/references/openapi-validation
+[controller-runtime]: https://github.com/kubernetes-sigs/controller-runtime
