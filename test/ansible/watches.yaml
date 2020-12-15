@@ -1,8 +1,9 @@
 ---
+# Use the 'create api' subcommand to add watches to this file.
 - version: v1alpha1
   group: test.example.com
   kind: InventoryTest
-  playbook: playbooks/inventory.yml
+  playbook: playbooks/inventorytest.yml
   vars:
     meta: '{{ ansible_operator_meta }}'
 
@@ -16,7 +17,7 @@
 - version: v1alpha1
   group: test.example.com
   kind: SubresourcesTest
-  playbook: playbooks/subresources.yml
+  playbook: playbooks/subresourcestest.yml
   vars:
     meta: '{{ ansible_operator_meta }}'
 
@@ -31,7 +32,7 @@
 - version: v1alpha1
   group: test.example.com
   kind: SelectorTest
-  playbook: playbooks/selector.yml
+  playbook: playbooks/selectortest.yml
   selector:
     matchExpressions:
      - {key: testLabel, operator: Exists, values: []}
@@ -41,7 +42,7 @@
 - version: v1alpha1
   group: test.example.com
   kind: CaseTest
-  playbook: playbooks/case.yml
+  playbook: playbooks/casetest.yml
   snakeCaseParameters: false
   vars:
     meta: '{{ ansible_operator_meta }}'
@@ -49,13 +50,14 @@
 - version: v1alpha1
   group: test.example.com
   kind: ArgsTest
-  playbook: playbooks/args.yml
+  playbook: playbooks/argstest.yml
   vars:
     meta: '{{ ansible_operator_meta }}'
 
 - version: v1alpha1
   group: test.example.com
   kind: ReconciliationTest
-  playbook: playbooks/reconciliation.yml
+  playbook: playbooks/reconciliationtest.yml
   vars:
     meta: '{{ ansible_operator_meta }}'
+# +kubebuilder:scaffold:watch
