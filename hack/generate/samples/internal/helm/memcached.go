@@ -94,7 +94,7 @@ func (mh *MemcachedHelm) Run() {
 	pkg.CheckError("adding customized roles", err)
 
 	log.Infof("creating the bundle")
-	err = mh.ctx.CreateBundle()
+	err = mh.ctx.GenerateBundle()
 	pkg.CheckError("creating the bundle", err)
 
 	log.Infof("striping bundle annotations")

@@ -90,8 +90,8 @@ func (tc TestContext) DisableManifestsInteractiveMode() error {
 	return ReplaceInFile(filepath.Join(tc.Dir, "Makefile"), content, replace)
 }
 
-// CreateBundle runs all commands to create an operator bundle.
-func (tc TestContext) CreateBundle() error {
+// GenerateBundle runs all commands to create an operator bundle.
+func (tc TestContext) GenerateBundle() error {
 	if err := tc.DisableManifestsInteractiveMode(); err != nil {
 		return err
 	}

@@ -95,7 +95,7 @@ func (mh *MemcachedGoWithWebhooks) Run() {
 	mh.uncommentKustomizationFile()
 
 	log.Infof("creating the bundle")
-	err = mh.ctx.CreateBundle()
+	err = mh.ctx.GenerateBundle()
 	pkg.CheckError("creating the bundle", err)
 
 	log.Infof("striping bundle annotations")

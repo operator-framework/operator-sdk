@@ -88,7 +88,7 @@ var _ = BeforeSuite(func() {
 	}
 
 	By("creating bundle image")
-	err = tc.CreateBundle()
+	err = tc.GenerateBundle()
 	Expect(err).NotTo(HaveOccurred())
 })
 

@@ -77,7 +77,7 @@ func (ma *MemcachedAnsible) Run() {
 	ma.addingMoleculeMockData()
 
 	log.Infof("creating the bundle")
-	err = ma.ctx.CreateBundle()
+	err = ma.ctx.GenerateBundle()
 	pkg.CheckError("creating the bundle", err)
 
 	log.Infof("striping bundle annotations")
