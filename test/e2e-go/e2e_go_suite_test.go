@@ -55,7 +55,7 @@ var _ = BeforeSuite(func() {
 	tc.Kubectl.Namespace = fmt.Sprintf("%s-system", tc.ProjectName)
 
 	By("copying sample to a temporary e2e directory")
-	Expect(exec.Command("cp", "-r", "../../testdata/go/v2/memcached-operator", tc.Dir).Run()).To(Succeed())
+	Expect(exec.Command("cp", "-r", "../../testdata/go/v3/memcached-operator", tc.Dir).Run()).To(Succeed())
 
 	By("fetching the current-context")
 	tc.Kubectx, err = tc.Kubectl.Command("config", "current-context")
@@ -88,14 +88,14 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	By("installing cert manager bundle")
-	Expect(tc.InstallCertManager(true)).To(Succeed())
+	Expect(tc.InstallCertManager(false)).To(Succeed())
 })
 
 // AfterSuite run after all the specs have run, regardless of whether any tests have failed to ensures that
 // all be cleaned up
 var _ = AfterSuite(func() {
 	By("uninstall cert manager bundle")
-	tc.UninstallCertManager(true)
+	tc.UninstallCertManager(false)
 
 	By("uninstalling prerequisites")
 	tc.UninstallPrerequisites()

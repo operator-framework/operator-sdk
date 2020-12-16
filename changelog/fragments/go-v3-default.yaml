@@ -1,0 +1,28 @@
+entries:
+  - description: >
+      Go CLI plugin go/v3 is now the default.
+    kind: change
+    breaking: false
+    migration:
+      header: Upgrade your Go project from "go.kubebuilder.io/v2" to "go.kubebuilder.io/v3"
+      body: >
+        The newly released go/v3 plugin has many new features and (breaking) changes
+        incompatible with projects created by go/v2. You are not required to upgrade
+        and your go/v2 project will continue to work with new operator-sdk versions.
+        If you wish to upgrade, check out the upstream
+        [migration guide](https://master.book.kubebuilder.io/migration/plugin/plugins.html).
+
+        Additionally, if using project version "3-alpha", you must update your "plugins" config field:
+
+        Old:
+        ```yaml
+        plugins:
+          go.sdk.operatorframework.io/v2-alpha: {}
+        ```
+
+        New:
+        ```yaml
+        plugins:
+          manifests.sdk.operatorframework.io/v2: {}
+          scorecard.sdk.operatorframework.io/v2: {}
+        ```
