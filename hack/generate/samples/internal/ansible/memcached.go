@@ -76,7 +76,13 @@ func (ma *MemcachedAnsible) Run() {
 	ma.addingAnsibleTask()
 	ma.addingMoleculeMockData()
 
-	ma.ctx.CreateBundle()
+	log.Infof("creating the bundle")
+	err = ma.ctx.GenerateBundle()
+	pkg.CheckError("creating the bundle", err)
+
+	log.Infof("striping bundle annotations")
+	err = ma.ctx.StripBundleAnnotations()
+	pkg.CheckError("striping bundle annotations", err)
 }
 
 // addingMoleculeMockData will customize the molecule data
