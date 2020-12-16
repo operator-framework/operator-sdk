@@ -1,0 +1,92 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      For Helm-based operators, added Liveness and Readiness probe by default using [`healthz.Ping`](https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/healthz#CheckHandler).
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "addition"
+
+    # Is this a breaking change?
+    breaking: false
+
+    # Migration can be defined to automatically add a section to
+    # the migration guide. This is required for breaking changes.
+    migration:
+      header: (Optional) For Helm-based operators, add Liveness and Readiness probe
+      body: >
+        New projects built with the tool will have the probes configured by default. The endpoints `/healthz` and
+        `/readyz` are available now in the image based provided.
+
+        You can update your pre-existing project to use them. For that update the Dockerfile to use the latest
+        release base image, then add the following to the `manager` container in
+        `config/default/manager/manager.yaml`:
+
+        ```yaml
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+        ```
+  - description: >
+      For Ansible-based operators, added Liveness and Readiness probe by default using [`healthz.Ping`](https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/healthz#CheckHandler).
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "addition"
+
+    # Is this a breaking change?
+    breaking: false
+
+    # Migration can be defined to automatically add a section to
+    # the migration guide. This is required for breaking changes.
+    migration:
+      header: (Optional) For Ansible-based operators, add Liveness and Readiness probe
+      body: >
+        New projects built with the tool will have the probes configured by default. The endpoints `/healthz` and
+        `/readyz` are available now in the image based provided.
+
+        You can update your pre-existing project to use them. For that update the Dockerfile to use the latest
+        release base image, then add the following to the `manager` container in
+        `config/default/manager/manager.yaml`:
+
+        ```yaml
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 6789
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 6789
+            initialDelaySeconds: 5
+            periodSeconds: 10
+        ```
+  - description: >
+      For Ansible-based operators, the `/ping` endpoint is deprecated. Use `/healthz` and `/readyz` instead.
+    kind: "deprecation"
+    breaking: false
+
+  - description: >
+      For Ansible/Helm-based operators, added new flag `--health-probe-bind-address` to allow customize the probe
+      port used.
+    kind: "addition"
