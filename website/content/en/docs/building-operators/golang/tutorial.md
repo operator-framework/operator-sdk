@@ -65,7 +65,7 @@ Before creating an API and controller, consider if your operator requires multip
 
 ```YAML
 domain: example.com
-layout: go.kubebuilder.io/v2
+layout: go.kubebuilder.io/v3
 multigroup: true
 ...
 ```

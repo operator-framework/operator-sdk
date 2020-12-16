@@ -1,5 +1,5 @@
 domain: example.com
-layout: go.kubebuilder.io/v3-alpha
+layout: go.kubebuilder.io/v3
 projectName: memcached-operator
 repo: github.com/example/memcached-operator
 resources:

@@ -66,8 +66,7 @@ func GetPluginsCLIAndRoot() (cli.CLI, *cobra.Command) {
 			&ansiblev1.Plugin{},
 		),
 		cli.WithDefaultPlugins(config.Version2, &golangv2.Plugin{}),
-		// TODO(estroz): make go/v3-alpha plugin the default once stabilized.
-		cli.WithDefaultPlugins(config.Version3Alpha, &golangv2.Plugin{}),
+		cli.WithDefaultPlugins(config.Version3Alpha, &golangv3.Plugin{}),
 		cli.WithExtraCommands(commands...),
 	)
 	if err != nil {
