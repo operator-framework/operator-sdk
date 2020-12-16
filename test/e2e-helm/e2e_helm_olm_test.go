@@ -30,12 +30,6 @@ var _ = Describe("Integrating Helm Projects with OLM", func() {
 			err := tc.Make("bundle-build", "BUNDLE_IMG="+tc.BundleImageName)
 			Expect(err).NotTo(HaveOccurred())
 
-			if tc.IsRunningOnKind() {
-				By("loading the bundle image into Kind cluster")
-				err = tc.LoadImageToKindClusterWithName(tc.BundleImageName)
-				Expect(err).NotTo(HaveOccurred())
-			}
-
 			By("adding the 'packagemanifests' rule to the Makefile")
 			err = tc.AddPackagemanifestsTarget()
 			Expect(err).NotTo(HaveOccurred())
