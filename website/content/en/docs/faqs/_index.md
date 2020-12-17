@@ -33,88 +33,81 @@ For more information on `kube-apiserver` request timeout options, see the [Kuber
 
 Unfortunately, adding the entire dependency tree for all Ansible modules would be excessive. Fortunately, you can add it easily. Simply edit your build/Dockerfile. You'll want to change to root for the install command, just be sure to swap back using a series of commands like the following right after the `FROM` line.
 
-```
+```docker
 USER 0
 RUN yum -y install my-dependency
 RUN pip3 install my-python-dependency
 USER 1001
 ```
 
-If you aren't sure what dependencies are required, start up a container using the image in the `FROM` line as root. That will look something like this.
-`docker run -u 0 -it --rm --entrypoint /bin/bash quay.io/operator-framework/ansible-operator:<sdk-tag-version>`
+If you aren't sure what dependencies are required, start up a container using the image in the `FROM` line as root. That will look something like this:
+```sh
+docker run -u 0 -it --rm --entrypoint /bin/bash quay.io/operator-framework/ansible-operator:<sdk-tag-version>
+```
 
 ## I keep seeing errors like "Failed to watch", how do I fix this?
 
-If you run into the following error message, it means that your operator is unable to watch the resoruce:
+If you run into the following error message, it means that your operator is unable to watch the resource:
 
 ```
 E0320 15:42:17.676888       1 reflector.go:280] pkg/mod/k8s.io/client-go@v0.0.0-20191016111102-bec269661e48/tools/cache/reflector.go:96: Failed to watch *v1.ImageStreamTag: unknown (get imagestreamtags.image.openshift.io)
 {"level":"info","ts":1584718937.766342,"logger":"controller_memcached","msg":"ImageStreamTag resource not found.
 ```
 
-Using controller-runtime's split client means that read operations (gets and lists) are read from a cache, and write operations are written directly to the API server. To populate the cache for reads, controller-runtime initiates a `list` and then a `watch` even when your operator is only attempting to `get` a single resource. The above scenario occurs when the operator does not have an (RBAC)[rbac] permission to `watch` the resource. The solution is to grant permission in the `config/rbac/role.yaml` file.
-
-In rare cases, it also could be that the particular resource does not implement the `watch` verb. In this case, it is necessary to use the [client.Reader][client.Reader] instead of the default split client. The manager's `GetAPIReader()` function can be used to get this reader.
-
-**Example**
-
-Here is an example that demonstrates how to use a `client.Reader` when a resource does not implement the `watch` verb:
+Using controller-runtime's split client means that read operations (gets and lists) are read from a cache, and write operations are written directly to the API server. To populate the cache for reads, controller-runtime initiates a `list` and then a `watch` even when your operator is only attempting to `get` a single resource. The above scenario occurs when the operator does not have an [RBAC][rbac] permission to `watch` the resource. The solution is to add an RBAC directive to generate a `config/rbac/role.yaml` with `watch` privileges:
 
 ```go
+// +kubebuilder:rbac:groups=some.group.com,resources=myresources,verbs=watch
+```
 
+Alternatively, if the resource you're attempting to cannot be watched (like `v1.ImageStreamTag` above), you can specify that objects of this type should not be cached by adding the following to `main.go`:
+
+```go
 import (
 	...
 	imagev1 "github.com/openshift/api/image/v1"
 )
 
-...
+var (
+	scheme = runtime.NewScheme()
+)
 
-// newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileMemcached{client: mgr.GetClient(), scheme: mgr.GetScheme(), APIReader: mgr.GetAPIReader() }
-
+func init() {
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	// Add imagev1's scheme.
+	utilruntime.Must(imagev1.AddToScheme(scheme))
 }
 
-...
-
-// ReconcileMemcached reconciles a Memcached object
-type ReconcileMemcached struct {
-	// TODO: Clarify the split client
-	// This client, initialized using mgr.Client() above, is a split client
-	// that reads objects from the cache and writes to the apiserver
-	client client.Client
-	scheme *runtime.Scheme
-	APIReader client.Reader // the APIReader  will not use the cache
+func main() {
+	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+		Scheme:        scheme,
+		// Specify that ImageStreamTag's should not be cached.
+		ClientBuilder: manager.NewClientBuilder().WithUncached(&imagev1.ImageStreamTag{}),
+	})
 }
-
-...
-func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-
-	// Get the ImageStreamTag from OCP API which has not the WATCH verb.
-	img := &imagev1.ImageStreamTag{}
-	err = r.APIReader.Get(context.TODO(), types.NamespacedName{Name: fmt.Sprintf("%s:%s", "example-name", "example-tag"), img)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			reqLogger.Info("resource not found")
-		} else {
-			reqLogger.Error(err, "unexpected error")
-		}
-	}
 ```
+
+Then in your controller file, add an RBAC directive to generate a `config/rbac/role.yaml` with `get` privileges:
+
+```go
+// +kubebuilder:rbac:groups=image.openshift.io,resources=imagestreamtags,verbs=get
+```
+
+Now run `make manifests` to update your `role.yaml`.
+
 
 ## I keep hitting errors like "is forbidden: cannot set blockOwnerDeletion if an ownerReference refers to a resource you can't set finalizers on:", how do I fix this?
 
 If you are facing this issue, it means that the operator is missing the required RBAC permissions to update finalizers on the APIs it manages. This permission is necessary if the [OwnerReferencesPermissionEnforcement][owner-references-permission-enforcement] plugin is enabled in your cluster.
 
-For Helm and Ansible operators, this permission is configured by default. However for Go operators, it may be necessary to add this permission yourself.
-
-In Go operators, RBAC permissions are configured via [RBAC markers][rbac-markers], which are used to generate and update the manifest files present in `config/rbac/`. Add the following marker line on your controller's `Reconcile()` method:
+For Helm and Ansible operators, this permission is configured by default. However for Go operators, it may be necessary to add this permission yourself
+by adding an RBAC directive to generate a `config/rbac/role.yaml` with `update` privileges on your CR's finalizers:
 
 ```go
 // +kubebuilder:rbac:groups=cache.example.com,resources=memcacheds/finalizers,verbs=update
 ```
 
-To update `config/rbac/role.yaml` after changing the markers, run `make manifests`. 
+Now run `make manifests` to update your `role.yaml`.
 
 
 [kube-apiserver_options]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options
