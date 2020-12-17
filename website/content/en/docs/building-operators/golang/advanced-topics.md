@@ -142,8 +142,7 @@ import (
 
 const memcachedFinalizer = "finalizer.cache.example.com"
 
-func (r *MemcachedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-    ctx := context.Background()
+func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
     reqLogger := r.log.WithValues("memcached", req.NamespacedName)
     reqLogger.Info("Reconciling Memcached")
 
