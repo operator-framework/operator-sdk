@@ -1,7 +1,0 @@
-# entries is a list of entries to include in
-# release notes and/or the migration guide
-
-entries:
-  - description: >
-      Updated helm-operator's Helm dependency to v3.4.1.
-    kind: "change"

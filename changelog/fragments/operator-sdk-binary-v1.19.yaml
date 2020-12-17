@@ -1,4 +1,0 @@
-entries:
-  - description: >
-      Bumped `operator-sdk` binary dependencies to their k8s v1.19 equivalents.
-    kind: change
