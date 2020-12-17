@@ -32,22 +32,18 @@ to appease the Netlify website configuration demons. You can ping SDK [approvers
 [release branch](#release-branches) is created prior to the release and that this mapping is created.
 If you have the proper permissions, you can do this by running the following,
 assuming the upstream SDK is the `upstream` remote repo:
-
   ```sh
   git checkout master
   git pull
   git checkout -b v1.3.x
   git push -u upstream v1.3.x
   ```
-
 1. Create and merge a commit that updates the top-level [Makefile] variable `IMAGE_VERSION`
 to the upcoming release tag `v1.3.0`. This variable ensures sample projects have been tagged
 correctly prior to the release commit.
-
   ```sh
   sed -i -E 's/(IMAGE_VERSION = ).+/\1v1\.3\.0/g' Makefile
   ```
-
 1. Lock down the `master` branch to prevent further commits before the release completes:
   1. Go to `Settings -> Branches` in the SDK repo.
   1. Under `Branch protection rules`, click `Edit` on the `master` branch rule.
@@ -135,11 +131,9 @@ We will use the `v1.3.1` release version in this example.
 1. Create and merge a commit that updates the top-level [Makefile] variable `IMAGE_VERSION`
 to the upcoming release tag `v1.3.1`. This variable ensures sample projects have been tagged
 correctly prior to the release commit.
-
   ```sh
   sed -i -E 's/(IMAGE_VERSION = ).+/\1v1\.3\.1/g' Makefile
   ```
-
 1. Lock down the `v1.3.x` branch to prevent further commits before the release completes:
   1. Go to `Settings -> Branches` in the SDK repo.
   1. Under `Branch protection rules`, click `Edit` on the `v.*` branch rule.
