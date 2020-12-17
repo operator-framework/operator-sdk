@@ -16,6 +16,7 @@ DOC_PATTERNS=(
   "(\.MD)"
   "(\.png)"
   "(\.pdf)"
+  "(netlify\.toml)"
   "^(doc/)"
   "^(website/)"
   "^(changelog/)"

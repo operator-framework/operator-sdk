@@ -5,7 +5,7 @@
 [build]
   publish = "public"
   base = "website"
-  command = "cd themes/docsy && git submodule update -f --init && cd ../.. && npm install postcss-cli autoprefixer@^9.0.0 && hugo version && hugo"
+  command = "git submodule update -f --init --recursive themes/docsy && npm install postcss@^8.0.0 postcss-cli@^8.0.0 autoprefixer@^9.0.0 && hugo version && hugo"
 
 # "production" environment specific build settings
 [build.environment]
