@@ -87,6 +87,5 @@ entries:
     breaking: false
 
   - description: >
-      For Ansible/Helm-based operators, added new flag `--health-probe-bind-address` to allow customize the probe
-      port used.
+      For Ansible/Helm-based operators, added new flag `--health-probe-bind-address` to set the health probe address.
     kind: "addition"
