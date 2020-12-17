@@ -82,7 +82,7 @@ entries:
             periodSeconds: 10
         ```
   - description: >
-      For Ansible-based operators, the `/ping` endpoint is deprecated. Use `/healthz` and `/readyz` instead.
+      For Ansible-based operators, the `/ping` endpoint is deprecated. Use `/healthz` instead.
     kind: "deprecation"
     breaking: false
 
