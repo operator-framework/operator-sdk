@@ -82,7 +82,7 @@ Creating a new Client is not usually necessary nor advised, as the default Clien
 
 ### Reconcile and the Client API
 
-A Reconciler implements the [`reconcile.Reconciler`][doc-reconcile-reconciler] interface, which exposes the Reconcile method. Reconcilers are added to a corresponding Controller for a Kind; Reconcile is called in response to cluster or external Events, with a `reconcile.Request` object argument, to read and write cluster state by the Controller, and returns a `reconcile.Result`. SDK Reconcilers have access to a Client in order to make Kubernetes API calls.
+A Reconciler implements the [`reconcile.Reconciler`][doc-reconcile-reconciler] interface, which exposes the Reconcile method. Reconcilers are added to a corresponding Controller for a Kind; Reconcile is called in response to cluster or external Events, with a `reconcile.Request` object argument, to read and write cluster state by the Controller, and returns a `ctrl.Result`. SDK Reconcilers have access to a Client in order to make Kubernetes API calls.
 
 ```Go
 // KindReconciler reconciles a Kind object
@@ -106,7 +106,7 @@ type KindReconciler struct {
 // The Controller will requeue the Request to be processed again if an error
 // is non-nil or Result.Requeue is true, otherwise upon completion it will
 // remove the work from the queue.
-func (r *KindReconciler) Reconcile(req ctrl.Request) (ctrl.Request, error)
+func (r *KindReconciler) Reconcile(context.Context, req ctrl.Request) (ctrl.Result, error)
 ```
 
 Reconcile is where Controller business logic lives, i.e. where Client API calls are made via `KindReconciler.client`. A `client.Client` implementer performs the following operations:
@@ -128,7 +128,7 @@ import (
     ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *AppReconciler) Reconcile(req ctrl.Request) (ctrl.Request, error) {
+func (r *AppReconciler) Reconcile(context.Context, req ctrl.Request) (ctrl.Result, error) {
     ...
 
     app := &v1alpha1.App{}
@@ -160,7 +160,7 @@ import (
     ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *AppReconciler) Reconcile(req ctrl.Request) (ctrl.Request, error) {
+func (r *AppReconciler) Reconcile(context.Context, req ctrl.Request) (ctrl.Result, error) {
     ...
 
     // Return all pods in the request namespace with a label of `app=<name>`
@@ -202,7 +202,7 @@ import (
     ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *AppReconciler) Reconcile(req ctrl.Request) (ctrl.Request, error) {
+func (r *AppReconciler) Reconcile(context.Context, req ctrl.Request) (ctrl.Result, error) {
     ...
 
     app := &v1.Deployment{ // Any cluster object you want to create.
@@ -238,7 +238,7 @@ import (
     ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *AppReconciler) Reconcile(req ctrl.Request) (ctrl.Request, error) {
+func (r *AppReconciler) Reconcile(context.Context, req ctrl.Request) (ctrl.Result, error) {
     ...
 
     dep := &v1.Deployment{}
@@ -276,7 +276,7 @@ import (
     ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *AppReconciler) Reconcile(req ctrl.Request) (ctrl.Request, error) {
+func (r *AppReconciler) Reconcile(context.Context, req ctrl.Request) (ctrl.Result, error) {
     ...
 
     dep := &v1.Deployment{}
@@ -320,7 +320,7 @@ import (
     ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *AppReconciler) Reconcile(req ctrl.Request) (ctrl.Request, error) {
+func (r *AppReconciler) Reconcile(context.Context, req ctrl.Request) (ctrl.Result, error) {
     ...
 
     ctx := context.TODO()
@@ -365,7 +365,7 @@ import (
     ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *AppReconciler) Reconcile(req ctrl.Request) (ctrl.Request, error) {
+func (r *AppReconciler) Reconcile(context.Context, req ctrl.Request) (ctrl.Result, error) {
     ...
 
     pod := &v1.Pod{}
@@ -409,7 +409,7 @@ import (
     ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *AppReconciler) Reconcile(req ctrl.Request) (ctrl.Request, error) {
+func (r *AppReconciler) Reconcile(context.Context, req ctrl.Request) (ctrl.Result, error) {
     ...
 
     // Delete all pods in the request namespace with a label of `app=<name>`
@@ -457,7 +457,7 @@ type AppReconciler struct {
     Scheme *runtime.Scheme
 }
 
-func (r *AppReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
+func (r *AppReconciler) Reconcile(context.Context, req ctrl.Request) (ctrl.Result, error) {
 
     // Fetch the App instance.
     app := &appv1alpha1.App{}
