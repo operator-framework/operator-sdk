@@ -2,91 +2,106 @@
 title: Quickstart for Go-based Operators
 linkTitle: Quickstart
 weight: 20
-description: A simple set of instructions that demonstrates the basics of setting up and running Go-based operator.
+description: A simple set of instructions to set up and run a Go-based operator.
 ---
 
 This guide walks through an example of building a simple memcached-operator using tools and libraries provided by the Operator SDK.
 
 ## Prerequisites
 
-- [Install operator-sdk][operator_install] and its prequisites.
-- Access to a Kubernetes v1.11.3+ cluster (v1.16.0+ if using `apiextensions.k8s.io/v1` CRDs).
+- Go through the [installation guide][install-guide].
 - User authorized with `cluster-admin` permissions
 
-## Quickstart Steps
+## Steps
 
-### Create a project
+1. Create a project directory for your project and initialize the project:
 
-Create and change into a directory for your project. Then call `operator-sdk init`
-with the Go plugin to initialize the project. 
- 
-```sh
-mkdir memcached-operator
-cd memcached-operator
-operator-sdk init --domain=example.com --repo=github.com/example-inc/memcached-operator
-```
+  ```sh
+  mkdir memcached-operator
+  cd memcached-operator
+  operator-sdk init --domain example.com --repo github.com/example-inc/memcached-operator
+  ```
 
-### Create an API
+1. Create a simple Memcached API:
 
-Create a simple Memcached API:
+  ```sh
+  operator-sdk create api --group cache --version v1alpha1 --kind Memcached --resource --controller
+  ```
 
-```sh
-operator-sdk create api --group cache --version v1 --kind Memcached --resource=true --controller=true
-```
+1. Use the built-in Makefile targets to build and push your operator.
+Make sure to define `IMG` when you call `make`:
 
-### Build and push the operator image
-
-Use the built-in Makefile targets to build and push your operator. Make
-sure to define `IMG` when you call `make`:
-
-```sh
-make docker-build docker-push IMG=<some-registry>/<project-name>:<tag>
-```
-
-**NOTE**: To allow the cluster pull the image the repository needs to be
-          set as public or you must configure an image pull secret.
+  ```sh
+  export OPERATOR_IMG="quay.io/example-inc/memcached-operator:v0.0.1"
+  make docker-build docker-push IMG=$OPERATOR_IMG
+  ```
 
 
-### Run the operator
+### OLM deployment
 
-Install the CRD and deploy the project to the cluster. Set `IMG` with
-`make deploy` to use the image you just pushed:
+1. Install [OLM][doc-olm]:
 
-```sh
-make install
-make deploy IMG=<some-registry>/<project-name>:<tag>
-```
+  ```sh
+  operator-sdk olm install
+  ```
 
-### Create a sample custom resource
+1. Bundle your operator and push the bundle image:
 
-Create a sample CR:
-```sh
-kubectl apply -f config/samples/cache_v1_memcached.yaml 
-```
+  ```sh
+  make bundle IMG=$OPERATOR_IMG
+  # Note the "-bundle" component in the image name below.
+  export BUNDLE_IMG="quay.io/example-inc/memcached-operator-bundle:v0.0.1"
+  make bundle-build BUNDLE_IMG=$BUNDLE_IMG
+  make docker-push IMG=$BUNDLE_IMG
+  ```
 
-Watch for the CR be reconciled by the operator:
-```
-kubectl logs deployment.apps/memcached-operator-controller-manager -n memcached-operator-system -c manager
-```
+1. Run your bundle:
 
-## Clean up
+  ```sh
+  operator-sdk run bundle $BUNDLE_IMG
+  ```
 
-Delete the CR to uninstall memcached:
-```sh 
-kubectl delete -f config/samples/cache_v1_memcached.yaml
-```
+1. Create a sample Memcached custom resource:
 
-Uninstall the operator and its CRDs:
-```sh
-kustomize build config/default | kubectl delete -f -
-```
+  ```console
+  $ kubectl apply -f config/samples/cache_v1alpha1_memcached.yaml
+  memcached.cache.example.com/memcached-sample created
+  ```
+
+1. Uninstall the operator:
+
+  ```sh
+  operator-sdk cleanup memcached-operator
+  ```
+
+
+### Direct deployment
+
+1. Deploy your operator:
+
+  ```sh
+  make deploy IMG=$OPERATOR_IMG
+  ```
+
+1. Create a sample Memcached custom resource:
+
+  ```console
+  $ kubectl apply -f config/samples/cache_v1alpha1_memcached.yaml
+  memcached.cache.example.com/memcached-sample created
+  ```
+
+1. Uninstall the operator:
+
+  ```sh
+  make undeploy
+  ```
+
 
 ## Next Steps
-Read the [tutorial][tutorial] for an in-depth walkthough of building a Go operator.
 
-[go_tool]:https://golang.org/dl/
-[docker_tool]:https://docs.docker.com/install/
-[kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
-[operator_install]: /docs/installation/
-[tutorial]: /docs/building-operators/golang/tutorial/ 
+Read the [full tutorial][tutorial] for an in-depth walkthough of building a Go operator.
 
+
+[install-guide]:/docs/building-operators/golang/installation
+[doc-olm]:/docs/olm-integration/quickstart-bundle/#enabling-olm
+[tutorial]:/docs/building-operators/golang/tutorial/
