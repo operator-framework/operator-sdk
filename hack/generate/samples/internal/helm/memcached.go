@@ -82,6 +82,11 @@ func (mh *MemcachedHelm) Run() {
 	pkg.CheckError("scaffolding apis", err)
 
 	log.Infof("customizing the sample")
+	err = testutils.ReplaceInFile(
+		filepath.Join(mh.ctx.Dir, "config", "samples", "cache_v1alpha1_memcached.yaml"),
+		"securityContext:\n    enabled: true", "securityContext:\n    enabled: false")
+	pkg.CheckError("customizing the sample", err)
+	
 	log.Infof("enabling prometheus metrics")
 	err = testutils.UncommentCode(
 		filepath.Join(mh.ctx.Dir, "config", "default", "kustomization.yaml"),
