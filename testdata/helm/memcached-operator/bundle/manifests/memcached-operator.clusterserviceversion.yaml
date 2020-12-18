@@ -209,7 +209,19 @@ spec:
                 - --enable-leader-election
                 - --leader-election-id=memcached-operator
                 image: quay.io/example/memcached-operator:v0.0.1
+                livenessProbe:
+                  httpGet:
+                    path: /readyz
+                    port: 8081
+                  initialDelaySeconds: 15
+                  periodSeconds: 20
                 name: manager
+                readinessProbe:
+                  httpGet:
+                    path: /healthz
+                    port: 8081
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
                 resources:
                   limits:
                     cpu: 100m

@@ -32,6 +32,7 @@ type Flags struct {
 	AnsibleRolesPath        string
 	AnsibleCollectionsPath  string
 	MetricsAddress          string
+	ProbeAddr               string
 	LeaderElectionID        string
 	LeaderElectionNamespace string
 	AnsibleArgs             string
@@ -81,6 +82,14 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 		"metrics-addr",
 		":8080",
 		"The address the metric endpoint binds to",
+	)
+	// todo: for Go/Helm the port used is: 8081
+	// update it to keep the project aligned to the other
+	// types for 2.0
+	flagSet.StringVar(&f.ProbeAddr,
+		"health-probe-bind-address",
+		":6789",
+		"The address the probe endpoint binds to.",
 	)
 	flagSet.BoolVar(&f.EnableLeaderElection,
 		"enable-leader-election",
