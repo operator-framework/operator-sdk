@@ -1,9 +1,0 @@
-# entries is a list of entries to include in
-# release notes and/or the migration guide
-entries:
-  - description: >
-      (ansible/v1) Pin all top level Python requirements. This fixes a bug that
-      erroneously installed Ansible 2.10.z instead of Ansible 2.9.z.
-
-    kind: "bugfix"
-    breaking: false
