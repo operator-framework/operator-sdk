@@ -96,7 +96,12 @@ In your new project, roles are automatically generated in `config/rbac/role.yaml
 If you modified these permissions manually in `deploy/role.yaml` in your existing
 project, you need to re-apply them in `config/rbac/role.yaml`.
 
-New projects are configured to watch all namespaces by default, so they need a `ClusterRole` to have the necessary permissions. Ensure that `config/rbac/role.yaml` remains a `ClusterRole` if you want to retain the default behavior of the new project conventions. For further information refer to the [operator scope][operator-scope] documentation.  
+New projects are configured to watch all namespaces by default, so they need a `ClusterRole` to have the necessary permissions. Ensure that `config/rbac/role.yaml` remains a `ClusterRole` if you want to retain the default behavior of the new project conventions.
+
+<!--
+todo(camilamacedo86): Create an Ansible operator scope document.
+https://github.com/operator-framework/operator-sdk/issues/3447
+-->
 
 The following rules were used in earlier versions of helm-operator to automatically create and manage services and servicemonitors for metrics collection. If your operator's charts don't require these rules, they can safely be left out of the new `config/rbac/role.yaml` file:
 
@@ -137,11 +142,11 @@ The default port used by the metric endpoint binds to was changed from `:8383` t
 
 ## Checking the changes
 
-Finally, follow the steps in the section [Build and run the operator][build-and-run-the-operator] to verify your project is running.
+Finally, follow the steps in the ["run the Operator"][run-the-operator] section to verify your project is running.
 
 [quickstart]: /docs/building-operators/helm/quickstart
 [integration-doc]: https://github.com/kubernetes-sigs/kubebuilder/blob/master/designs/integrating-kubebuilder-and-osdk.md
-[build-and-run-the-operator]: /docs/building-operators/helm/tutorial#build-and-run-the-operator
+[run-the-operator]: /docs/building-operators/helm/tutorial#run-the-operator
 [kustomize]: https://github.com/kubernetes-sigs/kustomize
 [kube-auth-proxy]: https://github.com/brancz/kube-rbac-proxy
 [metrics]: https://book.kubebuilder.io/reference/metrics.html?highlight=metr#metrics
