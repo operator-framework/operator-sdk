@@ -151,7 +151,7 @@ This makefile target will invoke [controller-gen][controller_tools] to generate 
 
 For this example replace the generated controller file `controllers/memcached_controller.go` with the example [`memcached_controller.go`][memcached_controller] implementation.
 
-**Note**: The next two subsections explain how the controller watches resources and how the reconcile loop is triggered. Skip to the [Build](#build-and-run-the-operator) section to see how to build and run the operator.
+**Note**: The next two subsections explain how the controller watches resources and how the reconcile loop is triggered. Skip to the [Build](#Build-and-push-the-image) section to see how to build and run the operator.
 
 ### Resources watched by the Controller
 
