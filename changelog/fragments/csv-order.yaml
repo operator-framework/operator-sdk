@@ -1,5 +1,0 @@
-entries:
-  - description: >
-      Added [`order=<int>`](https://sdk.operatorframework.io/docs/building-operators/golang/references/markers/#usage) marker fields to CSV markers.
-
-    kind: addition
