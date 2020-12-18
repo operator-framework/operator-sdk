@@ -30,6 +30,7 @@ type Flags struct {
 	LeaderElectionID        string
 	LeaderElectionNamespace string
 	MaxConcurrentReconciles int
+	ProbeAddr               string
 }
 
 // AddTo - Add the helm operator flags to the the flagset
@@ -48,6 +49,11 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 		"metrics-addr",
 		":8080",
 		"The address the metric endpoint binds to",
+	)
+	flagSet.StringVar(&f.ProbeAddr,
+		"health-probe-bind-address",
+		":8081",
+		"The address the probe endpoint binds to.",
 	)
 	flagSet.BoolVar(&f.EnableLeaderElection,
 		"enable-leader-election",
