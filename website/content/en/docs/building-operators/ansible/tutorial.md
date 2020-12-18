@@ -2,25 +2,20 @@
 title: Ansible Operator Tutorial
 linkTitle: Tutorial
 weight: 3
-description: An in-depth walkthough that demonstrates how to build and run a Ansible-based operator.
+description: An in-depth walkthough of building and running an Ansible-based operator.
 ---
 
-This guide walks through an example of building a simple memcached-operator powered by Ansible using tools and libraries provided by the Operator SDK.
+**NOTE:** If your project was created with an `operator-sdk` version prior to `v1.0.0`
+please [migrate][migration-guide], or consult the [legacy docs][legacy-quickstart-doc].
 
 ## Prerequisites
 
 - Go through the [installation guide][install-guide].
 - User authorized with `cluster-admin` permissions.
 
-## Creating an Operator
+## Create a new project
 
-In this section we will:
-  - extend the Kubernetes API with a [Custom Resource Definition][custom-resources] that allows users to create `Memcached` resources.
-  - create a manager that updates the state of the cluster to the desired state defined by `Memcached` resources.
-
-#### Scaffold a New Project
-
-Begin by generating a new project from a new directory.
+Use the CLI to create a new memcached-operator project:
 
 ```sh
 $ mkdir memcached-operator
@@ -122,7 +117,7 @@ spec:
 The key-value pairs in the Custom Resource spec are passed
 to Ansible as extra variables.
 
-__Note:__ The names of all variables in the spec field are converted to
+**Note:** The names of all variables in the spec field are converted to
 snake_case by the operator before running ansible. For example,
 serviceAccount in the spec becomes service_account in ansible. You can
 disable this case conversion by setting the `snakeCaseParameters` option
@@ -141,68 +136,164 @@ $  make docker-build docker-push IMG=<some-registry>/<project-name>:tag
 NOTE: To allow the cluster pull the image the repository needs to be set as public or you must configure an image pull secret
 
 
-## Using the Operator
+## Run the Operator
 
-This section walks through the steps that operator users will perform
-to deploy the operator and managed resources.
+There are three ways to run the operator:
 
-#### Install the CRD
+- As Go program outside a cluster
+- As a Deployment inside a Kubernetes cluster
+- Managed by the [Operator Lifecycle Manager (OLM)][doc-olm] in [bundle][quickstart-bundle] format
 
-To apply the `Memcached` Kind (CRD):
+### 1. Run locally outside the cluster
 
-```sh
-$ make install
-```
-#### Deploy the Operator:
+Execute the following command, which install your CRDs and run the manager locally:
 
 ```sh
-# IMG environment variable must be set
-$ export IMG=<yourimage>
-$ make deploy
+make install run
 ```
 
-We are using the `memcached-operator-system` Namespace, so let's set
-that context.
+### 2. Run as a Deployment inside the cluster
+
+#### Build and push the image
+
+Build and push the image:
 
 ```sh
-$ kubectl config set-context --current --namespace=memcached-operator-system
+export USERNAME=<quay-namespace>
+make docker-build docker-push IMG=quay.io/$USERNAME/memcached-operator:v0.0.1
+```
+
+**Note**: The name and tag of the image (`IMG=<some-registry>/<project-name>:tag`) in both the commands can also be set in the Makefile.
+Modify the line which has `IMG ?= controller:latest` to set your desired default image name.
+
+#### Deploy the operator
+
+By default, a new namespace is created with name `<project-name>-system`, i.e. memcached-operator-system and will be used for the deployment.
+
+Run the following to deploy the operator. This will also install the RBAC manifests from `config/rbac`.
+
+```sh
+make deploy IMG=quay.io/$USERNAME/memcached-operator:v0.0.1
 ```
 
 Verify that the memcached-operator is up and running:
 
+```console
+$ kubectl get deployment -n memcached-operator-system
+NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE
+memcached-operator-controller-manager   1/1     1            1           8m
+```
+
+### 3. Deploy your Operator with OLM
+
+First, install [OLM][doc-olm]:
+
 ```sh
+operator-sdk olm install
+```
+
+Then bundle your operator and push the bundle image:
+
+```sh
+make bundle IMG=$OPERATOR_IMG
+# Note the "-bundle" component in the image name below.
+export BUNDLE_IMG="quay.io/$USERNAME/memcached-operator-bundle:v0.0.1"
+make bundle-build BUNDLE_IMG=$BUNDLE_IMG
+make docker-push IMG=$BUNDLE_IMG
+```
+
+Finally, run your bundle:
+
+```sh
+operator-sdk run bundle $BUNDLE_IMG
+```
+
+Check out the [docs][quickstart-bundle] for a deep dive into `operator-sdk`'s OLM integration.
+
+
+## Create a Memcached CR
+
+Update the sample Memcached CR manifest at `config/samples/cache_v1alpha1_memcached.yaml` and define the `spec` as the following:
+
+```YAML
+apiVersion: cache.example.com/v1alpha1
+kind: Memcached
+metadata:
+  name: memcached-sample
+spec:
+  size: 3
+```
+
+Create the CR:
+
+```sh
+kubectl apply -f config/samples/cache_v1alpha1_memcached.yaml
+```
+
+Ensure that the memcached operator creates the deployment for the sample CR with the correct size:
+
+```console
 $ kubectl get deployment
-
-NAME                     DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
-memcached-operator       1         1         1            1           1m
+NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE
+memcached-operator-controller-manager   1/1     1            1           8m
+memcached-sample                        3/3     3            3           1m
 ```
 
-#### Create Memcached Resource
+Check the pods and CR status to confirm the status is updated with the memcached pod names:
 
-Create the resource, the operator will do the rest.
-
-```sh
-$ kubectl apply -f config/samples/cache_v1alpha1_memcached.yaml
-```
-
-Verify that Memcached pods are created
-
-```sh
+```console
 $ kubectl get pods
-
-NAME                                                     READY   STATUS    RESTARTS   AGE
-memcached-operator-controller-manager-7b667d9979-4jkfb   2/2     Running   0          14s
-memcached-sample-memcached-6456bdd5fc-8zgjf              1/1     Running   0          5s
-memcached-sample-memcached-6456bdd5fc-hjkrp              1/1     Running   0          5s
-memcached-sample-memcached-6456bdd5fc-mcqc5              1/1     Running   0          5s
+NAME                                  READY     STATUS    RESTARTS   AGE
+memcached-sample-6fd7c98d8-7dqdr      1/1       Running   0          1m
+memcached-sample-6fd7c98d8-g5k7v      1/1       Running   0          1m
+memcached-sample-6fd7c98d8-m7vn7      1/1       Running   0          1m
 ```
 
-#### Cleanup
+```console
+$ kubectl get memcached/memcached-sample -o yaml
+apiVersion: cache.example.com/v1alpha1
+kind: Memcached
+metadata:
+  clusterName: ""
+  creationTimestamp: 2018-03-31T22:51:08Z
+  generation: 0
+  name: memcached-sample
+  namespace: default
+  resourceVersion: "245453"
+  selfLink: /apis/cache.example.com/v1alpha1/namespaces/default/memcacheds/memcached-sample
+  uid: 0026cc97-3536-11e8-bd83-0800274106a1
+spec:
+  size: 3
+status:
+  nodes:
+  - memcached-sample-6fd7c98d8-7dqdr
+  - memcached-sample-6fd7c98d8-g5k7v
+  - memcached-sample-6fd7c98d8-m7vn7
+```
 
-Clean up the resources:
+### Update the size
+
+Update `config/samples/cache_v1alpha1_memcached.yaml` to change the `spec.size` field in the Memcached CR from 3 to 5:
 
 ```sh
-$ make undeploy
+kubectl patch memcached memcached-sample -p '{"spec":{"size": 5}}' --type=merge
+```
+
+Confirm that the operator changes the deployment size:
+
+```console
+$ kubectl get deployment
+NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE
+memcached-operator-controller-manager   1/1     1            1           10m
+memcached-sample                        5/5     5            5           3m
+```
+
+### Cleanup
+
+Call the following to delete all deployed resources:
+
+```sh
+make undeploy
 ```
 
 ## Next Steps
@@ -218,14 +309,21 @@ For brevity, some of the scaffolded files were left out of this guide.
 See [Scaffolding Reference][layout-doc]
 
 This example built a namespaced scope operator, but Ansible operators
-can also be used with cluster-wide scope. See the [operator scope][operator-scope] documentation.
+can also be used with cluster-wide scope.
+
+<!--
+todo(camilamacedo86): Create an Ansible operator scope document.
+https://github.com/operator-framework/operator-sdk/issues/3447
+-->
 
 OLM will manage creation of most if not all resources required to run your operator, using a bit of setup from other operator-sdk commands. Check out the [OLM integration guide][quickstart-bundle].
 
+[legacy-quickstart-doc]:https://v0-19-x.sdk.operatorframework.io/docs/ansible/quickstart/
+[migration-guide]:/docs/building-operators/ansible/migration
 [install-guide]:/docs/building-operators/ansible/installation
 [ansible-developer-tips]:/docs/building-operators/ansible/development-tips/
 [ansible-watches]:/docs/building-operators/ansible/reference/watches
 [custom-resources]:https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/
-[operator-scope]:https://v0-19-x.sdk.operatorframework.io/docs/legacy-common/operator-scope/
 [layout-doc]:/docs/building-operators/ansible/reference/scaffolding
-[quickstart-bundle]:/docs/olm-integration/quickstart-bundle/
+[quickstart-bundle]:/docs/olm-integration/quickstart-bundle
+[doc-olm]:/docs/olm-integration/quickstart-bundle/#enabling-olm
