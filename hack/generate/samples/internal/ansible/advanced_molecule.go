@@ -27,7 +27,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/testutils"
 )
 
-// MoleculeAnsible defines the context for the sample
+// AdvancedMolecule defines the context for the sample
 type AdvancedMolecule struct {
 	ctx *pkg.SampleContext
 }
