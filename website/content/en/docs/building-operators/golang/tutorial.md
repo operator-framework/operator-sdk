@@ -92,9 +92,9 @@ not go against the design goals set by [controller-runtime][controller-runtime].
 
 ### Define the API
 
-In this example, we will define that the Memcached Kind (CRD) will have a size Spec which will specify the quantity of Memcached instances will be deployed. Also, we will add a nodes Status that will store the Pod names.
+In this example, we will define that the Memcached Kind (CRD) will have a `MemcachedSpec.Size` field which will specify the quantity of Memcached instances will be deployed, and a `MemcachedStatus.Nodes` field that will store a CR's Pod names.
 
-**NOTE** The Node field is just to illustrate an example of a Status field. In real cases, it would be recommended to use [Conditions][conditionals].
+**Note** The Node field is just to illustrate an example of a Status field. In real cases, it would be recommended to use [Conditions][conditionals].
 
 Define the API for the Memcached Custom Resource(CR) by modifying the Go type definitions at `api/v1alpha1/memcached_types.go` to have the following spec and status:
 
@@ -145,7 +145,7 @@ make manifests
 
 This makefile target will invoke [controller-gen][controller_tools] to generate the CRD manifests at `config/crd/bases/cache.example.com_memcacheds.yaml`.
 
-**Note** If you would like to define validations for the CRD's fields see the [OpenAPI valiation][openapi-validation] doc.
+**Note** If you would like to read further into CRD validation, see the [OpenAPI valiation][openapi-validation] doc.
 
 ## Implement the Controller
 
@@ -197,38 +197,7 @@ There are a number of other useful configurations that can be made when initialz
 
 ### Reconcile loop
 
-The reconcile function is responsible for synchronizing the desired state as represented by their Specs and the actual state of the system. In this way, it works like a loop, and it does not stop until all conditionals match its implementation. The following is pseudo-code with an example that clarifies it.
-
-```go
-reconcile App {
- 
-   // Check if a Deployment for the app exists, if not create one
-   // If has an error, then go to the beginning of the reconcile
-   if err != nil {
-       return reconcile.Result{}, err 
-   } 
-    
-   // Check if a Service for the app exists, if not create one 
-   // If has an error, then go to the beginning of the reconcile
-   if err != nil {
-       return reconcile.Result{}, err 
-   }  
- 
-   // Looking for Database CR/CRD 
-   // Check the Database Deployments Replicas size
-   // If deployment.replicas size != cr.size, then update it
-   // Then, go to the beginning of the reconcile
-   if err != nil {
-       return reconcile.Result{Requeue: true}, nil
-   }  
-   ...
-    
-   // If it is at the end of the loop, then:
-   // All was done successfully and the reconcile can stop  
-   return reconcile.Result{}, nil
- 
-}
-```
+The reconcile function is responsible for synchronizing the desired state as represented by their Specs and the actual state of the system. In this way, it works like a loop, and it does not stop until all conditionals match its implementation. 
 
 The following are a few possible return options to restart the Reconcile:
 
@@ -305,7 +274,7 @@ There are three ways to run the operator:
 - Managed by the [Operator Lifecycle Manager (OLM)][doc-olm] in [bundle][quickstart-bundle] format
 
 
-The following steps will show how to deploy the operator on the Cluster. However, to run locally for development purposes and outside of a Cluster use the target `make run`.
+The following steps will show how to deploy the operator on the Cluster. However, to run locally for development purposes and outside of a Cluster use the target `make install run`.
 
 ### Build and push the image
 
