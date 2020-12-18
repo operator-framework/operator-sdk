@@ -32,7 +32,7 @@ operator-sdk generate bundle [flags]
 
   # Generate bundle files and build your bundle image with these 'make' recipes:
   $ make bundle
-  $ export USERNAME=<your registry username>
+  $ export USERNAME=<quay-namespace>
   $ export BUNDLE_IMG=quay.io/$USERNAME/memcached-operator-bundle:v0.0.1
   $ make bundle-build BUNDLE_IMG=$BUNDLE_IMG
 

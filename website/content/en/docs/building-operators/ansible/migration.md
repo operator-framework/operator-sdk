@@ -178,7 +178,12 @@ In your new project, roles are automatically generated in `config/rbac/role.yaml
 If you modified these permissions manually in `deploy/role.yaml` in your existing
 project, you need to re-apply them in `config/rbac/role.yaml`.
 
-New projects are configured to watch all namespaces by default, so they need a `ClusterRole` to have the necessary permissions. Ensure that `config/rbac/role.yaml` remains a `ClusterRole` if you want to retain the default behavior of the new project conventions. For further information refer to the [operator scope][operator-scope] documentation.  
+<!--
+todo(camilamacedo86): Create an Ansible operator scope document.
+https://github.com/operator-framework/operator-sdk/issues/3447
+-->
+
+New projects are configured to watch all namespaces by default, so they need a `ClusterRole` to have the necessary permissions. Ensure that `config/rbac/role.yaml` remains a `ClusterRole` if you want to retain the default behavior of the new project conventions.
 
 The following rules were used in earlier versions of anisible-operator to automatically create and manage services and `servicemonitors` for metrics collection. If your operator's don't require these rules, they can safely be left out of the new `config/rbac/role.yaml` file:
 
@@ -219,7 +224,7 @@ The default port used by the metric endpoint binds to was changed from `:8383` t
 
 ## Checking the changes
 
-Finally, follow the steps in the section [Build and run the Operator][build-and-run-the-operator] to verify your project is running.
+Finally, follow the steps in the ["run the Operator"][run-the-operator] section to verify your project is running.
 
 Note that, you also can troubleshooting by checking the container logs.
 E.g `$ kubectl logs deployment.apps/memcached-operator-controller-manager -n memcached-operator-system -c manager`  
@@ -227,11 +232,10 @@ E.g `$ kubectl logs deployment.apps/memcached-operator-controller-manager -n mem
 [quickstart-legacy]: https://v0-19-x.sdk.operatorframework.io/docs/ansible/quickstart/
 [quickstart]: /docs/building-operators/ansible/quickstart
 [integration-doc]: https://github.com/kubernetes-sigs/kubebuilder/blob/master/designs/integrating-kubebuilder-and-osdk.md
-[build-and-run-the-operator]: /docs/building-operators/ansible/tutorial/#deploy-the-operator
+[run-the-operator]: /docs/building-operators/ansible/tutorial/#run-the-operator
 [kustomize]: https://github.com/kubernetes-sigs/kustomize
 [kube-auth-proxy]: https://github.com/brancz/kube-rbac-proxy
 [metrics]: https://book.kubebuilder.io/reference/metrics.html?highlight=metr#metrics
 [marker]: https://book.kubebuilder.io/reference/markers.html?highlight=markers#marker-syntax
-[operator-scope]: /docs/building-operators/golang/operator-scope
 [molecule]: https://molecule.readthedocs.io/en/latest/#
 [testing-guide]: /docs/building-operators/ansible/testing-guide
