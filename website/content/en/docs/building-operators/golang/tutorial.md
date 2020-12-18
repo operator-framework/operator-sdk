@@ -461,12 +461,7 @@ The following guides build off the operator created in this example, adding adva
 
 Also see the [advanced topics][advanced_topics] doc for more use cases and under the hood details.
 
-[operator_install]: https://sdk.operatorframework.io/docs/installation/install-operator-sdk/
-[go_tool]:https://golang.org/dl/
-[docker_tool]:https://docs.docker.com/install/
-[kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
-[kustomize_tool]: https://sigs.k8s.io/kustomize/docs/INSTALL.md
-
+[install-guide]:/docs/building-operators/golang/installation
 [enqueue_requests_from_map_func]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/handler#EnqueueRequestsFromMapFunc
 [event_handler_godocs]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/handler#hdr-EventHandlers
 [event_filtering]:/docs/building-operators/golang/references/event-filtering/
@@ -474,18 +469,14 @@ Also see the [advanced topics][advanced_topics] doc for more use cases and under
 [controller_godocs]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/controller
 [operator_scope]:/docs/building-operators/golang/operator-scope/
 [kubebuilder_layout_doc]:https://book.kubebuilder.io/cronjob-tutorial/basic-project.html
-[homebrew_tool]:https://brew.sh/
 [go_mod_wiki]: https://github.com/golang/go/wiki/Modules
-[go_vendoring]: https://blog.gopheracademy.com/advent-2015/vendor-folder/
 [doc_client_api]:/docs/building-operators/golang/references/client/
 [manager_go_doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Manager
-[controller-go-doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg#hdr-Controller
 [request-go-doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Request
 [result_go_doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Result
 [multi-namespaced-cache-builder]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
 [cli-run-olm]: /docs/olm-integration/cli-overview
 [kubebuilder_entrypoint_doc]: https://book.kubebuilder.io/cronjob-tutorial/empty-main.html
-
 [api_terms_doc]: https://book.kubebuilder.io/cronjob-tutorial/gvks.html
 [kb_controller_doc]: https://book.kubebuilder.io/cronjob-tutorial/controller-overview.html
 [kb_api_doc]: https://book.kubebuilder.io/cronjob-tutorial/new-api.html
@@ -494,7 +485,6 @@ Also see the [advanced topics][advanced_topics] doc for more use cases and under
 [generating-crd]: https://book.kubebuilder.io/reference/generating-crd.html
 [markers]: https://book.kubebuilder.io/reference/markers.html
 [crd-markers]: https://book.kubebuilder.io/reference/markers/crd-validation.html
-[rbac-markers]: https://book.kubebuilder.io/reference/markers/rbac.html
 [memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/v1.2.0/testdata/go/memcached-operator/controllers/memcached_controller.go
 [builder_godocs]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/builder#example-Builder
 [legacy_quickstart_doc]:https://v0-19-x.sdk.operatorframework.io/docs/golang/legacy/quickstart/
@@ -503,7 +493,6 @@ Also see the [advanced topics][advanced_topics] doc for more use cases and under
 [create_a_webhook]: https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html
 [status_marker]: https://book.kubebuilder.io/reference/generating-crd.html#status
 [status_subresource]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#status-subresource
-[API-groups]:https://kubernetes.io/docs/concepts/overview/kubernetes-api/#api-groups
 [legacy_CLI]:https://v0-19-x.sdk.operatorframework.io/docs/cli/
 [env-test-setup]: /docs/building-operators/golang/references/envtest-setup
 [role-based-access-control]: https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control#iam-rolebinding-bootstrap
