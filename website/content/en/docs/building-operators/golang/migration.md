@@ -1,8 +1,8 @@
 ---
-title: Migrating Legacy Projects
-linkTitle: Migrating Projects to 1.0.0+
+link: Migrating pre-v1.0.0 Projects
+linkTitle: Migrating pre-v1.0.0 Projects
 weight: 200
-description: Instructions for migrating a legacy Go-based project to use the new Kubebuilder-style layout.
+description: Instructions for migrating a Go-based project built prior to v1.0.0 to use the new Kubebuilder-style layout.
 ---
 
 ## Overview

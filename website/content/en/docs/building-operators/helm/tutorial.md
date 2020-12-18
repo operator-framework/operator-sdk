@@ -11,8 +11,7 @@ This guide walks through an example of building a simple nginx-operator powered 
 
 ## Prerequisites
 
-- [Install `operator-sdk`][operator_install] and its prequisites.
-- Access to a Kubernetes v1.16.0+ cluster.
+- Go through the [installation guide][install-guide].
 - User authorized with `cluster-admin` permissions.
 
 ## Create a new project
@@ -50,7 +49,7 @@ If `--helm-chart` is specified, the `--group`, `--version`, and `--kind` flags b
 | kind |  deduce from the specified chart |
 | version | v1alpha1 |
 
-If `--helm-chart` is a local chart archive (e.g `example-chart-1.2.0.tgz`) or directory, 
+If `--helm-chart` is a local chart archive (e.g `example-chart-1.2.0.tgz`) or directory,
 it will be validated and unpacked or copied into the project.
 
 Otherwise, the SDK will attempt to fetch the specified helm chart from a remote repository.
@@ -195,7 +194,7 @@ make deploy IMG=$IMG
 
 Verify that the nginx-operator is up and running:
 
-```sh
+```console
 $ kubectl get deployment -n nginx-operator-system
 NAME                                DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
 nginx-operator-controller-manager   1/1       1         1            1           77s
@@ -224,7 +223,7 @@ kubectl apply -f config/samples/example_v1alpha1_nginx.yaml
 
 Ensure that the nginx-operator creates the deployment for the CR:
 
-```sh
+```console
 $ kubectl get deployment
 NAME           READY   UP-TO-DATE   AVAILABLE   AGE
 nginx-sample   2/2     2            2           2m13s
@@ -232,15 +231,16 @@ nginx-sample   2/2     2            2           2m13s
 
 Check the pods to confirm 2 replicas were created:
 
-```sh
+```console
 $ kubectl get pods
 NAME                                                   READY   STATUS    RESTARTS   AGE
 nginx-sample-c786bfdcf-4g6md                           1/1     Running   0          81s
 nginx-sample-c786bfdcf-6bhmx                           1/1     Running   0          81s
+```
 
 Check that the service port is set to `8080`:
 
-```sh
+```console
 $ kubectl get service
 NAME                                      TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)    AGE
 nginx-sample                              ClusterIP   10.96.26.3   <none>        8080/TCP   1m
@@ -251,7 +251,7 @@ nginx-sample                              ClusterIP   10.96.26.3   <none>       
 Change the `spec.replicaCount` field from 2 to 3, remove the `spec.service`
 field:
 
-```sh
+```console
 $ cat config/samples/example_v1alpha1_nginx.yaml
 apiVersion: example.com/v1alpha1
 kind: Nginx
@@ -269,7 +269,7 @@ kubectl apply -f config/samples/example_v1alpha1_nginx.yaml
 
 Confirm that the operator changes the deployment size:
 
-```sh
+```console
 $ kubectl get deployment
 NAME                                           DESIRED   CURRENT   UP-TO-DATE     AGE
 nginx-sample                                   3/3       3            3           7m29s
@@ -277,7 +277,7 @@ nginx-sample                                   3/3       3            3         
 
 Check that the service port is set to the default (`80`):
 
-```sh
+```console
 $ kubectl get service
 NAME                                      TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)  AGE
 nginx-sample                              ClusterIP   10.96.152.76    <none>        80/TCP   7m54s
@@ -294,7 +294,7 @@ kubectl logs deployment.apps/nginx-operator-controller-manager  -n nginx-operato
 Use the following command to check the CR status and events.
 
 ```sh
-kubectl describe nginxes.example.com 
+kubectl describe nginxes.example.com
 ```
 
 ### Cleanup
@@ -308,11 +308,11 @@ make undeploy
 **NOTE** Additional CR/CRD's can be added to the project by running, for example, the command :`operator-sdk create api --group=example --version=v1alpha1 --kind=AppService`
 
 <!--
-todo(camilamacedo86): https://github.com/operator-framework/operator-sdk/issues/3447 
+todo(camilamacedo86): https://github.com/operator-framework/operator-sdk/issues/3447
 -->
+[install-guide]:/docs/building-operators/helm/installation
 [operator-scope]: /docs/building-operators/golang/operator-scope
 [layout-doc]: /docs/building-operators/helm/reference/project_layout/
 [helm-charts]:https://helm.sh/docs/topics/charts/
 [helm-values]:https://helm.sh/docs/intro/using_helm/#customizing-the-chart-before-installing
 [helm-official]:https://helm.sh/docs/
-[operator_install]: /docs/installation/

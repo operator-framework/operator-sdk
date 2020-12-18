@@ -9,8 +9,7 @@ This guide walks through an example of building a simple memcached-operator powe
 
 ## Prerequisites
 
-- [Install `operator-sdk`][operator_install] and the [Ansible prequisites][ansible-operator-install] 
-- Access to a Kubernetes v1.16.0+ cluster.
+- Go through the [installation guide][install-guide].
 - User authorized with `cluster-admin` permissions.
 
 ## Creating an Operator
@@ -24,7 +23,7 @@ In this section we will:
 Begin by generating a new project from a new directory.
 
 ```sh
-$ mkdir memcached-operator 
+$ mkdir memcached-operator
 $ cd memcached-operator
 $ operator-sdk init --plugins=ansible --domain example.com
 ```
@@ -163,7 +162,7 @@ $ make deploy
 ```
 
 We are using the `memcached-operator-system` Namespace, so let's set
-that context. 
+that context.
 
 ```sh
 $ kubectl config set-context --current --namespace=memcached-operator-system
@@ -172,7 +171,7 @@ $ kubectl config set-context --current --namespace=memcached-operator-system
 Verify that the memcached-operator is up and running:
 
 ```sh
-$ kubectl get deployment 
+$ kubectl get deployment
 
 NAME                     DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
 memcached-operator       1         1         1            1           1m
@@ -223,13 +222,10 @@ can also be used with cluster-wide scope. See the [operator scope][operator-scop
 
 OLM will manage creation of most if not all resources required to run your operator, using a bit of setup from other operator-sdk commands. Check out the [OLM integration guide][quickstart-bundle].
 
-[ansible-operator-install]: /docs/building-operators/ansible/installation
-[ansible-developer-tips]: /docs/building-operators/ansible/development-tips/
-[ansible-watches]: /docs/building-operators/ansible/reference/watches
-[custom-resources]: https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/
+[install-guide]:/docs/building-operators/ansible/installation
+[ansible-developer-tips]:/docs/building-operators/ansible/development-tips/
+[ansible-watches]:/docs/building-operators/ansible/reference/watches
+[custom-resources]:https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/
 [operator-scope]:https://v0-19-x.sdk.operatorframework.io/docs/legacy-common/operator-scope/
-[layout-doc]:../reference/scaffolding
-[docker-tool]:https://docs.docker.com/install/
-[kubectl-tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
-[quickstart-bundle]: /docs/olm-integration/quickstart-bundle/
-[operator_install]: /docs/installation/
+[layout-doc]:/docs/building-operators/ansible/reference/scaffolding
+[quickstart-bundle]:/docs/olm-integration/quickstart-bundle/
