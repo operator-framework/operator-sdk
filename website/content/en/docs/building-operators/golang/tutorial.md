@@ -75,17 +75,9 @@ This will scaffold the Memcached resource API at `api/v1alpha1/memcached_types.g
 
 **Note:** This guide will cover the default case of a single group API. If you would like to support Multi-Group APIs see the [Single Group to Multi-Group][multigroup-kubebuilder-doc] doc.
 
-#### Understanding API
+#### Understanding Kubernetes APIs
 
-The goal of this command is to create Custom Resource (CR) and Custom Resource Definition (CRD) resources for the Memcached Kind. This command is creating the API with the group `cache.example.com`, and version `v1alpha1`  which uniquely identifies the new CRD of the Memcached Kind. For more info see [Extend the Kubernetes API with CustomResourceDefinitions][[kubernetes-extend-api]]. 
-
-Consequently, by using the Operator SDK tool, we can create our APIs and objects that will represent our solutions on these platforms. Here will adds only a single kind of resource; however, it could have as many Kinds as needed (1…N). Basically, the CRDs are a definition of our customized Objects, and the CRs are an instance of it.
-
-#### Getting a better idea
-
-Let’s think about the classic scenario where the goal is to have an application and its database running on the platform with Kubernetes. Then, one object could represent the App, and another one could represent the DB. By having one CRD to describe the App and another one for the DB, we will not be hurting concepts such as encapsulation, the single responsibility principle, and cohesion. Damaging these concepts could cause unexpected side effects, such as difficulty in extending, reuse, or maintenance, just to mention a few.
-
-In conclusion, the App CRD will have its controller which would be responsible for things like creating Deployments that contain the App and creating Services to access it. Similarly, we would create a CRD to represent the DB, and deploy a controller that would manage DB instances. 
+For an in-depth explanation of Kubernetes APIs and the group-version-kind model, check out these [kubebuilder docs][kb-doc-gkvs].
 
 In general, it's recommended to have one controller responsible for manage each API(CRD) created on the project in order to 
 not go against the design goals set by [controller-runtime][controller-runtime].
@@ -342,7 +334,6 @@ operator-sdk run bundle $BUNDLE_IMG
 
 Check out the [docs][quickstart-bundle] for a deep dive into `operator-sdk`'s OLM integration.
 
-
 ## Create a Memcached CR
 
 Update the sample Memcached CR manifest at `config/samples/cache_v1alpha1_memcached.yaml` and define the `spec` as the following:
@@ -480,3 +471,4 @@ Also see the [advanced topics][advanced_topics] doc for more use cases and under
 [olm-integration]: /docs/olm-integration
 [openapi-validation]: /docs/building-operators/golang/references/openapi-validation
 [controller-runtime]: https://github.com/kubernetes-sigs/controller-runtime
+[kb-doc-gkvs]: https://book.kubebuilder.io/cronjob-tutorial/gvks.html
