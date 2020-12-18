@@ -35,6 +35,9 @@ func main() {
 
 		// path is the path provided to generate the molecule sample
 		path string
+
+		// sample is the name of the mock was selected to be generated
+		sample string
 	)
 
 	// testdata is the path where all samples are generate
@@ -42,6 +45,7 @@ func main() {
 
 	flag.StringVar(&binaryName, "bin", testutils.BinaryName, "Binary path that should be used")
 	flag.StringVar(&path, "path", "", "Path where the molecule should be called")
+	flag.StringVar(&sample, "sample", "", "To generate only the selected option. Options: [advanced,memcached]")
 
 	flag.Parse()
 
@@ -59,5 +63,12 @@ func main() {
 
 	log.Infof("creating Ansible Molecule Mock Sample")
 	log.Infof("using the path: (%v)", path)
-	ansible.GenerateMoleculeAnsibleSample(path)
+
+	if sample == "" || sample == "memcached" {
+		ansible.GenerateMoleculeAnsibleSample(path)
+	}
+
+	if sample == "" || sample == "advanced" {
+		ansible.GenerateMoleculeAdvancedAnsibleSample(path)
+	}
 }

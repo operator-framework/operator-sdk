@@ -20,6 +20,7 @@ website/tech-doc-hugo
 
 # Ignore molecule samples testdata if it be generated in the testdata/ diretory
 testdata/ansible/memcached-molecule-operator
+testdata/ansible/advanced-molecule-operator
 
 # Trash files
 *\.DS_Store
