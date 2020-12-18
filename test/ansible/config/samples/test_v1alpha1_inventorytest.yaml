@@ -1,8 +1,0 @@
-apiVersion: test.example.com/v1alpha1
-kind: InventoryTest
-metadata:
-  name: inventorytest-sample
-  annotations:
-    "ansible.sdk.operatorframework.io/verbosity": "0"
-spec:
-  size: 3

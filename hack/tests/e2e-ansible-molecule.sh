@@ -17,14 +17,15 @@ pip3 install --user ansible-lint yamllint
 pip3 install --user docker==4.2.2 openshift jmespath
 ansible-galaxy collection install 'community.kubernetes:<1.0.0'
 
-header_text "Creating molecule sample"
-go run ./hack/generate/samples/molecule/generate.go --path=$TMPDIR
+header_text "Copying molecule testdata scenarios"
+cp -r $ROOTDIR/testdata/ansible/memcached-molecule-operator/ $TMPDIR/memcached-molecule-operator
+cp -r $ROOTDIR/testdata/ansible/advanced-molecule-operator/ $TMPDIR/advanced-molecule-operator
 
 pushd "$TMPDIR"
 popd
 cd $TMPDIR/memcached-molecule-operator
 
-header_text "Test Kind"
+header_text "Running Kind test with memcached-molecule-operator/"
 make kustomize
 if [ -f ./bin/kustomize ] ; then
   KUSTOMIZE="$(realpath ./bin/kustomize)"
@@ -33,12 +34,9 @@ else
 fi
 KUSTOMIZE_PATH=${KUSTOMIZE} TEST_OPERATOR_NAMESPACE=default molecule test -s kind
 
-rm -rf $KUSTOMIZE
-cd $TMPDIR/
-rm -rf memcached-molecule-operator
 
-header_text "Test Ansible Molecule scenarios"
-pushd "${ROOTDIR}/test/ansible"
+header_text "Running Default test with advanced-molecule-operator/"
+cd $TMPDIR/advanced-molecule-operator
 
 make kustomize
 if [ -f ./bin/kustomize ] ; then
@@ -48,7 +46,6 @@ else
 fi
 
 DEST_IMAGE="quay.io/example/advanced-molecule-operator:v0.0.1"
-sed -i".bak" -E -e 's/(FROM quay.io\/operator-framework\/ansible-operator)(:.*)?/\1:dev/g' Dockerfile; rm -f Dockerfile.bak
 docker build -t "$DEST_IMAGE" --no-cache .
 load_image_if_kind "$DEST_IMAGE"
 KUSTOMIZE_PATH=$KUSTOMIZE OPERATOR_PULL_POLICY=Never OPERATOR_IMAGE=${DEST_IMAGE} TEST_OPERATOR_NAMESPACE=osdk-test molecule test
