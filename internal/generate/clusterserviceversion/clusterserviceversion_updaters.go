@@ -124,7 +124,7 @@ func applyRoles(c *collector.Manifests, strategy *operatorsv1alpha1.StrategyDeta
 			perms = append(perms, perm)
 		}
 	}
-	strategy.Permissions = perms
+	strategy.Permissions = append(perms, strategy.Permissions...)
 }
 
 // applyClusterRoles applies ClusterRoles to strategy's clusterPermissions field by combining ClusterRoles
@@ -168,7 +168,7 @@ func applyClusterRoles(c *collector.Manifests, strategy *operatorsv1alpha1.Strat
 			perms = append(perms, perm)
 		}
 	}
-	strategy.ClusterPermissions = perms
+	strategy.ClusterPermissions = append(perms, strategy.ClusterPermissions...)
 }
 
 // applyDeployments updates strategy's deployments with the Deployments

@@ -1,0 +1,7 @@
+entries:
+  - description: >
+      Bundle generation: if input CSV already has install.spec.clusterPermissions or install.spec.permissions, do not overwrite but append to existing entries.
+
+    kind: "change"
+
+    breaking: false
