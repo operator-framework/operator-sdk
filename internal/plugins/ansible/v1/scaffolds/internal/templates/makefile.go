@@ -103,8 +103,6 @@ PATH  := $(PATH):$(PWD)/bin
 SHELL := env PATH=$(PATH) /bin/sh
 OS    = $(shell uname -s | tr '[:upper:]' '[:lower:]')
 ARCH  = $(shell uname -m | sed 's/x86_64/amd64/')
-OSOPER   = $(shell uname -s | tr '[:upper:]' '[:lower:]' | sed 's/darwin/apple-darwin/' | sed 's/linux/linux-gnu/')
-ARCHOPER = $(shell uname -m )
 
 kustomize:
 ifeq (, $(shell which kustomize 2>/dev/null))
@@ -123,8 +121,8 @@ ifeq (, $(shell which ansible-operator 2>/dev/null))
 	@{ \
 	set -e ;\
 	mkdir -p bin ;\
-	curl -sfSLO https://github.com/operator-framework/operator-sdk/releases/download/{{ .AnsibleOperatorVersion}}/ansible-operator-{{ .AnsibleOperatorVersion}}-$(ARCHOPER)-$(OSOPER) ;\
-	mv ansible-operator-{{ .AnsibleOperatorVersion}}-$(ARCHOPER)-$(OSOPER) ./bin/ansible-operator ;\
+	curl -sfSLO https://github.com/operator-framework/operator-sdk/releases/download/{{ .AnsibleOperatorVersion}}/ansible-operator_$(OS)_$(ARCH) ;\
+	mv ansible-operator_$(OS)_$(ARCH) ./bin/ansible-operator ;\
 	chmod +x ./bin/ansible-operator ;\
 	}
 ANSIBLE_OPERATOR=$(realpath ./bin/ansible-operator)
