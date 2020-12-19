@@ -1,0 +1,14 @@
+entries:
+  - description: >
+      For Helm-based operators delete resource, if the Helm uninstall completed with error, then keep trying to uninstall until there is no error on the Helm uninstall.
+
+    kind: "change"
+
+    breaking: true
+
+    migration:
+      header: For Helm-based operators delete resource, the finalizer will not be removed until the Helm uninstall is completed without error.
+      body: >
+        In the prior releases, Helm-based operators delete resource will remove it's finalizer even if the Helm uninstallation completed with error.
+        With this change, Helm-based operators will keep attempting to perform Helm uninstall until it completes without error.
+        Only then, will the finalizer be removed.

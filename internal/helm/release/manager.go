@@ -361,7 +361,34 @@ func (m manager) UninstallRelease(ctx context.Context, opts ...UninstallOption) 
 			return nil, fmt.Errorf("failed to apply uninstall option: %w", err)
 		}
 	}
+
+	// Get history of this release
+	h, err := m.storageBackend.History(m.releaseName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get release history: %w", err)
+	}
+	releaseutil.SortByRevision(h)
+	lastRelease := h[len(h)-1]
+
+	// Helm uninstall on a "uninstalled" status doesn't actually perform any resource deletes.
+	// See: https://github.com/helm/helm/blob/v3.4.2/pkg/action/uninstall.go#L83-L91
+	// Set the release to "uninstalling" status and trigger the uninstall again.
+	if lastRelease.Info != nil && lastRelease.Info.Status == rpb.StatusUninstalled {
+		lastRelease.Info.Status = rpb.StatusUninstalling
+		if err := m.storageBackend.Update(lastRelease); err != nil {
+			return nil, err
+		}
+	}
+
+	// Always keep the release record in case the uninstall errors.
+	uninstall.KeepHistory = true
+
 	uninstallResponse, err := uninstall.Run(m.releaseName)
+	if err == nil {
+		// Uninstall was successful so purge the release by running the uninstall again.
+		uninstall.KeepHistory = false
+		uninstallResponse, err = uninstall.Run(m.releaseName)
+	}
 	if uninstallResponse == nil {
 		return nil, err
 	}
