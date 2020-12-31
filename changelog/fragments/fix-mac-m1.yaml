@@ -1,0 +1,3 @@
+entries:
+  - description: Update containerd dependency to correctly handle running the Operator SDK CLI on Apple Silicon.
+    kind: bugfix
