@@ -28,6 +28,7 @@ import (
 	"helm.sh/helm/v3/pkg/kube"
 	helmkube "helm.sh/helm/v3/pkg/kube"
 	rpb "helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/releaseutil"
 	"helm.sh/helm/v3/pkg/storage"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -96,6 +97,23 @@ func (m *manager) Sync(ctx context.Context) error {
 	releases, err := m.storageBackend.History(m.releaseName)
 	if err != nil && !notFoundErr(err) {
 		return fmt.Errorf("failed to retrieve release history: %w", err)
+	}
+
+	// If the 2nd last release is in status 'superseded' and the last release is in status 'pending-upgrade'
+	// then transition the last release to status 'deployed'. See https://github.com/helm/helm/issues/9113
+	if len(releases) >= 2 {
+		releaseutil.SortByRevision(releases)
+		secondLastRelease := releases[len(releases)-2]
+		lastRelease := releases[len(releases)-1]
+
+		if secondLastRelease.Info != nil && secondLastRelease.Info.Status == rpb.StatusSuperseded &&
+			lastRelease.Info != nil && lastRelease.Info.Status == rpb.StatusPendingUpgrade {
+			lastRelease.Info.Description = "Upgrade complete"
+			lastRelease.Info.Status = rpb.StatusDeployed
+			if err := m.storageBackend.Update(lastRelease); err != nil {
+				return fmt.Errorf("failed to transition last release to deployed status: %w", err)
+			}
+		}
 	}
 
 	// Cleanup non-deployed release versions. If all release versions are
