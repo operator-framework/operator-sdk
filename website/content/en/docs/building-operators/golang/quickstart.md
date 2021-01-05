@@ -34,6 +34,7 @@ Make sure to define `IMG` when you call `make`:
   ```sh
   export USERNAME=<quay-namespace>
   export OPERATOR_IMG="quay.io/$USERNAME/memcached-operator:v0.0.1"
+  make kustomize
   make docker-build docker-push IMG=$OPERATOR_IMG
   ```
 
