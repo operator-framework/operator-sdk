@@ -143,8 +143,8 @@ func (g *Generator) generate() (*apimanifests.PackageManifest, error) {
 			base.DefaultChannelName = g.ChannelName
 		}
 	} else if len(base.Channels) == 0 {
-		setChannels(base, "alpha", csvName)
-		base.DefaultChannelName = "alpha"
+		setChannels(base, "preview", csvName)
+		base.DefaultChannelName = "preview"
 	}
 
 	if err = validatePackageManifest(base); err != nil {

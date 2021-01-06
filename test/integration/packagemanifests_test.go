@@ -68,7 +68,7 @@ var _ = Describe("run packagemanifests", func() {
 
 	It("should successfully deploy the second of two operator versions", func() {
 		versions := []string{"0.0.1", "0.2.0"}
-		channels := []string{"alpha", "stable"}
+		channels := []string{"preview", "stable"}
 		for i, version := range versions {
 			imageTag := fmt.Sprintf("integration/%s:%s", tc.ProjectName, version)
 			By("building the manager image " + imageTag)

@@ -113,7 +113,7 @@ func (b *ClusterServiceVersion) setDefaults() {
 		b.Description = b.DisplayName + " description. TODO."
 	}
 	if b.Maturity == "" {
-		b.Maturity = "alpha"
+		b.Maturity = "preview"
 	}
 	if b.Capabilities == "" {
 		b.Capabilities = "Basic Install"

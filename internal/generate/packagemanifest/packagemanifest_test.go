@@ -188,16 +188,16 @@ var _ = Describe("Generating a PackageManifest", func() {
 				g = Generator{
 					OperatorName: operatorName,
 					Version:      "0.0.2",
-					ChannelName:  "alpha",
+					ChannelName:  "preview",
 					getBase:      makeBaseGetter(pkgManDefaultContent),
 				}
 				pkg, err := g.generate()
 				Expect(err).ToNot(HaveOccurred())
 				Expect(pkg).To(Equal(&apimanifests.PackageManifest{
 					Channels: []apimanifests.PackageChannel{
-						{Name: "alpha", CurrentCSVName: genutil.MakeCSVName(operatorName, "0.0.2")},
+						{Name: "preview", CurrentCSVName: genutil.MakeCSVName(operatorName, "0.0.2")},
 					},
-					DefaultChannelName: "alpha",
+					DefaultChannelName: "preview",
 					PackageName:        operatorName,
 				}))
 			})
@@ -212,10 +212,10 @@ var _ = Describe("Generating a PackageManifest", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(pkg).To(Equal(&apimanifests.PackageManifest{
 					Channels: []apimanifests.PackageChannel{
-						{Name: "alpha", CurrentCSVName: genutil.MakeCSVName(operatorName, version)},
+						{Name: "preview", CurrentCSVName: genutil.MakeCSVName(operatorName, version)},
 						{Name: "stable", CurrentCSVName: genutil.MakeCSVName(operatorName, "0.0.2")},
 					},
-					DefaultChannelName: "alpha",
+					DefaultChannelName: "preview",
 					PackageName:        operatorName,
 				}))
 			})
@@ -231,7 +231,7 @@ var _ = Describe("Generating a PackageManifest", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(pkg).To(Equal(&apimanifests.PackageManifest{
 					Channels: []apimanifests.PackageChannel{
-						{Name: "alpha", CurrentCSVName: genutil.MakeCSVName(operatorName, version)},
+						{Name: "preview", CurrentCSVName: genutil.MakeCSVName(operatorName, version)},
 						{Name: "stable", CurrentCSVName: genutil.MakeCSVName(operatorName, "0.0.2")},
 					},
 					DefaultChannelName: "stable",

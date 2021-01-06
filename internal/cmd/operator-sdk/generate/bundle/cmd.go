@@ -118,7 +118,7 @@ func (c *bundleCmd) addFlagsTo(fs *pflag.FlagSet) {
 	fs.StringVar(&c.deployDir, "deploy-dir", "", "Root directory for operator manifests such as "+
 		"Deployments and RBAC, ex. 'deploy'. This directory is different from that passed to --input-dir")
 	fs.StringVar(&c.crdsDir, "crds-dir", "", "Root directory for CustomResoureDefinition manifests")
-	fs.StringVar(&c.channels, "channels", "alpha", "A comma-separated list of channels the bundle belongs to")
+	fs.StringVar(&c.channels, "channels", "preview", "A comma-separated list of channels the bundle belongs to")
 	fs.StringVar(&c.defaultChannel, "default-channel", "", "The default channel for the bundle")
 	fs.BoolVar(&c.overwrite, "overwrite", true, "Overwrite the bundle's metadata and Dockerfile if they exist")
 	fs.BoolVarP(&c.quiet, "quiet", "q", false, "Run in quiet mode")

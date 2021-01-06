@@ -79,7 +79,7 @@ operator-sdk generate bundle [flags]
 ### Options
 
 ```
-      --channels string          A comma-separated list of channels the bundle belongs to (default "alpha")
+      --channels string          A comma-separated list of channels the bundle belongs to (default "preview")
       --crds-dir string          Root directory for CustomResoureDefinition manifests
       --default-channel string   The default channel for the bundle
       --deploy-dir string        Root directory for operator manifests such as Deployments and RBAC, ex. 'deploy'. This directory is different from that passed to --input-dir

@@ -1,0 +1,22 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Use `preview` as default channel name value instead of `alpha` for OLM bundles.
+
+    kind: "change"
+
+    # Is this a breaking change?
+    breaking: false
+
+    # Migration can be defined to automatically add a section to
+    # the migration guide. This is required for breaking changes.
+    migration:
+      header: (Optional) Update OLM bundle channel name
+      body: >
+        Channel names are used to imply what form of upgrade you want to offer for your operator which is integrated with OLM.
+        By using the make target `make bundle` or the command `operator-sdk generate bundle` the default channel name configured
+        for the bundle was `alpha` and for now on, SDK will use `preview` as default the channel name instead.
+
+        To update the channel name used in the bundle of your project to use the new default value run `make bundle`.
+        To know more about the OLM channel name see: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/channel-naming.md#naming

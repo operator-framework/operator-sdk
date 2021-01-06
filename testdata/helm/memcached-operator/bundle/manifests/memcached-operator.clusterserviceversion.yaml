@@ -270,7 +270,7 @@ spec:
   maintainers:
   - email: your@email.com
     name: Maintainer Name
-  maturity: alpha
+  maturity: preview
   provider:
     name: Provider Name
     url: https://your.domain
