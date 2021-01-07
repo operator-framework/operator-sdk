@@ -109,9 +109,19 @@ by adding an RBAC directive to generate a `config/rbac/role.yaml` with `update` 
 
 Now run `make manifests` to update your `role.yaml`.
 
+## Seeing errors about `securityContext.runAsUser: Invalid value: 65532: must be in the ranges: [<NNN>, <MMM>]]`
+	
+For instance, if you are creating the `--kind=memcached` operator with `operator-sdk`. A workaround for this specific instance is to change the generated `config/manager/manager.yaml`:
+
+```diff
+spec:
+      securityContext:
+-        runAsUser: 65532
++        runAsNonRoot: true 
+```
 
 [kube-apiserver_options]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options
-[controller-runtime_faq]: https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md#q-how-do-i-have-different-logic-in-my-reconciler-for-different-types-of-events-eg-create-update-delete
+[controller-runtime_faq]: https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md#q-how-do-i-have-different-logic-in-my -reconciler-for-different-types-of-events-eg-create-update-delete
 [finalizer]:/docs/building-operators/golang/advanced-topics/#handle-cleanup-on-deletion
 [cr-faq]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md
 [client.Reader]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#Reader
