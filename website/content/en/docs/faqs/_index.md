@@ -109,7 +109,7 @@ by adding an RBAC directive to generate a `config/rbac/role.yaml` with `update` 
 
 Now run `make manifests` to update your `role.yaml`.
 
-## Seeing errors about `securityContext.runAsUser: Invalid value: 65532: must be in the ranges: [<NNN>, <MMM>]]`
+## I keep seeing errors like `securityContext.runAsUser: Invalid value: 65532: must be in the ranges: [<NNN>, <MMM>]]`
 	
 For instance, if you are creating the `--kind=memcached` operator with `operator-sdk`. A workaround for this specific instance is to change the generated `config/manager/manager.yaml`:
 
