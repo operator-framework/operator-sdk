@@ -111,7 +111,7 @@ Now run `make manifests` to update your `role.yaml`.
 
 ## I keep seeing errors like `securityContext.runAsUser: Invalid value: 65532: must be in the ranges: [<NNN>, <MMM>]]`
 	
-For instance, if you are creating the `--kind=memcached` operator with `operator-sdk`. A workaround for this specific instance is to change the generated `config/manager/manager.yaml`:
+Note that, the error can only be checked for some specific cluster's vendors such as OCP. In order to fix the issue,  replace `runAsUser: 65532` with `runAsNonRoot: true` in the `config/manager/manager.yaml` file :
 
 ```diff
 spec:
