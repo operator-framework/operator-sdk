@@ -116,7 +116,6 @@ Note that, the error can only be checked for some specific cluster's vendors suc
 ```yaml
 spec:
       securityContext:
--        runAsUser: 65532
 +        runAsNonRoot: true 
 ```
 
