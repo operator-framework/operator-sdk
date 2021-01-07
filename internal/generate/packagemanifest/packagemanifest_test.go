@@ -39,8 +39,8 @@ func TestGenerator(t *testing.T) {
 const (
 	pkgManDefaultContent = `channels:
   - currentCSV: memcached-operator.v0.0.1
-    name: alpha
-defaultChannel: alpha
+    name: preview
+defaultChannel: preview
 packageName: memcached-operator
 `
 
