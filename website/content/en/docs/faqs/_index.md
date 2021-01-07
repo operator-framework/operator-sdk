@@ -113,7 +113,7 @@ Now run `make manifests` to update your `role.yaml`.
 	
 Note that, the error can only be checked for some specific cluster's vendors such as OCP. In order to fix the issue,  replace `runAsUser: 65532` with `runAsNonRoot: true` in the `config/manager/manager.yaml` file :
 
-```diff
+```yaml
 spec:
       securityContext:
 -        runAsUser: 65532
