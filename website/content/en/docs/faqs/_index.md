@@ -116,7 +116,7 @@ Note that, the error can only be checked for some specific cluster's vendors suc
 ```yaml
 spec:
       securityContext:
-+        runAsNonRoot: true 
+        runAsNonRoot: true 
 ```
 
 [kube-apiserver_options]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options
