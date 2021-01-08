@@ -59,9 +59,9 @@ To validate a bundle with a superset of requirements for Operator Framework:
 	
   $ operator-sdk bundle validate ./bundle --select-optional suite=operatorframework
 
-To validate a bundle with a superset of requirements for *OperatorHub.io* specifically:
+To validate a bundle with a superset of requirements for operatorhub.io specifically:
 	
-  $ operator-sdk bundle validate ./bundle --select-optional suite=operatorframework,name=operatorhub
+  $ operator-sdk bundle validate ./bundle --select-optional name=operatorhub
 
 ```
 
