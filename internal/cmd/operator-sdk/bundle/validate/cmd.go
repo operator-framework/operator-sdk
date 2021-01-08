@@ -32,6 +32,11 @@ const (
 image or an operator bundle directory on-disk containing operator metadata and manifests. This command will exit
 with an exit code of 1 if any validation errors arise, and 0 if only warnings arise or all validators pass.
 
+A valid bundle is defined by the bundle spec, therefore the default validator make sure a bundle conforms to 
+that spec. However, if you are looking for to check if your bundle is valid for an optional superset of requirements such 
+as to publish your project into operatorhub.io then you will need to check it with the optionals available. 
+Use the argument --list-optional to check them. 	
+	
 More information about operator bundles and metadata:
 https://github.com/operator-framework/operator-registry/blob/master/docs/design/operator-bundle.md
 
@@ -63,7 +68,14 @@ To list and run optional validators, which are specified by a label selector:
   NAME           LABELS                     DESCRIPTION
   operatorhub    name=operatorhub           OperatorHub.io metadata validation
                  suite=operatorframework
+
+To validate a bundle with a superset of requirements for Operator Framework: 	
+	
   $ operator-sdk bundle validate ./bundle --select-optional suite=operatorframework
+
+To validate a bundle with a superset of requirements for *OperatorHub.io* specifically:
+	
+  $ operator-sdk bundle validate ./bundle --select-optional name=operatorhub
 `
 )
 
