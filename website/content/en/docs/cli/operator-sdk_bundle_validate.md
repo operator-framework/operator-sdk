@@ -11,10 +11,10 @@ The 'operator-sdk bundle validate' command can validate both content and format 
 image or an operator bundle directory on-disk containing operator metadata and manifests. This command will exit
 with an exit code of 1 if any validation errors arise, and 0 if only warnings arise or all validators pass.
 
-A valid bundle is defined by the bundle spec, therefore the default validator make sure a bundle conforms to 
-that spec. However, if you are looking for to check if your bundle is valid for an optional superset of requirements such 
-as to publish your project into operatorhub.io then you will need to check it with the optionals available. 
-Use the argument --list-optional to check them. 	
+A valid bundle is defined by the bundle spec (linked below), therefore the default validator ensures a bundle conforms to	
+that spec. If you want to ensure that your bundle is valid for an optional superset of requirements such as to those
+required to publish your operator on operatorhub.io, then you will need to run one or more supported optional validators.
+Set '--list-optional' to list which optional validators are supported, and how they are grouped by label.
 	
 More information about operator bundles and metadata:
 https://github.com/operator-framework/operator-registry/blob/master/docs/design/operator-bundle.md
@@ -55,7 +55,7 @@ To list and run optional validators, which are specified by a label selector:
   operatorhub    name=operatorhub           OperatorHub.io metadata validation
                  suite=operatorframework
 
-To validate a bundle with a superset of requirements for Operator Framework: 	
+To validate a bundle with a superset of requirements for Operator Framework:
 	
   $ operator-sdk bundle validate ./bundle --select-optional suite=operatorframework
 
