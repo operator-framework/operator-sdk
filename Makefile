@@ -144,7 +144,7 @@ export KIND_CLUSTER := operator-sdk-e2e
 export KUBEBUILDER_ASSETS := $(PWD)/$(TOOLS_DIR)
 test-e2e-setup: build
 	$(SCRIPTS_DIR)/fetch kind 0.9.0
-	$(SCRIPTS_DIR)/fetch envtest 0.6.3
+	$(SCRIPTS_DIR)/fetch envtest 0.7.0
 	$(SCRIPTS_DIR)/fetch kubectl $(K8S_VERSION) # Install kubectl AFTER envtest because envtest includes its own kubectl binary
 	[[ "`$(TOOLS_DIR)/kind get clusters`" =~ "$(KIND_CLUSTER)" ]] || $(TOOLS_DIR)/kind create cluster --image="kindest/node:v$(K8S_VERSION)" --name $(KIND_CLUSTER)
 
