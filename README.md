@@ -69,5 +69,5 @@ Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file f
 [license_file]:./LICENSE
 [of-home]: https://github.com/operator-framework
 [of-blog]: https://coreos.com/blog/introducing-operator-framework
-[operator-link]: https://coreos.com/operators/
+[operator-link]: https://kubernetes.io/docs/concepts/extend-kubernetes/operator/
 [sdk-docs]: https://sdk.operatorframework.io
