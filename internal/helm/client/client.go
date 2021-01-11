@@ -17,6 +17,7 @@ package client
 import (
 	"errors"
 	"io"
+	"strings"
 
 	"github.com/operator-framework/operator-lib/handler"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
@@ -144,7 +145,19 @@ func (c *ownerRefInjectingClient) Build(reader io.Reader, validate bool) (kube.R
 			return err
 		}
 
-		if useOwnerRef {
+		// If the resource contains the Helm 'keep' resource-policy annotation, then
+		// do not add the owner reference. So when the CR is deleted, the Kubernetes won't GCs
+		// the resource with the annotation.
+		containsKeepAnno := false
+		if u.GetAnnotations() != nil {
+			resourcePolicyType, ok := u.GetAnnotations()[kube.ResourcePolicyAnno]
+			if ok {
+				resourcePolicyType = strings.ToLower(strings.TrimSpace(resourcePolicyType))
+				containsKeepAnno = resourcePolicyType == kube.KeepPolicy
+			}
+		}
+
+		if useOwnerRef && !containsKeepAnno {
 			ownerRef := metav1.NewControllerRef(c.owner, c.owner.GroupVersionKind())
 			u.SetOwnerReferences([]metav1.OwnerReference{*ownerRef})
 		} else {
