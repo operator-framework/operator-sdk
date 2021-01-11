@@ -111,7 +111,7 @@ func (c bundleValidateCmd) run(logger *log.Entry, bundleRaw string) (res *intern
 			return res, err
 		}
 		defer func() {
-			if err = os.RemoveAll(c.directory); err != nil {
+			if err := os.RemoveAll(c.directory); err != nil {
 				logger.Errorf("Error removing temp bundle dir: %v", err)
 			}
 		}()
