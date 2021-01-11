@@ -6,7 +6,7 @@ description: >
     What is Operator SDK? Why should I use it?
 ---
 
-## What is Operator SDK and why should I use it? 
+## What is Operator SDK and why should I use it?
 
 This project is a component of the [Operator Framework][of-home], an open source toolkit to manage Kubernetes native applications, called Operators, in an effective, automated, and scalable way. Read more in the [introduction blog post][of-blog].
 
@@ -91,7 +91,7 @@ Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file f
 [license_file]:https://github.com/operator-framework/operator-sdk/blob/master/LICENSE
 [of-blog]: https://coreos.com/blog/introducing-operator-framework
 [of-home]: https://github.com/operator-framework
-[operator_link]: https://coreos.com/operators/
+[operator_link]: https://kubernetes.io/docs/concepts/extend-kubernetes/operator/
 [proposals_docs]: https://github.com/operator-framework/operator-sdk/tree/master/proposals
 [testdata_samples]: https://github.com/operator-framework/operator-sdk/tree/master/testdata
 [sdk_cli_ref]: /docs/cli/
