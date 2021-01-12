@@ -165,13 +165,13 @@ func (c *ownerRefInjectingClient) Build(reader io.Reader, validate bool) (kube.R
 }
 
 func containsResourcePolicyKeep(annotations map[string]string) bool {
-	if annotations != nil {
-		resourcePolicyType, ok := annotations[kube.ResourcePolicyAnno]
-		if ok {
-			resourcePolicyType = strings.ToLower(strings.TrimSpace(resourcePolicyType))
-			return resourcePolicyType == kube.KeepPolicy
-		}
+	if annotations == nil {
+		return false
 	}
-
-	return false
+	resourcePolicyType, ok := annotations[kube.ResourcePolicyAnno]
+	if !ok {
+		return false
+	}
+	resourcePolicyType = strings.ToLower(strings.TrimSpace(resourcePolicyType))
+	return resourcePolicyType == kube.KeepPolicy
 }
