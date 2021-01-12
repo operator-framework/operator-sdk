@@ -1,0 +1,4 @@
+entries:
+  - description: >
+      Upgraded the `kudobuilder/kuttl` base image version in the `scorecard-test-kuttl` image to v0.8.0
+    kind: change
