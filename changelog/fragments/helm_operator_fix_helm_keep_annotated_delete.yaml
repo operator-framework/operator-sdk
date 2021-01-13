@@ -1,0 +1,5 @@
+entries:
+  - description: >
+      For Helm-based operators, do not add owner references to resources that contain the Helm annotation: 'helm.sh/resource-policy: keep'.
+    kind: bugfix
+    breaking: false
