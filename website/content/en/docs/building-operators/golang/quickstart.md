@@ -19,7 +19,7 @@ This guide walks through an example of building a simple memcached-operator usin
   ```sh
   mkdir memcached-operator
   cd memcached-operator
-  operator-sdk init --domain example.com --repo github.com/example-inc/memcached-operator
+  operator-sdk init --domain example.com --repo github.com/example/memcached-operator
   ```
 
 1. Create a simple Memcached API:
