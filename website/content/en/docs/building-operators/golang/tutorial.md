@@ -23,7 +23,7 @@ mkdir -p $HOME/projects/memcached-operator
 cd $HOME/projects/memcached-operator
 # we'll use a domain of example.com
 # so all API groups will be <group>.example.com
-operator-sdk init --domain example.com --repo github.com/example-inc/memcached-operator
+operator-sdk init --domain example.com --repo github.com/example/memcached-operator
 ```
 
 To learn about the project directory structure, see [Kubebuilder project layout][kubebuilder_layout_doc] doc.
@@ -217,7 +217,7 @@ Every Controller has a Reconciler object with a `Reconcile()` method that implem
 import (
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	cachev1alpha1 "github.com/example-inc/memcached-operator/api/v1alpha1"
+	cachev1alpha1 "github.com/example/memcached-operator/api/v1alpha1"
 	...
 )
 

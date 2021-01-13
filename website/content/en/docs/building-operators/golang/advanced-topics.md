@@ -43,7 +43,7 @@ The operator's Manager supports the core Kubernetes resource types as found in t
 
 ```Go
 import (
-    cachev1alpha1 "github.com/example-inc/memcached-operator/api/v1alpha1
+    cachev1alpha1 "github.com/example/memcached-operator/api/v1alpha1
     ...
 )
 
