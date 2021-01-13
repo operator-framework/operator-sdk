@@ -18,5 +18,5 @@ entries:
         By using the make target `make bundle` or the command `operator-sdk generate bundle` the default channel name configured
         for the bundle was `alpha` and for now on, SDK will use `preview` as default the channel name instead.
 
-        To update the channel name used in the bundle of your project to use the new default value run `make bundle`.
+        To update the project bundle's channel name to the new default, run `make bundle`.
         To know more about the OLM channel name see: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/channel-naming.md#naming
