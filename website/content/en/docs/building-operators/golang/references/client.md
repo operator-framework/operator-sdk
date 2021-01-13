@@ -316,7 +316,7 @@ Example:
 ```Go
 import (
     "context"
-    cachev1alpha1 "github.com/example-inc/memcached-operator/pkg/apis/cache/v1alpha1"
+    cachev1alpha1 "github.com/example/memcached-operator/pkg/apis/cache/v1alpha1"
     ctrl "sigs.k8s.io/controller-runtime"
 )
 

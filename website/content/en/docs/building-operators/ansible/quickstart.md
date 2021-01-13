@@ -32,7 +32,7 @@ This guide walks through an example of building a simple memcached-operator powe
 Make sure to define `IMG` when you call `make`:
 
   ```sh
-  export OPERATOR_IMG="quay.io/example-inc/memcached-operator:v0.0.1"
+  export OPERATOR_IMG="quay.io/example/memcached-operator:v0.0.1"
   make docker-build docker-push IMG=$OPERATOR_IMG
   ```
 
@@ -50,7 +50,7 @@ Make sure to define `IMG` when you call `make`:
   ```sh
   make bundle IMG=$OPERATOR_IMG
   # Note the "-bundle" component in the image name below.
-  export BUNDLE_IMG="quay.io/example-inc/memcached-operator-bundle:v0.0.1"
+  export BUNDLE_IMG="quay.io/example/memcached-operator-bundle:v0.0.1"
   make bundle-build BUNDLE_IMG=$BUNDLE_IMG
   make docker-push IMG=$BUNDLE_IMG
   ```
