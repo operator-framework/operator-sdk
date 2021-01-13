@@ -66,7 +66,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	cachev1alpha1 "github.com/example-inc/app-operator/apis/cache/v1alpha1"
+	cachev1alpha1 "github.com/example/app-operator/apis/cache/v1alpha1"
 )
 
 ...
