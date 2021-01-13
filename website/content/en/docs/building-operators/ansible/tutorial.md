@@ -235,7 +235,6 @@ Ensure that the memcached operator creates the deployment for the sample CR with
 ```console
 $ kubectl get deployment
 NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE
-memcached-operator-controller-manager   1/1     1            1           8m
 memcached-sample                        3/3     3            3           1m
 ```
 
@@ -284,7 +283,6 @@ Confirm that the operator changes the deployment size:
 ```console
 $ kubectl get deployment
 NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE
-memcached-operator-controller-manager   1/1     1            1           10m
 memcached-sample                        5/5     5            5           3m
 ```
 
