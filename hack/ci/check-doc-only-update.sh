@@ -22,7 +22,6 @@ DOC_PATTERNS=(
   "^(MAINTAINERS)"
   "^(SECURITY)"
   "^(LICENSE)"
-  "^(\.github/workflows/)"
 )
 
 if ! git diff --name-only $1 | grep -qvE "$(IFS="|"; echo "${DOC_PATTERNS[*]}")"; then
