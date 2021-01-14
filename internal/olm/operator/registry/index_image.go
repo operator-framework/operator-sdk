@@ -99,19 +99,13 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 	}
 	annotationsNotFound := len(existingItems) == 0
 
-	if annotationsNotFound && cs.Spec.Image != "" {
+	if annotationsNotFound {
+		if cs.Spec.Image == "" {
+			// if no annotations exist and image reference is empty, error out
+			return errors.New("cannot upgrade: no catalog image reference exists in catalog source spec or annotations")
+		}
 		// if no annotations exist and image reference exists, set it to index image
 		c.IndexImage = cs.Spec.Image
-	} else if annotationsNotFound && cs.Spec.Image == "" {
-		// if no annotations exist and image reference is empty, error out
-		return errors.New("annotations and catalog source image reference don't exist")
-	}
-
-	updateFields := func(*v1alpha1.CatalogSource) {
-		// set `spec.Image` field to empty as we set the address in
-		// catalog source to registry pod IP
-		cs.Spec.Image = ""
-
 	}
 
 	// Default add mode here since it depends on an existing annotation.
@@ -125,6 +119,13 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 
 	newItem := index.BundleItem{ImageTag: c.BundleImage, AddMode: c.BundleAddMode}
 	existingItems = append(existingItems, newItem)
+
+	updateFields := func(cs *v1alpha1.CatalogSource) {
+		// set `spec.Image` field to empty as we set the address in
+		// catalog source to registry pod IP
+		cs.Spec.Image = ""
+
+	}
 
 	if err := c.createAnnotatedRegistry(ctx, cs, existingItems, updateFields); err != nil {
 		return fmt.Errorf("error creating registry pod: %v", err)
