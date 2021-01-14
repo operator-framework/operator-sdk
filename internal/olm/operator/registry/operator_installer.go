@@ -119,19 +119,6 @@ func (o OperatorInstaller) UpgradeOperator(ctx context.Context) (*v1alpha1.Clust
 
 	log.Infof("Found existing subscription with name %s and namespace %s", subscription.Name, subscription.Namespace)
 
-	// todo: attempt #1 to trigger install plan for the subscription and
-	// to make it detect catalog changes, as per OLM suggestion
-	if err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		// set the startingCSV to empty
-		subscription.Spec.StartingCSV = ""
-		if err := o.cfg.Client.Update(ctx, subscription); err != nil {
-			return fmt.Errorf("error updating subscription: %v", err)
-		}
-		return nil
-	}); err != nil {
-		return nil, err
-	}
-
 	// Get existing catalog source from the subsription
 	catsrcKey := types.NamespacedName{
 		Namespace: subscription.Spec.CatalogSourceNamespace,
