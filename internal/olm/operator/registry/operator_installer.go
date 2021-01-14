@@ -152,9 +152,11 @@ func (o OperatorInstaller) UpgradeOperator(ctx context.Context) (*v1alpha1.Clust
 		return nil, err
 	}
 
-	// Approve Install Plan for the subscription
-	if err = o.approveInstallPlan(ctx, subscription); err != nil {
-		return nil, err
+	// approve the install plan only if subscription is set to manual approval
+	if subscription.Spec.InstallPlanApproval == v1alpha1.ApprovalManual {
+		if err = o.approveInstallPlan(ctx, subscription); err != nil {
+			return nil, err
+		}
 	}
 
 	// Wait for successfully installed CSV
@@ -329,6 +331,12 @@ func (o OperatorInstaller) approveInstallPlan(ctx context.Context, sub *v1alpha1
 		if err := o.cfg.Client.Get(ctx, ipKey, &ip); err != nil {
 			return fmt.Errorf("error getting install plan: %v", err)
 		}
+
+		// if an install plan has been successfully generated but the phase is not complete, then error out
+		if ip.Status.Phase != v1alpha1.InstallPlanPhaseComplete {
+			return fmt.Errorf("install plan phase is not complete")
+		}
+
 		// approve the install plan by setting Approved to true
 		ip.Spec.Approved = true
 		if err := o.cfg.Client.Update(ctx, &ip); err != nil {
@@ -346,6 +354,10 @@ func (o OperatorInstaller) approveInstallPlan(ctx context.Context, sub *v1alpha1
 
 // waitForInstallPlan verifies if an Install Plan exists through subscription status
 func (o OperatorInstaller) waitForInstallPlan(ctx context.Context, sub *v1alpha1.Subscription) error {
+	if sub.Status.InstallPlanRef == nil {
+		return fmt.Errorf("subscription status does not have an install plan reference")
+	}
+
 	subKey := types.NamespacedName{
 		Namespace: sub.GetNamespace(),
 		Name:      sub.GetName(),
