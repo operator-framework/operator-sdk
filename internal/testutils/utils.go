@@ -148,7 +148,7 @@ func ReplaceRegexInFile(path, match, replace string) error {
 		return err
 	}
 	s := matcher.ReplaceAllString(string(b), replace)
-	if err != nil {
+	if s == string(b) {
 		return errors.New("unable to find the content to be replaced")
 	}
 	err = ioutil.WriteFile(path, []byte(s), info.Mode())
