@@ -79,12 +79,12 @@ This will scaffold the Memcached resource API at `api/v1alpha1/memcached_types.g
 
 For an in-depth explanation of Kubernetes APIs and the group-version-kind model, check out these [kubebuilder docs][kb-doc-gkvs].
 
-In general, it's recommended to have one controller responsible for manage each API(CRD) created on the project in order to 
-not go against the design goals set by [controller-runtime][controller-runtime].
+In general, it's recommended to have one controller responsible for manage each API created for the project to 
+properly follow the design goals set by [controller-runtime][controller-runtime].
 
 ### Define the API
 
-In this example, we will define that the Memcached Kind (CRD) will have a `MemcachedSpec.Size` field which will specify the quantity of Memcached instances will be deployed, and a `MemcachedStatus.Nodes` field that will store a CR's Pod names.
+To begin, we will represent our API by defining the `Memcached` type, which will have a `MemcachedSpec.Size` field to set the quantity of memcached instances (CRs) to be deployed, and a `MemcachedStatus.Nodes` field to store a CR's Pod names.
 
 **Note** The Node field is just to illustrate an example of a Status field. In real cases, it would be recommended to use [Conditions][conditionals].
 
@@ -125,7 +125,7 @@ After modifying the `*_types.go` file always run the following command to update
 make generate
 ```
 
-**Note**: The above makefile target will invoke the [controller-gen][controller_tools] utility to update the `api/v1alpha1/zz_generated.deepcopy.go` file to ensure our API's Go type definitons implement the `runtime.Object` interface that all Kind types must implement.
+The above makefile target will invoke the [controller-gen][controller_tools] utility to update the `api/v1alpha1/zz_generated.deepcopy.go` file to ensure our API's Go type definitons implement the `runtime.Object` interface that all Kind types must implement.
 
 ### Generating CRD manifests
 
@@ -137,7 +137,10 @@ make manifests
 
 This makefile target will invoke [controller-gen][controller_tools] to generate the CRD manifests at `config/crd/bases/cache.example.com_memcacheds.yaml`.
 
-**Note** If you would like to read further into CRD validation, see the [OpenAPI valiation][openapi-validation] doc.
+### OpenAPI validation
+
+OpenAPI validation defined in a CRD ensures CRs are validated based on a set of declarative rules. All CRDs should have validation.
+See the [OpenAPI valiation][openapi-validation] doc for details.
 
 ## Implement the Controller
 
@@ -189,31 +192,7 @@ There are a number of other useful configurations that can be made when initialz
 
 ### Reconcile loop
 
-The reconcile function is responsible for synchronizing the desired state as represented by their Specs and the actual state of the system. In this way, it works like a loop, and it does not stop until all conditionals match its implementation. 
-
-The following are a few possible return options to restart the Reconcile:
-
-- With the error:
-```go
-return ctrl.Result{}, err
-```
-
-- Without an error:
-```go
-return ctrl.Result{Requeue: true}, nil
-```
-
-- Therefore, to stop the Reconcile, use:
-```go
-return ctrl.Result{}, nil
-```
-
-- Reconcile again after X time:
-```go
-return ctrl.Result{RequeueAfter: nextRun.Sub(r.Now())}, nil
-```
-
-**Note:** For more details, check the Reconcile and its [Reconcile godoc][reconcile-godoc].
+The reconcile function is responsible for enforcing the desired CR state on the actual state of the system. It runs each time an event occurs on a watched CR or resource, and will return some value depending on whether those states match or not.
 
 In this way, every Controller has a Reconciler object with a `Reconcile()` method that implements the reconcile loop. The reconcile loop is passed the [`Request`][request-go-doc] argument which is a Namespace/Name key used to lookup the primary resource object, Memcached, from the cache:
 
@@ -234,6 +213,27 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 ```
 
 For a guide on Reconcilers, Clients, and interacting with resource Events, see the [Client API doc][doc_client_api].
+
+The following are a few possible return options for a Reconciler:
+
+- With the error:
+  ```go
+  return ctrl.Result{}, err
+  ```
+- Without an error:
+  ```go
+  return ctrl.Result{Requeue: true}, nil
+  ```
+- Therefore, to stop the Reconcile, use:
+  ```go
+  return ctrl.Result{}, nil
+  ```
+- Reconcile again after X time:
+  ```go
+   return ctrl.Result{RequeueAfter: nextRun.Sub(r.Now())}, nil
+   ```
+
+For more details, check the Reconcile and its [Reconcile godoc][reconcile-godoc].
 
 ### Specify permissions and generate RBAC manifests
 
@@ -265,8 +265,11 @@ There are three ways to run the operator:
 - As a Deployment inside a Kubernetes cluster
 - Managed by the [Operator Lifecycle Manager (OLM)][doc-olm] in [bundle][quickstart-bundle] format
 
+### 1. Run locally outside the cluster
 
 The following steps will show how to deploy the operator on the Cluster. However, to run locally for development purposes and outside of a Cluster use the target `make install run`.
+
+### 2. Run as a Deployment inside the cluster
 
 ### Build and push the image
 
@@ -421,10 +424,11 @@ make undeploy
 
 ## Further steps
 
-Now, check how to integrate your project with [OLM][olm-integration] to know how to distribute your project and, for example, publish your projects in the https://operatorhub.io/. 
+Next, try adding the following to your project:
+1. Validating and mutating [admission webhooks][create_a_webhook].
+2. Operator packaging and distribution with [OLM][olm-integration].
 
 Also see the [advanced topics][advanced_topics] doc for more use cases and under the hood details. 
-
 
 [legacy-quickstart-doc]:https://v0-19-x.sdk.operatorframework.io/docs/golang/legacy/quickstart/
 [migration-guide]:/docs/building-operators/golang/migration

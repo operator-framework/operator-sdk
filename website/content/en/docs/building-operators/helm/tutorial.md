@@ -13,6 +13,14 @@ please [migrate][migration-guide], or consult the [legacy docs][legacy-quickstar
 - Go through the [installation guide][install-guide].
 - User authorized with `cluster-admin` permissions.
 
+## Overview
+
+We will create a sample project to let you know how it works and this sample will:
+
+- Create a Memcached Deployment if it doesn't exist
+- Ensure that the Deployment size is the same as specified by the Memcached CR spec
+- Update the Memcached CR status using the status writer with the names of the memcached pods
+
 ## Create a new project
 
 Use the CLI to create a new Helm-based nginx-operator project:
