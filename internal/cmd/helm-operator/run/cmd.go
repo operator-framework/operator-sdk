@@ -33,6 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 	crmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 
+	"github.com/operator-framework/operator-sdk/internal/clientbuilder"
 	"github.com/operator-framework/operator-sdk/internal/helm/controller"
 	"github.com/operator-framework/operator-sdk/internal/helm/flags"
 	"github.com/operator-framework/operator-sdk/internal/helm/metrics"
@@ -102,7 +103,7 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 		LeaderElectionID:           f.LeaderElectionID,
 		LeaderElectionResourceLock: resourcelock.ConfigMapsResourceLock,
 		LeaderElectionNamespace:    f.LeaderElectionNamespace,
-		ClientBuilder:              manager.NewClientBuilder(),
+		ClientBuilder:              clientbuilder.NewUnstructedCached(),
 	}
 
 	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
