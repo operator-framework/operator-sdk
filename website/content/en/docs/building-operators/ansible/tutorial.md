@@ -52,7 +52,7 @@ See [scaffolded files reference][layout-doc] and [watches reference][ansible-wat
 
 Now we need to provide the reconcile logic, in the form of an Ansible
 Role, which will run every time a `Memcached` resource is created,
-updated, or delete.
+updated, or deleted.
 
 Update `roles/memcached/tasks/main.yml`:
 
