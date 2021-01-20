@@ -10,9 +10,9 @@ please [migrate][migration-guide], or consult the [legacy docs][legacy-quickstar
 
 ## Prerequisites
 
-- [Install operator-sdk][operator_install] and its prequisites.
+- Go through the [installation guide][install-guide].
 - Access to a Kubernetes v1.11.3+ cluster (v1.16.0+ if using `apiextensions.k8s.io/v1` CRDs).
-- User logged with admin permission. See [how to grant yourself cluster-admin privileges or be logged in as admin][role-based-access-control]
+- User authorized with `cluster-admin` permissions.
 
 ## Create a new project
 
@@ -314,6 +314,13 @@ make docker-build docker-push IMG=quay.io/$USERNAME/memcached-operator:v0.0.1
 **Note**: The name and tag of the image (`IMG=<some-registry>/<project-name>:tag`) in both the commands can also be set in the Makefile.
 Modify the line which has `IMG ?= controller:latest` to set your desired default image name.
 
+**Note**: If using an OS which does not point `sh` to the `bash` shell (Ubuntu for example) then you should add the following line to the `Makefile`:
+
+`SHELL := /bin/bash`
+
+This will fix potential issues when the `docker-build` target runs the controller test suite. Issues maybe similar to following error:
+`failed to start the controlplane. retried 5 times: fork/exec /usr/local/kubebuilder/bin/etcd: no such file or directory occurred`
+
 #### Deploy the operator
 
 By default, a new namespace is created with name `<project-name>-system`, i.e. memcached-operator-system and will be used for the deployment.
@@ -386,7 +393,6 @@ Ensure that the memcached operator creates the deployment for the sample CR with
 ```console
 $ kubectl get deployment
 NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE
-memcached-operator-controller-manager   1/1     1            1           8m
 memcached-sample                        3/3     3            3           1m
 ```
 
@@ -435,7 +441,6 @@ Confirm that the operator changes the deployment size:
 ```console
 $ kubectl get deployment
 NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE
-memcached-operator-controller-manager   1/1     1            1           10m
 memcached-sample                        5/5     5            5           3m
 ```
 
