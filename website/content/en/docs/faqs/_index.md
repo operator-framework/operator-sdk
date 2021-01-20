@@ -4,6 +4,18 @@ linkTitle: FAQ
 weight: 10
 ---
 
+## What are the the differences between Kubebuilder and Operator-SDK?
+
+Kubebuilder and Operator SDK are both projects that allow you to quickly create and manage an operator project. Operator SDK uses Kubebuilder under the hood to do so for Go projects, such that the `operator-sdk` CLI tool will work with a project created by `kubebuilder`. Therefore each project makes use of [controller-runtime][controller-runtime] and will have the same [basic layout][kb-doc-what-is-a-basic-project].
+
+Operator SDK offers additional features on top of the basic project scaffolding that Kubebuilder provides. By default, `operator-sdk init` generates a project integrated with: 
+- [Operator Lifecycle Manager][olm], an installation and runtime management system for operators
+- [OperatorHub][operatorhub.io], a community hub for publishing operators
+- Operator SDK [scorecard][scorecard-doc], a tool for ensuring operator best-practices and developing cluster tests
+Operator SDK supports operator types other than Go as well, such as Ansible and Helm.
+
+For further context about the relationship between Kubebuilder and Operator SDK, see [this blog post][operator-sdk-reaches-v1.0].
+
 ## Controller Runtime FAQ
 
 Please see the upstream [Controller Runtime FAQ][cr-faq] first for any questions related to runtime mechanics or controller-runtime APIs.
@@ -110,11 +122,16 @@ by adding an RBAC directive to generate a `config/rbac/role.yaml` with `update` 
 Now run `make manifests` to update your `role.yaml`.
 
 
-[kube-apiserver_options]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options
-[controller-runtime_faq]: https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md#q-how-do-i-have-different-logic-in-my-reconciler-for-different-types-of-events-eg-create-update-delete
-[finalizer]:/docs/building-operators/golang/advanced-topics/#handle-cleanup-on-deletion
-[cr-faq]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md
 [client.Reader]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#Reader
-[rbac]:https://kubernetes.io/docs/reference/access-authn-authz/rbac/
+[controller-runtime]: https://github.com/kubernetes-sigs/controller-runtime
+[cr-faq]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md
+[finalizer]:/docs/building-operators/golang/advanced-topics/#handle-cleanup-on-deletion
+[kb-doc-what-is-a-basic-project]: https://book.kubebuilder.io/cronjob-tutorial/basic-project.html
+[kube-apiserver_options]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options
+[olm]:  https://github.com/operator-framework/operator-lifecycle-manager
+[operator-sdk-reaches-v1.0]: https://www.openshift.com/blog/operator-sdk-reaches-v1.0 
+[operatorhub.io]: https://operatorhub.io/
 [owner-references-permission-enforcement]: https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#ownerreferencespermissionenforcement
 [rbac-markers]: https://book.kubebuilder.io/reference/markers/rbac.html
+[rbac]:https://kubernetes.io/docs/reference/access-authn-authz/rbac/
+[scorecard-doc]: https://sdk.operatorframework.io/docs/advanced-topics/scorecard/
