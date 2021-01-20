@@ -10,7 +10,7 @@ This guide walks through an example of building a simple memcached-operator usin
 ## Prerequisites
 
 - Go through the [installation guide][install-guide].
-- User authorized with `cluster-admin` permissions
+- User authorized with `cluster-admin` permissions.
 
 ## Steps
 
@@ -37,6 +37,12 @@ Make sure to define `IMG` when you call `make`:
   make docker-build docker-push IMG=$OPERATOR_IMG
   ```
 
+**Note**: If using an OS which does not point `sh` to the `bash` shell (Ubuntu for example) then you should add the following line to the `Makefile`:
+
+`SHELL := /bin/bash`
+
+This will fix potential issues when the `docker-build` target runs the controller test suite. Issues maybe similar to following error:
+`failed to start the controlplane. retried 5 times: fork/exec /usr/local/kubebuilder/bin/etcd: no such file or directory occurred`
 
 ### OLM deployment
 
