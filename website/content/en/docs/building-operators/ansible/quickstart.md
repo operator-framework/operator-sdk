@@ -36,7 +36,6 @@ Make sure to define `IMG` when you call `make`:
   make docker-build docker-push IMG=$OPERATOR_IMG
   ```
 
-
 ### OLM deployment
 
 1. Install [OLM][doc-olm]:
