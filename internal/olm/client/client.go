@@ -324,16 +324,14 @@ func (c Client) checkPodErrors(ctx context.Context, depSelectors *metav1.LabelSe
 	}
 	for _, p := range podList.Items {
 		for _, cs := range p.Status.ContainerStatuses {
-			if !cs.Ready {
-				if cs.State.Waiting != nil {
-					containerName := p.Name + ":" + cs.Name
-					podErr = append(podErr, podError{
-						resourceError{
-							name:  containerName,
-							issue: cs.State.Waiting.Message,
-						},
-					})
-				}
+			if !cs.Ready && cs.State.Waiting != nil {
+				containerName := p.Name + ":" + cs.Name
+				podErr = append(podErr, podError{
+					resourceError{
+						name:  containerName,
+						issue: cs.State.Waiting.Message,
+					},
+				})
 			}
 		}
 	}
