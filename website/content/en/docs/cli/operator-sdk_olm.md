@@ -5,10 +5,6 @@ title: "operator-sdk olm"
 
 Manage the Operator Lifecycle Manager installation in your cluster
 
-### Synopsis
-
-Manage the Operator Lifecycle Manager installation in your cluster
-
 ### Options
 
 ```

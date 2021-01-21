@@ -5,10 +5,6 @@ title: "operator-sdk run bundle-upgrade"
 
 Upgrade an Operator previously installed in the bundle format with OLM
 
-### Synopsis
-
-Upgrade an Operator previously installed in the bundle format with OLM
-
 ```
 operator-sdk run bundle-upgrade <bundle-image> [flags]
 ```
