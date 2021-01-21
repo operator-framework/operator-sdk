@@ -27,6 +27,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/chartutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds"
 	"github.com/operator-framework/operator-sdk/internal/plugins/manifests"
+	manifestsv2 "github.com/operator-framework/operator-sdk/internal/plugins/manifests/v2"
 )
 
 type createAPISubcommand struct {
@@ -136,8 +137,24 @@ func (p *createAPISubcommand) Run() error {
 
 // SDK phase 2 plugins.
 func (p *createAPISubcommand) runPhase2() error {
-	gvk := p.createOptions.GVK
-	return manifests.RunCreateAPI(p.config, config.GVK{Group: gvk.Group, Version: gvk.Version, Kind: gvk.Kind})
+	ogvk := p.createOptions.GVK
+	gvk := config.GVK{Group: ogvk.Group, Version: ogvk.Version, Kind: ogvk.Kind}
+
+	// Initially the helm/v1 plugin was written to not create a "plugins" config entry
+	// for any phase 2 plugin because they did not have their own keys. Now there are phase 2
+	// plugin keys, so those plugins should be run if keys exist. Otherwise, enact old behavior.
+
+	if manifestsv2.HasPluginConfig(p.config) {
+		if err := manifestsv2.RunCreateAPI(p.config, gvk); err != nil {
+			return err
+		}
+	} else {
+		if err := manifests.RunCreateAPI(p.config, gvk); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // Validate perform the required validations for this plugin

@@ -1,0 +1,22 @@
+entries:
+  - description: >
+      (ansible/v1, helm/v1, go/v2) Added plugin keys for the `manifests` and `scorecard` phase 2 plugins
+    kind: addition
+    breaking: false
+    migration:
+      header: Add `manifests` and `scorecard` plugin keys to your PROJECT
+      body: >
+        The `manifests` and `scorecard` plugins that create OLM and scorecard manifests, respectively,
+        now have plugin keys that direct `create` subcommands to create related files. While not necessary
+        to add, the following plugin configuration objects in the PROJECT file will be useful in the future
+        as configuration options are added to their respective plugins:
+
+        ```yaml
+        version: 3-alpha
+        ...
+        plugins:
+          manifests.sdk.operatorframework.io/v2: {}
+          scorecard.sdk.operatorframework.io/v2: {}
+        ```
+
+        For Go projects, you can replace `go.sdk.operatorframework.io/v2-alpha: {}` line with the above two keys.
