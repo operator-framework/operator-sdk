@@ -5,10 +5,6 @@ title: "operator-sdk run bundle"
 
 Deploy an Operator in the bundle format with OLM
 
-### Synopsis
-
-Deploy an Operator in the bundle format with OLM
-
 ```
 operator-sdk run bundle <bundle-image> [flags]
 ```

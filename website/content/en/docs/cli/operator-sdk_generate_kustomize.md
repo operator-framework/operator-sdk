@@ -5,10 +5,6 @@ title: "operator-sdk generate kustomize"
 
 Contains subcommands that generate operator-framework kustomize data for the operator
 
-### Synopsis
-
-Contains subcommands that generate operator-framework kustomize data for the operator
-
 ### Options
 
 ```
