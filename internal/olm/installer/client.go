@@ -28,7 +28,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/blang/semver"
+	"github.com/blang/semver/v4"
 	olmapiv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	olmmanifests "github.com/operator-framework/operator-sdk/internal/bindata/olm"
 	log "github.com/sirupsen/logrus"

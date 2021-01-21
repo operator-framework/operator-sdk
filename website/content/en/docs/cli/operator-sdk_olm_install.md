@@ -5,10 +5,6 @@ title: "operator-sdk olm install"
 
 Install Operator Lifecycle Manager in your cluster
 
-### Synopsis
-
-Install Operator Lifecycle Manager in your cluster
-
 ```
 operator-sdk olm install [flags]
 ```

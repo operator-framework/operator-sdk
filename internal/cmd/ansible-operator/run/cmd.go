@@ -41,6 +41,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/ansible/proxy/controllermap"
 	"github.com/operator-framework/operator-sdk/internal/ansible/runner"
 	"github.com/operator-framework/operator-sdk/internal/ansible/watches"
+	"github.com/operator-framework/operator-sdk/internal/clientbuilder"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/internal/version"
 )
@@ -107,7 +108,7 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 		LeaderElectionID:           f.LeaderElectionID,
 		LeaderElectionResourceLock: resourcelock.ConfigMapsResourceLock,
 		LeaderElectionNamespace:    f.LeaderElectionNamespace,
-		ClientBuilder:              manager.NewClientBuilder(),
+		ClientBuilder:              clientbuilder.NewUnstructedCached(),
 	}
 
 	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)

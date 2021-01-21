@@ -5,10 +5,6 @@ title: "operator-sdk completion bash"
 
 Generate bash completions
 
-### Synopsis
-
-Generate bash completions
-
 ```
 operator-sdk completion bash [flags]
 ```
