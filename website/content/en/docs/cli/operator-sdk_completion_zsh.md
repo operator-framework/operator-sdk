@@ -5,10 +5,6 @@ title: "operator-sdk completion zsh"
 
 Generate zsh completions
 
-### Synopsis
-
-Generate zsh completions
-
 ```
 operator-sdk completion zsh [flags]
 ```

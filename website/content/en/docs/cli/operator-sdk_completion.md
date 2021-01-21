@@ -5,10 +5,6 @@ title: "operator-sdk completion"
 
 Generators for shell completions
 
-### Synopsis
-
-Generators for shell completions
-
 ### Options
 
 ```

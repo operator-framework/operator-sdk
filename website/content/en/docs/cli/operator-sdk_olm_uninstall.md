@@ -5,10 +5,6 @@ title: "operator-sdk olm uninstall"
 
 Uninstall Operator Lifecycle Manager from your cluster
 
-### Synopsis
-
-Uninstall Operator Lifecycle Manager from your cluster
-
 ```
 operator-sdk olm uninstall [flags]
 ```

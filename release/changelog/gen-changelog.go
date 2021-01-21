@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/blang/semver"
+	"github.com/blang/semver/v4"
 	log "github.com/sirupsen/logrus"
 
 	util "github.com/operator-framework/operator-sdk/release/changelog/internal"
