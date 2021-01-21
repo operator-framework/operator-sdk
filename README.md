@@ -61,6 +61,16 @@ The following matrix defines which architectures are supported for MacOS Darwin:
 
 Support for the Windows platform is not on the roadmap at this time.
 
+## Community and how to get involved
+
+- [Operator framework community][operator-framework-community]
+- [Communication channels][operator-framework-communication]
+- [Project meetings][operator-framework-meetings]
+
+## How to contribute
+
+Check out the [contributor documentation][contribution-docs].
+
 ## License
 
 Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file for details.
@@ -71,3 +81,7 @@ Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file f
 [of-blog]: https://coreos.com/blog/introducing-operator-framework
 [operator-link]: https://kubernetes.io/docs/concepts/extend-kubernetes/operator/
 [sdk-docs]: https://sdk.operatorframework.io
+[operator-framework-community]: https://github.com/operator-framework/community
+[operator-framework-communication]: https://github.com/operator-framework/community#get-involved
+[operator-framework-meetings]: https://github.com/operator-framework/community#meetings
+[contribution-docs]: https://sdk.operatorframework.io/docs/contribution-guidelines/
