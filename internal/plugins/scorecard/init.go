@@ -15,60 +15,26 @@
 package scorecard
 
 import (
-	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"text/template"
 
-	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
-	"sigs.k8s.io/yaml"
+	"sigs.k8s.io/kubebuilder/v2/pkg/model/file"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/util/kustomize"
 	"github.com/operator-framework/operator-sdk/internal/scorecard"
 	"github.com/operator-framework/operator-sdk/internal/version"
 )
 
-// scorecardVersion is set to the version of scorecard at compile-time.
-var scorecardVersion = version.ImageVersion
+var (
+	// defaultTestImageTag points to the latest released scorecard-test image.
+	defaultTestImageTag = fmt.Sprintf("quay.io/operator-framework/scorecard-test:%s", version.ImageVersion)
 
-const (
-	// kustomization.yaml file template for the scorecard componentconfig. This should always be written to
-	// config/scorecard/kustomization.yaml since it only references files in config.
-	scorecardKustomizationTemplate = `resources:
-{{- range $i, $path := .ResourcePaths }}
-- {{ $path }}
-{{- end }}
-patchesJson6902:
-{{- range $i, $patch := .JSONPatches }}
-- path: {{ $patch.Path }}
-  target:
-    group: {{ $patch.Target.Group }}
-    version: {{ $patch.Target.Version }}
-    kind: {{ $patch.Target.Kind }}
-    name: {{ $patch.Target.Name }}
-{{- end }}
-`
-
-	// YAML file fragment to append to kustomization.yaml files.
-	kubebuilderScaffoldMarkerFragment = "# +kubebuilder:scaffold:patchesJson6902\n"
+	// defaultDir is the default directory in which to generate kustomize bases and the kustomization.yaml.
+	defaultDir = filepath.Join("config", "scorecard")
 )
-
-const (
-	// defaultConfigName is the default scorecard componentconfig's metadata.name,
-	// which must be set on all kustomize-able bases. This name is only used for
-	// `kustomize build` pattern match and not for on-cluster creation.
-	defaultConfigName = "config"
-)
-
-// defaultTestImageTag points to the latest-released image.
-var defaultTestImageTag = fmt.Sprintf("quay.io/operator-framework/scorecard-test:%s", scorecardVersion)
-
-// defaultDir is the default directory in which to generate kustomize bases and the kustomization.yaml.
-var defaultDir = filepath.Join("config", "scorecard")
 
 // RunInit scaffolds kustomize files for kustomizing a scorecard componentconfig.
 func RunInit(cfg *config.Config) error {
@@ -77,198 +43,147 @@ func RunInit(cfg *config.Config) error {
 		return nil
 	}
 
-	return generate(defaultTestImageTag, defaultDir)
+	return generateInit(defaultDir)
 }
 
-// scorecardKustomizationValues holds data required to generate a scorecard's kustomization.yaml.
-type scorecardKustomizationValues struct {
-	ResourcePaths []string
-	JSONPatches   []kustomizationJSON6902Patch
-}
-
-// kustomizationJSON6902Patch holds path and target data to write a patchesJson6902 list in a kustomization.yaml.
-type kustomizationJSON6902Patch struct {
-	Path   string
-	Target patchTarget
-}
-
-// patchTarget holds target data for a kustomize patch.
-type patchTarget struct {
-	schema.GroupVersionKind
-	Name string
-}
-
-// generate scaffolds kustomize bundle bases and a kustomization.yaml.
+// generateInit scaffolds kustomize bundle bases and a kustomization.yaml.
 // TODO(estroz): refactor this to be testable (in-mem fs) and easier to read.
-func generate(testImageTag, outputDir string) error {
+func generateInit(outputDir string) error {
 
-	kustomizationValues := scorecardKustomizationValues{}
-
-	// Config bases.
 	basesDir := filepath.Join(outputDir, "bases")
-	if err := os.MkdirAll(basesDir, 0755); err != nil {
-		return err
-	}
-
-	configBase := newConfigurationBase(defaultConfigName)
-	b, err := yaml.Marshal(configBase)
-	if err != nil {
-		return fmt.Errorf("error marshaling default config: %v", err)
-	}
-	relBasePath := filepath.Join("bases", scorecard.ConfigFileName)
-	basePath := filepath.Join(basesDir, scorecard.ConfigFileName)
-	if err := ioutil.WriteFile(basePath, b, 0666); err != nil {
-		return fmt.Errorf("error writing default scorecard config: %v", err)
-	}
-	kustomizationValues.ResourcePaths = append(kustomizationValues.ResourcePaths, relBasePath)
-	scorecardConfigTarget := patchTarget{
-		GroupVersionKind: v1alpha3.GroupVersion.WithKind(v1alpha3.ConfigurationKind),
-		Name:             defaultConfigName,
-	}
-
-	// Config patches.
 	patchesDir := filepath.Join(outputDir, "patches")
-	if err := os.MkdirAll(patchesDir, 0755); err != nil {
-		return err
+	for _, dir := range []string{basesDir, patchesDir} {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return err
+		}
 	}
 
-	// Basic scorecard tests patch.
-	basicPatch := newBasicConfigurationPatch(testImageTag)
-	b, err = yaml.Marshal(basicPatch)
-	if err != nil {
-		return fmt.Errorf("error marshaling basic patch config: %v", err)
-	}
-	basicPatchFileName := fmt.Sprintf("basic.%s", scorecard.ConfigFileName)
-	if err := ioutil.WriteFile(filepath.Join(patchesDir, basicPatchFileName), b, 0666); err != nil {
-		return fmt.Errorf("error writing basic scorecard config patch: %v", err)
-	}
-	kustomizationValues.JSONPatches = append(kustomizationValues.JSONPatches, kustomizationJSON6902Patch{
-		Path:   filepath.Join("patches", basicPatchFileName),
-		Target: scorecardConfigTarget,
-	})
-
-	// OLM scorecard tests patch.
-	olmPatch := newOLMConfigurationPatch(testImageTag)
-	b, err = yaml.Marshal(olmPatch)
-	if err != nil {
-		return fmt.Errorf("error marshaling OLM patch config: %v", err)
-	}
-	olmPatchFileName := fmt.Sprintf("olm.%s", scorecard.ConfigFileName)
-	if err := ioutil.WriteFile(filepath.Join(patchesDir, olmPatchFileName), b, 0666); err != nil {
+	// Write the scorecard config base.
+	baseFilePath := filepath.Join(basesDir, scorecard.ConfigFileName)
+	if err := ioutil.WriteFile(baseFilePath, []byte(configBaseFile), 0666); err != nil {
 		return fmt.Errorf("error writing default scorecard config: %v", err)
 	}
-	kustomizationValues.JSONPatches = append(kustomizationValues.JSONPatches, kustomizationJSON6902Patch{
-		Path:   filepath.Join("patches", olmPatchFileName),
-		Target: scorecardConfigTarget,
-	})
 
-	// Write a kustomization.yaml to outputDir if one does not exist.
-	t, err := template.New("scorecard").Parse(scorecardKustomizationTemplate)
-	if err != nil {
-		return fmt.Errorf("error parsing default kustomize template: %v", err)
+	// Write each patch in patchSet to "<key>.config.yaml"
+	patchSet := map[string]string{
+		"basic": fmt.Sprintf(basicPatchFile, defaultTestImageTag),
+		"olm":   fmt.Sprintf(olmPatchFile, defaultTestImageTag),
 	}
-	buf := bytes.Buffer{}
-	if err = t.Execute(&buf, kustomizationValues); err != nil {
-		return fmt.Errorf("error executing on default kustomize template: %v", err)
+	for name, patchStr := range patchSet {
+		patchFileName := fmt.Sprintf("%s.config.yaml", name)
+		if err := ioutil.WriteFile(filepath.Join(patchesDir, patchFileName), []byte(patchStr), 0666); err != nil {
+			return fmt.Errorf("error writing %s scorecard config patch: %v", name, err)
+		}
 	}
-	// Append the kubebuilder scaffold marker to make updates to this file in the future.
-	buf.Write([]byte(kubebuilderScaffoldMarkerFragment))
-	if err := kustomize.Write(outputDir, buf.String()); err != nil {
-		return fmt.Errorf("error writing default scorecard kustomization.yaml: %v", err)
+
+	// Write a kustomization.yaml to outputDir.
+	markerStr := file.NewMarkerFor("kustomization.yaml", patchesJSON6902Marker).String()
+	if err := kustomize.Write(outputDir, fmt.Sprintf(scorecardKustomizationFile, markerStr)); err != nil {
+		return fmt.Errorf("error writing scorecard kustomization.yaml: %v", err)
 	}
 
 	return nil
 }
 
-// jsonPatches is a list of JSON patch objects.
-type jsonPatches []jsonPatchObject
+const (
+	// scorecardKustomizationFile is a kustomization.yaml file for the scorecard componentconfig.
+	// This should always be written to config/scorecard/kustomization.yaml.
+	scorecardKustomizationFile = `resources:
+- bases/config.yaml
+patchesJson6902:
+- path: patches/basic.config.yaml
+  target:
+    group: scorecard.operatorframework.io
+    version: v1alpha3
+    kind: Configuration
+    name: config
+- path: patches/olm.config.yaml
+  target:
+    group: scorecard.operatorframework.io
+    version: v1alpha3
+    kind: Configuration
+    name: config
+%[1]s
+`
 
-// jsonPatchObject is a JSON 6902 patch object specific to the scorecard's test configuration.
-// https://kubernetes-sigs.github.io/kustomize/api-reference/kustomization/patchesjson6902/ for details.
-type jsonPatchObject struct {
-	Op    string                     `json:"op"`
-	Path  string                     `json:"path"`
-	Value v1alpha3.TestConfiguration `json:"value"`
-}
+	// YAML file marker to append to kustomization.yaml files.
+	patchesJSON6902Marker = "patchesJson6902"
+)
 
-// newConfigurationBase returns a scorecard componentconfig object with one parallel stage.
-// The returned object is intended to be marshaled and written to disk as a kustomize base.
-func newConfigurationBase(configName string) (cfg v1alpha3.Configuration) {
-	cfg.SetGroupVersionKind(v1alpha3.GroupVersion.WithKind(v1alpha3.ConfigurationKind))
-	cfg.Metadata.Name = configName
-	cfg.Stages = []v1alpha3.StageConfiguration{
-		{
-			Parallel: true,
-			Tests:    []v1alpha3.TestConfiguration{},
-		},
-	}
-	return cfg
-}
+const (
+	// configBaseFile is an empty scorecard componentconfig with parallel stages.
+	configBaseFile = `apiVersion: scorecard.operatorframework.io/v1alpha3
+kind: Configuration
+metadata:
+  name: config
+stages:
+- parallel: true
+  tests: []
+`
 
-const defaultJSONPath = "/stages/0/tests/-"
+	// basicPatchFile contains all default "basic" test configurations.
+	basicPatchFile = `- op: add
+  path: /stages/0/tests/-
+  value:
+    entrypoint:
+    - scorecard-test
+    - basic-check-spec
+    image: %[1]s
+    labels:
+      suite: basic
+      test: basic-check-spec-test
+`
 
-// newBasicConfigurationPatch returns default "basic" test configurations as JSON patch objects
-// to be inserted into the componentconfig base as a first stage test element.
-// The returned patches are intended to be marshaled and written to disk as in a kustomize patch file.
-func newBasicConfigurationPatch(testImageTag string) (ps jsonPatches) {
-	for _, cfg := range makeDefaultBasicTestConfigs(testImageTag) {
-		ps = append(ps, jsonPatchObject{
-			Op:    "add",
-			Path:  defaultJSONPath,
-			Value: cfg,
-		})
-	}
-	return ps
-}
-
-// makeDefaultBasicTestConfigs returns all default "basic" test configurations.
-func makeDefaultBasicTestConfigs(testImageTag string) (cfgs []v1alpha3.TestConfiguration) {
-	for _, testName := range []string{"basic-check-spec"} {
-		cfgs = append(cfgs, v1alpha3.TestConfiguration{
-			Image:      testImageTag,
-			Entrypoint: []string{"scorecard-test", testName},
-			Labels: map[string]string{
-				"suite": "basic",
-				"test":  fmt.Sprintf("%s-test", testName),
-			},
-		})
-	}
-
-	return cfgs
-}
-
-// newOLMConfigurationPatch returns default "olm" test configurations as JSON patch objects
-// to be inserted into the componentconfig base as a first stage test element.
-// The returned patches are intended to be marshaled and written to disk as in a kustomize patch file.
-func newOLMConfigurationPatch(testImageTag string) (ps jsonPatches) {
-	for _, cfg := range makeDefaultOLMTestConfigs(testImageTag) {
-		ps = append(ps, jsonPatchObject{
-			Op:    "add",
-			Path:  defaultJSONPath,
-			Value: cfg,
-		})
-	}
-	return ps
-}
-
-// makeDefaultOLMTestConfigs returns all default "olm" test configurations.
-func makeDefaultOLMTestConfigs(testImageTag string) (cfgs []v1alpha3.TestConfiguration) {
-	for _, testName := range []string{
-		"olm-bundle-validation",
-		"olm-crds-have-validation",
-		"olm-crds-have-resources",
-		"olm-spec-descriptors",
-		"olm-status-descriptors"} {
-
-		cfgs = append(cfgs, v1alpha3.TestConfiguration{
-			Image:      testImageTag,
-			Entrypoint: []string{"scorecard-test", testName},
-			Labels: map[string]string{
-				"suite": "olm",
-				"test":  fmt.Sprintf("%s-test", testName),
-			},
-		})
-	}
-
-	return cfgs
-}
+	// olmPatchFile contains all default "olm" test configurations.
+	olmPatchFile = `- op: add
+  path: /stages/0/tests/-
+  value:
+    entrypoint:
+    - scorecard-test
+    - olm-bundle-validation
+    image: %[1]s
+    labels:
+      suite: olm
+      test: olm-bundle-validation-test
+- op: add
+  path: /stages/0/tests/-
+  value:
+    entrypoint:
+    - scorecard-test
+    - olm-crds-have-validation
+    image: %[1]s
+    labels:
+      suite: olm
+      test: olm-crds-have-validation-test
+- op: add
+  path: /stages/0/tests/-
+  value:
+    entrypoint:
+    - scorecard-test
+    - olm-crds-have-resources
+    image: %[1]s
+    labels:
+      suite: olm
+      test: olm-crds-have-resources-test
+- op: add
+  path: /stages/0/tests/-
+  value:
+    entrypoint:
+    - scorecard-test
+    - olm-spec-descriptors
+    image: %[1]s
+    labels:
+      suite: olm
+      test: olm-spec-descriptors-test
+- op: add
+  path: /stages/0/tests/-
+  value:
+    entrypoint:
+    - scorecard-test
+    - olm-status-descriptors
+    image: %[1]s
+    labels:
+      suite: olm
+      test: olm-status-descriptors-test
+`
+)
