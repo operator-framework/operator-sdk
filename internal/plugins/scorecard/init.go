@@ -32,6 +32,8 @@ import (
 var (
 	// defaultTestImageTag points to the latest released scorecard-test image.
 	defaultTestImageTag = fmt.Sprintf("quay.io/operator-framework/scorecard-test:%s", version.ImageVersion)
+	// defaultTestImageTag points to the latest released scorecard-test-kuttl image.
+	defaultTestKuttlImageTag = fmt.Sprintf("quay.io/operator-framework/scorecard-test-kuttl:%s", version.ImageVersion)
 
 	// defaultDir is the default directory in which to generate kustomize bases and the kustomization.yaml.
 	defaultDir = filepath.Join("config", "scorecard")
@@ -45,12 +47,61 @@ func RunInit(cfg config.Config) error {
 		return nil
 	}
 
-	return generateInit(defaultDir)
+	if err := initUpdateMakefile(cfg, "Makefile"); err != nil {
+		return err
+	}
+	if err := initUpdateGitignore(".gitignore"); err != nil {
+		return err
+	}
+	if err := initGenerateConfigManifests(defaultDir); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-// generateInit scaffolds kustomize bundle bases and a kustomization.yaml.
+// initUpdateMakefile updates a vanilla kubebuilder Makefile with scorecard rules.
+func initUpdateMakefile(cfg config.Config, filePath string) error {
+	return appendToFile(filePath, []byte(fmt.Sprintf(makefileTestKuttlFragment, cfg.GetProjectName())))
+}
+
+const makefileTestKuttlFragment = `
+# Test your bundle using kuttl manifests (created for each API) using scorecard.
+# To test a remote bundle image, remove the 'deploy' dependency and add 'operator-sdk run bundle <bundle-image>'.
+# More on kuttl test configuration: https://kudo.dev/docs/testing.html
+# Example usage:
+# $ make test-kuttl IMG=quay.io/example/my-operator:v0.0.1
+.PHONY: test-kuttl
+test-kuttl: bundle deploy
+	cp -r bundle/ testbundle/ && cp -r test/kuttl/ testbundle/tests/scorecard/
+	operator-sdk scorecard testbundle/ --namespace %[1]s-system --selector suite=kuttl
+`
+
+// initUpdateGitignore updates a vanilla kubebuilder .gitignore with scorecard ignore directives.
+func initUpdateGitignore(filePath string) error {
+	return appendToFile(filePath, []byte(gitignoreTestBundleFragment))
+}
+
+const gitignoreTestBundleFragment = `
+# testbundle/ is used for local testing and should not be committed.
+/testbundle/
+`
+
+func appendToFile(filePath string, newContents []byte) error {
+	b, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		return err
+	}
+	var mode os.FileMode = 0644
+	if info, err := os.Stat(filePath); err != nil {
+		mode = info.Mode()
+	}
+	return ioutil.WriteFile(filePath, append(b, newContents...), mode)
+}
+
+// initGenerateConfigManifests scaffolds kustomize bundle bases and a kustomization.yaml.
 // TODO(estroz): refactor this to be testable (in-mem fs) and easier to read.
-func generateInit(outputDir string) error {
+func initGenerateConfigManifests(outputDir string) error {
 
 	basesDir := filepath.Join(outputDir, "bases")
 	patchesDir := filepath.Join(outputDir, "patches")
@@ -70,6 +121,7 @@ func generateInit(outputDir string) error {
 	patchSet := map[string]string{
 		"basic": fmt.Sprintf(basicPatchFile, defaultTestImageTag),
 		"olm":   fmt.Sprintf(olmPatchFile, defaultTestImageTag),
+		"kuttl": fmt.Sprintf(kuttlPatchFile, defaultTestKuttlImageTag),
 	}
 	for name, patchStr := range patchSet {
 		patchFileName := fmt.Sprintf("%s.config.yaml", name)
@@ -105,6 +157,15 @@ patchesJson6902:
     version: v1alpha3
     kind: Configuration
     name: config
+# This patch is commented so you can make modifications to your kuttl tests
+# before enabling them to run with scorecard. If you make any changes to a CR's spec,
+# make sure those changes are reflected in kuttl test cases before uncommenting this patch.
+#- path: patches/kuttl.config.yaml
+#  target:
+#    group: scorecard.operatorframework.io
+#    version: v1alpha3
+#    kind: Configuration
+#    name: config
 %[1]s
 `
 
@@ -119,6 +180,8 @@ kind: Configuration
 metadata:
   name: config
 stages:
+- parallel: true
+  tests: []
 - parallel: true
   tests: []
 `
@@ -187,5 +250,14 @@ stages:
     labels:
       suite: olm
       test: olm-status-descriptors-test
+`
+
+	// kuttlPatchFile contains a single kuttl suite for running all user-defined kuttl tests.
+	kuttlPatchFile = `- op: add
+  path: /stages/1/tests/-
+  value:
+    image: %[1]s
+    labels:
+      suite: kuttl
 `
 )

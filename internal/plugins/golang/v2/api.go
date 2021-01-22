@@ -22,6 +22,8 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/manifests"
 	manifestsv2 "github.com/operator-framework/operator-sdk/internal/plugins/manifests/v2"
+	"github.com/operator-framework/operator-sdk/internal/plugins/scorecard"
+	scorecardv2 "github.com/operator-framework/operator-sdk/internal/plugins/scorecard/v2"
 )
 
 type createAPISubcommand struct {
@@ -81,11 +83,17 @@ func (p *createAPISubcommand) runPhase2(gvk resource.GVK) error {
 		if err := manifests.RunCreateAPI(p.config, gvk); err != nil {
 			return err
 		}
+		if err := scorecard.RunCreateAPI(p.config, gvk, true); err != nil {
+			return err
+		}
 		return nil
 	}
 
 	// v2 plugins will handle checking p.config for their key so we can call all of them below.
 	if err := manifestsv2.RunCreateAPI(p.config, gvk); err != nil {
+		return err
+	}
+	if err := scorecardv2.RunCreateAPI(p.config, gvk); err != nil {
 		return err
 	}
 

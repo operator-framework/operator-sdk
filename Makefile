@@ -153,11 +153,10 @@ test-e2e-setup: build
 test-e2e-teardown:
 	$(SCRIPTS_DIR)/fetch kind 0.9.0
 	$(TOOLS_DIR)/kind delete cluster --name $(KIND_CLUSTER)
-	rm -f $(KUBECONFIG)
 
 # Double colon rules allow repeated rule declarations.
 # Repeated rules are executed in the order they appear.
-$(e2e_targets):: test-e2e-setup image/scorecard-test
+$(e2e_targets):: test-e2e-setup image/scorecard-test image/scorecard-test-kuttl
 
 test-e2e:: $(e2e_tests) ## Run e2e tests
 test-e2e-go:: image/custom-scorecard-tests ## Run Go e2e tests

@@ -1,0 +1,6 @@
+- op: add
+  path: /stages/1/tests/-
+  value:
+    image: quay.io/operator-framework/scorecard-test-kuttl:v1.4.0
+    labels:
+      suite: kuttl

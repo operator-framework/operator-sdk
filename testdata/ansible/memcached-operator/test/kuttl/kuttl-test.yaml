@@ -1,0 +1,16 @@
+# This file is a bundle-ready kuttl TestSuite configuration file.
+# Full configuration documentation can be found here:
+# https://kudo.dev/docs/testing/reference.html#testsuite
+apiVersion: kuttl.dev/v1beta1
+kind: TestSuite
+testDirs:
+- v1alpha1
+# A testDir for each new API will be added here using the following marker comment.
+#+kubebuilder:scaffold:kuttl:testDirs
+timeout: 120
+# By default, kuttl reads and logs events, for which it needs
+# events.events.k8s.io get/list Role rules that are not generated
+# by default for operators. Remove this option if the operator
+# has these permissions.
+suppress:
+- events

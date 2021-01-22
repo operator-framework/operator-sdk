@@ -28,6 +28,8 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds"
 	"github.com/operator-framework/operator-sdk/internal/plugins/manifests"
 	manifestsv2 "github.com/operator-framework/operator-sdk/internal/plugins/manifests/v2"
+	"github.com/operator-framework/operator-sdk/internal/plugins/scorecard"
+	scorecardv2 "github.com/operator-framework/operator-sdk/internal/plugins/scorecard/v2"
 )
 
 type createAPISubcommand struct {
@@ -149,6 +151,15 @@ func (p *createAPISubcommand) runPhase2() error {
 		}
 	} else {
 		if err := manifests.RunCreateAPI(p.config, gvk); err != nil {
+			return err
+		}
+	}
+	if scorecardv2.HasPluginConfig(p.config) {
+		if err := scorecardv2.RunCreateAPI(p.config, gvk); err != nil {
+			return err
+		}
+	} else {
+		if err := scorecard.RunCreateAPI(p.config, gvk, true); err != nil {
 			return err
 		}
 	}

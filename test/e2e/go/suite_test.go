@@ -80,6 +80,7 @@ var _ = BeforeSuite(func() {
 		By("loading the required images into Kind cluster")
 		Expect(tc.LoadImageToKindCluster()).To(Succeed())
 		Expect(tc.LoadImageToKindClusterWithName("quay.io/operator-framework/scorecard-test:dev")).To(Succeed())
+		Expect(tc.LoadImageToKindClusterWithName("quay.io/operator-framework/scorecard-test-kuttl:dev")).To(Succeed())
 		Expect(tc.LoadImageToKindClusterWithName("quay.io/operator-framework/custom-scorecard-tests:dev")).To(Succeed())
 	}
 

@@ -148,3 +148,13 @@ bundle: manifests kustomize
 .PHONY: bundle-build ## Build the bundle image.
 bundle-build:
 	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+
+# Test your bundle using kuttl manifests (created for each API) using scorecard.
+# To test a remote bundle image, remove the 'deploy' dependency and add 'operator-sdk run bundle <bundle-image>'.
+# More on kuttl test configuration: https://kudo.dev/docs/testing.html
+# Example usage:
+# $ make test-kuttl IMG=quay.io/example/my-operator:v0.0.1
+.PHONY: test-kuttl
+test-kuttl: bundle deploy
+	cp -r bundle/ testbundle/ && cp -r test/kuttl/ testbundle/tests/scorecard/
+	operator-sdk scorecard testbundle/ --namespace memcached-operator-system --selector suite=kuttl

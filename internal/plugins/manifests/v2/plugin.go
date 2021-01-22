@@ -37,15 +37,14 @@ var (
 // Config configures this plugin, and is saved in the project config file.
 type Config struct{}
 
-// HasPluginConfig returns true if cfg.Layout contains an exact match for this plugin's key.
+// HasPluginConfig returns true if cfg's plugins contains an exact match for this plugin's key.
 func HasPluginConfig(cfg config.Config) bool {
-	info := Config{}
-	return cfg.DecodePluginConfig(pluginConfigKey, &info) == nil
+	return cfg.DecodePluginConfig(pluginConfigKey, &Config{}) == nil
 }
 
 // RunInit modifies the project scaffolded by kubebuilder's Init plugin.
 func RunInit(cfg config.Config) error {
-	// Only run these if project version is v3.
+
 	if err := manifests.RunInit(cfg); err != nil {
 		return err
 	}

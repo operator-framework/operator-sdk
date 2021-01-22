@@ -23,9 +23,6 @@ import (
 	"path/filepath"
 )
 
-const scorecardImage = "quay.io/operator-framework/scorecard-test:.*"
-const scorecardImageReplace = "quay.io/operator-framework/scorecard-test:dev"
-
 const customScorecardPatch = `
 - op: add
   path: /stages/0/tests/-
@@ -86,17 +83,24 @@ func (tc TestContext) AddScorecardCustomPatchFile() error {
 // ReplaceScorecardImagesForDev will replaces the scorecard images in the manifests per dev tag which is built
 // in the CI based on the code changes made.
 func (tc TestContext) ReplaceScorecardImagesForDev() error {
-	err := ReplaceRegexInFile(
-		filepath.Join(tc.Dir, "config", "scorecard", "patches", "basic.config.yaml"),
-		scorecardImage, scorecardImageReplace,
-	)
-	if err != nil {
+	patchesDir := filepath.Join(tc.Dir, "config", "scorecard", "patches")
+	// Replace the versioned scorecard-test image with the dev-tagged one.
+	for _, fileName := range []string{"basic.config.yaml", "olm.config.yaml"} {
+		if err := ReplaceRegexInFile(filepath.Join(patchesDir, fileName),
+			"quay.io/operator-framework/scorecard-test:.*",
+			"quay.io/operator-framework/scorecard-test:dev",
+		); err != nil {
+			return err
+		}
+	}
+
+	// Replace the versioned scorecard-test-kuttl image with the dev-tagged one.
+	if err := ReplaceRegexInFile(filepath.Join(patchesDir, "kuttl.config.yaml"),
+		"quay.io/operator-framework/scorecard-test-kuttl:.*",
+		"quay.io/operator-framework/scorecard-test-kuttl:dev",
+	); err != nil {
 		return err
 	}
 
-	err = ReplaceRegexInFile(
-		filepath.Join(tc.Dir, "config", "scorecard", "patches", "olm.config.yaml"),
-		scorecardImage, scorecardImageReplace,
-	)
-	return err
+	return nil
 }

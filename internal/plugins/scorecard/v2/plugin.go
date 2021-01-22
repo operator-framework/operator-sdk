@@ -16,8 +16,10 @@ package v2
 
 import (
 	"fmt"
+	"errors"
 
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins"
@@ -34,7 +36,14 @@ var (
 )
 
 // Config configures this plugin, and is saved in the project config file.
-type Config struct{}
+type Config struct {
+	Kuttl bool `json:"kuttl,omitempty"`
+}
+
+// HasPluginConfig returns true if cfg's plugins contains an exact match for this plugin's key.
+func HasPluginConfig(cfg config.Config) bool {
+	return cfg.DecodePluginConfig(pluginConfigKey, &Config{}) == nil
+}
 
 // RunInit scaffolds kustomize files for kustomizing a scorecard componentconfig.
 func RunInit(cfg config.Config) error {
@@ -44,10 +53,23 @@ func RunInit(cfg config.Config) error {
 	}
 
 	// Update the plugin config section with this plugin's configuration.
-	mCfg := Config{}
-	if err := cfg.EncodePluginConfig(pluginConfigKey, mCfg); err != nil {
+	pcfg := Config{Kuttl: true}
+	if err := cfg.EncodePluginConfig(pluginConfigKey, pcfg); err != nil {
 		return fmt.Errorf("error writing plugin config for %s: %v", pluginConfigKey, err)
 	}
 
 	return nil
+}
+
+// RunCreateAPI runs the scorecard SDK phase 2 plugin.
+func RunCreateAPI(cfg config.Config, gvk resource.GVK) error {
+	pcfg := Config{}
+	if err := cfg.DecodePluginConfig(pluginConfigKey, &pcfg); err != nil {
+		if errors.As(err, &config.PluginKeyNotFoundError{}) {
+			return nil
+		}
+		return err
+	}
+
+	return scorecard.RunCreateAPI(cfg, gvk, pcfg.Kuttl)
 }

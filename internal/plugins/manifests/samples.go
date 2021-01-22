@@ -53,9 +53,6 @@ func (f *kustomization) GetMarkers() []file.Marker {
 	return []file.Marker{file.NewMarkerFor(f.Path, samplesMarker)}
 }
 
-const samplesCodeFragment = `- %s
-`
-
 // makeCRFileName returns a Custom Resource example file name in the same format
 // as kubebuilder's CreateAPI plugin for a gvk.
 func makeCRFileName(gvk resource.GVK) string {
@@ -65,7 +62,7 @@ func makeCRFileName(gvk resource.GVK) string {
 // GetCodeFragments implements file.Inserter
 func (f *kustomization) GetCodeFragments() file.CodeFragmentsMap {
 	return file.CodeFragmentsMap{
-		file.NewMarkerFor(f.Path, samplesMarker): []string{fmt.Sprintf(samplesCodeFragment, makeCRFileName(f.GroupVersionKind))},
+		file.NewMarkerFor(f.Path, samplesMarker): []string{fmt.Sprintf("- %s\n", makeCRFileName(f.GroupVersionKind))},
 	}
 }
 

@@ -1,0 +1,7 @@
+# Install a Memcached object labeled "test=kuttl".
+apiVersion: cache.example.com/v1alpha1
+kind: Memcached
+metadata:
+  name: memcached-test
+  labels:
+    test: kuttl

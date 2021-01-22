@@ -21,6 +21,7 @@ import (
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
 
 	manifestsv2 "github.com/operator-framework/operator-sdk/internal/plugins/manifests/v2"
+	scorecardv2 "github.com/operator-framework/operator-sdk/internal/plugins/scorecard/v2"
 )
 
 type createAPISubcommand struct {
@@ -75,5 +76,11 @@ func (p *createAPISubcommand) Run() error {
 
 // SDK phase 2 plugins.
 func (p *createAPISubcommand) runPhase2(gvk resource.GVK) error {
-	return manifestsv2.RunCreateAPI(p.config, gvk)
+	if err := manifestsv2.RunCreateAPI(p.config, gvk); err != nil {
+		return err
+	}
+	if err := scorecardv2.RunCreateAPI(p.config, gvk); err != nil {
+		return err
+	}
+	return nil
 }

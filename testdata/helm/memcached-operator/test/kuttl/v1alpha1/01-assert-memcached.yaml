@@ -1,0 +1,7 @@
+# Assert the named Memcached object has an updated spec.
+apiVersion: cache./v1alpha1
+kind: Memcached
+metadata:
+  name: memcached-test
+spec:
+  foo: bar

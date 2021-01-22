@@ -171,7 +171,7 @@ func (c *scorecardCmd) run() (err error) {
 
 		scorecardTests, err = o.Run(ctx)
 		if err != nil {
-			return fmt.Errorf("error running tests %w", err)
+			return fmt.Errorf("error running tests: %w", err)
 		}
 	}
 
