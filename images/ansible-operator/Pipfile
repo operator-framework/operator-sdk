@@ -1,0 +1,18 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+ansible-runner = "==1.3.4"
+ansible-runner-http = "==1.0.0"
+ipaddress = "==1.0.23"
+kubernetes = "==10.1.0"
+openshift = "==0.10.3"
+ansible = "==2.9.15"
+jmespath = "==0.10.0"
+
+[dev-packages]
+
+[requires]
+python_version = "3.8"
