@@ -14,7 +14,9 @@ ENV HOME=/opt/ansible \
 # Ensure fresh metadata rather than cached metadata in the base by running
 # yum clean all && rm -rf /var/yum/cache/* first
 COPY Pipfile* .
-ENV PIP_NO_CACHE_DIR=1
+ENV PIP_NO_CACHE_DIR=1 \
+    PIPENV_SYSTEM=1 \
+    PIPENV_CLEAR=1
 RUN yum clean all && rm -rf /var/cache/yum/* \
   && yum -y update \
   && yum install -y libffi-devel openssl-devel python38-devel gcc python38-pip python38-setuptools \
@@ -24,7 +26,7 @@ RUN yum clean all && rm -rf /var/cache/yum/* \
   && yum clean all \
   && rm -rf /var/cache/yum
 
-RUN pipenv check --system
+RUN pipenv check
 
 # Ensure directory permissions are properly set
 RUN echo "${USER_NAME}:x:${USER_UID}:0:${USER_NAME} user:${HOME}:/sbin/nologin" >> /etc/passwd \
