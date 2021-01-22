@@ -42,39 +42,69 @@ Let's look at the anatomy of the `run bundle` configuration model:
     well):
     - `AllNamespaces`: the Operator will watch all namespaces (cluster-scoped
       Operators). This is the default.
-    - 'OwnNamespace`: the Operator will watch its own namespace (from
+    - `OwnNamespace`: the Operator will watch its own namespace (from
       **namespace** or the kubeconfig default).
-    - 'SingleNamespace="my-ns"`: the Operator will watch a namespace, not
+    - `SingleNamespace="my-ns"`: the Operator will watch a namespace, not
       necessarily its own.
 
-## `operator-sdk <run|cleanup> packagemanifests` command overview
+## `operator-sdk run packagemanifests` command overview
 
-`operator-sdk <run|cleanup> packagemanifests` assumes OLM is already installed and running on your cluster,
-and that your Operator has a valid [package manifests format][package-manifests].
-See the [CLI overview][doc-cli-overview] for commands to work with an OLM installation and generate a package manifests format.
+`operator-sdk run packagemanifests` assumes OLM is already installed and
+running on your cluster, and that your Operator has a valid
+[package manifests format][package-manifests]. See the
+[CLI overview][doc-cli-overview] for commands to work with an OLM installation
+and generate a package manifests format.
 
-Let's look at the anatomy of the `run packagemanifests` (which is the same for `cleanup`) configuration model:
+Let's look at the configuration shared between `run bundle`, `run
+packagemanifests` and `cleanup`:
 
-- **kubeconfig-path**: the local path to a kubeconfig.
-  - This uses well-defined default loading rules to load the config if empty.
+- **kubeconfig**: the local path to a kubeconfig. This uses well-defined default
+  loading rules to load the config if empty.
 - **namespace**: the cluster namespace in which Operator resources are created.
-  - This namespace must already exist in the cluster.
-- **manifests-dir**: a directory containing the Operator's package manifests.
-- **version**: the version of the Operator to deploy. It must be a semantic version, ex. 0.0.1.
-  - This version must match the version of the CSV manifest found in **manifests-dir**,
-    ex. `packagemanifests/0.0.1` in an Operator SDK project.
-- **install-mode**: specifies which supported [`installMode`][csv-install-modes] should be used to
-  create an `OperatorGroup` by configuring its `spec.targetNamespaces` field.
-  - The `InstallModeType` string passed must be marked as "supported" in the CSV being installed.
-    The namespaces passed must exist or be created by passing a `Namespace` manifest to IncludePaths.
-  - This option understands the following strings (assuming your CSV does as well):
-      - `AllNamespaces`: the Operator will watch all namespaces (cluster-scoped Operators). This is the default.
-      - `OwnNamespace`: the Operator will watch its own namespace (from **namespace** or the kubeconfig default).
-      - `SingleNamespace="my-ns"`: the Operator will watch a namespace, not necessarily its own.
-- **timeout**: a time string dictating the maximum time that `run` can run. The command will
-  return an error if the timeout is exceeded.
+  This namespace must already exist in the cluster.
+- **timeout**: a time string dictating the maximum time that `run` can run. The
+  command will return an error if the timeout is exceeded.
+
+Let's look at the anatomy of the `run packagemanifests` configuration model:
+
+- **packagemanifests-root-dir**: a directory containing the Operator's package
+  manifests, this is a required parameter.
+- **install-mode**: specifies which supported [`installMode`][csv-install-modes]
+  should be used to create an `OperatorGroup` by configuring its
+  `spec.targetNamespaces` field. The `InstallModeType` string passed must be
+  marked as "supported" in the CSV being installed.
+  - This option understands the following strings (assuming your CSV does as
+    well):
+    - `AllNamespaces`: the Operator will watch all namespaces (cluster-scoped
+      Operators). This is the default.
+    - `OwnNamespace`: the Operator will watch its own namespace (from
+      **namespace** or the kubeconfig default).
+    - `SingleNamespace="my-ns"`: the Operator will watch a namespace, not
+      necessarily its own.
+- **version**: the version of the Operator to deploy. It must be a semantic
+  version, ex. 0.0.1. This version must match the version of the CSV manifest
+  found in **manifests-dir**, e.g. `packagemanifests/0.0.1` in an Operator
+  SDK project.
 
 ## `operator-sdk cleanup` command overview
+
+`operator-sdk cleanup` assumes an Operator was deployed using `run bundle` or
+`run packagemanifests`.
+
+Let's look at the configuration shared between `run bundle`, `run
+packagemanifests` and `cleanup`:
+
+- **kubeconfig**: the local path to a kubeconfig. This uses well-defined default
+  loading rules to load the config if empty.
+- **namespace**: the cluster namespace in which Operator resources are created.
+  This namespace must already exist in the cluster.
+- **timeout**: a time string dictating the maximum time that `run` can run. The
+  command will return an error if the timeout is exceeded.
+
+Let's look at the anatomy of the `cleanup` configuration model:
+
+- **operatorPackageName**: the Operator's package name which you want to remove
+  from the cluster, e.g. memcached-operator. This is a required parameter.
 
 ### Caveats
 
