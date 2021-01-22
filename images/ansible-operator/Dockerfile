@@ -24,6 +24,8 @@ RUN yum clean all && rm -rf /var/cache/yum/* \
   && yum clean all \
   && rm -rf /var/cache/yum
 
+RUN pipenv check --system
+
 # Ensure directory permissions are properly set
 RUN echo "${USER_NAME}:x:${USER_UID}:0:${USER_NAME} user:${HOME}:/sbin/nologin" >> /etc/passwd \
   && mkdir -p ${HOME}/.ansible/tmp \
