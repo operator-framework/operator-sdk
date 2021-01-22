@@ -25,7 +25,7 @@ RUN yum -y update \
   && yum clean all \
   && rm -rf /var/cache/yum
 
-RUN pipenv check --system
+RUN pipenv check
 
 # Ensure directory permissions are properly set
 RUN echo "${USER_NAME}:x:${USER_UID}:0:${USER_NAME} user:${HOME}:/sbin/nologin" >> /etc/passwd \
