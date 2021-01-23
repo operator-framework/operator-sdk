@@ -17,16 +17,16 @@ COPY Pipfile* .
 ENV PIP_NO_CACHE_DIR=1 \
     PIPENV_SYSTEM=1 \
     PIPENV_CLEAR=1
-RUN yum clean all && rm -rf /var/cache/yum/* \
+RUN INSTALL_DEPS="libffi-devel openssl-devel python38-devel gcc" \
+  && yum clean all && rm -rf /var/cache/yum/* \
   && yum -y update \
-  && yum install -y libffi-devel openssl-devel python38-devel gcc python38-pip python38-setuptools \
+  && yum install -y ${INSTALL_DEPS} python38-pip \
   && pip3 install pipenv==2020.11.15 \
   && pipenv install --deploy --system \
-  && yum remove -y gcc libffi-devel openssl-devel python38-devel \
+  && pipenv check \
+  && yum remove -y ${INSTALL_DEPS} \
   && yum clean all \
   && rm -rf /var/cache/yum
-
-RUN pipenv check
 
 # Ensure directory permissions are properly set
 RUN echo "${USER_NAME}:x:${USER_UID}:0:${USER_NAME} user:${HOME}:/sbin/nologin" >> /etc/passwd \
