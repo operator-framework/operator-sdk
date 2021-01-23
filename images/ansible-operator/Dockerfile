@@ -17,14 +17,13 @@ COPY Pipfile* .
 ENV PIP_NO_CACHE_DIR=1 \
     PIPENV_SYSTEM=1 \
     PIPENV_CLEAR=1
-RUN INSTALL_DEPS="libffi-devel openssl-devel python38-devel gcc" \
-  && yum clean all && rm -rf /var/cache/yum/* \
+RUN yum clean all \
+  && rm -rf /var/cache/yum/* \
   && yum -y update \
-  && yum install -y ${INSTALL_DEPS} python38-pip \
+  && yum install -y python38-pip \
   && pip3 install pipenv==2020.11.15 \
   && pipenv install --deploy --system \
   && pipenv check \
-  && yum remove -y ${INSTALL_DEPS} \
   && yum clean all \
   && rm -rf /var/cache/yum
 
