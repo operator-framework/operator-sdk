@@ -17,9 +17,7 @@ COPY Pipfile* .
 ENV PIP_NO_CACHE_DIR=1 \
     PIPENV_SYSTEM=1 \
     PIPENV_CLEAR=1
-RUN yum clean all \
-  && rm -rf /var/cache/yum/* \
-  && yum -y update \
+RUN yum -y update \
   && yum install -y python38-pip \
   && pip3 install pipenv==2020.11.15 \
   && pipenv install --deploy --system \
