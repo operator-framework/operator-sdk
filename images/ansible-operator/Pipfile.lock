@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "31860839e6fae28389b2ce653261db07c4d73f12d16e7eb21cebbfd35a09c289"
+            "sha256": "b2bc483f47c283416570727cef63c5501ec07bb83cebbea7e5c4d1ad231ac062"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -25,11 +25,11 @@
         },
         "ansible-runner": {
             "hashes": [
-                "sha256:60f531f1cb9b2b0cb1e8cf8dc9f81186aecda22d01587f35c61a833d0198f220",
-                "sha256:dafa8f28193ab253e71b07be3314f80d796672e1b96385f2c46c39b597c1e996"
+                "sha256:0744642cff32d23310b3a5f5aae23d07bea1051724e66b27f9bbccefec8427dd",
+                "sha256:53605de32f7d3d3442a6deb8937bf1d9c1f91c785e3f71003d22c3e63f85c71d"
             ],
             "index": "pypi",
-            "version": "==1.3.4"
+            "version": "==1.4.6"
         },
         "ansible-runner-http": {
             "hashes": [
@@ -351,7 +351,7 @@
                 "sha256:73ebfe9dbf22e832286dafa60473e4cd239f8592f699aa5adaf10050e6e1823c",
                 "sha256:75bb3f31ea686f1197762692a9ee6a7550b59fc6ca3a1f4b5d7e32fb98e2da2a"
             ],
-            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2'",
+            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'",
             "version": "==2.8.1"
         },
         "python-string-utils": {
@@ -450,7 +450,7 @@
                 "sha256:e9f7d1d8c26a6a12c23421061f9022bb62704e38211fe375c645485f38df34a2",
                 "sha256:f6061a31880c1ed6b6ce341215336e2f3d0c1deccd84957b6fa8ca474b41e89f"
             ],
-            "markers": "platform_python_implementation == 'CPython' and python_version < '3.9'",
+            "markers": "python_version < '3.9' and platform_python_implementation == 'CPython'",
             "version": "==0.2.2"
         },
         "six": {
@@ -458,7 +458,7 @@
                 "sha256:30639c035cdb23534cd4aa2dd52c3bf48f06e5f4a941509c8bafd8ce11080259",
                 "sha256:8b74bedcbbbaca38ff6d7491d76f2b06b3592611af620f8426e82dddb04a5ced"
             ],
-            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2'",
+            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'",
             "version": "==1.15.0"
         },
         "urllib3": {
