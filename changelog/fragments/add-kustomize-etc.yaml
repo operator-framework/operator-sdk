@@ -1,0 +1,4 @@
+entries:
+  - description: >
+      Added `kustomize` and `controller-gen` to the Operator SDK image.
+    kind: change
