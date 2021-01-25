@@ -72,13 +72,13 @@ Automated application provisioning and configuration management. This first capa
 
 Seamless upgrades mean the upgrade is as easy as possible for the user. You should support seamless upgrades of both your operator and operand, these would normally go hand in hand, an upgrade of the operator would automatically ensure the instantiated resources for each CR are in the new desired state and which would upgrade your operand. Upgrade may also be defined in multiple ways, such as updating the software of the operand - and other internals specific to the application - such as schema migrations. It should be very clear what is upgraded when this takes place, and what is not.
 
-### Upgrade of the managed workload**
+### Upgrade of the managed workload
 
 - Operand can be upgraded in the process of upgrading the Operator, or
 - Operand can be upgraded as part of changing the CR
 - Operator understands how to upgrade older versions of the Operand, managed previously by an older version of the Operator
 
-### Upgrade of the Operator**
+### Upgrade of the Operator
 
 - Operator can be upgraded seamlessly and can either still manage older versions of the Operand or update them
 - Operator conveys inability to manage an unsupported version of the Operand in the `status` section of the CR
@@ -105,7 +105,7 @@ Seamless upgrades mean the upgrade is as easy as possible for the user. You shou
 It should be possible to backup and restore the operand from the operator itself without any additional manual intervention other than triggering these operations. The operand data that should be backed up is any stateful data managed by the operand. You don’t need to backup the CR itself or the k8s resources created by the operator as the operator should return all resources to the same state if the CR is recreated. If your operator does not already setup the operand with other k8s resilient best practices, this should be completed to achieve this capability level. This includes liveness and readiness probes, multiple replicas, rolling deployment strategies, pod disruption budgets, CPU and memory requests and limits.
 
 
-### Lifecycle features**
+### Lifecycle features
 
 - Operator provides the ability to create backups of the Operand
 - Operator is able to restore a backup of an Operand
