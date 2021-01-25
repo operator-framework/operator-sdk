@@ -11,6 +11,7 @@ This guide walks through an example of building a simple memcached-operator usin
 
 - Go through the [installation guide][install-guide].
 - User authorized with `cluster-admin` permissions.
+- [Install kubebuilder](https://book.kubebuilder.io/quick-start.html#installation)
 
 ## Steps
 
