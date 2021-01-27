@@ -1,0 +1,4 @@
+entries:
+  - description: >
+      Project version now determines how package name is retrieved for a project
+    kind: bugfix
