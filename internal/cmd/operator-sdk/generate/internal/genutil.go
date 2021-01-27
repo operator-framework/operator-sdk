@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"github.com/blang/semver/v4"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -157,4 +158,38 @@ func IsExist(path string) bool {
 	}
 	_, err := os.Stat(path)
 	return err == nil || errors.Is(err, os.ErrExist)
+}
+
+// GetPackageNameAndLayout returns packageName and layout, if any, for a project.
+// These values are determined by project version and whether a PROJECT file exists.
+func GetPackageNameAndLayout(defaultPackageName string) (packageName string, layout string, _ error) {
+	packageName = defaultPackageName
+	if projutil.HasProjectFile() {
+		cfg, err := projutil.ReadConfig()
+		if err != nil {
+			return "", "", err
+		}
+		if packageName == "" {
+			switch {
+			case cfg.IsV2():
+				wd, err := os.Getwd()
+				if err != nil {
+					return "", "", err
+				}
+				packageName = strings.ToLower(filepath.Base(wd))
+			default:
+				if cfg.ProjectName == "" {
+					return "", "", errors.New("--package-name must be set if \"projectName\" is not set in the PROJECT config file")
+				}
+				packageName = cfg.ProjectName
+			}
+		}
+		layout = projutil.GetProjectLayout(cfg)
+	} else {
+		if packageName == "" {
+			return "", "", errors.New("--package-name must be set if PROJECT config file is not present")
+		}
+		layout = "unknown"
+	}
+	return packageName, layout, nil
 }
