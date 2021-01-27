@@ -26,7 +26,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion/bases"
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
 	genpkg "github.com/operator-framework/operator-sdk/internal/generate/packagemanifest"
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
 const (
@@ -78,21 +77,9 @@ https://github.com/operator-framework/operator-registry/#manifest-format
 const defaultRootDir = "packagemanifests"
 
 // setDefaults sets command defaults.
-func (c *packagemanifestsCmd) setDefaults() error {
-	if projutil.HasProjectFile() {
-		cfg, err := projutil.ReadConfig()
-		if err != nil {
-			return err
-		}
-		if c.packageName == "" {
-			c.packageName = cfg.ProjectName
-		}
-		c.layout = projutil.GetProjectLayout(cfg)
-	} else {
-		if c.packageName == "" {
-			return fmt.Errorf("package name is required if PROJECT config file is not present")
-		}
-		c.layout = "unknown"
+func (c *packagemanifestsCmd) setDefaults() (err error) {
+	if c.packageName, c.layout, err = genutil.GetPackageNameAndLayout(c.packageName); err != nil {
+		return err
 	}
 
 	if c.inputDir == "" {
@@ -103,6 +90,7 @@ func (c *packagemanifestsCmd) setDefaults() error {
 			c.outputDir = defaultRootDir
 		}
 	}
+
 	return nil
 }
 
