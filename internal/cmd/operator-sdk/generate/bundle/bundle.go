@@ -105,21 +105,9 @@ https://github.com/operator-framework/operator-registry/#manifest-format
 const defaultRootDir = "bundle"
 
 // setDefaults sets defaults useful to all modes of this subcommand.
-func (c *bundleCmd) setDefaults() error {
-	if projutil.HasProjectFile() {
-		cfg, err := projutil.ReadConfig()
-		if err != nil {
-			return err
-		}
-		if c.packageName == "" {
-			c.packageName = cfg.ProjectName
-		}
-		c.layout = projutil.GetProjectLayout(cfg)
-	} else {
-		if c.packageName == "" {
-			return fmt.Errorf("package name is required if PROJECT config file is not present")
-		}
-		c.layout = "unknown"
+func (c *bundleCmd) setDefaults() (err error) {
+	if c.packageName, c.layout, err = genutil.GetPackageNameAndLayout(c.packageName); err != nil {
+		return err
 	}
 	return nil
 }
