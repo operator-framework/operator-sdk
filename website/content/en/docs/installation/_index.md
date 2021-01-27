@@ -42,10 +42,10 @@ curl -LO ${OPERATOR_SDK_DL_URL}/operator-sdk_${OS}_${ARCH}
 
 #### 2. Verify the downloaded binary
 
-Import the operator-sdk release GPG key:
+Import the operator-sdk release GPG key from `keyserver.ubuntu.com`:
 
 ```sh
-gpg --recv-keys 052996E2A20B5C7E
+gpg --keyserver keyserver.ubuntu.com --recv-keys 052996E2A20B5C7E
 ```
 
 Download the checksums file and its signature, then verify the signature:
