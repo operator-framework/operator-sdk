@@ -9,16 +9,16 @@ Replace these versions with the current and new version you are releasing, respe
 
 ## Prerequisites
 
-- [`git`][git]
-- [`gpg`][gpg] v2.0+ and a [GPG key][gpg-key-create].
-- Your GPG key is publicly available in a [public key server][gpg-upload], like https://keyserver.ubuntu.com/.
+- [`git`](https://git-scm.com/downloads)
+- [`make`](https://www.gnu.org/software/make/)
+- [`sed`](https://www.gnu.org/software/sed/)
 
 ##### MacOS users
 
-Install GNU `sed`, `make`, and `gpg` which may not be by default:
+Install GNU `sed` and `make` which may not be by default:
 
 ```sh
-brew install gnu-sed make gnupg
+brew install gnu-sed make
 ```
 
 ## Major and Minor releases
@@ -233,10 +233,6 @@ Create and merge a PR from your branch to `v1.3.x`.
 GitHub releases live under the [`Releases` tab][release-page] in the operator-sdk repo.
 
 
-[git]:https://git-scm.com/downloads
-[gpg]:https://gnupg.org/download/
-[gpg-key-create]:https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/managing-commit-signature-verification
-[gpg-upload]:https://www.gnupg.org/gph/en/manual/x457.html
 [netlify-deploy]:https://docs.netlify.com/site-deploys/overview/#deploy-summary
 [doc-owners]: https://github.com/operator-framework/operator-sdk/blob/master/OWNERS
 [release-page]:https://github.com/operator-framework/operator-sdk/releases
