@@ -78,8 +78,10 @@ func TestApplyDefinitionsForKeysGo(t *testing.T) {
 							{Name: "dummy-replicaset", Kind: "ReplicaSet", Version: "v1beta2"},
 						},
 						SpecDescriptors: []v1alpha1.SpecDescriptor{
+							{Path: "sideCar", DisplayName: "Side Car"},
 							{Path: "size", DisplayName: "dummy-size", Description: "Should be in spec",
 								XDescriptors: []string{"urn:alm:descriptor:com.tectonic.ui:podCount"}},
+							{Path: "useful.containers", DisplayName: "Containers"},
 							{Path: "wheels", DisplayName: "Wheels",
 								Description:  "Should be in spec, but should not have array index in path",
 								XDescriptors: []string{"urn:alm:descriptor:com.tectonic.ui:text"}},
@@ -134,47 +136,58 @@ func TestApplyDefinitionsForKeysGo(t *testing.T) {
 			},
 		},
 		{
-			description: "Do not change definitions with non-existent package dir",
-			apisDir:     filepath.Join("pkg", "notexist"),
-			csv: &v1alpha1.ClusterServiceVersion{
-				Spec: v1alpha1.ClusterServiceVersionSpec{
-					CustomResourceDefinitions: v1alpha1.CustomResourceDefinitions{
-						Owned: []v1alpha1.CRDDescription{
-							{
-								Name: "dummys.cache.example.com", Version: "v1alpha2", Kind: "Dummy",
-								DisplayName: "Dummy App",
-								Description: "Dummy is the Schema for the other dummy API",
-								Resources: []v1alpha1.APIResourceReference{
-									{Name: "dummy-pod", Kind: "Pod", Version: "v1"},
-								},
-								SpecDescriptors: []v1alpha1.SpecDescriptor{
-									{Path: "foo", DisplayName: "Foo", Description: "Should not be removed"},
-								},
-								StatusDescriptors: []v1alpha1.StatusDescriptor{
-									{Path: "bar", DisplayName: "Bar", Description: "Should not be removed"},
-								},
-							},
-						},
-					},
-				},
-			},
+			description: "Populate CRDDescription with GVKs with same GK and different versions",
+			apisDir:     "api",
+			csv:         &v1alpha1.ClusterServiceVersion{},
 			gvks: []schema.GroupVersionKind{
-				{Group: "cache.example.com", Version: "v1alpha2", Kind: "Dummy"},
+				{Group: "cache.example.com", Version: "v1alpha1", Kind: "Memcached"},
+				{Group: "cache.example.com", Version: "v1alpha2", Kind: "Memcached"},
 			},
 			expectedCRDs: v1alpha1.CustomResourceDefinitions{
 				Owned: []v1alpha1.CRDDescription{
 					{
-						Name: "dummys.cache.example.com", Version: "v1alpha2", Kind: "Dummy",
-						DisplayName: "Dummy App",
-						Description: "Dummy is the Schema for the other dummy API",
-						Resources: []v1alpha1.APIResourceReference{
-							{Name: "dummy-pod", Kind: "Pod", Version: "v1"},
-						},
+						Name: "memcacheds.cache.example.com", Version: "v1alpha2", Kind: "Memcached",
+						DisplayName: "Memcached App",
+						Description: "Memcached is the Schema for the memcacheds API",
 						SpecDescriptors: []v1alpha1.SpecDescriptor{
-							{Path: "foo", DisplayName: "Foo", Description: "Should not be removed"},
+							{Path: "size", DisplayName: "Size", Description: "Size is the size of the memcached deployment"},
 						},
 						StatusDescriptors: []v1alpha1.StatusDescriptor{
-							{Path: "bar", DisplayName: "Bar", Description: "Should not be removed"},
+							{Path: "nodes", DisplayName: "Nodes", Description: "Nodes are the names of the memcached pods"},
+						},
+					},
+					{
+						Name: "memcacheds.cache.example.com", Version: "v1alpha1", Kind: "Memcached",
+						DisplayName: "Memcached App Display Name",
+						Description: "Memcached is the Schema for the memcacheds API",
+						StatusDescriptors: []v1alpha1.StatusDescriptor{
+							{Path: "nodes", DisplayName: "Nodes", Description: "Nodes are the names of the memcached pods"},
+						},
+						SpecDescriptors: []v1alpha1.SpecDescriptor{
+							{Path: "containers", DisplayName: "Containers"},
+							{Path: "providers", DisplayName: "Providers", Description: "List of Providers"},
+							{Path: "providers[0].foo", DisplayName: "Foo Provider", Description: "Foo represents the Foo provider"},
+							{Path: "providers[0].foo.credentialsSecret", DisplayName: "Secret Containing the Credentials",
+								Description:  "CredentialsSecret is a reference to a secret containing authentication details for the Foo server",
+								XDescriptors: []string{"urn:alm:descriptor:io.kubernetes:Secret"},
+							},
+							{
+								Path: "providers[0].foo.credentialsSecret.key", DisplayName: "Key within the secret",
+								Description:  "Key represents the specific key to reference from the secret",
+								XDescriptors: []string{"urn:alm:descriptor:com.tectonic.ui:advanced", "urn:alm:descriptor:com.tectonic.ui:text"},
+							},
+							{
+								Path: "providers[0].foo.credentialsSecret.name", DisplayName: "Name of the secret",
+								Description:  "Name represents the name of the secret",
+								XDescriptors: []string{"urn:alm:descriptor:com.tectonic.ui:advanced", "urn:alm:descriptor:com.tectonic.ui:text"},
+							},
+							{
+								Path: "providers[0].foo.credentialsSecret.namespace", DisplayName: "Namespace containing the secret",
+								Description:  "Namespace represents the namespace containing the secret",
+								XDescriptors: []string{"urn:alm:descriptor:com.tectonic.ui:advanced", "urn:alm:descriptor:com.tectonic.ui:text"},
+							},
+							{
+								Path: "size", DisplayName: "Size", Description: "Size is the size of the memcached deployment"},
 						},
 					},
 				},
@@ -226,6 +239,15 @@ func TestApplyDefinitionsForKeysGo(t *testing.T) {
 					},
 				},
 			},
+		},
+		{
+			description: "Return error for non-existent package dir",
+			apisDir:     filepath.Join("pkg", "notexist"),
+			csv:         &v1alpha1.ClusterServiceVersion{},
+			gvks: []schema.GroupVersionKind{
+				{Group: "cache.example.com", Version: "v1alpha2", Kind: "Dummy"},
+			},
+			wantErr: true,
 		},
 	}
 
