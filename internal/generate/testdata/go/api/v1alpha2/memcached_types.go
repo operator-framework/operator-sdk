@@ -15,7 +15,8 @@
 package v1alpha2
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	// Has the same name as a different import in dummy_types.go to test duplicate package names.
+	foo "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // MemcachedSpec defines the desired state of Memcached
@@ -40,8 +41,8 @@ type MemcachedStatus struct {
 // +kubebuilder:storageversion
 // +operator-sdk:csv:customresourcedefinitions:displayName="Memcached App"
 type Memcached struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	foo.TypeMeta   `json:",inline"`
+	foo.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   MemcachedSpec   `json:"spec,omitempty"`
 	Status MemcachedStatus `json:"status,omitempty"`
@@ -51,7 +52,7 @@ type Memcached struct {
 
 // MemcachedList contains a list of Memcached
 type MemcachedList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Memcached `json:"items"`
+	foo.TypeMeta `json:",inline"`
+	foo.ListMeta `json:"metadata,omitempty"`
+	Items        []Memcached `json:"items"`
 }
