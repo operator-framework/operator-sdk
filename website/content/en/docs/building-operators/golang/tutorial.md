@@ -486,7 +486,7 @@ Also see the [advanced topics][advanced_topics] doc for more use cases and under
 [generating-crd]: https://book.kubebuilder.io/reference/generating-crd.html
 [markers]: https://book.kubebuilder.io/reference/markers.html
 [crd-markers]: https://book.kubebuilder.io/reference/markers/crd-validation.html
-[memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/v1.2.0/testdata/go/memcached-operator/controllers/memcached_controller.go
+[memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/v1.3.0/testdata/go/v3/memcached-operator/controllers/memcached_controller.go
 [builder_godocs]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/builder#example-Builder
 [activate_modules]: https://github.com/golang/go/wiki/Modules#how-to-install-and-activate-module-support
 [advanced_topics]: /docs/building-operators/golang/advanced-topics/
