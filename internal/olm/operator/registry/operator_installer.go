@@ -16,6 +16,7 @@ package registry
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -106,6 +107,11 @@ func (o OperatorInstaller) UpgradeOperator(ctx context.Context) (*v1alpha1.Clust
 	}
 	if err := o.cfg.Client.List(ctx, subList, &options); err != nil {
 		return nil, fmt.Errorf("error getting list of subscriptions: %v", err)
+	}
+
+	// If there are no subscriptions found, then the previous operator version doesn't exist, so return error
+	if len(subList.Items) == 0 {
+		return nil, errors.New("no existing operator found in the cluster to upgrade")
 	}
 
 	var subscription *v1alpha1.Subscription
