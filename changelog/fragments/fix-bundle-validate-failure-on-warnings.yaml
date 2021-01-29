@@ -1,0 +1,6 @@
+entries:
+  - description: >
+      Bump operator-framework/api to fix "operator-sdk bundle validate" failure when bundle has warnings.
+      When a warning is detected during validation it should be logged to the CLI but the validation should still pass.
+    kind: bugfix
+    breaking: false
