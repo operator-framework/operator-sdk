@@ -123,6 +123,10 @@ func (o OperatorInstaller) UpgradeOperator(ctx context.Context) (*v1alpha1.Clust
 		}
 	}
 
+	if subscription == nil {
+		return nil, fmt.Errorf("subscription for package %q not found", o.PackageName)
+	}
+
 	log.Infof("Found existing subscription with name %s and namespace %s", subscription.Name, subscription.Namespace)
 
 	// Get existing catalog source from the subsription
