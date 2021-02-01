@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.3-230
 
 ENV HOME=/opt/helm \
     USER_NAME=helm \
