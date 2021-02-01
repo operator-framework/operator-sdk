@@ -21,6 +21,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+
+	"github.com/operator-framework/operator-sdk/internal/generate/packagemanifest"
 )
 
 //nolint:maligned
@@ -44,6 +46,8 @@ type packagemanifestsCmd struct {
 	// These are set if a PROJECT config is not present.
 	layout      string
 	packageName string
+	// Backend generator
+	generator packagemanifest.Generator
 }
 
 // NewCmd returns the 'packagemanifests' command configured for the new project layout.

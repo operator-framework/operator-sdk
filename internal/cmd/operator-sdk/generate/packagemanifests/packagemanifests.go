@@ -90,6 +90,7 @@ func (c *packagemanifestsCmd) setDefaults() (err error) {
 			c.outputDir = defaultRootDir
 		}
 	}
+	c.generator = genpkg.NewGenerator()
 
 	return nil
 }
@@ -216,17 +217,19 @@ func (c packagemanifestsCmd) run() error {
 }
 
 func (c packagemanifestsCmd) generatePackageManifest() error {
-	pkgGen := genpkg.Generator{
-		OperatorName:     c.packageName,
-		Version:          c.version,
+	//copy of genpkg withfilewriter()
+	//move out of internal util pkg?
+	if err := os.MkdirAll(c.outputDir, 0755); err != nil {
+		return err
+	}
+
+	opts := genpkg.Options{
+		BaseDir:          c.inputDir,
 		ChannelName:      c.channelName,
 		IsDefaultChannel: c.isDefaultChannel,
 	}
-	opts := []genpkg.Option{
-		genpkg.WithBase(c.inputDir),
-		genpkg.WithFileWriter(c.outputDir),
-	}
-	if err := pkgGen.Generate(opts...); err != nil {
+
+	if err := c.generator.Generate(c.packageName, c.version, c.outputDir, opts); err != nil {
 		return err
 	}
 	return nil
