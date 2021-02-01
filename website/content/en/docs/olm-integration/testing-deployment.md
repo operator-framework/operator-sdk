@@ -51,6 +51,9 @@ Let's look at the anatomy of the `run bundle` configuration model:
       **namespace** or the kubeconfig default).
     - `SingleNamespace="my-ns"`: the Operator will watch a namespace, not
       necessarily its own.
+  - This is an optional parameter, but if the CSV does not support
+    `AllNamespaces` then this parameter becomes **required** to instruct
+    `run bundle` with the appropriate `InstallModeType`.
 
 ## `operator-sdk run packagemanifests` command overview
 
@@ -91,6 +94,9 @@ Let's look at the anatomy of the `run packagemanifests` configuration model:
       **namespace** or the kubeconfig default).
     - `SingleNamespace="my-ns"`: the Operator will watch a namespace, not
       necessarily its own.
+  - This is an optional parameter, but if the CSV does not support
+    `AllNamespaces` then this parameter becomes **required** to instruct
+    `run packagemanifests` with the appropriate `InstallModeType`.
 - **version**: the version of the Operator to deploy. It must be a semantic
   version, ex. 0.0.1. This version must match the version of the CSV manifest
   found in **manifests-dir**, e.g. `packagemanifests/0.0.1` in an Operator
