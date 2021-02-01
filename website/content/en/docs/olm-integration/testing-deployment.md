@@ -23,7 +23,8 @@ packagemanifests` and `cleanup`:
 - **kubeconfig**: the local path to a kubeconfig. This uses well-defined default
   loading rules to load the config if empty.
 - **namespace**: the cluster namespace in which Operator resources are created.
-  This namespace must already exist in the cluster.
+  This namespace must already exist in the cluster. This is an optional field
+  which will default to the kubeconfig context if not provided.
 - **timeout**: a time string dictating the maximum time that `run` can run. The
   command will return an error if the timeout is exceeded.
 
@@ -61,7 +62,8 @@ packagemanifests` and `cleanup`:
 - **kubeconfig**: the local path to a kubeconfig. This uses well-defined default
   loading rules to load the config if empty.
 - **namespace**: the cluster namespace in which Operator resources are created.
-  This namespace must already exist in the cluster.
+  This namespace must already exist in the cluster. This is an optional field
+  which will default to the kubeconfig context if not provided.
 - **timeout**: a time string dictating the maximum time that `run` can run. The
   command will return an error if the timeout is exceeded.
 
@@ -97,7 +99,8 @@ packagemanifests` and `cleanup`:
 - **kubeconfig**: the local path to a kubeconfig. This uses well-defined default
   loading rules to load the config if empty.
 - **namespace**: the cluster namespace in which Operator resources are created.
-  This namespace must already exist in the cluster.
+  This namespace must already exist in the cluster. This is an optional field
+  which will default to the kubeconfig context if not provided.
 - **timeout**: a time string dictating the maximum time that `run` can run. The
   command will return an error if the timeout is exceeded.
 
