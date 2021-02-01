@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/ubi:latest
+FROM registry.access.redhat.com/ubi8/ubi:8.3-227
 
 RUN mkdir -p /etc/ansible \
   && echo "localhost ansible_connection=local" > /etc/ansible/hosts \
