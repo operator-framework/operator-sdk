@@ -17,6 +17,10 @@ See the [creating a bundle][creating-bundle] guide for more information. See the
 [CLI overview][doc-cli-overview] for commands to work with an OLM installation
 and generate a bundle.
 
+```
+operator-sdk run bundle <bundle-image> [--index-image=] [--kubeconfig=] [--namespace=] [--timeout=] [--install-mode=(AllNamespace|OwnNamespace|SingleNamespace=)]
+```
+
 Let's look at the configuration shared between `run bundle`, `run
 packagemanifests` and `cleanup`:
 
@@ -56,6 +60,10 @@ running on your cluster, and that your Operator has a valid
 [CLI overview][doc-cli-overview] for commands to work with an OLM installation
 and generate a package manifests format.
 
+```
+operator-sdk run packagemanifests <packagemanifests-root-dir> [--version=] [--kubeconfig=] [--namespace=] [--timeout=] [--install-mode=(AllNamespace|OwnNamespace|SingleNamespace=)]
+```
+
 Let's look at the configuration shared between `run bundle`, `run
 packagemanifests` and `cleanup`:
 
@@ -92,6 +100,10 @@ Let's look at the anatomy of the `run packagemanifests` configuration model:
 
 `operator-sdk cleanup` assumes an Operator was deployed using `run bundle` or
 `run packagemanifests`.
+
+```
+operator-sdk cleanup <operatorPackageName> [--kubeconfig=] [--namespace=] [--timeout=]
+```
 
 Let's look at the configuration shared between `run bundle`, `run
 packagemanifests` and `cleanup`:
