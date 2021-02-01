@@ -17,16 +17,16 @@ package packagemanifest
 import (
 	"errors"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"path/filepath"
 	"sort"
 
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	"github.com/operator-framework/api/pkg/validation"
 	log "github.com/sirupsen/logrus"
+	"sigs.k8s.io/yaml"
 
 	genutil "github.com/operator-framework/operator-sdk/internal/generate/internal"
-	"github.com/operator-framework/operator-sdk/internal/generate/packagemanifest/bases"
 )
 
 const (
@@ -34,20 +34,45 @@ const (
 	packageManifestFileExt = ".package.yaml"
 )
 
+// generator is an implementation of the Generator interface
+type generator struct{}
+
+// NewGenerator returns a new generator object
+func NewGenerator() Generator {
+	return generator{}
+}
+
+// Generator is an interface that specifies the Generate methods
+// to generate and write various package manifests
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 . Generator
+type Generator interface {
+	Generate(operatorName, version, outputDir string, opts Options) error
+}
+
+// PackageManifest configures the PackageManifest that GetBase() returns.
+type PackageManifest struct {
+	PackageName string
+	BasePath    string
+}
+
 var (
 	// User-facing errors.
-	errNoVersion = errors.New("version must be set")
+
+	// ErrNoVersion if no version # has been provided
+	ErrNoVersion = errors.New("version must be set")
 
 	// Internal errors.
-	errNoGetBase   = genutil.InternalError("getBase must be set")
-	errNoGetWriter = genutil.InternalError("getWriter must be set")
+
+	// ErrNoOpName if the operator name has not been set
+	ErrNoOpName = genutil.InternalError("operator name must be set")
+	// ErrNoOutputDir if the directory to write the package manifest to has not been set
+	ErrNoOutputDir = genutil.InternalError("output directory must be set")
 )
 
-type Generator struct {
-	// OperatorName is the operator's name, ex. app-operator.
-	OperatorName string
-	// Version is the version of the operator being updated.
-	Version string
+type Options struct {
+	// BaseDir is a directory to look for an existing base package manifest
+	// to update.
+	BaseDir string
 	// ChannelName is operator's PackageManifest channel. If a new PackageManifest is generated
 	// or ChannelName is the only channel in the generated PackageManifest,
 	// this channel will be set to the PackageManifest's default.
@@ -56,91 +81,56 @@ type Generator struct {
 	// generated PackageManifest. If true, ChannelName will be the PackageManifest's default channel.
 	// Setting this field is only necessary when more than one channel exists.
 	IsDefaultChannel bool
-
-	// Func that returns a base PackageManifest.
-	getBase getBaseFunc
-	// Func that returns the writer the generated PackageManifest's bytes are written to.
-	getWriter func() (io.Writer, error)
-}
-
-// Type of Generator.getBase.
-type getBaseFunc func() (*apimanifests.PackageManifest, error)
-
-// Option is a function that modifies a Generator.
-type Option func(*Generator) error
-
-// WithBase sets a Generator's base PackageManifest to one that either exists or a default.
-func WithBase(inputDir string) Option {
-	return func(g *Generator) error {
-		g.getBase = g.makeBaseGetter(inputDir)
-		return nil
-	}
-}
-
-// WithWriter sets a Generator's writer to w.
-func WithWriter(w io.Writer) Option {
-	return func(g *Generator) error {
-		g.getWriter = func() (io.Writer, error) {
-			return w, nil
-		}
-		return nil
-	}
-}
-
-// WithFileWriter sets a Generator's writer to a PackageManifest file under <dir>.
-func WithFileWriter(dir string) Option {
-	return func(g *Generator) (err error) {
-		g.getWriter = func() (io.Writer, error) {
-			return genutil.Open(dir, makePkgManFileName(g.OperatorName))
-		}
-		return nil
-	}
 }
 
 // Generate configures the Generator with opts then runs it.
-func (g *Generator) Generate(opts ...Option) error {
-	for _, opt := range opts {
-		if err := opt(g); err != nil {
-			return err
-		}
+func (g generator) Generate(operatorName, version, outputDir string, opts Options) error {
+	if operatorName == "" {
+		return ErrNoOpName
+	}
+	if version == "" {
+		return ErrNoVersion
+	}
+	if outputDir == "" {
+		return ErrNoOutputDir
 	}
 
-	if g.getWriter == nil {
-		return errNoGetWriter
-	}
-
-	pkg, err := g.generate()
+	pkg, err := g.generate(operatorName, version, opts)
 	if err != nil {
 		return err
 	}
 
-	w, err := g.getWriter()
+	outputWriter, err := genutil.Open(outputDir, makePkgManFileName(operatorName))
 	if err != nil {
 		return err
 	}
-	return genutil.WriteYAML(w, pkg)
+
+	return genutil.WriteYAML(outputWriter, pkg)
 }
 
-// generate runs a configured Generator.
-func (g *Generator) generate() (*apimanifests.PackageManifest, error) {
-	if g.getBase == nil {
-		return nil, errNoGetBase
+// generate takes the input and generates the populated package manifest object
+func (g generator) generate(operatorName, version string, opts Options) (*apimanifests.PackageManifest, error) {
+	b := PackageManifest{
+		PackageName: operatorName,
 	}
-	if g.Version == "" {
-		return nil, errNoVersion
+	if opts.BaseDir != "" {
+		basePath := filepath.Join(opts.BaseDir, makePkgManFileName(operatorName))
+		if genutil.IsNotExist(basePath) {
+			basePath = ""
+		}
+		b.BasePath = basePath
 	}
-
-	base, err := g.getBase()
+	base, err := b.GetBase()
 	if err != nil {
 		return nil, fmt.Errorf("error getting PackageManifest base: %v", err)
 	}
 
-	csvName := genutil.MakeCSVName(g.OperatorName, g.Version)
-	if g.ChannelName != "" {
-		setChannels(base, g.ChannelName, csvName)
+	csvName := genutil.MakeCSVName(operatorName, version)
+	if opts.ChannelName != "" {
+		setChannels(base, opts.ChannelName, csvName)
 		sortChannelsByName(base)
-		if g.IsDefaultChannel || len(base.Channels) == 1 {
-			base.DefaultChannelName = g.ChannelName
+		if opts.IsDefaultChannel || len(base.Channels) == 1 {
+			base.DefaultChannelName = opts.ChannelName
 		}
 	} else if len(base.Channels) == 0 {
 		setChannels(base, "alpha", csvName)
@@ -152,22 +142,6 @@ func (g *Generator) generate() (*apimanifests.PackageManifest, error) {
 	}
 
 	return base, nil
-}
-
-// makeBaseGetter returns a function that gets a base from inputDir.
-func (g Generator) makeBaseGetter(inputDir string) func() (*apimanifests.PackageManifest, error) {
-	basePath := filepath.Join(inputDir, makePkgManFileName(g.OperatorName))
-	if genutil.IsNotExist(basePath) {
-		basePath = ""
-	}
-
-	return func() (*apimanifests.PackageManifest, error) {
-		b := bases.PackageManifest{
-			PackageName: g.OperatorName,
-			BasePath:    basePath,
-		}
-		return b.GetBase()
-	}
 }
 
 // makePkgManFileName will return the file name of a PackageManifest.
@@ -226,4 +200,42 @@ func setChannels(pkg *apimanifests.PackageManifest, channelName, csvName string)
 			CurrentCSVName: csvName,
 		})
 	}
+}
+
+// GetBase returns a base PackageManifest, populated either with default
+// values or, if b.BasePath is set, bytes from disk.
+func (b PackageManifest) GetBase() (base *apimanifests.PackageManifest, err error) {
+	if b.BasePath != "" {
+		if base, err = readPackageManifestBase(b.BasePath); err != nil {
+			return nil, fmt.Errorf("error reading existing PackageManifest base %s: %v", b.BasePath, err)
+		}
+	} else {
+		base = b.makeNewBase()
+	}
+
+	return base, nil
+}
+
+// makeNewBase returns a base makeNewBase to modify.
+func (b PackageManifest) makeNewBase() *apimanifests.PackageManifest {
+	return &apimanifests.PackageManifest{
+		PackageName: b.PackageName,
+	}
+}
+
+// readPackageManifestBase returns the PackageManifest base at path.
+// If no base is found, readPackageManifestBase returns an error.
+func readPackageManifestBase(path string) (*apimanifests.PackageManifest, error) {
+	b, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	pkg := &apimanifests.PackageManifest{}
+	if err := yaml.Unmarshal(b, pkg); err != nil {
+		return nil, fmt.Errorf("error unmarshalling PackageManifest from %s: %w", path, err)
+	}
+	if pkg.PackageName == "" {
+		return nil, fmt.Errorf("no PackageManifest in %s", path)
+	}
+	return pkg, nil
 }
