@@ -49,7 +49,9 @@ func NewInstall(cfg *operator.Configuration) Install {
 func (i *Install) BindFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&i.IndexImage, "index-image", index.DefaultIndexImage, "index image in which to inject bundle")
 	fs.Var(&i.InstallMode, "install-mode", "install mode")
-	fs.StringVar(&i.BundleAddMode, "mode", "", "mode to use for adding bundle to index")
+
+	// --mode is hidden so only users who know what they're doing can alter add mode.
+	fs.StringVar((*string)(&i.BundleAddMode), "mode", "", "mode to use for adding bundle to index")
 	_ = fs.MarkHidden("mode")
 }
 
@@ -61,6 +63,17 @@ func (i Install) Run(ctx context.Context) (*v1alpha1.ClusterServiceVersion, erro
 }
 
 func (i *Install) setup(ctx context.Context) error {
+	// Default bundle add mode then validate in case it was set by a user.
+	if i.BundleAddMode == "" {
+		i.BundleAddMode = index.ReplacesBundleAddMode
+		if i.IndexImage == index.DefaultIndexImage {
+			i.BundleAddMode = index.SemverBundleAddMode
+		}
+	} else if err := i.BundleAddMode.Validate(); err != nil {
+		return err
+	}
+
+	// Load bundle labels and set label-dependent values.
 	labels, bundle, err := operator.LoadBundle(ctx, i.BundleImage)
 	if err != nil {
 		return err
@@ -79,12 +92,6 @@ func (i *Install) setup(ctx context.Context) error {
 
 	i.IndexImageCatalogCreator.PackageName = i.OperatorInstaller.PackageName
 	i.IndexImageCatalogCreator.BundleImage = i.BundleImage
-	if i.IndexImageCatalogCreator.BundleAddMode == "" {
-		i.IndexImageCatalogCreator.BundleAddMode = index.ReplacesBundleAddMode
-		if i.IndexImageCatalogCreator.IndexImage == index.DefaultIndexImage {
-			i.IndexImageCatalogCreator.BundleAddMode = index.SemverBundleAddMode
-		}
-	}
 
 	return nil
 }
