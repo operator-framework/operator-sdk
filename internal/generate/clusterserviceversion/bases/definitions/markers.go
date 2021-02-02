@@ -37,17 +37,20 @@ const (
 	crdMarkerName = csvPrefix + ":customresourcedefinitions"
 )
 
-// +operator-sdk:csv:customresourcedefinitions:displayName="string",resources={ {kind,version,name} , ... }
-var typeDefinition = markers.Must(markers.MakeDefinition(crdMarkerName, markers.DescribesType, Description{}))
-
-// +operator-sdk:csv:customresourcedefinitions:type=<spec|status>,displayName="name",xDescriptors="ui:elements:foo:bar"
-var fieldDefinition = markers.Must(markers.MakeDefinition(crdMarkerName, markers.DescribesField, Descriptor{}))
-
-// See https://github.com/kubernetes-sigs/controller-tools/blob/92e95c1/pkg/crd/markers/crd.go#L40
-var crdResourceDefinition = markers.Must(markers.MakeDefinition("kubebuilder:resource", markers.DescribesType, crdmarkers.Resource{}))
+var (
+	// +operator-sdk:csv:customresourcedefinitions:displayName="string",resources={ {kind,version,name} , ... }
+	typeDefinition = markers.Must(markers.MakeDefinition(crdMarkerName, markers.DescribesType, Description{}))
+	// +operator-sdk:csv:customresourcedefinitions:type=<spec|status>,displayName="name",xDescriptors="ui:elements:foo:bar"
+	fieldDefinition = markers.Must(markers.MakeDefinition(crdMarkerName, markers.DescribesField, Descriptor{}))
+)
 
 // registerMarkers adds type and field marker definitions to a registry.
 func registerMarkers(into *markers.Registry) error {
+	// External definitions.
+	if err := crdmarkers.Register(into); err != nil {
+		return fmt.Errorf("error registering external marker definition: %v", err)
+	}
+
 	if err := into.Register(typeDefinition); err != nil {
 		return fmt.Errorf("error registering type definition: %v", err)
 	}
@@ -57,11 +60,6 @@ func registerMarkers(into *markers.Registry) error {
 	}
 	into.AddHelp(fieldDefinition, Descriptor{}.Help())
 
-	// External definitions.
-	if err := into.Register(crdResourceDefinition); err != nil {
-		return fmt.Errorf("error registering CRD resource definition: %v", err)
-	}
-	into.AddHelp(crdResourceDefinition, crdmarkers.Resource{}.Help())
 	return nil
 }
 
