@@ -330,6 +330,13 @@ Clean up the resources:
 
 ```sh
 kubectl delete -f config/samples/demo_v1alpha1_nginx.yaml
+```
+
+**Note:** Make sure the above custom resource has been deleted before proceeding to
+run `make undeploy`, as helm-operator's controller adds finalizers to the custom resources.
+Otherwise your cluster may have dangling custom resource objects that cannot be deleted.
+
+```sh
 make undeploy
 ```
 
