@@ -36,8 +36,8 @@ var (
 // Config configures this plugin, and is saved in the project config file.
 type Config struct{}
 
-// hasPluginConfig returns true if cfg.Plugins contains an exact match for this plugin's key.
-func hasPluginConfig(cfg *config.Config) bool {
+// HasPluginConfig returns true if cfg.Plugins contains an exact match for this plugin's key.
+func HasPluginConfig(cfg *config.Config) bool {
 	if !cfg.IsV3() || len(cfg.Plugins) == 0 {
 		return false
 	}
@@ -63,7 +63,7 @@ func RunInit(cfg *config.Config) error {
 
 // RunCreateAPI runs the manifests SDK phase 2 plugin.
 func RunCreateAPI(cfg *config.Config, gvk config.GVK) error {
-	if !hasPluginConfig(cfg) {
+	if !HasPluginConfig(cfg) {
 		return nil
 	}
 	return manifests.RunCreateAPI(cfg, gvk)

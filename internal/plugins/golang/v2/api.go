@@ -20,6 +20,7 @@ import (
 	"sigs.k8s.io/kubebuilder/v2/pkg/plugin"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/manifests"
+	manifestsv2 "github.com/operator-framework/operator-sdk/internal/plugins/manifests/v2"
 )
 
 type createAPISubcommand struct {
@@ -46,13 +47,9 @@ func (p *createAPISubcommand) Run() error {
 	for _, r := range p.config.Resources {
 		oldResources[r] = struct{}{}
 	}
+
 	if err := p.CreateAPISubcommand.Run(); err != nil {
 		return err
-	}
-
-	// Emulate plugins phase 2 behavior by checking the config for this plugin's config object.
-	if !hasPluginConfig(p.config) {
-		return nil
 	}
 
 	// Find the new resource. Here we shouldn't worry about checking if one was found,
@@ -71,5 +68,18 @@ func (p *createAPISubcommand) Run() error {
 
 // SDK phase 2 plugins.
 func (p *createAPISubcommand) runPhase2(gvk config.GVK) error {
-	return manifests.RunCreateAPI(p.config, gvk)
+	// Check if the generic "go" operator-sdk plugin (legacy) exists first.
+	if hasPluginConfig(p.config) {
+		if err := manifests.RunCreateAPI(p.config, gvk); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	// v2 plugins will handle checking p.config for their key so we can call all of them below.
+	if err := manifestsv2.RunCreateAPI(p.config, gvk); err != nil {
+		return err
+	}
+
+	return nil
 }

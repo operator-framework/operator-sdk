@@ -28,8 +28,8 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/chartutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds"
-	"github.com/operator-framework/operator-sdk/internal/plugins/manifests"
-	"github.com/operator-framework/operator-sdk/internal/plugins/scorecard"
+	manifestsv2 "github.com/operator-framework/operator-sdk/internal/plugins/manifests/v2"
+	scorecardv2 "github.com/operator-framework/operator-sdk/internal/plugins/scorecard/v2"
 )
 
 type initSubcommand struct {
@@ -147,10 +147,10 @@ func (p *initSubcommand) Run() error {
 
 // SDK phase 2 plugins.
 func (p *initSubcommand) runPhase2() error {
-	if err := manifests.RunInit(p.config); err != nil {
+	if err := manifestsv2.RunInit(p.config); err != nil {
 		return err
 	}
-	if err := scorecard.RunInit(p.config); err != nil {
+	if err := scorecardv2.RunInit(p.config); err != nil {
 		return err
 	}
 
