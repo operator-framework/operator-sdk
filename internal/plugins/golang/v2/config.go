@@ -17,6 +17,7 @@ package v2
 import "sigs.k8s.io/kubebuilder/v2/pkg/model/config"
 
 // Config configures this plugin, and is saved in the project config file.
+// Deprecated: use scorecard and manifests plugin configs directly.
 type Config struct{}
 
 // hasPluginConfig returns true if cfg.Plugins contains an exact match for this plugin's key.
