@@ -4,4 +4,4 @@
   kind: Database
   playbook: playbook.yaml
   finalizer:
-    name: foo.app.example.com
+    name: foo.app.example.com/finalizer

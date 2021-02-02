@@ -4,6 +4,6 @@
   kind: Database
   role: opt/ansible/playbook.yaml
   finalizer:
-    name: finalizer.app.example.com
+    name: app.example.com/finalizer
     vars:
       sentinel: finalizer_running
