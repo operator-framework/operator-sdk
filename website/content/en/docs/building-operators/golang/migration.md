@@ -61,7 +61,7 @@ So let's create a new project with the same domain (`example.com`):
 ```sh
 mkdir memcached-operator
 cd memcached-operator
-operator-sdk init --domain example.com --repo github.com/example-inc/memcached-operator
+operator-sdk init --domain example.com --repo github.com/example/memcached-operator
 ```
 
 **Note**: `operator-sdk` attempts to automatically discover the Go module path of your project by looking for a `go.mod` file, or if in `$GOPATH`, by using the directory path. Use the `--repo` flag to explicitly set the module path.
