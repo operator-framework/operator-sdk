@@ -183,7 +183,9 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
     // Add finalizer for this CR
     if !controllerutil.ContainsFinalizer(memcached, memcachedFinalizer) {
-        if err := r.addFinalizer(reqLogger, memcached); err != nil {
+        controllerutil.AddFinalizer(memcached, memcachedFinalizer)
+        err = r.Update(ctx, memcached)
+        if err != nil {
             return ctrl.Result{}, err
         }
     }
@@ -199,19 +201,6 @@ func (r *MemcachedReconciler) finalizeMemcached(reqLogger logr.Logger, m *cachev
     // of finalizers include performing backups and deleting
     // resources that are not owned by this CR, like a PVC.
     reqLogger.Info("Successfully finalized memcached")
-    return nil
-}
-
-func (r *MemcachedReconciler) addFinalizer(reqLogger logr.Logger, m *cachev1alpha1.Memcached) error {
-    reqLogger.Info("Adding Finalizer for the Memcached")
-    controllerutil.AddFinalizer(m, memcachedFinalizer)
-
-    // Update CR
-    err := r.Update(context.TODO(), m)
-    if err != nil {
-        reqLogger.Error(err, "Failed to update Memcached with finalizer")
-        return err
-    }
     return nil
 }
 ```
