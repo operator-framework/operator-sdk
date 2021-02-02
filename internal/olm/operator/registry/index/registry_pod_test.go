@@ -138,7 +138,7 @@ var _ = Describe("RegistryPod", func() {
 			})
 
 			It("should not accept any other bundle add mode other than semver or replaces", func() {
-				expectedErr := "invalid bundle mode"
+				expectedErr := `bundle add mode "invalid" does not exist`
 				rp := &RegistryPod{
 					BundleItems: []BundleItem{{ImageTag: "quay.io/example/example-operator-bundle:0.2.0", AddMode: "invalid"}},
 				}

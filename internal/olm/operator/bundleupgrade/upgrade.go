@@ -47,7 +47,8 @@ func NewUpgrade(cfg *operator.Configuration) Upgrade {
 }
 
 func (u *Upgrade) BindFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&u.BundleAddMode, "mode", "", "mode to use for adding new bundle version to index")
+	// --mode is hidden so only users who know what they're doing can alter add mode.
+	fs.StringVar((*string)(&u.BundleAddMode), "mode", "", "mode to use for adding new bundle version to index")
 	_ = fs.MarkHidden("mode")
 }
 
@@ -59,6 +60,14 @@ func (u Upgrade) Run(ctx context.Context) (*v1alpha1.ClusterServiceVersion, erro
 }
 
 func (u *Upgrade) setup(ctx context.Context) error {
+	// Bundle add mode is defaulted based on in-cluster metadata in u.UpgradeOperator(),
+	// so validate only if it was set by a user.
+	if u.BundleAddMode != "" {
+		if err := u.BundleAddMode.Validate(); err != nil {
+			return err
+		}
+	}
+
 	labels, bundle, err := operator.LoadBundle(ctx, u.BundleImage)
 	if err != nil {
 		return err
