@@ -113,12 +113,13 @@ Now we're ready to test and deploy the Operator with OLM.
 ### Testing bundles
 
 Before proceeding, make sure you've [Installed OLM](#enabling-olm) onto your
-cluster. First, we need to build our bundle. To build a memcached-operator
-bundle, run:
+cluster.
+
+First, we need to build our bundle. To build a memcached-operator bundle, run:
 
 ```console
-make bundle-build BUNDLE_IMG=<some-registry>/memcached-operator-bundle:v0.0.1
-make docker-push IMG=<some-registry>/memcached-operator-bundle:v0.0.1
+$ make bundle-build BUNDLE_IMG=<some-registry>/memcached-operator-bundle:v0.0.1
+$ make docker-push IMG=<some-registry>/memcached-operator-bundle:v0.0.1
 ```
 
 Now that the bundle image is present in a registry, [`operator-sdk run bundle`][cli-run-bundle]
@@ -126,7 +127,7 @@ can create a pod to serve that bundle to OLM via a [`Subscription`][install-your
 along with other OLM objects, ephemerally.
 
 ```console
-operator-sdk run bundle <some-registry>/memcached-operator-bundle:v0.0.1
+$ operator-sdk run bundle <some-registry>/memcached-operator-bundle:v0.0.1
 INFO[0008] Successfully created registry pod: <some-registry>-memcached-operator-bundle-0-0-1
 INFO[0008] Created CatalogSource: memcached-operator-catalog
 INFO[0008] OperatorGroup "operator-sdk-og" created
@@ -150,8 +151,8 @@ which are composed of one or more bundles. To build a memcached-operator bundle 
 version v0.0.1, run:
 
 ```console
-make bundle-build BUNDLE_IMG=<some-registry>/memcached-operator-bundle:v0.0.1
-docker push <some-registry>/memcached-operator-bundle:v0.0.1
+$ make bundle-build BUNDLE_IMG=<some-registry>/memcached-operator-bundle:v0.0.1
+$ make docker-push IMG=<some-registry>/memcached-operator-bundle:v0.0.1
 ```
 
 Although we've validated on-disk manifests and metadata, we also must make sure the bundle itself is valid:
