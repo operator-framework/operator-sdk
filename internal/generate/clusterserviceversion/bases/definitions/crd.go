@@ -26,7 +26,9 @@ import (
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/version"
+	"sigs.k8s.io/controller-tools/pkg/crd"
 	crdmarkers "sigs.k8s.io/controller-tools/pkg/crd/markers"
+	"sigs.k8s.io/controller-tools/pkg/loader"
 	"sigs.k8s.io/controller-tools/pkg/markers"
 
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
@@ -54,7 +56,7 @@ func getHalfBySep(s, sep string, half uint) string {
 
 // buildCRDDescriptionFromType builds a crdDescription for the Go API defined
 // by key from markers and type information in g.types.
-func (g generator) buildCRDDescriptionFromType(gvk schema.GroupVersionKind, kindType *markers.TypeInfo) (v1alpha1.CRDDescription, int, error) {
+func (g generator) buildCRDDescriptionFromType(gvk schema.GroupVersionKind, typeIdent crd.TypeIdent, kindType *markers.TypeInfo) (v1alpha1.CRDDescription, int, error) {
 
 	// Initialize the description.
 	description := v1alpha1.CRDDescription{
@@ -96,7 +98,7 @@ func (g generator) buildCRDDescriptionFromType(gvk schema.GroupVersionKind, kind
 	}
 	sortResources(description.Resources)
 
-	specDescriptors, err := g.getTypedDescriptors(kindType, reflect.TypeOf(v1alpha1.SpecDescriptor{}), spec)
+	specDescriptors, err := g.getTypedDescriptors(typeIdent.Package, kindType, reflect.TypeOf(v1alpha1.SpecDescriptor{}), spec)
 	if err != nil {
 		return v1alpha1.CRDDescription{}, 0, err
 	}
@@ -104,7 +106,7 @@ func (g generator) buildCRDDescriptionFromType(gvk schema.GroupVersionKind, kind
 		description.SpecDescriptors = append(description.SpecDescriptors, d.(v1alpha1.SpecDescriptor))
 	}
 
-	statusDescriptors, err := g.getTypedDescriptors(kindType, reflect.TypeOf(v1alpha1.StatusDescriptor{}), status)
+	statusDescriptors, err := g.getTypedDescriptors(typeIdent.Package, kindType, reflect.TypeOf(v1alpha1.StatusDescriptor{}), status)
 	if err != nil {
 		return v1alpha1.CRDDescription{}, 0, err
 	}
@@ -115,7 +117,7 @@ func (g generator) buildCRDDescriptionFromType(gvk schema.GroupVersionKind, kind
 	return description, descriptionOrder, nil
 }
 
-func (g generator) getTypedDescriptors(kindType *markers.TypeInfo, t reflect.Type, descType string) ([]interface{}, error) {
+func (g generator) getTypedDescriptors(pkg *loader.Package, kindType *markers.TypeInfo, t reflect.Type, descType string) ([]interface{}, error) {
 	// Find child in the kind type.
 	child, err := findChildForDescType(kindType, descType)
 	if err != nil {
@@ -123,7 +125,7 @@ func (g generator) getTypedDescriptors(kindType *markers.TypeInfo, t reflect.Typ
 	}
 
 	// Find annotated fields of child and parse them into descriptors.
-	markedFields, err := g.getMarkedChildrenOfField(child)
+	markedFields, err := g.getMarkedChildrenOfField(pkg, child)
 	if err != nil {
 		return nil, err
 	}
