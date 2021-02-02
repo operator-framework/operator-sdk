@@ -35,15 +35,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
 
-// BundleAddMode - type of BundleAddMode in RegistryPod struct
-type BundleAddMode = string
-
-const (
-	// SemverBundleAddMode - bundle add mode for semver
-	SemverBundleAddMode BundleAddMode = "semver"
-	// ReplacesBundleAddMode - bundle add mode for replaces
-	ReplacesBundleAddMode BundleAddMode = "replaces"
-)
 const (
 	// DefaultIndexImage is the index base image used if none is specified. It contains no bundles.
 	DefaultIndexImage = "quay.io/operator-framework/upstream-opm-builder:latest"
@@ -175,12 +166,8 @@ func (rp *RegistryPod) validate() error {
 		if item.ImageTag == "" {
 			return errors.New("bundle image cannot be empty")
 		}
-		if item.AddMode == "" {
-			return fmt.Errorf("bundle add mode for %q cannot be empty", item.ImageTag)
-		}
-		if item.AddMode != SemverBundleAddMode && item.AddMode != ReplacesBundleAddMode {
-			return fmt.Errorf("invalid bundle mode %q: must be one of [%q, %q]",
-				item.AddMode, ReplacesBundleAddMode, SemverBundleAddMode)
+		if err := item.AddMode.Validate(); err != nil {
+			return fmt.Errorf("invalid bundle add mode: %v", err)
 		}
 	}
 
