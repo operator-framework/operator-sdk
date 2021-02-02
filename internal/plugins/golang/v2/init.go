@@ -15,15 +15,13 @@
 package v2
 
 import (
-	"fmt"
-
 	"github.com/spf13/pflag"
 	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
 	"sigs.k8s.io/kubebuilder/v2/pkg/plugin"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/envtest"
-	"github.com/operator-framework/operator-sdk/internal/plugins/manifests"
-	"github.com/operator-framework/operator-sdk/internal/plugins/scorecard"
+	manifestsv2 "github.com/operator-framework/operator-sdk/internal/plugins/manifests/v2"
+	scorecardv2 "github.com/operator-framework/operator-sdk/internal/plugins/scorecard/v2"
 )
 
 type initSubcommand struct {
@@ -52,14 +50,6 @@ func (p *initSubcommand) Run() error {
 		return err
 	}
 
-	// Update plugin config section with this plugin's configuration for v3 projects.
-	if p.config.IsV3() {
-		cfg := Config{}
-		if err := p.config.EncodePluginConfig(pluginConfigKey, cfg); err != nil {
-			return fmt.Errorf("error writing plugin config for %s: %v", pluginConfigKey, err)
-		}
-	}
-
 	return nil
 }
 
@@ -68,10 +58,10 @@ func (p *initSubcommand) runPhase2() error {
 	if err := envtest.RunInit(p.config); err != nil {
 		return err
 	}
-	if err := manifests.RunInit(p.config); err != nil {
+	if err := manifestsv2.RunInit(p.config); err != nil {
 		return err
 	}
-	if err := scorecard.RunInit(p.config); err != nil {
+	if err := scorecardv2.RunInit(p.config); err != nil {
 		return err
 	}
 	return nil
