@@ -162,7 +162,7 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
     // indicated by the deletion timestamp being set.
     isMemcachedMarkedToBeDeleted := memcached.GetDeletionTimestamp() != nil
     if isMemcachedMarkedToBeDeleted {
-        if contains(memcached.GetFinalizers(), memcachedFinalizer) {
+        if controllerutil.ContainsFinalizer(memcached, memcachedFinalizer) {
             // Run finalization logic for memcachedFinalizer. If the
             // finalization logic fails, don't remove the finalizer so
             // that we can retry during the next reconciliation.
@@ -182,8 +182,10 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
     }
 
     // Add finalizer for this CR
-    if !contains(memcached.GetFinalizers(), memcachedFinalizer) {
-        if err := r.addFinalizer(reqLogger, memcached); err != nil {
+    if !controllerutil.ContainsFinalizer(memcached, memcachedFinalizer) {
+        controllerutil.AddFinalizer(memcached, memcachedFinalizer)
+        err = r.Update(ctx, memcached)
+        if err != nil {
             return ctrl.Result{}, err
         }
     }
@@ -200,28 +202,6 @@ func (r *MemcachedReconciler) finalizeMemcached(reqLogger logr.Logger, m *cachev
     // resources that are not owned by this CR, like a PVC.
     reqLogger.Info("Successfully finalized memcached")
     return nil
-}
-
-func (r *MemcachedReconciler) addFinalizer(reqLogger logr.Logger, m *cachev1alpha1.Memcached) error {
-    reqLogger.Info("Adding Finalizer for the Memcached")
-    controllerutil.AddFinalizer(m, memcachedFinalizer)
-
-    // Update CR
-    err := r.Update(context.TODO(), m)
-    if err != nil {
-        reqLogger.Error(err, "Failed to update Memcached with finalizer")
-        return err
-    }
-    return nil
-}
-
-func contains(list []string, s string) bool {
-    for _, v := range list {
-        if v == s {
-            return true
-        }
-    }
-    return false
 }
 ```
 
