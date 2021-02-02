@@ -88,10 +88,10 @@ We will now create bundle manifests by running `make bundle` in the root of the 
 $ make bundle
 /home/user/go/bin/controller-gen "crd:trivialVersions=true" rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 operator-sdk generate kustomize manifests -q
-kustomize build config/manifests | operator-sdk generate bundle -q --overwrite --version 0.0.1  
-INFO[0000] Building annotations.yaml                    
+kustomize build config/manifests | operator-sdk generate bundle -q --overwrite --version 0.0.1
+INFO[0000] Building annotations.yaml
 INFO[0000] Writing annotations.yaml in /home/user/go/src/github.com/test-org/memcached-operator/bundle/metadata
-INFO[0000] Building Dockerfile                          
+INFO[0000] Building Dockerfile
 INFO[0000] Writing bundle.Dockerfile in /home/user/go/src/github.com/test-org/memcached-operator
 operator-sdk bundle validate ./bundle
 INFO[0000] Found annotations file                        bundle-dir=bundle container-tool=docker
@@ -99,10 +99,11 @@ INFO[0000] Could not find optional dependencies file     bundle-dir=bundle conta
 INFO[0000] All validation tests have completed successfully
 ```
 
-A bundle manifests directory `bundle/manifests` containing a CSV and all CRDs in `config/crds`, a bundle
-[metadata][bundle-metadata] directory `bundle/metadata`, and a [Dockerfile][bundle-dockerfile] `bundle.Dockerfile`
-have been created in the Operator project. These files have been statically validated by
-`operator-sdk bundle validate` to ensure the on-disk bundle representation is correct.
+The above command will have created the following bundle artifacts: a manifests directory
+(`bundle/manifests`) containing a CSV and all CRDs from `config/crds`, [metadata][bundle-metadata]
+directory (`bundle/metadata`), and [`bundle.Dockerfile`][bundle-dockerfile] have been created in
+the Operator project. These files have been statically validated by `operator-sdk bundle validate`
+to ensure the on-disk bundle representation is correct.
 
 ## Deploying an Operator with OLM
 
@@ -111,25 +112,53 @@ Now we're ready to test and deploy the Operator with OLM.
 
 ### Testing bundles
 
-<!-- TODO(jmrodri): `run bundle` usage here -->
+Before proceeding, make sure you've [Installed OLM](#enabling-olm) onto your
+cluster.
+
+First, we need to build our bundle. To build a memcached-operator bundle, run:
+
+```console
+$ make bundle-build BUNDLE_IMG=<some-registry>/memcached-operator-bundle:v0.0.1
+$ make docker-push IMG=<some-registry>/memcached-operator-bundle:v0.0.1
+```
+
+Now that the bundle image is present in a registry, [`operator-sdk run bundle`][cli-run-bundle]
+can create a pod to serve that bundle to OLM via a [`Subscription`][install-your-operator],
+along with other OLM objects, ephemerally.
+
+```console
+$ operator-sdk run bundle <some-registry>/memcached-operator-bundle:v0.0.1
+INFO[0008] Successfully created registry pod: <some-registry>-memcached-operator-bundle-0-0-1
+INFO[0008] Created CatalogSource: memcached-operator-catalog
+INFO[0008] OperatorGroup "operator-sdk-og" created
+INFO[0008] Created Subscription: memcached-operator-v0-0-1-sub
+INFO[0019] Approved InstallPlan install-krv7q for the Subscription: memcached-operator-v0-0-1-sub
+INFO[0019] Waiting for ClusterServiceVersion "default/memcached-operator.v0.0.1" to reach 'Succeeded' phase
+INFO[0019]   Waiting for ClusterServiceVersion "default/memcached-operator.v0.0.1" to appear
+INFO[0031]   Found ClusterServiceVersion "default/memcached-operator.v0.0.1" phase: Pending
+INFO[0032]   Found ClusterServiceVersion "default/memcached-operator.v0.0.1" phase: Installing
+INFO[0040]   Found ClusterServiceVersion "default/memcached-operator.v0.0.1" phase: Succeeded
+INFO[0040] OLM has successfully installed "memcached-operator.v0.0.1"
+```
+
 <!-- TODO(jmccormick2001): add `scorecard` usage here -->
 <!-- TODO(rashmigottipati): `run bundle-upgrade` usage here -->
-Coming soon.
 
 ### Deploying bundles in production
 
 OLM and Operator Registry consumes Operator bundles via an [index image][index-image],
-which are composed of one or more bundles. To build a memcached-operator bundle, run:
+which are composed of one or more bundles. To build a memcached-operator bundle for
+version v0.0.1, run:
 
 ```console
-make bundle-build BUNDLE_IMG=<some-registry>/memcached-operator-bundle:<tag>
-docker push <some-registry>/memcached-operator-bundle:<tag>
+$ make bundle-build BUNDLE_IMG=<some-registry>/memcached-operator-bundle:v0.0.1
+$ make docker-push IMG=<some-registry>/memcached-operator-bundle:v0.0.1
 ```
 
 Although we've validated on-disk manifests and metadata, we also must make sure the bundle itself is valid:
 
 ```console
-$ operator-sdk bundle validate <some-registry>/memcached-operator-bundle:<tag>
+$ operator-sdk bundle validate <some-registry>/memcached-operator-bundle:v0.0.1
 INFO[0000] Unpacked image layers                         bundle-dir=/tmp/bundle-716785960 container-tool=docker
 INFO[0000] running docker pull                           bundle-dir=/tmp/bundle-716785960 container-tool=docker
 INFO[0002] running docker save                           bundle-dir=/tmp/bundle-716785960 container-tool=docker
@@ -151,6 +180,7 @@ about your cataloged Operator.
 [bundle-metadata]:https://github.com/operator-framework/operator-registry/blob/v1.12.6/docs/design/operator-bundle.md#bundle-annotations
 [bundle-dockerfile]:https://github.com/operator-framework/operator-registry/blob/v1.12.6/docs/design/operator-bundle.md#bundle-dockerfile
 [cli-olm]:/docs/cli/operator-sdk_olm
+[cli-run-bundle]:/docs/cli/operator-sdk_run_bundle
 [doc-cli-overview]:/docs/olm-integration/cli-overview
 [doc-olm-generate]:/docs/olm-integration/generation
 [opm]:https://github.com/operator-framework/operator-registry/blob/master/docs/design/opm-tooling.md
@@ -158,3 +188,4 @@ about your cataloged Operator.
 [doc-index-build]:https://github.com/operator-framework/operator-registry#building-an-index-of-operators-using-opm
 [doc-olm-index]:https://github.com/operator-framework/operator-registry#using-the-index-with-operator-lifecycle-manager
 [doc-olm-discovery]:https://github.com/operator-framework/operator-lifecycle-manager/#discovery-catalogs-and-automated-upgrades
+[install-your-operator]:https://olm.operatorframework.io/docs/tasks/install-operator-with-olm/#install-your-operator
