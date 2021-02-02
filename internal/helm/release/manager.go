@@ -26,8 +26,8 @@ import (
 	"helm.sh/helm/v3/pkg/action"
 	cpb "helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/kube"
-	helmkube "helm.sh/helm/v3/pkg/kube"
 	rpb "helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/releaseutil"
 	"helm.sh/helm/v3/pkg/storage"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -38,8 +38,10 @@ import (
 	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/cli-runtime/pkg/resource"
+	"k8s.io/client-go/discovery"
 
 	"github.com/operator-framework/operator-sdk/internal/helm/internal/types"
+	"github.com/operator-framework/operator-sdk/internal/helm/manifestutil"
 )
 
 // Manager manages a Helm release. It can install, upgrade, reconcile,
@@ -53,6 +55,7 @@ type Manager interface {
 	UpgradeRelease(context.Context, ...UpgradeOption) (*rpb.Release, *rpb.Release, error)
 	ReconcileRelease(context.Context) (*rpb.Release, error)
 	UninstallRelease(context.Context, ...UninstallOption) (*rpb.Release, error)
+	CleanupRelease(context.Context, string) (bool, error)
 }
 
 type manager struct {
@@ -293,7 +296,7 @@ func createPatch(existing runtime.Object, expected *resource.Info) ([]byte, apit
 	}
 
 	// Get a versioned object
-	versionedObject := helmkube.AsVersioned(expected)
+	versionedObject := kube.AsVersioned(expected)
 
 	// Unstructured objects, such as CRDs, may not have an not registered error
 	// returned from ConvertToVersion. Anything that's unstructured should
@@ -362,4 +365,60 @@ func (m manager) UninstallRelease(ctx context.Context, opts ...UninstallOption) 
 		return nil, err
 	}
 	return uninstallResponse.Release, err
+}
+
+// CleanupRelease deletes resources if they are not deleted already.
+// Return true if all the resources are deleted, false otherwise.
+func (m manager) CleanupRelease(ctx context.Context, manifest string) (bool, error) {
+	dc, err := m.actionConfig.RESTClientGetter.ToDiscoveryClient()
+	if err != nil {
+		return false, fmt.Errorf("failed to get Kubernetes discovery client: %w", err)
+	}
+	apiVersions, err := action.GetVersionSet(dc)
+	if err != nil && !discovery.IsGroupDiscoveryFailedError(err) {
+		return false, fmt.Errorf("failed to get apiVersions from Kubernetes: %w", err)
+	}
+	manifests := releaseutil.SplitManifests(manifest)
+	_, files, err := releaseutil.SortManifests(manifests, apiVersions, releaseutil.UninstallOrder)
+	if err != nil {
+		return false, fmt.Errorf("failed to sort manifests: %w", err)
+	}
+	// do not delete resources that are annotated with the Helm resource policy 'keep'
+	_, filesToDelete := manifestutil.FilterManifestsToKeep(files)
+	var builder strings.Builder
+	for _, file := range filesToDelete {
+		builder.WriteString("\n---\n" + file.Content)
+	}
+	resources, err := m.kubeClient.Build(strings.NewReader(builder.String()), false)
+	if err != nil {
+		return false, fmt.Errorf("failed to build resources from manifests: %w", err)
+	}
+	if resources == nil || len(resources) <= 0 {
+		return true, nil
+	}
+	for _, resource := range resources {
+		err = resource.Get()
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				continue // resource is already delete, check the next one.
+			}
+			return false, fmt.Errorf("failed to get resource: %w", err)
+		}
+		// found at least one resource that is not deleted so just delete everything again.
+		_, errs := m.kubeClient.Delete(resources)
+		if errs != nil {
+			return false, fmt.Errorf("failed to delete resources: %s", joinErrors(errs))
+		}
+		return false, nil
+	}
+	return true, nil
+}
+
+// Source from https://github.com/helm/helm/blob/v3.4.2/pkg/action/uninstall.go#L163
+func joinErrors(errs []error) string {
+	es := make([]string, 0, len(errs))
+	for _, e := range errs {
+		es = append(es, e.Error())
+	}
+	return strings.Join(es, "; ")
 }
