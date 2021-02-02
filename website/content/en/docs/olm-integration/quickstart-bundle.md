@@ -99,7 +99,7 @@ INFO[0000] Could not find optional dependencies file     bundle-dir=bundle conta
 INFO[0000] All validation tests have completed successfully
 ```
 
-The above command will have created the bundle manifests' directories: a manifests directory
+The above command will have created the following bundle artifacts: a manifests directory
 (`bundle/manifests`) containing a CSV and all CRDs from `config/crds`, [metadata][bundle-metadata]
 directory (`bundle/metadata`), and [`bundle.Dockerfile`][bundle-dockerfile] have been created in
 the Operator project. These files have been statically validated by `operator-sdk bundle validate`
@@ -112,20 +112,21 @@ Now we're ready to test and deploy the Operator with OLM.
 
 ### Testing bundles
 
-In order to test our bundle in a cluster with [OLM installed](#enabling-olm).
-First, we need to build our bundle. To build a memcached-operator bundle, run:
+Before proceeding, make sure you've [Installed OLM](#enabling-olm) onto your
+cluster. First, we need to build our bundle. To build a memcached-operator
+bundle, run:
 
 ```console
-make bundle-build BUNDLE_IMG=<some-registry>/memcached-operator-bundle:<tag>
-docker push <some-registry>/memcached-operator-bundle:<tag>
+make bundle-build BUNDLE_IMG=<some-registry>/memcached-operator-bundle:v0.0.1
+make docker-push IMG=<some-registry>/memcached-operator-bundle:v0.0.1
 ```
 
-With the bundle pushed, we can run it with [run bundle][cli-run-bundle].
-The `operator-sdk run bundle` will add your bundle to an emphemeral index
-in the cluster and deploy your operator with OLM.
+Now that the bundle image is present in a registry, [`operator-sdk run bundle`][cli-run-bundle]
+can create a pod to serve that bundle to OLM via a [`Subscription`][install-your-operator],
+along with other OLM objects, ephemerally.
 
 ```console
-operator-sdk run bundle <some-registry>/memcached-operator-bundle:<tag>
+operator-sdk run bundle <some-registry>/memcached-operator-bundle:v0.0.1
 INFO[0008] Successfully created registry pod: <some-registry>-memcached-operator-bundle-0-0-1
 INFO[0008] Created CatalogSource: memcached-operator-catalog
 INFO[0008] OperatorGroup "operator-sdk-og" created
@@ -145,17 +146,18 @@ INFO[0040] OLM has successfully installed "memcached-operator.v0.0.1"
 ### Deploying bundles in production
 
 OLM and Operator Registry consumes Operator bundles via an [index image][index-image],
-which are composed of one or more bundles. To build a memcached-operator bundle, run:
+which are composed of one or more bundles. To build a memcached-operator bundle for
+version v0.0.1, run:
 
 ```console
-make bundle-build BUNDLE_IMG=<some-registry>/memcached-operator-bundle:<tag>
-docker push <some-registry>/memcached-operator-bundle:<tag>
+make bundle-build BUNDLE_IMG=<some-registry>/memcached-operator-bundle:v0.0.1
+docker push <some-registry>/memcached-operator-bundle:v0.0.1
 ```
 
 Although we've validated on-disk manifests and metadata, we also must make sure the bundle itself is valid:
 
 ```console
-$ operator-sdk bundle validate <some-registry>/memcached-operator-bundle:<tag>
+$ operator-sdk bundle validate <some-registry>/memcached-operator-bundle:v0.0.1
 INFO[0000] Unpacked image layers                         bundle-dir=/tmp/bundle-716785960 container-tool=docker
 INFO[0000] running docker pull                           bundle-dir=/tmp/bundle-716785960 container-tool=docker
 INFO[0002] running docker save                           bundle-dir=/tmp/bundle-716785960 container-tool=docker
@@ -185,3 +187,4 @@ about your cataloged Operator.
 [doc-index-build]:https://github.com/operator-framework/operator-registry#building-an-index-of-operators-using-opm
 [doc-olm-index]:https://github.com/operator-framework/operator-registry#using-the-index-with-operator-lifecycle-manager
 [doc-olm-discovery]:https://github.com/operator-framework/operator-lifecycle-manager/#discovery-catalogs-and-automated-upgrades
+[install-your-operator]:https://olm.operatorframework.io/docs/tasks/install-operator-with-olm/#install-your-operator
