@@ -330,6 +330,11 @@ Clean up the resources:
 
 ```sh
 kubectl delete -f config/samples/demo_v1alpha1_nginx.yaml
+```
+
+Make sure all the resources have been deleted before undeploying the controller, as the controller maintains finalizers on the custom resources. Otherwise you may end up stuck with some custom resource objects that cannot be deleted.
+
+```sh
 make undeploy
 ```
 
