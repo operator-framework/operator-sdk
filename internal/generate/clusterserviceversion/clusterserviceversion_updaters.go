@@ -18,7 +18,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"sort"
 	"strings"
 
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -29,7 +28,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
-	"k8s.io/apimachinery/pkg/version"
 
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
@@ -45,9 +43,6 @@ func ApplyTo(c *collector.Manifests, csv *operatorsv1alpha1.ClusterServiceVersio
 
 	// Set fields required by namespaced operators. This is a no-op for cluster-scoped operators.
 	setNamespacedFields(csv)
-
-	// Sort all updated fields.
-	sortUpdates(csv)
 
 	return validate(csv)
 }
@@ -473,30 +468,6 @@ func applyCustomResources(c *collector.Manifests, csv *operatorsv1alpha1.Cluster
 
 	return nil
 }
-
-// sortUpdates sorts all fields updated in csv.
-// TODO(estroz): sort other modified fields.
-func sortUpdates(csv *operatorsv1alpha1.ClusterServiceVersion) {
-	sort.Sort(descSorter(csv.Spec.CustomResourceDefinitions.Owned))
-	sort.Sort(descSorter(csv.Spec.CustomResourceDefinitions.Required))
-}
-
-// descSorter sorts a set of crdDescriptions.
-type descSorter []operatorsv1alpha1.CRDDescription
-
-var _ sort.Interface = descSorter{}
-
-func (descs descSorter) Len() int { return len(descs) }
-func (descs descSorter) Less(i, j int) bool {
-	if descs[i].Name == descs[j].Name {
-		if descs[i].Kind == descs[j].Kind {
-			return version.CompareKubeAwareVersionStrings(descs[i].Version, descs[j].Version) > 0
-		}
-		return descs[i].Kind < descs[j].Kind
-	}
-	return descs[i].Name < descs[j].Name
-}
-func (descs descSorter) Swap(i, j int) { descs[i], descs[j] = descs[j], descs[i] }
 
 // validate will validate csv using the api validation library.
 // More info: https://github.com/operator-framework/api

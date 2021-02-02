@@ -15,7 +15,11 @@
 package v1alpha2
 
 import (
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	// Has the same name as a different import in memcached_types.go to test duplicate package names.
+	foo "github.com/operator-framework/operator-sdk/internal/generate/testdata/go/api/shared"
 )
 
 // +k8s:deepcopy-gen=false
@@ -47,6 +51,10 @@ type DummySpec struct {
 	// Should be in spec, but should not have array index in path
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Wheels",xDescriptors="urn:alm:descriptor:com.tectonic.ui:text"
 	Wheels []Wheel `json:"wheels"`
+	// A useful shared type.
+	Useful foo.UsefulType `json:"useful"`
+	// +operator-sdk:csv:customresourcedefinitions:type=spec
+	SideCar v1.Container `json:"sideCar"`
 }
 
 // +k8s:deepcopy-gen=false

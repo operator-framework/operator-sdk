@@ -16,6 +16,8 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/operator-framework/operator-sdk/internal/generate/testdata/go/api/shared"
 )
 
 // MemcachedSpec defines the desired state of Memcached
@@ -27,6 +29,9 @@ type MemcachedSpec struct {
 	// List of Providers
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Providers"
 	Providers []Provider `json:"providers,omitempty"`
+
+	// A useful shared type.
+	Useful shared.UsefulType `json:",inline"`
 }
 
 // Provider represents the container for a single provider
