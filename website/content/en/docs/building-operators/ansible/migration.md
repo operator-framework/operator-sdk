@@ -185,7 +185,7 @@ https://github.com/operator-framework/operator-sdk/issues/3447
 
 New projects are configured to watch all namespaces by default, so they need a `ClusterRole` to have the necessary permissions. Ensure that `config/rbac/role.yaml` remains a `ClusterRole` if you want to retain the default behavior of the new project conventions.
 
-The following rules were used in earlier versions of anisible-operator to automatically create and manage services and `servicemonitors` for metrics collection. If your operator's don't require these rules, they can safely be left out of the new `config/rbac/role.yaml` file:
+The following rules were used in earlier versions of ansible-operator to automatically create and manage services and `servicemonitors` for metrics collection. If your operator's don't require these rules, they can safely be left out of the new `config/rbac/role.yaml` file:
 
 ```yaml  
   - apiGroups:
