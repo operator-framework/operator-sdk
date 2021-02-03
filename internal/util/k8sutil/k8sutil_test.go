@@ -319,6 +319,11 @@ func TestFormatOperatorNameDNS1123(t *testing.T) {
 			label:    "quay-io-raffaelespazzoli-proactive-node-scaling-operator-bundle-latest",
 			expected: "quay-io-raffaelespazzoli-proactive-node-scaling-operator-bundle-latest",
 		},
+		{
+			name:     "should not contain capital letters",
+			label:    "QUAY-IO-gobble-gobBLE",
+			expected: "quay-io-gobble-gobble",
+		},
 	}
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
