@@ -97,7 +97,7 @@ func FormatOperatorNameDNS1123(name string) string {
 		n := dns1123LabelRegexp.ReplaceAllString(name, "-")
 
 		// Now let's remove any leading or trailing -
-		return strings.Trim(n, "-")
+		return strings.ToLower(strings.Trim(n, "-"))
 	}
 	return name
 }
@@ -106,11 +106,7 @@ func FormatOperatorNameDNS1123(name string) string {
 // by removing characters from the beginning of label such that len(label) <= 63.
 func TrimDNS1123Label(label string) string {
 	if len(label) > validation.DNS1123LabelMaxLength {
-		lbl := label[len(label)-validation.DNS1123LabelMaxLength:]
-		if len(validation.IsDNS1123Label(lbl)) != 0 {
-			return FormatOperatorNameDNS1123(lbl)
-		}
-		return lbl
+		return strings.Trim(label[len(label)-validation.DNS1123LabelMaxLength:], "-")
 	}
 	return label
 }
