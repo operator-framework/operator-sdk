@@ -126,9 +126,10 @@ deleted until you remove the finalizer (ie, after your cleanup logic has success
 
 **Example:**
 
-The following is a snippet from the controller file under `pkg/controller/memcached/memcached_controller.go`
+The following is a snippet from a theoretical controller file `controllers/memcached_controller.go`
+that implements a finalizer handler:
 
-```Go
+```go
 import (
     ...
     "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
