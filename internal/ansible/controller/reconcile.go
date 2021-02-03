@@ -87,7 +87,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(ctx context.Context, request recon
 		duration, err := time.ParseDuration(ds)
 		if err != nil {
 			// Should attempt to update to a failed condition
-			errmark := r.markError(u, request.NamespacedName,
+			errmark := r.markError(ctx, request.NamespacedName, u,
 				fmt.Sprintf("Unable to parse reconcile period annotation: %v", err))
 			if errmark != nil {
 				logger.Error(errmark, "Unable to mark error annotation")
@@ -129,7 +129,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(ctx context.Context, request recon
 	}
 
 	if r.ManageStatus {
-		errmark := r.markRunning(u, request.NamespacedName)
+		errmark := r.markRunning(ctx, request.NamespacedName, u)
 		if errmark != nil {
 			logger.Error(errmark, "Unable to update the status to mark cr as running")
 			return reconcileResult, errmark
@@ -145,7 +145,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(ctx context.Context, request recon
 
 	kc, err := kubeconfig.Create(ownerRef, "http://localhost:8888", u.GetNamespace())
 	if err != nil {
-		errmark := r.markError(u, request.NamespacedName, "Unable to run reconciliation")
+		errmark := r.markError(ctx, request.NamespacedName, u, "Unable to run reconciliation")
 		if errmark != nil {
 			logger.Error(errmark, "Unable to mark error to run reconciliation")
 		}
@@ -159,7 +159,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(ctx context.Context, request recon
 	}()
 	result, err := r.Runner.Run(ident, u, kc.Name())
 	if err != nil {
-		errmark := r.markError(u, request.NamespacedName, "Unable to run reconciliation")
+		errmark := r.markError(ctx, request.NamespacedName, u, "Unable to run reconciliation")
 		if errmark != nil {
 			logger.Error(errmark, "Unable to mark error to run reconciliation")
 		}
@@ -219,7 +219,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(ctx context.Context, request recon
 		eventErr := errors.New("did not receive playbook_on_stats event")
 		stdout, err := result.Stdout()
 		if err != nil {
-			errmark := r.markError(u, request.NamespacedName, "Failed to get ansible-runner stdout")
+			errmark := r.markError(ctx, request.NamespacedName, u, "Failed to get ansible-runner stdout")
 			if errmark != nil {
 				logger.Error(errmark, "Unable to mark error to run reconciliation")
 			}
@@ -256,14 +256,14 @@ func (r *AnsibleOperatorReconciler) Reconcile(ctx context.Context, request recon
 			}
 		}
 		u.SetFinalizers(finalizers)
-		err := r.Client.Update(context.TODO(), u)
+		err := r.Client.Update(ctx, u)
 		if err != nil {
 			logger.Error(err, "Failed to remove finalizer")
 			return reconcileResult, err
 		}
 	}
 	if r.ManageStatus {
-		errmark := r.markDone(u, request.NamespacedName, statusEvent, failureMessages)
+		errmark := r.markDone(ctx, request.NamespacedName, u, statusEvent, failureMessages)
 		if errmark != nil {
 			logger.Error(errmark, "Failed to mark status done")
 		}
@@ -299,11 +299,10 @@ func (r *AnsibleOperatorReconciler) printAnsibleResult(result runner.RunResult) 
 	}
 }
 
-func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured,
-	namespacedName types.NamespacedName) error {
+func (r *AnsibleOperatorReconciler) markRunning(ctx context.Context, nn types.NamespacedName, u *unstructured.Unstructured) error {
 
 	// Get the latest resource to prevent updating a stale status.
-	if err := r.APIReader.Get(context.TODO(), namespacedName, u); err != nil {
+	if err := r.APIReader.Get(ctx, nn, u); err != nil {
 		return err
 	}
 	crStatus := getStatus(u)
@@ -327,19 +326,20 @@ func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured,
 	ansiblestatus.SetCondition(&crStatus, *c)
 	u.Object["status"] = crStatus.GetJSONMap()
 
-	return r.Client.Status().Update(context.TODO(), u)
+	return r.Client.Status().Update(ctx, u)
 }
 
 // markError - used to alert the user to the issues during the validation of a reconcile run.
 // i.e Annotations that could be incorrect
-func (r *AnsibleOperatorReconciler) markError(u *unstructured.Unstructured, namespacedName types.NamespacedName,
+func (r *AnsibleOperatorReconciler) markError(ctx context.Context, nn types.NamespacedName, u *unstructured.Unstructured,
 	failureMessage string) error {
+
 	logger := logf.Log.WithName("markError")
 	// Immediately update metrics with failed reconciliation, since Get()
 	// may fail.
 	metrics.ReconcileFailed(r.GVK.String())
 	// Get the latest resource to prevent updating a stale status.
-	if err := r.APIReader.Get(context.TODO(), namespacedName, u); err != nil {
+	if err := r.APIReader.Get(ctx, nn, u); err != nil {
 		if apierrors.IsNotFound(err) {
 			logger.Info("Resource not found, assuming it was deleted")
 			return nil
@@ -365,14 +365,15 @@ func (r *AnsibleOperatorReconciler) markError(u *unstructured.Unstructured, name
 	// This needs the status subresource to be enabled by default.
 	u.Object["status"] = crStatus.GetJSONMap()
 
-	return r.Client.Status().Update(context.TODO(), u)
+	return r.Client.Status().Update(ctx, u)
 }
 
-func (r *AnsibleOperatorReconciler) markDone(u *unstructured.Unstructured, namespacedName types.NamespacedName,
+func (r *AnsibleOperatorReconciler) markDone(ctx context.Context, nn types.NamespacedName, u *unstructured.Unstructured,
 	statusEvent eventapi.StatusJobEvent, failureMessages eventapi.FailureMessages) error {
+
 	logger := logf.Log.WithName("markDone")
 	// Get the latest resource to prevent updating a stale status.
-	if err := r.APIReader.Get(context.TODO(), namespacedName, u); err != nil {
+	if err := r.APIReader.Get(ctx, nn, u); err != nil {
 		if apierrors.IsNotFound(err) {
 			logger.Info("Resource not found, assuming it was deleted")
 			return nil
@@ -415,7 +416,7 @@ func (r *AnsibleOperatorReconciler) markDone(u *unstructured.Unstructured, names
 	// This needs the status subresource to be enabled by default.
 	u.Object["status"] = crStatus.GetJSONMap()
 
-	return r.Client.Status().Update(context.TODO(), u)
+	return r.Client.Status().Update(ctx, u)
 }
 
 func contains(l []string, s string) bool {
