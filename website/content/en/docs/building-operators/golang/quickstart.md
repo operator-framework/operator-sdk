@@ -23,7 +23,7 @@ with the Go plugin to initialize the project.
 ```sh
 mkdir memcached-operator
 cd memcached-operator
-operator-sdk init --domain=example.com --repo=github.com/example-inc/memcached-operator
+operator-sdk init --domain=example.com --repo=github.com/example/memcached-operator
 ```
 
 ### Create an API

@@ -316,8 +316,9 @@ Example:
 ```Go
 import (
     "context"
-    cachev1alpha1 "github.com/example-inc/memcached-operator/pkg/apis/cache/v1alpha1"
     ctrl "sigs.k8s.io/controller-runtime"
+
+    cachev1alpha1 "github.com/example/memcached-operator/api/v1alpha1"
 )
 
 func (r *AppReconciler) Reconcile(context.Context, req ctrl.Request) (ctrl.Result, error) {

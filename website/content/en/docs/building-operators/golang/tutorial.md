@@ -22,7 +22,7 @@ $ mkdir -p $HOME/projects/memcached-operator
 $ cd $HOME/projects/memcached-operator
 # we'll use a domain of example.com
 # so all API groups will be <group>.example.com
-$ operator-sdk init --domain=example.com --repo=github.com/example-inc/memcached-operator
+$ operator-sdk init --domain=example.com --repo=github.com/example/memcached-operator
 ```
 
 To learn about the project directory structure, see [Kubebuilder project layout][kubebuilder_layout_doc] doc.
@@ -221,7 +221,7 @@ Every Controller has a Reconciler object with a `Reconcile()` method that implem
 import (
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	cachev1alpha1 "github.com/example-inc/memcached-operator/api/v1alpha1"
+	cachev1alpha1 "github.com/example/memcached-operator/api/v1alpha1"
 	...
 )
 
@@ -495,7 +495,7 @@ Also see the [advanced topics][advanced_topics] doc for more use cases and under
 [markers]: https://book.kubebuilder.io/reference/markers.html
 [crd-markers]: https://book.kubebuilder.io/reference/markers/crd-validation.html
 [rbac-markers]: https://book.kubebuilder.io/reference/markers/rbac.html
-[memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/v1.2.0/testdata/go/memcached-operator/controllers/memcached_controller.go
+[memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/v1.3.x/testdata/go/v3/memcached-operator/controllers/memcached_controller.go
 [builder_godocs]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/builder#example-Builder
 [legacy_quickstart_doc]:https://v0-19-x.sdk.operatorframework.io/docs/golang/legacy/quickstart/
 [activate_modules]: https://github.com/golang/go/wiki/Modules#how-to-install-and-activate-module-support
