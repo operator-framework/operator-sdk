@@ -130,8 +130,8 @@ are used to generate the operator's [RBAC ClusterRole][rbac-clusterrole] (e.g `c
 Update the [`RBAC markers`][rbac-markers] in `<kind>_controller.go` with `namespace=<namespace>` where the `Role` is to be applied, such as:
 
 ```go
-// +kubebuilder:rbac:groups=cache.example.com,namespace=memcached-operator-system,resources=memcacheds,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=cache.example.com,namespace=memcached-operator-system,resources=memcacheds/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=cache.example.com,namespace=memcached-operator-system,resources=memcacheds,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=cache.example.com,namespace=memcached-operator-system,resources=memcacheds/status,verbs=get;update;patch
 ```
 
 - Run `make manifests` to update `config/rbac/role.yaml`. In our example it would like:

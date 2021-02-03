@@ -18,8 +18,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
 )
 
 var _ file.Template = &kustomization{}
@@ -30,7 +30,7 @@ type kustomization struct {
 	file.TemplateMixin
 
 	// GroupVersionKind is the sample's gvk to add to this scaffold.
-	GroupVersionKind config.GVK
+	GroupVersionKind resource.GVK
 }
 
 // SetTemplateDefaults implements file.Template
@@ -58,7 +58,7 @@ const samplesCodeFragment = `- %s
 
 // makeCRFileName returns a Custom Resource example file name in the same format
 // as kubebuilder's CreateAPI plugin for a gvk.
-func makeCRFileName(gvk config.GVK) string {
+func makeCRFileName(gvk resource.GVK) string {
 	return fmt.Sprintf("%s_%s_%s.yaml", gvk.Group, gvk.Version, strings.ToLower(gvk.Kind))
 }
 

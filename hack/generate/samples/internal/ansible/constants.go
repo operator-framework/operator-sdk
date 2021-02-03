@@ -379,5 +379,5 @@ const rolesForBaseOperator = `
       - patch
       - update
       - watch
-# +kubebuilder:scaffold:rules
+#+kubebuilder:scaffold:rules
 `

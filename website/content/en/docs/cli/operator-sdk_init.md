@@ -19,8 +19,6 @@ Writes the following files:
 - a Patch file for enabling prometheus metrics
 - a main.go to run
 
-project will prompt the user to run 'dep ensure' after writing the project files.
-
 
 ```
 operator-sdk init [flags]
@@ -37,26 +35,26 @@ operator-sdk init [flags]
 ### Options
 
 ```
-      --component-config         create a versioned ComponentConfig file, may be 'true' or 'false'
-      --domain string            domain for groups (default "my.domain")
-      --fetch-deps               ensure dependencies are downloaded (default true)
-  -h, --help                     help for init
-      --license string           license to use to boilerplate, may be one of 'apache2', 'none' (default "apache2")
-      --owner string             owner to add to the copyright
-      --plugins strings          Name and optionally version of the plugin to initialize the project with. Available plugins: ("ansible.sdk.operatorframework.io/v1", "go.kubebuilder.io/v2", "go.kubebuilder.io/v3", "helm.sdk.operatorframework.io/v1")
-      --project-name string      name of this project
-      --project-version string   project version, possible values: ("2", "3-alpha") (default "3-alpha")
-      --repo string              name to use for go module (e.g., github.com/user/repo), defaults to the go package of the current working directory.
-      --skip-go-version-check    if specified, skip checking the Go version
+      --component-config        create a versioned ComponentConfig file, may be 'true' or 'false'
+      --domain string           domain for groups (default "my.domain")
+      --fetch-deps              ensure dependencies are downloaded (default true)
+  -h, --help                    help for init
+      --license string          license to use to boilerplate, may be one of 'apache2', 'none' (default "apache2")
+      --owner string            owner to add to the copyright
+      --project-name string     name of this project
+      --repo string             name to use for go module (e.g., github.com/user/repo), defaults to the go package of the current working directory.
+      --skip-go-version-check   if specified, skip checking the Go version
 ```
 
 ### Options inherited from parent commands
 
 ```
-      --verbose   Enable verbose logging
+      --plugins strings          plugin keys of the plugin to initialize the project with
+      --project-version string   project version
+      --verbose                  Enable verbose logging
 ```
 
 ### SEE ALSO
 
-* [operator-sdk](../operator-sdk)	 - Development kit for building Kubernetes extensions and tools.
+* [operator-sdk](../operator-sdk)	 - 
 

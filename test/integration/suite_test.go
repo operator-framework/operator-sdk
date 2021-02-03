@@ -25,7 +25,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
-	"sigs.k8s.io/kubebuilder/v2/test/e2e/utils"
+	"sigs.k8s.io/kubebuilder/v3/test/e2e/utils"
 	"sigs.k8s.io/yaml"
 
 	"github.com/operator-framework/operator-sdk/internal/testutils"

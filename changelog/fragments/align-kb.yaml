@@ -1,0 +1,113 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      For Go-based operators, migrate your project to use the project version stable.
+    kind: "change"
+    breaking: true
+    migration:
+      header: For Go-based operators, migrate your project to use the project version stable.
+      body: >
+        The PROJECT version config file represents the project configuration. It reach the maturate stability and it will
+        store the data used to do the scaffolds. The motivation for this behaviour is to allow tools and helpers in the future such as to make easier the process to update the projects to use upper versions.
+        More info: TBD. //TODO: add link for docs (see the PR kubernetes-sigs/kubebuilder#1916)
+  - description: >
+      For Ansible/Helm-based operators, usage of project config stable version.
+    kind: "change"
+    breaking: true
+    migration:
+      header: For Ansible/Helm-based operators, update the PROJECT file.
+      body: >
+        Update the PROJECT file by replacing the `version: 3-alpha` with `version: "3"` and then, for each API scaffolded in your project:
+        - Add the `- api.crdVersion: <crdVersion>` and `api.namespaced: true`.
+        - Add the resource `domain` which will be the same value of the project domain unless it is an external type
+
+        Ensure that the PROJECT file results are like:
+
+        ```yml
+        domain: example.com
+        projectName: memcached-operator
+        resources:
+        - api:
+            crdVersion: v1
+            namespaced: true
+          domain: example.com
+          group: cache
+          kind: Memcached
+          version: v1alpha1
+        version: "3"
+        ```
+  - description: >
+      Add support for markers for files with the `yml` extension. More info: [#kubernetes-sigs/kubebuilder#1907](https://github.com/kubernetes-sigs/kubebuilder/pull/1907).
+    kind: "addition"
+    breaking: false
+  - description: >
+      (go/v3) Added the `--force` option to the `create webhook` command. More info: [#kubernetes-sigs/kubebuilder#1903](https://github.com/kubernetes-sigs/kubebuilder/pull/1903).
+    kind: "addition"
+    breaking: false
+  - description: >
+      For Go-based operators, fix `--force` option to recreate the files via `create api` command. More info: [#kubernetes-sigs/kubebuilder#1903](https://github.com/kubernetes-sigs/kubebuilder/pull/1903).
+    kind: "bugfix"
+    breaking: false
+  - description: >
+      For Go-based operators using go/v3 plugin only, upgrade the sigs.k8s.io/kubebuilder-declarative-pattern dependency (used only to gen api with --pattern=addon). More info: [#kubernetes-sigs/kubebuilder#1946](https://github.com/kubernetes-sigs/kubebuilder/pull/1946).
+    kind: "change"
+    breaking: false
+  - description: >
+      For Go-based operators, fix the name of the files to be edit in the comments of `[kind]_types.go` files. More info: [#kubernetes-sigs/kubebuilder#1927](https://github.com/kubernetes-sigs/kubebuilder/pull/1927).
+    kind: "bugfix"
+    breaking: false
+    header: Fix the name of the files in the comments on the `<kind>_types.go` files
+    body: >
+      When we use `$operator-sdk create api` or `$operator-sdk create webhook`, it generates a file like `[kind]_types.go`. In this file, there is a comment that indicates which file to change when adding a field.
+      You can update it with the correct value if you wich by replacing the Kind for lower case, such as replace `Edit Memcached_types.go to remove/update` with `Edit memcached_types.go to remove/update`
+  - description: >
+      Upgrade the `kube-rbac-proxy` image version from 0.5.0 to 0.8.0 to address security concerns. More info [#kubernetes-sigs/kubebuilder#1955](https://github.com/kubernetes-sigs/kubebuilder/pull/1955).
+    kind: "bugfix"
+    breaking: false
+    header: Upgrade the `kube-rbac-proxy` from 0.5.0 to 0.8.0 to solve security concerns
+    body: >
+      In the `config/default/manager_auth_proxy_patch.yaml` file, replace `gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0` with `gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0`.
+  - description: >
+      For Go-based operators, fix the endpoint names. More info [#kubernetes-sigs/kubebuilder#1910](https://github.com/kubernetes-sigs/kubebuilder/pull/1910).
+    kind: "bugfix"
+    breaking: false
+    header: For Go-based operators, fix the endpoint names
+    body: >
+      In the `main.go` file, replace `health` with `healthz` and `ready` with `readyz` then, it would look like:
+      ```go
+      if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+        setupLog.Error(err, "unable to set up health check")
+        os.Exit(1)
+      }
+      if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+        setupLog.Error(err, "unable to set up ready check")
+        os.Exit(1)
+      }
+      ```
+  - description: >
+      For Go-based operators, add `ErrorIfCRDPathMissing` config by default to the `suite_tests.go`. More info [#kubernetes-sigs/kubebuilder#1910](https://github.com/kubernetes-sigs/kubebuilder/pull/1910).
+    kind: "addition"
+    breaking: false
+    header: For Go-based operators, add `ErrorIfCRDPathMissing` config option if please you.
+    body: >
+      In the `controllers/<kind>/suite_test.go` file(s), add the option `ErrorIfCRDPathMissing` to raise an issue if the CRDs path be missing which would like:
+      ```go
+      By("bootstrapping test environment")
+      testEnv = &envtest.Environment{
+        CRDDirectoryPaths:     []string{filepath.Join("..", "..", "config", "crd", "bases")},
+        ErrorIfCRDPathMissing: true,
+      }
+      ```
+  - description: >
+      Allows initialize the projects with directories with `.`(dot) prefix names. More info [#kubernetes-sigs/kubebuilder#1944](https://github.com/kubernetes-sigs/kubebuilder/pull/1944).
+    kind: "bugfix"
+    breaking: false
+  - description: >
+      For Go-based operators, add Makefile help
+    kind: "change"
+    breaking: false
+  - description: >
+      For Go-based operators, Makefile scaffold was improved
+    kind: "change"
+    breaking: false

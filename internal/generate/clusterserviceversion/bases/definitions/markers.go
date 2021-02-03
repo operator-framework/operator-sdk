@@ -38,9 +38,9 @@ const (
 )
 
 var (
-	// +operator-sdk:csv:customresourcedefinitions:displayName="string",resources={ {kind,version,name} , ... }
+	//+operator-sdk:csv:customresourcedefinitions:displayName="string",resources={ {kind,version,name} , ... }
 	typeDefinition = markers.Must(markers.MakeDefinition(crdMarkerName, markers.DescribesType, Description{}))
-	// +operator-sdk:csv:customresourcedefinitions:type=<spec|status>,displayName="name",xDescriptors="ui:elements:foo:bar"
+	//+operator-sdk:csv:customresourcedefinitions:type=<spec|status>,displayName="name",xDescriptors="ui:elements:foo:bar"
 	fieldDefinition = markers.Must(markers.MakeDefinition(crdMarkerName, markers.DescribesField, Descriptor{}))
 )
 

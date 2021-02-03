@@ -20,7 +20,7 @@ import (
 	"path/filepath"
 	"text/template"
 
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
 )
 
 var _ file.Template = &ManagerRole{}
@@ -138,10 +138,10 @@ rules:
 `
 
 const rulesFragment = `  ##
-  ## Rules for {{.Resource.Domain}}/{{.Resource.Version}}, Kind: {{.Resource.Kind}}
+  ## Rules for {{.Resource.QualifiedGroup}}/{{.Resource.Version}}, Kind: {{.Resource.Kind}}
   ##
   - apiGroups:
-      - {{.Resource.Domain}}
+      - {{.Resource.QualifiedGroup}}
     resources:
       - {{.Resource.Plural}}
       - {{.Resource.Plural}}/status

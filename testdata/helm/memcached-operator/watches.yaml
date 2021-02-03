@@ -3,4 +3,4 @@
   version: v1alpha1
   kind: Memcached
   chart: helm-charts/memcached
-# +kubebuilder:scaffold:watch
+#+kubebuilder:scaffold:watch

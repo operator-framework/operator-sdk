@@ -19,9 +19,9 @@ import (
 	"strings"
 
 	"github.com/spf13/pflag"
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/resource"
-	"sigs.k8s.io/kubebuilder/v2/pkg/plugin"
+	"sigs.k8s.io/kubebuilder/v3/pkg/config"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
+	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
 
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/chartutil"
@@ -31,8 +31,7 @@ import (
 )
 
 type createAPISubcommand struct {
-	config *config.Config
-
+	config        config.Config
 	createOptions chartutil.CreateOptions
 }
 
@@ -117,7 +116,7 @@ func (p *createAPISubcommand) BindFlags(fs *pflag.FlagSet) {
 }
 
 // InjectConfig will inject the PROJECT file/config in the plugin
-func (p *createAPISubcommand) InjectConfig(c *config.Config) {
+func (p *createAPISubcommand) InjectConfig(c config.Config) {
 	p.config = c
 }
 
@@ -138,7 +137,7 @@ func (p *createAPISubcommand) Run() error {
 // SDK phase 2 plugins.
 func (p *createAPISubcommand) runPhase2() error {
 	ogvk := p.createOptions.GVK
-	gvk := config.GVK{Group: ogvk.Group, Version: ogvk.Version, Kind: ogvk.Kind}
+	gvk := resource.GVK{Group: ogvk.Group, Version: ogvk.Version, Kind: ogvk.Kind}
 
 	// Initially the helm/v1 plugin was written to not create a "plugins" config entry
 	// for any phase 2 plugin because they did not have their own keys. Now there are phase 2
@@ -183,13 +182,9 @@ func (p *createAPISubcommand) Validate() error {
 		}
 
 		// Validate the resource.
-		r := resource.Options{
-			Namespaced: true,
-			Group:      p.createOptions.GVK.Group,
-			Version:    p.createOptions.GVK.Version,
-			Kind:       p.createOptions.GVK.Kind,
-		}
-		if err := r.Validate(); err != nil {
+		ogvk := p.createOptions.GVK
+		gvk := resource.GVK{Group: ogvk.Group, Version: ogvk.Version, Kind: ogvk.Kind}
+		if err := gvk.Validate(); err != nil {
 			return err
 		}
 	}

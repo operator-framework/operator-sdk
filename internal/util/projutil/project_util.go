@@ -22,7 +22,12 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
+	"github.com/spf13/afero"
+	"sigs.k8s.io/kubebuilder/v3/pkg/config"
+	_ "sigs.k8s.io/kubebuilder/v3/pkg/config/v2" // Register config/v2 for `config.New`
+	_ "sigs.k8s.io/kubebuilder/v3/pkg/config/v3" // Register config/v3 for `config.New`
+	cfgv3 "sigs.k8s.io/kubebuilder/v3/pkg/config/v3"
+	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -78,17 +83,36 @@ func HasProjectFile() bool {
 	return true
 }
 
+type versionedConfig struct {
+	Version config.Version
+}
+
 // ReadConfig returns a configuration if a file containing one exists at the
 // default path (project root).
-func ReadConfig() (*config.Config, error) {
-	b, err := ioutil.ReadFile(configFile)
+func ReadConfig() (config.Config, error) {
+	// Read the file
+	in, err := afero.ReadFile(afero.NewOsFs(), configFile) //nolint:gosec
 	if err != nil {
 		return nil, err
 	}
-	c := &config.Config{}
-	if err = c.Unmarshal(b); err != nil {
+
+	// Check the file version
+	var versioned versionedConfig
+	if err := yaml.Unmarshal(in, &versioned); err != nil {
 		return nil, err
 	}
+
+	// Create the config object
+	c, err := config.New(versioned.Version)
+	if err != nil {
+		return nil, err
+	}
+
+	// Unmarshal the file content
+	if err := c.Unmarshal(in); err != nil {
+		return nil, err
+	}
+
 	return c, nil
 }
 
@@ -108,11 +132,12 @@ func PluginKeyToOperatorType(pluginKey string) OperatorType {
 
 // GetProjectLayout returns the `layout` field in PROJECT file that is v3.
 // If not, it will return "go" because that was the only project type supported for project versions < v3.
-func GetProjectLayout(cfg *config.Config) string {
-	if cfg == nil || !cfg.IsV3() || cfg.Layout == "" {
+func GetProjectLayout(cfg config.Config) string {
+	isV3 := cfg.GetVersion().Compare(cfgv3.Version) == 0
+	if cfg == nil || !isV3 || cfg.GetLayout() == "" {
 		return "go"
 	}
-	return cfg.Layout
+	return cfg.GetLayout()
 }
 
 var flagRe = regexp.MustCompile("(.* )?-v(.* )?")

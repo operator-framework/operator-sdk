@@ -52,7 +52,7 @@ These examples assume `Memcached`, `MemcachedSpec`, and `MemcachedStatus` are th
 1. Set a `displayName` and `resources` for a `customresourcedefinitions` kind entry:
 
 	```go
-	// +operator-sdk:csv:customresourcedefinitions:displayName="Memcached App",resources={{Pod,v1,memcached-runner},{Deployment,v1,memcached-deployment}}
+	//+operator-sdk:csv:customresourcedefinitions:displayName="Memcached App",resources={{Pod,v1,memcached-runner},{Deployment,v1,memcached-deployment}}
 	type Memcached struct {
 		metav1.TypeMeta   `json:",inline"`
 		metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -67,7 +67,7 @@ These examples assume `Memcached`, `MemcachedSpec`, and `MemcachedStatus` are th
 	```go
 	type MemcachedSpec struct {
 		// Size is the size of the memcached deployment. <-- This will become Size's specDescriptors.description.
-		// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Number of pods",xDescriptors={"urn:alm:descriptor:com.tectonic.ui:podCount","urn:alm:descriptor:io.kubernetes:custom"}
+		//+operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Number of pods",xDescriptors={"urn:alm:descriptor:com.tectonic.ui:podCount","urn:alm:descriptor:io.kubernetes:custom"}
 		Size int32 `json:"size"` // <-- Size's specDescriptors.path is inferred from this JSON tag.
 	}
 	```
@@ -77,7 +77,7 @@ These examples assume `Memcached`, `MemcachedSpec`, and `MemcachedStatus` are th
 	```go
 	type MemcachedSpec struct {
 		// Size is the size of the memcached deployment.
-		// +operator-sdk:csv:customresourcedefinitions:type=spec
+		//+operator-sdk:csv:customresourcedefinitions:type=spec
 		Size int32 `json:"size"`
 	}
 	```
@@ -90,7 +90,7 @@ These examples assume `Memcached`, `MemcachedSpec`, and `MemcachedStatus` are th
 
 	```go
 	// Represents a cluster of Memcached apps
-	// +operator-sdk:csv:customresourcedefinitions:displayName="Memcached App",resources={{Pod,v1,memcached-runner},{Deployment,v1,memcached-deployment}}
+	//+operator-sdk:csv:customresourcedefinitions:displayName="Memcached App",resources={{Pod,v1,memcached-runner},{Deployment,v1,memcached-deployment}}
 	type Memcached struct {
 		metav1.TypeMeta   `json:",inline"`
 		metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -105,14 +105,14 @@ These examples assume `Memcached`, `MemcachedSpec`, and `MemcachedStatus` are th
 
 	type MemcachedStatus struct {
 		Pods 		 MemcachedPods `json:"podStatuses"`
-		// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="Pod Count",xDescriptors="urn:alm:descriptor:com.tectonic.ui:podCount"
+		//+operator-sdk:csv:customresourcedefinitions:type=status,displayName="Pod Count",xDescriptors="urn:alm:descriptor:com.tectonic.ui:podCount"
 		PodCount int 					 `json:"podCount"`
 	}
 
 	type MemcachedPods struct {
 		// Size is the size of the memcached deployment.
-		// +operator-sdk:csv:customresourcedefinitions:type=spec
-		// +operator-sdk:csv:customresourcedefinitions.type=status
+		//+operator-sdk:csv:customresourcedefinitions:type=spec
+		//+operator-sdk:csv:customresourcedefinitions.type=status
 		Size int32 `json:"size"`
 	}
 	```

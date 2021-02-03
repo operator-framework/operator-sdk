@@ -69,7 +69,7 @@ E0320 15:42:17.676888       1 reflector.go:280] pkg/mod/k8s.io/client-go@v0.0.0-
 Using controller-runtime's split client means that read operations (gets and lists) are read from a cache, and write operations are written directly to the API server. To populate the cache for reads, controller-runtime initiates a `list` and then a `watch` even when your operator is only attempting to `get` a single resource. The above scenario occurs when the operator does not have an [RBAC][rbac] permission to `watch` the resource. The solution is to add an RBAC directive to generate a `config/rbac/role.yaml` with `watch` privileges:
 
 ```go
-// +kubebuilder:rbac:groups=some.group.com,resources=myresources,verbs=watch
+//+kubebuilder:rbac:groups=some.group.com,resources=myresources,verbs=watch
 ```
 
 Alternatively, if the resource you're attempting to cannot be watched (like `v1.ImageStreamTag` above), you can specify that objects of this type should not be cached by adding the following to `main.go`:
@@ -102,7 +102,7 @@ func main() {
 Then in your controller file, add an RBAC directive to generate a `config/rbac/role.yaml` with `get` privileges:
 
 ```go
-// +kubebuilder:rbac:groups=image.openshift.io,resources=imagestreamtags,verbs=get
+//+kubebuilder:rbac:groups=image.openshift.io,resources=imagestreamtags,verbs=get
 ```
 
 Now run `make manifests` to update your `role.yaml`.
@@ -116,7 +116,7 @@ For Helm and Ansible operators, this permission is configured by default. Howeve
 by adding an RBAC directive to generate a `config/rbac/role.yaml` with `update` privileges on your CR's finalizers:
 
 ```go
-// +kubebuilder:rbac:groups=cache.example.com,resources=memcacheds/finalizers,verbs=update
+//+kubebuilder:rbac:groups=cache.example.com,resources=memcacheds/finalizers,verbs=update
 ```
 
 Now run `make manifests` to update your `role.yaml`.

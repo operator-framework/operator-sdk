@@ -24,7 +24,7 @@ import (
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/repo/repotest"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/resource"
+	"sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/chartutil"
 )
@@ -202,14 +202,14 @@ type createChartTestCase struct {
 	helmChartVersion string
 	helmChartRepo    string
 
-	expectResource     *resource.Options
+	expectResource     *golang.Options
 	expectChartName    string
 	expectChartVersion string
 	expectErr          bool
 }
 
-func mustNewResource(group, version, kind string) *resource.Options {
-	r := &resource.Options{
+func mustNewResource(group, version, kind string) *golang.Options {
+	r := &golang.Options{
 		Namespaced: true,
 		Group:      group,
 		Version:    version,

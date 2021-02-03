@@ -21,10 +21,11 @@ import (
 	"errors"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"sigs.k8s.io/kubebuilder/v2/pkg/model"
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/file"
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/resource"
+	"sigs.k8s.io/kubebuilder/v3/pkg/config"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
+	"sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang"
 
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/machinery"
@@ -49,12 +50,12 @@ type CreateOptions struct {
 }
 
 type apiScaffolder struct {
-	config *config.Config
+	config config.Config
 	opts   CreateOptions
 }
 
 // NewCreateAPIScaffolder returns a new Scaffolder for project initialization operations
-func NewCreateAPIScaffolder(config *config.Config, opts CreateOptions) cmdutil.Scaffolder {
+func NewCreateAPIScaffolder(config config.Config, opts CreateOptions) cmdutil.Scaffolder {
 	return &apiScaffolder{
 		config: config,
 		opts:   opts,
@@ -74,24 +75,44 @@ func (s *apiScaffolder) Scaffold() error {
 }
 
 func (s *apiScaffolder) scaffold() error {
+	resourceOptions := &golang.Options{}
+	resourceOptions.DoAPI = true
+	resourceOptions.Group = s.opts.GVK.Group
+	resourceOptions.Version = s.opts.GVK.Version
+	resourceOptions.Kind = s.opts.GVK.Kind
 
-	resourceOptions := resource.Options{
-		Group:   s.opts.GVK.Group,
-		Version: s.opts.GVK.Version,
-		Kind:    s.opts.GVK.Kind,
+	//todo(camilamacedo86): replace the options by kubernetes-sigs/kubebuilder#1974
+	if err := resourceOptions.Validate(); err != nil {
+		return err
 	}
 
+	// Check that resource doesn't exist
 	if s.config.HasResource(resourceOptions.GVK()) {
 		return errors.New("the API resource already exists")
 	}
 
 	// Check that the provided group can be added to the project
-	if !s.config.MultiGroup && len(s.config.Resources) != 0 && !s.config.HasGroup(resourceOptions.Group) {
+	if !s.config.IsMultiGroup() && s.config.ResourcesLength() != 0 && !s.config.HasGroup(resourceOptions.Group) {
 		return errors.New("multiple groups are not allowed by default, to enable multi-group set 'multigroup: true' in your PROJECT file")
 	}
 
-	resource := resourceOptions.NewResource(s.config, true)
-	s.config.UpdateResources(resource.GVK())
+	resource := resourceOptions.NewResource(s.config)
+
+	resource.Domain = s.config.GetDomain()
+
+	// remove the path since is not a Golang project
+	resource.Path = ""
+
+	// add the resource API info to complain with project-version=3
+	// todo: ensure that this information is properly returned from
+	// resource.newResource in upstream ( see kubernetes-sigs/kubebuilder#1974)
+	// and then, remove it.
+	resource.API.Namespaced = true
+	resource.API.CRDVersion = s.opts.CRDVersion
+
+	if err := s.config.UpdateResource(resource); err != nil {
+		return err
+	}
 
 	var createAPITemplates []file.Builder
 	createAPITemplates = append(createAPITemplates,
@@ -123,7 +144,7 @@ func (s *apiScaffolder) scaffold() error {
 			&playbooks.Playbook{GenerateRole: s.opts.GenerateRole})
 	}
 	return machinery.NewScaffold().Execute(
-		s.newUniverse(resource),
+		s.newUniverse(&resource),
 		createAPITemplates...,
 	)
 }

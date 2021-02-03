@@ -24,7 +24,7 @@ import (
 	"text/template"
 
 	"helm.sh/helm/v3/pkg/chart"
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
 	"sigs.k8s.io/yaml"
 )
 
@@ -84,7 +84,7 @@ func (f *CRDSample) GetFuncMap() template.FuncMap {
 const defaultSpecTemplate = `foo: bar
 `
 
-const crdSampleTemplate = `apiVersion: {{ .Resource.Domain }}/{{ .Resource.Version }}
+const crdSampleTemplate = `apiVersion: {{ .Resource.QualifiedGroup }}/{{ .Resource.Version }}
 kind: {{ .Resource.Kind }}
 metadata:
   name: {{ lower .Resource.Kind }}-sample

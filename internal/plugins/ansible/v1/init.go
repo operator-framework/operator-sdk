@@ -22,8 +22,9 @@ import (
 
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/util/validation"
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
-	"sigs.k8s.io/kubebuilder/v2/pkg/plugin"
+	"sigs.k8s.io/kubebuilder/v3/pkg/config"
+	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
+	"sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang"
 
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds"
@@ -32,14 +33,15 @@ import (
 )
 
 type initSubcommand struct {
-	config    *config.Config
+	config    config.Config
 	apiPlugin createAPIPSubcommand
-
-	// If true, run the `create api` plugin.
-	doCreateAPI bool
+	options   *golang.Options
 
 	// For help text.
 	commandName string
+
+	// Flags
+	projectName string
 }
 
 var (
@@ -92,13 +94,14 @@ Optionally creates a new API, using the same flags as "create api"
 
 func (p *initSubcommand) BindFlags(fs *pflag.FlagSet) {
 	fs.SortFlags = false
-	fs.StringVar(&p.config.Domain, "domain", "my.domain", "domain for groups")
-	fs.StringVar(&p.config.ProjectName, "project-name", "", "name of this project, the default being directory name")
+	p.options = &golang.Options{}
+	fs.StringVar(&p.options.Domain, "domain", "my.domain", "domain for groups")
+	fs.StringVar(&p.projectName, "project-name", "", "name of this project, the default being directory name")
 	p.apiPlugin.BindFlags(fs)
 }
 
-func (p *initSubcommand) InjectConfig(c *config.Config) {
-	c.Layout = pluginKey
+func (p *initSubcommand) InjectConfig(c config.Config) {
+	_ = c.SetLayout(pluginKey)
 	p.config = c
 	p.apiPlugin.config = p.config
 }
@@ -125,7 +128,7 @@ func (p *initSubcommand) runPhase2() error {
 		return err
 	}
 
-	if p.doCreateAPI {
+	if p.options.DoAPI {
 		if err := p.apiPlugin.runPhase2(); err != nil {
 			return err
 		}
@@ -135,21 +138,32 @@ func (p *initSubcommand) runPhase2() error {
 }
 
 func (p *initSubcommand) Validate() error {
+	// Set values in the config
+	if err := p.config.SetProjectName(p.projectName); err != nil {
+		return err
+	}
+	if err := p.config.SetDomain(p.options.Domain); err != nil {
+		return err
+	}
+
 	// Check if the project name is a valid k8s namespace (DNS 1123 label).
-	if p.config.ProjectName == "" {
+	if p.config.GetProjectName() == "" {
 		dir, err := os.Getwd()
 		if err != nil {
 			return fmt.Errorf("error getting current directory: %v", err)
 		}
-		p.config.ProjectName = strings.ToLower(filepath.Base(dir))
+
+		if err := p.config.SetProjectName(strings.ToLower(filepath.Base(dir))); err != nil {
+			return err
+		}
 	}
-	if err := validation.IsDNS1123Label(p.config.ProjectName); err != nil {
-		return fmt.Errorf("project name (%s) is invalid: %v", p.config.ProjectName, err)
+	if err := validation.IsDNS1123Label(p.config.GetProjectName()); err != nil {
+		return fmt.Errorf("project name (%s) is invalid: %v", p.config.GetProjectName(), err)
 	}
 
 	defaultOpts := scaffolds.CreateOptions{CRDVersion: "v1"}
 	if !p.apiPlugin.createOptions.GVK.Empty() || p.apiPlugin.createOptions != defaultOpts {
-		p.doCreateAPI = true
+		p.options.DoAPI = true
 		return p.apiPlugin.Validate()
 	}
 	return nil
@@ -160,7 +174,7 @@ func (p *initSubcommand) GetScaffolder() (cmdutil.Scaffolder, error) {
 		apiScaffolder cmdutil.Scaffolder
 		err           error
 	)
-	if p.doCreateAPI {
+	if p.options.DoAPI {
 		apiScaffolder, err = p.apiPlugin.GetScaffolder()
 		if err != nil {
 			return nil, err
@@ -170,7 +184,7 @@ func (p *initSubcommand) GetScaffolder() (cmdutil.Scaffolder, error) {
 }
 
 func (p *initSubcommand) PostScaffold() error {
-	if !p.doCreateAPI {
+	if !p.options.DoAPI {
 		fmt.Printf("Next: define a resource with:\n$ %s create api\n", p.commandName)
 	}
 

@@ -7,7 +7,7 @@ weight: 2
 This guide assumes you have followed the introduction and *Setup* section of the [bundle quickstart][quickstart-bundle],
 and have added the `packagemanifests` target to your `Makefile` as described [here][doc-packagemanifests-makefile].
 
-**Important:** this guide assumes your project was scaffolded with `operator-sdk init --project-version=3-alpha`.
+**Important:** this guide assumes your project was scaffolded with `operator-sdk init --project-version=3`.
 These features are unavailable to projects of version `2` or less; this information can be found by inspecting
 your `PROJECT` file's `version` value.
 

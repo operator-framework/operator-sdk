@@ -116,13 +116,13 @@ type MemcachedStatus struct {
 	Nodes []string `json:"nodes"`
 }
 
-// +kubebuilder:object:root=true
-// +kubebuilder:subresource:status
+//+kubebuilder:object:root=true
+//+kubebuilder:subresource:status
 
 // Memcached is the Schema for the memcacheds API
 type Memcached struct {...}
 
-// +kubebuilder:object:root=true
+//+kubebuilder:object:root=true
 
 // MemcachedList contains a list of Memcached
 type MemcachedList struct {...}
@@ -154,10 +154,10 @@ The RBAC permissions are now configured via [RBAC markers][rbac_markers], which 
 In the Memcached example, they look like the following:
 
 ```go
-// +kubebuilder:rbac:groups=cache.example.com,resources=memcacheds,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=cache.example.com,resources=memcacheds/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list
+//+kubebuilder:rbac:groups=cache.example.com,resources=memcacheds,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=cache.example.com,resources=memcacheds/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list
 ```
 
 To update `config/rbac/role.yaml` after changing the markers, run `make manifests`.  

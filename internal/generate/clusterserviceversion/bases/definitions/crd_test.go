@@ -27,7 +27,7 @@ import (
 	"sigs.k8s.io/controller-tools/pkg/crd"
 	"sigs.k8s.io/controller-tools/pkg/loader"
 	"sigs.k8s.io/controller-tools/pkg/markers"
-	"sigs.k8s.io/kubebuilder/v2/test/e2e/utils"
+	"sigs.k8s.io/kubebuilder/v3/test/e2e/utils"
 )
 
 var _ = Describe("getTypedDescriptors", func() {

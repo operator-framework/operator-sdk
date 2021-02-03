@@ -15,7 +15,7 @@
 package templates
 
 import (
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
 )
 
 // RequirementsYml - A requirements file for Ansible collection dependencies

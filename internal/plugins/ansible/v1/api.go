@@ -19,9 +19,9 @@ import (
 	"strings"
 
 	"github.com/spf13/pflag"
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/resource"
-	"sigs.k8s.io/kubebuilder/v2/pkg/plugin"
+	"sigs.k8s.io/kubebuilder/v3/pkg/config"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
+	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
 
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds"
@@ -40,7 +40,7 @@ const (
 )
 
 type createAPIPSubcommand struct {
-	config        *config.Config
+	config        config.Config
 	createOptions scaffolds.CreateOptions
 }
 
@@ -91,7 +91,6 @@ func (p *createAPIPSubcommand) UpdateContext(ctx *plugin.Context) {
 
 func (p *createAPIPSubcommand) BindFlags(fs *pflag.FlagSet) {
 	fs.SortFlags = false
-
 	fs.StringVar(&p.createOptions.GVK.Group, groupFlag, "", "resource group")
 	fs.StringVar(&p.createOptions.GVK.Version, versionFlag, "", "resource version")
 	fs.StringVar(&p.createOptions.GVK.Kind, kindFlag, "", "resource kind")
@@ -100,7 +99,7 @@ func (p *createAPIPSubcommand) BindFlags(fs *pflag.FlagSet) {
 	fs.BoolVarP(&p.createOptions.GenerateRole, "generate-role", "", false, "Generate an Ansible role skeleton.")
 }
 
-func (p *createAPIPSubcommand) InjectConfig(c *config.Config) {
+func (p *createAPIPSubcommand) InjectConfig(c config.Config) {
 	p.config = c
 }
 
@@ -120,7 +119,7 @@ func (p *createAPIPSubcommand) Run() error {
 // SDK phase 2 plugins.
 func (p *createAPIPSubcommand) runPhase2() error {
 	ogvk := p.createOptions.GVK
-	gvk := config.GVK{Group: ogvk.Group, Version: ogvk.Version, Kind: ogvk.Kind}
+	gvk := resource.GVK{Group: ogvk.Group, Version: ogvk.Version, Kind: ogvk.Kind}
 
 	// Initially the ansible/v1 plugin was written to not create a "plugins" config entry
 	// for any phase 2 plugin because they did not have their own keys. Now there are phase 2
@@ -155,13 +154,9 @@ func (p *createAPIPSubcommand) Validate() error {
 	}
 
 	// Validate the resource.
-	r := resource.Options{
-		Namespaced: true,
-		Group:      p.createOptions.GVK.Group,
-		Version:    p.createOptions.GVK.Version,
-		Kind:       p.createOptions.GVK.Kind,
-	}
-	if err := r.Validate(); err != nil {
+	ogvk := p.createOptions.GVK
+	gvk := resource.GVK{Group: ogvk.Group, Version: ogvk.Version, Kind: ogvk.Kind}
+	if err := gvk.Validate(); err != nil {
 		return err
 	}
 

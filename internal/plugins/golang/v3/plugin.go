@@ -15,8 +15,9 @@
 package v3
 
 import (
-	"sigs.k8s.io/kubebuilder/v2/pkg/plugin"
-	kbgov3 "sigs.k8s.io/kubebuilder/v2/pkg/plugins/golang/v3"
+	"sigs.k8s.io/kubebuilder/v3/pkg/config"
+	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
+	kbgov3 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/v3"
 )
 
 var (
@@ -30,7 +31,7 @@ type Plugin struct{}
 
 func (Plugin) Name() string            { return (kbgov3.Plugin{}).Name() }
 func (Plugin) Version() plugin.Version { return (kbgov3.Plugin{}).Version() }
-func (Plugin) SupportedProjectVersions() []string {
+func (Plugin) SupportedProjectVersions() []config.Version {
 	return (kbgov3.Plugin{}).SupportedProjectVersions()
 }
 

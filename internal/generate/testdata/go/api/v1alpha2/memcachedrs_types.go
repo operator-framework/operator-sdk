@@ -20,23 +20,23 @@ import (
 
 // MemcachedRSSpec defines the desired state of MemcachedRS
 type MemcachedRSSpec struct {
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
+	//+operator-sdk:csv:customresourcedefinitions:type=spec
 	NumNodes int32 `json:"numNodes"`
 }
 
 // MemcachedRSStatus defines the observed state of MemcachedRS
 type MemcachedRSStatus struct {
-	// +operator-sdk:csv:customresourcedefinitions:type=status
+	//+operator-sdk:csv:customresourcedefinitions:type=status
 	NodeList []string `json:"nodeList"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // MemcachedRS is the Schema for the memcachedrs API
-// +kubebuilder:subresource:status
-// +kubebuilder:resource:path=memcachedrs,scope=Namespaced
-// +kubebuilder:storageversion
-// +operator-sdk:csv:customresourcedefinitions:displayName="MemcachedRS App"
+//+kubebuilder:subresource:status
+//+kubebuilder:resource:path=memcachedrs,scope=Namespaced
+//+kubebuilder:storageversion
+//+operator-sdk:csv:customresourcedefinitions:displayName="MemcachedRS App"
 type MemcachedRS struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

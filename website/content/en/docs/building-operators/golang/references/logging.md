@@ -145,7 +145,7 @@ Make sure to have your `run` target to take `ARGS` as shown below in `Makefile`.
 
 ```makefile
 # Run against the configured Kubernetes cluster in ~/.kube/config
-run: generate fmt vet manifests
+run: manifests generate fmt vet
 	go run ./main.go $(ARGS)
 ```
 

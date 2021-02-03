@@ -16,8 +16,8 @@ package v3
 
 import (
 	"github.com/spf13/pflag"
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
-	"sigs.k8s.io/kubebuilder/v2/pkg/plugin"
+	"sigs.k8s.io/kubebuilder/v3/pkg/config"
+	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
 
 	manifestsv2 "github.com/operator-framework/operator-sdk/internal/plugins/manifests/v2"
 	scorecardv2 "github.com/operator-framework/operator-sdk/internal/plugins/scorecard/v2"
@@ -26,7 +26,7 @@ import (
 type initSubcommand struct {
 	plugin.InitSubcommand
 
-	config *config.Config
+	config config.Config
 }
 
 var _ plugin.InitSubcommand = &initSubcommand{}
@@ -34,7 +34,7 @@ var _ plugin.InitSubcommand = &initSubcommand{}
 func (p *initSubcommand) UpdateContext(ctx *plugin.Context) { p.InitSubcommand.UpdateContext(ctx) }
 func (p *initSubcommand) BindFlags(fs *pflag.FlagSet)       { p.InitSubcommand.BindFlags(fs) }
 
-func (p *initSubcommand) InjectConfig(c *config.Config) {
+func (p *initSubcommand) InjectConfig(c config.Config) {
 	p.InitSubcommand.InjectConfig(c)
 	p.config = c
 }

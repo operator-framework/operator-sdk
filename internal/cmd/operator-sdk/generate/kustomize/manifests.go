@@ -26,7 +26,8 @@ import (
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation"
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
+	"sigs.k8s.io/kubebuilder/v3/pkg/config"
+	cfgv2 "sigs.k8s.io/kubebuilder/v3/pkg/config/v2"
 	"sigs.k8s.io/yaml"
 
 	genutil "github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/generate/internal"
@@ -138,9 +139,9 @@ func (c *manifestsCmd) addFlagsTo(fs *pflag.FlagSet) {
 var defaultDir = filepath.Join("config", "manifests")
 
 // setDefaults sets command defaults.
-func (c *manifestsCmd) setDefaults(cfg *config.Config) error {
+func (c *manifestsCmd) setDefaults(cfg config.Config) error {
 	if c.packageName == "" {
-		c.packageName = cfg.ProjectName
+		c.packageName = cfg.GetProjectName()
 	}
 
 	if c.inputDir == "" {
@@ -151,7 +152,7 @@ func (c *manifestsCmd) setDefaults(cfg *config.Config) error {
 	}
 
 	if c.apisDir == "" {
-		if cfg.MultiGroup {
+		if cfg.IsMultiGroup() {
 			c.apisDir = "apis"
 		} else {
 			c.apisDir = "api"
@@ -169,7 +170,7 @@ const manifestsKustomization = `resources:
 `
 
 // run generates kustomize bundle bases and a kustomization.yaml if one does not exist.
-func (c manifestsCmd) run(cfg *config.Config) error {
+func (c manifestsCmd) run(cfg config.Config) error {
 
 	if !c.quiet {
 		fmt.Println("Generating kustomize files in", c.outputDir)
@@ -189,12 +190,16 @@ func (c manifestsCmd) run(cfg *config.Config) error {
 
 	relBasePath := filepath.Join("bases", c.packageName+".clusterserviceversion.yaml")
 	basePath := filepath.Join(c.inputDir, relBasePath)
+	gvks, err := getGVKs(cfg)
+	if err != nil {
+		return err
+	}
 	base := bases.ClusterServiceVersion{
 		OperatorName: c.packageName,
-		OperatorType: projutil.PluginKeyToOperatorType(cfg.Layout),
+		OperatorType: projutil.PluginKeyToOperatorType(cfg.GetLayout()),
 		APIsDir:      c.apisDir,
 		Interactive:  requiresInteraction(basePath, c.interactiveLevel),
-		GVKs:         getGVKs(cfg),
+		GVKs:         gvks,
 	}
 	// Set BasePath only if it exists. If it doesn't, a new base will be generated
 	// if BasePath is empty.
@@ -236,12 +241,21 @@ func requiresInteraction(basePath string, ilvl projutil.InteractiveLevel) bool {
 	return (ilvl == projutil.InteractiveSoftOff && genutil.IsNotExist(basePath)) || ilvl == projutil.InteractiveOnAll
 }
 
-func getGVKs(cfg *config.Config) []schema.GroupVersionKind {
-	gvks := make([]schema.GroupVersionKind, len(cfg.Resources))
-	for i, gvk := range cfg.Resources {
-		gvks[i].Group = fmt.Sprintf("%s.%s", gvk.Group, cfg.Domain)
+func getGVKs(cfg config.Config) ([]schema.GroupVersionKind, error) {
+	resources, err := cfg.GetResources()
+	if err != nil {
+		return nil, err
+	}
+	gvks := make([]schema.GroupVersionKind, len(resources))
+	for i, gvk := range resources {
+		// check if the resource has an specific domain
+		// otherwise use the config.Domain.
+		if cfg.GetVersion().Compare(cfgv2.Version) == 0 {
+			gvk.Domain = cfg.GetDomain()
+		}
+		gvks[i].Group = gvk.QualifiedGroup()
 		gvks[i].Version = gvk.Version
 		gvks[i].Kind = gvk.Kind
 	}
-	return gvks
+	return gvks, nil
 }

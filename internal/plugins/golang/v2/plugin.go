@@ -15,10 +15,12 @@
 package v2
 
 import (
-	"github.com/operator-framework/operator-sdk/internal/plugins"
+	"sigs.k8s.io/kubebuilder/v3/pkg/config"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model/stage"
+	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
+	kbgov2 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/v2"
 
-	"sigs.k8s.io/kubebuilder/v2/pkg/plugin"
-	kbgov2 "sigs.k8s.io/kubebuilder/v2/pkg/plugins/golang/v2"
+	"github.com/operator-framework/operator-sdk/internal/plugins"
 )
 
 // Plugin name/version used in this file will also be used in phase 2 plugins when we can
@@ -30,7 +32,7 @@ const (
 )
 
 var (
-	pluginVersion   = plugin.Version{Number: 2, Stage: plugin.AlphaStage}
+	pluginVersion   = plugin.Version{Number: 2, Stage: stage.Alpha}
 	pluginConfigKey = plugin.Key(pluginName, pluginVersion.String())
 )
 
@@ -45,7 +47,7 @@ type Plugin struct{}
 
 func (Plugin) Name() string            { return (kbgov2.Plugin{}).Name() }
 func (Plugin) Version() plugin.Version { return (kbgov2.Plugin{}).Version() }
-func (Plugin) SupportedProjectVersions() []string {
+func (Plugin) SupportedProjectVersions() []config.Version {
 	return (kbgov2.Plugin{}).SupportedProjectVersions()
 }
 

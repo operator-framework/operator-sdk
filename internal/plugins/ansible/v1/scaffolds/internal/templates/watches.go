@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"text/template"
 
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
 )
 
 var _ file.Template = &Watches{}
@@ -104,7 +104,7 @@ const watchesTemplate = `---
 `
 
 const watchFragment = `- version: {{.Resource.Version}}
-  group: {{.Resource.Domain}}
+  group: {{.Resource.QualifiedGroup}}
   kind: {{.Resource.Kind}}
   {{- if .GeneratePlaybook }}
   playbook: {{ .PlaybooksDir }}/{{ .Resource.Kind | lower }}.yml

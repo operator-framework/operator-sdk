@@ -14,17 +14,16 @@
 
 package v2
 
-import "sigs.k8s.io/kubebuilder/v2/pkg/model/config"
+import (
+	"sigs.k8s.io/kubebuilder/v3/pkg/config"
+)
 
 // Config configures this plugin, and is saved in the project config file.
 // Deprecated: use scorecard and manifests plugin configs directly.
 type Config struct{}
 
-// hasPluginConfig returns true if cfg.Plugins contains an exact match for this plugin's key.
-func hasPluginConfig(cfg *config.Config) bool {
-	if !cfg.IsV3() || len(cfg.Plugins) == 0 {
-		return false
-	}
-	_, hasKey := cfg.Plugins[pluginConfigKey]
-	return hasKey
+// hasPluginConfig returns true if cfg.Layout contains an exact match for this plugin's key.
+func hasPluginConfig(cfg config.Config) bool {
+	info := Config{}
+	return cfg.DecodePluginConfig(pluginConfigKey, &info) == nil
 }

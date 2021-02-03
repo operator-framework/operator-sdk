@@ -34,7 +34,7 @@ require (
 	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/controller-runtime v0.8.0
 	sigs.k8s.io/controller-tools v0.4.1
-	sigs.k8s.io/kubebuilder/v2 v2.3.2-0.20201214213149-0a807f4e9428
+	sigs.k8s.io/kubebuilder/v3 v3.0.0-alpha.0.0.20210211121616-05abe25e7215
 	sigs.k8s.io/yaml v1.2.0
 )
 

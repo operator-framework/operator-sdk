@@ -106,7 +106,7 @@ in `watches.yaml` and executes Helm releases using the specified chart:
   version: v1alpha1
   kind: Nginx
   chart: helm-charts/nginx
-# +kubebuilder:scaffold:watch
+#+kubebuilder:scaffold:watch
 ```
 
 ### Reviewing the Nginx Helm Chart
