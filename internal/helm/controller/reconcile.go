@@ -110,7 +110,9 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 				Reason:  types.ReasonUninstallError,
 				Message: err.Error(),
 			})
-			_ = r.updateResourceStatus(o, status)
+			if err := r.updateResourceStatus(ctx, o, status); err != nil {
+				log.Error(err, "Failed to update status after uninstall release failure")
+			}
 			return reconcile.Result{}, err
 		}
 		status.RemoveCondition(types.ConditionReleaseFailed)
@@ -129,13 +131,13 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 			})
 			status.DeployedRelease = nil
 		}
-		if err := r.updateResourceStatus(o, status); err != nil {
+		if err := r.updateResourceStatus(ctx, o, status); err != nil {
 			log.Info("Failed to update CR status")
 			return reconcile.Result{}, err
 		}
 
 		controllerutil.RemoveFinalizer(o, finalizer)
-		if err := r.updateResource(o); err != nil {
+		if err := r.updateResource(ctx, o); err != nil {
 			log.Info("Failed to remove CR uninstall finalizer")
 			return reconcile.Result{}, err
 		}
@@ -144,7 +146,7 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 		// deletion here will guarantee that the next reconciliation
 		// will see that the CR has been deleted and that there's
 		// nothing left to do.
-		if err := r.waitForDeletion(o); err != nil {
+		if err := r.waitForDeletion(ctx, o); err != nil {
 			log.Info("Failed waiting for CR deletion")
 			return reconcile.Result{}, err
 		}
@@ -165,7 +167,9 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 			Reason:  types.ReasonReconcileError,
 			Message: err.Error(),
 		})
-		_ = r.updateResourceStatus(o, status)
+		if err := r.updateResourceStatus(ctx, o, status); err != nil {
+			log.Error(err, "Failed to update status after sync release failure")
+		}
 		return reconcile.Result{}, err
 	}
 	status.RemoveCondition(types.ConditionIrreconcilable)
@@ -184,14 +188,16 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 				Reason:  types.ReasonInstallError,
 				Message: err.Error(),
 			})
-			_ = r.updateResourceStatus(o, status)
+			if err := r.updateResourceStatus(ctx, o, status); err != nil {
+				log.Error(err, "Failed to update status after insatll release failure")
+			}
 			return reconcile.Result{}, err
 		}
 		status.RemoveCondition(types.ConditionReleaseFailed)
 
 		log.V(1).Info("Adding finalizer", "finalizer", finalizer)
 		controllerutil.AddFinalizer(o, finalizer)
-		if err := r.updateResource(o); err != nil {
+		if err := r.updateResource(ctx, o); err != nil {
 			log.Info("Failed to add CR uninstall finalizer")
 			return reconcile.Result{}, err
 		}
@@ -222,14 +228,14 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 			Name:     installedRelease.Name,
 			Manifest: installedRelease.Manifest,
 		}
-		err = r.updateResourceStatus(o, status)
+		err = r.updateResourceStatus(ctx, o, status)
 		return reconcile.Result{RequeueAfter: r.ReconcilePeriod}, err
 	}
 
 	if !contains(o.GetFinalizers(), finalizer) {
 		log.V(1).Info("Adding finalizer", "finalizer", finalizer)
 		controllerutil.AddFinalizer(o, finalizer)
-		if err := r.updateResource(o); err != nil {
+		if err := r.updateResource(ctx, o); err != nil {
 			log.Info("Failed to add CR uninstall finalizer")
 			return reconcile.Result{}, err
 		}
@@ -250,7 +256,9 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 				Reason:  types.ReasonUpgradeError,
 				Message: err.Error(),
 			})
-			_ = r.updateResourceStatus(o, status)
+			if err := r.updateResourceStatus(ctx, o, status); err != nil {
+				log.Error(err, "Failed to update status after sync release failure")
+			}
 			return reconcile.Result{}, err
 		}
 		status.RemoveCondition(types.ConditionReleaseFailed)
@@ -281,7 +289,7 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 			Name:     upgradedRelease.Name,
 			Manifest: upgradedRelease.Manifest,
 		}
-		err = r.updateResourceStatus(o, status)
+		err = r.updateResourceStatus(ctx, o, status)
 		return reconcile.Result{RequeueAfter: r.ReconcilePeriod}, err
 	}
 
@@ -302,7 +310,9 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 			Reason:  types.ReasonReconcileError,
 			Message: err.Error(),
 		})
-		_ = r.updateResourceStatus(o, status)
+		if err := r.updateResourceStatus(ctx, o, status); err != nil {
+			log.Error(err, "Failed to update status after reconcile release failure")
+		}
 		return reconcile.Result{}, err
 	}
 	status.RemoveCondition(types.ConditionIrreconcilable)
@@ -333,7 +343,7 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 		Name:     expectedRelease.Name,
 		Manifest: expectedRelease.Manifest,
 	}
-	err = r.updateResourceStatus(o, status)
+	err = r.updateResourceStatus(ctx, o, status)
 	return reconcile.Result{RequeueAfter: r.ReconcilePeriod}, err
 }
 
@@ -355,26 +365,26 @@ func hasHelmUpgradeForceAnnotation(o *unstructured.Unstructured) bool {
 	return value
 }
 
-func (r HelmOperatorReconciler) updateResource(o client.Object) error {
+func (r HelmOperatorReconciler) updateResource(ctx context.Context, o client.Object) error {
 	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		return r.Client.Update(context.TODO(), o)
+		return r.Client.Update(ctx, o)
 	})
 }
 
-func (r HelmOperatorReconciler) updateResourceStatus(o *unstructured.Unstructured, status *types.HelmAppStatus) error {
+func (r HelmOperatorReconciler) updateResourceStatus(ctx context.Context, o *unstructured.Unstructured, status *types.HelmAppStatus) error {
 	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		o.Object["status"] = status
-		return r.Client.Status().Update(context.TODO(), o)
+		return r.Client.Status().Update(ctx, o)
 	})
 }
 
-func (r HelmOperatorReconciler) waitForDeletion(o client.Object) error {
+func (r HelmOperatorReconciler) waitForDeletion(ctx context.Context, o client.Object) error {
 	key := client.ObjectKeyFromObject(o)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	tctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 	return wait.PollImmediateUntil(time.Millisecond*10, func() (bool, error) {
-		err := r.Client.Get(ctx, key, o)
+		err := r.Client.Get(tctx, key, o)
 		if apierrors.IsNotFound(err) {
 			return true, nil
 		}
@@ -382,7 +392,7 @@ func (r HelmOperatorReconciler) waitForDeletion(o client.Object) error {
 			return false, err
 		}
 		return false, nil
-	}, ctx.Done())
+	}, tctx.Done())
 }
 
 func contains(l []string, s string) bool {
