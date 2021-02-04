@@ -1,0 +1,12 @@
+entries:
+  - description: >
+      Changed the suggested finalizer format to `<qualified-group>/<finalizer-name>`
+    kind: change
+    migration:
+      header: Change your operator's finalizer names
+      body: >
+        The finalizer name format suggested by [Kubernetes docs](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#finalizers)
+        is `<qualified-group>/<finalizer-name>`, while the format previously documented by Operator SDK docs was
+        `<finalizer-name>.<qualified-group>`. If your operator uses any finalizers with names matching the incorrect format,
+        change them to match the official format.
+        For example, `finalizer.cache.example.com` should be changed to `cache.example.com/finalizer`.

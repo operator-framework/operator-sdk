@@ -4,7 +4,7 @@
   kind: Database
   playbook: playbook.yaml
   finalizer:
-    name: finalizer.app.example.com
+    name: app.example.com/finalizer
     vars:
       sentinel: finalizer_running
 - version: v1alpha1
@@ -12,6 +12,6 @@
   kind: Database
   playbook: playbook.yaml
   finalizer:
-    name: finalizer.app.example.com
+    name: app.example.com/finalizer
     vars:
       sentinel: finalizer_running

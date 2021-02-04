@@ -258,7 +258,7 @@ func TestReconcile(t *testing.T) {
 						Created: eventapi.EventTime{Time: eventTime},
 					},
 				},
-				Finalizer: "testing.io",
+				Finalizer: "testing.io/finalizer",
 			},
 			Client: fakeclient.NewClientBuilder().WithObjects(&unstructured.Unstructured{
 				Object: map[string]interface{}{
@@ -292,7 +292,7 @@ func TestReconcile(t *testing.T) {
 							controller.ReconcilePeriodAnnotation: "3s",
 						},
 						"finalizers": []interface{}{
-							"testing.io",
+							"testing.io/finalizer",
 						},
 					},
 					"apiVersion": "operator-sdk/v1beta1",
@@ -329,7 +329,7 @@ func TestReconcile(t *testing.T) {
 						Created: eventapi.EventTime{Time: eventTime},
 					},
 				},
-				Finalizer: "testing.io",
+				Finalizer: "testing.io/finalizer",
 			},
 			Client: fakeclient.NewClientBuilder().WithObjects(&unstructured.Unstructured{
 				Object: map[string]interface{}{
@@ -366,7 +366,7 @@ func TestReconcile(t *testing.T) {
 						Created: eventapi.EventTime{Time: eventTime},
 					},
 				},
-				Finalizer: "testing.io",
+				Finalizer: "testing.io/finalizer",
 			},
 			Client: fakeclient.NewClientBuilder().WithObjects(&unstructured.Unstructured{
 				Object: map[string]interface{}{
@@ -374,7 +374,7 @@ func TestReconcile(t *testing.T) {
 						"name":      "reconcile",
 						"namespace": "default",
 						"finalizers": []interface{}{
-							"testing.io",
+							"testing.io/finalizer",
 						},
 						"deletionTimestamp": eventTime.Format(time.RFC3339),
 					},

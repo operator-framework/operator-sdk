@@ -160,7 +160,7 @@ func TestLoad(t *testing.T) { //nolint:gocyclo
 			SnakeCaseParameters:         false,
 			WatchClusterScopedResources: false,
 			Finalizer: &Finalizer{
-				Name: "finalizer.app.example.com",
+				Name: "app.example.com/finalizer",
 				Role: validTemplate.ValidRole,
 				Vars: map[string]interface{}{"sentinel": "finalizer_running"},
 			},
@@ -223,7 +223,7 @@ func TestLoad(t *testing.T) { //nolint:gocyclo
 			Role:         validTemplate.ValidRole,
 			ManageStatus: true,
 			Finalizer: &Finalizer{
-				Name:     "finalizer.app.example.com",
+				Name:     "app.example.com/finalizer",
 				Playbook: validTemplate.ValidPlaybook,
 				Vars:     map[string]interface{}{"sentinel": "finalizer_running"},
 			},
@@ -237,7 +237,7 @@ func TestLoad(t *testing.T) { //nolint:gocyclo
 			Role:         validTemplate.ValidRole,
 			ManageStatus: true,
 			Finalizer: &Finalizer{
-				Name: "finalizer.app.example.com",
+				Name: "app.example.com/finalizer",
 				Vars: map[string]interface{}{"sentinel": "finalizer_running"},
 			},
 		},
