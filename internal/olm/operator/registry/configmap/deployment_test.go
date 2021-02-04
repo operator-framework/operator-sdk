@@ -28,9 +28,9 @@ var _ = Describe("Deployment", func() {
 
 	Describe("getRegistryServerName", func() {
 		It("should return the formatted servername", func() {
-			Expect(getRegistryServerName("pkgName")).Should(Equal("pkgName-registry-server"))
+			Expect(getRegistryServerName("pkgName")).Should(Equal("pkgname-registry-server"))
 			// This checks if all the special characters are handled correctly
-			Expect(getRegistryServerName("$abc.foo$@(&#(&!*)@&#")).Should(Equal("-abc-foo--registry-server"))
+			Expect(getRegistryServerName("$abc.foo$@(&#(&!*)@&#")).Should(Equal("abc-foo-registry-server"))
 		})
 	})
 
@@ -39,7 +39,7 @@ var _ = Describe("Deployment", func() {
 			labels := map[string]string{
 				"owner":        "operator-sdk",
 				"package-name": "$abc.foo$@(&#(&!*)@&#",
-				"server-name":  "-abc-foo--registry-server",
+				"server-name":  "abc-foo-registry-server",
 			}
 
 			Expect(getRegistryDeploymentLabels("$abc.foo$@(&#(&!*)@&#")).Should(Equal(labels))

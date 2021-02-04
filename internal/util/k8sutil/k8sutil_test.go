@@ -240,3 +240,95 @@ func TestSupportsOwnerReference(t *testing.T) {
 		})
 	}
 }
+
+func TestTrimDNS1123Label(t *testing.T) {
+	type testcase struct {
+		name     string
+		label    string
+		expected string
+	}
+	testcases := []testcase{
+		{
+			name:     "return valid truncated values",
+			label:    "quay-io-raffaelespazzoli-proactive-node-scaling-operator-bundle-latest",
+			expected: "raffaelespazzoli-proactive-node-scaling-operator-bundle-latest",
+		},
+		{
+			name:     "valid labels with proper length are noops",
+			label:    "raffaelespazzoli-proactive-node-scaling-operator-bundle-latest",
+			expected: "raffaelespazzoli-proactive-node-scaling-operator-bundle-latest",
+		},
+		{
+			name:     "short invalid labels are left alone",
+			label:    "-$*@*#fixed-invalid(__$)@+==-name-#$($",
+			expected: "-$*@*#fixed-invalid(__$)@+==-name-#$($",
+		},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := TrimDNS1123Label(tc.label)
+			assert.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func TestFormatOperatorNameDNS1123(t *testing.T) {
+	type testcase struct {
+		name     string
+		label    string
+		expected string
+	}
+	testcases := []testcase{
+		{
+			name:     "should not start with -",
+			label:    "-doesnot-start-with-hyphen",
+			expected: "doesnot-start-with-hyphen",
+		},
+		{
+			name:     "should not start with non-alphanumeric",
+			label:    "$@*#(@does-notstart-garbage",
+			expected: "does-notstart-garbage",
+		},
+		{
+			name:     "should not have non-alphanumeric",
+			label:    "sample-1234$@*#(@does-notstart-garbage",
+			expected: "sample-1234-does-notstart-garbage",
+		},
+		{
+			name:     "should not end with non-alphanumeric",
+			label:    "sample-1234-does-notstart-garbage#$*@#*($_!-_@(",
+			expected: "sample-1234-does-notstart-garbage",
+		},
+		{
+			name:     "should not start or end with hyphen",
+			label:    "-does-not-start-or-end-with-hyphen---",
+			expected: "does-not-start-or-end-with-hyphen",
+		},
+		{
+			name:     "empty string is a noop",
+			label:    "",
+			expected: "",
+		},
+		{
+			name:     "string of invalid characters results in empty string",
+			label:    "@#@#)$*!!_$#*$*!@",
+			expected: "",
+		},
+		{
+			name:     "valid long names are not trimmed",
+			label:    "quay-io-raffaelespazzoli-proactive-node-scaling-operator-bundle-latest",
+			expected: "quay-io-raffaelespazzoli-proactive-node-scaling-operator-bundle-latest",
+		},
+		{
+			name:     "should not contain capital letters",
+			label:    "QUAY-IO-gobble-gobBLE",
+			expected: "quay-io-gobble-gobble",
+		},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := FormatOperatorNameDNS1123(tc.label)
+			assert.Equal(t, tc.expected, result)
+		})
+	}
+}

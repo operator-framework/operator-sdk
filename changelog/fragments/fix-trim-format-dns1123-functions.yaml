@@ -1,0 +1,8 @@
+entries:
+  - description: >
+      Fixed invalid object names generated for long package names passed
+      to `run packagemanifests` & `run bundle`.
+
+    kind: "bugfix"
+
+    breaking: false
