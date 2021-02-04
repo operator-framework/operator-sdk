@@ -93,7 +93,11 @@ var dns1123LabelRegexp = regexp.MustCompile("[^a-zA-Z0-9]+")
 // replacing all non-compliant UTF-8 characters with "-".
 func FormatOperatorNameDNS1123(name string) string {
 	if len(validation.IsDNS1123Label(name)) != 0 {
-		return dns1123LabelRegexp.ReplaceAllString(name, "-")
+		// Use - for any of the non-matching characters
+		n := dns1123LabelRegexp.ReplaceAllString(name, "-")
+
+		// Now let's remove any leading or trailing -
+		return strings.ToLower(strings.Trim(n, "-"))
 	}
 	return name
 }
@@ -102,7 +106,7 @@ func FormatOperatorNameDNS1123(name string) string {
 // by removing characters from the beginning of label such that len(label) <= 63.
 func TrimDNS1123Label(label string) string {
 	if len(label) > validation.DNS1123LabelMaxLength {
-		return label[len(label)-validation.DNS1123LabelMaxLength:]
+		return strings.Trim(label[len(label)-validation.DNS1123LabelMaxLength:], "-")
 	}
 	return label
 }
