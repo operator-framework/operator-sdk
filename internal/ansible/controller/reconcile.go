@@ -172,18 +172,18 @@ func (r *AnsibleOperatorReconciler) Reconcile(ctx context.Context, request recon
 	failureMessages := eventapi.FailureMessages{}
 	for event := range result.Events() {
 		for _, eHandler := range r.EventHandlers {
-			go eHandler.Handle(ident, u, event)
+			go eHandler.Handle(ident, u, event, request)
 		}
 		if event.Event == eventapi.EventPlaybookOnStats {
 			// convert to StatusJobEvent; would love a better way to do this
 			data, err := json.Marshal(event)
 			if err != nil {
-				printEventStats(statusEvent)
+				printEventStats(statusEvent, request, u.GroupVersionKind().String())
 				return reconcile.Result{}, err
 			}
 			err = json.Unmarshal(data, &statusEvent)
 			if err != nil {
-				printEventStats(statusEvent)
+				printEventStats(statusEvent, request, u.GroupVersionKind().String())
 				return reconcile.Result{}, err
 			}
 		}
@@ -210,10 +210,10 @@ func (r *AnsibleOperatorReconciler) Reconcile(ctx context.Context, request recon
 	}
 
 	// To print the stats of the task
-	printEventStats(statusEvent)
+	printEventStats(statusEvent, request, u.GroupVersionKind().String())
 
 	// To print the full ansible result
-	r.printAnsibleResult(result)
+	r.printAnsibleResult(result, request, u.GroupVersionKind().String())
 
 	if statusEvent.Event == "" {
 		eventErr := errors.New("did not receive playbook_on_stats event")
@@ -273,18 +273,20 @@ func (r *AnsibleOperatorReconciler) Reconcile(ctx context.Context, request recon
 	return reconcileResult, nil
 }
 
-func printEventStats(statusEvent eventapi.StatusJobEvent) {
+func printEventStats(statusEvent eventapi.StatusJobEvent, request reconcile.Request, gvkStr string) {
 	if len(statusEvent.StdOut) > 0 {
 		fmt.Printf("\n--------------------------- Ansible Task Status Event StdOut  -----------------\n")
+		fmt.Printf("-----%68v -----\n", gvkStr+" "+request.Namespace+" "+request.Name)
 		fmt.Println(statusEvent.StdOut)
 		fmt.Printf("\n-------------------------------------------------------------------------------\n")
 	}
 }
 
-func (r *AnsibleOperatorReconciler) printAnsibleResult(result runner.RunResult) {
+func (r *AnsibleOperatorReconciler) printAnsibleResult(result runner.RunResult, request reconcile.Request, gvkStr string) {
 	if r.AnsibleDebugLogs {
 		if res, err := result.Stdout(); err == nil && len(res) > 0 {
 			fmt.Printf("\n--------------------------- Ansible Debug Result -----------------------------\n")
+			fmt.Printf("-----%68v -----\n", gvkStr+" "+request.Namespace+" "+request.Name)
 			fmt.Println(res)
 			fmt.Printf("\n-------------------------------------------------------------------------------\n")
 		}
