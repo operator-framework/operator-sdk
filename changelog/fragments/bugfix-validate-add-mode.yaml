@@ -1,5 +1,0 @@
-entries:
-  - description: >
-      `run bundle` and `run bundle-upgrade` now validate the value passed to the hidden flag `--mode` before
-      running a bundle.
-    kind: bugfix

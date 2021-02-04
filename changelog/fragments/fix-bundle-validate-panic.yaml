@@ -1,4 +1,0 @@
-entries:
-  - description: Fix panic when "operator-sdk bundle validate" fails
-    kind: bugfix
-    breaking: false
