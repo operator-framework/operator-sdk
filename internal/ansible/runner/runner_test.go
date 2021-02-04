@@ -93,7 +93,7 @@ func TestNew(t *testing.T) {
 			},
 			playbook: validPlaybook,
 			finalizer: &watches.Finalizer{
-				Name:     "example.finalizer.com",
+				Name:     "operator.example.com/finalizer",
 				Playbook: validPlaybook,
 			},
 		},
@@ -106,7 +106,7 @@ func TestNew(t *testing.T) {
 			},
 			role: validRole,
 			finalizer: &watches.Finalizer{
-				Name: "example.finalizer.com",
+				Name: "operator.example.com/finalizer",
 				Role: validRole,
 			},
 		},
@@ -119,7 +119,7 @@ func TestNew(t *testing.T) {
 			},
 			playbook: validPlaybook,
 			finalizer: &watches.Finalizer{
-				Name: "example.finalizer.com",
+				Name: "operator.example.com/finalizer",
 				Vars: map[string]interface{}{
 					"state": "absent",
 				},
@@ -137,7 +137,7 @@ func TestNew(t *testing.T) {
 				"type": "this",
 			},
 			finalizer: &watches.Finalizer{
-				Name: "example.finalizer.com",
+				Name: "operator.example.com/finalizer",
 				Vars: map[string]interface{}{
 					"state": "absent",
 				},

@@ -32,6 +32,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -100,21 +101,20 @@ func (r *AnsibleOperatorReconciler) Reconcile(ctx context.Context, request recon
 
 	deleted := u.GetDeletionTimestamp() != nil
 	finalizer, finalizerExists := r.Runner.GetFinalizer()
-	pendingFinalizers := u.GetFinalizers()
-	// If the resource is being deleted we don't want to add the finalizer again
-	if finalizerExists && !deleted && !contains(pendingFinalizers, finalizer) {
-		logger.V(1).Info("Adding finalizer to resource", "Finalizer", finalizer)
-		finalizers := append(pendingFinalizers, finalizer)
-		u.SetFinalizers(finalizers)
-		err := r.Client.Update(ctx, u)
-		if err != nil {
-			logger.Error(err, "Unable to update cr with finalizer")
-			return reconcileResult, err
+	if !controllerutil.ContainsFinalizer(u, finalizer) {
+		if deleted {
+			// If the resource is being deleted we don't want to add the finalizer again
+			logger.Info("Resource is terminated, skipping reconciliation")
+			return reconcile.Result{}, nil
+		} else if finalizerExists {
+			logger.V(1).Info("Adding finalizer to resource", "Finalizer", finalizer)
+			controllerutil.AddFinalizer(u, finalizer)
+			err := r.Client.Update(ctx, u)
+			if err != nil {
+				logger.Error(err, "Unable to update cr with finalizer")
+				return reconcileResult, err
+			}
 		}
-	}
-	if !contains(pendingFinalizers, finalizer) && deleted {
-		logger.Info("Resource is terminated, skipping reconciliation")
-		return reconcile.Result{}, nil
 	}
 
 	spec := u.Object["spec"]
@@ -240,22 +240,14 @@ func (r *AnsibleOperatorReconciler) Reconcile(ctx context.Context, request recon
 		return reconcile.Result{}, err
 	}
 
-	// try to get the updated finalizers
-	pendingFinalizers = u.GetFinalizers()
-
 	// We only want to update the CustomResource once, so we'll track changes
 	// and do it at the end
 	runSuccessful := len(failureMessages) == 0
 
 	// The finalizer has run successfully, time to remove it
+	deleted = u.GetDeletionTimestamp() != nil
 	if deleted && finalizerExists && runSuccessful {
-		finalizers := []string{}
-		for _, pendingFinalizer := range pendingFinalizers {
-			if pendingFinalizer != finalizer {
-				finalizers = append(finalizers, pendingFinalizer)
-			}
-		}
-		u.SetFinalizers(finalizers)
+		controllerutil.RemoveFinalizer(u, finalizer)
 		err := r.Client.Update(ctx, u)
 		if err != nil {
 			logger.Error(err, "Failed to remove finalizer")
@@ -417,15 +409,6 @@ func (r *AnsibleOperatorReconciler) markDone(ctx context.Context, nn types.Names
 	u.Object["status"] = crStatus.GetJSONMap()
 
 	return r.Client.Status().Update(ctx, u)
-}
-
-func contains(l []string, s string) bool {
-	for _, elem := range l {
-		if elem == s {
-			return true
-		}
-	}
-	return false
 }
 
 // getStatus returns u's "status" block as a status.Status.
