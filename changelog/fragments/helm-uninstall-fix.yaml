@@ -1,4 +1,0 @@
-entries:
-  - description: Fixed a bug that caused the Helm operator to remove the finalizer without doing a helm uninstall.
-    kind: "bugfix"
-    breaking: false
