@@ -1,4 +1,0 @@
-entries:
-  - description: >
-      `run bundle-upgrade` handles error gracefully when a previous operator version doesn't exist
-    kind: bugfix
