@@ -79,7 +79,7 @@ This will scaffold the Memcached resource API at `api/v1alpha1/memcached_types.g
 
 For an in-depth explanation of Kubernetes APIs and the group-version-kind model, check out these [kubebuilder docs][kb-doc-gkvs].
 
-In general, it's recommended to have one controller responsible for manage each API created for the project to 
+In general, it's recommended to have one controller responsible for manage each API created for the project to
 properly follow the design goals set by [controller-runtime][controller-runtime].
 
 ### Define the API
@@ -433,7 +433,7 @@ Next, try adding the following to your project:
 1. Validating and mutating [admission webhooks][create_a_webhook].
 2. Operator packaging and distribution with [OLM][olm-integration].
 
-Also see the [advanced topics][advanced_topics] doc for more use cases and under the hood details. 
+Also see the [advanced topics][advanced_topics] doc for more use cases and under the hood details.
 
 [legacy-quickstart-doc]:https://v0-19-x.sdk.operatorframework.io/docs/golang/legacy/quickstart/
 [migration-guide]:/docs/building-operators/golang/migration
