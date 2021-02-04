@@ -24,6 +24,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/tools/go/packages"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	apiversion "k8s.io/apimachinery/pkg/version"
+	"sigs.k8s.io/controller-tools/pkg/crd"
 	"sigs.k8s.io/controller-tools/pkg/genall"
 	"sigs.k8s.io/controller-tools/pkg/loader"
 	"sigs.k8s.io/controller-tools/pkg/markers"
@@ -39,75 +41,58 @@ type descriptionValues struct {
 // to populate csv spec fields. Go code with relevant markers and information is expected to be
 // in a package under apisRootDir and match a GVK in keys.
 func ApplyDefinitionsForKeysGo(csv *v1alpha1.ClusterServiceVersion, apisRootDir string, gvks []schema.GroupVersionKind) error {
-
-	// Construct a set of probable paths under apisRootDir for types defined by gvks.
-	// These are usually '(pkg/)?apis/(<group>/)?<version>'.
-	// NB(estroz): using "leaf" packages prevents type builders from searching other packages.
-	// It would be nice to implement extra-package traversal in the future.
-	paths, err := makeAPIPaths(apisRootDir, gvks)
+	wd, err := os.Getwd()
 	if err != nil {
 		return err
 	}
-	// Some APIs may not exist under apisRootDir, so skip loading packages if no paths are found
-	if len(paths) == 0 {
-		return nil
-	}
 
-	// Collect Go types from roots.
+	// Create a generator context for type-checking and loading all packages under apisRootDir.
+	// The "$(pwd)/<package>/..." syntax directs the loader to load all packages under apisRootDir.
 	g := &generator{}
-	ctx, err := g.contextForRoots(paths...)
+	ctx, err := g.contextForRoots(filepath.Join(wd, apisRootDir) + "/...")
 	if err != nil {
 		return err
 	}
+	// Collect Go types from the API root.
 	g.needTypes(ctx)
 	if loader.PrintErrors(ctx.Roots, packages.TypeError) {
 		return errors.New("one or more API packages had type errors")
 	}
 
+	gvkSet := make(map[schema.GroupVersionKind]struct{}, len(gvks))
+	for _, gvk := range gvks {
+		gvkSet[gvk] = struct{}{}
+	}
+
 	// Create definitions for kind types found under the collected roots.
 	definitionsByGVK := make(map[schema.GroupVersionKind]*descriptionValues)
-	for _, gvk := range gvks {
-		kindType, hasKind := g.types[gvk.Kind]
-		if !hasKind {
-			log.Warnf("Skipping CSV annotation parsing for API %s: type %s not found", gvk, gvk.Kind)
-			continue
+	for typeIdent, typeInfo := range g.types {
+		if gv, hasGV := g.groupVersions[typeIdent.Package]; hasGV {
+			gvk := gv.WithKind(typeIdent.Name)
+			// Type is one of the GVKs specified by the caller.
+			if _, hasGVK := gvkSet[gvk]; hasGVK {
+				crd, crdOrder, err := g.buildCRDDescriptionFromType(gvk, typeIdent, typeInfo)
+				if err != nil {
+					return err
+				}
+				definitionsByGVK[gvk] = &descriptionValues{
+					crdOrder: crdOrder,
+					crd:      crd,
+				}
+				delete(gvkSet, gvk)
+			}
 		}
-		crd, crdOrder, err := g.buildCRDDescriptionFromType(gvk, kindType)
-		if err != nil {
-			return err
-		}
-		definitionsByGVK[gvk] = &descriptionValues{
-			crdOrder: crdOrder,
-			crd:      crd,
-		}
+	}
+
+	// Leftover GVKs are ignored because their types can't be found.
+	for _, gvk := range gvkSet {
+		log.Warnf("Skipping CSV annotation parsing for API %s: type not found", gvk)
 	}
 
 	// Update csv with all values parsed.
 	updateDefinitionsByKey(csv, definitionsByGVK)
 
 	return nil
-}
-
-// makeAPIPaths creates a set of API directory paths with apisRootDir as their parent.
-func makeAPIPaths(apisRootDir string, gvks []schema.GroupVersionKind) (paths []string, err error) {
-	if apisRootDir, err = filepath.Abs(apisRootDir); err != nil {
-		return nil, err
-	}
-
-	for _, gvk := range gvks {
-		// Check if the kind pkg is at the expected layout.
-		group := MakeGroupFromFullGroup(gvk.Group)
-		expectedPkgPath, err := getExpectedPkgLayout(apisRootDir, group, gvk.Version)
-		if err != nil {
-			return nil, err
-		}
-		if expectedPkgPath == "" {
-			log.Warnf("Skipping CSV annotation parsing for API %s: directory does not exist", gvk)
-			continue
-		}
-		paths = append(paths, expectedPkgPath)
-	}
-	return paths, nil
 }
 
 // updateDefinitionsByKey updates owned definitions that already exist in csv or adds new definitions that do not.
@@ -122,9 +107,7 @@ func updateDefinitionsByKey(csv *v1alpha1.ClusterServiceVersion, defsByGVK map[s
 	// Sort generated buckets before adding non-generated descriptions so users can
 	// set their order manually.
 	for _, bucket := range crdBuckets {
-		sort.Slice(bucket, func(i, j int) bool {
-			return bucket[i].Name < bucket[j].Name
-		})
+		sort.Slice(bucket, lessForCRDDescription(bucket))
 	}
 
 	// Append non-generated descriptions to the end of their buckets,
@@ -149,6 +132,19 @@ func updateDefinitionsByKey(csv *v1alpha1.ClusterServiceVersion, defsByGVK map[s
 	}
 }
 
+// lessForCRDDescription returns a less func for descs. Used for sorting a list of CRDDescriptions.
+func lessForCRDDescription(descs []v1alpha1.CRDDescription) func(i, j int) bool {
+	return func(i, j int) bool {
+		if descs[i].Name == descs[j].Name {
+			if descs[i].Kind == descs[j].Kind {
+				return apiversion.CompareKubeAwareVersionStrings(descs[i].Version, descs[j].Version) > 0
+			}
+			return descs[i].Kind < descs[j].Kind
+		}
+		return descs[i].Name < descs[j].Name
+	}
+}
+
 // descToGVK convert desc to a GVK type.
 func descToGVK(desc v1alpha1.CRDDescription) (gvk schema.GroupVersionKind) {
 	gvk.Group = MakeFullGroupFromName(desc.Name)
@@ -157,47 +153,10 @@ func descToGVK(desc v1alpha1.CRDDescription) (gvk schema.GroupVersionKind) {
 	return gvk
 }
 
-func isDirExist(path string) (bool, error) {
-	fileInfo, err := os.Stat(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
-		}
-		return false, err
-	}
-	return fileInfo.IsDir(), nil
-}
-
-// getExpectedPkgLayout checks the directory layout in apisRootDir for single and multi group layouts and returns
-// the expected pkg path for the group and version. Returns empty string if neither single or multi group layout
-// is detected.
-// - multi-group layout:  apis/<group>/<version>
-// - single-group layout: api/<version>
-func getExpectedPkgLayout(apisRootDir, group, version string) (expectedPkgPath string, err error) {
-	if group == "" || version == "" {
-		return "", nil
-	}
-	groupVersionDir := filepath.Join(apisRootDir, group, version)
-	if isMultiGroupLayout, err := isDirExist(groupVersionDir); isMultiGroupLayout {
-		if err != nil {
-			return "", err
-		}
-		return groupVersionDir, nil
-	}
-	versionDir := filepath.Join(apisRootDir, version)
-	if isSingleGroupLayout, err := isDirExist(versionDir); isSingleGroupLayout {
-		if err != nil {
-			return "", err
-		}
-		return versionDir, nil
-	}
-	// Neither multi nor single group layout
-	return "", nil
-}
-
 // generator creates API definitions from type information for a set of roots.
 type generator struct {
-	types map[string]*markers.TypeInfo
+	types         map[crd.TypeIdent]*markers.TypeInfo
+	groupVersions map[*loader.Package]schema.GroupVersion
 }
 
 // contextForRoots creates a context that can populate a generator for a set of roots loaded from dirs.
@@ -222,13 +181,41 @@ func (g *generator) contextForRoots(dirs ...string) (ctx *genall.GenerationConte
 }
 
 // needTypes sets types in the generator for a given context.
+// Adapted from https://github.com/kubernetes-sigs/controller-tools/blob/868d39a/pkg/crd/parser.go#L121
 func (g *generator) needTypes(ctx *genall.GenerationContext) {
-	g.types = make(map[string]*markers.TypeInfo)
-	cb := func(info *markers.TypeInfo) {
-		g.types[info.Name] = info
-	}
+	g.types = make(map[crd.TypeIdent]*markers.TypeInfo)
+	g.groupVersions = make(map[*loader.Package]schema.GroupVersion)
 	for _, root := range ctx.Roots {
-		if err := markers.EachType(ctx.Collector, root, cb); err != nil {
+		pkgMarkers, err := markers.PackageMarkers(ctx.Collector, root)
+		if err != nil {
+			root.AddError(err)
+		} else {
+			// Explicitly skip this package.
+			if skipPkg := pkgMarkers.Get("kubebuilder:skip"); skipPkg != nil {
+				return
+			}
+			// Get group name and optionall version name from package markers.
+			if nameVal := pkgMarkers.Get("groupName"); nameVal != nil {
+				versionVal := root.Name
+				if versionMarker := pkgMarkers.Get("versionName"); versionMarker != nil {
+					versionVal = versionMarker.(string)
+				}
+
+				g.groupVersions[root] = schema.GroupVersion{
+					Version: versionVal,
+					Group:   nameVal.(string),
+				}
+			}
+		}
+		// Add all types indexed by their package and type name.
+		f := func(info *markers.TypeInfo) {
+			ident := crd.TypeIdent{
+				Package: root,
+				Name:    info.Name,
+			}
+			g.types[ident] = info
+		}
+		if err := markers.EachType(ctx.Collector, root, f); err != nil {
 			root.AddError(err)
 		}
 	}

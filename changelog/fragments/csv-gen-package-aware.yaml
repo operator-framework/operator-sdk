@@ -1,0 +1,6 @@
+entries:
+  - description: >
+      For Go-based projects, `generate <bundle|packagemanifests>` subcommands now consider package and type names
+      when parsing Go API types files to generate a CSV's `owned.customresourcedefinitions`, such that types in
+      different packages and files will not overwrite each other.
+    kind: bugfix
