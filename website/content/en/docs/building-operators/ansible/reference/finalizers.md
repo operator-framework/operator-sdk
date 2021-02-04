@@ -9,7 +9,7 @@ created during reconciliation when a managed resource is marked for deletion. Th
 behavior is usually sufficient for applications that exist only in Kubernetes, but
 sometimes it is necessary to perform more complex operations (for example, when
 your action performed against a third party API needs to be undone). These more
-complex cases can still be handled by Ansible Operator, through the use of a finalizer.
+complex cases can still be handled by Ansible Operator, through the use of a [finalizer][doc-crd-finalizers].
 
 Finalizers allow controllers (such as an Ansible Operator) to implement asynchronous pre-delete hooks.
 This allows custom logic to run after a resource has been marked for deletion, but
@@ -20,18 +20,19 @@ define the mapping from your finalizer to a playbook or role by simply setting t
 your top-level playbook or role with different variables set. The `watches.yaml`
 finalizer configuration accepts the following options:
 
-See [Ansible watches documentation][ansible-watches] for more
-information.
+See [Ansible watches documentation][ansible-watches] for more information.
 
 
 #### name
+
 `name` is required.
 
 This is the name of the finalizer. This is basically an arbitrary string, the existence
 of any finalizer string on a resource will prevent that resource from being deleted until
 the finalizer is removed. Ansible Operator will remove this string from the list of
 finalizers on successful execution of the specified role or playbook. A typical finalizer
-will be `finalizer.<group>`, where `<group>` is the group of the resource being managed.
+will be `<qualified-group>/finalizer`, where `<qualified-group>` is the fully qualified group
+of the resource being managed.
 
 #### playbook
 
@@ -71,7 +72,7 @@ Here are a few examples of `watches.yaml` files that specify a finalizer:
   kind: Database
   playbook: /opt/ansible/playbook.yml
   finalizer:
-    name: finalizer.app.example.com
+    name: app.example.com/finalizer
     vars:
       state: absent
 ```
@@ -87,7 +88,7 @@ the author can check this value and perform whatever cleanup is necessary.
   kind: Database
   role: database
   finalizer:
-    name: finalizer.app.example.com
+    name: app.example.com/finalizer
     vars:
       state: absent
 ```
@@ -103,7 +104,7 @@ role, rather than a playbook, with the `state` variable set to `absent`.
   kind: Database
   playbook: playbook.yml
   finalizer:
-    name: finalizer.app.example.com
+    name: app.example.com/finalizer
     role: teardown_database
 ```
 
@@ -116,7 +117,7 @@ This example will run the `/opt/ansible/roles/teardown_database` role when the C
   kind: Database
   playbook: playbook.yml
   finalizer:
-    name: finalizer.app.example.com
+    name: app.example.com/finalizer
     playbook: destroy.yml
 ```
 
@@ -129,7 +130,7 @@ This example will run the `/opt/ansible/destroy.yml` playbook when the Custom Re
   kind: Database
   playbook: playbook.yml
   finalizer:
-    name: finalizer.app.example.com
+    name: app.example.com/finalizer
     role: myNamespace.myCollection.myRole
 ```
 
@@ -150,7 +151,7 @@ interaction, with a different variable set.
   kind: Database
   playbook: playbook.yml
   finalizer:
-    name: finalizer.app.example.com
+    name: app.example.com/finalizer
     role: manage_credentials
     vars:
       state: revoked
@@ -165,7 +166,5 @@ causes the role to invalidate our credentials. For everything else in our applic
 automatic deletion of dependent resources will be sufficient, so we can exit successfully and
 let the operator remove our finalizer and allow the resource to be deleted.
 
-## Further reading
-• [Kubernetes finalizers](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#finalizers)
-
+[doc-crd-finalizers]:https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#finalizers
 [ansible-watches]:/docs/building-operators/ansible/reference/watches/

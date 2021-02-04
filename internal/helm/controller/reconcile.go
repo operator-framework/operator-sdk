@@ -56,7 +56,10 @@ type HelmOperatorReconciler struct {
 }
 
 const (
-	finalizer = "uninstall-helm-release"
+	// uninstallFinalizer is added to CRs so they are cleaned up after uninstalling a release.
+	uninstallFinalizer = "helm.sdk.operatorframework.io/uninstall-release"
+	// Deprecated: use uninstallFinalizer. This will be removed in operator-sdk v2.0.0.
+	uninstallFinalizerLegacy = "uninstall-helm-release"
 )
 
 // Reconcile reconciles the requested resource by installing, updating, or
@@ -96,7 +99,9 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 	log = log.WithValues("release", manager.ReleaseName())
 
 	if o.GetDeletionTimestamp() != nil {
-		if !contains(o.GetFinalizers(), finalizer) {
+		if !(controllerutil.ContainsFinalizer(o, uninstallFinalizer) ||
+			controllerutil.ContainsFinalizer(o, uninstallFinalizerLegacy)) {
+
 			log.Info("Resource is terminated, skipping reconciliation")
 			return reconcile.Result{}, nil
 		}
@@ -136,7 +141,8 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 			return reconcile.Result{}, err
 		}
 
-		controllerutil.RemoveFinalizer(o, finalizer)
+		controllerutil.RemoveFinalizer(o, uninstallFinalizer)
+		controllerutil.RemoveFinalizer(o, uninstallFinalizerLegacy)
 		if err := r.updateResource(ctx, o); err != nil {
 			log.Info("Failed to remove CR uninstall finalizer")
 			return reconcile.Result{}, err
@@ -195,8 +201,8 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 		}
 		status.RemoveCondition(types.ConditionReleaseFailed)
 
-		log.V(1).Info("Adding finalizer", "finalizer", finalizer)
-		controllerutil.AddFinalizer(o, finalizer)
+		log.V(1).Info("Adding finalizer", "finalizer", uninstallFinalizer)
+		controllerutil.AddFinalizer(o, uninstallFinalizer)
 		if err := r.updateResource(ctx, o); err != nil {
 			log.Info("Failed to add CR uninstall finalizer")
 			return reconcile.Result{}, err
@@ -232,9 +238,11 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 		return reconcile.Result{RequeueAfter: r.ReconcilePeriod}, err
 	}
 
-	if !contains(o.GetFinalizers(), finalizer) {
-		log.V(1).Info("Adding finalizer", "finalizer", finalizer)
-		controllerutil.AddFinalizer(o, finalizer)
+	if !(controllerutil.ContainsFinalizer(o, uninstallFinalizer) ||
+		controllerutil.ContainsFinalizer(o, uninstallFinalizerLegacy)) {
+
+		log.V(1).Info("Adding finalizer", "finalizer", uninstallFinalizer)
+		controllerutil.AddFinalizer(o, uninstallFinalizer)
 		if err := r.updateResource(ctx, o); err != nil {
 			log.Info("Failed to add CR uninstall finalizer")
 			return reconcile.Result{}, err
@@ -393,13 +401,4 @@ func (r HelmOperatorReconciler) waitForDeletion(ctx context.Context, o client.Ob
 		}
 		return false, nil
 	}, tctx.Done())
-}
-
-func contains(l []string, s string) bool {
-	for _, elem := range l {
-		if elem == s {
-			return true
-		}
-	}
-	return false
 }

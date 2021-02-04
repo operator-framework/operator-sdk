@@ -135,7 +135,7 @@ import (
     "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-const memcachedFinalizer = "finalizer.cache.example.com"
+const memcachedFinalizer = "cache.example.com/finalizer"
 
 func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
     reqLogger := r.log.WithValues("memcached", req.NamespacedName)

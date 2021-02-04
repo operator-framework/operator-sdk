@@ -4,7 +4,7 @@
   kind: Database
   playbook: playbook.yaml
   finalizer:
-    name: finalizer.app.example.com
+    name: app.example.com/finalizer
     playbook: playbook.yaml
     vars:
       sentinel: finalizer_running
