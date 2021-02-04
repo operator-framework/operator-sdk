@@ -182,7 +182,8 @@ func main() {
     	log.Error(err, "")
     	os.Exit(1)
 	}
-..
+...
+}
 ```
 
 In order to use the previous one ensure that you have the [operator-lib][operator-lib] as a dependency of your project.
@@ -202,6 +203,7 @@ func main() {
 		LeaderElectionID:   "f1c5ece8.example.com",
 	})
 ...
+}
 ```
 
 - Ensure that you copy all customizations made in `cmd/manager/main.go` to `main.go`. You’ll also need to ensure that all needed schemes have been registered, if you have been using third-party API's (i.e Route Api from OpenShift).
@@ -244,7 +246,7 @@ If not, you can install Prometheus via [kube-prometheus](https://github.com/core
 kubectl apply -f https://raw.githubusercontent.com/coreos/prometheus-operator/release-0.33/bundle.yaml
 ```
 - Now uncomment the line `- ../prometheus` in the `config/default/kustomization.yaml` file. It creates the `ServiceMonitor` resource which enables exporting the metrics:
-```sh
+```yaml
 # [PROMETHEUS] To enable prometheus monitor, uncomment all sections with 'PROMETHEUS'.
 - ../prometheus
 ```
@@ -280,7 +282,7 @@ func (r *MemcachedReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 In this way, the following metric with the resource info will be exported:
 
-```shell             
+```
 resource_created_at_seconds{"name", "namespace", "group", "version", "kind"}
 ```
 
@@ -294,7 +296,7 @@ The Dockerfile image also changes and now it is a `multi-stage`, `distroless` an
 
  See that, you might need to port some customizations made in your old Dockerfile as well. Also, if you wish to still using the previous UBI image replace:
 
-```sh
+```docker
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
 FROM gcr.io/distroless/static:nonroot
@@ -302,7 +304,7 @@ FROM gcr.io/distroless/static:nonroot
 
 With:
 
-```sh
+```docker
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 ```
 
