@@ -168,7 +168,7 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
     // indicated by the deletion timestamp being set.
     isMemcachedMarkedToBeDeleted := memcached.GetDeletionTimestamp() != nil
     if isMemcachedMarkedToBeDeleted {
-        if contains(memcached.GetFinalizers(), memcachedFinalizer) {
+        if controllerutil.ContainsFinalizer(memcached, memcachedFinalizer) {
             // Run finalization logic for memcachedFinalizer. If the
             // finalization logic fails, don't remove the finalizer so
             // that we can retry during the next reconciliation.
@@ -188,7 +188,7 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
     }
 
     // Add finalizer for this CR
-    if !contains(memcached.GetFinalizers(), memcachedFinalizer) {
+    if !controllerutil.ContainsFinalizer(memcached, memcachedFinalizer) {
         if err := r.addFinalizer(reqLogger, memcached); err != nil {
             return ctrl.Result{}, err
         }
@@ -219,15 +219,6 @@ func (r *MemcachedReconciler) addFinalizer(reqLogger logr.Logger, m *cachev1alph
         return err
     }
     return nil
-}
-
-func contains(list []string, s string) bool {
-    for _, v := range list {
-        if v == s {
-            return true
-        }
-    }
-    return false
 }
 ```
 
