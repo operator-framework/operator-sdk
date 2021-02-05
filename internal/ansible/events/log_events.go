@@ -17,6 +17,7 @@ package events
 import (
 	"errors"
 	"fmt"
+	"sync"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -45,7 +46,8 @@ type EventHandler interface {
 }
 
 type loggingEventHandler struct {
-	LogLevel LogLevel
+	LogLevel  LogLevel
+	mutexLock sync.Mutex
 }
 
 func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, e eventapi.JobEvent, request reconcile.Request) {
@@ -68,13 +70,17 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 		debugAction := e.EventData["task_action"] == eventapi.TaskActionDebug
 
 		if e.Event == eventapi.EventPlaybookOnTaskStart && !setFactAction && !debugAction {
+			mutexLock.Lock()
 			logger.Info("[playbook task]", "EventData.Name", e.EventData["name"])
 			l.logAnsibleStdOut(e, request, u.GroupVersionKind().String())
+			mutexLock.Unlock()
 			return
 		}
 		if e.Event == eventapi.EventRunnerOnOk && debugAction {
+			mutexLock.Lock()
 			logger.Info("[playbook debug]", "EventData.TaskArgs", e.EventData["task_args"])
 			l.logAnsibleStdOut(e, request, u.GroupVersionKind().String())
+			mutexLock.Unlock()
 			return
 		}
 		if e.Event == eventapi.EventRunnerOnFailed {
@@ -99,10 +105,9 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 }
 
 // logAnsibleStdOut will print in the logs the Ansible Task Output formatted
-func (l loggingEventHandler) logAnsibleStdOut(e eventapi.JobEvent, request reconcile.Request, gvkStr string) {
+func (l loggingEventHandler) logAnsibleStdOut(e eventapi.JobEvent) {
 	if len(e.StdOut) > 0 {
 		fmt.Printf("\n--------------------------- Ansible Task StdOut -------------------------------\n")
-		fmt.Printf("-----%68v -----\n", gvkStr+" "+request.Namespace+" "+request.Name)
 		if e.Event != eventapi.EventPlaybookOnTaskStart {
 			fmt.Printf("\n TASK [%v] ******************************** \n", e.EventData["task"])
 		}
