@@ -91,16 +91,20 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 			if taskPath, ok := e.EventData["task_path"]; ok {
 				errKVs = append(errKVs, "EventData.FailedTaskPath", taskPath)
 			}
+			mutexLock.Lock()
 			logger.Error(errors.New("[playbook task failed]"), "", errKVs...)
-			l.logAnsibleStdOut(e, request, u.GroupVersionKind().String())
+			l.logAnsibleStdOut(e)
+			mutexLock.Unlock()
 			return
 		}
 	}
 
 	// log everything else for the 'Everything' LogLevel
 	if l.LogLevel == Everything {
+		mutexLock.Lock()
 		logger.Info("", "EventData", e.EventData)
-		l.logAnsibleStdOut(e, request, u.GroupVersionKind().String())
+		l.logAnsibleStdOut(e, request)
+		mutexLock.Unlock()
 	}
 }
 
