@@ -172,7 +172,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(ctx context.Context, request recon
 	failureMessages := eventapi.FailureMessages{}
 	for event := range result.Events() {
 		for _, eHandler := range r.EventHandlers {
-			go eHandler.Handle(ident, u, event, request)
+			go eHandler.Handle(ident, u, event)
 		}
 		if event.Event == eventapi.EventPlaybookOnStats {
 			// convert to StatusJobEvent; would love a better way to do this

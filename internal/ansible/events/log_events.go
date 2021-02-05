@@ -21,7 +21,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/operator-framework/operator-sdk/internal/ansible/runner/eventapi"
 )
@@ -42,7 +41,7 @@ const (
 
 // EventHandler - knows how to handle job events.
 type EventHandler interface {
-	Handle(string, *unstructured.Unstructured, eventapi.JobEvent, reconcile.Request)
+	Handle(string, *unstructured.Unstructured, eventapi.JobEvent)
 }
 
 type loggingEventHandler struct {
@@ -70,17 +69,17 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 		debugAction := e.EventData["task_action"] == eventapi.TaskActionDebug
 
 		if e.Event == eventapi.EventPlaybookOnTaskStart && !setFactAction && !debugAction {
-			mutexLock.Lock()
+			l.mutexLock.Lock()
 			logger.Info("[playbook task]", "EventData.Name", e.EventData["name"])
 			l.logAnsibleStdOut(e)
-			mutexLock.Unlock()
+			l.mutexLock.Unlock()
 			return
 		}
 		if e.Event == eventapi.EventRunnerOnOk && debugAction {
-			mutexLock.Lock()
+			l.mutexLock.Lock()
 			logger.Info("[playbook debug]", "EventData.TaskArgs", e.EventData["task_args"])
 			l.logAnsibleStdOut(e)
-			mutexLock.Unlock()
+			l.mutexLock.Unlock()
 			return
 		}
 		if e.Event == eventapi.EventRunnerOnFailed {
@@ -91,20 +90,20 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 			if taskPath, ok := e.EventData["task_path"]; ok {
 				errKVs = append(errKVs, "EventData.FailedTaskPath", taskPath)
 			}
-			mutexLock.Lock()
+			l.mutexLock.Lock()
 			logger.Error(errors.New("[playbook task failed]"), "", errKVs...)
 			l.logAnsibleStdOut(e)
-			mutexLock.Unlock()
+			l.mutexLock.Unlock()
 			return
 		}
 	}
 
 	// log everything else for the 'Everything' LogLevel
 	if l.LogLevel == Everything {
-		mutexLock.Lock()
+		l.mutexLock.Lock()
 		logger.Info("", "EventData", e.EventData)
 		l.logAnsibleStdOut(e)
-		mutexLock.Unlock()
+		l.mutexLock.Unlock()
 	}
 }
 
