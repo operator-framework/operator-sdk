@@ -10,13 +10,16 @@ ENV HOME=/opt/ansible \
     USER_NAME=ansible \
     USER_UID=1001
 
-# Install python dependencies
+# Copy python dependencies specs to be installed using Pipenv
 COPY Pipfile* ./
-# Ensure fresh metadata rather than cached metadata in the base by running
-# yum clean all && rm -rf /var/yum/cache/* first
+# Instruct pip(env) not to keep a cache of installed packages,
+# to install into the global site-packages and
+# to clear the pipenv cache as well
 ENV PIP_NO_CACHE_DIR=1 \
     PIPENV_SYSTEM=1 \
     PIPENV_CLEAR=1
+# Ensure fresh metadata rather than cached metadata in the base by running
+# yum clean all && rm -rf /var/yum/cache/* first
 RUN yum clean all && rm -rf /var/cache/yum/* \
   && yum -y update \
   && yum install -y python38-pip \
