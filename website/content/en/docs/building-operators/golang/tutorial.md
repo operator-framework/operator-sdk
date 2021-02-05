@@ -44,7 +44,7 @@ To learn about the project directory structure, see [Kubebuilder project layout]
 
 The main program for the operator `main.go` initializes and runs the [Manager][manager_go_doc].
 
-See the [Kubebuilder entrypoint doc][kubebuilder_entrypoint_doc] for more details on how the manager registers the Scheme for the custom resource API defintions, and sets up and runs controllers and webhooks.
+See the [Kubebuilder entrypoint doc][kubebuilder_entrypoint_doc] for more details on how the manager registers the Scheme for the custom resource API definitions, and sets up and runs controllers and webhooks.
 
 
 The Manager can restrict the namespace that all controllers will watch for resources:
