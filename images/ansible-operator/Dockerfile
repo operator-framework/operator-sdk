@@ -11,20 +11,18 @@ ENV HOME=/opt/ansible \
     USER_UID=1001
 
 # Install python dependencies
+COPY Pipfile* .
 # Ensure fresh metadata rather than cached metadata in the base by running
 # yum clean all && rm -rf /var/yum/cache/* first
+ENV PIP_NO_CACHE_DIR=1 \
+    PIPENV_SYSTEM=1 \
+    PIPENV_CLEAR=1
 RUN yum clean all && rm -rf /var/cache/yum/* \
   && yum -y update \
-  && yum install -y libffi-devel openssl-devel python38-devel gcc python38-pip python38-setuptools \
-  && pip3 install --no-cache-dir \
-    ansible-runner==1.3.4 \
-    ansible-runner-http==1.0.0 \
-    ipaddress==1.0.23 \
-    kubernetes==10.1.0 \
-    openshift==0.10.3 \
-    ansible==2.9.15 \
-    jmespath==0.10.0 \
-  && yum remove -y gcc libffi-devel openssl-devel python38-devel \
+  && yum install -y python38-pip \
+  && pip3 install pipenv==2020.11.15 \
+  && pipenv install --deploy --system \
+  && pipenv check \
   && yum clean all \
   && rm -rf /var/cache/yum
 
