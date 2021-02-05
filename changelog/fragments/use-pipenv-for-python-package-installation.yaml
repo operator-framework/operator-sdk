@@ -1,0 +1,10 @@
+entries:
+  - description: >
+      For Ansible-based operators, Python package installation in the Docker
+      image is delegated to a pipenv managed Pipfile and Pipfile.lock, pinning
+      both the main installed packages and their subdependencies. This prevents
+      installing conflicting (sub)dependencies
+
+    kind: change
+
+    breaking: false
