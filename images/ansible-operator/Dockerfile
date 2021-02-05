@@ -11,7 +11,7 @@ ENV HOME=/opt/ansible \
     USER_UID=1001
 
 # Install python dependencies
-COPY Pipfile* .
+COPY Pipfile* ./
 # Ensure fresh metadata rather than cached metadata in the base by running
 # yum clean all && rm -rf /var/yum/cache/* first
 ENV PIP_NO_CACHE_DIR=1 \
