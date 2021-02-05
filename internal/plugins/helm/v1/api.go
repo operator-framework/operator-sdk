@@ -139,7 +139,7 @@ func (p *createAPISubcommand) Run() error {
 // SDK phase 2 plugins.
 func (p *createAPISubcommand) runPhase2() error {
 	ogvk := p.createOptions.GVK
-	gvk := resource.GVK{Group: ogvk.Group, Version: ogvk.Version, Kind: ogvk.Kind}
+	gvk := resource.GVK{Group: ogvk.Group, Version: ogvk.Version, Kind: ogvk.Kind, Domain: p.config.GetDomain()}
 
 	// Initially the helm/v1 plugin was written to not create a "plugins" config entry
 	// for any phase 2 plugin because they did not have their own keys. Now there are phase 2

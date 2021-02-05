@@ -17,6 +17,8 @@ package common
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -119,8 +121,8 @@ func ScorecardSpec(tc *testutils.TestContext, operatorType string) func() {
 				testutils.WrapWarn(tc.Make("undeploy"))
 			}()
 
-			// Run `operator-sdk scorecard` as it has been set up in `make test-kuttl`,
-			// but with a longer timeout and JSON output for marshaling purposes.
+			// Run `operator-sdk scorecard` as it has been set up in `make test-scorecard`,
+			// but with the 'suite=kuttl' selector, a longer timeout, and JSON output for marshaling purposes.
 			cmd = exec.Command(tc.BinaryName, "scorecard", "testbundle",
 				"--selector", "suite=kuttl",
 				// Set namespace so kuttl runs with an appropriately-privileged service account.
@@ -142,14 +144,14 @@ func ScorecardSpec(tc *testutils.TestContext, operatorType string) func() {
 }
 
 // enableKuttlTests exactly replicates the setup steps prior to and included in
-// `make test-kuttl IMG=<operator image>`, but with a `kubectl wait` for the operator's deployment
+// `make test-scorecard IMG=<operator image>`, but with a `kubectl wait` for the operator's deployment
 // to be ready since this process is likely slow in test environments.
 func enableKuttlTests(tc *testutils.TestContext) {
 	var err error
 
 	// Uncomment the kuttl config.
 	ExpectWithOffset(1, testutils.UncommentCode(
-		filepath.Join(tc.Dir, "config", "scorecard", "kustomization.yaml"),
+		filepath.Join(tc.Dir, "config", "scorecard-testbundle", "kustomization.yaml"),
 		`#- path: patches/kuttl.config.yaml
 #  target:
 #    group: scorecard.operatorframework.io
@@ -161,19 +163,23 @@ func enableKuttlTests(tc *testutils.TestContext) {
 	ExpectWithOffset(1, tc.Make("bundle", "deploy", "IMG="+tc.ImageName)).To(Succeed())
 
 	// Wait for the operator to become ready.
-	_, err = tc.Kubectl.Wait(false, "deployment.apps/memcached-operator-controller-manager",
+	_, err = tc.Kubectl.Wait(true, "deployment.apps/memcached-operator-controller-manager",
 		"--for", "condition=Available",
-		"--namespace", tc.Kubectl.Namespace,
 		"--timeout", "5m")
 	ExpectWithOffset(1, err).NotTo(HaveOccurred())
 
 	// Create the test bundle.
-	_, err = tc.Run(exec.Command("cp", "-r", "bundle/", "testbundle/"))
+	_, err = tc.Run(exec.Command("cp", "-r", "bundle", "testbundle"))
 	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	testBundleScorecardDir := filepath.Join(tc.Dir, "testbundle", "tests", "scorecard")
+	ExpectWithOffset(1, os.MkdirAll(testBundleScorecardDir, 0755)).To(Succeed())
+
+	// Build the testbundle scorecard config.
+	out, err := tc.Run(exec.Command(filepath.Join(tc.Dir, "bin", "kustomize"), "build", filepath.Join("config", "scorecard-testbundle")))
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	ExpectWithOffset(1, ioutil.WriteFile(filepath.Join(testBundleScorecardDir, "config.yaml"), out, 0666)).To(Succeed())
 
 	// Copy all test cases to the bundle so `scorecard` can run them.
-	_, err = tc.Run(exec.Command("cp", "-r",
-		filepath.Join("test", "kuttl/"),
-		filepath.Join("testbundle", "tests", "scorecard/")))
+	_, err = tc.Run(exec.Command("cp", "-r", filepath.Join("test", "kuttl"), filepath.Join("testbundle", "tests", "scorecard")))
 	ExpectWithOffset(1, err).NotTo(HaveOccurred())
 }

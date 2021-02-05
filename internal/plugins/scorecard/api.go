@@ -90,9 +90,6 @@ func generateAPI(cfg config.Config, outputDir string, gvk resource.GVK) error {
 // defined by gvk in caseDir.
 func createKuttlTestSteps(cfg config.Config, caseDir string, gvk resource.GVK) error {
 
-	gvkd := struct{ Group, Version, Kind, Domain string }{
-		gvk.Group, gvk.Version, gvk.Kind, gvk.Domain,
-	}
 	lowerKind := strings.ToLower(gvk.Kind)
 	stepSet := map[string]string{
 		fmt.Sprintf(step0InstallFileName, lowerKind): step0InstallTemplate,
@@ -111,7 +108,7 @@ func createKuttlTestSteps(cfg config.Config, caseDir string, gvk resource.GVK) e
 			}
 		}()
 		tmpl := template.Must(template.New(stepFile).Funcs(file.DefaultFuncMap()).Parse(tmpl))
-		if err = tmpl.Execute(f, gvkd); err != nil {
+		if err = tmpl.Execute(f, gvk); err != nil {
 			return err
 		}
 	}
@@ -196,7 +193,7 @@ const (
 	// Step 0: create a CR of the new API.
 	step0InstallFileName = "00-install-%s.yaml"
 	step0InstallTemplate = `# Install a {{ .Kind }} object labeled "test=kuttl".
-apiVersion: {{ if .Group }}{{ .Group }}.{{ .Domain }}/{{ end }}{{ .Version }}
+apiVersion: {{ if .QualifiedGroup }}{{ .QualifiedGroup }}/{{ end }}{{ .Version }}
 kind: {{ .Kind }}
 metadata:
   name: {{ .Kind | lower }}-test
@@ -209,7 +206,7 @@ const (
 	// Step 1: modify a CR of the new API.
 	step1ModifyFileName = "01-modify-%s.yaml"
 	step1ModifyTemplate = `# Update the named {{ .Kind }} object's spec.
-apiVersion: {{ if .Group }}{{ .Group }}.{{ .Domain }}/{{ end }}{{ .Version }}
+apiVersion: {{ if .QualifiedGroup }}{{ .QualifiedGroup }}/{{ end }}{{ .Version }}
 kind: {{ .Kind }}
 metadata:
   name: {{ .Kind | lower }}-test
@@ -222,7 +219,7 @@ const (
 	// Step 1: assert that the CR was modified.
 	step1AssertFileName = "01-assert-%s.yaml"
 	step1AssertTemplate = `# Assert the named {{ .Kind }} object has an updated spec.
-apiVersion: {{ if .Group }}{{ .Group }}.{{ .Domain }}/{{ end }}{{ .Version }}
+apiVersion: {{ if .QualifiedGroup }}{{ .QualifiedGroup }}/{{ end }}{{ .Version }}
 kind: {{ .Kind }}
 metadata:
   name: {{ .Kind | lower }}-test

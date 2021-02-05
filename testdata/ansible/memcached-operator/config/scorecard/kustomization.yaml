@@ -13,13 +13,4 @@ patchesJson6902:
     version: v1alpha3
     kind: Configuration
     name: config
-# This patch is commented so you can make modifications to your kuttl tests
-# before enabling them to run with scorecard. If you make any changes to a CR's spec,
-# make sure those changes are reflected in kuttl test cases before uncommenting this patch.
-#- path: patches/kuttl.config.yaml
-#  target:
-#    group: scorecard.operatorframework.io
-#    version: v1alpha3
-#    kind: Configuration
-#    name: config
 #+kubebuilder:scaffold:patchesJson6902
