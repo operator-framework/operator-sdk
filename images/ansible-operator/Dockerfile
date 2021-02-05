@@ -21,7 +21,7 @@ RUN yum clean all && rm -rf /var/cache/yum/* \
   && yum -y update \
   && yum install -y python38-pip \
   && pip3 install pipenv==2020.11.15 \
-  && pipenv install --deploy --system \
+  && pipenv install --deploy \
   && pipenv check \
   && yum clean all \
   && rm -rf /var/cache/yum
