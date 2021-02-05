@@ -72,14 +72,14 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 		if e.Event == eventapi.EventPlaybookOnTaskStart && !setFactAction && !debugAction {
 			mutexLock.Lock()
 			logger.Info("[playbook task]", "EventData.Name", e.EventData["name"])
-			l.logAnsibleStdOut(e, request, u.GroupVersionKind().String())
+			l.logAnsibleStdOut(e)
 			mutexLock.Unlock()
 			return
 		}
 		if e.Event == eventapi.EventRunnerOnOk && debugAction {
 			mutexLock.Lock()
 			logger.Info("[playbook debug]", "EventData.TaskArgs", e.EventData["task_args"])
-			l.logAnsibleStdOut(e, request, u.GroupVersionKind().String())
+			l.logAnsibleStdOut(e)
 			mutexLock.Unlock()
 			return
 		}
