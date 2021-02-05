@@ -50,7 +50,7 @@ type loggingEventHandler struct {
 	mutexLock sync.Mutex
 }
 
-func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, e eventapi.JobEvent, request reconcile.Request) {
+func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, e eventapi.JobEvent) {
 	if l.LogLevel == Nothing {
 		return
 	}
@@ -103,7 +103,7 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 	if l.LogLevel == Everything {
 		mutexLock.Lock()
 		logger.Info("", "EventData", e.EventData)
-		l.logAnsibleStdOut(e, request)
+		l.logAnsibleStdOut(e)
 		mutexLock.Unlock()
 	}
 }
