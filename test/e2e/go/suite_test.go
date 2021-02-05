@@ -55,7 +55,7 @@ var _ = BeforeSuite(func() {
 	tc.Kubectl.Namespace = fmt.Sprintf("%s-system", tc.ProjectName)
 
 	By("copying sample to a temporary e2e directory")
-	Expect(exec.Command("cp", "-r", "../../testdata/go/v3/memcached-operator", tc.Dir).Run()).To(Succeed())
+	Expect(exec.Command("cp", "-r", "../../../testdata/go/v3/memcached-operator", tc.Dir).Run()).To(Succeed())
 
 	By("fetching the current-context")
 	tc.Kubectx, err = tc.Kubectl.Command("config", "current-context")
