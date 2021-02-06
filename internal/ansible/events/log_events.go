@@ -45,8 +45,8 @@ type EventHandler interface {
 }
 
 type loggingEventHandler struct {
-	LogLevel  LogLevel
-	mutexLock sync.Mutex
+	LogLevel LogLevel
+	mutex    sync.Mutex
 }
 
 func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, e eventapi.JobEvent) {
