@@ -46,7 +46,7 @@ type EventHandler interface {
 
 type loggingEventHandler struct {
 	LogLevel LogLevel
-	mutex    sync.Mutex
+	mux      sync.Mutex
 }
 
 func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, e eventapi.JobEvent) {
@@ -69,17 +69,17 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 		debugAction := e.EventData["task_action"] == eventapi.TaskActionDebug
 
 		if e.Event == eventapi.EventPlaybookOnTaskStart && !setFactAction && !debugAction {
-			l.mutex.Lock()
+			l.mux.Lock()
 			logger.Info("[playbook task]", "EventData.Name", e.EventData["name"])
 			l.logAnsibleStdOut(e)
-			l.mutex.Unlock()
+			l.mux.Unlock()
 			return
 		}
 		if e.Event == eventapi.EventRunnerOnOk && debugAction {
-			l.mutex.Lock()
+			l.mux.Lock()
 			logger.Info("[playbook debug]", "EventData.TaskArgs", e.EventData["task_args"])
 			l.logAnsibleStdOut(e)
-			l.mutex.Unlock()
+			l.mux.Unlock()
 			return
 		}
 		if e.Event == eventapi.EventRunnerOnFailed {
@@ -90,20 +90,20 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 			if taskPath, ok := e.EventData["task_path"]; ok {
 				errKVs = append(errKVs, "EventData.FailedTaskPath", taskPath)
 			}
-			l.mutex.Lock()
+			l.mux.Lock()
 			logger.Error(errors.New("[playbook task failed]"), "", errKVs...)
 			l.logAnsibleStdOut(e)
-			l.mutex.Unlock()
+			l.mux.Unlock()
 			return
 		}
 	}
 
 	// log everything else for the 'Everything' LogLevel
 	if l.LogLevel == Everything {
-		l.mutex.Lock()
+		l.mux.Lock()
 		logger.Info("", "EventData", e.EventData)
 		l.logAnsibleStdOut(e)
-		l.mutex.Unlock()
+		l.mux.Unlock()
 	}
 }
 
