@@ -284,6 +284,7 @@ func printEventStats(statusEvent eventapi.StatusJobEvent, u *unstructured.Unstru
 }
 
 func (r *AnsibleOperatorReconciler) printAnsibleResult(result runner.RunResult, u *unstructured.Unstructured) {
+
 	if r.AnsibleDebugLogs {
 		if res, err := result.Stdout(); err == nil && len(res) > 0 {
 			str := "\n--------------------------- Ansible Debug Result -----------------------------\n"
