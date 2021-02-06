@@ -178,12 +178,12 @@ func (r *AnsibleOperatorReconciler) Reconcile(ctx context.Context, request recon
 			// convert to StatusJobEvent; would love a better way to do this
 			data, err := json.Marshal(event)
 			if err != nil {
-				printEventStats(statusEvent, request, u.GroupVersionKind().String())
+				printEventStats(statusEvent, u)
 				return reconcile.Result{}, err
 			}
 			err = json.Unmarshal(data, &statusEvent)
 			if err != nil {
-				printEventStats(statusEvent, request, u.GroupVersionKind().String())
+				printEventStats(statusEvent, u)
 				return reconcile.Result{}, err
 			}
 		}
@@ -210,10 +210,10 @@ func (r *AnsibleOperatorReconciler) Reconcile(ctx context.Context, request recon
 	}
 
 	// To print the stats of the task
-	printEventStats(statusEvent, request, u.GroupVersionKind().String())
+	printEventStats(statusEvent, u)
 
 	// To print the full ansible result
-	r.printAnsibleResult(result, request, u.GroupVersionKind().String())
+	r.printAnsibleResult(result, u)
 
 	if statusEvent.Event == "" {
 		eventErr := errors.New("did not receive playbook_on_stats event")
@@ -273,22 +273,24 @@ func (r *AnsibleOperatorReconciler) Reconcile(ctx context.Context, request recon
 	return reconcileResult, nil
 }
 
-func printEventStats(statusEvent eventapi.StatusJobEvent, request reconcile.Request, gvkStr string) {
+func printEventStats(statusEvent eventapi.StatusJobEvent, u *unstructured.Unstructured) {
 	if len(statusEvent.StdOut) > 0 {
-		fmt.Printf("\n--------------------------- Ansible Task Status Event StdOut  -----------------\n")
-		fmt.Printf("-----%68v -----\n", gvkStr+" "+request.Namespace+" "+request.Name)
-		fmt.Println(statusEvent.StdOut)
-		fmt.Printf("\n-------------------------------------------------------------------------------\n")
+		str := "\n--------------------------- Ansible Task Status Event StdOut  -----------------\n"
+		str += fmt.Sprintf("\n----- %70s -----\n", fmt.Sprintf("Ansible Task Status Event StdOut (%s, %s/%s)", u.GroupVersionKind(), u.GetName(), u.GetNamespace()))
+		str += fmt.Sprintf("\n%s\n", statusEvent.StdOut)
+		str += "\n-------------------------------------------------------------------------------\n"
+		fmt.Println(str)
 	}
 }
 
-func (r *AnsibleOperatorReconciler) printAnsibleResult(result runner.RunResult, request reconcile.Request, gvkStr string) {
+func (r *AnsibleOperatorReconciler) printAnsibleResult(result runner.RunResult, u *unstructured.Unstructured) {
 	if r.AnsibleDebugLogs {
 		if res, err := result.Stdout(); err == nil && len(res) > 0 {
-			fmt.Printf("\n--------------------------- Ansible Debug Result -----------------------------\n")
-			fmt.Printf("-----%68v -----\n", gvkStr+" "+request.Namespace+" "+request.Name)
-			fmt.Println(res)
-			fmt.Printf("\n-------------------------------------------------------------------------------\n")
+			str := "\n--------------------------- Ansible Debug Result -----------------------------\n"
+			str += fmt.Sprintf("\n----- %70s -----\n", fmt.Sprintf("Ansible Task Status Event StdOut (%s, %s/%s)", u.GroupVersionKind(), u.GetName(), u.GetNamespace()))
+			str += fmt.Sprintf("\n%s\n", res)
+			str += "\n-------------------------------------------------------------------------------\n"
+			fmt.Println(str)
 		}
 	}
 }
