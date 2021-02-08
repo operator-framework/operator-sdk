@@ -123,5 +123,6 @@ func (l loggingEventHandler) logAnsibleStdOut(e eventapi.JobEvent) {
 func NewLoggingEventHandler(l LogLevel) EventHandler {
 	return loggingEventHandler{
 		LogLevel: l,
+		mux:      &sync.Mutex{},
 	}
 }
