@@ -178,12 +178,12 @@ func (r *AnsibleOperatorReconciler) Reconcile(ctx context.Context, request recon
 			// convert to StatusJobEvent; would love a better way to do this
 			data, err := json.Marshal(event)
 			if err != nil {
-				printEventStats(statusEvent)
+				printEventStats(statusEvent, u)
 				return reconcile.Result{}, err
 			}
 			err = json.Unmarshal(data, &statusEvent)
 			if err != nil {
-				printEventStats(statusEvent)
+				printEventStats(statusEvent, u)
 				return reconcile.Result{}, err
 			}
 		}
@@ -210,10 +210,10 @@ func (r *AnsibleOperatorReconciler) Reconcile(ctx context.Context, request recon
 	}
 
 	// To print the stats of the task
-	printEventStats(statusEvent)
+	printEventStats(statusEvent, u)
 
 	// To print the full ansible result
-	r.printAnsibleResult(result)
+	r.printAnsibleResult(result, u)
 
 	if statusEvent.Event == "" {
 		eventErr := errors.New("did not receive playbook_on_stats event")
@@ -273,20 +273,18 @@ func (r *AnsibleOperatorReconciler) Reconcile(ctx context.Context, request recon
 	return reconcileResult, nil
 }
 
-func printEventStats(statusEvent eventapi.StatusJobEvent) {
+func printEventStats(statusEvent eventapi.StatusJobEvent, u *unstructured.Unstructured) {
 	if len(statusEvent.StdOut) > 0 {
-		fmt.Printf("\n--------------------------- Ansible Task Status Event StdOut  -----------------\n")
-		fmt.Println(statusEvent.StdOut)
-		fmt.Printf("\n-------------------------------------------------------------------------------\n")
+		str := fmt.Sprintf("Ansible Task Status Event StdOut (%s, %s/%s)", u.GroupVersionKind(), u.GetName(), u.GetNamespace())
+		fmt.Printf("\n----- %70s -----\n\n%s\n\n----------\n", str, statusEvent.StdOut)
 	}
 }
 
-func (r *AnsibleOperatorReconciler) printAnsibleResult(result runner.RunResult) {
+func (r *AnsibleOperatorReconciler) printAnsibleResult(result runner.RunResult, u *unstructured.Unstructured) {
 	if r.AnsibleDebugLogs {
 		if res, err := result.Stdout(); err == nil && len(res) > 0 {
-			fmt.Printf("\n--------------------------- Ansible Debug Result -----------------------------\n")
-			fmt.Println(res)
-			fmt.Printf("\n-------------------------------------------------------------------------------\n")
+			str := fmt.Sprintf("Ansible Debug Result (%s, %s/%s)", u.GroupVersionKind(), u.GetName(), u.GetNamespace())
+			fmt.Printf("\n----- %70s -----\n\n%s\n\n----------\n", str, res)
 		}
 	}
 }
