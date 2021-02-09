@@ -275,23 +275,16 @@ func (r *AnsibleOperatorReconciler) Reconcile(ctx context.Context, request recon
 
 func printEventStats(statusEvent eventapi.StatusJobEvent, u *unstructured.Unstructured) {
 	if len(statusEvent.StdOut) > 0 {
-		str := "\n--------------------------- Ansible Task Status Event StdOut  -----------------\n"
-		str += fmt.Sprintf("\n----- %70s -----\n", fmt.Sprintf("%s %s/%s", u.GroupVersionKind(), u.GetName(), u.GetNamespace()))
-		str += fmt.Sprintf("\n%s\n", statusEvent.StdOut)
-		str += "\n-------------------------------------------------------------------------------\n"
-		fmt.Println(str)
+		str := fmt.Sprintf("Ansible Task Status Event StdOut (%s, %s/%s)", u.GroupVersionKind(), u.GetName(), u.GetNamespace())
+		fmt.Printf("\n----- %70s -----\n\n%s\n\n----------\n", str, statusEvent.StdOut)
 	}
 }
 
 func (r *AnsibleOperatorReconciler) printAnsibleResult(result runner.RunResult, u *unstructured.Unstructured) {
-
 	if r.AnsibleDebugLogs {
 		if res, err := result.Stdout(); err == nil && len(res) > 0 {
-			str := "\n--------------------------- Ansible Debug Result -----------------------------\n"
-			str += fmt.Sprintf("\n----- %70s -----\n", fmt.Sprintf("%s %s/%s", u.GroupVersionKind(), u.GetName(), u.GetNamespace()))
-			str += fmt.Sprintf("\n%s\n", res)
-			str += "\n-------------------------------------------------------------------------------\n"
-			fmt.Println(str)
+			str := fmt.Sprintf("Ansible Debug Result (%s, %s/%s)", u.GroupVersionKind(), u.GetName(), u.GetNamespace())
+			fmt.Printf("\n----- %70s -----\n\n%s\n\n----------\n", str, res)
 		}
 	}
 }
