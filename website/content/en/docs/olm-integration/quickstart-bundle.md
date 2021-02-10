@@ -142,7 +142,32 @@ INFO[0040] OLM has successfully installed "memcached-operator.v0.0.1"
 ```
 
 <!-- TODO(jmccormick2001): add `scorecard` usage here -->
-<!-- TODO(rashmigottipati): `run bundle-upgrade` usage here -->
+
+### Upgrading bundles to a newer version
+
+We can use the `operator-sdk run bundle-upgrade` command with a newer version of bundle image to upgrade 
+an existing operator bundle deployed on cluster. The command automates the manual orchestration typically required to upgrade an operator 
+from one version to another. It extracts the package name from bundle, finds the existing subscription, updates the catalog 
+source, deletes the existing registry pod and creates a new registry pod with the version of bundle image provided in the command.
+
+Let's upgrade the previously deployed memcached-operator bundle from version `0.0.1` to `0.0.2`.
+
+```console
+$ operator-sdk run bundle-upgrade <some-registry>/memcached-operator-bundle:v0.0.2
+INFO[0002] Found existing subscription with name memcached-operator-bundle-0-0-1-sub and namespace default
+INFO[0002] Found existing catalog source with name memcached-operator-catalog and namespace default
+INFO[0007] Successfully created registry pod: <some-registry>-memcached-operator-bundle-0-0-2
+INFO[0007] Updated catalog source memcached-operator-catalog with address and annotations
+INFO[0008] Deleted previous registry pod with name "<some-registry>-memcached-operator-bundle-0-0-1"
+INFO[0050] Approved InstallPlan install-c8fkh for the Subscription: memcached-operator-bundle-0-0-1-sub
+INFO[0050] Waiting for ClusterServiceVersion "default/memcached-operator.v0.0.2" to reach 'Succeeded' phase
+INFO[0050]   Waiting for ClusterServiceVersion "default/memcached-operator.v0.0.2" to appear
+INFO[0052]   Found ClusterServiceVersion "default/memcached-operator.v0.0.2" phase: Pending
+INFO[0057]   Found ClusterServiceVersion "default/memcached-operator.v0.0.2" phase: InstallReady
+INFO[0058]   Found ClusterServiceVersion "default/memcached-operator.v0.0.2" phase: Installing
+INFO[0095]   Found ClusterServiceVersion "default/memcached-operator.v0.0.2" phase: Succeeded
+INFO[0095] Successfully upgraded to "memcached-operator.v0.0.2"
+```
 
 ### Deploying bundles in production
 
