@@ -2,7 +2,7 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      For Ansible/Helm based-operators, upgrade the `kube-rbac-proxy` image version from `0.5.0` to `0.8.0` to address security concerns. More info [#kubernetes-sigs/kubebuilder#1955](https://github.com/kubernetes-sigs/kubebuilder/pull/1955).
+      (ansible/v1, helm/v1) Upgraded the `gcr.io/kubebuilder/kube-rbac-proxy` image version from `0.5.0` to `0.8.0` to support rootless run mode.
     kind: "bugfix"
     breaking: false
     header: (ansible/v1, helm/v1) Upgrade the `gcr.io/kubebuilder/kube-rbac-proxy` image version from `0.5.0` to `0.8.0`
