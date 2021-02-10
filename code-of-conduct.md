@@ -1,4 +1,4 @@
-## RedHat Community Code of Conduct
+## Red Hat Community Code of Conduct
 
 ### Contributor Code of Conduct
 
@@ -39,20 +39,20 @@ This Code of Conduct is adapted from the Contributor Covenant
 (http://contributor-covenant.org), version 1.2.0, available at
 http://contributor-covenant.org/version/1/2/0/
 
-### RedHat Events Code of Conduct
+### Red Hat Events Code of Conduct
 
-RedHat events are working conferences intended for professional networking and
-collaboration in the RedHat community. Attendees are expected to behave
+Red Hat events are working conferences intended for professional networking and
+collaboration in the Red Hat community. Attendees are expected to behave
 according to professional standards and in accordance with their employer’s
 policies on appropriate workplace behavior.
 
-While at RedHat events or related social networking opportunities, attendees
+While at Red Hat events or related social networking opportunities, attendees
 should not engage in discriminatory or offensive speech or actions including
 but not limited to gender, sexuality, race, age, disability, or religion.
 Speakers should be especially aware of these concerns.
 
-RedHat does not condone any statements by speakers contrary to these standards.
-RedHat reserves the right to deny entrance and/or eject from an event (without
+Red Hat does not condone any statements by speakers contrary to these standards.
+Red Hat reserves the right to deny entrance and/or eject from an event (without
 refund) any individual found to be engaging in discriminatory or offensive
 speech or actions.
 
