@@ -1,0 +1,12 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      (ansible/v1, helm/v1) Upgraded the `gcr.io/kubebuilder/kube-rbac-proxy` image version from `0.5.0` to `0.8.0` to support rootless run mode.
+    kind: "bugfix"
+    breaking: false
+    header: (ansible/v1, helm/v1) Upgrade the `gcr.io/kubebuilder/kube-rbac-proxy` image version from `0.5.0` to `0.8.0`
+    body: >
+      The 0.8.0 version of kube-rbac-proxy supports rootless run mode.
+      To take advantage of this and other features, replace `gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0`
+      with `gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0` in your `config/default/manager_auth_proxy_patch.yaml` file.
