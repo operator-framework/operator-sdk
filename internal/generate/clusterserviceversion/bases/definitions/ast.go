@@ -19,8 +19,8 @@ import (
 	"fmt"
 	"go/ast"
 	"strconv"
-	"strings"
 
+	"golang.org/x/tools/go/packages"
 	"sigs.k8s.io/controller-tools/pkg/crd"
 	"sigs.k8s.io/controller-tools/pkg/loader"
 	"sigs.k8s.io/controller-tools/pkg/markers"
@@ -79,20 +79,21 @@ func (im importIdents) findPackagePathForSelExpr(expr *ast.SelectorExpr) (pkgPat
 
 	// Short-circuit if only one import.
 	if len(imports) == 1 {
-		return imports[0].path
-	}
-
-	// If multiple files contain the same local import name, check to see which file contains the selector expression.
-	for _, imp := range imports {
-		if imp.f.Pos() <= expr.Pos() && imp.f.End() >= expr.End() {
-			return imp.path
+		pkgPath = imports[0].path
+	} else {
+		// If multiple files contain the same local import name, check to see which file contains the selector expression.
+		for _, imp := range imports {
+			if imp.f.Pos() <= expr.Pos() && imp.f.End() >= expr.End() {
+				pkgPath = imp.path
+				break
+			}
 		}
 	}
-	return ""
+	return loader.NonVendorPath(pkgPath)
 }
 
 // getMarkedChildrenOfField collects all marked fields from type declarations starting at rootField in depth-first order.
-func (g generator) getMarkedChildrenOfField(rootPkg *loader.Package, rootField markers.FieldInfo) (map[string][]*fieldInfo, error) {
+func (g generator) getMarkedChildrenOfField(rootPkg *loader.Package, rootField markers.FieldInfo) (map[crd.TypeIdent][]*fieldInfo, error) {
 	// Gather all types and imports needed to build the BFS tree.
 	rootPkg.NeedTypesInfo()
 	importIDs, err := newImportIdents(rootPkg)
@@ -102,41 +103,37 @@ func (g generator) getMarkedChildrenOfField(rootPkg *loader.Package, rootField m
 
 	// ast.Inspect will not traverse into fields, so iteratively collect them and to check for markers.
 	nextFields := []*fieldInfo{{FieldInfo: rootField}}
-	markedFields := map[string][]*fieldInfo{}
+	markedFields := map[crd.TypeIdent][]*fieldInfo{}
 	for len(nextFields) > 0 {
 		fields := []*fieldInfo{}
 		for _, field := range nextFields {
-			errs := []error{}
 			ast.Inspect(field.RawField, func(n ast.Node) bool {
 				if n == nil {
 					return true
 				}
 
-				var info *markers.TypeInfo
-				var hasInfo bool
+				var ident crd.TypeIdent
 				switch nt := n.(type) {
-				case *ast.SelectorExpr:
-					// Case of a type definition in an imported package.
-
+				case *ast.SelectorExpr: // Type definition in an imported package.
 					pkgPath := importIDs.findPackagePathForSelExpr(nt)
 					if pkgPath == "" {
 						// Found no reference to pkgPath in any file.
 						return true
 					}
-					if pkg, hasImport := rootPkg.Imports()[loader.NonVendorPath(pkgPath)]; hasImport {
-						// Check if the field's type exists in the known types.
-						info, hasInfo = g.types[crd.TypeIdent{Package: pkg, Name: nt.Sel.Name}]
+					if pkg, hasImport := rootPkg.Imports()[pkgPath]; hasImport {
+						pkg.NeedTypesInfo()
+						ident = crd.TypeIdent{Package: pkg, Name: nt.Sel.Name}
 					}
-				case *ast.Ident:
-					// Case of a local type definition.
-
-					// Only look at type names.
-					if nt.Obj != nil && nt.Obj.Kind == ast.Typ {
-						// Check if the field's type exists in the known types.
-						info, hasInfo = g.types[crd.TypeIdent{Package: rootPkg, Name: nt.Name}]
+				case *ast.Ident: // Local type definition.
+					// Only look at type idents or references to type idents in other files.
+					if nt.Obj == nil || nt.Obj.Kind == ast.Typ {
+						ident = crd.TypeIdent{Package: rootPkg, Name: nt.Name}
 					}
 				}
-				if !hasInfo {
+
+				// Check if the field's type is a known types.
+				info, hasInfo := g.types[ident]
+				if ident == (crd.TypeIdent{}) || !hasInfo {
 					return true
 				}
 
@@ -144,8 +141,8 @@ func (g generator) getMarkedChildrenOfField(rootPkg *loader.Package, rootField m
 				for _, finfo := range info.Fields {
 					segment, err := getPathSegmentForField(finfo)
 					if err != nil {
-						errs = append(errs, fmt.Errorf("error getting path from type %s field %s: %v", info.Name, finfo.Name, err))
-						return true
+						rootPkg.AddError(fmt.Errorf("error getting path from type %s field %s: %v", info.Name, finfo.Name, err))
+						continue
 					}
 					// Add extra information to the segment if it comes from a certain field type.
 					switch finfo.RawField.Type.(type) {
@@ -166,33 +163,19 @@ func (g generator) getMarkedChildrenOfField(rootPkg *loader.Package, rootField m
 					fields = append(fields, f)
 					// Marked fields get collected for the caller to parse.
 					if len(finfo.Markers) != 0 {
-						markedFields[info.Name] = append(markedFields[info.Name], f)
+						markedFields[ident] = append(markedFields[ident], f)
 					}
 				}
 
 				return true
 			})
-			if err := fmtParseErrors(errs); err != nil {
-				return nil, err
-			}
 		}
 		nextFields = fields
 	}
-	return markedFields, nil
-}
 
-// fmtParseErrors prettifies a list of errors to make them easier to read.
-func fmtParseErrors(errs []error) error {
-	switch len(errs) {
-	case 0:
-		return nil
-	case 1:
-		return errs[0]
+	if loader.PrintErrors([]*loader.Package{rootPkg}, packages.TypeError) {
+		return nil, errors.New("package had type errors")
 	}
-	sb := strings.Builder{}
-	for _, err := range errs {
-		sb.WriteString("\n")
-		sb.WriteString(err.Error())
-	}
-	return errors.New(sb.String())
+
+	return markedFields, nil
 }
