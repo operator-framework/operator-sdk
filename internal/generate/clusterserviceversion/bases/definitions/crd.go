@@ -133,7 +133,7 @@ func (g generator) getTypedDescriptors(pkg *loader.Package, kindType *markers.Ty
 	return getTypedDescriptors(markedFields, t, descType), nil
 }
 
-func getTypedDescriptors(markedFields map[string][]*fieldInfo, t reflect.Type, descType string) (descriptors []interface{}) {
+func getTypedDescriptors(markedFields map[crd.TypeIdent][]*fieldInfo, t reflect.Type, descType string) (descriptors []interface{}) {
 	descriptorBuckets := make(map[int][]reflect.Value)
 	orders := make([]int, 0)
 	for _, fields := range markedFields {

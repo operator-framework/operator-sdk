@@ -24,18 +24,20 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"sigs.k8s.io/controller-tools/pkg/crd"
+	"sigs.k8s.io/controller-tools/pkg/loader"
 	"sigs.k8s.io/controller-tools/pkg/markers"
 	"sigs.k8s.io/kubebuilder/v2/test/e2e/utils"
 )
 
 var _ = Describe("getTypedDescriptors", func() {
 	var (
-		markedFields map[string][]*fieldInfo
+		markedFields map[crd.TypeIdent][]*fieldInfo
 		out          []interface{}
 	)
 
 	BeforeEach(func() {
-		markedFields = make(map[string][]*fieldInfo)
+		markedFields = make(map[crd.TypeIdent][]*fieldInfo)
 	})
 
 	It("handles an empty set of marked fields", func() {
@@ -43,7 +45,7 @@ var _ = Describe("getTypedDescriptors", func() {
 		Expect(out).To(HaveLen(0))
 	})
 	It("returns one spec descriptor for one spec marker on a field", func() {
-		markedFields[""] = []*fieldInfo{
+		markedFields[crd.TypeIdent{}] = []*fieldInfo{
 			{
 				FieldInfo: markers.FieldInfo{
 					Markers: markers.MarkerValues{
@@ -64,7 +66,7 @@ var _ = Describe("getTypedDescriptors", func() {
 		}))
 	})
 	It("returns no spec descriptors for one status marker on a field", func() {
-		markedFields[""] = []*fieldInfo{
+		markedFields[crd.TypeIdent{}] = []*fieldInfo{
 			{
 				FieldInfo: markers.FieldInfo{
 					Markers: markers.MarkerValues{
@@ -79,7 +81,7 @@ var _ = Describe("getTypedDescriptors", func() {
 		Expect(out).To(HaveLen(0))
 	})
 	It("returns one status descriptor for one status marker on a field", func() {
-		markedFields[""] = []*fieldInfo{
+		markedFields[crd.TypeIdent{}] = []*fieldInfo{
 			{
 				FieldInfo: markers.FieldInfo{
 					Markers: markers.MarkerValues{
@@ -100,7 +102,7 @@ var _ = Describe("getTypedDescriptors", func() {
 		}))
 	})
 	It("returns one spec descriptor for three spec markers and one status marker on a field", func() {
-		markedFields[""] = []*fieldInfo{
+		markedFields[crd.TypeIdent{}] = []*fieldInfo{
 			{
 				FieldInfo: markers.FieldInfo{
 					Markers: markers.MarkerValues{
@@ -126,7 +128,7 @@ var _ = Describe("getTypedDescriptors", func() {
 		}))
 	})
 	It("returns two spec descriptor for spec markers on two different fields", func() {
-		markedFields[""] = []*fieldInfo{
+		markedFields[crd.TypeIdent{}] = []*fieldInfo{
 			{
 				FieldInfo: markers.FieldInfo{
 					Markers: markers.MarkerValues{
@@ -163,10 +165,10 @@ func intPtr(i int) *int { return &i }
 
 // makeMockMarkedFields returns a randomly generated mock marked field set,
 // and the expected sorted set of descriptors.
-func makeMockMarkedFields() (markedFields map[string][]*fieldInfo, expected []interface{}) {
+func makeMockMarkedFields() (markedFields map[crd.TypeIdent][]*fieldInfo, expected []interface{}) {
 	descBuckets := make(map[int][]v1alpha1.SpecDescriptor, 100)
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	markedFields = make(map[string][]*fieldInfo, 100)
+	markedFields = make(map[crd.TypeIdent][]*fieldInfo, 100)
 	for i := 0; i < 100; i++ {
 		s, err := utils.RandomSuffix()
 		if err != nil {
@@ -174,10 +176,11 @@ func makeMockMarkedFields() (markedFields map[string][]*fieldInfo, expected []in
 		}
 		name := strings.Title(s)
 		order := r.Int() % 200 // Very likely to get one conflict.
-		if _, hasName := markedFields[name]; hasName {
+		ident := crd.TypeIdent{Package: &loader.Package{}, Name: name}
+		if _, hasName := markedFields[ident]; hasName {
 			continue
 		}
-		markedFields[name] = []*fieldInfo{
+		markedFields[ident] = []*fieldInfo{
 			{
 				FieldInfo: markers.FieldInfo{
 					Markers: markers.MarkerValues{
