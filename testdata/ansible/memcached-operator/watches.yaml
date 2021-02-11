@@ -4,4 +4,4 @@
   group: cache.example.com
   kind: Memcached
   playbook: playbooks/memcached.yml
-# +kubebuilder:scaffold:watch
+#+kubebuilder:scaffold:watch

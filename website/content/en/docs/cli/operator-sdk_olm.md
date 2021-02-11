@@ -14,12 +14,14 @@ Manage the Operator Lifecycle Manager installation in your cluster
 ### Options inherited from parent commands
 
 ```
-      --verbose   Enable verbose logging
+      --plugins strings          plugin keys of the plugin to initialize the project with
+      --project-version string   project version
+      --verbose                  Enable verbose logging
 ```
 
 ### SEE ALSO
 
-* [operator-sdk](../operator-sdk)	 - Development kit for building Kubernetes extensions and tools.
+* [operator-sdk](../operator-sdk)	 - 
 * [operator-sdk olm install](../operator-sdk_olm_install)	 - Install Operator Lifecycle Manager in your cluster
 * [operator-sdk olm status](../operator-sdk_olm_status)	 - Get the status of the Operator Lifecycle Manager installation in your cluster
 * [operator-sdk olm uninstall](../operator-sdk_olm_uninstall)	 - Uninstall Operator Lifecycle Manager from your cluster

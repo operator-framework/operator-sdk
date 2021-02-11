@@ -101,7 +101,7 @@ In our example, we will replace `# FIXME: Specify the role or playbook for this 
   group: cache.example.com
   kind: Memcached
   role: memcached
-# +kubebuilder:scaffold:watch
+#+kubebuilder:scaffold:watch
 ```
 
 **NOTE**: Do not remove the `+kubebuilder:scaffold:watch` [marker][marker]. It allows the tool to update the watches file when new APIs are created.

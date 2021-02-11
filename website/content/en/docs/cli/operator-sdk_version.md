@@ -28,10 +28,12 @@ operator-sdk version
 ### Options inherited from parent commands
 
 ```
-      --verbose   Enable verbose logging
+      --plugins strings          plugin keys of the plugin to initialize the project with
+      --project-version string   project version
+      --verbose                  Enable verbose logging
 ```
 
 ### SEE ALSO
 
-* [operator-sdk](../operator-sdk)	 - Development kit for building Kubernetes extensions and tools.
+* [operator-sdk](../operator-sdk)	 - 
 

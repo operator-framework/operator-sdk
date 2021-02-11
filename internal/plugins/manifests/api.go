@@ -18,17 +18,20 @@ package manifests
 import (
 	"fmt"
 
-	"sigs.k8s.io/kubebuilder/v2/pkg/model"
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/config"
+	cfgv3 "sigs.k8s.io/kubebuilder/v3/pkg/config/v3"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
 
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/machinery"
 )
 
 // RunCreateAPI runs the manifests SDK phase 2 plugin.
-func RunCreateAPI(cfg *config.Config, gvk config.GVK) error {
+func RunCreateAPI(cfg config.Config, gvk resource.GVK) error {
 	// Only run these if project version is v3.
-	if !cfg.IsV3() {
+	isV3 := cfg.GetVersion().Compare(cfgv3.Version) == 0
+	if !isV3 {
 		return nil
 	}
 
@@ -40,11 +43,11 @@ func RunCreateAPI(cfg *config.Config, gvk config.GVK) error {
 }
 
 type apiScaffolder struct {
-	config *config.Config
-	gvk    config.GVK
+	config config.Config
+	gvk    resource.GVK
 }
 
-func newAPIScaffolder(config *config.Config, gvk config.GVK) *apiScaffolder {
+func newAPIScaffolder(config config.Config, gvk resource.GVK) *apiScaffolder {
 	return &apiScaffolder{
 		config: config,
 		gvk:    gvk,

@@ -3,30 +3,11 @@ title: "operator-sdk"
 ---
 ## operator-sdk
 
-Development kit for building Kubernetes extensions and tools.
+
 
 ### Synopsis
 
-Development kit for building Kubernetes extensions and tools.
-
-Provides libraries and tools to create new projects, APIs and controllers.
-Includes tools for packaging artifacts into an installer container.
-
-Typical project lifecycle:
-
-- initialize a project:
-
-  operator-sdk init --domain example.com --license apache2 --owner "The Kubernetes authors"
-
-- create one or more a new resource APIs and add your code to them:
-
-  operator-sdk create api --group <group> --version <version> --kind <Kind>
-
-Create resource will prompt the user for if it should scaffold the Resource and / or Controller. To only
-scaffold a Controller for an existing Resource, select "n" for Resource. To only define
-the schema for a Resource without writing a Controller, select "n" for Controller.
-
-After the scaffold is written, api will run make on the project.
+CLI tool for building Kubernetes extensions and tools.
 
 
 ```
@@ -36,32 +17,38 @@ operator-sdk [flags]
 ### Examples
 
 ```
+The first step is to initialize your project:
+    operator-sdk init --project-version=<PROJECT VERSION> --plugins=<PLUGIN KEYS>
 
-  # Initialize your project
-  operator-sdk init --domain example.com --license apache2 --owner "The Kubernetes authors"
+<PLUGIN KEYS> is a comma-separated list of plugin keys from the following table
+and <PROJECT VERSION> a supported project version for these plugins.
 
-  # Create a frigates API with Group: ship, Version: v1beta1 and Kind: Frigate
-  operator-sdk create api --group ship --version v1beta1 --kind Frigate
+                         Plugin keys | Supported project versions
+-------------------------------------+----------------------------
+ ansible.sdk.operatorframework.io/v1 |                          3
+                go.kubebuilder.io/v2 |                       2, 3
+                go.kubebuilder.io/v3 |                          3
+    helm.sdk.operatorframework.io/v1 |                          3
 
-  # Edit the API Scheme
-  nano api/v1beta1/frigate_types.go
+For more specific help for the init command of a certain plugins and project version
+configuration please run:
+    operator-sdk init --help --project-version=<PROJECT VERSION> --plugins=<PLUGIN KEYS>
 
-  # Edit the Controller
-  nano controllers/frigate_controller.go
+Default project version: 3
+Default plugin keys: "go.kubebuilder.io/v3"
 
-  # Install CRDs into the Kubernetes cluster using kubectl apply
-  make install
-
-  # Regenerate code and run against the Kubernetes cluster configured by ~/.kube/config
-  make run
-
+After the project has been initialized, run
+    operator-sdk --help
+to obtain further info about available commands.
 ```
 
 ### Options
 
 ```
-  -h, --help      help for operator-sdk
-      --verbose   Enable verbose logging
+  -h, --help                     help for operator-sdk
+      --plugins strings          plugin keys of the plugin to initialize the project with
+      --project-version string   project version
+      --verbose                  Enable verbose logging
 ```
 
 ### SEE ALSO

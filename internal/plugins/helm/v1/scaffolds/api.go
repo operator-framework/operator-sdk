@@ -23,9 +23,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"sigs.k8s.io/kubebuilder/v2/pkg/model"
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/resource"
+	"sigs.k8s.io/kubebuilder/v3/pkg/config"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
 
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/machinery"
@@ -41,12 +41,12 @@ var _ cmdutil.Scaffolder = &apiScaffolder{}
 // apiScaffolder contains configuration for generating scaffolding for Go type
 // representing the API and controller that implements the behavior for the API.
 type apiScaffolder struct {
-	config *config.Config
+	config config.Config
 	opts   chartutil.CreateOptions
 }
 
 // NewAPIScaffolder returns a new Scaffolder for API/controller creation operations
-func NewAPIScaffolder(config *config.Config, opts chartutil.CreateOptions) cmdutil.Scaffolder {
+func NewAPIScaffolder(config config.Config, opts chartutil.CreateOptions) cmdutil.Scaffolder {
 	return &apiScaffolder{
 		config: config,
 		opts:   opts,
@@ -70,26 +70,48 @@ func (s *apiScaffolder) scaffold() error {
 	if err != nil {
 		return err
 	}
-	r, chrt, err := chartutil.CreateChart(projectDir, s.opts)
+	resourceOptions, chrt, err := chartutil.CreateChart(projectDir, s.opts)
 	if err != nil {
 		return err
 	}
 
+	resourceOptions.DoAPI = true
+	//todo(camilamacedo86): replace the options by kubernetes-sigs/kubebuilder#1974
+	if err := resourceOptions.Validate(); err != nil {
+		return err
+	}
+
 	// Check that resource doesn't exist
-	if s.config.HasResource(r.GVK()) {
+	if s.config.HasResource(resourceOptions.GVK()) {
 		return errors.New("the API resource already exists")
 	}
+
 	// Check that the provided group can be added to the project
-	if !s.config.MultiGroup && len(s.config.Resources) != 0 && !s.config.HasGroup(r.Group) {
+	if !s.config.IsMultiGroup() && s.config.ResourcesLength() != 0 && !s.config.HasGroup(resourceOptions.Group) {
 		return errors.New("multiple groups are not allowed by default, to enable multi-group set 'multigroup: true' in your PROJECT file")
 	}
 
-	res := r.NewResource(s.config, true)
-	s.config.UpdateResources(res.GVK())
+	resource := resourceOptions.NewResource(s.config)
+
+	resource.Domain = s.config.GetDomain()
+
+	// remove the path since is not a Golang project
+	resource.Path = ""
+
+	// add the resource API info to complain with project-version=3
+	// todo: ensure that this information is properly returned from
+	// resource.newResource in upstream ( see kubernetes-sigs/kubebuilder#1974)
+	// and then, remove it.
+	resource.API.Namespaced = true
+	resource.API.CRDVersion = s.opts.CRDVersion
+
+	if err := s.config.UpdateResource(resource); err != nil {
+		return err
+	}
 
 	chartPath := filepath.Join(chartutil.HelmChartsDir, chrt.Metadata.Name)
 	if err := machinery.NewScaffold().Execute(
-		s.newUniverse(res),
+		s.newUniverse(&resource),
 		&templates.WatchesUpdater{ChartPath: chartPath},
 		&crd.CRD{CRDVersion: s.opts.CRDVersion},
 		&crd.Kustomization{},

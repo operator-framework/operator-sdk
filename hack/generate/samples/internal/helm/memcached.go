@@ -95,7 +95,7 @@ func (mh *MemcachedHelm) Run() {
 
 	log.Infof("adding customized roles")
 	err = testutils.ReplaceInFile(filepath.Join(mh.ctx.Dir, "config", "rbac", "role.yaml"),
-		"# +kubebuilder:scaffold:rules", policyRolesFragment)
+		"#+kubebuilder:scaffold:rules", policyRolesFragment)
 	pkg.CheckError("adding customized roles", err)
 
 	log.Infof("creating the bundle")
@@ -151,5 +151,5 @@ const policyRolesFragment = `
   - update
   - watch
 
-# +kubebuilder:scaffold:rules
+#+kubebuilder:scaffold:rules
 `

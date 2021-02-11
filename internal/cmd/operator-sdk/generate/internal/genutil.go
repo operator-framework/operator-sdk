@@ -28,6 +28,7 @@ import (
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	cfgv2 "sigs.k8s.io/kubebuilder/v3/pkg/config/v2"
 	"sigs.k8s.io/yaml"
 )
 
@@ -171,17 +172,17 @@ func GetPackageNameAndLayout(defaultPackageName string) (packageName string, lay
 		}
 		if packageName == "" {
 			switch {
-			case cfg.IsV2():
+			case cfg.GetVersion().Compare(cfgv2.Version) == 0:
 				wd, err := os.Getwd()
 				if err != nil {
 					return "", "", err
 				}
 				packageName = strings.ToLower(filepath.Base(wd))
 			default:
-				if cfg.ProjectName == "" {
+				packageName = cfg.GetProjectName()
+				if packageName == "" {
 					return "", "", errors.New("--package-name must be set if \"projectName\" is not set in the PROJECT config file")
 				}
-				packageName = cfg.ProjectName
 			}
 		}
 		layout = projutil.GetProjectLayout(cfg)

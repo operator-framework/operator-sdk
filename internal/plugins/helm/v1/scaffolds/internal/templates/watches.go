@@ -17,7 +17,7 @@ package templates
 import (
 	"fmt"
 
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
 )
 
 var _ file.Template = &Watches{}
@@ -79,7 +79,7 @@ func (f *WatchesUpdater) GetCodeFragments() file.CodeFragmentsMap {
 	// Generate watch fragments
 	watches := make([]string, 0)
 	watches = append(watches,
-		fmt.Sprintf(watchFragment, f.Resource.Domain, f.Resource.Version, f.Resource.Kind, f.ChartPath))
+		fmt.Sprintf(watchFragment, f.Resource.QualifiedGroup(), f.Resource.Version, f.Resource.Kind, f.ChartPath))
 
 	if len(watches) != 0 {
 		fragments[file.NewMarkerFor(defaultWatchesFile, watchMarker)] = watches

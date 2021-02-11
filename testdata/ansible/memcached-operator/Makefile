@@ -101,15 +101,13 @@ ANSIBLE_OPERATOR = $(shell which ansible-operator)
 endif
 endif
 
-# Generate bundle manifests and metadata, then validate generated files.
-.PHONY: bundle
+.PHONY: bundle ## Generate bundle manifests and metadata, then validate generated files.
 bundle: kustomize
 	operator-sdk generate kustomize manifests --interactive=false -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 	operator-sdk bundle validate ./bundle
 
-# Build the bundle image.
-.PHONY: bundle-build
+.PHONY: bundle-build ## Build the bundle image.
 bundle-build:
 	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .

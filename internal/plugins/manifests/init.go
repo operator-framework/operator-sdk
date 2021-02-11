@@ -20,15 +20,17 @@ import (
 	"io/ioutil"
 	"os"
 
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
+	"sigs.k8s.io/kubebuilder/v3/pkg/config"
+	cfgv3 "sigs.k8s.io/kubebuilder/v3/pkg/config/v3"
 
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
 // RunInit modifies the project scaffolded by kubebuilder's Init plugin.
-func RunInit(cfg *config.Config) error {
+func RunInit(cfg config.Config) error {
 	// Only run these if project version is v3.
-	if !cfg.IsV3() {
+	isV3 := cfg.GetVersion().Compare(cfgv3.Version) == 0
+	if !isV3 {
 		return nil
 	}
 
@@ -40,7 +42,7 @@ func RunInit(cfg *config.Config) error {
 }
 
 // initUpdateMakefile updates a vanilla kubebuilder Makefile with operator-sdk recipes.
-func initUpdateMakefile(cfg *config.Config, filePath string) error {
+func initUpdateMakefile(cfg config.Config, filePath string) error {
 	makefileBytes, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		return err
@@ -50,10 +52,10 @@ func initUpdateMakefile(cfg *config.Config, filePath string) error {
 	makefileBytes = append([]byte(makefileBundleVarFragment), makefileBytes...)
 
 	// Append bundle recipes.
-	operatorType := projutil.PluginKeyToOperatorType(cfg.Layout)
+	operatorType := projutil.PluginKeyToOperatorType(cfg.GetLayout())
 	switch operatorType {
 	case projutil.OperatorTypeUnknown:
-		return fmt.Errorf("unsupported plugin key %q", cfg.Layout)
+		return fmt.Errorf("unsupported plugin key %q", cfg.GetLayout())
 	case projutil.OperatorTypeGo:
 		makefileBytes = append(makefileBytes, []byte(makefileBundleFragmentGo)...)
 	default:
@@ -103,8 +105,7 @@ BUNDLE_IMG ?= controller-bundle:$(VERSION)
 `
 
 	makefileBundleFragmentGo = `
-# Generate bundle manifests and metadata, then validate generated files.
-.PHONY: bundle
+.PHONY: bundle ## Generate bundle manifests and metadata, then validate generated files.
 bundle: manifests kustomize
 	operator-sdk generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
@@ -113,8 +114,7 @@ bundle: manifests kustomize
 `
 
 	makefileBundleFragmentNonGo = `
-# Generate bundle manifests and metadata, then validate generated files.
-.PHONY: bundle
+.PHONY: bundle ## Generate bundle manifests and metadata, then validate generated files.
 bundle: kustomize
 	operator-sdk generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
@@ -123,8 +123,7 @@ bundle: kustomize
 `
 
 	makefileBundleBuildFragment = `
-# Build the bundle image.
-.PHONY: bundle-build
+.PHONY: bundle-build ## Build the bundle image.
 bundle-build:
 	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
 `

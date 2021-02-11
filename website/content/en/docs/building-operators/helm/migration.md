@@ -85,7 +85,7 @@ Check if you have custom options in the `watches.yaml` file of your existing pro
   version: v1alpha1
   kind: Nginx
   chart: helm-charts/nginx
-# +kubebuilder:scaffold:watch
+#+kubebuilder:scaffold:watch
 ```
 
 **NOTE**: Do not remove the `+kubebuilder:scaffold:watch` [marker][marker]. It allows the tool to update the watches file when new APIs are created.

@@ -18,7 +18,9 @@ operator-sdk completion zsh [flags]
 ### Options inherited from parent commands
 
 ```
-      --verbose   Enable verbose logging
+      --plugins strings          plugin keys of the plugin to initialize the project with
+      --project-version string   project version
+      --verbose                  Enable verbose logging
 ```
 
 ### SEE ALSO

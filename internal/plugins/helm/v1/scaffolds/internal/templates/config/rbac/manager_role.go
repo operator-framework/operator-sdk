@@ -32,7 +32,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/discovery"
 	crconfig "sigs.k8s.io/controller-runtime/pkg/client/config"
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
 	"sigs.k8s.io/yaml"
 )
 
@@ -152,10 +152,10 @@ rules:
 `
 
 const rulesFragment = `##
-## Rules for {{.Resource.Domain}}/{{.Resource.Version}}, Kind: {{.Resource.Kind}}
+## Rules for {{.Resource.QualifiedGroup}}/{{.Resource.Version}}, Kind: {{.Resource.Kind}}
 ##
 - apiGroups:
-  - {{.Resource.Domain}}
+  - {{.Resource.QualifiedGroup}}
   resources:
   - {{.Resource.Plural}}
   - {{.Resource.Plural}}/status

@@ -21,7 +21,7 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	kbtestutils "sigs.k8s.io/kubebuilder/v2/test/e2e/utils"
+	kbtestutils "sigs.k8s.io/kubebuilder/v3/test/e2e/utils"
 
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
 	"github.com/operator-framework/operator-sdk/internal/testutils"
@@ -59,8 +59,7 @@ func (mh *MemcachedGoWithWebhooks) Prepare() {
 func (mh *MemcachedGoWithWebhooks) Run() {
 	log.Infof("creating the project")
 	err := mh.ctx.Init(
-		// TODO(estroz): change this to 3 when stabilized.
-		"--project-version", "3-alpha",
+		"--project-version", "3",
 		"--plugins", "go/v3",
 		"--repo", "github.com/example/memcached-operator",
 		"--domain",
@@ -229,6 +228,7 @@ func (mh *MemcachedGoWithWebhooks) implementingController() {
 	pkg.CheckError("replacing reconcile", err)
 }
 
+// nolint:gosec
 // implementingAPI will customize the API
 func (mh *MemcachedGoWithWebhooks) implementingAPI() {
 	err := kbtestutils.InsertCode(
@@ -273,8 +273,8 @@ func GenerateMemcachedGoWithWebhooksSample(samplesPath string) {
 }
 
 const rbacFragment = `
-// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;`
+//+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;`
 
 const reconcileFragment = `// Fetch the Memcached instance
 	memcached := &cachev1alpha1.Memcached{}
@@ -427,7 +427,7 @@ const watchCustomizedFragment = `return ctrl.NewControllerManagedBy(mgr).
 
 const webhooksFragment = `
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-// +kubebuilder:webhook:path=/validate-cache-example-com-v1alpha1-memcached,mutating=false,failurePolicy=fail,sideEffects=None,groups=cache.example.com,resources=memcacheds,verbs=create;update,versions=v1alpha1,name=vmemcached.kb.io,admissionReviewVersions={v1,v1beta1}
+//+kubebuilder:webhook:path=/validate-cache-example-com-v1alpha1-memcached,mutating=false,failurePolicy=fail,sideEffects=None,groups=cache.example.com,resources=memcacheds,verbs=create;update,versions=v1alpha1,name=vmemcached.kb.io,admissionReviewVersions={v1,v1beta1}
 
 var _ webhook.Validator = &Memcached{}
 

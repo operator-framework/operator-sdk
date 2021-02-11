@@ -17,7 +17,7 @@ package mdefault
 import (
 	"path/filepath"
 
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
 )
 
 var _ file.Template = &ResourceTest{}
@@ -42,7 +42,7 @@ func (f *ResourceTest) SetTemplateDefaults() error {
 }
 
 const resourceTestTemplate = `---
-- name: Create the {{.Resource.Domain}}/{{.Resource.Version}}.{{.Resource.Kind}}
+- name: Create the {{.Resource.QualifiedGroup}}/{{.Resource.Version}}.{{.Resource.Kind}}
   k8s:
     state: present
     namespace: '{{ "{{ namespace }}" }}'

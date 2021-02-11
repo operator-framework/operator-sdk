@@ -32,7 +32,7 @@ import (
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/repo"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/resource"
+	"sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang"
 )
 
 const (
@@ -66,6 +66,9 @@ type CreateOptions struct {
 
 	// CRDVersion is the version of the `apiextensions.k8s.io` API which will be used to generate the CRD.
 	CRDVersion string
+
+	// Domain is the domain of the project
+	Domain string
 }
 
 // CreateChart scaffolds a new helm chart for the project rooted in projectDir
@@ -114,7 +117,7 @@ type CreateOptions struct {
 //
 // CreateChart returns an error if an error occurs creating the scaffold.Resource or
 // creating the chart.
-func CreateChart(projectDir string, opts CreateOptions) (*resource.Options, *chart.Chart, error) {
+func CreateChart(projectDir string, opts CreateOptions) (*golang.Options, *chart.Chart, error) {
 	chartsDir := filepath.Join(projectDir, HelmChartsDir)
 	err := os.MkdirAll(chartsDir, 0755)
 	if err != nil {
@@ -122,14 +125,14 @@ func CreateChart(projectDir string, opts CreateOptions) (*resource.Options, *cha
 	}
 
 	var (
-		r *resource.Options
+		r *golang.Options
 		c *chart.Chart
 	)
 
 	// If we don't have a helm chart reference, scaffold the default chart
 	// from Helm's default template. Otherwise, fetch it.
 	if len(opts.Chart) == 0 {
-		r, c, err = scaffoldChart(chartsDir, opts.GVK.Group, opts.GVK.Version, opts.GVK.Kind)
+		r, c, err = scaffoldChart(chartsDir, opts)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to scaffold default chart: %v", err)
 		}
@@ -156,13 +159,13 @@ func CreateChart(projectDir string, opts CreateOptions) (*resource.Options, *cha
 	return r, c, nil
 }
 
-func scaffoldChart(destDir, group, version, kind string) (*resource.Options, *chart.Chart, error) {
-	r := &resource.Options{
-		Namespaced: true,
-		Group:      group,
-		Version:    version,
-		Kind:       kind,
-	}
+func scaffoldChart(destDir string, opts CreateOptions) (*golang.Options, *chart.Chart, error) {
+	r := &golang.Options{}
+	r.Namespaced = true
+	r.Domain = opts.Domain
+	r.Group = opts.GVK.Group
+	r.Version = opts.GVK.Version
+	r.Kind = opts.GVK.Kind
 
 	chartPath, err := chartutil.Create(strings.ToLower(r.Kind), destDir)
 	if err != nil {
@@ -176,7 +179,7 @@ func scaffoldChart(destDir, group, version, kind string) (*resource.Options, *ch
 	return r, chart, nil
 }
 
-func fetchChart(destDir string, opts CreateOptions) (*resource.Options, *chart.Chart, error) {
+func fetchChart(destDir string, opts CreateOptions) (*golang.Options, *chart.Chart, error) {
 	var (
 		chart *chart.Chart
 		err   error
@@ -202,12 +205,13 @@ func fetchChart(destDir string, opts CreateOptions) (*resource.Options, *chart.C
 		opts.GVK.Kind = strcase.ToCamel(chartName)
 	}
 
-	r := &resource.Options{
-		Namespaced: true,
-		Group:      opts.GVK.Group,
-		Version:    opts.GVK.Version,
-		Kind:       opts.GVK.Kind,
-	}
+	r := &golang.Options{}
+	r.Namespaced = true
+	r.Domain = opts.Domain
+	r.Group = opts.GVK.Group
+	r.Version = opts.GVK.Version
+	r.Kind = opts.GVK.Kind
+
 	return r, chart, nil
 }
 

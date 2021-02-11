@@ -228,7 +228,7 @@ var _ = Describe("Running a generate packagemanifests command", func() {
 			It("reads the data from the project file", func() {
 				err := c.setDefaults()
 				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(ContainSubstring("error unmarshalling project configuration"))
+				Expect(err.Error()).To(ContainSubstring("did not find expected key"))
 			})
 		})
 	})

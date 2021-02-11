@@ -20,7 +20,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	kbtestutils "sigs.k8s.io/kubebuilder/v2/test/e2e/utils"
+	kbtestutils "sigs.k8s.io/kubebuilder/v3/test/e2e/utils"
 
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
 	"github.com/operator-framework/operator-sdk/internal/testutils"
@@ -81,7 +81,7 @@ func (ma *MoleculeAnsible) Run() {
 
 	log.Infof("adding RBAC permissions")
 	err = testutils.ReplaceInFile(filepath.Join(ma.ctx.Dir, "config", "rbac", "role.yaml"),
-		"# +kubebuilder:scaffold:rules", rolesForBaseOperator)
+		"#+kubebuilder:scaffold:rules", rolesForBaseOperator)
 	pkg.CheckError("replacing in role.yml", err)
 
 	log.Infof("adding Memcached mock task to the role with black list")

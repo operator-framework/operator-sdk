@@ -20,8 +20,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/config"
+	cfgv3 "sigs.k8s.io/kubebuilder/v3/pkg/config/v3"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/util/kustomize"
 	"github.com/operator-framework/operator-sdk/internal/scorecard"
@@ -37,9 +38,10 @@ var (
 )
 
 // RunInit scaffolds kustomize files for kustomizing a scorecard componentconfig.
-func RunInit(cfg *config.Config) error {
+func RunInit(cfg config.Config) error {
 	// Only run these if project version is v3.
-	if !cfg.IsV3() {
+	isV3 := cfg.GetVersion().Compare(cfgv3.Version) == 0
+	if !isV3 {
 		return nil
 	}
 

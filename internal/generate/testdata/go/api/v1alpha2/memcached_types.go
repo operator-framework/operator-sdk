@@ -22,24 +22,24 @@ import (
 // MemcachedSpec defines the desired state of Memcached
 type MemcachedSpec struct {
 	// Size is the size of the memcached deployment
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
+	//+operator-sdk:csv:customresourcedefinitions:type=spec
 	Size int32 `json:"size"`
 }
 
 // MemcachedStatus defines the observed state of Memcached
 type MemcachedStatus struct {
 	// Nodes are the names of the memcached pods
-	// +operator-sdk:csv:customresourcedefinitions:type=status
+	//+operator-sdk:csv:customresourcedefinitions:type=status
 	Nodes []string `json:"nodes"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // Memcached is the Schema for the memcacheds API
-// +kubebuilder:subresource:status
-// +kubebuilder:resource:path=memcacheds,scope=Namespaced
-// +kubebuilder:storageversion
-// +operator-sdk:csv:customresourcedefinitions:displayName="Memcached App"
+//+kubebuilder:subresource:status
+//+kubebuilder:resource:path=memcacheds,scope=Namespaced
+//+kubebuilder:storageversion
+//+operator-sdk:csv:customresourcedefinitions:displayName="Memcached App"
 type Memcached struct {
 	foo.TypeMeta   `json:",inline"`
 	foo.ObjectMeta `json:"metadata,omitempty"`

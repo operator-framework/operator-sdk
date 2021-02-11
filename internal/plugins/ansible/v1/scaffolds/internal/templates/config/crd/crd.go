@@ -20,7 +20,7 @@ import (
 	"path/filepath"
 
 	"github.com/kr/text"
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
 )
 
 var _ file.Template = &CRD{}
@@ -36,7 +36,7 @@ type CRD struct {
 // SetTemplateDefaults implements input.Template
 func (f *CRD) SetTemplateDefaults() error {
 	if f.Path == "" {
-		f.Path = filepath.Join("config", "crd", "bases", fmt.Sprintf("%s_%%[plural].yaml", f.Resource.Domain))
+		f.Path = filepath.Join("config", "crd", "bases", fmt.Sprintf("%s_%%[plural].yaml", f.Resource.QualifiedGroup()))
 	}
 	f.Path = f.Resource.Replacer().Replace(f.Path)
 
@@ -58,9 +58,9 @@ const crdTemplate = `---
 apiVersion: apiextensions.k8s.io/{{ .CRDVersion }}
 kind: CustomResourceDefinition
 metadata:
-  name: {{ .Resource.Plural }}.{{ .Resource.Domain }}
+  name: {{ .Resource.Plural }}.{{ .Resource.QualifiedGroup }}
 spec:
-  group: {{ .Resource.Domain }}
+  group: {{ .Resource.QualifiedGroup }}
   names:
     kind: {{ .Resource.Kind }}
     listKind: {{ .Resource.Kind }}List

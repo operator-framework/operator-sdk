@@ -21,8 +21,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
-	"sigs.k8s.io/kubebuilder/v2/pkg/model"
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
 
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/filesystem"
 )
@@ -166,12 +166,12 @@ var _ = Describe("Scaffold", func() {
 			},
 			Entry("should insert lines for go files",
 				`
-// +kubebuilder:scaffold:-
+//+kubebuilder:scaffold:-
 `,
 				`
 1
 2
-// +kubebuilder:scaffold:-
+//+kubebuilder:scaffold:-
 `,
 				fakeInserter{codeFragments: file.CodeFragmentsMap{
 					file.NewMarkerFor("file.go", "-"): {"1\n", "2\n"}},
@@ -179,12 +179,12 @@ var _ = Describe("Scaffold", func() {
 			),
 			Entry("should insert lines for yaml files",
 				`
-# +kubebuilder:scaffold:-
+#+kubebuilder:scaffold:-
 `,
 				`
 1
 2
-# +kubebuilder:scaffold:-
+#+kubebuilder:scaffold:-
 `,
 				fakeInserter{codeFragments: file.CodeFragmentsMap{
 					file.NewMarkerFor("file.yaml", "-"): {"1\n", "2\n"}},
@@ -195,10 +195,10 @@ var _ = Describe("Scaffold", func() {
 				`
 1
 2
-// +kubebuilder:scaffold:-
+//+kubebuilder:scaffold:-
 `,
 				fakeTemplate{fakeBuilder: fakeBuilder{ifExistsAction: file.Overwrite}, body: `
-// +kubebuilder:scaffold:-
+//+kubebuilder:scaffold:-
 `},
 				fakeInserter{codeFragments: file.CodeFragmentsMap{
 					file.NewMarkerFor("file.go", "-"): {"1\n", "2\n"}},
@@ -209,10 +209,10 @@ var _ = Describe("Scaffold", func() {
 				`
 1
 2
-// +kubebuilder:scaffold:-
+//+kubebuilder:scaffold:-
 `,
 				fakeTemplate{fakeBuilder: fakeBuilder{ifExistsAction: file.Overwrite}, body: `
-// +kubebuilder:scaffold:-
+//+kubebuilder:scaffold:-
 `},
 				fakeInserter{codeFragments: file.CodeFragmentsMap{
 					file.NewMarkerFor("file.go", "-"): {"1\n", "2\n"}},
@@ -220,12 +220,12 @@ var _ = Describe("Scaffold", func() {
 			),
 			Entry("should use files over optional models",
 				`
-// +kubebuilder:scaffold:-
+//+kubebuilder:scaffold:-
 `,
 				`
 1
 2
-// +kubebuilder:scaffold:-
+//+kubebuilder:scaffold:-
 `,
 				fakeTemplate{body: fileContent},
 				fakeInserter{
@@ -236,14 +236,14 @@ var _ = Describe("Scaffold", func() {
 			),
 			Entry("should filter invalid markers",
 				`
-// +kubebuilder:scaffold:-
-// +kubebuilder:scaffold:*
+//+kubebuilder:scaffold:-
+//+kubebuilder:scaffold:*
 `,
 				`
 1
 2
-// +kubebuilder:scaffold:-
-// +kubebuilder:scaffold:*
+//+kubebuilder:scaffold:-
+//+kubebuilder:scaffold:*
 `,
 				fakeInserter{
 					markers: []file.Marker{file.NewMarkerFor("file.go", "-")},
@@ -256,18 +256,18 @@ var _ = Describe("Scaffold", func() {
 			Entry("should filter already existing one-line code fragments",
 				`
 1
-// +kubebuilder:scaffold:-
+//+kubebuilder:scaffold:-
 3
 4
-// +kubebuilder:scaffold:*
+//+kubebuilder:scaffold:*
 `,
 				`
 1
 2
-// +kubebuilder:scaffold:-
+//+kubebuilder:scaffold:-
 3
 4
-// +kubebuilder:scaffold:*
+//+kubebuilder:scaffold:*
 `,
 				fakeInserter{
 					codeFragments: file.CodeFragmentsMap{
@@ -279,10 +279,10 @@ var _ = Describe("Scaffold", func() {
 			Entry("should not insert anything if no code fragment",
 				"", // input is provided through a template as mock fs doesn't copy it to the output buffer if no-op
 				`
-// +kubebuilder:scaffold:-
+//+kubebuilder:scaffold:-
 `,
 				fakeTemplate{body: `
-// +kubebuilder:scaffold:-
+//+kubebuilder:scaffold:-
 `},
 				fakeInserter{
 					codeFragments: file.CodeFragmentsMap{

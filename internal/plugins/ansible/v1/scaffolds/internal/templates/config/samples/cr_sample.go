@@ -22,7 +22,7 @@ import (
 	"strings"
 	"text/template"
 
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
 )
 
 var _ file.Template = &CR{}
@@ -67,7 +67,7 @@ func (f *CR) GetFuncMap() template.FuncMap {
 
 const defaultSpecTemplate = `foo: bar`
 
-const crSampleTemplate = `apiVersion: {{ .Resource.Domain }}/{{ .Resource.Version }}
+const crSampleTemplate = `apiVersion: {{ .Resource.QualifiedGroup }}/{{ .Resource.Version }}
 kind: {{ .Resource.Kind }}
 metadata:
   name: {{ lower .Resource.Kind }}-sample

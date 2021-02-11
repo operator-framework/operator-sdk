@@ -60,4 +60,4 @@
   playbook: playbooks/reconciliationtest.yml
   vars:
     meta: '{{ ansible_operator_meta }}'
-# +kubebuilder:scaffold:watch
+#+kubebuilder:scaffold:watch

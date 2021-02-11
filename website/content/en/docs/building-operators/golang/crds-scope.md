@@ -13,7 +13,7 @@ The CRD manifests are generated in `config/crd/bases`. For each CRD that needs t
 should specify `spec.scope: Cluster`.
 
 To ensure that the CRD is always generated with `scope: Cluster`, add the marker 
-`// +kubebuilder:resource:path=<resource>,scope=Cluster`, or if already present replace `scope={Namespaced -> Cluster}`, 
+`//+kubebuilder:resource:path=<resource>,scope=Cluster`, or if already present replace `scope={Namespaced -> Cluster}`, 
 above the CRD's Go type definition in `api/<version>/<kind>_types.go` or `apis/<group>/<version>/<kind>_types.go` 
 if you are using the [multigroup][multigroup-kubebuilder-doc] layout. Note that the `<resource>` 
 element must be the same lower-case plural value of the CRD's Kind, `spec.names.plural`.  
@@ -51,13 +51,13 @@ spec:
 ``` 
 
 - Update the `apis/<version>/<kind>_types.go` by adding the 
-marker `// +kubebuilder:resource:path=<resource>,scope=Cluster`
+marker `//+kubebuilder:resource:path=<resource>,scope=Cluster`
 
 * `api/v1alpha1/memcached_types.go`
 
 ```Go
 // Memcached is the Schema for the memcacheds API
-// +kubebuilder:resource:path=memcacheds,scope=Cluster
+//+kubebuilder:resource:path=memcacheds,scope=Cluster
 type Memcached struct {
   metav1.TypeMeta   `json:",inline"`
   metav1.ObjectMeta `json:"metadata,omitempty"`

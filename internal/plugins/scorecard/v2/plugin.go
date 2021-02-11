@@ -17,11 +17,11 @@ package v2
 import (
 	"fmt"
 
+	"sigs.k8s.io/kubebuilder/v3/pkg/config"
+	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
+
 	"github.com/operator-framework/operator-sdk/internal/plugins"
 	"github.com/operator-framework/operator-sdk/internal/plugins/scorecard"
-
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
-	"sigs.k8s.io/kubebuilder/v2/pkg/plugin"
 )
 
 const (
@@ -37,7 +37,7 @@ var (
 type Config struct{}
 
 // RunInit scaffolds kustomize files for kustomizing a scorecard componentconfig.
-func RunInit(cfg *config.Config) error {
+func RunInit(cfg config.Config) error {
 
 	if err := scorecard.RunInit(cfg); err != nil {
 		return err

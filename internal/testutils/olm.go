@@ -20,7 +20,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
+	"sigs.k8s.io/kubebuilder/v3/pkg/config"
+	_ "sigs.k8s.io/kubebuilder/v3/pkg/config/v2" // Register config/v2 for `config.New`
+	_ "sigs.k8s.io/kubebuilder/v3/pkg/config/v3" // Register config/v3 for `config.New`
+	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -47,6 +50,10 @@ packagemanifests: kustomize %s
 	$(KUSTOMIZE) build config/manifests | operator-sdk generate packagemanifests -q --version $(VERSION) $(PKG_MAN_OPTS)
 `
 
+type versionedConfig struct {
+	Version config.Version
+}
+
 // AddPackagemanifestsTarget will append the packagemanifests target to the makefile
 // in order to test the steps described in the docs.
 // More info:  https://v1-0-x.sdk.operatorframework.io/docs/olm-integration/generation/#package-manifests-formats
@@ -60,14 +67,25 @@ func (tc TestContext) AddPackagemanifestsTarget() error {
 	if err != nil {
 		return err
 	}
-	c := &config.Config{}
-	if err = c.Unmarshal(b); err != nil {
+
+	var versioned versionedConfig
+	if err := yaml.Unmarshal(b, &versioned); err != nil {
+		return err
+	}
+	// Create the config object
+	c, err := config.New(versioned.Version)
+	if err != nil {
+		return err
+	}
+
+	// Unmarshal the file content
+	if err := c.Unmarshal(b); err != nil {
 		return err
 	}
 
 	// add the manifests target when is a Go project.
 	replaceTarget := ""
-	if strings.HasPrefix(c.Layout, "go") {
+	if strings.HasPrefix(c.GetLayout(), "go") {
 		replaceTarget = "manifests"
 	}
 	makefilePackagemanifestsFragment = fmt.Sprintf(makefilePackagemanifestsFragment, replaceTarget)

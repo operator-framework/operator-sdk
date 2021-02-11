@@ -235,23 +235,23 @@ Upon updating the project to `v0.8.2` the following breaking changes apply:
   ```Go
   // MemcachedSpec defines the desired state of Memcached
   type MemcachedSpec struct {
-    // +kubebuilder:validation:Maximum=5
-    // +kubebuilder:validation:Minimum=1
+    //+kubebuilder:validation:Maximum=5
+    //+kubebuilder:validation:Minimum=1
     Size int32 `json:"size"`
   }
 
   // MemcachedStatus defines the observed state of Memcached
   type MemcachedStatus struct {
-    // +kubebuilder:validation:MaxItems=5
-    // +kubebuilder:validation:MinItems=1
+    //+kubebuilder:validation:MaxItems=5
+    //+kubebuilder:validation:MinItems=1
     Nodes []string `json:"nodes"`
   }
 
   // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
   // Memcached is the Schema for the memcacheds API
-  // +kubebuilder:subresource:status
-  // +kubebuilder:resource:shortName="mc"
+  //+kubebuilder:subresource:status
+  //+kubebuilder:resource:shortName="mc"
   // +genclient:nonNamespaced
   type Memcached struct {
     metav1.TypeMeta   `json:",inline"`

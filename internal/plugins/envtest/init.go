@@ -22,16 +22,19 @@ import (
 	"os"
 	"strings"
 
-	"sigs.k8s.io/kubebuilder/v2/pkg/model/config"
+	cfgv3 "sigs.k8s.io/kubebuilder/v3/pkg/config/v3"
+
+	"sigs.k8s.io/kubebuilder/v3/pkg/config"
 )
 
 // controllerRuntimeVersion version to be used to download the envtest setup script
 const controllerRuntimeVersion = "v0.6.3"
 
 // RunInit modifies the project scaffolded by kubebuilder's Init plugin.
-func RunInit(cfg *config.Config) error {
+func RunInit(cfg config.Config) error {
 	// Only run these if project version is v3.
-	if !cfg.IsV3() {
+	isV3 := cfg.GetVersion().Compare(cfgv3.Version) == 0
+	if !isV3 {
 		return nil
 	}
 
@@ -50,7 +53,7 @@ func initUpdateMakefile(filePath string) error {
 	}
 
 	makefileBytes = []byte(strings.Replace(string(makefileBytes),
-		"# Run tests\ntest: generate fmt vet manifests\n\tgo test ./... -coverprofile cover.out",
+		"# Run tests\ntest: manifests generate fmt vet\n\tgo test ./... -coverprofile cover.out",
 		fmt.Sprintf(makefileTestTarget, controllerRuntimeVersion), 1))
 
 	var mode os.FileMode = 0644
@@ -62,7 +65,7 @@ func initUpdateMakefile(filePath string) error {
 
 const makefileTestTarget = `# Run tests
 ENVTEST_ASSETS_DIR = $(shell pwd)/testbin
-test: generate fmt vet manifests
+test: manifests generate fmt vet
 	mkdir -p $(ENVTEST_ASSETS_DIR)
 	test -f $(ENVTEST_ASSETS_DIR)/setup-envtest.sh || curl -sSLo $(ENVTEST_ASSETS_DIR)/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/%s/hack/setup-envtest.sh
 	source $(ENVTEST_ASSETS_DIR)/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out`

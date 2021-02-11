@@ -21,7 +21,7 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	kbtestutils "sigs.k8s.io/kubebuilder/v2/test/e2e/utils"
+	kbtestutils "sigs.k8s.io/kubebuilder/v3/test/e2e/utils"
 
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
 	"github.com/operator-framework/operator-sdk/internal/testutils"
@@ -145,10 +145,10 @@ func (ma *AdvancedMolecule) updateConfig() {
       - patch
       - update
       - watch
-# +kubebuilder:scaffold:rules`
+#+kubebuilder:scaffold:rules`
 	err := testutils.ReplaceInFile(
 		filepath.Join(ma.ctx.Dir, "config", "rbac", "role.yaml"),
-		"# +kubebuilder:scaffold:rules",
+		"#+kubebuilder:scaffold:rules",
 		cmRolesFragment)
 	pkg.CheckError("adding customized roles", err)
 

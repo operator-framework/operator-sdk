@@ -111,5 +111,5 @@ rules:
   - update
   - watch
 
-# +kubebuilder:scaffold:rules
+#+kubebuilder:scaffold:rules
 

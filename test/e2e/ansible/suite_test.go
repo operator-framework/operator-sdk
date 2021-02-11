@@ -21,7 +21,7 @@ import (
 	"strings"
 	"testing"
 
-	kbtestutils "sigs.k8s.io/kubebuilder/v2/test/e2e/utils"
+	kbtestutils "sigs.k8s.io/kubebuilder/v3/test/e2e/utils"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -108,7 +108,7 @@ var _ = BeforeSuite(func() {
 
 	By("adding RBAC permissions for the Memcached Kind")
 	err = testutils.ReplaceInFile(filepath.Join(tc.Dir, "config", "rbac", "role.yaml"),
-		"# +kubebuilder:scaffold:rules", rolesForBaseOperator)
+		"#+kubebuilder:scaffold:rules", rolesForBaseOperator)
 	Expect(err).NotTo(HaveOccurred())
 
 	By("building the project image")
@@ -213,5 +213,5 @@ const rolesForBaseOperator = `
       - patch
       - update
       - watch
-# +kubebuilder:scaffold:rules
+#+kubebuilder:scaffold:rules
 `
