@@ -68,7 +68,7 @@ func (c *cacheResponseHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 
 		// Skip cache for non-cacheable requests, not a part of skipCacheLookup for performance.
 		if !r.IsResourceRequest || !(r.Subresource == "" || r.Subresource == "status") {
-			log.Info("Skipping cache lookup", "resource", r)
+			log.V(2).Info("Skipping cache lookup", "resource", r)
 			break
 		}
 
@@ -86,7 +86,7 @@ func (c *cacheResponseHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 		}
 
 		if c.skipCacheLookup(r, k, req) {
-			log.Info("Skipping cache lookup", "resource", r)
+			log.V(2).Info("Skipping cache lookup", "resource", r)
 			break
 		}
 
