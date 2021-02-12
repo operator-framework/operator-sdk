@@ -62,7 +62,7 @@ var _ = BeforeSuite(func() {
 
 	By("enabling debug logging in the manager")
 	err = testutils.ReplaceInFile(filepath.Join(tc.Dir, "bundle", "manifests", "memcached-operator.clusterserviceversion.yaml"),
-		"- --enable-leader-election", "- --enable-leader-election\n                - --zap-devel")
+		"- --enable-leader-election", "- --enable-leader-election\n                - --zap-log-level=2")
 	Expect(err).NotTo(HaveOccurred())
 
 	By("fetching the current-context")
