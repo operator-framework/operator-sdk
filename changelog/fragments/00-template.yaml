@@ -39,3 +39,8 @@ entries:
       header: Header text for the migration section
       body: >
         Body of the migration section.
+
+  - description: >
+      For Ansible-based operators, change the level of the proxy skipping cache logs to debug level.
+    kind: "change"
+    breaking: false
