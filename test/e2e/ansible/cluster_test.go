@@ -17,7 +17,6 @@ package e2e_ansible_test
 import (
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"path/filepath"
 	"strings"
 	"time"
@@ -44,9 +43,6 @@ var _ = Describe("Running ansible projects", func() {
 			memfinSampleFile = filepath.Join(samplesDir, fmt.Sprintf("%s_%s_memfin.yaml", tc.Group, tc.Version))
 			memcachedSampleFile = filepath.Join(samplesDir,
 				fmt.Sprintf("%s_%s_%s.yaml", tc.Group, tc.Version, strings.ToLower(tc.Kind)))
-
-			d, _ := ioutil.ReadFile(filepath.Join(tc.Dir, "config", "manager", "manager.yaml"))
-			By(fmt.Sprintf("manager.yaml \n%s\n", string(d)))
 
 			By("deploying project on the cluster")
 			Expect(tc.Make("deploy", "IMG="+tc.ImageName)).To(Succeed())
