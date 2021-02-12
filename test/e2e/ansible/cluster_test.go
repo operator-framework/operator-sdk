@@ -45,11 +45,6 @@ var _ = Describe("Running ansible projects", func() {
 			memcachedSampleFile = filepath.Join(samplesDir,
 				fmt.Sprintf("%s_%s_%s.yaml", tc.Group, tc.Version, strings.ToLower(tc.Kind)))
 
-			By("enabling debug logging in the manager")
-			err := testutils.ReplaceInFile(filepath.Join(tc.Dir, "config", "manager", "manager.yaml"),
-				"- \"--enable-leader-election\"", "- \"--enable-leader-election\"\n            - \"--zap-log-level=2\"")
-			Expect(err).NotTo(HaveOccurred())
-
 			d, _ := ioutil.ReadFile(filepath.Join(tc.Dir, "config", "manager", "manager.yaml"))
 			By(fmt.Sprintf("manager.yaml \n%s\n", string(d)))
 

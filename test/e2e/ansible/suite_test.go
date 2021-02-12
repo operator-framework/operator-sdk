@@ -61,7 +61,7 @@ var _ = BeforeSuite(func() {
 	Expect(exec.Command("cp", "-r", "../../../testdata/ansible/memcached-operator", tc.Dir).Run()).To(Succeed())
 
 	By("enabling debug logging in the manager")
-	err = testutils.ReplaceInFile(filepath.Join(tc.Dir, "config", "manager", "manager.yaml"),
+	err = testutils.ReplaceInFile(filepath.Join(tc.Dir, "config", "default", "manager_auth_proxy_patch.yaml"),
 		"- \"--enable-leader-election\"", "- \"--enable-leader-election\"\n            - \"--zap-log-level=2\"")
 	Expect(err).NotTo(HaveOccurred())
 
