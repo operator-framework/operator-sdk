@@ -27,6 +27,12 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+type MetadataNotFoundError string
+
+func (e MetadataNotFoundError) Error() string {
+	return fmt.Sprintf("metadata not found in %s", string(e))
+}
+
 // Labels is a set of key:value labels from an operator-registry object.
 type Labels map[string]string
 
@@ -76,7 +82,7 @@ func findBundleMetadata(fs afero.Fs, bundleRoot string) (Labels, string, error) 
 	}
 
 	if len(annotations) == 0 {
-		return nil, "", fmt.Errorf("metadata not found in %s", bundleRoot)
+		return nil, "", MetadataNotFoundError(bundleRoot)
 	}
 
 	return annotations, annotationsPath, nil

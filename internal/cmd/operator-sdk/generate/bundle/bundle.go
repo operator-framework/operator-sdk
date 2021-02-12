@@ -20,29 +20,36 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
+	"text/template"
 
 	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
+	log "github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml"
 
 	metricsannotations "github.com/operator-framework/operator-sdk/internal/annotations/metrics"
-	scorecardannotations "github.com/operator-framework/operator-sdk/internal/annotations/scorecard"
 	genutil "github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/generate/internal"
 	gencsv "github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion"
 	"github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion/bases"
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
 	"github.com/operator-framework/operator-sdk/internal/registry"
 	"github.com/operator-framework/operator-sdk/internal/scorecard"
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
 const (
 	longHelp = `
 Running 'generate bundle' is the first step to publishing your operator to a catalog and/or deploying it with OLM.
 This command generates a set of bundle manifests, metadata, and a bundle.Dockerfile for your operator.
-Typically one would run 'generate kustomize manifests' first to (re)generate kustomize bases consumed by this command.
+A ClusterServiceVersion manifest will be generated from the set of manifests passed to this command (see below)
+using either an existing base at '<kustomize-dir>/bases/<package-name>.clusterserviceversion.yaml',
+typically containing metadata added by 'generate kustomize manifests' or by hand, or from scratch if that base
+does not exist. All non-metadata values in a base will be overwritten.
+
+There are two ways to pass cluster-ready manifests to this command: stdin via a Unix pipe,
+or in a directory using '--input-dir'. See command help for more information on these modes.
+Passing a directory is useful for running this command outside of a project, as kustomize
+config files are likely not present and/or only cluster-ready manifests are available.
 
 Set '--version' to supply a semantic version for your bundle if you are creating one
 for the first time or upgrading an existing one.
@@ -55,49 +62,44 @@ https://github.com/operator-framework/operator-registry/#manifest-format
 `
 
 	examples = `
-  # Generate bundle files and build your bundle image with these 'make' recipes:
-  $ make bundle
-  $ export USERNAME=<quay-namespace>
-  $ export BUNDLE_IMG=quay.io/$USERNAME/memcached-operator-bundle:v0.0.1
-  $ make bundle-build BUNDLE_IMG=$BUNDLE_IMG
-
-  # The above recipe runs the following commands manually. First it creates bundle
-  # manifests, metadata, and a bundle.Dockerfile:
-  $ make manifests
-  /home/user/go/bin/controller-gen "crd:trivialVersions=true" rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
-  $ operator-sdk generate kustomize manifests
-
-  Display name for the operator (required):
-  > memcached-operator
-  ...
-
+  # If running within a project or in a project that uses kustomize to generate manifests,
+	# make sure a kustomize directory exists that looks like the following 'config/manifests' directory:
   $ tree config/manifests
   config/manifests
   ├── bases
   │   └── memcached-operator.clusterserviceversion.yaml
   └── kustomization.yaml
-  $ kustomize build config/manifests | operator-sdk generate bundle --overwrite --version 0.0.1
-  Generating bundle manifest version 0.0.1
+
+  # Generate a 0.0.1 bundle by passing manifests to stdin:
+  $ kustomize build config/manifests | operator-sdk generate bundle --version 0.0.1
+  Generating bundle version 0.0.1
   ...
 
-  # After running the above commands, you should see this directory structure:
-  $ tree bundle
-  bundle
+  # If running outside of a project or in a project that does not use kustomize to generate manifests,
+	# make sure cluster-ready manifests are available on disk:
+  $ tree deploy/
+  deploy/
+  ├── crds
+  │   └── cache.my.domain_memcacheds.yaml
+  ├── deployment.yaml
+  ├── role.yaml
+  ├── role_binding.yaml
+  ├── service_account.yaml
+  └── webhooks.yaml
+
+  # Generate a 0.0.1 bundle by passing manifests by dir:
+  $ operator-sdk generate bundle --input-dir deploy --version 0.0.1
+  Generating bundle version 0.0.1
+  ...
+
+  # After running in either of the above modes, you should see this directory structure:
+  $ tree bundle/
+  bundle/
   ├── manifests
   │   ├── cache.my.domain_memcacheds.yaml
   │   └── memcached-operator.clusterserviceversion.yaml
   └── metadata
       └── annotations.yaml
-
-  # Then it validates your bundle files and builds your bundle image:
-  $ operator-sdk bundle validate ./bundle
-  $ docker build -f bundle.Dockerfile -t $BUNDLE_IMG .
-  Sending build context to Docker daemon  42.33MB
-  Step 1/9 : FROM scratch
-  ...
-
-  # You can then push your bundle image:
-  $ make docker-push IMG=$BUNDLE_IMG
 `
 )
 
@@ -120,17 +122,18 @@ func (c bundleCmd) validateManifests() (err error) {
 		}
 	}
 
-	if c.kustomizeDir == "" {
-		return errors.New("--kustomize-dir must be set")
-	}
-
-	if !genutil.IsPipeReader() {
-		if c.deployDir == "" {
-			return errors.New("--deploy-dir must be set if not reading from stdin")
-		}
-		if c.crdsDir == "" {
-			return errors.New("--crds-dir must be set if not reading from stdin")
-		}
+	// The three possible usage modes (stdin, inputDir, and legacy dirs) are mutually exclusive
+	// and one must be chosen.
+	isPipeReader := genutil.IsPipeReader()
+	isInputDir := c.inputDir != ""
+	isLegacyDirs := c.deployDir != "" || c.crdsDir != ""
+	switch {
+	case !(isPipeReader || isInputDir || isLegacyDirs):
+		return errors.New("one of stdin, --input-dir, or --deploy-dir (and optionally --crds-dir) must be set")
+	case isPipeReader && (isInputDir || isLegacyDirs):
+		return errors.New("none of --input-dir, --deploy-dir, or --crds-dir may be set if reading from stdin")
+	case isInputDir && isLegacyDirs:
+		return errors.New("only one of --input-dir or --deploy-dir (and optionally --crds-dir) may be set if not reading from stdin")
 	}
 
 	if c.stdout {
@@ -145,45 +148,39 @@ func (c bundleCmd) validateManifests() (err error) {
 // runManifests generates bundle manifests.
 func (c bundleCmd) runManifests() (err error) {
 
-	if !c.quiet && !c.stdout {
-		if c.version == "" {
-			fmt.Println("Generating bundle manifests")
-		} else {
-			fmt.Println("Generating bundle manifests version", c.version)
-		}
-	}
+	c.println("Generating bundle manifests")
 
-	if c.inputDir == "" {
-		c.inputDir = defaultRootDir
-	}
-	if !c.stdout {
-		if c.outputDir == "" {
-			c.outputDir = defaultRootDir
-		}
+	if !c.stdout && c.outputDir == "" {
+		c.outputDir = defaultRootDir
 	}
 
 	col := &collector.Manifests{}
-	if genutil.IsPipeReader() {
-		if err := col.UpdateFromReader(os.Stdin); err != nil {
-			return err
-		}
+	switch {
+	case genutil.IsPipeReader():
+		err = col.UpdateFromReader(os.Stdin)
+	case c.deployDir != "" && c.crdsDir != "":
+		err = col.UpdateFromDirs(c.deployDir, c.crdsDir)
+	case c.deployDir != "": // If only deployDir is set, use as input dir.
+		c.inputDir = c.deployDir
+		fallthrough
+	case c.inputDir != "":
+		err = col.UpdateFromDir(c.inputDir)
 	}
-	if c.deployDir != "" {
-		if err := col.UpdateFromDirs(c.deployDir, c.crdsDir); err != nil {
-			return err
-		}
+	if err != nil {
+		return err
 	}
 
-	// If no CSV is passed via stdin, an on-disk base is expected at basePath.
-	if len(col.ClusterServiceVersions) == 0 {
-		basePath := filepath.Join(c.kustomizeDir, "bases", c.packageName+".clusterserviceversion.yaml")
-		if genutil.IsExist(basePath) {
-			base, err := bases.ClusterServiceVersion{BasePath: basePath}.GetBase()
-			if err != nil {
-				return fmt.Errorf("error reading CSV base: %v", err)
-			}
-			col.ClusterServiceVersions = append(col.ClusterServiceVersions, *base)
+	// If no CSV was initially read, a kustomize base can be used at the default base path.
+	// Only read from kustomizeDir if a base exists so users can still generate a barebones CSV.
+	baseCSVPath := filepath.Join(c.kustomizeDir, "bases", c.packageName+".clusterserviceversion.yaml")
+	if len(col.ClusterServiceVersions) == 0 && genutil.IsExist(baseCSVPath) {
+		base, err := bases.ClusterServiceVersion{BasePath: baseCSVPath}.GetBase()
+		if err != nil {
+			return fmt.Errorf("error reading CSV base: %v", err)
 		}
+		col.ClusterServiceVersions = append(col.ClusterServiceVersions, *base)
+	} else {
+		c.println("Building a ClusterServiceVersion without an existing base")
 	}
 
 	var opts []gencsv.Option
@@ -221,15 +218,14 @@ func (c bundleCmd) runManifests() (err error) {
 		return fmt.Errorf("error writing bundle scorecard config: %v", err)
 	}
 
-	if !c.quiet && !c.stdout {
-		fmt.Println("Bundle manifests generated successfully in", c.outputDir)
-	}
+	c.println("Bundle manifests generated successfully in", c.outputDir)
 
 	return nil
 }
 
 // writeScorecardConfig writes cfg to dir at the hard-coded config path 'config.yaml'.
 func writeScorecardConfig(dir string, cfg v1alpha3.Configuration) error {
+	// Skip writing if config is empty.
 	if cfg.Metadata.Name == "" {
 		return nil
 	}
@@ -250,140 +246,127 @@ func writeScorecardConfig(dir string, cfg v1alpha3.Configuration) error {
 // runMetadata generates a bundle.Dockerfile and bundle metadata.
 func (c bundleCmd) runMetadata() error {
 
-	directory := c.inputDir
-	if directory == "" {
-		// There may be no existing bundle at the default path, so assume manifests
-		// only exist in the output directory.
-		defaultDirectory := filepath.Join(defaultRootDir, bundle.ManifestsDir)
-		if c.outputDir != "" && genutil.IsNotExist(defaultDirectory) {
-			directory = filepath.Join(c.outputDir, bundle.ManifestsDir)
-		} else {
-			directory = defaultDirectory
+	c.println("Generating bundle metadata")
+
+	if c.outputDir == "" {
+		c.outputDir = defaultRootDir
+	}
+	if err := os.MkdirAll(c.outputDir, 0755); err != nil {
+		return err
+	}
+
+	// If metadata already exists, only overwrite it if directed to.
+	bundleRoot := c.inputDir
+	if bundleRoot == "" {
+		bundleRoot = c.outputDir
+	}
+	if _, _, err := registry.FindBundleMetadata(bundleRoot); err != nil {
+		merr := registry.MetadataNotFoundError("")
+		if !errors.As(err, &merr) {
+			return err
 		}
-	} else {
-		directory = filepath.Join(directory, bundle.ManifestsDir)
-	}
-	outputDir := c.outputDir
-	if filepath.Clean(outputDir) == filepath.Clean(directory) {
-		outputDir = ""
+	} else if !c.overwrite {
+		return nil
 	}
 
-	return c.generateMetadata(directory, outputDir)
-}
-
-// generateMetadata wraps the operator-registry bundle Dockerfile/metadata generator.
-func (c bundleCmd) generateMetadata(manifestsDir, outputDir string) error {
-
-	metadataExists := isMetatdataExist(outputDir, manifestsDir)
-	err := bundle.GenerateFunc(manifestsDir, outputDir, c.packageName, c.channels, c.defaultChannel, c.overwrite)
-	if err != nil {
-		return fmt.Errorf("error generating bundle metadata: %v", err)
+	// Create annotation values for both bundle.Dockerfile and annotations.yaml, which should
+	// hold the same set of values always.
+	values := annotationsValues{
+		BundleDir:      c.outputDir,
+		PackageName:    c.packageName,
+		Channels:       c.channels,
+		DefaultChannel: c.defaultChannel,
+	}
+	for key, value := range metricsannotations.MakeBundleMetadataLabels(c.layout) {
+		values.OtherLabels = append(values.OtherLabels, fmt.Sprintf("%s=%s", key, value))
 	}
 
-	// Add SDK annotations/labels if metadata did not exist before or when overwrite is true.
-	if c.overwrite || !metadataExists {
-		bundleRoot := outputDir
-		if bundleRoot == "" {
-			bundleRoot = filepath.Dir(manifestsDir)
+	// Write each file.
+	metadataDir := filepath.Join(c.outputDir, "metadata")
+	if err := os.MkdirAll(metadataDir, 0755); err != nil {
+		return err
+	}
+	templateMap := map[string]*template.Template{
+		"bundle.Dockerfile":                            dockerfileTemplate,
+		filepath.Join(metadataDir, "annotations.yaml"): annotationsTemplate,
+	}
+	for path, tmpl := range templateMap {
+		c.println("Creating", path)
+		f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+		if err != nil {
+			return err
 		}
-
-		if err = updateMetadata(c.layout, bundleRoot); err != nil {
+		defer func() {
+			if err := f.Close(); err != nil {
+				log.Error(err)
+			}
+		}()
+		if err := tmpl.Execute(f, values); err != nil {
 			return err
 		}
 	}
-	return nil
-}
 
-// TODO(estroz): these updates need to be atomic because the bundle's Dockerfile and annotations.yaml
-// cannot be out-of-sync.
-func updateMetadata(layout, bundleRoot string) error {
-	bundleLabels := metricsannotations.MakeBundleMetadataLabels(layout)
-	for key, value := range scorecardannotations.MakeBundleMetadataLabels(scorecard.DefaultConfigDir) {
-		if _, hasKey := bundleLabels[key]; hasKey {
-			return fmt.Errorf("internal error: duplicate bundle annotation key %s", key)
-		}
-		bundleLabels[key] = value
-	}
-
-	// Write labels to bundle Dockerfile.
-	if err := rewriteDockerfileLabels(bundle.DockerFile, bundleLabels); err != nil {
-		return fmt.Errorf("error writing LABEL's in %s: %v", bundle.DockerFile, err)
-	}
-	if err := rewriteAnnotations(bundleRoot, bundleLabels); err != nil {
-		return fmt.Errorf("error writing LABEL's in bundle metadata: %v", err)
-	}
-
-	// Add a COPY for the scorecard config to bundle Dockerfile.
-	// TODO: change input config path to be a flag-based value.
-	localScorecardConfigPath := filepath.Join(bundleRoot, filepath.FromSlash(scorecard.DefaultConfigDir))
-	err := writeDockerfileCOPYScorecardConfig(bundle.DockerFile, localScorecardConfigPath)
-	if err != nil {
-		return fmt.Errorf("error writing scorecard config COPY in %s: %v", bundle.DockerFile, err)
-	}
+	c.println("Bundle metadata generated successfully")
 
 	return nil
 }
 
-// writeDockerfileCOPYScorecardConfig checks if bundle.Dockerfile and scorecard config exists in
-// the operator project. If it does, it injects the scorecard configuration into bundle image.
-func writeDockerfileCOPYScorecardConfig(dockerfileName, localConfigDir string) error {
-	if genutil.IsExist(bundle.DockerFile) && genutil.IsExist(localConfigDir) {
-		scorecardFileContent := fmt.Sprintf("COPY %s %s\n", localConfigDir, "/"+scorecard.DefaultConfigDir)
-		return projutil.RewriteFileContents(dockerfileName, "COPY", scorecardFileContent)
-	}
-	return nil
+// values to populate bundle metadata/Dockerfile.
+type annotationsValues struct {
+	BundleDir      string
+	PackageName    string
+	Channels       string
+	DefaultChannel string
+	OtherLabels    []string
 }
 
-// isMetatdataExist returns true if bundle.Dockerfile and metadataDir exist, if not
-// it returns false.
-func isMetatdataExist(outputDir, manifestsDir string) bool {
-	var annotationsDir string
-	if outputDir == "" {
-		annotationsDir = filepath.Dir(manifestsDir) + bundle.MetadataDir
-	} else {
-		annotationsDir = outputDir + bundle.MetadataDir
-	}
-
-	if genutil.IsNotExist(bundle.DockerFile) || genutil.IsNotExist(annotationsDir) {
-		return false
-	}
-	return true
+// Transform a Dockerfile label to a YAML kv.
+var funcs = template.FuncMap{
+	"toYAML": func(s string) string { return strings.ReplaceAll(s, "=", ": ") },
 }
 
-func rewriteDockerfileLabels(dockerfileName string, kvs map[string]string) error {
-	var labelStrings []string
-	for key, value := range kvs {
-		labelStrings = append(labelStrings, fmt.Sprintf("LABEL %s=%s\n", key, value))
-	}
-	sort.Strings(labelStrings)
-	var newBundleLabels strings.Builder
-	for _, line := range labelStrings {
-		newBundleLabels.WriteString(line)
-	}
+// Template for bundle.Dockerfile, containing scorecard labels.
+var dockerfileTemplate = template.Must(template.New("").Funcs(funcs).Parse(`FROM scratch
 
-	return projutil.RewriteFileContents(dockerfileName, "LABEL", newBundleLabels.String())
-}
+# Core bundle labels.
+LABEL operators.operatorframework.io.bundle.mediatype.v1=registry+v1
+LABEL operators.operatorframework.io.bundle.manifests.v1=manifests/
+LABEL operators.operatorframework.io.bundle.metadata.v1=metadata/
+LABEL operators.operatorframework.io.bundle.package.v1={{ .PackageName }}
+LABEL operators.operatorframework.io.bundle.channels.v1={{ .Channels }}
+{{- if .DefaultChannel }}
+LABEL operators.operatorframework.io.bundle.channel.default.v1={{ .DefaultChannel }}
+{{- end }}
+{{- range $i, $l := .OtherLabels }}
+LABEL {{ $l }}
+{{- end }}
 
-func rewriteAnnotations(bundleRoot string, kvs map[string]string) error {
-	annotations, annotationsPath, err := registry.FindBundleMetadata(bundleRoot)
-	if err != nil {
-		return err
-	}
+# Labels for testing.
+LABEL operators.operatorframework.io.test.mediatype.v1=scorecard+v1
+LABEL operators.operatorframework.io.test.config.v1=tests/scorecard/
 
-	for key, value := range kvs {
-		annotations[key] = value
-	}
-	annotationsFile := bundle.AnnotationMetadata{
-		Annotations: annotations,
-	}
-	b, err := yaml.Marshal(annotationsFile)
-	if err != nil {
-		return err
-	}
+# Copy files to locations specified by labels.
+COPY {{ .BundleDir }}/manifests /manifests/
+COPY {{ .BundleDir }}/metadata /metadata/
+COPY {{ .BundleDir }}/tests/scorecard /tests/scorecard/
+`))
 
-	mode := os.FileMode(0666)
-	if info, err := os.Stat(annotationsPath); err == nil {
-		mode = info.Mode()
-	}
-	return ioutil.WriteFile(annotationsPath, b, mode)
-}
+// Template for annotations.yaml, containing scorecard labels.
+var annotationsTemplate = template.Must(template.New("").Funcs(funcs).Parse(`annotations:
+  # Core bundle annotations.
+  operators.operatorframework.io.bundle.mediatype.v1: registry+v1
+  operators.operatorframework.io.bundle.manifests.v1: manifests/
+  operators.operatorframework.io.bundle.metadata.v1: metadata/
+  operators.operatorframework.io.bundle.package.v1: {{ .PackageName }}
+  operators.operatorframework.io.bundle.channels.v1: {{ .Channels }}
+  {{- if .DefaultChannel }}
+  operators.operatorframework.io.bundle.channel.default.v1: {{ .DefaultChannel }}
+  {{- end }}
+  {{- range $i, $l := .OtherLabels }}
+  {{ toYAML $l }}
+  {{- end }}
+
+  # Annotations for testing.
+  operators.operatorframework.io.test.mediatype.v1: scorecard+v1
+  operators.operatorframework.io.test.config.v1: tests/scorecard/
+`))
