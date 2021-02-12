@@ -68,6 +68,8 @@ func NewCmd() *cobra.Command {
 		Short: "Run the operator",
 		Run: func(cmd *cobra.Command, _ []string) {
 			logf.SetLogger(zapf.New(zapf.UseFlagOptions(opts)))
+			log.V(2).Info("test debug")
+			log.Info("testing verify if pick up ")
 			run(cmd, f)
 		},
 	}
