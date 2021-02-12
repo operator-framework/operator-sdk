@@ -114,20 +114,20 @@ tag: ## Tag a release commit. See 'make -f release/Makefile help' for more infor
 test-all: test-static test-e2e ## Run all tests
 
 .PHONY: test-static
-test-static: test-sanity test-unit test-links ## Run all non-cluster-based tests
+test-static: test-sanity test-unit test-docs ## Run all non-cluster-based tests
 
 .PHONY: test-sanity
 test-sanity: generate fix ## Test repo formatting, linting, etc.
 	git diff --exit-code # fast-fail if generate or fix produced changes
 	./hack/check-license.sh
 	./hack/check-error-log-msg-format.sh
-	go run ./release/changelog/gen-changelog.go -validate-only
 	go vet ./...
 	$(SCRIPTS_DIR)/fetch golangci-lint 1.31.0 && $(TOOLS_DIR)/golangci-lint run
 	git diff --exit-code # diff again to ensure other checks don't change repo
 
-.PHONY: test-links
-test-links: ## Test doc links
+.PHONY: test-docs
+test-docs: ## Test doc links
+	go run ./release/changelog/gen-changelog.go -validate-only
 	git submodule update --init --recursive website/
 	./hack/check-links.sh
 
