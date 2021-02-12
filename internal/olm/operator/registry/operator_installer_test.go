@@ -224,6 +224,10 @@ var _ = Describe("OperatorInstaller", func() {
 					Supported: true,
 				},
 				{
+					Type:      v1alpha1.InstallModeTypeMultiNamespace,
+					Supported: true,
+				},
+				{
 					Type:      v1alpha1.InstallModeTypeAllNamespaces,
 					Supported: true,
 				},
@@ -278,6 +282,22 @@ var _ = Describe("OperatorInstaller", func() {
 					Expect(og.Name).To(Equal("operator-sdk-og"))
 					Expect(og.Namespace).To(Equal("testns"))
 					Expect(len(og.Spec.TargetNamespaces)).To(Equal(1))
+				})
+			})
+			Context("given MultiNamespaces", func() {
+				It("should create one with the given target namespaces", func() {
+					_ = oi.InstallMode.Set(string(v1alpha1.InstallModeTypeMultiNamespace))
+					oi.InstallMode.TargetNamespaces = []string{"anotherns1", "anotherns2"}
+					err := oi.ensureOperatorGroup(context.TODO())
+					Expect(err).To(BeNil())
+
+					og, found, err := oi.getOperatorGroup(context.TODO())
+					Expect(err).To(BeNil())
+					Expect(found).To(BeTrue())
+					Expect(og).ToNot(BeNil())
+					Expect(og.Name).To(Equal("operator-sdk-og"))
+					Expect(og.Namespace).To(Equal("testns"))
+					Expect(og.Spec.TargetNamespaces).To(Equal([]string{"anotherns1", "anotherns2"}))
 				})
 			})
 			Context("given AllNamespaces", func() {
@@ -538,6 +558,19 @@ var _ = Describe("OperatorInstaller", func() {
 			target, err := oi.getTargetNamespaces(supported)
 			Expect(len(target)).To(Equal(1))
 			Expect(target[0]).To(Equal("test-ns"))
+			Expect(err).To(BeNil())
+		})
+		It("should return configured namespace when MultiNamespace is passed in", func() {
+
+			oi.InstallMode = operator.InstallMode{
+				InstallModeType:  v1alpha1.InstallModeTypeMultiNamespace,
+				TargetNamespaces: []string{"test-ns1", "test-ns2"},
+			}
+
+			supported.Insert(string(v1alpha1.InstallModeTypeMultiNamespace))
+			target, err := oi.getTargetNamespaces(supported)
+			Expect(len(target)).To(Equal(2))
+			Expect(target).To(Equal([]string{"test-ns1", "test-ns2"}))
 			Expect(err).To(BeNil())
 		})
 	})
