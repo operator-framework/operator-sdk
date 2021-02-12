@@ -73,8 +73,8 @@ func generateAPI(cfg config.Config, outputDir string, gvk resource.GVK) error {
 		return err
 	}
 
-	// Create test steps.
-	if err := createKuttlTestSteps(cfg, kuttlCaseDir, gvk); err != nil {
+	// Create test step files.
+	if err := createKuttlTestSteps(kuttlCaseDir, gvk); err != nil {
 		return fmt.Errorf("error creating kuttl test steps: %v", err)
 	}
 
@@ -88,7 +88,7 @@ func generateAPI(cfg config.Config, outputDir string, gvk resource.GVK) error {
 
 // createKuttlTestSteps creates a set of 3 kuttl case steps that minimally test a new API
 // defined by gvk in caseDir.
-func createKuttlTestSteps(cfg config.Config, caseDir string, gvk resource.GVK) error {
+func createKuttlTestSteps(caseDir string, gvk resource.GVK) error {
 
 	lowerKind := strings.ToLower(gvk.Kind)
 	stepSet := map[string]string{

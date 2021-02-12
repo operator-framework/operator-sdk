@@ -1460,7 +1460,6 @@ sigs.k8s.io/controller-runtime v0.8.0/go.mod h1:v9Lbj5oX443uR7GXYY46E0EE2o7k2YxQ
 sigs.k8s.io/controller-tools v0.3.0/go.mod h1:enhtKGfxZD1GFEoMgP8Fdbu+uKQ/cq1/WGJhdVChfvI=
 sigs.k8s.io/controller-tools v0.4.1 h1:VkuV0MxlRPmRu5iTgBZU4UxUX2LiR99n3sdQGRxZF4w=
 sigs.k8s.io/controller-tools v0.4.1/go.mod h1:G9rHdZMVlBDocIxGkK3jHLWqcTMNvveypYJwrvYKjWU=
-sigs.k8s.io/kubebuilder v1.0.8 h1:XYctSbuOICM9z1Ok0GIWChc1cj90EEEczeJQnb7ZPf0=
 sigs.k8s.io/kubebuilder/v3 v3.0.0-alpha.0.0.20210211121616-05abe25e7215 h1:pwEHSu3/ODNEr33DNrKt2DovGV84LhRBLt4QyrT6FJA=
 sigs.k8s.io/kubebuilder/v3 v3.0.0-alpha.0.0.20210211121616-05abe25e7215/go.mod h1:b1WkCy5t/3VSRBCffSfPV1WbH+f45ls69d4ic37sW6w=
 sigs.k8s.io/kustomize v2.0.3+incompatible h1:JUufWFNlI44MdtnjUqVnvh29rR37PQFzPbLXqhyOyX0=

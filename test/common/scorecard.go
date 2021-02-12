@@ -102,8 +102,8 @@ func ScorecardSpec(tc *testutils.TestContext, operatorType string) func() {
 			// Clean up after kuttl tests to avoid conflicts with other tests.
 			defer func() {
 				By("cleaning up CRs created by kuttl")
-				// If multiple groups are being tested, append output of the following command for that group.
-				crdNames, err := tc.Kubectl.Command("api-resources", "--api-group", "cache.example.com", "--output", "name")
+				// NB(estroz): this will need to be refactored into a function if the test project becomes multigroup.
+				crdNames, err := tc.Kubectl.Command("api-resources", "--api-group", fmt.Sprintf("%s.%s", tc.Group, tc.Domain), "--output", "name")
 				Expect(err).NotTo(HaveOccurred())
 				crdNames = strings.Join(strings.Split(strings.TrimSpace(crdNames), "\n"), ",")
 				kuttlCreatedCRsDeleted := func() error {
@@ -163,9 +163,12 @@ func enableKuttlTests(tc *testutils.TestContext) {
 	ExpectWithOffset(1, tc.Make("bundle", "deploy", "IMG="+tc.ImageName)).To(Succeed())
 
 	// Wait for the operator to become ready.
-	_, err = tc.Kubectl.Wait(true, "deployment.apps/memcached-operator-controller-manager",
-		"--for", "condition=Available",
-		"--timeout", "5m")
+	sampleFile := filepath.Join("config", "samples", fmt.Sprintf("%s_%s_%s.yaml", tc.Group, tc.Version, strings.ToLower(tc.Kind)))
+	EventuallyWithOffset(1, func() error {
+		_, err = tc.Kubectl.Apply(true, "-f", sampleFile)
+		return err
+	}, time.Minute, time.Second).Should(Succeed())
+	_, err = tc.Kubectl.Delete(true, "-f", sampleFile)
 	ExpectWithOffset(1, err).NotTo(HaveOccurred())
 
 	// Create the test bundle.
