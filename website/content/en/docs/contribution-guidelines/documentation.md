@@ -34,9 +34,9 @@ hugo server
 Any changes will be included in real time.
 
 
-## Check Links
+## Check Docs
 
-`make test-links` will use containers to build html and check the links.
+`make test-docs` will validate changelog fragments, build doc HTML in a container, and check its links.
 Please consider running this locally before creating a PR to save CI resources.
 
 

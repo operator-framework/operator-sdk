@@ -72,9 +72,9 @@ jobs:
         - make test-sanity
 
     # Run website checks
-    - name: doc links
+    - name: docs
       script:
-        - make test-links
+        - make test-docs
 
     ## Operator test stage jobs ##
 
