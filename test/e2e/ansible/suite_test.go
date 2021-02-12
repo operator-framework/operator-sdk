@@ -62,7 +62,7 @@ var _ = BeforeSuite(func() {
 
 	By("enabling debug logging in the manager")
 	err = testutils.ReplaceInFile(filepath.Join(tc.Dir, "config", "default", "manager_auth_proxy_patch.yaml"),
-		"- \"--enable-leader-election\"", "- \"--enable-leader-election\"\n            - \"--zap-log-level=2\"")
+		"- \"--enable-leader-election\"", "- \"--enable-leader-election\"\n        - \"--zap-log-level=2\"")
 	Expect(err).NotTo(HaveOccurred())
 
 	By("fetching the current-context")
