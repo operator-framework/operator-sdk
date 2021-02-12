@@ -193,8 +193,8 @@ var _ = Describe("Running ansible projects", func() {
 				Expect(err).NotTo(HaveOccurred())
 				return logOutput
 			}
-			Eventually(checkSkipCache, time.Minute, time.Second).Should(ContainSubstring("\"Skipping cache " +
-				"lookup\",\"resource\":{\"IsResourceRequest\":true," +
+			Eventually(checkSkipCache, time.Minute, time.Second).Should(ContainSubstring("\"Skipping cache lookup" +
+				"\",\"resource\":{\"IsResourceRequest\":true," +
 				"\"Path\":\"/api/v1/namespaces/default/configmaps/test-blacklist-watches\""))
 
 			By("scaling deployment replicas to 2")

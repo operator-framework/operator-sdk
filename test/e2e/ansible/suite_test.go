@@ -60,6 +60,11 @@ var _ = BeforeSuite(func() {
 	By("copying sample to a temporary e2e directory")
 	Expect(exec.Command("cp", "-r", "../../../testdata/ansible/memcached-operator", tc.Dir).Run()).To(Succeed())
 
+	By("enabling debug logging in the manager")
+	err = testutils.ReplaceInFile(filepath.Join(tc.Dir, "config", "manager", "manager.yaml"),
+		`- "--enable-leader-election"`, `- "--enable-leader-election"\n            - "--zap-devel"`)
+	Expect(err).NotTo(HaveOccurred())
+
 	By("fetching the current-context")
 	tc.Kubectx, err = tc.Kubectl.Command("config", "current-context")
 	Expect(err).NotTo(HaveOccurred())
