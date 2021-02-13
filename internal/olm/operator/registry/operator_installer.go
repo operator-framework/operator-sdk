@@ -375,6 +375,9 @@ func (o *OperatorInstaller) getTargetNamespaces(supported sets.String) ([]string
 		return []string{o.cfg.Namespace}, nil
 	case supported.Has(string(v1alpha1.InstallModeTypeSingleNamespace)):
 		return o.InstallMode.TargetNamespaces, nil
+	case supported.Has(string(v1alpha1.InstallModeTypeMultiNamespace)):
+		log.Warn("The selected install mode MultiNamespace may cause tenancy issues and is not recommended")
+		return o.InstallMode.TargetNamespaces, nil
 	default:
 		return nil, fmt.Errorf("no supported install modes")
 	}
