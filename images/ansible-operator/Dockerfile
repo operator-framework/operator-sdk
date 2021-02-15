@@ -17,7 +17,7 @@ RUN yum clean all && rm -rf /var/cache/yum/* \
   && yum -y update \
   && yum install -y libffi-devel openssl-devel python38-devel gcc python38-pip python38-setuptools \
   && pip3 install --no-cache-dir \
-    cryptography==3.3.1 \
+    cryptography==3.3.2 \
     ansible-runner==1.3.4 \
     ansible-runner-http==1.0.0 \
     ipaddress==1.0.23 \
