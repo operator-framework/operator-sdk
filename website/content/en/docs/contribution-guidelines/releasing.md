@@ -202,6 +202,11 @@ git push -f upstream latest
 - Post to Kubernetes slack in #kubernetes-operators and #operator-sdk-dev.
 - In the [GitHub milestone][gh-milestones], bump any open issues to the following release.
 
+**Note**
+In case there are non-transient errors while building the release job, you must:
+1. Revert the release PR. To do so, create a PR which reverts step [2](#2-create-and-merge-a-new-pr).
+2. Fix what broke in the release branch.
+3. Re-run the release with an incremented minor version to avoid Go module errors (ex. if v1.3.1 broke, then re-run the release as v1.3.2). Patch versions are cheap so this is not a big deal.
 
 ## Further reading
 
