@@ -34,6 +34,7 @@ func (f *RequirementsYml) SetTemplateDefaults() error {
 const requirementsYmlTmpl = `---
 collections:
   - name: community.kubernetes
-    version: "<1.0.0"
+    version: "==1.1.1"
   - operator_sdk.util
+    version: "==0.1.0"
 `
