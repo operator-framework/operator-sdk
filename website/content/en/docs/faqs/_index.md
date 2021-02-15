@@ -20,6 +20,12 @@ For further context about the relationship between Kubebuilder and Operator SDK,
 
 Please see the upstream [Controller Runtime FAQ][cr-faq] first for any questions related to runtime mechanics or controller-runtime APIs.
 
+## Can I customize the projects generated with SDK tool?
+
+After using the CLI to create your project, you are free to customise how you see fit. Bear in mind, that it is not recommended to deviate from the proposed layout unless you know what you are doing.
+
+For example, you should refrain from moving the scaffolded files, doing so will make it difficult in upgrading your project in the future. You may also lose the ability to use some of the CLI features and helpers. For further information on the project layout, see the doc [What's in a basic project?][basic-project-doc]
+
 ## How can I have separate logic for Create, Update, and Delete events? When reconciling an object can I access its previous state?
 
 You should not have separate logic. Instead design your reconciler to be idempotent. See the [controller-runtime FAQ][controller-runtime_faq] for more details.
@@ -135,3 +141,4 @@ Now run `make manifests` to update your `role.yaml`.
 [rbac-markers]: https://book.kubebuilder.io/reference/markers/rbac.html
 [rbac]:https://kubernetes.io/docs/reference/access-authn-authz/rbac/
 [scorecard-doc]: https://sdk.operatorframework.io/docs/advanced-topics/scorecard/
+[basic-project-doc]: https://book.kubebuilder.io/cronjob-tutorial/basic-project.html
