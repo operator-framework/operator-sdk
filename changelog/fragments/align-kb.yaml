@@ -111,3 +111,11 @@ entries:
       For Go-based operators, Makefile scaffold was improved
     kind: "change"
     breaking: false
+  - description: >
+      (go/v3) Changed the manager pod template's security context `runAsUser: 65532` to `runAsNonRoot: true`. More info: [#kubernetes-sigs/kubebuilder#1978](https://github.com/kubernetes-sigs/kubebuilder/pull/1978).
+    kind: "change"
+    breaking: false
+    header: (go/v3) Change security context run mode for OCP operators
+    body: >
+      In the `/config/manager/manager.yaml` file, replace `runAsUser: 65532` with `runAsNonRoot: true`.
+      This change is only necessary if your operator is intended to run on OCP.
