@@ -27,7 +27,7 @@ Projects are now scaffold using:
 
 - [kustomize][kustomize] to manage Kubernetes resources needed to deploy your operator
 - A `Makefile` with helpful targets to build, test, deploy and tailor things based on your project needs
-- Helpers and options to work with webhooks. For further information see [What is webhook?][webhook-doc]
+- Helpers and options to work with webhooks. For further information see [What is a Webhook?][webhook-doc]
 - Updated metrics configuration using [kube-auth-proxy][kube-auth-proxy], a `--metrics-addr` flag, and [kustomize][kustomize]-based deployment of a Kubernetes `Service` and prometheus operator `ServiceMonitor`
 - Scaffolded tests that use the [`envtest`][envtest] test framework
 - A preliminary support for plugins. For more info see the [extensible CLI and scaffolding plugins design document][plugins-phase1-design-doc] 
