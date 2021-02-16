@@ -7,7 +7,7 @@ description: Instructions for migrating a Go-based project built prior to `v1.0.
 
 ## Overview
 
-The motivation for the new layout was to [integrate Kubebuilder and Operator SDK][integration-doc] based projects. This enables Kubebuilder based projects to use the features provided by Operator SDK. For further information behind this motivation, check [What are the the differences between Kubebuilder and Operator-SDK?][what-are-the-the-differences-between-kubebuilder-and-operator-sdk]. 
+The motivation for the new layout is to [integrate Kubebuilder and Operator SDK][integration-doc] based projects. This enables Kubebuilder based projects to use the features provided by Operator SDK. For further information behind this motivation, check [the differences between Kubebuilder and Operator-SDK][what-are-the-the-differences-between-kubebuilder-and-operator-sdk]. 
 
 ### What was changed
 
@@ -26,14 +26,14 @@ The motivation for the new layout was to [integrate Kubebuilder and Operator SDK
 Projects are now scaffold using:
 
 - [kustomize][kustomize] to manage Kubernetes resources needed to deploy your operator
-- A `Makefile` with helpful targets to build, test, deploy and tailor things to your project's needs
+- A `Makefile` with helpful targets to build, test, deploy and tailor things based on your project needs
 - Helpers and options to work with webhooks. For further information see [What is webhook?][webhook-doc]
 - Updated metrics configuration using [kube-auth-proxy][kube-auth-proxy], a `--metrics-addr` flag, and [kustomize][kustomize]-based deployment of a Kubernetes `Service` and prometheus operator `ServiceMonitor`
 - Scaffolded tests that use the [`envtest`][envtest] test framework
-- A preliminary support for plugins. For more info see the [Extensible CLI and Scaffolding Plugins][plugins-phase1-design-doc] 
-- A PROJECT file which stores more information about the resources in use, to better enable plugins to make useful decisions while scaffolding
+- A preliminary support for plugins. For more info see the [extensible CLI and scaffolding plugins design document][plugins-phase1-design-doc] 
+- A PROJECT file which stores more information about the resources in use, to enable plugins make useful decisions while scaffolding
 - Liveness and Readiness probes using [`healthz.Ping`][healthz-ping].
-- A new option to create the projects using ComponentConfig. For more info see its [enhancement proposal][enhancement proposal] and the [Component config tutorial][component-config-tutorial]
+- A new option to create projects using ComponentConfig. For more info, see [enhancement proposal][enhancement proposal] and the [Component config tutorial][component-config-tutorial]
 - Go version `1.15` (previously it was `1.13).
 
 Generated files with the default API versions:
@@ -50,9 +50,9 @@ The most straightforward migration path is to:
 1. Create a new project from scratch to let `operator-sdk` scaffold the new project.
 2. Copy your existing code and configuration into the new project structure.
 
-**Note:** It is recommended that you have your project upgraded to the latest SDK release version (0.19.x+) before following the steps of this guide to migrate to new layout. 
+**Note:** It is recommended that you have your project upgraded to the latest SDK release version (0.19.x+) before following the steps in this guide to migrate to new layout. 
 
-Please, ensure that you have checked [Can I customize the projects generated with SDK tool?][faq-custom] in the [FAQ][faq] before continuing.
+Please ensure that you have read [Can I customize the projects generated with SDK tool?][faq-custom] in the [FAQ][faq] before continuing further.
 
 ### Create a new project
 
@@ -88,7 +88,7 @@ For further information see the [Single Group to Multi-Group][multigroup-kubebui
 
 ## Migrate APIs and Controllers
 
-Now we have our new project initialized, we need to re-create each of our APIs.
+Now that we have our new project initialized, we need to re-create each of our APIs.
 Using our API example from earlier (`cache.example.com`), we'll use `cache` for the
 `--group`, `v1alpha1` for the `--version` and `Memcached` for `--kind` flag.
 
@@ -105,7 +105,7 @@ operator-sdk create api \
 
 ### How to keep `apiextensions.k8s.io/v1beta1` for CRDs?
 
-From now on, the CRDs that will be created by controller-gen will be using the Kubernetes API version `apiextensions.k8s.io/v1`  by default, instead of `apiextensions.k8s.io/v1beta1`. 
+From now on, the CRDs that will be created by controller-gen will be using Kubernetes API version `apiextensions.k8s.io/v1` by default, instead of `apiextensions.k8s.io/v1beta1`. 
 
 The `apiextensions.k8s.io/v1beta1` was deprecated in Kubernetes `1.16` and will be removed in Kubernetes `1.22`.
 
@@ -184,7 +184,7 @@ Hereafter, the webhooks that are created by SDK will use Kubernetes API version 
     
 Note that `apiextensions/v1beta1` and `admissionregistration.k8s.io/v1beta1` were deprecated in Kubernetes `1.16` and will be removed in Kubernetes `1.22`. If you use `apiextensions/v1` and `admissionregistration.k8s.io/v1`, then you need to use `cert-manager.io/v1` which will be the default API adopted by the SDK CLI.
 
-**NOTE** If you are using the API `cert-manager.io/v1alpha2`, it is not compatible with the latest Kubernetes API version. (`cert-manager.io/v1alpha2` was deprecated in `Cert-Manager 0.14`. More info: [CertManager v1.0 docs][cert-manager-docs])
+**NOTE** If you are using the API `cert-manager.io/v1alpha2`, it is not compatible with the latest Kubernetes API version. (`cert-manager.io/v1alpha2` was deprecated in `Cert-Manager 0.14`. For more info, refer to [CertManager v1.0 docs][cert-manager-docs])
 
 If you would like to use the previous version, use the flag `--webhook-version=v1beta1` in the above command which is only required if you want your operator to support Kubernetes `1.15` and earlier.
 
@@ -388,7 +388,13 @@ make docker-build IMG=<some-registry>/<project-name>:<tag>
 
 ## Verify the migration
 
-The project can now be built, and the operator can be deployed on cluster. You can use the command `make deploy IMG=<some-registry>/<project-name>:<tag>`. For further steps regarding the deployment of the operator, creation of custom resources, and cleaning up of resources, see the [quickstart guide][quickstart].
+The project can now be built, and the operator can be deployed on cluster by running the command: 
+
+```sh
+make deploy IMG=<some-registry>/<project-name>:<tag>
+```
+
+For further steps regarding the deployment of the operator, creation of custom resources, and cleaning up of resources, see the [quickstart guide][quickstart].
 
 Note that, you can also troubleshoot by checking the container logs.
 E.g `kubectl logs deployment.apps/memcached-operator-controller-manager -n memcached-operator-system -c manager`  
