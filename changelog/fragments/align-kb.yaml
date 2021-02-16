@@ -117,4 +117,5 @@ entries:
     breaking: false
     header: (go/v3) Change security context run mode for OCP operators
     body: >
-      In the `/config/manager/manager.yaml` file, replace `runAsUser: 65532` with `runAsNonRoot: true`
+      In the `/config/manager/manager.yaml` file, replace `runAsUser: 65532` with `runAsNonRoot: true`.
+      This change is only necessary if your operator is intended to run on OCP.
