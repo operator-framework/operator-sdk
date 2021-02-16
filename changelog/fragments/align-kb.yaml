@@ -115,6 +115,6 @@ entries:
       (go/v3) Changed the manager pod template's security context `runAsUser: 65532` to `runAsNonRoot: true`. More info: [#kubernetes-sigs/kubebuilder#1978](https://github.com/kubernetes-sigs/kubebuilder/pull/1978).
     kind: "change"
     breaking: false
-    header: Fix issue to run Go-based projects on OCP
+    header: (go/v3) Change security context run mode for OCP operators
     body: >
       In the `/config/manager/manager.yaml` file, replace `runAsUser: 65532` with `runAsNonRoot: true`
