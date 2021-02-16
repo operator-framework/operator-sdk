@@ -291,10 +291,7 @@ func (o OperatorInstaller) createSubscription(ctx context.Context, csName string
 }
 
 func (o OperatorInstaller) getInstalledCSV(ctx context.Context) (*v1alpha1.ClusterServiceVersion, error) {
-	c, err := olmclient.NewClientForConfig(o.cfg.RESTConfig)
-	if err != nil {
-		return nil, err
-	}
+	c := olmclient.Client{KubeClient: o.cfg.Client}
 
 	// BUG(estroz): if namespace is not contained in targetNamespaces,
 	// DoCSVWait will fail because the CSV is not deployed in namespace.
@@ -303,13 +300,13 @@ func (o OperatorInstaller) getInstalledCSV(ctx context.Context) (*v1alpha1.Clust
 		Namespace: o.cfg.Namespace,
 	}
 	log.Infof("Waiting for ClusterServiceVersion %q to reach 'Succeeded' phase", nn)
-	if err = c.DoCSVWait(ctx, nn); err != nil {
+	if err := c.DoCSVWait(ctx, nn); err != nil {
 		return nil, fmt.Errorf("error waiting for CSV to install: %w", err)
 	}
 
 	// TODO: check status of all resources in the desired bundle/package.
 	csv := &v1alpha1.ClusterServiceVersion{}
-	if err = o.cfg.Client.Get(ctx, nn, csv); err != nil {
+	if err := o.cfg.Client.Get(ctx, nn, csv); err != nil {
 		return nil, fmt.Errorf("error getting installed CSV: %w", err)
 	}
 	return csv, nil

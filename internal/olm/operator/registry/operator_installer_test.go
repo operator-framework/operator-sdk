@@ -55,8 +55,8 @@ var _ = Describe("OperatorInstaller", func() {
 			cfg.Client = fake.NewClientBuilder().WithScheme(sch).Build()
 
 			oi = NewOperatorInstaller(cfg)
-			oi.StartingCSV = "fakeName"
-			oi.cfg.Namespace = "fakeNS"
+			oi.StartingCSV = "testname"
+			oi.cfg.Namespace = "testns"
 		})
 
 		It("should create the subscription with the fake client", func() {
@@ -82,6 +82,66 @@ var _ = Describe("OperatorInstaller", func() {
 			_, err := oi.createSubscription(context.TODO(), "duplicate")
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).Should(ContainSubstring("error creating subscription"))
+		})
+	})
+
+	Describe("getInstalledCSV", func() {
+		var (
+			cfg *operator.Configuration
+			oi  *OperatorInstaller
+			sch *runtime.Scheme
+		)
+		BeforeEach(func() {
+			// Setup and fake client
+			cfg = &operator.Configuration{}
+			sch = runtime.NewScheme()
+			Expect(v1.AddToScheme(sch)).To(Succeed())
+			Expect(v1alpha1.AddToScheme(sch)).To(Succeed())
+
+			oi = NewOperatorInstaller(cfg)
+			oi.StartingCSV = "somename"
+			oi.cfg.Namespace = "somenamespace"
+		})
+		It("should return installed CSV with no error", func() {
+			cfg.Client = fake.NewClientBuilder().WithScheme(sch).WithObjects(
+				&v1alpha1.ClusterServiceVersion{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "somename",
+						Namespace: "somenamespace",
+					},
+					Status: v1alpha1.ClusterServiceVersionStatus{
+						Phase: v1alpha1.CSVPhaseSucceeded,
+					},
+				},
+			).Build()
+
+			csv, err := oi.getInstalledCSV(context.TODO())
+			Expect(err).ToNot(HaveOccurred())
+			Expect(csv).ToNot(BeNil())
+			Expect(csv.Name).To(Equal("somename"))
+			Expect(csv.Namespace).To(Equal("somenamespace"))
+			Expect(csv.Status.Phase).To(Equal(v1alpha1.CSVPhaseSucceeded))
+		})
+		It("should return an error when CSV fails", func() {
+			cfg.Client = fake.NewClientBuilder().WithScheme(sch).WithObjects(
+				&v1alpha1.ClusterServiceVersion{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "somename",
+						Namespace: "somenamespace",
+					},
+					Status: v1alpha1.ClusterServiceVersionStatus{
+						Phase:   v1alpha1.CSVPhaseFailed,
+						Reason:  v1alpha1.CSVReasonInstallCheckFailed,
+						Message: "test message",
+					},
+				},
+			).Build()
+
+			csv, err := oi.getInstalledCSV(context.TODO())
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).Should(ContainSubstring("error waiting for CSV to install"))
+			Expect(err.Error()).Should(ContainSubstring("test message"))
+			Expect(csv).To(BeNil())
 		})
 	})
 

@@ -65,9 +65,9 @@ func (c ConfigMapCatalogCreator) registryUp(ctx context.Context, cs *v1alpha1.Ca
 	rr := configmap.RegistryResources{
 		Pkg:     c.Package,
 		Bundles: c.Bundles,
-	}
-	if rr.Client, err = olmclient.NewClientForConfig(c.cfg.RESTConfig); err != nil {
-		return err
+		Client: &olmclient.Client{
+			KubeClient: c.cfg.Client,
+		},
 	}
 
 	if exists, err := rr.IsRegistryExist(ctx, c.cfg.Namespace); err != nil {
