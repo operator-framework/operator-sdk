@@ -1,0 +1,6 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Add support for Apple Silicon via a new darwin_am64 release target.
+    kind: addition

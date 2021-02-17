@@ -3,7 +3,7 @@ dist: xenial
 
 language: go
 go:
-- 1.15.5
+- "1.16"
 go_import_path: github.com/operator-framework/operator-sdk
 
 cache:
