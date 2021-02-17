@@ -267,7 +267,7 @@ var _ = Describe("Running ansible projects", func() {
 			By("creating a pod with curl image")
 			// todo: the flag --generator=run-pod/v1 is deprecated, however, shows that besides
 			// it should not make any difference and work locally successfully when the flag is removed
-			// travis has been failing and the curl pod is not found when the flag is not used
+			// CI has been failing and the curl pod is not found when the flag is not used
 			cmdOpts := []string{
 				"run", "--generator=run-pod/v1", "curl", "--image=curlimages/curl:7.68.0", "--restart=OnFailure", "--",
 				"curl", "-v", "-k", "-H", fmt.Sprintf(`Authorization: Bearer %s`, token),

@@ -33,27 +33,20 @@ See the [release guide][dev-release] for more information.
 
 ## Continuous Integration (CI)
 
-The operator-sdk repo uses [Travis CI][travis] to test each pull request and build images for both master commits
-and releases. You can alter these processes by modifying this [`.travis.yml`][travis.yml] config file.
+The operator-sdk repo uses [Github Actions][sdk-actions] to test each pull request and build images for both master commits
+and release tags. You can alter these processes by modifying the appropriate [Action config][sdk-action-cfgs].
 
-### Testing builds with new architectures
+### Adding new architectures
 
-Follow these steps to execute the Travis `Deploy` stage against your branch
-to demonstrate that the merge build will complete as expected.
+The operator-sdk project builds binaries for [several os's/architectures][readme-platforms].
+If you wish to add support for a new one, please create a feature request issue before
+implementing support for that platform and submitting a PR.
 
-- Enable Travis in your fork repository. See [this guide][travis-setup] for more information.
-- Create public image repos for each image built by `make image-build`; make sure the registry used supports
-multi-arch images, like quay.io.
-  - For each image type, you need one repo for the manifest list and one for each architecture being tested.
-- Set each image variable (that ends in `_IMAGE`, not `_BASE_IMAGE`) found in the Makefile
-as an environment variable in `.travis.yml`, ex. `export SCORECARD_TEST_IMAGE=<registry>/<username>/scorecard-test:latest`
-- Create a PR with your configuration changes to _your_ fork, with the first commit message containing
-`[travis deploy]`.
-  - This commit is only for testing on your fork's PR. This commit/message should not be present in an operator-sdk
-  repo PR.
-- Ensure the image builds for that PR pass.
-- Create a PR to the operator-sdk repo with a description containing a link to the Travis build page
-showing a successful deployment stage with your changes.
+<!-- TODO(estroz): add link to deploy action once PR is merged -->
+If you'd like to implement support yourself, you can test a new architecture by enabling Actions
+in your repository, add a platform pair to the `deploy` Action's `build and push` step,
+and push to your main branch. Once the updated Action passes, submit a PR linking the passing Action run.
+
 
 [git-tool]:https://git-scm.com/downloads
 [go-tool]:https://golang.org/dl/
@@ -62,6 +55,6 @@ showing a successful deployment stage with your changes.
 [dev-testing]: /docs/contribution-guidelines/testing
 [dev-docs]: /docs/contribution-guidelines/documentation
 [dev-release]: /docs/contribution-guidelines/releasing
-[travis]: https://docs.travis-ci.com/
-[travis.yml]: https://github.com/operator-framework/operator-sdk/blob/master/.travis.yml
-[travis-setup]: https://docs.travis-ci.com/user/tutorial/#to-get-started-with-travis-ci-using-github
+[sdk-actions]:https://github.com/operator-framework/operator-sdk/actions
+[sdk-action-cfgs]:https://github.com/operator-framework/operator-sdk/tree/master/.github/workflows
+[readme-platforms]:https://github.com/operator-framework/operator-sdk/tree/master/README.md#platforms

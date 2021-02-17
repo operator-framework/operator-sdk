@@ -3,7 +3,6 @@
 set -e
 
 # If running in Github actions: this should be set to "github.base_ref".
-# If running in Travis CI: this should be set to "$TRAVIS_COMMIT_RANGE".
 : ${1?"the first argument must be set to a commit-ish reference"}
 
 # Patterns to ignore.

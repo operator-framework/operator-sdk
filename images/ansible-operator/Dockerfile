@@ -18,6 +18,7 @@ RUN GOOS=linux GOARCH=$TARGETARCH make build/ansible-operator
 
 # Final image.
 FROM registry.access.redhat.com/ubi8/ubi:8.3-227
+ARG TARGETARCH
 
 RUN mkdir -p /etc/ansible \
   && echo "localhost ansible_connection=local" > /etc/ansible/hosts \
@@ -29,9 +30,7 @@ ENV HOME=/opt/ansible \
     USER_NAME=ansible \
     USER_UID=1001
 
-# Install python dependencies
-# Ensure fresh metadata rather than cached metadata in the base by running
-# dnf clean all && rm -rf /var/dnf/cache/* first
+# Install python dependencies after freshening metadata.
 RUN dnf clean all && rm -rf /var/cache/dnf/* \
   && dnf update -y \
   && dnf install -y libffi-devel openssl-devel python38-devel gcc python38-pip python38-setuptools \
@@ -53,8 +52,7 @@ RUN echo "${USER_NAME}:x:${USER_UID}:0:${USER_NAME} user:${HOME}:/sbin/nologin" 
   && chown -R ${USER_UID}:0 ${HOME} \
   && chmod -R ug+rwx ${HOME}
 
-RUN TINIARCH=$(case ${TARGETARCH} in ppc64le) echo -n ppc64el ;; *) echo -n ${TARGETARCH} ;; esac) \
-  && curl -L -o /tini https://github.com/krallin/tini/releases/latest/download/tini-$TINIARCH \
+RUN curl -L -o /tini https://github.com/krallin/tini/releases/latest/download/tini-${TARGETARCH} \
   && chmod +x /tini
 
 WORKDIR ${HOME}

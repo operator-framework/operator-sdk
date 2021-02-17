@@ -18,7 +18,7 @@ cp "${DIR}"/*.auto* "${GPG_HOME}"
 
 echo -e "\nDecrypting secret key..."
 {
-  # $GPG_PASSWORD is taken from the script's env (injected by Travis CI).
+  # $GPG_PASSWORD is taken from the script's env (injected by CI).
   echo $GPG_PASSWORD | gpg --decrypt \
     --pinentry-mode loopback --batch \
     --passphrase-fd 0 \

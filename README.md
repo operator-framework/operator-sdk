@@ -1,6 +1,9 @@
 <img src="website/static/operator_logo_sdk_color.svg" height="125px"></img>
 
-[![Build Status](https://travis-ci.com/operator-framework/operator-sdk.svg?branch=master)](https://travis-ci.com/operator-framework/operator-sdk)
+
+<!-- TODO(estroz): uncomment this when .github.com/workflows/deploy.yml is merged
+[![Build Status](https://github.com/operator-framework/operator-sdk/workflows/deploy/badge.svg)](https://github.com/operator-framework/operator-sdk/actions)
+-->
 [![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
 [![Go Report Card](https://goreportcard.com/badge/github.com/operator-framework/operator-sdk)](https://goreportcard.com/report/github.com/operator-framework/operator-sdk)
 
