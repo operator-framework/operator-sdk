@@ -64,7 +64,7 @@ var _ = Describe("Running Helm projects", func() {
 		It("should run correctly in a cluster", func() {
 			By("checking if the Operator project Pod is running")
 			verifyControllerUp := func() error {
-				By("getting the controller-manager pod name")
+				// Get the controller-manager pod name
 				podOutput, err := tc.Kubectl.Get(
 					true,
 					"pods", "-l", "control-plane=controller-manager",
@@ -73,8 +73,6 @@ var _ = Describe("Running Helm projects", func() {
 				if err != nil {
 					return fmt.Errorf("could not get pods: %v", err)
 				}
-
-				By("ensuring the created controller-manager Pod")
 				podNames := kbtestutils.GetNonEmptyLines(podOutput)
 				if len(podNames) != 1 {
 					return fmt.Errorf("expecting 1 pod, have %d", len(podNames))
@@ -84,12 +82,12 @@ var _ = Describe("Running Helm projects", func() {
 					return fmt.Errorf("expecting pod name %q to contain %q", controllerPodName, "controller-manager")
 				}
 
-				By("checking the controller-manager Pod is running")
+				// Ensure the controller-manager Pod is running.
 				status, err := tc.Kubectl.Get(
 					true,
 					"pods", controllerPodName, "-o", "jsonpath={.status.phase}")
 				if err != nil {
-					return fmt.Errorf("failed to get pod stauts for %q: %v", controllerPodName, err)
+					return fmt.Errorf("failed to get pod status for %q: %v", controllerPodName, err)
 				}
 				if status != "Running" {
 					return fmt.Errorf("controller pod in %s status", status)
