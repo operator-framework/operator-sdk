@@ -126,14 +126,14 @@ spec:
                 image: quay.io/example/memcached-operator:v0.0.1
                 livenessProbe:
                   httpGet:
-                    path: /readyz
+                    path: /healthz
                     port: 6789
                   initialDelaySeconds: 15
                   periodSeconds: 20
                 name: manager
                 readinessProbe:
                   httpGet:
-                    path: /healthz
+                    path: /readyz
                     port: 6789
                   initialDelaySeconds: 5
                   periodSeconds: 10

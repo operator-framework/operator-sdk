@@ -80,13 +80,13 @@ spec:
           image: {{ .Image }}
           livenessProbe:
             httpGet:
-              path: /readyz
+              path: /healthz
               port: 6789
             initialDelaySeconds: 15
             periodSeconds: 20
           readinessProbe:
             httpGet:
-              path: /healthz
+              path: /readyz
               port: 6789
             initialDelaySeconds: 5
             periodSeconds: 10
