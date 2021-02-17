@@ -84,9 +84,14 @@ image-build: $(foreach i,$(IMAGE_TARGET_LIST),image/$(i)) ## Build all images.
 
 # Build an image.
 BUILD_IMAGE_REPO = quay.io/operator-framework
+# When running in a terminal, this will be false. If true (ex. CI), print plain progress.
+ifneq ($(shell test -t 0; echo $$?),0)
+DOCKER_PROGRESS = --progress plain
+endif
 image/%: export DOCKER_CLI_EXPERIMENTAL = enabled
 image/%:
-	docker buildx build -t $(BUILD_IMAGE_REPO)/$*:dev -f ./images/$*/Dockerfile --load .
+	docker run --privileged --rm tonistiigi/binfmt:qemu-v5.0.1 --install all > /dev/null
+	docker buildx build $(DOCKER_PROGRESS) -t $(BUILD_IMAGE_REPO)/$*:dev -f ./images/$*/Dockerfile --load .
 
 ##@ Release
 
