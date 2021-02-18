@@ -10,10 +10,11 @@ on:
     branches: [ master ]
 
 jobs:
+  # Job to test release steps. This will only create a release remotely if run on a tagged commit.
   goreleaser:
     name: goreleaser
     runs-on: ubuntu-18.04
-    environment: deploy
+    environment: foo
     steps:
     - name: checkout
       uses: actions/checkout@v2
@@ -36,10 +37,11 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GPG_PASSWORD: ${{ secrets.GPG_PASSWORD }}
 
+  # Job matrix for image builds.
   images:
     name: images
     runs-on: ubuntu-18.04
-    environment: deploy
+    environment: foo
     strategy:
       matrix:
         id: ["operator-sdk", "ansible-operator", "helm-operator", "scorecard-test", "scorecard-test-kuttl"]
