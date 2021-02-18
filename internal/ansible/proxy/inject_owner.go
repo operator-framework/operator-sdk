@@ -143,7 +143,9 @@ func (i *injectOwnerReferenceHandler) ServeHTTP(w http.ResponseWriter, req *http
 				http.Error(w, m, http.StatusBadRequest)
 				return
 			}
-			if addOwnerRef {
+			// If the resource contains the Helm resource-policy keep annotation, then do not add
+			// the owner reference. So when the CR is deleted, Kubernetes won't GCs the resource.
+			if addOwnerRef && !k8sutil.ContainsResourcePolicyKeep(data.GetAnnotations()) {
 				data.SetOwnerReferences(append(data.GetOwnerReferences(), owner.OwnerReference))
 			} else {
 				err := handler.SetOwnerAnnotations(data, ownerObject)
