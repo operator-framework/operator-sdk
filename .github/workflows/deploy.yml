@@ -10,6 +10,7 @@ on:
     branches: [ master ]
 
 jobs:
+  # Job to test release steps. This will only create a release remotely if run on a tagged commit.
   goreleaser:
     name: goreleaser
     runs-on: ubuntu-18.04
@@ -25,17 +26,22 @@ jobs:
       with:
         go-version: 1.15.5
 
+    - name: gpg init
+      if: github.event_name != 'pull_request'
+      run: .ci/gpg/create-keyring.sh
+      env:
+        GPG_PASSWORD: ${{ secrets.GPG_PASSWORD }}
+
     - name: release
       run: |
         if [[ $GITHUB_REF != refs/tags/* ]]; then
           export DRY_RUN=1
         fi
-        .ci/gpg/create-keyring.sh
         make release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GPG_PASSWORD: ${{ secrets.GPG_PASSWORD }}
 
+  # Job matrix for image builds.
   images:
     name: images
     runs-on: ubuntu-18.04

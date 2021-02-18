@@ -6,7 +6,7 @@ SHELL = /bin/bash
 
 # Dry run flags.
 ifneq ($(DRY_RUN),)
-SNAPSHOT_FLAGS = --snapshot --skip-publish --rm-dist
+SNAPSHOT_FLAGS = --snapshot --skip-publish --skip-sign --rm-dist
 $(shell touch changelog/generated/$(GIT_VERSION).md)
 endif
 
