@@ -13,7 +13,7 @@ jobs:
   goreleaser:
     name: goreleaser
     runs-on: ubuntu-18.04
-    environment: deploy
+    environment: foo
     steps:
     - name: checkout
       uses: actions/checkout@v2
@@ -39,7 +39,7 @@ jobs:
   images:
     name: images
     runs-on: ubuntu-18.04
-    environment: deploy
+    environment: foo
     strategy:
       matrix:
         id: ["operator-sdk", "ansible-operator", "helm-operator", "scorecard-test", "scorecard-test-kuttl"]
