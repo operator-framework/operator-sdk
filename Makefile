@@ -90,7 +90,6 @@ DOCKER_PROGRESS = --progress plain
 endif
 image/%: export DOCKER_CLI_EXPERIMENTAL = enabled
 image/%:
-	docker run --privileged --rm tonistiigi/binfmt:qemu-v5.0.1 --install all > /dev/null
 	docker buildx build $(DOCKER_PROGRESS) -t $(BUILD_IMAGE_REPO)/$*:dev -f ./images/$*/Dockerfile --load .
 
 ##@ Release
