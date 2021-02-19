@@ -17,6 +17,8 @@ COPY . .
 RUN GOOS=linux GOARCH=$TARGETARCH make build/ansible-operator
 
 # Final image.
+# TODO(estroz): replace ubi image in FROM with the following base image once a build has occurred:
+# FROM quay.io/operator-framework/ansible-operator-base:<tag>-<commit-ish>
 FROM registry.access.redhat.com/ubi8/ubi:8.3-227
 ARG TARGETARCH
 

@@ -48,3 +48,5 @@ RUN curl -L -o /tini https://github.com/krallin/tini/releases/download/${TINI_VE
 
 WORKDIR ${HOME}
 USER ${USER_UID}
+
+ENTRYPOINT ["/tini", "--"]
