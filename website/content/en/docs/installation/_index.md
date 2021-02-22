@@ -88,7 +88,6 @@ chmod +x operator-sdk_${OS}_${ARCH} && sudo mv operator-sdk_${OS}_${ARCH} /usr/l
 #### Prerequisites
 
 - [git][git_tool]
-- [bazaar][bazaar_tool] version 2.7.0+
 - [go][go_tool] version v1.15+.
 
 ```sh
@@ -103,5 +102,4 @@ versions 1.15+ which is `"https://proxy.golang.org|direct"`.
 
 [homebrew_tool]:https://brew.sh/
 [git_tool]:https://git-scm.com/downloads
-[bazaar_tool]:http://wiki.bazaar.canonical.com/Download
 [go_tool]:https://golang.org/dl/
