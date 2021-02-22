@@ -337,7 +337,7 @@ func (r *runner) makeParameters(u *unstructured.Unstructured) map[string]interfa
 		parameters = paramconv.MapToSnake(spec)
 	} else {
 		for k, v := range spec {
-			parameters[k] = v
+			parameters[k] = markUnsafe(v)
 		}
 	}
 
@@ -358,6 +358,34 @@ func (r *runner) makeParameters(u *unstructured.Unstructured) map[string]interfa
 		}
 	}
 	return parameters
+}
+
+// markUnsafe recursively checks for string values and marks them unsafe.
+// for eg:
+//		spec:
+//			key: "val"
+// would be marked unsafe in JSON format as:
+//		spec:
+//			key: map{__ansible_unsafe:"val"}
+func markUnsafe(values interface{}) interface{} {
+	switch v := values.(type) {
+	case []interface{}:
+		var p []interface{}
+		for _, n := range v {
+			p = append(p, markUnsafe(n))
+		}
+		return p
+	case map[string]interface{}:
+		m := make(map[string]interface{})
+		for k, v := range v {
+			m[k] = markUnsafe(v)
+		}
+		return m
+	case string:
+		return map[string]interface{}{"__ansible_unsafe": values}
+	default:
+		return values
+	}
 }
 
 // escapeAnsibleKey - replaces characters that would result in an inaccessible Ansible parameter with underscores
