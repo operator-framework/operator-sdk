@@ -143,7 +143,7 @@ INFO[0040] OLM has successfully installed "memcached-operator.v0.0.1"
 
 <!-- TODO(jmccormick2001): add `scorecard` usage here -->
 
-### Upgrading bundles to a newer version
+### Upgrading a bundle to a newer version
 
 We can use the `operator-sdk run bundle-upgrade` command with a newer version of bundle image to upgrade 
 an existing operator bundle deployed on cluster. The command automates the manual orchestration typically required to upgrade an operator 
@@ -167,6 +167,68 @@ INFO[0057]   Found ClusterServiceVersion "default/memcached-operator.v0.0.2" pha
 INFO[0058]   Found ClusterServiceVersion "default/memcached-operator.v0.0.2" phase: Installing
 INFO[0095]   Found ClusterServiceVersion "default/memcached-operator.v0.0.2" phase: Succeeded
 INFO[0095] Successfully upgraded to "memcached-operator.v0.0.2"
+```
+
+#### Upgrading a bundle that was installed traditionally using OLM
+
+An operator bundle can be upgraded even if it was originally deployed using OLM without using the `run bundle` command.
+
+Let's see how to deploy an operator bundle traditionally using OLM and then upgrade the operator bundle to a newer version.
+
+First, create a catalogsource by building the catalogsource from an index.
+```
+$ oc create -f catalogsource.yaml
+```
+```
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: etcdoperator
+  namespace: default
+spec:
+  displayName: Etcd Operators
+  image: <some-registry>/etcd-index:latest
+  sourceType: grpc
+```
+
+Next, install the operator bundle by creating a subscription.
+```
+$ oc create -f subscription.yaml
+```
+
+```
+apiVersion: v1
+items:
+- apiVersion: operators.coreos.com/v1alpha1
+  kind: Subscription
+  metadata:
+    name: etcd
+    namespace: default
+  spec:
+    channel: "stable"
+    installPlanApproval: Manual
+    name: etcd
+    source: etcdoperator
+    sourceNamespace: default
+    startingCSV: etcdoperator.v0.0.1
+```
+
+Once the Operator bundle is deployed, you can use the `run bundle-upgrade` command by specifing the new bundle image that you want to upgrade to.
+
+```console
+$ operator-sdk run bundle-upgrade <some-registry>/etcd-bundle:v0.0.2
+INFO[0000] Found existing subscription with name etcd and namespace default
+INFO[0000] Found existing catalog source with name etcdoperator and namespace default
+INFO[0005] Successfully created registry pod: <some-registry>-etcd-bundle-0-0-2
+INFO[0005] Updated catalog source etcdoperator with address and annotations
+INFO[0005] Deleted previous registry pod with name "<some-registry>-etcd-bundle-0-0-1"
+INFO[0005] Approved InstallPlan install-6vrzh for the Subscription: etcd
+INFO[0005] Waiting for ClusterServiceVersion "default/etcdoperator.v0.0.2" to reach 'Succeeded' phase
+INFO[0005]   Waiting for ClusterServiceVersion "default/etcdoperator.v0.0.2" to appear
+INFO[0007]   Found ClusterServiceVersion "default/etcdoperator.v0.0.2" phase: Pending
+INFO[0008]   Found ClusterServiceVersion "default/etcdoperator.v0.0.2" phase: Installing
+INFO[0018]   Found ClusterServiceVersion "default/etcdoperator.v0.0.2" phase: Succeeded
+INFO[0018] Successfully upgraded to "etcdoperator.v0.0.2"
 ```
 
 ### Deploying bundles in production
