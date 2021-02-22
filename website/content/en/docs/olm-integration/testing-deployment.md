@@ -22,7 +22,7 @@ operator-sdk run bundle <bundle-image> [--index-image=] [--kubeconfig=] [--names
 ```
 
 Let's look at the configuration shared between `run bundle`, `run
-packagemanifests` and `cleanup`:
+packagemanifests`, `run bundle-upgrade` and `cleanup`:
 
 - **kubeconfig**: the local path to a kubeconfig. This uses well-defined default
   loading rules to load the config if empty.
@@ -102,6 +102,21 @@ Let's look at the anatomy of the `run packagemanifests` configuration model:
   found in **manifests-dir**, e.g. `packagemanifests/0.0.1` in an Operator
   SDK project.
 
+## `operator-sdk run bundle-upgrade` command overview
+`operator-sdk run bundle-upgrade` assumes OLM is already installed and running on your 
+cluster and that the Operator has a valid [bundle][bundle-format]. It also assumes that 
+the previous version of the Operator was deployed on the cluster using `run bundle` command 
+or traditionally via OLM. See the [CLI overview][doc-cli-overview] for commands to work 
+with an OLM installation and generate a bundle.
+
+```
+operator-sdk run bundle-upgrade <bundle-image> [--kubeconfig=] [--namespace=] [--timeout=] 
+```
+Let's look at the anatomy of the `run bundle-upgrade` configuration model:
+
+- **bundle-image**: specifies the Operator bundle image, this is a
+  required parameter. The bundle image must be pullable.
+
 ## `operator-sdk cleanup` command overview
 
 `operator-sdk cleanup` assumes an Operator was deployed using `run bundle` or
@@ -129,12 +144,13 @@ Let's look at the anatomy of the `cleanup` configuration model:
 
 ### Caveats
 
-- `run bundle`, `run packagemanifests`, and `cleanup` are intended to be used for testing purposes only,
-since this command creates a transient image registry that should not be used in production.
+- `run bundle`, `run bundle-upgrade`, `run packagemanifests`, and `cleanup` are intended to be used for testing purposes only,
+since these commands create a transient image registry that should not be used in production.
 Typically a registry is deployed separately and a set of catalog manifests are created in the cluster
 to inform OLM of that registry and which Operator versions it can deploy and where to deploy the Operator.
-- `run bundle` and `run packagemanifests` can only deploy one Operator and one version of that Operator at a time,
-hence its intended purpose being testing only.
+- `run bundle` and `run packagemanifests` can only deploy one Operator and one version of that Operator at a time, 
+and `run bundle-upgrade` can only upgrade one Operator and one version of that Operator at a time, 
+hence their intended purpose being testing only.
 
 
 [olm]:https://github.com/operator-framework/operator-lifecycle-manager/
