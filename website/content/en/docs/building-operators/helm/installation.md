@@ -11,8 +11,7 @@ Follow the steps in the [installation guide][install-guide] to learn how to inst
 ### Additional Prerequisites
 
 - [docker][docker_tool] version 17.03+.
-- [kubectl][kubectl_tool] version v1.11.3+.
-- Access to a Kubernetes v1.11.3+ cluster (v1.16.0+ if using `apiextensions.k8s.io/v1` CRDs).
+- [kubectl][kubectl_tool] and access to a Kubernetes cluster of a [compatible version][k8s-version-compat].
 
 
 [install-guide]:/docs/installation/
