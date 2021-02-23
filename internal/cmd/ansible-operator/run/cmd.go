@@ -109,6 +109,7 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 		LeaderElectionResourceLock: resourcelock.ConfigMapsResourceLock,
 		LeaderElectionNamespace:    f.LeaderElectionNamespace,
 		ClientBuilder:              clientbuilder.NewUnstructedCached(),
+		GracefulShutdownTimeout:    &f.DrainTime,
 	}
 
 	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
