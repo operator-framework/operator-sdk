@@ -274,7 +274,7 @@ func GenerateMemcachedGoWithWebhooksSample(samplesPath string) {
 
 const rbacFragment = `
 //+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;`
+//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch`
 
 const reconcileFragment = `// Fetch the Memcached instance
 	memcached := &cachev1alpha1.Memcached{}
