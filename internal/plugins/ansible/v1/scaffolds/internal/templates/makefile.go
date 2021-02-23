@@ -67,7 +67,7 @@ func (f *Makefile) SetTemplateDefaults() error {
 const makefileTemplate = `
 # Image URL to use all building/pushing image targets
 IMG ?= {{ .Image }}
-IMG_NAME ?= $(${IMG} $(subst :, ,$1))
+IMG_NAME = $(shell echo $(IMG) | cut -d : -f 1)
 
 all: docker-build
 
