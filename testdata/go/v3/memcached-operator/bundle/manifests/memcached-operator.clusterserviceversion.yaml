@@ -81,6 +81,7 @@ spec:
           verbs:
           - get
           - list
+          - watch
         - apiGroups:
           - authentication.k8s.io
           resources:
