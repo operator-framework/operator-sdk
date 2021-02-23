@@ -118,6 +118,7 @@ test-static: test-sanity test-unit test-docs ## Run all non-cluster-based tests
 
 .PHONY: test-sanity
 test-sanity: generate fix ## Test repo formatting, linting, etc.
+	hg version
 	git diff --exit-code # fast-fail if generate or fix produced changes
 	./hack/check-license.sh
 	./hack/check-error-log-msg-format.sh
@@ -134,7 +135,6 @@ test-docs: ## Test doc links
 .PHONY: test-unit
 TEST_PKGS = $(shell go list ./... | grep -v -E 'github.com/operator-framework/operator-sdk/test/')
 test-unit: ## Run unit tests
-	hg version
 	go test -coverprofile=coverage.out -covermode=count -short $(TEST_PKGS)
 
 e2e_tests := test-e2e-go test-e2e-ansible test-e2e-ansible-molecule test-e2e-helm test-e2e-integration
