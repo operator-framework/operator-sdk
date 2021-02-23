@@ -7,7 +7,7 @@ description: Instructions for migrating a Go-based project built prior to `v1.0.
 
 ## Overview
 
-The motivation for the new layout is to [integrate Kubebuilder and Operator SDK][integration-doc] based projects. This enables Kubebuilder based projects to use the features provided by Operator SDK. For further information behind this motivation, check [the differences between Kubebuilder and Operator-SDK][what-are-the-the-differences-between-kubebuilder-and-operator-sdk]. 
+The motivation for the new layout is to [integrate Kubebuilder and Operator SDK][integration-doc] based projects. This enables Kubebuilder based projects to use the features provided by Operator SDK. For further information behind this motivation, check [the differences between Kubebuilder and Operator-SDK][what-are-the-the-differences-between-kubebuilder-and-operator-sdk].
 
 ### What was changed
 
@@ -30,11 +30,11 @@ Projects are now scaffold using:
 - Helpers and options to work with webhooks. For further information see [What is a Webhook?][webhook-doc]
 - Updated metrics configuration using [kube-auth-proxy][kube-auth-proxy], a `--metrics-addr` flag, and [kustomize][kustomize]-based deployment of a Kubernetes `Service` and prometheus operator `ServiceMonitor`
 - Scaffolded tests that use the [`envtest`][envtest] test framework
-- A preliminary support for plugins. For more info see the [extensible CLI and scaffolding plugins design document][plugins-phase1-design-doc] 
+- A preliminary support for plugins. For more info see the [extensible CLI and scaffolding plugins design document][plugins-phase1-design-doc]
 - A PROJECT file which stores more information about the resources in use, to enable plugins make useful decisions while scaffolding
 - Liveness and Readiness probes using [`healthz.Ping`][healthz-ping].
 - A new option to create projects using ComponentConfig. For more info, see [enhancement proposal][enhancement proposal] and the [Component config tutorial][component-config-tutorial]
-- Go version `1.15` (previously it was `1.13).
+- Go version `1.15` (previously it was `1.13`).
 
 Generated files with the default API versions:
 
@@ -50,7 +50,7 @@ The most straightforward migration path is to:
 1. Create a new project from scratch to let `operator-sdk` scaffold the new project.
 2. Copy your existing code and configuration into the new project structure.
 
-**Note:** It is recommended that you have your project upgraded to the latest SDK release version (0.19.x+) before following the steps in this guide to migrate to new layout. 
+**Note:** It is recommended that you have your project upgraded to the latest SDK release version (0.19.x+) before following the steps in this guide to migrate to new layout.
 
 Please ensure that you have read [Can I customize the projects generated with SDK tool?][faq-custom] in the [FAQ][faq] before continuing further.
 
@@ -105,7 +105,7 @@ operator-sdk create api \
 
 ### How to keep `apiextensions.k8s.io/v1beta1` for CRDs?
 
-From now on, the CRDs that will be created by controller-gen will be using Kubernetes API version `apiextensions.k8s.io/v1` by default, instead of `apiextensions.k8s.io/v1beta1`. 
+From now on, the CRDs that will be created by controller-gen will be using Kubernetes API version `apiextensions.k8s.io/v1` by default, instead of `apiextensions.k8s.io/v1beta1`.
 
 The `apiextensions.k8s.io/v1beta1` was deprecated in Kubernetes `1.16` and will be removed in Kubernetes `1.22`.
 
@@ -173,15 +173,15 @@ operator-sdk create webhook \
     --group=cache \
     --version=<version> \
     --kind=<Kind> \
-    --conversion 
+    --conversion
 ```
 
 After the webhook is generated, you will need to copy the webhook definition and content from your old project to the new one. You can find the respective file in `api/v1/<kind>_webhook.go`.
 
 ### How to keep using `apiextensions.k8s.io/v1beta1` for Webhooks?
 
-Hereafter, the webhooks that are created by SDK will use Kubernetes API version `admissionregistration.k8s.io/v1` by default instead of `admissionregistration.k8s.io/v1beta1` and `cert-manager.io/v1` instead of `cert-manager.io/v1alpha2`. 
-    
+Hereafter, the webhooks that are created by SDK will use Kubernetes API version `admissionregistration.k8s.io/v1` by default instead of `admissionregistration.k8s.io/v1beta1` and `cert-manager.io/v1` instead of `cert-manager.io/v1alpha2`.
+
 Note that `apiextensions/v1beta1` and `admissionregistration.k8s.io/v1beta1` were deprecated in Kubernetes `1.16` and will be removed in Kubernetes `1.22`. If you use `apiextensions/v1` and `admissionregistration.k8s.io/v1`, then you need to use `cert-manager.io/v1` which will be the default API adopted by the SDK CLI.
 
 **NOTE** If you are using the API `cert-manager.io/v1alpha2`, it is not compatible with the latest Kubernetes API version. (`cert-manager.io/v1alpha2` was deprecated in `Cert-Manager 0.14`. For more info, refer to [CertManager v1.0 docs][cert-manager-docs])
@@ -388,7 +388,7 @@ make docker-build IMG=<some-registry>/<project-name>:<tag>
 
 ## Verify the migration
 
-The project can now be built, and the operator can be deployed on cluster by running the command: 
+The project can now be built, and the operator can be deployed on cluster by running the command:
 
 ```sh
 make deploy IMG=<some-registry>/<project-name>:<tag>

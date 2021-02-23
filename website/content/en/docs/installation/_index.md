@@ -88,7 +88,8 @@ chmod +x operator-sdk_${OS}_${ARCH} && sudo mv operator-sdk_${OS}_${ARCH} /usr/l
 #### Prerequisites
 
 - [git][git_tool]
-- [go][go_tool] version v1.15+.
+- [go][go_tool] version 1.15
+  - Ensure that your `GOPROXY` is set to `"https://proxy.golang.org|direct"`
 
 ```sh
 git clone https://github.com/operator-framework/operator-sdk
@@ -96,9 +97,6 @@ cd operator-sdk
 git checkout master
 make install
 ```
-
-**Note:** Ensure that your `GOPROXY` is set with its default value for Go
-versions 1.15+ which is `"https://proxy.golang.org|direct"`.
 
 [homebrew_tool]:https://brew.sh/
 [git_tool]:https://git-scm.com/downloads
