@@ -34,7 +34,7 @@ make test-all
 
 ## Local Test Environment
 
-If running tests locally, access to a Kubernetes cluster of server version v1.11.3 or higher is required.
+If running tests locally, access to a Kubernetes cluster of a [compatible version][k8s-version-compat] is required.
 These tests require `KUBECONFIG` be set or kubeconfig file be present in a default location like `$HOME/.kube/config`.
 
 You will also need to set up an `envtest` environment for cluster tests. Follow [this doc][envtest-setup]
@@ -54,3 +54,4 @@ All the tests are run through the [`Makefile`][makefile]. Run `make help` for a 
 [kind]: https://kind.sigs.k8s.io/
 [envtest-setup]: /docs/building-operators/golang/references/envtest-setup
 [makefile]: https://github.com/operator-framework/operator-sdk/blob/master/Makefile
+[k8s-version-compat]:/docs/overview#kubernetes-version-compatibility

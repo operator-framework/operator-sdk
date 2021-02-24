@@ -56,6 +56,60 @@ Note that each operator type has a different set of capabilities. When choosing 
 
 Find more details about the various levels and the feature requirements for them in the [capability level documentation][capability_levels].
 
+## Kubernetes version compatibility
+
+Each `operator-sdk` release is tested with a specific version of Kubernetes. This version matches
+that of [kubernetes/kubernetes][k-k] or [client-go][client-go] that `operator-sdk` depends on directly,
+or that generated Operator projects depend on.
+
+In general, client-go's [compatibility matrix][client-go-compat] will determine whether
+a particular Kubernetes version is compatible with a particular `operator-sdk` version
+or generated Operator project. The following tables contains the canonical way per
+binary or project type to look up a Y-axis version to plug into the compatibility matrix.
+
+By binary:
+
+| Binary                  | Lookup strategy               |
+|-------------------------|-------------------------------|
+| `operator-sdk`          | `$ operator-sdk version`      |
+| `ansible-operator`      | `$ ansible-operator version`  |
+| `helm-operator`         | `$ helm-operator version`     |
+
+By project type (replace `${IMAGE_VERSION}` with base image version in your project `Dockerfile`):
+
+| Project type   | Lookup strategy                           |
+|----------------|-------------------------------------------|
+| Go             | controller-runtime version (see `go.mod`) |
+| Ansible        | `$ docker run --entrypoint ansible-operator quay.io/operator-framework/ansible-operator:${IMAGE_VERSION} version` |
+| Helm           | `$ docker run --entrypoint helm-operator quay.io/operator-framework/helm-operator:${IMAGE_VERSION} version` |
+
+
+[k-k]:https://github.com/kubernetes/kubernetes
+[client-go]:https://github.com/kubernetes/client-go
+[client-go-compat]:https://github.com/kubernetes/client-go#compatibility-matrix
+
+## Platform support
+
+Official build architectures for binaries:
+
+| Binary                    | `linux/amd64` | `linux/arm64` |`linux/ppc64le` | `linux/s390x` | `darwin/amd64` | `darwin/arm64` |
+|---------------------------|---------------|---------------|----------------|---------------|----------------|----------------|
+| `operator-sdk`            | ✓             | ✓             | ✓              | ✓             | ✓              | -              |
+| `ansible-operator`        | ✓             | ✓             | ✓              | ✓             | ✓              | -              |
+| `helm-operator`           | ✓             | ✓             | ✓              | ✓             | ✓              | -              |
+
+Official build architectures for images:
+
+| Binary                    | `linux/amd64` | `linux/arm64` |`linux/ppc64le` | `linux/s390x` |
+|---------------------------|---------------|---------------|----------------|---------------|
+| `operator-sdk`            | ✓             | ✓             | ✓              | ✓             |
+| `ansible-operator`        | ✓             | ✓             | ✓              | ✓             |
+| `helm-operator`           | ✓             | ✓             | ✓              | ✓             |
+| `scorecard-test`          | ✓             | ✓             | ✓              | ✓             |
+| `scorecard-test-kuttl`    | ✓             | ✓             | ✓              | -             |
+
+Official support for any Windows architecture is not on the roadmap at this time.
+
 ## Samples
 
 To explore any operator samples built using the operator-sdk, see the samples in [operator-sdk/testdata/][testdata_samples].

@@ -11,7 +11,6 @@ please [migrate][migration-guide], or consult the [legacy docs][legacy-quickstar
 ## Prerequisites
 
 - Go through the [installation guide][install-guide].
-- Access to a Kubernetes v1.11.3+ cluster (v1.16.0+ if using `apiextensions.k8s.io/v1` CRDs).
 - User authorized with `cluster-admin` permissions.
 
 ## Overview
