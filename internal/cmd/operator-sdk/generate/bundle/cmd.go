@@ -118,9 +118,11 @@ func (c *bundleCmd) addFlagsTo(fs *pflag.FlagSet) {
 		"This option should not be passed an existing bundle directory, as this bundle will not contain the correct "+
 		"set of manifests required to generate a CSV. Use --kustomize-dir to pass a base CSV")
 	fs.StringVar(&c.outputDir, "output-dir", "", "Directory to write the bundle to")
+	// TODO(estroz): deprecate this in favor of --intput-dir.
 	fs.StringVar(&c.deployDir, "deploy-dir", "", "Directory to read cluster-ready operator manifests from. "+
 		"If --crds-dir is not set, CRDs are ready from this directory. "+
 		"This option is mutually exclusive with --input-dir and piping to stdin")
+	// TODO(estroz): deprecate this in favor of --intput-dir.
 	fs.StringVar(&c.crdsDir, "crds-dir", "", "Directory to read cluster-ready CustomResoureDefinition manifests from. "+
 		"This option can only be used if --deploy-dir is set")
 	fs.StringVar(&c.kustomizeDir, "kustomize-dir", filepath.Join("config", "manifests"),
