@@ -112,9 +112,9 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 	)
 	flagSet.DurationVar(&f.DrainTime,
 		"drain-time",
-		30 * time.Second,
+		30*time.Second,
 		"The amount of time that will be spent waiting"+
-		" for runners to gracefully exit.",
+			" for runners to gracefully exit.",
 	)
 	flagSet.StringVar(&f.AnsibleArgs,
 		"ansible-args",
