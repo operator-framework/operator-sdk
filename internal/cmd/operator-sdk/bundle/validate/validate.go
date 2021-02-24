@@ -80,12 +80,8 @@ func (c *bundleValidateCmd) addToFlagSet(fs *pflag.FlagSet) {
 		"List all optional validators available. When set, no validators will be run")
 
 	fs.StringVarP(&c.outputFormat, "output", "o", internal.Text,
-		"Result format for results. One of: [text, json-alpha1]")
-	// It is hidden because it is an alpha option
-	// The idea is the next versions of Operator Registry will return a List of errors
-	if err := fs.MarkHidden("output"); err != nil {
-		panic(err)
-	}
+		"Result format for results. One of: [text, json-alpha1]. Note: output format types containing "+
+			"\"alphaX\" are subject to change and not covered by guarantees of stable APIs.")
 }
 
 func (c bundleValidateCmd) run(logger *log.Entry, bundleRaw string) (res *internal.Result, err error) {
