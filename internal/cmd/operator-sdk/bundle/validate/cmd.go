@@ -69,11 +69,11 @@ To list and run optional validators, which are specified by a label selector:
   operatorhub    name=operatorhub           OperatorHub.io metadata validation
                  suite=operatorframework
 
-To validate a bundle with a superset of requirements for Operator Framework:
+To validate a bundle against the entire suite of validators for Operator Framework, in addition to required bundle validators:
 	
   $ operator-sdk bundle validate ./bundle --select-optional suite=operatorframework
 
-To validate a bundle with a superset of requirements for operatorhub.io specifically:
+To validate a bundle against the validator for operatorhub.io specifically, in addition to required bundle validators:
 	
   $ operator-sdk bundle validate ./bundle --select-optional name=operatorhub
 `
