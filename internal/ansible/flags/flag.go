@@ -35,6 +35,7 @@ type Flags struct {
 	ProbeAddr               string
 	LeaderElectionID        string
 	LeaderElectionNamespace string
+	GracefulShutdownTimeout time.Duration
 	AnsibleArgs             string
 }
 
@@ -108,6 +109,12 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 		"Namespace in which to create the leader election configmap for"+
 			" holding the leader lock (required if running locally with leader"+
 			" election enabled).",
+	)
+	flagSet.DurationVar(&f.GracefulShutdownTimeout,
+		"graceful-shutdown-timeout",
+		30*time.Second,
+		"The amount of time that will be spent waiting"+
+			" for runners to gracefully exit.",
 	)
 	flagSet.StringVar(&f.AnsibleArgs,
 		"ansible-args",
