@@ -15,10 +15,13 @@
 package v1
 
 import (
+	"errors"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/spf13/pflag"
+	"helm.sh/helm/v3/pkg/chart"
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
 	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
@@ -33,6 +36,9 @@ import (
 type createAPISubcommand struct {
 	config        config.Config
 	createOptions chartutil.CreateOptions
+
+	resource resource.Resource
+	chrt     *chart.Chart
 }
 
 var (
@@ -95,8 +101,7 @@ const (
 	helmChartVersionFlag = "helm-chart-version"
 	crdVersionFlag       = "crd-version"
 
-	crdVersionV1      = "v1"
-	crdVersionV1beta1 = "v1beta1"
+	defaultCRDVersionV1 = "v1"
 )
 
 // BindFlags will set the flags for the plugin
@@ -112,7 +117,7 @@ func (p *createAPISubcommand) BindFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&p.createOptions.Repo, helmChartRepoFlag, "", "helm chart repository")
 	fs.StringVar(&p.createOptions.Version, helmChartVersionFlag, "", "helm chart version (default: latest)")
 
-	fs.StringVar(&p.createOptions.CRDVersion, crdVersionFlag, crdVersionV1, "crd version to generate")
+	fs.StringVar(&p.createOptions.CRDVersion, crdVersionFlag, defaultCRDVersionV1, "crd version to generate")
 }
 
 // InjectConfig will inject the PROJECT file/config in the plugin
@@ -136,19 +141,16 @@ func (p *createAPISubcommand) Run() error {
 
 // SDK phase 2 plugins.
 func (p *createAPISubcommand) runPhase2() error {
-	ogvk := p.createOptions.GVK
-	gvk := resource.GVK{Group: ogvk.Group, Version: ogvk.Version, Kind: ogvk.Kind}
-
 	// Initially the helm/v1 plugin was written to not create a "plugins" config entry
 	// for any phase 2 plugin because they did not have their own keys. Now there are phase 2
 	// plugin keys, so those plugins should be run if keys exist. Otherwise, enact old behavior.
 
 	if manifestsv2.HasPluginConfig(p.config) {
-		if err := manifestsv2.RunCreateAPI(p.config, gvk); err != nil {
+		if err := manifestsv2.RunCreateAPI(p.config, p.resource.GVK); err != nil {
 			return err
 		}
 	} else {
-		if err := manifests.RunCreateAPI(p.config, gvk); err != nil {
+		if err := manifests.RunCreateAPI(p.config, p.resource.GVK); err != nil {
 			return err
 		}
 	}
@@ -158,10 +160,6 @@ func (p *createAPISubcommand) runPhase2() error {
 
 // Validate perform the required validations for this plugin
 func (p *createAPISubcommand) Validate() error {
-	if p.createOptions.CRDVersion != crdVersionV1 && p.createOptions.CRDVersion != crdVersionV1beta1 {
-		return fmt.Errorf("value of --%s must be either %q or %q", crdVersionFlag, crdVersionV1, crdVersionV1beta1)
-	}
-
 	if len(strings.TrimSpace(p.createOptions.Chart)) == 0 {
 		if len(strings.TrimSpace(p.createOptions.Repo)) != 0 {
 			return fmt.Errorf("value of --%s can only be used with --%s", helmChartRepoFlag, helmChartFlag)
@@ -180,13 +178,34 @@ func (p *createAPISubcommand) Validate() error {
 		if len(strings.TrimSpace(p.createOptions.GVK.Kind)) == 0 {
 			return fmt.Errorf("value of --%s must not have empty value", kindFlag)
 		}
+	}
 
-		// Validate the resource.
-		ogvk := p.createOptions.GVK
-		gvk := resource.GVK{Group: ogvk.Group, Version: ogvk.Version, Kind: ogvk.Kind}
-		if err := gvk.Validate(); err != nil {
-			return err
-		}
+	// Create and validate the resource and chart from CreateOptions.
+	projectDir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	p.resource, p.chrt, err = chartutil.CreateChart(p.config, projectDir, p.createOptions)
+	if err != nil {
+		return err
+	}
+	if err := p.resource.Validate(); err != nil {
+		return err
+	}
+
+	// Check that resource doesn't exist
+	if p.config.HasResource(p.resource.GVK) {
+		return errors.New("the API resource already exists")
+	}
+
+	// Check that the provided group can be added to the project
+	if !p.config.IsMultiGroup() && p.config.ResourcesLength() != 0 && !p.config.HasGroup(p.resource.GVK.QualifiedGroup()) {
+		return errors.New("multiple groups are not allowed by default, to enable multi-group set 'multigroup: true' in your PROJECT file")
+	}
+
+	// Check CRDVersion against all other CRDVersions in p.config for compatibility.
+	if !p.config.IsCRDVersionCompatible(p.resource.API.CRDVersion) {
+		return fmt.Errorf("only one CRD version can be used for all resources, cannot add %q", p.resource.API.CRDVersion)
 	}
 
 	return nil
@@ -194,7 +213,7 @@ func (p *createAPISubcommand) Validate() error {
 
 // GetScaffolder returns cmdutil.Scaffolder which will be executed due the RunOptions interface implementation
 func (p *createAPISubcommand) GetScaffolder() (cmdutil.Scaffolder, error) {
-	return scaffolds.NewAPIScaffolder(p.config, p.createOptions), nil
+	return scaffolds.NewAPIScaffolder(p.config, p.resource, p.chrt), nil
 }
 
 // PostScaffold runs all actions that should be executed after the default plugin scaffold

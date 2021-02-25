@@ -32,6 +32,8 @@ import (
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/repo"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/kubebuilder/v3/pkg/config"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang"
 )
 
@@ -117,81 +119,63 @@ type CreateOptions struct {
 //
 // CreateChart returns an error if an error occurs creating the scaffold.Resource or
 // creating the chart.
-func CreateChart(projectDir string, opts CreateOptions) (*golang.Options, *chart.Chart, error) {
+func CreateChart(cfg config.Config, projectDir string, opts CreateOptions) (r resource.Resource, c *chart.Chart, err error) {
 	chartsDir := filepath.Join(projectDir, HelmChartsDir)
-	err := os.MkdirAll(chartsDir, 0755)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create helm-charts directory: %v", err)
+	if err := os.MkdirAll(chartsDir, 0755); err != nil {
+		return resource.Resource{}, nil, fmt.Errorf("failed to create helm-charts directory: %v", err)
 	}
-
-	var (
-		r *golang.Options
-		c *chart.Chart
-	)
 
 	// If we don't have a helm chart reference, scaffold the default chart
 	// from Helm's default template. Otherwise, fetch it.
 	if len(opts.Chart) == 0 {
-		r, c, err = scaffoldChart(chartsDir, opts)
+		r, c, err = scaffoldChart(cfg, chartsDir, opts)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to scaffold default chart: %v", err)
+			return resource.Resource{}, nil, fmt.Errorf("failed to scaffold default chart: %v", err)
 		}
 	} else {
-		r, c, err = fetchChart(chartsDir, opts)
+		r, c, err = fetchChart(cfg, chartsDir, opts)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to fetch chart: %v", err)
+			return resource.Resource{}, nil, fmt.Errorf("failed to fetch chart: %v", err)
 		}
 	}
 
 	relChartPath := filepath.Join(HelmChartsDir, c.Name())
 	absChartPath := filepath.Join(projectDir, relChartPath)
 	if err := fetchChartDependencies(absChartPath); err != nil {
-		return nil, nil, fmt.Errorf("failed to fetch chart dependencies: %v", err)
+		return resource.Resource{}, nil, fmt.Errorf("failed to fetch chart dependencies: %v", err)
 	}
 
 	// Reload chart in case dependencies changed
 	c, err = loader.Load(absChartPath)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to load chart: %v", err)
+		return resource.Resource{}, nil, fmt.Errorf("failed to load chart: %v", err)
 	}
 
 	fmt.Printf("Created %s\n", relChartPath)
 	return r, c, nil
 }
 
-func scaffoldChart(destDir string, opts CreateOptions) (*golang.Options, *chart.Chart, error) {
-	r := &golang.Options{}
-	r.Namespaced = true
-	r.Domain = opts.Domain
-	r.Group = opts.GVK.Group
-	r.Version = opts.GVK.Version
-	r.Kind = opts.GVK.Kind
-
-	chartPath, err := chartutil.Create(strings.ToLower(r.Kind), destDir)
+func scaffoldChart(cfg config.Config, destDir string, opts CreateOptions) (resource.Resource, *chart.Chart, error) {
+	chartPath, err := chartutil.Create(strings.ToLower(opts.GVK.Kind), destDir)
 	if err != nil {
-		return nil, nil, err
+		return resource.Resource{}, nil, err
 	}
-
 	chart, err := loader.Load(chartPath)
 	if err != nil {
-		return nil, nil, err
+		return resource.Resource{}, nil, err
 	}
-	return r, chart, nil
+
+	return opts.NewResource(cfg), chart, nil
 }
 
-func fetchChart(destDir string, opts CreateOptions) (*golang.Options, *chart.Chart, error) {
-	var (
-		chart *chart.Chart
-		err   error
-	)
-
+func fetchChart(cfg config.Config, destDir string, opts CreateOptions) (_ resource.Resource, chart *chart.Chart, err error) {
 	if _, err = os.Stat(opts.Chart); err == nil {
 		chart, err = createChartFromDisk(destDir, opts.Chart)
 	} else {
 		chart, err = createChartFromRemote(destDir, opts)
 	}
 	if err != nil {
-		return nil, nil, err
+		return resource.Resource{}, nil, err
 	}
 
 	chartName := chart.Name()
@@ -205,14 +189,24 @@ func fetchChart(destDir string, opts CreateOptions) (*golang.Options, *chart.Cha
 		opts.GVK.Kind = strcase.ToCamel(chartName)
 	}
 
-	r := &golang.Options{}
-	r.Namespaced = true
-	r.Domain = opts.Domain
-	r.Group = opts.GVK.Group
-	r.Version = opts.GVK.Version
-	r.Kind = opts.GVK.Kind
+	return opts.NewResource(cfg), chart, nil
+}
 
-	return r, chart, nil
+func (opts CreateOptions) NewResource(cfg config.Config) resource.Resource {
+	ro := &golang.Options{}
+	ro.DoAPI = true
+	ro.Namespaced = true
+	ro.Domain = opts.Domain
+	ro.CRDVersion = opts.CRDVersion
+	ro.Group = opts.GVK.Group
+	ro.Version = opts.GVK.Version
+	ro.Kind = opts.GVK.Kind
+
+	r := ro.NewResource(cfg)
+	r.Domain = cfg.GetDomain()
+	// remove the path since is not a Golang project
+	r.Path = ""
+	return r
 }
 
 func createChartFromDisk(destDir, source string) (*chart.Chart, error) {

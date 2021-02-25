@@ -145,6 +145,13 @@ func (p *initSubcommand) Run() error {
 		return err
 	}
 
+	// If API creation is configured, run the 'create api' subcommand.
+	if p.apiPlugin.createOptions != (chartutil.CreateOptions{CRDVersion: "v1"}) {
+		if err := cmdutil.Run(&p.apiPlugin); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -155,12 +162,6 @@ func (p *initSubcommand) runPhase2() error {
 	}
 	if err := scorecardv2.RunInit(p.config); err != nil {
 		return err
-	}
-
-	if p.options.DoAPI {
-		if err := p.apiPlugin.runPhase2(); err != nil {
-			return err
-		}
 	}
 
 	return nil
@@ -191,37 +192,16 @@ func (p *initSubcommand) Validate() error {
 		return fmt.Errorf("project name (%s) is invalid: %v", p.config.GetProjectName(), err)
 	}
 
-	defaultOpts := chartutil.CreateOptions{CRDVersion: "v1"}
-	if !p.apiPlugin.createOptions.GVK.Empty() || p.apiPlugin.createOptions != defaultOpts {
-		p.options.DoAPI = true
-		return p.apiPlugin.Validate()
-	}
-
 	return nil
 }
 
 // GetScaffolder returns cmdutil.Scaffolder which will be executed due the RunOptions interface implementation
 func (p *initSubcommand) GetScaffolder() (cmdutil.Scaffolder, error) {
-	var (
-		apiScaffolder cmdutil.Scaffolder
-		err           error
-	)
-	if p.options.DoAPI {
-		apiScaffolder, err = p.apiPlugin.GetScaffolder()
-		if err != nil {
-			return nil, err
-		}
-	}
-	return scaffolds.NewInitScaffolder(p.config, apiScaffolder), nil
+	return scaffolds.NewInitScaffolder(p.config), nil
 }
 
 // PostScaffold will run the required actions after the default plugin scaffold
 func (p *initSubcommand) PostScaffold() error {
-
-	if p.options.DoAPI {
-		return p.apiPlugin.PostScaffold()
-	}
-
 	fmt.Printf("Next: define a resource with:\n$ %s create api\n", p.commandName)
 	return nil
 }
