@@ -67,6 +67,11 @@ func NewCmd() *cobra.Command {
 			if !fs.Changed("metadata") && !fs.Changed("manifests") {
 				c.manifests = true
 				c.metadata = true
+				if c.version == "" {
+					c.println("Generating bundle")
+				} else {
+					c.println("Generating bundle version", c.version)
+				}
 			}
 
 			if err := c.setDefaults(); err != nil {
@@ -97,10 +102,6 @@ func NewCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&c.kustomizeDir, "kustomize-dir", filepath.Join("config", "manifests"),
-		"Directory containing kustomize bases and a kustomization.yaml for operator-framework manifests")
-	cmd.Flags().BoolVar(&c.stdout, "stdout", false, "Write bundle manifest to stdout")
-
 	c.addFlagsTo(cmd.Flags())
 
 	return cmd
@@ -112,16 +113,31 @@ func (c *bundleCmd) addFlagsTo(fs *pflag.FlagSet) {
 
 	fs.StringVarP(&c.version, "version", "v", "", "Semantic version of the operator in the generated bundle. "+
 		"Only set if creating a new bundle or upgrading your operator")
-	fs.StringVar(&c.inputDir, "input-dir", "", "Directory to read an existing bundle from. "+
-		"This directory is the parent of your bundle 'manifests' directory, and different from --deploy-dir")
+	fs.StringVar(&c.inputDir, "input-dir", "", "Directory to read cluster-ready operator manifests from. "+
+		"This option is mutually exclusive with --deploy-dir/--crds-dir and piping to stdin. "+
+		"This option should not be passed an existing bundle directory, as this bundle will not contain the correct "+
+		"set of manifests required to generate a CSV. Use --kustomize-dir to pass a base CSV")
 	fs.StringVar(&c.outputDir, "output-dir", "", "Directory to write the bundle to")
-	fs.StringVar(&c.deployDir, "deploy-dir", "", "Root directory for operator manifests such as "+
-		"Deployments and RBAC, ex. 'deploy'. This directory is different from that passed to --input-dir")
-	fs.StringVar(&c.crdsDir, "crds-dir", "", "Root directory for CustomResoureDefinition manifests")
+	// TODO(estroz): deprecate this in favor of --intput-dir.
+	fs.StringVar(&c.deployDir, "deploy-dir", "", "Directory to read cluster-ready operator manifests from. "+
+		"If --crds-dir is not set, CRDs are ready from this directory. "+
+		"This option is mutually exclusive with --input-dir and piping to stdin")
+	// TODO(estroz): deprecate this in favor of --intput-dir.
+	fs.StringVar(&c.crdsDir, "crds-dir", "", "Directory to read cluster-ready CustomResoureDefinition manifests from. "+
+		"This option can only be used if --deploy-dir is set")
+	fs.StringVar(&c.kustomizeDir, "kustomize-dir", filepath.Join("config", "manifests"),
+		"Directory containing kustomize bases in a \"bases\" dir and a kustomization.yaml for operator-framework manifests")
 	fs.StringVar(&c.channels, "channels", "alpha", "A comma-separated list of channels the bundle belongs to")
 	fs.StringVar(&c.defaultChannel, "default-channel", "", "The default channel for the bundle")
 	fs.BoolVar(&c.overwrite, "overwrite", true, "Overwrite the bundle's metadata and Dockerfile if they exist")
 	fs.BoolVarP(&c.quiet, "quiet", "q", false, "Run in quiet mode")
+	fs.BoolVar(&c.stdout, "stdout", false, "Write bundle manifest to stdout")
 
 	fs.StringVar(&c.packageName, "package", "", "Bundle's package name")
+}
+
+func (c bundleCmd) println(a ...interface{}) {
+	if !(c.quiet || c.stdout) {
+		fmt.Println(a...)
+	}
 }

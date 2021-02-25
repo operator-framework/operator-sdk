@@ -76,14 +76,6 @@ var _ = Describe("Running a generate packagemanifests command", func() {
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("input-dir must be set"))
 		})
-		It("fails if a kuztomize-dir is not provided", func() {
-			c.version = versionOne
-			c.inputDir = inputDir
-
-			err := c.validate()
-			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("kustomize-dir must be set"))
-		})
 		It("fails if a deploy-dir is not provided while not reading from stdin", func() {
 			c.version = versionOne
 			c.inputDir = inputDir
@@ -177,18 +169,17 @@ var _ = Describe("Running a generate packagemanifests command", func() {
 
 				err := c.setDefaults()
 				Expect(err).NotTo(HaveOccurred())
-				Expect(c.inputDir).To(Equal(defaultRootDir))
+				Expect(c.inputDir).To(Equal(""))
 				Expect(c.outputDir).To(Equal(defaultRootDir))
 				Expect(c.generator).ToNot(BeNil())
 				Expect(c.layout).To(Equal("unknown"))
 			})
-			It("does not set output if stdout has been set", func() {
+			It("does not set outputDir if stdout has been set", func() {
 				c.packageName = "banana"
 				c.stdout = true
 
 				err := c.setDefaults()
 				Expect(err).NotTo(HaveOccurred())
-				Expect(c.inputDir).To(Equal(defaultRootDir))
 				Expect(c.outputDir).To(Equal(""))
 			})
 		})
