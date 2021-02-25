@@ -33,8 +33,8 @@ import (
 )
 
 type createAPISubcommand struct {
-	config        config.Config
-	createOptions chartutil.CreateOptions
+	config  config.Config
+	options chartutil.CreateOptions
 
 	resource *resource.Resource
 	chrt     *chart.Chart
@@ -92,31 +92,26 @@ func (p createAPISubcommand) UpdateContext(ctx *plugin.Context) {
 }
 
 const (
-	groupFlag            = "group"
-	versionFlag          = "version"
-	kindFlag             = "kind"
 	helmChartFlag        = "helm-chart"
 	helmChartRepoFlag    = "helm-chart-repo"
 	helmChartVersionFlag = "helm-chart-version"
-	crdVersionFlag       = "crd-version"
 
-	defaultCRDVersionV1 = "v1"
+	defaultCRDVersion = "v1"
 )
 
 // BindFlags will set the flags for the plugin
 func (p *createAPISubcommand) BindFlags(fs *pflag.FlagSet) {
-	p.createOptions = chartutil.CreateOptions{}
 	fs.SortFlags = false
 
-	fs.StringVar(&p.createOptions.GVK.Group, groupFlag, "", "resource group")
-	fs.StringVar(&p.createOptions.GVK.Version, versionFlag, "", "resource version")
-	fs.StringVar(&p.createOptions.GVK.Kind, kindFlag, "", "resource kind")
+	fs.StringVar(&p.options.GVK.Group, "group", "", "resource group")
+	fs.StringVar(&p.options.GVK.Version, "version", "", "resource version")
+	fs.StringVar(&p.options.GVK.Kind, "kind", "", "resource kind")
 
-	fs.StringVar(&p.createOptions.Chart, helmChartFlag, "", "helm chart")
-	fs.StringVar(&p.createOptions.Repo, helmChartRepoFlag, "", "helm chart repository")
-	fs.StringVar(&p.createOptions.Version, helmChartVersionFlag, "", "helm chart version (default: latest)")
+	fs.StringVar(&p.options.Chart, helmChartFlag, "", "helm chart")
+	fs.StringVar(&p.options.Repo, helmChartRepoFlag, "", "helm chart repository")
+	fs.StringVar(&p.options.Version, helmChartVersionFlag, "", "helm chart version (default: latest)")
 
-	fs.StringVar(&p.createOptions.CRDVersion, crdVersionFlag, defaultCRDVersionV1, "crd version to generate")
+	fs.StringVar(&p.options.CRDVersion, "crd-version", defaultCRDVersion, "crd version to generate")
 }
 
 // InjectConfig will inject the PROJECT file/config in the plugin
@@ -159,28 +154,28 @@ func (p *createAPISubcommand) runPhase2() error {
 
 // Validate perform the required validations for this plugin
 func (p *createAPISubcommand) Validate() (err error) {
-	if len(strings.TrimSpace(p.createOptions.Chart)) == 0 {
-		if len(strings.TrimSpace(p.createOptions.Repo)) != 0 {
+	if len(strings.TrimSpace(p.options.Chart)) == 0 {
+		if len(strings.TrimSpace(p.options.Repo)) != 0 {
 			return fmt.Errorf("value of --%s can only be used with --%s", helmChartRepoFlag, helmChartFlag)
-		} else if len(p.createOptions.Version) != 0 {
+		} else if len(p.options.Version) != 0 {
 			return fmt.Errorf("value of --%s can only be used with --%s", helmChartVersionFlag, helmChartFlag)
 		}
 	}
 
-	if len(strings.TrimSpace(p.createOptions.Chart)) == 0 {
-		if len(strings.TrimSpace(p.createOptions.GVK.Group)) == 0 {
-			return fmt.Errorf("value of --%s must not have empty value", groupFlag)
+	if len(strings.TrimSpace(p.options.Chart)) == 0 {
+		if len(strings.TrimSpace(p.options.GVK.Group)) == 0 {
+			return errors.New("value of --group must not have empty value")
 		}
-		if len(strings.TrimSpace(p.createOptions.GVK.Version)) == 0 {
-			return fmt.Errorf("value of --%s must not have empty value", versionFlag)
+		if len(strings.TrimSpace(p.options.GVK.Version)) == 0 {
+			return errors.New("value of --version must not have empty value")
 		}
-		if len(strings.TrimSpace(p.createOptions.GVK.Kind)) == 0 {
-			return fmt.Errorf("value of --%s must not have empty value", kindFlag)
+		if len(strings.TrimSpace(p.options.GVK.Kind)) == 0 {
+			return errors.New("value of --kind must not have empty value")
 		}
 	}
 
 	// Create and validate the resource and chart from CreateOptions.
-	p.resource, p.chrt, err = chartutil.CreateChart(p.config, p.createOptions)
+	p.resource, p.chrt, err = chartutil.CreateChart(p.config, p.options)
 	if err != nil {
 		return err
 	}
@@ -194,7 +189,7 @@ func (p *createAPISubcommand) Validate() (err error) {
 	}
 
 	// Check that the provided group can be added to the project
-	if !p.config.IsMultiGroup() && p.config.ResourcesLength() != 0 && !p.config.HasGroup(p.resource.GVK.QualifiedGroup()) {
+	if !p.config.IsMultiGroup() && p.config.ResourcesLength() != 0 && !p.config.HasGroup(p.resource.GVK.Group) {
 		return errors.New("multiple groups are not allowed by default, to enable multi-group set 'multigroup: true' in your PROJECT file")
 	}
 

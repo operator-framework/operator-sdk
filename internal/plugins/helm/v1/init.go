@@ -24,7 +24,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation"
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
-	"sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang"
 
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/chartutil"
@@ -34,14 +33,14 @@ import (
 )
 
 type initSubcommand struct {
-	config    config.Config
-	options   *golang.Options
-	apiPlugin createAPISubcommand
+	config  config.Config
+	apiSubc createAPISubcommand
 
 	// For help text.
 	commandName string
 
 	// Flags
+	domain      string
 	projectName string
 }
 
@@ -119,11 +118,9 @@ Writes the following files:
 
 // BindFlags will set the flags for the plugin
 func (p *initSubcommand) BindFlags(fs *pflag.FlagSet) {
-	fs.SortFlags = false
-	p.options = &golang.Options{}
-	fs.StringVar(&p.options.Domain, "domain", "my.domain", "domain for groups")
+	fs.StringVar(&p.domain, "domain", "my.domain", "domain for groups")
 	fs.StringVar(&p.projectName, "project-name", "", "name of this project, the default being directory name")
-	p.apiPlugin.BindFlags(fs)
+	p.apiSubc.BindFlags(fs)
 }
 
 // InjectConfig will inject the PROJECT file/config in the plugin
@@ -131,11 +128,33 @@ func (p *initSubcommand) InjectConfig(c config.Config) {
 	// v3 project configs get a 'layout' value.
 	_ = c.SetLayout(pluginKey)
 	p.config = c
-	p.apiPlugin.config = p.config
+	p.apiSubc.config = p.config
 }
+
+// CreateOptions with defaults set, for comparison in case GVK/chart inputs were set.
+var emptyCreateOptions = chartutil.CreateOptions{CRDVersion: "v1"}
 
 // Run will call the plugin actions
 func (p *initSubcommand) Run() error {
+	// Set values in the config
+	if err := p.config.SetProjectName(p.projectName); err != nil {
+		return err
+	}
+	if err := p.config.SetDomain(p.domain); err != nil {
+		return err
+	}
+
+	// Check if the project name is a valid k8s namespace (DNS 1123 label).
+	if p.config.GetProjectName() == "" {
+		dir, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("error getting current directory: %v", err)
+		}
+		if err = p.config.SetProjectName(strings.ToLower(filepath.Base(dir))); err != nil {
+			return err
+		}
+	}
+
 	if err := cmdutil.Run(p); err != nil {
 		return err
 	}
@@ -146,8 +165,9 @@ func (p *initSubcommand) Run() error {
 	}
 
 	// If API creation is configured, run the 'create api' subcommand.
-	if p.apiPlugin.createOptions != (chartutil.CreateOptions{CRDVersion: "v1"}) {
-		if err := cmdutil.Run(&p.apiPlugin); err != nil {
+	if p.apiSubc.options != emptyCreateOptions {
+		p.apiSubc.options.Domain = p.domain
+		if err := p.apiSubc.Run(); err != nil {
 			return err
 		}
 	}
@@ -169,25 +189,6 @@ func (p *initSubcommand) runPhase2() error {
 
 // Validate perform the required validations for this plugin
 func (p *initSubcommand) Validate() error {
-	// Set values in the config
-	if err := p.config.SetProjectName(p.projectName); err != nil {
-		return err
-	}
-	if err := p.config.SetDomain(p.options.Domain); err != nil {
-		return err
-	}
-
-	// Check if the project name is a valid k8s namespace (DNS 1123 label).
-	if p.config.GetProjectName() == "" {
-		dir, err := os.Getwd()
-		if err != nil {
-			return fmt.Errorf("error getting current directory: %v", err)
-		}
-		if err = p.config.SetProjectName(strings.ToLower(filepath.Base(dir))); err != nil {
-			return err
-		}
-	}
-
 	if err := validation.IsDNS1123Label(p.config.GetProjectName()); err != nil {
 		return fmt.Errorf("project name (%s) is invalid: %v", p.config.GetProjectName(), err)
 	}
@@ -202,6 +203,8 @@ func (p *initSubcommand) GetScaffolder() (cmdutil.Scaffolder, error) {
 
 // PostScaffold will run the required actions after the default plugin scaffold
 func (p *initSubcommand) PostScaffold() error {
-	fmt.Printf("Next: define a resource with:\n$ %s create api\n", p.commandName)
+	if p.apiSubc.options == emptyCreateOptions {
+		fmt.Printf("Next: define a resource with:\n$ %s create api\n", p.commandName)
+	}
 	return nil
 }
