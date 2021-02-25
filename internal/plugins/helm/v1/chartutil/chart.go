@@ -73,8 +73,7 @@ type CreateOptions struct {
 	Domain string
 }
 
-// CreateChart scaffolds a new helm chart for the project rooted in projectDir
-// based on the passed opts.
+// CreateChart creates a new helm chart based on the passed opts.
 //
 // It returns a scaffold.Resource that can be used by the caller to create
 // other related files. opts.ResourceAPIVersion and opts.ResourceKind are
@@ -84,17 +83,16 @@ type CreateOptions struct {
 // left unset: opts.ResourceAPIVersion defaults to "charts.helm.k8s.io/v1alpha1"
 // and opts.ResourceKind is deduced from the specified opts.Chart.
 //
-// CreateChart also returns a chart.Chart that references the newly created
-// chart.
+// CreateChart also returns the newly created chart.Chart.
 //
-// If opts.Chart is empty, CreateChart scaffolds the default chart from helm's
+// If opts.Chart is empty, CreateChart creates the default chart from helm's
 // default template.
 //
 // If opts.Chart is a local file, CreateChart verifies that it is a valid helm
-// chart archive and unpacks it into the project's helm charts directory.
+// chart archive and returns its chart.Chart representation.
 //
 // If opts.Chart is a local directory, CreateChart verifies that it is a valid
-// helm chart directory and copies it into the project's helm charts directory.
+// helm chart directory and returns its chart.Chart representation.
 //
 // For any other value of opts.Chart, CreateChart attempts to fetch the helm chart
 // from a remote repository.
@@ -117,65 +115,68 @@ type CreateOptions struct {
 // opts.Version is not used when opts.Chart itself refers to a specific version, for
 // example when it is a local path or a URL.
 //
-// CreateChart returns an error if an error occurs creating the scaffold.Resource or
-// creating the chart.
-func CreateChart(cfg config.Config, projectDir string, opts CreateOptions) (r resource.Resource, c *chart.Chart, err error) {
-	chartsDir := filepath.Join(projectDir, HelmChartsDir)
-	if err := os.MkdirAll(chartsDir, 0755); err != nil {
-		return resource.Resource{}, nil, fmt.Errorf("failed to create helm-charts directory: %v", err)
+// CreateChart returns an error if an error occurs creating the resource.Resource or
+// loading the chart.Chart.
+func CreateChart(cfg config.Config, opts CreateOptions) (r *resource.Resource, c *chart.Chart, err error) {
+	tmpDir, err := ioutil.TempDir("", "osdk-helm-chart")
+	if err != nil {
+		return nil, nil, err
 	}
+	defer func() {
+		if err := os.RemoveAll(tmpDir); err != nil {
+			log.Errorf("Failed to remove temporary chart directory %s: %s", tmpDir, err)
+		}
+	}()
 
 	// If we don't have a helm chart reference, scaffold the default chart
 	// from Helm's default template. Otherwise, fetch it.
 	if len(opts.Chart) == 0 {
-		r, c, err = scaffoldChart(cfg, chartsDir, opts)
+		r, c, err = scaffoldChart(cfg, tmpDir, opts)
 		if err != nil {
-			return resource.Resource{}, nil, fmt.Errorf("failed to scaffold default chart: %v", err)
+			return nil, nil, fmt.Errorf("failed to scaffold default chart: %v", err)
 		}
 	} else {
-		r, c, err = fetchChart(cfg, chartsDir, opts)
+		r, c, err = fetchChart(cfg, tmpDir, opts)
 		if err != nil {
-			return resource.Resource{}, nil, fmt.Errorf("failed to fetch chart: %v", err)
+			return nil, nil, fmt.Errorf("failed to fetch chart: %v", err)
 		}
 	}
 
-	relChartPath := filepath.Join(HelmChartsDir, c.Name())
-	absChartPath := filepath.Join(projectDir, relChartPath)
+	absChartPath := filepath.Join(tmpDir, c.Name())
 	if err := fetchChartDependencies(absChartPath); err != nil {
-		return resource.Resource{}, nil, fmt.Errorf("failed to fetch chart dependencies: %v", err)
+		return nil, nil, fmt.Errorf("failed to fetch chart dependencies: %v", err)
 	}
 
 	// Reload chart in case dependencies changed
 	c, err = loader.Load(absChartPath)
 	if err != nil {
-		return resource.Resource{}, nil, fmt.Errorf("failed to load chart: %v", err)
+		return nil, nil, fmt.Errorf("failed to load chart: %v", err)
 	}
 
-	fmt.Printf("Created %s\n", relChartPath)
 	return r, c, nil
 }
 
-func scaffoldChart(cfg config.Config, destDir string, opts CreateOptions) (resource.Resource, *chart.Chart, error) {
+func scaffoldChart(cfg config.Config, destDir string, opts CreateOptions) (*resource.Resource, *chart.Chart, error) {
 	chartPath, err := chartutil.Create(strings.ToLower(opts.GVK.Kind), destDir)
 	if err != nil {
-		return resource.Resource{}, nil, err
+		return nil, nil, err
 	}
 	chart, err := loader.Load(chartPath)
 	if err != nil {
-		return resource.Resource{}, nil, err
+		return nil, nil, err
 	}
 
 	return opts.NewResource(cfg), chart, nil
 }
 
-func fetchChart(cfg config.Config, destDir string, opts CreateOptions) (_ resource.Resource, chart *chart.Chart, err error) {
+func fetchChart(cfg config.Config, destDir string, opts CreateOptions) (_ *resource.Resource, chart *chart.Chart, err error) {
 	if _, err = os.Stat(opts.Chart); err == nil {
 		chart, err = createChartFromDisk(destDir, opts.Chart)
 	} else {
 		chart, err = createChartFromRemote(destDir, opts)
 	}
 	if err != nil {
-		return resource.Resource{}, nil, err
+		return nil, nil, err
 	}
 
 	chartName := chart.Name()
@@ -192,7 +193,7 @@ func fetchChart(cfg config.Config, destDir string, opts CreateOptions) (_ resour
 	return opts.NewResource(cfg), chart, nil
 }
 
-func (opts CreateOptions) NewResource(cfg config.Config) resource.Resource {
+func (opts CreateOptions) NewResource(cfg config.Config) *resource.Resource {
 	ro := &golang.Options{}
 	ro.DoAPI = true
 	ro.Namespaced = true
@@ -206,7 +207,7 @@ func (opts CreateOptions) NewResource(cfg config.Config) resource.Resource {
 	r.Domain = cfg.GetDomain()
 	// remove the path since is not a Golang project
 	r.Path = ""
-	return r
+	return &r
 }
 
 func createChartFromDisk(destDir, source string) (*chart.Chart, error) {
@@ -215,7 +216,7 @@ func createChartFromDisk(destDir, source string) (*chart.Chart, error) {
 		return nil, err
 	}
 
-	// Save it into our project's helm-charts directory.
+	// Save it into destDir.
 	if err := chartutil.SaveDir(chart, destDir); err != nil {
 		return nil, err
 	}
@@ -240,17 +241,7 @@ func createChartFromRemote(destDir string, opts CreateOptions) (*chart.Chart, er
 		opts.Chart = chartURL
 	}
 
-	tmpDir, err := ioutil.TempDir("", "osdk-helm-chart")
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if err := os.RemoveAll(tmpDir); err != nil {
-			log.Errorf("Failed to remove temporary directory %s: %s", tmpDir, err)
-		}
-	}()
-
-	chartArchive, _, err := c.DownloadTo(opts.Chart, opts.Version, tmpDir)
+	chartArchive, _, err := c.DownloadTo(opts.Chart, opts.Version, destDir)
 	if err != nil {
 		return nil, err
 	}

@@ -17,7 +17,6 @@ package v1
 import (
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/spf13/pflag"
@@ -37,7 +36,7 @@ type createAPISubcommand struct {
 	config        config.Config
 	createOptions chartutil.CreateOptions
 
-	resource resource.Resource
+	resource *resource.Resource
 	chrt     *chart.Chart
 }
 
@@ -159,7 +158,7 @@ func (p *createAPISubcommand) runPhase2() error {
 }
 
 // Validate perform the required validations for this plugin
-func (p *createAPISubcommand) Validate() error {
+func (p *createAPISubcommand) Validate() (err error) {
 	if len(strings.TrimSpace(p.createOptions.Chart)) == 0 {
 		if len(strings.TrimSpace(p.createOptions.Repo)) != 0 {
 			return fmt.Errorf("value of --%s can only be used with --%s", helmChartRepoFlag, helmChartFlag)
@@ -181,11 +180,7 @@ func (p *createAPISubcommand) Validate() error {
 	}
 
 	// Create and validate the resource and chart from CreateOptions.
-	projectDir, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-	p.resource, p.chrt, err = chartutil.CreateChart(p.config, projectDir, p.createOptions)
+	p.resource, p.chrt, err = chartutil.CreateChart(p.config, p.createOptions)
 	if err != nil {
 		return err
 	}
