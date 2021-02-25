@@ -16,7 +16,7 @@ Operators, in an effective, automated, and scalable way. Read more in
 the [introduction blog post][of-blog].
 
 [Operators][operator-link] make it easy to manage complex stateful
-applications on top of Kubernetes. However writing an operator today can
+applications on top of Kubernetes. However writing an Operator today can
 be difficult because of challenges such as using low level APIs, writing
 boilerplate, and a lack of modularity which leads to duplication.
 
@@ -26,40 +26,31 @@ operators easier by providing:
 
 - High level APIs and abstractions to write the operational logic more intuitively
 - Tools for scaffolding and code generation to bootstrap a new project fast
-- Extensions to cover common operator use cases
+- Extensions to cover common Operator use cases
 
 ## Dependency and platform support
 
 ### Go version
 
-Release binaries will be built with the Go compiler version specified in the Operator SDK's [prerequisites section][doc-readme-prereqs].
+Release binaries will be built with the Go compiler version specified in the [developer guide][dev-guide-prereqs].
+A Go Operator project's Go version can be found in its `go.mod` file.
+
+[dev-guide-prereqs]:https://sdk.operatorframework.io/docs/contribution-guidelines/developer-guide#prerequisites
 
 ### Kubernetes versions
 
-As the Operator SDK interacts directly with the Kubernetes API, certain API features are assumed to exist in the target cluster.
-The currently supported Kubernetes version will always be listed in the SDK [prerequisites section][doc-readme-prereqs].
+Supported Kubernetes versions for your Operator project or relevant binary can be determined
+by following this [compatibility guide][k8s-compat].
+
+<!-- TODO(estroz): remove the master subdomain once the updated doc is released (v1.5.0) -->
+[k8s-compat]:https://master.sdk.operatorframework.io/docs/overview#kubernetes-version-compatibility
 
 ### Platforms
 
-The following matrix defines which architectures are supported for GNU Linux:
+The set of supported platforms for all binaries and images can be found in [these tables][platforms].
 
-|                               |     `amd64`     |     `arm64`     |    `ppc64le`    |     `s390x`     |
-|-------------------------------|-----------------|-----------------|-----------------|-----------------|
-| `operator-sdk`                | ✓               | ✓               | ✓               | ✓               |
-| `ansible-operator`            | ✓               | ✓               | ✓               | ✓               |
-| `helm-operator`               | ✓               | ✓               | ✓               | ✓               |
-| `scorecard-test` image        | ✓               | ✓               | ✓               | ✓               |
-| `scorecard-test-kuttl` image  | ✓               | ✓               | ✓               | -               |
-
-The following matrix defines which architectures are supported for MacOS Darwin:
-
-|                               |     `amd64`     |
-|-------------------------------|-----------------|
-| `operator-sdk`                | ✓               |
-| `ansible-operator`            | ✓               |
-| `helm-operator`               | ✓               |
-
-Support for the Windows platform is not on the roadmap at this time.
+<!-- TODO(estroz): remove the master subdomain once the updated doc is released (v1.5.0) -->
+[platforms]:https://master.sdk.operatorframework.io/docs/overview#platform-support
 
 ## Community and how to get involved
 
