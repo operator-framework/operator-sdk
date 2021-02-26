@@ -23,6 +23,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"reflect"
+	"time"
 
 	"context"
 
@@ -104,8 +105,10 @@ func (r *MemcachedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			log.Error(err, "Failed to update Deployment", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
 			return ctrl.Result{}, err
 		}
-		// Spec updated - return and requeue
-		return ctrl.Result{Requeue: true}, nil
+		// Ask to requeue after 1 minute in order to give enough time for the
+		// pods be created on the cluster side and the operand be able
+		// to do the next update step accurately.
+		return ctrl.Result{RequeueAfter: time.Minute}, nil
 	}
 
 	// Update the Memcached status with the pod names
