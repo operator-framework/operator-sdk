@@ -9,15 +9,15 @@ header_text "Running ansible molecule tests in a python3 virtual environment"
 
 # Set up a python3.8 virtual environment.
 ENVDIR="$(mktemp -d)"
-trap_add "deactivate; rm -rf $ENVDIR" EXIT
+trap_add "set +u; deactivate; set -u; rm -rf $ENVDIR" EXIT
 python3 -m venv "$ENVDIR"
-source "${ENVDIR}/bin/activate"
+set +u; source "${ENVDIR}/bin/activate"; set -u
 
 # Install dependencies.
 TMPDIR="$(mktemp -d)"
 trap_add "rm -rf $TMPDIR" EXIT
 pip3 install pyasn1==0.4.7 pyasn1-modules==0.2.6 idna==2.8 ipaddress==1.0.23
-pip3 install molecule==3.0.2
+pip3 install cryptography==3.3.2 molecule==3.0.2
 pip3 install ansible-lint yamllint
 pip3 install docker==4.2.2 openshift==0.11.2 jmespath
 ansible-galaxy collection install 'community.kubernetes:<1.0.0'
