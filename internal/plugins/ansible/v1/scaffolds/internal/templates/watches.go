@@ -19,10 +19,10 @@ import (
 	"fmt"
 	"text/template"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 )
 
-var _ file.Template = &Watches{}
+var _ machinery.Template = &Watches{}
 
 const (
 	defaultWatchesFile = "watches.yaml"
@@ -31,26 +31,25 @@ const (
 
 // Watches scaffolds the watches.yaml file
 type Watches struct {
-	file.TemplateMixin
+	machinery.TemplateMixin
 }
 
-// SetTemplateDefaults implements input.Template
+// SetTemplateDefaults implements machinery.Template
 func (f *Watches) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = defaultWatchesFile
 	}
 
 	f.TemplateBody = fmt.Sprintf(watchesTemplate,
-		file.NewMarkerFor(f.Path, watchMarker),
+		machinery.NewMarkerFor(f.Path, watchMarker),
 	)
 	return nil
 }
 
-var _ file.Inserter = &WatchesUpdater{}
+var _ machinery.Inserter = &WatchesUpdater{}
 
 type WatchesUpdater struct {
-	file.TemplateMixin
-	file.ResourceMixin
+	machinery.ResourceMixin
 
 	GeneratePlaybook bool
 	GenerateRole     bool
@@ -61,18 +60,18 @@ func (*WatchesUpdater) GetPath() string {
 	return defaultWatchesFile
 }
 
-func (*WatchesUpdater) GetIfExistsAction() file.IfExistsAction {
-	return file.Overwrite
+func (*WatchesUpdater) GetIfExistsAction() machinery.IfExistsAction {
+	return machinery.OverwriteFile
 }
 
-func (f *WatchesUpdater) GetMarkers() []file.Marker {
-	return []file.Marker{
-		file.NewMarkerFor(defaultWatchesFile, watchMarker),
+func (f *WatchesUpdater) GetMarkers() []machinery.Marker {
+	return []machinery.Marker{
+		machinery.NewMarkerFor(defaultWatchesFile, watchMarker),
 	}
 }
 
-func (f *WatchesUpdater) GetCodeFragments() file.CodeFragmentsMap {
-	fragments := make(file.CodeFragmentsMap, 1)
+func (f *WatchesUpdater) GetCodeFragments() machinery.CodeFragmentsMap {
+	fragments := make(machinery.CodeFragmentsMap, 1)
 
 	// If resource is not being provided we are creating the file, not updating it
 	if f.Resource == nil {
@@ -85,7 +84,7 @@ func (f *WatchesUpdater) GetCodeFragments() file.CodeFragmentsMap {
 
 	// TODO(asmacdo) Move template execution into a function, executed by the apiScaffolder.scaffold()
 	// DefaultFuncMap used provide the function "lower", used in the watch fragment.
-	tmpl := template.Must(template.New("rules").Funcs(file.DefaultFuncMap()).Parse(watchFragment))
+	tmpl := template.Must(template.New("rules").Funcs(machinery.DefaultFuncMap()).Parse(watchFragment))
 	err := tmpl.Execute(buf, f)
 	if err != nil {
 		panic(err)
@@ -93,7 +92,7 @@ func (f *WatchesUpdater) GetCodeFragments() file.CodeFragmentsMap {
 	watches = append(watches, buf.String())
 
 	if len(watches) != 0 {
-		fragments[file.NewMarkerFor(defaultWatchesFile, watchMarker)] = watches
+		fragments[machinery.NewMarkerFor(defaultWatchesFile, watchMarker)] = watches
 	}
 	return fragments
 }
@@ -103,13 +102,13 @@ const watchesTemplate = `---
 %s
 `
 
-const watchFragment = `- version: {{.Resource.Version}}
-  group: {{.Resource.QualifiedGroup}}
-  kind: {{.Resource.Kind}}
+const watchFragment = `- version: {{ .Resource.Version }}
+  group: {{ .Resource.QualifiedGroup }}
+  kind: {{ .Resource.Kind }}
   {{- if .GeneratePlaybook }}
-  playbook: {{ .PlaybooksDir }}/{{ .Resource.Kind | lower }}.yml
+  playbook: {{ .PlaybooksDir }}/{{ lower .Resource.Kind }}.yml
   {{- else if .GenerateRole}}
-  role: {{ .Resource.Kind | lower }}
+  role: {{ lower .Resource.Kind }}
   {{- else }}
   # FIXME: Specify the role or playbook for this resource.
   {{- end }}

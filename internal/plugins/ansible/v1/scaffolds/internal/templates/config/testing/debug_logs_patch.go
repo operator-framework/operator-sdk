@@ -17,18 +17,18 @@ package testing
 import (
 	"path/filepath"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 )
 
-var _ file.Template = &DebugLogsPatch{}
+var _ machinery.Template = &DebugLogsPatch{}
 
 // DebugLogsPatch scaffolds the patch file for enabling
 // verbose logs during Ansible testing
 type DebugLogsPatch struct {
-	file.TemplateMixin
+	machinery.TemplateMixin
 }
 
-// SetTemplateDefaults implements input.Template
+// SetTemplateDefaults implements machinery.Template
 func (f *DebugLogsPatch) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = filepath.Join("config", "testing", "debug_logs_patch.yaml")
@@ -36,7 +36,7 @@ func (f *DebugLogsPatch) SetTemplateDefaults() error {
 
 	f.TemplateBody = debugLogsPatchTemplate
 
-	f.IfExistsAction = file.Error
+	f.IfExistsAction = machinery.Error
 
 	return nil
 }

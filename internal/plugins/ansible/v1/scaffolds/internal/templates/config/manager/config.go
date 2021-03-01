@@ -20,21 +20,21 @@ package manager
 import (
 	"path/filepath"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 )
 
-var _ file.Template = &Config{}
+var _ machinery.Template = &Config{}
 
-// Config scaffolds a file that defines the namespace and the manager deployment
+// Config scaffolds yaml config for the manager.
 type Config struct {
-	file.TemplateMixin
-	file.ProjectNameMixin
+	machinery.TemplateMixin
+	machinery.ProjectNameMixin
 
 	// Image is controller manager image name
 	Image string
 }
 
-// SetTemplateDefaults implements file.Template
+// SetTemplateDefaults implements machinery.Template
 func (f *Config) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = filepath.Join("config", "manager", "manager.yaml")

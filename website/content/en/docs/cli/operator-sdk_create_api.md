@@ -7,13 +7,13 @@ Scaffold a Kubernetes API
 
 ### Synopsis
 
-Scaffold a Kubernetes API by creating a Resource definition and / or a Controller.
+Scaffold a Kubernetes API by writing a Resource definition and/or a Controller.
 
-create resource will prompt the user for if it should scaffold the Resource and / or Controller.  To only
-scaffold a Controller for an existing Resource, select "n" for Resource.  To only define
-the schema for a Resource without writing a Controller, select "n" for Controller.
+If information about whether the resource and controller should be scaffolded
+was not explicitly provided, it will prompt the user if they should be.
 
-After the scaffold is written, api will run make on the project.
+After the scaffold is written, the dependencies will be updated and
+make generate will be run.
 
 
 ```
@@ -62,9 +62,8 @@ operator-sdk create api [flags]
 ### Options inherited from parent commands
 
 ```
-      --plugins strings          plugin keys of the plugin to initialize the project with
-      --project-version string   project version
-      --verbose                  Enable verbose logging
+      --plugins strings   plugin keys to be used for this subcommand execution
+      --verbose           Enable verbose logging
 ```
 
 ### SEE ALSO

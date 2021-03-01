@@ -18,7 +18,7 @@ operator-sdk [flags]
 
 ```
 The first step is to initialize your project:
-    operator-sdk init --project-version=<PROJECT VERSION> --plugins=<PLUGIN KEYS>
+    operator-sdk init [--plugins=<PLUGIN KEYS> [--project-version=<PROJECT VERSION>]]
 
 <PLUGIN KEYS> is a comma-separated list of plugin keys from the following table
 and <PROJECT VERSION> a supported project version for these plugins.
@@ -32,22 +32,19 @@ and <PROJECT VERSION> a supported project version for these plugins.
 
 For more specific help for the init command of a certain plugins and project version
 configuration please run:
-    operator-sdk init --help --project-version=<PROJECT VERSION> --plugins=<PLUGIN KEYS>
+    operator-sdk init --help --plugins=<PLUGIN KEYS> [--project-version=<PROJECT VERSION>]
 
-Default project version: 3
 Default plugin keys: "go.kubebuilder.io/v3"
+Default project version: "3"
 
-After the project has been initialized, run
-    operator-sdk --help
-to obtain further info about available commands.
 ```
 
 ### Options
 
 ```
   -h, --help                     help for operator-sdk
-      --plugins strings          plugin keys of the plugin to initialize the project with
-      --project-version string   project version
+      --plugins strings          plugin keys to be used for this subcommand execution
+      --project-version string   project version (default "3")
       --verbose                  Enable verbose logging
 ```
 
@@ -58,7 +55,7 @@ to obtain further info about available commands.
 * [operator-sdk cleanup](../operator-sdk_cleanup)	 - Clean up an Operator deployed with the 'run' subcommand
 * [operator-sdk completion](../operator-sdk_completion)	 - Load completions for the specified shell
 * [operator-sdk create](../operator-sdk_create)	 - Scaffold a Kubernetes API or webhook
-* [operator-sdk edit](../operator-sdk_edit)	 - This command will edit the project configuration
+* [operator-sdk edit](../operator-sdk_edit)	 - Update the project configuration
 * [operator-sdk generate](../operator-sdk_generate)	 - Invokes a specific generator
 * [operator-sdk init](../operator-sdk_init)	 - Initialize a new project
 * [operator-sdk olm](../operator-sdk_olm)	 - Manage the Operator Lifecycle Manager installation in your cluster

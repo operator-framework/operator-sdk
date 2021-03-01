@@ -17,24 +17,24 @@ package roles
 import (
 	"path/filepath"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/constants"
 )
 
-const templatesPath = "templates" + constants.FilePathSep + ".placeholder"
+var _ machinery.Template = &RoleTemplates{}
 
 type RoleTemplates struct {
-	file.TemplateMixin
-	file.ResourceMixin
+	machinery.TemplateMixin
+	machinery.ResourceMixin
 }
 
-// SetTemplateDefaults implements input.Template
+// SetTemplateDefaults implements machinery.Template
 func (f *RoleTemplates) SetTemplateDefaults() error {
 	if f.Path == "" {
-		f.Path = filepath.Join(constants.RolesDir, "%[kind]", templatesPath)
-		f.Path = f.Resource.Replacer().Replace(f.Path)
+		f.Path = filepath.Join(constants.RolesDir, "%[kind]", "templates", ".placeholder")
 	}
+	f.Path = f.Resource.Replacer().Replace(f.Path)
 
 	f.TemplateBody = templatesDirPlaceholder
 	return nil

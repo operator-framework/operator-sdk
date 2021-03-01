@@ -20,10 +20,9 @@ package scaffolds
 import (
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
 	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
 	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
+	"sigs.k8s.io/kubebuilder/v3/pkg/plugins"
 
-	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/constants"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/crd"
@@ -34,7 +33,7 @@ import (
 	ansibleroles "github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/roles"
 )
 
-var _ cmdutil.Scaffolder = &apiScaffolder{}
+var _ plugins.Scaffolder = &apiScaffolder{}
 
 type apiScaffolder struct {
 	fs machinery.Filesystem
@@ -45,8 +44,8 @@ type apiScaffolder struct {
 	doRole, doPlaybook bool
 }
 
-// NewCreateAPIScaffolder returns a new Scaffolder for project initialization operations
-func NewCreateAPIScaffolder(cfg config.Config, res resource.Resource, doRole, doPlaybook bool) cmdutil.Scaffolder {
+// NewCreateAPIScaffolder returns a new plugins.Scaffolder for project initialization operations
+func NewCreateAPIScaffolder(cfg config.Config, res resource.Resource, doRole, doPlaybook bool) plugins.Scaffolder {
 	return &apiScaffolder{
 		config:     cfg,
 		resource:   res,
@@ -55,12 +54,12 @@ func NewCreateAPIScaffolder(cfg config.Config, res resource.Resource, doRole, do
 	}
 }
 
-// InjectFS implements Scaffolder
+// InjectFS implements plugins.Scaffolder
 func (s *apiScaffolder) InjectFS(fs machinery.Filesystem) {
 	s.fs = fs
 }
 
-// Scaffold implements Scaffolder
+// Scaffold implements plugins.Scaffolder
 func (s *apiScaffolder) Scaffold() error {
 	if err := s.config.UpdateResource(s.resource); err != nil {
 		return err
@@ -75,7 +74,7 @@ func (s *apiScaffolder) Scaffold() error {
 		machinery.WithResource(&s.resource),
 	)
 
-	var createAPITemplates []file.Builder
+	var createAPITemplates []machinery.Builder
 	createAPITemplates = append(createAPITemplates,
 		&rbac.CRDViewerRole{},
 		&rbac.CRDEditorRole{},

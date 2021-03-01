@@ -3,11 +3,14 @@ title: "operator-sdk edit"
 ---
 ## operator-sdk edit
 
-This command will edit the project configuration
+Update the project configuration
 
 ### Synopsis
 
-This command will edit the project configuration. You can have single or multi group project.
+This command will edit the project configuration.
+Features supported:
+  - Toggle between single or multi group projects.
+
 
 ```
 operator-sdk edit [flags]
@@ -16,11 +19,11 @@ operator-sdk edit [flags]
 ### Examples
 
 ```
-# Enable the multigroup layout
-        operator-sdk edit --multigroup
+  # Enable the multigroup layout
+  operator-sdk edit --multigroup
 
-        # Disable the multigroup layout
-        operator-sdk edit --multigroup=false
+  # Disable the multigroup layout
+  operator-sdk edit --multigroup=false
 
 ```
 
@@ -34,9 +37,8 @@ operator-sdk edit [flags]
 ### Options inherited from parent commands
 
 ```
-      --plugins strings          plugin keys of the plugin to initialize the project with
-      --project-version string   project version
-      --verbose                  Enable verbose logging
+      --plugins strings   plugin keys to be used for this subcommand execution
+      --verbose           Enable verbose logging
 ```
 
 ### SEE ALSO

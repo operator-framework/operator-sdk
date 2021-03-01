@@ -17,18 +17,18 @@ package pullpolicy
 import (
 	"path/filepath"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 )
 
-var _ file.Template = &IfNotPresentPullPatch{}
+var _ machinery.Template = &IfNotPresentPullPatch{}
 
 // IfNotPresentPullPatch scaffolds the patch file for overriding the
 // default image pull policy during Ansible testing
 type IfNotPresentPullPatch struct {
-	file.TemplateMixin
+	machinery.TemplateMixin
 }
 
-// SetTemplateDefaults implements input.Template
+// SetTemplateDefaults implements machinery.Template
 func (f *IfNotPresentPullPatch) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = filepath.Join("config", "testing", "pull_policy", "IfNotPresent.yaml")
@@ -36,7 +36,7 @@ func (f *IfNotPresentPullPatch) SetTemplateDefaults() error {
 
 	f.TemplateBody = ifNotPresentPullPatchTemplate
 
-	f.IfExistsAction = file.Error
+	f.IfExistsAction = machinery.Error
 
 	return nil
 }

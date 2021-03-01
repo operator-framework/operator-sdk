@@ -25,34 +25,38 @@ import (
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
 	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
+	"sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 
-	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
-	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/chartutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds"
-	manifestsv2 "github.com/operator-framework/operator-sdk/internal/plugins/manifests/v2"
-	scorecardv2 "github.com/operator-framework/operator-sdk/internal/plugins/scorecard/v2"
+)
+
+const (
+	groupFlag   = "group"
+	versionFlag = "version"
+	kindFlag    = "kind"
 )
 
 type initSubcommand struct {
-	config  config.Config
-	apiSubc createAPISubcommand
+	apiSubcommand createAPISubcommand
+
+	config config.Config
 
 	// For help text.
 	commandName string
 
 	// Flags
+	group       string
 	domain      string
+	version     string
+	kind        string
 	projectName string
 }
 
-var (
-	_ plugin.InitSubcommand = &initSubcommand{}
-	_ cmdutil.RunOptions    = &initSubcommand{}
-)
+var _ plugin.InitSubcommand = &initSubcommand{}
 
 // UpdateContext define plugin context
-func (p *initSubcommand) UpdateContext(ctx *plugin.Context) {
-	ctx.Description = `Initialize a new Helm-based operator project.
+func (p *initSubcommand) UpdateMetadata(cliMeta plugin.CLIMetadata, subcmdMeta *plugin.SubcommandMetadata) {
+	subcmdMeta.Description = `Initialize a new Helm-based operator project.
 
 Writes the following files:
 - a helm-charts directory with the chart(s) to build releases from
@@ -63,7 +67,7 @@ Writes the following files:
 - a Patch file for customizing image for manager manifests
 - a Patch file for enabling prometheus metrics
 `
-	ctx.Examples = fmt.Sprintf(`  $ %[1]s init --plugins=%[2]s \
+	subcmdMeta.Examples = fmt.Sprintf(`  $ %[1]s init --plugins=%[2]s \
       --domain=example.com \
       --group=apps \
       --version=v1alpha1 \
@@ -110,102 +114,87 @@ Writes the following files:
   $ %[1]s init --plugins=%[2]s \
       --domain=example.com \
       --helm-chart=/path/to/local/chart-archives/app-1.2.3.tgz
-`,
-		ctx.CommandName, pluginKey,
-	)
+`, cliMeta.CommandName, pluginKey)
 
-	p.commandName = ctx.CommandName
+	p.commandName = cliMeta.CommandName
 }
 
-// BindFlags will set the flags for the plugin
 func (p *initSubcommand) BindFlags(fs *pflag.FlagSet) {
+	fs.SortFlags = false
 	fs.StringVar(&p.domain, "domain", "my.domain", "domain for groups")
 	fs.StringVar(&p.projectName, "project-name", "", "name of this project, the default being directory name")
-	p.apiSubc.BindFlags(fs)
+
+	fs.StringVar(&p.group, groupFlag, "", "resource Group")
+	fs.StringVar(&p.version, versionFlag, "", "resource Version")
+	fs.StringVar(&p.kind, kindFlag, "", "resource Kind")
+	p.apiSubcommand.BindFlags(fs)
 }
 
-// InjectConfig will inject the PROJECT file/config in the plugin
-func (p *initSubcommand) InjectConfig(c config.Config) {
-	// v3 project configs get a 'layout' value.
-	_ = c.SetPluginChain([]string{pluginKey})
+func (p *initSubcommand) InjectConfig(c config.Config) error {
 	p.config = c
-	p.apiSubc.config = p.config
-}
 
-// CreateOptions with defaults set, for comparison in case GVK/chart inputs were set.
-var emptyCreateOptions = chartutil.CreateOptions{CRDVersion: "v1"}
-
-// Run will call the plugin actions
-func (p *initSubcommand) Run(fs machinery.Filesystem) error {
-	// Set values in the config
-	if err := p.config.SetProjectName(p.projectName); err != nil {
-		return err
-	}
 	if err := p.config.SetDomain(p.domain); err != nil {
 		return err
 	}
 
-	// Check if the project name is a valid k8s namespace (DNS 1123 label).
-	if p.config.GetProjectName() == "" {
+	// Assign a default project name
+	if p.projectName == "" {
 		dir, err := os.Getwd()
 		if err != nil {
 			return fmt.Errorf("error getting current directory: %v", err)
 		}
-		if err = p.config.SetProjectName(strings.ToLower(filepath.Base(dir))); err != nil {
-			return err
-		}
+		p.projectName = strings.ToLower(filepath.Base(dir))
 	}
-
-	if err := cmdutil.Run(p, fs); err != nil {
-		return err
+	// Check if the project name is a valid k8s namespace (DNS 1123 label).
+	if err := validation.IsDNS1123Label(p.projectName); err != nil {
+		return fmt.Errorf("project name (%s) is invalid: %v", p.projectName, err)
 	}
-
-	// Run SDK phase 2 plugins.
-	if err := p.runPhase2(fs); err != nil {
-		return err
-	}
-
-	// If API creation is configured, run the 'create api' subcommand.
-	if p.apiSubc.options != emptyCreateOptions {
-		p.apiSubc.options.Domain = p.domain
-		if err := p.apiSubc.Run(fs); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// SDK phase 2 plugins.
-func (p *initSubcommand) runPhase2(fs machinery.Filesystem) error {
-	if err := manifestsv2.RunInit(p.config, fs); err != nil {
-		return err
-	}
-	if err := scorecardv2.RunInit(p.config); err != nil {
+	if err := p.config.SetProjectName(p.projectName); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// Validate perform the required validations for this plugin
-func (p *initSubcommand) Validate() error {
-	if err := validation.IsDNS1123Label(p.config.GetProjectName()); err != nil {
-		return fmt.Errorf("project name (%s) is invalid: %v", p.config.GetProjectName(), err)
-	}
-
-	return nil
-}
-
-// GetScaffolder returns cmdutil.Scaffolder which will be executed due the RunOptions interface implementation
-func (p *initSubcommand) GetScaffolder() (cmdutil.Scaffolder, error) {
-	return scaffolds.NewInitScaffolder(p.config), nil
+func (p *initSubcommand) Scaffold(fs machinery.Filesystem) error {
+	scaffolder := scaffolds.NewInitScaffolder(p.config)
+	scaffolder.InjectFS(fs)
+	return scaffolder.Scaffold()
 }
 
 // PostScaffold will run the required actions after the default plugin scaffold
 func (p *initSubcommand) PostScaffold() error {
-	if p.apiSubc.options == emptyCreateOptions {
+	doAPI := p.group != "" || p.version != "" || p.kind != "" || p.apiSubcommand.options.chartOptions.Chart != defaultHelmChart
+	if !doAPI {
 		fmt.Printf("Next: define a resource with:\n$ %s create api\n", p.commandName)
+	} else {
+		args := []string{"create", "api"}
+		// The following three checks should match the default values in sig.k8s.io/kubebuilder/v3/pkg/cli/resource.go
+		if p.group != "" {
+			args = append(args, fmt.Sprintf("--%s", groupFlag), p.group)
+		}
+		if p.version != "" {
+			args = append(args, fmt.Sprintf("--%s", versionFlag), p.version)
+		}
+		if p.kind != "" {
+			args = append(args, fmt.Sprintf("--%s", kindFlag), p.kind)
+		}
+		if p.apiSubcommand.options.CRDVersion != defaultCrdVersion {
+			args = append(args, fmt.Sprintf("--%s", crdVersionFlag), p.apiSubcommand.options.CRDVersion)
+		}
+		if p.apiSubcommand.options.chartOptions.Chart != defaultHelmChart {
+			args = append(args, fmt.Sprintf("--%s", helmChartFlag), p.apiSubcommand.options.chartOptions.Chart)
+		}
+		if p.apiSubcommand.options.chartOptions.Repo != defaultHelmChartRepo {
+			args = append(args, fmt.Sprintf("--%s", helmChartRepoFlag), p.apiSubcommand.options.chartOptions.Repo)
+		}
+		if p.apiSubcommand.options.chartOptions.Version != defaultHelmChartVersion {
+			args = append(args, fmt.Sprintf("--%s", helmChartVersionFlag), p.apiSubcommand.options.chartOptions.Version)
+		}
+		if err := util.RunCmd("Creating the API", os.Args[0], args...); err != nil {
+			return err
+		}
 	}
+
 	return nil
 }

@@ -27,9 +27,8 @@ https://sdk.operatorframework.io/docs/olm-integration
 ### Options inherited from parent commands
 
 ```
-      --plugins strings          plugin keys of the plugin to initialize the project with
-      --project-version string   project version
-      --verbose                  Enable verbose logging
+      --plugins strings   plugin keys to be used for this subcommand execution
+      --verbose           Enable verbose logging
 ```
 
 ### SEE ALSO

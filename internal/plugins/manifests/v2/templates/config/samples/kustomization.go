@@ -11,32 +11,35 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package manifests
+
+package samples
 
 import (
 	"fmt"
 	"path/filepath"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 )
 
-var _ file.Template = &kustomization{}
-var _ file.Inserter = &kustomization{}
+var (
+	_ machinery.Template = &Kustomization{}
+	_ machinery.Inserter = &Kustomization{}
+)
 
-// kustomization scaffolds or updates the kustomization.yaml in config/samples.
-type kustomization struct {
-	file.TemplateMixin
-	file.ResourceMixin
+// Kustomization scaffolds a kustomization.yaml for the manifests overlay folder.
+type Kustomization struct {
+	machinery.TemplateMixin
+	machinery.ResourceMixin
 }
 
-// SetTemplateDefaults implements file.Template
-func (f *kustomization) SetTemplateDefaults() error {
+// SetTemplateDefaults implements machinery.Template
+func (f *Kustomization) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = filepath.Join("config", "samples", "kustomization.yaml")
 	}
 	f.Path = f.Resource.Replacer().Replace(f.Path)
 
-	f.TemplateBody = fmt.Sprintf(kustomizationTemplate, file.NewMarkerFor(f.Path, samplesMarker))
+	f.TemplateBody = fmt.Sprintf(kustomizationTemplate, machinery.NewMarkerFor(f.Path, samplesMarker))
 
 	return nil
 }
@@ -46,8 +49,8 @@ const (
 )
 
 // GetMarkers implements file.Inserter
-func (f *kustomization) GetMarkers() []file.Marker {
-	return []file.Marker{file.NewMarkerFor(f.Path, samplesMarker)}
+func (f *Kustomization) GetMarkers() []machinery.Marker {
+	return []machinery.Marker{machinery.NewMarkerFor(f.Path, samplesMarker)}
 }
 
 const samplesCodeFragment = `- %s
@@ -55,14 +58,14 @@ const samplesCodeFragment = `- %s
 
 // makeCRFileName returns a Custom Resource example file name in the same format
 // as kubebuilder's CreateAPI plugin for a gvk.
-func (f kustomization) makeCRFileName() string {
+func (f Kustomization) makeCRFileName() string {
 	return f.Resource.Replacer().Replace("%[group]_%[version]_%[kind].yaml")
 }
 
 // GetCodeFragments implements file.Inserter
-func (f *kustomization) GetCodeFragments() file.CodeFragmentsMap {
-	return file.CodeFragmentsMap{
-		file.NewMarkerFor(f.Path, samplesMarker): []string{fmt.Sprintf(samplesCodeFragment, f.makeCRFileName())},
+func (f *Kustomization) GetCodeFragments() machinery.CodeFragmentsMap {
+	return machinery.CodeFragmentsMap{
+		machinery.NewMarkerFor(f.Path, samplesMarker): []string{fmt.Sprintf(samplesCodeFragment, f.makeCRFileName())},
 	}
 }
 

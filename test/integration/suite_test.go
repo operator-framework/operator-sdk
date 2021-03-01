@@ -29,6 +29,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/operator-framework/operator-sdk/internal/testutils"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
 // TestIntegration tests operator-sdk projects with OLM.
@@ -192,7 +193,7 @@ func updateProjectConfigs(tc testutils.TestContext) {
 		defaultKustomizationOLMWebhookPatch,
 	)).To(Succeed())
 
-	ExpectWithOffset(1, tc.AddPackagemanifestsTarget()).To(Succeed())
+	ExpectWithOffset(1, tc.AddPackagemanifestsTarget(projutil.OperatorTypeGo)).To(Succeed())
 }
 
 // Exposes port 9443 for the OLM-managed webhook server.

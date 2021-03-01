@@ -1,4 +1,4 @@
-// Copyright 2020 The Operator-SDK Authors
+// Copyright 2021 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,61 +15,40 @@
 package v2
 
 import (
-	"fmt"
-	"path/filepath"
-
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
-	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
+	cfgv2 "sigs.k8s.io/kubebuilder/v3/pkg/config/v2"
+	cfgv3 "sigs.k8s.io/kubebuilder/v3/pkg/config/v3"
 	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins"
-	"github.com/operator-framework/operator-sdk/internal/plugins/manifests"
 )
 
-const (
-	pluginName = "manifests" + plugins.DefaultNameQualifier
+const pluginName = "manifests" + plugins.DefaultNameQualifier
+
+var (
+	pluginVersion            = plugin.Version{Number: 2}
+	supportedProjectVersions = []config.Version{cfgv2.Version, cfgv3.Version}
+	pluginKey                = plugin.KeyFor(Plugin{})
 )
 
 var (
-	pluginVersion   = plugin.Version{Number: 2}
-	pluginConfigKey = plugin.Key(pluginName, pluginVersion.String())
-
-	manifestsDir = filepath.Join("config", "manifests")
+	_ plugin.Plugin    = Plugin{}
+	_ plugin.Init      = Plugin{}
+	_ plugin.CreateAPI = Plugin{}
 )
 
-// Config configures this plugin, and is saved in the project config file.
-type Config struct{}
-
-// HasPluginConfig returns true if cfg.Layout contains an exact match for this plugin's key.
-func HasPluginConfig(cfg config.Config) bool {
-	info := Config{}
-	return cfg.DecodePluginConfig(pluginConfigKey, &info) == nil
+type Plugin struct {
+	initSubcommand
+	createAPISubcommand
 }
 
-// RunInit modifies the project scaffolded by kubebuilder's Init plugin.
-func RunInit(cfg config.Config, fs machinery.Filesystem) error {
-	// These will only run if project version is v3.
-	if err := manifests.RunInit(cfg); err != nil {
-		return err
-	}
-	if err := runInit(cfg, fs); err != nil {
-		return err
-	}
+func (Plugin) Name() string                                         { return pluginName }
+func (Plugin) Version() plugin.Version                              { return pluginVersion }
+func (Plugin) SupportedProjectVersions() []config.Version           { return supportedProjectVersions }
+func (p Plugin) GetInitSubcommand() plugin.InitSubcommand           { return &p.initSubcommand }
+func (p Plugin) GetCreateAPISubcommand() plugin.CreateAPISubcommand { return &p.createAPISubcommand }
 
-	// Update the plugin config section with this plugin's configuration.
-	mCfg := Config{}
-	if err := cfg.EncodePluginConfig(pluginConfigKey, mCfg); err != nil {
-		return fmt.Errorf("error writing plugin config for %s: %v", pluginConfigKey, err)
-	}
-
-	return nil
-}
-
-// RunCreateAPI runs the manifests SDK phase 2 plugin.
-func RunCreateAPI(cfg config.Config, fs machinery.Filesystem, res resource.Resource) error {
-	if !HasPluginConfig(cfg) {
-		return nil
-	}
-	return manifests.RunCreateAPI(cfg, fs, res)
+type Config struct {
+	Resources []resource.GVK `json:"resources,omitempty"`
 }

@@ -17,19 +17,19 @@ package mdefault
 import (
 	"path/filepath"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 )
 
-var _ file.Template = &ResourceTest{}
+var _ machinery.Template = &ResourceTest{}
 
 // ResourceTest scaffolds a ResourceTest for building a main
 type ResourceTest struct {
-	file.TemplateMixin
-	file.ResourceMixin
+	machinery.TemplateMixin
+	machinery.ResourceMixin
 	SampleFile string
 }
 
-// SetTemplateDefaults implements input.Template
+// SetTemplateDefaults implements machinery.Template
 func (f *ResourceTest) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = filepath.Join("molecule", "default", "tasks", "%[kind]_test.yml")
@@ -42,7 +42,7 @@ func (f *ResourceTest) SetTemplateDefaults() error {
 }
 
 const resourceTestTemplate = `---
-- name: Create the {{.Resource.QualifiedGroup}}/{{.Resource.Version}}.{{.Resource.Kind}}
+- name: Create the {{ .Resource.QualifiedGroup }}/{{ .Resource.Version }}.{{ .Resource.Kind }}
   k8s:
     state: present
     namespace: '{{ "{{ namespace }}" }}'

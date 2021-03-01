@@ -17,7 +17,6 @@ package ansible
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/spf13/pflag"
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
@@ -25,34 +24,44 @@ import (
 	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
 	pluginutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
-	"sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang"
 
-	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds"
-	"github.com/operator-framework/operator-sdk/internal/plugins/manifests"
-	manifestsv2 "github.com/operator-framework/operator-sdk/internal/plugins/manifests/v2"
 )
 
-const defaultCRDVersion = "v1"
+const (
+	crdVersionFlag       = "crd-version"
+	generatePlaybookFlag = "generate-playbook"
+	generateRoleFlag     = "generate-role"
 
-type createAPIPSubcommand struct {
-	config  config.Config
-	options createOptions
+	defaultCrdVersion = "v1"
+)
 
-	resource *resource.Resource
-
-	// Ansible-specific flags
-	doRole, doPlaybook bool
+type createAPIOptions struct {
+	CRDVersion         string
+	DoRole, DoPlaybook bool
 }
 
-var (
-	_ plugin.CreateAPISubcommand = &createAPIPSubcommand{}
-	_ cmdutil.RunOptions         = &createAPIPSubcommand{}
-)
+func (opts createAPIOptions) UpdateResource(res *resource.Resource) {
+	res.API = &resource.API{
+		CRDVersion: opts.CRDVersion,
+		Namespaced: true,
+	}
 
-// UpdateContext injects documentation for the command
-func (p *createAPIPSubcommand) UpdateContext(ctx *plugin.Context) {
-	ctx.Description = `Scaffold a Kubernetes API in which the controller is an Ansible role or playbook.
+	// Ensure that Path is empty and Controller false as this is not a Go project
+	res.Path = ""
+	res.Controller = false
+}
+
+var _ plugin.CreateAPISubcommand = &createAPISubcommand{}
+
+type createAPISubcommand struct {
+	config   config.Config
+	resource *resource.Resource
+	options  createAPIOptions
+}
+
+func (p *createAPISubcommand) UpdateMetadata(cliMeta plugin.CLIMetadata, subcmdMeta *plugin.SubcommandMetadata) {
+	subcmdMeta.Description = `Scaffold a Kubernetes API in which the controller is an Ansible role or playbook.
 
     - generates a Custom Resource Definition and sample
     - Updates watches.yaml
@@ -62,111 +71,59 @@ func (p *createAPIPSubcommand) UpdateContext(ctx *plugin.Context) {
     For the scaffolded operator to be runnable with no changes, specify either --generate-role or --generate-playbook.
 
 `
-	ctx.Examples = fmt.Sprintf(`# Create a new API, without Ansible roles or playbooks
-  $ %s create api \
+	subcmdMeta.Examples = fmt.Sprintf(`# Create a new API, without Ansible roles or playbooks
+  $ %[1]s create api \
       --group=apps --version=v1alpha1 \
       --kind=AppService
 
-  $ %s create api \
+  $ %[1]s create api \
       --group=apps --version=v1alpha1 \
       --kind=AppService \
       --generate-role
 
-  $ %s create api \
+  $ %[1]s create api \
       --group=apps --version=v1alpha1 \
       --kind=AppService \
       --generate-playbook
 
-  $ %s create api \
+  $ %[1]s create api \
       --group=apps --version=v1alpha1 \
       --kind=AppService
       --generate-playbook
       --generate-role
-`,
-		ctx.CommandName,
-		ctx.CommandName,
-		ctx.CommandName,
-		ctx.CommandName,
-	)
+`, cliMeta.CommandName)
 }
 
-func (p *createAPIPSubcommand) BindFlags(fs *pflag.FlagSet) {
+func (p *createAPISubcommand) BindFlags(fs *pflag.FlagSet) {
 	fs.SortFlags = false
-
-	fs.StringVar(&p.options.Group, "group", "", "resource group")
-	fs.StringVar(&p.options.Version, "version", "", "resource version")
-	fs.StringVar(&p.options.Kind, "kind", "", "resource kind")
-	fs.StringVar(&p.options.CRDVersion, "crd-version", defaultCRDVersion, "crd version to generate")
-
-	fs.BoolVarP(&p.doPlaybook, "generate-playbook", "", false, "Generate an Ansible playbook. If passed with --generate-role, the playbook will invoke the role.")
-	fs.BoolVarP(&p.doRole, "generate-role", "", false, "Generate an Ansible role skeleton.")
+	fs.StringVar(&p.options.CRDVersion, crdVersionFlag, defaultCrdVersion, "crd version to generate")
+	fs.BoolVar(&p.options.DoRole, generateRoleFlag, false, "Generate an Ansible role skeleton.")
+	fs.BoolVar(&p.options.DoPlaybook, generatePlaybookFlag, false, "Generate an Ansible playbook. If passed with --generate-role, the playbook will invoke the role.")
 }
 
-func (p *createAPIPSubcommand) InjectConfig(c config.Config) {
+func (p *createAPISubcommand) InjectConfig(c config.Config) error {
 	p.config = c
-}
-
-func (p *createAPIPSubcommand) Run(fs machinery.Filesystem) error {
-	if err := cmdutil.Run(p, fs); err != nil {
-		return err
-	}
-
-	// Run SDK phase 2 plugins.
-	if err := p.runPhase2(fs); err != nil {
-		return err
-	}
 
 	return nil
 }
 
-// SDK phase 2 plugins.
-func (p *createAPIPSubcommand) runPhase2(fs machinery.Filesystem) error {
-	if p.resource == nil {
-		return errors.New("resource must not be nil")
-	}
+func (p *createAPISubcommand) InjectResource(res *resource.Resource) error {
+	p.resource = res
 
-	// Initially the ansible/v1 plugin was written to not create a "plugins" config entry
-	// for any phase 2 plugin because they did not have their own keys. Now there are phase 2
-	// plugin keys, so those plugins should be run if keys exist. Otherwise, enact old behavior.
+	p.options.UpdateResource(p.resource)
 
-	if manifestsv2.HasPluginConfig(p.config) {
-		if err := manifestsv2.RunCreateAPI(p.config, fs, *p.resource); err != nil {
-			return err
-		}
-	} else {
-		if err := manifests.RunCreateAPI(p.config, fs, *p.resource); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (p *createAPIPSubcommand) Validate() error {
-	if len(strings.TrimSpace(p.options.Group)) == 0 {
-		return errors.New("value of --group must not have empty value")
-	}
-	if len(strings.TrimSpace(p.options.Version)) == 0 {
-		return errors.New("value of --version must not have empty value")
-	}
-	if len(strings.TrimSpace(p.options.Kind)) == 0 {
-		return errors.New("value of --kind must not have empty value")
-	}
-
-	// Create and validate the resource from CreateOptions.
-	p.resource = newResource(p.config, p.options)
 	if err := p.resource.Validate(); err != nil {
 		return err
 	}
 
-	// Check that resource doesn't exist
-	if p.config.HasResource(p.resource.GVK) {
+	// Check that resource doesn't have the API scaffolded
+	if res, err := p.config.GetResource(p.resource.GVK); err == nil && res.HasAPI() {
 		return errors.New("the API resource already exists")
 	}
 
 	// Check that the provided group can be added to the project
-	if !p.config.IsMultiGroup() && p.config.ResourcesLength() != 0 && !p.config.HasGroup(p.resource.GVK.Group) {
-		return errors.New("multiple groups are not allowed by default, to enable multi-group set 'multigroup: true' in your PROJECT file")
+	if !p.config.IsMultiGroup() && p.config.ResourcesLength() != 0 && !p.config.HasGroup(p.resource.Group) {
+		return fmt.Errorf("multiple groups are not allowed by default, to enable multi-group set 'multigroup: true' in your PROJECT file")
 	}
 
 	// Selected CRD version must match existing CRD versions.
@@ -177,23 +134,12 @@ func (p *createAPIPSubcommand) Validate() error {
 	return nil
 }
 
-func (p *createAPIPSubcommand) GetScaffolder() (cmdutil.Scaffolder, error) {
-	return scaffolds.NewCreateAPIScaffolder(p.config, *p.resource, p.doRole, p.doPlaybook), nil
-}
+func (p *createAPISubcommand) Scaffold(fs machinery.Filesystem) error {
+	scaffolder := scaffolds.NewCreateAPIScaffolder(p.config, *p.resource, p.options.DoRole, p.options.DoPlaybook)
+	scaffolder.InjectFS(fs)
+	if err := scaffolder.Scaffold(); err != nil {
+		return err
+	}
 
-func (p *createAPIPSubcommand) PostScaffold() error {
 	return nil
-}
-
-type createOptions = golang.Options
-
-func newResource(cfg config.Config, opts createOptions) *resource.Resource {
-	opts.DoAPI = true
-	opts.Namespaced = true
-
-	r := opts.NewResource(cfg)
-	r.Domain = cfg.GetDomain()
-	// Remove the path since this is not a Go project.
-	r.Path = ""
-	return &r
 }

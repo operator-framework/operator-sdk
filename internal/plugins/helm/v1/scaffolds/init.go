@@ -22,8 +22,8 @@ import (
 
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
 	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
+	"sigs.k8s.io/kubebuilder/v3/pkg/plugins"
 
-	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/chartutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/kdefault"
@@ -43,7 +43,7 @@ const (
 // helmOperatorVersion is set to the version of helm-operator at compile-time.
 var helmOperatorVersion = version.ImageVersion
 
-var _ cmdutil.Scaffolder = &initScaffolder{}
+var _ plugins.Scaffolder = &initScaffolder{}
 
 type initScaffolder struct {
 	fs machinery.Filesystem
@@ -51,14 +51,14 @@ type initScaffolder struct {
 	config config.Config
 }
 
-// NewInitScaffolder returns a new Scaffolder for project initialization operations
-func NewInitScaffolder(config config.Config) cmdutil.Scaffolder {
+// NewInitScaffolder returns a new plugins.Scaffolder for project initialization operations
+func NewInitScaffolder(config config.Config) plugins.Scaffolder {
 	return &initScaffolder{
 		config: config,
 	}
 }
 
-// InjectFS implements Scaffolder
+// InjectFS implements plugins.Scaffolder
 func (s *initScaffolder) InjectFS(fs machinery.Filesystem) {
 	s.fs = fs
 }

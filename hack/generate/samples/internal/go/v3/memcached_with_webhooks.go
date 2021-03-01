@@ -59,11 +59,10 @@ func (mh *MemcachedGoWithWebhooks) Prepare() {
 func (mh *MemcachedGoWithWebhooks) Run() {
 	log.Infof("creating the project")
 	err := mh.ctx.Init(
-		"--project-version", "3",
 		"--plugins", "go/v3",
+		"--project-version", "3",
 		"--repo", "github.com/example/memcached-operator",
-		"--domain",
-		mh.ctx.Domain)
+		"--domain", mh.ctx.Domain)
 	pkg.CheckError("creating the project", err)
 
 	err = mh.ctx.CreateAPI(

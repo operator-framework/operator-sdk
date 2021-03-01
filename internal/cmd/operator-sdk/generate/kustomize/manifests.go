@@ -30,12 +30,11 @@ import (
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
 	cfgv2 "sigs.k8s.io/kubebuilder/v3/pkg/config/v2"
 	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
 	"sigs.k8s.io/yaml"
 
 	genutil "github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/generate/internal"
 	"github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion/bases"
-	manifestsv2 "github.com/operator-framework/operator-sdk/internal/plugins/manifests/v2"
+	"github.com/operator-framework/operator-sdk/internal/plugins/manifests/v2/templates/config/manifests"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
@@ -183,7 +182,7 @@ func (c manifestsCmd) run(cfg config.Config) error {
 		}
 	}
 
-	operatorType := projutil.PluginKeyToOperatorType(cfg.GetPluginChain())
+	operatorType := projutil.PluginChainToOperatorType(cfg.GetPluginChain())
 	relBasePath := filepath.Join("bases", c.packageName+".clusterserviceversion.yaml")
 	basePath := filepath.Join(c.inputDir, relBasePath)
 	gvks, err := getGVKs(cfg)
@@ -220,8 +219,7 @@ func (c manifestsCmd) run(cfg config.Config) error {
 	}
 
 	// Write a kustomization.yaml to outputDir if one does not exist.
-	kustomization := manifestsv2.Kustomization{SupportsWebhooks: operatorType == projutil.OperatorTypeGo}
-	kustomization.IfExistsAction = file.Skip
+	kustomization := manifests.Kustomization{SupportsWebhooks: operatorType == projutil.OperatorTypeGo}
 	err = machinery.NewScaffold(machinery.Filesystem{FS: afero.NewOsFs()}, machinery.WithConfig(cfg)).Execute(
 		&kustomization,
 	)

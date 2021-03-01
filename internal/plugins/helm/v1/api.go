@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/iancoleman/strcase"
 	"github.com/spf13/pflag"
 	"helm.sh/helm/v3/pkg/chart"
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
@@ -27,31 +28,59 @@ import (
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
 	pluginutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 
-	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/chartutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds"
-	"github.com/operator-framework/operator-sdk/internal/plugins/manifests"
-	manifestsv2 "github.com/operator-framework/operator-sdk/internal/plugins/manifests/v2"
 )
 
-type createAPISubcommand struct {
-	config  config.Config
-	options chartutil.CreateOptions
+const (
+	crdVersionFlag       = "crd-version"
+	helmChartFlag        = "helm-chart"
+	helmChartRepoFlag    = "helm-chart-repo"
+	helmChartVersionFlag = "helm-chart-version"
 
-	resource *resource.Resource
-	chrt     *chart.Chart
+	defaultCrdVersion       = "v1"
+	defaultHelmChart        = ""
+	defaultHelmChartRepo    = ""
+	defaultHelmChartVersion = ""
+
+	// defaultGroup is the Kubernetes CRD API Group used for fetched charts when the --group flag is not specified
+	defaultGroup = "charts"
+	// defaultVersion is the Kubernetes CRD API Version used for fetched charts when the --version flag is not specified
+	defaultVersion = "v1alpha1"
+)
+
+type createAPIOptions struct {
+	// CRDVersion is the version of the `apiextensions.k8s.io` API which will be used to generate the CRD.
+	CRDVersion string
+
+	chartOptions chartutil.Options
 }
 
-var (
-	_ plugin.CreateAPISubcommand = &createAPISubcommand{}
-	_ cmdutil.RunOptions         = &createAPISubcommand{}
-)
+// UpdateResource updates the base resource with the information obtained from the flags
+func (opts createAPIOptions) UpdateResource(res *resource.Resource) {
+	res.API = &resource.API{
+		CRDVersion: opts.CRDVersion,
+		Namespaced: true,
+	}
 
-// UpdateContext define plugin context
-func (p createAPISubcommand) UpdateContext(ctx *plugin.Context) {
-	ctx.Description = `Scaffold a Kubernetes API that is backed by a Helm chart.
+	// Ensure that Path is empty and Controller false
+	res.Path = ""
+	res.Controller = false
+}
+
+var _ plugin.CreateAPISubcommand = &createAPISubcommand{}
+
+type createAPISubcommand struct {
+	config   config.Config
+	resource *resource.Resource
+	chart    *chart.Chart
+	options  createAPIOptions
+}
+
+func (p *createAPISubcommand) UpdateMetadata(cliMeta plugin.CLIMetadata, subcmdMeta *plugin.SubcommandMetadata) {
+	subcmdMeta.Description = `Scaffold a Kubernetes API that is backed by a Helm chart.
 `
-	ctx.Examples = fmt.Sprintf(`  $ %[1]s create api \
+	subcmdMeta.Examples = fmt.Sprintf(`  $ %s create api \
       --group=apps --version=v1alpha1 \
       --kind=AppService
 
@@ -81,114 +110,88 @@ func (p createAPISubcommand) UpdateContext(ctx *plugin.Context) {
 
   $ %[1]s create api \
       --helm-chart=/path/to/local/chart-archives/app-1.2.3.tgz
-`,
-		ctx.CommandName,
-	)
+`, cliMeta.CommandName)
 }
-
-const (
-	helmChartFlag        = "helm-chart"
-	helmChartRepoFlag    = "helm-chart-repo"
-	helmChartVersionFlag = "helm-chart-version"
-
-	defaultCRDVersion = "v1"
-)
 
 // BindFlags will set the flags for the plugin
 func (p *createAPISubcommand) BindFlags(fs *pflag.FlagSet) {
 	fs.SortFlags = false
 
-	fs.StringVar(&p.options.GVK.Group, "group", "", "resource group")
-	fs.StringVar(&p.options.GVK.Version, "version", "", "resource version")
-	fs.StringVar(&p.options.GVK.Kind, "kind", "", "resource kind")
+	fs.StringVar(&p.options.chartOptions.Chart, helmChartFlag, defaultHelmChart, "helm chart")
+	fs.StringVar(&p.options.chartOptions.Repo, helmChartRepoFlag, defaultHelmChartRepo, "helm chart repository")
+	fs.StringVar(&p.options.chartOptions.Version, helmChartVersionFlag, defaultHelmChartVersion, "helm chart version (default: latest)")
 
-	fs.StringVar(&p.options.Chart, helmChartFlag, "", "helm chart")
-	fs.StringVar(&p.options.Repo, helmChartRepoFlag, "", "helm chart repository")
-	fs.StringVar(&p.options.Version, helmChartVersionFlag, "", "helm chart version (default: latest)")
-
-	fs.StringVar(&p.options.CRDVersion, "crd-version", defaultCRDVersion, "crd version to generate")
+	fs.StringVar(&p.options.CRDVersion, crdVersionFlag, defaultCrdVersion, "crd version to generate")
 }
 
-// InjectConfig will inject the PROJECT file/config in the plugin
-func (p *createAPISubcommand) InjectConfig(c config.Config) {
+func (p *createAPISubcommand) InjectConfig(c config.Config) error {
 	p.config = c
-}
-
-// Run will call the plugin actions according to the definitions done in RunOptions interface
-func (p *createAPISubcommand) Run(fs machinery.Filesystem) error {
-	if err := cmdutil.Run(p, fs); err != nil {
-		return err
-	}
-
-	// Run SDK phase 2 plugins.
-	if err := p.runPhase2(fs); err != nil {
-		return err
-	}
 
 	return nil
 }
 
-// SDK phase 2 plugins.
-func (p *createAPISubcommand) runPhase2(fs machinery.Filesystem) error {
-	if p.resource == nil {
-		return errors.New("resource must not be nil")
-	}
-	// Initially the helm/v1 plugin was written to not create a "plugins" config entry
-	// for any phase 2 plugin because they did not have their own keys. Now there are phase 2
-	// plugin keys, so those plugins should be run if keys exist. Otherwise, enact old behavior.
+func (p *createAPISubcommand) InjectResource(res *resource.Resource) error {
+	p.resource = res
 
-	if manifestsv2.HasPluginConfig(p.config) {
-		if err := manifestsv2.RunCreateAPI(p.config, fs, *p.resource); err != nil {
+	// The following checks and the chart creation would be a better fit for PreScaffold method
+	// but, as having a chart sets some default values for the resource's GVK, we need to do it here.
+	var err error
+	if len(strings.TrimSpace(p.options.chartOptions.Chart)) == 0 {
+		// Chart repo and version can only be provided if chart was provided.
+		if len(strings.TrimSpace(p.options.chartOptions.Repo)) != 0 {
+			return fmt.Errorf("value of --%s can only be used with --%s", helmChartRepoFlag, helmChartFlag)
+		}
+		if len(p.options.chartOptions.Version) != 0 {
+			return fmt.Errorf("value of --%s can only be used with --%s", helmChartVersionFlag, helmChartFlag)
+		}
+
+		// Kind is required if no chart was provided as it is used for the chart name.
+		// While the resource validation will detect this, the error yielded would not
+		// mention the option of providing the chart flag. Additionally, by checking it
+		// here we can create the new chart before resource validation.
+		if len(p.resource.Kind) == 0 {
+			return fmt.Errorf("either --%s or --%s need to be provided", kindFlag, helmChartFlag)
+		}
+
+		p.chart, err = chartutil.NewChart(strings.ToLower(p.resource.Kind))
+		if err != nil {
 			return err
 		}
 	} else {
-		if err := manifests.RunCreateAPI(p.config, fs, *p.resource); err != nil {
+		p.chart, err = chartutil.LoadChart(p.options.chartOptions)
+		if err != nil {
 			return err
 		}
-	}
 
-	return nil
-}
-
-// Validate perform the required validations for this plugin
-func (p *createAPISubcommand) Validate() (err error) {
-	if len(strings.TrimSpace(p.options.Chart)) == 0 {
-		if len(strings.TrimSpace(p.options.Repo)) != 0 {
-			return fmt.Errorf("value of --%s can only be used with --%s", helmChartRepoFlag, helmChartFlag)
-		} else if len(p.options.Version) != 0 {
-			return fmt.Errorf("value of --%s can only be used with --%s", helmChartVersionFlag, helmChartFlag)
+		// In case we loaded a chart and some resource flags were not set we will set defaults.
+		if p.resource.Group == "" {
+			p.resource.Group = defaultGroup
+		}
+		if p.resource.Version == "" {
+			p.resource.Version = defaultVersion
+		}
+		if p.resource.Kind == "" {
+			p.resource.Kind = strcase.ToCamel(p.chart.Name())
+			if p.resource.Plural == "" {
+				p.resource.Plural = resource.RegularPlural(p.resource.Kind)
+			}
 		}
 	}
 
-	if len(strings.TrimSpace(p.options.Chart)) == 0 {
-		if len(strings.TrimSpace(p.options.GVK.Group)) == 0 {
-			return errors.New("value of --group must not have empty value")
-		}
-		if len(strings.TrimSpace(p.options.GVK.Version)) == 0 {
-			return errors.New("value of --version must not have empty value")
-		}
-		if len(strings.TrimSpace(p.options.GVK.Kind)) == 0 {
-			return errors.New("value of --kind must not have empty value")
-		}
-	}
+	p.options.UpdateResource(p.resource)
 
-	// Create and validate the resource and chart from CreateOptions.
-	p.resource, p.chrt, err = chartutil.CreateChart(p.config, p.options)
-	if err != nil {
-		return err
-	}
 	if err := p.resource.Validate(); err != nil {
 		return err
 	}
 
-	// Check that resource doesn't exist
-	if p.config.HasResource(p.resource.GVK) {
+	// Check that resource doesn't have the API scaffolded
+	if res, err := p.config.GetResource(p.resource.GVK); err == nil && res.HasAPI() {
 		return errors.New("the API resource already exists")
 	}
 
 	// Check that the provided group can be added to the project
-	if !p.config.IsMultiGroup() && p.config.ResourcesLength() != 0 && !p.config.HasGroup(p.resource.GVK.Group) {
-		return errors.New("multiple groups are not allowed by default, to enable multi-group set 'multigroup: true' in your PROJECT file")
+	if !p.config.IsMultiGroup() && p.config.ResourcesLength() != 0 && !p.config.HasGroup(p.resource.Group) {
+		return fmt.Errorf("multiple groups are not allowed by default, to enable multi-group set 'multigroup: true' in your PROJECT file")
 	}
 
 	// Selected CRD version must match existing CRD versions.
@@ -199,12 +202,13 @@ func (p *createAPISubcommand) Validate() (err error) {
 	return nil
 }
 
-// GetScaffolder returns cmdutil.Scaffolder which will be executed due the RunOptions interface implementation
-func (p *createAPISubcommand) GetScaffolder() (cmdutil.Scaffolder, error) {
-	return scaffolds.NewAPIScaffolder(p.config, *p.resource, p.chrt), nil
-}
+func (p *createAPISubcommand) Scaffold(fs machinery.Filesystem) error {
+	scaffolder := scaffolds.NewAPIScaffolder(p.config, *p.resource, p.chart)
+	scaffolder.InjectFS(fs)
+	if err := scaffolder.Scaffold(); err != nil {
+		return err
+	}
+	// NOTE: previous step fetches the dependencies of the chart.Chart, so reloading may be needed if used afterwards
 
-// PostScaffold runs all actions that should be executed after the default plugin scaffold
-func (p *createAPISubcommand) PostScaffold() error {
 	return nil
 }
