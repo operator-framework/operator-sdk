@@ -20,7 +20,7 @@ pip3 install pyasn1==0.4.7 pyasn1-modules==0.2.6 idna==2.8 ipaddress==1.0.23
 pip3 install cryptography==3.3.2 molecule==3.0.2
 pip3 install ansible-lint yamllint
 pip3 install docker==4.2.2 openshift==0.11.2 jmespath
-ansible-galaxy collection install 'community.kubernetes:1.1.0'
+ansible-galaxy collection install 'community.kubernetes:>=1.1.0'
 
 header_text "Copying molecule testdata scenarios"
 ROOTDIR="$(pwd)"
