@@ -135,6 +135,9 @@ func (p *createAPISubcommand) Run() error {
 
 // SDK phase 2 plugins.
 func (p *createAPISubcommand) runPhase2() error {
+	if p.resource == nil {
+		return errors.New("resource must not be nil")
+	}
 	// Initially the helm/v1 plugin was written to not create a "plugins" config entry
 	// for any phase 2 plugin because they did not have their own keys. Now there are phase 2
 	// plugin keys, so those plugins should be run if keys exist. Otherwise, enact old behavior.

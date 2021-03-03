@@ -18,6 +18,7 @@ limitations under the License.
 package scaffolds
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -69,6 +70,10 @@ func (s *apiScaffolder) newUniverse(r *resource.Resource) *model.Universe {
 }
 
 func (s *apiScaffolder) scaffold() error {
+	if s.resource == nil {
+		return errors.New("resource must not be nil")
+	}
+
 	if err := s.config.UpdateResource(*s.resource); err != nil {
 		return err
 	}
