@@ -2,8 +2,17 @@
 
 KUTTL_PATH=${KUTTL_PATH:-"/bundle/tests/scorecard/kuttl"}
 KUTTL_CONFIG=${KUTTL_CONFIG:-"${KUTTL_PATH}/kuttl-test.yaml"}
+# SUITE_DIR is only set when no kuttl config file is present which indicates
+# that either the current dir is a test case, or there is nothing to run
+# (kubectl-kuttl will gracefully handle this scenario).
+SUITE_DIR=
+if [[ ! -f "$KUTTL_CONFIG" ]]; then
+  SUITE_DIR="$PWD"
+fi
 
-kubectl-kuttl test ${KUTTL_PATH} \
+cd "$KUTTL_PATH"
+
+kubectl-kuttl test "$SUITE_DIR" \
   --config=${KUTTL_CONFIG} \
   --namespace=${SCORECARD_NAMESPACE} \
   --report=JSON --artifacts-dir=/tmp > /tmp/kuttl.stdout 2> /tmp/kuttl.stderr

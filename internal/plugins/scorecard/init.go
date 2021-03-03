@@ -30,11 +30,15 @@ import (
 )
 
 var (
-	// defaultTestImageTag points to the latest released scorecard-test image.
-	defaultTestImageTag = fmt.Sprintf("quay.io/operator-framework/scorecard-test:%s", version.ImageVersion)
+	// testImageTag points to the latest released scorecard-test image.
+	testImageTag = fmt.Sprintf("quay.io/operator-framework/scorecard-test:%s", version.ImageVersion)
+	// kuttlTestImageTag points to the latest released scorecard-test-kuttl image.
+	kuttlTestImageTag = fmt.Sprintf("quay.io/operator-framework/scorecard-test-kuttl:%s", version.ImageVersion)
 
-	// defaultDir is the default directory in which to generate kustomize bases and the kustomization.yaml.
-	defaultDir = filepath.Join("config", "scorecard")
+	// scorecardDir is the kustomize directory for a scorecard config.
+	scorecardDir = filepath.Join("config", "scorecard")
+	// scorecardDir is the kustomize directory for a scorecard config intended for a test bundle.
+	scorecardTestBundleDir = filepath.Join("config", "scorecard-testbundle")
 )
 
 // RunInit scaffolds kustomize files for kustomizing a scorecard componentconfig.
@@ -45,43 +49,102 @@ func RunInit(cfg config.Config) error {
 		return nil
 	}
 
-	return generateInit(defaultDir)
+	if err := initUpdateMakefile(cfg, "Makefile"); err != nil {
+		return err
+	}
+	if err := initUpdateGitignore(".gitignore"); err != nil {
+		return err
+	}
+	if err := initGenerateConfigManifests(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-// generateInit scaffolds kustomize bundle bases and a kustomization.yaml.
-// TODO(estroz): refactor this to be testable (in-mem fs) and easier to read.
-func generateInit(outputDir string) error {
+// initUpdateMakefile updates a vanilla kubebuilder Makefile with scorecard rules.
+func initUpdateMakefile(cfg config.Config, filePath string) error {
+	testScorecardRule := fmt.Sprintf(makefileTestScorecardFragment, scorecardTestBundleDir, cfg.GetProjectName())
+	return appendToFile(filePath, []byte(testScorecardRule))
+}
 
-	basesDir := filepath.Join(outputDir, "bases")
-	patchesDir := filepath.Join(outputDir, "patches")
-	for _, dir := range []string{basesDir, patchesDir} {
+const makefileTestScorecardFragment = `
+# Test your bundle using built-in and kuttl (created for each API) tests using scorecard.
+# To test a remote bundle image, remove the 'deploy' dependency and add 'operator-sdk run bundle <bundle-image>'.
+# Scorecard configuration docs: https://sdk.operatorframework.io/docs/advanced-topics/scorecard/scorecard/#configuration
+# Kuttl configuration docs: https://sdk.operatorframework.io/docs/advanced-topics/scorecard/kuttl-tests/
+# Example usage:
+# $ make test-scorecard IMG=quay.io/example/my-operator:v0.0.1
+.PHONY: test-scorecard
+test-scorecard: bundle deploy
+	rm -rf testbundle/ && cp -r bundle/ testbundle/ && mkdir -p testbundle/tests/scorecard/
+	$(KUSTOMIZE) build %[1]s > testbundle/tests/scorecard/config.yaml
+	cp -r test/kuttl/ testbundle/tests/scorecard/
+	operator-sdk scorecard testbundle/ --namespace %[2]s-system
+`
+
+// initUpdateGitignore updates a vanilla kubebuilder .gitignore with scorecard ignore directives.
+func initUpdateGitignore(filePath string) error {
+	return appendToFile(filePath, []byte(gitignoreTestBundleFragment))
+}
+
+const gitignoreTestBundleFragment = `
+# testbundle/ is used for local testing and should not be committed.
+/testbundle/
+`
+
+func appendToFile(filePath string, newContents []byte) error {
+	b, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		return err
+	}
+	var mode os.FileMode = 0644
+	if info, err := os.Stat(filePath); err != nil {
+		mode = info.Mode()
+	}
+	return ioutil.WriteFile(filePath, append(b, newContents...), mode)
+}
+
+// initGenerateConfigManifests scaffolds kustomize bundle bases and a kustomization.yaml.
+// TODO(estroz): refactor this to be testable (in-mem fs) and easier to read.
+func initGenerateConfigManifests() error {
+
+	scorecardBasesDir := filepath.Join(scorecardDir, "bases")
+	scorecardPatchesDir := filepath.Join(scorecardDir, "patches")
+	scorecardTestBundlePatchesDir := filepath.Join(scorecardTestBundleDir, "patches")
+	for _, dir := range []string{scorecardBasesDir, scorecardPatchesDir, scorecardTestBundlePatchesDir} {
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			return err
 		}
 	}
 
 	// Write the scorecard config base.
-	baseFilePath := filepath.Join(basesDir, scorecard.ConfigFileName)
+	baseFilePath := filepath.Join(scorecardBasesDir, scorecard.ConfigFileName)
 	if err := ioutil.WriteFile(baseFilePath, []byte(configBaseFile), 0666); err != nil {
 		return fmt.Errorf("error writing default scorecard config: %v", err)
 	}
 
 	// Write each patch in patchSet to "<key>.config.yaml"
 	patchSet := map[string]string{
-		"basic": fmt.Sprintf(basicPatchFile, defaultTestImageTag),
-		"olm":   fmt.Sprintf(olmPatchFile, defaultTestImageTag),
+		// Built-in patches.
+		filepath.Join(scorecardPatchesDir, "basic.config.yaml"): fmt.Sprintf(basicPatchFile, testImageTag),
+		filepath.Join(scorecardPatchesDir, "olm.config.yaml"):   fmt.Sprintf(olmPatchFile, testImageTag),
+		// Kuttl patch.
+		filepath.Join(scorecardTestBundlePatchesDir, "kuttl.config.yaml"): fmt.Sprintf(kuttlPatchFile, kuttlTestImageTag),
 	}
-	for name, patchStr := range patchSet {
-		patchFileName := fmt.Sprintf("%s.config.yaml", name)
-		if err := ioutil.WriteFile(filepath.Join(patchesDir, patchFileName), []byte(patchStr), 0666); err != nil {
-			return fmt.Errorf("error writing %s scorecard config patch: %v", name, err)
+	for path, contents := range patchSet {
+		if err := ioutil.WriteFile(path, []byte(contents), 0666); err != nil {
+			return fmt.Errorf("error writing scorecard config patch: %v", err)
 		}
 	}
 
-	// Write a kustomization.yaml to outputDir.
+	// Write a kustomization.yaml to scorecard and scorecard-testbundle dirs.
 	markerStr := file.NewMarkerFor("kustomization.yaml", patchesJSON6902Marker).String()
-	if err := kustomize.Write(outputDir, fmt.Sprintf(scorecardKustomizationFile, markerStr)); err != nil {
+	if err := kustomize.Write(scorecardDir, fmt.Sprintf(scorecardKustomizationFile, markerStr)); err != nil {
 		return fmt.Errorf("error writing scorecard kustomization.yaml: %v", err)
+	}
+	if err := kustomize.Write(scorecardTestBundleDir, fmt.Sprintf(scorecardTestBundleKustomizationFile, markerStr)); err != nil {
+		return fmt.Errorf("error writing scorecard-testbundle kustomization.yaml: %v", err)
 	}
 
 	return nil
@@ -108,6 +171,24 @@ patchesJson6902:
 %[1]s
 `
 
+	// scorecardTestBundleKustomizationFile is a kustomization.yaml file for the scorecard componentconfig built
+	// by calling `kustomize build config/scorecard`.
+	// This should always be written to config/scorecard-testbundle/kustomization.yaml.
+	scorecardTestBundleKustomizationFile = `resources:
+- ../scorecard
+patchesJson6902:
+# This patch is commented so you can make modifications to your kuttl tests
+# before enabling them to run with scorecard. If you make any changes to a CRD,
+# make sure those changes are reflected in kuttl test cases before uncommenting this patch.
+#- path: patches/kuttl.config.yaml
+#  target:
+#    group: scorecard.operatorframework.io
+#    version: v1alpha3
+#    kind: Configuration
+#    name: config
+%[1]s
+`
+
 	// YAML file marker to append to kustomization.yaml files.
 	patchesJSON6902Marker = "patchesJson6902"
 )
@@ -119,6 +200,8 @@ kind: Configuration
 metadata:
   name: config
 stages:
+- parallel: true
+  tests: []
 - parallel: true
   tests: []
 `
@@ -187,5 +270,14 @@ stages:
     labels:
       suite: olm
       test: olm-status-descriptors-test
+`
+
+	// kuttlPatchFile contains a single kuttl suite for running all user-defined kuttl tests.
+	kuttlPatchFile = `- op: add
+  path: /stages/1/tests/-
+  value:
+    image: %[1]s
+    labels:
+      suite: kuttl
 `
 )

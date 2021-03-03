@@ -22,3 +22,6 @@ bin
 *.swp
 *.swo
 *~
+
+# testbundle/ is used for local testing and should not be committed.
+/testbundle/

@@ -47,3 +47,5 @@ stages:
     labels:
       suite: olm
       test: olm-status-descriptors-test
+- parallel: true
+  tests: []

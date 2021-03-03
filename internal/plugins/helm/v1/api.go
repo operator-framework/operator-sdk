@@ -28,6 +28,8 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds"
 	"github.com/operator-framework/operator-sdk/internal/plugins/manifests"
 	manifestsv2 "github.com/operator-framework/operator-sdk/internal/plugins/manifests/v2"
+	"github.com/operator-framework/operator-sdk/internal/plugins/scorecard"
+	scorecardv2 "github.com/operator-framework/operator-sdk/internal/plugins/scorecard/v2"
 )
 
 type createAPISubcommand struct {
@@ -137,7 +139,7 @@ func (p *createAPISubcommand) Run() error {
 // SDK phase 2 plugins.
 func (p *createAPISubcommand) runPhase2() error {
 	ogvk := p.createOptions.GVK
-	gvk := resource.GVK{Group: ogvk.Group, Version: ogvk.Version, Kind: ogvk.Kind}
+	gvk := resource.GVK{Group: ogvk.Group, Version: ogvk.Version, Kind: ogvk.Kind, Domain: p.config.GetDomain()}
 
 	// Initially the helm/v1 plugin was written to not create a "plugins" config entry
 	// for any phase 2 plugin because they did not have their own keys. Now there are phase 2
@@ -149,6 +151,15 @@ func (p *createAPISubcommand) runPhase2() error {
 		}
 	} else {
 		if err := manifests.RunCreateAPI(p.config, gvk); err != nil {
+			return err
+		}
+	}
+	if scorecardv2.HasPluginConfig(p.config) {
+		if err := scorecardv2.RunCreateAPI(p.config, gvk); err != nil {
+			return err
+		}
+	} else {
+		if err := scorecard.RunCreateAPI(p.config, gvk, true); err != nil {
 			return err
 		}
 	}

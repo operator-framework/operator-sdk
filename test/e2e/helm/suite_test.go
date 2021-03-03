@@ -85,11 +85,11 @@ var _ = BeforeSuite(func() {
 		By("loading the required images into Kind cluster")
 		Expect(tc.LoadImageToKindCluster()).To(Succeed())
 		Expect(tc.LoadImageToKindClusterWithName("quay.io/operator-framework/scorecard-test:dev")).To(Succeed())
+		Expect(tc.LoadImageToKindClusterWithName("quay.io/operator-framework/scorecard-test-kuttl:dev")).To(Succeed())
 	}
 
-	By("creating bundle image")
-	err = tc.GenerateBundle()
-	Expect(err).NotTo(HaveOccurred())
+	By("generating bundle")
+	Expect(tc.GenerateBundle()).To(Succeed())
 })
 
 // AfterSuite run after all the specs have run, regardless of whether any tests have failed to ensures that
