@@ -1,0 +1,33 @@
+entries:
+  - description: >
+      PROJECT config version 3-alpha has been upgraded to version 3
+    kind: change
+    breaking: true
+    migration:
+      header: PROJECT config version 3-alpha must be upgraded to 3
+      body: >
+        PROJECT config version 3-alpha has been stabilized as
+        [version 3](https://github.com/kubernetes-sigs/kubebuilder/blob/master/docs/book/src/migration/manually_migration_guide_v2_v3.md)
+        (the `version` key in your PROJECT file), and contains a set of config fields sufficient
+        to fully describe a project. While this change is not technically breaking
+        because the spec at that version was alpha, it was used by default in `operator-sdk` commands
+        so should be marked as breaking and have a convenient migration path.
+        The `alpha config-3alpha-to-3` command will convert most of your PROJECT file
+        from version 3-alpha to 3, and leave comments with directions where
+        automatic conversion is not possible:
+
+        ```console
+        $ cat PROJECT
+        version: 3-alpha
+        resources:
+        - crdVersion: v1
+        ...
+        $ operator-sdk alpha config-3alpha-to-3
+        Your PROJECT config file has been converted from version 3-alpha to 3. Please make sure all config data is correct.
+        $ cat PROJECT
+        version: "3"
+        resources:
+        - api:
+            crdVersion: v1
+        ...
+        ```

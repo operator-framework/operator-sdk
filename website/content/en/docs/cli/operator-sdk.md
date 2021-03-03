@@ -53,6 +53,7 @@ to obtain further info about available commands.
 
 ### SEE ALSO
 
+* [operator-sdk alpha](../operator-sdk_alpha)	 - Commands in alpha stage
 * [operator-sdk bundle](../operator-sdk_bundle)	 - Manage operator bundle metadata
 * [operator-sdk cleanup](../operator-sdk_cleanup)	 - Clean up an Operator deployed with the 'run' subcommand
 * [operator-sdk completion](../operator-sdk_completion)	 - Generators for shell completions
