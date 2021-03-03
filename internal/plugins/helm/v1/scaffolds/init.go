@@ -47,15 +47,13 @@ var helmOperatorVersion = version.ImageVersion
 var _ cmdutil.Scaffolder = &initScaffolder{}
 
 type initScaffolder struct {
-	config        config.Config
-	apiScaffolder cmdutil.Scaffolder
+	config config.Config
 }
 
 // NewInitScaffolder returns a new Scaffolder for project initialization operations
-func NewInitScaffolder(config config.Config, apiScaffolder cmdutil.Scaffolder) cmdutil.Scaffolder {
+func NewInitScaffolder(config config.Config) cmdutil.Scaffolder {
 	return &initScaffolder{
-		config:        config,
-		apiScaffolder: apiScaffolder,
+		config: config,
 	}
 }
 
@@ -67,13 +65,7 @@ func (s *initScaffolder) newUniverse() *model.Universe {
 
 // Scaffold implements Scaffolder
 func (s *initScaffolder) Scaffold() error {
-	if err := s.scaffold(); err != nil {
-		return err
-	}
-	if s.apiScaffolder != nil {
-		return s.apiScaffolder.Scaffold()
-	}
-	return nil
+	return s.scaffold()
 }
 
 func (s *initScaffolder) scaffold() error {

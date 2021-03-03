@@ -1,0 +1,5 @@
+entries:
+  - description: >
+      Fixed samples kustomization.yaml generation on `operator-sdk init --plugins=helm --helm-chart=<chart>`,
+      caused by out-of-order operations in plugin code.
+    kind: bugfix
