@@ -1,7 +1,17 @@
 #!/usr/bin/env bash
 
 source hack/lib/common.sh
-source hack/lib/image_lib.sh
+
+# load_image_if_kind <image tag>
+#
+# load_image_if_kind loads an image into all nodes in a kind cluster.
+#
+function load_image_if_kind() {
+  local cluster=${KIND_CLUSTER:-kind}
+  if [[ "$(kubectl config current-context)" == "kind-${cluster}" ]]; then
+    kind load docker-image --name "${cluster}" "$1"
+  fi
+}
 
 set -eu
 

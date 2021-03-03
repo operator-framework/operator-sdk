@@ -6,7 +6,8 @@ SHELL = /bin/bash
 
 # Dry run flags.
 ifneq ($(DRY_RUN),)
-SNAPSHOT_FLAGS = --snapshot --skip-publish --rm-dist
+SNAPSHOT_FLAGS = --snapshot --skip-publish --skip-sign --rm-dist
+$(shell touch changelog/generated/$(GIT_VERSION).md)
 endif
 
 # Ensure that this Makefile is run from the project root (always contains the 'cmd/' directory).
@@ -23,6 +24,9 @@ ifeq (,$(GIT_VERSION))
 endif
 	$(SCRIPTS_DIR)/fetch goreleaser 0.147.2
 	GORELEASER_CURRENT_TAG=$(GIT_VERSION) $(TOOLS_DIR)/goreleaser $(SNAPSHOT_FLAGS) --release-notes=changelog/generated/$(GIT_VERSION).md --parallelism 5
+ifneq ($(DRY_RUN),)
+	rm changelog/generated/$(GIT_VERSION).md
+endif
 
 ##@ Pre-Release
 
@@ -53,30 +57,6 @@ ifeq (,$(shell [[ "$(RELEASE_VERSION)" =~ $(VERSION_REGEXP) ]] && echo 1))
 endif
 	git tag --sign --message "Operator SDK $(RELEASE_VERSION)" $(RELEASE_VERSION)
 	git verify-tag --verbose $(RELEASE_VERSION)
-
-##@ Image deploy
-
-# Convenience wrappers for pushing all remotely hosted images.
-.PHONY: image-push image-push-multiarch
-IMAGE_TARGET_LIST = operator-sdk helm-operator ansible-operator scorecard-test scorecard-test-kuttl
-image-push: $(foreach i,$(IMAGE_TARGET_LIST),image-push/$(i)) ## Push all images for the host architecture.
-image-push-multiarch: $(foreach i,$(IMAGE_TARGET_LIST),image-push-multiarch/$(i)) ## Push the manifest list for all architectures.
-
-# Push an image for an architecture.
-BUILD_IMAGE_REPO = quay.io/operator-framework
-IMAGE_REPO ?= $(BUILD_IMAGE_REPO)
-GO_ARCH := $(shell go env GOARCH)
-image-push/%: IMAGE_PUSH_TAG = $(IMAGE_REPO)/$*-$(GO_ARCH)
-image-push/%:
-	./hack/image/push-image-tags.sh $(BUILD_IMAGE_REPO)/$*:dev $(IMAGE_PUSH_TAG)
-
-# Push multiarch images.
-ARCHES ?= amd64 arm64 ppc64le s390x
-KUTTL_ARCHES := amd64 arm64 ppc64le
-image-push-multiarch/scorecard-test-kuttl: ARCHES = $(KUTTL_ARCHES)
-image-push-multiarch/%: IMAGE_PUSH_TAG = $(IMAGE_REPO)/$*
-image-push-multiarch/%:
-	./hack/image/push-manifest-list.sh $(IMAGE_PUSH_TAG) $(ARCHES)
 
 .DEFAULT_GOAL := help
 .PHONY: help
