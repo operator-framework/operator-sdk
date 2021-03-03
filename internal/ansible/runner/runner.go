@@ -160,6 +160,7 @@ func New(watch watches.Watch, runnerArgs string) (Runner, error) {
 		ansibleVerbosity:    watch.AnsibleVerbosity,
 		ansibleArgs:         runnerArgs,
 		snakeCaseParameters: watch.SnakeCaseParameters,
+		markUnsafe:          watch.MarkUnsafe,
 	}, nil
 }
 
@@ -174,6 +175,7 @@ type runner struct {
 	maxRunnerArtifacts  int
 	ansibleVerbosity    int
 	snakeCaseParameters bool
+	markUnsafe          bool
 	ansibleArgs         string
 }
 
@@ -337,7 +339,13 @@ func (r *runner) makeParameters(u *unstructured.Unstructured) map[string]interfa
 		parameters = paramconv.MapToSnake(spec)
 	} else {
 		for k, v := range spec {
-			parameters[k] = markUnsafe(v)
+			parameters[k] = v
+		}
+	}
+
+	if r.markUnsafe {
+		for key, val := range parameters {
+			parameters[key] = markUnsafe(val)
 		}
 	}
 

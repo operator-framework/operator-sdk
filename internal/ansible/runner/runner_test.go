@@ -355,7 +355,9 @@ func TestMakeParameters(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		testRunner := runner{}
+		testRunner := runner{
+			markUnsafe: true,
+		}
 		parameters := testRunner.makeParameters(&tc.inputParams)
 
 		val, ok := parameters[inputSpec]
