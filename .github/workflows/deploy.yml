@@ -10,9 +10,26 @@ on:
     branches: [ master ]
 
 jobs:
+  check_docs_only:
+    name: check_docs_only
+    runs-on: ubuntu-18.04
+    outputs:
+      should_skip_tests: ${{ steps.check_docs_only.outputs.skip-tests }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - id: check_docs_only
+        run: |
+          REPO_MASTER_REF=$(git show-ref ${{ github.base_ref }} | head -1 | cut -d' ' -f2)
+          echo "::set-output name=skip-tests::$(hack/ci/check-doc-only-update.sh $REPO_MASTER_REF)"
+
+
   # Job to test release steps. This will only create a release remotely if run on a tagged commit.
   goreleaser:
     name: goreleaser
+    needs: check_docs_only
+    if: needs.check_docs_only.outputs.should_skip_tests != 'true'
     runs-on: ubuntu-18.04
     environment: deploy
     steps:
@@ -44,6 +61,8 @@ jobs:
   # Job matrix for image builds.
   images:
     name: images
+    needs: check_docs_only
+    if: needs.check_docs_only.outputs.should_skip_tests != 'true'
     runs-on: ubuntu-18.04
     environment: deploy
     strategy:
