@@ -7,15 +7,9 @@ ARG TARGETARCH
 
 RUN mkdir -p /etc/ansible \
   && echo "localhost ansible_connection=local" > /etc/ansible/hosts \
-  && echo '\n\
-[defaults]\n\
-roles_path = /opt/ansible/roles\n\
-library = /usr/share/ansible/openshift\n'\
-> /etc/ansible/ansible.cfg
-
-ENV HOME=/opt/ansible \
-    USER_NAME=ansible \
-    USER_UID=1001
+  && echo '[defaults]' > /etc/ansible/ansible.cfg \
+  && echo 'roles_path = /opt/ansible/roles' >> /etc/ansible/ansible.cfg \
+  && echo 'library = /usr/share/ansible/openshift' >> /etc/ansible/ansible.cfg
 
 # Install python dependencies
 # Ensure fresh metadata rather than cached metadata in the base by running
@@ -36,17 +30,6 @@ RUN yum clean all && rm -rf /var/cache/yum/* \
   && yum clean all \
   && rm -rf /var/cache/yum
 
-# Ensure directory permissions are properly set
-RUN echo "${USER_NAME}:x:${USER_UID}:0:${USER_NAME} user:${HOME}:/sbin/nologin" >> /etc/passwd \
-  && mkdir -p ${HOME}/.ansible/tmp \
-  && chown -R ${USER_UID}:0 ${HOME} \
-  && chmod -R ug+rwx ${HOME}
-
 ENV TINI_VERSION=v0.19.0
 RUN curl -L -o /tini https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-${TARGETARCH} \
   && chmod +x /tini && /tini --version
-
-WORKDIR ${HOME}
-USER ${USER_UID}
-
-ENTRYPOINT ["/tini", "--"]
