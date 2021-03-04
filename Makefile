@@ -10,6 +10,7 @@ export SIMPLE_VERSION = $(shell (test "$(shell git describe)" = "$(shell git des
 export GIT_VERSION = $(shell git describe --dirty --tags --always)
 export GIT_COMMIT = $(shell git rev-parse HEAD)
 export K8S_VERSION = 1.19.4
+export OLM_VERSIONS = 0.16.1 0.15.1 0.17.0
 
 # Build settings
 export TOOLS_DIR = tools/bin
@@ -25,6 +26,7 @@ GO_BUILD_ARGS = \
     -X '$(REPO)/internal/version.GitVersion=$(GIT_VERSION)' \
     -X '$(REPO)/internal/version.GitCommit=$(GIT_COMMIT)' \
     -X '$(REPO)/internal/version.KubernetesVersion=v$(K8S_VERSION)' \
+	-X '$(REPO)/internal/cmd/operator-sdk/olm.OLMSupportedVersions=$(OLM_VERSIONS)' \
     -X '$(REPO)/internal/version.ImageVersion=$(IMAGE_VERSION)' \
   " \
 
@@ -42,7 +44,7 @@ generate: build # Generate CLI docs and samples
 	go generate ./...
 
 .PHONY: bindata
-OLM_VERSIONS = 0.16.1 0.15.1 0.17.0
+
 bindata: ## Update project bindata
 	./hack/generate/olm_bindata.sh $(OLM_VERSIONS)
 

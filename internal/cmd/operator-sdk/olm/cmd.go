@@ -15,13 +15,23 @@
 package olm
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
+)
+
+// Officially supported OLM versions by Operator SDK
+var (
+	OLMSupportedVersions = "unknown"
 )
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "olm",
-		Short: "Manage the Operator Lifecycle Manager installation in your cluster",
+		Use: "olm",
+		Short: fmt.Sprintf(`Manage the Operator Lifecycle Manager installation in your cluster.
+
+Operator SDK officially supports the following OLM versions: %s.
+Any other version installed with this command may work but is not officially tested.`, OLMSupportedVersions),
 	}
 	cmd.AddCommand(
 		newInstallCmd(),

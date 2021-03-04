@@ -60,7 +60,10 @@ to obtain further info about available commands.
 * [operator-sdk edit](../operator-sdk_edit)	 - This command will edit the project configuration
 * [operator-sdk generate](../operator-sdk_generate)	 - Invokes a specific generator
 * [operator-sdk init](../operator-sdk_init)	 - Initialize a new project
-* [operator-sdk olm](../operator-sdk_olm)	 - Manage the Operator Lifecycle Manager installation in your cluster
+* [operator-sdk olm](../operator-sdk_olm)	 - Manage the Operator Lifecycle Manager installation in your cluster.
+
+Operator SDK officially supports the following OLM versions: unknown.
+Any other version installed with this command may work but is not officially tested.
 * [operator-sdk run](../operator-sdk_run)	 - Run an Operator in a variety of environments
 * [operator-sdk scorecard](../operator-sdk_scorecard)	 - Runs scorecard
 * [operator-sdk version](../operator-sdk_version)	 - Print the operator-sdk version

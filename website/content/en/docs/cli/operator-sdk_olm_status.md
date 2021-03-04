@@ -28,5 +28,8 @@ operator-sdk olm status [flags]
 
 ### SEE ALSO
 
-* [operator-sdk olm](../operator-sdk_olm)	 - Manage the Operator Lifecycle Manager installation in your cluster
+* [operator-sdk olm](../operator-sdk_olm)	 - Manage the Operator Lifecycle Manager installation in your cluster.
+
+Operator SDK officially supports the following OLM versions: unknown.
+Any other version installed with this command may work but is not officially tested.
 
