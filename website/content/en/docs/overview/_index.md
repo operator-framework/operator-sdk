@@ -88,6 +88,10 @@ By project type (replace `${IMAGE_VERSION}` with base image version in your proj
 [client-go]:https://github.com/kubernetes/client-go
 [client-go-compat]:https://github.com/kubernetes/client-go#compatibility-matrix
 
+## OLM version compatibility
+
+Operator SDK officially supports the latest 3 versions of OLM present at the time of a given Operator SDK release. These versions of OLM manifests are packaged with the SDK binary in the form of `bindata` to support low-latency installations of OLM with [`operator-sdk olm install`][olm-install-cmd]. Any other version installed with this command may work but is not tested nor officially supported.
+
 ## Platform support
 
 Official build architectures for binaries:
@@ -149,3 +153,4 @@ Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file f
 [proposals_docs]: https://github.com/operator-framework/operator-sdk/tree/master/proposals
 [testdata_samples]: https://github.com/operator-framework/operator-sdk/tree/master/testdata
 [sdk_cli_ref]: /docs/cli/
+[olm-install-cmd]: /docs/cli/operator-sdk_olm_install/
