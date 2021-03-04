@@ -83,9 +83,8 @@ var _ = BeforeSuite(func() {
 		Expect(tc.LoadImageToKindClusterWithName("quay.io/operator-framework/custom-scorecard-tests:dev")).To(Succeed())
 	}
 
-	By("creating bundle image")
-	err = tc.GenerateBundle()
-	Expect(err).NotTo(HaveOccurred())
+	By("generating bundle")
+	Expect(tc.GenerateBundle()).To(Succeed())
 
 	By("installing cert manager bundle")
 	Expect(tc.InstallCertManager(false)).To(Succeed())

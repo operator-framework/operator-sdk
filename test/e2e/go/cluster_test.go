@@ -62,7 +62,7 @@ var _ = Describe("operator-sdk", func() {
 		It("should run correctly in a cluster", func() {
 			By("checking if the Operator project Pod is running")
 			verifyControllerUp := func() error {
-				By("getting the controller-manager pod name")
+				// Get the controller-manager pod name
 				podOutput, err := tc.Kubectl.Get(
 					true,
 					"pods", "-l", "control-plane=controller-manager",
@@ -71,8 +71,6 @@ var _ = Describe("operator-sdk", func() {
 				if err != nil {
 					return fmt.Errorf("could not get pods: %v", err)
 				}
-
-				By("ensuring the created controller-manager Pod")
 				podNames := kbtestutils.GetNonEmptyLines(podOutput)
 				if len(podNames) != 1 {
 					return fmt.Errorf("expecting 1 pod, have %d", len(podNames))
@@ -82,7 +80,7 @@ var _ = Describe("operator-sdk", func() {
 					return fmt.Errorf("expecting pod name %q to contain %q", controllerPodName, "controller-manager")
 				}
 
-				By("checking the controller-manager Pod is running")
+				// Ensure the controller-manager Pod is running.
 				status, err := tc.Kubectl.Get(
 					true,
 					"pods", controllerPodName, "-o", "jsonpath={.status.phase}")
