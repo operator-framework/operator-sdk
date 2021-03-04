@@ -27,6 +27,11 @@ jobs:
         password: ${{ secrets.QUAY_PASSWORD }}
         registry: quay.io
 
+    - name: checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
     - name: create tag
       id: tag
       run: |
@@ -37,11 +42,6 @@ jobs:
           TAG=$(git describe --tags --always --dirty --long --abbrev=100)
         fi
         echo ::set-output name=tag::${IMG}:${TAG}
-
-    - name: checkout
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 1
 
     - name: build and push
       uses: docker/build-push-action@v2
