@@ -22,6 +22,7 @@ import (
 
 	v1 "github.com/operator-framework/api/pkg/operators/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"github.com/spf13/pflag"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -51,6 +52,11 @@ func NewUninstall(cfg *Configuration) *Uninstall {
 	return &Uninstall{
 		config: cfg,
 	}
+}
+
+func (u *Uninstall) BindFlags(fs *pflag.FlagSet) {
+	fs.BoolVar(&u.DeleteCRDs, "delete-crds", true, "If set to false, owned CRDs and CRs will not be deleted")
+	fs.BoolVar(&u.DeleteAll, "delete-all", true, "If set to true, it will enable all the delete flags")
 }
 
 type ErrPackageNotFound struct {
@@ -143,9 +149,13 @@ func (u *Uninstall) Run(ctx context.Context) error {
 		return err
 	}
 	var objs []client.Object
+
 	if u.DeleteCRDs {
 		objs = append(objs, crds...)
+	} else {
+		u.Logf("skipping deletion of CRDs as delete-crds flag is set to %v", u.DeleteCRDs)
 	}
+
 	objs = append(objs, csvObj, csObj)
 	// These objects may have owned resources/finalizers, so block on deletion.
 	if err := u.deleteObjects(ctx, true, objs...); err != nil {

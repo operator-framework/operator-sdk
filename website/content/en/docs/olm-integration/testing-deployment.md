@@ -123,7 +123,7 @@ Let's look at the anatomy of the `run bundle-upgrade` configuration model:
 `run packagemanifests`.
 
 ```
-operator-sdk cleanup <operatorPackageName> [--kubeconfig=] [--namespace=] [--timeout=]
+operator-sdk cleanup <operatorPackageName> [--delete-all=] [--delete-crds=] [--kubeconfig=] [--namespace=] [--timeout=]
 ```
 
 Let's look at the configuration shared between `run bundle`, `run
@@ -141,6 +141,12 @@ Let's look at the anatomy of the `cleanup` configuration model:
 
 - **operatorPackageName**: the Operator's package name which you want to remove
   from the cluster, e.g. memcached-operator. This is a required parameter.
+- **delete-all**: a boolean indicating to enable all the delete flags that are present. This is an optional field
+  which will default to true if not provided. If set to false, it will enable
+  specific delete flags.
+- **delete-crds**: a boolean indicating to delete all owned CRDs and CRs. This is an optional field
+  which will default to true if not provided. If set to false, owned CRDs and CRs
+  will stay intact.
 
 ### Caveats
 

@@ -16,10 +16,12 @@ operator-sdk cleanup <operatorPackageName> [flags]
 ### Options
 
 ```
-  -h, --help                help for cleanup
+      --timeout duration    Time to wait for the command to complete before failing (default 2m0s)
+      --delete-crds         If set to false, owned CRDs and CRs will not be deleted (default true)
+      --delete-all          If set to true, it will enable all the delete flags (default true)
       --kubeconfig string   Path to the kubeconfig file to use for CLI requests.
   -n, --namespace string    If present, namespace scope for this CLI request
-      --timeout duration    Time to wait for the command to complete before failing (default 2m0s)
+  -h, --help                help for cleanup
 ```
 
 ### Options inherited from parent commands

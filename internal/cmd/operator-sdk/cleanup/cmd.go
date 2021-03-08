@@ -28,6 +28,7 @@ import (
 func NewCmd() *cobra.Command {
 	var timeout time.Duration
 	cfg := &operator.Configuration{}
+	u := operator.NewUninstall(cfg)
 	cmd := &cobra.Command{
 		Use:   "cleanup <operatorPackageName>",
 		Short: "Clean up an Operator deployed with the 'run' subcommand",
@@ -37,9 +38,7 @@ func NewCmd() *cobra.Command {
 			return cfg.Load()
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			u := operator.NewUninstall(cfg)
 			u.Package = args[0]
-			u.DeleteAll = true
 			u.DeleteOperatorGroupNames = []string{operator.SDKOperatorGroupName}
 			u.Logf = log.Infof
 
@@ -59,7 +58,9 @@ func NewCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().DurationVar(&timeout, "timeout", 2*time.Minute, "Time to wait for the command to complete before failing")
+	cmd.Flags().SortFlags = false
 	cfg.BindFlags(cmd.PersistentFlags())
+	u.BindFlags(cmd.Flags())
 
 	return cmd
 }
