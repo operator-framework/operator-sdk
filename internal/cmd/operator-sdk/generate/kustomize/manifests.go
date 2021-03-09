@@ -22,17 +22,20 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
 	cfgv2 "sigs.k8s.io/kubebuilder/v3/pkg/config/v2"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
 	"sigs.k8s.io/yaml"
 
 	genutil "github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/generate/internal"
 	"github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion/bases"
-	"github.com/operator-framework/operator-sdk/internal/plugins/util/kustomize"
+	manifestsv2 "github.com/operator-framework/operator-sdk/internal/plugins/manifests/v2"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
@@ -161,14 +164,6 @@ func (c *manifestsCmd) setDefaults(cfg config.Config) error {
 	return nil
 }
 
-// kustomization.yaml file contents for manifests. this should always be written to
-// config/manifests/kustomization.yaml since it only references files in config.
-const manifestsKustomization = `resources:
-- ../default
-- ../samples
-- ../scorecard
-`
-
 // run generates kustomize bundle bases and a kustomization.yaml if one does not exist.
 func (c manifestsCmd) run(cfg config.Config) error {
 
@@ -188,6 +183,7 @@ func (c manifestsCmd) run(cfg config.Config) error {
 		}
 	}
 
+	operatorType := projutil.PluginKeyToOperatorType(cfg.GetPluginChain())
 	relBasePath := filepath.Join("bases", c.packageName+".clusterserviceversion.yaml")
 	basePath := filepath.Join(c.inputDir, relBasePath)
 	gvks, err := getGVKs(cfg)
@@ -196,7 +192,7 @@ func (c manifestsCmd) run(cfg config.Config) error {
 	}
 	base := bases.ClusterServiceVersion{
 		OperatorName: c.packageName,
-		OperatorType: projutil.PluginKeyToOperatorType(cfg.GetPluginChain()),
+		OperatorType: operatorType,
 		APIsDir:      c.apisDir,
 		Interactive:  requiresInteraction(basePath, c.interactiveLevel),
 		GVKs:         gvks,
@@ -224,8 +220,13 @@ func (c manifestsCmd) run(cfg config.Config) error {
 	}
 
 	// Write a kustomization.yaml to outputDir if one does not exist.
-	if err := kustomize.WriteIfNotExist(c.outputDir, manifestsKustomization); err != nil {
-		return fmt.Errorf("error writing kustomization.yaml: %v", err)
+	kustomization := manifestsv2.Kustomization{SupportsWebhooks: operatorType == projutil.OperatorTypeGo}
+	kustomization.IfExistsAction = file.Skip
+	err = machinery.NewScaffold(machinery.Filesystem{FS: afero.NewOsFs()}, machinery.WithConfig(cfg)).Execute(
+		&kustomization,
+	)
+	if err != nil {
+		return fmt.Errorf("error scaffolding manifests: %v", err)
 	}
 
 	if !c.quiet {

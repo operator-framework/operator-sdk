@@ -62,6 +62,7 @@ The following resource kinds are typically included in a CSV, which are addresse
   - `Role`: define Operator permissions within a namespace.
   - `ClusterRole`: define cluster-wide Operator permissions.
   - `Deployment`: define how the Operator's operand is run in pods.
+  - `ValidatingWebhookConfiguration`, `MutatingWebhookConfiguration`: configures webhooks for your manager to handle.
   - `CustomResourceDefinition`: definitions of custom objects your Operator reconciles.
   - Custom resource examples: examples of objects adhering to the spec of a particular CRD.
 
@@ -71,11 +72,87 @@ This is advantageous for those who would like to take full advantage of `kustomi
 All fields unlabeled or labeled with _marker_ [below](#csv-fields) will be overwritten by these command,
 so make sure you do not `kustomize build` those fields!
 
+#### Webhooks
+
+A CSV allows you to [define][olm-whs] both [admission][doc-admission-whs] and [conversion][doc-conv-whs] webhooks
+at [`spec.webhookdefinitions`][wh-defs]. The `generate <bundle|packagemanifests>` commands, described below,
+will automatically add webhooks to your CSV if the following holds true:
+1. A webhook configuration must be associated with a `Service` by name and namespace,
+whether in a [CRD][crd-wh-serviceref] or in a [`*WebhookConfiguration`][wh-serviceref] file,
+1. The associated `Service` must expose one `spec.ports[*].targetPort` that matches both `containerPort`
+and `protocol` of one element in the Operator `Deployment`'s `spec.template.spec.containers[*].ports`.
+
+By default, the manager's Deployment is configured to mount a volume containing TLS cert data
+created by [cert-manager][cert-manager] into the manager's container.
+OLM does [not yet support cert-manager][olm-cert-support], so a JSON patch <!-- [JSON patch][cm-patch] --> was added
+to remove this volume and mount such that OLM can itself create and manage certs for your Operator.
+
+**Note (for Go Operators only):** If targeting OLM < v0.17.0, the manager's default webhook server
+is not configured with the correct cert/key paths; the correct path is
+`/apiserver.local.config/certificates/apiserver.{cert,key}`.
+To cover this case, make the following changes to your `main.go`:
+
+```go
+import (
+  ...
+  ctrl "sigs.k8s.io/controller-runtime"
+  "sigs.k8s.io/controller-runtime/pkg/webhook"
+)
+
+func main() {
+  ...
+
+  // Standard Manager setup.
+  mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+    Host: <some host>, // May not be configured explicitly.
+    Port: <some port>, // May not be configured explicitly.
+  })
+
+  ...
+
+  // Before any webhooks are registered:
+  var certDir, certName, keyName string
+  if info, err := os.Stat("/apiserver.local.config/certificates"); err == nil && info.IsDir() {
+    certDir = "/apiserver.local.config/certificates"
+    certName = "apiserver.crt"
+    keyName = "apiserver.key"
+  }
+  if err = mgr.Add(webhook.Server{
+    Host:     <some host>, // Set this only if set in ctrl.Options above.
+    Port:     <some port>, // Set this only if set in ctrl.Options above.
+    CertDir:  certDir,     // Defaults to the correct path if unset.
+    CertName: certName,    // Defaults to the correct path if unset.
+    KeyName:  keyName,     // Defaults to the correct path if unset.
+  }); err != nil {
+    setupLog.Error(err, "unable to add webhook server")
+    os.Exit(1)
+  }
+
+  // Now you can register webhooks.
+  ...
+}
+```
+
+**Note:** The `Service` itself will still be placed into the `manifests/` directory,
+in case other Operator resources require routing. Feel free to remove it otherwise.
+
+
+[olm-whs]:https://olm.operatorframework.io/docs/advanced-tasks/adding-admission-and-conversion-webhooks
+[doc-admission-whs]:https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/
+[doc-conv-whs]:https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/#webhook-conversion
+[wh-defs]:https://pkg.go.dev/github.com/operator-framework/api/pkg/operators/v1alpha1#WebhookDefinition
+[crd-wh-serviceref]:https://pkg.go.dev/k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1?utm_source=godoc#ServiceReference
+[wh-serviceref]:https://pkg.go.dev/k8s.io/api/admissionregistration/v1?utm_source=godoc#ServiceReference
+[olm-cert-support]:https://olm.operatorframework.io/docs/advanced-tasks/adding-admission-and-conversion-webhooks/#certificate-authority-requirements
+<!-- TODO(estroz): update this from master to the commit that adds this doc -->
+<!-- [cm-patch]:https://github.com/operator-framework/operator-sdk/blob/master/<commit>/go/v3/memcached-operator/config/manifests/kustomization.yaml#L12 -->
+
 ## Generate your first release
 
 You've recently run `operator-sdk init` and created your APIs with `operator-sdk create api`. Now you'd like to
 package your Operator for deployment by OLM. Your Operator is at version `v0.0.1`; the `Makefile` variable `VERSION`
-should be set to `0.0.1`. You've also built your operator image, `quay.io/<user>/memcached-operator:v0.0.1`.
+should be set to `0.0.1`. You've also built your operator image, `example.com/memcached-operator:v0.0.1`;
+if this image tag does not match yours, swap in the correct one in the docs below.
 
 ### Bundle format
 
@@ -220,7 +297,7 @@ packagemanifests: kustomize
 By default `make packagemanifests` will generate a CSV, a package manifest file, and copy CRDs in the package manifests format:
 
 ```console
-$ make packagemanifests IMG=quay.io/<user>/memcached-operator:v0.0.1
+$ make packagemanifests IMG=example.com/memcached-operator:v0.0.1
 $ tree ./packagemanifests
 ./packagemanifests
 ├── 0.0.1
@@ -237,13 +314,13 @@ and added a port to your manager Deployment in `config/manager/manager.yaml`.
 If using a bundle format, the current version of your CSV can be updated by running:
 
 ```console
-$ make bundle IMG=quay.io/<user>/memcached-operator:v0.0.1
+$ make bundle IMG=example.com/memcached-operator:v0.0.1
 ```
 
 If using a package manifests format, run:
 
 ```console
-$ make packagemanifests IMG=quay.io/<user>/memcached-operator:v0.0.1
+$ make packagemanifests IMG=example.com/memcached-operator:v0.0.1
 ```
 
 Running the command for either format will append your new CRD to `spec.customresourcedefinitions.owned`,
@@ -254,7 +331,7 @@ fields like `spec.maintainers`.
 ## Upgrade your Operator
 
 Let's say you're upgrading your Operator to version `v0.0.2`, you've already updated the `VERSION` variable
-in your `Makefile` to `0.0.2`, and built a new operator image `quay.io/<user>/memcached-operator:v0.0.2`.
+in your `Makefile` to `0.0.2`, and built a new operator image `example.com/memcached-operator:v0.0.2`.
 You also want to add a new channel `beta`, and use it as the default channel.
 
 First, update `spec.replaces` in your [base CSV manifest](#kustomize-files) to the _current_ CSV name.
@@ -269,13 +346,13 @@ spec:
 Next, upgrade your bundle. If using a bundle format, a new version of your CSV can be created by running:
 
 ```console
-$ make bundle CHANNELS=beta DEFAULT_CHANNEL=beta IMG=quay.io/<user>/memcached-operator:v0.0.2
+$ make bundle CHANNELS=beta DEFAULT_CHANNEL=beta IMG=example.com/memcached-operator:v0.0.2
 ```
 
 If using a package manifests format, run:
 
 ```console
-$ make packagemanifests FROM_VERSION=0.0.1 CHANNEL=beta IS_CHANNEL_DEFAULT=1 IMG=quay.io/<user>/memcached-operator:v0.0.2
+$ make packagemanifests FROM_VERSION=0.0.1 CHANNEL=beta IS_CHANNEL_DEFAULT=1 IMG=example.com/memcached-operator:v0.0.2
 ```
 
 Running the command for either format will persist user-defined fields, and updates `spec.version` and `metadata.name`.
@@ -325,6 +402,7 @@ being managed, each with a `name` and `url`.
 - `spec.selector` _(user)_ : selectors by which the Operator can pair resources in a cluster.
 - `spec.icon` _(user)_ : a base64-encoded icon unique to the Operator, set in a `base64data` field with a `mediatype`.
 - `spec.maturity` _(user)_: the Operator's maturity, ex. `alpha`.
+- `spec.webhookdefinitions`: any webhooks the Operator uses.
 
 **\*** `metadata.name` and `spec.version` will only be automatically updated from the base CSV
 when you set `--version` when running `generate <bundle|packagemanifests>`.

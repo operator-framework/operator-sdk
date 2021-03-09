@@ -1,0 +1,32 @@
+entries:
+  - description: >
+      (manifests/v2) Added a `config/manifests` kustomize patch to remove the cert-manager
+      volume and volumeMount from manifests destined for `generate <bundle|packagemanifests>`
+    kind: bugfix
+    migration:
+      header: (manifests/v2) Add a kustomize patch to remove the cert-manager volume/volumeMount from your CSV
+      body: >
+        OLM does [not yet support cert-manager](https://olm.operatorframework.io/docs/advanced-tasks/adding-admission-and-conversion-webhooks/#certificate-authority-requirements),
+        so a JSON patch was added to remove this volume and mount such that
+        OLM can itself create and manage certs for your Operator.
+
+        In `config/manifests/kustomization.yaml`, add the following:
+
+        ```yaml
+        patchesJson6902:
+        - target:
+            group: apps
+            version: v1
+            kind: Deployment
+            name: controller-manager
+            namespace: system
+          patch: |-
+            # Remove the manager container's "cert" volumeMount, since OLM will create and mount a set of certs.
+            # Update the indices in this path if adding or removing containers/volumeMounts in the manager's Deployment.
+            - op: remove
+              path: /spec/template/spec/containers/1/volumeMounts/0
+            # Remove the "cert" volume, since OLM will create and mount a set of certs.
+            # Update the indices in this path if adding or removing volumes in the manager's Deployment.
+            - op: remove
+              path: /spec/template/spec/volumes/0
+        ```
