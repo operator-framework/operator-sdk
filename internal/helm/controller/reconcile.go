@@ -157,7 +157,7 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 
 		if wait && status.DeployedRelease != nil && status.DeployedRelease.Manifest != "" {
 			log.Info("Uninstall wait")
-			areAllResDeleted, err := manager.CleanupRelease(ctx, status.DeployedRelease.Manifest)
+			isAllResourcesDeleted, err := manager.CleanupRelease(ctx, status.DeployedRelease.Manifest)
 			if err != nil {
 				log.Error(err, "Failed to cleanup release")
 				status.SetCondition(types.HelmAppCondition{
@@ -169,7 +169,7 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 				_ = r.updateResourceStatus(ctx, o, status)
 				return reconcile.Result{}, err
 			}
-			if !areAllResDeleted {
+			if !isAllResourcesDeleted {
 				log.Info("Waiting until all resources are deleted")
 				return reconcile.Result{RequeueAfter: r.ReconcilePeriod}, nil
 			}
