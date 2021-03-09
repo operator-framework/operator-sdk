@@ -23,9 +23,6 @@ aliases:
   # Contributors who can review and LGTM any PRs in the repo.
   sdk-reviewers:
   - jberkhahn
-  - sujil02
-  - laxmikantbpandhare
-  - venkat19967
 
   # Contributors who were approvers that are no longer directly involved with the project.
   # This role is symbolic.
