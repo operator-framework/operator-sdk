@@ -67,7 +67,7 @@ func main() {
 
 	jsonOutput, err := json.MarshalIndent(s, "", "    ")
 	if err != nil {
-		printErrorStatus(fmt.Errorf("could not marshal scoreard output %v", err))
+		printErrorStatus(fmt.Errorf("could not marshal scorecard output %v", err))
 		return
 	}
 	fmt.Println(string(jsonOutput))
