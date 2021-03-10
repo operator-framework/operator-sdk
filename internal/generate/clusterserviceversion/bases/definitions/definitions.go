@@ -41,6 +41,12 @@ type descriptionValues struct {
 // to populate csv spec fields. Go code with relevant markers and information is expected to be
 // in a package under apisRootDir and match a GVK in keys.
 func ApplyDefinitionsForKeysGo(csv *v1alpha1.ClusterServiceVersion, apisRootDir string, gvks []schema.GroupVersionKind) error {
+	// Skip definitions parsing if dir doesn't exist, otherwise g.contextForRoots() will error.
+	if _, err := os.Stat(apisRootDir); err != nil && errors.Is(err, os.ErrNotExist) {
+		log.Warnf("Skipping definitions parsing: APIs root dir %q does not exist", apisRootDir)
+		return nil
+	}
+
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
@@ -86,7 +92,7 @@ func ApplyDefinitionsForKeysGo(csv *v1alpha1.ClusterServiceVersion, apisRootDir 
 
 	// Leftover GVKs are ignored because their types can't be found.
 	for _, gvk := range gvkSet {
-		log.Warnf("Skipping CSV annotation parsing for API %s: type not found", gvk)
+		log.Warnf("Skipping definitions parsing for API %s: Go type not found", gvk)
 	}
 
 	// Update csv with all values parsed.
