@@ -49,7 +49,7 @@ changelog: check_release_version ## Generate the changelog.
 	rm -f ./changelog/fragments/!(00-template.yaml)
 
 .PHONY: tag
-VERSION_REGEXP := ^v[0-9]+\.[0-9]+\.[0-9]+(\-(alpha|beta|rc)\.[0-9]+)?$
+VERSION_REGEXP := ^(scorecard-kuttl/)?v[0-9]+\.[0-9]+\.[0-9]+(\-(alpha|beta|rc)\.[0-9]+)?$
 tag: ## Create a release tag.
 ifeq (,$(RELEASE_VERSION))
 	$(error "RELEASE_VERSION must be set to tag HEAD")
