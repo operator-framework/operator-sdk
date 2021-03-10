@@ -192,7 +192,7 @@ func newResource(cfg config.Config, opts createOptions) *resource.Resource {
 
 	r := opts.NewResource(cfg)
 	r.Domain = cfg.GetDomain()
-	// Remove the path since this is not a Golang project.
+	// Remove the path since this is not a Go project.
 	r.Path = ""
 	return &r
 }

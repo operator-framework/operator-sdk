@@ -30,7 +30,7 @@ Thanks for contributing!
 
 ### Code style
 
-The coding style suggested by the Golang community is used in operator-sdk. See the [style doc][golang-style-doc] for details.
+The coding style suggested by the Go community is used in operator-sdk. See the [style doc][golang-style-doc] for details.
 
 Please follow this style to make operator-sdk easy to review, maintain and develop.
 
