@@ -23,6 +23,7 @@ import (
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
 	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
+	pluginutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang"
 
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
@@ -167,8 +168,8 @@ func (p *createAPIPSubcommand) Validate() error {
 		return errors.New("multiple groups are not allowed by default, to enable multi-group set 'multigroup: true' in your PROJECT file")
 	}
 
-	// Check CRDVersion against all other CRDVersions in p.config for compatibility.
-	if !p.config.IsCRDVersionCompatible(p.resource.API.CRDVersion) {
+	// Selected CRD version must match existing CRD versions.
+	if pluginutil.HasDifferentCRDVersion(p.config, p.resource.API.CRDVersion) {
 		return fmt.Errorf("only one CRD version can be used for all resources, cannot add %q", p.resource.API.CRDVersion)
 	}
 

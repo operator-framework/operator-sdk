@@ -94,7 +94,7 @@ spec:
           - subjectaccessreviews
           verbs:
           - create
-        serviceAccountName: default
+        serviceAccountName: memcached-operator-controller-manager
       deployments:
       - name: memcached-operator-controller-manager
         spec:
@@ -159,6 +159,7 @@ spec:
                   readOnly: true
               securityContext:
                 runAsNonRoot: true
+              serviceAccountName: memcached-operator-controller-manager
               terminationGracePeriodSeconds: 10
               volumes:
               - name: cert
@@ -188,7 +189,7 @@ spec:
           verbs:
           - create
           - patch
-        serviceAccountName: default
+        serviceAccountName: memcached-operator-controller-manager
     strategy: deployment
   installModes:
   - supported: false
