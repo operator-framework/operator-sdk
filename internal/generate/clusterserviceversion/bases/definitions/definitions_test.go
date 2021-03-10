@@ -241,13 +241,31 @@ func TestApplyDefinitionsForKeysGo(t *testing.T) {
 			},
 		},
 		{
-			description: "Return error for non-existent package dir",
+			description: "Return the CSV unchanged for non-existent APIs dir",
 			apisDir:     filepath.Join("pkg", "notexist"),
-			csv:         &v1alpha1.ClusterServiceVersion{},
-			gvks: []schema.GroupVersionKind{
-				{Group: "cache.example.com", Version: "v1alpha2", Kind: "Dummy"},
+			csv: &v1alpha1.ClusterServiceVersion{
+				Spec: v1alpha1.ClusterServiceVersionSpec{
+					CustomResourceDefinitions: v1alpha1.CustomResourceDefinitions{
+						Owned: []v1alpha1.CRDDescription{
+							{
+								Name: "nokinds.cache.example.com", Version: "v1alpha2", Kind: "NoKind",
+								DisplayName: "NoKind App",
+								Description: "NoKind is the Schema for the other nokind API",
+							},
+						},
+					},
+				},
 			},
-			wantErr: true,
+			expectedCRDs: v1alpha1.CustomResourceDefinitions{
+				Owned: []v1alpha1.CRDDescription{
+					{
+						Name: "nokinds.cache.example.com", Version: "v1alpha2", Kind: "NoKind",
+						DisplayName: "NoKind App",
+						Description: "NoKind is the Schema for the other nokind API",
+					},
+				},
+			},
+			wantErr: false,
 		},
 	}
 
