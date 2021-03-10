@@ -64,7 +64,7 @@ end user along with any other test results.
 With the above kuttl test configuration, you can execute that
 kuttl test using scorecard as follows:
 ```bash
-operator-sdk scorecard <bundle_dir_or_image> --selector=suite=kuttlsuite 
+operator-sdk scorecard <bundle_dir_or_image> --selector=suite=kuttlsuite
 ```
 
 ## Defining kuttl Specific Configuration Options
@@ -92,7 +92,7 @@ use cases.  See [kuttl configuration][kuttl_configuration] for more details on k
 
 ### kuttl Tests Explained
 
-The kuttl test tool looks for tests to execute within the bundle 
+The kuttl test tool looks for tests to execute within the bundle
 following a naming convention as follows:
 ```
         └── kuttl
@@ -124,21 +124,22 @@ kuttl tests are named and executed.
 
 ### kuttl Test Privileges
 
-The kuttl tests a user might write can vary widely in functionality 
-and in particular require special Kubernetes RBAC priviledges outside 
-of what your default service account might have.  It is therefore very likely
-you will be required to run scorecard with a custom service account
-that holds the required RBAC permissions.
-
+The kuttl tests a user might write can vary widely in functionality
+and in particular require special Kubernetes RBAC privileges outside
+of what the default service account for a namespace might have.
+It is therefore very likely you will be required to run scorecard
+in a custom service account that holds the required RBAC permissions,
+like `config/rbac/service_account.yaml` in Go operator projects.
 You can specify a custom service account in scorecard as follows:
-```
-operator-sdk scorecard <bundle_dir_or_image> --service-account=mycustomsa
+
+```console
+$ operator-sdk scorecard <bundle_dir_or_image> --service-account=my-project-controller-manager
 ```
 
-Also, you can set up a non-default namespace that your tests
-will be executed within using the following namespace flag:
-```
-operator-sdk scorecard <bundle_dir_or_image> --namespace=mycustomns
+Also, you can specify a non-default namespace that scorecard will run in:
+
+```console
+$ operator-sdk scorecard <bundle_dir_or_image> --namespace=my-project-system
 ```
 
 If you do not specify either of these flags, the default namespace
@@ -146,7 +147,7 @@ and service account will be used by the scorecard to run test pods.
 
 It is worth noting that scorecard-test-kuttl specifies a namespace
 to the kubectl-kuttl command which causes kuttl to not create a
-namespace for each test.  This might impact your kuttl tests in 
+namespace for each test.  This might impact your kuttl tests in
 that you might need to perform resource cleanup in your tests
 instead of depending upon namespace deletion to perform that cleanup.
 
