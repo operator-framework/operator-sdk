@@ -36,7 +36,7 @@ jobs:
       id: tag
       run: |
         set -e
-        IMG=quay.io/operator-framework/ansible-operator-base
+        IMG=quay.io/${{ github.repository_owner }}/ansible-operator-base
         TAG="${{ github.event.inputs.tag }}"
         if [[ "$TAG" == "" ]]; then
           TAG=$(git describe --tags --always --dirty --long --abbrev=100)

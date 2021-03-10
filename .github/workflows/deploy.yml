@@ -87,7 +87,7 @@ jobs:
     - name: create tags
       id: tags
       run: |
-        IMG=quay.io/operator-framework/${{ matrix.id }}
+        IMG=quay.io/${{ github.repository_owner }}/${{ matrix.id }}
         if [[ $GITHUB_REF == refs/tags/* ]]; then
           TAG=${GITHUB_REF#refs/tags/}
           MAJOR_MINOR=${TAG%.*}
