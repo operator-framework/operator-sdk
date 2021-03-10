@@ -22,7 +22,7 @@ The Operator SDK is a framework that uses the [controller-runtime][controller_ru
 
 The SDK provides workflows to develop operators in Go, Ansible, or Helm.
 
-The following workflow is for a new [Golang operator][golang-guide]:
+The following workflow is for a new [Go operator][golang-guide]:
 
   1. Create a new operator project using the SDK Command Line Interface(CLI)
   2. Define new resource APIs by adding Custom Resource Definitions(CRD)

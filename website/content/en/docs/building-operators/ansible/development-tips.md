@@ -186,7 +186,7 @@ This is the list of CR annotations which will modify the behavior of the operato
 - `ansible.operator-sdk/reconcile-period`: Specifies the maximum time before a
   reconciliation is triggered. Note that at scale, this can reduce
   performance, see [watches][watches] reference for more information. This value
-  is parsed using the standard Golang package [time][time_pkg]. Specifically
+  is parsed using the standard Go package [time][time_pkg]. Specifically
   [ParseDuration][time_parse_duration] is used which will apply the default
   suffix of `s` giving the value in seconds.
 

@@ -205,7 +205,7 @@ func (opts CreateOptions) NewResource(cfg config.Config) *resource.Resource {
 
 	r := ro.NewResource(cfg)
 	r.Domain = cfg.GetDomain()
-	// remove the path since is not a Golang project
+	// remove the path since is not a Go project
 	r.Path = ""
 	return &r
 }

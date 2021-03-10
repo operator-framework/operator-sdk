@@ -1,5 +1,5 @@
 ---
-title: Golang Operator Tutorial
+title: Go Operator Tutorial
 linkTitle: Tutorial
 weight: 30
 description: An in-depth walkthough of building and running a Go-based operator.
