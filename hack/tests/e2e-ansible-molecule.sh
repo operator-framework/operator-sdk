@@ -11,10 +11,10 @@ ROOTDIR="$(pwd)"
 TMPDIR="$(mktemp -d)"
 trap_add 'rm -rf $TMPDIR' EXIT
 export PATH=${HOME}/.local/bin:${PATH}
-pip3 install --user pyasn1==0.4.7 pyasn1-modules==0.2.6 idna==2.8 ipaddress==1.0.22
-pip3 install --user molecule==3.0.2
+pip3 install --user pyasn1==0.4.7 pyasn1-modules==0.2.6 idna==2.8 ipaddress==1.0.23
+pip3 install --user cryptography==3.3.2 molecule==3.0.2
 pip3 install --user ansible-lint yamllint
-pip3 install --user docker==4.2.2 openshift jmespath
+pip3 install --user docker==4.2.2 openshift==0.11.2 jmespath
 ansible-galaxy collection install 'community.kubernetes:<1.0.0'
 
 header_text "Copying molecule testdata scenarios"
