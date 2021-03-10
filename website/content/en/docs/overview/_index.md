@@ -147,7 +147,7 @@ Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file f
 [helm-guide]:/docs/building-operators/helm/quickstart/
 [install_guide]: /docs/installation/
 [license_file]:https://github.com/operator-framework/operator-sdk/blob/master/LICENSE
-[of-blog]: https://coreos.com/blog/introducing-operator-framework
+[of-blog]:https://www.openshift.com/blog/introducing-the-operator-framework
 [of-home]: https://github.com/operator-framework
 [operator_link]: https://kubernetes.io/docs/concepts/extend-kubernetes/operator/
 [proposals_docs]: https://github.com/operator-framework/operator-sdk/tree/master/proposals
