@@ -22,6 +22,8 @@ import (
 	cfgv2 "sigs.k8s.io/kubebuilder/v3/pkg/config/v2"
 	cfgv3 "sigs.k8s.io/kubebuilder/v3/pkg/config/v3"
 
+	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/alpha"
+	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/alpha/config3alphato3"
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/bundle"
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/cleanup"
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/completion"
@@ -38,6 +40,7 @@ import (
 )
 
 var commands = []*cobra.Command{
+	alpha.NewCmd(),
 	bundle.NewCmd(),
 	cleanup.NewCmd(),
 	completion.NewCmd(),
@@ -97,4 +100,6 @@ func rootPersistentPreRun(cmd *cobra.Command, args []string) {
 		log.SetLevel(log.DebugLevel)
 		log.Debug("Debug logging is set")
 	}
+
+	config3alphato3.RootPersistentPreRun(cmd, args)
 }
