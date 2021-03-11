@@ -53,7 +53,7 @@ mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
     Scheme:             scheme,
     MetricsBindAddress: metricsAddr,
     Port:               9443,
-    LeaderElection:     enableLeaderElection, 
+    LeaderElection:     enableLeaderElection,
     LeaderElectionID:   "f1c5ece8.example.com",
     Namespace:          "operator-namespace",
 })
@@ -73,7 +73,7 @@ mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
     Scheme:             scheme,
     MetricsBindAddress: metricsAddr,
     Port:               9443,
-    LeaderElection:     enableLeaderElection, 
+    LeaderElection:     enableLeaderElection,
     LeaderElectionID:   "f1c5ece8.example.com",
     NewCache:           cache.MultiNamespacedCacheBuilder(namespaces),
 })
@@ -87,8 +87,8 @@ its controller because the [Manager][ctrl-manager] does not manage that Namespac
 ## Restricting Roles and permissions
 
 An operator's scope defines its [Manager's][ctrl-manager] cache's scope but not the permissions to access the resources.
-After updating the Manager's scope to be Namespaced, the cluster's [Role-Based Access Control (RBAC)][k8s-rbac]
-permissions should be restricted accordingly.
+After updating the Manager's scope to be Namespaced, [Role-Based Access Control (RBAC)][k8s-rbac] permissions
+applied to the operator's service account should be restricted accordingly.
 
 These permissions are found in the directory `config/rbac/`. The `ClusterRole` in `role.yaml` and `ClusterRoleBinding`
 in `role_binding.yaml` are used to grant the operator permissions to access and manage its resources.
@@ -99,33 +99,13 @@ and `auth_proxy_*.yaml` are not relevant to changing the operator's resource per
 
 ### Changing the permissions to Namespaced
 
-To change the scope of the RBAC permissions from cluster-wide to a specific namespace, you will need to use `Role`s
-=======
+To change the scope of the RBAC permissions from cluster-wide to a specific namespace, you will need to:
 
-- Inform the Namespace to the [Manager][ctrl-manager] 
-
-By default, the [Manager][ctrl-manager] does not have any namespace specified in `main.go`, and hence it will watch all the namespaces. In order to restrict the controllers to watch a specific namespace, specify it while creating the manager. Update the `NewManager` to inform the Namespace, in our `Memcahced` example it would like: 
-
-```go
-...
-mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-    Scheme:             scheme,
-    MetricsBindAddress: metricsAddr,
-    Port:               9443,
-    LeaderElection:     enableLeaderElection, 
-    LeaderElectionID:   "f1c5ece8.example.com",
-    Namespace:          "memcached-operator-system", // operator namespace
-})
-...
-```
-
-- Change the scope of the RBAC permissions from cluster-wide to a specific namespace
-
-You will need to use `Role`s and `RoleBinding`s instead of `ClusterRole`s and `ClusterRoleBinding`s, respectively.
+- Use `Role`s instead of `ClusterRole`s.
 
 [`RBAC markers`][rbac-markers] defined in the controller (e.g `controllers/memcached_controller.go`)
 are used to generate the operator's [RBAC ClusterRole][rbac-clusterrole] (e.g `config/rbac/role.yaml`). The default
- markers don't specify a `namespace` property and will result in a `ClusterRole`.
+markers don't specify a `namespace` property and will result in a `ClusterRole`.
 
 Update the [`RBAC markers`][rbac-markers] in `<kind>_controller.go` with `namespace=<namespace>` where the `Role` is to be applied, such as:
 
@@ -134,7 +114,7 @@ Update the [`RBAC markers`][rbac-markers] in `<kind>_controller.go` with `namesp
 //+kubebuilder:rbac:groups=cache.example.com,namespace=memcached-operator-system,resources=memcacheds/status,verbs=get;update;patch
 ```
 
-- Run `make manifests` to update `config/rbac/role.yaml`. In our example it would like:
+Then run `make manifests` to update `config/rbac/role.yaml`. In our example it would like:
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -145,10 +125,9 @@ metadata:
   namespace: memcached-operator-system
 ```
 
-- Replace `ClusterRoleBinding`  with `RoleBinding` and `ClusterRole` with `Role` in the `config/rbac/role_binding.yaml` file such as:
+- Use `RoleBinding`s instead of `ClusterRoleBinding`s. The `config/rbac/role_binding.yaml` needs to be manually updated:
 
 ```yaml
-
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
@@ -159,17 +138,18 @@ roleRef:
   name: manager-role
 subjects:
 - kind: ServiceAccount
-  name: default
+  name: controller-manager
   namespace: system
 ```
 
 <!-- todo(camilamacedo86): The need for the RoleBinding show an issue tracked
 in https://github.com/kubernetes-sigs/kubebuilder/issues/1496. -->
 
-## Using environment variables for Namespace
+## Configuring watch namespaces dynamically
 
-Instead of having any Namespaces hard-coded in the `main.go` file a good practice is to use environment
-variables to allow the restrictive configurations
+Instead of having any Namespaces hard-coded in the `main.go` file a good practice is to use an environment
+variable to allow the restrictive configurations. The one suggested here is `WATCH_NAMESPACE`, a
+comma-separated list of namespaces passed to the manager at deploy time.
 
 ### Configuring Namespace scoped operators
 
@@ -290,11 +270,11 @@ If your operator is [integrated with OLM][olm-integration], you will want to upd
 is allowed, so supporting multiple install modes in a CSV is permitted. After doing so, update your
 [bundle][bundle-quickstart] or [package manifests][packagemanifests-quickstart] by following the linked guides.
 
-## Watching resources in all Namespaces (default)
+### Watching resources in all Namespaces (default)
 
 Only the `AllNamespaces` install mode is `supported: true` by default, so no changes are required.
 
-## Watching resources in a single Namespace
+### Watching resources in a single Namespace
 
 If the operator can watch its own namespace, set the following in your `spec.installModes` list:
 
@@ -310,7 +290,7 @@ If the operator can watch a single namespace that is not its own, set the follow
     supported: true
 ```
 
-## Watching resources in multiple Namespaces
+### Watching resources in multiple Namespaces
 
 If the operator can watch multiple namespaces, set the following in your `spec.installModes` list:
 
