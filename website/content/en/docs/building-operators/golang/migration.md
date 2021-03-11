@@ -228,7 +228,7 @@ See the complete migrated `memcached_controller.go` code [here][memcached_contro
 
 **Note:** The version of [controller-runtime][controller-runtime] used in the projects scaffolded by SDK `0.19.x+` was `v0.6.0`. Please check [sigs.k8s.io/controller-runtime release docs from 0.7.0+ version][controller-runtime] for breaking changes.
 
-##### Updating your ServiceAccount in Go operator projects
+##### Updating your ServiceAccount
 
 New Go projects come with a ServiceAccount `controller-manager` in `config/rbac/service_account.yaml`.
 Your project's RoleBinding and ClusterRoleBinding subjects, and Deployment's `spec.template.spec.serviceAccountName`
