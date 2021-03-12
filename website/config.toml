@@ -97,6 +97,10 @@ algolia_docsearch = false
 ##RELEASE_ADDME##
 
 [[params.versions]]
+  version = "v1.5"
+  url = "https://v1-5-x.sdk.operatorframework.io"
+
+[[params.versions]]
   version = "v1.4"
   url = "https://v1-4-x.sdk.operatorframework.io"
 
