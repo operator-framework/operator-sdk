@@ -46,7 +46,7 @@ directory as part of the package manifests in the `<project-root>/packagemanifes
 with an existing OLM installation.
 
 
-[bundle]:https://github.com/operator-framework/operator-registry/blob/v1.12.6/docs/design/operator-bundle.md
+[bundle]:https://github.com/operator-framework/operator-registry/blob/v1.16.1/docs/design/operator-bundle.md
 [package-manifests]:https://github.com/operator-framework/operator-registry/tree/v1.5.3#manifest-format
 [doc-olm-generate]:/docs/olm-integration/generation
 [cli-olm-install]:/docs/cli/operator-sdk_olm_install

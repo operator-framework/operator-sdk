@@ -344,7 +344,7 @@ make undeploy
 [legacy-quickstart-doc]:https://v0-19-x.sdk.operatorframework.io/docs/helm/quickstart/
 [migration-guide]:/docs/building-operators/helm/migration
 [install-guide]:/docs/building-operators/helm/installation
-[layout-doc]: /docs/building-operators/helm/reference/project_layout/
+[layout-doc]: /docs/overview/project-layout
 [helm-charts]:https://helm.sh/docs/topics/charts/
 [helm-values]:https://helm.sh/docs/intro/using_helm/#customizing-the-chart-before-installing
 [helm-official]:https://helm.sh/docs/
