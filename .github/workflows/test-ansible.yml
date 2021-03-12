@@ -13,9 +13,12 @@ jobs:
         with:
           fetch-depth: 0
       - id: check_docs_only
+        # Since PR's are squashed prior to merging to the branch checked out (default branch),
+        # HEAD^ will resolve to the previous point in history.
         run: |
-          REPO_MASTER_REF=$(git show-ref ${{ github.base_ref }} | head -1 | cut -d' ' -f2)
-          echo "::set-output name=skip-tests::$(hack/ci/check-doc-only-update.sh $REPO_MASTER_REF)"
+          REF="HEAD^"
+          [[ -z "${{ github.base_ref }}" ]] || REF=$(git show-ref ${{ github.base_ref }} | head -1 | cut -d' ' -f2)
+          echo "::set-output name=skip-deploy::$(hack/ci/check-doc-only-update.sh $REF)"
 
   e2e:
     name: e2e

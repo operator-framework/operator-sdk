@@ -7,7 +7,8 @@ SHELL = /bin/bash
 # Dry run flags.
 ifneq ($(DRY_RUN),)
 SNAPSHOT_FLAGS = --snapshot --skip-publish --skip-sign --rm-dist
-$(shell touch changelog/generated/$(GIT_VERSION).md)
+CHANGELOG = changelog/generated/tmp.md
+$(shell touch $(CHANGELOG))
 endif
 
 # Ensure that this Makefile is run from the project root (always contains the 'cmd/' directory).
@@ -18,14 +19,15 @@ endif
 ##@ Release
 
 .PHONY: release
+CHANGELOG ?= changelog/generated/$(GIT_VERSION).md
 release: ## Publish an operator-sdk release, with option for a dry run with DRY_RUN.
 ifeq (,$(GIT_VERSION))
 	$(error "GIT_VERSION must be set to a git tag")
 endif
 	$(SCRIPTS_DIR)/fetch goreleaser 0.147.2
-	GORELEASER_CURRENT_TAG=$(GIT_VERSION) $(TOOLS_DIR)/goreleaser $(SNAPSHOT_FLAGS) --release-notes=changelog/generated/$(GIT_VERSION).md --parallelism 5
+	GORELEASER_CURRENT_TAG=$(GIT_VERSION) $(TOOLS_DIR)/goreleaser $(SNAPSHOT_FLAGS) --release-notes=$(CHANGELOG) --parallelism 5
 ifneq ($(DRY_RUN),)
-	rm changelog/generated/$(GIT_VERSION).md
+	rm $(CHANGELOG)
 endif
 
 ##@ Pre-Release
@@ -47,7 +49,7 @@ changelog: check_release_version ## Generate the changelog.
 	rm -f ./changelog/fragments/!(00-template.yaml)
 
 .PHONY: tag
-VERSION_REGEXP := ^v[0-9]+\.[0-9]+\.[0-9]+(\-(alpha|beta|rc)\.[0-9]+)?$
+VERSION_REGEXP := ^(scorecard-kuttl/)?v[0-9]+\.[0-9]+\.[0-9]+(\-(alpha|beta|rc)\.[0-9]+)?$
 tag: ## Create a release tag.
 ifeq (,$(RELEASE_VERSION))
 	$(error "RELEASE_VERSION must be set to tag HEAD")
