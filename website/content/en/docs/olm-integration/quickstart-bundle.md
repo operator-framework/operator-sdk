@@ -275,7 +275,7 @@ In-depth discussions of OLM concepts mentioned here:
 [sdk-user-guide-helm]:/docs/building-operators/helm/quickstart
 [quickstart-package-manifests]:/docs/olm-integration/quickstart-package-manifests
 [olm]:https://github.com/operator-framework/operator-lifecycle-manager/
-[bundle]:https://github.com/operator-framework/operator-registry/blob/v1.12.6/docs/design/operator-bundle.md
+[bundle]:https://github.com/operator-framework/operator-registry/blob/v1.16.1/docs/design/operator-bundle.md
 [bundle-metadata]:https://github.com/operator-framework/operator-registry/blob/v1.12.6/docs/design/operator-bundle.md#bundle-annotations
 [bundle-dockerfile]:https://github.com/operator-framework/operator-registry/blob/v1.12.6/docs/design/operator-bundle.md#bundle-dockerfile
 [cli-olm]:/docs/cli/operator-sdk_olm
