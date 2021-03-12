@@ -1,14 +1,15 @@
 ---
-link: Migrating pre-v1.0.0 Projects
-linkTitle: Migrating pre-v1.0.0 Projects
-weight: 300
-description: Instructions for migrating a Helm-based project built prior to v1.0.0 to use the new Kubebuilder-style layout.
+link: Migrating Projects from pre-v1.0.0 to the latest release
+linkTitle: Migrating from pre-v1.0.0 to latest
+weight: 200
+description: Instructions for migrating an Helm-based operator built prior to `v1.0.0` to use a Kubebuilder-style.
 ---
 
 ## Overview
 
-The motivations for the new layout are related to bringing more flexibility to users and
-part of the process to [Integrating Kubebuilder and Operator SDK][integration-doc].
+The v1.0 release improves upon prior `operator-sdk` releases with a new project structure and CLI, each of which enhances project extensibility and customizability. These design changes are influenced by [`kubebuilder`](https://book.kubebuilder.io/).
+
+**Note:** It is recommended that you have your project upgraded to the latest SDK release version (0.19.x+) before following the steps in this guide to migrate to the new layout. However, the steps might work from previous versions as well. In this case, if you find an issue which is not covered here then check the previous [Migration Guides][migration-doc] which might help out.
 
 ### What was changed
 
@@ -22,16 +23,22 @@ part of the process to [Integrating Kubebuilder and Operator SDK][integration-do
 
 ### What is new
 
-Projects are now scaffold using:
+Scaffolded projects now use:
 
 - [kustomize][kustomize] to manage Kubernetes resources needed to deploy your operator
 - A `Makefile` with helpful targets for build, test, and deployment, and to give you flexibility to tailor things to your project's needs
 - Updated metrics configuration using [kube-auth-proxy][kube-auth-proxy], a `--metrics-addr` flag, and [kustomize][kustomize]-based deployment of a Kubernetes `Service` and prometheus operator `ServiceMonitor`
+- Preliminary support for CLI plugins. For more info see the [plugins design document][plugins-phase1-design-doc]
+- A `PROJECT` configuration file to store information about GVKs, plugins, and help the CLI make decisions.
+
+Generated files with the default API versions:
+
+- `apiextensions/v1` for generated CRDs (`apiextensions/v1beta1` was deprecated in Kubernetes `1.16` and will be removed in `1.22`)
+- `admissionregistration.k8s.io/v1` for webhooks (`admissionregistration.k8s.io/v1beta1` was deprecated in Kubernetes `1.16` and will be removed in `1.22` )
 
 ## How to migrate
 
-The easy migration path is to create a new project from the scratch and let the tool scaffold the files properly and then,
-just replace with your customizations and implementations. Following an example.
+The easy migration path is to initialize a new project, re-recreate APIs, then copy pre-v1.0.0 configuration files into the new project.
 
 ### Creating a new project
 
@@ -151,3 +158,4 @@ Finally, follow the steps in the ["run the Operator"][run-the-operator] section 
 [kube-auth-proxy]: https://github.com/brancz/kube-rbac-proxy
 [metrics]: https://book.kubebuilder.io/reference/metrics.html?highlight=metr#metrics
 [marker]: https://book.kubebuilder.io/reference/markers.html?highlight=markers#marker-syntax
+[migration-doc]: /docs/upgrading-sdk-version/

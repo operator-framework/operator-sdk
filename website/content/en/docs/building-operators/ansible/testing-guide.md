@@ -7,7 +7,7 @@ weight: 4
 ## Getting started
 
 ### Requirements
-To begin, you sould have:
+To begin, you should have:
 
 - The latest version of the [operator-sdk](https://github.com/operator-framework/operator-sdk) installed.
 - Docker installed and running

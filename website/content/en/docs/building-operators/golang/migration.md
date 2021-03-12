@@ -7,7 +7,10 @@ description: Instructions for migrating a Go-based project built prior to `v1.0.
 
 ## Overview
 
-The motivation for the new layout is to [integrate Kubebuilder and Operator SDK][integration-doc] based projects. This enables Kubebuilder based projects to use the features provided by Operator SDK. For further information behind this motivation, check [the differences between Kubebuilder and Operator-SDK][what-are-the-the-differences-between-kubebuilder-and-operator-sdk].
+
+The v1.0 release improves upon prior `operator-sdk` releases with a new project structure and CLI, each of which enhances project extensibility and customizability. These design changes are influenced by [`kubebuilder`](https://book.kubebuilder.io/).
+
+**Note:** It is recommended that you have your project upgraded to the latest SDK release version (0.19.x+) before following the steps in this guide to migrate to the new layout. However, the steps might work from previous versions as well. In this case, if you find an issue which is not covered here then check the previous [Migration Guides][migration-doc] which might help out.
 
 ### What was changed
 
@@ -23,34 +26,25 @@ The motivation for the new layout is to [integrate Kubebuilder and Operator SDK]
 
 ### What is new
 
-Projects are now scaffold using:
+Scaffolded projects now use:
 
 - [kustomize][kustomize] to manage Kubernetes resources needed to deploy your operator
 - A `Makefile` with helpful targets to build, test, deploy and tailor things based on your project needs
 - Helpers and options to work with webhooks. For further information see [What is a Webhook?][webhook-doc]
 - Updated metrics configuration using [kube-auth-proxy][kube-auth-proxy], a `--metrics-addr` flag, and [kustomize][kustomize]-based deployment of a Kubernetes `Service` and prometheus operator `ServiceMonitor`
 - Scaffolded tests that use the [`envtest`][envtest] test framework
-- A preliminary support for plugins. For more info see the [extensible CLI and scaffolding plugins design document][plugins-phase1-design-doc]
-- A PROJECT file which stores more information about the resources in use, to enable plugins make useful decisions while scaffolding
-- Liveness and Readiness probes using [`healthz.Ping`][healthz-ping].
+- Preliminary support for CLI plugins. For more info see the [plugins design document][plugins-phase1-design-doc]
+- A `PROJECT` configuration file to store information about GVKs, plugins, and help the CLI make decisions.
 - A new option to create projects using ComponentConfig. For more info, see [enhancement proposal][enhancement proposal] and the [Component config tutorial][component-config-tutorial]
 - Go version `1.15` (previously it was `1.13`).
 
 Generated files with the default API versions:
 
-- `apiextensions/v1` for generated CRDs (`apiextensions/v1beta1` was deprecated in Kubernetes `1.16`)
-- `admissionregistration.k8s.io/v1` for webhooks (`admissionregistration.k8s.io/v1beta1` was deprecated in Kubernetes `1.16`)
+- `apiextensions/v1` for generated CRDs (`apiextensions/v1beta1` was deprecated in Kubernetes `1.16` and will be removed in `1.22`)
+- `admissionregistration.k8s.io/v1` for webhooks (`admissionregistration.k8s.io/v1beta1` was deprecated in Kubernetes `1.16` and will be removed in `1.22` )
 - `cert-manager.io/v1` for the certificate manager when webhooks are used (`cert-manager.io/v1alpha2` was deprecated in `Cert-Manager 0.14`. More info: [CertManager v1.0 docs][cert-manager-docs])
 
 **NOTE** You can still use the deprecated APIs which are only needed to support Kubernetes `1.15` and earlier.
-
-## Migration Steps
-
-The most straightforward migration path is to:
-1. Create a new project from scratch to let `operator-sdk` scaffold the new project.
-2. Copy your existing code and configuration into the new project structure.
-
-**Note:** It is recommended that you have your project upgraded to the latest SDK release version (0.19.x+) before following the steps in this guide to migrate to new layout.
 
 Please ensure that you have read [Can I customize the projects generated with SDK tool?][faq-custom] in the [FAQ][faq] before continuing further.
 
@@ -442,3 +436,4 @@ E.g `kubectl logs deployment.apps/memcached-operator-controller-manager -n memca
 [controller-runtime]: https://github.com/kubernetes-sigs/controller-runtime/releases
 [component-config-tutorial]: https://github.com/kubernetes-sigs/kubebuilder/blob/master/docs/book/src/component-config-tutorial/tutorial.md
 [plugins-phase1-design-doc]: https://github.com/kubernetes-sigs/kubebuilder/blob/master/designs/extensible-cli-and-scaffolding-plugins-phase-1.md
+[migration-doc]: /docs/upgrading-sdk-version/
