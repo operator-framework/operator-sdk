@@ -8,3 +8,11 @@ entries:
     kind: change
 
     breaking: false
+
+  - description: >
+      For Ansible-based operators, the Python following packages were updated:
+      `openshift` was updated to 0.11.2, `ansible-runner` was updated to 1.4.6.
+
+    kind: change
+
+    breaking: false
