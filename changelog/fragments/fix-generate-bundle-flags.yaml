@@ -1,7 +1,0 @@
-entries:
-  - description: >
-      Fixed ambiguous `--input-dir` and `--deploy-dir` flag semantics for `generate bundle`
-    kind: bugfix
-  - description: >
-      Improved `generate bundle` and `generate packagemanifests` handling and help text for use outside of a project
-    kind: change

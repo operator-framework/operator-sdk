@@ -1,5 +1,0 @@
-entries:
-  - description: >
-      Skip CSV definitions parsing in `generate kustomize manifests` if the APIs dir does not exist,
-      as projects may use only required APIs.
-    kind: bugfix
