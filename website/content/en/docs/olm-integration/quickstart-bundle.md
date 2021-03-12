@@ -118,8 +118,7 @@ cluster.
 First, we need to build our bundle. To build a memcached-operator bundle, run:
 
 ```console
-$ make bundle-build BUNDLE_IMG=<some-registry>/memcached-operator-bundle:v0.0.1
-$ make docker-push IMG=<some-registry>/memcached-operator-bundle:v0.0.1
+$ make bundle-build bundle-push BUNDLE_IMG=<some-registry>/memcached-operator-bundle:v0.0.1
 ```
 
 Now that the bundle image is present in a registry, [`operator-sdk run bundle`][cli-run-bundle]
@@ -145,9 +144,9 @@ INFO[0040] OLM has successfully installed "memcached-operator.v0.0.1"
 
 ### Upgrading a bundle to a newer version
 
-We can use the `operator-sdk run bundle-upgrade` command with a newer version of bundle image to upgrade 
-an existing operator bundle deployed on cluster. The command automates the manual orchestration typically required to upgrade an operator 
-from one version to another. It extracts the package name from bundle, finds the existing subscription, updates the catalog 
+We can use the `operator-sdk run bundle-upgrade` command with a newer version of bundle image to upgrade
+an existing operator bundle deployed on cluster. The command automates the manual orchestration typically required to upgrade an operator
+from one version to another. It extracts the package name from bundle, finds the existing subscription, updates the catalog
 source, deletes the existing registry pod and creates a new registry pod with the version of bundle image provided in the command.
 
 Let's upgrade the previously deployed memcached-operator bundle from version `0.0.1` to `0.0.2`.
@@ -175,11 +174,14 @@ An operator bundle can be upgraded even if it was originally deployed using OLM 
 
 Let's see how to deploy an operator bundle traditionally using OLM and then upgrade the operator bundle to a newer version.
 
-First, create a catalogsource by building the catalogsource from an index.
-```
+First, create a CatalogSource by building the CatalogSource from a catalog.
+
+```console
 $ oc create -f catalogsource.yaml
 ```
-```
+
+```yaml
+# catalogsource.yaml
 apiVersion: operators.coreos.com/v1alpha1
 kind: CatalogSource
 metadata:
@@ -187,16 +189,18 @@ metadata:
   namespace: default
 spec:
   displayName: Etcd Operators
-  image: <some-registry>/etcd-index:latest
+  image: <some-registry>/etcd-catalog:latest
   sourceType: grpc
 ```
 
 Next, install the operator bundle by creating a subscription.
-```
+
+```console
 $ oc create -f subscription.yaml
 ```
 
-```
+```yaml
+# subscription.yaml
 apiVersion: v1
 items:
 - apiVersion: operators.coreos.com/v1alpha1
@@ -233,29 +237,37 @@ INFO[0018] Successfully upgraded to "etcdoperator.v0.0.2"
 
 ### Deploying bundles in production
 
-OLM and Operator Registry consumes Operator bundles via an [index image][index-image],
-which are composed of one or more bundles. To build a memcached-operator bundle for
-version v0.0.1, run:
+OLM and Operator Registry consumes Operator bundles via a catalog of Operators, implemented as an
+[index image][index-image], which are composed of one or more bundles. To build and push a
+memcached-operator bundle image for version v0.0.1, run:
 
 ```console
-$ make bundle-build BUNDLE_IMG=<some-registry>/memcached-operator-bundle:v0.0.1
-$ make docker-push IMG=<some-registry>/memcached-operator-bundle:v0.0.1
+$ make bundle-build bundle-push BUNDLE_IMG=<some-registry>/memcached-operator-bundle:v0.0.1
 ```
 
-Although we've validated on-disk manifests and metadata, we also must make sure the bundle itself is valid:
+Now you can build and push the catalog by running `catalog-*` Makfile targets, which use
+the Operator package manager tool [`opm`][opm] to [build][doc-index-build] the catalog:
 
 ```console
-$ operator-sdk bundle validate <some-registry>/memcached-operator-bundle:v0.0.1
-INFO[0000] Unpacked image layers                         bundle-dir=/tmp/bundle-716785960 container-tool=docker
-INFO[0000] running docker pull                           bundle-dir=/tmp/bundle-716785960 container-tool=docker
-INFO[0002] running docker save                           bundle-dir=/tmp/bundle-716785960 container-tool=docker
-INFO[0002] All validation tests have completed successfully  bundle-dir=/tmp/bundle-716785960 container-tool=docker
+$ make catalog-build catalog-push CATALOG_IMG=<some-registry>/memcached-operator-catalog:v0.0.1
 ```
 
-The SDK does not build index images; instead, use the Operator package manager tool [`opm`][opm] to
-[build][doc-index-build] one. Once one has been built, follow the index image [usage docs][doc-olm-index]
-to add an index to a cluster catalog, and the catalog [discovery docs][doc-olm-discovery] to tell OLM
-about your cataloged Operator.
+Assuming `IMAGE_TAG_BASE = <some-registry>/memcached-operator` has the desired tag base, you can inline
+the above two commands to:
+
+```console
+$ make bundle-build bundle-push catalog-build catalog-push
+```
+
+Which will build and push both `<some-registry>/memcached-operator-bundle:v0.0.1`
+and `<some-registry>/memcached-operator-catalog:v0.0.1`.
+
+## Further reading
+
+In-depth discussions of OLM concepts mentioned here:
+- [CatalogSource][catalogsource]
+- [Subscription][subscription]
+- [Install an Operator from a catalog][olm-install]
 
 
 [sdk-user-guide-go]:/docs/building-operators/golang/quickstart
@@ -273,6 +285,7 @@ about your cataloged Operator.
 [opm]:https://github.com/operator-framework/operator-registry/blob/master/docs/design/opm-tooling.md
 [index-image]:https://github.com/operator-framework/operator-registry/blob/master/docs/design/opm-tooling.md#index
 [doc-index-build]:https://github.com/operator-framework/operator-registry#building-an-index-of-operators-using-opm
-[doc-olm-index]:https://github.com/operator-framework/operator-registry#using-the-index-with-operator-lifecycle-manager
-[doc-olm-discovery]:https://github.com/operator-framework/operator-lifecycle-manager/#discovery-catalogs-and-automated-upgrades
 [install-your-operator]:https://olm.operatorframework.io/docs/tasks/install-operator-with-olm/#install-your-operator
+[catalogsource]:https://olm.operatorframework.io/docs/concepts/crds/catalogsource/
+[subscription]:https://olm.operatorframework.io/docs/concepts/crds/subscription/
+[olm-install]:https://olm.operatorframework.io/docs/tasks/install-operator-with-olm/

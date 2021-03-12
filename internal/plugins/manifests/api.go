@@ -30,8 +30,7 @@ import (
 // RunCreateAPI runs the manifests SDK phase 2 plugin.
 func RunCreateAPI(cfg config.Config, gvk resource.GVK) error {
 	// Only run these if project version is v3.
-	isV3 := cfg.GetVersion().Compare(cfgv3.Version) == 0
-	if !isV3 {
+	if cfg.GetVersion().Compare(cfgv3.Version) != 0 {
 		return nil
 	}
 
