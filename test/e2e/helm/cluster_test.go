@@ -202,11 +202,9 @@ var _ = Describe("Running Helm projects", func() {
 			Eventually(verifyReleaseUpgrade, time.Minute, time.Second).Should(Succeed())
 
 			By("granting permissions to access the metrics and read the token")
-			_, err = tc.Kubectl.Command(
-				"create",
-				"clusterrolebinding", metricsClusterRoleBindingName,
+			_, err = tc.Kubectl.Command("create", "clusterrolebinding", metricsClusterRoleBindingName,
 				fmt.Sprintf("--clusterrole=%s-metrics-reader", tc.ProjectName),
-				fmt.Sprintf("--serviceaccount=%s:default", tc.Kubectl.Namespace))
+				fmt.Sprintf("--serviceaccount=%s:%s", tc.Kubectl.Namespace, tc.Kubectl.ServiceAccount))
 			Expect(err).NotTo(HaveOccurred())
 
 			By("reading the metrics token")
@@ -233,19 +231,19 @@ var _ = Describe("Running Helm projects", func() {
 			_, err = tc.Kubectl.CommandInNamespace(cmdOpts...)
 			Expect(err).NotTo(HaveOccurred())
 
-			By("validating the curl pod running as expected")
+			By("validating that the curl pod is running as expected")
 			verifyCurlUp := func() error {
 				// Validate pod status
 				status, err := tc.Kubectl.Get(
 					true,
 					"pods", "curl", "-o", "jsonpath={.status.phase}")
-				Expect(err).NotTo(HaveOccurred())
+				ExpectWithOffset(1, err).NotTo(HaveOccurred())
 				if status != "Completed" && status != "Succeeded" {
 					return fmt.Errorf("curl pod in %s status", status)
 				}
 				return nil
 			}
-			Eventually(verifyCurlUp, 4*time.Minute, time.Second).Should(Succeed())
+			Eventually(verifyCurlUp, 2*time.Minute, time.Second).Should(Succeed())
 
 			By("checking metrics endpoint serving as expected")
 			getCurlLogs := func() string {

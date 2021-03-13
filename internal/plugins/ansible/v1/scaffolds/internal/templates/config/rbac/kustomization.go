@@ -48,7 +48,7 @@ const kustomizeRBACTemplate = `resources:
 # if your manager will use a service account that exists at
 # runtime. Be sure to update RoleBinding and ClusterRoleBinding
 # subjects if changing service account names.
-- service_account.yam
+- service_account.yaml
 - role.yaml
 - role_binding.yaml
 - leader_election_role.yaml

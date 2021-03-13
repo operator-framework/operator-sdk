@@ -154,7 +154,9 @@ var _ = Describe("operator-sdk", func() {
 				status, err := tc.Kubectl.Get(
 					true,
 					"pods", "curl", "-o", "jsonpath={.status.phase}")
-				ExpectWithOffset(1, err).NotTo(HaveOccurred())
+				if err != nil {
+					return err
+				}
 				if status != "Completed" && status != "Succeeded" {
 					return fmt.Errorf("curl pod in %s status", status)
 				}

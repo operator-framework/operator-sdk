@@ -130,9 +130,9 @@ The following rules were used in earlier versions of helm-operator to automatica
     - update
 ```
 
-##### Updating your ServiceAccount in Go operator projects
+##### Updating your ServiceAccount
 
-New Go projects come with a ServiceAccount `controller-manager` in `config/rbac/service_account.yaml`.
+New Helm projects come with a ServiceAccount `controller-manager` in `config/rbac/service_account.yaml`.
 Your project's RoleBinding and ClusterRoleBinding subjects, and Deployment's `spec.template.spec.serviceAccountName`
 that reference a ServiceAccount already refer to this new name. When you run `make deploy`,
 your project's name will be prepended to `controller-manager`, making it unique within a namespace,
