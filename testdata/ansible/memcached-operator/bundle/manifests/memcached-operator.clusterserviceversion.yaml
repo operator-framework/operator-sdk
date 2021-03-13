@@ -138,6 +138,10 @@ spec:
                   initialDelaySeconds: 5
                   periodSeconds: 10
                 resources: {}
+                securityContext:
+                  allowPrivilegeEscalation: false
+              securityContext:
+                runAsNonRoot: true
               terminationGracePeriodSeconds: 10
       permissions:
       - rules:
