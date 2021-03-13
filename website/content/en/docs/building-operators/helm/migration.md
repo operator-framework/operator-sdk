@@ -27,7 +27,7 @@ Scaffolded projects now use:
 
 - [kustomize][kustomize] to manage Kubernetes resources needed to deploy your operator
 - A `Makefile` with helpful targets for build, test, and deployment, and to give you flexibility to tailor things to your project's needs
-- Updated metrics configuration using [kube-auth-proxy][kube-auth-proxy], a `--metrics-addr` flag, and [kustomize][kustomize]-based deployment of a Kubernetes `Service` and prometheus operator `ServiceMonitor`
+- Updated metrics configuration using [kube-auth-proxy][kube-auth-proxy], a `--metrics-bind-address` flag, and [kustomize][kustomize]-based deployment of a Kubernetes `Service` and prometheus operator `ServiceMonitor`
 - Preliminary support for CLI plugins. For more info see the [plugins design document][plugins-phase1-design-doc]
 - A `PROJECT` configuration file to store information about GVKs, plugins, and help the CLI make decisions.
 
@@ -154,7 +154,7 @@ Note that the following environment variables are no longer used.
 If you are using metrics and would like to keep them exported you will need to configure
 it in the `config/default/kustomization.yaml`. Please see the [metrics][metrics] doc to know how you can perform this setup.
 
-The default port used by the metric endpoint binds to was changed from `:8383` to `:8080`. To continue using port `8383`, specify `--metrics-addr=:8383` when you start the operator.
+The default port used by the metric endpoint binds to was changed from `:8383` to `:8080`. To continue using port `8383`, specify `--metrics-bind-address=:8383` when you start the operator.
 
 ## Checking the changes
 

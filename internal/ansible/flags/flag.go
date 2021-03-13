@@ -26,12 +26,12 @@ type Flags struct {
 	ReconcilePeriod         time.Duration
 	WatchesFile             string
 	InjectOwnerRef          bool
-	EnableLeaderElection    bool
+	LeaderElection          bool
 	MaxConcurrentReconciles int
 	AnsibleVerbosity        int
 	AnsibleRolesPath        string
 	AnsibleCollectionsPath  string
-	MetricsAddress          string
+	MetricsBindAddress      string
 	ProbeAddr               string
 	LeaderElectionID        string
 	LeaderElectionNamespace string
@@ -79,8 +79,15 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 		"",
 		"Path to installed Ansible Collections. If set, collections should be located in {{value}}/ansible_collections/. If unset, collections are assumed to be in ~/.ansible/collections or /usr/share/ansible/collections.",
 	)
-	flagSet.StringVar(&f.MetricsAddress,
+	// todo:remove it for 2.0.0
+	flagSet.StringVar(&f.MetricsBindAddress,
 		"metrics-addr",
+		":8080",
+		"The address the metric endpoint binds to",
+	)
+	_ = flagSet.MarkDeprecated("metrics-addr", "use --metrics-bind-address instead")
+	flagSet.StringVar(&f.MetricsBindAddress,
+		"metrics-bind-address",
 		":8080",
 		"The address the metric endpoint binds to",
 	)
@@ -92,8 +99,16 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 		":6789",
 		"The address the probe endpoint binds to.",
 	)
-	flagSet.BoolVar(&f.EnableLeaderElection,
+	// todo:remove it for 2.0.0
+	flagSet.BoolVar(&f.LeaderElection,
 		"enable-leader-election",
+		false,
+		"Enable leader election for controller manager. Enabling this will"+
+			" ensure there is only one active controller manager.",
+	)
+	_ = flagSet.MarkDeprecated("enable-leader-election", "use --leader-elect instead")
+	flagSet.BoolVar(&f.LeaderElection,
+		"leader-elect",
 		false,
 		"Enable leader election for controller manager. Enabling this will"+
 			" ensure there is only one active controller manager.",

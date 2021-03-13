@@ -175,8 +175,8 @@ spec:
           name: https
       - name: manager
         args:
-        - "--metrics-addr=127.0.0.1:8080"
-        - "--enable-leader-election"
+        - "--metrics-bind-address=127.0.0.1:8080"
+        - "--leader-elect"
         - "--zap-encoder=console"
         - "--zap-log-level=debug"
 ```

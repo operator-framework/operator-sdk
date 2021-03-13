@@ -98,10 +98,10 @@ func (s *initScaffolder) Scaffold() error {
 		&rbac.ManagerRoleBinding{},
 		&rbac.ServiceAccount{},
 		&manager.Kustomization{},
-		&manager.Manager{Image: imageName},
+		&manager.Config{Image: imageName},
 		&prometheus.Kustomization{},
 		&prometheus.ServiceMonitor{},
-		&kdefault.AuthProxyPatch{},
+		&kdefault.ManagerAuthProxyPatch{},
 		&kdefault.Kustomization{},
 	)
 }
