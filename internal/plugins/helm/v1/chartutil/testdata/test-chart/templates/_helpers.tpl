@@ -58,6 +58,6 @@ Create the name of the service account to use
 {{- if .Values.serviceAccount.create -}}
     {{ default (include "test-chart.fullname" .) .Values.serviceAccount.name }}
 {{- else -}}
-    {{ default "default" .Values.serviceAccount.name }}
+    {{ default "controller-manager" .Values.serviceAccount.name }}
 {{- end -}}
 {{- end -}}

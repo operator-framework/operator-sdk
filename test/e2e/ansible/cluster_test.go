@@ -252,25 +252,26 @@ var _ = Describe("Running ansible projects", func() {
 				fmt.Sprintf("--serviceaccount=%s:default", tc.Kubectl.Namespace))
 			Expect(err).NotTo(HaveOccurred())
 
-			By("getting the token")
-			b64Token, err := tc.Kubectl.Get(
-				true,
-				"secrets",
-				"-o=jsonpath={.items[0].data.token}")
+			By("reading the metrics token")
+			// Filter token query by service account in case more than one exists in a namespace.
+			query := fmt.Sprintf(`{.items[?(@.metadata.annotations.kubernetes\.io/service-account\.name=="%s")].data.token}`,
+				tc.Kubectl.ServiceAccount,
+			)
+			b64Token, err := tc.Kubectl.Get(true, "secrets", "-o=jsonpath="+query)
 			Expect(err).NotTo(HaveOccurred())
 			token, err := base64.StdEncoding.DecodeString(strings.TrimSpace(b64Token))
 			Expect(err).NotTo(HaveOccurred())
-			Expect(token).NotTo(HaveLen(0))
+			Expect(len(token)).To(BeNumerically(">", 0))
 
-			By("creating a pod with curl image")
-			// todo: the flag --generator=run-pod/v1 is deprecated, however, shows that besides
+			By("creating a curl pod")
+			// TODO: the flag --generator=run-pod/v1 is deprecated, however, shows that besides
 			// it should not make any difference and work locally successfully when the flag is removed
-			// CI has been failing and the curl pod is not found when the flag is not used
+			// the test will fail and the curl pod is not found when the flag is not used
 			cmdOpts := []string{
-				"run", "--generator=run-pod/v1", "curl", "--image=curlimages/curl:7.68.0", "--restart=OnFailure", "--",
+				"run", "--generator=run-pod/v1", "curl", "--image=curlimages/curl:7.68.0", "--restart=OnFailure",
+				"--serviceaccount", tc.Kubectl.ServiceAccount, "--",
 				"curl", "-v", "-k", "-H", fmt.Sprintf(`Authorization: Bearer %s`, token),
-				fmt.Sprintf("https://%s-controller-manager-metrics-service.%s.svc:8443/metrics",
-					tc.ProjectName, tc.Kubectl.Namespace),
+				fmt.Sprintf("https://%s-controller-manager-metrics-service.%s.svc:8443/metrics", tc.ProjectName, tc.Kubectl.Namespace),
 			}
 			_, err = tc.Kubectl.CommandInNamespace(cmdOpts...)
 			Expect(err).NotTo(HaveOccurred())

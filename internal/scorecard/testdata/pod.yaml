@@ -24,7 +24,7 @@ spec:
   dnsPolicy: ClusterFirst
   restartPolicy: Never
   securityContext: {}
-  serviceAccount: default
+  serviceAccount: controller-manager
   serviceAccountName: default
   volumes:
   - name: scorecard-bundle

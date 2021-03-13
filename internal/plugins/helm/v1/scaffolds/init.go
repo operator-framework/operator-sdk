@@ -93,6 +93,7 @@ func (s *initScaffolder) scaffold() error {
 		&rbac.LeaderElectionRoleBinding{},
 		&rbac.ManagerRole{},
 		&rbac.ManagerRoleBinding{},
+		&rbac.ServiceAccount{},
 		&manager.Kustomization{},
 		&manager.Manager{Image: imageName},
 		&prometheus.Kustomization{},

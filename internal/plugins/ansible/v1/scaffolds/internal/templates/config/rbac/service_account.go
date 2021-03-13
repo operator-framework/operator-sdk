@@ -23,35 +23,27 @@ import (
 	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
 )
 
-var _ file.Template = &RoleBinding{}
+var _ file.Template = &ServiceAccount{}
 
-// RoleBinding scaffolds the config/rbac/role_binding.yaml file
-type RoleBinding struct {
+// ServiceAccount scaffolds a file that defines the service account the manager is deployed in.
+type ServiceAccount struct {
 	file.TemplateMixin
 }
 
-// SetTemplateDefaults implements input.Template
-func (f *RoleBinding) SetTemplateDefaults() error {
+// SetTemplateDefaults implements file.Template
+func (f *ServiceAccount) SetTemplateDefaults() error {
 	if f.Path == "" {
-		f.Path = filepath.Join("config", "rbac", "role_binding.yaml")
+		f.Path = filepath.Join("config", "rbac", "service_account.yaml")
 	}
 
-	f.TemplateBody = roleBindingTemplate
+	f.TemplateBody = serviceAccountTemplate
 
 	return nil
 }
 
-const roleBindingTemplate = `---
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
+const serviceAccountTemplate = `apiVersion: v1
+kind: ServiceAccount
 metadata:
-  name: manager-rolebinding
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: manager-role
-subjects:
-- kind: ServiceAccount
   name: controller-manager
   namespace: system
 `

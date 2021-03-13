@@ -94,5 +94,6 @@ spec:
               port: 6789
             initialDelaySeconds: 5
             periodSeconds: 10
+      serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10
 `
