@@ -82,6 +82,9 @@ func TestNew(t *testing.T) {
 				t.Fatalf("Unexpected snakeCaseParameters %v expected %v", watch.SnakeCaseParameters,
 					snakeCaseParametersDefault)
 			}
+			if watch.MarkUnsafe != markUnsafeDefault {
+				t.Fatalf("Unexpected markUnsafe %v expected %v", watch.MarkUnsafe, markUnsafeDefault)
+			}
 			if watch.WatchClusterScopedResources != watchClusterScopedResourcesDefault {
 				t.Fatalf("Unexpected watchClusterScopedResources %v expected %v",
 					watch.WatchClusterScopedResources, watchClusterScopedResourcesDefault)
@@ -147,6 +150,18 @@ func TestLoad(t *testing.T) { //nolint:gocyclo
 			WatchDependentResources:     true,
 			WatchClusterScopedResources: false,
 			SnakeCaseParameters:         true,
+			MarkUnsafe:                  false,
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "WithUnsafeMarked",
+			},
+			Playbook:        validTemplate.ValidPlaybook,
+			ManageStatus:    true,
+			ReconcilePeriod: twoSeconds,
+			MarkUnsafe:      true,
 		},
 		Watch{
 			GroupVersionKind: schema.GroupVersionKind{
@@ -535,6 +550,10 @@ func TestLoad(t *testing.T) { //nolint:gocyclo
 				if gotWatch.ReconcilePeriod != expectedWatch.ReconcilePeriod {
 					t.Fatalf("The GVK: %v unexpected reconcile period: %v expected reconcile period: %v", gvk,
 						gotWatch.ReconcilePeriod, expectedWatch.ReconcilePeriod)
+				}
+				if gotWatch.MarkUnsafe != expectedWatch.MarkUnsafe {
+					t.Fatalf("The GVK: %v unexpected mark unsafe: %v expected mark unsafe: %v", gvk,
+						gotWatch.MarkUnsafe, expectedWatch.MarkUnsafe)
 				}
 
 				for i, val := range expectedWatch.Blacklist {

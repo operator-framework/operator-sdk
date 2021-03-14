@@ -52,6 +52,7 @@ type Watch struct {
 	WatchDependentResources     bool                      `yaml:"watchDependentResources"`
 	WatchClusterScopedResources bool                      `yaml:"watchClusterScopedResources"`
 	SnakeCaseParameters         bool                      `yaml:"snakeCaseParameters"`
+	MarkUnsafe                  bool                      `yaml:"markUnsafe"`
 	Selector                    metav1.LabelSelector      `yaml:"selector"`
 
 	// Not configurable via watches.yaml
@@ -76,6 +77,7 @@ var (
 	watchDependentResourcesDefault     = true
 	watchClusterScopedResourcesDefault = false
 	snakeCaseParametersDefault         = true
+	markUnsafeDefault                  = false
 	selectorDefault                    = metav1.LabelSelector{}
 
 	// these are overridden by cmdline flags
@@ -127,6 +129,7 @@ type alias struct {
 	WatchDependentResources     *bool                     `yaml:"watchDependentResources,omitempty"`
 	WatchClusterScopedResources *bool                     `yaml:"watchClusterScopedResources,omitempty"`
 	SnakeCaseParameters         *bool                     `yaml:"snakeCaseParameters"`
+	MarkUnsafe                  *bool                     `yaml:"markUnsafe"`
 	Blacklist                   []schema.GroupVersionKind `yaml:"blacklist,omitempty"`
 	Finalizer                   *Finalizer                `yaml:"finalizer"`
 	Selector                    tempLabelSelector         `yaml:"selector"`
@@ -162,6 +165,10 @@ func (w *Watch) setValuesFromAlias(tmp alias) error {
 		tmp.SnakeCaseParameters = &snakeCaseParametersDefault
 	}
 
+	if tmp.MarkUnsafe == nil {
+		tmp.MarkUnsafe = &markUnsafeDefault
+	}
+
 	gvk := schema.GroupVersionKind{
 		Group:   tmp.Group,
 		Version: tmp.Version,
@@ -183,6 +190,7 @@ func (w *Watch) setValuesFromAlias(tmp alias) error {
 	w.ManageStatus = *tmp.ManageStatus
 	w.WatchDependentResources = *tmp.WatchDependentResources
 	w.SnakeCaseParameters = *tmp.SnakeCaseParameters
+	w.MarkUnsafe = *tmp.MarkUnsafe
 	w.WatchClusterScopedResources = *tmp.WatchClusterScopedResources
 	w.Finalizer = tmp.Finalizer
 	w.AnsibleVerbosity = getAnsibleVerbosity(gvk, ansibleVerbosityDefault)
@@ -316,6 +324,7 @@ func New(gvk schema.GroupVersionKind, role, playbook string, vars map[string]int
 		WatchDependentResources:     watchDependentResourcesDefault,
 		WatchClusterScopedResources: watchClusterScopedResourcesDefault,
 		SnakeCaseParameters:         snakeCaseParametersDefault,
+		MarkUnsafe:                  markUnsafeDefault,
 		Finalizer:                   finalizer,
 		AnsibleVerbosity:            ansibleVerbosityDefault,
 		Selector:                    selectorDefault,
