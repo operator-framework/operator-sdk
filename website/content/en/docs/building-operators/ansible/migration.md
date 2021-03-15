@@ -9,7 +9,7 @@ description: Instructions for migrating an Ansible-based operator built prior to
 
 The v1.0 release improves upon prior `operator-sdk` releases with a new project structure and CLI, each of which enhances project extensibility and customizability. These design changes are influenced by [`kubebuilder`](https://book.kubebuilder.io/).
 
-**Note:** It is recommended that you have your project upgraded to the latest SDK release version (0.19.x+) before following the steps in this guide to migrate to the new layout. However, the steps might work from previous versions as well. In this case, if you find an issue which is not covered here then check the previous [Migration Guides][migration-doc] which might help out.
+**Note:** It is recommended that you have your project upgraded to the latest SDK v1.y release version before following the steps in this guide to migrate to the new layout. However, the steps might work from previous versions as well. In this case, if you find an issue which is not covered here then check the previous [Migration Guides][migration-doc] which might help out.
 
 ### What was changed
 
@@ -40,6 +40,17 @@ Generated files with the default API versions:
 ## How to migrate
 
 The easy migration path is to initialize a new project, re-recreate APIs, then copy pre-v1.0.0 configuration files into the new project.
+
+### Prerequisites
+
+- Go through the [installation guide][install-guide].
+- User authorized with `cluster-admin` permissions.
+- An accessible image registry for various operator images (ex. [hub.docker.com](https://hub.docker.com/signup),
+[quay.io](https://quay.io/)) and be logged in in your command line environment.
+  - `example.com` is used as the registry Docker Hub namespace in these examples.
+  Replace it with another value if using a different registry or namespace.
+  - The registry/namespace must be public, or the cluster must be provisioned with an
+  [image pull secret][k8s-image-pull-sec] if the image namespace is private.
 
 ### Creating a new project
 
@@ -120,7 +131,7 @@ If you are using [Molecule][molecule] in your project will be required to port t
 
 See that default structure changed from:
 
-```sh
+```
 ├── cluster
 │   ├── converge.yml
 │   ├── create.yml
@@ -140,7 +151,6 @@ See that default structure changed from:
     ├── molecule.yml
     ├── prepare.yml
     └── verify.yml
-
 ```
 
 To:
@@ -165,7 +175,7 @@ To:
 
 Ensure that the `provisioner.host_vars.localhost` has the following `host_vars`:
 
-```
+```yaml
 ....
     host_vars:
       localhost:
@@ -180,7 +190,7 @@ Ensure that the `provisioner.host_vars.localhost` has the following `host_vars`:
 
 For more information read the [Testing with Molecule][testing-guide].
 
-### Checking the Permissions (RBAC)
+### Checking RBAC Permissions
 
 In your new project, roles are automatically generated in `config/rbac/role.yaml`.
 If you modified these permissions manually in `deploy/role.yaml` in your existing
@@ -232,24 +242,30 @@ Note that the following environment variables are no longer used.
 - `OPERATOR_NAME` is deprecated. It is used to define the name for a leader election config map. Operator authors should begin using `--leader-election-id` instead.
 - `POD_NAME` has been removed. It was used to enable a particular pod to hold the leader election lock when the Ansible operator used the leader for life mechanism. Ansible operator now uses controller-runtime's leader with lease mechanism.
 
-## Exporting metrics
+### Exporting metrics
 
 If you are using metrics and would like to keep them exported you will need to configure
 it in the `config/default/kustomization.yaml`. Please see the [metrics][metrics] doc to know how you can perform this setup.
 
 The default port used by the metric endpoint binds to was changed from `:8383` to `:8080`. To continue using port `8383`, specify `--metrics-addr=:8383` when you start the operator.
 
-## Checking the changes
+### Verify the migration
 
-Finally, follow the steps in the ["run the Operator"][run-the-operator] section to verify your project is running.
+The project can now be deployed on cluster by running the command:
 
-Note that, you also can troubleshooting by checking the container logs.
-E.g `$ kubectl logs deployment.apps/memcached-operator-controller-manager -n memcached-operator-system -c manager`  
+```sh
+make deploy IMG=example.com/memcached-operator:v0.0.1
+```
 
-[quickstart-legacy]: https://v0-19-x.sdk.operatorframework.io/docs/ansible/quickstart/
-[quickstart]: /docs/building-operators/ansible/quickstart
-[integration-doc]: https://github.com/kubernetes-sigs/kubebuilder/blob/master/designs/integrating-kubebuilder-and-osdk.md
-[run-the-operator]: /docs/building-operators/ansible/tutorial/#run-the-operator
+You can troubleshoot your deployment by checking container logs:
+```sh
+kubectl logs deployment.apps/memcached-operator-controller-manager -n memcached-operator-system -c manager
+```
+
+For further steps regarding the deployment of the operator, creation of custom resources, and cleaning up of resources, see the [tutorial][tutorial-deploy].
+
+[install-guide]: /docs/building-operators/ansible/installation
+[k8s-image-pull-sec]:https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
 [kustomize]: https://github.com/kubernetes-sigs/kustomize
 [kube-auth-proxy]: https://github.com/brancz/kube-rbac-proxy
 [metrics]: https://book.kubebuilder.io/reference/metrics.html?highlight=metr#metrics
@@ -257,3 +273,4 @@ E.g `$ kubectl logs deployment.apps/memcached-operator-controller-manager -n mem
 [molecule]: https://molecule.readthedocs.io/en/latest/#
 [testing-guide]: /docs/building-operators/ansible/testing-guide
 [migration-doc]: /docs/upgrading-sdk-version/
+[tutorial-deploy]: /docs/building-operators/ansible/tutorial/#run-the-operator
