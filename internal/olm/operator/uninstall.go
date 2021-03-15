@@ -16,12 +16,14 @@ package operator
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	v1 "github.com/operator-framework/api/pkg/operators/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -56,7 +58,17 @@ func NewUninstall(cfg *Configuration) *Uninstall {
 
 func (u *Uninstall) BindFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&u.DeleteCRDs, "delete-crds", true, "If set to false, owned CRDs and CRs will not be deleted")
-	fs.BoolVar(&u.DeleteAll, "delete-all", true, "If set to true, it will enable all the delete flags")
+	fs.BoolVar(&u.DeleteAll, "delete-all", true, "If set to true, all other delete options will be enabled")
+	fs.BoolVar(&u.DeleteOperatorGroups, "delete-operator-groups", true, "If set to false, operator groups will not be deleted")
+}
+
+func (u *Uninstall) Validate() error {
+	if u.DeleteAll {
+		if !u.DeleteCRDs || !u.DeleteOperatorGroups {
+			return errors.New("if --delete-all flag is enabled, any other delete flag cannot be set to false")
+		}
+	}
+	return nil
 }
 
 type ErrPackageNotFound struct {
@@ -153,7 +165,8 @@ func (u *Uninstall) Run(ctx context.Context) error {
 	if u.DeleteCRDs {
 		objs = append(objs, crds...)
 	} else {
-		u.Logf("skipping deletion of CRDs as delete-crds flag is set to %v", u.DeleteCRDs)
+		log.Info("Skipping CRD deletion")
+
 	}
 
 	objs = append(objs, csvObj, csObj)
@@ -168,6 +181,8 @@ func (u *Uninstall) Run(ctx context.Context) error {
 		if err := u.deleteOperatorGroup(ctx); err != nil {
 			return err
 		}
+	} else {
+		log.Info("Skipping Operator Groups deletion")
 	}
 
 	// If no objects were cleaned up, the package was not found.

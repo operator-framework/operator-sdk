@@ -123,7 +123,7 @@ Let's look at the anatomy of the `run bundle-upgrade` configuration model:
 `run packagemanifests`.
 
 ```
-operator-sdk cleanup <operatorPackageName> [--delete-all=] [--delete-crds=] [--kubeconfig=] [--namespace=] [--timeout=]
+operator-sdk cleanup <operatorPackageName> [--delete-all=] [--delete-crds=] [--delete-operator-groups=] [--kubeconfig=] [--namespace=] [--timeout=]
 ```
 
 Let's look at the configuration shared between `run bundle`, `run
@@ -147,6 +147,8 @@ Let's look at the anatomy of the `cleanup` configuration model:
 - **delete-crds**: a boolean indicating to delete all owned CRDs and CRs. This is an optional field
   which will default to true if not provided. If set to false, owned CRDs and CRs
   will stay intact.
+- **delete-operator-groups**: a boolean indicating to delete all operator groups. This is an optional field
+  which will default to true if not provided. If set to false, operator groups will not be deleted.
 
 ### Caveats
 

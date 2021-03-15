@@ -17,6 +17,7 @@ package cleanup
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -42,6 +43,10 @@ func NewCmd() *cobra.Command {
 			u.DeleteOperatorGroupNames = []string{operator.SDKOperatorGroupName}
 			u.Logf = log.Infof
 
+			if err := u.Validate(); err != nil {
+				return fmt.Errorf("invalid command options: %v", err)
+			}
+
 			ctx, cancel := context.WithTimeout(cmd.Context(), timeout)
 			defer cancel()
 
@@ -58,7 +63,6 @@ func NewCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().DurationVar(&timeout, "timeout", 2*time.Minute, "Time to wait for the command to complete before failing")
-	cmd.Flags().SortFlags = false
 	cfg.BindFlags(cmd.PersistentFlags())
 	u.BindFlags(cmd.Flags())
 
