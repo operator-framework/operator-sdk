@@ -46,8 +46,6 @@ Generated files with the default API versions:
 
 **NOTE** You can still use the deprecated APIs which are only needed to support Kubernetes `1.15` and earlier.
 
-Please ensure that you have read [Can I customize the projects generated with SDK tool?][faq-custom] in the [FAQ][faq] before continuing further.
-
 ### Create a new project
 
 In Kubebuilder-style projects, CRD groups are defined using two different flags
@@ -429,8 +427,6 @@ E.g `kubectl logs deployment.apps/memcached-operator-controller-manager -n memca
 [what-are-the-the-differences-between-kubebuilder-and-operator-sdk]: /docs/faqs/#what-are-the-the-differences-between-kubebuilder-and-operator-sdk
 [controller-runtime]: https://github.com/kubernetes-sigs/controller-runtime/releases
 [cert-manager-docs]: https://cert-manager.io/docs/installation/upgrading/
-[faq-custom]: /docs/faqs/#can-i-customize-the-projects-generated-with-sdk-tool
-[faq]: /docs/faqs/
 [webhook-doc]: https://book.kubebuilder.io/reference/webhook-overview.html
 [healthz-ping]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/healthz#CheckHandler
 [controller-runtime]: https://github.com/kubernetes-sigs/controller-runtime/releases
