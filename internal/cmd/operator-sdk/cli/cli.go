@@ -92,6 +92,24 @@ func GetPluginsCLIAndRoot() (*cli.CLI, *cobra.Command) {
 	}
 	root.PersistentPreRun = rootPersistentPreRun
 
+	// Hide `alpha config-gen` subcommand
+	// TODO: stop hiding `alpha config-gen` subcommand when it is more mature
+	var alpha *cobra.Command
+	for _, subcmd := range root.Commands() {
+		if subcmd.Name() == "alpha" {
+			alpha = subcmd
+			break
+		}
+	}
+	if alpha != nil {
+		for _, subcmd := range alpha.Commands() {
+			if subcmd.Name() == "config-gen" {
+				subcmd.Hidden = true
+				break
+			}
+		}
+	}
+
 	return c, root
 }
 
