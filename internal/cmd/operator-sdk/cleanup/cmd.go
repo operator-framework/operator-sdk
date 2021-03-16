@@ -17,7 +17,7 @@ package cleanup
 import (
 	"context"
 	"errors"
-	"fmt"
+	"os"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -44,7 +44,8 @@ func NewCmd() *cobra.Command {
 			u.Logf = log.Infof
 
 			if err := u.Validate(); err != nil {
-				return fmt.Errorf("invalid command options: %v", err)
+				log.Errorf("Invalid command options: %v", err)
+				os.Exit(1)
 			}
 
 			ctx, cancel := context.WithTimeout(cmd.Context(), timeout)

@@ -16,7 +16,7 @@ operator-sdk cleanup <operatorPackageName> [flags]
 ### Options
 
 ```
-      --delete-all               If set to true, it will enable all the delete flags (default true)
+      --delete-all               If set to true, all other delete options will be enabled (default true)
       --delete-crds              If set to false, owned CRDs and CRs will not be deleted (default true)
       --delete-operator-groups   If set to false, operator groups will not be deleted (default true)
   -h, --help                     help for cleanup
