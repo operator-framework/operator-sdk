@@ -229,6 +229,10 @@ spec:
                   requests:
                     cpu: 100m
                     memory: 60Mi
+                securityContext:
+                  allowPrivilegeEscalation: false
+              securityContext:
+                runAsNonRoot: true
               terminationGracePeriodSeconds: 10
       permissions:
       - rules:

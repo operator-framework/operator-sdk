@@ -69,6 +69,8 @@ spec:
       labels:
         control-plane: controller-manager
     spec:
+      securityContext:
+        runAsNonRoot: true
       containers:
         - name: manager
           args:
@@ -78,6 +80,8 @@ spec:
             - name: ANSIBLE_GATHERING
               value: explicit
           image: {{ .Image }}
+          securityContext:
+            allowPrivilegeEscalation: false
           livenessProbe:
             httpGet:
               path: /healthz

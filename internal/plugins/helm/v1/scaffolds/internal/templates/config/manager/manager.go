@@ -69,12 +69,16 @@ spec:
       labels:
         control-plane: controller-manager
     spec:
+      securityContext:
+        runAsNonRoot: true
       containers:
       - image: {{ .Image }}
         args:
         - "--enable-leader-election"
         - "--leader-election-id={{ .ProjectName }}"
         name: manager
+        securityContext:
+          allowPrivilegeEscalation: false
         livenessProbe:
           httpGet:
             path: /healthz
