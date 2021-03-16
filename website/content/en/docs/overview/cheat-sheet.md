@@ -8,14 +8,14 @@ description: >
 
 Below you will find a cheat sheet with options and helpers for projects, which are built with the SDK and are respecting its proposed layout.
 
-## Base commands and options 
+## Common commands and options
 
 | Command   | Description  |
 |-------|-----------|
 | `operator-sdk init`          | To initialize an operator project in the current directory. |
-| `operator-sdk init --plugins=<plugin-key>`          | To initialize an operator project in the current directory using a specific plugin. You can check the available plugins you can run `oparator-sdk --help`. E.g (`operator-sdk init --plugins=helm`).|
+| `operator-sdk init --plugins=<plugin-key>`          | To initialize an operator project in the current directory using a specific plugin. To check the available plugins you can run `oparator-sdk --help`. E.g (`operator-sdk init --plugins=helm`).|
 | `operator-sdk create api [flags]`          | Lets you create your own APIs with its [GKV][gkvs] by [Extending the Kubernetes API with CustomResourceDefinitions][extend-k8s-api], or lets you use external/core-types. Also generates their respective [controllers][controllers-k8s-doc].|
-| `operator-sdk create webhook [flags]`          | To scaffold [Webhooks][webhooks-k8s-doc] for the APIs declared on the project. Currently, only the Go-based project supports this option. |
+| `operator-sdk create webhook [flags]`          | To scaffold [Webhooks][webhooks-k8s-doc] for the APIs declared in the project. Currently, only the Go-based project supports this option. |
 | `make docker-build IMG=<some-registry>/<project-name>:<tag>`          | Build the operator image.      |
 | `make docker-build docker-push IMG=<some-registry>/<project-name>:<tag>`      | Build and push the operator image for your registry.  |
 | `make install`         | Install the CRDs into the cluster. |
@@ -49,13 +49,8 @@ The following examples let you update the [bundle][bundle] with data-informed. F
 make bundle CHANNELS=fast,preview DEFAULT_CHANNEL=stable VERSION=1.0.0 IMG=<some-registry>/<project-name-bundle>:<tag>
 ```
 
-```sh
-export CHANNELS=fast,preview 
-export DEFAULT_CHANNEL=stable
-export VERSION=1.0.0
-make bundle
-make bundle CHANNELS=fast,preview DEFAULT_CHANNEL=stable VERSION=1.0.0 IMG=<some-registry>/<project-name-bundle>:<tag>
-```
+**NOTE** You can use environment variables to pass the values such as `export CHANNELS=fast,preview`. Note that, their values will be used by `make bundle` command.
+
 ## To test your projects
 
 | Command   | Description  |
@@ -65,8 +60,7 @@ make bundle CHANNELS=fast,preview DEFAULT_CHANNEL=stable VERSION=1.0.0 IMG=<some
 | `molecule test`          |  Run [Molecule][molecule-tests] tests.  It is valid only for Ansible-based operators. |
 | `helm test`          |  Run [Helm chart tests][helm-chart-tests].  It is valid only for Helm-based operators. |
 
-**NOTE:** For further information about the `make` options refer to the Makefile scaffolded in your project. Also, see the
-[CLI][cli] documentation to check all possible options.
+**NOTE:** This is not a comprehensive list of make targets or commands. Please see the scaffolded Makefile and `make help` for the full list of targets. Note that you can use `operator-sdk <command> --help` and check the [CLI][cli] section to check all options.
  
 [olm-integration]: /docs/olm-integration/
 [creating-a-bundle]: /docs/olm-integration/quickstart-bundle/#creating-a-bundle
