@@ -45,6 +45,7 @@ assuming the upstream SDK is the `upstream` remote repo:
   git checkout -b v1.3.x
   git push -u upstream v1.3.x
   ```
+1. Make sure that the list of supported OLM versions stated in the [Overview][overview] section of SDK docs is updated. If a new version of OLM needs to be officially supported, follow the steps in [updating OLM bindata](#updating-olm-bindata) section. 
 1. Create and merge a commit that updates the top-level [Makefile] variable `IMAGE_VERSION`
 to the upcoming release tag `v1.3.0`. This variable ensures sample projects have been tagged
 correctly prior to the release commit.
@@ -267,6 +268,14 @@ Create and merge a PR from your branch to `v1.3.x`.
 
 GitHub releases live under the [`Releases` tab][release-page] in the operator-sdk repo.
 
+### Updating OLM bindata
+
+Prior to an Operator SDK release, add bindata (if required) for a new OLM version by following these steps:
+
+1. Add the new version to the [`OLM_VERSIONS`][olm_version] variable in the Makefile. 
+2. Remove the *lowest* version from that variable, as `operator-sdk` only supports 3 versions at a time.
+3. Run `make bindata`.
+4. Update the list of supported OLM versions stated in the [`Overview`][overview] section of SDK documentation is updated.
 
 [netlify-deploy]:https://docs.netlify.com/site-deploys/overview/#deploy-summary
 [doc-owners]: https://github.com/operator-framework/operator-sdk/blob/master/OWNERS
@@ -275,3 +284,5 @@ GitHub releases live under the [`Releases` tab][release-page] in the operator-sd
 [of-ggroup]:https://groups.google.com/g/operator-framework
 [gh-milestones]:https://github.com/operator-framework/operator-sdk/milestones
 [Makefile]:https://github.com/operator-framework/operator-sdk/blob/master/Makefile
+[olm_version]:https://github.com/operator-framework/operator-sdk/blob/6002c70fe770cdaba9ba99da72685e0e7b6b69e8/Makefile#L45
+[overview]: /docs/overview/#olm-version-compatibility
