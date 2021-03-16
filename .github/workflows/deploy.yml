@@ -15,7 +15,7 @@ jobs:
     name: check_docs_only
     runs-on: ubuntu-18.04
     outputs:
-      is_skip: ${{ steps.check_docs_only.outputs.skip-deploy }}
+      skip: ${{ steps.check_docs_only.outputs.skip }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -26,14 +26,14 @@ jobs:
         run: |
           REF="HEAD^"
           [[ -z "${{ github.base_ref }}" ]] || REF=$(git show-ref ${{ github.base_ref }} | head -1 | cut -d' ' -f2)
-          echo "::set-output name=skip-deploy::$(hack/ci/check-doc-only-update.sh $REF)"
+          echo "::set-output name=skip::$(.github/workflows/check-docs-only.sh $REF)"
 
   # Job to test release steps. This will only create a release remotely if run on a tagged commit.
   goreleaser:
     name: goreleaser
     needs: check_docs_only
     # Run this job on a tag like 'vX.Y.Z' or on a branch or pull request with code changes.
-    if: startsWith(github.ref, 'refs/tags/v') || ( needs.check_docs_only.outputs.is_skip != 'true' && !startsWith(github.ref, 'refs/tags/') )
+    if: startsWith(github.ref, 'refs/tags/v') || ( needs.check_docs_only.outputs.skip != 'true' && !startsWith(github.ref, 'refs/tags/') )
     runs-on: ubuntu-18.04
     environment: deploy
     steps:
@@ -67,7 +67,7 @@ jobs:
     name: images
     needs: check_docs_only
     # Run this job on a tag like 'vX.Y.Z' or on a branch or pull request with code changes.
-    if: startsWith(github.ref, 'refs/tags/v') || ( needs.check_docs_only.outputs.is_skip != 'true' && !startsWith(github.ref, 'refs/tags/') )
+    if: startsWith(github.ref, 'refs/tags/v') || ( needs.check_docs_only.outputs.skip != 'true' && !startsWith(github.ref, 'refs/tags/') )
     runs-on: ubuntu-18.04
     environment: deploy
     strategy:
@@ -115,7 +115,7 @@ jobs:
     name: image-scorecard-test-kuttl
     needs: check_docs_only
     # Run this job on a tag like 'scorecard-kuttl/vX.Y.Z' or on a branch or pull request with code changes.
-    if: startsWith(github.ref, 'refs/tags/scorecard-kuttl/v') || ( needs.check_docs_only.outputs.is_skip != 'true' && !startsWith(github.ref, 'refs/tags/') )
+    if: startsWith(github.ref, 'refs/tags/scorecard-kuttl/v') || ( needs.check_docs_only.outputs.skip != 'true' && !startsWith(github.ref, 'refs/tags/') )
     runs-on: ubuntu-18.04
     environment: deploy
     steps:

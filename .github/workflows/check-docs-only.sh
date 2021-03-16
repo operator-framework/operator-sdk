@@ -9,18 +9,15 @@ set -e
 declare -a DOC_PATTERNS
 DOC_PATTERNS=(
   "(\.md)"
-  "(\.go.tmpl)"
   "(\.MD)"
   "(\.png)"
   "(\.pdf)"
   "(netlify\.toml)"
-  "^(doc/)"
-  "^(website/)"
-  "^(changelog/)"
-  "^(OWNERS)"
-  "^(MAINTAINERS)"
-  "^(SECURITY)"
-  "^(LICENSE)"
+  "(website/)"
+  "(changelog/)"
+  "(OWNERS)"
+  "(OWNERS_ALIASES)"
+  "(LICENSE)"
 )
 
 if ! git diff --name-only $1 | grep -qvE "$(IFS="|"; echo "${DOC_PATTERNS[*]}")"; then
