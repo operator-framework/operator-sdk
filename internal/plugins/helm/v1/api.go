@@ -22,6 +22,7 @@ import (
 	"github.com/spf13/pflag"
 	"helm.sh/helm/v3/pkg/chart"
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
 	pluginutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
@@ -50,44 +51,37 @@ var (
 func (p createAPISubcommand) UpdateContext(ctx *plugin.Context) {
 	ctx.Description = `Scaffold a Kubernetes API that is backed by a Helm chart.
 `
-	ctx.Examples = fmt.Sprintf(`  $ %s create api \
+	ctx.Examples = fmt.Sprintf(`  $ %[1]s create api \
       --group=apps --version=v1alpha1 \
       --kind=AppService
 
-  $ %s create api \
+  $ %[1]s create api \
       --group=apps --version=v1alpha1 \
       --kind=AppService \
       --helm-chart=myrepo/app
 
-  $ %s create api \
+  $ %[1]s create api \
       --helm-chart=myrepo/app
 
-  $ %s create api \
+  $ %[1]s create api \
       --helm-chart=myrepo/app \
       --helm-chart-version=1.2.3
 
-  $ %s create api \
+  $ %[1]s create api \
       --helm-chart=app \
       --helm-chart-repo=https://charts.mycompany.com/
 
-  $ %s create api \
+  $ %[1]s create api \
       --helm-chart=app \
       --helm-chart-repo=https://charts.mycompany.com/ \
       --helm-chart-version=1.2.3
 
-  $ %s create api \
+  $ %[1]s create api \
       --helm-chart=/path/to/local/chart-directories/app/
 
-  $ %s create api \
+  $ %[1]s create api \
       --helm-chart=/path/to/local/chart-archives/app-1.2.3.tgz
 `,
-		ctx.CommandName,
-		ctx.CommandName,
-		ctx.CommandName,
-		ctx.CommandName,
-		ctx.CommandName,
-		ctx.CommandName,
-		ctx.CommandName,
 		ctx.CommandName,
 	)
 }
@@ -121,13 +115,13 @@ func (p *createAPISubcommand) InjectConfig(c config.Config) {
 }
 
 // Run will call the plugin actions according to the definitions done in RunOptions interface
-func (p *createAPISubcommand) Run() error {
-	if err := cmdutil.Run(p); err != nil {
+func (p *createAPISubcommand) Run(fs machinery.Filesystem) error {
+	if err := cmdutil.Run(p, fs); err != nil {
 		return err
 	}
 
 	// Run SDK phase 2 plugins.
-	if err := p.runPhase2(); err != nil {
+	if err := p.runPhase2(fs); err != nil {
 		return err
 	}
 
@@ -135,7 +129,7 @@ func (p *createAPISubcommand) Run() error {
 }
 
 // SDK phase 2 plugins.
-func (p *createAPISubcommand) runPhase2() error {
+func (p *createAPISubcommand) runPhase2(fs machinery.Filesystem) error {
 	if p.resource == nil {
 		return errors.New("resource must not be nil")
 	}
@@ -144,11 +138,11 @@ func (p *createAPISubcommand) runPhase2() error {
 	// plugin keys, so those plugins should be run if keys exist. Otherwise, enact old behavior.
 
 	if manifestsv2.HasPluginConfig(p.config) {
-		if err := manifestsv2.RunCreateAPI(p.config, p.resource.GVK); err != nil {
+		if err := manifestsv2.RunCreateAPI(p.config, fs, *p.resource); err != nil {
 			return err
 		}
 	} else {
-		if err := manifests.RunCreateAPI(p.config, p.resource.GVK); err != nil {
+		if err := manifests.RunCreateAPI(p.config, fs, *p.resource); err != nil {
 			return err
 		}
 	}
@@ -207,7 +201,7 @@ func (p *createAPISubcommand) Validate() (err error) {
 
 // GetScaffolder returns cmdutil.Scaffolder which will be executed due the RunOptions interface implementation
 func (p *createAPISubcommand) GetScaffolder() (cmdutil.Scaffolder, error) {
-	return scaffolds.NewAPIScaffolder(p.config, p.resource, p.chrt), nil
+	return scaffolds.NewAPIScaffolder(p.config, *p.resource, p.chrt), nil
 }
 
 // PostScaffold runs all actions that should be executed after the default plugin scaffold

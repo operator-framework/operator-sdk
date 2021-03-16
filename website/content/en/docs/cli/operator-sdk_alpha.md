@@ -3,11 +3,14 @@ title: "operator-sdk alpha"
 ---
 ## operator-sdk alpha
 
-Commands in alpha stage
+Alpha-stage subcommands
 
 ### Synopsis
 
-Commands in alpha stage. These APIs are not stable and may be removed at any time.
+Alpha subcommands are for unstable features.
+
+- Alpha subcommands are exploratory and may be removed without warning.
+- No backwards compatibility is provided for any alpha subcommands.
 
 ### Options
 
@@ -27,4 +30,5 @@ Commands in alpha stage. These APIs are not stable and may be removed at any tim
 
 * [operator-sdk](../operator-sdk)	 - 
 * [operator-sdk alpha config-3alpha-to-3](../operator-sdk_alpha_config-3alpha-to-3)	 - Convert your PROJECT config file from version 3-alpha to 3
+* [operator-sdk alpha config-gen](../operator-sdk_alpha_config-gen)	 - Generate configuration for controller-runtime based projects
 

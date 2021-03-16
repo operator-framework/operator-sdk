@@ -7,18 +7,39 @@ Scaffold a webhook for an API resource
 
 ### Synopsis
 
-Scaffold a webhook for an API resource.
+Scaffold a webhook for an API resource. You can choose to scaffold defaulting,
+validating and (or) conversion webhooks.
 
-Note: unable to find configuration file, project must be initialized
 
 ```
 operator-sdk create webhook [flags]
 ```
 
+### Examples
+
+```
+  # Create defaulting and validating webhooks for CRD of group ship, version v1beta1
+  # and kind Frigate.
+  operator-sdk create webhook --group ship --version v1beta1 --kind Frigate --defaulting --programmatic-validation
+
+  # Create conversion webhook for CRD of group ship, version v1beta1 and kind Frigate.
+  operator-sdk create webhook --group ship --version v1beta1 --kind Frigate --conversion
+
+```
+
 ### Options
 
 ```
-  -h, --help   help for webhook
+      --conversion                if set, scaffold the conversion webhook
+      --defaulting                if set, scaffold the defaulting webhook
+      --force                     attempt to create resource even if it already exists
+      --group string              resource Group
+  -h, --help                      help for webhook
+      --kind string               resource Kind
+      --plural string             resource irregular plural form
+      --programmatic-validation   if set, scaffold the validating webhook
+      --version string            resource Version
+      --webhook-version string    version of {Mutating,Validating}WebhookConfigurations to scaffold. Options: [v1, v1beta1] (default "v1")
 ```
 
 ### Options inherited from parent commands

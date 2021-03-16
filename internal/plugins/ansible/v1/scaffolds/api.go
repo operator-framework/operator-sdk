@@ -18,15 +18,12 @@ limitations under the License.
 package scaffolds
 
 import (
-	"errors"
-
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
-	"sigs.k8s.io/kubebuilder/v3/pkg/model"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
 	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
 
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
-	"github.com/operator-framework/operator-sdk/internal/kubebuilder/machinery"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/constants"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/crd"
@@ -40,42 +37,43 @@ import (
 var _ cmdutil.Scaffolder = &apiScaffolder{}
 
 type apiScaffolder struct {
+	fs machinery.Filesystem
+
 	config   config.Config
-	resource *resource.Resource
+	resource resource.Resource
 
 	doRole, doPlaybook bool
 }
 
 // NewCreateAPIScaffolder returns a new Scaffolder for project initialization operations
-func NewCreateAPIScaffolder(config config.Config, res *resource.Resource, doRole, doPlaybook bool) cmdutil.Scaffolder {
+func NewCreateAPIScaffolder(cfg config.Config, res resource.Resource, doRole, doPlaybook bool) cmdutil.Scaffolder {
 	return &apiScaffolder{
-		config:     config,
+		config:     cfg,
 		resource:   res,
 		doRole:     doRole,
 		doPlaybook: doPlaybook,
 	}
 }
 
-func (s *apiScaffolder) newUniverse(r *resource.Resource) *model.Universe {
-	return model.NewUniverse(
-		model.WithConfig(s.config),
-		model.WithResource(r),
-	)
+// InjectFS implements Scaffolder
+func (s *apiScaffolder) InjectFS(fs machinery.Filesystem) {
+	s.fs = fs
 }
 
 // Scaffold implements Scaffolder
 func (s *apiScaffolder) Scaffold() error {
-	return s.scaffold()
-}
-
-func (s *apiScaffolder) scaffold() error {
-	if s.resource == nil {
-		return errors.New("resource must not be nil")
-	}
-
-	if err := s.config.UpdateResource(*s.resource); err != nil {
+	if err := s.config.UpdateResource(s.resource); err != nil {
 		return err
 	}
+
+	// Initialize the machinery.Scaffold that will write the files to disk
+	scaffold := machinery.NewScaffold(s.fs,
+		// NOTE: kubebuilder's default permissions are only for root users
+		machinery.WithDirectoryPermissions(0755),
+		machinery.WithFilePermissions(0644),
+		machinery.WithConfig(s.config),
+		machinery.WithResource(&s.resource),
+	)
 
 	var createAPITemplates []file.Builder
 	createAPITemplates = append(createAPITemplates,
@@ -83,7 +81,7 @@ func (s *apiScaffolder) scaffold() error {
 		&rbac.CRDEditorRole{},
 		&rbac.ManagerRoleUpdater{},
 
-		&crd.CRD{CRDVersion: s.resource.API.CRDVersion},
+		&crd.CRD{},
 		&crd.Kustomization{},
 		&samples.CR{},
 		&templates.WatchesUpdater{
@@ -113,8 +111,5 @@ func (s *apiScaffolder) scaffold() error {
 		)
 	}
 
-	return machinery.NewScaffold().Execute(
-		s.newUniverse(s.resource),
-		createAPITemplates...,
-	)
+	return scaffold.Execute(createAPITemplates...)
 }

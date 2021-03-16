@@ -15,7 +15,6 @@
 package crd
 
 import (
-	"errors"
 	"fmt"
 	"path/filepath"
 
@@ -29,8 +28,6 @@ var _ file.Template = &CRD{}
 type CRD struct {
 	file.TemplateMixin
 	file.ResourceMixin
-
-	CRDVersion string
 }
 
 // SetTemplateDefaults implements input.Template
@@ -42,20 +39,16 @@ func (f *CRD) SetTemplateDefaults() error {
 
 	f.IfExistsAction = file.Error
 
-	if f.CRDVersion == "" {
-		f.CRDVersion = "v1"
-	} else if f.CRDVersion != "v1" && f.CRDVersion != "v1beta1" {
-		return errors.New("the CRD version value must be either 'v1' or 'v1beta1'")
-	}
 	f.TemplateBody = fmt.Sprintf(crdTemplate,
 		text.Indent(openAPIV3SchemaTemplate, "    "),
 		text.Indent(openAPIV3SchemaTemplate, "      "),
 	)
+
 	return nil
 }
 
 const crdTemplate = `---
-apiVersion: apiextensions.k8s.io/{{ .CRDVersion }}
+apiVersion: apiextensions.k8s.io/{{ .Resource.API.CRDVersion }}
 kind: CustomResourceDefinition
 metadata:
   name: {{ .Resource.Plural }}.{{ .Resource.QualifiedGroup }}
@@ -67,7 +60,7 @@ spec:
     plural: {{ .Resource.Plural }}
     singular: {{ .Resource.Kind | lower }}
   scope: Namespaced
-{{- if eq .CRDVersion "v1beta1" }}
+{{- if eq .Resource.API.CRDVersion "v1beta1" }}
   subresources:
     status: {}
   validation:
@@ -75,13 +68,13 @@ spec:
 {{- end }}
   versions:
   - name: {{ .Resource.Version }}
-{{- if eq .CRDVersion "v1" }}
+{{- if eq .Resource.API.CRDVersion "v1" }}
     schema:
 %s
 {{- end }}
     served: true
     storage: true
-{{- if eq .CRDVersion "v1" }}
+{{- if eq .Resource.API.CRDVersion "v1" }}
     subresources:
       status: {}
 {{- end }}

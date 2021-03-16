@@ -23,6 +23,7 @@ import (
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
 
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
@@ -106,7 +107,7 @@ func (p *initSubcommand) InjectConfig(c config.Config) {
 // createOptions with defaults set, for comparison in case GVK/chart inputs were set.
 var emptyCreateOptions = createOptions{CRDVersion: "v1"}
 
-func (p *initSubcommand) Run() error {
+func (p *initSubcommand) Run(fs machinery.Filesystem) error {
 	// Set values in the config
 	if err := p.config.SetProjectName(p.projectName); err != nil {
 		return err
@@ -127,7 +128,7 @@ func (p *initSubcommand) Run() error {
 		}
 	}
 
-	if err := cmdutil.Run(p); err != nil {
+	if err := cmdutil.Run(p, fs); err != nil {
 		return err
 	}
 
@@ -139,7 +140,7 @@ func (p *initSubcommand) Run() error {
 	// If API creation is configured, run the 'create api' subcommand.
 	if p.apiSubc.options != emptyCreateOptions {
 		p.apiSubc.options.Domain = p.domain
-		if err := p.apiSubc.Run(); err != nil {
+		if err := p.apiSubc.Run(fs); err != nil {
 			return err
 		}
 	}

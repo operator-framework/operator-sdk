@@ -21,6 +21,7 @@ import (
 
 	"github.com/spf13/pflag"
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
 	pluginutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
@@ -105,13 +106,13 @@ func (p *createAPIPSubcommand) InjectConfig(c config.Config) {
 	p.config = c
 }
 
-func (p *createAPIPSubcommand) Run() error {
-	if err := cmdutil.Run(p); err != nil {
+func (p *createAPIPSubcommand) Run(fs machinery.Filesystem) error {
+	if err := cmdutil.Run(p, fs); err != nil {
 		return err
 	}
 
 	// Run SDK phase 2 plugins.
-	if err := p.runPhase2(); err != nil {
+	if err := p.runPhase2(fs); err != nil {
 		return err
 	}
 
@@ -119,7 +120,7 @@ func (p *createAPIPSubcommand) Run() error {
 }
 
 // SDK phase 2 plugins.
-func (p *createAPIPSubcommand) runPhase2() error {
+func (p *createAPIPSubcommand) runPhase2(fs machinery.Filesystem) error {
 	if p.resource == nil {
 		return errors.New("resource must not be nil")
 	}
@@ -129,11 +130,11 @@ func (p *createAPIPSubcommand) runPhase2() error {
 	// plugin keys, so those plugins should be run if keys exist. Otherwise, enact old behavior.
 
 	if manifestsv2.HasPluginConfig(p.config) {
-		if err := manifestsv2.RunCreateAPI(p.config, p.resource.GVK); err != nil {
+		if err := manifestsv2.RunCreateAPI(p.config, fs, *p.resource); err != nil {
 			return err
 		}
 	} else {
-		if err := manifests.RunCreateAPI(p.config, p.resource.GVK); err != nil {
+		if err := manifests.RunCreateAPI(p.config, fs, *p.resource); err != nil {
 			return err
 		}
 	}
@@ -177,7 +178,7 @@ func (p *createAPIPSubcommand) Validate() error {
 }
 
 func (p *createAPIPSubcommand) GetScaffolder() (cmdutil.Scaffolder, error) {
-	return scaffolds.NewCreateAPIScaffolder(p.config, p.resource, p.doRole, p.doPlaybook), nil
+	return scaffolds.NewCreateAPIScaffolder(p.config, *p.resource, p.doRole, p.doPlaybook), nil
 }
 
 func (p *createAPIPSubcommand) PostScaffold() error {

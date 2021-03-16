@@ -20,21 +20,18 @@ import (
 
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
 	cfgv3 "sigs.k8s.io/kubebuilder/v3/pkg/config/v3"
-	"sigs.k8s.io/kubebuilder/v3/pkg/model"
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
-
-	"github.com/operator-framework/operator-sdk/internal/kubebuilder/machinery"
 )
 
 // RunCreateAPI runs the manifests SDK phase 2 plugin.
-func RunCreateAPI(cfg config.Config, gvk resource.GVK) error {
+func RunCreateAPI(cfg config.Config, fs machinery.Filesystem, res resource.Resource) error {
 	// Only run these if project version is v3.
 	if cfg.GetVersion().Compare(cfgv3.Version) != 0 {
 		return nil
 	}
 
-	if err := newAPIScaffolder(cfg, gvk).scaffold(); err != nil {
+	if err := newAPIScaffolder(cfg, res).Scaffold(fs); err != nil {
 		return err
 	}
 
@@ -42,33 +39,32 @@ func RunCreateAPI(cfg config.Config, gvk resource.GVK) error {
 }
 
 type apiScaffolder struct {
-	config config.Config
-	gvk    resource.GVK
+	config   config.Config
+	resource resource.Resource
 }
 
-func newAPIScaffolder(config config.Config, gvk resource.GVK) *apiScaffolder {
+func newAPIScaffolder(config config.Config, res resource.Resource) *apiScaffolder {
 	return &apiScaffolder{
-		config: config,
-		gvk:    gvk,
+		config:   config,
+		resource: res,
 	}
 }
 
-func (s *apiScaffolder) newUniverse() *model.Universe {
-	return model.NewUniverse(
-		model.WithConfig(s.config),
+func (s *apiScaffolder) Scaffold(fs machinery.Filesystem) error {
+	// Initialize the machinery.Scaffold that will write the files to disk
+	scaffold := machinery.NewScaffold(fs,
+		// NOTE: kubebuilder's default permissions are only for root users
+		machinery.WithDirectoryPermissions(0755),
+		machinery.WithFilePermissions(0644),
+		machinery.WithConfig(s.config),
+		machinery.WithResource(&s.resource),
 	)
-}
 
-func (s *apiScaffolder) scaffold() error {
-	var builders []file.Builder
 	// If the gvk is non-empty, add relevant builders.
-	if s.gvk.Group != "" || s.gvk.Version != "" || s.gvk.Kind != "" {
-		builders = append(builders, &kustomization{GroupVersionKind: s.gvk})
-	}
-
-	err := machinery.NewScaffold().Execute(s.newUniverse(), builders...)
-	if err != nil {
-		return fmt.Errorf("error scaffolding manifests: %v", err)
+	if s.resource.Group != "" || s.resource.Version != "" || s.resource.Kind != "" {
+		if err := scaffold.Execute(&kustomization{}); err != nil {
+			return fmt.Errorf("error scaffolding manifests: %v", err)
+		}
 	}
 
 	return nil

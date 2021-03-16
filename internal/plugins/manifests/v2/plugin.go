@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
 
@@ -60,9 +61,9 @@ func RunInit(cfg config.Config) error {
 }
 
 // RunCreateAPI runs the manifests SDK phase 2 plugin.
-func RunCreateAPI(cfg config.Config, gvk resource.GVK) error {
+func RunCreateAPI(cfg config.Config, fs machinery.Filesystem, res resource.Resource) error {
 	if !HasPluginConfig(cfg) {
 		return nil
 	}
-	return manifests.RunCreateAPI(cfg, gvk)
+	return manifests.RunCreateAPI(cfg, fs, res)
 }

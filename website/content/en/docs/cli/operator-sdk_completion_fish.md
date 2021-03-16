@@ -1,32 +1,29 @@
 ---
-title: "operator-sdk completion zsh"
+title: "operator-sdk completion fish"
 ---
-## operator-sdk completion zsh
+## operator-sdk completion fish
 
-Load zsh completions
+Load fish completions
 
 ```
-operator-sdk completion zsh [flags]
+operator-sdk completion fish [flags]
 ```
 
 ### Examples
 
 ```
-# If shell completion is not already enabled in your environment you will need
-# to enable it. You can execute the following once:
-$ echo "autoload -U compinit; compinit" >> ~/.zshrc
+# To load completion for this session, execute:
+$ operator-sdk completion fish | source
 
 # To load completions for each session, execute once:
-$ operator-sdk completion zsh > "${fpath[1]}/_operator-sdk"
-
-# You will need to start a new shell for this setup to take effect.
+$ operator-sdk completion fish > ~/.config/fish/completions/operator-sdk.fish
 
 ```
 
 ### Options
 
 ```
-  -h, --help   help for zsh
+  -h, --help   help for fish
 ```
 
 ### Options inherited from parent commands

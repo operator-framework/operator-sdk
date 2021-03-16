@@ -17,6 +17,7 @@ package v2
 import (
 	"github.com/spf13/pflag"
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/envtest"
@@ -40,8 +41,8 @@ func (p *initSubcommand) InjectConfig(c config.Config) {
 	p.config = c
 }
 
-func (p *initSubcommand) Run() error {
-	if err := p.InitSubcommand.Run(); err != nil {
+func (p *initSubcommand) Run(fs machinery.Filesystem) error {
+	if err := p.InitSubcommand.Run(fs); err != nil {
 		return err
 	}
 

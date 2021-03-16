@@ -17,6 +17,7 @@ package v2
 import (
 	"github.com/spf13/pflag"
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
 
@@ -42,14 +43,14 @@ func (p *createAPISubcommand) InjectConfig(c config.Config) {
 	p.config = c
 }
 
-func (p *createAPISubcommand) Run() error {
+func (p *createAPISubcommand) Run(fs machinery.Filesystem) error {
 	// Run() may add a new resource to the config, so we can compare resources before/after to get the new resource.
 	oldResources, err := p.config.GetResources()
 	if err != nil {
 		return err
 	}
 
-	if err := p.CreateAPISubcommand.Run(); err != nil {
+	if err := p.CreateAPISubcommand.Run(fs); err != nil {
 		return err
 	}
 
@@ -71,21 +72,21 @@ func (p *createAPISubcommand) Run() error {
 	}
 
 	// Run SDK phase 2 plugins.
-	return p.runPhase2(newResource.GVK)
+	return p.runPhase2(fs, newResource)
 }
 
 // SDK phase 2 plugins.
-func (p *createAPISubcommand) runPhase2(gvk resource.GVK) error {
+func (p *createAPISubcommand) runPhase2(fs machinery.Filesystem, res resource.Resource) error {
 	// Check if the generic "go" operator-sdk plugin (legacy) exists first.
 	if hasPluginConfig(p.config) {
-		if err := manifests.RunCreateAPI(p.config, gvk); err != nil {
+		if err := manifests.RunCreateAPI(p.config, fs, res); err != nil {
 			return err
 		}
 		return nil
 	}
 
 	// v2 plugins will handle checking p.config for their key so we can call all of them below.
-	if err := manifestsv2.RunCreateAPI(p.config, gvk); err != nil {
+	if err := manifestsv2.RunCreateAPI(p.config, fs, res); err != nil {
 		return err
 	}
 
