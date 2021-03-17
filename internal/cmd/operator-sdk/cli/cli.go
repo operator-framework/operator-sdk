@@ -22,11 +22,9 @@ import (
 	cfgv2 "sigs.k8s.io/kubebuilder/v3/pkg/config/v2"
 	cfgv3 "sigs.k8s.io/kubebuilder/v3/pkg/config/v3"
 
-	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/alpha"
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/alpha/config3alphato3"
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/bundle"
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/cleanup"
-	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/completion"
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/generate"
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/olm"
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/run"
@@ -39,26 +37,29 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
-var commands = []*cobra.Command{
-	alpha.NewCmd(),
-	bundle.NewCmd(),
-	cleanup.NewCmd(),
-	completion.NewCmd(),
-	generate.NewCmd(),
-	olm.NewCmd(),
-	run.NewCmd(),
-	scorecard.NewCmd(),
-}
+var (
+	commands = []*cobra.Command{
+		bundle.NewCmd(),
+		cleanup.NewCmd(),
+		generate.NewCmd(),
+		olm.NewCmd(),
+		run.NewCmd(),
+		scorecard.NewCmd(),
+	}
+	alphaCommands = []*cobra.Command{
+		config3alphato3.NewCmd(),
+	}
+)
 
 func Run() error {
-	cli, _ := GetPluginsCLIAndRoot()
-	return cli.Run()
+	c, _ := GetPluginsCLIAndRoot()
+	return c.Run()
 }
 
 // GetPluginsCLIAndRoot returns the plugins based CLI configured to use operator-sdk as the root command
 // This CLI can run kubebuilder commands and certain SDK specific commands that are aligned for
 // the kubebuilder project layout
-func GetPluginsCLIAndRoot() (cli.CLI, *cobra.Command) {
+func GetPluginsCLIAndRoot() (*cli.CLI, *cobra.Command) {
 	c, err := cli.New(
 		cli.WithCommandName("operator-sdk"),
 		cli.WithVersion(makeVersionString()),
@@ -72,6 +73,8 @@ func GetPluginsCLIAndRoot() (cli.CLI, *cobra.Command) {
 		cli.WithDefaultPlugins(cfgv2.Version, &golangv2.Plugin{}),
 		cli.WithDefaultPlugins(cfgv3.Version, &golangv3.Plugin{}),
 		cli.WithExtraCommands(commands...),
+		cli.WithExtraAlphaCommands(alphaCommands...),
+		cli.WithCompletion(),
 	)
 	if err != nil {
 		log.Fatal(err)
@@ -88,6 +91,24 @@ func GetPluginsCLIAndRoot() (cli.CLI, *cobra.Command) {
 		log.Fatalf("Failed to bind %s flags: %v", root.Name(), err)
 	}
 	root.PersistentPreRun = rootPersistentPreRun
+
+	// Hide `alpha config-gen` subcommand
+	// TODO: stop hiding `alpha config-gen` subcommand when it is more mature
+	var alpha *cobra.Command
+	for _, subcmd := range root.Commands() {
+		if subcmd.Name() == "alpha" {
+			alpha = subcmd
+			break
+		}
+	}
+	if alpha != nil {
+		for _, subcmd := range alpha.Commands() {
+			if subcmd.Name() == "config-gen" {
+				subcmd.Hidden = true
+				break
+			}
+		}
+	}
 
 	return c, root
 }

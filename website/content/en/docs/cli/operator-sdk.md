@@ -53,10 +53,10 @@ to obtain further info about available commands.
 
 ### SEE ALSO
 
-* [operator-sdk alpha](../operator-sdk_alpha)	 - Commands in alpha stage
+* [operator-sdk alpha](../operator-sdk_alpha)	 - Alpha-stage subcommands
 * [operator-sdk bundle](../operator-sdk_bundle)	 - Manage operator bundle metadata
 * [operator-sdk cleanup](../operator-sdk_cleanup)	 - Clean up an Operator deployed with the 'run' subcommand
-* [operator-sdk completion](../operator-sdk_completion)	 - Generators for shell completions
+* [operator-sdk completion](../operator-sdk_completion)	 - Load completions for the specified shell
 * [operator-sdk create](../operator-sdk_create)	 - Scaffold a Kubernetes API or webhook
 * [operator-sdk edit](../operator-sdk_edit)	 - This command will edit the project configuration
 * [operator-sdk generate](../operator-sdk_generate)	 - Invokes a specific generator

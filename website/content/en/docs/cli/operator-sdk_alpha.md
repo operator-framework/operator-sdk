@@ -3,11 +3,14 @@ title: "operator-sdk alpha"
 ---
 ## operator-sdk alpha
 
-Commands in alpha stage
+Alpha-stage subcommands
 
 ### Synopsis
 
-Commands in alpha stage. These APIs are not stable and may be removed at any time.
+Alpha subcommands are for unstable features.
+
+- Alpha subcommands are exploratory and may be removed without warning.
+- No backwards compatibility is provided for any alpha subcommands.
 
 ### Options
 

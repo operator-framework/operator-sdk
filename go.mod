@@ -15,7 +15,7 @@ require (
 	github.com/operator-framework/operator-lib v0.4.0
 	github.com/operator-framework/operator-registry v1.15.3
 	github.com/prometheus/client_golang v1.7.1
-	github.com/sergi/go-diff v1.0.0
+	github.com/sergi/go-diff v1.1.0
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/afero v1.2.2
 	github.com/spf13/cobra v1.1.1
@@ -35,7 +35,7 @@ require (
 	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/controller-runtime v0.8.2
 	sigs.k8s.io/controller-tools v0.5.0
-	sigs.k8s.io/kubebuilder/v3 v3.0.0-alpha.0.0.20210309225704-dd3942c97cf5
+	sigs.k8s.io/kubebuilder/v3 v3.0.0-alpha.0.0.20210316110635-104672d382aa
 	sigs.k8s.io/yaml v1.2.0
 )
 

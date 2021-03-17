@@ -18,7 +18,6 @@ limitations under the License.
 package scaffolds
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -26,11 +25,10 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
-	"sigs.k8s.io/kubebuilder/v3/pkg/model"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
 
 	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
-	"github.com/operator-framework/operator-sdk/internal/kubebuilder/machinery"
 	internalchartutil "github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/chartutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/crd"
@@ -43,13 +41,15 @@ var _ cmdutil.Scaffolder = &apiScaffolder{}
 // apiScaffolder contains configuration for generating scaffolding for Go type
 // representing the API and controller that implements the behavior for the API.
 type apiScaffolder struct {
+	fs machinery.Filesystem
+
 	config   config.Config
-	resource *resource.Resource
+	resource resource.Resource
 	chrt     *chart.Chart
 }
 
 // NewAPIScaffolder returns a new Scaffolder for API/controller creation operations
-func NewAPIScaffolder(config config.Config, res *resource.Resource, chrt *chart.Chart) cmdutil.Scaffolder {
+func NewAPIScaffolder(config config.Config, res resource.Resource, chrt *chart.Chart) cmdutil.Scaffolder {
 	return &apiScaffolder{
 		config:   config,
 		resource: res,
@@ -57,24 +57,14 @@ func NewAPIScaffolder(config config.Config, res *resource.Resource, chrt *chart.
 	}
 }
 
+// InjectFS implements Scaffolder
+func (s *apiScaffolder) InjectFS(fs machinery.Filesystem) {
+	s.fs = fs
+}
+
 // Scaffold implements Scaffolder
 func (s *apiScaffolder) Scaffold() error {
-	return s.scaffold()
-}
-
-func (s *apiScaffolder) newUniverse(r *resource.Resource) *model.Universe {
-	return model.NewUniverse(
-		model.WithConfig(s.config),
-		model.WithResource(r),
-	)
-}
-
-func (s *apiScaffolder) scaffold() error {
-	if s.resource == nil {
-		return errors.New("resource must not be nil")
-	}
-
-	if err := s.config.UpdateResource(*s.resource); err != nil {
+	if err := s.config.UpdateResource(s.resource); err != nil {
 		return err
 	}
 	// Path for file builders.
@@ -91,17 +81,25 @@ func (s *apiScaffolder) scaffold() error {
 	}
 	fmt.Println("Created", chartPath)
 
-	if err := machinery.NewScaffold().Execute(
-		s.newUniverse(s.resource),
+	// Initialize the machinery.Scaffold that will write the files to disk
+	scaffold := machinery.NewScaffold(s.fs,
+		// NOTE: kubebuilder's default permissions are only for root users
+		machinery.WithDirectoryPermissions(0755),
+		machinery.WithFilePermissions(0644),
+		machinery.WithConfig(s.config),
+		machinery.WithResource(&s.resource),
+	)
+
+	if err := scaffold.Execute(
 		&templates.WatchesUpdater{ChartPath: chartPath},
-		&crd.CRD{CRDVersion: s.resource.API.CRDVersion},
+		&crd.CRD{},
 		&crd.Kustomization{},
 		&rbac.CRDEditorRole{},
 		&rbac.CRDViewerRole{},
 		&rbac.ManagerRoleUpdater{Chart: s.chrt},
 		&samples.CRDSample{ChartPath: chartPath, Chart: s.chrt},
 	); err != nil {
-		return fmt.Errorf("error scaffolding APIs: %v", err)
+		return fmt.Errorf("error scaffolding APIs: %w", err)
 	}
 
 	return nil
