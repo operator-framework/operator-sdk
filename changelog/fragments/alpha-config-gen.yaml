@@ -1,0 +1,6 @@
+entries:
+  - description: >
+      Added [`alpha config-gen`](https://github.com/kubernetes-sigs/kubebuilder/tree/master/pkg/cli/alpha/config-gen),
+      a kustomize plugin to specialize configuration for kubebuilder-style projects. This feature is *alpha*
+      and subject to breaking changes.
+    kind: addition

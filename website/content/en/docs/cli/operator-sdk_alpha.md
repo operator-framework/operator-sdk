@@ -30,4 +30,5 @@ Alpha subcommands are for unstable features.
 
 * [operator-sdk](../operator-sdk)	 - 
 * [operator-sdk alpha config-3alpha-to-3](../operator-sdk_alpha_config-3alpha-to-3)	 - Convert your PROJECT config file from version 3-alpha to 3
+* [operator-sdk alpha config-gen](../operator-sdk_alpha_config-gen)	 - Generate configuration for controller-runtime based projects
 
