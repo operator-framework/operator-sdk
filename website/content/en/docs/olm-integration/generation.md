@@ -335,7 +335,7 @@ when you set `--version` when running `generate <bundle|packagemanifests>`.
 [cli-gen-kustomize-manifests]:/docs/cli/operator-sdk_generate_kustomize_manifests
 [cli-gen-bundle]:/docs/cli/operator-sdk_generate_bundle
 [cli-gen-packagemanifests]:/docs/cli/operator-sdk_generate_packagemanifests
-[bundle]:https://github.com/operator-framework/operator-registry/blob/v1.12.6/docs/design/operator-bundle.md
+[bundle]: https://github.com/operator-framework/operator-registry/blob/v1.16.1/docs/design/operator-bundle.md
 [bundle-metadata]:https://github.com/operator-framework/operator-registry/blob/v1.12.6/docs/design/operator-bundle.md#bundle-annotations
 [package-manifests]:https://github.com/operator-framework/operator-registry/tree/v1.5.3#manifest-format
 [install-modes]:https://github.com/operator-framework/operator-lifecycle-manager/blob/4197455/Documentation/design/building-your-csv.md#operator-metadata
