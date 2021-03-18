@@ -24,7 +24,7 @@ Please see the upstream [Controller Runtime FAQ][cr-faq] first for any questions
 
 After using the CLI to create your project, you are free to customize based on how you see fit. Please note that it is not recommended to deviate from the proposed layout unless you know what you are doing.
 
-For example, you should refrain from moving the scaffolded files, doing so will make it difficult to upgrade your project in the future. You may also lose the ability to use some of the CLI features and helpers. For further information on the project layout, see the doc [What's in a basic project?][basic-project-doc]
+For example, you should refrain from moving the scaffolded files, doing so will make it difficult to upgrade your project in the future. You may also lose the ability to use some of the CLI features and helpers. For further information on the project layout, see the doc [Project Layout][project-doc]
 
 ## How can I have separate logic for Create, Update, and Delete events? When reconciling an object can I access its previous state?
 
@@ -141,4 +141,4 @@ Now run `make manifests` to update your `role.yaml`.
 [rbac-markers]: https://book.kubebuilder.io/reference/markers/rbac.html
 [rbac]:https://kubernetes.io/docs/reference/access-authn-authz/rbac/
 [scorecard-doc]: https://sdk.operatorframework.io/docs/advanced-topics/scorecard/
-[basic-project-doc]: https://book.kubebuilder.io/cronjob-tutorial/basic-project.html
+[project-doc]: /docs/overview/project-layout
