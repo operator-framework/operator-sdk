@@ -12,6 +12,12 @@ please [migrate][migration-guide], or consult the [legacy docs][legacy-quickstar
 
 - Go through the [installation guide][install-guide].
 - User authorized with `cluster-admin` permissions.
+- An accessible image registry for various operator images (ex. [hub.docker.com](https://hub.docker.com/signup),
+[quay.io](https://quay.io/)) and be logged in in your command line environment.
+  - `example.com` is used as the registry Docker Hub namespace in these examples.
+  Replace it with another value if using a different registry or namespace.
+  - The registry/namespace must be public, or the cluster must be provisioned with an
+  [image pull secret][k8s-image-pull-sec] if the image namespace is private.
 
 ## Overview
 
@@ -19,7 +25,7 @@ We will create a sample project to let you know how it works and this sample wil
 
 - Create a Memcached Deployment if it doesn't exist
 - Ensure that the Deployment size is the same as specified by the Memcached CR spec
-- Update the Memcached CR status using the status writer with the names of the memcached pods
+- Update the Memcached CR status using the status writer with the names of the CR's pods
 
 ## Create a new project
 
@@ -47,10 +53,13 @@ See the [Kubebuilder entrypoint doc][kubebuilder_entrypoint_doc] for more detail
 
 
 The Manager can restrict the namespace that all controllers will watch for resources:
+
 ```Go
 mgr, err := ctrl.NewManager(cfg, manager.Options{Namespace: namespace})
 ```
+
 By default this will be the namespace that the operator is running in. To watch all namespaces leave the namespace option empty:
+
 ```Go
 mgr, err := ctrl.NewManager(cfg, manager.Options{Namespace: ""})
 ```
@@ -59,7 +68,7 @@ Read the [operator scope][operator_scope] documentation on how to run your opera
 
 ## Create a new API and Controller
 
-Create a new Custom Resource Definition(CRD) API with group `cache` version `v1alpha1` and Kind Memcached.
+Create a new Custom Resource Definition (CRD) API with group `cache` version `v1alpha1` and Kind Memcached.
 When prompted, enter yes `y` for creating both the resource and controller.
 
 ```console
@@ -145,7 +154,8 @@ See the [OpenAPI valiation][openapi-validation] doc for details.
 
 For this example replace the generated controller file `controllers/memcached_controller.go` with the example [`memcached_controller.go`][memcached_controller] implementation.
 
-**Note**: The next two subsections explain how the controller watches resources and how the reconcile loop is triggered. Skip to the [Build](#build-and-push-the-image) section to see how to build and run the operator.
+**Note**: The next two subsections explain how the controller watches resources and how the reconcile loop is triggered.
+If you'd like to skip this section, head to the [deploy](#run-the-operator) section to see how to run the operator.
 
 ### Resources watched by the Controller
 
@@ -256,6 +266,33 @@ The `ClusterRole` manifest at `config/rbac/role.yaml` is generated from the abov
 make manifests
 ```
 
+## Configure the operator's image registry
+
+All that remains is to build and push the operator image to the desired image registry.
+
+Before building the operator image, ensure the generated Dockerfile references
+the base image you want. You can change the default "runner" image `gcr.io/distroless/static:nonroot`
+by replacing its tag with another, for example `alpine:latest`, and removing
+the `USER 65532:65532` directive.
+
+Your Makefile composes image tags either from values written at project initialization or from the CLI.
+In particular, `IMAGE_TAG_BASE` lets you define a common image registry, namespace, and partial name
+for all your image tags. Update this to another registry and/or namespace if the current value is incorrect.
+Afterwards you can update the `IMG` variable definition like so:
+
+```diff
+-IMG ?= controller:latest
++IMG ?= $(IMAGE_TAG_BASE):$(VERSION)
+```
+
+Once done, you do not have to set `IMG` or any other image variable in the CLI. The following command will
+build and push an operator image tagged as `example.com/memcached-operator:v0.0.1` to Docker Hub:
+
+```console
+make docker-build docker-push
+```
+
+
 ## Run the Operator
 
 There are three ways to run the operator:
@@ -270,43 +307,12 @@ The following steps will show how to deploy the operator on the Cluster. However
 
 ### 2. Run as a Deployment inside the cluster
 
-### Build and push the image
-
-Before building the operator image, ensure the generated Dockerfile references
-the base image you want. You can change the default "runner" image `gcr.io/distroless/static:nonroot`
-by replacing its tag with another, for example `alpine:latest`, and removing
-the `USER: nonroot:nonroot` directive.
-
-To build and push the operator image, use the following `make` commands.
-Make sure to modify the `IMG` arg in the example below to reference a container repository that
-you have access to. You can obtain an account for storing containers at
-repository sites such quay.io or hub.docker.com. This example uses quay.
-
-Build and push the image:
-
-```sh
-export USERNAME=<quay-namespace>
-make docker-build docker-push IMG=quay.io/$USERNAME/memcached-operator:v0.0.1
-```
-
-**Note**: The name and tag of the image (`IMG=<some-registry>/<project-name>:tag`) in both the commands can also be set in the Makefile.
-Modify the line which has `IMG ?= controller:latest` to set your desired default image name.
-
-**Note**: If using an OS which does not point `sh` to the `bash` shell (Ubuntu for example) then you should add the following line to the `Makefile`:
-
-`SHELL := /bin/bash`
-
-This will fix potential issues when the `docker-build` target runs the controller test suite. Issues maybe similar to following error:
-`failed to start the controlplane. retried 5 times: fork/exec /usr/local/kubebuilder/bin/etcd: no such file or directory occurred`
-
-#### Deploy the operator
-
-By default, a new namespace is created with name `<project-name>-system`, i.e. memcached-operator-system and will be used for the deployment.
+By default, a new namespace is created with name `<project-name>-system`, ex. `memcached-operator-system`, and will be used for the deployment.
 
 Run the following to deploy the operator. This will also install the RBAC manifests from `config/rbac`.
 
 ```sh
-make deploy IMG=quay.io/$USERNAME/memcached-operator:v0.0.1
+make deploy
 ```
 
 Verify that the memcached-operator is up and running:
@@ -325,23 +331,22 @@ First, install [OLM][doc-olm]:
 operator-sdk olm install
 ```
 
-Then bundle your operator and push the bundle image:
+Bundle your operator, then build and push the bundle image. The `bundle` target generates a [bundle][doc-bundle]
+in the `bundle` directory containing manifests and metadata defining your operator.
+`bundle-build` and `bundle-push` build and push a bundle image defined by `bundle.Dockerfile`.
 
 ```sh
-make bundle IMG=$OPERATOR_IMG
-# Note the "-bundle" component in the image name below.
-export BUNDLE_IMG="quay.io/$USERNAME/memcached-operator-bundle:v0.0.1"
-make bundle-build BUNDLE_IMG=$BUNDLE_IMG
-make docker-push IMG=$BUNDLE_IMG
+make bundle bundle-build bundle-push
 ```
 
 Finally, run your bundle:
 
 ```sh
-operator-sdk run bundle $BUNDLE_IMG
+operator-sdk run bundle example.com/memcached-operator-bundle:v0.0.1
 ```
 
 Check out the [docs][quickstart-bundle] for a deep dive into `operator-sdk`'s OLM integration.
+
 
 ## Create a Memcached CR
 
@@ -420,19 +425,20 @@ memcached-sample                        5/5     5            5           3m
 
 ### Cleanup
 
-Call the following to delete all deployed resources:
+Run the following to delete all deployed resources:
 
 ```sh
+kubectl delete -f config/samples/cache_v1alpha1_memcached.yaml
 make undeploy
 ```
 
-## Further steps
+## Next steps
 
-Next, try adding the following to your project:
+Next, check out the following:
 1. Validating and mutating [admission webhooks][create_a_webhook].
-2. Operator packaging and distribution with [OLM][olm-integration].
+1. Operator packaging and distribution with [OLM][olm-integration].
+1. The [advanced topics][advanced-topics] doc for more use cases and under-the-hood details.
 
-Also see the [advanced topics][advanced_topics] doc for more use cases and under the hood details.
 
 [legacy-quickstart-doc]:https://v0-19-x.sdk.operatorframework.io/docs/golang/legacy/quickstart/
 [migration-guide]:/docs/building-operators/golang/migration
@@ -462,7 +468,7 @@ Also see the [advanced topics][advanced_topics] doc for more use cases and under
 [memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/v1.3.0/testdata/go/v3/memcached-operator/controllers/memcached_controller.go
 [builder_godocs]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/builder#example-Builder
 [activate_modules]: https://github.com/golang/go/wiki/Modules#how-to-install-and-activate-module-support
-[advanced_topics]: /docs/building-operators/golang/advanced-topics/
+[advanced-topics]: /docs/building-operators/golang/advanced-topics/
 [create_a_webhook]: https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html
 [status_marker]: https://book.kubebuilder.io/reference/generating-crd.html#status
 [status_subresource]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#status-subresource
@@ -470,6 +476,7 @@ Also see the [advanced topics][advanced_topics] doc for more use cases and under
 [legacy_CLI]:https://v0-19-x.sdk.operatorframework.io/docs/cli/
 [role-based-access-control]: https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control#iam-rolebinding-bootstrap
 [multigroup-kubebuilder-doc]: https://book.kubebuilder.io/migration/multi-group.html
+[doc-bundle]:https://github.com/operator-framework/operator-registry/blob/v1.16.1/docs/design/operator-bundle.md#operator-bundle
 [quickstart-bundle]:/docs/olm-integration/quickstart-bundle
 [doc-olm]:/docs/olm-integration/quickstart-bundle/#enabling-olm
 [conditionals]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
@@ -480,3 +487,4 @@ Also see the [advanced topics][advanced_topics] doc for more use cases and under
 [openapi-validation]: /docs/building-operators/golang/references/openapi-validation
 [controller-runtime]: https://github.com/kubernetes-sigs/controller-runtime
 [kb-doc-gkvs]: https://book.kubebuilder.io/cronjob-tutorial/gvks.html
+[k8s-image-pull-sec]:https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/

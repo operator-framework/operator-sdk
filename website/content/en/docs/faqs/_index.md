@@ -8,7 +8,7 @@ weight: 10
 
 Kubebuilder and Operator SDK are both projects that allow you to quickly create and manage an operator project. Operator SDK uses Kubebuilder under the hood to do so for Go projects, such that the `operator-sdk` CLI tool will work with a project created by `kubebuilder`. Therefore each project makes use of [controller-runtime][controller-runtime] and will have the same [basic layout][kb-doc-what-is-a-basic-project].
 
-Operator SDK offers additional features on top of the basic project scaffolding that Kubebuilder provides. By default, `operator-sdk init` generates a project integrated with: 
+Operator SDK offers additional features on top of the basic project scaffolding that Kubebuilder provides. By default, `operator-sdk init` generates a project integrated with:
 - [Operator Lifecycle Manager][olm], an installation and runtime management system for operators
 - [OperatorHub][operatorhub.io], a community hub for publishing operators
 - Operator SDK [scorecard][scorecard-doc], a tool for ensuring operator best-practices and developing cluster tests
@@ -20,7 +20,7 @@ For further context about the relationship between Kubebuilder and Operator SDK,
 
 Please see the upstream [Controller Runtime FAQ][cr-faq] first for any questions related to runtime mechanics or controller-runtime APIs.
 
-## Can I customize the projects generated with SDK tool?
+## Can I customize the projects initialized with `operator-sdk`?
 
 After using the CLI to create your project, you are free to customize based on how you see fit. Please note that it is not recommended to deviate from the proposed layout unless you know what you are doing.
 
@@ -63,7 +63,7 @@ If you aren't sure what dependencies are required, start up a container using th
 docker run -u 0 -it --rm --entrypoint /bin/bash quay.io/operator-framework/ansible-operator:<sdk-tag-version>
 ```
 
-## I keep seeing errors like "Failed to watch", how do I fix this?
+## After deploying my operator, I see errors like "Failed to watch <external type>"
 
 If you run into the following error message, it means that your operator is unable to watch the resource:
 
@@ -114,7 +114,7 @@ Then in your controller file, add an RBAC directive to generate a `config/rbac/r
 Now run `make manifests` to update your `role.yaml`.
 
 
-## I keep hitting errors like "is forbidden: cannot set blockOwnerDeletion if an ownerReference refers to a resource you can't set finalizers on:", how do I fix this?
+## After deploying my operator, why do I see errors like "is forbidden: cannot set blockOwnerDeletion if an ownerReference refers to a resource you can't set finalizers on: ..."?
 
 If you are facing this issue, it means that the operator is missing the required RBAC permissions to update finalizers on the APIs it manages. This permission is necessary if the [OwnerReferencesPermissionEnforcement][owner-references-permission-enforcement] plugin is enabled in your cluster.
 
@@ -127,6 +127,14 @@ by adding an RBAC directive to generate a `config/rbac/role.yaml` with `update` 
 
 Now run `make manifests` to update your `role.yaml`.
 
+## When invoking `make` targets, why do I see errors like `fork/exec /usr/local/kubebuilder/bin/etcd: no such file or directory occurred`?
+
+If using an OS or distro that does not point `sh` to the `bash` shell (Ubuntu for example), add the following line to the `Makefile`:
+
+```make
+SHELL := /bin/bash
+```
+
 
 [client.Reader]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#Reader
 [controller-runtime]: https://github.com/kubernetes-sigs/controller-runtime
@@ -135,7 +143,7 @@ Now run `make manifests` to update your `role.yaml`.
 [kb-doc-what-is-a-basic-project]: https://book.kubebuilder.io/cronjob-tutorial/basic-project.html
 [kube-apiserver_options]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options
 [olm]:  https://github.com/operator-framework/operator-lifecycle-manager
-[operator-sdk-reaches-v1.0]: https://www.openshift.com/blog/operator-sdk-reaches-v1.0 
+[operator-sdk-reaches-v1.0]: https://www.openshift.com/blog/operator-sdk-reaches-v1.0
 [operatorhub.io]: https://operatorhub.io/
 [owner-references-permission-enforcement]: https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#ownerreferencespermissionenforcement
 [rbac-markers]: https://book.kubebuilder.io/reference/markers/rbac.html
