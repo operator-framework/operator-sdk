@@ -38,7 +38,7 @@ This guide walks through an example of building a simple nginx-operator powered 
 1. Build and push your operator's image:
 
   ```sh
-  make docker-build docker-push IMG="example.com/memcached-operator:v0.0.1"
+  make docker-build docker-push IMG="example.com/nginx-operator:v0.0.1"
   ```
 
 
@@ -50,17 +50,17 @@ This guide walks through an example of building a simple nginx-operator powered 
   operator-sdk olm install
   ```
 
-1. Bundle your operator, then build and push the bundle image (defaults to `example.com/memcached-operator-bundle:v0.0.1`):
+1. Bundle your operator, then build and push the bundle image (defaults to `example.com/nginx-operator-bundle:v0.0.1`):
 
   ```sh
-  make bundle IMG="example.com/memcached-operator:v0.0.1"
+  make bundle IMG="example.com/nginx-operator:v0.0.1"
   make bundle-build bundle-push
   ```
 
 1. Run your bundle:
 
   ```sh
-  operator-sdk run bundle example.com/memcached-operator-bundle:v0.0.1
+  operator-sdk run bundle example.com/nginx-operator-bundle:v0.0.1
   ```
 
 1. Create a sample Nginx custom resource:
@@ -82,7 +82,7 @@ This guide walks through an example of building a simple nginx-operator powered 
 1. Deploy your operator:
 
   ```sh
-  make deploy IMG="example.com/memcached-operator:v0.0.1"
+  make deploy IMG="example.com/nginx-operator:v0.0.1"
   ```
 
 1. Create a sample Nginx custom resource:

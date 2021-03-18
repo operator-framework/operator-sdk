@@ -12,14 +12,20 @@ please [migrate][migration-guide], or consult the [legacy docs][legacy-quickstar
 
 - Go through the [installation guide][install-guide].
 - User authorized with `cluster-admin` permissions.
+- An accessible image registry for various operator images (ex. [hub.docker.com](https://hub.docker.com/signup),
+[quay.io](https://quay.io/)) and be logged in in your command line environment.
+  - `example.com` is used as the registry Docker Hub namespace in these examples.
+  Replace it with another value if using a different registry or namespace.
+  - The registry/namespace must be public, or the cluster must be provisioned with an
+  [image pull secret][k8s-image-pull-sec] if the image namespace is private.
 
 ## Overview
 
 We will create a sample project to let you know how it works and this sample will:
 
-- Create a Memcached Deployment if it doesn't exist
-- Ensure that the Deployment size is the same as specified by the Memcached CR spec
-- Update the Memcached CR status using the status writer with the names of the memcached pods
+- Create a Nginx Deployment if it doesn't exist
+- Ensure that the Deployment size is the same as specified by the Nginx CR spec
+- Update the Nginx CR status using the status writer with the names of the CR's pods
 
 ## Create a new project
 
@@ -165,6 +171,27 @@ As you may have noticed, the Helm operator simply applies the entire spec as if
 it was the contents of a values file, just like `helm install -f ./overrides.yaml`
 works.
 
+## Configure the operator's image registry
+
+All that remains is to build and push the operator image to the desired image registry.
+Your Makefile composes image tags either from values written at project initialization or from the CLI.
+In particular, `IMAGE_TAG_BASE` lets you define a common image registry, namespace, and partial name
+for all your image tags. Update this to another registry and/or namespace if the current value is incorrect.
+Afterwards you can update the `IMG` variable definition like so:
+
+```diff
+-IMG ?= controller:latest
++IMG ?= $(IMAGE_TAG_BASE):$(VERSION)
+```
+
+Once done, you do not have to set `IMG` or any other image variable in the CLI. The following command will
+build and push an operator image tagged as `example.com/nginx-operator:v0.0.1` to Docker Hub:
+
+```console
+make docker-build docker-push
+```
+
+
 ## Run the operator
 
 There are three ways to run the operator:
@@ -183,26 +210,12 @@ make install run
 
 ### 2. Run as a Deployment inside the cluster
 
-#### Build and push the image
-
-Build and push the image:
-
-```sh
-export USERNAME=<quay-namespace>
-make docker-build docker-push IMG=quay.io/$USERNAME/nginx-operator:v0.0.1
-```
-
-**Note**: The name and tag of the image (`IMG=<some-registry>/<project-name>:tag`) in both the commands can also be set in the Makefile.
-Modify the line which has `IMG ?= controller:latest` to set your desired default image name.
-
-#### Deploy the operator
-
-By default, a new namespace is created with name `<project-name>-system`, i.e. nginx-operator-system and will be used for the deployment.
+By default, a new namespace is created with name `<project-name>-system`, ex. `nginx-operator-system`, and will be used for the deployment.
 
 Run the following to deploy the operator. This will also install the RBAC manifests from `config/rbac`.
 
 ```sh
-make deploy IMG=quay.io/$USERNAME/nginx-operator:v0.0.1
+make deploy
 ```
 
 Verify that the nginx-operator is up and running:
@@ -221,28 +234,26 @@ First, install [OLM][doc-olm]:
 operator-sdk olm install
 ```
 
-Then bundle your operator and push the bundle image:
+Bundle your operator, then build and push the bundle image. The `bundle` target generates a [bundle][doc-bundle]
+in the `bundle` directory containing manifests and metadata defining your operator.
+`bundle-build` and `bundle-push` build and push a bundle image defined by `bundle.Dockerfile`.
 
 ```sh
-make bundle IMG=$OPERATOR_IMG
-# Note the "-bundle" component in the image name below.
-export BUNDLE_IMG="quay.io/$USERNAME/nginx-operator-bundle:v0.0.1"
-make bundle-build BUNDLE_IMG=$BUNDLE_IMG
-make docker-push IMG=$BUNDLE_IMG
+make bundle bundle-build bundle-push
 ```
 
 Finally, run your bundle:
 
 ```sh
-operator-sdk run bundle $BUNDLE_IMG
+operator-sdk run bundle example.com/nginx-operator-bundle:v0.0.1
 ```
 
 Check out the [docs][quickstart-bundle] for a deep dive into `operator-sdk`'s OLM integration.
 
 
-## Deploy the Nginx custom resource
+## Create a Nginx CR
 
-Apply the nginx CR that we modified earlier:
+Create the nginx CR that we modified earlier:
 
 ```sh
 kubectl apply -f config/samples/demo_v1alpha1_nginx.yaml
@@ -340,6 +351,12 @@ Otherwise your cluster may have dangling custom resource objects that cannot be 
 make undeploy
 ```
 
+## Next steps
+
+Next, check out the following:
+1. Operator packaging and distribution with [OLM][olm-integration].
+1. The [advanced features][advanced-features] doc for more use cases and under-the-hood details.
+
 
 [legacy-quickstart-doc]:https://v0-19-x.sdk.operatorframework.io/docs/helm/quickstart/
 [migration-guide]:/docs/building-operators/helm/migration
@@ -350,3 +367,5 @@ make undeploy
 [helm-official]:https://helm.sh/docs/
 [quickstart-bundle]:/docs/olm-integration/quickstart-bundle
 [doc-olm]:/docs/olm-integration/quickstart-bundle/#enabling-olm
+[olm-integration]:/docs/olm-integration
+[advanced-features]:/docs/building-operators/helm/reference/advanced_features

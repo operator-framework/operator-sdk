@@ -26,7 +26,7 @@ We will create a sample project to let you know how it works and this sample wil
 
 - Create a Memcached Deployment if it doesn't exist
 - Ensure that the Deployment size is the same as specified by the Memcached CR spec
-- Update the Memcached CR status using the status writer with the names of the memcached pods
+- Update the Memcached CR status using the status writer with the names of the CR's pods
 
 ## Create a new project
 
@@ -57,7 +57,7 @@ The scaffolded operator has the following structure:
 
 See [scaffolded files reference][layout-doc] and [watches reference][ansible-watches] for more detailed information
 
-#### Modify the Manager
+### Modify the Manager
 
 Now we need to provide the reconcile logic, in the form of an Ansible
 Role, which will run every time a `Memcached` resource is created,
@@ -134,7 +134,7 @@ to `false` in your `watches.yaml`. It is recommended that you perform some
 type validation in Ansible on the variables to ensure that your
 application is receiving expected input.
 
-#### Configure the operator's image registry
+## Configure the operator's image registry
 
 All that remains is to build and push the operator image to the desired image registry.
 Your Makefile composes image tags either from values written at project initialization or from the CLI.
@@ -172,8 +172,6 @@ make install run
 ```
 
 ### 2. Run as a Deployment inside the cluster
-
-#### Deploy the operator
 
 By default, a new namespace is created with name `<project-name>-system`, ex. `memcached-operator-system`, and will be used for the deployment.
 
@@ -293,17 +291,17 @@ memcached-sample                        5/5     5            5           3m
 
 ### Cleanup
 
-Call the following to delete all deployed resources:
+Run the following to delete all deployed resources:
 
 ```sh
+kubectl delete -f config/samples/cache_v1alpha1_memcached.yaml
 make undeploy
 ```
 
 ## Next Steps
 
-We recommend reading through the our [Ansible development
-section][ansible-developer-tips] for tips and tricks, including how to
-run the operator locally.
+We recommend reading through the our [Ansible development section][ansible-developer-tips]
+for tips and tricks, including how to run the operator locally.
 
 In this tutorial, the scaffolded `watches.yaml` could be used as-is, but
 has additional optional features. See [watches reference][ansible-watches].
