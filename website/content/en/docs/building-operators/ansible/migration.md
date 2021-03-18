@@ -7,7 +7,7 @@ description: Instructions for migrating an Ansible-based operator built prior to
 
 ## Overview
 
-The v1.0 release improves upon prior `operator-sdk` releases with a new project structure and CLI, each of which enhances project extensibility and customizability. These design changes are influenced by [`kubebuilder`](https://book.kubebuilder.io/).
+The motivations for the new layout are related to bringing more flexibility to users and part of the process to Integrating Kubebuilder and Operator SDK. Because of this integration you may be referred to the Kubebuilder documentation [https://book.kubebuilder.io/](https://book.kubebuilder.io/) for more information about certain topics. When using this document just remember to replace `$ kubebuilder <command>` with `$ operator-sdk <command>`.
 
 **Note:** It is recommended that you have your project upgraded to the latest SDK v1.y release version before following the steps in this guide to migrate to the new layout. However, the steps might work from previous versions as well. In this case, if you find an issue which is not covered here then check the previous [Migration Guides][migration-doc] which might help out.
 
@@ -306,3 +306,4 @@ For further steps regarding the deployment of the operator, creation of custom r
 [testing-guide]: /docs/building-operators/ansible/testing-guide
 [migration-doc]: /docs/upgrading-sdk-version/
 [tutorial-deploy]: /docs/building-operators/ansible/tutorial/#run-the-operator
+
