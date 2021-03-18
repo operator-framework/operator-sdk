@@ -99,7 +99,7 @@ func (p *initSubcommand) BindFlags(fs *pflag.FlagSet) {
 }
 
 func (p *initSubcommand) InjectConfig(c config.Config) {
-	_ = c.SetLayout(pluginKey)
+	_ = c.SetPluginChain([]string{pluginKey})
 	p.config = c
 	p.apiSubc.config = p.config
 }

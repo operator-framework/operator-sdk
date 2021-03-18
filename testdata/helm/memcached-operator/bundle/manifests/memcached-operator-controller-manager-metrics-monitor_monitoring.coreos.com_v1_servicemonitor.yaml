@@ -6,8 +6,12 @@ metadata:
   name: memcached-operator-controller-manager-metrics-monitor
 spec:
   endpoints:
-  - path: /metrics
+  - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+    path: /metrics
     port: https
+    scheme: https
+    tlsConfig:
+      insecureSkipVerify: true
   selector:
     matchLabels:
       control-plane: controller-manager

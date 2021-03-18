@@ -109,7 +109,7 @@ func ReadConfig() (config.Config, error) {
 	}
 
 	// Unmarshal the file content
-	if err := c.Unmarshal(in); err != nil {
+	if err := c.UnmarshalYAML(in); err != nil {
 		return nil, err
 	}
 
@@ -118,14 +118,16 @@ func ReadConfig() (config.Config, error) {
 
 // PluginKeyToOperatorType converts a plugin key string to an operator project type.
 // TODO(estroz): this can probably be made more robust by checking known plugin keys directly.
-func PluginKeyToOperatorType(pluginKey string) OperatorType {
-	switch {
-	case strings.HasPrefix(pluginKey, "go"):
-		return OperatorTypeGo
-	case strings.HasPrefix(pluginKey, "helm"):
-		return OperatorTypeHelm
-	case strings.HasPrefix(pluginKey, "ansible"):
-		return OperatorTypeAnsible
+func PluginKeyToOperatorType(pluginKeys []string) OperatorType {
+	for _, pluginKey := range pluginKeys {
+		switch {
+		case strings.HasPrefix(pluginKey, "go"):
+			return OperatorTypeGo
+		case strings.HasPrefix(pluginKey, "helm"):
+			return OperatorTypeHelm
+		case strings.HasPrefix(pluginKey, "ansible"):
+			return OperatorTypeAnsible
+		}
 	}
 	return OperatorTypeUnknown
 }
@@ -134,10 +136,11 @@ func PluginKeyToOperatorType(pluginKey string) OperatorType {
 // If not, it will return "go" because that was the only project type supported for project versions < v3.
 func GetProjectLayout(cfg config.Config) string {
 	isV3 := cfg.GetVersion().Compare(cfgv3.Version) == 0
-	if cfg == nil || !isV3 || cfg.GetLayout() == "" {
+	pluginChain := cfg.GetPluginChain()
+	if cfg == nil || !isV3 || len(pluginChain) == 0 {
 		return "go"
 	}
-	return cfg.GetLayout()
+	return strings.Join(pluginChain, ",")
 }
 
 var flagRe = regexp.MustCompile("(.* )?-v(.* )?")

@@ -79,14 +79,17 @@ func (tc TestContext) AddPackagemanifestsTarget() error {
 	}
 
 	// Unmarshal the file content
-	if err := c.Unmarshal(b); err != nil {
+	if err := c.UnmarshalYAML(b); err != nil {
 		return err
 	}
 
 	// add the manifests target when is a Go project.
 	replaceTarget := ""
-	if strings.HasPrefix(c.GetLayout(), "go") {
-		replaceTarget = "manifests"
+	for _, pluginKey := range c.GetPluginChain() {
+		if strings.HasPrefix(pluginKey, "go") {
+			replaceTarget = "manifests"
+			break
+		}
 	}
 	makefilePackagemanifestsFragment = fmt.Sprintf(makefilePackagemanifestsFragment, replaceTarget)
 

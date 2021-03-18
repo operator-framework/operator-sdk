@@ -127,7 +127,7 @@ func (p *initSubcommand) BindFlags(fs *pflag.FlagSet) {
 // InjectConfig will inject the PROJECT file/config in the plugin
 func (p *initSubcommand) InjectConfig(c config.Config) {
 	// v3 project configs get a 'layout' value.
-	_ = c.SetLayout(pluginKey)
+	_ = c.SetPluginChain([]string{pluginKey})
 	p.config = c
 	p.apiSubc.config = p.config
 }
