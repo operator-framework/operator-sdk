@@ -196,7 +196,7 @@ func (c manifestsCmd) run(cfg config.Config) error {
 	}
 	base := bases.ClusterServiceVersion{
 		OperatorName: c.packageName,
-		OperatorType: projutil.PluginKeyToOperatorType(cfg.GetLayout()),
+		OperatorType: projutil.PluginKeyToOperatorType(cfg.GetPluginChain()),
 		APIsDir:      c.apisDir,
 		Interactive:  requiresInteraction(basePath, c.interactiveLevel),
 		GVKs:         gvks,

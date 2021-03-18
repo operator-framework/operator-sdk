@@ -48,9 +48,9 @@ func RunInit(cfg config.Config) error {
 
 // initUpdateMakefile updates a vanilla kubebuilder Makefile with operator-sdk recipes.
 func initUpdateMakefile(cfg config.Config, filePath string) error {
-	operatorType := projutil.PluginKeyToOperatorType(cfg.GetLayout())
+	operatorType := projutil.PluginKeyToOperatorType(cfg.GetPluginChain())
 	if operatorType == projutil.OperatorTypeUnknown {
-		return fmt.Errorf("unsupported plugin key %q", cfg.GetLayout())
+		return fmt.Errorf("unsupported plugin key %q", cfg.GetPluginChain())
 	}
 
 	makefileBytes, err := ioutil.ReadFile(filePath)
