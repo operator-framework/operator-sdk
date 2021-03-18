@@ -1,0 +1,11 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      For Helm-based operators, fixes handling of `kind: List` whereby the 
+      operator fails when trying to set watch on the object. The fix now sets
+      the watch on the objects of the list instead. 
+
+    kind: "bugfix"
+
+    breaking: false
