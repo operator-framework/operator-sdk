@@ -6,7 +6,7 @@ weight: 10
 
 ## What are the the differences between Kubebuilder and Operator-SDK?
 
-Kubebuilder and Operator SDK are both projects that allow you to quickly create and manage an operator project. Operator SDK uses Kubebuilder under the hood to do so for Go projects, such that the `operator-sdk` CLI tool will work with a project created by `kubebuilder`. Therefore each project makes use of [controller-runtime][controller-runtime] and will have the same [basic layout][kb-doc-what-is-a-basic-project].
+Kubebuilder and Operator SDK are both projects that allow you to quickly create and manage an operator project. Operator SDK uses Kubebuilder under the hood to do so for Go projects, such that the `operator-sdk` CLI tool will work with a project created by `kubebuilder`. Therefore each project makes use of [controller-runtime][controller-runtime] and will have the same [basic layout][kb-doc-what-is-a-basic-project]. For further information also check the [SDK Project Layout][project-doc].
 
 Operator SDK offers additional features on top of the basic project scaffolding that Kubebuilder provides. By default, `operator-sdk init` generates a project integrated with:
 - [Operator Lifecycle Manager][olm], an installation and runtime management system for operators
