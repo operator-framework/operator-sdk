@@ -31,7 +31,7 @@ type Kustomization struct {
 	file.ProjectNameMixin
 }
 
-// SetTemplateDefaults implements input.Template
+// SetTemplateDefaults implements file.Template
 func (f *Kustomization) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = filepath.Join("config", "default", "kustomization.yaml")
@@ -66,8 +66,8 @@ bases:
 #- ../prometheus
 
 patchesStrategicMerge:
-  # Protect the /metrics endpoint by putting it behind auth.
-  # If you want your controller-manager to expose the /metrics
-  # endpoint w/o any authn/z, please comment the following line.
+# Protect the /metrics endpoint by putting it behind auth.
+# If you want your controller-manager to expose the /metrics
+# endpoint w/o any authn/z, please comment the following line.
 - manager_auth_proxy_patch.yaml
 `

@@ -100,11 +100,11 @@ func (s *initScaffolder) Scaffold() error {
 		&prometheus.Kustomization{},
 		&prometheus.ServiceMonitor{},
 
-		&manager.Manager{Image: imageName},
+		&manager.Config{Image: imageName},
 		&manager.Kustomization{},
 
-		&kdefault.Kustomize{},
-		&kdefault.AuthProxyPatch{},
+		&kdefault.Kustomization{},
+		&kdefault.ManagerAuthProxyPatch{},
 
 		&roles.Placeholder{},
 		&playbooks.Placeholder{},

@@ -23,10 +23,10 @@ import (
 	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
 )
 
-var _ file.Template = &Manager{}
+var _ file.Template = &Config{}
 
-// Manager scaffolds yaml config for the manager.
-type Manager struct {
+// Config scaffolds a file that defines the namespace and the manager deployment
+type Config struct {
 	file.TemplateMixin
 	file.ProjectNameMixin
 
@@ -34,18 +34,18 @@ type Manager struct {
 	Image string
 }
 
-// SetTemplateDefaults implements input.Template
-func (f *Manager) SetTemplateDefaults() error {
+// SetTemplateDefaults implements file.Template
+func (f *Config) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = filepath.Join("config", "manager", "manager.yaml")
 	}
 
-	f.TemplateBody = managerTemplate
+	f.TemplateBody = configTemplate
 
 	return nil
 }
 
-const managerTemplate = `apiVersion: v1
+const configTemplate = `apiVersion: v1
 kind: Namespace
 metadata:
   labels:
@@ -72,32 +72,28 @@ spec:
       securityContext:
         runAsNonRoot: true
       containers:
-      - image: {{ .Image }}
-        args:
-        - "--enable-leader-election"
-        - "--leader-election-id={{ .ProjectName }}"
-        name: manager
-        securityContext:
-          allowPrivilegeEscalation: false
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 8081
-          initialDelaySeconds: 15
-          periodSeconds: 20
-        readinessProbe:
-          httpGet:
-            path: /readyz
-            port: 8081
-          initialDelaySeconds: 5
-          periodSeconds: 10
-        resources:
-          limits:
-            cpu: 100m
-            memory: 90Mi
-          requests:
-            cpu: 100m
-            memory: 60Mi
+        - name: manager
+          args:
+            - "--leader-elect"
+            - "--leader-election-id={{ .ProjectName }}"
+          env:
+            - name: ANSIBLE_GATHERING
+              value: explicit
+          image: {{ .Image }}
+          securityContext:
+            allowPrivilegeEscalation: false
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 6789
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 6789
+            initialDelaySeconds: 5
+            periodSeconds: 10
       serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10
 `

@@ -117,8 +117,9 @@ spec:
                   name: https
                 resources: {}
               - args:
-                - --metrics-addr=127.0.0.1:8080
-                - --enable-leader-election
+                - --health-probe-bind-address=:6789
+                - --metrics-bind-address=127.0.0.1:8080
+                - --leader-elect
                 - --leader-election-id=memcached-operator
                 env:
                 - name: ANSIBLE_GATHERING

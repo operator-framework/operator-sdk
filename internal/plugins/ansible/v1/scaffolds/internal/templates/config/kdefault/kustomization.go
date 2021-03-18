@@ -23,16 +23,16 @@ import (
 	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
 )
 
-var _ file.Template = &Kustomize{}
+var _ file.Template = &Kustomization{}
 
-// Kustomize scaffolds the Kustomization file for the default overlay
-type Kustomize struct {
+// Kustomization scaffolds a file that defines the kustomization scheme for the default overlay folder
+type Kustomization struct {
 	file.TemplateMixin
 	file.ProjectNameMixin
 }
 
-// SetTemplateDefaults implements input.Template
-func (f *Kustomize) SetTemplateDefaults() error {
+// SetTemplateDefaults implements file.Template
+func (f *Kustomization) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = filepath.Join("config", "default", "kustomization.yaml")
 	}
@@ -66,8 +66,8 @@ bases:
 #- ../prometheus
 
 patchesStrategicMerge:
-  # Protect the /metrics endpoint by putting it behind auth.
-  # If you want your controller-manager to expose the /metrics
-  # endpoint w/o any authn/z, please comment the following line.
+# Protect the /metrics endpoint by putting it behind auth.
+# If you want your controller-manager to expose the /metrics
+# endpoint w/o any authn/z, please comment the following line.
 - manager_auth_proxy_patch.yaml
 `

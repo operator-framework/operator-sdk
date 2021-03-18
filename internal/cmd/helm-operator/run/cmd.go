@@ -15,6 +15,7 @@
 package run
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -84,8 +85,9 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 		os.Exit(1)
 	}
 
-	// Deprecated: OPERATOR_NAME environment variable is an artifact of the legacy operator-sdk project scaffolding.
-	//   Flag `--leader-election-id` should be used instead.
+	// Deprecated: OPERATOR_NAME environment variable is an artifact of the
+	// legacy operator-sdk project scaffolding. Flag `--leader-election-id`
+	// should be used instead.
 	if operatorName, found := os.LookupEnv("OPERATOR_NAME"); found {
 		log.Info("Environment variable OPERATOR_NAME has been deprecated, use --leader-election-id instead.")
 		if cmd.Flags().Lookup("leader-election-id").Changed {
@@ -95,11 +97,22 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 		}
 	}
 
+	//todo: remove the following checks for 2.0.0 they are required just because of the flags deprecation
+	if cmd.Flags().Changed("leader-elect") && cmd.Flags().Changed("enable-leader-election") {
+		log.Error(errors.New("only one of --leader-elect and --enable-leader-election may be set"), "invalid flags usage")
+		os.Exit(1)
+	}
+
+	if cmd.Flags().Changed("metrics-addr") && cmd.Flags().Changed("metrics-bind-address") {
+		log.Error(errors.New("only one of --metrics-addr and --metrics-bind-address may be set"), "invalid flags usage")
+		os.Exit(1)
+	}
+
 	// Set default manager options
 	options := manager.Options{
-		MetricsBindAddress:         f.MetricsAddress,
+		MetricsBindAddress:         f.MetricsBindAddress,
 		HealthProbeBindAddress:     f.ProbeAddr,
-		LeaderElection:             f.EnableLeaderElection,
+		LeaderElection:             f.LeaderElection,
 		LeaderElectionID:           f.LeaderElectionID,
 		LeaderElectionResourceLock: resourcelock.ConfigMapsResourceLock,
 		LeaderElectionNamespace:    f.LeaderElectionNamespace,

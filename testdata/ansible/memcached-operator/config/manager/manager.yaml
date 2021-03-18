@@ -27,7 +27,7 @@ spec:
       containers:
         - name: manager
           args:
-            - "--enable-leader-election"
+            - "--leader-elect"
             - "--leader-election-id=memcached-operator"
           env:
             - name: ANSIBLE_GATHERING

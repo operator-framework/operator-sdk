@@ -251,7 +251,7 @@ func main() {
 
 In order to use the previous one ensure that you have the [operator-lib][operator-lib] as a dependency of your project.
 
-- The default port used by the metric endpoint binds to `:8080` from the previous `:8383`. To continue using port `8383`, specify `--metrics-addr=:8383` when you start the operator.
+- The default port used by the metric endpoint binds to `:8080` from the previous `:8383`. To continue using port `8383`, specify `--metrics-bind-address=:8383` when you start the operator.
 
 - `OPERATOR_NAME` and `POD_NAME` environment variables are no longer used. `OPERATOR_NAME` was used to define the name for a leader election config map. Operator authors should use the `LeaderElectionID` attribute from the [Manager Options][ctrl-options] which is hardcoded in `main.go`:
 
