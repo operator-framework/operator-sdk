@@ -96,7 +96,7 @@ func (s *initScaffolder) Scaffold() error {
 		&rbac.LeaderElectionRoleBinding{},
 		&rbac.ManagerRole{},
 		&rbac.RoleBinding{},
-
+		&rbac.ServiceAccount{},
 		&prometheus.Kustomization{},
 		&prometheus.ServiceMonitor{},
 

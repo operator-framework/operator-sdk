@@ -54,6 +54,7 @@ var _ = BeforeSuite(func() {
 	tc.Resources = "memcacheds"
 	tc.ProjectName = "memcached-operator"
 	tc.Kubectl.Namespace = fmt.Sprintf("%s-system", tc.ProjectName)
+	tc.Kubectl.ServiceAccount = fmt.Sprintf("%s-controller-manager", tc.ProjectName)
 
 	By("copying sample to a temporary e2e directory")
 	Expect(exec.Command("cp", "-r", "../../../testdata/helm/memcached-operator", tc.Dir).Run()).To(Succeed())

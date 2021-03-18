@@ -50,6 +50,6 @@ roleRef:
   name: proxy-role
 subjects:
 - kind: ServiceAccount
-  name: default
+  name: controller-manager
   namespace: system
 `
