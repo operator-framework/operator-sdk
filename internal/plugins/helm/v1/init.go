@@ -161,7 +161,7 @@ func (p *initSubcommand) Run(fs machinery.Filesystem) error {
 	}
 
 	// Run SDK phase 2 plugins.
-	if err := p.runPhase2(); err != nil {
+	if err := p.runPhase2(fs); err != nil {
 		return err
 	}
 
@@ -177,8 +177,8 @@ func (p *initSubcommand) Run(fs machinery.Filesystem) error {
 }
 
 // SDK phase 2 plugins.
-func (p *initSubcommand) runPhase2() error {
-	if err := manifestsv2.RunInit(p.config); err != nil {
+func (p *initSubcommand) runPhase2(fs machinery.Filesystem) error {
+	if err := manifestsv2.RunInit(p.config, fs); err != nil {
 		return err
 	}
 	if err := scorecardv2.RunInit(p.config); err != nil {

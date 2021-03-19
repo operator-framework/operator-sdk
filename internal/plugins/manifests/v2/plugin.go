@@ -16,6 +16,7 @@ package v2
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
 	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
@@ -33,6 +34,8 @@ const (
 var (
 	pluginVersion   = plugin.Version{Number: 2}
 	pluginConfigKey = plugin.Key(pluginName, pluginVersion.String())
+
+	manifestsDir = filepath.Join("config", "manifests")
 )
 
 // Config configures this plugin, and is saved in the project config file.
@@ -45,9 +48,12 @@ func HasPluginConfig(cfg config.Config) bool {
 }
 
 // RunInit modifies the project scaffolded by kubebuilder's Init plugin.
-func RunInit(cfg config.Config) error {
-	// Only run these if project version is v3.
+func RunInit(cfg config.Config, fs machinery.Filesystem) error {
+	// These will only run if project version is v3.
 	if err := manifests.RunInit(cfg); err != nil {
+		return err
+	}
+	if err := runInit(cfg, fs); err != nil {
 		return err
 	}
 
