@@ -41,6 +41,7 @@ endif
 .PHONY: prerelease
 prerelease: check_release_version changelog ## Create release commit changes to commit.
 	./website/scripts/update_branch_mappings.sh $(RELEASE_VERSION)
+	./website/scripts/update_download_url.sh $(RELEASE_VERSION)
 
 .PHONY: changelog
 changelog: check_release_version ## Generate the changelog.
