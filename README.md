@@ -1,9 +1,7 @@
 <img src="website/static/operator_logo_sdk_color.svg" height="125px"></img>
 
 
-<!-- TODO(estroz): uncomment this when .github.com/workflows/deploy.yml is merged
 [![Build Status](https://github.com/operator-framework/operator-sdk/workflows/deploy/badge.svg)](https://github.com/operator-framework/operator-sdk/actions)
--->
 [![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
 [![Go Report Card](https://goreportcard.com/badge/github.com/operator-framework/operator-sdk)](https://goreportcard.com/report/github.com/operator-framework/operator-sdk)
 
@@ -45,15 +43,13 @@ A Go Operator project's Go version can be found in its `go.mod` file.
 Supported Kubernetes versions for your Operator project or relevant binary can be determined
 by following this [compatibility guide][k8s-compat].
 
-<!-- TODO(estroz): remove the master subdomain once the updated doc is released (v1.5.0) -->
-[k8s-compat]:https://master.sdk.operatorframework.io/docs/overview#kubernetes-version-compatibility
+[k8s-compat]:https://sdk.operatorframework.io/docs/overview#kubernetes-version-compatibility
 
 ### Platforms
 
 The set of supported platforms for all binaries and images can be found in [these tables][platforms].
 
-<!-- TODO(estroz): remove the master subdomain once the updated doc is released (v1.5.0) -->
-[platforms]:https://master.sdk.operatorframework.io/docs/overview#platform-support
+[platforms]:https://sdk.operatorframework.io/docs/overview#platform-support
 
 ## Community and how to get involved
 

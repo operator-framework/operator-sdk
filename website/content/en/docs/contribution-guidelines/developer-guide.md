@@ -42,9 +42,8 @@ The operator-sdk project builds binaries for [several os's/architectures][readme
 If you wish to add support for a new one, please create a feature request issue before
 implementing support for that platform and submitting a PR.
 
-<!-- TODO(estroz): add link to deploy action once PR is merged -->
 If you'd like to implement support yourself, you can test a new architecture by enabling Actions
-in your repository, add a platform pair to the `deploy` Action's `build and push` step,
+in your repository, add a platform pair to the [`deploy`][deploy-workflow] workflow's `build and push` step,
 and push to your main branch. Once the updated Action passes, submit a PR linking the passing Action run.
 
 
@@ -58,3 +57,4 @@ and push to your main branch. Once the updated Action passes, submit a PR linkin
 [sdk-actions]:https://github.com/operator-framework/operator-sdk/actions
 [sdk-action-cfgs]:https://github.com/operator-framework/operator-sdk/tree/master/.github/workflows
 [readme-platforms]:https://github.com/operator-framework/operator-sdk/tree/master/README.md#platforms
+[deploy-workflow]:https://github.com/operator-framework/operator-sdk/tree/master/.github/workflows/deploy.yml
