@@ -125,6 +125,38 @@ In our example, we will replace `# FIXME: Specify the role or playbook for this 
 
 **NOTE**: Do not remove the `+kubebuilder:scaffold:watch` [marker][marker]. It allows the tool to update the watches file when new APIs are created.
 
+Additionally pre-1.0 the `reconcilePeriod` parameter was an integer representing the maximum time in seconds before a reconcile would be triggered.
+With 1.0, it was changed to a string representing the maximum duration before a reconcile will be triggered. Appending an `s` to your `reconcilePeriod`
+will set the duration unit to seconds and match the old behavior.
+
+so for example a resource set to requeue every hour:
+
+```yaml
+---
+# Use the 'create api' subcommand to add watches to this file.
+- version: v1alpha1
+  group: cache.example.com
+  kind: Memcached
+  role: memcached
+  reconcilePeriod: 3600
+#+kubebuilder:scaffold:watch
+```
+
+would become
+
+```yaml
+---
+# Use the 'create api' subcommand to add watches to this file.
+- version: v1alpha1
+  group: cache.example.com
+  kind: Memcached
+  role: memcached
+  reconcilePeriod: 3600s
+#+kubebuilder:scaffold:watch
+```
+
+and the values `60m` and `1h` would be equivalent to the `3600s` that is used.
+
 ### Migrating your Molecule tests
 
 If you are using [Molecule][molecule] in your project will be required to port the tests for the new layout.  
