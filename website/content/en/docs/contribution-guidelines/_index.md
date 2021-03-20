@@ -1,6 +1,6 @@
 ---
 title: How to Contribute
 linkTitle: Contribution Guide
-weight: 9
+weight: 10
 description: Contribute to Operator SDK
 ---
