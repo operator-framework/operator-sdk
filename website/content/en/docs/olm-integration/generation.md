@@ -84,7 +84,7 @@ and `protocol` of one element in the Operator `Deployment`'s `spec.template.spec
 
 By default, the manager's Deployment is configured to mount a volume containing TLS cert data
 created by [cert-manager][cert-manager] into the manager's container.
-OLM does [not yet support cert-manager][olm-cert-support], so a JSON patch <!-- [JSON patch][cm-patch] --> was added
+OLM does [not yet support cert-manager][olm-cert-support], so a [JSON patch][cm-patch] was added
 to remove this volume and mount such that OLM can itself create and manage certs for your Operator.
 
 **Note (for Go Operators only):** If targeting OLM < v0.17.0, the manager's default webhook server
@@ -144,8 +144,7 @@ in case other Operator resources require routing. Feel free to remove it otherwi
 [crd-wh-serviceref]:https://pkg.go.dev/k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1?utm_source=godoc#ServiceReference
 [wh-serviceref]:https://pkg.go.dev/k8s.io/api/admissionregistration/v1?utm_source=godoc#ServiceReference
 [olm-cert-support]:https://olm.operatorframework.io/docs/advanced-tasks/adding-admission-and-conversion-webhooks/#certificate-authority-requirements
-<!-- TODO(estroz): update this from master to the commit that adds this doc -->
-<!-- [cm-patch]:https://github.com/operator-framework/operator-sdk/blob/master/<commit>/go/v3/memcached-operator/config/manifests/kustomization.yaml#L12 -->
+[cm-patch]:https://github.com/operator-framework/operator-sdk/blob/163c657/go/v3/memcached-operator/config/manifests/kustomization.yaml#L12
 
 ## Generate your first release
 
