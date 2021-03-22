@@ -16,6 +16,11 @@ Operator SDK supports operator types other than Go as well, such as Ansible and 
 
 For further context about the relationship between Kubebuilder and Operator SDK, see [this blog post][operator-sdk-reaches-v1.0].
 
+## Can I use the Kubebuilder docs?
+
+Yes, you can use [https://book.kubebuilder.io/](https://book.kubebuilder.io/). Just keep in mind that when you see an instruction such as:
+`$ kubebuilder <command>` you will use `$ operator-sdk <command>`. 
+
 ## Controller Runtime FAQ
 
 Please see the upstream [Controller Runtime FAQ][cr-faq] first for any questions related to runtime mechanics or controller-runtime APIs.
