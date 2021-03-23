@@ -103,7 +103,11 @@ This memcached role will:
 - Ensure a memcached Deployment exists
 - Set the Deployment size
 
-It is good practice to set default values for variables used in Ansible
+Note that the tasks in this Ansible role file are what actually defines the behavior of the spec and status of the memcached custom resource.
+As Kubernetes allows entry of arbitrary fields when creating resources, we don't need to actually create specific fields in the CRD. 
+While we won't be doing this in this tutorial, it is recommended to also define these fields in the CRD, so that Kubernetes users
+can see the fields that will be used when using the custom resource.
+It is also good practice to set default values for variables used in Ansible
 Roles, so edit `roles/memcached/defaults/main.yml`:
 
 ```yaml
@@ -256,21 +260,46 @@ $ kubectl get memcached/memcached-sample -o yaml
 apiVersion: cache.example.com/v1alpha1
 kind: Memcached
 metadata:
-  clusterName: ""
-  creationTimestamp: 2018-03-31T22:51:08Z
-  generation: 0
+  creationTimestamp: "2021-03-17T19:54:42Z"
+  generation: 1
+  managedFields:
+  - apiVersion: cache.example.com/v1alpha1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:status:
+        .: {}
+        f:conditions: {}
+    manager: ansible-operator
+    operation: Update
+    time: "2021-03-17T19:54:42Z"
+  - apiVersion: cache.example.com/v1alpha1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:spec:
+        .: {}
+        f:size: {}
+    manager: kubectl
+    operation: Update
+    time: "2021-03-17T19:54:42Z"
   name: memcached-sample
   namespace: default
-  resourceVersion: "245453"
-  selfLink: /apis/cache.example.com/v1alpha1/namespaces/default/memcacheds/memcached-sample
-  uid: 0026cc97-3536-11e8-bd83-0800274106a1
+  resourceVersion: "1008"
+  uid: 4b023125-132a-44e3-80de-20801c7a9268
 spec:
   size: 3
 status:
-  nodes:
-  - memcached-sample-6fd7c98d8-7dqdr
-  - memcached-sample-6fd7c98d8-g5k7v
-  - memcached-sample-6fd7c98d8-m7vn7
+  conditions:
+  - ansibleResult:
+      changed: 0
+      completion: 2021-03-17T19:54:54.890394
+      failures: 0
+      ok: 1
+      skipped: 0
+    lastTransitionTime: "2021-03-17T19:54:42Z"
+    message: Awaiting next reconciliation
+    reason: Successful
+    status: "True"
+    type: Running
 ```
 
 ### Update the size
