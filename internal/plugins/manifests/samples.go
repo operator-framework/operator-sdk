@@ -16,10 +16,8 @@ package manifests
 import (
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
 )
 
 var _ file.Template = &kustomization{}
@@ -28,9 +26,7 @@ var _ file.Inserter = &kustomization{}
 // kustomization scaffolds or updates the kustomization.yaml in config/samples.
 type kustomization struct {
 	file.TemplateMixin
-
-	// GroupVersionKind is the sample's gvk to add to this scaffold.
-	GroupVersionKind resource.GVK
+	file.ResourceMixin
 }
 
 // SetTemplateDefaults implements file.Template
@@ -38,6 +34,7 @@ func (f *kustomization) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = filepath.Join("config", "samples", "kustomization.yaml")
 	}
+	f.Path = f.Resource.Replacer().Replace(f.Path)
 
 	f.TemplateBody = fmt.Sprintf(kustomizationTemplate, file.NewMarkerFor(f.Path, samplesMarker))
 
@@ -58,14 +55,14 @@ const samplesCodeFragment = `- %s
 
 // makeCRFileName returns a Custom Resource example file name in the same format
 // as kubebuilder's CreateAPI plugin for a gvk.
-func makeCRFileName(gvk resource.GVK) string {
-	return fmt.Sprintf("%s_%s_%s.yaml", gvk.Group, gvk.Version, strings.ToLower(gvk.Kind))
+func (f kustomization) makeCRFileName() string {
+	return f.Resource.Replacer().Replace("%[group]_%[version]_%[kind].yaml")
 }
 
 // GetCodeFragments implements file.Inserter
 func (f *kustomization) GetCodeFragments() file.CodeFragmentsMap {
 	return file.CodeFragmentsMap{
-		file.NewMarkerFor(f.Path, samplesMarker): []string{fmt.Sprintf(samplesCodeFragment, makeCRFileName(f.GroupVersionKind))},
+		file.NewMarkerFor(f.Path, samplesMarker): []string{fmt.Sprintf(samplesCodeFragment, f.makeCRFileName())},
 	}
 }
 

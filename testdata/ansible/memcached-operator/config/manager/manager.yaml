@@ -22,15 +22,19 @@ spec:
       labels:
         control-plane: controller-manager
     spec:
+      securityContext:
+        runAsNonRoot: true
       containers:
         - name: manager
           args:
-            - "--enable-leader-election"
+            - "--leader-elect"
             - "--leader-election-id=memcached-operator"
           env:
             - name: ANSIBLE_GATHERING
               value: explicit
           image: controller:latest
+          securityContext:
+            allowPrivilegeEscalation: false
           livenessProbe:
             httpGet:
               path: /healthz
@@ -43,4 +47,5 @@ spec:
               port: 6789
             initialDelaySeconds: 5
             periodSeconds: 10
+      serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10

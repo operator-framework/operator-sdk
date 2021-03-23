@@ -1,5 +1,5 @@
 ---
-title: Golang Based Operator Reference
+title: Go-based Operator Reference
 linkTitle: Reference
 weight: 100
 ---

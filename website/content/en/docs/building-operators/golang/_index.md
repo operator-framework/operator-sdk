@@ -1,5 +1,5 @@
 ---
-title: Golang
+title: Go
 weight: 2
-description: Guide to building a Golang Based Operator using Operator SDK
+description: Guide to building a Go-based Operator using Operator SDK
 ---

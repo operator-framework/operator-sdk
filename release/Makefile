@@ -6,7 +6,9 @@ SHELL = /bin/bash
 
 # Dry run flags.
 ifneq ($(DRY_RUN),)
-SNAPSHOT_FLAGS = --snapshot --skip-publish --rm-dist
+SNAPSHOT_FLAGS = --snapshot --skip-publish --skip-sign --rm-dist
+CHANGELOG = changelog/generated/tmp.md
+$(shell touch $(CHANGELOG))
 endif
 
 # Ensure that this Makefile is run from the project root (always contains the 'cmd/' directory).
@@ -17,12 +19,16 @@ endif
 ##@ Release
 
 .PHONY: release
+CHANGELOG ?= changelog/generated/$(GIT_VERSION).md
 release: ## Publish an operator-sdk release, with option for a dry run with DRY_RUN.
 ifeq (,$(GIT_VERSION))
 	$(error "GIT_VERSION must be set to a git tag")
 endif
 	$(SCRIPTS_DIR)/fetch goreleaser 0.147.2
-	GORELEASER_CURRENT_TAG=$(GIT_VERSION) $(TOOLS_DIR)/goreleaser $(SNAPSHOT_FLAGS) --release-notes=changelog/generated/$(GIT_VERSION).md --parallelism 5
+	GORELEASER_CURRENT_TAG=$(GIT_VERSION) $(TOOLS_DIR)/goreleaser $(SNAPSHOT_FLAGS) --release-notes=$(CHANGELOG) --parallelism 5
+ifneq ($(DRY_RUN),)
+	rm $(CHANGELOG)
+endif
 
 ##@ Pre-Release
 
@@ -35,6 +41,7 @@ endif
 .PHONY: prerelease
 prerelease: check_release_version changelog ## Create release commit changes to commit.
 	./website/scripts/update_branch_mappings.sh $(RELEASE_VERSION)
+	./website/scripts/update_download_url.sh $(RELEASE_VERSION)
 
 .PHONY: changelog
 changelog: check_release_version ## Generate the changelog.
@@ -43,7 +50,7 @@ changelog: check_release_version ## Generate the changelog.
 	rm -f ./changelog/fragments/!(00-template.yaml)
 
 .PHONY: tag
-VERSION_REGEXP := ^v[0-9]+\.[0-9]+\.[0-9]+(\-(alpha|beta|rc)\.[0-9]+)?$
+VERSION_REGEXP := ^(scorecard-kuttl/)?v[0-9]+\.[0-9]+\.[0-9]+(\-(alpha|beta|rc)\.[0-9]+)?$
 tag: ## Create a release tag.
 ifeq (,$(RELEASE_VERSION))
 	$(error "RELEASE_VERSION must be set to tag HEAD")
@@ -53,30 +60,6 @@ ifeq (,$(shell [[ "$(RELEASE_VERSION)" =~ $(VERSION_REGEXP) ]] && echo 1))
 endif
 	git tag --sign --message "Operator SDK $(RELEASE_VERSION)" $(RELEASE_VERSION)
 	git verify-tag --verbose $(RELEASE_VERSION)
-
-##@ Image deploy
-
-# Convenience wrappers for pushing all remotely hosted images.
-.PHONY: image-push image-push-multiarch
-IMAGE_TARGET_LIST = operator-sdk helm-operator ansible-operator scorecard-test scorecard-test-kuttl
-image-push: $(foreach i,$(IMAGE_TARGET_LIST),image-push/$(i)) ## Push all images for the host architecture.
-image-push-multiarch: $(foreach i,$(IMAGE_TARGET_LIST),image-push-multiarch/$(i)) ## Push the manifest list for all architectures.
-
-# Push an image for an architecture.
-BUILD_IMAGE_REPO = quay.io/operator-framework
-IMAGE_REPO ?= $(BUILD_IMAGE_REPO)
-GO_ARCH := $(shell go env GOARCH)
-image-push/%: IMAGE_PUSH_TAG = $(IMAGE_REPO)/$*-$(GO_ARCH)
-image-push/%:
-	./hack/image/push-image-tags.sh $(BUILD_IMAGE_REPO)/$*:dev $(IMAGE_PUSH_TAG)
-
-# Push multiarch images.
-ARCHES ?= amd64 arm64 ppc64le s390x
-KUTTL_ARCHES := amd64 arm64 ppc64le
-image-push-multiarch/scorecard-test-kuttl: ARCHES = $(KUTTL_ARCHES)
-image-push-multiarch/%: IMAGE_PUSH_TAG = $(IMAGE_REPO)/$*
-image-push-multiarch/%:
-	./hack/image/push-manifest-list.sh $(IMAGE_PUSH_TAG) $(ARCHES)
 
 .DEFAULT_GOAL := help
 .PHONY: help

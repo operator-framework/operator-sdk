@@ -4,7 +4,7 @@ SHELL = /bin/bash
 # This value must be updated to the release tag of the most recent release, a change that must
 # occur in the release commit. IMAGE_VERSION will be removed once each subproject that uses this
 # version is moved to a separate repo and release process.
-export IMAGE_VERSION = v1.4.0
+export IMAGE_VERSION = v1.5.0
 # Build-time variables to inject into binaries
 export SIMPLE_VERSION = $(shell (test "$(shell git describe)" = "$(shell git describe --abbrev=0)" && echo $(shell git describe)) || echo $(shell git describe --abbrev=0)+git)
 export GIT_VERSION = $(shell git describe --dirty --tags --always)
@@ -66,13 +66,14 @@ build: ## Build operator-sdk, ansible-operator, and helm-operator.
 	@mkdir -p $(BUILD_DIR)
 	go build $(GO_BUILD_ARGS) -o $(BUILD_DIR) ./cmd/{operator-sdk,ansible-operator,helm-operator}
 
+.PHONY: build/operator-sdk build/ansible-operator build/helm-operator
+build/operator-sdk build/ansible-operator build/helm-operator:
+	go build $(GO_BUILD_ARGS) -o $(BUILD_DIR)/$(@F) ./cmd/$(@F)
+
 # Build scorecard binaries.
 .PHONY: build/scorecard-test build/scorecard-test-kuttl build/custom-scorecard-tests
 build/scorecard-test build/scorecard-test-kuttl build/custom-scorecard-tests:
 	go build $(GO_GCFLAGS) $(GO_ASMFLAGS) -o $(BUILD_DIR)/$(@F) ./images/$(@F)
-.PHONY: build/operator-sdk build/ansible-operator build/helm-operator
-build/operator-sdk build/ansible-operator build/helm-operator:
-	go build $(GO_BUILD_ARGS) -o $(BUILD_DIR)/$(@F) ./cmd/$(@F)
 
 ##@ Dev image build
 
@@ -83,13 +84,13 @@ image-build: $(foreach i,$(IMAGE_TARGET_LIST),image/$(i)) ## Build all images.
 
 # Build an image.
 BUILD_IMAGE_REPO = quay.io/operator-framework
-image/%: BUILD_DIR = build/_image
-# Images run on the linux kernel, so binaries must always target linux.
-image/%: export GOOS = linux
-image/%: build/%
-	mkdir -p ./images/$*/bin && mv $(BUILD_DIR)/$* ./images/$*/bin
-	docker build -t $(BUILD_IMAGE_REPO)/$*:dev -f ./images/$*/Dockerfile ./images/$*
-	rm -rf $(BUILD_DIR)
+# When running in a terminal, this will be false. If true (ex. CI), print plain progress.
+ifneq ($(shell test -t 0; echo $$?),0)
+DOCKER_PROGRESS = --progress plain
+endif
+image/%: export DOCKER_CLI_EXPERIMENTAL = enabled
+image/%:
+	docker buildx build $(DOCKER_PROGRESS) -t $(BUILD_IMAGE_REPO)/$*:dev -f ./images/$*/Dockerfile --load .
 
 ##@ Release
 

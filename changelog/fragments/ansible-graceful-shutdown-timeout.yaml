@@ -1,5 +1,0 @@
-entries:
-  - description: >
-      For Ansible-based operators, allow passing a --graceful-shutdown-timeout to configure the duration the manager should wait before stopping.
-    kind: "addition"
-    breaking: false

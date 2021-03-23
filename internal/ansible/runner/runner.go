@@ -160,6 +160,7 @@ func New(watch watches.Watch, runnerArgs string) (Runner, error) {
 		ansibleVerbosity:    watch.AnsibleVerbosity,
 		ansibleArgs:         runnerArgs,
 		snakeCaseParameters: watch.SnakeCaseParameters,
+		markUnsafe:          watch.MarkUnsafe,
 	}, nil
 }
 
@@ -174,6 +175,7 @@ type runner struct {
 	maxRunnerArtifacts  int
 	ansibleVerbosity    int
 	snakeCaseParameters bool
+	markUnsafe          bool
 	ansibleArgs         string
 }
 
@@ -341,6 +343,12 @@ func (r *runner) makeParameters(u *unstructured.Unstructured) map[string]interfa
 		}
 	}
 
+	if r.markUnsafe {
+		for key, val := range parameters {
+			parameters[key] = markUnsafe(val)
+		}
+	}
+
 	parameters["ansible_operator_meta"] = map[string]string{"namespace": u.GetNamespace(), "name": u.GetName()}
 
 	objKey := escapeAnsibleKey(fmt.Sprintf("_%v_%v", r.GVK.Group, strings.ToLower(r.GVK.Kind)))
@@ -358,6 +366,34 @@ func (r *runner) makeParameters(u *unstructured.Unstructured) map[string]interfa
 		}
 	}
 	return parameters
+}
+
+// markUnsafe recursively checks for string values and marks them unsafe.
+// for eg:
+//		spec:
+//			key: "val"
+// would be marked unsafe in JSON format as:
+//		spec:
+//			key: map{__ansible_unsafe:"val"}
+func markUnsafe(values interface{}) interface{} {
+	switch v := values.(type) {
+	case []interface{}:
+		var p []interface{}
+		for _, n := range v {
+			p = append(p, markUnsafe(n))
+		}
+		return p
+	case map[string]interface{}:
+		m := make(map[string]interface{})
+		for k, v := range v {
+			m[k] = markUnsafe(v)
+		}
+		return m
+	case string:
+		return map[string]interface{}{"__ansible_unsafe": values}
+	default:
+		return values
+	}
 }
 
 // escapeAnsibleKey - replaces characters that would result in an inaccessible Ansible parameter with underscores

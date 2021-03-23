@@ -65,21 +65,16 @@ func (mh *MemcachedHelm) Run() {
 	// role and cause sanity testing to fail.
 	os.Setenv("KUBECONFIG", "broken_so_we_generate_static_default_rules")
 
-	log.Infof("creating the project")
+	helmChartPath := "../../../hack/generate/samples/internal/helm/testdata/memcached-0.0.1.tgz"
+	log.Infof("creating the project using the helm chart in: (%v)", helmChartPath)
 	err := mh.ctx.Init(
 		"--plugins", "helm",
-		"--domain", mh.ctx.Domain)
-	pkg.CheckError("creating the project", err)
-
-	helmChartPath := "../../../hack/generate/samples/internal/helm/testdata/memcached-0.0.1.tgz"
-	log.Infof("using the helm chart in: (%v)", helmChartPath)
-
-	err = mh.ctx.CreateAPI(
+		"--domain", mh.ctx.Domain,
 		"--group", mh.ctx.Group,
 		"--version", mh.ctx.Version,
 		"--kind", mh.ctx.Kind,
 		"--helm-chart", helmChartPath)
-	pkg.CheckError("scaffolding apis", err)
+	pkg.CheckError("creating the project", err)
 
 	log.Infof("customizing the sample")
 	err = testutils.ReplaceInFile(

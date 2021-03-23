@@ -21,10 +21,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/repo/repotest"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang"
+	cfgv3 "sigs.k8s.io/kubebuilder/v3/pkg/config/v3"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/chartutil"
 )
@@ -202,27 +202,21 @@ type createChartTestCase struct {
 	helmChartVersion string
 	helmChartRepo    string
 
-	expectResource     *golang.Options
+	expectResource     *resource.Resource
 	expectChartName    string
 	expectChartVersion string
 	expectErr          bool
 }
 
-func mustNewResource(group, version, kind string) *golang.Options {
-	r := &golang.Options{
-		Namespaced: true,
-		Group:      group,
-		Version:    version,
-		Kind:       kind,
-	}
-	return r
+func mustNewResource(group, version, kind string) *resource.Resource {
+	opts := chartutil.CreateOptions{}
+	opts.GVK.Group = group
+	opts.GVK.Version = version
+	opts.GVK.Kind = kind
+	return opts.NewResource(cfgv3.New())
 }
 
 func runTestCase(t *testing.T, testDir string, tc createChartTestCase) {
-	outputDir := filepath.Join(testDir, "output")
-	assert.NoError(t, os.Mkdir(outputDir, 0755))
-	defer os.RemoveAll(outputDir)
-
 	os.Setenv("XDG_CONFIG_HOME", filepath.Join(testDir, ".config"))
 	os.Setenv("XDG_CACHE_HOME", filepath.Join(testDir, ".cache"))
 	os.Setenv("HELM_REPOSITORY_CONFIG", filepath.Join(testDir, "repositories.yaml"))
@@ -242,7 +236,7 @@ func runTestCase(t *testing.T, testDir string, tc createChartTestCase) {
 		Version: tc.helmChartVersion,
 		Repo:    tc.helmChartRepo,
 	}
-	resource, chrt, err := chartutil.CreateChart(outputDir, opts)
+	resource, chrt, err := chartutil.CreateChart(cfgv3.New(), opts)
 	if tc.expectErr {
 		assert.Error(t, err)
 		return
@@ -254,11 +248,4 @@ func runTestCase(t *testing.T, testDir string, tc createChartTestCase) {
 	assert.Equal(t, tc.expectResource, resource)
 	assert.Equal(t, tc.expectChartName, chrt.Name())
 	assert.Equal(t, tc.expectChartVersion, chrt.Metadata.Version)
-
-	loadedChart, err := loader.Load(filepath.Join(outputDir, chartutil.HelmChartsDir, chrt.Name()))
-	if err != nil {
-		t.Fatalf("Could not load chart from expected location: %s", err)
-	}
-
-	assert.Equal(t, loadedChart, chrt)
 }

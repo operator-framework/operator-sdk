@@ -7,21 +7,24 @@ jobs:
     name: check_docs_only
     runs-on: ubuntu-18.04
     outputs:
-      should_skip_tests: ${{ steps.check_docs_only.outputs.skip-tests }}
+      skip: ${{ steps.check_docs_only.outputs.skip }}
     steps:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
       - id: check_docs_only
+        # Since PR's are squashed prior to merging to the branch checked out (default branch),
+        # HEAD^ will resolve to the previous point in history.
         run: |
-          REPO_MASTER_REF=$(git show-ref ${{ github.base_ref }} | head -1 | cut -d' ' -f2)
-          echo "::set-output name=skip-tests::$(hack/ci/check-doc-only-update.sh $REPO_MASTER_REF)"
+          REF="HEAD^"
+          [[ -z "${{ github.base_ref }}" ]] || REF=$(git show-ref ${{ github.base_ref }} | head -1 | cut -d' ' -f2)
+          echo "::set-output name=skip::$(.github/workflows/check-docs-only.sh $REF)"
 
   e2e:
     name: e2e
     runs-on: ubuntu-18.04
     needs: check_docs_only
-    if: needs.check_docs_only.outputs.should_skip_tests != 'true'
+    if: needs.check_docs_only.outputs.skip != 'true'
     steps:
       - uses: actions/setup-go@v2
         with:
@@ -36,7 +39,7 @@ jobs:
     name: unit
     runs-on: ubuntu-18.04
     needs: check_docs_only
-    if: needs.check_docs_only.outputs.should_skip_tests != 'true'
+    if: needs.check_docs_only.outputs.skip != 'true'
     steps:
       - uses: actions/setup-go@v2
         with:

@@ -22,12 +22,16 @@ spec:
       labels:
         control-plane: controller-manager
     spec:
+      securityContext:
+        runAsNonRoot: true
       containers:
       - image: controller:latest
         args:
-        - "--enable-leader-election"
-        - "--leader-election-id=memcached-operator"
+          - "--leader-elect"
+          - "--leader-election-id=memcached-operator"
         name: manager
+        securityContext:
+          allowPrivilegeEscalation: false
         livenessProbe:
           httpGet:
             path: /healthz
@@ -47,4 +51,5 @@ spec:
           requests:
             cpu: 100m
             memory: 60Mi
+      serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10

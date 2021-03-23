@@ -15,6 +15,7 @@
 package testutils
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
@@ -193,10 +194,20 @@ func UncommentCode(filename, target, prefix string) error {
 		return err
 	}
 
-	strs := strings.Split(target, "\n")
-	for _, str := range strs {
-		_, err := out.WriteString(strings.TrimPrefix(str, prefix) + "\n")
+	scanner := bufio.NewScanner(bytes.NewBufferString(target))
+	if !scanner.Scan() {
+		return nil
+	}
+	for {
+		_, err := out.WriteString(strings.TrimPrefix(scanner.Text(), prefix))
 		if err != nil {
+			return err
+		}
+		// Avoid writing a newline in case the previous line was the last in target.
+		if !scanner.Scan() {
+			break
+		}
+		if _, err := out.WriteString("\n"); err != nil {
 			return err
 		}
 	}

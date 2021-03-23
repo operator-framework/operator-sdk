@@ -1,4 +1,0 @@
-entries:
-  - description: >
-      Properly consider all Go files when generating a CSV's `spec.customresourcedefinitions.owned`.
-    kind: bugfix

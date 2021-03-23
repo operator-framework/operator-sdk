@@ -178,7 +178,7 @@ spec:
           - subjectaccessreviews
           verbs:
           - create
-        serviceAccountName: default
+        serviceAccountName: memcached-operator-controller-manager
       deployments:
       - name: memcached-operator-controller-manager
         spec:
@@ -205,8 +205,9 @@ spec:
                   name: https
                 resources: {}
               - args:
-                - --metrics-addr=127.0.0.1:8080
-                - --enable-leader-election
+                - --health-probe-bind-address=:8081
+                - --metrics-bind-address=127.0.0.1:8080
+                - --leader-elect
                 - --leader-election-id=memcached-operator
                 image: quay.io/example/memcached-operator:v0.0.1
                 livenessProbe:
@@ -229,6 +230,11 @@ spec:
                   requests:
                     cpu: 100m
                     memory: 60Mi
+                securityContext:
+                  allowPrivilegeEscalation: false
+              securityContext:
+                runAsNonRoot: true
+              serviceAccountName: memcached-operator-controller-manager
               terminationGracePeriodSeconds: 10
       permissions:
       - rules:
@@ -251,7 +257,7 @@ spec:
           verbs:
           - create
           - patch
-        serviceAccountName: default
+        serviceAccountName: memcached-operator-controller-manager
     strategy: deployment
   installModes:
   - supported: false

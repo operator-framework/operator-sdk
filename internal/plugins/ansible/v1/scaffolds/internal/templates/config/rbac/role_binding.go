@@ -52,6 +52,6 @@ roleRef:
   name: manager-role
 subjects:
 - kind: ServiceAccount
-  name: default
+  name: controller-manager
   namespace: system
 `

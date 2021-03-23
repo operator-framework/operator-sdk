@@ -9,32 +9,33 @@ require (
 	github.com/iancoleman/strcase v0.0.0-20191112232945-16388991a334
 	github.com/kr/text v0.1.0
 	github.com/markbates/inflect v1.0.4
-	github.com/onsi/ginkgo v1.14.1
-	github.com/onsi/gomega v1.10.2
+	github.com/onsi/ginkgo v1.15.0
+	github.com/onsi/gomega v1.10.5
 	github.com/operator-framework/api v0.5.3
 	github.com/operator-framework/operator-lib v0.4.0
 	github.com/operator-framework/operator-registry v1.15.3
 	github.com/prometheus/client_golang v1.7.1
-	github.com/sergi/go-diff v1.0.0
+	github.com/sergi/go-diff v1.1.0
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/afero v1.2.2
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.0
 	github.com/stretchr/testify v1.6.1
-	golang.org/x/tools v0.0.0-20201014231627-1610a49f37af
+	golang.org/x/mod v0.3.0
+	golang.org/x/tools v0.0.0-20201224043029-2b0845dc783e
 	gomodules.xyz/jsonpatch/v3 v3.0.1
 	helm.sh/helm/v3 v3.4.1
-	k8s.io/api v0.20.1
-	k8s.io/apiextensions-apiserver v0.20.1
-	k8s.io/apimachinery v0.20.1
-	k8s.io/cli-runtime v0.20.1
-	k8s.io/client-go v0.20.1
-	k8s.io/kubectl v0.20.1
+	k8s.io/api v0.20.2
+	k8s.io/apiextensions-apiserver v0.20.2
+	k8s.io/apimachinery v0.20.2
+	k8s.io/cli-runtime v0.20.2
+	k8s.io/client-go v0.20.2
+	k8s.io/kubectl v0.20.2
 	rsc.io/letsencrypt v0.0.3 // indirect
-	sigs.k8s.io/controller-runtime v0.8.0
-	sigs.k8s.io/controller-tools v0.4.1
-	sigs.k8s.io/kubebuilder/v3 v3.0.0-alpha.0.0.20210211121616-05abe25e7215
+	sigs.k8s.io/controller-runtime v0.8.2
+	sigs.k8s.io/controller-tools v0.5.0
+	sigs.k8s.io/kubebuilder/v3 v3.0.0-alpha.0.0.20210318180717-646f742d9407
 	sigs.k8s.io/yaml v1.2.0
 )
 

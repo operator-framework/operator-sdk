@@ -3,10 +3,24 @@ title: "operator-sdk completion bash"
 ---
 ## operator-sdk completion bash
 
-Generate bash completions
+Load bash completions
 
 ```
 operator-sdk completion bash [flags]
+```
+
+### Examples
+
+```
+# To load completion for this session, execute:
+$ source <(operator-sdk completion bash)
+
+# To load completions for each session, execute once:
+Linux:
+  $ operator-sdk completion bash > /etc/bash_completion.d/operator-sdk
+MacOS:
+  $ operator-sdk completion bash > /usr/local/etc/bash_completion.d/operator-sdk
+
 ```
 
 ### Options
@@ -25,5 +39,5 @@ operator-sdk completion bash [flags]
 
 ### SEE ALSO
 
-* [operator-sdk completion](../operator-sdk_completion)	 - Generators for shell completions
+* [operator-sdk completion](../operator-sdk_completion)	 - Load completions for the specified shell
 

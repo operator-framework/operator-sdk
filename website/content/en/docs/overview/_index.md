@@ -22,7 +22,7 @@ The Operator SDK is a framework that uses the [controller-runtime][controller_ru
 
 The SDK provides workflows to develop operators in Go, Ansible, or Helm.
 
-The following workflow is for a new [Golang operator][golang-guide]:
+The following workflow is for a new [Go operator][golang-guide]:
 
   1. Create a new operator project using the SDK Command Line Interface(CLI)
   2. Define new resource APIs by adding Custom Resource Definitions(CRD)
@@ -88,6 +88,12 @@ By project type (replace `${IMAGE_VERSION}` with base image version in your proj
 [client-go]:https://github.com/kubernetes/client-go
 [client-go-compat]:https://github.com/kubernetes/client-go#compatibility-matrix
 
+## OLM version compatibility
+
+Operator SDK officially supports the latest 3 versions of OLM present at the time of a given Operator SDK release. These versions of OLM manifests are packaged with the SDK binary in the form of `bindata` to support low-latency installations of OLM with [`operator-sdk olm install`][olm-install-cmd]. Any other version installed with this command may work but is not tested nor officially supported.
+
+Currently, the officially supported OLM Versions are: 0.15.1, 0.16.1 and 0.17.0.
+
 ## Platform support
 
 Official build architectures for binaries:
@@ -143,9 +149,10 @@ Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file f
 [helm-guide]:/docs/building-operators/helm/quickstart/
 [install_guide]: /docs/installation/
 [license_file]:https://github.com/operator-framework/operator-sdk/blob/master/LICENSE
-[of-blog]: https://coreos.com/blog/introducing-operator-framework
+[of-blog]:https://www.openshift.com/blog/introducing-the-operator-framework
 [of-home]: https://github.com/operator-framework
 [operator_link]: https://kubernetes.io/docs/concepts/extend-kubernetes/operator/
 [proposals_docs]: https://github.com/operator-framework/operator-sdk/tree/master/proposals
 [testdata_samples]: https://github.com/operator-framework/operator-sdk/tree/master/testdata
 [sdk_cli_ref]: /docs/cli/
+[olm-install-cmd]: /docs/cli/operator-sdk_olm_install/

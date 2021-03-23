@@ -94,7 +94,7 @@ spec:
           - subjectaccessreviews
           verbs:
           - create
-        serviceAccountName: default
+        serviceAccountName: memcached-operator-controller-manager
       deployments:
       - name: memcached-operator-controller-manager
         spec:
@@ -153,18 +153,10 @@ spec:
                     memory: 20Mi
                 securityContext:
                   allowPrivilegeEscalation: false
-                volumeMounts:
-                - mountPath: /tmp/k8s-webhook-server/serving-certs
-                  name: cert
-                  readOnly: true
               securityContext:
                 runAsNonRoot: true
+              serviceAccountName: memcached-operator-controller-manager
               terminationGracePeriodSeconds: 10
-              volumes:
-              - name: cert
-                secret:
-                  defaultMode: 420
-                  secretName: webhook-server-cert
       permissions:
       - rules:
         - apiGroups:
@@ -188,7 +180,7 @@ spec:
           verbs:
           - create
           - patch
-        serviceAccountName: default
+        serviceAccountName: memcached-operator-controller-manager
     strategy: deployment
   installModes:
   - supported: false

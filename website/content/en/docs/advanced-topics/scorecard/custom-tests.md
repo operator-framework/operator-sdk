@@ -256,17 +256,19 @@ pods created by scorecard.
 
 Scorecard does not deploy service accounts, RBAC resources, or
 namespaces for your test but instead considers these resources
-to be outside its scope.  You can however implement whatever
-service accounts your tests require and then specify
-that service account from the command line using the service-account flag:
+to be outside its scope. You can however specify whichever service account
+your tests require, like `config/rbac/service_account.yaml` in
+Go operator projects, and then specify that service account
+from the command line:
+
 ```console
-$ operator-sdk scorecard <bundle_dir_or_image> --service-account=mycustomsa
+$ operator-sdk scorecard <bundle_dir_or_image> --service-account=my-project-controller-manager
 ```
 
-Also, you can set up a non-default namespace that your tests
-will be executed within using the following namespace flag:
+Also, you can specify a non-default namespace that scorecard will run in:
+
 ```console
-$ operator-sdk scorecard <bundle_dir_or_image> --namespace=mycustomns
+$ operator-sdk scorecard <bundle_dir_or_image> --namespace=my-project-system
 ```
 
 If you do not specify either of these flags, the default namespace
@@ -275,12 +277,12 @@ and service account will be used by the scorecard to run test pods.
 ### Returning Multiple Test Results
 
 Some custom tests might require or be better implemented to return
-more than a single test result.  For this case, scorecard's output
+more than a single test result. For this case, scorecard's output
 API allows [multiple test results][testresults] to be defined for a single test.
 
 ### Accessing the Kube API
 
-Within your custom tests you might require connecting to the Kube API.  
+Within your custom tests you might require connecting to the Kube API.
 In golang, you could use the [client-go][client_go] API for example to
 check Kube resources within your tests, or even create custom resources. Your
 custom test image is being executed within a Pod, so you can use an in-cluster

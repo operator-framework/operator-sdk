@@ -15,27 +15,7 @@ operator-sdk init --plugins ansible \
   --generate-role
 ```
 
-The new project directory has many generated folders and files. The following
-table describes a basic rundown of each generated file/directory.
-
-| File/Folders   | Purpose |
-| :---           | :---    |
-| Dockerfile | The Dockerfile for building the container image for the operator. |
-| Makefile | Contains make targets for building, publishing, deploying the container image that wraps the operator binary, and make targets for installing and uninstalling the CRD. |
-| PROJECT | A YAML file containing meta information for the operator. |
-| config/crd | The base CRD files and the kustomization settings. |
-| config/default | Collects all operator manifests for deployment, used by `make deploy`. |
-| config/manager | The controller manager deployment. |
-| config/prometheus | The ServiceMonitor resource for monitoring the operator. |
-| config/rbac | The role, role binding for leader election and authentication proxy. |
-| config/samples | The sample resources created for the CRDs. |
-| config/testing | Some sample configurations for testing. |
-| playbooks/ | A subdirectory for the playbooks to run. |
-| roles/ | A subdirectory for the roles tree to run. |
-| watches.yaml | The Group, Version, and Kind of the resources to watch, and the Ansible invocation method. New entries are added via the 'create api' command. |
-| requirements.yml | A YAML file containing the Ansible collections and role dependencies to install during build. |
-| molecule/ | The [Molecule](https://molecule.readthedocs.io/) scenarios for end-to-end testing of your role and operator |
-
+The new project directory has many generated folders and files. For further information check the [Project Layout][project-layout] doc.
 
 ## The Deployment
 
@@ -128,3 +108,4 @@ some special environment variables:
 [ansible_env]: https://docs.ansible.com/ansible/latest/reference_appendices/config.html#environment-variables
 [runner_input_dir]: https://ansible-runner.readthedocs.io/en/latest/intro.html#runner-input-directory-hierarchy
 [watches_doc]: /docs/building-operators/ansible/reference/watches/
+[project-layout]: /docs/overview/project-layout

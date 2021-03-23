@@ -17,6 +17,7 @@ package v3
 import (
 	"github.com/spf13/pflag"
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
 
 	manifestsv2 "github.com/operator-framework/operator-sdk/internal/plugins/manifests/v2"
@@ -39,13 +40,13 @@ func (p *initSubcommand) InjectConfig(c config.Config) {
 	p.config = c
 }
 
-func (p *initSubcommand) Run() error {
-	if err := p.InitSubcommand.Run(); err != nil {
+func (p *initSubcommand) Run(fs machinery.Filesystem) error {
+	if err := p.InitSubcommand.Run(fs); err != nil {
 		return err
 	}
 
 	// Run SDK phase 2 plugins.
-	if err := p.runPhase2(); err != nil {
+	if err := p.runPhase2(fs); err != nil {
 		return err
 	}
 
@@ -53,8 +54,8 @@ func (p *initSubcommand) Run() error {
 }
 
 // SDK phase 2 plugins.
-func (p *initSubcommand) runPhase2() error {
-	if err := manifestsv2.RunInit(p.config); err != nil {
+func (p *initSubcommand) runPhase2(fs machinery.Filesystem) error {
+	if err := manifestsv2.RunInit(p.config, fs); err != nil {
 		return err
 	}
 	if err := scorecardv2.RunInit(p.config); err != nil {

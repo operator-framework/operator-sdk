@@ -54,6 +54,7 @@ var _ = BeforeSuite(func() {
 	tc.Resources = "memcacheds"
 	tc.ProjectName = "memcached-operator"
 	tc.Kubectl.Namespace = fmt.Sprintf("%s-system", tc.ProjectName)
+	tc.Kubectl.ServiceAccount = fmt.Sprintf("%s-controller-manager", tc.ProjectName)
 
 	By("copying sample to a temporary e2e directory")
 	Expect(exec.Command("cp", "-r", "../../../testdata/helm/memcached-operator", tc.Dir).Run()).To(Succeed())
@@ -87,9 +88,8 @@ var _ = BeforeSuite(func() {
 		Expect(tc.LoadImageToKindClusterWithName("quay.io/operator-framework/scorecard-test:dev")).To(Succeed())
 	}
 
-	By("creating bundle image")
-	err = tc.GenerateBundle()
-	Expect(err).NotTo(HaveOccurred())
+	By("generating bundle")
+	Expect(tc.GenerateBundle()).To(Succeed())
 })
 
 // AfterSuite run after all the specs have run, regardless of whether any tests have failed to ensures that

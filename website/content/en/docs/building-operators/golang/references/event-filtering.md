@@ -34,14 +34,8 @@ All event types contain Kubernetes [metadata][doc_object_metadata] about the obj
 
 ```Go
 type UpdateEvent struct {
-  // MetaOld is the ObjectMeta of the Kubernetes Type that was updated (before the update).
-  MetaOld v1.Object
-
   // ObjectOld is the object from the event.
   ObjectOld runtime.Object
-
-  // MetaNew is the ObjectMeta of the Kubernetes Type that was updated (after the update).
-  MetaNew v1.Object
 
   // ObjectNew is the object from the event.
   ObjectNew runtime.Object
@@ -75,7 +69,7 @@ func ignoreDeletionPredicate() predicate.Predicate {
 	return predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
 			// Ignore updates to CR status in which case metadata.Generation does not change
-			return e.MetaOld.GetGeneration() != e.MetaNew.GetGeneration()
+			return e.ObjectOld.GetGeneration() != e.ObjectNew.GetGeneration()
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
 			// Evaluates to false if the object has been confirmed deleted.

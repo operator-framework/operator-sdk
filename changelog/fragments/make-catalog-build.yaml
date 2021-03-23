@@ -1,0 +1,72 @@
+entries:
+  - description: >
+      (go/v2, go/v3, ansible/v1, helm/v1) Added the `opm` and `catalog-build` Makefile targets to
+      download [`opm`](https://github.com/operator-framework/operator-registry/blob/v1.15.1/docs/design/opm-tooling.md)
+      and build operator catalogs either from scratch or an existing catalog.
+    kind: addition
+    migration:
+      header: (go/v2, go/v3, ansible/v1, helm/v1) Add `opm` and `catalog-build` Makefile targets
+      body: >
+        The `opm` and `catalog-build` Makefile targets were added so operator developers who
+        want to create their own catalogs for their operator or add their operator's bundle(s) to an
+        existing catalog can do so. If this sounds like you, add the following lines to the bottom
+        of your Makefile:
+
+        ```make
+        .PHONY: opm
+        OPM = ./bin/opm
+        opm:
+        ifeq (,$(wildcard $(OPM)))
+        ifeq (,$(shell which opm 2>/dev/null))
+        	@{ \
+        	set -e ;\
+        	mkdir -p $(dir $(OPM)) ;\
+        	curl -sSLo $(OPM) https://github.com/operator-framework/operator-registry/releases/download/v1.15.1/$(OS)-$(ARCH)-opm ;\
+        	chmod +x $(OPM) ;\
+        	}
+        else
+        OPM = $(shell which opm)
+        endif
+        endif
+
+        BUNDLE_IMGS ?= $(BUNDLE_IMG)
+        CATALOG_IMG ?= $(IMAGE_TAG_BASE)-catalog:v$(VERSION)
+        ifneq ($(origin CATALOG_BASE_IMG), undefined)
+        FROM_INDEX_OPT := --from-index $(CATALOG_BASE_IMG)
+        endif
+        .PHONY: catalog-build
+        catalog-build: opm
+        	$(OPM) index add --container-tool docker --mode semver --tag $(CATALOG_IMG) --bundles $(BUNDLE_IMGS) $(FROM_INDEX_OPT)
+
+        # Push the catalog image.
+        .PHONY: catalog-push
+        catalog-push:
+        	$(MAKE) docker-push IMG=$(CATALOG_IMG)
+        ```
+
+        If updating a Go operator project, additionally add the following Makefile variables:
+
+        ```make
+        OS = $(shell go env GOOS)
+        ARCH = $(shell go env GOARCH)
+        ```
+  - description: >
+      (go/v2, go/v3, ansible/v1, helm/v1) Changed `BUNDLE_IMG` and added `IMAGE_TAG_BASE` Makefile variables
+      to allow one line bundle and catalog image builds.
+    kind: change
+    migration:
+      header: (go/v2, go/v3, ansible/v1, helm/v1) Changed `BUNDLE_IMG` and added `IMAGE_TAG_BASE` Makefile variables
+      body: >
+        The following Makefile changes were made to allow `make bundle-build bundle-push catalog-build catalog-push`
+        and encode image repo/namespace information in the Makefile by default:
+
+        ```diff
+        +IMAGE_TAG_BASE ?= <registry>/<operator name>
+        +
+        -BUNDLE_IMG ?= controller-bundle:$(VERSION)
+        +BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(VERSION)
+        ```
+
+        For example, if `IMAGE_TAG_BASE ?= foo/bar-operator` then running `make bundle-build bundle-push catalog-build catalog-push`
+        would build `foo/bar-operator-bundle:v0.0.1` and `foo/bar-operator-catalog:v0.0.1` then push them to the
+        `docker.io/foo` namespaced registry.

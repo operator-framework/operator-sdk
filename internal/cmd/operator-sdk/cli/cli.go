@@ -22,9 +22,9 @@ import (
 	cfgv2 "sigs.k8s.io/kubebuilder/v3/pkg/config/v2"
 	cfgv3 "sigs.k8s.io/kubebuilder/v3/pkg/config/v3"
 
+	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/alpha/config3alphato3"
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/bundle"
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/cleanup"
-	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/completion"
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/generate"
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/olm"
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/run"
@@ -37,25 +37,29 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
-var commands = []*cobra.Command{
-	bundle.NewCmd(),
-	cleanup.NewCmd(),
-	completion.NewCmd(),
-	generate.NewCmd(),
-	olm.NewCmd(),
-	run.NewCmd(),
-	scorecard.NewCmd(),
-}
+var (
+	commands = []*cobra.Command{
+		bundle.NewCmd(),
+		cleanup.NewCmd(),
+		generate.NewCmd(),
+		olm.NewCmd(),
+		run.NewCmd(),
+		scorecard.NewCmd(),
+	}
+	alphaCommands = []*cobra.Command{
+		config3alphato3.NewCmd(),
+	}
+)
 
 func Run() error {
-	cli, _ := GetPluginsCLIAndRoot()
-	return cli.Run()
+	c, _ := GetPluginsCLIAndRoot()
+	return c.Run()
 }
 
 // GetPluginsCLIAndRoot returns the plugins based CLI configured to use operator-sdk as the root command
 // This CLI can run kubebuilder commands and certain SDK specific commands that are aligned for
 // the kubebuilder project layout
-func GetPluginsCLIAndRoot() (cli.CLI, *cobra.Command) {
+func GetPluginsCLIAndRoot() (*cli.CLI, *cobra.Command) {
 	c, err := cli.New(
 		cli.WithCommandName("operator-sdk"),
 		cli.WithVersion(makeVersionString()),
@@ -69,6 +73,8 @@ func GetPluginsCLIAndRoot() (cli.CLI, *cobra.Command) {
 		cli.WithDefaultPlugins(cfgv2.Version, &golangv2.Plugin{}),
 		cli.WithDefaultPlugins(cfgv3.Version, &golangv3.Plugin{}),
 		cli.WithExtraCommands(commands...),
+		cli.WithExtraAlphaCommands(alphaCommands...),
+		cli.WithCompletion(),
 	)
 	if err != nil {
 		log.Fatal(err)
@@ -97,4 +103,6 @@ func rootPersistentPreRun(cmd *cobra.Command, args []string) {
 		log.SetLevel(log.DebugLevel)
 		log.Debug("Debug logging is set")
 	}
+
+	config3alphato3.RootPersistentPreRun(cmd, args)
 }

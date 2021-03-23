@@ -64,7 +64,7 @@ var _ = Describe("Running Helm projects", func() {
 		It("should run correctly in a cluster", func() {
 			By("checking if the Operator project Pod is running")
 			verifyControllerUp := func() error {
-				By("getting the controller-manager pod name")
+				// Get the controller-manager pod name
 				podOutput, err := tc.Kubectl.Get(
 					true,
 					"pods", "-l", "control-plane=controller-manager",
@@ -73,8 +73,6 @@ var _ = Describe("Running Helm projects", func() {
 				if err != nil {
 					return fmt.Errorf("could not get pods: %v", err)
 				}
-
-				By("ensuring the created controller-manager Pod")
 				podNames := kbtestutils.GetNonEmptyLines(podOutput)
 				if len(podNames) != 1 {
 					return fmt.Errorf("expecting 1 pod, have %d", len(podNames))
@@ -84,12 +82,12 @@ var _ = Describe("Running Helm projects", func() {
 					return fmt.Errorf("expecting pod name %q to contain %q", controllerPodName, "controller-manager")
 				}
 
-				By("checking the controller-manager Pod is running")
+				// Ensure the controller-manager Pod is running.
 				status, err := tc.Kubectl.Get(
 					true,
 					"pods", controllerPodName, "-o", "jsonpath={.status.phase}")
 				if err != nil {
-					return fmt.Errorf("failed to get pod stauts for %q: %v", controllerPodName, err)
+					return fmt.Errorf("failed to get pod status for %q: %v", controllerPodName, err)
 				}
 				if status != "Running" {
 					return fmt.Errorf("controller pod in %s status", status)
@@ -204,48 +202,48 @@ var _ = Describe("Running Helm projects", func() {
 			Eventually(verifyReleaseUpgrade, time.Minute, time.Second).Should(Succeed())
 
 			By("granting permissions to access the metrics and read the token")
-			_, err = tc.Kubectl.Command(
-				"create",
-				"clusterrolebinding", metricsClusterRoleBindingName,
+			_, err = tc.Kubectl.Command("create", "clusterrolebinding", metricsClusterRoleBindingName,
 				fmt.Sprintf("--clusterrole=%s-metrics-reader", tc.ProjectName),
-				fmt.Sprintf("--serviceaccount=%s:default", tc.Kubectl.Namespace))
+				fmt.Sprintf("--serviceaccount=%s:%s", tc.Kubectl.Namespace, tc.Kubectl.ServiceAccount))
 			Expect(err).NotTo(HaveOccurred())
 
-			By("getting the token")
-			b64Token, err := tc.Kubectl.Get(
-				true,
-				"secrets",
-				"-o=jsonpath={.items[0].data.token}")
+			By("reading the metrics token")
+			// Filter token query by service account in case more than one exists in a namespace.
+			query := fmt.Sprintf(`{.items[?(@.metadata.annotations.kubernetes\.io/service-account\.name=="%s")].data.token}`,
+				tc.Kubectl.ServiceAccount,
+			)
+			b64Token, err := tc.Kubectl.Get(true, "secrets", "-o=jsonpath="+query)
 			Expect(err).NotTo(HaveOccurred())
 			token, err := base64.StdEncoding.DecodeString(strings.TrimSpace(b64Token))
 			Expect(err).NotTo(HaveOccurred())
-			Expect(token).NotTo(HaveLen(0))
+			Expect(len(token)).To(BeNumerically(">", 0))
 
-			By("creating a pod with curl image")
-			// todo: the flag --generator=run-pod/v1 is deprecated, however, shows that besides
+			By("creating a curl pod")
+			// TODO: the flag --generator=run-pod/v1 is deprecated, however, shows that besides
 			// it should not make any difference and work locally successfully when the flag is removed
-			// travis has been failing and the curl pod is not found when the flag is not used
+			// the test will fail and the curl pod is not found when the flag is not used
 			cmdOpts := []string{
-				"run", "--generator=run-pod/v1", "curl", "--image=curlimages/curl:7.68.0", "--restart=OnFailure", "--",
+				"run", "--generator=run-pod/v1", "curl", "--image=curlimages/curl:7.68.0", "--restart=OnFailure",
+				"--serviceaccount", tc.Kubectl.ServiceAccount, "--",
 				"curl", "-v", "-k", "-H", fmt.Sprintf(`Authorization: Bearer %s`, token),
 				fmt.Sprintf("https://%s-controller-manager-metrics-service.%s.svc:8443/metrics", tc.ProjectName, tc.Kubectl.Namespace),
 			}
 			_, err = tc.Kubectl.CommandInNamespace(cmdOpts...)
 			Expect(err).NotTo(HaveOccurred())
 
-			By("validating the curl pod running as expected")
+			By("validating that the curl pod is running as expected")
 			verifyCurlUp := func() error {
 				// Validate pod status
 				status, err := tc.Kubectl.Get(
 					true,
 					"pods", "curl", "-o", "jsonpath={.status.phase}")
-				Expect(err).NotTo(HaveOccurred())
+				ExpectWithOffset(1, err).NotTo(HaveOccurred())
 				if status != "Completed" && status != "Succeeded" {
 					return fmt.Errorf("curl pod in %s status", status)
 				}
 				return nil
 			}
-			Eventually(verifyCurlUp, 4*time.Minute, time.Second).Should(Succeed())
+			Eventually(verifyCurlUp, 2*time.Minute, time.Second).Should(Succeed())
 
 			By("checking metrics endpoint serving as expected")
 			getCurlLogs := func() string {

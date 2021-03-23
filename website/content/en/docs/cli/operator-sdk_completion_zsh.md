@@ -3,10 +3,24 @@ title: "operator-sdk completion zsh"
 ---
 ## operator-sdk completion zsh
 
-Generate zsh completions
+Load zsh completions
 
 ```
 operator-sdk completion zsh [flags]
+```
+
+### Examples
+
+```
+# If shell completion is not already enabled in your environment you will need
+# to enable it. You can execute the following once:
+$ echo "autoload -U compinit; compinit" >> ~/.zshrc
+
+# To load completions for each session, execute once:
+$ operator-sdk completion zsh > "${fpath[1]}/_operator-sdk"
+
+# You will need to start a new shell for this setup to take effect.
+
 ```
 
 ### Options
@@ -25,5 +39,5 @@ operator-sdk completion zsh [flags]
 
 ### SEE ALSO
 
-* [operator-sdk completion](../operator-sdk_completion)	 - Generators for shell completions
+* [operator-sdk completion](../operator-sdk_completion)	 - Load completions for the specified shell
 

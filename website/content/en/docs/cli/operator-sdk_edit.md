@@ -7,18 +7,28 @@ This command will edit the project configuration
 
 ### Synopsis
 
-Edit the project configuration.
-
-Note: unable to find configuration file, project must be initialized
+This command will edit the project configuration. You can have single or multi group project.
 
 ```
 operator-sdk edit [flags]
 ```
 
+### Examples
+
+```
+# Enable the multigroup layout
+        operator-sdk edit --multigroup
+
+        # Disable the multigroup layout
+        operator-sdk edit --multigroup=false
+
+```
+
 ### Options
 
 ```
-  -h, --help   help for edit
+  -h, --help         help for edit
+      --multigroup   enable or disable multigroup layout
 ```
 
 ### Options inherited from parent commands

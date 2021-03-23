@@ -17,6 +17,7 @@ package v3
 import (
 	"github.com/spf13/pflag"
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
 
@@ -41,14 +42,14 @@ func (p *createAPISubcommand) InjectConfig(c config.Config) {
 	p.config = c
 }
 
-func (p *createAPISubcommand) Run() error {
+func (p *createAPISubcommand) Run(fs machinery.Filesystem) error {
 	// Run() may add a new resource to the config, so we can compare resources before/after to get the new resource.
 	oldResources, err := p.config.GetResources()
 	if err != nil {
 		return err
 	}
 
-	if err := p.CreateAPISubcommand.Run(); err != nil {
+	if err := p.CreateAPISubcommand.Run(fs); err != nil {
 		return err
 	}
 
@@ -70,10 +71,10 @@ func (p *createAPISubcommand) Run() error {
 	}
 
 	// Run SDK phase 2 plugins.
-	return p.runPhase2(newResource.GVK)
+	return p.runPhase2(fs, newResource)
 }
 
 // SDK phase 2 plugins.
-func (p *createAPISubcommand) runPhase2(gvk resource.GVK) error {
-	return manifestsv2.RunCreateAPI(p.config, gvk)
+func (p *createAPISubcommand) runPhase2(fs machinery.Filesystem, res resource.Resource) error {
+	return manifestsv2.RunCreateAPI(p.config, fs, res)
 }

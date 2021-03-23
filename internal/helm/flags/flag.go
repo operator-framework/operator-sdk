@@ -25,8 +25,8 @@ import (
 type Flags struct {
 	ReconcilePeriod         time.Duration
 	WatchesFile             string
-	MetricsAddress          string
-	EnableLeaderElection    bool
+	MetricsBindAddress      string
+	LeaderElection          bool
 	LeaderElectionID        string
 	LeaderElectionNamespace string
 	MaxConcurrentReconciles int
@@ -45,20 +45,39 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 		"./watches.yaml",
 		"Path to the watches file to use",
 	)
-	flagSet.StringVar(&f.MetricsAddress,
+	// todo:remove it for 2.0.0
+	flagSet.StringVar(&f.MetricsBindAddress,
 		"metrics-addr",
 		":8080",
 		"The address the metric endpoint binds to",
 	)
+	_ = flagSet.MarkDeprecated("metrics-addr", "use --metrics-bind-address instead")
+	flagSet.StringVar(&f.MetricsBindAddress,
+		"metrics-bind-address",
+		":8080",
+		"The address the metric endpoint binds to",
+	)
+	// todo: for Go/Helm the port used is: 8081
+	// update it to keep the project aligned to the other
+	// types for 2.0
 	flagSet.StringVar(&f.ProbeAddr,
 		"health-probe-bind-address",
 		":8081",
 		"The address the probe endpoint binds to.",
 	)
-	flagSet.BoolVar(&f.EnableLeaderElection,
+	// todo:remove it for 2.0.0
+	flagSet.BoolVar(&f.LeaderElection,
 		"enable-leader-election",
 		false,
-		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.",
+		"Enable leader election for controller manager. Enabling this will"+
+			" ensure there is only one active controller manager.",
+	)
+	_ = flagSet.MarkDeprecated("enable-leader-election", "use --leader-elect instead.")
+	flagSet.BoolVar(&f.LeaderElection,
+		"leader-elect",
+		false,
+		"Enable leader election for controller manager. Enabling this will"+
+			" ensure there is only one active controller manager.",
 	)
 	flagSet.StringVar(&f.LeaderElectionID,
 		"leader-election-id",
@@ -68,7 +87,9 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 	flagSet.StringVar(&f.LeaderElectionNamespace,
 		"leader-election-namespace",
 		"",
-		"Namespace in which to create the leader election configmap for holding the leader lock (required if running locally with leader election enabled).",
+		"Namespace in which to create the leader election configmap for"+
+			" holding the leader lock (required if running locally with leader"+
+			" election enabled).",
 	)
 	flagSet.IntVar(&f.MaxConcurrentReconciles,
 		"max-concurrent-reconciles",

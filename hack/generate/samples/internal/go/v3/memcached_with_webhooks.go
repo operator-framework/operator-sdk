@@ -90,7 +90,8 @@ func (mh *MemcachedGoWithWebhooks) Run() {
 	pkg.CheckError("scaffolding webhook", err)
 
 	mh.implementingWebhooks()
-	mh.uncommentKustomizationFile()
+	mh.uncommentDefaultKustomization()
+	mh.uncommentManifestsKustomization()
 
 	log.Infof("creating the bundle")
 	err = mh.ctx.GenerateBundle()
@@ -106,35 +107,28 @@ func (mh *MemcachedGoWithWebhooks) Run() {
 	pkg.CheckError("cleaning up", os.RemoveAll(filepath.Join(mh.ctx.Dir, "bin")))
 }
 
-// uncommentKustomizationFile will uncomment the file kustomization.yaml
-func (mh *MemcachedGoWithWebhooks) uncommentKustomizationFile() {
-	log.Infof("uncomment kustomization.yaml to enable webhook and ca injection")
-	err := testutils.UncommentCode(
-		filepath.Join(mh.ctx.Dir, "config", "default", "kustomization.yaml"),
-		"#- ../webhook", "#")
+// uncommentDefaultKustomization will uncomment code in config/default/kustomization.yaml
+func (mh *MemcachedGoWithWebhooks) uncommentDefaultKustomization() {
+	var err error
+	kustomization := filepath.Join(mh.ctx.Dir, "config", "default", "kustomization.yaml")
+	log.Info("uncommenting config/default/kustomization.yaml to enable webhooks and ca injection")
+
+	err = testutils.UncommentCode(kustomization, "#- ../webhook", "#")
 	pkg.CheckError("uncomment webhook", err)
 
-	err = testutils.UncommentCode(
-		filepath.Join(mh.ctx.Dir, "config", "default", "kustomization.yaml"),
-		"#- ../certmanager", "#")
+	err = testutils.UncommentCode(kustomization, "#- ../certmanager", "#")
 	pkg.CheckError("uncomment certmanager", err)
 
-	err = testutils.UncommentCode(
-		filepath.Join(mh.ctx.Dir, "config", "default", "kustomization.yaml"),
-		"#- ../prometheus", "#")
+	err = testutils.UncommentCode(kustomization, "#- ../prometheus", "#")
 	pkg.CheckError("uncomment prometheus", err)
 
-	err = testutils.UncommentCode(
-		filepath.Join(mh.ctx.Dir, "config", "default", "kustomization.yaml"),
-		"#- manager_webhook_patch.yaml", "#")
+	err = testutils.UncommentCode(kustomization, "#- manager_webhook_patch.yaml", "#")
 	pkg.CheckError("uncomment manager_webhook_patch.yaml", err)
 
-	err = testutils.UncommentCode(
-		filepath.Join(mh.ctx.Dir, "config", "default", "kustomization.yaml"),
-		"#- webhookcainjection_patch.yaml", "#")
+	err = testutils.UncommentCode(kustomization, "#- webhookcainjection_patch.yaml", "#")
 	pkg.CheckError("uncomment webhookcainjection_patch.yaml", err)
 
-	err = testutils.UncommentCode(filepath.Join(mh.ctx.Dir, "config", "default", "kustomization.yaml"),
+	err = testutils.UncommentCode(kustomization,
 		`#- name: CERTIFICATE_NAMESPACE # namespace of the certificate CR
 #  objref:
 #    kind: Certificate
@@ -162,6 +156,32 @@ func (mh *MemcachedGoWithWebhooks) uncommentKustomizationFile() {
 #    version: v1
 #    name: webhook-service`, "#")
 	pkg.CheckError("uncommented certificate CR", err)
+}
+
+// uncommentManifestsKustomization will uncomment code in config/manifests/kustomization.yaml
+func (mh *MemcachedGoWithWebhooks) uncommentManifestsKustomization() {
+	var err error
+	kustomization := filepath.Join(mh.ctx.Dir, "config", "manifests", "kustomization.yaml")
+	log.Info("uncommenting config/manifests/kustomization.yaml to enable webhooks in OLM")
+
+	err = testutils.UncommentCode(kustomization,
+		`#patchesJson6902:
+#- target:
+#    group: apps
+#    version: v1
+#    kind: Deployment
+#    name: controller-manager
+#    namespace: system
+#  patch: |-
+#    # Remove the manager container's "cert" volumeMount, since OLM will create and mount a set of certs.
+#    # Update the indices in this path if adding or removing containers/volumeMounts in the manager's Deployment.
+#    - op: remove
+#      path: /spec/template/spec/containers/1/volumeMounts/0
+#    # Remove the "cert" volume, since OLM will create and mount a set of certs.
+#    # Update the indices in this path if adding or removing volumes in the manager's Deployment.
+#    - op: remove
+#      path: /spec/template/spec/volumes/0`, "#")
+	pkg.CheckError("uncommented webhook volume removal patch", err)
 }
 
 // implementingWebhooks will customize the kind wekbhok file
@@ -321,7 +341,7 @@ const reconcileFragment = `// Fetch the Memcached instance
 			return ctrl.Result{}, err
 		}
 		// Ask to requeue after 1 minute in order to give enough time for the
-		// pods be created on the cluster side and the operand be able 
+		// pods be created on the cluster side and the operand be able
 		// to do the next update step accurately.
 		return ctrl.Result{RequeueAfter: time.Minute }, nil
 	}
