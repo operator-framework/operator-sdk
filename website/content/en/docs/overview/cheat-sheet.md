@@ -68,9 +68,8 @@ make bundle CHANNELS=fast,preview DEFAULT_CHANNEL=stable VERSION=1.0.0 IMG=<some
 [operatorhub-io]: https://operatorhub.io/
 [upgrade-project]: /docs/olm-integration/generation/#upgrade-your-operator
 [channel-namming-doc]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/channel-naming.md
-[api-kb-doc]: https://book.kubebuilder.io/cronjob-tutorial/gvks.html
 [controllers-k8s-doc]: https://kubernetes.io/docs/concepts/architecture/controller
-[gkvs]: https://kubernetes.io/docs/concepts/architecture/controller
+[gkvs]: https://book.kubebuilder.io/cronjob-tutorial/gvks.html
 [extend-k8s-api]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/
 [webhooks-k8s-doc]: https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/
 [scorcard]: /docs/advanced-topics/scorecard/
