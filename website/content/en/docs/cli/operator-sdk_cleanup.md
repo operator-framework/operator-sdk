@@ -17,8 +17,8 @@ operator-sdk cleanup <operatorPackageName> [flags]
 
 ```
       --delete-all               If set to true, all other delete options will be enabled (default true)
-      --delete-crds              If set to false, owned CRDs and CRs will not be deleted (default true)
-      --delete-operator-groups   If set to false, operator groups will not be deleted (default true)
+      --delete-crds              If set to true, owned CRDs and CRs will be deleted
+      --delete-operator-groups   If set to true, operator groups will be deleted
   -h, --help                     help for cleanup
       --kubeconfig string        Path to the kubeconfig file to use for CLI requests.
   -n, --namespace string         If present, namespace scope for this CLI request

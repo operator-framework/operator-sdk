@@ -16,7 +16,6 @@ package operator
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -57,18 +56,9 @@ func NewUninstall(cfg *Configuration) *Uninstall {
 }
 
 func (u *Uninstall) BindFlags(fs *pflag.FlagSet) {
-	fs.BoolVar(&u.DeleteCRDs, "delete-crds", true, "If set to false, owned CRDs and CRs will not be deleted")
+	fs.BoolVar(&u.DeleteCRDs, "delete-crds", false, "If set to true, owned CRDs and CRs will be deleted")
 	fs.BoolVar(&u.DeleteAll, "delete-all", true, "If set to true, all other delete options will be enabled")
-	fs.BoolVar(&u.DeleteOperatorGroups, "delete-operator-groups", true, "If set to false, operator groups will not be deleted")
-}
-
-func (u *Uninstall) Validate() error {
-	if u.DeleteAll {
-		if !u.DeleteCRDs || !u.DeleteOperatorGroups {
-			return errors.New("if --delete-all flag is enabled, any other delete flag cannot be set to false")
-		}
-	}
-	return nil
+	fs.BoolVar(&u.DeleteOperatorGroups, "delete-operator-groups", false, "If set to true, operator groups will be deleted")
 }
 
 type ErrPackageNotFound struct {

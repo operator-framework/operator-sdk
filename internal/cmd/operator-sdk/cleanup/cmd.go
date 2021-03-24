@@ -17,7 +17,6 @@ package cleanup
 import (
 	"context"
 	"errors"
-	"os"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -42,11 +41,6 @@ func NewCmd() *cobra.Command {
 			u.Package = args[0]
 			u.DeleteOperatorGroupNames = []string{operator.SDKOperatorGroupName}
 			u.Logf = log.Infof
-
-			if err := u.Validate(); err != nil {
-				log.Errorf("Invalid command options: %v", err)
-				os.Exit(1)
-			}
 
 			ctx, cancel := context.WithTimeout(cmd.Context(), timeout)
 			defer cancel()
