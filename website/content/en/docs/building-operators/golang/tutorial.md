@@ -339,7 +339,8 @@ in the `bundle` directory containing manifests and metadata defining your operat
 make bundle bundle-build bundle-push
 ```
 
-Finally, run your bundle:
+Finally, run your bundle. If your bundle image is hosted in a private registry,
+set `--secret-name` to the image pull secret name for that registry host.
 
 ```sh
 operator-sdk run bundle example.com/memcached-operator-bundle:v0.0.1

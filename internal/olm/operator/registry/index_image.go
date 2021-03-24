@@ -24,6 +24,7 @@ import (
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/pflag"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -61,6 +62,7 @@ type IndexImageCatalogCreator struct {
 	IndexImage    string
 	BundleImage   string
 	BundleAddMode index.BundleAddMode
+	SecretName    string
 
 	cfg *operator.Configuration
 }
@@ -72,6 +74,13 @@ func NewIndexImageCatalogCreator(cfg *operator.Configuration) *IndexImageCatalog
 	return &IndexImageCatalogCreator{
 		cfg: cfg,
 	}
+}
+
+func (c *IndexImageCatalogCreator) BindFlags(fs *pflag.FlagSet) {
+	fs.StringVar(&c.SecretName, "secret-name", "",
+		"Name of image pull secret required to pull bundle images. "+
+			"This secret must be in docker config format, and tied to the namespace, "+
+			"and optionally service account, that this command is configured to run in")
 }
 
 func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string) (*v1alpha1.CatalogSource, error) {
@@ -170,6 +179,7 @@ func (c IndexImageCatalogCreator) createAnnotatedRegistry(ctx context.Context, c
 	registryPod := index.RegistryPod{
 		BundleItems: items,
 		IndexImage:  c.IndexImage,
+		SecretName:  c.SecretName,
 	}
 	if registryPod.DBPath, err = c.getDBPath(ctx); err != nil {
 		return fmt.Errorf("get database path: %v", err)

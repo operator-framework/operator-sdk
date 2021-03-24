@@ -57,7 +57,8 @@ This guide walks through an example of building a simple nginx-operator powered 
   make bundle-build bundle-push
   ```
 
-1. Run your bundle:
+1. Run your bundle. If your bundle image is hosted in a private registry,
+set `--secret-name` to the image pull secret name for that registry host:
 
   ```sh
   operator-sdk run bundle example.com/nginx-operator-bundle:v0.0.1

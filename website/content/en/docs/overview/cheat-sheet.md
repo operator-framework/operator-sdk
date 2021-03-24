@@ -32,12 +32,13 @@ For further information check [Operator SDK Integration with Operator Lifecycle 
 |-------|-----------|
 | `make bundle`          | Create/update the [bundle][bundle] based on the project manifests in the `bundle/` directory. More info [Create a bundle][creating-a-bundle].      |
 | `operator-sdk bundle validate ./bundle`          | To validate your [bundle][bundle] spec definition.      |
-| `operator-sdk bundle validate ./bundle --select-optional suite=operatorframework` | Validate your bundle against [OperatorHub.io][operatorhub-io] criteria. For further information use the flag.`--help`. |
+| `operator-sdk bundle validate ./bundle --select-optional suite=operatorframework` | Validate your bundle against [OperatorHub.io][operatorhub-io] criteria. For further information use the flag`--help`. |
 | `operator-sdk olm install` | To install OLM on your cluster for development purposes. |
 | `operator-sdk olm uninstall` | To uninstall OLM from your cluster. |
 | `make bundle-build BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>` | To build your bundle operator image. |
 | `make bundle-build bundle-push BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>` | To build and push your bundle operator image. |
-| `operator-sdk run bundle <some-registry>/<project-name-bundle>:<tag>.` | To deploy your bundle operator using OLM on your cluster for development purposes. |
+| `operator-sdk run bundle <some-registry>/<project-name-bundle>:<tag>` | To deploy your bundle operator using OLM on your cluster for development purposes. |
+| `operator-sdk run bundle --service-account test-sa --secret-name registry-pull-secret private-registry.org/bundle:v1.2.3` | Configure `run bundle` (and `run bundle-upgrade`) to use a bundle image pull secret and non-default service account |
 
 ### Updating bundle channels
  
