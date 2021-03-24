@@ -36,5 +36,5 @@ collections:
   - name: community.kubernetes
     version: "==1.1.1"
   - name: operator_sdk.util
-	  version: "0.1.0"
+    version: "0.1.0"
 `
