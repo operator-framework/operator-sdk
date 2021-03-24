@@ -68,11 +68,12 @@ To validate a bundle against the validator for operatorhub.io specifically, in a
 ### Options
 
 ```
-  -h, --help                     help for validate
-  -b, --image-builder string     Tool to pull and unpack bundle images. Only used when validating a bundle image. One of: [docker, podman, none] (default "docker")
-      --list-optional            List all optional validators available. When set, no validators will be run
-  -o, --output string            Result format for results. One of: [text, json-alpha1]. Note: output format types containing "alphaX" are subject to change and not covered by guarantees of stable APIs. (default "text")
-      --select-optional string   Label selector to select optional validators to run. Run this command with '--list-optional' to list available optional validators
+  -h, --help                                                 help for validate
+  -b, --image-builder string                                 Tool to pull and unpack bundle images. Only used when validating a bundle image. One of: [docker, podman, none] (default "docker")
+      --list-optional                                        List all optional validators available. When set, no validators will be run
+      --optional-values --optional-values=k8s-version=1.22   Inform a []string map of key=values which can be used by the validator. e.g. to check the operator bundle against an Kubernetes version that it is intended to be distributed use --optional-values=k8s-version=1.22 (default [])
+  -o, --output string                                        Result format for results. One of: [text, json-alpha1]. Note: output format types containing "alphaX" are subject to change and not covered by guarantees of stable APIs. (default "text")
+      --select-optional string                               Label selector to select optional validators to run. Run this command with '--list-optional' to list available optional validators
 ```
 
 ### Options inherited from parent commands

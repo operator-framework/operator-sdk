@@ -237,6 +237,18 @@ bundle: ...
   operator-sdk bundle validate ./bundle --select-optional name=operatorhub
 ```
 
+Also, see that you can test the bundle against the suite of test to ensure it against all criteria:
+
+```sh 
+operator-sdk bundle validate ./bundle --select-optional suite=operatorframework 
+```  
+
+**Note**: The `OperatorHub.io` validator in the `operatorframework` optional suite allows you to validate that your manifests can work with a Kubernetes cluster of a particular version using the `k8s-version` optional key value:
+
+```sh 
+operator-sdk bundle validate ./bundle --select-optional suite=operatorframework --optional-values=k8s-version=1.22
+```
+
 Documentation on optional validators:
 - [`operatorhub`][operatorhub_validator]
 
