@@ -17,22 +17,22 @@ package roles
 import (
 	"path/filepath"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/constants"
 )
 
-const handlersMainPath = "handlers" + constants.FilePathSep + "main.yml"
+var _ machinery.Template = &HandlersMain{}
 
 type HandlersMain struct {
-	file.TemplateMixin
-	file.ResourceMixin
+	machinery.TemplateMixin
+	machinery.ResourceMixin
 }
 
-// SetTemplateDefaults implements input.Template
+// SetTemplateDefaults implements machinery.Template
 func (f *HandlersMain) SetTemplateDefaults() error {
 	if f.Path == "" {
-		f.Path = filepath.Join(constants.RolesDir, "%[kind]", handlersMainPath)
+		f.Path = filepath.Join(constants.RolesDir, "%[kind]", "handlers", "main.yml")
 		f.Path = f.Resource.Replacer().Replace(f.Path)
 	}
 
@@ -41,5 +41,5 @@ func (f *HandlersMain) SetTemplateDefaults() error {
 }
 
 const handlersMainAnsibleTmpl = `---
-# handlers file for {{ .Resource.Kind}}
+# handlers file for {{ .Resource.Kind }}
 `

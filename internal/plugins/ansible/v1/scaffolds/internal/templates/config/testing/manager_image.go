@@ -17,18 +17,18 @@ package testing
 import (
 	"path/filepath"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 )
 
-var _ file.Template = &ManagerImage{}
+var _ machinery.Template = &ManagerImage{}
 
 // ManagerImage scaffolds the patch file for overriding the
 // default image during Ansible testing
 type ManagerImage struct {
-	file.TemplateMixin
+	machinery.TemplateMixin
 }
 
-// SetTemplateDefaults implements input.Template
+// SetTemplateDefaults implements machinery.Template
 func (f *ManagerImage) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = filepath.Join("config", "testing", "manager_image.yaml")
@@ -36,7 +36,7 @@ func (f *ManagerImage) SetTemplateDefaults() error {
 
 	f.TemplateBody = managerImageTemplate
 
-	f.IfExistsAction = file.Error
+	f.IfExistsAction = machinery.Error
 
 	return nil
 }

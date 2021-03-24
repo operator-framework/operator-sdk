@@ -24,31 +24,33 @@ import (
 	"text/template"
 
 	"helm.sh/helm/v3/pkg/chart"
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 	"sigs.k8s.io/yaml"
 )
 
-var _ file.Template = &CRDSample{}
-var _ file.UseCustomFuncMap = &CRDSample{}
+var (
+	_ machinery.Template         = &CRDSample{}
+	_ machinery.UseCustomFuncMap = &CRDSample{}
+)
 
 // CRDSample scaffolds a manifest for CRD sample.
 type CRDSample struct {
-	file.TemplateMixin
-	file.ResourceMixin
+	machinery.TemplateMixin
+	machinery.ResourceMixin
 
 	ChartPath string
 	Chart     *chart.Chart
 	Spec      string
 }
 
-// SetTemplateDefaults implements input.Template
+// SetTemplateDefaults implements machinery.Template
 func (f *CRDSample) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = filepath.Join("config", "samples", "%[group]_%[version]_%[kind].yaml")
 	}
 	f.Path = f.Resource.Replacer().Replace(f.Path)
 
-	f.IfExistsAction = file.Error
+	f.IfExistsAction = machinery.Error
 
 	if len(f.Spec) == 0 {
 		f.Spec = defaultSpecTemplate
@@ -74,9 +76,9 @@ func indent(spaces int, v string) string {
 	return pad + strings.Replace(v, "\n", "\n"+pad, -1)
 }
 
-// GetFuncMap implements file.UseCustomFuncMap
+// GetFuncMap implements machinery.UseCustomFuncMap
 func (f *CRDSample) GetFuncMap() template.FuncMap {
-	fm := file.DefaultFuncMap()
+	fm := machinery.DefaultFuncMap()
 	fm["indent"] = indent
 	return fm
 }

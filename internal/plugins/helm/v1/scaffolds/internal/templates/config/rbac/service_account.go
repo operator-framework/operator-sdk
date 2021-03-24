@@ -19,17 +19,17 @@ package rbac
 import (
 	"path/filepath"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 )
 
-var _ file.Template = &ServiceAccount{}
+var _ machinery.Template = &ServiceAccount{}
 
 // ServiceAccount scaffolds a file that defines the service account the manager is deployed in.
 type ServiceAccount struct {
-	file.TemplateMixin
+	machinery.TemplateMixin
 }
 
-// SetTemplateDefaults implements file.Template
+// SetTemplateDefaults implements machinery.Template
 func (f *ServiceAccount) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = filepath.Join("config", "rbac", "service_account.yaml")

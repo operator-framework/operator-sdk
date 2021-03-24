@@ -19,12 +19,12 @@ import (
 )
 
 const (
-	FilePathSep          = string(filepath.Separator)
+	filePathSep          = string(filepath.Separator)
 	RolesDir             = "roles"
 	PlaybooksDir         = "playbooks"
 	MoleculeDir          = "molecule"
-	MoleculeDefaultDir   = MoleculeDir + FilePathSep + "default"
-	MoleculeTestLocalDir = MoleculeDir + FilePathSep + "test-local"
-	MoleculeClusterDir   = MoleculeDir + FilePathSep + "cluster"
-	MoleculeTemplatesDir = MoleculeDir + FilePathSep + "templates"
+	MoleculeDefaultDir   = MoleculeDir + filePathSep + "default"
+	MoleculeTestLocalDir = MoleculeDir + filePathSep + "test-local"
+	MoleculeClusterDir   = MoleculeDir + filePathSep + "cluster"
+	MoleculeTemplatesDir = MoleculeDir + filePathSep + "templates"
 )

@@ -17,29 +17,29 @@ package roles
 import (
 	"path/filepath"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/constants"
 )
 
-const varsMainPath = "vars" + constants.FilePathSep + "main.yml"
+var _ machinery.Template = &VarsMain{}
 
 type VarsMain struct {
-	file.TemplateMixin
-	file.ResourceMixin
+	machinery.TemplateMixin
+	machinery.ResourceMixin
 }
 
-// SetTemplateDefaults implements input.Template
+// SetTemplateDefaults implements machinery.Template
 func (f *VarsMain) SetTemplateDefaults() error {
 	if f.Path == "" {
-		f.Path = filepath.Join(constants.RolesDir, "%[kind]", varsMainPath)
-		f.Path = f.Resource.Replacer().Replace(f.Path)
+		f.Path = filepath.Join(constants.RolesDir, "%[kind]", "vars", "main.yml")
 	}
+	f.Path = f.Resource.Replacer().Replace(f.Path)
 
 	f.TemplateBody = varsMainAnsibleTmpl
 	return nil
 }
 
 const varsMainAnsibleTmpl = `---
-# vars file for {{ .Resource.Kind}}
+# vars file for {{ .Resource.Kind }}
 `

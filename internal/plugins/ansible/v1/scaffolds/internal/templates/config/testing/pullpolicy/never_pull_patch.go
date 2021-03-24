@@ -17,18 +17,18 @@ package pullpolicy
 import (
 	"path/filepath"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 )
 
-var _ file.Template = &NeverPullPatch{}
+var _ machinery.Template = &NeverPullPatch{}
 
 // NeverPullPatch scaffolds the patch file for overriding the
 // default image pull policy during Ansible testing
 type NeverPullPatch struct {
-	file.TemplateMixin
+	machinery.TemplateMixin
 }
 
-// SetTemplateDefaults implements input.Template
+// SetTemplateDefaults implements machinery.Template
 func (f *NeverPullPatch) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = filepath.Join("config", "testing", "pull_policy", "Never.yaml")
@@ -36,7 +36,7 @@ func (f *NeverPullPatch) SetTemplateDefaults() error {
 
 	f.TemplateBody = neverPullPatchTemplate
 
-	f.IfExistsAction = file.Error
+	f.IfExistsAction = machinery.Error
 
 	return nil
 }

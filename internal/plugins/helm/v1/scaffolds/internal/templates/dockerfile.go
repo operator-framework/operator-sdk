@@ -17,20 +17,20 @@ package templates
 import (
 	"errors"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 )
 
-var _ file.Template = &Dockerfile{}
+var _ machinery.Template = &Dockerfile{}
 
 // Dockerfile scaffolds a Dockerfile for building a main
 type Dockerfile struct {
-	file.TemplateMixin
+	machinery.TemplateMixin
 
 	// HelmOperatorVersion is the version of the Dockerfile's base image.
 	HelmOperatorVersion string
 }
 
-// SetTemplateDefaults implements input.Template
+// SetTemplateDefaults implements machinery.Template
 func (f *Dockerfile) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = "Dockerfile"

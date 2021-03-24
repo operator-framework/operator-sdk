@@ -17,35 +17,34 @@ package templates
 import (
 	"fmt"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 )
 
-var _ file.Template = &Watches{}
+var _ machinery.Template = &Watches{}
 
 const defaultWatchesFile = "watches.yaml"
 
 // Watches scaffolds the watches.yaml file
 type Watches struct {
-	file.TemplateMixin
+	machinery.TemplateMixin
 }
 
-// SetTemplateDefaults implements input.Template
+// SetTemplateDefaults implements machinery.Template
 func (f *Watches) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = defaultWatchesFile
 	}
 
 	f.TemplateBody = fmt.Sprintf(watchesTemplate,
-		file.NewMarkerFor(f.Path, watchMarker),
+		machinery.NewMarkerFor(f.Path, watchMarker),
 	)
 	return nil
 }
 
-var _ file.Inserter = &WatchesUpdater{}
+var _ machinery.Inserter = &WatchesUpdater{}
 
 type WatchesUpdater struct {
-	file.TemplateMixin
-	file.ResourceMixin
+	machinery.ResourceMixin
 
 	ChartPath string
 }
@@ -54,22 +53,22 @@ func (*WatchesUpdater) GetPath() string {
 	return defaultWatchesFile
 }
 
-func (*WatchesUpdater) GetIfExistsAction() file.IfExistsAction {
-	return file.Overwrite
+func (*WatchesUpdater) GetIfExistsAction() machinery.IfExistsAction {
+	return machinery.OverwriteFile
 }
 
 const (
 	watchMarker = "watch"
 )
 
-func (f *WatchesUpdater) GetMarkers() []file.Marker {
-	return []file.Marker{
-		file.NewMarkerFor(defaultWatchesFile, watchMarker),
+func (f *WatchesUpdater) GetMarkers() []machinery.Marker {
+	return []machinery.Marker{
+		machinery.NewMarkerFor(defaultWatchesFile, watchMarker),
 	}
 }
 
-func (f *WatchesUpdater) GetCodeFragments() file.CodeFragmentsMap {
-	fragments := make(file.CodeFragmentsMap, 1)
+func (f *WatchesUpdater) GetCodeFragments() machinery.CodeFragmentsMap {
+	fragments := make(machinery.CodeFragmentsMap, 1)
 
 	// If resource is not being provided we are creating the file, not updating it
 	if f.Resource == nil {
@@ -82,7 +81,7 @@ func (f *WatchesUpdater) GetCodeFragments() file.CodeFragmentsMap {
 		fmt.Sprintf(watchFragment, f.Resource.QualifiedGroup(), f.Resource.Version, f.Resource.Kind, f.ChartPath))
 
 	if len(watches) != 0 {
-		fragments[file.NewMarkerFor(defaultWatchesFile, watchMarker)] = watches
+		fragments[machinery.NewMarkerFor(defaultWatchesFile, watchMarker)] = watches
 	}
 	return fragments
 }

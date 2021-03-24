@@ -15,12 +15,14 @@
 package templates
 
 import (
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 )
+
+var _ machinery.Template = &RequirementsYml{}
 
 // RequirementsYml - A requirements file for Ansible collection dependencies
 type RequirementsYml struct {
-	file.TemplateMixin
+	machinery.TemplateMixin
 }
 
 func (f *RequirementsYml) SetTemplateDefaults() error {

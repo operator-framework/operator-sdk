@@ -19,25 +19,25 @@ import (
 	"path/filepath"
 
 	"github.com/kr/text"
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 )
 
-var _ file.Template = &CRD{}
+var _ machinery.Template = &CRD{}
 
 // CRD scaffolds a manifest for CRD sample.
 type CRD struct {
-	file.TemplateMixin
-	file.ResourceMixin
+	machinery.TemplateMixin
+	machinery.ResourceMixin
 }
 
-// SetTemplateDefaults implements input.Template
+// SetTemplateDefaults implements machinery.Template
 func (f *CRD) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = filepath.Join("config", "crd", "bases", fmt.Sprintf("%s_%%[plural].yaml", f.Resource.QualifiedGroup()))
 	}
 	f.Path = f.Resource.Replacer().Replace(f.Path)
 
-	f.IfExistsAction = file.Error
+	f.IfExistsAction = machinery.Error
 
 	f.TemplateBody = fmt.Sprintf(crdTemplate,
 		text.Indent(openAPIV3SchemaTemplate, "    "),

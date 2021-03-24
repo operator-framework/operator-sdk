@@ -19,17 +19,17 @@ package rbac
 import (
 	"path/filepath"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 )
 
-var _ file.Template = &LeaderElectionRoleBinding{}
+var _ machinery.Template = &LeaderElectionRoleBinding{}
 
 // LeaderElectionRoleBinding scaffolds the config/rbac/leader_election_role_binding.yaml file
 type LeaderElectionRoleBinding struct {
-	file.TemplateMixin
+	machinery.TemplateMixin
 }
 
-// SetTemplateDefaults implements input.Template
+// SetTemplateDefaults implements machinery.Template
 func (f *LeaderElectionRoleBinding) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = filepath.Join("config", "rbac", "leader_election_role_binding.yaml")

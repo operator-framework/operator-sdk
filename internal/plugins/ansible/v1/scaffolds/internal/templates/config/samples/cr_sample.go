@@ -22,28 +22,30 @@ import (
 	"strings"
 	"text/template"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 )
 
-var _ file.Template = &CR{}
-var _ file.UseCustomFuncMap = &CR{}
+var (
+	_ machinery.Template         = &CR{}
+	_ machinery.UseCustomFuncMap = &CR{}
+)
 
 // CR scaffolds a sample manifest for a CRD.
 type CR struct {
-	file.TemplateMixin
-	file.ResourceMixin
+	machinery.TemplateMixin
+	machinery.ResourceMixin
 
 	Spec string
 }
 
-// SetTemplateDefaults implements input.Template
+// SetTemplateDefaults implements machinery.Template
 func (f *CR) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = filepath.Join("config", "samples", "%[group]_%[version]_%[kind].yaml")
 	}
 	f.Path = f.Resource.Replacer().Replace(f.Path)
 
-	f.IfExistsAction = file.Error
+	f.IfExistsAction = machinery.Error
 
 	if len(f.Spec) == 0 {
 		f.Spec = defaultSpecTemplate
@@ -58,9 +60,9 @@ func indent(spaces int, v string) string {
 	return pad + strings.Replace(v, "\n", "\n"+pad, -1)
 }
 
-// GetFuncMap implements file.UseCustomFuncMap
+// GetFuncMap implements machinery.UseCustomFuncMap
 func (f *CR) GetFuncMap() template.FuncMap {
-	fm := file.DefaultFuncMap()
+	fm := machinery.DefaultFuncMap()
 	fm["indent"] = indent
 	return fm
 }

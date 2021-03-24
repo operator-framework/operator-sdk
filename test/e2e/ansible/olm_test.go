@@ -19,6 +19,8 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
 var _ = Describe("Integrating ansible Projects with OLM", func() {
@@ -31,7 +33,7 @@ var _ = Describe("Integrating ansible Projects with OLM", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			By("adding the 'packagemanifests' rule to the Makefile")
-			err = tc.AddPackagemanifestsTarget()
+			err = tc.AddPackagemanifestsTarget(projutil.OperatorTypeAnsible)
 			Expect(err).NotTo(HaveOccurred())
 
 			By("generating the operator package manifests")

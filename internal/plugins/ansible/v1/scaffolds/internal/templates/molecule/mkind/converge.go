@@ -17,17 +17,17 @@ package mkind
 import (
 	"path/filepath"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 )
 
-var _ file.Template = &Converge{}
+var _ machinery.Template = &Converge{}
 
 // Converge scaffolds a Converge for building a main
 type Converge struct {
-	file.TemplateMixin
+	machinery.TemplateMixin
 }
 
-// SetTemplateDefaults implements input.Template
+// SetTemplateDefaults implements machinery.Template
 func (f *Converge) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = filepath.Join("molecule", "kind", "converge.yml")

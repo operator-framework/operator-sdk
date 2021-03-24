@@ -24,10 +24,10 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
+	yamlstore "sigs.k8s.io/kubebuilder/v3/pkg/config/store/yaml"
 	_ "sigs.k8s.io/kubebuilder/v3/pkg/config/v2" // Register config/v2 for `config.New`
 	_ "sigs.k8s.io/kubebuilder/v3/pkg/config/v3" // Register config/v3 for `config.New`
-	cfgv3 "sigs.k8s.io/kubebuilder/v3/pkg/config/v3"
-	"sigs.k8s.io/yaml"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 )
 
 const (
@@ -83,42 +83,20 @@ func HasProjectFile() bool {
 	return true
 }
 
-type versionedConfig struct {
-	Version config.Version
-}
-
 // ReadConfig returns a configuration if a file containing one exists at the
 // default path (project root).
 func ReadConfig() (config.Config, error) {
-	// Read the file
-	in, err := afero.ReadFile(afero.NewOsFs(), configFile) //nolint:gosec
-	if err != nil {
+	store := yamlstore.New(machinery.Filesystem{FS: afero.NewOsFs()})
+	if err := store.Load(); err != nil {
 		return nil, err
 	}
 
-	// Check the file version
-	var versioned versionedConfig
-	if err := yaml.Unmarshal(in, &versioned); err != nil {
-		return nil, err
-	}
-
-	// Create the config object
-	c, err := config.New(versioned.Version)
-	if err != nil {
-		return nil, err
-	}
-
-	// Unmarshal the file content
-	if err := c.UnmarshalYAML(in); err != nil {
-		return nil, err
-	}
-
-	return c, nil
+	return store.Config(), nil
 }
 
-// PluginKeyToOperatorType converts a plugin key string to an operator project type.
+// PluginChainToOperatorType converts a plugin chain to an operator project type.
 // TODO(estroz): this can probably be made more robust by checking known plugin keys directly.
-func PluginKeyToOperatorType(pluginKeys []string) OperatorType {
+func PluginChainToOperatorType(pluginKeys []string) OperatorType {
 	for _, pluginKey := range pluginKeys {
 		switch {
 		case strings.HasPrefix(pluginKey, "go"):
@@ -132,15 +110,9 @@ func PluginKeyToOperatorType(pluginKeys []string) OperatorType {
 	return OperatorTypeUnknown
 }
 
-// GetProjectLayout returns the `layout` field in PROJECT file that is v3.
-// If not, it will return "go" because that was the only project type supported for project versions < v3.
+// GetProjectLayout returns the `layout` field as a comma separated list.
 func GetProjectLayout(cfg config.Config) string {
-	isV3 := cfg.GetVersion().Compare(cfgv3.Version) == 0
-	pluginChain := cfg.GetPluginChain()
-	if cfg == nil || !isV3 || len(pluginChain) == 0 {
-		return "go"
-	}
-	return strings.Join(pluginChain, ",")
+	return strings.Join(cfg.GetPluginChain(), ",")
 }
 
 var flagRe = regexp.MustCompile("(.* )?-v(.* )?")

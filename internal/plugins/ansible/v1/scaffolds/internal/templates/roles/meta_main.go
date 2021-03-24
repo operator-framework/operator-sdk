@@ -17,24 +17,24 @@ package roles
 import (
 	"path/filepath"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/constants"
 )
 
-const metaMainPath = "meta" + constants.FilePathSep + "main.yml"
+var _ machinery.Template = &MetaMain{}
 
 type MetaMain struct {
-	file.TemplateMixin
-	file.ResourceMixin
+	machinery.TemplateMixin
+	machinery.ResourceMixin
 }
 
-// SetTemplateDefaults implements input.Template
+// SetTemplateDefaults implements machinery.Template
 func (f *MetaMain) SetTemplateDefaults() error {
 	if f.Path == "" {
-		f.Path = filepath.Join(constants.RolesDir, "%[kind]", metaMainPath)
-		f.Path = f.Resource.Replacer().Replace(f.Path)
+		f.Path = filepath.Join(constants.RolesDir, "%[kind]", "meta", "main.yml")
 	}
+	f.Path = f.Resource.Replacer().Replace(f.Path)
 
 	f.TemplateBody = metaMainAnsibleTmpl
 	return nil

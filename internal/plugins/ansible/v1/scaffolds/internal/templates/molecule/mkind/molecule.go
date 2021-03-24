@@ -17,17 +17,17 @@ package mkind
 import (
 	"path/filepath"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 )
 
-var _ file.Template = &Molecule{}
+var _ machinery.Template = &Molecule{}
 
 // Molecule scaffolds a Molecule for building a main
 type Molecule struct {
-	file.TemplateMixin
+	machinery.TemplateMixin
 }
 
-// SetTemplateDefaults implements input.Template
+// SetTemplateDefaults implements machinery.Template
 func (f *Molecule) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = filepath.Join("molecule", "kind", "molecule.yml")

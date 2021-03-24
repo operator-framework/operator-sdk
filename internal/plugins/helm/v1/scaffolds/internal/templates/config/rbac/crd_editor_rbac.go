@@ -19,18 +19,18 @@ package rbac
 import (
 	"path/filepath"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 )
 
-var _ file.Template = &CRDEditorRole{}
+var _ machinery.Template = &CRDEditorRole{}
 
 // CRDEditorRole scaffolds the config/rbac/<kind>_editor_role.yaml
 type CRDEditorRole struct {
-	file.TemplateMixin
-	file.ResourceMixin
+	machinery.TemplateMixin
+	machinery.ResourceMixin
 }
 
-// SetTemplateDefaults implements input.Template
+// SetTemplateDefaults implements machinery.Template
 func (f *CRDEditorRole) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = filepath.Join("config", "rbac", "%[kind]_editor_role.yaml")

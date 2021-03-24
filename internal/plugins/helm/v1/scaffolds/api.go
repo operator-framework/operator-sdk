@@ -20,23 +20,21 @@ package scaffolds
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chartutil"
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
 	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
+	"sigs.k8s.io/kubebuilder/v3/pkg/plugins"
 
-	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
-	internalchartutil "github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/chartutil"
+	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/chartutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/crd"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/rbac"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/samples"
 )
 
-var _ cmdutil.Scaffolder = &apiScaffolder{}
+var _ plugins.Scaffolder = &apiScaffolder{}
 
 // apiScaffolder contains configuration for generating scaffolding for Go type
 // representing the API and controller that implements the behavior for the API.
@@ -48,38 +46,39 @@ type apiScaffolder struct {
 	chrt     *chart.Chart
 }
 
-// NewAPIScaffolder returns a new Scaffolder for API/controller creation operations
-func NewAPIScaffolder(config config.Config, res resource.Resource, chrt *chart.Chart) cmdutil.Scaffolder {
+// NewAPIScaffolder returns a new plugins.Scaffolder for API/controller creation operations
+func NewAPIScaffolder(cfg config.Config, res resource.Resource, chrt *chart.Chart) plugins.Scaffolder {
 	return &apiScaffolder{
-		config:   config,
+		config:   cfg,
 		resource: res,
 		chrt:     chrt,
 	}
 }
 
-// InjectFS implements Scaffolder
+// InjectFS implements plugins.Scaffolder
 func (s *apiScaffolder) InjectFS(fs machinery.Filesystem) {
 	s.fs = fs
 }
 
-// Scaffold implements Scaffolder
+// Scaffold implements plugins.Scaffolder
 func (s *apiScaffolder) Scaffold() error {
 	if err := s.config.UpdateResource(s.resource); err != nil {
 		return err
 	}
-	// Path for file builders.
-	chartPath := filepath.Join(internalchartutil.HelmChartsDir, s.chrt.Name())
 
-	// Write the chart to disk.
+	// Get current directory
 	projectDir, err := os.Getwd()
 	if err != nil {
 		return err
 	}
-	absChartDir := filepath.Join(projectDir, internalchartutil.HelmChartsDir)
-	if err := chartutil.SaveDir(s.chrt, absChartDir); err != nil {
+
+	// Save the loaded chart.Chart
+	var chartPath string
+	s.chrt, chartPath, err = chartutil.ScaffoldChart(s.chrt, projectDir)
+	if err != nil {
 		return err
 	}
-	fmt.Println("Created", chartPath)
+	fmt.Printf("Created %s\n", chartPath)
 
 	// Initialize the machinery.Scaffold that will write the files to disk
 	scaffold := machinery.NewScaffold(s.fs,

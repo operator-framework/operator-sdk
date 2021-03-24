@@ -17,16 +17,17 @@ package templates
 import (
 	"errors"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/constants"
 )
 
-var _ file.Template = &Dockerfile{}
+var _ machinery.Template = &Dockerfile{}
 
 // Dockerfile scaffolds a Dockerfile for building a main
 type Dockerfile struct {
-	file.TemplateMixin
+	machinery.TemplateMixin
+
 	// AnsibleOperatorVersion is the version of the Dockerfile's base image.
 	AnsibleOperatorVersion string
 
@@ -35,7 +36,7 @@ type Dockerfile struct {
 	PlaybooksDir string
 }
 
-// SetTemplateDefaults implements input.Template
+// SetTemplateDefaults implements machinery.Template
 func (f *Dockerfile) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = "Dockerfile"

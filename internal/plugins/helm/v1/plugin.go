@@ -22,11 +22,11 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/plugins"
 )
 
-const pluginName = "helm" + plugins.DefaultNameQualifier
+const pluginName = "base.helm" + plugins.DefaultNameQualifier
 
 var (
-	supportedProjectVersions = []config.Version{cfgv3.Version}
 	pluginVersion            = plugin.Version{Number: 1}
+	supportedProjectVersions = []config.Version{cfgv3.Version}
 	pluginKey                = plugin.KeyFor(Plugin{})
 )
 

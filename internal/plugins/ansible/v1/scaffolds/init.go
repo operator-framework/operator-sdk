@@ -20,8 +20,8 @@ package scaffolds
 import (
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
 	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
+	"sigs.k8s.io/kubebuilder/v3/pkg/plugins"
 
-	"github.com/operator-framework/operator-sdk/internal/kubebuilder/cmdutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/kdefault"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/manager"
@@ -46,7 +46,7 @@ const (
 // ansibleOperatorVersion is set to the version of ansible-operator at compile-time.
 var ansibleOperatorVersion = version.ImageVersion
 
-var _ cmdutil.Scaffolder = &initScaffolder{}
+var _ plugins.Scaffolder = &initScaffolder{}
 
 type initScaffolder struct {
 	fs machinery.Filesystem
@@ -54,19 +54,19 @@ type initScaffolder struct {
 	config config.Config
 }
 
-// NewInitScaffolder returns a new Scaffolder for project initialization operations
-func NewInitScaffolder(config config.Config) cmdutil.Scaffolder {
+// NewInitScaffolder returns a new plugins.Scaffolder for project initialization operations
+func NewInitScaffolder(config config.Config) plugins.Scaffolder {
 	return &initScaffolder{
 		config: config,
 	}
 }
 
-// InjectFS implements Scaffolder
+// InjectFS implements plugins.Scaffolder
 func (s *initScaffolder) InjectFS(fs machinery.Filesystem) {
 	s.fs = fs
 }
 
-// Scaffold implements Scaffolder
+// Scaffold implements plugins.Scaffolder
 func (s *initScaffolder) Scaffold() error {
 	// Initialize the machinery.Scaffold that will write the files to disk
 	scaffold := machinery.NewScaffold(s.fs,

@@ -8,7 +8,7 @@ Scaffold a webhook for an API resource
 ### Synopsis
 
 Scaffold a webhook for an API resource. You can choose to scaffold defaulting,
-validating and (or) conversion webhooks.
+validating and/or conversion webhooks.
 
 
 ```
@@ -18,11 +18,12 @@ operator-sdk create webhook [flags]
 ### Examples
 
 ```
-  # Create defaulting and validating webhooks for CRD of group ship, version v1beta1
-  # and kind Frigate.
+  # Create defaulting and validating webhooks for Group: ship, Version: v1beta1
+  # and Kind: Frigate
   operator-sdk create webhook --group ship --version v1beta1 --kind Frigate --defaulting --programmatic-validation
 
-  # Create conversion webhook for CRD of group ship, version v1beta1 and kind Frigate.
+  # Create conversion webhook for Group: ship, Version: v1beta1
+  # and Kind: Frigate
   operator-sdk create webhook --group ship --version v1beta1 --kind Frigate --conversion
 
 ```
@@ -45,9 +46,8 @@ operator-sdk create webhook [flags]
 ### Options inherited from parent commands
 
 ```
-      --plugins strings          plugin keys of the plugin to initialize the project with
-      --project-version string   project version
-      --verbose                  Enable verbose logging
+      --plugins strings   plugin keys to be used for this subcommand execution
+      --verbose           Enable verbose logging
 ```
 
 ### SEE ALSO

@@ -19,17 +19,17 @@ package rbac
 import (
 	"path/filepath"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 )
 
-var _ file.Template = &ClientClusterRole{}
+var _ machinery.Template = &ClientClusterRole{}
 
 // ClientClusterRole scaffolds the config/rbac/client_clusterrole.yaml file
 type ClientClusterRole struct {
-	file.TemplateMixin
+	machinery.TemplateMixin
 }
 
-// SetTemplateDefaults implements input.Template
+// SetTemplateDefaults implements machinery.Template
 func (f *ClientClusterRole) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = filepath.Join("config", "rbac", "auth_proxy_client_clusterrole.yaml")

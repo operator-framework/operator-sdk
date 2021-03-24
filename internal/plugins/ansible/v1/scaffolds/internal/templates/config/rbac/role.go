@@ -20,35 +20,34 @@ import (
 	"path/filepath"
 	"text/template"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 )
 
-var _ file.Template = &ManagerRole{}
+var _ machinery.Template = &ManagerRole{}
 
 var defaultRoleFile = filepath.Join("config", "rbac", "role.yaml")
 
 // ManagerRole scaffolds the role.yaml file
 type ManagerRole struct {
-	file.TemplateMixin
+	machinery.TemplateMixin
 }
 
-// SetTemplateDefaults implements input.Template
+// SetTemplateDefaults implements machinery.Template
 func (f *ManagerRole) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = defaultRoleFile
 	}
 
 	f.TemplateBody = fmt.Sprintf(roleTemplate,
-		file.NewMarkerFor(f.Path, rulesMarker),
+		machinery.NewMarkerFor(f.Path, rulesMarker),
 	)
 	return nil
 }
 
-var _ file.Inserter = &ManagerRoleUpdater{}
+var _ machinery.Inserter = &ManagerRoleUpdater{}
 
 type ManagerRoleUpdater struct {
-	file.TemplateMixin
-	file.ResourceMixin
+	machinery.ResourceMixin
 
 	SkipDefaultRules bool
 }
@@ -57,22 +56,22 @@ func (*ManagerRoleUpdater) GetPath() string {
 	return defaultRoleFile
 }
 
-func (*ManagerRoleUpdater) GetIfExistsAction() file.IfExistsAction {
-	return file.Overwrite
+func (*ManagerRoleUpdater) GetIfExistsAction() machinery.IfExistsAction {
+	return machinery.OverwriteFile
 }
 
 const (
 	rulesMarker = "rules"
 )
 
-func (f *ManagerRoleUpdater) GetMarkers() []file.Marker {
-	return []file.Marker{
-		file.NewMarkerFor(defaultRoleFile, rulesMarker),
+func (f *ManagerRoleUpdater) GetMarkers() []machinery.Marker {
+	return []machinery.Marker{
+		machinery.NewMarkerFor(defaultRoleFile, rulesMarker),
 	}
 }
 
-func (f *ManagerRoleUpdater) GetCodeFragments() file.CodeFragmentsMap {
-	fragments := make(file.CodeFragmentsMap, 1)
+func (f *ManagerRoleUpdater) GetCodeFragments() machinery.CodeFragmentsMap {
+	fragments := make(machinery.CodeFragmentsMap, 1)
 
 	// If resource is not being provided we are creating the file, not updating it
 	if f.Resource == nil {
@@ -90,7 +89,7 @@ func (f *ManagerRoleUpdater) GetCodeFragments() file.CodeFragmentsMap {
 	rules := []string{buf.String()}
 
 	if len(rules) != 0 {
-		fragments[file.NewMarkerFor(defaultRoleFile, rulesMarker)] = rules
+		fragments[machinery.NewMarkerFor(defaultRoleFile, rulesMarker)] = rules
 	}
 	return fragments
 }

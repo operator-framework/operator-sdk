@@ -20,9 +20,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 
-	"github.com/iancoleman/strcase"
 	log "github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
@@ -31,32 +29,16 @@ import (
 	"helm.sh/helm/v3/pkg/downloader"
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/repo"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"sigs.k8s.io/kubebuilder/v3/pkg/config"
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
-	"sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang"
 )
 
 const (
-
-	// HelmChartsDir is the relative directory within an SDK project where Helm
-	// charts are stored.
-	HelmChartsDir string = "helm-charts"
-
-	// DefaultGroup is the Kubernetes CRD API Group used for fetched
-	// charts when the --group flag is not specified
-	DefaultGroup string = "charts"
-
-	// DefaultVersion is the Kubernetes CRD API Version used for fetched
-	// charts when the --version flag is not specified
-	DefaultVersion string = "v1alpha1"
+	// HelmChartsDir is the relative directory within a SDK project where Helm charts are stored.
+	HelmChartsDir = "helm-charts"
 )
 
-// CreateOptions is used to configure how a Helm chart is scaffolded
+// Options is used to configure how a Helm chart is scaffolded
 // for a new Helm operator project.
-type CreateOptions struct {
-	GVK schema.GroupVersionKind
-
+type Options struct {
 	// Chart is a chart reference for a local or remote chart.
 	Chart string
 
@@ -65,37 +47,41 @@ type CreateOptions struct {
 
 	// Version is the version of the chart to fetch.
 	Version string
-
-	// CRDVersion is the version of the `apiextensions.k8s.io` API which will be used to generate the CRD.
-	CRDVersion string
-
-	// Domain is the domain of the project
-	Domain string
 }
 
-// CreateChart creates a new helm chart based on the passed opts.
+// NewChart creates a new helm chart for the project from helm's default template.
+// It returns a chart.Chart that references the newly created chart or an error.
+func NewChart(name string) (*chart.Chart, error) {
+	tmpDir, err := ioutil.TempDir("", "osdk-helm-chart")
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := os.RemoveAll(tmpDir); err != nil {
+			log.Errorf("Failed to remove temporary directory %s: %v", tmpDir, err)
+		}
+	}()
+
+	// Create a new chart
+	chartPath, err := chartutil.Create(name, tmpDir)
+	if err != nil {
+		return nil, err
+	}
+
+	return loader.Load(chartPath)
+}
+
+// LoadChart creates a new helm chart for the project based on the passed opts.
+// It returns a chart.Chart that references the newly created chart or an error.
 //
-// It returns a scaffold.Resource that can be used by the caller to create
-// other related files. opts.ResourceAPIVersion and opts.ResourceKind are
-// used to create the resource and must be specified if opts.Chart is empty.
+// If opts.Chart is a local file, it verifies that it is a valid helm chart
+// archive and returns its chart.Chart representation.
 //
-// If opts.Chart is not empty, opts.ResourceAPIVersion and opts.Kind can be
-// left unset: opts.ResourceAPIVersion defaults to "charts.helm.k8s.io/v1alpha1"
-// and opts.ResourceKind is deduced from the specified opts.Chart.
+// If opts.Chart is a local directory, it verifies that it is a valid helm chart
+// directory and returns its chart.Chart representation.
 //
-// CreateChart also returns the newly created chart.Chart.
-//
-// If opts.Chart is empty, CreateChart creates the default chart from helm's
-// default template.
-//
-// If opts.Chart is a local file, CreateChart verifies that it is a valid helm
-// chart archive and returns its chart.Chart representation.
-//
-// If opts.Chart is a local directory, CreateChart verifies that it is a valid
-// helm chart directory and returns its chart.Chart representation.
-//
-// For any other value of opts.Chart, CreateChart attempts to fetch the helm chart
-// from a remote repository.
+// For any other value of opts.Chart, it attempts to fetch the helm chart from a
+// remote repository.
 //
 // If opts.Repo is not specified, the following chart reference formats are supported:
 //
@@ -110,120 +96,35 @@ type CreateOptions struct {
 //   - <chartName>: Fetch the helm chart named chartName in the helm chart repository
 //                  specified by opts.Repo
 //
-// If opts.Version is not set, CreateChart will fetch the latest available version of
-// the helm chart. Otherwise, CreateChart will fetch the specified version.
+// If opts.Version is not set, it will fetch the latest available version of the helm
+// chart. Otherwise, it will fetch the specified version.
 // opts.Version is not used when opts.Chart itself refers to a specific version, for
 // example when it is a local path or a URL.
-//
-// CreateChart returns an error if an error occurs creating the resource.Resource or
-// loading the chart.Chart.
-func CreateChart(cfg config.Config, opts CreateOptions) (r *resource.Resource, c *chart.Chart, err error) {
+func LoadChart(opts Options) (*chart.Chart, error) {
 	tmpDir, err := ioutil.TempDir("", "osdk-helm-chart")
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	defer func() {
 		if err := os.RemoveAll(tmpDir); err != nil {
-			log.Errorf("Failed to remove temporary chart directory %s: %s", tmpDir, err)
+			log.Errorf("Failed to remove temporary directory %s: %v", tmpDir, err)
 		}
 	}()
 
-	// If we don't have a helm chart reference, scaffold the default chart
-	// from Helm's default template. Otherwise, fetch it.
-	if len(opts.Chart) == 0 {
-		r, c, err = scaffoldChart(cfg, tmpDir, opts)
+	chartPath := opts.Chart
+
+	// If it is a remote chart, download it to a temp dir first
+	if _, err := os.Stat(opts.Chart); err != nil {
+		chartPath, err = downloadChart(tmpDir, opts)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to scaffold default chart: %v", err)
-		}
-	} else {
-		r, c, err = fetchChart(cfg, tmpDir, opts)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to fetch chart: %v", err)
+			return nil, err
 		}
 	}
 
-	absChartPath := filepath.Join(tmpDir, c.Name())
-	if err := fetchChartDependencies(absChartPath); err != nil {
-		return nil, nil, fmt.Errorf("failed to fetch chart dependencies: %v", err)
-	}
-
-	// Reload chart in case dependencies changed
-	c, err = loader.Load(absChartPath)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to load chart: %v", err)
-	}
-
-	return r, c, nil
+	return loader.Load(chartPath)
 }
 
-func scaffoldChart(cfg config.Config, destDir string, opts CreateOptions) (*resource.Resource, *chart.Chart, error) {
-	chartPath, err := chartutil.Create(strings.ToLower(opts.GVK.Kind), destDir)
-	if err != nil {
-		return nil, nil, err
-	}
-	chart, err := loader.Load(chartPath)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return opts.NewResource(cfg), chart, nil
-}
-
-func fetchChart(cfg config.Config, destDir string, opts CreateOptions) (_ *resource.Resource, chart *chart.Chart, err error) {
-	if _, err = os.Stat(opts.Chart); err == nil {
-		chart, err = createChartFromDisk(destDir, opts.Chart)
-	} else {
-		chart, err = createChartFromRemote(destDir, opts)
-	}
-	if err != nil {
-		return nil, nil, err
-	}
-
-	chartName := chart.Name()
-	if len(opts.GVK.Group) == 0 {
-		opts.GVK.Group = DefaultGroup
-	}
-	if len(opts.GVK.Version) == 0 {
-		opts.GVK.Version = DefaultVersion
-	}
-	if len(opts.GVK.Kind) == 0 {
-		opts.GVK.Kind = strcase.ToCamel(chartName)
-	}
-
-	return opts.NewResource(cfg), chart, nil
-}
-
-func (opts CreateOptions) NewResource(cfg config.Config) *resource.Resource {
-	ro := &golang.Options{}
-	ro.DoAPI = true
-	ro.Namespaced = true
-	ro.Domain = opts.Domain
-	ro.CRDVersion = opts.CRDVersion
-	ro.Group = opts.GVK.Group
-	ro.Version = opts.GVK.Version
-	ro.Kind = opts.GVK.Kind
-
-	r := ro.NewResource(cfg)
-	r.Domain = cfg.GetDomain()
-	// remove the path since is not a Go project
-	r.Path = ""
-	return &r
-}
-
-func createChartFromDisk(destDir, source string) (*chart.Chart, error) {
-	chart, err := loader.Load(source)
-	if err != nil {
-		return nil, err
-	}
-
-	// Save it into destDir.
-	if err := chartutil.SaveDir(chart, destDir); err != nil {
-		return nil, err
-	}
-	return chart, nil
-}
-
-func createChartFromRemote(destDir string, opts CreateOptions) (*chart.Chart, error) {
+func downloadChart(destDir string, opts Options) (string, error) {
 	settings := cli.New()
 	getters := getter.All(settings)
 	c := downloader.ChartDownloader{
@@ -236,17 +137,46 @@ func createChartFromRemote(destDir string, opts CreateOptions) (*chart.Chart, er
 	if opts.Repo != "" {
 		chartURL, err := repo.FindChartInRepoURL(opts.Repo, opts.Chart, opts.Version, "", "", "", getters)
 		if err != nil {
-			return nil, err
+			return "", err
 		}
 		opts.Chart = chartURL
 	}
 
 	chartArchive, _, err := c.DownloadTo(opts.Chart, opts.Version, destDir)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	return createChartFromDisk(destDir, chartArchive)
+	return chartArchive, nil
+}
+
+// ScaffoldChart scaffolds the provided chart.Chart to a known directory relative to projectDir
+//
+// It also fetches the dependencies and reloads the chart.Chart
+//
+// It returns the reloaded chart, the relative path, or an error.
+func ScaffoldChart(chrt *chart.Chart, projectDir string) (*chart.Chart, string, error) {
+	chartsPath := filepath.Join(projectDir, HelmChartsDir)
+
+	// Save it into our project's helm-charts directory.
+	if err := chartutil.SaveDir(chrt, chartsPath); err != nil {
+		return chrt, "", err
+	}
+
+	chartPath := filepath.Join(chartsPath, chrt.Name())
+
+	// Fetch dependencies
+	if err := fetchChartDependencies(chartPath); err != nil {
+		return chrt, "", fmt.Errorf("failed to fetch chart dependencies: %w", err)
+	}
+
+	// Reload chart in case dependencies changed
+	chrt, err := loader.Load(chartPath)
+	if err != nil {
+		return chrt, "", fmt.Errorf("failed to reload chart: %w", err)
+	}
+
+	return chrt, filepath.Join(HelmChartsDir, chrt.Name()), nil
 }
 
 func fetchChartDependencies(chartPath string) error {

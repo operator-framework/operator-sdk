@@ -17,23 +17,25 @@ package roles
 import (
 	"path/filepath"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/constants"
 )
 
 const ReadmePath = "README.md"
 
+var _ machinery.Template = &Readme{}
+
 type Readme struct {
-	file.TemplateMixin
-	file.ResourceMixin
+	machinery.TemplateMixin
+	machinery.ResourceMixin
 }
 
 func (f *Readme) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = filepath.Join(constants.RolesDir, "%[kind]", ReadmePath)
-		f.Path = f.Resource.Replacer().Replace(f.Path)
 	}
+	f.Path = f.Resource.Replacer().Replace(f.Path)
 
 	f.TemplateBody = readmeAnsibleTmpl
 	return nil

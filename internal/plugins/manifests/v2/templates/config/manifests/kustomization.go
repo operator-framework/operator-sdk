@@ -12,35 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v2
+package manifests
 
 import (
 	"path/filepath"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 )
 
-var _ file.Template = &Kustomization{}
+var _ machinery.Template = &Kustomization{}
 
 // Kustomization scaffolds a kustomization.yaml for the manifests overlay folder.
 type Kustomization struct {
-	file.TemplateMixin
-	file.ProjectNameMixin
+	machinery.TemplateMixin
+	machinery.ProjectNameMixin
 
 	SupportsWebhooks bool
 }
 
-// SetTemplateDefaults implements file.Template
+// SetTemplateDefaults implements machinery.Template
 func (f *Kustomization) SetTemplateDefaults() error {
 	if f.Path == "" {
-		f.Path = filepath.Join(manifestsDir, "kustomization.yaml")
+		f.Path = filepath.Join("config", "manifests", "kustomization.yaml")
 	}
 
 	f.TemplateBody = kustomizationTemplate
-
-	if f.IfExistsAction == 0 && f.IfExistsAction != file.Skip {
-		f.IfExistsAction = file.Error
-	}
 
 	return nil
 }

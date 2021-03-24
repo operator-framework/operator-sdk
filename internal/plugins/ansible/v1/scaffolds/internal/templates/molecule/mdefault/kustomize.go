@@ -17,17 +17,17 @@ package mdefault
 import (
 	"path/filepath"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 )
 
-var _ file.Template = &Kustomize{}
+var _ machinery.Template = &Kustomize{}
 
 // Kustomize scaffolds a Kustomize for building a main
 type Kustomize struct {
-	file.TemplateMixin
+	machinery.TemplateMixin
 }
 
-// SetTemplateDefaults implements input.Template
+// SetTemplateDefaults implements machinery.Template
 func (f *Kustomize) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = filepath.Join("molecule", "default", "kustomize.yml")

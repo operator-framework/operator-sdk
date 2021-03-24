@@ -19,17 +19,17 @@ package rbac
 import (
 	"path/filepath"
 
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 )
 
-var _ file.Template = &Kustomization{}
+var _ machinery.Template = &Kustomization{}
 
 // Kustomization scaffolds the Kustomization file in rbac folder.
 type Kustomization struct {
-	file.TemplateMixin
+	machinery.TemplateMixin
 }
 
-// SetTemplateDefaults implements input.Template
+// SetTemplateDefaults implements machinery.Template
 func (f *Kustomization) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = filepath.Join("config", "rbac", "kustomization.yaml")
@@ -37,7 +37,7 @@ func (f *Kustomization) SetTemplateDefaults() error {
 
 	f.TemplateBody = kustomizeRBACTemplate
 
-	f.IfExistsAction = file.Error
+	f.IfExistsAction = machinery.Error
 
 	return nil
 }

@@ -1,4 +1,4 @@
-// Copyright 2020 The Operator-SDK Authors
+// Copyright 2021 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,19 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scorecard
+package v2
 
 import (
+	"errors"
 	"fmt"
-	"io/ioutil"
-	"os"
 	"path/filepath"
 
+	"github.com/spf13/afero"
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
-	cfgv3 "sigs.k8s.io/kubebuilder/v3/pkg/config/v3"
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/file"
+	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
+	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
 
-	"github.com/operator-framework/operator-sdk/internal/plugins/util/kustomize"
 	"github.com/operator-framework/operator-sdk/internal/scorecard"
 	"github.com/operator-framework/operator-sdk/internal/version"
 )
@@ -33,55 +32,58 @@ var (
 	// defaultTestImageTag points to the latest released scorecard-test image.
 	defaultTestImageTag = fmt.Sprintf("quay.io/operator-framework/scorecard-test:%s", version.ImageVersion)
 
-	// defaultDir is the default directory in which to generate kustomize bases and the kustomization.yaml.
-	defaultDir = filepath.Join("config", "scorecard")
+	// Directories
+	outputDir  = filepath.Join("config", "scorecard")
+	basesDir   = filepath.Join(outputDir, "bases")
+	patchesDir = filepath.Join(outputDir, "patches")
 )
 
-// RunInit scaffolds kustomize files for kustomizing a scorecard componentconfig.
-func RunInit(cfg config.Config) error {
-	// Only run these if project version is v3.
-	isV3 := cfg.GetVersion().Compare(cfgv3.Version) == 0
-	if !isV3 {
-		return nil
-	}
+var _ plugin.InitSubcommand = &initSubcommand{}
 
-	return generateInit(defaultDir)
+type initSubcommand struct {
+	config config.Config
 }
 
-// generateInit scaffolds kustomize bundle bases and a kustomization.yaml.
-// TODO(estroz): refactor this to be testable (in-mem fs) and easier to read.
-func generateInit(outputDir string) error {
+func (s *initSubcommand) InjectConfig(c config.Config) error {
+	s.config = c
 
-	basesDir := filepath.Join(outputDir, "bases")
-	patchesDir := filepath.Join(outputDir, "patches")
+	return nil
+}
+
+func (s *initSubcommand) Scaffold(fs machinery.Filesystem) error {
+	// TODO: convert all these files to templates
+
+	// Create the directories
 	for _, dir := range []string{basesDir, patchesDir} {
-		if err := os.MkdirAll(dir, 0755); err != nil {
+		if err := fs.FS.MkdirAll(dir, 0755); err != nil {
 			return err
 		}
 	}
 
 	// Write the scorecard config base.
-	baseFilePath := filepath.Join(basesDir, scorecard.ConfigFileName)
-	if err := ioutil.WriteFile(baseFilePath, []byte(configBaseFile), 0666); err != nil {
-		return fmt.Errorf("error writing default scorecard config: %v", err)
+	if err := afero.WriteFile(fs.FS, filepath.Join(basesDir, scorecard.ConfigFileName), []byte(configBaseFile), 0666); err != nil {
+		return fmt.Errorf("error writing default scorecard config: %w", err)
 	}
 
-	// Write each patch in patchSet to "<key>.config.yaml"
+	// Write a "<key>.config.yaml" for each patch in patchSet.
 	patchSet := map[string]string{
 		"basic": fmt.Sprintf(basicPatchFile, defaultTestImageTag),
 		"olm":   fmt.Sprintf(olmPatchFile, defaultTestImageTag),
 	}
 	for name, patchStr := range patchSet {
-		patchFileName := fmt.Sprintf("%s.config.yaml", name)
-		if err := ioutil.WriteFile(filepath.Join(patchesDir, patchFileName), []byte(patchStr), 0666); err != nil {
-			return fmt.Errorf("error writing %s scorecard config patch: %v", name, err)
+		if err := afero.WriteFile(fs.FS, filepath.Join(patchesDir, fmt.Sprintf("%s.config.yaml", name)), []byte(patchStr), 0666); err != nil {
+			return fmt.Errorf("error writing %s scorecard config patch: %w", name, err)
 		}
 	}
 
-	// Write a kustomization.yaml to outputDir.
-	markerStr := file.NewMarkerFor("kustomization.yaml", patchesJSON6902Marker).String()
-	if err := kustomize.Write(outputDir, fmt.Sprintf(scorecardKustomizationFile, markerStr)); err != nil {
-		return fmt.Errorf("error writing scorecard kustomization.yaml: %v", err)
+	// Write "kustomization.yaml".
+	kustomizeContent := fmt.Sprintf(scorecardKustomizationFile, machinery.NewMarkerFor("kustomization.yaml", patchesJSON6902Marker))
+	if err := afero.WriteFile(fs.FS, filepath.Join(outputDir, "kustomization.yaml"), []byte(kustomizeContent), 0666); err != nil {
+		return fmt.Errorf("error writing scorecard kustomization.yaml: %w", err)
+	}
+
+	if err := s.config.EncodePluginConfig(pluginKey, Config{}); err != nil && !errors.As(err, &config.UnsupportedFieldError{}) {
+		return err
 	}
 
 	return nil
@@ -110,9 +112,7 @@ patchesJson6902:
 
 	// YAML file marker to append to kustomization.yaml files.
 	patchesJSON6902Marker = "patchesJson6902"
-)
 
-const (
 	// configBaseFile is an empty scorecard componentconfig with parallel stages.
 	configBaseFile = `apiVersion: scorecard.operatorframework.io/v1alpha3
 kind: Configuration
