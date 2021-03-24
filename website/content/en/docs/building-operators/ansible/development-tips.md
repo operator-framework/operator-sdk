@@ -26,21 +26,21 @@ machine and test it using a playbook.
 To install the Kubernetes Collection, one must first install Ansible 2.9+.
 For example, on Fedora/Centos:
 
-```bash
-$ sudo dnf install ansible
+```sh
+sudo dnf install ansible
 ```
 
 In addition to Ansible, a user must install the
 [OpenShift Restclient Python][openshift-restclient-python] package:
 
-```bash
-$ pip3 install openshift
+```sh
+pip3 install openshift
 ```
 
 Finally, install the Kubernetes Collection from ansible-galaxy:
 
-```bash
-$ ansible-galaxy collection install community.kubernetes
+```sh
+ansible-galaxy collection install community.kubernetes
 ```
 
 Alternatively, if you've already initialized your operator, you may have a
@@ -52,8 +52,8 @@ operator-specific operations.
 
 To install the dependent modules from this file, run:
 
-```bash
-$ ansible-galaxy collection install -r requirements.yml
+```sh
+ansible-galaxy collection install -r requirements.yml
 ```
 
 ### Testing the Kubernetes Collection locally
@@ -62,13 +62,13 @@ Sometimes it is beneficial for a developer to run the Ansible code from their
 local machine as opposed to running/rebuilding the operator each time. To do
 this, initialize a new project:
 
-```bash
-$ mkdir foo-operator && cd foo-operator
-$ operator-sdk init --plugins=ansible --domain=example.com --group=foo --version=v1alpha1 --kind=Foo --generate-role
-$ ansible-galaxy collection install -r requirements.yml
+```sh
+mkdir memcached-operator && cd memcached-operator
+operator-sdk init --plugins=ansible --domain=example.com --group=cache --version=v1alpha1 --kind=Memcached --generate-role
+ansible-galaxy collection install -r requirements.yml
 ```
 
-Modify `roles/foo/tasks/main.yml` with desired Ansible logic. For this example
+Modify `roles/memcached/tasks/main.yml` with desired Ansible logic. For this example
 we will create and delete a ConfigMap based on the value of a variable named
 `state`:
 
@@ -89,7 +89,7 @@ Setting `ignore_errors: true` is done so that deleting a nonexistent
 ConfigMap doesn't error out.
 {{% /alert %}}
 
-Modify `roles/foo/defaults/main.yml` to set `state` to `present` as default.
+Modify `roles/memcached/defaults/main.yml` to set `state` to `present` as default.
 
 ```yaml
 ---
@@ -97,18 +97,18 @@ state: present
 ```
 
 Create an Ansible playbook `playbook.yml` in the top-level directory which
-includes role `foo`:
+includes role `memcached`:
 
 ```yaml
 ---
 - hosts: localhost
   roles:
-    - foo
+    - memcached
 ```
 
 Run the playbook:
 
-```bash
+```console
 $ ansible-playbook playbook.yml
  [WARNING]: provided hosts list is empty, only localhost is available. Note that the implicit localhost does not match 'all'
 
@@ -118,7 +118,7 @@ PLAY [localhost] ***************************************************************
 TASK [Gathering Facts] *********************************************************************
 ok: [localhost]
 
-Task [foo : set example-coonfig configmap to present]
+Task [memcached : set example-coonfig configmap to present]
 changed: [localhost]
 
 PLAY RECAP *********************************************************************************
@@ -127,7 +127,7 @@ localhost                  : ok=2    changed=1    unreachable=0    failed=0
 
 Check that the ConfigMap was created:
 
-```bash
+```console
 $ kubectl get configmaps
 NAME                    STATUS    AGE
 example-config          Active    3s
@@ -135,7 +135,7 @@ example-config          Active    3s
 
 Rerun the playbook setting `state` to `absent`:
 
-```none
+```console
 $ ansible-playbook playbook.yml --extra-vars state=absent
  [WARNING]: provided hosts list is empty, only localhost is available. Note that the implicit localhost does not match 'all'
 
@@ -145,7 +145,7 @@ PLAY [localhost] ***************************************************************
 TASK [Gathering Facts] *********************************************************************
 ok: [localhost]
 
-Task [foo : set example-config configmap to absent]
+Task [memcached : set example-config configmap to absent]
 changed: [localhost]
 
 PLAY RECAP *********************************************************************************
@@ -154,8 +154,9 @@ localhost                  : ok=2    changed=1    unreachable=0    failed=0
 
 Check that the ConfigMap was deleted:
 
-```none
+```console
 $ kubectl get configmaps
+No resources found in default namespace.
 ```
 
 ## Using Ansible inside an Operator
@@ -193,8 +194,8 @@ This is the list of CR annotations which will modify the behavior of the operato
   Example:
 
   ```yaml
-  apiVersion: foo.example.com/v1alpha1
-  kind: Foo
+  apiVersion: cache.example.com/v1alpha1
+  kind: Memcached
   metadata:
     name: example
     annotations:
@@ -210,18 +211,18 @@ Kubernetes events.
 
 ### Testing an Ansible Operator locally
 
-**Prerequisites**: Ensure that [Ansible Runner][ansible-runner-tool] and [Ansible Runner
-HTTP Plugin][ansible-runner-http-plugin] is installed or else you will see
-unexpected errors from Ansible Runner when a Custom Resource is created.
-
 Once a developer is comfortable working with the above workflow, it will be
-beneficial to test the logic inside an operator. To accomplish this, you can
-use `make run` from the top-level directory of our project. The `make run`
-Makefile target runs the `ansible-operator` binary locally, which reads from
+beneficial to test the logic inside an operator.
+
+**Prerequisites**:
+- Read the [Ansible Operator tutorial][tutorial].
+- Install `ansible-operator` [dependencies][py-deps] using [`pipenv`][pipenv]
+and their OS prerequisite [packages][os-pkgs] (these will differ depending on OS) locally.
+
+The `run` Makefile target runs the `ansible-operator` binary locally, which reads from
 `./watches.yaml` and uses `~/.kube/config` to communicate with a Kubernetes
-cluster just as the `k8s` modules do. This section assumes the developer has
-read the [Ansible Operator user guide][ansible_operator_user_guide] and has
-the proper dependencies installed.
+cluster just as the `k8s` modules do. The `install` target registers the operator's
+`Memcached` CustomResourceDefinition (CRD) with the apiserver.
 
 {{% alert title="Note" color="primary" %}}
 You can customize the roles path by setting the environment variable
@@ -230,17 +231,11 @@ role is not found in `ANSIBLE_ROLES_PATH`, then the operator will look for it
 in `{{current directory}}/roles`.   
 {{% /alert %}}
 
-Create a Custom Resource Definition (CRD) and proper Role-Based Access Control
-(RBAC) definitions for resource Foo.
-
-```bash
-$ make install
-```
-
-Run the `make run` command:
-```bash
-$ make run
-/home/user/go/bin/ansible-operator
+```console
+$ make install run
+/home/user/memcached-operator/bin/kustomize build config/crd | kubectl apply -f -
+customresourcedefinition.apiextensions.k8s.io/memcacheds.cache.example.com created
+/home/user/go/bin/ansible-operator run
 {"level":"info","ts":1595899073.9861593,"logger":"cmd","msg":"Version","Go Version":"go1.13.12","GOOS":"linux","GOARCH":"amd64","ansible-operator":"v0.19.0+git"}
 {"level":"info","ts":1595899073.987384,"logger":"cmd","msg":"WATCH_NAMESPACE environment variable not set. Watching all namespaces.","Namespace":""}
 {"level":"info","ts":1595899074.9504397,"logger":"controller-runtime.metrics","msg":"metrics server is starting to listen","addr":":8080"}
@@ -249,53 +244,53 @@ $ make run
 {"level":"info","ts":1595899074.9524298,"logger":"ansible-controller","msg":"Watching resource","Options.Group":"cache.example.com","Options.Version":"v1","Options.Kind":"Memcached"}
 ```
 
-Now that the operator is watching resource `Foo` for events, the creation of a
+Now that the operator is watching resource `Memcached` for events, the creation of a
 Custom Resource will trigger our Ansible Role to be executed. Take a look at
-`config/samples/foo_v1alpha1_foo.yaml`:
+`config/samples/cache_v1alpha1_memcached.yaml`:
 
 ```yaml
-apiVersion: foo.example.com/v1alpha1
-kind: Foo
+apiVersion: cache.example.com/v1alpha1
+kind: Memcached
 metadata:
-  name: "foo-sample"
+  name: "memcached-sample"
 ```
 
 Since `spec` is not set, Ansible is invoked with no extra variables. The next
 section covers how extra variables are passed from a Custom Resource to
 Ansible. This is why it is important to set sane defaults for the operator.
 
-Create a Custom Resource instance of Foo with variable `state` default to
+Create a Custom Resource instance of Memcached with variable `state` default to
 `present`:
 
-```bash
-$ kubectl create -f config/samples/foo_v1alpha1_foo.yaml
+```sh
+kubectl create -f config/samples/cache_v1alpha1_memcached.yaml
 ```
 
 Check that ConfigMap `example-config` was created:
 
-```bash
+```console
 $ kubectl get configmaps
 NAME                    STATUS    AGE
 example-config          Active    3s
 ```
 
-Modify `deploy/crds/foo.example.com_v1alpha1_foo_cr.yaml` to set `state` to
+Modify `config/samples/cache_v1alpha1_memcached.yaml` to set `state` to
 `absent`:
 
 ```yaml
-apiVersion: foo.example.com/v1alpha1
-kind: Foo
+apiVersion: cache.example.com/v1alpha1
+kind: Memcached
 metadata:
-  name: foo-sample
+  name: memcached-sample
 spec:
   state: absent
 ```
 
 Apply the changes to Kubernetes and confirm that the ConfiMap is deleted:
 
-```none
-$ kubectl apply -f config/samples/foo_v1alpha1_foo.yaml
-$ kubectl get configmaps
+```sh
+kubectl apply -f config/samples/cache_v1alpha1_memcached.yaml
+kubectl get configmaps
 ```
 
 ### Testing an Ansible Operator on a cluster
@@ -304,33 +299,33 @@ Now that a developer is confident in the operator logic, testing the operator
 inside of a pod on a Kubernetes cluster is desired. Running as a pod inside a
 Kubernetes cluster is preferred for production use.
 
-To build the `foo-operator` image and push it to a registry:
+To build the `memcached-operator` image and push it to a registry:
 
-```bash
-$ make docker-build docker-push IMG=quay.io/example/foo-operator:v0.0.1
+```sh
+make docker-build docker-push IMG=example.com/memcached-operator:v0.0.1
 ```
 
-Deploy the foo-operator:
+Deploy the memcached-operator:
 
-```bash
-$ make install
-$ make deploy IMG=quay.io/example/foo-operator:v0.0.1
+```sh
+make install
+make deploy IMG=example.com/memcached-operator:v0.0.1
 ```
 
-Verify that the foo-operator is up and running:
+Verify that the memcached-operator is up and running:
 
-```bash
-$ kubectl get deployment -n foo-operator-system
+```console
+$ kubectl get deployment -n memcached-operator-system
 NAME                     DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
-foo-operator       1         1         1            1           1m
+memcached-operator       1         1         1            1           1m
 ```
 
 ### Viewing the Ansible logs
 
 In order to see the logs from a particular operator you can run:
 
-```bash
-kubectl logs deployment/foo-operator-controller-manager -n foo-operator-system
+```sh
+kubectl logs deployment/memcached-operator-controller-manager -n memcached-operator-system
 ```
 
 The logs contain the information about the Ansible run and are useful for
@@ -410,20 +405,19 @@ you can update the `watches.yaml` file with `manageStatus`, as shown below:
 ```yaml
 - version: v1
   group: api.example.com
-  kind: Foo
-  role: foo
+  kind: Memcached
+  role: memcached
   manageStatus: false
 ```
 
 The simplest way to invoke the `k8s_status` module is to use its fully
 qualified collection name (fqcn), i.e. `operator_sdk.util.k8s_status`.  The
-following example updates the `status` subresource with key `foo` and value
-`bar`:
+following example updates the `status` subresource with key `memcached` and value `bar`:
 
 ```yaml
 - operator_sdk.util.k8s_status:
     api_version: app.example.com/v1
-    kind: Foo
+    kind: Memcached
     name: "{{ ansible_operator_meta.name }}"
     namespace: "{{ ansible_operator_meta.namespace }}"
     status:
@@ -476,10 +470,10 @@ the name of the CR and the namespace of the CR.
 For the CR example:
 
 ```yaml
-apiVersion: "foo.example.com/v1alpha1"
-kind: "Foo"
+apiVersion: "cache.example.com/v1alpha1"
+kind: "Memcached"
 metadata:
-  name: "foo-sample"
+  name: "memcached-sample"
 spec:
   message: "Hello world 2"
   newParameter: "newParam"
@@ -517,7 +511,7 @@ operator. The `ansible_operator_meta` fields can be accessed via dot notation in
 [ansible-runner-tool]: https://ansible-runner.readthedocs.io/en/latest/install.html
 [k8s_ansible_module]:https://docs.ansible.com/ansible/2.6/modules/k8s_module.html
 [openshift_restclient_python]:https://github.com/openshift/openshift-restclient-python
-[ansible_operator_user_guide]:../tutorial
+[tutorial]:../tutorial
 [kubernetes_collection]: https://galaxy.ansible.com/community/kubernetes
 [manage_status_proposal]:../../proposals/ansible-operator-status.md
 [openshift-restclient-python]: https://github.com/openshift/openshift-restclient-python
@@ -526,3 +520,6 @@ operator. The `ansible_operator_meta` fields can be accessed via dot notation in
 [time_pkg]:https://golang.org/pkg/time/
 [time_parse_duration]:https://golang.org/pkg/time/#ParseDuration
 [watches]:/docs/building-operators/ansible/reference/watches
+[py-deps]:https://github.com/operator-framework/operator-sdk/blob/c6796de/images/ansible-operator/Pipfile.lock
+[pipenv]:https://pypi.org/project/pipenv/
+[os-pkgs]:https://github.com/operator-framework/operator-sdk/blob/c6796de/images/ansible-operator/base.Dockerfile#L29
