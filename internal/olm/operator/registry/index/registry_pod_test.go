@@ -30,6 +30,8 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 )
 
+const testIndexImageTag = "some-image:v1.2.3"
+
 // newFakeClient() returns a fake controller runtime client
 func newFakeClient() client.Client {
 	return fakeclient.NewClientBuilder().Build()
@@ -59,7 +61,10 @@ var _ = Describe("RegistryPod", func() {
 					Client:    newFakeClient(),
 					Namespace: "test-default",
 				}
-				rp = &RegistryPod{BundleItems: []BundleItem{defaultBundleItem}}
+				rp = &RegistryPod{
+					BundleItems: []BundleItem{defaultBundleItem},
+					IndexImage:  testIndexImageTag,
+				}
 				By("initializing the RegistryPod")
 				Expect(rp.init(cfg)).To(Succeed())
 			})
@@ -150,6 +155,7 @@ var _ = Describe("RegistryPod", func() {
 			It("checkPodStatus should return error when pod check is false and context is done", func() {
 				rp := &RegistryPod{
 					BundleItems: []BundleItem{defaultBundleItem},
+					IndexImage:  testIndexImageTag,
 				}
 				Expect(rp.init(cfg)).To(Succeed())
 

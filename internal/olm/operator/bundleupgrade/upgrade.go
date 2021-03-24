@@ -24,7 +24,6 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry"
-	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry/index"
 )
 
 type Upgrade struct {
@@ -84,7 +83,7 @@ func (u *Upgrade) setup(ctx context.Context) error {
 	// defer defaulting the bundle add mode to after the existing CatalogSource is retrieved.
 	u.IndexImageCatalogCreator.PackageName = u.OperatorInstaller.PackageName
 	u.IndexImageCatalogCreator.BundleImage = u.BundleImage
-	u.IndexImageCatalogCreator.IndexImage = index.DefaultIndexImage
+	u.IndexImageCatalogCreator.IndexImage = registry.DefaultIndexImage
 
 	return nil
 }

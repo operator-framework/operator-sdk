@@ -11,7 +11,7 @@ docker run --rm -v "$(pwd):/src" -v sdk-html:/src/website/public klakegg/hugo:0.
 
 header_text "Checking links"
 # For config explanation: https://github.com/gjtorikian/html-proofer#special-cases-for-the-command-line
-docker run --rm -v sdk-html:/target klakegg/html-proofer:latest /target \
+docker run --rm -v sdk-html:/target klakegg/html-proofer:3.18.8 /target \
   --empty-alt-ignore \
   --http-status-ignore 429 \
   --allow_hash_href \

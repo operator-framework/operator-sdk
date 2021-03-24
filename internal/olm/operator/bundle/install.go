@@ -24,7 +24,6 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry"
-	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry/index"
 )
 
 type Install struct {
@@ -47,7 +46,7 @@ func NewInstall(cfg *operator.Configuration) Install {
 }
 
 func (i *Install) BindFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&i.IndexImage, "index-image", index.DefaultIndexImage, "index image in which to inject bundle")
+	fs.StringVar(&i.IndexImage, "index-image", registry.DefaultIndexImage, "index image in which to inject bundle")
 	fs.Var(&i.InstallMode, "install-mode", "install mode")
 
 	// --mode is hidden so only users who know what they're doing can alter add mode.
@@ -63,14 +62,11 @@ func (i Install) Run(ctx context.Context) (*v1alpha1.ClusterServiceVersion, erro
 }
 
 func (i *Install) setup(ctx context.Context) error {
-	// Default bundle add mode then validate in case it was set by a user.
-	if i.BundleAddMode == "" {
-		i.BundleAddMode = index.ReplacesBundleAddMode
-		if i.IndexImage == index.DefaultIndexImage {
-			i.BundleAddMode = index.SemverBundleAddMode
+	// Validate add mode in case it was set by a user.
+	if i.BundleAddMode != "" {
+		if err := i.BundleAddMode.Validate(); err != nil {
+			return err
 		}
-	} else if err := i.BundleAddMode.Validate(); err != nil {
-		return err
 	}
 
 	// Load bundle labels and set label-dependent values.

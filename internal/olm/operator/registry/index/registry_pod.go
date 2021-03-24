@@ -36,9 +36,6 @@ import (
 )
 
 const (
-	// DefaultIndexImage is the index base image used if none is specified. It contains no bundles.
-	DefaultIndexImage = "quay.io/operator-framework/upstream-opm-builder:latest"
-
 	// defaultGRPCPort is the default grpc container port that the registry pod exposes
 	defaultGRPCPort = 50051
 	defaultDBPath   = "/database/index.db"
@@ -84,9 +81,6 @@ func (rp *RegistryPod) init(cfg *operator.Configuration) error {
 	}
 	if rp.DBPath == "" {
 		rp.DBPath = defaultDBPath
-	}
-	if rp.IndexImage == "" {
-		rp.IndexImage = DefaultIndexImage
 	}
 	rp.cfg = cfg
 
@@ -169,6 +163,10 @@ func (rp *RegistryPod) validate() error {
 		if err := item.AddMode.Validate(); err != nil {
 			return fmt.Errorf("invalid bundle add mode: %v", err)
 		}
+	}
+
+	if rp.IndexImage == "" {
+		return errors.New("index image cannot be empty")
 	}
 
 	return nil
