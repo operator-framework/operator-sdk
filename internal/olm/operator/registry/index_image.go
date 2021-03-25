@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -32,6 +33,15 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry/index"
 	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
+)
+
+const (
+	// defaultIndexImageBase is the base for defaultIndexImage. It is necessary to separate
+	// them for string comparison when defaulting bundle add mode.
+	defaultIndexImageBase = "quay.io/operator-framework/upstream-opm-builder:"
+	// DefaultIndexImage is the index base image used if none is specified. It contains no bundles.
+	// TODO(v2.0.0): pin this image tag to a specific version.
+	DefaultIndexImage = defaultIndexImageBase + "latest"
 )
 
 // Internal CatalogSource annotations.
@@ -74,6 +84,8 @@ func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string
 		return nil, fmt.Errorf("error creating catalog source: %v", err)
 	}
 
+	c.setAddMode()
+
 	newItems := []index.BundleItem{{ImageTag: c.BundleImage, AddMode: c.BundleAddMode}}
 	if err := c.createAnnotatedRegistry(ctx, cs, newItems, updateFieldsNoOp); err != nil {
 		return nil, fmt.Errorf("error creating registry pod: %v", err)
@@ -108,14 +120,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 		c.IndexImage = cs.Spec.Image
 	}
 
-	// Default add mode here since it depends on an existing annotation.
-	if c.BundleAddMode == "" {
-		if c.IndexImage == index.DefaultIndexImage {
-			c.BundleAddMode = index.SemverBundleAddMode
-		} else {
-			c.BundleAddMode = index.ReplacesBundleAddMode
-		}
-	}
+	c.setAddMode()
 
 	newItem := index.BundleItem{ImageTag: c.BundleImage, AddMode: c.BundleAddMode}
 	existingItems = append(existingItems, newItem)
@@ -124,7 +129,6 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 		// set `spec.Image` field to empty as we set the address in
 		// catalog source to registry pod IP
 		cs.Spec.Image = ""
-
 	}
 
 	if err := c.createAnnotatedRegistry(ctx, cs, existingItems, updateFields); err != nil {
@@ -142,10 +146,26 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 	return nil
 }
 
+// Default add mode here since it depends on an existing annotation.
+// TODO(v2.0.0): this should default to semver mode.
+func (c IndexImageCatalogCreator) setAddMode() {
+	if c.BundleAddMode == "" {
+		if strings.HasPrefix(c.IndexImage, defaultIndexImageBase) {
+			c.BundleAddMode = index.SemverBundleAddMode
+		} else {
+			c.BundleAddMode = index.ReplacesBundleAddMode
+		}
+	}
+}
+
 // createAnnotatedRegistry creates a registry pod and updates cs with annotations constructed
 // from items and that pod, then applies updateFields.
 func (c IndexImageCatalogCreator) createAnnotatedRegistry(ctx context.Context, cs *v1alpha1.CatalogSource,
 	items []index.BundleItem, updateFields func(*v1alpha1.CatalogSource)) (err error) {
+
+	if c.IndexImage == "" {
+		c.IndexImage = DefaultIndexImage
+	}
 	// Initialize and create registry pod
 	registryPod := index.RegistryPod{
 		BundleItems: items,
