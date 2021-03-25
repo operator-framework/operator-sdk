@@ -195,7 +195,7 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 				Message: err.Error(),
 			})
 			if err := r.updateResourceStatus(ctx, o, status); err != nil {
-				log.Error(err, "Failed to update status after insatll release failure")
+				log.Error(err, "Failed to update status after install release failure")
 			}
 			return reconcile.Result{}, err
 		}
