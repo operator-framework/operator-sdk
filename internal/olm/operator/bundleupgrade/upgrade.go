@@ -49,6 +49,8 @@ func (u *Upgrade) BindFlags(fs *pflag.FlagSet) {
 	// --mode is hidden so only users who know what they're doing can alter add mode.
 	fs.StringVar((*string)(&u.BundleAddMode), "mode", "", "mode to use for adding new bundle version to index")
 	_ = fs.MarkHidden("mode")
+
+	u.IndexImageCatalogCreator.BindFlags(fs)
 }
 
 func (u Upgrade) Run(ctx context.Context) (*v1alpha1.ClusterServiceVersion, error) {

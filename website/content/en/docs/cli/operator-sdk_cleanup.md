@@ -22,7 +22,7 @@ operator-sdk cleanup <operatorPackageName> [flags]
   -h, --help                     help for cleanup
       --kubeconfig string        Path to the kubeconfig file to use for CLI requests.
   -n, --namespace string         If present, namespace scope for this CLI request
-      --timeout duration         Time to wait for the command to complete before failing (default 2m0s)
+      --timeout duration         Duration to wait for the command to complete before failing (default 2m0s)
 ```
 
 ### Options inherited from parent commands

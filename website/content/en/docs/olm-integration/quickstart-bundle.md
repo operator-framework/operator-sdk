@@ -110,6 +110,15 @@ to ensure the on-disk bundle representation is correct.
 At this point in development we've generated all files necessary to build the memcached-operator bundle.
 Now we're ready to test and deploy the Operator with OLM.
 
+**Note:** if testing a bundle hosted in a private registry, add the image pull
+secret for that registry host [to the service account][add-sa-secret] in use
+and set `--secret-name` to the secret name. You may have to set `--namespace`
+if the service account is in a different namespace than that configured in your kubeconfig.
+<!-- TODO(estroz): remove the service account requirement once OLM releases a patch or new
+minor release containing https://github.com/operator-framework/operator-lifecycle-manager/pull/1941 -->
+
+[add-sa-secret]:https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#add-imagepullsecrets-to-a-service-account
+
 ### Testing bundles
 
 Before proceeding, make sure you've [Installed OLM](#enabling-olm) onto your

@@ -23,6 +23,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -53,8 +54,12 @@ var _ = Describe("RegistryPod", func() {
 
 		Context("with valid registry pod values", func() {
 
-			var rp *RegistryPod
-			var cfg *operator.Configuration
+			var (
+				rp  *RegistryPod
+				cfg *operator.Configuration
+				pod *corev1.Pod
+				err error
+			)
 
 			BeforeEach(func() {
 				cfg = &operator.Configuration{
@@ -122,6 +127,35 @@ var _ = Describe("RegistryPod", func() {
 				err := rp.checkPodStatus(context.Background(), mockGoodPodCheck)
 
 				Expect(err).To(BeNil())
+			})
+
+			It("adds secrets and a service account to the pod", func() {
+				cfg.ServiceAccount = "foo"
+				rp.SecretName = "foo-secret"
+
+				pod, err = rp.podForBundleRegistry()
+				Expect(err).NotTo((HaveOccurred()))
+				Expect(pod.Spec.ServiceAccountName).To(Equal(cfg.ServiceAccount))
+				Expect(pod.Spec.Volumes).To(Equal([]corev1.Volume{
+					{
+						Name: "foo-secret",
+						VolumeSource: corev1.VolumeSource{
+							Secret: &corev1.SecretVolumeSource{
+								SecretName:  "foo-secret",
+								DefaultMode: newInt32(0400),
+								Optional:    newBool(false),
+								Items: []corev1.KeyToPath{
+									{Key: ".dockerconfigjson", Path: ".docker/config.json"},
+								},
+							},
+						},
+					},
+				}))
+				for _, container := range pod.Spec.Containers {
+					Expect(container.VolumeMounts).To(Equal([]corev1.VolumeMount{
+						{Name: "foo-secret", ReadOnly: true, MountPath: "/root"},
+					}))
+				}
 			})
 		})
 

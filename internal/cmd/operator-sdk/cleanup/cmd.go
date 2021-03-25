@@ -17,7 +17,6 @@ package cleanup
 import (
 	"context"
 	"errors"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -26,23 +25,20 @@ import (
 )
 
 func NewCmd() *cobra.Command {
-	var timeout time.Duration
 	cfg := &operator.Configuration{}
 	u := operator.NewUninstall(cfg)
 	cmd := &cobra.Command{
-		Use:   "cleanup <operatorPackageName>",
-		Short: "Clean up an Operator deployed with the 'run' subcommand",
-		Long:  "This command has subcommands that will destroy an Operator deployed with OLM.",
-		Args:  cobra.ExactArgs(1),
-		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
-			return cfg.Load()
-		},
+		Use:     "cleanup <operatorPackageName>",
+		Short:   "Clean up an Operator deployed with the 'run' subcommand",
+		Long:    "This command has subcommands that will destroy an Operator deployed with OLM.",
+		Args:    cobra.ExactArgs(1),
+		PreRunE: func(*cobra.Command, []string) error { return cfg.Load() },
 		Run: func(cmd *cobra.Command, args []string) {
 			u.Package = args[0]
 			u.DeleteOperatorGroupNames = []string{operator.SDKOperatorGroupName}
 			u.Logf = log.Infof
 
-			ctx, cancel := context.WithTimeout(cmd.Context(), timeout)
+			ctx, cancel := context.WithTimeout(cmd.Context(), cfg.Timeout)
 			defer cancel()
 
 			err := u.Run(ctx)
@@ -57,9 +53,13 @@ func NewCmd() *cobra.Command {
 			}
 		},
 	}
-	cmd.Flags().DurationVar(&timeout, "timeout", 2*time.Minute, "Time to wait for the command to complete before failing")
-	cfg.BindFlags(cmd.PersistentFlags())
+
+	cfg.BindFlags(cmd.Flags())
 	u.BindFlags(cmd.Flags())
+	// --service-account is meaningless here.
+	if err := cmd.Flags().MarkHidden("service-account"); err != nil {
+		log.Fatal(err)
+	}
 
 	return cmd
 }

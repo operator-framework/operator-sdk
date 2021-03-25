@@ -52,6 +52,8 @@ func (i *Install) BindFlags(fs *pflag.FlagSet) {
 	// --mode is hidden so only users who know what they're doing can alter add mode.
 	fs.StringVar((*string)(&i.BundleAddMode), "mode", "", "mode to use for adding bundle to index")
 	_ = fs.MarkHidden("mode")
+
+	i.IndexImageCatalogCreator.BindFlags(fs)
 }
 
 func (i Install) Run(ctx context.Context) (*v1alpha1.ClusterServiceVersion, error) {

@@ -68,6 +68,10 @@ type RegistryPod struct {
 	// GRPCPort is the container grpc port
 	GRPCPort int32
 
+	// SecretName holds the name of an image pull secret to mount into the Pod so `opm registry add`
+	// can pull bundle images from a private registry.
+	SecretName string
+
 	// pod represents a kubernetes *corev1.pod that will be created on a cluster using an index image
 	pod *corev1.Pod
 
@@ -216,13 +220,60 @@ func (rp *RegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 					},
 				},
 			},
+			ServiceAccountName: rp.cfg.ServiceAccount,
 		},
 	}
+
+	applySecret(rp.pod, rp.SecretName)
 
 	return rp.pod, nil
 }
 
-const containerCommand = `/bin/mkdir -p {{ .DBPath | dirname }} && \
+// applySecret creates a docker config volume for secretName
+// and a volumeMount for that secret in each container in pod.
+func applySecret(pod *corev1.Pod, secretName string) {
+	pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{
+		Name: secretName,
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				SecretName:  secretName,
+				DefaultMode: newInt32(0400),
+				Optional:    newBool(false),
+				// Require a non-legacy docker config secret.
+				Items: []corev1.KeyToPath{
+					{
+						Key:  ".dockerconfigjson",
+						Path: ".docker/config.json",
+					},
+				},
+			},
+		},
+	})
+
+	volumeMount := corev1.VolumeMount{
+		Name:     secretName,
+		ReadOnly: true,
+		// Mount in $HOME.
+		MountPath: "/root",
+	}
+	for i := range pod.Spec.Containers {
+		pod.Spec.Containers[i].VolumeMounts = append(pod.Spec.Containers[i].VolumeMounts, volumeMount)
+	}
+}
+
+func newInt32(i int32) *int32 {
+	ip := new(int32)
+	*ip = i
+	return ip
+}
+
+func newBool(b bool) *bool {
+	bp := new(bool)
+	*bp = b
+	return bp
+}
+
+const containerCommand = `/bin/mkdir -p {{ dirname .DBPath }} && \
 {{- range $i, $item := .BundleItems }}
 /bin/opm registry add -d {{ $.DBPath }} -b {{ $item.ImageTag }} --mode={{ $item.AddMode }} && \
 {{- end }}

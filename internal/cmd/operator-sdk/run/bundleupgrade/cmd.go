@@ -16,7 +16,6 @@ package bundleupgrade
 
 import (
 	"context"
-	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -26,18 +25,16 @@ import (
 )
 
 func NewCmd(cfg *operator.Configuration) *cobra.Command {
-	var timeout time.Duration
-
 	u := bundleupgrade.NewUpgrade(cfg)
 	cmd := &cobra.Command{
 		Use:   "bundle-upgrade <bundle-image>",
 		Short: "Upgrade an Operator previously installed in the bundle format with OLM",
-		Args:  cobra.ExactArgs(1),
-		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
-			return cfg.Load()
-		},
+		Long: `The single argument to this command is a bundle image, with the full registry path specified.
+If using a docker.io image, you must specify docker.io(/<namespace>)?/<bundle-image-name>:<tag>.`,
+		Args:    cobra.ExactArgs(1),
+		PreRunE: func(*cobra.Command, []string) error { return cfg.Load() },
 		Run: func(cmd *cobra.Command, args []string) {
-			ctx, cancel := context.WithTimeout(cmd.Context(), timeout)
+			ctx, cancel := context.WithTimeout(cmd.Context(), cfg.Timeout)
 			defer cancel()
 
 			u.BundleImage = args[0]
@@ -48,10 +45,9 @@ func NewCmd(cfg *operator.Configuration) *cobra.Command {
 			}
 		},
 	}
-	cmd.Flags().SortFlags = false
-	cfg.BindFlags(cmd.PersistentFlags())
+
+	cfg.BindFlags(cmd.Flags())
 	u.BindFlags(cmd.Flags())
 
-	cmd.Flags().DurationVar(&timeout, "timeout", 2*time.Minute, "upgrade timeout")
 	return cmd
 }

@@ -8,9 +8,26 @@ This document discusses the behavior of `operator-sdk <run|cleanup>` subcommands
 and assumes you are familiar with [OLM][olm], related terminology,
 and have read the SDK-OLM integration [design proposal][sdk-olm-design].
 
-**Note:** before continuing, please read the [caveats](#caveats) section below.
+### Caveats
+
+- `run bundle`, `run bundle-upgrade`, `run packagemanifests`, and `cleanup` are intended to be used for testing purposes only,
+since these commands create a transient image registry that should not be used in production.
+Typically a registry is deployed separately and a set of catalog manifests are created in the cluster
+to inform OLM of that registry and which Operator versions it can deploy and where to deploy the Operator.
+- `run bundle` and `run packagemanifests` can only deploy one Operator and one version of that Operator at a time, 
+and `run bundle-upgrade` can only upgrade one Operator and one version of that Operator at a time, 
+hence their intended purpose being testing only.
+- If testing a bundle hosted in a private registry, set the `--secret-name` flag to
+the name of the appropriate in-cluster image pull secret, and add the same secret
+[to a service account][add-sa-secret] and set `--service-account` to that service account's name;
+you may have to set `--namespace` if the service account is in a different namespace
+than that configured in your kubeconfig.
+<!-- TODO(estroz): remove the service account requirement once OLM releases a patch or new
+minor release containing https://github.com/operator-framework/operator-lifecycle-manager/pull/1941 -->
+
 
 ## `operator-sdk run bundle` command overview
+
 `operator-sdk run bundle` assumes OLM is already installed and running on your
 cluster. It also assumes that your Operator has a valid [bundle][bundle-format].
 See the [creating a bundle][creating-bundle] guide for more information. See the
@@ -103,6 +120,7 @@ Let's look at the anatomy of the `run packagemanifests` configuration model:
   SDK project.
 
 ## `operator-sdk run bundle-upgrade` command overview
+
 `operator-sdk run bundle-upgrade` assumes OLM is already installed and running on your 
 cluster and that the Operator has a valid [bundle][bundle-format]. It also assumes that 
 the previous version of the Operator was deployed on the cluster using `run bundle` command 
@@ -149,16 +167,6 @@ Let's look at the anatomy of the `cleanup` configuration model:
 - **delete-operator-groups**: a boolean indicating to delete all operator groups. This is an optional field
   which will default to false if not provided. If set to true, operator groups will be deleted.
 
-### Caveats
-
-- `run bundle`, `run bundle-upgrade`, `run packagemanifests`, and `cleanup` are intended to be used for testing purposes only,
-since these commands create a transient image registry that should not be used in production.
-Typically a registry is deployed separately and a set of catalog manifests are created in the cluster
-to inform OLM of that registry and which Operator versions it can deploy and where to deploy the Operator.
-- `run bundle` and `run packagemanifests` can only deploy one Operator and one version of that Operator at a time, 
-and `run bundle-upgrade` can only upgrade one Operator and one version of that Operator at a time, 
-hence their intended purpose being testing only.
-
 
 [olm]:https://github.com/operator-framework/operator-lifecycle-manager/
 [sdk-olm-design]:https://github.com/operator-framework/operator-sdk/blob/master/proposals/sdk-integration-with-olm.md
@@ -169,3 +177,4 @@ hence their intended purpose being testing only.
 [cli-olm-install]:/docs/cli/operator-sdk_olm_install
 [cli-olm-status]:/docs/cli/operator-sdk_olm_status
 [creating-bundles]:/docs/olm-integration/quickstart-bundle/#creating-a-bundle
+[add-sa-secret]:https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#add-imagepullsecrets-to-a-service-account

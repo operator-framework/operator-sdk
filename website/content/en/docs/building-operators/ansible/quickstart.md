@@ -56,9 +56,14 @@ This guide walks through an example of building a simple memcached-operator powe
   make bundle-build bundle-push
   ```
 
-1. Run your bundle:
+1. Run your bundle. If your bundle image is hosted in a private registry,
+add the image pull secret for that registry host to the service account in use
+and set `--secret-name` to the secret name:
+<!-- TODO(estroz): remove the service account requirement once OLM releases a patch or new
+minor release containing https://github.com/operator-framework/operator-lifecycle-manager/pull/1941 -->
 
   ```sh
+  kubectl patch serviceaccount default -p '{"imagePullSecrets":[{"name":"<reg secret name>"}]}'
   operator-sdk run bundle example.com/memcached-operator-bundle:v0.0.1
   ```
 
