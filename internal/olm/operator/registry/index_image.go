@@ -80,8 +80,8 @@ func NewIndexImageCatalogCreator(cfg *operator.Configuration) *IndexImageCatalog
 func (c *IndexImageCatalogCreator) BindFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.SecretName, "secret-name", "",
 		"Name of image pull secret (\"type: kubernetes.io/dockerconfigjson\") required "+
-			"to pull bundle images. This secret must be tied to the namespace, "+
-			"and optionally service account, that this command is configured to run in")
+			"to pull bundle images. This secret *must* be both in the namespace and an "+
+			"imagePullSecret of the service account that this command is configured to run in")
 }
 
 func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string) (*v1alpha1.CatalogSource, error) {
@@ -146,7 +146,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 	}
 
 	if err := c.createAnnotatedRegistry(ctx, cs, existingItems, opts...); err != nil {
-		return fmt.Errorf("error creating registry pod: %v", err)
+		return fmt.Errorf("error creating registry: %v", err)
 	}
 
 	log.Infof("Updated catalog source %s with address and annotations", cs.GetName())
@@ -162,7 +162,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 
 // Default add mode here since it depends on an existing annotation.
 // TODO(v2.0.0): this should default to semver mode.
-func (c IndexImageCatalogCreator) setAddMode() {
+func (c *IndexImageCatalogCreator) setAddMode() {
 	if c.BundleAddMode == "" {
 		if strings.HasPrefix(c.IndexImage, defaultIndexImageBase) {
 			c.BundleAddMode = index.SemverBundleAddMode
@@ -211,18 +211,15 @@ func (c IndexImageCatalogCreator) createAnnotatedRegistry(ctx context.Context, c
 	key := types.NamespacedName{Namespace: cs.GetNamespace(), Name: cs.GetName()}
 	if err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		if err := c.cfg.Client.Get(ctx, key, cs); err != nil {
-			return fmt.Errorf("error getting catalog source: %w", err)
+			return err
 		}
 		updateCatalogSourceFields(cs, pod, updatedAnnotations)
 		for _, update := range updates {
 			update(cs)
 		}
-		if err := c.cfg.Client.Update(ctx, cs); err != nil {
-			return fmt.Errorf("error updating catalog source: %w", err)
-		}
-		return nil
+		return c.cfg.Client.Update(ctx, cs)
 	}); err != nil {
-		return err
+		return fmt.Errorf("error updating catalog source: %w", err)
 	}
 
 	return nil

@@ -18,10 +18,12 @@ to inform OLM of that registry and which Operator versions it can deploy and whe
 and `run bundle-upgrade` can only upgrade one Operator and one version of that Operator at a time, 
 hence their intended purpose being testing only.
 - If testing a bundle hosted in a private registry, set the `--secret-name` flag to
-the name of the appropriate in-cluster image pull secret.
-- If testing an index image hosted in a private registry, add the appropriate image pull secret
+the name of the appropriate in-cluster image pull secret, and add the same secret
 [to a service account][add-sa-secret] and set `--service-account` to that service account's name;
-you may have to set `--namespace` if the service account is in a different namespace than that configured in your kubeconfig.
+you may have to set `--namespace` if the service account is in a different namespace
+than that configured in your kubeconfig.
+<!-- TODO(estroz): remove the service account requirement once OLM releases a patch or new
+minor release containing https://github.com/operator-framework/operator-lifecycle-manager/pull/1941 -->
 
 
 ## `operator-sdk run bundle` command overview
