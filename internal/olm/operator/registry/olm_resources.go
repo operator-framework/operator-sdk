@@ -81,6 +81,14 @@ func withSDKPublisher(pkgName string) func(*v1alpha1.CatalogSource) {
 	}
 }
 
+// withSecrets adds secretNames to a CatalogSource's secrets. Secrets are
+// assumed to be image pull secrets ("type: kubernetes.io/dockerconfigjson").
+func withSecrets(secretNames ...string) func(*v1alpha1.CatalogSource) {
+	return func(cs *v1alpha1.CatalogSource) {
+		cs.Spec.Secrets = append(cs.Spec.Secrets, secretNames...)
+	}
+}
+
 // newCatalogSource creates a new CatalogSource with a name derived from
 // pkgName, the package manifest's packageName, in namespace. opts will
 // be applied to the CatalogSource object.
