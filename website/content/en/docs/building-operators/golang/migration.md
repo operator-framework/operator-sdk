@@ -57,8 +57,7 @@ The easy migration path is to initialize a new project, re-recreate APIs, then c
 [quay.io](https://quay.io/)) and be logged in in your command line environment.
   - `example.com` is used as the registry Docker Hub namespace in these examples.
   Replace it with another value if using a different registry or namespace.
-  - The registry/namespace must be public, or the cluster must be provisioned with an
-  [image pull secret][k8s-image-pull-sec] if the image namespace is private.
+  - [Authentication and certificates][image-reg-config] if the registry is private or uses a custom CA.
 
 ### Create a new project
 
@@ -417,7 +416,7 @@ For further steps regarding the deployment of the operator, creation of custom r
 
 
 [install-guide]: /docs/building-operators/ansible/installation
-[k8s-image-pull-sec]:https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+[image-reg-config]:/docs/olm-integration/cli-overview#private-bundle-and-catalog-image-registries
 [metrics]: https://book.kubebuilder.io/reference/metrics.html?highlight=metr#metrics
 [memcached_controller]: https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v3/memcached-operator
 [rbac_markers]: https://book.kubebuilder.io/reference/markers/rbac.html

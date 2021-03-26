@@ -64,6 +64,7 @@ type IndexImageCatalogCreator struct {
 	BundleImage   string
 	BundleAddMode index.BundleAddMode
 	SecretName    string
+	CASecretName  string
 
 	cfg *operator.Configuration
 }
@@ -78,10 +79,14 @@ func NewIndexImageCatalogCreator(cfg *operator.Configuration) *IndexImageCatalog
 }
 
 func (c *IndexImageCatalogCreator) BindFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&c.SecretName, "secret-name", "",
+	fs.StringVar(&c.SecretName, "pull-secret-name", "",
 		"Name of image pull secret (\"type: kubernetes.io/dockerconfigjson\") required "+
 			"to pull bundle images. This secret *must* be both in the namespace and an "+
 			"imagePullSecret of the service account that this command is configured to run in")
+	fs.StringVar(&c.CASecretName, "ca-secret-name", "",
+		"Name of a generic secret containing a PEM root certificate file required to pull bundle images. "+
+			"This secret *must* be in the namespace that this command is configured to run in, "+
+			"and the file *must* be encoded under the key \"cert.pem\"")
 }
 
 func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string) (*v1alpha1.CatalogSource, error) {
@@ -153,7 +158,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 
 	if prevRegistryPodName != "" {
 		if err = c.deleteRegistryPod(ctx, prevRegistryPodName); err != nil {
-			return fmt.Errorf("error cleaning up previous registry pod: %v", err)
+			return fmt.Errorf("error cleaning up previous registry: %v", err)
 		}
 	}
 
@@ -182,16 +187,17 @@ func (c IndexImageCatalogCreator) createAnnotatedRegistry(ctx context.Context, c
 	}
 	// Initialize and create registry pod
 	registryPod := index.RegistryPod{
-		BundleItems: items,
-		IndexImage:  c.IndexImage,
-		SecretName:  c.SecretName,
+		BundleItems:  items,
+		IndexImage:   c.IndexImage,
+		SecretName:   c.SecretName,
+		CASecretName: c.CASecretName,
 	}
 	if registryPod.DBPath, err = c.getDBPath(ctx); err != nil {
 		return fmt.Errorf("get database path: %v", err)
 	}
 	pod, err := registryPod.Create(ctx, c.cfg, cs)
 	if err != nil {
-		return fmt.Errorf("error creating registry pod: %v", err)
+		return err
 	}
 
 	// JSON marshal injected bundles

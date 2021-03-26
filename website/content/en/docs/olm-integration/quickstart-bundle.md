@@ -110,14 +110,8 @@ to ensure the on-disk bundle representation is correct.
 At this point in development we've generated all files necessary to build the memcached-operator bundle.
 Now we're ready to test and deploy the Operator with OLM.
 
-**Note:** if testing a bundle hosted in a private registry, add the image pull
-secret for that registry host [to the service account][add-sa-secret] in use
-and set `--secret-name` to the secret name. You may have to set `--namespace`
-if the service account is in a different namespace than that configured in your kubeconfig.
-<!-- TODO(estroz): remove the service account requirement once OLM releases a patch or new
-minor release containing https://github.com/operator-framework/operator-lifecycle-manager/pull/1941 -->
-
-[add-sa-secret]:https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#add-imagepullsecrets-to-a-service-account
+**Note:** If testing a bundle whose image will be hosted in a registry that is private and/or
+has a custom CA, these [configuration steps][image-reg-config] must be complete.
 
 ### Testing bundles
 
@@ -287,6 +281,7 @@ In-depth discussions of OLM concepts mentioned here:
 [bundle]:https://github.com/operator-framework/operator-registry/blob/v1.16.1/docs/design/operator-bundle.md
 [bundle-metadata]:https://github.com/operator-framework/operator-registry/blob/v1.12.6/docs/design/operator-bundle.md#bundle-annotations
 [bundle-dockerfile]:https://github.com/operator-framework/operator-registry/blob/v1.12.6/docs/design/operator-bundle.md#bundle-dockerfile
+[image-reg-config]:/docs/olm-integration/cli-overview#private-bundle-and-catalog-image-registries
 [cli-olm]:/docs/cli/operator-sdk_olm
 [cli-run-bundle]:/docs/cli/operator-sdk_run_bundle
 [doc-cli-overview]:/docs/olm-integration/cli-overview

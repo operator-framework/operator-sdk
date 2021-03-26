@@ -15,8 +15,7 @@ This guide walks through an example of building a simple memcached-operator usin
 [quay.io](https://quay.io/)) and be logged in in your command line environment.
   - `example.com` is used as the registry Docker Hub namespace in these examples.
   Replace it with another value if using a different registry or namespace.
-  - The registry/namespace must be public, or the cluster must be provisioned with an
-  [image pull secret][k8s-image-pull-sec] if the image namespace is private.
+  - [Authentication and certificates][image-reg-config] if the registry is private or uses a custom CA.
 
 
 ## Steps
@@ -56,14 +55,10 @@ This guide walks through an example of building a simple memcached-operator usin
   make bundle-build bundle-push
   ```
 
-1. Run your bundle. If your bundle image is hosted in a private registry,
-add the image pull secret for that registry host to the service account in use
-and set `--secret-name` to the secret name:
-<!-- TODO(estroz): remove the service account requirement once OLM releases a patch or new
-minor release containing https://github.com/operator-framework/operator-lifecycle-manager/pull/1941 -->
+1. Run your bundle. If your bundle image is hosted in a registry that is private and/or
+has a custom CA, these [configuration steps][image-reg-config] must be complete.
 
   ```sh
-  kubectl patch serviceaccount default -p '{"imagePullSecrets":[{"name":"<reg secret name>"}]}'
   operator-sdk run bundle example.com/memcached-operator-bundle:v0.0.1
   ```
 
@@ -109,6 +104,6 @@ Read the [full tutorial][tutorial] for an in-depth walkthough of building a Go o
 
 
 [install-guide]:/docs/building-operators/golang/installation
+[image-reg-config]:/docs/olm-integration/cli-overview#private-bundle-and-catalog-image-registries
 [doc-olm]:/docs/olm-integration/quickstart-bundle/#enabling-olm
 [tutorial]:/docs/building-operators/golang/tutorial/
-[k8s-image-pull-sec]:https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/

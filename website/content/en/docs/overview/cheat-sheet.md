@@ -38,7 +38,7 @@ For further information check [Operator SDK Integration with Operator Lifecycle 
 | `make bundle-build BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>` | To build your bundle operator image. |
 | `make bundle-build bundle-push BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>` | To build and push your bundle operator image. |
 | `operator-sdk run bundle <some-registry>/<project-name-bundle>:<tag>` | To deploy your bundle operator using OLM on your cluster for development purposes. |
-| `operator-sdk run bundle --service-account sa-with-secret --secret-name registry-pull-secret private-registry.org/bundle:v1.2.3` | Configure `run bundle` (and `run bundle-upgrade`) to use an image pull secret and non-default service account configured with that secret |
+| `operator-sdk run bundle private-registry.org/bundle:v1.2.3 --service-account sa-with-secret --pull-secret-name regcred --ca-secret-name cert-sec` | Configure `run bundle` (and `run bundle-upgrade`) to use an image pull secret, non-default service account configured with that secret, and custom CA certificate secret |
 <!-- TODO(estroz): remove the service account requirement once OLM releases a patch or new
 minor release containing https://github.com/operator-framework/operator-lifecycle-manager/pull/1941 -->
 

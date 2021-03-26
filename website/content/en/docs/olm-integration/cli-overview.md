@@ -8,9 +8,7 @@ This document gives an overview of using `operator-sdk` to work with Operator ma
 namely [bundles][bundle] and [package manifests][package-manifests]. See the [manifests generation][doc-olm-generate]
 doc for an in-depth discussion of these commands.
 
-## Commands
-
-### OLM installation
+## OLM installation
 
 The following `operator-sdk` subcommands manage an OLM installation:
 
@@ -20,16 +18,16 @@ can infer the version of an error-free OLM installation.
 - [`olm uninstall`][cli-olm-uninstall]: uninstall a particular version of OLM running in a cluster. This command
 can infer the version of an error-free OLM installation.
 
-### Manifests and metadata
+## Manifests and metadata
 
 The following `make` recipes and `operator-sdk` subcommands create or interact with Operator package manifests and bundles:
 
 - [`generate kustomize manifests`][cli-gen-kustomize-manifests]: creates kustomize bases and a `kustomization.yaml` in `config/manifests`.
 
-##### Bundles
+### Bundles
 
 - `make bundle`: runs the following commands:
-  - `generate kustomize manifests`: see [above](#commands).
+  - `generate kustomize manifests`: see [above](#manifests-and-metadata).
   - [`generate bundle`][cli-gen-bundle]: creates a new or updates an existing bundle in the `<project-root>/bundle`
   directory. This command generates both manifests and metadata.
   - [`bundle validate`][cli-bundle-validate]: validates an Operator bundle image or unpacked manifests and metadata.
@@ -38,7 +36,53 @@ The following `make` recipes and `operator-sdk` subcommands create or interact w
   existing OLM installation.
 - [`run bundle-upgrade`][cli-run-bundle-upgrade]: upgrades the Operator bundle to a specified newer version.
 
-##### Package Manifests
+#### Private bundle and catalog image registries
+
+By default, projects are configured to push to and pull from a [docker.io] registry
+with namespace being the value passed to `operator-sdk init --domain=<value>`.
+Modify this value to push/pull bundle and catalog images with a different registry host or namespace.
+
+All bundle and catalog image-related commands invoke [`opm`][opm] (except for bundle image builds,
+for which `docker` is used directly). `opm` leverages the host's image build/pull tools indirectly
+to perform various image tasks, so if your image registry is private or has a custom CA you
+must ensure the in-use build tool is able to push to/pull from the registry:
+- `docker`: [`config.json`][docker-pull-sec], [certificate configuration][docker-certs]
+- `podman`: [`auth.json`][podman-pull-sec], [certificate configuration][podman-certs]
+- `none` (containerd): uses docker's `config.json`, [certificate configuration][none-certs]
+
+The `run bundle` or `run bundle-upgrade` commands use the `none` image tool, described above, in-cluster.
+These commands accept the names of secrets available in the deployment namesace that contain configuration file data.
+Ideally a cluster admin will provision a namespace and service account for bundle testing,
+such that they include and reference these secrets:
+- Create an [image pull secret][k8s-image-pull-sec] for your `config.json` and [add it to your service account][k8s-pull-sec-sa].
+<!-- TODO(estroz): remove the service account requirement once OLM releases a patch or new
+minor release containing https://github.com/operator-framework/operator-lifecycle-manager/pull/1941 -->
+- Create a [generic secret][k8s-gen-sec] with a `cert.pem` key containing root certificate(s) for your registry.
+
+Once the above secrets have been created, run the either command with `--pull-secret-name=<image pull secret>` and `--ca-secret-name=<certificate secret>`:
+
+```sh
+operator-sdk run bundle private-custom-ca-reg.com/memcached-operator-bundle:v0.0.2 \
+    --index-image private-custom-ca-reg.com/memcached-operator-catalog:v0.0.1 \
+    --pull-secret-name foo-pull-sec \
+    --ca-secret-name foo-cert-sec
+```
+
+You may have to set `--namespace=<provisioned namespace>` if the namespace encoded in your kubeconfig's current context
+was not provisioned with these secrets.
+
+[docker.io]:https://hub.docker.com/
+[opm]:https://github.com/operator-framework/operator-registry/blob/496ccce/docs/design/opm-tooling.md
+[docker-pull-sec]:https://docs.docker.com/engine/reference/commandline/login/
+[docker-certs]:https://docs.docker.com/engine/security/certificates/
+[podman-pull-sec]:http://docs.podman.io/en/latest/markdown/podman-login.1.html#description
+[podman-certs]:http://docs.podman.io/en/latest/markdown/podman-image-sign.1.html#cert-dir-path
+[none-certs]:https://github.com/operator-framework/operator-registry/blob/master/docs/design/opm-tooling.md#add
+[k8s-image-pull-sec]:https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+[k8s-pull-sec-sa]:https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#add-image-pull-secret-to-service-account
+[k8s-gen-sec]:https://kubernetes.io/docs/tasks/configmap-secret/managing-secret-using-kubectl/#create-a-secret
+
+### Package Manifests
 
 - [`generate packagemanifests`][cli-gen-packagemanifests]: creates a new or updates an existing versioned
 directory as part of the package manifests in the `<project-root>/packagemanifests` directory.
