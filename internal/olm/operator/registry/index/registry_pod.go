@@ -224,14 +224,18 @@ func (rp *RegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 		},
 	}
 
-	applySecret(rp.pod, rp.SecretName)
+	addImagePullSecret(rp.pod, rp.SecretName)
 
 	return rp.pod, nil
 }
 
-// applySecret creates a docker config volume for secretName
-// and a volumeMount for that secret in each container in pod.
-func applySecret(pod *corev1.Pod, secretName string) {
+// addImagePullSecret creates and mounts an image pull secret volume
+// for a docker config secret "secretName" in each container in pod.
+func addImagePullSecret(pod *corev1.Pod, secretName string) {
+	if secretName == "" {
+		return
+	}
+
 	pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{
 		Name: secretName,
 		VolumeSource: corev1.VolumeSource{
@@ -239,12 +243,9 @@ func applySecret(pod *corev1.Pod, secretName string) {
 				SecretName:  secretName,
 				DefaultMode: newInt32(0400),
 				Optional:    newBool(false),
-				// Require a non-legacy docker config secret.
 				Items: []corev1.KeyToPath{
-					{
-						Key:  ".dockerconfigjson",
-						Path: ".docker/config.json",
-					},
+					// Require a non-legacy docker config secret.
+					{Key: ".dockerconfigjson", Path: ".docker/config.json"},
 				},
 			},
 		},
