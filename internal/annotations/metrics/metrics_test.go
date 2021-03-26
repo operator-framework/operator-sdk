@@ -15,6 +15,8 @@
 package metrics
 
 import (
+	"testing"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -36,6 +38,26 @@ var _ = Describe("SDK Label helper functions", func() {
 			output := parseVersion(version)
 			Expect(output).To(Equal("v0.18.0+git"))
 		})
+		It("should extract the right downstream sdk version", func() {
+			version := "v1.3.0-ocp"
+			output := parseVersion(version)
+			Expect(output).To(Equal("v1.3.0-ocp"))
+		})
+		It("should extract the right downstream sdk version", func() {
+			version := "v1.3.0-ocp-ge87627f4"
+			output := parseVersion(version)
+			Expect(output).To(Equal("v1.3.0-ocp+git"))
+		})
+		It("should extract the right downstream sdk version", func() {
+			version := "v1.3.0-ocp-ge87627f4-dirty"
+			output := parseVersion(version)
+			Expect(output).To(Equal("v1.3.0-ocp+git"))
+		})
 
 	})
 })
+
+func TestVersion(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "metrics Suite")
+}

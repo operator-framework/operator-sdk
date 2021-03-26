@@ -69,6 +69,11 @@ func parseVersion(input string) string {
 		return "unknown"
 	}
 
+	if strings.Contains(input, "ocp") {
+		version = version + "-ocp"
+		input = strings.Replace(input, "-ocp", "", 1)
+	}
+
 	if isUnreleased(input) {
 		version = version + "+git"
 	}
