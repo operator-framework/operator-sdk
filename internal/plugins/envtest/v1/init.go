@@ -15,7 +15,6 @@
 package v1
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -60,10 +59,6 @@ func (s *initSubcommand) Scaffold(fs machinery.Filesystem) error {
 	}
 	if err := ioutil.WriteFile(filePath, makefileBytes, mode); err != nil {
 		return fmt.Errorf("error updating Makefile: %w", err)
-	}
-
-	if err := s.config.EncodePluginConfig(pluginKey, Config{}); err != nil && !errors.As(err, &config.UnsupportedFieldError{}) {
-		return err
 	}
 
 	return nil

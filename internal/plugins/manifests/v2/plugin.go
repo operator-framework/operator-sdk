@@ -18,7 +18,6 @@ import (
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
 	cfgv2 "sigs.k8s.io/kubebuilder/v3/pkg/config/v2"
 	cfgv3 "sigs.k8s.io/kubebuilder/v3/pkg/config/v3"
-	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins"
@@ -49,6 +48,4 @@ func (Plugin) SupportedProjectVersions() []config.Version           { return sup
 func (p Plugin) GetInitSubcommand() plugin.InitSubcommand           { return &p.initSubcommand }
 func (p Plugin) GetCreateAPISubcommand() plugin.CreateAPISubcommand { return &p.createAPISubcommand }
 
-type Config struct {
-	Resources []resource.GVK `json:"resources,omitempty"`
-}
+type Config struct{}

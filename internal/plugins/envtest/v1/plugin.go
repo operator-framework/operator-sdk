@@ -30,7 +30,6 @@ const pluginName = "envtest" + plugins.DefaultNameQualifier
 var (
 	pluginVersion            = plugin.Version{Number: 1}
 	supportedProjectVersions = []config.Version{cfgv2.Version, cfgv3.Version}
-	pluginKey                = plugin.KeyFor(Plugin{})
 )
 
 var (

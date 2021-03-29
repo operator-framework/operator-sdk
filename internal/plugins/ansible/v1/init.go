@@ -102,6 +102,8 @@ func (p *initSubcommand) BindFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&p.domain, "domain", "my.domain", "domain for groups")
 	fs.StringVar(&p.projectName, "project-name", "", "name of this project, the default being directory name")
 
+	// Bind GVK flags here so they can be passed to `create api`,
+	// for which GVK flags are auto-bound by the CLI.
 	fs.StringVar(&p.group, "group", "", "resource Group")
 	fs.StringVar(&p.version, "version", "", "resource Version")
 	fs.StringVar(&p.kind, "kind", "", "resource Kind")
