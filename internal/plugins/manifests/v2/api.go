@@ -24,6 +24,7 @@ import (
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/manifests/v2/templates/config/samples"
+	"github.com/operator-framework/operator-sdk/internal/plugins/util"
 )
 
 var _ plugin.CreateAPISubcommand = &createAPISubcommand{}
@@ -38,6 +39,9 @@ func (s *createAPISubcommand) InjectConfig(c config.Config) error {
 
 	// Try to retrieve the plugin config
 	if err := s.config.DecodePluginConfig(pluginKey, &Config{}); errors.As(err, &config.PluginKeyNotFoundError{}) {
+		if util.UpdateIfLegacyKey(s.config) {
+			return nil
+		}
 		// If we couldn't find it, it means we are not using this plugin, so we skip remaining hooks
 		// This scenario could happen if the project was initialized with kubebuilder which doesn't have this plugin
 		return plugin.ExitError{

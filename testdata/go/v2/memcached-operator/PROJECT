@@ -2,7 +2,6 @@ domain: example.com
 layout:
 - go.kubebuilder.io/v2
 plugins:
-  envtest.sdk.operatorframework.io/v1: {}
   manifests.sdk.operatorframework.io/v2: {}
   scorecard.sdk.operatorframework.io/v2: {}
 projectName: memcached-operator

@@ -38,10 +38,7 @@ const (
 	helmChartRepoFlag    = "helm-chart-repo"
 	helmChartVersionFlag = "helm-chart-version"
 
-	defaultCrdVersion       = "v1"
-	defaultHelmChart        = ""
-	defaultHelmChartRepo    = ""
-	defaultHelmChartVersion = ""
+	defaultCrdVersion = "v1"
 
 	// defaultGroup is the Kubernetes CRD API Group used for fetched charts when the --group flag is not specified
 	defaultGroup = "charts"
@@ -117,9 +114,9 @@ func (p *createAPISubcommand) UpdateMetadata(cliMeta plugin.CLIMetadata, subcmdM
 func (p *createAPISubcommand) BindFlags(fs *pflag.FlagSet) {
 	fs.SortFlags = false
 
-	fs.StringVar(&p.options.chartOptions.Chart, helmChartFlag, defaultHelmChart, "helm chart")
-	fs.StringVar(&p.options.chartOptions.Repo, helmChartRepoFlag, defaultHelmChartRepo, "helm chart repository")
-	fs.StringVar(&p.options.chartOptions.Version, helmChartVersionFlag, defaultHelmChartVersion, "helm chart version (default: latest)")
+	fs.StringVar(&p.options.chartOptions.Chart, helmChartFlag, "", "helm chart")
+	fs.StringVar(&p.options.chartOptions.Repo, helmChartRepoFlag, "", "helm chart repository")
+	fs.StringVar(&p.options.chartOptions.Version, helmChartVersionFlag, "", "helm chart version (default: latest)")
 
 	fs.StringVar(&p.options.CRDVersion, crdVersionFlag, defaultCrdVersion, "crd version to generate")
 }

@@ -124,6 +124,8 @@ func (p *initSubcommand) BindFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&p.domain, "domain", "my.domain", "domain for groups")
 	fs.StringVar(&p.projectName, "project-name", "", "name of this project, the default being directory name")
 
+	// Bind GVK flags here so they can be passed to `create api`,
+	// for which GVK flags are auto-bound by the CLI.
 	fs.StringVar(&p.group, groupFlag, "", "resource Group")
 	fs.StringVar(&p.version, versionFlag, "", "resource Version")
 	fs.StringVar(&p.kind, kindFlag, "", "resource Kind")
@@ -164,7 +166,7 @@ func (p *initSubcommand) Scaffold(fs machinery.Filesystem) error {
 
 // PostScaffold will run the required actions after the default plugin scaffold
 func (p *initSubcommand) PostScaffold() error {
-	doAPI := p.group != "" || p.version != "" || p.kind != "" || p.apiSubcommand.options.chartOptions.Chart != defaultHelmChart
+	doAPI := p.group != "" || p.version != "" || p.kind != "" || p.apiSubcommand.options.chartOptions.Chart != ""
 	if !doAPI {
 		fmt.Printf("Next: define a resource with:\n$ %s create api\n", p.commandName)
 	} else {
@@ -182,13 +184,13 @@ func (p *initSubcommand) PostScaffold() error {
 		if p.apiSubcommand.options.CRDVersion != defaultCrdVersion {
 			args = append(args, fmt.Sprintf("--%s", crdVersionFlag), p.apiSubcommand.options.CRDVersion)
 		}
-		if p.apiSubcommand.options.chartOptions.Chart != defaultHelmChart {
+		if p.apiSubcommand.options.chartOptions.Chart != "" {
 			args = append(args, fmt.Sprintf("--%s", helmChartFlag), p.apiSubcommand.options.chartOptions.Chart)
 		}
-		if p.apiSubcommand.options.chartOptions.Repo != defaultHelmChartRepo {
+		if p.apiSubcommand.options.chartOptions.Repo != "" {
 			args = append(args, fmt.Sprintf("--%s", helmChartRepoFlag), p.apiSubcommand.options.chartOptions.Repo)
 		}
-		if p.apiSubcommand.options.chartOptions.Version != defaultHelmChartVersion {
+		if p.apiSubcommand.options.chartOptions.Version != "" {
 			args = append(args, fmt.Sprintf("--%s", helmChartVersionFlag), p.apiSubcommand.options.chartOptions.Version)
 		}
 		if err := util.RunCmd("Creating the API", os.Args[0], args...); err != nil {
