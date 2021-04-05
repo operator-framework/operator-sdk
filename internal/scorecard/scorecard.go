@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 
 	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
 )
@@ -47,8 +48,10 @@ type PodTestRunner struct {
 	Namespace      string
 	ServiceAccount string
 	BundlePath     string
+	TestOutput     string
 	BundleMetadata registryutil.Labels
 	Client         kubernetes.Interface
+	RESTConfig     *rest.Config
 
 	configMapName string
 }
@@ -172,6 +175,7 @@ func (r *PodTestRunner) Initialize(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("error creating ConfigMap %w", err)
 	}
+
 	return nil
 
 }
@@ -187,6 +191,7 @@ func (r FakeTestRunner) Cleanup(ctx context.Context) error {
 
 // Cleanup deletes pods and configmap resources from this test run
 func (r PodTestRunner) Cleanup(ctx context.Context) (err error) {
+
 	err = r.deletePods(ctx, r.configMapName)
 	if err != nil {
 		return err
@@ -195,13 +200,20 @@ func (r PodTestRunner) Cleanup(ctx context.Context) (err error) {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
 // RunTest executes a single test
 func (r PodTestRunner) RunTest(ctx context.Context, test v1alpha3.TestConfiguration) (*v1alpha3.TestStatus, error) {
+
 	// Create a Pod to run the test
 	podDef := getPodDefinition(r.configMapName, test, r)
+
+	if test.Storage.Spec.MountPath.Path != "" {
+		addStorageToPod(podDef, test.Storage.Spec.MountPath.Path)
+	}
+
 	pod, err := r.Client.CoreV1().Pods(r.Namespace).Create(ctx, podDef, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
@@ -210,6 +222,14 @@ func (r PodTestRunner) RunTest(ctx context.Context, test v1alpha3.TestConfigurat
 	err = r.waitForTestToComplete(ctx, pod)
 	if err != nil {
 		return nil, err
+	}
+
+	// gather test output if necessary
+	if test.Storage.Spec.MountPath.Path != "" {
+		err := gatherTestOutput(ctx, r, test.Labels["suite"], test.Labels["test"], pod.Name, test.Storage.Spec.MountPath.Path)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return r.getTestStatus(ctx, pod), nil
@@ -239,9 +259,14 @@ func (r PodTestRunner) waitForTestToComplete(ctx context.Context, p *v1.Pod) (er
 		if err != nil {
 			return true, fmt.Errorf("error getting pod %s %w", p.Name, err)
 		}
-		if tmp.Status.Phase == v1.PodSucceeded || tmp.Status.Phase == v1.PodFailed {
-			return true, nil
+		for _, s := range tmp.Status.ContainerStatuses {
+			if s.Name == "scorecard-test" {
+				if s.State.Terminated != nil {
+					return true, nil
+				}
+			}
 		}
+
 		return false, nil
 	})
 
