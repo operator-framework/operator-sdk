@@ -20,13 +20,9 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"sort"
-	"strings"
-	"text/template"
 
 	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
-	log "github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml"
 
 	metricsannotations "github.com/operator-framework/operator-sdk/internal/annotations/metrics"
@@ -36,6 +32,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
 	"github.com/operator-framework/operator-sdk/internal/registry"
 	"github.com/operator-framework/operator-sdk/internal/scorecard"
+	"github.com/operator-framework/operator-sdk/internal/util/bundleutil"
 )
 
 const (
@@ -152,6 +149,7 @@ func (c bundleCmd) validateManifests() (err error) {
 	return nil
 }
 
+// TODO: Move this to bundleutil package
 // runManifests generates bundle manifests.
 func (c bundleCmd) runManifests() (err error) {
 
@@ -258,9 +256,6 @@ func (c bundleCmd) runMetadata() error {
 	if c.outputDir == "" {
 		c.outputDir = defaultRootDir
 	}
-	if err := os.MkdirAll(c.outputDir, 0755); err != nil {
-		return err
-	}
 
 	// If metadata already exists, only overwrite it if directed to.
 	bundleRoot := c.inputDir
@@ -276,105 +271,13 @@ func (c bundleCmd) runMetadata() error {
 		return nil
 	}
 
-	// Create annotation values for both bundle.Dockerfile and annotations.yaml, which should
-	// hold the same set of values always.
-	values := annotationsValues{
+	bundleMetadata := bundleutil.BundleMetaData{
 		BundleDir:      c.outputDir,
 		PackageName:    c.packageName,
 		Channels:       c.channels,
 		DefaultChannel: c.defaultChannel,
-	}
-	for key, value := range metricsannotations.MakeBundleMetadataLabels(c.layout) {
-		values.OtherLabels = append(values.OtherLabels, fmt.Sprintf("%s=%s", key, value))
-	}
-	sort.Strings(values.OtherLabels)
-
-	// Write each file.
-	metadataDir := filepath.Join(c.outputDir, "metadata")
-	if err := os.MkdirAll(metadataDir, 0755); err != nil {
-		return err
-	}
-	templateMap := map[string]*template.Template{
-		"bundle.Dockerfile":                            dockerfileTemplate,
-		filepath.Join(metadataDir, "annotations.yaml"): annotationsTemplate,
-	}
-	for path, tmpl := range templateMap {
-		c.println("Creating", path)
-		f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
-		if err != nil {
-			return err
-		}
-		defer func() {
-			if err := f.Close(); err != nil {
-				log.Error(err)
-			}
-		}()
-		if err := tmpl.Execute(f, values); err != nil {
-			return err
-		}
+		OtherLabels:    metricsannotations.MakeBundleMetadataLabels(c.layout),
 	}
 
-	c.println("Bundle metadata generated successfully")
-
-	return nil
+	return bundleMetadata.GenerateMetadata()
 }
-
-// values to populate bundle metadata/Dockerfile.
-type annotationsValues struct {
-	BundleDir      string
-	PackageName    string
-	Channels       string
-	DefaultChannel string
-	OtherLabels    []string
-}
-
-// Transform a Dockerfile label to a YAML kv.
-var funcs = template.FuncMap{
-	"toYAML": func(s string) string { return strings.ReplaceAll(s, "=", ": ") },
-}
-
-// Template for bundle.Dockerfile, containing scorecard labels.
-var dockerfileTemplate = template.Must(template.New("").Funcs(funcs).Parse(`FROM scratch
-
-# Core bundle labels.
-LABEL operators.operatorframework.io.bundle.mediatype.v1=registry+v1
-LABEL operators.operatorframework.io.bundle.manifests.v1=manifests/
-LABEL operators.operatorframework.io.bundle.metadata.v1=metadata/
-LABEL operators.operatorframework.io.bundle.package.v1={{ .PackageName }}
-LABEL operators.operatorframework.io.bundle.channels.v1={{ .Channels }}
-{{- if .DefaultChannel }}
-LABEL operators.operatorframework.io.bundle.channel.default.v1={{ .DefaultChannel }}
-{{- end }}
-{{- range $i, $l := .OtherLabels }}
-LABEL {{ $l }}
-{{- end }}
-
-# Labels for testing.
-LABEL operators.operatorframework.io.test.mediatype.v1=scorecard+v1
-LABEL operators.operatorframework.io.test.config.v1=tests/scorecard/
-
-# Copy files to locations specified by labels.
-COPY {{ .BundleDir }}/manifests /manifests/
-COPY {{ .BundleDir }}/metadata /metadata/
-COPY {{ .BundleDir }}/tests/scorecard /tests/scorecard/
-`))
-
-// Template for annotations.yaml, containing scorecard labels.
-var annotationsTemplate = template.Must(template.New("").Funcs(funcs).Parse(`annotations:
-  # Core bundle annotations.
-  operators.operatorframework.io.bundle.mediatype.v1: registry+v1
-  operators.operatorframework.io.bundle.manifests.v1: manifests/
-  operators.operatorframework.io.bundle.metadata.v1: metadata/
-  operators.operatorframework.io.bundle.package.v1: {{ .PackageName }}
-  operators.operatorframework.io.bundle.channels.v1: {{ .Channels }}
-  {{- if .DefaultChannel }}
-  operators.operatorframework.io.bundle.channel.default.v1: {{ .DefaultChannel }}
-  {{- end }}
-  {{- range $i, $l := .OtherLabels }}
-  {{ toYAML $l }}
-  {{- end }}
-
-  # Annotations for testing.
-  operators.operatorframework.io.test.mediatype.v1: scorecard+v1
-  operators.operatorframework.io.test.config.v1: tests/scorecard/
-`))

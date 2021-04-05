@@ -143,7 +143,12 @@ func RewriteFileContents(filename, target, newContent string) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(filename, []byte(modifiedContent), FileMode)
+	return WriteFile(filename, modifiedContent)
+}
+
+// WriteFile writes contents to file.
+func WriteFile(filename, content string) error {
+	err := ioutil.WriteFile(filename, []byte(content), FileMode)
 	if err != nil {
 		return fmt.Errorf("error writing modified contents to file, %v", err)
 	}
