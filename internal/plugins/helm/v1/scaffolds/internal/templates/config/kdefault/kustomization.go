@@ -39,7 +39,9 @@ func (f *Kustomization) SetTemplateDefaults() error {
 
 	f.TemplateBody = kustomizeTemplate
 
-	f.IfExistsAction = machinery.Error
+	// For Anible/Helm is no supported webhooks then, we customize
+	// it in the init
+	f.IfExistsAction = machinery.OverwriteFile
 
 	return nil
 }

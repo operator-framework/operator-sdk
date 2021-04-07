@@ -53,6 +53,6 @@ spec:
       containers:
         - name: manager
           env:
-            - name: ANSIBLE_DEBUG_LOGS
-              value: "TRUE"
+          - name: ANSIBLE_DEBUG_LOGS
+            value: "TRUE"
 `

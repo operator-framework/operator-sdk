@@ -18,16 +18,15 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/spf13/pflag"
-	"k8s.io/apimachinery/pkg/util/validation"
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
 	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds"
+	sdkutil "github.com/operator-framework/operator-sdk/internal/util"
 )
 
 const (
@@ -45,11 +44,9 @@ type initSubcommand struct {
 	commandName string
 
 	// Flags
-	group       string
-	domain      string
-	version     string
-	kind        string
-	projectName string
+	group   string
+	version string
+	kind    string
 }
 
 var _ plugin.InitSubcommand = &initSubcommand{}
@@ -121,11 +118,6 @@ Writes the following files:
 
 func (p *initSubcommand) BindFlags(fs *pflag.FlagSet) {
 	fs.SortFlags = false
-	fs.StringVar(&p.domain, "domain", "my.domain", "domain for groups")
-	fs.StringVar(&p.projectName, "project-name", "", "name of this project, the default being directory name")
-
-	// Bind GVK flags here so they can be passed to `create api`,
-	// for which GVK flags are auto-bound by the CLI.
 	fs.StringVar(&p.group, groupFlag, "", "resource Group")
 	fs.StringVar(&p.version, versionFlag, "", "resource Version")
 	fs.StringVar(&p.kind, kindFlag, "", "resource Kind")
@@ -134,31 +126,14 @@ func (p *initSubcommand) BindFlags(fs *pflag.FlagSet) {
 
 func (p *initSubcommand) InjectConfig(c config.Config) error {
 	p.config = c
-
-	if err := p.config.SetDomain(p.domain); err != nil {
-		return err
-	}
-
-	// Assign a default project name
-	if p.projectName == "" {
-		dir, err := os.Getwd()
-		if err != nil {
-			return fmt.Errorf("error getting current directory: %v", err)
-		}
-		p.projectName = strings.ToLower(filepath.Base(dir))
-	}
-	// Check if the project name is a valid k8s namespace (DNS 1123 label).
-	if err := validation.IsDNS1123Label(p.projectName); err != nil {
-		return fmt.Errorf("project name (%s) is invalid: %v", p.projectName, err)
-	}
-	if err := p.config.SetProjectName(p.projectName); err != nil {
-		return err
-	}
-
 	return nil
 }
 
 func (p *initSubcommand) Scaffold(fs machinery.Filesystem) error {
+	if err := addInitCustomizations(p.config.GetProjectName()); err != nil {
+		return fmt.Errorf("unable to scaffold the helm customizations : %s", err)
+	}
+
 	scaffolder := scaffolds.NewInitScaffolder(p.config)
 	scaffolder.InjectFS(fs)
 	return scaffolder.Scaffold()
@@ -196,6 +171,57 @@ func (p *initSubcommand) PostScaffold() error {
 		if err := util.RunCmd("Creating the API", os.Args[0], args...); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+// addInitCustomizations will perform the required customizations for this plugin on the common base
+func addInitCustomizations(projectName string) error {
+	managerFile := filepath.Join("config", "manager", "manager.yaml")
+
+	// todo: we ought to use afero instead. Replace this methods to insert/update
+	// by https://github.com/kubernetes-sigs/kubebuilder/pull/2119
+
+	// Add leader election arg in config/manager/manager.yaml and in config/default/manager_auth_proxy_patch.yaml
+	err := sdkutil.InsertCode(managerFile,
+		"--leader-elect",
+		fmt.Sprintf("\n        - --leader-election-id=%s", projectName))
+	if err != nil {
+		return err
+	}
+
+	err = sdkutil.InsertCode("config/default/manager_auth_proxy_patch.yaml",
+		"- \"--leader-elect\"",
+		fmt.Sprintf("\n        - \"--leader-election-id=%s\"", projectName))
+	if err != nil {
+		return err
+	}
+
+	// Increase the default memory required.
+	err = sdkutil.ReplaceInFile(managerFile, "memory: 30Mi", "memory: 90Mi")
+	if err != nil {
+		return err
+	}
+	err = sdkutil.ReplaceInFile(managerFile, "memory: 20Mi", "memory: 60Mi")
+	if err != nil {
+		return err
+	}
+
+	// Remove the webhook option for the componentConfig since webhooks are not supported by helm
+	err = sdkutil.ReplaceInFile("config/manager/controller_manager_config.yaml", "webhook:\n  port: 9443", "")
+	if err != nil {
+		return err
+	}
+
+	// Remove the call to the command as manager. Helm/Ansible has not been exposing this entrypoint
+	// todo: provide the manager entrypoint for helm/ansible and then remove it
+	const command = `command:
+        - /manager
+        `
+	err = sdkutil.ReplaceInFile(managerFile, command, "")
+	if err != nil {
+		return err
 	}
 
 	return nil

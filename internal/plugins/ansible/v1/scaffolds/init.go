@@ -24,8 +24,6 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/kdefault"
-	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/manager"
-	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/prometheus"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/rbac"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/testing"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/testing/pullpolicy"
@@ -86,26 +84,8 @@ func (s *initScaffolder) Scaffold() error {
 		&templates.GitIgnore{},
 		&templates.RequirementsYml{},
 		&templates.Watches{},
-
-		&rbac.Kustomization{},
-		&rbac.ClientClusterRole{},
-		&rbac.AuthProxyRole{},
-		&rbac.AuthProxyRoleBinding{},
-		&rbac.AuthProxyService{},
-		&rbac.LeaderElectionRole{},
-		&rbac.LeaderElectionRoleBinding{},
 		&rbac.ManagerRole{},
-		&rbac.RoleBinding{},
-		&rbac.ServiceAccount{},
-		&prometheus.Kustomization{},
-		&prometheus.ServiceMonitor{},
-
-		&manager.Config{Image: imageName},
-		&manager.Kustomization{},
-
 		&kdefault.Kustomization{},
-		&kdefault.ManagerAuthProxyPatch{},
-
 		&roles.Placeholder{},
 		&playbooks.Placeholder{},
 

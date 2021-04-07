@@ -1,0 +1,60 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      (ansible/v1,helm/v1) Add componentConfig option. For further information check [here](https://master.book.kubebuilder.io/component-config-tutorial/tutorial.html)
+    kind: "addition"
+    breaking: false
+    migration:
+      header: (ansible/v1,helm/v1) Add componentConfig option.
+      body: >
+        To add this option your project you will need to:
+        - Create the file [/config/default/manager_config_patch.yaml](https://github.com/operator-framework/operator-sdk/blob/v1.6.0/testdata/ansible/memcached-operator/config/default/manager_config_patch.yaml).
+        - Create the file [/config/default/manager_config_patch.yaml](https://github.com/operator-framework/operator-sdk/blob/v1.6.0/testdata/ansible/memcached-operator/config/manager/controller_manager_config.yaml) .
+        - Update the `config/default/kustomization.yaml` by adding:
+          ```yaml
+          # Mount the controller config file for loading manager configurations
+          # through a ComponentConfig type
+          #- manager_config_patch.yaml
+          ```
+        - Update the `config/manager/kustomization.yaml` by adding:
+          ```yaml
+          generatorOptions:
+            disableNameSuffixHash: true
+
+          configMapGenerator:
+          - files:
+            - controller_manager_config.yaml
+            name: manager-config
+          apiVersion: kustomize.config.k8s.io/v1beta1
+          kind: Kustomization
+          images:
+          - name: controller
+            newName: quay.io/example/memcached-operator
+            newTag: v0.0.1
+          ```
+  - description: >
+      (golang/v3) Not scaffold the specific webhooks config manifests by default 
+    kind: "bugfix"
+
+    # Is this a breaking change?
+    breaking: false
+  - description: >
+      (ansible/v1,helm/v1) Add rules for leader election
+    kind: "addition"
+
+    # Is this a breaking change?
+    breaking: false
+    migration:
+      header: (ansible/v1,helm/v1) Add rules for leader election.
+      body: >
+        Add the rule for the `apiGroups` `coordination.k8s.io` and the resource `leases` in config/rbac/leader_election_role.yaml:
+        ```yaml
+        rules:
+          - apiGroups:
+              - ""
+              - coordination.k8s.io
+            resources:
+              - configmaps
+              - leases
+        ```

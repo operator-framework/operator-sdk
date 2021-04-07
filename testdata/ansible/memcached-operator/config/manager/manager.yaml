@@ -25,27 +25,27 @@ spec:
       securityContext:
         runAsNonRoot: true
       containers:
-        - name: manager
-          args:
-            - "--leader-elect"
-            - "--leader-election-id=memcached-operator"
-          env:
-            - name: ANSIBLE_GATHERING
-              value: explicit
-          image: controller:latest
-          securityContext:
-            allowPrivilegeEscalation: false
-          livenessProbe:
-            httpGet:
-              path: /healthz
-              port: 6789
-            initialDelaySeconds: 15
-            periodSeconds: 20
-          readinessProbe:
-            httpGet:
-              path: /readyz
-              port: 6789
-            initialDelaySeconds: 5
-            periodSeconds: 10
+      - args:
+        - --leader-elect
+        - --leader-election-id=memcached-operator
+        image: controller:latest
+        name: manager
+        env:
+        - name: ANSIBLE_GATHERING
+          value: explicit
+        securityContext:
+          allowPrivilegeEscalation: false
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 6789
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 6789
+          initialDelaySeconds: 5
+          periodSeconds: 10
       serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10

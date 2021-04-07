@@ -26,6 +26,7 @@ import (
 	kbtestutils "sigs.k8s.io/kubebuilder/v3/test/e2e/utils"
 
 	"github.com/operator-framework/operator-sdk/internal/testutils"
+	"github.com/operator-framework/operator-sdk/internal/util"
 )
 
 var _ = Describe("Running Helm projects", func() {
@@ -114,7 +115,7 @@ var _ = Describe("Running Helm projects", func() {
 				fmt.Sprintf("%s_%s_%s.yaml", tc.Group, tc.Version, strings.ToLower(tc.Kind)))
 
 			By("updating replicaCount to 1 in the CR manifest")
-			err = testutils.ReplaceInFile(filepath.Join(tc.Dir, sampleFile), "replicaCount: 3", "replicaCount: 1")
+			err = util.ReplaceInFile(filepath.Join(tc.Dir, sampleFile), "replicaCount: 3", "replicaCount: 1")
 			Expect(err).NotTo(HaveOccurred())
 
 			By("creating an instance of release(CR)")
@@ -172,7 +173,7 @@ var _ = Describe("Running Helm projects", func() {
 			Eventually(verifyRelease, time.Minute, time.Second).Should(Succeed())
 
 			By("updating replicaCount to 2 in the CR manifest")
-			err = testutils.ReplaceInFile(filepath.Join(tc.Dir, sampleFile), "replicaCount: 1", "replicaCount: 2")
+			err = util.ReplaceInFile(filepath.Join(tc.Dir, sampleFile), "replicaCount: 1", "replicaCount: 2")
 			Expect(err).NotTo(HaveOccurred())
 
 			By("applying CR manifest with replicaCount: 2")

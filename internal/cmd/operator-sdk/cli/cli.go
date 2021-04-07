@@ -22,6 +22,8 @@ import (
 	cfgv2 "sigs.k8s.io/kubebuilder/v3/pkg/config/v2"
 	cfgv3 "sigs.k8s.io/kubebuilder/v3/pkg/config/v3"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
+	kustomizev1 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/common/kustomize/v1"
+	"sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang"
 	golangv2 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/v2"
 	golangv3 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/v3"
 
@@ -66,22 +68,28 @@ func Run() error {
 // the kubebuilder project layout
 func GetPluginsCLIAndRoot() (*cli.CLI, *cobra.Command) {
 	ansibleBundle, _ := plugin.NewBundle("ansible"+plugins.DefaultNameQualifier, plugin.Version{Number: 1},
+		kustomizev1.Plugin{},
 		ansiblev1.Plugin{},
 		manifestsv2.Plugin{},
 		scorecardv2.Plugin{},
 	)
-	gov2Bundle, _ := plugin.NewBundle(golangv2.Plugin{}.Name(), golangv2.Plugin{}.Version(),
+
+	// todo: Export the bundles KB and then change here to use the bundles exported instead
+	// more info: https://github.com/kubernetes-sigs/kubebuilder/pull/2112
+	gov2Bundle, _ := plugin.NewBundle(golang.DefaultNameQualifier, golangv2.Plugin{}.Version(),
 		golangv2.Plugin{},
 		envtestv1.Plugin{},
 		manifestsv2.Plugin{},
 		scorecardv2.Plugin{},
 	)
-	gov3Bundle, _ := plugin.NewBundle(golangv3.Plugin{}.Name(), golangv3.Plugin{}.Version(),
+	gov3Bundle, _ := plugin.NewBundle(golang.DefaultNameQualifier, golangv3.Plugin{}.Version(),
+		kustomizev1.Plugin{},
 		golangv3.Plugin{},
 		manifestsv2.Plugin{},
 		scorecardv2.Plugin{},
 	)
 	helmBundle, _ := plugin.NewBundle("helm"+plugins.DefaultNameQualifier, plugin.Version{Number: 1},
+		kustomizev1.Plugin{},
 		helmv1.Plugin{},
 		manifestsv2.Plugin{},
 		scorecardv2.Plugin{},

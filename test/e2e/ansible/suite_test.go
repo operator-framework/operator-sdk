@@ -27,6 +27,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/operator-framework/operator-sdk/internal/testutils"
+	"github.com/operator-framework/operator-sdk/internal/util"
 )
 
 // TestE2EAnsible ensures the ansible projects built with the SDK tool by using its binary.
@@ -62,7 +63,7 @@ var _ = BeforeSuite(func() {
 	Expect(exec.Command("cp", "-r", "../../../testdata/ansible/memcached-operator", tc.Dir).Run()).To(Succeed())
 
 	By("enabling debug logging in the manager")
-	err = testutils.ReplaceInFile(filepath.Join(tc.Dir, "config", "default", "manager_auth_proxy_patch.yaml"),
+	err = util.ReplaceInFile(filepath.Join(tc.Dir, "config", "default", "manager_auth_proxy_patch.yaml"),
 		"- \"--leader-elect\"", "- \"--zap-log-level=2\"\n        - \"--leader-elect\"")
 	Expect(err).NotTo(HaveOccurred())
 
@@ -78,7 +79,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	By("replacing project Dockerfile to use ansible base image with the dev tag")
-	err = testutils.ReplaceRegexInFile(filepath.Join(tc.Dir, "Dockerfile"), "quay.io/operator-framework/ansible-operator:.*", "quay.io/operator-framework/ansible-operator:dev")
+	err = util.ReplaceRegexInFile(filepath.Join(tc.Dir, "Dockerfile"), "quay.io/operator-framework/ansible-operator:.*", "quay.io/operator-framework/ansible-operator:dev")
 	Expect(err).Should(Succeed())
 
 	By("adding Memcached mock task to the role")
@@ -95,12 +96,12 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	By("adding task to delete config map")
-	err = testutils.ReplaceInFile(filepath.Join(tc.Dir, "roles", "memfin", "tasks", "main.yml"),
+	err = util.ReplaceInFile(filepath.Join(tc.Dir, "roles", "memfin", "tasks", "main.yml"),
 		"# tasks file for Memfin", taskToDeleteConfigMap)
 	Expect(err).NotTo(HaveOccurred())
 
 	By("adding to watches finalizer and blacklist")
-	err = testutils.ReplaceInFile(filepath.Join(tc.Dir, "watches.yaml"),
+	err = util.ReplaceInFile(filepath.Join(tc.Dir, "watches.yaml"),
 		"playbook: playbooks/memcached.yml", memcachedWatchCustomizations)
 	Expect(err).NotTo(HaveOccurred())
 
@@ -113,7 +114,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	By("adding RBAC permissions for the Memcached Kind")
-	err = testutils.ReplaceInFile(filepath.Join(tc.Dir, "config", "rbac", "role.yaml"),
+	err = util.ReplaceInFile(filepath.Join(tc.Dir, "config", "rbac", "role.yaml"),
 		"#+kubebuilder:scaffold:rules", rolesForBaseOperator)
 	Expect(err).NotTo(HaveOccurred())
 
