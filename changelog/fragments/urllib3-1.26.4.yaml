@@ -1,0 +1,5 @@
+entries:
+  - description: >
+      Bumped urllib3 in ansible-operator-base and ansible-operator images to 1.26.4
+      for a security fix.
+    kind: change
