@@ -24,6 +24,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
 	"github.com/operator-framework/operator-sdk/internal/testutils"
+	"github.com/operator-framework/operator-sdk/internal/util"
 )
 
 // MemcachedAnsible defines the context for the sample
@@ -91,7 +92,7 @@ func (ma *MemcachedAnsible) addingMoleculeMockData() {
 	moleculeTaskPath := filepath.Join(ma.ctx.Dir, "molecule", "default", "tasks",
 		fmt.Sprintf("%s_test.yml", strings.ToLower(ma.ctx.Kind)))
 
-	err := testutils.ReplaceInFile(moleculeTaskPath,
+	err := util.ReplaceInFile(moleculeTaskPath,
 		originaMemcachedMoleculeTask, fmt.Sprintf(moleculeTaskFragment, ma.ctx.ProjectName, ma.ctx.ProjectName))
 	pkg.CheckError("replacing molecule default tasks", err)
 }
@@ -105,13 +106,13 @@ func (ma *MemcachedAnsible) addingAnsibleTask() {
 		roleFragment)
 	pkg.CheckError("adding task", err)
 
-	err = testutils.ReplaceInFile(filepath.Join(ma.ctx.Dir, "roles", strings.ToLower(ma.ctx.Kind),
+	err = util.ReplaceInFile(filepath.Join(ma.ctx.Dir, "roles", strings.ToLower(ma.ctx.Kind),
 		"defaults", "main.yml"),
 		fmt.Sprintf("# defaults file for %s", ma.ctx.Kind),
 		defaultsFragment)
 	pkg.CheckError("adding defaulting", err)
 
-	err = testutils.ReplaceInFile(filepath.Join(ma.ctx.Dir, "config", "samples",
+	err = util.ReplaceInFile(filepath.Join(ma.ctx.Dir, "config", "samples",
 		fmt.Sprintf("%s_%s_%s.yaml", ma.ctx.Group, ma.ctx.Version, strings.ToLower(ma.ctx.Kind))),
 		"foo: bar", "size: 1")
 	pkg.CheckError("updating sample CR", err)

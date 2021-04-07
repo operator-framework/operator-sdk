@@ -27,8 +27,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/chartutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/kdefault"
-	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/manager"
-	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/prometheus"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/rbac"
 	"github.com/operator-framework/operator-sdk/internal/version"
 )
@@ -87,21 +85,7 @@ func (s *initScaffolder) Scaffold() error {
 			HelmOperatorVersion: helmOperatorVersion,
 		},
 		&templates.Watches{},
-		&rbac.AuthProxyRole{},
-		&rbac.AuthProxyRoleBinding{},
-		&rbac.AuthProxyService{},
-		&rbac.ClientClusterRole{},
-		&rbac.Kustomization{},
-		&rbac.LeaderElectionRole{},
-		&rbac.LeaderElectionRoleBinding{},
 		&rbac.ManagerRole{},
-		&rbac.ManagerRoleBinding{},
-		&rbac.ServiceAccount{},
-		&manager.Kustomization{},
-		&manager.Config{Image: imageName},
-		&prometheus.Kustomization{},
-		&prometheus.ServiceMonitor{},
-		&kdefault.ManagerAuthProxyPatch{},
 		&kdefault.Kustomization{},
 	)
 }

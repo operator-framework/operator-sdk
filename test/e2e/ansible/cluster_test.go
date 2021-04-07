@@ -26,6 +26,7 @@ import (
 	kbtestutils "sigs.k8s.io/kubebuilder/v3/test/e2e/utils"
 
 	"github.com/operator-framework/operator-sdk/internal/testutils"
+	"github.com/operator-framework/operator-sdk/internal/util"
 )
 
 var _ = Describe("Running ansible projects", func() {
@@ -214,7 +215,7 @@ var _ = Describe("Running ansible projects", func() {
 			Eventually(verifyMemcachedScalesBack, time.Minute, time.Second).Should(Succeed())
 
 			By("updating size to 2 in the CR manifest")
-			err = testutils.ReplaceInFile(memcachedSampleFile, "size: 1", "size: 2")
+			err = util.ReplaceInFile(memcachedSampleFile, "size: 1", "size: 2")
 			Expect(err).NotTo(HaveOccurred())
 
 			By("applying CR manifest with size: 2")

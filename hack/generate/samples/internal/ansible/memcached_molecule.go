@@ -20,11 +20,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
 	kbtestutils "sigs.k8s.io/kubebuilder/v3/test/e2e/utils"
 
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
 	"github.com/operator-framework/operator-sdk/internal/testutils"
-	log "github.com/sirupsen/logrus"
+	"github.com/operator-framework/operator-sdk/internal/util"
 )
 
 // MoleculeAnsible defines the context for the sample
@@ -76,11 +77,11 @@ func (ma *MoleculeAnsible) Run() {
 	pkg.CheckError("replacing memcached task to add foo check", err)
 
 	log.Infof("replacing project Dockerfile to use ansible base image with the dev tag")
-	err = testutils.ReplaceRegexInFile(filepath.Join(ma.ctx.Dir, "Dockerfile"), "quay.io/operator-framework/ansible-operator:.*", "quay.io/operator-framework/ansible-operator:dev")
+	err = util.ReplaceRegexInFile(filepath.Join(ma.ctx.Dir, "Dockerfile"), "quay.io/operator-framework/ansible-operator:.*", "quay.io/operator-framework/ansible-operator:dev")
 	pkg.CheckError("replacing Dockerfile", err)
 
 	log.Infof("adding RBAC permissions")
-	err = testutils.ReplaceInFile(filepath.Join(ma.ctx.Dir, "config", "rbac", "role.yaml"),
+	err = util.ReplaceInFile(filepath.Join(ma.ctx.Dir, "config", "rbac", "role.yaml"),
 		"#+kubebuilder:scaffold:rules", rolesForBaseOperator)
 	pkg.CheckError("replacing in role.yml", err)
 
@@ -106,12 +107,12 @@ func (ma *MoleculeAnsible) Run() {
 	pkg.CheckError("creating api", err)
 
 	log.Infof("adding task to delete config map")
-	err = testutils.ReplaceInFile(filepath.Join(ma.ctx.Dir, "roles", "memfin", "tasks", "main.yml"),
+	err = util.ReplaceInFile(filepath.Join(ma.ctx.Dir, "roles", "memfin", "tasks", "main.yml"),
 		"# tasks file for Memfin", taskToDeleteConfigMap)
 	pkg.CheckError("replacing in tasks/main.yml", err)
 
 	log.Infof("adding to watches finalizer and blacklist")
-	err = testutils.ReplaceInFile(filepath.Join(ma.ctx.Dir, "watches.yaml"),
+	err = util.ReplaceInFile(filepath.Join(ma.ctx.Dir, "watches.yaml"),
 		"playbook: playbooks/memcached.yml", memcachedWatchCustomizations)
 	pkg.CheckError("replacing in watches", err)
 
@@ -133,7 +134,7 @@ func (ma *MoleculeAnsible) Run() {
 	pkg.CheckError("creating api", err)
 
 	log.Infof("removing ignore group for the secret from watches as an workaround to work with core types")
-	err = testutils.ReplaceInFile(filepath.Join(ma.ctx.Dir, "watches.yaml"),
+	err = util.ReplaceInFile(filepath.Join(ma.ctx.Dir, "watches.yaml"),
 		"ignore.example.com", "\"\"")
 	pkg.CheckError("replacing the watches file", err)
 
@@ -143,22 +144,22 @@ func (ma *MoleculeAnsible) Run() {
 	pkg.CheckError("removing secret test file", err)
 
 	log.Infof("adding Secret task to the role")
-	err = testutils.ReplaceInFile(filepath.Join(ma.ctx.Dir, "roles", "secret", "tasks", "main.yml"),
+	err = util.ReplaceInFile(filepath.Join(ma.ctx.Dir, "roles", "secret", "tasks", "main.yml"),
 		originalTaskSecret, taskForSecret)
 	pkg.CheckError("replacing in secret/tasks/main.yml file", err)
 
 	log.Infof("adding ManageStatus == false for role secret")
-	err = testutils.ReplaceInFile(filepath.Join(ma.ctx.Dir, "watches.yaml"),
+	err = util.ReplaceInFile(filepath.Join(ma.ctx.Dir, "watches.yaml"),
 		"role: secret", manageStatusFalseForRoleSecret)
 	pkg.CheckError("replacing in watches.yaml", err)
 
 	log.Infof("removing FIXME asserts from memfin_test.yml")
-	err = testutils.ReplaceInFile(filepath.Join(ma.ctx.Dir, "molecule", "default", "tasks", "memfin_test.yml"),
+	err = util.ReplaceInFile(filepath.Join(ma.ctx.Dir, "molecule", "default", "tasks", "memfin_test.yml"),
 		fixmeAssert, "")
 	pkg.CheckError("replacing memfin_test.yml", err)
 
 	log.Infof("removing FIXME asserts from foo_test.yml")
-	err = testutils.ReplaceInFile(filepath.Join(ma.ctx.Dir, "molecule", "default", "tasks", "foo_test.yml"),
+	err = util.ReplaceInFile(filepath.Join(ma.ctx.Dir, "molecule", "default", "tasks", "foo_test.yml"),
 		fixmeAssert, "")
 	pkg.CheckError("replacing foo_test.yml", err)
 }

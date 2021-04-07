@@ -25,6 +25,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
 	"github.com/operator-framework/operator-sdk/internal/testutils"
+	"github.com/operator-framework/operator-sdk/internal/util"
 )
 
 // MemcachedGoWithWebhooks defines the Memcached Sample in GO using webhooks
@@ -195,7 +196,7 @@ func (mh *MemcachedGoWithWebhooks) implementingWebhooks() {
 		webhooksFragment)
 	pkg.CheckError("replacing reconcile", err)
 
-	err = testutils.ReplaceInFile(webhookPath,
+	err = util.ReplaceInFile(webhookPath,
 		"// TODO(user): fill in your defaulting logic.", "if r.Spec.Size == 0 {\n\t\tr.Spec.Size = 3\n\t}")
 	pkg.CheckError("replacing default webhook implementation", err)
 
@@ -224,16 +225,16 @@ func (mh *MemcachedGoWithWebhooks) implementingController() {
 	pkg.CheckError("adding rbac", err)
 
 	// Replace reconcile content
-	err = testutils.ReplaceInFile(controllerPath, "_ = context.Background()", "ctx := context.Background()")
+	err = util.ReplaceInFile(controllerPath, "_ = context.Background()", "ctx := context.Background()")
 	pkg.CheckError("replacing reconcile content", err)
 
-	err = testutils.ReplaceInFile(controllerPath,
+	err = util.ReplaceInFile(controllerPath,
 		fmt.Sprintf("_ = r.Log.WithValues(\"%s\", req.NamespacedName)", strings.ToLower(mh.ctx.Kind)),
 		fmt.Sprintf("log := r.Log.WithValues(\"%s\", req.NamespacedName)", strings.ToLower(mh.ctx.Kind)))
 	pkg.CheckError("replacing reconcile content", err)
 
 	// Add reconcile implementation
-	err = testutils.ReplaceInFile(controllerPath,
+	err = util.ReplaceInFile(controllerPath,
 		"// your logic here", reconcileFragment)
 	pkg.CheckError("replacing reconcile", err)
 
@@ -243,7 +244,7 @@ func (mh *MemcachedGoWithWebhooks) implementingController() {
 	pkg.CheckError("adding helpers methods in the controller", err)
 
 	// Add watch for the Kind
-	err = testutils.ReplaceInFile(controllerPath,
+	err = util.ReplaceInFile(controllerPath,
 		fmt.Sprintf(watchOriginalFragment, mh.ctx.Group, mh.ctx.Version, mh.ctx.Kind),
 		fmt.Sprintf(watchCustomizedFragment, mh.ctx.Group, mh.ctx.Version, mh.ctx.Kind))
 	pkg.CheckError("replacing reconcile", err)
@@ -280,7 +281,7 @@ func (mh *MemcachedGoWithWebhooks) implementingAPI() {
 		fmt.Sprintf("%s_%s_%s.yaml", mh.ctx.Group, mh.ctx.Version, strings.ToLower(mh.ctx.Kind)))
 
 	log.Infof("updating sample to have size attribute")
-	err = testutils.ReplaceInFile(filepath.Join(mh.ctx.Dir, sampleFile), "foo: bar", "size: 1")
+	err = util.ReplaceInFile(filepath.Join(mh.ctx.Dir, sampleFile), "foo: bar", "size: 1")
 	pkg.CheckError("updating sample", err)
 }
 

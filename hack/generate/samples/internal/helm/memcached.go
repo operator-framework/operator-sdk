@@ -22,6 +22,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
 	"github.com/operator-framework/operator-sdk/internal/testutils"
+	"github.com/operator-framework/operator-sdk/internal/util"
 )
 
 // MemcachedHelm defines the Memcached Sample in Helm
@@ -77,7 +78,7 @@ func (mh *MemcachedHelm) Run() {
 	pkg.CheckError("creating the project", err)
 
 	log.Infof("customizing the sample")
-	err = testutils.ReplaceInFile(
+	err = util.ReplaceInFile(
 		filepath.Join(mh.ctx.Dir, "config", "samples", "cache_v1alpha1_memcached.yaml"),
 		"securityContext:\n    enabled: true", "securityContext:\n    enabled: false")
 	pkg.CheckError("customizing the sample", err)
@@ -89,7 +90,7 @@ func (mh *MemcachedHelm) Run() {
 	pkg.CheckError("enabling prometheus metrics", err)
 
 	log.Infof("adding customized roles")
-	err = testutils.ReplaceInFile(filepath.Join(mh.ctx.Dir, "config", "rbac", "role.yaml"),
+	err = util.ReplaceInFile(filepath.Join(mh.ctx.Dir, "config", "rbac", "role.yaml"),
 		"#+kubebuilder:scaffold:rules", policyRolesFragment)
 	pkg.CheckError("adding customized roles", err)
 

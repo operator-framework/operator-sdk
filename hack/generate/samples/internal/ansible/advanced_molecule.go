@@ -25,6 +25,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
 	"github.com/operator-framework/operator-sdk/internal/testutils"
+	"github.com/operator-framework/operator-sdk/internal/util"
 )
 
 // AdvancedMolecule defines the context for the sample
@@ -89,21 +90,21 @@ func (ma *AdvancedMolecule) Run() {
         data:
           sentinel: '{{ sentinel }}'
           groups: '{{ groups | to_nice_yaml }}'`
-	err = testutils.ReplaceInFile(
+	err = util.ReplaceInFile(
 		inventoryRoleTask,
 		"# tasks file for InventoryTest",
 		inventoryRoleTaskFragment)
 	pkg.CheckError("replacing inventory task", err)
 
 	log.Infof("updating inventorytest sample")
-	err = testutils.ReplaceInFile(
+	err = util.ReplaceInFile(
 		filepath.Join(ma.ctx.Dir, "config", "samples", "test_v1alpha1_inventorytest.yaml"),
 		"name: inventorytest-sample",
 		inventorysampleFragment)
 	pkg.CheckError("updating inventorytest sample", err)
 
 	log.Infof("updating spec of inventorytest sample")
-	err = testutils.ReplaceInFile(
+	err = util.ReplaceInFile(
 		filepath.Join(ma.ctx.Dir, "config", "samples", "test_v1alpha1_inventorytest.yaml"),
 		"foo: bar",
 		"size: 3")
@@ -146,7 +147,7 @@ func (ma *AdvancedMolecule) updateConfig() {
       - update
       - watch
 #+kubebuilder:scaffold:rules`
-	err := testutils.ReplaceInFile(
+	err := util.ReplaceInFile(
 		filepath.Join(ma.ctx.Dir, "config", "rbac", "role.yaml"),
 		"#+kubebuilder:scaffold:rules",
 		cmRolesFragment)
@@ -154,19 +155,19 @@ func (ma *AdvancedMolecule) updateConfig() {
 
 	log.Infof("adding manager arg")
 	const ansibleVaultArg = `
-            - "--ansible-args='--vault-password-file /opt/ansible/pwd.yml'"`
+        - --ansible-args='--vault-password-file /opt/ansible/pwd.yml'`
 	err = kbtestutils.InsertCode(
 		filepath.Join(ma.ctx.Dir, "config", "manager", "manager.yaml"),
-		"- \"--leader-election-id=advanced-molecule-operator\"",
+		"- --leader-election-id=advanced-molecule-operator",
 		ansibleVaultArg)
 	pkg.CheckError("adding manager arg", err)
 
 	log.Infof("adding manager env")
 	const managerEnv = `
-            - name: ANSIBLE_DEBUG_LOGS
-              value: "TRUE"
-            - name: ANSIBLE_INVENTORY
-              value: /opt/ansible/inventory`
+          - name: ANSIBLE_DEBUG_LOGS
+            value: "TRUE"
+          - name: ANSIBLE_INVENTORY
+            value: /opt/ansible/inventory`
 	err = kbtestutils.InsertCode(
 		filepath.Join(ma.ctx.Dir, "config", "manager", "manager.yaml"),
 		"value: explicit",
@@ -183,7 +184,7 @@ func (ma *AdvancedMolecule) updateConfig() {
 	pkg.CheckError("adding vaulting args to the proxy auth", err)
 
 	log.Infof("adding task to not pull image to the config/testing")
-	err = testutils.ReplaceInFile(
+	err = util.ReplaceInFile(
 		filepath.Join(ma.ctx.Dir, "config", "testing", "kustomization.yaml"),
 		"- manager_image.yaml",
 		"- manager_image.yaml\n- pull_policy/Never.yaml")
@@ -229,7 +230,7 @@ func (ma *AdvancedMolecule) addMocksFromTestdata() {
 
 func (ma *AdvancedMolecule) updateDockerfile() {
 	log.Infof("replacing project Dockerfile to use ansible base image with the dev tag")
-	err := testutils.ReplaceRegexInFile(
+	err := util.ReplaceRegexInFile(
 		filepath.Join(ma.ctx.Dir, "Dockerfile"),
 		"quay.io/operator-framework/ansible-operator:.*",
 		"quay.io/operator-framework/ansible-operator:dev")
@@ -281,7 +282,7 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
           data:
             msg: The decrypted value is {{the_secret.the_secret}}
 `
-	err := testutils.ReplaceInFile(
+	err := util.ReplaceInFile(
 		filepath.Join(ma.ctx.Dir, "playbooks", "argstest.yml"),
 		originalPlaybookFragment,
 		argsPlaybook)
@@ -305,7 +306,7 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
           data:
             shouldBeCamel: '{{ camelCaseVar | default("false") }}'
 `
-	err = testutils.ReplaceInFile(
+	err = util.ReplaceInFile(
 		filepath.Join(ma.ctx.Dir, "playbooks", "casetest.yml"),
 		originalPlaybookFragment,
 		casePlaybook)
@@ -324,7 +325,7 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
   tasks:
     - command: echo hello
     - debug: msg='{{ "hello" | test }}'`
-	err = testutils.ReplaceInFile(
+	err = util.ReplaceInFile(
 		filepath.Join(ma.ctx.Dir, "playbooks", "inventorytest.yml"),
 		"---\n- hosts: localhost\n  gather_facts: no\n  collections:\n    - community.kubernetes\n    - operator_sdk.util\n  tasks:\n    - import_role:\n        name: \"inventorytest\"",
 		inventoryPlaybook)
@@ -382,7 +383,7 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
         time: 1s
       when: configmap.resources|length > 0 and (configmap.resources.0.data.iterations|int) < 5
 `
-	err = testutils.ReplaceInFile(
+	err = util.ReplaceInFile(
 		filepath.Join(ma.ctx.Dir, "playbooks", "reconciliationtest.yml"),
 		originalPlaybookFragment,
 		reconciliationPlaybook)
@@ -406,7 +407,7 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
           data:
             hello: "world"
 `
-	err = testutils.ReplaceInFile(
+	err = util.ReplaceInFile(
 		filepath.Join(ma.ctx.Dir, "playbooks", "selectortest.yml"),
 		originalPlaybookFragment,
 		selectorPlaybook)
@@ -465,7 +466,7 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
           execCommandStderr: '{{ exec_result.stderr.strip() }}'
           logs: '{{ log_result.log }}'
 `
-	err = testutils.ReplaceInFile(
+	err = util.ReplaceInFile(
 		filepath.Join(ma.ctx.Dir, "playbooks", "subresourcestest.yml"),
 		originalPlaybookFragment,
 		subresourcesPlaybook)
@@ -497,7 +498,7 @@ func (ma *AdvancedMolecule) addPlaybooks() {
 		task := fmt.Sprintf("%s_test.yml", k)
 		logMsgForKind = fmt.Sprintf("removing FIXME assert from %s", task)
 		log.Infof(logMsgForKind)
-		err = testutils.ReplaceInFile(
+		err = util.ReplaceInFile(
 			filepath.Join(ma.ctx.Dir, "molecule", "default", "tasks", task),
 			fixmeAssert,
 			"")

@@ -25,10 +25,10 @@ spec:
       securityContext:
         runAsNonRoot: true
       containers:
-      - image: controller:latest
-        args:
-          - "--leader-elect"
-          - "--leader-election-id=memcached-operator"
+      - args:
+        - --leader-elect
+        - --leader-election-id=memcached-operator
+        image: controller:latest
         name: manager
         securityContext:
           allowPrivilegeEscalation: false
