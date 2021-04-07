@@ -37,9 +37,9 @@ jobs:
       run: |
         set -e
         IMG=quay.io/${{ github.repository_owner }}/ansible-operator-base
-        TAG="${{ github.event.inputs.tag }}"
+        TAG="${{ github.event.inputs.ansible_operator_base_tag }}"
         if [[ "$TAG" == "" ]]; then
-          TAG=$(git rev-parse HEAD)
+          TAG="$(git branch --show-current)-$(git rev-parse HEAD)"
         fi
         echo ::set-output name=tag::${IMG}:${TAG}
 
