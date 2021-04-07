@@ -26,6 +26,7 @@ RUN yum clean all && rm -rf /var/cache/yum/* \
     openshift==0.10.3 \
     ansible==2.9.15 \
     jmespath==0.10.0 \
+    urllib3==1.26.4 \
   && yum remove -y gcc libffi-devel openssl-devel python38-devel \
   && yum clean all \
   && rm -rf /var/cache/yum
