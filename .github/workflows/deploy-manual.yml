@@ -3,8 +3,8 @@ name: deploy-manual
 on:
   workflow_dispatch:
     inputs:
-      tag:
-        description: ansible-operator-base image tag, ex. "v1.2.3-10-g6e1b47e6ca7c507b8ecf197a8edcd412dd64d85d"
+      ansible_operator_base_tag:
+        description: ansible-operator-base image tag, ex. "6e1b47e6ca7c507b8ecf197a8edcd412dd64d85d"
         required: false
 
 jobs:
@@ -30,7 +30,7 @@ jobs:
     - name: checkout
       uses: actions/checkout@v2
       with:
-        fetch-depth: 0
+        fetch-depth: 1
 
     - name: create tag
       id: tag
@@ -39,7 +39,7 @@ jobs:
         IMG=quay.io/${{ github.repository_owner }}/ansible-operator-base
         TAG="${{ github.event.inputs.tag }}"
         if [[ "$TAG" == "" ]]; then
-          TAG=$(git describe --tags --always --dirty --long --abbrev=100)
+          TAG=$(git rev-parse HEAD)
         fi
         echo ::set-output name=tag::${IMG}:${TAG}
 
