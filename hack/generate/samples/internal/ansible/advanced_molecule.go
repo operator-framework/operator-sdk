@@ -164,10 +164,10 @@ func (ma *AdvancedMolecule) updateConfig() {
 
 	log.Infof("adding manager env")
 	const managerEnv = `
-          - name: ANSIBLE_DEBUG_LOGS
-            value: "TRUE"
-          - name: ANSIBLE_INVENTORY
-            value: /opt/ansible/inventory`
+        - name: ANSIBLE_DEBUG_LOGS
+          value: "TRUE"
+        - name: ANSIBLE_INVENTORY
+          value: /opt/ansible/inventory`
 	err = kbtestutils.InsertCode(
 		filepath.Join(ma.ctx.Dir, "config", "manager", "manager.yaml"),
 		"value: explicit",

@@ -189,8 +189,8 @@ func addInitCustomizations(projectName string) error {
 	// Add ANSIBLE_GATHERING env var
 	const envVar = `
         env:
-          - name: ANSIBLE_GATHERING
-            value: explicit`
+        - name: ANSIBLE_GATHERING
+          value: explicit`
 	err = sdkutil.InsertCode(managerFile, "name: manager", envVar)
 	if err != nil {
 		return err

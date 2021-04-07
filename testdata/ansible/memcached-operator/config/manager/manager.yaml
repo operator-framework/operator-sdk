@@ -31,8 +31,8 @@ spec:
         image: controller:latest
         name: manager
         env:
-          - name: ANSIBLE_GATHERING
-            value: explicit
+        - name: ANSIBLE_GATHERING
+          value: explicit
         securityContext:
           allowPrivilegeEscalation: false
         livenessProbe:
