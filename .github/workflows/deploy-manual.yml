@@ -30,7 +30,7 @@ jobs:
     - name: checkout
       uses: actions/checkout@v2
       with:
-        fetch-depth: 0
+        fetch-depth: 1
 
     - name: create tag
       id: tag
@@ -39,7 +39,7 @@ jobs:
         IMG=quay.io/${{ github.repository_owner }}/ansible-operator-base
         TAG="${{ github.event.inputs.tag }}"
         if [[ "$TAG" == "" ]]; then
-          TAG=$(git describe --tags --always --dirty --long --abbrev=100)
+          TAG="$(git branch --show-current | sed -E 's|/+|-|g')-$(git rev-parse HEAD)"
         fi
         echo ::set-output name=tag::${IMG}:${TAG}
 
