@@ -102,6 +102,7 @@ func GetPluginsCLIAndRoot() (*cli.CLI, *cobra.Command) {
 			gov2Bundle,
 			gov3Bundle,
 			helmBundle,
+			kustomizev1.Plugin{},
 		),
 		cli.WithDefaultPlugins(cfgv2.Version, gov2Bundle),
 		cli.WithDefaultPlugins(cfgv3.Version, gov3Bundle),
