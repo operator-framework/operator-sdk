@@ -1,0 +1,12 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Update dependencies for Ansible-based Operators. Pulls in 0.12 of the
+      openshift Python client, 12.0.1 of the kubernetes Python client, 0.2.0
+      of the operator_sdk.util Ansible collection, and 1.2.1 of the
+      community.kubernetes Ansible collection.
+
+    kind: "change"
+
+    breaking: false
