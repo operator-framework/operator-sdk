@@ -104,8 +104,11 @@ func GetPluginsCLIAndRoot() (*cli.CLI, *cobra.Command) {
 			gov2Bundle,
 			gov3Bundle,
 			helmBundle,
+<<<<<<< HEAD
 			kustomizev1.Plugin{},
+=======
 			declarativev1.Plugin{},
+>>>>>>> plugins: add the optional kb declative plugin
 		),
 		cli.WithDefaultPlugins(cfgv2.Version, gov2Bundle),
 		cli.WithDefaultPlugins(cfgv3.Version, gov3Bundle),
