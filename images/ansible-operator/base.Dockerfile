@@ -11,6 +11,9 @@ RUN mkdir -p /etc/ansible \
   && echo 'roles_path = /opt/ansible/roles' >> /etc/ansible/ansible.cfg \
   && echo 'library = /usr/share/ansible/openshift' >> /etc/ansible/ansible.cfg
 
+# Install python dependencies
+# Ensure fresh metadata rather than cached metadata in the base by running
+# yum clean all && rm -rf /var/yum/cache/* first
 # Copy python dependencies specs to be installed using Pipenv
 COPY Pipfile* ./
 # Instruct pip(env) not to keep a cache of installed packages,
@@ -19,10 +22,10 @@ COPY Pipfile* ./
 ENV PIP_NO_CACHE_DIR=1 \
     PIPENV_SYSTEM=1 \
     PIPENV_CLEAR=1
-# Ensure fresh metadata rather than cached metadata, install system and pip python deps,
-# and remove those not needed at runtime.
+# Ensure fresh metadata rather than cached metadata in the base by running
+# yum clean all && rm -rf /var/yum/cache/* first
 RUN yum clean all && rm -rf /var/cache/yum/* \
-  && yum update -y \
+  && yum -y update \
   && yum install -y libffi-devel openssl-devel python38-devel gcc python38-pip python38-setuptools \
   && pip3 install pipenv==2020.11.15 \
   && pipenv install --deploy \
