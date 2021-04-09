@@ -1,0 +1,21 @@
+entries:
+  - description: |
+      For Ansible-based Operators: Update Python dependencies.
+        - openshift (0.11.2 -> 0.12.0)
+        - kubernetes (11.0.0 -> 12.0.1)
+        - ansible-runner (1.4.6 -> 1.4.7)
+        - ansible (2.9.15 -> 2.9.19)
+    kind: "change"
+    breaking: false
+
+  - description: |
+      (ansible/v1) Update scaffolded requirements.yml to pull in newer versions of the Ansible collections.
+        - community.kubernetes (1.1.1 -> 1.2.1)
+        - operator_sdk.util (0.1.0 -> 0.2.0)
+    kind: "change"
+    breaking: false
+    migration:
+      header: (ansible/v1) Update Ansible collections
+      body: >
+        In your requirements.yml, change the `version` field for community.kubernetes to `1.2.1`,
+        and the `version` field for `operator_sdk.util` to `0.2.0`.
