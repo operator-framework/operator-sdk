@@ -262,13 +262,17 @@ func (c bundleCmd) runMetadata() error {
 	if bundleRoot == "" {
 		bundleRoot = c.outputDir
 	}
-	if _, _, err := registry.FindBundleMetadata(bundleRoot); err != nil {
-		merr := registry.MetadataNotFoundError("")
-		if !errors.As(err, &merr) {
-			return err
+
+	// Find metadata from output directory only of it exists on disk.
+	if genutil.IsExist(bundleRoot) {
+		if _, _, err := registry.FindBundleMetadata(bundleRoot); err != nil {
+			merr := registry.MetadataNotFoundError("")
+			if !errors.As(err, &merr) {
+				return err
+			}
+		} else if !c.overwrite {
+			return nil
 		}
-	} else if !c.overwrite {
-		return nil
 	}
 
 	bundleMetadata := bundleutil.BundleMetaData{

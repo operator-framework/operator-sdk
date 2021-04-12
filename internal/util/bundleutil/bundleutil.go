@@ -24,8 +24,9 @@ import (
 	"sort"
 	"text/template"
 
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
 var (
@@ -154,7 +155,7 @@ func writeScorecardConfig(path string) error {
 			log.Error(err)
 		}
 	}()
-	err = projutil.WriteFile(path, scorecardTemplate)
+	err = ioutil.WriteFile(path, []byte(scorecardTemplate), projutil.FileMode)
 	if err != nil {
 		return err
 	}
@@ -221,6 +222,8 @@ func (meta *BundleMetaData) BuildBundleImage(tag string) error {
 	img := fmt.Sprintf("%s:%s", meta.BaseImage, tag)
 
 	if len(meta.BuildCommand) != 0 {
+		// TODO(varsha): Make this more user friendly by accepting a template which
+		// can executed in each bundle subdirectory.
 		log.Infof("Using the specified command to build image %s", img)
 		cmd := exec.Command(meta.BuildCommand, img)
 		if err := cmd.Run(); err != nil {

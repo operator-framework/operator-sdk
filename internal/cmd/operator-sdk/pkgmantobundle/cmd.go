@@ -19,8 +19,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
-	semver "github.com/blang/semver/v4"
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	"github.com/operator-framework/operator-sdk/internal/annotations/metrics"
 	"github.com/operator-framework/operator-sdk/internal/util/bundleutil"
@@ -130,7 +130,7 @@ func NewCmd() *cobra.Command {
 
 	pkgManToBundleCmd.Flags().StringVar(&p.outputDir, "output-dir", "", "Directory to write bundle to.")
 	pkgManToBundleCmd.Flags().StringVar(&p.baseImg, "image-base", "", "Base container image name for bundle image tags, "+
-		"ex. my.reg/foo/bar-operator will become my.reg/foo/bar-operator-bundle:${package-dir-name} for each child directory name in the packagemanifests directory")
+		"ex. my.reg/foo/bar-operator-bundle will become my.reg/foo/bar-operator-bundle:${package-dir-name} for each child directory name in the packagemanifests directory")
 
 	// TODO(varsha): enable users to provide a template command so that it can be run in all child directories to build image.
 	pkgManToBundleCmd.Flags().StringVar(&p.buildCmd, "build-cmd", "", "Build command to be run for building images. By default 'docker build' is run.")
@@ -146,6 +146,8 @@ func (p *pkgManToBundleCmd) run() (err error) {
 	if _, err := os.Stat(p.outputDir); !os.IsNotExist(err) {
 		return fmt.Errorf("output directory: %s for bundles already exists", p.outputDir)
 	}
+
+	log.Infof("Packagemanifests will be migrated to bundles in %s directory", p.outputDir)
 
 	// Skipping bundles here, since that's not required and could be empty for a manifest directory.
 	packages, _, err := apimanifests.GetManifestsDir(p.pkgmanifestDir)
@@ -168,14 +170,9 @@ func (p *pkgManToBundleCmd) run() (err error) {
 		return err
 	}
 
-	// iterate through each of the subdirectories whose name is in the valid semver format to generate bundles.
+	// iterate through each of the subdirectories to generate respective bundles for each of them.
 	for _, dir := range directories {
 		if dir.IsDir() {
-			if !isValidSemver(dir.Name()) {
-				log.Infof("Skipping %s as the directory name is not in valid semver format", dir.Name())
-				continue
-			}
-
 			// this is required to extract project layout and SDK version information.
 			otherLabels, channels, err := getSDKStampsAndChannels(filepath.Join(p.pkgmanifestDir, dir.Name()), channelsByCSV)
 			if err != nil {
@@ -258,25 +255,22 @@ func getSDKStamps(bundle *apimanifests.Bundle) (map[string]string, error) {
 }
 
 // getChannelsByCSV creates a list for channels for the currentCSV,
-func getChannelsByCSV(bundle *apimanifests.Bundle, channelsByCSV map[string][]string) string {
+func getChannelsByCSV(bundle *apimanifests.Bundle, channelsByCSV map[string][]string) (channels string) {
 	// Find channels matching the CSV names
-	channels := ""
-
+	var channelNames []string
 	for csv, ch := range channelsByCSV {
 		if csv == bundle.CSV.GetName() {
-			for _, c := range ch {
-				channels = channels + c + ","
-			}
+			channelNames = ch
+			break
 		}
 	}
+	channels = strings.Join(channelNames, ",")
 
 	// TODO: verify if we have to add this validation since while building bundles if channel is not specified
 	// we add the default channel.
 	if channels == "" {
 		channels = "preview"
-		log.Infof("Supported channels cannot be identified from manifests, adding default `preview` channel")
-	} else {
-		channels = channels[:len(channels)-1]
+		log.Infof("Supported channels cannot be identified from CSV %s, using default channel 'preview'", bundle.CSV.GetName())
 	}
 
 	return channels
@@ -306,11 +300,6 @@ func getPackageMetadata(pkg *apimanifests.PackageManifest) (packagename, default
 	return
 }
 
-func isValidSemver(input string) bool {
-	_, err := semver.Parse(input)
-	return err == nil
-}
-
 func (p *pkgManToBundleCmd) validate(args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("a package manifest directory argument is required")
@@ -325,7 +314,5 @@ func (p *pkgManToBundleCmd) validate(args []string) error {
 func (p *pkgManToBundleCmd) setDefaults() {
 	if p.outputDir == "" {
 		p.outputDir = "bundle"
-
-		log.Infof("Packagemanifests will be migrated to bundles in %s directory", p.outputDir)
 	}
 }

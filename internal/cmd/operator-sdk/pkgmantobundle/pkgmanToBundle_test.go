@@ -228,17 +228,6 @@ var _ = Describe("Running pkgmanToBundle command", func() {
 			Expect(defaultChannel).To(BeEquivalentTo("preview"))
 		})
 	})
-
-	Describe("isValidSemver", func() {
-		It("should return true when its valid semver", func() {
-			input := "1.0.9"
-			Expect(isValidSemver(input)).To(BeTrue())
-		})
-		It("should return false when invalid semver is passed", func() {
-			input := "x-y.z"
-			Expect(isValidSemver(input)).To(BeFalse())
-		})
-	})
 })
 
 func getNumberOfDirectories(inputDir string) int {

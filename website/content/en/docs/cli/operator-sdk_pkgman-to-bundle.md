@@ -90,7 +90,7 @@ Also, images for the both the bundles will be built with the following names: qu
 ```
       --build-cmd string    Build command to be run for building images. By default 'docker build' is run.
   -h, --help                help for pkgman-to-bundle
-      --image-base string   Base container image name for bundle image tags, ex. my.reg/foo/bar-operator will become my.reg/foo/bar-operator-bundle:${package-dir-name} for each child directory name in the packagemanifests directory
+      --image-base string   Base container image name for bundle image tags, ex. my.reg/foo/bar-operator-bundle will become my.reg/foo/bar-operator-bundle:${package-dir-name} for each child directory name in the packagemanifests directory
       --output-dir string   Directory to write bundle to.
 ```
 
