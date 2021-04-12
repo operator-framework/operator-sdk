@@ -34,8 +34,14 @@ var (
 	versionRe = regexp.MustCompile(`version:[ ]*(?:")?3-alpha(?:")?`)
 )
 
+type templObj struct {
+	IsGo      bool
+	Resources []resource.Resource
+}
+
 // convertConfig3AlphaTo3 returns cfgBytes converted to 3 iff cfgBytes is version 3-alpha.
 func convertConfig3AlphaTo3(cfgBytes []byte) (_ []byte, err error) {
+	tObj := templObj{}
 	cfgObj := make(map[string]interface{}, 5)
 	if err := yaml.Unmarshal(cfgBytes, &cfgObj); err != nil {
 		return nil, err
@@ -109,9 +115,12 @@ func convertConfig3AlphaTo3(cfgBytes []byte) (_ []byte, err error) {
 			}
 		}
 
+		tObj.Resources = resources
+		tObj.IsGo = isGo
+
 		out := bytes.Buffer{}
 		t := template.Must(template.New("").Parse(tmpl))
-		if err := t.Execute(&out, resources); err != nil {
+		if err := t.Execute(&out, tObj); err != nil {
 			return nil, err
 		}
 
@@ -152,7 +161,8 @@ var getModulePath = func() (string, error) {
 
 // Comment-heavy "resources" template.
 const tmpl = `resources:
-{{- range $i, $res := . }}
+{{- $isGo := .IsGo }}
+{{- range $i, $res := .Resources }}
 -{{- if $res.API }} api:
     {{- if $res.API.CRDVersion }}
     crdVersion: {{ $res.API.CRDVersion }}
@@ -163,8 +173,10 @@ const tmpl = `resources:
     # TODO(user): Uncomment the below line if this resource's CRD is namespace scoped, else delete it.
     # namespaced: true
   {{- end }}
+  {{- if $isGo }}
   # TODO(user): Uncomment the below line if this resource implements a controller, else delete it.
   # controller: true
+  {{- end }}
   {{- if $res.Domain }}
   domain: {{ $res.Domain }}
   {{- end }}
