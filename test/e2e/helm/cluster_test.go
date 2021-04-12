@@ -276,17 +276,84 @@ var _ = Describe("Running Helm projects", func() {
 				tc.Version)
 			Eventually(getCurlLogs, time.Minute, time.Second).Should(ContainSubstring(metricExportedCR))
 
-			By("deleting CR manifest")
-			_, err = tc.Kubectl.Delete(false, "-f", sampleFile)
+			By("annotate CR with uninstall-wait")
+			cmdOpts = []string{
+				"annotate", tc.Kind, fmt.Sprintf("%s-sample", strings.ToLower(tc.Kind)),
+				"helm.sdk.operatorframework.io/uninstall-wait=true",
+			}
+			_, err = tc.Kubectl.Command(cmdOpts...)
 			Expect(err).NotTo(HaveOccurred())
 
-			By("ensuring the CR gets reconciled and the release was Uninstalled")
+			By("adding a finalizer to statefulset")
+			cmdOpts = []string{
+				"patch", "statefulset", releaseName, "-p",
+				"{\"metadata\":{\"finalizers\":[\"helm.sdk.operatorframework.io/fake-finalizer\"]}}",
+				"--type=merge",
+			}
+			_, err = tc.Kubectl.Command(cmdOpts...)
+			Expect(err).NotTo(HaveOccurred())
+
+			By("deleting CR manifest")
+			_, err = tc.Kubectl.Delete(false, "-f", sampleFile, "--wait=false")
+			Expect(err).NotTo(HaveOccurred())
+
+			By("ensuring the CR gets reconciled and uninstall-wait is enabled")
 			managerContainerLogsAfterDeleteCR := func() string {
 				logOutput, err := tc.Kubectl.Logs(controllerPodName, "-c", "manager")
 				Expect(err).NotTo(HaveOccurred())
 				return logOutput
 			}
+			Eventually(managerContainerLogsAfterDeleteCR, time.Minute, time.Second).Should(ContainSubstring("Uninstall wait"))
+			Eventually(managerContainerLogsAfterDeleteCR, time.Minute, time.Second).Should(ContainSubstring("Waiting until all resources are deleted"))
+
+			By("removing the finalizer from statefulset")
+			cmdOpts = []string{
+				"patch", "statefulset", releaseName, "-p",
+				"{\"metadata\":{\"finalizers\":[]}}",
+				"--type=merge",
+			}
+			_, err = tc.Kubectl.Command(cmdOpts...)
+			Expect(err).NotTo(HaveOccurred())
+
+			By("ensuring the CR gets reconciled and CR finalizer is removed")
+			Eventually(managerContainerLogsAfterDeleteCR, 2*time.Minute, time.Second).Should(ContainSubstring("Removing finalizer"))
+
+			By("ensuring the CR is deleted")
+			verifyDeletedCR := func() error {
+				_, err := tc.Kubectl.Get(
+					true,
+					tc.Kind, fmt.Sprintf("%s-sample", strings.ToLower(tc.Kind)))
+				if err == nil {
+					return fmt.Errorf("the %s CR is not deleted", tc.Kind)
+				}
+				return nil
+			}
+			Eventually(verifyDeletedCR, time.Minute, time.Second).Should(Succeed())
+
+			By("creating an instance of release(CR) again after a delete with uninstall-wait")
+			_, err = tc.Kubectl.Apply(false, "-f", sampleFile)
+			Expect(err).NotTo(HaveOccurred())
+
+			By("ensuring the CR gets reconciled and the release was Installed again")
+			managerContainerLogs = func() string {
+				logOutput, err := tc.Kubectl.Logs(controllerPodName, "-c", "manager")
+				Expect(err).NotTo(HaveOccurred())
+				return logOutput
+			}
+			Eventually(managerContainerLogs, time.Minute, time.Second).Should(ContainSubstring("Installed release"))
+
+			By("deleting CR manifest again without uninstall-wait")
+			_, err = tc.Kubectl.Delete(false, "-f", sampleFile)
+			Expect(err).NotTo(HaveOccurred())
+
+			By("ensuring the CR gets reconciled and the release was Uninstalled")
+			managerContainerLogsAfterDeleteCR = func() string {
+				logOutput, err := tc.Kubectl.Logs(controllerPodName, "-c", "manager")
+				Expect(err).NotTo(HaveOccurred())
+				return logOutput
+			}
 			Eventually(managerContainerLogsAfterDeleteCR, time.Minute, time.Second).Should(ContainSubstring("Uninstalled release"))
+			Eventually(managerContainerLogsAfterDeleteCR, time.Minute, time.Second).Should(ContainSubstring("Removing finalizer"))
 		})
 	})
 })

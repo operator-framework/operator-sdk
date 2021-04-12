@@ -60,6 +60,9 @@ const (
 	uninstallFinalizer = "helm.sdk.operatorframework.io/uninstall-release"
 	// Deprecated: use uninstallFinalizer. This will be removed in operator-sdk v2.0.0.
 	uninstallFinalizerLegacy = "uninstall-helm-release"
+
+	helmUpgradeForceAnnotation  = "helm.sdk.operatorframework.io/upgrade-force"
+	helmUninstallWaitAnnotation = "helm.sdk.operatorframework.io/uninstall-wait"
 )
 
 // Reconcile reconciles the requested resource by installing, updating, or
@@ -122,25 +125,58 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 		}
 		status.RemoveCondition(types.ConditionReleaseFailed)
 
+		wait := hasAnnotation(helmUninstallWaitAnnotation, o)
 		if errors.Is(err, driver.ErrReleaseNotFound) {
-			log.Info("Release not found, removing finalizer")
+			log.Info("Release not found")
 		} else {
 			log.Info("Uninstalled release")
 			if log.V(0).Enabled() && uninstalledRelease != nil {
 				fmt.Println(diff.Generate(uninstalledRelease.Manifest, ""))
 			}
+			if !wait {
+				status.SetCondition(types.HelmAppCondition{
+					Type:   types.ConditionDeployed,
+					Status: types.StatusFalse,
+					Reason: types.ReasonUninstallSuccessful,
+				})
+				status.DeployedRelease = nil
+			}
+		}
+		if wait {
 			status.SetCondition(types.HelmAppCondition{
-				Type:   types.ConditionDeployed,
-				Status: types.StatusFalse,
-				Reason: types.ReasonUninstallSuccessful,
+				Type:    types.ConditionDeployed,
+				Status:  types.StatusFalse,
+				Reason:  types.ReasonUninstallSuccessful,
+				Message: "Waiting until all resources are deleted.",
 			})
-			status.DeployedRelease = nil
 		}
 		if err := r.updateResourceStatus(ctx, o, status); err != nil {
 			log.Info("Failed to update CR status")
 			return reconcile.Result{}, err
 		}
 
+		if wait && status.DeployedRelease != nil && status.DeployedRelease.Manifest != "" {
+			log.Info("Uninstall wait")
+			isAllResourcesDeleted, err := manager.CleanupRelease(ctx, status.DeployedRelease.Manifest)
+			if err != nil {
+				log.Error(err, "Failed to cleanup release")
+				status.SetCondition(types.HelmAppCondition{
+					Type:    types.ConditionReleaseFailed,
+					Status:  types.StatusTrue,
+					Reason:  types.ReasonUninstallError,
+					Message: err.Error(),
+				})
+				_ = r.updateResourceStatus(ctx, o, status)
+				return reconcile.Result{}, err
+			}
+			if !isAllResourcesDeleted {
+				log.Info("Waiting until all resources are deleted")
+				return reconcile.Result{RequeueAfter: r.ReconcilePeriod}, nil
+			}
+			status.RemoveCondition(types.ConditionReleaseFailed)
+		}
+
+		log.Info("Removing finalizer")
 		controllerutil.RemoveFinalizer(o, uninstallFinalizer)
 		controllerutil.RemoveFinalizer(o, uninstallFinalizerLegacy)
 		if err := r.updateResource(ctx, o); err != nil {
@@ -254,7 +290,7 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 			r.EventRecorder.Eventf(o, "Warning", "OverrideValuesInUse",
 				"Chart value %q overridden to %q by operator's watches.yaml", k, v)
 		}
-		force := hasHelmUpgradeForceAnnotation(o)
+		force := hasAnnotation(helmUpgradeForceAnnotation, o)
 		previousRelease, upgradedRelease, err := manager.UpgradeRelease(ctx, release.ForceUpgrade(force))
 		if err != nil {
 			log.Error(err, "Release failed")
@@ -357,16 +393,15 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 
 // returns the boolean representation of the annotation string
 // will return false if annotation is not set
-func hasHelmUpgradeForceAnnotation(o *unstructured.Unstructured) bool {
-	const helmUpgradeForceAnnotation = "helm.sdk.operatorframework.io/upgrade-force"
-	force := o.GetAnnotations()[helmUpgradeForceAnnotation]
-	if force == "" {
+func hasAnnotation(anno string, o *unstructured.Unstructured) bool {
+	boolStr := o.GetAnnotations()[anno]
+	if boolStr == "" {
 		return false
 	}
 	value := false
-	if i, err := strconv.ParseBool(force); err != nil {
+	if i, err := strconv.ParseBool(boolStr); err != nil {
 		log.Info("Could not parse annotation as a boolean",
-			"annotation", helmUpgradeForceAnnotation, "value informed", force)
+			"annotation", anno, "value informed", boolStr)
 	} else {
 		value = i
 	}
