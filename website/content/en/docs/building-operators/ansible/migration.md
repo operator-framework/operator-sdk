@@ -49,8 +49,7 @@ The easy migration path is to initialize a new project, re-recreate APIs, then c
 [quay.io](https://quay.io/)) and be logged in in your command line environment.
   - `example.com` is used as the registry Docker Hub namespace in these examples.
   Replace it with another value if using a different registry or namespace.
-  - The registry/namespace must be public, or the cluster must be provisioned with an
-  [image pull secret][k8s-image-pull-sec] if the image namespace is private.
+  - [Authentication and certificates][image-reg-config] if the registry is private or uses a custom CA.
 
 ### Creating a new project
 
@@ -297,7 +296,7 @@ kubectl logs deployment.apps/memcached-operator-controller-manager -n memcached-
 For further steps regarding the deployment of the operator, creation of custom resources, and cleaning up of resources, see the [tutorial][tutorial-deploy].
 
 [install-guide]: /docs/building-operators/ansible/installation
-[k8s-image-pull-sec]:https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+[image-reg-config]:/docs/olm-integration/cli-overview#private-bundle-and-catalog-image-registries
 [kustomize]: https://github.com/kubernetes-sigs/kustomize
 [kube-auth-proxy]: https://github.com/brancz/kube-rbac-proxy
 [metrics]: https://book.kubebuilder.io/reference/metrics.html?highlight=metr#metrics
@@ -306,4 +305,3 @@ For further steps regarding the deployment of the operator, creation of custom r
 [testing-guide]: /docs/building-operators/ansible/testing-guide
 [migration-doc]: /docs/upgrading-sdk-version/
 [tutorial-deploy]: /docs/building-operators/ansible/tutorial/#run-the-operator
-

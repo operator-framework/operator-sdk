@@ -45,10 +45,10 @@ func TestCreateRegistryPod(t *testing.T) {
 
 var _ = Describe("RegistryPod", func() {
 
-	var defaultBundleItem = BundleItem{
+	var defaultBundleItems = []BundleItem{{
 		ImageTag: "quay.io/example/example-operator-bundle:0.2.0",
 		AddMode:  SemverBundleAddMode,
-	}
+	}}
 
 	Describe("creating registry pod", func() {
 
@@ -67,7 +67,7 @@ var _ = Describe("RegistryPod", func() {
 					Namespace: "test-default",
 				}
 				rp = &RegistryPod{
-					BundleItems: []BundleItem{defaultBundleItem},
+					BundleItems: defaultBundleItems,
 					IndexImage:  testIndexImageTag,
 				}
 				By("initializing the RegistryPod")
@@ -94,21 +94,27 @@ var _ = Describe("RegistryPod", func() {
 			It("should return a valid container command for one image", func() {
 				output, err := rp.getContainerCmd()
 				Expect(err).To(BeNil())
-				Expect(output).Should(Equal(containerCommandFor(defaultDBPath, []BundleItem{defaultBundleItem})))
+				Expect(output).Should(Equal(containerCommandFor(defaultDBPath, defaultBundleItems, false)))
+			})
+
+			It("should return a container command with --ca-file", func() {
+				rp.CASecretName = "foo-secret"
+				output, err := rp.getContainerCmd()
+				Expect(err).To(BeNil())
+				Expect(output).Should(Equal(containerCommandFor(defaultDBPath, defaultBundleItems, true)))
 			})
 
 			It("should return a valid container command for three images", func() {
-				bundleItems := []BundleItem{
-					defaultBundleItem,
-					{
+				bundleItems := append(defaultBundleItems,
+					BundleItem{
 						ImageTag: "quay.io/example/example-operator-bundle:0.3.0",
 						AddMode:  ReplacesBundleAddMode,
 					},
-					{
+					BundleItem{
 						ImageTag: "quay.io/example/example-operator-bundle:1.0.1",
 						AddMode:  SemverBundleAddMode,
 					},
-				}
+				)
 				rp2 := RegistryPod{
 					DBPath:      defaultDBPath,
 					GRPCPort:    defaultGRPCPort,
@@ -116,7 +122,7 @@ var _ = Describe("RegistryPod", func() {
 				}
 				output, err := rp2.getContainerCmd()
 				Expect(err).To(BeNil())
-				Expect(output).Should(Equal(containerCommandFor(defaultDBPath, bundleItems)))
+				Expect(output).Should(Equal(containerCommandFor(defaultDBPath, bundleItems, false)))
 			})
 
 			It("check pod status should return successfully when pod check is true", func() {
@@ -188,7 +194,7 @@ var _ = Describe("RegistryPod", func() {
 
 			It("checkPodStatus should return error when pod check is false and context is done", func() {
 				rp := &RegistryPod{
-					BundleItems: []BundleItem{defaultBundleItem},
+					BundleItems: defaultBundleItems,
 					IndexImage:  testIndexImageTag,
 				}
 				Expect(rp.init(cfg)).To(Succeed())
@@ -211,10 +217,14 @@ var _ = Describe("RegistryPod", func() {
 })
 
 // containerCommandFor returns the expected container command for a db path and set of bundle items.
-func containerCommandFor(dbPath string, items []BundleItem) string {
+func containerCommandFor(dbPath string, items []BundleItem, hasCA bool) string {
+	var caFlag string
+	if hasCA {
+		caFlag = " --ca-file=/certs/cert.pem"
+	}
 	additions := &strings.Builder{}
 	for _, item := range items {
-		additions.WriteString(fmt.Sprintf("/bin/opm registry add -d %s -b %s --mode=%s && \\\n", dbPath, item.ImageTag, item.AddMode))
+		additions.WriteString(fmt.Sprintf("/bin/opm registry add -d %s -b %s --mode=%s%s && \\\n", dbPath, item.ImageTag, item.AddMode, caFlag))
 	}
 	return fmt.Sprintf("/bin/mkdir -p /database && \\\n%s/bin/opm registry serve -d /database/index.db -p 50051\n", additions.String())
 }

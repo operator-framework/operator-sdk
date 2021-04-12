@@ -16,8 +16,7 @@ please [migrate][migration-guide], or consult the [legacy docs][legacy-quickstar
 [quay.io](https://quay.io/)) and be logged in in your command line environment.
   - `example.com` is used as the registry Docker Hub namespace in these examples.
   Replace it with another value if using a different registry or namespace.
-  - The registry/namespace must be public, or the cluster must be provisioned with an
-  [image pull secret][k8s-image-pull-sec] if the image namespace is private.
+  - [Authentication and certificates][image-reg-config] if the registry is private or uses a custom CA.
 
 
 ## Overview
@@ -209,14 +208,10 @@ in the `bundle` directory containing manifests and metadata defining your operat
 make bundle bundle-build bundle-push
 ```
 
-Finally, run your bundle. If your bundle image is hosted in a private registry,
-add the image pull secret for that registry host to the service account in use
-and set `--secret-name` to the secret name:
-<!-- TODO(estroz): remove the service account requirement once OLM releases a patch or new
-minor release containing https://github.com/operator-framework/operator-lifecycle-manager/pull/1941 -->
+Finally, run your bundle. If your bundle image is hosted in a registry that is private and/or
+has a custom CA, these [configuration steps][image-reg-config] must be complete.
 
 ```sh
-kubectl patch serviceaccount default -p '{"imagePullSecrets":[{"name":"<reg secret name>"}]}'
 operator-sdk run bundle example.com/memcached-operator-bundle:v0.0.1
 ```
 
@@ -356,6 +351,7 @@ OLM will manage creation of most if not all resources required to run your opera
 [legacy-quickstart-doc]:https://v0-19-x.sdk.operatorframework.io/docs/ansible/quickstart/
 [migration-guide]:/docs/building-operators/ansible/migration
 [install-guide]:/docs/building-operators/ansible/installation
+[image-reg-config]:/docs/olm-integration/cli-overview#private-bundle-and-catalog-image-registries
 [ansible-developer-tips]:/docs/building-operators/ansible/development-tips/
 [ansible-watches]:/docs/building-operators/ansible/reference/watches
 [custom-resources]:https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/
@@ -363,4 +359,3 @@ OLM will manage creation of most if not all resources required to run your opera
 [doc-bundle]:https://github.com/operator-framework/operator-registry/blob/v1.16.1/docs/design/operator-bundle.md#operator-bundle
 [quickstart-bundle]:/docs/olm-integration/quickstart-bundle
 [doc-olm]:/docs/olm-integration/quickstart-bundle/#enabling-olm
-[k8s-image-pull-sec]:https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
