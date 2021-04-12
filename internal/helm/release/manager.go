@@ -36,6 +36,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	apitypes "k8s.io/apimachinery/pkg/types"
+	apiutilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/client-go/discovery"
@@ -406,19 +407,10 @@ func (m manager) CleanupRelease(ctx context.Context, manifest string) (bool, err
 		}
 		// found at least one resource that is not deleted so just delete everything again.
 		_, errs := m.kubeClient.Delete(resources)
-		if errs != nil {
-			return false, fmt.Errorf("failed to delete resources: %s", joinErrors(errs))
+		if len(errs) > 0 {
+			return false, fmt.Errorf("failed to delete resources: %v", apiutilerrors.NewAggregate(errs))
 		}
 		return false, nil
 	}
 	return true, nil
-}
-
-// Source from https://github.com/helm/helm/blob/v3.4.2/pkg/action/uninstall.go#L163
-func joinErrors(errs []error) string {
-	es := make([]string, 0, len(errs))
-	for _, e := range errs {
-		es = append(es, e.Error())
-	}
-	return strings.Join(es, "; ")
 }
