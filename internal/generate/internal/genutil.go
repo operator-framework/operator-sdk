@@ -15,6 +15,7 @@
 package genutil
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -61,6 +62,11 @@ func WriteObject(w io.Writer, obj interface{}) error {
 	if err != nil {
 		return err
 	}
+
+	// todo: remove it when the OLM starts to support https://github.com/operator-framework/api/pull/100
+	const cleanup = "cleanup:\n    enabled: false\n  "
+	b = bytes.ReplaceAll(b, []byte(cleanup), []byte(""))
+
 	return write(w, b)
 }
 

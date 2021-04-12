@@ -15,6 +15,7 @@
 package kustomize
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -210,6 +211,11 @@ func (c manifestsCmd) run(cfg config.Config) error {
 	if err != nil {
 		return fmt.Errorf("error marshaling CSV base: %v", err)
 	}
+
+	// todo: remove it when the OLM starts to support https://github.com/operator-framework/api/pull/100
+	const cleanup = "cleanup:\n    enabled: false\n  "
+	csvBytes = bytes.ReplaceAll(csvBytes, []byte(cleanup), []byte(""))
+
 	if err = os.MkdirAll(filepath.Join(c.outputDir, "bases"), 0755); err != nil {
 		return err
 	}
