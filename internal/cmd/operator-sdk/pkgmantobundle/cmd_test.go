@@ -27,8 +27,9 @@ var _ = Describe("Migrating packagemanifests to bundle command", func() {
 		flag := cmd.Flags().Lookup("output-dir")
 		Expect(flag).NotTo(BeNil())
 		Expect(flag.Usage).ToNot(Equal(""))
+		Expect(flag.DefValue).To(Equal("bundles"))
 
-		flag = cmd.Flags().Lookup("image-base")
+		flag = cmd.Flags().Lookup("image-tag-base")
 		Expect(flag).NotTo(BeNil())
 		Expect(flag.Usage).ToNot(Equal(""))
 

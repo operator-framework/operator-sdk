@@ -56,19 +56,6 @@ var _ = Describe("Running pkgmanToBundle command", func() {
 		})
 	})
 
-	Describe("setdefaults", func() {
-		It("should set default output bundle directory if not provided", func() {
-			p.setDefaults()
-			Expect(p.outputDir).To(BeEquivalentTo("bundle"))
-		})
-
-		It("should not set default output bundle directory if already provided", func() {
-			p.outputDir = "test-dir"
-			p.setDefaults()
-			Expect(p.outputDir).To(BeEquivalentTo("test-dir"))
-		})
-	})
-
 	Describe("migrate packagemanifests to bundle ", func() {
 		AfterEach(func() {
 			err := os.RemoveAll(outputDir)

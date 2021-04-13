@@ -128,8 +128,8 @@ func NewCmd() *cobra.Command {
 		},
 	}
 
-	pkgManToBundleCmd.Flags().StringVar(&p.outputDir, "output-dir", "", "Directory to write bundle to.")
-	pkgManToBundleCmd.Flags().StringVar(&p.baseImg, "image-base", "", "Base container image name for bundle image tags, "+
+	pkgManToBundleCmd.Flags().StringVar(&p.outputDir, "output-dir", "bundles", "Directory to write bundle to.")
+	pkgManToBundleCmd.Flags().StringVar(&p.baseImg, "image-tag-base", "", "Base container image name for bundle image tags, "+
 		"ex. my.reg/foo/bar-operator-bundle will become my.reg/foo/bar-operator-bundle:${package-dir-name} for each child directory name in the packagemanifests directory")
 
 	// TODO(varsha): enable users to provide a template command so that it can be run in all child directories to build image.
@@ -140,7 +140,6 @@ func NewCmd() *cobra.Command {
 
 // Generate the bundles from the provided packagemanifest directory.
 func (p *pkgManToBundleCmd) run() (err error) {
-	p.setDefaults()
 
 	// error if output bundle directory already exists.
 	if _, err := os.Stat(p.outputDir); !os.IsNotExist(err) {
@@ -309,10 +308,4 @@ func (p *pkgManToBundleCmd) validate(args []string) error {
 		return fmt.Errorf("base image needs to be specified to build bundle image")
 	}
 	return nil
-}
-
-func (p *pkgManToBundleCmd) setDefaults() {
-	if p.outputDir == "" {
-		p.outputDir = "bundle"
-	}
 }
