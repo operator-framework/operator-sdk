@@ -1,5 +1,0 @@
-entries:
-  - description: >
-      Bumped ansible and ansible-base in ansible-operator-base and ansible-operator images
-      to 2.10.7 for a security fix.
-    kind: change
