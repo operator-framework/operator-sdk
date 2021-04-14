@@ -75,7 +75,6 @@ func (s *apiScaffolder) Scaffold() error {
 
 	createAPITemplates := []machinery.Builder{
 		&rbac.ManagerRoleUpdater{},
-
 		&crd.CRD{},
 		&crd.Kustomization{},
 		&templates.WatchesUpdater{

@@ -26,7 +26,6 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/chartutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates"
-	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/kdefault"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds/internal/templates/config/rbac"
 	"github.com/operator-framework/operator-sdk/internal/version"
 )
@@ -86,6 +85,5 @@ func (s *initScaffolder) Scaffold() error {
 		},
 		&templates.Watches{},
 		&rbac.ManagerRole{},
-		&kdefault.Kustomization{},
 	)
 }

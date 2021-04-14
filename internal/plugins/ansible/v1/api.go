@@ -136,8 +136,11 @@ func (p *createAPISubcommand) InjectResource(res *resource.Resource) error {
 }
 
 func (p *createAPISubcommand) Scaffold(fs machinery.Filesystem) error {
-	if err := util.RemoveKustomizeCRDWebhooks(); err != nil {
-		return fmt.Errorf("error removing CRD webhook manifests: %v", err)
+	if err := util.RemoveKustomizeCRDManifests(); err != nil {
+		return fmt.Errorf("error removing kustomization CRD manifests: %v", err)
+	}
+	if err := util.UpdateKustomizationsCreateAPI(); err != nil {
+		return fmt.Errorf("error updating kustomization.yaml files: %v", err)
 	}
 
 	scaffolder := scaffolds.NewCreateAPIScaffolder(p.config, *p.resource, p.options.DoRole, p.options.DoPlaybook)

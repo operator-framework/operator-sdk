@@ -23,7 +23,6 @@ import (
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugins"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates"
-	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/kdefault"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/rbac"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/testing"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/testing/pullpolicy"
@@ -85,10 +84,8 @@ func (s *initScaffolder) Scaffold() error {
 		&templates.RequirementsYml{},
 		&templates.Watches{},
 		&rbac.ManagerRole{},
-		&kdefault.Kustomization{},
 		&roles.Placeholder{},
 		&playbooks.Placeholder{},
-
 		&mdefault.Converge{},
 		&mdefault.Create{},
 		&mdefault.Destroy{},

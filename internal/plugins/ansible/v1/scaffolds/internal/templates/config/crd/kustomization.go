@@ -40,13 +40,8 @@ func (f *Kustomization) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = filepath.Join("config", "crd", "kustomization.yaml")
 	}
-	f.Path = f.Resource.Replacer().Replace(f.Path)
 
-	f.TemplateBody = fmt.Sprintf(kustomizationTemplate,
-		machinery.NewMarkerFor(f.Path, resourceMarker),
-	)
-
-	f.IfExistsAction = machinery.OverwriteFile
+	f.TemplateBody = fmt.Sprintf(kustomizationTemplate, machinery.NewMarkerFor(f.Path, resourceMarker))
 
 	return nil
 }
@@ -55,7 +50,7 @@ const (
 	resourceMarker = "crdkustomizeresource"
 )
 
-// GetMarkers implements file.Inserter
+// GetMarkers implements machinery.Inserter
 func (f *Kustomization) GetMarkers() []machinery.Marker {
 	return []machinery.Marker{
 		machinery.NewMarkerFor(f.Path, resourceMarker),
@@ -67,7 +62,7 @@ const (
 `
 )
 
-// GetCodeFragments implements file.Inserter
+// GetCodeFragments implements machinery.Inserter
 func (f *Kustomization) GetCodeFragments() machinery.CodeFragmentsMap {
 	return machinery.CodeFragmentsMap{
 		// Generate resource code fragments
