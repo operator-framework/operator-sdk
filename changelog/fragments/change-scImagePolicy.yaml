@@ -1,0 +1,5 @@
+entries:
+  - description: >
+      "Changed default image Pull Policy to Always for scorecard"
+    kind: change
+    breaking: false
