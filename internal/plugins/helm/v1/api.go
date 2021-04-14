@@ -30,6 +30,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/chartutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds"
+	"github.com/operator-framework/operator-sdk/internal/plugins/util"
 )
 
 const (
@@ -200,6 +201,10 @@ func (p *createAPISubcommand) InjectResource(res *resource.Resource) error {
 }
 
 func (p *createAPISubcommand) Scaffold(fs machinery.Filesystem) error {
+	if err := util.RemoveKustomizeCRDWebhooks(); err != nil {
+		return fmt.Errorf("error removing CRD webhook manifests: %v", err)
+	}
+
 	scaffolder := scaffolds.NewAPIScaffolder(p.config, *p.resource, p.chart)
 	scaffolder.InjectFS(fs)
 	if err := scaffolder.Scaffold(); err != nil {

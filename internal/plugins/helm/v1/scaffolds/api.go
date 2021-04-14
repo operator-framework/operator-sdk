@@ -93,10 +93,8 @@ func (s *apiScaffolder) Scaffold() error {
 		&templates.WatchesUpdater{ChartPath: chartPath},
 		&crd.CRD{},
 		&crd.Kustomization{},
-		&rbac.CRDEditorRole{},
-		&rbac.CRDViewerRole{},
 		&rbac.ManagerRoleUpdater{Chart: s.chrt},
-		&samples.CRDSample{ChartPath: chartPath, Chart: s.chrt},
+		&samples.CustomResource{ChartPath: chartPath, Chart: s.chrt},
 	); err != nil {
 		return fmt.Errorf("error scaffolding APIs: %w", err)
 	}

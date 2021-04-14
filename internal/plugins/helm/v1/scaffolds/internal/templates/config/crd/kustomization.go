@@ -46,6 +46,8 @@ func (f *Kustomization) SetTemplateDefaults() error {
 		machinery.NewMarkerFor(f.Path, resourceMarker),
 	)
 
+	f.IfExistsAction = machinery.OverwriteFile
+
 	return nil
 }
 

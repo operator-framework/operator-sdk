@@ -26,6 +26,7 @@ import (
 	pluginutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds"
+	"github.com/operator-framework/operator-sdk/internal/plugins/util"
 )
 
 const (
@@ -135,6 +136,10 @@ func (p *createAPISubcommand) InjectResource(res *resource.Resource) error {
 }
 
 func (p *createAPISubcommand) Scaffold(fs machinery.Filesystem) error {
+	if err := util.RemoveKustomizeCRDWebhooks(); err != nil {
+		return fmt.Errorf("error removing CRD webhook manifests: %v", err)
+	}
+
 	scaffolder := scaffolds.NewCreateAPIScaffolder(p.config, *p.resource, p.options.DoRole, p.options.DoPlaybook)
 	scaffolder.InjectFS(fs)
 	if err := scaffolder.Scaffold(); err != nil {

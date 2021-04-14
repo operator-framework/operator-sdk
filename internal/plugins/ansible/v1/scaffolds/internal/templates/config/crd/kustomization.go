@@ -46,6 +46,8 @@ func (f *Kustomization) SetTemplateDefaults() error {
 		machinery.NewMarkerFor(f.Path, resourceMarker),
 	)
 
+	f.IfExistsAction = machinery.OverwriteFile
+
 	return nil
 }
 
@@ -67,18 +69,12 @@ const (
 
 // GetCodeFragments implements file.Inserter
 func (f *Kustomization) GetCodeFragments() machinery.CodeFragmentsMap {
-	fragments := make(machinery.CodeFragmentsMap, 3)
-
-	// Generate resource code fragments
-	res := make([]string, 0)
-	res = append(res, fmt.Sprintf(resourceCodeFragment, f.Resource.QualifiedGroup(), f.Resource.Plural))
-
-	// Only store code fragments in the map if the slices are non-empty
-	if len(res) != 0 {
-		fragments[machinery.NewMarkerFor(f.Path, resourceMarker)] = res
+	return machinery.CodeFragmentsMap{
+		// Generate resource code fragments
+		machinery.NewMarkerFor(f.Path, resourceMarker): []string{
+			fmt.Sprintf(resourceCodeFragment, f.Resource.QualifiedGroup(), f.Resource.Plural),
+		},
 	}
-
-	return fragments
 }
 
 var kustomizationTemplate = `# This kustomization.yaml is not intended to be run by itself,
