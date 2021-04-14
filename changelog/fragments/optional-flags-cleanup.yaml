@@ -1,5 +1,0 @@
-entries:
-  - description: >
-      Added new optional flags `--delete-all`, `--delete-crds` and `--delete-operator-groups` to the cleanup command
-    kind: "addition"
-    breaking: false

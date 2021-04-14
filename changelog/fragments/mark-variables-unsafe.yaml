@@ -1,5 +1,0 @@
-entries:
-  - description: >
-      Mark the input variables from custom resources as unsafe by default in Ansible operators. 
-    kind: bugfix
-    breaking: false

@@ -1,6 +1,0 @@
-entries:
-  - description: >
-      For Helm based-operators, added annotation `helm.sdk.operatorframework.io/uninstall-wait: "true"`
-      to allow all resources to be deleted before removing the custom resource's finalizer.
-    kind: "addition"
-    breaking: false
