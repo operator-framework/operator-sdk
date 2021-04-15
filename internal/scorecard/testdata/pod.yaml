@@ -12,7 +12,7 @@ spec:
           apiVersion: v1
           fieldPath: metadata.namespace
     image: quay.io/operator-framework/scorecard-test:dev 
-    imagePullPolicy: IfNotPresent
+    imagePullPolicy: Always
     name: scorecard-test
     command: ["/usr/local/bin/scorecard-test"]
     args: ["basic-check-spec"]
