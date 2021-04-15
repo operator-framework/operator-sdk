@@ -1,7 +1,7 @@
 ---
 title: Testing
 linkTitle: Testing
-weight: 10
+weight: 6
 ---
 
 On all PRs, a suite of static and cluster tests is run against your changes in a CI environment.

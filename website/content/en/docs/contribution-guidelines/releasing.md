@@ -1,7 +1,7 @@
 ---
 title: Release Guide
 linkTitle: Releasing
-weight: 30
+weight: 4
 ---
 
 These steps describe how to conduct a release of the operator-sdk repo using example versions.
