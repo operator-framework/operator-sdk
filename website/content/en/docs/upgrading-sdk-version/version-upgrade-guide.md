@@ -465,7 +465,7 @@ All method signatures for [`sigs.k8s.io/controller-runtime/pkg/client.Client`](h
     with:
     ```go
     listOpts := []client.ListOption{
-      client.InNamespace("namespace"),        
+      client.InNamespace("namespace"),
     }
     err = r.client.List(context.TODO(), podList, listOpts...)
     ```
@@ -634,7 +634,7 @@ Replace `*` per verbs in order to solve the issue [671](https://github.com/opera
 
 - **Deprecated:** Deprecated the `operator-sdk generate openapi` command. CRD generation is still supported with `operator-sdk generate crds`. It is now recommended to use [openapi-gen](https://github.com/kubernetes/kube-openapi/tree/master/cmd/openapi-gen) directly for OpenAPI code generation. The `generate openapi` subcommand will be removed in a future release.
 - **Breaking change:** An existing CSV's `spec.customresourcedefinitions.owned` is now always overwritten except for each name, version, and kind on invoking olm-catalog gen-csv when Go API code annotations are present.
-- **Potentially Breaking change:** Be aware that there are potentially other breaking changes due to the controller-runtime and Kubernetes version be upgraded from `v0.4.0` to `v1.16.2, respectively. There may be breaking changes to Go client code due to both of those changes.
+- **Potentially Breaking change:** Be aware that there are potentially other breaking changes due to the controller-runtime and Kubernetes version be upgraded from `v0.4.0` to `v1.16.2`, respectively. There may be breaking changes to Go client code due to both of those changes.
 
 For further detailed information see [CHANGELOG](https://github.com/operator-framework/operator-sdk/blob/master/CHANGELOG.md#v0130)
 
@@ -1341,7 +1341,7 @@ install:
   - pip3 install docker molecule ansible-lint yamllint flake8 openshift jmespath
 ```
 
-**NOTE** To know more about how to upgrade your project to use the V3 Molecule version see [here](https://github.com/ansible-community/molecule/issues/2560).  
+**NOTE** To know more about how to upgrade your project to use the V3 Molecule version see [here](https://github.com/ansible-community/molecule/issues/2560).
 
 **Deprecations**
 
