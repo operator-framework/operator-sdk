@@ -24,7 +24,6 @@ import (
 	kbtestutils "sigs.k8s.io/kubebuilder/v3/test/e2e/utils"
 
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
-	"github.com/operator-framework/operator-sdk/internal/testutils"
 	"github.com/operator-framework/operator-sdk/internal/util"
 )
 
@@ -33,9 +32,18 @@ type AdvancedMolecule struct {
 	ctx *pkg.SampleContext
 }
 
-// NewMoleculeAnsible return a MoleculeAnsible
-func NewAdvancedMolecule(ctx *pkg.SampleContext) AdvancedMolecule {
-	return AdvancedMolecule{ctx}
+// GenerateAdvancedMoleculeSample will call all actions to create the directory and generate the sample
+// The Context to run the samples are not the same in the e2e test. In this way, note that it should NOT
+// be called in the e2e tests since it will call the Prepare() to set the sample context and generate the files
+// in the testdata directory. The e2e tests only ought to use the Run() method with the TestContext.
+func GenerateAdvancedMoleculeSample(binaryPath, samplesPath string) {
+	ctx, err := pkg.NewSampleContext(binaryPath, filepath.Join(samplesPath, "advanced-molecule-operator"),
+		"GO111MODULE=on")
+	pkg.CheckError("generating Ansible Molecule Advanced Operator context", err)
+
+	molecule := AdvancedMolecule{&ctx}
+	molecule.Prepare()
+	molecule.Run()
 }
 
 // Prepare the Context for the Memcached Ansible Sample
@@ -518,17 +526,3 @@ const originalPlaybookFragment = `---
 const inventorysampleFragment = `name: inventorytest-sample
   annotations:
     "ansible.sdk.operatorframework.io/verbosity": "0"`
-
-// GenerateMoleculeAnsibleSample will call all actions to create the directory and generate the sample
-// The Context to run the samples are not the same in the e2e test. In this way, note that it should NOT
-// be called in the e2e tests since it will call the Prepare() to set the sample context and generate the files
-// in the testdata directory. The e2e tests only ought to use the Run() method with the TestContext.
-func GenerateMoleculeAdvancedAnsibleSample(path string) {
-	ctx, err := pkg.NewSampleContext(testutils.BinaryName, filepath.Join(path, "advanced-molecule-operator"),
-		"GO111MODULE=on")
-	pkg.CheckError("generating Ansible Molecule Advanced Operator context", err)
-
-	molecule := NewAdvancedMolecule(&ctx)
-	molecule.Prepare()
-	molecule.Run()
-}

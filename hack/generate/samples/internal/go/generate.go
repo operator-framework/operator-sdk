@@ -21,7 +21,7 @@ import (
 	golangv3 "github.com/operator-framework/operator-sdk/hack/generate/samples/internal/go/v3"
 )
 
-func GenerateMemcachedGoWithWebhooksSample(rootPath string) {
-	golangv2.GenerateMemcachedGoWithWebhooksSample(filepath.Join(rootPath, "go", "v2"))
-	golangv3.GenerateMemcachedGoWithWebhooksSample(filepath.Join(rootPath, "go", "v3"))
+func GenerateMemcachedSamples(binaryPath, rootPath string) {
+	golangv2.GenerateMemcachedSample(binaryPath, filepath.Join(rootPath, "go", "v2"))
+	golangv3.GenerateMemcachedSample(binaryPath, filepath.Join(rootPath, "go", "v3"))
 }

@@ -28,20 +28,27 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util"
 )
 
-// MemcachedGoWithWebhooks defines the Memcached Sample in GO using webhooks
-type MemcachedGoWithWebhooks struct {
+// Memcached defines the Memcached Sample in GO using webhooks
+type Memcached struct {
 	ctx *pkg.SampleContext
 }
 
-// MemcachedGoWithWebhooks return a MemcachedGoWithWebhooks
-func NewMemcachedGoWithWebhooks(ctx *pkg.SampleContext) MemcachedGoWithWebhooks {
-	return MemcachedGoWithWebhooks{ctx}
+// GenerateMemcachedSample will call all actions to create the directory and generate the sample
+// Note that it should NOT be called in the e2e tests.
+func GenerateMemcachedSample(binaryPath, samplesPath string) {
+	log.Infof("starting to generate Go memcached sample with webhooks")
+	ctx, err := pkg.NewSampleContext(binaryPath, filepath.Join(samplesPath, "memcached-operator"), "GO111MODULE=on")
+	pkg.CheckError("generating Go memcached with webhooks context", err)
+
+	memcached := Memcached{&ctx}
+	memcached.Prepare()
+	memcached.Run()
 }
 
 // Prepare the Context for the Memcached with WebHooks Go Sample
 // Note that sample directory will be re-created and the context data for the sample
 // will be set such as the domain and GVK.
-func (mh *MemcachedGoWithWebhooks) Prepare() {
+func (mh *Memcached) Prepare() {
 	log.Infof("destroying directory for Memcached with Webhooks Go samples")
 	mh.ctx.Destroy()
 
@@ -57,7 +64,7 @@ func (mh *MemcachedGoWithWebhooks) Prepare() {
 }
 
 // Run the steps to create the Memcached with Webhooks Go Sample
-func (mh *MemcachedGoWithWebhooks) Run() {
+func (mh *Memcached) Run() {
 	log.Infof("creating the project")
 	err := mh.ctx.Init(
 		"--plugins", "go/v2",
@@ -108,7 +115,7 @@ func (mh *MemcachedGoWithWebhooks) Run() {
 }
 
 // uncommentDefaultKustomization will uncomment code in config/default/kustomization.yaml
-func (mh *MemcachedGoWithWebhooks) uncommentDefaultKustomization() {
+func (mh *Memcached) uncommentDefaultKustomization() {
 	var err error
 	kustomization := filepath.Join(mh.ctx.Dir, "config", "default", "kustomization.yaml")
 	log.Info("uncommenting config/default/kustomization.yaml to enable webhooks and ca injection")
@@ -159,7 +166,7 @@ func (mh *MemcachedGoWithWebhooks) uncommentDefaultKustomization() {
 }
 
 // uncommentManifestsKustomization will uncomment code in config/manifests/kustomization.yaml
-func (mh *MemcachedGoWithWebhooks) uncommentManifestsKustomization() {
+func (mh *Memcached) uncommentManifestsKustomization() {
 	var err error
 	kustomization := filepath.Join(mh.ctx.Dir, "config", "manifests", "kustomization.yaml")
 	log.Info("uncommenting config/manifests/kustomization.yaml to enable webhooks in OLM")
@@ -185,7 +192,7 @@ func (mh *MemcachedGoWithWebhooks) uncommentManifestsKustomization() {
 }
 
 // implementingWebhooks will customize the kind wekbhok file
-func (mh *MemcachedGoWithWebhooks) implementingWebhooks() {
+func (mh *Memcached) implementingWebhooks() {
 	log.Infof("implementing webhooks")
 	webhookPath := filepath.Join(mh.ctx.Dir, "api", mh.ctx.Version, fmt.Sprintf("%s_webhook.go",
 		strings.ToLower(mh.ctx.Kind)))
@@ -208,7 +215,7 @@ func (mh *MemcachedGoWithWebhooks) implementingWebhooks() {
 }
 
 // implementingController will customize the Controller
-func (mh *MemcachedGoWithWebhooks) implementingController() {
+func (mh *Memcached) implementingController() {
 	controllerPath := filepath.Join(mh.ctx.Dir, "controllers", fmt.Sprintf("%s_controller.go",
 		strings.ToLower(mh.ctx.Kind)))
 
@@ -252,7 +259,7 @@ func (mh *MemcachedGoWithWebhooks) implementingController() {
 
 // nolint:gosec
 // implementingAPI will customize the API
-func (mh *MemcachedGoWithWebhooks) implementingAPI() {
+func (mh *Memcached) implementingAPI() {
 	typeFilePath := filepath.Join(mh.ctx.Dir, "api", mh.ctx.Version, fmt.Sprintf("%s_types.go", strings.ToLower(mh.ctx.Kind)))
 
 	log.Infof("implementing api spec")
@@ -283,18 +290,6 @@ func (mh *MemcachedGoWithWebhooks) implementingAPI() {
 	log.Infof("updating sample to have size attribute")
 	err = util.ReplaceInFile(filepath.Join(mh.ctx.Dir, sampleFile), "foo: bar", "size: 1")
 	pkg.CheckError("updating sample", err)
-}
-
-// GenerateMemcachedGoWithWebhooksSample will call all actions to create the directory and generate the sample
-// Note that it should NOT be called in the e2e tests.
-func GenerateMemcachedGoWithWebhooksSample(samplesPath string) {
-	log.Infof("starting to generate Go memcached sample with webhooks")
-	ctx, err := pkg.NewSampleContext(testutils.BinaryName, filepath.Join(samplesPath, "memcached-operator"), "GO111MODULE=on")
-	pkg.CheckError("generating Go memcached with webhooks context", err)
-
-	memcached := NewMemcachedGoWithWebhooks(&ctx)
-	memcached.Prepare()
-	memcached.Run()
 }
 
 const rbacFragment = `

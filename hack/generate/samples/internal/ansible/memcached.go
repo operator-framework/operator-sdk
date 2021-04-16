@@ -27,20 +27,29 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util"
 )
 
-// MemcachedAnsible defines the context for the sample
-type MemcachedAnsible struct {
+// Memcached defines the context for the sample
+type Memcached struct {
 	ctx *pkg.SampleContext
 }
 
-// NewMemcachedAnsible return a MemcachedAnsible
-func NewMemcachedAnsible(ctx *pkg.SampleContext) MemcachedAnsible {
-	return MemcachedAnsible{ctx}
+// GenerateMemcachedSample will call all actions to create the directory and generate the sample
+// The Context to run the samples are not the same in the e2e test. In this way, note that it should NOT
+// be called in the e2e tests since it will call the Prepare() to set the sample context and generate the files
+// in the testdata directory. The e2e tests only ought to use the Run() method with the TestContext.
+func GenerateMemcachedSample(binaryPath, samplesPath string) {
+	ctx, err := pkg.NewSampleContext(binaryPath, filepath.Join(samplesPath, "ansible", "memcached-operator"),
+		"GO111MODULE=on")
+	pkg.CheckError("generating Ansible memcached context", err)
+
+	memcached := Memcached{&ctx}
+	memcached.Prepare()
+	memcached.Run()
 }
 
 // Prepare the Context for the Memcached Ansible Sample
 // Note that sample directory will be re-created and the context data for the sample
 // will be set such as the domain and GVK.
-func (ma *MemcachedAnsible) Prepare() {
+func (ma *Memcached) Prepare() {
 	log.Infof("destroying directory for memcached Ansible samples")
 	ma.ctx.Destroy()
 
@@ -56,7 +65,7 @@ func (ma *MemcachedAnsible) Prepare() {
 }
 
 // Run the steps to create the Memcached Ansible Sample
-func (ma *MemcachedAnsible) Run() {
+func (ma *Memcached) Run() {
 	log.Infof("creating the project")
 	err := ma.ctx.Init(
 		"--plugins", "ansible",
@@ -87,7 +96,7 @@ func (ma *MemcachedAnsible) Run() {
 }
 
 // addingMoleculeMockData will customize the molecule data
-func (ma *MemcachedAnsible) addingMoleculeMockData() {
+func (ma *Memcached) addingMoleculeMockData() {
 	log.Infof("adding molecule test for Ansible task")
 	moleculeTaskPath := filepath.Join(ma.ctx.Dir, "molecule", "default", "tasks",
 		fmt.Sprintf("%s_test.yml", strings.ToLower(ma.ctx.Kind)))
@@ -98,7 +107,7 @@ func (ma *MemcachedAnsible) addingMoleculeMockData() {
 }
 
 // addingAnsibleTask will add the Ansible Task and update the sample
-func (ma *MemcachedAnsible) addingAnsibleTask() {
+func (ma *Memcached) addingAnsibleTask() {
 	log.Infof("adding Ansible task and variable")
 	err := kbtestutils.InsertCode(filepath.Join(ma.ctx.Dir, "roles", strings.ToLower(ma.ctx.Kind),
 		"tasks", "main.yml"),
@@ -116,18 +125,4 @@ func (ma *MemcachedAnsible) addingAnsibleTask() {
 		fmt.Sprintf("%s_%s_%s.yaml", ma.ctx.Group, ma.ctx.Version, strings.ToLower(ma.ctx.Kind))),
 		"foo: bar", "size: 1")
 	pkg.CheckError("updating sample CR", err)
-}
-
-// GenerateMemcachedAnsibleSample will call all actions to create the directory and generate the sample
-// The Context to run the samples are not the same in the e2e test. In this way, note that it should NOT
-// be called in the e2e tests since it will call the Prepare() to set the sample context and generate the files
-// in the testdata directory. The e2e tests only ought to use the Run() method with the TestContext.
-func GenerateMemcachedAnsibleSample(samplesPath string) {
-	ctx, err := pkg.NewSampleContext(testutils.BinaryName, filepath.Join(samplesPath, "ansible", "memcached-operator"),
-		"GO111MODULE=on")
-	pkg.CheckError("generating Ansible memcached context", err)
-
-	memcached := NewMemcachedAnsible(&ctx)
-	memcached.Prepare()
-	memcached.Run()
 }

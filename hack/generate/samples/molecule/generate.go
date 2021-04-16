@@ -29,12 +29,12 @@ import (
 // This generate is used to run the e2e molecule tests
 func main() {
 	var (
-		// binaryName allow inform the binary that should be used.
+		// binaryPath allow inform the binary that should be used.
 		// By default it is operator-sdk
-		binaryName string
+		binaryPath string
 
-		// path is the path provided to generate the molecule sample
-		path string
+		// samplesRoot is the path provided to generate the molecule sample
+		samplesRoot string
 
 		// sample is the name of the mock was selected to be generated
 		sample string
@@ -43,32 +43,39 @@ func main() {
 	// testdata is the path where all samples are generate
 	const testdata = "/testdata/"
 
-	flag.StringVar(&binaryName, "bin", testutils.BinaryName, "Binary path that should be used")
-	flag.StringVar(&path, "path", "", "Path where the molecule should be called")
-	flag.StringVar(&sample, "sample", "", "To generate only the selected option. Options: [advanced,memcached]")
+	flag.StringVar(&binaryPath, "bin", testutils.BinaryName, "Binary path that should be used")
+	flag.StringVar(&samplesRoot, "samples-root", "", "Path where molecule samples should be generated")
+	flag.StringVar(&sample, "sample", "", "To generate only the selected option. Options: [advanced, memcached]")
 
 	flag.Parse()
+
+	// Make the binary path absolute if pathed, for reproducibility and debugging purposes.
+	if dir, _ := filepath.Split(binaryPath); dir != "" {
+		tmp, err := filepath.Abs(binaryPath)
+		if err != nil {
+			log.Fatalf("Failed to make binary path %q absolute: %v", binaryPath, err)
+		}
+		binaryPath = tmp
+	}
 
 	// If no path be provided then the Molecule sample will be create in the testdata/ansible dir
 	// It can be helpful to check the mock data used in the e2e molecule tests as to develop this sample
 	// By default this mock is ignored in the .gitignore
-	if strings.TrimSpace(path) == "" {
+	if strings.TrimSpace(samplesRoot) == "" {
 		currentPath, err := os.Getwd()
 		if err != nil {
-			log.Error(err)
-			os.Exit(1)
+			log.Fatal(err)
 		}
-		path = filepath.Join(currentPath, testdata, "ansible")
+		samplesRoot = filepath.Join(currentPath, testdata, "ansible")
 	}
 
-	log.Infof("creating Ansible Molecule Mock Sample")
-	log.Infof("using the path: (%v)", path)
+	log.Infof("creating Ansible Molecule Mock Samples under %s", samplesRoot)
 
 	if sample == "" || sample == "memcached" {
-		ansible.GenerateMoleculeAnsibleSample(path)
+		ansible.GenerateMoleculeSample(binaryPath, samplesRoot)
 	}
 
 	if sample == "" || sample == "advanced" {
-		ansible.GenerateMoleculeAdvancedAnsibleSample(path)
+		ansible.GenerateAdvancedMoleculeSample(binaryPath, samplesRoot)
 	}
 }

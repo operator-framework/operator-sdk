@@ -25,20 +25,28 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util"
 )
 
-// MemcachedHelm defines the Memcached Sample in Helm
-type MemcachedHelm struct {
+// Memcached defines the Memcached Sample in Helm
+type Memcached struct {
 	ctx *pkg.SampleContext
 }
 
-// NewMemcachedHelm return a MemcachedHelm
-func NewMemcachedHelm(ctx *pkg.SampleContext) MemcachedHelm {
-	return MemcachedHelm{ctx}
+// GenerateMemcachedSample will call all actions to create the directory and generate the sample
+// The Context to run the samples are not the same in the e2e test. In this way, note that it should NOT
+// be called in the e2e tests since it will call the Prepare() to set the sample context and generate the files
+// in the testdata directory. The e2e tests only ought to use the Run() method with the TestContext.
+func GenerateMemcachedSample(binaryPath, samplesPath string) {
+	ctx, err := pkg.NewSampleContext(binaryPath, filepath.Join(samplesPath, "helm", "memcached-operator"), "GO111MODULE=on")
+	pkg.CheckError("generating Helm memcached context", err)
+
+	memcached := Memcached{&ctx}
+	memcached.Prepare()
+	memcached.Run()
 }
 
 // Prepare the Context for the Memcached Helm Sample
 // Note that sample directory will be re-created and the context data for the sample
 // will be set such as the domain and GVK.
-func (mh *MemcachedHelm) Prepare() {
+func (mh *Memcached) Prepare() {
 	log.Infof("destroying directory for memcached helm samples")
 	mh.ctx.Destroy()
 
@@ -54,7 +62,7 @@ func (mh *MemcachedHelm) Prepare() {
 }
 
 // Run runs the steps to generate the sample
-func (mh *MemcachedHelm) Run() {
+func (mh *Memcached) Run() {
 	// When operator-sdk scaffolds Helm projects, it tries to use the discovery API of a Kubernetes
 	// cluster to intelligently build the RBAC rules that the operator will require based on the
 	// content of the helm chart.
@@ -101,19 +109,6 @@ func (mh *MemcachedHelm) Run() {
 	log.Infof("striping bundle annotations")
 	err = mh.ctx.StripBundleAnnotations()
 	pkg.CheckError("striping bundle annotations", err)
-}
-
-// GenerateMemcachedHelmSample will call all actions to create the directory and generate the sample
-// The Context to run the samples are not the same in the e2e test. In this way, note that it should NOT
-// be called in the e2e tests since it will call the Prepare() to set the sample context and generate the files
-// in the testdata directory. The e2e tests only ought to use the Run() method with the TestContext.
-func GenerateMemcachedHelmSample(samplesPath string) {
-	ctx, err := pkg.NewSampleContext(testutils.BinaryName, filepath.Join(samplesPath, "helm", "memcached-operator"), "GO111MODULE=on")
-	pkg.CheckError("generating Helm memcached context", err)
-
-	memcached := NewMemcachedHelm(&ctx)
-	memcached.Prepare()
-	memcached.Run()
 }
 
 const policyRolesFragment = `
