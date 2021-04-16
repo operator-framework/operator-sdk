@@ -44,6 +44,9 @@ type Flags struct {
 
 // AddTo - Add the helm operator flags to the the flagset
 func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
+	// Store flagset internally to be used for lookups later.
+	f.flagSet = flagSet
+
 	// Helm flags.
 	flagSet.StringVar(&f.WatchesFile,
 		"watches-file",

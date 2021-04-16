@@ -55,6 +55,9 @@ const (
 
 // AddTo - Add the ansible operator flags to the the flagset
 func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
+	// Store flagset internally to be used for lookups later.
+	f.flagSet = flagSet
+
 	// Ansible flags.
 	flagSet.StringVar(&f.WatchesFile,
 		"watches-file",
