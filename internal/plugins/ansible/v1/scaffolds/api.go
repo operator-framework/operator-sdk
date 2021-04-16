@@ -27,7 +27,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/crd"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/rbac"
-	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/samples"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/molecule/mdefault"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/playbooks"
 	ansibleroles "github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/roles"
@@ -74,22 +73,17 @@ func (s *apiScaffolder) Scaffold() error {
 		machinery.WithResource(&s.resource),
 	)
 
-	var createAPITemplates []machinery.Builder
-	createAPITemplates = append(createAPITemplates,
-		&rbac.CRDViewerRole{},
-		&rbac.CRDEditorRole{},
+	createAPITemplates := []machinery.Builder{
 		&rbac.ManagerRoleUpdater{},
-
 		&crd.CRD{},
 		&crd.Kustomization{},
-		&samples.CR{},
 		&templates.WatchesUpdater{
 			GeneratePlaybook: s.doPlaybook,
 			GenerateRole:     s.doRole,
 			PlaybooksDir:     constants.PlaybooksDir,
 		},
 		&mdefault.ResourceTest{},
-	)
+	}
 
 	if s.doRole {
 		createAPITemplates = append(createAPITemplates,

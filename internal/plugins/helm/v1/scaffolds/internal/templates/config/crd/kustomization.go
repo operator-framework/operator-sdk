@@ -40,11 +40,8 @@ func (f *Kustomization) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = filepath.Join("config", "crd", "kustomization.yaml")
 	}
-	f.Path = f.Resource.Replacer().Replace(f.Path)
 
-	f.TemplateBody = fmt.Sprintf(kustomizationTemplate,
-		machinery.NewMarkerFor(f.Path, resourceMarker),
-	)
+	f.TemplateBody = fmt.Sprintf(kustomizationTemplate, machinery.NewMarkerFor(f.Path, resourceMarker))
 
 	return nil
 }
@@ -53,7 +50,7 @@ const (
 	resourceMarker = "crdkustomizeresource"
 )
 
-// GetMarkers implements file.Inserter
+// GetMarkers implements machinery.Inserter
 func (f *Kustomization) GetMarkers() []machinery.Marker {
 	return []machinery.Marker{
 		machinery.NewMarkerFor(f.Path, resourceMarker),
@@ -65,20 +62,14 @@ const (
 `
 )
 
-// GetCodeFragments implements file.Inserter
+// GetCodeFragments implements machinery.Inserter
 func (f *Kustomization) GetCodeFragments() machinery.CodeFragmentsMap {
-	fragments := make(machinery.CodeFragmentsMap, 3)
-
-	// Generate resource code fragments
-	res := make([]string, 0)
-	res = append(res, fmt.Sprintf(resourceCodeFragment, f.Resource.QualifiedGroup(), f.Resource.Plural))
-
-	// Only store code fragments in the map if the slices are non-empty
-	if len(res) != 0 {
-		fragments[machinery.NewMarkerFor(f.Path, resourceMarker)] = res
+	return machinery.CodeFragmentsMap{
+		// Generate resource code fragments
+		machinery.NewMarkerFor(f.Path, resourceMarker): []string{
+			fmt.Sprintf(resourceCodeFragment, f.Resource.QualifiedGroup(), f.Resource.Plural),
+		},
 	}
-
-	return fragments
 }
 
 var kustomizationTemplate = `# This kustomization.yaml is not intended to be run by itself,

@@ -29,12 +29,12 @@ import (
 )
 
 var (
-	_ machinery.Template         = &CRDSample{}
-	_ machinery.UseCustomFuncMap = &CRDSample{}
+	_ machinery.Template         = &CustomResource{}
+	_ machinery.UseCustomFuncMap = &CustomResource{}
 )
 
-// CRDSample scaffolds a manifest for CRD sample.
-type CRDSample struct {
+// CustomResource scaffolds a custom resource sample manifest.
+type CustomResource struct {
 	machinery.TemplateMixin
 	machinery.ResourceMixin
 
@@ -44,13 +44,13 @@ type CRDSample struct {
 }
 
 // SetTemplateDefaults implements machinery.Template
-func (f *CRDSample) SetTemplateDefaults() error {
+func (f *CustomResource) SetTemplateDefaults() error {
 	if f.Path == "" {
 		f.Path = filepath.Join("config", "samples", "%[group]_%[version]_%[kind].yaml")
 	}
 	f.Path = f.Resource.Replacer().Replace(f.Path)
 
-	f.IfExistsAction = machinery.Error
+	f.IfExistsAction = machinery.OverwriteFile
 
 	if len(f.Spec) == 0 {
 		f.Spec = defaultSpecTemplate
@@ -67,7 +67,7 @@ func (f *CRDSample) SetTemplateDefaults() error {
 		}
 	}
 
-	f.TemplateBody = crdSampleTemplate
+	f.TemplateBody = customResourceTemplate
 	return nil
 }
 
@@ -77,7 +77,7 @@ func indent(spaces int, v string) string {
 }
 
 // GetFuncMap implements machinery.UseCustomFuncMap
-func (f *CRDSample) GetFuncMap() template.FuncMap {
+func (f *CustomResource) GetFuncMap() template.FuncMap {
 	fm := machinery.DefaultFuncMap()
 	fm["indent"] = indent
 	return fm
@@ -86,7 +86,7 @@ func (f *CRDSample) GetFuncMap() template.FuncMap {
 const defaultSpecTemplate = `foo: bar
 `
 
-const crdSampleTemplate = `apiVersion: {{ .Resource.QualifiedGroup }}/{{ .Resource.Version }}
+const customResourceTemplate = `apiVersion: {{ .Resource.QualifiedGroup }}/{{ .Resource.Version }}
 kind: {{ .Resource.Kind }}
 metadata:
   name: {{ lower .Resource.Kind }}-sample

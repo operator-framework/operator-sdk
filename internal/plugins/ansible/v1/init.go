@@ -26,6 +26,7 @@ import (
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds"
+	sdkpluginutil "github.com/operator-framework/operator-sdk/internal/plugins/util"
 	sdkutil "github.com/operator-framework/operator-sdk/internal/util"
 )
 
@@ -226,6 +227,10 @@ func addInitCustomizations(projectName string) error {
 	err = sdkutil.ReplaceInFile(managerFile, command, "")
 	if err != nil {
 		return err
+	}
+
+	if err := sdkpluginutil.UpdateKustomizationsInit(); err != nil {
+		return fmt.Errorf("error updating kustomization.yaml files: %v", err)
 	}
 
 	return nil

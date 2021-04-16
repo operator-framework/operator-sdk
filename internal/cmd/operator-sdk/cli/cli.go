@@ -69,13 +69,6 @@ func Run() error {
 // This CLI can run kubebuilder commands and certain SDK specific commands that are aligned for
 // the kubebuilder project layout
 func GetPluginsCLIAndRoot() (*cli.CLI, *cobra.Command) {
-	ansibleBundle, _ := plugin.NewBundle("ansible"+plugins.DefaultNameQualifier, plugin.Version{Number: 1},
-		kustomizev1.Plugin{},
-		ansiblev1.Plugin{},
-		manifestsv2.Plugin{},
-		scorecardv2.Plugin{},
-	)
-
 	// todo: Export the bundles KB and then change here to use the bundles exported instead
 	// more info: https://github.com/kubernetes-sigs/kubebuilder/pull/2112
 	gov2Bundle, _ := plugin.NewBundle(golang.DefaultNameQualifier, golangv2.Plugin{}.Version(),
@@ -87,6 +80,12 @@ func GetPluginsCLIAndRoot() (*cli.CLI, *cobra.Command) {
 	gov3Bundle, _ := plugin.NewBundle(golang.DefaultNameQualifier, golangv3.Plugin{}.Version(),
 		kustomizev1.Plugin{},
 		golangv3.Plugin{},
+		manifestsv2.Plugin{},
+		scorecardv2.Plugin{},
+	)
+	ansibleBundle, _ := plugin.NewBundle("ansible"+plugins.DefaultNameQualifier, plugin.Version{Number: 1},
+		kustomizev1.Plugin{},
+		ansiblev1.Plugin{},
 		manifestsv2.Plugin{},
 		scorecardv2.Plugin{},
 	)

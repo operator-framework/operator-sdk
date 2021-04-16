@@ -26,6 +26,7 @@ import (
 	pluginutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds"
+	"github.com/operator-framework/operator-sdk/internal/plugins/util"
 )
 
 const (
@@ -135,6 +136,13 @@ func (p *createAPISubcommand) InjectResource(res *resource.Resource) error {
 }
 
 func (p *createAPISubcommand) Scaffold(fs machinery.Filesystem) error {
+	if err := util.RemoveKustomizeCRDManifests(); err != nil {
+		return fmt.Errorf("error removing kustomization CRD manifests: %v", err)
+	}
+	if err := util.UpdateKustomizationsCreateAPI(); err != nil {
+		return fmt.Errorf("error updating kustomization.yaml files: %v", err)
+	}
+
 	scaffolder := scaffolds.NewCreateAPIScaffolder(p.config, *p.resource, p.options.DoRole, p.options.DoPlaybook)
 	scaffolder.InjectFS(fs)
 	if err := scaffolder.Scaffold(); err != nil {

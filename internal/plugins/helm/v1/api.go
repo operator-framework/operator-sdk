@@ -30,6 +30,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/chartutil"
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds"
+	"github.com/operator-framework/operator-sdk/internal/plugins/util"
 )
 
 const (
@@ -200,6 +201,13 @@ func (p *createAPISubcommand) InjectResource(res *resource.Resource) error {
 }
 
 func (p *createAPISubcommand) Scaffold(fs machinery.Filesystem) error {
+	if err := util.RemoveKustomizeCRDManifests(); err != nil {
+		return fmt.Errorf("error removing kustomization CRD manifests: %v", err)
+	}
+	if err := util.UpdateKustomizationsCreateAPI(); err != nil {
+		return fmt.Errorf("error updating kustomization.yaml files: %v", err)
+	}
+
 	scaffolder := scaffolds.NewAPIScaffolder(p.config, *p.resource, p.chart)
 	scaffolder.InjectFS(fs)
 	if err := scaffolder.Scaffold(); err != nil {

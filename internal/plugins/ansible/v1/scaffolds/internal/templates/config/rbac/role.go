@@ -38,9 +38,8 @@ func (f *ManagerRole) SetTemplateDefaults() error {
 		f.Path = defaultRoleFile
 	}
 
-	f.TemplateBody = fmt.Sprintf(roleTemplate,
-		machinery.NewMarkerFor(f.Path, rulesMarker),
-	)
+	f.TemplateBody = fmt.Sprintf(roleTemplate, machinery.NewMarkerFor(f.Path, rulesMarker))
+
 	return nil
 }
 
