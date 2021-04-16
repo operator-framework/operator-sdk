@@ -131,7 +131,7 @@ func (p *initSubcommand) InjectConfig(c config.Config) error {
 
 func (p *initSubcommand) Scaffold(fs machinery.Filesystem) error {
 	if err := addInitCustomizations(p.config.GetProjectName()); err != nil {
-		return fmt.Errorf("unable to scaffold the helm customizations : %s", err)
+		return fmt.Errorf("error updating init manifests: %s", err)
 	}
 
 	scaffolder := scaffolds.NewInitScaffolder(p.config)
@@ -190,8 +190,7 @@ func addInitCustomizations(projectName string) error {
 	if err != nil {
 		return err
 	}
-
-	err = sdkutil.InsertCode("config/default/manager_auth_proxy_patch.yaml",
+	err = sdkutil.InsertCode(filepath.Join("config", "default", "manager_auth_proxy_patch.yaml"),
 		"- \"--leader-elect\"",
 		fmt.Sprintf("\n        - \"--leader-election-id=%s\"", projectName))
 	if err != nil {
@@ -208,8 +207,9 @@ func addInitCustomizations(projectName string) error {
 		return err
 	}
 
-	// Remove the webhook option for the componentConfig since webhooks are not supported by helm
-	err = sdkutil.ReplaceInFile("config/manager/controller_manager_config.yaml", "webhook:\n  port: 9443", "")
+	// Remove the webhook option for the componentConfig since webhooks are not supported by ansible
+	err = sdkutil.ReplaceInFile(filepath.Join("config", "manager", "controller_manager_config.yaml"),
+		"webhook:\n  port: 9443", "")
 	if err != nil {
 		return err
 	}

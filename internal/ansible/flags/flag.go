@@ -19,6 +19,8 @@ import (
 	"time"
 
 	"github.com/spf13/pflag"
+	"k8s.io/client-go/tools/leaderelection/resourcelock"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
 // Flags - Options to be used by an ansible operator
@@ -37,18 +39,26 @@ type Flags struct {
 	LeaderElectionNamespace string
 	GracefulShutdownTimeout time.Duration
 	AnsibleArgs             string
+
+	// Path to a controller-runtime componentconfig file.
+	// If this is empty, use default values.
+	ManagerConfigPath string
+
+	// If not nil, used to deduce which flags were set in the CLI.
+	flagSet *pflag.FlagSet
 }
 
-const AnsibleRolesPathEnvVar = "ANSIBLE_ROLES_PATH"
-const AnsibleCollectionsPathEnvVar = "ANSIBLE_COLLECTIONS_PATH"
+const (
+	AnsibleRolesPathEnvVar       = "ANSIBLE_ROLES_PATH"
+	AnsibleCollectionsPathEnvVar = "ANSIBLE_COLLECTIONS_PATH"
+)
 
 // AddTo - Add the ansible operator flags to the the flagset
 func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
-	flagSet.DurationVar(&f.ReconcilePeriod,
-		"reconcile-period",
-		time.Minute,
-		"Default reconcile period for controllers",
-	)
+	// Store flagset internally to be used for lookups later.
+	f.flagSet = flagSet
+
+	// Ansible flags.
 	flagSet.StringVar(&f.WatchesFile,
 		"watches-file",
 		"./watches.yaml",
@@ -58,11 +68,6 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 		"inject-owner-ref",
 		true,
 		"The ansible operator will inject owner references unless this flag is false",
-	)
-	flagSet.IntVar(&f.MaxConcurrentReconciles,
-		"max-concurrent-reconciles",
-		runtime.NumCPU(),
-		"Maximum number of concurrent reconciles for controllers. Overridden by environment variable.",
 	)
 	flagSet.IntVar(&f.AnsibleVerbosity,
 		"ansible-verbosity",
@@ -77,9 +82,36 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 	flagSet.StringVar(&f.AnsibleCollectionsPath,
 		"ansible-collections-path",
 		"",
-		"Path to installed Ansible Collections. If set, collections should be located in {{value}}/ansible_collections/. If unset, collections are assumed to be in ~/.ansible/collections or /usr/share/ansible/collections.",
+		"Path to installed Ansible Collections. If set, collections should be located in {{value}}/ansible_collections/. "+
+			"If unset, collections are assumed to be in ~/.ansible/collections or /usr/share/ansible/collections.",
 	)
-	// todo:remove it for 2.0.0
+	flagSet.StringVar(&f.AnsibleArgs,
+		"ansible-args",
+		"",
+		"Ansible args. Allows user to specify arbitrary arguments for ansible-based operators.",
+	)
+
+	// Controller flags.
+	flagSet.DurationVar(&f.ReconcilePeriod,
+		"reconcile-period",
+		time.Minute,
+		"Default reconcile period for controllers",
+	)
+	flagSet.IntVar(&f.MaxConcurrentReconciles,
+		"max-concurrent-reconciles",
+		runtime.NumCPU(),
+		"Maximum number of concurrent reconciles for controllers. Overridden by environment variable.",
+	)
+
+	// Controller manager flags.
+	flagSet.StringVar(&f.ManagerConfigPath,
+		"config",
+		"",
+		"The controller will load its initial configuration from this file. "+
+			"Omit this flag to use the default configuration values. "+
+			"Command-line flags override configuration from this file.",
+	)
+	// TODO(2.0.0): remove
 	flagSet.StringVar(&f.MetricsBindAddress,
 		"metrics-addr",
 		":8080",
@@ -91,15 +123,14 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 		":8080",
 		"The address the metric endpoint binds to",
 	)
-	// todo: for Go/Helm the port used is: 8081
+	// TODO(2.0.0): for Go/Helm the port used is: 8081
 	// update it to keep the project aligned to the other
-	// types for 2.0
 	flagSet.StringVar(&f.ProbeAddr,
 		"health-probe-bind-address",
 		":6789",
 		"The address the probe endpoint binds to.",
 	)
-	// todo:remove it for 2.0.0
+	// TODO(2.0.0): remove
 	flagSet.BoolVar(&f.LeaderElection,
 		"enable-leader-election",
 		false,
@@ -131,9 +162,43 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 		"The amount of time that will be spent waiting"+
 			" for runners to gracefully exit.",
 	)
-	flagSet.StringVar(&f.AnsibleArgs,
-		"ansible-args",
-		"",
-		"Ansible args. Allows user to specify arbitrary arguments for ansible-based operators.",
-	)
+}
+
+// ToManagerOptions uses the flag set in f to configure options.
+// Values of options take precedence over flag defaults,
+// as values are assume to have been explicitly set.
+func (f *Flags) ToManagerOptions(options manager.Options) manager.Options {
+	// Alias FlagSet.Changed so options are still updated when fields are empty.
+	changed := func(flagName string) bool {
+		return f.flagSet.Changed(flagName)
+	}
+	if f.flagSet == nil {
+		changed = func(flagName string) bool { return false }
+	}
+
+	// TODO(2.0.0): remove metrics-addr
+	if changed("metrics-bind-address") || changed("metrics-addr") || options.MetricsBindAddress == "" {
+		options.MetricsBindAddress = f.MetricsBindAddress
+	}
+	if changed("health-probe-bind-address") || options.HealthProbeBindAddress == "" {
+		options.HealthProbeBindAddress = f.ProbeAddr
+	}
+	// TODO(2.0.0): remove enable-leader-election
+	if changed("leader-elect") || changed("enable-leader-election") || !options.LeaderElection {
+		options.LeaderElection = f.LeaderElection
+	}
+	if changed("leader-election-id") || options.LeaderElectionID == "" {
+		options.LeaderElectionID = f.LeaderElectionID
+	}
+	if changed("leader-election-namespace") || options.LeaderElectionNamespace == "" {
+		options.LeaderElectionNamespace = f.LeaderElectionNamespace
+	}
+	if options.LeaderElectionResourceLock == "" {
+		options.LeaderElectionResourceLock = resourcelock.ConfigMapsResourceLock
+	}
+	if changed("graceful-shutdown-timeout") || options.GracefulShutdownTimeout == nil {
+		options.GracefulShutdownTimeout = &f.GracefulShutdownTimeout
+	}
+
+	return options
 }

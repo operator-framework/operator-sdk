@@ -109,7 +109,7 @@ func (p *initSubcommand) InjectConfig(c config.Config) error {
 
 func (p *initSubcommand) Scaffold(fs machinery.Filesystem) error {
 	if err := addInitCustomizations(p.config.GetProjectName()); err != nil {
-		return fmt.Errorf("unable to scaffold the ansible customizations : %s", err)
+		return fmt.Errorf("error updating init manifests: %s", err)
 	}
 
 	scaffolder := scaffolds.NewInitScaffolder(p.config)
@@ -164,7 +164,8 @@ func addInitCustomizations(projectName string) error {
 	if err != nil {
 		return err
 	}
-	err = sdkutil.InsertCode("config/default/manager_auth_proxy_patch.yaml",
+	managerProxyPatchFile := filepath.Join("config", "default", "manager_auth_proxy_patch.yaml")
+	err = sdkutil.InsertCode(managerProxyPatchFile,
 		"- \"--leader-elect\"",
 		fmt.Sprintf("\n        - \"--leader-election-id=%s\"", projectName))
 	if err != nil {
@@ -203,17 +204,18 @@ func addInitCustomizations(projectName string) error {
 	if err != nil {
 		return err
 	}
-	err = sdkutil.ReplaceInFile("config/default/manager_auth_proxy_patch.yaml", "8081", "6789")
-	if err != nil {
-		return err
-	}
-	err = sdkutil.ReplaceInFile("config/manager/controller_manager_config.yaml", "8081", "6789")
+	err = sdkutil.ReplaceInFile(managerProxyPatchFile, "8081", "6789")
 	if err != nil {
 		return err
 	}
 
+	managerConfigFile := filepath.Join("config", "manager", "controller_manager_config.yaml")
+	err = sdkutil.ReplaceInFile(managerConfigFile, "8081", "6789")
+	if err != nil {
+		return err
+	}
 	// Remove the webhook option for the componentConfig since webhooks are not supported by ansible
-	err = sdkutil.ReplaceInFile("config/manager/controller_manager_config.yaml", "webhook:\n  port: 9443", "")
+	err = sdkutil.ReplaceInFile(managerConfigFile, "webhook:\n  port: 9443", "")
 	if err != nil {
 		return err
 	}
