@@ -20,7 +20,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/operator-framework/operator-lib/handler"
 	libpredicate "github.com/operator-framework/operator-lib/predicate"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -33,6 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/operator-framework/operator-sdk/internal/ansible/events"
+	"github.com/operator-framework/operator-sdk/internal/ansible/handler"
 	"github.com/operator-framework/operator-sdk/internal/ansible/predicate"
 	"github.com/operator-framework/operator-sdk/internal/ansible/runner"
 )
@@ -112,7 +112,7 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 
 	u := &unstructured.Unstructured{}
 	u.SetGroupVersionKind(options.GVK)
-	err = c.Watch(&source.Kind{Type: u}, &handler.InstrumentedEnqueueRequestForObject{}, predicates...)
+	err = c.Watch(&source.Kind{Type: u}, &handler.LoggingEnqueueRequestForObject{}, predicates...)
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)
