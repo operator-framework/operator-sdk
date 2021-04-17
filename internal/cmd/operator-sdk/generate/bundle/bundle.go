@@ -276,11 +276,12 @@ func (c bundleCmd) runMetadata() error {
 	}
 
 	bundleMetadata := bundleutil.BundleMetaData{
-		BundleDir:      c.outputDir,
-		PackageName:    c.packageName,
-		Channels:       c.channels,
-		DefaultChannel: c.defaultChannel,
-		OtherLabels:    metricsannotations.MakeBundleMetadataLabels(c.layout),
+		BundleDir:            c.outputDir,
+		PackageName:          c.packageName,
+		Channels:             c.channels,
+		DefaultChannel:       c.defaultChannel,
+		OtherLabels:          metricsannotations.MakeBundleMetadataLabels(c.layout),
+		IsScoreconfigPresent: true,
 	}
 
 	return bundleMetadata.GenerateMetadata()

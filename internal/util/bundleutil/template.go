@@ -40,14 +40,19 @@ LABEL operators.operatorframework.io.bundle.channel.default.v1={{ .DefaultChanne
 LABEL {{ $l }}
 {{- end }}
 
+{{- if .ScorecardConfigPath }}
+
 # Labels for testing.
 LABEL operators.operatorframework.io.test.mediatype.v1=scorecard+v1
 LABEL operators.operatorframework.io.test.config.v1=tests/scorecard/
+{{- end }}
 
 # Copy files to locations specified by labels.
 COPY {{ .BundleDir }}/manifests /manifests/
 COPY {{ .BundleDir }}/metadata /metadata/
+{{- if .ScorecardConfigPath }}
 COPY {{ .BundleDir }}/tests/scorecard /tests/scorecard/
+{{- end }}
 `))
 
 // Template for annotations.yaml, containing scorecard labels.
@@ -65,60 +70,10 @@ var annotationsTemplate = template.Must(template.New("").Funcs(funcs).Parse(`ann
   {{ toYAML $l }}
   {{- end }}
 
+  {{- if .ScorecardConfigPath }}
+
   # Annotations for testing.
   operators.operatorframework.io.test.mediatype.v1: scorecard+v1
   operators.operatorframework.io.test.config.v1: tests/scorecard/
+  {{- end }}
 `))
-
-// Contents to write for scorecard config.yaml
-var scorecardTemplate = `apiVersion: scorecard.operatorframework.io/v1alpha3
-kind: Configuration
-metadata:
-  name: config
-stages:
-- parallel: true
-  tests:
-  - entrypoint:
-    - scorecard-test
-    - basic-check-spec
-    image: quay.io/operator-framework/scorecard-test:v1.5.0
-    labels:
-      suite: basic
-      test: basic-check-spec-test
-  - entrypoint:
-    - scorecard-test
-    - olm-bundle-validation
-    image: quay.io/operator-framework/scorecard-test:v1.5.0
-    labels:
-      suite: olm
-      test: olm-bundle-validation-test
-  - entrypoint:
-    - scorecard-test
-    - olm-crds-have-validation
-    image: quay.io/operator-framework/scorecard-test:v1.5.0
-    labels:
-      suite: olm
-      test: olm-crds-have-validation-test
-  - entrypoint:
-    - scorecard-test
-    - olm-crds-have-resources
-    image: quay.io/operator-framework/scorecard-test:v1.5.0
-    labels:
-      suite: olm
-      test: olm-crds-have-resources-test
-  - entrypoint:
-    - scorecard-test
-    - olm-spec-descriptors
-    image: quay.io/operator-framework/scorecard-test:v1.5.0
-    labels:
-      suite: olm
-      test: olm-spec-descriptors-test
-  - entrypoint:
-    - scorecard-test
-    - olm-status-descriptors
-    image: quay.io/operator-framework/scorecard-test:v1.5.0
-    labels:
-      suite: olm
-      test: olm-status-descriptors-test
-
-`

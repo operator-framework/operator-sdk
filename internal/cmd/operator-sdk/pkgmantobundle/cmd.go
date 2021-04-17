@@ -21,9 +21,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	"github.com/operator-framework/operator-sdk/internal/annotations/metrics"
 	"github.com/operator-framework/operator-sdk/internal/util/bundleutil"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -193,11 +195,19 @@ func (p *pkgManToBundleCmd) run() (err error) {
 				return err
 			}
 
-			if err := bundleMetaData.GenerateMetadata(); err != nil {
+			scorecardConfigPath, err := getScorecardConfigPath(bundleMetaData.PkgmanifestPath)
+			if err != nil {
 				return err
 			}
 
-			if err := bundleMetaData.WriteScorecardConfig(); err != nil {
+			// if scorecard config is present, then copy it to tests/scorecard directory
+			// in bundle.
+			if scorecardConfigPath != "" {
+				bundleMetaData.IsScoreconfigPresent = true
+				bundleMetaData.WriteScorecardConfig(scorecardConfigPath)
+			}
+
+			if err := bundleMetaData.GenerateMetadata(); err != nil {
 				return err
 			}
 
@@ -211,6 +221,40 @@ func (p *pkgManToBundleCmd) run() (err error) {
 		}
 	}
 	return nil
+}
+
+func getScorecardConfigPath(inputDir string) (string, error) {
+	var scorecardConfigPath string
+
+	err := filepath.Walk(inputDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if !info.IsDir() {
+			b, err := ioutil.ReadFile(path)
+			if err != nil {
+				return err
+			}
+
+			typeMeta, err := k8sutil.GetTypeMetaFromBytes(b)
+			if err != nil {
+				return err
+			}
+
+			if typeMeta.Kind == v1alpha3.ConfigurationKind {
+				if len(scorecardConfigPath) != 0 {
+					return fmt.Errorf("multiple scorrecard config files found in packagemanifest directory %s", inputDir)
+				}
+				scorecardConfigPath = path
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+	return scorecardConfigPath, nil
 }
 
 func getSDKStampsAndChannels(path string, channelsByCSV map[string][]string) (map[string]string, string, error) {
