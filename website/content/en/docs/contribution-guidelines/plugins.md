@@ -55,7 +55,7 @@ Note that custom plugins are called via the init sub-command to work as global p
 
 ## Plugins Vision
 
-Maintainers and contributors are able to create their own plugin(s) using the same standards and approaches. These contributions in the future could be added as solutions to be compatible and used with the Operator SDK CLI. Currently, the SDK cannot discover and use plugins that are not shipped or built with its binary. However, it has been discussed in the issue [kubebuilder/issues/1378][kb-issue].
+Contributors are able to create their own plugin(s) using the same standards and approach described by this document. Following them facilitates in-tree (in other words, built with the `operator-sdk` binary) addition of such community-driven plugins to the Operator SDK project by making review easier and code maintainable. Currently, the SDK cannot discover and use plugins that are not in-tree. However, out-of-tree plugins have been discussed in [kubebuilder/issues/1378][kb-issue].
 
 ## How to create your own plugins
 
