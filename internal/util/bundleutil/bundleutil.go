@@ -223,7 +223,9 @@ func (meta *BundleMetaData) WriteScorecardConfig(inputConfigPath string) error {
 	// If the config is already copied as a part of the manifest directory
 	// then ensure that it is deleted to remove duplicates.
 	_, filename := filepath.Split(inputConfigPath)
-	err := deleteExistingScorecardConfig(meta.BundleDir, filename)
+	if err := deleteExistingScorecardConfig(meta.BundleDir, filename); err != nil {
+		return err
+	}
 
 	scorecardDir := filepath.Join(meta.BundleDir, "tests/scorecard")
 
@@ -251,7 +253,7 @@ func deleteExistingScorecardConfig(bundleDir, filename string) error {
 	metadataDirPath := filepath.Join(bundleDir, defaultManifestDir, filename)
 	if _, err := os.Stat(metadataDirPath); !os.IsNotExist(err) {
 		if err := os.Remove(metadataDirPath); err != nil {
-			return nil
+			return err
 		}
 	}
 	return nil

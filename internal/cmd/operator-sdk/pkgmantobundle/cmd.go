@@ -206,7 +206,9 @@ func (p *pkgManToBundleCmd) run() (err error) {
 			// in bundle.
 			if scorecardConfigPath != "" {
 				bundleMetaData.IsScoreconfigPresent = true
-				bundleMetaData.WriteScorecardConfig(scorecardConfigPath)
+				if err := bundleMetaData.WriteScorecardConfig(scorecardConfigPath); err != nil {
+					return err
+				}
 			}
 
 			if err := bundleMetaData.GenerateMetadata(); err != nil {

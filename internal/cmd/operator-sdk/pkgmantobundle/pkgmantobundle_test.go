@@ -64,7 +64,7 @@ var _ = Describe("Running pkgmanToBundle command", func() {
 
 		It("should generate multiple bundles for each version of manifests", func() {
 			// Specify input package manifest directory and output directory
-			pkgManDir = filepath.Join("..", "..", "..", "..", "internal", "cmd", "operator-sdk", "pkgmantobundle", "testdata", "packagemanifests")
+			pkgManDir = filepath.Join("testdata", "packagemanifests")
 			outputDir = "bundles-output"
 
 			p.pkgmanifestDir = pkgManDir
