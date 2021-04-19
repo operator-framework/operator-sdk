@@ -2,7 +2,7 @@
 # It is built with dependencies that take a while to download, thus speeding
 # up ansible deploy jobs.
 
-FROM registry.access.redhat.com/ubi8/ubi:8.3-227
+FROM registry.access.redhat.com/ubi8/ubi:8.3-297
 ARG TARGETARCH
 
 RUN mkdir -p /etc/ansible \
