@@ -33,12 +33,10 @@ hugo server
 
 Any changes will be included in real time.
 
-
 ## Check Docs
 
 `make test-docs` will validate changelog fragments, build doc HTML in a container, and check its links.
 Please consider running this locally before creating a PR to save CI resources.
-
 
 [hugo]:https://gohugo.io/
 [docsy-install]:https://www.docsy.dev/docs/getting-started/#prerequisites-and-installation
