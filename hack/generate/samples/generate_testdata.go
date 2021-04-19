@@ -28,31 +28,37 @@ import (
 )
 
 func main() {
-	// testdata is the path where all samples should be generate
-	const testdata = "/testdata/"
-
-	// binaryName allow inform the binary that should be used.
+	// binaryPath allow inform the binary that should be used.
 	// By default it is operator-sdk
-	var binaryName string
+	var binaryPath string
 
-	flag.StringVar(&binaryName, "bin", testutils.BinaryName, "Binary path that should be used")
+	flag.StringVar(&binaryPath, "bin", testutils.BinaryName, "Binary path that should be used")
 	flag.Parse()
 
-	currentPath, err := os.Getwd()
-	if err != nil {
-		log.Error(err)
-		os.Exit(1)
+	// Make the binary path absolute if pathed, for reproducibility and debugging purposes.
+	if dir, _ := filepath.Split(binaryPath); dir != "" {
+		tmp, err := filepath.Abs(binaryPath)
+		if err != nil {
+			log.Fatalf("Failed to make binary path %q absolute: %v", binaryPath, err)
+		}
+		binaryPath = tmp
 	}
 
-	samplesPath := filepath.Join(currentPath, testdata)
-	log.Infof("using the path: (%v)", samplesPath)
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// samplesPath is the path where all samples should be generated
+	samplesPath := filepath.Join(wd, "testdata")
+	log.Infof("writing sample directories under %s", samplesPath)
 
 	log.Infof("creating Helm Memcached Sample")
-	helm.GenerateMemcachedHelmSample(samplesPath)
+	helm.GenerateMemcachedSamples(binaryPath, samplesPath)
 
 	log.Infof("creating Ansible Memcached Sample")
-	ansible.GenerateMemcachedAnsibleSample(samplesPath)
+	ansible.GenerateMemcachedSamples(binaryPath, samplesPath)
 
 	log.Infof("creating Go Memcached Sample with Webhooks")
-	golang.GenerateMemcachedGoWithWebhooksSample(samplesPath)
+	golang.GenerateMemcachedSamples(binaryPath, samplesPath)
 }

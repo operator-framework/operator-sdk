@@ -1,4 +1,4 @@
-// Copyright 2020 The Operator-SDK Authors
+// Copyright 2021 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,16 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package golang
+package helm
 
 import (
 	"path/filepath"
-
-	golangv2 "github.com/operator-framework/operator-sdk/hack/generate/samples/internal/go/v2"
-	golangv3 "github.com/operator-framework/operator-sdk/hack/generate/samples/internal/go/v3"
 )
 
 func GenerateMemcachedSamples(binaryPath, rootPath string) {
-	golangv2.GenerateMemcachedSample(binaryPath, filepath.Join(rootPath, "go", "v2"))
-	golangv3.GenerateMemcachedSample(binaryPath, filepath.Join(rootPath, "go", "v3"))
+	GenerateMemcachedSample(binaryPath, filepath.Join(rootPath, "helm"))
 }
