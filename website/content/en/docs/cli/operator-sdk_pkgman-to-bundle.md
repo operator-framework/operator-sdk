@@ -15,7 +15,7 @@ the input directory. Additionally, it also provides the flexibility to build bun
 The generated bundles are always written on disk. Location for the generated bundles can be specified using '--output-dir'. If not
 specified, the default location would be 'bundle/' directory.
 
-The base container image name for the bundles can be provided using '--base-image' flag. This should be provided without the tag, since the tag
+The base container image name for the bundles can be provided using '--image-tag-base' flag. This should be provided without the tag, since the tag
 for the images would be the bundle version, (ie) image names will be in the format &lt;base_image&gt;:&lt;bundle_version&gt;.
 
 Specify the build command for building container images using '--build-cmd' flag. The default build command is 'docker build'. The command will
@@ -49,7 +49,7 @@ packagemanifests
 
 # Run the following command to generate bundles in the default 'bundle/' directory with the base-container image name
 # to be 'quay.io/example/etcd'
-$ operator-sdk pkgman-to-bundle packagemanifests --base-image quay.io/example/etcd
+$ operator-sdk pkgman-to-bundle packagemanifests --image-tag-base quay.io/example/etcd
 INFO[0000] Packagemanifests will be migrated to bundles in bundle directory
 INFO[0000] Creating bundle/bundle-0.0.1/bundle.Dockerfile
 INFO[0000] Creating bundle/bundle-0.0.1/metadata/annotations.yaml
@@ -77,9 +77,9 @@ bundle/
     │   ├── etcdrestore.crd.yaml
     ├── metadata
     │   └── annotations.yaml
-	└── tests
+    └── tests
         └── scorecard
-	        └── config.yaml
+            └── config.yaml
 
 Also, images for the both the bundles will be built with the following names: quay.io/example/etcd:0.0.1 and quay.io/example/etcd:0.0.2.
 

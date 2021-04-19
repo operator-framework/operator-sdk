@@ -25,7 +25,9 @@ import (
 	"text/template"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 
+	"github.com/operator-framework/operator-sdk/internal/flags"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
@@ -136,13 +138,12 @@ func (meta *BundleMetaData) GenerateMetadata() error {
 	return nil
 }
 
-// CopyOperatorManifests copies packagemanifestsDir/manifests to bundleDir/manifests
+// CopyOperatorManifests copies packagemanifestsDir/manifests to bundleDir/manifests.
 func (meta *BundleMetaData) CopyOperatorManifests() error {
 	return copyOperatorManifests(meta.PkgmanifestPath, filepath.Join(meta.BundleDir, defaultManifestDir))
 }
 
 func copyOperatorManifests(src, dest string) error {
-
 	srcInfo, err := os.Stat(src)
 	if err != nil {
 		return fmt.Errorf("error reading source directory %v", err)
@@ -204,17 +205,19 @@ func (meta *BundleMetaData) BuildBundleImage(tag string) error {
 			return err
 		}
 	} else {
-		output, err := exec.Command("docker", "build", "-f", filepath.Join(meta.BundleDir, "bundle.Dockerfile"), "-t", img, ".").Output()
+		output, err := exec.Command("docker", "build", "-f", filepath.Join(meta.BundleDir, "bundle.Dockerfile"), "-t", img, ".").CombinedOutput()
+		if err != nil || viper.GetBool(flags.VerboseOpt) {
+			fmt.Println(string(output))
+		}
 		if err != nil {
 			return err
 		}
-		fmt.Println(string(output))
 	}
 	log.Infof("Successfully built image %s", img)
 	return nil
 }
 
-// WriteScorecardConfig creates the scorecard directory in the bundle and compies the
+// WriteScorecardConfig creates the scorecard directory in the bundle and copies the
 // configuration yaml to bundle.
 func (meta *BundleMetaData) WriteScorecardConfig(inputConfigPath string) error {
 	// If the config is already copied as a part of the manifest directory
@@ -242,6 +245,8 @@ func (meta *BundleMetaData) WriteScorecardConfig(inputConfigPath string) error {
 	return nil
 }
 
+// deleteExistingScorecardConfig checks if there is an existing scorecard config file
+// in manifests/ folder, if present it deletes it.
 func deleteExistingScorecardConfig(bundleDir, filename string) error {
 	metadataDirPath := filepath.Join(bundleDir, defaultManifestDir, filename)
 	if _, err := os.Stat(metadataDirPath); !os.IsNotExist(err) {
