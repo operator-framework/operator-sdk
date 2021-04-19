@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"text/template"
 
@@ -286,6 +287,7 @@ func (c bundleCmd) runMetadata() error {
 	for key, value := range metricsannotations.MakeBundleMetadataLabels(c.layout) {
 		values.OtherLabels = append(values.OtherLabels, fmt.Sprintf("%s=%s", key, value))
 	}
+	sort.Strings(values.OtherLabels)
 
 	// Write each file.
 	metadataDir := filepath.Join(c.outputDir, "metadata")
