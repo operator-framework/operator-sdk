@@ -35,7 +35,8 @@ type Memcached struct {
 // be called in the e2e tests since it will call the Prepare() to set the sample context and generate the files
 // in the testdata directory. The e2e tests only ought to use the Run() method with the TestContext.
 func GenerateMemcachedSample(binaryPath, samplesPath string) {
-	ctx, err := pkg.NewSampleContext(binaryPath, filepath.Join(samplesPath, "helm", "memcached-operator"), "GO111MODULE=on")
+	ctx, err := pkg.NewSampleContext(binaryPath, filepath.Join(samplesPath, "memcached-operator"),
+		"GO111MODULE=on")
 	pkg.CheckError("generating Helm memcached context", err)
 
 	memcached := Memcached{&ctx}

@@ -38,7 +38,7 @@ type MemcachedMolecule struct {
 // be called in the e2e tests since it will call the Prepare() to set the sample context and generate the files
 // in the testdata directory. The e2e tests only ought to use the Run() method with the TestContext.
 func GenerateMoleculeSample(binaryPath, samplesPath string) {
-	ctx, err := pkg.NewSampleContext(binaryPath, filepath.Join(binaryPath, samplesPath, "memcached-molecule-operator"),
+	ctx, err := pkg.NewSampleContext(binaryPath, filepath.Join(samplesPath, "memcached-molecule-operator"),
 		"GO111MODULE=on")
 	pkg.CheckError("generating Ansible Moleule memcached context", err)
 

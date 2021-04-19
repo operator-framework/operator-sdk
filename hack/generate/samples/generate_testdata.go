@@ -54,10 +54,10 @@ func main() {
 	log.Infof("writing sample directories under %s", samplesPath)
 
 	log.Infof("creating Helm Memcached Sample")
-	helm.GenerateMemcachedSample(binaryPath, samplesPath)
+	helm.GenerateMemcachedSamples(binaryPath, samplesPath)
 
 	log.Infof("creating Ansible Memcached Sample")
-	ansible.GenerateMemcachedSample(binaryPath, samplesPath)
+	ansible.GenerateMemcachedSamples(binaryPath, samplesPath)
 
 	log.Infof("creating Go Memcached Sample with Webhooks")
 	golang.GenerateMemcachedSamples(binaryPath, samplesPath)

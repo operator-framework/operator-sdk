@@ -40,9 +40,6 @@ func main() {
 		sample string
 	)
 
-	// testdata is the path where all samples are generate
-	const testdata = "/testdata/"
-
 	flag.StringVar(&binaryPath, "bin", testutils.BinaryName, "Binary path that should be used")
 	flag.StringVar(&samplesRoot, "samples-root", "", "Path where molecule samples should be generated")
 	flag.StringVar(&sample, "sample", "", "To generate only the selected option. Options: [advanced, memcached]")
@@ -66,7 +63,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		samplesRoot = filepath.Join(currentPath, testdata, "ansible")
+		samplesRoot = filepath.Join(currentPath, "testdata", "ansible")
 	}
 
 	log.Infof("creating Ansible Molecule Mock Samples under %s", samplesRoot)
