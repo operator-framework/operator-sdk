@@ -112,7 +112,7 @@ These examples assume `Memcached`, `MemcachedSpec`, and `MemcachedStatus` are th
 	type MemcachedPods struct {
 		// Size is the size of the memcached deployment.
 		//+operator-sdk:csv:customresourcedefinitions:type=spec
-		//+operator-sdk:csv:customresourcedefinitions.type=status
+		//+operator-sdk:csv:customresourcedefinitions:type=status
 		Size int32 `json:"size"`
 	}
 	```
