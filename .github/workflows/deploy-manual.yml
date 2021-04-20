@@ -70,4 +70,4 @@ jobs:
         commit-message: "[${{ steps.update.outputs.branch_name }}] image(ansible-operator): bump base to ${{ steps.tag.outputs.tag }}"
         body: "New ansible-operator-base image built by https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         delete-branch: true
-        branch-suffix: -ansible-operator-base
+        branch-suffix: short-commit-hash
