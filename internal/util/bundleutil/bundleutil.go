@@ -58,9 +58,9 @@ type BundleMetaData struct {
 	// PackageManifestPath where the input manifests are present.
 	PkgmanifestPath string
 
-	// IsScoreconfigPresent when set to true includes scorecard config annotations
+	// IsScoreConfigPresent when set to true includes scorecard config annotations
 	// in bundle metadata.
-	IsScoreconfigPresent bool
+	IsScoreConfigPresent bool
 
 	// Other labels to be added in CSV.
 	OtherLabels map[string]string
@@ -68,12 +68,12 @@ type BundleMetaData struct {
 
 // values to populate bundle metadata/Dockerfile.
 type annotationsValues struct {
-	BundleDir           string
-	PackageName         string
-	Channels            string
-	DefaultChannel      string
-	OtherLabels         []string
-	ScorecardConfigPath bool
+	BundleDir                string
+	PackageName              string
+	Channels                 string
+	DefaultChannel           string
+	OtherLabels              []string
+	IsScorecardConfigPresent bool
 }
 
 // GenerateMetadata scaffolds annotations.yaml and bundle.Dockerfile with the provided
@@ -87,11 +87,11 @@ func (meta *BundleMetaData) GenerateMetadata() error {
 	// Create annotation values for both bundle.Dockerfile and annotations.yaml, which should
 	// hold the same set of values always.
 	values := annotationsValues{
-		BundleDir:           meta.BundleDir,
-		PackageName:         meta.PackageName,
-		Channels:            meta.Channels,
-		DefaultChannel:      meta.DefaultChannel,
-		ScorecardConfigPath: meta.IsScoreconfigPresent,
+		BundleDir:                meta.BundleDir,
+		PackageName:              meta.PackageName,
+		Channels:                 meta.Channels,
+		DefaultChannel:           meta.DefaultChannel,
+		IsScorecardConfigPresent: meta.IsScoreConfigPresent,
 	}
 
 	for k, v := range meta.OtherLabels {
@@ -227,7 +227,7 @@ func (meta *BundleMetaData) WriteScorecardConfig(inputConfigPath string) error {
 		return err
 	}
 
-	scorecardDir := filepath.Join(meta.BundleDir, "tests/scorecard")
+	scorecardDir := filepath.Join(meta.BundleDir, "tests", "scorecard")
 
 	// Create directory for scorecard config
 	if err := os.MkdirAll(scorecardDir, projutil.DirMode); err != nil {
@@ -250,11 +250,6 @@ func (meta *BundleMetaData) WriteScorecardConfig(inputConfigPath string) error {
 // deleteExistingScorecardConfig checks if there is an existing scorecard config file
 // in manifests/ folder, if present it deletes it.
 func deleteExistingScorecardConfig(bundleDir, filename string) error {
-	metadataDirPath := filepath.Join(bundleDir, defaultManifestDir, filename)
-	if _, err := os.Stat(metadataDirPath); !os.IsNotExist(err) {
-		if err := os.Remove(metadataDirPath); err != nil {
-			return err
-		}
-	}
-	return nil
+	scorecardConfigPath := filepath.Join(bundleDir, defaultManifestDir, filename)
+	return os.RemoveAll(scorecardConfigPath)
 }

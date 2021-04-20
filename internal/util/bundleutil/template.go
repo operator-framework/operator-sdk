@@ -40,7 +40,7 @@ LABEL operators.operatorframework.io.bundle.channel.default.v1={{ .DefaultChanne
 LABEL {{ $l }}
 {{- end }}
 
-{{- if .ScorecardConfigPath }}
+{{- if .IsScorecardConfigPresent }}
 
 # Labels for testing.
 LABEL operators.operatorframework.io.test.mediatype.v1=scorecard+v1
@@ -50,7 +50,7 @@ LABEL operators.operatorframework.io.test.config.v1=tests/scorecard/
 # Copy files to locations specified by labels.
 COPY {{ .BundleDir }}/manifests /manifests/
 COPY {{ .BundleDir }}/metadata /metadata/
-{{- if .ScorecardConfigPath }}
+{{- if .IsScorecardConfigPresent }}
 COPY {{ .BundleDir }}/tests/scorecard /tests/scorecard/
 {{- end }}
 `))
@@ -70,7 +70,7 @@ var annotationsTemplate = template.Must(template.New("").Funcs(funcs).Parse(`ann
   {{ toYAML $l }}
   {{- end }}
 
-  {{- if .ScorecardConfigPath }}
+  {{- if .IsScorecardConfigPresent }}
 
   # Annotations for testing.
   operators.operatorframework.io.test.mediatype.v1: scorecard+v1

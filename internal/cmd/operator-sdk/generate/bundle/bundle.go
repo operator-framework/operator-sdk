@@ -281,7 +281,7 @@ func (c bundleCmd) runMetadata() error {
 		Channels:             c.channels,
 		DefaultChannel:       c.defaultChannel,
 		OtherLabels:          metricsannotations.MakeBundleMetadataLabels(c.layout),
-		IsScoreconfigPresent: true,
+		IsScoreConfigPresent: true,
 	}
 
 	return bundleMetadata.GenerateMetadata()
