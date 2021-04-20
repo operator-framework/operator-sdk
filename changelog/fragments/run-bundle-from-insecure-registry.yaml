@@ -1,0 +1,4 @@
+entries:
+  - description: >
+       Add new optional flag `--skip-tls` to the commands `operator-sdk run bundle` and `operator-sdk run bundle-upgrade`. This option allow to install the operator from a bundle image stored at an insecure docker registry. (e.g. `operator-sdk run bundle localhost:5000/my-operator-bundle:latest --skip-tls`)
+    kind: "addition"

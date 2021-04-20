@@ -34,8 +34,8 @@ func CatalogNameForPackage(pkg string) string {
 }
 
 // LoadBundle returns metadata and manifests from within bundleImage.
-func LoadBundle(ctx context.Context, bundleImage string) (registryutil.Labels, *apimanifests.Bundle, error) {
-	bundlePath, err := registryutil.ExtractBundleImage(ctx, nil, bundleImage, false)
+func LoadBundle(ctx context.Context, bundleImage string, skipTLS bool) (registryutil.Labels, *apimanifests.Bundle, error) {
+	bundlePath, err := registryutil.ExtractBundleImage(ctx, nil, bundleImage, false, skipTLS)
 	if err != nil {
 		return nil, nil, fmt.Errorf("pull bundle image: %v", err)
 	}
