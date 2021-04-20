@@ -36,12 +36,13 @@ import (
 )
 
 type bundleValidateCmd struct {
-	directory    string
-	imageBuilder string
-	outputFormat string
-	selectorRaw  string
-	selector     labels.Selector
-	listOptional bool
+	directory      string
+	imageBuilder   string
+	outputFormat   string
+	selectorRaw    string
+	selector       labels.Selector
+	listOptional   bool
+	optionalValues map[string]string
 }
 
 // validate verifies the command args
@@ -78,6 +79,11 @@ func (c *bundleValidateCmd) addToFlagSet(fs *pflag.FlagSet) {
 			"Run this command with '--list-optional' to list available optional validators")
 	fs.BoolVar(&c.listOptional, "list-optional", false,
 		"List all optional validators available. When set, no validators will be run")
+
+	optionalValueEmpty := map[string]string{}
+	fs.StringToStringVarP(&c.optionalValues, "optional-values", "", optionalValueEmpty,
+		"Inform a []string map of key=values which can be used by the validator. e.g. to check the operator bundle "+
+			"against an Kubernetes version that it is intended to be distributed use `--optional-values=k8s-version=1.22`")
 
 	fs.StringVarP(&c.outputFormat, "output", "o", internal.Text,
 		"Result format for results. One of: [text, json-alpha1]. Note: output format types containing "+
@@ -144,7 +150,7 @@ func (c bundleValidateCmd) run(logger *log.Entry, bundleRaw string) (res *intern
 	res.AddManifestResults(results...)
 
 	// Run optional validators.
-	results = runOptionalValidators(bundle, c.selector)
+	results = runOptionalValidators(bundle, c.selector, c.optionalValues)
 	res.AddManifestResults(results...)
 
 	return res, nil

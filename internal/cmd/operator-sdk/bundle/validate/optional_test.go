@@ -46,14 +46,14 @@ var _ = Describe("Running optional validators", func() {
 		It("runs no validators for an empty selector", func() {
 			bundle = &apimanifests.Bundle{}
 			sel = labels.SelectorFromSet(map[string]string{})
-			Expect(vals.run(bundle, sel)).To(HaveLen(0))
+			Expect(vals.run(bundle, sel, nil)).To(HaveLen(0))
 		})
 		It("runs a validator for one selector on an empty bundle", func() {
 			bundle = &apimanifests.Bundle{}
 			sel = labels.SelectorFromSet(map[string]string{
 				nameKey: "operatorhub",
 			})
-			results = vals.run(bundle, sel)
+			results = vals.run(bundle, sel, map[string]string{"k8s-version": "1.22"})
 			Expect(results).To(HaveLen(1))
 			Expect(results[0].Errors).To(HaveLen(1))
 		})
@@ -63,7 +63,7 @@ var _ = Describe("Running optional validators", func() {
 			sel = labels.SelectorFromSet(map[string]string{
 				nameKey: "operatorhub",
 			})
-			results = vals.run(bundle, sel)
+			results = vals.run(bundle, sel, nil)
 			Expect(results).To(HaveLen(1))
 			// Only test that more than one error was returned than the empty bundle case, which
 			// indicates validation happening.
