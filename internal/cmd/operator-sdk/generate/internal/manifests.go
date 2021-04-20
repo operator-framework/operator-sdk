@@ -22,7 +22,7 @@ import (
 )
 
 // GetManifestObjects returns all objects to be written to a manifests directory from collector.Manifests.
-func GetManifestObjects(c *collector.Manifests) (objs []client.Object) {
+func GetManifestObjects(c *collector.Manifests, extraSAs []string) (objs []client.Object) {
 	// All CRDs passed in should be written.
 	for i := range c.V1CustomResourceDefinitions {
 		objs = append(objs, &c.V1CustomResourceDefinitions[i])
@@ -50,9 +50,9 @@ func GetManifestObjects(c *collector.Manifests) (objs []client.Object) {
 	}
 
 	// RBAC objects that are not a part of the CSV should be written.
-	_, roleObjs := c.SplitCSVPermissionsObjects()
+	_, roleObjs := c.SplitCSVPermissionsObjects(extraSAs)
 	objs = append(objs, roleObjs...)
-	_, clusterRoleObjs := c.SplitCSVClusterPermissionsObjects()
+	_, clusterRoleObjs := c.SplitCSVClusterPermissionsObjects(extraSAs)
 	objs = append(objs, clusterRoleObjs...)
 
 	removeNamespace(objs)

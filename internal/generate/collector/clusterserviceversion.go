@@ -31,7 +31,7 @@ const (
 
 // SplitCSVPermissionsObjects splits roles that should be written to a CSV as permissions (in)
 // from roles and role bindings that should be written directly to the bundle (out).
-func (c *Manifests) SplitCSVPermissionsObjects() (in, out []client.Object) { //nolint:dupl
+func (c *Manifests) SplitCSVPermissionsObjects(extraSAs []string) (in, out []client.Object) { //nolint:dupl
 	roleMap := make(map[string]*rbacv1.Role)
 	for i := range c.Roles {
 		roleMap[c.Roles[i].GetName()] = &c.Roles[i]
@@ -60,13 +60,13 @@ func (c *Manifests) SplitCSVPermissionsObjects() (in, out []client.Object) { //n
 	}
 
 	// If a role is bound and:
-	// 1. the binding only has one subject and it is a service account that maps to a deployment service account,
-	//    add the role to in.
-	// 2. the binding only has one subject and it does not map to a deployment service account or is not a service account,
+	// 1. the binding only has one subject and it is a service account that maps to a deployment service account
+	//    or an extra service account, add the role to in.
+	// 2. the binding only has one subject and it does not map to a deployment/extra service account or is not a service account,
 	//    add both role and binding to out.
 	// 3. the binding has more than one subject and:
-	//    a. one of those subjects is a deployment's service account, add both role and binding to out and role to in.
-	//    b. none of those subjects is a service account or maps to a deployment's service account, add both role and binding to out.
+	//    a. one of those subjects is a deployment/extra service account, add both role and binding to out and role to in.
+	//    b. none of those subjects is a service account or maps to a deployment/extra service account, add both role and binding to out.
 	deploymentSANames := make(map[string]struct{})
 	for _, dep := range c.Deployments {
 		saName := dep.Spec.Template.Spec.ServiceAccountName
@@ -74,6 +74,9 @@ func (c *Manifests) SplitCSVPermissionsObjects() (in, out []client.Object) { //n
 			saName = defaultServiceAccountName
 		}
 		deploymentSANames[saName] = struct{}{}
+	}
+	for _, extraSA := range extraSAs {
+		deploymentSANames[extraSA] = struct{}{}
 	}
 
 	inRoleNames := make(map[string]struct{})
@@ -127,7 +130,7 @@ func (c *Manifests) SplitCSVPermissionsObjects() (in, out []client.Object) { //n
 
 // SplitCSVClusterPermissionsObjects splits cluster roles that should be written to a CSV as clusterPermissions (in)
 // from cluster roles and cluster role bindings that should be written directly to the bundle (out).
-func (c *Manifests) SplitCSVClusterPermissionsObjects() (in, out []client.Object) { //nolint:dupl
+func (c *Manifests) SplitCSVClusterPermissionsObjects(extraSAs []string) (in, out []client.Object) { //nolint:dupl
 	roleMap := make(map[string]*rbacv1.ClusterRole)
 	for i := range c.ClusterRoles {
 		roleMap[c.ClusterRoles[i].GetName()] = &c.ClusterRoles[i]
@@ -156,13 +159,13 @@ func (c *Manifests) SplitCSVClusterPermissionsObjects() (in, out []client.Object
 	}
 
 	// If a role is bound and:
-	// 1. the binding only has one subject and it is a service account that maps to a deployment service account,
-	//    add the role to in.
-	// 2. the binding only has one subject and it does not map to a deployment service account or is not a service account,
+	// 1. the binding only has one subject and it is a service account that maps to a deployment service account
+	//    or an extra service account, add the role to in.
+	// 2. the binding only has one subject and it does not map to a deployment/extra service account or is not a service account,
 	//    add both role and binding to out.
 	// 3. the binding has more than one subject and:
-	//    a. one of those subjects is a deployment's service account, add both role and binding to out and role to in.
-	//    b. none of those subjects is a service account or maps to a deployment's service account, add both role and binding to out.
+	//    a. one of those subjects is a deployment/extra service account, add both role and binding to out and role to in.
+	//    b. none of those subjects is a service account or maps to a deployment/extra service account, add both role and binding to out.
 	deploymentSANames := make(map[string]struct{})
 	for _, dep := range c.Deployments {
 		saName := dep.Spec.Template.Spec.ServiceAccountName
@@ -170,6 +173,9 @@ func (c *Manifests) SplitCSVClusterPermissionsObjects() (in, out []client.Object
 			saName = defaultServiceAccountName
 		}
 		deploymentSANames[saName] = struct{}{}
+	}
+	for _, extraSA := range extraSAs {
+		deploymentSANames[extraSA] = struct{}{}
 	}
 
 	inRoleNames := make(map[string]struct{})

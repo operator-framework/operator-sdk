@@ -37,9 +37,9 @@ import (
 
 // ApplyTo applies relevant manifests in c to csv, sorts the applied updates,
 // and validates the result.
-func ApplyTo(c *collector.Manifests, csv *operatorsv1alpha1.ClusterServiceVersion) error {
+func ApplyTo(c *collector.Manifests, csv *operatorsv1alpha1.ClusterServiceVersion, extraSAs []string) error {
 	// Apply manifests to the CSV object.
-	if err := apply(c, csv); err != nil {
+	if err := apply(c, csv, extraSAs); err != nil {
 		return err
 	}
 
@@ -50,12 +50,12 @@ func ApplyTo(c *collector.Manifests, csv *operatorsv1alpha1.ClusterServiceVersio
 }
 
 // apply applies relevant manifests in c to csv.
-func apply(c *collector.Manifests, csv *operatorsv1alpha1.ClusterServiceVersion) error {
+func apply(c *collector.Manifests, csv *operatorsv1alpha1.ClusterServiceVersion, extraSAs []string) error {
 	strategy := getCSVInstallStrategy(csv)
 	switch strategy.StrategyName {
 	case operatorsv1alpha1.InstallStrategyNameDeployment:
-		applyRoles(c, &strategy.StrategySpec)
-		applyClusterRoles(c, &strategy.StrategySpec)
+		applyRoles(c, &strategy.StrategySpec, extraSAs)
+		applyClusterRoles(c, &strategy.StrategySpec, extraSAs)
 		applyDeployments(c, &strategy.StrategySpec)
 	}
 	csv.Spec.InstallStrategy = strategy
@@ -82,8 +82,8 @@ const defaultServiceAccountName = "default"
 
 // applyRoles applies Roles to strategy's permissions field by combining Roles bound to ServiceAccounts
 // into one set of permissions.
-func applyRoles(c *collector.Manifests, strategy *operatorsv1alpha1.StrategyDetailsDeployment) { //nolint:dupl
-	objs, _ := c.SplitCSVPermissionsObjects()
+func applyRoles(c *collector.Manifests, strategy *operatorsv1alpha1.StrategyDetailsDeployment, extraSAs []string) { //nolint:dupl
+	objs, _ := c.SplitCSVPermissionsObjects(extraSAs)
 	roleSet := make(map[string]*rbacv1.Role)
 	for i := range objs {
 		switch t := objs[i].(type) {
@@ -99,6 +99,9 @@ func applyRoles(c *collector.Manifests, strategy *operatorsv1alpha1.StrategyDeta
 			saName = defaultServiceAccountName
 		}
 		saToPermissions[saName] = operatorsv1alpha1.StrategyDeploymentPermissions{ServiceAccountName: saName}
+	}
+	for _, extraSA := range extraSAs {
+		saToPermissions[extraSA] = operatorsv1alpha1.StrategyDeploymentPermissions{ServiceAccountName: extraSA}
 	}
 
 	// Collect all role names by their corresponding service accounts via bindings. This lets us
@@ -126,8 +129,8 @@ func applyRoles(c *collector.Manifests, strategy *operatorsv1alpha1.StrategyDeta
 
 // applyClusterRoles applies ClusterRoles to strategy's clusterPermissions field by combining ClusterRoles
 // bound to ServiceAccounts into one set of clusterPermissions.
-func applyClusterRoles(c *collector.Manifests, strategy *operatorsv1alpha1.StrategyDetailsDeployment) { //nolint:dupl
-	objs, _ := c.SplitCSVClusterPermissionsObjects()
+func applyClusterRoles(c *collector.Manifests, strategy *operatorsv1alpha1.StrategyDetailsDeployment, extraSAs []string) { //nolint:dupl
+	objs, _ := c.SplitCSVClusterPermissionsObjects(extraSAs)
 	roleSet := make(map[string]*rbacv1.ClusterRole)
 	for i := range objs {
 		switch t := objs[i].(type) {
@@ -143,6 +146,9 @@ func applyClusterRoles(c *collector.Manifests, strategy *operatorsv1alpha1.Strat
 			saName = defaultServiceAccountName
 		}
 		saToPermissions[saName] = operatorsv1alpha1.StrategyDeploymentPermissions{ServiceAccountName: saName}
+	}
+	for _, extraSA := range extraSAs {
+		saToPermissions[extraSA] = operatorsv1alpha1.StrategyDeploymentPermissions{ServiceAccountName: extraSA}
 	}
 
 	// Collect all role names by their corresponding service accounts via bindings. This lets us

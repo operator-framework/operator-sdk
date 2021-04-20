@@ -37,14 +37,14 @@ var _ = Describe("ClusterServiceVersion", func() {
 
 		It("should return empty lists for an empty Manifests", func() {
 			c.Roles = []rbacv1.Role{}
-			in, out = c.SplitCSVPermissionsObjects()
+			in, out = c.SplitCSVPermissionsObjects(nil)
 			Expect(in).To(HaveLen(0))
 			Expect(out).To(HaveLen(0))
 		})
 		It("should return non-empty lists", func() {
 			By("splitting 1 Role no RoleBinding")
 			c.Roles = []rbacv1.Role{newRole("my-role")}
-			in, out = c.SplitCSVPermissionsObjects()
+			in, out = c.SplitCSVPermissionsObjects(nil)
 			Expect(in).To(HaveLen(0))
 			Expect(out).To(HaveLen(1))
 			Expect(getRoleNames(out)).To(ContainElement("my-role"))
@@ -55,7 +55,7 @@ var _ = Describe("ClusterServiceVersion", func() {
 			c.RoleBindings = []rbacv1.RoleBinding{
 				newRoleBinding("my-role-binding", newRoleRef("my-role"), newServiceAccountSubject("my-other-account")),
 			}
-			in, out = c.SplitCSVPermissionsObjects()
+			in, out = c.SplitCSVPermissionsObjects(nil)
 			Expect(in).To(HaveLen(0))
 			Expect(out).To(HaveLen(2))
 			Expect(getRoleNames(out)).To(ContainElement("my-role"))
@@ -67,7 +67,7 @@ var _ = Describe("ClusterServiceVersion", func() {
 			c.RoleBindings = []rbacv1.RoleBinding{
 				newRoleBinding("my-role-binding", newRoleRef("my-role"), newServiceAccountSubject("my-dep-account")),
 			}
-			in, out = c.SplitCSVPermissionsObjects()
+			in, out = c.SplitCSVPermissionsObjects(nil)
 			Expect(in).To(HaveLen(1))
 			Expect(getRoleNames(in)).To(ContainElement("my-role"))
 			Expect(out).To(HaveLen(0))
@@ -80,7 +80,7 @@ var _ = Describe("ClusterServiceVersion", func() {
 					newRoleRef("my-role"),
 					newServiceAccountSubject("my-dep-account"), newServiceAccountSubject("my-other-account")),
 			}
-			in, out = c.SplitCSVPermissionsObjects()
+			in, out = c.SplitCSVPermissionsObjects(nil)
 			Expect(in).To(HaveLen(1))
 			Expect(getRoleNames(in)).To(ContainElement("my-role"))
 			Expect(out).To(HaveLen(2))
@@ -98,7 +98,7 @@ var _ = Describe("ClusterServiceVersion", func() {
 					newRoleRef("my-role-2"),
 					newServiceAccountSubject("my-other-account")),
 			}
-			in, out = c.SplitCSVPermissionsObjects()
+			in, out = c.SplitCSVPermissionsObjects(nil)
 			Expect(in).To(HaveLen(1))
 			Expect(getRoleNames(in)).To(ContainElement("my-role-1"))
 			Expect(out).To(HaveLen(4))
@@ -124,7 +124,7 @@ var _ = Describe("ClusterServiceVersion", func() {
 					newRoleRef("my-role-3"),
 					newServiceAccountSubject("my-dep-account-2")),
 			}
-			in, out = c.SplitCSVPermissionsObjects()
+			in, out = c.SplitCSVPermissionsObjects(nil)
 			Expect(in).To(HaveLen(2))
 			Expect(getRoleNames(in)).To(ContainElement("my-role-1"))
 			Expect(getRoleNames(in)).To(ContainElement("my-role-3"))
@@ -139,14 +139,14 @@ var _ = Describe("ClusterServiceVersion", func() {
 	Describe("SplitCSVClusterPermissionsObjects", func() {
 		It("should return empty lists for an empty Manifests", func() {
 			c.ClusterRoles = []rbacv1.ClusterRole{}
-			in, out = c.SplitCSVClusterPermissionsObjects()
+			in, out = c.SplitCSVClusterPermissionsObjects(nil)
 			Expect(in).To(HaveLen(0))
 			Expect(out).To(HaveLen(0))
 		})
 		It("should return non-empty lists", func() {
 			By("splitting 1 ClusterRole no ClusterRoleBinding")
 			c.ClusterRoles = []rbacv1.ClusterRole{newClusterRole("my-role")}
-			in, out = c.SplitCSVClusterPermissionsObjects()
+			in, out = c.SplitCSVClusterPermissionsObjects(nil)
 			Expect(in).To(HaveLen(0))
 			Expect(out).To(HaveLen(1))
 			Expect(getClusterRoleNames(out)).To(ContainElement("my-role"))
@@ -157,7 +157,7 @@ var _ = Describe("ClusterServiceVersion", func() {
 			c.ClusterRoleBindings = []rbacv1.ClusterRoleBinding{
 				newClusterRoleBinding("my-role-binding", newClusterRoleRef("my-role"), newServiceAccountSubject("my-other-account")),
 			}
-			in, out = c.SplitCSVClusterPermissionsObjects()
+			in, out = c.SplitCSVClusterPermissionsObjects(nil)
 			Expect(in).To(HaveLen(0))
 			Expect(out).To(HaveLen(2))
 			Expect(getClusterRoleNames(out)).To(ContainElement("my-role"))
@@ -169,7 +169,7 @@ var _ = Describe("ClusterServiceVersion", func() {
 			c.ClusterRoleBindings = []rbacv1.ClusterRoleBinding{
 				newClusterRoleBinding("my-role-binding", newClusterRoleRef("my-role"), newServiceAccountSubject("my-dep-account")),
 			}
-			in, out = c.SplitCSVClusterPermissionsObjects()
+			in, out = c.SplitCSVClusterPermissionsObjects(nil)
 			Expect(in).To(HaveLen(1))
 			Expect(getClusterRoleNames(in)).To(ContainElement("my-role"))
 			Expect(out).To(HaveLen(0))
@@ -182,7 +182,7 @@ var _ = Describe("ClusterServiceVersion", func() {
 					newClusterRoleRef("my-role"),
 					newServiceAccountSubject("my-dep-account"), newServiceAccountSubject("my-other-account")),
 			}
-			in, out = c.SplitCSVClusterPermissionsObjects()
+			in, out = c.SplitCSVClusterPermissionsObjects(nil)
 			Expect(in).To(HaveLen(1))
 			Expect(getClusterRoleNames(in)).To(ContainElement("my-role"))
 			Expect(out).To(HaveLen(2))
@@ -200,7 +200,7 @@ var _ = Describe("ClusterServiceVersion", func() {
 					newClusterRoleRef("my-role-2"),
 					newServiceAccountSubject("my-other-account")),
 			}
-			in, out = c.SplitCSVClusterPermissionsObjects()
+			in, out = c.SplitCSVClusterPermissionsObjects(nil)
 			Expect(in).To(HaveLen(1))
 			Expect(getClusterRoleNames(in)).To(ContainElement("my-role-1"))
 			Expect(out).To(HaveLen(4))
@@ -230,7 +230,7 @@ var _ = Describe("ClusterServiceVersion", func() {
 					newClusterRoleRef("my-role-3"),
 					newServiceAccountSubject("my-dep-account-2")),
 			}
-			in, out = c.SplitCSVClusterPermissionsObjects()
+			in, out = c.SplitCSVClusterPermissionsObjects(nil)
 			Expect(in).To(HaveLen(2))
 			Expect(getClusterRoleNames(in)).To(ContainElement("my-role-1"))
 			Expect(getClusterRoleNames(in)).To(ContainElement("my-role-3"))

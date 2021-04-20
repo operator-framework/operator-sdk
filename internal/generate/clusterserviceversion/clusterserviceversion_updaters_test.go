@@ -54,7 +54,7 @@ var _ = Describe("apply functions", func() {
 				rules := []rbacv1.PolicyRule{{Verbs: []string{"create"}}}
 				c.Roles = []rbacv1.Role{newRole(roleName1, rules...)}
 				c.RoleBindings = []rbacv1.RoleBinding{newRoleBinding("role-binding", newRoleRef(roleName1), newServiceAccountSubject(saName1))}
-				applyRoles(c, strategy)
+				applyRoles(c, strategy, nil)
 				Expect(strategy.Permissions).To(Equal([]operatorsv1alpha1.StrategyDeploymentPermissions{
 					{ServiceAccountName: saName1, Rules: rules},
 				}))
@@ -65,7 +65,7 @@ var _ = Describe("apply functions", func() {
 				c.Deployments = []appsv1.Deployment{newDeploymentWithServiceAccount(depName1, saName1)}
 				c.ServiceAccounts = []corev1.ServiceAccount{newServiceAccount(saName1)}
 				c.RoleBindings = []rbacv1.RoleBinding{newRoleBinding("role-binding", newRoleRef(roleName1), newServiceAccountSubject(saName1))}
-				applyRoles(c, strategy)
+				applyRoles(c, strategy, nil)
 				Expect(strategy.Permissions).To(Equal([]operatorsv1alpha1.StrategyDeploymentPermissions{}))
 			})
 		})
@@ -77,7 +77,7 @@ var _ = Describe("apply functions", func() {
 				rules := []rbacv1.PolicyRule{{Verbs: []string{"create"}}}
 				c.ClusterRoles = []rbacv1.ClusterRole{newClusterRole(cRoleName1, rules...)}
 				c.ClusterRoleBindings = []rbacv1.ClusterRoleBinding{newClusterRoleBinding("cluster-role-binding", newClusterRoleRef(cRoleName1), newServiceAccountSubject(saName1))}
-				applyClusterRoles(c, strategy)
+				applyClusterRoles(c, strategy, nil)
 				Expect(strategy.ClusterPermissions).To(Equal([]operatorsv1alpha1.StrategyDeploymentPermissions{
 					{ServiceAccountName: saName1, Rules: rules},
 				}))
@@ -88,7 +88,7 @@ var _ = Describe("apply functions", func() {
 				c.Deployments = []appsv1.Deployment{newDeploymentWithServiceAccount(depName1, saName1)}
 				c.ServiceAccounts = []corev1.ServiceAccount{newServiceAccount(saName1)}
 				c.ClusterRoleBindings = []rbacv1.ClusterRoleBinding{newClusterRoleBinding("cluster-role-binding", newClusterRoleRef(cRoleName1), newServiceAccountSubject(saName1))}
-				applyClusterRoles(c, strategy)
+				applyClusterRoles(c, strategy, nil)
 				Expect(strategy.ClusterPermissions).To(Equal([]operatorsv1alpha1.StrategyDeploymentPermissions{}))
 			})
 		})

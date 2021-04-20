@@ -207,7 +207,8 @@ func (c packagemanifestsCmd) run() error {
 	}
 
 	if c.updateObjects {
-		objs := genutil.GetManifestObjects(col)
+		// Extra ServiceAccounts not supported by this command.
+		objs := genutil.GetManifestObjects(col, nil)
 		if c.stdout {
 			if err := genutil.WriteObjects(stdout, objs...); err != nil {
 				return err
