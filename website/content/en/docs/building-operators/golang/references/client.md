@@ -433,7 +433,7 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
     pod := &v1.Pod{}
     opts := []client.DeleteAllOfOption{
         client.InNamespace(request.NamespacedName.Namespace),
-        client.MatchingLabels{"instance", request.NamespacedName.Name},
+        client.MatchingLabels{"instance": request.NamespacedName.Name},
         client.MatchingFields{"status.phase": "Failed"},
         client.GracePeriodSeconds(5),
     }
