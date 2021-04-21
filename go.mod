@@ -14,6 +14,7 @@ require (
 	github.com/operator-framework/api v0.8.1-0.20210414192051-b51286920978
 	github.com/operator-framework/operator-lib v0.4.0
 	github.com/operator-framework/operator-registry v1.15.3
+	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
 	github.com/prometheus/client_golang v1.7.1
 	github.com/prometheus/client_model v0.2.0
 	github.com/sergi/go-diff v1.1.0

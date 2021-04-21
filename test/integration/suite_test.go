@@ -17,8 +17,13 @@ package integration
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
+
+	"github.com/phayes/freeport"
+
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -86,32 +91,60 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	// TODO(estroz): enable when bundles can be tested locally.
-	//
-	// By("generating the operator bundle")
-	// err = tc.Make("bundle", "IMG="+tc.ImageName)
-	// Expect(err).NotTo(HaveOccurred())
-	//
-	// By("building the operator bundle image")
-	// err = tc.Make("bundle-build", "BUNDLE_IMG="+tc.BundleImageName)
-	// Expect(err).NotTo(HaveOccurred())
+
+	os.Setenv("LOCAL_IMAGE_REGISTRY", "1")
+	PortNumber, _ := freeport.GetFreePort()
+	os.Setenv("PORT_NUMBER", strconv.Itoa(PortNumber))
+
+	ImgName := fmt.Sprintf("localhost:%d/%s:0.0.1", PortNumber, tc.ProjectName)
+	BundleImgName := fmt.Sprintf("localhost:%d/%s-bundle:0.0.1", PortNumber, tc.ProjectName)
+
+	if tc.IsRunningOnKind() {
+		By("loading the required images into Kind cluster")
+		Expect(tc.LoadImageToKindCluster()).To(Succeed())
+	}
+
+	cmd := exec.Command("kind", "load", "docker-image", ImgName, "--name", "Kind")
+	_, err = cmd.Output()
+
+	os.Setenv("BUNDLE_IMAGE_NAME", BundleImgName)
+
+	_ = exec.Command("docker", "run", "-d", "-p", strconv.Itoa(PortNumber)+":"+strconv.Itoa(5000), "--restart=always", "--name", "registry", "registry:2")
+
+	By("generating the operator bundle")
+	err = tc.Make("bundle", "IMG="+ImgName)
+	Expect(err).NotTo(HaveOccurred())
+
+	By("building the operator bundle image")
+	err = tc.Make("bundle-build", "BUNDLE_IMG="+BundleImgName)
+	Expect(err).NotTo(HaveOccurred())
+
+	By("push the image to a local registry")
+	err = tc.Make("docker-build", "IMG="+ImgName)
+	Expect(err).NotTo(HaveOccurred())
+
+	os.Setenv("OPERATOR_IMAGE_NAME", ImgName)
 
 	By("creating the test namespace")
 	_, err = tc.Kubectl.Command("create", "namespace", tc.Kubectl.Namespace)
 	Expect(err).NotTo(HaveOccurred())
+
+	os.Setenv("KUBECTL_NAMESPACE", tc.Kubectl.Namespace)
+
 })
 
 var _ = AfterSuite(func() {
-	By("uninstalling OLM")
-	tc.UninstallOLM()
+	// By("uninstalling OLM")
+	// tc.UninstallOLM()
 
-	By("uninstalling prometheus-operator")
-	tc.UninstallPrometheusOperManager()
+	// By("uninstalling prometheus-operator")
+	// tc.UninstallPrometheusOperManager()
 
-	By("deleting the test namespace")
-	warn(tc.Kubectl.Delete(false, "namespace", tc.Kubectl.Namespace))
+	// By("deleting the test namespace")
+	// warn(tc.Kubectl.Delete(false, "namespace", tc.Kubectl.Namespace))
 
-	By("cleaning up the project")
-	tc.Destroy()
+	// By("cleaning up the project")
+	// tc.Destroy()
 })
 
 func warn(output string, err error) {
@@ -185,7 +218,7 @@ func updateProjectConfigs(tc testutils.TestContext) {
 		"#- manager_webhook_patch.yaml",
 	)).To(Succeed())
 
-	olmManagerWebhookPatchFile := filepath.Join(tc.Dir, "config", "default", "olm_manager_webhook_patch.yaml")
+	olmManagerWebhookPatchFile := filepath.Join(tc.Dir, "config", "manifests", "olm_manager_webhook_patch.yaml")
 	ExpectWithOffset(1, ioutil.WriteFile(olmManagerWebhookPatchFile, []byte(olmManagerWebhookPatch), 0644)).To(Succeed())
 
 	ExpectWithOffset(1, utils.InsertCode(filepath.Join(tc.Dir, "config", "manifests", "kustomization.yaml"),

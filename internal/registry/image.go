@@ -51,7 +51,7 @@ func ExtractBundleImage(ctx context.Context, logger *log.Entry, image string, lo
 	logger = logger.WithFields(log.Fields{"dir": bundleDir})
 
 	// Use a containerd registry instead of shelling out to a container tool.
-	reg, err := containerdregistry.NewRegistry(containerdregistry.WithLog(logger))
+	reg, err := containerdregistry.NewRegistry(containerdregistry.WithLog(logger), containerdregistry.SkipTLS(true))
 	if err != nil {
 		return "", err
 	}
