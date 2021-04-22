@@ -61,6 +61,7 @@ Default project version: "3"
 * [operator-sdk generate](../operator-sdk_generate)	 - Invokes a specific generator
 * [operator-sdk init](../operator-sdk_init)	 - Initialize a new project
 * [operator-sdk olm](../operator-sdk_olm)	 - Manage the Operator Lifecycle Manager installation in your cluster
+* [operator-sdk pkgman-to-bundle](../operator-sdk_pkgman-to-bundle)	 - Migrates packagemanifests to bundles
 * [operator-sdk run](../operator-sdk_run)	 - Run an Operator in a variety of environments
 * [operator-sdk scorecard](../operator-sdk_scorecard)	 - Runs scorecard
 * [operator-sdk version](../operator-sdk_version)	 - Print the operator-sdk version

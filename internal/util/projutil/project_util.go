@@ -147,6 +147,7 @@ func RewriteFileContents(filename, target, newContent string) error {
 	if err != nil {
 		return fmt.Errorf("error writing modified contents to file, %v", err)
 	}
+
 	return nil
 }
 
