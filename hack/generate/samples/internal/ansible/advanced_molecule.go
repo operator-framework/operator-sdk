@@ -125,6 +125,7 @@ func (ma *AdvancedMolecule) updateConfig() {
       - ""
     resources:
       - configmaps
+      - namespaces
     verbs:
       - create
       - delete
@@ -470,6 +471,42 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
 		originalPlaybookFragment,
 		subresourcesPlaybook)
 	pkg.CheckError("adding playbook for subresourcestest", err)
+
+	log.Infof("adding playbook for clusterannotationtest")
+	const clusterAnnotationTest = `---
+- hosts: localhost
+  gather_facts: no
+  collections:
+    - community.kubernetes
+  tasks:
+
+    - name: create externalnamespace
+      k8s:
+        name: "externalnamespace"
+        api_version: v1
+        kind: "Namespace"
+        definition:
+          metadata:
+            labels:
+              foo: bar
+
+    - name: create configmap
+      k8s:
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            namespace: "externalnamespace"
+            name: '{{ meta.name }}'
+          data:
+            foo: bar
+`
+	err = util.ReplaceInFile(
+		filepath.Join(ma.ctx.Dir, "playbooks", "clusterannotationtest.yml"),
+		originalPlaybookFragment,
+		clusterAnnotationTest)
+	pkg.CheckError("adding playbook for clusterannotationtest", err)
+
 }
 
 func (ma *AdvancedMolecule) addPlaybooks() {
@@ -477,12 +514,13 @@ func (ma *AdvancedMolecule) addPlaybooks() {
 		"ArgsTest",
 		"CaseTest",
 		"CollectionTest",
+		"ClusterAnnotationTest",
 		"ReconciliationTest",
 		"SelectorTest",
 		"SubresourcesTest",
 	}
 
-	// Crate API
+	// Create API
 	for _, k := range allPlaybookKinds {
 		logMsgForKind := fmt.Sprintf("creating an API %s", k)
 		log.Infof(logMsgForKind)
