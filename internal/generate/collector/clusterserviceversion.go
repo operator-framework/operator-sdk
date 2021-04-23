@@ -31,8 +31,11 @@ const (
 	cRoleKind          = "ClusterRole"
 )
 
-// SplitCSVPermissionsObjects splits roles that should be written to a CSV as permissions (in)
-// from roles and role bindings that should be written directly to the bundle (out).
+// SplitCSVPermissionsObjects splits Roles and ClusterRoles bound to ServiceAccounts in Deployments and extraSA's.
+// Roles and ClusterRoles bound to RoleBindings associated with ServiceAccounts are added to inPerms.
+// ClusterRoles bound to ClusterRoleBindings associated with ServiceAccounts are added to inCPerms.
+// All unassociated Roles, ClusterRoles, and bindings are added to out.
+// Any bindings with some associations, but with non-associations, are added to out unmodified.
 func (c *Manifests) SplitCSVPermissionsObjects(extraSAs []string) (inPerms, inCPerms, out []client.Object) { //nolint:gocyclo
 	// Create a set of ServiceAccount names to match against below.
 	saNameSet := make(map[string]struct{})
