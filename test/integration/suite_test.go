@@ -69,8 +69,8 @@ var _ = BeforeSuite(func() {
 	By("copying sample to a temporary e2e directory")
 	Expect(exec.Command("cp", "-r", "../../testdata/go/v3/memcached-operator", tc.Dir).Run()).To(Succeed())
 
-	By("updating the project configuration")
-	updateProjectConfigs(tc)
+	// By("updating the project configuration")
+	// updateProjectConfigs(tc)
 
 	By("installing OLM")
 	Expect(tc.InstallOLMVersion("0.15.1")).To(Succeed())
@@ -86,10 +86,11 @@ var _ = BeforeSuite(func() {
 		Expect(tc.LoadImageToKindCluster()).To(Succeed())
 	}
 
-	By("generating the operator package manifests")
-	err = tc.Make("packagemanifests", "IMG="+tc.ImageName)
-	Expect(err).NotTo(HaveOccurred())
+	// By("generating the operator package manifests")
+	// err = tc.Make("packagemanifests", "IMG="+tc.ImageName)
+	// Expect(err).NotTo(HaveOccurred())
 
+	fmt.Printf("----------------------%+v", tc.ImageName)
 	// TODO(estroz): enable when bundles can be tested locally.
 
 	os.Setenv("LOCAL_IMAGE_REGISTRY", "1")
@@ -109,7 +110,8 @@ var _ = BeforeSuite(func() {
 
 	os.Setenv("BUNDLE_IMAGE_NAME", BundleImgName)
 
-	_ = exec.Command("docker", "run", "-d", "-p", strconv.Itoa(PortNumber)+":"+strconv.Itoa(5000), "--restart=always", "--name", "registry", "registry:2")
+	cmd = exec.Command("docker", "run", "-d", "-p", strconv.Itoa(PortNumber)+":"+strconv.Itoa(5000), "--restart=always", "--name", "registry", "registry:2")
+	_, err = cmd.Output()
 
 	By("generating the operator bundle")
 	err = tc.Make("bundle", "IMG="+ImgName)
