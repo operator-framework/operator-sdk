@@ -57,12 +57,13 @@ func (h LoggingEnqueueRequestForObject) Generic(e event.GenericEvent, q workqueu
 }
 
 func (h LoggingEnqueueRequestForObject) logEvent(eventType string, object client.Object) {
-	objectNs := object.GetNamespace()
-	if objectNs == "" {
-		objectNs = "<nil>"
+	kvs := []string{
+		"Event type", eventType,
+		"GroupVersionKind", object.GetObjectKind().GroupVersionKind().String(),
+		"Name", object.GetName(),
 	}
-	log.Info(fmt.Sprintf("Received %s event for GVK %s with name %s in namespace %s",
-		eventType,
-		object.GetObjectKind().GroupVersionKind().String(),
-		object.GetName(), objectNs))
+	if objectNs := object.GetNamespace(); objectNs != "" {
+		kvs = append(kvs, "Namespace", objectNs)
+	}
+	log.Info("Metrics handler event", kvs...))
 }
