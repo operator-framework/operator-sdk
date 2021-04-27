@@ -242,7 +242,9 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 			log.Info("Watching child resource", "kind", resource.GroupVersionKind(),
 				"enqueue_kind", u.GroupVersionKind())
 			err := contents.Controller.Watch(&source.Kind{Type: resource},
-				&handler.LoggingEnqueueRequestForOwner{crHandler.EnqueueRequestForOwner{OwnerType: u}}, predicate.DependentPredicate{})
+				&handler.LoggingEnqueueRequestForOwner{
+					EnqueueRequestForOwner: crHandler.EnqueueRequestForOwner{OwnerType: u},
+				}, predicate.DependentPredicate{})
 			// Store watch in map
 			if err != nil {
 				log.Error(err, "Failed to watch child resource",
@@ -263,7 +265,9 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 			log.Info("Watching child resource", "kind", resource.GroupVersionKind(),
 				"enqueue_annotation_type", ownerGK.String())
 			err = contents.Controller.Watch(&source.Kind{Type: resource},
-				&handler.LoggingEnqueueRequestForAnnotation{libhandler.EnqueueRequestForAnnotation{Type: ownerGK}}, predicate.DependentPredicate{})
+				&handler.LoggingEnqueueRequestForAnnotation{
+					EnqueueRequestForAnnotation: libhandler.EnqueueRequestForAnnotation{Type: ownerGK},
+				}, predicate.DependentPredicate{})
 			if err != nil {
 				log.Error(err, "Failed to watch child resource",
 					"kind", resource.GroupVersionKind(), "enqueue_kind", u.GroupVersionKind())

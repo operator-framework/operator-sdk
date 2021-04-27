@@ -27,6 +27,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 )
 
+const (
+	nilString = "<nil>"
+)
+
 // LoggingEnqueueRequestForAnnotation wraps operator-lib handler for
 // "InstrumentedEnqueueRequestForObject", and logs the events as they occur
 //		&handler.LoggingEnqueueRequestForAnnotation{}
@@ -64,12 +68,12 @@ func (h LoggingEnqueueRequestForAnnotation) logEvent(eventType string, object, n
 		typeString, name, namespace = extractTypedOwnerAnnotations(h.EnqueueRequestForAnnotation.Type, newObject)
 	}
 	if namespace == "" {
-		namespace = "<nil>"
+		namespace = nilString
 	}
 
 	objectNs := object.GetNamespace()
 	if objectNs == "" {
-		objectNs = "<nil>"
+		objectNs = nilString
 	}
 
 	if name != "" && typeString != "" {
