@@ -64,5 +64,5 @@ func (h LoggingEnqueueRequestForObject) logEvent(eventType string, object client
 		kvs = append(kvs, "Namespace", objectNs)
 	}
 
-	log.Info("Metrics handler event", kvs...)
+	log.V(1).Info("Metrics handler event", kvs...)
 }

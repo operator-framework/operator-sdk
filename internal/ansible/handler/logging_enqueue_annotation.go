@@ -80,7 +80,7 @@ func (h LoggingEnqueueRequestForAnnotation) logEvent(eventType string, object, n
 			kvs = append(kvs, "Owner Namespace", namespace)
 		}
 
-		log.Info("Annotation handler event", kvs...)
+		log.V(1).Info("Annotation handler event", kvs...)
 	}
 }
 

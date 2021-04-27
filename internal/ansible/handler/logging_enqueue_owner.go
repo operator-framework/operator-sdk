@@ -75,7 +75,7 @@ func (h LoggingEnqueueRequestForOwner) logEvent(eventType string, object, newObj
 			"Owner Name", ownerReference.Name,
 		)
 
-		log.Info("OwnerReference handler event", kvs...)
+		log.V(1).Info("OwnerReference handler event", kvs...)
 	}
 }
 
