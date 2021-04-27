@@ -17,7 +17,6 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-lib/handler"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -86,8 +85,12 @@ func (h LoggingEnqueueRequestForAnnotation) logEvent(eventType string, object, n
 }
 
 func extractTypedOwnerAnnotations(ownerGK schema.GroupKind, object metav1.Object) (string, string, string) {
-	if typeString, ok := object.GetAnnotations()[handler.TypeAnnotation]; ok && typeString == ownerGK.String() {
-		if namespacedNameString, ok := object.GetAnnotations()[handler.NamespacedNameAnnotation]; ok {
+	annotations := object.GetAnnotations()
+	if len(annotations) == 0 {
+		return "", "", ""
+	}
+	if typeString, ok := annotations[handler.TypeAnnotation]; ok && typeString == ownerGK.String() {
+		if namespacedNameString, ok := annotations[handler.NamespacedNameAnnotation]; ok {
 			parsed := parseNamespacedName(namespacedNameString)
 			return typeString, parsed.Name, parsed.Namespace
 		}

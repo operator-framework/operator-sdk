@@ -54,8 +54,7 @@ var _ = Describe("LoggingEnqueueRequestForAnnotation", func() {
 		pod.SetGroupVersionKind(schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Pod"})
 		podOwner.SetGroupVersionKind(schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Pod"})
 
-		err := handler.SetOwnerAnnotations(podOwner, pod)
-		Expect(err).To(BeNil())
+		Expect(handler.SetOwnerAnnotations(podOwner, pod)).To(Succeed())
 		instance = LoggingEnqueueRequestForAnnotation{
 			handler.EnqueueRequestForAnnotation{
 				Type: schema.GroupKind{
