@@ -14,8 +14,6 @@
 package handler
 
 import (
-	"fmt"
-
 	"github.com/operator-framework/operator-lib/handler"
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -57,7 +55,7 @@ func (h LoggingEnqueueRequestForObject) Generic(e event.GenericEvent, q workqueu
 }
 
 func (h LoggingEnqueueRequestForObject) logEvent(eventType string, object client.Object) {
-	kvs := []string{
+	kvs := []interface{}{
 		"Event type", eventType,
 		"GroupVersionKind", object.GetObjectKind().GroupVersionKind().String(),
 		"Name", object.GetName(),
@@ -65,5 +63,6 @@ func (h LoggingEnqueueRequestForObject) logEvent(eventType string, object client
 	if objectNs := object.GetNamespace(); objectNs != "" {
 		kvs = append(kvs, "Namespace", objectNs)
 	}
-	log.Info("Metrics handler event", kvs...))
+
+	log.Info("Metrics handler event", kvs...)
 }

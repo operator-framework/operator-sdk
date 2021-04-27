@@ -227,7 +227,7 @@ var _ = Describe("LoggingEnqueueRequestForAnnotation", func() {
 			logBuffer.Reset()
 			instance.Create(evt, q)
 			Expect(logBuffer.String()).To(MatchRegexp(
-				`ansible.handler.*Create.*/v1.*Node.*node-1.*<nil>.*ReplicaSet.apps.*myapp.*<nil>`,
+				`ansible.handler.*Create.*/v1.*Node.*node-1.*ReplicaSet.apps.*myapp.*`,
 			))
 			Expect(q.Len()).To(Equal(1))
 

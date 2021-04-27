@@ -14,8 +14,6 @@
 package handler
 
 import (
-	"fmt"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/util/workqueue"
@@ -63,14 +61,21 @@ func (h LoggingEnqueueRequestForOwner) logEvent(eventType string, object, newObj
 
 	// If no ownerReference was found then it's probably not an event we care about
 	if ownerReference != nil {
-		log.Info(fmt.Sprintf("Received %s event for dependent resource with GVK %s with name %s in namespace %s, mapped to owner GVK %s, Kind=%s with name %s",
-			eventType,
-			object.GetObjectKind().GroupVersionKind().String(),
-			object.GetName(),
-			object.GetNamespace(),
-			ownerReference.APIVersion,
-			ownerReference.Kind,
-			ownerReference.Name))
+		kvs := []interface{}{
+			"Event type", eventType,
+			"GroupVersionKind", object.GetObjectKind().GroupVersionKind().String(),
+			"Name", object.GetName(),
+		}
+		if objectNs := object.GetNamespace(); objectNs != "" {
+			kvs = append(kvs, "Namespace", objectNs)
+		}
+		kvs = append(kvs,
+			"Owner APIVersion", ownerReference.APIVersion,
+			"Owner Kind", ownerReference.Kind,
+			"Owner Name", ownerReference.Name,
+		)
+
+		log.Info("OwnerReference handler event", kvs...)
 	}
 }
 

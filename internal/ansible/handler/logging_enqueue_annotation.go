@@ -14,7 +14,6 @@
 package handler
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/operator-framework/operator-lib/handler"
@@ -25,10 +24,6 @@ import (
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
-)
-
-const (
-	nilString = "<nil>"
 )
 
 // LoggingEnqueueRequestForAnnotation wraps operator-lib handler for
@@ -67,24 +62,26 @@ func (h LoggingEnqueueRequestForAnnotation) logEvent(eventType string, object, n
 	if newObject != nil && typeString == "" {
 		typeString, name, namespace = extractTypedOwnerAnnotations(h.EnqueueRequestForAnnotation.Type, newObject)
 	}
-	if namespace == "" {
-		namespace = nilString
-	}
-
-	objectNs := object.GetNamespace()
-	if objectNs == "" {
-		objectNs = nilString
-	}
 
 	if name != "" && typeString != "" {
-		log.Info(fmt.Sprintf("Received %s event for dependent resource with GVK %s with name %s in namespace %s, mapped to owner GK %s with name %s in namespace %s",
-			eventType,
-			object.GetObjectKind().GroupVersionKind().String(),
-			object.GetName(),
-			objectNs,
-			typeString,
-			name,
-			namespace))
+		kvs := []interface{}{
+			"Event type", eventType,
+			"GroupVersionKind", object.GetObjectKind().GroupVersionKind().String(),
+			"Name", object.GetName(),
+		}
+		if objectNs := object.GetNamespace(); objectNs != "" {
+			kvs = append(kvs, "Namespace", objectNs)
+		}
+
+		kvs = append(kvs,
+			"Owner GroupKind", typeString,
+			"Owner Name", name,
+		)
+		if namespace != "" {
+			kvs = append(kvs, "Owner Namespace", namespace)
+		}
+
+		log.Info("Annotation handler event", kvs...)
 	}
 }
 
