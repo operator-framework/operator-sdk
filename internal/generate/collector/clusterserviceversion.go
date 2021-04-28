@@ -34,9 +34,9 @@ const (
 // SplitCSVPermissionsObjects splits Roles and ClusterRoles bound to ServiceAccounts in Deployments and extraSA's.
 // Roles and ClusterRoles bound to RoleBindings associated with ServiceAccounts are added to inPerms.
 // ClusterRoles bound to ClusterRoleBindings associated with ServiceAccounts are added to inCPerms.
-// All unassociated Roles, ClusterRoles, and bindings are added to out.
-// Any bindings with some associations, but with non-associations, are added to out unmodified.
-func (c *Manifests) SplitCSVPermissionsObjects(extraSAs []string) (inPerms, inCPerms, out []client.Object) { //nolint:gocyclo
+// All Roles and ClusterRoles not bound to a relevant ServiceAccount, and bindings without a relevant ServiceAccount,
+// are added to out. Any bindings with some associations, but with non-associations, are added to out unmodified.
+func (c *Manifests) SplitCSVPermissionsObjects(extraSAs []string) (inPerms, inCPerms, out []client.Object) {
 	// Create a set of ServiceAccount names to match against below.
 	saNameSet := make(map[string]struct{})
 	for _, dep := range c.Deployments {
@@ -50,99 +50,97 @@ func (c *Manifests) SplitCSVPermissionsObjects(extraSAs []string) (inPerms, inCP
 		saNameSet[extraSA] = struct{}{}
 	}
 
-	roleBindings := copyRoleBindings(c.RoleBindings)
-	cRoleBindings := copyClusterRoleBindings(c.ClusterRoleBindings)
-
-	var inPermsR, inPermsCR, inCPermsCR []client.Object
-	inPermsR, roleBindings = getRolesBoundToRoleBindings(c.Roles, roleBindings, saNameSet)
-	inPerms = append(inPerms, inPermsR...)
-	inPermsCR, roleBindings = getClusterRolesBoundToRoleBindings(c.ClusterRoles, roleBindings, saNameSet)
-	inPerms = append(inPerms, inPermsCR...)
-	inCPermsCR, cRoleBindings = getClusterRolesBoundToClusterRoleBindings(c.ClusterRoles, cRoleBindings, saNameSet)
-	inCPerms = append(inCPerms, inCPermsCR...)
-
+	// Construct sets for lookups.
 	roleMap := make(map[string]*rbacv1.Role, len(c.Roles))
+	roleNameMap := make(map[string]struct{}, len(c.Roles))
+	for i, r := range c.Roles {
+		roleMap[r.GetName()] = &c.Roles[i]
+		roleNameMap[r.GetName()] = struct{}{}
+	}
 	cRoleMap := make(map[string]*rbacv1.ClusterRole, len(c.ClusterRoles))
-	for i, perm := range inPerms {
-		switch t := perm.(type) {
-		case *rbacv1.Role:
-			roleMap[t.GetName()] = inPerms[i].(*rbacv1.Role)
-		case *rbacv1.ClusterRole:
-			cRoleMap[t.GetName()] = inPerms[i].(*rbacv1.ClusterRole)
-		}
+	cRoleNameMap := make(map[string]struct{}, len(c.ClusterRoles))
+	for i, r := range c.ClusterRoles {
+		cRoleMap[r.GetName()] = &c.ClusterRoles[i]
+		cRoleNameMap[r.GetName()] = struct{}{}
 	}
-	for i, perm := range inCPerms {
-		if t, ok := perm.(*rbacv1.ClusterRole); ok {
-			cRoleMap[t.GetName()] = inCPerms[i].(*rbacv1.ClusterRole)
-		}
+	pRoleBindings := make(partialBindings, len(c.RoleBindings))
+	roleBindingMap := make(map[string]*rbacv1.RoleBinding, len(c.RoleBindings))
+	for i, binding := range c.RoleBindings {
+		pRoleBindings[i].Name = binding.GetName()
+		pRoleBindings[i].RoleRef = binding.RoleRef
+		pRoleBindings[i].Subjects = make([]rbacv1.Subject, len(binding.Subjects))
+		copy(pRoleBindings[i].Subjects, binding.Subjects)
+		roleBindingMap[binding.GetName()] = &c.RoleBindings[i]
 	}
-	for i := 0; i < len(c.Roles); i++ {
-		role := c.Roles[i]
-		if _, inPerms := roleMap[role.GetName()]; !inPerms {
-			out = append(out, &role)
-		}
-	}
-	for i := 0; i < len(c.ClusterRoles); i++ {
-		role := c.ClusterRoles[i]
-		if _, inPerms := cRoleMap[role.GetName()]; !inPerms {
-			out = append(out, &role)
-		}
+	pCRoleBindings := make(partialBindings, len(c.ClusterRoleBindings))
+	cRoleBindingMap := make(map[string]*rbacv1.ClusterRoleBinding, len(c.ClusterRoleBindings))
+	for i, binding := range c.ClusterRoleBindings {
+		pCRoleBindings[i].Name = binding.GetName()
+		pCRoleBindings[i].RoleRef = binding.RoleRef
+		pCRoleBindings[i].Subjects = make([]rbacv1.Subject, len(binding.Subjects))
+		copy(pCRoleBindings[i].Subjects, binding.Subjects)
+		cRoleBindingMap[binding.GetName()] = &c.ClusterRoleBindings[i]
 	}
 
-	roleBindingMap := make(map[string]struct{}, len(roleBindings))
-	cRoleBindingMap := make(map[string]struct{}, len(cRoleBindings))
-	for _, binding := range roleBindings {
-		roleBindingMap[binding.GetName()] = struct{}{}
+	// getRolesBoundToPartialBindings will remove
+	// bound Subjects from partial bindings to easily find concrete bindings that bind non-CSV RBAC.
+	// Those with no Subjects left will be removed from the partial binding lists; their concrete counterparts should
+	// be added to out.
+	inRoleNames := pRoleBindings.getRolesBoundToPartialBindings(roleKind, roleNameMap, saNameSet)
+	inCRoleNamesNScope := pRoleBindings.getRolesBoundToPartialBindings(cRoleKind, cRoleNameMap, saNameSet)
+	inCRoleNamesCScope := pCRoleBindings.getRolesBoundToPartialBindings(cRoleKind, cRoleNameMap, saNameSet)
+
+	// Add {Cluster}Roles bound to a ServiceAccount to either namespace- or cluster-scoped permission sets.
+	for _, roleName := range inRoleNames {
+		inPerms = append(inPerms, roleMap[roleName])
+		delete(roleMap, roleName)
 	}
-	for _, binding := range cRoleBindings {
-		cRoleBindingMap[binding.GetName()] = struct{}{}
+	for _, roleName := range inCRoleNamesNScope {
+		inPerms = append(inPerms, cRoleMap[roleName])
 	}
-	for i := range c.RoleBindings {
-		binding := c.RoleBindings[i]
-		if _, ok := roleBindingMap[binding.GetName()]; ok {
-			out = append(out, &binding)
-		}
+	for _, roleName := range inCRoleNamesCScope {
+		inCPerms = append(inCPerms, cRoleMap[roleName])
 	}
-	for i := range c.ClusterRoleBindings {
-		binding := c.ClusterRoleBindings[i]
-		if _, ok := cRoleBindingMap[binding.GetName()]; ok {
-			out = append(out, &binding)
-		}
+	// Delete afterwards so both namespace- and cluster-scoped ClusterRoles can be added.
+	for _, roleName := range append(inCRoleNamesNScope, inCRoleNamesCScope...) {
+		delete(cRoleMap, roleName)
+	}
+
+	// Add all {Cluster}Roles not used above and all remaining bindings to out.
+	for _, role := range roleMap {
+		out = append(out, role)
+	}
+	for _, role := range cRoleMap {
+		out = append(out, role)
+	}
+	for _, pBinding := range pRoleBindings {
+		out = append(out, roleBindingMap[pBinding.Name])
+	}
+	for _, pBinding := range pCRoleBindings {
+		out = append(out, cRoleBindingMap[pBinding.Name])
 	}
 
 	return inPerms, inCPerms, out
 }
 
-func copyRoleBindings(in []rbacv1.RoleBinding) (out []*rbacv1.RoleBinding) {
-	out = make([]*rbacv1.RoleBinding, len(in))
-	for i, binding := range in {
-		out[i] = binding.DeepCopy()
-	}
-	return out
+// partialBinding is a "generic" binding.
+type partialBinding struct {
+	Name     string
+	RoleRef  rbacv1.RoleRef
+	Subjects []rbacv1.Subject
 }
 
-func copyClusterRoleBindings(in []rbacv1.ClusterRoleBinding) (out []*rbacv1.ClusterRoleBinding) {
-	out = make([]*rbacv1.ClusterRoleBinding, len(in))
-	for i, binding := range in {
-		out[i] = binding.DeepCopy()
-	}
-	return out
-}
+type partialBindings []partialBinding
 
-// getRolesBoundToRoleBindings splits roles that should be written to a CSV as permissions (in)
-// from roles and role bindings that should be written directly to the bundle (out).
-//nolint:dupl
-func getRolesBoundToRoleBindings(roles []rbacv1.Role, bindings []*rbacv1.RoleBinding, saNames map[string]struct{}) (in []client.Object, _ []*rbacv1.RoleBinding) {
-	roleMap := make(map[string]*rbacv1.Role, len(roles))
-	for i, r := range roles {
-		roleMap[r.GetName()] = &roles[i]
-	}
+// getRolesBoundToPartialBindings returns a list of role names for type refKind (one of Role, ClusterRole) in roleNameMap
+// that are bound to a binding in pBindings with a ServiceAccount subject with a name in saNames.
+func (pBindings *partialBindings) getRolesBoundToPartialBindings(refKind string, roleNameMap, saNames map[string]struct{}) (inNames []string) {
 
-	for i := 0; i < len(bindings); i++ {
-		binding := bindings[i]
+	for i := 0; i < len(*pBindings); i++ {
+		binding := (*pBindings)[i]
 		ref := binding.RoleRef
-		role, hasRoleName := roleMap[ref.Name]
-		if !hasRoleName || ref.Kind != roleKind || !acceptRefGroup(ref.APIGroup) {
+		_, hasRoleName := roleNameMap[ref.Name]
+		if !hasRoleName || ref.Kind != refKind || !acceptRefGroup(ref.APIGroup) {
 			continue
 		}
 		addRole := false
@@ -154,89 +152,17 @@ func getRolesBoundToRoleBindings(roles []rbacv1.Role, bindings []*rbacv1.RoleBin
 				j--
 			}
 		}
-		// At least one ServiceAccount of this binding in saNames was found, so add the role.
+		// At least one ServiceAccount of this binding in saNames was found, so add the role's name.
 		if addRole {
-			in = append(in, role)
+			inNames = append(inNames, ref.Name)
 		}
-		if len(binding.Subjects) == 0 {
-			bindings = append(bindings[:i], bindings[i+1:]...)
+		if len(binding.Subjects) == 0 && len(*pBindings) > 0 {
+			*pBindings = append((*pBindings)[:i], (*pBindings)[i+1:]...)
 			i--
 		}
 	}
 
-	return in, bindings
-}
-
-//nolint:dupl
-func getClusterRolesBoundToRoleBindings(roles []rbacv1.ClusterRole, bindings []*rbacv1.RoleBinding, saNames map[string]struct{}) (in []client.Object, _ []*rbacv1.RoleBinding) {
-	roleMap := make(map[string]*rbacv1.ClusterRole)
-	for i, r := range roles {
-		roleMap[r.GetName()] = &roles[i]
-	}
-
-	for i := 0; i < len(bindings); i++ {
-		binding := bindings[i]
-		ref := binding.RoleRef
-		role, hasRoleName := roleMap[ref.Name]
-		if !hasRoleName || ref.Kind != cRoleKind || !acceptRefGroup(ref.APIGroup) {
-			continue
-		}
-		addRole := false
-		for j := 0; j < len(binding.Subjects); j++ {
-			subject := binding.Subjects[j]
-			if _, hasSA := saNames[subject.Name]; hasSA && subject.Kind == serviceAccountKind {
-				addRole = true
-				binding.Subjects = append(binding.Subjects[:j], binding.Subjects[j+1:]...)
-				j--
-			}
-		}
-		// At least one ServiceAccount of this binding in saNames was found, so add the role.
-		if addRole {
-			in = append(in, role)
-		}
-		if len(binding.Subjects) == 0 {
-			bindings = append(bindings[:i], bindings[i+1:]...)
-			i--
-		}
-	}
-
-	return in, bindings
-}
-
-//nolint:dupl
-func getClusterRolesBoundToClusterRoleBindings(roles []rbacv1.ClusterRole, bindings []*rbacv1.ClusterRoleBinding, saNames map[string]struct{}) (in []client.Object, _ []*rbacv1.ClusterRoleBinding) {
-	roleMap := make(map[string]*rbacv1.ClusterRole)
-	for i, r := range roles {
-		roleMap[r.GetName()] = &roles[i]
-	}
-
-	for i := 0; i < len(bindings); i++ {
-		binding := bindings[i]
-		ref := binding.RoleRef
-		role, hasRoleName := roleMap[ref.Name]
-		if !hasRoleName || ref.Kind != cRoleKind || !acceptRefGroup(ref.APIGroup) {
-			continue
-		}
-		addRole := false
-		for j := 0; j < len(binding.Subjects); j++ {
-			subject := binding.Subjects[j]
-			if _, hasSA := saNames[subject.Name]; hasSA && subject.Kind == serviceAccountKind {
-				addRole = true
-				binding.Subjects = append(binding.Subjects[:j], binding.Subjects[j+1:]...)
-				j--
-			}
-		}
-		// At least one ServiceAccount of this binding in saNames was found, so add the role.
-		if addRole {
-			in = append(in, role)
-		}
-		if len(binding.Subjects) == 0 {
-			bindings = append(bindings[:i], bindings[i+1:]...)
-			i--
-		}
-	}
-
-	return in, bindings
+	return inNames
 }
 
 func acceptRefGroup(apiGroup string) bool {
