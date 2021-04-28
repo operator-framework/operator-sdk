@@ -58,10 +58,6 @@ var _ = BeforeSuite(func() {
 	By("copying sample to a temporary e2e directory")
 	Expect(exec.Command("cp", "-r", "../../../testdata/go/v3/memcached-operator", tc.Dir).Run()).To(Succeed())
 
-	By("fetching the current-context")
-	tc.Kubectx, err = tc.Kubectl.Command("config", "current-context")
-	Expect(err).NotTo(HaveOccurred())
-
 	By("preparing the prerequisites on cluster")
 	tc.InstallPrerequisites()
 
@@ -77,7 +73,9 @@ var _ = BeforeSuite(func() {
 	err = tc.Make("docker-build", "IMG="+tc.ImageName)
 	Expect(err).NotTo(HaveOccurred())
 
-	if tc.IsRunningOnKind() {
+	onKind, err := tc.IsRunningOnKind()
+	Expect(err).NotTo(HaveOccurred())
+	if onKind {
 		By("loading the required images into Kind cluster")
 		Expect(tc.LoadImageToKindCluster()).To(Succeed())
 		Expect(tc.LoadImageToKindClusterWithName("quay.io/operator-framework/scorecard-test:dev")).To(Succeed())

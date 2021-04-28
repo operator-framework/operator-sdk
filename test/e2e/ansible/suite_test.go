@@ -67,10 +67,6 @@ var _ = BeforeSuite(func() {
 		"- \"--leader-elect\"", "- \"--zap-log-level=2\"\n        - \"--leader-elect\"")
 	Expect(err).NotTo(HaveOccurred())
 
-	By("fetching the current-context")
-	tc.Kubectx, err = tc.Kubectl.Command("config", "current-context")
-	Expect(err).NotTo(HaveOccurred())
-
 	By("preparing the prerequisites on cluster")
 	tc.InstallPrerequisites()
 
@@ -122,7 +118,9 @@ var _ = BeforeSuite(func() {
 	err = tc.Make("docker-build", "IMG="+tc.ImageName)
 	Expect(err).NotTo(HaveOccurred())
 
-	if tc.IsRunningOnKind() {
+	onKind, err := tc.IsRunningOnKind()
+	Expect(err).NotTo(HaveOccurred())
+	if onKind {
 		By("loading the required images into Kind cluster")
 		Expect(tc.LoadImageToKindCluster()).To(Succeed())
 		Expect(tc.LoadImageToKindClusterWithName("quay.io/operator-framework/scorecard-test:dev")).To(Succeed())
