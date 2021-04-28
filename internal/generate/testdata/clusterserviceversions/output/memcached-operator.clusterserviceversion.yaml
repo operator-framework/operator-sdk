@@ -197,3 +197,14 @@ spec:
     targetPort: 9443
     type: MutatingAdmissionWebhook
     webhookPath: /mutate-cache-my-domain-v1alpha1-memcached
+  - admissionReviewVersions:
+    - v1beta1
+    containerPort: 443
+    conversionCRDs:
+    - memcacheds.cache.example.com
+    deploymentName: memcached-operator-controller-manager
+    generateName: cmemcacheds.kb.io
+    sideEffects: None
+    targetPort: 9443
+    type: ConversionWebhook
+    webhookPath: /convert

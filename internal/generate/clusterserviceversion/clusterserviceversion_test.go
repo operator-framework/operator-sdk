@@ -252,6 +252,10 @@ var _ = Describe("Generating a ClusterServiceVersion", func() {
 				csv, err := g.generate()
 				Expect(err).ToNot(HaveOccurred())
 				Expect(csv).To(Equal(updatedCSV))
+
+				// verify if conversion webhooks are added
+				Expect(len(csv.Spec.WebhookDefinitions)).NotTo(Equal(0))
+				Expect(containsConversionWebhookDefinition(csv.Spec.WebhookDefinitions)).To(BeTrue())
 			})
 		})
 
@@ -394,4 +398,13 @@ func upgradeCSV(csv *v1alpha1.ClusterServiceVersion, name, version string) *v1al
 	upgraded.Spec.Version = operatorversion.OperatorVersion{Version: semver.MustParse(version)}
 
 	return upgraded
+}
+
+func containsConversionWebhookDefinition(whdef []v1alpha1.WebhookDescription) bool {
+	for _, def := range whdef {
+		if def.Type == v1alpha1.ConversionWebhook {
+			return true
+		}
+	}
+	return false
 }
