@@ -24,8 +24,8 @@ require (
 	github.com/spf13/viper v1.7.0
 	github.com/stretchr/testify v1.6.1
 	github.com/thoas/go-funk v0.8.0
-	golang.org/x/mod v0.3.0
-	golang.org/x/tools v0.0.0-20201224043029-2b0845dc783e
+	golang.org/x/mod v0.4.2
+	golang.org/x/tools v0.1.0
 	gomodules.xyz/jsonpatch/v3 v3.0.1
 	helm.sh/helm/v3 v3.4.1
 	k8s.io/api v0.20.2
