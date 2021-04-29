@@ -22,6 +22,8 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
 )
@@ -90,6 +92,141 @@ var _ = Describe("apply functions", func() {
 				Expect(strategy.ClusterPermissions).To(Equal([]operatorsv1alpha1.StrategyDeploymentPermissions{}))
 			})
 		})
+	})
+})
+
+var _ = Describe("applyCustomResourceDefinitions", func() {
+	var c *collector.Manifests
+
+	csv := operatorsv1alpha1.ClusterServiceVersion{
+		Spec: operatorsv1alpha1.ClusterServiceVersionSpec{
+			CustomResourceDefinitions: operatorsv1alpha1.CustomResourceDefinitions{
+				Owned: []operatorsv1alpha1.CRDDescription{
+					{
+						Name:    "test1",
+						Version: "v1",
+						Kind:    "Memcached",
+					},
+					{
+						Name:    "test1",
+						Version: "v1beta1",
+						Kind:    "Memcached",
+					},
+				},
+			},
+		},
+	}
+
+	It("should add all CRDs present in collector and specified in CSV", func() {
+		c = &collector.Manifests{}
+		crd1 := apiextv1.CustomResourceDefinition{
+			Spec: apiextv1.CustomResourceDefinitionSpec{
+				Group: "Test",
+				Names: apiextv1.CustomResourceDefinitionNames{
+					Kind: "Memcached",
+				},
+				Versions: []apiextv1.CustomResourceDefinitionVersion{
+					{
+						Name:   "v1",
+						Served: true,
+					},
+					{
+						Name:   "v1beta1",
+						Served: true,
+					},
+				},
+			}}
+		crd1.SetName("test1")
+
+		c.V1CustomResourceDefinitions = []apiextv1.CustomResourceDefinition{crd1}
+
+		applyCustomResourceDefinitions(c, &csv)
+
+		By("test if csv has the required owned crds applied")
+		ownedDes := csv.Spec.CustomResourceDefinitions.Owned
+		Expect(len(ownedDes)).To(BeEquivalentTo(2))
+		Expect(ownedDes).To(ContainElements(operatorsv1alpha1.CRDDescription{
+			Name:    "test1",
+			Version: "v1",
+			Kind:    "Memcached",
+		}, operatorsv1alpha1.CRDDescription{
+			Name:    "test1",
+			Version: "v1beta1",
+			Kind:    "Memcached",
+		}))
+	})
+
+	It("should not add unserved v1CRDs", func() {
+		c = &collector.Manifests{}
+		crd1 := apiextv1.CustomResourceDefinition{
+			Spec: apiextv1.CustomResourceDefinitionSpec{
+				Group: "Test",
+				Names: apiextv1.CustomResourceDefinitionNames{
+					Kind: "Memcached",
+				},
+				Versions: []apiextv1.CustomResourceDefinitionVersion{
+					{
+						Name:   "v1",
+						Served: true,
+					},
+					{
+						Name:   "v1beta1",
+						Served: false,
+					},
+				},
+			}}
+		crd1.SetName("test1")
+
+		c.V1CustomResourceDefinitions = []apiextv1.CustomResourceDefinition{crd1}
+
+		applyCustomResourceDefinitions(c, &csv)
+
+		By("test if deprecated crds are not added")
+		ownedDes := csv.Spec.CustomResourceDefinitions.Owned
+		Expect(len(ownedDes)).To(BeEquivalentTo(1))
+		Expect(ownedDes).To(ContainElement(operatorsv1alpha1.CRDDescription{
+			Name:    "test1",
+			Version: "v1",
+			Kind:    "Memcached",
+		}))
+	})
+
+	It("should not add unserved v1beta1CRDs", func() {
+		c = &collector.Manifests{}
+
+		crd1 := apiextv1beta1.CustomResourceDefinition{
+			Spec: apiextv1beta1.CustomResourceDefinitionSpec{
+				Group: "Test",
+				Names: apiextv1beta1.CustomResourceDefinitionNames{
+					Kind: "Memcached",
+				},
+				Versions: []apiextv1beta1.CustomResourceDefinitionVersion{
+					{
+						Name:   "v2",
+						Served: true,
+					},
+					{
+						Name:   "v1beta1",
+						Served: false,
+					},
+				},
+			},
+		}
+
+		crd1.SetName("test1")
+
+		c.V1beta1CustomResourceDefinitions = []apiextv1beta1.CustomResourceDefinition{crd1}
+
+		applyCustomResourceDefinitions(c, &csv)
+
+		By("test if deprecated crds are not added")
+		ownedDes := csv.Spec.CustomResourceDefinitions.Owned
+		Expect(len(ownedDes)).To(BeEquivalentTo(1))
+		Expect(ownedDes).To(ContainElement(operatorsv1alpha1.CRDDescription{
+			Name:    "test1",
+			Version: "v2",
+			Kind:    "Memcached",
+		}))
 	})
 })
 
