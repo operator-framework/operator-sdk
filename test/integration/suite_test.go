@@ -110,8 +110,21 @@ var _ = BeforeSuite(func() {
 
 	os.Setenv("BUNDLE_IMAGE_NAME", BundleImgName)
 
-	cmd = exec.Command("docker", "run", "-d", "-p", strconv.Itoa(PortNumber)+":"+strconv.Itoa(5000), "--restart=always", "--name", "registry", "registry:2")
-	_, err = cmd.Output()
+	fmt.Printf("-----------------hello %+v\n", PortNumber)
+
+	cmd2 := exec.Command("docker", "run", "-d", "-p", strconv.Itoa(PortNumber)+":"+strconv.Itoa(5000), "--restart=always", "--name", "registry", "registry:2")
+
+	stdout, _ := cmd2.Output()
+
+	// localRegistryCmd := exec.Command("docker", "run", "-d", "-p", strconv.Itoa(PortNumber)+":"+strconv.Itoa(5000), "--restart=always", "--name", "registry", "registry:2")
+
+	// stdout, _ := localRegistryCmd.Output()
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// 	return
+	// }
+
+	fmt.Printf("-----------------hello %+v\n", stdout)
 
 	By("generating the operator bundle")
 	err = tc.Make("bundle", "IMG="+ImgName)
@@ -136,8 +149,8 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = AfterSuite(func() {
-	// By("uninstalling OLM")
-	// tc.UninstallOLM()
+	By("uninstalling OLM")
+	tc.UninstallOLM()
 
 	// By("uninstalling prometheus-operator")
 	// tc.UninstallPrometheusOperManager()
