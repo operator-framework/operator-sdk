@@ -15,12 +15,10 @@ next version of your Operator.
 ## Overview
 
 Several `operator-sdk` subcommands manage operator-framework manifests and metadata,
-in particular [`ClusterServiceVersion`'s (CSVs)][doc-csv], for an Operator: [`generate bundle`][cli-gen-bundle],
-[`generate packagemanifests`][cli-gen-packagemanifests], and [`generate kustomize manifests`][cli-gen-kustomize-manifests].
-See this [CLI overview][cli-overview] for details on each command. These manifests come in two different formats,
-[bundle][bundle] and [package manifests][package-manifests], which are described in detail below.
-Ideally the bundle format should be used as this is the default packaging format in operator-framework.
-However the package manifests format is still supported by operator-framework tooling.
+in particular [`ClusterServiceVersion`'s (CSVs)][doc-csv], for an Operator: [`generate bundle`][cli-gen-bundle] and [`generate kustomize manifests`][cli-gen-kustomize-manifests].
+See this [CLI overview][cli-overview] for details on each command.
+
+**Note:** The packagemanifests format is deprecated and support will be removed in `operator-sdk` v2.0.0.
 
 ### Kustomize files
 
@@ -423,10 +421,8 @@ when you set `--version` when running `generate <bundle|packagemanifests>`.
 [cli-overview]:/docs/olm-integration/cli-overview
 [cli-gen-kustomize-manifests]:/docs/cli/operator-sdk_generate_kustomize_manifests
 [cli-gen-bundle]:/docs/cli/operator-sdk_generate_bundle
-[cli-gen-packagemanifests]:/docs/cli/operator-sdk_generate_packagemanifests
 [bundle]: https://github.com/operator-framework/operator-registry/blob/v1.16.1/docs/design/operator-bundle.md
 [bundle-metadata]:https://github.com/operator-framework/operator-registry/blob/v1.12.6/docs/design/operator-bundle.md#bundle-annotations
-[package-manifests]:https://github.com/operator-framework/operator-registry/tree/v1.5.3#manifest-format
 [install-modes]:https://github.com/operator-framework/operator-lifecycle-manager/blob/4197455/Documentation/design/building-your-csv.md#operator-metadata
 [olm-capabilities]:/docs/advanced-topics/operator-capabilities/operator-capabilities
 [csv-markers]:/docs/building-operators/golang/references/markers

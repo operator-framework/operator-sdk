@@ -3,6 +3,10 @@ title: OLM Integration Package Manifests Quickstart
 linkTitle: Package Manifests Quickstart
 weight: 2
 ---
+<!-- TODO(2.0.0): remove this document -->
+
+**Note**
+As operator framework has moved to using bundle format by default, the package manifest commands have been deprecated and will be removed soon. It is suggested that you follow the bundle quickstart][quickstart-bundle] to package your operator. 
 
 This guide assumes you have followed the introduction and *Setup* section of the [bundle quickstart][quickstart-bundle],
 and have added the `packagemanifests` target to your `Makefile` as described [here][doc-packagemanifests-makefile].
@@ -32,7 +36,7 @@ Now we're ready to test the Operator with OLM.
 
 ### Testing package manifests
 
-[`operator-sdk run packagemanifests`][cli-run-packagemanifests] will create an Operator [registry][operator-registry]
+`operator-sdk run packagemanifests` will create an Operator [registry][operator-registry]
 from manifests and metadata in the memcached-operator project, and inform OLM that memcached-operator v0.0.1
 is ready to be deployed. This process effectively replicates production deployment in a constrained manner
 to make sure OLM can deploy our Operator successfully before attempting real production deployment.
@@ -91,7 +95,6 @@ INFO[0001] operator "memcached-operator" uninstalled
 
 [quickstart-bundle]:/docs/olm-integration/quickstart-bundle
 [operator-registry]:https://github.com/operator-framework/operator-registry
-[cli-run-packagemanifests]:/docs/cli/operator-sdk_run_packagemanifests
 [cli-cleanup]:/docs/cli/operator-sdk_cleanup
 [doc-packagemanifests-makefile]:/docs/olm-integration/generation/#package-manifests-format
 [doc-testing-deployment]:/docs/olm-integration/testing-deployment
