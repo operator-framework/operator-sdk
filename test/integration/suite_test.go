@@ -17,6 +17,7 @@ package integration
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
@@ -25,7 +26,6 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
-	"sigs.k8s.io/kubebuilder/v3/test/e2e/utils"
 	"sigs.k8s.io/yaml"
 
 	"github.com/operator-framework/operator-sdk/internal/testutils"
@@ -42,7 +42,8 @@ func TestIntegration(t *testing.T) {
 }
 
 var (
-	tc testutils.TestContext
+	tc     testutils.TestContext
+	onKind bool
 )
 
 var _ = BeforeSuite(func() {
@@ -65,10 +66,10 @@ var _ = BeforeSuite(func() {
 	Expect(exec.Command("cp", "-r", "../../testdata/go/v3/memcached-operator", tc.Dir).Run()).To(Succeed())
 
 	By("updating the project configuration")
-	updateProjectConfigs(tc)
+	Expect(tc.AddPackagemanifestsTarget(projutil.OperatorTypeGo)).To(Succeed())
 
 	By("installing OLM")
-	Expect(tc.InstallOLMVersion("0.15.1")).To(Succeed())
+	Expect(tc.InstallOLMVersion(testutils.OlmVersionForTestSuite)).To(Succeed())
 
 	By("installing prometheus-operator")
 	Expect(tc.InstallPrometheusOperManager()).To(Succeed())
@@ -76,14 +77,15 @@ var _ = BeforeSuite(func() {
 	By("building the manager image")
 	Expect(tc.Make("docker-build", "IMG="+tc.ImageName)).To(Succeed())
 
-	if tc.IsRunningOnKind() {
+	onKind, err = tc.IsRunningOnKind()
+	Expect(err).NotTo(HaveOccurred())
+	if onKind {
 		By("loading the required images into Kind cluster")
 		Expect(tc.LoadImageToKindCluster()).To(Succeed())
 	}
 
 	By("generating the operator package manifests")
-	err = tc.Make("packagemanifests", "IMG="+tc.ImageName)
-	Expect(err).NotTo(HaveOccurred())
+	Expect(tc.Make("packagemanifests", "IMG="+tc.ImageName)).To(Succeed())
 
 	// TODO(estroz): enable when bundles can be tested locally.
 	//
@@ -116,7 +118,7 @@ var _ = AfterSuite(func() {
 
 func warn(output string, err error) {
 	if err != nil {
-		fmt.Fprintf(GinkgoWriter, "warning: %s", err)
+		fmt.Fprintf(GinkgoWriter, "warning: %s\n%s", err, output)
 	}
 }
 
@@ -156,13 +158,23 @@ func readCSVFor(tc *testutils.TestContext, isBundle bool) func(string) (*v1alpha
 	}
 }
 
-func writeCSVFor(tc *testutils.TestContext, isBundle bool) func(*v1alpha1.ClusterServiceVersion) error {
-	return func(csv *v1alpha1.ClusterServiceVersion) error {
+func writeCSVFor(tc *testutils.TestContext, isBundle bool) func(*v1alpha1.ClusterServiceVersion, string) error {
+	return func(csv *v1alpha1.ClusterServiceVersion, version string) error {
 		b, err := yaml.Marshal(csv)
 		if err != nil {
 			return err
 		}
-		return ioutil.WriteFile(csvPath(tc, csv.Spec.Version.String(), isBundle), b, 0644)
+		f, err := os.OpenFile(csvPath(tc, version, isBundle), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+		if err != nil {
+			return err
+		}
+		if _, err := f.Write(b); err != nil {
+			return err
+		}
+		if err := f.Sync(); err != nil {
+			return err
+		}
+		return f.Close()
 	}
 }
 
@@ -173,48 +185,3 @@ func csvPath(tc *testutils.TestContext, version string, isBundle bool) string {
 	}
 	return filepath.Join(tc.Dir, "packagemanifests", version, fileName)
 }
-
-func updateProjectConfigs(tc testutils.TestContext) {
-	defaultKustomization := filepath.Join(tc.Dir, "config", "default", "kustomization.yaml")
-	ExpectWithOffset(1, testutils.ReplaceInFile(defaultKustomization,
-		"- ../certmanager",
-		"#- ../certmanager",
-	)).To(Succeed())
-	ExpectWithOffset(1, testutils.ReplaceInFile(defaultKustomization,
-		"- manager_webhook_patch.yaml",
-		"#- manager_webhook_patch.yaml",
-	)).To(Succeed())
-
-	olmManagerWebhookPatchFile := filepath.Join(tc.Dir, "config", "default", "olm_manager_webhook_patch.yaml")
-	ExpectWithOffset(1, ioutil.WriteFile(olmManagerWebhookPatchFile, []byte(olmManagerWebhookPatch), 0644)).To(Succeed())
-
-	ExpectWithOffset(1, utils.InsertCode(filepath.Join(tc.Dir, "config", "manifests", "kustomization.yaml"),
-		"- ../scorecard",
-		defaultKustomizationOLMWebhookPatch,
-	)).To(Succeed())
-
-	ExpectWithOffset(1, tc.AddPackagemanifestsTarget(projutil.OperatorTypeGo)).To(Succeed())
-}
-
-// Exposes port 9443 for the OLM-managed webhook server.
-const defaultKustomizationOLMWebhookPatch = `
-patchesStrategicMerge:
-- olm_manager_webhook_patch.yaml
-`
-
-const olmManagerWebhookPatch = `
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: controller-manager
-  namespace: system
-spec:
-  template:
-    spec:
-      containers:
-      - name: manager
-        ports:
-        - containerPort: 9443
-          name: webhook-server
-          protocol: TCP
-`

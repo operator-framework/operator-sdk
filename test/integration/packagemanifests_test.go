@@ -62,7 +62,7 @@ var _ = Describe("run packagemanifests", func() {
 				break
 			}
 		}
-		Expect(writeCSV(csv)).To(Succeed())
+		Expect(writeCSV(csv, "0.0.1")).To(Succeed())
 		Expect(runPackageManifests("--install-mode", "OwnNamespace", "--version", "0.0.1")).To(Succeed())
 	})
 
@@ -73,7 +73,7 @@ var _ = Describe("run packagemanifests", func() {
 			imageTag := fmt.Sprintf("integration/%s:%s", tc.ProjectName, version)
 			By("building the manager image " + imageTag)
 			Expect(tc.Make("docker-build", "IMG="+imageTag)).To(Succeed())
-			if tc.IsRunningOnKind() {
+			if onKind {
 				Expect(tc.LoadImageToKindClusterWithName(imageTag)).To(Succeed())
 			}
 			makeArgs := []string{"packagemanifests", "IMG=" + imageTag, "VERSION=" + version, "CHANNEL=" + channels[i]}

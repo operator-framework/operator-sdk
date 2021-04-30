@@ -41,8 +41,6 @@ type TestContext struct {
 	BundleImageName string
 	// ProjectName store the project name
 	ProjectName string
-	// Kubectx stores the k8s context from where the tests are running
-	Kubectx string
 	// isPrometheusManagedBySuite is true when the suite tests is installing/uninstalling the Prometheus
 	isPrometheusManagedBySuite bool
 	// isOLMManagedBySuite is true when the suite tests is installing/uninstalling the OLM
@@ -254,8 +252,12 @@ func (tc TestContext) InstallPrerequisites() {
 }
 
 // IsRunningOnKind returns true when the tests are executed in a Kind Cluster
-func (tc TestContext) IsRunningOnKind() bool {
-	return strings.Contains(tc.Kubectx, "kind")
+func (tc TestContext) IsRunningOnKind() (bool, error) {
+	kubectx, err := tc.Kubectl.Command("config", "current-context")
+	if err != nil {
+		return false, err
+	}
+	return strings.Contains(kubectx, "kind"), nil
 }
 
 // UninstallPrerequisites will uninstall all prerequisites installed via InstallPrerequisites()
