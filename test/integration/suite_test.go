@@ -84,8 +84,14 @@ var _ = BeforeSuite(func() {
 		Expect(tc.LoadImageToKindCluster()).To(Succeed())
 	}
 
-	By("generating the operator package manifests")
+	By("generating the operator package manifests and enabling all InstallModes")
 	Expect(tc.Make("packagemanifests", "IMG="+tc.ImageName)).To(Succeed())
+	csv, err := readCSV(&tc, "0.0.1", false)
+	Expect(err).NotTo(HaveOccurred())
+	for i := range csv.Spec.InstallModes {
+		csv.Spec.InstallModes[i].Supported = true
+	}
+	Expect(writeCSV(&tc, "0.0.1", csv, false)).To(Succeed())
 
 	// TODO(estroz): enable when bundles can be tested locally.
 	//
@@ -122,60 +128,52 @@ func warn(output string, err error) {
 	}
 }
 
-func runPackageManifestsFor(tc *testutils.TestContext) func(...string) error {
-	return func(args ...string) error {
-		allArgs := []string{"run", "packagemanifests", "--timeout", "4m", "--namespace", tc.Kubectl.Namespace}
-		output, err := tc.Run(exec.Command(tc.BinaryName, append(allArgs, args...)...))
-		if err == nil {
-			fmt.Fprintln(GinkgoWriter, string(output))
-		}
+func runPackageManifests(tc *testutils.TestContext, args ...string) error {
+	allArgs := []string{"run", "packagemanifests", "--timeout", "4m", "--namespace", tc.Kubectl.Namespace}
+	output, err := tc.Run(exec.Command(tc.BinaryName, append(allArgs, args...)...))
+	if err == nil {
+		fmt.Fprintln(GinkgoWriter, string(output))
+	}
+	return err
+}
+
+func cleanup(tc *testutils.TestContext) (string, error) {
+	allArgs := []string{"cleanup", tc.ProjectName, "--timeout", "4m", "--namespace", tc.Kubectl.Namespace}
+	output, err := tc.Run(exec.Command(tc.BinaryName, allArgs...))
+	if err == nil {
+		fmt.Fprintln(GinkgoWriter, string(output))
+	}
+	return string(output), err
+}
+
+func readCSV(tc *testutils.TestContext, version string, isBundle bool) (*v1alpha1.ClusterServiceVersion, error) {
+	b, err := ioutil.ReadFile(csvPath(tc, version, isBundle))
+	if err != nil {
+		return nil, err
+	}
+	csv := &v1alpha1.ClusterServiceVersion{}
+	if err := yaml.Unmarshal(b, csv); err != nil {
+		return nil, err
+	}
+	return csv, nil
+}
+
+func writeCSV(tc *testutils.TestContext, version string, csv *v1alpha1.ClusterServiceVersion, isBundle bool) error {
+	b, err := yaml.Marshal(csv)
+	if err != nil {
 		return err
 	}
-}
-
-func cleanupFor(tc *testutils.TestContext) func() (string, error) {
-	return func() (string, error) {
-		allArgs := []string{"cleanup", tc.ProjectName, "--timeout", "4m", "--namespace", tc.Kubectl.Namespace}
-		output, err := tc.Run(exec.Command(tc.BinaryName, allArgs...))
-		if err == nil {
-			fmt.Fprintln(GinkgoWriter, string(output))
-		}
-		return string(output), err
+	f, err := os.OpenFile(csvPath(tc, version, isBundle), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	if err != nil {
+		return err
 	}
-}
-
-func readCSVFor(tc *testutils.TestContext, isBundle bool) func(string) (*v1alpha1.ClusterServiceVersion, error) {
-	return func(version string) (*v1alpha1.ClusterServiceVersion, error) {
-		b, err := ioutil.ReadFile(csvPath(tc, version, isBundle))
-		if err != nil {
-			return nil, err
-		}
-		csv := &v1alpha1.ClusterServiceVersion{}
-		if err := yaml.Unmarshal(b, csv); err != nil {
-			return nil, err
-		}
-		return csv, nil
+	if _, err := f.Write(b); err != nil {
+		return err
 	}
-}
-
-func writeCSVFor(tc *testutils.TestContext, isBundle bool) func(*v1alpha1.ClusterServiceVersion, string) error {
-	return func(csv *v1alpha1.ClusterServiceVersion, version string) error {
-		b, err := yaml.Marshal(csv)
-		if err != nil {
-			return err
-		}
-		f, err := os.OpenFile(csvPath(tc, version, isBundle), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
-		if err != nil {
-			return err
-		}
-		if _, err := f.Write(b); err != nil {
-			return err
-		}
-		if err := f.Sync(); err != nil {
-			return err
-		}
-		return f.Close()
+	if err := f.Sync(); err != nil {
+		return err
 	}
+	return f.Close()
 }
 
 func csvPath(tc *testutils.TestContext, version string, isBundle bool) string {

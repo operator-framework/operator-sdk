@@ -19,7 +19,6 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 )
 
 var _ = Describe("run packagemanifests", func() {
@@ -29,41 +28,27 @@ var _ = Describe("run packagemanifests", func() {
 		output string
 	)
 
-	runPackageManifests := runPackageManifestsFor(&tc)
-	cleanup := cleanupFor(&tc)
-	isBundle := false
-	readCSV, writeCSV := readCSVFor(&tc, isBundle), writeCSVFor(&tc, isBundle)
-
 	AfterEach(func() {
 		By("cleaning up")
-		_, err = cleanup()
+		_, err = cleanup(&tc)
 		Expect(err).NotTo(HaveOccurred())
 	})
 
 	It("should handle existing operator deployments correctly", func() {
-		output, err = cleanup()
+		output, err = cleanup(&tc)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(output).To(ContainSubstring(`package \"memcached-operator\" not found`))
-		Expect(runPackageManifests("--version", "0.0.1")).To(Succeed())
-		Expect(runPackageManifests("--version", "0.0.1")).NotTo(Succeed())
-		_, err = cleanup()
+		Expect(runPackageManifests(&tc, "--version", "0.0.1")).To(Succeed())
+		Expect(runPackageManifests(&tc, "--version", "0.0.1")).NotTo(Succeed())
+		_, err = cleanup(&tc)
 		Expect(err).NotTo(HaveOccurred())
-		output, err = cleanup()
+		output, err = cleanup(&tc)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(output).To(ContainSubstring(`package \"memcached-operator\" not found`))
 	})
 
 	It("should succeed with a single operator version in OwnNamespace mode", func() {
-		csv, err := readCSV("0.0.1")
-		Expect(err).NotTo(HaveOccurred())
-		for i, mode := range csv.Spec.InstallModes {
-			if mode.Type == v1alpha1.InstallModeTypeOwnNamespace {
-				csv.Spec.InstallModes[i].Supported = true
-				break
-			}
-		}
-		Expect(writeCSV(csv, "0.0.1")).To(Succeed())
-		Expect(runPackageManifests("--install-mode", "OwnNamespace", "--version", "0.0.1")).To(Succeed())
+		Expect(runPackageManifests(&tc, "--install-mode", "OwnNamespace", "--version", "0.0.1")).To(Succeed())
 	})
 
 	It("should successfully deploy the second of two operator versions", func() {
@@ -82,6 +67,6 @@ var _ = Describe("run packagemanifests", func() {
 			}
 			Expect(tc.Make(makeArgs...)).To(Succeed())
 		}
-		Expect(runPackageManifests("--version", versions[len(versions)-1])).To(Succeed())
+		Expect(runPackageManifests(&tc, "--version", versions[len(versions)-1])).To(Succeed())
 	})
 })
