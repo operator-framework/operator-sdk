@@ -112,6 +112,10 @@ func GetCustomResourceDefinitions(crdsDir string) (
 func DefinitionsForV1CustomResourceDefinitions(crds ...apiextv1.CustomResourceDefinition) (keys []registry.DefinitionKey) {
 	for _, crd := range crds {
 		for _, ver := range crd.Spec.Versions {
+			if !ver.Served {
+				log.Debugf("Not adding unserved CRD %q version %q to set of owned keys", crd.GetName(), ver.Name)
+				continue
+			}
 			keys = append(keys, registry.DefinitionKey{
 				Name:    crd.GetName(),
 				Group:   crd.Spec.Group,
@@ -136,6 +140,10 @@ func DefinitionsForV1beta1CustomResourceDefinitions(crds ...apiextv1beta1.Custom
 			})
 		}
 		for _, ver := range crd.Spec.Versions {
+			if !ver.Served {
+				log.Debugf("Not adding unserved CRD %q version %q to set of owned keys", crd.GetName(), ver.Name)
+				continue
+			}
 			keys = append(keys, registry.DefinitionKey{
 				Name:    crd.GetName(),
 				Group:   crd.Spec.Group,
