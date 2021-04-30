@@ -1563,8 +1563,8 @@ sigs.k8s.io/controller-tools v0.4.1 h1:VkuV0MxlRPmRu5iTgBZU4UxUX2LiR99n3sdQGRxZF
 sigs.k8s.io/controller-tools v0.4.1/go.mod h1:G9rHdZMVlBDocIxGkK3jHLWqcTMNvveypYJwrvYKjWU=
 sigs.k8s.io/controller-tools v0.5.0 h1:3u2RCwOlp0cjCALAigpOcbAf50pE+kHSdueUosrC/AE=
 sigs.k8s.io/controller-tools v0.5.0/go.mod h1:JTsstrMpxs+9BUj6eGuAaEb6SDSPTeVtUyp0jmnAM/I=
-sigs.k8s.io/kubebuilder/v3 v3.0.0-alpha.0.0.20210415223022-9f90d1a3c3cc h1:laR4sYUQabBCltK1WnyvA5Bde+f/0aiPogArXWfnBBs=
-sigs.k8s.io/kubebuilder/v3 v3.0.0-alpha.0.0.20210415223022-9f90d1a3c3cc/go.mod h1:KJLAKkOvgXZ2+1REJqFmoseez1tgg5Qoz0zFeJorrSo=
+sigs.k8s.io/kubebuilder/v3 v3.0.0 h1:jCXjBl04Dd2anjv9aZQwayqu7ibPeHm2iSxPOGkzmpc=
+sigs.k8s.io/kubebuilder/v3 v3.0.0/go.mod h1:KJLAKkOvgXZ2+1REJqFmoseez1tgg5Qoz0zFeJorrSo=
 sigs.k8s.io/kustomize v2.0.3+incompatible h1:JUufWFNlI44MdtnjUqVnvh29rR37PQFzPbLXqhyOyX0=
 sigs.k8s.io/kustomize v2.0.3+incompatible/go.mod h1:MkjgH3RdOWrievjo6c9T245dYlB5QeXV4WCbnt/PEpU=
 sigs.k8s.io/kustomize/kyaml v0.10.10 h1:caAxDDkaXZp+0kDsZVik4leFJV8LCy09PdVqpaoNeF4=
