@@ -92,11 +92,17 @@ var _ = BeforeSuite(func() {
 
 	fmt.Printf("----------------------%+v", tc.ImageName)
 	// TODO(estroz): enable when bundles can be tested locally.
+	// The above commented out lines are necessary for running packagemanifests test
 
+	// Uncomment packagemanifests_test.go for integrating package manifests along with run bundle
+	// Once PR on --skip-tls is merged, remove  `containerdregistry.SkipTLS(true)` from internal/registry/image.go
+
+	// Finding a free port number
 	os.Setenv("LOCAL_IMAGE_REGISTRY", "1")
 	PortNumber, _ := freeport.GetFreePort()
 	os.Setenv("PORT_NUMBER", strconv.Itoa(PortNumber))
 
+	// Setting the image names
 	ImgName := fmt.Sprintf("localhost:%d/%s:0.0.1", PortNumber, tc.ProjectName)
 	BundleImgName := fmt.Sprintf("localhost:%d/%s-bundle:0.0.1", PortNumber, tc.ProjectName)
 
@@ -110,40 +116,35 @@ var _ = BeforeSuite(func() {
 
 	os.Setenv("BUNDLE_IMAGE_NAME", BundleImgName)
 
-	fmt.Printf("-----------------hello %+v\n", PortNumber)
-
+	// Creating a local registry using PortNumber
 	cmd2 := exec.Command("docker", "run", "-d", "-p", strconv.Itoa(PortNumber)+":"+strconv.Itoa(5000), "--restart=always", "--name", "registry", "registry:2")
-
 	stdout, _ := cmd2.Output()
-
-	// localRegistryCmd := exec.Command("docker", "run", "-d", "-p", strconv.Itoa(PortNumber)+":"+strconv.Itoa(5000), "--restart=always", "--name", "registry", "registry:2")
-
-	// stdout, _ := localRegistryCmd.Output()
-	// if err != nil {
-	// 	fmt.Println(err.Error())
-	// 	return
-	// }
 
 	fmt.Printf("-----------------hello %+v\n", stdout)
 
+	// Does `make bundle`
 	By("generating the operator bundle")
 	err = tc.Make("bundle", "IMG="+ImgName)
 	Expect(err).NotTo(HaveOccurred())
 
+	// Does `make bundle-build`
 	By("building the operator bundle image")
 	err = tc.Make("bundle-build", "BUNDLE_IMG="+BundleImgName)
 	Expect(err).NotTo(HaveOccurred())
 
+	// Building the operator
 	By("push the image to a local registry")
 	err = tc.Make("docker-build", "IMG="+ImgName)
 	Expect(err).NotTo(HaveOccurred())
 
+	// Setting env variable for opertr image
 	os.Setenv("OPERATOR_IMAGE_NAME", ImgName)
 
 	By("creating the test namespace")
 	_, err = tc.Kubectl.Command("create", "namespace", tc.Kubectl.Namespace)
 	Expect(err).NotTo(HaveOccurred())
 
+	// setting kubectl namespace
 	os.Setenv("KUBECTL_NAMESPACE", tc.Kubectl.Namespace)
 
 })
@@ -151,6 +152,8 @@ var _ = BeforeSuite(func() {
 var _ = AfterSuite(func() {
 	By("uninstalling OLM")
 	tc.UninstallOLM()
+
+	// the folliwng have been commented for testing purpose
 
 	// By("uninstalling prometheus-operator")
 	// tc.UninstallPrometheusOperManager()
