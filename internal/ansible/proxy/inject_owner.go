@@ -146,7 +146,7 @@ func (i *injectOwnerReferenceHandler) ServeHTTP(w http.ResponseWriter, req *http
 			if addOwnerRef {
 				data.SetOwnerReferences(append(data.GetOwnerReferences(), owner.OwnerReference))
 			} else {
-				err := handler.SetOwnerAnnotations(data, ownerObject)
+				err := handler.SetOwnerAnnotations(ownerObject, data)
 				if err != nil {
 					m := "Could not set owner annotations"
 					log.Error(err, m)

@@ -60,4 +60,12 @@
   playbook: playbooks/reconciliationtest.yml
   vars:
     meta: '{{ ansible_operator_meta }}'
+
+- version: v1alpha1
+  group: test.example.com
+  kind: ClusterAnnotationTest
+  playbook: playbooks/clusterannotationtest.yml
+  watchClusterScopedResources: true
+  vars:
+    meta: '{{ ansible_operator_meta }}'
 #+kubebuilder:scaffold:watch

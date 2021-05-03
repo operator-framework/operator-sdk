@@ -1,0 +1,41 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      For Anible-based operators, fixed a bug that caused to be unable watch
+      cluster scoped dependent resources and dependent resources in other
+      namespaces.
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "bugfix"
+
+    # Is this a breaking change?
+    breaking: false
+
+    # NOTE: ONLY USE `pull_request_override` WHEN ADDING THIS
+    # FILE FOR A PREVIOUSLY MERGED PULL_REQUEST!
+    #
+    # The generator auto-detects the PR number from the commit
+    # message in which this file was originally added.
+    #
+    # What is the pull request number (without the "#")?
+    # pull_request_override: 0
+
+
+    # Migration can be defined to automatically add a section to
+    # the migration guide. This is required for breaking changes.
+    migration:
+      header: Ensure that existing dependent resources have owner annotations
+      body: >
+        Ansible-based operators use owner references (for resources in the same
+        namespace) and owner annotations(for cluster scoped resources and
+        resources in other namespaces). If dependent resources were created
+        without the references/annotations, they cannot be cleaned up by the
+        operator, and update/deletes will not trigger a reconcile. Follow these
+        instructions to add owner references/annotations to existing objects.
+        https://sdk.operatorframework.io/docs/building-operators/ansible/reference/retroactively-owned-resources/

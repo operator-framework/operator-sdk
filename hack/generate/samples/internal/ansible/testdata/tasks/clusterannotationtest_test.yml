@@ -1,0 +1,51 @@
+---
+- name: Create the test.example.com/v1alpha1.ClusterAnnotationTest
+  k8s:
+    state: present
+    namespace: '{{ namespace }}'
+    definition: "{{ lookup('template', '/'.join([samples_dir, cr_file])) | from_yaml }}"
+    wait: yes
+    wait_timeout: 300
+    wait_condition:
+      type: Running
+      reason: Successful
+      status: "True"
+  vars:
+    cr_file: 'test_v1alpha1_clusterannotationtest.yaml'
+
+- name: retrieve configmap
+  k8s_info:
+    api_version: v1
+    kind: ConfigMap
+    namespace: "externalnamespace"
+    name: "clusterannotationtest-sample"
+  register: configmap
+  until: (configmap.resources | length) == 1
+
+- assert:
+    that:
+      - configmap.resources[0].metadata.annotations["operator-sdk/primary-resource"] == primary
+      - configmap.resources[0].metadata.annotations["operator-sdk/primary-resource-type"] == primary_type
+  vars:
+    primary: "osdk-test/clusterannotationtest-sample"
+    primary_type: "ClusterAnnotationTest.test.example.com"
+
+- name: change the namespace labels
+  k8s:
+    name: "externalnamespace"
+    api_version: v1
+    kind: "Namespace"
+    wait: yes
+    definition:
+      metadata:
+        labels:
+          foo: baz
+
+- name: Make sure the label is changed back
+  k8s_info:
+    api_version: v1
+    kind: Namespace
+    name: "externalnamespace"
+  register: external_namespace
+  until: external_namespace.resources[0].metadata.labels["foo"] == "bar"
+
