@@ -1,0 +1,24 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      (go/v3, ansible/v1, helm/v1) Bumped controller-runtime to v0.8.3 (kubernetes 1.20)
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "change"
+
+    # Is this a breaking change?
+    breaking: false
+
+    # Migration can be defined to automatically add a section to
+    # the migration guide. This is required for breaking changes.
+    migration:
+      header: (go/v3) Bump controller-runtime to v0.8.3 and kubernetes dependencies to v0.20.2
+      body: >
+        In your go.mod, change controller-runtime's version to v0.8.3 and kubernetes dependencies 
+        to v0.20.2, then rebuild your project.
