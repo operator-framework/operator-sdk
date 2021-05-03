@@ -1,0 +1,8 @@
+entries:
+  - description: >
+      Bumped controller-runtime to v0.8.3 (kubernetes 1.20)
+    kind: change
+    migration:
+      header: (go/v3) Bump controller-runtime to v0.8.3
+      body: >
+        In your go.mod, change the required controller-runtime version to v0.8.3 then rebuild your project.
