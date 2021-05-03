@@ -488,3 +488,4 @@ Next, check out the following:
 [openapi-validation]: /docs/building-operators/golang/references/openapi-validation
 [controller-runtime]: https://github.com/kubernetes-sigs/controller-runtime
 [kb-doc-gkvs]: https://book.kubebuilder.io/cronjob-tutorial/gvks.html
+[rbac_markers]: https://book.kubebuilder.io/reference/markers/rbac.html
