@@ -12,9 +12,9 @@ The Operator SDK project recommends using controller-runtime's [envtest][envtest
 ## Using EnvTest
 
 You will see that `controllers/suite_test.go` is created when a controller is scaffolded by the tool. This file contains boilerplate for executing integration tests using [envtest][envtest] with [ginkgo](https://onsi.github.io/ginkgo/) and [gomega][gomega].
+Setup instructions, including those for disconnected environments, are found [here][envtest-setup].
 
-
-It means that you will implement your controller's tests in go using this stack and it will be called by the `suite_test.go` via go tool such as: 
+These tests are runnable as native Go tests:
 
 ```shell
 go test controllers/ -v -ginkgo.v
@@ -31,8 +31,8 @@ Also you can write tests for your operator in a declarative using the [kuttl][ku
 To implement application-specific tests, the SDK's test harness, [scorecard][scorecard], provides the ability to ship custom code in container images as well, which can be referenced in the test suite. Because this test suite definition metadata travels with the Operator Bundle, it allows for functional testing of the Operator without the source code or the project layout being available. See [Writing Custom Scorecard Tests][writing-custom-scorecard-tests].
 
 [envtest]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/envtest
+[envtest-setup]:https://book.kubebuilder.io/reference/envtest.html
 [writing-controller-tests]: https://book.kubebuilder.io/cronjob-tutorial/writing-tests.html
-[envtest-setup]: /docs/building-operators/golang/references/envtest-setup
 [writing-kuttl-scorecard-tests]: /docs/advanced-topics/scorecard/kuttl-tests
 [writing-custom-scorecard-tests]: /docs/advanced-topics/scorecard/custom-tests
 [scorecard]: /docs/advanced-topics/scorecard/scorecard
