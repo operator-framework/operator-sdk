@@ -23,6 +23,7 @@ operator-sdk run bundle-upgrade <bundle-image> [flags]
   -n, --namespace string          If present, namespace scope for this CLI request
       --pull-secret-name string   Name of image pull secret ("type: kubernetes.io/dockerconfigjson") required to pull bundle images. This secret *must* be both in the namespace and an imagePullSecret of the service account that this command is configured to run in
       --service-account string    Service account name to bind registry objects to. If unset, the default service account is used. This value does not override the operator's service account
+      --skip-tls                  skip authentication of image registry TLS certificate when pulling a bundle image in-cluster
       --timeout duration          Duration to wait for the command to complete before failing (default 2m0s)
 ```
 

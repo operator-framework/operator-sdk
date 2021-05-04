@@ -28,7 +28,7 @@ import (
 
 // ExtractBundleImage returns a bundle directory containing files extracted
 // from image. If local is true, the image will not be pulled.
-func ExtractBundleImage(ctx context.Context, logger *log.Entry, image string, local bool) (string, error) {
+func ExtractBundleImage(ctx context.Context, logger *log.Entry, image string, local bool, skipTLS bool) (string, error) {
 	if logger == nil {
 		logger = DiscardLogger()
 	}
@@ -51,7 +51,7 @@ func ExtractBundleImage(ctx context.Context, logger *log.Entry, image string, lo
 	logger = logger.WithFields(log.Fields{"dir": bundleDir})
 
 	// Use a containerd registry instead of shelling out to a container tool.
-	reg, err := containerdregistry.NewRegistry(containerdregistry.WithLog(logger))
+	reg, err := containerdregistry.NewRegistry(containerdregistry.WithLog(logger), containerdregistry.SkipTLS(skipTLS))
 	if err != nil {
 		return "", err
 	}

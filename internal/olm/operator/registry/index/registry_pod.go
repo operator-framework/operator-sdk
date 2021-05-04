@@ -77,6 +77,9 @@ type RegistryPod struct {
 	// The secret's key for this file must be "cert.pem".
 	CASecretName string
 
+	// SkipTLS controls wether to ignore SSL errors while pulling bundle image from registry server.
+	SkipTLS bool `json:"SkipTLS"`
+
 	// pod represents a kubernetes *corev1.pod that will be created on a cluster using an index image
 	pod *corev1.Pod
 
@@ -302,7 +305,7 @@ func newBool(b bool) *bool {
 
 const cmdTemplate = `/bin/mkdir -p {{ dirname .DBPath }} && \
 {{- range $i, $item := .BundleItems }}
-/bin/opm registry add -d {{ $.DBPath }} -b {{ $item.ImageTag }} --mode={{ $item.AddMode }}{{ if $.CASecretName }} --ca-file=/certs/cert.pem{{ end }} && \
+/bin/opm registry add -d {{ $.DBPath }} -b {{ $item.ImageTag }} --mode={{ $item.AddMode }}{{ if $.CASecretName }} --ca-file=/certs/cert.pem{{ end }} --skip-tls={{ $.SkipTLS }} && \
 {{- end }}
 /bin/opm registry serve -d {{ .DBPath }} -p {{ .GRPCPort }}
 `

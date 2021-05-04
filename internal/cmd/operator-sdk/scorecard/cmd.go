@@ -211,5 +211,5 @@ func extractBundleImage(bundleImage string) (string, error) {
 		logger = log.WithFields(log.Fields{"bundle": bundleImage})
 	}
 	// FEAT: enable explicit local image extraction.
-	return registryutil.ExtractBundleImage(context.TODO(), logger, bundleImage, false)
+	return registryutil.ExtractBundleImage(context.TODO(), logger, bundleImage, false, false)
 }

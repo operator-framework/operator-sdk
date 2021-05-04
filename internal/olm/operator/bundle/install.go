@@ -72,7 +72,7 @@ func (i *Install) setup(ctx context.Context) error {
 	}
 
 	// Load bundle labels and set label-dependent values.
-	labels, bundle, err := operator.LoadBundle(ctx, i.BundleImage)
+	labels, bundle, err := operator.LoadBundle(ctx, i.BundleImage, i.SkipTLS)
 	if err != nil {
 		return err
 	}

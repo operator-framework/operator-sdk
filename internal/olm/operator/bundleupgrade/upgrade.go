@@ -69,7 +69,7 @@ func (u *Upgrade) setup(ctx context.Context) error {
 		}
 	}
 
-	labels, bundle, err := operator.LoadBundle(ctx, u.BundleImage)
+	labels, bundle, err := operator.LoadBundle(ctx, u.BundleImage, u.SkipTLS)
 	if err != nil {
 		return err
 	}
