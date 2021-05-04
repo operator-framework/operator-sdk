@@ -19,7 +19,7 @@ Each capability level is associated with a certain set of management features th
 
 **Custom Resource (CR)** - an instance of the [`CustomResourceDefinition`](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/) the Operator ships that represents the Operand or an Operation on an Operand (also known as primary resources)
 
-**Managed resources** - the Kubernetes objects or off-cluster services the Operator uses to constitute an Operand (also known as secodary resources)
+**Managed resources** - the Kubernetes objects or off-cluster services the Operator uses to constitute an Operand (also known as secondary resources)
 
 **Custom Resource Definition (CRD)** - an API of the Operator, providing the blueprint and validation rules for **Custom Resources**.
 
