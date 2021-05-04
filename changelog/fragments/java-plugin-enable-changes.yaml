@@ -1,4 +1,4 @@
 entries:
   - description: >
-       Added changes for Java plugin. This change will enable the java-plugin that will scaffold out an java operator using init and create api command.
+       Added the `quarkus/v1-alpha` Java plugin, which supports `init` and `create api` commands. This plugin is alpha and subject to breaking changes.
     kind: "addition"
