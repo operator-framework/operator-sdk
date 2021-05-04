@@ -92,6 +92,79 @@ INFO[0000] operatorgroup "operator-sdk-og" deleted
 INFO[0001] operator "memcached-operator" uninstalled
 ```
 
+## Migrating packagemanifests to bundles
+
+In order to migrate packagemanifests to bundles, `operator-sdk pkgman-to-bundle` command can be used.
+
+As an example, consider the packagemanifests directory to have the following structure:
+
+```
+packagemanifests
+└── etcd
+    ├── 0.0.1
+    │   ├── etcdcluster.crd.yaml
+    │   └── etcdoperator.clusterserviceversion.yaml
+    ├── 0.0.2
+    │   ├── etcdbackup.crd.yaml
+    │   ├── etcdcluster.crd.yaml
+    │   ├── etcdoperator.v0.0.2.clusterserviceversion.yaml
+    │   └── etcdrestore.crd.yaml
+    └── etcd.package.yaml
+```
+
+Here, we have manifests for two versions of the `etcd` operator. The following command will generate bundles for each of these versions.
+
+```console
+$ operator-sdk pkgman-to-bundle packagemanifests --output-dir etcd-bundle/
+INFO[0000] Packagemanifests will be migrated to bundles in bundle directory
+INFO[0000] Creating etcd-bundle/bundle-0.0.1/bundle.Dockerfile
+INFO[0000] Creating etcd-bundle/bundle-0.0.1/metadata/annotations.yaml
+...
+```
+
+This will create output bundles in the directory `etcd-bundle`. The output directory will look like:
+
+```
+├── bundle-0.0.1
+│   ├── bundle.Dockerfile
+│   ├── manifests
+│   │   ├── etcdcluster.crd.yaml
+│   │   ├── etcdoperator.clusterserviceversion.yaml
+│   ├── metadata
+│   │   └── annotations.yaml
+└── bundle-0.0.2
+    ├── bundle.Dockerfile
+    ├── manifests
+    │   ├── etcdbackup.crd.yaml
+    │   ├── etcdcluster.crd.yaml
+    │   ├── etcdoperator.v0.0.2.clusterserviceversion.yaml
+    │   ├── etcdrestore.crd.yaml
+    ├── metadata
+        └── annotations.yaml
+```
+
+To build images for the bundles, the base container image name can be provided using `--image-tag-base` flag. This name should be provided without the tag (`:` and characters following), as the command will tag each bundle image with its packagemanifests directory name, i.e. `<image-tag-base>:<dir-name>`. For example, the following command for the above `packagemnifests` directory would build the bundles `quay.io/example/etcd-bundle:0.0.1` and `quay.io/example/etcd-bundle:0.0.2`.
+
+```sh
+operator-sdk pkgman-to-bundle packagemanifests --image-tag-base quay.io/example/etcd-bundle
+```
+
+A custom command can also be specified to build images, using the `--build-cmd` flag. The default command is `docker build`. However, if using a custom command, it needs to be made sure that the command is in the `PATH` or a fully qualified path name is provided as input to the flag.
+
+Once the command has finished building your bundle images and they have been added to a catalog image, delete all bundle directories except for the latest one. This directory will contain manifests for your operator's head bundle, and should be versioned with version control system like git. Rename this directory to `bundle`, and move `bundle.Dockerfile` to your project's root:
+
+```console
+$ mv ./etcd-bundle/bundle-0.0.2 ./bundle
+$ rm -rf ./etcd-bundle
+$ mv bundle/bundle.Dockerfile .
+```
+
+Try building then running your bundle on a live cluster to make sure it works as expected:
+
+```console
+$ make bundle bundle-build bundle-push
+$ operator-sdk run bundle quay.io/example/etcd-bundle:0.0.2
+```
 
 [quickstart-bundle]:/docs/olm-integration/quickstart-bundle
 [operator-registry]:https://github.com/operator-framework/operator-registry
