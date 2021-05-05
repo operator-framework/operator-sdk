@@ -231,7 +231,7 @@ var _ = Describe("RegistryPod", func() {
 })
 
 // containerCommandFor returns the expected container command for a db path and set of bundle items.
-func containerCommandFor(dbPath string, items []BundleItem, hasCA, skipTLS bool) string {
+func containerCommandFor(dbPath string, items []BundleItem, hasCA, skipTLS bool) string { //nolint:unparam
 	var caFlag string
 	if hasCA {
 		caFlag = " --ca-file=/certs/cert.pem"
