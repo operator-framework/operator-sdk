@@ -53,7 +53,7 @@ type BundleItem struct {
 }
 
 // RegistryPod holds resources necessary for creation of a registry server
-type RegistryPod struct {
+type RegistryPod struct { //nolint:maligned
 	// BundleItems contains all bundles to be added to a registry pod.
 	BundleItems []BundleItem
 
