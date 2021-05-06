@@ -1,6 +1,7 @@
 apiVersion: v1
 appVersion: 1.5.20
-description: Free & open source, high-performance, distributed memory object caching system.
+description: Free & open source, high-performance, distributed memory object caching
+  system.
 home: http://memcached.org/
 icon: https://upload.wikimedia.org/wikipedia/en/thumb/2/27/Memcached.svg/1024px-Memcached.svg.png
 keywords:

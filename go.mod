@@ -9,9 +9,10 @@ require (
 	github.com/iancoleman/strcase v0.0.0-20191112232945-16388991a334
 	github.com/kr/text v0.1.0
 	github.com/markbates/inflect v1.0.4
-	github.com/onsi/ginkgo v1.15.0
-	github.com/onsi/gomega v1.10.5
+	github.com/onsi/ginkgo v1.15.2
+	github.com/onsi/gomega v1.11.0
 	github.com/operator-framework/api v0.8.1
+	github.com/operator-framework/java-operator-plugins v0.0.0-20210430183738-736a20a43674
 	github.com/operator-framework/operator-lib v0.4.1
 	github.com/operator-framework/operator-registry v1.15.3
 	github.com/prometheus/client_golang v1.7.1
@@ -37,7 +38,7 @@ require (
 	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/controller-runtime v0.8.3
 	sigs.k8s.io/controller-tools v0.5.0
-	sigs.k8s.io/kubebuilder/v3 v3.0.0-alpha.0.0.20210503171920-2b857cb37698
+	sigs.k8s.io/kubebuilder/v3 v3.0.0-beta.1
 	sigs.k8s.io/yaml v1.2.0
 )
 
@@ -49,6 +50,7 @@ replace (
 	github.com/containerd/containerd => github.com/containerd/containerd v1.4.3
 	github.com/mattn/go-sqlite3 => github.com/mattn/go-sqlite3 v1.10.0
 	golang.org/x/text => golang.org/x/text v0.3.3 // Required to fix CVE-2020-14040
+	sigs.k8s.io/kubebuilder/v3 => sigs.k8s.io/kubebuilder/v3 v3.0.0-alpha.0.0.20210503171920-2b857cb37698
 )
 
 exclude github.com/spf13/viper v1.3.2 // Required to fix CVE-2018-1098

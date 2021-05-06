@@ -31,6 +31,7 @@ and <PROJECT VERSION> a supported project version for these plugins.
                 go.kubebuilder.io/v3 |                          3
     helm.sdk.operatorframework.io/v1 |                          3
   kustomize.common.kubebuilder.io/v1 |                          3
+ quarkus.javaoperatorsdk.io/v1-alpha |                          3
 
 For more specific help for the init command of a certain plugins and project version
 configuration please run:

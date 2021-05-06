@@ -1,0 +1,4 @@
+entries:
+  - description: >
+       Added changes for Java plugin. This change will enable the java-plugin that will scaffold out an java operator using init and create api command.
+    kind: "addition"
