@@ -1,0 +1,4 @@
+entries:
+  - description: >
+      Bumped operator-lib to v0.4.1 for several bugfixes in ansible-operator and helm-operator binaries.
+    kind: bugfix
