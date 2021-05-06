@@ -8,7 +8,7 @@ description: >
 
 ### Bundle
 
-**Definition**: A collection of Operator [CSV](/docs/concepts/crds/clusterserviceversion), manifests, and metadata which together form a unique version of an Operator that can be installed onto the cluster. 
+**Definition**: A collection of Operator [CSV](https://olm.operatorframework.io/docs/concepts/crds/clusterserviceversion), manifests, and metadata which together form a unique version of an Operator that can be installed onto the cluster. 
 
 ### Bundle Image
 
