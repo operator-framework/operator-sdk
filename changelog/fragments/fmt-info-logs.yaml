@@ -1,4 +1,0 @@
-entries:
-  - description: >
-      Format ansible-operator and helm-operator `run` command logs correctly.
-    kind: bugfix
