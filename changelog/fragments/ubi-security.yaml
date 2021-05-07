@@ -1,6 +1,0 @@
-entries:
-  - description: >
-      Pinned base images of ansible-operator to ubi:8.3-297.1618432833,
-      and helm-operator and scorecard to ubi-minimal:8.3-298.1618432845.
-    kind: bugfix
-
