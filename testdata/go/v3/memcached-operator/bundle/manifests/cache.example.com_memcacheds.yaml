@@ -20,10 +20,14 @@ spec:
         description: Memcached is the Schema for the memcacheds API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
@@ -31,7 +35,8 @@ spec:
             description: MemcachedSpec defines the desired state of Memcached
             properties:
               foo:
-                description: Foo is an example field of Memcached. Edit memcached_types.go to remove/update
+                description: Foo is an example field of Memcached. Edit memcached_types.go
+                  to remove/update
                 type: string
               size:
                 description: Size defines the number of Memcached instances
@@ -42,7 +47,8 @@ spec:
             description: MemcachedStatus defines the observed state of Memcached
             properties:
               nodes:
-                description: Nodes store the name of the pods which are running Memcached instances
+                description: Nodes store the name of the pods which are running Memcached
+                  instances
                 items:
                   type: string
                 type: array

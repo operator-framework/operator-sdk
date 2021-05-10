@@ -1,0 +1,4 @@
+entries:
+  - description: >
+       Added the `quarkus/v1-alpha` Java plugin, which supports `init` and `create api` commands. This plugin is alpha and subject to breaking changes.
+    kind: "addition"
