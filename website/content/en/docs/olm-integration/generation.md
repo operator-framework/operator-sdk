@@ -428,4 +428,4 @@ when you set `--version` when running `generate <bundle|packagemanifests>`.
 [csv-markers]:/docs/building-operators/golang/references/markers
 [operatorhub]:https://operatorhub.io/
 [scorecard]:/docs/advanced-topics/scorecard
-[operatorhub_validator]: https://olm.operatorframework.io/docs/tasks/validate-package/#validation
+[operatorhub_validator]:https://olm.operatorframework.io/docs/tasks/creating-operator-bundle/#validating-your-bundle
