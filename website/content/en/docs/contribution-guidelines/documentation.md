@@ -4,7 +4,7 @@ linkTitle: Documentation
 weight: 20
 ---
 
-If a contribution changes existing APIs or user interface it must include sufficient documentation to explain the use of the new or updated feature.
+If a contribution changes the user interface or existing APIs it must include new or updated documentation.
 Since the operator-sdk repository does not expose many public packages, documentation mostly comes in the form of our website's [markdown docs][website-md].
 Good [godocs][godocs] are expected nonetheless.
 
