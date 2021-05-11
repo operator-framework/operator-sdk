@@ -4,11 +4,19 @@ linkTitle: Documentation
 weight: 20
 ---
 
+If a contribution changes existing APIs or user interface it must include sufficient documentation to explain the use of the new or updated feature.
+Since the operator-sdk repository does not expose many public packages, documentation mostly comes in the form of our website's [markdown docs][website-md].
+Good [godocs][godocs] are expected nonetheless.
+
+Likewise a [changelog fragment][changelog-template] should be added containing a summary of the change and optionally a migration guide.
+
+## Testing docs changes
+
 This document discusses how to visually inspect documentation changes as they would be applied
 to the live website. All changes to documentation should be inspected locally before being pushed
 to a PR.
 
-## Prerequisites
+### Prerequisites
 
 The docs are built with [Hugo][hugo] which can be installed along with the
 required extensions by following the [docsy install guide][docsy-install].
@@ -22,7 +30,7 @@ We use `git submodules` to install the docsy theme. From the
 git submodule update --init --recursive
 ```
 
-## Build and Serve
+### Build and Serve
 
 You can build and serve your docs to `localhost:1313`. From the `website/`
 directory run:
@@ -33,10 +41,13 @@ hugo server
 
 Any changes will be included in real time.
 
-## Check Docs
+### Check Docs
 
 `make test-docs` will validate changelog fragments, build doc HTML in a container, and check its links.
 Please consider running this locally before creating a PR to save CI resources.
 
 [hugo]:https://gohugo.io/
 [docsy-install]:https://www.docsy.dev/docs/getting-started/#prerequisites-and-installation
+[website-md]:https://github.com/operator-framework/operator-sdk/tree/master/website/content/en/docs
+[changelog-template]:https://github.com/operator-framework/operator-sdk/blob/master/changelog/fragments/00-template.yaml
+[godocs]:https://blog.golang.org/godoc

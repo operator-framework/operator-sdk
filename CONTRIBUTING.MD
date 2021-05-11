@@ -62,11 +62,10 @@ The first line is the subject and should be no longer than 70 characters, the se
 
 ## Documentation
 
-If the contribution changes the existing APIs or user interface it must include sufficient documentation to explain the use of the new or updated feature. Likewise the [CHANGELOG][changelog] should be updated with a summary of the change and link to the pull request.
-
+Most contributions involve some sort of documentation. See our [doc contribution guidelines][doc-contrib] for details.
 
 [operator_framework]: https://groups.google.com/forum/#!forum/operator-framework
 [developer-guide]: https://sdk.operatorframework.io/docs/contribution-guidelines/developer-guide/
 [reporting-issues]: https://sdk.operatorframework.io/docs/contribution-guidelines/reporting-issues/
 [golang-style-doc]: https://github.com/golang/go/wiki/CodeReviewComments
-[changelog]: https://github.com/operator-framework/operator-sdk/blob/master/CHANGELOG.md
+[doc-contrib]:https://sdk.operatorframework.io/docs/contribution-guidelines/documentation
