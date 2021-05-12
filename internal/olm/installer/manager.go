@@ -45,13 +45,13 @@ func (m *Manager) initialize() (err error) {
 		if m.Client == nil {
 			cfg, cerr := config.GetConfig()
 			if cerr != nil {
-				err = fmt.Errorf("failed to get Kubernetes config: %v", err)
+				err = fmt.Errorf("failed to get Kubernetes config: %v", cerr)
 				return
 			}
 
 			client, cerr := ClientForConfig(cfg)
 			if cerr != nil {
-				err = fmt.Errorf("failed to create manager client: %v", err)
+				err = fmt.Errorf("failed to create manager client: %v", cerr)
 				return
 			}
 			m.Client = client
