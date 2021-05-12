@@ -10,7 +10,7 @@ DOC_PATH="${DIR}/../content/en/docs/installation/_index.md"
 
 VERSION="${1?"A Version is required"}"
 
-TARGET="export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/"
+TARGET="export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/download/"
 
 sed -i -E 's@('"${TARGET}"').+@\1'"${VERSION}"'@g' "$DOC_PATH"
 
