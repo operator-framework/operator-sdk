@@ -97,7 +97,7 @@ func CustomTest1(bundle registry.Bundle) scapiv1alpha3.TestStatus {
 The [configuration file][config_yaml] includes test definitions and metadata to run the test.
 This file is constructed using a kustomization under `config/scorecard`, with overlays for test sets.
 
-For the example `CustomTest1` function, add the following to `config/scorecard/customtest1.config.yaml`.
+For the example `CustomTest1` function, add the following to `config/scorecard/patches/customtest1.config.yaml`.
 
 ```yaml
 - op: add
