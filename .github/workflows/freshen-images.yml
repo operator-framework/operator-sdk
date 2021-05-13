@@ -15,7 +15,7 @@ jobs:
   git_tags:
     runs-on: ubuntu-18.04
     outputs:
-      git_tags: steps.tags.outputs.git_tags
+      git_tags: ${{ steps.tags.outputs.git_tags }}
     steps:
     - name: checkout
       uses: actions/checkout@v2
@@ -24,8 +24,8 @@ jobs:
     - id: tags
       run: echo ::set-output name=git_tags::$(.github/workflows/freshen-images/tags.sh)
 
-  images:
-    name: images
+  build:
+    name: build
     needs: git_tags
     runs-on: ubuntu-18.04
     environment: deploy
@@ -44,7 +44,11 @@ jobs:
         username: ${{ secrets.QUAY_USERNAME }}
         password: ${{ secrets.QUAY_PASSWORD }}
         registry: quay.io
-    - name: get build IDs
+    - name: checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 1
+    - name: build and push
       id: build_ids
       run: |
         .github/workflows/freshen-images/build.sh --push \
