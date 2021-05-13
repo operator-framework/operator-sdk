@@ -93,8 +93,8 @@ func (r *MemcachedReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 Predicates are not necessary for many operators, although filtering reduces the amount of chatter to the API server from `Reconcile()`. They are particularly useful for controllers that watch resources cluster-wide, i.e. without a namespace.
 
-[doc_event]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/event
-[doc_source]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/source#Source
-[doc_eventhandler]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/handler#EventHandler
-[doc_predicate]:https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/predicate
-[doc_object_metadata]:https://godoc.org/k8s.io/apimachinery/pkg/apis/meta/v1#Object
+[doc_event]:https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/event
+[doc_source]:https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/source#Source
+[doc_eventhandler]:https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/handler#EventHandler
+[doc_predicate]:https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/predicate
+[doc_object_metadata]:https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#Object

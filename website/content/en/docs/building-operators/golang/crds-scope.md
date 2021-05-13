@@ -78,7 +78,7 @@ spec:
 
 
 
-[manager_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Options
+[manager_options]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/manager#Options
 [manager_user_guide]:/docs/building-operators/golang/tutorial/#manager
 [k8s_crd_scope]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#create-a-customresourcedefinition 
 [kubebuilder_crd_markers]: https://book.kubebuilder.io/reference/markers/crd.html

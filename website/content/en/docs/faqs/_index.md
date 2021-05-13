@@ -142,7 +142,7 @@ SHELL := /bin/bash
 ```
 
 
-[client.Reader]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#Reader
+[client.Reader]:https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/client#Reader
 [controller-runtime]: https://github.com/kubernetes-sigs/controller-runtime
 [cr-faq]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md
 [finalizer]:/docs/building-operators/golang/advanced-topics/#handle-cleanup-on-deletion

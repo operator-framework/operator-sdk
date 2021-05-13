@@ -134,7 +134,7 @@ Similarly any scaffolding and manifest changes to Kubebuilder would need e2e tes
 [controller-runtime-554]: https://github.com/kubernetes-sigs/controller-runtime/pull/554
 [sdk-pkg-predicate]: https://github.com/operator-framework/operator-sdk/blob/947a464dbe968b8af147049e76e40f787ccb0847/pkg/predicate/predicate.go
 [controller-runtime-553]: https://github.com/kubernetes-sigs/controller-runtime/pull/553
-[gen-change-predicate-godocs]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/predicate#GenerationChangedPredicate
+[gen-change-predicate-godocs]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/predicate#GenerationChangedPredicate
 [sdk-pkg-log-zap]: https://github.com/operator-framework/operator-sdk/tree/947a464dbe968b8af147049e76e40f787ccb0847/pkg/log/zap
 [sdk-zap-cmd-flags]: https://github.com/operator-framework/operator-sdk/blob/947a464dbe968b8af147049e76e40f787ccb0847/pkg/log/zap/flags.go#L41-L45
 [controller-runtime-560]: https://github.com/kubernetes-sigs/controller-runtime/pull/560

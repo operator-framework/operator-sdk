@@ -429,13 +429,13 @@ For further steps regarding the deployment of the operator, creation of custom r
 [builder]: https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.6.1/pkg/builder?tab=doc
 [writing-controller-tests]: https://book.kubebuilder.io/cronjob-tutorial/writing-tests.html
 [openapi-gen]: https://github.com/kubernetes/kube-openapi/tree/master/cmd/openapi-gen
-[controller-runtime-leader]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/manager#LeaderElectionRunnable
+[controller-runtime-leader]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/manager#LeaderElectionRunnable
 [operator-lib]: https://github.com/operator-framework/operator-lib/
 [leader-lib-doc]: https://pkg.go.dev/github.com/operator-framework/operator-lib@v0.1.0/leader?tab=doc
 [migration-guide-main-section]: /docs/building-operators/golang/migration/#migrate-maingo
 [kustomize]: https://github.com/kubernetes-sigs/kustomize
-[ctrl-options]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/manager#Options
-[envtest]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/envtest
+[ctrl-options]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/manager#Options
+[envtest]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/envtest
 [gomega]: https://onsi.github.io/gomega/
 [multigroup-kubebuilder-doc]: https://book.kubebuilder.io/migration/multi-group.html
 [what-are-the-the-differences-between-kubebuilder-and-operator-sdk]: /docs/faqs/#what-are-the-the-differences-between-kubebuilder-and-operator-sdk

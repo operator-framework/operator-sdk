@@ -444,19 +444,19 @@ Next, check out the following:
 [migration-guide]:/docs/building-operators/golang/migration
 [install-guide]:/docs/building-operators/golang/installation
 [image-reg-config]:/docs/olm-integration/cli-overview#private-bundle-and-catalog-image-registries
-[enqueue_requests_from_map_func]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/handler#EnqueueRequestsFromMapFunc
-[event_handler_godocs]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/handler#hdr-EventHandlers
+[enqueue_requests_from_map_func]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/handler#EnqueueRequestsFromMapFunc
+[event_handler_godocs]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/handler#hdr-EventHandlers
 [event_filtering]:/docs/building-operators/golang/references/event-filtering/
-[controller_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/controller#Options
-[controller_godocs]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/controller
+[controller_options]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/controller#Options
+[controller_godocs]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/controller
 [operator_scope]:/docs/building-operators/golang/operator-scope/
 [kubebuilder_layout_doc]:https://book.kubebuilder.io/cronjob-tutorial/basic-project.html
 [go_mod_wiki]: https://github.com/golang/go/wiki/Modules
 [doc_client_api]:/docs/building-operators/golang/references/client/
-[manager_go_doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Manager
-[request-go-doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Request
-[result_go_doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Result
-[multi-namespaced-cache-builder]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
+[manager_go_doc]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/manager#Manager
+[request-go-doc]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/reconcile#Request
+[result_go_doc]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/reconcile#Result
+[multi-namespaced-cache-builder]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
 [kubebuilder_entrypoint_doc]: https://book.kubebuilder.io/cronjob-tutorial/empty-main.html
 [api_terms_doc]: https://book.kubebuilder.io/cronjob-tutorial/gvks.html
 [kb_controller_doc]: https://book.kubebuilder.io/cronjob-tutorial/controller-overview.html
@@ -467,7 +467,7 @@ Next, check out the following:
 [markers]: https://book.kubebuilder.io/reference/markers.html
 [crd-markers]: https://book.kubebuilder.io/reference/markers/crd-validation.html
 [memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/v1.3.0/testdata/go/v3/memcached-operator/controllers/memcached_controller.go
-[builder_godocs]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/builder#example-Builder
+[builder_godocs]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/builder#example-Builder
 [activate_modules]: https://github.com/golang/go/wiki/Modules#how-to-install-and-activate-module-support
 [advanced-topics]: /docs/building-operators/golang/advanced-topics/
 [create_a_webhook]: https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html

@@ -255,11 +255,11 @@ Log records will look like the following (from `log.Error()` above):
 If you do not want to use `logr` as your logging tool, you can remove `logr`-specific statements without issue from your operator's code, including the `logr` setup code in `main.go`, and add your own. Note that removing `logr` setup code will prevent `controller-runtime` from logging.
 
 
-[godoc_logr]:https://godoc.org/github.com/go-logr/logr
-[repo_zapr]:https://godoc.org/github.com/go-logr/zapr
-[godoc_logr_logger]:https://godoc.org/github.com/go-logr/logr#Logger
+[godoc_logr]:https://pkg.go.dev/github.com/go-logr/logr
+[repo_zapr]:https://pkg.go.dev/github.com/go-logr/zapr
+[godoc_logr_logger]:https://pkg.go.dev/github.com/go-logr/logr#Logger
 [site_struct_logging]:https://www.client9.com/structured-logging-in-golang/
 [code_memcached_controller]: https://github.com/operator-framework/operator-sdk/blob/v1.2.0/testdata/go/memcached-operator/controllers/memcached_controller.go
 [logfmt_repo]:https://github.com/jsternberg/zap-logfmt
 [controller_runtime_zap]:https://github.com/kubernetes-sigs/controller-runtime/tree/master/pkg/log/zap
-[logging_godocs]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/log/zap#Options.BindFlags
+[logging_godocs]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/log/zap#Options.BindFlags

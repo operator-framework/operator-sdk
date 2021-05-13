@@ -785,7 +785,7 @@ func addMetrics(ctx context.Context, cfg *rest.Config, namespace string) {
 
 **Deprecations**
 
-The `github.com/operator-framework/operator-sdk/pkg/restmapper` package was deprecated in favor of the `DynamicRESTMapper` implementation in [controller-runtime](https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/client/apiutil#NewDiscoveryRESTMapper). Users should migrate to controller-runtime's implementation, which is a drop-in replacement.
+The `github.com/operator-framework/operator-sdk/pkg/restmapper` package was deprecated in favor of the `DynamicRESTMapper` implementation in [controller-runtime](https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/client/apiutil#NewDiscoveryRESTMapper). Users should migrate to controller-runtime's implementation, which is a drop-in replacement.
 
 Replace:
 ```
@@ -1142,7 +1142,7 @@ func main() {
 	// Add support for MultiNamespace set in WATCH_NAMESPACE (e.g ns1,ns2)
 	// Note that this is not intended to be used for excluding namespaces, this is better done via a Predicate
 	// Also note that you may face performance issues when using this with a high number of namespaces.
-	// More Info: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
+	// More Info: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
 	if strings.Contains(namespace, ",") {
 		options.Namespace = ""
 		options.NewCache = cache.MultiNamespacedCacheBuilder(strings.Split(namespace, ","))
