@@ -247,7 +247,7 @@ Results:
 		time="2020-07-15T03:19:02Z" level=info msg="Could not find optional dependencies file" name=bundle-test
 ```
 
-**NOTE** The output format spec for each test matches the [`Test`](https://godoc.org/github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3#Test) type layout.
+**NOTE** The output format spec for each test matches the [`Test`](https://pkg.go.dev/github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3#Test) type layout.
 
 
 ## Exit Status

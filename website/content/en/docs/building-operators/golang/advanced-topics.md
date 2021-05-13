@@ -269,13 +269,13 @@ When the operator is not running in a cluster, the Manager will return an error 
 [typical-status-properties]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
 [scheme_package]:https://github.com/kubernetes/client-go/blob/master/kubernetes/scheme/register.go
 [deployments_register]: https://github.com/kubernetes/api/blob/master/apps/v1/register.go#L41
-[runtime_package]: https://godoc.org/k8s.io/apimachinery/pkg/runtime
-[scheme_builder]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/scheme#Builder
+[runtime_package]: https://pkg.go.dev/k8s.io/apimachinery/pkg/runtime
+[scheme_builder]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/scheme#Builder
 [metrics_doc]: https://book.kubebuilder.io/reference/metrics.html
 [lease_split_brain]: https://github.com/kubernetes/client-go/blob/30b06a83d67458700a5378239df6b96948cb9160/tools/leaderelection/leaderelection.go#L21-L24
-[leader_for_life]: https://godoc.org/github.com/operator-framework/operator-lib/leader
-[leader_with_lease]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/leaderelection
+[leader_for_life]: https://pkg.go.dev/github.com/operator-framework/operator-lib/leader
+[leader_with_lease]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/leaderelection
 [pod_eviction_timeout]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#options
-[manager_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Options
+[manager_options]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/manager#Options
 [apimachinery_condition]: https://github.com/kubernetes/apimachinery/blob/d4f471b82f0a17cda946aeba446770563f92114d/pkg/apis/meta/v1/types.go#L1368
 [helpers-conditions]: https://github.com/kubernetes/apimachinery/blob/master/pkg/api/meta/conditions.go

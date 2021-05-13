@@ -300,9 +300,9 @@ If the operator can watch multiple namespaces, set the following in your `spec.i
 ```
 
 [cert-manager]: https://github.com/jetstack/cert-manager
-[ctrl-manager]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/manager#Manager
-[ctrl-options]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/manager#Options
-[multi-namespaced-cache-builder]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
+[ctrl-manager]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/manager#Manager
+[ctrl-options]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/manager#Options
+[multi-namespaced-cache-builder]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
 [k8s-rbac]: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
 [kube-rbac-proxy]: https://github.com/brancz/kube-rbac-proxy
 [rbac-clusterrole]: https://kubernetes.io/docs/reference/access-authn-authz/rbac/#role-and-clusterrole
