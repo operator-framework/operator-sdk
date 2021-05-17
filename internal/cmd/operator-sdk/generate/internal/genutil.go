@@ -192,14 +192,14 @@ func GetPackageNameAndLayout(defaultPackageName string) (packageName string, lay
 			default:
 				packageName = cfg.GetProjectName()
 				if packageName == "" {
-					return "", "", errors.New("--package-name must be set if \"projectName\" is not set in the PROJECT config file")
+					return "", "", errors.New("--package <name> must be set if \"projectName\" is not set in the PROJECT config file")
 				}
 			}
 		}
 		layout = projutil.GetProjectLayout(cfg)
 	} else {
 		if packageName == "" {
-			return "", "", errors.New("--package-name must be set if PROJECT config file is not present")
+			return "", "", errors.New("--package <name> must be set if PROJECT config file is not present")
 		}
 		layout = "unknown"
 	}

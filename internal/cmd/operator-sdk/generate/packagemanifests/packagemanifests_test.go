@@ -162,7 +162,7 @@ var _ = Describe("Running a generate packagemanifests command", func() {
 			It("fails if no correct operator name can be found", func() {
 				err := c.setDefaults()
 				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(ContainSubstring("package-name must be set if PROJECT config file is not present"))
+				Expect(err.Error()).To(ContainSubstring("--package <name> must be set if PROJECT config file is not present"))
 			})
 			It("sets fields on the command to default values", func() {
 				c.packageName = "apricot"
