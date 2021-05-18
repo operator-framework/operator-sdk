@@ -2,8 +2,12 @@
 # It is built with dependencies that take a while to download, thus speeding
 # up ansible deploy jobs.
 
-FROM registry.access.redhat.com/ubi8/ubi:8.3-297.1618432833
+FROM registry.access.redhat.com/ubi8/ubi:8.3
 ARG TARGETARCH
+
+# Label this image with the repo and commit that built it, for freshmaking purposes.
+ARG GIT_COMMIT=devel
+LABEL git_commit=$GIT_COMMIT
 
 RUN mkdir -p /etc/ansible \
   && echo "localhost ansible_connection=local" > /etc/ansible/hosts \

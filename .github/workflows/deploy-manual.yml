@@ -38,10 +38,12 @@ jobs:
         set -e
         IMG=quay.io/${{ github.repository_owner }}/ansible-operator-base
         TAG="${{ github.event.inputs.ansible_operator_base_tag }}"
+        GIT_COMMIT=$(git rev-parse HEAD)
         if [[ "$TAG" == "" ]]; then
-          TAG="$(git branch --show-current)-$(git rev-parse HEAD)"
+          TAG="$(git branch --show-current)-${GIT_COMMIT}"
         fi
         echo ::set-output name=tag::${IMG}:${TAG}
+        echo ::set-output name=git_commit::${GIT_COMMIT}
 
     - name: build and push
       uses: docker/build-push-action@v2
@@ -51,6 +53,8 @@ jobs:
         platforms: linux/amd64,linux/arm64,linux/ppc64le,linux/s390x
         push: true
         tags: ${{ steps.tag.outputs.tag }}
+        build-args: |
+          GIT_COMMIT=${{ steps.tag.outputs.git_commit }}
 
     # This change will be staged and committed in the PR pushed below.
     # The script below will fail if no change was made.
