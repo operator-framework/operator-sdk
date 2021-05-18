@@ -7,7 +7,7 @@ source ${DIR}/lib.sh
 set -eu
 set -o pipefail
 
-# Comman-separated list of build platforms, ex. linux/s390x.
+# Comma-separated list of build platforms, ex. linux/s390x.
 # See 'docker buildx build --help' for --platform flag info.
 DEFAULT_PLATFORMS="linux/amd64,linux/arm64,linux/ppc64le,linux/s390x"
 # TODO(estroz): support scorecard-test-kuttl rebuilds.
