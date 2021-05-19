@@ -17,6 +17,7 @@ package v3
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -99,6 +100,11 @@ func (mh *Memcached) Run() {
 	mh.implementingWebhooks()
 	mh.uncommentDefaultKustomization()
 	mh.uncommentManifestsKustomization()
+
+	cmd := exec.Command("go", "mod", "tidy")
+	cmd.Dir = mh.ctx.Dir
+	_, err = mh.ctx.Run(cmd)
+	pkg.CheckError("Running go mod tidy", err)
 
 	log.Infof("creating the bundle")
 	err = mh.ctx.GenerateBundle()

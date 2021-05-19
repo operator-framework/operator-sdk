@@ -1,6 +1,6 @@
 module github.com/example/memcached-operator
 
-go 1.15
+go 1.16
 
 require (
 	github.com/go-logr/logr v0.3.0
