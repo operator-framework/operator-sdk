@@ -28,6 +28,7 @@ import (
 
 type Upgrade struct {
 	BundleImage string
+	LocalBundle string
 
 	*registry.IndexImageCatalogCreator
 	*registry.OperatorInstaller
@@ -46,6 +47,8 @@ func NewUpgrade(cfg *operator.Configuration) Upgrade {
 }
 
 func (u *Upgrade) BindFlags(fs *pflag.FlagSet) {
+	fs.StringVar(&u.LocalBundle, "local-bundle", "", "bundle directory or image to extract package information from. If unset, the bundle image arg is used")
+
 	// --mode is hidden so only users who know what they're doing can alter add mode.
 	fs.StringVar((*string)(&u.BundleAddMode), "mode", "", "mode to use for adding new bundle version to index")
 	_ = fs.MarkHidden("mode")
@@ -69,7 +72,12 @@ func (u *Upgrade) setup(ctx context.Context) error {
 		}
 	}
 
-	labels, bundle, err := operator.LoadBundle(ctx, u.BundleImage, u.SkipTLS)
+	bundleRef := u.LocalBundle
+	if bundleRef == "" {
+		bundleRef = u.BundleImage
+	}
+	// Load bundle labels and set label-dependent values.
+	labels, bundle, err := operator.LoadBundle(ctx, bundleRef, u.SkipTLS)
 	if err != nil {
 		return err
 	}

@@ -22,6 +22,7 @@ operator-sdk run bundle <bundle-image> [flags]
       --index-image string              index image in which to inject bundle (default "quay.io/operator-framework/opm:latest")
       --install-mode InstallModeValue   install mode
       --kubeconfig string               Path to the kubeconfig file to use for CLI requests.
+      --local-bundle string             bundle directory or image to extract package information from. If unset, the bundle image arg is used
   -n, --namespace string                If present, namespace scope for this CLI request
       --pull-secret-name string         Name of image pull secret ("type: kubernetes.io/dockerconfigjson") required to pull bundle images. This secret *must* be both in the namespace and an imagePullSecret of the service account that this command is configured to run in
       --service-account string          Service account name to bind registry objects to. If unset, the default service account is used. This value does not override the operator's service account

@@ -25,6 +25,9 @@ jobs:
     runs-on: ubuntu-18.04
     needs: check_docs_only
     if: needs.check_docs_only.outputs.skip != 'true'
+    strategy:
+      matrix:
+        type: [olm, bundle, pkgman]
     steps:
       - uses: actions/setup-go@v2
         with:
@@ -32,4 +35,4 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - run: make test-e2e-integration
+      - run: make test-integration-${{ matrix.type }}

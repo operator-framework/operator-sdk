@@ -28,6 +28,7 @@ import (
 
 type Install struct {
 	BundleImage string
+	LocalBundle string
 
 	*registry.IndexImageCatalogCreator
 	*registry.OperatorInstaller
@@ -46,6 +47,7 @@ func NewInstall(cfg *operator.Configuration) Install {
 }
 
 func (i *Install) BindFlags(fs *pflag.FlagSet) {
+	fs.StringVar(&i.LocalBundle, "local-bundle", "", "bundle directory or image to extract package information from. If unset, the bundle image arg is used")
 	fs.StringVar(&i.IndexImage, "index-image", registry.DefaultIndexImage, "index image in which to inject bundle")
 	fs.Var(&i.InstallMode, "install-mode", "install mode")
 
@@ -71,8 +73,12 @@ func (i *Install) setup(ctx context.Context) error {
 		}
 	}
 
+	bundleRef := i.LocalBundle
+	if bundleRef == "" {
+		bundleRef = i.BundleImage
+	}
 	// Load bundle labels and set label-dependent values.
-	labels, bundle, err := operator.LoadBundle(ctx, i.BundleImage, i.SkipTLS)
+	labels, bundle, err := operator.LoadBundle(ctx, bundleRef, i.SkipTLS)
 	if err != nil {
 		return err
 	}

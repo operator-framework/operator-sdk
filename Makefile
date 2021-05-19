@@ -1,4 +1,5 @@
-SHELL = /bin/bash
+SHELL = /usr/bin/env bash -o pipefail
+.SHELLFLAGS = -ec
 
 # IMAGE_VERSION represents the ansible-operator, helm-operator, and scorecard subproject versions.
 # This value must be updated to the release tag of the most recent release, a change that must
@@ -114,8 +115,10 @@ tag: ## Tag a release commit. See 'make -f release/Makefile help' for more infor
 
 ##@ Test
 
+TEST_ARTIFACTS := test/artifacts
+
 .PHONY: test-all
-test-all: test-static test-e2e ## Run all tests
+test-all: test-static test-e2e test-integration ## Run all tests
 
 .PHONY: test-static
 test-static: test-sanity test-unit test-docs ## Run all non-cluster-based tests
@@ -140,7 +143,13 @@ TEST_PKGS = $(shell go list ./... | grep -v -E 'github.com/operator-framework/op
 test-unit: ## Run unit tests
 	go test -coverprofile=coverage.out -covermode=count -short $(TEST_PKGS)
 
-e2e_tests := test-e2e-go test-e2e-ansible test-e2e-ansible-molecule test-e2e-helm test-e2e-integration
+testbins: build
+	$(SCRIPTS_DIR)/fetch kind 0.11.0
+	$(SCRIPTS_DIR)/fetch envtest 0.8.3
+	$(SCRIPTS_DIR)/fetch kubectl $(K8S_VERSION) # Install kubectl AFTER envtest because envtest includes its own kubectl binary
+
+# e2e tests
+e2e_tests := test-e2e-go test-e2e-ansible test-e2e-ansible-molecule test-e2e-helm
 e2e_targets := test-e2e $(e2e_tests)
 .PHONY: $(e2e_targets)
 
@@ -148,16 +157,15 @@ e2e_targets := test-e2e $(e2e_tests)
 export KIND_CLUSTER := operator-sdk-e2e
 
 export KUBEBUILDER_ASSETS = $(PWD)/$(shell go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest && $(shell go env GOPATH)/bin/setup-envtest use $(ENVTEST_K8S_VERSION) --bin-dir tools/bin/ -p path)
-test-e2e-setup: build
-	$(SCRIPTS_DIR)/fetch kind 0.11.0
-	$(SCRIPTS_DIR)/fetch kubectl $(ENVTEST_K8S_VERSION) # Install kubectl AFTER envtest because envtest includes its own kubectl binary
+test-e2e-setup: testbins
 	[[ "`$(TOOLS_DIR)/kind get clusters`" =~ "$(KIND_CLUSTER)" ]] || $(TOOLS_DIR)/kind create cluster --image="kindest/node:v$(ENVTEST_K8S_VERSION)" --name $(KIND_CLUSTER)
 
-.PHONY: test-e2e-teardown
-test-e2e-teardown:
+.PHONY: teardown-test-cluster
+teardown-test-cluster:
 	$(SCRIPTS_DIR)/fetch kind 0.11.0
 	$(TOOLS_DIR)/kind delete cluster --name $(KIND_CLUSTER)
-	rm -f $(KUBECONFIG)
+	(docker stop kind-registry 2>/dev/null; docker rm --volumes kind-registry 2>/dev/null) || true
+	rm -rf $(TEST_ARTIFACTS)
 
 # Double colon rules allow repeated rule declarations.
 # Repeated rules are executed in the order they appear.
@@ -174,9 +182,27 @@ test-e2e-ansible-molecule:: image/ansible-operator ## Run molecule-based Ansible
 	./hack/tests/e2e-ansible-molecule.sh
 test-e2e-helm:: image/helm-operator ## Run Helm e2e tests
 	go test ./test/e2e/helm -v -ginkgo.v
-test-e2e-integration:: ## Run integration tests
-	go test ./test/integration -v -ginkgo.v
+
+# Integration tests
+DOCKER_REGISTRY_NAME := kind-registry
+CLUSTER ?= kind
+
+integration_tests := test-integration-olm test-integration-bundle test-integration-pkgman
+integration_targets := test-integration $(integration_tests)
+.PHONY: $(integration_targets)
+
+$(integration_targets):: testbins
+test-integration:: $(integration_tests) ## Run integration tests
+test-integration-olm:: test-e2e-setup ## Run OLM integration tests
 	./hack/tests/subcommand-olm-install.sh
+test-integration-bundle:: FOCUS = bundle
+test-integration-pkgman:: FOCUS = packagemanifests
+test-integration-bundle test-integration-pkgman:: test-integration-cluster ## Run packagemanifests integration tests.
+test-integration-cluster:: ## Set up cluster for integration tests.
+ifeq ($(CLUSTER),kind)
+	$(SCRIPTS_DIR)/create_kind_cluster -c $(TEST_ARTIFACTS)/registry-certs -k $(K8S_VERSION)
+endif
+	go test ./test/integration -v -ginkgo.v -ginkgo.focus="$(FOCUS)" $(if ($(CLUSTER),kind),-cert-dir $(shell pwd)/$(TEST_ARTIFACTS)/registry-certs)
 
 .DEFAULT_GOAL := help
 .PHONY: help

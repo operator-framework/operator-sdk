@@ -78,7 +78,7 @@ type RegistryPod struct { //nolint:maligned
 	CASecretName string
 
 	// SkipTLS controls wether to ignore SSL errors while pulling bundle image from registry server.
-	SkipTLS bool `json:"SkipTLS"`
+	SkipTLS bool
 
 	// pod represents a kubernetes *corev1.pod that will be created on a cluster using an index image
 	pod *corev1.Pod

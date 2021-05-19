@@ -25,6 +25,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -214,7 +215,7 @@ func (u *Uninstall) deleteObjects(ctx context.Context, waitForDelete bool, objs 
 			return err
 		}
 		lowerKind := strings.ToLower(gvks[0].Kind)
-		if err := u.config.Client.Delete(ctx, obj); err != nil && !apierrors.IsNotFound(err) {
+		if err := u.config.Client.Delete(ctx, obj, client.PropagationPolicy(metav1.DeletePropagationBackground)); err != nil && !apierrors.IsNotFound(err) {
 			return fmt.Errorf("delete %s %q: %v", lowerKind, obj.GetName(), err)
 		} else if err == nil {
 			u.Logf("%s %q deleted", lowerKind, obj.GetName())

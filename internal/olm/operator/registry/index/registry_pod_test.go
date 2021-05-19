@@ -232,13 +232,16 @@ var _ = Describe("RegistryPod", func() {
 
 // containerCommandFor returns the expected container command for a db path and set of bundle items.
 func containerCommandFor(dbPath string, items []BundleItem, hasCA, skipTLS bool) string { //nolint:unparam
-	var caFlag string
+	var extraFlags string
 	if hasCA {
-		caFlag = " --ca-file=/certs/cert.pem"
+		extraFlags += " --ca-file=/certs/cert.pem"
+	}
+	if skipTLS {
+		extraFlags += " --skip-tls"
 	}
 	additions := &strings.Builder{}
 	for _, item := range items {
-		additions.WriteString(fmt.Sprintf("opm registry add -d %s -b %s --mode=%s%s --skip-tls=%v && \\\n", dbPath, item.ImageTag, item.AddMode, caFlag, skipTLS))
+		additions.WriteString(fmt.Sprintf("opm registry add -d %s -b %s --mode=%s%s && \\\n", dbPath, item.ImageTag, item.AddMode, extraFlags))
 	}
 	return fmt.Sprintf("mkdir -p /database && \\\n%sopm registry serve -d /database/index.db -p 50051\n", additions.String())
 }

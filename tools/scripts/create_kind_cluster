@@ -1,0 +1,207 @@
+#!/usr/bin/env bash
+
+# Adapted from https://github.com/operator-framework/operator-registry/blob/v1.17.1/scripts/start_registry.sh
+
+set -o errexit
+set -o pipefail
+
+# defaults
+CERT_DIR=certs
+
+TOOLS_DIR=tools/bin
+
+CLUSTER_NAME="operator-sdk-e2e"
+REGISTRY_NAME=kind-registry
+REGISTRY_PORT=443
+# TODO: get secure registry client working.
+SKIP_TLS=false
+
+K8S_VERSION=
+
+function usage() {
+  echo -n "$(basename "$0") [OPTIONS]
+
+Creates a local kind cluster reading from a local named docker registry.
+This registry always serves over TLS; this script generates TLS certs.
+
+ Options:
+  -k,--k8s-ver     Kubernetes version (required)
+  --tools-dir      Directory containing kind and kubectl (defaults to ${TOOLS_DIR})
+  --reg-name       Image registry container and in-cluster name (defaults to ${REGISTRY_NAME})
+  -p, --reg-port   Port the image registry will listen on (defaults to ${REGISTRY_PORT})
+  -c, --cert-dir   Output directory for cert and key files (defaults to ${CERT_DIR})
+  -h, --help       Display this help and exit
+"
+  exit 0
+}
+
+function err_exit() {
+  echo >&2 "[ERROR] $1"
+  exit 1
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+  -k|--k8s-ver)
+    K8S_VERSION="$2"
+    shift 2
+  ;;
+  --tools-dir)
+    TOOLS_DIR="$2"
+    shift 2
+  ;;
+  --reg-name)
+    REGISTRY_NAME="$2"
+    shift 2
+  ;;
+  -p|--reg-port)
+    REGISTRY_PORT="$2"
+    shift 2
+  ;;
+  -c|--cert-dir)
+    CERT_DIR="$2"
+    shift 2
+  ;;
+  -h|--help)
+    usage
+    shift
+  ;;
+  --) # end argument parsing
+    shift
+    break
+  ;;
+  --*=|-*) # unsupported flags
+    err_exit "Unsupported flag $1"
+  ;;
+  *)
+    POSITIONAL+=("$1") # save it in an array for later
+    shift # past argument
+  ;;
+  esac
+done
+set -- "${POSITIONAL[@]}" # restore positional parameters
+
+: ${K8S_VERSION:?"Kubernetes version must be set"}
+
+KIND=${TOOLS_DIR}/kind
+KUBECTL=${TOOLS_DIR}/kubectl
+
+# Install this globally since its version does not really matter.
+LOCAL_BIN="${XGD_CONFIG_HOME:-$HOME}/.local/bin"
+mkdir -p "$LOCAL_BIN"
+export PATH="${PATH}:${LOCAL_BIN}"
+MKCERT="${LOCAL_BIN}/mkcert"
+
+CERT="${CERT_DIR}/cert.pem"
+KEY="${CERT_DIR}/key.pem"
+
+function installMkcert() {
+  if ! mkcert --version &>/dev/null; then
+    curl -sSLo "$MKCERT" https://github.com/FiloSottile/mkcert/releases/download/v1.4.3/mkcert-v1.4.3-$(go env GOOS)-$(go env GOARCH)
+    chmod +x "$MKCERT"
+  else
+    MKCERT=$(command -v mkcert)
+  fi
+}
+
+function createCerts() {
+  # create destination for certs
+  mkdir -p "${CERT_DIR}"
+  # check if CAROOT is installed or not
+  if [[ ! -d $("$MKCERT" -CAROOT) ]]; then
+    if ! "$MKCERT" -install; then
+      err_exit "Unable to install CAROOT"
+    fi
+  fi
+  # check if the certs were already created from a previous run of this script
+  if [[ ! -f "${CERT}" ]] && [[ ! -f "${KEY}" ]]; then
+    if ! "$MKCERT" -cert-file "${CERT}" -key-file "${KEY}" localhost 127.0.0.1 ::1 "$REGISTRY_NAME" ; then
+      err_exit "Unable to create cert and key files"
+    fi
+  fi
+}
+
+running="$(docker inspect -f '{{.State.Running}}' "${REGISTRY_NAME}" 2>/dev/null || true)"
+if [ "${running}" = 'true' ]; then
+  echo "Registry is already running. Nothing to do."
+  exit 0
+fi
+
+# use mkcert tool for simple cross platform setup/configuration
+installMkcert
+createCerts
+
+ABS_CERT_DIR="$(cd "$(dirname "${CERT_DIR}")"; pwd -P)/$(basename "${CERT_DIR}")"
+docker run \
+  -d \
+  --restart=always \
+  --name "${REGISTRY_NAME}" \
+  -v "${ABS_CERT_DIR}":/certs \
+  -e REGISTRY_HTTP_ADDR=0.0.0.0:${REGISTRY_PORT} \
+  -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/cert.pem \
+  -e REGISTRY_HTTP_TLS_KEY=/certs/key.pem \
+  -p "127.0.0.1:${REGISTRY_PORT}:${REGISTRY_PORT}" \
+  registry:2
+
+if [[ "`$KIND get clusters`" =~ "$CLUSTER_NAME" ]]; then
+  echo "Cluster operator-sdk-e2e already exists."
+  exit 0
+fi
+
+if [[ "$SKIP_TLS" == "false" ]]; then
+  echo "Creating kind cluster with an insecure registry client config."
+  # create a cluster with the local registry enabled in containerd
+  cat <<EOF | $KIND create cluster --name operator-sdk-e2e --image kindest/node:v${K8S_VERSION} --config=-
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+containerdConfigPatches:
+- |-
+  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:${REGISTRY_PORT}"]
+    endpoint = ["http://${REGISTRY_NAME}:${REGISTRY_PORT}"]
+- |-
+  [plugins."io.containerd.grpc.v1.cri".registry.configs."${REGISTRY_NAME}:${REGISTRY_PORT}".tls]
+    insecure_skip_verify = true
+EOF
+
+else
+
+  # TODO: get secure registry client working.
+  echo "Creating kind cluster with a secure registry client config."
+  # create a cluster with the local registry enabled in containerd
+  cat <<EOF | $KIND create cluster --name operator-sdk-e2e --image kindest/node:v${K8S_VERSION} --config=-
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+  extraMounts:
+  - containerPath: /etc/docker/certs.d/localhost
+    hostPath: $(pwd)/test/integration/registry/certs
+containerdConfigPatches:
+- |-
+  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:${REGISTRY_PORT}"]
+    endpoint = ["https://${REGISTRY_NAME}:${REGISTRY_PORT}"]
+- |-
+  [plugins."io.containerd.grpc.v1.cri".registry.configs."${REGISTRY_NAME}:${REGISTRY_PORT}".tls]
+    cert_file = "/etc/docker/certs.d/localhost/cert.pem"
+    key_file  = "/etc/docker/certs.d/localhost/key.pem"
+EOF
+
+fi
+
+# Connect the registry to kind's network so the registry name is resolvable.
+docker network connect kind $REGISTRY_NAME || true
+
+# Document the local registry
+# https://github.com/kubernetes/enhancements/tree/master/keps/sig-cluster-lifecycle/generic/1755-communicating-a-local-registry
+cat <<EOF | $KUBECTL apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: local-registry-hosting
+  namespace: kube-public
+data:
+  localRegistryHosting.v1: |
+    host: "localhost:${REGISTRY_PORT}"
+    hostFromClusterNetwork: "${REGISTRY_NAME}:${REGISTRY_PORT}"
+    help: "https://kind.sigs.k8s.io/docs/user/local-registry/"
+EOF
