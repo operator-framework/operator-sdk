@@ -333,7 +333,7 @@ var _ = Describe("findMatchingDeploymentAndServiceForWebhook", func() {
 		})
 	})
 
-	Context("match webhookconfigs with same service and path", func() {
+	Context("crdGroups", func() {
 		path1 := "/whPath"
 		port1 := new(int32)
 		*port1 = 2311

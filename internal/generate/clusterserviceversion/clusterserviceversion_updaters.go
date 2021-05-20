@@ -35,13 +35,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
 
-// serviceportPath is refers to the group of webhook service and
-// path names and port.
-type serviceportPath struct {
-	Port *int32
-	Path string
-}
-
 // ApplyTo applies relevant manifests in c to csv, sorts the applied updates,
 // and validates the result.
 func ApplyTo(c *collector.Manifests, csv *operatorsv1alpha1.ClusterServiceVersion) error {
@@ -310,12 +303,7 @@ func applyWebhooks(c *collector.Manifests, csv *operatorsv1alpha1.ClusterService
 
 		if len(crdToConfigMap) != 0 {
 			depName := findMatchingDepNameFromService(c, &svc)
-			des, err := conversionToWebhookDescription(crdToConfigMap, depName, &svc)
-			// not sure if we should exit here, is it reasonable to just log it and continue with
-			// the next step?
-			if err != nil {
-				log.Fatal(err)
-			}
+			des := conversionToWebhookDescription(crdToConfigMap, depName, &svc)
 			webhookDescriptions = append(webhookDescriptions, des...)
 		}
 	}
@@ -327,7 +315,7 @@ func applyWebhooks(c *collector.Manifests, csv *operatorsv1alpha1.ClusterService
 // port and path.
 // For example: if we have the following map: {crd1:[portX+pathX], crd2: [portX+pathX], crd3: [portY:partY]},
 // we will create 2 webhook descriptions: one with [portX+pathX]:[crd1, crd2] and the other with [portY:pathY]:[crd3]
-func conversionToWebhookDescription(crdToConfig map[string]apiextv1.WebhookConversion, depName string, ws *corev1.Service) ([]operatorsv1alpha1.WebhookDescription, error) {
+func conversionToWebhookDescription(crdToConfig map[string]apiextv1.WebhookConversion, depName string, ws *corev1.Service) []operatorsv1alpha1.WebhookDescription {
 	des := make([]operatorsv1alpha1.WebhookDescription, 0)
 
 	// this is a map of serviceportAndPath configs, and the respective CRDs.
@@ -337,10 +325,10 @@ func conversionToWebhookDescription(crdToConfig map[string]apiextv1.WebhookConve
 		// we need this to get the conversionReviewVersions.
 		// here, we assume all crds having same servicePortAndPath config will have
 		// same conversion review versions.
-		// this should technically never error.
 		config, ok := crdToConfig[crds[0]]
 		if !ok {
-			return nil, fmt.Errorf("webhook config for crd %q not found", crds[0])
+			log.Infof("Webhook config for CRD %q not found", crds[0])
+			continue
 		}
 
 		description := operatorsv1alpha1.WebhookDescription{
@@ -357,7 +345,7 @@ func conversionToWebhookDescription(crdToConfig map[string]apiextv1.WebhookConve
 		}
 
 		if len(description.AdmissionReviewVersions) == 0 {
-			log.Infof("conversionReviewVersion not found for the deployment %q", depName)
+			log.Infof("ConversionReviewVersion not found for the deployment %q", depName)
 		}
 
 		var webhookServiceRefPort int32 = 443
@@ -386,7 +374,14 @@ func conversionToWebhookDescription(crdToConfig map[string]apiextv1.WebhookConve
 		des = append(des, description)
 	}
 
-	return des, nil
+	return des
+}
+
+// serviceportPath is refers to the group of webhook service and
+// path names and port.
+type serviceportPath struct {
+	Port *int32
+	Path string
 }
 
 // crdGroups groups the crds with similar service port and name. It returns a map of serviceportPath
@@ -399,10 +394,6 @@ func crdGroups(crdToConfig map[string]apiextv1.WebhookConversion) map[servicepor
 		serviceportPath := serviceportPath{
 			Port: config.ClientConfig.Service.Port,
 			Path: *config.ClientConfig.Service.Path,
-		}
-
-		if _, ok := uniqueConfig[serviceportPath]; !ok {
-			uniqueConfig[serviceportPath] = make([]string, 0)
 		}
 
 		uniqueConfig[serviceportPath] = append(uniqueConfig[serviceportPath], crdName)
@@ -587,7 +578,7 @@ func findMatchingDepNameFromService(c *collector.Manifests, ws *corev1.Service) 
 		}
 
 		depName = dep.GetName()
-		// Check that all labels match
+		// Check that all labels match.
 		for key, serviceValue := range ws.Spec.Selector {
 			if podTemplateValue, hasKey := podTemplateLabels[key]; !hasKey || podTemplateValue != serviceValue {
 				depName = ""
