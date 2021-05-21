@@ -27,10 +27,10 @@ import (
 
 	"context"
 
-	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	cachev1alpha1 "github.com/example/memcached-operator/api/v1alpha1"
 )
@@ -38,7 +38,6 @@ import (
 // MemcachedReconciler reconciles a Memcached object
 type MemcachedReconciler struct {
 	client.Client
-	Log    logr.Logger
 	Scheme *runtime.Scheme
 }
 
@@ -58,7 +57,7 @@ type MemcachedReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
 func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := r.Log.WithValues("memcached", req.NamespacedName)
+	log := ctrllog.FromContext(ctx)
 
 	// Fetch the Memcached instance
 	memcached := &cachev1alpha1.Memcached{}

@@ -207,7 +207,7 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 			os.Exit(1)
 		}
 
-		cMap.Store(w.GroupVersionKind, &controllermap.Contents{Controller: *ctr,
+		cMap.Store(w.GroupVersionKind, &controllermap.Contents{Controller: *ctr, //nolint:staticcheck
 			WatchDependentResources:     w.WatchDependentResources,
 			WatchClusterScopedResources: w.WatchClusterScopedResources,
 			OwnerWatchMap:               controllermap.NewWatchMap(),

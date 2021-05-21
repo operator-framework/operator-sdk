@@ -17,6 +17,7 @@ package v3
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -99,6 +100,11 @@ func (mh *Memcached) Run() {
 	mh.implementingWebhooks()
 	mh.uncommentDefaultKustomization()
 	mh.uncommentManifestsKustomization()
+
+	cmd := exec.Command("go", "mod", "tidy")
+	cmd.Dir = mh.ctx.Dir
+	_, err = mh.ctx.Run(cmd)
+	pkg.CheckError("Running go mod tidy", err)
 
 	log.Infof("creating the bundle")
 	err = mh.ctx.GenerateBundle()
@@ -234,25 +240,31 @@ func (mh *Memcached) implementingController() {
 
 	// Replace reconcile content
 	err = util.ReplaceInFile(controllerPath,
-		fmt.Sprintf("_ = r.Log.WithValues(\"%s\", req.NamespacedName)", strings.ToLower(mh.ctx.Kind)),
-		fmt.Sprintf("log := r.Log.WithValues(\"%s\", req.NamespacedName)", strings.ToLower(mh.ctx.Kind)))
-	pkg.CheckError("replacing reconcile content", err)
+		`"sigs.k8s.io/controller-runtime/pkg/log"`,
+		`ctrllog "sigs.k8s.io/controller-runtime/pkg/log"`,
+	)
+	pkg.CheckError("replacing controller log import", err)
+	err = util.ReplaceInFile(controllerPath,
+		"_ = log.FromContext(ctx)",
+		"log := ctrllog.FromContext(ctx)",
+	)
+	pkg.CheckError("replacing controller logger construction", err)
 
 	// Add reconcile implementation
 	err = util.ReplaceInFile(controllerPath,
 		"// your logic here", reconcileFragment)
-	pkg.CheckError("replacing reconcile", err)
+	pkg.CheckError("replacing reconcile content", err)
 
 	// Add helpers funcs to the controller
 	err = kbtestutils.InsertCode(controllerPath,
 		"return ctrl.Result{}, nil\n}", controllerFuncsFragment)
-	pkg.CheckError("adding helpers methods in the controller", err)
+	pkg.CheckError("adding helper methods in the controller", err)
 
 	// Add watch for the Kind
 	err = util.ReplaceInFile(controllerPath,
 		fmt.Sprintf(watchOriginalFragment, mh.ctx.Group, mh.ctx.Version, mh.ctx.Kind),
 		fmt.Sprintf(watchCustomizedFragment, mh.ctx.Group, mh.ctx.Version, mh.ctx.Kind))
-	pkg.CheckError("replacing reconcile", err)
+	pkg.CheckError("replacing add controller to manager", err)
 }
 
 // nolint:gosec
