@@ -45,6 +45,7 @@ generate: build # Generate CLI docs and samples
 OLM_VERSIONS = 0.16.1 0.17.0 0.18.1
 bindata: ## Update project bindata
 	./hack/generate/olm_bindata.sh $(OLM_VERSIONS)
+	$(MAKE) fix
 
 .PHONY: fix
 fix: ## Fixup files in the repo.
