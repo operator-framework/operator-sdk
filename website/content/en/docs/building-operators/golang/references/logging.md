@@ -33,7 +33,7 @@ Operators set the logger for all operator logging in `main.go`. To illustrate ho
 package main
 
 import (
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"  
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -191,7 +191,7 @@ An example from [`memcached_controller.go`][code_memcached_controller]:
 package memcached
 
 import (
-	"github.com/go-logr/logr"
+  ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 
@@ -203,7 +203,7 @@ type MemcachedReconciler struct {
 }
 
 func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := r.Log.WithValues("memcached", req.NamespacedName)
+	log := ctrllog.FromContext(ctx)
 
 	// Fetch the Memcached instance
 	memcached := &cachev1alpha1.Memcached{}
