@@ -9,7 +9,7 @@ export IMAGE_VERSION = v1.7.1
 export SIMPLE_VERSION = $(shell (test "$(shell git describe)" = "$(shell git describe --abbrev=0)" && echo $(shell git describe)) || echo $(shell git describe --abbrev=0)+git)
 export GIT_VERSION = $(shell git describe --dirty --tags --always)
 export GIT_COMMIT = $(shell git rev-parse HEAD)
-export K8S_VERSION = 1.19.4
+export K8S_VERSION = 1.20.2
 
 # Build settings
 export TOOLS_DIR = tools/bin
@@ -42,7 +42,7 @@ generate: build # Generate CLI docs and samples
 	go generate ./...
 
 .PHONY: bindata
-OLM_VERSIONS = 0.16.1 0.17.0 0.18.0
+OLM_VERSIONS = 0.16.1 0.17.0 0.18.1
 bindata: ## Update project bindata
 	./hack/generate/olm_bindata.sh $(OLM_VERSIONS)
 
@@ -145,14 +145,14 @@ e2e_targets := test-e2e $(e2e_tests)
 export KIND_CLUSTER := operator-sdk-e2e
 export KUBEBUILDER_ASSETS := $(PWD)/$(TOOLS_DIR)
 test-e2e-setup: build
-	$(SCRIPTS_DIR)/fetch kind 0.9.0
-	$(SCRIPTS_DIR)/fetch envtest 0.7.0
+	$(SCRIPTS_DIR)/fetch kind 0.11.0
+	$(SCRIPTS_DIR)/fetch envtest 0.8.3
 	$(SCRIPTS_DIR)/fetch kubectl $(K8S_VERSION) # Install kubectl AFTER envtest because envtest includes its own kubectl binary
 	[[ "`$(TOOLS_DIR)/kind get clusters`" =~ "$(KIND_CLUSTER)" ]] || $(TOOLS_DIR)/kind create cluster --image="kindest/node:v$(K8S_VERSION)" --name $(KIND_CLUSTER)
 
 .PHONY: test-e2e-teardown
 test-e2e-teardown:
-	$(SCRIPTS_DIR)/fetch kind 0.9.0
+	$(SCRIPTS_DIR)/fetch kind 0.11.0
 	$(TOOLS_DIR)/kind delete cluster --name $(KIND_CLUSTER)
 	rm -f $(KUBECONFIG)
 
