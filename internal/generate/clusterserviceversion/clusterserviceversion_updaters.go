@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -28,6 +29,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
@@ -295,7 +297,146 @@ func applyWebhooks(c *collector.Manifests, csv *operatorsv1alpha1.ClusterService
 		}
 		webhookDescriptions = append(webhookDescriptions, mutatingToWebhookDescription(webhook, depName, svc))
 	}
+
+	for _, svc := range c.Services {
+		crdToConfigMap := getConvWebhookCRDNamesAndConfig(c, svc.GetName())
+
+		if len(crdToConfigMap) != 0 {
+			depName := findMatchingDepNameFromService(c, &svc)
+			des := conversionToWebhookDescription(crdToConfigMap, depName, &svc)
+			webhookDescriptions = append(webhookDescriptions, des...)
+		}
+	}
 	csv.Spec.WebhookDefinitions = webhookDescriptions
+}
+
+// conversionToWebhookDescription takes in a map of {crdNames, apiextv.WebhookConversion} and groups
+// all the crds with same port and path. It then creates a webhook description for each unique combination of
+// port and path.
+// For example: if we have the following map: {crd1:[portX+pathX], crd2: [portX+pathX], crd3: [portY:partY]},
+// we will create 2 webhook descriptions: one with [portX+pathX]:[crd1, crd2] and the other with [portY:pathY]:[crd3]
+func conversionToWebhookDescription(crdToConfig map[string]apiextv1.WebhookConversion, depName string, ws *corev1.Service) []operatorsv1alpha1.WebhookDescription {
+	des := make([]operatorsv1alpha1.WebhookDescription, 0)
+
+	// this is a map of serviceportAndPath configs, and the respective CRDs.
+	webhookDescriptions := crdGroups(crdToConfig)
+
+	for serviceConfig, crds := range webhookDescriptions {
+		// we need this to get the conversionReviewVersions.
+		// here, we assume all crds having same servicePortAndPath config will have
+		// same conversion review versions.
+		config, ok := crdToConfig[crds[0]]
+		if !ok {
+			log.Infof("Webhook config for CRD %q not found", crds[0])
+			continue
+		}
+
+		description := operatorsv1alpha1.WebhookDescription{
+			Type:                    operatorsv1alpha1.ConversionWebhook,
+			ConversionCRDs:          crds,
+			AdmissionReviewVersions: config.ConversionReviewVersions,
+			WebhookPath:             &serviceConfig.Path,
+			DeploymentName:          depName,
+			GenerateName:            getGenerateName(crds),
+			SideEffects: func() *admissionregv1.SideEffectClass {
+				seNone := admissionregv1.SideEffectClassNone
+				return &seNone
+			}(),
+		}
+
+		if len(description.AdmissionReviewVersions) == 0 {
+			log.Infof("ConversionReviewVersion not found for the deployment %q", depName)
+		}
+
+		var webhookServiceRefPort int32 = 443
+
+		if serviceConfig.Port != nil {
+			webhookServiceRefPort = *serviceConfig.Port
+		}
+
+		if ws != nil {
+			for _, port := range ws.Spec.Ports {
+				if webhookServiceRefPort == port.Port {
+					description.ContainerPort = port.Port
+					description.TargetPort = &port.TargetPort
+					break
+				}
+			}
+		}
+
+		if description.DeploymentName == "" {
+			if config.ClientConfig.Service != nil {
+				description.DeploymentName = strings.TrimSuffix(config.ClientConfig.Service.Name, "-service")
+			}
+		}
+
+		description.WebhookPath = &serviceConfig.Path
+		des = append(des, description)
+	}
+
+	return des
+}
+
+// serviceportPath is refers to the group of webhook service and
+// path names and port.
+type serviceportPath struct {
+	Port *int32
+	Path string
+}
+
+// crdGroups groups the crds with similar service port and name. It returns a map of serviceportPath
+// and the corresponding crd names.
+func crdGroups(crdToConfig map[string]apiextv1.WebhookConversion) map[serviceportPath][]string {
+
+	uniqueConfig := make(map[serviceportPath][]string)
+
+	for crdName, config := range crdToConfig {
+		serviceportPath := serviceportPath{
+			Port: config.ClientConfig.Service.Port,
+			Path: *config.ClientConfig.Service.Path,
+		}
+
+		uniqueConfig[serviceportPath] = append(uniqueConfig[serviceportPath], crdName)
+	}
+
+	return uniqueConfig
+}
+
+func getConvWebhookCRDNamesAndConfig(c *collector.Manifests, serviceName string) map[string]apiextv1.WebhookConversion {
+	if serviceName == "" {
+		return nil
+	}
+
+	crdToConfig := make(map[string]apiextv1.WebhookConversion)
+
+	for _, crd := range c.V1CustomResourceDefinitions {
+		if crd.Spec.Conversion != nil {
+			whConv := crd.Spec.Conversion.Webhook
+			if whConv != nil && whConv.ClientConfig != nil && whConv.ClientConfig.Service != nil {
+				if whConv.ClientConfig.Service.Name == serviceName {
+					crdToConfig[crd.GetName()] = *whConv
+				}
+			}
+		}
+	}
+
+	for _, crd := range c.V1beta1CustomResourceDefinitions {
+		whConv := crd.Spec.Conversion
+		if whConv != nil && whConv.WebhookClientConfig != nil && whConv.WebhookClientConfig.Service != nil {
+			if whConv.WebhookClientConfig.Service.Name == serviceName {
+				v1whConv := apiextv1.WebhookConversion{
+					ClientConfig:             &apiextv1.WebhookClientConfig{Service: &apiextv1.ServiceReference{}},
+					ConversionReviewVersions: crd.Spec.Conversion.ConversionReviewVersions,
+				}
+				if path := whConv.WebhookClientConfig.Service.Path; path != nil {
+					v1whConv.ClientConfig.Service.Path = new(string)
+					*v1whConv.ClientConfig.Service.Path = *path
+				}
+				crdToConfig[crd.GetName()] = v1whConv
+			}
+		}
+	}
+	return crdToConfig
 }
 
 // The default AdmissionReviewVersions set in a CSV if not set in the source webhook.
@@ -391,8 +532,7 @@ func mutatingToWebhookDescription(webhook admissionregv1.MutatingWebhook, depNam
 }
 
 // findMatchingDeploymentAndServiceForWebhook matches a Service to a webhook's client config (if it uses a service)
-// then matches that Service to a Deployment by comparing label selectors (if the Service uses label selectors).
-// The names of both Service and Deployment are returned if found.
+// and uses that service to find the deployment name.
 func findMatchingDeploymentAndServiceForWebhook(c *collector.Manifests, wcc admissionregv1.WebhookClientConfig) (depName string, ws *corev1.Service) {
 	// Return if a service reference is not specified, since a URL will be in that case.
 	if wcc.Service == nil {
@@ -422,7 +562,15 @@ func findMatchingDeploymentAndServiceForWebhook(c *collector.Manifests, wcc admi
 		return
 	}
 
-	// Match service against pod labels, in which the webhook server will be running.
+	depName = findMatchingDepNameFromService(c, ws)
+
+	return depName, ws
+}
+
+// findMatchingDepNameFromService matches the provided service to a deployment by comparing label selectors (if
+// Service uses label selectors).
+func findMatchingDepNameFromService(c *collector.Manifests, ws *corev1.Service) (depName string) {
+	// Match service against pod labels, in which the webhook server will be running
 	for _, dep := range c.Deployments {
 		podTemplateLabels := dep.Spec.Template.GetLabels()
 		if len(podTemplateLabels) == 0 {
@@ -441,8 +589,7 @@ func findMatchingDeploymentAndServiceForWebhook(c *collector.Manifests, wcc admi
 			break
 		}
 	}
-
-	return depName, ws
+	return depName
 }
 
 // applyCustomResources updates csv's "alm-examples" annotation with the
@@ -494,4 +641,17 @@ func validate(csv *operatorsv1alpha1.ClusterServiceVersion) error {
 	}
 
 	return nil
+}
+
+// generateName takes in a list of crds, and returns a conversion webhook generator name.
+func getGenerateName(crds []string) string {
+	sort.Strings(crds)
+	joinedResourceNames := strings.Builder{}
+
+	for _, name := range crds {
+		if name != "" {
+			joinedResourceNames.WriteString(strings.Split(name, ".")[0])
+		}
+	}
+	return fmt.Sprintf("c%s.kb.io", joinedResourceNames.String())
 }

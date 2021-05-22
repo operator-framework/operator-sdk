@@ -332,6 +332,49 @@ var _ = Describe("findMatchingDeploymentAndServiceForWebhook", func() {
 			Expect(service.GetName()).To(Equal(serviceName1))
 		})
 	})
+
+	Context("crdGroups", func() {
+		path1 := "/whPath"
+		port1 := new(int32)
+		*port1 = 2311
+		crdToConfigPath := map[string]apiextv1.WebhookConversion{
+			"crd-test-1": apiextv1.WebhookConversion{
+				ClientConfig: &apiextv1.WebhookClientConfig{
+					Service: &apiextv1.ServiceReference{
+						Path: &path1,
+						Port: port1,
+					},
+				},
+			},
+
+			"crd-test-2": apiextv1.WebhookConversion{
+				ClientConfig: &apiextv1.WebhookClientConfig{
+					Service: &apiextv1.ServiceReference{
+						Path: &path1,
+						Port: port1,
+					},
+				},
+			},
+		}
+
+		val := crdGroups(crdToConfigPath)
+
+		Expect(len(val)).To(BeEquivalentTo(1))
+
+		test := serviceportPath{
+			Port: port1,
+			Path: path1,
+		}
+
+		g := val[test]
+
+		Expect(g).NotTo(BeNil())
+		Expect(len(g)).To(BeEquivalentTo(2))
+		Expect(g).To(ContainElement("crd-test-2"))
+		Expect(g).To(ContainElement("crd-test-1"))
+
+	})
+
 })
 
 func newDeployment(name string, labels map[string]string) (dep appsv1.Deployment) {
