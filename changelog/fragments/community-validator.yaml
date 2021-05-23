@@ -1,0 +1,16 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Added new bundle validator to check the bundle against the Community Operator criteria in the alpha stage. For futher information run `operator-sdk bundle validate --list-optional` and `operator-sdk bundle validate --help`.
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "addition"
+
+    # Is this a breaking change?
+    breaking: false
