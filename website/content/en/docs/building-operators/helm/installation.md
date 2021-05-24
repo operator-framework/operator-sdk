@@ -17,3 +17,4 @@ Follow the steps in the [installation guide][install-guide] to learn how to inst
 [install-guide]:/docs/installation/
 [docker_tool]:https://docs.docker.com/install/
 [kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
+[k8s-version-compat]:/docs/overview#kubernetes-version-compatibility
