@@ -96,8 +96,9 @@ CERT="${CERT_DIR}/cert.pem"
 KEY="${CERT_DIR}/key.pem"
 
 function installMkcert() {
+  local mkcert_ver="v1.4.3"
   if ! mkcert --version &>/dev/null; then
-    curl -sSLo "$MKCERT" https://github.com/FiloSottile/mkcert/releases/download/v1.4.3/mkcert-v1.4.3-$(go env GOOS)-$(go env GOARCH)
+    curl -sSLo "$MKCERT" "https://github.com/FiloSottile/mkcert/releases/download/${mkcert_ver}/mkcert-${mkcert_ver}-$(go env GOOS)-$(go env GOARCH)"
     chmod +x "$MKCERT"
   else
     MKCERT=$(command -v mkcert)
@@ -106,14 +107,15 @@ function installMkcert() {
 
 function createCerts() {
   # create destination for certs
-  mkdir -p "${CERT_DIR}"
   # check if CAROOT is installed or not
   if [[ ! -d $("$MKCERT" -CAROOT) ]]; then
+    export TRUST_STORES=system
     if ! "$MKCERT" -install; then
       err_exit "Unable to install CAROOT"
     fi
   fi
   # check if the certs were already created from a previous run of this script
+  mkdir -p "${CERT_DIR}"
   if [[ ! -f "${CERT}" ]] && [[ ! -f "${KEY}" ]]; then
     if ! "$MKCERT" -cert-file "${CERT}" -key-file "${KEY}" localhost 127.0.0.1 ::1 "$REGISTRY_NAME" ; then
       err_exit "Unable to create cert and key files"
@@ -121,37 +123,45 @@ function createCerts() {
   fi
 }
 
-running="$(docker inspect -f '{{.State.Running}}' "${REGISTRY_NAME}" 2>/dev/null || true)"
-if [ "${running}" = 'true' ]; then
-  echo "Registry is already running. Nothing to do."
-  exit 0
+function registry_running() {
+  local value="$(docker inspect -f '{{.State.Running}}' "$1" 2>/dev/null || true)"
+  if [[ "$value" == "true" ]]; then
+    return 0
+  fi
+  return 1
+}
+
+if registry_running "$REGISTRY_NAME"; then
+  echo "Registry $REGISTRY_NAME is already running."
+else
+
+  # use mkcert tool for simple cross platform setup/configuration
+  installMkcert
+  createCerts
+
+  ABS_CERT_DIR="$(cd "$(dirname "${CERT_DIR}")"; pwd -P)/$(basename "${CERT_DIR}")"
+  docker run \
+    -d \
+    --restart=always \
+    --name "${REGISTRY_NAME}" \
+    -v "${ABS_CERT_DIR}":/certs \
+    -e REGISTRY_HTTP_ADDR=0.0.0.0:${REGISTRY_PORT} \
+    -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/cert.pem \
+    -e REGISTRY_HTTP_TLS_KEY=/certs/key.pem \
+    -p "127.0.0.1:${REGISTRY_PORT}:${REGISTRY_PORT}" \
+    registry:2
 fi
-
-# use mkcert tool for simple cross platform setup/configuration
-installMkcert
-createCerts
-
-ABS_CERT_DIR="$(cd "$(dirname "${CERT_DIR}")"; pwd -P)/$(basename "${CERT_DIR}")"
-docker run \
-  -d \
-  --restart=always \
-  --name "${REGISTRY_NAME}" \
-  -v "${ABS_CERT_DIR}":/certs \
-  -e REGISTRY_HTTP_ADDR=0.0.0.0:${REGISTRY_PORT} \
-  -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/cert.pem \
-  -e REGISTRY_HTTP_TLS_KEY=/certs/key.pem \
-  -p "127.0.0.1:${REGISTRY_PORT}:${REGISTRY_PORT}" \
-  registry:2
 
 if [[ "`$KIND get clusters`" =~ "$CLUSTER_NAME" ]]; then
-  echo "Cluster operator-sdk-e2e already exists."
+  echo "Cluster $CLUSTER_NAME already exists."
   exit 0
 fi
 
+# create a cluster with the local registry enabled in containerd
 if [[ "$SKIP_TLS" == "false" ]]; then
+
   echo "Creating kind cluster with an insecure registry client config."
-  # create a cluster with the local registry enabled in containerd
-  cat <<EOF | $KIND create cluster --name operator-sdk-e2e --image kindest/node:v${K8S_VERSION} --config=-
+  cat <<EOF | $KIND create cluster --name $CLUSTER_NAME --image kindest/node:v${K8S_VERSION} --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 containerdConfigPatches:
@@ -167,15 +177,15 @@ else
 
   # TODO: get secure registry client working.
   echo "Creating kind cluster with a secure registry client config."
-  # create a cluster with the local registry enabled in containerd
-  cat <<EOF | $KIND create cluster --name operator-sdk-e2e --image kindest/node:v${K8S_VERSION} --config=-
+
+  cat <<EOF | $KIND create cluster --name $CLUSTER_NAME --image kindest/node:v${K8S_VERSION} --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
 - role: control-plane
   extraMounts:
   - containerPath: /etc/docker/certs.d/localhost
-    hostPath: $(pwd)/test/integration/registry/certs
+    hostPath: "$CERT_DIR"
 containerdConfigPatches:
 - |-
   [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:${REGISTRY_PORT}"]
