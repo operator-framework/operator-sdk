@@ -202,7 +202,7 @@ test-integration-cluster:: ## Set up cluster for integration tests.
 ifeq ($(CLUSTER),kind)
 	$(SCRIPTS_DIR)/create_kind_cluster -c $(TEST_ARTIFACTS)/registry-certs -k $(K8S_VERSION)
 endif
-	go test ./test/integration -v -ginkgo.v -ginkgo.focus="$(FOCUS)" $(if ($(CLUSTER),kind),-cert-dir $(shell pwd)/$(TEST_ARTIFACTS)/registry-certs)
+	go test ./test/integration -v -ginkgo.v -ginkgo.focus="$(FOCUS)" -timeout 20m $(if ($(CLUSTER),kind),-cert-dir $(shell pwd)/$(TEST_ARTIFACTS)/registry-certs)
 
 .DEFAULT_GOAL := help
 .PHONY: help
