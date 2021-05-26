@@ -1,0 +1,4 @@
+entries:
+  - description: >
+      For Helm-based operators, fixed a bug where deployed and candidate release comparison was always false when an RNG was used to derive some manifest value, resulting in the chart release constantly upgrading
+    kind: bugfix
