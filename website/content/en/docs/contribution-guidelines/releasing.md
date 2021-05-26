@@ -81,7 +81,7 @@ The following changes should be present:
 - `website/content/en/docs/upgrading-sdk-version/v1.3.0.md`: commit changes (created by changelog generation).
 - `website/config.toml`: commit changes (modified by release script).
 
-Commit these changes and push:
+Commit these changes and push to your remote (assuming your remote is named `origin`):
 
 ```sh
 git add --all
@@ -98,9 +98,14 @@ if you have admin access to the operator-sdk repo, or ask an administrator to do
 
 Unlock the branch by changing the number of required approving reviewers in the `master` branch rule back to 1.
 
-### 4. Create and push a release tag
+### 4. Create and push a release tag on `master`
+
+Refresh your local `master` branch, tag the release PR commit, and push to the main operator-sdk repo
+(assumes the remote's name is `upstream`):
 
 ```sh
+git checkout master
+git pull
 make tag
 git push upstream refs/tags/$RELEASE_VERSION
 ```
@@ -112,7 +117,7 @@ Run the following commands to do so:
 
 ```sh
 git checkout latest
-git reset --hard tags/$RELEASE_VERSION
+git reset --hard refs/tags/$RELEASE_VERSION
 git push -f upstream latest
 ```
 
@@ -120,7 +125,7 @@ Similarly, to update the release branch, run:
 
 ```sh
 git checkout v1.3.x
-git reset --hard tags/$RELEASE_VERSION
+git reset --hard refs/tags/$RELEASE_VERSION
 git push -f upstream v1.3.x
 ```
 
@@ -161,12 +166,12 @@ git checkout -b release-$RELEASE_VERSION
 Using the version for your release as the IMAGE_VERSION, execute the
 following commands from the root of the project.
 
-```sh 
-# Update the IMAGE_VERSION in the Makefile 
+```sh
+# Update the IMAGE_VERSION in the Makefile
 sed -i -E 's/(IMAGE_VERSION = ).+/\1v1\.3\.1/g' Makefile
 #  Run the pre-release `make` target:
 make prerelease
-# Regenerate testdata (samples). 
+# Regenerate testdata (samples).
 # NOTE: The sanity test will fail but scaffolding should complete.
 make test-sanity
 ```
@@ -188,7 +193,7 @@ git push -u origin release-$RELEASE_VERSION
 
 #### 3. Create and merge Pull Request
 
-- Create a pull request against the `v1.3.x` branch. 
+- Create a pull request against the `v1.3.x` branch.
 - Once approving review is given, merge. You may have to unlock the branch by setting
 "required approving reviewers" to back to `1`. (See step 0).
 
@@ -207,7 +212,7 @@ git push upstream refs/tags/$RELEASE_VERSION
 
 If the patch release is on the latest y-stream (in the example you would
 not ff latest if there was a y-stream for v1.4.x), you will need to
-fast-forward the `latest` git branch. 
+fast-forward the `latest` git branch.
 
 (The `latest` branch points to the latest release tag to keep the main website subdomain up-to-date.)
 
