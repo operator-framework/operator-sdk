@@ -1,0 +1,6 @@
+entries:
+  - description: >
+      Detect and report ansible-runner binary failures early and prevent symliking to artifacts.
+    kind: bugfix
+    pull_request_override: 4944
+
