@@ -53,6 +53,9 @@ type Generator struct {
 	Collector *collector.Manifests
 	// Annotations are applied to the resulting CSV.
 	Annotations map[string]string
+	// ExtraServiceAccounts are ServiceAccount names to consider when matching
+	// {Cluster}Roles to include in a CSV via their Bindings.
+	ExtraServiceAccounts []string
 
 	// Func that returns the writer the generated CSV's bytes are written to.
 	getWriter func() (io.Writer, error)
@@ -163,7 +166,7 @@ func (g *Generator) generate() (base *operatorsv1alpha1.ClusterServiceVersion, e
 		base.Spec.Replaces = genutil.MakeCSVName(g.OperatorName, g.FromVersion)
 	}
 
-	if err := ApplyTo(g.Collector, base); err != nil {
+	if err := ApplyTo(g.Collector, base, g.ExtraServiceAccounts); err != nil {
 		return nil, err
 	}
 

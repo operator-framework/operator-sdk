@@ -88,21 +88,22 @@ operator-sdk generate bundle [flags]
 ### Options
 
 ```
-      --channels string          A comma-separated list of channels the bundle belongs to (default "alpha")
-      --crds-dir string          Directory to read cluster-ready CustomResoureDefinition manifests from. This option can only be used if --deploy-dir is set
-      --default-channel string   The default channel for the bundle
-      --deploy-dir string        Directory to read cluster-ready operator manifests from. If --crds-dir is not set, CRDs are ready from this directory. This option is mutually exclusive with --input-dir and piping to stdin
-  -h, --help                     help for bundle
-      --input-dir string         Directory to read cluster-ready operator manifests from. This option is mutually exclusive with --deploy-dir/--crds-dir and piping to stdin. This option should not be passed an existing bundle directory, as this bundle will not contain the correct set of manifests required to generate a CSV. Use --kustomize-dir to pass a base CSV
-      --kustomize-dir string     Directory containing kustomize bases in a "bases" dir and a kustomization.yaml for operator-framework manifests (default "config/manifests")
-      --manifests                Generate bundle manifests
-      --metadata                 Generate bundle metadata and Dockerfile
-      --output-dir string        Directory to write the bundle to
-      --overwrite                Overwrite the bundle's metadata and Dockerfile if they exist (default true)
-      --package string           Bundle's package name
-  -q, --quiet                    Run in quiet mode
-      --stdout                   Write bundle manifest to stdout
-  -v, --version string           Semantic version of the operator in the generated bundle. Only set if creating a new bundle or upgrading your operator
+      --channels string                  A comma-separated list of channels the bundle belongs to (default "alpha")
+      --crds-dir string                  Directory to read cluster-ready CustomResoureDefinition manifests from. This option can only be used if --deploy-dir is set
+      --default-channel string           The default channel for the bundle
+      --deploy-dir string                Directory to read cluster-ready operator manifests from. If --crds-dir is not set, CRDs are ready from this directory. This option is mutually exclusive with --input-dir and piping to stdin
+      --extra-service-accounts strings   Names of service accounts, outside of the operator's Deployment account, that have bindings to {Cluster}Roles that should be added to the CSV
+  -h, --help                             help for bundle
+      --input-dir string                 Directory to read cluster-ready operator manifests from. This option is mutually exclusive with --deploy-dir/--crds-dir and piping to stdin. This option should not be passed an existing bundle directory, as this bundle will not contain the correct set of manifests required to generate a CSV. Use --kustomize-dir to pass a base CSV
+      --kustomize-dir string             Directory containing kustomize bases in a "bases" dir and a kustomization.yaml for operator-framework manifests (default "config/manifests")
+      --manifests                        Generate bundle manifests
+      --metadata                         Generate bundle metadata and Dockerfile
+      --output-dir string                Directory to write the bundle to
+      --overwrite                        Overwrite the bundle's metadata and Dockerfile if they exist (default true)
+      --package string                   Bundle's package name
+  -q, --quiet                            Run in quiet mode
+      --stdout                           Write bundle manifest to stdout
+  -v, --version string                   Semantic version of the operator in the generated bundle. Only set if creating a new bundle or upgrading your operator
 ```
 
 ### Options inherited from parent commands

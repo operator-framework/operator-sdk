@@ -16,6 +16,8 @@
 package collector
 
 import (
+	"sort"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
@@ -23,225 +25,196 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var _ = Describe("ClusterServiceVersion", func() {
-	var (
-		c       *Manifests
-		in, out []client.Object
-	)
+var _ = Describe("SplitCSVPermissionsObjects", func() {
+	var c *Manifests
+	var inPerm, inCPerm, out []client.Object
 
 	BeforeEach(func() {
 		c = &Manifests{}
 	})
 
-	Describe("SplitCSVPermissionsObjects", func() {
-
-		It("should return empty lists for an empty Manifests", func() {
-			c.Roles = []rbacv1.Role{}
-			in, out = c.SplitCSVPermissionsObjects()
-			Expect(in).To(HaveLen(0))
-			Expect(out).To(HaveLen(0))
-		})
-		It("should return non-empty lists", func() {
-			By("splitting 1 Role no RoleBinding")
-			c.Roles = []rbacv1.Role{newRole("my-role")}
-			in, out = c.SplitCSVPermissionsObjects()
-			Expect(in).To(HaveLen(0))
-			Expect(out).To(HaveLen(1))
-			Expect(getRoleNames(out)).To(ContainElement("my-role"))
-
-			By("splitting 1 Role 1 RoleBinding with 1 Subject not containing Deployment serviceAccountName")
-			c.Deployments = []appsv1.Deployment{newDeploymentWithServiceAccount("my-dep-account")}
-			c.Roles = []rbacv1.Role{newRole("my-role")}
-			c.RoleBindings = []rbacv1.RoleBinding{
-				newRoleBinding("my-role-binding", newRoleRef("my-role"), newServiceAccountSubject("my-other-account")),
-			}
-			in, out = c.SplitCSVPermissionsObjects()
-			Expect(in).To(HaveLen(0))
-			Expect(out).To(HaveLen(2))
-			Expect(getRoleNames(out)).To(ContainElement("my-role"))
-			Expect(getRoleBindingNames(out)).To(ContainElement("my-role-binding"))
-
-			By("splitting 1 Role 1 RoleBinding with 1 Subject containing Deployment serviceAccountName")
-			c.Deployments = []appsv1.Deployment{newDeploymentWithServiceAccount("my-dep-account")}
-			c.Roles = []rbacv1.Role{newRole("my-role")}
-			c.RoleBindings = []rbacv1.RoleBinding{
-				newRoleBinding("my-role-binding", newRoleRef("my-role"), newServiceAccountSubject("my-dep-account")),
-			}
-			in, out = c.SplitCSVPermissionsObjects()
-			Expect(in).To(HaveLen(1))
-			Expect(getRoleNames(in)).To(ContainElement("my-role"))
-			Expect(out).To(HaveLen(0))
-
-			By("splitting 1 Role 1 RoleBinding with 2 Subjects containing a Deployment serviceAccountName")
-			c.Deployments = []appsv1.Deployment{newDeploymentWithServiceAccount("my-dep-account")}
-			c.Roles = []rbacv1.Role{newRole("my-role")}
-			c.RoleBindings = []rbacv1.RoleBinding{
-				newRoleBinding("my-role-binding",
-					newRoleRef("my-role"),
-					newServiceAccountSubject("my-dep-account"), newServiceAccountSubject("my-other-account")),
-			}
-			in, out = c.SplitCSVPermissionsObjects()
-			Expect(in).To(HaveLen(1))
-			Expect(getRoleNames(in)).To(ContainElement("my-role"))
-			Expect(out).To(HaveLen(2))
-			Expect(getRoleNames(out)).To(ContainElement("my-role"))
-			Expect(getRoleBindingNames(out)).To(ContainElement("my-role-binding"))
-
-			By("splitting 2 Roles 2 RoleBinding, one with 1 Subject not containing and the other with 2 Subjects containing a Deployment serviceAccountName")
-			c.Deployments = []appsv1.Deployment{newDeploymentWithServiceAccount("my-dep-account")}
-			c.Roles = []rbacv1.Role{newRole("my-role-1"), newRole("my-role-2")}
-			c.RoleBindings = []rbacv1.RoleBinding{
-				newRoleBinding("my-role-binding-1",
-					newRoleRef("my-role-1"),
-					newServiceAccountSubject("my-dep-account"), newServiceAccountSubject("my-other-account")),
-				newRoleBinding("my-role-binding-2",
-					newRoleRef("my-role-2"),
-					newServiceAccountSubject("my-other-account")),
-			}
-			in, out = c.SplitCSVPermissionsObjects()
-			Expect(in).To(HaveLen(1))
-			Expect(getRoleNames(in)).To(ContainElement("my-role-1"))
-			Expect(out).To(HaveLen(4))
-			Expect(getRoleNames(out)).To(ContainElement("my-role-1"))
-			Expect(getRoleNames(out)).To(ContainElement("my-role-2"))
-			Expect(getRoleBindingNames(out)).To(ContainElement("my-role-binding-1"))
-			Expect(getRoleBindingNames(out)).To(ContainElement("my-role-binding-2"))
-
-			By("splitting on 2 different Deployments")
-			c.Deployments = []appsv1.Deployment{
-				newDeploymentWithServiceAccount("my-dep-account-1"),
-				newDeploymentWithServiceAccount("my-dep-account-2"),
-			}
-			c.Roles = []rbacv1.Role{newRole("my-role-1"), newRole("my-role-2"), newRole("my-role-3")}
-			c.RoleBindings = []rbacv1.RoleBinding{
-				newRoleBinding("my-role-binding-1",
-					newRoleRef("my-role-1"),
-					newServiceAccountSubject("my-dep-account-1"), newServiceAccountSubject("my-other-account")),
-				newRoleBinding("my-role-binding-2",
-					newRoleRef("my-role-2"),
-					newServiceAccountSubject("my-other-account")),
-				newRoleBinding("my-role-binding-3",
-					newRoleRef("my-role-3"),
-					newServiceAccountSubject("my-dep-account-2")),
-			}
-			in, out = c.SplitCSVPermissionsObjects()
-			Expect(in).To(HaveLen(2))
-			Expect(getRoleNames(in)).To(ContainElement("my-role-1"))
-			Expect(getRoleNames(in)).To(ContainElement("my-role-3"))
-			Expect(out).To(HaveLen(4))
-			Expect(getRoleNames(out)).To(ContainElement("my-role-1"))
-			Expect(getRoleNames(out)).To(ContainElement("my-role-2"))
-			Expect(getRoleBindingNames(out)).To(ContainElement("my-role-binding-1"))
-			Expect(getRoleBindingNames(out)).To(ContainElement("my-role-binding-2"))
-		})
+	It("returns empty lists for an empty Manifests", func() {
+		c.Roles = []rbacv1.Role{}
+		inPerm, inCPerm, out = c.SplitCSVPermissionsObjects(nil)
+		Expect(inPerm).To(HaveLen(0))
+		Expect(inCPerm).To(HaveLen(0))
+		Expect(out).To(HaveLen(0))
 	})
 
-	Describe("SplitCSVClusterPermissionsObjects", func() {
-		It("should return empty lists for an empty Manifests", func() {
-			c.ClusterRoles = []rbacv1.ClusterRole{}
-			in, out = c.SplitCSVClusterPermissionsObjects()
-			Expect(in).To(HaveLen(0))
-			Expect(out).To(HaveLen(0))
-		})
-		It("should return non-empty lists", func() {
-			By("splitting 1 ClusterRole no ClusterRoleBinding")
-			c.ClusterRoles = []rbacv1.ClusterRole{newClusterRole("my-role")}
-			in, out = c.SplitCSVClusterPermissionsObjects()
-			Expect(in).To(HaveLen(0))
-			Expect(out).To(HaveLen(1))
-			Expect(getClusterRoleNames(out)).To(ContainElement("my-role"))
-
-			By("splitting 1 ClusterRole 1 ClusterRoleBinding with 1 Subject not containing Deployment serviceAccountName")
-			c.Deployments = []appsv1.Deployment{newDeploymentWithServiceAccount("my-dep-account")}
-			c.ClusterRoles = []rbacv1.ClusterRole{newClusterRole("my-role")}
-			c.ClusterRoleBindings = []rbacv1.ClusterRoleBinding{
-				newClusterRoleBinding("my-role-binding", newClusterRoleRef("my-role"), newServiceAccountSubject("my-other-account")),
-			}
-			in, out = c.SplitCSVClusterPermissionsObjects()
-			Expect(in).To(HaveLen(0))
-			Expect(out).To(HaveLen(2))
-			Expect(getClusterRoleNames(out)).To(ContainElement("my-role"))
-			Expect(getClusterRoleBindingNames(out)).To(ContainElement("my-role-binding"))
-
-			By("splitting 1 ClusterRole 1 ClusterRoleBinding with 1 Subject containing Deployment serviceAccountName")
-			c.Deployments = []appsv1.Deployment{newDeploymentWithServiceAccount("my-dep-account")}
-			c.ClusterRoles = []rbacv1.ClusterRole{newClusterRole("my-role")}
-			c.ClusterRoleBindings = []rbacv1.ClusterRoleBinding{
-				newClusterRoleBinding("my-role-binding", newClusterRoleRef("my-role"), newServiceAccountSubject("my-dep-account")),
-			}
-			in, out = c.SplitCSVClusterPermissionsObjects()
-			Expect(in).To(HaveLen(1))
-			Expect(getClusterRoleNames(in)).To(ContainElement("my-role"))
-			Expect(out).To(HaveLen(0))
-
-			By("splitting 1 ClusterRole 1 ClusterRoleBinding with 2 Subjects containing a Deployment serviceAccountName")
-			c.Deployments = []appsv1.Deployment{newDeploymentWithServiceAccount("my-dep-account")}
-			c.ClusterRoles = []rbacv1.ClusterRole{newClusterRole("my-role")}
-			c.ClusterRoleBindings = []rbacv1.ClusterRoleBinding{
-				newClusterRoleBinding("my-role-binding",
-					newClusterRoleRef("my-role"),
-					newServiceAccountSubject("my-dep-account"), newServiceAccountSubject("my-other-account")),
-			}
-			in, out = c.SplitCSVClusterPermissionsObjects()
-			Expect(in).To(HaveLen(1))
-			Expect(getClusterRoleNames(in)).To(ContainElement("my-role"))
-			Expect(out).To(HaveLen(2))
-			Expect(getClusterRoleNames(out)).To(ContainElement("my-role"))
-			Expect(getClusterRoleBindingNames(out)).To(ContainElement("my-role-binding"))
-
-			By("splitting 2 ClusterRoles 2 ClusterRoleBindings, one with 1 Subject not containing and the other with 2 Subjects containing a Deployment serviceAccountName")
-			c.Deployments = []appsv1.Deployment{newDeploymentWithServiceAccount("my-dep-account")}
-			c.ClusterRoles = []rbacv1.ClusterRole{newClusterRole("my-role-1"), newClusterRole("my-role-2")}
-			c.ClusterRoleBindings = []rbacv1.ClusterRoleBinding{
-				newClusterRoleBinding("my-role-binding-1",
-					newClusterRoleRef("my-role-1"),
-					newServiceAccountSubject("my-dep-account"), newServiceAccountSubject("my-other-account")),
-				newClusterRoleBinding("my-role-binding-2",
-					newClusterRoleRef("my-role-2"),
-					newServiceAccountSubject("my-other-account")),
-			}
-			in, out = c.SplitCSVClusterPermissionsObjects()
-			Expect(in).To(HaveLen(1))
-			Expect(getClusterRoleNames(in)).To(ContainElement("my-role-1"))
-			Expect(out).To(HaveLen(4))
-			Expect(getClusterRoleNames(out)).To(ContainElement("my-role-1"))
-			Expect(getClusterRoleNames(out)).To(ContainElement("my-role-2"))
-			Expect(getClusterRoleBindingNames(out)).To(ContainElement("my-role-binding-1"))
-			Expect(getClusterRoleBindingNames(out)).To(ContainElement("my-role-binding-2"))
-
-			By("splitting on 2 different Deployments")
-			c.Deployments = []appsv1.Deployment{
-				newDeploymentWithServiceAccount("my-dep-account-1"),
-				newDeploymentWithServiceAccount("my-dep-account-2"),
-			}
-			c.ClusterRoles = []rbacv1.ClusterRole{
-				newClusterRole("my-role-1"),
-				newClusterRole("my-role-2"),
-				newClusterRole("my-role-3"),
-			}
-			c.ClusterRoleBindings = []rbacv1.ClusterRoleBinding{
-				newClusterRoleBinding("my-role-binding-1",
-					newClusterRoleRef("my-role-1"),
-					newServiceAccountSubject("my-dep-account-1"), newServiceAccountSubject("my-other-account")),
-				newClusterRoleBinding("my-role-binding-2",
-					newClusterRoleRef("my-role-2"),
-					newServiceAccountSubject("my-other-account")),
-				newClusterRoleBinding("my-role-binding-3",
-					newClusterRoleRef("my-role-3"),
-					newServiceAccountSubject("my-dep-account-2")),
-			}
-			in, out = c.SplitCSVClusterPermissionsObjects()
-			Expect(in).To(HaveLen(2))
-			Expect(getClusterRoleNames(in)).To(ContainElement("my-role-1"))
-			Expect(getClusterRoleNames(in)).To(ContainElement("my-role-3"))
-			Expect(out).To(HaveLen(4))
-			Expect(getClusterRoleNames(out)).To(ContainElement("my-role-1"))
-			Expect(getClusterRoleNames(out)).To(ContainElement("my-role-2"))
-			Expect(getClusterRoleBindingNames(out)).To(ContainElement("my-role-binding-1"))
-			Expect(getClusterRoleBindingNames(out)).To(ContainElement("my-role-binding-2"))
-		})
+	It("splitting 1 Role no RoleBinding", func() {
+		c.Roles = []rbacv1.Role{newRole("my-role")}
+		inPerm, inCPerm, out = c.SplitCSVPermissionsObjects(nil)
+		Expect(inPerm).To(HaveLen(0))
+		Expect(inCPerm).To(HaveLen(0))
+		Expect(out).To(HaveLen(1))
+		Expect(getRoleNames(out)).To(Equal([]string{"my-role"}))
 	})
 
+	It("splitting 1 Role 1 RoleBinding with 1 Subject not containing Deployment serviceAccountName", func() {
+		c.Deployments = []appsv1.Deployment{newDeploymentWithServiceAccount("my-dep-account")}
+		c.Roles = []rbacv1.Role{newRole("my-role")}
+		c.RoleBindings = []rbacv1.RoleBinding{
+			newRoleBinding("my-role-binding", newRoleRef("my-role"), newServiceAccountSubject("my-other-account")),
+		}
+		inPerm, inCPerm, out = c.SplitCSVPermissionsObjects(nil)
+		Expect(inPerm).To(HaveLen(0))
+		Expect(inCPerm).To(HaveLen(0))
+		Expect(out).To(HaveLen(2))
+		Expect(getRoleNames(out)).To(Equal([]string{"my-role"}))
+		Expect(getRoleBindingNames(out)).To(Equal([]string{"my-role-binding"}))
+	})
+
+	It("splitting 1 ClusterRole 1 RoleBinding with 1 Subject not containing Deployment serviceAccountName", func() {
+		c.Deployments = []appsv1.Deployment{newDeploymentWithServiceAccount("my-dep-account")}
+		c.ClusterRoles = []rbacv1.ClusterRole{newClusterRole("my-role")}
+		c.RoleBindings = []rbacv1.RoleBinding{
+			newRoleBinding("my-role-binding", newClusterRoleRef("my-role"), newServiceAccountSubject("my-other-account")),
+		}
+		inPerm, inCPerm, out = c.SplitCSVPermissionsObjects(nil)
+		Expect(inPerm).To(HaveLen(0))
+		Expect(inCPerm).To(HaveLen(0))
+		Expect(out).To(HaveLen(2))
+		Expect(getClusterRoleNames(out)).To(Equal([]string{"my-role"}))
+		Expect(getRoleBindingNames(out)).To(Equal([]string{"my-role-binding"}))
+	})
+
+	It("splitting 1 Role 1 ClusterRole 1 RoleBinding with 1 Subject not containing Deployment serviceAccountName", func() {
+		c.Deployments = []appsv1.Deployment{newDeploymentWithServiceAccount("my-dep-account")}
+		c.Roles = []rbacv1.Role{newRole("my-role")}
+		c.ClusterRoles = []rbacv1.ClusterRole{newClusterRole("my-role")}
+		c.RoleBindings = []rbacv1.RoleBinding{
+			newRoleBinding("my-role-binding-1", newRoleRef("my-role"), newServiceAccountSubject("my-other-account")),
+			newRoleBinding("my-role-binding-2", newClusterRoleRef("my-role"), newServiceAccountSubject("my-other-account")),
+		}
+		inPerm, inCPerm, out = c.SplitCSVPermissionsObjects(nil)
+		Expect(inPerm).To(HaveLen(0))
+		Expect(inCPerm).To(HaveLen(0))
+		Expect(out).To(HaveLen(4))
+		Expect(getRoleNames(out)).To(Equal([]string{"my-role"}))
+		Expect(getClusterRoleNames(out)).To(Equal([]string{"my-role"}))
+		Expect(getRoleBindingNames(out)).To(Equal([]string{"my-role-binding-1", "my-role-binding-2"}))
+	})
+
+	It("splitting 1 Role 1 RoleBinding with 1 Subject containing a Deployment serviceAccountName", func() {
+		c.Deployments = []appsv1.Deployment{newDeploymentWithServiceAccount("my-dep-account")}
+		c.Roles = []rbacv1.Role{newRole("my-role")}
+		c.RoleBindings = []rbacv1.RoleBinding{
+			newRoleBinding("my-role-binding", newRoleRef("my-role"), newServiceAccountSubject("my-dep-account")),
+		}
+		inPerm, inCPerm, out = c.SplitCSVPermissionsObjects(nil)
+		Expect(inPerm).To(HaveLen(1))
+		Expect(getRoleNames(inPerm)).To(Equal([]string{"my-role"}))
+		Expect(inCPerm).To(HaveLen(0))
+		Expect(out).To(HaveLen(0))
+	})
+
+	It("splitting 1 ClusterRole 1 RoleBinding with 1 Subject containing a Deployment serviceAccountName", func() {
+		c.Deployments = []appsv1.Deployment{newDeploymentWithServiceAccount("my-dep-account")}
+		c.ClusterRoles = []rbacv1.ClusterRole{newClusterRole("my-role")}
+		c.RoleBindings = []rbacv1.RoleBinding{
+			newRoleBinding("my-role-binding", newClusterRoleRef("my-role"), newServiceAccountSubject("my-dep-account")),
+		}
+		inPerm, inCPerm, out = c.SplitCSVPermissionsObjects(nil)
+		Expect(inPerm).To(HaveLen(1))
+		Expect(getClusterRoleNames(inPerm)).To(Equal([]string{"my-role"}))
+		Expect(inCPerm).To(HaveLen(0))
+		Expect(out).To(HaveLen(0))
+	})
+
+	It("splitting 1 Role 1 ClusterRole 1 RoleBinding with 1 Subject containing a Deployment serviceAccountName", func() {
+		c.Deployments = []appsv1.Deployment{newDeploymentWithServiceAccount("my-dep-account")}
+		c.Roles = []rbacv1.Role{newRole("my-role")}
+		c.ClusterRoles = []rbacv1.ClusterRole{newClusterRole("my-role")}
+		c.RoleBindings = []rbacv1.RoleBinding{
+			newRoleBinding("my-role-binding-1", newRoleRef("my-role"), newServiceAccountSubject("my-dep-account")),
+			newRoleBinding("my-role-binding-2", newClusterRoleRef("my-role"), newServiceAccountSubject("my-dep-account")),
+		}
+		inPerm, inCPerm, out = c.SplitCSVPermissionsObjects(nil)
+		Expect(inPerm).To(HaveLen(2))
+		Expect(getRoleNames(inPerm)).To(Equal([]string{"my-role"}))
+		Expect(getClusterRoleNames(inPerm)).To(Equal([]string{"my-role"}))
+		Expect(inCPerm).To(HaveLen(0))
+		Expect(out).To(HaveLen(0))
+	})
+
+	It("splitting 1 Role 1 ClusterRole 1 RoleBinding with 2 Subjects containing a Deployment serviceAccountName", func() {
+		c.Deployments = []appsv1.Deployment{newDeploymentWithServiceAccount("my-dep-account")}
+		c.Roles = []rbacv1.Role{newRole("my-role")}
+		c.ClusterRoles = []rbacv1.ClusterRole{newClusterRole("my-role")}
+		c.RoleBindings = []rbacv1.RoleBinding{
+			newRoleBinding("my-role-binding-1", newRoleRef("my-role"), newServiceAccountSubject("my-other-account"), newServiceAccountSubject("my-dep-account")),
+			newRoleBinding("my-role-binding-2", newClusterRoleRef("my-role"), newServiceAccountSubject("my-dep-account")),
+		}
+		inPerm, inCPerm, out = c.SplitCSVPermissionsObjects(nil)
+		Expect(inPerm).To(HaveLen(2))
+		Expect(getRoleNames(inPerm)).To(Equal([]string{"my-role"}))
+		Expect(getClusterRoleNames(inPerm)).To(Equal([]string{"my-role"}))
+		Expect(out).To(HaveLen(1))
+		Expect(getRoleBindingNames(out)).To(Equal([]string{"my-role-binding-1"}))
+	})
+
+	Context("multiple relationship RBAC", func() {
+		depSA, extraSA := "my-dep-account", "my-other-account"
+		roleName1, roleName2 := "my-role-1", "my-role-2"
+		bindingName1, bindingName2, bindingName3 := "my-role-binding-1", "my-role-binding-2", "my-role-binding-3"
+
+		complexTestSetup := func() {
+			c.Deployments = []appsv1.Deployment{newDeploymentWithServiceAccount(depSA)}
+			role1, role2 := newRole(roleName1), newRole(roleName2)
+			c.Roles = []rbacv1.Role{role1, role2}
+			// Use the same names as for Roles to make sure Kind is respected
+			cRole1, cRole2 := newClusterRole(roleName1), newClusterRole(roleName2)
+			c.ClusterRoles = []rbacv1.ClusterRole{cRole1, cRole2}
+
+			// Binds role 1 to depSA,extraSA, role 2 to extraSA, and clusterrole 1 to depSA.
+			c.RoleBindings = []rbacv1.RoleBinding{
+				newRoleBinding(bindingName1,
+					newRoleRef(role1.Name),
+					newServiceAccountSubject(depSA), newServiceAccountSubject(extraSA)),
+				newRoleBinding(bindingName2,
+					newRoleRef(role2.Name),
+					newServiceAccountSubject(extraSA)),
+				newRoleBinding(bindingName3,
+					newClusterRoleRef(cRole1.Name),
+					newServiceAccountSubject(depSA)),
+			}
+
+			// Binds clusterrole 1 to depSA and clusterrole 2 to extraSA.
+			c.ClusterRoleBindings = []rbacv1.ClusterRoleBinding{
+				newClusterRoleBinding(bindingName1,
+					newClusterRoleRef(cRole1.Name),
+					newServiceAccountSubject(depSA)),
+				newClusterRoleBinding(bindingName2,
+					newClusterRoleRef(cRole2.Name),
+					newServiceAccountSubject(extraSA)),
+			}
+		}
+
+		It("contains a Deployment serviceAccountName only", func() {
+			complexTestSetup()
+			inPerm, inCPerm, out = c.SplitCSVPermissionsObjects(nil)
+			Expect(inPerm).To(HaveLen(2))
+			Expect(getRoleNames(inPerm)).To(Equal([]string{roleName1}))
+			Expect(getClusterRoleNames(inPerm)).To(Equal([]string{roleName1}))
+			Expect(inCPerm).To(HaveLen(1))
+			Expect(getClusterRoleNames(inCPerm)).To(Equal([]string{roleName1}))
+			Expect(out).To(HaveLen(5))
+			Expect(getRoleNames(out)).To(Equal([]string{roleName2}))
+			Expect(getClusterRoleNames(out)).To(Equal([]string{roleName2}))
+			Expect(getRoleBindingNames(out)).To(Equal([]string{bindingName1, bindingName2}))
+			Expect(getClusterRoleBindingNames(out)).To(Equal([]string{bindingName2}))
+		})
+		It("contains a Deployment serviceAccountName and extra ServiceAccount", func() {
+			complexTestSetup()
+			inPerm, inCPerm, out = c.SplitCSVPermissionsObjects([]string{extraSA})
+			Expect(inPerm).To(HaveLen(3))
+			Expect(getRoleNames(inPerm)).To(Equal([]string{roleName1, roleName2}))
+			Expect(getClusterRoleNames(inPerm)).To(Equal([]string{roleName1}))
+			Expect(inCPerm).To(HaveLen(2))
+			Expect(getClusterRoleNames(inCPerm)).To(Equal([]string{roleName1, roleName2}))
+			Expect(out).To(HaveLen(0))
+		})
+	})
 })
 
 func getRoleNames(objs []client.Object) []string {
@@ -266,6 +239,7 @@ func getNamesForKind(kind string, objs []client.Object) (names []string) {
 			names = append(names, obj.GetName())
 		}
 	}
+	sort.Strings(names)
 	return
 }
 

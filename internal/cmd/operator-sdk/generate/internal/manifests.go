@@ -22,7 +22,7 @@ import (
 )
 
 // GetManifestObjects returns all objects to be written to a manifests directory from collector.Manifests.
-func GetManifestObjects(c *collector.Manifests) (objs []client.Object) {
+func GetManifestObjects(c *collector.Manifests, extraSAs []string) (objs []client.Object) {
 	// All CRDs passed in should be written.
 	for i := range c.V1CustomResourceDefinitions {
 		objs = append(objs, &c.V1CustomResourceDefinitions[i])
@@ -32,8 +32,20 @@ func GetManifestObjects(c *collector.Manifests) (objs []client.Object) {
 	}
 
 	// All ServiceAccounts passed in should be written.
+	saSet := make(map[string]struct{}, len(extraSAs))
+	for _, saName := range extraSAs {
+		saSet[saName] = struct{}{}
+	}
 	for i := range c.ServiceAccounts {
-		objs = append(objs, &c.ServiceAccounts[i])
+		sa := c.ServiceAccounts[i]
+		saSet[sa.GetName()] = struct{}{}
+		objs = append(objs, &sa)
+	}
+	extraSAs = make([]string, len(saSet))
+	i := 0
+	for saName := range saSet {
+		extraSAs[i] = saName
+		i++
 	}
 
 	// All Services passed in should be written.
@@ -50,10 +62,8 @@ func GetManifestObjects(c *collector.Manifests) (objs []client.Object) {
 	}
 
 	// RBAC objects that are not a part of the CSV should be written.
-	_, roleObjs := c.SplitCSVPermissionsObjects()
-	objs = append(objs, roleObjs...)
-	_, clusterRoleObjs := c.SplitCSVClusterPermissionsObjects()
-	objs = append(objs, clusterRoleObjs...)
+	_, _, rbacObjs := c.SplitCSVPermissionsObjects(extraSAs)
+	objs = append(objs, rbacObjs...)
 
 	removeNamespace(objs)
 	return objs

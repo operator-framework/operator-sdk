@@ -30,6 +30,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
@@ -37,9 +38,9 @@ import (
 
 // ApplyTo applies relevant manifests in c to csv, sorts the applied updates,
 // and validates the result.
-func ApplyTo(c *collector.Manifests, csv *operatorsv1alpha1.ClusterServiceVersion) error {
+func ApplyTo(c *collector.Manifests, csv *operatorsv1alpha1.ClusterServiceVersion, extraSAs []string) error {
 	// Apply manifests to the CSV object.
-	if err := apply(c, csv); err != nil {
+	if err := apply(c, csv, extraSAs); err != nil {
 		return err
 	}
 
@@ -50,12 +51,13 @@ func ApplyTo(c *collector.Manifests, csv *operatorsv1alpha1.ClusterServiceVersio
 }
 
 // apply applies relevant manifests in c to csv.
-func apply(c *collector.Manifests, csv *operatorsv1alpha1.ClusterServiceVersion) error {
+func apply(c *collector.Manifests, csv *operatorsv1alpha1.ClusterServiceVersion, extraSAs []string) error {
 	strategy := getCSVInstallStrategy(csv)
 	switch strategy.StrategyName {
 	case operatorsv1alpha1.InstallStrategyNameDeployment:
-		applyRoles(c, &strategy.StrategySpec)
-		applyClusterRoles(c, &strategy.StrategySpec)
+		inPerms, inCPerms, _ := c.SplitCSVPermissionsObjects(extraSAs)
+		applyRoles(c, inPerms, &strategy.StrategySpec, extraSAs)
+		applyClusterRoles(c, inCPerms, &strategy.StrategySpec, extraSAs)
 		applyDeployments(c, &strategy.StrategySpec)
 	}
 	csv.Spec.InstallStrategy = strategy
@@ -82,34 +84,46 @@ const defaultServiceAccountName = "default"
 
 // applyRoles applies Roles to strategy's permissions field by combining Roles bound to ServiceAccounts
 // into one set of permissions.
-func applyRoles(c *collector.Manifests, strategy *operatorsv1alpha1.StrategyDetailsDeployment) { //nolint:dupl
-	objs, _ := c.SplitCSVPermissionsObjects()
-	roleSet := make(map[string]*rbacv1.Role)
+func applyRoles(c *collector.Manifests, objs []client.Object, strategy *operatorsv1alpha1.StrategyDetailsDeployment, extraSAs []string) { //nolint:dupl
+	roleSet := make(map[string]rbacv1.Role)
+	cRoleSet := make(map[string]rbacv1.ClusterRole)
 	for i := range objs {
 		switch t := objs[i].(type) {
 		case *rbacv1.Role:
-			roleSet[t.GetName()] = t
+			roleSet[t.GetName()] = *t
+		case *rbacv1.ClusterRole:
+			cRoleSet[t.GetName()] = *t
 		}
 	}
 
-	saToPermissions := make(map[string]operatorsv1alpha1.StrategyDeploymentPermissions)
-	for _, dep := range c.Deployments {
-		saName := dep.Spec.Template.Spec.ServiceAccountName
-		if saName == "" {
-			saName = defaultServiceAccountName
-		}
-		saToPermissions[saName] = operatorsv1alpha1.StrategyDeploymentPermissions{ServiceAccountName: saName}
-	}
-
-	// Collect all role names by their corresponding service accounts via bindings. This lets us
+	// Collect all role and cluster role names by their corresponding service accounts via bindings. This lets us
 	// look up all service accounts a role is bound to and create one set of permissions per service account.
+	saToPermissions := initPermissionSet(c.Deployments, extraSAs)
 	for _, binding := range c.RoleBindings {
-		if role, hasRole := roleSet[binding.RoleRef.Name]; hasRole {
-			for _, subject := range binding.Subjects {
-				if perm, hasSA := saToPermissions[subject.Name]; hasSA && subject.Kind == "ServiceAccount" {
-					perm.Rules = append(perm.Rules, role.Rules...)
-					saToPermissions[subject.Name] = perm
-				}
+		for _, subject := range binding.Subjects {
+			perm, hasSA := saToPermissions[subject.Name]
+			if subject.Kind != "ServiceAccount" || !hasSA {
+				continue
+			}
+			var (
+				rules   []rbacv1.PolicyRule
+				hasRole bool
+			)
+			switch binding.RoleRef.Kind {
+			case "Role":
+				role, has := roleSet[binding.RoleRef.Name]
+				rules = role.Rules
+				hasRole = has
+			case "ClusterRole":
+				role, has := cRoleSet[binding.RoleRef.Name]
+				rules = role.Rules
+				hasRole = has
+			default:
+				continue
+			}
+			if hasRole {
+				perm.Rules = append(perm.Rules, rules...)
+				saToPermissions[subject.Name] = perm
 			}
 		}
 	}
@@ -121,39 +135,35 @@ func applyRoles(c *collector.Manifests, strategy *operatorsv1alpha1.StrategyDeta
 			perms = append(perms, perm)
 		}
 	}
+	sort.Slice(perms, func(i, j int) bool {
+		return perms[i].ServiceAccountName < perms[j].ServiceAccountName
+	})
 	strategy.Permissions = perms
 }
 
 // applyClusterRoles applies ClusterRoles to strategy's clusterPermissions field by combining ClusterRoles
 // bound to ServiceAccounts into one set of clusterPermissions.
-func applyClusterRoles(c *collector.Manifests, strategy *operatorsv1alpha1.StrategyDetailsDeployment) { //nolint:dupl
-	objs, _ := c.SplitCSVClusterPermissionsObjects()
-	roleSet := make(map[string]*rbacv1.ClusterRole)
+func applyClusterRoles(c *collector.Manifests, objs []client.Object, strategy *operatorsv1alpha1.StrategyDetailsDeployment, extraSAs []string) { //nolint:dupl
+	roleSet := make(map[string]rbacv1.ClusterRole)
 	for i := range objs {
 		switch t := objs[i].(type) {
 		case *rbacv1.ClusterRole:
-			roleSet[t.GetName()] = t
+			roleSet[t.GetName()] = *t
 		}
-	}
-
-	saToPermissions := make(map[string]operatorsv1alpha1.StrategyDeploymentPermissions)
-	for _, dep := range c.Deployments {
-		saName := dep.Spec.Template.Spec.ServiceAccountName
-		if saName == "" {
-			saName = defaultServiceAccountName
-		}
-		saToPermissions[saName] = operatorsv1alpha1.StrategyDeploymentPermissions{ServiceAccountName: saName}
 	}
 
 	// Collect all role names by their corresponding service accounts via bindings. This lets us
 	// look up all service accounts a role is bound to and create one set of permissions per service account.
+	saToPermissions := initPermissionSet(c.Deployments, extraSAs)
 	for _, binding := range c.ClusterRoleBindings {
-		if role, hasRole := roleSet[binding.RoleRef.Name]; hasRole {
-			for _, subject := range binding.Subjects {
-				if perm, hasSA := saToPermissions[subject.Name]; hasSA && subject.Kind == "ServiceAccount" {
-					perm.Rules = append(perm.Rules, role.Rules...)
-					saToPermissions[subject.Name] = perm
-				}
+		for _, subject := range binding.Subjects {
+			perm, hasSA := saToPermissions[subject.Name]
+			if !hasSA || subject.Kind != "ServiceAccount" {
+				continue
+			}
+			if role, hasRole := roleSet[binding.RoleRef.Name]; hasRole {
+				perm.Rules = append(perm.Rules, role.Rules...)
+				saToPermissions[subject.Name] = perm
 			}
 		}
 	}
@@ -165,7 +175,26 @@ func applyClusterRoles(c *collector.Manifests, strategy *operatorsv1alpha1.Strat
 			perms = append(perms, perm)
 		}
 	}
+	sort.Slice(perms, func(i, j int) bool {
+		return perms[i].ServiceAccountName < perms[j].ServiceAccountName
+	})
 	strategy.ClusterPermissions = perms
+}
+
+// initPermissionSet initializes a map of ServiceAccount name to permissions, which are empty.
+func initPermissionSet(deps []appsv1.Deployment, extraSAs []string) map[string]operatorsv1alpha1.StrategyDeploymentPermissions {
+	saToPermissions := make(map[string]operatorsv1alpha1.StrategyDeploymentPermissions)
+	for _, dep := range deps {
+		saName := dep.Spec.Template.Spec.ServiceAccountName
+		if saName == "" {
+			saName = defaultServiceAccountName
+		}
+		saToPermissions[saName] = operatorsv1alpha1.StrategyDeploymentPermissions{ServiceAccountName: saName}
+	}
+	for _, extraSA := range extraSAs {
+		saToPermissions[extraSA] = operatorsv1alpha1.StrategyDeploymentPermissions{ServiceAccountName: extraSA}
+	}
+	return saToPermissions
 }
 
 // applyDeployments updates strategy's deployments with the Deployments
