@@ -50,7 +50,7 @@ var optionalValidators = validators{
 		labels: map[string]string{
 			nameKey: "community",
 		},
-		desc: "(stage: alpha) Community Operator bundle validation.",
+		desc: "(stage: alpha) Community Operator bundle validation. See https://github.com/operator-framework/community-operators/blob/master/docs/packaging-required-fields.md",
 	},
 }
 

@@ -32,11 +32,11 @@ const (
 image or an operator bundle directory on-disk containing operator metadata and manifests. This command will exit
 with an exit code of 1 if any validation errors arise, and 0 if only warnings arise or all validators pass.
 
-A valid bundle is defined by the bundle spec (linked below), therefore the default validator ensures a bundle conforms to	
+A valid bundle is defined by the bundle spec (linked below), therefore the default validator ensures a bundle conforms to
 that spec. If you want to ensure that your bundle is valid for an optional superset of requirements such as to those
 required to publish your operator on operatorhub.io, then you will need to run one or more supported optional validators.
 Set '--list-optional' to list which optional validators are supported, and how they are grouped by label.
-	
+
 More information about operator bundles and metadata:
 https://github.com/operator-framework/operator-registry/blob/master/docs/design/operator-bundle.md
 
@@ -65,33 +65,30 @@ To build and validate a *pullable* bundle image:
 To list and run optional validators, which are specified by a label selector:
 
   $ operator-sdk bundle validate --list-optional
-  NAME           LABELS                                                DESCRIPTION
-  operatorhub    name=operatorhub                                      OperatorHub.io metadata validation. 
-                 suite=operatorframework    
-  community      name=community                                        (stage: alpha) Community Operator bundle validation.
+  NAME           LABELS                     DESCRIPTION
+  operatorhub    name=operatorhub           OperatorHub.io metadata validation.
+                 suite=operatorframework
 
 To validate a bundle against the entire suite of validators for Operator Framework, in addition to required bundle validators:
-	
+
   $ operator-sdk bundle validate ./bundle --select-optional suite=operatorframework
 
-**NOTE:** The OperatorHub.io validator in the operatorframework optional suite allows you to validate that your manifests can work with a Kubernetes cluster of a particular version using the k8s-version optional key value:	
+The OperatorHub.io validator in the operatorframework optional suite allows you to validate that your manifests can work with a Kubernetes cluster of a particular version using the k8s-version optional key value:
 
   $ operator-sdk bundle validate ./bundle --select-optional suite=operatorframework --optional-values=k8s-version=1.22
-	
+
 To validate a bundle against the validator for operatorhub.io specifically, in addition to required bundle validators:
-	
+
   $ operator-sdk bundle validate ./bundle --select-optional name=operatorhub
-	
-**NOTE:** This validator allows check the bundle against an specific Kubernetes cluster version using the k8s-version optional key value:
-	
+
+This validator allows check the bundle against an specific Kubernetes cluster version using the k8s-version optional key value:
+
   $ operator-sdk bundle validate ./bundle --select-optional name=operatorhub --optional-values=k8s-version=1.22
 
-(stage: alpha) To validate a bundle against the validator for Community Operators specifically, in addition to required bundle validators. This validator allows check the bundle image. In this way, inform the path-index optional key value:
-	
+To validate a bundle against the (alpha) validator for Community Operators specifically, in addition to required bundle validators:
+
   $ operator-sdk bundle validate ./bundle --select-optional name=community --optional-values=index-path=bundle.Dockerfile
-	
-**NOTE:** Community Operators are the operators which will be distributed on the OKD/OCP catalogs. More info: https://github.com/operator-framework/community-operators/
-`
+	`
 )
 
 // NewCmd returns a command that will validate an operator bundle.
