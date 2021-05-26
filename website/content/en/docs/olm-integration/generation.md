@@ -223,9 +223,10 @@ You can list all available optional validators by setting the `--list-optional` 
 
 ```console
 $ operator-sdk bundle validate --list-optional
-NAME           LABELS                     DESCRIPTION
-operatorhub    name=operatorhub           OperatorHub.io metadata validation
-               suite=operatorframework
+NAME           LABELS                                                DESCRIPTION
+operatorhub    name=operatorhub                                      OperatorHub.io metadata validation. 
+               suite=operatorframework    
+community      name=community                                        (stage: alpha) Community Operator bundle validation      
 ...
 ```
 
@@ -253,6 +254,12 @@ operator-sdk bundle validate ./bundle --select-optional suite=operatorframework 
 
 Documentation on optional validators:
 - [`operatorhub`][operatorhub_validator]
+
+**Note**: (stage: alpha) The `Community` validator allows you to validate your `bundle.Dockerfile` configuration against its specific criteria using the `image-path` optional key value:
+
+```sh 
+operator-sdk bundle validate ./bundle --select-optional name=community --optional-values=image-path=bundle.Dockerfile
+```
 
 ### Package manifests format
 

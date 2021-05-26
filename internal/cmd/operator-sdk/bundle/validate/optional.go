@@ -42,7 +42,15 @@ var optionalValidators = validators{
 			nameKey:  "operatorhub",
 			suiteKey: "operatorframework",
 		},
-		desc: "OperatorHub.io metadata validation",
+		desc: "OperatorHub.io metadata validation. ",
+	},
+	{
+		Validator: apivalidation.CommunityOperatorValidator,
+		name:      "community",
+		labels: map[string]string{
+			nameKey: "community",
+		},
+		desc: "(stage: alpha) Community Operator bundle validation.",
 	},
 }
 
@@ -117,6 +125,7 @@ func (vals validators) run(bundle *apimanifests.Bundle, sel labels.Selector, opt
 	}
 
 	// Pass the --optional-values. e.g. --optional-values="k8s-version=1.22"
+	// or --optional-values="image-path=bundle.Dockerfile"
 	objs = append(objs, optionalValues)
 
 	for _, v := range vals {

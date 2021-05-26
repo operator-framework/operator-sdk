@@ -65,17 +65,32 @@ To build and validate a *pullable* bundle image:
 To list and run optional validators, which are specified by a label selector:
 
   $ operator-sdk bundle validate --list-optional
-  NAME           LABELS                     DESCRIPTION
-  operatorhub    name=operatorhub           OperatorHub.io metadata validation
-                 suite=operatorframework
+  NAME           LABELS                                                DESCRIPTION
+  operatorhub    name=operatorhub                                      OperatorHub.io metadata validation. 
+                 suite=operatorframework    
+  community      name=community                                        (stage: alpha) Community Operator bundle validation.
 
 To validate a bundle against the entire suite of validators for Operator Framework, in addition to required bundle validators:
 	
   $ operator-sdk bundle validate ./bundle --select-optional suite=operatorframework
 
+**NOTE:** The OperatorHub.io validator in the operatorframework optional suite allows you to validate that your manifests can work with a Kubernetes cluster of a particular version using the k8s-version optional key value:	
+
+  $ operator-sdk bundle validate ./bundle --select-optional suite=operatorframework --optional-values=k8s-version=1.22
+	
 To validate a bundle against the validator for operatorhub.io specifically, in addition to required bundle validators:
 	
   $ operator-sdk bundle validate ./bundle --select-optional name=operatorhub
+	
+**NOTE:** This validator allows check the bundle against an specific Kubernetes cluster version using the k8s-version optional key value:
+	
+  $ operator-sdk bundle validate ./bundle --select-optional name=operatorhub --optional-values=k8s-version=1.22
+
+(stage: alpha) To validate a bundle against the validator for Community Operators specifically, in addition to required bundle validators. This validator allows check the bundle image. In this way, inform the path-index optional key value:
+	
+  $ operator-sdk bundle validate ./bundle --select-optional name=community --optional-values=index-path=bundle.Dockerfile
+	
+**NOTE:** Community Operators are the operators which will be distributed on the OKD/OCP catalogs. More info: https://github.com/operator-framework/community-operators/
 `
 )
 
