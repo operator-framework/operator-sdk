@@ -100,7 +100,7 @@ release: ## Release target. See 'make -f release/Makefile help' for more informa
 	$(MAKE) -f release/Makefile $@
 
 .PHONY: prerelease
-prerelease: ## Write release commit changes. See 'make -f release/Makefile help' for more information.
+prerelease: generate ## Write release commit changes. See 'make -f release/Makefile help' for more information.
 ifneq ($(RELEASE_VERSION),$(IMAGE_VERSION))
 	$(error "IMAGE_VERSION "$(IMAGE_VERSION)" must be updated to match RELEASE_VERSION "$(RELEASE_VERSION)" prior to creating a release commit")
 endif

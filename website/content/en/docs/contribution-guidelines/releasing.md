@@ -76,15 +76,17 @@ make prerelease
 
 The following changes should be present:
 
+- `Makefile`: IMAGE_VERSION should be modified to the upcoming release tag. (This variable ensures sampleprojects have been tagged correctpy prior to the release commit.)
 - `changelog/generated/v1.3.0.md`: commit changes (created by changelog generation).
 - `changelog/fragments/*`: commit deleted fragment files (deleted by changelog generation).
 - `website/content/en/docs/upgrading-sdk-version/v1.3.0.md`: commit changes (created by changelog generation).
 - `website/config.toml`: commit changes (modified by release script).
+- `testdata/*`: Generated sample code.
 
 Commit these changes and push to your remote (assuming your remote is named `origin`):
 
 ```sh
-git add --all
+git add Makefile changelog website testdata
 git commit -m "Release $RELEASE_VERSION"
 git push -u origin release-$RELEASE_VERSION
 ```
@@ -171,9 +173,6 @@ following commands from the root of the project.
 sed -i -E 's/(IMAGE_VERSION = ).+/\1v1\.3\.1/g' Makefile
 #  Run the pre-release `make` target:
 make prerelease
-# Regenerate testdata (samples).
-# NOTE: The sanity test will fail but scaffolding should complete.
-make test-sanity
 ```
 
 All of the following changes should be present (and no others).
@@ -186,7 +185,7 @@ All of the following changes should be present (and no others).
 Commit these changes and push these changes **to your fork**:
 
 ```sh
-git add --all
+git add Makefile changelog website testdata
 git commit -sm "Release $RELEASE_VERSION"
 git push -u origin release-$RELEASE_VERSION
 ```
