@@ -310,5 +310,5 @@ If the operator can watch multiple namespaces, set the following in your `spec.i
 [rbac-markers]: https://book.kubebuilder.io/reference/markers/rbac.html
 [olm-integration]: /docs/olm-integration
 [csv-base]: /docs/olm-integration/generation/#kustomize-files
-[bundle]: /docs/olm-integration/quickstart-bundle
+[bundle-quickstart]: /docs/olm-integration/quickstart-bundle
 [packagemanifests-quickstart]: /docs/olm-integration/quickstart-package-manifests
