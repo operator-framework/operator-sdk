@@ -322,7 +322,15 @@ func createPatch(existing runtime.Object, expected *resource.Info) ([]byte, apit
 	}
 
 	patch, err := strategicpatch.CreateThreeWayMergePatch(expectedJSON, expectedJSON, existingJSON, patchMeta, true)
-	return patch, apitypes.StrategicMergePatchType, err
+	if err != nil {
+		return nil, apitypes.StrategicMergePatchType, err
+	}
+	// An empty patch could be in the form of "{}" which represents an empty map out of the 3-way merge;
+	// filter them out here too to avoid sending the apiserver empty patch requests.
+	if len(patch) == 0 || bytes.Equal(patch, []byte("{}")) {
+		return nil, apitypes.StrategicMergePatchType, nil
+	}
+	return patch, apitypes.StrategicMergePatchType, nil
 }
 
 func createJSONMergePatch(existingJSON, expectedJSON []byte) ([]byte, error) {
