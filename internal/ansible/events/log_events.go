@@ -50,6 +50,9 @@ type loggingEventHandler struct {
 }
 
 func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, e eventapi.JobEvent) {
+	// Prints StdOut based on verbosity
+	fmt.Printf("%s\n", e.StdOut)
+
 	if l.LogLevel == Nothing {
 		return
 	}
