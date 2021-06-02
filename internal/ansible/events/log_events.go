@@ -17,12 +17,12 @@ package events
 import (
 	"errors"
 	"fmt"
-	"sync"
-
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
-
 	"github.com/operator-framework/operator-sdk/internal/ansible/runner/eventapi"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"os"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"strconv"
+	"sync"
 )
 
 // LogLevel - Levelt for the logging to take place.
@@ -50,9 +50,6 @@ type loggingEventHandler struct {
 }
 
 func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, e eventapi.JobEvent) {
-	// Prints StdOut based on verbosity
-	fmt.Printf("%s\n", e.StdOut)
-
 	if l.LogLevel == Nothing {
 		return
 	}
@@ -64,6 +61,27 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 		"event_type", e.Event,
 		"job", ident,
 	)
+
+	verbosityAnnotation, err := strconv.Atoi(u.UnstructuredContent()["metadata"].(map[string]interface{})["annotations"].(map[string]interface{})["ansible.sdk.operatorframework.io/verbosity"].(string))
+	if err != nil {
+		logger.Error(err, "Unable to parse verbosity value from custom resource.")
+		verbosityAnnotation = 0
+	}
+
+	verbosityEnvVar := 0
+	if os.Getenv("ANSIBLE_VERBOSITY") != "" {
+		environmentVerbosity, err := strconv.Atoi(os.Getenv("ANSIBLE_VERBOSITY"))
+		if err == nil {
+			verbosityEnvVar = environmentVerbosity
+		} else {
+			logger.Error(err, "Unable to parse verbosity value from environment variable.")
+		}
+	}
+
+	if verbosityAnnotation > 0 || verbosityEnvVar > 0 {
+		fmt.Println(e.StdOut)
+		return
+	}
 
 	// logger only the following for the 'Tasks' LogLevel
 	t, ok := e.EventData["task"]
