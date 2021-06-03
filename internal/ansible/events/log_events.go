@@ -17,12 +17,14 @@ package events
 import (
 	"errors"
 	"fmt"
-	"github.com/operator-framework/operator-sdk/internal/ansible/runner/eventapi"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"os"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"strconv"
 	"sync"
+
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/operator-framework/operator-sdk/internal/ansible/runner/eventapi"
 )
 
 // LogLevel - Levelt for the logging to take place.
@@ -62,25 +64,22 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 		"job", ident,
 	)
 
+	// Parse verbosity from CR
+	verbosityAnnotation := 0
 	verbosityAnnotation, err := strconv.Atoi(u.UnstructuredContent()["metadata"].(map[string]interface{})["annotations"].(map[string]interface{})["ansible.sdk.operatorframework.io/verbosity"].(string))
 	if err != nil {
 		logger.Error(err, "Unable to parse verbosity value from custom resource.")
-		verbosityAnnotation = 0
 	}
 
+	// Parse verbosity from environment variable
 	verbosityEnvVar := 0
 	if os.Getenv("ANSIBLE_VERBOSITY") != "" {
 		environmentVerbosity, err := strconv.Atoi(os.Getenv("ANSIBLE_VERBOSITY"))
-		if err == nil {
-			verbosityEnvVar = environmentVerbosity
-		} else {
+		if err != nil {
 			logger.Error(err, "Unable to parse verbosity value from environment variable.")
+		} else {
+			verbosityEnvVar = environmentVerbosity
 		}
-	}
-
-	if verbosityAnnotation > 0 || verbosityEnvVar > 0 {
-		fmt.Println(e.StdOut)
-		return
 	}
 
 	// logger only the following for the 'Tasks' LogLevel
@@ -88,7 +87,14 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 	if ok {
 		setFactAction := e.EventData["task_action"] == eventapi.TaskActionSetFact
 		debugAction := e.EventData["task_action"] == eventapi.TaskActionDebug
+		verbose := verbosityAnnotation > 0 || verbosityEnvVar > 0
 
+		if verbose {
+			l.mux.Lock()
+			fmt.Println(e.StdOut)
+			l.mux.Unlock()
+			return
+		}
 		if e.Event == eventapi.EventPlaybookOnTaskStart && !setFactAction && !debugAction {
 			l.mux.Lock()
 			logger.Info("[playbook task]", "EventData.Name", e.EventData["name"])
@@ -96,9 +102,8 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 			l.mux.Unlock()
 			return
 		}
-		if e.Event == eventapi.EventRunnerOnOk && debugAction {
+		if e.Event == eventapi.EventRunnerOnOk {
 			l.mux.Lock()
-			logger.Info("[playbook debug]", "EventData.TaskArgs", e.EventData["task_args"])
 			l.logAnsibleStdOut(e)
 			l.mux.Unlock()
 			return
