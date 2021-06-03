@@ -66,9 +66,15 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 
 	// Parse verbosity from CR
 	verbosityAnnotation := 0
-	verbosityAnnotation, err := strconv.Atoi(u.UnstructuredContent()["metadata"].(map[string]interface{})["annotations"].(map[string]interface{})["ansible.sdk.operatorframework.io/verbosity"].(string))
-	if err != nil {
-		logger.Error(err, "Unable to parse verbosity value from custom resource.")
+	if annot, exists := u.UnstructuredContent()["metadata"].(map[string]interface{})["annotations"]; exists {
+		if verbosityField, present := annot.(map[string]interface{})["ansible.sdk.operatorframework.io/verbosity"]; present {
+			verbosityValue, err := strconv.Atoi(verbosityField.(string))
+			if err != nil {
+				logger.Error(err, "Unable to parse verbosity value from CR.")
+			} else {
+				verbosityAnnotation = verbosityValue
+			}
+		}
 	}
 
 	// Parse verbosity from environment variable
