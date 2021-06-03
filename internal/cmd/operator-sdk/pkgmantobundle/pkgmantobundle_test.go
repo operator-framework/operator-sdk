@@ -88,15 +88,29 @@ var _ = Describe("Running pkgmanToBundle command", func() {
 
 				// Verifying that bundle contains required files
 				Expect(fileExists(filepath.Join(p.outputDir, bundle.Name(), "bundle.Dockerfile"))).To(BeTrue())
-				Expect(fileExists(filepath.Join(p.outputDir, bundle.Name(), "metadata", "annotations.yaml"))).To(BeTrue())
+				Expect(fileExists(filepath.Join(p.outputDir, bundle.Name(), "bundle", "metadata", "annotations.yaml"))).To(BeTrue())
 				Expect(b.CSV).NotTo(BeNil())
 				Expect(b.V1CRDs).NotTo(BeNil())
 
 				// Verify if scorecard config exiss in the bundle
 				if bundle.Name() == "bundle-0.0.1" {
-					Expect(fileExists(filepath.Join(p.outputDir, bundle.Name(), "tests", "scorecard", "config.yaml"))).To(BeTrue())
+					Expect(fileExists(filepath.Join(p.outputDir, bundle.Name(), "bundle", "tests", "scorecard", "config.yaml"))).To(BeTrue())
 				}
 			}
+		})
+
+		It("should build image when build command is provided", func() {
+			// Specify input package manifest directory and output directory
+			pkgManDir = filepath.Join("testdata", "packagemanifests")
+			outputDir = "bundles-output"
+
+			p.pkgmanifestDir = pkgManDir
+			p.outputDir = outputDir
+			p.baseImg = "quay.io/example/memcached-operator"
+			p.buildCmd = "docker build -f bundle.Dockerfile -t quay.io/example/memcached ."
+
+			err := p.run()
+			Expect(err).NotTo(HaveOccurred())
 		})
 
 		It("should error when output directory already exists", func() {

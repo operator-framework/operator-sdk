@@ -183,7 +183,7 @@ func (p *pkgManToBundleCmd) run() (err error) {
 			}
 
 			bundleMetaData := bundleutil.BundleMetaData{
-				BundleDir:       filepath.Join(p.outputDir, "bundle-"+dir.Name()),
+				BundleDir:       filepath.Join(p.outputDir, "bundle-"+dir.Name(), "bundle"),
 				PackageName:     packageName,
 				Channels:        channels,
 				DefaultChannel:  defaultChannel,
