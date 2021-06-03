@@ -17,6 +17,7 @@ package scorecard
 import (
 	"context"
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"os"
@@ -73,7 +74,7 @@ If the argument holds an image tag, it must be present remotely.`,
 	scorecardCmd.Flags().StringVarP(&c.config, "config", "c", "", "path to scorecard config file")
 	scorecardCmd.Flags().StringVarP(&c.namespace, "namespace", "n", "", "namespace to run the test images in")
 	scorecardCmd.Flags().StringVarP(&c.outputFormat, "output", "o", "text",
-		"Output format for results. Valid values: text, json")
+		"Output format for results. Valid values: text, json, xunit")
 	scorecardCmd.Flags().StringVarP(&c.serviceAccount, "service-account", "s", "default",
 		"Service account to use for tests")
 	scorecardCmd.Flags().BoolVarP(&c.list, "list", "L", false,
@@ -98,6 +99,12 @@ func (c *scorecardCmd) printOutput(output v1alpha3.TestList) error {
 		}
 	case "json":
 		bytes, err := json.MarshalIndent(output, "", "  ")
+		if err != nil {
+			return fmt.Errorf("marshal json error: %v", err)
+		}
+		fmt.Printf("%s\n", string(bytes))
+	case "xunit":
+		bytes, err := xml.MarshalIndent(output, "", "  ")
 		if err != nil {
 			return fmt.Errorf("marshal json error: %v", err)
 		}
