@@ -68,23 +68,22 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 	verbosityAnnotation := 0
 	if annot, exists := u.UnstructuredContent()["metadata"].(map[string]interface{})["annotations"]; exists {
 		if verbosityField, present := annot.(map[string]interface{})["ansible.sdk.operatorframework.io/verbosity"]; present {
-			verbosityValue, err := strconv.Atoi(verbosityField.(string))
+			var err error
+			verbosityAnnotation, err = strconv.Atoi(verbosityField.(string))
 			if err != nil {
 				logger.Error(err, "Unable to parse verbosity value from CR.")
-			} else {
-				verbosityAnnotation = verbosityValue
 			}
 		}
 	}
 
 	// Parse verbosity from environment variable
 	verbosityEnvVar := 0
-	if os.Getenv("ANSIBLE_VERBOSITY") != "" {
-		environmentVerbosity, err := strconv.Atoi(os.Getenv("ANSIBLE_VERBOSITY"))
+	everb := os.Getenv("ANSIBLE_VERBOSITY")
+	if everb != "" {
+		var err error
+		verbosityEnvVar, err = strconv.Atoi(everb)
 		if err != nil {
 			logger.Error(err, "Unable to parse verbosity value from environment variable.")
-		} else {
-			verbosityEnvVar = environmentVerbosity
 		}
 	}
 
@@ -93,9 +92,8 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 	if ok {
 		setFactAction := e.EventData["task_action"] == eventapi.TaskActionSetFact
 		debugAction := e.EventData["task_action"] == eventapi.TaskActionDebug
-		verbose := verbosityAnnotation > 0 || verbosityEnvVar > 0
 
-		if verbose {
+		if verbosityAnnotation > 0 || verbosityEnvVar > 0 {
 			l.mux.Lock()
 			fmt.Println(e.StdOut)
 			l.mux.Unlock()
