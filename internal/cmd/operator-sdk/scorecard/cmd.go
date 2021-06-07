@@ -106,7 +106,7 @@ func (c *scorecardCmd) printOutput(output v1alpha3.TestList) error {
 	case "xunit":
 		bytes, err := xml.MarshalIndent(output, "", "  ")
 		if err != nil {
-			return fmt.Errorf("marshal json error: %v", err)
+			return fmt.Errorf("marshal xml error: %v", err)
 		}
 		fmt.Printf("%s\n", string(bytes))
 	default:
