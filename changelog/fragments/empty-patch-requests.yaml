@@ -1,4 +1,4 @@
 entries:
   - description: >
-      Filtering out empty patch requests generated from the 3-way merge to avoid unnecessary load on kube apiserver.
+      For helm-based operators, empty patch requests generated from the 3-way merge are filtered to avoid unnecessary requests to the kube apiserver.
     kind: bugfix
