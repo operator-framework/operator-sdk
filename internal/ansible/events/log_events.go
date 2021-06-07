@@ -82,6 +82,9 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 			l.mux.Unlock()
 			return
 		}
+		if e.Event == eventapi.EventRunnerItemOnOk {
+			fmt.Println(e.StdOut)
+		}
 		if e.Event == eventapi.EventRunnerOnFailed {
 			errKVs := []interface{}{
 				"EventData.Task", t,
