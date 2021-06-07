@@ -74,35 +74,36 @@ INFO[0000] Creating bundle/bundle-0.0.1/bundle.Dockerfile
 INFO[0000] Creating bundle/bundle-0.0.1/metadata/annotations.yaml
 ...
 
-# After running the above command, the bundles will be generated in 'bundle/' directory.
-$ tree bundle/
-bundle/
+# After running the above command, the bundles will be generated in 'bundles/' directory.
+$ tree bundles/
+bundles/
 ├── bundle-0.0.1
-│   ├── bundle.Dockerfile
-│   ├── manifests
-│   │   ├── etcdcluster.crd.yaml
-│   │   ├── etcdoperator.clusterserviceversion.yaml
-│   ├── metadata
-│   │   └── annotations.yaml
-│   └── tests
-│       └── scorecard
-│           └── config.yaml
+│   ├── bundle
+│   │   ├── manifests
+│   │   │   ├── etcdcluster.crd.yaml
+│   │   │   ├── etcdoperator.clusterserviceversion.yaml
+│   │   ├── metadata
+│   │   │   └── annotations.yaml
+│   │   └── tests
+│   │       └── scorecard
+│   │           └── config.yaml
+│   └── bundle.Dockerfile
 └── bundle-0.0.2
-    ├── bundle.Dockerfile
-    ├── manifests
-    │   ├── etcdbackup.crd.yaml
-    │   ├── etcdcluster.crd.yaml
-    │   ├── etcdoperator.v0.0.2.clusterserviceversion.yaml
-    │   ├── etcdrestore.crd.yaml
-    ├── metadata
-    │   └── annotations.yaml
-    └── tests
-        └── scorecard
-            └── config.yaml
+    ├── bundle
+    │   ├── manifests
+    │   │   ├── etcdbackup.crd.yaml
+    │   │   ├── etcdcluster.crd.yaml
+    │   │   ├── etcdoperator.v0.0.2.clusterserviceversion.yaml
+    │   │   ├── etcdrestore.crd.yaml
+    │   └── metadata
+    │       └── annotations.yaml
+    └── bundle.Dockerfile
 
 Also, images for the both the bundles will be built with the following names: quay.io/example/etcd:0.0.1 and quay.io/example/etcd:0.0.2.
 `
 )
+
+var defaultSubBundleDir = "bundle"
 
 type pkgManToBundleCmd struct {
 	// Input packagemanifest directory.
@@ -183,7 +184,7 @@ func (p *pkgManToBundleCmd) run() (err error) {
 			}
 
 			bundleMetaData := bundleutil.BundleMetaData{
-				BundleDir:       filepath.Join(p.outputDir, "bundle-"+dir.Name(), "bundle"),
+				BundleDir:       filepath.Join(p.outputDir, "bundle-"+dir.Name(), defaultSubBundleDir),
 				PackageName:     packageName,
 				Channels:        channels,
 				DefaultChannel:  defaultChannel,

@@ -204,8 +204,10 @@ func (meta *BundleMetaData) BuildBundleImage(tag string) error {
 		return err
 	}
 
-	defer func() error {
-		return os.Chdir(cwd)
+	defer func() {
+		if err := os.Chdir(cwd); err != nil {
+			log.Error(cwd)
+		}
 	}()
 
 	if err := os.Chdir(filepath.Dir(meta.BundleDir)); err != nil {
@@ -218,8 +220,11 @@ func (meta *BundleMetaData) BuildBundleImage(tag string) error {
 		log.Infof("Using the specified command to build image")
 		commandArg := strings.Split(meta.BuildCommand, " ")
 
+		// append the tag and build context to the command
+		commandArg = append(commandArg, "-t", img, ".")
 		cmd := exec.Command(commandArg[0], commandArg[1:]...)
-		if err := cmd.Run(); err != nil {
+		if out, err := cmd.CombinedOutput(); err != nil {
+			fmt.Println(string(out))
 			return err
 		}
 	} else {

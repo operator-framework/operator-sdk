@@ -125,22 +125,28 @@ INFO[0000] Creating etcd-bundle/bundle-0.0.1/metadata/annotations.yaml
 This will create output bundles in the directory `etcd-bundle`. The output directory will look like:
 
 ```
+etcd-bundle/
 ├── bundle-0.0.1
-│   ├── bundle.Dockerfile
-│   ├── manifests
-│   │   ├── etcdcluster.crd.yaml
-│   │   ├── etcdoperator.clusterserviceversion.yaml
-│   ├── metadata
-│   │   └── annotations.yaml
+│   ├── bundle
+│   │   ├── manifests
+│   │   │   ├── etcdcluster.crd.yaml
+│   │   │   ├── etcdoperator.clusterserviceversion.yaml
+│   │   ├── metadata
+│   │   │   └── annotations.yaml
+│   │   └── tests
+│   │       └── scorecard
+│   │           └── config.yaml
+│   └── bundle.Dockerfile
 └── bundle-0.0.2
-    ├── bundle.Dockerfile
-    ├── manifests
-    │   ├── etcdbackup.crd.yaml
-    │   ├── etcdcluster.crd.yaml
-    │   ├── etcdoperator.v0.0.2.clusterserviceversion.yaml
-    │   ├── etcdrestore.crd.yaml
-    ├── metadata
-        └── annotations.yaml
+    ├── bundle
+    │   ├── manifests
+    │   │   ├── etcdbackup.crd.yaml
+    │   │   ├── etcdcluster.crd.yaml
+    │   │   ├── etcdoperator.v0.0.2.clusterserviceversion.yaml
+    │   │   ├── etcdrestore.crd.yaml
+    │   └── metadata
+    │       └── annotations.yaml
+    └── bundle.Dockerfile
 ```
 
 To build images for the bundles, the base container image name can be provided using `--image-tag-base` flag. This name should be provided without the tag (`:` and characters following), as the command will tag each bundle image with its packagemanifests directory name, i.e. `<image-tag-base>:<dir-name>`. For example, the following command for the above `packagemnifests` directory would build the bundles `quay.io/example/etcd-bundle:0.0.1` and `quay.io/example/etcd-bundle:0.0.2`.
@@ -151,12 +157,11 @@ operator-sdk pkgman-to-bundle packagemanifests --image-tag-base quay.io/example/
 
 A custom command can also be specified to build images, using the `--build-cmd` flag. The default command is `docker build`. However, if using a custom command, it needs to be made sure that the command is in the `PATH` or a fully qualified path name is provided as input to the flag.
 
-Once the command has finished building your bundle images and they have been added to a catalog image, delete all bundle directories except for the latest one. This directory will contain manifests for your operator's head bundle, and should be versioned with version control system like git. Rename this directory to `bundle`, and move `bundle.Dockerfile` to your project's root:
+Once the command has finished building your bundle images and they have been added to a catalog image, delete all bundle directories except for the latest one. This directory will contain manifests for your operator's head bundle, and should be versioned with version control system like git. Move this directory and its `bundle.Dockerfile` to your project's root:
 
 ```console
-$ mv ./etcd-bundle/bundle-0.0.2 ./bundle
+$ cp -r ./etcd-bundle/bundle-0.0.2/* .
 $ rm -rf ./etcd-bundle
-$ mv bundle/bundle.Dockerfile .
 ```
 
 Try building then running your bundle on a live cluster to make sure it works as expected:
