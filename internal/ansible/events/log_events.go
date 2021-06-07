@@ -84,6 +84,7 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 		}
 		if e.Event == eventapi.EventRunnerItemOnOk {
 			fmt.Println(e.StdOut)
+			return
 		}
 		if e.Event == eventapi.EventRunnerOnFailed {
 			errKVs := []interface{}{
