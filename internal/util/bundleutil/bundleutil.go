@@ -221,10 +221,12 @@ func (meta *BundleMetaData) BuildBundleImage(tag string) error {
 		commandArg := strings.Split(meta.BuildCommand, " ")
 
 		// append the tag and build context to the command
-		commandArg = append(commandArg, "-t", img, ".")
-		cmd := exec.Command(commandArg[0], commandArg[1:]...)
-		if out, err := cmd.CombinedOutput(); err != nil {
-			fmt.Println(string(out))
+		cmd := exec.Command(commandArg[0], append(commandArg[1:], img)...)
+		output, err := cmd.CombinedOutput()
+		if err != nil || viper.GetBool(flags.VerboseOpt) {
+			fmt.Println(string(output))
+		}
+		if err != nil {
 			return err
 		}
 	} else {
