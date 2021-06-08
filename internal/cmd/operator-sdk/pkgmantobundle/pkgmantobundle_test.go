@@ -105,7 +105,7 @@ var _ = Describe("Running pkgmanToBundle command", func() {
 			p.pkgmanifestDir = pkgManDir
 			p.outputDir = outputDir
 			p.baseImg = "quay.io/example/memcached-operator"
-			p.buildCmd = "docker build -f bundle.Dockerfile"
+			p.buildCmd = "docker build -f bundle.Dockerfile . -t"
 
 			err := p.run()
 			Expect(err).NotTo(HaveOccurred())

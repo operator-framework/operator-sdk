@@ -155,7 +155,13 @@ To build images for the bundles, the base container image name can be provided u
 operator-sdk pkgman-to-bundle packagemanifests --image-tag-base quay.io/example/etcd-bundle
 ```
 
-A custom command can also be specified to build images, using the `--build-cmd` flag. The default command is `docker build`. However, if using a custom command, it needs to be made sure that the command is in the `PATH` or a fully qualified path name is provided as input to the flag.
+A custom command can also be specified to build images, using the `--build-cmd` flag. The default command is `docker build`. For example:
+
+```console
+$ operator-sdk pkgman-to-bundle packagemanifests --output-dir etcd-bundle/ --image-tag-base quay.io/example/etcd --build-cmd "podman build -f bundle.Dockerfile . -t"
+```
+
+However, if using a custom command, it needs to be made sure that the command is in the `PATH` or a fully qualified path name is provided as input to the flag.
 
 Once the command has finished building your bundle images and they have been added to a catalog image, delete all bundle directories except for the latest one. This directory will contain manifests for your operator's head bundle, and should be versioned with version control system like git. Move this directory and its `bundle.Dockerfile` to your project's root:
 

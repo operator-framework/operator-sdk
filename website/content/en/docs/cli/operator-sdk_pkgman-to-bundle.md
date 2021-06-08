@@ -80,7 +80,11 @@ bundles/
     │       └── annotations.yaml
     └── bundle.Dockerfile
 
-Also, images for the both the bundles will be built with the following names: quay.io/example/etcd:0.0.1 and quay.io/example/etcd:0.0.2.
+A custom command to build bundle images can also be specified using the '--build-cmd' flag. For example,
+
+$ operator-sdk pkgman-to-bundle packagemanifests --image-tag-base quay.io/example/etcd --build-cmd "podman build -f bundle.Dockerfile . -t"
+
+Images for the both the bundles will be built with the following names: quay.io/example/etcd:0.0.1 and quay.io/example/etcd:0.0.2.
 
 ```
 
