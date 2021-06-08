@@ -164,7 +164,7 @@ func TestManagerGenerateStrategicMergePatch(t *testing.T) {
 			o2: newTestDeployment([]v1.Container{
 				{Name: "test1", LivenessProbe: nil},
 			}),
-			patch:     `{}`,
+			patch:     ``,
 			patchType: apitypes.StrategicMergePatchType,
 		},
 		{
@@ -197,7 +197,7 @@ func TestManagerGenerateStrategicMergePatch(t *testing.T) {
 				},
 				Spec: appsv1.DeploymentSpec{},
 			},
-			patch:     `{}`,
+			patch:     ``,
 			patchType: apitypes.StrategicMergePatchType,
 		},
 	}
