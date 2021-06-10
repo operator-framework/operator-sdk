@@ -64,28 +64,7 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 		"job", ident,
 	)
 
-	// Parse verbosity from CR
-	verbosityAnnotation := 0
-	if annot, exists := u.UnstructuredContent()["metadata"].(map[string]interface{})["annotations"]; exists {
-		if verbosityField, present := annot.(map[string]interface{})["ansible.sdk.operatorframework.io/verbosity"]; present {
-			var err error
-			verbosityAnnotation, err = strconv.Atoi(verbosityField.(string))
-			if err != nil {
-				logger.Error(err, "Unable to parse verbosity value from CR.")
-			}
-		}
-	}
-
-	// Parse verbosity from environment variable
-	verbosityEnvVar := 0
-	everb := os.Getenv("ANSIBLE_VERBOSITY")
-	if everb != "" {
-		var err error
-		verbosityEnvVar, err = strconv.Atoi(everb)
-		if err != nil {
-			logger.Error(err, "Unable to parse verbosity value from environment variable.")
-		}
-	}
+	verbosityAnnotation, verbosityEnvVar := GetVerbosity(u, e, ident)
 
 	// logger only the following for the 'Tasks' LogLevel
 	t, ok := e.EventData["task"]
@@ -95,19 +74,21 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 
 		if verbosityAnnotation > 0 || verbosityEnvVar > 0 {
 			l.mux.Lock()
+			logger.Info("[Ansible StdOut Logs]", "EventData.TaskArgs", e.EventData["task_args"])
 			fmt.Println(e.StdOut)
 			l.mux.Unlock()
 			return
 		}
 		if e.Event == eventapi.EventPlaybookOnTaskStart && !setFactAction && !debugAction {
 			l.mux.Lock()
-			logger.Info("[playbook task]", "EventData.Name", e.EventData["name"])
+			logger.Info("[playbook task start]", "EventData.Name", e.EventData["name"])
 			l.logAnsibleStdOut(e)
 			l.mux.Unlock()
 			return
 		}
 		if e.Event == eventapi.EventRunnerOnOk {
 			l.mux.Lock()
+			logger.Info("[playbook task finished]", "EventData.TaskArgs", e.EventData["task_args"])
 			l.logAnsibleStdOut(e)
 			l.mux.Unlock()
 			return
@@ -155,4 +136,40 @@ func NewLoggingEventHandler(l LogLevel) EventHandler {
 		LogLevel: l,
 		mux:      &sync.Mutex{},
 	}
+}
+
+// GetVerbosity - Parses the verbsoity from CR and environment variables
+func GetVerbosity(u *unstructured.Unstructured, e eventapi.JobEvent, ident string) (int, int) {
+	logger := logf.Log.WithName("logging_event_handler").WithValues(
+		"name", u.GetName(),
+		"namespace", u.GetNamespace(),
+		"gvk", u.GroupVersionKind().String(),
+		"event_type", e.Event,
+		"job", ident,
+	)
+
+	// Parse verbosity from CR
+	verbosityAnnotation := 0
+	if annot, exists := u.UnstructuredContent()["metadata"].(map[string]interface{})["annotations"]; exists {
+		if verbosityField, present := annot.(map[string]interface{})["ansible.sdk.operatorframework.io/verbosity"]; present {
+			var err error
+			verbosityAnnotation, err = strconv.Atoi(verbosityField.(string))
+			if err != nil {
+				logger.Error(err, "Unable to parse verbosity value from CR.")
+			}
+		}
+	}
+
+	// Parse verbosity from environment variable
+	verbosityEnvVar := 0
+	everb := os.Getenv("ANSIBLE_VERBOSITY")
+	if everb != "" {
+		var err error
+		verbosityEnvVar, err = strconv.Atoi(everb)
+		if err != nil {
+			logger.Error(err, "Unable to parse verbosity value from environment variable.")
+		}
+	}
+
+	return verbosityAnnotation, verbosityEnvVar
 }
