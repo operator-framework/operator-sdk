@@ -64,7 +64,7 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 		"job", ident,
 	)
 
-	verbosityAnnotation, verbosityEnvVar := GetVerbosity(u, e, ident)
+	verbosity := GetVerbosity(u, e, ident)
 
 	// logger only the following for the 'Tasks' LogLevel
 	t, ok := e.EventData["task"]
@@ -72,9 +72,8 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 		setFactAction := e.EventData["task_action"] == eventapi.TaskActionSetFact
 		debugAction := e.EventData["task_action"] == eventapi.TaskActionDebug
 
-		if verbosityAnnotation > 0 || verbosityEnvVar > 0 {
+		if verbosity > 0 {
 			l.mux.Lock()
-			logger.Info("[Ansible StdOut Logs]", "EventData.TaskArgs", e.EventData["task_args"])
 			fmt.Println(e.StdOut)
 			l.mux.Unlock()
 			return
@@ -86,9 +85,9 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 			l.mux.Unlock()
 			return
 		}
-		if e.Event == eventapi.EventRunnerOnOk {
+		if e.Event == eventapi.EventRunnerOnOk && debugAction {
 			l.mux.Lock()
-			logger.Info("[playbook task finished]", "EventData.TaskArgs", e.EventData["task_args"])
+			logger.Info("[playbook debug]", "EventData.TaskArgs", e.EventData["task_args"])
 			l.logAnsibleStdOut(e)
 			l.mux.Unlock()
 			return
@@ -139,7 +138,7 @@ func NewLoggingEventHandler(l LogLevel) EventHandler {
 }
 
 // GetVerbosity - Parses the verbsoity from CR and environment variables
-func GetVerbosity(u *unstructured.Unstructured, e eventapi.JobEvent, ident string) (int, int) {
+func GetVerbosity(u *unstructured.Unstructured, e eventapi.JobEvent, ident string) int {
 	logger := logf.Log.WithName("logging_event_handler").WithValues(
 		"name", u.GetName(),
 		"namespace", u.GetNamespace(),
@@ -171,5 +170,12 @@ func GetVerbosity(u *unstructured.Unstructured, e eventapi.JobEvent, ident strin
 		}
 	}
 
-	return verbosityAnnotation, verbosityEnvVar
+	// Return in order of precedence
+	if verbosityAnnotation > 0 {
+		return verbosityAnnotation
+	} else if verbosityEnvVar > 0 {
+		return verbosityEnvVar
+	} else {
+		return 0 // Default
+	}
 }
