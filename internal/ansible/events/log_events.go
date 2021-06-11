@@ -17,6 +17,8 @@ package events
 import (
 	"errors"
 	"fmt"
+	"os"
+	"strconv"
 	"sync"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -62,15 +64,23 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 		"job", ident,
 	)
 
+	verbosity := GetVerbosity(u, e, ident)
+
 	// logger only the following for the 'Tasks' LogLevel
 	t, ok := e.EventData["task"]
 	if ok {
 		setFactAction := e.EventData["task_action"] == eventapi.TaskActionSetFact
 		debugAction := e.EventData["task_action"] == eventapi.TaskActionDebug
 
+		if verbosity > 0 {
+			l.mux.Lock()
+			fmt.Println(e.StdOut)
+			l.mux.Unlock()
+			return
+		}
 		if e.Event == eventapi.EventPlaybookOnTaskStart && !setFactAction && !debugAction {
 			l.mux.Lock()
-			logger.Info("[playbook task]", "EventData.Name", e.EventData["name"])
+			logger.Info("[playbook task start]", "EventData.Name", e.EventData["name"])
 			l.logAnsibleStdOut(e)
 			l.mux.Unlock()
 			return
@@ -128,5 +138,48 @@ func NewLoggingEventHandler(l LogLevel) EventHandler {
 	return loggingEventHandler{
 		LogLevel: l,
 		mux:      &sync.Mutex{},
+	}
+}
+
+// GetVerbosity - Parses the verbsoity from CR and environment variables
+func GetVerbosity(u *unstructured.Unstructured, e eventapi.JobEvent, ident string) int {
+	logger := logf.Log.WithName("logging_event_handler").WithValues(
+		"name", u.GetName(),
+		"namespace", u.GetNamespace(),
+		"gvk", u.GroupVersionKind().String(),
+		"event_type", e.Event,
+		"job", ident,
+	)
+
+	// Parse verbosity from CR
+	verbosityAnnotation := 0
+	if annot, exists := u.UnstructuredContent()["metadata"].(map[string]interface{})["annotations"]; exists {
+		if verbosityField, present := annot.(map[string]interface{})["ansible.sdk.operatorframework.io/verbosity"]; present {
+			var err error
+			verbosityAnnotation, err = strconv.Atoi(verbosityField.(string))
+			if err != nil {
+				logger.Error(err, "Unable to parse verbosity value from CR.")
+			}
+		}
+	}
+
+	// Parse verbosity from environment variable
+	verbosityEnvVar := 0
+	everb := os.Getenv("ANSIBLE_VERBOSITY")
+	if everb != "" {
+		var err error
+		verbosityEnvVar, err = strconv.Atoi(everb)
+		if err != nil {
+			logger.Error(err, "Unable to parse verbosity value from environment variable.")
+		}
+	}
+
+	// Return in order of precedence
+	if verbosityAnnotation > 0 {
+		return verbosityAnnotation
+	} else if verbosityEnvVar > 0 {
+		return verbosityEnvVar
+	} else {
+		return 0 // Default
 	}
 }
