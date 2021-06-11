@@ -208,7 +208,7 @@ func addInitCustomizations(projectName string) error {
 		return err
 	}
 
-	// Remove the webhook option for the componentConfig since webhooks are not supported by ansible
+	// Remove the webhook option for the componentConfig since webhooks are not supported by helm/ansible
 	err = sdkutil.ReplaceInFile(filepath.Join("config", "manager", "controller_manager_config.yaml"),
 		"webhook:\n  port: 9443", "")
 	if err != nil {
