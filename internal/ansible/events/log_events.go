@@ -82,7 +82,6 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 			l.mux.Lock()
 			fmt.Printf("\n-------------------------------------------------------------------------------\n")
 			l.mux.Unlock()
-			return
 		}
 		if e.Event == eventapi.EventPlaybookOnTaskStart && !setFactAction && !debugAction {
 			l.mux.Lock()
