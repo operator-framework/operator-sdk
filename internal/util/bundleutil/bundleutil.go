@@ -22,6 +22,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sort"
+	"strings"
 	"text/template"
 
 	log "github.com/sirupsen/logrus"
@@ -87,7 +88,7 @@ func (meta *BundleMetaData) GenerateMetadata() error {
 	// Create annotation values for both bundle.Dockerfile and annotations.yaml, which should
 	// hold the same set of values always.
 	values := annotationsValues{
-		BundleDir:                meta.BundleDir,
+		BundleDir:                filepath.Base(meta.BundleDir),
 		PackageName:              meta.PackageName,
 		Channels:                 meta.Channels,
 		DefaultChannel:           meta.DefaultChannel,
@@ -110,7 +111,7 @@ func (meta *BundleMetaData) GenerateMetadata() error {
 	// inside bundleDir, else its in the project directory.
 	// Remmove this, when pkgman-to-bundle migrate command is removed.
 	if len(meta.PkgmanifestPath) != 0 {
-		dockerfilePath = filepath.Join(meta.BundleDir, "bundle.Dockerfile")
+		dockerfilePath = filepath.Join(filepath.Dir(meta.BundleDir), "bundle.Dockerfile")
 	}
 
 	templateMap := map[string]*template.Template{
@@ -196,16 +197,40 @@ func (meta *BundleMetaData) BuildBundleImage(tag string) error {
 
 	img := fmt.Sprintf("%s:%s", meta.BaseImage, tag)
 
+	// switch back to current working directory, so that subsequent
+	// bundle version images can be built.
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if err := os.Chdir(cwd); err != nil {
+			log.Error(cwd)
+		}
+	}()
+
+	if err := os.Chdir(filepath.Dir(meta.BundleDir)); err != nil {
+		return err
+	}
+
 	if len(meta.BuildCommand) != 0 {
 		// TODO(varsha): Make this more user friendly by accepting a template which
 		// can executed in each bundle subdirectory.
-		log.Infof("Using the specified command to build image %s", img)
-		cmd := exec.Command(meta.BuildCommand, img)
-		if err := cmd.Run(); err != nil {
+		log.Infof("Using the specified command to build image")
+		commandArg := strings.Split(meta.BuildCommand, " ")
+
+		// append the tag and build context to the command
+		cmd := exec.Command(commandArg[0], append(commandArg[1:], img)...)
+		output, err := cmd.CombinedOutput()
+		if err != nil || viper.GetBool(flags.VerboseOpt) {
+			fmt.Println(string(output))
+		}
+		if err != nil {
 			return err
 		}
 	} else {
-		output, err := exec.Command("docker", "build", "-f", filepath.Join(meta.BundleDir, "bundle.Dockerfile"), "-t", img, ".").CombinedOutput()
+		output, err := exec.Command("docker", "build", "-f", "bundle.Dockerfile", "-t", img, ".").CombinedOutput()
 		if err != nil || viper.GetBool(flags.VerboseOpt) {
 			fmt.Println(string(output))
 		}
