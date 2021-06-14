@@ -43,7 +43,7 @@ const (
 
 // EventHandler - knows how to handle job events.
 type EventHandler interface {
-	Handle(string, *unstructured.Unstructured, eventapi.JobEvent)
+	Handle(string, *unstructured.Unstructured, eventapi.JobEvent, string)
 }
 
 type loggingEventHandler struct {
@@ -51,7 +51,7 @@ type loggingEventHandler struct {
 	mux      *sync.Mutex
 }
 
-func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, e eventapi.JobEvent) {
+func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, e eventapi.JobEvent, prevEvent string) {
 	if l.LogLevel == Nothing {
 		return
 	}
@@ -78,6 +78,12 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 			l.mux.Unlock()
 			return
 		}
+		if e.Event != eventapi.EventRunnerItemOnOk && prevEvent == eventapi.EventRunnerItemOnOk { // A previous loop task ended
+			l.mux.Lock()
+			fmt.Printf("\n-------------------------------------------------------------------------------\n")
+			l.mux.Unlock()
+			return
+		}
 		if e.Event == eventapi.EventPlaybookOnTaskStart && !setFactAction && !debugAction {
 			l.mux.Lock()
 			logger.Info("[playbook task start]", "EventData.Name", e.EventData["name"])
@@ -93,7 +99,15 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 			return
 		}
 		if e.Event == eventapi.EventRunnerItemOnOk {
+			l.mux.Lock()
+			if prevEvent != eventapi.EventRunnerItemOnOk { // A loop task starts
+				fmt.Printf("\n--------------------------- Ansible Task StdOut -------------------------------\n")
+				if e.Event != eventapi.EventPlaybookOnTaskStart {
+					fmt.Printf("\n TASK [%v] ******************************** \n", e.EventData["task"])
+				}
+			}
 			fmt.Println(e.StdOut)
+			l.mux.Unlock()
 			return
 		}
 		if e.Event == eventapi.EventRunnerOnFailed {

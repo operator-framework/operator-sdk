@@ -173,17 +173,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(ctx context.Context, request recon
 	prevEvent := ""
 	for event := range result.Events() {
 		for _, eHandler := range r.EventHandlers {
-			if event.Event == eventapi.EventRunnerItemOnOk && prevEvent != eventapi.EventRunnerItemOnOk { // Loop begins
-				fmt.Printf("\n--------------------------- Ansible Task StdOut -------------------------------\n")
-				if event.Event != eventapi.EventPlaybookOnTaskStart {
-					fmt.Printf("\n TASK [%v] ******************************** \n", event.EventData["task"])
-				}
-			}
-			if event.Event != eventapi.EventRunnerItemOnOk && prevEvent == eventapi.EventRunnerItemOnOk { // Loop ends
-				fmt.Printf("\n-------------------------------------------------------------------------------\n")
-			}
-
-			go eHandler.Handle(ident, u, event)
+			go eHandler.Handle(ident, u, event, prevEvent)
 			prevEvent = event.Event // To keep track of previous events
 		}
 		if event.Event == eventapi.EventPlaybookOnStats {
