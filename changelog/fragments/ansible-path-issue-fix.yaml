@@ -1,4 +1,9 @@
 entries:
   - description: >
-      For Ansible operators, API endpoint has path component in it. If it has path then current flow is ignoring the path component. This fix is a breaking change, migration instructions are to wait for the proper fix.
+      For Ansible operators, API endpoint has path component in it. If it has path then current flow is ignoring the path component.
     kind: bugfix
+    breaking: true
+    migration:
+      header: Wait for the proper fix.
+      body: >
+        The APImachinary has change related to API endpoint Path fix. Once it got merged then proper fix can be done for this issue. Work on this issue is being tracked here: https://github.com/operator-framework/operator-sdk/issues/4925
