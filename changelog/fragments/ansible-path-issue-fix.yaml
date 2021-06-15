@@ -1,4 +1,4 @@
 entries:
   - description: >
-      For Ansible operators, API endpoint has path component in it. If it has path then current flow is ignoring the path component.
+      For Ansible operators, API endpoint has path component in it. If it has path then current flow is ignoring the path component. This fix is a breaking change, migration instructions are to wait for the proper fix.
     kind: bugfix
