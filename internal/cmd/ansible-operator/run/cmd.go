@@ -18,6 +18,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"net/url"
 	"os"
 	"runtime"
 	"strconv"
@@ -100,6 +101,13 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 	cfg, err := config.GetConfig()
 	if err != nil {
 		log.Error(err, "Failed to get config.")
+		os.Exit(1)
+	}
+
+	urlPath, err := url.Parse(cfg.Host)
+
+	if urlPath.Path != "" {
+		log.Error(err, "API endpoint has path component in it. If it has path then current flow is ignoring the path component. This error message is the fix for the issue: https://github.com/operator-framework/operator-sdk/issues/4925")
 		os.Exit(1)
 	}
 
