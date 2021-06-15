@@ -170,11 +170,9 @@ func (r *AnsibleOperatorReconciler) Reconcile(ctx context.Context, request recon
 	// iterate events from ansible, looking for the final one
 	statusEvent := eventapi.StatusJobEvent{}
 	failureMessages := eventapi.FailureMessages{}
-	prevEvent := ""
 	for event := range result.Events() {
 		for _, eHandler := range r.EventHandlers {
-			go eHandler.Handle(ident, u, event, prevEvent)
-			prevEvent = event.Event // To keep track of previous events
+			go eHandler.Handle(ident, u, event)
 		}
 		if event.Event == eventapi.EventPlaybookOnStats {
 			// convert to StatusJobEvent; would love a better way to do this
