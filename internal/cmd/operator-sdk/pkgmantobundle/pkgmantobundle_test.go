@@ -173,10 +173,10 @@ var _ = Describe("Running pkgmanToBundle command", func() {
 				Expect(ch).To(BeEquivalentTo("alpha,beta"))
 			})
 
-			It("if no channel is provided, default to preview", func() {
+			It("if no channel is provided, default to candidate", func() {
 				channels := map[string][]string{}
 				ch := getChannelsByCSV(&bundle, channels)
-				Expect(ch).To(BeEquivalentTo("preview"))
+				Expect(ch).To(BeEquivalentTo("candidate"))
 			})
 		})
 	})
@@ -228,7 +228,7 @@ var _ = Describe("Running pkgmanToBundle command", func() {
 			pkg.DefaultChannelName = ""
 			_, defaultChannel, _, err := getPackageMetadata(&pkg)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(defaultChannel).To(BeEquivalentTo("preview"))
+			Expect(defaultChannel).To(BeEquivalentTo("candidate"))
 		})
 	})
 })

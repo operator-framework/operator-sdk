@@ -52,7 +52,7 @@ The following examples let you update the [bundle][bundle] with data-informed. F
 make bundle CHANNELS=fast,preview DEFAULT_CHANNEL=stable VERSION=1.0.0 IMG=<some-registry>/<project-name-bundle>:<tag>
 ```
 
-**NOTE** You can use environment variables to pass the values such as `export CHANNELS=fast,preview`. Note that, their values will be used by `make bundle` command.
+**NOTE** You can use environment variables to pass the values such as `export CHANNELS=fast,candidate`. Note that, their values will be used by `make bundle` command.
 
 ## To test your projects
 

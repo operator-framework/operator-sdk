@@ -323,7 +323,7 @@ func getChannelsByCSV(bundle *apimanifests.Bundle, channelsByCSV map[string][]st
 	// TODO: verify if we have to add this validation since while building bundles if channel is not specified
 	// we add the default channel.
 	if channels == "" {
-		channels = "preview"
+		channels = "candidate"
 		log.Infof("Supported channels cannot be identified from CSV %s, using default channel 'preview'", bundle.CSV.GetName())
 	}
 
@@ -339,7 +339,7 @@ func getPackageMetadata(pkg *apimanifests.PackageManifest) (packagename, default
 
 	defaultChannel = pkg.DefaultChannelName
 	if defaultChannel == "" {
-		defaultChannel = "preview"
+		defaultChannel = "candidate"
 	}
 
 	channelsByCSV = make(map[string][]string)
