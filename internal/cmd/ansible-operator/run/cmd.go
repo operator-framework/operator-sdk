@@ -106,8 +106,13 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 
 	urlPath, err := url.Parse(cfg.Host)
 
+	if err != nil {
+		log.Error(err, "Failed to Parse the Path URL.")
+		os.Exit(1)
+	}
+
 	if urlPath.Path != "" {
-		log.Error(err, fmt.Sprintf("API endpoint '%s' contains a path component, which the proxy server is currently unable to handle properly. Work on this issue is being tracked here: https://github.com/operator-framework/operator-sdk/issues/4925", cfg.Host))
+		log.Error(fmt.Errorf("API endpoint '%s' contains a path component, which the proxy server is currently unable to handle properly. Work on this issue is being tracked here: https://github.com/operator-framework/operator-sdk/issues/4925", cfg.Host), "")
 		os.Exit(1)
 	}
 
