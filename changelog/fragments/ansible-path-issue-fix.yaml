@@ -1,9 +1,9 @@
 entries:
   - description: >
-      For Ansible operators, API endpoint has path component in it. If it has path then current flow is ignoring the path component.
-    kind: bugfix
+      For Ansible operators, if an API endpoint has path component in it then the ansible-operator binary will terminate early with an error, due to a bug in the proxy that would cause the operator to target the wrong cluster.
+    kind: change
     breaking: true
     migration:
-      header: Wait for the proper fix.
+      header: The ansible-operator binary will reject the kubeconfig if the server URL contains a path.
       body: >
-        The APImachinary has change related to API endpoint Path fix. Once it got merged then proper fix can be done for this issue. Work on this issue is being tracked here: https://github.com/operator-framework/operator-sdk/issues/4925
+        There is currently no workaround other than running the operator as a pod in the cluster (where it will use the internal endpoint). The fix for this issue is currently blocked waiting on a fix to the apimachinery package. Once the upstream issue is merged then a proper fix will be done for ansible-operator. Work on this issue is being tracked here: https://github.com/operator-framework/operator-sdk/issues/4925
