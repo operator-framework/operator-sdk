@@ -115,6 +115,23 @@ func (c *scorecardCmd) printOutput(output v1alpha3.TestList) error {
 	return nil
 }
 
+func (c *scorecardCmd) convertXunit(output v1alpha3.TestList) error {
+	if c.outputFormat != "xunit" {
+		return fmt.Errorf("Non XML Type output cannot be formatted for xunit")
+	}
+	jsonTestItems := output.Items
+	for _, item := range jsonTestItems {
+		tempResults := item.Status.Results
+		for _, res := range tempResults {
+			if res.State == v1alpha3.ErrorState {
+				return nil
+			}
+		}
+	}
+
+	return nil
+}
+
 func (c *scorecardCmd) run() (err error) {
 	// Extract bundle image contents if bundle is inferred to be an image.
 	if _, err = os.Stat(c.bundle); err != nil && errors.Is(err, os.ErrNotExist) {
