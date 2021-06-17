@@ -1,4 +1,0 @@
-entries:
-  - description: >
-      For helm-based operators, empty patch requests generated from the 3-way merge are filtered to avoid unnecessary requests to the kube apiserver.
-    kind: bugfix
