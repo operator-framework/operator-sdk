@@ -8,6 +8,7 @@
 
 # Test artifacts
 **/testbin/
+*\.coverprofile
 
 # CI GPG keyring
 /.ci/gpg/keyring
