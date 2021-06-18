@@ -245,7 +245,7 @@ Finally, run your bundle. If your bundle image is hosted in a registry that is p
 has a custom CA, these [configuration steps][image-reg-config] must be complete.
 
 ```sh
-operator-sdk run bundle example.com/memcached-operator-bundle:v0.0.1
+operator-sdk run bundle example.com/nginx-operator-bundle:v0.0.1
 ```
 
 Check out the [docs][quickstart-bundle] for a deep dive into `operator-sdk`'s OLM integration.
