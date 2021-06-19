@@ -422,6 +422,7 @@ being managed, each with a `name` and `url`.
 - `spec.selector` _(user)_ : selectors by which the Operator can pair resources in a cluster.
 - `spec.icon` _(user)_ : a base64-encoded icon unique to the Operator, set in a `base64data` field with a `mediatype`.
 - `spec.maturity` _(user)_: the Operator's maturity, ex. `alpha`.
+- `spec.minKubeVersion` _(user)_: the minimal Kubernetes version supported by the Operator, ex. `1.16.0`.
 - `spec.webhookdefinitions`: any webhooks the Operator uses.
 - `spec.relatedImages` _(user)_: a list of image tags containing SHA digests [mapped to in-CSV names][relatedimages]
 that your Operator might require to perform their functions.
