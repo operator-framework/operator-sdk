@@ -79,7 +79,7 @@ Now, let's look at the files and directories specific to Helm-based operators.
 [k8s-rbac]: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
 [k8s-cr-doc]: https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/#custom-resources
 [k8s-crd-doc]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/
-[scorecard]: /docs/advanced-topics/scorecard/
+[scorecard]: /docs/testing-operators/scorecard/
 [olm-integrate]: /docs/olm-integration/
 [olm-manifests]: https://github.com/operator-framework/operator-registry/tree/v1.5.3#manifest-format  
 [olm-metadata]: https://github.com/operator-framework/operator-registry/blob/v1.16.1/docs/design/operator-bundle.md#bundle-manifest-format

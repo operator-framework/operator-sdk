@@ -75,7 +75,7 @@ make bundle CHANNELS=fast,preview DEFAULT_CHANNEL=stable VERSION=1.0.0 IMG=<some
 [gkvs]: https://book.kubebuilder.io/cronjob-tutorial/gvks.html
 [extend-k8s-api]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/
 [webhooks-k8s-doc]: https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/
-[scorcard]: /docs/advanced-topics/scorecard/
+[scorcard]: /docs/testing-operators/scorecard/
 [molecule-tests]: /docs/building-operators/ansible/testing-guide
 [helm-chart-tests]: https://helm.sh/docs/topics/chart_tests/
 [cli]: /docs/cli/

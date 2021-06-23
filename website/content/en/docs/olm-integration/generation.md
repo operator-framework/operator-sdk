@@ -440,9 +440,9 @@ when you set `--version` when running `generate <bundle|packagemanifests>`.
 [bundle]: https://github.com/operator-framework/operator-registry/blob/v1.16.1/docs/design/operator-bundle.md
 [bundle-metadata]:https://github.com/operator-framework/operator-registry/blob/v1.12.6/docs/design/operator-bundle.md#bundle-annotations
 [install-modes]:https://github.com/operator-framework/operator-lifecycle-manager/blob/4197455/Documentation/design/building-your-csv.md#operator-metadata
-[olm-capabilities]:/docs/advanced-topics/operator-capabilities/operator-capabilities
+[olm-capabilities]:/docs/overview/operator-capabilities/
 [csv-markers]:/docs/building-operators/golang/references/markers
 [operatorhub]:https://operatorhub.io/
-[scorecard]:/docs/advanced-topics/scorecard
+[scorecard]:/docs/testing-operators/scorecard/
 [operatorhub_validator]:https://olm.operatorframework.io/docs/tasks/creating-operator-bundle/#validating-your-bundle
 [relatedimages]:https://pkg.go.dev/github.com/operator-framework/api@v0.8.1/pkg/operators/v1alpha1#RelatedImage
