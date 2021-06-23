@@ -33,8 +33,8 @@ To implement application-specific tests, the SDK's test harness, [scorecard][sco
 [envtest]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/envtest
 [envtest-setup]:https://book.kubebuilder.io/reference/envtest.html
 [writing-controller-tests]: https://book.kubebuilder.io/cronjob-tutorial/writing-tests.html
-[writing-kuttl-scorecard-tests]: /docs/advanced-topics/scorecard/kuttl-tests
-[writing-custom-scorecard-tests]: /docs/advanced-topics/scorecard/custom-tests
-[scorecard]: /docs/advanced-topics/scorecard/scorecard
+[writing-kuttl-scorecard-tests]: /docs/testing-operators/scorecard/kuttl-tests
+[writing-custom-scorecard-tests]: /docs/testing-operators/scorecard/custom-tests
+[scorecard]: /docs/testing-operators/scorecard/
 [gomega]: https://onsi.github.io/gomega/
 [kuttl]: https://kuttl.dev/

@@ -76,5 +76,5 @@ If you are looking to develop similar solutions to allow users for example to cr
 [default-scaffold]: https://github.com/kubernetes-sigs/kubebuilder/blob/master/testdata/project-v3/controllers/admiral_controller.go
 [kb-issue]: https://github.com/kubernetes-sigs/kubebuilder/issues/1378
 [create-your-own-plugins]: https://master.book.kubebuilder.io/plugins/creating-plugins.html
-[scorecard]: /docs/advanced-topics/scorecard/scorecard/
+[scorecard]: /docs/testing-operators/scorecard/
 [kubebuilder]: https://github.com/kubernetes-sigs/kubebuilder 

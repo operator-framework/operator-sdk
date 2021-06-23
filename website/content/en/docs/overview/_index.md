@@ -140,7 +140,7 @@ Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file f
 
 [ansible-guide]:/docs/building-operators/ansible/quickstart/
 [bug_guide]:/docs/contribution-guidelines/reporting-issues/
-[capability_levels]: /docs/advanced-topics/operator-capabilities/operator-capabilities
+[capability_levels]: /docs/overview/operator-capabilities/
 [contrib]: https://github.com/operator-framework/operator-sdk/blob/master/CONTRIBUTING.MD
 [controller_runtime]: https://github.com/kubernetes-sigs/controller-runtime
 [faq]: /docs/faqs/
