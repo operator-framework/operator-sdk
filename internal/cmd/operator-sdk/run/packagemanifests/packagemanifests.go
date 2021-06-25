@@ -29,7 +29,7 @@ func NewCmd(cfg *operator.Configuration) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "packagemanifests [packagemanifests-root-dir]",
 		Deprecated: "support for the packagemanifests format will be removed in operator-sdk v2.0.0. Use bundles to " +
-			"package your operator instead. Migrate your packagemanifes to a bundle using " +
+			"package your operator instead. Migrate your packagemanifest to a bundle using " +
 			"'operator-sdk pkgman-to-bundle' command. Run 'operator-sdk pkgman-to-bundle --help' " +
 			"for more details.",
 		Short: "Deploy an Operator in the package manifests format with OLM",
