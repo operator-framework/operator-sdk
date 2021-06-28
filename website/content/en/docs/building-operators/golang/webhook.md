@@ -10,7 +10,7 @@ description: An in-depth walkthough of admission webhooks.
 Admission webhooks are HTTP callbacks that receive admission requests and do something with them. It is registered with Kubernetes, and
 will be called by Kubernetes to validate or mutate a resource before being stored. There are two types of admission webhooks.
 
-#### 1. Validation admission webhook
+#### 1. Validating admission webhook
 
 Validating webhooks can be used to perform validations that go beyond the capabilities of OpenAPI schema validation, 
 such as ensuring a field is immutable after creation or higher level permissions checks based on the user that is making 
