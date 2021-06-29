@@ -25,13 +25,14 @@ For more background on Admission webhooks, refer to the [Kubebuilder documentati
 You can also refer to the [Kubebuilder webhook walkthrough](https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html), which is similar in content to this guide. 
 Kubebuilder also has a guide that walks through implementing webhooks for their example `CronJob` resource.
 
-First, creat an operator using `init` and `create` command of `operator-sdk`. To add a webhook to your Operator SDK project, first you must scaffold out the webhooks with the following command.
+As an example, let's start by creating a validation webhook.
+First, create an operator project and the necessary apis using `init` and `create` command of `operator-sdk`. To add a webhook to the Operator SDK project, we need to scaffold out the webhooks with the following command.
 
 ```sh
 $ operator-sdk create webhook --group cache --version v1alpha1 --kind Memcached --defaulting --programmatic-validation
 ```
 
-After, `create webhook` command below message will appear on the terminal. It scaffolds out `api/v1alpha1/memcached_webhook.go` file.
+After, `create webhook` command, the following message will appear on the terminal. It scaffolds out `api/<version>/<kind>_webhook.go` file. In this example, it would be `api/v1alpha1/memcached_webhook.go`.
 
 ```sh
 Writing kustomize manifests for you to edit...
@@ -42,7 +43,7 @@ api/v1alpha1/memcached_webhook.go
 The `--defaulting` flag will scaffold the resources required for a mutating webhook, and the `--programmatic-validation` flag will scaffold the resources required for a validating webhook. 
 In this case we scaffolded both.
 
-After running the `create webhook` command the file structure will change to match the one shown as below.
+After running the `create webhook` command the file structure would be:
 
 ```sh
 ├── Dockerfile
@@ -55,8 +56,6 @@ After running the `create webhook` command the file structure will change to mat
 │       ├── memcached_webhook.go
 │       ├── webhook_suite_test.go
 │       └── zz_generated.deepcopy.go
-├── bin
-│   └── controller-gen
 ├── config
 │   ├── certmanager
 │   │   ├── certificate.yaml
@@ -121,8 +120,7 @@ After running the `create webhook` command the file structure will change to mat
 19 directories, 53 files
 ```
 
-The scaffoled file `api/v1alpha1/memcached_webhook.go` has `ValidateCreate`, `ValidateUpdate`, and `ValidateDelete` functions, 
-which allows you to perform different validations based on the operation being performed. The mutating webhook implementation belongs in the `Default` function.
+The scaffolded file `api/v1alpha1/memcached_webhook.go` has method signatures which need to be implemented for the validation webhook, which allows you to perform different validations based on the operation being performed. The mutating webhook implementation belongs in the `Default` function.
 
 The memcached operator we are building in this example is too simple to require defaulting or additional validations, 
 but as an example, we can reinforce that the default value for `spec.size` should be `3`, by adding the following logic to 
@@ -131,7 +129,7 @@ the `Default` function (note that this is already handled by the CRD defaulting 
 ```sh
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (r *Memcached) Default() {
-	memcachedlog.Info("default", "name", r.Name)
+	log.Info("default", "name", r.Name)
 
 	if r.Spec.Size == 0 {
 		r.Spec.Size = 3
@@ -158,23 +156,23 @@ At the end, call this method from `ValidateCreate` and `ValidateUpdate` function
 ```sh
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *Memcached) ValidateCreate() error {
-	memcachedlog.Info("validate create", "name", r.Name)
+	log.Info("validate create", "name", r.Name)
 	return validateOdd(r.Spec.Size)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *Memcached) ValidateUpdate(old runtime.Object) error {
-	memcachedlog.Info("validate update", "name", r.Name)
+	log.Info("validate update", "name", r.Name)
 	return validateOdd(r.Spec.Size)
 }
 ```
 
-This function gets called whenever there is an object deletion happens.
+This function gets called whenever an object deletion happens.
 
 ```sh
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
 func (r *Memcached) ValidateDelete() error {
-	memcachedlog.Info("validate delete", "name", r.Name)
+	log.Info("validate delete", "name", r.Name)
 
 	// TODO(user): fill in your validation logic upon object deletion.
 	return nil
