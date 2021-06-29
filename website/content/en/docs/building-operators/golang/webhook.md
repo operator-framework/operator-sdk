@@ -120,9 +120,9 @@ After running the `create webhook` command the file structure would be:
 19 directories, 53 files
 ```
 
-The scaffolded file `api/v1alpha1/memcached_webhook.go` has method signatures which need to be implemented for the validation webhook, which allows you to perform different validations based on the operation being performed. The mutating webhook implementation belongs in the `Default` function.
+The scaffolded file `api/v1alpha1/memcached_webhook.go` has method signatures which need to be implemented for the validation webhook.
 
-The memcached operator we are building in this example is too simple to require defaulting or additional validations, 
+The example memcached operator explained in the [tutorial](https://sdk.operatorframework.io/docs/building-operators/golang/tutorial/) is too simple to require defaulting or additional validations,
 but as an example, we can reinforce that the default value for `spec.size` should be `3`, by adding the following logic to 
 the `Default` function (note that this is already handled by the CRD defaulting and is technically completely superfluous):
 
@@ -140,7 +140,7 @@ func (r *Memcached) Default() {
 For validation, we can enforce that the size of the cluster follows a rule that is difficult or impossible 
 to describe with OpenAPI, for example, that the size of the cluster always remain an odd number.
 
-In order to perform this validation, we can simply add below `validateOdd` function that will perform this check.
+In order to perform this validation, we can simply add the `validateOdd` function shown below to  perform the check.
 
 ```sh
 func validateOdd(n int32) error {
@@ -151,16 +151,14 @@ func validateOdd(n int32) error {
 }
 ```
 
-At the end, call this method from `ValidateCreate` and `ValidateUpdate` function as shown below.
+At the end, let's call this method from `ValidateCreate` and `ValidateUpdate` function as shown below.
 
 ```sh
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *Memcached) ValidateCreate() error {
 	log.Info("validate create", "name", r.Name)
 	return validateOdd(r.Spec.Size)
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *Memcached) ValidateUpdate(old runtime.Object) error {
 	log.Info("validate update", "name", r.Name)
 	return validateOdd(r.Spec.Size)
@@ -170,7 +168,6 @@ func (r *Memcached) ValidateUpdate(old runtime.Object) error {
 This function gets called whenever an object deletion happens.
 
 ```sh
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
 func (r *Memcached) ValidateDelete() error {
 	log.Info("validate delete", "name", r.Name)
 
@@ -193,16 +190,7 @@ More detail on this step can be found in the [Kubebuilder documentation](https:/
 
 ### Update main.go so that running locally works 
 
-To ensure that operator running locally continues working, ensure that there is a check that prevents the webhooks from being started when the `ENABLE_WEBHOOKS` flag is set to `false`. To do so, edit `main.go`, and add the following check around the call to `SetupWebhookWithManager` if it’s not already present:
-
-```sh
-if os.Getenv("ENABLE_WEBHOOKS") != "false" {
-	if err = (&cachev1alpha1.Memcached{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "Memcached")
-		os.Exit(1)
-	}
-}
-```
+Refer upstream [Kubebuilder doc](https://book.kubebuilder.io/cronjob-tutorial/main-revisited.html?highlight=enable_webhooks#you-said-something-about-main) for more details.
 
 ## Run your operator and webhooks 
 
@@ -215,6 +203,8 @@ If your certificates are properly configured, you should be able to start your o
 ```sh
 $ make run ENABLE_WEBHOOKS=true
 ```
+
+For more details about running webhook locally, refer [here](https://book.kubebuilder.io/cronjob-tutorial/running.html#running-webhooks-locally).
 
 #### Run as a Deployment inside the cluster
 
@@ -254,7 +244,7 @@ status:
 $ kubectl get deployment
 NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE
 memcached-operator-controller-manager   1/1     1            1           8m
-memcached-sample   
+memcached-sample                        5/5     5            5           3m
 ```
 
 #### Update the size
@@ -271,7 +261,7 @@ Confirm that the operator changes the deployment size:
 $ kubectl get deployment
 NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE
 memcached-operator-controller-manager   1/1     1            1           10m
-memcached-sample   
+memcached-sample                        5/5     5            5           3m
 ```
 
 #### Update the size to an even number
