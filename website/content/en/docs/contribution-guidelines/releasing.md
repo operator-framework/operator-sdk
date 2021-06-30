@@ -30,7 +30,7 @@ brew install gnu-sed make
 
 Verify the version of `make` using command `make --version`.
 
-Here, `brew` automatically installs `3.81` version of `make`. In order to update it to `4.3` use below command.
+For MAC users, `brew` automatically installs `3.81` version of `make`. Make sure that it is upgraded to `4.3+`.
 
 ```sh
 PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"
