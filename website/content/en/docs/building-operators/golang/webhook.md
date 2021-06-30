@@ -244,7 +244,7 @@ status:
 $ kubectl get deployment
 NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE
 memcached-operator-controller-manager   1/1     1            1           8m
-memcached-sample                        5/5     5            5           3m
+memcached-sample                        3/3     3            3           3m
 ```
 
 #### Update the size
@@ -266,7 +266,7 @@ memcached-sample                        5/5     5            5           3m
 
 #### Update the size to an even number
 
-Update `config/samples/cache_v1alpha1_memcached.yaml` to change the `spec.size` field in the Memcached CR from `3` to `4`:
+Update `config/samples/cache_v1alpha1_memcached.yaml` to change the `spec.size` field in the Memcached CR from `5` to `4`:
 
 ```sh
 $ kubectl patch memcached memcached-sample -p '{"spec":{"size": 4}}' --type=merge
@@ -284,5 +284,5 @@ This means that your update was rejected by your webhook. If you inspect the clu
 $ kubectl get deployment
 NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE
 memcached-operator-controller-manager   1/1     1            1           10m
-memcached-sample
+memcached-sample                        5/5     5            5           3m
 ```
