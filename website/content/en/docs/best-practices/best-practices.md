@@ -40,6 +40,8 @@ Considerations for Operator developers:
 
 - Operators may create objects as part of their operational duty. Object accumulation can consume unnecessary resources, slow down the API and clutter the user interface. As such it is important for operators to keep good hygiene and to clean up resources when they are not needed. Here are instructions on [how to handle cleanup on deletion][advanced-topics].
 
+- You can leverage Knative Service to optimize the resource usage for your operands. Refer to [Converting a Kubernetes Deployment to a Knative Service](https://knative.dev/docs/serving/convert-deployment-to-knative-service/) for detail.
+
 ### Summary
 
 - One Operator per managed application
