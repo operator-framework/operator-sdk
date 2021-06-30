@@ -28,6 +28,22 @@ Install GNU `sed` and `make` which may not be by default:
 brew install gnu-sed make
 ```
 
+Verify the version of `make` using command `make --version`.
+
+Here, `brew` automatically installs `3.81` version of `make`. In order to update it to `4.3` use below command.
+
+```sh
+PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"
+```
+
+Also, verify the version of `gnu-sed` using command `brew info gnu-sed`. `Brew` installs GNU `sed` as `gsed`.
+
+If you need to use it as `sed`, you can add a `gnubin` directory to your PATH from your bashrc like:
+
+```sh
+export PATH="/usr/local/opt/make/libexec/gnubin:$PATH"
+```
+
 ## Major and Minor releases
 
 We will use the `v1.3.0` release version in this example.
