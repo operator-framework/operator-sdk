@@ -38,6 +38,8 @@ Considerations for Operator developers:
 
 - Operators are instrumented to provide useful, actionable metrics to external systems (e.g. monitoring/alerting platforms).  Minimally, metrics should represent the software's health and key performance indicators, as well as support the creation of [service levels indicators](https://en.wikipedia.org/wiki/Service_level_indicator) such as throughput, latency, availability, errors, capacity, etc.
 
+- You can leverage Knative Service to reduce the footprint of your operand if it often becomes idle. Refer to [Converting a Kubernetes Deployment to a Knative Service](https://dev-knative.netlify.app/development/serving/convert-deployment-to-knative-service/) for detail.
+
 ### Summary
 
 - One Operator per managed application
