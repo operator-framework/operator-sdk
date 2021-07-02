@@ -88,7 +88,7 @@ func (meta *BundleMetaData) GenerateMetadata() error {
 	// Create annotation values for both bundle.Dockerfile and annotations.yaml, which should
 	// hold the same set of values always.
 	values := annotationsValues{
-		BundleDir:                filepath.Base(meta.BundleDir),
+		BundleDir:                meta.BundleDir,
 		PackageName:              meta.PackageName,
 		Channels:                 meta.Channels,
 		DefaultChannel:           meta.DefaultChannel,
@@ -107,11 +107,13 @@ func (meta *BundleMetaData) GenerateMetadata() error {
 	}
 
 	dockerfilePath := defaultBundleDockerfilePath
-	// If migrating from packagemanifests to bundle, bundle.Docker file is present
-	// inside bundleDir, else its in the project directory.
+	// If migrating from packagemanifests to bundle, bundle.Dockerfile is present
+	// inside bundleDir, else its in the project directory. Hence dockerfile
+	// should have the path specified with respect to output directory of resulting bundles.
 	// Remmove this, when pkgman-to-bundle migrate command is removed.
 	if len(meta.PkgmanifestPath) != 0 {
 		dockerfilePath = filepath.Join(filepath.Dir(meta.BundleDir), "bundle.Dockerfile")
+		values.BundleDir = filepath.Base(meta.BundleDir)
 	}
 
 	templateMap := map[string]*template.Template{
