@@ -14,7 +14,7 @@ will be called by Kubernetes to validate or mutate a resource before being store
 
 Validating webhooks can be used to perform validations that go beyond the capabilities of OpenAPI schema validation, 
 such as ensuring a field is immutable after creation or higher level permissions checks based on the user that is making 
-the request to the API server. It can reject the request, but the cannot modify the object that they are receiving in the request.
+the request to the API server. It can reject the request, but it cannot modify the object that they are receiving in the request.
 
 #### 2. Mutating admission webhook
 
@@ -25,8 +25,10 @@ For more background on Admission webhooks, refer to the [Kubebuilder documentati
 You can also refer to the [Kubebuilder webhook walkthrough](https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html), which is similar in content to this guide. 
 Kubebuilder also has a guide that walks through implementing webhooks for their example `CronJob` resource.
 
+### Create Validation Webhook
+
 As an example, let's start by creating a validation webhook.
-First, create an operator project and the necessary apis using `init` and `create` command of `operator-sdk`. To add a webhook to the Operator SDK project, we need to scaffold out the webhooks with the following command.
+First, create an operator project and the necessary apis using `init` and `create` command of `operator-sdk`. Refer tutorial [here](https://sdk.operatorframework.io/docs/building-operators/golang/tutorial/). To add a webhook to the Operator SDK project, we need to scaffold out the webhooks with the following command.
 
 ```sh
 $ operator-sdk create webhook --group cache --version v1alpha1 --kind Memcached --defaulting --programmatic-validation
@@ -151,7 +153,7 @@ func validateOdd(n int32) error {
 }
 ```
 
-At the end, let's call this method from `ValidateCreate` and `ValidateUpdate` function as shown below.
+The `ValidateCreate`, `ValidateUpdate` and `ValidateDelete` methods are expected to validate that its receiver upon `creation`, `update` and `deletion` respectively. At the end, let's call this method from `ValidateCreate` and `ValidateUpdate` function as shown below. 
 
 ```sh
 func (r *Memcached) ValidateCreate() error {
@@ -165,7 +167,7 @@ func (r *Memcached) ValidateUpdate(old runtime.Object) error {
 }
 ```
 
-This function gets called whenever an object deletion happens.
+The function below gets called whenever an object deletion happens.
 
 ```sh
 func (r *Memcached) ValidateDelete() error {
@@ -196,7 +198,7 @@ Refer upstream [Kubebuilder doc](https://book.kubebuilder.io/cronjob-tutorial/ma
 
 #### Run locally
 
-Technically, The webhooks can be run locally, but for it to work you need to generate certificates for the webhook server and store them at `/tmp/k8s-webhook-server/serving-certs/tls.{crt,key}`. Generally it’s easier to just disable them locally and test the webhooks when running in a cluster.
+Technically, the webhooks can be run locally, but for it to work you need to generate certificates for the webhook server and store them at `/tmp/k8s-webhook-server/serving-certs/tls.{crt,key}`. Generally it’s easier to just disable them locally and test the webhooks when running in a cluster.
 
 If your certificates are properly configured, you should be able to start your operator by running:
 
@@ -208,9 +210,9 @@ For more details about running webhook locally, refer [here](https://book.kubebu
 
 #### Run as a Deployment inside the cluster
 
-For instructions on deploying your operator into a cluster, refer to the [tutorial](https://sdk.operatorframework.io/docs/building-operators/golang/tutorial/#2-run-as-a-deployment-inside-the-cluster) instructions. Adding webhooks does not alter this step.
+Adding webhooks does not alter deploying your operator. For instructions on deploying your operator into a cluster, refer to the [tutorial](https://sdk.operatorframework.io/docs/building-operators/golang/tutorial/#2-run-as-a-deployment-inside-the-cluster) instructions.
 
-## Create a Memcached CR to exercise your webhook
+## Exercise your webhook
 
 First, follow the instructions for creating your Memcached CR in the [tutorial](https://sdk.operatorframework.io/docs/building-operators/golang/tutorial).
 
@@ -266,7 +268,7 @@ memcached-sample                        5/5     5            5           3m
 
 #### Update the size to an even number
 
-Update `config/samples/cache_v1alpha1_memcached.yaml` to change the `spec.size` field in the Memcached CR from `5` to `4`:
+Update `config/samples/cache_v1alpha1_memcached.yaml` to change the `spec.size` field in the Memcached CR from `5` to `4`:  
 
 ```sh
 $ kubectl patch memcached memcached-sample -p '{"spec":{"size": 4}}' --type=merge
