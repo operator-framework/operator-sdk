@@ -53,70 +53,22 @@ After running the `create webhook` command the file structure would be:
 ├── PROJECT
 ├── api
 │   └── v1alpha1
-│       ├── groupversion_info.go
-│       ├── memcached_types.go
 │       ├── memcached_webhook.go
 │       ├── webhook_suite_test.go
-│       └── zz_generated.deepcopy.go
 ├── config
 │   ├── certmanager
 │   │   ├── certificate.yaml
 │   │   ├── kustomization.yaml
 │   │   └── kustomizeconfig.yaml
-│   ├── crd
-│   │   ├── kustomization.yaml
-│   │   ├── kustomizeconfig.yaml
-│   │   └── patches
-│   │       ├── cainjection_in_memcacheds.yaml
-│   │       └── webhook_in_memcacheds.yaml
 │   ├── default
-│   │   ├── kustomization.yaml
-│   │   ├── manager_auth_proxy_patch.yaml
-│   │   ├── manager_config_patch.yaml
 │   │   ├── manager_webhook_patch.yaml
 │   │   └── webhookcainjection_patch.yaml
-│   ├── manager
-│   │   ├── controller_manager_config.yaml
-│   │   ├── kustomization.yaml
-│   │   └── manager.yaml
-│   ├── manifests
-│   │   └── kustomization.yaml
-│   ├── prometheus
-│   │   ├── kustomization.yaml
-│   │   └── monitor.yaml
-│   ├── rbac
-│   │   ├── auth_proxy_client_clusterrole.yaml
-│   │   ├── auth_proxy_role.yaml
-│   │   ├── auth_proxy_role_binding.yaml
-│   │   ├── auth_proxy_service.yaml
-│   │   ├── kustomization.yaml
-│   │   ├── leader_election_role.yaml
-│   │   ├── leader_election_role_binding.yaml
-│   │   ├── memcached_editor_role.yaml
-│   │   ├── memcached_viewer_role.yaml
-│   │   ├── role_binding.yaml
-│   │   └── service_account.yaml
-│   ├── samples
-│   │   ├── cache_v1alpha1_memcached.yaml
-│   │   └── kustomization.yaml
-│   ├── scorecard
-│   │   ├── bases
-│   │   │   └── config.yaml
-│   │   ├── kustomization.yaml
-│   │   └── patches
-│   │       ├── basic.config.yaml
-│   │       └── olm.config.yaml
 │   └── webhook
 │       ├── kustomization.yaml
 │       ├── kustomizeconfig.yaml
 │       └── service.yaml
-├── controllers
-│   ├── memcached_controller.go
-│   └── suite_test.go
 ├── go.mod
 ├── go.sum
-├── hack
-│   └── boilerplate.go.txt
 └── main.go
 
 19 directories, 53 files
