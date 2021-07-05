@@ -70,8 +70,6 @@ After running the `create webhook` command the file structure would be:
 ├── go.mod
 ├── go.sum
 └── main.go
-
-19 directories, 53 files
 ```
 
 The scaffolded file `api/v1alpha1/memcached_webhook.go` has method signatures which need to be implemented for the validation webhook.
