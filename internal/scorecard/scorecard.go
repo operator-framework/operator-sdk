@@ -132,6 +132,7 @@ func (o Scorecard) runTest(ctx context.Context, test v1alpha3.TestConfiguration)
 	}
 
 	out := v1alpha3.NewTest()
+	//out.TimeStamp = time.Now().Format(time.RFC850)
 	out.Spec = test
 	out.Status = *result
 	return out
