@@ -156,22 +156,29 @@ func equalJSONStruct(a, b interface{}) (bool, error) {
 	return aBuf.String() == bBuf.String(), err
 }
 
+func (m manager) getCandidateRelease(namespace, name string, chart *cpb.Chart,
+	values map[string]interface{}) (*rpb.Release, error) {
+	upgrade := action.NewUpgrade(m.actionConfig)
+	upgrade.Namespace = namespace
+	upgrade.DryRun = true
+	return upgrade.Run(name, chart, values)
+}
+
 func (m manager) isUpgrade(deployedRelease *rpb.Release) (bool, error) {
 	if deployedRelease == nil {
 		return false, nil
 	}
 
-	// Judging whether to skip updates
-	skip := m.namespace == deployedRelease.Namespace
-	skip = skip && m.releaseName == deployedRelease.Name
-
-	ok, err := equalJSONStruct(m.chart, deployedRelease.Chart)
+	candidateRelease, err := m.getCandidateRelease(m.namespace, m.releaseName, m.chart, m.values)
 	if err != nil {
 		return false, err
 	}
-	skip = skip && ok
 
-	ok, err = equalJSONStruct(m.values, deployedRelease.Config)
+	skip, err := equalJSONStruct(candidateRelease.Chart, deployedRelease.Chart)
+	if err != nil {
+		return false, err
+	}
+	ok, err := equalJSONStruct(candidateRelease.Config, deployedRelease.Config)
 	return !(skip && ok), err
 }
 

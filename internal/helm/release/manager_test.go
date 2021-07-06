@@ -15,14 +15,17 @@
 package release
 
 import (
-	"bytes"
-	"encoding/json"
+	"io/ioutil"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"helm.sh/helm/v3/pkg/action"
 	cpb "helm.sh/helm/v3/pkg/chart"
 	lpb "helm.sh/helm/v3/pkg/chart/loader"
-	rpb "helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/chartutil"
+	kubefake "helm.sh/helm/v3/pkg/kube/fake"
+	"helm.sh/helm/v3/pkg/storage"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -219,49 +222,54 @@ func TestManagerGenerateStrategicMergePatch(t *testing.T) {
 
 func TestManagerisUpgrade(t *testing.T) {
 	tests := []struct {
-		name            string
-		releaseName     string
-		releaseNs       string
-		values          map[string]interface{}
-		chart           *cpb.Chart
-		deployedRelease *rpb.Release
-		want            bool
+		name         string
+		releaseName  string
+		releaseNs    string
+		deployValues map[string]interface{}
+		values       map[string]interface{}
+		deployChart  *cpb.Chart
+		chart        *cpb.Chart
+		want         bool
 	}{
 		{
-			name:            "ok",
-			releaseName:     "deployed",
-			releaseNs:       "deployed-ns",
-			values:          map[string]interface{}{"key": "value"},
-			chart:           newTestChart(t, "./testdata/simple"),
-			deployedRelease: newTestRelease(newTestChart(t, "./testdata/simple"), map[string]interface{}{"key": "value"}, "deployed", "deployed-ns"),
-			want:            false,
+			name:         "ok",
+			releaseName:  "deployed",
+			releaseNs:    "deployed-ns",
+			values:       map[string]interface{}{"key": "value"},
+			deployValues: map[string]interface{}{"key": "value"},
+			chart:        newTestChart(t, "./testdata/simple"),
+			deployChart:  newTestChart(t, "./testdata/simple"),
+			want:         false,
 		},
 		{
-			name:            "different chart",
-			releaseName:     "deployed",
-			releaseNs:       "deployed-ns",
-			values:          map[string]interface{}{"key": "value"},
-			chart:           newTestChart(t, "./testdata/simple"),
-			deployedRelease: newTestRelease(newTestChart(t, "./testdata/simpledf"), map[string]interface{}{"key": "value"}, "deployed", "deployed-ns"),
-			want:            true,
+			name:         "different chart",
+			releaseName:  "deployed",
+			releaseNs:    "deployed-ns",
+			values:       map[string]interface{}{"key": "value"},
+			deployValues: map[string]interface{}{"key": "value"},
+			chart:        newTestChart(t, "./testdata/simple"),
+			deployChart:  newTestChart(t, "./testdata/simpledf"),
+			want:         true,
 		},
 		{
-			name:            "different values",
-			releaseName:     "deployed",
-			releaseNs:       "deployed-ns",
-			values:          map[string]interface{}{"key": "1", "int": int32(1)},
-			chart:           newTestChart(t, "./testdata/simple"),
-			deployedRelease: newTestRelease(newTestChart(t, "./testdata/simple"), map[string]interface{}{"key": "", "int": int64(1)}, "deployed", "deployed-ns"),
-			want:            true,
+			name:         "different values",
+			releaseName:  "deployed",
+			releaseNs:    "deployed-ns",
+			deployValues: map[string]interface{}{"key": "1"},
+			values:       map[string]interface{}{"key": "1", "int": int32(1)},
+			chart:        newTestChart(t, "./testdata/simple"),
+			deployChart:  newTestChart(t, "./testdata/simple"),
+			want:         true,
 		},
 		{
-			name:            "nil values",
-			releaseName:     "deployed",
-			releaseNs:       "deployed-ns",
-			values:          nil,
-			chart:           newTestChart(t, "./testdata/simple"),
-			deployedRelease: newTestRelease(newTestChart(t, "./testdata/simple"), map[string]interface{}{}, "deployed", "deployed-ns"),
-			want:            false,
+			name:         "nil values",
+			releaseName:  "deployed",
+			releaseNs:    "deployed-ns",
+			deployValues: map[string]interface{}{},
+			values:       nil,
+			chart:        newTestChart(t, "./testdata/simple"),
+			deployChart:  newTestChart(t, "./testdata/simple"),
+			want:         false,
 		},
 	}
 	for _, test := range tests {
@@ -271,10 +279,21 @@ func TestManagerisUpgrade(t *testing.T) {
 				namespace:   test.releaseNs,
 				values:      test.values,
 				chart:       test.chart,
+				actionConfig: &action.Configuration{
+					Releases:     storage.Init(driver.NewMemory()),
+					KubeClient:   &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}},
+					Capabilities: chartutil.DefaultCapabilities,
+					Log:          t.Logf,
+				},
 			}
-			isUpgrade, err := m.isUpgrade(test.deployedRelease)
+			install := action.NewInstall(m.actionConfig)
+			install.Namespace = test.releaseNs
+			install.ReleaseName = test.releaseName
+			deployedRelease, err := install.Run(test.deployChart, test.deployValues)
+			assert.Nil(t, err)
+			isUpgrade, err := m.isUpgrade(deployedRelease)
 			assert.Equal(t, test.want, isUpgrade)
-			assert.Equal(t, nil, err)
+			assert.Nil(t, err)
 		})
 	}
 }
@@ -283,18 +302,4 @@ func newTestChart(t *testing.T, path string) *cpb.Chart {
 	chart, err := lpb.Load(path)
 	assert.Nil(t, err)
 	return chart
-}
-
-func newTestRelease(chart *cpb.Chart, values map[string]interface{}, name, namespace string) *rpb.Release { // nolint: unparam
-	release := rpb.Mock(&rpb.MockReleaseOptions{
-		Name:      name,
-		Namespace: namespace,
-		Version:   1,
-	})
-
-	buffer := &bytes.Buffer{}
-	_ = json.NewEncoder(buffer).Encode(chart)
-	_ = json.NewDecoder(buffer).Decode(release.Chart)
-	release.Config = values
-	return release
 }
