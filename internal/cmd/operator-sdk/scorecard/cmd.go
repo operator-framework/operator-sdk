@@ -115,6 +115,45 @@ func (c *scorecardCmd) printOutput(output v1alpha3.TestList) error {
 	return nil
 }
 
+type TestCase struct {
+	// Name is the name of the test
+	Name      string `json:"name,omitempty"`
+	Time      string `json:"time,omitempty"`
+	Classname string `json:"classname,omitempty"`
+	Group     string `json:"group,omitempty"`
+}
+
+type TestSuite struct {
+	// Name is the name of the test
+	Name      string `json:"name,omitempty"`
+	Tests     string `json:"tests,omitempty"`
+	Failures  string `json:"failures,omitempty"`
+	Errors    string `json:"errors,omitempty"`
+	Group     string `json:"group,omitempty"`
+	Skipped   string `json:"skipped,omitempty"`
+	Timestamp string `json:"timestamp,omitempty"`
+	Hostname  string `json:"hostnames,omitempty"`
+	ID        string `json:"id,omitempty"`
+	Package   string `json:"package,omitempty"`
+	File      string `json:"file,omitempty"`
+	Log       string `json:"log,omitempty"`
+	URL       string `json:"url,omitempty"`
+	Version   string `json:"version,omitempty"`
+}
+
+type TestSuites struct {
+	// Name is the name of the test
+	Name     string `json:"name,omitempty"`
+	Tests    string `json:"tests,omitempty"`
+	Failures string `json:"failures,omitempty"`
+	Errors   string `json:"errors,omitempty"`
+}
+
+type xUnitComplexType struct {
+	Type    string `json:"name,omitempty"`
+	Message string `json:"name,omitempty"`
+}
+
 func (c *scorecardCmd) convertXunit(output v1alpha3.TestList) error {
 	if c.outputFormat != "xunit" {
 		return fmt.Errorf("Non XML Type output cannot be formatted for xunit")
