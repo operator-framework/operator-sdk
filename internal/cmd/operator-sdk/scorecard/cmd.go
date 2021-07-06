@@ -190,13 +190,19 @@ func (c *scorecardCmd) convertXunit(output v1alpha3.TestList) (TestSuites, error
 		tempResults := item.Status.Results
 		for _, res := range tempResults {
 			var tCase TestCase
+			var tSuite TestSuite
+			tSuite.Name = res.Name
 			tCase.Name = res.Name
 			if res.State == v1alpha3.ErrorState {
 				tCase.Errors = append(tCase.Errors, xUnitComplexError{"Error", strings.Join(res.Errors, ",")})
+				tSuite.Errors = strings.Join(res.Errors, ",")
 			} else if res.State == v1alpha3.FailState {
 				tCase.Failures = append(tCase.Failures, xUnitComplexFailure{"Failure", res.Log})
+				tSuite.Failures = res.Log
 			}
-
+			tSuite.TestCases = append(tSuite.TestCases, tCase)
+			tSuite.URL = item.Spec.Image
+			//tSuite.ID = item.Spec.UniqueID
 		}
 	}
 
