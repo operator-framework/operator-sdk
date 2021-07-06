@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
@@ -170,21 +171,32 @@ type xUnitComplexSkipped struct {
 	Message string `json:"message,omitempty"`
 }
 
-func (c *scorecardCmd) convertXunit(output v1alpha3.TestList) error {
+func (c *scorecardCmd) convertXunit(output v1alpha3.TestList) (TestSuites, error) {
+	var resultSuite TestSuites
+	resultSuite.Name = "scorecard"
+	resultSuite.Tests = ""
+	resultSuite.Failures = ""
+	resultSuite.Errors = ""
+
 	if c.outputFormat != "xunit" {
-		return fmt.Errorf("Non XML Type output cannot be formatted for xunit")
+		return resultSuite, fmt.Errorf("Non XML Type output cannot be formatted for xunit")
 	}
 	jsonTestItems := output.Items
 	for _, item := range jsonTestItems {
 		tempResults := item.Status.Results
 		for _, res := range tempResults {
+			var tCase TestCase
+			tCase.Name = res.Name
 			if res.State == v1alpha3.ErrorState {
-				return nil
+				tCase.Errors = append(tCase.Errors, xUnitComplexError{"Error", strings.Join(res.Errors, ",")})
+			} else if res.State == v1alpha3.FailState {
+				tCase.Failures = append(tCase.Failures, xUnitComplexFailure{"Failure", res.Log})
 			}
+
 		}
 	}
 
-	return nil
+	return resultSuite, nil
 }
 
 func (c *scorecardCmd) run() (err error) {
