@@ -1,0 +1,4 @@
+entries:
+  - description: >
+      For Helm-based operators, fixed release equality comparison such that number values are compared and not their types to avoid unnecessary reconciliations.
+    kind: bugfix
