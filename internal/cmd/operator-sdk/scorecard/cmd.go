@@ -182,9 +182,6 @@ func (c *scorecardCmd) convertXunit(output v1alpha3.TestList) (TestSuites, error
 	resultSuite.Failures = ""
 	resultSuite.Errors = ""
 
-	if c.outputFormat != "xunit" {
-		return resultSuite, fmt.Errorf("Non XML Type output cannot be formatted for xunit")
-	}
 	jsonTestItems := output.Items
 	for _, item := range jsonTestItems {
 		tempResults := item.Status.Results
