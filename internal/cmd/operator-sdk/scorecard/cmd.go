@@ -32,6 +32,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	scorecardannotations "github.com/operator-framework/operator-sdk/internal/annotations/scorecard"
+	xunit "github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/scorecard/xunit"
 	"github.com/operator-framework/operator-sdk/internal/flags"
 	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
 	"github.com/operator-framework/operator-sdk/internal/scorecard"
@@ -117,63 +118,8 @@ func (c *scorecardCmd) printOutput(output v1alpha3.TestList) error {
 	return nil
 }
 
-type TestCase struct {
-	// Name is the name of the test
-	Name      string                `json:"name,omitempty"`
-	Time      string                `json:"time,omitempty"`
-	Classname string                `json:"classname,omitempty"`
-	Group     string                `json:"group,omitempty"`
-	Failures  []xUnitComplexFailure `json:"failure,omitempty"`
-	Errors    []xUnitComplexError   `json:"error,omitempty"`
-	Skipped   []xUnitComplexSkipped `json:"skipped,omitempty"`
-}
-
-type TestSuite struct {
-	// Name is the name of the test
-	Name       string      `json:"name,omitempty"`
-	Tests      string      `json:"tests,omitempty"`
-	Failures   string      `json:"failures,omitempty"`
-	Errors     string      `json:"errors,omitempty"`
-	Group      string      `json:"group,omitempty"`
-	Skipped    string      `json:"skipped,omitempty"`
-	Timestamp  string      `json:"timestamp,omitempty"`
-	Hostname   string      `json:"hostnames,omitempty"`
-	ID         string      `json:"id,omitempty"`
-	Package    string      `json:"package,omitempty"`
-	File       string      `json:"file,omitempty"`
-	Log        string      `json:"log,omitempty"`
-	URL        string      `json:"url,omitempty"`
-	Version    string      `json:"version,omitempty"`
-	TestSuites []TestSuite `json:"testsuite,omitempty"`
-	TestCases  []TestCase  `json:"testcase,omitempty"`
-}
-
-type TestSuites struct {
-	// Name is the name of the test
-	Name      string      `json:"name,omitempty"`
-	Tests     string      `json:"tests,omitempty"`
-	Failures  string      `json:"failures,omitempty"`
-	Errors    string      `json:"errors,omitempty"`
-	TestSuite []TestSuite `json:"testsuite,omitempty"`
-}
-
-type xUnitComplexError struct {
-	Type    string `json:"type,omitempty"`
-	Message string `json:"message,omitempty"`
-}
-
-type xUnitComplexFailure struct {
-	Type    string `json:"type,omitempty"`
-	Message string `json:"message,omitempty"`
-}
-
-type xUnitComplexSkipped struct {
-	Type    string `json:"type,omitempty"`
-	Message string `json:"message,omitempty"`
-}
-
-func (c *scorecardCmd) convertXunit(output v1alpha3.TestList) TestSuites {
-	var resultSuite TestSuites
+func (c *scorecardCmd) convertXunit(output v1alpha3.TestList) xunit.TestSuites {
+	var resultSuite xunit.TestSuites
 	resultSuite.Name = "scorecard"
 	resultSuite.Tests = ""
 	resultSuite.Failures = ""
@@ -183,15 +129,15 @@ func (c *scorecardCmd) convertXunit(output v1alpha3.TestList) TestSuites {
 	for _, item := range jsonTestItems {
 		tempResults := item.Status.Results
 		for _, res := range tempResults {
-			var tCase TestCase
-			var tSuite TestSuite
+			var tCase xunit.TestCase
+			var tSuite xunit.TestSuite
 			tSuite.Name = res.Name
 			tCase.Name = res.Name
 			if res.State == v1alpha3.ErrorState {
-				tCase.Errors = append(tCase.Errors, xUnitComplexError{"Error", strings.Join(res.Errors, ",")})
+				tCase.Errors = append(tCase.Errors, xunit.XUnitComplexError{Type: "Error", Message: strings.Join(res.Errors, ",")})
 				tSuite.Errors = strings.Join(res.Errors, ",")
 			} else if res.State == v1alpha3.FailState {
-				tCase.Failures = append(tCase.Failures, xUnitComplexFailure{"Failure", res.Log})
+				tCase.Failures = append(tCase.Failures, xunit.XUnitComplexFailure{Type: "Failure", Message: res.Log})
 				tSuite.Failures = res.Log
 			}
 			tSuite.TestCases = append(tSuite.TestCases, tCase)
