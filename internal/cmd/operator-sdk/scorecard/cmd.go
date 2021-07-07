@@ -107,7 +107,7 @@ func (c *scorecardCmd) printOutput(output v1alpha3.TestList) error {
 	case "xunit":
 		xunitOutput, err := c.convertXunit(output)
 		if err != nil {
-			return fmt.Errorf("Xunit conversion error: %v", err)
+			return fmt.Errorf("xunit conversion error: %v", err)
 		}
 		bytes, err := xml.MarshalIndent(xunitOutput, "", "  ")
 		if err != nil {
