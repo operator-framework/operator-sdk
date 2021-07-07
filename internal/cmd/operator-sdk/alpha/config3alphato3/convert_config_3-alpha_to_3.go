@@ -66,7 +66,12 @@ func convertConfig3AlphaTo3(cfgBytes []byte) (_ []byte, err error) {
 	isMultigroup := hasMultigroup && multigroupObj.(bool)
 
 	if obj, hasRes := cfgObj["resources"]; hasRes {
-		domain := cfgObj["domain"].(string)
+		// Default to empty domain if no domain information is found.
+		domain := ""
+		if domainObj, ok := cfgObj["domain"]; ok {
+			domain = domainObj.(string)
+		}
+
 		resObjs := obj.([]interface{})
 		resources := make([]resource.Resource, len(resObjs))
 
