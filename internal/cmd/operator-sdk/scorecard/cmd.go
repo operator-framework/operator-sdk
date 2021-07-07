@@ -105,10 +105,7 @@ func (c *scorecardCmd) printOutput(output v1alpha3.TestList) error {
 		}
 		fmt.Printf("%s\n", string(bytes))
 	case "xunit":
-		xunitOutput, err := c.convertXunit(output)
-		if err != nil {
-			return fmt.Errorf("xunit conversion error: %v", err)
-		}
+		xunitOutput := c.convertXunit(output)
 		bytes, err := xml.MarshalIndent(xunitOutput, "", "  ")
 		if err != nil {
 			return fmt.Errorf("marshal xml error: %v", err)
@@ -175,7 +172,7 @@ type xUnitComplexSkipped struct {
 	Message string `json:"message,omitempty"`
 }
 
-func (c *scorecardCmd) convertXunit(output v1alpha3.TestList) (TestSuites, error) {
+func (c *scorecardCmd) convertXunit(output v1alpha3.TestList) TestSuites {
 	var resultSuite TestSuites
 	resultSuite.Name = "scorecard"
 	resultSuite.Tests = ""
@@ -199,11 +196,12 @@ func (c *scorecardCmd) convertXunit(output v1alpha3.TestList) (TestSuites, error
 			}
 			tSuite.TestCases = append(tSuite.TestCases, tCase)
 			tSuite.URL = item.Spec.Image
+			//TODO: Add TestStuite ID when API updates version
 			//tSuite.ID = item.Spec.UniqueID
 		}
 	}
 
-	return resultSuite, nil
+	return resultSuite
 }
 
 func (c *scorecardCmd) run() (err error) {
