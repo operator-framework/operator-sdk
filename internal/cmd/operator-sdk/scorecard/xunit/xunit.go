@@ -69,7 +69,7 @@ type XUnitComplexFailure struct {
 	Message string `json:"message,omitempty"`
 }
 
-// XUnitComplexSkipped contianers a type header along with associated run logs
+// XUnitComplexSkipped contains a type header along with associated run logs
 type XUnitComplexSkipped struct {
 	Type    string `json:"type,omitempty"`
 	Message string `json:"message,omitempty"`
