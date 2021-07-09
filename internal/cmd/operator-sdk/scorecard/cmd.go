@@ -121,9 +121,6 @@ func (c *scorecardCmd) printOutput(output v1alpha3.TestList) error {
 func (c *scorecardCmd) convertXunit(output v1alpha3.TestList) xunit.TestSuites {
 	var resultSuite xunit.TestSuites
 	resultSuite.Name = "scorecard"
-	resultSuite.Tests = ""
-	resultSuite.Failures = ""
-	resultSuite.Errors = ""
 
 	jsonTestItems := output.Items
 	for _, item := range jsonTestItems {
@@ -144,6 +141,8 @@ func (c *scorecardCmd) convertXunit(output v1alpha3.TestList) xunit.TestSuites {
 			tSuite.URL = item.Spec.Image
 			//TODO: Add TestStuite ID when API updates version
 			//tSuite.ID = item.Spec.UniqueID
+			tSuite.TestCases = append(tSuite.TestCases, tCase)
+			resultSuite.TestSuite = append(resultSuite.TestSuite, tSuite)
 		}
 	}
 
