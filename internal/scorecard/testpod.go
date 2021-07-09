@@ -56,7 +56,7 @@ func getPodDefinition(configMapName string, test v1alpha3.TestConfiguration, r P
 				{
 					Name:            "scorecard-test",
 					Image:           test.Image,
-					ImagePullPolicy: v1.PullIfNotPresent,
+					ImagePullPolicy: v1.PullAlways,
 					Command:         test.Entrypoint,
 					VolumeMounts: []v1.VolumeMount{
 						{
@@ -81,7 +81,7 @@ func getPodDefinition(configMapName string, test v1alpha3.TestConfiguration, r P
 				{
 					Name:            "scorecard-untar",
 					Image:           scorecardUntarImage,
-					ImagePullPolicy: v1.PullIfNotPresent,
+					ImagePullPolicy: v1.PullAlways,
 					Args: []string{
 						"tar",
 						"xvzf",
