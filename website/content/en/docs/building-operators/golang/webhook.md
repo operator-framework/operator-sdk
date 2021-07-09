@@ -28,7 +28,6 @@ Kubebuilder also has a guide that walks through implementing webhooks for their 
 ### Create Validation Webhook
 
 As an example, let's start by creating a validation webhook.
-First, create an operator project and the necessary apis using `init` and `create` command of `operator-sdk`. Refer tutorial [here](https://sdk.operatorframework.io/docs/building-operators/golang/tutorial/). To add a webhook to the Operator SDK project, we need to scaffold out the webhooks with the following command.
 
 ```sh
 $ operator-sdk create webhook --group cache --version v1alpha1 --kind Memcached --defaulting --programmatic-validation
@@ -74,59 +73,11 @@ After running the `create webhook` command the file structure would be:
 
 The scaffolded file `api/v1alpha1/memcached_webhook.go` has method signatures which need to be implemented for the validation webhook.
 
-The example memcached operator explained in the [tutorial](https://sdk.operatorframework.io/docs/building-operators/golang/tutorial/) is too simple to require defaulting or additional validations,
-but as an example, we can reinforce that the default value for `spec.size` should be `3`, by adding the following logic to 
-the `Default` function (note that this is already handled by the CRD defaulting and is technically completely superfluous):
+Following this, there are a few steps which need to be done in your operator project to enable webhhoks. This will involve:
 
-```sh
-// Default implements webhook.Defaulter so a webhook will be registered for the type
-func (r *Memcached) Default() {
-	log.Info("default", "name", r.Name)
+1. Implementing the required methods for Validating or Mutating webhook in <kind>_webhook.go. An example of such implementation is provided [here](https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html).
 
-	if r.Spec.Size == 0 {
-		r.Spec.Size = 3
-	}
-}
-```
-
-For validation, we can enforce that the size of the cluster follows a rule that is difficult or impossible 
-to describe with OpenAPI, for example, that the size of the cluster always remain an odd number.
-
-In order to perform this validation, we can simply add the `validateOdd` function shown below to  perform the check.
-
-```sh
-func validateOdd(n int32) error {
-	if n%2 == 0 {
-		return errors.New("Cluster size must be an odd number")
-	}
-	return nil
-}
-```
-
-The `ValidateCreate`, `ValidateUpdate` and `ValidateDelete` methods are expected to validate that its receiver upon `creation`, `update` and `deletion` respectively. At the end, let's call this method from `ValidateCreate` and `ValidateUpdate` function as shown below. 
-
-```sh
-func (r *Memcached) ValidateCreate() error {
-	log.Info("validate create", "name", r.Name)
-	return validateOdd(r.Spec.Size)
-}
-
-func (r *Memcached) ValidateUpdate(old runtime.Object) error {
-	log.Info("validate update", "name", r.Name)
-	return validateOdd(r.Spec.Size)
-}
-```
-
-The function below gets called whenever an object deletion happens.
-
-```sh
-func (r *Memcached) ValidateDelete() error {
-	log.Info("validate delete", "name", r.Name)
-
-	// TODO(user): fill in your validation logic upon object deletion.
-	return nil
-}
-```
+2. Uncommenting sections in config/default/kustomization.yaml to enable webhook and cert-manager configuration through kustomize. Cert-manager (or any third party solution) can be used to provision certificates for webhook server. This is explained in detail here.
 
 ### Generate webhook manifests and enable webhook deployment 
 
@@ -146,21 +97,15 @@ Refer upstream [Kubebuilder doc](https://book.kubebuilder.io/cronjob-tutorial/ma
 
 ## Run your operator and webhooks 
 
+There are two ways to test your operator project with webhooks.
+
 #### Run locally
 
-Technically, the webhooks can be run locally, but for it to work you need to generate certificates for the webhook server and store them at `/tmp/k8s-webhook-server/serving-certs/tls.{crt,key}`. Generally it’s easier to just disable them locally and test the webhooks when running in a cluster.
-
-If your certificates are properly configured, you should be able to start your operator by running:
-
-```sh
-$ make run ENABLE_WEBHOOKS=true
-```
-
-For more details about running webhook locally, refer [here](https://book.kubebuilder.io/cronjob-tutorial/running.html#running-webhooks-locally).
+Technically, the webhooks can be run locally, but for it to work you need to generate certificates for the webhook server and store them at /tmp/k8s-webhook-server/serving-certs/tls.{crt,key}. For more details about running webhook locally, refer [here](https://book.kubebuilder.io/cronjob-tutorial/running.html#running-webhooks-locally).
 
 #### Run as a Deployment inside the cluster
 
-Adding webhooks does not alter deploying your operator. For instructions on deploying your operator into a cluster, refer to the [tutorial](https://sdk.operatorframework.io/docs/building-operators/golang/tutorial/#2-run-as-a-deployment-inside-the-cluster) instructions.
+Adding webhooks does not alter deploying your operator. For instructions on deploying your operator into a cluster, refer to the [tutorial](https://sdk.operatorframework.io/docs/building-operators/golang/tutorial/#2-run-as-a-deployment-inside-the-cluster).
 
 ## Exercise your webhook
 
