@@ -9,7 +9,7 @@ export IMAGE_VERSION = v1.9.0
 export SIMPLE_VERSION = $(shell (test "$(shell git describe)" = "$(shell git describe --abbrev=0)" && echo $(shell git describe)) || echo $(shell git describe --abbrev=0)+git)
 export GIT_VERSION = $(shell git describe --dirty --tags --always)
 export GIT_COMMIT = $(shell git rev-parse HEAD)
-export K8S_VERSION = 1.20.2
+export K8S_VERSION = 1.21.2
 
 # Build settings
 export TOOLS_DIR = tools/bin
@@ -144,12 +144,15 @@ e2e_targets := test-e2e $(e2e_tests)
 
 .PHONY: test-e2e-setup
 export KIND_CLUSTER := operator-sdk-e2e
-export KUBEBUILDER_ASSETS := $(PWD)/$(TOOLS_DIR)
-test-e2e-setup: build
+test-e2e-setup: build envtest
 	$(SCRIPTS_DIR)/fetch kind 0.11.0
-	$(SCRIPTS_DIR)/fetch envtest 0.8.3
 	$(SCRIPTS_DIR)/fetch kubectl $(K8S_VERSION) # Install kubectl AFTER envtest because envtest includes its own kubectl binary
 	[[ "`$(TOOLS_DIR)/kind get clusters`" =~ "$(KIND_CLUSTER)" ]] || $(TOOLS_DIR)/kind create cluster --image="kindest/node:v$(K8S_VERSION)" --name $(KIND_CLUSTER)
+
+# install envtest binary
+envtest:
+	go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+	$(shell go env GOPATH)/bin/setup-envtest use -p path $(K8S_VERSION)  
 
 .PHONY: test-e2e-teardown
 test-e2e-teardown:

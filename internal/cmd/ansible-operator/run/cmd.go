@@ -26,8 +26,10 @@ import (
 
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -43,7 +45,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/ansible/proxy/controllermap"
 	"github.com/operator-framework/operator-sdk/internal/ansible/runner"
 	"github.com/operator-framework/operator-sdk/internal/ansible/watches"
-	"github.com/operator-framework/operator-sdk/internal/clientbuilder"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/internal/version"
 )
@@ -145,8 +146,21 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 	// Set default manager options
 	// TODO: probably should expose the host & port as an environment variables
 	options = f.ToManagerOptions(options)
-	if options.ClientBuilder == nil {
-		options.ClientBuilder = clientbuilder.NewUnstructedCached()
+	if options.NewClient == nil {
+		options.NewClient = func(cache cache.Cache, config *rest.Config, options client.Options, uncachedObjects ...client.Object) (client.Client, error) {
+			// Create the Client for Write operations.
+			c, err := client.New(config, options)
+			if err != nil {
+				return nil, err
+			}
+
+			return client.NewDelegatingClient(client.NewDelegatingClientInput{
+				CacheReader:       cache,
+				Client:            c,
+				UncachedObjects:   uncachedObjects,
+				CacheUnstructured: true,
+			})
+		}
 	}
 
 	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
