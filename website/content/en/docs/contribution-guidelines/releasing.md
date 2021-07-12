@@ -33,7 +33,7 @@ Verify that the version of `make` is higher than 4.2 using command `make --versi
 Add the gnubin directory to your PATH from your `~/.bashrc`:
 
 ```sh
-echo 'export PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"' >> ~/.bashrc
+echo 'export PATH="/usr/local/opt/make/libexec/gnubin:$PATH"' >> ~/.bashrc
 ```
 
 Verify that the version of `sed` is higher than 4.3 using command `gnu-sed --version`.
@@ -41,7 +41,7 @@ Verify that the version of `sed` is higher than 4.3 using command `gnu-sed --ver
 Add the `gnubin` directory to your PATH from your `~/.bashrc`:
 
 ```sh
-echo 'export PATH="/usr/local/opt/make/libexec/gnubin:$PATH"' >> ~/.bashrc
+echo 'export PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"' >> ~/.bashrc
 ```
 
 ## Major and Minor releases
