@@ -16,9 +16,9 @@ Table of contents:
 
 ## Prerequisites
 
-- [`git`](https://git-scm.com/downloads)
-- [`make`](https://www.gnu.org/software/make/)
-- [`sed`](https://www.gnu.org/software/sed/)
+- [`git`](https://git-scm.com/downloads) 2.2+
+- [`make`](https://www.gnu.org/software/make/) 4.2+
+- [`sed`](https://www.gnu.org/software/sed/) 4.3+
 
 ##### MacOS users
 
@@ -28,21 +28,20 @@ Install GNU `sed` and `make` which may not be by default:
 brew install gnu-sed make
 ```
 
-Verify the version of `make` using command `make --version`.
+Verify that the version of `make` is higher than 4.2 using command `make --version`.
 
-For MAC users, `brew` automatically installs `3.81` version of `make`. Make sure that it is upgraded to `4.3+`.
-To use `gnu make` as default, add it to your `PATH`:
+Add the gnubin directory to your PATH from your `~/.bashrc`:
 
 ```sh
-PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"
+echo 'export PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"' >> ~/.bashrc
 ```
 
-Also, verify the version of `gnu-sed` using command `brew info gnu-sed`. `Brew` installs GNU `sed` as `gsed`.
+Verify that the version of `sed` is higher than 4.3 using command `gnu-sed --version`.
 
-If you need to use it as `sed`, you can add a `gnubin` directory to your PATH from your bashrc like:
+Add the `gnubin` directory to your PATH from your `~/.bashrc`:
 
 ```sh
-export PATH="/usr/local/opt/make/libexec/gnubin:$PATH"
+echo 'export PATH="/usr/local/opt/make/libexec/gnubin:$PATH"' >> ~/.bashrc
 ```
 
 ## Major and Minor releases
