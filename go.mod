@@ -52,6 +52,7 @@ replace (
 	// latest tag resolves to a very old version. this is only used for spinning up local test registries
 	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
 	github.com/mattn/go-sqlite3 => github.com/mattn/go-sqlite3 v1.10.0
+	golang.org/x/net => golang.org/x/net v0.0.0-20210614182718-04defd469f4e // Required to fix CVE-2021-33194
 	golang.org/x/text => golang.org/x/text v0.3.3 // Required to fix CVE-2020-14040
 
 )
