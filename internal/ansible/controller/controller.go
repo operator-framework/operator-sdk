@@ -17,6 +17,7 @@ package controller
 import (
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 	"time"
 
@@ -33,7 +34,6 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/ansible/events"
 	"github.com/operator-framework/operator-sdk/internal/ansible/handler"
-	"github.com/operator-framework/operator-sdk/internal/ansible/predicate"
 	"github.com/operator-framework/operator-sdk/internal/ansible/runner"
 )
 
@@ -103,12 +103,15 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 	predicates := []ctrlpredicate.Predicate{
 		ctrlpredicate.Or(ctrlpredicate.GenerationChangedPredicate{}, libpredicate.NoGenerationPredicate{}),
 	}
-	filterPredicate, err := predicate.NewResourceFilterPredicate(options.Selector)
-	if err != nil {
-		log.Error(err, "Error creating resource filter predicate")
-		os.Exit(1)
+
+	if !reflect.ValueOf(options.Selector).IsZero() {
+		filterPredicate, err := ctrlpredicate.LabelSelectorPredicate(options.Selector)
+		if err != nil {
+			log.Error(err, "Unable to create predicate from selector.")
+			os.Exit(1)
+		}
+		predicates = append(predicates, filterPredicate)
 	}
-	predicates = append(predicates, filterPredicate)
 
 	u := &unstructured.Unstructured{}
 	u.SetGroupVersionKind(options.GVK)
