@@ -23,7 +23,6 @@ They can modify objects by creating a patch that will be sent back in the admiss
 
 For more background on Admission webhooks, refer to the [Kubebuilder documentation](https://book.kubebuilder.io/reference/admission-webhook.html) or the [official Kubernetes documentation](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/). 
 You can also refer to the [Kubebuilder webhook walkthrough](https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html), which is similar in content to this guide. 
-Kubebuilder also has a guide that walks through implementing webhooks for their example `CronJob` resource.
 
 ### Create Validation Webhook
 
@@ -75,7 +74,7 @@ The scaffolded file `api/v1alpha1/memcached_webhook.go` has method signatures wh
 
 Following this, there are a few steps which need to be done in your operator project to enable webhhoks. This will involve:
 
-1. Implementing the required methods for Validating or Mutating webhook in <kind>_webhook.go. An example of such implementation is provided [here](https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html).
+1. Implementing the required methods for Validating or Mutating webhook in `<kind>_webhook.go`. An example of such implementation is provided [here](https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html).
 
 2. Uncommenting sections in `config/default/kustomization.yaml` to enable webhook and cert-manager configuration through kustomize. Cert-manager (or any third party solution) can be used to provision certificates for webhook server. This is explained in detail [here](https://book.kubebuilder.io/cronjob-tutorial/running-webhook.html#deploy-webhooks).
 
