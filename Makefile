@@ -144,6 +144,7 @@ e2e_targets := test-e2e $(e2e_tests)
 
 .PHONY: test-e2e-setup
 export KIND_CLUSTER := operator-sdk-e2e
+export KUBEBUILDER_ASSETS=$(shell $(shell go env GOPATH)/bin/setup-envtest use $(K8S_VERSION) --bin-dir tools/bin/ -p path)
 test-e2e-setup: build envtest
 	$(SCRIPTS_DIR)/fetch kind 0.11.0
 	$(SCRIPTS_DIR)/fetch kubectl $(K8S_VERSION) # Install kubectl AFTER envtest because envtest includes its own kubectl binary
@@ -151,8 +152,7 @@ test-e2e-setup: build envtest
 
 # install envtest binary
 envtest:
-	go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
-	$(shell go env GOPATH)/bin/setup-envtest use $(K8S_VERSION) --bin-dir tools/bin/ -p env
+	go install $(GO_BUILD_ARGS) sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
 
 .PHONY: test-e2e-teardown
 test-e2e-teardown:
