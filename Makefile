@@ -9,6 +9,7 @@ export IMAGE_VERSION = v1.9.0
 export SIMPLE_VERSION = $(shell (test "$(shell git describe)" = "$(shell git describe --abbrev=0)" && echo $(shell git describe)) || echo $(shell git describe --abbrev=0)+git)
 export GIT_VERSION = $(shell git describe --dirty --tags --always)
 export GIT_COMMIT = $(shell git rev-parse HEAD)
+# TODO: bump this to 1.21, after kubectl `--generator` flag is removed from e2e tests.
 export K8S_VERSION = 1.20.2
 
 # Build settings
@@ -144,15 +145,12 @@ e2e_targets := test-e2e $(e2e_tests)
 
 .PHONY: test-e2e-setup
 export KIND_CLUSTER := operator-sdk-e2e
-export KUBEBUILDER_ASSETS=$(shell $(shell go env GOPATH)/bin/setup-envtest use $(K8S_VERSION) --bin-dir tools/bin/ -p path)
-test-e2e-setup: build envtest
+
+export KUBEBUILDER_ASSETS = $(PWD)/$(shell go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest && $(shell go env GOPATH)/bin/setup-envtest use $(K8S_VERSION) --bin-dir tools/bin/ -p path)
+test-e2e-setup: build
 	$(SCRIPTS_DIR)/fetch kind 0.11.0
 	$(SCRIPTS_DIR)/fetch kubectl $(K8S_VERSION) # Install kubectl AFTER envtest because envtest includes its own kubectl binary
 	[[ "`$(TOOLS_DIR)/kind get clusters`" =~ "$(KIND_CLUSTER)" ]] || $(TOOLS_DIR)/kind create cluster --image="kindest/node:v$(K8S_VERSION)" --name $(KIND_CLUSTER)
-
-# install envtest binary
-envtest:
-	go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
 
 .PHONY: test-e2e-teardown
 test-e2e-teardown:
@@ -163,8 +161,8 @@ test-e2e-teardown:
 # Double colon rules allow repeated rule declarations.
 # Repeated rules are executed in the order they appear.
 $(e2e_targets):: test-e2e-setup image/scorecard-test
-
 test-e2e:: $(e2e_tests) ## Run e2e tests
+	
 test-e2e-go:: image/custom-scorecard-tests ## Run Go e2e tests
 	go test ./test/e2e/go -v -ginkgo.v
 test-e2e-ansible:: image/ansible-operator ## Run Ansible e2e tests
