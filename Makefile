@@ -152,7 +152,7 @@ test-e2e-setup: build envtest
 
 # install envtest binary
 envtest:
-	go install $(GO_BUILD_ARGS) sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+	go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
 
 .PHONY: test-e2e-teardown
 test-e2e-teardown:
