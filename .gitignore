@@ -8,6 +8,8 @@
 
 # Test artifacts
 **/testbin/
+/test/artifacts/
+/test/integration/e2e-*
 
 # CI GPG keyring
 /.ci/gpg/keyring

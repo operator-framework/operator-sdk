@@ -15,10 +15,10 @@
 package integration
 
 import (
-	"fmt"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/operator-framework/operator-sdk/internal/testutils"
 )
 
 var _ = Describe("run packagemanifests", func() {
@@ -55,13 +55,10 @@ var _ = Describe("run packagemanifests", func() {
 		versions := []string{"0.0.1", "0.2.0"}
 		channels := []string{"alpha", "stable"}
 		for i, version := range versions {
-			imageTag := fmt.Sprintf("integration/%s:%s", tc.ProjectName, version)
+			imageTag := localImageBase + ":v" + version
 			By("building the manager image " + imageTag)
-			Expect(tc.Make("docker-build", "IMG="+imageTag)).To(Succeed())
-			if onKind {
-				Expect(tc.LoadImageToKindClusterWithName(imageTag)).To(Succeed())
-			}
-			makeArgs := []string{"packagemanifests", "IMG=" + imageTag, "VERSION=" + version, "CHANNEL=" + channels[i]}
+			Expect(tc.Make("docker-build", "docker-push", "IMG="+imageTag)).To(Succeed())
+			makeArgs := []string{"packagemanifests", "IMG=" + inClusterImageBase + ":v0.0.1", "VERSION=" + version, "CHANNEL=" + channels[i]}
 			if i != 0 {
 				makeArgs = append(makeArgs, "FROM_VERSION="+versions[i-1])
 			}
@@ -70,3 +67,7 @@ var _ = Describe("run packagemanifests", func() {
 		Expect(runPackageManifests(&tc, "--version", versions[len(versions)-1])).To(Succeed())
 	})
 })
+
+func runPackageManifests(tc *testutils.TestContext, args ...string) error {
+	return runCmd(tc, "packagemanifests", args...)
+}

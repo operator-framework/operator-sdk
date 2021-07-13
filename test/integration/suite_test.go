@@ -15,6 +15,7 @@
 package integration
 
 import (
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -44,9 +45,18 @@ func TestIntegration(t *testing.T) {
 var (
 	tc     testutils.TestContext
 	onKind bool
+
+	// TLS configuration.
+	certDir      = flag.String("cert-dir", "", "registry TLS certificates and keys")
+	caSecretName string
+
+	localImageBase     string
+	inClusterImageBase string
 )
 
 var _ = BeforeSuite(func() {
+	flag.Parse()
+
 	var err error
 
 	By("creating a new test context")
@@ -59,14 +69,24 @@ var _ = BeforeSuite(func() {
 	tc.Kind = "Memcached"
 	tc.Resources = "memcacheds"
 	tc.ProjectName = "memcached-operator"
-	tc.ImageName = fmt.Sprintf("quay.io/integration/%s:0.0.1", tc.ProjectName)
-	tc.BundleImageName = fmt.Sprintf("quay.io/integration/%s-bundle:0.0.1", tc.ProjectName)
 
 	By("copying sample to a temporary e2e directory")
 	Expect(exec.Command("cp", "-r", "../../testdata/go/v3/memcached-operator", tc.Dir).Run()).To(Succeed())
 
-	By("updating the project configuration")
-	Expect(tc.AddPackagemanifestsTarget(projutil.OperatorTypeGo)).To(Succeed())
+	By("creating the test namespace")
+	_, err = tc.Kubectl.Command("create", "namespace", tc.Kubectl.Namespace)
+	Expect(err).NotTo(HaveOccurred())
+
+	By("configuring the local image registry")
+	configureRegistry(tc)
+	localImageBase = fmt.Sprintf("%s/integration/%s", localRegistryHost, tc.ProjectName)
+	inClusterImageBase = fmt.Sprintf("%s/integration/%s", inClusterRegistryHost, tc.ProjectName)
+
+	By("configuring registry TLS")
+	certFile := filepath.Join(*certDir, "cert.pem")
+	caSecretName = tc.ProjectName + "-ca-secret"
+	_, err = tc.Kubectl.CommandInNamespace("create", "secret", "generic", caSecretName, "--from-file", "cert.pem="+certFile)
+	Expect(err).NotTo(HaveOccurred())
 
 	By("installing OLM")
 	Expect(tc.InstallOLMVersion(testutils.OlmVersionForTestSuite)).To(Succeed())
@@ -74,41 +94,26 @@ var _ = BeforeSuite(func() {
 	By("installing prometheus-operator")
 	Expect(tc.InstallPrometheusOperManager()).To(Succeed())
 
-	By("building the manager image")
-	Expect(tc.Make("docker-build", "IMG="+tc.ImageName)).To(Succeed())
-
 	onKind, err = tc.IsRunningOnKind()
 	Expect(err).NotTo(HaveOccurred())
+
+	By("building the operator image")
+	Expect(tc.Make("docker-build", "docker-push", "IMG="+localImageBase+":v0.0.1")).To(Succeed())
 	if onKind {
-		By("loading the required images into Kind cluster")
-		Expect(tc.LoadImageToKindCluster()).To(Succeed())
+		inClusterOperatorImage := inClusterImageBase + ":v0.0.1"
+		Expect(dockerTag(tc, localImageBase+":v0.0.1", inClusterOperatorImage)).To(Succeed())
+		Expect(tc.LoadImageToKindClusterWithName(inClusterOperatorImage)).To(Succeed())
 	}
 
-	By("generating the operator package manifests and enabling all InstallModes")
-	Expect(tc.Make("packagemanifests", "IMG="+tc.ImageName)).To(Succeed())
-	csv, err := readCSV(&tc, "0.0.1", false)
-	Expect(err).NotTo(HaveOccurred())
-	for i := range csv.Spec.InstallModes {
-		csv.Spec.InstallModes[i].Supported = true
-	}
-	Expect(writeCSV(&tc, "0.0.1", csv, false)).To(Succeed())
-
-	// TODO(estroz): enable when bundles can be tested locally.
-	//
-	// By("generating the operator bundle")
-	// err = tc.Make("bundle", "IMG="+tc.ImageName)
-	// Expect(err).NotTo(HaveOccurred())
-	//
-	// By("building the operator bundle image")
-	// err = tc.Make("bundle-build", "BUNDLE_IMG="+tc.BundleImageName)
-	// Expect(err).NotTo(HaveOccurred())
-
-	By("creating the test namespace")
-	_, err = tc.Kubectl.Command("create", "namespace", tc.Kubectl.Namespace)
-	Expect(err).NotTo(HaveOccurred())
+	setupBundle()
+	setupPackagemanifests()
 })
 
 var _ = AfterSuite(func() {
+	if tc == (testutils.TestContext{}) {
+		return
+	}
+
 	By("uninstalling OLM")
 	tc.UninstallOLM()
 
@@ -122,14 +127,53 @@ var _ = AfterSuite(func() {
 	tc.Destroy()
 })
 
+func setupPackagemanifests() {
+	By("adding the packagemanifests target to the project Makefile")
+	ExpectWithOffset(1, tc.AddPackagemanifestsTarget(projutil.OperatorTypeGo)).To(Succeed())
+
+	By("generating operator packagemanifests and enabling all InstallModes")
+	ExpectWithOffset(1, tc.Make("packagemanifests", "IMG="+inClusterImageBase+":v0.0.1")).To(Succeed())
+	csv, err := readCSV(&tc, "0.0.1", false)
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	for i := range csv.Spec.InstallModes {
+		csv.Spec.InstallModes[i].Supported = true
+	}
+	ExpectWithOffset(1, writeCSV(&tc, "0.0.1", csv, false)).To(Succeed())
+}
+
+func dockerTag(tc testutils.TestContext, old, new string) error {
+	cmd := exec.Command("docker", "tag", old, new)
+	_, err := tc.Run(cmd)
+	return err
+}
+
+func setupBundle() {
+	By("generating the operator bundle and enabling all InstallModes")
+	ExpectWithOffset(1, tc.Make("bundle", "IMG="+inClusterImageBase+":v0.0.1")).To(Succeed())
+	csv, err := readCSV(&tc, "", true)
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	for i := range csv.Spec.InstallModes {
+		csv.Spec.InstallModes[i].Supported = true
+	}
+	ExpectWithOffset(1, writeCSV(&tc, "", csv, true)).To(Succeed())
+
+	By("building the operator bundle image")
+	ExpectWithOffset(1, tc.Make("bundle-build", "bundle-push", "BUNDLE_IMG="+localImageBase+"-bundle:v0.0.1")).To(Succeed())
+	if onKind {
+		inClusterBundleImage := inClusterImageBase + "-bundle:v0.0.1"
+		ExpectWithOffset(1, dockerTag(tc, localImageBase+"-bundle:v0.0.1", inClusterBundleImage)).To(Succeed())
+		ExpectWithOffset(1, tc.LoadImageToKindClusterWithName(inClusterBundleImage)).To(Succeed())
+	}
+}
+
 func warn(output string, err error) {
 	if err != nil {
 		fmt.Fprintf(GinkgoWriter, "warning: %s\n%s", err, output)
 	}
 }
 
-func runPackageManifests(tc *testutils.TestContext, args ...string) error {
-	allArgs := []string{"run", "packagemanifests", "--timeout", "4m", "--namespace", tc.Kubectl.Namespace}
+func runCmd(tc *testutils.TestContext, cmd string, args ...string) error {
+	allArgs := []string{"run", cmd, "--timeout", "4m", "--namespace", tc.Kubectl.Namespace}
 	output, err := tc.Run(exec.Command(tc.BinaryName, append(allArgs, args...)...))
 	if err == nil {
 		fmt.Fprintln(GinkgoWriter, string(output))
