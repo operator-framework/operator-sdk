@@ -31,7 +31,36 @@ will cause the custom resource to be reconciled and upgraded with the `force` op
 log message when an upgrade succeeds:
 
 ```
-{"level":"info","ts":1591198931.1703992,"logger":"helm.controller","msg":"Upgraded release","namespace":"helm-nginx","name":"example-nginx","apiVersion":"cache.example.com/v1alpha1","kind":"Nginx","release":"example-nginx","force":true}
+{"level":"info","ts":1591198931.1703992,"logger":"helm.controller","msg":"Upgraded release","namespace":"helm-nginx","name":"example-nginx","apiVersion":"cache.example.com/v1alpha1","kind":"Nginx","release":"example-nginx","forceUpgrade":true}
+```
+
+## `helm.sdk.operatorframework.io/rollback-force`
+
+The operator will assume this annotation to be `"true"`, if it is not set or set to an invalid value.
+This annotation can be set to `"false"` to run a possible `helm rollback` after a failed release
+without the `--force` option. For more info see the [Helm Rollback documentation](https://helm.sh/docs/helm/helm_rollback/).
+
+Setting this can be required if a chart contains resources that have immutable fields after their first creation.
+See [helm/helm#6378](https://github.com/helm/helm/issues/6378#issuecomment-735812673) for a more detailed description
+of this issue.
+
+This for example applies to a `Service` of type `ClusterIP`. The `ClusterIP` can be empty on creation, but kubernetes will fill
+it with an actual IP, afterwards, the field is immutable. Helm (with `--force`) however will try to set it to `""`, which
+results in an error.
+
+**Example**
+
+```yaml
+apiVersion: example.com/v1alpha1
+kind: Nginx
+metadata:
+  name: nginx-sample
+  annotations:
+    helm.sdk.operatorframework.io/rollback-force: "false"
+spec:
+  replicaCount: 2
+  service:
+    port: 8080
 ```
 
 ## `helm.sdk.operatorframework.io/uninstall-wait`

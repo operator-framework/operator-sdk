@@ -62,6 +62,7 @@ const (
 	uninstallFinalizerLegacy = "uninstall-helm-release"
 
 	helmUpgradeForceAnnotation  = "helm.sdk.operatorframework.io/upgrade-force"
+	helmRollbackForceAnnotation = "helm.sdk.operatorframework.io/rollback-force"
 	helmUninstallWaitAnnotation = "helm.sdk.operatorframework.io/uninstall-wait"
 )
 
@@ -125,7 +126,7 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 		}
 		status.RemoveCondition(types.ConditionReleaseFailed)
 
-		wait := hasAnnotation(helmUninstallWaitAnnotation, o)
+		wait := hasAnnotation(helmUninstallWaitAnnotation, o, false)
 		if errors.Is(err, driver.ErrReleaseNotFound) {
 			log.Info("Release not found")
 		} else {
@@ -290,8 +291,9 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 			r.EventRecorder.Eventf(o, "Warning", "OverrideValuesInUse",
 				"Chart value %q overridden to %q by operator's watches.yaml", k, v)
 		}
-		force := hasAnnotation(helmUpgradeForceAnnotation, o)
-		previousRelease, upgradedRelease, err := manager.UpgradeRelease(ctx, release.ForceUpgrade(force))
+		forceUpgrade := hasAnnotation(helmUpgradeForceAnnotation, o, false)
+		forceRollback := hasAnnotation(helmRollbackForceAnnotation, o, true)
+		previousRelease, upgradedRelease, err := manager.UpgradeRelease(ctx, []release.UpgradeOption{release.ForceUpgrade(forceUpgrade)}, []release.RollbackOption{release.ForceRollback(forceRollback)})
 		if err != nil {
 			log.Error(err, "Release failed")
 			status.SetCondition(types.HelmAppCondition{
@@ -314,7 +316,7 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 			}
 		}
 
-		log.Info("Upgraded release", "force", force)
+		log.Info("Upgraded release", "forceUpgrade", forceUpgrade, "forceRollback", forceRollback)
 		if log.V(0).Enabled() {
 			fmt.Println(diff.Generate(previousRelease.Manifest, upgradedRelease.Manifest))
 		}
@@ -393,12 +395,12 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 
 // returns the boolean representation of the annotation string
 // will return false if annotation is not set
-func hasAnnotation(anno string, o *unstructured.Unstructured) bool {
+func hasAnnotation(anno string, o *unstructured.Unstructured, fallback bool) bool {
+	value := fallback
 	boolStr := o.GetAnnotations()[anno]
 	if boolStr == "" {
-		return false
+		return value
 	}
-	value := false
 	if i, err := strconv.ParseBool(boolStr); err != nil {
 		log.Info("Could not parse annotation as a boolean",
 			"annotation", anno, "value informed", boolStr)

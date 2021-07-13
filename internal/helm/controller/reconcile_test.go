@@ -22,9 +22,10 @@ import (
 )
 
 func TestHasAnnotation(t *testing.T) {
-	upgradeForceTests := []struct {
+	tests := []struct {
 		input       map[string]interface{}
 		expectedVal bool
+		fallback    bool
 		expectedOut string
 		name        string
 	}{
@@ -70,10 +71,34 @@ func TestHasAnnotation(t *testing.T) {
 			expectedVal: false,
 			name:        "upgrade force invalid value",
 		},
+		{
+			input: map[string]interface{}{
+				"helm.sdk.operatorframework.io/upgrade-force": "false",
+			},
+			fallback:    true,
+			expectedVal: false,
+			name:        "false annotation fallback true",
+		},
+		{
+			input: map[string]interface{}{
+				"helm.sdk.operatorframework.io/upgrade-force": "",
+			},
+			fallback:    true,
+			expectedVal: true,
+			name:        "empty annotation fallback true",
+		},
+		{
+			input: map[string]interface{}{
+				"helm.sdk.operatorframework.io/invalid": "",
+			},
+			fallback:    true,
+			expectedVal: true,
+			name:        "invalid annotation fallback true",
+		},
 	}
 
-	for _, test := range upgradeForceTests {
-		assert.Equal(t, test.expectedVal, hasAnnotation(helmUpgradeForceAnnotation, annotations(test.input)), test.name)
+	for _, test := range tests {
+		assert.Equal(t, test.expectedVal, hasAnnotation(helmUpgradeForceAnnotation, annotations(test.input), test.fallback), test.name)
 	}
 
 	uninstallWaitTests := []struct {
@@ -127,7 +152,7 @@ func TestHasAnnotation(t *testing.T) {
 	}
 
 	for _, test := range uninstallWaitTests {
-		assert.Equal(t, test.expectedVal, hasAnnotation(helmUninstallWaitAnnotation, annotations(test.input)), test.name)
+		assert.Equal(t, test.expectedVal, hasAnnotation(helmUninstallWaitAnnotation, annotations(test.input), false), test.name)
 	}
 }
 
