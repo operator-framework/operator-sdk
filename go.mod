@@ -37,7 +37,6 @@ require (
 	k8s.io/cli-runtime v0.21.0
 	k8s.io/client-go v0.21.2
 	k8s.io/kubectl v0.21.0
-	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/controller-runtime v0.9.2
 	sigs.k8s.io/controller-tools v0.6.0
 	sigs.k8s.io/kubebuilder/v3 v3.0.0-alpha.0.0.20210707171043-359e8aa70c2b
@@ -50,6 +49,8 @@ replace (
 	// from an init function in containerd. This replace can be removed when
 	// one of our direct dependencies begins using containerd v1.4.0+
 	github.com/containerd/containerd => github.com/containerd/containerd v1.4.3
+	// latest tag resolves to a very old version. this is only used for spinning up local test registries
+	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
 	github.com/mattn/go-sqlite3 => github.com/mattn/go-sqlite3 v1.10.0
 	golang.org/x/text => golang.org/x/text v0.3.3 // Required to fix CVE-2020-14040
 )
