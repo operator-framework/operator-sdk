@@ -152,7 +152,7 @@ test-e2e-setup: build envtest
 # install envtest binary
 envtest:
 	go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
-	$(shell go env GOPATH)/bin/setup-envtest use -p path $(K8S_VERSION)  
+	$(shell go env GOPATH)/bin/setup-envtest use $(K8S_VERSION) --bin-dir tools/bin/ -p env
 
 .PHONY: test-e2e-teardown
 test-e2e-teardown:
