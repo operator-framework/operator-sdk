@@ -52,6 +52,7 @@ replace (
 	// one of our direct dependencies begins using containerd v1.4.0+
 	github.com/containerd/containerd => github.com/containerd/containerd v1.4.3
 	github.com/mattn/go-sqlite3 => github.com/mattn/go-sqlite3 v1.10.0
+	golang.org/x/net => golang.org/x/net v0.0.0-20210614182718-04defd469f4e // Required to fix CVE-2021-33194
 	golang.org/x/text => golang.org/x/text v0.3.3 // Required to fix CVE-2020-14040
 	sigs.k8s.io/kubebuilder/v3 => sigs.k8s.io/kubebuilder/v3 v3.0.0-alpha.0.0.20210518234629-191170994550
 )
