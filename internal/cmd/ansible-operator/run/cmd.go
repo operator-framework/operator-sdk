@@ -106,7 +106,6 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 	}
 
 	if err := verifyCfgURL(cfg.Host); err != nil {
-		log.Error(err, "Failed toverify config endpoint")
 		os.Exit(1)
 	}
 
