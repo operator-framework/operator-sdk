@@ -35,7 +35,7 @@ import (
 
 const (
 	// kustomizeVersion is the sigs.k8s.io/kustomize version to be used in the project
-	kustomizeVersion = "v3.5.4"
+	kustomizeVersion = "v3.8.7"
 
 	imageName = "controller:latest"
 )

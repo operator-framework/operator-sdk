@@ -30,10 +30,6 @@ fetch() {
       ver_cmd="${DEST}/kubectl version 2>/dev/null | grep Client | cut -d' ' -f5 | sed 's/\w\+:\"v\(.*\)\",/\1/'"
       fetch_cmd="(curl -sSfLo '${DEST}/kubectl' 'https://storage.googleapis.com/kubernetes-release/release/v${ver}/bin/${os}/${arch}/kubectl' && chmod +x ${DEST}/kubectl)"
       ;;
-    "envtest")
-      ver_cmd="cat ${DEST}/.envtest_version 2>/dev/null"
-      fetch_cmd="(test -f ${DEST}/setup-envtest.sh || curl -sSLo ${DEST}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v${ver}/hack/setup-envtest.sh) && (source ${DEST}/setup-envtest.sh; fetch_envtest_tools ${DEST}/../) && echo ${ver} > ${DEST}/.envtest_version"
-      ;;
     "goreleaser")
       ver_cmd="${DEST}/goreleaser --version 2>/dev/null | grep version | cut -d' ' -f3"
       fetch_cmd="curl -sSfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh -s -- -b \"${DEST}\" -d \"v${ver}\""
