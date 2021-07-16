@@ -17,10 +17,12 @@ package scorecard
 import (
 	"context"
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
@@ -30,6 +32,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	scorecardannotations "github.com/operator-framework/operator-sdk/internal/annotations/scorecard"
+	xunit "github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/scorecard/xunit"
 	"github.com/operator-framework/operator-sdk/internal/flags"
 	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
 	"github.com/operator-framework/operator-sdk/internal/scorecard"
@@ -73,7 +76,7 @@ If the argument holds an image tag, it must be present remotely.`,
 	scorecardCmd.Flags().StringVarP(&c.config, "config", "c", "", "path to scorecard config file")
 	scorecardCmd.Flags().StringVarP(&c.namespace, "namespace", "n", "", "namespace to run the test images in")
 	scorecardCmd.Flags().StringVarP(&c.outputFormat, "output", "o", "text",
-		"Output format for results. Valid values: text, json")
+		"Output format for results. Valid values: text, json, xunit")
 	scorecardCmd.Flags().StringVarP(&c.serviceAccount, "service-account", "s", "default",
 		"Service account to use for tests")
 	scorecardCmd.Flags().BoolVarP(&c.list, "list", "L", false,
@@ -102,10 +105,47 @@ func (c *scorecardCmd) printOutput(output v1alpha3.TestList) error {
 			return fmt.Errorf("marshal json error: %v", err)
 		}
 		fmt.Printf("%s\n", string(bytes))
+	case "xunit":
+		xunitOutput := c.convertXunit(output)
+		bytes, err := xml.MarshalIndent(xunitOutput, "", "  ")
+		if err != nil {
+			return fmt.Errorf("marshal xml error: %v", err)
+		}
+		fmt.Printf("%s\n", string(bytes))
 	default:
 		return fmt.Errorf("invalid output format selected")
 	}
 	return nil
+}
+
+func (c *scorecardCmd) convertXunit(output v1alpha3.TestList) xunit.TestSuites {
+	var resultSuite xunit.TestSuites
+	resultSuite.Name = "scorecard"
+
+	jsonTestItems := output.Items
+	for _, item := range jsonTestItems {
+		tempResults := item.Status.Results
+		for _, res := range tempResults {
+			var tCase xunit.TestCase
+			var tSuite xunit.TestSuite
+			tSuite.Name = res.Name
+			tCase.Name = res.Name
+			if res.State == v1alpha3.ErrorState {
+				tCase.Errors = append(tCase.Errors, xunit.XUnitComplexError{Type: "Error", Message: strings.Join(res.Errors, ",")})
+				tSuite.Errors = strings.Join(res.Errors, ",")
+			} else if res.State == v1alpha3.FailState {
+				tCase.Failures = append(tCase.Failures, xunit.XUnitComplexFailure{Type: "Failure", Message: res.Log})
+				tSuite.Failures = res.Log
+			}
+			tSuite.TestCases = append(tSuite.TestCases, tCase)
+			tSuite.URL = item.Spec.Image
+			//TODO: Add TestStuite ID when API updates version
+			//tSuite.ID = item.Spec.UniqueID
+			resultSuite.TestSuite = append(resultSuite.TestSuite, tSuite)
+		}
+	}
+
+	return resultSuite
 }
 
 func (c *scorecardCmd) run() (err error) {
