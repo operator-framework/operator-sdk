@@ -22,6 +22,7 @@ import (
 	"os"
 
 	"helm.sh/helm/v3/pkg/chartutil"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/yaml"
 )
@@ -32,9 +33,10 @@ const WatchesFile = "watches.yaml"
 // custom resource.
 type Watch struct {
 	schema.GroupVersionKind `json:",inline"`
-	ChartDir                string            `json:"chart"`
-	WatchDependentResources *bool             `json:"watchDependentResources,omitempty"`
-	OverrideValues          map[string]string `json:"overrideValues,omitempty"`
+	ChartDir                string               `json:"chart"`
+	WatchDependentResources *bool                `json:"watchDependentResources,omitempty"`
+	OverrideValues          map[string]string    `json:"overrideValues,omitempty"`
+	Selector                metav1.LabelSelector `json:"selector"`
 }
 
 // UnmarshalYAML unmarshals an individual watch from the Helm watches.yaml file

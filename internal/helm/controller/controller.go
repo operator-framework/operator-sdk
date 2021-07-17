@@ -16,6 +16,7 @@ package controller
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -30,6 +31,7 @@ import (
 	crthandler "sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	ctrlpredicate "sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 	"sigs.k8s.io/yaml"
 
@@ -51,6 +53,7 @@ type WatchOptions struct {
 	WatchDependentResources bool
 	OverrideValues          map[string]string
 	MaxConcurrentReconciles int
+	Selector                metav1.LabelSelector
 }
 
 // Add creates a new helm operator controller and adds it to the manager
@@ -80,7 +83,20 @@ func Add(mgr manager.Manager, options WatchOptions) error {
 
 	o := &unstructured.Unstructured{}
 	o.SetGroupVersionKind(options.GVK)
-	if err := c.Watch(&source.Kind{Type: o}, &libhandler.InstrumentedEnqueueRequestForObject{}); err != nil {
+
+	var preds []ctrlpredicate.Predicate
+
+	// If a selector has been specified in watches.yaml, add it to the watch's predicates.
+	if !reflect.ValueOf(options.Selector).IsZero() {
+		p, err := ctrlpredicate.LabelSelectorPredicate(options.Selector)
+		if err != nil {
+			log.Error(err, "Unable to create predicate from selector.")
+			return err
+		}
+		preds = append(preds, p)
+	}
+
+	if err := c.Watch(&source.Kind{Type: o}, &libhandler.InstrumentedEnqueueRequestForObject{}, preds...); err != nil {
 		return err
 	}
 
