@@ -20,7 +20,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 
-	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/bundle/validate/internal"
+	"github.com/operator-framework/operator-sdk/pkg/validate"
 )
 
 var _ = Describe("Running a bundle validate command", func() {
@@ -47,7 +47,7 @@ var _ = Describe("Running a bundle validate command", func() {
 			flag = cmd.Flags().Lookup("output")
 			Expect(flag).NotTo(BeNil())
 			Expect(flag.Shorthand).To(Equal("o"))
-			Expect(flag.DefValue).To(Equal(internal.Text))
+			Expect(flag.DefValue).To(Equal(validate.TextOutput))
 		})
 	})
 

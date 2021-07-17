@@ -15,6 +15,7 @@
 package validate
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -31,8 +32,8 @@ import (
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/labels"
 
-	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/bundle/validate/internal"
 	internalregistry "github.com/operator-framework/operator-sdk/internal/registry"
+	"github.com/operator-framework/operator-sdk/pkg/validate"
 )
 
 type bundleValidateCmd struct {
@@ -54,7 +55,7 @@ func (c bundleValidateCmd) validate(args []string) error {
 	if len(args) != 1 {
 		return errors.New("an image tag or directory is a required argument")
 	}
-	if c.outputFormat != internal.JSONAlpha1 && c.outputFormat != internal.Text {
+	if c.outputFormat != validate.JSONAlpha1Output && c.outputFormat != validate.TextOutput {
 		return fmt.Errorf("invalid value for output flag: %v", c.outputFormat)
 	}
 
@@ -85,12 +86,12 @@ func (c *bundleValidateCmd) addToFlagSet(fs *pflag.FlagSet) {
 		"Inform a []string map of key=values which can be used by the validator. e.g. to check the operator bundle "+
 			"against an Kubernetes version that it is intended to be distributed use `--optional-values=k8s-version=1.22`")
 
-	fs.StringVarP(&c.outputFormat, "output", "o", internal.Text,
+	fs.StringVarP(&c.outputFormat, "output", "o", validate.TextOutput,
 		"Result format for results. One of: [text, json-alpha1]. Note: output format types containing "+
 			"\"alphaX\" are subject to change and not covered by guarantees of stable APIs.")
 }
 
-func (c bundleValidateCmd) run(logger *log.Entry, bundleRaw string) (res *internal.Result, err error) {
+func (c bundleValidateCmd) run(logger *log.Entry, bundleRaw string) (res *validate.Result, err error) {
 	// Create a registry to validate bundle files and optionally unpack the image with.
 	reg, err := newImageRegistryForTool(logger, c.imageBuilder)
 	if err != nil {
@@ -132,7 +133,7 @@ func (c bundleValidateCmd) run(logger *log.Entry, bundleRaw string) (res *intern
 	}
 
 	// Create Result to be output.
-	res = internal.NewResult()
+	res = validate.NewResult()
 
 	logger = logger.WithFields(log.Fields{
 		"bundle-dir":     c.directory,
@@ -152,6 +153,20 @@ func (c bundleValidateCmd) run(logger *log.Entry, bundleRaw string) (res *intern
 	// Run optional validators.
 	results = runOptionalValidators(bundle, c.selector, c.optionalValues)
 	res.AddManifestResults(results...)
+
+	// Run external validators, if enabled.
+	if entrypoints, isEnabled := validate.GetExternalValidatorEntrypoints(); isEnabled {
+		logger.Debugf("Running external validators: %+q", entrypoints)
+		// TODO(estroz): enable timeout.
+		ctx := context.Background()
+		ress, err := validate.RunExternalValidators(ctx, entrypoints, c.directory)
+		if err != nil {
+			return nil, err
+		}
+		if err := res.Combine(ress...); err != nil {
+			return nil, err
+		}
+	}
 
 	return res, nil
 }

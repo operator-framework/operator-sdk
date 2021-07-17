@@ -135,7 +135,7 @@ test-docs: ## Test doc links
 	./hack/check-links.sh
 
 .PHONY: test-unit
-TEST_PKGS = $(shell go list ./... | grep -v -E 'github.com/operator-framework/operator-sdk/test/')
+TEST_PKGS = ./cmd/... ./hack/... ./release/... ./images/... ./internal/... ./pkg/...
 test-unit: ## Run unit tests
 	go test -coverprofile=coverage.out -covermode=count -short $(TEST_PKGS)
 
