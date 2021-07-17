@@ -23,6 +23,7 @@ import (
 	"strings"
 	"unicode"
 
+	"helm.sh/helm/v3/pkg/kube"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -155,4 +156,16 @@ func SupportsOwnerReference(restMapper meta.RESTMapper, owner, dependent runtime
 	}
 	// Both owner and dependent are namespace-scoped and in the same namespace.
 	return true, nil
+}
+
+func ContainsResourcePolicyKeep(annotations map[string]string) bool {
+	if annotations == nil {
+		return false
+	}
+	resourcePolicyType, ok := annotations[kube.ResourcePolicyAnno]
+	if !ok {
+		return false
+	}
+	resourcePolicyType = strings.ToLower(strings.TrimSpace(resourcePolicyType))
+	return resourcePolicyType == kube.KeepPolicy
 }

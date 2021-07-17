@@ -15,9 +15,11 @@
 package k8sutil
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"helm.sh/helm/v3/pkg/kube"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -330,5 +332,61 @@ func TestFormatOperatorNameDNS1123(t *testing.T) {
 			result := FormatOperatorNameDNS1123(tc.label)
 			assert.Equal(t, tc.expected, result)
 		})
+	}
+}
+
+func TestContainsResourcePolicyKeep(t *testing.T) {
+	tests := []struct {
+		input       map[string]string
+		expectedVal bool
+		expectedOut string
+		name        string
+	}{
+		{
+			input: map[string]string{
+				kube.ResourcePolicyAnno: kube.KeepPolicy,
+			},
+			expectedVal: true,
+			name:        "base case true",
+		},
+		{
+			input: map[string]string{
+				"not-" + kube.ResourcePolicyAnno: kube.KeepPolicy,
+			},
+			expectedVal: false,
+			name:        "base case annotation false",
+		},
+		{
+			input: map[string]string{
+				kube.ResourcePolicyAnno: "not-" + kube.KeepPolicy,
+			},
+			expectedVal: false,
+			name:        "base case value false",
+		},
+		{
+			input: map[string]string{
+				kube.ResourcePolicyAnno: strings.ToUpper(kube.KeepPolicy),
+			},
+			expectedVal: true,
+			name:        "true with upper case",
+		},
+		{
+			input: map[string]string{
+				kube.ResourcePolicyAnno: " " + kube.KeepPolicy + "  ",
+			},
+			expectedVal: true,
+			name:        "true with spaces",
+		},
+		{
+			input: map[string]string{
+				kube.ResourcePolicyAnno: " " + strings.ToUpper(kube.KeepPolicy) + "  ",
+			},
+			expectedVal: true,
+			name:        "true with upper case and spaces",
+		},
+	}
+
+	for _, test := range tests {
+		assert.Equal(t, test.expectedVal, ContainsResourcePolicyKeep(test.input), test.name)
 	}
 }
