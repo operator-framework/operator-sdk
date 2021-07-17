@@ -1,7 +1,7 @@
 ---
 # tasks file for Memcached
 - name: start memcached
-  community.kubernetes.k8s:
+  k8s:
     definition:
       kind: Deployment
       apiVersion: apps/v1
