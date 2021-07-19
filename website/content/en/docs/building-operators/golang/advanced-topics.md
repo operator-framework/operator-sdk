@@ -120,14 +120,24 @@ To learn about how metrics work in the Operator SDK read the [metrics section][m
 
 ### Handle Cleanup on Deletion
 
-To implement complex deletion logic, you can add a finalizer to your Custom Resource. This will prevent your Custom Resource from being
-deleted until you remove the finalizer (ie, after your cleanup logic has successfully run). For more information, see the
-[official Kubernetes documentation on finalizers](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#finalizers).
+Operators may create objects as part of their operational duty. Object accumulation can consume unnecessary resources, slow down the API and clutter the user interface. As such it is important for operators to keep good hygiene and to clean up resources when they are not needed. Here are a few common scenarios.
 
-**Example:**
+**Internal Resources**
 
-The following is a snippet from a theoretical controller file `controllers/memcached_controller.go`
-that implements a finalizer handler:
+A typical example is jobs. When they get created one or multiple pods get spawn. When the jobs are deleted the associated pods are deleted as well. This is a very common pattern and it can easily be achieved by setting the owner reference on the child resource, the pod in this example. Here is a code snippet for it where "r" is the reconcilier and "ctrl" the controller-runtime library:
+
+```go
+ctrl.SetControllerReference(job, pod, r.Scheme)
+```
+
+Note that with CRD the default behavior for cascading deletion is background. [This page](https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection/) in kubernetes documentation provides additional information.
+
+**External Resources**
+
+Sometimes external resources or resources that are not owned by a custom resource need to be cleaned up when the parent resource is deleted. In that case [Finalizers](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#finalizers) can be leveraged. The deletion of the object becomes an update where a deletion timestamp is set. Without finalizers the object would just be dropped of the cache. The reconciliation loop of the controller will then need to check whether a date has been set for the deleteion timestamp, perform the cleanup and remove the finalizers to allow the garbage collection of the object.
+
+The following is a snippet from a theoretical controller file `controllers/memcached_controller.go` that implements a finalizer handler:
+
 
 ```go
 import (
@@ -205,6 +215,15 @@ func (r *MemcachedReconciler) finalizeMemcached(reqLogger logr.Logger, m *cachev
     return nil
 }
 ```
+
+**Complex cleanup logic**
+
+Similar to the previous scenario finalizers can be used for implementing complex cleanup logic. Taking cron jobs as an example. They require to keep a number of past jobs, which have been spawned by the cron job controller. Therefore the cron job resource defines two fields successfulJobsHistoryLimit and failedJobsHistoryLimit. This is the role of the cron job controller to check the number of successful and failed jobs for a specific cron job and to delete the older ones when the limit has been exceeded. Here is [an example from Kubebuilder](https://book.kubebuilder.io/cronjob-tutorial/controller-implementation.html#3-clean-up-old-jobs-according-to-the-history-limit) for such a logic.
+
+**Sensitive resources**
+
+Sensitive resources need to be protected against unintended deletion. One typical example is Persistent Volume (PV) / Persistent Volume Claim (PVC). If a user tries to delete a PV that is bound by a PVC the PV is not removed immediately. PV removal is postponed until the PV is not bound to any PVC. To achieve a similar behaviour for your own resources Finalizers again can be leveraged. By setting a Finalizer on the PV like resource you controller can make sure there is no remaining resource depending on it before completing the deletion.
+In the other direction the user can specify what happens to a PV when the PVC is deleted through the reclaim policy. There are two options: "delete", which means that the PV is deleted or retain, where the PV and its associated storage are kept after the PVC deletion. Such a behaviour is achieved again through the use of Finalizers. Key is that the user can make a conscious decision between automated cleansing of unused resources (delete) and data protection (retain).
 
 ### Leader election
 
