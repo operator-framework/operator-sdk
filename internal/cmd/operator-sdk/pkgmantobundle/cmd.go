@@ -177,7 +177,7 @@ func (p *pkgManToBundleCmd) run() (err error) {
 	for _, dir := range directories {
 		if dir.IsDir() {
 			// this is required to extract project layout and SDK version information.
-			otherLabels, channels, err := getSDKStampsAndChannels(filepath.Join(p.pkgmanifestDir, dir.Name()), channelsByCSV)
+			otherLabels, channels, err := getSDKStampsAndChannels(filepath.Join(p.pkgmanifestDir, dir.Name()), defaultChannel, channelsByCSV)
 			if err != nil {
 				return fmt.Errorf("error getting CSV from provided packagemanifest %v", err)
 			}
@@ -263,7 +263,7 @@ func getScorecardConfigPath(inputDir string) (string, error) {
 	return scorecardConfigPath, nil
 }
 
-func getSDKStampsAndChannels(path string, channelsByCSV map[string][]string) (map[string]string, string, error) {
+func getSDKStampsAndChannels(path, defaultChannel string, channelsByCSV map[string][]string) (map[string]string, string, error) {
 	bundle, err := apimanifests.GetBundleFromDir(path)
 	if err != nil {
 		return nil, "", err
@@ -275,7 +275,7 @@ func getSDKStampsAndChannels(path string, channelsByCSV map[string][]string) (ma
 	}
 
 	// Find channels matching the CSV names
-	channels := getChannelsByCSV(bundle, channelsByCSV)
+	channels := getChannelsByCSV(bundle, channelsByCSV, defaultChannel)
 
 	return sdkLabels, channels, nil
 }
@@ -304,22 +304,16 @@ func getSDKStamps(bundle *apimanifests.Bundle) (map[string]string, error) {
 }
 
 // getChannelsByCSV creates a list for channels for the currentCSV,
-func getChannelsByCSV(bundle *apimanifests.Bundle, channelsByCSV map[string][]string) (channels string) {
+func getChannelsByCSV(bundle *apimanifests.Bundle, channelsByCSV map[string][]string, defaultChannel string) (channels string) {
 	// Find channels matching the CSV names
-	var channelNames []string
-	for csv, ch := range channelsByCSV {
-		if csv == bundle.CSV.GetName() {
-			channelNames = ch
-			break
-		}
-	}
+	channelNames := channelsByCSV[bundle.CSV.GetName()]
 	channels = strings.Join(channelNames, ",")
 
 	// TODO: verify if we have to add this validation since while building bundles if channel is not specified
 	// we add the default channel.
 	if channels == "" {
-		channels = "preview"
-		log.Infof("Supported channels cannot be identified from CSV %s, using default channel 'preview'", bundle.CSV.GetName())
+		channels = defaultChannel
+		log.Infof("Supported channels cannot be identified from CSV %s, using default channel %s", bundle.CSV.GetName(), defaultChannel)
 	}
 
 	return channels
@@ -334,7 +328,8 @@ func getPackageMetadata(pkg *apimanifests.PackageManifest) (packagename, default
 
 	defaultChannel = pkg.DefaultChannelName
 	if defaultChannel == "" {
-		defaultChannel = "preview"
+		err = fmt.Errorf("cannot find the default channel for package %q", packagename)
+		return
 	}
 
 	channelsByCSV = make(map[string][]string)
