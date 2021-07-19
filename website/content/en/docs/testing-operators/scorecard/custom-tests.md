@@ -242,6 +242,16 @@ The `--skip-cleanup` flag can be used when executing the `operator-sdk scorecard
 This is useful when debugging or writing new tests so that you can view
 the test logs or the pod manifests.
 
+### Storing scorecard test output
+
+The `--test-output` flag can be used when executing the `operator-sdk scorecard` command to store the output of the scorecard tests in a specific directory. Any persistent volume data will be stored in the specified local directory upon completion of the scorecard tests.
+
+```console
+$ operator-sdk scorecard ./bundle --test-output=/mytestoutput
+```
+
+**Note**: By default, the gathered test output will be stored in the local directory from where scorecard was executed.
+
 ### Scorecard initContainer
 
 The scorecard inserts an `initContainer` into the test pods it creates. The

@@ -28,6 +28,7 @@ operator-sdk scorecard [flags]
   -s, --service-account string   Service account to use for tests (default "default")
   -x, --skip-cleanup             Disable resource cleanup after tests are run
   -w, --wait-time duration       seconds to wait for tests to complete. Example: 35s (default 30s)
+  -t, --test-output              directory in which the scorecard test output is stored.
 ```
 
 ### Options inherited from parent commands
