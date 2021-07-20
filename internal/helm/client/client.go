@@ -140,7 +140,7 @@ func (c *ownerRefInjectingClient) Build(reader io.Reader, validate bool) (kube.R
 			return err
 		}
 		u := &unstructured.Unstructured{Object: objMap}
-		useOwnerRef, err := k8sutil.SupportsOwnerReference(c.restMapper, c.owner, u)
+		useOwnerRef, err := k8sutil.SupportsOwnerReference(c.restMapper, c.owner, u, "")
 		if err != nil {
 			return err
 		}

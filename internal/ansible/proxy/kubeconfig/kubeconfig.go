@@ -68,18 +68,25 @@ type NamespacedOwnerReference struct {
 	Namespace string
 }
 
+func EncodeOwnerRef(ownerRef metav1.OwnerReference, namespace string) (string, error) {
+	nsOwnerRef := NamespacedOwnerReference{OwnerReference: ownerRef, Namespace: namespace}
+	ownerRefJSON, err := json.Marshal(nsOwnerRef)
+	if err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(ownerRefJSON), nil
+}
+
 // Create renders a kubeconfig template and writes it to disk
 func Create(ownerRef metav1.OwnerReference, proxyURL string, namespace string) (*os.File, error) {
-	nsOwnerRef := NamespacedOwnerReference{OwnerReference: ownerRef, Namespace: namespace}
 	parsedURL, err := url.Parse(proxyURL)
 	if err != nil {
 		return nil, err
 	}
-	ownerRefJSON, err := json.Marshal(nsOwnerRef)
+	username, err := EncodeOwnerRef(ownerRef, namespace)
 	if err != nil {
 		return nil, err
 	}
-	username := base64.URLEncoding.EncodeToString(ownerRefJSON)
 	parsedURL.User = url.User(username)
 	v := values{
 		Username:  username,

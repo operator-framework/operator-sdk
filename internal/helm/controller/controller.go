@@ -129,7 +129,7 @@ func watchDependentResources(mgr manager.Manager, r *HelmOperatorReconciler, c c
 				}
 
 				restMapper := mgr.GetRESTMapper()
-				useOwnerRef, err := k8sutil.SupportsOwnerReference(restMapper, owner, dependent)
+				useOwnerRef, err := k8sutil.SupportsOwnerReference(restMapper, owner, dependent, "")
 				if err != nil {
 					return err
 				}
