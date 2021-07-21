@@ -226,7 +226,7 @@ func (r PodTestRunner) RunTest(ctx context.Context, test v1alpha3.TestConfigurat
 
 	// gather test output if necessary
 	if test.Storage.Spec.MountPath.Path != "" {
-		err := gatherTestOutput(ctx, r, test.Labels["suite"], test.Labels["test"], pod.Name, test.Storage.Spec.MountPath.Path)
+		err := gatherTestOutput(r, test.Labels["suite"], test.Labels["test"], pod.Name, test.Storage.Spec.MountPath.Path)
 		if err != nil {
 			return nil, err
 		}

@@ -17,7 +17,6 @@ package scorecard
 import (
 	"archive/tar"
 	"bytes"
-	"context"
 	"fmt"
 	"io"
 	"os"
@@ -32,7 +31,7 @@ import (
 )
 
 const (
-	STORAGE_SIDECAR_CONTAINER = "scorecard-gather"
+	StorageSidecarContainer = "scorecard-gather"
 )
 
 func (r PodTestRunner) execInPod(podName, mountPath, containerName string) (io.Reader, error) {
@@ -156,7 +155,7 @@ func addStorageToPod(podDef *v1.Pod, mountPath string) {
 
 	// add the storage sidecar container
 	storageContainer := v1.Container{
-		Name:            STORAGE_SIDECAR_CONTAINER,
+		Name:            StorageSidecarContainer,
 		Image:           "busybox",
 		ImagePullPolicy: v1.PullIfNotPresent,
 		Args: []string{
@@ -187,10 +186,10 @@ func addStorageToPod(podDef *v1.Pod, mountPath string) {
 
 }
 
-func gatherTestOutput(ctx context.Context, r PodTestRunner, suiteName, testName, podName, mountPath string) error {
+func gatherTestOutput(r PodTestRunner, suiteName, testName, podName, mountPath string) error {
 
 	//exec into sidecar container, run tar,  get reader
-	containerName := STORAGE_SIDECAR_CONTAINER
+	containerName := StorageSidecarContainer
 	reader, err := r.execInPod(podName, mountPath, containerName)
 	if err != nil {
 		return err
