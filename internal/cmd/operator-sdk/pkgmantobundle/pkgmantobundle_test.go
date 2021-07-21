@@ -164,19 +164,21 @@ var _ = Describe("Running pkgmanToBundle command", func() {
 				},
 			}
 
+			defaultChannel := "gamma"
+
 			It("should get the list of channels for corresponding CSV", func() {
 				channels := map[string][]string{
 					"memcached-operator:0.0.1": {"alpha", "beta"},
 				}
 
-				ch := getChannelsByCSV(&bundle, channels)
+				ch := getChannelsByCSV(&bundle, channels, defaultChannel)
 				Expect(ch).To(BeEquivalentTo("alpha,beta"))
 			})
 
 			It("if no channel is provided, default to preview", func() {
 				channels := map[string][]string{}
-				ch := getChannelsByCSV(&bundle, channels)
-				Expect(ch).To(BeEquivalentTo("preview"))
+				ch := getChannelsByCSV(&bundle, channels, defaultChannel)
+				Expect(ch).To(BeEquivalentTo(defaultChannel))
 			})
 		})
 	})
@@ -224,11 +226,11 @@ var _ = Describe("Running pkgmanToBundle command", func() {
 			Expect(err.Error()).To(ContainSubstring("cannot find packagename from the manifest directory"))
 		})
 
-		It("should assign default channel name of not provided", func() {
+		It("should error when defaultChannel name is empty", func() {
 			pkg.DefaultChannelName = ""
-			_, defaultChannel, _, err := getPackageMetadata(&pkg)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(defaultChannel).To(BeEquivalentTo("preview"))
+			_, _, _, err := getPackageMetadata(&pkg)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("cannot find the default channel for package"))
 		})
 	})
 })
