@@ -254,7 +254,19 @@ ok: [localhost] => {
 
 -------------------------------------------------------------------------------
 ```
+
+## Using Ansible Log Events
+
+Using the `--ansible-log-events` CLI flag, you can determine to what degree the Ansible task logs will be outputted. The flag can take any of the following values:
+
+1. `Nothing` - No tasks or task-related logs will be outputted.
+2. `Tasks` - Only Ansible Tasks will be outputted.
+3. `Everything` - All info logs and all tasks will be outputted.
+
+If you want more control over the logs that are outputted, consider using the [Zap Logger][Zap-Logger] and [verbosity annotations][verbosity-annotations] in tandem with the `--ansible-log-events` CLI flag. 
+
+
 [ansible-vault-doc]: https://docs.ansible.com/ansible/latest/user_guide/vault.html
-
-
+[Zap-Logger]: https://github.com/operator-framework/operator-sdk/blob/master/website/content/en/docs/building-operators/golang/references/logging.md#default-zap-logger
+[verbosity-annotations]: https://sdk.operatorframework.io/docs/building-operators/ansible/reference/advanced_options/#ansible-verbosity
 

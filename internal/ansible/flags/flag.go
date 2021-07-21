@@ -39,6 +39,7 @@ type Flags struct {
 	LeaderElectionNamespace string
 	GracefulShutdownTimeout time.Duration
 	AnsibleArgs             string
+	AnsibleLogEvents        string
 
 	// Path to a controller-runtime componentconfig file.
 	// If this is empty, use default values.
@@ -161,6 +162,11 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 		30*time.Second,
 		"The amount of time that will be spent waiting"+
 			" for runners to gracefully exit.",
+	)
+	flagSet.StringVar(&f.AnsibleLogEvents,
+		"ansible-log-events",
+		"",
+		"Ansible log events. The log level for console logging.",
 	)
 }
 
