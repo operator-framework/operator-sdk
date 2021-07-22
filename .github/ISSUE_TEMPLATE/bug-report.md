@@ -26,7 +26,7 @@ Note: Make sure to first check the prerequisites that can be found in the main R
 
 #### What did you see instead? Under which circumstances?
 
-<!-- A clear and concise description of what you expected to happen (or insert a code snippet). -->
+<!-- A clear and concise description of what ACTUALLY happened (or insert a code snippet). -->
 
 #### Environment
 
