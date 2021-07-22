@@ -68,6 +68,9 @@ type NamespacedOwnerReference struct {
 	Namespace string
 }
 
+// EncodeOwnerRef takes an ownerReference and a namespace and returns a base64 encoded
+// string that can be used in the username field of a request to associate the
+// owner with the request being made.
 func EncodeOwnerRef(ownerRef metav1.OwnerReference, namespace string) (string, error) {
 	nsOwnerRef := NamespacedOwnerReference{OwnerReference: ownerRef, Namespace: namespace}
 	ownerRefJSON, err := json.Marshal(nsOwnerRef)

@@ -61,9 +61,9 @@ var _ = Describe("proxyTests", func() {
 		// Should only be one string from 'X-Cache' header (explicitly set to HIT in proxy)
 		if resp.Header["X-Cache"] == nil {
 			t.Fatalf("Object was not retrieved from cache")
-			if resp.Header["X-Cache"][0] != "HIT" {
-				t.Fatalf("Cache response header found but got [%v], expected [HIT]", resp.Header["X-Cache"][0])
-			}
+		}
+		if resp.Header["X-Cache"][0] != "HIT" {
+			t.Fatalf("Cache response header found but got [%v], expected [HIT]", resp.Header["X-Cache"][0])
 		}
 		data := kcorev1.Pod{}
 		err = json.Unmarshal(body, &data)
