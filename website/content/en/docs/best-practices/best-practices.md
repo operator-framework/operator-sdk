@@ -38,6 +38,8 @@ Considerations for Operator developers:
 
 - Operators are instrumented to provide useful, actionable metrics to external systems (e.g. monitoring/alerting platforms).  Minimally, metrics should represent the software's health and key performance indicators, as well as support the creation of [service levels indicators](https://en.wikipedia.org/wiki/Service_level_indicator) such as throughput, latency, availability, errors, capacity, etc.
 
+- Operators may create objects as part of their operational duty. Object accumulation can consume unnecessary resources, slow down the API and clutter the user interface. As such it is important for operators to keep good hygiene and to clean up resources when they are not needed. Here are instructions on [how to handle cleanup on deletion][advanced-topics].
+
 ### Summary
 
 - One Operator per managed application
@@ -50,6 +52,7 @@ Considerations for Operator developers:
 - Use semver / observe Kubernetes guidelines on versioning APIs
 - Use OpenAPI spec with structural schema on CRDs
 - Operators expose metrics to external systems
+- Operators cleanup resources on deletion
 
 ## Running On-Cluster
 
@@ -98,3 +101,4 @@ On the cluster, an Operator...
 - Offers (pre)configuration via a `“Configuration CR”` instantiated by InitContainers
 
 [Dependency Resolution]: https://olm.operatorframework.io/docs/concepts/olm-architecture/dependency-resolution/
+[advanced-topics]:/docs/building-operators/golang/advanced-topics#handle-cleanup-on-deletion
