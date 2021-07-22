@@ -124,7 +124,7 @@ Operators may create objects as part of their operational duty. Object accumulat
 
 **Internal Resources**
 
-A typical example is jobs. When they get created one or multiple pods get spawn. When the jobs are deleted the associated pods are deleted as well. This is a very common pattern and it can easily be achieved by setting the owner reference on the child resource, the pod in this example. Here is a code snippet for it where "r" is the reconcilier and "ctrl" the controller-runtime library:
+A typical example of correct resource cleanup is the [Jobs](https://kubernetes.io/docs/concepts/workloads/controllers/job/) implementation. When a Job is created, one or multiple Pods are created as child resources. When a Job is deleted, the associated Pods are deleted as well. This is a very common pattern easily achieved by setting an owner reference from the parent (Job) to the child (Pod) object. Here is a code snippet for doing so, where "r" is the reconcilier and "ctrl" the controller-runtime library:
 
 ```go
 ctrl.SetControllerReference(job, pod, r.Scheme)
