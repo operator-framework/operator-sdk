@@ -122,7 +122,7 @@ To learn about how metrics work in the Operator SDK read the [metrics section][m
 
 Operators may create objects as part of their operational duty. Object accumulation can consume unnecessary resources, slow down the API and clutter the user interface. As such it is important for operators to keep good hygiene and to clean up resources when they are not needed. Here are a few common scenarios.
 
-**Internal Resources**
+#### Internal Resources
 
 A typical example of correct resource cleanup is the [Jobs](https://kubernetes.io/docs/concepts/workloads/controllers/job/) implementation. When a Job is created, one or multiple Pods are created as child resources. When a Job is deleted, the associated Pods are deleted as well. This is a very common pattern easily achieved by setting an owner reference from the parent (Job) to the child (Pod) object. Here is a code snippet for doing so, where "r" is the reconcilier and "ctrl" the controller-runtime library:
 
@@ -130,11 +130,11 @@ A typical example of correct resource cleanup is the [Jobs](https://kubernetes.i
 ctrl.SetControllerReference(job, pod, r.Scheme)
 ```
 
-Note that with CRD the default behavior for cascading deletion is background. [This page](https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection/) in kubernetes documentation provides additional information.
+Note that the default behavior for cascading deletion is background propagation, meaning deletion requests for child objects occur after the request to delete the parent object. [This Kubernetes doc](https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection/) provides alternative deletion types.
 
-**External Resources**
+#### External Resources
 
-Sometimes external resources or resources that are not owned by a custom resource need to be cleaned up when the parent resource is deleted. In that case [Finalizers](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#finalizers) can be leveraged. The deletion of the object becomes an update where a deletion timestamp is set. Without finalizers the object would just be dropped of the cache. The reconciliation loop of the controller will then need to check whether a date has been set for the deleteion timestamp, perform the cleanup and remove the finalizers to allow the garbage collection of the object.
+Sometimes external resources or resources that are not owned by a custom resource, those across namespaces for example, need to be cleaned up when the parent resource is deleted. In that case [Finalizers](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#finalizers) can be leveraged. A deletion request for an object with a finalizer becomes an update during which a deletion timestamp is set; the object is not deleted while the finalizer is present. The reconciliation loop of the custom resource's controller will then need to check whether a the deletion timestamp is set, perform the external cleanup operation(s), then remove the finalizer to allow garbage collection of the object. Multiple finalizers may be present on an object, each with a key that should indicatie what external resources require deletion by the controller.
 
 The following is a snippet from a theoretical controller file `controllers/memcached_controller.go` that implements a finalizer handler:
 
@@ -216,14 +216,14 @@ func (r *MemcachedReconciler) finalizeMemcached(reqLogger logr.Logger, m *cachev
 }
 ```
 
-**Complex cleanup logic**
+#### Complex cleanup logic
 
-Similar to the previous scenario finalizers can be used for implementing complex cleanup logic. Taking cron jobs as an example. They require to keep a number of past jobs, which have been spawned by the cron job controller. Therefore the cron job resource defines two fields successfulJobsHistoryLimit and failedJobsHistoryLimit. This is the role of the cron job controller to check the number of successful and failed jobs for a specific cron job and to delete the older ones when the limit has been exceeded. Here is [an example from Kubebuilder](https://book.kubebuilder.io/cronjob-tutorial/controller-implementation.html#3-clean-up-old-jobs-according-to-the-history-limit) for such a logic.
+Similar to the previous scenario, finalizers can be used for implementing complex cleanup logic. Take [CronJobs](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/) as an example: the controller maintains limited-size lists of jobs that have been created by the CronJob controller to check for deletion. These list sizes are configured by the CronJob fields [`.spec.successfulJobsHistoryLimit` and `.spec.failedJobsHistoryLimit`](https://kubernetes.io/docs/tasks/job/automated-tasks-with-cron-jobs/#jobs-history-limits), which specify how many completed and failed jobs should be kept. Check out the [Kubebuilder CronJob tutorial](https://book.kubebuilder.io/cronjob-tutorial/controller-implementation.html#3-clean-up-old-jobs-according-to-the-history-limit) for full implementation details.
 
-**Sensitive resources**
+#### Sensitive resources
 
-Sensitive resources need to be protected against unintended deletion. One typical example is Persistent Volume (PV) / Persistent Volume Claim (PVC). If a user tries to delete a PV that is bound by a PVC the PV is not removed immediately. PV removal is postponed until the PV is not bound to any PVC. To achieve a similar behaviour for your own resources Finalizers again can be leveraged. By setting a Finalizer on the PV like resource you controller can make sure there is no remaining resource depending on it before completing the deletion.
-In the other direction the user can specify what happens to a PV when the PVC is deleted through the reclaim policy. There are two options: "delete", which means that the PV is deleted or retain, where the PV and its associated storage are kept after the PVC deletion. Such a behaviour is achieved again through the use of Finalizers. Key is that the user can make a conscious decision between automated cleansing of unused resources (delete) and data protection (retain).
+Sensitive resources need to be protected against unintended deletion. An intuitive example of protecting resources is the [PersistentVolume (PV) / PersistentVolumeClaim (PVC)](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) relationship. A PV is first created, after which users can request access to that PV's storage by creating a PVC, which gets bound to the PV. If a user tries to delete a PV currently bound by a PVC, the PV is not removed immediately. Instead, PV removal is postponed until the PV is not bound to any PVC. Finalizers again can be leveraged to achieve a similar behaviour for your own PV-like custom resources: by setting a finalizer on an object, your controller can make sure there are no remaining objects bound to it before removing the finalizer and deleting the object.
+Additionally, the user who created the PVC can specify what happens to the underlying storage allocated in a PV when the PVC is deleted through the [reclaim policy](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#reclaiming). There are several options available, each of which defines a behavior that is achieved again through the use of finalizers. The key concept to take away is that your operator can give a user the power to decide how their resources are cleaned up via finalizers, which may be dangerous yet useful depending on your workloads.
 
 ### Leader election
 
