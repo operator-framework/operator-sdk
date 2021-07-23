@@ -52,11 +52,15 @@ import (
 var log = logf.Log.WithName("cmd")
 
 func printVersion() {
+	version := sdkVersion.GitVersion
+	if version == "unknown" {
+		version = sdkVersion.Version
+	}
 	log.Info("Version",
 		"Go Version", runtime.Version(),
 		"GOOS", runtime.GOOS,
 		"GOARCH", runtime.GOARCH,
-		"ansible-operator", sdkVersion.Version,
+		"ansible-operator", version,
 		"commit", sdkVersion.GitCommit)
 }
 
