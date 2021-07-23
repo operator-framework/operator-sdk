@@ -78,6 +78,7 @@ func (o Scorecard) Run(ctx context.Context) (testOutput v1alpha3.TestList, err e
 		if len(tests) == 0 {
 			continue
 		}
+		tests = o.setTestDefaults(tests)
 
 		output := make(chan v1alpha3.Test, len(tests))
 		if stage.Parallel {
@@ -108,6 +109,15 @@ func (o Scorecard) Run(ctx context.Context) (testOutput v1alpha3.TestList, err e
 	}
 
 	return testOutput, err
+}
+
+func (o Scorecard) setTestDefaults(tests []v1alpha3.Test) []v1alpha3.Test {
+	for i, _ := range tests {
+		if tests[i].Storage.Spec.MountPath == "" {
+			tests[i].Storage.Spec.MountPath = o.Config.Storage.Spec.MountPath
+		}
+	}
+	return tests
 }
 
 func (o Scorecard) runStageParallel(ctx context.Context, tests []v1alpha3.TestConfiguration, results chan<- v1alpha3.Test) {
