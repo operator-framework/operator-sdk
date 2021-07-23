@@ -16,9 +16,9 @@ package scorecard
 
 import (
 	"archive/tar"
-	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -34,7 +34,7 @@ const (
 	StorageSidecarContainer = "scorecard-gather"
 )
 
-func (r PodTestRunner) execInPod(podName, mountPath, containerName string) (io.Reader, error) {
+func (r PodTestRunner) execInPod(podName, mountPath, containerName string) (io.Reader, io.Reader, error) {
 	cmd := []string{
 		"tar",
 		"cf",
@@ -42,7 +42,8 @@ func (r PodTestRunner) execInPod(podName, mountPath, containerName string) (io.R
 		mountPath,
 	}
 
-	reader, outStream := io.Pipe()
+	stdoutReader, outStream := io.Pipe()
+	stderrReader, errStream := io.Pipe()
 	const tty = false
 	req := r.Client.CoreV1().RESTClient().Post().
 		Resource("pods").
@@ -59,24 +60,24 @@ func (r PodTestRunner) execInPod(podName, mountPath, containerName string) (io.R
 		scheme.ParameterCodec,
 	)
 
-	var stderr bytes.Buffer
 	exec, err := remotecommand.NewSPDYExecutor(r.RESTConfig, "POST", req.URL())
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	go func() {
 		defer outStream.Close()
+		defer errStream.Close()
 		err = exec.Stream(remotecommand.StreamOptions{
 			Stdin:  nil,
 			Stdout: outStream,
-			Stderr: &stderr,
+			Stderr: errStream,
 		})
 		if err != nil {
 			log.Error(err)
 		}
 	}()
-	return reader, err
+	return stdoutReader, stderrReader, err
 }
 
 func getStoragePrefix(file string) string {
@@ -111,17 +112,9 @@ func untarAll(reader io.Reader, destDir, prefix string) error {
 			}
 			continue
 		}
-		evaledPath, err := filepath.EvalSymlinks(baseName)
-		if err != nil {
-			return err
-		}
 
 		if mode&os.ModeSymlink != 0 {
 			linkname := header.Linkname
-
-			if !filepath.IsAbs(linkname) {
-				_ = filepath.Join(evaledPath, linkname)
-			}
 
 			if err := os.Symlink(linkname, destFileName); err != nil {
 				return err
@@ -190,7 +183,7 @@ func gatherTestOutput(r PodTestRunner, suiteName, testName, podName, mountPath s
 
 	//exec into sidecar container, run tar,  get reader
 	containerName := StorageSidecarContainer
-	reader, err := r.execInPod(podName, mountPath, containerName)
+	stdoutReader, stderrReader, err := r.execInPod(podName, mountPath, containerName)
 	if err != nil {
 		return err
 	}
@@ -199,9 +192,20 @@ func gatherTestOutput(r PodTestRunner, suiteName, testName, podName, mountPath s
 	prefix := getStoragePrefix(srcPath)
 	prefix = path.Clean(prefix)
 	destPath := getDestPath(r.TestOutput, suiteName, testName)
-	err = untarAll(reader, destPath, prefix)
+	err = untarAll(stdoutReader, destPath, prefix)
 	if err != nil {
 		return err
+	}
+	stderr, err := ioutil.ReadAll(stderrReader)
+	if err != nil {
+		return err
+	}
+	if len(stderr) > 0 {
+		destFileName := filepath.Join(destPath, "tar_stderr")
+		err = ioutil.WriteFile(destFileName, stderr, 0644)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
