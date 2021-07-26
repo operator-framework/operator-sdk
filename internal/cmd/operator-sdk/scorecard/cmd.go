@@ -49,6 +49,7 @@ type scorecardCmd struct {
 	list           bool
 	skipCleanup    bool
 	waitTime       time.Duration
+	testOutput     string
 }
 
 func NewCmd() *cobra.Command {
@@ -85,6 +86,8 @@ If the argument holds an image tag, it must be present remotely.`,
 		"Disable resource cleanup after tests are run")
 	scorecardCmd.Flags().DurationVarP(&c.waitTime, "wait-time", "w", 30*time.Second,
 		"seconds to wait for tests to complete. Example: 35s")
+	scorecardCmd.Flags().StringVarP(&c.testOutput, "test-output", "t", "test-output",
+		"Test output directory.")
 
 	return scorecardCmd
 }
@@ -196,11 +199,12 @@ func (c *scorecardCmd) run() (err error) {
 			ServiceAccount: c.serviceAccount,
 			Namespace:      scorecard.GetKubeNamespace(c.kubeconfig, c.namespace),
 			BundlePath:     c.bundle,
+			TestOutput:     c.testOutput,
 			BundleMetadata: metadata,
 		}
 
 		// Only get the client if running tests.
-		if runner.Client, err = scorecard.GetKubeClient(c.kubeconfig); err != nil {
+		if runner.Client, runner.RESTConfig, err = scorecard.GetKubeClient(c.kubeconfig); err != nil {
 			return fmt.Errorf("error getting kubernetes client: %w", err)
 		}
 
