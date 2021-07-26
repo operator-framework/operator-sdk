@@ -112,7 +112,7 @@ func (o Scorecard) Run(ctx context.Context) (testOutput v1alpha3.TestList, err e
 }
 
 func (o Scorecard) setTestDefaults(tests []v1alpha3.TestConfiguration) []v1alpha3.TestConfiguration {
-	for i, _ := range tests {
+	for i := range tests {
 		if len(tests[i].Storage.Spec.MountPath.Path) == 0 {
 			tests[i].Storage.Spec.MountPath.Path = o.Config.Storage.Spec.MountPath.Path
 		}
