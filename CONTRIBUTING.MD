@@ -66,11 +66,11 @@ Most contributions involve some sort of documentation. See our [doc contribution
 
 ## Changelog
 
-The operator-sdk maintains a changelog and most contributions should involve a changelog fragment following the following [template][changelog-template]
+The operator-sdk maintains a changelog and most contributions should involve a changelog entry. See our [changelog contribution guidelines][changelog-contrib] for details.
 
 [operator_framework]: https://groups.google.com/forum/#!forum/operator-framework
 [developer-guide]: https://sdk.operatorframework.io/docs/contribution-guidelines/developer-guide/
 [reporting-issues]: https://sdk.operatorframework.io/docs/contribution-guidelines/reporting-issues/
 [golang-style-doc]: https://github.com/golang/go/wiki/CodeReviewComments
 [doc-contrib]: https://sdk.operatorframework.io/docs/contribution-guidelines/documentation
-[changelog-template]: https://github.com/operator-framework/operator-sdk/blob/master/changelog/fragments/00-template.yaml
+[changelog-contrib]:https://master.sdk.operatorframework.io/docs/contribution-guidelines/changelog
