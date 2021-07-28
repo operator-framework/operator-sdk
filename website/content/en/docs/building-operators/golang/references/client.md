@@ -570,7 +570,7 @@ func (r *MemcachedReconciler) deploymentForMemcached(m *cachev1alpha1.Memcached)
     // Set Memcached instance as the owner and controller.memcac
     // NOTE: calling SetControllerReference, and setting owner references in
     // general, is important as it allows deleted objects to be garbage collected.
-    controllerutil.SetControllerReference(m, dep, r.scheme)
+    controllerutil.SetControllerReference(m, dep, r.Scheme)
     return dep
 }
 
