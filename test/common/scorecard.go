@@ -97,18 +97,18 @@ func ScorecardSpec(tc *testutils.TestContext, operatorType string) func() {
 			cmd = exec.Command(tc.BinaryName, "scorecard", "bundle",
 				"--selector", "suite=basic",
 				"--output", "json",
-				"--test-output", "testdata/",
+				"--test-output", "/testdata",
 				"--wait-time", "2m")
 			outputBytes, err = tc.Run(cmd)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(json.Unmarshal(outputBytes, &output)).To(Succeed())
 
-			if _, err := os.Stat("testdata/"); !os.IsNotExist(err) {
+			if _, err := os.Stat("/testdata"); !os.IsNotExist(err) {
 				// testdata/ does exist
 				Expect(err).NotTo(HaveOccurred())
 			}
 
-			if _, err := os.Stat("testdata/"); os.IsNotExist(err) {
+			if _, err := os.Stat("/testdata"); os.IsNotExist(err) {
 				// testdata/ does NOT exist
 				Fail("testdata storage folder failed to scaffold")
 			}
