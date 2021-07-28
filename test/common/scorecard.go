@@ -17,6 +17,7 @@ package common
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 
@@ -90,6 +91,33 @@ func ScorecardSpec(tc *testutils.TestContext, operatorType string) func() {
 				fmt.Fprintln(GinkgoWriter, "      Output: ", results[0].State)
 				Expect(results[0].State).To(Equal(expected[results[0].Name]))
 			}
+		})
+
+		It("should configure scorecard storage successfully", func() {
+			cmd = exec.Command(tc.BinaryName, "scorecard", "bundle",
+				"--selector", "suite=basic",
+				"--output", "json",
+				"--test-output", "testdata/",
+				"--wait-time", "2m")
+			outputBytes, err = tc.Run(cmd)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(json.Unmarshal(outputBytes, &output)).To(Succeed())
+
+			if _, err := os.Stat("testdata/"); !os.IsNotExist(err) {
+				// testdata/ does exist
+				Expect(err).NotTo(HaveOccurred())
+			}
+
+			if _, err := os.Stat("testdata/"); os.IsNotExist(err) {
+				// testdata/ does NOT exist
+				Fail("testdata storage folder failed to scaffold")
+			}
+
+			Expect(output.Items).To(HaveLen(1))
+			results := output.Items[0].Status.Results
+			Expect(results).To(HaveLen(1))
+			Expect(results[0].Name).To(Equal("basic-check-spec"))
+			Expect(results[0].State).To(Equal(v1alpha3.PassState))
 		})
 	}
 }
