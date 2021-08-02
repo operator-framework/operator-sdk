@@ -104,13 +104,15 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 		ctrlpredicate.Or(ctrlpredicate.GenerationChangedPredicate{}, libpredicate.NoGenerationPredicate{}),
 	}
 
-	if !reflect.ValueOf(options.Selector).IsZero() {
-		filterPredicate, err := ctrlpredicate.LabelSelectorPredicate(options.Selector)
-		if err != nil {
-			log.Error(err, "Unable to create predicate from selector.")
-			os.Exit(1)
-		}
-		predicates = append(predicates, filterPredicate)
+	p, err := parsePredicateSelector(options.Selector)
+
+	if err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
+	if p != nil {
+		predicates = append(predicates, p)
 	}
 
 	u := &unstructured.Unstructured{}
@@ -122,4 +124,18 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 	}
 
 	return &c
+}
+
+// parsePredicateSelector parses the selector in the WatchOptions and creates a predicate
+// that is used to filter resources based on the specified selector
+func parsePredicateSelector(selector metav1.LabelSelector) (ctrlpredicate.Predicate, error) {
+	// If a selector has been specified in watches.yaml, add it to the watch's predicates.
+	if !reflect.ValueOf(selector).IsZero() {
+		p, err := ctrlpredicate.LabelSelectorPredicate(selector)
+		if err != nil {
+			return nil, fmt.Errorf("error constructing predicate from watches selector: %v", err)
+		}
+		return p, nil
+	}
+	return nil, nil
 }
