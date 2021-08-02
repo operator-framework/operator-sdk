@@ -55,7 +55,7 @@ func TestLoadReader(t *testing.T) {
 			expectErr: false,
 		},
 		{
-			name: "valid with override expansion",
+			name: "valid with override env expansion",
 			data: `---
 - group: mygroup
   version: v1alpha1
@@ -75,6 +75,48 @@ func TestLoadReader(t *testing.T) {
 				},
 			},
 			expectErr: false,
+		},
+		{
+			name: "valid with override template expansion",
+			data: `---
+- group: mygroup
+  version: v1alpha1
+  kind: MyKind
+  chart: ../../../internal/plugins/helm/v1/chartutil/testdata/test-chart
+  watchDependentResources: false
+  overrideValues:
+    repo: '{{ ("$MY_IMAGE" | split ":")._0 }}'
+    tag: '{{ ("$MY_IMAGE" | split ":")._1 }}'
+`,
+			env: map[string]string{"MY_IMAGE": "quay.io/operator-framework/helm-operator:latest"},
+			expectWatches: []Watch{
+				{
+					GroupVersionKind:        schema.GroupVersionKind{Group: "mygroup", Version: "v1alpha1", Kind: "MyKind"},
+					ChartDir:                "../../../internal/plugins/helm/v1/chartutil/testdata/test-chart",
+					WatchDependentResources: &falseVal,
+					OverrideValues: map[string]string{
+						"repo": "quay.io/operator-framework/helm-operator",
+						"tag":  "latest",
+					},
+				},
+			},
+			expectErr: false,
+		},
+
+		{
+			name: "invalid with override template expansion",
+			data: `---
+- group: mygroup
+  version: v1alpha1
+  kind: MyKind
+  chart: ../../../internal/plugins/helm/v1/chartutil/testdata/test-chart
+  watchDependentResources: false
+  overrideValues:
+    repo: '{{ ("$MY_IMAGE" | split ":")._0 }}'
+    tag: '{{ ("$MY_IMAGE" | split ":")._1'
+`,
+			env:       map[string]string{"MY_IMAGE": "quay.io/operator-framework/helm-operator:latest"},
+			expectErr: true,
 		},
 		{
 			name: "multiple gvk",
