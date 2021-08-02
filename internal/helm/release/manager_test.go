@@ -15,8 +15,6 @@
 package release
 
 import (
-	"bytes"
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -249,19 +247,10 @@ func TestManagerisUpgrade(t *testing.T) {
 			name:            "different values",
 			releaseName:     "deployed",
 			releaseNs:       "deployed-ns",
-			values:          map[string]interface{}{"key": "1", "int": int32(1)},
+			values:          map[string]interface{}{"key": "1"},
 			chart:           newTestChart(t, "./testdata/simple"),
-			deployedRelease: newTestRelease(newTestChart(t, "./testdata/simple"), map[string]interface{}{"key": "", "int": int64(1)}, "deployed", "deployed-ns"),
+			deployedRelease: newTestRelease(newTestChart(t, "./testdata/simple"), map[string]interface{}{"key": ""}, "deployed", "deployed-ns"),
 			want:            true,
-		},
-		{
-			name:            "nil values",
-			releaseName:     "deployed",
-			releaseNs:       "deployed-ns",
-			values:          nil,
-			chart:           newTestChart(t, "./testdata/simple"),
-			deployedRelease: newTestRelease(newTestChart(t, "./testdata/simple"), map[string]interface{}{}, "deployed", "deployed-ns"),
-			want:            false,
 		},
 	}
 	for _, test := range tests {
@@ -272,9 +261,8 @@ func TestManagerisUpgrade(t *testing.T) {
 				values:      test.values,
 				chart:       test.chart,
 			}
-			isUpgrade, err := m.isUpgrade(test.deployedRelease)
+			isUpgrade := m.isUpgrade(test.deployedRelease)
 			assert.Equal(t, test.want, isUpgrade)
-			assert.Equal(t, nil, err)
 		})
 	}
 }
@@ -285,16 +273,13 @@ func newTestChart(t *testing.T, path string) *cpb.Chart {
 	return chart
 }
 
-func newTestRelease(chart *cpb.Chart, values map[string]interface{}, name, namespace string) *rpb.Release { // nolint: unparam
+func newTestRelease(chart *cpb.Chart, values map[string]interface{}, name, namespace string) *rpb.Release {
 	release := rpb.Mock(&rpb.MockReleaseOptions{
 		Name:      name,
 		Namespace: namespace,
+		Chart:     chart,
 		Version:   1,
 	})
-
-	buffer := &bytes.Buffer{}
-	_ = json.NewEncoder(buffer).Encode(chart)
-	_ = json.NewDecoder(buffer).Decode(release.Chart)
 	release.Config = values
 	return release
 }
