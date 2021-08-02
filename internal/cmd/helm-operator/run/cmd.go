@@ -24,8 +24,10 @@ import (
 
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -34,7 +36,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 	crmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 
-	"github.com/operator-framework/operator-sdk/internal/clientbuilder"
 	"github.com/operator-framework/operator-sdk/internal/helm/controller"
 	"github.com/operator-framework/operator-sdk/internal/helm/flags"
 	"github.com/operator-framework/operator-sdk/internal/helm/metrics"
@@ -47,11 +48,15 @@ import (
 var log = logf.Log.WithName("cmd")
 
 func printVersion() {
+	version := sdkVersion.GitVersion
+	if version == "unknown" {
+		version = sdkVersion.Version
+	}
 	log.Info("Version",
 		"Go Version", runtime.Version(),
 		"GOOS", runtime.GOOS,
 		"GOARCH", runtime.GOARCH,
-		"helm-operator", sdkVersion.Version,
+		"helm-operator", version,
 		"commit", sdkVersion.GitCommit)
 }
 
@@ -128,10 +133,23 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 
 	// Set default manager options
 	options = f.ToManagerOptions(options)
-	if options.ClientBuilder == nil {
-		options.ClientBuilder = clientbuilder.NewUnstructedCached()
-	}
 
+	if options.NewClient == nil {
+		options.NewClient = func(cache cache.Cache, config *rest.Config, options client.Options, uncachedObjects ...client.Object) (client.Client, error) {
+			// Create the Client for Write operations.
+			c, err := client.New(config, options)
+			if err != nil {
+				return nil, err
+			}
+
+			return client.NewDelegatingClient(client.NewDelegatingClientInput{
+				CacheReader:       cache,
+				Client:            c,
+				UncachedObjects:   uncachedObjects,
+				CacheUnstructured: true,
+			})
+		}
+	}
 	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
 	log = log.WithValues("Namespace", namespace)
 	if found {
@@ -184,6 +202,7 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 			WatchDependentResources: *w.WatchDependentResources,
 			OverrideValues:          w.OverrideValues,
 			MaxConcurrentReconciles: f.MaxConcurrentReconciles,
+			Selector:                w.Selector,
 		})
 		if err != nil {
 			log.Error(err, "Failed to add manager factory to controller.")

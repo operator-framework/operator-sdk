@@ -56,7 +56,7 @@ const prepareTemplate = `---
         chdir: '{{ "{{ config_dir }}" }}/testing'
 
     - name: Set pull policy
-      command: '{{ "{{ kustomize }}" }} edit add patch pull_policy/{{ "{{ operator_pull_policy }}" }}.yaml'
+      command: '{{ "{{ kustomize }}" }} edit add patch --path pull_policy/{{ "{{ operator_pull_policy }}" }}.yaml'
       args:
         chdir: '{{ "{{ config_dir }}" }}/testing'
 

@@ -16,9 +16,9 @@ Table of contents:
 
 ## Prerequisites
 
-- [`git`](https://git-scm.com/downloads)
-- [`make`](https://www.gnu.org/software/make/)
-- [`sed`](https://www.gnu.org/software/sed/)
+- [`git`](https://git-scm.com/downloads) 2.2+
+- [`make`](https://www.gnu.org/software/make/) 4.2+
+- [`sed`](https://www.gnu.org/software/sed/) 4.3+
 
 ##### MacOS users
 
@@ -26,6 +26,22 @@ Install GNU `sed` and `make` which may not be by default:
 
 ```sh
 brew install gnu-sed make
+```
+
+Verify that the version of `make` is higher than 4.2 using command `make --version`.
+
+Add the gnubin directory to your PATH from your `~/.bashrc`:
+
+```sh
+echo 'export PATH="/usr/local/opt/make/libexec/gnubin:$PATH"' >> ~/.bashrc
+```
+
+Verify that the version of `sed` is higher than 4.3 using command `gnu-sed --version`.
+
+Add the `gnubin` directory to your PATH from your `~/.bashrc`:
+
+```sh
+echo 'export PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"' >> ~/.bashrc
 ```
 
 ## Major and Minor releases

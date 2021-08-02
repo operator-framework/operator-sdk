@@ -19,6 +19,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	cruntime "sigs.k8s.io/controller-runtime/pkg/client/config"
 )
@@ -30,24 +31,24 @@ import (
 // - in-cluster connection for when the sdk is run within a cluster instead of
 //   the command line
 // TODO(joelanford): migrate scorecard use `internal/operator.Configuration`
-func GetKubeClient(kubeconfig string) (client kubernetes.Interface, err error) {
+func GetKubeClient(kubeconfig string) (client kubernetes.Interface, config *rest.Config, err error) {
 
 	if kubeconfig != "" {
 		os.Setenv(k8sutil.KubeConfigEnvVar, kubeconfig)
 	}
 
-	config, err := cruntime.GetConfig()
+	config, err = cruntime.GetConfig()
 	if err != nil {
-		return client, err
+		return client, config, err
 	}
 
 	// create the clientset
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return client, err
+		return client, config, err
 	}
 
-	return clientset, err
+	return clientset, config, err
 }
 
 // GetKubeNamespace returns the kubernetes namespace to use

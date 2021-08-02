@@ -26,8 +26,10 @@ import (
 
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -43,7 +45,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/ansible/proxy/controllermap"
 	"github.com/operator-framework/operator-sdk/internal/ansible/runner"
 	"github.com/operator-framework/operator-sdk/internal/ansible/watches"
-	"github.com/operator-framework/operator-sdk/internal/clientbuilder"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/internal/version"
 )
@@ -51,11 +52,15 @@ import (
 var log = logf.Log.WithName("cmd")
 
 func printVersion() {
+	version := sdkVersion.GitVersion
+	if version == "unknown" {
+		version = sdkVersion.Version
+	}
 	log.Info("Version",
 		"Go Version", runtime.Version(),
 		"GOOS", runtime.GOOS,
 		"GOARCH", runtime.GOARCH,
-		"ansible-operator", sdkVersion.Version,
+		"ansible-operator", version,
 		"commit", sdkVersion.GitCommit)
 }
 
@@ -104,15 +109,7 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 		os.Exit(1)
 	}
 
-	urlPath, err := url.Parse(cfg.Host)
-
-	if err != nil {
-		log.Error(err, "Failed to Parse the Path URL.")
-		os.Exit(1)
-	}
-
-	if urlPath != nil && urlPath.Path != "" {
-		log.Error(fmt.Errorf("api endpoint '%s' contains a path component, which the proxy server is currently unable to handle properly. Work on this issue is being tracked here: https://github.com/operator-framework/operator-sdk/issues/4925", cfg.Host), "")
+	if err := verifyCfgURL(cfg.Host); err != nil {
 		os.Exit(1)
 	}
 
@@ -145,8 +142,20 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 	// Set default manager options
 	// TODO: probably should expose the host & port as an environment variables
 	options = f.ToManagerOptions(options)
-	if options.ClientBuilder == nil {
-		options.ClientBuilder = clientbuilder.NewUnstructedCached()
+	if options.NewClient == nil {
+		options.NewClient = func(cache cache.Cache, config *rest.Config, options client.Options, uncachedObjects ...client.Object) (client.Client, error) {
+			// Create the Client for Write operations.
+			c, err := client.New(config, options)
+			if err != nil {
+				return nil, err
+			}
+			return client.NewDelegatingClient(client.NewDelegatingClientInput{
+				CacheReader:       cache,
+				Client:            c,
+				UncachedObjects:   uncachedObjects,
+				CacheUnstructured: true,
+			})
+		}
 	}
 
 	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
@@ -264,6 +273,21 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 		os.Exit(1)
 	}
 	log.Info("Exiting.")
+}
+
+// verifyCfgURL verifies the path component of api endpoint
+// passed through the config.
+func verifyCfgURL(path string) error {
+	urlPath, err := url.Parse(path)
+	if err != nil {
+		log.Error(err, "Failed to Parse the Path URL.")
+		return err
+	}
+	if urlPath != nil && urlPath.Path != "" {
+		log.Error(fmt.Errorf("api endpoint '%s' contains a path component, which the proxy server is currently unable to handle properly. Work on this issue is being tracked here: https://github.com/operator-framework/operator-sdk/issues/4925", path), "")
+		return err
+	}
+	return nil
 }
 
 // exitIfUnsupported prints an error containing unsupported field names and exits
