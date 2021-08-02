@@ -32,7 +32,6 @@ import (
 	"helm.sh/helm/v3/pkg/storage/driver"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -126,27 +125,20 @@ func (m *manager) Sync(ctx context.Context) error {
 	m.deployedRelease = deployedRelease
 	m.isInstalled = true
 
-	m.isUpgradeRequired = m.isUpgrade(deployedRelease)
+	// Get the next candidate release to determine if an upgrade is necessary.
+	candidateRelease, err := m.getCandidateRelease(m.namespace, m.releaseName, m.chart, m.values)
+	if err != nil {
+		return fmt.Errorf("failed to get candidate release: %w", err)
+	}
+	if deployedRelease.Manifest != candidateRelease.Manifest {
+		m.isUpgradeRequired = true
+	}
 
 	return nil
 }
 
 func notFoundErr(err error) bool {
 	return err != nil && strings.Contains(err.Error(), "not found")
-}
-
-func (m manager) isUpgrade(deployedRelease *rpb.Release) bool {
-	if deployedRelease == nil {
-		return false
-	}
-
-	// Judging whether to skip updates
-	skip := m.namespace == deployedRelease.Namespace
-	skip = skip && m.releaseName == deployedRelease.Name
-	skip = skip && apiequality.Semantic.DeepEqual(m.chart, deployedRelease.Chart)
-	skip = skip && apiequality.Semantic.DeepEqual(m.values, deployedRelease.Config)
-
-	return !skip
 }
 
 func (m manager) getDeployedRelease() (*rpb.Release, error) {
@@ -158,6 +150,14 @@ func (m manager) getDeployedRelease() (*rpb.Release, error) {
 		return nil, err
 	}
 	return deployedRelease, nil
+}
+
+func (m manager) getCandidateRelease(namespace, name string, chart *cpb.Chart,
+	values map[string]interface{}) (*rpb.Release, error) {
+	upgrade := action.NewUpgrade(m.actionConfig)
+	upgrade.Namespace = namespace
+	upgrade.DryRun = true
+	return upgrade.Run(name, chart, values)
 }
 
 // InstallRelease performs a Helm release install.
