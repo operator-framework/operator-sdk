@@ -20,7 +20,7 @@ For further context about the relationship between Kubebuilder and Operator SDK,
 ## Can I use the Kubebuilder docs?
 
 Yes, you can use [https://book.kubebuilder.io/](https://book.kubebuilder.io/). Just keep in mind that when you see an instruction such as:
-`$ kubebuilder <command>` you will use `$ operator-sdk <command>`. 
+`$ kubebuilder <command>` you will use `$ operator-sdk <command>`.
 
 ## Controller Runtime FAQ
 
@@ -154,5 +154,5 @@ SHELL := /bin/bash
 [owner-references-permission-enforcement]: https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#ownerreferencespermissionenforcement
 [rbac-markers]: https://book.kubebuilder.io/reference/markers/rbac.html
 [rbac]:https://kubernetes.io/docs/reference/access-authn-authz/rbac/
-[scorecard-doc]: https://sdk.operatorframework.io/docs/advanced-topics/scorecard/
+[scorecard-doc]: https://sdk.operatorframework.io/docs/testing-operators/scorecard/
 [project-doc]: /docs/overview/project-layout
