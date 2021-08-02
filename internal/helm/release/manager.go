@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"reflect"
 	"strings"
 
 	jsonpatch "gomodules.xyz/jsonpatch/v3"
@@ -127,10 +126,8 @@ func (m *manager) Sync(ctx context.Context) error {
 	m.deployedRelease = deployedRelease
 	m.isInstalled = true
 
-	m.isUpgradeRequired, err = m.isUpgrade(deployedRelease)
-	if err != nil {
-		return fmt.Errorf("failed to get upgrade status: %w", err)
-	}
+	m.isUpgradeRequired = m.isUpgrade(deployedRelease)
+
 	return nil
 }
 
@@ -138,41 +135,18 @@ func notFoundErr(err error) bool {
 	return err != nil && strings.Contains(err.Error(), "not found")
 }
 
-// This is caused by the different logic of loading from local and loading from secret
-// For example, the Raw field, which has the tag `json:"-"`, causes the Unmarshal to be lost when it into Release
-// We need to make them follow the JSON tag
-// see: https://github.com/helm/helm/blob/cf0c6fed519d48101cd69ce01a355125215ee46f/pkg/storage/driver/util.go#L81
-func equalJSONStruct(a, b interface{}) (bool, error) {
-	if reflect.ValueOf(a).IsNil() || reflect.ValueOf(b).IsNil() {
-		return apiequality.Semantic.DeepEqual(a, b), nil
-	}
-
-	aBuf, bBuf := &bytes.Buffer{}, &bytes.Buffer{}
-	err := json.NewEncoder(aBuf).Encode(a)
-	if err != nil {
-		return false, err
-	}
-	err = json.NewEncoder(bBuf).Encode(b)
-	return aBuf.String() == bBuf.String(), err
-}
-
-func (m manager) isUpgrade(deployedRelease *rpb.Release) (bool, error) {
+func (m manager) isUpgrade(deployedRelease *rpb.Release) bool {
 	if deployedRelease == nil {
-		return false, nil
+		return false
 	}
 
 	// Judging whether to skip updates
 	skip := m.namespace == deployedRelease.Namespace
 	skip = skip && m.releaseName == deployedRelease.Name
+	skip = skip && apiequality.Semantic.DeepEqual(m.chart, deployedRelease.Chart)
+	skip = skip && apiequality.Semantic.DeepEqual(m.values, deployedRelease.Config)
 
-	ok, err := equalJSONStruct(m.chart, deployedRelease.Chart)
-	if err != nil {
-		return false, err
-	}
-	skip = skip && ok
-
-	ok, err = equalJSONStruct(m.values, deployedRelease.Config)
-	return !(skip && ok), err
+	return !skip
 }
 
 func (m manager) getDeployedRelease() (*rpb.Release, error) {
