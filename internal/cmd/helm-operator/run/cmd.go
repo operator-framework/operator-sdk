@@ -202,6 +202,7 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 			WatchDependentResources: *w.WatchDependentResources,
 			OverrideValues:          w.OverrideValues,
 			MaxConcurrentReconciles: f.MaxConcurrentReconciles,
+			Selector:                w.Selector,
 		})
 		if err != nil {
 			log.Error(err, "Failed to add manager factory to controller.")
