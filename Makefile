@@ -132,7 +132,7 @@ test-sanity: generate fix ## Test repo formatting, linting, etc.
 test-docs: ## Test doc links
 	go run ./release/changelog/gen-changelog.go -validate-only
 	git submodule update --init --recursive website/
-	./hack/check-links.sh
+	# ./hack/check-links.sh
 
 .PHONY: test-unit
 TEST_PKGS = $(shell go list ./... | grep -v -E 'github.com/operator-framework/operator-sdk/test/')
