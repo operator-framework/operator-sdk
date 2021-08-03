@@ -154,5 +154,5 @@ SHELL := /bin/bash
 [owner-references-permission-enforcement]: https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#ownerreferencespermissionenforcement
 [rbac-markers]: https://book.kubebuilder.io/reference/markers/rbac.html
 [rbac]:https://kubernetes.io/docs/reference/access-authn-authz/rbac/
-[scorecard-doc]: https://sdk.operatorframework.io/docs/testing-operators/scorecard/
+[scorecard-doc]:/docs/advanced-topics/scorecard/
 [project-doc]: /docs/overview/project-layout
