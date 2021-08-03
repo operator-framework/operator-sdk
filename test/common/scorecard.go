@@ -17,7 +17,6 @@ package common
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"os/exec"
 	"strings"
 
@@ -103,16 +102,6 @@ func ScorecardSpec(tc *testutils.TestContext, operatorType string) func() {
 			outputBytes, err = tc.Run(cmd)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(json.Unmarshal(outputBytes, &output)).To(Succeed())
-
-			if _, err := os.Stat("/testdata"); !os.IsNotExist(err) {
-				// testdata/ does exist
-				Expect(err).NotTo(HaveOccurred())
-			}
-
-			if _, err := os.Stat("/testdata"); os.IsNotExist(err) {
-				// testdata/ does NOT exist
-				Fail("testdata storage folder failed to scaffold")
-			}
 
 			Expect(output.Items).To(HaveLen(1))
 			results := output.Items[0].Status.Results
