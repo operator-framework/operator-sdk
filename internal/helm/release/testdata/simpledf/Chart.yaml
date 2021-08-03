@@ -1,8 +1,0 @@
-apiVersion: v1
-description: a simple charts
-name: simple
-keywords:
-  - helm
-  - operator-sdk
-version: 0.0.1+master
-appVersion: "master"
