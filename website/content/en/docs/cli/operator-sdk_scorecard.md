@@ -27,6 +27,7 @@ operator-sdk scorecard [flags]
   -l, --selector string          label selector to determine which tests are run
   -s, --service-account string   Service account to use for tests (default "default")
   -x, --skip-cleanup             Disable resource cleanup after tests are run
+  -t, --test-output string       Test output directory. (default "test-output")
   -w, --wait-time duration       seconds to wait for tests to complete. Example: 35s (default 30s)
 ```
 

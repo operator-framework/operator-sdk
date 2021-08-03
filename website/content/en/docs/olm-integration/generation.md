@@ -101,32 +101,28 @@ import (
 func main() {
   ...
 
-  // Standard Manager setup.
+  // Configure a webhook.Server with the correct path and file names.
+  // If webhookServer is nil, which will be the case of OLM >= 0.17 is available,
+  // the manager will create a server for you using Host, Port,
+  // and the default CertDir, KeyName, and CertName.
+  var webhookServer *webhook.Server
+  const legacyOLMCertDir = "/apiserver.local.config/certificates"
+  if info, err := os.Stat(legacyOLMCertDir); err == nil && info.IsDir() {
+    webhookServer = &webhook.Server{
+      Host:     <some host>, // Set this only if normally set in ctrl.Options below.
+      Port:     <some port>, // Set this only if normally set in ctrl.Options below.
+      CertDir:  legacyOLMCertDir,
+      CertName: "apiserver.crt",
+      KeyName:  "apiserver.key",
+    }
+  }
+
   mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-    Host: <some host>, // May not be configured explicitly.
-    Port: <some port>, // May not be configured explicitly.
+    Host:          <some host>,
+    Port:          <some port>,
+    WebhookServer: webhookServer, // Host/Port will not be used if webhookServer is nil.
   })
-
-  ...
-
-  // Before any webhooks are registered:
-  var certDir, certName, keyName string
-  if info, err := os.Stat("/apiserver.local.config/certificates"); err == nil && info.IsDir() {
-    certDir = "/apiserver.local.config/certificates"
-    certName = "apiserver.crt"
-    keyName = "apiserver.key"
-  }
-  if err = mgr.Add(webhook.Server{
-    Host:     <some host>, // Set this only if set in ctrl.Options above.
-    Port:     <some port>, // Set this only if set in ctrl.Options above.
-    CertDir:  certDir,     // Defaults to the correct path if unset.
-    CertName: certName,    // Defaults to the correct path if unset.
-    KeyName:  keyName,     // Defaults to the correct path if unset.
-  }); err != nil {
-    setupLog.Error(err, "unable to add webhook server")
-    os.Exit(1)
-  }
-
+ 
   // Now you can register webhooks.
   ...
 }
@@ -422,6 +418,7 @@ being managed, each with a `name` and `url`.
 - `spec.selector` _(user)_ : selectors by which the Operator can pair resources in a cluster.
 - `spec.icon` _(user)_ : a base64-encoded icon unique to the Operator, set in a `base64data` field with a `mediatype`.
 - `spec.maturity` _(user)_: the Operator's maturity, ex. `alpha`.
+- `spec.minKubeVersion` _(user)_: the minimal Kubernetes version supported by the Operator, ex. `1.16.0`.
 - `spec.webhookdefinitions`: any webhooks the Operator uses.
 - `spec.relatedImages` _(user)_: a list of image tags containing SHA digests [mapped to in-CSV names][relatedimages]
 that your Operator might require to perform their functions.

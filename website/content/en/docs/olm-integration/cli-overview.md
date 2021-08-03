@@ -51,7 +51,7 @@ must ensure the in-use build tool is able to push to/pull from the registry:
 - `none` (containerd): uses docker's `config.json`, [certificate configuration][none-certs]
 
 The `run bundle` or `run bundle-upgrade` commands use the `none` image tool, described above, in-cluster.
-These commands accept the names of secrets available in the deployment namesace that contain configuration file data.
+These commands accept the names of secrets available in the deployment namespace that contain configuration file data.
 Ideally a cluster admin will provision a namespace and service account for bundle testing,
 such that they include and reference these secrets:
 - Create an [image pull secret][k8s-image-pull-sec] for your `config.json` and [add it to your service account][k8s-pull-sec-sa].

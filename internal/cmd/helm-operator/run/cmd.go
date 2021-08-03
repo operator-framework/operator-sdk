@@ -48,11 +48,15 @@ import (
 var log = logf.Log.WithName("cmd")
 
 func printVersion() {
+	version := sdkVersion.GitVersion
+	if version == "unknown" {
+		version = sdkVersion.Version
+	}
 	log.Info("Version",
 		"Go Version", runtime.Version(),
 		"GOOS", runtime.GOOS,
 		"GOARCH", runtime.GOARCH,
-		"helm-operator", sdkVersion.Version,
+		"helm-operator", version,
 		"commit", sdkVersion.GitCommit)
 }
 
@@ -198,6 +202,7 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 			WatchDependentResources: *w.WatchDependentResources,
 			OverrideValues:          w.OverrideValues,
 			MaxConcurrentReconciles: f.MaxConcurrentReconciles,
+			Selector:                w.Selector,
 		})
 		if err != nil {
 			log.Error(err, "Failed to add manager factory to controller.")
