@@ -14,8 +14,8 @@ or the helm binary (helm v3) for security reasons.
 With the helm Operator this becomes possible by override values. This enforces that certain
 template values provided by the chart's default `values.yaml` or by a CR spec are always set
 when rendering the chart. If the value is set by a CR it gets overridden by the global override value.
-The override value can be static but can also refer to an environment variable. To pass down environment
-variables to the chart override values is currently the only way.
+The override value can be static but can also refer to an environment variable and use go templates.
+To pass down environment variables to the chart override values is currently the only way.
 
 An example use case of this is when your helm chart references container images by chart variables,
 which is a good practice.
@@ -26,6 +26,8 @@ versus individually per CR / chart release.
 > Note that it is strongly recommended to reference container images in your chart by helm variables
 > and then also associate these with an environment variable of your Operator like shown below.
 > This allows your Operator to be mirrored for offline usage when packaged for OLM.
+
+## Basic usage
 
 To configure your operator with override values, add an `overrideValues` map to your
 `watches.yaml` file for the GVK and chart you need to override. For example, to change
@@ -39,14 +41,16 @@ following:
   kind: Nginx
   chart: helm-charts/nginx
   overrideValues:
-    image.repository: quay.io/mycustomrepo
+    image.repository: quay.io/mycustomrepo/myimage
 ```
 
-By setting `image.repository` to `quay.io/mycustomrepo` you are ensuring that
-`quay.io/mycustomrepo` will always be used instead of the chart's default repository
+By setting `image.repository` to `quay.io/mycustomrepo/myimage` you are ensuring that
+`quay.io/mycustomrepo/myimage` will always be used instead of the chart's default repository
 (`nginx`). If the CR attempts to set this value, it will be ignored.
 
-It is now possible to reference environment variables in the `overrideValues` section:
+## Using environment variables
+
+It is also possible to reference environment variables in the `overrideValues` section:
 
 ```yaml
   overrideValues:
@@ -61,7 +65,7 @@ following snippet to the container spec:
 ```yaml
 env:
   - name: IMAGE_REPOSITORY
-    value: quay.io/mycustomrepo
+    value: quay.io/mycustomrepo/myimage
 ```
 
 If an environment variable reference is listed in `overrideValues`, but is not present
@@ -69,6 +73,32 @@ in the environment when the operator runs, it will resolve to an empty string an
 override all other values. Therefore, these environment variables should _always_ be
 set. It is suggested to update the Dockerfile to set these environment variables to
 the same defaults that are defined by the chart.
+
+## Using Go templates
+
+Lastly, you can use Go `text/template` strings along with
+[slim-sprig](https://go-task.github.io/slim-sprig/) functions to provide even more
+flexibility when building override values.
+
+For example, consider a situation where your operator has an environment variable,
+`$IMAGE`, set to `quay.io/mycustomrepo/myimage:latest`. You can use sprig template
+functions to split that environment variable into its repo and tag:
+
+```yaml
+  overrideValues:
+    image.repository: '{{ ("$IMAGE" | split ":")._0 }}'
+    image.tag: '{{ ("$IMAGE" | split ":")._1 }}'
+```
+
+The resulting override values sent to the helm installation would look like:
+
+```yaml
+  overrideValues:
+    image.repository: quay.io/mycustomrepo/myimage
+    image.tag: latest
+```
+
+## Event generation
 
 To warn users that their CR settings may be ignored, the Helm operator creates events on
 the CR that include the name and value of each overridden value. For example:

@@ -15,12 +15,15 @@
 package watches
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
+	"text/template"
 
+	sprig "github.com/go-task/slim-sprig"
 	"helm.sh/helm/v3/pkg/chartutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -112,21 +115,34 @@ func LoadReader(reader io.Reader) ([]Watch, error) {
 			trueVal := true
 			w.WatchDependentResources = &trueVal
 		}
-		w.OverrideValues = expandOverrideEnvs(w.OverrideValues)
+		w.OverrideValues, err = expandOverrideValues(w.OverrideValues)
+		if err != nil {
+			return nil, fmt.Errorf("failed to expand override values: %v", err)
+		}
 		watches[i] = w
 	}
 	return watches, nil
 }
 
-func expandOverrideEnvs(in map[string]string) map[string]string {
+func expandOverrideValues(in map[string]string) (map[string]string, error) {
 	if in == nil {
-		return nil
+		return nil, nil
 	}
 	out := make(map[string]string)
 	for k, v := range in {
-		out[k] = os.ExpandEnv(v)
+		envV := os.ExpandEnv(v)
+
+		v := &bytes.Buffer{}
+		tmplV, err := template.New(k).Funcs(sprig.TxtFuncMap()).Parse(envV)
+		if err != nil {
+			return nil, fmt.Errorf("invalid template string %q: %v", envV, err)
+		}
+		if err := tmplV.Execute(v, nil); err != nil {
+			return nil, fmt.Errorf("failed to execute template %q: %v", envV, err)
+		}
+		out[k] = v.String()
 	}
-	return out
+	return out, nil
 }
 
 func verifyGVK(gvk schema.GroupVersionKind) error {
