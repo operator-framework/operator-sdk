@@ -59,7 +59,7 @@ help: ## Display this help.
 ##@ Build
 
 run: ansible-operator ## Run against the configured Kubernetes cluster in ~/.kube/config
-	$(ANSIBLE_OPERATOR) run
+	ANSIBLE_ROLES_PATH="$(ANSIBLE_ROLES_PATH):$(shell pwd)/roles" $(ANSIBLE_OPERATOR) run
 
 docker-build: ## Build docker image with the manager.
 	docker build -t ${IMG} .

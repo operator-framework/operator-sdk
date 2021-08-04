@@ -1,0 +1,18 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      (ansible/v1) Previously, when scaffolding an Ansible-based operator with
+      both Roles and Playbooks, the roles imported by the playbook could not be
+      found when running locally (`make run`). This change prepends the
+      `ANSIBLE_ROLES_PATH` environment variable with the path to the local
+      roles directory.
+    kind: "bugfix"
+    breaking: false
+    migration:
+      header: (optional) Add local Ansible Roles path to Env in `make run`
+      body: >
+        If you would like to run your operator locally using `make run`, modify
+        the `run` target in the `Makefile` to:
+        `ANSIBLE_ROLES_PATH="$(ANSIBLE_ROLES_PATH):$(shell pwd)/roles"
+        $(ANSIBLE_OPERATOR) run`
