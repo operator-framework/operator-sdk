@@ -177,8 +177,8 @@ func addInitCustomizations(projectName string) error {
 	// todo: remove it when we solve the issue operator-framework/operator-sdk#3573
 	const resourcesLimitsFragment = `  resources:
           limits:
-            cpu: 100m
-            memory: 30Mi
+            cpu: 200m
+            memory: 100Mi
           requests:
             cpu: 100m
             memory: 20Mi
