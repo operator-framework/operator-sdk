@@ -38,16 +38,16 @@ const (
 // are added to out. Any bindings with some associations, but with non-associations, are added to out unmodified.
 func (c *Manifests) SplitCSVPermissionsObjects(extraSAs []string) (inPerms, inCPerms, out []client.Object) {
 	// Create a set of ServiceAccount names to match against below.
-	saNameSet := make(map[string]struct{})
+	csvSAs := make(map[string]struct{})
 	for _, dep := range c.Deployments {
 		saName := dep.Spec.Template.Spec.ServiceAccountName
 		if saName == "" {
 			saName = defaultServiceAccountName
 		}
-		saNameSet[saName] = struct{}{}
+		csvSAs[saName] = struct{}{}
 	}
 	for _, extraSA := range extraSAs {
-		saNameSet[extraSA] = struct{}{}
+		csvSAs[extraSA] = struct{}{}
 	}
 
 	// Construct sets for lookups.
@@ -86,9 +86,9 @@ func (c *Manifests) SplitCSVPermissionsObjects(extraSAs []string) (inPerms, inCP
 	// bound Subjects from partial bindings to easily find concrete bindings that bind non-CSV RBAC.
 	// Those with no Subjects left will be removed from the partial binding lists; their concrete counterparts should
 	// be added to out.
-	inRoleNames := pRoleBindings.getRolesBoundToPartialBindings(roleKind, roleNameMap, saNameSet)
-	inCRoleNamesNScope := pRoleBindings.getRolesBoundToPartialBindings(cRoleKind, cRoleNameMap, saNameSet)
-	inCRoleNamesCScope := pCRoleBindings.getRolesBoundToPartialBindings(cRoleKind, cRoleNameMap, saNameSet)
+	inRoleNames := pRoleBindings.getRolesBoundToPartialBindings(roleKind, roleNameMap, csvSAs)
+	inCRoleNamesNScope := pRoleBindings.getRolesBoundToPartialBindings(cRoleKind, cRoleNameMap, csvSAs)
+	inCRoleNamesCScope := pCRoleBindings.getRolesBoundToPartialBindings(cRoleKind, cRoleNameMap, csvSAs)
 
 	// Add {Cluster}Roles bound to a ServiceAccount to either namespace- or cluster-scoped permission sets.
 	for _, roleName := range inRoleNames {
@@ -118,6 +118,14 @@ func (c *Manifests) SplitCSVPermissionsObjects(extraSAs []string) (inPerms, inCP
 	}
 	for _, pBinding := range pCRoleBindings {
 		out = append(out, cRoleBindingMap[pBinding.Name])
+	}
+
+	// All ServiceAccounts not in the CSV should be in out.
+	for i := range c.ServiceAccounts {
+		sa := c.ServiceAccounts[i]
+		if _, csvHasSA := csvSAs[sa.Name]; !csvHasSA {
+			out = append(out, &sa)
+		}
 	}
 
 	return inPerms, inCPerms, out
