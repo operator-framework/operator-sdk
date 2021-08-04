@@ -1,0 +1,20 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      For helm-based operators, reverted the following PRs which modified helm release
+      equality comparison.
+      - https://github.com/operator-framework/operator-sdk/pull/5042
+      - https://github.com/operator-framework/operator-sdk/pull/4937
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: change
+
+    # Is this a breaking change?
+    breaking: false
+
