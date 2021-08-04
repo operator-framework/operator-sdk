@@ -15,21 +15,18 @@
 package release
 
 import (
-	"bytes"
-	"encoding/json"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	cpb "helm.sh/helm/v3/pkg/chart"
-	lpb "helm.sh/helm/v3/pkg/chart/loader"
-	rpb "helm.sh/helm/v3/pkg/release"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	apitypes "k8s.io/apimachinery/pkg/types"
+	"k8s.io/cli-runtime/pkg/resource"
+
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/runtime"
-	apitypes "k8s.io/apimachinery/pkg/types"
-	"k8s.io/cli-runtime/pkg/resource"
 )
 
 func newTestUnstructured(containers []interface{}) *unstructured.Unstructured {
@@ -215,86 +212,4 @@ func TestManagerGenerateStrategicMergePatch(t *testing.T) {
 		assert.Equal(t, test.patchType, patchType)
 		assert.Equal(t, test.patch, string(diff))
 	}
-}
-
-func TestManagerisUpgrade(t *testing.T) {
-	tests := []struct {
-		name            string
-		releaseName     string
-		releaseNs       string
-		values          map[string]interface{}
-		chart           *cpb.Chart
-		deployedRelease *rpb.Release
-		want            bool
-	}{
-		{
-			name:            "ok",
-			releaseName:     "deployed",
-			releaseNs:       "deployed-ns",
-			values:          map[string]interface{}{"key": "value"},
-			chart:           newTestChart(t, "./testdata/simple"),
-			deployedRelease: newTestRelease(newTestChart(t, "./testdata/simple"), map[string]interface{}{"key": "value"}, "deployed", "deployed-ns"),
-			want:            false,
-		},
-		{
-			name:            "different chart",
-			releaseName:     "deployed",
-			releaseNs:       "deployed-ns",
-			values:          map[string]interface{}{"key": "value"},
-			chart:           newTestChart(t, "./testdata/simple"),
-			deployedRelease: newTestRelease(newTestChart(t, "./testdata/simpledf"), map[string]interface{}{"key": "value"}, "deployed", "deployed-ns"),
-			want:            true,
-		},
-		{
-			name:            "different values",
-			releaseName:     "deployed",
-			releaseNs:       "deployed-ns",
-			values:          map[string]interface{}{"key": "1", "int": int32(1)},
-			chart:           newTestChart(t, "./testdata/simple"),
-			deployedRelease: newTestRelease(newTestChart(t, "./testdata/simple"), map[string]interface{}{"key": "", "int": int64(1)}, "deployed", "deployed-ns"),
-			want:            true,
-		},
-		{
-			name:            "nil values",
-			releaseName:     "deployed",
-			releaseNs:       "deployed-ns",
-			values:          nil,
-			chart:           newTestChart(t, "./testdata/simple"),
-			deployedRelease: newTestRelease(newTestChart(t, "./testdata/simple"), map[string]interface{}{}, "deployed", "deployed-ns"),
-			want:            false,
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			m := manager{
-				releaseName: test.releaseName,
-				namespace:   test.releaseNs,
-				values:      test.values,
-				chart:       test.chart,
-			}
-			isUpgrade, err := m.isUpgrade(test.deployedRelease)
-			assert.Equal(t, test.want, isUpgrade)
-			assert.Equal(t, nil, err)
-		})
-	}
-}
-
-func newTestChart(t *testing.T, path string) *cpb.Chart {
-	chart, err := lpb.Load(path)
-	assert.Nil(t, err)
-	return chart
-}
-
-func newTestRelease(chart *cpb.Chart, values map[string]interface{}, name, namespace string) *rpb.Release { // nolint: unparam
-	release := rpb.Mock(&rpb.MockReleaseOptions{
-		Name:      name,
-		Namespace: namespace,
-		Version:   1,
-	})
-
-	buffer := &bytes.Buffer{}
-	_ = json.NewEncoder(buffer).Encode(chart)
-	_ = json.NewDecoder(buffer).Decode(release.Chart)
-	release.Config = values
-	return release
 }

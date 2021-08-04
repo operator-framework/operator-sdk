@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"reflect"
 	"strings"
 
 	jsonpatch "gomodules.xyz/jsonpatch/v3"
@@ -33,7 +32,6 @@ import (
 	"helm.sh/helm/v3/pkg/storage/driver"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -127,52 +125,20 @@ func (m *manager) Sync(ctx context.Context) error {
 	m.deployedRelease = deployedRelease
 	m.isInstalled = true
 
-	m.isUpgradeRequired, err = m.isUpgrade(deployedRelease)
+	// Get the next candidate release to determine if an upgrade is necessary.
+	candidateRelease, err := m.getCandidateRelease(m.namespace, m.releaseName, m.chart, m.values)
 	if err != nil {
-		return fmt.Errorf("failed to get upgrade status: %w", err)
+		return fmt.Errorf("failed to get candidate release: %w", err)
 	}
+	if deployedRelease.Manifest != candidateRelease.Manifest {
+		m.isUpgradeRequired = true
+	}
+
 	return nil
 }
 
 func notFoundErr(err error) bool {
 	return err != nil && strings.Contains(err.Error(), "not found")
-}
-
-// This is caused by the different logic of loading from local and loading from secret
-// For example, the Raw field, which has the tag `json:"-"`, causes the Unmarshal to be lost when it into Release
-// We need to make them follow the JSON tag
-// see: https://github.com/helm/helm/blob/cf0c6fed519d48101cd69ce01a355125215ee46f/pkg/storage/driver/util.go#L81
-func equalJSONStruct(a, b interface{}) (bool, error) {
-	if reflect.ValueOf(a).IsNil() || reflect.ValueOf(b).IsNil() {
-		return apiequality.Semantic.DeepEqual(a, b), nil
-	}
-
-	aBuf, bBuf := &bytes.Buffer{}, &bytes.Buffer{}
-	err := json.NewEncoder(aBuf).Encode(a)
-	if err != nil {
-		return false, err
-	}
-	err = json.NewEncoder(bBuf).Encode(b)
-	return aBuf.String() == bBuf.String(), err
-}
-
-func (m manager) isUpgrade(deployedRelease *rpb.Release) (bool, error) {
-	if deployedRelease == nil {
-		return false, nil
-	}
-
-	// Judging whether to skip updates
-	skip := m.namespace == deployedRelease.Namespace
-	skip = skip && m.releaseName == deployedRelease.Name
-
-	ok, err := equalJSONStruct(m.chart, deployedRelease.Chart)
-	if err != nil {
-		return false, err
-	}
-	skip = skip && ok
-
-	ok, err = equalJSONStruct(m.values, deployedRelease.Config)
-	return !(skip && ok), err
 }
 
 func (m manager) getDeployedRelease() (*rpb.Release, error) {
@@ -184,6 +150,14 @@ func (m manager) getDeployedRelease() (*rpb.Release, error) {
 		return nil, err
 	}
 	return deployedRelease, nil
+}
+
+func (m manager) getCandidateRelease(namespace, name string, chart *cpb.Chart,
+	values map[string]interface{}) (*rpb.Release, error) {
+	upgrade := action.NewUpgrade(m.actionConfig)
+	upgrade.Namespace = namespace
+	upgrade.DryRun = true
+	return upgrade.Run(name, chart, values)
 }
 
 // InstallRelease performs a Helm release install.
