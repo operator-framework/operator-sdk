@@ -242,6 +242,16 @@ The `--skip-cleanup` flag can be used when executing the `operator-sdk scorecard
 This is useful when debugging or writing new tests so that you can view
 the test logs or the pod manifests.
 
+### Storing scorecard test output
+
+The `--test-output` flag can be used when executing the `operator-sdk scorecard` command with a config specifying [output persistence][storage] to store the output of the scorecard tests in a specific directory. Any persistent volume data will be stored in the specified local directory upon completion of the scorecard tests.
+
+```console
+$ operator-sdk scorecard ./bundle --test-output=/mytestoutput
+```
+
+**Note**: By default, the gathered test output will be stored in `$(pwd)/test-output`.
+
 ### Scorecard initContainer
 
 The scorecard inserts an `initContainer` into the test pods it creates. The
@@ -301,3 +311,4 @@ connection to invoke the Kube API.
 [sample_makefile]: https://github.com/operator-framework/operator-sdk/blob/09c3aa14625965af9f22f513cd5c891471dbded2/Makefile
 [kustomize-patchJson6902]: https://kubernetes-sigs.github.io/kustomize/api-reference/kustomization/patchesjson6902/
 [testresults]:https://github.com/operator-framework/api/blob/333d064/pkg/apis/scorecard/v1alpha3/test_types.go#L35
+[storage]:https://pkg.go.dev/github.com/operator-framework/api@v0.10.4/pkg/apis/scorecard/v1alpha3#Storage
