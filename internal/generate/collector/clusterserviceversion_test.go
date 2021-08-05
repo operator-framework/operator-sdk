@@ -21,6 +21,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -160,6 +161,10 @@ var _ = Describe("SplitCSVPermissionsObjects", func() {
 
 		complexTestSetup := func() {
 			c.Deployments = []appsv1.Deployment{newDeploymentWithServiceAccount(depSA)}
+			c.ServiceAccounts = []corev1.ServiceAccount{
+				newServiceAccount(depSA),
+				newServiceAccount(extraSA),
+			}
 			role1, role2 := newRole(roleName1), newRole(roleName2)
 			c.Roles = []rbacv1.Role{role1, role2}
 			// Use the same names as for Roles to make sure Kind is respected
@@ -198,12 +203,14 @@ var _ = Describe("SplitCSVPermissionsObjects", func() {
 			Expect(getClusterRoleNames(inPerm)).To(Equal([]string{roleName1}))
 			Expect(inCPerm).To(HaveLen(1))
 			Expect(getClusterRoleNames(inCPerm)).To(Equal([]string{roleName1}))
-			Expect(out).To(HaveLen(5))
+			Expect(out).To(HaveLen(6))
 			Expect(getRoleNames(out)).To(Equal([]string{roleName2}))
 			Expect(getClusterRoleNames(out)).To(Equal([]string{roleName2}))
 			Expect(getRoleBindingNames(out)).To(Equal([]string{bindingName1, bindingName2}))
 			Expect(getClusterRoleBindingNames(out)).To(Equal([]string{bindingName2}))
+			Expect(getServiceAccountNames(out)).To(Equal([]string{extraSA}))
 		})
+
 		It("contains a Deployment serviceAccountName and extra ServiceAccount", func() {
 			complexTestSetup()
 			inPerm, inCPerm, out = c.SplitCSVPermissionsObjects([]string{extraSA})
@@ -231,6 +238,10 @@ func getClusterRoleNames(objs []client.Object) []string {
 
 func getClusterRoleBindingNames(objs []client.Object) []string {
 	return getNamesForKind("ClusterRoleBinding", objs)
+}
+
+func getServiceAccountNames(objs []client.Object) []string {
+	return getNamesForKind("ServiceAccount", objs)
 }
 
 func getNamesForKind(kind string, objs []client.Object) (names []string) {
@@ -299,4 +310,10 @@ func newSubject(name, kind string) (s rbacv1.Subject) {
 
 func newServiceAccountSubject(name string) (s rbacv1.Subject) {
 	return newSubject(name, "ServiceAccount")
+}
+
+func newServiceAccount(name string) (sa corev1.ServiceAccount) {
+	sa.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("ServiceAccount"))
+	sa.Name = name
+	return sa
 }
