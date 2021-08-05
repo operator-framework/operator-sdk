@@ -309,6 +309,13 @@ Prior to an Operator SDK release, add bindata (if required) for a new OLM versio
 3. Run `make bindata`.
 4. Update the list of supported OLM versions stated in the [`Overview`][overview] section of SDK documentation is updated.
 
+### Patch releases in parallel:
+
+  - Releasing in order is nice but not worth inconvenience. Release order affects the order on GitHub releases, and which 
+    is labeled "latest release".
+  - Do not unlock v* while other releases are in progress. Instead, have an admin do the merges.
+  - Release announcements should be consolidated.
+
 [netlify-deploy]:https://docs.netlify.com/site-deploys/overview/#deploy-summary
 [doc-owners]: https://github.com/operator-framework/operator-sdk/blob/master/OWNERS
 [release-page]:https://github.com/operator-framework/operator-sdk/releases
