@@ -379,7 +379,7 @@ var _ = Describe("findMatchingDeploymentAndServiceForWebhook", func() {
 		port1 := new(int32)
 		*port1 = 2311
 		crdToConfigPath := map[string]apiextv1.WebhookConversion{
-			"crd-test-1": apiextv1.WebhookConversion{
+			"crd-test-1": {
 				ClientConfig: &apiextv1.WebhookClientConfig{
 					Service: &apiextv1.ServiceReference{
 						Path: &path1,
@@ -388,7 +388,7 @@ var _ = Describe("findMatchingDeploymentAndServiceForWebhook", func() {
 				},
 			},
 
-			"crd-test-2": apiextv1.WebhookConversion{
+			"crd-test-2": {
 				ClientConfig: &apiextv1.WebhookClientConfig{
 					Service: &apiextv1.ServiceReference{
 						Path: &path1,
