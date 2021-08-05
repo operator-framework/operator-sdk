@@ -39,7 +39,7 @@ require (
 	k8s.io/kubectl v0.21.0
 	sigs.k8s.io/controller-runtime v0.9.2
 	sigs.k8s.io/controller-tools v0.6.0
-	sigs.k8s.io/kubebuilder/v3 v3.0.0-alpha.0.0.20210707171043-359e8aa70c2b
+	sigs.k8s.io/kubebuilder/v3 v3.0.0-alpha.0.0.20210803185103-51e4a9aa5055
 	sigs.k8s.io/yaml v1.2.0
 )
 

@@ -203,6 +203,7 @@ spec:
                 ports:
                 - containerPort: 8443
                   name: https
+                  protocol: TCP
                 resources: {}
               - args:
                 - --health-probe-bind-address=:8081
@@ -225,8 +226,8 @@ spec:
                   periodSeconds: 10
                 resources:
                   limits:
-                    cpu: 100m
-                    memory: 90Mi
+                    cpu: 200m
+                    memory: 100Mi
                   requests:
                     cpu: 100m
                     memory: 60Mi

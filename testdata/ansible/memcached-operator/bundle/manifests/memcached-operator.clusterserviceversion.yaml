@@ -115,6 +115,7 @@ spec:
                 ports:
                 - containerPort: 8443
                   name: https
+                  protocol: TCP
                 resources: {}
               - args:
                 - --health-probe-bind-address=:6789
