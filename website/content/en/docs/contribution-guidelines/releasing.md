@@ -311,9 +311,9 @@ Prior to an Operator SDK release, add bindata (if required) for a new OLM versio
 
 ### Patch releases in parallel:
 
-  - Releasing in order is nice but not worth inconvenience. Release order affects the order on GitHub releases, and which 
+  - Releasing in order is nice but not worth the inconvenience. Release order affects the order on GitHub releases, and which 
     is labeled "latest release".
-  - Do not unlock v* while other releases are in progress. Instead, have an admin do the merges.
+  - Do not unlock v.* branches while other releases are in progress. Instead, have an admin do the merges.
   - Release announcements should be consolidated.
 
 [netlify-deploy]:https://docs.netlify.com/site-deploys/overview/#deploy-summary
