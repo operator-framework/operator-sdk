@@ -199,10 +199,6 @@ func addInitCustomizations(projectName string) error {
 	}
 
 	// Increase the default memory required.
-	err = sdkutil.ReplaceInFile(managerFile, "memory: 30Mi", "memory: 90Mi")
-	if err != nil {
-		return err
-	}
 	err = sdkutil.ReplaceInFile(managerFile, "memory: 20Mi", "memory: 60Mi")
 	if err != nil {
 		return err
