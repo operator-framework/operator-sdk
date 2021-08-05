@@ -31,23 +31,6 @@ func GetManifestObjects(c *collector.Manifests, extraSAs []string) (objs []clien
 		objs = append(objs, &c.V1beta1CustomResourceDefinitions[i])
 	}
 
-	// All ServiceAccounts passed in should be written.
-	saSet := make(map[string]struct{}, len(extraSAs))
-	for _, saName := range extraSAs {
-		saSet[saName] = struct{}{}
-	}
-	for i := range c.ServiceAccounts {
-		sa := c.ServiceAccounts[i]
-		saSet[sa.GetName()] = struct{}{}
-		objs = append(objs, &sa)
-	}
-	extraSAs = make([]string, len(saSet))
-	i := 0
-	for saName := range saSet {
-		extraSAs[i] = saName
-		i++
-	}
-
 	// All Services passed in should be written.
 	for i := range c.Services {
 		objs = append(objs, &c.Services[i])
@@ -61,7 +44,7 @@ func GetManifestObjects(c *collector.Manifests, extraSAs []string) (objs []clien
 		}
 	}
 
-	// RBAC objects that are not a part of the CSV should be written.
+	// RBAC objects (including ServiceAccounts) that are not a part of the CSV should be written.
 	_, _, rbacObjs := c.SplitCSVPermissionsObjects(extraSAs)
 	objs = append(objs, rbacObjs...)
 
