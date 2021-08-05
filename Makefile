@@ -162,7 +162,7 @@ test-e2e-teardown:
 # Repeated rules are executed in the order they appear.
 $(e2e_targets):: test-e2e-setup image/scorecard-test
 test-e2e:: $(e2e_tests) ## Run e2e tests
-	
+
 test-e2e-go:: image/custom-scorecard-tests ## Run Go e2e tests
 	go test ./test/e2e/go -v -ginkgo.v
 test-e2e-ansible:: image/ansible-operator ## Run Ansible e2e tests
