@@ -345,7 +345,7 @@ has a custom CA, these [configuration steps][image-reg-config] must be complete.
 operator-sdk run bundle example.com/memcached-operator-bundle:v0.0.1
 ```
 
-Check out the [docs][quickstart-bundle] for a deep dive into `operator-sdk`'s OLM integration.
+Check out the [docs][tutorial-bundle] for a deep dive into `operator-sdk`'s OLM integration.
 
 
 ## Create a Memcached CR
@@ -478,8 +478,9 @@ Next, check out the following:
 [role-based-access-control]: https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control#iam-rolebinding-bootstrap
 [multigroup-kubebuilder-doc]: https://book.kubebuilder.io/migration/multi-group.html
 [doc-bundle]:https://github.com/operator-framework/operator-registry/blob/v1.16.1/docs/design/operator-bundle.md#operator-bundle
+[tutorial-bundle]:/docs/olm-integration/tutorial-bundle
 [quickstart-bundle]:/docs/olm-integration/quickstart-bundle
-[doc-olm]:/docs/olm-integration/quickstart-bundle/#enabling-olm
+[doc-olm]:/docs/olm-integration/tutorial-bundle/#enabling-olm
 [conditionals]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
 [kubernetes-extend-api]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/
 [reconcile-godoc]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/reconcile

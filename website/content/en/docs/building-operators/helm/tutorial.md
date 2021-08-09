@@ -197,7 +197,7 @@ There are three ways to run the operator:
 
 - As Go program outside a cluster
 - As a Deployment inside a Kubernetes cluster
-- Managed by the [Operator Lifecycle Manager (OLM)][doc-olm] in [bundle][quickstart-bundle] format
+- Managed by the [Operator Lifecycle Manager (OLM)][doc-olm] in [bundle][tutorial-bundle] format
 
 ### 1. Run locally outside the cluster
 
@@ -248,7 +248,7 @@ has a custom CA, these [configuration steps][image-reg-config] must be complete.
 operator-sdk run bundle example.com/nginx-operator-bundle:v0.0.1
 ```
 
-Check out the [docs][quickstart-bundle] for a deep dive into `operator-sdk`'s OLM integration.
+Check out the [docs][tutorial-bundle] for a deep dive into `operator-sdk`'s OLM integration.
 
 
 ## Create a Nginx CR
@@ -366,7 +366,7 @@ Next, check out the following:
 [helm-charts]:https://helm.sh/docs/topics/charts/
 [helm-values]:https://helm.sh/docs/intro/using_helm/#customizing-the-chart-before-installing
 [helm-official]:https://helm.sh/docs/
-[quickstart-bundle]:/docs/olm-integration/quickstart-bundle
-[doc-olm]:/docs/olm-integration/quickstart-bundle/#enabling-olm
+[tutorial-bundle]:/docs/olm-integration/tutorial-bundle
+[doc-olm]:/docs/olm-integration/tutorial-bundle/#enabling-olm
 [olm-integration]:/docs/olm-integration
 [advanced-features]:/docs/building-operators/helm/reference/advanced_features

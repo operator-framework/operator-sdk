@@ -174,6 +174,6 @@ Let's look at the anatomy of the `cleanup` configuration model:
 [csv-install-modes]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md#operator-metadata
 [cli-olm-install]:/docs/cli/operator-sdk_olm_install
 [cli-olm-status]:/docs/cli/operator-sdk_olm_status
-[creating-bundles]:/docs/olm-integration/quickstart-bundle/#creating-a-bundle
+[creating-bundles]:/docs/olm-integration/tutorial-bundle/#creating-a-bundle
 [add-sa-secret]:https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#add-imagepullsecrets-to-a-service-account
 [image-reg-config]:/docs/olm-integration/cli-overview#private-bundle-and-catalog-image-registries
