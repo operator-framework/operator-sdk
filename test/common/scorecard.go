@@ -97,8 +97,7 @@ func ScorecardSpec(tc *testutils.TestContext, operatorType string) func() {
 				"--selector", "suite=basic",
 				"--output", "json",
 				"--test-output", "/testdata",
-				"--wait-time", "2m",
-				"--skip-cleanup")
+				"--wait-time", "2m")
 			outputBytes, err = tc.Run(cmd)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(json.Unmarshal(outputBytes, &output)).To(Succeed())
