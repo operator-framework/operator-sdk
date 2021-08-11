@@ -1,7 +1,0 @@
-entries:
-  - description: >
-      Added a predicate for helm operators that filters resources based on selectors specified in watches.yaml.
-      Only the resources that contain the labels specified by selectors will be reconciled.
-
-    kind: addition
-    breaking: false
