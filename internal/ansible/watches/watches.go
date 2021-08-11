@@ -85,36 +85,6 @@ var (
 	ansibleVerbosityDefault        = 2
 )
 
-// Creates, populates, and returns a LabelSelector object. Used in Unmarshal().
-func parseLabelSelector(dls tempLabelSelector) metav1.LabelSelector {
-	obj := metav1.LabelSelector{}
-	obj.MatchLabels = dls.MatchLabels
-
-	for _, v := range dls.MatchExpressions {
-		requirement := metav1.LabelSelectorRequirement{
-			Key:      v.Key,
-			Operator: v.Operator,
-			Values:   v.Values,
-		}
-
-		obj.MatchExpressions = append(obj.MatchExpressions, requirement)
-	}
-
-	return obj
-}
-
-// Temporary structs created to store yaml parsing
-type tempLabelSelector struct {
-	MatchLabels      map[string]string `yaml:"matchLabels,omitempty"`
-	MatchExpressions []tempRequirement `json:"matchExpressions,omitempty"`
-}
-
-type tempRequirement struct {
-	Key      string                       `json:"key"`
-	Operator metav1.LabelSelectorOperator `json:"operator"`
-	Values   []string                     `json:"values,omitempty"`
-}
-
 // Use an alias struct to handle complex types
 type alias struct {
 	Group                       string                    `yaml:"group"`
@@ -132,7 +102,7 @@ type alias struct {
 	MarkUnsafe                  *bool                     `yaml:"markUnsafe"`
 	Blacklist                   []schema.GroupVersionKind `yaml:"blacklist,omitempty"`
 	Finalizer                   *Finalizer                `yaml:"finalizer"`
-	Selector                    tempLabelSelector         `yaml:"selector"`
+	Selector                    metav1.LabelSelector      `yaml:"selector"`
 }
 
 // buildWatch will build Watch based on the values parsed from alias
@@ -201,7 +171,7 @@ func (w *Watch) setValuesFromAlias(tmp alias) error {
 		return err
 	}
 	w.addRolePlaybookPaths(wd)
-	w.Selector = parseLabelSelector(tmp.Selector)
+	w.Selector = tmp.Selector
 
 	return nil
 }
