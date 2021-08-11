@@ -1,8 +1,0 @@
-entries:
-  - description: >
-      For Ansible-based operators, if a request is sent without a body in
-      the metadata it will now be extracted from the request URL and properly
-      set owner references/dependent watches.
-    kind: "bugfix"
-    breaking: false
-

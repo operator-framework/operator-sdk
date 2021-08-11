@@ -1,6 +1,0 @@
-entries:
-  - description: >
-      Updated operator-framework dependency to 0.10.5. This specific update includes a
-      fix for bundle validation when checking for invalid service accounts.
-    kind: change
-    breaking: false
