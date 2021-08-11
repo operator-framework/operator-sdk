@@ -17,6 +17,7 @@ package controller
 import (
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 	"time"
 
@@ -33,7 +34,6 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/ansible/events"
 	"github.com/operator-framework/operator-sdk/internal/ansible/handler"
-	"github.com/operator-framework/operator-sdk/internal/ansible/predicate"
 	"github.com/operator-framework/operator-sdk/internal/ansible/runner"
 )
 
@@ -103,12 +103,17 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 	predicates := []ctrlpredicate.Predicate{
 		ctrlpredicate.Or(ctrlpredicate.GenerationChangedPredicate{}, libpredicate.NoGenerationPredicate{}),
 	}
-	filterPredicate, err := predicate.NewResourceFilterPredicate(options.Selector)
+
+	p, err := parsePredicateSelector(options.Selector)
+
 	if err != nil {
-		log.Error(err, "Error creating resource filter predicate")
+		log.Error(err, "")
 		os.Exit(1)
 	}
-	predicates = append(predicates, filterPredicate)
+
+	if p != nil {
+		predicates = append(predicates, p)
+	}
 
 	u := &unstructured.Unstructured{}
 	u.SetGroupVersionKind(options.GVK)
@@ -119,4 +124,18 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 	}
 
 	return &c
+}
+
+// parsePredicateSelector parses the selector in the WatchOptions and creates a predicate
+// that is used to filter resources based on the specified selector
+func parsePredicateSelector(selector metav1.LabelSelector) (ctrlpredicate.Predicate, error) {
+	// If a selector has been specified in watches.yaml, add it to the watch's predicates.
+	if !reflect.ValueOf(selector).IsZero() {
+		p, err := ctrlpredicate.LabelSelectorPredicate(selector)
+		if err != nil {
+			return nil, fmt.Errorf("error constructing predicate from watches selector: %v", err)
+		}
+		return p, nil
+	}
+	return nil, nil
 }
