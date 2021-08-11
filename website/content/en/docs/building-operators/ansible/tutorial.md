@@ -164,7 +164,7 @@ There are three ways to run the operator:
 
 - As Go program outside a cluster
 - As a Deployment inside a Kubernetes cluster
-- Managed by the [Operator Lifecycle Manager (OLM)][doc-olm] in [bundle][quickstart-bundle] format
+- Managed by the [Operator Lifecycle Manager (OLM)][doc-olm] in [bundle][tutorial-bundle] format
 
 ### 1. Run locally outside the cluster
 
@@ -215,7 +215,7 @@ has a custom CA, these [configuration steps][image-reg-config] must be complete.
 operator-sdk run bundle example.com/memcached-operator-bundle:v0.0.1
 ```
 
-Check out the [docs][quickstart-bundle] for a deep dive into `operator-sdk`'s OLM integration.
+Check out the [docs][tutorial-bundle] for a deep dive into `operator-sdk`'s OLM integration.
 
 
 ## Create a Memcached CR
@@ -346,7 +346,7 @@ todo(camilamacedo86): Create an Ansible operator scope document.
 https://github.com/operator-framework/operator-sdk/issues/3447
 -->
 
-OLM will manage creation of most if not all resources required to run your operator, using a bit of setup from other operator-sdk commands. Check out the [OLM integration guide][quickstart-bundle].
+OLM will manage creation of most if not all resources required to run your operator, using a bit of setup from other operator-sdk commands. Check out the [OLM integration guide][tutorial-bundle].
 
 [legacy-quickstart-doc]:https://v0-19-x.sdk.operatorframework.io/docs/ansible/quickstart/
 [migration-guide]:/docs/building-operators/ansible/migration
@@ -357,5 +357,5 @@ OLM will manage creation of most if not all resources required to run your opera
 [custom-resources]:https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/
 [layout-doc]:/docs/building-operators/ansible/reference/scaffolding
 [doc-bundle]:https://github.com/operator-framework/operator-registry/blob/v1.16.1/docs/design/operator-bundle.md#operator-bundle
-[quickstart-bundle]:/docs/olm-integration/quickstart-bundle
-[doc-olm]:/docs/olm-integration/quickstart-bundle/#enabling-olm
+[tutorial-bundle]:/docs/olm-integration/tutorial-bundle
+[doc-olm]:/docs/olm-integration/tutorial-bundle/#enabling-olm

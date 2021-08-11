@@ -106,5 +106,5 @@ Read the [full tutorial][tutorial] for an in-depth walkthough of building a Ansi
 [ansible-link]:https://www.ansible.com/
 [install-guide]:/docs/building-operators/ansible/installation
 [image-reg-config]:/docs/olm-integration/cli-overview#private-bundle-and-catalog-image-registries
-[doc-olm]:/docs/olm-integration/quickstart-bundle/#enabling-olm
+[doc-olm]:/docs/olm-integration/tutorial-bundle/#enabling-olm
 [tutorial]:/docs/building-operators/ansible/tutorial/
