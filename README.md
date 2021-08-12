@@ -1,3 +1,4 @@
+
 <img src="website/static/operator_logo_sdk_color.svg" height="125px"></img>
 
 
