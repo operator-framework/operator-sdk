@@ -147,6 +147,7 @@ git push -f upstream v1.3.x
 
 ### 6. Post release steps
 
+- Check that the new versioned documentation subdomain is live.
 - Make an [operator-framework Google Group][of-ggroup] post.
 - Post to Kubernetes slack in #kubernetes-operators and #operator-sdk-dev.
 - In the [GitHub milestone][gh-milestones], bump any open issues to the following release.
