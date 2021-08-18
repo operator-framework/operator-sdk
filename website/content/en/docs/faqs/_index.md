@@ -141,11 +141,27 @@ If using an OS or distro that does not point `sh` to the `bash` shell (Ubuntu fo
 SHELL := /bin/bash
 ```
 
+## How do I make my Operator proxy-friendly?
+---
 
+Administrators can configure proxy-friendly Operators to support network proxies by
+specifiying `HTTP_PROXY`, `HTTPS_PROXY`, and `NO_PROXY` environment
+variables in the Operator deployment. (These variables can be handled by OLM.)
+
+Proxy-friendly Operators are responsible for inspecting the Operator
+environment and passing these variables along to the rquired operands.
+For more information and examples, please see the type-specific docs:
+- [Ansible][ansible-proxy-vars]
+- [Golang][go-proxy-vars]
+- [Helm][helm-proxy-vars]
+
+[ansible-proxy-vars]: /docs/building-operators/ansible/reference/proxy-vars/
 [client.Reader]:https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/client#Reader
 [controller-runtime]: https://github.com/kubernetes-sigs/controller-runtime
 [cr-faq]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md
 [finalizer]:/docs/building-operators/golang/advanced-topics/#handle-cleanup-on-deletion
+[go-proxy-vars]: /docs/building-operators/golang/references/proxy-vars/
+[helm-proxy-vars]: /docs/building-operators/helm/reference/proxy-vars/
 [kb-doc-what-is-a-basic-project]: https://book.kubebuilder.io/cronjob-tutorial/basic-project.html
 [kube-apiserver_options]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options
 [olm]:  https://github.com/operator-framework/operator-lifecycle-manager
