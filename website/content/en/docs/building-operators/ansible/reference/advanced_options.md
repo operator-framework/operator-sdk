@@ -242,7 +242,7 @@ Ansible-runner will perform the task relevant to the command specified by the us
         msg: The decrypted value is {{secret.the_secret}}
 ```
 
-Now, let's also assume that we have a password file, `pwd.yml`, that contains the password to decrypt the encrypted text. Then, by running the command `ansible-operator run --ansible-args='--vault-password-file pwd.yml'` the operator will read in the encrypted text from the file and perform decryption using the password stored in the `pwd.yml` file:
+Now, let's also assume that we have a password file, `pwd.yml`, that contains the password to decrypt the encrypted text. Then, by running the command `ansible-operator run --ansible-args='--vault-password-file /absolute/path/to/pwd.yml'` the operator will read in the encrypted text from the file and perform decryption using the password stored in the `pwd.yml` file:
 
 ```
 --------------------------- Ansible Task StdOut -------------------------------
