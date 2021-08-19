@@ -828,8 +828,8 @@ github.com/operator-framework/api v0.10.5 h1:/WvLKOPo8zZMyEmuW0kLC0PJBt4Xal8HZkF
 github.com/operator-framework/api v0.10.5/go.mod h1:tV0BUNvly7szq28ZPBXhjp1Sqg5yHCOeX19ui9K4vjI=
 github.com/operator-framework/java-operator-plugins v0.0.0-20210708174638-463fb91f3d5e h1:LMsT59IJqaLn7kD6DnZFy0IouRufXyJHTT+mXQrl9Ps=
 github.com/operator-framework/java-operator-plugins v0.0.0-20210708174638-463fb91f3d5e/go.mod h1:sGKGELFkUeRqElcyvyPC89bC76YnCL7MPMa13P0AQcw=
-github.com/operator-framework/operator-lib v0.5.0 h1:Jmhz/WjcstEyBBM9IFUiHEgKg5bd43uF4ej/ZY2S0rM=
-github.com/operator-framework/operator-lib v0.5.0/go.mod h1:33Skl0vjauYx3nAS+cSFbHNkX8do7weQ6s5siIV/w1E=
+github.com/operator-framework/operator-lib v0.6.0 h1:srZoTL8P7OZUOovMkQkd4vwIbFzFNW413R/6V9N9rz4=
+github.com/operator-framework/operator-lib v0.6.0/go.mod h1:2Z32GTTJUz2/f+OKcoJXsVnAyRwcXx7mGmQsdhIAIIE=
 github.com/operator-framework/operator-registry v1.17.4 h1:bYoWevurGEUshSMu8QNcImhLuPZJ/a4MbsUuvBjFEzA=
 github.com/operator-framework/operator-registry v1.17.4/go.mod h1:k0rWVT23QoN1prs9tX8PHjRVXz6FMZfUJ5EIZSrqh9E=
 github.com/otiai10/copy v1.2.0 h1:HvG945u96iNadPoG2/Ja2+AUJeW5YuFQMixq9yirC+k=
