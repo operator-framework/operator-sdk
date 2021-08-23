@@ -1,0 +1,6 @@
+entries:
+  - description: >
+      Adds a built-in Scorecard test to check total bundle size. Bundles must be less than 1MB and until
+      this limit can be changed, we should test for it.
+    kind: "addition"
+    breaking: false

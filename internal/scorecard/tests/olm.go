@@ -17,7 +17,9 @@ package tests
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	scapiv1alpha3 "github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
@@ -42,6 +44,7 @@ const (
 	OLMCRDsHaveResourcesTest  = "olm-crds-have-resources"
 	OLMSpecDescriptorsTest    = "olm-spec-descriptors"
 	OLMStatusDescriptorsTest  = "olm-status-descriptors"
+	OLMBundleSizeTest         = "olm-bundle-size"
 	statusDescriptor          = "status"
 	specDescriptor            = "spec"
 )
@@ -206,6 +209,17 @@ func StatusDescriptorsTest(bundle *apimanifests.Bundle) scapiv1alpha3.TestStatus
 	return wrapResult(r)
 }
 
+// BundleSizeTest verifies size of the bundle
+func BundleSizeTest(bundle *apimanifests.Bundle) scapiv1alpha3.TestStatus {
+	r := scapiv1alpha3.TestResult{}
+	r.Name = OLMBundleSizeTest
+	r.State = scapiv1alpha3.PassState
+	r.Errors = make([]string, 0)
+	r.Suggestions = make([]string, 0)
+	r = bundleSizeTooLarge(bundle, r)
+	return wrapResult(r)
+}
+
 func checkCSVDescriptors(bundle *apimanifests.Bundle, r scapiv1alpha3.TestResult,
 	descriptor string) scapiv1alpha3.TestResult {
 
@@ -229,6 +243,48 @@ func checkCSVDescriptors(bundle *apimanifests.Bundle, r scapiv1alpha3.TestResult
 		}
 	}
 	return r
+}
+
+func bundleSizeTooLarge(bundle *apimanifests.Bundle, r scapiv1alpha3.TestResult) scapiv1alpha3.TestResult {
+
+	// Crawl the bundle, mounted at /bundle, and add up the bytes
+	r.Log += fmt.Sprintf("Checking bundle size for: %s\n", bundle.CSV.GetName())
+	bundleDir := "/bundle"
+	errChDir := os.Chdir(bundleDir)
+	if errChDir != nil {
+		r.Errors = append(r.Errors, errChDir.Error())
+	}
+	size, err := dirSize(bundleDir)
+	if err != nil {
+		r.Errors = append(r.Errors, err.Error())
+	}
+	r.Log += fmt.Sprintf("Total size: %s\n", strconv.FormatInt(size, 10))
+	checkSize(size, r)
+	return r
+}
+
+func checkSize(size int64, r scapiv1alpha3.TestResult) scapiv1alpha3.TestResult {
+	if size > 1048576 {
+		r.Log += "Total bundle size greater than 1,048,576 bytes will not work yet"
+		r.State = scapiv1alpha3.FailState
+		return r
+	}
+	r.State = scapiv1alpha3.PassState
+	return r
+}
+
+func dirSize(path string) (int64, error) {
+	var size int64
+	err := filepath.Walk(path, func(_ string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			size += info.Size()
+		}
+		return err
+	})
+	return size, err
 }
 
 func checkOwnedCSVStatusDescriptor(cr unstructured.Unstructured, csv *operatorsv1alpha1.ClusterServiceVersion,
