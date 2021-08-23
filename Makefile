@@ -9,8 +9,9 @@ export IMAGE_VERSION = v1.11.0
 export SIMPLE_VERSION = $(shell (test "$(shell git describe)" = "$(shell git describe --abbrev=0)" && echo $(shell git describe)) || echo $(shell git describe --abbrev=0)+git)
 export GIT_VERSION = $(shell git describe --dirty --tags --always)
 export GIT_COMMIT = $(shell git rev-parse HEAD)
+export K8S_VERSION = 1.21
 # TODO: bump this to 1.21, after kubectl `--generator` flag is removed from e2e tests.
-export K8S_VERSION = 1.20.2
+export ENVTEST_K8S_VERSION = 1.20.2
 
 # Build settings
 export TOOLS_DIR = tools/bin
@@ -146,11 +147,11 @@ e2e_targets := test-e2e $(e2e_tests)
 .PHONY: test-e2e-setup
 export KIND_CLUSTER := operator-sdk-e2e
 
-export KUBEBUILDER_ASSETS = $(PWD)/$(shell go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest && $(shell go env GOPATH)/bin/setup-envtest use $(K8S_VERSION) --bin-dir tools/bin/ -p path)
+export KUBEBUILDER_ASSETS = $(PWD)/$(shell go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest && $(shell go env GOPATH)/bin/setup-envtest use $(ENVTEST_K8S_VERSION) --bin-dir tools/bin/ -p path)
 test-e2e-setup: build
 	$(SCRIPTS_DIR)/fetch kind 0.11.0
-	$(SCRIPTS_DIR)/fetch kubectl $(K8S_VERSION) # Install kubectl AFTER envtest because envtest includes its own kubectl binary
-	[[ "`$(TOOLS_DIR)/kind get clusters`" =~ "$(KIND_CLUSTER)" ]] || $(TOOLS_DIR)/kind create cluster --image="kindest/node:v$(K8S_VERSION)" --name $(KIND_CLUSTER)
+	$(SCRIPTS_DIR)/fetch kubectl $(ENVTEST_K8S_VERSION) # Install kubectl AFTER envtest because envtest includes its own kubectl binary
+	[[ "`$(TOOLS_DIR)/kind get clusters`" =~ "$(KIND_CLUSTER)" ]] || $(TOOLS_DIR)/kind create cluster --image="kindest/node:v$(ENVTEST_K8S_VERSION)" --name $(KIND_CLUSTER)
 
 .PHONY: test-e2e-teardown
 test-e2e-teardown:
