@@ -184,6 +184,7 @@ The scorecard ships with pre-defined tests that are arranged into suites.
 | Owned CRDs Have Resources Listed | This test makes sure that the CRDs for each CR provided via the `cr-manifest` option have a `resources` subsection in the [`owned` CRDs section][owned-crds] of the CSV. If the test detects used resources that are not listed in the resources section, it will list them in the suggestions at the end of the test. Users are required to fill out the resources section after initial code generation for this test to pass. For Go-based operators, use ClusterServiceVersion [API Markers](/docs/building-operators/golang/references/markers) to add resources. | olm-crds-have-resources-test |
 | Spec Fields With Descriptors | This test verifies that every field in the Custom Resources' spec sections have a corresponding descriptor listed in the CSV.| olm-spec-descriptors-test |
 | Status Fields With Descriptors | This test verifies that every field in the Custom Resources' status sections have a corresponding descriptor listed in the CSV.| olm-status-descriptors-test |
+| Bundle Size | Checks total bunde size does not exceed 1MB.| olm-bundle-size-test |
 
 ## Scorecard Output
 
