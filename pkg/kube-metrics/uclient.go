@@ -26,8 +26,8 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-func newClientForGVK(cfg *rest.Config, apiVersion, kind string) (dynamic.NamespaceableResourceInterface, error) {
-	apiResourceList, apiResource, err := getAPIResource(cfg, apiVersion, kind)
+func newClientForGVK(cfg *rest.Config, apiResourceLists []*metav1.APIResourceList, apiVersion, kind string) (dynamic.NamespaceableResourceInterface, error) {
+	apiResourceList, apiResource, err := getAPIResource(apiResourceLists, apiVersion, kind)
 	if err != nil {
 		return nil, fmt.Errorf("discovering resource information failed for %s in %s: %w", kind, apiVersion, err)
 	}
@@ -51,17 +51,20 @@ func newClientForGVK(cfg *rest.Config, apiVersion, kind string) (dynamic.Namespa
 	return dc.Resource(gvr), nil
 }
 
-func getAPIResource(cfg *rest.Config, apiVersion, kind string) (*metav1.APIResourceList, *metav1.APIResource, error) {
+func getAPIResourceLists(cfg *rest.Config) ([]*metav1.APIResourceList, error) {
 	kclient, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	_, apiResourceLists, err := kclient.Discovery().ServerGroupsAndResources()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
+	return apiResourceLists, nil
+}
 
+func getAPIResource(apiResourceLists []*metav1.APIResourceList, apiVersion, kind string) (*metav1.APIResourceList, *metav1.APIResource, error) {
 	for _, apiResourceList := range apiResourceLists {
 		if apiResourceList.GroupVersion == apiVersion {
 			for _, r := range apiResourceList.APIResources {

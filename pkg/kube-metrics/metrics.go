@@ -20,10 +20,10 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	ksmetric "k8s.io/kube-state-metrics/pkg/metric"
 	metricsstore "k8s.io/kube-state-metrics/pkg/metrics_store"
@@ -48,6 +48,12 @@ func GenerateAndServeCRMetrics(cfg *rest.Config,
 	// Create new unstructured client.
 	var allStores [][]*metricsstore.MetricsStore
 	log.V(1).Info("Starting collecting operator types")
+
+	apiResourceLists, err := getAPIResourceLists(cfg)
+	if err != nil {
+		return err
+	}
+
 	// Loop through all the possible operator/custom resource specific types.
 	for _, gvk := range operatorGVKs {
 		apiVersion := gvk.GroupVersion().String()
@@ -55,11 +61,11 @@ func GenerateAndServeCRMetrics(cfg *rest.Config,
 		// Generate metric based on the kind.
 		metricFamilies := generateMetricFamilies(gvk.Kind)
 		log.V(1).Info("Generating metric families", "apiVersion", apiVersion, "kind", kind)
-		dclient, err := newClientForGVK(cfg, apiVersion, kind)
+		dclient, err := newClientForGVK(cfg, apiResourceLists, apiVersion, kind)
 		if err != nil {
 			return err
 		}
-		namespaced, err := isNamespaced(gvk, cfg)
+		namespaced, err := isNamespaced(gvk, apiResourceLists)
 		if err != nil {
 			return err
 		}
@@ -123,20 +129,14 @@ func GetNamespacesForMetrics(operatorNs string) ([]string, error) {
 	return ns, nil
 }
 
-func isNamespaced(gvk schema.GroupVersionKind, cfg *rest.Config) (bool, error) {
-	discoveryClient, err := discovery.NewDiscoveryClientForConfig(cfg)
-	if err != nil {
-		log.Error(err, "Unable to get discovery client")
-		return false, err
-	}
-	resourceList, err := discoveryClient.ServerResourcesForGroupVersion(gvk.GroupVersion().String())
-	if err != nil {
-		log.Error(err, "Unable to get resource list for", "apiversion", gvk.GroupVersion().String())
-		return false, err
-	}
-	for _, apiResource := range resourceList.APIResources {
-		if apiResource.Kind == gvk.Kind {
-			return apiResource.Namespaced, nil
+func isNamespaced(gvk schema.GroupVersionKind, resourceLists []*metav1.APIResourceList) (bool, error) {
+	for _, resourceList := range resourceLists {
+		if resourceList.GroupVersion == gvk.GroupVersion().String() {
+			for _, apiResource := range resourceList.APIResources {
+				if apiResource.Kind == gvk.Kind {
+					return apiResource.Namespaced, nil
+				}
+			}
 		}
 	}
 	return false, errors.New("unable to find type: " + gvk.String() + " in server")
