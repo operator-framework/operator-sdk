@@ -1,0 +1,11 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Add a Parameter to the Makefile to allow modifying the
+      'operator-sdk' binary before running any commands.
+      This allows you to run `OPERATOR_SDK=~/local/operator-sdk-1.2 make bundle`
+      without modifying and of the default makefile provided
+    kind: addition
+
+    breaking: false
