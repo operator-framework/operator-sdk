@@ -143,7 +143,7 @@ in case other Operator resources require routing. Feel free to remove it otherwi
 [crd-wh-serviceref]:https://pkg.go.dev/k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1?utm_source=godoc#ServiceReference
 [wh-serviceref]:https://pkg.go.dev/k8s.io/api/admissionregistration/v1?utm_source=godoc#ServiceReference
 [olm-cert-support]:https://olm.operatorframework.io/docs/advanced-tasks/adding-admission-and-conversion-webhooks/#certificate-authority-requirements
-[cm-patch]:https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/v3/memcached-operator/config/manifests/kustomization.yaml#L12
+[cm-patch]:https://github.com/operator-framework/operator-sdk/blob/163c657/testdata/go/v3/memcached-operator/config/manifests/kustomization.yaml#L12
 
 ## Generate your first release
 
