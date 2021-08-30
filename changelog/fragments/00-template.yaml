@@ -2,15 +2,7 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      Description is the line that shows up in the CHANGELOG. This
-      should be formatted as markdown and be on a single line. Using
-      the YAML string '>' operator means you can write your entry
-      multiple lines and it will still be parsed as a single line.
-
-      If an operator type's plugin is being changed then prefix the description with
-      "(<operator language>/<plugin version>)", ex. "(go/v2)".
-      If an operator type's runtime is being changed, use then prefix the description
-      with "For <operator language>-based operators,", ex. "For Go-based operators".
+      Upgrade OPM version that is used by default in the generated Makefile so `make catalog-build` also works on OSX.
 
     # kind is one of:
     # - addition
@@ -18,7 +10,7 @@ entries:
     # - deprecation
     # - removal
     # - bugfix
-    kind: ""
+    kind: "change"
 
     # Is this a breaking change?
     breaking: false
