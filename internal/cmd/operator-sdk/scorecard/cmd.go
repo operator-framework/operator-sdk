@@ -142,7 +142,7 @@ func (c *scorecardCmd) convertXunit(output v1alpha3.TestList) xunit.TestSuites {
 			}
 			tSuite.TestCases = append(tSuite.TestCases, tCase)
 			tSuite.URL = item.Spec.Image
-			if item.Spec.UniqueID != nil {
+			if item.Spec.UniqueID != "" {
 				tSuite.ID = item.Spec.UniqueID
 			} else {
 				tSuite.ID = res.Name
