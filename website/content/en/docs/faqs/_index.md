@@ -1,7 +1,7 @@
 ---
 title: Operator SDK FAQ
 linkTitle: FAQ
-weight: 11
+weight: 12
 ---
 
 ## What are the the differences between Kubebuilder and Operator-SDK?
