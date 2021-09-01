@@ -72,7 +72,7 @@ After running the `create webhook` command the file structure would be:
 
 The scaffolded file `api/v1alpha1/memcached_webhook.go` has method signatures which need to be implemented for the validation webhook.
 
-Following this, there are a few steps which need to be done in your operator project to enable webhhoks. This will involve:
+Following this, there are a few steps which need to be done in your operator project to enable webhooks. This will involve:
 
 1. Implementing the required methods for Validating or Mutating webhook in `<kind>_webhook.go`. An example of such implementation is provided [here](https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html).
 

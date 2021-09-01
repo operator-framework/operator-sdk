@@ -142,8 +142,11 @@ func (c *scorecardCmd) convertXunit(output v1alpha3.TestList) xunit.TestSuites {
 			}
 			tSuite.TestCases = append(tSuite.TestCases, tCase)
 			tSuite.URL = item.Spec.Image
-			//TODO: Add TestStuite ID when API updates version
-			//tSuite.ID = item.Spec.UniqueID
+			if item.Spec.UniqueID != "" {
+				tSuite.ID = item.Spec.UniqueID
+			} else {
+				tSuite.ID = res.Name
+			}
 			resultSuite.TestSuite = append(resultSuite.TestSuite, tSuite)
 		}
 	}
