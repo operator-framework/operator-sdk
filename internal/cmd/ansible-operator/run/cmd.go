@@ -340,7 +340,7 @@ func getAnsibleEventsToLog(f *flags.Flags) events.LogLevel {
 		return events.Nothing
 	} else {
 		if strings.ToLower(f.AnsibleLogEvents) != "tasks" && f.AnsibleLogEvents != "" {
-			log.Error(fmt.Errorf("--ansible-log-events flag value '%s' not recognized. Must be done of: Tasks, Everything, Nothing", f.AnsibleLogEvents), "unrecognized log level")
+			log.Error(fmt.Errorf("--ansible-log-events flag value '%s' not recognized. Must be one of: Tasks, Everything, Nothing", f.AnsibleLogEvents), "unrecognized log level")
 		}
 		return events.Tasks // Tasks is the default
 	}
