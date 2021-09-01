@@ -165,8 +165,9 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 	)
 	flagSet.StringVar(&f.AnsibleLogEvents,
 		"ansible-log-events",
-		"",
-		"Ansible log events. The log level for console logging.",
+		"tasks",
+		"Ansible log events. The log level for console logging."+
+			" This flag can be set to either Nothing, Tasks, or Everything.",
 	)
 }
 
