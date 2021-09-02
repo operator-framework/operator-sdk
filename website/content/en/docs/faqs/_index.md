@@ -34,7 +34,7 @@ For example, you should refrain from moving the scaffolded files, doing so will 
 
 ## How can I have separate logic for Create, Update, and Delete events? When reconciling an object can I access its previous state?
 
-You should not have separate logic. Instead design your reconciler to be idempotent. See the [controller-runtime FAQ][controller-runtime_faq] for more details.
+You should not have separate logic. Instead design your reconciler to be idempotent. See the [controller-runtime FAQ][cr-faq] for more details.
 
 ## When my Custom Resource is deleted, I need to know its contents or perform cleanup tasks. How can I do that?
 
