@@ -67,50 +67,52 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 	verbosity := GetVerbosity(u, e, ident)
 
 	// logger only the following for the 'Tasks' LogLevel
-	t, ok := e.EventData["task"]
-	if ok {
-		setFactAction := e.EventData["task_action"] == eventapi.TaskActionSetFact
-		debugAction := e.EventData["task_action"] == eventapi.TaskActionDebug
+	if l.LogLevel == Tasks {
+		t, ok := e.EventData["task"]
+		if ok {
+			setFactAction := e.EventData["task_action"] == eventapi.TaskActionSetFact
+			debugAction := e.EventData["task_action"] == eventapi.TaskActionDebug
 
-		if verbosity > 0 {
-			l.mux.Lock()
-			fmt.Println(e.StdOut)
-			l.mux.Unlock()
-			return
-		}
-		if e.Event == eventapi.EventPlaybookOnTaskStart && !setFactAction && !debugAction {
-			l.mux.Lock()
-			logger.Info("[playbook task start]", "EventData.Name", e.EventData["name"])
-			l.logAnsibleStdOut(e)
-			l.mux.Unlock()
-			return
-		}
-		if e.Event == eventapi.EventRunnerOnOk && debugAction {
-			l.mux.Lock()
-			logger.Info("[playbook debug]", "EventData.TaskArgs", e.EventData["task_args"])
-			l.logAnsibleStdOut(e)
-			l.mux.Unlock()
-			return
-		}
-		if e.Event == eventapi.EventRunnerItemOnOk {
-			l.mux.Lock()
-			l.logAnsibleStdOut(e)
-			l.mux.Unlock()
-			return
-		}
-		if e.Event == eventapi.EventRunnerOnFailed {
-			errKVs := []interface{}{
-				"EventData.Task", t,
-				"EventData.TaskArgs", e.EventData["task_args"],
+			if verbosity > 0 {
+				l.mux.Lock()
+				fmt.Println(e.StdOut)
+				l.mux.Unlock()
+				return
 			}
-			if taskPath, ok := e.EventData["task_path"]; ok {
-				errKVs = append(errKVs, "EventData.FailedTaskPath", taskPath)
+			if e.Event == eventapi.EventPlaybookOnTaskStart && !setFactAction && !debugAction {
+				l.mux.Lock()
+				logger.Info("[playbook task start]", "EventData.Name", e.EventData["name"])
+				l.logAnsibleStdOut(e)
+				l.mux.Unlock()
+				return
 			}
-			l.mux.Lock()
-			logger.Error(errors.New("[playbook task failed]"), "", errKVs...)
-			l.logAnsibleStdOut(e)
-			l.mux.Unlock()
-			return
+			if e.Event == eventapi.EventRunnerOnOk && debugAction {
+				l.mux.Lock()
+				logger.Info("[playbook debug]", "EventData.TaskArgs", e.EventData["task_args"])
+				l.logAnsibleStdOut(e)
+				l.mux.Unlock()
+				return
+			}
+			if e.Event == eventapi.EventRunnerItemOnOk {
+				l.mux.Lock()
+				l.logAnsibleStdOut(e)
+				l.mux.Unlock()
+				return
+			}
+			if e.Event == eventapi.EventRunnerOnFailed {
+				errKVs := []interface{}{
+					"EventData.Task", t,
+					"EventData.TaskArgs", e.EventData["task_args"],
+				}
+				if taskPath, ok := e.EventData["task_path"]; ok {
+					errKVs = append(errKVs, "EventData.FailedTaskPath", taskPath)
+				}
+				l.mux.Lock()
+				logger.Error(errors.New("[playbook task failed]"), "", errKVs...)
+				l.logAnsibleStdOut(e)
+				l.mux.Unlock()
+				return
+			}
 		}
 	}
 

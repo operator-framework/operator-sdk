@@ -39,6 +39,7 @@ import (
 	crmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 
 	"github.com/operator-framework/operator-sdk/internal/ansible/controller"
+	"github.com/operator-framework/operator-sdk/internal/ansible/events"
 	"github.com/operator-framework/operator-sdk/internal/ansible/flags"
 	"github.com/operator-framework/operator-sdk/internal/ansible/metrics"
 	"github.com/operator-framework/operator-sdk/internal/ansible/proxy"
@@ -223,6 +224,7 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 			MaxConcurrentReconciles: w.MaxConcurrentReconciles,
 			ReconcilePeriod:         w.ReconcilePeriod,
 			Selector:                w.Selector,
+			LoggingLevel:            getAnsibleEventsToLog(f),
 		})
 		if ctr == nil {
 			log.Error(fmt.Errorf("failed to add controller for GVK %v", w.GroupVersionKind.String()), "")
@@ -328,6 +330,20 @@ func getAnsibleDebugLog() bool {
 			envVar, val)
 	}
 	return val
+}
+
+// getAnsibleDebugLog return the integer value of the log level set in the flag
+func getAnsibleEventsToLog(f *flags.Flags) events.LogLevel {
+	if strings.ToLower(f.AnsibleLogEvents) == "everything" {
+		return events.Everything
+	} else if strings.ToLower(f.AnsibleLogEvents) == "nothing" {
+		return events.Nothing
+	} else {
+		if strings.ToLower(f.AnsibleLogEvents) != "tasks" && f.AnsibleLogEvents != "" {
+			log.Error(fmt.Errorf("--ansible-log-events flag value '%s' not recognized. Must be one of: Tasks, Everything, Nothing", f.AnsibleLogEvents), "unrecognized log level")
+		}
+		return events.Tasks // Tasks is the default
+	}
 }
 
 // setAnsibleEnvVars will set environment variables based on CLI flags
