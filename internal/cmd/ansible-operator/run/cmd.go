@@ -18,6 +18,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"net/url"
 	"os"
 	"runtime"
 	"strconv"
@@ -25,8 +26,10 @@ import (
 
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -36,13 +39,13 @@ import (
 	crmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 
 	"github.com/operator-framework/operator-sdk/internal/ansible/controller"
+	"github.com/operator-framework/operator-sdk/internal/ansible/events"
 	"github.com/operator-framework/operator-sdk/internal/ansible/flags"
 	"github.com/operator-framework/operator-sdk/internal/ansible/metrics"
 	"github.com/operator-framework/operator-sdk/internal/ansible/proxy"
 	"github.com/operator-framework/operator-sdk/internal/ansible/proxy/controllermap"
 	"github.com/operator-framework/operator-sdk/internal/ansible/runner"
 	"github.com/operator-framework/operator-sdk/internal/ansible/watches"
-	"github.com/operator-framework/operator-sdk/internal/clientbuilder"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/internal/version"
 )
@@ -50,11 +53,15 @@ import (
 var log = logf.Log.WithName("cmd")
 
 func printVersion() {
+	version := sdkVersion.GitVersion
+	if version == "unknown" {
+		version = sdkVersion.Version
+	}
 	log.Info("Version",
 		"Go Version", runtime.Version(),
 		"GOOS", runtime.GOOS,
 		"GOARCH", runtime.GOARCH,
-		"ansible-operator", sdkVersion.Version,
+		"ansible-operator", version,
 		"commit", sdkVersion.GitCommit)
 }
 
@@ -103,6 +110,10 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 		os.Exit(1)
 	}
 
+	if err := verifyCfgURL(cfg.Host); err != nil {
+		os.Exit(1)
+	}
+
 	// TODO(2.0.0): remove
 	// Deprecated: OPERATOR_NAME environment variable is an artifact of the
 	// legacy operator-sdk project scaffolding. Flag `--leader-election-id`
@@ -132,8 +143,20 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 	// Set default manager options
 	// TODO: probably should expose the host & port as an environment variables
 	options = f.ToManagerOptions(options)
-	if options.ClientBuilder == nil {
-		options.ClientBuilder = clientbuilder.NewUnstructedCached()
+	if options.NewClient == nil {
+		options.NewClient = func(cache cache.Cache, config *rest.Config, options client.Options, uncachedObjects ...client.Object) (client.Client, error) {
+			// Create the Client for Write operations.
+			c, err := client.New(config, options)
+			if err != nil {
+				return nil, err
+			}
+			return client.NewDelegatingClient(client.NewDelegatingClientInput{
+				CacheReader:       cache,
+				Client:            c,
+				UncachedObjects:   uncachedObjects,
+				CacheUnstructured: true,
+			})
+		}
 	}
 
 	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
@@ -201,6 +224,7 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 			MaxConcurrentReconciles: w.MaxConcurrentReconciles,
 			ReconcilePeriod:         w.ReconcilePeriod,
 			Selector:                w.Selector,
+			LoggingLevel:            getAnsibleEventsToLog(f),
 		})
 		if ctr == nil {
 			log.Error(fmt.Errorf("failed to add controller for GVK %v", w.GroupVersionKind.String()), "")
@@ -253,6 +277,21 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 	log.Info("Exiting.")
 }
 
+// verifyCfgURL verifies the path component of api endpoint
+// passed through the config.
+func verifyCfgURL(path string) error {
+	urlPath, err := url.Parse(path)
+	if err != nil {
+		log.Error(err, "Failed to Parse the Path URL.")
+		return err
+	}
+	if urlPath != nil && urlPath.Path != "" {
+		log.Error(fmt.Errorf("api endpoint '%s' contains a path component, which the proxy server is currently unable to handle properly. Work on this issue is being tracked here: https://github.com/operator-framework/operator-sdk/issues/4925", path), "")
+		return err
+	}
+	return nil
+}
+
 // exitIfUnsupported prints an error containing unsupported field names and exits
 // if any of those fields are not their default values.
 func exitIfUnsupported(options manager.Options) {
@@ -291,6 +330,20 @@ func getAnsibleDebugLog() bool {
 			envVar, val)
 	}
 	return val
+}
+
+// getAnsibleDebugLog return the integer value of the log level set in the flag
+func getAnsibleEventsToLog(f *flags.Flags) events.LogLevel {
+	if strings.ToLower(f.AnsibleLogEvents) == "everything" {
+		return events.Everything
+	} else if strings.ToLower(f.AnsibleLogEvents) == "nothing" {
+		return events.Nothing
+	} else {
+		if strings.ToLower(f.AnsibleLogEvents) != "tasks" && f.AnsibleLogEvents != "" {
+			log.Error(fmt.Errorf("--ansible-log-events flag value '%s' not recognized. Must be one of: Tasks, Everything, Nothing", f.AnsibleLogEvents), "unrecognized log level")
+		}
+		return events.Tasks // Tasks is the default
+	}
 }
 
 // setAnsibleEnvVars will set environment variables based on CLI flags

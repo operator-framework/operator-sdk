@@ -16,9 +16,9 @@ Table of contents:
 
 ## Prerequisites
 
-- [`git`](https://git-scm.com/downloads)
-- [`make`](https://www.gnu.org/software/make/)
-- [`sed`](https://www.gnu.org/software/sed/)
+- [`git`](https://git-scm.com/downloads) 2.2+
+- [`make`](https://www.gnu.org/software/make/) 4.2+
+- [`sed`](https://www.gnu.org/software/sed/) 4.3+
 
 ##### MacOS users
 
@@ -26,6 +26,22 @@ Install GNU `sed` and `make` which may not be by default:
 
 ```sh
 brew install gnu-sed make
+```
+
+Verify that the version of `make` is higher than 4.2 using command `make --version`.
+
+Add the gnubin directory to your PATH from your `~/.bashrc`:
+
+```sh
+echo 'export PATH="/usr/local/opt/make/libexec/gnubin:$PATH"' >> ~/.bashrc
+```
+
+Verify that the version of `sed` is higher than 4.3 using command `gnu-sed --version`.
+
+Add the `gnubin` directory to your PATH from your `~/.bashrc`:
+
+```sh
+echo 'export PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"' >> ~/.bashrc
 ```
 
 ## Major and Minor releases
@@ -45,7 +61,7 @@ assuming the upstream SDK is the `upstream` remote repo:
   git checkout -b v1.3.x
   git push -u upstream v1.3.x
   ```
-1. Make sure that the list of supported OLM versions stated in the [Overview][overview] section of SDK docs is updated. If a new version of OLM needs to be officially supported, follow the steps in [updating OLM bindata](#updating-olm-bindata) section. 
+1. Make sure that the list of supported OLM versions stated in the [Overview][overview] section of SDK docs is updated. If a new version of OLM needs to be officially supported, follow the steps in [updating OLM bindata](#updating-olm-bindata) section.
 1. Create and merge a commit that updates the top-level [Makefile] variable `IMAGE_VERSION`
 to the upcoming release tag `v1.3.0`. This variable ensures sample projects have been tagged
 correctly prior to the release commit.
@@ -81,7 +97,7 @@ The following changes should be present:
 - `website/content/en/docs/upgrading-sdk-version/v1.3.0.md`: commit changes (created by changelog generation).
 - `website/config.toml`: commit changes (modified by release script).
 
-Commit these changes and push:
+Commit these changes and push to your remote (assuming your remote is named `origin`):
 
 ```sh
 git add --all
@@ -98,9 +114,14 @@ if you have admin access to the operator-sdk repo, or ask an administrator to do
 
 Unlock the branch by changing the number of required approving reviewers in the `master` branch rule back to 1.
 
-### 4. Create and push a release tag
+### 4. Create and push a release tag on `master`
+
+Refresh your local `master` branch, tag the release PR commit, and push to the main operator-sdk repo
+(assumes the remote's name is `upstream`):
 
 ```sh
+git checkout master
+git pull
 make tag
 git push upstream refs/tags/$RELEASE_VERSION
 ```
@@ -112,7 +133,7 @@ Run the following commands to do so:
 
 ```sh
 git checkout latest
-git reset --hard tags/$RELEASE_VERSION
+git reset --hard refs/tags/$RELEASE_VERSION
 git push -f upstream latest
 ```
 
@@ -120,7 +141,7 @@ Similarly, to update the release branch, run:
 
 ```sh
 git checkout v1.3.x
-git reset --hard tags/$RELEASE_VERSION
+git reset --hard refs/tags/$RELEASE_VERSION
 git push -f upstream v1.3.x
 ```
 
@@ -135,23 +156,18 @@ git push -f upstream v1.3.x
 
 We will use the `v1.3.1` release version in this example.
 
-### Before starting
+#### 0. Lock down release branches on GitHub
 
-1. Create and merge a commit that updates the top-level [Makefile] variable `IMAGE_VERSION`
-to the upcoming release tag `v1.3.1`. This variable ensures sample projects have been tagged
-correctly prior to the release commit.
-  ```sh
-  sed -i -E 's/(IMAGE_VERSION = ).+/\1v1\.3\.1/g' Makefile
-  ```
-1. Lock down the `v1.3.x` branch to prevent further commits before the release completes:
-  1. Go to `Settings -> Branches` in the SDK repo.
-  1. Under `Branch protection rules`, click `Edit` on the `v.*` branch rule.
-  1. In section `Protect matching branches` of the `Rule settings` box, increase the number of required approving reviewers to 6.
+Lock down the `v1.3.x` branch to prevent further merges/commits.
 
-### 1. Create and push a release commit
+To do this, edit the `Branch protection rules`: https://github.com/operator-framework/operator-sdk/settings/branches
 
-Create a new branch from the release branch, which should already exist for the desired minor version,
-to push the release commit to:
+- click `Edit` on the `v.*` branch rule.
+- In section `Protect matching branches` of the `Rule settings` box, set "Required approving reviewers" to `6`.
+
+#### 1. Branch
+
+Create a new branch from the release branch (v1.3.x in this example). This branch should already exist prior to cutting a patch release.
 
 ```sh
 export RELEASE_VERSION=v1.3.1
@@ -160,45 +176,61 @@ git pull
 git checkout -b release-$RELEASE_VERSION
 ```
 
-Run the pre-release `make` target:
+
+#### 2. Prepare the release commit
+
+Using the version for your release as the IMAGE_VERSION, execute the
+following commands from the root of the project.
 
 ```sh
+# Update the IMAGE_VERSION in the Makefile
+sed -i -E 's/(IMAGE_VERSION = ).+/\1v1\.3\.1/g' Makefile
+#  Run the pre-release `make` target:
 make prerelease
+# Regenerate testdata (samples).
+# NOTE: The sanity test will fail but scaffolding should complete.
+make test-sanity
 ```
 
-The following changes should be present:
+All of the following changes should be present (and no others).
 
-- `changelog/generated/v1.3.0.md`: commit changes (created by changelog generation).
-- `changelog/fragments/*`: commit deleted fragment files (deleted by changelog generation).
+- Makefile: IMAGE_VERSION should be modified to the upcoming release tag. (This variable ensures sampleprojects have been tagged correctpy priror to the release commit.)
+- changelog/: all fragments should be deleted and consolidated into the new file `changelog/generated/v1.3.1.md`
+- docs: If there are migration steps, a new migration doc will be created. The installation docs should also contain a link update.
+- testdata/: Generated samples and tests should have version bumps
 
-Commit these changes and push:
+Commit these changes and push these changes **to your fork**:
 
 ```sh
 git add --all
-git commit -m "Release $RELEASE_VERSION"
+git commit -sm "Release $RELEASE_VERSION"
 git push -u origin release-$RELEASE_VERSION
 ```
 
-### 2. Create and merge a new PR
+#### 3. Create and merge Pull Request
 
-Create and merge a new PR for the commit created in step 1. You can force-merge your PR to the locked-down `v1.3.x`
-if you have admin access to the operator-sdk repo, or ask an administrator to do so.
+- Create a pull request against the `v1.3.x` branch.
+- Once approving review is given, merge. You may have to unlock the branch by setting
+"required approving reviewers" to back to `1`. (See step 0).
 
-### 3. Unlock the `v1.3.x` branch
+#### 4. Create a release tag
 
-Unlock the branch by changing the number of required approving reviewers in the `v.*` branch rule back to 1.
-
-### 4. Create and push a release tag
+Pull down `v1.3.x` and tag it.
 
 ```sh
+git checkout v1.3.x
+git pull upstream v1.3.x
 make tag
 git push upstream refs/tags/$RELEASE_VERSION
 ```
 
 ### 5. Fast-forward the `latest` branch
 
-The `latest` branch points to the latest release tag to keep the main website subdomain up-to-date.
-Run the following commands to do so:
+If the patch release is on the latest y-stream (in the example you would
+not ff latest if there was a y-stream for v1.4.x), you will need to
+fast-forward the `latest` git branch.
+
+(The `latest` branch points to the latest release tag to keep the main website subdomain up-to-date.)
 
 ```sh
 git checkout latest
@@ -272,10 +304,17 @@ GitHub releases live under the [`Releases` tab][release-page] in the operator-sd
 
 Prior to an Operator SDK release, add bindata (if required) for a new OLM version by following these steps:
 
-1. Add the new version to the [`OLM_VERSIONS`][olm_version] variable in the Makefile. 
+1. Add the new version to the [`OLM_VERSIONS`][olm_version] variable in the Makefile.
 2. Remove the *lowest* version from that variable, as `operator-sdk` only supports 3 versions at a time.
 3. Run `make bindata`.
 4. Update the list of supported OLM versions stated in the [`Overview`][overview] section of SDK documentation is updated.
+
+### Patch releases in parallel:
+
+  - Releasing in order is nice but not worth the inconvenience. Release order affects the order on GitHub releases, and which 
+    is labeled "latest release".
+  - Do not unlock v.* branches while other releases are in progress. Instead, have an admin do the merges.
+  - Release announcements should be consolidated.
 
 [netlify-deploy]:https://docs.netlify.com/site-deploys/overview/#deploy-summary
 [doc-owners]: https://github.com/operator-framework/operator-sdk/blob/master/OWNERS

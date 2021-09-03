@@ -53,11 +53,12 @@ func TestGetDisplayName(t *testing.T) {
 
 func TestSupportsOwnerReference(t *testing.T) {
 	type testcase struct {
-		name       string
-		restMapper meta.RESTMapper
-		owner      runtime.Object
-		dependent  runtime.Object
-		result     bool
+		name         string
+		restMapper   meta.RESTMapper
+		owner        runtime.Object
+		dependent    runtime.Object
+		result       bool
+		depNamespace string
 	}
 
 	var defaultVersion []schema.GroupVersion
@@ -228,11 +229,61 @@ func TestSupportsOwnerReference(t *testing.T) {
 			},
 			result: false,
 		},
+		{
+			name:         "Returns true if depNamespace provided and matches.",
+			restMapper:   restMapper,
+			depNamespace: "ns",
+			owner: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind":       "MyNamespaceKind",
+					"apiVersion": "apps/v1alpha1",
+					"metadata": map[string]interface{}{
+						"name":      "example-nginx-controller",
+						"namespace": "ns",
+					},
+				},
+			},
+			dependent: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind":       "MyNamespaceKind",
+					"apiVersion": "apps/v1alpha1",
+					"metadata": map[string]interface{}{
+						"name": "example-nginx-role",
+					},
+				},
+			},
+			result: true,
+		},
+		{
+			name:         "Returns false if depNamespace provided and doesn't match.",
+			restMapper:   restMapper,
+			depNamespace: "ns1",
+			owner: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind":       "MyNamespaceKind",
+					"apiVersion": "apps/v1alpha1",
+					"metadata": map[string]interface{}{
+						"name":      "example-nginx-controller",
+						"namespace": "ns",
+					},
+				},
+			},
+			dependent: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind":       "MyNamespaceKind",
+					"apiVersion": "apps/v1alpha1",
+					"metadata": map[string]interface{}{
+						"name": "example-nginx-role",
+					},
+				},
+			},
+			result: false,
+		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			useOwner, err := SupportsOwnerReference(c.restMapper, c.owner, c.dependent)
+			useOwner, err := SupportsOwnerReference(c.restMapper, c.owner, c.dependent, c.depNamespace)
 			if err != nil {
 				assert.Error(t, err)
 			}

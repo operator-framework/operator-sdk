@@ -74,35 +74,40 @@ INFO[0000] Creating bundle/bundle-0.0.1/bundle.Dockerfile
 INFO[0000] Creating bundle/bundle-0.0.1/metadata/annotations.yaml
 ...
 
-# After running the above command, the bundles will be generated in 'bundle/' directory.
-$ tree bundle/
-bundle/
+# After running the above command, the bundles will be generated in 'bundles/' directory.
+$ tree bundles/
+bundles/
 ├── bundle-0.0.1
-│   ├── bundle.Dockerfile
-│   ├── manifests
-│   │   ├── etcdcluster.crd.yaml
-│   │   ├── etcdoperator.clusterserviceversion.yaml
-│   ├── metadata
-│   │   └── annotations.yaml
-│   └── tests
-│       └── scorecard
-│           └── config.yaml
+│   ├── bundle
+│   │   ├── manifests
+│   │   │   ├── etcdcluster.crd.yaml
+│   │   │   ├── etcdoperator.clusterserviceversion.yaml
+│   │   ├── metadata
+│   │   │   └── annotations.yaml
+│   │   └── tests
+│   │       └── scorecard
+│   │           └── config.yaml
+│   └── bundle.Dockerfile
 └── bundle-0.0.2
-    ├── bundle.Dockerfile
-    ├── manifests
-    │   ├── etcdbackup.crd.yaml
-    │   ├── etcdcluster.crd.yaml
-    │   ├── etcdoperator.v0.0.2.clusterserviceversion.yaml
-    │   ├── etcdrestore.crd.yaml
-    ├── metadata
-    │   └── annotations.yaml
-    └── tests
-        └── scorecard
-            └── config.yaml
+    ├── bundle
+    │   ├── manifests
+    │   │   ├── etcdbackup.crd.yaml
+    │   │   ├── etcdcluster.crd.yaml
+    │   │   ├── etcdoperator.v0.0.2.clusterserviceversion.yaml
+    │   │   ├── etcdrestore.crd.yaml
+    │   └── metadata
+    │       └── annotations.yaml
+    └── bundle.Dockerfile
 
-Also, images for the both the bundles will be built with the following names: quay.io/example/etcd:0.0.1 and quay.io/example/etcd:0.0.2.
+A custom command to build bundle images can also be specified using the '--build-cmd' flag. For example,
+
+$ operator-sdk pkgman-to-bundle packagemanifests --image-tag-base quay.io/example/etcd --build-cmd "podman build -f bundle.Dockerfile . -t"
+
+Images for the both the bundles will be built with the following names: quay.io/example/etcd:0.0.1 and quay.io/example/etcd:0.0.2.
 `
 )
+
+var defaultSubBundleDir = "bundle"
 
 type pkgManToBundleCmd struct {
 	// Input packagemanifest directory.
@@ -177,13 +182,13 @@ func (p *pkgManToBundleCmd) run() (err error) {
 	for _, dir := range directories {
 		if dir.IsDir() {
 			// this is required to extract project layout and SDK version information.
-			otherLabels, channels, err := getSDKStampsAndChannels(filepath.Join(p.pkgmanifestDir, dir.Name()), channelsByCSV)
+			otherLabels, channels, err := getSDKStampsAndChannels(filepath.Join(p.pkgmanifestDir, dir.Name()), defaultChannel, channelsByCSV)
 			if err != nil {
 				return fmt.Errorf("error getting CSV from provided packagemanifest %v", err)
 			}
 
 			bundleMetaData := bundleutil.BundleMetaData{
-				BundleDir:       filepath.Join(p.outputDir, "bundle-"+dir.Name()),
+				BundleDir:       filepath.Join(p.outputDir, "bundle-"+dir.Name(), defaultSubBundleDir),
 				PackageName:     packageName,
 				Channels:        channels,
 				DefaultChannel:  defaultChannel,
@@ -263,7 +268,7 @@ func getScorecardConfigPath(inputDir string) (string, error) {
 	return scorecardConfigPath, nil
 }
 
-func getSDKStampsAndChannels(path string, channelsByCSV map[string][]string) (map[string]string, string, error) {
+func getSDKStampsAndChannels(path, defaultChannel string, channelsByCSV map[string][]string) (map[string]string, string, error) {
 	bundle, err := apimanifests.GetBundleFromDir(path)
 	if err != nil {
 		return nil, "", err
@@ -275,7 +280,7 @@ func getSDKStampsAndChannels(path string, channelsByCSV map[string][]string) (ma
 	}
 
 	// Find channels matching the CSV names
-	channels := getChannelsByCSV(bundle, channelsByCSV)
+	channels := getChannelsByCSV(bundle, channelsByCSV, defaultChannel)
 
 	return sdkLabels, channels, nil
 }
@@ -303,23 +308,18 @@ func getSDKStamps(bundle *apimanifests.Bundle) (map[string]string, error) {
 	return sdkLabels, nil
 }
 
-// getChannelsByCSV creates a list for channels for the currentCSV,
-func getChannelsByCSV(bundle *apimanifests.Bundle, channelsByCSV map[string][]string) (channels string) {
+// getChannelsByCSV creates a list for channels for the currentCSV. For other versions of manifests which
+// are not present in the manifest, the defaultChannel is added.
+func getChannelsByCSV(bundle *apimanifests.Bundle, channelsByCSV map[string][]string, defaultChannel string) (channels string) {
 	// Find channels matching the CSV names
-	var channelNames []string
-	for csv, ch := range channelsByCSV {
-		if csv == bundle.CSV.GetName() {
-			channelNames = ch
-			break
-		}
-	}
+	channelNames := channelsByCSV[bundle.CSV.GetName()]
 	channels = strings.Join(channelNames, ",")
 
 	// TODO: verify if we have to add this validation since while building bundles if channel is not specified
 	// we add the default channel.
 	if channels == "" {
-		channels = "preview"
-		log.Infof("Supported channels cannot be identified from CSV %s, using default channel 'preview'", bundle.CSV.GetName())
+		channels = defaultChannel
+		log.Infof("Supported channels cannot be identified from CSV %s, using default channel %s", bundle.CSV.GetName(), defaultChannel)
 	}
 
 	return channels
@@ -334,7 +334,8 @@ func getPackageMetadata(pkg *apimanifests.PackageManifest) (packagename, default
 
 	defaultChannel = pkg.DefaultChannelName
 	if defaultChannel == "" {
-		defaultChannel = "preview"
+		err = fmt.Errorf("cannot find the default channel for package %q", packagename)
+		return
 	}
 
 	channelsByCSV = make(map[string][]string)

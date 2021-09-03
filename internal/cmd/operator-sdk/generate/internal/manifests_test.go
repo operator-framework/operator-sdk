@@ -47,7 +47,7 @@ var _ = Describe("GetManifestObjects", func() {
 				{ObjectMeta: metav1.ObjectMeta{Namespace: "bar"}},
 			},
 		}
-		objs := GetManifestObjects(&m)
+		objs := GetManifestObjects(&m, nil)
 		Expect(objs).To(HaveLen(len(m.Roles) + len(m.ClusterRoles) + len(m.ServiceAccounts) + len(m.V1CustomResourceDefinitions) + len(m.V1beta1CustomResourceDefinitions)))
 		for _, obj := range objs {
 			Expect(obj.GetNamespace()).To(BeEmpty())

@@ -275,7 +275,7 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 ```Go
 // Patch patches the given obj in the Kubernetes cluster. obj must be a
 // struct pointer so that obj can be updated with the content returned by the Server.
-func (c Client) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.UpdateOption) error
+func (c Client) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.PatchOption) error
 ```
 
 A `client.PatchOption` is an interface that sets [`client.PatchOptions`][patch-options] fields. A `client.PatchOption` is created by using one of the provided implementations: [`DryRunAll`][dry-run-all], [`ForceOwnership`][force-ownership]. Generally these options are not needed.
@@ -496,7 +496,7 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
             }
             return ctrl.Result{Requeue: true}, nil
         } else {
-            return ctrl.Result{}, err            
+            return ctrl.Result{}, err
         }
     }
 

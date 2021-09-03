@@ -53,7 +53,7 @@ spec:
 - If you will integrate your project with OLM then, also check its [Best Practices][olm-best-practices] section.
  
 [env-test]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/envtest
-[scorecard]: /docs/advanced-topics/scorecard/
+[scorecard]: /docs/testing-operators/scorecard/
 [testing-with-envtest]: /docs/building-operators/golang/testing
 [olm-best-practices]: https://olm.operatorframework.io/docs/best-practices/
 [finalizers]: /docs/building-operators/golang/advanced-topics/#handle-cleanup-on-deletion

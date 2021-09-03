@@ -197,16 +197,17 @@ func (c bundleCmd) runManifests() (err error) {
 	}
 
 	csvGen := gencsv.Generator{
-		OperatorName: c.packageName,
-		Version:      c.version,
-		Collector:    col,
-		Annotations:  metricsannotations.MakeBundleObjectAnnotations(c.layout),
+		OperatorName:         c.packageName,
+		Version:              c.version,
+		Collector:            col,
+		Annotations:          metricsannotations.MakeBundleObjectAnnotations(c.layout),
+		ExtraServiceAccounts: c.extraServiceAccounts,
 	}
 	if err := csvGen.Generate(opts...); err != nil {
 		return fmt.Errorf("error generating ClusterServiceVersion: %v", err)
 	}
 
-	objs := genutil.GetManifestObjects(col)
+	objs := genutil.GetManifestObjects(col, c.extraServiceAccounts)
 	if c.stdout {
 		if err := genutil.WriteObjects(stdout, objs...); err != nil {
 			return err

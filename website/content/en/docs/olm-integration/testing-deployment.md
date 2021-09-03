@@ -118,9 +118,12 @@ Let's look at the anatomy of the `run packagemanifests` configuration model:
 
 `operator-sdk run bundle-upgrade` assumes OLM is already installed and running on your 
 cluster and that the Operator has a valid [bundle][bundle-format]. It also assumes that 
-the previous version of the Operator was deployed on the cluster using `run bundle` command 
-or traditionally via OLM. See the [CLI overview][doc-cli-overview] for commands to work 
-with an OLM installation and generate a bundle.
+the previous version of the Operator was either deployed on the cluster using `run bundle` 
+command or traditionally via OLM. Another assumption of this command is that the newer operator bundle
+should not exist in the index image, if the previous version of the operator bundle was installed 
+traditionally using OLM. This will cause the registry pod to fail as the bundle is already added to the 
+index that provides package and csv. See the [CLI overview][doc-cli-overview] for commands to work with 
+an OLM installation and generate a bundle.
 
 ```
 operator-sdk run bundle-upgrade <bundle-image> [--kubeconfig=] [--namespace=] [--timeout=] 
@@ -171,5 +174,6 @@ Let's look at the anatomy of the `cleanup` configuration model:
 [csv-install-modes]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md#operator-metadata
 [cli-olm-install]:/docs/cli/operator-sdk_olm_install
 [cli-olm-status]:/docs/cli/operator-sdk_olm_status
-[creating-bundles]:/docs/olm-integration/quickstart-bundle/#creating-a-bundle
+[creating-bundles]:/docs/olm-integration/tutorial-bundle/#creating-a-bundle
 [add-sa-secret]:https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#add-imagepullsecrets-to-a-service-account
+[image-reg-config]:/docs/olm-integration/cli-overview#private-bundle-and-catalog-image-registries

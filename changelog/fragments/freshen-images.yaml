@@ -1,7 +1,0 @@
-entries:
-  - description: >
-      Images built from the operator-sdk repository for the latest two minor version's
-      latest patch version will now be rebuilt whenever a constituent base image has a new patch version published.
-      For example, running `docker pull quay.io/operator-framework/ansible-operator:v1.7.2` after a rebuild
-      will result in a fully compatible, patched image.
-    kind: change

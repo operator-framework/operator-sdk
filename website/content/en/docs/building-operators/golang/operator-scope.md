@@ -268,7 +268,7 @@ if strings.Contains(watchNamespace, ",") {
 If your operator is [integrated with OLM][olm-integration], you will want to update your [CSV base's][csv-base]
 `spec.installModes` list to support the desired namespacing requirements. Support for multiple types of namespacing
 is allowed, so supporting multiple install modes in a CSV is permitted. After doing so, update your
-[bundle][bundle-quickstart] or [package manifests][packagemanifests-quickstart] by following the linked guides.
+[bundle][bundle-quickstart] or [package manifests][packagemanifests-tutorial] by following the linked guides.
 
 ### Watching resources in all Namespaces (default)
 
@@ -310,5 +310,5 @@ If the operator can watch multiple namespaces, set the following in your `spec.i
 [rbac-markers]: https://book.kubebuilder.io/reference/markers/rbac.html
 [olm-integration]: /docs/olm-integration
 [csv-base]: /docs/olm-integration/generation/#kustomize-files
-[bundle]: /docs/olm-integration/quickstart-bundle
-[packagemanifests-quickstart]: /docs/olm-integration/quickstart-package-manifests
+[bundle-quickstart]: /docs/olm-integration/quickstart-bundle
+[packagemanifests-tutorial]: /docs/olm-integration/tutorial-package-manifests

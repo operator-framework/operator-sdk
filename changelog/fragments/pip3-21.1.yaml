@@ -1,4 +1,0 @@
-entries:
-  - description: >
-      Pinned pip3 to 21.1 in the ansible-operator image to fix https://github.com/pypa/pip/pull/9827
-    kind: bugfix

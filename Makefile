@@ -4,12 +4,14 @@ SHELL = /bin/bash
 # This value must be updated to the release tag of the most recent release, a change that must
 # occur in the release commit. IMAGE_VERSION will be removed once each subproject that uses this
 # version is moved to a separate repo and release process.
-export IMAGE_VERSION = v1.7.1
+export IMAGE_VERSION = v1.11.0
 # Build-time variables to inject into binaries
 export SIMPLE_VERSION = $(shell (test "$(shell git describe)" = "$(shell git describe --abbrev=0)" && echo $(shell git describe)) || echo $(shell git describe --abbrev=0)+git)
 export GIT_VERSION = $(shell git describe --dirty --tags --always)
 export GIT_COMMIT = $(shell git rev-parse HEAD)
-export K8S_VERSION = 1.20.2
+export K8S_VERSION = 1.21
+# TODO: bump this to 1.21, after kubectl `--generator` flag is removed from e2e tests.
+export ENVTEST_K8S_VERSION = 1.20.2
 
 # Build settings
 export TOOLS_DIR = tools/bin
@@ -42,7 +44,7 @@ generate: build # Generate CLI docs and samples
 	go generate ./...
 
 .PHONY: bindata
-OLM_VERSIONS = 0.16.1 0.17.0 0.18.1
+OLM_VERSIONS = 0.16.1 0.17.0 0.18.2
 bindata: ## Update project bindata
 	./hack/generate/olm_bindata.sh $(OLM_VERSIONS)
 	$(MAKE) fix
@@ -144,12 +146,12 @@ e2e_targets := test-e2e $(e2e_tests)
 
 .PHONY: test-e2e-setup
 export KIND_CLUSTER := operator-sdk-e2e
-export KUBEBUILDER_ASSETS := $(PWD)/$(TOOLS_DIR)
+
+export KUBEBUILDER_ASSETS = $(PWD)/$(shell go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest && $(shell go env GOPATH)/bin/setup-envtest use $(ENVTEST_K8S_VERSION) --bin-dir tools/bin/ -p path)
 test-e2e-setup: build
 	$(SCRIPTS_DIR)/fetch kind 0.11.0
-	$(SCRIPTS_DIR)/fetch envtest 0.8.3
-	$(SCRIPTS_DIR)/fetch kubectl $(K8S_VERSION) # Install kubectl AFTER envtest because envtest includes its own kubectl binary
-	[[ "`$(TOOLS_DIR)/kind get clusters`" =~ "$(KIND_CLUSTER)" ]] || $(TOOLS_DIR)/kind create cluster --image="kindest/node:v$(K8S_VERSION)" --name $(KIND_CLUSTER)
+	$(SCRIPTS_DIR)/fetch kubectl $(ENVTEST_K8S_VERSION) # Install kubectl AFTER envtest because envtest includes its own kubectl binary
+	[[ "`$(TOOLS_DIR)/kind get clusters`" =~ "$(KIND_CLUSTER)" ]] || $(TOOLS_DIR)/kind create cluster --image="kindest/node:v$(ENVTEST_K8S_VERSION)" --name $(KIND_CLUSTER)
 
 .PHONY: test-e2e-teardown
 test-e2e-teardown:
@@ -160,8 +162,8 @@ test-e2e-teardown:
 # Double colon rules allow repeated rule declarations.
 # Repeated rules are executed in the order they appear.
 $(e2e_targets):: test-e2e-setup image/scorecard-test
-
 test-e2e:: $(e2e_tests) ## Run e2e tests
+
 test-e2e-go:: image/custom-scorecard-tests ## Run Go e2e tests
 	go test ./test/e2e/go -v -ginkgo.v
 test-e2e-ansible:: image/ansible-operator ## Run Ansible e2e tests

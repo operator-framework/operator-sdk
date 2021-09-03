@@ -199,24 +199,20 @@ func addInitCustomizations(projectName string) error {
 	}
 
 	// Increase the default memory required.
-	err = sdkutil.ReplaceInFile(managerFile, "memory: 30Mi", "memory: 90Mi")
-	if err != nil {
-		return err
-	}
 	err = sdkutil.ReplaceInFile(managerFile, "memory: 20Mi", "memory: 60Mi")
 	if err != nil {
 		return err
 	}
 
-	// Remove the webhook option for the componentConfig since webhooks are not supported by ansible
+	// Remove the webhook option for the componentConfig since webhooks are not supported by helm
 	err = sdkutil.ReplaceInFile(filepath.Join("config", "manager", "controller_manager_config.yaml"),
 		"webhook:\n  port: 9443", "")
 	if err != nil {
 		return err
 	}
 
-	// Remove the call to the command as manager. Helm/Ansible has not been exposing this entrypoint
-	// todo: provide the manager entrypoint for helm/ansible and then remove it
+	// Remove the call to the command as manager. Helm has not been exposing this entrypoint
+	// todo: provide the manager entrypoint for helm and then remove it
 	const command = `command:
         - /manager
         `

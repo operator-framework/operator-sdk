@@ -31,6 +31,8 @@ const (
 	EventRunnerOnFailed = "runner_on_failed"
 	// EventPlaybookOnStats - playbook has finished running.
 	EventPlaybookOnStats = "playbook_on_stats"
+	// EventRunnerItemOnOk - item finished with ok status.
+	EventRunnerItemOnOk = "runner_item_on_ok"
 
 	// Ansible Task Actions
 

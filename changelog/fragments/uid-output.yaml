@@ -1,0 +1,5 @@
+entries:
+  - description: >
+      If an optional UniqueID is provided by a user in the scorecard config and the user generates XML output the UID will be appended to the test result output.
+    kind: "addition"
+    breaking: false

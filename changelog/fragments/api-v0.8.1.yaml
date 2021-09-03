@@ -1,4 +1,0 @@
-entries:
-  - description: >
-      Bumped operator-framework/api to v0.8.1, which properly defaults a CRD conversion's service port to 443
-    kind: bugfix

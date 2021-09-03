@@ -242,7 +242,7 @@ Ansible-runner will perform the task relevant to the command specified by the us
         msg: The decrypted value is {{secret.the_secret}}
 ```
 
-Now, let's also assume that we have a password file, `pwd.yml`, that contains the password to decrypt the encrypted text. Then, by running the command `ansible-operator run --ansible-args='--vault-password-file pwd.yml'` the operator will read in the encrypted text from the file and perform decryption using the password stored in the `pwd.yml` file:
+Now, let's also assume that we have a password file, `pwd.yml`, that contains the password to decrypt the encrypted text. Then, by running the command `ansible-operator run --ansible-args='--vault-password-file /absolute/path/to/pwd.yml'` the operator will read in the encrypted text from the file and perform decryption using the password stored in the `pwd.yml` file:
 
 ```
 --------------------------- Ansible Task StdOut -------------------------------
@@ -254,7 +254,19 @@ ok: [localhost] => {
 
 -------------------------------------------------------------------------------
 ```
+
+## Using Ansible Log Events
+
+Using the `--ansible-log-events` CLI flag, you can determine to what degree the Ansible task logs will be outputted. The flag can take any of the following values:
+
+1. `Nothing` - No tasks or task-related logs will be outputted.
+2. `Tasks` - Only Ansible Tasks will be outputted.
+3. `Everything` - All info logs and all tasks will be outputted.
+
+If you want more control over the logs that are outputted, consider using the [Zap Logger][Zap-Logger] and [verbosity annotations][verbosity-annotations] in tandem with the `--ansible-log-events` CLI flag. 
+
+
 [ansible-vault-doc]: https://docs.ansible.com/ansible/latest/user_guide/vault.html
-
-
+[Zap-Logger]: https://github.com/operator-framework/operator-sdk/blob/master/website/content/en/docs/building-operators/golang/references/logging.md#default-zap-logger
+[verbosity-annotations]: https://sdk.operatorframework.io/docs/building-operators/ansible/reference/advanced_options/#ansible-verbosity
 

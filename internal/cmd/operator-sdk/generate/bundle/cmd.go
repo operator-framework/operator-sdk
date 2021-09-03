@@ -38,6 +38,8 @@ type bundleCmd struct {
 	crdsDir      string
 	stdout       bool
 	quiet        bool
+	// ServiceAccount names to consider outside of the operator's service account.
+	extraServiceAccounts []string
 
 	// Metadata options.
 	channels       string
@@ -129,6 +131,9 @@ func (c *bundleCmd) addFlagsTo(fs *pflag.FlagSet) {
 		"Directory containing kustomize bases in a \"bases\" dir and a kustomization.yaml for operator-framework manifests")
 	fs.StringVar(&c.channels, "channels", "alpha", "A comma-separated list of channels the bundle belongs to")
 	fs.StringVar(&c.defaultChannel, "default-channel", "", "The default channel for the bundle")
+	fs.StringSliceVar(&c.extraServiceAccounts, "extra-service-accounts", nil,
+		"Names of service accounts, outside of the operator's Deployment account, "+
+			"that have bindings to {Cluster}Roles that should be added to the CSV")
 	fs.BoolVar(&c.overwrite, "overwrite", true, "Overwrite the bundle's metadata and Dockerfile if they exist")
 	fs.BoolVarP(&c.quiet, "quiet", "q", false, "Run in quiet mode")
 	fs.BoolVar(&c.stdout, "stdout", false, "Write bundle manifest to stdout")

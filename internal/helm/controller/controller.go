@@ -16,6 +16,7 @@ package controller
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -30,6 +31,7 @@ import (
 	crthandler "sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	ctrlpredicate "sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 	"sigs.k8s.io/yaml"
 
@@ -51,6 +53,7 @@ type WatchOptions struct {
 	WatchDependentResources bool
 	OverrideValues          map[string]string
 	MaxConcurrentReconciles int
+	Selector                metav1.LabelSelector
 }
 
 // Add creates a new helm operator controller and adds it to the manager
@@ -80,7 +83,19 @@ func Add(mgr manager.Manager, options WatchOptions) error {
 
 	o := &unstructured.Unstructured{}
 	o.SetGroupVersionKind(options.GVK)
-	if err := c.Watch(&source.Kind{Type: o}, &libhandler.InstrumentedEnqueueRequestForObject{}); err != nil {
+
+	var preds []ctrlpredicate.Predicate
+	p, err := parsePredicateSelector(options.Selector)
+
+	if err != nil {
+		return err
+	}
+
+	if p != nil {
+		preds = append(preds, p)
+	}
+
+	if err := c.Watch(&source.Kind{Type: o}, &libhandler.InstrumentedEnqueueRequestForObject{}, preds...); err != nil {
 		return err
 	}
 
@@ -91,6 +106,20 @@ func Add(mgr manager.Manager, options WatchOptions) error {
 	log.Info("Watching resource", "apiVersion", options.GVK.GroupVersion(), "kind",
 		options.GVK.Kind, "namespace", options.Namespace, "reconcilePeriod", options.ReconcilePeriod.String())
 	return nil
+}
+
+// parsePredicateSelector parses the selector in the WatchOptions and creates a predicate
+// that is used to filter resources based on the specified selector
+func parsePredicateSelector(selector metav1.LabelSelector) (ctrlpredicate.Predicate, error) {
+	// If a selector has been specified in watches.yaml, add it to the watch's predicates.
+	if !reflect.ValueOf(selector).IsZero() {
+		p, err := ctrlpredicate.LabelSelectorPredicate(selector)
+		if err != nil {
+			return nil, fmt.Errorf("error constructing predicate from watches selector: %v", err)
+		}
+		return p, nil
+	}
+	return nil, nil
 }
 
 // watchDependentResources adds a release hook function to the HelmOperatorReconciler
@@ -129,7 +158,7 @@ func watchDependentResources(mgr manager.Manager, r *HelmOperatorReconciler, c c
 				}
 
 				restMapper := mgr.GetRESTMapper()
-				useOwnerRef, err := k8sutil.SupportsOwnerReference(restMapper, owner, dependent)
+				useOwnerRef, err := k8sutil.SupportsOwnerReference(restMapper, owner, dependent, "")
 				if err != nil {
 					return err
 				}

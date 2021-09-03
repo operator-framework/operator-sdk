@@ -30,7 +30,7 @@ For further information check [Operator SDK Integration with Operator Lifecycle 
 
 | Command   | Description  |
 |-------|-----------|
-| `make bundle`          | Create/update the [bundle][bundle] based on the project manifests in the `bundle/` directory. More info [Create a bundle][creating-a-bundle].      |
+| `make bundle`          | Create/update the [bundle][bundle] based on the project manifests in the `bundle/` directory. For more info see [Create a bundle][creating-a-bundle].      |
 | `operator-sdk bundle validate ./bundle`          | To validate your [bundle][bundle] spec definition.      |
 | `operator-sdk bundle validate ./bundle --select-optional suite=operatorframework` | Validate your bundle against [OperatorHub.io][operatorhub-io] criteria. For further information use the flag `--help`. |
 | `operator-sdk olm install` | To install OLM on your cluster for development purposes. |
@@ -52,7 +52,7 @@ The following examples let you update the [bundle][bundle] with data-informed. F
 make bundle CHANNELS=fast,preview DEFAULT_CHANNEL=stable VERSION=1.0.0 IMG=<some-registry>/<project-name-bundle>:<tag>
 ```
 
-**NOTE** You can use environment variables to pass the values such as `export CHANNELS=fast,preview`. Note that, their values will be used by `make bundle` command.
+**NOTE** You can use environment variables to pass the values such as `export CHANNELS=fast,candidate`. Note that, their values will be used by `make bundle` command.
 
 ## To test your projects
 
@@ -66,7 +66,7 @@ make bundle CHANNELS=fast,preview DEFAULT_CHANNEL=stable VERSION=1.0.0 IMG=<some
 **NOTE:** This is not a comprehensive list of make targets or commands. Please see the scaffolded Makefile and `make help` for the full list of targets. Note that you can use `operator-sdk <command> --help` and check the [CLI][cli] section to check all options.
  
 [olm-integration]: /docs/olm-integration/
-[creating-a-bundle]: /docs/olm-integration/quickstart-bundle/#creating-a-bundle
+[creating-a-bundle]: /docs/olm-integration/tutorial-bundle/#creating-a-bundle
 [bundle]:https://github.com/operator-framework/operator-registry/blob/v1.16.1/docs/design/operator-bundle.md
 [operatorhub-io]: https://operatorhub.io/
 [upgrade-project]: /docs/olm-integration/generation/#upgrade-your-operator
@@ -75,7 +75,7 @@ make bundle CHANNELS=fast,preview DEFAULT_CHANNEL=stable VERSION=1.0.0 IMG=<some
 [gkvs]: https://book.kubebuilder.io/cronjob-tutorial/gvks.html
 [extend-k8s-api]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/
 [webhooks-k8s-doc]: https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/
-[scorcard]: /docs/advanced-topics/scorecard/
+[scorcard]: /docs/testing-operators/scorecard/
 [molecule-tests]: /docs/building-operators/ansible/testing-guide
 [helm-chart-tests]: https://helm.sh/docs/topics/chart_tests/
 [cli]: /docs/cli/
