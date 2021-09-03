@@ -24,7 +24,7 @@ release: ## Publish an operator-sdk release, with option for a dry run with DRY_
 ifeq (,$(GIT_VERSION))
 	$(error "GIT_VERSION must be set to a git tag")
 endif
-	$(SCRIPTS_DIR)/fetch goreleaser 0.156.0
+	$(SCRIPTS_DIR)/fetch goreleaser 0.177.0
 	GORELEASER_CURRENT_TAG=$(GIT_VERSION) $(TOOLS_DIR)/goreleaser $(SNAPSHOT_FLAGS) --release-notes=$(CHANGELOG) --parallelism 5
 ifneq ($(DRY_RUN),)
 	rm $(CHANGELOG)
