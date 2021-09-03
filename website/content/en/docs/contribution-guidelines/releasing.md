@@ -76,7 +76,7 @@ make prerelease
 
 The following changes should be present:
 
-- `Makefile`: IMAGE_VERSION should be modified to the upcoming release tag. (This variable ensures sampleprojects have been tagged correctpy prior to the release commit.)
+- `Makefile`: IMAGE_VERSION should be modified to the upcoming release tag. (This variable ensures sampleprojects have been tagged correctly prior to the release commit.)
 - `changelog/generated/v1.3.0.md`: commit changes (created by changelog generation).
 - `changelog/fragments/*`: commit deleted fragment files (deleted by changelog generation).
 - `website/content/en/docs/upgrading-sdk-version/v1.3.0.md`: commit changes (created by changelog generation).
