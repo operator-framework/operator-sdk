@@ -23,4 +23,4 @@ It may be worthwhile to read [Elika Etemad’s article on filing good bug report
 We might ask for further information to locate a bug. A duplicated bug report will be closed.
 
 [operator-sdk-issue]: https://github.com/operator-framework/operator-sdk/issues/new
-[filing-good-bugs]: http://fantasai.inkedblade.net/style/talks/filing-good-bugs/
+[filing-good-bugs]: https://fantasai.inkedblade.net/style/talks/filing-good-bugs/
