@@ -336,6 +336,10 @@ func applyWebhooks(c *collector.Manifests, csv *operatorsv1alpha1.ClusterService
 			webhookDescriptions = append(webhookDescriptions, des...)
 		}
 	}
+	// Sorts the WebhookDescriptions based on natural order of webhookDescriptions Type
+	sort.Slice(webhookDescriptions, func(i, j int) bool {
+		return webhookDescriptions[i].Type < webhookDescriptions[j].Type
+	})
 	csv.Spec.WebhookDefinitions = webhookDescriptions
 }
 

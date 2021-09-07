@@ -160,23 +160,14 @@ spec:
   - admissionReviewVersions:
     - v1beta1
     containerPort: 443
+    conversionCRDs:
+    - memcacheds.cache.example.com
     deploymentName: memcached-operator-controller-manager
-    failurePolicy: Fail
-    generateName: vmemcached.kb.io
-    rules:
-    - apiGroups:
-      - cache.example.com
-      apiVersions:
-      - v1alpha1
-      operations:
-      - CREATE
-      - UPDATE
-      resources:
-      - memcacheds
+    generateName: cmemcacheds.kb.io
     sideEffects: None
     targetPort: 9443
-    type: ValidatingAdmissionWebhook
-    webhookPath: /validate-cache-my-domain-v1alpha1-memcached
+    type: ConversionWebhook
+    webhookPath: /convert
   - admissionReviewVersions:
     - v1beta1
     containerPort: 443
@@ -200,11 +191,20 @@ spec:
   - admissionReviewVersions:
     - v1beta1
     containerPort: 443
-    conversionCRDs:
-    - memcacheds.cache.example.com
     deploymentName: memcached-operator-controller-manager
-    generateName: cmemcacheds.kb.io
+    failurePolicy: Fail
+    generateName: vmemcached.kb.io
+    rules:
+    - apiGroups:
+      - cache.example.com
+      apiVersions:
+      - v1alpha1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - memcacheds
     sideEffects: None
     targetPort: 9443
-    type: ConversionWebhook
-    webhookPath: /convert
+    type: ValidatingAdmissionWebhook
+    webhookPath: /validate-cache-my-domain-v1alpha1-memcached
