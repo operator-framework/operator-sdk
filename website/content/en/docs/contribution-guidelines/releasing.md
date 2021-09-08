@@ -97,6 +97,12 @@ The following changes should be present:
 - `website/content/en/docs/upgrading-sdk-version/v1.3.0.md`: commit changes (created by changelog generation).
 - `website/config.toml`: commit changes (modified by release script).
 
+Then, run the test-sanity `make` target to regenerate the testdata samples. Note that the sanity tests will fail but the scaffolding in `testdata/` will be generated. 
+
+```sh
+make test-sanity
+```
+
 Commit these changes and push to your remote (assuming your remote is named `origin`):
 
 ```sh
