@@ -107,7 +107,7 @@ ifneq ($(RELEASE_VERSION),$(IMAGE_VERSION))
 	$(error "IMAGE_VERSION "$(IMAGE_VERSION)" must be updated to match RELEASE_VERSION "$(RELEASE_VERSION)" prior to creating a release commit")
 endif
 	$(MAKE) -f release/Makefile $@
-
+	$(MAKE) generate
 .PHONY: tag
 tag: ## Tag a release commit. See 'make -f release/Makefile help' for more information.
 	$(MAKE) -f release/Makefile $@
