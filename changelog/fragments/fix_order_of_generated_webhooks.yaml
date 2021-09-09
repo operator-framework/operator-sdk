@@ -1,8 +1,0 @@
-entries:
-  - description: >
-      Preserve the order of `webhookdefinitions` while generating bundles, 
-      by sorting `webhookDescriptions` in CSV generator.
-
-    kind: bugfix
-    
-    breaking: false
