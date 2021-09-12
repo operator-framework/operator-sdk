@@ -80,7 +80,7 @@ operator-sdk_linux_amd64: OK
 #### 3. Install the release binary in your PATH
 
 ```sh
-chmod +x operator-sdk_${OS}_${ARCH} && sudo mv operator-sdk_${OS}_${ARCH} /usr/local/bin/operator-sdk
+sudo chmod +x operator-sdk_${OS}_${ARCH} && sudo mv operator-sdk_${OS}_${ARCH} /usr/local/bin/operator-sdk
 ```
 
 ## Compile and install from master
