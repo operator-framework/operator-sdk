@@ -50,29 +50,33 @@ type ResourceStatus struct {
 	requestObject runtime.Object // Needed for context on errors from requests on an object.
 }
 
-func (c Client) GetObjectsStatus(ctx context.Context, objs ...client.Object) Status {
+func (c Client) GetObjectsStatus(ctx context.Context, namespace string, objs ...client.Object) Status {
 	var rss []ResourceStatus
 	for _, obj := range objs {
-		gvk := obj.GetObjectKind().GroupVersionKind()
-		nn := types.NamespacedName{
-			Namespace: obj.GetNamespace(),
-			Name:      obj.GetName(),
-		}
-		rs := ResourceStatus{
-			NamespacedName: nn,
-			GVK:            gvk,
-			requestObject:  obj,
-		}
-		u := unstructured.Unstructured{}
-		u.SetGroupVersionKind(gvk)
-		rs.Error = c.KubeClient.Get(ctx, nn, &u)
-		if rs.Error == nil {
-			rs.Resource = &u
-		}
+		rs := c.GetObjectStatus(ctx, namespace, obj)
 		rss = append(rss, rs)
 	}
-
 	return Status{Resources: rss}
+}
+
+func (c Client) GetObjectStatus(ctx context.Context, namespace string, obj client.Object) ResourceStatus {
+	gvk := obj.GetObjectKind().GroupVersionKind()
+	nn := types.NamespacedName{
+		Namespace: namespace,
+		Name:      obj.GetName(),
+	}
+	rs := ResourceStatus{
+		NamespacedName: nn,
+		GVK:            gvk,
+		requestObject:  obj,
+	}
+	u := unstructured.Unstructured{}
+	u.SetGroupVersionKind(gvk)
+	rs.Error = c.KubeClient.Get(ctx, nn, &u)
+	if rs.Error == nil {
+		rs.Resource = &u
+	}
+	return rs
 }
 
 // HasInstalledResources only returns true if at least one resource in s
