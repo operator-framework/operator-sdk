@@ -77,7 +77,7 @@ func (c Client) InstallVersion(ctx context.Context, namespace, version string) (
 	}
 	objs := toObjects(resources...)
 
-	status := c.GetObjectsStatus(ctx, objs...)
+	status := c.GetObjectsStatus(ctx, namespace, objs...)
 	installed, err := status.HasInstalledResources()
 	if err != nil {
 		return nil, fmt.Errorf("detected errored OLM resources: %v", err)
@@ -131,7 +131,7 @@ func (c Client) InstallVersion(ctx context.Context, namespace, version string) (
 		return nil, fmt.Errorf("deployment/%s failed to rollout: %v", packageServerKey.Name, err)
 	}
 
-	status = c.GetObjectsStatus(ctx, objs...)
+	status = c.GetObjectsStatus(ctx, namespace, objs...)
 	return &status, nil
 }
 
@@ -142,7 +142,7 @@ func (c Client) UninstallVersion(ctx context.Context, namespace, version string)
 	}
 	objs := toObjects(resources...)
 
-	status := c.GetObjectsStatus(ctx, objs...)
+	status := c.GetObjectsStatus(ctx, namespace, objs...)
 	installed, err := status.HasInstalledResources()
 	if !installed && err == nil {
 		return olmresourceclient.ErrOLMNotInstalled
@@ -161,8 +161,7 @@ func (c Client) GetStatus(ctx context.Context, namespace, version string) (*olmr
 		return nil, fmt.Errorf("failed to get resources: %v", err)
 	}
 	objs := toObjects(resources...)
-
-	status := c.GetObjectsStatus(ctx, objs...)
+	status := c.GetObjectsStatus(ctx, namespace, objs...)
 	installed, err := status.HasInstalledResources()
 	if err != nil {
 		return nil, fmt.Errorf("the OLM installation has resource errors: %v", err)
