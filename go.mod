@@ -14,7 +14,7 @@ require (
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.13.0
 	github.com/operator-framework/api v0.10.5
-	github.com/operator-framework/java-operator-plugins v0.0.0-20210708174638-463fb91f3d5e
+	github.com/operator-framework/java-operator-plugins v0.1.0
 	github.com/operator-framework/operator-lib v0.6.0
 	github.com/operator-framework/operator-registry v1.17.4
 	github.com/prometheus/client_golang v1.11.0
