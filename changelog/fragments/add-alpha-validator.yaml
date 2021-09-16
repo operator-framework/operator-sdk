@@ -1,0 +1,17 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Add new optional validator `alpha-deprecated-apis` for the command bundle validate to help you verify if your bundle uses Kubernetes deprecated APIs.
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "addition"
+
+    # Is this a breaking change?
+    breaking: false
+
