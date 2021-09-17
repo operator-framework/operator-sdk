@@ -179,7 +179,7 @@ The `preserveUnknownFields` will be removed if set to false when running `make b
 
 You can use this script to post process the files to add the `preserveUnknownFields` back in.
 
-```bigquery
+```
 function generate_preserveUnknownFieldsdata() {
     for j in config/crd/patches/*.yaml ; do
         if grep -qF "preserveUnknownFields" "$j";then
