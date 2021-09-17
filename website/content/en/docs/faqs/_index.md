@@ -175,11 +175,11 @@ For more information and examples, please see the type-specific docs:
 
 ## Preserve the `preserveUnknownFields` in your CRDs
 
-The `preserveUnknownFields` will be removed if set to false when running `make bundle`. Because of some underlying data structure changes and how yaml is unmarshalled, it is best to add them back in after they have been written.
+The [`preserveUnknownFields`](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#field-pruning) will be removed if set to false when running `make bundle`. Because of some underlying data structure changes and how yaml is unmarshalled, it is best to add them back in after they have been written.
 
 You can use this script to post process the files to add the `preserveUnknownFields` back in.
 
-```
+```sh
 function generate_preserveUnknownFieldsdata() {
     for j in config/crd/patches/*.yaml ; do
         if grep -qF "preserveUnknownFields" "$j";then
@@ -197,7 +197,7 @@ function generate_preserveUnknownFieldsdata() {
 generate_preserveUnknownFieldsdata
 ```
 
-You can then modify the `bundle:` target in your `Makefile` by adding a call to the script at the end of the target. See the example below:
+You can then modify the `bundle` target in your `Makefile` by adding a call to the script at the end of the target. See the example below:
 
 ```
 .PHONY: bundle
