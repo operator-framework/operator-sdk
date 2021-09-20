@@ -50,7 +50,7 @@ definition of what the selector `suite=kuttlsuite` will translate to:
 ```yaml
 stages:
 - tests:
-  - image: quay.io/operator-framework/scorecard-test-kuttl:dev
+  - image: quay.io/operator-framework/scorecard-test-kuttl:v2.0.0
     labels:
       suite: kuttlsuite
       test: kuttltest1
@@ -111,7 +111,7 @@ The important fields to note here are:
  * `list-pods, list-other` - The names given by you for these test cases.
  * `00-assert.yaml` - The assert file is executed to test whether or
 not the test was successful, this assertion determines whether or not
-the test passed or failed.  
+the test passed or failed.
  * `00-pod.yaml` - The pod file is used to define what the test will
 create, in this case a pod will be created based on the manifest within
 00-pod.yaml.
