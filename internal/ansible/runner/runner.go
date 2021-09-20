@@ -74,19 +74,18 @@ type cmdFuncType func(ident, inputDirPath string, maxArtifacts, verbosity int) *
 
 func playbookCmdFunc(path string) cmdFuncType {
 	return func(ident, inputDirPath string, maxArtifacts, verbosity int) *exec.Cmd {
+		cmdArgs := []string{"run", inputDirPath}
 		cmdOptions := []string{
 			"--rotate-artifacts", fmt.Sprintf("%v", maxArtifacts),
 			"-p", path,
 			"-i", ident,
 		}
-		cmdArgs := []string{"run", inputDirPath}
 
 		// check the verbosity since the exec.Command will fail if an arg as "" or " " be informed
 		if verbosity > 0 {
 			cmdOptions = append(cmdOptions, ansibleVerbosityString(verbosity))
 		}
-
-		return exec.Command("ansible-runner", append(cmdOptions, cmdArgs...)...)
+		return exec.Command("ansible-runner", append(cmdArgs, cmdOptions...)...)
 	}
 }
 
@@ -114,8 +113,7 @@ func roleCmdFunc(path string) cmdFuncType {
 		if ansibleGathering == "explicit" {
 			cmdOptions = append(cmdOptions, "--role-skip-facts")
 		}
-
-		return exec.Command("ansible-runner", append(cmdOptions, cmdArgs...)...)
+		return exec.Command("ansible-runner", append(cmdArgs, cmdOptions...)...)
 	}
 }
 
