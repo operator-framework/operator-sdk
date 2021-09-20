@@ -218,7 +218,6 @@ spec:
   webhookdefinitions:
   - admissionReviewVersions:
     - v1
-    - v1beta1
     containerPort: 443
     deploymentName: memcached-operator-controller-manager
     failurePolicy: Fail
@@ -239,7 +238,6 @@ spec:
     webhookPath: /mutate-cache-example-com-v1alpha1-memcached
   - admissionReviewVersions:
     - v1
-    - v1beta1
     containerPort: 443
     deploymentName: memcached-operator-controller-manager
     failurePolicy: Fail

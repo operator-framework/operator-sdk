@@ -27,7 +27,6 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/helm/v1/scaffolds"
 	sdkpluginutil "github.com/operator-framework/operator-sdk/internal/plugins/util"
-	sdkutil "github.com/operator-framework/operator-sdk/internal/util"
 )
 
 const (
@@ -185,13 +184,13 @@ func addInitCustomizations(projectName string) error {
 	// by https://github.com/kubernetes-sigs/kubebuilder/pull/2119
 
 	// Add leader election arg in config/manager/manager.yaml and in config/default/manager_auth_proxy_patch.yaml
-	err := sdkutil.InsertCode(managerFile,
+	err := util.InsertCode(managerFile,
 		"--leader-elect",
 		fmt.Sprintf("\n        - --leader-election-id=%s", projectName))
 	if err != nil {
 		return err
 	}
-	err = sdkutil.InsertCode(filepath.Join("config", "default", "manager_auth_proxy_patch.yaml"),
+	err = util.InsertCode(filepath.Join("config", "default", "manager_auth_proxy_patch.yaml"),
 		"- \"--leader-elect\"",
 		fmt.Sprintf("\n        - \"--leader-election-id=%s\"", projectName))
 	if err != nil {
@@ -199,13 +198,13 @@ func addInitCustomizations(projectName string) error {
 	}
 
 	// Increase the default memory required.
-	err = sdkutil.ReplaceInFile(managerFile, "memory: 20Mi", "memory: 60Mi")
+	err = util.ReplaceInFile(managerFile, "memory: 20Mi", "memory: 60Mi")
 	if err != nil {
 		return err
 	}
 
 	// Remove the webhook option for the componentConfig since webhooks are not supported by helm
-	err = sdkutil.ReplaceInFile(filepath.Join("config", "manager", "controller_manager_config.yaml"),
+	err = util.ReplaceInFile(filepath.Join("config", "manager", "controller_manager_config.yaml"),
 		"webhook:\n  port: 9443", "")
 	if err != nil {
 		return err
@@ -216,7 +215,7 @@ func addInitCustomizations(projectName string) error {
 	const command = `command:
         - /manager
         `
-	err = sdkutil.ReplaceInFile(managerFile, command, "")
+	err = util.ReplaceInFile(managerFile, command, "")
 	if err != nil {
 		return err
 	}

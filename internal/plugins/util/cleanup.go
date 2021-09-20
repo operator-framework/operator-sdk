@@ -22,9 +22,9 @@ import (
 	"os"
 	"path/filepath"
 
-	log "github.com/sirupsen/logrus"
+	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 
-	"github.com/operator-framework/operator-sdk/internal/util"
+	log "github.com/sirupsen/logrus"
 )
 
 // RemoveKustomizeCRDManifests removes items in config/crd relating to CRD conversion webhooks.
@@ -63,7 +63,7 @@ func RemoveKustomizeCRDManifests() error {
 func UpdateKustomizationsInit() error {
 
 	defaultKFile := filepath.Join("config", "default", "kustomization.yaml")
-	if err := util.ReplaceInFile(defaultKFile,
+	if err := kbutil.ReplaceInFile(defaultKFile,
 		`
 # [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix including the one in
 # crd/kustomization.yaml
@@ -73,7 +73,7 @@ func UpdateKustomizationsInit() error {
 		return fmt.Errorf("remove %s resources: %v", defaultKFile, err)
 	}
 
-	if err := util.ReplaceInFile(defaultKFile,
+	if err := kbutil.ReplaceInFile(defaultKFile,
 		`
 # [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix including the one in
 # crd/kustomization.yaml

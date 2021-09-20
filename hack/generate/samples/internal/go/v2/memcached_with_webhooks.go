@@ -22,11 +22,9 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	kbtestutils "sigs.k8s.io/kubebuilder/v3/test/e2e/utils"
+	kbtutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
-	"github.com/operator-framework/operator-sdk/internal/testutils"
-	"github.com/operator-framework/operator-sdk/internal/util"
 )
 
 // Memcached defines the Memcached Sample in GO using webhooks
@@ -126,22 +124,22 @@ func (mh *Memcached) uncommentDefaultKustomization() {
 	kustomization := filepath.Join(mh.ctx.Dir, "config", "default", "kustomization.yaml")
 	log.Info("uncommenting config/default/kustomization.yaml to enable webhooks and ca injection")
 
-	err = testutils.UncommentCode(kustomization, "#- ../webhook", "#")
+	err = kbtutil.UncommentCode(kustomization, "#- ../webhook", "#")
 	pkg.CheckError("uncomment webhook", err)
 
-	err = testutils.UncommentCode(kustomization, "#- ../certmanager", "#")
+	err = kbtutil.UncommentCode(kustomization, "#- ../certmanager", "#")
 	pkg.CheckError("uncomment certmanager", err)
 
-	err = testutils.UncommentCode(kustomization, "#- ../prometheus", "#")
+	err = kbtutil.UncommentCode(kustomization, "#- ../prometheus", "#")
 	pkg.CheckError("uncomment prometheus", err)
 
-	err = testutils.UncommentCode(kustomization, "#- manager_webhook_patch.yaml", "#")
+	err = kbtutil.UncommentCode(kustomization, "#- manager_webhook_patch.yaml", "#")
 	pkg.CheckError("uncomment manager_webhook_patch.yaml", err)
 
-	err = testutils.UncommentCode(kustomization, "#- webhookcainjection_patch.yaml", "#")
+	err = kbtutil.UncommentCode(kustomization, "#- webhookcainjection_patch.yaml", "#")
 	pkg.CheckError("uncomment webhookcainjection_patch.yaml", err)
 
-	err = testutils.UncommentCode(kustomization,
+	err = kbtutil.UncommentCode(kustomization,
 		`#- name: CERTIFICATE_NAMESPACE # namespace of the certificate CR
 #  objref:
 #    kind: Certificate
@@ -177,7 +175,7 @@ func (mh *Memcached) uncommentManifestsKustomization() {
 	kustomization := filepath.Join(mh.ctx.Dir, "config", "manifests", "kustomization.yaml")
 	log.Info("uncommenting config/manifests/kustomization.yaml to enable webhooks in OLM")
 
-	err = testutils.UncommentCode(kustomization,
+	err = kbtutil.UncommentCode(kustomization,
 		`#patchesJson6902:
 #- target:
 #    group: apps
@@ -204,17 +202,17 @@ func (mh *Memcached) implementingWebhooks() {
 		strings.ToLower(mh.ctx.Kind)))
 
 	// Add webhook methods
-	err := kbtestutils.InsertCode(webhookPath,
+	err := kbtutil.InsertCode(webhookPath,
 		"// TODO(user): fill in your defaulting logic.\n}",
 		webhooksFragment)
 	pkg.CheckError("replacing reconcile", err)
 
-	err = util.ReplaceInFile(webhookPath,
+	err = kbtutil.ReplaceInFile(webhookPath,
 		"// TODO(user): fill in your defaulting logic.", "if r.Spec.Size == 0 {\n\t\tr.Spec.Size = 3\n\t}")
 	pkg.CheckError("replacing default webhook implementation", err)
 
 	// Add imports
-	err = kbtestutils.InsertCode(webhookPath,
+	err = kbtutil.InsertCode(webhookPath,
 		"import (",
 		"\"errors\"\n\n\"k8s.io/apimachinery/pkg/runtime\"")
 	pkg.CheckError("adding webhook imports", err)
@@ -226,38 +224,38 @@ func (mh *Memcached) implementingController() {
 		strings.ToLower(mh.ctx.Kind)))
 
 	// Add imports
-	err := kbtestutils.InsertCode(controllerPath,
+	err := kbtutil.InsertCode(controllerPath,
 		"import (",
 		importsFragment)
 	pkg.CheckError("adding imports", err)
 
 	// Add RBAC permissions on top of reconcile
-	err = kbtestutils.InsertCode(controllerPath,
+	err = kbtutil.InsertCode(controllerPath,
 		"verbs=get;update;patch",
 		rbacFragment)
 	pkg.CheckError("adding rbac", err)
 
 	// Replace reconcile content
-	err = util.ReplaceInFile(controllerPath, "_ = context.Background()", "ctx := context.Background()")
+	err = kbtutil.ReplaceInFile(controllerPath, "_ = context.Background()", "ctx := context.Background()")
 	pkg.CheckError("replacing reconcile content", err)
 
-	err = util.ReplaceInFile(controllerPath,
+	err = kbtutil.ReplaceInFile(controllerPath,
 		fmt.Sprintf("_ = r.Log.WithValues(\"%s\", req.NamespacedName)", strings.ToLower(mh.ctx.Kind)),
 		fmt.Sprintf("log := r.Log.WithValues(\"%s\", req.NamespacedName)", strings.ToLower(mh.ctx.Kind)))
 	pkg.CheckError("replacing reconcile content", err)
 
 	// Add reconcile implementation
-	err = util.ReplaceInFile(controllerPath,
+	err = kbtutil.ReplaceInFile(controllerPath,
 		"// your logic here", reconcileFragment)
 	pkg.CheckError("replacing reconcile", err)
 
 	// Add helpers funcs to the controller
-	err = kbtestutils.InsertCode(controllerPath,
+	err = kbtutil.InsertCode(controllerPath,
 		"return ctrl.Result{}, nil\n}", controllerFuncsFragment)
 	pkg.CheckError("adding helpers methods in the controller", err)
 
 	// Add watch for the Kind
-	err = util.ReplaceInFile(controllerPath,
+	err = kbtutil.ReplaceInFile(controllerPath,
 		fmt.Sprintf(watchOriginalFragment, mh.ctx.Group, mh.ctx.Version, mh.ctx.Kind),
 		fmt.Sprintf(watchCustomizedFragment, mh.ctx.Group, mh.ctx.Version, mh.ctx.Kind))
 	pkg.CheckError("replacing reconcile", err)
@@ -269,7 +267,7 @@ func (mh *Memcached) implementingAPI() {
 	typeFilePath := filepath.Join(mh.ctx.Dir, "api", mh.ctx.Version, fmt.Sprintf("%s_types.go", strings.ToLower(mh.ctx.Kind)))
 
 	log.Infof("implementing api spec")
-	err := kbtestutils.InsertCode(
+	err := kbtutil.InsertCode(
 		typeFilePath,
 		fmt.Sprintf("type %sSpec struct {\n\t// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster\n\t// Important: Run \"make\" to regenerate code after modifying this file", mh.ctx.Kind),
 		`
@@ -280,7 +278,7 @@ func (mh *Memcached) implementingAPI() {
 	pkg.CheckError("inserting spec Status", err)
 
 	log.Infof("implementing api status")
-	err = kbtestutils.InsertCode(
+	err = kbtutil.InsertCode(
 		typeFilePath,
 		fmt.Sprintf("type %sStatus struct {\n\t// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster\n\t// Important: Run \"make\" to regenerate code after modifying this file", mh.ctx.Kind),
 		`
@@ -294,7 +292,7 @@ func (mh *Memcached) implementingAPI() {
 		fmt.Sprintf("%s_%s_%s.yaml", mh.ctx.Group, mh.ctx.Version, strings.ToLower(mh.ctx.Kind)))
 
 	log.Infof("updating sample to have size attribute")
-	err = util.ReplaceInFile(filepath.Join(mh.ctx.Dir, sampleFile), "foo: bar", "size: 1")
+	err = kbtutil.ReplaceInFile(filepath.Join(mh.ctx.Dir, sampleFile), "# Add fields here", "size: 1")
 	pkg.CheckError("updating sample", err)
 }
 

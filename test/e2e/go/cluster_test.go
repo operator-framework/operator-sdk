@@ -25,10 +25,10 @@ import (
 	"strings"
 	"time"
 
+	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	kbtestutils "sigs.k8s.io/kubebuilder/v3/test/e2e/utils"
-
 	"github.com/operator-framework/operator-sdk/internal/testutils"
 )
 
@@ -71,7 +71,7 @@ var _ = Describe("operator-sdk", func() {
 				if err != nil {
 					return fmt.Errorf("could not get pods: %v", err)
 				}
-				podNames := kbtestutils.GetNonEmptyLines(podOutput)
+				podNames := kbutil.GetNonEmptyLines(podOutput)
 				if len(podNames) != 1 {
 					return fmt.Errorf("expecting 1 pod, have %d", len(podNames))
 				}

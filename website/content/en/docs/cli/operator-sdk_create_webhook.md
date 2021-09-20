@@ -40,7 +40,6 @@ operator-sdk create webhook [flags]
       --plural string             resource irregular plural form
       --programmatic-validation   if set, scaffold the validating webhook
       --version string            resource Version
-      --webhook-version string    version of {Mutating,Validating}WebhookConfigurations to scaffold. Options: [v1, v1beta1] (default "v1")
 ```
 
 ### Options inherited from parent commands

@@ -21,7 +21,7 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	kbtestutils "sigs.k8s.io/kubebuilder/v3/test/e2e/utils"
+	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
 	"github.com/operator-framework/operator-sdk/internal/util"
@@ -73,15 +73,15 @@ func (ma *MemcachedMolecule) Run() {
 		fmt.Sprintf("%s_test.yml", strings.ToLower(ma.ctx.Kind)))
 
 	log.Infof("insert molecule task to ensure that ConfigMap will be deleted")
-	err := kbtestutils.InsertCode(moleculeTaskPath, targetMoleculeCheckDeployment, molecuTaskToCheckConfigMap)
+	err := kbutil.InsertCode(moleculeTaskPath, targetMoleculeCheckDeployment, molecuTaskToCheckConfigMap)
 	pkg.CheckError("replacing memcached task to add config map check", err)
 
 	log.Infof("insert molecule task to ensure to check secret")
-	err = kbtestutils.InsertCode(moleculeTaskPath, memcachedCustomStatusMoleculeTarget, testSecretMoleculeCheck)
+	err = kbutil.InsertCode(moleculeTaskPath, memcachedCustomStatusMoleculeTarget, testSecretMoleculeCheck)
 	pkg.CheckError("replacing memcached task to add secret check", err)
 
 	log.Infof("insert molecule task to ensure to foo ")
-	err = kbtestutils.InsertCode(moleculeTaskPath, testSecretMoleculeCheck, testFooMoleculeCheck)
+	err = kbutil.InsertCode(moleculeTaskPath, testSecretMoleculeCheck, testFooMoleculeCheck)
 	pkg.CheckError("replacing memcached task to add foo check", err)
 
 	log.Infof("replacing project Dockerfile to use ansible base image with the dev tag")
@@ -89,12 +89,12 @@ func (ma *MemcachedMolecule) Run() {
 	pkg.CheckError("replacing Dockerfile", err)
 
 	log.Infof("adding RBAC permissions")
-	err = util.ReplaceInFile(filepath.Join(ma.ctx.Dir, "config", "rbac", "role.yaml"),
+	err = kbutil.ReplaceInFile(filepath.Join(ma.ctx.Dir, "config", "rbac", "role.yaml"),
 		"#+kubebuilder:scaffold:rules", rolesForBaseOperator)
 	pkg.CheckError("replacing in role.yml", err)
 
 	log.Infof("adding Memcached mock task to the role with black list")
-	err = kbtestutils.InsertCode(filepath.Join(ma.ctx.Dir, "roles", strings.ToLower(ma.ctx.Kind), "tasks", "main.yml"),
+	err = kbutil.InsertCode(filepath.Join(ma.ctx.Dir, "roles", strings.ToLower(ma.ctx.Kind), "tasks", "main.yml"),
 		roleFragment, memcachedWithBlackListTask)
 	pkg.CheckError("replacing in tasks/main.yml", err)
 
@@ -106,6 +106,13 @@ func (ma *MemcachedMolecule) Run() {
 		"--generate-role")
 	pkg.CheckError("creating api", err)
 
+	log.Infof("updating spec of foo sample")
+	err = kbutil.ReplaceInFile(
+		filepath.Join(ma.ctx.Dir, "config", "samples", "cache_v1alpha1_foo.yaml"),
+		"# Add fields here",
+		"foo: bar")
+	pkg.CheckError("updating spec of cache_v1alpha1_foo.yaml", err)
+
 	log.Infof("creating an API definition to add a task to delete the config map")
 	err = ma.ctx.CreateAPI(
 		"--group", ma.ctx.Group,
@@ -114,13 +121,20 @@ func (ma *MemcachedMolecule) Run() {
 		"--generate-role")
 	pkg.CheckError("creating api", err)
 
+	log.Infof("updating spec of Memfin sample")
+	err = kbutil.ReplaceInFile(
+		filepath.Join(ma.ctx.Dir, "config", "samples", "cache_v1alpha1_memfin.yaml"),
+		"# Add fields here",
+		"foo: bar")
+	pkg.CheckError("updating spec of cache_v1alpha1_memfin.yaml ", err)
+
 	log.Infof("adding task to delete config map")
-	err = util.ReplaceInFile(filepath.Join(ma.ctx.Dir, "roles", "memfin", "tasks", "main.yml"),
+	err = kbutil.ReplaceInFile(filepath.Join(ma.ctx.Dir, "roles", "memfin", "tasks", "main.yml"),
 		"# tasks file for Memfin", taskToDeleteConfigMap)
 	pkg.CheckError("replacing in tasks/main.yml", err)
 
 	log.Infof("adding to watches finalizer and blacklist")
-	err = util.ReplaceInFile(filepath.Join(ma.ctx.Dir, "watches.yaml"),
+	err = kbutil.ReplaceInFile(filepath.Join(ma.ctx.Dir, "watches.yaml"),
 		"playbook: playbooks/memcached.yml", memcachedWatchCustomizations)
 	pkg.CheckError("replacing in watches", err)
 
@@ -141,8 +155,15 @@ func (ma *MemcachedMolecule) Run() {
 		"--generate-role")
 	pkg.CheckError("creating api", err)
 
+	log.Infof("updating spec of ignore sample")
+	err = kbutil.ReplaceInFile(
+		filepath.Join(ma.ctx.Dir, "config", "samples", "ignore_v1_secret.yaml"),
+		"# Add fields here",
+		"foo: bar")
+	pkg.CheckError("updating spec of ignore_v1_secret.yaml", err)
+
 	log.Infof("removing ignore group for the secret from watches as an workaround to work with core types")
-	err = util.ReplaceInFile(filepath.Join(ma.ctx.Dir, "watches.yaml"),
+	err = kbutil.ReplaceInFile(filepath.Join(ma.ctx.Dir, "watches.yaml"),
 		"ignore.example.com", "\"\"")
 	pkg.CheckError("replacing the watches file", err)
 
@@ -152,22 +173,22 @@ func (ma *MemcachedMolecule) Run() {
 	pkg.CheckError("removing secret test file", err)
 
 	log.Infof("adding Secret task to the role")
-	err = util.ReplaceInFile(filepath.Join(ma.ctx.Dir, "roles", "secret", "tasks", "main.yml"),
+	err = kbutil.ReplaceInFile(filepath.Join(ma.ctx.Dir, "roles", "secret", "tasks", "main.yml"),
 		originalTaskSecret, taskForSecret)
 	pkg.CheckError("replacing in secret/tasks/main.yml file", err)
 
 	log.Infof("adding ManageStatus == false for role secret")
-	err = util.ReplaceInFile(filepath.Join(ma.ctx.Dir, "watches.yaml"),
+	err = kbutil.ReplaceInFile(filepath.Join(ma.ctx.Dir, "watches.yaml"),
 		"role: secret", manageStatusFalseForRoleSecret)
 	pkg.CheckError("replacing in watches.yaml", err)
 
 	log.Infof("removing FIXME asserts from memfin_test.yml")
-	err = util.ReplaceInFile(filepath.Join(ma.ctx.Dir, "molecule", "default", "tasks", "memfin_test.yml"),
+	err = kbutil.ReplaceInFile(filepath.Join(ma.ctx.Dir, "molecule", "default", "tasks", "memfin_test.yml"),
 		fixmeAssert, "")
 	pkg.CheckError("replacing memfin_test.yml", err)
 
 	log.Infof("removing FIXME asserts from foo_test.yml")
-	err = util.ReplaceInFile(filepath.Join(ma.ctx.Dir, "molecule", "default", "tasks", "foo_test.yml"),
+	err = kbutil.ReplaceInFile(filepath.Join(ma.ctx.Dir, "molecule", "default", "tasks", "foo_test.yml"),
 		fixmeAssert, "")
 	pkg.CheckError("replacing foo_test.yml", err)
 }

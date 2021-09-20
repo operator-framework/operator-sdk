@@ -15,15 +15,12 @@
 package testutils
 
 import (
-	"bufio"
-	"bytes"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 
@@ -130,33 +127,6 @@ func ReplaceInFile(path, old, new string) error {
 	return nil
 }
 
-// ReplaceRegexInFile finds all strings that match `match` and replaces them
-// with `replace` in the file at path.
-// todo(camilamacedo86): this func can be pushed to upstream/kb
-func ReplaceRegexInFile(path, match, replace string) error {
-	matcher, err := regexp.Compile(match)
-	if err != nil {
-		return err
-	}
-	info, err := os.Stat(path)
-	if err != nil {
-		return err
-	}
-	b, err := ioutil.ReadFile(path)
-	if err != nil {
-		return err
-	}
-	s := matcher.ReplaceAllString(string(b), replace)
-	if s == string(b) {
-		return errors.New("unable to find the content to be replaced")
-	}
-	err = ioutil.WriteFile(path, []byte(s), info.Mode())
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // LoadImageToKindClusterWithName loads a local docker image with the name informed to the kind cluster
 func (tc TestContext) LoadImageToKindClusterWithName(image string) error {
 	cluster := "kind"
@@ -167,56 +137,6 @@ func (tc TestContext) LoadImageToKindClusterWithName(image string) error {
 	cmd := exec.Command("kind", kindOptions...)
 	_, err := tc.Run(cmd)
 	return err
-}
-
-// UncommentCode searches for target in the file and remove the comment prefix
-// of the target content. The target content may span multiple lines.
-// todo(camilamacedo86): this func exists in upstream/kb but there the error is not thrown. We need to
-// push this change. See: https://github.com/kubernetes-sigs/kubebuilder/blob/master/test/e2e/utils/util.go
-func UncommentCode(filename, target, prefix string) error {
-	content, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return err
-	}
-	strContent := string(content)
-
-	idx := strings.Index(strContent, target)
-	if idx < 0 {
-		// todo: push this check to upstream for we do not need have this func here
-		return fmt.Errorf("unable to find the code %s to be uncomment", target)
-	}
-
-	out := new(bytes.Buffer)
-	_, err = out.Write(content[:idx])
-	if err != nil {
-		return err
-	}
-
-	scanner := bufio.NewScanner(bytes.NewBufferString(target))
-	if !scanner.Scan() {
-		return nil
-	}
-	for {
-		_, err := out.WriteString(strings.TrimPrefix(scanner.Text(), prefix))
-		if err != nil {
-			return err
-		}
-		// Avoid writing a newline in case the previous line was the last in target.
-		if !scanner.Scan() {
-			break
-		}
-		if _, err := out.WriteString("\n"); err != nil {
-			return err
-		}
-	}
-
-	_, err = out.Write(content[idx+len(target):])
-	if err != nil {
-		return err
-	}
-	// false positive
-	// nolint:gosec
-	return ioutil.WriteFile(filename, out.Bytes(), 0644)
 }
 
 // InstallPrerequisites will install OLM and Prometheus
@@ -270,26 +190,6 @@ func (tc TestContext) UninstallPrerequisites() {
 		By("uninstalling OLM")
 		tc.UninstallOLM()
 	}
-}
-
-// AllowProjectBeMultiGroup will update the PROJECT file with the information to allow we scaffold
-// apis with different groups.
-// todo(camilamacedo86) : remove this helper when the edit plugin via the bin
-// be available. See the Pr: https://github.com/kubernetes-sigs/kubebuilder/pull/1691
-func (tc TestContext) AllowProjectBeMultiGroup() error {
-	const multiGroup = `multigroup: true
-`
-	projectBytes, err := ioutil.ReadFile(filepath.Join(tc.Dir, "PROJECT"))
-	if err != nil {
-		return err
-	}
-
-	projectBytes = append([]byte(multiGroup), projectBytes...)
-	err = ioutil.WriteFile(filepath.Join(tc.Dir, "PROJECT"), projectBytes, 0644)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // WrapWarnOutput is a one-liner to wrap an error from a command that returns (string, error) in a warning.

@@ -20,11 +20,9 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	kbtestutils "sigs.k8s.io/kubebuilder/v3/test/e2e/utils"
+	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
-	"github.com/operator-framework/operator-sdk/internal/testutils"
-	"github.com/operator-framework/operator-sdk/internal/util"
 )
 
 // Memcached defines the context for the sample
@@ -78,7 +76,7 @@ func (ma *Memcached) Run() {
 	pkg.CheckError("creating the project", err)
 
 	log.Infof("customizing the sample")
-	err = testutils.UncommentCode(
+	err = kbutil.UncommentCode(
 		filepath.Join(ma.ctx.Dir, "config", "default", "kustomization.yaml"),
 		"#- ../prometheus", "#")
 	pkg.CheckError("enabling prometheus metrics", err)
@@ -101,7 +99,7 @@ func (ma *Memcached) addingMoleculeMockData() {
 	moleculeTaskPath := filepath.Join(ma.ctx.Dir, "molecule", "default", "tasks",
 		fmt.Sprintf("%s_test.yml", strings.ToLower(ma.ctx.Kind)))
 
-	err := util.ReplaceInFile(moleculeTaskPath,
+	err := kbutil.ReplaceInFile(moleculeTaskPath,
 		originaMemcachedMoleculeTask, fmt.Sprintf(moleculeTaskFragment, ma.ctx.ProjectName, ma.ctx.ProjectName))
 	pkg.CheckError("replacing molecule default tasks", err)
 }
@@ -109,20 +107,20 @@ func (ma *Memcached) addingMoleculeMockData() {
 // addingAnsibleTask will add the Ansible Task and update the sample
 func (ma *Memcached) addingAnsibleTask() {
 	log.Infof("adding Ansible task and variable")
-	err := kbtestutils.InsertCode(filepath.Join(ma.ctx.Dir, "roles", strings.ToLower(ma.ctx.Kind),
+	err := kbutil.InsertCode(filepath.Join(ma.ctx.Dir, "roles", strings.ToLower(ma.ctx.Kind),
 		"tasks", "main.yml"),
 		fmt.Sprintf("# tasks file for %s", ma.ctx.Kind),
 		roleFragment)
 	pkg.CheckError("adding task", err)
 
-	err = util.ReplaceInFile(filepath.Join(ma.ctx.Dir, "roles", strings.ToLower(ma.ctx.Kind),
+	err = kbutil.ReplaceInFile(filepath.Join(ma.ctx.Dir, "roles", strings.ToLower(ma.ctx.Kind),
 		"defaults", "main.yml"),
 		fmt.Sprintf("# defaults file for %s", ma.ctx.Kind),
 		defaultsFragment)
 	pkg.CheckError("adding defaulting", err)
 
-	err = util.ReplaceInFile(filepath.Join(ma.ctx.Dir, "config", "samples",
+	err = kbutil.ReplaceInFile(filepath.Join(ma.ctx.Dir, "config", "samples",
 		fmt.Sprintf("%s_%s_%s.yaml", ma.ctx.Group, ma.ctx.Version, strings.ToLower(ma.ctx.Kind))),
-		"foo: bar", "size: 1")
+		"# Add fields here", "size: 1")
 	pkg.CheckError("updating sample CR", err)
 }

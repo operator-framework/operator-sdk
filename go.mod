@@ -31,15 +31,15 @@ require (
 	golang.org/x/tools v0.1.5
 	gomodules.xyz/jsonpatch/v3 v3.0.1
 	helm.sh/helm/v3 v3.6.2
-	k8s.io/api v0.22.1
-	k8s.io/apiextensions-apiserver v0.22.1
-	k8s.io/apimachinery v0.22.1
+	k8s.io/api v0.22.2
+	k8s.io/apiextensions-apiserver v0.22.2
+	k8s.io/apimachinery v0.22.2
 	k8s.io/cli-runtime v0.21.0
-	k8s.io/client-go v0.22.1
+	k8s.io/client-go v0.22.2
 	k8s.io/kubectl v0.21.0
 	sigs.k8s.io/controller-runtime v0.10.0
-	sigs.k8s.io/controller-tools v0.6.2
-	sigs.k8s.io/kubebuilder/v3 v3.0.0-alpha.0.0.20210803185103-51e4a9aa5055
+	sigs.k8s.io/controller-tools v0.7.0
+	sigs.k8s.io/kubebuilder/v3 v3.0.0-alpha.0.0.20211001202619-87eb9d55ecdc
 	sigs.k8s.io/yaml v1.2.0
 )
 
@@ -53,6 +53,7 @@ replace (
 	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
 	github.com/mattn/go-sqlite3 => github.com/mattn/go-sqlite3 v1.10.0
 	golang.org/x/text => golang.org/x/text v0.3.3 // Required to fix CVE-2020-14040
+
 )
 
 exclude github.com/spf13/viper v1.3.2 // Required to fix CVE-2018-1098

@@ -27,7 +27,6 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds"
 	sdkpluginutil "github.com/operator-framework/operator-sdk/internal/plugins/util"
-	sdkutil "github.com/operator-framework/operator-sdk/internal/util"
 )
 
 const (
@@ -159,14 +158,14 @@ func addInitCustomizations(projectName string) error {
 	// by https://github.com/kubernetes-sigs/kubebuilder/pull/2119
 
 	// Add leader election
-	err := sdkutil.InsertCode(managerFile,
+	err := util.InsertCode(managerFile,
 		"--leader-elect",
 		fmt.Sprintf("\n        - --leader-election-id=%s", projectName))
 	if err != nil {
 		return err
 	}
 	managerProxyPatchFile := filepath.Join("config", "default", "manager_auth_proxy_patch.yaml")
-	err = sdkutil.InsertCode(managerProxyPatchFile,
+	err = util.InsertCode(managerProxyPatchFile,
 		"- \"--leader-elect\"",
 		fmt.Sprintf("\n        - \"--leader-election-id=%s\"", projectName))
 	if err != nil {
@@ -183,7 +182,7 @@ func addInitCustomizations(projectName string) error {
             cpu: 100m
             memory: 20Mi
       `
-	err = sdkutil.ReplaceInFile(managerFile, resourcesLimitsFragment, "")
+	err = util.ReplaceInFile(managerFile, resourcesLimitsFragment, "")
 	if err != nil {
 		return err
 	}
@@ -193,7 +192,7 @@ func addInitCustomizations(projectName string) error {
         env:
         - name: ANSIBLE_GATHERING
           value: explicit`
-	err = sdkutil.InsertCode(managerFile, "name: manager", envVar)
+	err = util.InsertCode(managerFile, "name: manager", envVar)
 	if err != nil {
 		return err
 	}
@@ -201,22 +200,22 @@ func addInitCustomizations(projectName string) error {
 	// replace the default ports because ansible has been using another one
 	// todo: remove it when we be able to change the port for the default one
 	// issue: https://github.com/operator-framework/operator-sdk/issues/4331
-	err = sdkutil.ReplaceInFile(managerFile, "port: 8081", "port: 6789")
+	err = util.ReplaceInFile(managerFile, "port: 8081", "port: 6789")
 	if err != nil {
 		return err
 	}
-	err = sdkutil.ReplaceInFile(managerProxyPatchFile, "8081", "6789")
+	err = util.ReplaceInFile(managerProxyPatchFile, "8081", "6789")
 	if err != nil {
 		return err
 	}
 
 	managerConfigFile := filepath.Join("config", "manager", "controller_manager_config.yaml")
-	err = sdkutil.ReplaceInFile(managerConfigFile, "8081", "6789")
+	err = util.ReplaceInFile(managerConfigFile, "8081", "6789")
 	if err != nil {
 		return err
 	}
 	// Remove the webhook option for the componentConfig since webhooks are not supported by ansible
-	err = sdkutil.ReplaceInFile(managerConfigFile, "webhook:\n  port: 9443", "")
+	err = util.ReplaceInFile(managerConfigFile, "webhook:\n  port: 9443", "")
 	if err != nil {
 		return err
 	}
@@ -226,7 +225,7 @@ func addInitCustomizations(projectName string) error {
 	const command = `command:
         - /manager
         `
-	err = sdkutil.ReplaceInFile(managerFile, command, "")
+	err = util.ReplaceInFile(managerFile, command, "")
 	if err != nil {
 		return err
 	}
