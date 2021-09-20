@@ -40,7 +40,7 @@ import (
 const (
 	// defaultIndexImageBase is the base for defaultIndexImage. It is necessary to separate
 	// them for string comparison when defaulting bundle add mode.
-	defaultIndexImageBase = "quay.io/operator-framework/upstream-opm-builder:"
+	defaultIndexImageBase = "quay.io/operator-framework/opm:"
 	// DefaultIndexImage is the index base image used if none is specified. It contains no bundles.
 	// TODO(v2.0.0): pin this image tag to a specific version.
 	DefaultIndexImage = defaultIndexImageBase + "latest"

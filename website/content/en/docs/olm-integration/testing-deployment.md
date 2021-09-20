@@ -50,7 +50,7 @@ Let's look at the anatomy of the `run bundle` configuration model:
   required parameter. The bundle image must be pullable.
 - **index-image**: specifies an index image in which to inject the given bundle.
   This is an optional field which will default to
-  `quay.io/operator-framework/upstream-opm-builder:latest`
+  `quay.io/operator-framework/opm:latest`
 - **install-mode**: specifies which supported [`installMode`][csv-install-modes]
   should be used to create an `OperatorGroup` by configuring its
   `spec.targetNamespaces` field. The `InstallModeType` string passed must be

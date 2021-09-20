@@ -219,7 +219,7 @@ func (rp *RegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 					Name:  defaultContainerName,
 					Image: rp.IndexImage,
 					Command: []string{
-						"/bin/sh",
+						"sh",
 						"-c",
 						containerCmd,
 					},
@@ -303,11 +303,11 @@ func newBool(b bool) *bool {
 	return bp
 }
 
-const cmdTemplate = `/bin/mkdir -p {{ dirname .DBPath }} && \
+const cmdTemplate = `mkdir -p {{ dirname .DBPath }} && \
 {{- range $i, $item := .BundleItems }}
-/bin/opm registry add -d {{ $.DBPath }} -b {{ $item.ImageTag }} --mode={{ $item.AddMode }}{{ if $.CASecretName }} --ca-file=/certs/cert.pem{{ end }} --skip-tls={{ $.SkipTLS }} && \
+opm registry add -d {{ $.DBPath }} -b {{ $item.ImageTag }} --mode={{ $item.AddMode }}{{ if $.CASecretName }} --ca-file=/certs/cert.pem{{ end }} --skip-tls={{ $.SkipTLS }} && \
 {{- end }}
-/bin/opm registry serve -d {{ .DBPath }} -p {{ .GRPCPort }}
+opm registry serve -d {{ .DBPath }} -p {{ .GRPCPort }}
 `
 
 // getContainerCmd uses templating to construct the container command
