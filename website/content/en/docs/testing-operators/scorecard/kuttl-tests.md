@@ -12,7 +12,8 @@ kuttl test image.
 Scorecard users can include kuttl tests within their operator
 bundles as follows:
 ```
-.
+$ tree ./bundle
+./bundle
 ├── manifests
 │   ├── cache.example.com_memcacheds_crd.yaml
 │   └── memcached-operator.clusterserviceversion.yaml
@@ -33,12 +34,12 @@ bundles as follows:
 
  * `bundle/` - Contains bundle manifests and metadata under test.
  * `bundle/tests/scorecard/config.yaml` - Configuration yaml to define and run scorecard tests.
- * `tests/kuttl` - Contains tests written for kuttl to execute
- * `tests/kuttl/kuttl-test.yaml` - Contains the kuttl configuration, it is here that you would add any kuttl specific configuration settings that you might require.
- * `tests/kuttl/list-pods` - Contains a kuttl test case
- * `tests/kuttl/list-pods/00-assert.yaml` - Contains a kuttl test case assert
- * `tests/kuttl/list-pods/00-pod.yaml` - Contains a kuttl test case step
- * `tests/kuttl/list-other` - Contains another kuttl test case
+ * `bundle/tests/scorecard/kuttl` - Contains tests written for kuttl to execute
+ * `bundle/tests/scorecard/kuttl/kuttl-test.yaml` - Contains the kuttl configuration, it is here that you would add any kuttl specific configuration settings that you might require.
+ * `bundle/tests/scorecard/kuttl/list-pods` - Contains a kuttl test case
+ * `bundle/tests/scorecard/kuttl/list-pods/00-assert.yaml` - Contains a kuttl test case assert
+ * `bundle/tests/scorecard/kuttl/list-pods/00-pod.yaml` - Contains a kuttl test case step
+ * `bundle/tests/scorecard/kuttl/list-other` - Contains another kuttl test case
 
 When the scorecard kuttl binary is executed, it will process all the test
 cases under the scorecard/kuttl directory within the bundle contents.
@@ -111,7 +112,7 @@ The important fields to note here are:
  * `list-pods, list-other` - The names given by you for these test cases.
  * `00-assert.yaml` - The assert file is executed to test whether or
 not the test was successful, this assertion determines whether or not
-the test passed or failed.  
+the test passed or failed.
  * `00-pod.yaml` - The pod file is used to define what the test will
 create, in this case a pod will be created based on the manifest within
 00-pod.yaml.
