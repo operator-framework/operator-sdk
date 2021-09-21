@@ -98,6 +98,8 @@ jobs:
     - name: create tags
       id: tags
       run: |
+        # TODO(asmacdo) github.repository_owner is wrong. This should be a quay account, `operator-framework` happens to be the same in
+        # gh and quay.
         IMG=quay.io/${{ github.repository_owner }}/${{ matrix.id }}
         echo ::set-output name=tags::$(.github/workflows/get_image_tags.sh "$IMG" "v")
 

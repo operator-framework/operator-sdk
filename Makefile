@@ -82,7 +82,8 @@ build/scorecard-test build/scorecard-test-kuttl build/custom-scorecard-tests:
 
 # Convenience wrapper for building all remotely hosted images.
 .PHONY: image-build
-IMAGE_TARGET_LIST = operator-sdk helm-operator ansible-operator scorecard-test scorecard-test-kuttl
+# TODO(asmacdo) add 2.11-preview
+IMAGE_TARGET_LIST = operator-sdk helm-operator ansible-operator/2.9 Oscorecard-test scorecard-test-kuttl
 image-build: $(foreach i,$(IMAGE_TARGET_LIST),image/$(i)) ## Build all images.
 
 # Build an image.

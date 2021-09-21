@@ -4,6 +4,7 @@
 
 FROM registry.access.redhat.com/ubi8/ubi:8.4
 ARG TARGETARCH
+ARG ANSIBLE_VERSION=2.9
 
 # Label this image with the repo and commit that built it, for freshmaking purposes.
 ARG GIT_COMMIT=devel
@@ -15,8 +16,9 @@ RUN mkdir -p /etc/ansible \
   && echo 'roles_path = /opt/ansible/roles' >> /etc/ansible/ansible.cfg \
   && echo 'library = /usr/share/ansible/openshift' >> /etc/ansible/ansible.cfg
 
-# Copy python dependencies specs to be installed using Pipenv
-COPY Pipfile* ./
+
+# Copy python dependencies (including ansible) to be installed using Pipenv
+COPY images/ansible-operator/${ANSIBLE_VERSION}/Pipfile* ./
 # Instruct pip(env) not to keep a cache of installed packages,
 # to install into the global site-packages and
 # to clear the pipenv cache as well

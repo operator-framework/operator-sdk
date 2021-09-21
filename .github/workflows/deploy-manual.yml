@@ -32,10 +32,12 @@ jobs:
       with:
         fetch-depth: 1
 
-    - name: create tag
+    # TODO(asmacdo) add 2.11-preview-base
+    - name: create 2.9-base tag
       id: tag
       run: |
         set -e
+        # TODO(asmacdo)
         IMG=quay.io/${{ github.repository_owner }}/ansible-operator-base
         TAG="${{ github.event.inputs.ansible_operator_base_tag }}"
         GIT_COMMIT=$(git rev-parse HEAD)
@@ -58,7 +60,8 @@ jobs:
 
     # This change will be staged and committed in the PR pushed below.
     # The script below will fail if no change was made.
-    - name: update ansible-operator base
+    # TODO(asmacdo) add base of 2.11-preview
+    - name: update base of ansible-operator
       id: update
       run: |
         set -ex
@@ -67,6 +70,7 @@ jobs:
         REF="${{ github.event.ref }}"
         echo ::set-output name=branch_name::"${REF##*/}"
 
+    # TODO(asmacdo) add base of 2.11-preview
     - name: create PR
       uses: peter-evans/create-pull-request@v3
       with:
