@@ -52,6 +52,14 @@ var optionalValidators = validators{
 		},
 		desc: "(stage: alpha) Community Operator bundle validation. See https://github.com/operator-framework/community-operators/blob/master/docs/packaging-required-fields.md",
 	},
+	{
+		Validator: apivalidation.AlphaDeprecatedAPIsValidator,
+		name:      "alpha-deprecated-apis",
+		labels: map[string]string{
+			nameKey: "alpha-deprecated-apis",
+		},
+		desc: "(stage: alpha) Deprecated APIs bundle validation. This valiator can help you out verify if your bundle contains manifests which uses deprecated APIs. More info: https://kubernetes.io/docs/reference/using-api/deprecation-guide/",
+	},
 }
 
 // runOptionalValidators runs optional validators selected by sel on bundle.
