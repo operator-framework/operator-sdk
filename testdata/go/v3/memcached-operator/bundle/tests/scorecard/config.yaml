@@ -3,7 +3,7 @@ kind: Configuration
 metadata:
   name: config
 stages:
-- parallel: false
+- parallel: true
   tests:
   - entrypoint:
     - scorecard-test
