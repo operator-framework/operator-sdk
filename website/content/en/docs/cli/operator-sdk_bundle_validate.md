@@ -75,6 +75,10 @@ To validate a bundle against the (alpha) validator for Community Operators speci
 
   $ operator-sdk bundle validate ./bundle --select-optional name=community --optional-values=index-path=bundle.Dockerfile
 	
+To validate a bundle against the (alpha) validator for Deprecated APIs specifically, in addition to required bundle validators:
+
+  $ operator-sdk bundle validate ./bundle --select-optional name=alpha-deprecated-apis --optional-values=k8s-version=1.22	
+	
 ```
 
 ### Options

@@ -1,0 +1,18 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      (quarkus/v1alpha) Bump java-operator-plugins to v0.1.0. This
+      is the first release of the java-operator-plugins repo. There
+      are no other changes besides pointing to a specific tag.
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "change"
+
+    # Is this a breaking change?
+    breaking: false

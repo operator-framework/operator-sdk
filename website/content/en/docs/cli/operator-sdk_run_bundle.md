@@ -19,7 +19,7 @@ operator-sdk run bundle <bundle-image> [flags]
 ```
       --ca-secret-name string           Name of a generic secret containing a PEM root certificate file required to pull bundle images. This secret *must* be in the namespace that this command is configured to run in, and the file *must* be encoded under the key "cert.pem"
   -h, --help                            help for bundle
-      --index-image string              index image in which to inject bundle (default "quay.io/operator-framework/upstream-opm-builder:latest")
+      --index-image string              index image in which to inject bundle (default "quay.io/operator-framework/opm:latest")
       --install-mode InstallModeValue   install mode
       --kubeconfig string               Path to the kubeconfig file to use for CLI requests.
   -n, --namespace string                If present, namespace scope for this CLI request

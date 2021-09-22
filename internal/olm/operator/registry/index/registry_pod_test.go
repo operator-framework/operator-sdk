@@ -238,7 +238,7 @@ func containerCommandFor(dbPath string, items []BundleItem, hasCA, skipTLS bool)
 	}
 	additions := &strings.Builder{}
 	for _, item := range items {
-		additions.WriteString(fmt.Sprintf("/bin/opm registry add -d %s -b %s --mode=%s%s --skip-tls=%v && \\\n", dbPath, item.ImageTag, item.AddMode, caFlag, skipTLS))
+		additions.WriteString(fmt.Sprintf("opm registry add -d %s -b %s --mode=%s%s --skip-tls=%v && \\\n", dbPath, item.ImageTag, item.AddMode, caFlag, skipTLS))
 	}
-	return fmt.Sprintf("/bin/mkdir -p /database && \\\n%s/bin/opm registry serve -d /database/index.db -p 50051\n", additions.String())
+	return fmt.Sprintf("mkdir -p /database && \\\n%sopm registry serve -d /database/index.db -p 50051\n", additions.String())
 }
