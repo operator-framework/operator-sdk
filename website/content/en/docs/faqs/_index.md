@@ -172,3 +172,41 @@ For more information and examples, please see the type-specific docs:
 [rbac]:https://kubernetes.io/docs/reference/access-authn-authz/rbac/
 [scorecard-doc]: https://sdk.operatorframework.io/docs/testing-operators/scorecard/
 [project-doc]: /docs/overview/project-layout
+
+## Preserve the `preserveUnknownFields` in your CRDs
+
+The [`preserveUnknownFields`](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#field-pruning) will be removed if set to false when running `make bundle`. Because of some underlying data structure changes and how yaml is unmarshalled, it is best to add them back in after they have been written.
+
+You can use this script to post process the files to add the `preserveUnknownFields` back in.
+
+```sh
+function generate_preserveUnknownFieldsdata() {
+    for j in config/crd/patches/*.yaml ; do
+        if grep -qF "preserveUnknownFields" "$j";then
+            variable=`awk '/metadata/{flag=1} flag && /name:/{print $NF;flag=""}' "$j"`
+            for k in config/crd/bases/*.yaml ; do
+                if grep -qF "$variable" "$j";then
+                    filename=`awk 'END{ var=FILENAME; split (var,a,/\//); print a[4]}' "$k"`
+                    awk '/^spec:/{print;print "  preserveUnknownFields: false";next}1' "bundle/manifests/$filename" > testfile.tmp && mv testfile.tmp "bundle/manifests/$filename"
+                fi
+            done
+        fi
+    done
+}
+
+generate_preserveUnknownFieldsdata
+```
+
+You can then modify the `bundle` target in your `Makefile` by adding a call to the script at the end of the target. See the example below:
+
+```
+.PHONY: bundle
+bundle: manifests kustomize ## Generate bundle manifests and metadata, then validate generated files.
+	operator-sdk generate kustomize manifests -q
+	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
+	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
+	operator-sdk bundle validate ./bundle | ./preserve_script.sh
+```
+
+Note:
+Though this is a bug with controller-gen which is used by Operator SDK to generate CRD, this is a workaround from our end to enable users to preserve the field after controller-gen has run.
