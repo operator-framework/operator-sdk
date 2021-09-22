@@ -33,7 +33,7 @@ const (
 
 	// The image used to untar bundles prior to running tests within a runner Pod.
 	// This image tag should always be pinned to a specific version.
-	scorecardUntarImage = "docker.io/busybox:1.33.0"
+	scorecardUntarImage = "registry.access.redhat.com/ubi8/ubi:8.4"
 )
 
 // getPodDefinition fills out a Pod definition based on
