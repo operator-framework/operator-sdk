@@ -26,7 +26,7 @@ your `PROJECT` file's `version` value.
 
 ```sh
 $ export USERNAME=<container-registry-username>
-$ export VERSON=0.0.1
+$ export VERSION=0.0.1
 $ export IMG=docker.io/$USERNAME/memcached-operator:v$VERSION // location where your operator image is hosted
 $ export BUNDLE_IMG=docker.io/$USERNAME/memcached-operator-bundle:v$VERSION // location where your bundle will be hosted
 ```
