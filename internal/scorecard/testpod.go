@@ -81,7 +81,7 @@ func getPodDefinition(configMapName string, test v1alpha3.TestConfiguration, r P
 				{
 					Name:            "scorecard-untar",
 					Image:           scorecardUntarImage,
-					ImagePullPolicy: v1.PullAlways,
+					ImagePullPolicy: v1.PullIfNotPresent,
 					Args: []string{
 						"tar",
 						"xvzf",
