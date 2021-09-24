@@ -15,6 +15,8 @@
 package tests
 
 import (
+	"fmt"
+
 	scapiv1alpha3 "github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -50,6 +52,7 @@ func checkSpec(crSet []unstructured.Unstructured,
 		if cr.Object["spec"] == nil {
 			res.Errors = append(res.Errors, "error spec does not exist")
 			res.State = scapiv1alpha3.FailState
+			res.Suggestions = append(res.Suggestions, fmt.Sprintf("spec missing from [%+v]", cr.GetName()))
 			return res
 		}
 	}
