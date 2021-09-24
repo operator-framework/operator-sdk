@@ -65,6 +65,9 @@ var _ = BeforeSuite(func() {
 	err = tc.AddScorecardCustomPatchFile()
 	Expect(err).NotTo(HaveOccurred())
 
+	By("loading UBI")
+	Expect(tc.LoadImageToKindClusterWithName("registry.access.redhat.com/ubi8/ubi:8.4").To(Succeed()))
+
 	By("using dev image for scorecard-test")
 	err = tc.ReplaceScorecardImagesForDev()
 	Expect(err).NotTo(HaveOccurred())
