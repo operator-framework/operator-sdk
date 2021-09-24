@@ -18,6 +18,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"net/url"
 	"os"
 	"runtime"
@@ -50,6 +51,7 @@ import (
 	sdkVersion "github.com/operator-framework/operator-sdk/internal/version"
 )
 
+var scheme = k8sruntime.NewScheme()
 var log = logf.Log.WithName("cmd")
 
 func printVersion() {
@@ -92,7 +94,7 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 	// Load config options from the config at f.ManagerConfigPath.
 	// These options will not override those set by flags.
 	var (
-		options manager.Options
+		options = ctrl.Options{Scheme: scheme}
 		err     error
 	)
 	if f.ManagerConfigPath != "" {

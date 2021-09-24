@@ -24,6 +24,7 @@ import (
 
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
@@ -45,6 +46,7 @@ import (
 	sdkVersion "github.com/operator-framework/operator-sdk/internal/version"
 )
 
+var scheme = k8sruntime.NewScheme()
 var log = logf.Log.WithName("cmd")
 
 func printVersion() {
@@ -87,9 +89,10 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 	// Load config options from the config at f.ManagerConfigPath.
 	// These options will not override those set by flags.
 	var (
-		options manager.Options
+		options = ctrl.Options{Scheme: scheme}
 		err     error
 	)
+
 	if f.ManagerConfigPath != "" {
 		cfgLoader := ctrl.ConfigFile().AtPath(f.ManagerConfigPath)
 		if options, err = options.AndFrom(cfgLoader); err != nil {
