@@ -66,7 +66,8 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	By("loading UBI")
-	Expect(tc.LoadImageToKindClusterWithName("registry.access.redhat.com/ubi8/ubi:8.4").To(Succeed()))
+	err = tc.LoadImageToKindClusterWithName("registry.access.redhat.com/ubi8/ubi:8.4")
+	Expect(err).NotTo(HaveOccurred())
 
 	By("using dev image for scorecard-test")
 	err = tc.ReplaceScorecardImagesForDev()
