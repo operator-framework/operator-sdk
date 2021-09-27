@@ -226,6 +226,8 @@ func (c manifestsCmd) run(cfg config.Config) error {
 
 	// Write a kustomization.yaml to outputDir if one does not exist.
 	kustomization := manifests.Kustomization{SupportsWebhooks: operatorType == projutil.OperatorTypeGo}
+	// Ensure the path to the manifest directory is correctly carried through
+	kustomization.Path = c.outputDir
 	err = machinery.NewScaffold(machinery.Filesystem{FS: afero.NewOsFs()}, machinery.WithConfig(cfg)).Execute(
 		&kustomization,
 	)
