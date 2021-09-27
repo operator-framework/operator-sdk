@@ -198,8 +198,14 @@ func (c *scorecardCmd) run() (err error) {
 	if c.list {
 		scorecardTests = o.List()
 	} else {
+		runnerSA := ""
+		if o.Config.ServiceAccount != "" {
+			runnerSA = o.Config.ServiceAccount
+		} else {
+			runnerSA = c.serviceAccount
+		}
 		runner := scorecard.PodTestRunner{
-			ServiceAccount: c.serviceAccount,
+			ServiceAccount: runnerSA,
 			Namespace:      scorecard.GetKubeNamespace(c.kubeconfig, c.namespace),
 			BundlePath:     c.bundle,
 			TestOutput:     c.testOutput,
