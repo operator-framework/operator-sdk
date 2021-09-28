@@ -902,6 +902,8 @@ github.com/operator-framework/api v0.7.1/go.mod h1:L7IvLd/ckxJEJg/t4oTTlnHKAJIP/
 github.com/operator-framework/api v0.10.0/go.mod h1:tV0BUNvly7szq28ZPBXhjp1Sqg5yHCOeX19ui9K4vjI=
 github.com/operator-framework/api v0.10.6-0.20210916204207-e2541569a535 h1:KaxHrTuHE6e23ajWqN/McxMetmtZhKbE+jYLfmpo500=
 github.com/operator-framework/api v0.10.6-0.20210916204207-e2541569a535/go.mod h1:PtQSNSuVrhSC6YE6JJJZv3nnZJc32osKX8FmFUZK05U=
+github.com/operator-framework/api v0.10.6 h1:Vi2l5xbdDFLa9ktpOPpfsepmT+mtHD9ztI8PDWMZ1Co=
+github.com/operator-framework/api v0.10.6/go.mod h1:PtQSNSuVrhSC6YE6JJJZv3nnZJc32osKX8FmFUZK05U=
 github.com/operator-framework/java-operator-plugins v0.1.0 h1:khkYsrkEG4m+wT+oPjZYmWXo8jd0QQ8E4agSrqrhPhU=
 github.com/operator-framework/java-operator-plugins v0.1.0/go.mod h1:sGKGELFkUeRqElcyvyPC89bC76YnCL7MPMa13P0AQcw=
 github.com/operator-framework/operator-lib v0.6.0 h1:srZoTL8P7OZUOovMkQkd4vwIbFzFNW413R/6V9N9rz4=
