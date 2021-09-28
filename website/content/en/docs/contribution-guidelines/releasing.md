@@ -50,11 +50,14 @@ We will use the `v1.3.0` release version in this example.
 
 ### Before starting
 
-1. A release branch must be created and [mapped][netlify-deploy] _before the release begins_
-to appease the Netlify website configuration demons. You can ping SDK [approvers][doc-owners] to ensure a
-[release branch](#release-branches) is created prior to the release and that this mapping is created.
-If you have the proper permissions, you can do this by running the following,
-assuming the upstream SDK is the `upstream` remote repo:
+1. **Before creating a new branch**, a [Netlify admin][doc-owners] must add `v1.13.x`
+   to [Branch
+   Deploys](https://app.netlify.com/sites/operator-sdk/settings/deploys#branches).
+   This will watch for this branch when there are changes on Github
+   (creating the branch, or adding a commit).
+1. A release branch must be created. If you have the proper permissions,
+   you can do this by running the following, assuming the upstream SDK
+   is the `upstream` remote repo:
   ```sh
   git checkout master
   git pull
@@ -147,6 +150,11 @@ git push -f upstream v1.3.x
 
 ### 6. Post release steps
 
+- Publish the new Netlify subdomain. Assuming that the Netlify prestep
+  was done before the new branch was created, a new [branch 
+  option](https://app.netlify.com/sites/operator-sdk/settings/domain#branch-subdomains)
+  should be visible to Netlify Admins and can be mapped to a subdomain. Please test that this subdomain
+  works before announcing.
 - Make an [operator-framework Google Group][of-ggroup] post.
 - Post to Kubernetes slack in #kubernetes-operators and #operator-sdk-dev.
 - In the [GitHub milestone][gh-milestones], bump any open issues to the following release.
@@ -311,12 +319,11 @@ Prior to an Operator SDK release, add bindata (if required) for a new OLM versio
 
 ### Patch releases in parallel:
 
-  - Releasing in order is nice but not worth the inconvenience. Release order affects the order on GitHub releases, and which 
+  - Releasing in order is nice but not worth the inconvenience. Release order affects the order on GitHub releases, and which
     is labeled "latest release".
   - Do not unlock v.* branches while other releases are in progress. Instead, have an admin do the merges.
   - Release announcements should be consolidated.
 
-[netlify-deploy]:https://docs.netlify.com/site-deploys/overview/#deploy-summary
 [doc-owners]: https://github.com/operator-framework/operator-sdk/blob/master/OWNERS
 [release-page]:https://github.com/operator-framework/operator-sdk/releases
 [backports]:/docs/upgrading-sdk-version/backport-policy
