@@ -88,7 +88,7 @@ func (ma *AdvancedMolecule) Run() {
 	const inventoryRoleTaskFragment = `
 - when: sentinel | test
   block:
-  - community.kubernetes.k8s:
+  - kubernetes.core.k8s:
       definition:
         apiVersion: v1
         kind: ConfigMap
@@ -274,7 +274,7 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
 - hosts: localhost
   gather_facts: no
   collections:
-    - community.kubernetes
+    - kubernetes.core
   tasks:
     - name: Get the decrypted message variable
       include_vars:
@@ -302,7 +302,7 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
 - hosts: localhost
   gather_facts: no
   collections:
-    - community.kubernetes
+    - kubernetes.core
   tasks:
     - name: Create configmap
       k8s:
@@ -336,7 +336,7 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
     - debug: msg='{{ "hello" | test }}'`
 	err = util.ReplaceInFile(
 		filepath.Join(ma.ctx.Dir, "playbooks", "inventorytest.yml"),
-		"---\n- hosts: localhost\n  gather_facts: no\n  collections:\n    - community.kubernetes\n    - operator_sdk.util\n  tasks:\n    - import_role:\n        name: \"inventorytest\"",
+		"---\n- hosts: localhost\n  gather_facts: no\n  collections:\n    - kubernetes.core\n    - operator_sdk.util\n  tasks:\n    - import_role:\n        name: \"inventorytest\"",
 		inventoryPlaybook)
 	pkg.CheckError("adding playbook for inventorytest", err)
 
@@ -345,7 +345,7 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
 - hosts: localhost
   gather_facts: no
   collections:
-    - community.kubernetes
+    - kubernetes.core
   tasks:
     - name: retrieve configmap
       k8s_info:
@@ -403,7 +403,7 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
 - hosts: localhost
   gather_facts: no
   collections:
-    - community.kubernetes
+    - kubernetes.core
   tasks:
     - name: Create configmap
       k8s:
@@ -427,7 +427,7 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
 - hosts: localhost
   gather_facts: no
   collections:
-    - community.kubernetes
+    - kubernetes.core
     - operator_sdk.util
 
   tasks:
@@ -486,7 +486,7 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
 - hosts: localhost
   gather_facts: no
   collections:
-    - community.kubernetes
+    - kubernetes.core
   tasks:
 
     - name: create externalnamespace
@@ -556,7 +556,7 @@ const originalPlaybookFragment = `---
 - hosts: localhost
   gather_facts: no
   collections:
-    - community.kubernetes
+    - kubernetes.core
     - operator_sdk.util
   tasks: []
 `

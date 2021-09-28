@@ -39,4 +39,6 @@ collections:
     version: "1.2.1"
   - name: operator_sdk.util
     version: "0.2.0"
+  - name: kubernetes.core
+    version: "2.2.0"
 `

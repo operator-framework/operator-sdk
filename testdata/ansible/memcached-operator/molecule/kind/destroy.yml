@@ -4,7 +4,7 @@
   connection: local
   gather_facts: false
   collections:
-    - community.kubernetes
+    - kubernetes.core
 
   tasks:
     - name: Destroy test kind cluster

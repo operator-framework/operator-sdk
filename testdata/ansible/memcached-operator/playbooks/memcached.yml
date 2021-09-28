@@ -2,7 +2,7 @@
 - hosts: localhost
   gather_facts: no
   collections:
-    - community.kubernetes
+    - kubernetes.core
     - operator_sdk.util
   tasks:
     - import_role:

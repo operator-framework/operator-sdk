@@ -150,7 +150,7 @@ const memcachedWithBlackListTask = `
     status:
       test: "hello world"
 
-- community.kubernetes.k8s:
+- kubernetes.core.k8s:
     definition:
       kind: Secret
       apiVersion: v1
@@ -161,10 +161,10 @@ const memcachedWithBlackListTask = `
         test: aGVsbG8K
 - name: Get cluster api_groups
   set_fact:
-    api_groups: "{{ lookup('community.kubernetes.k8s', cluster_info='api_groups', kubeconfig=lookup('env', 'K8S_AUTH_KUBECONFIG')) }}"
+    api_groups: "{{ lookup('kubernetes.core.k8s', cluster_info='api_groups', kubeconfig=lookup('env', 'K8S_AUTH_KUBECONFIG')) }}"
 
 - name: create project if projects are available
-  community.kubernetes.k8s:
+  kubernetes.core.k8s:
     definition:
       apiVersion: project.openshift.io/v1
       kind: Project
@@ -173,7 +173,7 @@ const memcachedWithBlackListTask = `
   when: "'project.openshift.io' in api_groups"
 
 - name: Create ConfigMap to test blacklisted watches
-  community.kubernetes.k8s:
+  kubernetes.core.k8s:
     definition:
       kind: ConfigMap
       apiVersion: v1
@@ -185,7 +185,7 @@ const memcachedWithBlackListTask = `
     state: present`
 
 const taskToDeleteConfigMap = `- name: delete configmap for test
-  community.kubernetes.k8s:
+  kubernetes.core.k8s:
     kind: ConfigMap
     api_version: v1
     name: deleteme

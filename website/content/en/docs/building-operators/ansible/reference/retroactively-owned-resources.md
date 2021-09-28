@@ -137,7 +137,7 @@ This file can be used as-is without user adjustments.
     - name: Import user variables
       include_vars: vars.yml
     - name: Retrieve owning resource
-      community.kubernetes.k8s_info:
+      kubernetes.core.k8s_info:
         api_version: "{{ owning_resource.apiVersion }}"
         kind: "{{ owning_resource.kind }}"
         name: "{{ owning_resource.name }}"
@@ -148,7 +148,7 @@ This file can be used as-is without user adjustments.
       include_tasks: each_resource.yml
       loop: "{{ resources_to_own }}"
       vars:
-        to_be_owned: '{{ q("community.kubernetes.k8s",
+        to_be_owned: '{{ q("kubernetes.core.k8s",
           api_version=item.apiVersion,
           kind=item.kind,
           resource_name=item.name,
@@ -172,7 +172,7 @@ This file can be used as-is without user adjustments.
     - to_be_owned.metadata.namespace == owning_resource.namespace
     - (to_be_owned.metadata.ownerReferences is not defined) or
       (owner_reference not in to_be_owned.metadata.ownerReferences)
-  community.kubernetes.k8s:
+  kubernetes.core.k8s:
     state: present
     resource_definition:
       apiVersion: "{{ to_be_owned.apiVersion }}"
@@ -184,7 +184,7 @@ This file can be used as-is without user adjustments.
 
 - name: Patch resource with owner annotation
   when: to_be_owned.namespace is not defined or to_be_owned.namespace != owning_resource.namespace
-  community.kubernetes.k8s:
+  kubernetes.core.k8s:
     state: present
     resource_definition:
       apiVersion: "{{ to_be_owned.apiVersion }}"
