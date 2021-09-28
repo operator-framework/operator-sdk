@@ -198,11 +198,9 @@ func (c *scorecardCmd) run() (err error) {
 	if c.list {
 		scorecardTests = o.List()
 	} else {
-		runnerSA := ""
+		runnerSA := c.serviceAccount
 		if o.Config.ServiceAccount != "" {
 			runnerSA = o.Config.ServiceAccount
-		} else {
-			runnerSA = c.serviceAccount
 		}
 		runner := scorecard.PodTestRunner{
 			ServiceAccount: runnerSA,
