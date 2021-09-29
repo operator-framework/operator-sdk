@@ -1,0 +1,14 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Replace busybox with UBI8.4 for Scorecard Un-Tar image.
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "change"
+    # Is this a breaking change?
+    breaking: false
