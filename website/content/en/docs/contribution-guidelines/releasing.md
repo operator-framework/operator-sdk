@@ -55,6 +55,12 @@ We will use the `v1.3.0` release version in this example.
    Deploys](https://app.netlify.com/sites/operator-sdk/settings/deploys#branches).
    This will watch for this branch when there are changes on Github
    (creating the branch, or adding a commit).
+1. Kick off a new build of the [ansible-operator-base
+   image](https://quay.io/repository/operator-framework/ansible-operator-base)
+   by running the
+   [deploy-manual](https://github.com/operator-framework/operator-sdk/actions/workflows/deploy-manual.yml)
+   GitHub action.  After the image is built, check the security scan
+   results under `Child Manifests`.
 1. A release branch must be created. If you have the proper permissions,
    you can do this by running the following, assuming the upstream SDK
    is the `upstream` remote repo:
@@ -163,6 +169,15 @@ git push -f upstream v1.3.x
 ## Patch releases
 
 We will use the `v1.3.1` release version in this example.
+
+### Before starting
+
+1. Kick off a new build of the [ansible-operator-base
+   image](https://quay.io/repository/operator-framework/ansible-operator-base)
+   by running the
+   [deploy-manual](https://github.com/operator-framework/operator-sdk/actions/workflows/deploy-manual.yml)
+   GitHub action.  After the image is built, check the security scan
+   results under `Child Manifests`.
 
 #### 0. Lock down release branches on GitHub
 
