@@ -13,8 +13,7 @@
     wait: yes
     wait_timeout: 300
     wait_condition:
-      type: Running
-      reason: Successful
+      type: Successful
       status: "True"
   register: reconciliation_test
 - name: Retreive the number of iterations on the ConfigMap

@@ -127,6 +127,16 @@ func TestReconcile(t *testing.T) {
 								"message": "Awaiting next reconciliation",
 								"reason":  "Successful",
 							},
+							map[string]interface{}{
+								"status":  "True",
+								"type":    "Successful",
+								"message": "Last reconciliation succeeded",
+								"reason":  "Successful",
+							},
+							map[string]interface{}{
+								"status": "False",
+								"type":   "Failure",
+							},
 						},
 					},
 				},
@@ -199,6 +209,10 @@ func TestReconcile(t *testing.T) {
 								},
 								"message": "new failure message",
 								"reason":  "Failed",
+							},
+							map[string]interface{}{
+								"status": "False",
+								"type":   "Successful",
 							},
 						},
 					},
@@ -312,6 +326,16 @@ func TestReconcile(t *testing.T) {
 								},
 								"message": "Awaiting next reconciliation",
 								"reason":  "Successful",
+							},
+							map[string]interface{}{
+								"status":  "True",
+								"type":    "Successful",
+								"message": "Last reconciliation succeeded",
+								"reason":  "Successful",
+							},
+							map[string]interface{}{
+								"status": "False",
+								"type":   "Failure",
 							},
 						},
 					},
@@ -555,15 +579,15 @@ func TestReconcile(t *testing.T) {
 					actualCond := ansiblestatus.GetCondition(actualStatus, c.Type)
 					if c.Reason != actualCond.Reason || c.Message != actualCond.Message || c.Status !=
 						actualCond.Status {
-						t.Fatalf("Message or reason did not match\nexpected: %v\nactual: %v", c, actualCond)
+						t.Fatalf("Message or reason did not match\nexpected: %+v\nactual: %+v", c, actualCond)
 					}
 					if c.AnsibleResult == nil && actualCond.AnsibleResult != nil {
-						t.Fatalf("Ansible result did not match expected: %v\nactual: %v", c.AnsibleResult,
+						t.Fatalf("Ansible result did not match\nexpected: %+v\nactual: %+v", c.AnsibleResult,
 							actualCond.AnsibleResult)
 					}
 					if c.AnsibleResult != nil {
 						if !reflect.DeepEqual(c.AnsibleResult, actualCond.AnsibleResult) {
-							t.Fatalf("Ansible result did not match expected: %v\nactual: %v", c.AnsibleResult,
+							t.Fatalf("Ansible result did not match\nexpected: %+v\nactual: %+v", c.AnsibleResult,
 								actualCond.AnsibleResult)
 						}
 					}
