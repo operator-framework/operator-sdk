@@ -1,0 +1,14 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Add support for configuring Scorecard Service Accounts using config files alongside the CLI.
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "addition"
+    # Is this a breaking change?
+    breaking: false
