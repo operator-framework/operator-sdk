@@ -1,0 +1,26 @@
+---
+- name: Create the test.example.com/v1alpha1.ArgsTest
+  k8s:
+    state: present
+    definition:
+      apiVersion: test.example.com/v1alpha1
+      kind: ArgsTest
+      metadata:
+        name: args-test
+        namespace: '{{ namespace }}'
+      spec:
+        field: value
+    wait: yes
+    wait_timeout: 300
+    wait_condition:
+      type: Running
+      reason: Successful
+      status: "True"
+  register: args_test
+
+- name: Assert sentinel ConfigMap has been created for Molecule Test
+  assert:
+    that: cm.data.msg == "The decrypted value is thisisatest"
+  vars:
+    cm: "{{ q('k8s', api_version='v1', kind='ConfigMap', namespace=namespace,
+    resource_name='args-test').0 }}"

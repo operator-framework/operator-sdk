@@ -1,0 +1,29 @@
+---
+- name: Create the test.example.com/v1alpha1.SubresourcesTest
+  k8s:
+    state: present
+    definition:
+      apiVersion: test.example.com/v1alpha1
+      kind: SubresourcesTest
+      metadata:
+        name: subresources-test
+        namespace: '{{ namespace }}'
+      spec:
+        execCommand: "echo 'hello world'"
+        logMessage: "Running..."
+    wait: yes
+    wait_timeout: 300
+    wait_condition:
+      type: Running
+      reason: Successful
+      status: "True"
+  register: subresources_test
+
+- debug: var=subresources_test
+
+- name: Assert stdout and stderr are properly set in status
+  assert:
+    that:
+      - subresources_test.result.status.execCommandStderr == ""
+      - subresources_test.result.status.execCommandStdout == "hello world"
+      - "'Running' in subresources_test.result.status.logs"

@@ -1,0 +1,24 @@
+# permissions for end users to edit collectiontests.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: collectiontest-editor-role
+rules:
+- apiGroups:
+  - test.example.com
+  resources:
+  - collectiontests
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - test.example.com
+  resources:
+  - collectiontests/status
+  verbs:
+  - get

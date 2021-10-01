@@ -1,0 +1,7 @@
+apiVersion: cache.example.com/v1alpha1
+kind: Memfin
+metadata:
+  name: memfin-sample
+spec:
+  # Add fields here
+  foo: bar

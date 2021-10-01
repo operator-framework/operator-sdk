@@ -1,0 +1,20 @@
+# permissions for end users to view clusterannotationtests.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: clusterannotationtest-viewer-role
+rules:
+- apiGroups:
+  - test.example.com
+  resources:
+  - clusterannotationtests
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - test.example.com
+  resources:
+  - clusterannotationtests/status
+  verbs:
+  - get

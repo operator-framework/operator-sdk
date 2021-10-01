@@ -1,0 +1,7 @@
+apiVersion: test.example.com/v1alpha1
+kind: SubresourcesTest
+metadata:
+  name: subresourcestest-sample
+spec:
+  # Add fields here
+  foo: bar

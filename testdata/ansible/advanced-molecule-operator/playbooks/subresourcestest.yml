@@ -1,0 +1,51 @@
+---
+- hosts: localhost
+  gather_facts: no
+  collections:
+    - community.kubernetes
+    - operator_sdk.util
+
+  tasks:
+    - name: Deploy busybox pod
+      k8s:
+        definition:
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            name: '{{ meta.name }}-busybox'
+            namespace: '{{ meta.namespace }}'
+          spec:
+            containers:
+              - image: busybox
+                name: sleep
+                args:
+                  - "/bin/sh"
+                  - "-c"
+                  - "while true ; do echo '{{ log_message }}' ; sleep 5 ; done"
+        wait: yes
+
+    - name: Execute command in busybox pod
+      k8s_exec:
+        namespace: '{{ meta.namespace }}'
+        pod: '{{ meta.name }}-busybox'
+        command: '{{ exec_command }}'
+      register: exec_result
+
+    - debug: var=exec_result
+
+    - name: Get logs from busybox pod
+      k8s_log:
+        name: '{{ meta.name }}-busybox'
+        namespace: '{{ meta.namespace }}'
+      register: log_result
+
+    - name: Write results to resource status
+      k8s_status:
+        api_version: test.example.com/v1alpha1
+        kind: SubresourcesTest
+        name: '{{ meta.name }}'
+        namespace: '{{ meta.namespace }}'
+        status:
+          execCommandStdout: '{{ exec_result.stdout.strip() }}'
+          execCommandStderr: '{{ exec_result.stderr.strip() }}'
+          logs: '{{ log_result.log }}'

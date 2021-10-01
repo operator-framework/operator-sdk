@@ -1,0 +1,25 @@
+---
+- name: Create the test.example.com/v1alpha1.CaseTest
+  k8s:
+    state: present
+    definition:
+      apiVersion: test.example.com/v1alpha1
+      kind: CaseTest
+      metadata:
+        name: case-test
+        namespace: '{{ namespace }}'
+      spec:
+        camelCaseVar: "true"
+    wait: yes
+    wait_timeout: 300
+    wait_condition:
+      type: Running
+      reason: Successful
+      status: "True"
+  register: case_test
+
+- name: Assert sentinel ConfigMap has been created for Molecule Test
+  assert:
+    that: cm.data.shouldBeCamel == 'true'
+  vars:
+    cm: "{{ q('k8s', api_version='v1', kind='ConfigMap', namespace=namespace, resource_name='case-test').0 }}"

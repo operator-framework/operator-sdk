@@ -1,0 +1,126 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: manager-role
+rules:
+  ##
+  ## Base operator rules
+  ##
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+      - pods
+      - pods/exec
+      - pods/log
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+      - daemonsets
+      - replicasets
+      - statefulsets
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  ##
+  ## Rules for cache.example.com/v1alpha1, Kind: Memcached
+  ##
+  - apiGroups:
+      - cache.example.com
+    resources:
+      - memcacheds
+      - memcacheds/status
+      - memcacheds/finalizers
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+
+  ##
+  ## Apply customize roles for base operator
+  ##
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+      - services
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  ##
+  ## Rules for cache.example.com/v1alpha1, Kind: Foo
+  ##
+  - apiGroups:
+      - cache.example.com
+    resources:
+      - foos
+      - foos/status
+      - foos/finalizers
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  ##
+  ## Rules for cache.example.com/v1alpha1, Kind: Memfin
+  ##
+  - apiGroups:
+      - cache.example.com
+    resources:
+      - memfins
+      - memfins/status
+      - memfins/finalizers
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  ##
+  ## Rules for ignore.example.com/v1, Kind: Secret
+  ##
+  - apiGroups:
+      - ignore.example.com
+    resources:
+      - secrets
+      - secrets/status
+      - secrets/finalizers
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+#+kubebuilder:scaffold:rules
+

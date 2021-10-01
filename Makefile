@@ -41,6 +41,7 @@ generate: build # Generate CLI docs and samples
 	go run ./hack/generate/cncf-maintainers/main.go
 	go run ./hack/generate/cli-doc/gen-cli-doc.go
 	go run ./hack/generate/samples/generate_testdata.go
+	go run ./hack/generate/samples/molecule/generate.go
 	go generate ./...
 
 .PHONY: bindata

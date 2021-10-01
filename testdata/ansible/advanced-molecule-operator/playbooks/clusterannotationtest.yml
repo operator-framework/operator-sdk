@@ -1,0 +1,27 @@
+---
+- hosts: localhost
+  gather_facts: no
+  collections:
+    - community.kubernetes
+  tasks:
+
+    - name: create externalnamespace
+      k8s:
+        name: "externalnamespace"
+        api_version: v1
+        kind: "Namespace"
+        definition:
+          metadata:
+            labels:
+              foo: bar
+
+    - name: create configmap
+      k8s:
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            namespace: "externalnamespace"
+            name: '{{ meta.name }}'
+          data:
+            foo: bar

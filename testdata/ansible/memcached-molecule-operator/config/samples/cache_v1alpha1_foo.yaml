@@ -1,0 +1,7 @@
+apiVersion: cache.example.com/v1alpha1
+kind: Foo
+metadata:
+  name: foo-sample
+spec:
+  # Add fields here
+  foo: bar

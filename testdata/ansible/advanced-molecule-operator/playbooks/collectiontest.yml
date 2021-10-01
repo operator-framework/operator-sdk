@@ -1,0 +1,7 @@
+---
+- hosts: localhost
+  gather_facts: no
+  collections:
+    - community.kubernetes
+    - operator_sdk.util
+  tasks: []

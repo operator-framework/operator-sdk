@@ -1,0 +1,7 @@
+apiVersion: test.example.com/v1alpha1
+kind: ArgsTest
+metadata:
+  name: argstest-sample
+spec:
+  # Add fields here
+  foo: bar

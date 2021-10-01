@@ -1,0 +1,14 @@
+---
+- name: Create the test.example.com/v1alpha1.CollectionTest
+  k8s:
+    state: present
+    namespace: '{{ namespace }}'
+    definition: "{{ lookup('template', '/'.join([samples_dir, cr_file])) | from_yaml }}"
+    wait: yes
+    wait_timeout: 300
+    wait_condition:
+      type: Running
+      reason: Successful
+      status: "True"
+  vars:
+    cr_file: 'test_v1alpha1_collectiontest.yaml'
