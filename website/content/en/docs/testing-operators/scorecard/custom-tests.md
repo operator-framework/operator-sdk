@@ -69,7 +69,7 @@ The `tests.go` file is where the custom tests are implemented in the sample test
 package tests
 
 import (
-  "github.com/operator-framework/operator-registry/pkg/registry"
+  apimanifests "github.com/operator-framework/api/pkg/manifests"
   scapiv1alpha3 "github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 )
 
@@ -78,10 +78,9 @@ const (
 )
 
 // CustomTest1
-func CustomTest1(bundle registry.Bundle) scapiv1alpha3.TestStatus {
+func CustomTest1(bundle *apimanifests.Bundle) scapiv1alpha3.TestStatus {
   r := scapiv1alpha3.TestResult{}
   r.Name = CustomTest1Name
-  r.Description = "Custom Test 1"
   r.State = scapiv1alpha3.PassState
   r.Errors = make([]string, 0)
   r.Suggestions = make([]string, 0)
