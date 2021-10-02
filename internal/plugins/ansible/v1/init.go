@@ -172,8 +172,7 @@ func addInitCustomizations(projectName string) error {
 		return err
 	}
 
-	// remove the resources limits
-	// todo: remove it when we solve the issue operator-framework/operator-sdk#3573
+	// update default resource request and limits with bigger values
 	const resourcesLimitsFragment = `  resources:
           limits:
             cpu: 500m
@@ -182,7 +181,17 @@ func addInitCustomizations(projectName string) error {
             cpu: 10m
             memory: 64Mi
       `
-	err = util.ReplaceInFile(managerFile, resourcesLimitsFragment, "")
+
+	const resourcesLimitsAnsibleFragment = `  resources:
+          limits:
+            cpu: 500m
+            memory: 768Mi
+          requests:
+            cpu: 10m
+            memory: 256Mi
+      `
+
+	err = util.ReplaceInFile(managerFile, resourcesLimitsFragment, resourcesLimitsAnsibleFragment)
 	if err != nil {
 		return err
 	}
