@@ -15,6 +15,8 @@
 package tests
 
 import (
+	"fmt"
+
 	scapiv1alpha3 "github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -35,7 +37,7 @@ func CheckSpecTest(bundle *apimanifests.Bundle) scapiv1alpha3.TestStatus {
 
 	crSet, err := GetCRs(bundle)
 	if err != nil {
-		r.Errors = append(r.Errors, "error getting custom resources")
+		r.Errors = append(r.Errors, fmt.Sprintf("error getting custom resources: %s", err))
 		r.State = scapiv1alpha3.FailState
 	}
 
@@ -48,7 +50,7 @@ func checkSpec(crSet []unstructured.Unstructured,
 	res scapiv1alpha3.TestResult) scapiv1alpha3.TestResult {
 	for _, cr := range crSet {
 		if cr.Object["spec"] == nil {
-			res.Errors = append(res.Errors, "error spec does not exist")
+			res.Errors = append(res.Errors, fmt.Sprintf("error spec does not exist for the custom resource %s", cr.GetName()))
 			res.State = scapiv1alpha3.FailState
 			return res
 		}
