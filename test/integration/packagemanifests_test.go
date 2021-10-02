@@ -15,8 +15,6 @@
 package integration
 
 import (
-	"fmt"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -49,24 +47,5 @@ var _ = Describe("run packagemanifests", func() {
 
 	It("should succeed with a single operator version in OwnNamespace mode", func() {
 		Expect(runPackageManifests(&tc, "--install-mode", "OwnNamespace", "--version", "0.0.1")).To(Succeed())
-	})
-
-	It("should successfully deploy the second of two operator versions", func() {
-		versions := []string{"0.0.1", "0.2.0"}
-		channels := []string{"alpha", "stable"}
-		for i, version := range versions {
-			imageTag := fmt.Sprintf("integration/%s:%s", tc.ProjectName, version)
-			By("building the manager image " + imageTag)
-			Expect(tc.Make("docker-build", "IMG="+imageTag)).To(Succeed())
-			if onKind {
-				Expect(tc.LoadImageToKindClusterWithName(imageTag)).To(Succeed())
-			}
-			makeArgs := []string{"packagemanifests", "IMG=" + imageTag, "VERSION=" + version, "CHANNEL=" + channels[i]}
-			if i != 0 {
-				makeArgs = append(makeArgs, "FROM_VERSION="+versions[i-1])
-			}
-			Expect(tc.Make(makeArgs...)).To(Succeed())
-		}
-		Expect(runPackageManifests(&tc, "--version", versions[len(versions)-1])).To(Succeed())
 	})
 })
