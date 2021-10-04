@@ -59,7 +59,7 @@ This guide walks through an example of building a simple memcached-operator usin
 has a custom CA, these [configuration steps][image-reg-config] must be complete.
 
   ```sh
-  operator-sdk run bundle example.com/memcached-operator-bundle:v0.0.1
+  operator-sdk run bundle <some-registry>/memcached-operator-bundle:v0.0.1
   ```
 
 1. Create a sample Memcached custom resource:
