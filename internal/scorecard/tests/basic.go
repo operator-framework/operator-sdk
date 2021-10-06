@@ -52,6 +52,7 @@ func checkSpec(crSet []unstructured.Unstructured,
 		if cr.Object["spec"] == nil {
 			res.Errors = append(res.Errors, fmt.Sprintf("error spec does not exist for the custom resource %s", cr.GetName()))
 			res.State = scapiv1alpha3.FailState
+			res.Suggestions = append(res.Suggestions, fmt.Sprintf("spec missing from [%+v]", cr.GetName()))
 			return res
 		}
 	}
