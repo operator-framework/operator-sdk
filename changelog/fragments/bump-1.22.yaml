@@ -33,10 +33,10 @@ entries:
     migration:
       header: Upgrade K8s versions to use 1.22 (golang/v3)
       body: >
-        Note that to ensure the backwords compatibility SDK tool will try to downgrade the versions used if you need to still scaffolding the v1beta1 for CRDs and Webhooks to pusblish your solutions into the old cluster versions.
-        However, note that this versions are no longer supported on Kubernetes 1.22+, and for sigs.k8s.io/controller-runtime v0.10.0 or controller-gen v0.7.0.
+        Note that to ensure the backwords compatibility SDK tool will try to downgrade the versions used if you need to still scaffold the v1beta1 for CRDs and Webhooks to pusblish your solutions into the old cluster versions.
+        However, note that this version is no longer supported on Kubernetes 1.22+, and for sigs.k8s.io/controller-runtime v0.10.0 or controller-gen v0.7.0.
 
-        Following the changes to be addressed to your Makefile and go.mod file if you are
+        Following are the changes to be addressed in your `Makefile` and `go.mod` file if you are
         not using the `v1beta1` K8s APIs which are no longer supported from k8s `1.22` version.
 
         1) Update your `go.mod` file to upgrade the dependencies and run `go mod tidy` to download then
