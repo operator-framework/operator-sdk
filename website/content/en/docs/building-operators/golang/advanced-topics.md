@@ -124,17 +124,17 @@ Operators may create objects as part of their operational duty. Object accumulat
 
 #### Internal Resources
 
-A typical example of correct resource cleanup is the [Jobs](https://kubernetes.io/docs/concepts/workloads/controllers/job/) implementation. When a Job is created, one or multiple Pods are created as child resources. When a Job is deleted, the associated Pods are deleted as well. This is a very common pattern easily achieved by setting an owner reference from the parent (Job) to the child (Pod) object. Here is a code snippet for doing so, where "r" is the reconcilier and "ctrl" the controller-runtime library:
+A typical example of correct resource cleanup is the [Jobs][jobs] implementation. When a Job is created, one or multiple Pods are created as child resources. When a Job is deleted, the associated Pods are deleted as well. This is a very common pattern easily achieved by setting an owner reference from the parent (Job) to the child (Pod) object. Here is a code snippet for doing so, where "r" is the reconcilier and "ctrl" the controller-runtime library:
 
 ```go
 ctrl.SetControllerReference(job, pod, r.Scheme)
 ```
 
-Note that the default behavior for cascading deletion is background propagation, meaning deletion requests for child objects occur after the request to delete the parent object. [This Kubernetes doc](https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection/) provides alternative deletion types.
+Note that the default behavior for cascading deletion is background propagation, meaning deletion requests for child objects occur after the request to delete the parent object. [This Kubernetes doc][garbage_collection] provides alternative deletion types.
 
 #### External Resources
 
-Sometimes external resources or resources that are not owned by a custom resource, those across namespaces for example, need to be cleaned up when the parent resource is deleted. In that case [Finalizers](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#finalizers) can be leveraged. A deletion request for an object with a finalizer becomes an update during which a deletion timestamp is set; the object is not deleted while the finalizer is present. The reconciliation loop of the custom resource's controller will then need to check whether a the deletion timestamp is set, perform the external cleanup operation(s), then remove the finalizer to allow garbage collection of the object. Multiple finalizers may be present on an object, each with a key that should indicate what external resources require deletion by the controller.
+Sometimes external resources or resources that are not owned by a custom resource, those across namespaces for example, need to be cleaned up when the parent resource is deleted. In that case [Finalizers][finalizers] can be leveraged. A deletion request for an object with a finalizer becomes an update during which a deletion timestamp is set; the object is not deleted while the finalizer is present. The reconciliation loop of the custom resource's controller will then need to check whether a the deletion timestamp is set, perform the external cleanup operation(s), then remove the finalizer to allow garbage collection of the object. Multiple finalizers may be present on an object, each with a key that should indicate what external resources require deletion by the controller.
 
 The following is a snippet from a theoretical controller file `controllers/memcached_controller.go` that implements a finalizer handler:
 
@@ -218,12 +218,12 @@ func (r *MemcachedReconciler) finalizeMemcached(reqLogger logr.Logger, m *cachev
 
 #### Complex cleanup logic
 
-Similar to the previous scenario, finalizers can be used for implementing complex cleanup logic. Take [CronJobs](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/) as an example: the controller maintains limited-size lists of jobs that have been created by the CronJob controller to check for deletion. These list sizes are configured by the CronJob fields [`.spec.successfulJobsHistoryLimit` and `.spec.failedJobsHistoryLimit`](https://kubernetes.io/docs/tasks/job/automated-tasks-with-cron-jobs/#jobs-history-limits), which specify how many completed and failed jobs should be kept. Check out the [Kubebuilder CronJob tutorial](https://book.kubebuilder.io/cronjob-tutorial/controller-implementation.html#3-clean-up-old-jobs-according-to-the-history-limit) for full implementation details.
+Similar to the previous scenario, finalizers can be used for implementing complex cleanup logic. Take [CronJobs][cronjobs] as an example: the controller maintains limited-size lists of jobs that have been created by the CronJob controller to check for deletion. These list sizes are configured by the CronJob fields [`.spec.successfulJobsHistoryLimit` and `.spec.failedJobsHistoryLimit`][cronjob_fields], which specify how many completed and failed jobs should be kept. Check out the [Kubebuilder CronJob tutorial][cronjob_tutorial] for full implementation details.
 
 #### Sensitive resources
 
-Sensitive resources need to be protected against unintended deletion. An intuitive example of protecting resources is the [PersistentVolume (PV) / PersistentVolumeClaim (PVC)](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) relationship. A PV is first created, after which users can request access to that PV's storage by creating a PVC, which gets bound to the PV. If a user tries to delete a PV currently bound by a PVC, the PV is not removed immediately. Instead, PV removal is postponed until the PV is not bound to any PVC. Finalizers again can be leveraged to achieve a similar behaviour for your own PV-like custom resources: by setting a finalizer on an object, your controller can make sure there are no remaining objects bound to it before removing the finalizer and deleting the object.
-Additionally, the user who created the PVC can specify what happens to the underlying storage allocated in a PV when the PVC is deleted through the [reclaim policy](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#reclaiming). There are several options available, each of which defines a behavior that is achieved again through the use of finalizers. The key concept to take away is that your operator can give a user the power to decide how their resources are cleaned up via finalizers, which may be dangerous yet useful depending on your workloads.
+Sensitive resources need to be protected against unintended deletion. An intuitive example of protecting resources is the [PersistentVolume (PV) / PersistentVolumeClaim (PVC)][pv] relationship. A PV is first created, after which users can request access to that PV's storage by creating a PVC, which gets bound to the PV. If a user tries to delete a PV currently bound by a PVC, the PV is not removed immediately. Instead, PV removal is postponed until the PV is not bound to any PVC. Finalizers again can be leveraged to achieve a similar behaviour for your own PV-like custom resources: by setting a finalizer on an object, your controller can make sure there are no remaining objects bound to it before removing the finalizer and deleting the object.
+Additionally, the user who created the PVC can specify what happens to the underlying storage allocated in a PV when the PVC is deleted through the [reclaim policy][reclaiming]. There are several options available, each of which defines a behavior that is achieved again through the use of finalizers. The key concept to take away is that your operator can give a user the power to decide how their resources are cleaned up via finalizers, which may be dangerous yet useful depending on your workloads.
 
 ### Leader election
 
@@ -285,12 +285,24 @@ func main() {
 
 When the operator is not running in a cluster, the Manager will return an error on starting since it can't detect the operator's namespace in order to create the configmap for leader election. You can override this namespace by setting the Manager's `LeaderElectionNamespace` option.
 
+### Multiple architectures
+
+Authors may decide to distribute their bundles for various architectures: x86_64, aarch64, ppc64le, s390x, etc, to accomodate the diversity of Kubernetes clusters and reach a larger number of potential users. Each architecture requires however compatible binaries. Considerations on the topic are available in the [Multiple Architectures page][multi_arch].
+
 [typical-status-properties]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
 [scheme_package]:https://github.com/kubernetes/client-go/blob/master/kubernetes/scheme/register.go
 [deployments_register]: https://github.com/kubernetes/api/blob/master/apps/v1/register.go#L41
 [runtime_package]: https://pkg.go.dev/k8s.io/apimachinery/pkg/runtime
 [scheme_builder]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/scheme#Builder
 [metrics_doc]: https://book.kubebuilder.io/reference/metrics.html
+[jobs]: https://kubernetes.io/docs/concepts/workloads/controllers/job/
+[garbage_collection]: https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection/
+[finalizers]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#finalizers
+[cronjobs]: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/
+[cronjobs_fields]: https://kubernetes.io/docs/tasks/job/automated-tasks-with-cron-jobs/#jobs-history-limits
+[cronjob_tutorial]: https://book.kubebuilder.io/cronjob-tutorial/controller-implementation.html#3-clean-up-old-jobs-according-to-the-history-limit
+[pv]: https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+[reclaiming]: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#reclaiming
 [lease_split_brain]: https://github.com/kubernetes/client-go/blob/30b06a83d67458700a5378239df6b96948cb9160/tools/leaderelection/leaderelection.go#L21-L24
 [leader_for_life]: https://pkg.go.dev/github.com/operator-framework/operator-lib/leader
 [leader_with_lease]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/leaderelection
@@ -298,3 +310,4 @@ When the operator is not running in a cluster, the Manager will return an error 
 [manager_options]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/manager#Options
 [apimachinery_condition]: https://github.com/kubernetes/apimachinery/blob/d4f471b82f0a17cda946aeba446770563f92114d/pkg/apis/meta/v1/types.go#L1368
 [helpers-conditions]: https://github.com/kubernetes/apimachinery/blob/master/pkg/api/meta/conditions.go
+[multi_arch]:/docs/advanced-topics/multi-arch
