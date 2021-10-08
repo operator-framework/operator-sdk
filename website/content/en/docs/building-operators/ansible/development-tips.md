@@ -118,7 +118,7 @@ PLAY [localhost] ***************************************************************
 TASK [Gathering Facts] *********************************************************************
 ok: [localhost]
 
-Task [memcached : set example-coonfig configmap to present]
+Task [memcached : set ConfigMap example-config to present]
 changed: [localhost]
 
 PLAY RECAP *********************************************************************************
@@ -145,7 +145,7 @@ PLAY [localhost] ***************************************************************
 TASK [Gathering Facts] *********************************************************************
 ok: [localhost]
 
-Task [memcached : set example-config configmap to absent]
+Task [memcached : set ConfigMap example-config to absent]
 changed: [localhost]
 
 PLAY RECAP *********************************************************************************
