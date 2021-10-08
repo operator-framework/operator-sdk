@@ -11,7 +11,7 @@ export GIT_VERSION = $(shell git describe --dirty --tags --always)
 export GIT_COMMIT = $(shell git rev-parse HEAD)
 export K8S_VERSION = 1.21
 # TODO: bump this to 1.21, after kubectl `--generator` flag is removed from e2e tests.
-export ENVTEST_K8S_VERSION = 1.21.0
+export ENVTEST_K8S_VERSION = 1.22.1
 
 # Build settings
 export TOOLS_DIR = tools/bin
