@@ -18,11 +18,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	apierrors "github.com/operator-framework/api/pkg/validation/errors"
 )
 
 // ValidatorEntrypointsEnv should be set to a Unix path list ("/path/to/e1.sh:/path/to/e2")
@@ -60,6 +63,7 @@ func GetExternalValidatorEntrypoints() ([]string, bool) {
 // TODO(estroz): what other information should be passed? Output of `docker inspect`?
 func RunExternalValidators(ctx context.Context, entrypoints []string, bundleRoot string) ([]Result, error) {
 	results := make([]Result, len(entrypoints))
+	manifestresults := make([]apierrors.ManifestResult, len(entrypoints))
 	for i, entrypoint := range entrypoints {
 		cmd := exec.CommandContext(ctx, entrypoint, bundleRoot)
 		// Let error text go to stderr.
@@ -70,12 +74,18 @@ func RunExternalValidators(ctx context.Context, entrypoints []string, bundleRoot
 		if err != nil {
 			return nil, err
 		}
+
 		// Ensure output conforms to the Output spec.
 		dec := json.NewDecoder(bytes.NewBuffer(out))
 		dec.DisallowUnknownFields()
-		if err := dec.Decode(&results[i]); err != nil {
+
+		if err := dec.Decode(&manifestresults[i]); err != nil {
+			fmt.Printf("decode failed: %v\n", err)
 			return nil, err
 		}
+		// if err := dec.Decode(&results[i]); err != nil {
+		//     return nil, err
+		// }
 	}
 	return results, nil
 }

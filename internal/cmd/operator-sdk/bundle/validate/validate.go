@@ -37,13 +37,14 @@ import (
 )
 
 type bundleValidateCmd struct {
-	directory      string
-	imageBuilder   string
-	outputFormat   string
-	selectorRaw    string
-	selector       labels.Selector
-	listOptional   bool
-	optionalValues map[string]string
+	directory           string
+	imageBuilder        string
+	outputFormat        string
+	selectorRaw         string
+	selector            labels.Selector
+	listOptional        bool
+	optionalValues      map[string]string
+	alphaSelectExternal string
 }
 
 // validate verifies the command args
@@ -64,6 +65,10 @@ func (c bundleValidateCmd) validate(args []string) error {
 		if err := optionalValidators.checkMatches(c.selector); err != nil {
 			return err
 		}
+	}
+
+	if c.alphaSelectExternal != "" {
+		// ensure the variable is in Unix path format
 	}
 
 	return nil
@@ -89,6 +94,8 @@ func (c *bundleValidateCmd) addToFlagSet(fs *pflag.FlagSet) {
 	fs.StringVarP(&c.outputFormat, "output", "o", validate.TextOutput,
 		"Result format for results. One of: [text, json-alpha1]. Note: output format types containing "+
 			"\"alphaX\" are subject to change and not covered by guarantees of stable APIs.")
+
+	fs.StringVar(&c.alphaSelectExternal, "alpha-select-external", "", "Selector to select external validators to run. ")
 }
 
 func (c bundleValidateCmd) run(logger *log.Entry, bundleRaw string) (res *validate.Result, err error) {
