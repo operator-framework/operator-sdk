@@ -32,10 +32,10 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/testutils"
 )
 
-var _ = Describe("operator-sdk", func() {
+var _ = FDescribe("operator-sdk", func() {
 	var controllerPodName, metricsClusterRoleBindingName string
 
-	Context("built with operator-sdk", func() {
+	FContext("built with operator-sdk", func() {
 
 		BeforeEach(func() {
 			metricsClusterRoleBindingName = fmt.Sprintf("%s-metrics-reader", tc.ProjectName)
@@ -59,7 +59,7 @@ var _ = Describe("operator-sdk", func() {
 			testutils.WrapWarnOutput(tc.Kubectl.Wait(false, "namespace", "foo", "--for", "delete", "--timeout", "2m"))
 		})
 
-		It("should run correctly in a cluster", func() {
+		FIt("should run correctly in a cluster", func() {
 			By("checking if the Operator project Pod is running")
 			verifyControllerUp := func() error {
 				// Get the controller-manager pod name
