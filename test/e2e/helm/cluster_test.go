@@ -220,8 +220,6 @@ var _ = Describe("Running Helm projects", func() {
 			Expect(len(token)).To(BeNumerically(">", 0))
 
 			By("creating a curl pod")
-			// it should not make any difference and work locally successfully when the flag is removed
-			// the test will fail and the curl pod is not found when the flag is not used
 			cmdOpts := []string{
 				"run", "curl", "--image=curlimages/curl:7.68.0", "--restart=OnFailure",
 				"--serviceaccount", tc.Kubectl.ServiceAccount, "--",
