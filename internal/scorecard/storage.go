@@ -137,7 +137,7 @@ func untarAll(reader io.Reader, destDir, prefix string) error {
 	return nil
 }
 
-func addStorageToPod(podDef *v1.Pod, mountPath string) {
+func addStorageToPod(podDef *v1.Pod, mountPath string, storageImage string) {
 
 	// add the emptyDir volume for storage to the test Pod
 	newVolume := v1.Volume{}
@@ -149,7 +149,7 @@ func addStorageToPod(podDef *v1.Pod, mountPath string) {
 	// add the storage sidecar container
 	storageContainer := v1.Container{
 		Name:            StorageSidecarContainer,
-		Image:           "busybox",
+		Image:           storageImage,
 		ImagePullPolicy: v1.PullIfNotPresent,
 		Args: []string{
 			"/bin/sh",

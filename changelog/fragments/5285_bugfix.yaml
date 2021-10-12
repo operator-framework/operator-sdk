@@ -1,0 +1,17 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Add new flag options `--storage-image` and `--untar-image` to the Scorecard command to allow overwrite its default values.
+      These options are useful for disconnect environments and to prevent an impact of the external registry's pull limits.
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "addition"
+
+    # Is this a breaking change?
+    breaking: false

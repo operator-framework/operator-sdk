@@ -65,6 +65,16 @@ var _ = Describe("Running the scorecard command", func() {
 			Expect(flag).NotTo(BeNil())
 			Expect(flag.Shorthand).To(Equal("w"))
 			Expect(flag.DefValue).To(Equal("30s"))
+
+			flag = cmd.Flags().Lookup("storage-image")
+			Expect(flag).NotTo(BeNil())
+			Expect(flag.Shorthand).To(Equal("b"))
+			Expect(flag.DefValue).To(Equal("docker.io/library/busybox@sha256:c71cb4f7e8ececaffb34037c2637dc86820e4185100e18b4d02d613a9bd772af"))
+
+			flag = cmd.Flags().Lookup("untar-image")
+			Expect(flag).NotTo(BeNil())
+			Expect(flag.Shorthand).To(Equal("u"))
+			Expect(flag.DefValue).To(Equal("registry.access.redhat.com/ubi8@sha256:910f6bc0b5ae9b555eb91b88d28d568099b060088616eba2867b07ab6ea457c7"))
 		})
 	})
 

@@ -251,6 +251,13 @@ $ operator-sdk scorecard ./bundle --test-output=/mytestoutput
 
 **Note**: By default, the gathered test output will be stored in `$(pwd)/test-output`.
 
+### Overwrite storage and untar images to prevent downloading the images from external registries
+
+The following options are useful to prevent downloading the images from external registries during scorecard job execution.
+That could be a case of disconnected environments or to prevent an impact of the external registry's pull limits.
+- The `--storage-image` flag can be used when executing the `operator-sdk scorecard` command to overwrite the default `busybox` image used by the Scorecard pod.
+- The `--untar-image` flag can be used when executing the `operator-sdk scorecard` command to overwrite the default untar image used by the Scorecard pod.
+
 ### Scorecard initContainer
 
 The scorecard inserts an `initContainer` into the test pods it creates. The

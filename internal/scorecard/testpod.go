@@ -30,10 +30,6 @@ import (
 const (
 	// PodBundleRoot is the directory containing all bundle data within a test pod.
 	PodBundleRoot = "/bundle"
-
-	// The image used to untar bundles prior to running tests within a runner Pod.
-	// This image tag should always be pinned to a specific version.
-	scorecardUntarImage = "registry.access.redhat.com/ubi8/ubi:8.4"
 )
 
 // getPodDefinition fills out a Pod definition based on
@@ -80,7 +76,7 @@ func getPodDefinition(configMapName string, test v1alpha3.TestConfiguration, r P
 			InitContainers: []v1.Container{
 				{
 					Name:            "scorecard-untar",
-					Image:           scorecardUntarImage,
+					Image:           r.UntarImage,
 					ImagePullPolicy: v1.PullIfNotPresent,
 					Args: []string{
 						"tar",
