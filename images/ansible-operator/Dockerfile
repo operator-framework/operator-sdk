@@ -17,7 +17,7 @@ COPY . .
 RUN GOOS=linux GOARCH=$TARGETARCH make build/ansible-operator
 
 # Final image.
-FROM quay.io/operator-framework/ansible-operator-base:master-bc8aedd752afff8aed00e62901d69e737d3e370e
+FROM quay.io/operator-framework/ansible-operator-base:master-7685cb158ec5ba254e5f6a7a360eaa89d7e6f6d6
 
 ENV HOME=/opt/ansible \
     USER_NAME=ansible \
