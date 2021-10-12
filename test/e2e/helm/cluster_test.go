@@ -220,11 +220,8 @@ var _ = Describe("Running Helm projects", func() {
 			Expect(len(token)).To(BeNumerically(">", 0))
 
 			By("creating a curl pod")
-			// TODO: the flag --generator=run-pod/v1 is deprecated, however, shows that besides
-			// it should not make any difference and work locally successfully when the flag is removed
-			// the test will fail and the curl pod is not found when the flag is not used
 			cmdOpts := []string{
-				"run", "--generator=run-pod/v1", "curl", "--image=curlimages/curl:7.68.0", "--restart=OnFailure",
+				"run", "curl", "--image=curlimages/curl:7.68.0", "--restart=OnFailure",
 				"--serviceaccount", tc.Kubectl.ServiceAccount, "--",
 				"curl", "-v", "-k", "-H", fmt.Sprintf(`Authorization: Bearer %s`, token),
 				fmt.Sprintf("https://%s-controller-manager-metrics-service.%s.svc:8443/metrics", tc.ProjectName, tc.Kubectl.Namespace),
