@@ -129,7 +129,7 @@ func warn(output string, err error) {
 }
 
 func runPackageManifests(tc *testutils.TestContext, args ...string) error {
-	allArgs := []string{"run", "packagemanifests", "--timeout", "4m", "--namespace", tc.Kubectl.Namespace}
+	allArgs := []string{"run", "packagemanifests", "--timeout", "6m", "--namespace", tc.Kubectl.Namespace}
 	output, err := tc.Run(exec.Command(tc.BinaryName, append(allArgs, args...)...))
 	if err == nil {
 		fmt.Fprintln(GinkgoWriter, string(output))
