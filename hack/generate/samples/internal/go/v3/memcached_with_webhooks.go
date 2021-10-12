@@ -22,11 +22,9 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	kbtestutils "sigs.k8s.io/kubebuilder/v3/test/e2e/utils"
+	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
-	"github.com/operator-framework/operator-sdk/internal/testutils"
-	"github.com/operator-framework/operator-sdk/internal/util"
 )
 
 // Memcached defines the Memcached Sample in GO using webhooks
@@ -126,22 +124,22 @@ func (mh *Memcached) uncommentDefaultKustomization() {
 	kustomization := filepath.Join(mh.ctx.Dir, "config", "default", "kustomization.yaml")
 	log.Info("uncommenting config/default/kustomization.yaml to enable webhooks and ca injection")
 
-	err = testutils.UncommentCode(kustomization, "#- ../webhook", "#")
+	err = kbutil.UncommentCode(kustomization, "#- ../webhook", "#")
 	pkg.CheckError("uncomment webhook", err)
 
-	err = testutils.UncommentCode(kustomization, "#- ../certmanager", "#")
+	err = kbutil.UncommentCode(kustomization, "#- ../certmanager", "#")
 	pkg.CheckError("uncomment certmanager", err)
 
-	err = testutils.UncommentCode(kustomization, "#- ../prometheus", "#")
+	err = kbutil.UncommentCode(kustomization, "#- ../prometheus", "#")
 	pkg.CheckError("uncomment prometheus", err)
 
-	err = testutils.UncommentCode(kustomization, "#- manager_webhook_patch.yaml", "#")
+	err = kbutil.UncommentCode(kustomization, "#- manager_webhook_patch.yaml", "#")
 	pkg.CheckError("uncomment manager_webhook_patch.yaml", err)
 
-	err = testutils.UncommentCode(kustomization, "#- webhookcainjection_patch.yaml", "#")
+	err = kbutil.UncommentCode(kustomization, "#- webhookcainjection_patch.yaml", "#")
 	pkg.CheckError("uncomment webhookcainjection_patch.yaml", err)
 
-	err = testutils.UncommentCode(kustomization,
+	err = kbutil.UncommentCode(kustomization,
 		`#- name: CERTIFICATE_NAMESPACE # namespace of the certificate CR
 #  objref:
 #    kind: Certificate
@@ -177,7 +175,7 @@ func (mh *Memcached) uncommentManifestsKustomization() {
 	kustomization := filepath.Join(mh.ctx.Dir, "config", "manifests", "kustomization.yaml")
 	log.Info("uncommenting config/manifests/kustomization.yaml to enable webhooks in OLM")
 
-	err = testutils.UncommentCode(kustomization,
+	err = kbutil.UncommentCode(kustomization,
 		`#patchesJson6902:
 #- target:
 #    group: apps
@@ -204,17 +202,17 @@ func (mh *Memcached) implementingWebhooks() {
 		strings.ToLower(mh.ctx.Kind)))
 
 	// Add webhook methods
-	err := kbtestutils.InsertCode(webhookPath,
+	err := kbutil.InsertCode(webhookPath,
 		"// TODO(user): fill in your defaulting logic.\n}",
 		webhooksFragment)
 	pkg.CheckError("replacing webhook validate implementation", err)
 
-	err = util.ReplaceInFile(webhookPath,
+	err = kbutil.ReplaceInFile(webhookPath,
 		"// TODO(user): fill in your defaulting logic.", "if r.Spec.Size == 0 {\n\t\tr.Spec.Size = 3\n\t}")
 	pkg.CheckError("replacing webhook default implementation", err)
 
 	// Add imports
-	err = kbtestutils.InsertCode(webhookPath,
+	err = kbutil.InsertCode(webhookPath,
 		"import (",
 		// TODO(estroz): remove runtime dep when --programmatic-validation is added to `ccreate webhook` above.
 		"\"errors\"\n\n\"k8s.io/apimachinery/pkg/runtime\"")
@@ -227,41 +225,41 @@ func (mh *Memcached) implementingController() {
 		strings.ToLower(mh.ctx.Kind)))
 
 	// Add imports
-	err := kbtestutils.InsertCode(controllerPath,
+	err := kbutil.InsertCode(controllerPath,
 		"import (",
 		importsFragment)
 	pkg.CheckError("adding imports", err)
 
 	// Add RBAC permissions on top of reconcile
-	err = kbtestutils.InsertCode(controllerPath,
+	err = kbutil.InsertCode(controllerPath,
 		"/finalizers,verbs=update",
 		rbacFragment)
 	pkg.CheckError("adding rbac", err)
 
 	// Replace reconcile content
-	err = util.ReplaceInFile(controllerPath,
+	err = kbutil.ReplaceInFile(controllerPath,
 		`"sigs.k8s.io/controller-runtime/pkg/log"`,
 		`ctrllog "sigs.k8s.io/controller-runtime/pkg/log"`,
 	)
 	pkg.CheckError("replacing controller log import", err)
-	err = util.ReplaceInFile(controllerPath,
+	err = kbutil.ReplaceInFile(controllerPath,
 		"_ = log.FromContext(ctx)",
 		"log := ctrllog.FromContext(ctx)",
 	)
 	pkg.CheckError("replacing controller logger construction", err)
 
 	// Add reconcile implementation
-	err = util.ReplaceInFile(controllerPath,
+	err = kbutil.ReplaceInFile(controllerPath,
 		"// your logic here", reconcileFragment)
 	pkg.CheckError("replacing reconcile content", err)
 
 	// Add helpers funcs to the controller
-	err = kbtestutils.InsertCode(controllerPath,
+	err = kbutil.InsertCode(controllerPath,
 		"return ctrl.Result{}, nil\n}", controllerFuncsFragment)
 	pkg.CheckError("adding helper methods in the controller", err)
 
 	// Add watch for the Kind
-	err = util.ReplaceInFile(controllerPath,
+	err = kbutil.ReplaceInFile(controllerPath,
 		fmt.Sprintf(watchOriginalFragment, mh.ctx.Group, mh.ctx.Version, mh.ctx.Kind),
 		fmt.Sprintf(watchCustomizedFragment, mh.ctx.Group, mh.ctx.Version, mh.ctx.Kind))
 	pkg.CheckError("replacing add controller to manager", err)
@@ -270,7 +268,7 @@ func (mh *Memcached) implementingController() {
 // nolint:gosec
 // implementingAPI will customize the API
 func (mh *Memcached) implementingAPI() {
-	err := kbtestutils.InsertCode(
+	err := kbutil.InsertCode(
 		filepath.Join(mh.ctx.Dir, "api", mh.ctx.Version, fmt.Sprintf("%s_types.go", strings.ToLower(mh.ctx.Kind))),
 		fmt.Sprintf("type %sSpec struct {\n\t// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster\n\t// Important: Run \"make\" to regenerate code after modifying this file", mh.ctx.Kind),
 		`
@@ -281,7 +279,7 @@ func (mh *Memcached) implementingAPI() {
 	pkg.CheckError("inserting spec Status", err)
 
 	log.Infof("implementing MemcachedStatus")
-	err = kbtestutils.InsertCode(
+	err = kbutil.InsertCode(
 		filepath.Join(mh.ctx.Dir, "api", mh.ctx.Version, fmt.Sprintf("%s_types.go", strings.ToLower(mh.ctx.Kind))),
 		fmt.Sprintf("type %sStatus struct {\n\t// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster\n\t// Important: Run \"make\" to regenerate code after modifying this file", mh.ctx.Kind),
 		`
@@ -295,7 +293,7 @@ func (mh *Memcached) implementingAPI() {
 		fmt.Sprintf("%s_%s_%s.yaml", mh.ctx.Group, mh.ctx.Version, strings.ToLower(mh.ctx.Kind)))
 
 	log.Infof("updating sample to have size attribute")
-	err = util.ReplaceInFile(filepath.Join(mh.ctx.Dir, sampleFile), "foo: bar", "size: 1")
+	err = kbutil.ReplaceInFile(filepath.Join(mh.ctx.Dir, sampleFile), "# Add fields here", "size: 1")
 	pkg.CheckError("updating sample", err)
 }
 
@@ -457,7 +455,7 @@ const watchCustomizedFragment = `return ctrl.NewControllerManagedBy(mgr).
 
 const webhooksFragment = `
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-//+kubebuilder:webhook:path=/validate-cache-example-com-v1alpha1-memcached,mutating=false,failurePolicy=fail,sideEffects=None,groups=cache.example.com,resources=memcacheds,verbs=create;update,versions=v1alpha1,name=vmemcached.kb.io,admissionReviewVersions={v1,v1beta1}
+//+kubebuilder:webhook:path=/validate-cache-example-com-v1alpha1-memcached,mutating=false,failurePolicy=fail,sideEffects=None,groups=cache.example.com,resources=memcacheds,verbs=create;update,versions=v1alpha1,name=vmemcached.kb.io,admissionReviewVersions=v1
 
 var _ webhook.Validator = &Memcached{}
 

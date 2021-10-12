@@ -21,7 +21,7 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	kbtestutils "sigs.k8s.io/kubebuilder/v3/test/e2e/utils"
+	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
 	"github.com/operator-framework/operator-sdk/internal/util"
@@ -98,23 +98,23 @@ func (ma *AdvancedMolecule) Run() {
         data:
           sentinel: '{{ sentinel }}'
           groups: '{{ groups | to_nice_yaml }}'`
-	err = util.ReplaceInFile(
+	err = kbutil.ReplaceInFile(
 		inventoryRoleTask,
 		"# tasks file for InventoryTest",
 		inventoryRoleTaskFragment)
 	pkg.CheckError("replacing inventory task", err)
 
 	log.Infof("updating inventorytest sample")
-	err = util.ReplaceInFile(
+	err = kbutil.ReplaceInFile(
 		filepath.Join(ma.ctx.Dir, "config", "samples", "test_v1alpha1_inventorytest.yaml"),
 		"name: inventorytest-sample",
 		inventorysampleFragment)
 	pkg.CheckError("updating inventorytest sample", err)
 
 	log.Infof("updating spec of inventorytest sample")
-	err = util.ReplaceInFile(
+	err = kbutil.ReplaceInFile(
 		filepath.Join(ma.ctx.Dir, "config", "samples", "test_v1alpha1_inventorytest.yaml"),
-		"foo: bar",
+		"# Add fields here",
 		"size: 3")
 	pkg.CheckError("updating spec of inventorytest sample", err)
 
@@ -156,7 +156,7 @@ func (ma *AdvancedMolecule) updateConfig() {
       - update
       - watch
 #+kubebuilder:scaffold:rules`
-	err := util.ReplaceInFile(
+	err := kbutil.ReplaceInFile(
 		filepath.Join(ma.ctx.Dir, "config", "rbac", "role.yaml"),
 		"#+kubebuilder:scaffold:rules",
 		cmRolesFragment)
@@ -165,7 +165,7 @@ func (ma *AdvancedMolecule) updateConfig() {
 	log.Infof("adding manager arg")
 	const ansibleVaultArg = `
         - --ansible-args='--vault-password-file /opt/ansible/pwd.yml'`
-	err = kbtestutils.InsertCode(
+	err = kbutil.InsertCode(
 		filepath.Join(ma.ctx.Dir, "config", "manager", "manager.yaml"),
 		"- --leader-election-id=advanced-molecule-operator",
 		ansibleVaultArg)
@@ -177,7 +177,7 @@ func (ma *AdvancedMolecule) updateConfig() {
           value: "TRUE"
         - name: ANSIBLE_INVENTORY
           value: /opt/ansible/inventory`
-	err = kbtestutils.InsertCode(
+	err = kbutil.InsertCode(
 		filepath.Join(ma.ctx.Dir, "config", "manager", "manager.yaml"),
 		"value: explicit",
 		managerEnv)
@@ -186,14 +186,14 @@ func (ma *AdvancedMolecule) updateConfig() {
 	log.Infof("adding vaulting args to the proxy auth")
 	const managerAuthArgs = `
         - "--ansible-args='--vault-password-file /opt/ansible/pwd.yml'"`
-	err = kbtestutils.InsertCode(
+	err = kbutil.InsertCode(
 		filepath.Join(ma.ctx.Dir, "config", "default", "manager_auth_proxy_patch.yaml"),
 		"- \"--leader-elect\"",
 		managerAuthArgs)
 	pkg.CheckError("adding vaulting args to the proxy auth", err)
 
 	log.Infof("adding task to not pull image to the config/testing")
-	err = util.ReplaceInFile(
+	err = kbutil.ReplaceInFile(
 		filepath.Join(ma.ctx.Dir, "config", "testing", "kustomization.yaml"),
 		"- manager_image.yaml",
 		"- manager_image.yaml\n- pull_policy/Never.yaml")
@@ -261,7 +261,7 @@ RUN ansible-galaxy collection build /tmp/fixture_collection/ --output-path /tmp/
 RUN echo abc123 > /opt/ansible/pwd.yml \
  && ansible-vault encrypt_string --vault-password-file /opt/ansible/pwd.yml 'thisisatest' --name 'the_secret' > /opt/ansible/vars.yml
 `
-	err = kbtestutils.InsertCode(
+	err = kbutil.InsertCode(
 		filepath.Join(ma.ctx.Dir, "Dockerfile"),
 		"COPY playbooks/ ${HOME}/playbooks/",
 		dockerfileFragment)
@@ -291,7 +291,7 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
           data:
             msg: The decrypted value is {{the_secret.the_secret}}
 `
-	err := util.ReplaceInFile(
+	err := kbutil.ReplaceInFile(
 		filepath.Join(ma.ctx.Dir, "playbooks", "argstest.yml"),
 		originalPlaybookFragment,
 		argsPlaybook)
@@ -315,7 +315,7 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
           data:
             shouldBeCamel: '{{ camelCaseVar | default("false") }}'
 `
-	err = util.ReplaceInFile(
+	err = kbutil.ReplaceInFile(
 		filepath.Join(ma.ctx.Dir, "playbooks", "casetest.yml"),
 		originalPlaybookFragment,
 		casePlaybook)
@@ -334,7 +334,7 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
   tasks:
     - command: echo hello
     - debug: msg='{{ "hello" | test }}'`
-	err = util.ReplaceInFile(
+	err = kbutil.ReplaceInFile(
 		filepath.Join(ma.ctx.Dir, "playbooks", "inventorytest.yml"),
 		"---\n- hosts: localhost\n  gather_facts: no\n  collections:\n    - community.kubernetes\n    - operator_sdk.util\n  tasks:\n    - import_role:\n        name: \"inventorytest\"",
 		inventoryPlaybook)
@@ -392,7 +392,7 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
         time: 1s
       when: configmap.resources|length > 0 and (configmap.resources.0.data.iterations|int) < 5
 `
-	err = util.ReplaceInFile(
+	err = kbutil.ReplaceInFile(
 		filepath.Join(ma.ctx.Dir, "playbooks", "reconciliationtest.yml"),
 		originalPlaybookFragment,
 		reconciliationPlaybook)
@@ -416,7 +416,7 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
           data:
             hello: "world"
 `
-	err = util.ReplaceInFile(
+	err = kbutil.ReplaceInFile(
 		filepath.Join(ma.ctx.Dir, "playbooks", "selectortest.yml"),
 		originalPlaybookFragment,
 		selectorPlaybook)
@@ -475,7 +475,7 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
           execCommandStderr: '{{ exec_result.stderr.strip() }}'
           logs: '{{ log_result.log }}'
 `
-	err = util.ReplaceInFile(
+	err = kbutil.ReplaceInFile(
 		filepath.Join(ma.ctx.Dir, "playbooks", "subresourcestest.yml"),
 		originalPlaybookFragment,
 		subresourcesPlaybook)
@@ -510,7 +510,7 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
           data:
             foo: bar
 `
-	err = util.ReplaceInFile(
+	err = kbutil.ReplaceInFile(
 		filepath.Join(ma.ctx.Dir, "playbooks", "clusterannotationtest.yml"),
 		originalPlaybookFragment,
 		clusterAnnotationTest)
@@ -544,7 +544,7 @@ func (ma *AdvancedMolecule) addPlaybooks() {
 		task := fmt.Sprintf("%s_test.yml", k)
 		logMsgForKind = fmt.Sprintf("removing FIXME assert from %s", task)
 		log.Infof(logMsgForKind)
-		err = util.ReplaceInFile(
+		err = kbutil.ReplaceInFile(
 			filepath.Join(ma.ctx.Dir, "molecule", "default", "tasks", task),
 			fixmeAssert,
 			"")

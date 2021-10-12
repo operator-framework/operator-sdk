@@ -35,6 +35,9 @@ operator-sdk create api [flags]
   # Edit the Controller Test
   nano controllers/frigate/frigate_controller_test.go
 
+  # Generate the manifests
+  make manifests
+
   # Install CRDs into the Kubernetes cluster using kubectl apply
   make install
 
@@ -47,7 +50,6 @@ operator-sdk create api [flags]
 
 ```
       --controller           if set, generate the controller without prompting the user (default true)
-      --crd-version string   version of CustomResourceDefinition to scaffold. Options: [v1, v1beta1] (default "v1")
       --force                attempt to create resource even if it already exists
       --group string         resource Group
   -h, --help                 help for api

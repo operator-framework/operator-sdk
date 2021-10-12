@@ -21,7 +21,7 @@ import (
 	"strings"
 	"testing"
 
-	kbtestutils "sigs.k8s.io/kubebuilder/v3/test/e2e/utils"
+	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -63,7 +63,7 @@ var _ = BeforeSuite(func() {
 	Expect(exec.Command("cp", "-r", "../../../testdata/ansible/memcached-operator", tc.Dir).Run()).To(Succeed())
 
 	By("enabling debug logging in the manager")
-	err = util.ReplaceInFile(filepath.Join(tc.Dir, "config", "default", "manager_auth_proxy_patch.yaml"),
+	err = kbutil.ReplaceInFile(filepath.Join(tc.Dir, "config", "default", "manager_auth_proxy_patch.yaml"),
 		"- \"--leader-elect\"", "- \"--zap-log-level=2\"\n        - \"--leader-elect\"")
 	Expect(err).NotTo(HaveOccurred())
 
@@ -79,7 +79,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).Should(Succeed())
 
 	By("adding Memcached mock task to the role")
-	err = kbtestutils.InsertCode(filepath.Join(tc.Dir, "roles", strings.ToLower(tc.Kind), "tasks", "main.yml"),
+	err = kbutil.InsertCode(filepath.Join(tc.Dir, "roles", strings.ToLower(tc.Kind), "tasks", "main.yml"),
 		"periodSeconds: 3", memcachedWithBlackListTask)
 	Expect(err).NotTo(HaveOccurred())
 
@@ -91,13 +91,20 @@ var _ = BeforeSuite(func() {
 		"--generate-role")
 	Expect(err).NotTo(HaveOccurred())
 
+	By("updating spec of Memfin sample")
+	err = kbutil.ReplaceInFile(
+		filepath.Join(tc.Dir, "config", "samples", fmt.Sprintf("%s_%s_memfin.yaml", tc.Group, tc.Version)),
+		"# Add fields here",
+		"foo: bar")
+	Expect(err).NotTo(HaveOccurred())
+
 	By("adding task to delete config map")
-	err = util.ReplaceInFile(filepath.Join(tc.Dir, "roles", "memfin", "tasks", "main.yml"),
+	err = kbutil.ReplaceInFile(filepath.Join(tc.Dir, "roles", "memfin", "tasks", "main.yml"),
 		"# tasks file for Memfin", taskToDeleteConfigMap)
 	Expect(err).NotTo(HaveOccurred())
 
 	By("adding to watches finalizer and blacklist")
-	err = util.ReplaceInFile(filepath.Join(tc.Dir, "watches.yaml"),
+	err = kbutil.ReplaceInFile(filepath.Join(tc.Dir, "watches.yaml"),
 		"playbook: playbooks/memcached.yml", memcachedWatchCustomizations)
 	Expect(err).NotTo(HaveOccurred())
 
@@ -109,8 +116,15 @@ var _ = BeforeSuite(func() {
 		"--generate-role")
 	Expect(err).NotTo(HaveOccurred())
 
+	By("updating spec of Foo sample")
+	err = kbutil.ReplaceInFile(
+		filepath.Join(tc.Dir, "config", "samples", fmt.Sprintf("%s_%s_foo.yaml", tc.Group, tc.Version)),
+		"# Add fields here",
+		"foo: bar")
+	Expect(err).NotTo(HaveOccurred())
+
 	By("adding RBAC permissions for the Memcached Kind")
-	err = util.ReplaceInFile(filepath.Join(tc.Dir, "config", "rbac", "role.yaml"),
+	err = kbutil.ReplaceInFile(filepath.Join(tc.Dir, "config", "rbac", "role.yaml"),
 		"#+kubebuilder:scaffold:rules", rolesForBaseOperator)
 	Expect(err).NotTo(HaveOccurred())
 

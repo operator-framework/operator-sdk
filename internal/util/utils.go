@@ -20,28 +20,7 @@ import (
 	"io/ioutil"
 	"os"
 	"regexp"
-	"strings"
 )
-
-func ReplaceInFile(path, old, new string) error {
-	info, err := os.Stat(path)
-	if err != nil {
-		return err
-	}
-	b, err := ioutil.ReadFile(path)
-	if err != nil {
-		return err
-	}
-	if !strings.Contains(string(b), old) {
-		return errors.New("unable to find the content to be replaced")
-	}
-	s := strings.Replace(string(b), old, new, -1)
-	err = ioutil.WriteFile(path, []byte(s), info.Mode())
-	if err != nil {
-		return err
-	}
-	return nil
-}
 
 func ReplaceRegexInFile(path, match, replace string) error {
 	matcher, err := regexp.Compile(match)
@@ -65,17 +44,4 @@ func ReplaceRegexInFile(path, match, replace string) error {
 		return err
 	}
 	return nil
-}
-
-// InsertCode searches target content in the file and insert `toInsert` after the target.
-func InsertCode(filename, target, code string) error {
-	contents, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return err
-	}
-	idx := strings.Index(string(contents), target)
-	out := string(contents[:idx+len(target)]) + code + string(contents[idx+len(target):])
-	// false positive
-	// nolint:gosec
-	return ioutil.WriteFile(filename, []byte(out), 0644)
 }

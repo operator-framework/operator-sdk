@@ -18,11 +18,11 @@ import (
 	"os"
 	"path/filepath"
 
+	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
+
 	log "github.com/sirupsen/logrus"
 
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
-	"github.com/operator-framework/operator-sdk/internal/testutils"
-	"github.com/operator-framework/operator-sdk/internal/util"
 )
 
 // Memcached defines the Memcached Sample in Helm
@@ -87,19 +87,19 @@ func (mh *Memcached) Run() {
 	pkg.CheckError("creating the project", err)
 
 	log.Infof("customizing the sample")
-	err = util.ReplaceInFile(
+	err = kbutil.ReplaceInFile(
 		filepath.Join(mh.ctx.Dir, "config", "samples", "cache_v1alpha1_memcached.yaml"),
 		"securityContext:\n    enabled: true", "securityContext:\n    enabled: false")
 	pkg.CheckError("customizing the sample", err)
 
 	log.Infof("enabling prometheus metrics")
-	err = testutils.UncommentCode(
+	err = kbutil.UncommentCode(
 		filepath.Join(mh.ctx.Dir, "config", "default", "kustomization.yaml"),
 		"#- ../prometheus", "#")
 	pkg.CheckError("enabling prometheus metrics", err)
 
 	log.Infof("adding customized roles")
-	err = util.ReplaceInFile(filepath.Join(mh.ctx.Dir, "config", "rbac", "role.yaml"),
+	err = kbutil.ReplaceInFile(filepath.Join(mh.ctx.Dir, "config", "rbac", "role.yaml"),
 		"#+kubebuilder:scaffold:rules", policyRolesFragment)
 	pkg.CheckError("adding customized roles", err)
 

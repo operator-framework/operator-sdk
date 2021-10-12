@@ -27,7 +27,7 @@ import (
 	"sigs.k8s.io/controller-tools/pkg/crd"
 	"sigs.k8s.io/controller-tools/pkg/loader"
 	"sigs.k8s.io/controller-tools/pkg/markers"
-	"sigs.k8s.io/kubebuilder/v3/test/e2e/utils"
+	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 )
 
 var _ = Describe("getTypedDescriptors", func() {
@@ -170,7 +170,7 @@ func makeMockMarkedFields() (markedFields map[crd.TypeIdent][]*fieldInfo, expect
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	markedFields = make(map[crd.TypeIdent][]*fieldInfo, 100)
 	for i := 0; i < 100; i++ {
-		s, err := utils.RandomSuffix()
+		s, err := kbutil.RandomSuffix()
 		if err != nil {
 			panic(err)
 		}
