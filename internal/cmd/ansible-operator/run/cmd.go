@@ -285,9 +285,9 @@ func verifyCfgURL(path string) error {
 		log.Error(err, "Failed to Parse the Path URL.")
 		return err
 	}
-	if urlPath != nil && urlPath.Path != "" {
+	if urlPath != nil && urlPath.Path != "" && urlPath.Path != "/" {
 		log.Error(fmt.Errorf("api endpoint '%s' contains a path component, which the proxy server is currently unable to handle properly. Work on this issue is being tracked here: https://github.com/operator-framework/operator-sdk/issues/4925", path), "")
-		return err
+		os.Exit(1)
 	}
 	return nil
 }
