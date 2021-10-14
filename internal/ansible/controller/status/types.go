@@ -93,6 +93,8 @@ const (
 	RunningConditionType ConditionType = "Running"
 	// FailureConditionType - condition type of failure.
 	FailureConditionType ConditionType = "Failure"
+	// SuccessfulConditionType - condition type of success.
+	SuccessfulConditionType ConditionType = "Successful"
 )
 
 // Condition - the condition for the ansible operator.
@@ -118,11 +120,11 @@ func createConditionFromMap(cm map[string]interface{}) Condition {
 	}
 	reason, ok := cm["reason"].(string)
 	if !ok {
-		reason = RunningReason
+		reason = ""
 	}
 	message, ok := cm["message"].(string)
 	if !ok {
-		message = RunningMessage
+		message = ""
 	}
 	asm, ok := cm["ansibleResult"].(map[string]interface{})
 	var ansibleResult *AnsibleResult

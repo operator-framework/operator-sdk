@@ -303,6 +303,11 @@ func (r *AnsibleOperatorReconciler) markRunning(ctx context.Context, nn types.Na
 		errCond.Status = v1.ConditionFalse
 		ansiblestatus.SetCondition(&crStatus, *errCond)
 	}
+	successCond := ansiblestatus.GetCondition(crStatus, ansiblestatus.SuccessfulConditionType)
+	if successCond != nil {
+		successCond.Status = v1.ConditionFalse
+		ansiblestatus.SetCondition(&crStatus, *successCond)
+	}
 	// If the condition is currently running, making sure that the values are correct.
 	// If they are the same a no-op, if they are different then it is a good thing we
 	// are updating it.
@@ -338,7 +343,12 @@ func (r *AnsibleOperatorReconciler) markError(ctx context.Context, nn types.Name
 	}
 	crStatus := getStatus(u)
 
-	sc := ansiblestatus.GetCondition(crStatus, ansiblestatus.RunningConditionType)
+	rc := ansiblestatus.GetCondition(crStatus, ansiblestatus.RunningConditionType)
+	if rc != nil {
+		rc.Status = v1.ConditionFalse
+		ansiblestatus.SetCondition(&crStatus, *rc)
+	}
+	sc := ansiblestatus.GetCondition(crStatus, ansiblestatus.SuccessfulConditionType)
 	if sc != nil {
 		sc.Status = v1.ConditionFalse
 		ansiblestatus.SetCondition(&crStatus, *sc)
@@ -375,33 +385,55 @@ func (r *AnsibleOperatorReconciler) markDone(ctx context.Context, nn types.Names
 	runSuccessful := len(failureMessages) == 0
 	ansibleStatus := ansiblestatus.NewAnsibleResultFromStatusJobEvent(statusEvent)
 
-	if !runSuccessful {
+	if runSuccessful {
+		metrics.ReconcileSucceeded(r.GVK.String())
+		deprecatedRunningCondition := ansiblestatus.NewCondition(
+			ansiblestatus.RunningConditionType,
+			v1.ConditionTrue,
+			ansibleStatus,
+			ansiblestatus.SuccessfulReason,
+			ansiblestatus.AwaitingMessage,
+		)
+		failureCondition := ansiblestatus.NewCondition(
+			ansiblestatus.FailureConditionType,
+			v1.ConditionFalse,
+			nil,
+			"",
+			"",
+		)
+		successfulCondition := ansiblestatus.NewCondition(
+			ansiblestatus.SuccessfulConditionType,
+			v1.ConditionTrue,
+			nil,
+			ansiblestatus.SuccessfulReason,
+			ansiblestatus.SuccessfulMessage,
+		)
+		ansiblestatus.SetCondition(&crStatus, *deprecatedRunningCondition)
+		ansiblestatus.SetCondition(&crStatus, *successfulCondition)
+		ansiblestatus.SetCondition(&crStatus, *failureCondition)
+	} else {
 		metrics.ReconcileFailed(r.GVK.String())
 		sc := ansiblestatus.GetCondition(crStatus, ansiblestatus.RunningConditionType)
 		if sc != nil {
 			sc.Status = v1.ConditionFalse
 			ansiblestatus.SetCondition(&crStatus, *sc)
 		}
-		c := ansiblestatus.NewCondition(
+		failureCondition := ansiblestatus.NewCondition(
 			ansiblestatus.FailureConditionType,
 			v1.ConditionTrue,
 			ansibleStatus,
 			ansiblestatus.FailedReason,
 			strings.Join(failureMessages, "\n"),
 		)
-		ansiblestatus.SetCondition(&crStatus, *c)
-	} else {
-		metrics.ReconcileSucceeded(r.GVK.String())
-		c := ansiblestatus.NewCondition(
-			ansiblestatus.RunningConditionType,
-			v1.ConditionTrue,
-			ansibleStatus,
-			ansiblestatus.SuccessfulReason,
-			ansiblestatus.SuccessfulMessage,
+		successfulCondition := ansiblestatus.NewCondition(
+			ansiblestatus.SuccessfulConditionType,
+			v1.ConditionFalse,
+			nil,
+			"",
+			"",
 		)
-		// Remove the failure condition if set, because this completed successfully.
-		ansiblestatus.RemoveCondition(&crStatus, ansiblestatus.FailureConditionType)
-		ansiblestatus.SetCondition(&crStatus, *c)
+		ansiblestatus.SetCondition(&crStatus, *failureCondition)
+		ansiblestatus.SetCondition(&crStatus, *successfulCondition)
 	}
 	// This needs the status subresource to be enabled by default.
 	u.Object["status"] = crStatus.GetJSONMap()

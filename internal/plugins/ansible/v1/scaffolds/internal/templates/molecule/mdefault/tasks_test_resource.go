@@ -50,8 +50,7 @@ const resourceTestTemplate = `---
     wait: yes
     wait_timeout: 300
     wait_condition:
-      type: Running
-      reason: Successful
+      type: Successful
       status: "True"
   vars:
     cr_file: '{{ .SampleFile }}'

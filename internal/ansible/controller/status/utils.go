@@ -34,7 +34,9 @@ const (
 	// RunningMessage - message for running reason.
 	RunningMessage = "Running reconciliation"
 	// SuccessfulMessage - message for successful reason.
-	SuccessfulMessage = "Awaiting next reconciliation"
+	AwaitingMessage = "Awaiting next reconciliation"
+	// SuccessfulMessage - message for successful condition.
+	SuccessfulMessage = "Last reconciliation succeeded"
 )
 
 // NewCondition -  condition

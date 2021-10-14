@@ -69,8 +69,7 @@ const moleculeTaskFragment = `- name: Load CR
     wait: yes
     wait_timeout: 300
     wait_condition:
-      type: Running
-      reason: Successful
+      type: Successful
       status: "True"
 
 - name: Wait 2 minutes for memcached deployment
@@ -259,8 +258,7 @@ const originaMemcachedMoleculeTask = `- name: Create the cache.example.com/v1alp
     wait: yes
     wait_timeout: 300
     wait_condition:
-      type: Running
-      reason: Successful
+      type: Successful
       status: "True"
   vars:
     cr_file: 'cache_v1alpha1_memcached.yaml'
