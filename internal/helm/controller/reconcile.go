@@ -130,7 +130,7 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 			log.Info("Release not found")
 		} else {
 			log.Info("Uninstalled release")
-			if log.V(0).Enabled() && uninstalledRelease != nil {
+			if log.V(1).Enabled() && uninstalledRelease != nil {
 				fmt.Println(diff.Generate(uninstalledRelease.Manifest, ""))
 			}
 			if !wait {
@@ -252,7 +252,7 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 		}
 
 		log.Info("Installed release")
-		if log.V(0).Enabled() {
+		if log.V(1).Enabled() {
 			fmt.Println(diff.Generate("", installedRelease.Manifest))
 		}
 		log.V(1).Info("Config values", "values", installedRelease.Config)
@@ -315,7 +315,7 @@ func (r HelmOperatorReconciler) Reconcile(ctx context.Context, request reconcile
 		}
 
 		log.Info("Upgraded release", "force", force)
-		if log.V(0).Enabled() {
+		if log.V(1).Enabled() {
 			fmt.Println(diff.Generate(previousRelease.Manifest, upgradedRelease.Manifest))
 		}
 		log.V(1).Info("Config values", "values", upgradedRelease.Config)
