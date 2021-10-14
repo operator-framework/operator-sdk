@@ -198,6 +198,8 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
         err = r.Update(ctx, memcached)
         if err != nil {
             return ctrl.Result{}, err
+        } else {
+            return ctrl.Result{}, nil
         }
     }
 
