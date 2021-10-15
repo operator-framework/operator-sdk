@@ -52,6 +52,8 @@ type PodTestRunner struct {
 	BundleMetadata registryutil.Labels
 	Client         kubernetes.Interface
 	RESTConfig     *rest.Config
+	StorageImage   string
+	UntarImage     string
 
 	configMapName string
 }
@@ -221,7 +223,7 @@ func (r PodTestRunner) RunTest(ctx context.Context, test v1alpha3.TestConfigurat
 	podDef := getPodDefinition(r.configMapName, test, r)
 
 	if test.Storage.Spec.MountPath.Path != "" {
-		addStorageToPod(podDef, test.Storage.Spec.MountPath.Path)
+		addStorageToPod(podDef, test.Storage.Spec.MountPath.Path, r.StorageImage)
 	}
 
 	pod, err := r.Client.CoreV1().Pods(r.Namespace).Create(ctx, podDef, metav1.CreateOptions{})
