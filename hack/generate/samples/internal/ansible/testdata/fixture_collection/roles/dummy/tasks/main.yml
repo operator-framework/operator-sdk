@@ -1,6 +1,6 @@
 ---
 - name: Create ConfigMap
-  community.kubernetes.k8s:
+  kubernetes.core.k8s:
     definition:
       kind: ConfigMap
       apiVersion: v1

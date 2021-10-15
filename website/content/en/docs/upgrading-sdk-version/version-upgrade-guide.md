@@ -1223,7 +1223,7 @@ The core Ansible Kubernetes modules have been moved to the [`community.kubernete
 
 ```yaml
 collections:
-  - community.kubernetes
+  - kubernetes.core
   - operator_sdk.util
 ```
 

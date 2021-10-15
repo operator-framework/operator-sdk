@@ -40,13 +40,13 @@ pip3 install openshift
 Finally, install the Kubernetes Collection from ansible-galaxy:
 
 ```sh
-ansible-galaxy collection install community.kubernetes
+ansible-galaxy collection install kubernetes.core
 ```
 
 Alternatively, if you've already initialized your operator, you may have a
 `requirements.yml` file at the top level of your project. This file specifies
 Ansible dependencies that need to be installed for your operator to function.
-By default it will install the `community.kubernetes` collection as well as
+By default it will install the `kubernetes.core` collection as well as
 the `operator_sdk.util` collection, which provides modules and plugins for
 operator-specific operations.
 
@@ -75,7 +75,7 @@ we will create and delete a ConfigMap based on the value of a variable named
 ```yaml
 ---
 - name: set ConfigMap example-config to {{ state }}
-  community.kubernetes.k8s:
+  kubernetes.core.k8s:
     api_version: v1
     kind: ConfigMap
     name: example-config

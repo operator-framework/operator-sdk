@@ -68,7 +68,7 @@ Update `roles/memcached/tasks/main.yml`:
 ```yaml
 ---
 - name: start memcached
-  community.kubernetes.k8s:
+  kubernetes.core.k8s:
     definition:
       kind: Deployment
       apiVersion: apps/v1

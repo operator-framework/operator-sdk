@@ -42,7 +42,7 @@ const destroyTemplate = `---
   connection: local
   gather_facts: false
   collections:
-    - community.kubernetes
+    - kubernetes.core
 
   tasks:
     - import_tasks: kustomize.yml
