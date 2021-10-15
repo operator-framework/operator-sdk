@@ -26,17 +26,17 @@ var _ = Describe("Running a verify config command", func() {
 
 	Describe("verifyCfgURL", func() {
 		It("verify valid URL", func() {
-			url := verifyCfgURL("https://127.0.0.1:49810")
-			Expect(url).To(BeNil())
-			Expect(url).NotTo(Equal(""))
+			err := verifyCfgURL("https://127.0.0.1:49810")
+			Expect(err).To(BeNil())
+			Expect(err).NotTo(Equal(""))
 		})
 	})
 
 	Describe("verifyCfgURL", func() {
 		It("verify valid URL with slash at the end", func() {
-			url := verifyCfgURL("https://127.0.0.1:49810/")
-			Expect(url).To(BeNil())
-			Expect(url).NotTo(Equal(""))
+			err := verifyCfgURL("https://127.0.0.1:49810/")
+			Expect(err).To(BeNil())
+			Expect(err).NotTo(Equal(""))
 		})
 	})
 
@@ -48,13 +48,13 @@ var _ = Describe("Running a verify config command", func() {
 			defer func() {
 				os.Stdout = tmp
 			}()
-			var url error
+			var error error
 			os.Stdout = w
 			go func() {
-				url = verifyCfgURL("https://127.0.0.1:49810/path")
+				error = verifyCfgURL("https://127.0.0.1:49810/path")
 				w.Close()
 			}()
-			Expect(url).To(BeNil())
+			Expect(error).To(BeNil())
 			stdout, err := ioutil.ReadAll(r)
 			Expect(err).To(BeNil())
 			stdoutString := string(stdout)
@@ -64,9 +64,9 @@ var _ = Describe("Running a verify config command", func() {
 
 	Describe("verifyCfgURL", func() {
 		It("verify Empty URL", func() {
-			url := verifyCfgURL("")
-			Expect(url).To(BeNil())
-			Expect(url).NotTo(Equal(""))
+			err := verifyCfgURL("")
+			Expect(err).To(BeNil())
+			Expect(err).NotTo(Equal(""))
 		})
 	})
 
