@@ -31,4 +31,3 @@ func verifyCfgURL(path string) error {
 	}
 	return nil
 }
-

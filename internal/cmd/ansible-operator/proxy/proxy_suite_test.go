@@ -25,4 +25,3 @@ func TestVersion(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Verify Config URL Suite")
 }
-

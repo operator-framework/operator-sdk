@@ -69,5 +69,3 @@ var _ = Describe("Running a verify config command", func() {
 	})
 
 })
-
-
