@@ -103,5 +103,5 @@ dependencies: []
   # if you add dependencies to this list.
 collections:
 - operator_sdk.util
-- community.kubernetes
+- kubernetes.core
 `

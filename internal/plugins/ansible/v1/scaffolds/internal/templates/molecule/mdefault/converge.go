@@ -42,7 +42,7 @@ const convergeTemplate = `---
   connection: local
   gather_facts: no
   collections:
-    - community.kubernetes
+    - kubernetes.core
 
   tasks:
     - name: Create Namespace
