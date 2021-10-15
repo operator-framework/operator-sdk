@@ -15,11 +15,11 @@
 package proxy
 
 import (
-	"fmt"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"io/ioutil"
 	"os"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Running a verify config command", func() {
@@ -48,15 +48,17 @@ var _ = Describe("Running a verify config command", func() {
 			defer func() {
 				os.Stdout = tmp
 			}()
+			var url error
 			os.Stdout = w
 			go func() {
-				verifyCfgURL("https://127.0.0.1:49810/path")
+				url = verifyCfgURL("https://127.0.0.1:49810/path")
 				w.Close()
 			}()
+			Expect(url).To(BeNil())
 			stdout, err := ioutil.ReadAll(r)
 			Expect(err).To(BeNil())
 			stdoutString := string(stdout)
-			Expect(stdoutString).To(ContainSubstring(fmt.Sprintf("https://127.0.0.1:49810/path")))
+			Expect(stdoutString).To(ContainSubstring("https://127.0.0.1:49810/path"))
 		})
 	})
 
