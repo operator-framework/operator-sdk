@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package proxy
+package run_test
 
 import (
+	"fmt"
+	"github.com/operator-framework/operator-sdk/internal/cmd/ansible-operator/run"
 	"io/ioutil"
 	"os"
 
@@ -26,7 +28,7 @@ var _ = Describe("Running a verify config command", func() {
 
 	Describe("verifyCfgURL", func() {
 		It("verify valid URL", func() {
-			err := verifyCfgURL("https://127.0.0.1:49810")
+			err := run.VerifyCfgURL("https://127.0.0.1:49810")
 			Expect(err).To(BeNil())
 			Expect(err).NotTo(Equal(""))
 		})
@@ -34,7 +36,7 @@ var _ = Describe("Running a verify config command", func() {
 
 	Describe("verifyCfgURL", func() {
 		It("verify valid URL with slash at the end", func() {
-			err := verifyCfgURL("https://127.0.0.1:49810/")
+			err := run.VerifyCfgURL("https://127.0.0.1:49810/")
 			Expect(err).To(BeNil())
 			Expect(err).NotTo(Equal(""))
 		})
@@ -51,7 +53,8 @@ var _ = Describe("Running a verify config command", func() {
 			var error error
 			os.Stdout = w
 			go func() {
-				error = verifyCfgURL("https://127.0.0.1:49810/path")
+				error = run.VerifyCfgURL("https://127.0.0.1:49810/path")
+				fmt.Print(error)
 				w.Close()
 			}()
 			Expect(error).To(BeNil())
@@ -64,7 +67,7 @@ var _ = Describe("Running a verify config command", func() {
 
 	Describe("verifyCfgURL", func() {
 		It("verify Empty URL", func() {
-			err := verifyCfgURL("")
+			err := run.VerifyCfgURL("")
 			Expect(err).To(BeNil())
 			Expect(err).NotTo(Equal(""))
 		})
