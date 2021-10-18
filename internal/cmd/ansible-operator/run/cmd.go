@@ -110,7 +110,7 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 		os.Exit(1)
 	}
 
-	if err := VerifyCfgURL(cfg.Host); err != nil {
+	if err := verifyCfgURL(cfg.Host); err != nil {
 		os.Exit(1)
 	}
 
@@ -279,7 +279,7 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 
 // verifyCfgURL verifies the path component of api endpoint
 // passed through the config.
-func VerifyCfgURL(path string) error {
+func verifyCfgURL(path string) error {
 	urlPath, err := url.Parse(path)
 	if err != nil {
 		return fmt.Errorf("failed to Parse the Path URL")
