@@ -199,6 +199,7 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
         if err != nil {
             return ctrl.Result{}, err
         } else {
+            // The Update to add the finalizer will drive another Reconcile into the main app logic below
             return ctrl.Result{}, nil
         }
     }
