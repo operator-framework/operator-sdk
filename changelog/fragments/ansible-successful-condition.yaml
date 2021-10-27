@@ -1,8 +1,0 @@
-entries:
-  - description: >
-      For Ansible-based Operators, adds documented `Successful` condition, and no longer
-      removes conditions from the status in updates. Users can now wait for a successful
-      reconciliation by waiting for the `Successful` type condition to be `True`.
-
-    kind: "bugfix"
-    breaking: false
