@@ -74,3 +74,4 @@ Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file f
 [operator-framework-communication]: https://github.com/operator-framework/community#get-involved
 [operator-framework-meetings]: https://github.com/operator-framework/community#meetings
 [contribution-docs]: https://sdk.operatorframework.io/docs/contribution-guidelines/
+
