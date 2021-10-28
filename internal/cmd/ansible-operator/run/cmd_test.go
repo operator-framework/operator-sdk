@@ -28,8 +28,7 @@ var _ = Describe("Running a verify config command", func() {
 	Describe("verifyCfgURL", func() {
 		It("verify valid URL", func() {
 			err := verifyCfgURL("https://127.0.0.1:49810")
-			Expect(err).To(BeNil())
-			Expect(err).NotTo(Equal(""))
+			Expect(err).NotTo(HaveOccurred())
 		})
 	})
 
@@ -37,7 +36,6 @@ var _ = Describe("Running a verify config command", func() {
 		It("verify valid URL with slash at the end", func() {
 			err := verifyCfgURL("https://127.0.0.1:49810/")
 			Expect(err).To(BeNil())
-			Expect(err).NotTo(Equal(""))
 		})
 	})
 
@@ -53,6 +51,7 @@ var _ = Describe("Running a verify config command", func() {
 			os.Stdout = w
 			go func() {
 				error = verifyCfgURL("https://127.0.0.1:49810/path")
+				Expect(error).Should(HaveOccurred())
 				fmt.Print(error)
 				w.Close()
 			}()
@@ -68,7 +67,6 @@ var _ = Describe("Running a verify config command", func() {
 		It("verify Empty URL", func() {
 			err := verifyCfgURL("")
 			Expect(err).To(BeNil())
-			Expect(err).NotTo(Equal(""))
 		})
 	})
 
