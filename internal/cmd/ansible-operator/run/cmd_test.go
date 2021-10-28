@@ -16,9 +16,6 @@ package run
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -41,25 +38,9 @@ var _ = Describe("Running a verify config command", func() {
 
 	Describe("verifyCfgURL", func() {
 		It("Verify invalid URL and check if printed output contains path or not", func() {
-
-			r, w, _ := os.Pipe()
-			tmp := os.Stdout
-			defer func() {
-				os.Stdout = tmp
-			}()
-			var error error
-			os.Stdout = w
-			go func() {
-				error = verifyCfgURL("https://127.0.0.1:49810/path")
-				Expect(error).Should(HaveOccurred())
-				fmt.Print(error)
-				w.Close()
-			}()
-			Expect(error).To(BeNil())
-			stdout, err := ioutil.ReadAll(r)
-			Expect(err).To(BeNil())
-			stdoutString := string(stdout)
-			Expect(stdoutString).To(ContainSubstring("https://127.0.0.1:49810/path"))
+			err := verifyCfgURL("https://127.0.0.1:49810/path")
+			Expect(err).NotTo(BeNil())
+			Expect(err.Error()).To(ContainSubstring(fmt.Sprintf("https://127.0.0.1:49810/path")))
 		})
 	})
 
