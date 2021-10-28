@@ -246,7 +246,7 @@ func (mh *Memcached) implementingController() {
 
 	// Add reconcile implementation
 	err = kbtutil.ReplaceInFile(controllerPath,
-		"// your logic here", reconcileFragment)
+		"// TODO(user): your logic here", reconcileFragment)
 	pkg.CheckError("replacing reconcile", err)
 
 	// Add helpers funcs to the controller
@@ -292,7 +292,7 @@ func (mh *Memcached) implementingAPI() {
 		fmt.Sprintf("%s_%s_%s.yaml", mh.ctx.Group, mh.ctx.Version, strings.ToLower(mh.ctx.Kind)))
 
 	log.Infof("updating sample to have size attribute")
-	err = kbtutil.ReplaceInFile(filepath.Join(mh.ctx.Dir, sampleFile), "# Add fields here", "size: 1")
+	err = kbtutil.ReplaceInFile(filepath.Join(mh.ctx.Dir, sampleFile), "# TODO(user): Add fields here", "size: 1")
 	pkg.CheckError("updating sample", err)
 }
 

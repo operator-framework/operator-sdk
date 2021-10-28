@@ -121,6 +121,6 @@ func (ma *Memcached) addingAnsibleTask() {
 
 	err = kbutil.ReplaceInFile(filepath.Join(ma.ctx.Dir, "config", "samples",
 		fmt.Sprintf("%s_%s_%s.yaml", ma.ctx.Group, ma.ctx.Version, strings.ToLower(ma.ctx.Kind))),
-		"# Add fields here", "size: 1")
+		"# TODO(user): Add fields here", "size: 1")
 	pkg.CheckError("updating sample CR", err)
 }

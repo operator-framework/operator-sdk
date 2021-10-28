@@ -197,12 +197,6 @@ func addInitCustomizations(projectName string) error {
 		return err
 	}
 
-	// Increase the default memory required.
-	err = util.ReplaceInFile(managerFile, "memory: 20Mi", "memory: 60Mi")
-	if err != nil {
-		return err
-	}
-
 	// Remove the webhook option for the componentConfig since webhooks are not supported by helm
 	err = util.ReplaceInFile(filepath.Join("config", "manager", "controller_manager_config.yaml"),
 		"webhook:\n  port: 9443", "")

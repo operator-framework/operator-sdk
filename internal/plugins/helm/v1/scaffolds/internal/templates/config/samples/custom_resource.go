@@ -83,7 +83,7 @@ func (f *CustomResource) GetFuncMap() template.FuncMap {
 	return fm
 }
 
-const defaultSpecTemplate = `# Add fields here
+const defaultSpecTemplate = `# TODO(user): Add fields here
 `
 
 const customResourceTemplate = `apiVersion: {{ .Resource.QualifiedGroup }}/{{ .Resource.Version }}

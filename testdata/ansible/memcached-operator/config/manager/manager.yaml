@@ -19,6 +19,8 @@ spec:
   replicas: 1
   template:
     metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
       labels:
         control-plane: controller-manager
     spec:
@@ -47,5 +49,7 @@ spec:
             port: 6789
           initialDelaySeconds: 5
           periodSeconds: 10
+        # TODO(user): Configure the resources accordingly based on the project requirements.
+        # More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
       serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10

@@ -430,7 +430,7 @@ kind: Memcached
 metadata:
   name: memcached-sample
 spec:
-  # Add fields here
+  # TODO(user): Add fields here
   foo: bar
 ---
 apiVersion: admissionregistration.k8s.io/v1
