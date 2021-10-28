@@ -21,7 +21,7 @@ We will now create a package manifests format by running `make packagemanifests`
 
 ```console
 $ make packagemanifests
-/home/user/go/bin/controller-gen "crd:trivialVersions=true" rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+/home/user/go/bin/controller-gen rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 operator-sdk generate kustomize manifests -q
 kustomize build config/manifests | operator-sdk generate packagemanifests -q --version 0.0.1
 ```
