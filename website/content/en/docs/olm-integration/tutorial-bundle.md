@@ -86,7 +86,7 @@ We will now create bundle manifests by running `make bundle` in the root of the 
 
 ```console
 $ make bundle
-/home/user/go/bin/controller-gen "crd:trivialVersions=true" rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+/home/user/go/bin/controller-gen rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 operator-sdk generate kustomize manifests -q
 kustomize build config/manifests | operator-sdk generate bundle -q --overwrite --version 0.0.1
 INFO[0000] Building annotations.yaml
