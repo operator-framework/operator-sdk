@@ -1,5 +1,5 @@
 entries:
   - description: >
-      For Ansible operators, if an API endpoint has path component in it then the ansible-operator binary will terminate early with an error, due to a bug in the proxy that would cause the operator to target the wrong cluster. If there "/" slash at the end of Server path then still it is throwing error which is wrong.
+      For Ansible operators, if an API endpoint has a "/" in server path component the ansible binary will no longer throw error.
     kind: bugfix
     breaking: false

@@ -39,7 +39,7 @@ var _ = Describe("Running a verify config command", func() {
 		It("Verify invalid URL and check if printed output contains path or not", func() {
 			err := verifyCfgURL("https://127.0.0.1:49810/path")
 			Expect(err).NotTo(BeNil())
-			Expect(err.Error()).To(ContainSubstring("https://127.0.0.1:49810/path"))
+			Expect(err.Error()).To(ContainSubstring("https://127.0.0.1:49810/path contains a path component, which the proxy server is currently unable to handle properly"))
 		})
 	})
 
