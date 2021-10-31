@@ -132,7 +132,7 @@ After modifying the `*_types.go` file always run the following command to update
 make generate
 ```
 
-The above makefile target will invoke the [controller-gen][controller_tools] utility to update the `api/v1alpha1/zz_generated.deepcopy.go` file to ensure our API's Go type definitons implement the `runtime.Object` interface that all Kind types must implement.
+The above makefile target will invoke the [controller-gen][controller_tools] utility to update the `api/v1alpha1/zz_generated.deepcopy.go` file to ensure our API's Go type definitions implement the `runtime.Object` interface that all Kind types must implement.
 
 ### Generating CRD manifests
 
