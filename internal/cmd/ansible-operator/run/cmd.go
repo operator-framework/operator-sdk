@@ -282,12 +282,10 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 func verifyCfgURL(path string) error {
 	urlPath, err := url.Parse(path)
 	if err != nil {
-		log.Error(err, "Failed to Parse the Path URL.")
-		return err
+		return fmt.Errorf("failed to parse the path in URL %v", err)
 	}
-	if urlPath != nil && urlPath.Path != "" {
-		log.Error(fmt.Errorf("api endpoint '%s' contains a path component, which the proxy server is currently unable to handle properly. Work on this issue is being tracked here: https://github.com/operator-framework/operator-sdk/issues/4925", path), "")
-		return err
+	if urlPath != nil && urlPath.Path != "" && urlPath.Path != "/" {
+		return fmt.Errorf("api endpoint '%s' contains a path component, which the proxy server is currently unable to handle properly. Work on this issue is being tracked here: https://github.com/operator-framework/operator-sdk/issues/4925", path)
 	}
 	return nil
 }
