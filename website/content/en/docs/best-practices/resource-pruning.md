@@ -131,8 +131,6 @@ func myStrategy(cfg Config, resources []ResourceInfo) (resourcesToRemove []Resou
 }
 ```
 
-A custom strategy builds up a list of resources to be removed, returning the list to the prune library which
-performs the actual resource removal. 
 
 To have your custom strategy invoked, you will specify your function within the prune configuration
 as follows:
