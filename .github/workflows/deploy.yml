@@ -142,7 +142,7 @@ jobs:
     - name: build and push ansible 2.11
       uses: docker/build-push-action@v2
       with:
-        file: ./images/ansible-operator/2.11/Dockerfile
+        file: ./images/ansible-operator-2.11-preview/Dockerfile
         context: .
         platforms: linux/amd64,linux/arm64,linux/ppc64le,linux/s390x
         # Push on tag, or master or latest branch push.
