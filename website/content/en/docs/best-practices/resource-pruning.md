@@ -18,7 +18,7 @@ Operator authors have traditionally had two pruning options:
  * implement some form of pruning within their operator solution
 
 For our purposes when we say, *prune*, we mean to remove a resource (e.g. kubectl delete) from
-a kubernetes cluster for a given namespace.
+a Kubernetes cluster for a given namespace.
 
 This documentation describes the pattern and library useful for implementing a solution within an operator.
 
