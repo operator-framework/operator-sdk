@@ -18,7 +18,7 @@ RUN GOOS=linux GOARCH=$TARGETARCH make build/ansible-operator
 
 # Final image.
 # TODO(asmacdo) update GH action to set this
-FROM quay.io/operator-framework/ansible-operator-2.11-preview-base:master-bc8aedd752afff8aed00e62901d69e737d3e370e
+FROM quay.io/operator-framework/ansible-operator-2.11-preview-base:dev
 
 ENV HOME=/opt/ansible \
     USER_NAME=ansible \

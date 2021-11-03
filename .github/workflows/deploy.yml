@@ -72,7 +72,7 @@ jobs:
     environment: deploy
     strategy:
       matrix:
-        id: ["operator-sdk", "ansible-operator", "helm-operator", "scorecard-test"]
+        id: ["operator-sdk", "ansible-operator", "ansible-operator-2.11-preview", "helm-operator", "scorecard-test"]
     steps:
 
     - name: set up qemu
