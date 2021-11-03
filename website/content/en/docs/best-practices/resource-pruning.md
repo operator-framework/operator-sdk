@@ -142,7 +142,7 @@ cfg.Strategy.CustomSettings = make(map[string]interface{})
 cfg.CustomStrategy = myStrategy
 ```
 
-Notice that you can optionally pass in settings to your custom function as a map.
+Notice that you can optionally pass in settings to your custom function as a map using the `cfg.Strategy.CustomSettings` field.
 
 
 [operator-lib]: https://github.com/operator-framework/operator-lib
