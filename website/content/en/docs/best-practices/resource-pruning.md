@@ -24,9 +24,9 @@ This documentation describes the pattern and library useful for implementing a s
 
 ## operator-lib prune library
 
-A simple pruning implementation can be found in the [operator-lib prune package][operator-lib-prune].  This 
-package is written in golang and is meant to be used within golang based operators.  This package was 
-developed to include common pruning strategies as found in common operators.  The package also allow 
+A simple pruning implementation can be found in the [operator-lib prune package][operator-lib-prune]. This 
+package is written in Go and is meant to be used within Go-based operators. This package was 
+developed to include common pruning strategies as found in common operators. The package also allow 
 for customization of hooks and strategies.
 
 ### Pruning Configuration
