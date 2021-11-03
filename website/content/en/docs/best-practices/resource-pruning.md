@@ -7,7 +7,7 @@ description: Recommendations for pruning resources
 
 ## Overview
 
-Operators can create [Jobs][jobs] or Pods as part of their normal operation and when those Jobs or Pods
+Operators can create [Jobs][jobs] or Pods as part of their normal operation, and when those Jobs or Pods
 complete, they can remain on the Kubernetes cluster if not specifically removed.  These resources
 can consume valuable cluster resources like disk storage (e.g. etcd).  The resources here we 
 are discussing are ones that are not tied to a Custom Resource using an ownerReference.
