@@ -167,10 +167,10 @@ test-e2e:: $(e2e_tests) ## Run e2e tests
 
 test-e2e-go:: image/custom-scorecard-tests ## Run Go e2e tests
 	go test ./test/e2e/go -v -ginkgo.v
-test-e2e-ansible:: image/ansible-operator/2.9 ## Run Ansible e2e tests
+test-e2e-ansible:: image/ansible-operator ## Run Ansible e2e tests
 	go test -count=1 ./internal/ansible/proxy/...
 	go test ./test/e2e/ansible -v -ginkgo.v
-test-e2e-ansible-molecule:: image/ansible-operator/2.9 ## Run molecule-based Ansible e2e tests
+test-e2e-ansible-molecule:: image/ansible-operator ## Run molecule-based Ansible e2e tests
 	go run ./hack/generate/samples/molecule/generate.go
 	./hack/tests/e2e-ansible-molecule.sh
 test-e2e-helm:: image/helm-operator ## Run Helm e2e tests
