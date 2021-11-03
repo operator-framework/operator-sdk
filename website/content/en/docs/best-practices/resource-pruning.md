@@ -118,8 +118,9 @@ prune library.
 ### Custom Strategy
 
 Library users can also write their own custom pruning strategy function to support advanced
-cases.  Custom strategy functions are passed in the prune configuration and a list of resources selected by
-the library.  Here is an example custom strategy:
+cases. Custom strategy functions are passed in the prune configuration and a list of resources selected by
+the library.  The custom strategy builds up a list of resources to be removed, returning the list to the prune library which
+performs the actual resource removal. Here is an example custom strategy:
 ```golang
 func myStrategy(cfg Config, resources []ResourceInfo) (resourcesToRemove []ResourceInfo, err error) {
 	fmt.Printf("myStrategy is called with resources %v config %v\n", resources, cfg)
