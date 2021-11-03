@@ -72,7 +72,7 @@ jobs:
     environment: deploy
     strategy:
       matrix:
-        id: ["operator-sdk", "ansible-operator", "ansible-operator-2.11-preview", "helm-operator", "scorecard-test"]
+        id: ["operator-sdk", "helm-operator", "scorecard-test"]
     steps:
 
     - name: set up qemu
@@ -103,6 +103,22 @@ jobs:
         IMG=quay.io/${{ github.repository_owner }}/${{ matrix.id }}
         echo ::set-output name=tags::$(.github/workflows/get_image_tags.sh "$IMG" "v")
 
+    - name: create ansible 2.9 tag
+      id: ansible-29-tags
+      run: |
+        # TODO(asmacdo) github.repository_owner is wrong. This should be a quay account, `operator-framework` happens to be the same in
+        # gh and quay.
+        IMG=quay.io/${{ github.repository_owner }}/ansible-operator
+        echo ::set-output name=tags::$(.github/workflows/get_image_tags.sh "$IMG" "v")
+
+    - name: create ansible 2.11 tag
+      id: ansible-211-tags
+      run: |
+        # TODO(asmacdo) github.repository_owner is wrong. This should be a quay account, `operator-framework` happens to be the same in
+        # gh and quay.
+        IMG=quay.io/${{ github.repository_owner }}/ansible-operator-2.11-preview
+        echo ::set-output name=tags::$(.github/workflows/get_image_tags.sh "$IMG" "v")
+
     - name: build and push
       uses: docker/build-push-action@v2
       with:
@@ -112,6 +128,26 @@ jobs:
         # Push on tag, or master or latest branch push.
         push: ${{ (github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/latest')) }}
         tags: ${{ steps.tags.outputs.tags }}
+
+    - name: build and push ansible 2.9
+      uses: docker/build-push-action@v2
+      with:
+        file: ./images/ansible-operator/2.9/Dockerfile
+        context: .
+        platforms: linux/amd64,linux/arm64,linux/ppc64le,linux/s390x
+        # Push on tag, or master or latest branch push.
+        push: ${{ (github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/latest')) }}
+        tags: ${{ steps.ansible-29-tags.outputs.tags }}
+
+    - name: build and push ansible 2.11
+      uses: docker/build-push-action@v2
+      with:
+        file: ./images/ansible-operator/2.11/Dockerfile
+        context: .
+        platforms: linux/amd64,linux/arm64,linux/ppc64le,linux/s390x
+        # Push on tag, or master or latest branch push.
+        push: ${{ (github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/latest')) }}
+        tags: ${{ steps.ansible-211-tags.outputs.tags }}
 
   # scorecard-test-kuttl image build job. Only pushes if a tag with prefix "scorecard-kuttl/v" is present.
   image-scorecard-test-kuttl:
