@@ -98,7 +98,7 @@ jobs:
     - name: create tags
       id: tags
       run: |
-        IMG=quay.io/${{ secrets.QUAY_USERNAME  }}/${{ matrix.id }}
+        IMG=quay.io/${{ github.repository_owner }}/${{ matrix.id }}
         echo ::set-output name=tags::$(.github/workflows/get_image_tags.sh "$IMG" "v")
 
     - name: build and push
