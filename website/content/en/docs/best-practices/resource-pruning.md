@@ -108,6 +108,22 @@ Here is an example of a *preDelete* hook:
 ```golang
 func myhook(cfg Config, x ResourceInfo) error {
 	fmt.Println("myhook is called ")
+       	if x.GVK.Kind == PodKind {
+                req := cfg.Clientset.CoreV1().Pods(x.Namespace).GetLogs(x.Name, &v1.PodLogOptions{})
+                podLogs, err := req.Stream(context.Background())
+                if err != nil {
+                        return err
+                }
+                defer podLogs.Close()
+
+                buf := new(bytes.Buffer)
+                _, err = io.Copy(buf, podLogs)
+                if err != nil {
+                        return err
+                }
+
+                fmt.Printf("pod log before removing is %s\n", buf.String())
+        }
 	return nil
 }
 ```
