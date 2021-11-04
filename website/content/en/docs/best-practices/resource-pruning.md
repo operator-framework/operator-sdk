@@ -128,7 +128,7 @@ func myhook(cfg Config, x ResourceInfo) error {
 }
 ```
 
-Note that if your custom hook returns an error, then the resource will not be removed by the
+*Note* if your custom hook returns an error, then the resource will not be removed by the
 prune library.
 
 ### Custom Strategy
