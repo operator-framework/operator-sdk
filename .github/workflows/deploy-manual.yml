@@ -35,11 +35,11 @@ jobs:
       with:
         fetch-depth: 1
 
+    # Copied this for 2.11 rather than use a matrix because eventually 2.11 will be default and this will be removed.
     - name: create 2.9-base tag
       id: 29_base_tag
       run: |
         set -e
-        # TODO(asmacdo)
         IMG=quay.io/${{ github.repository_owner }}/ansible-operator-base
         TAG="${{ github.event.inputs.ansible_operator_base_tag }}"
         GIT_COMMIT=$(git rev-parse HEAD)
@@ -53,7 +53,6 @@ jobs:
       id: 211_base_tag
       run: |
         set -e
-        # TODO(asmacdo)
         IMG=quay.io/${{ github.repository_owner }}/ansible-operator-2.11-preview-base
         TAG="${{ github.event.inputs.ansible_operator_211_base_tag }}"
         if [[ "$TAG" == "" ]]; then
@@ -88,7 +87,7 @@ jobs:
 
     # This change will be staged and committed in the PR pushed below.
     # The script below will fail if no change was made.
-    - name: update base of ansible-operator
+    - name: update base of ansible-operator 2.9
       id: update
       run: |
         set -ex
@@ -97,7 +96,7 @@ jobs:
         REF="${{ github.event.ref }}"
         echo ::set-output name=branch_name::"${REF##*/}"
 
-    - name: create PR
+    - name: create PR for ansible-operator 2.9 Dockerfile
       uses: peter-evans/create-pull-request@v3
       with:
         title: "[${{ steps.update.outputs.branch_name }}] image(ansible-operator): bump base to ${{ steps.tag.outputs.29_base_tag }}"
@@ -120,7 +119,7 @@ jobs:
         REF="${{ github.event.ref }}"
         echo ::set-output name=branch_name::"${REF##*/}"
 
-    - name: create PR
+    - name: create PR for ansible-operator-2.11-preview Dockerfile
       uses: peter-evans/create-pull-request@v3
       with:
         title: "[${{ steps.update.outputs.branch_name }}] image(ansible-operator-2.11-preview): bump base to ${{ steps.tag.outputs.211_base_tag }}"
