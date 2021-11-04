@@ -93,7 +93,7 @@ resources would be pruned (removed) from your cluster starting with the oldest r
 A strategy of removing resources greater than a specific time is called *maxage*.  This strategy
 seeks to remove resources older than a specified *maxage* duration.  For example, a library
 user might specify a value of *48h* to indicate that any resource older than 48 hours would be
-pruned.  Durations are specified using golang's time.Duration formatting (e.g. 48h).
+pruned.  Durations are specified using golang's [time.Duration formatting] (e.g. 48h).
 
 ## Pruning Customization
 
@@ -162,3 +162,4 @@ Notice that you can optionally pass in settings to your custom function as a map
 [operator-lib]: https://github.com/operator-framework/operator-lib
 [operator-lib-prune]: https://github.com/operator-framework/operator-lib/tree/main/prune
 [jobs]: https://kubernetes.io/docs/concepts/workloads/controllers/job/
+[time.Duration formatting]: https://pkg.go.dev/time#Duration
