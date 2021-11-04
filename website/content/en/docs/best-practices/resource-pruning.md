@@ -54,7 +54,7 @@ cfg = Config{
 | Config Field | Description
 | ------------ | -----------
 | log          | a logger to handle library log messages
-| DryRun       | true means to execute but not to remove resources
+| DryRun       | a boolean determines whether to actually remove resources; `true` means to execute but not to remove resources
 | Clientset    | a client-go Kubernetes ClientSet that will be used for Kube API calls by the library
 | LabelSelector| Kubernetes label selector expression used to find resources to prune
 | Resources    | Kube resource Kinds, currently PodKind and JobKind are supported by the library
