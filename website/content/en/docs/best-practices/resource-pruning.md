@@ -83,8 +83,8 @@ library based on some other triggering event.
 
 ### maxcount Strategy
 
-A strategy of leaving a finite set of resources is implemented called *maxcount*.  This strategy
-seeks to leave a specific number of resources, sorted by latest, on your cluster.  For example if
+A strategy of leaving a finite set of resources is implemented called *maxcount*. This strategy
+seeks to leave a specific number of resources, sorted by latest, on your cluster. For example, if
 you have 10 resources that would be pruned, and you specified a *maxcount* value of 4, then 6 
 resources would be pruned (removed) from your cluster starting with the oldest resources.
 
