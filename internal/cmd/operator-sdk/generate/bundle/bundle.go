@@ -24,6 +24,7 @@ import (
 	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 	"sigs.k8s.io/yaml"
 
+	"github.com/blang/semver/v4"
 	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 	"github.com/operator-framework/operator-manifest-tools/pkg/image"
 	"github.com/operator-framework/operator-manifest-tools/pkg/imageresolver"
@@ -123,11 +124,13 @@ func (c *bundleCmd) setDefaults() (err error) {
 }
 
 // validateManifests validates c for bundle manifests generation.
-func (c bundleCmd) validateManifests() (err error) {
+func (c *bundleCmd) validateManifests() (err error) {
 	if c.version != "" {
-		if err := genutil.ValidateVersion(c.version); err != nil {
+		var sv *semver.Version
+		if sv, err = genutil.ParseVersion(c.version); err != nil {
 			return err
 		}
+		c.version = sv.String()
 	}
 
 	// The three possible usage modes (stdin, inputDir, and legacy dirs) are mutually exclusive
@@ -272,8 +275,8 @@ func (c bundleCmd) removeDefaultCommentsFromControllerManager() {
 	// if not found we will not raise an error
 	_ = kbutil.ReplaceInFile(filepath.Join(c.inputDir, "config/manager/controller_manager_config.yaml"), commentsControllerManager, "")
 
-	//todo: remove the space on Kubebuilder project so that we can remove the following replace
-	//it is required because of the molecule issues, see: https://github.com/operator-framework/operator-sdk/issues/5838
+	// todo: remove the space on Kubebuilder project so that we can remove the following replace
+	// it is required because of the molecule issues, see: https://github.com/operator-framework/operator-sdk/issues/5838
 
 	const commentManagerUpdate = `# leaderElectionReleaseOnCancel defines if the leader should step down volume
 # when the Manager ends. This requires the binary to immediately end when the

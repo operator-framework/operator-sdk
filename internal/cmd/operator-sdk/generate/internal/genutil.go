@@ -32,18 +32,20 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-// ValidateVersion returns an error if version is not a strict semantic version.
-func ValidateVersion(version string) error {
+// ParseVersion will parse the version into semver.Version, or return error if
+// version is not a strict semantic version.
+func ParseVersion(version string) (*semver.Version, error) {
+	version = strings.TrimPrefix(version, "v")
 	v, err := semver.Parse(version)
 	if err != nil {
-		return fmt.Errorf("%s is not a valid semantic version: %v", version, err)
+		return nil, fmt.Errorf("%s is not a valid semantic version: %v", version, err)
 	}
 	// Ensures numerical values composing csvVersion don't contain leading 0's,
 	// ex. 01.01.01
 	if v.String() != version {
-		return fmt.Errorf("version %s contains bad values (parses to %s)", version, v)
+		return nil, fmt.Errorf("version %s contains bad values (parses to %s)", version, v)
 	}
-	return nil
+	return &v, nil
 }
 
 // IsPipeReader returns true if stdin is an open pipe, i.e. the caller can

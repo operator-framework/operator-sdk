@@ -20,6 +20,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/blang/semver/v4"
 	metricsannotations "github.com/operator-framework/operator-sdk/internal/annotations/metrics"
 	genutil "github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/generate/internal"
 	gencsv "github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion"
@@ -111,20 +112,25 @@ func (c *packagemanifestsCmd) setDefaults() (err error) {
 }
 
 // validate validates c for package manifests generation.
-func (c packagemanifestsCmd) validate() error {
-
+func (c *packagemanifestsCmd) validate() error {
+	var (
+		err error
+		sv  *semver.Version
+	)
 	if c.version != "" {
-		if err := genutil.ValidateVersion(c.version); err != nil {
+		if sv, err = genutil.ParseVersion(c.version); err != nil {
 			return err
 		}
+		c.version = sv.String()
 	} else {
 		return errors.New("--version must be set")
 	}
 
 	if c.fromVersion != "" {
-		if err := genutil.ValidateVersion(c.fromVersion); err != nil {
+		if sv, err = genutil.ParseVersion(c.fromVersion); err != nil {
 			return err
 		}
+		c.fromVersion = sv.String()
 	}
 
 	if c.inputDir == "" {
@@ -227,8 +233,8 @@ func (c packagemanifestsCmd) run() error {
 }
 
 func (c packagemanifestsCmd) generatePackageManifest() error {
-	//copy of genpkg withfilewriter()
-	//move out of internal util pkg?
+	// copy of genpkg withfilewriter()
+	// move out of internal util pkg?
 	if err := os.MkdirAll(c.outputDir, 0755); err != nil {
 		return err
 	}

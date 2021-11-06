@@ -1,0 +1,21 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Allows the `v` char as a prefix in version option of the
+      `operator-sdk bundle` and `operator-sdk packagemanifests` commands. The
+      `v` char in version string, is extremely common, for example the `git describe`
+      command produces an output like this: `v0.2.0-13-ga74dac1`. When version
+      string with `v` prefix is given, the version will be normalized to be
+      semantically valid.
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "bugfix"
+
+    # Is this a breaking change?
+    breaking: false
