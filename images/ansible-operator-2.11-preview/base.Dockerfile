@@ -17,7 +17,7 @@ RUN mkdir -p /etc/ansible \
 
 
 # Copy python dependencies (including ansible) to be installed using Pipenv
-COPY images/ansible-operator-2.11-preview/Pipfile* ./
+COPY Pipfile* ./
 # Instruct pip(env) not to keep a cache of installed packages,
 # to install into the global site-packages and
 # to clear the pipenv cache as well
