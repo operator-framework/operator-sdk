@@ -57,7 +57,7 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "packagemanifests",
 		Deprecated: "support for the packagemanifests format will be removed in operator-sdk v2.0.0. Use bundles " +
-			"to package your operator instead. Migrate your packagemanifes to a bundle using " +
+			"to package your operator instead. Migrate your packagemanifest to a bundle using " +
 			"'operator-sdk pkgman-to-bundle' command. Run 'operator-sdk pkgman-to-bundle --help' " +
 			"for more details.",
 		Short:   "Generates package manifests data for the operator",
