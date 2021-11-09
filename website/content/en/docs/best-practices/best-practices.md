@@ -21,7 +21,6 @@ Considerations for Operator developers:
 
 - An Operator shouldn't deploy or manage other operators (such patterns are known as meta or super operators). It's the Operator Lifecycle Manager's job to manage the deployment and lifecycle of operators. For further information check [Dependency Resolution][Dependency Resolution].
 
-
 - If multiple operators are packaged and shipped as a single entity by the same CSV for example, then it is recommended to add all owned and required CRDs, as well as all deployments for operators that manage the owned CRDs, to the same CSV.
 
 - Writing an Operator involves using the Kubernetes API, which in most scenarios will be built using same boilerplate code. Use a framework like the Operator SDK to save yourself time with this and to also get a suite of tooling to ease development and testing.
