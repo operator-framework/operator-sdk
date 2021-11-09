@@ -147,7 +147,7 @@ This makefile target will invoke [controller-gen][controller_tools] to generate 
 ### OpenAPI validation
 
 OpenAPI validation defined in a CRD ensures CRs are validated based on a set of declarative rules. All CRDs should have validation.
-See the [OpenAPI valiation][openapi-validation] doc for details.
+See the [OpenAPI validation][openapi-validation] doc for details.
 
 ## Implement the Controller
 
