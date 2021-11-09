@@ -86,7 +86,7 @@ jobs:
     # This change will be staged and committed in the PR pushed below.
     # The script below will fail if no change was made.
     - name: update base of ansible-operator 2.9
-      id: 29_update
+      id: update_29
       run: |
         set -ex
         sed -i -E 's|FROM quay\.io/operator-framework/ansible-operator-base:.+|FROM ${{ steps.base_tag_29.outputs.tag }}|g' images/ansible-operator/Dockerfile
@@ -97,9 +97,9 @@ jobs:
     - name: create PR for ansible-operator 2.9 Dockerfile
       uses: peter-evans/create-pull-request@v3
       with:
-        title: "[${{ steps.29_update.outputs.branch_name }}] image(ansible-operator): bump base to ${{ steps.base_tag_29.outputs.tag }}"
+        title: "[${{ steps.update_29.outputs.branch_name }}] image(ansible-operator): bump base to ${{ steps.base_tag_29.outputs.tag }}"
         commit-message: |
-          [${{ steps.29_update.outputs.branch_name }}] image(ansible-operator): bump base to ${{ steps.base_tag_29.outputs.tag }}
+          [${{ steps.update_29.outputs.branch_name }}] image(ansible-operator): bump base to ${{ steps.base_tag_29.outputs.tag }}
 
           Signed-off-by: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
         body: "New ansible-operator-base image built by https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
@@ -109,7 +109,7 @@ jobs:
     # This change will be staged and committed in the PR pushed below.
     # The script below will fail if no change was made.
     - name: update base of ansible-operator-2.11-preview
-      id: 211_update
+      id: update_211
       run: |
         set -ex
         sed -i -E 's|FROM quay\.io/operator-framework/ansible-operator-2.11-preview-base:.+|FROM ${{ steps.base_tag_211.outputs.tag }}|g' images/ansible-operator/Dockerfile
@@ -120,9 +120,9 @@ jobs:
     - name: create PR for ansible-operator-2.11-preview Dockerfile
       uses: peter-evans/create-pull-request@v3
       with:
-        title: "[${{ steps.211_update.outputs.branch_name }}] image(ansible-operator-2.11-preview): bump base to ${{ steps.base_tag_211.outputs.tag }}"
+        title: "[${{ steps.update_211.outputs.branch_name }}] image(ansible-operator-2.11-preview): bump base to ${{ steps.base_tag_211.outputs.tag }}"
         commit-message: |
-          [${{ steps.211_update.outputs.branch_name }}] image(ansible-operator-2.11-preview): bump base to ${{ steps.base_tag_211.outputs.tag }}
+          [${{ steps.update_211.outputs.branch_name }}] image(ansible-operator-2.11-preview): bump base to ${{ steps.base_tag_211.outputs.tag }}
 
           Signed-off-by: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
         body: "New ansible-operator-2.11-preview-base image built by https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
