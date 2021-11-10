@@ -32,7 +32,7 @@ import (
 
 // Version of `opm` to download and use for building index images.
 // This version's release artifacts *must* contain a binary for multiple arches; certain releases do not.
-const opmVersion = "v1.18.0"
+const opmVersion = "v1.19.1"
 
 const filePath = "Makefile"
 

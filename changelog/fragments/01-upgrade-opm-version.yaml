@@ -1,6 +1,6 @@
 entries:
   - description: >
-      Upgrade OPM version that is used by default in the generated Makefile so `make catalog-build` also works on OSX.
+      Upgrade OPM version that is used by default to 1.19.1 in the generated Makefile so `make catalog-build` also works on OSX.
 
     kind: "change"
 
