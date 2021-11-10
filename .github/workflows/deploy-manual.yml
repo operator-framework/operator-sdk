@@ -55,6 +55,7 @@ jobs:
         set -e
         IMG=quay.io/${{ github.repository_owner }}/ansible-operator-2.11-preview-base
         TAG="${{ github.event.inputs.ansible_operator_base_tag_211 }}"
+        GIT_COMMIT=$(git rev-parse HEAD)
         if [[ "$TAG" == "" ]]; then
           TAG="$(git branch --show-current)-${GIT_COMMIT}"
         fi
