@@ -17,6 +17,12 @@ Reconcile loop in `controllers/memcached_controller.go`:
 
 
 ```go
+import (
+  ...
+   "github.com/operator-framework/operator-lib/proxy"
+)
+
+
 for i, container := range dep.Spec.Template.Spec.Containers {
 		dep.Spec.Template.Spec.Containers[i].Env = append(container.Env, proxy.ReadProxyVarsFromEnv()...)
 }
