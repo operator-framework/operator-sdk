@@ -113,7 +113,7 @@ jobs:
       id: update_211
       run: |
         set -ex
-        sed -i -E 's|FROM quay\.io/operator-framework/ansible-operator-2.11-preview-base:.+|FROM ${{ steps.base_tag_211.outputs.tag }}|g' images/ansible-operator/Dockerfile
+        sed -i -E 's|FROM quay\.io/operator-framework/ansible-operator-2.11-preview-base:.+|FROM ${{ steps.base_tag_211.outputs.tag }}|g' images/ansible-operator-2.11-preview/Dockerfile
         git diff --exit-code --quiet && echo "Failed to update images/ansible-operator-11-preview-base/Dockerfile" && exit 1
         REF="${{ github.event.ref }}"
         echo ::set-output name=branch_name::"${REF##*/}"
