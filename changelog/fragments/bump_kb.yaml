@@ -29,7 +29,7 @@ entries:
     migration:
       header:  Add Phone Targets(`.PHONY`) into Makefile
       body: >
-        Add Phone Target(`.PHONY`) for all Makefile targets. For sample, refer to the `Makefile` in `operator-sdk/testdata` directory of [OperatorSDK](https://github.com/operator-framework/operator-sdk) tagged by the release containing this change. 
+        Add PHONY target to all Makefile targets. For example, refer to the `Makefile` in `operator-sdk/testdata` directory of [OperatorSDK](https://github.com/operator-framework/operator-sdk) tagged by the release containing this change. 
   - description: >
       Add `# TODO(user): Configure the resources accordingly based on the project requirements.` into the
       file `config/manager/manager.yaml` to make this requirement clear for users. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
