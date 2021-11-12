@@ -27,7 +27,7 @@ entries:
     kind: "addition"
     breaking: false
     migration:
-      header:  Add Phone Targets(`.PHONY`) into Makefile
+      header:  Add PHONY targets to Makefile
       body: >
         Add PHONY target to all Makefile targets. For example, refer to the `Makefile` in `operator-sdk/testdata` directory of [OperatorSDK](https://github.com/operator-framework/operator-sdk) tagged by the release containing this change. 
   - description: >
