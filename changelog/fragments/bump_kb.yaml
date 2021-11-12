@@ -2,7 +2,7 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      Ensure that all places which requires to be changed by the user has the same nomenclature `TODO(user)`.
+      For a more consistent user experience, ensure that all areas that require to be changed are marked by `TODO(user)`.
     kind: "change"
     breaking: false
   - description: >
