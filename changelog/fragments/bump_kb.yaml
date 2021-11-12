@@ -49,9 +49,9 @@ entries:
     kind: "bugfix"
     breaking: false
   - description: >
-      For Golang-based projects, add flag ignore-not-found into Makefile for the targets `uninstall` and `undeploy`. With this change,
-      you can run `make undeploy ignore-not-found=true`. This way, if you have any errors in your Kustomize
-      your make undeploy or make uninstall won't error out when it stumbles on the missing resource.
+      For Golang-based projects, added `ignore-not-found` flag to the `uninstall` and `undeploy` Makefile targets. 
+      This change allows `make undeploy` and  `make install` to continue if Kustomize encounters a missing resource.
+      You can invoke this feature by calling `make undeploy ignore-not-found=true`
     kind: "addition"
     breaking: false
     migration:
