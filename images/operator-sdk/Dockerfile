@@ -17,7 +17,7 @@ COPY . .
 RUN GOOS=linux GOARCH=$TARGETARCH make build/operator-sdk
 
 # Final image.
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.4
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.5
 
 ENV GO_VERSION 1.16.4
 
