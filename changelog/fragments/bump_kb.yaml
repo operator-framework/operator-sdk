@@ -23,7 +23,7 @@ entries:
         ...
         ```
   - description: >
-      Add Phone Targets into Makefile
+      Add PHONY targets to Makefile
     kind: "addition"
     breaking: false
     migration:
