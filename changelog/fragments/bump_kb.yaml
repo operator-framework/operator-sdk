@@ -75,5 +75,4 @@ entries:
         ```sh
         kubectl delete --ignore-not-found=$(ignore-not-found) -f -
         ```
-        **NOTE**  You can check the `Makefile` in `operator-sdk/testdata` directory of [OperatorSDK](https://github.com/operator-framework/operator-sdk) tagged by the release containing this change and update your Makefile accordingly. 
-        and directory `operator-sdk/testdata/` for its tag release to know how you can update your Makefile.
+        **NOTE**  You can also compare your `Makefile` with the one tagged by this release, in `operator-sdk/testdata` of the [OperatorSDK](https://github.com/operator-framework/operator-sdk) project.
