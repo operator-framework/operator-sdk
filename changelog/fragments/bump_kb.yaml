@@ -58,7 +58,7 @@ entries:
       header: For Golang-based projects, add flag ignore-not-found into Makefile for the targets `uninstall` and `undeploy`
       body: >
         Update the Makefile with the following changes.
-        1) Add above `##@ Deployment`:
+        1) Above `##@ Deployment` add the following:
 
         ```
         ...
