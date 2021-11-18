@@ -176,11 +176,11 @@ func addInitCustomizations(projectName string) error {
 	// todo: remove it when we solve the issue operator-framework/operator-sdk#3573
 	const resourcesLimitsFragment = `  resources:
           limits:
-            cpu: 200m
-            memory: 100Mi
+            cpu: 500m
+            memory: 128Mi
           requests:
-            cpu: 100m
-            memory: 20Mi
+            cpu: 10m
+            memory: 64Mi
       `
 	err = util.ReplaceInFile(managerFile, resourcesLimitsFragment, "")
 	if err != nil {

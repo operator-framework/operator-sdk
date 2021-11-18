@@ -109,7 +109,7 @@ func (ma *MemcachedMolecule) Run() {
 	log.Infof("updating spec of foo sample")
 	err = kbutil.ReplaceInFile(
 		filepath.Join(ma.ctx.Dir, "config", "samples", "cache_v1alpha1_foo.yaml"),
-		"# Add fields here",
+		"# TODO(user): Add fields here",
 		"foo: bar")
 	pkg.CheckError("updating spec of cache_v1alpha1_foo.yaml", err)
 
@@ -124,7 +124,7 @@ func (ma *MemcachedMolecule) Run() {
 	log.Infof("updating spec of Memfin sample")
 	err = kbutil.ReplaceInFile(
 		filepath.Join(ma.ctx.Dir, "config", "samples", "cache_v1alpha1_memfin.yaml"),
-		"# Add fields here",
+		"# TODO(user): Add fields here",
 		"foo: bar")
 	pkg.CheckError("updating spec of cache_v1alpha1_memfin.yaml ", err)
 
@@ -158,7 +158,7 @@ func (ma *MemcachedMolecule) Run() {
 	log.Infof("updating spec of ignore sample")
 	err = kbutil.ReplaceInFile(
 		filepath.Join(ma.ctx.Dir, "config", "samples", "ignore_v1_secret.yaml"),
-		"# Add fields here",
+		"# TODO(user): Add fields here",
 		"foo: bar")
 	pkg.CheckError("updating spec of ignore_v1_secret.yaml", err)
 

@@ -94,7 +94,7 @@ var _ = BeforeSuite(func() {
 	By("updating spec of Memfin sample")
 	err = kbutil.ReplaceInFile(
 		filepath.Join(tc.Dir, "config", "samples", fmt.Sprintf("%s_%s_memfin.yaml", tc.Group, tc.Version)),
-		"# Add fields here",
+		"# TODO(user): Add fields here",
 		"foo: bar")
 	Expect(err).NotTo(HaveOccurred())
 
@@ -119,7 +119,7 @@ var _ = BeforeSuite(func() {
 	By("updating spec of Foo sample")
 	err = kbutil.ReplaceInFile(
 		filepath.Join(tc.Dir, "config", "samples", fmt.Sprintf("%s_%s_foo.yaml", tc.Group, tc.Version)),
-		"# Add fields here",
+		"# TODO(user): Add fields here",
 		"foo: bar")
 	Expect(err).NotTo(HaveOccurred())
 

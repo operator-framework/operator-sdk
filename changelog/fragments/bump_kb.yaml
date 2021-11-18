@@ -1,0 +1,78 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      For a more consistent user experience, ensure that all areas that require to be changed are marked by `TODO(user)`.
+    kind: "change"
+    breaking: false
+  - description: >
+      Add annotation to specify the default container. More info [here](https://kubernetes.io/docs/reference/labels-annotations-taints/#kubectl-kubernetes-io-default-container)
+    kind: "addition"
+    breaking: false
+    migration:
+      header:  Add annotation to specify the default container
+      body: >
+        Add the following annotation into the file `config/manager/manager.yaml`
+
+        ```yaml
+        ...
+        template:
+          metadata:
+            annotations:
+              kubectl.kubernetes.io/default-container: manager
+        ...
+        ```
+  - description: >
+      Add PHONY targets to Makefile
+    kind: "addition"
+    breaking: false
+    migration:
+      header:  Add PHONY targets to Makefile
+      body: >
+        Add PHONY target to all Makefile targets. For example, refer to the `Makefile` in `operator-sdk/testdata` directory of [OperatorSDK](https://github.com/operator-framework/operator-sdk) tagged by the release containing this change. 
+  - description: >
+      Add `# TODO(user): Configure the resources accordingly based on the project requirements.` into the
+      file `config/manager/manager.yaml` to make this requirement clear for users. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    kind: "addition"
+    breaking: false
+  - description: >
+      For Helm-based Operators, adopted the same default resource limit values used to scaffold Golang-based projects.
+    kind: "change"
+    breaking: false
+  - description: >
+      For Golang-based Operators, increase the values used in the default scaffold to define the resource limits usage
+      and make clear the need to optimize its values based on the Operator requirements.
+    kind: "change"
+    breaking: false
+  - description: >
+      Improve scaffolding to filter existing multiline code fragments. More info [kubernetes-sigs/kubebuilder#2343](https://github.com/kubernetes-sigs/kubebuilder/pull/2343/files)
+    kind: "bugfix"
+    breaking: false
+  - description: >
+      For Golang-based projects, added `ignore-not-found` flag to the `uninstall` and `undeploy` Makefile targets. 
+      This change allows `make undeploy` and  `make install` to continue if Kustomize encounters a missing resource.
+      You can invoke this feature by calling `make undeploy ignore-not-found=true`
+    kind: "addition"
+    breaking: false
+    migration:
+      header: For Golang-based projects, add the flag `ignore-not-found` into the Makefile for the `uninstall` and `undeploy` targets
+      body: >
+        Update the Makefile with the following changes.
+        1) Above `##@ Deployment` add the following:
+
+        ```
+        ...
+        ifndef ignore-not-found
+          ignore-not-found = false
+        endif
+        ...
+        ```
+        2) Replace:
+        ```sh
+        kubectl delete -f -
+        ```
+        With:
+        ```sh
+        kubectl delete --ignore-not-found=$(ignore-not-found) -f -
+        ```
+        **NOTE**  You can also compare your `Makefile` with the one tagged by this release, in `operator-sdk/testdata` of the [OperatorSDK](https://github.com/operator-framework/operator-sdk) project.

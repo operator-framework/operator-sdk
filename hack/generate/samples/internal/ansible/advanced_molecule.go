@@ -114,7 +114,7 @@ func (ma *AdvancedMolecule) Run() {
 	log.Infof("updating spec of inventorytest sample")
 	err = kbutil.ReplaceInFile(
 		filepath.Join(ma.ctx.Dir, "config", "samples", "test_v1alpha1_inventorytest.yaml"),
-		"# Add fields here",
+		"# TODO(user): Add fields here",
 		"size: 3")
 	pkg.CheckError("updating spec of inventorytest sample", err)
 

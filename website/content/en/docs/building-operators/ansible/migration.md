@@ -102,7 +102,7 @@ kind: Memcached
 metadata:
   name: memcached-sample
 spec:
-  # Add fields here
+  # TODO(user): Add fields here
   size: 3
 ```
 
