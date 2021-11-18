@@ -1,5 +1,0 @@
-entries:
-  - description: >
-      For Ansible operators, if an API endpoint has a "/" in server path component the ansible binary will no longer throw error.
-    kind: bugfix
-    breaking: false
