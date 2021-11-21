@@ -1,4 +1,0 @@
-$font_size: 16;
-@function rem($pixels){
-  @return $pixels / $font_size + rem;
-}
