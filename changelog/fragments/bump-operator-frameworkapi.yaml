@@ -6,6 +6,6 @@ entries:
     kind: "bugfix"
     breaking: false
   - description: >
-      Improves the validate bundle spec error message top rovide a better explanation when invalid service accounts are found.
+      Improves the validate bundle spec error message to provide a better explanation when invalid service accounts are found.
     kind: "bugfix"
     breaking: false
