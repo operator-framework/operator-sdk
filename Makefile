@@ -102,7 +102,7 @@ image/%:
 
 image-base/%: export DOCKER_CLI_EXPERIMENTAL = enabled
 image-base/%:
-	docker buildx build $(DOCKER_PROGRESS) -t $(BUILD_IMAGE_REPO)/$*:dev -f ./images/$*/base.Dockerfile --load images/$*
+	docker buildx build $(DOCKER_PROGRESS) -t $(BUILD_IMAGE_REPO)/$*-base:dev -f ./images/$*/base.Dockerfile --load images/$*
 ##@ Release
 
 .PHONY: release
