@@ -15,7 +15,7 @@ With the helm Operator this becomes possible by override values. This enforces t
 template values provided by the chart's default `values.yaml` or by a CR spec are always set
 when rendering the chart. If the value is set by a CR it gets overridden by the global override value.
 The override value can be static but can also refer to an environment variable and use go templates.
-To pass down environment variables to the chart override values is currently the only way.
+Using override values is currently the only way to pass down environment variables to the chart.
 
 An example use case of this is when your helm chart references container images by chart variables,
 which is a good practice.
