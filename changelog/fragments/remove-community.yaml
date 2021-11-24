@@ -1,0 +1,7 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Remove the Optional(stage: alpha) Community Operator bundle validation. Its checks were moved to the [external validator](https://github.com/redhat-openshift-ecosystem/ocp-olm-catalog-validator/).
+    kind: "removal"
+    breaking: false

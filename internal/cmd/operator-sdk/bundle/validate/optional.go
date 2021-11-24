@@ -45,14 +45,6 @@ var optionalValidators = validators{
 		desc: "OperatorHub.io metadata validation. ",
 	},
 	{
-		Validator: apivalidation.CommunityOperatorValidator,
-		name:      "community",
-		labels: map[string]string{
-			nameKey: "community",
-		},
-		desc: "(stage: alpha) Community Operator bundle validation. See https://github.com/operator-framework/community-operators/blob/master/docs/packaging-required-fields.md",
-	},
-	{
 		Validator: apivalidation.AlphaDeprecatedAPIsValidator,
 		name:      "alpha-deprecated-apis",
 		labels: map[string]string{

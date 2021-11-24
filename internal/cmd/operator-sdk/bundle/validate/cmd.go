@@ -85,10 +85,6 @@ This validator allows check the bundle against an specific Kubernetes cluster ve
 
   $ operator-sdk bundle validate ./bundle --select-optional name=operatorhub --optional-values=k8s-version=1.22
 
-To validate a bundle against the (alpha) validator for Community Operators specifically, in addition to required bundle validators:
-
-  $ operator-sdk bundle validate ./bundle --select-optional name=community --optional-values=index-path=bundle.Dockerfile
-	
 To validate a bundle against the (alpha) validator for Deprecated APIs specifically, in addition to required bundle validators:
 
   $ operator-sdk bundle validate ./bundle --select-optional name=alpha-deprecated-apis --optional-values=k8s-version=1.22	
