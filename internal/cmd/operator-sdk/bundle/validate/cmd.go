@@ -85,7 +85,7 @@ This validator allows check the bundle against an specific Kubernetes cluster ve
 
   $ operator-sdk bundle validate ./bundle --select-optional name=operatorhub --optional-values=k8s-version=1.22
 
-To validate a bundle against the (alpha) validator for Community Operators specifically, in addition to required bundle validators:
+[Deprecated] To validate a bundle against the (alpha) validator for Community Operators specifically, in addition to required bundle validators:
 
   $ operator-sdk bundle validate ./bundle --select-optional name=community --optional-values=index-path=bundle.Dockerfile
 	
@@ -123,6 +123,12 @@ func NewCmd() *cobra.Command {
 					logger.Fatal(err)
 				}
 				return nil
+			}
+
+			if c.selectorRaw == "name=community" {
+				logger.Warnf("The Optional(stage: alpha) Community Operator bundle validator is deprecated and" +
+					" will be removed in a future release. You can do these checks using the external validator: " +
+					"https://github.com/redhat-openshift-ecosystem/ocp-olm-catalog-validator/")
 			}
 
 			result, err := c.run(logger, args[0])
