@@ -23,7 +23,7 @@ your Operator. Cluster administrators will typically set a [ResourceQuota][k8s-r
 tenant's namespace as part of the onboarding. If a [LimitRange][k8s-limit-range] with default values
 has **not** been created in each namespace and your Operator creates Containers inside the tenant
 namespace without specifying at least resource requests for CPU and Memory of its Pods then,
-the system or quota may reject Pod creation with errors such as, for example: `[maximum cpu usage per Pod is 100m.  No limit is specified, maximum memory usage per Pod is 512Mi.  No limit is specified]`. 
+the system or quota may reject Pod creation.
 Check the following statements obtained from K8s docs:
 
 - > If a LimitRange is activated in a namespace for computing resources like CPU and memory, users must specify requests or limits for those values. Otherwise, the system may reject Pod creation. (  [Reference][k8s-limit-range] ).
