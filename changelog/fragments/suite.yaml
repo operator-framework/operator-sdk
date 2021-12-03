@@ -2,7 +2,7 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      Add the deprecated APIs optional checker, `alpha-deprecated-apis`, to the suite operatorframework.
+      Add the deprecated APIs optional checker, `alpha-deprecated-apis`, to the `operatorframework` suite.
 
     # kind is one of:
     # - addition
