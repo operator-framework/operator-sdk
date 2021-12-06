@@ -56,9 +56,10 @@ var optionalValidators = validators{
 		Validator: apivalidation.AlphaDeprecatedAPIsValidator,
 		name:      "alpha-deprecated-apis",
 		labels: map[string]string{
-			nameKey: "alpha-deprecated-apis",
+			nameKey:  "alpha-deprecated-apis",
+			suiteKey: "operatorframework",
 		},
-		desc: "(stage: alpha) Deprecated APIs bundle validation. This valiator can help you out verify if your bundle contains manifests which uses deprecated APIs. More info: https://kubernetes.io/docs/reference/using-api/deprecation-guide/",
+		desc: "(stage: alpha) Deprecated APIs bundle validation. This validator can help you out verify if your bundle contains manifests which uses deprecated APIs. More info: https://kubernetes.io/docs/reference/using-api/deprecation-guide/",
 	},
 }
 
