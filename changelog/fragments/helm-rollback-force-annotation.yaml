@@ -1,0 +1,6 @@
+entries:
+  - description: >
+      Helm-based Operators now support the `helm.sdk.operatorframework.io/rollback-force` annotation which, if
+      set to `false`, will run a possible rollback after a failed upgrade without the `--force` option.
+    kind: "addition"
+    breaking: false

@@ -53,7 +53,7 @@ type Manager interface {
 	IsUpgradeRequired() bool
 	Sync(context.Context) error
 	InstallRelease(context.Context, ...InstallOption) (*rpb.Release, error)
-	UpgradeRelease(context.Context, ...UpgradeOption) (*rpb.Release, *rpb.Release, error)
+	UpgradeRelease(context.Context, []UpgradeOption, []RollbackOption) (*rpb.Release, *rpb.Release, error)
 	ReconcileRelease(context.Context) (*rpb.Release, error)
 	UninstallRelease(context.Context, ...UninstallOption) (*rpb.Release, error)
 	CleanupRelease(context.Context, string) (bool, error)
@@ -78,6 +78,7 @@ type manager struct {
 
 type InstallOption func(*action.Install) error
 type UpgradeOption func(*action.Upgrade) error
+type RollbackOption func(*action.Rollback) error
 type UninstallOption func(*action.Uninstall) error
 
 // ReleaseName returns the name of the release.
@@ -195,6 +196,13 @@ func (m manager) InstallRelease(ctx context.Context, opts ...InstallOption) (*rp
 	return installedRelease, nil
 }
 
+func ForceRollback(force bool) RollbackOption {
+	return func(u *action.Rollback) error {
+		u.Force = force
+		return nil
+	}
+}
+
 func ForceUpgrade(force bool) UpgradeOption {
 	return func(u *action.Upgrade) error {
 		u.Force = force
@@ -203,10 +211,10 @@ func ForceUpgrade(force bool) UpgradeOption {
 }
 
 // UpgradeRelease performs a Helm release upgrade.
-func (m manager) UpgradeRelease(ctx context.Context, opts ...UpgradeOption) (*rpb.Release, *rpb.Release, error) {
+func (m manager) UpgradeRelease(ctx context.Context, upgradeOpts []UpgradeOption, rollbackOpts []RollbackOption) (*rpb.Release, *rpb.Release, error) {
 	upgrade := action.NewUpgrade(m.actionConfig)
 	upgrade.Namespace = m.namespace
-	for _, o := range opts {
+	for _, o := range upgradeOpts {
 		if err := o(upgrade); err != nil {
 			return nil, nil, fmt.Errorf("failed to apply upgrade option: %w", err)
 		}
@@ -217,7 +225,11 @@ func (m manager) UpgradeRelease(ctx context.Context, opts ...UpgradeOption) (*rp
 		// Workaround for helm/helm#3338
 		if upgradedRelease != nil {
 			rollback := action.NewRollback(m.actionConfig)
-			rollback.Force = true
+			for _, o := range rollbackOpts {
+				if err := o(rollback); err != nil {
+					return nil, nil, fmt.Errorf("failed to apply rollback option: %w", err)
+				}
+			}
 
 			// As of Helm 2.13, if UpgradeRelease returns a non-nil release, that
 			// means the release was also recorded in the release store.
