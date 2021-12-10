@@ -75,7 +75,12 @@ func (c Client) InstallVersion(ctx context.Context, namespace, version string) (
 	if err != nil {
 		return nil, fmt.Errorf("failed to get resources: %v", err)
 	}
-	objs := toObjects(resources...)
+	np := newNamespacePatcher()
+	namespacedResources, err := np.setObjectsNamespace(resources, namespace)
+	if err != nil {
+		return nil, err
+	}
+	objs := toObjects(namespacedResources...)
 
 	status := c.GetObjectsStatus(ctx, objs...)
 	installed, err := status.HasInstalledResources()

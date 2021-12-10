@@ -34,6 +34,7 @@ func newInstallCmd() *cobra.Command {
 		},
 	}
 
+	cmd.Flags().StringVar(&mgr.OLMNamespace, "namespace", installer.DefaultOLMNamespace, "namespace to install the OLM. If not set, the OLM will be installed in the default OLM namespace which is `olm`. ")
 	cmd.Flags().StringVar(&mgr.Version, "version", installer.DefaultVersion, "version of OLM resources to install")
 	mgr.AddToFlagSet(cmd.Flags())
 	return cmd
