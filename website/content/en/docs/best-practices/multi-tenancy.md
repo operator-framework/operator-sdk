@@ -50,6 +50,7 @@ and further information.
 [olm-docs]: /docs/olm-integration/
 [ocp-route]: https://docs.openshift.com/container-platform/4.9/rest_api/network_apis/route-route-openshift-io-v1.html#route-route-openshift-io-v1
 [ocp-ingress-doc]: https://docs.openshift.com/container-platform/4.9/networking/ingress-operator.html#nw-ingress-sharding-route-labels_configuring-ingress
+[k8s-ingress-controllers]: https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/
 [ocp-blog]: https://rcarrata.com/openshift/ocp4_route_sharding/
 [k8s-network-policy]: https://kubernetes.io/docs/concepts/services-networking/network-policies/
 [ingress-class]: https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-class
