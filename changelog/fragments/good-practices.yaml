@@ -1,0 +1,23 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Add new optional validator Good Practices. You are able to test your bundle
+      against good practices defined under operator framework solutions by running:
+
+      ```sh
+      $ operator-sdk bundle validate ./bundle --select-optional name=best-practices
+      OR
+      $ operator-sdk bundle validate ./bundle --select-optional suite=operatorframework
+      ```
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "addition"
+
+    # Is this a breaking change?
+    breaking: false
