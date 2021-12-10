@@ -61,6 +61,15 @@ var optionalValidators = validators{
 		},
 		desc: "(stage: alpha) Deprecated APIs bundle validation. This validator can help you out verify if your bundle contains manifests which uses deprecated APIs. More info: https://kubernetes.io/docs/reference/using-api/deprecation-guide/",
 	},
+	{
+		Validator: apivalidation.GoodPracticesValidator,
+		name:      "good-practices",
+		labels: map[string]string{
+			nameKey:  "good-practices",
+			suiteKey: "operatorframework",
+		},
+		desc: "Good Practices bundle validation. This validator validates the bundle against criteria and suggestions defined as good practices for bundles under the operator-framework solutions. More info: https://sdk.operatorframework.io/docs/best-practices/.",
+	},
 }
 
 // runOptionalValidators runs optional validators selected by sel on bundle.
