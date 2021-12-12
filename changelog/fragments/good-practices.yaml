@@ -6,7 +6,7 @@ entries:
       against good practices defined under operator framework solutions by running:
 
       ```sh
-      $ operator-sdk bundle validate ./bundle --select-optional name=best-practices
+      $ operator-sdk bundle validate ./bundle --select-optional name=good-practices
       OR
       $ operator-sdk bundle validate ./bundle --select-optional suite=operatorframework
       ```
