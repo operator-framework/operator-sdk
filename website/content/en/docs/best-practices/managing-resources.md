@@ -26,8 +26,8 @@ namespace without specifying at least resource requests for CPU and Memory of it
 the system or quota may reject Pod creation.
 Check the following statements obtained from K8s docs:
 
-- > If a LimitRange is activated in a namespace for computing resources like CPU and memory, users must specify requests or limits for those values. Otherwise, the system may reject Pod creation. ([Reference][k8s-limit-range]).
-- > If quota is enabled in a namespace for compute resources like cpu and memory, users must specify requests or limits for those values; otherwise, the quota system may reject pod creation. ([Reference][k8s-resources-quotas]).
+- > _"If a LimitRange is activated in a namespace for computing resources like CPU and memory, users must specify requests or limits for those values. Otherwise, the system may reject Pod creation."_ ([Reference][k8s-limit-range]).
+- > _"If quota is enabled in a namespace for compute resources like cpu and memory, users must specify requests or limits for those values; otherwise, the quota system may reject pod creation."_ ([Reference][k8s-resources-quotas]).
 
 In an effort to support clusters with the above configuration, to ensure safe operations and avoid negatively
 impacting other workloads: Operators should **always** include reasonable memory and CPU resource requests for their own deployment as well as for operands they deploy. 
