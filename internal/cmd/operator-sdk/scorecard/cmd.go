@@ -141,6 +141,7 @@ func (c *scorecardCmd) convertXunit(output v1alpha3.TestList) xunit.TestSuites {
 			var tSuite xunit.TestSuite
 			tSuite.Name = res.Name
 			tCase.Name = res.Name
+			tCase.Classname = "scorecard"
 			if res.State == v1alpha3.ErrorState {
 				tCase.Errors = append(tCase.Errors, xunit.XUnitComplexError{Type: "Error", Message: strings.Join(res.Errors, ",")})
 				tSuite.Errors = strings.Join(res.Errors, ",")
