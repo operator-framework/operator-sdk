@@ -33,7 +33,7 @@ RUN yum clean all && rm -rf /var/cache/yum/* \
   && pip3 install --upgrade pip~=21.1.0 \
   && pip3 install pipenv==2020.11.15 \
   && pipenv install --deploy \
-  && pipenv check \
+  && pipenv check  -i 42926 -i 42923 \
   && yum remove -y gcc libffi-devel openssl-devel python38-devel \
   && yum clean all \
   && rm -rf /var/cache/yum
