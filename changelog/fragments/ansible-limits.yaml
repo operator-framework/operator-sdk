@@ -46,6 +46,6 @@ entries:
         ...
         ```
 
-        **IMPORTANT:** These values should be optimize accordingly to the project requirements. The default
-        values scaffold are only added to help out Operator Authors getting started and have this configuration
-        in place.
+        **IMPORTANT:** Having resource limits is a best-practice and these values are reasonable
+        defaults, but Operator authors should optimize these values based on their project's
+        requirements.
