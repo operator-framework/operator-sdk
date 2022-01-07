@@ -1,0 +1,47 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      For Ansible & Helm-based operators, the generated `Makefile` does not
+      handle converting `aarch64` to `arm64`. This prevents it from downloading
+      the appropriate binaries.
+
+      This change simply adds a call to `sed` to convert `aarch64` to `arm64`.
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "bugfix"
+
+    # Is this a breaking change?
+    breaking: false
+
+    # NOTE: ONLY USE `pull_request_override` WHEN ADDING THIS
+    # FILE FOR A PREVIOUSLY MERGED PULL_REQUEST!
+    #
+    # The generator auto-detects the PR number from the commit
+    # message in which this file was originally added.
+    #
+    # What is the pull request number (without the "#")?
+    # pull_request_override: 0
+
+
+    # Migration can be defined to automatically add a section to
+    # the migration guide. This is required for breaking changes.
+    migration:
+      header: Support for arm64
+      body: >
+        In Ansible & Helm-based operators, if you need to support `arm64`, add the following
+
+          `| sed 's/aarch64/arm64/'` 
+
+        on the following line
+
+          `ARCH := $(shell uname -m | sed 's/x86_64/amd64/')`
+
+        The resulting line should look like this
+
+          `ARCH := $(shell uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')`
