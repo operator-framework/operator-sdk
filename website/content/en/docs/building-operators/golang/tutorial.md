@@ -265,6 +265,8 @@ The `ClusterRole` manifest at `config/rbac/role.yaml` is generated from the abov
 make manifests
 ```
 
+NOTE: If you receive an error, please run the specified command in the error and re-run `make manifests`. 
+
 ## Configure the operator's image registry
 
 All that remains is to build and push the operator image to the desired image registry.
