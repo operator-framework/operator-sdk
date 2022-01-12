@@ -266,7 +266,7 @@ Scorecard will execute custom tests if they follow these mandated conventions:
  * tests can obtain the bundle contents at a shared mount point of /bundle
  * tests can access the Kubernetes API using an in-cluster client connection
 
-See [here][custom-image] for an example of a custom test image written in Go.
+See the [example of a custom test image][custom-image] written in Go.
 
 Writing custom tests in other programming languages is possible
 if the test image follows the above guidelines.
