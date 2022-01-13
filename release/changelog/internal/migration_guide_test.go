@@ -92,7 +92,7 @@ title: v999.999.999
 weight: 3
 ---
 
-There are no migrations for this release! :tada:
+There are no migrations for this release! 🎉
 `,
 		},
 	}
