@@ -36,6 +36,26 @@ For example, you should refrain from moving the scaffolded files, doing so will 
 
 You should not have separate logic. Instead design your reconciler to be idempotent. See the [controller-runtime FAQ][cr-faq] for more details.
 
+## How do I wait for some specific cluster state such as a resource being deleted?
+
+You don't. Instead, design your reconciler to be idempotent by  taking the next step based on the current state, and then returning and requeuing. For example, waiting for an object to be deleted might look something like this:
+
+```
+func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
+    ...
+    if !r.IfPodWasDeleted(ctx, pod) {
+        if err := r.Delete(ctx, pod); err != nil {
+            return ctrl.Result{}, err
+        }
+        return ctrl.Result{Requeue: true}, nil
+    }
+    // This code will be invoked only after pod deletion    
+    r.DeployBiggerPod(ctx)
+    ...
+}
+```
+
+
 ## When my Custom Resource is deleted, I need to know its contents or perform cleanup tasks. How can I do that?
 
 Use a [finalizer].
