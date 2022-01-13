@@ -37,5 +37,9 @@ entries:
     # the migration guide. This is required for breaking changes.
     migration:
       header: Header text for the migration section
-      body: >
-        Body of the migration section.
+      body: |
+        Body of the migration section. This should be formatted as markdown and can
+        span multiple lines.
+
+        Using the YAML string '|' operator means that newlines in this string will
+        be honored and interpretted as newlines in the rendered markdown.
