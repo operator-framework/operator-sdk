@@ -33,7 +33,7 @@ weight: {{ .Weight }}
 {{ if .PullRequestLink }}
 _See {{ .PullRequestLink }} for more details._
 {{ end }}{{ else }}
-There are no migrations for this release! :tada:
+There are no migrations for this release! 🎉
 {{ end }}`
 
 var migrationGuideTmpl = template.Must(template.New("migrationGuide").Parse(migrationGuideTemplate))
