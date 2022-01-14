@@ -1,0 +1,18 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Now operator-sdk bundle validate also ensures that the `alm-examples` annotation has a valid JSON ([More info](https://github.com/operator-framework/api/pull/207))
+      Introduction done by upgrading operator-framework/api from the commit `54878ea280f7c7402549dae568916dfb330b9262` to the release `v0.11.1`
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "addition"
+
+    # Is this a breaking change?
+    breaking: false
+
