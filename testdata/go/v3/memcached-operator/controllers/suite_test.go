@@ -71,6 +71,8 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
 
+	// test2
+
 }, 60)
 
 var _ = AfterSuite(func() {
