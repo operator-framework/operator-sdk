@@ -16,10 +16,11 @@ package main
 
 import (
 	"flag"
-	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/ansible"
-	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/helm"
 	"os"
 	"path/filepath"
+
+	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/ansible"
+	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/helm"
 
 	log "github.com/sirupsen/logrus"
 
