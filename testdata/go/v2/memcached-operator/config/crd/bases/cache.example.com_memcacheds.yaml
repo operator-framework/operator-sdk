@@ -14,6 +14,7 @@ spec:
     listKind: MemcachedList
     plural: memcacheds
     singular: memcached
+  preserveUnknownFields: false
   scope: Namespaced
   subresources:
     status: {}

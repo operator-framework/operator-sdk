@@ -104,6 +104,14 @@ func (mh *Memcached) Run() {
 	_, err = mh.ctx.Run(cmd)
 	pkg.CheckError("Running go mod tidy", err)
 
+	// Add webhook methods
+	// todo: verify if we ought to update for go/v2 scaffold in Kubebuilder
+	// when the webhook is scaffold
+	err = kbtutil.ReplaceInFile(filepath.Join(mh.ctx.Dir, "Makefile"),
+		"crd:trivialVersions=true",
+		"crd:trivialVersions=true,preserveUnknownFields=false")
+	pkg.CheckError("replacing reconcile", err)
+
 	log.Infof("creating the bundle")
 	err = mh.ctx.GenerateBundle()
 	pkg.CheckError("creating the bundle", err)

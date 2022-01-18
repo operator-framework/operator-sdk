@@ -16,14 +16,14 @@ package main
 
 import (
 	"flag"
+	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/ansible"
+	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/helm"
 	"os"
 	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/ansible"
 	golang "github.com/operator-framework/operator-sdk/hack/generate/samples/internal/go"
-	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/helm"
 	"github.com/operator-framework/operator-sdk/internal/testutils"
 )
 

@@ -25,7 +25,7 @@ operator-sdk init [flags]
   # Initialize a new project with your domain and name in copyright
   operator-sdk init --plugins go/v3 --domain example.org --owner "Your name"
 
-  # Initialize a new project defining an specific project version
+  # Initialize a new project defining a specific project version
   operator-sdk init --plugins go/v3 --project-version 3
 
 ```
