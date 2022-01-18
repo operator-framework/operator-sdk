@@ -6,7 +6,6 @@ aliases:
   # This role is a subset of the approver role.
   sdk-admins:
   - asmacdo
-  - estroz
   - jmrodri
   - joelanford
   - marc-obrien
@@ -29,3 +28,4 @@ aliases:
   - bharathi-tenneti
   - hasbro17
   - shawn-hurley
+  - estroz
