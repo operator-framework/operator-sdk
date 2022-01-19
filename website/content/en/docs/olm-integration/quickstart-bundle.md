@@ -32,7 +32,7 @@ $ export IMG=docker.io/$USERNAME/memcached-operator:v$VERSION // location where 
 $ export BUNDLE_IMG=docker.io/$USERNAME/memcached-operator-bundle:v$VERSION // location where your bundle will be hosted
 ```
 
-1. Create a bundle from the root directory of your project
+- Create a bundle from the root directory of your project
 
 ```sh
 $ make bundle
@@ -40,19 +40,19 @@ $ make bundle
 
 This will prompt you to enter basic information about your operator.
 
-1. Build and push the bundle image
+- Build and push the bundle image
 
 ```sh
 $ make bundle-build bundle-push
 ```
 
-1. Validate the bundle
+- Validate the bundle
 
 ```sh
 $ operator-sdk bundle validate $BUNDLE_IMG
 ```
 
-1. Install the bundle with OLM
+- Install the bundle with OLM
 
 ```sh
 $ operator-sdk run bundle $BUNDLE_IMG
