@@ -1,8 +1,8 @@
 approvers:
 - asmacdo
 - camilamacedo86
-- estroz
 - fabianvf
+- jberkhahn
 - jmrodri
 - joelanford
 - marc-obrien
@@ -12,7 +12,6 @@ approvers:
 reviewers:
 - asmacdo
 - camilamacedo86
-- estroz
 - fabianvf
 - jberkhahn
 - jmrodri
