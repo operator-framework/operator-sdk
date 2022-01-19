@@ -2,7 +2,7 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      (go/v3) upgrade go version from 1.16 and the following dependencies:
+      (go/v3) upgrade go version from 1.16 to 1.17 and the following dependencies:
       - upgrade controller-runtime from `0.10.0` to `0.11.0`
       - k8s from `1.22` to `1.23`
       - controller-gen from `v0.0.7` to `v0.8.0`
