@@ -7,13 +7,14 @@ require (
 	github.com/fatih/structtag v1.1.0
 	github.com/go-logr/logr v1.2.0
 	github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0
-	github.com/iancoleman/strcase v0.0.0-20191112232945-16388991a334
+	github.com/iancoleman/strcase v0.1.2
 	github.com/kr/text v0.2.0
 	github.com/markbates/inflect v1.0.4
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.2.2
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.17.0
 	github.com/operator-framework/api v0.11.2-0.20220118170607-6b187a1d0908
+	github.com/operator-framework/helm-operator-plugins v0.0.9-0.20220121192446-5b1f0735f059
 	github.com/operator-framework/java-operator-plugins v0.1.0
 	github.com/operator-framework/operator-lib v0.10.0
 	github.com/operator-framework/operator-registry v1.19.5
