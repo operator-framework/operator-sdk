@@ -159,6 +159,13 @@ BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(VERSION)
 # USE_IMAGE_DIGESTS defines if images are resolved via tags or digests
 # You can enable this value if you would like to use SHA Based Digests
 USE_IMAGE_DIGESTS ?= false
+
+# BUNDLE_GEN_FLAGS is an additional mechanism for resolving running sdk generate bundle flags
+BUNDLE_GEN_FLAGS ?= ""
+
+ifeq ($(USE_IMAGE_DIGESTS) true)
+	BUNDLE_GEN_FLAGS += "--use-image-digests"
+endif
 `
 
 	makefileBundleFragmentGo = `
@@ -166,11 +173,7 @@ USE_IMAGE_DIGESTS ?= false
 bundle: manifests kustomize ## Generate bundle manifests and metadata, then validate generated files.
 	operator-sdk generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
-	ifeq ($(USE_IMAGE_DIGESTS) true)
-		$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle --use-image-digests -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
-	else
-		$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
-	endif
+	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle $(BUNDLE_GEN_FLAGS) -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 	operator-sdk bundle validate ./bundle
 `
 
