@@ -155,6 +155,10 @@ IMAGE_TAG_BASE ?= %[1]s/%[2]s
 # BUNDLE_IMG defines the image:tag used for the bundle.
 # You can use it as an arg. (E.g make bundle-build BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>)
 BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(VERSION)
+
+# USE_IMAGE_DIGESTS defines if images are resolved via tags or digests
+# You can enable this value if you would like to use SHA Based Digests
+USE_IMAGE_DIGESTS ?= 0
 `
 
 	makefileBundleFragmentGo = `

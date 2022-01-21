@@ -49,6 +49,9 @@ type bundleCmd struct {
 	// These are set if a PROJECT config is not present.
 	layout      string
 	packageName string
+
+	// Use Image Digests flag to toggle using traditional Image tags vs SHA Digests
+	useImageDigests bool
 }
 
 // NewCmd returns the 'bundle' command configured for the new project layout.
