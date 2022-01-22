@@ -16,7 +16,8 @@ These features are unavailable to projects of version `2` or less; this informat
 your `PROJECT` file's `version` value.
 
 ## Prerequisites
-- Have a working operator that you have uploaded to a container registry. This guide assumes the simple Golang Memcached operator from [the building operators section][sdk-user-guid-go] at version `0.0.1`.
+
+- Have a working operator that you have uploaded to a container registry. This guide assumes the simple Golang Memcached operator from [the building operators section][sdk-user-guide-go] at version `0.0.1`.
 - User authorized with 'cluster-admin' permissions.
 - OLM installed on your cluster. The command `operator-sdk olm install` will attempt to install a basic OLM deployment on your cluster.
 
@@ -31,7 +32,7 @@ $ export IMG=docker.io/$USERNAME/memcached-operator:v$VERSION // location where 
 $ export BUNDLE_IMG=docker.io/$USERNAME/memcached-operator-bundle:v$VERSION // location where your bundle will be hosted
 ```
 
-1. Create a bundle from the root directory of your project
+- Create a bundle from the root directory of your project
 
 ```sh
 $ make bundle
@@ -39,19 +40,19 @@ $ make bundle
 
 This will prompt you to enter basic information about your operator.
 
-1. Build and push the bundle image
+- Build and push the bundle image
 
 ```sh
 $ make bundle-build bundle-push
 ```
 
-1. Validate the bundle
+- Validate the bundle
 
 ```sh
 $ operator-sdk bundle validate $BUNDLE_IMG
 ```
 
-1. Install the bundle with OLM
+- Install the bundle with OLM
 
 ```sh
 $ operator-sdk run bundle $BUNDLE_IMG
