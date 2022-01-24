@@ -27,7 +27,10 @@ import (
 
 var log = logf.Log.WithName("apiserver")
 
-type Options struct{}
+type Options struct {
+	Address string
+	Port    int
+}
 
 func Run(done chan error, options Options) error {
 
@@ -35,7 +38,7 @@ func Run(done chan error, options Options) error {
 	mux.HandleFunc("/metrics", metricsHandler)
 
 	server := http.Server{
-		Addr:    "localhost:5050",
+		Addr:    fmt.Sprintf("%s:%d", options.Address, options.Port),
 		Handler: mux,
 	}
 	go func() {

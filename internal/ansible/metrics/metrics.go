@@ -153,7 +153,7 @@ func HandleUserMetric(r prometheus.Registerer, metricSpec UserMetric) error {
 	switch v := collector.(type) {
 	case prometheus.Gauge:
 		if metricSpec.Gauge == nil {
-			return errors.New("Cannot change metric type of metricSpec.Name, which is a gauge metric")
+			return errors.New(fmt.Sprintf("Cannot change metric type of %s, which is a gauge", metricSpec.Name))
 		}
 		if metricSpec.Gauge.Inc == true {
 			v.Inc()
@@ -171,7 +171,7 @@ func HandleUserMetric(r prometheus.Registerer, metricSpec UserMetric) error {
 	// Counter must be first, because otherwise it can be confused with a gauge.
 	case prometheus.Counter:
 		if metricSpec.Counter == nil {
-			return errors.New("Cannot change metric type of metricSpec.Name, which is a counter metric")
+			return errors.New(fmt.Sprintf("Cannot change metric type of %s, which is a counter", metricSpec.Name))
 		}
 		if metricSpec.Counter.Inc == true {
 			v.Inc()
@@ -180,14 +180,14 @@ func HandleUserMetric(r prometheus.Registerer, metricSpec UserMetric) error {
 		}
 	case prometheus.Histogram:
 		if metricSpec.Histogram == nil {
-			return errors.New("Cannot change metric type of metricSpec.Name, which is a histogram metric")
+			return errors.New(fmt.Sprintf("Cannot change metric type of %s, which is a histogram", metricSpec.Name))
 		}
 		if metricSpec.Histogram.Observe != 0.0 {
 			v.Observe(metricSpec.Histogram.Observe)
 		}
 	case prometheus.Summary:
 		if metricSpec.Summary == nil {
-			return errors.New("Cannot change metric type of metricSpec.Name, which is a summary metric")
+			return errors.New(fmt.Sprintf("Cannot change metric type of %s, which is a summary", metricSpec.Name))
 		}
 		if metricSpec.Summary.Observe != 0.0 {
 			v.Observe(metricSpec.Summary.Observe)
