@@ -158,6 +158,7 @@ BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(VERSION)
 
 # USE_IMAGE_DIGESTS defines if images are resolved via tags or digests
 # You can enable this value if you would like to use SHA Based Digests
+# To enable set flag to true
 USE_IMAGE_DIGESTS ?= false
 
 # BUNDLE_GEN_FLAGS is an additional mechanism for resolving running sdk generate bundle flags

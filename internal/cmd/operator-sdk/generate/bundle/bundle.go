@@ -219,6 +219,13 @@ func (c bundleCmd) runManifests() (err error) {
 		}
 	}
 
+	// Resolved SHA Digests if necessary
+	if c.useImageDigests {
+		if err := c.genSHADigest(); err != nil {
+			return fmt.Errorf("error resolving SHA Digest: %v", err)
+		}
+	}
+
 	// Write the scorecard config if it was passed.
 	if err := writeScorecardConfig(c.outputDir, col.ScorecardConfig); err != nil {
 		return fmt.Errorf("error writing bundle scorecard config: %v", err)
@@ -286,4 +293,10 @@ func (c bundleCmd) runMetadata() error {
 	}
 
 	return bundleMetadata.GenerateMetadata()
+}
+
+// genSHADigest will generate a SHA Digest based bundle for any images needed
+func (c bundleCmd) genSHADigest() error {
+	c.println("Resolving SHA Digests")
+	return nil
 }
