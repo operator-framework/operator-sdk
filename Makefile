@@ -85,6 +85,9 @@ build/scorecard-test build/scorecard-test-kuttl build/custom-scorecard-tests:
 IMAGE_TARGET_LIST = operator-sdk helm-operator ansible-operator ansible-operator-2.11-preview scorecard-test scorecard-test-kuttl
 image-build: $(foreach i,$(IMAGE_TARGET_LIST),image/$(i)) ## Build all images.
 
+ba: 
+	docker buildx build $(DOCKER_PROGRESS) -t $(BUILD_IMAGE_REPO)/ansible-operator$*:dev -f ./images/ansible-operator/Dockerfile --load . --no-cache
+
 # Convenience wrapper for building dependency base images.
 .PHONY: image-build-base
 IMAGE_BASE_TARGET_LIST = ansible-operator ansible-operator-2.11-preview
