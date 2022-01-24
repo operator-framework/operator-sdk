@@ -38,7 +38,7 @@ func metricsHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case "POST":
-		log.Info("apiserver has recieved a POST")
+		log.Info("apiserver has received a POST")
 		log.Info("The POST BODY", "Body", r.Body)
 		err := json.NewDecoder(r.Body).Decode(&userMetric)
 		if err != nil {

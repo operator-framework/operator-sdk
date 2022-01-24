@@ -40,16 +40,14 @@ cp -r $ROOTDIR/testdata/ansible/advanced-molecule-operator/ $TMPDIR/advanced-mol
 
 pushd $TMPDIR/memcached-molecule-operator
 
-# TODO(uncomment)
-# header_text "Running Kind test with memcached-molecule-operator"
-# make kustomize
-# if [ -f ./bin/kustomize ] ; then
-#   KUSTOMIZE="$(realpath ./bin/kustomize)"
-# else
-#   KUSTOMIZE="$(which kustomize)"
-# fi
-# KUSTOMIZE_PATH=${KUSTOMIZE} TEST_OPERATOR_NAMESPACE=default molecule test -s kind
-
+header_text "Running Kind test with memcached-molecule-operator"
+make kustomize
+if [ -f ./bin/kustomize ] ; then
+  KUSTOMIZE="$(realpath ./bin/kustomize)"
+else
+  KUSTOMIZE="$(which kustomize)"
+fi
+KUSTOMIZE_PATH=${KUSTOMIZE} TEST_OPERATOR_NAMESPACE=default molecule test -s kind
 
 header_text "Running Default test with advanced-molecule-operator"
 pushd $TMPDIR/advanced-molecule-operator

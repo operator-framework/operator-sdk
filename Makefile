@@ -85,9 +85,6 @@ build/scorecard-test build/scorecard-test-kuttl build/custom-scorecard-tests:
 IMAGE_TARGET_LIST = operator-sdk helm-operator ansible-operator ansible-operator-2.11-preview scorecard-test scorecard-test-kuttl
 image-build: $(foreach i,$(IMAGE_TARGET_LIST),image/$(i)) ## Build all images.
 
-ba: 
-	docker buildx build $(DOCKER_PROGRESS) -t $(BUILD_IMAGE_REPO)/ansible-operator$*:dev -f ./images/ansible-operator/Dockerfile --load . --no-cache
-
 # Convenience wrapper for building dependency base images.
 .PHONY: image-build-base
 IMAGE_BASE_TARGET_LIST = ansible-operator ansible-operator-2.11-preview
@@ -101,11 +98,11 @@ DOCKER_PROGRESS = --progress plain
 endif
 image/%: export DOCKER_CLI_EXPERIMENTAL = enabled
 image/%:
-	docker buildx build $(DOCKER_PROGRESS) -t $(BUILD_IMAGE_REPO)/$*:dev -f ./images/$*/Dockerfile --load . --no-cache
+	docker buildx build $(DOCKER_PROGRESS) -t $(BUILD_IMAGE_REPO)/$*:dev -f ./images/$*/Dockerfile --load .
 
 image-base/%: export DOCKER_CLI_EXPERIMENTAL = enabled
 image-base/%:
-	docker buildx build $(DOCKER_PROGRESS) -t $(BUILD_IMAGE_REPO)/$*-base:dev -f ./images/$*/base.Dockerfile --load images/$* --no-cache
+	docker buildx build $(DOCKER_PROGRESS) -t $(BUILD_IMAGE_REPO)/$*-base:dev -f ./images/$*/base.Dockerfile --load images/$*
 ##@ Release
 
 .PHONY: release
@@ -181,7 +178,7 @@ test-e2e-ansible:: image/ansible-operator ## Run Ansible e2e tests
 	go test -count=1 ./internal/ansible/proxy/...
 	go test ./test/e2e/ansible -v -ginkgo.v
 test-e2e-ansible-molecule:: image/ansible-operator ## Run molecule-based Ansible e2e tests
-	# // go run ./hack/generate/samples/molecule/generate.go
+	go run ./hack/generate/samples/molecule/generate.go
 	./hack/tests/e2e-ansible-molecule.sh
 test-e2e-helm:: image/helm-operator ## Run Helm e2e tests
 	go test ./test/e2e/helm -v -ginkgo.v
