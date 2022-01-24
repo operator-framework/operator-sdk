@@ -39,7 +39,7 @@ func Run(done chan error, options Options) error {
 		Handler: mux,
 	}
 	go func() {
-		log.Info("Starting to serve", "Address", server.Addr)
+		log.V(3).Info("Starting to serve", "Address", server.Addr)
 		done <- server.ListenAndServe()
 	}()
 	return nil
@@ -52,15 +52,13 @@ func metricsHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case "POST":
-		log.Info("apiserver has received a POST")
-		log.Info("The POST BODY", "Body", r.Body)
+		log.V(3).Info("apiserver has received a POST")
 		err := json.NewDecoder(r.Body).Decode(&userMetric)
 		if err != nil {
 			log.Info(err.Error())
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		log.Info("apiserver is about to attempt to handle userMetric")
 		err = metrics.HandleUserMetric(crmetrics.Registry, userMetric)
 		if err != nil {
 			log.Info(err.Error())

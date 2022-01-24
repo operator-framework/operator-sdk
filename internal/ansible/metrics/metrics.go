@@ -168,7 +168,8 @@ func HandleUserMetric(r prometheus.Registerer, metricSpec UserMetric) error {
 		} else if metricSpec.Gauge.SetToCurrentTime == true {
 			v.SetToCurrentTime()
 		}
-	case prometheus.Counter: // &&  not prometheus.Gauge  TODO(asmacdo)
+	// Counter must be first, because otherwise it can be confused with a gauge.
+	case prometheus.Counter:
 		if metricSpec.Counter == nil {
 			return errors.New("Cannot change metric type of metricSpec.Name, which is a counter metric")
 		}
