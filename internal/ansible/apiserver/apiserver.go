@@ -42,20 +42,20 @@ func Run(done chan error, options Options) error {
 		Handler: mux,
 	}
 	go func() {
-		log.V(3).Info("Starting to serve", "Address", server.Addr)
+		log.Info("Starting to serve metrics listener", "Address", server.Addr)
 		done <- server.ListenAndServe()
 	}()
 	return nil
 }
 
 func metricsHandler(w http.ResponseWriter, r *http.Request) {
-	log.Info(fmt.Sprintf("Request: %+v", r))
+	log.V(3).Info(fmt.Sprintf("Request: %+v", r))
 
 	var userMetric metrics.UserMetric
 
 	switch r.Method {
 	case "POST":
-		log.V(3).Info("apiserver has received a POST")
+		log.V(3).Info("The apiserver has received a POST")
 		err := json.NewDecoder(r.Body).Decode(&userMetric)
 		if err != nil {
 			log.Info(err.Error())
