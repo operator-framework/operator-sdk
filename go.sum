@@ -930,8 +930,8 @@ github.com/operator-framework/api v0.10.0/go.mod h1:tV0BUNvly7szq28ZPBXhjp1Sqg5y
 github.com/operator-framework/api v0.10.5/go.mod h1:tV0BUNvly7szq28ZPBXhjp1Sqg5yHCOeX19ui9K4vjI=
 github.com/operator-framework/api v0.11.2-0.20220118170607-6b187a1d0908 h1:pD3v8KvLkf3H99fs6iMONVgoUzK8IoVJXcGTiuZGq2E=
 github.com/operator-framework/api v0.11.2-0.20220118170607-6b187a1d0908/go.mod h1:OLKAZHSlVAjOHpeduyIQSQBTcI67asjV3w7E1W0FL8E=
-github.com/operator-framework/helm-operator-plugins v0.0.9-0.20220121192446-5b1f0735f059 h1:SPFUQKFwX62Rt5ytKuXCN/3u3Z0uQaBuS+CwKSArGu0=
-github.com/operator-framework/helm-operator-plugins v0.0.9-0.20220121192446-5b1f0735f059/go.mod h1:LFi/PUYE+xA5ubF3ZrleYE1Ez7cphJzSYpjHAyLiNwQ=
+github.com/operator-framework/helm-operator-plugins v0.0.9 h1:G5aBY5sPrNXcRiKLpAaBMOYm7q0+qCmk9XWOAL/ZJuc=
+github.com/operator-framework/helm-operator-plugins v0.0.9/go.mod h1:LFi/PUYE+xA5ubF3ZrleYE1Ez7cphJzSYpjHAyLiNwQ=
 github.com/operator-framework/java-operator-plugins v0.1.0 h1:khkYsrkEG4m+wT+oPjZYmWXo8jd0QQ8E4agSrqrhPhU=
 github.com/operator-framework/java-operator-plugins v0.1.0/go.mod h1:sGKGELFkUeRqElcyvyPC89bC76YnCL7MPMa13P0AQcw=
 github.com/operator-framework/operator-lib v0.3.0/go.mod h1:LTp5UQd8ivq4MXqm/W/XHulHQ0RRoZXsAj73sNMAQxc=
