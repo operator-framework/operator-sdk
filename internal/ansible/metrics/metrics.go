@@ -15,7 +15,6 @@
 package metrics
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -103,9 +102,9 @@ type UserMetricGauge struct {
 	Set              float64 `json:"set,omitempty" yaml:"set,omitempty"`
 	Inc              bool    `json:"increment,omitempty" yaml:"increment,omitempty"`
 	Dec              bool    `json:"decrement,omitempty" yaml:"decrement,omitempty"`
+	SetToCurrentTime bool    `json:"set_to_current_time,omitempty" yaml:"set_to_current_time,omitempty"`
 	Add              float64 `json:"add,omitempty" yaml:"add,omitempty"`
 	Sub              float64 `json:"subtract,omitempty" yaml:"subtract,omitempty"`
-	SetToCurrentTime bool    `json:"set_to_current_time,omitempty" yaml:"set_to_current_time,omitempty"`
 }
 
 type UserMetricHistogram struct {
@@ -120,7 +119,7 @@ func HandleUserMetric(r prometheus.Registerer, metricSpec UserMetric) error {
 	defer recoverMetricPanic()
 	logf.Log.WithName("metrics").Info("Registering", "metric", metricSpec.Name)
 	_, ok := userMetrics[metricSpec.Name]
-	if ok != true {
+	if !ok {
 		// This is the first time we've seen this metric
 		if metricSpec.Counter != nil {
 			userMetrics[metricSpec.Name] = prometheus.NewCounter(prometheus.CounterOpts{
@@ -153,11 +152,11 @@ func HandleUserMetric(r prometheus.Registerer, metricSpec UserMetric) error {
 	switch v := collector.(type) {
 	case prometheus.Gauge:
 		if metricSpec.Gauge == nil {
-			return errors.New(fmt.Sprintf("Cannot change metric type of %s, which is a gauge", metricSpec.Name))
+			return fmt.Errorf("cannot change metric type of %s, which is a gauge", metricSpec.Name)
 		}
-		if metricSpec.Gauge.Inc == true {
+		if metricSpec.Gauge.Inc {
 			v.Inc()
-		} else if metricSpec.Gauge.Dec == true {
+		} else if metricSpec.Gauge.Dec {
 			v.Dec()
 		} else if metricSpec.Gauge.Add != 0.0 {
 			v.Add(metricSpec.Gauge.Add)
@@ -165,31 +164,28 @@ func HandleUserMetric(r prometheus.Registerer, metricSpec UserMetric) error {
 			v.Sub(metricSpec.Gauge.Sub)
 		} else if metricSpec.Gauge.Set != 0.0 {
 			v.Set(metricSpec.Gauge.Set)
-		} else if metricSpec.Gauge.SetToCurrentTime == true {
+		} else if metricSpec.Gauge.SetToCurrentTime {
 			v.SetToCurrentTime()
 		}
 	// Counter must be first, because otherwise it can be confused with a gauge.
 	case prometheus.Counter:
 		if metricSpec.Counter == nil {
-			return errors.New(fmt.Sprintf("Cannot change metric type of %s, which is a counter", metricSpec.Name))
+			return fmt.Errorf("cannot change metric type of %s, which is a counter", metricSpec.Name)
 		}
-		if metricSpec.Counter.Inc == true {
+		if metricSpec.Counter.Inc {
 			v.Inc()
 		} else if metricSpec.Counter.Add != 0.0 {
 			v.Add(metricSpec.Counter.Add)
 		}
 	case prometheus.Histogram:
-		if metricSpec.Histogram == nil {
-			return errors.New(fmt.Sprintf("Cannot change metric type of %s, which is a histogram", metricSpec.Name))
+		if metricSpec.Histogram == nil && metricSpec.Summary == nil {
+			return fmt.Errorf("cannot change metric type of %s, which is a histogram or summary", metricSpec.Name)
 		}
-		if metricSpec.Histogram.Observe != 0.0 {
+		// Histogram and Summary interfaces are identical, so we accept either case.
+		if metricSpec.Histogram != nil {
 			v.Observe(metricSpec.Histogram.Observe)
 		}
-	case prometheus.Summary:
-		if metricSpec.Summary == nil {
-			return errors.New(fmt.Sprintf("Cannot change metric type of %s, which is a summary", metricSpec.Name))
-		}
-		if metricSpec.Summary.Observe != 0.0 {
+		if metricSpec.Summary != nil {
 			v.Observe(metricSpec.Summary.Observe)
 		}
 	}
