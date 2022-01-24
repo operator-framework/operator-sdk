@@ -29,7 +29,7 @@ ENV PIP_NO_CACHE_DIR=1 \
 # pip3~=21.1 fixes a vulnerability described in https://github.com/pypa/pip/pull/9827.
 RUN yum clean all && rm -rf /var/cache/yum/* \
   && yum update -y \
-  && yum install -y libffi-devel openssl-devel python38-devel gcc python38-pip python38-setuptools \
+  && yum install -y libffi-devel openssl-devel python38-devel gcc python38-pip python38-setuptools git\
   && pip3 install --upgrade pip~=21.1.0 \
   && pip3 install pipenv==2020.11.15 \
   && pipenv install --deploy \

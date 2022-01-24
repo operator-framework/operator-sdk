@@ -38,6 +38,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 	crmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 
+	"github.com/operator-framework/operator-sdk/internal/ansible/apiserver"
 	"github.com/operator-framework/operator-sdk/internal/ansible/controller"
 	"github.com/operator-framework/operator-sdk/internal/ansible/events"
 	"github.com/operator-framework/operator-sdk/internal/ansible/flags"
@@ -260,6 +261,12 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 	})
 	if err != nil {
 		log.Error(err, "Error starting proxy.")
+		os.Exit(1)
+	}
+	// start the ansible-operator api server
+	err = apiserver.Run(done, apiserver.Options{})
+	if err != nil {
+		log.Error(err, "Error starting api server.")
 		os.Exit(1)
 	}
 

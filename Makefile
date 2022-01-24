@@ -98,11 +98,11 @@ DOCKER_PROGRESS = --progress plain
 endif
 image/%: export DOCKER_CLI_EXPERIMENTAL = enabled
 image/%:
-	docker buildx build $(DOCKER_PROGRESS) -t $(BUILD_IMAGE_REPO)/$*:dev -f ./images/$*/Dockerfile --load .
+	docker buildx build $(DOCKER_PROGRESS) -t $(BUILD_IMAGE_REPO)/$*:dev -f ./images/$*/Dockerfile --load . --no-cache
 
 image-base/%: export DOCKER_CLI_EXPERIMENTAL = enabled
 image-base/%:
-	docker buildx build $(DOCKER_PROGRESS) -t $(BUILD_IMAGE_REPO)/$*-base:dev -f ./images/$*/base.Dockerfile --load images/$*
+	docker buildx build $(DOCKER_PROGRESS) -t $(BUILD_IMAGE_REPO)/$*-base:dev -f ./images/$*/base.Dockerfile --load images/$* --no-cache
 ##@ Release
 
 .PHONY: release
@@ -178,7 +178,7 @@ test-e2e-ansible:: image/ansible-operator ## Run Ansible e2e tests
 	go test -count=1 ./internal/ansible/proxy/...
 	go test ./test/e2e/ansible -v -ginkgo.v
 test-e2e-ansible-molecule:: image/ansible-operator ## Run molecule-based Ansible e2e tests
-	go run ./hack/generate/samples/molecule/generate.go
+	# // go run ./hack/generate/samples/molecule/generate.go
 	./hack/tests/e2e-ansible-molecule.sh
 test-e2e-helm:: image/helm-operator ## Run Helm e2e tests
 	go test ./test/e2e/helm -v -ginkgo.v
