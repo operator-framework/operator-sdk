@@ -15,6 +15,7 @@
 package cli
 
 import (
+	hybrid "github.com/operator-framework/helm-operator-plugins/pkg/plugins/hybrid/v1alpha"
 	quarkusv1 "github.com/operator-framework/java-operator-plugins/pkg/quarkus/v1alpha"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -22,6 +23,7 @@ import (
 	"sigs.k8s.io/kubebuilder/v3/pkg/cli"
 	cfgv2 "sigs.k8s.io/kubebuilder/v3/pkg/config/v2"
 	cfgv3 "sigs.k8s.io/kubebuilder/v3/pkg/config/v3"
+	"sigs.k8s.io/kubebuilder/v3/pkg/model/stage"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
 	kustomizev1 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/common/kustomize/v1"
 	declarativev1 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/declarative/v1"
@@ -98,6 +100,12 @@ func GetPluginsCLIAndRoot() (*cli.CLI, *cobra.Command) {
 		manifestsv2.Plugin{},
 		scorecardv2.Plugin{},
 	)
+	hybridBundle, _ := plugin.NewBundle("hybrid.helm"+plugins.DefaultNameQualifier, plugin.Version{Number: 1, Stage: stage.Alpha},
+		kustomizev1.Plugin{},
+		hybrid.Plugin{},
+		manifestsv2.Plugin{},
+		scorecardv2.Plugin{},
+	)
 	c, err := cli.New(
 		cli.WithCommandName("operator-sdk"),
 		cli.WithVersion(makeVersionString()),
@@ -106,6 +114,7 @@ func GetPluginsCLIAndRoot() (*cli.CLI, *cobra.Command) {
 			gov2Bundle,
 			gov3Bundle,
 			helmBundle,
+			hybridBundle,
 			kustomizev1.Plugin{},
 			declarativev1.Plugin{},
 			&quarkusv1.Plugin{},

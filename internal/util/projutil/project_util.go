@@ -55,6 +55,8 @@ const (
 	OperatorTypeAnsible OperatorType = "ansible"
 	// OperatorTypeHelm - helm type of operator.
 	OperatorTypeHelm OperatorType = "helm"
+	// OperatorTypeHybrid - hybrid type of operator.
+	operatorTypeHybridHelm OperatorType = "hybridHelm"
 	// OperatorTypeUnknown - unknown type of operator.
 	OperatorTypeUnknown OperatorType = "unknown"
 )
@@ -105,6 +107,8 @@ func PluginChainToOperatorType(pluginKeys []string) OperatorType {
 			return OperatorTypeHelm
 		case strings.HasPrefix(pluginKey, "ansible"):
 			return OperatorTypeAnsible
+		case strings.HasPrefix(pluginKey, "hybrid"):
+			return operatorTypeHybridHelm
 		}
 	}
 	return OperatorTypeUnknown
