@@ -167,7 +167,7 @@ func HandleUserMetric(r prometheus.Registerer, metricSpec UserMetric) error {
 		} else if metricSpec.Gauge.SetToCurrentTime {
 			v.SetToCurrentTime()
 		}
-	// Counter must be first, because otherwise it can be confused with a gauge.
+	// Counter must be first, because a Counter is a Gauge, but a Gauge is not a Counter.
 	case prometheus.Counter:
 		if metricSpec.Counter == nil {
 			return fmt.Errorf("cannot change metric type of %s, which is a counter", metricSpec.Name)
@@ -177,11 +177,11 @@ func HandleUserMetric(r prometheus.Registerer, metricSpec UserMetric) error {
 		} else if metricSpec.Counter.Add != 0.0 {
 			v.Add(metricSpec.Counter.Add)
 		}
+	// Histogram and Summary interfaces are identical, so we accept either case.
 	case prometheus.Histogram:
 		if metricSpec.Histogram == nil && metricSpec.Summary == nil {
 			return fmt.Errorf("cannot change metric type of %s, which is a histogram or summary", metricSpec.Name)
 		}
-		// Histogram and Summary interfaces are identical, so we accept either case.
 		if metricSpec.Histogram != nil {
 			v.Observe(metricSpec.Histogram.Observe)
 		}
