@@ -32,7 +32,7 @@ type Options struct {
 	Port    int
 }
 
-func Run(done chan error, options Options) error {
+func Run(options Options) error {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/metrics", metricsHandler)
@@ -41,20 +41,17 @@ func Run(done chan error, options Options) error {
 		Addr:    fmt.Sprintf("%s:%d", options.Address, options.Port),
 		Handler: mux,
 	}
-	go func() {
-		log.Info("Starting to serve metrics listener", "Address", server.Addr)
-		done <- server.ListenAndServe()
-	}()
-	return nil
+	log.Info("Starting to serve metrics listener", "Address", server.Addr)
+	return server.ListenAndServe()
 }
 
 func metricsHandler(w http.ResponseWriter, r *http.Request) {
-	log.V(3).Info(fmt.Sprintf("Request: %+v", r))
+	log.V(3).Info(fmt.Sprintf("%s %s", r.Method, r.URL))
 
 	var userMetric metrics.UserMetric
 
 	switch r.Method {
-	case "POST":
+	case http.MethodPost:
 		log.V(3).Info("The apiserver has received a POST")
 		err := json.NewDecoder(r.Body).Decode(&userMetric)
 		if err != nil {
