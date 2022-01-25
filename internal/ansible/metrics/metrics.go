@@ -15,6 +15,7 @@
 package metrics
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -115,8 +116,77 @@ type UserMetricSummary struct {
 	Observe float64 `json:"observe,omitempty" yaml:"observe,omitempty"`
 }
 
+func validateMetricSpec(metricSpec UserMetric) error {
+	var metricConfigs int
+	if metricSpec.Counter != nil {
+		metricConfigs++
+	}
+	if metricSpec.Gauge != nil {
+		metricConfigs++
+	}
+	if metricSpec.Summary != nil {
+		metricConfigs++
+	}
+	if metricSpec.Histogram != nil {
+		metricConfigs++
+	}
+	if metricConfigs > 1 {
+		return errors.New("only one metric can be processed at a time")
+	} else if metricConfigs == 0 {
+		return errors.New("a request should contain at least one metric")
+	}
+	return nil
+}
+
+func handleCounter(metricSpec UserMetric, counter prometheus.Counter) error {
+	if metricSpec.Counter == nil {
+		return fmt.Errorf("cannot change metric type of %s, which is a counter", metricSpec.Name)
+	}
+	if metricSpec.Counter.Inc {
+		counter.Inc()
+	} else if metricSpec.Counter.Add != 0.0 {
+		counter.Add(metricSpec.Counter.Add)
+	}
+	return nil
+}
+
+func handleGauge(metricSpec UserMetric, gauge prometheus.Gauge) error {
+	if metricSpec.Gauge == nil {
+		return fmt.Errorf("cannot change metric type of %s, which is a gauge", metricSpec.Name)
+	}
+	if metricSpec.Gauge.Inc {
+		gauge.Inc()
+	} else if metricSpec.Gauge.Dec {
+		gauge.Dec()
+	} else if metricSpec.Gauge.Add != 0.0 {
+		gauge.Add(metricSpec.Gauge.Add)
+	} else if metricSpec.Gauge.Sub != 0.0 {
+		gauge.Sub(metricSpec.Gauge.Sub)
+	} else if metricSpec.Gauge.Set != 0.0 {
+		gauge.Set(metricSpec.Gauge.Set)
+	} else if metricSpec.Gauge.SetToCurrentTime {
+		gauge.SetToCurrentTime()
+	}
+	return nil
+}
+
+func handleSummaryOrHistogram(metricSpec UserMetric, summary prometheus.Summary) error {
+	if metricSpec.Histogram == nil && metricSpec.Summary == nil {
+		return fmt.Errorf("cannot change metric type of %s, which is a histogram or summary", metricSpec.Name)
+	}
+	if metricSpec.Histogram != nil {
+		summary.Observe(metricSpec.Histogram.Observe)
+	} else if metricSpec.Summary != nil {
+		summary.Observe(metricSpec.Summary.Observe)
+	}
+	return nil
+}
+
 func HandleUserMetric(r prometheus.Registerer, metricSpec UserMetric) error {
-	defer recoverMetricPanic()
+	err := validateMetricSpec(metricSpec)
+	if err != nil {
+		return err
+	}
 	logf.Log.WithName("metrics").Info("Registering", "metric", metricSpec.Name)
 	_, ok := userMetrics[metricSpec.Name]
 	if !ok {
@@ -150,43 +220,23 @@ func HandleUserMetric(r prometheus.Registerer, metricSpec UserMetric) error {
 
 	collector := userMetrics[metricSpec.Name]
 	switch v := collector.(type) {
-	case prometheus.Gauge:
-		if metricSpec.Gauge == nil {
-			return fmt.Errorf("cannot change metric type of %s, which is a gauge", metricSpec.Name)
-		}
-		if metricSpec.Gauge.Inc {
-			v.Inc()
-		} else if metricSpec.Gauge.Dec {
-			v.Dec()
-		} else if metricSpec.Gauge.Add != 0.0 {
-			v.Add(metricSpec.Gauge.Add)
-		} else if metricSpec.Gauge.Sub != 0.0 {
-			v.Sub(metricSpec.Gauge.Sub)
-		} else if metricSpec.Gauge.Set != 0.0 {
-			v.Set(metricSpec.Gauge.Set)
-		} else if metricSpec.Gauge.SetToCurrentTime {
-			v.SetToCurrentTime()
-		}
 	// Counter must be first, because a Counter is a Gauge, but a Gauge is not a Counter.
+	case prometheus.Gauge:
+		err := handleGauge(metricSpec, v)
+		if err != nil {
+			return err
+		}
 	case prometheus.Counter:
-		if metricSpec.Counter == nil {
-			return fmt.Errorf("cannot change metric type of %s, which is a counter", metricSpec.Name)
+		err := handleCounter(metricSpec, v)
+		if err != nil {
+			return err // Allow the error to be handled by apiserver so it can return a 400
 		}
-		if metricSpec.Counter.Inc {
-			v.Inc()
-		} else if metricSpec.Counter.Add != 0.0 {
-			v.Add(metricSpec.Counter.Add)
-		}
+
 	// Histogram and Summary interfaces are identical, so we accept either case.
 	case prometheus.Histogram:
-		if metricSpec.Histogram == nil && metricSpec.Summary == nil {
-			return fmt.Errorf("cannot change metric type of %s, which is a histogram or summary", metricSpec.Name)
-		}
-		if metricSpec.Histogram != nil {
-			v.Observe(metricSpec.Histogram.Observe)
-		}
-		if metricSpec.Summary != nil {
-			v.Observe(metricSpec.Summary.Observe)
+		err := handleSummaryOrHistogram(metricSpec, v)
+		if err != nil {
+			return err
 		}
 	}
 	return nil

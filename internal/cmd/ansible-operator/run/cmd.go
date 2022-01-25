@@ -268,11 +268,11 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 		Address: "localhost",
 		Port:    5050,
 	})
+	done <- err
 	if err != nil {
 		log.Error(err, "Error starting api server.")
 		os.Exit(1)
 	}
-	done <- err
 
 	// start the operator
 	go func() {
