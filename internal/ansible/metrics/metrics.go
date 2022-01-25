@@ -215,7 +215,10 @@ func HandleUserMetric(r prometheus.Registerer, metricSpec UserMetric) error {
 				Help: metricSpec.Help,
 			})
 		}
-		r.MustRegister(userMetrics[metricSpec.Name])
+		err := r.Register(userMetrics[metricSpec.Name])
+		if err != nil {
+			logf.Log.WithName("metrics").Info("unable to register %s metric with promethesu", metricSpec.Name)
+		}
 	}
 
 	collector := userMetrics[metricSpec.Name]
