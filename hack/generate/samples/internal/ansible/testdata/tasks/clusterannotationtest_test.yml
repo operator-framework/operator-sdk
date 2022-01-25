@@ -47,4 +47,5 @@
     name: "externalnamespace"
   register: external_namespace
   until: external_namespace.resources[0].metadata.labels["foo"] == "bar"
+  retries: 6
 
