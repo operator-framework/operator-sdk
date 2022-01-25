@@ -182,15 +182,10 @@ func handleSummaryOrHistogram(metricSpec UserMetric, summary prometheus.Summary)
 	return nil
 }
 
-func HandleUserMetric(r prometheus.Registerer, metricSpec UserMetric) error {
-	err := validateMetricSpec(metricSpec)
-	if err != nil {
-		return err
-	}
-	logf.Log.WithName("metrics").Info("Registering", "metric", metricSpec.Name)
-	_, ok := userMetrics[metricSpec.Name]
-	if !ok {
+func ensureMetric(r prometheus.Registerer, metricSpec UserMetric) {
+	if _, ok := userMetrics[metricSpec.Name]; !ok {
 		// This is the first time we've seen this metric
+		logf.Log.WithName("metrics").Info("Registering", "metric", metricSpec.Name)
 		if metricSpec.Counter != nil {
 			userMetrics[metricSpec.Name] = prometheus.NewCounter(prometheus.CounterOpts{
 				Name: metricSpec.Name,
@@ -215,30 +210,31 @@ func HandleUserMetric(r prometheus.Registerer, metricSpec UserMetric) error {
 				Help: metricSpec.Help,
 			})
 		}
-		err := r.Register(userMetrics[metricSpec.Name])
-		if err != nil {
-			logf.Log.WithName("metrics").Info("unable to register %s metric with promethesu", metricSpec.Name)
+		if err := r.Register(userMetrics[metricSpec.Name]); err != nil {
+			logf.Log.WithName("metrics").Info("Unable to register %s metric with prometheus.", metricSpec.Name)
 		}
 	}
+}
 
+func HandleUserMetric(r prometheus.Registerer, metricSpec UserMetric) error {
+	if err := validateMetricSpec(metricSpec); err != nil {
+		return err
+	}
+	ensureMetric(r, metricSpec)
 	collector := userMetrics[metricSpec.Name]
 	switch v := collector.(type) {
 	// Counter must be first, because a Counter is a Gauge, but a Gauge is not a Counter.
 	case prometheus.Gauge:
-		err := handleGauge(metricSpec, v)
-		if err != nil {
+		if err := handleGauge(metricSpec, v); err != nil {
 			return err
 		}
 	case prometheus.Counter:
-		err := handleCounter(metricSpec, v)
-		if err != nil {
-			return err // Allow the error to be handled by apiserver so it can return a 400
+		if err := handleCounter(metricSpec, v); err != nil {
+			return err
 		}
-
 	// Histogram and Summary interfaces are identical, so we accept either case.
 	case prometheus.Histogram:
-		err := handleSummaryOrHistogram(metricSpec, v)
-		if err != nil {
+		if err := handleSummaryOrHistogram(metricSpec, v); err != nil {
 			return err
 		}
 	}
