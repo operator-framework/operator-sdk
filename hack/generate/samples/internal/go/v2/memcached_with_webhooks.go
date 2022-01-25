@@ -86,6 +86,9 @@ func (mh *Memcached) Run() {
 	log.Infof("implementing the Controller")
 	mh.implementingController()
 
+	log.Infof("implementing the suite test")
+	mh.implementingSuiteTest()
+
 	log.Infof("scaffolding webhook")
 	err = mh.ctx.CreateWebhook(
 		"--group", mh.ctx.Group,
@@ -269,6 +272,19 @@ func (mh *Memcached) implementingController() {
 	pkg.CheckError("replacing reconcile", err)
 }
 
+// implementingSuiteTest will customize the suite test
+func (mh *Memcached) implementingSuiteTest() {
+	suiteTestPath := filepath.Join(mh.ctx.Dir, "controllers", "suite_test.go")
+
+	// Add imports
+	err := kbtutil.ReplaceInFile(suiteTestPath, suiteTestOriginalImports, suiteTestCustomizedImports)
+	pkg.CheckError("adding imports", err)
+
+	// Add kubernetes client
+	err = kbtutil.ReplaceInFile(suiteTestPath, suiteTestOriginalFragment, suiteTestCustomizedFragment)
+	pkg.CheckError("starting suite test with kubernetes client", err)
+}
+
 // nolint:gosec
 // implementingAPI will customize the API
 func (mh *Memcached) implementingAPI() {
@@ -437,6 +453,51 @@ func getPodNames(pods []corev1.Pod) []string {
 	}
 	return podNames
 }
+`
+
+const suiteTestOriginalImports = `
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+`
+
+const suiteTestCustomizedImports = `
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+`
+
+const suiteTestOriginalFragment = `
+
+	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	Expect(err).ToNot(HaveOccurred())
+	Expect(k8sClient).ToNot(BeNil())
+`
+
+const suiteTestCustomizedFragment = `
+
+k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
+	Scheme: scheme.Scheme,
+})
+Expect(err).ToNot(HaveOccurred())
+
+err = (&MemcachedReconciler{
+	Client: k8sManager.GetClient(),
+	Log:    ctrl.Log.WithName("controllers").WithName("Memcached"),
+	Scheme: &runtime.Scheme{},
+}).SetupWithManager(k8sManager)
+Expect(err).ToNot(HaveOccurred())
+
+go func() {
+	err = k8sManager.Start(ctrl.SetupSignalHandler())
+	Expect(err).ToNot(HaveOccurred())
+}()
+
+k8sClient = k8sManager.GetClient()
+Expect(k8sClient).NotTo(BeNil())
 `
 
 const importsFragment = `
