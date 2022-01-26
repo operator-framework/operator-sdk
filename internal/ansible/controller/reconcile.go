@@ -187,9 +187,8 @@ func (r *AnsibleOperatorReconciler) Reconcile(ctx context.Context, request recon
 				return reconcile.Result{}, err
 			}
 		}
-
 		if module, found := event.EventData["task_action"]; found {
-			if module == "operator_sdk.util.requeue_after" && event.Event != eventapi.EventRunnerOnFailed {
+			if module == "operator_sdk.util.requeue_after" || module == "requeue_after" && event.Event != eventapi.EventRunnerOnFailed {
 				if data, exists := event.EventData["res"]; exists {
 					if fields, check := data.(map[string]interface{}); check {
 						requeueDuration, err := time.ParseDuration(fields["period"].(string))
