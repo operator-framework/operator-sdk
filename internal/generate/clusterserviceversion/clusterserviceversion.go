@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/blang/semver/v4"
@@ -56,6 +57,9 @@ type Generator struct {
 	// ExtraServiceAccounts are ServiceAccount names to consider when matching
 	// {Cluster}Roles to include in a CSV via their Bindings.
 	ExtraServiceAccounts []string
+	// RelatedImages are additional images used by the operator.
+	// It is a mapping of an image name to an image URL
+	RelatedImages map[string]string
 
 	// Func that returns the writer the generated CSV's bytes are written to.
 	getWriter func() (io.Writer, error)
@@ -165,6 +169,14 @@ func (g *Generator) generate() (base *operatorsv1alpha1.ClusterServiceVersion, e
 	if g.FromVersion != "" {
 		base.Spec.Replaces = genutil.MakeCSVName(g.OperatorName, g.FromVersion)
 	}
+	base.Spec.RelatedImages = make([]operatorsv1alpha1.RelatedImage, 0, len(g.RelatedImages))
+	for name, image := range g.RelatedImages {
+		base.Spec.RelatedImages = append(base.Spec.RelatedImages, operatorsv1alpha1.RelatedImage{Name: name, Image: image})
+	}
+	// ensure deterministic order
+	sort.SliceStable(base.Spec.RelatedImages, func(i, j int) bool {
+		return strings.Compare(base.Spec.RelatedImages[i].Name, base.Spec.RelatedImages[j].Name) > 0
+	})
 
 	if err := ApplyTo(g.Collector, base, g.ExtraServiceAccounts); err != nil {
 		return nil, err

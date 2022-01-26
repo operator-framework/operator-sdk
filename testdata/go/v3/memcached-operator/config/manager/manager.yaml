@@ -33,6 +33,9 @@ spec:
         - --leader-elect
         image: controller:latest
         name: manager
+        env:
+        - name: RELATED_IMAGE_GOLANG_117
+          value: golang:1.17
         securityContext:
           allowPrivilegeEscalation: false
         livenessProbe:

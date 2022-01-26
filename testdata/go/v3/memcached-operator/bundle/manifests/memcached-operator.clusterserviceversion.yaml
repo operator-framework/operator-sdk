@@ -16,6 +16,8 @@ metadata:
         }
       ]
     capabilities: Basic Install
+    operators.operatorframework.io/builder: operator-sdk-v1.16.0+git
+    operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
   name: memcached-operator.v0.0.1
   namespace: placeholder
 spec:
@@ -135,7 +137,10 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
-                image: quay.io/example/memcached-operator:v0.0.1
+                env:
+                - name: RELATED_IMAGE_GOLANG_117
+                  value: golang:1.17
+                image: controller:latest
                 livenessProbe:
                   httpGet:
                     path: /healthz
@@ -222,6 +227,9 @@ spec:
   provider:
     name: Provider Name
     url: https://your.domain
+  relatedImages:
+  - image: golang:1.17
+    name: golang-117
   version: 0.0.1
   webhookdefinitions:
   - admissionReviewVersions:
