@@ -307,9 +307,10 @@ func (c bundleCmd) findRelatedImages(col *collector.Manifests) (map[string]strin
 	for _, envVar := range env {
 		if strings.HasPrefix(envVar.Name, relatedImagePrefix) {
 			if envVar.ValueFrom != nil {
-				return nil, fmt.Errorf("related images with valueFrom field unsopported, found in %s`", envVar.Name)
+				return nil, fmt.Errorf("related images with valueFrom field unsupported, found in %s`", envVar.Name)
 			}
 
+			// transforms RELATED_IMAGE_This_IS_a_cool_image to this-is-a-cool-image
 			name := strings.ToLower(strings.Replace(strings.TrimPrefix(envVar.Name, relatedImagePrefix), "_", "-", -1))
 			imageNames[name] = envVar.Value
 		}
