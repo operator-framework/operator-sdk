@@ -38,8 +38,9 @@ func (f *Kustomize) SetTemplateDefaults() error {
 
 const kustomizeTemplate = `---
 - name: Build kustomize testing overlay
-  # load_restrictor must be set to none so we can load patch files from the default overlay
-  command: '{{ "{{ kustomize }}" }} build  --load_restrictor none .'
+  # load-restrictor must be set to none so we can load patch files from the default overlay
+  # use "--load-restrictor LoadRestrictionsNone" for kustomize 4+
+  command: '{{ "{{ kustomize }}" }} build  --load-restrictor none .'
   args:
     chdir: '{{ "{{ config_dir }}" }}/testing'
   register: resources
