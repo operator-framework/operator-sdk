@@ -145,6 +145,9 @@ func handleCounter(metricSpec UserMetric, counter prometheus.Counter) error {
 	if metricSpec.Counter.Inc {
 		counter.Inc()
 	} else if metricSpec.Counter.Add != 0.0 {
+		if metricSpec.Counter.Add < 0 {
+			return errors.New("counter metrics cannot decrease in value")
+		}
 		counter.Add(metricSpec.Counter.Add)
 	}
 	return nil

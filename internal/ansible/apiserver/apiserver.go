@@ -17,6 +17,7 @@ package apiserver
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -45,6 +46,10 @@ func Run(options Options) error {
 }
 
 func metricsHandler(w http.ResponseWriter, r *http.Request) {
+	defer func() {
+		io.Copy(io.Discard, r.Body)
+		r.Body.Close()
+	}()
 	log.V(3).Info(fmt.Sprintf("%s %s", r.Method, r.URL))
 
 	var userMetric metrics.UserMetric
