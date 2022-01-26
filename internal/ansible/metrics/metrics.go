@@ -223,7 +223,7 @@ func HandleUserMetric(r prometheus.Registerer, metricSpec UserMetric) error {
 	ensureMetric(r, metricSpec)
 	collector := userMetrics[metricSpec.Name]
 	switch v := collector.(type) {
-	// Counter must be first, because a Counter is a Gauge, but a Gauge is not a Counter.
+	// Gauge must be first, because a Counter is a Gauge, but a Gauge is not a Counter.
 	case prometheus.Gauge:
 		if err := handleGauge(metricSpec, v); err != nil {
 			return err

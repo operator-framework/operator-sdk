@@ -265,10 +265,11 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 	}
 	// start the ansible-operator api server
 	go func() {
-		apiserver.Run(done, apiserver.Options{
+		server := apiserver.Run(apiserver.Options{
 			Address: "localhost",
 			Port:    5050,
 		})
+		done <- server
 	}()
 
 	// start the operator

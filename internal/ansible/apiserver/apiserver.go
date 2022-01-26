@@ -32,7 +32,7 @@ type Options struct {
 	Port    int
 }
 
-func Run(done chan error, options Options) {
+func Run(options Options) error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/metrics", metricsHandler)
 
@@ -41,7 +41,7 @@ func Run(done chan error, options Options) {
 		Handler: mux,
 	}
 	log.Info("Starting to serve metrics listener", "Address", server.Addr)
-	done <- server.ListenAndServe()
+	return server.ListenAndServe()
 }
 
 func metricsHandler(w http.ResponseWriter, r *http.Request) {
