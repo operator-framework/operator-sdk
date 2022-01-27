@@ -470,7 +470,7 @@ Next, check out the following:
 [builder_godocs]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/builder#example-Builder
 [activate_modules]: https://github.com/golang/go/wiki/Modules#how-to-install-and-activate-module-support
 [advanced-topics]: /docs/building-operators/golang/advanced-topics/
-[create_a_webhook]: https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html
+[create_a_webhook]: /docs/building-operators/golang/webhook
 [status_marker]: https://book.kubebuilder.io/reference/generating-crd.html#status
 [status_subresource]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#status-subresource
 [API-groups]:https://kubernetes.io/docs/concepts/overview/kubernetes-api/#api-groups
