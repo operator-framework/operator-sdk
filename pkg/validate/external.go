@@ -28,37 +28,39 @@ import (
 	apierrors "github.com/operator-framework/api/pkg/validation/errors"
 )
 
-// ValidatorEntrypointsEnv should be set to a Unix path list ("/path/to/e1.sh:/path/to/e2")
-// containing the list of entrypoints to external (out of code tree) validator scripts
-// or binaries to run. Requirements for entrypoints:
-// - Entrypoints must be executable by the user running the parent process.
-// - The stdout output of an entrypoint *must* conform to the JSON representation
-//   of Result so results can be parsed and collated with other internal validators.
-// - An entrypoint should exit 1 and print output to stderr only if the entrypoint itself
-//   fails for some reason. If the bundle fails to pass validation, that information
-//   should be encoded in the Result printed to stdout as a Type="error".
-//
-// WARNING: the script or binary at the base of this path will be executed arbitrarily,
-// so make sure you check the contents of that script or binary prior to running.
-const ValidatorEntrypointsEnv = "OPERATOR_SDK_VALIDATOR_ENTRYPOINTS"
+// TODO: (zeus) remove this
+// // ValidatorEntrypointsEnv should be set to a Unix path list ("/path/to/e1.sh:/path/to/e2")
+// // containing the list of entrypoints to external (out of code tree) validator scripts
+// // or binaries to run. Requirements for entrypoints:
+// // - Entrypoints must be executable by the user running the parent process.
+// // - The stdout output of an entrypoint *must* conform to the JSON representation
+// //   of Result so results can be parsed and collated with other internal validators.
+// // - An entrypoint should exit 1 and print output to stderr only if the entrypoint itself
+// //   fails for some reason. If the bundle fails to pass validation, that information
+// //   should be encoded in the Result printed to stdout as a Type="error".
+// //
+// // WARNING: the script or binary at the base of this path will be executed arbitrarily,
+// // so make sure you check the contents of that script or binary prior to running.
+// const ValidatorEntrypointsEnv = "OPERATOR_SDK_VALIDATOR_ENTRYPOINTS"
 
 // For mocking in tests.
 var stderr io.Writer = os.Stderr
 
 // GetExternalValidatorEntrypoints returns a list of external validator entrypoints
-// retrieved from ValidatorEntrypointsEnv and true if set. If not set or set to the empty string,
+// retrieved from given entrypoints string. If not set or set to the empty string,
 // GetExternalValidatorEntrypoints returns false.
-func GetExternalValidatorEntrypoints() ([]string, bool) {
-	entrypoints, isSet := os.LookupEnv(ValidatorEntrypointsEnv)
-	if !isSet || strings.TrimSpace(entrypoints) == "" {
+func GetExternalValidatorEntrypoints(entrypoints string) ([]string, bool) {
+	// entrypoints, isSet := os.LookupEnv(ValidatorEntrypointsEnv)
+	if strings.TrimSpace(entrypoints) == "" {
 		return nil, false
 	}
 	return filepath.SplitList(entrypoints), true
 }
 
-// RunExternalValidators runs each entrypoint in entrypoint as a exec.Cmd with the single argument bundleRoot.
-// External validators are expected to parse the bundle themselves with library APIs available
-// in https://pkg.go.dev/github.com/operator-framework/api/pkg/manifests.
+// RunExternalValidators runs each entrypoint in entrypoint as a exec.Cmd with the
+// single argument bundleRoot. External validators are expected to parse the bundle
+// themselves with library APIs available in
+// https://pkg.go.dev/github.com/operator-framework/api/pkg/manifests.
 //
 // TODO(estroz): what other information should be passed? Output of `docker inspect`?
 func RunExternalValidators(ctx context.Context, entrypoints []string, bundleRoot string) ([]Result, error) {
