@@ -96,19 +96,24 @@ func (c *bundleValidateCmd) addToFlagSet(fs *pflag.FlagSet) {
 		"Result format for results. One of: [text, json-alpha1]. Note: output format types containing "+
 			"\"alphaX\" are subject to change and not covered by guarantees of stable APIs.")
 
-	fs.StringVar(&c.alphaSelectExternal, "alpha-select-external", "", "Selector to select external validators to run. ")
-	// ValidatorEntrypointsEnv should be set to a Unix path list ("/path/to/e1.sh:/path/to/e2")
-	// containing the list of entrypoints to external (out of code tree) validator scripts
-	// or binaries to run. Requirements for entrypoints:
-	// - Entrypoints must be executable by the user running the parent process.
-	// - The stdout output of an entrypoint *must* conform to the JSON representation
-	//   of Result so results can be parsed and collated with other internal validators.
-	// - An entrypoint should exit 1 and print output to stderr only if the entrypoint itself
-	//   fails for some reason. If the bundle fails to pass validation, that information
-	//   should be encoded in the Result printed to stdout as a Type="error".
+	// alpha-select-external should be set to a Unix path list
+	// ("/path/to/e1.sh:/path/to/e2") containing the list of entrypoints to
+	// external (out of code tree) validator scripts or binaries to run.
+	// Requirements for entrypoints:
+	//  - Entrypoints must be executable by the user running the parent process.
+	//  - The stdout output of an entrypoint *must* conform to the JSON
+	//    representation of Result so results can be parsed and collated
+	//    with other internal validators.
+	//  - An entrypoint should exit 1 and print output to stderr only if the
+	//    entrypoint itself fails for some reason. If the bundle fails to
+	//    pass validation, that information  should be encoded in the Result
+	//    printed to stdout as a Type=\"error\".
 	//
-	// WARNING: the script or binary at the base of this path will be executed arbitrarily,
-	// so make sure you check the contents of that script or binary prior to running.
+	// WARNING: the script or binary at the base of this path will be
+	// executed arbitrarily, so make sure you check the contents of that
+	// script or binary prior to running.
+	fs.StringVar(&c.alphaSelectExternal, "alpha-select-external", "",
+		"Selector to select external validators to run. It should be set to a Unix path list (\"/path/to/e1.sh:/path/to/e2\")")
 }
 
 func (c bundleValidateCmd) run(logger *log.Entry, bundleRaw string) (res *validate.Result, err error) {
