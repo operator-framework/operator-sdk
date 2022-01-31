@@ -84,6 +84,11 @@ func (ma *MemcachedMolecule) Run() {
 	err = kbutil.InsertCode(moleculeTaskPath, testSecretMoleculeCheck, testFooMoleculeCheck)
 	pkg.CheckError("replacing memcached task to add foo check", err)
 
+	log.Infof("insert molecule task to check custom metrics")
+	err = kbutil.InsertCode(moleculeTaskPath, testFooMoleculeCheck, customMetricsTest)
+
+	pkg.CheckError("replacing memcached task to add foo check", err)
+
 	log.Infof("replacing project Dockerfile to use ansible base image with the dev tag")
 	err = util.ReplaceRegexInFile(filepath.Join(ma.ctx.Dir, "Dockerfile"), "quay.io/operator-framework/ansible-operator:.*", "quay.io/operator-framework/ansible-operator:dev")
 	pkg.CheckError("replacing Dockerfile", err)

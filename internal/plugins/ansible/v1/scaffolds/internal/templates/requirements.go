@@ -38,7 +38,7 @@ collections:
   - name: community.kubernetes
     version: "1.2.1"
   - name: operator_sdk.util
-    version: "0.3.1"
+    version: "0.4.0"
   - name: kubernetes.core
     version: "2.2.0"
 `

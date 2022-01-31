@@ -51,8 +51,139 @@ const roleFragment = `
                   port: 11211
                 initialDelaySeconds: 3
                 periodSeconds: 3
-`
 
+- name: Check if config exists
+  ansible.builtin.stat:
+     path: /tmp/metricsbumped
+  register: metricsbumped
+
+# Only run once
+- block:
+    - ansible.builtin.file:
+       path: /tmp/metricsbumped
+       state: touch
+    # Sanity
+    - name: create sanity_counter
+      operator_sdk.util.osdk_metric:
+        name: sanity_counter
+        description: ensure counter can be created
+        counter: {}
+
+    - name: create sanity_gauge
+      operator_sdk.util.osdk_metric:
+        name: sanity_gauge
+        description: ensure gauge can be created
+        gauge: {}
+
+    - name: create sanity_histogram
+      operator_sdk.util.osdk_metric:
+        name: sanity_histogram
+        description: ensure histogram can be created
+        histogram: {}
+
+    - name: create sanity_summary
+      operator_sdk.util.osdk_metric:
+        name: sanity_summary
+        description: ensure summary can be created
+        summary: {}
+
+    # Counter
+    - name: Counter increment test setup
+      operator_sdk.util.osdk_metric:
+        name: counter_inc_test
+        description: create counter to be incremented
+        counter: {}
+
+    - name: Execute Counter increment test
+      operator_sdk.util.osdk_metric:
+        name: counter_inc_test
+        description: increment counter
+        counter:
+          increment: yes
+
+    - name: Counter add test setup
+      operator_sdk.util.osdk_metric:
+        name: counter_add_test
+        description: create counter to be added to
+        counter: {}
+
+    - name: Counter add test exe
+      operator_sdk.util.osdk_metric:
+        name: counter_add_test
+        description: create counter to be incremented
+        counter:
+          add: 2
+
+    # Gauge
+    - name: Gauge set test
+      operator_sdk.util.osdk_metric:
+        name: gauge_set_test
+        description: create and set a gauge t0 5
+        gauge:
+          set: 5
+
+    - name: Gauge add test setup
+      operator_sdk.util.osdk_metric:
+        name: gauge_add_test
+        description: create a gauge
+        gauge: {}
+
+    - name: Gauge add test
+      operator_sdk.util.osdk_metric:
+        name: gauge_add_test
+        description: Add 7 to the gauge
+        gauge:
+          add: 7
+
+    - name: Gauge subtract test setup
+      operator_sdk.util.osdk_metric:
+        name: gauge_sub_test
+        description: create a gauge
+        gauge: {}
+
+    - name: Gauge sub test
+      operator_sdk.util.osdk_metric:
+        name: gauge_sub_test
+        description: Add 7 to the gauge
+        gauge:
+          subtract: 7
+
+    - name: Gauge time test
+      operator_sdk.util.osdk_metric:
+        name: gauge_time_test
+        description: set the gauge to current time
+        gauge:
+          set_to_current_time: yes
+
+    # Summary
+    - name: Summary test setup
+      operator_sdk.util.osdk_metric:
+        name: summary_test
+        description: create a summary
+        summary: {}
+
+    - name: Summary test
+      operator_sdk.util.osdk_metric:
+        name: summary_test
+        description: observe a summary
+        summary:
+          observe: 2
+
+    # Histogram
+    - name: Histogram test setup
+      operator_sdk.util.osdk_metric:
+        name: histogram_test
+        description: create a histogram
+        histogram: {}
+
+    - name: Histogram test
+      operator_sdk.util.osdk_metric:
+        name: histogram_test
+        description: observe a histogram
+        histogram:
+          observe: 2
+  when: not metricsbumped.stat.exists
+`
 const defaultsFragment = `size: 1`
 
 const moleculeTaskFragment = `- name: Load CR
@@ -378,4 +509,54 @@ const rolesForBaseOperator = `
       - update
       - watch
 #+kubebuilder:scaffold:rules
+`
+
+const customMetricsTest = `
+- name: Search for all running pods
+  kubernetes.core.k8s_info:
+    kind: Pod
+    label_selectors:
+      - "control-plane = controller-manager"
+  register: output
+- name: Curl the metrics from the manager
+  kubernetes.core.k8s_exec:
+    namespace: default
+    container: manager
+    pod: "{{ output.resources[0].metadata.name }}"
+    command: curl localhost:8080/metrics
+  register: metrics_output
+
+- name: Assert sanity metrics were created
+  assert:
+    that:
+      - "'sanity_counter 0' in metrics_output.stdout"
+      - "'sanity_gauge 0' in metrics_output.stdout"
+      - "'sanity_histogram_bucket' in metrics_output.stdout"
+      - "'sanity_summary summary' in metrics_output.stdout"
+
+- name: Assert Counter works as expected
+  assert:
+    that:
+      - "'counter_inc_test 1' in metrics_output.stdout"
+      - "'counter_add_test 2' in metrics_output.stdout"
+
+- name: Assert Gauge works as expected
+  assert:
+    that:
+      - "'gauge_set_test 5' in metrics_output.stdout"
+      - "'gauge_add_test 7' in metrics_output.stdout"
+      - "'gauge_sub_test -7' in metrics_output.stdout"
+      # result is epoch time in seconds so the first digit is good until 2033
+      - "'gauge_time_test 1' in metrics_output.stdout"
+
+- name: Assert Summary works as expected
+  assert:
+    that:
+      - "'summary_test_sum 2' in metrics_output.stdout"
+
+- name: Assert Histogram works as expected
+  assert:
+    that:
+      - "'histogram_test_sum 2' in metrics_output.stdout"
+
 `
