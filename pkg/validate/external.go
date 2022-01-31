@@ -28,21 +28,6 @@ import (
 	apierrors "github.com/operator-framework/api/pkg/validation/errors"
 )
 
-// TODO: (zeus) remove this
-// // ValidatorEntrypointsEnv should be set to a Unix path list ("/path/to/e1.sh:/path/to/e2")
-// // containing the list of entrypoints to external (out of code tree) validator scripts
-// // or binaries to run. Requirements for entrypoints:
-// // - Entrypoints must be executable by the user running the parent process.
-// // - The stdout output of an entrypoint *must* conform to the JSON representation
-// //   of Result so results can be parsed and collated with other internal validators.
-// // - An entrypoint should exit 1 and print output to stderr only if the entrypoint itself
-// //   fails for some reason. If the bundle fails to pass validation, that information
-// //   should be encoded in the Result printed to stdout as a Type="error".
-// //
-// // WARNING: the script or binary at the base of this path will be executed arbitrarily,
-// // so make sure you check the contents of that script or binary prior to running.
-// const ValidatorEntrypointsEnv = "OPERATOR_SDK_VALIDATOR_ENTRYPOINTS"
-
 // For mocking in tests.
 var stderr io.Writer = os.Stderr
 
@@ -50,7 +35,6 @@ var stderr io.Writer = os.Stderr
 // retrieved from given entrypoints string. If not set or set to the empty string,
 // GetExternalValidatorEntrypoints returns false.
 func GetExternalValidatorEntrypoints(entrypoints string) ([]string, bool) {
-	// entrypoints, isSet := os.LookupEnv(ValidatorEntrypointsEnv)
 	if strings.TrimSpace(entrypoints) == "" {
 		return nil, false
 	}
@@ -61,8 +45,6 @@ func GetExternalValidatorEntrypoints(entrypoints string) ([]string, bool) {
 // single argument bundleRoot. External validators are expected to parse the bundle
 // themselves with library APIs available in
 // https://pkg.go.dev/github.com/operator-framework/api/pkg/manifests.
-//
-// TODO(estroz): what other information should be passed? Output of `docker inspect`?
 func RunExternalValidators(ctx context.Context, entrypoints []string, bundleRoot string) ([]Result, error) {
 	results := make([]Result, len(entrypoints))
 	manifestresults := make([]apierrors.ManifestResult, len(entrypoints))
@@ -70,6 +52,7 @@ func RunExternalValidators(ctx context.Context, entrypoints []string, bundleRoot
 		cmd := exec.CommandContext(ctx, entrypoint, bundleRoot)
 		// Let error text go to stderr.
 		cmd.Stderr = stderr
+
 		// The validator should only exit non-zero if the entrypoint itself failed to run,
 		// not if the bundle failed validation.
 		out, err := cmd.Output()
@@ -85,9 +68,6 @@ func RunExternalValidators(ctx context.Context, entrypoints []string, bundleRoot
 			fmt.Printf("decode failed: %v\n", err)
 			return nil, err
 		}
-		// if err := dec.Decode(&results[i]); err != nil {
-		//     return nil, err
-		// }
 	}
 	return results, nil
 }
