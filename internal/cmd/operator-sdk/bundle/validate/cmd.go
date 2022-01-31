@@ -95,7 +95,11 @@ To validate a bundle against the validator for Good Practices specifically, in a
 
 To validate a bundle against the (alpha) validator for Deprecated APIs specifically, in addition to required bundle validators:
 
-  $ operator-sdk bundle validate ./bundle --select-optional name=alpha-deprecated-apis --optional-values=k8s-version=1.22	
+  $ operator-sdk bundle validate ./bundle --select-optional name=alpha-deprecated-apis --optional-values=k8s-version=1.22
+
+To validate a bundle against an external validator, in addition to required bundle validators:
+
+  $ operator-sdk bundle validate ./bundle --alpha-select-external /path/to/external-validator[:/path/to/optional-second-validator]
 	`
 )
 
