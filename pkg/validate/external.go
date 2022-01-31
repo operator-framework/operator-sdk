@@ -45,8 +45,7 @@ func GetExternalValidatorEntrypoints(entrypoints string) ([]string, bool) {
 // single argument bundleRoot. External validators are expected to parse the bundle
 // themselves with library APIs available in
 // https://pkg.go.dev/github.com/operator-framework/api/pkg/manifests.
-func RunExternalValidators(ctx context.Context, entrypoints []string, bundleRoot string) ([]Result, error) {
-	results := make([]Result, len(entrypoints))
+func RunExternalValidators(ctx context.Context, entrypoints []string, bundleRoot string) ([]apierrors.ManifestResult, error) {
 	manifestresults := make([]apierrors.ManifestResult, len(entrypoints))
 	for i, entrypoint := range entrypoints {
 		cmd := exec.CommandContext(ctx, entrypoint, bundleRoot)
@@ -69,5 +68,5 @@ func RunExternalValidators(ctx context.Context, entrypoints []string, bundleRoot
 			return nil, err
 		}
 	}
-	return results, nil
+	return manifestresults, nil
 }

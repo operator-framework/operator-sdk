@@ -186,9 +186,7 @@ func (c bundleValidateCmd) run(logger *log.Entry, bundleRaw string) (res *valida
 		if err != nil {
 			return nil, err
 		}
-		if err := res.Combine(ress...); err != nil {
-			return nil, err
-		}
+		res.AddManifestResults(ress...)
 	}
 
 	return res, nil
