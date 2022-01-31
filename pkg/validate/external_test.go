@@ -17,67 +17,68 @@ package validate
 import (
 	"bytes"
 	"context"
-	"os"
 	"path/filepath"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/sirupsen/logrus"
+	apierrors "github.com/operator-framework/api/pkg/validation/errors"
 )
 
 var _ = Describe("External", func() {
 	var (
 		ctx context.Context
 
-		oldEnv      = os.Getenv(ValidatorEntrypointsEnv)
 		testdataDir = "testdata"
 	)
 
 	BeforeEach(func() {
 		ctx = context.Background()
 	})
-	AfterEach(func() {
-		Expect(os.Setenv(ValidatorEntrypointsEnv, oldEnv)).To(Succeed())
+
+	Describe("getexternalvalidatorentrypoints", func() {
+		It("should return entrypoints", func() {
+			paths := "/path/to/validate1.sh:/path/to/validator2"
+			entrypoints, hasExternal := GetExternalValidatorEntrypoints(paths)
+			Expect(hasExternal).To(BeTrue())
+			Expect(entrypoints).To(HaveLen(2))
+			Expect(entrypoints[0]).To(Equal("/path/to/validate1.sh"))
+		})
+		It("should return false", func() {
+			entrypoints, hasExternal := GetExternalValidatorEntrypoints("")
+			Expect(hasExternal).To(BeFalse())
+			Expect(entrypoints).To(HaveLen(0))
+		})
 	})
 
 	Context("passing validator", func() { //nolint:dupl
 		It("runs successfully", func() {
-			Expect(os.Setenv(ValidatorEntrypointsEnv, filepath.Join(testdataDir, "passes.sh"))).To(Succeed())
-			entrypoints, hasExternal := GetExternalValidatorEntrypoints()
+			entrypoints, hasExternal := GetExternalValidatorEntrypoints(filepath.Join(testdataDir, "passes.sh"))
 			Expect(hasExternal).To(BeTrue())
 			results, err := RunExternalValidators(ctx, entrypoints, "foo/bar")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(results).To(HaveLen(1))
-			Expect(results[0].Passed).To(BeTrue())
-			Expect(results[0].Outputs).To(HaveLen(2))
-			Expect(results[0].Outputs[0].Type).To(Equal(logrus.InfoLevel.String()))
-			Expect(results[0].Outputs[0].Message).To(Equal("found bundle: foo/bar"))
-			Expect(results[0].Outputs[1].Type).To(Equal(logrus.WarnLevel.String()))
-			Expect(results[0].Outputs[1].Message).To(Equal("foo"))
+			Expect(results[0].Name).To(Equal("passes-bundle"))
+			Expect(results[0].Errors).To(HaveLen(0))
 		})
 	})
 
 	Context("failing validator", func() { //nolint:dupl
 		It("fails with one error", func() {
-			Expect(os.Setenv(ValidatorEntrypointsEnv, filepath.Join(testdataDir, "fails.sh"))).To(Succeed())
-			entrypoints, hasExternal := GetExternalValidatorEntrypoints()
+			entrypoints, hasExternal := GetExternalValidatorEntrypoints(filepath.Join(testdataDir, "fails.sh"))
 			Expect(hasExternal).To(BeTrue())
 			results, err := RunExternalValidators(ctx, entrypoints, "foo/bar")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(results).To(HaveLen(1))
-			Expect(results[0].Passed).To(BeFalse())
-			Expect(results[0].Outputs).To(HaveLen(2))
-			Expect(results[0].Outputs[0].Type).To(Equal(logrus.InfoLevel.String()))
-			Expect(results[0].Outputs[0].Message).To(Equal("found bundle: foo/bar"))
-			Expect(results[0].Outputs[1].Type).To(Equal(logrus.ErrorLevel.String()))
-			Expect(results[0].Outputs[1].Message).To(Equal("got error"))
+			Expect(results[0].Name).To(Equal("fails-bundle"))
+			Expect(results[0].Errors).To(HaveLen(1))
+			Expect(results[0].Errors[0].Type).To(Equal(apierrors.ErrorInvalidCSV))
+			Expect(results[0].Errors[0].Detail).To(Equal("invalid field Pesce"))
 		})
 	})
 
 	Context("errored validator", func() {
-		It("doesn not run", func() {
-			Expect(os.Setenv(ValidatorEntrypointsEnv, filepath.Join(testdataDir, "errors.sh"))).To(Succeed())
-			entrypoints, hasExternal := GetExternalValidatorEntrypoints()
+		It("does not run", func() {
+			entrypoints, hasExternal := GetExternalValidatorEntrypoints(filepath.Join(testdataDir, "errors.sh"))
 			Expect(hasExternal).To(BeTrue())
 			stderrBuf := &bytes.Buffer{}
 			stderr = stderrBuf

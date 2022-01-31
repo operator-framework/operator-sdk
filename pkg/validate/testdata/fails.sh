@@ -2,16 +2,16 @@
 
 cat <<EOF
 {
-  "passed": false,
-  "outputs": [
-    {
-      "type": "info",
-      "message": "found bundle: ${1}"
-    },
-    {
-      "type": "error",
-      "message": "got error"
-    }
-  ]
+    "Name": "fails-bundle",
+    "Errors": [
+        {
+            "Type": "CSVFileNotValid",
+            "Level": "Error",
+            "Field": "",
+            "BadValue": "",
+            "Detail": "invalid field Pesce"
+        }
+    ],
+    "Warnings": null
 }
 EOF
