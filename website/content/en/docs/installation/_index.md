@@ -88,7 +88,7 @@ chmod +x operator-sdk_${OS}_${ARCH} && sudo mv operator-sdk_${OS}_${ARCH} /usr/l
 #### Prerequisites
 
 - [git][git_tool]
-- [go][go_tool] version 1.15
+- [go][go_tool] version 1.17
   - Ensure that your `GOPROXY` is set to `"https://proxy.golang.org|direct"`
 
 ```sh
