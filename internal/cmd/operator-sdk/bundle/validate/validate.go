@@ -67,11 +67,6 @@ func (c bundleValidateCmd) validate(args []string) error {
 		}
 	}
 
-	// TODO: (zeus) do we care?
-	if c.alphaSelectExternal != "" {
-		// ensure the variable is in Unix path format
-	}
-
 	return nil
 }
 
