@@ -31,7 +31,7 @@ RUN yum clean all && rm -rf /var/cache/yum/* \
   && yum update -y \
   && yum install -y libffi-devel openssl-devel python38-devel gcc python38-pip python38-setuptools \
   && pip3 install --upgrade pip~=21.1.0 \
-  && pip3 install pipenv==2020.11.15 \
+  && pip3 install pipenv==2022.1.8 \
   && pipenv install --deploy \
   && pipenv check \
   && yum remove -y gcc libffi-devel openssl-devel python38-devel \
