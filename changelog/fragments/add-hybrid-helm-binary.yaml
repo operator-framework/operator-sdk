@@ -1,0 +1,18 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Added the `hybrid.helm.sdk.operatorframework.io/v1-alpha` plugin, which scaffolds a hybrid helm based operator. 
+      For more details on the plugin, please refer https://github.com/operator-framework/helm-operator-plugins/blob/main/docs/tutorial.md.
+      This plugin is alpha and subject to breaking changes.
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "addition"
+
+    # Is this a breaking change?
+    breaking: false
+    pull_request_override: 5504
