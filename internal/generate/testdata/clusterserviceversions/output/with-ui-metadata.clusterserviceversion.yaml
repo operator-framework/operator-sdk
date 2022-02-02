@@ -108,6 +108,8 @@ spec:
         serviceAccountName: default
       deployments:
       - name: memcached-operator-controller-manager
+        label:
+          control-plane: controller-manager
         spec:
           replicas: 1
           selector:

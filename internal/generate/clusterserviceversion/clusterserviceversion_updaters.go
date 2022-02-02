@@ -203,8 +203,9 @@ func applyDeployments(c *collector.Manifests, strategy *operatorsv1alpha1.Strate
 	depSpecs := []operatorsv1alpha1.StrategyDeploymentSpec{}
 	for _, dep := range c.Deployments {
 		depSpecs = append(depSpecs, operatorsv1alpha1.StrategyDeploymentSpec{
-			Name: dep.GetName(),
-			Spec: dep.Spec,
+			Name:  dep.GetName(),
+			Spec:  dep.Spec,
+			Label: dep.Labels,
 		})
 	}
 	strategy.DeploymentSpecs = depSpecs
