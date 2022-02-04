@@ -19,13 +19,14 @@ Table of contents:
 - [`git`](https://git-scm.com/downloads) 2.2+
 - [`make`](https://www.gnu.org/software/make/) 4.2+
 - [`sed`](https://www.gnu.org/software/sed/) 4.3+
+- [`gpg2`](https://gnupg.org/) 2.3+ 
 
 ##### MacOS users
 
-Install GNU `sed` and `make` which may not be by default:
+Install GNU `sed` and `make` and `gpg2` which may not be by default:
 
 ```sh
-brew install gnu-sed make
+brew install gnu-sed make gnupg2
 ```
 
 Verify that the version of `make` is higher than 4.2 using command `make --version`.
@@ -44,13 +45,19 @@ Add the `gnubin` directory to your PATH from your `~/.bashrc`:
 echo 'export PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"' >> ~/.bashrc
 ```
 
+Set GPG_TTY
+
+```sh
+$ export GPG_TTY=$(tty)
+```
+
 ## Major and Minor releases
 
 We will use the `v1.3.0` release version in this example.
 
 ### Before starting
 
-1. **Before creating a new branch**, a [Netlify admin][doc-owners] must add `v1.13.x`
+1. **Before creating a new branch**, a [Netlify admin][doc-owners] must add `v1.3.x`
    to [Branch
    Deploys](https://app.netlify.com/sites/operator-sdk/settings/deploys#branches).
    This will watch for this branch when there are changes on Github
@@ -60,23 +67,8 @@ We will use the `v1.3.0` release version in this example.
    by running the
    [deploy-manual](https://github.com/operator-framework/operator-sdk/actions/workflows/deploy-manual.yml)
    GitHub action.  After the image is built, check the security scan
-   results under `Child Manifests`.
-1. A release branch must be created. If you have the proper permissions,
-   you can do this by running the following, assuming the upstream SDK
-   is the `upstream` remote repo:
-  ```sh
-  git checkout master
-  git pull
-  git checkout -b v1.3.x
-  git push -u upstream v1.3.x
-  ```
+   results under `Child Manifests`. Merge the resulting pull requests to update the links.
 1. Make sure that the list of supported OLM versions stated in the [Overview][overview] section of SDK docs is updated. If a new version of OLM needs to be officially supported, follow the steps in [updating OLM bindata](#updating-olm-bindata) section.
-1. Create and merge a commit that updates the top-level [Makefile] variable `IMAGE_VERSION`
-to the upcoming release tag `v1.3.0`. This variable ensures sample projects have been tagged
-correctly prior to the release commit.
-  ```sh
-  sed -i -E 's/(IMAGE_VERSION = ).+/\1v1\.3\.0/g' Makefile
-  ```
 1. Lock down the `master` branch to prevent further commits before the release completes:
   1. Go to `Settings -> Branches` in the SDK repo.
   1. Under `Branch protection rules`, click `Edit` on the `master` branch rule.
@@ -84,14 +76,22 @@ correctly prior to the release commit.
 
 ### 1. Create and push a release commit
 
-Create a new branch to push the release commit:
-
-```sh
-export RELEASE_VERSION=v1.3.0
-git checkout master
-git pull
-git checkout -b release-$RELEASE_VERSION
-```
+   A release branch must be created. Note that the release branch is labeled `1.3.x` while the tag
+   is labeled `1.3.0`. Future patch releases will have their own tags but be based on the same release
+   branch. If you have the proper permissions, you can do this by running the following, assuming the upstream SDK
+   is the `upstream` remote repo:
+  ```sh
+  git checkout master
+  git pull
+  git checkout -b v1.3.x
+  git push -u upstream v1.3.x
+  ```
+Update the top-level [Makefile] variable `IMAGE_VERSION`
+to the upcoming release tag `v1.3.0`. This variable ensures sample projects have been tagged
+correctly prior to the release commit.
+  ```sh
+  sed -i -E 's/(IMAGE_VERSION = ).+/\1v1\.3\.0/g' Makefile
+  ```
 
 Run the pre-release `make` target:
 
@@ -111,9 +111,10 @@ The following changes should be present:
 Commit these changes and push to your remote (assuming your remote is named `origin`):
 
 ```sh
+export RELEASE_VERSION=1.3.0
 git add Makefile changelog website testdata
 git commit -m "Release $RELEASE_VERSION"
-git push -u origin release-$RELEASE_VERSION
+git push -u origin v1.3.x
 ```
 
 ### 2. Create and merge a new PR
@@ -137,7 +138,7 @@ make tag
 git push upstream refs/tags/$RELEASE_VERSION
 ```
 
-### 5. Fast-forward the `latest` and release branches
+### 5. Fast-forward the `latest`branch
 
 The `latest` branch points to the latest release tag to keep the main website subdomain up-to-date.
 Run the following commands to do so:
@@ -145,15 +146,7 @@ Run the following commands to do so:
 ```sh
 git checkout latest
 git reset --hard refs/tags/$RELEASE_VERSION
-git push -f upstream latest
-```
-
-Similarly, to update the release branch, run:
-
-```sh
-git checkout v1.3.x
-git reset --hard refs/tags/$RELEASE_VERSION
-git push -f upstream v1.3.x
+git push upstream latest
 ```
 
 ### 6. Post release steps
