@@ -41,4 +41,6 @@ collections:
     version: "0.4.0"
   - name: kubernetes.core
     version: "2.2.0"
+  - name: cloud.common
+    version: "2.1.0"
 `
