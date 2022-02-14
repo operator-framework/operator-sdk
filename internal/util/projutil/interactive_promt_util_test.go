@@ -47,6 +47,14 @@ func TestUserInput(t *testing.T) {
 			},
 			want: "Memcached Operator",
 		},
+		{
+			name: "test when user provides quoted input to the command",
+			args: args{
+				msg:     "Enter a word: ",
+				content: []byte("'Memcached Operator'\n"),
+			},
+			want: "Memcached Operator",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
