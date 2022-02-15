@@ -90,7 +90,7 @@ func readLine(reader *bufio.Reader) string {
 	if err != nil {
 		log.Fatalf("Error when reading input: %v", err)
 	}
-	return strings.TrimSpace(text)
+	return strings.Trim(strings.TrimSpace(text), "`'\"")
 }
 
 func readInput(reader *bufio.Reader) string {
