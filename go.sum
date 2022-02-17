@@ -932,8 +932,8 @@ github.com/operator-framework/api v0.11.2-0.20220208215419-e8208e3dcf33 h1:yOfR9
 github.com/operator-framework/api v0.11.2-0.20220208215419-e8208e3dcf33/go.mod h1:r/erkmp9Kc1Al4dnxmRkJYc0uCtD5FohN9VuJ5nTxz0=
 github.com/operator-framework/helm-operator-plugins v0.0.9 h1:G5aBY5sPrNXcRiKLpAaBMOYm7q0+qCmk9XWOAL/ZJuc=
 github.com/operator-framework/helm-operator-plugins v0.0.9/go.mod h1:LFi/PUYE+xA5ubF3ZrleYE1Ez7cphJzSYpjHAyLiNwQ=
-github.com/operator-framework/java-operator-plugins v0.1.0 h1:khkYsrkEG4m+wT+oPjZYmWXo8jd0QQ8E4agSrqrhPhU=
-github.com/operator-framework/java-operator-plugins v0.1.0/go.mod h1:sGKGELFkUeRqElcyvyPC89bC76YnCL7MPMa13P0AQcw=
+github.com/operator-framework/java-operator-plugins v0.2.0 h1:nIc3/pmH9j9lA6IzcnBBOl1D1V7XFculETUJrucOcrk=
+github.com/operator-framework/java-operator-plugins v0.2.0/go.mod h1:38ZUfA6J5JQjPZLQJZKyXE3v+t91mpJ2utAtVCDQTY0=
 github.com/operator-framework/operator-lib v0.3.0/go.mod h1:LTp5UQd8ivq4MXqm/W/XHulHQ0RRoZXsAj73sNMAQxc=
 github.com/operator-framework/operator-lib v0.10.0 h1:tTjrt8Udi0msABkMpgxKHp7sXKnC73jFPO5Col0tWso=
 github.com/operator-framework/operator-lib v0.10.0/go.mod h1:sdCls/olFjSHLXU0bHlaPtmyeIdentoxz/9miyw27kw=
@@ -1498,7 +1498,6 @@ golang.org/x/sys v0.0.0-20210324051608-47abb6519492/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20210330210617-4fbd30eecc44/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210403161142-5e06dd20ab57/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210423082822-04245dca01da/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
-golang.org/x/sys v0.0.0-20210426230700-d19ff857e887/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210510120138-977fb7262007/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20210603081109-ebe580a85c40/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
@@ -1852,7 +1851,6 @@ k8s.io/apimachinery v0.19.4/go.mod h1:DnPGDnARWFvYa3pMHgSxtbZb7gpzzAZ1pTfaUNDVlm
 k8s.io/apimachinery v0.20.2/go.mod h1:WlLqWAHZGg07AeltaI0MV5uk1Omp8xaN0JGLY6gkRpU=
 k8s.io/apimachinery v0.21.0/go.mod h1:jbreFvJo3ov9rj7eWT7+sYiRx+qZuCYXwWT1bcDswPY=
 k8s.io/apimachinery v0.21.1/go.mod h1:jbreFvJo3ov9rj7eWT7+sYiRx+qZuCYXwWT1bcDswPY=
-k8s.io/apimachinery v0.21.2/go.mod h1:CdTY8fU/BlvAbJ2z/8kBwimGki5Zp8/fbVuLY8gJumM=
 k8s.io/apimachinery v0.22.0/go.mod h1:O3oNtNadZdeOMxHFVxOreoznohCpy0z6mocxbZr7oJ0=
 k8s.io/apimachinery v0.22.2/go.mod h1:O3oNtNadZdeOMxHFVxOreoznohCpy0z6mocxbZr7oJ0=
 k8s.io/apimachinery v0.23.0/go.mod h1:fFCTTBKvKcwTPFzjlcxp91uPFZr+JA0FubU4fLzzFYc=
@@ -1968,7 +1966,6 @@ sigs.k8s.io/controller-tools v0.8.0/go.mod h1:qE2DXhVOiEq5ijmINcFbqi9GZrrUjzB1Tu
 sigs.k8s.io/json v0.0.0-20211020170558-c049b76a60c6 h1:fD1pz4yfdADVNfFmcP2aBEtudwUQ1AlLnRBALr33v3s=
 sigs.k8s.io/json v0.0.0-20211020170558-c049b76a60c6/go.mod h1:p4QtZmO4uMYipTQNzagwnNoseA6OxSUutVw05NhYDRs=
 sigs.k8s.io/kind v0.11.1/go.mod h1:fRpgVhtqAWrtLB9ED7zQahUimpUXuG/iHT88xYqEGIA=
-sigs.k8s.io/kubebuilder/v3 v3.0.0-alpha.0.0.20210702145813-742983631190/go.mod h1:pUhjQx9f/+cn1OtSa5zMohY1lgk9s/9Mbcvwj82lrNk=
 sigs.k8s.io/kubebuilder/v3 v3.3.0 h1:rl1d7qHajPDS83bM9IhR85jtEBTRZzQziWwAGYTsadE=
 sigs.k8s.io/kubebuilder/v3 v3.3.0/go.mod h1:573SPrO9ttCNPvXVuGQRCpjsEsFza/S+8Jo/b+a+wR0=
 sigs.k8s.io/kustomize/api v0.8.5/go.mod h1:M377apnKT5ZHJS++6H4rQoCHmWtt6qTpp3mbe7p6OLY=
