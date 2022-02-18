@@ -49,10 +49,15 @@ This guide walks through an example of building a simple nginx-operator powered 
   operator-sdk olm install
   ```
 
-1. Bundle your operator, then build and push the bundle image (defaults to `example.com/nginx-operator-bundle:v0.0.1`):
+1. Bundle your operator:
 
   ```sh
   make bundle IMG="example.com/nginx-operator:v0.0.1"
+  ```
+
+1. Push the bundle image. Defaults to `example.com/nginx-operator-bundle:v0.0.1`. You can set IMAGE_TAG_BASE to override the image tag (e.g. 1IMAGE_TAG_BASE=quay.io/example/nginx-operator1:
+
+  ```sh
   make bundle-build bundle-push
   ```
 
@@ -60,7 +65,7 @@ This guide walks through an example of building a simple nginx-operator powered 
 has a custom CA, these [configuration steps][image-reg-config] must be complete.
 
   ```sh
-  operator-sdk run bundle example.com/memcached-operator-bundle:v0.0.1
+  operator-sdk run bundle example.com/nginx-operator-bundle:v0.0.1
   ```
 
 1. Create a sample Nginx custom resource:
