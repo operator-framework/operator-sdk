@@ -276,12 +276,26 @@ func (c bundleCmd) runMetadata() error {
 		}
 	}
 
+	cLabels := bundleutil.CustomMetaDataLabels{}
+	customAnno := filepath.Join(c.customAnno, "annotations.yaml")
+	if genutil.IsExist(customAnno) {
+		file, err := ioutil.ReadFile(customAnno)
+		if err != nil {
+			return err
+		}
+
+		if err := yaml.Unmarshal(file, &cLabels); err != nil {
+			return err
+		}
+	}
+
 	bundleMetadata := bundleutil.BundleMetaData{
 		BundleDir:            c.outputDir,
 		PackageName:          c.packageName,
 		Channels:             c.channels,
 		DefaultChannel:       c.defaultChannel,
 		OtherLabels:          metricsannotations.MakeBundleMetadataLabels(c.layout),
+		CustomLabels:         cLabels.Annotations,
 		IsScoreConfigPresent: true,
 	}
 

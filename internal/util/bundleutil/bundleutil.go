@@ -65,6 +65,9 @@ type BundleMetaData struct {
 
 	// Other labels to be added in CSV.
 	OtherLabels map[string]string
+
+	// Custom labels to be added in CSV.
+	CustomLabels map[string]string
 }
 
 // values to populate bundle metadata/Dockerfile.
@@ -74,7 +77,13 @@ type annotationsValues struct {
 	Channels                 string
 	DefaultChannel           string
 	OtherLabels              []string
+	CustomLabels             []string
 	IsScorecardConfigPresent bool
+}
+
+// CustomMetaDataLabels contains custom metadata for bundles.
+type CustomMetaDataLabels struct {
+	Annotations map[string]string
 }
 
 // GenerateMetadata scaffolds annotations.yaml and bundle.Dockerfile with the provided
@@ -99,6 +108,11 @@ func (meta *BundleMetaData) GenerateMetadata() error {
 		values.OtherLabels = append(values.OtherLabels, fmt.Sprintf("%s=%s", k, v))
 	}
 	sort.Strings(values.OtherLabels)
+
+	for k, v := range meta.CustomLabels {
+		values.CustomLabels = append(values.CustomLabels, fmt.Sprintf("%s=%s", k, v))
+	}
+	sort.Strings(values.CustomLabels)
 
 	// Write each file
 	metadataDir := filepath.Join(meta.BundleDir, defaultMetadataDir)

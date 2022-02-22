@@ -52,6 +52,15 @@ COPY {{ .BundleDir }}/manifests /manifests/
 COPY {{ .BundleDir }}/metadata /metadata/
 {{- if .IsScorecardConfigPresent }}
 COPY {{ .BundleDir }}/tests/scorecard /tests/scorecard/
+
+{{- if .CustomLabels }}
+
+# Custom project labels.
+{{- range $i, $l := .CustomLabels }}
+LABEL {{ $l }}
+{{- end }}
+{{- end }}
+
 {{- end }}
 `))
 
@@ -75,5 +84,14 @@ var annotationsTemplate = template.Must(template.New("").Funcs(funcs).Parse(`ann
   # Annotations for testing.
   operators.operatorframework.io.test.mediatype.v1: scorecard+v1
   operators.operatorframework.io.test.config.v1: tests/scorecard/
+
+  {{- if .CustomLabels }}
+
+  # Custom project annotations.
+  {{- range $i, $l := .CustomLabels }}
+  {{ toYAML $l }}
+  {{- end }}
+  {{- end }}
+
   {{- end }}
 `))

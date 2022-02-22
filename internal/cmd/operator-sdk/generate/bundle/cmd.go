@@ -36,6 +36,7 @@ type bundleCmd struct {
 	kustomizeDir string
 	deployDir    string
 	crdsDir      string
+	customAnno   string
 	stdout       bool
 	quiet        bool
 	// ServiceAccount names to consider outside of the operator's service account.
@@ -129,6 +130,8 @@ func (c *bundleCmd) addFlagsTo(fs *pflag.FlagSet) {
 		"This option can only be used if --deploy-dir is set")
 	fs.StringVar(&c.kustomizeDir, "kustomize-dir", filepath.Join("config", "manifests"),
 		"Directory containing kustomize bases in a \"bases\" dir and a kustomization.yaml for operator-framework manifests")
+	fs.StringVar(&c.customAnno, "custom-annotations", filepath.Join("config", "metadata"),
+		"Directory containing custom annotations for operator bundle metadata")
 	fs.StringVar(&c.channels, "channels", "alpha", "A comma-separated list of channels the bundle belongs to")
 	fs.StringVar(&c.defaultChannel, "default-channel", "", "The default channel for the bundle")
 	fs.StringSliceVar(&c.extraServiceAccounts, "extra-service-accounts", nil,
