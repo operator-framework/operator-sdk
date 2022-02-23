@@ -238,5 +238,3 @@ allow configMaps larger than `~1MB`. However, from [OLM](https://github.com/oper
 
 The change to allow bigger bundles from [OLM](https://github.com/operator-framework/operator-lifecycle-manager) version `v0.19.0` only impacts the full bundle size amount. 
 Any single manifest within the bundle such as the CRD will still make the bundle uninstallable if it exceeds the default file size limit on clusters (`~1MB`).
-
-_NOTE: Openshift k8S vendor began to allow `~4MB` uncompressed bundle sizes from its `4.9` version release version._
