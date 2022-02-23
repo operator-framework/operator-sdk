@@ -234,7 +234,35 @@ Though this is a bug with controller-gen which is used by Operator SDK to genera
 ## What is the bundle limit size? Was this amount increased?
 
 Bundles have a size limitation because their manifests are used to create a configMap, and the Kubernetes API does not 
-allow configMaps larger than `~1MB`. However, from [OLM](https://github.com/operator-framework/operator-lifecycle-manager) version `v0.19.0` and [OPM](https://github.com/operator-framework/operator-registry) `1.17.5`, these values were increased to `~4MB` because we are compressing them. ([More info](https://github.com/operator-framework/operator-registry/pull/685)).
+allow configMaps larger than `~1MB`. However, from [OLM](https://github.com/operator-framework/operator-lifecycle-manager) version `v0.19.0` 
+and [OPM](https://github.com/operator-framework/operator-registry) `1.17.5`, 
+these values were increased because they are compressed now. ([More info](https://github.com/operator-framework/operator-registry/pull/685)).
 
 The change to allow bigger bundles from [OLM](https://github.com/operator-framework/operator-lifecycle-manager) version `v0.19.0` only impacts the full bundle size amount. 
 Any single manifest within the bundle such as the CRD will still make the bundle uninstallable if it exceeds the default file size limit on clusters (`~1MB`).
+
+Following are some general guidelines that might help you out:
+
+### The size of my Operator bundle is too big. What can I do?
+
+What about check how many [versions of the CRDs][k8s-crd-versions] are supported in your Operator? 
+Could you deprecate and reduce the number of supported APIs versions ? (_In this case, the recommendation can be to have a 
+clear plan for deprecation and removal of old CRDs versions when a new one gets added, 
+see [Kubernetes API change practices][k8s-api-change]. Also, you might want to give a look at 
+[Kubernetes API conventions][k8s-api-convention]._).
+
+### But, the size of my CRD(s) is too big. How can I keep the CRDs smaller?
+
+We can design Operator solutions that have many APIs(CRDs). In this way, you might want to review the design of your 
+Operator solution to ensure that it is not hurting concepts such as; encapsulation, 
+the single responsibility principle, and cohesion. In this case; do all spec definitions must be 
+in this single API(CRD), or could it make sense to be split in a better API design? To better understand the APIs,
+see [Groups and Versions and Kinds oh my!][kb-apis].
+
+Also, you might need to find some alternative options to achieve the same goal in another way such as; are you documenting the API(CRD)? 
+Could you be more concise and less verbose? (_But surely we don't want to say to not document the APIs_)
+
+[kb-apis]: https://book.kubebuilder.io/cronjob-tutorial/gvks.html
+[k8s-crd-versions]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/#specify-multiple-versions
+[k8s-api-change]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api_changes.md
+[k8s-api-convention]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md
