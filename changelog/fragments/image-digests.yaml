@@ -1,0 +1,5 @@
+entries:
+  - description: >
+      Adds support to bundle operators using image digests instead of tags.
+    kind: "addition"
+    breaking: false
