@@ -252,7 +252,6 @@ see [Kubernetes API change practices][k8s-api-change]. Also, you might want to g
 Also, you might need to find some alternative options to achieve the same goal in another way such as; are you documenting the API(CRD)? 
 Could you be more concise and less verbose? (_But surely we don't want to say to not document the APIs_)
 
-[kb-apis]: https://book.kubebuilder.io/cronjob-tutorial/gvks.html
 [k8s-crd-versions]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/#specify-multiple-versions
 [k8s-api-change]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api_changes.md
 [k8s-api-convention]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md
