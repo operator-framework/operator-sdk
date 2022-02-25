@@ -241,7 +241,7 @@ these values are now compressed accommodating larger bundles. ([More info](https
 The change to allow bigger bundles from [OLM](https://github.com/operator-framework/operator-lifecycle-manager) version `v0.19.0` only impacts the full bundle size amount. 
 Any single manifest within the bundle such as the CRD will still make the bundle uninstallable if it exceeds the default file size limit on clusters (`~1MB`).
 
-### The size of my Operator bundle is too big. What can I do?
+## The size of my Operator bundle is too big. What can I do?
 
 If your bundle is too large, there are a few things you could try.
 
