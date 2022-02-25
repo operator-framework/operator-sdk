@@ -243,11 +243,14 @@ Any single manifest within the bundle such as the CRD will still make the bundle
 
 ### The size of my Operator bundle is too big. What can I do?
 
-What about check how many [versions of the CRDs][k8s-crd-versions] are supported in your Operator? 
-Could you deprecate and reduce the number of supported APIs versions ? (_In this case, the recommendation can be to have a 
-clear plan for deprecation and removal of old CRDs versions when a new one gets added, 
-see [Kubernetes API change practices][k8s-api-change]. Also, you might want to give a look at 
-[Kubernetes API conventions][k8s-api-convention]._).
+If your bundle is too large, there are a few things you could try.
+
+* Consider reducing the number of [CRD versions][k8s-crd-versions] supported in your Operator?
+* Deprecate or reduce the number of supported API versions? It is a good idea to have a clear
+plan for deprecation and removal of old CRDs versions when a new ones get added, 
+see [Kubernetes API change practices][k8s-api-change]. Also, refer to the 
+[Kubernetes API conventions][k8s-api-convention].
+* Reduce the verbosity of your API documentation. (_We do not recommend eliminating documenting the APIs_)
 
 
 [k8s-crd-versions]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/#specify-multiple-versions
