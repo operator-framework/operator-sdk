@@ -245,8 +245,8 @@ Any single manifest within the bundle such as the CRD will still make the bundle
 
 If your bundle is too large, there are a few things you could try.
 
-* Consider reducing the number of [CRD versions][k8s-crd-versions] supported in your Operator?
-* Deprecate or reduce the number of supported API versions? It is a good idea to have a clear
+* Consider reducing the number of [CRD versions][k8s-crd-versions] supported in your Operator
+* Deprecate or reduce the number of supported API versions. It is a good idea to have a clear
 plan for deprecation and removal of old CRDs versions when a new ones get added, 
 see [Kubernetes API change practices][k8s-api-change]. Also, refer to the 
 [Kubernetes API conventions][k8s-api-convention].
