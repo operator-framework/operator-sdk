@@ -234,9 +234,9 @@ Though this is a bug with controller-gen which is used by Operator SDK to genera
 ## What is the bundle limit size? Was this amount increased?
 
 Bundles have a size limitation because their manifests are used to create a configMap, and the Kubernetes API does not 
-allow configMaps larger than `~1MB`. However, from [OLM](https://github.com/operator-framework/operator-lifecycle-manager) version `v0.19.0` 
+allow configMaps larger than `~1MB`. Beginning with [OLM](https://github.com/operator-framework/operator-lifecycle-manager) version `v0.19.0` 
 and [OPM](https://github.com/operator-framework/operator-registry) `1.17.5`, 
-these values were increased because they are compressed now. ([More info](https://github.com/operator-framework/operator-registry/pull/685)).
+these values are now compressed accommodating larger bundles. ([More info](https://github.com/operator-framework/operator-registry/pull/685)).
 
 The change to allow bigger bundles from [OLM](https://github.com/operator-framework/operator-lifecycle-manager) version `v0.19.0` only impacts the full bundle size amount. 
 Any single manifest within the bundle such as the CRD will still make the bundle uninstallable if it exceeds the default file size limit on clusters (`~1MB`).
