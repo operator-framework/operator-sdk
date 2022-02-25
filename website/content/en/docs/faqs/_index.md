@@ -249,8 +249,6 @@ clear plan for deprecation and removal of old CRDs versions when a new one gets 
 see [Kubernetes API change practices][k8s-api-change]. Also, you might want to give a look at 
 [Kubernetes API conventions][k8s-api-convention]._).
 
-Also, you might need to find some alternative options to achieve the same goal in another way such as; are you documenting the API(CRD)? 
-Could you be more concise and less verbose? (_But surely we don't want to say to not document the APIs_)
 
 [k8s-crd-versions]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/#specify-multiple-versions
 [k8s-api-change]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api_changes.md
