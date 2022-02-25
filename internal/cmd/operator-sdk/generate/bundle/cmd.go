@@ -49,6 +49,9 @@ type bundleCmd struct {
 	// These are set if a PROJECT config is not present.
 	layout      string
 	packageName string
+
+	// Use Image Digests flag to toggle using traditional Image tags vs SHA Digests
+	useImageDigests bool
 }
 
 // NewCmd returns the 'bundle' command configured for the new project layout.
@@ -139,6 +142,8 @@ func (c *bundleCmd) addFlagsTo(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.stdout, "stdout", false, "Write bundle manifest to stdout")
 
 	fs.StringVar(&c.packageName, "package", "", "Bundle's package name")
+
+	fs.BoolVar(&c.useImageDigests, "use-image-digests", false, "Use SHA Digest for images")
 }
 
 func (c bundleCmd) println(a ...interface{}) {
