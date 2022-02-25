@@ -245,7 +245,7 @@ Any single manifest within the bundle such as the CRD will still make the bundle
 
 If your bundle is too large, there are a few things you can try:
 
-  * Reducing the number of [CRD versions](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/#specify-multiple-versions) supported in your Operator by deprecating and then removing older API versions. It is a good idea to have a clear plan for deprecation and removal of old CRDs versions when a new ones get added, see [Kubernetes API change practices](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api_changes.md). Also, refer to the [Kubernetes API conventions](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md).
+  * Reducing the number of [CRD versions][k8s-crd-versions] supported in your Operator by deprecating and then removing older API versions. It is a good idea to have a clear plan for deprecation and removal of old CRDs versions when new ones get added, see [Kubernetes API change practices][k8s-api-change]. Also, refer to the [Kubernetes API conventions][k8s-api-convention].
   * Reduce the verbosity of your API documentation. (We do not recommend eliminating documenting the APIs)
 
 
