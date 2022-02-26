@@ -1,5 +1,0 @@
-entries:
-  - description: >
-      Fixed a bug in `generate kustomze manifest` that quotes from interactive input were not trimmed properly.
-    kind: bugfix
-    breaking: false
