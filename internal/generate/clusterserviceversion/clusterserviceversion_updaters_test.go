@@ -24,6 +24,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/operator-sdk/internal/generate/collector"
@@ -34,6 +35,29 @@ var _ = Describe("apply functions", func() {
 		c        *collector.Manifests
 		strategy *operatorsv1alpha1.StrategyDetailsDeployment
 	)
+
+	Describe("applyDeployments", func() {
+		const (
+			depName = "dep-1"
+		)
+
+		BeforeEach(func() {
+			c = &collector.Manifests{}
+			strategy = &operatorsv1alpha1.StrategyDetailsDeployment{}
+		})
+
+		Context("collector contains Deployments", func() {
+			It("applies the deployment labels", func() {
+				labels := labels.Set{}
+				labels["foo"] = "bar"
+
+				c.Deployments = []appsv1.Deployment{newDeploymentWithLabels(depName, labels)}
+				applyDeployments(c, strategy)
+				Expect(len(strategy.DeploymentSpecs)).To(Equal(1))
+				Expect(strategy.DeploymentSpecs[0].Label).To(Equal(labels))
+			})
+		})
+	})
 
 	Describe("apply{Cluster}Roles", func() {
 		const (
@@ -418,10 +442,10 @@ var _ = Describe("findMatchingDeploymentAndServiceForWebhook", func() {
 
 })
 
-func newDeployment(name string, labels map[string]string) (dep appsv1.Deployment) {
+func newDeployment(name string, podLabels map[string]string) (dep appsv1.Deployment) {
 	dep.SetGroupVersionKind(appsv1.SchemeGroupVersion.WithKind("Deployment"))
 	dep.SetName(name)
-	dep.Spec.Template.SetLabels(labels)
+	dep.Spec.Template.SetLabels(podLabels)
 	return dep
 }
 
@@ -443,6 +467,13 @@ func newServiceAccount(name string) (s corev1.ServiceAccount) {
 func newDeploymentWithServiceAccount(name, saName string) (d appsv1.Deployment) {
 	d = newDeployment(name, nil)
 	d.Spec.Template.Spec.ServiceAccountName = saName
+	return d
+}
+
+// newDeploymentWithLabels returns a deployment with the given labels
+func newDeploymentWithLabels(name string, labels labels.Set) appsv1.Deployment {
+	d := newDeployment(name, nil)
+	d.ObjectMeta.Labels = labels
 	return d
 }
 

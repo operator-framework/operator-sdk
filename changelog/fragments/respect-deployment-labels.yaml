@@ -1,0 +1,5 @@
+entries:
+  - description: >
+      Add the labels defined in the Manager (Operator Deployment) to the ClusterServiceVersions [`DeploymentSpecs`](https://github.com/operator-framework/api/blob/master/pkg/operators/v1alpha1/clusterserviceversion_types.go#L78) to ensure that they will also be provided to the integration with OLM (CSV).
+    kind: bugfix
+    breaking: false
