@@ -165,7 +165,7 @@ SHELL := /bin/bash
 ---
 
 Administrators can configure proxy-friendly Operators to support network proxies by
-specifiying `HTTP_PROXY`, `HTTPS_PROXY`, and `NO_PROXY` environment
+specifying `HTTP_PROXY`, `HTTPS_PROXY`, and `NO_PROXY` environment
 variables in the Operator deployment. (These variables can be handled by OLM.)
 
 Proxy-friendly Operators are responsible for inspecting the Operator

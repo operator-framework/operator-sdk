@@ -91,7 +91,7 @@ necessary depending on the specific changes in Kubernetes 1.17.
 ### Upgrade / Downgrade Strategy
 
 To help users upgrade their projects, Operator SDK provides a migration guide that
-documents the steps that operator develoeprs must take to migrate their project
+documents the steps that operator developers must take to migrate their project
 to a new version of the SDK.
 
 The migration guide for the version containing the Kubernetes 1.17 dependency

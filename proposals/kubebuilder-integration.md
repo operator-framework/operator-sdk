@@ -73,7 +73,7 @@ with the Kubebuilder maintainers on the upstream controller-runtime and controll
 
 - Operator developers get the project layout and scaffolding for Golang Operators from Kubebuilder
 - Operator developers can use the same command line switches as Kubebuilder to create and extend the project
-  - This ensures Operator SDK binary compatiblity with existing Kubebuilder projects.
+  - This ensures Operator SDK binary compatibility with existing Kubebuilder projects.
 - An Operator Developer is notified about deprecation of `new --type=go` once `init` subcommand is in place.
 - An Operator Developer should see the current UX maintained for these features: CSV generation, scorecard, and test-framework
 - Operator developers can re-use an existing Kubebuilder project for Go-based Operators
