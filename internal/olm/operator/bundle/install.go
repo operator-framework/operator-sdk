@@ -121,9 +121,15 @@ func (i *Install) setup(ctx context.Context) error {
 	}
 
 	// generate an FBC
-	_, err = f.createMinimalFBC()
+	declcfg, err := f.createMinimalFBC()
 	if err != nil {
 		log.Errorf("error creating a minimal FBC: %v", err)
+		return err
+	}
+
+	// write declarative config to file
+	if err = f.writeDecConfigToFile(declcfg); err != nil {
+		log.Errorf("error writing declarative config to file: %v", err)
 		return err
 	}
 
@@ -196,4 +202,33 @@ func (f *FBCContext) createMinimalFBC() (*declarativeconfig.DeclarativeConfig, e
 	declcfg.Channels = []declarativeconfig.Channel{channel}
 
 	return declcfg, nil
+}
+
+// writeDecConfigToFile writes the generated declarative config to a file.
+func (f *FBCContext) writeDecConfigToFile(declcfg *declarativeconfig.DeclarativeConfig) error {
+	var buf bytes.Buffer
+	err := declarativeconfig.WriteJSON(*declcfg, &buf)
+	if err != nil {
+		log.Errorf("error writing to JSON encoder: %v", err)
+		return err
+	}
+	if err := os.MkdirAll(f.FBCDirContext, 0755); err != nil {
+		log.Errorf("error creating a directory for FBC: %v", err)
+		return err
+	}
+	fbcFilePath := filepath.Join(f.FBCPath, f.FBCName)
+	file, err := os.OpenFile(fbcFilePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Errorf("error opening FBC file: %v", err)
+		return err
+	}
+
+	defer file.Close()
+
+	if _, err := file.WriteString(string(buf.Bytes()) + "\n"); err != nil {
+		log.Errorf("error writing to FBC file: %v", err)
+		return err
+	}
+
+	return nil
 }
