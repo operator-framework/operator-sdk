@@ -52,8 +52,8 @@ type BundleItem struct {
 	AddMode BundleAddMode `json:"mode"`
 }
 
-// RegistryPod holds resources necessary for creation of a registry server
-type RegistryPod struct { //nolint:maligned
+// SQLiteRegistryPod holds resources necessary for creation of a registry server
+type SQLiteRegistryPod struct { //nolint:maligned
 	// BundleItems contains all bundles to be added to a registry pod.
 	BundleItems []BundleItem
 
@@ -89,8 +89,8 @@ type RegistryPod struct { //nolint:maligned
 	cfg *operator.Configuration
 }
 
-// init initializes the RegistryPod struct and sets defaults for empty fields
-func (rp *RegistryPod) init(cfg *operator.Configuration) error {
+// init initializes the SQLiteRegistryPod struct and sets defaults for empty fields
+func (rp *SQLiteRegistryPod) init(cfg *operator.Configuration) error {
 	if rp.GRPCPort == 0 {
 		rp.GRPCPort = defaultGRPCPort
 	}
@@ -99,7 +99,7 @@ func (rp *RegistryPod) init(cfg *operator.Configuration) error {
 	}
 	rp.cfg = cfg
 
-	// validate the RegistryPod struct and ensure required fields are set
+	// validate the SQLiteRegistryPod struct and ensure required fields are set
 	if err := rp.validate(); err != nil {
 		return fmt.Errorf("invalid registry pod: %v", err)
 	}
@@ -117,7 +117,7 @@ func (rp *RegistryPod) init(cfg *operator.Configuration) error {
 // Create creates a bundle registry pod built from an index image,
 // sets the catalog source as the owner for the pod and verifies that
 // the pod is running
-func (rp *RegistryPod) Create(ctx context.Context, cfg *operator.Configuration, cs *v1alpha1.CatalogSource) (*corev1.Pod, error) {
+func (rp *SQLiteRegistryPod) Create(ctx context.Context, cfg *operator.Configuration, cs *v1alpha1.CatalogSource) (*corev1.Pod, error) {
 	if err := rp.init(cfg); err != nil {
 		return nil, err
 	}
@@ -150,12 +150,12 @@ func (rp *RegistryPod) Create(ctx context.Context, cfg *operator.Configuration, 
 	if err := rp.checkPodStatus(ctx, podCheck); err != nil {
 		return nil, fmt.Errorf("registry pod did not become ready: %w", err)
 	}
-	log.Infof("Successfully created registry pod: %s", rp.pod.Name)
+	log.Infof("Created registry pod: %s", rp.pod.Name)
 	return rp.pod, nil
 }
 
 // checkPodStatus polls and verifies that the pod status is running
-func (rp *RegistryPod) checkPodStatus(ctx context.Context, podCheck wait.ConditionFunc) error {
+func (rp *SQLiteRegistryPod) checkPodStatus(ctx context.Context, podCheck wait.ConditionFunc) error {
 	// poll every 200 ms until podCheck is true or context is done
 	err := wait.PollImmediateUntil(200*time.Millisecond, podCheck, ctx.Done())
 	if err != nil {
@@ -165,9 +165,9 @@ func (rp *RegistryPod) checkPodStatus(ctx context.Context, podCheck wait.Conditi
 	return err
 }
 
-// validate will ensure that RegistryPod required fields are set
+// validate will ensure that SQLiteRegistryPod required fields are set
 // and throws error if not set
-func (rp *RegistryPod) validate() error {
+func (rp *SQLiteRegistryPod) validate() error {
 	if len(rp.BundleItems) == 0 {
 		return errors.New("bundle image set cannot be empty")
 	}
@@ -200,7 +200,7 @@ func getPodName(bundleImage string) string {
 
 // podForBundleRegistry constructs and returns the registry pod definition
 // and throws error when unable to build the pod definition successfully
-func (rp *RegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
+func (rp *SQLiteRegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 	// rp was already validated so len(rp.BundleItems) must be greater than 0.
 	bundleImage := rp.BundleItems[len(rp.BundleItems)-1].ImageTag
 
@@ -315,8 +315,7 @@ opm registry serve -d {{ .DBPath }} -p {{ .GRPCPort }}
 
 // getContainerCmd uses templating to construct the container command
 // and throws error if unable to parse and execute the container command
-func (rp *RegistryPod) getContainerCmd() (string, error) {
-
+func (rp *SQLiteRegistryPod) getContainerCmd() (string, error) {
 	// create a custom dirname template function
 	funcMap := template.FuncMap{
 		"dirname": path.Dir,
@@ -326,7 +325,7 @@ func (rp *RegistryPod) getContainerCmd() (string, error) {
 	// template's FuncMap and parse the cmdTemplate
 	t := template.Must(template.New("cmd").Funcs(funcMap).Parse(cmdTemplate))
 
-	// execute the command by applying the parsed t to command
+	// execute the command by applying the parsed template to command
 	// and write command output to out
 	out := &bytes.Buffer{}
 	if err := t.Execute(out, rp); err != nil {
