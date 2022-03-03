@@ -100,9 +100,9 @@ Official build architectures for binaries:
 
 | Binary                    | `linux/amd64` | `linux/arm64` |`linux/ppc64le` | `linux/s390x` | `darwin/amd64` | `darwin/arm64` |
 |---------------------------|---------------|---------------|----------------|---------------|----------------|----------------|
-| `operator-sdk`            | ✓             | ✓             | ✓              | ✓             | ✓              | -              |
-| `ansible-operator`        | ✓             | ✓             | ✓              | ✓             | ✓              | -              |
-| `helm-operator`           | ✓             | ✓             | ✓              | ✓             | ✓              | -              |
+| `operator-sdk`            | ✓             | ✓             | ✓              | ✓             | ✓              | ✓              |
+| `ansible-operator`        | ✓             | ✓             | ✓              | ✓             | ✓              | ✓              |
+| `helm-operator`           | ✓             | ✓             | ✓              | ✓             | ✓              | ✓              |
 
 Official build architectures for images:
 
