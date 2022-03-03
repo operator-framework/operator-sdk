@@ -315,6 +315,6 @@ connection to invoke the Kube API.
 [user_doc]: /docs/testing-operators/scorecard/
 [scorecard_binary]: https://github.com/operator-framework/operator-sdk/blob/09c3aa14625965af9f22f513cd5c891471dbded2/images/custom-scorecard-tests/main.go
 [sample_makefile]: https://github.com/operator-framework/operator-sdk/blob/09c3aa14625965af9f22f513cd5c891471dbded2/Makefile
-[kustomize-patchJson6902]: https://kubernetes-sigs.github.io/kustomize/api-reference/kustomization/patchesjson6902/
+[kustomize-patchJson6902]: https://kubectl.docs.kubernetes.io/references/kustomize/kustomization/patchesjson6902/
 [testresults]:https://github.com/operator-framework/api/blob/333d064/pkg/apis/scorecard/v1alpha3/test_types.go#L35
 [storage]:https://pkg.go.dev/github.com/operator-framework/api@v0.10.4/pkg/apis/scorecard/v1alpha3#Storage
