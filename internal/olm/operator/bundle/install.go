@@ -48,7 +48,7 @@ type FBCContext struct {
 	Package           string
 	DefaultChannel    string
 	FBCName           string
-	FBCPath           string
+	FBCDirPath        string
 	FBCDirContext     string
 	ChannelSchema     string
 	ChannelName       string
@@ -113,13 +113,21 @@ func (i *Install) setup(ctx context.Context) error {
 		BundleImage:       i.BundleImage,
 		Package:           labels[registrybundle.PackageLabel],
 		FBCDirContext:     "testdata",
-		FBCPath:           filepath.Join(wd, "testdata"),
+		FBCDirPath:        filepath.Join(wd, "testdata"),
 		FBCName:           "testFBC",
 		DescriptionReader: bytes.NewBufferString("foo"),
 		DefaultChannel:    "foo",
 		ChannelSchema:     "olm.channel",
 		ChannelName:       "foo",
 	}
+
+	// create entries for channel blob
+	entries := []declarativeconfig.ChannelEntry{
+		{
+			Name: "api-operator.v1.0.1",
+		},
+	}
+	f.ChannelEntries = entries
 
 	// generate an FBC
 	declcfg, err := f.createFBC()
@@ -149,6 +157,9 @@ func (i *Install) setup(ctx context.Context) error {
 	i.IndexImageCatalogCreator.PackageName = i.OperatorInstaller.PackageName
 	i.IndexImageCatalogCreator.BundleImage = i.BundleImage
 	// TODO (rashmi/venkat) add FBC to IndexImageCatalogCreator
+	// TODO(rashmi/venkat) investigate whether an FBC needs to be a directory path to where the catalog exists
+	// or it has to be declarative config
+	// i.IndexImageCatalogCreator.FBCPath = declcfg
 	return nil
 }
 
@@ -223,7 +234,7 @@ func (f *FBCContext) writeDecConfigToFile(declcfg *declarativeconfig.Declarative
 		log.Errorf("error creating a directory for FBC: %v", err)
 		return err
 	}
-	fbcFilePath := filepath.Join(f.FBCPath, f.FBCName)
+	fbcFilePath := filepath.Join(f.FBCDirPath, f.FBCName)
 	file, err := os.OpenFile(fbcFilePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Errorf("error opening FBC file: %v", err)
