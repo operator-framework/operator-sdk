@@ -33,6 +33,7 @@ import (
 	"k8s.io/client-go/util/retry"
 
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
+	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry/fbcindex"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry/index"
 	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
 )
@@ -59,15 +60,17 @@ const (
 )
 
 type IndexImageCatalogCreator struct {
-	PackageName   string
-	IndexImage    string
-	BundleImage   string
 	SkipTLS       bool
 	SkipTLSVerify bool
 	UseHTTP       bool
-	BundleAddMode index.BundleAddMode
+	HasFBCLabel   bool
+	FBCContent    string
+	PackageName   string
+	IndexImage    string
+	BundleImage   string
 	SecretName    string
 	CASecretName  string
+	BundleAddMode index.BundleAddMode
 
 	cfg *operator.Configuration
 }
@@ -195,25 +198,43 @@ func (c *IndexImageCatalogCreator) setAddMode() {
 // from items and that pod, then applies updateFields.
 func (c IndexImageCatalogCreator) createAnnotatedRegistry(ctx context.Context, cs *v1alpha1.CatalogSource,
 	items []index.BundleItem, updates ...func(*v1alpha1.CatalogSource)) (err error) {
-
+	var pod *corev1.Pod
 	if c.IndexImage == "" {
 		c.IndexImage = DefaultIndexImage
 	}
-	// Initialize and create registry pod
-	registryPod := index.RegistryPod{
-		BundleItems:   items,
-		IndexImage:    c.IndexImage,
-		SecretName:    c.SecretName,
-		CASecretName:  c.CASecretName,
-		SkipTLSVerify: c.SkipTLSVerify,
-		UseHTTP:       c.UseHTTP,
-	}
-	if registryPod.DBPath, err = c.getDBPath(ctx); err != nil {
-		return fmt.Errorf("get database path: %v", err)
-	}
-	pod, err := registryPod.Create(ctx, c.cfg, cs)
-	if err != nil {
-		return err
+
+	if c.HasFBCLabel {
+		// Initialize and create the FBC registry pod.
+		fbcRegistryPod := fbcindex.FBCRegistryPod{
+			BundleItems: items,
+			IndexImage:  c.IndexImage,
+			FBCContent:  c.FBCContent,
+		}
+
+		pod, err = fbcRegistryPod.Create(ctx, c.cfg, cs)
+		if err != nil {
+			return err
+		}
+
+	} else {
+		// Initialize and create registry pod
+		registryPod := index.SQLiteRegistryPod{
+			BundleItems:   items,
+			IndexImage:    c.IndexImage,
+			SecretName:    c.SecretName,
+			CASecretName:  c.CASecretName,
+			SkipTLSVerify: c.SkipTLSVerify,
+			UseHTTP:       c.UseHTTP,
+		}
+
+		if registryPod.DBPath, err = c.getDBPath(ctx); err != nil {
+			return fmt.Errorf("get database path: %v", err)
+		}
+
+		pod, err = registryPod.Create(ctx, c.cfg, cs)
+		if err != nil {
+			return err
+		}
 	}
 
 	// JSON marshal injected bundles
