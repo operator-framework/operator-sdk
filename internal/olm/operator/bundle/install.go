@@ -113,6 +113,7 @@ func (i *Install) setup(ctx context.Context) error {
 		log.Error(err)
 	}
 
+	// TODO (rashmi/venkat) might have to clean this up to remove/update some stuff.
 	f := &FBCContext{
 		BundleImage:       i.BundleImage,
 		Package:           labels[registrybundle.PackageLabel],
@@ -126,7 +127,7 @@ func (i *Install) setup(ctx context.Context) error {
 	}
 
 	// generate an FBC
-	declcfg, err := f.createMinimalFBC()
+	declcfg, err := f.createFBC()
 	if err != nil {
 		log.Errorf("error creating a minimal FBC: %v", err)
 		return err
@@ -138,6 +139,12 @@ func (i *Install) setup(ctx context.Context) error {
 		return err
 	}
 
+	// validate the generated declarative config
+	if err = validateFBC(declcfg); err != nil {
+		log.Errorf("error validating the generated FBC: %v", err)
+		return err
+	}
+
 	i.OperatorInstaller.PackageName = labels[registrybundle.PackageLabel]
 	i.OperatorInstaller.CatalogSourceName = operator.CatalogNameForPackage(i.OperatorInstaller.PackageName)
 	i.OperatorInstaller.StartingCSV = csv.Name
@@ -146,12 +153,12 @@ func (i *Install) setup(ctx context.Context) error {
 
 	i.IndexImageCatalogCreator.PackageName = i.OperatorInstaller.PackageName
 	i.IndexImageCatalogCreator.BundleImage = i.BundleImage
-
+	// TODO (rashmi/venkat) add FBC to IndexImageCatalogCreator
 	return nil
 }
 
-//createMinimalFBC generates an FBC by creating bundle, package and channel blobs.
-func (f *FBCContext) createMinimalFBC() (*declarativeconfig.DeclarativeConfig, error) {
+//createFBC generates an FBC by creating bundle, package and channel blobs.
+func (f *FBCContext) createFBC() (*declarativeconfig.DeclarativeConfig, error) {
 
 	var (
 		declcfg        *declarativeconfig.DeclarativeConfig
@@ -232,6 +239,23 @@ func (f *FBCContext) writeDecConfigToFile(declcfg *declarativeconfig.Declarative
 
 	if _, err := file.WriteString(string(buf.Bytes()) + "\n"); err != nil {
 		log.Errorf("error writing to FBC file: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+// validateFBC converts the generated declarative config to a model and validates it.
+func validateFBC(declcfg *declarativeconfig.DeclarativeConfig) error {
+	// convert declarative config to model
+	FBCmodel, err := declarativeconfig.ConvertToModel(*declcfg)
+	if err != nil {
+		log.Errorf("error converting the declarative config to mode: %v", err)
+		return err
+	}
+
+	if err = FBCmodel.Validate(); err != nil {
+		log.Errorf("error validating the generated FBC: %v", err)
 		return err
 	}
 
