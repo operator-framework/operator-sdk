@@ -31,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
+	declarativeconfig "github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
@@ -87,6 +88,9 @@ type RegistryPod struct { //nolint:maligned
 	pod *corev1.Pod
 
 	cfg *operator.Configuration
+
+	FBCPath *declarativeconfig.DeclarativeConfig
+	// FBC string
 }
 
 // init initializes the RegistryPod struct and sets defaults for empty fields
@@ -98,6 +102,8 @@ func (rp *RegistryPod) init(cfg *operator.Configuration) error {
 		rp.DBPath = defaultDBPath
 	}
 	rp.cfg = cfg
+
+	// TODO(rashmi/venkat): If FBCPath is empty, assign it a default value (maybe something thats hosted on a registry)
 
 	// validate the RegistryPod struct and ensure required fields are set
 	if err := rp.validate(); err != nil {
@@ -312,6 +318,13 @@ opm registry add -d {{ $.DBPath }} -b {{ $item.ImageTag }} --mode={{ $item.AddMo
 {{- end }}
 opm registry serve -d {{ .DBPath }} -p {{ .GRPCPort }}
 `
+
+// TODO(rashmi/venkat/lucky): modify the template according to FBC, and serve the FBC over the GRPC port.
+// opm serve can serve declarative configs
+
+// const cmdTemplate = `{{- range $i, $item := .BundleItems }}
+// opm serve -d {{ .FBCPath }} -p {{ .GRPCPort }}
+// `
 
 // getContainerCmd uses templating to construct the container command
 // and throws error if unable to parse and execute the container command
