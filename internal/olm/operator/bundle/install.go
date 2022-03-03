@@ -15,11 +15,19 @@
 package bundle
 
 import (
+	"bytes"
 	"context"
+	"errors"
+	"io"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"github.com/operator-framework/operator-registry/alpha/action"
+	declarativeconfig "github.com/operator-framework/operator-registry/alpha/declcfg"
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
@@ -33,6 +41,19 @@ type Install struct {
 	*registry.OperatorInstaller
 
 	cfg *operator.Configuration
+}
+
+type FBCContext struct {
+	BundleImage       string
+	Package           string
+	DefaultChannel    string
+	FBCName           string
+	FBCPath           string
+	FBCDirContext     string
+	ChannelSchema     string
+	ChannelName       string
+	ChannelEntries    []declarativeconfig.ChannelEntry
+	DescriptionReader io.Reader
 }
 
 func NewInstall(cfg *operator.Configuration) Install {
@@ -87,6 +108,30 @@ func (i *Install) setup(ctx context.Context) error {
 		return err
 	}
 
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Error(err)
+	}
+
+	f := &FBCContext{
+		BundleImage:       i.BundleImage,
+		Package:           labels[registrybundle.PackageLabel],
+		FBCDirContext:     "testdata",
+		FBCPath:           filepath.Join(wd, "testdata"),
+		FBCName:           "testFBC",
+		DescriptionReader: bytes.NewBufferString("foo"),
+		DefaultChannel:    "foo",
+		ChannelSchema:     "olm.channel",
+		ChannelName:       "foo",
+	}
+
+	// generate an FBC
+	_, err = f.createMinimalFBC()
+	if err != nil {
+		log.Errorf("error creating a minimal FBC: %v", err)
+		return err
+	}
+
 	i.OperatorInstaller.PackageName = labels[registrybundle.PackageLabel]
 	i.OperatorInstaller.CatalogSourceName = operator.CatalogNameForPackage(i.OperatorInstaller.PackageName)
 	i.OperatorInstaller.StartingCSV = csv.Name
@@ -97,4 +142,63 @@ func (i *Install) setup(ctx context.Context) error {
 	i.IndexImageCatalogCreator.BundleImage = i.BundleImage
 
 	return nil
+}
+
+//createMinimalFBC generates an FBC by creating bundle, package and channel blobs.
+func (f *FBCContext) createMinimalFBC() (*declarativeconfig.DeclarativeConfig, error) {
+
+	var (
+		declcfg        *declarativeconfig.DeclarativeConfig
+		declcfgpackage *declarativeconfig.Package
+		err            error
+	)
+
+	render := action.Render{
+		Refs: []string{f.BundleImage},
+	}
+
+	// generate bundles by rendering the bundle objects.
+	declcfg, err = render.Run(context.TODO())
+	if err != nil {
+		log.Errorf("error in rendering the bundle image: %v", err)
+		return nil, err
+	}
+
+	if len(declcfg.Bundles) < 0 {
+		log.Errorf("error in rendering the correct number of bundles: %v", err)
+		return nil, err
+	}
+	// validate length of bundles and add them to declcfg.Bundles.
+	if len(declcfg.Bundles) == 1 {
+		declcfg.Bundles = []declarativeconfig.Bundle{*&declcfg.Bundles[0]}
+	} else {
+		return nil, errors.New("error in expected length of bundles")
+	}
+
+	// init packages
+	init := action.Init{
+		Package:           f.Package,
+		DefaultChannel:    f.DefaultChannel,
+		DescriptionReader: f.DescriptionReader,
+	}
+
+	// generate packages
+	declcfgpackage, err = init.Run()
+	if err != nil {
+		log.Errorf("error in generating packages for the FBC: %v", err)
+		return nil, err
+	}
+	declcfg.Packages = []declarativeconfig.Package{*declcfgpackage}
+
+	// generate channels
+	channel := declarativeconfig.Channel{
+		Schema:  f.ChannelSchema,
+		Name:    f.ChannelName,
+		Package: f.Package,
+		Entries: f.ChannelEntries,
+	}
+
+	declcfg.Channels = []declarativeconfig.Channel{channel}
+
+	return declcfg, nil
 }
