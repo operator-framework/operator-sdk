@@ -32,7 +32,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
 
-	declarativeconfig "github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry/index"
 	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
@@ -69,6 +68,9 @@ type IndexImageCatalogCreator struct {
 	BundleAddMode index.BundleAddMode
 	SecretName    string
 	CASecretName  string
+	FBCcontent    string
+	FBCdir        string
+	FBCfile       string
 
 	FBCPath *declarativeconfig.DeclarativeConfig
 	cfg     *operator.Configuration
@@ -208,6 +210,10 @@ func (c IndexImageCatalogCreator) createAnnotatedRegistry(ctx context.Context, c
 		SkipTLSVerify: c.SkipTLSVerify,
 		UseHTTP:       c.UseHTTP,
 		FBCPath:       c.FBCPath,
+		SkipTLS:       c.SkipTLS,
+		FBCcontent:    c.FBCcontent,
+		FBCdir:        c.FBCdir,
+		FBCfile:       c.FBCfile,
 	}
 	if registryPod.DBPath, err = c.getDBPath(ctx); err != nil {
 		return fmt.Errorf("get database path: %v", err)
