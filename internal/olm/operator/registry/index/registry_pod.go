@@ -19,7 +19,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"path"
 	"text/template"
 	"time"
 
@@ -31,7 +30,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	declarativeconfig "github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
@@ -86,8 +84,10 @@ type RegistryPod struct { //nolint:maligned
 
 	cfg *operator.Configuration
 
-	FBCPath *declarativeconfig.DeclarativeConfig
-	// FBC string
+	// FBC data
+	FBCcontent string
+	FBCdir     string
+	FBCfile    string
 }
 
 // init initializes the RegistryPod struct and sets defaults for empty fields
@@ -99,8 +99,6 @@ func (rp *RegistryPod) init(cfg *operator.Configuration) error {
 		rp.DBPath = defaultDBPath
 	}
 	rp.cfg = cfg
-
-	// TODO(rashmi/venkat): If FBCPath is empty, assign it a default value (maybe something thats hosted on a registry)
 
 	// validate the RegistryPod struct and ensure required fields are set
 	if err := rp.validate(); err != nil {
@@ -309,32 +307,27 @@ func newBool(b bool) *bool {
 	return bp
 }
 
-const cmdTemplate = `mkdir -p {{ dirname .DBPath }} && \
-{{- range $i, $item := .BundleItems }}
-opm registry add -d {{ $.DBPath }} -b {{ $item.ImageTag }} --mode={{ $item.AddMode }}{{ if $.CASecretName }} --ca-file=/certs/cert.pem{{ end }} --skip-tls={{ $.SkipTLS }} && \
-{{- end }}
-opm registry serve -d {{ .DBPath }} -p {{ .GRPCPort }}
-`
+// const cmdTemplate = `mkdir -p {{ dirname .DBPath }} && \
+// {{- range $i, $item := .BundleItems }}
+// opm registry add -d {{ $.DBPath }} -b {{ $item.ImageTag }} --mode={{ $item.AddMode }}{{ if $.CASecretName }} --ca-file=/certs/cert.pem{{ end }} --skip-tls={{ $.SkipTLS }} && \
+// {{- end }}
+// opm registry serve -d {{ .DBPath }} -p {{ .GRPCPort }}
+// `
 
 // TODO(rashmi/venkat/lucky): modify the template according to FBC, and serve the FBC over the GRPC port.
 // opm serve can serve declarative configs
 
-// const cmdTemplate = `{{- range $i, $item := .BundleItems }}
-// opm serve -d {{ .FBCPath }} -p {{ .GRPCPort }}
-// `
+const cmdTemplate = `mkdir -p {{ .FBCdir }} && \
+echo '{{ .FBCcontent }}' >> {{ .FBCfile  }} && \
+opm serve {{ .FBCdir }} -p {{ .GRPCPort }}
+`
 
 // getContainerCmd uses templating to construct the container command
 // and throws error if unable to parse and execute the container command
 func (rp *RegistryPod) getContainerCmd() (string, error) {
-
-	// create a custom dirname template function
-	funcMap := template.FuncMap{
-		"dirname": path.Dir,
-	}
-
 	// add the custom dirname template function to the
 	// template's FuncMap and parse the cmdTemplate
-	t := template.Must(template.New("cmd").Funcs(funcMap).Parse(cmdTemplate))
+	t := template.Must(template.New("cmd").Parse(cmdTemplate))
 
 	// execute the command by applying the parsed t to command
 	// and write command output to out
