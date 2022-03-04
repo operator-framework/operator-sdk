@@ -19,7 +19,6 @@ import (
 	"context"
 	"errors"
 	"io"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -49,7 +48,7 @@ type FBCContext struct {
 	DefaultChannel    string
 	FBCName           string
 	FBCDirPath        string
-	FBCDirContext     string
+	FBCDirName        string
 	ChannelSchema     string
 	ChannelName       string
 	ChannelEntries    []declarativeconfig.ChannelEntry
@@ -108,42 +107,35 @@ func (i *Install) setup(ctx context.Context) error {
 		return err
 	}
 
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Error(err)
-	}
+	// FBC variables
+	directoryName := filepath.Join("/tmp", strings.Split(csv.Name, ".")[0]+"-index")
+	bundleChannel := strings.Split(labels[registrybundle.ChannelsLabel], ",")[0]
+	fileName := filepath.Join(directoryName, "testFBC")
 
-	// TODO (rashmi/venkat) might have to clean this up to remove/update some stuff.
 	f := &FBCContext{
-		BundleImage:       i.BundleImage,
-		Package:           labels[registrybundle.PackageLabel],
-		FBCDirContext:     "testdata",
-		FBCDirPath:        filepath.Join(wd, "testdata"),
-		FBCName:           "testFBC",
-		DescriptionReader: bytes.NewBufferString("foo"),
-		DefaultChannel:    "foo",
-		ChannelSchema:     "olm.channel",
-		ChannelName:       "foo",
+		BundleImage:    i.BundleImage,
+		Package:        labels[registrybundle.PackageLabel],
+		FBCDirName:     directoryName,
+		FBCName:        fileName,
+		DefaultChannel: bundleChannel,
+		ChannelSchema:  "olm.channel",
+		ChannelName:    bundleChannel,
 	}
 
 	// create entries for channel blob
 	entries := []declarativeconfig.ChannelEntry{
 		{
-			Name: "api-operator.v1.0.1",
+			Name: csv.Name,
 		},
 	}
 	f.ChannelEntries = entries
+
+	log.Infof("Generating a File-Based Catalog")
 
 	// generate an FBC
 	declcfg, err := f.createFBC()
 	if err != nil {
 		log.Errorf("error creating a minimal FBC: %v", err)
-		return err
-	}
-
-	// write declarative config to file
-	if err = f.writeDecConfigToFile(declcfg); err != nil {
-		log.Errorf("error writing declarative config to file: %v", err)
 		return err
 	}
 
@@ -153,6 +145,20 @@ func (i *Install) setup(ctx context.Context) error {
 		return err
 	}
 
+	// convert declarative config to string
+	content, err := f.stringifyDecConfig(declcfg)
+
+	if err != nil {
+		log.Errorf("error converting declarative config to string: %v", err)
+		return err
+	}
+
+	if content == "" {
+		return errors.New("File-Based Catalog contents cannot be empty")
+	}
+
+	log.Infof("Generated a valid File-Based Catalog")
+
 	i.OperatorInstaller.PackageName = labels[registrybundle.PackageLabel]
 	i.OperatorInstaller.CatalogSourceName = operator.CatalogNameForPackage(i.OperatorInstaller.PackageName)
 	i.OperatorInstaller.StartingCSV = csv.Name
@@ -161,10 +167,10 @@ func (i *Install) setup(ctx context.Context) error {
 
 	i.IndexImageCatalogCreator.PackageName = i.OperatorInstaller.PackageName
 	i.IndexImageCatalogCreator.BundleImage = i.BundleImage
-	// TODO (rashmi/venkat) add FBC to IndexImageCatalogCreator
-	// TODO(rashmi/venkat) investigate whether an FBC needs to be a directory path to where the catalog exists
-	// or it has to be declarative config
-	// i.IndexImageCatalogCreator.FBCPath = declcfg
+	i.IndexImageCatalogCreator.FBCcontent = content
+	i.IndexImageCatalogCreator.FBCdir = directoryName
+	i.IndexImageCatalogCreator.FBCfile = fileName
+
 	return nil
 }
 
@@ -202,7 +208,7 @@ func (f *FBCContext) createFBC() (*declarativeconfig.DeclarativeConfig, error) {
 	// init packages
 	init := action.Init{
 		Package:           f.Package,
-		DefaultChannel:    f.DefaultChannel,
+		DefaultChannel:    f.ChannelName,
 		DescriptionReader: f.DescriptionReader,
 	}
 
@@ -227,33 +233,16 @@ func (f *FBCContext) createFBC() (*declarativeconfig.DeclarativeConfig, error) {
 	return declcfg, nil
 }
 
-// writeDecConfigToFile writes the generated declarative config to a file.
-func (f *FBCContext) writeDecConfigToFile(declcfg *declarativeconfig.DeclarativeConfig) error {
+// stringifyDecConfig writes the generated declarative config to a string.
+func (f *FBCContext) stringifyDecConfig(declcfg *declarativeconfig.DeclarativeConfig) (string, error) {
 	var buf bytes.Buffer
 	err := declarativeconfig.WriteJSON(*declcfg, &buf)
 	if err != nil {
 		log.Errorf("error writing to JSON encoder: %v", err)
-		return err
-	}
-	if err := os.MkdirAll(f.FBCDirContext, 0755); err != nil {
-		log.Errorf("error creating a directory for FBC: %v", err)
-		return err
-	}
-	fbcFilePath := filepath.Join(f.FBCDirPath, f.FBCName)
-	file, err := os.OpenFile(fbcFilePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
-	if err != nil {
-		log.Errorf("error opening FBC file: %v", err)
-		return err
+		return "", err
 	}
 
-	defer file.Close()
-
-	if _, err := file.WriteString(string(buf.Bytes()) + "\n"); err != nil {
-		log.Errorf("error writing to FBC file: %v", err)
-		return err
-	}
-
-	return nil
+	return string(buf.Bytes()), nil
 }
 
 // validateFBC converts the generated declarative config to a model and validates it.
