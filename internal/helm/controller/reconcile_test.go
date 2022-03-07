@@ -16,10 +16,60 @@ package controller
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
+
+func TestDetermineReconcilePeriod(t *testing.T) {
+	testPeriod1, _ := time.ParseDuration("10s")
+	obj1 := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"annotations": map[string]interface{}{
+					"name":                        "test-obj-1",
+					helmReconcilePeriodAnnotation: "3s",
+				},
+			},
+		},
+	}
+	expected1, _ := time.ParseDuration("3s")
+	finalPeriod1, err := determineReconcilePeriod(testPeriod1, obj1)
+	assert.Equal(t, nil, err, "Verify that no error is returned on parsing the time period")
+	assert.Equal(t, expected1, finalPeriod1, "Verify that the annotations period takes precedence")
+
+	testPeriod2, _ := time.ParseDuration("1h3m4s")
+	obj2 := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"annotations": map[string]interface{}{
+					"name": "test-obj-2",
+				},
+			},
+		},
+	}
+	expected2, _ := time.ParseDuration("1h3m4s")
+	finalPeriod2, err := determineReconcilePeriod(testPeriod2, obj2)
+	assert.Equal(t, nil, err, "Verify that no error is returned on parsing the time period")
+	assert.Equal(t, expected2, finalPeriod2, "Verify that when no time period is present under the CR's annotations, the original time period value gets used")
+
+	testPeriod3, _ := time.ParseDuration("5m15s")
+	obj3 := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"annotations": map[string]interface{}{
+					"name":                        "test-obj-3",
+					helmReconcilePeriodAnnotation: "4x",
+				},
+			},
+		},
+	}
+	finalPeriod3, err := determineReconcilePeriod(testPeriod3, obj3)
+	expected3, _ := time.ParseDuration("5m15s")
+	assert.NotEqual(t, nil, err, "Verify that error is thrown when invalid time period is passed in the CR annotations")
+	assert.Equal(t, expected3, finalPeriod3, "Verify that when a faulty time period is present under the CR's annotations, the original time period value gets used")
+}
 
 func TestHasAnnotation(t *testing.T) {
 	upgradeForceTests := []struct {

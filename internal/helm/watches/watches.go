@@ -40,6 +40,7 @@ type Watch struct {
 	WatchDependentResources *bool                `json:"watchDependentResources,omitempty"`
 	OverrideValues          map[string]string    `json:"overrideValues,omitempty"`
 	Selector                metav1.LabelSelector `json:"selector"`
+	ReconcilePeriod         metav1.Duration      `json:"reconcilePeriod,omitempty"`
 }
 
 // UnmarshalYAML unmarshals an individual watch from the Helm watches.yaml file
