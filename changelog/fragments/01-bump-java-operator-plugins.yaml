@@ -1,0 +1,20 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      (java/v1alpha) bumping the java-operator-plugins dependency to v0.3.0.
+      This release includes the following items.
+
+      ### Bug Fixes
+      - chore: update to JOSDK extension 3.0.4 and Quarkus 2.7.3 (Fixes issue 74)
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "bugfix"
+
+    # Is this a breaking change?
+    breaking: false
