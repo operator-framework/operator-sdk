@@ -46,7 +46,7 @@ type Watch struct {
 	Role                        string                    `yaml:"role"`
 	Vars                        map[string]interface{}    `yaml:"vars"`
 	MaxRunnerArtifacts          int                       `yaml:"maxRunnerArtifacts"`
-	ReconcilePeriod             time.Duration             `yaml:"reconcilePeriod"`
+	ReconcilePeriod             metav1.Duration           `yaml:"reconcilePeriod"`
 	Finalizer                   *Finalizer                `yaml:"finalizer"`
 	ManageStatus                bool                      `yaml:"manageStatus"`
 	WatchDependentResources     bool                      `yaml:"watchDependentResources"`
@@ -156,7 +156,7 @@ func (w *Watch) setValuesFromAlias(tmp alias) error {
 	w.Vars = tmp.Vars
 	w.MaxRunnerArtifacts = tmp.MaxRunnerArtifacts
 	w.MaxConcurrentReconciles = getMaxConcurrentReconciles(gvk, maxConcurrentReconcilesDefault)
-	w.ReconcilePeriod = tmp.ReconcilePeriod.Duration
+	w.ReconcilePeriod = *tmp.ReconcilePeriod
 	w.ManageStatus = *tmp.ManageStatus
 	w.WatchDependentResources = *tmp.WatchDependentResources
 	w.SnakeCaseParameters = *tmp.SnakeCaseParameters
@@ -289,7 +289,7 @@ func New(gvk schema.GroupVersionKind, role, playbook string, vars map[string]int
 		Vars:                        vars,
 		MaxRunnerArtifacts:          maxRunnerArtifactsDefault,
 		MaxConcurrentReconciles:     maxConcurrentReconcilesDefault,
-		ReconcilePeriod:             reconcilePeriodDefault.Duration,
+		ReconcilePeriod:             reconcilePeriodDefault,
 		ManageStatus:                manageStatusDefault,
 		WatchDependentResources:     watchDependentResourcesDefault,
 		WatchClusterScopedResources: watchClusterScopedResourcesDefault,

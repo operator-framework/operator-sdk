@@ -23,6 +23,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -212,6 +213,13 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 		os.Exit(1)
 	}
 	for _, w := range watches {
+		reconcilePeriod := f.ReconcilePeriod
+		if w.ReconcilePeriod.Duration != time.Duration(0) {
+			// if a duration other than default was passed in through watches,
+			// it will take precedence over the command-line flag
+			reconcilePeriod = w.ReconcilePeriod.Duration
+		}
+
 		runner, err := runner.New(w, f.AnsibleArgs)
 		if err != nil {
 			log.Error(err, "Failed to create runner")
@@ -224,7 +232,7 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 			ManageStatus:            w.ManageStatus,
 			AnsibleDebugLogs:        getAnsibleDebugLog(),
 			MaxConcurrentReconciles: w.MaxConcurrentReconciles,
-			ReconcilePeriod:         w.ReconcilePeriod,
+			ReconcilePeriod:         reconcilePeriod,
 			Selector:                w.Selector,
 			LoggingLevel:            getAnsibleEventsToLog(f),
 		})

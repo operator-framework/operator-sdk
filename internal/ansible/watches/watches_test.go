@@ -67,7 +67,7 @@ func TestNew(t *testing.T) {
 				t.Fatalf("Unexpected maxConcurrentReconciles %v expected %v", watch.MaxConcurrentReconciles,
 					maxConcurrentReconcilesDefault)
 			}
-			if watch.ReconcilePeriod != expectedReconcilePeriod {
+			if watch.ReconcilePeriod.Duration != expectedReconcilePeriod {
 				t.Fatalf("Unexpected reconcilePeriod %v expected %v", watch.ReconcilePeriod,
 					expectedReconcilePeriod)
 			}
@@ -134,8 +134,8 @@ func TestLoad(t *testing.T) { //nolint:gocyclo
 		return
 	}
 
-	zeroSeconds := time.Duration(0)
-	twoSeconds := time.Second * 2
+	zeroSeconds := metav1.Duration{Duration: time.Duration(0)}
+	twoSeconds := metav1.Duration{Duration: time.Second * 2}
 
 	validWatches := []Watch{
 		Watch{
