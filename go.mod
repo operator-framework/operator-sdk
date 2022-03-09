@@ -15,7 +15,7 @@ require (
 	github.com/onsi/gomega v1.17.0
 	github.com/operator-framework/api v0.14.0
 	github.com/operator-framework/helm-operator-plugins v0.0.9
-	github.com/operator-framework/java-operator-plugins v0.2.0
+	github.com/operator-framework/java-operator-plugins v0.3.0
 	github.com/operator-framework/operator-lib v0.10.0
 	github.com/operator-framework/operator-registry v1.19.5
 	github.com/prometheus/client_golang v1.11.0
