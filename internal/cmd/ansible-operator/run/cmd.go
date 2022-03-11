@@ -112,6 +112,7 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 	}
 
 	if err := verifyCfgURL(cfg.Host); err != nil {
+		log.Error(err, "URL verification failed.")
 		os.Exit(1)
 	}
 
