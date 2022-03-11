@@ -21,6 +21,7 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -194,11 +195,16 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 	}
 	for _, w := range ws {
 		// Register the controller with the factory.
+		reconcilePeriod := f.ReconcilePeriod
+		if w.ReconcilePeriod.Duration != time.Duration(0) {
+			reconcilePeriod = w.ReconcilePeriod.Duration
+		}
+
 		err := controller.Add(mgr, controller.WatchOptions{
 			Namespace:               namespace,
 			GVK:                     w.GroupVersionKind,
 			ManagerFactory:          release.NewManagerFactory(mgr, w.ChartDir),
-			ReconcilePeriod:         f.ReconcilePeriod,
+			ReconcilePeriod:         reconcilePeriod,
 			WatchDependentResources: *w.WatchDependentResources,
 			OverrideValues:          w.OverrideValues,
 			MaxConcurrentReconciles: f.MaxConcurrentReconciles,
