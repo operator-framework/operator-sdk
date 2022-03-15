@@ -299,7 +299,7 @@ Authors may decide to distribute their bundles for various architectures: x86_64
 [garbage_collection]: https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection/
 [finalizers]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#finalizers
 [cronjobs]: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/
-[cronjobs_fields]: https://kubernetes.io/docs/tasks/job/automated-tasks-with-cron-jobs/#jobs-history-limits
+[cronjob_fields]: https://kubernetes.io/docs/tasks/job/automated-tasks-with-cron-jobs/#jobs-history-limits
 [cronjob_tutorial]: https://book.kubebuilder.io/cronjob-tutorial/controller-implementation.html#3-clean-up-old-jobs-according-to-the-history-limit
 [pv]: https://kubernetes.io/docs/concepts/storage/persistent-volumes/
 [reclaiming]: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#reclaiming

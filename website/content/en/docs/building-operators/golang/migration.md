@@ -34,7 +34,7 @@ Scaffolded projects now use:
 - Scaffolded tests that use the [`envtest`][envtest] test framework
 - Preliminary support for CLI plugins. For more info see the [plugins design document][plugins-phase1-design-doc]
 - A `PROJECT` configuration file to store information about GVKs, plugins, and help the CLI make decisions.
-- A new option to create projects using ComponentConfig. For more info, see [enhancement proposal][enhancement proposal] and the [Component config tutorial][component-config-tutorial]
+- A new option to create projects using ComponentConfig. For more info, see [enhancement proposal][component-proposal] and the [Component config tutorial][component-config-tutorial]
 - Go version `1.15` (previously it was `1.13`).
 
 Generated files with the default API versions:
@@ -444,6 +444,7 @@ For further steps regarding the deployment of the operator, creation of custom r
 [webhook-doc]: https://book.kubebuilder.io/reference/webhook-overview.html
 [healthz-ping]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/healthz#CheckHandler
 [controller-runtime]: https://github.com/kubernetes-sigs/controller-runtime/releases
+[component-proposal]: https://github.com/kubernetes-sigs/controller-runtime/blob/master/designs/component-config.md
 [component-config-tutorial]: https://github.com/kubernetes-sigs/kubebuilder/blob/master/docs/book/src/component-config-tutorial/tutorial.md
 [plugins-phase1-design-doc]: https://github.com/kubernetes-sigs/kubebuilder/blob/master/designs/extensible-cli-and-scaffolding-plugins-phase-1.md
 [migration-doc]: /docs/upgrading-sdk-version/
