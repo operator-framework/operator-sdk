@@ -317,9 +317,6 @@ func newBool(b bool) *bool {
 // opm registry serve -d {{ .DBPath }} -p {{ .GRPCPort }}
 // `
 
-// TODO(rashmi/venkat/lucky): modify the template according to FBC, and serve the FBC over the GRPC port.
-// opm serve can serve declarative configs
-
 const cmdTemplate = `mkdir -p {{ .FBCdir }} && \
 echo '{{ .FBCcontent }}' >> {{ .FBCfile  }} && \
 opm serve {{ .FBCdir }} -p {{ .GRPCPort }}
