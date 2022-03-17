@@ -107,36 +107,51 @@ func (i *Install) setup(ctx context.Context) error {
 		return err
 	}
 
-	// FBC variables
+	var declcfg *declarativeconfig.DeclarativeConfig
+
 	directoryName := filepath.Join("/tmp", strings.Split(csv.Name, ".")[0]+"-index")
-	bundleChannel := strings.Split(labels[registrybundle.ChannelsLabel], ",")[0]
 	fileName := filepath.Join(directoryName, "testFBC")
 
-	f := &FBCContext{
-		BundleImage:    i.BundleImage,
-		Package:        labels[registrybundle.PackageLabel],
-		FBCDirName:     directoryName,
-		FBCName:        fileName,
-		DefaultChannel: bundleChannel,
-		ChannelSchema:  "olm.channel",
-		ChannelName:    bundleChannel,
-	}
+	if i.IndexImageCatalogCreator.IndexImage != registry.DefaultIndexImage {
+		render := action.Render{
+			Refs: []string{i.IndexImageCatalogCreator.IndexImage},
+		}
 
-	// create entries for channel blob
-	entries := []declarativeconfig.ChannelEntry{
-		{
-			Name: csv.Name,
-		},
-	}
-	f.ChannelEntries = entries
+		declcfg, err = render.Run(context.TODO())
+		if err != nil {
+			log.Errorf("error in rendering index image: %v", err)
+			return err
+		}
 
-	log.Infof("Generating a File-Based Catalog")
+	} else {
+		bundleChannel := strings.Split(labels[registrybundle.ChannelsLabel], ",")[0]
+		// FBC variables
+		f := &FBCContext{
+			BundleImage:    i.BundleImage,
+			FBCDirName:     directoryName,
+			FBCName:        fileName,
+			Package:        labels[registrybundle.PackageLabel],
+			DefaultChannel: bundleChannel,
+			ChannelSchema:  "olm.channel",
+			ChannelName:    bundleChannel,
+		}
 
-	// generate an FBC
-	declcfg, err := f.createFBC()
-	if err != nil {
-		log.Errorf("error creating a minimal FBC: %v", err)
-		return err
+		// create entries for channel blob
+		entries := []declarativeconfig.ChannelEntry{
+			{
+				Name: csv.Name,
+			},
+		}
+		f.ChannelEntries = entries
+
+		log.Infof("Generating a File-Based Catalog")
+
+		// generate an FBC
+		declcfg, err = f.createFBC()
+		if err != nil {
+			log.Errorf("error creating a minimal FBC: %v", err)
+			return err
+		}
 	}
 
 	// validate the generated declarative config
@@ -146,7 +161,7 @@ func (i *Install) setup(ctx context.Context) error {
 	}
 
 	// convert declarative config to string
-	content, err := f.stringifyDecConfig(declcfg)
+	content, err := stringifyDecConfig(declcfg)
 
 	if err != nil {
 		log.Errorf("error converting declarative config to string: %v", err)
@@ -234,7 +249,7 @@ func (f *FBCContext) createFBC() (*declarativeconfig.DeclarativeConfig, error) {
 }
 
 // stringifyDecConfig writes the generated declarative config to a string.
-func (f *FBCContext) stringifyDecConfig(declcfg *declarativeconfig.DeclarativeConfig) (string, error) {
+func stringifyDecConfig(declcfg *declarativeconfig.DeclarativeConfig) (string, error) {
 	var buf bytes.Buffer
 	err := declarativeconfig.WriteJSON(*declcfg, &buf)
 	if err != nil {
