@@ -30,7 +30,7 @@ $ operator-sdk create api --group cache --version v1alpha1 --kind Memcached --re
 
 You can also manually set the scope in the Go `types.go` file by adding or changing the [kubebuilder scope marker][kubebuilder_crd_markers]
 to your resource. This file is usually located in `api/<version>/<kind>_types.go` or `apis/<group>/<version>/<kind>_types.go` if
-you are using the [multigroup][multigroup-kubebuilder-doc] layout. Once this marker is set, the CRD files will be generated with the approriate scope.
+you are using the [multigroup][kubebuilder_multigroup] layout. Once this marker is set, the CRD files will be generated with the approriate scope.
 Here is an example API type with the marker set to cluster scope:
 
 ```golang
