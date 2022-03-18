@@ -50,6 +50,7 @@ type Options struct {
 	AnsibleDebugLogs            bool
 	WatchDependentResources     bool
 	WatchClusterScopedResources bool
+	WatchAnnotationsChanges     bool
 	MaxConcurrentReconciles     int
 	Selector                    metav1.LabelSelector
 }
@@ -57,21 +58,22 @@ type Options struct {
 // Add - Creates a new ansible operator controller and adds it to the manager
 func Add(mgr manager.Manager, options Options) *controller.Controller {
 	log.Info("Watching resource", "Options.Group", options.GVK.Group, "Options.Version",
-		options.GVK.Version, "Options.Kind", options.GVK.Kind)
+		options.GVK.Version, "Options.Kind", options.GVK.Kind, "Options.WatchAnnotationsChanges", options.WatchAnnotationsChanges)
 	if options.EventHandlers == nil {
 		options.EventHandlers = []events.EventHandler{}
 	}
 	eventHandlers := append(options.EventHandlers, events.NewLoggingEventHandler(options.LoggingLevel))
 
 	aor := &AnsibleOperatorReconciler{
-		Client:           mgr.GetClient(),
-		GVK:              options.GVK,
-		Runner:           options.Runner,
-		EventHandlers:    eventHandlers,
-		ReconcilePeriod:  options.ReconcilePeriod,
-		ManageStatus:     options.ManageStatus,
-		AnsibleDebugLogs: options.AnsibleDebugLogs,
-		APIReader:        mgr.GetAPIReader(),
+		Client:                  mgr.GetClient(),
+		GVK:                     options.GVK,
+		Runner:                  options.Runner,
+		EventHandlers:           eventHandlers,
+		ReconcilePeriod:         options.ReconcilePeriod,
+		ManageStatus:            options.ManageStatus,
+		AnsibleDebugLogs:        options.AnsibleDebugLogs,
+		APIReader:               mgr.GetAPIReader(),
+		WatchAnnotationsChanges: options.WatchAnnotationsChanges,
 	}
 
 	scheme := mgr.GetScheme()
@@ -102,6 +104,12 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 	// Set up predicates.
 	predicates := []ctrlpredicate.Predicate{
 		ctrlpredicate.Or(ctrlpredicate.GenerationChangedPredicate{}, libpredicate.NoGenerationPredicate{}),
+	}
+
+	if options.WatchAnnotationsChanges {
+		predicates = []ctrlpredicate.Predicate{
+			ctrlpredicate.Or(ctrlpredicate.AnnotationChangedPredicate{}, predicates[0]),
+		}
 	}
 
 	p, err := parsePredicateSelector(options.Selector)
