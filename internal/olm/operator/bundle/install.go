@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"path/filepath"
 	"reflect"
@@ -26,7 +27,9 @@ import (
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/alpha/action"
 	declarativeconfig "github.com/operator-framework/operator-registry/alpha/declcfg"
+	"github.com/operator-framework/operator-registry/pkg/containertools"
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
+	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 
@@ -108,15 +111,28 @@ func (i *Install) setup(ctx context.Context) error {
 	directoryName := filepath.Join("/tmp", strings.Split(csv.Name, ".")[0]+"-index")
 	fileName := filepath.Join(directoryName, "testFBC")
 
-	if i.IndexImageCatalogCreator.IndexImage != registry.DefaultIndexImage {
-		declcfg, err = addBundleToIndexImage(i.IndexImageCatalogCreator.IndexImage, i.BundleImage)
-		if err != nil {
-			log.Errorf("error in rendering index image: %v", err)
-			return err
-		}
+	catalogLabels, err := registryutil.GetImageLabels(ctx, nil, i.IndexImageCatalogCreator.IndexImage, false)
+	if err != nil {
+		return fmt.Errorf("get index image labels: %v", err)
+	}
 
-		log.Infof("Rendered a File-Based Catalog of the Index Image")
-	} else {
+	_, hasDBLabel := catalogLabels[containertools.DbLocationLabel]
+	_, hasFBCLabel := catalogLabels[containertools.ConfigsLocationLabel]
+
+	// handle both SQLite based and FBC based images.
+	if hasDBLabel || hasFBCLabel {
+		if i.IndexImageCatalogCreator.IndexImage != registry.DefaultIndexImage {
+			declcfg, err = addBundleToIndexImage(i.IndexImageCatalogCreator.IndexImage, i.BundleImage)
+			if err != nil {
+				log.Errorf("error in rendering index image: %v", err)
+				return err
+			}
+
+			log.Infof("Rendered a File-Based Catalog of the Index Image")
+		}
+	}
+
+	if i.IndexImageCatalogCreator.IndexImage == registry.DefaultIndexImage {
 		// if the index image is a default index image i.e the user did not provide an index image, then we create a file based catalog.
 		bundleChannel := strings.Split(labels[registrybundle.ChannelsLabel], ",")[0]
 		// FBC variables
