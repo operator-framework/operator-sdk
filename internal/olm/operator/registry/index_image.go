@@ -70,6 +70,8 @@ type IndexImageCatalogCreator struct {
 	FBCdir        string
 	FBCfile       string
 	cfg           *operator.Configuration
+	FBCImage      string
+	UpgradeEdge   string
 }
 
 var _ CatalogCreator = &IndexImageCatalogCreator{}
@@ -92,6 +94,7 @@ func (c *IndexImageCatalogCreator) BindFlags(fs *pflag.FlagSet) {
 			"and the file *must* be encoded under the key \"cert.pem\"")
 	fs.BoolVar(&c.SkipTLS, "skip-tls", false, "skip authentication of image registry TLS "+
 		"certificate when pulling a bundle image in-cluster")
+	fs.StringVar(&c.UpgradeEdge, "upgrade-edge", "", "Edge to which the new bundle will be added.")
 }
 
 func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string) (*v1alpha1.CatalogSource, error) {

@@ -27,17 +27,19 @@ import (
 func NewCmd(cfg *operator.Configuration) *cobra.Command {
 	u := bundleupgrade.NewUpgrade(cfg)
 	cmd := &cobra.Command{
-		Use:   "bundle-upgrade <bundle-image>",
+		Use:   "bundle-upgrade <bundle-image> <index-image>",
 		Short: "Upgrade an Operator previously installed in the bundle format with OLM",
-		Long: `The single argument to this command is a bundle image, with the full registry path specified.
-If using a docker.io image, you must specify docker.io(/<namespace>)?/<bundle-image-name>:<tag>.`,
-		Args:    cobra.ExactArgs(1),
+		Long: `The first argument to this command is a bundle image, with the full registry path specified.
+If using a docker.io image, you must specify docker.io(/<namespace>)?/<bundle-image-name>:<tag>.
+The second argument to this command is an index image in which the upgrade edge is present in the specified channel.`,
+		Args:    cobra.ExactArgs(2),
 		PreRunE: func(*cobra.Command, []string) error { return cfg.Load() },
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx, cancel := context.WithTimeout(cmd.Context(), cfg.Timeout)
 			defer cancel()
 
 			u.BundleImage = args[0]
+			u.IndexImageCatalogCreator.FBCImage = args[1]
 
 			_, err := u.Run(ctx)
 			if err != nil {

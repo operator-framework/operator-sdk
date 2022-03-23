@@ -55,8 +55,9 @@ type FBCContext struct {
 	FBCDirName        string
 	ChannelSchema     string
 	ChannelName       string
-	ChannelEntries    []declarativeconfig.ChannelEntry
+	ChannelEntry      declarativeconfig.ChannelEntry
 	DescriptionReader io.Reader
+	Refs              []string
 }
 
 func NewInstall(cfg *operator.Configuration) Install {
@@ -130,16 +131,11 @@ func (i *Install) setup(ctx context.Context) error {
 		DefaultChannel: bundleChannel,
 		ChannelSchema:  "olm.channel",
 		ChannelName:    bundleChannel,
-	}
-
-	// create entries for channel blob
-	entries := []declarativeconfig.ChannelEntry{
-		{
+		Refs:           []string{i.BundleImage},
+		ChannelEntry: declarativeconfig.ChannelEntry{
 			Name: csv.Name,
 		},
 	}
-	f.ChannelEntries = entries
-
 	log.Infof("Generating a File-Based Catalog")
 
 	// generate a file-based catalog representation of the bundle image
@@ -162,18 +158,21 @@ func (i *Install) setup(ctx context.Context) error {
 	}
 
 	// validate the declarative config
-	if err = validateFBC(declcfg); err != nil {
+	if err = ValidateFBC(declcfg); err != nil {
 		log.Errorf("error validating the generated FBC: %v", err)
 		return err
 	}
 
 	// convert declarative config to string
-	content, err := stringifyDecConfig(declcfg)
+	content, err := StringifyDecConfig(declcfg)
 
 	if err != nil {
 		log.Errorf("error converting declarative config to string: %v", err)
 		return err
 	}
+
+	fmt.Println("FBC Content")
+	fmt.Println(content)
 
 	if content == "" {
 		return errors.New("File-Based Catalog contents cannot be empty")
@@ -245,7 +244,7 @@ func addBundleToIndexImage(indexImage string, bundleDeclConfig *declarativeconfi
 	return imageDeclConfig, nil
 }
 
-//createFBC generates an FBC by creating bundle, package and channel blobs.
+// CreateFBC generates an FBC by creating bundle, package and channel blobs.
 func (f *FBCContext) createFBC(ctx context.Context) (*declarativeconfig.DeclarativeConfig, error) {
 	var (
 		declcfg        *declarativeconfig.DeclarativeConfig
@@ -253,8 +252,9 @@ func (f *FBCContext) createFBC(ctx context.Context) (*declarativeconfig.Declarat
 		err            error
 	)
 
+	// Rendering the bundle image into declarative config format
 	render := action.Render{
-		Refs: []string{f.BundleImage},
+		Refs: f.Refs,
 	}
 
 	// generate bundles by rendering the bundle objects.
@@ -264,15 +264,10 @@ func (f *FBCContext) createFBC(ctx context.Context) (*declarativeconfig.Declarat
 		return nil, err
 	}
 
+	// Ensuring a valid bundle size
 	if len(declcfg.Bundles) < 0 {
 		log.Errorf("error in rendering the correct number of bundles: %v", err)
 		return nil, err
-	}
-	// validate length of bundles and add them to declcfg.Bundles.
-	if len(declcfg.Bundles) == 1 {
-		declcfg.Bundles = []declarativeconfig.Bundle{*&declcfg.Bundles[0]}
-	} else {
-		return nil, errors.New("error in expected length of bundles")
 	}
 
 	// init packages
@@ -295,7 +290,7 @@ func (f *FBCContext) createFBC(ctx context.Context) (*declarativeconfig.Declarat
 		Schema:  f.ChannelSchema,
 		Name:    f.ChannelName,
 		Package: f.Package,
-		Entries: f.ChannelEntries,
+		Entries: []declarativeconfig.ChannelEntry{f.ChannelEntry},
 	}
 
 	declcfg.Channels = []declarativeconfig.Channel{channel}
@@ -303,8 +298,8 @@ func (f *FBCContext) createFBC(ctx context.Context) (*declarativeconfig.Declarat
 	return declcfg, nil
 }
 
-// stringifyDecConfig writes the generated declarative config to a string.
-func stringifyDecConfig(declcfg *declarativeconfig.DeclarativeConfig) (string, error) {
+// StringifyDecConfig writes the generated declarative config to a string.
+func StringifyDecConfig(declcfg *declarativeconfig.DeclarativeConfig) (string, error) {
 	var buf bytes.Buffer
 	err := declarativeconfig.WriteJSON(*declcfg, &buf)
 	if err != nil {
@@ -315,8 +310,8 @@ func stringifyDecConfig(declcfg *declarativeconfig.DeclarativeConfig) (string, e
 	return string(buf.Bytes()), nil
 }
 
-// validateFBC converts the generated declarative config to a model and validates it.
-func validateFBC(declcfg *declarativeconfig.DeclarativeConfig) error {
+// ValidateFBC converts the generated declarative config to a model and validates it.
+func ValidateFBC(declcfg *declarativeconfig.DeclarativeConfig) error {
 	// convert declarative config to model
 	FBCmodel, err := declarativeconfig.ConvertToModel(*declcfg)
 	if err != nil {
