@@ -1,0 +1,5 @@
+entries:
+  - description: >
+      User is not able to run the `operator-sdk run bundle` in local kind-registry as `--skip-tls` flag is deprecated. OPM introduced new flags `--skip-tls-verify and --use-http`. This fix will enable the newly introduced flags.
+    kind: addition
+    breaking: false

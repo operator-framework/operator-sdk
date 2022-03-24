@@ -23,15 +23,15 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
-
-	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 )
 
 const testIndexImageTag = "some-image:v1.2.3"
+const caSecretName = "foo-secret"
 
 // newFakeClient() returns a fake controller runtime client
 func newFakeClient() client.Client {
@@ -94,23 +94,71 @@ var _ = Describe("RegistryPod", func() {
 			It("should return a valid container command for one image", func() {
 				output, err := rp.getContainerCmd()
 				Expect(err).To(BeNil())
-				Expect(output).Should(Equal(containerCommandFor(defaultDBPath, defaultBundleItems, false, rp.SkipTLS)))
+				Expect(output).Should(Equal(containerCommandFor(defaultDBPath, defaultBundleItems, false, rp.SkipTLSVerify, false)))
 			})
 
 			It("should return a container command with --ca-file", func() {
-				rp.CASecretName = "foo-secret"
+				rp.CASecretName = caSecretName
 				output, err := rp.getContainerCmd()
 				Expect(err).To(BeNil())
-				Expect(output).Should(Equal(containerCommandFor(defaultDBPath, defaultBundleItems, true, rp.SkipTLS)))
+				Expect(output).Should(Equal(containerCommandFor(defaultDBPath, defaultBundleItems, true, rp.SkipTLSVerify, false)))
 			})
 
-			It("should return a container command for image with --skip-tls", func() {
+			It("should return a container command for image with --skip-tls-verify", func() {
 				bundles := []BundleItem{defaultBundleItems[0]}
 				rp.BundleItems = bundles
-				rp.SkipTLS = true
+				rp.SkipTLSVerify = true
 				output, err := rp.getContainerCmd()
 				Expect(err).To(BeNil())
-				Expect(output).Should(Equal(containerCommandFor(defaultDBPath, bundles, false, rp.SkipTLS)))
+				Expect(output).Should(Equal(containerCommandFor(defaultDBPath, bundles, false, rp.SkipTLSVerify, false)))
+			})
+
+			It("should return a valid container command for three images", func() {
+				bundleItems := append(defaultBundleItems,
+					BundleItem{
+						ImageTag: "quay.io/example/example-operator-bundle:0.3.0",
+						AddMode:  ReplacesBundleAddMode,
+					},
+					BundleItem{
+						ImageTag: "quay.io/example/example-operator-bundle:1.0.1",
+						AddMode:  SemverBundleAddMode,
+					},
+					BundleItem{
+						ImageTag: "localhost/example-operator-bundle:1.0.1",
+						AddMode:  SemverBundleAddMode,
+					},
+				)
+				rp2 := RegistryPod{
+					DBPath:        defaultDBPath,
+					GRPCPort:      defaultGRPCPort,
+					BundleItems:   bundleItems,
+					SkipTLSVerify: true,
+				}
+				output, err := rp2.getContainerCmd()
+				Expect(err).To(BeNil())
+				Expect(output).Should(Equal(containerCommandFor(defaultDBPath, bundleItems, false, rp2.SkipTLSVerify, false)))
+			})
+
+			It("should return a valid container command for one image", func() {
+				output, err := rp.getContainerCmd()
+				Expect(err).To(BeNil())
+				Expect(output).Should(Equal(containerCommandFor(defaultDBPath, defaultBundleItems, false, false, rp.UseHTTP)))
+			})
+
+			It("should return a container command with --ca-file", func() {
+				rp.CASecretName = caSecretName
+				output, err := rp.getContainerCmd()
+				Expect(err).To(BeNil())
+				Expect(output).Should(Equal(containerCommandFor(defaultDBPath, defaultBundleItems, true, false, rp.UseHTTP)))
+			})
+
+			It("should return a container command for image with --use-http", func() {
+				bundles := []BundleItem{defaultBundleItems[0]}
+				rp.BundleItems = bundles
+				rp.UseHTTP = true
+				output, err := rp.getContainerCmd()
+				Expect(err).To(BeNil())
+				Expect(output).Should(Equal(containerCommandFor(defaultDBPath, bundles, false, false, rp.UseHTTP)))
 			})
 
 			It("should return a valid container command for three images", func() {
@@ -132,11 +180,11 @@ var _ = Describe("RegistryPod", func() {
 					DBPath:      defaultDBPath,
 					GRPCPort:    defaultGRPCPort,
 					BundleItems: bundleItems,
-					SkipTLS:     true,
+					UseHTTP:     true,
 				}
 				output, err := rp2.getContainerCmd()
 				Expect(err).To(BeNil())
-				Expect(output).Should(Equal(containerCommandFor(defaultDBPath, bundleItems, false, rp2.SkipTLS)))
+				Expect(output).Should(Equal(containerCommandFor(defaultDBPath, bundleItems, false, false, rp2.UseHTTP)))
 			})
 
 			It("check pod status should return successfully when pod check is true", func() {
@@ -151,7 +199,7 @@ var _ = Describe("RegistryPod", func() {
 
 			It("adds secrets and a service account to the pod", func() {
 				cfg.ServiceAccount = "foo"
-				rp.SecretName = "foo-secret"
+				rp.SecretName = caSecretName
 
 				pod, err = rp.podForBundleRegistry()
 				Expect(err).NotTo((HaveOccurred()))
@@ -231,14 +279,14 @@ var _ = Describe("RegistryPod", func() {
 })
 
 // containerCommandFor returns the expected container command for a db path and set of bundle items.
-func containerCommandFor(dbPath string, items []BundleItem, hasCA, skipTLS bool) string { //nolint:unparam
+func containerCommandFor(dbPath string, items []BundleItem, hasCA, skipTLSVerify bool, useHTTP bool) string { //nolint:unparam
 	var caFlag string
 	if hasCA {
 		caFlag = " --ca-file=/certs/cert.pem"
 	}
 	additions := &strings.Builder{}
 	for _, item := range items {
-		additions.WriteString(fmt.Sprintf("opm registry add -d %s -b %s --mode=%s%s --skip-tls=%v && \\\n", dbPath, item.ImageTag, item.AddMode, caFlag, skipTLS))
+		additions.WriteString(fmt.Sprintf("opm registry add -d %s -b %s --mode=%s%s --skip-tls-verify=%v --use-http=%v && \\\n", dbPath, item.ImageTag, item.AddMode, caFlag, skipTLSVerify, useHTTP))
 	}
 	return fmt.Sprintf("mkdir -p /database && \\\n%sopm registry serve -d /database/index.db -p 50051\n", additions.String())
 }
