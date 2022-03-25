@@ -105,12 +105,14 @@ var _ = Describe("RegistryPod", func() {
 			})
 
 			It("should return a container command for image with --skip-tls-verify", func() {
-				bundles := []BundleItem{defaultBundleItems[0]}
-				rp.BundleItems = bundles
-				rp.SkipTLSVerify = true
-				output, err := rp.getContainerCmd()
-				Expect(err).To(BeNil())
-				Expect(output).Should(Equal(containerCommandFor(defaultDBPath, bundles, false, rp.SkipTLSVerify, false)))
+				if len(defaultBundleItems) > 0 {
+					bundles := []BundleItem{defaultBundleItems[0]}
+					rp.BundleItems = bundles
+					rp.SkipTLSVerify = true
+					output, err := rp.getContainerCmd()
+					Expect(err).To(BeNil())
+					Expect(output).Should(Equal(containerCommandFor(defaultDBPath, bundles, false, rp.SkipTLSVerify, false)))
+				}
 			})
 
 			It("should return a valid container command for three images", func() {
@@ -153,12 +155,14 @@ var _ = Describe("RegistryPod", func() {
 			})
 
 			It("should return a container command for image with --use-http", func() {
-				bundles := []BundleItem{defaultBundleItems[0]}
-				rp.BundleItems = bundles
-				rp.UseHTTP = true
-				output, err := rp.getContainerCmd()
-				Expect(err).To(BeNil())
-				Expect(output).Should(Equal(containerCommandFor(defaultDBPath, bundles, false, false, rp.UseHTTP)))
+				if len(defaultBundleItems) > 0 {
+					bundles := []BundleItem{defaultBundleItems[0]}
+					rp.BundleItems = bundles
+					rp.UseHTTP = true
+					output, err := rp.getContainerCmd()
+					Expect(err).To(BeNil())
+					Expect(output).Should(Equal(containerCommandFor(defaultDBPath, bundles, false, false, rp.UseHTTP)))
+				}
 			})
 
 			It("should return a valid container command for three images", func() {

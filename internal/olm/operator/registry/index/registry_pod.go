@@ -77,10 +77,10 @@ type RegistryPod struct { //nolint:maligned
 	// The secret's key for this file must be "cert.pem".
 	CASecretName string
 
-	// SkipTLSVerify skip TLS certificate verification for container image registries while pulling bundles.
+	// SkipTLSVerify represents skip TLS certificate verification for container image registries while pulling bundles.
 	SkipTLSVerify bool `json:"SkipTLSVerify"`
 
-	// UseHTTP use plain HTTP for container image registries while pulling bundles.
+	// UseHTTP uses plain HTTP for container image registries while pulling bundles.
 	UseHTTP bool `json:"UseHTTP"`
 
 	// pod represents a kubernetes *corev1.pod that will be created on a cluster using an index image
