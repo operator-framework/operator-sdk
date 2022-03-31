@@ -98,6 +98,10 @@ func (u *Upgrade) setup(ctx context.Context) error {
 	fileName := filepath.Join(directoryName, "testUpgradedFBC")
 	bundleChannel := strings.Split(labels[registrybundle.ChannelsLabel], ",")[0]
 
+	if u.IndexImageCatalogCreator.ChannelEntrypoint != "" {
+		bundleChannel = u.IndexImageCatalogCreator.ChannelEntrypoint
+	}
+
 	// FBC variables
 	f := &bundleInstall.FBCContext{
 		BundleImage:    u.BundleImage,

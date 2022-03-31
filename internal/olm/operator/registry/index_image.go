@@ -59,19 +59,20 @@ const (
 )
 
 type IndexImageCatalogCreator struct {
-	PackageName   string
-	IndexImage    string
-	BundleImage   string
-	SkipTLS       bool
-	SecretName    string
-	CASecretName  string
-	BundleAddMode index.BundleAddMode
-	FBCcontent    string
-	FBCdir        string
-	FBCfile       string
-	cfg           *operator.Configuration
-	FBCImage      string
-	UpgradeEdge   string
+	PackageName       string
+	IndexImage        string
+	BundleImage       string
+	SkipTLS           bool
+	SecretName        string
+	CASecretName      string
+	BundleAddMode     index.BundleAddMode
+	FBCcontent        string
+	FBCdir            string
+	FBCfile           string
+	cfg               *operator.Configuration
+	FBCImage          string
+	UpgradeEdge       string
+	ChannelEntrypoint string
 }
 
 var _ CatalogCreator = &IndexImageCatalogCreator{}
@@ -95,6 +96,7 @@ func (c *IndexImageCatalogCreator) BindFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.SkipTLS, "skip-tls", false, "skip authentication of image registry TLS "+
 		"certificate when pulling a bundle image in-cluster")
 	fs.StringVar(&c.UpgradeEdge, "upgrade-edge", "", "Edge to which the new bundle will be added.")
+	fs.StringVar(&c.ChannelEntrypoint, "channel-entrypoint", "", "Channel in which the upgrade will take place. Defaults to the bundle's default channel")
 }
 
 func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string) (*v1alpha1.CatalogSource, error) {
