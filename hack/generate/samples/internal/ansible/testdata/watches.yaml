@@ -26,6 +26,9 @@
   kind: Secret
   playbook: playbooks/secret.yml
   manageStatus: false
+  selector:
+    matchExpressions:
+     - {key: reconcile, operator: Exists, values: []}
   vars:
     meta: '{{ ansible_operator_meta }}'
 
