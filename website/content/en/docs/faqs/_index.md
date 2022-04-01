@@ -175,6 +175,22 @@ For more information and examples, please see the type-specific docs:
 - [Golang][go-proxy-vars]
 - [Helm][helm-proxy-vars]
 
+
+## After running `make manifests`, `rbac` permissions are not updated in config
+
+[RBAC markers][rbac-markers] that are not followed by a newline will not be
+parsed correctly, resulting in missing `rbac` configuration.
+
+This is a known issue with `controller-tools`, see [issue #551][controller-tools-issue-551]
+The current workaround is to add a new line after the `rbac` marker.
+
+```go
+// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;
+
+func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+```
+
 [ansible-proxy-vars]: /docs/building-operators/ansible/reference/proxy-vars/
 [client.Reader]:https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/client#Reader
 [controller-runtime]: https://github.com/kubernetes-sigs/controller-runtime
@@ -192,6 +208,7 @@ For more information and examples, please see the type-specific docs:
 [rbac]:https://kubernetes.io/docs/reference/access-authn-authz/rbac/
 [scorecard-doc]: https://sdk.operatorframework.io/docs/testing-operators/scorecard/
 [project-doc]: /docs/overview/project-layout
+[controller-tools-issue-551]: https://github.com/kubernetes-sigs/controller-tools/issues/551
 
 ## Preserve the `preserveUnknownFields` in your CRDs
 
