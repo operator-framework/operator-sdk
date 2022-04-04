@@ -213,7 +213,6 @@ func addBundleToIndexImage(indexImage string, bundleDeclConfig *declarativeconfi
 	}
 
 	// check if the package blob already exists in the image
-	bundleNotPresent := true
 	if len(bundleDeclConfig.Channels) > 0 && len(bundleDeclConfig.Bundles) > 0 {
 		for _, channel := range imageDeclConfig.Channels {
 			// Find the specific channel that the bundle needs to be inserted into
@@ -221,9 +220,7 @@ func addBundleToIndexImage(indexImage string, bundleDeclConfig *declarativeconfi
 				// Check if the CSV name is already present in the channel's entries
 				for _, entry := range channel.Entries {
 					if entry.Name == bundleDeclConfig.Bundles[0].Name {
-						bundleNotPresent = false
-						log.Infof("Bundle image already present in the Index Image, serving the Index Image")
-						break
+						return nil, fmt.Errorf("Bundle image %s already present in the Index Image: %s", bundleDeclConfig.Bundles[0].Name, indexImage)
 					}
 				}
 				break // We only want to search through the specific channel
@@ -231,7 +228,7 @@ func addBundleToIndexImage(indexImage string, bundleDeclConfig *declarativeconfi
 		}
 	}
 
-	if bundleNotPresent && len(bundleDeclConfig.Bundles) > 0 && len(bundleDeclConfig.Channels) > 0 {
+	if len(bundleDeclConfig.Bundles) > 0 && len(bundleDeclConfig.Channels) > 0 {
 		imageDeclConfig.Packages = append(imageDeclConfig.Packages, bundleDeclConfig.Packages[0])
 		if len(bundleDeclConfig.Bundles) > 0 {
 			imageDeclConfig.Bundles = append(imageDeclConfig.Bundles, bundleDeclConfig.Bundles[0])
