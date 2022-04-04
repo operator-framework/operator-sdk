@@ -71,9 +71,11 @@ type IndexImageCatalogCreator struct {
 	FBCcontent    string
 	FBCdir        string
 	FBCfile       string
-
-	FBCPath *declarativeconfig.DeclarativeConfig
-	cfg     *operator.Configuration
+	FBCImage      string
+	UpgradeEdge   string
+	HasFBCLabel   bool
+	HasDBLabel    bool
+	cfg           *operator.Configuration
 }
 
 var _ CatalogCreator = &IndexImageCatalogCreator{}
@@ -103,6 +105,7 @@ func (c *IndexImageCatalogCreator) BindFlags(fs *pflag.FlagSet) {
 		"while pulling bundles")
 	fs.BoolVar(&c.UseHTTP, "use-http", false, "use plain HTTP for container image registries "+
 		"while pulling bundles")
+	fs.StringVar(&c.UpgradeEdge, "upgrade-edge", "", "Edge to which the new bundle will be added.")
 }
 
 func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string) (*v1alpha1.CatalogSource, error) {
@@ -209,11 +212,12 @@ func (c IndexImageCatalogCreator) createAnnotatedRegistry(ctx context.Context, c
 		CASecretName:  c.CASecretName,
 		SkipTLSVerify: c.SkipTLSVerify,
 		UseHTTP:       c.UseHTTP,
-		FBCPath:       c.FBCPath,
 		SkipTLS:       c.SkipTLS,
 		FBCcontent:    c.FBCcontent,
 		FBCdir:        c.FBCdir,
 		FBCfile:       c.FBCfile,
+		HasFBCLabel:   c.HasFBCLabel,
+		HasDBLabel:    c.HasDBLabel,
 	}
 	if registryPod.DBPath, err = c.getDBPath(ctx); err != nil {
 		return fmt.Errorf("get database path: %v", err)
