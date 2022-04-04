@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -34,6 +35,10 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry"
+)
+
+const (
+	schemaChannel = "olm.channel"
 )
 
 type Install struct {
@@ -275,16 +280,12 @@ func (f *FBCContext) createFBC(ctx context.Context) (*declarativeconfig.Declarat
 		log.Errorf("error in rendering the bundle image: %v", err)
 		return nil, err
 	}
+	log.SetOutput(os.Stdout)
 
+	// Ensuring a valid bundle size
 	if len(declcfg.Bundles) < 0 {
 		log.Errorf("error in rendering the correct number of bundles: %v", err)
 		return nil, err
-	}
-	// validate length of bundles and add them to declcfg.Bundles.
-	if len(declcfg.Bundles) == 1 {
-		declcfg.Bundles = []declarativeconfig.Bundle{*&declcfg.Bundles[0]}
-	} else {
-		return nil, errors.New("error in expected length of bundles")
 	}
 
 	// init packages
@@ -332,7 +333,7 @@ func validateFBC(declcfg *declarativeconfig.DeclarativeConfig) error {
 	// convert declarative config to model
 	FBCmodel, err := declarativeconfig.ConvertToModel(*declcfg)
 	if err != nil {
-		log.Errorf("error converting the declarative config to mode: %v", err)
+		log.Errorf("error converting the declarative config to model: %v", err)
 		return err
 	}
 
