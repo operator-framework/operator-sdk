@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
-	"reflect"
 	"strings"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -214,18 +213,25 @@ func addBundleToIndexImage(indexImage string, bundleDeclConfig *declarativeconfi
 	}
 
 	// check if the package blob already exists in the image
-	packageNotPresent := true
-	if len(bundleDeclConfig.Packages) > 0 {
-		for _, packageName := range imageDeclConfig.Packages {
-			if reflect.DeepEqual(packageName, bundleDeclConfig.Packages[0]) {
-				log.Infof("Bundle image already present in the Index Image, serving the Index Image")
-				packageNotPresent = false
-				break
+	bundleNotPresent := true
+	if len(bundleDeclConfig.Channels) > 0 && len(bundleDeclConfig.Bundles) > 0 {
+		for _, channel := range imageDeclConfig.Channels {
+			// Find the specific channel that the bundle needs to be inserted into
+			if channel.Name == bundleDeclConfig.Channels[0].Name && channel.Package == bundleDeclConfig.Channels[0].Package {
+				// Check if the CSV name is already present in the channel's entries
+				for _, entry := range channel.Entries {
+					if entry.Name == bundleDeclConfig.Bundles[0].Name {
+						bundleNotPresent = false
+						log.Infof("Bundle image already present in the Index Image, serving the Index Image")
+						break
+					}
+				}
+				break // We only want to search through the specific channel
 			}
 		}
 	}
 
-	if packageNotPresent && len(bundleDeclConfig.Bundles) > 0 && len(bundleDeclConfig.Channels) > 0 {
+	if bundleNotPresent && len(bundleDeclConfig.Bundles) > 0 && len(bundleDeclConfig.Channels) > 0 {
 		imageDeclConfig.Packages = append(imageDeclConfig.Packages, bundleDeclConfig.Packages[0])
 		if len(bundleDeclConfig.Bundles) > 0 {
 			imageDeclConfig.Bundles = append(imageDeclConfig.Bundles, bundleDeclConfig.Bundles[0])
