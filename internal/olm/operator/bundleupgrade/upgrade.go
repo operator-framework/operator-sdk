@@ -21,7 +21,9 @@ import (
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/alpha/action"
 	declarativeconfig "github.com/operator-framework/operator-registry/alpha/declcfg"
+	"github.com/operator-framework/operator-registry/pkg/containertools"
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
+	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"path/filepath"
@@ -97,6 +99,12 @@ func (u *Upgrade) setup(ctx context.Context) error {
 	u.IndexImageCatalogCreator.BundleImage = u.BundleImage
 	u.IndexImageCatalogCreator.IndexImage = registry.DefaultIndexImage
 
+	// determine if the image is SQLite or FBC
+	catalogLabels, err := registryutil.GetImageLabels(ctx, nil, u.IndexImageCatalogCreator.IndexImage, false)
+	if err != nil {
+		return fmt.Errorf("get index image labels: %v", err)
+	}
+
 	if _, hasDBLabel := catalogLabels[containertools.DbLocationLabel]; hasDBLabel {
 		log.Infof("Converting SQLite Image to a File-Based Catalog")
 	}
@@ -113,8 +121,6 @@ func (u *Upgrade) setup(ctx context.Context) error {
 	// FBC variables
 	f := &bundleInstall.FBCContext{
 		BundleImage:    u.BundleImage,
-		FBCDirName:     directoryName,
-		FBCName:        fileName,
 		Package:        labels[registrybundle.PackageLabel],
 		DefaultChannel: bundleChannel,
 		ChannelSchema:  channelSchema,
