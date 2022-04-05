@@ -1,8 +1,15 @@
-<img src="website/static/operator_logo_sdk_color.svg" height="125px"></img>
+<p align=center>
+    <img src="website/static/operator_logo_sdk_color.svg" height="125px"></img>
+</p>
 
-
-[![Build Status](https://github.com/operator-framework/operator-sdk/workflows/deploy/badge.svg)](https://github.com/operator-framework/operator-sdk/actions)
-[![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
+<p align=center>
+    <a href="https://github.com/operator-framework/operator-sdk/actions">
+        <img class="center" src="https://github.com/operator-framework/operator-sdk/workflows/deploy/badge.svg">
+    </a>
+    <a href="http://www.apache.org/licenses/LICENSE-2.0.html">
+        <img src="http://img.shields.io/:license-apache-blue.svg">
+    </a>
+</p>
 
 ## Documentation
 
