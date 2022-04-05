@@ -108,6 +108,43 @@ var _ = Describe("RegistryPod", func() {
 				if len(defaultBundleItems) > 0 {
 					bundles := []BundleItem{defaultBundleItems[0]}
 					rp.BundleItems = bundles
+					rp.SkipTLS = true
+					output, err := rp.getContainerCmd()
+					Expect(err).To(BeNil())
+					Expect(output).Should(Equal(containerCommandFor(defaultDBPath, bundles, false, true, false)))
+				}
+			})
+
+			It("should return a valid container command for three images", func() {
+				bundleItems := append(defaultBundleItems,
+					BundleItem{
+						ImageTag: "quay.io/example/example-operator-bundle:0.3.0",
+						AddMode:  ReplacesBundleAddMode,
+					},
+					BundleItem{
+						ImageTag: "quay.io/example/example-operator-bundle:1.0.1",
+						AddMode:  SemverBundleAddMode,
+					},
+					BundleItem{
+						ImageTag: "localhost/example-operator-bundle:1.0.1",
+						AddMode:  SemverBundleAddMode,
+					},
+				)
+				rp2 := RegistryPod{
+					DBPath:        defaultDBPath,
+					GRPCPort:      defaultGRPCPort,
+					BundleItems:   bundleItems,
+					SkipTLS: true,
+				}
+				output, err := rp2.getContainerCmd()
+				Expect(err).To(BeNil())
+				Expect(output).Should(Equal(containerCommandFor(defaultDBPath, bundleItems, false, true, false)))
+			})
+
+			It("should return a container command for image with --skip-tls-verify", func() {
+				if len(defaultBundleItems) > 0 {
+					bundles := []BundleItem{defaultBundleItems[0]}
+					rp.BundleItems = bundles
 					rp.SkipTLSVerify = true
 					output, err := rp.getContainerCmd()
 					Expect(err).To(BeNil())

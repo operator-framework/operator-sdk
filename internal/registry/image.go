@@ -28,7 +28,7 @@ import (
 
 // ExtractBundleImage returns a bundle directory containing files extracted
 // from image. If local is true, the image will not be pulled.
-func ExtractBundleImage(ctx context.Context, logger *log.Entry, image string, local bool, skipTLSVerify bool, useHTTP bool) (string, error) {
+func ExtractBundleImage(ctx context.Context, logger *log.Entry, image string, local bool, skipTLS bool, skipTLSVerify bool, useHTTP bool) (string, error) {
 	if logger == nil {
 		logger = DiscardLogger()
 	}
@@ -49,6 +49,11 @@ func ExtractBundleImage(ctx context.Context, logger *log.Entry, image string, lo
 
 	// Export the image into bundleDir.
 	logger = logger.WithFields(log.Fields{"dir": bundleDir})
+
+	//if user set --skip-tls then set --skip-tls-verify to true as --skip-tls is deprecated
+	if skipTLS{
+		skipTLSVerify = true
+	}
 
 	// Use a containerd registry instead of shelling out to a container tool.
 	reg, err := containerdregistry.NewRegistry(
