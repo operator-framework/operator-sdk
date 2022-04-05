@@ -203,7 +203,7 @@ func (c IndexImageCatalogCreator) createAnnotatedRegistry(ctx context.Context, c
 		IndexImage:    c.IndexImage,
 		SecretName:    c.SecretName,
 		CASecretName:  c.CASecretName,
-		SkipTLS:      c.SkipTLS,
+		SkipTLS:       c.SkipTLS,
 		SkipTLSVerify: c.SkipTLSVerify,
 		UseHTTP:       c.UseHTTP,
 	}

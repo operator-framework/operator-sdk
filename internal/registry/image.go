@@ -51,7 +51,7 @@ func ExtractBundleImage(ctx context.Context, logger *log.Entry, image string, lo
 	logger = logger.WithFields(log.Fields{"dir": bundleDir})
 
 	//if user set --skip-tls then set --skip-tls-verify to true as --skip-tls is deprecated
-	if skipTLS{
+	if skipTLS {
 		skipTLSVerify = true
 	}
 
