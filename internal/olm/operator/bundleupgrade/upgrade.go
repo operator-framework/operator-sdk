@@ -32,6 +32,10 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry"
 )
 
+const (
+	channelSchema = "olm.channel"
+)
+
 type Upgrade struct {
 	BundleImage string
 
@@ -93,7 +97,11 @@ func (u *Upgrade) setup(ctx context.Context) error {
 	u.IndexImageCatalogCreator.BundleImage = u.BundleImage
 	u.IndexImageCatalogCreator.IndexImage = registry.DefaultIndexImage
 
-	// write out FBC stuff
+	if _, hasDBLabel := catalogLabels[containertools.DbLocationLabel]; hasDBLabel {
+		log.Infof("Converting SQLite Image to a File-Based Catalog")
+	}
+
+	// write out FBC data used in ephemeral pod
 	directoryName := filepath.Join("/tmp", strings.Split(csv.Name, ".")[0]+"-index")
 	fileName := filepath.Join(directoryName, "testUpgradedFBC")
 	bundleChannel := strings.Split(labels[registrybundle.ChannelsLabel], ",")[0]
@@ -109,7 +117,7 @@ func (u *Upgrade) setup(ctx context.Context) error {
 		FBCName:        fileName,
 		Package:        labels[registrybundle.PackageLabel],
 		DefaultChannel: bundleChannel,
-		ChannelSchema:  "olm.channel",
+		ChannelSchema:  channelSchema,
 		ChannelName:    bundleChannel,
 		Refs:           []string{u.BundleImage, u.IndexImageCatalogCreator.FBCImage},
 		ChannelEntry: declarativeconfig.ChannelEntry{
@@ -194,6 +202,7 @@ func upgradeFBC(f *bundleInstall.FBCContext, ctx context.Context) (*declarativec
 		return nil, err
 	}
 
+	// Finding the correct channel to insert into
 	for i, _ := range declcfg.Channels {
 		if declcfg.Channels[i].Name == f.ChannelName && declcfg.Channels[i].Package == f.Package {
 			declcfg.Channels[i].Entries = append(declcfg.Channels[i].Entries, f.ChannelEntry)
