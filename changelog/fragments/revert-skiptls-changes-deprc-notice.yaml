@@ -1,0 +1,5 @@
+entries:
+  - description: >
+      Reverted changes for `--skip-tls` flag and made sure that `--skip-tls-verify` marked true if user enters `--skip-tls` with deprecation notice.
+    kind: addition
+    breaking: false
