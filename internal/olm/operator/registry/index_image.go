@@ -15,14 +15,17 @@
 package registry
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 	"time"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"github.com/operator-framework/operator-registry/alpha/action"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	gofunk "github.com/thoas/go-funk"
@@ -31,7 +34,9 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
+	"path/filepath"
 
+	declarativeconfig "github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry/index"
 	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
@@ -58,8 +63,24 @@ const (
 	registryPodNameAnnotation = operatorFrameworkGroup + "/registry-pod-name"
 )
 
+type FBCContext struct {
+	BundleImage       string
+	Package           string
+	DefaultChannel    string
+	FBCName           string
+	FBCDirPath        string
+	FBCDirName        string
+	ChannelSchema     string
+	ChannelName       string
+	ChannelEntry      declarativeconfig.ChannelEntry
+	DescriptionReader io.Reader
+	Refs              []string
+}
+
 type IndexImageCatalogCreator struct {
 	PackageName       string
+	ChannelName       string
+	CSVname           string
 	IndexImage        string
 	BundleImage       string
 	SkipTLS           bool
@@ -119,6 +140,112 @@ func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string
 	return cs, nil
 }
 
+func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
+	directoryName := filepath.Join("/tmp", strings.Split(c.CSVname, ".")[0]+"-index")
+	fileName := filepath.Join(directoryName, "testUpgradedFBC")
+
+	if c.ChannelEntrypoint != "" {
+		c.ChannelName = c.ChannelEntrypoint
+	}
+
+	// FBC variables
+	f := &FBCContext{
+		BundleImage:    c.BundleImage,
+		Package:        c.PackageName,
+		DefaultChannel: c.ChannelName,
+		ChannelSchema:  "olm.channel",
+		ChannelName:    c.ChannelName,
+		Refs:           []string{c.BundleImage, c.IndexImage},
+		ChannelEntry: declarativeconfig.ChannelEntry{
+			Name:     c.CSVname,
+			Replaces: c.UpgradeEdge,
+		},
+	}
+
+	// generate a file-based catalog representation of the bundle image
+	declcfg, err := upgradeFBC(f, ctx)
+	if err != nil {
+		log.Errorf("error creating the upgraded FBC: %v", err)
+		return err
+	}
+
+	// convert declarative config to string
+	content, err := stringifyDecConfig(declcfg)
+
+	if err != nil {
+		log.Errorf("error converting declarative config to string: %v", err)
+		return err
+	}
+
+	// validate the declarative config
+	if err = validateFBC(declcfg); err != nil {
+		log.Errorf("error validating the generated FBC: %v", err)
+		return err
+	}
+
+	if content == "" {
+		return errors.New("File-Based Catalog contents cannot be empty")
+	}
+
+	log.Infof("Generated a valid Upgraded File-Based Catalog")
+
+	c.FBCcontent = content
+	c.FBCdir = directoryName
+	c.FBCfile = fileName
+
+	return nil
+
+}
+
+func upgradeFBC(f *FBCContext, ctx context.Context) (*declarativeconfig.DeclarativeConfig, error) {
+	var (
+		declcfg *declarativeconfig.DeclarativeConfig
+		err     error
+	)
+
+	if len(f.Refs) < 2 {
+		return nil, errors.New("error: incorrect number of references: a bundle image and an index image must be passed in")
+	}
+
+	// Rendering the bundle image and index image into declarative config format
+	render := action.Render{
+		Refs: f.Refs,
+	}
+
+	declcfg, err = render.Run(ctx)
+	if err != nil {
+		log.Errorf("error in rendering the bundle and index image: %v", err)
+		return nil, err
+	}
+
+	// Ensuring a valid bundle size
+	if len(declcfg.Bundles) < 1 {
+		log.Errorf("error in rendering the correct number of bundles: %v", err)
+		return nil, err
+	}
+
+	// Ensuring a valid package size
+	if len(declcfg.Packages) < 1 {
+		log.Errorf("error in rendering the correct number of packages: %v", err)
+		return nil, err
+	}
+
+	// Ensuring a valid channel size
+	if len(declcfg.Channels) < 1 {
+		log.Errorf("error in rendering the correct number of channels: %v", err)
+		return nil, err
+	}
+
+	// Finding the correct channel to insert into
+	for i, _ := range declcfg.Channels {
+		if declcfg.Channels[i].Name == f.ChannelName && declcfg.Channels[i].Package == f.Package {
+			declcfg.Channels[i].Entries = append(declcfg.Channels[i].Entries, f.ChannelEntry)
+		}
+	}
+
+	return declcfg, nil
+}
+
 // UpdateCatalog links a new registry pod in catalog source by updating the address and annotations,
 // then deletes existing registry pod based on annotation name found in catalog source object
 func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha1.CatalogSource) error {
@@ -129,6 +256,9 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 		}
 		prevRegistryPodName = annotations[registryPodNameAnnotation]
 	}
+
+	// add FBC updates
+	setupFBCupdates(&c, ctx)
 
 	existingItems, err := getExistingBundleItems(cs.GetAnnotations())
 	if err != nil {
@@ -195,6 +325,9 @@ func (c IndexImageCatalogCreator) createAnnotatedRegistry(ctx context.Context, c
 	if c.IndexImage == "" {
 		c.IndexImage = DefaultIndexImage
 	}
+	fmt.Println("HERE IS MY FBC CONTENT")
+	fmt.Println(c.FBCcontent)
+
 	// Initialize and create registry pod
 	registryPod := index.RegistryPod{
 		BundleItems:  items,
@@ -324,6 +457,35 @@ func (c IndexImageCatalogCreator) deleteRegistryPod(ctx context.Context, podName
 		return false, nil
 	}, ctx.Done()); err != nil {
 		return fmt.Errorf("old registry pod %q failed to delete (%v), requires manual cleanup", pod.GetName(), err)
+	}
+
+	return nil
+}
+
+// StringifyDecConfig writes the generated declarative config to a string.
+func stringifyDecConfig(declcfg *declarativeconfig.DeclarativeConfig) (string, error) {
+	var buf bytes.Buffer
+	err := declarativeconfig.WriteJSON(*declcfg, &buf)
+	if err != nil {
+		log.Errorf("error writing to JSON encoder: %v", err)
+		return "", err
+	}
+
+	return string(buf.Bytes()), nil
+}
+
+// ValidateFBC converts the generated declarative config to a model and validates it.
+func validateFBC(declcfg *declarativeconfig.DeclarativeConfig) error {
+	// convert declarative config to model
+	FBCmodel, err := declarativeconfig.ConvertToModel(*declcfg)
+	if err != nil {
+		log.Errorf("error converting the declarative config to mode: %v", err)
+		return err
+	}
+
+	if err = FBCmodel.Validate(); err != nil {
+		log.Errorf("error validating the FBC: %v", err)
+		return err
 	}
 
 	return nil

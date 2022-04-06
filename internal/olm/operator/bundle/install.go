@@ -157,13 +157,13 @@ func (i *Install) setup(ctx context.Context) error {
 	}
 
 	// validate the declarative config
-	if err = ValidateFBC(declcfg); err != nil {
+	if err = validateFBC(declcfg); err != nil {
 		log.Errorf("error validating the generated FBC: %v", err)
 		return err
 	}
 
 	// convert declarative config to string
-	content, err := StringifyDecConfig(declcfg)
+	content, err := stringifyDecConfig(declcfg)
 
 	if err != nil {
 		log.Errorf("error converting declarative config to string: %v", err)
@@ -213,6 +213,7 @@ func addBundleToIndexImage(indexImage string, bundleDeclConfig *declarativeconfi
 	}
 
 	// check if the package blob already exists in the image
+	bundleNotPresent := true
 	if len(bundleDeclConfig.Channels) > 0 && len(bundleDeclConfig.Bundles) > 0 {
 		for _, channel := range imageDeclConfig.Channels {
 			// Find the specific channel that the bundle needs to be inserted into
@@ -220,7 +221,8 @@ func addBundleToIndexImage(indexImage string, bundleDeclConfig *declarativeconfi
 				// Check if the CSV name is already present in the channel's entries
 				for _, entry := range channel.Entries {
 					if entry.Name == bundleDeclConfig.Bundles[0].Name {
-						return nil, fmt.Errorf("Bundle image %s already present in the Index Image: %s", bundleDeclConfig.Bundles[0].Name, indexImage)
+						bundleNotPresent = false
+						//return nil, fmt.Errorf("Bundle image %s already present in the Index Image: %s", bundleDeclConfig.Bundles[0].Name, indexImage)
 					}
 				}
 				break // We only want to search through the specific channel
@@ -228,7 +230,7 @@ func addBundleToIndexImage(indexImage string, bundleDeclConfig *declarativeconfi
 		}
 	}
 
-	if len(bundleDeclConfig.Bundles) > 0 && len(bundleDeclConfig.Channels) > 0 {
+	if bundleNotPresent && len(bundleDeclConfig.Bundles) > 0 && len(bundleDeclConfig.Channels) > 0 {
 		imageDeclConfig.Packages = append(imageDeclConfig.Packages, bundleDeclConfig.Packages[0])
 		if len(bundleDeclConfig.Bundles) > 0 {
 			imageDeclConfig.Bundles = append(imageDeclConfig.Bundles, bundleDeclConfig.Bundles[0])
@@ -302,7 +304,7 @@ func (f *FBCContext) createFBC(ctx context.Context) (*declarativeconfig.Declarat
 }
 
 // StringifyDecConfig writes the generated declarative config to a string.
-func StringifyDecConfig(declcfg *declarativeconfig.DeclarativeConfig) (string, error) {
+func stringifyDecConfig(declcfg *declarativeconfig.DeclarativeConfig) (string, error) {
 	var buf bytes.Buffer
 	err := declarativeconfig.WriteJSON(*declcfg, &buf)
 	if err != nil {
@@ -314,7 +316,7 @@ func StringifyDecConfig(declcfg *declarativeconfig.DeclarativeConfig) (string, e
 }
 
 // ValidateFBC converts the generated declarative config to a model and validates it.
-func ValidateFBC(declcfg *declarativeconfig.DeclarativeConfig) error {
+func validateFBC(declcfg *declarativeconfig.DeclarativeConfig) error {
 	// convert declarative config to model
 	FBCmodel, err := declarativeconfig.ConvertToModel(*declcfg)
 	if err != nil {
