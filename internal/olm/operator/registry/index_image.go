@@ -325,8 +325,9 @@ func (c IndexImageCatalogCreator) createAnnotatedRegistry(ctx context.Context, c
 	if c.IndexImage == "" {
 		c.IndexImage = DefaultIndexImage
 	}
-	fmt.Println("HERE IS MY FBC CONTENT")
-	fmt.Println(c.FBCcontent)
+
+	// fmt.Println("HERE IS MY FBC CONTENT")
+	// fmt.Println(c.FBCcontent)
 
 	// Initialize and create registry pod
 	registryPod := index.RegistryPod{

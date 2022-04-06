@@ -170,8 +170,8 @@ func (i *Install) setup(ctx context.Context) error {
 		return err
 	}
 
-	fmt.Println("FBC Content")
-	fmt.Println(content)
+	// fmt.Println("FBC Content")
+	// fmt.Println(content)
 
 	if content == "" {
 		return errors.New("File-Based Catalog contents cannot be empty")
@@ -222,6 +222,7 @@ func addBundleToIndexImage(indexImage string, bundleDeclConfig *declarativeconfi
 				for _, entry := range channel.Entries {
 					if entry.Name == bundleDeclConfig.Bundles[0].Name {
 						bundleNotPresent = false
+						log.Infof("Bundle already exists in the Index Image, serving the Index Image")
 						//return nil, fmt.Errorf("Bundle image %s already present in the Index Image: %s", bundleDeclConfig.Bundles[0].Name, indexImage)
 					}
 				}
