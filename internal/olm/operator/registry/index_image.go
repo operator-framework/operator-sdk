@@ -94,7 +94,7 @@ type IndexImageCatalogCreator struct {
 	FBCImage          string
 	UpgradeEdge       string
 	ChannelEntrypoint string
-	PreviousBundle    string
+	PreviousBundles   []string
 }
 
 var _ CatalogCreator = &IndexImageCatalogCreator{}
@@ -163,7 +163,7 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 			DefaultChannel: c.ChannelName,
 			ChannelSchema:  "olm.channel",
 			ChannelName:    c.ChannelName,
-			Refs:           []string{c.PreviousBundle},
+			Refs:           c.PreviousBundles,
 		}
 		originalDeclcfg, err = f1.CreateFBC(ctx)
 	}
@@ -198,10 +198,10 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 		return err
 	}
 
-	// fmt.Println()
-	// fmt.Println("FBC CONTENT")
-	// fmt.Println(content)
-	// fmt.Println()
+	fmt.Println()
+	fmt.Println("FBC CONTENT")
+	fmt.Println(content)
+	fmt.Println()
 
 	// validate the declarative config
 	if err = ValidateFBC(declcfg); err != nil {
@@ -295,8 +295,10 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 			if err := json.Unmarshal([]byte(annotations[injectedBundlesAnnotation]), &injectedBundles); err != nil {
 				return err
 			}
-			c.PreviousBundle = injectedBundles[len(injectedBundles)-1]["imageTag"].(string)
-			// fmt.Println(c.PreviousBundle)
+			for i, _ := range injectedBundles {
+				c.PreviousBundles = append(c.PreviousBundles, injectedBundles[i]["imageTag"].(string))
+			}
+			fmt.Println(c.PreviousBundles)
 		}
 		prevRegistryPodName = annotations[registryPodNameAnnotation]
 	}
@@ -529,7 +531,7 @@ func ValidateFBC(declcfg *declarativeconfig.DeclarativeConfig) error {
 	// convert declarative config to model
 	FBCmodel, err := declarativeconfig.ConvertToModel(*declcfg)
 	if err != nil {
-		log.Errorf("error converting the declarative config to mode: %v", err)
+		log.Errorf("error converting the declarative config to model: %v", err)
 		return err
 	}
 
@@ -562,7 +564,7 @@ func (f *FBCContext) CreateFBC(ctx context.Context) (*declarativeconfig.Declarat
 	}
 
 	// Ensuring a valid bundle size
-	if len(declcfg.Bundles) != 1 {
+	if len(declcfg.Bundles) < 1 {
 		log.Errorf("error in rendering the correct number of bundles: %v", err)
 		return nil, err
 	}
@@ -582,8 +584,14 @@ func (f *FBCContext) CreateFBC(ctx context.Context) (*declarativeconfig.Declarat
 	}
 	declcfg.Packages = []declarativeconfig.Package{*declcfgpackage}
 
-	entry := declarativeconfig.ChannelEntry{
-		Name: declcfg.Bundles[0].Name,
+	entries := []declarativeconfig.ChannelEntry{}
+	for i, _ := range declcfg.Bundles {
+		entry := declarativeconfig.ChannelEntry{}
+		entry.Name = declcfg.Bundles[i].Name
+		if i > 0 {
+			entry.Replaces = declcfg.Bundles[i-1].Name
+		}
+		entries = append(entries, entry)
 	}
 
 	// generate channels
@@ -591,7 +599,7 @@ func (f *FBCContext) CreateFBC(ctx context.Context) (*declarativeconfig.Declarat
 		Schema:  f.ChannelSchema,
 		Name:    f.ChannelName,
 		Package: f.Package,
-		Entries: []declarativeconfig.ChannelEntry{entry},
+		Entries: entries,
 	}
 
 	declcfg.Channels = []declarativeconfig.Channel{channel}
