@@ -71,7 +71,7 @@ func (i *Install) setup(ctx context.Context) error {
 		}
 	}
 
-	//if user set --skip-tls then set --skip-tls-verify to true as --skip-tls is deprecated
+	//if user sets --skip-tls then set --use-http to true as --skip-tls is deprecated
 	if i.SkipTLS {
 		i.UseHTTP = true
 	}
