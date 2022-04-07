@@ -1,0 +1,5 @@
+entries:
+  - description: >
+      Reverted removal of  `--skip-tls` flag and mark the flag as deprecated.
+    kind: addition
+    breaking: false

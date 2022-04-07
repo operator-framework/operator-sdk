@@ -71,6 +71,11 @@ func (i *Install) setup(ctx context.Context) error {
 		}
 	}
 
+	//if user sets --skip-tls then set --use-http to true as --skip-tls is deprecated
+	if i.SkipTLS {
+		i.UseHTTP = true
+	}
+
 	// Load bundle labels and set label-dependent values.
 	labels, bundle, err := operator.LoadBundle(ctx, i.BundleImage, i.SkipTLSVerify, i.UseHTTP)
 	if err != nil {
