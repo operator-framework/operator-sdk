@@ -233,6 +233,12 @@ func (c *scorecardCmd) run() (err error) {
 
 		scorecardTests, err = o.Run(ctx)
 		if err != nil {
+			// if we got a timeout; printout the test results if there are any
+			if err == context.DeadlineExceeded {
+				if errpo := c.printOutput(scorecardTests); errpo != nil {
+					log.Fatal(errpo)
+				}
+			}
 			return fmt.Errorf("error running tests %w", err)
 		}
 	}
