@@ -77,7 +77,6 @@ type RegistryPod struct { //nolint:maligned
 	// The secret's key for this file must be "cert.pem".
 	CASecretName string
 
-	// SkipTLS controls whether to ignore SSL errors while pulling bundle image from registry server.
 	SkipTLS bool `json:"SkipTLS"`
 
 	// SkipTLSVerify represents skip TLS certificate verification for container image registries while pulling bundles.
