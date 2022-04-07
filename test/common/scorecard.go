@@ -67,10 +67,10 @@ func ScorecardSpec(tc *testutils.TestContext, operatorType string) func() {
 				"basic-check-spec": v1alpha3.PassState,
 				// OLM suite.
 				"olm-bundle-validation":    v1alpha3.PassState,
-				"olm-crds-have-validation": v1alpha3.FailState,
-				"olm-crds-have-resources":  v1alpha3.FailState,
-				"olm-spec-descriptors":     v1alpha3.FailState,
-				"olm-status-descriptors":   v1alpha3.FailState,
+				"olm-crds-have-validation": v1alpha3.PassState,
+				"olm-crds-have-resources":  v1alpha3.PassState,
+				"olm-spec-descriptors":     v1alpha3.PassState,
+				"olm-status-descriptors":   v1alpha3.PassState,
 			}
 			if strings.ToLower(operatorType) == "go" {
 				// Go projects have generated CRD validation.

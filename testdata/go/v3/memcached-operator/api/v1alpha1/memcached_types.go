@@ -29,6 +29,7 @@ type MemcachedSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Size defines the number of Memcached instances
+	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	Size int32 `json:"size,omitempty"`
 
 	// Foo is an example field of Memcached. Edit memcached_types.go to remove/update
@@ -41,11 +42,13 @@ type MemcachedStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Nodes store the name of the pods which are running Memcached instances
+	// +operator-sdk:csv:customresourcedefinitions:type=status
 	Nodes []string `json:"nodes,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+// +operator-sdk:csv:customresourcedefinitions:resources={{Deployment,v1,memcached-deployment}}
 
 // Memcached is the Schema for the memcacheds API
 type Memcached struct {
