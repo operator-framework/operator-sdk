@@ -291,11 +291,12 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 			c.IndexImage = value
 		}
 		if value, hasAnnotation := annotations[injectedBundlesAnnotation]; hasAnnotation && value != "" {
-			var annotationsMap []map[string]interface{}
-			if err := json.Unmarshal([]byte(annotations[injectedBundlesAnnotation]), &annotationsMap); err != nil {
+			var injectedBundles []map[string]interface{}
+			if err := json.Unmarshal([]byte(annotations[injectedBundlesAnnotation]), &injectedBundles); err != nil {
 				return err
 			}
-			c.PreviousBundle = annotationsMap[0]["imageTag"].(string)
+			c.PreviousBundle = injectedBundles[len(injectedBundles)-1]["imageTag"].(string)
+			// fmt.Println(c.PreviousBundle)
 		}
 		prevRegistryPodName = annotations[registryPodNameAnnotation]
 	}
