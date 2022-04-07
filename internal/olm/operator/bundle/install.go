@@ -73,7 +73,7 @@ func (i *Install) setup(ctx context.Context) error {
 
 	//if user set --skip-tls then set --skip-tls-verify to true as --skip-tls is deprecated
 	if i.SkipTLS {
-		i.SkipTLSVerify = true
+		i.UseHTTP = true
 	}
 
 	// Load bundle labels and set label-dependent values.
