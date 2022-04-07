@@ -154,6 +154,19 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 		c.ChannelName = c.ChannelEntrypoint
 	}
 
+	// determining the channel head
+	upgradeEdge := ""
+	if c.UpgradeEdge != "" {
+		upgradeEdge = c.UpgradeEdge
+	} else {
+		lastEdge := action.Render{Refs: []string{c.PreviousBundles[len(c.PreviousBundles)-1]}}
+		tempDeclConfig, err := lastEdge.Run(ctx)
+		if err != nil {
+			return err
+		}
+		upgradeEdge = tempDeclConfig.Bundles[len(tempDeclConfig.Bundles)-1].Name
+	}
+
 	if c.IndexImage != DefaultIndexImage {
 		render := action.Render{Refs: []string{c.IndexImage}}
 		originalDeclcfg, err = render.Run(ctx)
@@ -180,7 +193,7 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 		Refs:           []string{c.BundleImage},
 		ChannelEntry: declarativeconfig.ChannelEntry{
 			Name:     c.CSVname,
-			Replaces: c.UpgradeEdge,
+			Replaces: upgradeEdge,
 		},
 	}
 
@@ -298,7 +311,6 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 			for i, _ := range injectedBundles {
 				c.PreviousBundles = append(c.PreviousBundles, injectedBundles[i]["imageTag"].(string))
 			}
-			//fmt.Println(c.PreviousBundles)
 		}
 		prevRegistryPodName = annotations[registryPodNameAnnotation]
 	}
