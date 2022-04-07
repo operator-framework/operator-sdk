@@ -47,7 +47,7 @@ Any changes will be included in real time.
 Please consider running this locally before creating a PR to save CI resources.
 
 [hugo]:https://gohugo.io/
-[docsy-install]:https://www.docsy.dev/docs/theme-installation/docsy-as-module/installation-prerequisites/
+[docsy-install]:https://www.docsy.dev/docs/get-started/docsy-as-module/installation-prerequisites/
 [website-md]:https://github.com/operator-framework/operator-sdk/tree/master/website/content/en/docs
 [changelog-template]:https://github.com/operator-framework/operator-sdk/blob/master/changelog/fragments/00-template.yaml
 [godocs]:https://blog.golang.org/godoc
