@@ -198,6 +198,11 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 		return err
 	}
 
+	// fmt.Println()
+	// fmt.Println("FBC CONTENT")
+	// fmt.Println(content)
+	// fmt.Println()
+
 	// validate the declarative config
 	if err = ValidateFBC(declcfg); err != nil {
 		log.Errorf("error validating the generated FBC: %v", err)
@@ -209,11 +214,6 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 	}
 
 	log.Infof("Generated a valid Upgraded File-Based Catalog")
-
-	// fmt.Println()
-	// fmt.Println("FBC CONTENT")
-	// fmt.Println(content)
-	// fmt.Println()
 
 	c.FBCcontent = content
 	c.FBCdir = directoryName
@@ -243,6 +243,30 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 	if len(declcfg.Bundles) < 1 {
 		log.Errorf("error in rendering the correct number of bundles: %v", err)
 		return nil, err
+	}
+
+	// Checking to see if FBC already contains this upgrade
+	bundleNotPresent := true
+	if len(declcfg.Bundles) > 0 {
+		for _, channel := range originalDeclCfg.Channels {
+			// Find the specific channel that the bundle needs to be inserted into
+			if channel.Name == f.ChannelName && channel.Package == f.Package {
+				// Check if the CSV name is already present in the channel's entries
+				for _, entry := range channel.Entries {
+					if entry.Name == declcfg.Bundles[0].Name {
+						bundleNotPresent = false
+						log.Infof("Upgrades already exist in the Index Image, serving the Index Image")
+						break
+					}
+				}
+				break // We only want to search through the specific channel
+			}
+		}
+	}
+
+	// If the upgrade is already present, return the image itself
+	if !bundleNotPresent {
+		return originalDeclCfg, nil
 	}
 
 	// Add new bundle blobs
@@ -275,6 +299,8 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 		}
 		prevRegistryPodName = annotations[registryPodNameAnnotation]
 	}
+
+	// fmt.Println(cs.GetAnnotations())
 
 	existingItems, err := getExistingBundleItems(cs.GetAnnotations())
 	if err != nil {

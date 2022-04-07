@@ -165,9 +165,9 @@ func (i *Install) setup(ctx context.Context) error {
 	i.IndexImageCatalogCreator.PackageName = i.OperatorInstaller.PackageName
 	i.IndexImageCatalogCreator.BundleImage = i.BundleImage
 
-	fmt.Println()
-	fmt.Println(content)
-	fmt.Println()
+	// fmt.Println()
+	// fmt.Println(content)
+	// fmt.Println()
 
 	i.IndexImageCatalogCreator.FBCcontent = content
 	i.IndexImageCatalogCreator.FBCdir = directoryName
@@ -205,6 +205,7 @@ func addBundleToIndexImage(indexImage string, bundleDeclConfig *declarativeconfi
 					if entry.Name == bundleDeclConfig.Bundles[0].Name {
 						bundleNotPresent = false
 						log.Infof("Bundle already exists in the Index Image, serving the Index Image")
+						break
 					}
 				}
 				break // We only want to search through the specific channel
