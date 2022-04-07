@@ -198,10 +198,10 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 		return err
 	}
 
-	fmt.Println()
-	fmt.Println("FBC CONTENT")
-	fmt.Println(content)
-	fmt.Println()
+	// fmt.Println()
+	// fmt.Println("FBC CONTENT")
+	// fmt.Println(content)
+	// fmt.Println()
 
 	// validate the declarative config
 	if err = ValidateFBC(declcfg); err != nil {
@@ -298,7 +298,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 			for i, _ := range injectedBundles {
 				c.PreviousBundles = append(c.PreviousBundles, injectedBundles[i]["imageTag"].(string))
 			}
-			fmt.Println(c.PreviousBundles)
+			//fmt.Println(c.PreviousBundles)
 		}
 		prevRegistryPodName = annotations[registryPodNameAnnotation]
 	}
