@@ -265,6 +265,48 @@ If your bundle is too large, there are a few things you can try:
   * Reducing the number of [CRD versions][k8s-crd-versions] supported in your Operator by deprecating and then removing older API versions. It is a good idea to have a clear plan for deprecation and removal of old CRDs versions when new ones get added, see [Kubernetes API change practices][k8s-api-change]. Also, refer to the [Kubernetes API conventions][k8s-api-convention].
   * Reduce the verbosity of your API documentation. (We do not recommend eliminating documenting the APIs)
 
+## How can I update dependencies for an unsupported release image?
+
+The Operator-SDK community releases updated images for supported
+releases. If you are using an older version of Operator-SDK, sometimes
+the dependencies will need to be updated in the images. For users in
+this situation we recommend updating to the latest version. If this is
+not possible, users can build and push their own versions of any of the
+images provided by the Operator-SDK. 
+
+**Operator-SDK**
+docker buildx build  -t quay.io/operator-framework/operator-sdk:dev -f ./images/operator-sdk/Dockerfile --load .
+
+**Helm-Operator**
+docker buildx build  -t quay.io/operator-framework/helm-operator:dev -f ./images/helm-operator/Dockerfile --load .
+
+**Scorecard-test**
+docker buildx build  -t quay.io/operator-framework/scorecard-test:dev -f ./images/scorecard-test/Dockerfile --load .
+
+**Scorecard-test-kuttl**
+docker buildx build  -t quay.io/operator-framework/scorecard-test-kuttl:dev -f ./images/scorecard-test-kuttl/Dockerfile --load .
+
+
+### Ansible
+
+Ansible images are built in 2 layers, and both will need to be rebuilt.
+Build and push the dependency image
+`images/ansible-operator/base.Dockerfile`, and then update `FROM` in
+`images/ansible-operator/Dockerfile` to point to your image, and build
+and push this image, which can be added to your operator's  `FROM`.
+
+**Ansible Operator (2.9) base**
+`docker buildx build  -t quay.io/operator-framework/ansible-operator-base:dev -f ./images/ansible-operator/base.Dockerfile --load images/ansible-operator`
+
+**Ansible Operator (2.9)**
+`docker buildx build  -t quay.io/operator-framework/ansible-operator:dev -f ./images/ansible-operator/Dockerfile --load .`
+
+**Ansible Operator (2.11) Dependencies**
+`docker buildx build  -t quay.io/operator-framework/ansible-operator-2.11-preview-base:dev -f ./images/ansible-operator-2.11-preview/base.Dockerfile --load images/ansible-operator-2.11-preview`
+
+**Ansible Operator (2.11)**
+`docker buildx build  -t quay.io/operator-framework/ansible-operator-2.11-preview:dev -f ./images/ansible-operator-2.11-preview/Dockerfile --load .`
+
 
 [k8s-crd-versions]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/#specify-multiple-versions
 [k8s-api-change]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api_changes.md
