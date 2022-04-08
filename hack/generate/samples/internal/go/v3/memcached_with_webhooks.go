@@ -274,6 +274,7 @@ func (mh *Memcached) implementingAPI() {
 		`
 
 	// Size defines the number of Memcached instances
+	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	Size int32 `+"`"+`json:"size,omitempty"`+"`"+`
 `)
 	pkg.CheckError("inserting spec Status", err)
@@ -285,9 +286,20 @@ func (mh *Memcached) implementingAPI() {
 		`
 
 	// Nodes store the name of the pods which are running Memcached instances
+	// +operator-sdk:csv:customresourcedefinitions:type=status
 	Nodes []string `+"`"+`json:"nodes,omitempty"`+"`"+`
 `)
 	pkg.CheckError("inserting Node Status", err)
+
+	// Add CSV marker that shows CRD owned resources
+	err = kbutil.InsertCode(
+		filepath.Join(mh.ctx.Dir, "api", mh.ctx.Version, fmt.Sprintf("%s_types.go", strings.ToLower(mh.ctx.Kind))),
+		`//+kubebuilder:subresource:status`,
+		`
+		// +operator-sdk:csv:customresourcedefinitions:resources={{Deployment,v1,memcached-deployment}}
+		`)
+
+	pkg.CheckError("inserting CRD owned resources CSV marker", err)
 
 	sampleFile := filepath.Join("config", "samples",
 		fmt.Sprintf("%s_%s_%s.yaml", mh.ctx.Group, mh.ctx.Version, strings.ToLower(mh.ctx.Kind)))

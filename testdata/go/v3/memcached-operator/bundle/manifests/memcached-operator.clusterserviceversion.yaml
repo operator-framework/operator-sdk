@@ -26,6 +26,19 @@ spec:
       displayName: Memcached
       kind: Memcached
       name: memcacheds.cache.example.com
+      resources:
+      - kind: Deployment
+        name: memcached-deployment
+        version: v1
+      specDescriptors:
+      - description: Size defines the number of Memcached instances
+        displayName: Size
+        path: size
+      statusDescriptors:
+      - description: Nodes store the name of the pods which are running Memcached
+          instances
+        displayName: Nodes
+        path: nodes
       version: v1alpha1
   description: Memcached Operator description. TODO.
   displayName: Memcached Operator
