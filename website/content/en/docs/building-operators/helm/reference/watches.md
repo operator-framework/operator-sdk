@@ -19,7 +19,7 @@ The follow tables describes the fields in an entry in `watches.yaml`:
 | chart                   | The path to the helm chart to use when reconciling this GVK.  |
 | watchDependentResources | Enable watching resources that are created by helm (default: `true`). |
 | overrideValues          | Values to be used for overriding Helm chart's defaults. For additional information see the [reference doc][override-values]. |
-| selector                | The conditions that a resource's labels must satsify in order to get reconciled. For additional information see [labels and selectors documentation][label-selector-doc]. |
+| selector                | The conditions that a resource's labels must satisfy in order to get reconciled. For additional information see [labels and selectors documentation][label-selector-doc]. |
 
 
 For reference, here is an example of a simple `watches.yaml` file:

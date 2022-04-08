@@ -122,7 +122,7 @@ files might contain something like:
   imagePullPolicy: "Always"
   args:
     # This value applies to all GVKs specified in watches.yaml
-    # that are not overriden by environment variables.
+    # that are not overridden by environment variables.
     - "--ansible-verbosity"
     - "1"
   env:

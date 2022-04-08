@@ -43,7 +43,7 @@ contributors.
 ## Goals
 
 1. Enable `golangci-lint` in the project Makefile and in CI, reduce the number of
-   linter errors, and permenantly enable more linters to keep avoid introducing
+   linter errors, and permanently enable more linters to keep avoid introducing
    new lint errors.
 2. Enable code coverage metrics for unit tests and push results to coveralls.io
    during CI to help contributors and maintainers keep code quality high and

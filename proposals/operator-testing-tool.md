@@ -241,7 +241,7 @@ end to end tests.**
 ##### Removing a deprecated feature
 
 - We are adding a new --version flag to allow users to switch between
-v1alpha1 and the proposed v1alpha2 or vice-versa for backward compatiblity
+v1alpha1 and the proposed v1alpha2 or vice-versa for backward compatibility
 - The output spec for v1alpha2 is added and the v1alpha1 spec is
 retained to support the existing output format
 - The default spec version will be v1alpha2, users will need to modify

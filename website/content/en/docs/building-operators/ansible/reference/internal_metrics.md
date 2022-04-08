@@ -7,8 +7,8 @@ The default metrics recorded in Operator SDK are collected in a [histogram](http
 The following three metrics are derived from the histogram:
 1. `ansible_operator_reconciles_bucket` - Each bucket in the histogram counts the number of reconciliations that have a period (in seconds) less than or equal
 to the upper limit of the bucket.
-3. `ansible_operator_reconciles_count` - The total number of reconciliations that have occured up to that instance of time while running an Ansible operator.
-4. `ansible_operator_reconciles_sum` - The cumulative amount of time (in seconds) of all reconciliations that have occured up to that instance of time while 
+3. `ansible_operator_reconciles_count` - The total number of reconciliations that have occurred up to that instance of time while running an Ansible operator.
+4. `ansible_operator_reconciles_sum` - The cumulative amount of time (in seconds) of all reconciliations that have occurred up to that instance of time while 
 running an Ansible operator.
 
 These metrics can be queried in the Prometheus UI.

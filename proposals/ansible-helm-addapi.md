@@ -34,12 +34,12 @@ The proposal is to enable Ansible/Helm operator developers to create additional 
 
 ## Motivation
 
-As of today, SDK CLI can be used only to add additonal APIs for Go based Operators.
-Ansible/Helm operator developers are not able to create additonal APIs via CLI, once the original project scaffolds. Today, developers have to manually add necessary files to the project scaffold.
+As of today, SDK CLI can be used only to add additional APIs for Go based Operators.
+Ansible/Helm operator developers are not able to create additional APIs via CLI, once the original project scaffolds. Today, developers have to manually add necessary files to the project scaffold.
 
 ## Goals
 
-* Ansible/Helm operator developer can use existing SDK CLI commands to create additonal APIs as needed.
+* Ansible/Helm operator developer can use existing SDK CLI commands to create additional APIs as needed.
 * Ansible/Helm operator developer should be able to use flags necessary for Ansible/Helm as used in `operator-sdk new`CLI. for adding additional APIs as well.
 * Ansible/Helm operator developer can find supported documentation for the same.
 
@@ -53,7 +53,7 @@ Ansible/Helm operator developers are not able to create additonal APIs via CLI, 
 ### User Stories
 
 #### Story 1 - Ansible operator additional API
-As an  Ansible operator developer, I would like to scaffold additional API, once the original Ansible operator project has been created. Goal is to use  following command, to create additonal APIs.
+As an  Ansible operator developer, I would like to scaffold additional API, once the original Ansible operator project has been created. Goal is to use  following command, to create additional APIs.
     `operator-sdk add api --kind <kind> --api-version <group/version> [flags]`
 
 ##### Acceptance Criteria
@@ -66,7 +66,7 @@ As an  Ansible operator developer, I would like to scaffold additional API, once
   --kind string - CRD Kind. (e.g AppService)
   --generate-playbook - Generate a playbook skeleton. (Only used for --type ansible) [**TBD**]
 ```
-* Documentation for [SDK CLI reference][sdkclidoc] is updated with steps to add additonal APIs for Ansible based operator.
+* Documentation for [SDK CLI reference][sdkclidoc] is updated with steps to add additional APIs for Ansible based operator.
 * Documentation is updated for [operator-sdk add api][addapidoc] for ansible.
 
 
@@ -86,7 +86,7 @@ As Helm operator developer, I would like to scaffold additional API, once the or
   --helm-chart-repo string - Chart repository URL for the requested helm chart
   --helm-chart-version string - Specific version of the helm chart (default is latest version)
   ```
-* Documentation for [SDK CLI reference][sdkclidoc] is updated with steps to add additonal APIs for Helm based operator.
+* Documentation for [SDK CLI reference][sdkclidoc] is updated with steps to add additional APIs for Helm based operator.
 * Documentation is updated for [operator-sdk add api][addapidoc] for helm.
 
 

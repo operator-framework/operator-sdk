@@ -136,7 +136,7 @@ interact and conflict with each other.
 However, if tests are designed to be fully isolated, they can be parallelized.
 To run a set of isolated tests in parallel, include them in the same stage and
 set `parallel` to `true`. All tests in a parallel stage are executed
-simultaneously, and scorecard waits for all of them to finish before proceding
+simultaneously, and scorecard waits for all of them to finish before proceeding
 to the next stage. This can make your tests run much faster.
 
 ## Selecting Tests
