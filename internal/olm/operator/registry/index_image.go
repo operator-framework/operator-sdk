@@ -21,6 +21,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"os"
 	"strings"
 	"time"
 
@@ -142,6 +144,7 @@ func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string
 }
 
 func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
+	log.SetOutput(ioutil.Discard)
 	var (
 		originalDeclcfg *declarativeconfig.DeclarativeConfig
 		err             error
@@ -159,8 +162,10 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 	if c.UpgradeEdge != "" {
 		upgradeEdge = c.UpgradeEdge
 	} else {
+		log.SetOutput(ioutil.Discard)
 		lastEdge := action.Render{Refs: []string{c.PreviousBundles[len(c.PreviousBundles)-1]}}
 		tempDeclConfig, err := lastEdge.Run(ctx)
+		log.SetOutput(os.Stdout)
 		if err != nil {
 			return err
 		}
@@ -168,8 +173,10 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 	}
 
 	if c.IndexImage != DefaultIndexImage {
+		log.SetOutput(ioutil.Discard)
 		render := action.Render{Refs: []string{c.IndexImage}}
 		originalDeclcfg, err = render.Run(ctx)
+		log.SetOutput(os.Stdout)
 	} else {
 		f1 := &FBCContext{
 			Package:        c.PackageName,
@@ -246,7 +253,9 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 		Refs: f.Refs,
 	}
 
+	log.SetOutput(ioutil.Discard)
 	declcfg, err = render.Run(ctx)
+	log.SetOutput(os.Stdout)
 	if err != nil {
 		log.Errorf("error in rendering the bundle and index image: %v", err)
 		return nil, err
@@ -557,6 +566,7 @@ func ValidateFBC(declcfg *declarativeconfig.DeclarativeConfig) error {
 
 // CreateFBC generates an FBC by creating bundle, package and channel blobs.
 func (f *FBCContext) CreateFBC(ctx context.Context) (*declarativeconfig.DeclarativeConfig, error) {
+	// log.SetOutput(ioutil.Discard)
 	var (
 		declcfg        *declarativeconfig.DeclarativeConfig
 		declcfgpackage *declarativeconfig.Package
@@ -569,7 +579,9 @@ func (f *FBCContext) CreateFBC(ctx context.Context) (*declarativeconfig.Declarat
 	}
 
 	// generate bundles by rendering the bundle objects.
+	log.SetOutput(ioutil.Discard)
 	declcfg, err = render.Run(ctx)
+	log.SetOutput(os.Stdout)
 	if err != nil {
 		log.Errorf("error in rendering the bundle image: %v", err)
 		return nil, err
