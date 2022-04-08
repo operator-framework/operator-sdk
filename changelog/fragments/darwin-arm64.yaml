@@ -1,5 +1,0 @@
-entries:
-  - description: >
-      Add official binary builds for `darwin/arm64`
-    kind: addition
-    breaking: false
