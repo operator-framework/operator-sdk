@@ -15,7 +15,6 @@
 package validate
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -54,17 +53,22 @@ func RunExternalValidators(ctx context.Context, entrypoints []string, bundleRoot
 
 		// The validator should only exit non-zero if the entrypoint itself failed to run,
 		// not if the bundle failed validation.
-		out, err := cmd.Output()
+		stdout, err := cmd.StdoutPipe()
 		if err != nil {
 			return nil, err
 		}
-
+		if err := cmd.Start(); err != nil {
+			return nil, err
+		}
 		// Ensure output conforms to the Output spec.
-		dec := json.NewDecoder(bytes.NewBuffer(out))
+		dec := json.NewDecoder(stdout)
 		dec.DisallowUnknownFields()
 
 		if err := dec.Decode(&manifestresults[i]); err != nil {
 			fmt.Printf("decode failed: %v\n", err)
+			return nil, err
+		}
+		if err := cmd.Wait(); err != nil {
 			return nil, err
 		}
 	}
