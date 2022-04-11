@@ -18,7 +18,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"net/url"
 	"os"
 	"runtime"
 	"strconv"
@@ -109,11 +108,6 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 	cfg, err := config.GetConfig()
 	if err != nil {
 		log.Error(err, "Failed to get config.")
-		os.Exit(1)
-	}
-
-	if err := verifyCfgURL(cfg.Host); err != nil {
-		log.Error(err, "URL verification failed.")
 		os.Exit(1)
 	}
 
@@ -293,19 +287,6 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 		os.Exit(1)
 	}
 	log.Info("Exiting.")
-}
-
-// verifyCfgURL verifies the path component of api endpoint
-// passed through the config.
-func verifyCfgURL(path string) error {
-	urlPath, err := url.Parse(path)
-	if err != nil {
-		return fmt.Errorf("failed to parse the path in URL %v", err)
-	}
-	if urlPath != nil && urlPath.Path != "" && urlPath.Path != "/" {
-		return fmt.Errorf("api endpoint '%s' contains a path component, which the proxy server is currently unable to handle properly. Work on this issue is being tracked here: https://github.com/operator-framework/operator-sdk/issues/4925", path)
-	}
-	return nil
 }
 
 // exitIfUnsupported prints an error containing unsupported field names and exits
