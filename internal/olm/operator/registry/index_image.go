@@ -119,7 +119,6 @@ func (c *IndexImageCatalogCreator) BindFlags(fs *pflag.FlagSet) {
 			"and the file *must* be encoded under the key \"cert.pem\"")
 	fs.BoolVar(&c.SkipTLS, "skip-tls", false, "skip authentication of image registry TLS "+
 		"certificate when pulling a bundle image in-cluster")
-	fs.StringVar(&c.UpgradeEdge, "upgrade-edge", "", "Edge to which the new bundle will be added.")
 	fs.StringVar(&c.ChannelEntrypoint, "channel-entrypoint", "", "Channel in which the upgrade will take place. Defaults to the bundle's default channel")
 }
 
@@ -144,7 +143,6 @@ func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string
 }
 
 func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
-	log.SetOutput(ioutil.Discard)
 	var (
 		originalDeclcfg *declarativeconfig.DeclarativeConfig
 		err             error
@@ -158,19 +156,14 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 	}
 
 	// determining the channel head
-	upgradeEdge := ""
-	if c.UpgradeEdge != "" {
-		upgradeEdge = c.UpgradeEdge
-	} else {
-		log.SetOutput(ioutil.Discard)
-		lastEdge := action.Render{Refs: []string{c.PreviousBundles[len(c.PreviousBundles)-1]}}
-		tempDeclConfig, err := lastEdge.Run(ctx)
-		log.SetOutput(os.Stdout)
-		if err != nil {
-			return err
-		}
-		upgradeEdge = tempDeclConfig.Bundles[len(tempDeclConfig.Bundles)-1].Name
+	log.SetOutput(ioutil.Discard)
+	lastEdge := action.Render{Refs: []string{c.PreviousBundles[len(c.PreviousBundles)-1]}}
+	tempDeclConfig, err := lastEdge.Run(ctx)
+	log.SetOutput(os.Stdout)
+	if err != nil {
+		return err
 	}
+	upgradeEdge := tempDeclConfig.Bundles[len(tempDeclConfig.Bundles)-1].Name
 
 	if c.IndexImage != DefaultIndexImage {
 		log.SetOutput(ioutil.Discard)
@@ -268,7 +261,6 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 	}
 
 	// Checking to see if FBC already contains this upgrade
-	bundleNotPresent := true
 	if len(declcfg.Bundles) > 0 {
 		for _, channel := range originalDeclCfg.Channels {
 			// Find the specific channel that the bundle needs to be inserted into
@@ -276,9 +268,8 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 				// Check if the CSV name is already present in the channel's entries
 				for _, entry := range channel.Entries {
 					if entry.Name == declcfg.Bundles[0].Name {
-						bundleNotPresent = false
 						log.Infof("Upgrades already exist in the Index Image, serving the Index Image")
-						break
+						return originalDeclCfg, nil
 					}
 				}
 				break // We only want to search through the specific channel
@@ -286,13 +277,10 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 		}
 	}
 
-	// If the upgrade is already present, return the image itself
-	if !bundleNotPresent {
-		return originalDeclCfg, nil
-	}
-
 	// Add new bundle blobs
-	originalDeclCfg.Bundles = append(originalDeclCfg.Bundles, declcfg.Bundles[0])
+	if len(declcfg.Bundles) > 0 {
+		originalDeclCfg.Bundles = append(originalDeclCfg.Bundles, declcfg.Bundles[0])
+	}
 
 	// Finding the correct channel to insert entries into
 	for i, _ := range originalDeclCfg.Channels {
