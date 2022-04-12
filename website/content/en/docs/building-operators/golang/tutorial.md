@@ -17,8 +17,6 @@ please [migrate][migration-guide], or consult the [legacy docs][legacy-quickstar
   - `example.com` is used as the registry Docker Hub namespace in these examples.
   Replace it with another value if using a different registry or namespace.
   - [Authentication and certificates][image-reg-config] if the registry is private or uses a custom CA.
-- `CGO_ENABLED` environment variable set to `0`
-    - Example: `export CGO_ENABLED=0`
 
 ## Overview
 
