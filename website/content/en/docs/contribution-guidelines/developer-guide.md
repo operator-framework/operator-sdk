@@ -50,7 +50,7 @@ and push to your main branch. Once the updated Action passes, submit a PR linkin
 [git-tool]:https://git-scm.com/downloads
 [go-tool]:https://golang.org/dl/
 [repo-sdk]:https://github.com/operator-framework/operator-sdk
-[fork-guide]:https://help.github.com/en/articles/fork-a-repo
+[fork-guide]:https://docs.github.com/en/get-started/quickstart/fork-a-repo
 [dev-testing]: /docs/contribution-guidelines/testing
 [dev-docs]: /docs/contribution-guidelines/documentation
 [dev-release]: /docs/contribution-guidelines/releasing
