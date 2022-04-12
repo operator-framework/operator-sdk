@@ -59,20 +59,17 @@ const (
 )
 
 type IndexImageCatalogCreator struct {
-	PackageName   string
-	IndexImage    string
-	BundleImage   string
 	SkipTLS       bool
 	SkipTLSVerify bool
 	UseHTTP       bool
-	BundleAddMode index.BundleAddMode
+	HasFBCLabel   bool
+	FBCcontent    string
+	PackageName   string
+	IndexImage    string
+	BundleImage   string
 	SecretName    string
 	CASecretName  string
-
-	FBCcontent  string
-	FBCdir      string
-	FBCfile     string
-	HasFBCLabel bool
+	BundleAddMode index.BundleAddMode
 
 	cfg *operator.Configuration
 }
@@ -211,8 +208,6 @@ func (c IndexImageCatalogCreator) createAnnotatedRegistry(ctx context.Context, c
 		SkipTLSVerify: c.SkipTLSVerify,
 		UseHTTP:       c.UseHTTP,
 		FBCcontent:    c.FBCcontent,
-		FBCdir:        c.FBCdir,
-		FBCfile:       c.FBCfile,
 		HasFBCLabel:   c.HasFBCLabel,
 	}
 	if registryPod.DBPath, err = c.getDBPath(ctx); err != nil {
