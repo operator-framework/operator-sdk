@@ -20,6 +20,8 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"path/filepath"
+	"strings"
 	"text/template"
 	"time"
 
@@ -104,6 +106,14 @@ func (rp *RegistryPod) init(cfg *operator.Configuration) error {
 		rp.DBPath = defaultDBPath
 	}
 	rp.cfg = cfg
+
+	// if the FBC label is set to true, assign FBCdir and FBCfile variables to serve the content from.
+	if rp.HasFBCLabel {
+		bundleImage := rp.BundleItems[len(rp.BundleItems)-1].ImageTag
+		trimmedbundleImage := strings.Split(bundleImage, ":")[0]
+		rp.FBCdir = fmt.Sprintf("%s-index", filepath.Join("/tmp", strings.Split(trimmedbundleImage, "/")[2]))
+		rp.FBCfile = filepath.Join(rp.FBCdir, strings.Split(bundleImage, ":")[1])
+	}
 
 	// validate the RegistryPod struct and ensure required fields are set
 	if err := rp.validate(); err != nil {
@@ -312,25 +322,22 @@ func newBool(b bool) *bool {
 	return bp
 }
 
-const cmdTemplate = `
-	{{if .HasFBCLabel}}
-		mkdir -p {{ .FBCdir }} && \
-		echo '{{ .FBCcontent }}' >> {{ .FBCfile  }} && \
-		opm serve {{ .FBCdir }} -p {{ .GRPCPort }}
-	{{end}}
+const cmdTemplate = `mkdir -p {{ dirname .DBPath }} && \
+{{- range $i, $item := .BundleItems }}
+opm registry add -d {{ $.DBPath }} -b {{ $item.ImageTag }} --mode={{ $item.AddMode }}{{ if $.CASecretName }} --ca-file=/certs/cert.pem{{ end }} --skip-tls-verify={{ $.SkipTLSVerify }} --use-http={{ $.UseHTTP }} && \
+{{- end }}
+opm registry serve -d {{ .DBPath }} -p {{ .GRPCPort }}
+`
 
-	{{if not .HasFBCLabel}}
-		mkdir -p {{ dirname .DBPath }} && \
-		{{- range $i, $item := .BundleItems }}
-		opm registry add -d {{ $.DBPath }} -b {{ $item.ImageTag }} --mode={{ $item.AddMode }}{{ if $.CASecretName }} --ca-file=/certs/cert.pem{{ end }} --skip-tls={{ $.SkipTLS }} && \
-		{{- end }}
-		opm registry serve -d {{ .DBPath }} -p {{ .GRPCPort }}
-	{{end}}
+const fbcCmdTemplate = `mkdir -p {{ .FBCdir }} && \
+echo '{{ .FBCcontent }}' >> {{ .FBCfile  }} && \
+opm serve {{ .FBCdir }} -p {{ .GRPCPort }}
 `
 
 // getContainerCmd uses templating to construct the container command
 // and throws error if unable to parse and execute the container command
 func (rp *RegistryPod) getContainerCmd() (string, error) {
+	var t *template.Template
 	// create a custom dirname template function
 	funcMap := template.FuncMap{
 		"dirname": path.Dir,
@@ -338,7 +345,11 @@ func (rp *RegistryPod) getContainerCmd() (string, error) {
 
 	// add the custom dirname template function to the
 	// template's FuncMap and parse the cmdTemplate
-	t := template.Must(template.New("cmd").Funcs(funcMap).Parse(cmdTemplate))
+	if rp.HasFBCLabel {
+		t = template.Must(template.New("cmd").Funcs(funcMap).Parse(fbcCmdTemplate))
+	} else {
+		t = template.Must(template.New("cmd").Funcs(funcMap).Parse(cmdTemplate))
+	}
 
 	// execute the command by applying the parsed template to command
 	// and write command output to out
