@@ -324,7 +324,7 @@ make: *** [Makefile:95: generate] Error 1
 Error: failed to create API: unable to run post-scaffold tasks of "base.go.kubebuilder.io/v3": exit status 2
 ```
 
-Here are a couple steps to try to resolve the issue:
+Here are a couple workarounds to try to resolve the issue:
 
 - Ensure `gcc` is installed
 - Set the `CGO_ENABLED` environment variable to `0` to disable [cgo][cgo-docs]
