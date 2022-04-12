@@ -6,7 +6,7 @@
 
     "httpHeaders": [
         {
-            "url": "https://docs.github.com",
+            "urls": ["https://docs.github.com"],
             "headers": {
                 "User-Agent": "Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:98.0) Gecko/20100101 Firefox/98.0"
             }
