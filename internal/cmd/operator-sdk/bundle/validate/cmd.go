@@ -143,11 +143,15 @@ func NewCmd() *cobra.Command {
 			if err != nil {
 				logger.Fatal(err)
 			}
-			if err := result.PrintWithFormat(c.outputFormat); err != nil {
+			failed, err := result.PrintWithFormat(c.outputFormat)
+			if err != nil {
 				logger.Fatal(err)
 			}
 
-			logger.Info("All validation tests have completed successfully")
+			// if a test failed don't print that it was successful
+			if !failed {
+				logger.Info("All validation tests have completed successfully")
+			}
 
 			return nil
 		},

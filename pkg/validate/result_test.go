@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 
 	. "github.com/onsi/ginkgo"
@@ -167,7 +168,9 @@ var _ = Describe("Output Result", func() {
 		Context("json-alpha1 formatting", func() {
 			It("prints a warning", func() {
 				result.AddWarn(errors.New(warnText))
-				Expect(result.printWithFormat(w, JSONAlpha1Output)).To(Succeed())
+				failed, err := result.printWithFormat(w, JSONAlpha1Output)
+				Expect(failed).To(BeFalse())
+				Expect(err).To(Succeed())
 				output = w.Bytes()
 				Expect(json.Unmarshal(output, &resJSON)).To(Succeed(), string(output))
 				Expect(resJSON.Passed).To(BeTrue())
@@ -179,21 +182,27 @@ var _ = Describe("Output Result", func() {
 
 			It("prints an error", func() {
 				result.AddError(errors.New(errorText))
-				Expect(result.printWithFormat(w, JSONAlpha1Output)).To(Succeed())
+				failed, err := result.printWithFormat(w, JSONAlpha1Output)
+				fmt.Println(failed)
+				fmt.Println(err)
+				Expect(failed).To(BeTrue())
+				Expect(err).To(Succeed())
 				output = w.Bytes()
 				Expect(json.Unmarshal(output, &resJSON)).To(Succeed(), string(output))
 				Expect(resJSON.Passed).To(BeFalse())
 				Expect(resJSON.Outputs).To(HaveLen(1))
 				Expect(resJSON.Outputs[0].Type).To(Equal("error"))
 				Expect(resJSON.Outputs[0].Message).To(Equal(errorText))
-				Expect(exitCode).To(Equal(1))
+				Expect(exitCode).To(Equal(0))
 			})
 		})
 
 		Context("text formatting", func() {
 			It("prints a warning", func() {
 				result.AddWarn(errors.New(warnText))
-				Expect(result.printWithFormat(w, TextOutput)).To(Succeed())
+				failed, err := result.printWithFormat(w, TextOutput)
+				Expect(failed).To(BeFalse())
+				Expect(err).To(Succeed())
 				output = w.Bytes()
 				lines := bytes.Split(bytes.TrimSpace(output), []byte("\n"))
 				Expect(lines).To(HaveLen(1))
@@ -205,14 +214,17 @@ var _ = Describe("Output Result", func() {
 
 			It("prints an error", func() {
 				result.AddError(errors.New(errorText))
-				Expect(result.printWithFormat(w, TextOutput)).To(Succeed())
+				failed, err := result.printWithFormat(w, TextOutput)
+				Expect(failed).To(BeTrue())
+				Expect(err).To(Succeed())
 				output = w.Bytes()
 				lines := bytes.Split(bytes.TrimSpace(output), []byte("\n"))
 				Expect(lines).To(HaveLen(1))
 				line := string(lines[0])
+				fmt.Println(line)
 				Expect(line).To(ContainSubstring("level=error"), line)
 				Expect(line).To(ContainSubstring(`msg="example of an error"`), line)
-				Expect(exitCode).To(Equal(1))
+				Expect(exitCode).To(Equal(0))
 			})
 		})
 
@@ -222,7 +234,9 @@ var _ = Describe("Output Result", func() {
 					Type:    "invalid",
 					Message: "invalid",
 				})
-				Expect(result.printWithFormat(w, TextOutput)).NotTo(Succeed())
+				failed, err := result.printWithFormat(w, TextOutput)
+				Expect(failed).To(BeFalse())
+				Expect(err).NotTo(Succeed())
 			})
 		})
 	})

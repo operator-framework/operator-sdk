@@ -138,14 +138,14 @@ var exit = os.Exit
 
 // PrintWithFormat prints output to w in format, and exits if some object in output
 // is not in a passing state.
-func (r *Result) PrintWithFormat(format string) (err error) {
+func (r *Result) PrintWithFormat(format string) (failed bool, err error) {
 	return r.printWithFormat(os.Stdout, format)
 }
 
-func (r *Result) printWithFormat(w io.Writer, format string) (err error) {
+func (r *Result) printWithFormat(w io.Writer, format string) (failed bool, err error) {
 	// the prepare will ensure the result data if the setters were not used
 	if err = r.prepare(); err != nil {
-		return fmt.Errorf("error preparing output: %v", err)
+		return failed, fmt.Errorf("error preparing output: %v", err)
 	}
 
 	switch format {
@@ -156,14 +156,13 @@ func (r *Result) printWithFormat(w io.Writer, format string) (err error) {
 		entry := logrus.NewEntry(newLoggerTo(w))
 		err = r.printText(entry)
 	default:
-		return fmt.Errorf("invalid result format type: %s", format)
+		return failed, fmt.Errorf("invalid result format type: %s", format)
 	}
 	if err == nil && !r.Passed {
-		// Exit when any Error type was added
-		exit(1)
+		failed = true
 	}
 
-	return err
+	return failed, err
 }
 
 // printText will print the Output in human readable format
