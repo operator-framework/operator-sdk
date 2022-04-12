@@ -94,7 +94,6 @@ type IndexImageCatalogCreator struct {
 	FBCfile           string
 	cfg               *operator.Configuration
 	FBCImage          string
-	UpgradeEdge       string
 	ChannelEntrypoint string
 	PreviousBundles   []string
 }
@@ -142,6 +141,8 @@ func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string
 	return cs, nil
 }
 
+// setupFBCupdates starts the process of upgrading a bundle in an FBC. This function will recreate the FBC that was generated
+// during run bundle and upgrade a specific bundle in the specified channel.
 func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 	var (
 		originalDeclcfg *declarativeconfig.DeclarativeConfig
@@ -155,9 +156,9 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 		c.ChannelName = c.ChannelEntrypoint
 	}
 
-	// determining the channel head
-	log.SetOutput(ioutil.Discard)
-	lastEdge := action.Render{Refs: []string{c.PreviousBundles[len(c.PreviousBundles)-1]}}
+	// Determining the upgrade edge
+	log.SetOutput(ioutil.Discard)                                                          // Limit global log output from Operator Registry
+	lastEdge := action.Render{Refs: []string{c.PreviousBundles[len(c.PreviousBundles)-1]}} // Most recent bundle
 	tempDeclConfig, err := lastEdge.Run(ctx)
 	log.SetOutput(os.Stdout)
 	if err != nil {
@@ -166,19 +167,21 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 	upgradeEdge := tempDeclConfig.Bundles[len(tempDeclConfig.Bundles)-1].Name
 
 	if c.IndexImage != DefaultIndexImage {
+		// Non-default index image was specified
 		log.SetOutput(ioutil.Discard)
 		render := action.Render{Refs: []string{c.IndexImage}}
 		originalDeclcfg, err = render.Run(ctx)
 		log.SetOutput(os.Stdout)
 	} else {
-		f1 := &FBCContext{
+		// Default index image was specified
+		rebuiltFBC := &FBCContext{
 			Package:        c.PackageName,
 			DefaultChannel: c.ChannelName,
 			ChannelSchema:  "olm.channel",
 			ChannelName:    c.ChannelName,
 			Refs:           c.PreviousBundles,
 		}
-		originalDeclcfg, err = f1.CreateFBC(ctx)
+		originalDeclcfg, err = rebuiltFBC.CreateFBC(ctx)
 	}
 
 	if err != nil {
@@ -197,6 +200,7 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 		},
 	}
 
+	// Adding the FBC "f" to the originalDeclcfg to generate a new FBC
 	declcfg, err := upgradeFBC(f, originalDeclcfg, ctx)
 	if err != nil {
 		log.Errorf("error creating the upgraded FBC: %v", err)
@@ -210,11 +214,6 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 		log.Errorf("error converting declarative config to string: %v", err)
 		return err
 	}
-
-	// fmt.Println()
-	// fmt.Println("FBC CONTENT")
-	// fmt.Println(content)
-	// fmt.Println()
 
 	// validate the declarative config
 	if err = ValidateFBC(declcfg); err != nil {
@@ -235,6 +234,8 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 	return nil
 }
 
+// upgradeFBC constructs a new File-Based Catalog from both the FBCConext object and the declarative config object. This function will check to see
+// if the FBCContext object "f" is already presetn in the original declarative config.
 func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeConfig, ctx context.Context) (*declarativeconfig.DeclarativeConfig, error) {
 	var (
 		declcfg *declarativeconfig.DeclarativeConfig
@@ -312,15 +313,13 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 		prevRegistryPodName = annotations[registryPodNameAnnotation]
 	}
 
-	// fmt.Println(cs.GetAnnotations())
-
 	existingItems, err := getExistingBundleItems(cs.GetAnnotations())
 	if err != nil {
 		return fmt.Errorf("error getting existing bundles from CatalogSource %s annotations: %v", cs.GetName(), err)
 	}
 	annotationsNotFound := len(existingItems) == 0
 
-	// add FBC updates
+	// adding updates to the IndexImageCatalogCreator
 	err = setupFBCupdates(&c, ctx)
 	if err != nil {
 		return err
@@ -385,9 +384,6 @@ func (c IndexImageCatalogCreator) createAnnotatedRegistry(ctx context.Context, c
 	if c.IndexImage == "" {
 		c.IndexImage = DefaultIndexImage
 	}
-
-	// fmt.Println("HERE IS MY FBC CONTENT")
-	// fmt.Println(c.FBCcontent)
 
 	// Initialize and create registry pod
 	registryPod := index.RegistryPod{

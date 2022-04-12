@@ -165,10 +165,6 @@ func (i *Install) setup(ctx context.Context) error {
 	i.IndexImageCatalogCreator.PackageName = i.OperatorInstaller.PackageName
 	i.IndexImageCatalogCreator.BundleImage = i.BundleImage
 
-	// fmt.Println()
-	// fmt.Println(content)
-	// fmt.Println()
-
 	i.IndexImageCatalogCreator.FBCcontent = content
 	i.IndexImageCatalogCreator.FBCdir = directoryName
 	i.IndexImageCatalogCreator.FBCfile = fileName
