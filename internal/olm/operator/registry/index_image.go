@@ -116,9 +116,15 @@ func (c *IndexImageCatalogCreator) BindFlags(fs *pflag.FlagSet) {
 		"Name of a generic secret containing a PEM root certificate file required to pull bundle images. "+
 			"This secret *must* be in the namespace that this command is configured to run in, "+
 			"and the file *must* be encoded under the key \"cert.pem\"")
+
+	_ = fs.MarkDeprecated("skip-tls", "use --skip-tls-verify or --use-http instead")
 	fs.BoolVar(&c.SkipTLS, "skip-tls", false, "skip authentication of image registry TLS "+
 		"certificate when pulling a bundle image in-cluster")
 	fs.StringVar(&c.ChannelEntrypoint, "channel-entrypoint", "", "Channel in which the upgrade will take place. Defaults to the bundle's default channel")
+	fs.BoolVar(&c.SkipTLSVerify, "skip-tls-verify", false, "skip TLS certificate verification for container image registries "+
+		"while pulling bundles")
+	fs.BoolVar(&c.UseHTTP, "use-http", false, "use plain HTTP for container image registries "+
+		"while pulling bundles")
 }
 
 func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string) (*v1alpha1.CatalogSource, error) {
@@ -397,14 +403,14 @@ func (c IndexImageCatalogCreator) createAnnotatedRegistry(ctx context.Context, c
 
 	// Initialize and create registry pod
 	registryPod := index.RegistryPod{
-		BundleItems:  items,
-		IndexImage:   c.IndexImage,
-		SecretName:   c.SecretName,
-		CASecretName: c.CASecretName,
-		SkipTLS:      c.SkipTLS,
-		FBCcontent:   c.FBCcontent,
-		FBCdir:       c.FBCdir,
-		FBCfile:      c.FBCfile,
+		BundleItems:   items,
+		IndexImage:    c.IndexImage,
+		SecretName:    c.SecretName,
+		CASecretName:  c.CASecretName,
+		SkipTLSVerify: c.SkipTLSVerify,
+		UseHTTP:       c.UseHTTP,
+		FBCcontent:    c.FBCcontent,
+		HasFBCLabel:   c.HasFBCLabel,
 	}
 	if registryPod.DBPath, err = c.getDBPath(ctx); err != nil {
 		return fmt.Errorf("get database path: %v", err)

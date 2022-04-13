@@ -18,11 +18,11 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"net/url"
 	"os"
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -108,10 +108,6 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 	cfg, err := config.GetConfig()
 	if err != nil {
 		log.Error(err, "Failed to get config.")
-		os.Exit(1)
-	}
-
-	if err := verifyCfgURL(cfg.Host); err != nil {
 		os.Exit(1)
 	}
 
@@ -211,6 +207,13 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 		os.Exit(1)
 	}
 	for _, w := range watches {
+		reconcilePeriod := f.ReconcilePeriod
+		if w.ReconcilePeriod.Duration != time.Duration(0) {
+			// if a duration other than default was passed in through watches,
+			// it will take precedence over the command-line flag
+			reconcilePeriod = w.ReconcilePeriod.Duration
+		}
+
 		runner, err := runner.New(w, f.AnsibleArgs)
 		if err != nil {
 			log.Error(err, "Failed to create runner")
@@ -223,7 +226,7 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 			ManageStatus:            w.ManageStatus,
 			AnsibleDebugLogs:        getAnsibleDebugLog(),
 			MaxConcurrentReconciles: w.MaxConcurrentReconciles,
-			ReconcilePeriod:         w.ReconcilePeriod,
+			ReconcilePeriod:         reconcilePeriod,
 			Selector:                w.Selector,
 			LoggingLevel:            getAnsibleEventsToLog(f),
 		})
@@ -284,19 +287,6 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 		os.Exit(1)
 	}
 	log.Info("Exiting.")
-}
-
-// verifyCfgURL verifies the path component of api endpoint
-// passed through the config.
-func verifyCfgURL(path string) error {
-	urlPath, err := url.Parse(path)
-	if err != nil {
-		return fmt.Errorf("failed to parse the path in URL %v", err)
-	}
-	if urlPath != nil && urlPath.Path != "" && urlPath.Path != "/" {
-		return fmt.Errorf("api endpoint '%s' contains a path component, which the proxy server is currently unable to handle properly. Work on this issue is being tracked here: https://github.com/operator-framework/operator-sdk/issues/4925", path)
-	}
-	return nil
 }
 
 // exitIfUnsupported prints an error containing unsupported field names and exits

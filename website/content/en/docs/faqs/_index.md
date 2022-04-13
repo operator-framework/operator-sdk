@@ -165,7 +165,7 @@ SHELL := /bin/bash
 ---
 
 Administrators can configure proxy-friendly Operators to support network proxies by
-specifiying `HTTP_PROXY`, `HTTPS_PROXY`, and `NO_PROXY` environment
+specifying `HTTP_PROXY`, `HTTPS_PROXY`, and `NO_PROXY` environment
 variables in the Operator deployment. (These variables can be handled by OLM.)
 
 Proxy-friendly Operators are responsible for inspecting the Operator
@@ -174,6 +174,22 @@ For more information and examples, please see the type-specific docs:
 - [Ansible][ansible-proxy-vars]
 - [Golang][go-proxy-vars]
 - [Helm][helm-proxy-vars]
+
+
+## After running `make manifests`, `rbac` permissions are not updated in config
+
+[RBAC markers][rbac-markers] that are not followed by a newline will not be
+parsed correctly, resulting in missing `rbac` configuration.
+
+This is a known issue with `controller-tools`, see [issue #551][controller-tools-issue-551]
+The current workaround is to add a new line after the `rbac` marker.
+
+```go
+// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;
+
+func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+```
 
 [ansible-proxy-vars]: /docs/building-operators/ansible/reference/proxy-vars/
 [client.Reader]:https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/client#Reader
@@ -192,6 +208,7 @@ For more information and examples, please see the type-specific docs:
 [rbac]:https://kubernetes.io/docs/reference/access-authn-authz/rbac/
 [scorecard-doc]: https://sdk.operatorframework.io/docs/testing-operators/scorecard/
 [project-doc]: /docs/overview/project-layout
+[controller-tools-issue-551]: https://github.com/kubernetes-sigs/controller-tools/issues/551
 
 ## Preserve the `preserveUnknownFields` in your CRDs
 
@@ -248,7 +265,71 @@ If your bundle is too large, there are a few things you can try:
   * Reducing the number of [CRD versions][k8s-crd-versions] supported in your Operator by deprecating and then removing older API versions. It is a good idea to have a clear plan for deprecation and removal of old CRDs versions when new ones get added, see [Kubernetes API change practices][k8s-api-change]. Also, refer to the [Kubernetes API conventions][k8s-api-convention].
   * Reduce the verbosity of your API documentation. (We do not recommend eliminating documenting the APIs)
 
+## How can I update dependencies for an unsupported release image?
+
+The Operator-SDK community releases updated images for supported
+releases. If you are using an older version of Operator-SDK, sometimes
+the dependencies will need to be updated in the images. For users in
+this situation we recommend updating to the latest version. If this is
+not possible, users can build and push their own versions of any of the
+images provided by the Operator-SDK. 
+
+**Operator-SDK**
+docker buildx build  -t quay.io/operator-framework/operator-sdk:dev -f ./images/operator-sdk/Dockerfile --load .
+
+**Helm-Operator**
+docker buildx build  -t quay.io/operator-framework/helm-operator:dev -f ./images/helm-operator/Dockerfile --load .
+
+**Scorecard-test**
+docker buildx build  -t quay.io/operator-framework/scorecard-test:dev -f ./images/scorecard-test/Dockerfile --load .
+
+**Scorecard-test-kuttl**
+docker buildx build  -t quay.io/operator-framework/scorecard-test-kuttl:dev -f ./images/scorecard-test-kuttl/Dockerfile --load .
+
+
+### Ansible
+
+Ansible images are built in 2 layers, and both will need to be rebuilt.
+Build and push the dependency image
+`images/ansible-operator/base.Dockerfile`, and then update `FROM` in
+`images/ansible-operator/Dockerfile` to point to your image, and build
+and push this image, which can be added to your operator's  `FROM`.
+
+**Ansible Operator (2.9) base**
+`docker buildx build  -t quay.io/operator-framework/ansible-operator-base:dev -f ./images/ansible-operator/base.Dockerfile --load images/ansible-operator`
+
+**Ansible Operator (2.9)**
+`docker buildx build  -t quay.io/operator-framework/ansible-operator:dev -f ./images/ansible-operator/Dockerfile --load .`
+
+**Ansible Operator (2.11) Dependencies**
+`docker buildx build  -t quay.io/operator-framework/ansible-operator-2.11-preview-base:dev -f ./images/ansible-operator-2.11-preview/base.Dockerfile --load images/ansible-operator-2.11-preview`
+
+**Ansible Operator (2.11)**
+`docker buildx build  -t quay.io/operator-framework/ansible-operator-2.11-preview:dev -f ./images/ansible-operator-2.11-preview/Dockerfile --load .`
+
 
 [k8s-crd-versions]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/#specify-multiple-versions
 [k8s-api-change]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api_changes.md
 [k8s-api-convention]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md
+
+## Running `operator-sdk create api` results in an error with `/usr/local/go/src/net/cgo_linux.go:13:8: no such package located` in the error message
+
+By default Go will set the `CGO_ENABLED` environment variable to `1` which means that [cgo][cgo-docs] is enabled. Depending on the architecture and OS of your system you may run into an issue similar to this one: 
+
+```sh
+/usr/local/go/src/net/cgo_linux.go:13:8: no such package located
+Error: not all generators ran successfully
+run `controller-gen object:headerFile=hack/boilerplate.go.txt paths=./... -w` to see all available markers, or `controller-gen object:headerFile=hack/boilerplate.go.txt paths=./... -h` for usage
+make: *** [Makefile:95: generate] Error 1
+Error: failed to create API: unable to run post-scaffold tasks of "base.go.kubebuilder.io/v3": exit status 2
+```
+
+Here are a couple workarounds to try to resolve the issue:
+
+- Ensure `gcc` is installed
+- Set the `CGO_ENABLED` environment variable to `0` to disable [cgo][cgo-docs]
+
+If neither of those solutions work for you, please [open an issue][open-issue]
+
+[cgo-docs]: https://pkg.go.dev/cmd/cgo
+[open-issue]: https://github.com/operator-framework/operator-sdk/issues/new/choose

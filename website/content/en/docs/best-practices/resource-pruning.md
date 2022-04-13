@@ -34,7 +34,7 @@ for customization of hooks and strategies.
 Users can configure the pruning library by creating code similar to this example:
 ```golang
 cfg = Config{
-	log:           logf.Log.WithName("prune"),
+	Log:           logf.Log.WithName("prune"),
 	DryRun:        false,
 	Clientset:     client,
 	LabelSelector: "app=churro",
@@ -53,7 +53,7 @@ cfg = Config{
 
 | Config Field | Description
 | ------------ | -----------
-| log          | a logger to handle library log messages
+| Log          | a logr.Logger. It is optional if a logger is provided through the context to the Execute method, which is the case with the context of the Reconcile function of operator-sdk and controller-runtime
 | DryRun       | a boolean determines whether to actually remove resources; `true` means to execute but not to remove resources
 | Clientset    | a client-go Kubernetes ClientSet that will be used for Kube API calls by the library
 | LabelSelector| Kubernetes label selector expression used to find resources to prune
@@ -78,6 +78,9 @@ err := cfg.Execute(ctx)
 
 Users might want to implement pruning execution by means of a cron package or simply call the prune
 library based on some other triggering event.
+
+If a logger has been configured in the Config structure it takes precedence on the one provided through ctx.
+Adding a logger.Logger to the context can be done with [logr.NewContext][logr-newcontext].
 
 ## Pruning Strategies
 
@@ -106,10 +109,11 @@ from the cluster.
 
 Here is an example of a *preDelete* hook:
 ```golang
-func myhook(cfg Config, x ResourceInfo) error {
-	fmt.Println("myhook is called ")
-       	if x.GVK.Kind == PodKind {
-                req := cfg.Clientset.CoreV1().Pods(x.Namespace).GetLogs(x.Name, &v1.PodLogOptions{})
+func myhook(ctx context.Context, cfg Config, res ResourceInfo) error {
+        log := prune.Logger(ctx, cfg)
+        log.V(4).Info("pre-deletion", "GVK", res.GVK, "namespace", res.Namespace, "name", res.Name)
+       	if res.GVK.Kind == PodKind {
+                req := cfg.Clientset.CoreV1().Pods(res.Namespace).GetLogs(res.Name, &v1.PodLogOptions{})
                 podLogs, err := req.Stream(context.Background())
                 if err != nil {
                         return err
@@ -122,7 +126,7 @@ func myhook(cfg Config, x ResourceInfo) error {
                         return err
                 }
 
-                fmt.Printf("pod log before removing is %s\n", buf.String())
+                log.V(4).Info("pod log before removing is", "log", buf.String())
         }
 	return nil
 }
@@ -138,8 +142,9 @@ cases. Custom strategy functions are passed in the prune configuration and a lis
 the library.  The custom strategy builds up a list of resources to be removed, returning the list to the prune library which
 performs the actual resource removal. Here is an example custom strategy:
 ```golang
-func myStrategy(cfg Config, resources []ResourceInfo) (resourcesToRemove []ResourceInfo, err error) {
-	fmt.Printf("myStrategy is called with resources %v config %v\n", resources, cfg)
+func myStrategy(ctx context.Context, cfg Config, resources []ResourceInfo) (resourcesToRemove []ResourceInfo, err error) {
+        log := Logger(ctx, cfg)
+        log.V(4).Info("myStrategy called", "resources", resources, "config", cfg)
 	if len(resources) != 3 {
 		return resourcesToRemove, fmt.Errorf("count of resources did not equal our expectation")
 	}
@@ -163,3 +168,4 @@ Notice that you can optionally pass in settings to your custom function as a map
 [operator-lib-prune]: https://github.com/operator-framework/operator-lib/tree/main/prune
 [jobs]: https://kubernetes.io/docs/concepts/workloads/controllers/job/
 [time.Duration formatting]: https://pkg.go.dev/time#Duration
+[logr-newcontext]: https://pkg.go.dev/github.com/go-logr/logr#NewContext

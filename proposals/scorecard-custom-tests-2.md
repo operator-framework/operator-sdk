@@ -89,7 +89,7 @@ The Scorecard would support the creation of a Kuttl test image and then execute 
 
  * test image - this is a container image built by end-users to contain a custom test implementation
  * test configuration (DSL) - this is a file that contains the test definitions and labels which determine what tests are run and how they are configured
- * Custom Test Definition - A custom test is any sort of test logic required, written in any programming language that satifies the scorecard test requirements for output format and execution.
+ * Custom Test Definition - A custom test is any sort of test logic required, written in any programming language that satisfies the scorecard test requirements for output format and execution.
 
 #### Test Image
 

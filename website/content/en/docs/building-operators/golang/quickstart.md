@@ -12,7 +12,7 @@ This guide walks through an example of building a simple memcached-operator usin
 - Go through the [installation guide][install-guide].
 - User authorized with `cluster-admin` permissions.
 - An accessible image registry for various operator images (ex. [hub.docker.com](https://hub.docker.com/signup),
-[quay.io](https://quay.io/)) and be logged in in your command line environment.
+[quay.io](https://quay.io/)) and be logged in your command line environment.
   - `example.com` is used as the registry Docker Hub namespace in these examples.
   Replace it with another value if using a different registry or namespace.
   - [Authentication and certificates][image-reg-config] if the registry is private or uses a custom CA.
@@ -97,6 +97,24 @@ has a custom CA, these [configuration steps][image-reg-config] must be complete.
   make undeploy
   ```
 
+### Run locally (outside the cluster)
+
+This is recommended ONLY for development purposes
+
+1. Run the operator:
+
+  ```sh
+  make install run
+  ```
+
+1. In a new terminal tab/window, create a sample Memcached custom resource:
+  
+  ```console
+  $ kubectl apply -f config/samples/cache_v1alpha1_memcached.yaml
+  memcached.cache.example.com/memcached-sample created
+  ```
+
+1. Stop the operator by pressing `ctrl+c` in the terminal tab or window the operator is running in
 
 ## Next Steps
 

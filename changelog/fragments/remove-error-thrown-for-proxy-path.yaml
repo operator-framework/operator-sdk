@@ -1,0 +1,5 @@
+entries:
+  - description: >
+      Previously we added this error to show the user that the Path component is part of proxy server. Now, kubectl made this fix that handles this case and there is no need to throw this error anymore.
+    kind: addition
+    breaking: false

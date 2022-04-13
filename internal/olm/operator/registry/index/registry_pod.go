@@ -19,6 +19,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path"
+	"path/filepath"
+	"strings"
 	"text/template"
 	"time"
 
@@ -76,8 +79,11 @@ type RegistryPod struct { //nolint:maligned
 	// The secret's key for this file must be "cert.pem".
 	CASecretName string
 
-	// SkipTLS controls wether to ignore SSL errors while pulling bundle image from registry server.
-	SkipTLS bool `json:"SkipTLS"`
+	// SkipTLSVerify represents skip TLS certificate verification for container image registries while pulling bundles.
+	SkipTLSVerify bool `json:"SkipTLSVerify"`
+
+	// UseHTTP uses plain HTTP for container image registries while pulling bundles.
+	UseHTTP bool `json:"UseHTTP"`
 
 	// pod represents a kubernetes *corev1.pod that will be created on a cluster using an index image
 	pod *corev1.Pod
@@ -85,9 +91,10 @@ type RegistryPod struct { //nolint:maligned
 	cfg *operator.Configuration
 
 	// FBC data
-	FBCcontent string
-	FBCdir     string
-	FBCfile    string
+	FBCcontent  string
+	FBCdir      string
+	FBCfile     string
+	HasFBCLabel bool
 }
 
 // init initializes the RegistryPod struct and sets defaults for empty fields
@@ -99,6 +106,14 @@ func (rp *RegistryPod) init(cfg *operator.Configuration) error {
 		rp.DBPath = defaultDBPath
 	}
 	rp.cfg = cfg
+
+	// if the FBC label is set to true, assign FBCdir and FBCfile variables to serve the content from.
+	if rp.HasFBCLabel {
+		bundleImage := rp.BundleItems[len(rp.BundleItems)-1].ImageTag
+		trimmedbundleImage := strings.Split(bundleImage, ":")[0]
+		rp.FBCdir = fmt.Sprintf("%s-index", filepath.Join("/tmp", strings.Split(trimmedbundleImage, "/")[2]))
+		rp.FBCfile = filepath.Join(rp.FBCdir, strings.Split(bundleImage, ":")[1])
+	}
 
 	// validate the RegistryPod struct and ensure required fields are set
 	if err := rp.validate(); err != nil {
@@ -151,7 +166,7 @@ func (rp *RegistryPod) Create(ctx context.Context, cfg *operator.Configuration, 
 	if err := rp.checkPodStatus(ctx, podCheck); err != nil {
 		return nil, fmt.Errorf("registry pod did not become ready: %w", err)
 	}
-	log.Infof("Successfully created registry pod: %s", rp.pod.Name)
+	log.Infof("Created registry pod: %s", rp.pod.Name)
 	return rp.pod, nil
 }
 
@@ -307,14 +322,14 @@ func newBool(b bool) *bool {
 	return bp
 }
 
-// const cmdTemplate = `mkdir -p {{ dirname .DBPath }} && \
-// {{- range $i, $item := .BundleItems }}
-// opm registry add -d {{ $.DBPath }} -b {{ $item.ImageTag }} --mode={{ $item.AddMode }}{{ if $.CASecretName }} --ca-file=/certs/cert.pem{{ end }} --skip-tls={{ $.SkipTLS }} && \
-// {{- end }}
-// opm registry serve -d {{ .DBPath }} -p {{ .GRPCPort }}
-// `
+const cmdTemplate = `mkdir -p {{ dirname .DBPath }} && \
+{{- range $i, $item := .BundleItems }}
+opm registry add -d {{ $.DBPath }} -b {{ $item.ImageTag }} --mode={{ $item.AddMode }}{{ if $.CASecretName }} --ca-file=/certs/cert.pem{{ end }} --skip-tls-verify={{ $.SkipTLSVerify }} --use-http={{ $.UseHTTP }} && \
+{{- end }}
+opm registry serve -d {{ .DBPath }} -p {{ .GRPCPort }}
+`
 
-const cmdTemplate = `mkdir -p {{ .FBCdir }} && \
+const fbcCmdTemplate = `mkdir -p {{ .FBCdir }} && \
 echo '{{ .FBCcontent }}' >> {{ .FBCfile  }} && \
 opm serve {{ .FBCdir }} -p {{ .GRPCPort }}
 `
@@ -322,11 +337,21 @@ opm serve {{ .FBCdir }} -p {{ .GRPCPort }}
 // getContainerCmd uses templating to construct the container command
 // and throws error if unable to parse and execute the container command
 func (rp *RegistryPod) getContainerCmd() (string, error) {
+	var t *template.Template
+	// create a custom dirname template function
+	funcMap := template.FuncMap{
+		"dirname": path.Dir,
+	}
+
 	// add the custom dirname template function to the
 	// template's FuncMap and parse the cmdTemplate
-	t := template.Must(template.New("cmd").Parse(cmdTemplate))
+	if rp.HasFBCLabel {
+		t = template.Must(template.New("cmd").Funcs(funcMap).Parse(fbcCmdTemplate))
+	} else {
+		t = template.Must(template.New("cmd").Funcs(funcMap).Parse(cmdTemplate))
+	}
 
-	// execute the command by applying the parsed t to command
+	// execute the command by applying the parsed template to command
 	// and write command output to out
 	out := &bytes.Buffer{}
 	if err := t.Execute(out, rp); err != nil {

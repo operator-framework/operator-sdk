@@ -229,7 +229,7 @@ items:
     startingCSV: etcdoperator.v0.0.1
 ```
 
-Once the Operator bundle is deployed, you can use the `run bundle-upgrade` command by specifing the new bundle image that you want to upgrade to.
+Once the Operator bundle is deployed, you can use the `run bundle-upgrade` command by specifying the new bundle image that you want to upgrade to.
 
 ```console
 $ operator-sdk run bundle-upgrade <some-registry>/etcd-bundle:v0.0.2
