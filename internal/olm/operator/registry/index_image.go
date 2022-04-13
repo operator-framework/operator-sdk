@@ -28,6 +28,7 @@ import (
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/alpha/action"
+	"github.com/operator-framework/operator-registry/pkg/containertools"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	gofunk "github.com/thoas/go-funk"
@@ -80,6 +81,9 @@ type FBCContext struct {
 }
 
 type IndexImageCatalogCreator struct {
+	SkipTLSVerify     bool
+	UseHTTP           bool
+	HasFBCLabel       bool
 	PackageName       string
 	ChannelName       string
 	CSVname           string
@@ -322,9 +326,6 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 			for i, _ := range injectedBundles {
 				c.PreviousBundles = append(c.PreviousBundles, injectedBundles[i]["imageTag"].(string))
 			}
-			fmt.Println()
-			fmt.Println(c.PreviousBundles)
-			fmt.Println()
 		}
 		prevRegistryPodName = annotations[registryPodNameAnnotation]
 	}
@@ -335,10 +336,17 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 	}
 	annotationsNotFound := len(existingItems) == 0
 
-	// adding updates to the IndexImageCatalogCreator
-	err = setupFBCupdates(&c, ctx)
+	// adding updates to the IndexImageCatalogCreator if it is an FBC image
+	catalogLabels, err := registryutil.GetImageLabels(ctx, nil, c.IndexImage, false)
 	if err != nil {
-		return err
+		return fmt.Errorf("get index image labels: %v", err)
+	}
+
+	if _, hasFBCLabel := catalogLabels[containertools.ConfigsLocationLabel]; hasFBCLabel || c.IndexImage == DefaultIndexImage {
+		err = setupFBCupdates(&c, ctx)
+		if err != nil {
+			return err
+		}
 	}
 
 	if annotationsNotFound {

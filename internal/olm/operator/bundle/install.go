@@ -15,19 +15,14 @@
 package bundle
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"github.com/operator-framework/operator-registry/alpha/action"
-	declarativeconfig "github.com/operator-framework/operator-registry/alpha/declcfg"
-	"github.com/operator-framework/operator-registry/pkg/containertools"
-	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
-	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 
@@ -56,13 +51,6 @@ type Install struct {
 	*registry.OperatorInstaller
 
 	cfg *operator.Configuration
-}
-
-type FBCContext struct {
-	Package      string
-	ChannelName  string
-	Refs         []string
-	ChannelEntry declarativeconfig.ChannelEntry
 }
 
 func NewInstall(cfg *operator.Configuration) Install {
@@ -122,7 +110,6 @@ func (i *Install) setup(ctx context.Context) error {
 
 	directoryName := filepath.Join("/tmp", strings.Split(csv.Name, ".")[0]+"-index")
 	fileName := filepath.Join(directoryName, "testFBC")
-	bundleChannel := strings.Split(labels[registrybundle.ChannelsLabel], ",")[0]
 	defaultChannel := labels[defaultChannelAnnotation]
 
 	// get index image labels.
@@ -139,10 +126,11 @@ func (i *Install) setup(ctx context.Context) error {
 	// generate an fbc if an fbc specific label is found on the image or for a default index image.
 	if i.IndexImageCatalogCreator.HasFBCLabel {
 		// FBC variables
-		f := &FBCContext{
-			Package:     labels[registrybundle.PackageLabel],
-			ChannelName: strings.Split(labels[registrybundle.ChannelsLabel], ",")[0],
-			Refs:        []string{i.BundleImage},
+		f := &registry.FBCContext{
+			Package:        labels[registrybundle.PackageLabel],
+			ChannelName:    strings.Split(labels[registrybundle.ChannelsLabel], ",")[0],
+			DefaultChannel: defaultChannel,
+			Refs:           []string{i.BundleImage},
 			ChannelEntry: declarativeconfig.ChannelEntry{
 				Name: csv.Name,
 			},
@@ -150,7 +138,7 @@ func (i *Install) setup(ctx context.Context) error {
 		log.Infof("Creating a File-Based Catalog of the bundle %q", i.BundleImage)
 
 		// generate a file-based catalog representation of the bundle image
-		declcfg, err = f.createFBC(ctx)
+		declcfg, err = f.CreateFBC(ctx)
 		if err != nil {
 			log.Errorf("error in generating file-based catalog with image %s: %v", i.BundleImage, err)
 			return err
@@ -197,7 +185,6 @@ func (i *Install) setup(ctx context.Context) error {
 	i.IndexImageCatalogCreator.PackageName = i.OperatorInstaller.PackageName
 	i.IndexImageCatalogCreator.BundleImage = i.BundleImage
 
-	i.IndexImageCatalogCreator.FBCcontent = content
 	i.IndexImageCatalogCreator.FBCdir = directoryName
 	i.IndexImageCatalogCreator.FBCfile = fileName
 
