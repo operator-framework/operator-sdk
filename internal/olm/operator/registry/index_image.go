@@ -147,6 +147,7 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 	var (
 		originalDeclcfg *declarativeconfig.DeclarativeConfig
 		err             error
+		render          action.Render
 	)
 
 	directoryName := filepath.Join("/tmp", strings.Split(c.CSVname, ".")[0]+"-index")
@@ -156,48 +157,27 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 		c.ChannelName = c.ChannelEntrypoint
 	}
 
-	// Determining the upgrade edge
-	log.SetOutput(ioutil.Discard)                                                          // Limit global log output from Operator Registry
-	lastEdge := action.Render{Refs: []string{c.PreviousBundles[len(c.PreviousBundles)-1]}} // Most recent bundle
-	tempDeclConfig, err := lastEdge.Run(ctx)
-	log.SetOutput(os.Stdout)
-	if err != nil {
-		return err
-	}
-	upgradeEdge := tempDeclConfig.Bundles[len(tempDeclConfig.Bundles)-1].Name
+	log.SetOutput(ioutil.Discard)
 
+	render = action.Render{Refs: []string{}}
 	if c.IndexImage != DefaultIndexImage {
-		// Non-default index image was specified
-		log.SetOutput(ioutil.Discard)
-		render := action.Render{Refs: []string{c.IndexImage}}
-		originalDeclcfg, err = render.Run(ctx)
-		log.SetOutput(os.Stdout)
-	} else {
-		// Default index image was specified
-		rebuiltFBC := &FBCContext{
-			Package:        c.PackageName,
-			DefaultChannel: c.ChannelName,
-			ChannelSchema:  "olm.channel",
-			ChannelName:    c.ChannelName,
-			Refs:           c.PreviousBundles,
-		}
-		originalDeclcfg, err = rebuiltFBC.CreateFBC(ctx)
+		render.Refs = append(render.Refs, c.IndexImage)
 	}
 
+	originalDeclcfg, err = render.Run(ctx)
 	if err != nil {
 		return err
 	}
 
+	log.SetOutput(os.Stdout)
+
+	c.PreviousBundles = append(c.PreviousBundles, c.BundleImage)
 	f := &FBCContext{
 		Package:        c.PackageName,
 		DefaultChannel: c.ChannelName,
 		ChannelSchema:  "olm.channel",
 		ChannelName:    c.ChannelName,
-		Refs:           []string{c.BundleImage},
-		ChannelEntry: declarativeconfig.ChannelEntry{
-			Name:     c.CSVname,
-			Replaces: upgradeEdge,
-		},
+		Refs:           c.PreviousBundles,
 	}
 
 	// Adding the FBC "f" to the originalDeclcfg to generate a new FBC
@@ -215,14 +195,18 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 		return err
 	}
 
+	if content == "" {
+		return errors.New("File-Based Catalog contents cannot be empty")
+	}
+
+	fmt.Println()
+	fmt.Println(content)
+	fmt.Println()
+
 	// validate the declarative config
 	if err = ValidateFBC(declcfg); err != nil {
 		log.Errorf("error validating the generated FBC: %v", err)
 		return err
-	}
-
-	if content == "" {
-		return errors.New("File-Based Catalog contents cannot be empty")
 	}
 
 	log.Infof("Generated a valid Upgraded File-Based Catalog")
@@ -235,7 +219,7 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 }
 
 // upgradeFBC constructs a new File-Based Catalog from both the FBCConext object and the declarative config object. This function will check to see
-// if the FBCContext object "f" is already presetn in the original declarative config.
+// if the FBCContext object "f" is already present in the original declarative config.
 func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeConfig, ctx context.Context) (*declarativeconfig.DeclarativeConfig, error) {
 	var (
 		declcfg *declarativeconfig.DeclarativeConfig
@@ -262,33 +246,56 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 	}
 
 	// Checking to see if FBC already contains this upgrade
-	if len(declcfg.Bundles) > 0 {
-		for _, channel := range originalDeclCfg.Channels {
-			// Find the specific channel that the bundle needs to be inserted into
-			if channel.Name == f.ChannelName && channel.Package == f.Package {
-				// Check if the CSV name is already present in the channel's entries
-				for _, entry := range channel.Entries {
-					if entry.Name == declcfg.Bundles[0].Name {
-						log.Infof("Upgrades already exist in the Index Image, serving the Index Image")
-						return originalDeclCfg, nil
-					}
+	for _, channel := range originalDeclCfg.Channels {
+		// Find the specific channel that the bundle needs to be inserted into
+		if channel.Name == f.ChannelName && channel.Package == f.Package {
+			// Check if the CSV name is already present in the channel's entries
+			for _, entry := range channel.Entries {
+				if entry.Name == declcfg.Bundles[len(declcfg.Bundles)-1].Name {
+					return nil, errors.New("Bundle already exists in the Index Image")
 				}
-				break // We only want to search through the specific channel
 			}
+			break // We only want to search through the specific channel
 		}
 	}
 
-	// Add new bundle blobs
-	if len(declcfg.Bundles) > 0 {
-		originalDeclCfg.Bundles = append(originalDeclCfg.Bundles, declcfg.Bundles[0])
+	// Add new bundle blobs and channel entries
+	entries := []declarativeconfig.ChannelEntry{}
+	for i, bundle := range declcfg.Bundles {
+		originalDeclCfg.Bundles = append(originalDeclCfg.Bundles, bundle)
+		entry := declarativeconfig.ChannelEntry{
+			Name: declcfg.Bundles[i].Name,
+		}
+		if i > 0 {
+			entry.Replaces = declcfg.Bundles[i-1].Name
+		}
+		entries = append(entries, entry)
 	}
 
-	// Finding the correct channel to insert entries into
-	for i, _ := range originalDeclCfg.Channels {
-		if originalDeclCfg.Channels[i].Name == f.ChannelName && originalDeclCfg.Channels[i].Package == f.Package {
-			originalDeclCfg.Channels[i].Entries = append(originalDeclCfg.Channels[i].Entries, f.ChannelEntry)
-		}
+	// generate channels
+	channel := declarativeconfig.Channel{
+		Schema:  f.ChannelSchema,
+		Name:    f.ChannelName,
+		Package: f.Package,
+		Entries: entries,
 	}
+
+	originalDeclCfg.Channels = append(originalDeclCfg.Channels, channel)
+
+	// generate package
+	init := action.Init{
+		Package:           f.Package,
+		DefaultChannel:    f.ChannelName,
+		DescriptionReader: f.DescriptionReader,
+	}
+
+	// generate packages
+	declcfgpackage, err := init.Run()
+	if err != nil {
+		log.Errorf("error in generating packages for the FBC: %v", err)
+		return nil, err
+	}
+	originalDeclCfg.Packages = append(originalDeclCfg.Packages, *declcfgpackage)
 
 	return originalDeclCfg, nil
 }
@@ -309,6 +316,9 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 			for i, _ := range injectedBundles {
 				c.PreviousBundles = append(c.PreviousBundles, injectedBundles[i]["imageTag"].(string))
 			}
+			fmt.Println()
+			fmt.Println(c.PreviousBundles)
+			fmt.Println()
 		}
 		prevRegistryPodName = annotations[registryPodNameAnnotation]
 	}
@@ -550,41 +560,38 @@ func ValidateFBC(declcfg *declarativeconfig.DeclarativeConfig) error {
 
 // CreateFBC generates an FBC by creating bundle, package and channel blobs.
 func (f *FBCContext) CreateFBC(ctx context.Context) (*declarativeconfig.DeclarativeConfig, error) {
-	// log.SetOutput(ioutil.Discard)
 	var (
 		declcfg        *declarativeconfig.DeclarativeConfig
 		declcfgpackage *declarativeconfig.Package
 		err            error
 	)
 
-	// Rendering the bundle image into declarative config format
+	// Rendering the bundle image into a declarative config format.
+	log.SetOutput(ioutil.Discard)
 	render := action.Render{
 		Refs: f.Refs,
 	}
 
 	// generate bundles by rendering the bundle objects.
-	log.SetOutput(ioutil.Discard)
 	declcfg, err = render.Run(ctx)
-	log.SetOutput(os.Stdout)
 	if err != nil {
 		log.Errorf("error in rendering the bundle image: %v", err)
 		return nil, err
 	}
+	log.SetOutput(os.Stdout)
 
-	// Ensuring a valid bundle size
-	if len(declcfg.Bundles) < 1 {
-		log.Errorf("error in rendering the correct number of bundles: %v", err)
-		return nil, err
+	// Ensuring a valid bundle size.
+	if len(declcfg.Bundles) < 0 {
+		return nil, fmt.Errorf("bundles rendered are less than 0 for the bundle image")
 	}
 
-	// init packages
+	// init packages.
 	init := action.Init{
-		Package:           f.Package,
-		DefaultChannel:    f.ChannelName,
-		DescriptionReader: f.DescriptionReader,
+		Package:        f.Package,
+		DefaultChannel: f.ChannelName,
 	}
 
-	// generate packages
+	// generate packages.
 	declcfgpackage, err = init.Run()
 	if err != nil {
 		log.Errorf("error in generating packages for the FBC: %v", err)
@@ -592,22 +599,12 @@ func (f *FBCContext) CreateFBC(ctx context.Context) (*declarativeconfig.Declarat
 	}
 	declcfg.Packages = []declarativeconfig.Package{*declcfgpackage}
 
-	entries := []declarativeconfig.ChannelEntry{}
-	for i, _ := range declcfg.Bundles {
-		entry := declarativeconfig.ChannelEntry{}
-		entry.Name = declcfg.Bundles[i].Name
-		if i > 0 {
-			entry.Replaces = declcfg.Bundles[i-1].Name
-		}
-		entries = append(entries, entry)
-	}
-
-	// generate channels
+	// generate channels.
 	channel := declarativeconfig.Channel{
-		Schema:  f.ChannelSchema,
+		Schema:  "olm.channel",
 		Name:    f.ChannelName,
 		Package: f.Package,
-		Entries: entries,
+		Entries: []declarativeconfig.ChannelEntry{f.ChannelEntry},
 	}
 
 	declcfg.Channels = []declarativeconfig.Channel{channel}

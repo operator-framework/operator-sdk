@@ -34,6 +34,10 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry"
 )
 
+const (
+	defaultChannelAnnotation = "operators.operatorframework.io.bundle.channel.default.v1"
+)
+
 type Install struct {
 	BundleImage string
 
@@ -95,6 +99,7 @@ func (i *Install) setup(ctx context.Context) error {
 	directoryName := filepath.Join("/tmp", strings.Split(csv.Name, ".")[0]+"-index")
 	fileName := filepath.Join(directoryName, "testFBC")
 	bundleChannel := strings.Split(labels[registrybundle.ChannelsLabel], ",")[0]
+	defaultChannel := labels[defaultChannelAnnotation]
 
 	catalogLabels, err := registryutil.GetImageLabels(ctx, nil, i.IndexImageCatalogCreator.IndexImage, false)
 	if err != nil {
@@ -109,11 +114,13 @@ func (i *Install) setup(ctx context.Context) error {
 	f := &registry.FBCContext{
 		BundleImage:    i.BundleImage,
 		Package:        labels[registrybundle.PackageLabel],
-		DefaultChannel: bundleChannel,
+		DefaultChannel: defaultChannel,
 		ChannelSchema:  "olm.channel",
 		ChannelName:    bundleChannel,
 		Refs:           []string{i.BundleImage},
-		ChannelEntry:   declarativeconfig.ChannelEntry{},
+		ChannelEntry: declarativeconfig.ChannelEntry{
+			Name: csv.Name,
+		},
 	}
 	log.Infof("Generating a File-Based Catalog")
 
@@ -136,14 +143,18 @@ func (i *Install) setup(ctx context.Context) error {
 		log.Infof("Rendered a File-Based Catalog of the Index Image")
 	}
 
+	// convert declarative config to string
+	content, err := registry.StringifyDecConfig(declcfg)
+
+	fmt.Println()
+	fmt.Println(content)
+	fmt.Println()
+
 	// validate the declarative config
 	if err = registry.ValidateFBC(declcfg); err != nil {
 		log.Errorf("error validating the generated FBC: %v", err)
 		return err
 	}
-
-	// convert declarative config to string
-	content, err := registry.StringifyDecConfig(declcfg)
 
 	if err != nil {
 		log.Errorf("error converting declarative config to string: %v", err)
@@ -191,7 +202,6 @@ func addBundleToIndexImage(indexImage string, bundleDeclConfig *declarativeconfi
 	}
 
 	// check if the package blob already exists in the image
-	bundleNotPresent := true
 	if len(bundleDeclConfig.Channels) > 0 && len(bundleDeclConfig.Bundles) > 0 {
 		for _, channel := range imageDeclConfig.Channels {
 			// Find the specific channel that the bundle needs to be inserted into
@@ -199,9 +209,7 @@ func addBundleToIndexImage(indexImage string, bundleDeclConfig *declarativeconfi
 				// Check if the CSV name is already present in the channel's entries
 				for _, entry := range channel.Entries {
 					if entry.Name == bundleDeclConfig.Bundles[0].Name {
-						bundleNotPresent = false
-						log.Infof("Bundle already exists in the Index Image, serving the Index Image")
-						break
+						return nil, errors.New("Bundle already exists in the Index Image")
 					}
 				}
 				break // We only want to search through the specific channel
@@ -209,7 +217,7 @@ func addBundleToIndexImage(indexImage string, bundleDeclConfig *declarativeconfi
 		}
 	}
 
-	if bundleNotPresent && len(bundleDeclConfig.Bundles) > 0 && len(bundleDeclConfig.Channels) > 0 {
+	if len(bundleDeclConfig.Bundles) > 0 && len(bundleDeclConfig.Channels) > 0 {
 		imageDeclConfig.Packages = append(imageDeclConfig.Packages, bundleDeclConfig.Packages[0])
 		if len(bundleDeclConfig.Bundles) > 0 {
 			imageDeclConfig.Bundles = append(imageDeclConfig.Bundles, bundleDeclConfig.Bundles[0])
