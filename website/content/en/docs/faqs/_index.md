@@ -311,3 +311,25 @@ and push this image, which can be added to your operator's  `FROM`.
 [k8s-crd-versions]: https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/#specify-multiple-versions
 [k8s-api-change]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api_changes.md
 [k8s-api-convention]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md
+
+## Running `operator-sdk create api` results in an error with `/usr/local/go/src/net/cgo_linux.go:13:8: no such package located` in the error message
+
+By default Go will set the `CGO_ENABLED` environment variable to `1` which means that [cgo][cgo-docs] is enabled. Depending on the architecture and OS of your system you may run into an issue similar to this one: 
+
+```sh
+/usr/local/go/src/net/cgo_linux.go:13:8: no such package located
+Error: not all generators ran successfully
+run `controller-gen object:headerFile=hack/boilerplate.go.txt paths=./... -w` to see all available markers, or `controller-gen object:headerFile=hack/boilerplate.go.txt paths=./... -h` for usage
+make: *** [Makefile:95: generate] Error 1
+Error: failed to create API: unable to run post-scaffold tasks of "base.go.kubebuilder.io/v3": exit status 2
+```
+
+Here are a couple workarounds to try to resolve the issue:
+
+- Ensure `gcc` is installed
+- Set the `CGO_ENABLED` environment variable to `0` to disable [cgo][cgo-docs]
+
+If neither of those solutions work for you, please [open an issue][open-issue]
+
+[cgo-docs]: https://pkg.go.dev/cmd/cgo
+[open-issue]: https://github.com/operator-framework/operator-sdk/issues/new/choose
