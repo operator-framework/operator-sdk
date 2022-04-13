@@ -1,0 +1,11 @@
+entries:
+  - description: >
+      The related image discovery feature currently only reads environment
+      variables from the manager container. This was causing an error when the
+      deployment labels or container name that was expected were not present.
+      This fixes that by collecting related images from all containers across
+      all deployments.
+
+      This change also enables users to use related images in other containers
+      since related images from everywhere will be considered.
+    kind: "bugfix"
