@@ -1,0 +1,11 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      For ansible-based operators, this change fixes an issue that caused
+      finalizers to fail to run if the watched resource (CR) is deleted during
+      reconciliation.
+    kind: "bugfix"
+
+    # Is this a breaking change?
+    breaking: false

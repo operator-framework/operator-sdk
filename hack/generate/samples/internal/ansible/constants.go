@@ -204,8 +204,6 @@ const moleculeTaskFragment = `- name: Load CR
       status: "True"
 
 - name: Wait 2 minutes for memcached deployment
-  debug:
-    var: deploy
   until:
   - deploy is defined
   - deploy.status is defined
@@ -400,8 +398,6 @@ const originaMemcachedMoleculeTask = `- name: Create the cache.example.com/v1alp
     fail_msg: FIXME Add real assertions for your operator`
 
 const targetMoleculeCheckDeployment = `- name: Wait 2 minutes for memcached deployment
-  debug:
-    var: deploy
   until:
   - deploy is defined
   - deploy.status is defined
@@ -415,10 +411,10 @@ const targetMoleculeCheckDeployment = `- name: Wait 2 minutes for memcached depl
       api_version="apps/v1",
       namespace=namespace,
       label_selector="app=memcached"
-    )}}'`
+    )}}'
+`
 
 const molecuTaskToCheckConfigMap = `
-
 - name: Create ConfigMap that the Operator should delete
   k8s:
     definition:

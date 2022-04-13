@@ -17,6 +17,8 @@ set -eu
 
 header_text "Running ansible molecule tests in a python3 virtual environment"
 
+
+
 # Set up a python3.8 virtual environment.
 ENVDIR="$(mktemp -d)"
 trap_add "set +u; deactivate; set -u; rm -rf $ENVDIR" EXIT

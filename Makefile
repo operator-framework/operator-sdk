@@ -156,10 +156,14 @@ e2e_targets := test-e2e $(e2e_tests)
 export KIND_CLUSTER := osdk-test
 
 KUBEBUILDER_ASSETS = $(PWD)/$(shell go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest && $(shell go env GOPATH)/bin/setup-envtest use $(ENVTEST_K8S_VERSION) --bin-dir tools/bin/ -p path)
-test-e2e-setup: build
+test-e2e-setup:: build dev-install cluster-create
+
+cluster-create::
+	[[ "`$(TOOLS_DIR)/kind get clusters`" =~ "$(KIND_CLUSTER)" ]] || $(TOOLS_DIR)/kind create cluster --image="kindest/node:v$(ENVTEST_K8S_VERSION)" --name $(KIND_CLUSTER)
+
+dev-install::
 	$(SCRIPTS_DIR)/fetch kind 0.11.0
 	$(SCRIPTS_DIR)/fetch kubectl $(ENVTEST_K8S_VERSION) # Install kubectl AFTER envtest because envtest includes its own kubectl binary
-	[[ "`$(TOOLS_DIR)/kind get clusters`" =~ "$(KIND_CLUSTER)" ]] || $(TOOLS_DIR)/kind create cluster --image="kindest/node:v$(ENVTEST_K8S_VERSION)" --name $(KIND_CLUSTER)
 
 .PHONY: test-e2e-teardown
 test-e2e-teardown:
@@ -177,7 +181,7 @@ test-e2e-go:: image/custom-scorecard-tests ## Run Go e2e tests
 test-e2e-ansible:: image/ansible-operator ## Run Ansible e2e tests
 	go test -count=1 ./internal/ansible/proxy/...
 	go test ./test/e2e/ansible -v -ginkgo.v
-test-e2e-ansible-molecule:: image/ansible-operator ## Run molecule-based Ansible e2e tests
+test-e2e-ansible-molecule:: install dev-install image/ansible-operator ## Run molecule-based Ansible e2e tests
 	go run ./hack/generate/samples/molecule/generate.go
 	./hack/tests/e2e-ansible-molecule.sh
 test-e2e-helm:: image/helm-operator ## Run Helm e2e tests
