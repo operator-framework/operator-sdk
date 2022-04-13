@@ -14,63 +14,101 @@
 
 package xunitapi
 
-// TestCase contain the core information from a test run, including its name and status
-type TestCase struct {
-	// Name is the name of the test
-	Name      string                `xml:"name,attr,omitempty"`
-	Time      string                `xml:"time,attr,omitempty"`
-	Classname string                `xml:"classname,attr,omitempty"`
-	Group     string                `xml:"group,attr,omitempty"`
-	Failures  []XUnitComplexFailure `xml:"failure,omitempty"`
-	Errors    []XUnitComplexError   `xml:"error,omitempty"`
-	Skipped   []XUnitComplexSkipped `xml:"skipped,omitempty"`
-}
+import (
+	"encoding/xml"
+	"time"
+)
 
-// TestSuite contains for details about a test beyond the final status
-type TestSuite struct {
-	// Name is the name of the test
-	Name       string      `xml:"name,attr,omitempty"`
-	Tests      string      `xml:"tests,attr,omitempty"`
-	Failures   string      `xml:"failures,attr,omitempty"`
-	Errors     string      `xml:"errors,attr,omitempty"`
-	Group      string      `xml:"group,attr,omitempty"`
-	Skipped    string      `xml:"skipped,attr,omitempty"`
-	Timestamp  string      `xml:"timestamp,attr,omitempty"`
-	Hostname   string      `xml:"hostnames,attr,omitempty"`
-	ID         string      `xml:"id,attr,omitempty"`
-	Package    string      `xml:"package,attr,omitempty"`
-	File       string      `xml:"file,attr,omitempty"`
-	Log        string      `xml:"log,attr,omitempty"`
-	URL        string      `xml:"url,attr,omitempty"`
-	Version    string      `xml:"version,attr,omitempty"`
-	TestSuites []TestSuite `xml:"testsuite,omitempty"`
-	TestCases  []TestCase  `xml:"testcase,omitempty"`
+// NewTestSuites returns a new XUnit result from the given test suites.
+func NewTestSuites(name string, testSuites []TestSuite) TestSuites {
+	return TestSuites{
+		Name:       name,
+		TestSuites: testSuites,
+	}
 }
 
 // TestSuites is the top level object for amassing Xunit test results
 type TestSuites struct {
-	// Name is the name of the test
-	Name      string      `xml:"name,attr,omitempty"`
-	Tests     string      `xml:"tests,attr,omitempty"`
-	Failures  string      `xml:"failures,attr,omitempty"`
-	Errors    string      `xml:"errors,attr,omitempty"`
-	TestSuite []TestSuite `xml:"testsuite,omitempty"`
+	XMLName    xml.Name    `xml:"testsuites"` // Component name: <testsuites>
+	Name       string      `xml:"name,attr"`
+	TestSuites []TestSuite `xml:"testsuite"`
 }
 
-// XUnitComplexError contains a type header along with the error messages
-type XUnitComplexError struct {
-	Type    string `xml:"type,attr,omitempty"`
-	Message string `xml:"message,attr,omitempty"`
+// Preperty is a named property that will be formatted as an XML tag.
+type Property struct {
+	Name  string      `xml:"name,attr"`
+	Value interface{} `xml:"value,attr"`
 }
 
-// XUnitComplexFailure contains a type header along with the failure logs
-type XUnitComplexFailure struct {
-	Type    string `xml:"type,attr,omitempty"`
-	Message string `xml:"message,attr,omitempty"`
+// TestSuite contains for details about a test beyond the final status
+type TestSuite struct {
+	Name       string `xml:"name,attr"`
+	Properties struct {
+		Properties []Property `xml:"property"`
+	} `xml:"properties,omitempty"`
+	TestCases []TestCase `xml:"testcase,omitempty"`
+	Tests     int        `xml:"tests,attr"`
+	Skipped   int        `xml:"skipped,attr"`
+	Failures  int        `xml:"failures,attr"`
+	Errors    int        `xml:"errors,attr"`
 }
 
-// XUnitComplexSkipped contains a type header along with associated run logs
-type XUnitComplexSkipped struct {
-	Type    string `xml:"type,attr,omitempty"`
-	Message string `xml:"message,attr,omitempty"`
+// NewSuite creates a new test suite with the given name.
+func NewSuite(name string) TestSuite {
+	return TestSuite{Name: name}
+}
+
+// AddProperty adds the property key/value to the test suite.
+func (ts *TestSuite) AddProperty(name, value string) {
+	ts.Properties.Properties = append(ts.Properties.Properties, Property{Name: name, Value: value})
+}
+
+// AddSuccess adds a passing test case to the suite.
+func (ts *TestSuite) AddSuccess(name string, time time.Time, logs string) {
+	ts.addTest(name, time, logs, nil)
+}
+
+// AddFailure adds a failed test case to the suite.
+func (ts *TestSuite) AddFailure(name string, time time.Time, logs, msg string) {
+	ts.Failures++
+	ts.addTest(name, time, logs, &Result{
+		Name:    xml.Name{Local: "failure"},
+		Type:    "failure",
+		Message: msg,
+	})
+}
+
+// AddError adds an errored test case to the suite.
+func (ts *TestSuite) AddError(name string, time time.Time, logs, msg string) {
+	ts.Errors++
+	ts.addTest(name, time, logs, &Result{
+		Name:    xml.Name{Local: "error"},
+		Type:    "error",
+		Message: msg,
+	})
+}
+
+func (ts *TestSuite) addTest(name string, time time.Time, logs string, result *Result) {
+	ts.Tests++
+	ts.TestCases = append(ts.TestCases, TestCase{
+		Name:      name,
+		Time:      time,
+		SystemOut: logs,
+		Result:    result,
+	})
+}
+
+// TestCase contains information about an individual test case.
+type TestCase struct {
+	Name      string    `xml:"name,attr"`
+	Time      time.Time `xml:"time,attr"`
+	SystemOut string    `xml:"system-out"`
+	Result    *Result   `xml:",omitempty"`
+}
+
+// Result represents the final state of the test case.
+type Result struct {
+	Name    xml.Name
+	Type    string
+	Message string
 }
