@@ -153,7 +153,7 @@ e2e_targets := test-e2e $(e2e_tests)
 .PHONY: $(e2e_targets)
 
 .PHONY: test-e2e-setup
-export KIND_CLUSTER := operator-sdk-e2e
+export KIND_CLUSTER := osdk-test
 
 KUBEBUILDER_ASSETS = $(PWD)/$(shell go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest && $(shell go env GOPATH)/bin/setup-envtest use $(ENVTEST_K8S_VERSION) --bin-dir tools/bin/ -p path)
 test-e2e-setup: build
