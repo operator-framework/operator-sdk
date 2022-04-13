@@ -40,6 +40,7 @@ type Flags struct {
 	GracefulShutdownTimeout time.Duration
 	AnsibleArgs             string
 	AnsibleLogEvents        string
+	ProxyPort               int
 
 	// Path to a controller-runtime componentconfig file.
 	// If this is empty, use default values.
@@ -168,6 +169,11 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 		"tasks",
 		"Ansible log events. The log level for console logging."+
 			" This flag can be set to either Nothing, Tasks, or Everything.",
+	)
+	flagSet.IntVar(&f.ProxyPort,
+		"proxy-port",
+		8888,
+		"Ansible proxy server port. Defaults to 8888.",
 	)
 }
 

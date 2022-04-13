@@ -254,7 +254,7 @@ func run(cmd *cobra.Command, f *flags.Flags) {
 	// start the proxy
 	err = proxy.Run(done, proxy.Options{
 		Address:           "localhost",
-		Port:              8888,
+		Port:              f.ProxyPort,
 		KubeConfig:        mgr.GetConfig(),
 		Cache:             mgr.GetCache(),
 		RESTMapper:        mgr.GetRESTMapper(),
