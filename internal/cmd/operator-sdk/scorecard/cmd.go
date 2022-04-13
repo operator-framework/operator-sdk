@@ -130,37 +130,43 @@ func (c *scorecardCmd) printOutput(output v1alpha3.TestList) error {
 }
 
 func (c *scorecardCmd) convertXunit(output v1alpha3.TestList) xunit.TestSuites {
-	var resultSuite xunit.TestSuites
-	resultSuite.Name = "scorecard"
+	const (
+		imagePropName        = "spec.image"
+		entrypointPropName   = "spec.entrypoint"
+		testPropName         = "labels.test"
+		clusterPhasePropName = "labels.cluster-phase"
+	)
 
-	jsonTestItems := output.Items
-	for _, item := range jsonTestItems {
-		tempResults := item.Status.Results
-		for _, res := range tempResults {
-			var tCase xunit.TestCase
-			var tSuite xunit.TestSuite
-			tSuite.Name = res.Name
-			tCase.Name = res.Name
-			tCase.Classname = "scorecard"
-			if res.State == v1alpha3.ErrorState {
-				tCase.Errors = append(tCase.Errors, xunit.XUnitComplexError{Type: "Error", Message: strings.Join(res.Errors, ",")})
-				tSuite.Errors = strings.Join(res.Errors, ",")
-			} else if res.State == v1alpha3.FailState {
-				tCase.Failures = append(tCase.Failures, xunit.XUnitComplexFailure{Type: "Failure", Message: res.Log})
-				tSuite.Failures = res.Log
-			}
-			tSuite.TestCases = append(tSuite.TestCases, tCase)
-			tSuite.URL = item.Spec.Image
-			if item.Spec.UniqueID != "" {
-				tSuite.ID = item.Spec.UniqueID
-			} else {
-				tSuite.ID = res.Name
-			}
-			resultSuite.TestSuite = append(resultSuite.TestSuite, tSuite)
+	suites := make([]xunit.TestSuite, 0, len(output.Items))
+	for i, item := range output.Items {
+		suiteName, ok := item.Spec.Labels["test"]
+		if !ok {
+			suiteName = fmt.Sprintf("testsuite-%03d", i+1)
 		}
+
+		ts := xunit.NewSuite(suiteName)
+		ts.AddProperty(imagePropName, item.Spec.Image)
+		ts.AddProperty(entrypointPropName, strings.Join(item.Spec.Entrypoint, " "))
+		ts.AddProperty(testPropName, suiteName)
+		if phase, ok := item.Spec.Labels["cluster-phase"]; ok {
+			ts.AddProperty(clusterPhasePropName, phase)
+		}
+
+		for _, tc := range item.Status.Results {
+			switch tc.State {
+			case v1alpha3.PassState:
+				ts.AddSuccess(tc.Name, tc.CreationTimestamp.Time, tc.Log)
+			case v1alpha3.FailState:
+				ts.AddFailure(tc.Name, tc.CreationTimestamp.Time, tc.Log, strings.Join(tc.Errors, "\n"))
+			case v1alpha3.ErrorState:
+				ts.AddError(tc.Name, tc.CreationTimestamp.Time, tc.Log, strings.Join(tc.Errors, "\n"))
+			}
+		}
+
+		suites = append(suites, ts)
 	}
 
-	return resultSuite
+	return xunit.NewTestSuites("scorecard", suites)
 }
 
 func (c *scorecardCmd) run() (err error) {
