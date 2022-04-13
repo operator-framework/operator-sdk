@@ -61,5 +61,5 @@ fi
 
 DEST_IMAGE="quay.io/example/advanced-molecule-operator:v0.0.1"
 docker build -t "$DEST_IMAGE" --no-cache .
-load_image_if_kind "$DEST_IMAGE"
+# load_image_if_kind "$DEST_IMAGE"
 KUSTOMIZE_PATH=$KUSTOMIZE OPERATOR_PULL_POLICY=Never OPERATOR_IMAGE=${DEST_IMAGE} TEST_OPERATOR_NAMESPACE=osdk-test molecule test
