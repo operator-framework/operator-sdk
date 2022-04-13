@@ -20,14 +20,12 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 	"github.com/operator-framework/operator-manifest-tools/pkg/image"
 	"github.com/operator-framework/operator-manifest-tools/pkg/imageresolver"
 	"github.com/operator-framework/operator-manifest-tools/pkg/pullspec"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
-	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/yaml"
 
 	metricsannotations "github.com/operator-framework/operator-sdk/internal/annotations/metrics"
@@ -193,7 +191,7 @@ func (c bundleCmd) runManifests() (err error) {
 		c.println("Building a ClusterServiceVersion without an existing base")
 	}
 
-	relatedImages, err := c.findRelatedImages(col)
+	relatedImages, err := genutil.FindRelatedImages(col)
 	if err != nil {
 		return err
 	}
@@ -303,54 +301,6 @@ func (c bundleCmd) runMetadata() error {
 	}
 
 	return bundleMetadata.GenerateMetadata()
-}
-
-// findRelatedImages looks in the controller manager's environment for images used by the operator.
-func (c bundleCmd) findRelatedImages(col *collector.Manifests) (map[string]string, error) {
-	const relatedImagePrefix = "RELATED_IMAGE_"
-	env, err := c.findManagerEnvironment(col)
-	if err != nil {
-		return nil, err
-	}
-	imageNames := make(map[string]string, len(env))
-	for _, envVar := range env {
-		if strings.HasPrefix(envVar.Name, relatedImagePrefix) {
-			if envVar.ValueFrom != nil {
-				return nil, fmt.Errorf("related images with valueFrom field unsupported, found in %s`", envVar.Name)
-			}
-
-			// transforms RELATED_IMAGE_This_IS_a_cool_image to this-is-a-cool-image
-			name := strings.ToLower(strings.Replace(strings.TrimPrefix(envVar.Name, relatedImagePrefix), "_", "-", -1))
-			imageNames[name] = envVar.Value
-		}
-	}
-
-	return imageNames, nil
-}
-
-// findManagerEnvironment returns the environment passed to the controller manager container.
-func (c bundleCmd) findManagerEnvironment(col *collector.Manifests) ([]corev1.EnvVar, error) {
-	const (
-		managerLabel         = "control-plane"
-		managerLabelValue    = "controller-manager"
-		managerContainerName = "manager"
-	)
-
-	for _, deployment := range col.Deployments {
-		if val, ok := deployment.GetLabels()[managerLabel]; ok && val == managerLabelValue {
-			for _, container := range deployment.Spec.Template.Spec.Containers {
-				if container.Name == managerContainerName {
-					return container.Env, nil
-				}
-			}
-
-			return nil, fmt.Errorf("manager deployment does not have container named %q", managerContainerName)
-		}
-	}
-
-	return nil, fmt.Errorf(
-		"could not find manager deployment, should have label %s=%s", managerLabel, managerLabelValue,
-	)
 }
 
 // pinImages is used to replace all image tags in the given manifests with digests
