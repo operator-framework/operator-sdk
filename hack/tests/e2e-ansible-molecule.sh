@@ -48,8 +48,11 @@ else
   KUSTOMIZE="$(which kustomize)"
 fi
 KUSTOMIZE_PATH=${KUSTOMIZE} TEST_OPERATOR_NAMESPACE=default molecule test -s kind
+popd
 
 header_text "Running Default test with advanced-molecule-operator"
+
+make test-e2e-setup
 pushd $TMPDIR/advanced-molecule-operator
 
 make kustomize
@@ -63,3 +66,4 @@ DEST_IMAGE="quay.io/example/advanced-molecule-operator:v0.0.1"
 docker build -t "$DEST_IMAGE" --no-cache .
 load_image_if_kind "$DEST_IMAGE"
 KUSTOMIZE_PATH=$KUSTOMIZE OPERATOR_PULL_POLICY=Never OPERATOR_IMAGE=${DEST_IMAGE} TEST_OPERATOR_NAMESPACE=osdk-test molecule test
+popd
