@@ -112,7 +112,8 @@ func (rp *RegistryPod) init(cfg *operator.Configuration) error {
 		bundleImage := rp.BundleItems[len(rp.BundleItems)-1].ImageTag
 		trimmedbundleImage := strings.Split(bundleImage, ":")[0]
 		rp.FBCdir = fmt.Sprintf("%s-index", filepath.Join("/tmp", strings.Split(trimmedbundleImage, "/")[2]))
-		rp.FBCfile = filepath.Join(rp.FBCdir, strings.Split(bundleImage, ":")[1])
+		// rp.FBCfile = filepath.Join(rp.FBCdir, strings.Split(bundleImage, ":")[1])
+		rp.FBCfile = filepath.Join(rp.FBCdir, "testFBC")
 	}
 
 	// validate the RegistryPod struct and ensure required fields are set
@@ -347,13 +348,12 @@ func (rp *RegistryPod) getContainerCmd() (string, error) {
 	// template's FuncMap and parse the cmdTemplate
 	if rp.HasFBCLabel {
 		t = template.Must(template.New("cmd").Funcs(funcMap).Parse(fbcCmdTemplate))
+		fmt.Println(rp.FBCcontent)
+		fmt.Println(rp.FBCdir)
+		fmt.Println(rp.FBCfile)
 	} else {
 		t = template.Must(template.New("cmd").Funcs(funcMap).Parse(cmdTemplate))
 	}
-
-	fmt.Println(rp.FBCcontent)
-	fmt.Println(rp.FBCdir)
-	fmt.Println(rp.FBCfile)
 
 	// execute the command by applying the parsed template to command
 	// and write command output to out

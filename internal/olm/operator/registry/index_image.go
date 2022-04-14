@@ -331,12 +331,15 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 	annotationsNotFound := len(existingItems) == 0
 
 	// adding updates to the IndexImageCatalogCreator if it is an FBC image
+	fmt.Println("YO THE INDEX IMAGE IS", c.IndexImage)
 	catalogLabels, err := registryutil.GetImageLabels(ctx, nil, c.IndexImage, false)
 	if err != nil {
 		return fmt.Errorf("get index image labels: %v", err)
 	}
 
+	c.HasFBCLabel = false
 	if _, hasFBCLabel := catalogLabels[containertools.ConfigsLocationLabel]; hasFBCLabel || c.IndexImage == DefaultIndexImage {
+		fmt.Println("i am an fbc")
 		c.HasFBCLabel = true
 		err = setupFBCupdates(&c, ctx)
 		if err != nil {
