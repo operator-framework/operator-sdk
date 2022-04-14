@@ -351,6 +351,10 @@ func (rp *RegistryPod) getContainerCmd() (string, error) {
 		t = template.Must(template.New("cmd").Funcs(funcMap).Parse(cmdTemplate))
 	}
 
+	fmt.Println(rp.FBCcontent)
+	fmt.Println(rp.FBCdir)
+	fmt.Println(rp.FBCfile)
+
 	// execute the command by applying the parsed template to command
 	// and write command output to out
 	out := &bytes.Buffer{}

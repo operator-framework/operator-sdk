@@ -37,7 +37,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
-	"path/filepath"
 
 	declarativeconfig "github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
@@ -160,9 +159,6 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 		render          action.Render
 	)
 
-	directoryName := filepath.Join("/tmp", strings.Split(c.CSVname, ".")[0]+"-index")
-	fileName := filepath.Join(directoryName, "testUpgradedFBC")
-
 	if c.ChannelEntrypoint != "" {
 		c.ChannelName = c.ChannelEntrypoint
 	}
@@ -209,9 +205,9 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 		return errors.New("File-Based Catalog contents cannot be empty")
 	}
 
-	fmt.Println()
-	fmt.Println(content)
-	fmt.Println()
+	// fmt.Println()
+	// fmt.Println(content)
+	// fmt.Println()
 
 	// validate the declarative config
 	if err = ValidateFBC(declcfg); err != nil {
@@ -222,8 +218,6 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 	log.Infof("Generated a valid Upgraded File-Based Catalog")
 
 	c.FBCcontent = content
-	c.FBCdir = directoryName
-	c.FBCfile = fileName
 
 	return nil
 }
@@ -343,6 +337,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 	}
 
 	if _, hasFBCLabel := catalogLabels[containertools.ConfigsLocationLabel]; hasFBCLabel || c.IndexImage == DefaultIndexImage {
+		c.HasFBCLabel = true
 		err = setupFBCupdates(&c, ctx)
 		if err != nil {
 			return err

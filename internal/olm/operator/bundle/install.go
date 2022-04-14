@@ -30,6 +30,7 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/action"
 	declarativeconfig "github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/pkg/containertools"
+
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry"
@@ -107,9 +108,6 @@ func (i *Install) setup(ctx context.Context) error {
 	}
 
 	var declcfg *declarativeconfig.DeclarativeConfig
-
-	directoryName := filepath.Join("/tmp", strings.Split(csv.Name, ".")[0]+"-index")
-	fileName := filepath.Join(directoryName, "testFBC")
 	defaultChannel := labels[defaultChannelAnnotation]
 
 	// get index image labels.
@@ -171,6 +169,10 @@ func (i *Install) setup(ctx context.Context) error {
 			return errors.New("file based catalog contents cannot be empty")
 		}
 
+		// fmt.Println()
+		// fmt.Println(content)
+		// fmt.Println()
+
 		log.Infof("Generated a valid File-Based Catalog")
 
 		i.IndexImageCatalogCreator.FBCcontent = content
@@ -184,9 +186,6 @@ func (i *Install) setup(ctx context.Context) error {
 
 	i.IndexImageCatalogCreator.PackageName = i.OperatorInstaller.PackageName
 	i.IndexImageCatalogCreator.BundleImage = i.BundleImage
-
-	i.IndexImageCatalogCreator.FBCdir = directoryName
-	i.IndexImageCatalogCreator.FBCfile = fileName
 
 	return nil
 }
