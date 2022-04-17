@@ -152,15 +152,10 @@ var _ = Describe("Output Result", func() {
 		var w *bytes.Buffer
 		var output []byte
 		var resJSON Result
-		var exitCode int
-		exit = func(code int) {
-			exitCode = code
-		}
 		const warnText = "example of a warning"
 		const errorText = "example of an error"
 
 		BeforeEach(func() {
-			exitCode = 0
 			w = &bytes.Buffer{}
 			resJSON = Result{}
 		})
@@ -177,7 +172,6 @@ var _ = Describe("Output Result", func() {
 				Expect(resJSON.Outputs).To(HaveLen(1))
 				Expect(resJSON.Outputs[0].Type).To(Equal("warning"))
 				Expect(resJSON.Outputs[0].Message).To(Equal(warnText))
-				Expect(exitCode).To(Equal(0))
 			})
 
 			It("prints an error", func() {
@@ -193,7 +187,6 @@ var _ = Describe("Output Result", func() {
 				Expect(resJSON.Outputs).To(HaveLen(1))
 				Expect(resJSON.Outputs[0].Type).To(Equal("error"))
 				Expect(resJSON.Outputs[0].Message).To(Equal(errorText))
-				Expect(exitCode).To(Equal(0))
 			})
 		})
 
@@ -209,7 +202,6 @@ var _ = Describe("Output Result", func() {
 				line := string(lines[0])
 				Expect(line).To(ContainSubstring("level=warning"), line)
 				Expect(line).To(ContainSubstring(`msg="example of a warning"`), line)
-				Expect(exitCode).To(Equal(0))
 			})
 
 			It("prints an error", func() {
@@ -224,7 +216,6 @@ var _ = Describe("Output Result", func() {
 				fmt.Println(line)
 				Expect(line).To(ContainSubstring("level=error"), line)
 				Expect(line).To(ContainSubstring(`msg="example of an error"`), line)
-				Expect(exitCode).To(Equal(0))
 			})
 		})
 

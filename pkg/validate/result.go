@@ -133,9 +133,6 @@ func (r *Result) prepare() error {
 	return nil
 }
 
-// Mockable exit function for tests.
-var exit = os.Exit
-
 // PrintWithFormat prints output to w in format, and exits if some object in output
 // is not in a passing state.
 func (r *Result) PrintWithFormat(format string) (failed bool, err error) {
