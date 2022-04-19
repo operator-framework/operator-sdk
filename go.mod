@@ -13,7 +13,7 @@ require (
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.2.2
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.17.0
-	github.com/operator-framework/api v0.14.0
+	github.com/operator-framework/api v0.14.1-0.20220413143725-33310d6154f3
 	github.com/operator-framework/helm-operator-plugins v0.0.9
 	github.com/operator-framework/java-operator-plugins v0.3.0
 	github.com/operator-framework/operator-lib v0.10.0

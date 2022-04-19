@@ -1016,8 +1016,8 @@ github.com/openzipkin/zipkin-go v0.2.2/go.mod h1:NaW6tEwdmWMaCDZzg8sh+IBNOxHMPnh
 github.com/operator-framework/api v0.4.0/go.mod h1:xXYReW8+PpSBHMxsf0e7uhtfQTLqIM1iz4X6zUs20+c=
 github.com/operator-framework/api v0.10.0/go.mod h1:tV0BUNvly7szq28ZPBXhjp1Sqg5yHCOeX19ui9K4vjI=
 github.com/operator-framework/api v0.12.0/go.mod h1:FTiYGm11fZQ3cSX+EQHc/UWoGZAwkGfyeHU+wMJ8jmA=
-github.com/operator-framework/api v0.14.0 h1:5nk8fQL8l+dDxi11hZi0T7nqhhoIQLn+qL2DhMEGnoE=
-github.com/operator-framework/api v0.14.0/go.mod h1:r/erkmp9Kc1Al4dnxmRkJYc0uCtD5FohN9VuJ5nTxz0=
+github.com/operator-framework/api v0.14.1-0.20220413143725-33310d6154f3 h1:su4h7uvJ+2xfvUDdSUxzsqtnlKqE5u0zmnUyj19x5PA=
+github.com/operator-framework/api v0.14.1-0.20220413143725-33310d6154f3/go.mod h1:r/erkmp9Kc1Al4dnxmRkJYc0uCtD5FohN9VuJ5nTxz0=
 github.com/operator-framework/helm-operator-plugins v0.0.9 h1:G5aBY5sPrNXcRiKLpAaBMOYm7q0+qCmk9XWOAL/ZJuc=
 github.com/operator-framework/helm-operator-plugins v0.0.9/go.mod h1:LFi/PUYE+xA5ubF3ZrleYE1Ez7cphJzSYpjHAyLiNwQ=
 github.com/operator-framework/java-operator-plugins v0.3.0 h1:K+gdg1cLugxP3KbGNc1SttKIY69z7ywBFaXW0vVIG9o=
