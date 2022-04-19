@@ -38,6 +38,7 @@ import (
 
 const (
 	schemaChannel = "olm.channel"
+	schemaPackage = "olm.package"
 )
 
 type Install struct {
@@ -85,7 +86,6 @@ func (i Install) Run(ctx context.Context) (*v1alpha1.ClusterServiceVersion, erro
 }
 
 func (i *Install) setup(ctx context.Context) error {
-	var content string
 	// Validate add mode in case it was set by a user.
 	if i.BundleAddMode != "" {
 		if err := i.BundleAddMode.Validate(); err != nil {
@@ -108,8 +108,6 @@ func (i *Install) setup(ctx context.Context) error {
 	if err := i.InstallMode.CheckCompatibility(csv, i.cfg.Namespace); err != nil {
 		return err
 	}
-
-	var declcfg *declarativeconfig.DeclarativeConfig
 
 	// get index image labels.
 	catalogLabels, err := registryutil.GetImageLabels(ctx, nil, i.IndexImageCatalogCreator.IndexImage, false)
@@ -136,10 +134,9 @@ func (i *Install) setup(ctx context.Context) error {
 		log.Infof("Creating a File-Based Catalog of the bundle %q", i.BundleImage)
 
 		// generate a file-based catalog representation of the bundle image
-		declcfg, err = f.createFBC(ctx)
+		declcfg, err := f.createFBC(ctx)
 		if err != nil {
-			log.Errorf("Error in generating file-based catalog with image %s: %v", i.BundleImage, err)
-			return err
+			return fmt.Errorf("error generating file-based catalog with image %q: %v", i.BundleImage, err)
 		}
 
 		if i.IndexImageCatalogCreator.IndexImage != registry.DefaultIndexImage { // non-default index image was specified.
@@ -147,22 +144,19 @@ func (i *Install) setup(ctx context.Context) error {
 			// addBundleToIndexImage will ensure that the bundle is not already present in the index image and error out if it does.
 			declcfg, err = addBundleToIndexImage(ctx, i.IndexImageCatalogCreator.IndexImage, declcfg)
 			if err != nil {
-				log.Errorf("Error in rendering Index image: %v", err)
-				return err
+				return fmt.Errorf("error adding bundle image %q to index image %q: %v", i.BundleImage, i.IndexImageCatalogCreator.IndexImage, err)
 			}
 		}
 
 		// validate the file based catalog
 		if err = validateFBC(declcfg); err != nil {
-			log.Errorf("Error validating the generated FBC: %v", err)
-			return err
+			return fmt.Errorf("error validating the generated FBC: %v", err)
 		}
 
 		// convert declarative config to string
-		content, err = stringifyDecConfig(declcfg)
+		content, err := stringifyDecConfig(declcfg)
 		if err != nil {
-			log.Errorf("Error converting declarative config to string: %v", err)
-			return err
+			return fmt.Errorf("error converting the declarative config to string: %v", err)
 		}
 
 		if content == "" {
@@ -171,7 +165,7 @@ func (i *Install) setup(ctx context.Context) error {
 
 		log.Infof("Generated a valid File-Based Catalog")
 
-		i.IndexImageCatalogCreator.FBCcontent = content
+		i.IndexImageCatalogCreator.FBCContent = content
 	}
 
 	i.OperatorInstaller.PackageName = labels[registrybundle.PackageLabel]
@@ -195,14 +189,13 @@ func addBundleToIndexImage(ctx context.Context, indexImage string, bundleDeclCon
 	}
 
 	imageDeclConfig, err := render.Run(ctx)
-	if err != nil {
-		log.Errorf("Error in rendering the index image %q: %v", indexImage, err)
-		return nil, err
-	}
 	log.SetOutput(os.Stdout)
+	if err != nil {
+		return nil, fmt.Errorf("error rendering the index image %q: %v", indexImage, err)
+	}
 
-	if len(bundleDeclConfig.Bundles) < 0 {
-		return nil, fmt.Errorf("bundles rendered are less than 0 for the bundle image")
+	if len(bundleDeclConfig.Bundles) != 1 {
+		return nil, fmt.Errorf("there should be exactly one bundle rendered with the bundle image")
 	}
 
 	// check if the bundle exists in the index image.
@@ -226,10 +219,7 @@ func addBundleToIndexImage(ctx context.Context, indexImage string, bundleDeclCon
 		imageDeclConfig.Bundles = append(imageDeclConfig.Bundles, bundleDeclConfig.Bundles[0])
 		imageDeclConfig.Channels = append(imageDeclConfig.Channels, bundleDeclConfig.Channels[0])
 		imageDeclConfig.Packages = append(imageDeclConfig.Packages, bundleDeclConfig.Packages[0])
-
-		if len(bundleDeclConfig.Others) > 0 {
-			imageDeclConfig.Others = append(imageDeclConfig.Others, bundleDeclConfig.Others[0])
-		}
+		imageDeclConfig.Others = append(imageDeclConfig.Others, bundleDeclConfig.Others...)
 
 		log.Infof("Inserted the new bundle %q into the index image: %s", bundleDeclConfig.Bundles[0].Name, indexImage)
 	}
@@ -239,12 +229,6 @@ func addBundleToIndexImage(ctx context.Context, indexImage string, bundleDeclCon
 
 // createFBC generates an FBC by creating bundle, package and channel blobs.
 func (f *FBCContext) createFBC(ctx context.Context) (*declarativeconfig.DeclarativeConfig, error) {
-	var (
-		declcfg        *declarativeconfig.DeclarativeConfig
-		declcfgpackage *declarativeconfig.Package
-		err            error
-	)
-
 	// Rendering the bundle image into a declarative config format.
 	log.SetOutput(ioutil.Discard)
 	render := action.Render{
@@ -252,31 +236,25 @@ func (f *FBCContext) createFBC(ctx context.Context) (*declarativeconfig.Declarat
 	}
 
 	// generate bundles by rendering the bundle objects.
-	declcfg, err = render.Run(ctx)
-	if err != nil {
-		log.Errorf("Error in rendering the bundle image: %v", err)
-		return nil, err
-	}
+	declcfg, err := render.Run(ctx)
 	log.SetOutput(os.Stdout)
+	if err != nil {
+		return nil, fmt.Errorf("error rendering the bundle image: %v", err)
+	}
 
 	// Ensuring a valid bundle size.
-	if len(declcfg.Bundles) < 0 {
-		return nil, fmt.Errorf("bundles rendered are less than 0 for the bundle image")
-	}
-
-	// init packages.
-	init := action.Init{
-		Package:        f.Package,
-		DefaultChannel: f.ChannelName,
+	if len(declcfg.Bundles) != 1 {
+		return nil, fmt.Errorf("bundle image should contain exactly one bundle blob")
 	}
 
 	// generate packages.
-	declcfgpackage, err = init.Run()
-	if err != nil {
-		log.Errorf("Error in generating packages for the FBC: %v", err)
-		return nil, err
+	pkg := declarativeconfig.Package{
+		Schema:         schemaPackage,
+		Name:           f.Package,
+		DefaultChannel: f.ChannelName,
 	}
-	declcfg.Packages = []declarativeconfig.Package{*declcfgpackage}
+
+	declcfg.Packages = []declarativeconfig.Package{pkg}
 
 	// generate channels.
 	channel := declarativeconfig.Channel{
@@ -296,8 +274,7 @@ func stringifyDecConfig(declcfg *declarativeconfig.DeclarativeConfig) (string, e
 	var buf bytes.Buffer
 	err := declarativeconfig.WriteJSON(*declcfg, &buf)
 	if err != nil {
-		log.Errorf("Error writing to JSON encoder: %v", err)
-		return "", err
+		return "", fmt.Errorf("error writing generated declarative config to JSON encoder: %v", err)
 	}
 
 	return buf.String(), nil
@@ -305,16 +282,11 @@ func stringifyDecConfig(declcfg *declarativeconfig.DeclarativeConfig) (string, e
 
 // validateFBC converts the generated declarative config to a model and validates it.
 func validateFBC(declcfg *declarativeconfig.DeclarativeConfig) error {
-	// convert declarative config to model
-	FBCmodel, err := declarativeconfig.ConvertToModel(*declcfg)
+	// validates and converts declarative config to model
+	_, err := declarativeconfig.ConvertToModel(*declcfg)
 	if err != nil {
-		log.Errorf("Error converting the declarative config to model: %v", err)
-		return err
-	}
+		return fmt.Errorf("error converting the declarative config to model: %v", err)
 
-	if err = FBCmodel.Validate(); err != nil {
-		log.Errorf("Error validating the generated FBC: %v", err)
-		return err
 	}
 
 	return nil
