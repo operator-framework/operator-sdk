@@ -91,9 +91,9 @@ type RegistryPod struct { //nolint:maligned
 	cfg *operator.Configuration
 
 	// FBC data
-	FBCcontent  string
-	FBCdir      string
-	FBCfile     string
+	FBCContent  string
+	FBCDir      string
+	FBCFile     string
 	HasFBCLabel bool
 }
 
@@ -107,12 +107,12 @@ func (rp *RegistryPod) init(cfg *operator.Configuration) error {
 	}
 	rp.cfg = cfg
 
-	// if the FBC label is set to true, assign FBCdir and FBCfile variables to serve the content from.
+	// if the FBC label is set to true, assign FBCDir and FBCFile variables to serve the content from.
 	if rp.HasFBCLabel {
 		bundleImage := rp.BundleItems[len(rp.BundleItems)-1].ImageTag
 		trimmedbundleImage := strings.Split(bundleImage, ":")[0]
-		rp.FBCdir = fmt.Sprintf("%s-index", filepath.Join("/tmp", strings.Split(trimmedbundleImage, "/")[2]))
-		rp.FBCfile = filepath.Join(rp.FBCdir, strings.Split(bundleImage, ":")[1])
+		rp.FBCDir = fmt.Sprintf("%s-index", filepath.Join("/tmp", strings.Split(trimmedbundleImage, "/")[2]))
+		rp.FBCFile = filepath.Join(rp.FBCDir, strings.Split(bundleImage, ":")[1])
 	}
 
 	// validate the RegistryPod struct and ensure required fields are set
@@ -329,9 +329,9 @@ opm registry add -d {{ $.DBPath }} -b {{ $item.ImageTag }} --mode={{ $item.AddMo
 opm registry serve -d {{ .DBPath }} -p {{ .GRPCPort }}
 `
 
-const fbcCmdTemplate = `mkdir -p {{ .FBCdir }} && \
-echo '{{ .FBCcontent }}' >> {{ .FBCfile  }} && \
-opm serve {{ .FBCdir }} -p {{ .GRPCPort }}
+const fbcCmdTemplate = `mkdir -p {{ .FBCDir }} && \
+echo '{{ .FBCContent }}' >> {{ .FBCFile  }} && \
+opm serve {{ .FBCDir }} -p {{ .GRPCPort }}
 `
 
 // getContainerCmd uses templating to construct the container command
