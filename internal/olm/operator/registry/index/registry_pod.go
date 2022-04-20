@@ -112,8 +112,7 @@ func (rp *RegistryPod) init(cfg *operator.Configuration) error {
 		bundleImage := rp.BundleItems[len(rp.BundleItems)-1].ImageTag
 		trimmedbundleImage := strings.Split(bundleImage, ":")[0]
 		rp.FBCdir = fmt.Sprintf("%s-index", filepath.Join("/tmp", strings.Split(trimmedbundleImage, "/")[2]))
-		// rp.FBCfile = filepath.Join(rp.FBCdir, strings.Split(bundleImage, ":")[1])
-		rp.FBCfile = filepath.Join(rp.FBCdir, "testFBC")
+		rp.FBCfile = filepath.Join(rp.FBCdir, strings.Split(bundleImage, ":")[1])
 	}
 
 	// validate the RegistryPod struct and ensure required fields are set
