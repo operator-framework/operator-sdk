@@ -47,7 +47,7 @@ type Memcached struct {
 	Status MemcachedStatus `json:"status,omitempty"`
 }
 ```
-To set the scope to namespaced, the marker would be set to `//+kubebuilder:resource:scope=Namespace` instead.
+To set the scope to namespaced, the marker would be set to `//+kubebuilder:resource:scope=Namespaced` instead.
 
 
 ## Set scope in CRD YAML file
