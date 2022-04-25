@@ -17,6 +17,8 @@
       status: "True"
 
 - name: Wait 2 minutes for memcached deployment
+  debug:
+    var: deploy
   until:
   - deploy is defined
   - deploy.status is defined
