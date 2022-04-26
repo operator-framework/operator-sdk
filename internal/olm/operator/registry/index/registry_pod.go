@@ -347,9 +347,6 @@ func (rp *RegistryPod) getContainerCmd() (string, error) {
 	// template's FuncMap and parse the cmdTemplate
 	if rp.HasFBCLabel {
 		t = template.Must(template.New("cmd").Funcs(funcMap).Parse(fbcCmdTemplate))
-		fmt.Println(rp.FBCcontent)
-		fmt.Println(rp.FBCdir)
-		fmt.Println(rp.FBCfile)
 	} else {
 		t = template.Must(template.New("cmd").Funcs(funcMap).Parse(cmdTemplate))
 	}

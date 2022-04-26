@@ -550,14 +550,9 @@ func StringifyDecConfig(declcfg *declarativeconfig.DeclarativeConfig) (string, e
 // ValidateFBC converts the generated declarative config to a model and validates it.
 func ValidateFBC(declcfg *declarativeconfig.DeclarativeConfig) error {
 	// convert declarative config to model
-	FBCmodel, err := declarativeconfig.ConvertToModel(*declcfg)
+	_, err := declarativeconfig.ConvertToModel(*declcfg)
 	if err != nil {
 		log.Errorf("error converting the declarative config to model: %v", err)
-		return err
-	}
-
-	if err = FBCmodel.Validate(); err != nil {
-		log.Errorf("error validating the FBC: %v", err)
 		return err
 	}
 

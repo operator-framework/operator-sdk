@@ -168,10 +168,6 @@ func (i *Install) setup(ctx context.Context) error {
 			return errors.New("file based catalog contents cannot be empty")
 		}
 
-		// fmt.Println()
-		// fmt.Println(content)
-		// fmt.Println()
-
 		log.Infof("Generated a valid File-Based Catalog")
 
 		i.IndexImageCatalogCreator.FBCcontent = content
@@ -192,17 +188,18 @@ func (i *Install) setup(ctx context.Context) error {
 // addBundleToIndexImage adds the bundle to an existing index image if the bundle is not already present in the index image.
 func addBundleToIndexImage(ctx context.Context, indexImage string, bundleDeclConfig *declarativeconfig.DeclarativeConfig) (*declarativeconfig.DeclarativeConfig, error) {
 	log.Infof("Rendering a File-Based Catalog of the Index Image %q", indexImage)
-	log.SetOutput(ioutil.Discard)
 	render := action.Render{
 		Refs: []string{indexImage},
 	}
 
+	log.SetOutput(ioutil.Discard)
 	imageDeclConfig, err := render.Run(ctx)
+	log.SetOutput(os.Stdout)
+
 	if err != nil {
 		log.Errorf("error in rendering the index image %q: %v", indexImage, err)
 		return nil, err
 	}
-	log.SetOutput(os.Stdout)
 
 	if len(bundleDeclConfig.Bundles) < 0 {
 		return nil, fmt.Errorf("bundles rendered are less than 0 for the bundle image")
@@ -219,7 +216,6 @@ func addBundleToIndexImage(ctx context.Context, indexImage string, bundleDeclCon
 						return nil, fmt.Errorf("bundle %q already present in the index image: %s", bundleDeclConfig.Bundles[0].Name, indexImage)
 					}
 				}
-
 				break // we only want to search through the specific channel.
 			}
 		}
