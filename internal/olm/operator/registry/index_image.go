@@ -163,19 +163,18 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 		c.ChannelName = c.ChannelEntrypoint
 	}
 
-	log.SetOutput(ioutil.Discard)
-
 	render = action.Render{Refs: []string{}}
 	if c.IndexImage != DefaultIndexImage {
 		render.Refs = append(render.Refs, c.IndexImage)
 	}
 
+	log.SetOutput(ioutil.Discard)
 	originalDeclcfg, err = render.Run(ctx)
+	log.SetOutput(os.Stdout)
+
 	if err != nil {
 		return err
 	}
-
-	log.SetOutput(os.Stdout)
 
 	c.PreviousBundles = append(c.PreviousBundles, c.BundleImage)
 	f := &FBCContext{
@@ -204,10 +203,6 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 	if content == "" {
 		return errors.New("File-Based Catalog contents cannot be empty")
 	}
-
-	// fmt.Println()
-	// fmt.Println(content)
-	// fmt.Println()
 
 	// validate the declarative config
 	if err = ValidateFBC(declcfg); err != nil {
@@ -238,6 +233,7 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 	log.SetOutput(ioutil.Discard)
 	declcfg, err = render.Run(ctx)
 	log.SetOutput(os.Stdout)
+
 	if err != nil {
 		log.Errorf("error in rendering the bundle and index image: %v", err)
 		return nil, err
@@ -577,18 +573,19 @@ func (f *FBCContext) CreateFBC(ctx context.Context) (*declarativeconfig.Declarat
 	)
 
 	// Rendering the bundle image into a declarative config format.
-	log.SetOutput(ioutil.Discard)
 	render := action.Render{
 		Refs: f.Refs,
 	}
 
 	// generate bundles by rendering the bundle objects.
+	log.SetOutput(ioutil.Discard)
 	declcfg, err = render.Run(ctx)
+	log.SetOutput(os.Stdout)
+
 	if err != nil {
 		log.Errorf("error in rendering the bundle image: %v", err)
 		return nil, err
 	}
-	log.SetOutput(os.Stdout)
 
 	// Ensuring a valid bundle size.
 	if len(declcfg.Bundles) < 0 {
