@@ -76,6 +76,11 @@ version_menu = "Releases"
 # Repository configuration (URLs for in-page links to opening issues and suggesting changes)
 github_repo = "https://github.com/operator-framework/operator-sdk"
 
+# Update archived_version to true when this version is no longer supported.
+version = "v0.18"
+archived_version = true
+url_latest_version = "https://sdk.operatorframework.io"
+
 [[params.versions]]
   version = "master"
   url = "https://master.sdk.operatorframework.io"
