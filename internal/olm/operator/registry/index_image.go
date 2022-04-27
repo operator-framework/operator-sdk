@@ -204,6 +204,9 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 		return errors.New("File-Based Catalog contents cannot be empty")
 	}
 
+	fmt.Println("Content")
+	fmt.Println(content)
+
 	// validate the declarative config
 	if err = ValidateFBC(declcfg); err != nil {
 		log.Errorf("error validating the generated FBC: %v", err)
@@ -332,15 +335,6 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 		return fmt.Errorf("get index image labels: %v", err)
 	}
 
-	c.HasFBCLabel = false
-	if _, hasFBCLabel := catalogLabels[containertools.ConfigsLocationLabel]; hasFBCLabel || c.IndexImage == DefaultIndexImage {
-		c.HasFBCLabel = true
-		err = setupFBCupdates(&c, ctx)
-		if err != nil {
-			return err
-		}
-	}
-
 	if annotationsNotFound {
 		if cs.Spec.Image == "" {
 			// if no annotations exist and image reference is empty, error out
@@ -348,6 +342,19 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 		}
 		// if no annotations exist and image reference exists, set it to index image
 		c.IndexImage = cs.Spec.Image
+	}
+
+	fmt.Println()
+	fmt.Println(cs.GetAnnotations())
+	fmt.Println(c.IndexImage)
+
+	c.HasFBCLabel = false
+	if _, hasFBCLabel := catalogLabels[containertools.ConfigsLocationLabel]; hasFBCLabel || c.IndexImage == DefaultIndexImage {
+		c.HasFBCLabel = true
+		err = setupFBCupdates(&c, ctx)
+		if err != nil {
+			return err
+		}
 	}
 
 	c.setAddMode()
