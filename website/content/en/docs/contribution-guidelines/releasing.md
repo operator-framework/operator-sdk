@@ -166,7 +166,15 @@ git push -f upstream v1.3.x
 - Make an [operator-framework Google Group][of-ggroup] post.
 - Post to Kubernetes slack in #kubernetes-operators and #operator-sdk-dev.
 - In the [GitHub milestone][gh-milestones], bump any open issues to the following release.
+- Update the newly unsupported branch (1.1.x in this example) the documentation to mark it as archived. 
+  This is done by ensuring that the following is in `website/config.toml`. This PR does not need to be
+  merged before the release is complete.
 
+```toml
+version = "FIXME_1.1.x"
+archived_version = true
+url_latest_version = "https://sdk.operatorframework.io"
+```
 
 ## Patch releases
 
