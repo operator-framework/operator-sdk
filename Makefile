@@ -44,7 +44,7 @@ generate: build # Generate CLI docs and samples
 	go generate ./...
 
 .PHONY: bindata
-OLM_VERSIONS = 0.19.0 0.19.1 0.20.0
+OLM_VERSIONS = 0.18.3 0.19.1 0.20.0
 bindata: ## Update project bindata
 	./hack/generate/olm_bindata.sh $(OLM_VERSIONS)
 	$(MAKE) fix
