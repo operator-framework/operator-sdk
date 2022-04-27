@@ -85,6 +85,10 @@ gcs_engine_id = "015999847059016081733:wlfzxjx77h8"
 # Enable Algolia DocSearch
 algolia_docsearch = false
 
+# Update archived_version to true when this version is no longer supported.
+version = "v1.1"
+archived_version = true
+url_latest_version = "https://sdk.operatorframework.io"
 
 [[params.versions]]
   version = "master"
