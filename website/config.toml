@@ -79,7 +79,10 @@ github_repo = "https://github.com/operator-framework/operator-sdk"
 # Specify a value here if your content directory is not in your repo's root directory
 github_subdir = "website"
 
-
+# Update archived_version to true when this version is no longer supported.
+version = "v1.8"
+archived_version = true
+url_latest_version = "https://sdk.operatorframework.io"
 
 # Enable Algolia DocSearch
 algolia_docsearch = true
