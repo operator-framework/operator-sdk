@@ -522,7 +522,6 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
 
 	log.Infof("adding playbook for finalizerconcurrencytest")
 	const finalizerConcurrencyTest = `---
----
 - hosts: localhost
   gather_facts: no
   collections:
