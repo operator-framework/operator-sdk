@@ -1,8 +1,0 @@
-entries:
-  - description: >
-      For ansible-based operators, proxy server port can be changed with the new `proxy-port` flag, which still defaults to 8888.
-
-    kind: "addition"
-
-    # Is this a breaking change?
-    breaking: false
