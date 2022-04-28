@@ -153,7 +153,7 @@ func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string
 	return cs, nil
 }
 
-func addEntry(indexImage string, startingCSV string, bundleImage string, channelName string, ctx context.Context) (string, error) {
+func addEntry(ctx context.Context, indexImage string, startingCSV string, bundleImage string, channelName string) (string, error) {
 	render := action.Render{Refs: []string{indexImage}}
 	log.SetOutput(ioutil.Discard)
 	originalDeclCfg, err := render.Run(ctx)
@@ -165,7 +165,6 @@ func addEntry(indexImage string, startingCSV string, bundleImage string, channel
 	log.SetOutput(os.Stdout)
 
 	for i, _ := range originalDeclCfg.Channels {
-		fmt.Println(originalDeclCfg.Channels[i].Name, channelName)
 		if originalDeclCfg.Channels[i].Name == channelName {
 			// found specific channel
 			entry := declarativeconfig.ChannelEntry{
@@ -191,15 +190,12 @@ func addEntry(indexImage string, startingCSV string, bundleImage string, channel
 		return "", errors.New("File-Based Catalog contents cannot be empty")
 	}
 
-	fmt.Println("Content")
-	fmt.Println(content)
-
 	if err = ValidateFBC(originalDeclCfg); err != nil {
 		log.Errorf("error validating the generated FBC: %v", err)
 		return "", err
 	}
 
-	fmt.Println("Valid")
+	log.Infof("Generated a valid Upgraded File-Based Catalog")
 
 	return content, nil
 }
@@ -253,9 +249,6 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 	if content == "" {
 		return errors.New("File-Based Catalog contents cannot be empty")
 	}
-
-	fmt.Println("Content")
-	fmt.Println(content)
 
 	// validate the declarative config
 	if err = ValidateFBC(declcfg); err != nil {
@@ -373,7 +366,7 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 
 // UpdateCatalog links a new registry pod in catalog source by updating the address and annotations,
 // then deletes existing registry pod based on annotation name found in catalog source object
-func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha1.CatalogSource) error {
+func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha1.CatalogSource, subscription *v1alpha1.Subscription) error {
 	var prevRegistryPodName string
 	if annotations := cs.GetAnnotations(); len(annotations) != 0 {
 		if value, hasAnnotation := annotations[indexImageAnnotation]; hasAnnotation && value != "" {
@@ -397,43 +390,37 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 	}
 	annotationsNotFound := len(existingItems) == 0
 
-	test := true
-	if annotationsNotFound {
-		if cs.Spec.Image == "" {
-			// if no annotations exist and image reference is empty, error out
-			return errors.New("cannot upgrade: no catalog image reference exists in catalog source spec or annotations")
-		}
-		// if no annotations exist and image reference exists, set it to index image
-		c.IndexImage = cs.Spec.Image
-
-		// traditional method - index image, starting csv, the bundle image
-		fbc, err := addEntry(c.IndexImage, c.StartingCSV, c.BundleImage, c.ChannelName, ctx)
-		if err != nil {
-			return err
-		}
-
-		test = false
-		c.HasFBCLabel = true
-		c.FBCcontent = fbc
-	}
-
 	// adding updates to the IndexImageCatalogCreator if it is an FBC image
 	catalogLabels, err := registryutil.GetImageLabels(ctx, nil, c.IndexImage, false)
 	if err != nil {
 		return fmt.Errorf("get index image labels: %v", err)
 	}
 
-	// fmt.Println()
-	// fmt.Println(cs.GetAnnotations())
-	// fmt.Println(c.IndexImage)
-	// fmt.Println()
+	c.HasFBCLabel = false
+	if _, hasFBCLabel := catalogLabels[containertools.ConfigsLocationLabel]; hasFBCLabel || c.IndexImage == DefaultIndexImage {
+		c.HasFBCLabel = true
+	}
 
-	if test {
-		injectedBundles := strings.Split(c.UpgradeEdges, ",")
-		c.PreviousBundles = injectedBundles
-		c.HasFBCLabel = false
-		if _, hasFBCLabel := catalogLabels[containertools.ConfigsLocationLabel]; hasFBCLabel || c.IndexImage == DefaultIndexImage {
-			c.HasFBCLabel = true
+	if annotationsNotFound {
+		if cs.Spec.Image == "" {
+			// if no annotations exist and image reference is empty, error out
+			return errors.New("cannot upgrade: no catalog image reference exists in catalog source spec or annotations")
+		}
+
+		// if no annotations exist and image reference exists, set it to index image
+		c.IndexImage = cs.Spec.Image
+
+		if c.HasFBCLabel {
+			// Upgrading when installed traditionally by OLM
+			upgradedFBC, err := addEntry(ctx, c.IndexImage, subscription.Spec.StartingCSV, c.BundleImage, subscription.Spec.Channel)
+			if err != nil {
+				return err
+			}
+			c.FBCcontent = upgradedFBC
+		}
+	} else {
+		// Upgrading when installed by run bundle
+		if c.HasFBCLabel {
 			err = setupFBCupdates(&c, ctx)
 			if err != nil {
 				return err

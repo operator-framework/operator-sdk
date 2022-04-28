@@ -358,7 +358,5 @@ func (rp *RegistryPod) getContainerCmd() (string, error) {
 		return "", fmt.Errorf("parse container command: %w", err)
 	}
 
-	fmt.Println(out.String())
-
 	return out.String(), nil
 }
