@@ -82,6 +82,7 @@ type FBCContext struct {
 type IndexImageCatalogCreator struct {
 	SkipTLSVerify     bool
 	UseHTTP           bool
+	UpgradeEdges      string
 	HasFBCLabel       bool
 	PackageName       string
 	ChannelName       string
@@ -99,6 +100,7 @@ type IndexImageCatalogCreator struct {
 	FBCImage          string
 	ChannelEntrypoint string
 	PreviousBundles   []string
+	StartingCSV       string
 }
 
 var _ CatalogCreator = &IndexImageCatalogCreator{}
@@ -123,7 +125,8 @@ func (c *IndexImageCatalogCreator) BindFlags(fs *pflag.FlagSet) {
 	_ = fs.MarkDeprecated("skip-tls", "use --skip-tls-verify or --use-http instead")
 	fs.BoolVar(&c.SkipTLS, "skip-tls", false, "skip authentication of image registry TLS "+
 		"certificate when pulling a bundle image in-cluster")
-	fs.StringVar(&c.ChannelEntrypoint, "channel-entrypoint", "", "Channel in which the upgrade will take place. Defaults to the bundle's default channel")
+	fs.StringVar(&c.UpgradeEdges, "upgrade-edges", "", "List of edges to upgrade")
+	fs.StringVar(&c.StartingCSV, "starting-csv", "", "test")
 	fs.BoolVar(&c.SkipTLSVerify, "skip-tls-verify", false, "skip TLS certificate verification for container image registries "+
 		"while pulling bundles")
 	fs.BoolVar(&c.UseHTTP, "use-http", false, "use plain HTTP for container image registries "+
@@ -150,6 +153,57 @@ func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string
 	return cs, nil
 }
 
+func addEntry(indexImage string, startingCSV string, bundleImage string, channelName string, ctx context.Context) (string, error) {
+	render := action.Render{Refs: []string{indexImage}}
+	log.SetOutput(ioutil.Discard)
+	originalDeclCfg, err := render.Run(ctx)
+	log.SetOutput(os.Stdout)
+
+	render = action.Render{Refs: []string{bundleImage}}
+	log.SetOutput(ioutil.Discard)
+	bundleDeclConfig, err := render.Run(ctx)
+	log.SetOutput(os.Stdout)
+
+	for i, _ := range originalDeclCfg.Channels {
+		fmt.Println(originalDeclCfg.Channels[i].Name, channelName)
+		if originalDeclCfg.Channels[i].Name == channelName {
+			// found specific channel
+			entry := declarativeconfig.ChannelEntry{
+				Name:     bundleDeclConfig.Bundles[0].Name,
+				Replaces: startingCSV,
+			}
+			originalDeclCfg.Channels[i].Entries = append(originalDeclCfg.Channels[i].Entries, entry)
+			break
+		}
+	}
+
+	originalDeclCfg.Bundles = append(originalDeclCfg.Bundles, bundleDeclConfig.Bundles[0])
+
+	// convert declarative config to string
+	content, err := StringifyDecConfig(originalDeclCfg)
+
+	if err != nil {
+		log.Errorf("error converting declarative config to string: %v", err)
+		return "", err
+	}
+
+	if content == "" {
+		return "", errors.New("File-Based Catalog contents cannot be empty")
+	}
+
+	fmt.Println("Content")
+	fmt.Println(content)
+
+	if err = ValidateFBC(originalDeclCfg); err != nil {
+		log.Errorf("error validating the generated FBC: %v", err)
+		return "", err
+	}
+
+	fmt.Println("Valid")
+
+	return content, nil
+}
+
 // setupFBCupdates starts the process of upgrading a bundle in an FBC. This function will recreate the FBC that was generated
 // during run bundle and upgrade a specific bundle in the specified channel.
 func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
@@ -158,10 +212,6 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 		err             error
 		render          action.Render
 	)
-
-	if c.ChannelEntrypoint != "" {
-		c.ChannelName = c.ChannelEntrypoint
-	}
 
 	render = action.Render{Refs: []string{}}
 	if c.IndexImage != DefaultIndexImage {
@@ -262,10 +312,18 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 		}
 	}
 
+	m := make(map[string]string)
+	for _, bundle := range originalDeclCfg.Bundles {
+		m[bundle.Name] = bundle.Package
+	}
+
 	// Add new bundle blobs and channel entries
 	entries := []declarativeconfig.ChannelEntry{}
 	for i, bundle := range declcfg.Bundles {
-		originalDeclCfg.Bundles = append(originalDeclCfg.Bundles, bundle)
+		// it is not present in the bundles array or belongs to a different package
+		if _, ok := m[bundle.Name]; !ok || m[bundle.Name] != f.Package {
+			originalDeclCfg.Bundles = append(originalDeclCfg.Bundles, bundle)
+		}
 		entry := declarativeconfig.ChannelEntry{
 			Name: declcfg.Bundles[i].Name,
 		}
@@ -298,7 +356,17 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 		log.Errorf("error in generating packages for the FBC: %v", err)
 		return nil, err
 	}
-	originalDeclCfg.Packages = append(originalDeclCfg.Packages, *declcfgpackage)
+
+	packagePresent := false
+	for _, packageName := range originalDeclCfg.Packages {
+		if packageName.Name == f.Package {
+			packagePresent = true
+		}
+	}
+
+	if !packagePresent {
+		originalDeclCfg.Packages = append(originalDeclCfg.Packages, *declcfgpackage)
+	}
 
 	return originalDeclCfg, nil
 }
@@ -329,12 +397,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 	}
 	annotationsNotFound := len(existingItems) == 0
 
-	// adding updates to the IndexImageCatalogCreator if it is an FBC image
-	catalogLabels, err := registryutil.GetImageLabels(ctx, nil, c.IndexImage, false)
-	if err != nil {
-		return fmt.Errorf("get index image labels: %v", err)
-	}
-
+	test := true
 	if annotationsNotFound {
 		if cs.Spec.Image == "" {
 			// if no annotations exist and image reference is empty, error out
@@ -342,18 +405,39 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 		}
 		// if no annotations exist and image reference exists, set it to index image
 		c.IndexImage = cs.Spec.Image
-	}
 
-	fmt.Println()
-	fmt.Println(cs.GetAnnotations())
-	fmt.Println(c.IndexImage)
-
-	c.HasFBCLabel = false
-	if _, hasFBCLabel := catalogLabels[containertools.ConfigsLocationLabel]; hasFBCLabel || c.IndexImage == DefaultIndexImage {
-		c.HasFBCLabel = true
-		err = setupFBCupdates(&c, ctx)
+		// traditional method - index image, starting csv, the bundle image
+		fbc, err := addEntry(c.IndexImage, c.StartingCSV, c.BundleImage, c.ChannelName, ctx)
 		if err != nil {
 			return err
+		}
+
+		test = false
+		c.HasFBCLabel = true
+		c.FBCcontent = fbc
+	}
+
+	// adding updates to the IndexImageCatalogCreator if it is an FBC image
+	catalogLabels, err := registryutil.GetImageLabels(ctx, nil, c.IndexImage, false)
+	if err != nil {
+		return fmt.Errorf("get index image labels: %v", err)
+	}
+
+	// fmt.Println()
+	// fmt.Println(cs.GetAnnotations())
+	// fmt.Println(c.IndexImage)
+	// fmt.Println()
+
+	if test {
+		injectedBundles := strings.Split(c.UpgradeEdges, ",")
+		c.PreviousBundles = injectedBundles
+		c.HasFBCLabel = false
+		if _, hasFBCLabel := catalogLabels[containertools.ConfigsLocationLabel]; hasFBCLabel || c.IndexImage == DefaultIndexImage {
+			c.HasFBCLabel = true
+			err = setupFBCupdates(&c, ctx)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
