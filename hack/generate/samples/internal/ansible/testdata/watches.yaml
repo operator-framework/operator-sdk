@@ -71,4 +71,14 @@
   watchClusterScopedResources: true
   vars:
     meta: '{{ ansible_operator_meta }}'
+
+- version: v1alpha1
+  group: test.example.com
+  kind: FinalizerConcurrencyTest
+  playbook: playbooks/finalizerconcurrencytest.yml
+  finalizer:
+    name: test.example.com/finalizer
+    playbook: playbooks/finalizerconcurrencyfinalizer.yml
+  vars:
+    meta: '{{ ansible_operator_meta }}'
 #+kubebuilder:scaffold:watch

@@ -235,6 +235,12 @@ func (ma *AdvancedMolecule) addMocksFromTestdata() {
 	cmd = exec.Command("cp", "-r", "../../../hack/generate/samples/internal/ansible/testdata/inventory/", filepath.Join(ma.ctx.Dir, "inventory/"))
 	_, err = ma.ctx.Run(cmd)
 	pkg.CheckError("adding inventory/", err)
+
+	log.Infof("adding finalizer for finalizerconcurrencytest")
+	cmd = exec.Command("cp", "../../../hack/generate/samples/internal/ansible/testdata/playbooks/finalizerconcurrencyfinalizer.yml", filepath.Join(ma.ctx.Dir, "playbooks/finalizerconcurrencyfinalizer.yml"))
+	_, err = ma.ctx.Run(cmd)
+	pkg.CheckError("adding finalizer for finalizerconccurencytest", err)
+
 }
 
 func (ma *AdvancedMolecule) updateDockerfile() {
@@ -456,8 +462,6 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
         command: '{{ exec_command }}'
       register: exec_result
 
-    - debug: var=exec_result
-
     - name: Get logs from busybox pod
       k8s_log:
         name: '{{ meta.name }}-busybox'
@@ -516,6 +520,36 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
 		clusterAnnotationTest)
 	pkg.CheckError("adding playbook for clusterannotationtest", err)
 
+	log.Infof("adding playbook for finalizerconcurrencytest")
+	const finalizerConcurrencyTest = `---
+- hosts: localhost
+  gather_facts: no
+  collections:
+    - kubernetes.core
+    - operator_sdk.util
+
+  tasks:
+    - debug:
+        msg: "Pausing until configmap exists"
+
+    - name: Wait for configmap
+      k8s_info:
+        apiVersion: v1
+        kind: ConfigMap
+        name: unpause-reconciliation
+        namespace: osdk-test
+      wait: yes
+      wait_sleep: 10
+      wait_timeout: 360
+
+    - debug:
+        msg: "Unpause!"
+`
+	err = kbutil.ReplaceInFile(
+		filepath.Join(ma.ctx.Dir, "playbooks", "finalizerconcurrencytest.yml"),
+		originalPlaybookFragment,
+		finalizerConcurrencyTest)
+	pkg.CheckError("adding playbook for finalizerconcurrencytest", err)
 }
 
 func (ma *AdvancedMolecule) addPlaybooks() {
@@ -524,6 +558,7 @@ func (ma *AdvancedMolecule) addPlaybooks() {
 		"CaseTest",
 		"CollectionTest",
 		"ClusterAnnotationTest",
+		"FinalizerConcurrencyTest",
 		"ReconciliationTest",
 		"SelectorTest",
 		"SubresourcesTest",
