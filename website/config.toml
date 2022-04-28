@@ -84,6 +84,10 @@ github_subdir = "website"
 # Enable Algolia DocSearch
 algolia_docsearch = true
 
+# Update archived_version to true when this version is no longer supported.
+version = "v1.15"
+archived_version = true
+url_latest_version = "https://sdk.operatorframework.io"
 
 [[params.versions]]
   version = "master"
