@@ -158,9 +158,11 @@ export KIND_CLUSTER := osdk-test
 KUBEBUILDER_ASSETS = $(PWD)/$(shell go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest && $(shell go env GOPATH)/bin/setup-envtest use $(ENVTEST_K8S_VERSION) --bin-dir tools/bin/ -p path)
 test-e2e-setup:: build dev-install cluster-create
 
+.PHONY: cluster-create
 cluster-create::
 	[[ "`$(TOOLS_DIR)/kind get clusters`" =~ "$(KIND_CLUSTER)" ]] || $(TOOLS_DIR)/kind create cluster --image="kindest/node:v$(ENVTEST_K8S_VERSION)" --name $(KIND_CLUSTER)
 
+.PHONY: dev-install
 dev-install::
 	$(SCRIPTS_DIR)/fetch kind 0.11.0
 	$(SCRIPTS_DIR)/fetch kubectl $(ENVTEST_K8S_VERSION) # Install kubectl AFTER envtest because envtest includes its own kubectl binary
