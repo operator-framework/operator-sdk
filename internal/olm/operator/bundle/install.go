@@ -28,6 +28,7 @@ import (
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/alpha/action"
+	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	declarativeconfig "github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/pkg/containertools"
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
@@ -41,6 +42,12 @@ const (
 	schemaPackage  = "olm.package"
 	defaultChannel = "develop"
 )
+
+type bundleDeclcfg struct {
+	Package declcfg.Package
+	Channel declcfg.Channel
+	Bundle  declcfg.Bundle
+}
 
 type Install struct {
 	BundleImage string
@@ -165,9 +172,15 @@ func (i *Install) setup(ctx context.Context) error {
 func (f *FBCContext) generateFBCContent(ctx context.Context, bundleImage, indexImage string) (string, error) {
 	log.Infof("Creating a File-Based Catalog of the bundle %q", bundleImage)
 	// generate a file-based catalog representation of the bundle image
-	declcfg, err := f.createFBC(ctx)
+	bundleDeclcfg, err := f.createFBC(ctx)
 	if err != nil {
 		return "", fmt.Errorf("error generating file-based catalog with image %q: %v", bundleImage, err)
+	}
+
+	declcfg := &declarativeconfig.DeclarativeConfig{
+		Bundles:  []declarativeconfig.Bundle{bundleDeclcfg.Bundle},
+		Packages: []declarativeconfig.Package{bundleDeclcfg.Package},
+		Channels: []declarativeconfig.Channel{bundleDeclcfg.Channel},
 	}
 
 	if indexImage != registry.DefaultIndexImage { // non-default index image was specified.
@@ -213,41 +226,34 @@ func addBundleToIndexImage(ctx context.Context, indexImage string, bundleDeclCon
 		return nil, fmt.Errorf("error rendering the index image %q: %v", indexImage, err)
 	}
 
-	if len(bundleDeclConfig.Bundles) != 1 {
-		return nil, fmt.Errorf("there should be exactly one bundle rendered with the bundle image")
-	}
-
 	// check if the bundle exists in the index image.
-	if len(bundleDeclConfig.Channels) > 0 && len(bundleDeclConfig.Bundles) > 0 {
-		for _, channel := range imageDeclConfig.Channels {
-			// find the specific channel that the bundle needs to be inserted into.
-			if channel.Name == bundleDeclConfig.Channels[0].Name && channel.Package == bundleDeclConfig.Channels[0].Package {
-				// check if the CSV name is already present in the channel's entries.
-				for _, entry := range channel.Entries {
-					if entry.Name == bundleDeclConfig.Bundles[0].Name {
-						return nil, fmt.Errorf("bundle %q already present in the index image: %s", bundleDeclConfig.Bundles[0].Name, indexImage)
-					}
+	for _, channel := range imageDeclConfig.Channels {
+		// find the specific channel that the bundle needs to be inserted into.
+		if channel.Name == bundleDeclConfig.Channels[0].Name && channel.Package == bundleDeclConfig.Channels[0].Package {
+			// check if the CSV name is already present in the channel's entries.
+			for _, entry := range channel.Entries {
+				if entry.Name == bundleDeclConfig.Bundles[0].Name {
+					return nil, fmt.Errorf("bundle %q already present in the index image: %s", bundleDeclConfig.Bundles[0].Name, indexImage)
 				}
-
-				break // we only want to search through the specific channel.
 			}
+
+			break // we only want to search through the specific channel.
 		}
 	}
 
-	if len(bundleDeclConfig.Bundles) > 0 && len(bundleDeclConfig.Channels) > 0 && len(bundleDeclConfig.Packages) > 0 {
-		imageDeclConfig.Bundles = append(imageDeclConfig.Bundles, bundleDeclConfig.Bundles[0])
-		imageDeclConfig.Channels = append(imageDeclConfig.Channels, bundleDeclConfig.Channels[0])
-		imageDeclConfig.Packages = append(imageDeclConfig.Packages, bundleDeclConfig.Packages[0])
-		imageDeclConfig.Others = append(imageDeclConfig.Others, bundleDeclConfig.Others...)
+	imageDeclConfig.Bundles = append(imageDeclConfig.Bundles, bundleDeclConfig.Bundles[0])
+	imageDeclConfig.Channels = append(imageDeclConfig.Channels, bundleDeclConfig.Channels[0])
+	imageDeclConfig.Packages = append(imageDeclConfig.Packages, bundleDeclConfig.Packages[0])
+	imageDeclConfig.Others = append(imageDeclConfig.Others, bundleDeclConfig.Others...)
 
-		log.Infof("Inserted the new bundle %q into the index image: %s", bundleDeclConfig.Bundles[0].Name, indexImage)
-	}
+	log.Infof("Inserted the new bundle %q into the index image: %s", bundleDeclConfig.Bundles[0].Name, indexImage)
 
 	return imageDeclConfig, nil
 }
 
 // createFBC generates an FBC by creating bundle, package and channel blobs.
-func (f *FBCContext) createFBC(ctx context.Context) (*declarativeconfig.DeclarativeConfig, error) {
+func (f *FBCContext) createFBC(ctx context.Context) (bundleDeclcfg, error) {
+	var bundleDC bundleDeclcfg
 	// Rendering the bundle image into a declarative config format.
 	log.SetOutput(ioutil.Discard)
 	render := action.Render{
@@ -258,34 +264,32 @@ func (f *FBCContext) createFBC(ctx context.Context) (*declarativeconfig.Declarat
 	declcfg, err := render.Run(ctx)
 	log.SetOutput(os.Stdout)
 	if err != nil {
-		return nil, fmt.Errorf("error rendering the bundle image: %v", err)
+		return bundleDeclcfg{}, fmt.Errorf("error rendering the bundle image: %v", err)
 	}
 
 	// Ensuring a valid bundle size.
 	if len(declcfg.Bundles) != 1 {
-		return nil, fmt.Errorf("bundle image should contain exactly one bundle blob")
+		return bundleDeclcfg{}, fmt.Errorf("bundle image should contain exactly one bundle blob")
 	}
 
-	// generate packages.
-	pkg := declarativeconfig.Package{
+	bundleDC.Bundle = declcfg.Bundles[0]
+
+	// generate package.
+	bundleDC.Package = declarativeconfig.Package{
 		Schema:         schemaPackage,
 		Name:           f.Package,
 		DefaultChannel: f.ChannelName,
 	}
 
-	declcfg.Packages = []declarativeconfig.Package{pkg}
-
-	// generate channels.
-	channel := declarativeconfig.Channel{
+	// generate channel.
+	bundleDC.Channel = declarativeconfig.Channel{
 		Schema:  schemaChannel,
 		Name:    f.ChannelName,
 		Package: f.Package,
 		Entries: []declarativeconfig.ChannelEntry{f.ChannelEntry},
 	}
 
-	declcfg.Channels = []declarativeconfig.Channel{channel}
-
-	return declcfg, nil
+	return bundleDC, nil
 }
 
 // stringifyDecConfig writes the generated declarative config to a string.
