@@ -37,8 +37,9 @@ import (
 )
 
 const (
-	schemaChannel = "olm.channel"
-	schemaPackage = "olm.package"
+	schemaChannel  = "olm.channel"
+	schemaPackage  = "olm.package"
+	defaultChannel = "develop"
 )
 
 type Install struct {
@@ -124,50 +125,27 @@ func (i *Install) setup(ctx context.Context) error {
 		log.Warn(deprecationMsg)
 	}
 
-	// generate an fbc if an fbc specific label is found on the image or for a default index image.
 	if i.IndexImageCatalogCreator.HasFBCLabel {
 		// FBC variables
 		f := &FBCContext{
-			Package:     labels[registrybundle.PackageLabel],
-			ChannelName: strings.Split(labels[registrybundle.ChannelsLabel], ",")[0],
-			Refs:        []string{i.BundleImage},
+			Package: labels[registrybundle.PackageLabel],
+			Refs:    []string{i.BundleImage},
 			ChannelEntry: declarativeconfig.ChannelEntry{
 				Name: csv.Name,
 			},
 		}
-		log.Infof("Creating a File-Based Catalog of the bundle %q", i.BundleImage)
 
-		// generate a file-based catalog representation of the bundle image
-		declcfg, err := f.createFBC(ctx)
+		if _, hasChannelMetadata := labels[registrybundle.ChannelsLabel]; hasChannelMetadata {
+			f.ChannelName = strings.Split(labels[registrybundle.ChannelsLabel], ",")[0]
+		} else {
+			f.ChannelName = defaultChannel
+		}
+
+		// generate an fbc if an fbc specific label is found on the image or for a default index image.
+		content, err := f.generateFBCContent(ctx, i.BundleImage, i.IndexImageCatalogCreator.IndexImage)
 		if err != nil {
 			return fmt.Errorf("error generating file-based catalog with image %q: %v", i.BundleImage, err)
 		}
-
-		if i.IndexImageCatalogCreator.IndexImage != registry.DefaultIndexImage { // non-default index image was specified.
-			// since an index image is specified, the bundle image will be added to the index image.
-			// addBundleToIndexImage will ensure that the bundle is not already present in the index image and error out if it does.
-			declcfg, err = addBundleToIndexImage(ctx, i.IndexImageCatalogCreator.IndexImage, declcfg)
-			if err != nil {
-				return fmt.Errorf("error adding bundle image %q to index image %q: %v", i.BundleImage, i.IndexImageCatalogCreator.IndexImage, err)
-			}
-		}
-
-		// validate the file based catalog
-		if err = validateFBC(declcfg); err != nil {
-			return fmt.Errorf("error validating the generated FBC: %v", err)
-		}
-
-		// convert declarative config to string
-		content, err := stringifyDecConfig(declcfg)
-		if err != nil {
-			return fmt.Errorf("error converting the declarative config to string: %v", err)
-		}
-
-		if content == "" {
-			return errors.New("file based catalog contents cannot be empty")
-		}
-
-		log.Infof("Generated a valid File-Based Catalog")
 
 		i.IndexImageCatalogCreator.FBCContent = content
 	}
@@ -182,6 +160,43 @@ func (i *Install) setup(ctx context.Context) error {
 	i.IndexImageCatalogCreator.BundleImage = i.BundleImage
 
 	return nil
+}
+
+func (f *FBCContext) generateFBCContent(ctx context.Context, bundleImage, indexImage string) (string, error) {
+	log.Infof("Creating a File-Based Catalog of the bundle %q", bundleImage)
+	// generate a file-based catalog representation of the bundle image
+	declcfg, err := f.createFBC(ctx)
+	if err != nil {
+		return "", fmt.Errorf("error generating file-based catalog with image %q: %v", bundleImage, err)
+	}
+
+	if indexImage != registry.DefaultIndexImage { // non-default index image was specified.
+		// since an index image is specified, the bundle image will be added to the index image.
+		// addBundleToIndexImage will ensure that the bundle is not already present in the index image and error out if it does.
+		declcfg, err = addBundleToIndexImage(ctx, indexImage, declcfg)
+		if err != nil {
+			return "", fmt.Errorf("error adding bundle image %q to index image %q: %v", bundleImage, indexImage, err)
+		}
+	}
+
+	// validate the file based catalog
+	if err = validateFBC(declcfg); err != nil {
+		return "", fmt.Errorf("error validating the generated FBC: %v", err)
+	}
+
+	// convert declarative config to string
+	content, err := stringifyDecConfig(declcfg)
+	if err != nil {
+		return "", fmt.Errorf("error converting the declarative config to string: %v", err)
+	}
+
+	if content == "" {
+		return "", errors.New("file based catalog contents cannot be empty")
+	}
+
+	log.Infof("Generated a valid File-Based Catalog")
+
+	return content, nil
 }
 
 // addBundleToIndexImage adds the bundle to an existing index image if the bundle is not already present in the index image.
