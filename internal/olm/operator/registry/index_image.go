@@ -153,16 +153,25 @@ func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string
 	return cs, nil
 }
 
-func addEntry(ctx context.Context, indexImage string, startingCSV string, bundleImage string, channelName string) (string, error) {
+// traditionalUpgrade upgrades an operator that was installed using OLM. Subsequent upgrades will go through the setupFBCupdates function
+func traditionalUpgrade(ctx context.Context, indexImage string, startingCSV string, bundleImage string, channelName string) (string, error) {
 	render := action.Render{Refs: []string{indexImage}}
 	log.SetOutput(ioutil.Discard)
 	originalDeclCfg, err := render.Run(ctx)
 	log.SetOutput(os.Stdout)
 
+	if err != nil {
+		return "", err
+	}
+
 	render = action.Render{Refs: []string{bundleImage}}
 	log.SetOutput(ioutil.Discard)
 	bundleDeclConfig, err := render.Run(ctx)
 	log.SetOutput(os.Stdout)
+
+	if err != nil {
+		return "", err
+	}
 
 	for i, _ := range originalDeclCfg.Channels {
 		if originalDeclCfg.Channels[i].Name == channelName {
@@ -189,8 +198,6 @@ func addEntry(ctx context.Context, indexImage string, startingCSV string, bundle
 	if content == "" {
 		return "", errors.New("File-Based Catalog contents cannot be empty")
 	}
-
-	//fmt.Println(content)
 
 	if err = ValidateFBC(originalDeclCfg); err != nil {
 		log.Errorf("error validating the generated FBC: %v", err)
@@ -252,8 +259,6 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 		return errors.New("File-Based Catalog contents cannot be empty")
 	}
 
-	fmt.Println(content)
-
 	// validate the declarative config
 	if err = ValidateFBC(declcfg); err != nil {
 		log.Errorf("error validating the generated FBC: %v", err)
@@ -313,9 +318,9 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 		}
 	}
 
-	m := make(map[string]string)
+	existingBundles := make(map[string]string)
 	for _, bundle := range originalDeclCfg.Bundles {
-		m[bundle.Name] = bundle.Package
+		existingBundles[bundle.Name] = bundle.Package
 	}
 
 	// Add new bundle blobs and channel entries
@@ -323,7 +328,7 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 		entries := []declarativeconfig.ChannelEntry{}
 		for i, bundle := range declcfg.Bundles {
 			// it is not present in the bundles array or belongs to a different package
-			if _, ok := m[bundle.Name]; !ok || m[bundle.Name] != f.Package {
+			if _, ok := existingBundles[bundle.Name]; !ok || existingBundles[bundle.Name] != f.Package {
 				originalDeclCfg.Bundles = append(originalDeclCfg.Bundles, bundle)
 			}
 			entry := declarativeconfig.ChannelEntry{
@@ -346,7 +351,7 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 	} else {
 		for i, bundle := range declcfg.Bundles {
 			// it is not present in the bundles array or belongs to a different package
-			if _, ok := m[bundle.Name]; !ok || m[bundle.Name] != f.Package {
+			if _, ok := existingBundles[bundle.Name]; !ok || existingBundles[bundle.Name] != f.Package {
 				originalDeclCfg.Bundles = append(originalDeclCfg.Bundles, bundle)
 			}
 			entry := declarativeconfig.ChannelEntry{
@@ -376,6 +381,7 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 		return nil, err
 	}
 
+	// check if package already exists
 	packagePresent := false
 	for _, packageName := range originalDeclCfg.Packages {
 		if packageName.Name == f.Package {
@@ -383,6 +389,7 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 		}
 	}
 
+	// only add the new package if it does not already exist
 	if !packagePresent {
 		originalDeclCfg.Packages = append(originalDeclCfg.Packages, *declcfgpackage)
 	}
@@ -410,10 +417,6 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 		prevRegistryPodName = annotations[registryPodNameAnnotation]
 	}
 
-	// fmt.Println()
-	// fmt.Println(cs.GetAnnotations())
-	// fmt.Println()
-
 	existingItems, err := getExistingBundleItems(cs.GetAnnotations())
 	if err != nil {
 		return fmt.Errorf("error getting existing bundles from CatalogSource %s annotations: %v", cs.GetName(), err)
@@ -421,8 +424,6 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 	annotationsNotFound := len(existingItems) == 0
 
 	c.HasFBCLabel = false
-	// fmt.Println(c.IndexImage)
-
 	if annotationsNotFound {
 		if cs.Spec.Image == "" {
 			// if no annotations exist and image reference is empty, error out
@@ -431,7 +432,6 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 
 		// if no annotations exist and image reference exists, set it to index image
 		c.IndexImage = cs.Spec.Image
-		// fmt.Println(c.IndexImage)
 
 		// adding updates to the IndexImageCatalogCreator if it is an FBC image
 		catalogLabels, err := registryutil.GetImageLabels(ctx, nil, c.IndexImage, false)
@@ -443,10 +443,10 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 			c.HasFBCLabel = true
 		}
 
+		// Upgrade a bundle that was installed using OLM
 		if c.HasFBCLabel {
 			// Upgrading when installed traditionally by OLM
-			// fmt.Println("HERE")
-			upgradedFBC, err := addEntry(ctx, c.IndexImage, subscription.Spec.StartingCSV, c.BundleImage, subscription.Spec.Channel)
+			upgradedFBC, err := traditionalUpgrade(ctx, c.IndexImage, subscription.Spec.StartingCSV, c.BundleImage, subscription.Spec.Channel)
 			if err != nil {
 				return err
 			}
@@ -464,6 +464,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 			c.HasFBCLabel = true
 		}
 
+		// Upgrade an installed bundle from catalog source annotations
 		if c.HasFBCLabel {
 			err = setupFBCupdates(&c, ctx)
 			if err != nil {
