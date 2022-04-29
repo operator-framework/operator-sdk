@@ -190,6 +190,8 @@ func addEntry(ctx context.Context, indexImage string, startingCSV string, bundle
 		return "", errors.New("File-Based Catalog contents cannot be empty")
 	}
 
+	//fmt.Println(content)
+
 	if err = ValidateFBC(originalDeclCfg); err != nil {
 		log.Errorf("error validating the generated FBC: %v", err)
 		return "", err
@@ -250,6 +252,8 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 		return errors.New("File-Based Catalog contents cannot be empty")
 	}
 
+	fmt.Println(content)
+
 	// validate the declarative config
 	if err = ValidateFBC(declcfg); err != nil {
 		log.Errorf("error validating the generated FBC: %v", err)
@@ -292,9 +296,13 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 	}
 
 	// Checking to see if FBC already contains this upgrade
-	for _, channel := range originalDeclCfg.Channels {
+	channelExists := false
+	channelIndex := -1
+	for i, channel := range originalDeclCfg.Channels {
 		// Find the specific channel that the bundle needs to be inserted into
 		if channel.Name == f.ChannelName && channel.Package == f.Package {
+			channelExists = true
+			channelIndex = i
 			// Check if the CSV name is already present in the channel's entries
 			for _, entry := range channel.Entries {
 				if entry.Name == declcfg.Bundles[len(declcfg.Bundles)-1].Name {
@@ -311,30 +319,48 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 	}
 
 	// Add new bundle blobs and channel entries
-	entries := []declarativeconfig.ChannelEntry{}
-	for i, bundle := range declcfg.Bundles {
-		// it is not present in the bundles array or belongs to a different package
-		if _, ok := m[bundle.Name]; !ok || m[bundle.Name] != f.Package {
-			originalDeclCfg.Bundles = append(originalDeclCfg.Bundles, bundle)
+	if !channelExists {
+		entries := []declarativeconfig.ChannelEntry{}
+		for i, bundle := range declcfg.Bundles {
+			// it is not present in the bundles array or belongs to a different package
+			if _, ok := m[bundle.Name]; !ok || m[bundle.Name] != f.Package {
+				originalDeclCfg.Bundles = append(originalDeclCfg.Bundles, bundle)
+			}
+			entry := declarativeconfig.ChannelEntry{
+				Name: declcfg.Bundles[i].Name,
+			}
+			if i > 0 {
+				entry.Replaces = declcfg.Bundles[i-1].Name
+			}
+			entries = append(entries, entry)
 		}
-		entry := declarativeconfig.ChannelEntry{
-			Name: declcfg.Bundles[i].Name,
-		}
-		if i > 0 {
-			entry.Replaces = declcfg.Bundles[i-1].Name
-		}
-		entries = append(entries, entry)
-	}
 
-	// generate channels
-	channel := declarativeconfig.Channel{
-		Schema:  f.ChannelSchema,
-		Name:    f.ChannelName,
-		Package: f.Package,
-		Entries: entries,
+		// generate channels
+		channel := declarativeconfig.Channel{
+			Schema:  f.ChannelSchema,
+			Name:    f.ChannelName,
+			Package: f.Package,
+			Entries: entries,
+		}
+		originalDeclCfg.Channels = append(originalDeclCfg.Channels, channel)
+	} else {
+		for i, bundle := range declcfg.Bundles {
+			// it is not present in the bundles array or belongs to a different package
+			if _, ok := m[bundle.Name]; !ok || m[bundle.Name] != f.Package {
+				originalDeclCfg.Bundles = append(originalDeclCfg.Bundles, bundle)
+			}
+			entry := declarativeconfig.ChannelEntry{
+				Name: declcfg.Bundles[i].Name,
+			}
+			if i > 0 {
+				entry.Replaces = declcfg.Bundles[i-1].Name
+			} else {
+				length := len(originalDeclCfg.Channels[channelIndex].Entries)
+				entry.Replaces = originalDeclCfg.Channels[channelIndex].Entries[length-1].Name
+			}
+			originalDeclCfg.Channels[channelIndex].Entries = append(originalDeclCfg.Channels[channelIndex].Entries, entry)
+		}
 	}
-
-	originalDeclCfg.Channels = append(originalDeclCfg.Channels, channel)
 
 	// generate package
 	init := action.Init{
@@ -384,22 +410,18 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 		prevRegistryPodName = annotations[registryPodNameAnnotation]
 	}
 
+	// fmt.Println()
+	// fmt.Println(cs.GetAnnotations())
+	// fmt.Println()
+
 	existingItems, err := getExistingBundleItems(cs.GetAnnotations())
 	if err != nil {
 		return fmt.Errorf("error getting existing bundles from CatalogSource %s annotations: %v", cs.GetName(), err)
 	}
 	annotationsNotFound := len(existingItems) == 0
 
-	// adding updates to the IndexImageCatalogCreator if it is an FBC image
-	catalogLabels, err := registryutil.GetImageLabels(ctx, nil, c.IndexImage, false)
-	if err != nil {
-		return fmt.Errorf("get index image labels: %v", err)
-	}
-
 	c.HasFBCLabel = false
-	if _, hasFBCLabel := catalogLabels[containertools.ConfigsLocationLabel]; hasFBCLabel || c.IndexImage == DefaultIndexImage {
-		c.HasFBCLabel = true
-	}
+	// fmt.Println(c.IndexImage)
 
 	if annotationsNotFound {
 		if cs.Spec.Image == "" {
@@ -409,9 +431,21 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 
 		// if no annotations exist and image reference exists, set it to index image
 		c.IndexImage = cs.Spec.Image
+		// fmt.Println(c.IndexImage)
+
+		// adding updates to the IndexImageCatalogCreator if it is an FBC image
+		catalogLabels, err := registryutil.GetImageLabels(ctx, nil, c.IndexImage, false)
+		if err != nil {
+			return fmt.Errorf("get index image labels: %v", err)
+		}
+
+		if _, hasFBCLabel := catalogLabels[containertools.ConfigsLocationLabel]; hasFBCLabel || c.IndexImage == DefaultIndexImage {
+			c.HasFBCLabel = true
+		}
 
 		if c.HasFBCLabel {
 			// Upgrading when installed traditionally by OLM
+			// fmt.Println("HERE")
 			upgradedFBC, err := addEntry(ctx, c.IndexImage, subscription.Spec.StartingCSV, c.BundleImage, subscription.Spec.Channel)
 			if err != nil {
 				return err
@@ -419,7 +453,17 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 			c.FBCcontent = upgradedFBC
 		}
 	} else {
+		// adding updates to the IndexImageCatalogCreator if it is an FBC image
+		catalogLabels, err := registryutil.GetImageLabels(ctx, nil, c.IndexImage, false)
+		if err != nil {
+			return fmt.Errorf("get index image labels: %v", err)
+		}
+
 		// Upgrading when installed by run bundle
+		if _, hasFBCLabel := catalogLabels[containertools.ConfigsLocationLabel]; hasFBCLabel || c.IndexImage == DefaultIndexImage {
+			c.HasFBCLabel = true
+		}
+
 		if c.HasFBCLabel {
 			err = setupFBCupdates(&c, ctx)
 			if err != nil {
