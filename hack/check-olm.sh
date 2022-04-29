@@ -2,30 +2,23 @@
 
 FAILED="false"
 
-# clone OLM
-mkdir olm-test
-cd olm-test
-git clone https://github.com/operator-framework/operator-lifecycle-manager.git
-cd operator-lifecycle-manager
+# Get list of unique release versions sorted highest to lowest
+RELEASES=($(curl https://api.github.com/repos/operator-framework/operator-lifecycle-manager/releases | jq '.[] | .name' | tr -d '"'))
 
-# Get list of unique minor versions sorted highest to lowest
-MINOR_ARRAY=($(git tag --list --sort=-version:refname "v0.*" | awk -F. '{ print $1 "." $2 "." }' | sort -ur))
+# Get unique release versions ignoring patch versions
+RELEASES_UNIQUE_NO_PATCH=($(printf '%s\n' "${RELEASES[@]}" | awk -F. '{ print $1 "." $2 "." }' | sort -ur))
 
 # Get highest patch version for each unique minor version
-# Loop through the latest 3 minor versions
+# Loop through the latest 3 unique release versions
 VERSIONS_STRING=""
 for i in {2..0}
 do
-    MINOR_VERSION=$(echo "${MINOR_ARRAY[i]}")
-    PATCH_ARRAY=($(git tag --list --sort=-version:refname "$MINOR_VERSION*" | awk -F. '{ print $1 "." $2 "." $3 }' | sort -ur))
+    MINOR_VERSION=$(echo "${RELEASES_UNIQUE_NO_PATCH[i]}")
+    PATCH_ARRAY=($(printf '%s\n' "${RELEASES[@]}" | grep ${RELEASES_UNIQUE_NO_PATCH[i]} | awk -F. '{ print $1 "." $2 "." $3 }' | sort -ur))
     VERSIONS_STRING+=$(echo " ${PATCH_ARRAY[0]}" | tr -d 'v')
 done
 
 VERSIONS_ARRAY=($(echo "$VERSIONS_STRING" | tr ' ' '\n'))
-
-# clean up OLM because we are done with it now
-cd ../../
-rm -rf olm-test
 
 # check Makefile OLM_VERSIONS
 EXPECTED="OLM_VERSIONS =$VERSIONS_STRING"
@@ -80,4 +73,3 @@ then
 else
     echo -e "\nOLM Version Check - \033[0;32mPASSED\033[0m"
 fi
-
