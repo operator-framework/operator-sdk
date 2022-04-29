@@ -151,7 +151,7 @@ func (i *Install) setup(ctx context.Context) error {
 		// generate an fbc if an fbc specific label is found on the image or for a default index image.
 		content, err := f.generateFBCContent(ctx, i.BundleImage, i.IndexImageCatalogCreator.IndexImage)
 		if err != nil {
-			return fmt.Errorf("error generating file-based catalog with image %q: %v", i.BundleImage, err)
+			return fmt.Errorf("error generating File-Based Catalog with bundle %q: %v", i.BundleImage, err)
 		}
 
 		i.IndexImageCatalogCreator.FBCContent = content
@@ -171,10 +171,10 @@ func (i *Install) setup(ctx context.Context) error {
 
 func (f *FBCContext) generateFBCContent(ctx context.Context, bundleImage, indexImage string) (string, error) {
 	log.Infof("Creating a File-Based Catalog of the bundle %q", bundleImage)
-	// generate a file-based catalog representation of the bundle image
+	// generate a File-Based Catalog representation of the bundle image
 	bundleDeclcfg, err := f.createFBC(ctx)
 	if err != nil {
-		return "", fmt.Errorf("error generating file-based catalog with image %q: %v", bundleImage, err)
+		return "", fmt.Errorf("error creating a File-Based Catalog with image %q: %v", bundleImage, err)
 	}
 
 	declcfg := &declarativeconfig.DeclarativeConfig{
@@ -192,7 +192,7 @@ func (f *FBCContext) generateFBCContent(ctx context.Context, bundleImage, indexI
 		}
 	}
 
-	// validate the file based catalog
+	// validate the generated File-Based Catalog
 	if err = validateFBC(declcfg); err != nil {
 		return "", fmt.Errorf("error validating the generated FBC: %v", err)
 	}
@@ -226,25 +226,45 @@ func addBundleToIndexImage(ctx context.Context, indexImage string, bundleDeclCon
 		return nil, fmt.Errorf("error rendering the index image %q: %v", indexImage, err)
 	}
 
-	// check if the bundle exists in the index image.
-	for _, channel := range imageDeclConfig.Channels {
-		// find the specific channel that the bundle needs to be inserted into.
-		if channel.Name == bundleDeclConfig.Channels[0].Name && channel.Package == bundleDeclConfig.Channels[0].Package {
-			// check if the CSV name is already present in the channel's entries.
-			for _, entry := range channel.Entries {
-				if entry.Name == bundleDeclConfig.Bundles[0].Name {
-					return nil, fmt.Errorf("bundle %q already present in the index image: %s", bundleDeclConfig.Bundles[0].Name, indexImage)
-				}
-			}
-
-			break // we only want to search through the specific channel.
+	var isPackagePresent, isBundlePresent, isChannelPresent bool
+	for _, pkg := range imageDeclConfig.Packages {
+		if pkg.Name == bundleDeclConfig.Packages[0].Name {
+			isPackagePresent = true
+			break
 		}
 	}
 
-	imageDeclConfig.Bundles = append(imageDeclConfig.Bundles, bundleDeclConfig.Bundles[0])
-	imageDeclConfig.Channels = append(imageDeclConfig.Channels, bundleDeclConfig.Channels[0])
-	imageDeclConfig.Packages = append(imageDeclConfig.Packages, bundleDeclConfig.Packages[0])
-	imageDeclConfig.Others = append(imageDeclConfig.Others, bundleDeclConfig.Others...)
+	for _, bundle := range imageDeclConfig.Bundles {
+		if bundle.Name == bundleDeclConfig.Bundles[0].Name && bundle.Package == bundleDeclConfig.Bundles[0].Package {
+			isBundlePresent = true
+			break
+		}
+	}
+
+	for _, channel := range imageDeclConfig.Channels {
+		if channel.Name == bundleDeclConfig.Channels[0].Name && channel.Package == bundleDeclConfig.Bundles[0].Package {
+			isChannelPresent = true
+			break
+		}
+	}
+
+	// insert bundle to index if package/bundle/channel is not present on the index;
+	// and insert only bundle declarative config channel to index when both bundle/package are present but not the channel.
+	if !isPackagePresent && !isBundlePresent && !isChannelPresent {
+		imageDeclConfig.Bundles = append(imageDeclConfig.Bundles, bundleDeclConfig.Bundles[0])
+		imageDeclConfig.Channels = append(imageDeclConfig.Channels, bundleDeclConfig.Channels[0])
+		imageDeclConfig.Packages = append(imageDeclConfig.Packages, bundleDeclConfig.Packages[0])
+		imageDeclConfig.Others = append(imageDeclConfig.Others, bundleDeclConfig.Others...)
+	} else if isPackagePresent && isBundlePresent && !isChannelPresent {
+		// if the bundle already exists in a different channel,
+		// we already have the bundle and package blobs in the FBC, in which case,
+		// we need to reference it in the channel we want it to be in.
+		imageDeclConfig.Channels = append(imageDeclConfig.Channels, bundleDeclConfig.Channels[0])
+	} else if isBundlePresent {
+		return nil, fmt.Errorf("bundle %q already present in the index image: %s", bundleDeclConfig.Bundles[0].Name, indexImage)
+	} else {
+		return nil, fmt.Errorf("cannot add bundle %q to the index image: %s", bundleDeclConfig.Bundles[0].Name, indexImage)
+	}
 
 	log.Infof("Inserted the new bundle %q into the index image: %s", bundleDeclConfig.Bundles[0].Name, indexImage)
 
