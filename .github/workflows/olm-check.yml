@@ -1,0 +1,19 @@
+name: olm-check
+
+on:
+ pull_request:
+   branches:
+    - 'release-*'
+ workflow_dispatch:
+   
+
+jobs:
+  check-olm-minor-releases:
+    name: check-olm-minor-releases
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - id: run-check-olm
+        run: ./hack/check-olm.sh
+    
+    
