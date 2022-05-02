@@ -89,7 +89,7 @@ type SQLiteRegistryPod struct { //nolint:maligned
 	cfg *operator.Configuration
 }
 
-// init initializes the RegistryPod struct and sets defaults for empty fields
+// init initializes the SQLiteRegistryPod struct and sets defaults for empty fields
 func (rp *SQLiteRegistryPod) init(cfg *operator.Configuration) error {
 	if rp.GRPCPort == 0 {
 		rp.GRPCPort = defaultGRPCPort
@@ -99,7 +99,7 @@ func (rp *SQLiteRegistryPod) init(cfg *operator.Configuration) error {
 	}
 	rp.cfg = cfg
 
-	// validate the RegistryPod struct and ensure required fields are set
+	// validate the SQLiteRegistryPod struct and ensure required fields are set
 	if err := rp.validate(); err != nil {
 		return fmt.Errorf("invalid registry pod: %v", err)
 	}
@@ -165,7 +165,7 @@ func (rp *SQLiteRegistryPod) checkPodStatus(ctx context.Context, podCheck wait.C
 	return err
 }
 
-// validate will ensure that RegistryPod required fields are set
+// validate will ensure that SQLiteRegistryPod required fields are set
 // and throws error if not set
 func (rp *SQLiteRegistryPod) validate() error {
 	if len(rp.BundleItems) == 0 {
@@ -316,7 +316,6 @@ opm registry serve -d {{ .DBPath }} -p {{ .GRPCPort }}
 // getContainerCmd uses templating to construct the container command
 // and throws error if unable to parse and execute the container command
 func (rp *SQLiteRegistryPod) getContainerCmd() (string, error) {
-	var t *template.Template
 	// create a custom dirname template function
 	funcMap := template.FuncMap{
 		"dirname": path.Dir,
@@ -324,7 +323,7 @@ func (rp *SQLiteRegistryPod) getContainerCmd() (string, error) {
 
 	// add the custom dirname template function to the
 	// template's FuncMap and parse the cmdTemplate
-	t = template.Must(template.New("cmd").Funcs(funcMap).Parse(cmdTemplate))
+	t := template.Must(template.New("cmd").Funcs(funcMap).Parse(cmdTemplate))
 
 	// execute the command by applying the parsed template to command
 	// and write command output to out

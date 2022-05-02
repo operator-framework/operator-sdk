@@ -61,7 +61,7 @@ type FBCRegistryPod struct { //nolint:maligned
 	// pod represents a kubernetes *corev1.pod that will be created on a cluster using an index image
 	pod *corev1.Pod
 
-	// FBCContent represents the contents of the FBC file (string YAML/JSON).
+	// FBCContent represents the contents of the FBC file (string JSON).
 	FBCContent string
 
 	// FBCDir is the name of the FBC directory name where the FBC resides in.
