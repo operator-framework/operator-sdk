@@ -323,23 +323,30 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 		existingBundles[bundle.Name] = bundle.Package
 	}
 
-	// Add new bundle blobs and channel entries
-	if !channelExists {
-		entries := []declarativeconfig.ChannelEntry{}
-		for i, bundle := range declcfg.Bundles {
-			// it is not present in the bundles array or belongs to a different package
-			if _, ok := existingBundles[bundle.Name]; !ok || existingBundles[bundle.Name] != f.Package {
-				originalDeclCfg.Bundles = append(originalDeclCfg.Bundles, bundle)
-			}
-			entry := declarativeconfig.ChannelEntry{
-				Name: declcfg.Bundles[i].Name,
-			}
-			if i > 0 {
-				entry.Replaces = declcfg.Bundles[i-1].Name
-			}
-			entries = append(entries, entry)
+	entries := []declarativeconfig.ChannelEntry{}
+	for i, bundle := range declcfg.Bundles {
+		// it is not present in the bundles array or belongs to a different package
+		if _, ok := existingBundles[bundle.Name]; !ok || existingBundles[bundle.Name] != f.Package {
+			originalDeclCfg.Bundles = append(originalDeclCfg.Bundles, bundle)
+		}
+		entry := declarativeconfig.ChannelEntry{
+			Name: declcfg.Bundles[i].Name,
+		}
+		if i > 0 {
+			entry.Replaces = declcfg.Bundles[i-1].Name
+		} else if channelExists {
+			length := len(originalDeclCfg.Channels[channelIndex].Entries)
+			entry.Replaces = originalDeclCfg.Channels[channelIndex].Entries[length-1].Name
 		}
 
+		if channelExists {
+			originalDeclCfg.Channels[channelIndex].Entries = append(originalDeclCfg.Channels[channelIndex].Entries, entry)
+		} else {
+			entries = append(entries, entry)
+		}
+	}
+
+	if !channelExists {
 		// generate channels
 		channel := declarativeconfig.Channel{
 			Schema:  f.ChannelSchema,
@@ -348,23 +355,6 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 			Entries: entries,
 		}
 		originalDeclCfg.Channels = append(originalDeclCfg.Channels, channel)
-	} else {
-		for i, bundle := range declcfg.Bundles {
-			// it is not present in the bundles array or belongs to a different package
-			if _, ok := existingBundles[bundle.Name]; !ok || existingBundles[bundle.Name] != f.Package {
-				originalDeclCfg.Bundles = append(originalDeclCfg.Bundles, bundle)
-			}
-			entry := declarativeconfig.ChannelEntry{
-				Name: declcfg.Bundles[i].Name,
-			}
-			if i > 0 {
-				entry.Replaces = declcfg.Bundles[i-1].Name
-			} else {
-				length := len(originalDeclCfg.Channels[channelIndex].Entries)
-				entry.Replaces = originalDeclCfg.Channels[channelIndex].Entries[length-1].Name
-			}
-			originalDeclCfg.Channels[channelIndex].Entries = append(originalDeclCfg.Channels[channelIndex].Entries, entry)
-		}
 	}
 
 	// generate package
@@ -386,6 +376,7 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 	for _, packageName := range originalDeclCfg.Packages {
 		if packageName.Name == f.Package {
 			packagePresent = true
+			break
 		}
 	}
 
@@ -416,6 +407,8 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 		}
 		prevRegistryPodName = annotations[registryPodNameAnnotation]
 	}
+
+	// fmt.Println(cs.GetAnnotations())
 
 	existingItems, err := getExistingBundleItems(cs.GetAnnotations())
 	if err != nil {
