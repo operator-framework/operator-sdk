@@ -173,7 +173,7 @@ func getChannelHead(entries []declarativeconfig.ChannelEntry) string {
 }
 
 // traditionalUpgrade upgrades an operator that was installed using OLM. Subsequent upgrades will go through the setupFBCupdates function
-func traditionalUpgrade(ctx context.Context, indexImage string, startingCSV string, bundleImage string, channelName string) (string, error) {
+func traditionalUpgrade(ctx context.Context, indexImage string, bundleImage string, channelName string) (string, error) {
 	render := action.Render{Refs: []string{indexImage}}
 	log.SetOutput(ioutil.Discard)
 	originalDeclCfg, err := render.Run(ctx)
@@ -192,18 +192,7 @@ func traditionalUpgrade(ctx context.Context, indexImage string, startingCSV stri
 		return "", err
 	}
 
-	// OLM will install the latest
-	// get most recent CSV --> find which CSV does not appear in the replaces field in entries
-	//
-	//		{
-	//			Name:     0.0.2,
-	//			Replaces: 0.0.1,
-	//		}
-	//
-	// 		{
-	//			Name: 0.0.1
-	//		}
-	channelHead := startingCSV
+	channelHead := ""
 	for i, _ := range originalDeclCfg.Channels {
 		if originalDeclCfg.Channels[i].Name == channelName && originalDeclCfg.Channels[i].Package == bundleDeclConfig.Bundles[0].Package {
 			// found specific channel
@@ -364,8 +353,6 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 		existingBundles[bundle.Name] = bundle.Package
 	}
 
-	// [0.0.2] <-- [0.0.1]
-	// [0.0.3] <-- [0.0.2]
 	entries := []declarativeconfig.ChannelEntry{}
 	for i, bundle := range declcfg.Bundles {
 		// it is not present in the bundles array or belongs to a different package
@@ -487,7 +474,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 		// Upgrade a bundle that was installed using OLM
 		if c.HasFBCLabel {
 			// Upgrading when installed traditionally by OLM
-			upgradedFBC, err := traditionalUpgrade(ctx, c.IndexImage, subscription.Spec.StartingCSV, c.BundleImage, subscription.Spec.Channel)
+			upgradedFBC, err := traditionalUpgrade(ctx, c.IndexImage, c.BundleImage, subscription.Spec.Channel)
 			if err != nil {
 				return err
 			}
