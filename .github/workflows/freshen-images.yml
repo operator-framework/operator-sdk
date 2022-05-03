@@ -11,6 +11,9 @@ on:
   # Run at 11 am UTC every day.
   - cron: '0 11 * * *'
 
+permissions:
+  contents: read
+
 jobs:
   git_tags:
     runs-on: ubuntu-18.04

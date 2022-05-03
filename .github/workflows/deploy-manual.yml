@@ -10,9 +10,15 @@ on:
         description: ansible-operator-2.11-preview-base image tag, ex. "6e1b47e6ca7c507b8ecf197a8edcd412dd64d85d"
         required: false
 
+permissions:
+  contents: read
+
 jobs:
   # Build the ansible-operator-base image.
   ansible-operator-base:
+    permissions:
+      contents: write  # for peter-evans/create-pull-request to create branch
+      pull-requests: write  # for peter-evans/create-pull-request to create a PR
     runs-on: ubuntu-18.04
     environment: deploy
     steps:

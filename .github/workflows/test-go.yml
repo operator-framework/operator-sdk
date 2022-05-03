@@ -2,6 +2,9 @@ name: go
 on:
   pull_request: {}
 
+permissions:
+  contents: read
+
 jobs:
   check_docs_only:
     name: check_docs_only
@@ -36,6 +39,9 @@ jobs:
       - run: make test-e2e-go
 
   unit:
+    permissions:
+      checks: write  # for shogo82148/actions-goveralls to create a new check based on the results
+      contents: read  # for actions/checkout to fetch code
     name: unit
     runs-on: ubuntu-18.04
     needs: check_docs_only
