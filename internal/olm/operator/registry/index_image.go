@@ -153,6 +153,25 @@ func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string
 	return cs, nil
 }
 
+func getChannelHead(entries []declarativeconfig.ChannelEntry) string {
+	for i, _ := range entries {
+		replaced := false
+		for j, _ := range entries {
+			if entries[j].Replaces == entries[i].Name {
+				replaced = true
+				break
+			}
+		}
+
+		if !replaced {
+			fmt.Println(entries[i].Name)
+			return entries[i].Name
+		}
+	}
+
+	return ""
+}
+
 // traditionalUpgrade upgrades an operator that was installed using OLM. Subsequent upgrades will go through the setupFBCupdates function
 func traditionalUpgrade(ctx context.Context, indexImage string, startingCSV string, bundleImage string, channelName string) (string, error) {
 	render := action.Render{Refs: []string{indexImage}}
@@ -173,12 +192,30 @@ func traditionalUpgrade(ctx context.Context, indexImage string, startingCSV stri
 		return "", err
 	}
 
+	// OLM will install the latest
+	// get most recent CSV --> find which CSV does not appear in the replaces field in entries
+	//
+	//		{
+	//			Name:     0.0.2,
+	//			Replaces: 0.0.1,
+	//		}
+	//
+	// 		{
+	//			Name: 0.0.1
+	//		}
+	channelHead := startingCSV
 	for i, _ := range originalDeclCfg.Channels {
-		if originalDeclCfg.Channels[i].Name == channelName {
+		if originalDeclCfg.Channels[i].Name == channelName && originalDeclCfg.Channels[i].Package == bundleDeclConfig.Bundles[0].Package {
 			// found specific channel
+			tempChannelHead := getChannelHead(originalDeclCfg.Channels[i].Entries)
+
+			if tempChannelHead != "" {
+				channelHead = tempChannelHead
+			}
+
 			entry := declarativeconfig.ChannelEntry{
 				Name:     bundleDeclConfig.Bundles[0].Name,
-				Replaces: startingCSV,
+				Replaces: channelHead,
 			}
 			originalDeclCfg.Channels[i].Entries = append(originalDeclCfg.Channels[i].Entries, entry)
 			break
@@ -259,8 +296,6 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 		return errors.New("File-Based Catalog contents cannot be empty")
 	}
 
-	fmt.Println(content)
-
 	// validate the declarative config
 	if err = ValidateFBC(declcfg); err != nil {
 		log.Errorf("error validating the generated FBC: %v", err)
@@ -315,12 +350,10 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 			for _, entry := range channel.Entries {
 				// Our upgraded bundle image is the last element of the refs we passed in
 				if entry.Name == declcfg.Bundles[len(declcfg.Bundles)-1].Name {
+					// TODO: may or may not error out if already found
 					return nil, errors.New("Bundle already exists in the Index Image")
 				}
-
-				if entry.Replaces == "" {
-					channelHead = entry.Name
-				}
+				channelHead = getChannelHead(channel.Entries)
 			}
 			break // We only want to search through the specific channel
 		}
@@ -331,6 +364,8 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 		existingBundles[bundle.Name] = bundle.Package
 	}
 
+	// [0.0.2] <-- [0.0.1]
+	// [0.0.3] <-- [0.0.2]
 	entries := []declarativeconfig.ChannelEntry{}
 	for i, bundle := range declcfg.Bundles {
 		// it is not present in the bundles array or belongs to a different package
@@ -457,6 +492,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 				return err
 			}
 			c.FBCcontent = upgradedFBC
+			fmt.Println(c.FBCcontent)
 		}
 	} else {
 		isFBCImage, err := isFBC(ctx, c.IndexImage)
@@ -471,6 +507,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 			if err != nil {
 				return err
 			}
+			fmt.Println(c.FBCcontent)
 		}
 	}
 
