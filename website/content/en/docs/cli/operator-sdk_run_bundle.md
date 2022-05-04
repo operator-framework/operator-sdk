@@ -10,6 +10,12 @@ Deploy an Operator in the bundle format with OLM
 The single argument to this command is a bundle image, with the full registry path specified.
 If using a docker.io image, you must specify docker.io(/&lt;namespace&gt;)?/&lt;bundle-image-name&gt;:&lt;tag&gt;.
 
+The main purpose of this command is to streamline running the bundle without having to provide an index image with the bundle already included.
+
+An index image can be specified to resolve dependencies for a bundle by specifying the `--index-image` flag.
+The index image provided should **NOT** already have the bundle, if it does this command will not work as expected.
+
+
 ```
 operator-sdk run bundle <bundle-image> [flags]
 ```
