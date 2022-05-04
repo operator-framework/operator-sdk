@@ -12,7 +12,8 @@ If using a docker.io image, you must specify docker.io(/&lt;namespace&gt;)?/&lt;
 
 The main purpose of this command is to streamline running the bundle without having to provide an index image with the bundle already included.
 
-An index image can be specified to resolve dependencies for a bundle by specifying the `--index-image` flag.
+The `--index-image` flag specifies an index image in which to inject the given bundle. It can be specified to resolve dependencies for a bundle. 
+This is an optional flag which will default to `quay.io/operator-framework/opm:latest`.
 The index image provided should **NOT** already have the bundle, if it does this command will not work as expected.
 
 
