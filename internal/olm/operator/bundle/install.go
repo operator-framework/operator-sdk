@@ -168,8 +168,6 @@ func (i *Install) setup(ctx context.Context) error {
 			return errors.New("file based catalog contents cannot be empty")
 		}
 
-		fmt.Println(content)
-
 		log.Infof("Generated a valid File-Based Catalog")
 
 		i.IndexImageCatalogCreator.FBCcontent = content

@@ -82,7 +82,6 @@ type FBCContext struct {
 type IndexImageCatalogCreator struct {
 	SkipTLSVerify     bool
 	UseHTTP           bool
-	UpgradeEdges      string
 	HasFBCLabel       bool
 	PackageName       string
 	ChannelName       string
@@ -100,7 +99,6 @@ type IndexImageCatalogCreator struct {
 	FBCImage          string
 	ChannelEntrypoint string
 	PreviousBundles   []string
-	StartingCSV       string
 }
 
 var _ CatalogCreator = &IndexImageCatalogCreator{}
@@ -125,8 +123,6 @@ func (c *IndexImageCatalogCreator) BindFlags(fs *pflag.FlagSet) {
 	_ = fs.MarkDeprecated("skip-tls", "use --skip-tls-verify or --use-http instead")
 	fs.BoolVar(&c.SkipTLS, "skip-tls", false, "skip authentication of image registry TLS "+
 		"certificate when pulling a bundle image in-cluster")
-	fs.StringVar(&c.UpgradeEdges, "upgrade-edges", "", "List of edges to upgrade")
-	fs.StringVar(&c.StartingCSV, "starting-csv", "", "test")
 	fs.BoolVar(&c.SkipTLSVerify, "skip-tls-verify", false, "skip TLS certificate verification for container image registries "+
 		"while pulling bundles")
 	fs.BoolVar(&c.UseHTTP, "use-http", false, "use plain HTTP for container image registries "+
@@ -154,25 +150,27 @@ func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string
 }
 
 // getChannelHead retrieves the channel head from an array of entries
-func getChannelHead(entries []declarativeconfig.ChannelEntry) string {
-	// gets the CSV that does not appear in any replaces field in the entries array
-	for i, _ := range entries {
-		replaced := false
-		for j, _ := range entries {
-			if entries[j].Replaces == entries[i].Name {
-				replaced = true
-				break
-			}
-		}
+func getChannelHead(entries []declarativeconfig.ChannelEntry) (string, error) {
+	nameMap := make(map[string]bool)
+	replacesMap := make(map[string]bool)
 
-		if !replaced {
-			fmt.Println(entries[i].Name)
-			return entries[i].Name
+	for i, _ := range entries {
+		nameMap[entries[i].Name] = true
+		if entries[i].Replaces != "" {
+			replacesMap[entries[i].Replaces] = true
 		}
 	}
 
-	// this should not be reached since there must be an edge
-	return ""
+	// gets the CSV name that does not appear in any replaces field in the entries array
+	for key, _ := range nameMap {
+		if _, present := replacesMap[key]; !present {
+			fmt.Println(key)
+			return key, nil
+		}
+	}
+
+	// this should not be reached since there must be an edge to upgrade from
+	return "", errors.New("no channel head found")
 }
 
 // traditionalUpgrade upgrades an operator that was installed using OLM. Subsequent upgrades will go through the setupFBCupdates function
@@ -202,14 +200,13 @@ func traditionalUpgrade(ctx context.Context, indexImage string, bundleImage stri
 	}
 
 	// search for the specific channel in which the upgrade needs to take place, and upgrade from the channel head
-	channelHead := ""
 	for i, _ := range originalDeclCfg.Channels {
 		if originalDeclCfg.Channels[i].Name == channelName && originalDeclCfg.Channels[i].Package == bundleDeclConfig.Bundles[0].Package {
 			// found specific channel
-			tempChannelHead := getChannelHead(originalDeclCfg.Channels[i].Entries)
+			channelHead, err := getChannelHead(originalDeclCfg.Channels[i].Entries)
 
-			if tempChannelHead != "" {
-				channelHead = tempChannelHead
+			if err != nil {
+				return "", err
 			}
 
 			entry := declarativeconfig.ChannelEntry{
@@ -356,7 +353,12 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 					return nil, errors.New("Bundle already exists in the Index Image")
 				}
 			}
-			channelHead = getChannelHead(channel.Entries)
+			channelHead, err = getChannelHead(channel.Entries)
+
+			if err != nil {
+				return nil, err
+			}
+
 			break // We only want to search through the specific channel
 		}
 	}
@@ -499,7 +501,6 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 				return err
 			}
 			c.FBCcontent = upgradedFBC
-			fmt.Println(c.FBCcontent)
 		}
 	} else {
 		isFBCImage, err := isFBC(ctx, c.IndexImage)
@@ -514,7 +515,6 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 			if err != nil {
 				return err
 			}
-			fmt.Println(c.FBCcontent)
 		}
 	}
 
