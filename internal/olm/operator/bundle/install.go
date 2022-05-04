@@ -315,7 +315,7 @@ func (f *FBCContext) createFBC(ctx context.Context) (bundleDeclcfg, error) {
 // stringifyDecConfig writes the generated declarative config to a string.
 func stringifyDecConfig(declcfg *declarativeconfig.DeclarativeConfig) (string, error) {
 	var buf bytes.Buffer
-	err := declarativeconfig.WriteJSON(*declcfg, &buf)
+	err := declarativeconfig.WriteYAML(*declcfg, &buf)
 	if err != nil {
 		return "", fmt.Errorf("error writing generated declarative config to JSON encoder: %v", err)
 	}
