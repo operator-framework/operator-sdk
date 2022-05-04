@@ -153,7 +153,9 @@ func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string
 	return cs, nil
 }
 
+// getChannelHead retrieves the channel head from an array of entries
 func getChannelHead(entries []declarativeconfig.ChannelEntry) string {
+	// gets the CSV that does not appear in any replaces field in the entries array
 	for i, _ := range entries {
 		replaced := false
 		for j, _ := range entries {
@@ -169,11 +171,13 @@ func getChannelHead(entries []declarativeconfig.ChannelEntry) string {
 		}
 	}
 
+	// this should not be reached since there must be an edge
 	return ""
 }
 
 // traditionalUpgrade upgrades an operator that was installed using OLM. Subsequent upgrades will go through the setupFBCupdates function
 func traditionalUpgrade(ctx context.Context, indexImage string, bundleImage string, channelName string) (string, error) {
+	// render the index image
 	render := action.Render{Refs: []string{indexImage}}
 	log.SetOutput(ioutil.Discard)
 	originalDeclCfg, err := render.Run(ctx)
@@ -183,6 +187,7 @@ func traditionalUpgrade(ctx context.Context, indexImage string, bundleImage stri
 		return "", err
 	}
 
+	// render the bundle image
 	render = action.Render{Refs: []string{bundleImage}}
 	log.SetOutput(ioutil.Discard)
 	bundleDeclConfig, err := render.Run(ctx)
@@ -196,6 +201,7 @@ func traditionalUpgrade(ctx context.Context, indexImage string, bundleImage stri
 		return "", err
 	}
 
+	// search for the specific channel in which the upgrade needs to take place, and upgrade from the channel head
 	channelHead := ""
 	for i, _ := range originalDeclCfg.Channels {
 		if originalDeclCfg.Channels[i].Name == channelName && originalDeclCfg.Channels[i].Package == bundleDeclConfig.Bundles[0].Package {
@@ -215,6 +221,7 @@ func traditionalUpgrade(ctx context.Context, indexImage string, bundleImage stri
 		}
 	}
 
+	// add the upgraded bundle to resulting declarative config
 	originalDeclCfg.Bundles = append(originalDeclCfg.Bundles, bundleDeclConfig.Bundles[0])
 
 	// convert declarative config to string
@@ -248,6 +255,7 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 		render          action.Render
 	)
 
+	// render the index image if it is not the default index image
 	render = action.Render{Refs: []string{}}
 	if c.IndexImage != DefaultIndexImage {
 		render.Refs = append(render.Refs, c.IndexImage)
@@ -261,6 +269,7 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 		return err
 	}
 
+	// add the upgraded bundle to the list of previous bundles so that they can be rendered with a single API call
 	c.PreviousBundles = append(c.PreviousBundles, c.BundleImage)
 	f := &FBCContext{
 		Package:        c.PackageName,
@@ -352,7 +361,7 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 		}
 	}
 
-	// Storing a list of the bundles for easier querying via maps
+	// Storing a list of the existing bundles and their packages for easier querying via maps
 	existingBundles := make(map[string]string)
 	for _, bundle := range originalDeclCfg.Bundles {
 		existingBundles[bundle.Name] = bundle.Package
@@ -426,6 +435,8 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 	return originalDeclCfg, nil
 }
 
+// isFBC will determine if an index image uses the File-Based Catalog or SQLite index image format.
+// The default index image will adopt the File-Based Catalog format.
 func isFBC(ctx context.Context, indexImage string) (bool, error) {
 	// adding updates to the IndexImageCatalogCreator if it is an FBC image
 	catalogLabels, err := registryutil.GetImageLabels(ctx, nil, indexImage, false)
@@ -445,6 +456,8 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 		if value, hasAnnotation := annotations[indexImageAnnotation]; hasAnnotation && value != "" {
 			c.IndexImage = value
 		}
+
+		// search for the list of the previous injected bundles using the catalog source's annotations
 		if value, hasAnnotation := annotations[injectedBundlesAnnotation]; hasAnnotation && value != "" {
 			var injectedBundles []map[string]interface{}
 			if err := json.Unmarshal([]byte(annotations[injectedBundlesAnnotation]), &injectedBundles); err != nil {
@@ -456,8 +469,6 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 		}
 		prevRegistryPodName = annotations[registryPodNameAnnotation]
 	}
-
-	// fmt.Println(cs.GetAnnotations())
 
 	existingItems, err := getExistingBundleItems(cs.GetAnnotations())
 	if err != nil {
