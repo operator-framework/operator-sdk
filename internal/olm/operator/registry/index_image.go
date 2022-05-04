@@ -188,6 +188,10 @@ func traditionalUpgrade(ctx context.Context, indexImage string, bundleImage stri
 	bundleDeclConfig, err := render.Run(ctx)
 	log.SetOutput(os.Stdout)
 
+	if len(bundleDeclConfig.Bundles) != 1 {
+		return "", errors.New("bundle image must have at least one bundle")
+	}
+
 	if err != nil {
 		return "", err
 	}
@@ -342,23 +346,27 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 					// TODO: may or may not error out if already found
 					return nil, errors.New("Bundle already exists in the Index Image")
 				}
-				channelHead = getChannelHead(channel.Entries)
 			}
+			channelHead = getChannelHead(channel.Entries)
 			break // We only want to search through the specific channel
 		}
 	}
 
+	// Storing a list of the bundles for easier querying via maps
 	existingBundles := make(map[string]string)
 	for _, bundle := range originalDeclCfg.Bundles {
 		existingBundles[bundle.Name] = bundle.Package
 	}
 
+	// declcfg contains all the bundles we need to insert to form the new FBC
 	entries := []declarativeconfig.ChannelEntry{}
 	for i, bundle := range declcfg.Bundles {
-		// it is not present in the bundles array or belongs to a different package
+		// if it is not present in the bundles array or belongs to a different package, we can add it
 		if _, present := existingBundles[bundle.Name]; !present || existingBundles[bundle.Name] != bundle.Package {
 			originalDeclCfg.Bundles = append(originalDeclCfg.Bundles, bundle)
 		}
+
+		// constructing a new entry to add
 		entry := declarativeconfig.ChannelEntry{
 			Name: declcfg.Bundles[i].Name,
 		}
@@ -368,6 +376,7 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 			entry.Replaces = channelHead
 		}
 
+		// either add it to a new channel or an existing channel
 		if channelExists {
 			originalDeclCfg.Channels[channelIndex].Entries = append(originalDeclCfg.Channels[channelIndex].Entries, entry)
 		} else {
@@ -376,7 +385,7 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 	}
 
 	if !channelExists {
-		// generate channels
+		// generate channel
 		channel := declarativeconfig.Channel{
 			Schema:  f.ChannelSchema,
 			Name:    f.ChannelName,
