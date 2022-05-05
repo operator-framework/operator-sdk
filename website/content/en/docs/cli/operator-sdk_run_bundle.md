@@ -14,7 +14,7 @@ The main purpose of this command is to streamline running the bundle without hav
 
 The `--index-image` flag specifies an index image in which to inject the given bundle. It can be specified to resolve dependencies for a bundle. 
 This is an optional flag which will default to `quay.io/operator-framework/opm:latest`.
-The index image provided should **NOT** already have the bundle, if it does this command will not work as expected.
+The index image provided should **NOT** already have the bundle.
 
 
 ```
