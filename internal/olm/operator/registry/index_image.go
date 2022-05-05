@@ -69,9 +69,6 @@ type FBCContext struct {
 	BundleImage       string
 	Package           string
 	DefaultChannel    string
-	FBCName           string
-	FBCDirPath        string
-	FBCDirName        string
 	ChannelSchema     string
 	ChannelName       string
 	ChannelEntry      declarativeconfig.ChannelEntry
@@ -80,25 +77,20 @@ type FBCContext struct {
 }
 
 type IndexImageCatalogCreator struct {
-	SkipTLSVerify     bool
-	UseHTTP           bool
-	HasFBCLabel       bool
-	PackageName       string
-	ChannelName       string
-	CSVname           string
-	IndexImage        string
-	BundleImage       string
-	SkipTLS           bool
-	SecretName        string
-	CASecretName      string
-	BundleAddMode     index.BundleAddMode
-	FBCcontent        string
-	FBCdir            string
-	FBCfile           string
-	cfg               *operator.Configuration
-	FBCImage          string
-	ChannelEntrypoint string
-	PreviousBundles   []string
+	SkipTLSVerify   bool
+	UseHTTP         bool
+	HasFBCLabel     bool
+	PackageName     string
+	ChannelName     string
+	IndexImage      string
+	BundleImage     string
+	SkipTLS         bool
+	SecretName      string
+	CASecretName    string
+	BundleAddMode   index.BundleAddMode
+	FBCcontent      string
+	cfg             *operator.Configuration
+	PreviousBundles []string
 }
 
 var _ CatalogCreator = &IndexImageCatalogCreator{}
