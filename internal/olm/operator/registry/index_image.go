@@ -204,7 +204,6 @@ func traditionalUpgrade(ctx context.Context, indexImage string, bundleImage stri
 		if originalDeclCfg.Channels[i].Name == channelName && originalDeclCfg.Channels[i].Package == bundleDeclConfig.Bundles[0].Package {
 			// found specific channel
 			channelHead, err := getChannelHead(originalDeclCfg.Channels[i].Entries)
-
 			if err != nil {
 				return "", err
 			}
@@ -349,7 +348,6 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 			for _, entry := range channel.Entries {
 				// Our upgraded bundle image is the last element of the refs we passed in
 				if entry.Name == declcfg.Bundles[len(declcfg.Bundles)-1].Name {
-					// TODO: may or may not error out if already found
 					return nil, errors.New("Bundle already exists in the Index Image")
 				}
 			}
@@ -370,7 +368,7 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 	}
 
 	// declcfg contains all the bundles we need to insert to form the new FBC
-	entries := []declarativeconfig.ChannelEntry{}
+	entries := []declarativeconfig.ChannelEntry{} // Used when generating a new channel
 	for i, bundle := range declcfg.Bundles {
 		// if it is not present in the bundles array or belongs to a different package, we can add it
 		if _, present := existingBundles[bundle.Name]; !present || existingBundles[bundle.Name] != bundle.Package {
@@ -395,8 +393,8 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 		}
 	}
 
+	// create a new channel if it does not exist
 	if !channelExists {
-		// generate channel
 		channel := declarativeconfig.Channel{
 			Schema:  f.ChannelSchema,
 			Name:    f.ChannelName,
@@ -487,6 +485,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 		// if no annotations exist and image reference exists, set it to index image
 		c.IndexImage = cs.Spec.Image
 
+		// check if index image adopts File-Based Catalog or SQLite index image format
 		isFBCImage, err := isFBC(ctx, c.IndexImage)
 		if err != nil {
 			return err
@@ -503,6 +502,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 			c.FBCcontent = upgradedFBC
 		}
 	} else {
+		// check if index image adopts File-Based Catalog or SQLite index image format
 		isFBCImage, err := isFBC(ctx, c.IndexImage)
 		if err != nil {
 			return err
