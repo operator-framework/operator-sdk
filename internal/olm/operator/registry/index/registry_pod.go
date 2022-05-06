@@ -20,8 +20,6 @@ import (
 	"errors"
 	"fmt"
 	"path"
-	"path/filepath"
-	"strings"
 	"text/template"
 	"time"
 
@@ -54,8 +52,8 @@ type BundleItem struct {
 	AddMode BundleAddMode `json:"mode"`
 }
 
-// RegistryPod holds resources necessary for creation of a registry server
-type RegistryPod struct { //nolint:maligned
+// SQLiteRegistryPod holds resources necessary for creation of a registry server
+type SQLiteRegistryPod struct { //nolint:maligned
 	// BundleItems contains all bundles to be added to a registry pod.
 	BundleItems []BundleItem
 
@@ -89,16 +87,10 @@ type RegistryPod struct { //nolint:maligned
 	pod *corev1.Pod
 
 	cfg *operator.Configuration
-
-	// FBC data
-	FBCcontent  string
-	FBCdir      string
-	FBCfile     string
-	HasFBCLabel bool
 }
 
-// init initializes the RegistryPod struct and sets defaults for empty fields
-func (rp *RegistryPod) init(cfg *operator.Configuration) error {
+// init initializes the SQLiteRegistryPod struct and sets defaults for empty fields
+func (rp *SQLiteRegistryPod) init(cfg *operator.Configuration) error {
 	if rp.GRPCPort == 0 {
 		rp.GRPCPort = defaultGRPCPort
 	}
@@ -107,15 +99,7 @@ func (rp *RegistryPod) init(cfg *operator.Configuration) error {
 	}
 	rp.cfg = cfg
 
-	// if the FBC label is set to true, assign FBCdir and FBCfile variables to serve the content from.
-	if rp.HasFBCLabel {
-		bundleImage := rp.BundleItems[len(rp.BundleItems)-1].ImageTag
-		trimmedbundleImage := strings.Split(bundleImage, ":")[0]
-		rp.FBCdir = fmt.Sprintf("%s-index", filepath.Join("/tmp", strings.Split(trimmedbundleImage, "/")[2]))
-		rp.FBCfile = filepath.Join(rp.FBCdir, strings.Split(bundleImage, ":")[1])
-	}
-
-	// validate the RegistryPod struct and ensure required fields are set
+	// validate the SQLiteRegistryPod struct and ensure required fields are set
 	if err := rp.validate(); err != nil {
 		return fmt.Errorf("invalid registry pod: %v", err)
 	}
@@ -133,7 +117,7 @@ func (rp *RegistryPod) init(cfg *operator.Configuration) error {
 // Create creates a bundle registry pod built from an index image,
 // sets the catalog source as the owner for the pod and verifies that
 // the pod is running
-func (rp *RegistryPod) Create(ctx context.Context, cfg *operator.Configuration, cs *v1alpha1.CatalogSource) (*corev1.Pod, error) {
+func (rp *SQLiteRegistryPod) Create(ctx context.Context, cfg *operator.Configuration, cs *v1alpha1.CatalogSource) (*corev1.Pod, error) {
 	if err := rp.init(cfg); err != nil {
 		return nil, err
 	}
@@ -171,7 +155,7 @@ func (rp *RegistryPod) Create(ctx context.Context, cfg *operator.Configuration, 
 }
 
 // checkPodStatus polls and verifies that the pod status is running
-func (rp *RegistryPod) checkPodStatus(ctx context.Context, podCheck wait.ConditionFunc) error {
+func (rp *SQLiteRegistryPod) checkPodStatus(ctx context.Context, podCheck wait.ConditionFunc) error {
 	// poll every 200 ms until podCheck is true or context is done
 	err := wait.PollImmediateUntil(200*time.Millisecond, podCheck, ctx.Done())
 	if err != nil {
@@ -181,9 +165,9 @@ func (rp *RegistryPod) checkPodStatus(ctx context.Context, podCheck wait.Conditi
 	return err
 }
 
-// validate will ensure that RegistryPod required fields are set
+// validate will ensure that SQLiteRegistryPod required fields are set
 // and throws error if not set
-func (rp *RegistryPod) validate() error {
+func (rp *SQLiteRegistryPod) validate() error {
 	if len(rp.BundleItems) == 0 {
 		return errors.New("bundle image set cannot be empty")
 	}
@@ -216,7 +200,7 @@ func getPodName(bundleImage string) string {
 
 // podForBundleRegistry constructs and returns the registry pod definition
 // and throws error when unable to build the pod definition successfully
-func (rp *RegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
+func (rp *SQLiteRegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 	// rp was already validated so len(rp.BundleItems) must be greater than 0.
 	bundleImage := rp.BundleItems[len(rp.BundleItems)-1].ImageTag
 
@@ -329,15 +313,9 @@ opm registry add -d {{ $.DBPath }} -b {{ $item.ImageTag }} --mode={{ $item.AddMo
 opm registry serve -d {{ .DBPath }} -p {{ .GRPCPort }}
 `
 
-const fbcCmdTemplate = `mkdir -p {{ .FBCdir }} && \
-echo '{{ .FBCcontent }}' >> {{ .FBCfile  }} && \
-opm serve {{ .FBCdir }} -p {{ .GRPCPort }}
-`
-
 // getContainerCmd uses templating to construct the container command
 // and throws error if unable to parse and execute the container command
-func (rp *RegistryPod) getContainerCmd() (string, error) {
-	var t *template.Template
+func (rp *SQLiteRegistryPod) getContainerCmd() (string, error) {
 	// create a custom dirname template function
 	funcMap := template.FuncMap{
 		"dirname": path.Dir,
@@ -345,11 +323,7 @@ func (rp *RegistryPod) getContainerCmd() (string, error) {
 
 	// add the custom dirname template function to the
 	// template's FuncMap and parse the cmdTemplate
-	if rp.HasFBCLabel {
-		t = template.Must(template.New("cmd").Funcs(funcMap).Parse(fbcCmdTemplate))
-	} else {
-		t = template.Must(template.New("cmd").Funcs(funcMap).Parse(cmdTemplate))
-	}
+	t := template.Must(template.New("cmd").Funcs(funcMap).Parse(cmdTemplate))
 
 	// execute the command by applying the parsed template to command
 	// and write command output to out
@@ -357,9 +331,6 @@ func (rp *RegistryPod) getContainerCmd() (string, error) {
 	if err := t.Execute(out, rp); err != nil {
 		return "", fmt.Errorf("parse container command: %w", err)
 	}
-
-	// fmt.Println()
-	// fmt.Println(out.String())
 
 	return out.String(), nil
 }

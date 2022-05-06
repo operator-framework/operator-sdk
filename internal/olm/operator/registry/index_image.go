@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -38,8 +37,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
 
+	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	declarativeconfig "github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
+	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry/fbcindex"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry/index"
 	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
 )
@@ -65,32 +66,39 @@ const (
 	registryPodNameAnnotation = operatorFrameworkGroup + "/registry-pod-name"
 )
 
+const (
+	SchemaChannel  = "olm.channel"
+	SchemaPackage  = "olm.package"
+	DefaultChannel = "develop"
+)
+
+type BundleDeclcfg struct {
+	Package declcfg.Package
+	Channel declcfg.Channel
+	Bundle  declcfg.Bundle
+}
+
 type FBCContext struct {
-	BundleImage       string
-	Package           string
-	DefaultChannel    string
-	ChannelSchema     string
-	ChannelName       string
-	ChannelEntry      declarativeconfig.ChannelEntry
-	DescriptionReader io.Reader
-	Refs              []string
+	Package      string
+	ChannelName  string
+	Refs         []string
+	ChannelEntry declarativeconfig.ChannelEntry
 }
 
 type IndexImageCatalogCreator struct {
+	SkipTLS         bool
 	SkipTLSVerify   bool
 	UseHTTP         bool
 	HasFBCLabel     bool
+	FBCContent      string
 	PackageName     string
-	ChannelName     string
 	IndexImage      string
 	BundleImage     string
-	SkipTLS         bool
 	SecretName      string
 	CASecretName    string
 	BundleAddMode   index.BundleAddMode
-	FBCcontent      string
-	cfg             *operator.Configuration
 	PreviousBundles []string
+	cfg             *operator.Configuration
 }
 
 var _ CatalogCreator = &IndexImageCatalogCreator{}
@@ -260,11 +268,8 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 	// add the upgraded bundle to the list of previous bundles so that they can be rendered with a single API call
 	c.PreviousBundles = append(c.PreviousBundles, c.BundleImage)
 	f := &FBCContext{
-		Package:        c.PackageName,
-		DefaultChannel: c.ChannelName,
-		ChannelSchema:  "olm.channel",
-		ChannelName:    c.ChannelName,
-		Refs:           c.PreviousBundles,
+		Package: c.PackageName,
+		Refs:    c.PreviousBundles,
 	}
 
 	// Adding the FBC "f" to the originalDeclcfg to generate a new FBC
@@ -294,7 +299,7 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 
 	log.Infof("Generated a valid Upgraded File-Based Catalog")
 
-	c.FBCcontent = content
+	c.FBCContent = content
 
 	return nil
 }
@@ -388,7 +393,7 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 	// create a new channel if it does not exist
 	if !channelExists {
 		channel := declarativeconfig.Channel{
-			Schema:  f.ChannelSchema,
+			Schema:  SchemaChannel,
 			Name:    f.ChannelName,
 			Package: f.Package,
 			Entries: entries,
@@ -398,9 +403,8 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 
 	// generate package
 	init := action.Init{
-		Package:           f.Package,
-		DefaultChannel:    f.ChannelName,
-		DescriptionReader: f.DescriptionReader,
+		Package:        f.Package,
+		DefaultChannel: f.ChannelName,
 	}
 
 	// generate packages
@@ -491,7 +495,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 			if err != nil {
 				return err
 			}
-			c.FBCcontent = upgradedFBC
+			c.FBCContent = upgradedFBC
 		}
 	} else {
 		// check if index image adopts File-Based Catalog or SQLite index image format
@@ -556,28 +560,43 @@ func (c *IndexImageCatalogCreator) setAddMode() {
 // from items and that pod, then applies updateFields.
 func (c IndexImageCatalogCreator) createAnnotatedRegistry(ctx context.Context, cs *v1alpha1.CatalogSource,
 	items []index.BundleItem, updates ...func(*v1alpha1.CatalogSource)) (err error) {
-
+	var pod *corev1.Pod
 	if c.IndexImage == "" {
 		c.IndexImage = DefaultIndexImage
 	}
 
-	// Initialize and create registry pod
-	registryPod := index.RegistryPod{
-		BundleItems:   items,
-		IndexImage:    c.IndexImage,
-		SecretName:    c.SecretName,
-		CASecretName:  c.CASecretName,
-		SkipTLSVerify: c.SkipTLSVerify,
-		UseHTTP:       c.UseHTTP,
-		FBCcontent:    c.FBCcontent,
-		HasFBCLabel:   c.HasFBCLabel,
-	}
-	if registryPod.DBPath, err = c.getDBPath(ctx); err != nil {
-		return fmt.Errorf("get database path: %v", err)
-	}
-	pod, err := registryPod.Create(ctx, c.cfg, cs)
-	if err != nil {
-		return err
+	if c.HasFBCLabel {
+		// Initialize and create the FBC registry pod.
+		fbcRegistryPod := fbcindex.FBCRegistryPod{
+			BundleItems: items,
+			IndexImage:  c.IndexImage,
+			FBCContent:  c.FBCContent,
+		}
+
+		pod, err = fbcRegistryPod.Create(ctx, c.cfg, cs)
+		if err != nil {
+			return err
+		}
+
+	} else {
+		// Initialize and create registry pod
+		registryPod := index.SQLiteRegistryPod{
+			BundleItems:   items,
+			IndexImage:    c.IndexImage,
+			SecretName:    c.SecretName,
+			CASecretName:  c.CASecretName,
+			SkipTLSVerify: c.SkipTLSVerify,
+			UseHTTP:       c.UseHTTP,
+		}
+
+		if registryPod.DBPath, err = c.getDBPath(ctx); err != nil {
+			return fmt.Errorf("get database path: %v", err)
+		}
+
+		pod, err = registryPod.Create(ctx, c.cfg, cs)
+		if err != nil {
+			return err
+		}
 	}
 
 	// JSON marshal injected bundles
@@ -698,78 +717,63 @@ func (c IndexImageCatalogCreator) deleteRegistryPod(ctx context.Context, podName
 // StringifyDecConfig writes the generated declarative config to a string.
 func StringifyDecConfig(declcfg *declarativeconfig.DeclarativeConfig) (string, error) {
 	var buf bytes.Buffer
-	err := declarativeconfig.WriteJSON(*declcfg, &buf)
+	err := declarativeconfig.WriteYAML(*declcfg, &buf)
 	if err != nil {
-		log.Errorf("error writing to JSON encoder: %v", err)
-		return "", err
+		return "", fmt.Errorf("error writing generated declarative config to JSON encoder: %v", err)
 	}
 
-	return string(buf.Bytes()), nil
+	return buf.String(), nil
 }
 
 // ValidateFBC converts the generated declarative config to a model and validates it.
 func ValidateFBC(declcfg *declarativeconfig.DeclarativeConfig) error {
-	// convert declarative config to model
+	// validates and converts declarative config to model
 	_, err := declarativeconfig.ConvertToModel(*declcfg)
 	if err != nil {
-		log.Errorf("error converting the declarative config to model: %v", err)
-		return err
+		return fmt.Errorf("error converting the declarative config to model: %v", err)
+
 	}
 
 	return nil
 }
 
 // CreateFBC generates an FBC by creating bundle, package and channel blobs.
-func (f *FBCContext) CreateFBC(ctx context.Context) (*declarativeconfig.DeclarativeConfig, error) {
-	var (
-		declcfg        *declarativeconfig.DeclarativeConfig
-		declcfgpackage *declarativeconfig.Package
-		err            error
-	)
-
+func (f *FBCContext) CreateFBC(ctx context.Context) (BundleDeclcfg, error) {
+	var bundleDC BundleDeclcfg
 	// Rendering the bundle image into a declarative config format.
+	log.SetOutput(ioutil.Discard)
 	render := action.Render{
 		Refs: f.Refs,
 	}
 
 	// generate bundles by rendering the bundle objects.
-	log.SetOutput(ioutil.Discard)
-	declcfg, err = render.Run(ctx)
+	declcfg, err := render.Run(ctx)
 	log.SetOutput(os.Stdout)
-
 	if err != nil {
-		log.Errorf("error in rendering the bundle image: %v", err)
-		return nil, err
+		return BundleDeclcfg{}, fmt.Errorf("error rendering the bundle image: %v", err)
 	}
 
 	// Ensuring a valid bundle size.
-	if len(declcfg.Bundles) < 0 {
-		return nil, fmt.Errorf("bundles rendered are less than 0 for the bundle image")
+	if len(declcfg.Bundles) != 1 {
+		return BundleDeclcfg{}, fmt.Errorf("bundle image should contain exactly one bundle blob")
 	}
 
-	// init packages.
-	init := action.Init{
-		Package:        f.Package,
+	bundleDC.Bundle = declcfg.Bundles[0]
+
+	// generate package.
+	bundleDC.Package = declarativeconfig.Package{
+		Schema:         SchemaPackage,
+		Name:           f.Package,
 		DefaultChannel: f.ChannelName,
 	}
 
-	// generate packages.
-	declcfgpackage, err = init.Run()
-	if err != nil {
-		log.Errorf("error in generating packages for the FBC: %v", err)
-		return nil, err
-	}
-	declcfg.Packages = []declarativeconfig.Package{*declcfgpackage}
-
-	// generate channels.
-	channel := declarativeconfig.Channel{
-		Schema:  "olm.channel",
+	// generate channel.
+	bundleDC.Channel = declarativeconfig.Channel{
+		Schema:  SchemaChannel,
 		Name:    f.ChannelName,
 		Package: f.Package,
 		Entries: []declarativeconfig.ChannelEntry{f.ChannelEntry},
 	}
 
-	declcfg.Channels = []declarativeconfig.Channel{channel}
-
-	return declcfg, nil
+	return bundleDC, nil
 }
