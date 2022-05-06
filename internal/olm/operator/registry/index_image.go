@@ -269,8 +269,9 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 	// add the upgraded bundle to the list of previous bundles so that they can be rendered with a single API call
 	c.PreviousBundles = append(c.PreviousBundles, c.BundleImage)
 	f := &FBCContext{
-		Package: c.PackageName,
-		Refs:    c.PreviousBundles,
+		Package:     c.PackageName,
+		Refs:        c.PreviousBundles,
+		ChannelName: c.ChannelName,
 	}
 
 	// Adding the FBC "f" to the originalDeclcfg to generate a new FBC
