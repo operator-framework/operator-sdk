@@ -18,8 +18,6 @@
       status: "True"
   register: subresources_test
 
-- debug: var=subresources_test
-
 - name: Assert stdout and stderr are properly set in status
   assert:
     that:

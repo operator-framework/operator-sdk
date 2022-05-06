@@ -418,7 +418,6 @@ const targetMoleculeCheckDeployment = `- name: Wait 2 minutes for memcached depl
     )}}'`
 
 const molecuTaskToCheckConfigMap = `
-
 - name: Create ConfigMap that the Operator should delete
   k8s:
     definition:

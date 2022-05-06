@@ -1,4 +1,4 @@
-// Copyright 2020 The Operator-SDK Authors
+// Copyright 2021 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package olm
+package validate
 
-var availableVersions = map[string]struct{}{
-	"0.18.3": {},
-	"0.19.1": {},
-	"0.20.0": {},
-}
+import (
+	"testing"
 
-// HasVersion returns whether version maps to released OLM manifests as bindata.
-func HasVersion(version string) bool {
-	_, ok := availableVersions[version]
-	return ok
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+)
+
+func TestResult(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Output Result Tests")
 }

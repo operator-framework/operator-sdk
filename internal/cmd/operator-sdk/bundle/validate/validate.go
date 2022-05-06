@@ -15,6 +15,7 @@
 package validate
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -31,18 +32,19 @@ import (
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/labels"
 
-	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/bundle/validate/internal"
 	internalregistry "github.com/operator-framework/operator-sdk/internal/registry"
+	"github.com/operator-framework/operator-sdk/internal/validate"
 )
 
 type bundleValidateCmd struct {
-	directory      string
-	imageBuilder   string
-	outputFormat   string
-	selectorRaw    string
-	selector       labels.Selector
-	listOptional   bool
-	optionalValues map[string]string
+	directory           string
+	imageBuilder        string
+	outputFormat        string
+	selectorRaw         string
+	selector            labels.Selector
+	listOptional        bool
+	optionalValues      map[string]string
+	alphaSelectExternal string
 }
 
 // validate verifies the command args
@@ -54,7 +56,7 @@ func (c bundleValidateCmd) validate(args []string) error {
 	if len(args) != 1 {
 		return errors.New("an image tag or directory is a required argument")
 	}
-	if c.outputFormat != internal.JSONAlpha1 && c.outputFormat != internal.Text {
+	if c.outputFormat != validate.JSONAlpha1Output && c.outputFormat != validate.TextOutput {
 		return fmt.Errorf("invalid value for output flag: %v", c.outputFormat)
 	}
 
@@ -85,12 +87,31 @@ func (c *bundleValidateCmd) addToFlagSet(fs *pflag.FlagSet) {
 		"Inform a []string map of key=values which can be used by the validator. e.g. to check the operator bundle "+
 			"against an Kubernetes version that it is intended to be distributed use `--optional-values=k8s-version=1.22`")
 
-	fs.StringVarP(&c.outputFormat, "output", "o", internal.Text,
+	fs.StringVarP(&c.outputFormat, "output", "o", validate.TextOutput,
 		"Result format for results. One of: [text, json-alpha1]. Note: output format types containing "+
 			"\"alphaX\" are subject to change and not covered by guarantees of stable APIs.")
+
+	// alpha-select-external should be set to a Unix path list
+	// ("/path/to/e1.sh:/path/to/e2") containing the list of entrypoints to
+	// external (out of code tree) validator scripts or binaries to run.
+	// Requirements for entrypoints:
+	//  - Entrypoints must be executable by the user running the parent process.
+	//  - The stdout output of an entrypoint *must* conform to the JSON
+	//    representation of Result so results can be parsed and collated
+	//    with other internal validators.
+	//  - An entrypoint should exit 1 and print output to stderr only if the
+	//    entrypoint itself fails for some reason. If the bundle fails to
+	//    pass validation, that information  should be encoded in the Result
+	//    printed to stdout as a Type=\"error\".
+	//
+	// WARNING: the script or binary at the base of this path will be
+	// executed arbitrarily, so make sure you check the contents of that
+	// script or binary prior to running.
+	fs.StringVar(&c.alphaSelectExternal, "alpha-select-external", "",
+		"Selector to select external validators to run. It should be set to a Unix path list (\"/path/to/e1.sh:/path/to/e2\")")
 }
 
-func (c bundleValidateCmd) run(logger *log.Entry, bundleRaw string) (res *internal.Result, err error) {
+func (c bundleValidateCmd) run(logger *log.Entry, bundleRaw string) (res *validate.Result, err error) {
 	// Create a registry to validate bundle files and optionally unpack the image with.
 	reg, err := newImageRegistryForTool(logger, c.imageBuilder)
 	if err != nil {
@@ -132,7 +153,7 @@ func (c bundleValidateCmd) run(logger *log.Entry, bundleRaw string) (res *intern
 	}
 
 	// Create Result to be output.
-	res = internal.NewResult()
+	res = validate.NewResult()
 
 	logger = logger.WithFields(log.Fields{
 		"bundle-dir":     c.directory,
@@ -152,6 +173,21 @@ func (c bundleValidateCmd) run(logger *log.Entry, bundleRaw string) (res *intern
 	// Run optional validators.
 	results = runOptionalValidators(bundle, c.selector, c.optionalValues)
 	res.AddManifestResults(results...)
+
+	// TODO: (zeus) consider making this a runExternalValidators method similar
+	// to the optional one above
+
+	// Run external validators, if enabled.
+	if entrypoints, isEnabled := validate.GetExternalValidatorEntrypoints(c.alphaSelectExternal); isEnabled {
+		logger.Debugf("Running external validators: %+q", entrypoints)
+		// TODO(estroz): enable timeout.
+		ctx := context.Background()
+		ress, err := validate.RunExternalValidators(ctx, entrypoints, c.directory)
+		if err != nil {
+			return nil, err
+		}
+		res.AddManifestResults(ress...)
+	}
 
 	return res, nil
 }

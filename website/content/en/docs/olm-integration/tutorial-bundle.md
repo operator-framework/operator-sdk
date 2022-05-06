@@ -152,6 +152,8 @@ INFO[0040]   Found ClusterServiceVersion "default/memcached-operator.v0.0.1" pha
 INFO[0040] OLM has successfully installed "memcached-operator.v0.0.1"
 ```
 
+**Note:** If the bundle that is being installed has dependencies, the `--index-image` flag allows adding a bundle to a catalog that contains that bundle's dependencies.  
+
 <!-- TODO(jmccormick2001): add `scorecard` usage here -->
 
 ### Upgrading a bundle to a newer version
@@ -179,6 +181,8 @@ INFO[0058]   Found ClusterServiceVersion "default/memcached-operator.v0.0.2" pha
 INFO[0095]   Found ClusterServiceVersion "default/memcached-operator.v0.0.2" phase: Succeeded
 INFO[0095] Successfully upgraded to "memcached-operator.v0.0.2"
 ```
+
+**Note:** If a bundle was installed using [`operator-sdk run bundle`][run-bundle] with a SQLite index image, the `replaces` field *must* be present and populated in the upgraded CSV's spec. 
 
 #### Upgrading a bundle that was installed traditionally using OLM
 
@@ -303,3 +307,4 @@ In-depth discussions of OLM concepts mentioned here:
 [subscription]:https://olm.operatorframework.io/docs/concepts/crds/subscription/
 [olm-install]:https://olm.operatorframework.io/docs/tasks/install-operator-with-olm/
 [olm-manifests]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/deploy/upstream/quickstart/olm.yaml
+[run-bundle]: https://sdk.operatorframework.io/docs/cli/operator-sdk_run_bundle/

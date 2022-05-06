@@ -84,6 +84,10 @@ github_subdir = "website"
 # Enable Algolia DocSearch
 algolia_docsearch = true
 
+# Update archived_version to true when this version is no longer supported. `version` is only used by the archived banner.
+version = "FIXME_when_archived"
+archived_version = false
+url_latest_version = "https://sdk.operatorframework.io"
 
 [[params.versions]]
   version = "master"
@@ -94,6 +98,10 @@ algolia_docsearch = true
   url = "https://sdk.operatorframework.io"
 
 ##RELEASE_ADDME##
+
+[[params.versions]]
+  version = "v1.20"
+  url = "https://v1-20-x.sdk.operatorframework.io"
 
 [[params.versions]]
   version = "v1.19"

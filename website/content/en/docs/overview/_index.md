@@ -90,9 +90,9 @@ By project type (replace `${IMAGE_VERSION}` with base image version in your proj
 
 ## OLM version compatibility
 
-Operator SDK officially supports the latest 3 versions of OLM present at the time of a given Operator SDK release. These versions of OLM manifests are packaged with the SDK binary in the form of `bindata` to support low-latency installations of OLM with [`operator-sdk olm install`][olm-install-cmd]. Any other version installed with this command may work but is not tested nor officially supported.
+Operator SDK officially supports the latest 3 minor versions of OLM present at the time of a given Operator SDK release. These versions of OLM manifests are packaged with the SDK binary in the form of `bindata` to support low-latency installations of OLM with [`operator-sdk olm install`][olm-install-cmd]. Any other version installed with this command may work but is not tested nor officially supported.
 
-Currently, the officially supported OLM Versions are: 0.16.1, 0.17.0 and 0.18.2.
+Currently, the officially supported OLM Versions are: 0.18.3, 0.19.1, and 0.20.0
 
 ## Platform support
 
