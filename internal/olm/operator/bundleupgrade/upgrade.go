@@ -89,6 +89,7 @@ func (u *Upgrade) setup(ctx context.Context) error {
 	u.IndexImageCatalogCreator.PackageName = u.OperatorInstaller.PackageName
 	u.IndexImageCatalogCreator.BundleImage = u.BundleImage
 	u.IndexImageCatalogCreator.IndexImage = registry.DefaultIndexImage
+	u.IndexImageCatalogCreator.ChannelName = strings.Split(labels[registrybundle.ChannelsLabel], ",")[0]
 
 	return nil
 }

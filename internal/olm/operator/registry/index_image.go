@@ -99,6 +99,7 @@ type IndexImageCatalogCreator struct {
 	BundleAddMode   index.BundleAddMode
 	PreviousBundles []string
 	cfg             *operator.Configuration
+	ChannelName     string
 }
 
 var _ CatalogCreator = &IndexImageCatalogCreator{}
@@ -721,6 +722,8 @@ func StringifyDecConfig(declcfg *declarativeconfig.DeclarativeConfig) (string, e
 	if err != nil {
 		return "", fmt.Errorf("error writing generated declarative config to JSON encoder: %v", err)
 	}
+
+	fmt.Println(buf.String())
 
 	return buf.String(), nil
 }
