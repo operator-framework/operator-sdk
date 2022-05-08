@@ -1,0 +1,8 @@
+entries:
+  - description: >
+      Update golang version to 1.17 in the documentation requirements.
+
+    kind: "bugfix"
+
+    # Is this a breaking change?
+    breaking: false
