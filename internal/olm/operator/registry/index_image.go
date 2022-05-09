@@ -165,7 +165,6 @@ func getChannelHead(entries []declarativeconfig.ChannelEntry) (string, error) {
 	// gets the CSV name that does not appear in any replaces field in the entries array
 	for key, _ := range nameMap {
 		if _, present := replacesMap[key]; !present {
-			fmt.Println(key)
 			return key, nil
 		}
 	}
@@ -208,7 +207,6 @@ func traditionalUpgrade(ctx context.Context, indexImage string, bundleImage stri
 			if err != nil {
 				return "", err
 			}
-
 			entry := declarativeconfig.ChannelEntry{
 				Name:     bundleDeclConfig.Bundles[0].Name,
 				Replaces: channelHead,
