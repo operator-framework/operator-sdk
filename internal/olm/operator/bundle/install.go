@@ -205,17 +205,16 @@ func addBundleToIndexImage(ctx context.Context, indexImage string, bundleDeclCon
 		return nil, fmt.Errorf("error rendering the index image %q: %v", indexImage, err)
 	}
 
-	var isPackagePresent, isBundlePresent, isChannelPresent bool
-	for _, pkg := range imageDeclConfig.Packages {
-		if pkg.Name == bundleDeclConfig.Package.Name {
-			isPackagePresent = true
-			break
+	for _, bundle := range imageDeclConfig.Bundles {
+		if bundle.Name == bundleDeclConfig.Bundle.Name && bundle.Package == bundleDeclConfig.Bundle.Package {
+			return nil, fmt.Errorf("bundle %q already exists in the index image: %s", bundleDeclConfig.Bundle.Name, indexImage)
 		}
 	}
 
-	for _, bundle := range imageDeclConfig.Bundles {
-		if bundle.Name == bundleDeclConfig.Bundle.Name && bundle.Package == bundleDeclConfig.Bundle.Package {
-			isBundlePresent = true
+	var isPackagePresent, isChannelPresent bool
+	for _, pkg := range imageDeclConfig.Packages {
+		if pkg.Name == bundleDeclConfig.Package.Name {
+			isPackagePresent = true
 			break
 		}
 	}
@@ -227,21 +226,12 @@ func addBundleToIndexImage(ctx context.Context, indexImage string, bundleDeclCon
 		}
 	}
 
-	// insert bundle to index if package/bundle/channel is not present on the index;
-	// and insert only bundle declarative config channel to index when both bundle/package are present but not the channel.
-	if !isPackagePresent && !isBundlePresent && !isChannelPresent {
+	if !isPackagePresent && !isChannelPresent {
 		imageDeclConfig.Bundles = append(imageDeclConfig.Bundles, bundleDeclConfig.Bundle)
 		imageDeclConfig.Channels = append(imageDeclConfig.Channels, bundleDeclConfig.Channel)
 		imageDeclConfig.Packages = append(imageDeclConfig.Packages, bundleDeclConfig.Package)
-	} else if isPackagePresent && isBundlePresent && !isChannelPresent {
-		// if the bundle already exists in a different channel,
-		// we already have the bundle and package blobs in the FBC, in which case,
-		// we need to reference it in the channel we want it to be in.
-		imageDeclConfig.Channels = append(imageDeclConfig.Channels, bundleDeclConfig.Channel)
-	} else if isBundlePresent {
-		return nil, fmt.Errorf("bundle %q already present in the index image: %s", bundleDeclConfig.Bundle.Name, indexImage)
 	} else {
-		return nil, fmt.Errorf("cannot add bundle %q to the index image: %s", bundleDeclConfig.Bundle.Name, indexImage)
+		return nil, fmt.Errorf("cannot add bundle %q to the index: %s", bundleDeclConfig.Bundle.Name, indexImage)
 	}
 
 	log.Infof("Inserted the new bundle %q into the index image: %s", bundleDeclConfig.Bundle.Name, indexImage)
