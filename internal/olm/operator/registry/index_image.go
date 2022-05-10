@@ -722,8 +722,6 @@ func StringifyDecConfig(declcfg *declarativeconfig.DeclarativeConfig) (string, e
 		return "", fmt.Errorf("error writing generated declarative config to JSON encoder: %v", err)
 	}
 
-	fmt.Println(buf.String())
-
 	return buf.String(), nil
 }
 
