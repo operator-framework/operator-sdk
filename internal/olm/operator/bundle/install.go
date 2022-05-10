@@ -148,6 +148,7 @@ func (i *Install) setup(ctx context.Context) error {
 	return nil
 }
 
+// generateFBCContent creates a File-Based Catalog using the bundle image and index image from the run bundle command.
 func generateFBCContent(f *registry.FBCContext, ctx context.Context, bundleImage, indexImage string) (string, error) {
 	log.Infof("Creating a File-Based Catalog of the bundle %q", bundleImage)
 	// generate a File-Based Catalog representation of the bundle image
