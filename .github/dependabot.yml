@@ -24,3 +24,8 @@ updates:
     directory: "/images/scorecard-test-kuttl"
     schedule:
       interval: daily
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule: 
+     interval: daily
+  
