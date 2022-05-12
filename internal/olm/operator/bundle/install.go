@@ -212,7 +212,13 @@ func addBundleToIndexImage(ctx context.Context, indexImage string, bundleDeclCon
 		}
 	}
 
-	var isPackagePresent, isChannelPresent bool
+	for _, channel := range imageDeclConfig.Channels {
+		if channel.Name == bundleDeclConfig.Channel.Name && channel.Package == bundleDeclConfig.Bundle.Package {
+			return nil, fmt.Errorf("channel %q already exists in the index image: %s", bundleDeclConfig.Channel.Name, indexImage)
+		}
+	}
+
+	var isPackagePresent bool
 	for _, pkg := range imageDeclConfig.Packages {
 		if pkg.Name == bundleDeclConfig.Package.Name {
 			isPackagePresent = true
@@ -220,19 +226,11 @@ func addBundleToIndexImage(ctx context.Context, indexImage string, bundleDeclCon
 		}
 	}
 
-	for _, channel := range imageDeclConfig.Channels {
-		if channel.Name == bundleDeclConfig.Channel.Name && channel.Package == bundleDeclConfig.Bundle.Package {
-			isChannelPresent = true
-			break
-		}
-	}
+	imageDeclConfig.Bundles = append(imageDeclConfig.Bundles, bundleDeclConfig.Bundle)
+	imageDeclConfig.Channels = append(imageDeclConfig.Channels, bundleDeclConfig.Channel)
 
-	if !isPackagePresent && !isChannelPresent {
-		imageDeclConfig.Bundles = append(imageDeclConfig.Bundles, bundleDeclConfig.Bundle)
-		imageDeclConfig.Channels = append(imageDeclConfig.Channels, bundleDeclConfig.Channel)
+	if !isPackagePresent {
 		imageDeclConfig.Packages = append(imageDeclConfig.Packages, bundleDeclConfig.Package)
-	} else {
-		return nil, fmt.Errorf("cannot add bundle %q to the index: %s", bundleDeclConfig.Bundle.Name, indexImage)
 	}
 
 	log.Infof("Inserted the new bundle %q into the index image: %s", bundleDeclConfig.Bundle.Name, indexImage)
