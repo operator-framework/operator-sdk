@@ -228,7 +228,7 @@ See an example of the JSON format produced by a scorecard test:
 
 ### XML format
 
-See below an example of XMl format produced by a scorecard test. Please note that the XMl is formatted to be compatible with the XUnit schema for post-processing the results.
+See the example below for the results of a scorecard test formatted in XML. Please note that the XML is formatted to be compatible with the XUnit schema for post-processing the results.
 
 ```xml
 <testsuites name="scorecard">
