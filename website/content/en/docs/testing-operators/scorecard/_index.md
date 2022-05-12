@@ -226,6 +226,26 @@ See an example of the JSON format produced by a scorecard test:
 }
 ```
 
+### XML format
+
+See below an example of XMl format produced by a scorecard test. Please note that the XMl is formatted to be compatible with the XUnit schema for post-processing the results.
+
+```xml
+<testsuites name="scorecard">
+  <testsuite name="olm-bundle-validation-test" tests="1" skipped="0" failures="0" errors="0">
+    <properties>
+      <property name="spec.image" value="quay.io/operator-framework/scorecard-test:v1.19.0"></property>
+      <property name="spec.entrypoint" value="scorecard-test olm-bundle-validation"></property>
+      <property name="labels.test" value="olm-bundle-validation-test"></property>
+    </properties>
+    <testcase name="olm-bundle-validation" time="0001-01-01T00:00:00Z">
+      <system-out>time=&#34;2022-04-12T19:21:52Z&#34; level=debug msg=&#34;Found manifests directory&#34; name=bundle-test&#xA;time=&#34;2022-04-12T19:21:52Z&#34; level=debug msg=&#34;Found metadata directory&#34; name=bundle-test&#xA;time=&#34;2022-04-12T19:21:52Z&#34; level=debug msg=&#34;Getting mediaType info from manifests directory&#34; name=bundle-test&#xA;time=&#34;2022-04-12T19:21:52Z&#34; level=debug msg=&#34;Found annotations file&#34; name=bundle-test&#xA;time=&#34;2022-04-12T19:21:52Z&#34; level=debug msg=&#34;Could not find optional dependencies file&#34; name=bundle-test&#xA;</system-out>
+    </testcase>
+  </testsuite>
+  <!-- Some suites omitted for readability -->
+</testsuites>
+```
+
 ### Text format
 
 See an example of the text format produced by a scorecard test:
@@ -246,26 +266,6 @@ Results:
 		time="2020-07-15T03:19:02Z" level=debug msg="Getting mediaType info from manifests directory" name=bundle-test
 		time="2020-07-15T03:19:02Z" level=info msg="Found annotations file" name=bundle-test
 		time="2020-07-15T03:19:02Z" level=info msg="Could not find optional dependencies file" name=bundle-test
-```
-
-### XML format
-
-See below an example of XMl format produced by a scorecard test. Please note that the XMl is formatted to be compatible with the XUnit schema for post-processing the results.
-
-```
-<testsuites name="scorecard">
-  <testsuite name="olm-bundle-validation-test" tests="1" skipped="0" failures="0" errors="0">
-    <properties>
-      <property name="spec.image" value="quay.io/operator-framework/scorecard-test:v1.19.0"></property>
-      <property name="spec.entrypoint" value="scorecard-test olm-bundle-validation"></property>
-      <property name="labels.test" value="olm-bundle-validation-test"></property>
-    </properties>
-    <testcase name="olm-bundle-validation" time="0001-01-01T00:00:00Z">
-      <system-out>time=&#34;2022-04-12T19:21:52Z&#34; level=debug msg=&#34;Found manifests directory&#34; name=bundle-test&#xA;time=&#34;2022-04-12T19:21:52Z&#34; level=debug msg=&#34;Found metadata directory&#34; name=bundle-test&#xA;time=&#34;2022-04-12T19:21:52Z&#34; level=debug msg=&#34;Getting mediaType info from manifests directory&#34; name=bundle-test&#xA;time=&#34;2022-04-12T19:21:52Z&#34; level=debug msg=&#34;Found annotations file&#34; name=bundle-test&#xA;time=&#34;2022-04-12T19:21:52Z&#34; level=debug msg=&#34;Could not find optional dependencies file&#34; name=bundle-test&#xA;</system-out>
-    </testcase>
-  </testsuite>
-  <!-- Some suites omitted for readability -->
-</testsuites>
 ```
 
 **NOTE** The output format spec for each test matches the [`Test`](https://pkg.go.dev/github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3#Test) type layout.
