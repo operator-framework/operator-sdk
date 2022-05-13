@@ -167,7 +167,19 @@ func (g *Generator) generate() (base *operatorsv1alpha1.ClusterServiceVersion, e
 	if g.FromVersion != "" {
 		base.Spec.Replaces = genutil.MakeCSVName(g.OperatorName, g.FromVersion)
 	}
-	base.Spec.RelatedImages = append(base.Spec.RelatedImages, g.RelatedImages...)
+	relatedImageNamesMap := make(map[string]bool)
+	relatedImages := []operatorsv1alpha1.RelatedImage{}
+	for _, image := range append(base.Spec.RelatedImages, g.RelatedImages...) {
+		if _, found := relatedImageNamesMap[image.Name]; !found {
+			// append if name is not already in the list
+			relatedImageNamesMap[image.Name] = true
+			relatedImages = append(relatedImages, image)
+			continue
+		}
+		// if name is already in the list, error
+		return nil, fmt.Errorf("found more than one related image with name %s", image.Name)
+	}
+	base.Spec.RelatedImages = relatedImages
 
 	if err := ApplyTo(g.Collector, base, g.ExtraServiceAccounts); err != nil {
 		return nil, err
