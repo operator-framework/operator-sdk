@@ -178,7 +178,7 @@ func generateFBCContent(f *registry.FBCContext, ctx context.Context, bundleImage
 	}
 
 	// convert declarative config to string
-	content, err := registry.StringifyDecConfig(declcfg)
+	content, err := registry.StringifyDeclConfig(declcfg)
 	if err != nil {
 		return "", fmt.Errorf("error converting the declarative config to string: %v", err)
 	}

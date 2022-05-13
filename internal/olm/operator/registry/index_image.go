@@ -69,7 +69,7 @@ const (
 const (
 	SchemaChannel  = "olm.channel"
 	SchemaPackage  = "olm.package"
-	DefaultChannel = "develop"
+	DefaultChannel = "operator-sdk-run"
 )
 
 type BundleDeclcfg struct {
@@ -174,8 +174,8 @@ func getChannelHead(entries []declarativeconfig.ChannelEntry) (string, error) {
 	return "", errors.New("no channel head found")
 }
 
-// traditionalUpgrade upgrades an operator that was installed using OLM. Subsequent upgrades will go through the setupFBCupdates function
-func traditionalUpgrade(ctx context.Context, indexImage string, bundleImage string, channelName string) (string, error) {
+// handleTraditionalUpgrade upgrades an operator that was installed using OLM. Subsequent upgrades will go through the setupFBCupdates function
+func handleTraditionalUpgrade(ctx context.Context, indexImage string, bundleImage string, channelName string) (string, error) {
 	// render the index image
 	render := action.Render{Refs: []string{indexImage}}
 	log.SetOutput(ioutil.Discard)
@@ -221,7 +221,7 @@ func traditionalUpgrade(ctx context.Context, indexImage string, bundleImage stri
 	originalDeclCfg.Bundles = append(originalDeclCfg.Bundles, bundleDeclConfig.Bundles[0])
 
 	// convert declarative config to string
-	content, err := StringifyDecConfig(originalDeclCfg)
+	content, err := StringifyDeclConfig(originalDeclCfg)
 
 	if err != nil {
 		log.Errorf("error converting declarative config to string: %v", err)
@@ -281,7 +281,7 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 	}
 
 	// convert declarative config to string
-	content, err := StringifyDecConfig(declcfg)
+	content, err := StringifyDeclConfig(declcfg)
 
 	if err != nil {
 		log.Errorf("error converting declarative config to string: %v", err)
@@ -492,7 +492,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 		// Upgrade a bundle that was installed using OLM
 		if c.HasFBCLabel {
 			// Upgrading when installed traditionally by OLM
-			upgradedFBC, err := traditionalUpgrade(ctx, c.IndexImage, c.BundleImage, subscription.Spec.Channel)
+			upgradedFBC, err := handleTraditionalUpgrade(ctx, c.IndexImage, c.BundleImage, subscription.Spec.Channel)
 			if err != nil {
 				return err
 			}
@@ -715,8 +715,8 @@ func (c IndexImageCatalogCreator) deleteRegistryPod(ctx context.Context, podName
 	return nil
 }
 
-// StringifyDecConfig writes the generated declarative config to a string.
-func StringifyDecConfig(declcfg *declarativeconfig.DeclarativeConfig) (string, error) {
+// StringifyDeclConfig writes the generated declarative config to a string.
+func StringifyDeclConfig(declcfg *declarativeconfig.DeclarativeConfig) (string, error) {
 	var buf bytes.Buffer
 	err := declarativeconfig.WriteYAML(*declcfg, &buf)
 	if err != nil {
