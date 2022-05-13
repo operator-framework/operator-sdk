@@ -226,6 +226,26 @@ See an example of the JSON format produced by a scorecard test:
 }
 ```
 
+### XML format
+
+See the example below for the results of a scorecard test formatted in XML. The scorecard tool formats the XML output for XUnit schema compatability. This format makes it easier for post-processing the test results.
+
+```xml
+<testsuites name="scorecard">
+  <testsuite name="olm-bundle-validation-test" tests="1" skipped="0" failures="0" errors="0">
+    <properties>
+      <property name="spec.image" value="quay.io/operator-framework/scorecard-test:v1.19.0"></property>
+      <property name="spec.entrypoint" value="scorecard-test olm-bundle-validation"></property>
+      <property name="labels.test" value="olm-bundle-validation-test"></property>
+    </properties>
+    <testcase name="olm-bundle-validation" time="0001-01-01T00:00:00Z">
+      <system-out>time=&#34;2022-04-12T19:21:52Z&#34; level=debug msg=&#34;Found manifests directory&#34; name=bundle-test&#xA;time=&#34;2022-04-12T19:21:52Z&#34; level=debug msg=&#34;Found metadata directory&#34; name=bundle-test&#xA;time=&#34;2022-04-12T19:21:52Z&#34; level=debug msg=&#34;Getting mediaType info from manifests directory&#34; name=bundle-test&#xA;time=&#34;2022-04-12T19:21:52Z&#34; level=debug msg=&#34;Found annotations file&#34; name=bundle-test&#xA;time=&#34;2022-04-12T19:21:52Z&#34; level=debug msg=&#34;Could not find optional dependencies file&#34; name=bundle-test&#xA;</system-out>
+    </testcase>
+  </testsuite>
+  <!-- Some suites omitted for readability -->
+</testsuites>
+```
+
 ### Text format
 
 See an example of the text format produced by a scorecard test:
