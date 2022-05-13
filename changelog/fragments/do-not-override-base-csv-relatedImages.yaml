@@ -2,7 +2,7 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      No longer overriding the base csv relatedImages.
+      Fixes an issue that caused hardcoded values in the base CSV's `spec.relatedImages` field to be overwritten during bundle generation.
 
     # kind is one of:
     # - addition
