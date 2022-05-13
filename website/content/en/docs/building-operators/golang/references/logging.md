@@ -181,6 +181,30 @@ spec:
         - "--zap-log-level=debug"
 ```
 
+### Setting flags when deploying with Kustomize
+
+It's very common to use [Kustomize](https://kustomize.io/) to deploy operators - typically by referencing the upstream manifests as a remote resource. You can't just edit the upstream `Deployment` to change log settings if you do this. Instead, use a Kustomize patch to add any argument you require.
+
+To set debug logging for the above example operator `controller-manager` in namespace `system`, for example, you might use:
+
+```
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- https://url-of-your-operator/
+patches:
+  - target:
+      kind: Deployment
+      name: controller-manager
+      namespace: system
+    patch: |-
+      - op: add
+        path: "/spec/template/spec/containers/1/args/-"
+        value: "--zap-log-level=debug"
+```
+
+Because of Kustomize's reliance on [jsonpatch](http://jsonpatch.com/) you must specify the container containing your operator as a 0-indexed offset within the `spec.template.spec.containers` array in the `Deployment` yaml, so check the index is correct for your Deployment.
+
 ## Creating a structured log statement
 
 There are two ways to create structured logs with `logr`. You can create new loggers using `log.WithValues(keyValues)` that include `keyValues`, a list of key-value pair `interface{}`'s, in each log record. Alternatively you can include `keyValues` directly in a log statement, as all `logr` log statements take some message and `keyValues`. The signature of `logr.Error()` has an `error`-type parameter, which can be `nil`.
