@@ -25,10 +25,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry"
 )
 
-const (
-	channelSchema = "olm.channel"
-)
-
 type Upgrade struct {
 	BundleImage string
 

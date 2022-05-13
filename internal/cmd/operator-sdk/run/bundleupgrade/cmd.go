@@ -29,8 +29,8 @@ func NewCmd(cfg *operator.Configuration) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "bundle-upgrade <bundle-image>",
 		Short: "Upgrade an Operator previously installed in the bundle format with OLM",
-		Long: `The only argument to this command is a bundle image, with the full registry path specified.
-			   If using a docker.io image, you must specify docker.io(/<namespace>)?/<bundle-image-name>:<tag>.`,
+		Long: `The single argument to this command is a bundle image, with the full registry path specified.
+If using a docker.io image, you must specify docker.io(/<namespace>)?/<bundle-image-name>:<tag>.`,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(*cobra.Command, []string) error { return cfg.Load() },
 		Run: func(cmd *cobra.Command, args []string) {
