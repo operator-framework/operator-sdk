@@ -26,14 +26,14 @@ import (
 )
 
 // FindRelatedImages looks in the controller manager's environment for images used by the operator.
-func FindRelatedImages(manifestCol *collector.Manifests) ([]operatorsv1alpha1.RelatedImage, error) {
+func FindRelatedImages(manifestCol *collector.Manifests, packageName string) ([]operatorsv1alpha1.RelatedImage, error) {
 	col := relatedImageCollector{
 		relatedImages:           []*relatedImage{},
 		relatedImagesByName:     make(map[string][]*relatedImage),
 		relatedImagesByImageRef: make(map[string][]*relatedImage),
 		seenRelatedImages:       sets.NewString(),
 	}
-
+	col.collectFromBaseCSV(manifestCol.GetClusterServiceVersion(packageName))
 	for _, deployment := range manifestCol.Deployments {
 		containers := append(deployment.Spec.Template.Spec.Containers, deployment.Spec.Template.Spec.InitContainers...)
 		for _, container := range containers {
@@ -78,6 +78,18 @@ func (c *relatedImageCollector) collectFromEnvironment(containerRef string, env 
 			name := c.formatName(envVar.Name)
 			c.collect(name, envVar.Value, containerRef)
 		}
+	}
+
+	return nil
+}
+
+func (c *relatedImageCollector) collectFromBaseCSV(base *operatorsv1alpha1.ClusterServiceVersion) error {
+	if base == nil || base.Spec.RelatedImages == nil  {
+		return nil
+	}
+
+	for _, relatedImage := range base.Spec.RelatedImages {
+		c.collect(relatedImage.Name, relatedImage.Image, "baseCSV")
 	}
 
 	return nil

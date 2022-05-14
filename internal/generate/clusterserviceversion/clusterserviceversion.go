@@ -145,13 +145,7 @@ func (g *Generator) generate() (base *operatorsv1alpha1.ClusterServiceVersion, e
 		return nil, fmt.Errorf("cannot generate CSV without a manifests collection")
 	}
 
-	// Search for a CSV in the collector with a name matching the package name.
-	csvNamePrefix := g.OperatorName + "."
-	for _, csv := range g.Collector.ClusterServiceVersions {
-		if base == nil && strings.HasPrefix(csv.GetName(), csvNamePrefix) {
-			base = csv.DeepCopy()
-		}
-	}
+	base = g.Collector.GetClusterServiceVersion(g.OperatorName)
 
 	// Use a default base if none was supplied.
 	if base == nil {
@@ -167,19 +161,7 @@ func (g *Generator) generate() (base *operatorsv1alpha1.ClusterServiceVersion, e
 	if g.FromVersion != "" {
 		base.Spec.Replaces = genutil.MakeCSVName(g.OperatorName, g.FromVersion)
 	}
-	relatedImageNamesMap := make(map[string]bool)
-	relatedImages := []operatorsv1alpha1.RelatedImage{}
-	for _, image := range append(base.Spec.RelatedImages, g.RelatedImages...) {
-		if _, found := relatedImageNamesMap[image.Name]; !found {
-			// append if name is not already in the list
-			relatedImageNamesMap[image.Name] = true
-			relatedImages = append(relatedImages, image)
-			continue
-		}
-		// if name is already in the list, error
-		return nil, fmt.Errorf("found more than one related image with name %s", image.Name)
-	}
-	base.Spec.RelatedImages = relatedImages
+	base.Spec.RelatedImages = g.RelatedImages
 
 	if err := ApplyTo(g.Collector, base, g.ExtraServiceAccounts); err != nil {
 		return nil, err

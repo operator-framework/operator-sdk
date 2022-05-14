@@ -191,7 +191,7 @@ func (c bundleCmd) runManifests() (err error) {
 		c.println("Building a ClusterServiceVersion without an existing base")
 	}
 
-	relatedImages, err := genutil.FindRelatedImages(col)
+	relatedImages, err := genutil.FindRelatedImages(col, c.packageName)
 	if err != nil {
 		return err
 	}

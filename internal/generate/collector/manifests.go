@@ -22,8 +22,10 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	scorecardv1alpha3 "github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	admissionregv1 "k8s.io/api/admissionregistration/v1"
@@ -373,4 +375,15 @@ func isDirExist(dir string) bool {
 	}
 	info, err := os.Stat(dir)
 	return (err == nil && info.IsDir()) || os.IsExist(err)
+}
+
+// Get ClusterServiceVersion for operator with package name provided
+func (c *Manifests) GetClusterServiceVersion(name string) *v1alpha1.ClusterServiceVersion {
+	csvNamePrefix := name + "."
+	for _, csv := range c.ClusterServiceVersions {
+		if strings.HasPrefix(csv.GetName(), csvNamePrefix) {
+			return csv.DeepCopy()
+		}
+	}
+	return nil
 }
