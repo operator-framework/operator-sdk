@@ -334,7 +334,7 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 			for _, entry := range channel.Entries {
 				// Our upgraded bundle image is the last element of the refs we passed in
 				if entry.Name == declcfg.Bundles[len(declcfg.Bundles)-1].Name {
-					return nil, errors.New("Bundle already exists in the Index Image")
+					return nil, errors.New("bundle already exists in the Index Image")
 				}
 			}
 			channelHead, err = getChannelHead(channel.Entries)
@@ -478,6 +478,11 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 
 		// Upgrade a bundle that was installed using OLM
 		if c.HasFBCLabel {
+			// bundle add modes are not supported for FBC
+			if c.BundleAddMode != "" {
+				return fmt.Errorf("specifying the bundle add mode is not supported for File-Based Catalog bundles and index images")
+			}
+
 			// Upgrading when installed traditionally by OLM
 			upgradedFBC, err := handleTraditionalUpgrade(ctx, c.IndexImage, c.BundleImage, subscription.Spec.Channel)
 			if err != nil {
@@ -495,6 +500,11 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 
 		// Upgrade an installed bundle from catalog source annotations
 		if c.HasFBCLabel {
+			// bundle add modes are not supported for FBC
+			if c.BundleAddMode != "" {
+				return fmt.Errorf("specifying the bundle add mode is not supported for File-Based Catalog bundles and index images")
+			}
+
 			err = setupFBCupdates(&c, ctx)
 			if err != nil {
 				return err

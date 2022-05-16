@@ -105,6 +105,9 @@ func (i *Install) setup(ctx context.Context) error {
 	// set the field to true if FBC label is on the image or for a default index image.
 	if _, hasFBCLabel := catalogLabels[containertools.ConfigsLocationLabel]; hasFBCLabel || i.IndexImageCatalogCreator.IndexImage == registry.DefaultIndexImage {
 		i.IndexImageCatalogCreator.HasFBCLabel = true
+		if i.IndexImageCatalogCreator.BundleAddMode != "" {
+			return fmt.Errorf("specifying the bundle add mode is not supported for File-Based Catalog bundles and index images")
+		}
 	} else {
 		// index image is of the SQLite index format.
 		deprecationMsg := fmt.Sprintf("%s is a SQLite index image. SQLite based index images are being deprecated and will be removed in a future release, please migrate your catalogs to the new File-Based Catalog format", i.IndexImageCatalogCreator.IndexImage)
