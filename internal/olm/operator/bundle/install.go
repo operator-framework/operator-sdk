@@ -16,7 +16,6 @@ package bundle
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -175,19 +174,10 @@ func generateFBCContent(f *registry.FBCContext, ctx context.Context, bundleImage
 		}
 	}
 
-	// validate the generated File-Based Catalog
-	if err = registry.ValidateFBC(declcfg); err != nil {
-		return "", fmt.Errorf("error validating the generated FBC: %v", err)
-	}
-
-	// convert declarative config to string
-	content, err := registry.StringifyDeclConfig(declcfg)
-	if err != nil {
-		return "", fmt.Errorf("error converting the declarative config to string: %v", err)
-	}
-
-	if content == "" {
-		return "", errors.New("file based catalog contents cannot be empty")
+	// validate the declarative config and convert it to a string
+	var content string
+	if content, err = registry.ValidateAndStringify(declcfg); err != nil {
+		return "", fmt.Errorf("error validating/stringifying the declarative config object: %v", err)
 	}
 
 	log.Infof("Generated a valid File-Based Catalog")

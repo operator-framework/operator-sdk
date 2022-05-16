@@ -67,8 +67,8 @@ const (
 )
 
 const (
-	SchemaChannel  = "olm.channel"
-	SchemaPackage  = "olm.package"
+	schemaChannel  = "olm.channel"
+	schemaPackage  = "olm.package"
 	DefaultChannel = "operator-sdk-run"
 )
 
@@ -174,7 +174,7 @@ func getChannelHead(entries []declarativeconfig.ChannelEntry) (string, error) {
 	return "", errors.New("no channel head found")
 }
 
-// handleTraditionalUpgrade upgrades an operator that was installed using OLM. Subsequent upgrades will go through the setupFBCupdates function
+// handleTraditionalUpgrade upgrades an operator that was installed using OLM. Subsequent upgrades will go through the runFBCupgrade function
 func handleTraditionalUpgrade(ctx context.Context, indexImage string, bundleImage string, channelName string) (string, error) {
 	// render the index image
 	render := action.Render{Refs: []string{indexImage}}
@@ -192,16 +192,16 @@ func handleTraditionalUpgrade(ctx context.Context, indexImage string, bundleImag
 	bundleDeclConfig, err := render.Run(ctx)
 	log.SetOutput(os.Stdout)
 
-	if len(bundleDeclConfig.Bundles) != 1 {
-		return "", errors.New("bundle image must have at least one bundle")
-	}
-
 	if err != nil {
 		return "", err
 	}
 
+	if len(bundleDeclConfig.Bundles) != 1 {
+		return "", errors.New("bundle image must have at least one bundle")
+	}
+
 	// search for the specific channel in which the upgrade needs to take place, and upgrade from the channel head
-	for i, _ := range originalDeclCfg.Channels {
+	for i := range originalDeclCfg.Channels {
 		if originalDeclCfg.Channels[i].Name == channelName && originalDeclCfg.Channels[i].Package == bundleDeclConfig.Bundles[0].Package {
 			// found specific channel
 			channelHead, err := getChannelHead(originalDeclCfg.Channels[i].Entries)
@@ -220,19 +220,10 @@ func handleTraditionalUpgrade(ctx context.Context, indexImage string, bundleImag
 	// add the upgraded bundle to resulting declarative config
 	originalDeclCfg.Bundles = append(originalDeclCfg.Bundles, bundleDeclConfig.Bundles[0])
 
-	// convert declarative config to string
-	content, err := StringifyDeclConfig(originalDeclCfg)
-
-	if err != nil {
-		return "", fmt.Errorf("error converting declarative config to string: %v", err)
-	}
-
-	if content == "" {
-		return "", errors.New("file-Based Catalog contents cannot be empty")
-	}
-
-	if err = ValidateFBC(originalDeclCfg); err != nil {
-		return "", fmt.Errorf("error validating the generated FBC: %v", err)
+	// validate the declarative config and convert it to a string
+	var content string
+	if content, err = ValidateAndStringify(originalDeclCfg); err != nil {
+		return "", fmt.Errorf("error validating/stringifying the declarative config object: %v", err)
 	}
 
 	log.Infof("Generated a valid Upgraded File-Based Catalog")
@@ -242,7 +233,7 @@ func handleTraditionalUpgrade(ctx context.Context, indexImage string, bundleImag
 
 // setupFBCupdates starts the process of upgrading a bundle in an FBC. This function will recreate the FBC that was generated
 // during run bundle and upgrade a specific bundle in the specified channel.
-func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
+func runFBCupgrade(ctx context.Context, c *IndexImageCatalogCreator) error {
 	var err error
 
 	// render the index image if it is not the default index image
@@ -273,20 +264,10 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 		return fmt.Errorf("error creating the upgraded FBC: %v", err)
 	}
 
-	// convert declarative config to string
-	content, err := StringifyDeclConfig(declcfg)
-
-	if err != nil {
-		return fmt.Errorf("error converting declarative config to string: %v", err)
-	}
-
-	if content == "" {
-		return errors.New("File-Based Catalog contents cannot be empty")
-	}
-
-	// validate the declarative config
-	if err = ValidateFBC(declcfg); err != nil {
-		return fmt.Errorf("error validating the generated FBC: %v", err)
+	// validate the declarative config and convert it to a string
+	var content string
+	if content, err = ValidateAndStringify(declcfg); err != nil {
+		return fmt.Errorf("error validating/stringifying the declarative config object: %v", err)
 	}
 
 	log.Infof("Generated a valid Upgraded File-Based Catalog")
@@ -296,7 +277,7 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 	return nil
 }
 
-// upgradeFBC constructs a new File-Based Catalog from both the FBCConext object and the declarative config object. This function will check to see
+// upgradeFBC constructs a new File-Based Catalog from both the FBCContext object and the declarative config object. This function will check to see
 // if the FBCContext object "f" is already present in the original declarative config.
 func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeConfig, ctx context.Context) (*declarativeconfig.DeclarativeConfig, error) {
 	var err error
@@ -382,7 +363,7 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 	// create a new channel if it does not exist
 	if !channelExists {
 		channel := declarativeconfig.Channel{
-			Schema:  SchemaChannel,
+			Schema:  schemaChannel,
 			Name:    f.ChannelName,
 			Package: f.Package,
 			Entries: entries,
@@ -472,7 +453,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 		// check if index image adopts File-Based Catalog or SQLite index image format
 		isFBCImage, err := isFBC(ctx, c.IndexImage)
 		if err != nil {
-			return err
+			return fmt.Errorf("unable to determine if index image adopts File-Based Catalog or SQLite format: %v", err)
 		}
 		c.HasFBCLabel = isFBCImage
 
@@ -505,9 +486,9 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 				return fmt.Errorf("specifying the bundle add mode is not supported for File-Based Catalog bundles and index images")
 			}
 
-			err = setupFBCupdates(&c, ctx)
+			err = runFBCupgrade(ctx, &c)
 			if err != nil {
-				return err
+				return fmt.Errorf("unable to determine if index image adopts File-Based Catalog or SQLite format: %v", err)
 			}
 		}
 	}
@@ -712,29 +693,6 @@ func (c IndexImageCatalogCreator) deleteRegistryPod(ctx context.Context, podName
 	return nil
 }
 
-// StringifyDeclConfig writes the generated declarative config to a string.
-func StringifyDeclConfig(declcfg *declarativeconfig.DeclarativeConfig) (string, error) {
-	var buf bytes.Buffer
-	err := declarativeconfig.WriteYAML(*declcfg, &buf)
-	if err != nil {
-		return "", fmt.Errorf("error writing generated declarative config to JSON encoder: %v", err)
-	}
-
-	return buf.String(), nil
-}
-
-// ValidateFBC converts the generated declarative config to a model and validates it.
-func ValidateFBC(declcfg *declarativeconfig.DeclarativeConfig) error {
-	// validates and converts declarative config to model
-	_, err := declarativeconfig.ConvertToModel(*declcfg)
-	if err != nil {
-		return fmt.Errorf("error converting the declarative config to model: %v", err)
-
-	}
-
-	return nil
-}
-
 // CreateFBC generates an FBC by creating bundle, package and channel blobs.
 func (f *FBCContext) CreateFBC(ctx context.Context) (BundleDeclcfg, error) {
 	var bundleDC BundleDeclcfg
@@ -760,18 +718,40 @@ func (f *FBCContext) CreateFBC(ctx context.Context) (BundleDeclcfg, error) {
 
 	// generate package.
 	bundleDC.Package = declarativeconfig.Package{
-		Schema:         SchemaPackage,
+		Schema:         schemaPackage,
 		Name:           f.Package,
 		DefaultChannel: f.ChannelName,
 	}
 
 	// generate channel.
 	bundleDC.Channel = declarativeconfig.Channel{
-		Schema:  SchemaChannel,
+		Schema:  schemaChannel,
 		Name:    f.ChannelName,
 		Package: f.Package,
 		Entries: []declarativeconfig.ChannelEntry{f.ChannelEntry},
 	}
 
 	return bundleDC, nil
+}
+
+// ValidateAnStringify first converts the generated declarative config to a model and validates it.
+// If the declarative config model is valid, it will convert the declarative config to a YAML string and return it.
+func ValidateAndStringify(declcfg *declarativeconfig.DeclarativeConfig) (string, error) {
+	// validates and converts declarative config to model
+	_, err := declarativeconfig.ConvertToModel(*declcfg)
+	if err != nil {
+		return "", fmt.Errorf("error converting the declarative config to model: %v", err)
+	}
+
+	var buf bytes.Buffer
+	err = declarativeconfig.WriteYAML(*declcfg, &buf)
+	if err != nil {
+		return "", fmt.Errorf("error writing generated declarative config to JSON encoder: %v", err)
+	}
+
+	if buf.String() == "" {
+		return "", errors.New("file-based catalog contents cannot be empty")
+	}
+
+	return buf.String(), nil
 }
