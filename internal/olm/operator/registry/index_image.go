@@ -224,17 +224,15 @@ func handleTraditionalUpgrade(ctx context.Context, indexImage string, bundleImag
 	content, err := StringifyDeclConfig(originalDeclCfg)
 
 	if err != nil {
-		log.Errorf("error converting declarative config to string: %v", err)
-		return "", err
+		return "", fmt.Errorf("error converting declarative config to string: %v", err)
 	}
 
 	if content == "" {
-		return "", errors.New("File-Based Catalog contents cannot be empty")
+		return "", errors.New("file-Based Catalog contents cannot be empty")
 	}
 
 	if err = ValidateFBC(originalDeclCfg); err != nil {
-		log.Errorf("error validating the generated FBC: %v", err)
-		return "", err
+		return "", fmt.Errorf("error validating the generated FBC: %v", err)
 	}
 
 	log.Infof("Generated a valid Upgraded File-Based Catalog")
@@ -245,24 +243,20 @@ func handleTraditionalUpgrade(ctx context.Context, indexImage string, bundleImag
 // setupFBCupdates starts the process of upgrading a bundle in an FBC. This function will recreate the FBC that was generated
 // during run bundle and upgrade a specific bundle in the specified channel.
 func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
-	var (
-		originalDeclcfg *declarativeconfig.DeclarativeConfig
-		err             error
-		render          action.Render
-	)
+	var err error
 
 	// render the index image if it is not the default index image
-	render = action.Render{Refs: []string{}}
+	render := action.Render{Refs: []string{}}
 	if c.IndexImage != DefaultIndexImage {
 		render.Refs = append(render.Refs, c.IndexImage)
 	}
 
 	log.SetOutput(ioutil.Discard)
-	originalDeclcfg, err = render.Run(ctx)
+	originalDeclcfg, err := render.Run(ctx)
 	log.SetOutput(os.Stdout)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("error rendering index image %q: %v", c.IndexImage, err)
 	}
 
 	// add the upgraded bundle to the list of previous bundles so that they can be rendered with a single API call
@@ -276,16 +270,14 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 	// Adding the FBC "f" to the originalDeclcfg to generate a new FBC
 	declcfg, err := upgradeFBC(f, originalDeclcfg, ctx)
 	if err != nil {
-		log.Errorf("error creating the upgraded FBC: %v", err)
-		return err
+		return fmt.Errorf("error creating the upgraded FBC: %v", err)
 	}
 
 	// convert declarative config to string
 	content, err := StringifyDeclConfig(declcfg)
 
 	if err != nil {
-		log.Errorf("error converting declarative config to string: %v", err)
-		return err
+		return fmt.Errorf("error converting declarative config to string: %v", err)
 	}
 
 	if content == "" {
@@ -294,8 +286,7 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 
 	// validate the declarative config
 	if err = ValidateFBC(declcfg); err != nil {
-		log.Errorf("error validating the generated FBC: %v", err)
-		return err
+		return fmt.Errorf("error validating the generated FBC: %v", err)
 	}
 
 	log.Infof("Generated a valid Upgraded File-Based Catalog")
@@ -308,10 +299,7 @@ func setupFBCupdates(c *IndexImageCatalogCreator, ctx context.Context) error {
 // upgradeFBC constructs a new File-Based Catalog from both the FBCConext object and the declarative config object. This function will check to see
 // if the FBCContext object "f" is already present in the original declarative config.
 func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeConfig, ctx context.Context) (*declarativeconfig.DeclarativeConfig, error) {
-	var (
-		declcfg *declarativeconfig.DeclarativeConfig
-		err     error
-	)
+	var err error
 
 	// Rendering the bundle image and index image into declarative config format
 	render := action.Render{
@@ -319,21 +307,21 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 	}
 
 	log.SetOutput(ioutil.Discard)
-	declcfg, err = render.Run(ctx)
+	declcfg, err := render.Run(ctx)
 	log.SetOutput(os.Stdout)
 
 	if err != nil {
-		log.Errorf("error in rendering the bundle and index image: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("error in rendering the bundle and index image: %v", err)
 	}
 
 	// Ensuring a valid bundle size
 	if len(declcfg.Bundles) < 1 {
-		log.Errorf("error in rendering the correct number of bundles: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("bundle image should contain exactly one bundle blob")
 	}
 
-	// Checking to see if FBC already contains this channel and/or upgrade
+	// Checking if the existing file-based catalog (before upgrade) contains the bundle and channel that we intend to insert.
+	// If the bundle already exists, we error out. If the channel already exists, we store the index of the channel. This
+	// index will be used to access the channel from the declarative config object
 	channelExists := false
 	channelIndex := -1
 	channelHead := ""
@@ -402,7 +390,7 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 		originalDeclCfg.Channels = append(originalDeclCfg.Channels, channel)
 	}
 
-	// generate package
+	// initialize package
 	init := action.Init{
 		Package:        f.Package,
 		DefaultChannel: f.ChannelName,
@@ -411,8 +399,7 @@ func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeCon
 	// generate packages
 	declcfgpackage, err := init.Run()
 	if err != nil {
-		log.Errorf("error in generating packages for the FBC: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("error in generating packages for the FBC: %v", err)
 	}
 
 	// check if package already exists
