@@ -156,7 +156,7 @@ func getChannelHead(entries []declarativeconfig.ChannelEntry) (string, error) {
 	nameMap := make(map[string]bool)
 	replacesMap := make(map[string]bool)
 
-	for i, _ := range entries {
+	for i := range entries {
 		nameMap[entries[i].Name] = true
 		if entries[i].Replaces != "" {
 			replacesMap[entries[i].Replaces] = true
@@ -164,7 +164,7 @@ func getChannelHead(entries []declarativeconfig.ChannelEntry) (string, error) {
 	}
 
 	// gets the CSV name that does not appear in any replaces field in the entries array
-	for key, _ := range nameMap {
+	for key := range nameMap {
 		if _, present := replacesMap[key]; !present {
 			return key, nil
 		}
@@ -259,7 +259,7 @@ func runFBCupgrade(ctx context.Context, c *IndexImageCatalogCreator) error {
 	}
 
 	// Adding the FBC "f" to the originalDeclcfg to generate a new FBC
-	declcfg, err := upgradeFBC(f, originalDeclcfg, ctx)
+	declcfg, err := upgradeFBC(ctx, f, originalDeclcfg)
 	if err != nil {
 		return fmt.Errorf("error creating the upgraded FBC: %v", err)
 	}
@@ -279,7 +279,7 @@ func runFBCupgrade(ctx context.Context, c *IndexImageCatalogCreator) error {
 
 // upgradeFBC constructs a new File-Based Catalog from both the FBCContext object and the declarative config object. This function will check to see
 // if the FBCContext object "f" is already present in the original declarative config.
-func upgradeFBC(f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeConfig, ctx context.Context) (*declarativeconfig.DeclarativeConfig, error) {
+func upgradeFBC(ctx context.Context, f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeConfig) (*declarativeconfig.DeclarativeConfig, error) {
 	var err error
 
 	// Rendering the bundle image and index image into declarative config format
@@ -428,7 +428,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 			if err := json.Unmarshal([]byte(annotations[injectedBundlesAnnotation]), &injectedBundles); err != nil {
 				return err
 			}
-			for i, _ := range injectedBundles {
+			for i := range injectedBundles {
 				c.PreviousBundles = append(c.PreviousBundles, injectedBundles[i]["imageTag"].(string))
 			}
 		}
