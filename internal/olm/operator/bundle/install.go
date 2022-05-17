@@ -130,7 +130,7 @@ func (i *Install) setup(ctx context.Context) error {
 		}
 
 		// generate an fbc if an fbc specific label is found on the image or for a default index image.
-		content, err := generateFBCContent(f, ctx, i.BundleImage, i.IndexImageCatalogCreator.IndexImage)
+		content, err := generateFBCContent(ctx, f, i.BundleImage, i.IndexImageCatalogCreator.IndexImage)
 		if err != nil {
 			return fmt.Errorf("error generating File-Based Catalog with bundle %q: %v", i.BundleImage, err)
 		}
@@ -151,7 +151,7 @@ func (i *Install) setup(ctx context.Context) error {
 }
 
 // generateFBCContent creates a File-Based Catalog using the bundle image and index image from the run bundle command.
-func generateFBCContent(f *registry.FBCContext, ctx context.Context, bundleImage, indexImage string) (string, error) {
+func generateFBCContent(ctx context.Context, f *registry.FBCContext, bundleImage, indexImage string) (string, error) {
 	log.Infof("Creating a File-Based Catalog of the bundle %q", bundleImage)
 	// generate a File-Based Catalog representation of the bundle image
 	bundleDeclcfg, err := f.CreateFBC(ctx)
