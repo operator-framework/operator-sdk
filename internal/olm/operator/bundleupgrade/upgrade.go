@@ -16,13 +16,13 @@ package bundleupgrade
 
 import (
 	"context"
-	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"github.com/spf13/pflag"
 	"strings"
 
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry"
+	"github.com/spf13/pflag"
 )
 
 type Upgrade struct {
