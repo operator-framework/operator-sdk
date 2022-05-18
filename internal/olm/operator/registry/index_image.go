@@ -72,12 +72,18 @@ const (
 	DefaultChannel = "operator-sdk-run"
 )
 
+// BundleDeclcfg represents a minimal File-Based Catalog.
+// This struct only consists of one Package, Bundle, and Channel blob. It is used to
+// represent the bundle image in the File-Based Catalog format.
 type BundleDeclcfg struct {
 	Package declcfg.Package
 	Channel declcfg.Channel
 	Bundle  declcfg.Bundle
 }
 
+// FBCContext is a struct that stores all the required information while constructing
+// a new File-Based Catalog on the fly. The fields from this struct are passed as
+// parameters to Operator Registry API calls to generate declarative config objects.
 type FBCContext struct {
 	Package      string
 	ChannelName  string
@@ -174,14 +180,13 @@ func getChannelHead(entries []declarativeconfig.ChannelEntry) (string, error) {
 	return "", errors.New("no channel head found")
 }
 
-// handleTraditionalUpgrade upgrades an operator that was installed using OLM. Subsequent upgrades will go through the runFBCupgrade function
+// handleTraditionalUpgrade upgrades an operator that was installed using OLM. Subsequent upgrades will go through the runFBCUpgrade function
 func handleTraditionalUpgrade(ctx context.Context, indexImage string, bundleImage string, channelName string) (string, error) {
 	// render the index image
 	render := action.Render{Refs: []string{indexImage}}
 	log.SetOutput(ioutil.Discard)
 	originalDeclCfg, err := render.Run(ctx)
 	log.SetOutput(os.Stdout)
-
 	if err != nil {
 		return "", err
 	}
@@ -191,7 +196,6 @@ func handleTraditionalUpgrade(ctx context.Context, indexImage string, bundleImag
 	log.SetOutput(ioutil.Discard)
 	bundleDeclConfig, err := render.Run(ctx)
 	log.SetOutput(os.Stdout)
-
 	if err != nil {
 		return "", err
 	}
@@ -223,7 +227,7 @@ func handleTraditionalUpgrade(ctx context.Context, indexImage string, bundleImag
 	// validate the declarative config and convert it to a string
 	var content string
 	if content, err = ValidateAndStringify(originalDeclCfg); err != nil {
-		return "", fmt.Errorf("error validating/stringifying the declarative config object: %v", err)
+		return "", fmt.Errorf("error validating and converting the declarative config object to a string format: %v", err)
 	}
 
 	log.Infof("Generated a valid Upgraded File-Based Catalog")
@@ -231,11 +235,9 @@ func handleTraditionalUpgrade(ctx context.Context, indexImage string, bundleImag
 	return content, nil
 }
 
-// setupFBCupdates starts the process of upgrading a bundle in an FBC. This function will recreate the FBC that was generated
+// runFBCUpgrade starts the process of upgrading a bundle in an FBC. This function will recreate the FBC that was generated
 // during run bundle and upgrade a specific bundle in the specified channel.
-func runFBCupgrade(ctx context.Context, c *IndexImageCatalogCreator) error {
-	var err error
-
+func runFBCUpgrade(ctx context.Context, c *IndexImageCatalogCreator) error {
 	// render the index image if it is not the default index image
 	render := action.Render{Refs: []string{}}
 	if c.IndexImage != DefaultIndexImage {
@@ -245,7 +247,6 @@ func runFBCupgrade(ctx context.Context, c *IndexImageCatalogCreator) error {
 	log.SetOutput(ioutil.Discard)
 	originalDeclcfg, err := render.Run(ctx)
 	log.SetOutput(os.Stdout)
-
 	if err != nil {
 		return fmt.Errorf("error rendering index image %q: %v", c.IndexImage, err)
 	}
@@ -290,14 +291,13 @@ func upgradeFBC(ctx context.Context, f *FBCContext, originalDeclCfg *declarative
 	log.SetOutput(ioutil.Discard)
 	declcfg, err := render.Run(ctx)
 	log.SetOutput(os.Stdout)
-
 	if err != nil {
 		return nil, fmt.Errorf("error in rendering the bundle and index image: %v", err)
 	}
 
 	// Ensuring a valid bundle size
 	if len(declcfg.Bundles) < 1 {
-		return nil, fmt.Errorf("bundle image should contain exactly one bundle blob")
+		return nil, fmt.Errorf("bundle image should contain at least one bundle blob")
 	}
 
 	// Checking if the existing file-based catalog (before upgrade) contains the bundle and channel that we intend to insert.
@@ -486,7 +486,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 				return fmt.Errorf("specifying the bundle add mode is not supported for File-Based Catalog bundles and index images")
 			}
 
-			err = runFBCupgrade(ctx, &c)
+			err = runFBCUpgrade(ctx, &c)
 			if err != nil {
 				return fmt.Errorf("unable to determine if index image adopts File-Based Catalog or SQLite format: %v", err)
 			}

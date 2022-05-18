@@ -177,7 +177,7 @@ func generateFBCContent(ctx context.Context, f *registry.FBCContext, bundleImage
 	// validate the declarative config and convert it to a string
 	var content string
 	if content, err = registry.ValidateAndStringify(declcfg); err != nil {
-		return "", fmt.Errorf("error validating/stringifying the declarative config object: %v", err)
+		return "", fmt.Errorf("error validating and converting the declarative config object to a string format: %v", err)
 	}
 
 	log.Infof("Generated a valid File-Based Catalog")
