@@ -183,19 +183,13 @@ func getChannelHead(entries []declarativeconfig.ChannelEntry) (string, error) {
 // handleTraditionalUpgrade upgrades an operator that was installed using OLM. Subsequent upgrades will go through the runFBCUpgrade function
 func handleTraditionalUpgrade(ctx context.Context, indexImage string, bundleImage string, channelName string) (string, error) {
 	// render the index image
-	render := action.Render{Refs: []string{indexImage}}
-	log.SetOutput(ioutil.Discard)
-	originalDeclCfg, err := render.Run(ctx)
-	log.SetOutput(os.Stdout)
+	originalDeclCfg, err := renderRefs(ctx, []string{indexImage})
 	if err != nil {
 		return "", err
 	}
 
 	// render the bundle image
-	render = action.Render{Refs: []string{bundleImage}}
-	log.SetOutput(ioutil.Discard)
-	bundleDeclConfig, err := render.Run(ctx)
-	log.SetOutput(os.Stdout)
+	bundleDeclConfig, err := renderRefs(ctx, []string{bundleImage})
 	if err != nil {
 		return "", err
 	}
@@ -239,16 +233,14 @@ func handleTraditionalUpgrade(ctx context.Context, indexImage string, bundleImag
 // during run bundle and upgrade a specific bundle in the specified channel.
 func runFBCUpgrade(ctx context.Context, c *IndexImageCatalogCreator) error {
 	// render the index image if it is not the default index image
-	render := action.Render{Refs: []string{}}
+	var refs []string
 	if c.IndexImage != DefaultIndexImage {
-		render.Refs = append(render.Refs, c.IndexImage)
+		refs = append(refs, c.IndexImage)
 	}
 
-	log.SetOutput(ioutil.Discard)
-	originalDeclcfg, err := render.Run(ctx)
-	log.SetOutput(os.Stdout)
+	originalDeclcfg, err := renderRefs(ctx, refs)
 	if err != nil {
-		return fmt.Errorf("error rendering index image %q: %v", c.IndexImage, err)
+		return err
 	}
 
 	// add the upgraded bundle to the list of previous bundles so that they can be rendered with a single API call
@@ -278,14 +270,9 @@ func runFBCUpgrade(ctx context.Context, c *IndexImageCatalogCreator) error {
 	return nil
 }
 
-// upgradeFBC constructs a new File-Based Catalog from both the FBCContext object and the declarative config object. This function will check to see
-// if the FBCContext object "f" is already present in the original declarative config.
-func upgradeFBC(ctx context.Context, f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeConfig) (*declarativeconfig.DeclarativeConfig, error) {
-	var err error
-
-	// Rendering the bundle image and index image into declarative config format
+func renderRefs(ctx context.Context, refs []string) (*declarativeconfig.DeclarativeConfig, error) {
 	render := action.Render{
-		Refs: f.Refs,
+		Refs: refs,
 	}
 
 	log.SetOutput(ioutil.Discard)
@@ -293,6 +280,17 @@ func upgradeFBC(ctx context.Context, f *FBCContext, originalDeclCfg *declarative
 	log.SetOutput(os.Stdout)
 	if err != nil {
 		return nil, fmt.Errorf("error in rendering the bundle and index image: %v", err)
+	}
+
+	return declcfg, nil
+}
+
+// upgradeFBC constructs a new File-Based Catalog from both the FBCContext object and the declarative config object. This function will check to see
+// if the FBCContext object "f" is already present in the original declarative config.
+func upgradeFBC(ctx context.Context, f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeConfig) (*declarativeconfig.DeclarativeConfig, error) {
+	declcfg, err := renderRefs(ctx, f.Refs)
+	if err != nil {
+		return nil, err
 	}
 
 	// Ensuring a valid bundle size
@@ -697,16 +695,9 @@ func (c IndexImageCatalogCreator) deleteRegistryPod(ctx context.Context, podName
 func (f *FBCContext) CreateFBC(ctx context.Context) (BundleDeclcfg, error) {
 	var bundleDC BundleDeclcfg
 	// Rendering the bundle image into a declarative config format.
-	log.SetOutput(ioutil.Discard)
-	render := action.Render{
-		Refs: f.Refs,
-	}
-
-	// generate bundles by rendering the bundle objects.
-	declcfg, err := render.Run(ctx)
-	log.SetOutput(os.Stdout)
+	declcfg, err := renderRefs(ctx, f.Refs)
 	if err != nil {
-		return BundleDeclcfg{}, fmt.Errorf("error rendering the bundle image: %v", err)
+		return BundleDeclcfg{}, err
 	}
 
 	// Ensuring a valid bundle size.
