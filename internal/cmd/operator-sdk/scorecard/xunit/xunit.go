@@ -72,7 +72,7 @@ func (ts *TestSuite) AddSuccess(name string, time time.Time, logs string) {
 func (ts *TestSuite) AddFailure(name string, time time.Time, logs, msg string) {
 	ts.Failures++
 	ts.addTest(name, time, logs, &Result{
-		Name:    xml.Name{Local: "failure"},
+		XMLName: xml.Name{Local: "failure"},
 		Type:    "failure",
 		Message: msg,
 	})
@@ -82,7 +82,7 @@ func (ts *TestSuite) AddFailure(name string, time time.Time, logs, msg string) {
 func (ts *TestSuite) AddError(name string, time time.Time, logs, msg string) {
 	ts.Errors++
 	ts.addTest(name, time, logs, &Result{
-		Name:    xml.Name{Local: "error"},
+		XMLName: xml.Name{Local: "error"},
 		Type:    "error",
 		Message: msg,
 	})
@@ -108,7 +108,7 @@ type TestCase struct {
 
 // Result represents the final state of the test case.
 type Result struct {
-	Name    xml.Name
-	Type    string
-	Message string
+	XMLName xml.Name
+	Type    string `xml:"type,attr"`
+	Message string `xml:",innerxml"`
 }
