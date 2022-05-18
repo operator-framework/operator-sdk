@@ -185,17 +185,17 @@ func handleTraditionalUpgrade(ctx context.Context, indexImage string, bundleImag
 	// render the index image
 	originalDeclCfg, err := renderRefs(ctx, []string{indexImage})
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error in rendering index %q", indexImage)
 	}
 
 	// render the bundle image
 	bundleDeclConfig, err := renderRefs(ctx, []string{bundleImage})
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error in rendering index %q", bundleImage)
 	}
 
 	if len(bundleDeclConfig.Bundles) != 1 {
-		return "", errors.New("bundle image must have at least one bundle")
+		return "", errors.New("bundle image must have exactly one bundle")
 	}
 
 	// search for the specific channel in which the upgrade needs to take place, and upgrade from the channel head
@@ -231,7 +231,7 @@ func handleTraditionalUpgrade(ctx context.Context, indexImage string, bundleImag
 
 // runFBCUpgrade starts the process of upgrading a bundle in an FBC. This function will recreate the FBC that was generated
 // during run bundle and upgrade a specific bundle in the specified channel.
-func runFBCUpgrade(ctx context.Context, c *IndexImageCatalogCreator) error {
+func (c *IndexImageCatalogCreator) runFBCUpgrade(ctx context.Context) error {
 	// render the index image if it is not the default index image
 	var refs []string
 	if c.IndexImage != DefaultIndexImage {
@@ -313,7 +313,7 @@ func upgradeFBC(ctx context.Context, f *FBCContext, originalDeclCfg *declarative
 			for _, entry := range channel.Entries {
 				// Our upgraded bundle image is the last element of the refs we passed in
 				if entry.Name == declcfg.Bundles[len(declcfg.Bundles)-1].Name {
-					return nil, errors.New("bundle already exists in the Index Image")
+					return nil, fmt.Errorf("bundle %q already exists in the Index Image %q", declcfg.Bundles[len(declcfg.Bundles)-1].Name, entry.Name)
 				}
 			}
 			channelHead, err = getChannelHead(channel.Entries)
@@ -360,25 +360,12 @@ func upgradeFBC(ctx context.Context, f *FBCContext, originalDeclCfg *declarative
 
 	// create a new channel if it does not exist
 	if !channelExists {
-		channel := declarativeconfig.Channel{
+		originalDeclCfg.Channels = append(originalDeclCfg.Channels, declarativeconfig.Channel{
 			Schema:  schemaChannel,
 			Name:    f.ChannelName,
 			Package: f.Package,
 			Entries: entries,
-		}
-		originalDeclCfg.Channels = append(originalDeclCfg.Channels, channel)
-	}
-
-	// initialize package
-	init := action.Init{
-		Package:        f.Package,
-		DefaultChannel: f.ChannelName,
-	}
-
-	// generate packages
-	declcfgpackage, err := init.Run()
-	if err != nil {
-		return nil, fmt.Errorf("error in generating packages for the FBC: %v", err)
+		})
 	}
 
 	// check if package already exists
@@ -392,7 +379,11 @@ func upgradeFBC(ctx context.Context, f *FBCContext, originalDeclCfg *declarative
 
 	// only add the new package if it does not already exist
 	if !packagePresent {
-		originalDeclCfg.Packages = append(originalDeclCfg.Packages, *declcfgpackage)
+		originalDeclCfg.Packages = append(originalDeclCfg.Packages, declarativeconfig.Package{
+			Schema:         schemaPackage,
+			Name:           f.Package,
+			DefaultChannel: f.ChannelName,
+		})
 	}
 
 	return originalDeclCfg, nil
@@ -424,7 +415,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 		if value, hasAnnotation := annotations[injectedBundlesAnnotation]; hasAnnotation && value != "" {
 			var injectedBundles []map[string]interface{}
 			if err := json.Unmarshal([]byte(annotations[injectedBundlesAnnotation]), &injectedBundles); err != nil {
-				return err
+				return fmt.Errorf("unable to unmarshal injected bundles json: %v", err)
 			}
 			for i := range injectedBundles {
 				c.PreviousBundles = append(c.PreviousBundles, injectedBundles[i]["imageTag"].(string))
@@ -465,7 +456,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 			// Upgrading when installed traditionally by OLM
 			upgradedFBC, err := handleTraditionalUpgrade(ctx, c.IndexImage, c.BundleImage, subscription.Spec.Channel)
 			if err != nil {
-				return err
+				return fmt.Errorf("unable to upgrade bundle: %v", err)
 			}
 			c.FBCContent = upgradedFBC
 		}
@@ -473,7 +464,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 		// check if index image adopts File-Based Catalog or SQLite index image format
 		isFBCImage, err := isFBC(ctx, c.IndexImage)
 		if err != nil {
-			return err
+			return fmt.Errorf("error in upgrading the bundle %q that was installed traditionally", c.BundleImage)
 		}
 		c.HasFBCLabel = isFBCImage
 
@@ -484,7 +475,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 				return fmt.Errorf("specifying the bundle add mode is not supported for File-Based Catalog bundles and index images")
 			}
 
-			err = runFBCUpgrade(ctx, &c)
+			err = c.runFBCUpgrade(ctx)
 			if err != nil {
 				return fmt.Errorf("unable to determine if index image adopts File-Based Catalog or SQLite format: %v", err)
 			}
@@ -725,7 +716,7 @@ func (f *FBCContext) CreateFBC(ctx context.Context) (BundleDeclcfg, error) {
 	return bundleDC, nil
 }
 
-// ValidateAnStringify first converts the generated declarative config to a model and validates it.
+// ValidateAndStringify first converts the generated declarative config to a model and validates it.
 // If the declarative config model is valid, it will convert the declarative config to a YAML string and return it.
 func ValidateAndStringify(declcfg *declarativeconfig.DeclarativeConfig) (string, error) {
 	// validates and converts declarative config to model
