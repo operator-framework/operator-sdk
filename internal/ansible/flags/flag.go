@@ -96,7 +96,7 @@ func (f *Flags) AddTo(flagSet *pflag.FlagSet) {
 	// Controller flags.
 	flagSet.DurationVar(&f.ReconcilePeriod,
 		"reconcile-period",
-		time.Minute,
+		10*time.Hour,
 		"Default reconcile period for controllers",
 	)
 	flagSet.IntVar(&f.MaxConcurrentReconciles,
