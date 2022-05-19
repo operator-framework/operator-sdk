@@ -23,6 +23,36 @@ Building your own operator commonly involves extending the Kubernetes API itself
 
 Having many Kinds (such as CRDs) which are all managed by the same controller usually goes against the design proposed by [controller-runtime][controller-runtime]. Furthermore this might hurt concepts such as encapsulation, the Single Responsibility Principle, and Cohesion. Damaging these concepts may cause unexpected side effects, and increase the difficulty of extending, reusing, or maintaining the operator.
 
+### Ideally Operators does not manage other Operators
+
+From [best practices][best practices]: 
+
+- _"Operators should own a CRD and only one Operator should control a CRD on a cluster.
+Two Operators managing the same CRD is not a recommended best practice. In the case where an API exists but 
+with multiple implementations, this is typically an example of a no-op Operator because it doesn't 
+have any deployment or reconciliation loop to define the shared API and other 
+Operators depend on this Operator to provide one implementation of the 
+API, e.g. similar to PVCs or Ingress."_
+
+- _"An Operator shouldn't deploy or manage other operators (such patterns are known as meta or super operators 
+or include CRDs in its Operands). It's the Operator Lifecycle Manager's job to manage the deployment and 
+lifecycle of operators. For further information check [Dependency Resolution][Dependency Resolution]."_
+
+#### What does it mainly mean:
+
+- If you want to define that your Operator depends on APIs which are owned by another Operator or on 
+another whole Operator itself you should use Operator Lifecycle Manager's [Dependency Resolution][Dependency Resolution]
+- If you want to reconcile core APIs (_defined by Kubernetes_) or External APIs (_defined from other operators_)
+you should not re-define the API as owned by your project. Therefore, you can create the controller in this 
+cases by using the flag `--resource=false`. (i.e. `$ operator-sdk create api --group ship --version v1beta1 --kind External --resource=false --controller=true`). 
+**Attention:** If you are using Golang-based language Operator then, you will need to update the markers and imports 
+manually until it become officially supported by the tool. For further information check the issue [#1999](https://github.com/kubernetes-sigs/kubebuilder/issues/1999).
+
+**WARNING:** if you create CRD's via the reconciliations or via the Operands then, OLM cannot handle CRDs migration and update, validation.
+
+**NOTE:** By not following this guidance you might probably to be hurting concepts like as single responsibility principle
+and damaging these concepts could cause unexpected side effects, such as; difficulty extending, reuse, or maintenance, only to mention a few. 
+
 ### Other common suggestions
 
 - Provide the images and tags used by the operator solution via environment variables in the `config/manager/manager.yaml`: 
@@ -73,3 +103,6 @@ spec:
 [envtest]: https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/envtest
 [docker-cheats]: https://cheatsheetseries.owasp.org/cheatsheets/Docker_Security_Cheat_Sheet.html#rule-7-limit-resources-memory-cpu-file-descriptors-processes-restarts
 [k8s-manage-resources]: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+[best practices]: https://olm.operatorframework.io/docs/concepts/olm-architecture/dependency-resolution/
+[Dependency Resolution]:  /docs/best-practices/best-practices
+
