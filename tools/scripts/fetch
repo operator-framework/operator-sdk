@@ -32,7 +32,9 @@ fetch() {
       ;;
     "goreleaser")
       ver_cmd="${DEST}/goreleaser --version 2>/dev/null | grep version | cut -d' ' -f3"
-      fetch_cmd="curl -sSfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh -s -- -b \"${DEST}\" -d \"v${ver}\""
+      osCap="$(uname -s)"
+      archBase="$(uname -m)"
+      fetch_cmd="(curl -sSfLo '${DEST}/goreleaser.tar.gz' 'https://github.com/goreleaser/goreleaser/releases/download/v${ver}/goreleaser_${osCap}_${archBase}.tar.gz' && tar -xf $DEST/goreleaser.tar.gz -C $DEST)"
       ;;
     *)
       echo "unknown tool $tool"
