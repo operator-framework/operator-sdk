@@ -142,7 +142,7 @@ func (o OperatorInstaller) UpgradeOperator(ctx context.Context) (*v1alpha1.Clust
 	log.Infof("Found existing catalog source with name %s and namespace %s", cs.Name, cs.Namespace)
 
 	// Update catalog source
-	err := o.CatalogUpdater.UpdateCatalog(ctx, cs)
+	err := o.CatalogUpdater.UpdateCatalog(ctx, cs, subscription)
 	if err != nil {
 		return nil, fmt.Errorf("update catalog error: %v", err)
 	}

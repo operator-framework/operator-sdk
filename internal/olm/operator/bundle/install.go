@@ -15,9 +15,7 @@
 package bundle
 
 import (
-	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -28,7 +26,6 @@ import (
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/alpha/action"
-	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	declarativeconfig "github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/pkg/containertools"
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
@@ -37,18 +34,6 @@ import (
 	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
 )
 
-const (
-	schemaChannel  = "olm.channel"
-	schemaPackage  = "olm.package"
-	defaultChannel = "operator-sdk-run"
-)
-
-type bundleDeclcfg struct {
-	Package declcfg.Package
-	Channel declcfg.Channel
-	Bundle  declcfg.Bundle
-}
-
 type Install struct {
 	BundleImage string
 
@@ -56,13 +41,6 @@ type Install struct {
 	*registry.OperatorInstaller
 
 	cfg *operator.Configuration
-}
-
-type FBCContext struct {
-	Package      string
-	ChannelName  string
-	Refs         []string
-	ChannelEntry declarativeconfig.ChannelEntry
 }
 
 func NewInstall(cfg *operator.Configuration) Install {
@@ -126,6 +104,9 @@ func (i *Install) setup(ctx context.Context) error {
 	// set the field to true if FBC label is on the image or for a default index image.
 	if _, hasFBCLabel := catalogLabels[containertools.ConfigsLocationLabel]; hasFBCLabel || i.IndexImageCatalogCreator.IndexImage == registry.DefaultIndexImage {
 		i.IndexImageCatalogCreator.HasFBCLabel = true
+		if i.IndexImageCatalogCreator.BundleAddMode != "" {
+			return fmt.Errorf("specifying the bundle add mode is not supported for File-Based Catalog bundles and index images")
+		}
 	} else {
 		// index image is of the SQLite index format.
 		deprecationMsg := fmt.Sprintf("%s is a SQLite index image. SQLite based index images are being deprecated and will be removed in a future release, please migrate your catalogs to the new File-Based Catalog format", i.IndexImageCatalogCreator.IndexImage)
@@ -134,7 +115,7 @@ func (i *Install) setup(ctx context.Context) error {
 
 	if i.IndexImageCatalogCreator.HasFBCLabel {
 		// FBC variables
-		f := &FBCContext{
+		f := &registry.FBCContext{
 			Package: labels[registrybundle.PackageLabel],
 			Refs:    []string{i.BundleImage},
 			ChannelEntry: declarativeconfig.ChannelEntry{
@@ -145,11 +126,11 @@ func (i *Install) setup(ctx context.Context) error {
 		if _, hasChannelMetadata := labels[registrybundle.ChannelsLabel]; hasChannelMetadata {
 			f.ChannelName = strings.Split(labels[registrybundle.ChannelsLabel], ",")[0]
 		} else {
-			f.ChannelName = defaultChannel
+			f.ChannelName = registry.DefaultChannel
 		}
 
 		// generate an fbc if an fbc specific label is found on the image or for a default index image.
-		content, err := f.generateFBCContent(ctx, i.BundleImage, i.IndexImageCatalogCreator.IndexImage)
+		content, err := generateFBCContent(ctx, f, i.BundleImage, i.IndexImageCatalogCreator.IndexImage)
 		if err != nil {
 			return fmt.Errorf("error generating File-Based Catalog with bundle %q: %v", i.BundleImage, err)
 		}
@@ -169,10 +150,11 @@ func (i *Install) setup(ctx context.Context) error {
 	return nil
 }
 
-func (f *FBCContext) generateFBCContent(ctx context.Context, bundleImage, indexImage string) (string, error) {
+// generateFBCContent creates a File-Based Catalog using the bundle image and index image from the run bundle command.
+func generateFBCContent(ctx context.Context, f *registry.FBCContext, bundleImage, indexImage string) (string, error) {
 	log.Infof("Creating a File-Based Catalog of the bundle %q", bundleImage)
 	// generate a File-Based Catalog representation of the bundle image
-	bundleDeclcfg, err := f.createFBC(ctx)
+	bundleDeclcfg, err := f.CreateFBC(ctx)
 	if err != nil {
 		return "", fmt.Errorf("error creating a File-Based Catalog with image %q: %v", bundleImage, err)
 	}
@@ -192,19 +174,10 @@ func (f *FBCContext) generateFBCContent(ctx context.Context, bundleImage, indexI
 		}
 	}
 
-	// validate the generated File-Based Catalog
-	if err = validateFBC(declcfg); err != nil {
-		return "", fmt.Errorf("error validating the generated FBC: %v", err)
-	}
-
-	// convert declarative config to string
-	content, err := stringifyDecConfig(declcfg)
-	if err != nil {
-		return "", fmt.Errorf("error converting the declarative config to string: %v", err)
-	}
-
-	if content == "" {
-		return "", errors.New("file based catalog contents cannot be empty")
+	// validate the declarative config and convert it to a string
+	var content string
+	if content, err = registry.ValidateAndStringify(declcfg); err != nil {
+		return "", fmt.Errorf("error validating and converting the declarative config object to a string format: %v", err)
 	}
 
 	log.Infof("Generated a valid File-Based Catalog")
@@ -212,8 +185,8 @@ func (f *FBCContext) generateFBCContent(ctx context.Context, bundleImage, indexI
 	return content, nil
 }
 
-/// addBundleToIndexImage adds the bundle to an existing index image if the bundle is not already present in the index image.
-func addBundleToIndexImage(ctx context.Context, indexImage string, bundleDeclConfig bundleDeclcfg) (*declarativeconfig.DeclarativeConfig, error) {
+// addBundleToIndexImage adds the bundle to an existing index image if the bundle is not already present in the index image.
+func addBundleToIndexImage(ctx context.Context, indexImage string, bundleDeclConfig registry.BundleDeclcfg) (*declarativeconfig.DeclarativeConfig, error) {
 	log.Infof("Rendering a File-Based Catalog of the Index Image %q", indexImage)
 	log.SetOutput(ioutil.Discard)
 	render := action.Render{
@@ -256,68 +229,4 @@ func addBundleToIndexImage(ctx context.Context, indexImage string, bundleDeclCon
 	log.Infof("Inserted the new bundle %q into the index image: %s", bundleDeclConfig.Bundle.Name, indexImage)
 
 	return imageDeclConfig, nil
-}
-
-// createFBC generates an FBC by creating bundle, package and channel blobs.
-func (f *FBCContext) createFBC(ctx context.Context) (bundleDeclcfg, error) {
-	var bundleDC bundleDeclcfg
-	// Rendering the bundle image into a declarative config format.
-	log.SetOutput(ioutil.Discard)
-	render := action.Render{
-		Refs: f.Refs,
-	}
-
-	// generate bundles by rendering the bundle objects.
-	declcfg, err := render.Run(ctx)
-	log.SetOutput(os.Stdout)
-	if err != nil {
-		return bundleDeclcfg{}, fmt.Errorf("error rendering the bundle image: %v", err)
-	}
-
-	// Ensuring a valid bundle size.
-	if len(declcfg.Bundles) != 1 {
-		return bundleDeclcfg{}, fmt.Errorf("bundle image should contain exactly one bundle blob")
-	}
-
-	bundleDC.Bundle = declcfg.Bundles[0]
-
-	// generate package.
-	bundleDC.Package = declarativeconfig.Package{
-		Schema:         schemaPackage,
-		Name:           f.Package,
-		DefaultChannel: f.ChannelName,
-	}
-
-	// generate channel.
-	bundleDC.Channel = declarativeconfig.Channel{
-		Schema:  schemaChannel,
-		Name:    f.ChannelName,
-		Package: f.Package,
-		Entries: []declarativeconfig.ChannelEntry{f.ChannelEntry},
-	}
-
-	return bundleDC, nil
-}
-
-// stringifyDecConfig writes the generated declarative config to a string.
-func stringifyDecConfig(declcfg *declarativeconfig.DeclarativeConfig) (string, error) {
-	var buf bytes.Buffer
-	err := declarativeconfig.WriteYAML(*declcfg, &buf)
-	if err != nil {
-		return "", fmt.Errorf("error writing generated declarative config to JSON encoder: %v", err)
-	}
-
-	return buf.String(), nil
-}
-
-// validateFBC converts the generated declarative config to a model and validates it.
-func validateFBC(declcfg *declarativeconfig.DeclarativeConfig) error {
-	// validates and converts declarative config to model
-	_, err := declarativeconfig.ConvertToModel(*declcfg)
-	if err != nil {
-		return fmt.Errorf("error converting the declarative config to model: %v", err)
-
-	}
-
-	return nil
 }
