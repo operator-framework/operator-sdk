@@ -15,19 +15,14 @@
 package registry
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"github.com/operator-framework/operator-registry/alpha/action"
-	"github.com/operator-framework/operator-registry/pkg/containertools"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	gofunk "github.com/thoas/go-funk"
@@ -37,21 +32,12 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
 
-	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	declarativeconfig "github.com/operator-framework/operator-registry/alpha/declcfg"
+	fbcutil "github.com/operator-framework/operator-sdk/internal/olm/fbcutil"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry/fbcindex"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry/index"
 	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
-)
-
-const (
-	// defaultIndexImageBase is the base for defaultIndexImage. It is necessary to separate
-	// them for string comparison when defaulting bundle add mode.
-	defaultIndexImageBase = "quay.io/operator-framework/opm:"
-	// DefaultIndexImage is the index base image used if none is specified. It contains no bundles.
-	// TODO(v2.0.0): pin this image tag to a specific version.
-	DefaultIndexImage = defaultIndexImageBase + "latest"
 )
 
 // Internal CatalogSource annotations.
@@ -65,31 +51,6 @@ const (
 	// Holds the name of the existing registry pod associated with a catalog.
 	registryPodNameAnnotation = operatorFrameworkGroup + "/registry-pod-name"
 )
-
-const (
-	schemaChannel  = "olm.channel"
-	schemaPackage  = "olm.package"
-	DefaultChannel = "operator-sdk-run"
-)
-
-// BundleDeclcfg represents a minimal File-Based Catalog.
-// This struct only consists of one Package, Bundle, and Channel blob. It is used to
-// represent the bundle image in the File-Based Catalog format.
-type BundleDeclcfg struct {
-	Package declcfg.Package
-	Channel declcfg.Channel
-	Bundle  declcfg.Bundle
-}
-
-// FBCContext is a struct that stores all the required information while constructing
-// a new File-Based Catalog on the fly. The fields from this struct are passed as
-// parameters to Operator Registry API calls to generate declarative config objects.
-type FBCContext struct {
-	Package      string
-	ChannelName  string
-	Refs         []string
-	ChannelEntry declarativeconfig.ChannelEntry
-}
 
 type IndexImageCatalogCreator struct {
 	SkipTLS         bool
@@ -183,13 +144,13 @@ func getChannelHead(entries []declarativeconfig.ChannelEntry) (string, error) {
 // handleTraditionalUpgrade upgrades an operator that was installed using OLM. Subsequent upgrades will go through the runFBCUpgrade function
 func handleTraditionalUpgrade(ctx context.Context, indexImage string, bundleImage string, channelName string) (string, error) {
 	// render the index image
-	originalDeclCfg, err := renderRefs(ctx, []string{indexImage})
+	originalDeclCfg, err := fbcutil.RenderRefs(ctx, []string{indexImage})
 	if err != nil {
 		return "", fmt.Errorf("error in rendering index %q", indexImage)
 	}
 
 	// render the bundle image
-	bundleDeclConfig, err := renderRefs(ctx, []string{bundleImage})
+	bundleDeclConfig, err := fbcutil.RenderRefs(ctx, []string{bundleImage})
 	if err != nil {
 		return "", fmt.Errorf("error in rendering index %q", bundleImage)
 	}
@@ -220,7 +181,7 @@ func handleTraditionalUpgrade(ctx context.Context, indexImage string, bundleImag
 
 	// validate the declarative config and convert it to a string
 	var content string
-	if content, err = ValidateAndStringify(originalDeclCfg); err != nil {
+	if content, err = fbcutil.ValidateAndStringify(originalDeclCfg); err != nil {
 		return "", fmt.Errorf("error validating and converting the declarative config object to a string format: %v", err)
 	}
 
@@ -234,18 +195,18 @@ func handleTraditionalUpgrade(ctx context.Context, indexImage string, bundleImag
 func (c *IndexImageCatalogCreator) runFBCUpgrade(ctx context.Context) error {
 	// render the index image if it is not the default index image
 	var refs []string
-	if c.IndexImage != DefaultIndexImage {
+	if c.IndexImage != fbcutil.DefaultIndexImage {
 		refs = append(refs, c.IndexImage)
 	}
 
-	originalDeclcfg, err := renderRefs(ctx, refs)
+	originalDeclcfg, err := fbcutil.RenderRefs(ctx, refs)
 	if err != nil {
 		return err
 	}
 
 	// add the upgraded bundle to the list of previous bundles so that they can be rendered with a single API call
 	c.PreviousBundles = append(c.PreviousBundles, c.BundleImage)
-	f := &FBCContext{
+	f := &fbcutil.FBCContext{
 		Package:     c.PackageName,
 		Refs:        c.PreviousBundles,
 		ChannelName: c.ChannelName,
@@ -259,7 +220,7 @@ func (c *IndexImageCatalogCreator) runFBCUpgrade(ctx context.Context) error {
 
 	// validate the declarative config and convert it to a string
 	var content string
-	if content, err = ValidateAndStringify(declcfg); err != nil {
+	if content, err = fbcutil.ValidateAndStringify(declcfg); err != nil {
 		return fmt.Errorf("error validating/stringifying the declarative config object: %v", err)
 	}
 
@@ -270,25 +231,10 @@ func (c *IndexImageCatalogCreator) runFBCUpgrade(ctx context.Context) error {
 	return nil
 }
 
-func renderRefs(ctx context.Context, refs []string) (*declarativeconfig.DeclarativeConfig, error) {
-	render := action.Render{
-		Refs: refs,
-	}
-
-	log.SetOutput(ioutil.Discard)
-	declcfg, err := render.Run(ctx)
-	log.SetOutput(os.Stdout)
-	if err != nil {
-		return nil, fmt.Errorf("error in rendering the bundle and index image: %v", err)
-	}
-
-	return declcfg, nil
-}
-
 // upgradeFBC constructs a new File-Based Catalog from both the FBCContext object and the declarative config object. This function will check to see
 // if the FBCContext object "f" is already present in the original declarative config.
-func upgradeFBC(ctx context.Context, f *FBCContext, originalDeclCfg *declarativeconfig.DeclarativeConfig) (*declarativeconfig.DeclarativeConfig, error) {
-	declcfg, err := renderRefs(ctx, f.Refs)
+func upgradeFBC(ctx context.Context, f *fbcutil.FBCContext, originalDeclCfg *declarativeconfig.DeclarativeConfig) (*declarativeconfig.DeclarativeConfig, error) {
+	declcfg, err := fbcutil.RenderRefs(ctx, f.Refs)
 	if err != nil {
 		return nil, err
 	}
@@ -361,7 +307,7 @@ func upgradeFBC(ctx context.Context, f *FBCContext, originalDeclCfg *declarative
 	// create a new channel if it does not exist
 	if !channelExists {
 		originalDeclCfg.Channels = append(originalDeclCfg.Channels, declarativeconfig.Channel{
-			Schema:  schemaChannel,
+			Schema:  fbcutil.SchemaChannel,
 			Name:    f.ChannelName,
 			Package: f.Package,
 			Entries: entries,
@@ -380,26 +326,13 @@ func upgradeFBC(ctx context.Context, f *FBCContext, originalDeclCfg *declarative
 	// only add the new package if it does not already exist
 	if !packagePresent {
 		originalDeclCfg.Packages = append(originalDeclCfg.Packages, declarativeconfig.Package{
-			Schema:         schemaPackage,
+			Schema:         fbcutil.SchemaPackage,
 			Name:           f.Package,
 			DefaultChannel: f.ChannelName,
 		})
 	}
 
 	return originalDeclCfg, nil
-}
-
-// isFBC will determine if an index image uses the File-Based Catalog or SQLite index image format.
-// The default index image will adopt the File-Based Catalog format.
-func isFBC(ctx context.Context, indexImage string) (bool, error) {
-	// adding updates to the IndexImageCatalogCreator if it is an FBC image
-	catalogLabels, err := registryutil.GetImageLabels(ctx, nil, indexImage, false)
-	if err != nil {
-		return false, fmt.Errorf("get index image labels: %v", err)
-	}
-	_, hasFBCLabel := catalogLabels[containertools.ConfigsLocationLabel]
-
-	return hasFBCLabel || indexImage == DefaultIndexImage, nil
 }
 
 // UpdateCatalog links a new registry pod in catalog source by updating the address and annotations,
@@ -440,7 +373,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 		c.IndexImage = cs.Spec.Image
 
 		// check if index image adopts File-Based Catalog or SQLite index image format
-		isFBCImage, err := isFBC(ctx, c.IndexImage)
+		isFBCImage, err := fbcutil.IsFBC(ctx, c.IndexImage)
 		if err != nil {
 			return fmt.Errorf("unable to determine if index image adopts File-Based Catalog or SQLite format: %v", err)
 		}
@@ -462,7 +395,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 		}
 	} else {
 		// check if index image adopts File-Based Catalog or SQLite index image format
-		isFBCImage, err := isFBC(ctx, c.IndexImage)
+		isFBCImage, err := fbcutil.IsFBC(ctx, c.IndexImage)
 		if err != nil {
 			return fmt.Errorf("error in upgrading the bundle %q that was installed traditionally", c.BundleImage)
 		}
@@ -516,7 +449,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 // TODO(v2.0.0): this should default to semver mode.
 func (c *IndexImageCatalogCreator) setAddMode() {
 	if c.BundleAddMode == "" {
-		if strings.HasPrefix(c.IndexImage, defaultIndexImageBase) {
+		if strings.HasPrefix(c.IndexImage, fbcutil.DefaultIndexImageBase) {
 			c.BundleAddMode = index.SemverBundleAddMode
 		} else {
 			c.BundleAddMode = index.ReplacesBundleAddMode
@@ -530,7 +463,7 @@ func (c IndexImageCatalogCreator) createAnnotatedRegistry(ctx context.Context, c
 	items []index.BundleItem, updates ...func(*v1alpha1.CatalogSource)) (err error) {
 	var pod *corev1.Pod
 	if c.IndexImage == "" {
-		c.IndexImage = DefaultIndexImage
+		c.IndexImage = fbcutil.DefaultIndexImage
 	}
 
 	if c.HasFBCLabel {
@@ -680,60 +613,4 @@ func (c IndexImageCatalogCreator) deleteRegistryPod(ctx context.Context, podName
 	}
 
 	return nil
-}
-
-// CreateFBC generates an FBC by creating bundle, package and channel blobs.
-func (f *FBCContext) CreateFBC(ctx context.Context) (BundleDeclcfg, error) {
-	var bundleDC BundleDeclcfg
-	// Rendering the bundle image into a declarative config format.
-	declcfg, err := renderRefs(ctx, f.Refs)
-	if err != nil {
-		return BundleDeclcfg{}, err
-	}
-
-	// Ensuring a valid bundle size.
-	if len(declcfg.Bundles) != 1 {
-		return BundleDeclcfg{}, fmt.Errorf("bundle image should contain exactly one bundle blob")
-	}
-
-	bundleDC.Bundle = declcfg.Bundles[0]
-
-	// generate package.
-	bundleDC.Package = declarativeconfig.Package{
-		Schema:         schemaPackage,
-		Name:           f.Package,
-		DefaultChannel: f.ChannelName,
-	}
-
-	// generate channel.
-	bundleDC.Channel = declarativeconfig.Channel{
-		Schema:  schemaChannel,
-		Name:    f.ChannelName,
-		Package: f.Package,
-		Entries: []declarativeconfig.ChannelEntry{f.ChannelEntry},
-	}
-
-	return bundleDC, nil
-}
-
-// ValidateAndStringify first converts the generated declarative config to a model and validates it.
-// If the declarative config model is valid, it will convert the declarative config to a YAML string and return it.
-func ValidateAndStringify(declcfg *declarativeconfig.DeclarativeConfig) (string, error) {
-	// validates and converts declarative config to model
-	_, err := declarativeconfig.ConvertToModel(*declcfg)
-	if err != nil {
-		return "", fmt.Errorf("error converting the declarative config to model: %v", err)
-	}
-
-	var buf bytes.Buffer
-	err = declarativeconfig.WriteYAML(*declcfg, &buf)
-	if err != nil {
-		return "", fmt.Errorf("error writing generated declarative config to JSON encoder: %v", err)
-	}
-
-	if buf.String() == "" {
-		return "", errors.New("file-based catalog contents cannot be empty")
-	}
-
-	return buf.String(), nil
 }
