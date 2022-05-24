@@ -103,7 +103,7 @@ This memcached role will:
 - Set the Deployment size
 
 Note that the tasks in this Ansible role file are what actually defines the behavior of the spec and status of the memcached custom resource.
-As Kubernetes allows entry of arbitrary fields when creating resources, we don't need to actually create specific fields in the CRD. 
+As Kubernetes allows entry of arbitrary fields when creating resources, we don't need to actually create specific fields in the CRD.
 While we won't be doing this in this tutorial, it is recommended to also define these fields in the CRD, so that Kubernetes users
 can see the fields that will be used when using the custom resource.
 It is also good practice to set default values for variables used in Ansible
@@ -178,7 +178,18 @@ make install run
 
 By default, a new namespace is created with name `<project-name>-system`, ex. `memcached-operator-system`, and will be used for the deployment.
 
-Run the following to deploy the operator. This will also install the RBAC manifests from `config/rbac`.
+The scaffolded `Makefile` uses [`kustomize`][kustomize-docs] to apply
+custom configurations and generate manifests from the `config/`
+directory, which are piped to `kubectl`.
+
+```sh
+kustomize build config/default | kubectl apply -f -
+```
+
+Commonly, Operator authors may need to modify `config/rbac` in order to
+give their Operator the necessary permissions to reconcile.
+
+Run the following to customize the manifests and deploy the operator.
 
 ```sh
 make deploy
@@ -351,6 +362,7 @@ OLM will manage creation of most if not all resources required to run your opera
 [legacy-quickstart-doc]:https://v0-19-x.sdk.operatorframework.io/docs/ansible/quickstart/
 [migration-guide]:/docs/building-operators/ansible/migration
 [install-guide]:/docs/building-operators/ansible/installation
+[kustomize-docs]:https://kustomize.io/
 [image-reg-config]:/docs/olm-integration/cli-overview#private-bundle-and-catalog-image-registries
 [ansible-developer-tips]:/docs/building-operators/ansible/development-tips/
 [ansible-watches]:/docs/building-operators/ansible/reference/watches
