@@ -165,5 +165,4 @@ metadata:
 
 The value that is present under this key must be in the h/m/s format. For example, 1h2m4s, 3m0s, 4s are all valid values, but 1x3m9s is invalid. 
 
-**NOTE**: This is just one way of specifying the reconcile period for Helm-based operators. There are two other ways: using the `--reconcile-period` command-line flag and under the 'reconcilePeriod' key in the watches.yaml file. If these three methods are used simultaneously to specify reconcile period (which they should not be), the order of precedence is as follows: 
-Custom Resource Annotations > watches.yaml > command-line flag.
+**NOTE**: This is just one way of specifying the reconcile period for Helm-based operators. There are two other ways: using the `--reconcile-period` command-line flag and under the 'reconcilePeriod' key in the watches.yaml file. If these three methods are used simultaneously to specify reconcile period (which they should not be), the order of precedence is as follows: Custom Resource Annotations > watches.yaml > command-line flag. If none of these three methods are used to specify the reconcile period, the command-line flag will default and set the reconcile-period to 10h to be on-par with [controller-runtime's](https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/manager#Options) SyncPeriod. 

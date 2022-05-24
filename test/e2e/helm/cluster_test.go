@@ -169,7 +169,7 @@ var _ = Describe("Running Helm projects", func() {
 				}
 				return nil
 			}
-			Eventually(verifyRelease, time.Minute, time.Second).Should(Succeed())
+			Eventually(verifyRelease, 10*time.Hour, time.Second).Should(Succeed())
 
 			By("updating replicaCount to 2 in the CR manifest")
 			err = kbutil.ReplaceInFile(filepath.Join(tc.Dir, sampleFile), "replicaCount: 1", "replicaCount: 2")

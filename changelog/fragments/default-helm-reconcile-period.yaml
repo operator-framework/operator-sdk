@@ -1,0 +1,5 @@
+entries:
+  - description: >
+      Changed the default reconcile period of Helm-based operators to 10h instead of 1m to be on-par with controller-runtime standards. Reason for a default reconcile period of 10h: https://github.com/kubernetes-sigs/controller-runtime/issues/521#issuecomment-518457302.
+    kind: "change"
+    breaking: false
