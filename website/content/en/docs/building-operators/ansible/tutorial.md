@@ -359,15 +359,15 @@ https://github.com/operator-framework/operator-sdk/issues/3447
 
 OLM will manage creation of most if not all resources required to run your operator, using a bit of setup from other operator-sdk commands. Check out the [OLM integration guide][tutorial-bundle].
 
-[legacy-quickstart-doc]:https://v0-19-x.sdk.operatorframework.io/docs/ansible/quickstart/
-[migration-guide]:/docs/building-operators/ansible/migration
-[install-guide]:/docs/building-operators/ansible/installation
-[kustomize-docs]:https://kustomize.io/
-[image-reg-config]:/docs/olm-integration/cli-overview#private-bundle-and-catalog-image-registries
 [ansible-developer-tips]:/docs/building-operators/ansible/development-tips/
 [ansible-watches]:/docs/building-operators/ansible/reference/watches
 [custom-resources]:https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/
-[layout-doc]:/docs/building-operators/ansible/reference/scaffolding
 [doc-bundle]:https://github.com/operator-framework/operator-registry/blob/v1.16.1/docs/design/operator-bundle.md#operator-bundle
-[tutorial-bundle]:/docs/olm-integration/tutorial-bundle
 [doc-olm]:/docs/olm-integration/tutorial-bundle/#enabling-olm
+[image-reg-config]:/docs/olm-integration/cli-overview#private-bundle-and-catalog-image-registries
+[install-guide]:/docs/building-operators/ansible/installation
+[layout-doc]:/docs/building-operators/ansible/reference/scaffolding
+[legacy-quickstart-doc]:https://v0-19-x.sdk.operatorframework.io/docs/ansible/quickstart/
+[kustomize-docs]:https://kustomize.io/
+[migration-guide]:/docs/building-operators/ansible/migration
+[tutorial-bundle]:/docs/olm-integration/tutorial-bundle
