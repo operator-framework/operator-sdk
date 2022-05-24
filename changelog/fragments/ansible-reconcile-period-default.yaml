@@ -1,6 +1,0 @@
-entries:
-  - description: >
-      Changed the default reconcile period of Ansible-based operators to 10h instead of 1m.
-
-    kind: "change"
-    breaking: false
