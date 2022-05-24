@@ -291,13 +291,15 @@ func (c bundleCmd) runMetadata() error {
 		}
 	}
 
+	scorecardConfigPath := filepath.Join(bundleRoot, scorecard.DefaultConfigDir, scorecard.ConfigFileName)
+
 	bundleMetadata := bundleutil.BundleMetaData{
 		BundleDir:            c.outputDir,
 		PackageName:          c.packageName,
 		Channels:             c.channels,
 		DefaultChannel:       c.defaultChannel,
 		OtherLabels:          metricsannotations.MakeBundleMetadataLabels(c.layout),
-		IsScoreConfigPresent: true,
+		IsScoreConfigPresent: genutil.IsExist(scorecardConfigPath),
 	}
 
 	return bundleMetadata.GenerateMetadata()
