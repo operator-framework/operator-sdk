@@ -104,7 +104,7 @@ func (c *relatedImageCollector) collectFromBaseCSV(base *operatorsv1alpha1.Clust
 }
 
 func isStaticImage(image string) bool {
-	return strings.Contains(image, ":")
+	return !strings.Contains(image, "@sha256:")
 }
 
 func (c *relatedImageCollector) collect(name, imageRef, containerRef string) {
