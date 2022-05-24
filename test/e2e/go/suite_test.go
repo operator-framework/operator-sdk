@@ -25,6 +25,8 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/testutils"
 )
 
+//TODO: update this to use the new PoC api
+
 // TestE2EGo ensures the Go projects built with the SDK tool by using its binary.
 func TestE2EGo(t *testing.T) {
 	if testing.Short() {

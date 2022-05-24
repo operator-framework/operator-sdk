@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,5 +31,23 @@ func CreateCustomResources(sample sample.Sample, kubectl kubernetes.Kubectl) err
 		}
 	}
 
+	return nil
+}
+
+// AllowProjectBeMultiGroup will update the PROJECT file with the information to allow we scaffold
+// apis with different groups. be available.
+func AllowProjectBeMultiGroup(sample sample.Sample) error {
+	const multiGroup = `multigroup: true
+`
+	projectBytes, err := ioutil.ReadFile(filepath.Join(sample.Dir(), "PROJECT"))
+	if err != nil {
+		return err
+	}
+
+	projectBytes = append([]byte(multiGroup), projectBytes...)
+	err = ioutil.WriteFile(filepath.Join(sample.Dir(), "PROJECT"), projectBytes, 0644)
+	if err != nil {
+		return err
+	}
 	return nil
 }

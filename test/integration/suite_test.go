@@ -32,6 +32,8 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
+//TODO: update to use the new PoC api
+
 // TestIntegration tests operator-sdk projects with OLM.
 func TestIntegration(t *testing.T) {
 	if testing.Short() {

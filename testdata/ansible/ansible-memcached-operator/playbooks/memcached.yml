@@ -1,0 +1,9 @@
+---
+- hosts: localhost
+  gather_facts: no
+  collections:
+    - kubernetes.core
+    - operator_sdk.util
+  tasks:
+    - import_role:
+        name: "memcached"

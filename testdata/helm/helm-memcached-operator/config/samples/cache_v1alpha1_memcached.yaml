@@ -1,0 +1,42 @@
+apiVersion: cache.example.com/v1alpha1
+kind: Memcached
+metadata:
+  name: memcached-sample
+spec:
+  # Default values copied from <project_dir>/helm-charts/memcached/values.yaml
+  AntiAffinity: soft
+  affinity: {}
+  extraContainers: ""
+  extraVolumes: ""
+  image: memcached:1.5.20
+  kind: StatefulSet
+  memcached:
+    extendedOptions: modern
+    extraArgs: []
+    maxItemMemory: 64
+    verbosity: v
+  metrics:
+    enabled: false
+    image: quay.io/prometheus/memcached-exporter:v0.6.0
+    resources: {}
+    serviceMonitor:
+      enabled: false
+      interval: 15s
+  nodeSelector: {}
+  pdbMinAvailable: 2
+  podAnnotations: {}
+  replicaCount: 3
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  securityContext:
+    enabled: false
+    fsGroup: 1001
+    runAsUser: 1001
+  serviceAnnotations: {}
+  tolerations: {}
+  updateStrategy:
+    type: RollingUpdate
+  
+  

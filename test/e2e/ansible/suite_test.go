@@ -30,6 +30,8 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util"
 )
 
+//TODO: update this to use the new PoC api
+
 // TestE2EAnsible ensures the ansible projects built with the SDK tool by using its binary.
 func TestE2EAnsible(t *testing.T) {
 	if testing.Short() {

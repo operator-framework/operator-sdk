@@ -15,9 +15,50 @@
 package helm
 
 import (
+	"fmt"
+	"os"
 	"path/filepath"
+
+	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
+	"github.com/operator-framework/operator-sdk/testutils/command"
+	"github.com/operator-framework/operator-sdk/testutils/sample"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func GenerateMemcachedSamples(binaryPath, rootPath string) {
-	GenerateMemcachedSample(binaryPath, filepath.Join(rootPath, "helm"))
+	bundleImageBase := "bundle"
+
+	helmCC := command.NewGenericCommandContext(
+		command.WithEnv("GO111MODULE=on", "KUBECONFIG=broken_so_we_generate_static_default_rules"),
+		command.WithDir(filepath.Join(rootPath, "helm")),
+	)
+
+	memcachedGVK := schema.GroupVersionKind{
+		Group:   "cache",
+		Version: "v1alpha1",
+		Kind:    "Memcached",
+	}
+
+	helmMemcached := sample.NewGenericSample(
+		sample.WithBinary(binaryPath),
+		sample.WithCommandContext(helmCC),
+		sample.WithDomain("example.com"),
+		sample.WithPlugins("helm"),
+		sample.WithGvk(memcachedGVK),
+		sample.WithExtraApiOptions("--helm-chart", "../../../hack/generate/samples/internal/helm/testdata/memcached-0.0.1.tgz"),
+		sample.WithName("helm-memcached-operator"),
+	)
+
+	// remove sample directory if it already exists
+	err := os.RemoveAll(helmMemcached.Dir())
+	pkg.CheckError("attempting to remove sample dir", err)
+
+	gen := sample.NewGenerator(
+		sample.WithNoWebhook(),
+	)
+
+	err = gen.GenerateSamples(helmMemcached)
+	pkg.CheckError("generating helm samples", err)
+
+	ImplementMemcached(helmMemcached, fmt.Sprintf("%s-%s", bundleImageBase, helmMemcached.Name()))
 }

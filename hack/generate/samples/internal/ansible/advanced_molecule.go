@@ -21,69 +21,22 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
 	"github.com/operator-framework/operator-sdk/internal/util"
+	"github.com/operator-framework/operator-sdk/testutils/command"
+	"github.com/operator-framework/operator-sdk/testutils/e2e"
+	"github.com/operator-framework/operator-sdk/testutils/sample"
 )
 
-// AdvancedMolecule defines the context for the sample
-type AdvancedMolecule struct {
-	ctx *pkg.SampleContext
-}
-
-// GenerateAdvancedMoleculeSample will call all actions to create the directory and generate the sample
-// The Context to run the samples are not the same in the e2e test. In this way, note that it should NOT
-// be called in the e2e tests since it will call the Prepare() to set the sample context and generate the files
-// in the testdata directory. The e2e tests only ought to use the Run() method with the TestContext.
-func GenerateAdvancedMoleculeSample(binaryPath, samplesPath string) {
-	ctx, err := pkg.NewSampleContext(binaryPath, filepath.Join(samplesPath, "advanced-molecule-operator"),
-		"GO111MODULE=on")
-	pkg.CheckError("generating Ansible Molecule Advanced Operator context", err)
-
-	molecule := AdvancedMolecule{&ctx}
-	molecule.Prepare()
-	molecule.Run()
-}
-
-// Prepare the Context for the Memcached Ansible Sample
-// Note that sample directory will be re-created and the context data for the sample
-// will be set such as the domain and GVK.
-func (ma *AdvancedMolecule) Prepare() {
-	log.Infof("destroying directory for memcached Ansible samples")
-	ma.ctx.Destroy()
-
-	log.Infof("creating directory")
-	err := ma.ctx.Prepare()
-	pkg.CheckError("creating directory for Advanced Molecule Sample", err)
-
-	log.Infof("setting domain and GVK")
-	// nolint:goconst
-	ma.ctx.Domain = "example.com"
-	// nolint:goconst
-	ma.ctx.Version = "v1alpha1"
-	ma.ctx.Group = "test"
-	ma.ctx.Kind = "InventoryTest"
-}
-
-// Run the steps to create the Memcached Ansible Sample
-func (ma *AdvancedMolecule) Run() {
-	log.Infof("creating the project")
-	err := ma.ctx.Init(
-		"--plugins", "ansible",
-		"--group", ma.ctx.Group,
-		"--version", ma.ctx.Version,
-		"--kind", ma.ctx.Kind,
-		"--domain", ma.ctx.Domain,
-		"--generate-role",
-		"--generate-playbook")
-	pkg.CheckError("creating the project", err)
-
+func ImplementAdvancedMolecule(sample sample.Sample, image string) {
 	log.Infof("enabling multigroup support")
-	err = ma.ctx.AllowProjectBeMultiGroup()
+	err := e2e.AllowProjectBeMultiGroup(sample)
 	pkg.CheckError("updating PROJECT file", err)
 
-	inventoryRoleTask := filepath.Join(ma.ctx.Dir, "roles", "inventorytest", "tasks", "main.yml")
+	inventoryRoleTask := filepath.Join(sample.Dir(), "roles", "inventorytest", "tasks", "main.yml")
 	log.Infof("inserting code to inventory role task")
 	const inventoryRoleTaskFragment = `
 - when: sentinel | test
@@ -106,26 +59,26 @@ func (ma *AdvancedMolecule) Run() {
 
 	log.Infof("updating inventorytest sample")
 	err = kbutil.ReplaceInFile(
-		filepath.Join(ma.ctx.Dir, "config", "samples", "test_v1alpha1_inventorytest.yaml"),
+		filepath.Join(sample.Dir(), "config", "samples", "test_v1alpha1_inventorytest.yaml"),
 		"name: inventorytest-sample",
 		inventorysampleFragment)
 	pkg.CheckError("updating inventorytest sample", err)
 
 	log.Infof("updating spec of inventorytest sample")
 	err = kbutil.ReplaceInFile(
-		filepath.Join(ma.ctx.Dir, "config", "samples", "test_v1alpha1_inventorytest.yaml"),
+		filepath.Join(sample.Dir(), "config", "samples", "test_v1alpha1_inventorytest.yaml"),
 		"# TODO(user): Add fields here",
 		"size: 3")
 	pkg.CheckError("updating spec of inventorytest sample", err)
 
-	ma.addPlaybooks()
-	ma.updatePlaybooks()
-	ma.addMocksFromTestdata()
-	ma.updateDockerfile()
-	ma.updateConfig()
+	removeFixmeFromPlaybooks(sample.Dir(), sample.GVKs())
+	updatePlaybooks(sample.Dir())
+	addMocksFromTestdata(sample.Dir(), sample.CommandContext())
+	updateDockerfile(sample.Dir())
+	updateConfig(sample.Dir())
 }
 
-func (ma *AdvancedMolecule) updateConfig() {
+func updateConfig(dir string) {
 	log.Infof("adding customized roles")
 	const cmRolesFragment = `  ##
   ## Base operator rules
@@ -157,7 +110,7 @@ func (ma *AdvancedMolecule) updateConfig() {
       - watch
 #+kubebuilder:scaffold:rules`
 	err := kbutil.ReplaceInFile(
-		filepath.Join(ma.ctx.Dir, "config", "rbac", "role.yaml"),
+		filepath.Join(dir, "config", "rbac", "role.yaml"),
 		"#+kubebuilder:scaffold:rules",
 		cmRolesFragment)
 	pkg.CheckError("adding customized roles", err)
@@ -166,7 +119,7 @@ func (ma *AdvancedMolecule) updateConfig() {
 	const ansibleVaultArg = `
         - --ansible-args='--vault-password-file /opt/ansible/pwd.yml'`
 	err = kbutil.InsertCode(
-		filepath.Join(ma.ctx.Dir, "config", "manager", "manager.yaml"),
+		filepath.Join(dir, "config", "manager", "manager.yaml"),
 		"- --leader-election-id=advanced-molecule-operator",
 		ansibleVaultArg)
 	pkg.CheckError("adding manager arg", err)
@@ -178,7 +131,7 @@ func (ma *AdvancedMolecule) updateConfig() {
         - name: ANSIBLE_INVENTORY
           value: /opt/ansible/inventory`
 	err = kbutil.InsertCode(
-		filepath.Join(ma.ctx.Dir, "config", "manager", "manager.yaml"),
+		filepath.Join(dir, "config", "manager", "manager.yaml"),
 		"value: explicit",
 		managerEnv)
 	pkg.CheckError("adding manager env", err)
@@ -187,66 +140,66 @@ func (ma *AdvancedMolecule) updateConfig() {
 	const managerAuthArgs = `
         - "--ansible-args='--vault-password-file /opt/ansible/pwd.yml'"`
 	err = kbutil.InsertCode(
-		filepath.Join(ma.ctx.Dir, "config", "default", "manager_auth_proxy_patch.yaml"),
+		filepath.Join(dir, "config", "default", "manager_auth_proxy_patch.yaml"),
 		"- \"--leader-elect\"",
 		managerAuthArgs)
 	pkg.CheckError("adding vaulting args to the proxy auth", err)
 
 	log.Infof("adding task to not pull image to the config/testing")
 	err = kbutil.ReplaceInFile(
-		filepath.Join(ma.ctx.Dir, "config", "testing", "kustomization.yaml"),
+		filepath.Join(dir, "config", "testing", "kustomization.yaml"),
 		"- manager_image.yaml",
 		"- manager_image.yaml\n- pull_policy/Never.yaml")
 	pkg.CheckError("adding task to not pull image to the config/testing", err)
 }
 
-func (ma *AdvancedMolecule) addMocksFromTestdata() {
+func addMocksFromTestdata(dir string, cc command.CommandContext) {
 	log.Infof("adding ansible.cfg")
-	cmd := exec.Command("cp", "../../../hack/generate/samples/internal/ansible/testdata/ansible.cfg", ma.ctx.Dir)
-	_, err := ma.ctx.Run(cmd)
+	cmd := exec.Command("cp", "../../../hack/generate/samples/internal/ansible/testdata/ansible.cfg", dir)
+	_, err := cc.Run(cmd)
 	pkg.CheckError("adding ansible.cfg", err)
 
 	log.Infof("adding plugins/")
-	cmd = exec.Command("cp", "-r", "../../../hack/generate/samples/internal/ansible/testdata/plugins/", filepath.Join(ma.ctx.Dir, "plugins/"))
-	_, err = ma.ctx.Run(cmd)
+	cmd = exec.Command("cp", "-r", "../../../hack/generate/samples/internal/ansible/testdata/plugins/", filepath.Join(dir, "plugins/"))
+	_, err = cc.Run(cmd)
 	pkg.CheckError("adding plugins/", err)
 
 	log.Infof("adding fixture_collection/")
-	cmd = exec.Command("cp", "-r", "../../../hack/generate/samples/internal/ansible/testdata/fixture_collection/", filepath.Join(ma.ctx.Dir, "fixture_collection/"))
-	_, err = ma.ctx.Run(cmd)
+	cmd = exec.Command("cp", "-r", "../../../hack/generate/samples/internal/ansible/testdata/fixture_collection/", filepath.Join(dir, "fixture_collection/"))
+	_, err = cc.Run(cmd)
 	pkg.CheckError("adding fixture_collection/", err)
 
 	log.Infof("replacing watches.yaml")
-	cmd = exec.Command("cp", "-r", "../../../hack/generate/samples/internal/ansible/testdata/watches.yaml", ma.ctx.Dir)
-	_, err = ma.ctx.Run(cmd)
+	cmd = exec.Command("cp", "-r", "../../../hack/generate/samples/internal/ansible/testdata/watches.yaml", dir)
+	_, err = cc.Run(cmd)
 	pkg.CheckError("replacing watches.yaml", err)
 
 	log.Infof("adding tasks/")
-	cmd = exec.Command("cp", "-r", "../../../hack/generate/samples/internal/ansible/testdata/tasks/", filepath.Join(ma.ctx.Dir, "molecule/default/"))
-	_, err = ma.ctx.Run(cmd)
+	cmd = exec.Command("cp", "-r", "../../../hack/generate/samples/internal/ansible/testdata/tasks/", filepath.Join(dir, "molecule/default/"))
+	_, err = cc.Run(cmd)
 	pkg.CheckError("adding tasks/", err)
 
 	log.Infof("adding secret playbook")
-	cmd = exec.Command("cp", "-r", "../../../hack/generate/samples/internal/ansible/testdata/secret.yml", filepath.Join(ma.ctx.Dir, "playbooks/secret.yml"))
-	_, err = ma.ctx.Run(cmd)
+	cmd = exec.Command("cp", "-r", "../../../hack/generate/samples/internal/ansible/testdata/secret.yml", filepath.Join(dir, "playbooks/secret.yml"))
+	_, err = cc.Run(cmd)
 	pkg.CheckError("adding secret playbook", err)
 
 	log.Infof("adding inventory/")
-	cmd = exec.Command("cp", "-r", "../../../hack/generate/samples/internal/ansible/testdata/inventory/", filepath.Join(ma.ctx.Dir, "inventory/"))
-	_, err = ma.ctx.Run(cmd)
+	cmd = exec.Command("cp", "-r", "../../../hack/generate/samples/internal/ansible/testdata/inventory/", filepath.Join(dir, "inventory/"))
+	_, err = cc.Run(cmd)
 	pkg.CheckError("adding inventory/", err)
 
 	log.Infof("adding finalizer for finalizerconcurrencytest")
-	cmd = exec.Command("cp", "../../../hack/generate/samples/internal/ansible/testdata/playbooks/finalizerconcurrencyfinalizer.yml", filepath.Join(ma.ctx.Dir, "playbooks/finalizerconcurrencyfinalizer.yml"))
-	_, err = ma.ctx.Run(cmd)
+	cmd = exec.Command("cp", "../../../hack/generate/samples/internal/ansible/testdata/playbooks/finalizerconcurrencyfinalizer.yml", filepath.Join(dir, "playbooks/finalizerconcurrencyfinalizer.yml"))
+	_, err = cc.Run(cmd)
 	pkg.CheckError("adding finalizer for finalizerconccurencytest", err)
 
 }
 
-func (ma *AdvancedMolecule) updateDockerfile() {
+func updateDockerfile(dir string) {
 	log.Infof("replacing project Dockerfile to use ansible base image with the dev tag")
 	err := util.ReplaceRegexInFile(
-		filepath.Join(ma.ctx.Dir, "Dockerfile"),
+		filepath.Join(dir, "Dockerfile"),
 		"quay.io/operator-framework/ansible-operator:.*",
 		"quay.io/operator-framework/ansible-operator:dev")
 	pkg.CheckError("replacing Dockerfile", err)
@@ -268,13 +221,13 @@ RUN echo abc123 > /opt/ansible/pwd.yml \
  && ansible-vault encrypt_string --vault-password-file /opt/ansible/pwd.yml 'thisisatest' --name 'the_secret' > /opt/ansible/vars.yml
 `
 	err = kbutil.InsertCode(
-		filepath.Join(ma.ctx.Dir, "Dockerfile"),
+		filepath.Join(dir, "Dockerfile"),
 		"COPY playbooks/ ${HOME}/playbooks/",
 		dockerfileFragment)
 	pkg.CheckError("replacing Dockerfile", err)
 }
 
-func (ma *AdvancedMolecule) updatePlaybooks() {
+func updatePlaybooks(dir string) {
 	log.Infof("adding playbook for argstest")
 	const argsPlaybook = `---
 - hosts: localhost
@@ -298,7 +251,7 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
             msg: The decrypted value is {{the_secret.the_secret}}
 `
 	err := kbutil.ReplaceInFile(
-		filepath.Join(ma.ctx.Dir, "playbooks", "argstest.yml"),
+		filepath.Join(dir, "playbooks", "argstest.yml"),
 		originalPlaybookFragment,
 		argsPlaybook)
 	pkg.CheckError("adding playbook for argstest", err)
@@ -322,7 +275,7 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
             shouldBeCamel: '{{ camelCaseVar | default("false") }}'
 `
 	err = kbutil.ReplaceInFile(
-		filepath.Join(ma.ctx.Dir, "playbooks", "casetest.yml"),
+		filepath.Join(dir, "playbooks", "casetest.yml"),
 		originalPlaybookFragment,
 		casePlaybook)
 	pkg.CheckError("adding playbook for casetest", err)
@@ -341,7 +294,7 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
     - command: echo hello
     - debug: msg='{{ "hello" | test }}'`
 	err = kbutil.ReplaceInFile(
-		filepath.Join(ma.ctx.Dir, "playbooks", "inventorytest.yml"),
+		filepath.Join(dir, "playbooks", "inventorytest.yml"),
 		"---\n- hosts: localhost\n  gather_facts: no\n  collections:\n    - kubernetes.core\n    - operator_sdk.util\n  tasks:\n    - import_role:\n        name: \"inventorytest\"",
 		inventoryPlaybook)
 	pkg.CheckError("adding playbook for inventorytest", err)
@@ -399,7 +352,7 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
       when: configmap.resources|length > 0 and (configmap.resources.0.data.iterations|int) < 5
 `
 	err = kbutil.ReplaceInFile(
-		filepath.Join(ma.ctx.Dir, "playbooks", "reconciliationtest.yml"),
+		filepath.Join(dir, "playbooks", "reconciliationtest.yml"),
 		originalPlaybookFragment,
 		reconciliationPlaybook)
 	pkg.CheckError("adding playbook for reconciliationtest", err)
@@ -423,7 +376,7 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
             hello: "world"
 `
 	err = kbutil.ReplaceInFile(
-		filepath.Join(ma.ctx.Dir, "playbooks", "selectortest.yml"),
+		filepath.Join(dir, "playbooks", "selectortest.yml"),
 		originalPlaybookFragment,
 		selectorPlaybook)
 	pkg.CheckError("adding playbook for selectortest", err)
@@ -480,7 +433,7 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
           logs: '{{ log_result.log }}'
 `
 	err = kbutil.ReplaceInFile(
-		filepath.Join(ma.ctx.Dir, "playbooks", "subresourcestest.yml"),
+		filepath.Join(dir, "playbooks", "subresourcestest.yml"),
 		originalPlaybookFragment,
 		subresourcesPlaybook)
 	pkg.CheckError("adding playbook for subresourcestest", err)
@@ -515,7 +468,7 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
             foo: bar
 `
 	err = kbutil.ReplaceInFile(
-		filepath.Join(ma.ctx.Dir, "playbooks", "clusterannotationtest.yml"),
+		filepath.Join(dir, "playbooks", "clusterannotationtest.yml"),
 		originalPlaybookFragment,
 		clusterAnnotationTest)
 	pkg.CheckError("adding playbook for clusterannotationtest", err)
@@ -546,41 +499,20 @@ func (ma *AdvancedMolecule) updatePlaybooks() {
         msg: "Unpause!"
 `
 	err = kbutil.ReplaceInFile(
-		filepath.Join(ma.ctx.Dir, "playbooks", "finalizerconcurrencytest.yml"),
+		filepath.Join(dir, "playbooks", "finalizerconcurrencytest.yml"),
 		originalPlaybookFragment,
 		finalizerConcurrencyTest)
 	pkg.CheckError("adding playbook for finalizerconcurrencytest", err)
 }
 
-func (ma *AdvancedMolecule) addPlaybooks() {
-	allPlaybookKinds := []string{
-		"ArgsTest",
-		"CaseTest",
-		"CollectionTest",
-		"ClusterAnnotationTest",
-		"FinalizerConcurrencyTest",
-		"ReconciliationTest",
-		"SelectorTest",
-		"SubresourcesTest",
-	}
-
-	// Create API
-	for _, k := range allPlaybookKinds {
-		logMsgForKind := fmt.Sprintf("creating an API %s", k)
-		log.Infof(logMsgForKind)
-		err := ma.ctx.CreateAPI(
-			"--group", ma.ctx.Group,
-			"--version", ma.ctx.Version,
-			"--kind", k,
-			"--generate-playbook")
-		pkg.CheckError(logMsgForKind, err)
-
-		k = strings.ToLower(k)
+func removeFixmeFromPlaybooks(dir string, gvks []schema.GroupVersionKind) {
+	for _, gvk := range gvks {
+		k := strings.ToLower(gvk.Kind)
 		task := fmt.Sprintf("%s_test.yml", k)
-		logMsgForKind = fmt.Sprintf("removing FIXME assert from %s", task)
+		logMsgForKind := fmt.Sprintf("removing FIXME assert from %s", task)
 		log.Infof(logMsgForKind)
-		err = kbutil.ReplaceInFile(
-			filepath.Join(ma.ctx.Dir, "molecule", "default", "tasks", task),
+		err := kbutil.ReplaceInFile(
+			filepath.Join(dir, "molecule", "default", "tasks", task),
 			fixmeAssert,
 			"")
 		pkg.CheckError(logMsgForKind, err)

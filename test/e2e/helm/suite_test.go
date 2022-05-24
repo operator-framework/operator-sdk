@@ -27,6 +27,8 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util"
 )
 
+//TODO: update this to use the PoC api
+
 // TestE2EHelm ensures the Helm projects built with the SDK tool by using its binary.
 func TestE2EHelm(t *testing.T) {
 	if testing.Short() {

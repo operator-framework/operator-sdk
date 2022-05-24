@@ -5,8 +5,10 @@ import (
 	"io/ioutil"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 
 	. "github.com/onsi/ginkgo"
+	"github.com/operator-framework/operator-sdk/internal/annotations/metrics"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/testutils/sample"
 	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
@@ -98,4 +100,59 @@ func UninstallOLM(sample sample.Sample) {
 	if _, err := sample.CommandContext().Run(cmd); err != nil {
 		fmt.Fprintln(GinkgoWriter, "warning: error when uninstalling OLM:", err)
 	}
+}
+
+// StripBundleAnnotations removes all annotations applied to bundle manifests and metadata
+// by operator-sdk/internal/annotations/metrics annotators. Doing so decouples samples
+// from which operator-sdk version they were build with, as this information is already
+// available in git history.
+func StripBundleAnnotations(sample sample.Sample) (err error) {
+	// Remove metadata labels.
+	metadataAnnotations := metrics.MakeBundleMetadataLabels("")
+	metadataFiles := []string{
+		filepath.Join(sample.Dir(), "bundle", "metadata", "annotations.yaml"),
+		filepath.Join(sample.Dir(), "bundle.Dockerfile"),
+	}
+	if err = removeAllAnnotationLines(metadataAnnotations, metadataFiles); err != nil {
+		return err
+	}
+
+	// Remove manifests annotations.
+	manifestsAnnotations := metrics.MakeBundleObjectAnnotations("")
+	manifestsFiles := []string{
+		filepath.Join(sample.Dir(), "bundle", "manifests", sample.Name()+".clusterserviceversion.yaml"),
+		filepath.Join(sample.Dir(), "config", "manifests", "bases", sample.Name()+".clusterserviceversion.yaml"),
+	}
+	if err = removeAllAnnotationLines(manifestsAnnotations, manifestsFiles); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// removeAllAnnotationLines removes each line containing a key in annotations from all files at filePaths.
+func removeAllAnnotationLines(annotations map[string]string, filePaths []string) error {
+	var annotationREs []*regexp.Regexp
+	for annotation := range annotations {
+		re, err := regexp.Compile(".+" + regexp.QuoteMeta(annotation) + ".+\n")
+		if err != nil {
+			return fmt.Errorf("compiling annotation regexp: %v", err)
+		}
+		annotationREs = append(annotationREs, re)
+	}
+
+	for _, file := range filePaths {
+		b, err := ioutil.ReadFile(file)
+		if err != nil {
+			return err
+		}
+		for _, re := range annotationREs {
+			b = re.ReplaceAll(b, []byte{})
+		}
+		err = ioutil.WriteFile(file, b, 0644)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
