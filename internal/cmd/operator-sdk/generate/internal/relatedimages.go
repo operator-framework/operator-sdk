@@ -33,6 +33,8 @@ func FindRelatedImages(manifestCol *collector.Manifests, packageName string) ([]
 		relatedImagesByImageRef: make(map[string][]*relatedImage),
 		seenRelatedImages:       sets.NewString(),
 	}
+	// collectedRelatedImages add prefix to on name collisions on after first occurrence.
+	// collecting from base CSV first will preserve base CSV's name and add prefix to image from container environment.
 	col.collectFromBaseCSV(manifestCol.GetClusterServiceVersion(packageName))
 	for _, deployment := range manifestCol.Deployments {
 		containers := append(deployment.Spec.Template.Spec.Containers, deployment.Spec.Template.Spec.InitContainers...)
@@ -84,15 +86,25 @@ func (c *relatedImageCollector) collectFromEnvironment(containerRef string, env 
 }
 
 func (c *relatedImageCollector) collectFromBaseCSV(base *operatorsv1alpha1.ClusterServiceVersion) error {
-	if base == nil || base.Spec.RelatedImages == nil  {
+	if base == nil || base.Spec.RelatedImages == nil {
 		return nil
 	}
 
 	for _, relatedImage := range base.Spec.RelatedImages {
 		c.collect(relatedImage.Name, relatedImage.Image, "baseCSV")
+		if isStaticImage(relatedImage.Image) {
+			log.Warnf(
+				"warning: relatedImage %s is defined statically in base CSV as %s. Persistence of static related images will be removed in OperatorSDK v2",
+				relatedImage.Name, relatedImage.Image,
+			)
+		}
 	}
 
 	return nil
+}
+
+func isStaticImage(image string) bool {
+	return strings.Contains(image, ":")
 }
 
 func (c *relatedImageCollector) collect(name, imageRef, containerRef string) {
@@ -125,13 +137,15 @@ func (c *relatedImageCollector) collect(name, imageRef, containerRef string) {
 
 func (c *relatedImageCollector) collectedRelatedImages() []operatorsv1alpha1.RelatedImage {
 	final := make([]operatorsv1alpha1.RelatedImage, 0, len(c.relatedImages))
-
+	namesAddedOnce := make(map[string]bool)
 	for _, relatedImage := range c.relatedImages {
 		name := relatedImage.name
-
 		// Prefix the name with the containerRef on name collisions.
 		if len(c.relatedImagesByName[relatedImage.name]) > 1 {
-			name = relatedImage.containerRef + "-" + name
+			if _, added := namesAddedOnce[name]; added {
+				name = relatedImage.containerRef + "-" + name
+			}
+			namesAddedOnce[name] = true
 		}
 
 		// Only add the related image to the final list if it's the first occurrence of an image.
@@ -142,10 +156,8 @@ func (c *relatedImageCollector) collectedRelatedImages() []operatorsv1alpha1.Rel
 				continue
 			}
 
-			name = ""
 			log.Warnf(
-				"warning: multiple related images with the same image ref, %q, and different names found."+
-					"The image will only be listed once with an empty name."+
+				"warning: multiple related images with the same image ref, %q, and different names found. "+
 					"It is recmmended to either remove the duplicate or use the exact same name.",
 				relatedImage.name,
 			)
