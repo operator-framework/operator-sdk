@@ -2,7 +2,7 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      Bumping OPM version from v1.19.1 to v1.21.0 to allow for ppc64le and s390x support
+      Bumping OPM version from v1.19.1 to v1.21.0. For further information about this changes see: https://github.com/operator-framework/operator-registry/releases
 
     # kind is one of:
     # - addition
