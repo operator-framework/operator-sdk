@@ -33,7 +33,7 @@ import (
 const (
 	SchemaChannel  = "olm.channel"
 	SchemaPackage  = "olm.package"
-	DefaultChannel = "operator-sdk-run"
+	DefaultChannel = "operator-sdk-run-bundle"
 )
 
 const (

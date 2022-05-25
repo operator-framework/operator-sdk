@@ -198,20 +198,21 @@ func (f *FBCRegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 		return nil, err
 	}
 
+	// (todo) remove comment: ConfigMap related
 	// create a ConfigMap
-	cm := &corev1.ConfigMap{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: corev1.SchemeGroupVersion.String(),
-			Kind:       "ConfigMap",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "operator-sdk-run-bundle-config",
-			Namespace: f.cfg.Namespace,
-		},
-		Data: map[string]string{
-			"hello": "world",
-		},
-	}
+	// cm := &corev1.ConfigMap{
+	// 	TypeMeta: metav1.TypeMeta{
+	// 		APIVersion: corev1.SchemeGroupVersion.String(),
+	// 		Kind:       "ConfigMap",
+	// 	},
+	// 	ObjectMeta: metav1.ObjectMeta{
+	// 		Name:      "operator-sdk-run-bundle-config",
+	// 		Namespace: f.cfg.Namespace,
+	// 	},
+	// 	Data: map[string]string{
+	// 		"test": "runbundle",
+	// 	},
+	// }
 
 	// make the pod definition
 	f.pod = &corev1.Pod{
@@ -220,24 +221,25 @@ func (f *FBCRegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 			Namespace: f.cfg.Namespace,
 		},
 		Spec: corev1.PodSpec{
-			Volumes: []corev1.Volume{
-				{
-					Name: k8sutil.TrimDNS1123Label(cm.Name + "-volume"),
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							Items: []corev1.KeyToPath{
-								{
-									Key:  cm.Name,
-									Path: cm.Name,
-								},
-							},
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: cm.Name,
-							},
-						},
-					},
-				},
-			},
+			// (todo) remove comment: ConfigMap related
+			// Volumes: []corev1.Volume{
+			// 	{
+			// 		Name: k8sutil.TrimDNS1123Label(cm.Name + "-volume"),
+			// 		VolumeSource: corev1.VolumeSource{
+			// 			ConfigMap: &corev1.ConfigMapVolumeSource{
+			// 				Items: []corev1.KeyToPath{
+			// 					{
+			// 						Key:  cm.Name,
+			// 						Path: cm.Name,
+			// 					},
+			// 				},
+			// 				LocalObjectReference: corev1.LocalObjectReference{
+			// 					Name: cm.Name,
+			// 				},
+			// 			},
+			// 		},
+			// 	},
+			// },
 			Containers: []corev1.Container{
 				{
 					Name:  defaultContainerName,
@@ -250,14 +252,15 @@ func (f *FBCRegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 					Ports: []corev1.ContainerPort{
 						{Name: defaultContainerPortName, ContainerPort: f.GRPCPort},
 					},
-					VolumeMounts: []corev1.VolumeMount{
-						{
-							Name: k8sutil.TrimDNS1123Label(cm.Name + "-volume"),
-							// ReadOnly:  true,
-							MountPath: path.Join(defaultFBCIndexRootDir, cm.Name),
-							SubPath:   cm.Name,
-						},
-					},
+					// (todo) remove comment: ConfigMap related
+					// VolumeMounts: []corev1.VolumeMount{
+					// 	{
+					// 		Name: k8sutil.TrimDNS1123Label(cm.Name + "-volume"),
+					// 		// ReadOnly:  true,
+					// 		MountPath: path.Join(defaultFBCIndexRootDir, cm.Name),
+					// 		SubPath:   cm.Name,
+					// 	},
+					// },
 				},
 			},
 		},
