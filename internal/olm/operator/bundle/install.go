@@ -27,11 +27,10 @@ import (
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/alpha/action"
 	declarativeconfig "github.com/operator-framework/operator-registry/alpha/declcfg"
-	"github.com/operator-framework/operator-registry/pkg/containertools"
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
+	fbcutil "github.com/operator-framework/operator-sdk/internal/olm/fbcutil"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry"
-	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
 )
 
 type Install struct {
@@ -54,7 +53,7 @@ func NewInstall(cfg *operator.Configuration) Install {
 }
 
 func (i *Install) BindFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&i.IndexImage, "index-image", registry.DefaultIndexImage, "index image in which to inject bundle")
+	fs.StringVar(&i.IndexImage, "index-image", fbcutil.DefaultIndexImage, "index image in which to inject bundle")
 	fs.Var(&i.InstallMode, "install-mode", "install mode")
 
 	// --mode is hidden so only users who know what they're doing can alter add mode.
@@ -95,15 +94,15 @@ func (i *Install) setup(ctx context.Context) error {
 		return err
 	}
 
-	// get index image labels.
-	catalogLabels, err := registryutil.GetImageLabels(ctx, nil, i.IndexImageCatalogCreator.IndexImage, false)
+	// check if index image adopts File-Based Catalog or SQLite index image format
+	isFBCImage, err := fbcutil.IsFBC(ctx, i.IndexImageCatalogCreator.IndexImage)
 	if err != nil {
-		return fmt.Errorf("get index image labels: %v", err)
+		return fmt.Errorf("error in upgrading the bundle %q that was installed traditionally", i.IndexImageCatalogCreator.BundleImage)
 	}
+	i.IndexImageCatalogCreator.HasFBCLabel = isFBCImage
 
 	// set the field to true if FBC label is on the image or for a default index image.
-	if _, hasFBCLabel := catalogLabels[containertools.ConfigsLocationLabel]; hasFBCLabel || i.IndexImageCatalogCreator.IndexImage == registry.DefaultIndexImage {
-		i.IndexImageCatalogCreator.HasFBCLabel = true
+	if i.IndexImageCatalogCreator.HasFBCLabel {
 		if i.IndexImageCatalogCreator.BundleAddMode != "" {
 			return fmt.Errorf("specifying the bundle add mode is not supported for File-Based Catalog bundles and index images")
 		}
@@ -115,7 +114,7 @@ func (i *Install) setup(ctx context.Context) error {
 
 	if i.IndexImageCatalogCreator.HasFBCLabel {
 		// FBC variables
-		f := &registry.FBCContext{
+		f := &fbcutil.FBCContext{
 			Package: labels[registrybundle.PackageLabel],
 			Refs:    []string{i.BundleImage},
 			ChannelEntry: declarativeconfig.ChannelEntry{
@@ -126,7 +125,7 @@ func (i *Install) setup(ctx context.Context) error {
 		if _, hasChannelMetadata := labels[registrybundle.ChannelsLabel]; hasChannelMetadata {
 			f.ChannelName = strings.Split(labels[registrybundle.ChannelsLabel], ",")[0]
 		} else {
-			f.ChannelName = registry.DefaultChannel
+			f.ChannelName = fbcutil.DefaultChannel
 		}
 
 		// generate an fbc if an fbc specific label is found on the image or for a default index image.
@@ -151,7 +150,7 @@ func (i *Install) setup(ctx context.Context) error {
 }
 
 // generateFBCContent creates a File-Based Catalog using the bundle image and index image from the run bundle command.
-func generateFBCContent(ctx context.Context, f *registry.FBCContext, bundleImage, indexImage string) (string, error) {
+func generateFBCContent(ctx context.Context, f *fbcutil.FBCContext, bundleImage, indexImage string) (string, error) {
 	log.Infof("Creating a File-Based Catalog of the bundle %q", bundleImage)
 	// generate a File-Based Catalog representation of the bundle image
 	bundleDeclcfg, err := f.CreateFBC(ctx)
@@ -165,7 +164,7 @@ func generateFBCContent(ctx context.Context, f *registry.FBCContext, bundleImage
 		Channels: []declarativeconfig.Channel{bundleDeclcfg.Channel},
 	}
 
-	if indexImage != registry.DefaultIndexImage { // non-default index image was specified.
+	if indexImage != fbcutil.DefaultIndexImage { // non-default index image was specified.
 		// since an index image is specified, the bundle image will be added to the index image.
 		// addBundleToIndexImage will ensure that the bundle is not already present in the index image and error out if it does.
 		declcfg, err = addBundleToIndexImage(ctx, indexImage, bundleDeclcfg)
@@ -176,7 +175,7 @@ func generateFBCContent(ctx context.Context, f *registry.FBCContext, bundleImage
 
 	// validate the declarative config and convert it to a string
 	var content string
-	if content, err = registry.ValidateAndStringify(declcfg); err != nil {
+	if content, err = fbcutil.ValidateAndStringify(declcfg); err != nil {
 		return "", fmt.Errorf("error validating and converting the declarative config object to a string format: %v", err)
 	}
 
@@ -186,7 +185,7 @@ func generateFBCContent(ctx context.Context, f *registry.FBCContext, bundleImage
 }
 
 // addBundleToIndexImage adds the bundle to an existing index image if the bundle is not already present in the index image.
-func addBundleToIndexImage(ctx context.Context, indexImage string, bundleDeclConfig registry.BundleDeclcfg) (*declarativeconfig.DeclarativeConfig, error) {
+func addBundleToIndexImage(ctx context.Context, indexImage string, bundleDeclConfig fbcutil.BundleDeclcfg) (*declarativeconfig.DeclarativeConfig, error) {
 	log.Infof("Rendering a File-Based Catalog of the Index Image %q", indexImage)
 	log.SetOutput(ioutil.Discard)
 	render := action.Render{
