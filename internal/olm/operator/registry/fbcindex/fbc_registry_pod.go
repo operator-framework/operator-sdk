@@ -200,19 +200,22 @@ func (f *FBCRegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 
 	// (todo) remove comment: ConfigMap related
 	// create a ConfigMap
-	// cm := &corev1.ConfigMap{
-	// 	TypeMeta: metav1.TypeMeta{
-	// 		APIVersion: corev1.SchemeGroupVersion.String(),
-	// 		Kind:       "ConfigMap",
-	// 	},
-	// 	ObjectMeta: metav1.ObjectMeta{
-	// 		Name:      "operator-sdk-run-bundle-config",
-	// 		Namespace: f.cfg.Namespace,
-	// 	},
-	// 	Data: map[string]string{
-	// 		"test": "runbundle",
-	// 	},
-	// }
+	cm := &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: corev1.SchemeGroupVersion.String(),
+			Kind:       "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "operator-sdk-run-bundle-config",
+			Namespace: f.cfg.Namespace,
+		},
+		// (todo) remove comment (rashmi/venkat):
+		// can we have key as something random, and value to be the extra FBC string
+		// but how do we specifically access the value in CM?
+		Data: map[string]string{
+			"test": "runbundle",
+		},
+	}
 
 	// make the pod definition
 	f.pod = &corev1.Pod{
@@ -222,24 +225,25 @@ func (f *FBCRegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 		},
 		Spec: corev1.PodSpec{
 			// (todo) remove comment: ConfigMap related
-			// Volumes: []corev1.Volume{
-			// 	{
-			// 		Name: k8sutil.TrimDNS1123Label(cm.Name + "-volume"),
-			// 		VolumeSource: corev1.VolumeSource{
-			// 			ConfigMap: &corev1.ConfigMapVolumeSource{
-			// 				Items: []corev1.KeyToPath{
-			// 					{
-			// 						Key:  cm.Name,
-			// 						Path: cm.Name,
-			// 					},
-			// 				},
-			// 				LocalObjectReference: corev1.LocalObjectReference{
-			// 					Name: cm.Name,
-			// 				},
-			// 			},
-			// 		},
-			// 	},
-			// },
+			Volumes: []corev1.Volume{
+				{
+					Name: k8sutil.TrimDNS1123Label(cm.Name + "-volume"),
+					VolumeSource: corev1.VolumeSource{
+						ConfigMap: &corev1.ConfigMapVolumeSource{
+							// todo: do we have to add items like this or can we just reference the CM below?
+							Items: []corev1.KeyToPath{
+								{
+									Key:  cm.Name,
+									Path: cm.Name,
+								},
+							},
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: cm.Name,
+							},
+						},
+					},
+				},
+			},
 			Containers: []corev1.Container{
 				{
 					Name:  defaultContainerName,
@@ -253,16 +257,37 @@ func (f *FBCRegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 						{Name: defaultContainerPortName, ContainerPort: f.GRPCPort},
 					},
 					// (todo) remove comment: ConfigMap related
-					// VolumeMounts: []corev1.VolumeMount{
-					// 	{
-					// 		Name: k8sutil.TrimDNS1123Label(cm.Name + "-volume"),
-					// 		// ReadOnly:  true,
-					// 		MountPath: path.Join(defaultFBCIndexRootDir, cm.Name),
-					// 		SubPath:   cm.Name,
-					// 	},
-					// },
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							Name:      k8sutil.TrimDNS1123Label(cm.Name + "-volume"),
+							MountPath: path.Join(defaultFBCIndexRootDir, cm.Name),
+							SubPath:   cm.Name,
+						},
+					},
 				},
 			},
+			// (todo) remove comment (not configmap related).
+			// InitContainer related to doing untar of the extra fbc tar.
+			// InitContainers: []corev1.Container{
+			// 	{
+			// 		Name:            "extra-FBC-untar",
+			// 		Image:           f.IndexImage, // should this be the same image as regular container?
+			// 		ImagePullPolicy: corev1.PullIfNotPresent,
+			// 		Args: []string{
+			// 			"tar",
+			// 			"xvzf",
+			// 			"/configs/extrafbc.tar.gz",
+			// 			"-C",
+			// 			path.Join(defaultFBCIndexRootDir, cm.Name),
+			// 		},
+			// 		VolumeMounts: []corev1.VolumeMount{
+			// 			{
+			// 				MountPath: path.Join(defaultFBCIndexRootDir, cm.Name),
+			// 				Name:      k8sutil.TrimDNS1123Label(cm.Name + "-volume"),
+			// 			},
+			// 		},
+			// 	},
+			// },
 		},
 	}
 
@@ -273,6 +298,13 @@ const fbcCmdTemplate = `mkdir -p {{ .FBCDir }} && \
 echo '{{ .FBCContent }}' >> {{ .FBCFile  }} && \
 opm serve {{ .FBCDir }} -p {{ .GRPCPort }}
 `
+
+// (todo) remove comment.
+// This maybe the new container creation command for handling the extra FBC for large indexes for both ConfigMap
+// InitContainer.
+// const extraFBCCmdTemplate = `
+// opm serve {{ .ExtraFBCDir }} -p {{ .GRPCPort }}
+// `
 
 // getContainerCmd uses templating to construct the container command
 // and throws error if unable to parse and execute the container command
