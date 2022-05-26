@@ -16,18 +16,29 @@ package e2e_ansible_test
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/operator-framework/operator-sdk/hack/generate/samples/ansible"
 	"github.com/operator-framework/operator-sdk/internal/testutils"
 	"github.com/operator-framework/operator-sdk/internal/util"
+	"github.com/operator-framework/operator-sdk/testutils/command"
+	"github.com/operator-framework/operator-sdk/testutils/e2e/kind"
+	"github.com/operator-framework/operator-sdk/testutils/e2e/olm"
+	"github.com/operator-framework/operator-sdk/testutils/e2e/operator"
+	"github.com/operator-framework/operator-sdk/testutils/e2e/prometheus"
+	"github.com/operator-framework/operator-sdk/testutils/e2e/scorecard"
+	"github.com/operator-framework/operator-sdk/testutils/kubernetes"
+	"github.com/operator-framework/operator-sdk/testutils/sample"
 )
 
 //TODO: update this to use the new PoC api
@@ -42,7 +53,13 @@ func TestE2EAnsible(t *testing.T) {
 }
 
 var (
-	tc testutils.TestContext
+	tc                         testutils.TestContext
+	kctl                       kubernetes.Kubectl
+	isPrometheusManagedBySuite = true
+	isOLMManagedBySuite        = true
+	ansibleSample              sample.Sample
+	testdir                    = "e2e-test-ansible"
+	image                      = "e2e-test:ansible"
 )
 
 // BeforeSuite run before any specs are run to perform the required actions for all e2e ansible tests.
@@ -50,110 +67,165 @@ var _ = BeforeSuite(func() {
 	var err error
 
 	By("creating a new test context")
-	tc, err = testutils.NewTestContext(testutils.BinaryName, "GO111MODULE=on")
+	By("creating helm test samples")
 	Expect(err).NotTo(HaveOccurred())
+	samples := ansible.GenerateMemcachedSamples(testutils.BinaryName, testdir)
+	ansibleSample = samples[0]
 
-	tc.Domain = "example.com"
-	tc.Version = "v1alpha1"
-	tc.Group = "cache"
-	tc.Kind = "Memcached"
-	tc.ProjectName = "memcached-operator"
-	tc.Kubectl.Namespace = fmt.Sprintf("%s-system", tc.ProjectName)
-	tc.Kubectl.ServiceAccount = fmt.Sprintf("%s-controller-manager", tc.ProjectName)
+	kctl = kubernetes.NewKubectlUtil(
+		kubernetes.WithCommandContext(
+			command.NewGenericCommandContext(
+				command.WithDir(ansibleSample.Dir()),
+			),
+		),
+		kubernetes.WithNamespace(ansibleSample.Name()+"-system"),
+		kubernetes.WithServiceAccount(ansibleSample.Name()+"-controller-manager"),
+	)
 
-	By("copying sample to a temporary e2e directory")
-	Expect(exec.Command("cp", "-r", "../../../testdata/ansible/memcached-operator", tc.Dir).Run()).To(Succeed())
+	// TODO(everettraven): IMO this should be moved to the logic for implementing the sample. Keeping as is for now to make finish the PoC easier
+	// ---------------------------------------------------
 
 	By("enabling debug logging in the manager")
-	err = kbutil.ReplaceInFile(filepath.Join(tc.Dir, "config", "default", "manager_auth_proxy_patch.yaml"),
+	err = kbutil.ReplaceInFile(filepath.Join(ansibleSample.Dir(), "config", "default", "manager_auth_proxy_patch.yaml"),
 		"- \"--leader-elect\"", "- \"--zap-log-level=2\"\n        - \"--leader-elect\"")
 	Expect(err).NotTo(HaveOccurred())
 
+	// ---------------------------------------------------
+
 	By("preparing the prerequisites on cluster")
-	tc.InstallPrerequisites()
+	By("checking API resources applied on Cluster")
+	output, err := kctl.Command("api-resources")
+	Expect(err).NotTo(HaveOccurred())
+	if strings.Contains(output, "servicemonitors") {
+		isPrometheusManagedBySuite = false
+	}
+	if strings.Contains(output, "clusterserviceversions") {
+		isOLMManagedBySuite = false
+	}
+
+	if isPrometheusManagedBySuite {
+		By("installing Prometheus")
+		Expect(prometheus.InstallPrometheusOperator(kctl)).To(Succeed())
+
+		By("ensuring provisioned Prometheus Manager Service")
+		Eventually(func() error {
+			_, err := kctl.Get(
+				false,
+				"Service", "prometheus-operator")
+			return err
+		}, 3*time.Minute, time.Second).Should(Succeed())
+	}
+
+	if isOLMManagedBySuite {
+		By("installing OLM")
+		Expect(olm.InstallOLMVersion(ansibleSample, olm.OlmVersionForTestSuite)).To(Succeed())
+	}
 
 	By("using dev image for scorecard-test")
-	err = tc.ReplaceScorecardImagesForDev()
+	err = scorecard.ReplaceScorecardImagesForDev(ansibleSample)
 	Expect(err).NotTo(HaveOccurred())
 
 	By("replacing project Dockerfile to use ansible base image with the dev tag")
-	err = util.ReplaceRegexInFile(filepath.Join(tc.Dir, "Dockerfile"), "quay.io/operator-framework/ansible-operator:.*", "quay.io/operator-framework/ansible-operator:dev")
+	err = util.ReplaceRegexInFile(filepath.Join(ansibleSample.Dir(), "Dockerfile"), "quay.io/operator-framework/ansible-operator:.*", "quay.io/operator-framework/ansible-operator:dev")
 	Expect(err).Should(Succeed())
 
+	// TODO(everettraven): IMO this should be moved to the logic for implementing the sample. Keeping as is for now to make finish the PoC easier
+	// ---------------------------------------------------
+
+	gvk := ansibleSample.GVKs()[0]
+
 	By("adding Memcached mock task to the role")
-	err = kbutil.InsertCode(filepath.Join(tc.Dir, "roles", strings.ToLower(tc.Kind), "tasks", "main.yml"),
+	err = kbutil.InsertCode(filepath.Join(ansibleSample.Dir(), "roles", strings.ToLower(gvk.Kind), "tasks", "main.yml"),
 		"periodSeconds: 3", memcachedWithBlackListTask)
 	Expect(err).NotTo(HaveOccurred())
 
 	By("creating an API definition to add a task to delete the config map")
-	err = tc.CreateAPI(
-		"--group", tc.Group,
-		"--version", tc.Version,
+	cmd := exec.Command(ansibleSample.Binary(), "create", "api",
+		"--group", gvk.Group,
+		"--version", gvk.Version,
 		"--kind", "Memfin",
 		"--generate-role")
+	_, err = ansibleSample.CommandContext().Run(cmd, ansibleSample.Name())
 	Expect(err).NotTo(HaveOccurred())
 
 	By("updating spec of Memfin sample")
 	err = kbutil.ReplaceInFile(
-		filepath.Join(tc.Dir, "config", "samples", fmt.Sprintf("%s_%s_memfin.yaml", tc.Group, tc.Version)),
+		filepath.Join(ansibleSample.Dir(), "config", "samples", fmt.Sprintf("%s_%s_memfin.yaml", gvk.Group, gvk.Version)),
 		"# TODO(user): Add fields here",
 		"foo: bar")
 	Expect(err).NotTo(HaveOccurred())
 
 	By("adding task to delete config map")
-	err = kbutil.ReplaceInFile(filepath.Join(tc.Dir, "roles", "memfin", "tasks", "main.yml"),
+	err = kbutil.ReplaceInFile(filepath.Join(ansibleSample.Dir(), "roles", "memfin", "tasks", "main.yml"),
 		"# tasks file for Memfin", taskToDeleteConfigMap)
 	Expect(err).NotTo(HaveOccurred())
 
 	By("adding to watches finalizer and blacklist")
-	err = kbutil.ReplaceInFile(filepath.Join(tc.Dir, "watches.yaml"),
+	err = kbutil.ReplaceInFile(filepath.Join(ansibleSample.Dir(), "watches.yaml"),
 		"playbook: playbooks/memcached.yml", memcachedWatchCustomizations)
 	Expect(err).NotTo(HaveOccurred())
 
 	By("create API to test watching multiple GVKs")
-	err = tc.CreateAPI(
-		"--group", tc.Group,
-		"--version", tc.Version,
+	cmd = exec.Command(ansibleSample.Binary(), "create", "api",
+		"--group", gvk.Group,
+		"--version", gvk.Version,
 		"--kind", "Foo",
 		"--generate-role")
+	_, err = ansibleSample.CommandContext().Run(cmd, ansibleSample.Name())
 	Expect(err).NotTo(HaveOccurred())
 
 	By("updating spec of Foo sample")
 	err = kbutil.ReplaceInFile(
-		filepath.Join(tc.Dir, "config", "samples", fmt.Sprintf("%s_%s_foo.yaml", tc.Group, tc.Version)),
+		filepath.Join(ansibleSample.Dir(), "config", "samples", fmt.Sprintf("%s_%s_foo.yaml", gvk.Group, gvk.Version)),
 		"# TODO(user): Add fields here",
 		"foo: bar")
 	Expect(err).NotTo(HaveOccurred())
 
 	By("adding RBAC permissions for the Memcached Kind")
-	err = kbutil.ReplaceInFile(filepath.Join(tc.Dir, "config", "rbac", "role.yaml"),
+	err = kbutil.ReplaceInFile(filepath.Join(ansibleSample.Dir(), "config", "rbac", "role.yaml"),
 		"#+kubebuilder:scaffold:rules", rolesForBaseOperator)
 	Expect(err).NotTo(HaveOccurred())
 
+	// ---------------------------------------------------
+
 	By("building the project image")
-	err = tc.Make("docker-build", "IMG="+tc.ImageName)
+	err = operator.BuildOperatorImage(ansibleSample, image)
 	Expect(err).NotTo(HaveOccurred())
 
-	onKind, err := tc.IsRunningOnKind()
+	onKind, err := kind.IsRunningOnKind(kctl)
 	Expect(err).NotTo(HaveOccurred())
 	if onKind {
 		By("loading the required images into Kind cluster")
-		Expect(tc.LoadImageToKindCluster()).To(Succeed())
-		Expect(tc.LoadImageToKindClusterWithName("quay.io/operator-framework/scorecard-test:dev")).To(Succeed())
+		Expect(kind.LoadImageToKindCluster(ansibleSample.CommandContext(), image)).To(Succeed())
+		Expect(kind.LoadImageToKindCluster(ansibleSample.CommandContext(), "quay.io/operator-framework/scorecard-test:dev")).To(Succeed())
+		Expect(kind.LoadImageToKindCluster(ansibleSample.CommandContext(), "quay.io/operator-framework/custom-scorecard-tests:dev")).To(Succeed())
 	}
 
 	By("generating bundle")
-	Expect(tc.GenerateBundle()).To(Succeed())
+	Expect(olm.GenerateBundle(ansibleSample, "bundle-"+image)).To(Succeed())
 })
 
 // AfterSuite run after all the specs have run, regardless of whether any tests have failed to ensures that
 // all be cleaned up
 var _ = AfterSuite(func() {
 	By("uninstalling prerequisites")
-	tc.UninstallPrerequisites()
+	if isPrometheusManagedBySuite {
+		By("uninstalling Prometheus")
+		prometheus.UninstallPrometheusOperator(kctl)
+	}
+	if isOLMManagedBySuite {
+		By("uninstalling OLM")
+		olm.UninstallOLM(ansibleSample)
+	}
 
 	By("destroying container image and work dir")
-	tc.Destroy()
+	cmd := exec.Command("docker", "rmi", "-f", image)
+	if _, err := ansibleSample.CommandContext().Run(cmd); err != nil {
+		Expect(err).To(BeNil())
+	}
+	if err := os.RemoveAll(testdir); err != nil {
+		Expect(err).To(BeNil())
+	}
 })
 
 const memcachedWithBlackListTask = `

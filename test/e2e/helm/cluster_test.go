@@ -50,7 +50,6 @@ var _ = Describe("Running Helm projects", func() {
 			Expect(metrics.CleanUpMetrics(kctl, metricsClusterRoleBindingName)).To(Succeed())
 
 			By("cleaning up created API objects during test process")
-			// TODO(estroz): go/v2 does not have this target, so generalize once tests are refactored.
 			Expect(operator.UndeployOperator(helmSampleValidKubeConfig)).To(Succeed())
 
 			By("ensuring that the namespace was deleted")

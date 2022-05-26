@@ -33,7 +33,7 @@ var memcachedGVK = schema.GroupVersionKind{
 	Kind:    "Memcached",
 }
 
-func GenerateMemcachedSamples(binaryPath, rootPath string) {
+func GenerateMemcachedSamples(binaryPath, rootPath string) []sample.Sample {
 	ansibleCC := command.NewGenericCommandContext(
 		command.WithEnv("GO111MODULE=on"),
 		command.WithDir(filepath.Join(rootPath, "ansible")),
@@ -61,6 +61,7 @@ func GenerateMemcachedSamples(binaryPath, rootPath string) {
 	pkg.CheckError("generating ansible samples", err)
 
 	ImplementMemcached(ansibleMemcached, fmt.Sprintf("%s-%s", bundleImageBase, ansibleMemcached.Name()))
+	return []sample.Sample{ansibleMemcached}
 }
 
 // GenerateMoleculeSample will call all actions to create the directory and generate the sample
