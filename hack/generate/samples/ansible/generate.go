@@ -19,7 +19,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
+	"github.com/operator-framework/operator-sdk/hack/generate/samples/pkg"
 	"github.com/operator-framework/operator-sdk/testutils/command"
 	"github.com/operator-framework/operator-sdk/testutils/sample"
 	"k8s.io/apimachinery/pkg/runtime/schema"

@@ -24,7 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 
-	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
+	"github.com/operator-framework/operator-sdk/hack/generate/samples/pkg"
 	"github.com/operator-framework/operator-sdk/internal/util"
 	"github.com/operator-framework/operator-sdk/testutils/command"
 	"github.com/operator-framework/operator-sdk/testutils/e2e"

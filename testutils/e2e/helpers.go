@@ -19,15 +19,14 @@ func CleanUpTestDir(path string) error {
 // CreateCustomResources will create the CRs that are specified in a Sample
 func CreateCustomResources(sample sample.Sample, kubectl kubernetes.Kubectl) error {
 	for _, gvk := range sample.GVKs() {
-		sampleFile := filepath.Join(sample.CommandContext().Dir(),
-			sample.Name(),
+		sampleFile := filepath.Join(
 			"config",
-			"sample",
+			"samples",
 			fmt.Sprintf("%s_%s_%s.yaml", gvk.Group, gvk.Version, strings.ToLower(gvk.Kind)))
 
-		_, err := kubectl.Apply(true, "-f", sampleFile)
+		o, err := kubectl.Apply(true, "-f", sampleFile)
 		if err != nil {
-			return fmt.Errorf("encountered an error when applying CRD (%s): %w", sampleFile, err)
+			return fmt.Errorf("encountered an error when applying CRD (%s): %w | OUTPUT: %s", sampleFile, err, o)
 		}
 	}
 

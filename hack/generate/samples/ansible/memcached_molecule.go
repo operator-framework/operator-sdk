@@ -24,7 +24,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 
-	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
+	"github.com/operator-framework/operator-sdk/hack/generate/samples/pkg"
 	"github.com/operator-framework/operator-sdk/internal/util"
 	"github.com/operator-framework/operator-sdk/testutils/e2e"
 	"github.com/operator-framework/operator-sdk/testutils/sample"

@@ -16,8 +16,19 @@ package e2e_go_test
 
 import (
 	. "github.com/onsi/ginkgo"
-
 	"github.com/operator-framework/operator-sdk/test/common"
+	"github.com/operator-framework/operator-sdk/testutils/sample"
 )
 
-var _ = Describe("scorecard", common.ScorecardSpec(&tc, "go"))
+var _ = Describe("scorecard", func() {
+	// Create this BeforeEach so the BeforeSuite actions are run
+	// and the goSample variable is set
+	var sample sample.Sample
+	BeforeEach(func() {
+		sample = goSample
+	})
+
+	It("Should pass scorecard tests", func() {
+		common.PoCScorecardSpec(sample, "go")
+	})
+})

@@ -25,6 +25,7 @@ import (
 
 	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 	"github.com/operator-framework/operator-sdk/internal/testutils"
+	"github.com/operator-framework/operator-sdk/testutils/sample"
 )
 
 // ScorecardSpec runs a set of scorecard tests common to all operator types.
@@ -117,4 +118,93 @@ func ScorecardSpec(tc *testutils.TestContext, operatorType string) func() {
 			Expect(results[0].State).To(Equal(v1alpha3.PassState))
 		})
 	}
+}
+
+// PoCScorecardSpec runs a set of scorecard tests common to all operator types.
+func PoCScorecardSpec(sample sample.Sample, operatorType string) {
+	fmt.Println("SAMPLE: ", sample)
+	var (
+		err         error
+		cmd         *exec.Cmd
+		outputBytes []byte
+		output      v1alpha3.TestList
+	)
+
+	By("running a single scorecard test")
+	cmd = exec.Command(sample.Binary(), "scorecard", "bundle",
+		"--selector", "suite=basic",
+		"--output", "json",
+		"--wait-time", "2m")
+	outputBytes, err = sample.CommandContext().Run(cmd, sample.Name())
+	Expect(err).NotTo(HaveOccurred())
+	Expect(json.Unmarshal(outputBytes, &output)).To(Succeed())
+
+	Expect(output.Items).To(HaveLen(1))
+	results := output.Items[0].Status.Results
+	Expect(results).To(HaveLen(1))
+	Expect(results[0].Name).To(Equal("basic-check-spec"))
+	Expect(results[0].State).To(Equal(v1alpha3.PassState))
+
+	By("running all enabled scorecard tests")
+	cmd = exec.Command(sample.Binary(), "scorecard", "bundle",
+		"--output", "json",
+		"--wait-time", "4m")
+	outputBytes, err = sample.CommandContext().Run(cmd, sample.Name())
+	// Some tests are expected to fail, which results in scorecard exiting 1.
+	// Go tests no longer expect to fail
+	if strings.ToLower(operatorType) != "go" {
+		Expect(err).To(HaveOccurred())
+	}
+	Expect(json.Unmarshal(outputBytes, &output)).To(Succeed())
+
+	expected := map[string]v1alpha3.State{
+		// Basic suite.
+		"basic-check-spec": v1alpha3.PassState,
+		// OLM suite.
+		"olm-bundle-validation":    v1alpha3.PassState,
+		"olm-crds-have-validation": v1alpha3.FailState,
+		"olm-crds-have-resources":  v1alpha3.FailState,
+		"olm-spec-descriptors":     v1alpha3.FailState,
+		"olm-status-descriptors":   v1alpha3.FailState,
+	}
+	if strings.ToLower(operatorType) == "go" {
+		// Go projects have generated CRD validation.
+		expected["olm-crds-have-validation"] = v1alpha3.PassState
+		// Go generated test operator now has CSV markers
+		// that allows these validations to pass
+		expected["olm-crds-have-resources"] = v1alpha3.PassState
+		expected["olm-spec-descriptors"] = v1alpha3.PassState
+		expected["olm-status-descriptors"] = v1alpha3.PassState
+		// The Go sample project tests a custom suite.
+		expected["customtest1"] = v1alpha3.PassState
+		expected["customtest2"] = v1alpha3.PassState
+	}
+
+	Expect(output.Items).To(HaveLen(len(expected)))
+	for i := 0; i < len(output.Items); i++ {
+		results := output.Items[i].Status.Results
+		Expect(results).To(HaveLen(1))
+		Expect(results[0].Name).NotTo(BeEmpty())
+		fmt.Fprintln(GinkgoWriter, "    - Name: ", results[0].Name)
+		fmt.Fprintln(GinkgoWriter, "      Expected: ", expected[results[0].Name])
+		fmt.Fprintln(GinkgoWriter, "      Output: ", results[0].State)
+		Expect(results[0].State).To(Equal(expected[results[0].Name]))
+	}
+
+	By("configuring scorecard storage")
+	cmd = exec.Command(sample.Binary(), "scorecard", "bundle",
+		"--selector", "suite=basic",
+		"--output", "json",
+		"--test-output", "/testdata",
+		"--wait-time", "4m")
+	outputBytes, err = sample.CommandContext().Run(cmd, sample.Name())
+	Expect(err).NotTo(HaveOccurred())
+	Expect(json.Unmarshal(outputBytes, &output)).To(Succeed())
+
+	Expect(output.Items).To(HaveLen(1))
+	results = output.Items[0].Status.Results
+	Expect(results).To(HaveLen(1))
+	Expect(results[0].Name).To(Equal("basic-check-spec"))
+	Expect(results[0].State).To(Equal(v1alpha3.PassState))
+
 }

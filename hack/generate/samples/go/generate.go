@@ -19,16 +19,15 @@ import (
 	"os"
 	"path/filepath"
 
-	golangv2 "github.com/operator-framework/operator-sdk/hack/generate/samples/internal/go/v2"
-	golangv3 "github.com/operator-framework/operator-sdk/hack/generate/samples/internal/go/v3"
-	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
+	golangv3 "github.com/operator-framework/operator-sdk/hack/generate/samples/go/v3"
+	"github.com/operator-framework/operator-sdk/hack/generate/samples/pkg"
 	"github.com/operator-framework/operator-sdk/testutils/command"
 	"github.com/operator-framework/operator-sdk/testutils/sample"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-func GenerateMemcachedSamples(binaryPath, rootPath string) {
-	golangv2.GenerateMemcachedSample(binaryPath, filepath.Join(rootPath, "go", "v2"))
+func GenerateMemcachedSamples(binaryPath, rootPath string) []sample.Sample {
+	// golangv2.GenerateMemcachedSample(binaryPath, filepath.Join(rootPath, "go", "v2"))
 
 	bundleImageBase := "bundle"
 
@@ -67,4 +66,6 @@ func GenerateMemcachedSamples(binaryPath, rootPath string) {
 
 	// Perform implementation logic
 	golangv3.ImplementMemcached(goV3Memcached, fmt.Sprintf("%s-%s", bundleImageBase, goV3Memcached.Name()))
+
+	return []sample.Sample{goV3Memcached}
 }

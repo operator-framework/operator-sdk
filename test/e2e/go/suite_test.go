@@ -15,14 +15,26 @@
 package e2e_go_test
 
 import (
-	"fmt"
+	"os"
 	"os/exec"
+	"strings"
 	"testing"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	golang "github.com/operator-framework/operator-sdk/hack/generate/samples/go"
 	"github.com/operator-framework/operator-sdk/internal/testutils"
+	"github.com/operator-framework/operator-sdk/testutils/command"
+	"github.com/operator-framework/operator-sdk/testutils/e2e/certmanager"
+	"github.com/operator-framework/operator-sdk/testutils/e2e/kind"
+	"github.com/operator-framework/operator-sdk/testutils/e2e/olm"
+	"github.com/operator-framework/operator-sdk/testutils/e2e/operator"
+	"github.com/operator-framework/operator-sdk/testutils/e2e/prometheus"
+	"github.com/operator-framework/operator-sdk/testutils/e2e/scorecard"
+	"github.com/operator-framework/operator-sdk/testutils/kubernetes"
+	"github.com/operator-framework/operator-sdk/testutils/sample"
 )
 
 //TODO: update this to use the new PoC api
@@ -37,69 +49,112 @@ func TestE2EGo(t *testing.T) {
 }
 
 var (
-	tc testutils.TestContext
+	tc                         testutils.TestContext
+	kctl                       kubernetes.Kubectl
+	isPrometheusManagedBySuite = true
+	isOLMManagedBySuite        = true
+	goSample                   sample.Sample
+	testdir                    = "e2e-test-go"
+	image                      = "e2e-test:go"
 )
 
 // BeforeSuite run before any specs are run to perform the required actions for all e2e Go tests.
 var _ = BeforeSuite(func() {
 	var err error
 
-	By("creating a new test context")
-	tc, err = testutils.NewTestContext(testutils.BinaryName, "GO111MODULE=on")
-	Expect(err).NotTo(HaveOccurred())
+	By("creating Go test samples")
+	samples := golang.GenerateMemcachedSamples(testutils.BinaryName, testdir)
+	goSample = samples[0]
 
-	tc.Domain = "example.com"
-	tc.Group = "cache"
-	tc.Version = "v1alpha1"
-	tc.Kind = "Memcached"
-	tc.Resources = "memcacheds"
-	tc.ProjectName = "memcached-operator"
-	tc.Kubectl.Namespace = fmt.Sprintf("%s-system", tc.ProjectName)
-	tc.Kubectl.ServiceAccount = fmt.Sprintf("%s-controller-manager", tc.ProjectName)
-
-	By("copying sample to a temporary e2e directory")
-	Expect(exec.Command("cp", "-r", "../../../testdata/go/v3/memcached-operator", tc.Dir).Run()).To(Succeed())
+	kctl = kubernetes.NewKubectlUtil(
+		kubernetes.WithCommandContext(
+			command.NewGenericCommandContext(
+				command.WithDir(goSample.Dir()),
+			),
+		),
+		kubernetes.WithNamespace(goSample.Name()+"-system"),
+		kubernetes.WithServiceAccount(goSample.Name()+"-controller-manager"),
+	)
 
 	By("preparing the prerequisites on cluster")
-	tc.InstallPrerequisites()
+	By("checking API resources applied on Cluster")
+	output, err := kctl.Command("api-resources")
+	Expect(err).NotTo(HaveOccurred())
+	if strings.Contains(output, "servicemonitors") {
+		isPrometheusManagedBySuite = false
+	}
+	if strings.Contains(output, "clusterserviceversions") {
+		isOLMManagedBySuite = false
+	}
+
+	if isPrometheusManagedBySuite {
+		By("installing Prometheus")
+		Expect(prometheus.InstallPrometheusOperator(kctl)).To(Succeed())
+
+		By("ensuring provisioned Prometheus Manager Service")
+		Eventually(func() error {
+			_, err := kctl.Get(
+				false,
+				"Service", "prometheus-operator")
+			return err
+		}, 3*time.Minute, time.Second).Should(Succeed())
+	}
+
+	if isOLMManagedBySuite {
+		By("installing OLM")
+		Expect(olm.InstallOLMVersion(goSample, olm.OlmVersionForTestSuite)).To(Succeed())
+	}
 
 	By("by adding scorecard custom patch file")
-	err = tc.AddScorecardCustomPatchFile()
+	err = scorecard.AddScorecardCustomPatchFile(goSample)
 	Expect(err).NotTo(HaveOccurred())
 
 	By("using dev image for scorecard-test")
-	err = tc.ReplaceScorecardImagesForDev()
+	err = scorecard.ReplaceScorecardImagesForDev(goSample)
 	Expect(err).NotTo(HaveOccurred())
 
 	By("building the project image")
-	err = tc.Make("docker-build", "IMG="+tc.ImageName)
+	err = operator.BuildOperatorImage(goSample, image)
 	Expect(err).NotTo(HaveOccurred())
 
-	onKind, err := tc.IsRunningOnKind()
+	onKind, err := kind.IsRunningOnKind(kctl)
 	Expect(err).NotTo(HaveOccurred())
 	if onKind {
 		By("loading the required images into Kind cluster")
-		Expect(tc.LoadImageToKindCluster()).To(Succeed())
-		Expect(tc.LoadImageToKindClusterWithName("quay.io/operator-framework/scorecard-test:dev")).To(Succeed())
-		Expect(tc.LoadImageToKindClusterWithName("quay.io/operator-framework/custom-scorecard-tests:dev")).To(Succeed())
+		Expect(kind.LoadImageToKindCluster(goSample.CommandContext(), image)).To(Succeed())
+		Expect(kind.LoadImageToKindCluster(goSample.CommandContext(), "quay.io/operator-framework/scorecard-test:dev")).To(Succeed())
+		Expect(kind.LoadImageToKindCluster(goSample.CommandContext(), "quay.io/operator-framework/custom-scorecard-tests:dev")).To(Succeed())
 	}
 
 	By("generating bundle")
-	Expect(tc.GenerateBundle()).To(Succeed())
+	Expect(olm.GenerateBundle(goSample, "bundle-"+image)).To(Succeed())
 
 	By("installing cert manager bundle")
-	Expect(tc.InstallCertManager(false)).To(Succeed())
+	Expect(certmanager.InstallCertManagerBundle(false, kctl)).To(Succeed())
 })
 
 // AfterSuite run after all the specs have run, regardless of whether any tests have failed to ensures that
 // all be cleaned up
 var _ = AfterSuite(func() {
 	By("uninstall cert manager bundle")
-	tc.UninstallCertManager(false)
+	certmanager.UninstallCertManagerBundle(false, kctl)
 
 	By("uninstalling prerequisites")
-	tc.UninstallPrerequisites()
+	if isPrometheusManagedBySuite {
+		By("uninstalling Prometheus")
+		prometheus.UninstallPrometheusOperator(kctl)
+	}
+	if isOLMManagedBySuite {
+		By("uninstalling OLM")
+		olm.UninstallOLM(goSample)
+	}
 
 	By("destroying container image and work dir")
-	tc.Destroy()
+	cmd := exec.Command("docker", "rmi", "-f", image)
+	if _, err := goSample.CommandContext().Run(cmd); err != nil {
+		Expect(err).To(BeNil())
+	}
+	if err := os.RemoveAll(testdir); err != nil {
+		Expect(err).To(BeNil())
+	}
 })

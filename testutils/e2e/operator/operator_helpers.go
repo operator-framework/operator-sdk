@@ -5,43 +5,10 @@ import (
 	"os/exec"
 	"strings"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-
 	"github.com/operator-framework/operator-sdk/testutils/kubernetes"
 	"github.com/operator-framework/operator-sdk/testutils/sample"
 	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 )
-
-// LocalTest will run a few basic tests for testing that an operator will run locally (outside of a cluster)
-func LocalTest(sample sample.Sample) {
-	BeforeEach(func() {
-		By("Installing CRD's")
-		cmd := exec.Command("make", "install")
-		cmdCtx := sample.CommandContext()
-		_, err := cmdCtx.Run(cmd, sample.Name())
-		Expect(err).NotTo(HaveOccurred())
-	})
-
-	AfterEach(func() {
-		By("Uninstalling CRD's")
-		cmd := exec.Command("make", "uninstall")
-		cmdCtx := sample.CommandContext()
-		_, err := cmdCtx.Run(cmd, sample.Name())
-		Expect(err).NotTo(HaveOccurred())
-	})
-
-	It("Should run correctly when run locally", func() {
-		By("Running the project")
-		cmd := exec.Command("make", "run")
-		err := cmd.Start()
-		Expect(err).NotTo(HaveOccurred())
-
-		By("Killing the project")
-		err = cmd.Process.Kill()
-		Expect(err).NotTo(HaveOccurred())
-	})
-}
 
 // BuildOperatorImage will build an operator image by running `make docker-build IMG=<image>`
 func BuildOperatorImage(sample sample.Sample, image string) error {
@@ -107,5 +74,23 @@ func EnsureOperatorRunning(kubectl kubernetes.Kubectl, expectedNumPods int, podN
 	if status != "Running" {
 		return fmt.Errorf("controller pod in %s status", status)
 	}
+	return nil
+}
+
+// InstallCRDs will install the CRDs for a sample onto the cluster
+func InstallCRDs(sample sample.Sample) error {
+	cmd := exec.Command("make", "install")
+	_, err := sample.CommandContext().Run(cmd, sample.Name())
+	return err
+}
+
+// UninstallCRDs will uninstall the CRDs for a sample from the cluster
+func UninstallCRDs(sample sample.Sample) error {
+	cmd := exec.Command("make", "uninstall")
+	o, err := sample.CommandContext().Run(cmd, sample.Name())
+	if err != nil {
+		return fmt.Errorf("encountered an error uninstalling the CRDs: %w | OUTPUT: %s", err, o)
+	}
+
 	return nil
 }

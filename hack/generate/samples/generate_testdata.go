@@ -19,9 +19,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/ansible"
-	golang "github.com/operator-framework/operator-sdk/hack/generate/samples/internal/go"
-	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/helm"
+	"github.com/operator-framework/operator-sdk/hack/generate/samples/ansible"
+	golang "github.com/operator-framework/operator-sdk/hack/generate/samples/go"
+	"github.com/operator-framework/operator-sdk/hack/generate/samples/helm"
 
 	log "github.com/sirupsen/logrus"
 
