@@ -15,16 +15,27 @@
 package e2e_helm_test
 
 import (
-	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/operator-framework/operator-sdk/hack/generate/samples/helm"
 	"github.com/operator-framework/operator-sdk/internal/testutils"
 	"github.com/operator-framework/operator-sdk/internal/util"
+	"github.com/operator-framework/operator-sdk/testutils/command"
+	"github.com/operator-framework/operator-sdk/testutils/e2e/kind"
+	"github.com/operator-framework/operator-sdk/testutils/e2e/olm"
+	"github.com/operator-framework/operator-sdk/testutils/e2e/operator"
+	"github.com/operator-framework/operator-sdk/testutils/e2e/prometheus"
+	"github.com/operator-framework/operator-sdk/testutils/e2e/scorecard"
+	"github.com/operator-framework/operator-sdk/testutils/kubernetes"
+	"github.com/operator-framework/operator-sdk/testutils/sample"
 )
 
 //TODO: update this to use the PoC api
@@ -39,66 +50,125 @@ func TestE2EHelm(t *testing.T) {
 }
 
 var (
-	tc testutils.TestContext
+	tc                         testutils.TestContext
+	kctl                       kubernetes.Kubectl
+	isPrometheusManagedBySuite = true
+	isOLMManagedBySuite        = true
+	helmSample                 sample.Sample
+	testdir                    = "e2e-test-helm"
+	image                      = "e2e-test:helm"
+	helmSampleValidKubeConfig  sample.Sample
 )
 
 // BeforeSuite run before any specs are run to perform the required actions for all e2e Helm tests.
 var _ = BeforeSuite(func() {
 	var err error
 
-	By("creating a new test context")
-	tc, err = testutils.NewTestContext(testutils.BinaryName, "GO111MODULE=on")
+	By("creating helm test samples")
+	helmChartPath, err := filepath.Abs("../../../hack/generate/samples/helm/testdata/memcached-0.0.1.tgz")
 	Expect(err).NotTo(HaveOccurred())
+	samples := helm.GenerateMemcachedSamples(testutils.BinaryName, testdir, helmChartPath)
+	helmSample = samples[0]
 
-	tc.Domain = "example.com"
-	tc.Group = "cache"
-	tc.Version = "v1alpha1"
-	tc.Kind = "Memcached"
-	tc.Resources = "memcacheds"
-	tc.ProjectName = "memcached-operator"
-	tc.Kubectl.Namespace = fmt.Sprintf("%s-system", tc.ProjectName)
-	tc.Kubectl.ServiceAccount = fmt.Sprintf("%s-controller-manager", tc.ProjectName)
+	// need to create a new sample for anything that requires a valid KUBECONFIG
+	helmSampleValidKubeConfig = sample.NewGenericSample(
+		sample.WithBinary(helmSample.Binary()),
+		sample.WithGvk(helmSample.GVKs()...),
+		sample.WithDomain(helmSample.Domain()),
+		sample.WithName(helmSample.Name()),
+		sample.WithCommandContext(command.NewGenericCommandContext(
+			command.WithDir(helmSample.CommandContext().Dir()),
+		)),
+	)
 
-	By("copying sample to a temporary e2e directory")
-	Expect(exec.Command("cp", "-r", "../../../testdata/helm/memcached-operator", tc.Dir).Run()).To(Succeed())
+	kctl = kubernetes.NewKubectlUtil(
+		kubernetes.WithCommandContext(
+			command.NewGenericCommandContext(
+				command.WithDir(helmSample.Dir()),
+			),
+		),
+		kubernetes.WithNamespace(helmSample.Name()+"-system"),
+		kubernetes.WithServiceAccount(helmSample.Name()+"-controller-manager"),
+	)
 
 	By("preparing the prerequisites on cluster")
-	tc.InstallPrerequisites()
+	By("checking API resources applied on Cluster")
+	output, err := kctl.Command("api-resources")
+	Expect(err).NotTo(HaveOccurred())
+	if strings.Contains(output, "servicemonitors") {
+		isPrometheusManagedBySuite = false
+	}
+	if strings.Contains(output, "clusterserviceversions") {
+		isOLMManagedBySuite = false
+	}
+
+	if isPrometheusManagedBySuite {
+		By("installing Prometheus")
+		Expect(prometheus.InstallPrometheusOperator(kctl)).To(Succeed())
+
+		By("ensuring provisioned Prometheus Manager Service")
+		Eventually(func() error {
+			_, err := kctl.Get(
+				false,
+				"Service", "prometheus-operator")
+			return err
+		}, 3*time.Minute, time.Second).Should(Succeed())
+	}
+
+	if isOLMManagedBySuite {
+		By("installing OLM")
+		Expect(olm.InstallOLMVersion(helmSampleValidKubeConfig, olm.OlmVersionForTestSuite)).To(Succeed())
+	}
 
 	By("using dev image for scorecard-test")
-	err = tc.ReplaceScorecardImagesForDev()
+	err = scorecard.ReplaceScorecardImagesForDev(helmSample)
 	Expect(err).NotTo(HaveOccurred())
 
 	By("replacing project Dockerfile to use Helm base image with the dev tag")
-	err = util.ReplaceRegexInFile(filepath.Join(tc.Dir, "Dockerfile"), "quay.io/operator-framework/helm-operator:.*", "quay.io/operator-framework/helm-operator:dev")
+	err = util.ReplaceRegexInFile(filepath.Join(helmSample.Dir(), "Dockerfile"), "quay.io/operator-framework/helm-operator:.*", "quay.io/operator-framework/helm-operator:dev")
 	Expect(err).Should(Succeed())
 
 	By("checking the kustomize setup")
-	err = tc.Make("kustomize")
+	cmd := exec.Command("make", "kustomize")
+	_, err = helmSample.CommandContext().Run(cmd, helmSample.Name())
 	Expect(err).NotTo(HaveOccurred())
 
 	By("building the project image")
-	err = tc.Make("docker-build", "IMG="+tc.ImageName)
+	err = operator.BuildOperatorImage(helmSample, image)
 	Expect(err).NotTo(HaveOccurred())
 
-	onKind, err := tc.IsRunningOnKind()
+	onKind, err := kind.IsRunningOnKind(kctl)
 	Expect(err).NotTo(HaveOccurred())
 	if onKind {
 		By("loading the required images into Kind cluster")
-		Expect(tc.LoadImageToKindCluster()).To(Succeed())
-		Expect(tc.LoadImageToKindClusterWithName("quay.io/operator-framework/scorecard-test:dev")).To(Succeed())
+		Expect(kind.LoadImageToKindCluster(helmSample.CommandContext(), image)).To(Succeed())
+		Expect(kind.LoadImageToKindCluster(helmSample.CommandContext(), "quay.io/operator-framework/scorecard-test:dev")).To(Succeed())
+		Expect(kind.LoadImageToKindCluster(helmSample.CommandContext(), "quay.io/operator-framework/custom-scorecard-tests:dev")).To(Succeed())
 	}
 
 	By("generating bundle")
-	Expect(tc.GenerateBundle()).To(Succeed())
+	Expect(olm.GenerateBundle(helmSample, "bundle-"+image)).To(Succeed())
 })
 
 // AfterSuite run after all the specs have run, regardless of whether any tests have failed to ensures that
 // all be cleaned up
 var _ = AfterSuite(func() {
 	By("uninstalling prerequisites")
-	tc.UninstallPrerequisites()
+	if isPrometheusManagedBySuite {
+		By("uninstalling Prometheus")
+		prometheus.UninstallPrometheusOperator(kctl)
+	}
+	if isOLMManagedBySuite {
+		By("uninstalling OLM")
+		olm.UninstallOLM(helmSample)
+	}
 
 	By("destroying container image and work dir")
-	tc.Destroy()
+	cmd := exec.Command("docker", "rmi", "-f", image)
+	if _, err := helmSample.CommandContext().Run(cmd); err != nil {
+		Expect(err).To(BeNil())
+	}
+	if err := os.RemoveAll(testdir); err != nil {
+		Expect(err).To(BeNil())
+	}
 })

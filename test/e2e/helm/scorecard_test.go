@@ -18,6 +18,18 @@ import (
 	. "github.com/onsi/ginkgo"
 
 	"github.com/operator-framework/operator-sdk/test/common"
+	"github.com/operator-framework/operator-sdk/testutils/sample"
 )
 
-var _ = Describe("scorecard", common.ScorecardSpec(&tc, "helm"))
+var _ = Describe("scorecard", func() {
+	// Create this BeforeEach so the BeforeSuite actions are run
+	// and the goSample variable is set
+	var sample sample.Sample
+	BeforeEach(func() {
+		sample = helmSampleValidKubeConfig
+	})
+
+	It("Should pass scorecard tests", func() {
+		common.PoCScorecardSpec(sample, "helm")
+	})
+})

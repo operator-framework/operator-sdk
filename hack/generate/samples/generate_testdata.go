@@ -55,7 +55,7 @@ func main() {
 	log.Infof("writing sample directories under %s", samplesPath)
 
 	log.Infof("creating Helm Memcached Sample")
-	helm.GenerateMemcachedSamples(binaryPath, samplesPath)
+	helm.GenerateMemcachedSamples(binaryPath, samplesPath, "../../../hack/generate/samples/helm/testdata/memcached-0.0.1.tgz")
 
 	log.Infof("creating Ansible Memcached Sample")
 	ansible.GenerateMemcachedSamples(binaryPath, samplesPath)

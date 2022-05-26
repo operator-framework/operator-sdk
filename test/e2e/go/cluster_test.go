@@ -61,7 +61,9 @@ var _ = Describe("operator-sdk", func() {
 		It("should run correctly in a cluster", func() {
 			By("checking if the Operator project Pod is running")
 			verifyControllerUp := func() error {
-				return operator.EnsureOperatorRunning(kctl, 1, "controller-manager", "controller-manager")
+				var err error
+				_, err = operator.EnsureOperatorRunning(kctl, 1, "controller-manager", "controller-manager")
+				return err
 			}
 			Eventually(verifyControllerUp, 2*time.Minute, time.Second).Should(Succeed())
 

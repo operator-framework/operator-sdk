@@ -17,6 +17,8 @@ type Sample interface {
 	Name() string
 	// GVKs return an array of GVKs that are used when generating the apis and webhooks for the Sample
 	GVKs() []schema.GroupVersionKind
+	// Domain returs the domain of the sample
+	Domain() string
 	// Dir returns the directory the sample is created in
 	Dir() string
 	// Binary returns the binary that is used when creating a sample
@@ -172,6 +174,11 @@ func (gs *GenericSample) Dir() string {
 // Binary returns the binary used when creating the sample
 func (gs *GenericSample) Binary() string {
 	return gs.binary
+}
+
+// Domain returns the domain of the GenericSample
+func (gs *GenericSample) Domain() string {
+	return gs.domain
 }
 
 // GenerateInit runs the `init` subcommand of the binary provided

@@ -45,7 +45,7 @@ func UndeployOperator(sample sample.Sample) error {
 
 // EnsureOperatorRunning makes sure that an operator is running with with expected number of pods,
 // the pod name contains a specific substring and is running in the specified control-plane
-func EnsureOperatorRunning(kubectl kubernetes.Kubectl, expectedNumPods int, podNameShouldContain string, controlPlane string) error {
+func EnsureOperatorRunning(kubectl kubernetes.Kubectl, expectedNumPods int, podNameShouldContain string, controlPlane string) (string, error) {
 	// Get the controller-manager pod name
 	podOutput, err := kubectl.Get(
 		true,
@@ -53,15 +53,15 @@ func EnsureOperatorRunning(kubectl kubernetes.Kubectl, expectedNumPods int, podN
 		"-o", "go-template={{ range .items }}{{ if not .metadata.deletionTimestamp }}{{ .metadata.name }}"+
 			"{{ \"\\n\" }}{{ end }}{{ end }}")
 	if err != nil {
-		return fmt.Errorf("could not get pods: %v", err)
+		return "", fmt.Errorf("could not get pods: %v", err)
 	}
 	podNames := kbutil.GetNonEmptyLines(podOutput)
 	if len(podNames) != expectedNumPods {
-		return fmt.Errorf("expecting %d pod(s), have %d", expectedNumPods, len(podNames))
+		return "", fmt.Errorf("expecting %d pod(s), have %d", expectedNumPods, len(podNames))
 	}
 	controllerPodName := podNames[0]
 	if !strings.Contains(controllerPodName, podNameShouldContain) {
-		return fmt.Errorf("expecting pod name %q to contain %q", controllerPodName, podNameShouldContain)
+		return "", fmt.Errorf("expecting pod name %q to contain %q", controllerPodName, podNameShouldContain)
 	}
 
 	// Ensure the controller-manager Pod is running.
@@ -69,19 +69,22 @@ func EnsureOperatorRunning(kubectl kubernetes.Kubectl, expectedNumPods int, podN
 		true,
 		"pods", controllerPodName, "-o", "jsonpath={.status.phase}")
 	if err != nil {
-		return fmt.Errorf("failed to get pod status for %q: %v", controllerPodName, err)
+		return "", fmt.Errorf("failed to get pod status for %q: %v", controllerPodName, err)
 	}
 	if status != "Running" {
-		return fmt.Errorf("controller pod in %s status", status)
+		return "", fmt.Errorf("controller pod in %s status", status)
 	}
-	return nil
+	return controllerPodName, nil
 }
 
 // InstallCRDs will install the CRDs for a sample onto the cluster
 func InstallCRDs(sample sample.Sample) error {
 	cmd := exec.Command("make", "install")
-	_, err := sample.CommandContext().Run(cmd, sample.Name())
-	return err
+	o, err := sample.CommandContext().Run(cmd, sample.Name())
+	if err != nil {
+		return fmt.Errorf("encountered an error when installing the CRDs: %w | OUTPUT: %s", err, o)
+	}
+	return nil
 }
 
 // UninstallCRDs will uninstall the CRDs for a sample from the cluster

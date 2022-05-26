@@ -19,30 +19,31 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/operator-framework/operator-sdk/testutils/e2e/operator"
 )
 
 var _ = Describe("Running Helm projects", func() {
 	Context("built with operator-sdk", func() {
-
 		BeforeEach(func() {
-			By("installing CRD's")
-			err := tc.Make("install")
+			By("Installing CRD's")
+			err := operator.InstallCRDs(helmSampleValidKubeConfig)
 			Expect(err).NotTo(HaveOccurred())
 		})
 
 		AfterEach(func() {
-			By("uninstalling CRD's")
-			err := tc.Make("uninstall")
+			By("Uninstalling CRD's")
+			err := operator.UninstallCRDs(helmSampleValidKubeConfig)
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		It("should run correctly locally", func() {
-			By("running the project")
+		It("Should run correctly when run locally", func() {
+			By("Running the project")
 			cmd := exec.Command("make", "run")
+			cmd.Dir = helmSample.Dir()
 			err := cmd.Start()
 			Expect(err).NotTo(HaveOccurred())
 
-			By("killing the project")
+			By("Killing the project")
 			err = cmd.Process.Kill()
 			Expect(err).NotTo(HaveOccurred())
 		})

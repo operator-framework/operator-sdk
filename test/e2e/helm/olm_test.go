@@ -21,37 +21,45 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/operator-framework/operator-sdk/testutils/e2e/olm"
+	"github.com/operator-framework/operator-sdk/testutils/sample"
 )
 
 var _ = Describe("Integrating Helm Projects with OLM", func() {
 	Context("with operator-sdk", func() {
+		var sample sample.Sample
+
+		BeforeEach(func() {
+			sample = helmSampleValidKubeConfig
+		})
+
 		const operatorVersion = "0.0.1"
 
 		It("should generate and run a valid OLM bundle and packagemanifests", func() {
 			By("building the operator bundle image")
-			err := tc.Make("bundle-build", "BUNDLE_IMG="+tc.BundleImageName)
+			err := olm.BuildBundleImage(sample, "bundle-"+image)
 			Expect(err).NotTo(HaveOccurred())
 
 			By("adding the 'packagemanifests' rule to the Makefile")
-			err = tc.AddPackagemanifestsTarget(projutil.OperatorTypeHelm)
+			err = olm.AddPackagemanifestsTarget(sample, projutil.OperatorTypeHelm)
 			Expect(err).NotTo(HaveOccurred())
 
 			By("generating the operator package manifests")
-			err = tc.Make("packagemanifests", "IMG="+tc.ImageName)
+			err = olm.GeneratePackageManifests(sample, image)
 			Expect(err).NotTo(HaveOccurred())
 
 			By("running the package")
-			runPkgManCmd := exec.Command(tc.BinaryName, "run", "packagemanifests",
+			runPkgManCmd := exec.Command(sample.Binary(), "run", "packagemanifests",
 				"--install-mode", "AllNamespaces",
 				"--version", operatorVersion,
 				"--timeout", "4m")
-			_, err = tc.Run(runPkgManCmd)
+			_, err = sample.CommandContext().Run(runPkgManCmd, sample.Name())
 			Expect(err).NotTo(HaveOccurred())
 
 			By("destroying the deployed package manifests-formatted operator")
-			cleanupPkgManCmd := exec.Command(tc.BinaryName, "cleanup", tc.ProjectName,
+			cleanupPkgManCmd := exec.Command(sample.Binary(), "cleanup", sample.Name(),
 				"--timeout", "4m")
-			_, err = tc.Run(cleanupPkgManCmd)
+			_, err = sample.CommandContext().Run(cleanupPkgManCmd, sample.Name())
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})

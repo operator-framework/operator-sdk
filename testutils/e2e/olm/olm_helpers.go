@@ -22,25 +22,24 @@ const (
 // in order to test the steps described in the docs.
 // More info:  https://v1-0-x.sdk.operatorframework.io/docs/olm-integration/generation/#package-manifests-formats
 func AddPackagemanifestsTarget(sample sample.Sample, operatorType projutil.OperatorType) error {
-	var makefilePackagemanifestsFragment = `
-	# Options for "packagemanifests".
-	ifneq ($(origin FROM_VERSION), undefined)
-	PKG_FROM_VERSION := --from-version=$(FROM_VERSION)
-	endif
-	ifneq ($(origin CHANNEL), undefined)
-	PKG_CHANNELS := --channel=$(CHANNEL)
-	endif
-	ifeq ($(IS_CHANNEL_DEFAULT), 1)
-	PKG_IS_DEFAULT_CHANNEL := --default-channel
-	endif
-	PKG_MAN_OPTS ?= $(PKG_FROM_VERSION) $(PKG_CHANNELS) $(PKG_IS_DEFAULT_CHANNEL)
+	var makefilePackagemanifestsFragment = `# Options for "packagemanifests".
+ifneq ($(origin FROM_VERSION), undefined)
+PKG_FROM_VERSION := --from-version=$(FROM_VERSION)
+endif
+ifneq ($(origin CHANNEL), undefined)
+PKG_CHANNELS := --channel=$(CHANNEL)
+endif
+ifeq ($(IS_CHANNEL_DEFAULT), 1)
+PKG_IS_DEFAULT_CHANNEL := --default-channel
+endif
+PKG_MAN_OPTS ?= $(PKG_FROM_VERSION) $(PKG_CHANNELS) $(PKG_IS_DEFAULT_CHANNEL)
 	
-	# Generate package manifests.
-	packagemanifests: kustomize %s
-		operator-sdk generate kustomize manifests -q --interactive=false
-		cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
-		$(KUSTOMIZE) build config/manifests | operator-sdk generate packagemanifests -q --version $(VERSION) $(PKG_MAN_OPTS)
-	`
+# Generate package manifests.
+packagemanifests: kustomize %s
+	operator-sdk generate kustomize manifests -q --interactive=false
+	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
+	$(KUSTOMIZE) build config/manifests | operator-sdk generate packagemanifests -q --version $(VERSION) $(PKG_MAN_OPTS)
+`
 
 	makefileBytes, err := ioutil.ReadFile(filepath.Join(sample.Dir(), "Makefile"))
 	if err != nil {
@@ -153,6 +152,23 @@ func removeAllAnnotationLines(annotations map[string]string, filePaths []string)
 		if err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+// BuildBundleImage is a helper function to run `make bundle-build BUNDLE_IMAGE=<bundleImage>`
+func BuildBundleImage(sample sample.Sample, bundleImage string) error {
+	cmd := exec.Command("make", "bundle-build", "BUNDLE_IMG="+bundleImage)
+	_, err := sample.CommandContext().Run(cmd, sample.Name())
+	return err
+}
+
+// GeneratePackageManifests is a helper function to run `make packagemanifests IMG=<image>`
+func GeneratePackageManifests(sample sample.Sample, image string) error {
+	cmd := exec.Command("make", "packagemanifests", "IMG="+image)
+	o, err := sample.CommandContext().Run(cmd, sample.Name())
+	if err != nil {
+		return fmt.Errorf("encountered an error when generating the packagemanifests: %w | OUTPUT: %s", err, o)
 	}
 	return nil
 }

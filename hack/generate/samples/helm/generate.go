@@ -25,7 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-func GenerateMemcachedSamples(binaryPath, rootPath string) {
+func GenerateMemcachedSamples(binaryPath, rootPath, helmChartPath string) []sample.Sample {
 	bundleImageBase := "bundle"
 
 	helmCC := command.NewGenericCommandContext(
@@ -45,7 +45,7 @@ func GenerateMemcachedSamples(binaryPath, rootPath string) {
 		sample.WithDomain("example.com"),
 		sample.WithPlugins("helm"),
 		sample.WithGvk(memcachedGVK),
-		sample.WithExtraApiOptions("--helm-chart", "../../../hack/generate/samples/internal/helm/testdata/memcached-0.0.1.tgz"),
+		sample.WithExtraApiOptions("--helm-chart", helmChartPath),
 		sample.WithName("helm-memcached-operator"),
 	)
 
@@ -61,4 +61,6 @@ func GenerateMemcachedSamples(binaryPath, rootPath string) {
 	pkg.CheckError("generating helm samples", err)
 
 	ImplementMemcached(helmMemcached, fmt.Sprintf("%s-%s", bundleImageBase, helmMemcached.Name()))
+
+	return []sample.Sample{helmMemcached}
 }
