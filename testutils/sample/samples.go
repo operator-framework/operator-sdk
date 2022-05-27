@@ -33,6 +33,7 @@ type Sample interface {
 
 // GenericSample is a generalized object that implements the Sample interface. It is meant
 // to be as simple and versatile to make the process of generating test samples easier
+// TODO: Consider making it easier to create custom cli flags on a per GVK basis for the `create api` and `create webhook` subcommands
 type GenericSample struct {
 	domain         string
 	repo           string

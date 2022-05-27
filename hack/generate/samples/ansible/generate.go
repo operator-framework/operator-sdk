@@ -73,7 +73,7 @@ func GenerateMemcachedSamples(binaryPath, rootPath string) []sample.Sample {
 func GenerateMoleculeSample(binaryPath, samplesPath string) {
 	ansibleCC := command.NewGenericCommandContext(
 		command.WithEnv("GO111MODULE=on"),
-		command.WithDir(filepath.Join(samplesPath, "molecule-operator")),
+		command.WithDir(filepath.Join(samplesPath, "")),
 	)
 
 	ansibleMoleculeMemcached := sample.NewGenericSample(
@@ -92,15 +92,23 @@ func GenerateMoleculeSample(binaryPath, samplesPath string) {
 				Version: memcachedGVK.Version,
 				Kind:    "Memfin",
 			},
-			schema.GroupVersionKind{
-				Group:   "ignore",
-				Version: "v1",
-				Kind:    "Secret",
-			},
 		),
 		sample.WithPlugins("ansible"),
 		sample.WithExtraApiOptions("--generate-role", "--generate-playbook"),
 		sample.WithName("memcached-molecule-operator"),
+	)
+
+	addIgnore := sample.NewGenericSample(
+		sample.WithBinary(ansibleMoleculeMemcached.Binary()),
+		sample.WithCommandContext(ansibleMoleculeMemcached.CommandContext()),
+		sample.WithName(ansibleMoleculeMemcached.Name()),
+		sample.WithPlugins("ansible"),
+		sample.WithGvk(schema.GroupVersionKind{
+			Group:   "ignore",
+			Version: "v1",
+			Kind:    "Secret",
+		}),
+		sample.WithExtraApiOptions("--generate-role"),
 	)
 
 	// remove sample directory if it already exists
@@ -109,16 +117,18 @@ func GenerateMoleculeSample(binaryPath, samplesPath string) {
 
 	gen := sample.NewGenerator(
 		sample.WithNoWebhook(),
-		sample.WithPreApiHook(func(s sample.Sample) {
-			log.Infof("enabling multigroup support")
-			err = e2e.AllowProjectBeMultiGroup(s)
-			pkg.CheckError("updating PROJECT file", err)
-		}),
 	)
 
 	err = gen.GenerateSamples(ansibleMoleculeMemcached)
-
 	pkg.CheckError("generating ansible molecule sample", err)
+
+	log.Infof("enabling multigroup support")
+	err = e2e.AllowProjectBeMultiGroup(ansibleMoleculeMemcached)
+	pkg.CheckError("updating PROJECT file", err)
+
+	ignoreGen := sample.NewGenerator(sample.WithNoInit(), sample.WithNoWebhook())
+	err = ignoreGen.GenerateSamples(addIgnore)
+	pkg.CheckError("generating ansible molecule sample - ignore", err)
 
 	ImplementMemcached(ansibleMoleculeMemcached, fmt.Sprintf("%s-%s", bundleImageBase, ansibleMoleculeMemcached.Name()))
 
@@ -132,7 +142,7 @@ func GenerateMoleculeSample(binaryPath, samplesPath string) {
 func GenerateAdvancedMoleculeSample(binaryPath, samplesPath string) {
 	ansibleCC := command.NewGenericCommandContext(
 		command.WithEnv("GO111MODULE=on"),
-		command.WithDir(filepath.Join(samplesPath, "advanced-molecule-operator")),
+		command.WithDir(filepath.Join(samplesPath, "")),
 	)
 
 	gv := schema.GroupVersion{

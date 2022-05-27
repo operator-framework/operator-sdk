@@ -154,43 +154,45 @@ func updateConfig(dir string) {
 }
 
 func addMocksFromTestdata(dir string, cc command.CommandContext) {
+	testDataAbsPath, err := filepath.Abs("hack/generate/samples/ansible/testdata")
+	pkg.CheckError("absolute path for testdata", err)
 	log.Infof("adding ansible.cfg")
-	cmd := exec.Command("cp", "../../../hack/generate/samples/internal/ansible/testdata/ansible.cfg", dir)
-	_, err := cc.Run(cmd)
+	cmd := exec.Command("cp", filepath.Join(testDataAbsPath, "ansible.cfg"), dir)
+	_, err = cc.Run(cmd)
 	pkg.CheckError("adding ansible.cfg", err)
 
 	log.Infof("adding plugins/")
-	cmd = exec.Command("cp", "-r", "../../../hack/generate/samples/internal/ansible/testdata/plugins/", filepath.Join(dir, "plugins/"))
+	cmd = exec.Command("cp", "-r", filepath.Join(testDataAbsPath, "plugins/"), filepath.Join(dir, "plugins/"))
 	_, err = cc.Run(cmd)
 	pkg.CheckError("adding plugins/", err)
 
 	log.Infof("adding fixture_collection/")
-	cmd = exec.Command("cp", "-r", "../../../hack/generate/samples/internal/ansible/testdata/fixture_collection/", filepath.Join(dir, "fixture_collection/"))
+	cmd = exec.Command("cp", "-r", filepath.Join(testDataAbsPath, "fixture_collection/"), filepath.Join(dir, "fixture_collection/"))
 	_, err = cc.Run(cmd)
 	pkg.CheckError("adding fixture_collection/", err)
 
 	log.Infof("replacing watches.yaml")
-	cmd = exec.Command("cp", "-r", "../../../hack/generate/samples/internal/ansible/testdata/watches.yaml", dir)
+	cmd = exec.Command("cp", "-r", filepath.Join(testDataAbsPath, "watches.yaml"), dir)
 	_, err = cc.Run(cmd)
 	pkg.CheckError("replacing watches.yaml", err)
 
 	log.Infof("adding tasks/")
-	cmd = exec.Command("cp", "-r", "../../../hack/generate/samples/internal/ansible/testdata/tasks/", filepath.Join(dir, "molecule/default/"))
+	cmd = exec.Command("cp", "-r", filepath.Join(testDataAbsPath, "tasks/"), filepath.Join(dir, "molecule/default/"))
 	_, err = cc.Run(cmd)
 	pkg.CheckError("adding tasks/", err)
 
 	log.Infof("adding secret playbook")
-	cmd = exec.Command("cp", "-r", "../../../hack/generate/samples/internal/ansible/testdata/secret.yml", filepath.Join(dir, "playbooks/secret.yml"))
+	cmd = exec.Command("cp", "-r", filepath.Join(testDataAbsPath, "secret.yml"), filepath.Join(dir, "playbooks/secret.yml"))
 	_, err = cc.Run(cmd)
 	pkg.CheckError("adding secret playbook", err)
 
 	log.Infof("adding inventory/")
-	cmd = exec.Command("cp", "-r", "../../../hack/generate/samples/internal/ansible/testdata/inventory/", filepath.Join(dir, "inventory/"))
+	cmd = exec.Command("cp", "-r", filepath.Join(testDataAbsPath, "inventory/"), filepath.Join(dir, "inventory/"))
 	_, err = cc.Run(cmd)
 	pkg.CheckError("adding inventory/", err)
 
 	log.Infof("adding finalizer for finalizerconcurrencytest")
-	cmd = exec.Command("cp", "../../../hack/generate/samples/internal/ansible/testdata/playbooks/finalizerconcurrencyfinalizer.yml", filepath.Join(dir, "playbooks/finalizerconcurrencyfinalizer.yml"))
+	cmd = exec.Command("cp", filepath.Join(testDataAbsPath, "/playbooks/finalizerconcurrencyfinalizer.yml"), filepath.Join(dir, "playbooks/finalizerconcurrencyfinalizer.yml"))
 	_, err = cc.Run(cmd)
 	pkg.CheckError("adding finalizer for finalizerconccurencytest", err)
 
