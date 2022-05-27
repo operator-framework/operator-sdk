@@ -26,7 +26,6 @@ import (
 
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/pkg"
 	"github.com/operator-framework/operator-sdk/internal/util"
-	"github.com/operator-framework/operator-sdk/testutils/e2e"
 	"github.com/operator-framework/operator-sdk/testutils/sample"
 )
 
@@ -89,10 +88,6 @@ func ImplementMemcachedMolecule(sample sample.Sample, image string) {
 	err = kbutil.ReplaceInFile(filepath.Join(sample.Dir(), "watches.yaml"),
 		"playbook: playbooks/memcached.yml", memcachedWatchCustomizations)
 	pkg.CheckError("replacing in watches", err)
-
-	log.Infof("enabling multigroup support")
-	err = e2e.AllowProjectBeMultiGroup(sample)
-	pkg.CheckError("updating PROJECT file", err)
 
 	log.Infof("removing ignore group for the secret from watches as an workaround to work with core types")
 	err = kbutil.ReplaceInFile(filepath.Join(sample.Dir(), "watches.yaml"),

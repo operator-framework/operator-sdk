@@ -21,7 +21,9 @@ import (
 
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/pkg"
 	"github.com/operator-framework/operator-sdk/testutils/command"
+	"github.com/operator-framework/operator-sdk/testutils/e2e"
 	"github.com/operator-framework/operator-sdk/testutils/sample"
+	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -98,14 +100,21 @@ func GenerateMoleculeSample(binaryPath, samplesPath string) {
 		),
 		sample.WithPlugins("ansible"),
 		sample.WithExtraApiOptions("--generate-role", "--generate-playbook"),
-		sample.WithName("ansible-molecule-memcached-operator"),
+		sample.WithName("memcached-molecule-operator"),
 	)
 
 	// remove sample directory if it already exists
 	err := os.RemoveAll(ansibleMoleculeMemcached.Dir())
 	pkg.CheckError("attempting to remove sample dir", err)
 
-	gen := sample.NewGenerator(sample.WithNoWebhook())
+	gen := sample.NewGenerator(
+		sample.WithNoWebhook(),
+		sample.WithPreApiHook(func(s sample.Sample) {
+			log.Infof("enabling multigroup support")
+			err = e2e.AllowProjectBeMultiGroup(s)
+			pkg.CheckError("updating PROJECT file", err)
+		}),
+	)
 
 	err = gen.GenerateSamples(ansibleMoleculeMemcached)
 
@@ -154,7 +163,7 @@ func GenerateAdvancedMoleculeSample(binaryPath, samplesPath string) {
 		sample.WithPlugins("ansible"),
 		sample.WithExtraInitOptions("--group", gv.Group, "--version", gv.Version, "--kind", "InventoryTest", "--generate-role", "--generate-playbook"),
 		sample.WithExtraApiOptions("--generate-playbook"),
-		sample.WithName("ansible-advanced-molecule-memcached-operator"),
+		sample.WithName("advanced-molecule-operator"),
 	)
 
 	// remove sample directory if it already exists
