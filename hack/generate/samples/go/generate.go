@@ -52,7 +52,7 @@ func GenerateMemcachedSamples(binaryPath, rootPath string) []sample.Sample {
 		sample.WithExtraInitOptions("--project-version", "3"),
 		sample.WithExtraApiOptions("--controller", "--resource"),
 		sample.WithExtraWebhookOptions("--defaulting"),
-		sample.WithName("gov3-memcached-operator"),
+		sample.WithName("memcached-operator"),
 	)
 
 	// remove sample directory if it already exists

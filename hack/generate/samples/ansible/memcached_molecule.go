@@ -35,39 +35,46 @@ func ImplementMemcachedMolecule(sample sample.Sample, image string) {
 		moleculeTaskPath := filepath.Join(sample.Dir(), "molecule", "default", "tasks",
 			fmt.Sprintf("%s_test.yml", strings.ToLower(gvk.Kind)))
 
-		log.Infof("insert molecule task to ensure that ConfigMap will be deleted")
-		err := kbutil.InsertCode(moleculeTaskPath, targetMoleculeCheckDeployment, molecuTaskToCheckConfigMap)
-		pkg.CheckError("replacing memcached task to add config map check", err)
+		fmt.Println("MOLECULE TASK PATH:", moleculeTaskPath)
 
-		log.Infof("insert molecule task to ensure to check secret")
-		err = kbutil.InsertCode(moleculeTaskPath, memcachedCustomStatusMoleculeTarget, testSecretMoleculeCheck)
-		pkg.CheckError("replacing memcached task to add secret check", err)
+		if gvk.Kind == "Memcached" {
+			log.Infof("insert molecule task to ensure that ConfigMap will be deleted")
+			err := kbutil.InsertCode(moleculeTaskPath, targetMoleculeCheckDeployment, molecuTaskToCheckConfigMap)
+			pkg.CheckError("replacing memcached task to add config map check", err)
 
-		log.Infof("insert molecule task to ensure to foo ")
-		err = kbutil.InsertCode(moleculeTaskPath, testSecretMoleculeCheck, testFooMoleculeCheck)
-		pkg.CheckError("replacing memcached task to add foo check", err)
+			log.Infof("insert molecule task to ensure to check secret")
+			err = kbutil.InsertCode(moleculeTaskPath, memcachedCustomStatusMoleculeTarget, testSecretMoleculeCheck)
+			pkg.CheckError("replacing memcached task to add secret check", err)
 
-		log.Infof("insert molecule task to check custom metrics")
-		err = kbutil.InsertCode(moleculeTaskPath, testFooMoleculeCheck, customMetricsTest)
+			log.Infof("insert molecule task to ensure to foo ")
+			err = kbutil.InsertCode(moleculeTaskPath, testSecretMoleculeCheck, testFooMoleculeCheck)
+			pkg.CheckError("replacing memcached task to add foo check", err)
 
-		pkg.CheckError("replacing memcached task to add foo check", err)
+			log.Infof("insert molecule task to check custom metrics")
+			err = kbutil.InsertCode(moleculeTaskPath, testFooMoleculeCheck, customMetricsTest)
 
-		log.Infof("adding Memcached mock task to the role with black list")
-		err = kbutil.InsertCode(filepath.Join(sample.Dir(), "roles", strings.ToLower(gvk.Kind), "tasks", "main.yml"),
-			roleFragment, memcachedWithBlackListTask)
-		pkg.CheckError("replacing in tasks/main.yml", err)
+			pkg.CheckError("replacing memcached task to add foo check", err)
 
-		log.Infof("updating spec of kind: ", gvk.Kind)
-		err = kbutil.ReplaceInFile(
-			filepath.Join(sample.Dir(), "config", "samples", fmt.Sprintf("%s_%s_%s.yaml", gvk.Group, gvk.Version, strings.ToLower(gvk.Kind))),
-			"# TODO(user): Add fields here",
-			"foo: bar")
-		pkg.CheckError("updating spec of "+fmt.Sprintf("%s_%s_%s.yaml", gvk.Group, gvk.Version, strings.ToLower(gvk.Kind)), err)
+			log.Infof("adding Memcached mock task to the role with black list")
+			err = kbutil.InsertCode(filepath.Join(sample.Dir(), "roles", strings.ToLower(gvk.Kind), "tasks", "main.yml"),
+				roleFragment, memcachedWithBlackListTask)
+			pkg.CheckError("replacing in tasks/main.yml", err)
+		}
 
-		log.Infof("removing FIXME asserts from %s_test.yml", strings.ToLower(gvk.Kind))
-		err = kbutil.ReplaceInFile(filepath.Join(sample.Dir(), "molecule", "default", "tasks", fmt.Sprintf("%s_test.yml", strings.ToLower(gvk.Kind))),
-			fixmeAssert, "")
-		pkg.CheckError(fmt.Sprintf("replacing %s_test.yml", strings.ToLower(gvk.Kind)), err)
+		if gvk.Kind != "Memcached" {
+			log.Infof("updating spec of kind: ", gvk.Kind)
+			err := kbutil.ReplaceInFile(
+				filepath.Join(sample.Dir(), "config", "samples", fmt.Sprintf("%s_%s_%s.yaml", gvk.Group, gvk.Version, strings.ToLower(gvk.Kind))),
+				"# TODO(user): Add fields here",
+				"foo: bar")
+			pkg.CheckError("updating spec of "+fmt.Sprintf("%s_%s_%s.yaml", gvk.Group, gvk.Version, strings.ToLower(gvk.Kind)), err)
+
+			log.Infof("removing FIXME asserts from %s_test.yml", strings.ToLower(gvk.Kind))
+			err = kbutil.ReplaceInFile(filepath.Join(sample.Dir(), "molecule", "default", "tasks", fmt.Sprintf("%s_test.yml", strings.ToLower(gvk.Kind))),
+				fixmeAssert, "")
+			pkg.CheckError(fmt.Sprintf("replacing %s_test.yml", strings.ToLower(gvk.Kind)), err)
+		}
+
 	}
 
 	log.Infof("replacing project Dockerfile to use ansible base image with the dev tag")

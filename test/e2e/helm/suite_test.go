@@ -56,7 +56,7 @@ var (
 	isOLMManagedBySuite        = true
 	helmSample                 sample.Sample
 	testdir                    = "e2e-test-helm"
-	image                      = "e2e-test:helm"
+	image                      = "e2e-test-helm:temp"
 	helmSampleValidKubeConfig  sample.Sample
 )
 

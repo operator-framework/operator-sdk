@@ -59,7 +59,7 @@ var (
 	isOLMManagedBySuite        = true
 	ansibleSample              sample.Sample
 	testdir                    = "e2e-test-ansible"
-	image                      = "e2e-test:ansible"
+	image                      = "e2e-test-ansible:temp"
 )
 
 // BeforeSuite run before any specs are run to perform the required actions for all e2e ansible tests.

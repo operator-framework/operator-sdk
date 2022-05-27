@@ -20,7 +20,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -28,8 +30,17 @@ import (
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	"sigs.k8s.io/yaml"
 
+	golang "github.com/operator-framework/operator-sdk/hack/generate/samples/go"
 	"github.com/operator-framework/operator-sdk/internal/testutils"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/operator-framework/operator-sdk/testutils/command"
+	"github.com/operator-framework/operator-sdk/testutils/e2e/certmanager"
+	"github.com/operator-framework/operator-sdk/testutils/e2e/kind"
+	"github.com/operator-framework/operator-sdk/testutils/e2e/olm"
+	"github.com/operator-framework/operator-sdk/testutils/e2e/operator"
+	"github.com/operator-framework/operator-sdk/testutils/e2e/prometheus"
+	"github.com/operator-framework/operator-sdk/testutils/kubernetes"
+	"github.com/operator-framework/operator-sdk/testutils/sample"
 )
 
 //TODO: update to use the new PoC api
@@ -44,56 +55,83 @@ func TestIntegration(t *testing.T) {
 }
 
 var (
-	tc     testutils.TestContext
-	onKind bool
+	tc                         testutils.TestContext
+	kctl                       kubernetes.Kubectl
+	isPrometheusManagedBySuite = true
+	isOLMManagedBySuite        = true
+	goSample                   sample.Sample
+	testdir                    = "e2e-test-integration"
+	image                      = "e2e-test-integration:temp"
 )
 
 var _ = BeforeSuite(func() {
 	var err error
 
-	By("creating a new test context")
-	tc, err = testutils.NewTestContext(testutils.BinaryName, "GO111MODULE=on")
+	By("creating Go test samples")
+	samples := golang.GenerateMemcachedSamples(testutils.BinaryName, testdir)
+	goSample = samples[0]
+
+	kctl = kubernetes.NewKubectlUtil(
+		kubernetes.WithCommandContext(
+			command.NewGenericCommandContext(
+				command.WithDir(goSample.Dir()),
+			),
+		),
+		kubernetes.WithNamespace(goSample.Name()+"-system"),
+		kubernetes.WithServiceAccount(goSample.Name()+"-controller-manager"),
+	)
+
+	By("preparing the prerequisites on cluster")
+	By("checking API resources applied on Cluster")
+	output, err := kctl.Command("api-resources")
 	Expect(err).NotTo(HaveOccurred())
+	if strings.Contains(output, "servicemonitors") {
+		isPrometheusManagedBySuite = false
+	}
+	if strings.Contains(output, "clusterserviceversions") {
+		isOLMManagedBySuite = false
+	}
 
-	tc.Domain = "example.com"
-	tc.Group = "cache"
-	tc.Version = "v1alpha1"
-	tc.Kind = "Memcached"
-	tc.Resources = "memcacheds"
-	tc.ProjectName = "memcached-operator"
-	tc.ImageName = fmt.Sprintf("quay.io/integration/%s:0.0.1", tc.ProjectName)
-	tc.BundleImageName = fmt.Sprintf("quay.io/integration/%s-bundle:0.0.1", tc.ProjectName)
+	if isPrometheusManagedBySuite {
+		By("installing Prometheus")
+		Expect(prometheus.InstallPrometheusOperator(kctl)).To(Succeed())
 
-	By("copying sample to a temporary e2e directory")
-	Expect(exec.Command("cp", "-r", "../../testdata/go/v3/memcached-operator", tc.Dir).Run()).To(Succeed())
+		By("ensuring provisioned Prometheus Manager Service")
+		Eventually(func() error {
+			_, err := kctl.Get(
+				false,
+				"Service", "prometheus-operator")
+			return err
+		}, 3*time.Minute, time.Second).Should(Succeed())
+	}
+
+	if isOLMManagedBySuite {
+		By("installing OLM")
+		Expect(olm.InstallOLMVersion(goSample, olm.OlmVersionForTestSuite)).To(Succeed())
+	}
 
 	By("updating the project configuration")
-	Expect(tc.AddPackagemanifestsTarget(projutil.OperatorTypeGo)).To(Succeed())
-
-	By("installing OLM")
-	Expect(tc.InstallOLMVersion(testutils.OlmVersionForTestSuite)).To(Succeed())
-
-	By("installing prometheus-operator")
-	Expect(tc.InstallPrometheusOperManager()).To(Succeed())
+	Expect(olm.AddPackagemanifestsTarget(goSample, projutil.OperatorTypeGo)).To(Succeed())
 
 	By("building the manager image")
-	Expect(tc.Make("docker-build", "IMG="+tc.ImageName)).To(Succeed())
+	err = operator.BuildOperatorImage(goSample, image)
+	Expect(err).NotTo(HaveOccurred())
 
-	onKind, err = tc.IsRunningOnKind()
+	onKind, err := kind.IsRunningOnKind(kctl)
 	Expect(err).NotTo(HaveOccurred())
 	if onKind {
 		By("loading the required images into Kind cluster")
-		Expect(tc.LoadImageToKindCluster()).To(Succeed())
+		Expect(kind.LoadImageToKindCluster(goSample.CommandContext(), image)).To(Succeed())
 	}
 
 	By("generating the operator package manifests and enabling all InstallModes")
-	Expect(tc.Make("packagemanifests", "IMG="+tc.ImageName)).To(Succeed())
-	csv, err := readCSV(&tc, "0.0.1", false)
+	Expect(olm.GeneratePackageManifests(goSample, image)).To(Succeed())
+	csv, err := readCSV(goSample, "0.0.1", false)
 	Expect(err).NotTo(HaveOccurred())
 	for i := range csv.Spec.InstallModes {
 		csv.Spec.InstallModes[i].Supported = true
 	}
-	Expect(writeCSV(&tc, "0.0.1", csv, false)).To(Succeed())
+	Expect(writeCSV(goSample, "0.0.1", csv, false)).To(Succeed())
 
 	// TODO(estroz): enable when bundles can be tested locally.
 	//
@@ -106,22 +144,36 @@ var _ = BeforeSuite(func() {
 	// Expect(err).NotTo(HaveOccurred())
 
 	By("creating the test namespace")
-	_, err = tc.Kubectl.Command("create", "namespace", tc.Kubectl.Namespace)
+	_, err = kctl.Command("create", "namespace", kctl.Namespace())
 	Expect(err).NotTo(HaveOccurred())
 })
 
 var _ = AfterSuite(func() {
-	By("uninstalling OLM")
-	tc.UninstallOLM()
 
-	By("uninstalling prometheus-operator")
-	tc.UninstallPrometheusOperManager()
+	By("uninstall cert manager bundle")
+	certmanager.UninstallCertManagerBundle(false, kctl)
+
+	By("uninstalling prerequisites")
+	if isPrometheusManagedBySuite {
+		By("uninstalling Prometheus")
+		prometheus.UninstallPrometheusOperator(kctl)
+	}
+	if isOLMManagedBySuite {
+		By("uninstalling OLM")
+		olm.UninstallOLM(goSample)
+	}
 
 	By("deleting the test namespace")
-	warn(tc.Kubectl.Delete(false, "namespace", tc.Kubectl.Namespace))
+	warn(kctl.Delete(false, "namespace", kctl.Namespace()))
 
-	By("cleaning up the project")
-	tc.Destroy()
+	By("destroying container image and work dir")
+	cmd := exec.Command("docker", "rmi", "-f", image)
+	if _, err := goSample.CommandContext().Run(cmd); err != nil {
+		Expect(err).To(BeNil())
+	}
+	if err := os.RemoveAll(testdir); err != nil {
+		Expect(err).To(BeNil())
+	}
 })
 
 func warn(output string, err error) {
@@ -130,26 +182,26 @@ func warn(output string, err error) {
 	}
 }
 
-func runPackageManifests(tc *testutils.TestContext, args ...string) error {
-	allArgs := []string{"run", "packagemanifests", "--timeout", "6m", "--namespace", tc.Kubectl.Namespace}
-	output, err := tc.Run(exec.Command(tc.BinaryName, append(allArgs, args...)...))
+func runPackageManifests(sample sample.Sample, args ...string) error {
+	allArgs := []string{"run", "packagemanifests", "--timeout", "6m", "--namespace", kctl.Namespace()}
+	output, err := sample.CommandContext().Run(exec.Command(sample.Binary(), append(allArgs, args...)...), sample.Name())
 	if err == nil {
 		fmt.Fprintln(GinkgoWriter, string(output))
 	}
 	return err
 }
 
-func cleanup(tc *testutils.TestContext) (string, error) {
-	allArgs := []string{"cleanup", tc.ProjectName, "--timeout", "4m", "--namespace", tc.Kubectl.Namespace}
-	output, err := tc.Run(exec.Command(tc.BinaryName, allArgs...))
+func cleanup(sample sample.Sample) (string, error) {
+	allArgs := []string{"cleanup", sample.Name(), "--timeout", "4m", "--namespace", kctl.Namespace()}
+	output, err := sample.CommandContext().Run(exec.Command(sample.Binary(), allArgs...), sample.Name())
 	if err == nil {
 		fmt.Fprintln(GinkgoWriter, string(output))
 	}
 	return string(output), err
 }
 
-func readCSV(tc *testutils.TestContext, version string, isBundle bool) (*v1alpha1.ClusterServiceVersion, error) {
-	b, err := ioutil.ReadFile(csvPath(tc, version, isBundle))
+func readCSV(sample sample.Sample, version string, isBundle bool) (*v1alpha1.ClusterServiceVersion, error) {
+	b, err := ioutil.ReadFile(csvPath(sample, version, isBundle))
 	if err != nil {
 		return nil, err
 	}
@@ -160,12 +212,12 @@ func readCSV(tc *testutils.TestContext, version string, isBundle bool) (*v1alpha
 	return csv, nil
 }
 
-func writeCSV(tc *testutils.TestContext, version string, csv *v1alpha1.ClusterServiceVersion, isBundle bool) error {
+func writeCSV(sample sample.Sample, version string, csv *v1alpha1.ClusterServiceVersion, isBundle bool) error {
 	b, err := yaml.Marshal(csv)
 	if err != nil {
 		return err
 	}
-	f, err := os.OpenFile(csvPath(tc, version, isBundle), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	f, err := os.OpenFile(csvPath(sample, version, isBundle), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
 		return err
 	}
@@ -178,10 +230,10 @@ func writeCSV(tc *testutils.TestContext, version string, csv *v1alpha1.ClusterSe
 	return f.Close()
 }
 
-func csvPath(tc *testutils.TestContext, version string, isBundle bool) string {
-	fileName := fmt.Sprintf("%s.clusterserviceversion.yaml", tc.ProjectName)
+func csvPath(sample sample.Sample, version string, isBundle bool) string {
+	fileName := fmt.Sprintf("%s.clusterserviceversion.yaml", sample.Name())
 	if isBundle {
-		return filepath.Join(tc.Dir, "bundle", bundle.ManifestsDir, fileName)
+		return filepath.Join(sample.Dir(), "bundle", bundle.ManifestsDir, fileName)
 	}
-	return filepath.Join(tc.Dir, "packagemanifests", version, fileName)
+	return filepath.Join(sample.Dir(), "packagemanifests", version, fileName)
 }

@@ -46,7 +46,7 @@ func GenerateMemcachedSamples(binaryPath, rootPath, helmChartPath string) []samp
 		sample.WithPlugins("helm"),
 		sample.WithGvk(memcachedGVK),
 		sample.WithExtraApiOptions("--helm-chart", helmChartPath),
-		sample.WithName("helm-memcached-operator"),
+		sample.WithName("memcached-operator"),
 	)
 
 	// remove sample directory if it already exists

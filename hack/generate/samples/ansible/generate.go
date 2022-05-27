@@ -48,7 +48,7 @@ func GenerateMemcachedSamples(binaryPath, rootPath string) []sample.Sample {
 		sample.WithGvk(memcachedGVK),
 		sample.WithPlugins("ansible"),
 		sample.WithExtraApiOptions("--generate-role", "--generate-playbook"),
-		sample.WithName("ansible-memcached-operator"),
+		sample.WithName("memcached-operator"),
 	)
 
 	// remove sample directory if it already exists
@@ -119,6 +119,8 @@ func GenerateMoleculeSample(binaryPath, samplesPath string) {
 	err = gen.GenerateSamples(ansibleMoleculeMemcached)
 
 	pkg.CheckError("generating ansible molecule sample", err)
+
+	ImplementMemcached(ansibleMoleculeMemcached, fmt.Sprintf("%s-%s", bundleImageBase, ansibleMoleculeMemcached.Name()))
 
 	ImplementMemcachedMolecule(ansibleMoleculeMemcached, fmt.Sprintf("%s-%s", bundleImageBase, ansibleMoleculeMemcached.Name()))
 }

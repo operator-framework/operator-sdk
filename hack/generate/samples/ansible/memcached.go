@@ -36,8 +36,10 @@ func ImplementMemcached(sample sample.Sample, image string) {
 	pkg.CheckError("enabling prometheus metrics", err)
 
 	for _, gvk := range sample.GVKs() {
-		addingAnsibleTask(sample.Dir(), gvk)
-		addingMoleculeMockData(sample.Dir(), sample.Name(), gvk)
+		if gvk.Kind == "Memcached" {
+			addingAnsibleTask(sample.Dir(), gvk)
+			addingMoleculeMockData(sample.Dir(), sample.Name(), gvk)
+		}
 	}
 
 	log.Infof("creating the bundle")

@@ -55,7 +55,7 @@ var (
 	isOLMManagedBySuite        = true
 	goSample                   sample.Sample
 	testdir                    = "e2e-test-go"
-	image                      = "e2e-test:go"
+	image                      = "e2e-test-go:temp"
 )
 
 // BeforeSuite run before any specs are run to perform the required actions for all e2e Go tests.
