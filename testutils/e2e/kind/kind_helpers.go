@@ -1,6 +1,7 @@
 package kind
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -26,6 +27,9 @@ func LoadImageToKindCluster(cc command.CommandContext, image string) error {
 	}
 	kindOptions := []string{"load", "docker-image", image, "--name", cluster}
 	cmd := exec.Command("kind", kindOptions...)
-	_, err := cc.Run(cmd)
-	return err
+	o, err := cc.Run(cmd)
+	if err != nil {
+		return fmt.Errorf("encountered an error attempting to load image to KinD cluster: %w | OUTPUT: %s", err, o)
+	}
+	return nil
 }
