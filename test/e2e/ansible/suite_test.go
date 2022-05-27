@@ -198,7 +198,6 @@ var _ = BeforeSuite(func() {
 		By("loading the required images into Kind cluster")
 		Expect(kind.LoadImageToKindCluster(ansibleSample.CommandContext(), image)).To(Succeed())
 		Expect(kind.LoadImageToKindCluster(ansibleSample.CommandContext(), "quay.io/operator-framework/scorecard-test:dev")).To(Succeed())
-		Expect(kind.LoadImageToKindCluster(ansibleSample.CommandContext(), "quay.io/operator-framework/custom-scorecard-tests:dev")).To(Succeed())
 	}
 
 	By("generating bundle")
