@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
 	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
@@ -35,6 +36,7 @@ const (
 	generateRoleFlag     = "generate-role"
 
 	defaultCrdVersion = "v1"
+	legacyCrdVersion  = "v1beta1"
 )
 
 type createAPIOptions struct {
@@ -98,6 +100,10 @@ func (p *createAPISubcommand) UpdateMetadata(cliMeta plugin.CLIMetadata, subcmdM
 func (p *createAPISubcommand) BindFlags(fs *pflag.FlagSet) {
 	fs.SortFlags = false
 	fs.StringVar(&p.options.CRDVersion, crdVersionFlag, defaultCrdVersion, "crd version to generate")
+	// (not required raise an error in this case)
+	// nolint:errcheck,gosec
+	fs.MarkDeprecated(crdVersionFlag, util.WarnMessageRemovalV1beta1)
+
 	fs.BoolVar(&p.options.DoRole, generateRoleFlag, false, "Generate an Ansible role skeleton.")
 	fs.BoolVar(&p.options.DoPlaybook, generatePlaybookFlag, false, "Generate an Ansible playbook. If passed with --generate-role, the playbook will invoke the role.")
 }
@@ -105,6 +111,13 @@ func (p *createAPISubcommand) BindFlags(fs *pflag.FlagSet) {
 func (p *createAPISubcommand) InjectConfig(c config.Config) error {
 	p.config = c
 
+	return nil
+}
+
+func (p *createAPISubcommand) PreScaffold(machinery.Filesystem) error {
+	if p.options.CRDVersion == legacyCrdVersion {
+		logrus.Warn(util.WarnMessageRemovalV1beta1)
+	}
 	return nil
 }
 
