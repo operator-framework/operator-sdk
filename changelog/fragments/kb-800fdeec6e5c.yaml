@@ -1,0 +1,72 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      For Golang/Ansible/Helm/HybridHelm language-based operators (go/v3, ansible/v1, helm/v1, hybrid.helm/v1-alpha): applying restrictive SCC for all containers scaffolded by the tool (will not work with k8s versions < 1.19).
+      ([More info](https://github.com/kubernetes-sigs/kubebuilder/pull/2700)). Important: You might be affected while updating Kubernetes to 1.25, Hence,  ensure that the containers
+      used in your project are restrictive or defined with the property labels `pod-security.kubernetes.io` on clusters ([More info](https://kubernetes.io/docs/concepts/security/pod-security-admission/#pod-security-admission-labels-for-namespaces)). Therefore, we suggest
+      that you begin to configure the projects according to the best practices. ([More info](https://kubernetes.io/blog/2021/04/06/podsecuritypolicy-deprecation-past-present-and-future/))
+    kind: "change"
+
+    # Is this a breaking change?
+    breaking: false
+    migration:
+      header: For Golang/Ansible/Helm/HybridHelm language-based operators (go/v3, ansible/v1, helm/v1, hybrid.helm/v1-alpha)
+      body: |
+        Following the steps
+        1) In `config/kdefault/manager_auth_proxy_patch.go` ensure the following security context:
+
+        ```yaml
+        ...
+        spec:
+          containers:
+          - name: kube-rbac-proxy
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
+        ...
+        ```
+
+        2) In the `config/manager/manager.yaml` ensure the following security context:
+
+        ```yaml
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - command:
+                - /manager
+              image: controller:latest
+              name: manager
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+        ```
+        3) Run make bundle tagert to ensure that the above changes are also applied to
+        your bundles.
+  - description: >
+      For Golang-based language (go/v2), fix issue introduced by removing the GO111MODULE=on from Dockerfile. ([More info](https://github.com/kubernetes-sigs/kubebuilder/pull/2678))
+
+      **IMPORTANT NOTE**: If you are using `go/v2` we highly recommend to upgrade your project to latest `go/v3` plugin (default operator-sdk scaffold). Please be aware that
+      `go/v2` is a plugin which was kept to ensure the backwards compatibility with old Kubebuilder
+      layout produced using its CLI versions < `3.0.0`. ([More info](https://book.kubebuilder.io/plugins/go-v2-plugin.html))
+      Therefore, we are unable to upgrade this plugin continuously and solve tech-debts as it is
+      very likely that it would soon be deprecated by the Kubebuilder community. Note that projects built
+      with this plugin do not produce CRDs for example using v1 APIs so that cannot work on
+      Kubernetes cluster >= `1.22`). Please, ensure that you follow our migration guide
+      [Migrating from pre-v1.0.0 to latest](https://sdk.operatorframework.io/docs/building-operators/golang/migration/)
+
+    kind: "bugfix"
+    breaking: false
+  - description: >
+      For Golang/Ansible/Helm/HybridHelm language-based operators (go/v3, ansible/v1, helm/v1, hybrid.helm/v1-alpha, add a new comment with the option `leaderElectionReleaseOnCancel` ((More info)[https://github.com/kubernetes-sigs/kubebuilder/pull/2596])
+    kind: "addition"
+  - description: >
+      For HybridHelm based-language (hybrid.helm/v1-alpha), update its version from v0.0.10 to [v0.0.11-0.20220607145946-5b29693d1612](https://github.com/operator-framework/helm-operator-plugins/commit/5b29693d1612f87797e1e91e6cf1253842a5714e). [More info](https://github.com/operator-framework/helm-operator-plugins/compare/v0.0.8...5b29693d1612)
+    kind: "change"
