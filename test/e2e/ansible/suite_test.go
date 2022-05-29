@@ -21,13 +21,11 @@ import (
 	"strings"
 	"testing"
 
-	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 
 	"github.com/operator-framework/operator-sdk/internal/testutils"
-	"github.com/operator-framework/operator-sdk/internal/util"
 )
 
 // TestE2EAnsible ensures the ansible projects built with the SDK tool by using its binary.
@@ -75,7 +73,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	By("replacing project Dockerfile to use ansible base image with the dev tag")
-	err = util.ReplaceRegexInFile(filepath.Join(tc.Dir, "Dockerfile"), "quay.io/operator-framework/ansible-operator:.*", "quay.io/operator-framework/ansible-operator:dev")
+	err = kbutil.ReplaceRegexInFile(filepath.Join(tc.Dir, "Dockerfile"), "quay.io/operator-framework/ansible-operator:.*", "quay.io/operator-framework/ansible-operator:dev")
 	Expect(err).Should(Succeed())
 
 	By("adding Memcached mock task to the role")
