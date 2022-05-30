@@ -310,7 +310,7 @@ const cmdTemplate = `mkdir -p {{ dirname .DBPath }} && \
 {{- range $i, $item := .BundleItems }}
 opm registry add -d {{ $.DBPath }} -b {{ $item.ImageTag }} --mode={{ $item.AddMode }}{{ if $.CASecretName }} --ca-file=/certs/cert.pem{{ end }} --skip-tls-verify={{ $.SkipTLSVerify }} --use-http={{ $.UseHTTP }} && \
 {{- end }}
-opm registry serve -d {{ .DBPath }} -p {{ .GRPCPort }}
+exec opm registry serve -d {{ .DBPath }} -p {{ .GRPCPort }}
 `
 
 // getContainerCmd uses templating to construct the container command
