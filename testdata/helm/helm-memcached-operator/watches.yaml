@@ -1,6 +1,0 @@
-# Use the 'create api' subcommand to add watches to this file.
-- group: cache.example.com
-  version: v1alpha1
-  kind: Memcached
-  chart: helm-charts/memcached
-#+kubebuilder:scaffold:watch
