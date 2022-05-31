@@ -29,7 +29,7 @@ import (
 )
 
 func ImplementMemcached(sample sample.Sample, image string) {
-	log.Infof("customizing the sample")
+	log.Info("customizing the sample")
 	err := kbutil.UncommentCode(
 		filepath.Join(sample.Dir(), "config", "default", "kustomization.yaml"),
 		"#- ../prometheus", "#")
@@ -42,18 +42,18 @@ func ImplementMemcached(sample sample.Sample, image string) {
 		}
 	}
 
-	log.Infof("creating the bundle")
+	log.Info("creating the bundle")
 	err = olm.GenerateBundle(sample, image)
 	pkg.CheckError("creating the bundle", err)
 
-	log.Infof("striping bundle annotations")
+	log.Info("striping bundle annotations")
 	err = olm.StripBundleAnnotations(sample)
 	pkg.CheckError("striping bundle annotations", err)
 }
 
 // addingMoleculeMockData will customize the molecule data
 func addingMoleculeMockData(dir string, projectName string, gvk schema.GroupVersionKind) {
-	log.Infof("adding molecule test for Ansible task")
+	log.Info("adding molecule test for Ansible task")
 	moleculeTaskPath := filepath.Join(dir, "molecule", "default", "tasks",
 		fmt.Sprintf("%s_test.yml", strings.ToLower(gvk.Kind)))
 
@@ -64,7 +64,7 @@ func addingMoleculeMockData(dir string, projectName string, gvk schema.GroupVers
 
 // addingAnsibleTask will add the Ansible Task and update the sample
 func addingAnsibleTask(dir string, gvk schema.GroupVersionKind) {
-	log.Infof("adding Ansible task and variable")
+	log.Info("adding Ansible task and variable")
 	err := kbutil.InsertCode(filepath.Join(dir, "roles", strings.ToLower(gvk.Kind),
 		"tasks", "main.yml"),
 		fmt.Sprintf("# tasks file for %s", gvk.Kind),

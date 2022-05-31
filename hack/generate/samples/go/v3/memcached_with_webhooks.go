@@ -32,13 +32,13 @@ import (
 
 func ImplementMemcached(sample sample.Sample, image string) {
 	for _, gvk := range sample.GVKs() {
-		log.Infof("implementing the API")
+		log.Info("implementing the API")
 		implementingAPI(sample.Dir(), gvk)
 
-		log.Infof("implementing the Controller")
+		log.Info("implementing the Controller")
 		implementingController(sample.Dir(), gvk)
 
-		log.Infof("implementing the Webhook")
+		log.Info("implementing the Webhook")
 		implementingWebhooks(sample.Dir(), gvk)
 		uncommentDefaultKustomization(sample.Dir())
 		uncommentManifestsKustomization(sample.Dir())
@@ -48,11 +48,11 @@ func ImplementMemcached(sample sample.Sample, image string) {
 	_, err := sample.CommandContext().Run(cmd)
 	pkg.CheckError("Running go mod tidy", err)
 
-	log.Infof("creating the bundle")
+	log.Info("creating the bundle")
 	err = olm.GenerateBundle(sample, image)
 	pkg.CheckError("creating the bundle", err)
 
-	log.Infof("striping bundle annotations")
+	log.Info("striping bundle annotations")
 	err = olm.StripBundleAnnotations(sample)
 	pkg.CheckError("striping bundle annotations", err)
 
@@ -143,7 +143,7 @@ func uncommentManifestsKustomization(dir string) {
 
 // implementingWebhooks will customize the kind wekbhok file
 func implementingWebhooks(dir string, gvk schema.GroupVersionKind) {
-	log.Infof("implementing webhooks")
+	log.Info("implementing webhooks")
 	webhookPath := filepath.Join(dir, "api", gvk.Version, fmt.Sprintf("%s_webhook.go",
 		strings.ToLower(gvk.Kind)))
 
@@ -225,7 +225,7 @@ func implementingAPI(dir string, gvk schema.GroupVersionKind) {
 `)
 	pkg.CheckError("inserting spec Status", err)
 
-	log.Infof("implementing MemcachedStatus")
+	log.Info("implementing MemcachedStatus")
 	err = kbutil.InsertCode(
 		filepath.Join(dir, "api", gvk.Version, fmt.Sprintf("%s_types.go", strings.ToLower(gvk.Kind))),
 		fmt.Sprintf("type %sStatus struct {\n\t// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster\n\t// Important: Run \"make\" to regenerate code after modifying this file", gvk.Kind),
@@ -250,7 +250,7 @@ func implementingAPI(dir string, gvk schema.GroupVersionKind) {
 	sampleFile := filepath.Join("config", "samples",
 		fmt.Sprintf("%s_%s_%s.yaml", gvk.Group, gvk.Version, strings.ToLower(gvk.Kind)))
 
-	log.Infof("updating sample to have size attribute")
+	log.Info("updating sample to have size attribute")
 	err = kbutil.ReplaceInFile(filepath.Join(dir, sampleFile), "# TODO(user): Add fields here", "size: 1")
 	pkg.CheckError("updating sample", err)
 }

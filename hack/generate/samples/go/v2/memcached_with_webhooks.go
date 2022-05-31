@@ -35,7 +35,7 @@ type Memcached struct {
 // GenerateMemcachedSample will call all actions to create the directory and generate the sample
 // Note that it should NOT be called in the e2e tests.
 func GenerateMemcachedSample(binaryPath, samplesPath string) {
-	log.Infof("starting to generate Go memcached sample with webhooks")
+	log.Info("starting to generate Go memcached sample with webhooks")
 	ctx, err := pkg.NewSampleContext(binaryPath, filepath.Join(samplesPath, "memcached-operator"), "GO111MODULE=on")
 	pkg.CheckError("generating Go memcached with webhooks context", err)
 
@@ -48,14 +48,14 @@ func GenerateMemcachedSample(binaryPath, samplesPath string) {
 // Note that sample directory will be re-created and the context data for the sample
 // will be set such as the domain and GVK.
 func (mh *Memcached) Prepare() {
-	log.Infof("destroying directory for Memcached with Webhooks Go samples")
+	log.Info("destroying directory for Memcached with Webhooks Go samples")
 	mh.ctx.Destroy()
 
-	log.Infof("creating directory")
+	log.Info("creating directory")
 	err := mh.ctx.Prepare()
 	pkg.CheckError("creating directory for Go Sample", err)
 
-	log.Infof("setting domain and GVK")
+	log.Info("setting domain and GVK")
 	mh.ctx.Domain = "example.com"
 	mh.ctx.Version = "v1alpha1"
 	mh.ctx.Group = "cache"
@@ -64,7 +64,7 @@ func (mh *Memcached) Prepare() {
 
 // Run the steps to create the Memcached with Webhooks Go Sample
 func (mh *Memcached) Run() {
-	log.Infof("creating the project")
+	log.Info("creating the project")
 	err := mh.ctx.Init(
 		"--plugins", "go/v2",
 		"--project-version", "3",
@@ -80,13 +80,13 @@ func (mh *Memcached) Run() {
 		"--resource", "true")
 	pkg.CheckError("scaffolding apis", err)
 
-	log.Infof("implementing the API")
+	log.Info("implementing the API")
 	mh.implementingAPI()
 
-	log.Infof("implementing the Controller")
+	log.Info("implementing the Controller")
 	mh.implementingController()
 
-	log.Infof("scaffolding webhook")
+	log.Info("scaffolding webhook")
 	err = mh.ctx.CreateWebhook(
 		"--group", mh.ctx.Group,
 		"--version", mh.ctx.Version,
@@ -112,11 +112,11 @@ func (mh *Memcached) Run() {
 		"crd:trivialVersions=true,preserveUnknownFields=false")
 	pkg.CheckError("replacing reconcile", err)
 
-	log.Infof("creating the bundle")
+	log.Info("creating the bundle")
 	err = mh.ctx.GenerateBundle()
 	pkg.CheckError("creating the bundle", err)
 
-	log.Infof("striping bundle annotations")
+	log.Info("striping bundle annotations")
 	err = mh.ctx.StripBundleAnnotations()
 	pkg.CheckError("striping bundle annotations", err)
 
@@ -205,7 +205,7 @@ func (mh *Memcached) uncommentManifestsKustomization() {
 
 // implementingWebhooks will customize the kind wekbhok file
 func (mh *Memcached) implementingWebhooks() {
-	log.Infof("implementing webhooks")
+	log.Info("implementing webhooks")
 	webhookPath := filepath.Join(mh.ctx.Dir, "api", mh.ctx.Version, fmt.Sprintf("%s_webhook.go",
 		strings.ToLower(mh.ctx.Kind)))
 
@@ -274,7 +274,7 @@ func (mh *Memcached) implementingController() {
 func (mh *Memcached) implementingAPI() {
 	typeFilePath := filepath.Join(mh.ctx.Dir, "api", mh.ctx.Version, fmt.Sprintf("%s_types.go", strings.ToLower(mh.ctx.Kind)))
 
-	log.Infof("implementing api spec")
+	log.Info("implementing api spec")
 	err := kbtutil.InsertCode(
 		typeFilePath,
 		fmt.Sprintf("type %sSpec struct {\n\t// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster\n\t// Important: Run \"make\" to regenerate code after modifying this file", mh.ctx.Kind),
@@ -285,7 +285,7 @@ func (mh *Memcached) implementingAPI() {
 `)
 	pkg.CheckError("inserting spec Status", err)
 
-	log.Infof("implementing api status")
+	log.Info("implementing api status")
 	err = kbtutil.InsertCode(
 		typeFilePath,
 		fmt.Sprintf("type %sStatus struct {\n\t// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster\n\t// Important: Run \"make\" to regenerate code after modifying this file", mh.ctx.Kind),
@@ -299,7 +299,7 @@ func (mh *Memcached) implementingAPI() {
 	sampleFile := filepath.Join("config", "samples",
 		fmt.Sprintf("%s_%s_%s.yaml", mh.ctx.Group, mh.ctx.Version, strings.ToLower(mh.ctx.Kind)))
 
-	log.Infof("updating sample to have size attribute")
+	log.Info("updating sample to have size attribute")
 	err = kbtutil.ReplaceInFile(filepath.Join(mh.ctx.Dir, sampleFile), "# TODO(user): Add fields here", "size: 1")
 	pkg.CheckError("updating sample", err)
 }

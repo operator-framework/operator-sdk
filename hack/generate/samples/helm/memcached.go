@@ -27,28 +27,28 @@ import (
 )
 
 func ImplementMemcached(sample sample.Sample, image string) {
-	log.Infof("customizing the sample")
+	log.Info("customizing the sample")
 	err := kbutil.ReplaceInFile(
 		filepath.Join(sample.Dir(), "config", "samples", "cache_v1alpha1_memcached.yaml"),
 		"securityContext:\n    enabled: true", "securityContext:\n    enabled: false")
 	pkg.CheckError("customizing the sample", err)
 
-	log.Infof("enabling prometheus metrics")
+	log.Info("enabling prometheus metrics")
 	err = kbutil.UncommentCode(
 		filepath.Join(sample.Dir(), "config", "default", "kustomization.yaml"),
 		"#- ../prometheus", "#")
 	pkg.CheckError("enabling prometheus metrics", err)
 
-	log.Infof("adding customized roles")
+	log.Info("adding customized roles")
 	err = kbutil.ReplaceInFile(filepath.Join(sample.Dir(), "config", "rbac", "role.yaml"),
 		"#+kubebuilder:scaffold:rules", policyRolesFragment)
 	pkg.CheckError("adding customized roles", err)
 
-	log.Infof("creating the bundle")
+	log.Info("creating the bundle")
 	err = olm.GenerateBundle(sample, image)
 	pkg.CheckError("creating the bundle", err)
 
-	log.Infof("striping bundle annotations")
+	log.Info("striping bundle annotations")
 	err = olm.StripBundleAnnotations(sample)
 	pkg.CheckError("striping bundle annotations", err)
 }

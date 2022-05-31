@@ -32,12 +32,12 @@ import (
 )
 
 func ImplementAdvancedMolecule(sample sample.Sample, image string) {
-	log.Infof("enabling multigroup support")
+	log.Info("enabling multigroup support")
 	err := e2e.AllowProjectBeMultiGroup(sample)
 	pkg.CheckError("updating PROJECT file", err)
 
 	inventoryRoleTask := filepath.Join(sample.Dir(), "roles", "inventorytest", "tasks", "main.yml")
-	log.Infof("inserting code to inventory role task")
+	log.Info("inserting code to inventory role task")
 	const inventoryRoleTaskFragment = `
 - when: sentinel | test
   block:
@@ -57,14 +57,14 @@ func ImplementAdvancedMolecule(sample sample.Sample, image string) {
 		inventoryRoleTaskFragment)
 	pkg.CheckError("replacing inventory task", err)
 
-	log.Infof("updating inventorytest sample")
+	log.Info("updating inventorytest sample")
 	err = kbutil.ReplaceInFile(
 		filepath.Join(sample.Dir(), "config", "samples", "test_v1alpha1_inventorytest.yaml"),
 		"name: inventorytest-sample",
 		inventorysampleFragment)
 	pkg.CheckError("updating inventorytest sample", err)
 
-	log.Infof("updating spec of inventorytest sample")
+	log.Info("updating spec of inventorytest sample")
 	err = kbutil.ReplaceInFile(
 		filepath.Join(sample.Dir(), "config", "samples", "test_v1alpha1_inventorytest.yaml"),
 		"# TODO(user): Add fields here",
@@ -79,7 +79,7 @@ func ImplementAdvancedMolecule(sample sample.Sample, image string) {
 }
 
 func updateConfig(dir string) {
-	log.Infof("adding customized roles")
+	log.Info("adding customized roles")
 	const cmRolesFragment = `  ##
   ## Base operator rules
   ##
@@ -115,7 +115,7 @@ func updateConfig(dir string) {
 		cmRolesFragment)
 	pkg.CheckError("adding customized roles", err)
 
-	log.Infof("adding manager arg")
+	log.Info("adding manager arg")
 	const ansibleVaultArg = `
         - --ansible-args='--vault-password-file /opt/ansible/pwd.yml'`
 	err = kbutil.InsertCode(
@@ -124,7 +124,7 @@ func updateConfig(dir string) {
 		ansibleVaultArg)
 	pkg.CheckError("adding manager arg", err)
 
-	log.Infof("adding manager env")
+	log.Info("adding manager env")
 	const managerEnv = `
         - name: ANSIBLE_DEBUG_LOGS
           value: "TRUE"
@@ -136,7 +136,7 @@ func updateConfig(dir string) {
 		managerEnv)
 	pkg.CheckError("adding manager env", err)
 
-	log.Infof("adding vaulting args to the proxy auth")
+	log.Info("adding vaulting args to the proxy auth")
 	const managerAuthArgs = `
         - "--ansible-args='--vault-password-file /opt/ansible/pwd.yml'"`
 	err = kbutil.InsertCode(
@@ -145,7 +145,7 @@ func updateConfig(dir string) {
 		managerAuthArgs)
 	pkg.CheckError("adding vaulting args to the proxy auth", err)
 
-	log.Infof("adding task to not pull image to the config/testing")
+	log.Info("adding task to not pull image to the config/testing")
 	err = kbutil.ReplaceInFile(
 		filepath.Join(dir, "config", "testing", "kustomization.yaml"),
 		"- manager_image.yaml",
@@ -156,42 +156,42 @@ func updateConfig(dir string) {
 func addMocksFromTestdata(dir string, cc command.CommandContext) {
 	testDataAbsPath, err := filepath.Abs("hack/generate/samples/ansible/testdata")
 	pkg.CheckError("absolute path for testdata", err)
-	log.Infof("adding ansible.cfg")
+	log.Info("adding ansible.cfg")
 	cmd := exec.Command("cp", filepath.Join(testDataAbsPath, "ansible.cfg"), dir)
 	_, err = cc.Run(cmd)
 	pkg.CheckError("adding ansible.cfg", err)
 
-	log.Infof("adding plugins/")
+	log.Info("adding plugins/")
 	cmd = exec.Command("cp", "-r", filepath.Join(testDataAbsPath, "plugins/"), filepath.Join(dir, "plugins/"))
 	_, err = cc.Run(cmd)
 	pkg.CheckError("adding plugins/", err)
 
-	log.Infof("adding fixture_collection/")
+	log.Info("adding fixture_collection/")
 	cmd = exec.Command("cp", "-r", filepath.Join(testDataAbsPath, "fixture_collection/"), filepath.Join(dir, "fixture_collection/"))
 	_, err = cc.Run(cmd)
 	pkg.CheckError("adding fixture_collection/", err)
 
-	log.Infof("replacing watches.yaml")
+	log.Info("replacing watches.yaml")
 	cmd = exec.Command("cp", "-r", filepath.Join(testDataAbsPath, "watches.yaml"), dir)
 	_, err = cc.Run(cmd)
 	pkg.CheckError("replacing watches.yaml", err)
 
-	log.Infof("adding tasks/")
+	log.Info("adding tasks/")
 	cmd = exec.Command("cp", "-r", filepath.Join(testDataAbsPath, "tasks/"), filepath.Join(dir, "molecule/default/"))
 	_, err = cc.Run(cmd)
 	pkg.CheckError("adding tasks/", err)
 
-	log.Infof("adding secret playbook")
+	log.Info("adding secret playbook")
 	cmd = exec.Command("cp", "-r", filepath.Join(testDataAbsPath, "secret.yml"), filepath.Join(dir, "playbooks/secret.yml"))
 	_, err = cc.Run(cmd)
 	pkg.CheckError("adding secret playbook", err)
 
-	log.Infof("adding inventory/")
+	log.Info("adding inventory/")
 	cmd = exec.Command("cp", "-r", filepath.Join(testDataAbsPath, "inventory/"), filepath.Join(dir, "inventory/"))
 	_, err = cc.Run(cmd)
 	pkg.CheckError("adding inventory/", err)
 
-	log.Infof("adding finalizer for finalizerconcurrencytest")
+	log.Info("adding finalizer for finalizerconcurrencytest")
 	cmd = exec.Command("cp", filepath.Join(testDataAbsPath, "/playbooks/finalizerconcurrencyfinalizer.yml"), filepath.Join(dir, "playbooks/finalizerconcurrencyfinalizer.yml"))
 	_, err = cc.Run(cmd)
 	pkg.CheckError("adding finalizer for finalizerconccurencytest", err)
@@ -199,14 +199,14 @@ func addMocksFromTestdata(dir string, cc command.CommandContext) {
 }
 
 func updateDockerfile(dir string) {
-	log.Infof("replacing project Dockerfile to use ansible base image with the dev tag")
+	log.Info("replacing project Dockerfile to use ansible base image with the dev tag")
 	err := util.ReplaceRegexInFile(
 		filepath.Join(dir, "Dockerfile"),
 		"quay.io/operator-framework/ansible-operator:.*",
 		"quay.io/operator-framework/ansible-operator:dev")
 	pkg.CheckError("replacing Dockerfile", err)
 
-	log.Infof("inserting code to Dockerfile")
+	log.Info("inserting code to Dockerfile")
 	const dockerfileFragment = `
 
 # Customizations done to check advanced scenarios
@@ -230,7 +230,7 @@ RUN echo abc123 > /opt/ansible/pwd.yml \
 }
 
 func updatePlaybooks(dir string) {
-	log.Infof("adding playbook for argstest")
+	log.Info("adding playbook for argstest")
 	const argsPlaybook = `---
 - hosts: localhost
   gather_facts: no
@@ -258,7 +258,7 @@ func updatePlaybooks(dir string) {
 		argsPlaybook)
 	pkg.CheckError("adding playbook for argstest", err)
 
-	log.Infof("adding playbook for casetest")
+	log.Info("adding playbook for casetest")
 	const casePlaybook = `---
 - hosts: localhost
   gather_facts: no
@@ -282,7 +282,7 @@ func updatePlaybooks(dir string) {
 		casePlaybook)
 	pkg.CheckError("adding playbook for casetest", err)
 
-	log.Infof("adding playbook for inventorytest")
+	log.Info("adding playbook for inventorytest")
 	const inventoryPlaybook = `---
 - hosts: test
   gather_facts: no
@@ -301,7 +301,7 @@ func updatePlaybooks(dir string) {
 		inventoryPlaybook)
 	pkg.CheckError("adding playbook for inventorytest", err)
 
-	log.Infof("adding playbook for reconciliationtest")
+	log.Info("adding playbook for reconciliationtest")
 	const reconciliationPlaybook = `---
 - hosts: localhost
   gather_facts: no
@@ -359,7 +359,7 @@ func updatePlaybooks(dir string) {
 		reconciliationPlaybook)
 	pkg.CheckError("adding playbook for reconciliationtest", err)
 
-	log.Infof("adding playbook for selectortest")
+	log.Info("adding playbook for selectortest")
 	const selectorPlaybook = `---
 - hosts: localhost
   gather_facts: no
@@ -383,7 +383,7 @@ func updatePlaybooks(dir string) {
 		selectorPlaybook)
 	pkg.CheckError("adding playbook for selectortest", err)
 
-	log.Infof("adding playbook for subresourcestest")
+	log.Info("adding playbook for subresourcestest")
 	const subresourcesPlaybook = `---
 - hosts: localhost
   gather_facts: no
@@ -440,7 +440,7 @@ func updatePlaybooks(dir string) {
 		subresourcesPlaybook)
 	pkg.CheckError("adding playbook for subresourcestest", err)
 
-	log.Infof("adding playbook for clusterannotationtest")
+	log.Info("adding playbook for clusterannotationtest")
 	const clusterAnnotationTest = `---
 - hosts: localhost
   gather_facts: no
@@ -475,7 +475,7 @@ func updatePlaybooks(dir string) {
 		clusterAnnotationTest)
 	pkg.CheckError("adding playbook for clusterannotationtest", err)
 
-	log.Infof("adding playbook for finalizerconcurrencytest")
+	log.Info("adding playbook for finalizerconcurrencytest")
 	const finalizerConcurrencyTest = `---
 - hosts: localhost
   gather_facts: no
@@ -512,7 +512,7 @@ func removeFixmeFromPlaybooks(dir string, gvks []schema.GroupVersionKind) {
 		k := strings.ToLower(gvk.Kind)
 		task := fmt.Sprintf("%s_test.yml", k)
 		logMsgForKind := fmt.Sprintf("removing FIXME assert from %s", task)
-		log.Infof(logMsgForKind)
+		log.Info(logMsgForKind)
 		err := kbutil.ReplaceInFile(
 			filepath.Join(dir, "molecule", "default", "tasks", task),
 			fixmeAssert,
