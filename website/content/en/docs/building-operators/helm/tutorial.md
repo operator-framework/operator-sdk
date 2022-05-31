@@ -24,7 +24,6 @@ We will create a sample project to let you know how it works and this sample wil
 
 - Create a Nginx Deployment if it doesn't exist
 - Ensure that the Deployment size is the same as specified by the Nginx CR spec
-- Update the Nginx CR status using the status writer with the names of the CR's pods
 
 ## Create a new project
 
