@@ -15,7 +15,6 @@
 package ansible
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -27,7 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-const bundleImageBase = "bundle"
+const bundleImage = "quay.io/example/memcached-operator:v0.0.1"
 
 var memcachedGVK = schema.GroupVersionKind{
 	Group:   "cache",
@@ -62,7 +61,7 @@ func GenerateMemcachedSamples(binaryPath, rootPath string) []sample.Sample {
 	err = gen.GenerateSamples(ansibleMemcached)
 	pkg.CheckError("generating ansible samples", err)
 
-	ImplementMemcached(ansibleMemcached, fmt.Sprintf("%s-%s", bundleImageBase, ansibleMemcached.Name()))
+	ImplementMemcached(ansibleMemcached, bundleImage)
 	return []sample.Sample{ansibleMemcached}
 }
 
@@ -130,9 +129,9 @@ func GenerateMoleculeSample(binaryPath, samplesPath string) {
 	err = ignoreGen.GenerateSamples(addIgnore)
 	pkg.CheckError("generating ansible molecule sample - ignore", err)
 
-	ImplementMemcached(ansibleMoleculeMemcached, fmt.Sprintf("%s-%s", bundleImageBase, ansibleMoleculeMemcached.Name()))
+	ImplementMemcached(ansibleMoleculeMemcached, bundleImage)
 
-	ImplementMemcachedMolecule(ansibleMoleculeMemcached, fmt.Sprintf("%s-%s", bundleImageBase, ansibleMoleculeMemcached.Name()))
+	ImplementMemcachedMolecule(ansibleMoleculeMemcached, bundleImage)
 }
 
 // GenerateAdvancedMoleculeSample will call all actions to create the directory and generate the sample
@@ -187,5 +186,5 @@ func GenerateAdvancedMoleculeSample(binaryPath, samplesPath string) {
 	err = gen.GenerateSamples(advancedMoleculeMemcached)
 	pkg.CheckError("generating ansible advanced molecule sample", err)
 
-	ImplementAdvancedMolecule(advancedMoleculeMemcached, fmt.Sprintf("%s-%s", bundleImageBase, advancedMoleculeMemcached.Name()))
+	ImplementAdvancedMolecule(advancedMoleculeMemcached, bundleImage)
 }

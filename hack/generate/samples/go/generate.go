@@ -15,10 +15,10 @@
 package golang
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 
+	golangv2 "github.com/operator-framework/operator-sdk/hack/generate/samples/go/v2"
 	golangv3 "github.com/operator-framework/operator-sdk/hack/generate/samples/go/v3"
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/pkg"
 	"github.com/operator-framework/operator-sdk/testutils/command"
@@ -27,9 +27,9 @@ import (
 )
 
 func GenerateMemcachedSamples(binaryPath, rootPath string) []sample.Sample {
-	// golangv2.GenerateMemcachedSample(binaryPath, filepath.Join(rootPath, "go", "v2"))
+	golangv2.GenerateMemcachedSample(binaryPath, filepath.Join(rootPath, "go", "v2"))
 
-	bundleImageBase := "bundle"
+	bundleImage := "quay.io/example/memcached-operator:v0.0.1"
 
 	goV3CC := command.NewGenericCommandContext(
 		command.WithEnv("GO111MODULE=on"),
@@ -65,7 +65,7 @@ func GenerateMemcachedSamples(binaryPath, rootPath string) []sample.Sample {
 	pkg.CheckError("generating go/v3 samples", err)
 
 	// Perform implementation logic
-	golangv3.ImplementMemcached(goV3Memcached, fmt.Sprintf("%s-%s", bundleImageBase, goV3Memcached.Name()))
+	golangv3.ImplementMemcached(goV3Memcached, bundleImage)
 
 	return []sample.Sample{goV3Memcached}
 }

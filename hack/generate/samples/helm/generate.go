@@ -15,7 +15,6 @@
 package helm
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -26,7 +25,7 @@ import (
 )
 
 func GenerateMemcachedSamples(binaryPath, rootPath, helmChartPath string) []sample.Sample {
-	bundleImageBase := "bundle"
+	bundleImage := "quay.io/example/memcached-operator:v0.0.1"
 
 	helmCC := command.NewGenericCommandContext(
 		command.WithEnv("GO111MODULE=on", "KUBECONFIG=broken_so_we_generate_static_default_rules"),
@@ -60,7 +59,7 @@ func GenerateMemcachedSamples(binaryPath, rootPath, helmChartPath string) []samp
 	err = gen.GenerateSamples(helmMemcached)
 	pkg.CheckError("generating helm samples", err)
 
-	ImplementMemcached(helmMemcached, fmt.Sprintf("%s-%s", bundleImageBase, helmMemcached.Name()))
+	ImplementMemcached(helmMemcached, bundleImage)
 
 	return []sample.Sample{helmMemcached}
 }
