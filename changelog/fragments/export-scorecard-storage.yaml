@@ -1,0 +1,5 @@
+entries:
+  - description: >
+      Test containers defined by `config.yaml` can now read the environment variable `SCORECARD_STORAGE` to get a storage path defined in the `config.yaml`.
+    kind: "addition"
+    breaking: false
