@@ -92,6 +92,8 @@ func (c *IndexImageCatalogCreator) BindFlags(fs *pflag.FlagSet) {
 			"and the file *must* be encoded under the key \"cert.pem\"")
 
 	_ = fs.MarkDeprecated("skip-tls", "use --skip-tls-verify or --use-http instead")
+	_ = fs.MarkHidden("skip-tls")
+
 	fs.BoolVar(&c.SkipTLS, "skip-tls", false, "skip authentication of image registry TLS "+
 		"certificate when pulling a bundle image in-cluster")
 
