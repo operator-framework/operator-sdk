@@ -24,7 +24,6 @@ import (
 	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
-	"github.com/operator-framework/operator-sdk/internal/util"
 )
 
 // AdvancedMolecule defines the context for the sample
@@ -245,7 +244,7 @@ func (ma *AdvancedMolecule) addMocksFromTestdata() {
 
 func (ma *AdvancedMolecule) updateDockerfile() {
 	log.Infof("replacing project Dockerfile to use ansible base image with the dev tag")
-	err := util.ReplaceRegexInFile(
+	err := kbutil.ReplaceRegexInFile(
 		filepath.Join(ma.ctx.Dir, "Dockerfile"),
 		"quay.io/operator-framework/ansible-operator:.*",
 		"quay.io/operator-framework/ansible-operator:dev")

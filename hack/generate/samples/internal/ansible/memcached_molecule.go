@@ -25,7 +25,6 @@ import (
 	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/internal/pkg"
-	"github.com/operator-framework/operator-sdk/internal/util"
 )
 
 // MemcachedMolecule defines the context for the sample
@@ -91,7 +90,7 @@ func (ma *MemcachedMolecule) Run() {
 	pkg.CheckError("replacing memcached task to add foo check", err)
 
 	log.Infof("replacing project Dockerfile to use ansible base image with the dev tag")
-	err = util.ReplaceRegexInFile(filepath.Join(ma.ctx.Dir, "Dockerfile"), "quay.io/operator-framework/ansible-operator:.*", "quay.io/operator-framework/ansible-operator:dev")
+	err = kbutil.ReplaceRegexInFile(filepath.Join(ma.ctx.Dir, "Dockerfile"), "quay.io/operator-framework/ansible-operator:.*", "quay.io/operator-framework/ansible-operator:dev")
 	pkg.CheckError("replacing Dockerfile", err)
 
 	log.Infof("adding RBAC permissions")
