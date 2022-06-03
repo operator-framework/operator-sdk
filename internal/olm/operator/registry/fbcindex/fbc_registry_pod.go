@@ -20,8 +20,6 @@ import (
 	"errors"
 	"fmt"
 	"path"
-	"path/filepath"
-	"strings"
 	"text/template"
 	"time"
 
@@ -68,12 +66,6 @@ type FBCRegistryPod struct { //nolint:maligned
 	// FBCContent represents the contents of the FBC file (string YAML).
 	FBCContent string
 
-	// FBCDir is the name of the FBC directory name where the FBC resides in.
-	FBCDir string
-
-	// FBCFile represents the FBC filename that has all the contents to be served through the registry pod.
-	FBCFile string
-
 	cfg *operator.Configuration
 }
 
@@ -89,11 +81,6 @@ func (f *FBCRegistryPod) init(cfg *operator.Configuration, cs *v1alpha1.CatalogS
 	if err := f.validate(); err != nil {
 		return fmt.Errorf("invalid FBC registry pod: %v", err)
 	}
-
-	bundleImage := f.BundleItems[len(f.BundleItems)-1].ImageTag
-	trimmedbundleImage := strings.Split(bundleImage, ":")[0]
-	f.FBCDir = fmt.Sprintf("%s-index", filepath.Join("/tmp", strings.Split(trimmedbundleImage, "/")[2]))
-	f.FBCFile = filepath.Join(f.FBCDir, strings.Split(bundleImage, ":")[1])
 
 	// podForBundleRegistry() to make the pod definition
 	pod, err := f.podForBundleRegistry(cs)
@@ -198,7 +185,6 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 		return nil, err
 	}
 
-	// (todo) remove comment: ConfigMap related
 	// create a ConfigMap
 	cm := &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
@@ -210,7 +196,7 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 			Namespace: f.cfg.Namespace,
 		},
 		Data: map[string]string{
-			"test": f.FBCContent,
+			"extraFBC": f.FBCContent,
 		},
 	}
 
@@ -236,12 +222,6 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 					Name: k8sutil.TrimDNS1123Label(cm.Name + "-volume"),
 					VolumeSource: corev1.VolumeSource{
 						ConfigMap: &corev1.ConfigMapVolumeSource{
-							// Items: []corev1.KeyToPath{
-							// 	{
-							// 		Key:  cm.Name,
-							// 		Path: cm.Name,
-							// 	},
-							// },
 							LocalObjectReference: corev1.LocalObjectReference{
 								Name: cm.Name,
 							},
@@ -263,45 +243,20 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 					},
 					VolumeMounts: []corev1.VolumeMount{
 						{
-							Name: k8sutil.TrimDNS1123Label(cm.Name + "-volume"),
-							// MountPath: path.Join(DefaultFBCIndexRootDir, cm.Name),
-							MountPath: path.Join(DefaultFBCIndexRootDir),
-							// SubPath:   cm.Name,
+							Name:      k8sutil.TrimDNS1123Label(cm.Name + "-volume"),
+							MountPath: path.Join(DefaultFBCIndexRootDir, cm.Name),
+							SubPath:   cm.Name,
 						},
 					},
 				},
 			},
-			// (todo) remove comment (not configmap related).
-			// InitContainer related to doing untar of the extra fbc tar.
-			// InitContainers: []corev1.Container{
-			// 	{
-			// 		Name:            "extra-FBC-untar",
-			// 		Image:           f.IndexImage, // should this be the same image as regular container?
-			// 		ImagePullPolicy: corev1.PullIfNotPresent,
-			// 		Args: []string{
-			// 			"tar",
-			// 			"xvzf",
-			// 			"/configs/extrafbc.tar.gz",
-			// 			"-C",
-			// 			path.Join(defaultFBCIndexRootDir, cm.Name),
-			// 		},
-			// 		VolumeMounts: []corev1.VolumeMount{
-			// 			{
-			// 				MountPath: path.Join(defaultFBCIndexRootDir, cm.Name),
-			// 				Name:      k8sutil.TrimDNS1123Label(cm.Name + "-volume"),
-			// 			},
-			// 		},
-			// 	},
-			// },
 		},
 	}
 
 	return f.pod, nil
 }
 
-const fbcCmdTemplate = `mkdir -p {{ .FBCDir }} && \
-opm serve /configs -p {{ .GRPCPort }}
-`
+const fbcCmdTemplate = `opm serve /configs -p {{ .GRPCPort }}`
 
 // getContainerCmd uses templating to construct the container command
 // and throws error if unable to parse and execute the container command
