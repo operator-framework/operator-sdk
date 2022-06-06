@@ -22,6 +22,7 @@ import (
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/ansible"
 	golang "github.com/operator-framework/operator-sdk/hack/generate/samples/go"
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/helm"
+	"github.com/operator-framework/operator-sdk/hack/generate/samples/pkg"
 
 	log "github.com/sirupsen/logrus"
 
@@ -54,8 +55,11 @@ func main() {
 	samplesPath := filepath.Join(wd, "testdata")
 	log.Infof("writing sample directories under %s", samplesPath)
 
+	helmChartPath, err := filepath.Abs("hack/generate/samples/helm/testdata/memcached-0.0.1.tgz")
+	pkg.CheckError("absolute filepath to helm chart", err)
+
 	log.Infof("creating Helm Memcached Sample")
-	helm.GenerateMemcachedSamples(binaryPath, samplesPath, "../../../hack/generate/samples/helm/testdata/memcached-0.0.1.tgz")
+	helm.GenerateMemcachedSamples(binaryPath, samplesPath, helmChartPath)
 
 	log.Infof("creating Ansible Memcached Sample")
 	ansible.GenerateMemcachedSamples(binaryPath, samplesPath)

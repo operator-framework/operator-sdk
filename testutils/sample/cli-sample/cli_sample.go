@@ -198,7 +198,11 @@ func (gs *CliSample) GenerateInit() error {
 	// defer returning to the original working directory
 	defer func() { os.Chdir(cwd) }()
 	// Change directory to the context specified
-	err = os.Chdir(gs.commandContext.Dir())
+	err = os.MkdirAll(gs.Dir(), 0777)
+	if err != nil {
+		return fmt.Errorf("encountered an error creating context directory: %w", err)
+	}
+	err = os.Chdir(gs.Dir())
 	if err != nil {
 		return fmt.Errorf("encountered an error switching to context directory: %w", err)
 	}
@@ -241,7 +245,11 @@ func (gs *CliSample) GenerateApi() error {
 	// defer returning to the original working directory
 	defer func() { os.Chdir(cwd) }()
 	// Change directory to the context specified
-	err = os.Chdir(gs.commandContext.Dir())
+	err = os.MkdirAll(gs.Dir(), os.ModeDir)
+	if err != nil {
+		return fmt.Errorf("encountered an error creating context directory: %w", err)
+	}
+	err = os.Chdir(gs.Dir())
 	if err != nil {
 		return fmt.Errorf("encountered an error switching to context directory: %w", err)
 	}
@@ -285,8 +293,12 @@ func (gs *CliSample) GenerateWebhook() error {
 	}
 	// defer returning to the original working directory
 	defer func() { os.Chdir(cwd) }()
+	err = os.MkdirAll(gs.Dir(), os.ModeDir)
+	if err != nil {
+		return fmt.Errorf("encountered an error creating context directory: %w", err)
+	}
 	// Change directory to the context specified
-	err = os.Chdir(gs.commandContext.Dir())
+	err = os.Chdir(gs.Dir())
 	if err != nil {
 		return fmt.Errorf("encountered an error switching to context directory: %w", err)
 	}
