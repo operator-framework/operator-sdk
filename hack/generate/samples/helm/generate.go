@@ -64,6 +64,7 @@ func GenerateMemcachedSamples(binaryPath, rootPath, helmChartPath string) []samp
 		cli.WithDefaultProjectVersion(cfgv3.Version),
 		cli.WithCompletion(),
 	)
+	pkg.CheckError("creating helm cli", err)
 
 	helmMemcached, err := clisample.NewCliSample(
 		clisample.WithCLI(helmCli),
@@ -74,6 +75,7 @@ func GenerateMemcachedSamples(binaryPath, rootPath, helmChartPath string) []samp
 		clisample.WithExtraApiOptions("--helm-chart", helmChartPath),
 		clisample.WithName("memcached-operator"),
 	)
+	pkg.CheckError("creating helm cli sample", err)
 
 	// remove sample directory if it already exists
 	err = os.RemoveAll(helmMemcached.Dir())
