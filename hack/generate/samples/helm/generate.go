@@ -19,9 +19,18 @@ import (
 	"path/filepath"
 
 	"github.com/operator-framework/operator-sdk/hack/generate/samples/pkg"
+	"github.com/operator-framework/operator-sdk/internal/plugins"
+	helmv1 "github.com/operator-framework/operator-sdk/internal/plugins/helm/v1"
+	manifestsv2 "github.com/operator-framework/operator-sdk/internal/plugins/manifests/v2"
+	scorecardv2 "github.com/operator-framework/operator-sdk/internal/plugins/scorecard/v2"
 	"github.com/operator-framework/operator-sdk/testutils/command"
 	"github.com/operator-framework/operator-sdk/testutils/sample"
+	clisample "github.com/operator-framework/operator-sdk/testutils/sample/cli-sample"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/kubebuilder/v3/pkg/cli"
+	cfgv3 "sigs.k8s.io/kubebuilder/v3/pkg/config/v3"
+	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
+	kustomizev1 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/common/kustomize/v1"
 )
 
 func GenerateMemcachedSamples(binaryPath, rootPath, helmChartPath string) []sample.Sample {
@@ -38,18 +47,36 @@ func GenerateMemcachedSamples(binaryPath, rootPath, helmChartPath string) []samp
 		Kind:    "Memcached",
 	}
 
-	helmMemcached := sample.NewGenericSample(
-		sample.WithBinary(binaryPath),
-		sample.WithCommandContext(helmCC),
-		sample.WithDomain("example.com"),
-		sample.WithPlugins("helm"),
-		sample.WithGvk(memcachedGVK),
-		sample.WithExtraApiOptions("--helm-chart", helmChartPath),
-		sample.WithName("memcached-operator"),
+	// Create a custom CLI to run the helm scaffolding
+	helmBundle, _ := plugin.NewBundle("helm"+plugins.DefaultNameQualifier, plugin.Version{Number: 1},
+		kustomizev1.Plugin{},
+		helmv1.Plugin{},
+		manifestsv2.Plugin{},
+		scorecardv2.Plugin{},
+	)
+	helmCli, err := cli.New(
+		cli.WithCommandName("helm-test-cli"),
+		cli.WithVersion("v0.0.0"),
+		cli.WithPlugins(
+			helmBundle,
+		),
+		cli.WithDefaultPlugins(cfgv3.Version, helmBundle),
+		cli.WithDefaultProjectVersion(cfgv3.Version),
+		cli.WithCompletion(),
+	)
+
+	helmMemcached, err := clisample.NewCliSample(
+		clisample.WithCLI(helmCli),
+		clisample.WithCommandContext(helmCC),
+		clisample.WithDomain("example.com"),
+		clisample.WithPlugins("helm"),
+		clisample.WithGvk(memcachedGVK),
+		clisample.WithExtraApiOptions("--helm-chart", helmChartPath),
+		clisample.WithName("memcached-operator"),
 	)
 
 	// remove sample directory if it already exists
-	err := os.RemoveAll(helmMemcached.Dir())
+	err = os.RemoveAll(helmMemcached.Dir())
 	pkg.CheckError("attempting to remove sample dir", err)
 
 	gen := sample.NewGenerator(
