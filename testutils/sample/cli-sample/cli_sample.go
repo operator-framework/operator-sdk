@@ -191,6 +191,18 @@ func (gs *CliSample) Domain() string {
 
 // GenerateInit runs the `init` subcommand of the binary provided
 func (gs *CliSample) GenerateInit() error {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("encountered an error getting the current working directory: %w", err)
+	}
+	// defer returning to the original working directory
+	defer func() { os.Chdir(cwd) }()
+	// Change directory to the context specified
+	err = os.Chdir(gs.commandContext.Dir())
+	if err != nil {
+		return fmt.Errorf("encountered an error switching to context directory: %w", err)
+	}
+
 	// Cobra's Execute command by default uses os.Args[1:] so we need to add an extra
 	// arg to take place of os.Args[0]
 	args := []string{
@@ -212,7 +224,7 @@ func (gs *CliSample) GenerateInit() error {
 	defer func() { os.Args = oldArgs }()
 	os.Args = args
 
-	err := gs.cli.Run()
+	err = gs.cli.Run()
 	if err != nil {
 		return fmt.Errorf("encountered an error when running `init` subcommand for the cli sample: %w", err)
 	}
@@ -222,6 +234,18 @@ func (gs *CliSample) GenerateInit() error {
 
 // GenerateApi runs the `create api` subcommand of the binary provided
 func (gs *CliSample) GenerateApi() error {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("encountered an error getting the current working directory: %w", err)
+	}
+	// defer returning to the original working directory
+	defer func() { os.Chdir(cwd) }()
+	// Change directory to the context specified
+	err = os.Chdir(gs.commandContext.Dir())
+	if err != nil {
+		return fmt.Errorf("encountered an error switching to context directory: %w", err)
+	}
+
 	oldArgs := os.Args
 	defer func() { os.Args = oldArgs }()
 
@@ -255,6 +279,18 @@ func (gs *CliSample) GenerateApi() error {
 
 // GenerateWebhook runs the `create webhook` subcommand of the binary provided
 func (gs *CliSample) GenerateWebhook() error {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("encountered an error getting the current working directory: %w", err)
+	}
+	// defer returning to the original working directory
+	defer func() { os.Chdir(cwd) }()
+	// Change directory to the context specified
+	err = os.Chdir(gs.commandContext.Dir())
+	if err != nil {
+		return fmt.Errorf("encountered an error switching to context directory: %w", err)
+	}
+
 	oldArgs := os.Args
 	defer func() { os.Args = oldArgs }()
 	for _, gvk := range gs.gvks {
