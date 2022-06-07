@@ -53,7 +53,7 @@ This guide walks through an example of building a simple nginx-operator powered 
 
   ```sh
   make bundle IMG="example.com/nginx-operator:v0.0.1"
-  make bundle-build bundle-push
+  make bundle-build bundle-push IMG="example.com/nginx-operator:v0.0.1"
   ```
 
 1. Run your bundle. If your bundle image is hosted in a registry that is private and/or
