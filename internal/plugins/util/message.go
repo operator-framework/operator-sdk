@@ -14,7 +14,7 @@
 
 package util
 
-const WarnMessageRemovalV1beta1 = "The v1beta1 API version for CRDs and Webhooks are deprecated and are no longer offered since " +
-	"the Kubernetes release 1.22. This flag no longer required to exist in future releases. Also, we would like to " +
-	"recommend you no longer use these API versions." +
+const WarnMessageRemovalV1beta1 = "The v1beta1 API version for CRDs and Webhooks is deprecated and is no longer offered since " +
+	"Kubernetes 1.22. This flag will be removed in a future release. We " +
+	"recommend that you no longer use the v1beta1 API version" +
 	"More info: https://kubernetes.io/docs/reference/using-api/deprecation-guide/#v1-22"
