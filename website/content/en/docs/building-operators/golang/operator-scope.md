@@ -20,7 +20,7 @@ permissions and watches so that it can manage and issue certificates for an enti
 
 **IMPORTANT**: When a [Manager][ctrl-manager] instance is created in the `main.go` file, the
 Namespaces are set via [Manager Options][ctrl-options] as described below. These Namespaces should be watched and
-cached for the Client which is provided by the Manager.Only clients provided by cluster-scoped Managers are able
+cached for the Client which is provided by the Manager. Only clients provided by cluster-scoped Managers are able
 to manage cluster-scoped CRD's. For further information see: [CRD scope doc][crd-scope-doc].
 
 ## Manager watching options
