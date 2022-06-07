@@ -28,6 +28,7 @@ import (
 	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/downloader"
 	"helm.sh/helm/v3/pkg/getter"
+	"helm.sh/helm/v3/pkg/registry"
 	"helm.sh/helm/v3/pkg/repo"
 )
 
@@ -127,9 +128,14 @@ func LoadChart(opts Options) (*chart.Chart, error) {
 func downloadChart(destDir string, opts Options) (string, error) {
 	settings := cli.New()
 	getters := getter.All(settings)
+	registrar, err := registry.NewClient()
+	if err != nil {
+		return "", err
+	}
 	c := downloader.ChartDownloader{
 		Out:              os.Stderr,
 		Getters:          getters,
+		RegistryClient:   registrar,
 		RepositoryConfig: settings.RepositoryConfig,
 		RepositoryCache:  settings.RepositoryCache,
 	}
