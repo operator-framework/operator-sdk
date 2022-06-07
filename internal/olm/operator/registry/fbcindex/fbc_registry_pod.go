@@ -26,9 +26,11 @@ import (
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
@@ -205,9 +207,26 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 		return nil, fmt.Errorf("set configmap %q owner reference: %v", cm.GetName(), err)
 	}
 
-	// create ConfigMap
-	if err := f.cfg.Client.Create(context.TODO(), cm); err != nil {
-		return nil, fmt.Errorf("error creating ConfigMap: %w", err)
+	cmKey := types.NamespacedName{
+		Namespace: f.cfg.Namespace,
+		Name:      "operator-sdk-run-bundle-config",
+	}
+
+	cmObj := corev1.ConfigMap{}
+	if err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		err := f.cfg.Client.Get(context.TODO(), cmKey, &cmObj)
+		if apierrors.IsNotFound(err) {
+			if err := f.cfg.Client.Create(context.TODO(), cm); err != nil {
+				return fmt.Errorf("error creating ConfigMap: %w", err)
+			}
+		}
+		// update ConfigMap with new FBCContent
+		cmObj.Data = map[string]string{
+			"extraFBC": f.FBCContent,
+		}
+		return f.cfg.Client.Update(context.TODO(), &cmObj)
+	}); err != nil {
+		return nil, fmt.Errorf("error updating ConfigMap: %w", err)
 	}
 
 	// make the pod definition
@@ -222,6 +241,12 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 					Name: k8sutil.TrimDNS1123Label(cm.Name + "-volume"),
 					VolumeSource: corev1.VolumeSource{
 						ConfigMap: &corev1.ConfigMapVolumeSource{
+							Items: []corev1.KeyToPath{
+								{
+									Key:  "extraFBC",
+									Path: "operator-sdk-run-bundle-config/extraFBC",
+								},
+							},
 							LocalObjectReference: corev1.LocalObjectReference{
 								Name: cm.Name,
 							},
@@ -245,7 +270,7 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 						{
 							Name:      k8sutil.TrimDNS1123Label(cm.Name + "-volume"),
 							MountPath: path.Join(DefaultFBCIndexRootDir, cm.Name),
-							SubPath:   cm.Name,
+							SubPath:   path.Join(cm.Name, "extraFBC"),
 						},
 					},
 				},
@@ -261,15 +286,9 @@ const fbcCmdTemplate = `opm serve /configs -p {{ .GRPCPort }}`
 // getContainerCmd uses templating to construct the container command
 // and throws error if unable to parse and execute the container command
 func (f *FBCRegistryPod) getContainerCmd() (string, error) {
-	var t *template.Template
-	// create a custom dirname template function
-	funcMap := template.FuncMap{
-		"dirname": path.Dir,
-	}
-
 	// add the custom dirname template function to the
 	// template's FuncMap and parse the cmdTemplate
-	t = template.Must(template.New("cmd").Funcs(funcMap).Parse(fbcCmdTemplate))
+	t := template.Must(template.New("cmd").Parse(fbcCmdTemplate))
 
 	// execute the command by applying the parsed template to command
 	// and write command output to out

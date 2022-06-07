@@ -161,6 +161,7 @@ func handleTraditionalUpgrade(ctx context.Context, indexImage string, bundleImag
 		return "", errors.New("bundle image must have exactly one bundle")
 	}
 
+	var extraDeclCfg *declarativeconfig.DeclarativeConfig
 	// search for the specific channel in which the upgrade needs to take place, and upgrade from the channel head
 	for i := range originalDeclCfg.Channels {
 		if originalDeclCfg.Channels[i].Name == channelName && originalDeclCfg.Channels[i].Package == bundleDeclConfig.Bundles[0].Package {
@@ -173,17 +174,20 @@ func handleTraditionalUpgrade(ctx context.Context, indexImage string, bundleImag
 				Name:     bundleDeclConfig.Bundles[0].Name,
 				Replaces: channelHead,
 			}
-			originalDeclCfg.Channels[i].Entries = append(originalDeclCfg.Channels[i].Entries, entry)
+			// originalDeclCfg.Channels[i].Entries = append(originalDeclCfg.Channels[i].Entries, entry)
+			extraDeclCfg.Channels[i].Entries = append(extraDeclCfg.Channels[i].Entries, entry)
 			break
 		}
 	}
 
 	// add the upgraded bundle to resulting declarative config
-	originalDeclCfg.Bundles = append(originalDeclCfg.Bundles, bundleDeclConfig.Bundles[0])
+	// originalDeclCfg.Bundles = append(originalDeclCfg.Bundles, bundleDeclConfig.Bundles[0])
+	extraDeclCfg.Bundles = append(extraDeclCfg.Bundles, bundleDeclConfig.Bundles[0])
 
 	// validate the declarative config and convert it to a string
 	var content string
-	if content, err = fbcutil.ValidateAndStringify(originalDeclCfg); err != nil {
+	// if content, err = fbcutil.ValidateAndStringify(originalDeclCfg); err != nil {
+	if content, err = fbcutil.ValidateAndStringify(extraDeclCfg); err != nil {
 		return "", fmt.Errorf("error validating and converting the declarative config object to a string format: %v", err)
 	}
 
@@ -215,17 +219,18 @@ func (c *IndexImageCatalogCreator) runFBCUpgrade(ctx context.Context) error {
 	}
 
 	// Adding the FBC "f" to the originalDeclcfg to generate a new FBC
-	declcfg, err := upgradeFBC(ctx, f, originalDeclcfg)
+	extraDeclCfg, err := upgradeFBC(ctx, f, originalDeclcfg)
 	if err != nil {
 		return fmt.Errorf("error creating the upgraded FBC: %v", err)
 	}
 
 	// validate the declarative config and convert it to a string
 	var content string
-	if content, err = fbcutil.ValidateAndStringify(declcfg); err != nil {
+	if content, err = fbcutil.ValidateAndStringify(extraDeclCfg); err != nil {
 		return fmt.Errorf("error validating/stringifying the declarative config object: %v", err)
 	}
 
+	fmt.Println(content)
 	log.Infof("Generated a valid Upgraded File-Based Catalog")
 
 	c.FBCContent = content
@@ -280,12 +285,16 @@ func upgradeFBC(ctx context.Context, f *fbcutil.FBCContext, originalDeclCfg *dec
 		existingBundles[bundle.Name] = bundle.Package
 	}
 
+	// extraDeclConfig := &declarativeconfig.DeclarativeConfig{}
 	// declcfg contains all the bundles we need to insert to form the new FBC
 	entries := []declarativeconfig.ChannelEntry{} // Used when generating a new channel
 	for i, bundle := range declcfg.Bundles {
 		// if it is not present in the bundles array or belongs to a different package, we can add it
 		if _, present := existingBundles[bundle.Name]; !present || existingBundles[bundle.Name] != bundle.Package {
 			originalDeclCfg.Bundles = append(originalDeclCfg.Bundles, bundle)
+			// extraDeclConfig.Bundles = append(extraDeclConfig.Bundles, bundle)
+			// extraDeclConfig.Bundles = []declarativeconfig.Bundle{bundle}
+
 		}
 
 		// constructing a new entry to add
@@ -301,6 +310,9 @@ func upgradeFBC(ctx context.Context, f *fbcutil.FBCContext, originalDeclCfg *dec
 		// either add it to a new channel or an existing channel
 		if channelExists {
 			originalDeclCfg.Channels[channelIndex].Entries = append(originalDeclCfg.Channels[channelIndex].Entries, entry)
+			// extraDeclConfig.Channels[channelIndex].Entries = append(extraDeclConfig.Channels[channelIndex].Entries, entry)
+			// extraDeclConfig.Channels[channelIndex].Entries = []declarativeconfig.ChannelEntry{entry}
+
 		} else {
 			entries = append(entries, entry)
 		}
@@ -314,6 +326,14 @@ func upgradeFBC(ctx context.Context, f *fbcutil.FBCContext, originalDeclCfg *dec
 			Package: f.Package,
 			Entries: entries,
 		})
+		/*channel := declarativeconfig.Channel{
+			Schema:  fbcutil.SchemaChannel,
+			Name:    f.ChannelName,
+			Package: f.Package,
+			Entries: entries,
+		}*/
+		// extraDeclConfig.Channels = []declarativeconfig.Channel{channel}
+
 	}
 
 	// check if package already exists
@@ -332,9 +352,16 @@ func upgradeFBC(ctx context.Context, f *fbcutil.FBCContext, originalDeclCfg *dec
 			Name:           f.Package,
 			DefaultChannel: f.ChannelName,
 		})
+		// packageBlob := declarativeconfig.Package{
+		// 	Schema:         fbcutil.SchemaPackage,
+		// 	Name:           f.Package,
+		// 	DefaultChannel: f.ChannelName,
+		// }
+		// extraDeclConfig.Packages = []declarativeconfig.Package{packageBlob}
 	}
 
 	return originalDeclCfg, nil
+	// return extraDeclConfig, nil
 }
 
 // UpdateCatalog links a new registry pod in catalog source by updating the address and annotations,
@@ -412,7 +439,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 
 			err = c.runFBCUpgrade(ctx)
 			if err != nil {
-				return fmt.Errorf("unable to determine if index image adopts File-Based Catalog or SQLite format: %v", err)
+				return fmt.Errorf("error in upgrading FBC: %v", err)
 			}
 		}
 	}
