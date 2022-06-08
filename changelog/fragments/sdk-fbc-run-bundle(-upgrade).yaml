@@ -1,11 +1,9 @@
 entries:
   - description: >
-      Add File-Based Catalog support for both `run bundle` and `run bundle-upgrade` subcommands. 
-      Infer the image type and handle FBC scenarios accordingly for both commands. For FBC images,
-      Operator Registry APIs are called for rendering the bundle and/or the index image and serving these images
-      through the registry pod using a gRPC port. For images that are SQLite based, 
-      `opm registry add` and `opm serve` commands will be called during the registry pod creation. 
-      Support for these old opm commands will be deprecated and completely removed in the future. 
+      Add support for File-Based Catalog to the subcommands [operator-sdk run bundle](https://sdk.operatorframework.io/docs/cli/operator-sdk_run_bundle/#m-docsclioperator-sdk_run_bundle) 
+      and [run bundle-upgrade](https://sdk.operatorframework.io/docs/cli/operator-sdk_run_bundle-upgrade/) so that 
+      new indexes created by these subcommands are using the new format. 
+      Users are able to pass in an index catalog with FBC format via the flag option `--index-image`.
 
     # kind is one of:
     # - addition
@@ -13,7 +11,7 @@ entries:
     # - deprecation
     # - removal
     # - bugfix
-    kind: addition
+    kind: change
 
     # Is this a breaking change?
     breaking: false
