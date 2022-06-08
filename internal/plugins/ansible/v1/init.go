@@ -243,5 +243,36 @@ func addInitCustomizations(projectName string) error {
 		return fmt.Errorf("error updating kustomization.yaml files: %v", err)
 	}
 
+	//todo: remove the space on Kubebuilder project so that we can remove the following replace
+	//it is required because of the molecule issues, see: https://github.com/operator-framework/operator-sdk/issues/5838
+
+	const commentManager = `#   leaderElectionReleaseOnCancel defines if the leader should step down volume 
+#   when the Manager ends. This requires the binary to immediately end when the
+#   Manager is stopped, otherwise, this setting is unsafe. Setting this significantly
+#   speeds up voluntary leader transitions as the new leader don't have to wait
+#   LeaseDuration time first.
+#   In the default scaffold provided, the program ends immediately after 
+#   the manager stops, so would be fine to enable this option. However, 
+#   if you are doing or is intended to do any operation such as perform cleanups 
+#   after the manager stops then its usage might be unsafe.
+#   leaderElectionReleaseOnCancel: true`
+
+	const commentManagerUpdate = `# leaderElectionReleaseOnCancel defines if the leader should step down volume
+# when the Manager ends. This requires the binary to immediately end when the
+# Manager is stopped, otherwise, this setting is unsafe. Setting this significantly
+# speeds up voluntary leader transitions as the new leader don't have to wait
+# LeaseDuration time first.
+# In the default scaffold provided, the program ends immediately after
+# the manager stops, so would be fine to enable this option. However,
+# if you are doing or is intended to do any operation such as perform cleanups
+# after the manager stops then its usage might be unsafe.
+# leaderElectionReleaseOnCancel: true`
+
+	controllerManagerFile := filepath.Join("config", "manager", "controller_manager_config.yaml")
+
+	err = util.ReplaceInFile(controllerManagerFile, commentManager, commentManagerUpdate)
+	if err != nil {
+		return err
+	}
 	return nil
 }
