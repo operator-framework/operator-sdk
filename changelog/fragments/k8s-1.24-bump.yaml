@@ -4,7 +4,7 @@
 # TODO(everettraven): update changelog
 entries:
   - description: >
-      For Go (go/v3) and Helm Hybrid (hybrid) Operators: Upgrade Kubernetes 1.23 to 1.24
+      For Go (go/v3) and Helm Hybrid (hybrid.helm/v1-alpha) language based operators: Upgrade Kubernetes 1.23 to 1.24
 
     # kind is one of:
     # - addition
@@ -20,7 +20,7 @@ entries:
     # Migration can be defined to automatically add a section to
     # the migration guide. This is required for breaking changes.
     migration:
-      header: Go (go/v3) and Hybrid Helm (hybrid) Operators - Upgrading to Kubernetes 1.24
+      header: Go (go/v3) and Hybrid Helm (hybrid.helm/v1-alpha) language based operators - Upgrade Kubernetes 1.23 to 1.24
       body: |
         To update your project to support Kubernetes 1.24:
         
@@ -41,7 +41,7 @@ entries:
         4. Run `make` to run all make targets
 
   - description: >
-      For Go (go/v3) and Hybrid Helm (hybrid) Operators: Support for Go 1.18
+      For Go (go/v3) and Hybrid Helm (hybrid.helm/v1-alpha) language based operators: Add support for Go 1.18
       
     # kind is one of:
     # - addition
@@ -49,7 +49,7 @@ entries:
     # - deprecation
     # - removal
     # - bugfix
-    kind: "change"
+    kind: "addition"
 
     # Is this a breaking change?
     breaking: false
@@ -57,7 +57,7 @@ entries:
     # Migration can be defined to automatically add a section to
     # the migration guide. This is required for breaking changes.
     migration:
-      header: Go (go/v3) and Hybrid Helm (hybrid) Operator - Update to Go 1.18
+      header: Go (go/v3) and Hybrid Helm (hybrid.helm/v1-alpha) language based operators - Add support for Go 1.18
       body: |
         To update your project to use Go 1.18:
 
@@ -68,7 +68,7 @@ entries:
         2. Run `go mod tidy` to ensure all dependencies are upgraded
 
   - description: >
-      For `operator-sdk bundle validate`: fix channel naming validation [More info](https://github.com/operator-framework/api/pull/231)
+      For `operator-sdk bundle validate` command and GoodPractices validator (`--select-optional name=good-practices`): fix channel naming validation [More info](https://github.com/operator-framework/api/pull/231)
       
     # kind is one of:
     # - addition
@@ -82,7 +82,7 @@ entries:
     breaking: false
 
   - description: >
-      For `operator-sdk bundle validate`: Add CRD description check validation [More info](https://github.com/operator-framework/api/pull/234)
+      For `operator-sdk bundle validate` command and GoodPractices validator (`--select-optional name=good-practices`): Add CRD description check validation [More info](https://github.com/operator-framework/api/pull/234)
       
     # kind is one of:
     # - addition
@@ -96,7 +96,7 @@ entries:
     breaking: false
 
   - description: >
-      For `operator-sdk bundle validate`: Add a new check to warn authors when permissions to create CRDs are found [More info](https://github.com/operator-framework/api/pull/241)
+      For `operator-sdk bundle validate` command and GoodPractices validator (`--select-optional name=good-practices`): Add a new check to warn authors when permissions to create CRDs are found [More info](https://github.com/operator-framework/api/pull/241)
       
     # kind is one of:
     # - addition
@@ -107,4 +107,16 @@ entries:
     kind: "addition"
 
     # Is this a breaking change?
+    breaking: false
+
+  - description: >
+      For Helm (helm/v1) and Hybrid Helm (hybrid.helm/v1-alpha) language based operators: Upgrade helm from `v3.6.2` to `v3.9.0`
+    breaking: false
+
+  - description: >
+      For Ansible (ansible/v1) and Helm (helm/v1) language based operators: change the default value for the manager.option LeaderElectionResourceLock from `comfigmaps` to `configmapsleases` to allow a safe transition to use the leases option on the future. [More info](https://github.com/kubernetes-sigs/controller-runtime/pull/1903)
+    breaking: false
+  
+  - description: >
+      For Quarkus (quarkus/v1-alpha) language based operator: add bundle generation [More info](https://github.com/operator-framework/java-operator-plugins/pull/84)
     breaking: false
