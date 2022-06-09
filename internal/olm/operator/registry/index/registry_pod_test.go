@@ -43,7 +43,7 @@ func TestCreateRegistryPod(t *testing.T) {
 	RunSpecs(t, "Test Registry Pod Suite")
 }
 
-var _ = Describe("RegistryPod", func() {
+var _ = Describe("SQLiteRegistryPod", func() {
 
 	var defaultBundleItems = []BundleItem{{
 		ImageTag: "quay.io/example/example-operator-bundle:0.2.0",
@@ -55,7 +55,7 @@ var _ = Describe("RegistryPod", func() {
 		Context("with valid registry pod values", func() {
 
 			var (
-				rp  *RegistryPod
+				rp  *SQLiteRegistryPod
 				cfg *operator.Configuration
 				pod *corev1.Pod
 				err error
@@ -66,15 +66,15 @@ var _ = Describe("RegistryPod", func() {
 					Client:    newFakeClient(),
 					Namespace: "test-default",
 				}
-				rp = &RegistryPod{
+				rp = &SQLiteRegistryPod{
 					BundleItems: defaultBundleItems,
 					IndexImage:  testIndexImageTag,
 				}
-				By("initializing the RegistryPod")
+				By("initializing the SQLiteRegistryPod")
 				Expect(rp.init(cfg)).To(Succeed())
 			})
 
-			It("should create the RegistryPod successfully", func() {
+			It("should create the SQLiteRegistryPod successfully", func() {
 				expectedPodName := "quay-io-example-example-operator-bundle-0-2-0"
 				Expect(rp).NotTo(BeNil())
 				Expect(rp.pod.Name).To(Equal(expectedPodName))
@@ -130,7 +130,7 @@ var _ = Describe("RegistryPod", func() {
 						AddMode:  SemverBundleAddMode,
 					},
 				)
-				rp2 := RegistryPod{
+				rp2 := SQLiteRegistryPod{
 					DBPath:        defaultDBPath,
 					GRPCPort:      defaultGRPCPort,
 					BundleItems:   bundleItems,
@@ -180,7 +180,7 @@ var _ = Describe("RegistryPod", func() {
 						AddMode:  SemverBundleAddMode,
 					},
 				)
-				rp2 := RegistryPod{
+				rp2 := SQLiteRegistryPod{
 					DBPath:      defaultDBPath,
 					GRPCPort:    defaultGRPCPort,
 					BundleItems: bundleItems,
@@ -242,7 +242,7 @@ var _ = Describe("RegistryPod", func() {
 
 			It("should error when bundle image is not provided", func() {
 				expectedErr := "bundle image set cannot be empty"
-				rp := &RegistryPod{}
+				rp := &SQLiteRegistryPod{}
 				err := rp.init(cfg)
 				Expect(err).NotTo(BeNil())
 				Expect(err.Error()).Should(ContainSubstring(expectedErr))
@@ -250,7 +250,7 @@ var _ = Describe("RegistryPod", func() {
 
 			It("should not accept any other bundle add mode other than semver or replaces", func() {
 				expectedErr := `bundle add mode "invalid" does not exist`
-				rp := &RegistryPod{
+				rp := &SQLiteRegistryPod{
 					BundleItems: []BundleItem{{ImageTag: "quay.io/example/example-operator-bundle:0.2.0", AddMode: "invalid"}},
 				}
 				err := rp.init(cfg)
@@ -259,7 +259,7 @@ var _ = Describe("RegistryPod", func() {
 			})
 
 			It("checkPodStatus should return error when pod check is false and context is done", func() {
-				rp := &RegistryPod{
+				rp := &SQLiteRegistryPod{
 					BundleItems: defaultBundleItems,
 					IndexImage:  testIndexImageTag,
 				}

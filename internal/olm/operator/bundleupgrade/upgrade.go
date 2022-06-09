@@ -20,10 +20,10 @@ import (
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
-	"github.com/spf13/pflag"
-
+	fbcutil "github.com/operator-framework/operator-sdk/internal/olm/fbcutil"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry"
+	"github.com/spf13/pflag"
 )
 
 type Upgrade struct {
@@ -85,7 +85,13 @@ func (u *Upgrade) setup(ctx context.Context) error {
 	// defer defaulting the bundle add mode to after the existing CatalogSource is retrieved.
 	u.IndexImageCatalogCreator.PackageName = u.OperatorInstaller.PackageName
 	u.IndexImageCatalogCreator.BundleImage = u.BundleImage
-	u.IndexImageCatalogCreator.IndexImage = registry.DefaultIndexImage
+	u.IndexImageCatalogCreator.IndexImage = fbcutil.DefaultIndexImage
+
+	if _, hasChannelMetadata := labels[registrybundle.ChannelsLabel]; hasChannelMetadata {
+		u.IndexImageCatalogCreator.ChannelName = strings.Split(labels[registrybundle.ChannelsLabel], ",")[0]
+	} else {
+		u.IndexImageCatalogCreator.ChannelName = fbcutil.DefaultChannel
+	}
 
 	return nil
 }

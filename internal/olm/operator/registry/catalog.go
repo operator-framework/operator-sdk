@@ -25,5 +25,5 @@ type CatalogCreator interface {
 }
 
 type CatalogUpdater interface {
-	UpdateCatalog(ctx context.Context, cs *v1alpha1.CatalogSource) error
+	UpdateCatalog(ctx context.Context, cs *v1alpha1.CatalogSource, subscription *v1alpha1.Subscription) error
 }
