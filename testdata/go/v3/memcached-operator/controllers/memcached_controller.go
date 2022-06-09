@@ -155,9 +155,28 @@ func (r *MemcachedReconciler) deploymentForMemcached(m *cachev1alpha1.Memcached)
 					Labels: ls,
 				},
 				Spec: corev1.PodSpec{
+					// Ensure restrictive standard for the Pod.
+					// More info: https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted
+					SecurityContext: &corev1.PodSecurityContext{
+						RunAsNonRoot: &[]bool{true}[0],
+						SeccompProfile: &corev1.SeccompProfile{
+							Type: corev1.SeccompProfileTypeRuntimeDefault,
+						},
+					},
 					Containers: []corev1.Container{{
-						Image:   "memcached:1.4.36-alpine",
-						Name:    "memcached",
+						Image: "memcached:1.4.36-alpine",
+						Name:  "memcached",
+						// Ensure restrictive context for the container
+						// More info: https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted
+						SecurityContext: &corev1.SecurityContext{
+							RunAsNonRoot:             &[]bool{true}[0],
+							AllowPrivilegeEscalation: &[]bool{false}[0],
+							Capabilities: &corev1.Capabilities{
+								Drop: []corev1.Capability{
+									"ALL",
+								},
+							},
+						},
 						Command: []string{"memcached", "-m=64", "-o", "modern", "-v"},
 						Ports: []corev1.ContainerPort{{
 							ContainerPort: 11211,
