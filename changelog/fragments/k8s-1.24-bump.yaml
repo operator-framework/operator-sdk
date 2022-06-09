@@ -9,7 +9,7 @@ entries:
       github.com/operator-framework/helm-operator-plugins --> commit d3967d2ae2acf40cca1bf4215508b10a55ea6755
       github.com/operator-framework/java-operator-plugins --> commit 95356a3d7a6581dba1eb3ce641b72a1f7b2e542a
       github.com/operator-framework/operator-lib --> v0.11.0
-      github.com/operator-framework/operator-manifest-tools --> commit ee92fbc83da525980ee58c1ff28fd10d6a5f8416
+      github.com/operator-framework/operator-manifest-tools --> v0.2.1
       github.com/operator-framework/operator-registry --> v1.23.0
       helm.sh/helm/v3 --> v3.9.0
       k8s.io/api --> v0.24.0
@@ -21,7 +21,7 @@ entries:
       sigs.k8s.io/controller-runtime --> v0.12.1
       sigs.k8s.io/controller-tools --> v0.9.0
       sigs.k8s.io/kubebuilder/v3 --> commit eea565cb3f508d7bcf10831d2b761dbf59af6db0
-      
+
     # kind is one of:
     # - addition
     # - change
