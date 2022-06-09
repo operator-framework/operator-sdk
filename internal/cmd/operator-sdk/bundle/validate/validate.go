@@ -33,7 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	internalregistry "github.com/operator-framework/operator-sdk/internal/registry"
-	"github.com/operator-framework/operator-sdk/pkg/validate"
+	"github.com/operator-framework/operator-sdk/internal/validate"
 )
 
 type bundleValidateCmd struct {
