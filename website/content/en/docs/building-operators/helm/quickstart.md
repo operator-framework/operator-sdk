@@ -55,7 +55,7 @@ This guide walks through an example of building a simple nginx-operator powered 
   make bundle IMG="example.com/nginx-operator:v0.0.1"
   ```
 
-1. Push the bundle image. Defaults to `example.com/nginx-operator-bundle:v0.0.1`. You can set IMAGE_TAG_BASE to override the image tag (e.g. 1IMAGE_TAG_BASE=quay.io/example/nginx-operator1:
+1. Push the bundle image. Defaults to `example.com/nginx-operator-bundle:v0.0.1`. You can set IMAGE_TAG_BASE to override the image tag (e.g. IMAGE_TAG_BASE=quay.io/example/nginx-operator1:)
 
   ```sh
   make bundle-build bundle-push
