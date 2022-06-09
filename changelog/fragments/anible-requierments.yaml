@@ -1,0 +1,84 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      For Ansible-based language operators, upgrade `community.kubernetes` from `1.2.1` to `2.0.1`. **IMPORTANT** The `community.kubernetes` collection is being renamed to kubernetes.core. As of version 2.0.0, the collection has been replaced by deprecated redirects for all content to kubernetes.core. If you are using FQCNs starting with `community.kubernetes`, please update them to `kubernetes.core`.
+    kind: "change"
+    breaking: true
+    migration:
+      header: For Ansible-based language operators, upgrade `community.kubernetes` from `1.2.1` to `2.0.1`.
+      body: |
+        **IMPORTANT** The `community.kubernetes` collection is being renamed to `kubernetes.core`. As of version 2.0.0, the collection has been replaced by deprecated redirects for all content to kubernetes.core. If you are using FQCNs starting with `community.kubernetes`, please update them to `kubernetes.core`.
+        Ensure that you check the [community.kubernetes changelog](https://github.com/ansible-collections/community.kubernetes/blob/main/CHANGELOG.rst) to verify if your Operator code must be updated and it is affected by the MAJOR changes.
+
+        In the `requirements.yml` file:
+
+        Replace:
+
+        ```yaml
+        collections:
+          - name: community.kubernetes
+            version: "1.2.1"
+        ```
+
+        With:
+
+        ```yaml
+        collections:
+          - name: community.kubernetes
+            version: "2.0.1"
+        ```
+  - description: >
+      For Ansible-based language operators, upgrade `kubernetes.core` from `2.2.0` to `2.3.1`. **IMPORTANT** The `community.kubernetes` collection is being renamed to kubernetes.core. As of version 2.0.0, the collection has been replaced by deprecated redirects for all content to kubernetes.core. If you are using FQCNs starting with `community.kubernetes`, please update them to `kubernetes.core`.
+    kind: "change"
+    breaking: false
+    migration:
+      header: For Ansible-based language operators, upgrade `kubernetes.core` from `2.2.0` to `2.3.1`.
+      body: |
+        Ensure that you check the [kubernetes.core changelog](https://github.com/ansible-collections/kubernetes.core/blob/main/CHANGELOG.rst) to verify if your Operator code must be updated and it is affected by the MAJOR changes.
+
+        In the `requirements.yml` file:
+
+        Replace:
+
+        ```yaml
+        collections:
+          ...
+          - name: kubernetes.core
+            version: "2.2.0"
+        ```
+
+        With:
+
+        ```yaml
+        collections:
+          ...
+          - name: kubernetes.core
+            version: "2.3.1"
+        ```
+  - description: >
+      For Ansible-based language operators, upgrade `community.kubernetes` from `1.2.1` to `2.0.1`. **IMPORTANT** The `community.kubernetes` collection is being renamed to kubernetes.core. As of version 2.0.0, the collection has been replaced by deprecated redirects for all content to kubernetes.core. If you are using FQCNs starting with `community.kubernetes`, please update them to `kubernetes.core`.
+    kind: "change"
+    breaking: false
+    migration:
+      header: For Ansible-based language operators, upgrade `cloud.common` from `2.2.0` to `2.2.1`.
+      body: |
+        In the `requirements.yml` file:
+
+        Replace:
+
+        ```ymal
+        collections:
+          ...
+          - name: cloud.common
+            version: "2.2.0"
+        ```
+
+        With:
+
+        ```ymal
+        collections:
+          ...
+          - name: cloud.common
+            version: "2.2.1"
+        ```
