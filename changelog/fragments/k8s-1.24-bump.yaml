@@ -4,7 +4,7 @@
 # TODO(everettraven): update changelog
 entries:
   - description: >
-      (go/v3)(hybrid): Kubernetes 1.23 to 1.24
+      For Go (go/v3) and Helm Hybrid (hybrid) Operators: Upgrade Kubernetes 1.23 to 1.24
 
     # kind is one of:
     # - addition
