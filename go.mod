@@ -15,7 +15,7 @@ require (
 	github.com/onsi/gomega v1.18.1
 	github.com/operator-framework/api v0.15.0
 	github.com/operator-framework/helm-operator-plugins v0.0.12-0.20220608155702-d3967d2ae2ac
-	github.com/operator-framework/java-operator-plugins v0.5.1-0.20220608173721-95356a3d7a65
+	github.com/operator-framework/java-operator-plugins v0.5.1
 	github.com/operator-framework/operator-lib v0.11.0
 	github.com/operator-framework/operator-manifest-tools v0.2.1
 	github.com/operator-framework/operator-registry v1.23.0
