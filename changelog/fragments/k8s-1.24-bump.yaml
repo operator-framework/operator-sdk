@@ -20,7 +20,7 @@ entries:
     # Migration can be defined to automatically add a section to
     # the migration guide. This is required for breaking changes.
     migration:
-      header: Go (go/v3) and Helm Hybrid (hybrid.helm/v1-alpha) language based operators - Upgrade Kubernetes dependencies from `1.23`` to `1.24` and controller-gen from `v0.8.0` to `v0.9.0`
+      header: Go (go/v3) and Helm Hybrid (hybrid.helm/v1-alpha) language based operators - Upgrade Kubernetes dependencies from `1.23` to `1.24` and controller-gen from `v0.8.0` to `v0.9.0`
       body: |
         To update your project to support Kubernetes 1.24:
         
@@ -127,4 +127,4 @@ entries:
   
   - description: >
       For Helm Hybrid (hybrid.helm/v1-alpha) language based operator: Upgrade dependency from `v0.0.10` to `v0.0.11`. [More info](https://github.com/operator-framework/helm-operator-plugins/releases)
-    breaking: false  
+    breaking: false
