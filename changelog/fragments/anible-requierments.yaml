@@ -15,7 +15,7 @@ entries:
 
         Replace:
 
-        ```ymal
+        ```yaml
         collections:
           - name: community.kubernetes
             version: "1.2.1"
@@ -23,7 +23,7 @@ entries:
 
         With:
 
-        ```ymal
+        ```yaml
         collections:
           - name: community.kubernetes
             version: "2.0.1"
@@ -31,7 +31,7 @@ entries:
   - description: >
       For Ansible-based language operators, upgrade `kubernetes.core` from `2.2.0` to `2.3.1`. **IMPORTANT** The `community.kubernetes` collection is being renamed to kubernetes.core. As of version 2.0.0, the collection has been replaced by deprecated redirects for all content to kubernetes.core. If you are using FQCNs starting with `community.kubernetes`, please update them to `kubernetes.core`.
     kind: "change"
-    breaking: true
+    breaking: false
     migration:
       header: For Ansible-based language operators, upgrade `kubernetes.core` from `2.2.0` to `2.3.1`.
       body: |
@@ -41,7 +41,7 @@ entries:
 
         Replace:
 
-        ```ymal
+        ```yaml
         collections:
           ...
           - name: kubernetes.core
@@ -50,7 +50,7 @@ entries:
 
         With:
 
-        ```ymal
+        ```yaml
         collections:
           ...
           - name: kubernetes.core
