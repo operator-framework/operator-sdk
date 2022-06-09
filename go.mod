@@ -2,8 +2,6 @@ module github.com/operator-framework/operator-sdk
 
 go 1.17
 
-// TODO(asmacdo) kubebuilder bump
-// TODO(asmacdo) operator-lib 0.11.0 release & bump
 require (
 	github.com/blang/semver/v4 v4.0.0
 	github.com/fatih/structtag v1.1.0

@@ -349,7 +349,7 @@ func generateRoleRules(dc roleDiscoveryInterface, chart *chart.Chart) ([]rbacv1.
 func getDefaultManifests(c *chart.Chart) ([]releaseutil.Manifest, error) {
 	install := action.NewInstall(&action.Configuration{})
 	install.DryRun = true
-	install.ReleaseName = "RELEASE-NAME"
+	install.ReleaseName = "release-name"
 	install.Replace = true
 	install.ClientOnly = true
 	rel, err := install.Run(c, nil)
