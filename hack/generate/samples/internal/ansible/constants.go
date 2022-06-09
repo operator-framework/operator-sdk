@@ -26,6 +26,10 @@ const roleFragment = `
         labels:
           app: memcached
       spec:
+		securityContext:
+		  runAsNonRoot: true
+		  seccompProfile:
+			type: RuntimeDefault
         replicas: "{{size}}"
         selector:
           matchLabels:
@@ -37,6 +41,11 @@ const roleFragment = `
           spec:
             containers:
             - name: memcached
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - "ALL"
               command:
               - memcached
               - -m=64
