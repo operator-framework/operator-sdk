@@ -71,7 +71,7 @@ entries:
     # - deprecation
     # - removal
     # - bugfix
-    kind: "change"
+    kind: "bugfix"
 
     # Is this a breaking change?
     breaking: false
@@ -85,7 +85,7 @@ entries:
     # - deprecation
     # - removal
     # - bugfix
-    kind: "change"
+    kind: "addition"
 
     # Is this a breaking change?
     breaking: false
@@ -99,7 +99,7 @@ entries:
     # - deprecation
     # - removal
     # - bugfix
-    kind: "change"
+    kind: "addition"
 
     # Is this a breaking change?
     breaking: false
