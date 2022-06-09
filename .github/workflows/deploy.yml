@@ -13,7 +13,7 @@ on:
 jobs:
   check_docs_only:
     name: check_docs_only
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     outputs:
       skip: ${{ steps.check_docs_only.outputs.skip }}
     steps:
@@ -34,7 +34,7 @@ jobs:
     needs: check_docs_only
     # Run this job on a tag like 'vX.Y.Z' or on a branch or pull request with code changes.
     if: startsWith(github.ref, 'refs/tags/v') || ( needs.check_docs_only.outputs.skip != 'true' && !startsWith(github.ref, 'refs/tags/') )
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     environment: deploy
     steps:
     - name: checkout
@@ -68,7 +68,7 @@ jobs:
     needs: check_docs_only
     # Run this job on a tag like 'vX.Y.Z' or on a branch or pull request with code changes.
     if: startsWith(github.ref, 'refs/tags/v') || ( needs.check_docs_only.outputs.skip != 'true' && !startsWith(github.ref, 'refs/tags/') )
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     environment: deploy
     strategy:
       matrix:
@@ -117,7 +117,7 @@ jobs:
     needs: check_docs_only
     # Run this job on a tag like 'scorecard-kuttl/vX.Y.Z' or on a branch or pull request with code changes.
     if: startsWith(github.ref, 'refs/tags/scorecard-kuttl/v') || ( needs.check_docs_only.outputs.skip != 'true' && !startsWith(github.ref, 'refs/tags/') )
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     environment: deploy
     steps:
 

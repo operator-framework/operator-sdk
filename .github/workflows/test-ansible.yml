@@ -5,7 +5,7 @@ on:
 jobs:
   check_docs_only:
     name: check_docs_only
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     outputs:
       skip: ${{ steps.check_docs_only.outputs.skip }}
     steps:
@@ -22,7 +22,7 @@ jobs:
 
   e2e:
     name: e2e
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     needs: check_docs_only
     if: needs.check_docs_only.outputs.skip != 'true'
     steps:
@@ -37,7 +37,7 @@ jobs:
 
   e2e-molecule:
     name: e2e-molecule
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     needs: check_docs_only
     if: needs.check_docs_only.outputs.skip != 'true'
     steps:
@@ -50,7 +50,7 @@ jobs:
       - run: sudo rm -rf /usr/local/bin/kustomize
       - run: |
           env
-          export PATH=/opt/python/3.6.7/bin:${PATH}
+          export PATH=/opt/python/3.8.12/bin:${PATH}
           sudo apt-get install python3 python3-pip
           sudo pip3 install --upgrade setuptools pip
           sudo pip3 install ansible~=2.9.13
