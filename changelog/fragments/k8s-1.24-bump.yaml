@@ -11,9 +11,6 @@ entries:
       
       - github.com/operator-framework/helm-operator-plugins --> commit d3967d2ae2acf40cca1bf4215508b10a55ea6755
       - github.com/operator-framework/java-operator-plugins --> v0.5.1
-      - github.com/operator-framework/operator-lib --> v0.11.0
-      - github.com/operator-framework/operator-manifest-tools --> v0.2.1
-      - github.com/operator-framework/operator-registry --> v1.23.0
       - helm.sh/helm/v3 --> v3.9.0
       - k8s.io/api --> v0.24.0
       - k8s.io/apiextensions-apiserver --> v0.24.0
