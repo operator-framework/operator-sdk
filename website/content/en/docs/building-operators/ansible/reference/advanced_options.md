@@ -263,7 +263,30 @@ Using the `--ansible-log-events` CLI flag, you can determine to what degree the 
 2. `Tasks` - Only Ansible Tasks will be outputted.
 3. `Everything` - All info logs and all tasks will be outputted.
 
-If you want more control over the logs that are outputted, consider using the [Zap Logger][Zap-Logger] and [verbosity annotations][verbosity-annotations] in tandem with the `--ansible-log-events` CLI flag. 
+If you want more control over the logs that are outputted, consider using the [Zap Logger][Zap-Logger] and [verbosity annotations][verbosity-annotations] in tandem with the `--ansible-log-events` CLI flag.
+
+## `ansible.sdk.operatorframework.io/reconcile-period` Custom Resource Annotation
+
+You can specify the reconcile period for an Ansible Operator by adding the ansible.sdk.operatorframework.io/reconcile-period key to the custom resource annotations.
+This feature specifies the maximum interval in which a cluster will get reconciled. If changes are detected in the desired state, the cluster may be reconciled sooner than the specified interval.
+
+The reconcile period can be specified in the custom resource's annotations in the following manner: 
+
+```yaml
+...
+metadata:
+  name: memcached-sample
+  annotations:
+    ansible.sdk.operatorframework.io/reconcile-period: 5s
+...
+```
+
+The key only accepts a value in the `h/m/s` format, such as `1h2m4s`, `3m0s`, or `4s`. Values such as `1x3m9s` are invalid.
+
+**NOTE**: Alternatively, you can specify the reconcile period for Ansible-based Operators in the following ways:
+- Using the `--reconcile-period` command-line flag 
+- Using the 'reconcilePeriod' key in the `watches.yaml` file
+You should not use all three methods to specify a single reconcile period. If all three methods are used simultaneously, the order of precedence is as follows: Custom resource annotations > `watches.yaml` file > command-line flag.
 
 
 [ansible-vault-doc]: https://docs.ansible.com/ansible/latest/user_guide/vault.html
