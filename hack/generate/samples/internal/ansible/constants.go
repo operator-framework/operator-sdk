@@ -35,8 +35,18 @@ const roleFragment = `
             labels:
               app: memcached
           spec:
+            securityContext:
+              runAsNonRoot: true
+              seccompProfile:
+                type: RuntimeDefault
             containers:
             - name: memcached
+              securityContext:
+                runAsNonRoot: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
               command:
               - memcached
               - -m=64
