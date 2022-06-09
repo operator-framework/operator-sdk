@@ -20,7 +20,7 @@ entries:
     # Migration can be defined to automatically add a section to
     # the migration guide. This is required for breaking changes.
     migration:
-      header: (go/v3)(hybrid) - Kubernetes 1.24
+      header: Go (go/v3) and Hybrid Helm (hybrid) Operators - Upgrading to Kubernetes 1.24
       body: |
         To update your project to support Kubernetes 1.24:
         
@@ -30,14 +30,18 @@ entries:
         - Replace `k8s.io/apimachinery v0.23.5` with  `k8s.io/apimachinery v0.24.0`
         - Replace `k8s.io/client-go v0.23.5` with `k8s.io/client-go v0.24.0`
         - Replace `sigs.k8s.io/controller-runtime v0.11.2` with `sigs.k8s.io/controller-runtime v0.12.1`
-        
-        2. In `Makefile`:
-        - Replace `CONTROLLER_TOOLS_VERSION ?= 0.8.0` with `CONTROLLER_TOOLS_VERSION ?= 0.9.0`
+        - Hybrid Helm (hybrid) only: Replace `github.com/operator-framework/helm-operator-plugins v0.0.11` with `github.com/operator-framework/helm-operator-plugins v0.0.12-0.20220608155702-d3967d2ae2ac`
 
-        3. Run `make manifests` to regenerate the manifests
+        2. Run `go mod tidy` to ensure all dependencies are upgraded
+        
+        3. In `Makefile`:
+        - Replace `CONTROLLER_TOOLS_VERSION ?= 0.8.0` with `CONTROLLER_TOOLS_VERSION ?= 0.9.0`
+        - Replace `ENVTEST_K8S_VERSION = 1.23` with `ENVTEST_K8S_VERSION = 1.24`
+
+        4. Run `make` to run all make targets
 
   - description: >
-      (go/v3)(hybrid): Support for Go 1.18
+      For Go (go/v3) and Hybrid Helm (hybrid) Operators: Support for Go 1.18
       
     # kind is one of:
     # - addition
@@ -53,7 +57,7 @@ entries:
     # Migration can be defined to automatically add a section to
     # the migration guide. This is required for breaking changes.
     migration:
-      header: (go/v3)(hybrid) - update to Go 1.18
+      header: Go (go/v3) and Hybrid Helm (hybrid) Operator - Update to Go 1.18
       body: |
         To update your project to use Go 1.18:
 
@@ -61,9 +65,10 @@ entries:
 
         - Replace `go 1.17` with `go 1.18`   
 
-        2. Run `go mod tidy`
+        2. Run `go mod tidy` to ensure all dependencies are upgraded
+
   - description: >
-      :bug: fix channel naming validation by @camilamacedo86 [More info](https://github.com/operator-framework/api/pull/231)
+      For `operator-sdk bundle validate`: fix channel naming validation [More info](https://github.com/operator-framework/api/pull/231)
       
     # kind is one of:
     # - addition
@@ -77,7 +82,7 @@ entries:
     breaking: false
 
   - description: >
-      Add CRD description check validation by @ryantking [More info](https://github.com/operator-framework/api/pull/234)
+      For `operator-sdk bundle validate`: Add CRD description check validation [More info](https://github.com/operator-framework/api/pull/234)
       
     # kind is one of:
     # - addition
@@ -91,7 +96,7 @@ entries:
     breaking: false
 
   - description: >
-      :sparkles: (GoodPracticesValidator) : Add a new check to warn authors when permissions to create CRDs are found by @camilamacedo86 [More info](https://github.com/operator-framework/api/pull/241)
+      For `operator-sdk bundle validate`: Add a new check to warn authors when permissions to create CRDs are found [More info](https://github.com/operator-framework/api/pull/241)
       
     # kind is one of:
     # - addition
