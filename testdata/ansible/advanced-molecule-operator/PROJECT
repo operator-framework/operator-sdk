@@ -1,0 +1,73 @@
+domain: example.com
+layout:
+- ansible.sdk.operatorframework.io/v1
+multigroup: true
+plugins:
+  manifests.sdk.operatorframework.io/v2: {}
+  scorecard.sdk.operatorframework.io/v2: {}
+projectName: advanced-molecule-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: example.com
+  group: test
+  kind: InventoryTest
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: example.com
+  group: test
+  kind: ArgsTest
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: example.com
+  group: test
+  kind: CaseTest
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: example.com
+  group: test
+  kind: CollectionTest
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: example.com
+  group: test
+  kind: ClusterAnnotationTest
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: example.com
+  group: test
+  kind: FinalizerConcurrencyTest
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: example.com
+  group: test
+  kind: ReconciliationTest
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: example.com
+  group: test
+  kind: SelectorTest
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: example.com
+  group: test
+  kind: SubresourcesTest
+  version: v1alpha1
+version: "3"

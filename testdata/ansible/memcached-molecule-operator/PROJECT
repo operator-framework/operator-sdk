@@ -1,0 +1,38 @@
+domain: example.com
+layout:
+- ansible.sdk.operatorframework.io/v1
+multigroup: true
+plugins:
+  manifests.sdk.operatorframework.io/v2: {}
+  scorecard.sdk.operatorframework.io/v2: {}
+projectName: memcached-molecule-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: example.com
+  group: cache
+  kind: Memcached
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: example.com
+  group: cache
+  kind: Foo
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: example.com
+  group: cache
+  kind: Memfin
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: example.com
+  group: ignore
+  kind: Secret
+  version: v1
+version: "3"

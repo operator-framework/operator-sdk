@@ -1,0 +1,58 @@
+---
+# TODO(asmacdo) this should be the only task. the other is getting magiced in
+- name: Create the test.example.com/v1alpha1.FinalizerConcurrencyTest
+  k8s:
+    state: present
+    definition:
+      apiVersion: test.example.com/v1alpha1
+      kind: FinalizerConcurrencyTest
+      metadata:
+        name: finalizer-concurrency-test
+        namespace: '{{ namespace }}'
+    wait: no
+
+- name: While reconcile is paused, delete the CR
+  k8s:
+    state: absent
+    definition:
+      apiVersion: test.example.com/v1alpha1
+      kind: FinalizerConcurrencyTest
+      metadata:
+        name: finalizer-concurrency-test
+        namespace: '{{ namespace }}'
+    wait: no
+
+- name: Create a configmap to allow reconciliation to unpause
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: finalizer-concurrency-results
+        namespace: osdk-test
+    wait: no
+
+- name: Wait for the custom resource to be deleted
+  k8s_info:
+    api_version: test.example.com/v1alpha1
+    kind: FinalizerConcurrencyTest
+    namespace: osdk-test # TODO(asmacdo) Fixme
+    name: finalizer-concurrency-test
+  register: cr
+  retries: 10
+  delay: 6
+  until: not cr.resources
+  failed_when: cr.resources
+
+- name: Retrive the cm
+  k8s_info:
+    api_version: v1
+    kind: ConfigMap
+    name: finalizer-concurrency-results
+    namespace: osdk-test
+  register: finalizer_test
+
+- name: Assert that finalizer ran
+  assert:
+    that: finalizer_test.resources.0.data.finalizer== 'success'

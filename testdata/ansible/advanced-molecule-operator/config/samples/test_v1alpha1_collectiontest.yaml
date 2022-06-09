@@ -1,0 +1,6 @@
+apiVersion: test.example.com/v1alpha1
+kind: CollectionTest
+metadata:
+  name: collectiontest-sample
+spec:
+  # TODO(user): Add fields here

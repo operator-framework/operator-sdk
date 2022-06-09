@@ -1,0 +1,6 @@
+apiVersion: test.example.com/v1alpha1
+kind: FinalizerConcurrencyTest
+metadata:
+  name: finalizerconcurrencytest-sample
+spec:
+  # TODO(user): Add fields here

@@ -1,0 +1,6 @@
+apiVersion: test.example.com/v1alpha1
+kind: ClusterAnnotationTest
+metadata:
+  name: clusterannotationtest-sample
+spec:
+  # TODO(user): Add fields here

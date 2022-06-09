@@ -41,6 +41,7 @@ generate: build # Generate CLI docs and samples
 	go run ./hack/generate/cncf-maintainers/main.go
 	go run ./hack/generate/cli-doc/gen-cli-doc.go
 	go run ./hack/generate/samples/generate_testdata.go
+	go run ./hack/generate/samples/molecule/generate.go
 	go generate ./...
 
 .PHONY: bindata
@@ -184,7 +185,6 @@ test-e2e-ansible:: image/ansible-operator ## Run Ansible e2e tests
 	go test -count=1 ./internal/ansible/proxy/...
 	go test ./test/e2e/ansible -v -ginkgo.v
 test-e2e-ansible-molecule:: install dev-install image/ansible-operator ## Run molecule-based Ansible e2e tests
-	go run ./hack/generate/samples/molecule/generate.go
 	./hack/tests/e2e-ansible-molecule.sh
 test-e2e-helm:: image/helm-operator ## Run Helm e2e tests
 	go test ./test/e2e/helm -v -ginkgo.v

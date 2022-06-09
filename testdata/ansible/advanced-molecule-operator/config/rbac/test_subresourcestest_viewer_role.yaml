@@ -1,0 +1,20 @@
+# permissions for end users to view subresourcestests.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: subresourcestest-viewer-role
+rules:
+- apiGroups:
+  - test.example.com
+  resources:
+  - subresourcestests
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - test.example.com
+  resources:
+  - subresourcestests/status
+  verbs:
+  - get

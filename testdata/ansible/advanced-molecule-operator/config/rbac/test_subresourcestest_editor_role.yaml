@@ -1,0 +1,24 @@
+# permissions for end users to edit subresourcestests.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: subresourcestest-editor-role
+rules:
+- apiGroups:
+  - test.example.com
+  resources:
+  - subresourcestests
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - test.example.com
+  resources:
+  - subresourcestests/status
+  verbs:
+  - get

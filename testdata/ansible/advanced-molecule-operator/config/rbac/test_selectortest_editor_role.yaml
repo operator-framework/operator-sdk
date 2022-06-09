@@ -1,0 +1,24 @@
+# permissions for end users to edit selectortests.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: selectortest-editor-role
+rules:
+- apiGroups:
+  - test.example.com
+  resources:
+  - selectortests
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - test.example.com
+  resources:
+  - selectortests/status
+  verbs:
+  - get

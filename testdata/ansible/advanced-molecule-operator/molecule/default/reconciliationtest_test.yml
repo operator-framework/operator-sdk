@@ -1,0 +1,32 @@
+---
+- name: Create the test.example.com/v1alpha1.ReconciliationTest
+  k8s:
+    state: present
+    definition:
+      apiVersion: test.example.com/v1alpha1
+      kind: ReconciliationTest
+      metadata:
+        name: reconciliation-test
+        namespace: '{{ namespace }}'
+      spec:
+        field: value
+    wait: yes
+    wait_timeout: 300
+    wait_condition:
+      type: Successful
+      status: "True"
+  register: reconciliation_test
+- name: Retreive the number of iterations on the ConfigMap
+  debug: var=cm.data.iterations
+  retries: 20
+  delay: 2
+  until: "cm.data.iterations|int == 5"
+  vars:
+    cm: "{{ q('k8s', api_version='v1', kind='ConfigMap', namespace=namespace,
+         resource_name='reconciliation-test').0 }}"
+- name: Assert sentinel ConfigMap has been created for Molecule Test
+  assert:
+    that: "cm.data.iterations|int == 5"
+  vars:
+    cm: "{{ q('k8s', api_version='v1', kind='ConfigMap', namespace=namespace,
+         resource_name='reconciliation-test').0 }}"

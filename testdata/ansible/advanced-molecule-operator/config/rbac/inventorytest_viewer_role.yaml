@@ -1,0 +1,20 @@
+# permissions for end users to view inventorytests.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: inventorytest-viewer-role
+rules:
+- apiGroups:
+  - test.example.com
+  resources:
+  - inventorytests
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - test.example.com
+  resources:
+  - inventorytests/status
+  verbs:
+  - get

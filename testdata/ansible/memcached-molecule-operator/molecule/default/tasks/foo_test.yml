@@ -1,0 +1,13 @@
+---
+- name: Create the cache.example.com/v1alpha1.Foo
+  k8s:
+    state: present
+    namespace: '{{ namespace }}'
+    definition: "{{ lookup('template', '/'.join([samples_dir, cr_file])) | from_yaml }}"
+    wait: yes
+    wait_timeout: 300
+    wait_condition:
+      type: Successful
+      status: "True"
+  vars:
+    cr_file: 'cache_v1alpha1_foo.yaml'

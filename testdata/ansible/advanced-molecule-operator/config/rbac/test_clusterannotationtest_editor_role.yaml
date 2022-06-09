@@ -1,0 +1,24 @@
+# permissions for end users to edit clusterannotationtests.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: clusterannotationtest-editor-role
+rules:
+- apiGroups:
+  - test.example.com
+  resources:
+  - clusterannotationtests
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - test.example.com
+  resources:
+  - clusterannotationtests/status
+  verbs:
+  - get

@@ -1,0 +1,23 @@
+---
+- hosts: localhost
+  gather_facts: no
+  collections:
+    - kubernetes.core
+    - operator_sdk.util
+
+  tasks:
+    - debug:
+        msg: "Pausing until configmap exists"
+
+    - name: Wait for configmap
+      k8s_info:
+        apiVersion: v1
+        kind: ConfigMap
+        name: unpause-reconciliation
+        namespace: osdk-test
+      wait: yes
+      wait_sleep: 10
+      wait_timeout: 360
+
+    - debug:
+        msg: "Unpause!"
