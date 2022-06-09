@@ -1,26 +1,35 @@
 # entries is a list of entries to include in
 # release notes and/or the migration guide
+
+# TODO(everettraven): update changelog
 entries:
   - description: >
-      Bump dependencies to support Kubernetes 1.24. Projects scaffolded with the go/v3 plugin now support Go 1.18.
+      Bump dependencies to support Kubernetes 1.24. 
+      Projects scaffolded with the go/v3 plugin now support Go 1.18 - [More info](https://github.com/kubernetes-sigs/kubebuilder/commit/02da15bfc32c9deb030a811d16da45ace5cc8db8).
+      
       Dependency bumps that occurred are as follows:
       
-      github.com/operator-framework/api --> v0.15.0
-      github.com/operator-framework/helm-operator-plugins --> commit d3967d2ae2acf40cca1bf4215508b10a55ea6755
-      github.com/operator-framework/java-operator-plugins --> commit 95356a3d7a6581dba1eb3ce641b72a1f7b2e542a
-      github.com/operator-framework/operator-lib --> v0.11.0
-      github.com/operator-framework/operator-manifest-tools --> v0.2.1
-      github.com/operator-framework/operator-registry --> v1.23.0
-      helm.sh/helm/v3 --> v3.9.0
-      k8s.io/api --> v0.24.0
-      k8s.io/apiextensions-apiserver --> v0.24.0
-      k8s.io/apimachinery --> v0.24.0
-      k8s.io/cli-runtime --> v0.24.0
-      k8s.io/client-go --> v0.24.0
-      k8s.io/kubectl --> v0.24.0
-      sigs.k8s.io/controller-runtime --> v0.12.1
-      sigs.k8s.io/controller-tools --> v0.9.0
-      sigs.k8s.io/kubebuilder/v3 --> commit eea565cb3f508d7bcf10831d2b761dbf59af6db0
+      - github.com/operator-framework/helm-operator-plugins --> commit d3967d2ae2acf40cca1bf4215508b10a55ea6755
+      - github.com/operator-framework/java-operator-plugins --> v0.5.1
+      - github.com/operator-framework/operator-lib --> v0.11.0
+      - github.com/operator-framework/operator-manifest-tools --> v0.2.1
+      - github.com/operator-framework/operator-registry --> v1.23.0
+      - helm.sh/helm/v3 --> v3.9.0
+      - k8s.io/api --> v0.24.0
+      - k8s.io/apiextensions-apiserver --> v0.24.0
+      - k8s.io/apimachinery --> v0.24.0
+      - k8s.io/cli-runtime --> v0.24.0
+      - k8s.io/client-go --> v0.24.0
+      - k8s.io/kubectl --> v0.24.0
+      - sigs.k8s.io/controller-runtime --> v0.12.1
+      - sigs.k8s.io/controller-tools --> v0.9.0
+      - sigs.k8s.io/kubebuilder/v3 --> commit eea565cb3f508d7bcf10831d2b761dbf59af6db0
+
+      Additional Changes:
+
+      - :bug: fix channel naming validation by @camilamacedo86 [More info](https://github.com/operator-framework/api/pull/231)
+      - Add CRD description check validation by @ryantking [More info](https://github.com/operator-framework/api/pull/234)
+      - :sparkles: (GoodPracticesValidator) : Add a new check to warn authors when permissions to create CRDs are found by @camilamacedo86 [More info](https://github.com/operator-framework/api/pull/241)
 
     # kind is one of:
     # - addition
@@ -32,3 +41,26 @@ entries:
 
     # Is this a breaking change?
     breaking: false
+
+    # Migration can be defined to automatically add a section to
+    # the migration guide. This is required for breaking changes.
+    migration:
+      header: Kubernetes 1.24 and Go 1.18 support
+      body: |
+        To update your project to support Kubernetes 1.24:
+        
+        In the `go.mod` file change the following dependencies:
+        - k8s.io/* --> v0.24.0
+        - sigs.k8s.io/controller-runtime --> v0.12.1
+        
+        In the `Makefile` update the line:
+        `CONTROLLER_TOOLS_VERSION ?= 0.8.0` to `CONTROLLER_TOOLS_VERSION ?= 0.9.0`
+
+        Run `make manifests` to regenerate the manifests
+
+        To update your project to use Go 1.18:
+
+        In the `go.mod` file update the line:
+        `go 1.17` to `go 1.18`
+        
+        Run `go mod tidy`
