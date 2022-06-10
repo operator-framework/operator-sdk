@@ -230,7 +230,6 @@ func (c *IndexImageCatalogCreator) runFBCUpgrade(ctx context.Context) error {
 		return fmt.Errorf("error validating/stringifying the declarative config object: %v", err)
 	}
 
-	fmt.Println(content)
 	log.Infof("Generated a valid Upgraded File-Based Catalog")
 
 	c.FBCContent = content
@@ -285,15 +284,14 @@ func upgradeFBC(ctx context.Context, f *fbcutil.FBCContext, originalDeclCfg *dec
 		existingBundles[bundle.Name] = bundle.Package
 	}
 
-	// extraDeclConfig := &declarativeconfig.DeclarativeConfig{}
+	extraDeclConfig := &declarativeconfig.DeclarativeConfig{}
 	// declcfg contains all the bundles we need to insert to form the new FBC
 	entries := []declarativeconfig.ChannelEntry{} // Used when generating a new channel
 	for i, bundle := range declcfg.Bundles {
 		// if it is not present in the bundles array or belongs to a different package, we can add it
 		if _, present := existingBundles[bundle.Name]; !present || existingBundles[bundle.Name] != bundle.Package {
-			originalDeclCfg.Bundles = append(originalDeclCfg.Bundles, bundle)
-			// extraDeclConfig.Bundles = append(extraDeclConfig.Bundles, bundle)
-			// extraDeclConfig.Bundles = []declarativeconfig.Bundle{bundle}
+			// originalDeclCfg.Bundles = append(originalDeclCfg.Bundles, bundle)
+			extraDeclConfig.Bundles = append(extraDeclConfig.Bundles, bundle)
 
 		}
 
@@ -309,9 +307,8 @@ func upgradeFBC(ctx context.Context, f *fbcutil.FBCContext, originalDeclCfg *dec
 
 		// either add it to a new channel or an existing channel
 		if channelExists {
-			originalDeclCfg.Channels[channelIndex].Entries = append(originalDeclCfg.Channels[channelIndex].Entries, entry)
-			// extraDeclConfig.Channels[channelIndex].Entries = append(extraDeclConfig.Channels[channelIndex].Entries, entry)
-			// extraDeclConfig.Channels[channelIndex].Entries = []declarativeconfig.ChannelEntry{entry}
+			// originalDeclCfg.Channels[channelIndex].Entries = append(originalDeclCfg.Channels[channelIndex].Entries, entry)
+			extraDeclConfig.Channels[channelIndex].Entries = []declarativeconfig.ChannelEntry{entry}
 
 		} else {
 			entries = append(entries, entry)
@@ -320,19 +317,19 @@ func upgradeFBC(ctx context.Context, f *fbcutil.FBCContext, originalDeclCfg *dec
 
 	// create a new channel if it does not exist
 	if !channelExists {
-		originalDeclCfg.Channels = append(originalDeclCfg.Channels, declarativeconfig.Channel{
+		// originalDeclCfg.Channels = append(originalDeclCfg.Channels, declarativeconfig.Channel{
+		// 	Schema:  fbcutil.SchemaChannel,
+		// 	Name:    f.ChannelName,
+		// 	Package: f.Package,
+		// 	Entries: entries,
+		// })
+		channel := declarativeconfig.Channel{
 			Schema:  fbcutil.SchemaChannel,
 			Name:    f.ChannelName,
 			Package: f.Package,
 			Entries: entries,
-		})
-		/*channel := declarativeconfig.Channel{
-			Schema:  fbcutil.SchemaChannel,
-			Name:    f.ChannelName,
-			Package: f.Package,
-			Entries: entries,
-		}*/
-		// extraDeclConfig.Channels = []declarativeconfig.Channel{channel}
+		}
+		extraDeclConfig.Channels = []declarativeconfig.Channel{channel}
 
 	}
 
@@ -347,21 +344,21 @@ func upgradeFBC(ctx context.Context, f *fbcutil.FBCContext, originalDeclCfg *dec
 
 	// only add the new package if it does not already exist
 	if !packagePresent {
-		originalDeclCfg.Packages = append(originalDeclCfg.Packages, declarativeconfig.Package{
-			Schema:         fbcutil.SchemaPackage,
-			Name:           f.Package,
-			DefaultChannel: f.ChannelName,
-		})
-		// packageBlob := declarativeconfig.Package{
+		// originalDeclCfg.Packages = append(originalDeclCfg.Packages, declarativeconfig.Package{
 		// 	Schema:         fbcutil.SchemaPackage,
 		// 	Name:           f.Package,
 		// 	DefaultChannel: f.ChannelName,
-		// }
-		// extraDeclConfig.Packages = []declarativeconfig.Package{packageBlob}
+		// })
+		packageBlob := declarativeconfig.Package{
+			Schema:         fbcutil.SchemaPackage,
+			Name:           f.Package,
+			DefaultChannel: f.ChannelName,
+		}
+		extraDeclConfig.Packages = []declarativeconfig.Package{packageBlob}
 	}
 
-	return originalDeclCfg, nil
-	// return extraDeclConfig, nil
+	// return originalDeclCfg, nil
+	return extraDeclConfig, nil
 }
 
 // UpdateCatalog links a new registry pod in catalog source by updating the address and annotations,

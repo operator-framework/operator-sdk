@@ -221,8 +221,14 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 			}
 		}
 		// update ConfigMap with new FBCContent
-		cmObj.Data = map[string]string{
-			"extraFBC": f.FBCContent,
+		cmObj = corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "operator-sdk-run-bundle-config",
+				Namespace: f.cfg.Namespace,
+			},
+			Data: map[string]string{
+				"extraFBC": f.FBCContent,
+			},
 		}
 		return f.cfg.Client.Update(context.TODO(), &cmObj)
 	}); err != nil {
