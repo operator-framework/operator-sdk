@@ -142,3 +142,6 @@ entries:
         - Replace `curl -sSLo $(OPM) https://github.com/operator-framework/operator-registry/releases/download/v1.19.1/$${OS}-$${ARCH}-opm` with `curl -sSLo $(OPM) https://github.com/operator-framework/operator-registry/releases/download/v1.23.0/$${OS}-$${ARCH}-opm`   
 
         2. Run `make opm`
+  - description: >
+      For Docker images: Bump Go from 1.17 to 1.18
+    breaking: false
