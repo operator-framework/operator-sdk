@@ -162,12 +162,12 @@ cluster-create::
 
 .PHONY: dev-install
 dev-install::
-	$(SCRIPTS_DIR)/fetch kind 0.11.0
+	$(SCRIPTS_DIR)/fetch kind 0.14.0
 	$(SCRIPTS_DIR)/fetch kubectl $(K8S_VERSION) # Install kubectl AFTER envtest because envtest includes its own kubectl binary
 
 .PHONY: test-e2e-teardown
 test-e2e-teardown:
-	$(SCRIPTS_DIR)/fetch kind 0.11.0
+	$(SCRIPTS_DIR)/fetch kind 0.14.0
 	$(TOOLS_DIR)/kind delete cluster --name $(KIND_CLUSTER)
 	rm -f $(KUBECONFIG)
 
