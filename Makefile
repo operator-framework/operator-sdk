@@ -134,7 +134,7 @@ test-sanity: generate fix ## Test repo formatting, linting, etc.
 	./hack/check-license.sh
 	./hack/check-error-log-msg-format.sh
 	go vet ./...
-	$(SCRIPTS_DIR)/fetch golangci-lint 1.31.0 && $(TOOLS_DIR)/golangci-lint run
+	$(SCRIPTS_DIR)/fetch golangci-lint 1.46.2 && $(TOOLS_DIR)/golangci-lint run
 	git diff --exit-code # diff again to ensure other checks don't change repo
 
 .PHONY: test-docs

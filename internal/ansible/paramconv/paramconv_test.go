@@ -41,8 +41,8 @@ func TestMapToCamel(t *testing.T) {
 			want: map[string]interface{}{
 				"var":        "value",
 				"appService": "value",
-				"app8sk":     "value",
-				"App8skTest": "value",
+				"app8Sk":     "value",
+				"App8SkTest": "value",
 			},
 		},
 	}

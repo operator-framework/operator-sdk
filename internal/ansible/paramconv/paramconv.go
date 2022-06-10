@@ -19,6 +19,9 @@ package paramconv
 import (
 	"regexp"
 	"strings"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 var (
@@ -42,7 +45,8 @@ func translateWord(word string, initCase bool) string {
 		return val
 	}
 	if initCase {
-		return strings.Title(word)
+		caser := cases.Title(language.AmericanEnglish)
+		return caser.String(word)
 	}
 	return word
 }
