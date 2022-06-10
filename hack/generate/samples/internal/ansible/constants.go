@@ -26,10 +26,10 @@ const roleFragment = `
         labels:
           app: memcached
       spec:
-		securityContext:
-		  runAsNonRoot: true
-		  seccompProfile:
-			type: RuntimeDefault
+        securityContext:
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
         replicas: "{{size}}"
         selector:
           matchLabels:
