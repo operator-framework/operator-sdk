@@ -230,8 +230,7 @@ var _ = Describe("Running Helm projects", func() {
 
 			By("creating a curl pod")
 			cmdOpts := []string{
-				"run", "curl", "--image=curlimages/curl:7.68.0", "--restart=OnFailure",
-				"--serviceaccount", tc.Kubectl.ServiceAccount, "--",
+				"run", "curl", "--image=curlimages/curl:7.68.0", "--restart=OnFailure", "--",
 				"curl", "-v", "-k", "-H", fmt.Sprintf(`Authorization: Bearer %s`, token),
 				fmt.Sprintf("https://%s-controller-manager-metrics-service.%s.svc:8443/metrics", tc.ProjectName, tc.Kubectl.Namespace),
 			}
