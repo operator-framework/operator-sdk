@@ -128,3 +128,17 @@ entries:
   - description: >
       For Helm Hybrid (hybrid.helm/v1-alpha) language based operator: Upgrade dependency from `v0.0.10` to `v0.0.11`. [More info](https://github.com/operator-framework/helm-operator-plugins/releases)
     breaking: false
+
+  - description: >
+      For Go (go/v3, go/v2), Ansible (ansible/v1), Helm (helm/v1), and Helm Hybrid (hybrid.helm/v1-alpha) language based operators: Bump OPM version from `v1.19.1` to `v1.23.0`
+    breaking: false
+    migration:
+      header: For Go (go/v3, go/v2), Ansible (ansible/v1), Helm (helm/v1), and Helm Hybrid (hybrid.helm/v1-alpha) language based operators - Bump OPM version from `v1.19.1` to `v1.23.0`
+      body: |
+        To update your project to use OPM `v1.23.0`:
+
+        1. In the `Makefile`:
+
+        - Replace `curl -sSLo $(OPM) https://github.com/operator-framework/operator-registry/releases/download/v1.19.1/$${OS}-$${ARCH}-opm` with `curl -sSLo $(OPM) https://github.com/operator-framework/operator-registry/releases/download/v1.23.0/$${OS}-$${ARCH}-opm`   
+
+        2. Run `make opm`
