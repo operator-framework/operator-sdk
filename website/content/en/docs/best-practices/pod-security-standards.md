@@ -82,9 +82,7 @@ dep:= &appsv1.Deployment{
 
 **Note:** For Ansible- and Helm-based Operator projects, your Ansible playbooks or Helm charts must create manifests that comply with the requirements.
 
-**OR**
-
-- B) **For workloads that need elevated permissions:** Ensure the namespace has the appropriate enforcement level label as shown in the following example.
+- **For workloads that need elevated permissions:** Ensure the namespace has the appropriate enforcement level label as shown in the following example.
 You might need include this in the installation documentation for your Operator.  While the label syncer should handle this for you in most cases, it is a good practice for Operators to explicitly state its requirements.
 
 ```yaml
@@ -96,10 +94,11 @@ You might need include this in the installation documentation for your Operator.
 ```
 
 **You should ensure the configuration is carried to the Pod/Containers on the bundle CSV (install.spec.deployments.containers).**
+
 To check an example of CSV which complies with the [restrictive][restricted] policy, see the Golang sample
 under the [testdata/go/v3/memcached-operator/bundle/manifests/memcached-operator.clusterserviceversion.yaml](https://github.com/kubernetes-sigs/kubebuilder/blob/master/testdata/go/v3/memcached-operator/bundle/manifests/memcached-operator.clusterserviceversion.yaml)
 
-- [pod-security]: https://kubernetes.io/blog/2021/04/06/podsecuritypolicy-deprecation-past-present-and-future/#what-is-podsecuritypolicy
-- [2579-psp-replacement]: https://github.com/kubernetes/enhancements/tree/master/keps/sig-auth/2579-psp-replacement
-- [enforce-standards-namespace-labels]: https://kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-namespace-labels/
-- [restricted]: https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted
+[pod-security]: https://kubernetes.io/blog/2021/04/06/podsecuritypolicy-deprecation-past-present-and-future/#what-is-podsecuritypolicy
+[2579-psp-replacement]: https://github.com/kubernetes/enhancements/tree/master/keps/sig-auth/2579-psp-replacement
+[enforce-standards-namespace-labels]: https://kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-namespace-labels/
+[restricted]: https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted
