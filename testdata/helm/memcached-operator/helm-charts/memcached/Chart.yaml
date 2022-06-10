@@ -17,4 +17,4 @@ maintainers:
 name: memcached
 sources:
 - https://github.com/docker-library/memcached
-version: 0.0.1
+version: 0.0.2
