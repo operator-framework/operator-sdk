@@ -30,6 +30,9 @@ spec:
       {{- if .Values.securityContext.enabled }}
       securityContext:
         fsGroup: {{ .Values.securityContext.fsGroup }}
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       {{- end }}
       affinity:
         podAntiAffinity:
@@ -59,7 +62,11 @@ spec:
         imagePullPolicy: {{ default "" .Values.imagePullPolicy | quote }}
         {{- if .Values.securityContext.enabled }}
         securityContext:
+          allowPrivilegeEscalation: false
           runAsUser: {{ .Values.securityContext.runAsUser }}
+          capabilities:
+            drop:
+              - ALL
         {{- end }}
         command:
         - memcached

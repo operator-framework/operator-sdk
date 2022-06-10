@@ -1,4 +1,4 @@
-// Copyright 2020 The Operator-SDK Authors
+// Copyright 2021 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,18 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package registry
+package util
 
-import (
-	"context"
-
-	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-)
-
-type CatalogCreator interface {
-	CreateCatalog(ctx context.Context, name string) (*v1alpha1.CatalogSource, error)
-}
-
-type CatalogUpdater interface {
-	UpdateCatalog(ctx context.Context, cs *v1alpha1.CatalogSource, subscription *v1alpha1.Subscription) error
-}
+const WarnMessageRemovalV1beta1 = "The v1beta1 API version for CRDs and Webhooks is deprecated and is no longer offered since " +
+	"Kubernetes 1.22. This flag will be removed in a future release. We " +
+	"recommend that you no longer use the v1beta1 API version" +
+	"More info: https://kubernetes.io/docs/reference/using-api/deprecation-guide/#v1-22"

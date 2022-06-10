@@ -142,6 +142,8 @@ func UntarFile(tarName, target string) (err error) {
 				return err
 			}
 		}
+
+		// nolint
 		absFileName := filepath.Join(absPath, fileName)
 
 		if finfo.Mode().IsDir() {

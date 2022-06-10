@@ -151,7 +151,7 @@ func (f *Flags) ToManagerOptions(options manager.Options) manager.Options {
 		options.LeaderElectionNamespace = f.LeaderElectionNamespace
 	}
 	if options.LeaderElectionResourceLock == "" {
-		options.LeaderElectionResourceLock = resourcelock.ConfigMapsResourceLock
+		options.LeaderElectionResourceLock = resourcelock.ConfigMapsLeasesResourceLock
 	}
 
 	return options

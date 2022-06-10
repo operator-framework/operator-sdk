@@ -18,12 +18,13 @@ import (
 	"math/rand"
 	"reflect"
 	"sort"
-	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"sigs.k8s.io/controller-tools/pkg/crd"
 	"sigs.k8s.io/controller-tools/pkg/loader"
 	"sigs.k8s.io/controller-tools/pkg/markers"
@@ -174,7 +175,8 @@ func makeMockMarkedFields() (markedFields map[crd.TypeIdent][]*fieldInfo, expect
 		if err != nil {
 			panic(err)
 		}
-		name := strings.Title(s)
+		caser := cases.Title(language.AmericanEnglish)
+		name := caser.String(s)
 		order := r.Int() % 200 // Very likely to get one conflict.
 		ident := crd.TypeIdent{Package: &loader.Package{}, Name: name}
 		if _, hasName := markedFields[ident]; hasName {

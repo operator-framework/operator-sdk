@@ -23,6 +23,8 @@ import (
 	"strings"
 	"unicode"
 
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -64,7 +66,8 @@ func GetDisplayName(name string) string {
 		}
 		splitName[i] = temp
 	}
-	return strings.TrimSpace(strings.Title(strings.Join(splitName, " ")))
+	caser := cases.Title(language.AmericanEnglish, cases.NoLower)
+	return strings.TrimSpace(caser.String(strings.Join(splitName, " ")))
 }
 
 // GetTypeMetaFromBytes gets the type and object metadata from b. b is assumed

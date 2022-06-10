@@ -16,12 +16,19 @@ package bundle
 
 import (
 	"context"
+	"fmt"
+	"io/ioutil"
+	"os"
 	"strings"
 
-	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"github.com/operator-framework/operator-registry/alpha/action"
+	declarativeconfig "github.com/operator-framework/operator-registry/alpha/declcfg"
+	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
+	fbcutil "github.com/operator-framework/operator-sdk/internal/olm/fbcutil"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry"
 )
@@ -46,7 +53,7 @@ func NewInstall(cfg *operator.Configuration) Install {
 }
 
 func (i *Install) BindFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&i.IndexImage, "index-image", registry.DefaultIndexImage, "index image in which to inject bundle")
+	fs.StringVar(&i.IndexImage, "index-image", fbcutil.DefaultIndexImage, "index image in which to inject bundle")
 	fs.Var(&i.InstallMode, "install-mode", "install mode")
 
 	// --mode is hidden so only users who know what they're doing can alter add mode.
@@ -87,6 +94,49 @@ func (i *Install) setup(ctx context.Context) error {
 		return err
 	}
 
+	// check if index image adopts File-Based Catalog or SQLite index image format
+	isFBCImage, err := fbcutil.IsFBC(ctx, i.IndexImageCatalogCreator.IndexImage)
+	if err != nil {
+		return fmt.Errorf("error in upgrading the bundle %q that was installed traditionally", i.IndexImageCatalogCreator.BundleImage)
+	}
+	i.IndexImageCatalogCreator.HasFBCLabel = isFBCImage
+
+	// set the field to true if FBC label is on the image or for a default index image.
+	if i.IndexImageCatalogCreator.HasFBCLabel {
+		if i.IndexImageCatalogCreator.BundleAddMode != "" {
+			return fmt.Errorf("specifying the bundle add mode is not supported for File-Based Catalog bundles and index images")
+		}
+	} else {
+		// index image is of the SQLite index format.
+		deprecationMsg := fmt.Sprintf("%s is a SQLite index image. SQLite based index images are being deprecated and will be removed in a future release, please migrate your catalogs to the new File-Based Catalog format", i.IndexImageCatalogCreator.IndexImage)
+		log.Warn(deprecationMsg)
+	}
+
+	if i.IndexImageCatalogCreator.HasFBCLabel {
+		// FBC variables
+		f := &fbcutil.FBCContext{
+			Package: labels[registrybundle.PackageLabel],
+			Refs:    []string{i.BundleImage},
+			ChannelEntry: declarativeconfig.ChannelEntry{
+				Name: csv.Name,
+			},
+		}
+
+		if _, hasChannelMetadata := labels[registrybundle.ChannelsLabel]; hasChannelMetadata {
+			f.ChannelName = strings.Split(labels[registrybundle.ChannelsLabel], ",")[0]
+		} else {
+			f.ChannelName = fbcutil.DefaultChannel
+		}
+
+		// generate an fbc if an fbc specific label is found on the image or for a default index image.
+		content, err := generateFBCContent(ctx, f, i.BundleImage, i.IndexImageCatalogCreator.IndexImage)
+		if err != nil {
+			return fmt.Errorf("error generating File-Based Catalog with bundle %q: %v", i.BundleImage, err)
+		}
+
+		i.IndexImageCatalogCreator.FBCContent = content
+	}
+
 	i.OperatorInstaller.PackageName = labels[registrybundle.PackageLabel]
 	i.OperatorInstaller.CatalogSourceName = operator.CatalogNameForPackage(i.OperatorInstaller.PackageName)
 	i.OperatorInstaller.StartingCSV = csv.Name
@@ -97,4 +147,85 @@ func (i *Install) setup(ctx context.Context) error {
 	i.IndexImageCatalogCreator.BundleImage = i.BundleImage
 
 	return nil
+}
+
+// generateFBCContent creates a File-Based Catalog using the bundle image and index image from the run bundle command.
+func generateFBCContent(ctx context.Context, f *fbcutil.FBCContext, bundleImage, indexImage string) (string, error) {
+	log.Infof("Creating a File-Based Catalog of the bundle %q", bundleImage)
+	// generate a File-Based Catalog representation of the bundle image
+	bundleDeclcfg, err := f.CreateFBC(ctx)
+	if err != nil {
+		return "", fmt.Errorf("error creating a File-Based Catalog with image %q: %v", bundleImage, err)
+	}
+
+	declcfg := &declarativeconfig.DeclarativeConfig{
+		Bundles:  []declarativeconfig.Bundle{bundleDeclcfg.Bundle},
+		Packages: []declarativeconfig.Package{bundleDeclcfg.Package},
+		Channels: []declarativeconfig.Channel{bundleDeclcfg.Channel},
+	}
+
+	if indexImage != fbcutil.DefaultIndexImage { // non-default index image was specified.
+		// since an index image is specified, the bundle image will be added to the index image.
+		// addBundleToIndexImage will ensure that the bundle is not already present in the index image and error out if it does.
+		declcfg, err = addBundleToIndexImage(ctx, indexImage, bundleDeclcfg)
+		if err != nil {
+			return "", fmt.Errorf("error adding bundle image %q to index image %q: %v", bundleImage, indexImage, err)
+		}
+	}
+
+	// validate the declarative config and convert it to a string
+	var content string
+	if content, err = fbcutil.ValidateAndStringify(declcfg); err != nil {
+		return "", fmt.Errorf("error validating and converting the declarative config object to a string format: %v", err)
+	}
+
+	log.Infof("Generated a valid File-Based Catalog")
+
+	return content, nil
+}
+
+// addBundleToIndexImage adds the bundle to an existing index image if the bundle is not already present in the index image.
+func addBundleToIndexImage(ctx context.Context, indexImage string, bundleDeclConfig fbcutil.BundleDeclcfg) (*declarativeconfig.DeclarativeConfig, error) {
+	log.Infof("Rendering a File-Based Catalog of the Index Image %q", indexImage)
+	log.SetOutput(ioutil.Discard)
+	render := action.Render{
+		Refs: []string{indexImage},
+	}
+
+	imageDeclConfig, err := render.Run(ctx)
+	log.SetOutput(os.Stdout)
+	if err != nil {
+		return nil, fmt.Errorf("error rendering the index image %q: %v", indexImage, err)
+	}
+
+	for _, bundle := range imageDeclConfig.Bundles {
+		if bundle.Name == bundleDeclConfig.Bundle.Name && bundle.Package == bundleDeclConfig.Bundle.Package {
+			return nil, fmt.Errorf("bundle %q already exists in the index image: %s", bundleDeclConfig.Bundle.Name, indexImage)
+		}
+	}
+
+	for _, channel := range imageDeclConfig.Channels {
+		if channel.Name == bundleDeclConfig.Channel.Name && channel.Package == bundleDeclConfig.Bundle.Package {
+			return nil, fmt.Errorf("channel %q already exists in the index image: %s", bundleDeclConfig.Channel.Name, indexImage)
+		}
+	}
+
+	var isPackagePresent bool
+	for _, pkg := range imageDeclConfig.Packages {
+		if pkg.Name == bundleDeclConfig.Package.Name {
+			isPackagePresent = true
+			break
+		}
+	}
+
+	imageDeclConfig.Bundles = append(imageDeclConfig.Bundles, bundleDeclConfig.Bundle)
+	imageDeclConfig.Channels = append(imageDeclConfig.Channels, bundleDeclConfig.Channel)
+
+	if !isPackagePresent {
+		imageDeclConfig.Packages = append(imageDeclConfig.Packages, bundleDeclConfig.Package)
+	}
+
+	log.Infof("Inserted the new bundle %q into the index image: %s", bundleDeclConfig.Bundle.Name, indexImage)
+
+	return imageDeclConfig, nil
 }
