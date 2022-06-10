@@ -111,26 +111,32 @@ entries:
 
   - description: >
       For Helm (helm/v1) and Hybrid Helm (hybrid.helm/v1-alpha) language based operators: Upgrade helm from `v3.6.2` to `v3.9.0`
+    kind: "change"
     breaking: false
 
   - description: >
       For Ansible (ansible/v1) and Helm (helm/v1) language based operators: change the default value for the manager.option LeaderElectionResourceLock from `comfigmaps` to `configmapsleases` to allow a safe transition to use the leases option on the future. [More info](https://github.com/kubernetes-sigs/controller-runtime/pull/1903)
+    kind: "change"
     breaking: false
   
   - description: >
       For Quarkus (quarkus/v1-alpha) language based operator: add bundle generation [More info](https://github.com/operator-framework/java-operator-plugins/pull/84)
+    kind: "addition"
     breaking: false
   
   - description: >
       For Quarkus (quarkus/v1-alpha) language based operator: upgrade dependency from `v0.0.3` to `v0.5.1` [More info](https://github.com/operator-framework/java-operator-plugins/releases)
+    kind: "change"
     breaking: false
   
   - description: >
       For Helm Hybrid (hybrid.helm/v1-alpha) language based operator: Upgrade dependency from `v0.0.10` to `v0.0.11`. [More info](https://github.com/operator-framework/helm-operator-plugins/releases)
+    kind: "change"
     breaking: false
 
   - description: >
       For Go (go/v3, go/v2), Ansible (ansible/v1), Helm (helm/v1), and Helm Hybrid (hybrid.helm/v1-alpha) language based operators: Bump OPM version from `v1.19.1` to `v1.23.0`
+    kind: "change"
     breaking: false
     migration:
       header: For Go (go/v3, go/v2), Ansible (ansible/v1), Helm (helm/v1), and Helm Hybrid (hybrid.helm/v1-alpha) language based operators - Bump OPM version from `v1.19.1` to `v1.23.0` [More info](https://github.com/operator-framework/operator-registry/releases)
@@ -144,16 +150,20 @@ entries:
         2. Run `make opm`
   - description: >
       For Docker images: Bump Go from 1.17 to 1.18
+    kind: "change"
     breaking: false
   
   - description: >
       Docs: Update Go 1.17 references to Go 1.18
+    kind: "change"
     breaking: false
 
   - description: >
       For operator-sdk run bundle and bundle-upgrade subcommands: improve message from common scenario faced to add a new bundle [More info](https://github.com/operator-framework/operator-registry/pull/954)
+    kind: "addition"
     breaking: false
 
   - description: >
       For operator-sdk run bundle and bundle-upgrade subcommands: adds some extra text context to sql statement errors [More info](https://github.com/operator-framework/operator-registry/pull/953)
+    kind: "addition"
     breaking: false
