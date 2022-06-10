@@ -149,3 +149,11 @@ entries:
   - description: >
       Docs: Update Go 1.17 references to Go 1.18
     breaking: false
+
+  - description: >
+      For operator-sdk run bundle and bundle-upgrade subcommands: improve message from common scenario faced to add a new bundle [More info](https://github.com/operator-framework/operator-registry/pull/954)
+    breaking: false
+
+  - description: >
+      For operator-sdk run bundle and bundle-upgrade subcommands: adds some extra text context to sql statement errors [More info](https://github.com/operator-framework/operator-registry/pull/953)
+    breaking: false
