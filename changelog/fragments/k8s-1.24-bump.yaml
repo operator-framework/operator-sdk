@@ -133,7 +133,7 @@ entries:
       For Go (go/v3, go/v2), Ansible (ansible/v1), Helm (helm/v1), and Helm Hybrid (hybrid.helm/v1-alpha) language based operators: Bump OPM version from `v1.19.1` to `v1.23.0`
     breaking: false
     migration:
-      header: For Go (go/v3, go/v2), Ansible (ansible/v1), Helm (helm/v1), and Helm Hybrid (hybrid.helm/v1-alpha) language based operators - Bump OPM version from `v1.19.1` to `v1.23.0`
+      header: For Go (go/v3, go/v2), Ansible (ansible/v1), Helm (helm/v1), and Helm Hybrid (hybrid.helm/v1-alpha) language based operators - Bump OPM version from `v1.19.1` to `v1.23.0` [More info](https://github.com/operator-framework/operator-registry/releases)
       body: |
         To update your project to use OPM `v1.23.0`:
 
@@ -144,4 +144,8 @@ entries:
         2. Run `make opm`
   - description: >
       For Docker images: Bump Go from 1.17 to 1.18
+    breaking: false
+  
+  - description: >
+      Docs: Update Go 1.17 references to Go 1.18
     breaking: false
