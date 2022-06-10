@@ -37,12 +37,9 @@ const roleFragment = `
           spec:
             securityContext:
               runAsNonRoot: true
-              seccompProfile:
-                type: RuntimeDefault
             containers:
             - name: memcached
               securityContext:
-                runAsNonRoot: true
                 allowPrivilegeEscalation: false
                 capabilities:
                   drop:
