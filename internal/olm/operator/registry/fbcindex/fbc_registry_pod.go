@@ -46,6 +46,7 @@ const (
 	defaultContainerPortName = "grpc"
 
 	defaultConfigMapName = "operator-sdk-run-bundle-config"
+	defaultConfigMapKey  = "extraFBC"
 )
 
 // FBCRegistryPod holds resources necessary for creation of a registry pod in FBC scenarios.
@@ -214,8 +215,8 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 						ConfigMap: &corev1.ConfigMapVolumeSource{
 							Items: []corev1.KeyToPath{
 								{
-									Key:  "extraFBC",
-									Path: path.Join(defaultConfigMapName, "extraFBC.yaml"),
+									Key:  defaultConfigMapKey,
+									Path: path.Join(defaultConfigMapName, fmt.Sprintf("%s.yaml", defaultConfigMapKey)),
 								},
 							},
 							LocalObjectReference: corev1.LocalObjectReference{
@@ -269,7 +270,7 @@ func (f *FBCRegistryPod) createConfigMap(cs *v1alpha1.CatalogSource) (*corev1.Co
 			Namespace: f.cfg.Namespace,
 		},
 		Data: map[string]string{
-			"extraFBC": f.FBCContent,
+			defaultConfigMapKey: f.FBCContent,
 		},
 	}
 
@@ -293,7 +294,7 @@ func (f *FBCRegistryPod) createConfigMap(cs *v1alpha1.CatalogSource) (*corev1.Co
 			}
 		}
 		// update ConfigMap with new FBCContent
-		cm.Data = map[string]string{"extraFBC": f.FBCContent}
+		cm.Data = map[string]string{defaultConfigMapKey: f.FBCContent}
 		return f.cfg.Client.Update(context.TODO(), cm)
 	}); err != nil {
 		return nil, fmt.Errorf("error updating ConfigMap: %w", err)

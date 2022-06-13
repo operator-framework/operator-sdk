@@ -286,7 +286,6 @@ func upgradeFBC(ctx context.Context, f *fbcutil.FBCContext, originalDeclCfg *dec
 		// if it is not present in the bundles array or belongs to a different package, we can add it
 		if _, present := existingBundles[bundle.Name]; !present || existingBundles[bundle.Name] != bundle.Package {
 			originalDeclCfg.Bundles = append(originalDeclCfg.Bundles, bundle)
-
 		}
 
 		// constructing a new entry to add
@@ -302,7 +301,6 @@ func upgradeFBC(ctx context.Context, f *fbcutil.FBCContext, originalDeclCfg *dec
 		// either add it to a new channel or an existing channel
 		if channelExists {
 			originalDeclCfg.Channels[channelIndex].Entries = append(originalDeclCfg.Channels[channelIndex].Entries, entry)
-
 		} else {
 			entries = append(entries, entry)
 		}
