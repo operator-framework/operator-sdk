@@ -22,11 +22,10 @@ on the namespace level will **not** be admitted. In this way, it will not be pos
 
 - **For common cases that do not require escalating privileges:** configure all containers to comply with the [restricted][restricted] policy as shown in the following the examples:
 
-**IMPORTANT NOTE** The `seccompProfile` field required to define that a container is [restricted][restricted] was introduced with K8s `1.19` and might **not** be support on some vendors by default.
-Please, do **not** use this field if you are looking for to build Operators to work on K8s versions < `1.19` or on vendors when it might
-**not** work. This can result in your Pod/containers **not** be admitted and be allowed to run (i.e. On Openshift versions < `4.11` with its default configuration the deployments will fail with errors like `Forbidden: seccomp`.)
-However, if you are developing solutions to be distributed on Kubernetes versions => `1.19` and or for example, Openshift versions >= `4.11` it is highly recommended used it and 
-ensure that all your Pods/containers are [restricted][restricted] unless they require escalating privileges.
+**IMPORTANT NOTE** The `seccompProfile` field to define that a container is [restricted][restricted] was introduced with K8s `1.19` and might **not** be supported on some vendors by default.
+Please, do **not** use this field if you are looking to build Operators that work on K8s versions < `1.19` or on vendors that do **not** support this field. Having this field when it is not supported can result in your Pods/Containers **not** being allowed to run (i.e. On Openshift versions < `4.11` with its default configuration the deployments will fail with errors like `Forbidden: seccomp`.)
+However, if you are developing solutions to be distributed on Kubernetes versions => `1.19` and or for example, Openshift versions >= `4.11` it is highly recommended that this field is used to
+ensure that all your Pods/Containers are [restricted][restricted] unless they require escalated privileges.
 
 **On Kubernetes manifests:**
 
