@@ -413,6 +413,10 @@ func (r *MemcachedReconciler) deploymentForMemcached(m *cachev1alpha1.Memcached)
 					// More info: https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted
 					SecurityContext: &corev1.PodSecurityContext{
 						RunAsNonRoot: &[]bool{true}[0],
+						// Please ensure that you can use SeccompProfile and do NOT use
+						// this field if your project must work on old Kubernetes 
+						// versions < 1.19 or on vendors versions which 
+						// do NOT support this field by default (i.e. Openshift < 4.11)
 						SeccompProfile: &corev1.SeccompProfile{
 							Type: corev1.SeccompProfileTypeRuntimeDefault,
 						},
