@@ -412,7 +412,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 
 			err = c.runFBCUpgrade(ctx)
 			if err != nil {
-				return fmt.Errorf("unable to determine if index image adopts File-Based Catalog or SQLite format: %v", err)
+				return fmt.Errorf("error in upgrading FBC: %v", err)
 			}
 		}
 	}

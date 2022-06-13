@@ -20,17 +20,17 @@ import (
 	"errors"
 	"fmt"
 	"path"
-	"path/filepath"
-	"strings"
 	"text/template"
 	"time"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
@@ -44,6 +44,9 @@ const (
 
 	defaultContainerName     = "registry-grpc"
 	defaultContainerPortName = "grpc"
+
+	defaultConfigMapName = "operator-sdk-run-bundle-config"
+	defaultConfigMapKey  = "extraFBC"
 )
 
 // FBCRegistryPod holds resources necessary for creation of a registry pod in FBC scenarios.
@@ -64,19 +67,21 @@ type FBCRegistryPod struct { //nolint:maligned
 	// FBCContent represents the contents of the FBC file (string YAML).
 	FBCContent string
 
-	// FBCDir is the name of the FBC directory name where the FBC resides in.
-	FBCDir string
-
-	// FBCFile represents the FBC filename that has all the contents to be served through the registry pod.
-	FBCFile string
+	// FBCIndexRootDir is the FBC directory that exists under root of an FBC container image.
+	// This directory has the File-Based Catalog representation of a catalog index.
+	FBCIndexRootDir string
 
 	cfg *operator.Configuration
 }
 
 // init initializes the FBCRegistryPod struct.
-func (f *FBCRegistryPod) init(cfg *operator.Configuration) error {
+func (f *FBCRegistryPod) init(cfg *operator.Configuration, cs *v1alpha1.CatalogSource) error {
 	if f.GRPCPort == 0 {
 		f.GRPCPort = defaultGRPCPort
+	}
+
+	if f.FBCIndexRootDir == "" {
+		f.FBCIndexRootDir = "/configs"
 	}
 
 	f.cfg = cfg
@@ -86,13 +91,8 @@ func (f *FBCRegistryPod) init(cfg *operator.Configuration) error {
 		return fmt.Errorf("invalid FBC registry pod: %v", err)
 	}
 
-	bundleImage := f.BundleItems[len(f.BundleItems)-1].ImageTag
-	trimmedbundleImage := strings.Split(bundleImage, ":")[0]
-	f.FBCDir = fmt.Sprintf("%s-index", filepath.Join("/tmp", strings.Split(trimmedbundleImage, "/")[2]))
-	f.FBCFile = filepath.Join(f.FBCDir, strings.Split(bundleImage, ":")[1])
-
 	// podForBundleRegistry() to make the pod definition
-	pod, err := f.podForBundleRegistry()
+	pod, err := f.podForBundleRegistry(cs)
 	if err != nil {
 		return fmt.Errorf("error building registry pod definition: %v", err)
 	}
@@ -105,7 +105,7 @@ func (f *FBCRegistryPod) init(cfg *operator.Configuration) error {
 // sets the catalog source as the owner for the pod and verifies that
 // the pod is running
 func (f *FBCRegistryPod) Create(ctx context.Context, cfg *operator.Configuration, cs *v1alpha1.CatalogSource) (*corev1.Pod, error) {
-	if err := f.init(cfg); err != nil {
+	if err := f.init(cfg, cs); err != nil {
 		return nil, err
 	}
 
@@ -184,7 +184,7 @@ func getPodName(bundleImage string) string {
 
 // podForBundleRegistry constructs and returns the registry pod definition
 // and throws error when unable to build the pod definition successfully
-func (f *FBCRegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
+func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*corev1.Pod, error) {
 	// rp was already validated so len(f.BundleItems) must be greater than 0.
 	bundleImage := f.BundleItems[len(f.BundleItems)-1].ImageTag
 
@@ -194,6 +194,13 @@ func (f *FBCRegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 		return nil, err
 	}
 
+	// create ConfigMap if it does not exist,
+	// if it exists, then update it with new content.
+	cm, err := f.createConfigMap(cs)
+	if err != nil {
+		return nil, fmt.Errorf("configMap error: %w", err)
+	}
+
 	// make the pod definition
 	f.pod = &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -201,6 +208,24 @@ func (f *FBCRegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 			Namespace: f.cfg.Namespace,
 		},
 		Spec: corev1.PodSpec{
+			Volumes: []corev1.Volume{
+				{
+					Name: k8sutil.TrimDNS1123Label(cm.Name + "-volume"),
+					VolumeSource: corev1.VolumeSource{
+						ConfigMap: &corev1.ConfigMapVolumeSource{
+							Items: []corev1.KeyToPath{
+								{
+									Key:  defaultConfigMapKey,
+									Path: path.Join(defaultConfigMapName, fmt.Sprintf("%s.yaml", defaultConfigMapKey)),
+								},
+							},
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: cm.Name,
+							},
+						},
+					},
+				},
+			},
 			Containers: []corev1.Container{
 				{
 					Name:  defaultContainerName,
@@ -213,6 +238,13 @@ func (f *FBCRegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 					Ports: []corev1.ContainerPort{
 						{Name: defaultContainerPortName, ContainerPort: f.GRPCPort},
 					},
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							Name:      k8sutil.TrimDNS1123Label(cm.Name + "-volume"),
+							MountPath: path.Join(f.FBCIndexRootDir, cm.Name),
+							SubPath:   cm.Name,
+						},
+					},
 				},
 			},
 		},
@@ -221,23 +253,63 @@ func (f *FBCRegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 	return f.pod, nil
 }
 
-const fbcCmdTemplate = `mkdir -p {{ .FBCDir }} && \
-echo '{{ .FBCContent }}' >> {{ .FBCFile  }} && \
-opm serve {{ .FBCDir }} -p {{ .GRPCPort }}
-`
+// container creation command for FBC type images.
+const fbcCmdTemplate = `opm serve {{ .FBCIndexRootDir}} -p {{ .GRPCPort }}`
+
+// createConfigMap creates a ConfigMap if it does not exist and if it does, then update it with new content.
+// Also, sets the owner reference by making CatalogSource the owner of ConfigMap object for cleanup purposes.
+func (f *FBCRegistryPod) createConfigMap(cs *v1alpha1.CatalogSource) (*corev1.ConfigMap, error) {
+	// new ConfigMap
+	cm := &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: corev1.SchemeGroupVersion.String(),
+			Kind:       "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      defaultConfigMapName,
+			Namespace: f.cfg.Namespace,
+		},
+		Data: map[string]string{
+			defaultConfigMapKey: f.FBCContent,
+		},
+	}
+
+	// set owner reference by making catalog source the owner of ConfigMap object
+	if err := controllerutil.SetOwnerReference(cs, cm, f.cfg.Scheme); err != nil {
+		return nil, fmt.Errorf("set configmap %q owner reference: %v", cm.GetName(), err)
+	}
+
+	cmKey := types.NamespacedName{
+		Namespace: f.cfg.Namespace,
+		Name:      defaultConfigMapName,
+	}
+
+	// create a ConfigMap if it does not exist;
+	// update it with new data if it already exists.
+	if err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		err := f.cfg.Client.Get(context.TODO(), cmKey, cm)
+		if apierrors.IsNotFound(err) {
+			if err := f.cfg.Client.Create(context.TODO(), cm); err != nil {
+				return fmt.Errorf("error creating ConfigMap: %w", err)
+			}
+		}
+		// update ConfigMap with new FBCContent
+		cm.Data = map[string]string{defaultConfigMapKey: f.FBCContent}
+		return f.cfg.Client.Update(context.TODO(), cm)
+	}); err != nil {
+		return nil, fmt.Errorf("error updating ConfigMap: %w", err)
+	}
+
+	return cm, nil
+
+}
 
 // getContainerCmd uses templating to construct the container command
 // and throws error if unable to parse and execute the container command
 func (f *FBCRegistryPod) getContainerCmd() (string, error) {
-	var t *template.Template
-	// create a custom dirname template function
-	funcMap := template.FuncMap{
-		"dirname": path.Dir,
-	}
-
 	// add the custom dirname template function to the
 	// template's FuncMap and parse the cmdTemplate
-	t = template.Must(template.New("cmd").Funcs(funcMap).Parse(fbcCmdTemplate))
+	t := template.Must(template.New("cmd").Parse(fbcCmdTemplate))
 
 	// execute the command by applying the parsed template to command
 	// and write command output to out
