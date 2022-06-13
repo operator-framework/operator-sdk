@@ -21,6 +21,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 	"strings"
 	"time"
 
@@ -202,4 +203,34 @@ func WrapWarnOutput(_ string, err error) {
 // WrapWarn is a one-liner to wrap an error from a command that returns (error) in a warning.
 func WrapWarn(err error) {
 	WrapWarnOutput("", err)
+}
+
+func (tc TestContext) UncommentRestrictivePodStandards() error {
+	configManager := filepath.Join(tc.Dir, "config", "manager", "manager.yaml")
+	managerAuth := filepath.Join(tc.Dir, "config", "default", "manager_auth_proxy_patch.yaml")
+
+	kbutil.ReplaceInFile(configManager, `# TODO(user): uncomment for common cases that do not require escalating privileges
+        # capabilities:
+        #   drop:
+        #     - "ALL"`, `  capabilities:
+            drop:
+              - "ALL"`)
+
+	kbutil.ReplaceInFile(managerAuth, `# TODO(user): uncomment for common cases that do not require escalating privileges
+        # capabilities:
+        #   drop:
+        #     - "ALL"`, `  capabilities:
+            drop:
+              - "ALL"`)
+
+	kbutil.ReplaceInFile(configManager, `# TODO(user): For common cases that do not require escalating privileges
+        # it is recommended to ensure that all your Pods/Containers are restrictive.
+        # More info: https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted
+        # Please uncomment the following code if your project does NOT have to work on old Kubernetes
+        # versions < 1.19 or on vendors versions which do NOT support this field by default (i.e. Openshift < 4.11 ).
+        # seccompProfile:
+        #   type: RuntimeDefault`, `seccompProfile:
+          type: RuntimeDefault`)
+
+	return nil
 }

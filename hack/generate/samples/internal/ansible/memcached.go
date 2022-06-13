@@ -81,6 +81,7 @@ func (ma *Memcached) Run() {
 		"#- ../prometheus", "#")
 	pkg.CheckError("enabling prometheus metrics", err)
 
+	ma.ctx.UncommentRestrictivePodStandards()
 	ma.addingAnsibleTask()
 	ma.addingMoleculeMockData()
 

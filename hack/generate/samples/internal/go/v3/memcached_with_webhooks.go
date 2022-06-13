@@ -80,6 +80,8 @@ func (mh *Memcached) Run() {
 		"--resource", "true")
 	pkg.CheckError("scaffolding apis", err)
 
+	mh.ctx.UncommentRestrictivePodStandards()
+
 	log.Infof("implementing the API")
 	mh.implementingAPI()
 
