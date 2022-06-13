@@ -27,7 +27,7 @@ Please, do **not** use this field if you are looking to build Operators that wor
 However, if you are developing solutions to be distributed on Kubernetes versions => `1.19` and or for example, Openshift versions >= `4.11` it is highly recommended that this field is used to
 ensure that all your Pods/Containers are [restricted][restricted] unless they require escalated privileges.
 
-**On Kubernetes manifests:**
+**In Kubernetes manifests:**
 
 ```yaml
     spec:
