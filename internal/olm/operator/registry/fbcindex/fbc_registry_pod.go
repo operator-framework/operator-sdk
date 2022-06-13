@@ -193,52 +193,11 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 		return nil, err
 	}
 
-	// create a ConfigMap
-	cm := &corev1.ConfigMap{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: corev1.SchemeGroupVersion.String(),
-			Kind:       "ConfigMap",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      defaultConfigMapName,
-			Namespace: f.cfg.Namespace,
-		},
-		Data: map[string]string{
-			"extraFBC": f.FBCContent,
-		},
-	}
-
-	// set owner reference by making catalog source the owner of ConfigMap object
-	if err := controllerutil.SetOwnerReference(cs, cm, f.cfg.Scheme); err != nil {
-		return nil, fmt.Errorf("set configmap %q owner reference: %v", cm.GetName(), err)
-	}
-
-	cmKey := types.NamespacedName{
-		Namespace: f.cfg.Namespace,
-		Name:      defaultConfigMapName,
-	}
-
-	cmObj := corev1.ConfigMap{}
-	if err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		err := f.cfg.Client.Get(context.TODO(), cmKey, &cmObj)
-		if apierrors.IsNotFound(err) {
-			if err := f.cfg.Client.Create(context.TODO(), cm); err != nil {
-				return fmt.Errorf("error creating ConfigMap: %w", err)
-			}
-		}
-		// update ConfigMap with new FBCContent
-		cmObj = corev1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      defaultConfigMapName,
-				Namespace: f.cfg.Namespace,
-			},
-			Data: map[string]string{
-				"extraFBC": f.FBCContent,
-			},
-		}
-		return f.cfg.Client.Update(context.TODO(), &cmObj)
-	}); err != nil {
-		return nil, fmt.Errorf("error updating ConfigMap: %w", err)
+	// create ConfigMap if it does not exist,
+	// if it exists, then update it with new content.
+	cm, err := f.createConfigMap(cs)
+	if err != nil {
+		return nil, fmt.Errorf("ConfigMap error: %w", err)
 	}
 
 	// make the pod definition
@@ -293,7 +252,56 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 	return f.pod, nil
 }
 
+// container creation command for FBC type images.
 const fbcCmdTemplate = `opm serve {{ .FBCIndexRootDir}} -p {{ .GRPCPort }}`
+
+// createConfigMap creates a ConfigMap if it does not exist and if it does, then update it with new content.
+// Also, sets the owner reference by making CatalogSource the owner of ConfigMap object for cleanup purposes.
+func (f *FBCRegistryPod) createConfigMap(cs *v1alpha1.CatalogSource) (*corev1.ConfigMap, error) {
+	// new ConfigMap
+	cm := &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: corev1.SchemeGroupVersion.String(),
+			Kind:       "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      defaultConfigMapName,
+			Namespace: f.cfg.Namespace,
+		},
+		Data: map[string]string{
+			"extraFBC": f.FBCContent,
+		},
+	}
+
+	// set owner reference by making catalog source the owner of ConfigMap object
+	if err := controllerutil.SetOwnerReference(cs, cm, f.cfg.Scheme); err != nil {
+		return nil, fmt.Errorf("set configmap %q owner reference: %v", cm.GetName(), err)
+	}
+
+	cmKey := types.NamespacedName{
+		Namespace: f.cfg.Namespace,
+		Name:      defaultConfigMapName,
+	}
+
+	// create a ConfigMap if it does not exist;
+	// update it with new data if it already exists.
+	if err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		err := f.cfg.Client.Get(context.TODO(), cmKey, cm)
+		if apierrors.IsNotFound(err) {
+			if err := f.cfg.Client.Create(context.TODO(), cm); err != nil {
+				return fmt.Errorf("error creating ConfigMap: %w", err)
+			}
+		}
+		// update ConfigMap with new FBCContent
+		cm.Data = map[string]string{"extraFBC": f.FBCContent}
+		return f.cfg.Client.Update(context.TODO(), cm)
+	}); err != nil {
+		return nil, fmt.Errorf("error updating ConfigMap: %w", err)
+	}
+
+	return cm, nil
+
+}
 
 // getContainerCmd uses templating to construct the container command
 // and throws error if unable to parse and execute the container command
