@@ -20,14 +20,23 @@ on the namespace level will **not** be admitted. In this way, it will not be pos
 
 #### How should I configure my Operators and Operands to comply with the criteria?
 
-- **For common cases that do not require escalating privileges:** configure all containers to comply with the [restrictive][restricted] policy as shown in the following the examples:
+- **For common cases that do not require escalating privileges:** configure all containers to comply with the [restricted][restricted] policy as shown in the following the examples:
 
-**On Kubernetes manifests:**
+**IMPORTANT NOTE** The `seccompProfile` field to define that a container is [restricted][restricted] was introduced with K8s `1.19` and might **not** be supported on some vendors by default.
+Please, do **not** use this field if you are looking to build Operators that work on K8s versions < `1.19` or on vendors that do **not** support this field. Having this field when it is not supported can result in your Pods/Containers **not** being allowed to run (i.e. On Openshift versions < `4.11` with its default configuration the deployments will fail with errors like `Forbidden: seccomp`.)
+However, if you are developing solutions to be distributed on Kubernetes versions => `1.19` and or for example, Openshift versions >= `4.11` it is highly recommended that this field is used to
+ensure that all your Pods/Containers are [restricted][restricted] unless they require escalated privileges.
+
+**In Kubernetes manifests:**
 
 ```yaml
     spec:
       securityContext:
         runAsNonRoot: true
+        # Please ensure that you can use SeccompProfile and do not use
+        # if your project must work on old Kubernetes
+        # versions < 1.19 or on vendors versions which
+        # do NOT support this field by default (i.e. Openshift < 4.11 )
         seccompProfile:
           type: RuntimeDefault
       ...
@@ -56,6 +65,10 @@ dep:= &appsv1.Deployment{
            // Ensure restrictive context for the Pod    
            SecurityContext: &corev1.PodSecurityContext{
               RunAsNonRoot: &[]bool{true}[0],
+			  // Please ensure that you can use SeccompProfile and do NOT use
+			  // this filed if your project must work on old Kubernetes
+			  // versions < 1.19 or on vendors versions which 
+			  // do NOT support this field by default (i.e. Openshift < 4.11)
               SeccompProfile: &corev1.SeccompProfile{
                  Type: corev1.SeccompProfileTypeRuntimeDefault,
               },
