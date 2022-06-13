@@ -197,7 +197,7 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 	// if it exists, then update it with new content.
 	cm, err := f.createConfigMap(cs)
 	if err != nil {
-		return nil, fmt.Errorf("ConfigMap error: %w", err)
+		return nil, fmt.Errorf("configMap error: %w", err)
 	}
 
 	// make the pod definition
