@@ -45,9 +45,7 @@ const (
 	defaultContainerName     = "registry-grpc"
 	defaultContainerPortName = "grpc"
 
-	// DefaultFBCIndexRootDir is the FBC directory that exists under root of an FBC container image.
-	// This directory has the File-Based Catalog representation of a catalog index.
-	DefaultFBCIndexRootDir = "/configs"
+	defaultConfigMapName = "operator-sdk-run-bundle-config"
 )
 
 // FBCRegistryPod holds resources necessary for creation of a registry pod in FBC scenarios.
@@ -68,6 +66,10 @@ type FBCRegistryPod struct { //nolint:maligned
 	// FBCContent represents the contents of the FBC file (string YAML).
 	FBCContent string
 
+	// FBCIndexRootDir is the FBC directory that exists under root of an FBC container image.
+	// This directory has the File-Based Catalog representation of a catalog index.
+	FBCIndexRootDir string
+
 	cfg *operator.Configuration
 }
 
@@ -75,6 +77,10 @@ type FBCRegistryPod struct { //nolint:maligned
 func (f *FBCRegistryPod) init(cfg *operator.Configuration, cs *v1alpha1.CatalogSource) error {
 	if f.GRPCPort == 0 {
 		f.GRPCPort = defaultGRPCPort
+	}
+
+	if f.FBCIndexRootDir == "" {
+		f.FBCIndexRootDir = "/configs"
 	}
 
 	f.cfg = cfg
@@ -194,7 +200,7 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 			Kind:       "ConfigMap",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "operator-sdk-run-bundle-config",
+			Name:      defaultConfigMapName,
 			Namespace: f.cfg.Namespace,
 		},
 		Data: map[string]string{
@@ -209,7 +215,7 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 
 	cmKey := types.NamespacedName{
 		Namespace: f.cfg.Namespace,
-		Name:      "operator-sdk-run-bundle-config",
+		Name:      defaultConfigMapName,
 	}
 
 	cmObj := corev1.ConfigMap{}
@@ -223,7 +229,7 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 		// update ConfigMap with new FBCContent
 		cmObj = corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "operator-sdk-run-bundle-config",
+				Name:      defaultConfigMapName,
 				Namespace: f.cfg.Namespace,
 			},
 			Data: map[string]string{
@@ -250,7 +256,7 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 							Items: []corev1.KeyToPath{
 								{
 									Key:  "extraFBC",
-									Path: "operator-sdk-run-bundle-config/extraFBC",
+									Path: path.Join(defaultConfigMapName, "extraFBC.yaml"),
 								},
 							},
 							LocalObjectReference: corev1.LocalObjectReference{
@@ -275,8 +281,8 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 					VolumeMounts: []corev1.VolumeMount{
 						{
 							Name:      k8sutil.TrimDNS1123Label(cm.Name + "-volume"),
-							MountPath: path.Join(DefaultFBCIndexRootDir, cm.Name),
-							SubPath:   path.Join(cm.Name, "extraFBC"),
+							MountPath: path.Join(f.FBCIndexRootDir, cm.Name),
+							SubPath:   cm.Name,
 						},
 					},
 				},
@@ -287,7 +293,7 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 	return f.pod, nil
 }
 
-const fbcCmdTemplate = `opm serve /configs -p {{ .GRPCPort }}`
+const fbcCmdTemplate = `opm serve {{ .FBCIndexRootDir}} -p {{ .GRPCPort }}`
 
 // getContainerCmd uses templating to construct the container command
 // and throws error if unable to parse and execute the container command
