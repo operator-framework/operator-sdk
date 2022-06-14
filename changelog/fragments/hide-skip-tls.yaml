@@ -1,5 +1,0 @@
-entries:
-  - description: >
-      Hide --skip-tls flag as it is deprecated.
-    kind: "change"
-    breaking: false

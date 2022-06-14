@@ -1,8 +1,0 @@
-# entries is a list of entries to include in
-# release notes and/or the migration guide
-entries:
-  - description: >
-      For Ansible/Helm based-operators (ansible/v1, helm/v1), deprecate the flag `crd-version` since
-      `v1beta1` APIs is not longer offered from k8s 1.22 and this flag is deprecated for Golang.
-    kind: "deprecation"
-    breaking: false

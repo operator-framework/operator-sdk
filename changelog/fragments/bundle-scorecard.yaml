@@ -1,5 +1,0 @@
-entries:
-  - description: >
-      Scorecard details got generated for the bundle even if no details were present for the scorecard in the java plugin. This change will add scorecard changes on conditional basis.
-    kind: "change"
-    breaking: false
