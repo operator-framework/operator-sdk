@@ -1801,8 +1801,6 @@ sigs.k8s.io/controller-tools v0.9.0 h1:b/vSEPpA8hiMiyzDfLbZdCn3hoAcy3/868OHhYtHY
 sigs.k8s.io/controller-tools v0.9.0/go.mod h1:NUkn8FTV3Sad3wWpSK7dt/145qfuQ8CKJV6j4jHC5rM=
 sigs.k8s.io/json v0.0.0-20211208200746-9f7c6b3444d2 h1:kDi4JBNAsJWfz1aEXhO8Jg87JJaPNLh5tIzYHgStQ9Y=
 sigs.k8s.io/json v0.0.0-20211208200746-9f7c6b3444d2/go.mod h1:B+TnT182UBxE84DiCz4CVE26eOSDAeYCpfDnC2kdKMY=
-sigs.k8s.io/kubebuilder/v3 v3.0.0-alpha.0.0.20220613172611-57aed3f94a44 h1:CiPMwc2kXKdu3PZalDa28e7S4ClLsgEDmlHWQWYC1OE=
-sigs.k8s.io/kubebuilder/v3 v3.0.0-alpha.0.0.20220613172611-57aed3f94a44/go.mod h1:2o0wAP/Qi4vLA5tlmKOCTZdWUlkdewvkNi3o5Ko6eSw=
 sigs.k8s.io/kubebuilder/v3 v3.0.0-alpha.0.0.20220613215411-7a05e3d4fe6d h1:VKHPL8DAxw5EAZyF01fRkSU41Yk+hpYpUEIrstg6e4Y=
 sigs.k8s.io/kubebuilder/v3 v3.0.0-alpha.0.0.20220613215411-7a05e3d4fe6d/go.mod h1:2o0wAP/Qi4vLA5tlmKOCTZdWUlkdewvkNi3o5Ko6eSw=
 sigs.k8s.io/kustomize/api v0.11.4 h1:/0Mr3kfBBNcNPOW5Qwk/3eb8zkswCwnqQxxKtmrTkRo=

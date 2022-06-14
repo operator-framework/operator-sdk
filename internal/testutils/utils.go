@@ -21,12 +21,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 	kbtestutils "sigs.k8s.io/kubebuilder/v3/test/e2e/utils"
 )
 
@@ -209,28 +209,34 @@ func (tc TestContext) UncommentRestrictivePodStandards() error {
 	configManager := filepath.Join(tc.Dir, "config", "manager", "manager.yaml")
 	managerAuth := filepath.Join(tc.Dir, "config", "default", "manager_auth_proxy_patch.yaml")
 
-	kbutil.ReplaceInFile(configManager, `# TODO(user): uncomment for common cases that do not require escalating privileges
+	if err := kbutil.ReplaceInFile(configManager, `# TODO(user): uncomment for common cases that do not require escalating privileges
         # capabilities:
         #   drop:
         #     - "ALL"`, `  capabilities:
             drop:
-              - "ALL"`)
+              - "ALL"`); err != nil {
+		return err
+	}
 
-	kbutil.ReplaceInFile(managerAuth, `# TODO(user): uncomment for common cases that do not require escalating privileges
+	if err := kbutil.ReplaceInFile(managerAuth, `# TODO(user): uncomment for common cases that do not require escalating privileges
         # capabilities:
         #   drop:
         #     - "ALL"`, `  capabilities:
             drop:
-              - "ALL"`)
+              - "ALL"`); err != nil {
+		return err
+	}
 
-	kbutil.ReplaceInFile(configManager, `# TODO(user): For common cases that do not require escalating privileges
+	if err := kbutil.ReplaceInFile(configManager, `# TODO(user): For common cases that do not require escalating privileges
         # it is recommended to ensure that all your Pods/Containers are restrictive.
         # More info: https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted
         # Please uncomment the following code if your project does NOT have to work on old Kubernetes
         # versions < 1.19 or on vendors versions which do NOT support this field by default (i.e. Openshift < 4.11 ).
         # seccompProfile:
         #   type: RuntimeDefault`, `seccompProfile:
-          type: RuntimeDefault`)
+          type: RuntimeDefault`); err == nil {
+		return err
+	}
 
 	return nil
 }
