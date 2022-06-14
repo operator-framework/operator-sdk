@@ -109,7 +109,7 @@ You might need include this in the installation documentation for your Operator.
 **You should ensure the configuration is carried to the Pod/Containers on the bundle CSV (install.spec.deployments.containers).**
 
 To check an example of CSV which complies with the [restrictive][restricted] policy, see the Golang sample
-under the [testdata/go/v3/memcached-operator/bundle/manifests/memcached-operator.clusterserviceversion.yaml](https://github.com/kubernetes-sigs/kubebuilder/blob/master/testdata/go/v3/memcached-operator/bundle/manifests/memcached-operator.clusterserviceversion.yaml)
+under the [testdata/go/v3/memcached-operator/bundle/manifests/memcached-operator.clusterserviceversion.yaml](https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/v3/memcached-operator/bundle/manifests/memcached-operator.clusterserviceversion.yaml)
 
 [pod-security]: https://kubernetes.io/blog/2021/04/06/podsecuritypolicy-deprecation-past-present-and-future/#what-is-podsecuritypolicy
 [2579-psp-replacement]: https://github.com/kubernetes/enhancements/tree/master/keps/sig-auth/2579-psp-replacement
