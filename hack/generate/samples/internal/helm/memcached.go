@@ -86,6 +86,9 @@ func (mh *Memcached) Run() {
 		"--helm-chart", helmChartPath)
 	pkg.CheckError("creating the project", err)
 
+	err = mh.ctx.UncommentRestrictivePodStandards()
+	pkg.CheckError("creating the bundle", err)
+
 	log.Infof("customizing the sample")
 	err = kbutil.ReplaceInFile(
 		filepath.Join(mh.ctx.Dir, "config", "samples", "cache_v1alpha1_memcached.yaml"),

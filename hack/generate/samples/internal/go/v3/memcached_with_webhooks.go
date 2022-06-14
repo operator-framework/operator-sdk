@@ -80,6 +80,9 @@ func (mh *Memcached) Run() {
 		"--resource", "true")
 	pkg.CheckError("scaffolding apis", err)
 
+	err = mh.ctx.UncommentRestrictivePodStandards()
+	pkg.CheckError("creating the bundle", err)
+
 	log.Infof("implementing the API")
 	mh.implementingAPI()
 

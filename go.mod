@@ -14,7 +14,7 @@ require (
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.18.1
 	github.com/operator-framework/api v0.15.0
-	github.com/operator-framework/helm-operator-plugins v0.0.12-0.20220608155702-d3967d2ae2ac
+	github.com/operator-framework/helm-operator-plugins v0.0.12-0.20220613184440-7329cace347f
 	github.com/operator-framework/java-operator-plugins v0.5.1
 	github.com/operator-framework/operator-lib v0.11.0
 	github.com/operator-framework/operator-manifest-tools v0.2.1
@@ -42,7 +42,7 @@ require (
 	k8s.io/kubectl v0.24.0
 	sigs.k8s.io/controller-runtime v0.12.1
 	sigs.k8s.io/controller-tools v0.9.0
-	sigs.k8s.io/kubebuilder/v3 v3.0.0-alpha.0.0.20220608134342-eea565cb3f50
+	sigs.k8s.io/kubebuilder/v3 v3.0.0-alpha.0.0.20220613215411-7a05e3d4fe6d
 	sigs.k8s.io/yaml v1.3.0
 )
 
