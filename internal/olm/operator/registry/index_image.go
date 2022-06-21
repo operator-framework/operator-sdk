@@ -161,7 +161,6 @@ func handleTraditionalUpgrade(ctx context.Context, indexImage string, bundleImag
 		return "", errors.New("bundle image must have exactly one bundle")
 	}
 
-	extraDeclCfg := &declarativeconfig.DeclarativeConfig{}
 	// search for the specific channel in which the upgrade needs to take place, and upgrade from the channel head
 	for i := range originalDeclCfg.Channels {
 		if originalDeclCfg.Channels[i].Name == channelName && originalDeclCfg.Channels[i].Package == bundleDeclConfig.Bundles[0].Package {
@@ -174,17 +173,17 @@ func handleTraditionalUpgrade(ctx context.Context, indexImage string, bundleImag
 				Name:     bundleDeclConfig.Bundles[0].Name,
 				Replaces: channelHead,
 			}
-			extraDeclCfg.Channels[i].Entries = []declarativeconfig.ChannelEntry{entry}
+			originalDeclCfg.Channels[i].Entries = append(originalDeclCfg.Channels[i].Entries, entry)
 			break
 		}
 	}
 
 	// add the upgraded bundle to resulting declarative config
-	extraDeclCfg.Bundles = append(extraDeclCfg.Bundles, bundleDeclConfig.Bundles[0])
+	originalDeclCfg.Bundles = append(originalDeclCfg.Bundles, bundleDeclConfig.Bundles[0])
 
 	// validate the declarative config and convert it to a string
 	var content string
-	if content, err = fbcutil.ValidateAndStringify(extraDeclCfg); err != nil {
+	if content, err = fbcutil.ValidateAndStringify(originalDeclCfg); err != nil {
 		return "", fmt.Errorf("error validating and converting the declarative config object to a string format: %v", err)
 	}
 
@@ -216,14 +215,14 @@ func (c *IndexImageCatalogCreator) runFBCUpgrade(ctx context.Context) error {
 	}
 
 	// Adding the FBC "f" to the originalDeclcfg to generate a new FBC
-	extraDeclCfg, err := upgradeFBC(ctx, f, originalDeclcfg)
+	declcfg, err := upgradeFBC(ctx, f, originalDeclcfg)
 	if err != nil {
 		return fmt.Errorf("error creating the upgraded FBC: %v", err)
 	}
 
 	// validate the declarative config and convert it to a string
 	var content string
-	if content, err = fbcutil.ValidateAndStringify(extraDeclCfg); err != nil {
+	if content, err = fbcutil.ValidateAndStringify(declcfg); err != nil {
 		return fmt.Errorf("error validating/stringifying the declarative config object: %v", err)
 	}
 
