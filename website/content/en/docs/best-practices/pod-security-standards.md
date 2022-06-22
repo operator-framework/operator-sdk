@@ -121,8 +121,8 @@ Therefore, you will need to check and apply the configurations on it.
 
 **Note: Ensure the configuration is carried to the Pod/Containers on the bundle CSV after running make bundle**
 
-Note that Operator bundle generated with the target is building from looking on 
-the manifest under the `config` directory. 
+Note that the Operator bundle generated with the target is built from
+the manifests under the `config` directory. 
 
 To check an example of CSV which complies with the [restricted][restricted] policy, see the Golang sample
 under the [testdata/go/v3/memcached-operator/bundle/manifests/memcached-operator.clusterserviceversion.yaml](https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/v3/memcached-operator/bundle/manifests/memcached-operator.clusterserviceversion.yaml)
