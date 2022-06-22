@@ -21,7 +21,7 @@ on the namespace level will **not** be admitted and it will **not** be possible 
 
 **As a best practice, you must ensure that workloads (Operators and Operands) are defined to run under 
 restricted permissions unless they need further privileges. For the cases where Pod/Container(s) requires 
-escalating permissions, the recommendation is to use the label as described bellow**
+escalating permissions, the recommendation is to use the label as described below**
 
 #### How should I configure my Operators and Operands to comply with the criteria?
 
