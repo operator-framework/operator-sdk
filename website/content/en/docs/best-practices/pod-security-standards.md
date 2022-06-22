@@ -101,7 +101,7 @@ with the requirements in the same way. You can find some examples by looking at 
 
 - **For workloads that need elevated permissions:** it is recommended that you ensure the namespace containing your 
 solution is labeled accordingly. You can either update your operator to manage the namespace labels or include 
-the namespace labelling as part of the manual install instructions. Following the labels for this case scenario:
+the namespace labeling as part of the manual install instructions. Following the labels for this case scenario:
 
 ```yaml
   labels:
