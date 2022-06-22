@@ -2,8 +2,7 @@
 title: "Pod Security Standards"
 linkTitle: "Pod Security Standards"
 weight: 5
-description: This guide describes good practices for security standards for your Operators and Operands. Also,
-how to achieve the goal by configuring the Pod/Containers that will be installed by OLM.
+description: This guide describes best practices for security standards for Operators and Operands. This guide will also cover how to configure the Pods/Containers that will be created when your Operator is installed with OLM.
 ---
 
 ## Overview
