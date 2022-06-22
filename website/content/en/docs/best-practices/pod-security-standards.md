@@ -11,7 +11,7 @@ The [PodSecurityPolicy][pod-security] API is deprecated and will be removed from
 This API is replaced by a new built-in admission controller ([KEP-2579: Pod Security Admission Control][2579-psp-replacement]) which allows cluster admins to [enforce 
  Pod Security Standards Labels][enforce-standards-namespace-labels].
 
-#### What does that mean?
+### What does that mean?
 
 Namespace and Pod/Container can be defined with three different policies which are; **Privileged, Baseline and Restricted.** 
 ([More info](https://kubernetes.io/docs/concepts/security/pod-security-standards/)). Therefore, Pod(s)/Container(s) that 
@@ -22,7 +22,7 @@ on the namespace level will **not** be admitted and it will **not** be possible 
 restricted permissions unless they need further privileges. For the cases where Pod/Container(s) requires 
 escalating permissions, the recommendation is to use the label as described below**
 
-#### How should I configure my Operators and Operands to comply with the criteria?
+### How should I configure my Operators and Operands to comply with the criteria?
 
 - **For common cases that do not require escalating privileges:** configure all containers to comply with the [restricted][restricted] policy as shown in the following the examples:
 
@@ -110,7 +110,7 @@ the permissions are required.
     pod-security.kubernetes.io/warn: privileged
 ```
 
-#### How the Operator bundle (CSV) must be configured to apply the standards to the Pod/Containers which are installed by OLM (Operator itself)?
+### How the Operator bundle (CSV) must be configured to apply the standards to the Pod/Containers which are installed by OLM (Operator itself)?
 
 For Operators integrated with OLM, there is an Operator bundle with a CSV where the `spec.install.spec.deployments` has a Deployment 
 which defines the Pod/Container(s) that will be installed by OLM to get your Operator running on the cluster. 
