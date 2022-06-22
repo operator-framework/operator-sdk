@@ -99,7 +99,7 @@ dep:= &appsv1.Deployment{
 ```
 
 **For Ansible and Helm language based Operators:** Ansible playbooks or Helm charts MUST create manifests that comply 
-with the requirements at the same way. You can find some examples by looking at the samples under the 
+with the requirements in the same way. You can find some examples by looking at the samples under the 
 [testdata](https://github.com/operator-framework/operator-sdk/tree/master/testdata) directory.
 
 - **For workloads that need elevated permissions:** Use the following labels in any workload where 
