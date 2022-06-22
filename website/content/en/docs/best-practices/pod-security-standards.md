@@ -150,7 +150,7 @@ spec:
 ...
 ```
 
-- 3) Now, add to this test the CSV deployment (`spec.install.spec.deployments`) 
+- 3) Now, add the CSV deployment to this test (`spec.install.spec.deployments`) 
 - 4) Then, you can run the tool and check if its result will be `restricted` as expected, i.e.,
 
 ```sh
