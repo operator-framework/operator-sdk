@@ -145,7 +145,7 @@ able to be used to check locally the `Deployments/Pods` manifests and not the CS
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: test-csv-deployment-strattegy
+  name: test-csv-deployment-strategy
 spec:
 ...
 ```
