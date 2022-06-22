@@ -139,7 +139,7 @@ cluster as described in the [K8s documentation](https://kubernetes.io/docs/tutor
 able to be used to check locally the `Deployments/Pods` manifests and not the CSV. To check your CSV you can follow these steps:
 
 - 1) Create a new `test.yaml` file
-- 2) Add to the file the Deployment schema:
+- 2) Add Deployment schema to the file:
 
 ```yaml
 apiVersion: apps/v1
