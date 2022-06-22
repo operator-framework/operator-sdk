@@ -115,9 +115,9 @@ the permissions are required.
 
 #### How the Operator bundle (CSV) must be configured to apply the standards to the Pod/Containers which are installed by OLM (Operator itself)?
 
-For Operators integrated with OLM, they have an Operator bundle with an CSV where the `spec.install.spec.deployments` has a Deployment 
-which defines the Pod/Container(s) those will be installed by OLM to get your Operator itself running on the cluster. 
-Therefore, you will need to check and apply the configurations on it.
+For Operators integrated with OLM, there is an Operator bundle with a CSV where the `spec.install.spec.deployments` has a Deployment 
+which defines the Pod/Container(s) that will be installed by OLM to get your Operator running on the cluster. 
+In order for the security standards to be followed you will need to ensure the configurations are set correctly.
 
 **Note: Ensure the configuration is carried to the Pod/Containers on the bundle CSV after running make bundle**
 
