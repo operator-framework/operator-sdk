@@ -97,7 +97,7 @@ func (i *Install) setup(ctx context.Context) error {
 	// check if index image adopts File-Based Catalog or SQLite index image format
 	isFBCImage, err := fbcutil.IsFBC(ctx, i.IndexImageCatalogCreator.IndexImage)
 	if err != nil {
-		return fmt.Errorf("error in upgrading the bundle %q that was installed traditionally", i.IndexImageCatalogCreator.BundleImage)
+		return fmt.Errorf("error determining whether index %q is FBC or SQLite based: %v", i.IndexImageCatalogCreator.IndexImage, err)
 	}
 	i.IndexImageCatalogCreator.HasFBCLabel = isFBCImage
 
