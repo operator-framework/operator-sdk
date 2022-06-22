@@ -98,7 +98,7 @@ dep:= &appsv1.Deployment{
 }
 ```
 
-**For Ansible and Helm based language Operators:** Ansible playbooks or Helm charts MUST create manifests that comply 
+**For Ansible and Helm language based Operators:** Ansible playbooks or Helm charts MUST create manifests that comply 
 with the requirements at the same way. You can find some examples by looking at the samples under the 
 [testdata](https://github.com/operator-framework/operator-sdk/tree/master/testdata) directory.
 
