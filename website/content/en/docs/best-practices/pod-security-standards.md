@@ -136,7 +136,7 @@ To verify the policy of your Pod/Container(s) you might to use a [Kind](https://
 cluster as described in the [K8s documentation](https://kubernetes.io/docs/tutorials/security/cluster-level-pss/).
 
 **However, an easy way might be using the tool:** [psachecker](https://github.com/stlaz/psachecker). This tool is only 
-able to be used to check locally the `Deployments/Pods` manifests and not the CSV. Thus, to check out your CSV you can follow the steps:
+able to be used to check locally the `Deployments/Pods` manifests and not the CSV. To check your CSV you can follow these steps:
 
 - 1) Create a new `test.yaml` file
 - 2) Add to the file the Deployment schema:
