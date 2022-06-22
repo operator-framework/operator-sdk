@@ -17,7 +17,7 @@ This API is replaced by a new built-in admission controller ([KEP-2579: Pod Secu
 Namespace and Pod/Container can be defined with three different policies which are; **Privileged, Baseline and Restricted.** 
 ([More info](https://kubernetes.io/docs/concepts/security/pod-security-standards/)). Therefore, Pod(s)/Container(s) that 
 are **not** configured according to the enforced security standards defined globally or
-on the namespace level will **not** be admitted. In this way, it will **not** be possible to run them.
+on the namespace level will **not** be admitted and it will **not** be possible to run them.
 
 **As a best practice, you must ensure that workloads (Operators and Operands) are defined to run under 
 restricted permissions unless they need further privileges. For the cases where Pod/Container(s) requires 
