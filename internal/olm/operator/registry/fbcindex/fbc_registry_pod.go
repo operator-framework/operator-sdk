@@ -81,7 +81,7 @@ func (f *FBCRegistryPod) init(cfg *operator.Configuration, cs *v1alpha1.CatalogS
 	}
 
 	if f.FBCIndexRootDir == "" {
-		f.FBCIndexRootDir = "/configs"
+		f.FBCIndexRootDir = fmt.Sprintf("/%s-configs", cs.Name)
 	}
 
 	f.cfg = cfg
