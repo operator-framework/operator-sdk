@@ -135,8 +135,8 @@ cluster as described in the [K8s documentation](https://kubernetes.io/docs/tutor
 **However, an easy way might be using the tool:** [psachecker](https://github.com/stlaz/psachecker). This tool is only 
 able to be used to check locally the `Deployments/Pods` manifests and not the CSV. To check your CSV you can follow these steps:
 
-- 1) Create a new `test.yaml` file
-- 2) Add Deployment schema to the file:
+- Create a new `test.yaml` file
+- Add Deployment schema to the file:
 
 ```yaml
 apiVersion: apps/v1
@@ -147,8 +147,8 @@ spec:
 ...
 ```
 
-- 3) Now, add the CSV deployment to this test (`spec.install.spec.deployments`) 
-- 4) Then, you can run the tool and check if its result will be `restricted` as expected, i.e.,
+- Now, add the CSV deployment to this test (`spec.install.spec.deployments`) 
+- Then, you can run the tool and check if its result will be `restricted` as expected (i.e.):
 
 ```sh
 $ ./kubectl-psachecker inspect-workloads -f test.yaml
