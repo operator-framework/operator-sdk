@@ -130,7 +130,7 @@ under the [testdata/go/v3/memcached-operator/bundle/manifests/memcached-operator
 **Attention** If you need to use the labels to define the Pod/Container(s) installed by OLM (Operator itself) via the CSV are Privileged 
 then, that means set the labels under the `spec.install.spec.deployments`. (_not in the CSV labels on top of the file_)
 
-#### How can I verify my manifest? How to check what are the policy configured on them?
+#### How can I verify my manifest? How do I check what policy is configured?
 
 To verify the policy of your Pod/Container(s) you might to use a [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/)
 cluster as described in the [K8s documentation](https://kubernetes.io/docs/tutorials/security/cluster-level-pss/).
