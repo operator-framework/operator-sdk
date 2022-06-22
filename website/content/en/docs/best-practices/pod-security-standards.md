@@ -99,8 +99,9 @@ dep:= &appsv1.Deployment{
 with the requirements in the same way. You can find some examples by looking at the samples under the 
 [testdata](https://github.com/operator-framework/operator-sdk/tree/master/testdata) directory.
 
-- **For workloads that need elevated permissions:** Use the following labels in any workload where 
-the permissions are required.
+- **For workloads that need elevated permissions:** it is recommended that you ensure the namespace containing your 
+solution is labeled accordingly. You can either update your operator to manage the namespace labels or include 
+the namespace labeling as part of the manual install instructions. Following the labels for this case scenario:
 
 ```yaml
   labels:
@@ -123,9 +124,6 @@ the manifests under the `config` directory.
 
 To check an example of a CSV which complies with the [restricted][restricted] policy, see the Golang sample
 under the [testdata/go/v3/memcached-operator/bundle/manifests/memcached-operator.clusterserviceversion.yaml](https://github.com/operator-framework/operator-sdk/blob/master/testdata/go/v3/memcached-operator/bundle/manifests/memcached-operator.clusterserviceversion.yaml)
-
-**Attention** If you need to use the labels to define the Pod/Container(s) installed by OLM (Operator itself) via the CSV are Privileged 
-then, that means set the labels under the `spec.install.spec.deployments`. (_not in the CSV labels on top of the file_)
 
 #### How can I verify my manifest? How do I check what policy is configured?
 
