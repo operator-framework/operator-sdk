@@ -119,7 +119,7 @@ For Operators integrated with OLM, they have an Operator bundle with an CSV wher
 which defines the Pod/Container(s) those will be installed by OLM to get your Operator itself running on the cluster. 
 Therefore, you will need to check and apply the configurations on it.
 
-**Please, ensure the configuration is carried to the Pod/Containers on the bundle CSV after run make bundle**
+**Note: Ensure the configuration is carried to the Pod/Containers on the bundle CSV after running make bundle**
 
 Note that Operator bundle generated with the target is building from looking on 
 the manifest under the `config` directory. 
