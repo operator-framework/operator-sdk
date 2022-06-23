@@ -33,6 +33,8 @@ Using the `errors` package from [`operator-framework/api`][of-api], we
 can start by validating the correct number of arguments and marshaling a
 [`ManifestResult`][manifest_result] into STDOUT.
 
+`myvalidator/main.go`
+
 ```go
 package main
 
@@ -73,7 +75,7 @@ When executed on its own, this validator prints a JSON representation of
 [`ManifestResult`][manifest_result].
 
 ```sh
-go build main.go && ./main
+go build -o myvalidator/main myvalidator/main.go && ./myvalidator/main
 
 {
     "Name": "Always Green Example",
@@ -82,11 +84,9 @@ go build main.go && ./main
 }
 ```
 
-As long as the STDOUT follows the ManifestResult spec, it can be used
-with `operator-sdk bundle validate` command.
-
 ```sh
-$ go build main.go && operator-sdk bundle validate ./bundle --alpha-select-external ./main
+$ go build -o myvalidator/main myvalidator/main.go
+$ operator-sdk bundle validate ./bundle --alpha-select-external ./myvalidator/main
 ```
 ```
 INFO[0000] All validation tests have completed successfully
@@ -109,7 +109,8 @@ validatorWarnings = []errors.Error{errors.Error{"someWarningType", "somelevel", 
 We can now rebuild and run the validator, which now shows errors.
 
 ```sh
-$ go build main.go && operator-sdk bundle validate ./bundle --alpha-select-external ./main
+$ go build -o myvalidator/main myvalidator/main.go
+$ operator-sdk bundle validate ./bundle --alpha-select-external ./myvalidator/main
 ```
 ```
 WARN[0000] somelevel: Field somefield, Value somebadvalue: somedetail
@@ -126,6 +127,8 @@ package][of-validation] at an arbitrary version.
 
 Currently, some of the code necessary requires copying code from
 internal packages, which may someday become a library.
+
+`myvalidator/main.go`
 
 ```go
 package main
@@ -209,7 +212,7 @@ func getBundleDataFromDir(dir string) (*apimanifests.Bundle, string, error) {
 // -------------------------------------------------------
 // Everything below this line was copied code from the internal Operator SDK
 // registry package operator-sdk/internal/registry/labels.go. If this is
-// generally userful please file an issue to move this to a reuable library.
+// generally useful please file an issue to move this to a reuable library.
 // to make this a library or other reusable code.
 // -------------------------------------------------------
 
@@ -299,7 +302,8 @@ The `main.go` is then built into a binary and used with `operator-sdk bundle
 validate`
 
 ```sh
-$ go build main.go && operator-sdk bundle validate ./bundle --alpha-select-external ./main
+$ go build -o myvalidator/main myvalidator/main.go
+$ operator-sdk bundle validate ./bundle --alpha-select-external ./myvalidator/main
 ```
 ```
 WARN[0000] Warning: Value sandbox-op.v0.0.1: owned CRD "sandboxes.sandbox.example.come" has an empty description
