@@ -246,6 +246,10 @@ func upgradeFBC(ctx context.Context, f *fbcutil.FBCContext, originalDeclCfg *dec
 		return nil, fmt.Errorf("bundle image should contain at least one bundle blob")
 	}
 
+	extraDeclConfig := &declarativeconfig.DeclarativeConfig{}
+	// declcfg contains all the bundles we need to insert to form the new FBC
+	entries := []declarativeconfig.ChannelEntry{} // Used when generating a new channel
+
 	// Checking if the existing file-based catalog (before upgrade) contains the bundle and channel that we intend to insert.
 	// If the bundle already exists, we error out. If the channel already exists, we store the index of the channel. This
 	// index will be used to access the channel from the declarative config object
@@ -270,6 +274,8 @@ func upgradeFBC(ctx context.Context, f *fbcutil.FBCContext, originalDeclCfg *dec
 				return nil, err
 			}
 
+			extraDeclConfig.Channels = append(extraDeclConfig.Channels, channel)
+
 			break // We only want to search through the specific channel
 		}
 	}
@@ -280,9 +286,6 @@ func upgradeFBC(ctx context.Context, f *fbcutil.FBCContext, originalDeclCfg *dec
 		existingBundles[bundle.Name] = bundle.Package
 	}
 
-	extraDeclConfig := &declarativeconfig.DeclarativeConfig{}
-	// declcfg contains all the bundles we need to insert to form the new FBC
-	entries := []declarativeconfig.ChannelEntry{} // Used when generating a new channel
 	for i, bundle := range declcfg.Bundles {
 		// if it is not present in the bundles array or belongs to a different package, we can add it
 		if _, present := existingBundles[bundle.Name]; !present || existingBundles[bundle.Name] != bundle.Package {
@@ -318,24 +321,16 @@ func upgradeFBC(ctx context.Context, f *fbcutil.FBCContext, originalDeclCfg *dec
 		extraDeclConfig.Channels = []declarativeconfig.Channel{channel}
 	}
 
-	// check if package already exists
-	packagePresent := false
-	for _, packageName := range originalDeclCfg.Packages {
-		if packageName.Name == f.Package {
-			packagePresent = true
-			break
-		}
+	// always add the package as we are starting with a new empty DeclarativeConfig
+	packageBlob := declarativeconfig.Package{
+		Schema:         fbcutil.SchemaPackage,
+		Name:           f.Package,
+		DefaultChannel: f.ChannelName,
 	}
+	extraDeclConfig.Packages = []declarativeconfig.Package{packageBlob}
 
-	// only add the new package if it does not already exist
-	if !packagePresent {
-		packageBlob := declarativeconfig.Package{
-			Schema:         fbcutil.SchemaPackage,
-			Name:           f.Package,
-			DefaultChannel: f.ChannelName,
-		}
-		extraDeclConfig.Packages = []declarativeconfig.Package{packageBlob}
-	}
+	// copy over any other FBC metadata
+	extraDeclConfig.Others = originalDeclCfg.Others
 
 	return extraDeclConfig, nil
 }
