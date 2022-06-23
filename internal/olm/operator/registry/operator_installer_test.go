@@ -32,6 +32,9 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 )
 
+const name = "fakeName"
+const namespace = "fakeNS"
+
 var _ = Describe("OperatorInstaller", func() {
 	Describe("NewOperatorInstaller", func() {
 		It("should create an OperatorInstaller", func() {
@@ -161,29 +164,29 @@ var _ = Describe("OperatorInstaller", func() {
 			oi.cfg.Client = fake.NewClientBuilder().WithScheme(sch).WithObjects(
 				&v1alpha1.InstallPlan{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "fakeName",
-						Namespace: "fakeNS",
+						Name:      name,
+						Namespace: namespace,
 					},
 				},
 			).Build()
 
 			ip := &v1alpha1.InstallPlan{}
 			ipKey := types.NamespacedName{
-				Namespace: "fakeNS",
-				Name:      "fakeName",
+				Namespace: namespace,
+				Name:      name,
 			}
 
 			err := oi.cfg.Client.Get(context.TODO(), ipKey, ip)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(ip.Name).To(Equal("fakeName"))
-			Expect(ip.Namespace).To(Equal("fakeNS"))
+			Expect(ip.Name).To(Equal(name))
+			Expect(ip.Namespace).To(Equal(namespace))
 
 			// Test
 			sub := &v1alpha1.Subscription{
 				Status: v1alpha1.SubscriptionStatus{
 					InstallPlanRef: &corev1.ObjectReference{
-						Name:      "fakeName",
-						Namespace: "fakeNS",
+						Name:      name,
+						Namespace: namespace,
 					},
 				},
 			}
@@ -191,8 +194,8 @@ var _ = Describe("OperatorInstaller", func() {
 			Expect(err).ToNot(HaveOccurred())
 			err = oi.cfg.Client.Get(context.TODO(), ipKey, ip)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(ip.Name).To(Equal("fakeName"))
-			Expect(ip.Namespace).To(Equal("fakeNS"))
+			Expect(ip.Name).To(Equal(name))
+			Expect(ip.Namespace).To(Equal(namespace))
 			Expect(ip.Spec.Approved).To(Equal(true))
 		})
 		It("should return an error if the install plan does not exist.", func() {
@@ -200,8 +203,8 @@ var _ = Describe("OperatorInstaller", func() {
 			sub := &v1alpha1.Subscription{
 				Status: v1alpha1.SubscriptionStatus{
 					InstallPlanRef: &corev1.ObjectReference{
-						Name:      "fakeName",
-						Namespace: "fakeNS",
+						Name:      name,
+						Namespace: namespace,
 					},
 				},
 			}
@@ -224,8 +227,8 @@ var _ = Describe("OperatorInstaller", func() {
 			cfg.Client = fake.NewClientBuilder().WithScheme(sch).Build()
 
 			oi = NewOperatorInstaller(cfg)
-			oi.StartingCSV = "fakeName"
-			oi.cfg.Namespace = "fakeNS"
+			oi.StartingCSV = name
+			oi.cfg.Namespace = namespace
 		})
 		It("should return an error if the subscription does not exist.", func() {
 			sub := newSubscription(oi.StartingCSV, oi.cfg.Namespace, withCatalogSource("duplicate", oi.cfg.Namespace))
@@ -236,8 +239,8 @@ var _ = Describe("OperatorInstaller", func() {
 
 		})
 		It("should return if subscription has an install plan and previous install plan is nil", func() {
-			name := "fakeName"
-			namespace := "fakeNS"
+			name := name
+			namespace := namespace
 			prevSub := &v1alpha1.Subscription{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      name,
@@ -264,8 +267,8 @@ var _ = Describe("OperatorInstaller", func() {
 			Expect(err).ToNot(HaveOccurred())
 		})
 		It("should return if subscription has an install plan and is different than previous install plan", func() {
-			name := "fakeName"
-			namespace := "fakeNS"
+			name := name
+			namespace := namespace
 			prevSub := &v1alpha1.Subscription{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      name,
@@ -593,7 +596,7 @@ var _ = Describe("OperatorInstaller", func() {
 			Expect(err).To(HaveOccurred())
 		})
 		It("should return nothing if namespace does not match", func() {
-			oi.cfg.Namespace = "fakens"
+			oi.cfg.Namespace = namespace
 			_ = createOperatorGroupHelper(context.TODO(), client, "og1", "atestns")
 			grp, found, err := oi.getOperatorGroup(context.TODO())
 			Expect(grp).To(BeNil())
