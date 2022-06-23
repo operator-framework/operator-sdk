@@ -312,4 +312,4 @@ INFO[0000] All validation tests have completed successfully
 [errors-pkg]: https://github.com/operator-framework/api/pkg/validation/errors
 [manifest_result]: https://github.com/operator-framework/api/blob/master/pkg/validation/errors/error.go#L9-L16
 [of-api]: https://github.com/operator-framework/api
-[of-validation]: https://github.com/operator-framework/api/pkg/validation
+[of-validation]: https://github.com/operator-framework/api/tree/master/pkg/validation
