@@ -263,7 +263,7 @@ func findBundleMetadata(fs afero.Fs, bundleRoot string) (Labels, string, error) 
 		}
 		return nil
 	})
-	if err != nil {todoapi
+	if err != nil {
 		return nil, "", err
 	}
 
