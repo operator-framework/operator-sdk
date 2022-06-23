@@ -235,23 +235,66 @@ var _ = Describe("OperatorInstaller", func() {
 			Expect(err.Error()).Should(ContainSubstring("install plan is not available for the subscription"))
 
 		})
-		It("should return if subscription has an install plan.", func() {
+		It("should return if subscription has an install plan and previous install plan is nil", func() {
+			name := "fakeName"
+			namespace := "fakeNS"
+			prevSub := &v1alpha1.Subscription{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: namespace,
+				},
+			}
+
 			sub := &v1alpha1.Subscription{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "fakeName",
-					Namespace: "fakeNS",
+					Name:      name,
+					Namespace: namespace,
 				},
 				Status: v1alpha1.SubscriptionStatus{
 					InstallPlanRef: &corev1.ObjectReference{
-						Name:      "fakeName",
-						Namespace: "fakeNS",
+						Name:      name,
+						Namespace: namespace,
 					},
 				},
 			}
 			err := oi.cfg.Client.Create(context.TODO(), sub)
 			Expect(err).ToNot(HaveOccurred())
 
-			err = oi.waitForInstallPlan(context.TODO(), sub)
+			err = oi.waitForInstallPlan(context.TODO(), prevSub)
+			Expect(err).ToNot(HaveOccurred())
+		})
+		It("should return if subscription has an install plan and is different than previous install plan", func() {
+			name := "fakeName"
+			namespace := "fakeNS"
+			prevSub := &v1alpha1.Subscription{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: namespace,
+				},
+				Status: v1alpha1.SubscriptionStatus{
+					InstallPlanRef: &corev1.ObjectReference{
+						Name:      name + "diff",
+						Namespace: namespace + "diff",
+					},
+				},
+			}
+
+			sub := &v1alpha1.Subscription{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: namespace,
+				},
+				Status: v1alpha1.SubscriptionStatus{
+					InstallPlanRef: &corev1.ObjectReference{
+						Name:      name,
+						Namespace: namespace,
+					},
+				},
+			}
+			err := oi.cfg.Client.Create(context.TODO(), sub)
+			Expect(err).ToNot(HaveOccurred())
+
+			err = oi.waitForInstallPlan(context.TODO(), prevSub)
 			Expect(err).ToNot(HaveOccurred())
 		})
 	})

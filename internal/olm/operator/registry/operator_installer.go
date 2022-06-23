@@ -31,6 +31,8 @@ import (
 
 	olmclient "github.com/operator-framework/operator-sdk/internal/olm/client"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
+
+	corev1 "k8s.io/api/core/v1"
 )
 
 type OperatorInstaller struct {
@@ -345,11 +347,17 @@ func (o OperatorInstaller) waitForInstallPlan(ctx context.Context, sub *v1alpha1
 		Name:      sub.GetName(),
 	}
 
+	// Get the previous InstallPlanRef
+	prevIpRef := corev1.ObjectReference{}
+	if sub.Status.InstallPlanRef != nil {
+		prevIpRef = *sub.Status.InstallPlanRef
+	}
+
 	ipCheck := wait.ConditionFunc(func() (done bool, err error) {
 		if err := o.cfg.Client.Get(ctx, subKey, sub); err != nil {
 			return false, err
 		}
-		if sub.Status.InstallPlanRef != nil {
+		if sub.Status.InstallPlanRef != nil && sub.Status.InstallPlanRef.Name != prevIpRef.Name {
 			return true, nil
 		}
 		return false, nil
