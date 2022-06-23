@@ -348,16 +348,16 @@ func (o OperatorInstaller) waitForInstallPlan(ctx context.Context, sub *v1alpha1
 	}
 
 	// Get the previous InstallPlanRef
-	prevIpRef := corev1.ObjectReference{}
+	prevIPRef := corev1.ObjectReference{}
 	if sub.Status.InstallPlanRef != nil {
-		prevIpRef = *sub.Status.InstallPlanRef
+		prevIPRef = *sub.Status.InstallPlanRef
 	}
 
 	ipCheck := wait.ConditionFunc(func() (done bool, err error) {
 		if err := o.cfg.Client.Get(ctx, subKey, sub); err != nil {
 			return false, err
 		}
-		if sub.Status.InstallPlanRef != nil && sub.Status.InstallPlanRef.Name != prevIpRef.Name {
+		if sub.Status.InstallPlanRef != nil && sub.Status.InstallPlanRef.Name != prevIPRef.Name {
 			return true, nil
 		}
 		return false, nil
