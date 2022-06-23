@@ -329,6 +329,9 @@ func upgradeFBC(ctx context.Context, f *fbcutil.FBCContext, originalDeclCfg *dec
 	}
 	extraDeclConfig.Packages = []declarativeconfig.Package{packageBlob}
 
+	// copy over any other FBC metadata
+	extraDeclConfig.Others = originalDeclCfg.Others
+
 	return extraDeclConfig, nil
 }
 
