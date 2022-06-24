@@ -309,7 +309,7 @@ $ operator-sdk bundle validate ./bundle --alpha-select-external ./myvalidator/ma
 WARN[0000] Warning: Value sandbox-op.v0.0.1: owned CRD "sandboxes.sandbox.example.come" has an empty description
 INFO[0000] All validation tests have completed successfully
 ```
-[errors-pkg]: https://github.com/operator-framework/api/pkg/validation/errors
+[errors-pkg]: https://github.com/operator-framework/api/pkg/tree/master/validation/errors
 [manifest_result]: https://github.com/operator-framework/api/blob/master/pkg/validation/errors/error.go#L9-L16
 [of-api]: https://github.com/operator-framework/api
 [of-validation]: https://github.com/operator-framework/api/tree/master/pkg/validation
