@@ -194,6 +194,26 @@ var _ = Describe("operator-sdk", func() {
 			var nodes []string
 			Expect(json.Unmarshal([]byte(status), &nodes)).To(Succeed())
 			Expect(len(nodes)).To(BeNumerically(">", 0))
+
+			By("validating that pod(s) status.phase=Running")
+			var podsOutput string
+			getPods := func() error {
+				podsOutput, err = tc.Kubectl.Get(true, "pods", "-o", "jsonpath={range .items[*]}{.metadata.name},{.status.phase} {end}")
+				if err == nil && strings.TrimSpace(podsOutput) == "" {
+					err = errors.New("empty pod output, continue")
+				}
+
+				return err
+			}
+			Eventually(getPods, 1*time.Minute, time.Second).Should(Succeed())
+			podSlice := strings.Split(strings.TrimSpace(podsOutput), " ")
+			Expect(len(podSlice)).To(BeNumerically(">", 0))
+			for _, pod := range podSlice {
+				// make sure any pod that contains the substring "memcached" is in the running state
+				if strings.Contains(pod, "memcached") {
+					Expect(pod).To(ContainSubstring(",Running"))
+				}
+			}
 		})
 	})
 })

@@ -437,6 +437,7 @@ func (r *MemcachedReconciler) deploymentForMemcached(m *cachev1alpha1.Memcached)
 									"ALL",
 								},
 							},
+							RunAsUser: &[]int64{1000}[0],
 						},
 						Command: []string{"memcached", "-m=64", "-o", "modern", "-v"},
 						Ports: []corev1.ContainerPort{{

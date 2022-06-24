@@ -54,6 +54,7 @@ Please, do **not** use this field if you are looking to build Operators that wor
 
 **On Reconciliations, such as code implementation in Go:**
 
+**Note:** *if you are setting the `RunAsNonRoot` value to `true` in the `SecurityContext` you will also need to specify the `RunAsUser` value to set the user to a numeric user. In this implementation it sets the user uid to `1000`.*
 ```go
 dep:= &appsv1.Deployment{
   ObjectMeta: metav1.ObjectMeta{
@@ -87,6 +88,7 @@ dep:= &appsv1.Deployment{
                        "ALL",
                     },
                  },
+                 RunAsUser: &[]int64{1000}[0],
               },
            }},
         },
