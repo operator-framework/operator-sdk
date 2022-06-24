@@ -1,0 +1,11 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Upgrade kube proxy image `gcr.io/kubebuilder/kube-rbac-proxy` from `v0.11.0` to `v0.12.0`. [More info](https://github.com/brancz/kube-rbac-proxy/releases/tag/v0.12.0)
+    kind: "change"
+    breaking: false
+    migration:
+      header: Upgrade kube proxy image `gcr.io/kubebuilder/kube-rbac-proxy` from `v0.11.0` to `v0.12.0`
+      body: |
+        Update the tag version used for `gcr.io/kubebuilder/kube-rbac-proxy` to `v0.12.0` in the file `config/default/manager_auth_proxy_patch.yaml`
