@@ -207,25 +207,6 @@ func WrapWarn(err error) {
 
 func (tc TestContext) UncommentRestrictivePodStandards() error {
 	configManager := filepath.Join(tc.Dir, "config", "manager", "manager.yaml")
-	managerAuth := filepath.Join(tc.Dir, "config", "default", "manager_auth_proxy_patch.yaml")
-
-	if err := kbutil.ReplaceInFile(configManager, `# TODO(user): uncomment for common cases that do not require escalating privileges
-        # capabilities:
-        #   drop:
-        #     - "ALL"`, `  capabilities:
-            drop:
-              - "ALL"`); err != nil {
-		return err
-	}
-
-	if err := kbutil.ReplaceInFile(managerAuth, `# TODO(user): uncomment for common cases that do not require escalating privileges
-        # capabilities:
-        #   drop:
-        #     - "ALL"`, `  capabilities:
-            drop:
-              - "ALL"`); err != nil {
-		return err
-	}
 
 	if err := kbutil.ReplaceInFile(configManager, `# TODO(user): For common cases that do not require escalating privileges
         # it is recommended to ensure that all your Pods/Containers are restrictive.
