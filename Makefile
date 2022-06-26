@@ -51,6 +51,17 @@ bindata: ## Update project bindata
 fix: ## Fixup files in the repo.
 	go mod tidy
 	go fmt ./...
+	make setup-lint
+	$(TOOLS_DIR)/golangci-lint run --fix
+
+.PHONY: setup-lint
+setup-lint: ## Setup the lint
+	$(SCRIPTS_DIR)/fetch golangci-lint 1.46.2
+
+.PHONY: lint
+lint: setup-lint ## Run the lint check
+	$(TOOLS_DIR)/golangci-lint run
+
 
 .PHONY: clean
 clean: ## Cleanup build artifacts and tool binaries.
@@ -132,7 +143,8 @@ test-sanity: generate fix ## Test repo formatting, linting, etc.
 	./hack/check-license.sh
 	./hack/check-error-log-msg-format.sh
 	go vet ./...
-	$(SCRIPTS_DIR)/fetch golangci-lint 1.46.2 && $(TOOLS_DIR)/golangci-lint run
+	setup-lint
+	lint
 	git diff --exit-code # diff again to ensure other checks don't change repo
 
 .PHONY: test-docs
