@@ -76,7 +76,7 @@ spec:
 - Use [finalizers][finalizers] when/if required 
 - Cover the project with tests/CI to ensure its quality:
     - For any language-based operator, you can use [Scorecard][scorecard] to implement functional tests
-    - For Go-based operators, you can also use [envtest][envtest] to cover the controllers. For further information see [Testing with EnvTest][testing-with-envtest]. Also, see the `test` directory for the Memcached sample under the [testdata/go/v3/memcached-operator][sample] to know how can you built e2e tests.
+    - For Go-based operators, you can also use [envtest][envtest] to cover the controllers. For further information see [Testing with EnvTest][testing-with-envtest]. Also, see the `test` directory for the Memcached sample under the [testdata/go/v3/memcached-operator][sample] to know how can you build e2e tests.
     - For Ansible-based operators, you can also use [Molecule][molecule], an Ansible testing framework. For further information see [Testing with Molecule][molecule-tests]
     - For Helm-based operators, you can also use [Chart tests][helm-chart-tests]
 - Ensure that you checked the [Can I customize the projects initialized with operator-sdk?][faq] and understand the [Project Layout][project-layout] before starting to do your customizations as please you on top.

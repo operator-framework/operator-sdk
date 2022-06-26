@@ -9,7 +9,7 @@ weight: 70
 
 The Operator SDK project recommends using controller-runtime's [envtest][envtest] to write tests for your Operators projects. Envtest has a more active contributor community, it is more mature than Operator SDK's test framework, and it does not require an actual cluster to run tests which can be a huge benefit in CI scenarios.
 
-## Using EnvTest 
+## Using EnvTest
 
 You will see that `controllers/suite_test.go` is created when a controller is scaffolded by the tool. This file contains boilerplate for executing integration tests using [envtest][envtest] with [ginkgo](https://onsi.github.io/ginkgo/) and [gomega][gomega].
 Setup instructions, including those for disconnected environments, are found [here][envtest-setup].
@@ -27,12 +27,12 @@ Operator SDK adopted this stack to write tests for its operators. It might be us
 ## e2e Integration tests
 
 - **For Golang-based operators**: you can create the e2e tests using Go. See the `test` directory for the Memcached sample 
-under the [testdata/go/v3/memcached-operator][sample] to know how can you built your own e2e tests.
+under the [testdata/go/v3/memcached-operator][sample] to see an example of e2e tests.
 - **For Ansible-based operators**: you can use [Molecule][molecule], an Ansible testing framework. For further information see [Testing with Molecule][molecule-tests].
 - **For Helm-based operators**: you can also use [Chart tests][helm-chart-tests].
 
-Alternatively, you can achieve the same goal using shell scripts. You might want to look in some scripts as a helper that was used to test old versions
-of projects built with SDK `1.0.0` see:
+Alternatively, you can achieve the same goal using shell scripts. The following are a few examples of shell scripts
+used for testing projects built with SDK `1.0.0`:
 
 - [Legacy test to check Golang-based Operators][go-legacy-shell]
 - [Legacy test to check Helm-based Operators][helm-legacy-shell]
@@ -40,7 +40,7 @@ of projects built with SDK `1.0.0` see:
 
 ## Other Options
 
-Also, you can write tests for your operator in a declarative using the [kuttl][kuttl]. Via kuttl, you can define YAML manifests that specify the expected before and after statues of a cluster when your operator is used. For more info see [Writing Kuttl Scorecard Tests][writing-kuttl-scorecard-tests].
+Also, you can write tests for your operator in a declarative format using [kuttl][kuttl]. Via kuttl, you can define YAML manifests that specify the expected before and after states of a cluster when your operator is used. For more info see [Writing Kuttl Scorecard Tests][writing-kuttl-scorecard-tests].
 
 To implement application-specific tests, the SDK's test harness, [scorecard][scorecard], provides the ability to ship custom code in container images as well, which can be referenced in the test suite. Because this test suite definition metadata travels with the Operator Bundle, it allows for functional testing of the Operator without the source code or the project layout being available. See [Writing Custom Scorecard Tests][writing-custom-scorecard-tests].
 

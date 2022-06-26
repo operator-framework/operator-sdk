@@ -103,7 +103,7 @@ func (mh *Memcached) Run() {
 	mh.uncommentManifestsKustomization()
 	mh.implementingE2ETests()
 
-	//Todo: remove after apply the fix in Kubebuilder
+	// TODO: remove after the fix in Kubebuilder is applied
 	// https://github.com/operator-framework/operator-sdk/issues/5875
 	err = kbutil.ReplaceInFile(filepath.Join(mh.ctx.Dir, "Makefile"),
 		`curl -s $(KUSTOMIZE_INSTALL_SCRIPT) | bash -s -- $(subst v,,$(KUSTOMIZE_VERSION)) $(LOCALBIN)`,

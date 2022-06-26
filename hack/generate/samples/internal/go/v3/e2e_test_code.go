@@ -10,32 +10,48 @@ import (
 	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 )
 
-// implementingWebhooks will customize the kind wekbhok file
+// implementingE2ETests will add e2e test for the sample
+// so that users are able to know how the can create their own e2e tests
 func (mh *Memcached) implementingE2ETests() {
-	log.Infof("implementing e2e tests as example")
+	log.Infof("implementing example e2e tests")
 
+	// testdDir is testdata/go/v3/memcached-operator/test
 	testDir := filepath.Join(mh.ctx.Dir, "test")
-	err := os.Mkdir(testDir, os.ModePerm)
-	pkg.CheckError("error to create test dir", err)
+	// testE2eDir is testdata/go/v3/memcached-operator/test/e2e
+	testE2eDir := filepath.Join(testDir, "e2e")
+	// testE2eDir is testdata/go/v3/memcached-operator/test/utils
+	testUtilsDir := filepath.Join(testDir, "utils")
 
-	testE2eDir := filepath.Join(mh.ctx.Dir, "test", "e2e")
-	err = os.Mkdir(testE2eDir, os.ModePerm)
-	pkg.CheckError("error to create test e2e dir", err)
+	// Following we will create the directories
+	// Create the golang files with a string replace inside onlu
+	// Then, replace the string replace by the template contents
+	mh.createDirs(testDir, testE2eDir, testUtilsDir)
+	mh.createGoFiles(testE2eDir, testUtilsDir)
+	mh.addContent(testE2eDir, testUtilsDir)
 
-	testUtilsDir := filepath.Join(mh.ctx.Dir, "test", "utils")
-	err = os.Mkdir(testUtilsDir, os.ModePerm)
-	pkg.CheckError("error to create test e2e dir", err)
+	// Add a target to run the tests into the Makefile
+	mh.addTestE2eMaekefileTarget()
+}
 
-	err = ioutil.WriteFile(filepath.Join(testE2eDir, "e2e_suite_test.go"), []byte("replace"), 0644)
-	pkg.CheckError("error to create file to add e2e_suite_test.go", err)
+func (mh *Memcached) addTestE2eMaekefileTarget() {
+	err := kbutil.ReplaceInFile(filepath.Join(mh.ctx.Dir, "Makefile"),
+		`KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out`,
+		`KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)"  go test $(go list ./... | grep -v /test/) -coverprofile cover.out`,
+	)
+	pkg.CheckError("replacing test target", err)
 
-	err = ioutil.WriteFile(filepath.Join(testE2eDir, "e2e_test.go"), []byte("replace"), 0644)
-	pkg.CheckError("error to create file to add e2e_test.go", err)
+	err = kbutil.InsertCode(filepath.Join(mh.ctx.Dir, "Makefile"),
+		`.PHONY: test
+test: manifests generate fmt vet envtest ## Run tests.
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)"  go test $(go list ./... | grep -v /test/) -coverprofile cover.out
+`,
+		targetTemplate,
+	)
+	pkg.CheckError("insert e2e target", err)
+}
 
-	err = ioutil.WriteFile(filepath.Join(testUtilsDir, "utils.go"), []byte("replace"), 0644)
-	pkg.CheckError("error to create file to add utils.go", err)
-
-	err = kbutil.ReplaceInFile(filepath.Join(testE2eDir, "e2e_suite_test.go"),
+func (mh *Memcached) addContent(testE2eDir string, testUtilsDir string) {
+	err := kbutil.ReplaceInFile(filepath.Join(testE2eDir, "e2e_suite_test.go"),
 		"replace",
 		e2eSuiteTemplate,
 	)
@@ -52,21 +68,26 @@ func (mh *Memcached) implementingE2ETests() {
 		utilsTemplate,
 	)
 	pkg.CheckError("replacing utils", err)
+}
 
-	err = kbutil.ReplaceInFile(filepath.Join(mh.ctx.Dir, "Makefile"),
-		`KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out`,
-		`KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)"  go test $(go list ./... | grep -v /test/) -coverprofile cover.out`,
-	)
-	pkg.CheckError("replacing test target", err)
+func (mh *Memcached) createGoFiles(testE2eDir string, testUtilsDir string) {
+	err := ioutil.WriteFile(filepath.Join(testE2eDir, "e2e_suite_test.go"), []byte("replace"), 0644)
+	pkg.CheckError("error to create file to add e2e_suite_test.go", err)
 
-	err = kbutil.InsertCode(filepath.Join(mh.ctx.Dir, "Makefile"),
-		`.PHONY: test
-test: manifests generate fmt vet envtest ## Run tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)"  go test $(go list ./... | grep -v /test/) -coverprofile cover.out
-`,
-		targetTemplate,
-	)
-	pkg.CheckError("insert e2e target", err)
+	err = ioutil.WriteFile(filepath.Join(testE2eDir, "e2e_test.go"), []byte("replace"), 0644)
+	pkg.CheckError("error to create file to add e2e_test.go", err)
+
+	err = ioutil.WriteFile(filepath.Join(testUtilsDir, "utils.go"), []byte("replace"), 0644)
+	pkg.CheckError("error to create file to add utils.go", err)
+}
+
+func (mh *Memcached) createDirs(testDir string, testE2eDir string, testUtilsDir string) {
+	err := os.Mkdir(testDir, os.ModePerm)
+	pkg.CheckError("error to create test dir", err)
+	err = os.Mkdir(testE2eDir, os.ModePerm)
+	pkg.CheckError("error to create test e2e dir", err)
+	err = os.Mkdir(testUtilsDir, os.ModePerm)
+	pkg.CheckError("error to create test utils dir", err)
 }
 
 const e2eSuiteTemplate = `/*
@@ -146,16 +167,26 @@ var _ = Describe("memcached", func() {
 
 	Context("ensure that Operator and Operand(s) can run in restricted namespaces", func() {
 		BeforeEach(func() {
+			// The prometheus and the certmanager are installed in this test
+			// because the Memcached sample has this option enable and 
+            // when we try to apply the manifests both will be required to be installed
 			By("installing prometheus operator")
 			Expect(utils.InstallPrometheusOperator()).To(Succeed())
 
 			By("installing the cert-manager")
 			Expect(utils.InstallCertManager()).To(Succeed())
 
+			// The namespace can be created when we run make install
+			// However, in this test we want ensure that the solution 
+			// can run in a ns labeled as restricted. Therefore, we are
+            // creating the namespace an lebeling it. 
 			By("creating manager namespace")
 			cmd := exec.Command("kubectl", "create", "ns", namespace)
 			_, _ = utils.Run(cmd)
 
+			// Now, let's ensure that all namespaces can raise an Warn when we apply the manifests
+            // and that the namespace where the Operator and Operand will run are enforced as 
+            // restricted so that we can ensure that both can be admitted and run with the enforcement
 			By("labeling all namespaces to warn when we apply the manifest if would violate the PodStandards")
 			cmd = exec.Command("kubectl", "label", "--overwrite", "ns", "--all",
 				"pod-security.kubernetes.io/audit=restricted",
@@ -200,11 +231,6 @@ var _ = Describe("memcached", func() {
 
 			By("loading the the manager(Operator) image on Kind")
 			err = utils.LoadImageToKindClusterWithName("example.com/memcached-operator:v0.0.1")
-			ExpectWithOffset(1, err).NotTo(HaveOccurred())
-
-			By("pulling Operand image")
-			cmd = exec.Command("docker", "pull", "memcached:1.4.36-alpine")
-			_, err = utils.Run(cmd)
 			ExpectWithOffset(1, err).NotTo(HaveOccurred())
 
 			By("installing CRDs")

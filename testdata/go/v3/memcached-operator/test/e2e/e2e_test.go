@@ -41,16 +41,26 @@ var _ = Describe("memcached", func() {
 
 	Context("ensure that Operator and Operand(s) can run in restricted namespaces", func() {
 		BeforeEach(func() {
+			// The prometheus and the certmanager are installed in this test
+			// because the Memcached sample has this option enable and
+			// when we try to apply the manifests both will be required to be installed
 			By("installing prometheus operator")
 			Expect(utils.InstallPrometheusOperator()).To(Succeed())
 
 			By("installing the cert-manager")
 			Expect(utils.InstallCertManager()).To(Succeed())
 
+			// The namespace can be created when we run make install
+			// However, in this test we want ensure that the solution
+			// can run in a ns labeled as restricted. Therefore, we are
+			// creating the namespace an lebeling it.
 			By("creating manager namespace")
 			cmd := exec.Command("kubectl", "create", "ns", namespace)
 			_, _ = utils.Run(cmd)
 
+			// Now, let's ensure that all namespaces can raise an Warn when we apply the manifests
+			// and that the namespace where the Operator and Operand will run are enforced as
+			// restricted so that we can ensure that both can be admitted and run with the enforcement
 			By("labeling all namespaces to warn when we apply the manifest if would violate the PodStandards")
 			cmd = exec.Command("kubectl", "label", "--overwrite", "ns", "--all",
 				"pod-security.kubernetes.io/audit=restricted",
@@ -95,11 +105,6 @@ var _ = Describe("memcached", func() {
 
 			By("loading the the manager(Operator) image on Kind")
 			err = utils.LoadImageToKindClusterWithName("example.com/memcached-operator:v0.0.1")
-			ExpectWithOffset(1, err).NotTo(HaveOccurred())
-
-			By("pulling Operand image")
-			cmd = exec.Command("docker", "pull", "memcached:1.4.36-alpine")
-			_, err = utils.Run(cmd)
 			ExpectWithOffset(1, err).NotTo(HaveOccurred())
 
 			By("installing CRDs")
