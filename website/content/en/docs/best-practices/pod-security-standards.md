@@ -198,7 +198,7 @@ make build
 cp kubectl-psachecker $GOPATH/bin/
 ```
 
-#### How to use psachecker to verify the policy of a manifests?
+#### How do I use psachecker to verify the policy of a manifests?
 
 The following steps will demonstrate how we can use [psachecker][psachecker] to verify that our Operator and deployments are properly configured in the CSV.
 
