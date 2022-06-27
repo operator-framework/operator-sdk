@@ -143,7 +143,7 @@ test-sanity: generate fix ## Test repo formatting, linting, etc.
 	./hack/check-license.sh
 	./hack/check-error-log-msg-format.sh
 	go vet ./...
-	setup-lint
+	make setup-lint
 	lint
 	git diff --exit-code # diff again to ensure other checks don't change repo
 
