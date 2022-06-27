@@ -144,7 +144,7 @@ test-sanity: generate fix ## Test repo formatting, linting, etc.
 	./hack/check-error-log-msg-format.sh
 	go vet ./...
 	make setup-lint
-	lint
+	make lint
 	git diff --exit-code # diff again to ensure other checks don't change repo
 
 .PHONY: test-docs
