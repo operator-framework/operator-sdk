@@ -112,7 +112,7 @@ the namespace labeling as part of the manual install instructions. Following the
 ```
 
 Following you will find a detailed description of how to configure and test your solutions. 
-The most straightforward way to ensure if your workloads can work on a restricted namespace is verifing if your solution can run in namespaces enforced as restricted. 
+The most straightforward way to ensure if your workloads will work in a restricted namespace is verifying if your solution can run in namespaces enforced as restricted. 
 
 **NOTE**: It is recommended that you test the desired behavior as part of an e2e test suite. Examples of an e2e test for this will be shown in a later section.
 
