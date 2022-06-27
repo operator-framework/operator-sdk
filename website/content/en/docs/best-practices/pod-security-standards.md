@@ -189,7 +189,7 @@ Alternatively, you could test the policy enforcement by labeling the namespaces 
 
 ##### How do I install psachecker?
 
-Following the steps to install the [psachecker][psachecker] in an env with Golang.
+The following steps will install [psachecker][psachecker] in a Golang environment.
 
 ```sh
 git clone git@github.com:stlaz/psachecker.git $GOPATH/src/github.com/stlaz/psachecker
