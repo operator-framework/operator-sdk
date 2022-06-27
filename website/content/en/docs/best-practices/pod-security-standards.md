@@ -54,7 +54,7 @@ Please, do **not** use this field if you are looking to build Operators that wor
 
 **On Reconciliations, such as code implementation in Go:**
 
-**Note:** *if you are setting the `RunAsNonRoot` value to `true` in the `SecurityContext` you will also need to specify the `RunAsUser` value to set the user to a numeric user. In this implementation it sets the user uid to `1000`.*
+**Note:** *if you are setting the `RunAsNonRoot` value to `true` in the `SecurityContext` you will need to verify that the Pod or Container(s) are running with a numeric user that is not 0 (root). If the Pod or Container(s) do not use a non-zero numeric user, you can use the `RunAsUser` value to set the user to a numeric user. In this example, the memcached container does not use a non-zero numeric user and therefor the `RunAsUser` value is set to use a uid of `1000`.*
 ```go
 dep:= &appsv1.Deployment{
   ObjectMeta: metav1.ObjectMeta{
