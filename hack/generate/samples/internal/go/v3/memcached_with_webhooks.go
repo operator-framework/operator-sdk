@@ -437,6 +437,10 @@ func (r *MemcachedReconciler) deploymentForMemcached(m *cachev1alpha1.Memcached)
 									"ALL",
 								},
 							},
+							// The memcached image does not use a non-zero numeric user as the default user.
+							// Due to RunAsNonRoot field being set to true, we need to force the user in the
+							// container to a non-zero numeric user. We do this using the RunAsUser field.
+							RunAsUser: &[]int64{1000}[0],
 						},
 						Command: []string{"memcached", "-m=64", "-o", "modern", "-v"},
 						Ports: []corev1.ContainerPort{{
