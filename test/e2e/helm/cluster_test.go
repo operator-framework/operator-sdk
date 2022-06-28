@@ -347,6 +347,20 @@ var _ = Describe("Running Helm projects", func() {
 			}
 			Eventually(managerContainerLogs, time.Minute, time.Second).Should(ContainSubstring("Installed release"))
 
+			By("validating that pod(s) status.phase=Running")
+			getMemcachedPodStatus := func() error {
+				status, err := tc.Kubectl.Get(
+					false, "pods",
+					"-l", "app=memcached", "-o", "jsonpath={.items[*].status}")
+				Expect(err).NotTo(HaveOccurred())
+				ExpectWithOffset(2, err).NotTo(HaveOccurred())
+				if !strings.Contains(string(status), "\"phase\":\"Running\"") {
+					return fmt.Errorf("memcached pod in %s status", status)
+				}
+				return nil
+			}
+			EventuallyWithOffset(1, getMemcachedPodStatus, time.Minute, time.Second).Should(Succeed())
+
 			By("deleting CR manifest again without uninstall-wait")
 			_, err = tc.Kubectl.Delete(false, "-f", sampleFile)
 			Expect(err).NotTo(HaveOccurred())
