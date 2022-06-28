@@ -88,6 +88,11 @@ dep:= &appsv1.Deployment{
                        "ALL",
                     },
                  },
+                 // The memcached image does not use a non-zero numeric user as the default user.
+                 // Due to RunAsNonRoot field being set to true, we need to force the user in the
+                 // container to a non-zero numeric user. We do this using the RunAsUser field.
+                 // However, if you are looking to provide solution for K8s vendors like Openshift
+                 // be aware that if you inform this value you can not run under its restricted-v2 SCC. 
                  RunAsUser: &[]int64{1000}[0],
               },
            }},
