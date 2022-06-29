@@ -108,7 +108,7 @@ IMPORTANT: To use this option it is required to have access to pull the images d
   $ operator-sdk bundle validate ./bundle --select-optional name=multiarch 
 
 NOTE: The --optional-values can be used to inform the container-tools that should be used i.e. "--optional-values=container-tools=docker".
-The optional values are [docker, podman, none]. If not informed or none then the command defaults to docker to inspect the images.
+The valid values for the container-tools optional value are [docker, podman, none]. If no value is supplied then the command will default to using docker to inspect the images.
 More info: https://github.com/operator-framework/api/blob/master/pkg/validation/internal/multiarch.go
 `
 )
