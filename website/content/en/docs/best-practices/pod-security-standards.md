@@ -330,6 +330,8 @@ sum (increase(pod_security_evaluations_total{decision="deny",mode="audit"}[1h]))
 In the tests, you can create and label a namespace with the desired policy (i.e. restricted). This would allow you to verify
 if any warnings/errors occur and if the Pod(s)/Container(s) are in the `Running` state. It can be something like:
 
+**NOTE** See the `test` directory for the Memcached sample under the [testdata/go/v3/memcached-operator][sample] to see a full example.
+
 ```go
 // namespace store the ns where the Operator and Operand(s) will be executed
 const namespace = "my-operator-system"
@@ -386,6 +388,8 @@ var _ = Describe("my operator test", func() {
 })
 ```
 
+ 
+
 [project-layout]: /docs/overview/project-layout
 [pod-security]: https://kubernetes.io/blog/2021/04/06/podsecuritypolicy-deprecation-past-present-and-future/#what-is-podsecuritypolicy
 [2579-psp-replacement]: https://github.com/kubernetes/enhancements/tree/master/keps/sig-auth/2579-psp-replacement
@@ -393,3 +397,4 @@ var _ = Describe("my operator test", func() {
 [restricted]: https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted
 [security-standards]: https://kubernetes.io/docs/concepts/security/pod-security-standards/
 [psachecker]: https://github.com/stlaz/psachecker
+[sample]: https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v3/memcached-operator

@@ -101,6 +101,15 @@ func (mh *Memcached) Run() {
 	mh.implementingWebhooks()
 	mh.uncommentDefaultKustomization()
 	mh.uncommentManifestsKustomization()
+	mh.implementingE2ETests()
+
+	// TODO: remove after the fix in Kubebuilder is applied
+	// https://github.com/operator-framework/operator-sdk/issues/5875
+	err = kbutil.ReplaceInFile(filepath.Join(mh.ctx.Dir, "Makefile"),
+		`curl -s $(KUSTOMIZE_INSTALL_SCRIPT) | bash -s -- $(subst v,,$(KUSTOMIZE_VERSION)) $(LOCALBIN)`,
+		`est -s $(LOCALBIN)/kustomize || { curl -s $(KUSTOMIZE_INSTALL_SCRIPT) | bash -s -- $(subst v,,$(KUSTOMIZE_VERSION)) $(LOCALBIN); }`,
+	)
+	pkg.CheckError("replacing test target", err)
 
 	cmd := exec.Command("go", "mod", "tidy")
 	cmd.Dir = mh.ctx.Dir
