@@ -35,6 +35,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry/index"
+	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry/proxy"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 )
 
@@ -201,6 +202,45 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 		return nil, fmt.Errorf("configMap error: %w", err)
 	}
 
+	proxyConfig, err := proxy.GetProxyConfig(f.cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	proxyEnv := []corev1.EnvVar{}
+
+	if proxyConfig != nil {
+		if proxyConfig.Status.HTTPProxy != "" {
+			proxyEnv = append(proxyEnv, corev1.EnvVar{
+				Name:  "HTTP_PROXY",
+				Value: proxyConfig.Status.HTTPProxy,
+			}, corev1.EnvVar{
+				Name:  "http_proxy",
+				Value: proxyConfig.Status.HTTPProxy,
+			})
+		}
+
+		if proxyConfig.Status.HTTPSProxy != "" {
+			proxyEnv = append(proxyEnv, corev1.EnvVar{
+				Name:  "HTTPS_PROXY",
+				Value: proxyConfig.Status.HTTPSProxy,
+			}, corev1.EnvVar{
+				Name:  "https_proxy",
+				Value: proxyConfig.Status.HTTPSProxy,
+			})
+		}
+
+		if proxyConfig.Status.NoProxy != "" {
+			proxyEnv = append(proxyEnv, corev1.EnvVar{
+				Name:  "NO_PROXY",
+				Value: proxyConfig.Status.NoProxy,
+			}, corev1.EnvVar{
+				Name:  "no_proxy",
+				Value: proxyConfig.Status.NoProxy,
+			})
+		}
+	}
+
 	// make the pod definition
 	f.pod = &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -245,6 +285,7 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 							SubPath:   cm.Name,
 						},
 					},
+					Env: proxyEnv,
 				},
 			},
 		},
