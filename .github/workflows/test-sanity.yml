@@ -9,7 +9,7 @@ jobs:
     outputs:
       skip: ${{ steps.check_docs_only.outputs.skip }}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 0
     - id: check_docs_only
@@ -30,7 +30,7 @@ jobs:
       with:
         go-version: 1.18
       id: go
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 0
     - run: sudo rm -rf /usr/local/bin/kustomize
@@ -40,7 +40,7 @@ jobs:
     name: docs
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 0
         submodules: recursive
