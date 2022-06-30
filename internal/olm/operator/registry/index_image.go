@@ -148,17 +148,17 @@ func handleTraditionalUpgrade(ctx context.Context, indexImage string, bundleImag
 	// render the index image
 	originalDeclCfg, err := fbcutil.RenderRefs(ctx, []string{indexImage})
 	if err != nil {
-		return "", fmt.Errorf("error in rendering index %q", indexImage)
+		return "", fmt.Errorf("error rendering index %q", indexImage)
 	}
 
 	// render the bundle image
 	bundleDeclConfig, err := fbcutil.RenderRefs(ctx, []string{bundleImage})
 	if err != nil {
-		return "", fmt.Errorf("error in rendering index %q", bundleImage)
+		return "", fmt.Errorf("error rendering bundle image %q", bundleImage)
 	}
 
 	if len(bundleDeclConfig.Bundles) != 1 {
-		return "", errors.New("bundle image must have exactly one bundle")
+		return "", errors.New("rendered bundle must have exactly one bundle")
 	}
 
 	// search for the specific channel in which the upgrade needs to take place, and upgrade from the channel head
