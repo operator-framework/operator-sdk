@@ -27,6 +27,7 @@ import (
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/alpha/action"
 	declarativeconfig "github.com/operator-framework/operator-registry/alpha/declcfg"
+	"github.com/operator-framework/operator-registry/pkg/image/containerdregistry"
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	fbcutil "github.com/operator-framework/operator-sdk/internal/olm/fbcutil"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
@@ -129,7 +130,7 @@ func (i *Install) setup(ctx context.Context) error {
 		}
 
 		// generate an fbc if an fbc specific label is found on the image or for a default index image.
-		content, err := generateFBCContent(ctx, f, i.BundleImage, i.IndexImageCatalogCreator.IndexImage)
+		content, err := generateFBCContent(ctx, f, i.BundleImage, i.IndexImageCatalogCreator.IndexImage, i.SkipTLSVerify, i.UseHTTP)
 		if err != nil {
 			return fmt.Errorf("error generating File-Based Catalog with bundle %q: %v", i.BundleImage, err)
 		}
@@ -150,10 +151,10 @@ func (i *Install) setup(ctx context.Context) error {
 }
 
 // generateFBCContent creates a File-Based Catalog using the bundle image and index image from the run bundle command.
-func generateFBCContent(ctx context.Context, f *fbcutil.FBCContext, bundleImage, indexImage string) (string, error) {
+func generateFBCContent(ctx context.Context, f *fbcutil.FBCContext, bundleImage, indexImage string, skipTLSVerify bool, useHTTP bool) (string, error) {
 	log.Infof("Creating a File-Based Catalog of the bundle %q", bundleImage)
 	// generate a File-Based Catalog representation of the bundle image
-	bundleDeclcfg, err := f.CreateFBC(ctx)
+	bundleDeclcfg, err := f.CreateFBC(ctx, skipTLSVerify, useHTTP)
 	if err != nil {
 		return "", fmt.Errorf("error creating a File-Based Catalog with image %q: %v", bundleImage, err)
 	}
@@ -167,7 +168,7 @@ func generateFBCContent(ctx context.Context, f *fbcutil.FBCContext, bundleImage,
 	if indexImage != fbcutil.DefaultIndexImage { // non-default index image was specified.
 		// since an index image is specified, the bundle image will be added to the index image.
 		// generateExtraFBC will ensure that the bundle is not already present in the index image and error out if it does.
-		declcfg, err = generateExtraFBC(ctx, indexImage, bundleDeclcfg)
+		declcfg, err = generateExtraFBC(ctx, indexImage, bundleDeclcfg, skipTLSVerify, useHTTP)
 		if err != nil {
 			return "", fmt.Errorf("error adding bundle image %q to index image %q: %v", bundleImage, indexImage, err)
 		}
@@ -184,13 +185,28 @@ func generateFBCContent(ctx context.Context, f *fbcutil.FBCContext, bundleImage,
 	return content, nil
 }
 
+// below is duplicate code and same added in util.go try to merge both
+func nullLogger() *log.Entry {
+	logger := log.New()
+	logger.SetOutput(ioutil.Discard)
+	return log.NewEntry(logger)
+}
+
 // generateExtraFBC verifies that a bundle is not already present on the index and if not, it renders the bundle contents into a
 // declarative config type.
-func generateExtraFBC(ctx context.Context, indexImage string, bundleDeclConfig fbcutil.BundleDeclcfg) (*declarativeconfig.DeclarativeConfig, error) {
+func generateExtraFBC(ctx context.Context, indexImage string, bundleDeclConfig fbcutil.BundleDeclcfg, skipTLSVerify bool, useHTTP bool) (*declarativeconfig.DeclarativeConfig, error) {
 	log.Infof("Rendering a File-Based Catalog of the Index Image %q to verify if bundle %q is present", indexImage, bundleDeclConfig.Bundle.Name)
 	log.SetOutput(ioutil.Discard)
+
+	reg, err := containerdregistry.NewRegistry(
+		// containerdregistry.WithLog(logger),
+		containerdregistry.WithLog(nullLogger()),
+		containerdregistry.SkipTLSVerify(skipTLSVerify),
+		containerdregistry.WithPlainHTTP(useHTTP))
+
 	render := action.Render{
-		Refs: []string{indexImage},
+		Refs:     []string{indexImage},
+		Registry: reg,
 	}
 
 	imageDeclConfig, err := render.Run(ctx)

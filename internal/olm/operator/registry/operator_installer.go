@@ -101,7 +101,7 @@ func (o OperatorInstaller) InstallOperator(ctx context.Context) (*v1alpha1.Clust
 	return csv, nil
 }
 
-func (o OperatorInstaller) UpgradeOperator(ctx context.Context) (*v1alpha1.ClusterServiceVersion, error) {
+func (o OperatorInstaller) UpgradeOperator(ctx context.Context, skipTLSVerify bool, useHTTP bool) (*v1alpha1.ClusterServiceVersion, error) {
 	subList := &v1alpha1.SubscriptionList{}
 
 	options := client.ListOptions{
@@ -144,7 +144,7 @@ func (o OperatorInstaller) UpgradeOperator(ctx context.Context) (*v1alpha1.Clust
 	log.Infof("Found existing catalog source with name %s and namespace %s", cs.Name, cs.Namespace)
 
 	// Update catalog source
-	err := o.CatalogUpdater.UpdateCatalog(ctx, cs, subscription)
+	err := o.CatalogUpdater.UpdateCatalog(ctx, cs, subscription, skipTLSVerify, useHTTP)
 	if err != nil {
 		return nil, fmt.Errorf("update catalog error: %v", err)
 	}

@@ -144,15 +144,15 @@ func getChannelHead(entries []declarativeconfig.ChannelEntry) (string, error) {
 }
 
 // handleTraditionalUpgrade upgrades an operator that was installed using OLM. Subsequent upgrades will go through the runFBCUpgrade function
-func handleTraditionalUpgrade(ctx context.Context, indexImage string, bundleImage string, channelName string) (string, error) {
+func handleTraditionalUpgrade(ctx context.Context, indexImage string, bundleImage string, channelName string, skipTLSVerify bool, useHTTP bool) (string, error) {
 	// render the index image
-	originalDeclCfg, err := fbcutil.RenderRefs(ctx, []string{indexImage})
+	originalDeclCfg, err := fbcutil.RenderRefs(ctx, []string{indexImage}, skipTLSVerify, useHTTP)
 	if err != nil {
 		return "", fmt.Errorf("error rendering index %q", indexImage)
 	}
 
 	// render the bundle image
-	bundleDeclConfig, err := fbcutil.RenderRefs(ctx, []string{bundleImage})
+	bundleDeclConfig, err := fbcutil.RenderRefs(ctx, []string{bundleImage}, skipTLSVerify, useHTTP)
 	if err != nil {
 		return "", fmt.Errorf("error rendering bundle image %q", bundleImage)
 	}
@@ -194,14 +194,14 @@ func handleTraditionalUpgrade(ctx context.Context, indexImage string, bundleImag
 
 // runFBCUpgrade starts the process of upgrading a bundle in an FBC. This function will recreate the FBC that was generated
 // during run bundle and upgrade a specific bundle in the specified channel.
-func (c *IndexImageCatalogCreator) runFBCUpgrade(ctx context.Context) error {
+func (c *IndexImageCatalogCreator) runFBCUpgrade(ctx context.Context, skipTLSVerify bool, useHTTP bool) error {
 	// render the index image if it is not the default index image
 	var refs []string
 	if c.IndexImage != fbcutil.DefaultIndexImage {
 		refs = append(refs, c.IndexImage)
 	}
 
-	originalDeclcfg, err := fbcutil.RenderRefs(ctx, refs)
+	originalDeclcfg, err := fbcutil.RenderRefs(ctx, refs, skipTLSVerify, useHTTP)
 	if err != nil {
 		return err
 	}
@@ -215,7 +215,7 @@ func (c *IndexImageCatalogCreator) runFBCUpgrade(ctx context.Context) error {
 	}
 
 	// Adding the FBC "f" to the originalDeclcfg to generate a new FBC
-	declcfg, err := upgradeFBC(ctx, f, originalDeclcfg)
+	declcfg, err := upgradeFBC(ctx, f, originalDeclcfg, skipTLSVerify, useHTTP)
 	if err != nil {
 		return fmt.Errorf("error creating the upgraded FBC: %v", err)
 	}
@@ -235,8 +235,9 @@ func (c *IndexImageCatalogCreator) runFBCUpgrade(ctx context.Context) error {
 
 // upgradeFBC constructs a new File-Based Catalog from both the FBCContext object and the declarative config object. This function will check to see
 // if the FBCContext object "f" is already present in the original declarative config.
-func upgradeFBC(ctx context.Context, f *fbcutil.FBCContext, originalDeclCfg *declarativeconfig.DeclarativeConfig) (*declarativeconfig.DeclarativeConfig, error) {
-	declcfg, err := fbcutil.RenderRefs(ctx, f.Refs)
+func upgradeFBC(ctx context.Context, f *fbcutil.FBCContext, originalDeclCfg *declarativeconfig.DeclarativeConfig, skipTLSVerify bool, useHTTP bool) (*declarativeconfig.DeclarativeConfig, error) {
+	// for time being added false
+	declcfg, err := fbcutil.RenderRefs(ctx, f.Refs, skipTLSVerify, useHTTP)
 	if err != nil {
 		return nil, err
 	}
@@ -337,7 +338,7 @@ func upgradeFBC(ctx context.Context, f *fbcutil.FBCContext, originalDeclCfg *dec
 
 // UpdateCatalog links a new registry pod in catalog source by updating the address and annotations,
 // then deletes existing registry pod based on annotation name found in catalog source object
-func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha1.CatalogSource, subscription *v1alpha1.Subscription) error {
+func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha1.CatalogSource, subscription *v1alpha1.Subscription, skipTLSVerify bool, useHTTP bool) error {
 	var prevRegistryPodName string
 	if annotations := cs.GetAnnotations(); len(annotations) != 0 {
 		if value, hasAnnotation := annotations[indexImageAnnotation]; hasAnnotation && value != "" {
@@ -387,7 +388,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 			}
 
 			// Upgrading when installed traditionally by OLM
-			upgradedFBC, err := handleTraditionalUpgrade(ctx, c.IndexImage, c.BundleImage, subscription.Spec.Channel)
+			upgradedFBC, err := handleTraditionalUpgrade(ctx, c.IndexImage, c.BundleImage, subscription.Spec.Channel, skipTLSVerify, useHTTP)
 			if err != nil {
 				return fmt.Errorf("unable to upgrade bundle: %v", err)
 			}
@@ -408,7 +409,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 				return fmt.Errorf("specifying the bundle add mode is not supported for File-Based Catalog bundles and index images")
 			}
 
-			err = c.runFBCUpgrade(ctx)
+			err = c.runFBCUpgrade(ctx, skipTLSVerify, useHTTP)
 			if err != nil {
 				return fmt.Errorf("error in upgrading FBC: %v", err)
 			}
@@ -481,6 +482,7 @@ func (c IndexImageCatalogCreator) createAnnotatedRegistry(ctx context.Context, c
 
 	} else {
 		// Initialize and create registry pod
+
 		registryPod := index.SQLiteRegistryPod{
 			BundleItems:   items,
 			IndexImage:    c.IndexImage,

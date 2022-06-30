@@ -20,14 +20,16 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 
 	"github.com/operator-framework/operator-registry/alpha/action"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	declarativeconfig "github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/pkg/containertools"
+	"github.com/operator-framework/operator-registry/pkg/image/containerdregistry"
 	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -65,10 +67,10 @@ type FBCContext struct {
 }
 
 // CreateFBC generates an FBC by creating bundle, package and channel blobs.
-func (f *FBCContext) CreateFBC(ctx context.Context) (BundleDeclcfg, error) {
+func (f *FBCContext) CreateFBC(ctx context.Context, skipTLSVerify bool, useHTTP bool) (BundleDeclcfg, error) {
 	var bundleDC BundleDeclcfg
 	// Rendering the bundle image into a declarative config format.
-	declcfg, err := RenderRefs(ctx, f.Refs)
+	declcfg, err := RenderRefs(ctx, f.Refs, skipTLSVerify, useHTTP)
 	if err != nil {
 		return BundleDeclcfg{}, err
 	}
@@ -120,11 +122,25 @@ func ValidateAndStringify(declcfg *declarativeconfig.DeclarativeConfig) (string,
 	return buf.String(), nil
 }
 
+func nullLogger() *logrus.Entry {
+	logger := logrus.New()
+	logger.SetOutput(ioutil.Discard)
+	return logrus.NewEntry(logger)
+}
+
 // RenderRefs will invoke Operator Registry APIs and return a declarative config object representation
 // of the references that are passed in as a string array.
-func RenderRefs(ctx context.Context, refs []string) (*declarativeconfig.DeclarativeConfig, error) {
+func RenderRefs(ctx context.Context, refs []string, skipTLSVerify bool, useHTTP bool) (*declarativeconfig.DeclarativeConfig, error) {
+
+	reg, err := containerdregistry.NewRegistry(
+		// containerdregistry.WithLog(logger),
+		containerdregistry.WithLog(nullLogger()),
+		containerdregistry.SkipTLSVerify(skipTLSVerify),
+		containerdregistry.WithPlainHTTP(useHTTP))
+
 	render := action.Render{
-		Refs: refs,
+		Refs:     refs,
+		Registry: reg,
 	}
 
 	log.SetOutput(ioutil.Discard)
