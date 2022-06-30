@@ -176,6 +176,8 @@ test-e2e-teardown:
 $(e2e_targets):: test-e2e-setup image/scorecard-test
 test-e2e:: $(e2e_tests) ## Run e2e tests
 
+test-e2e-sample-go:: dev-install cluster-create ## Run Memcached Operator Sample e2e tests
+	make test-e2e -C ./testdata/go/v3/memcached-operator/
 test-e2e-go:: image/custom-scorecard-tests ## Run Go e2e tests
 	go test ./test/e2e/go -v -ginkgo.v
 test-e2e-ansible:: image/ansible-operator ## Run Ansible e2e tests
