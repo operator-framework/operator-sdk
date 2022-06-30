@@ -204,6 +204,10 @@ func generateExtraFBC(ctx context.Context, indexImage string, bundleDeclConfig f
 		containerdregistry.SkipTLSVerify(skipTLSVerify),
 		containerdregistry.WithPlainHTTP(useHTTP))
 
+	if err != nil {
+		return nil, err
+	}
+
 	render := action.Render{
 		Refs:     []string{indexImage},
 		Registry: reg,

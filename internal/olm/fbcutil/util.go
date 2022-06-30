@@ -138,6 +138,10 @@ func RenderRefs(ctx context.Context, refs []string, skipTLSVerify bool, useHTTP 
 		containerdregistry.SkipTLSVerify(skipTLSVerify),
 		containerdregistry.WithPlainHTTP(useHTTP))
 
+	if err != nil {
+		return nil, fmt.Errorf("error creating new image registry: %v", err)
+	}
+
 	render := action.Render{
 		Refs:     refs,
 		Registry: reg,
