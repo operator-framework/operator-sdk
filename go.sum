@@ -870,8 +870,8 @@ github.com/openshift/api v0.0.0-20220630121623-32f1d77b9f50/go.mod h1:LEnw1IVscI
 github.com/openshift/build-machinery-go v0.0.0-20211213093930-7e33a7eb4ce3/go.mod h1:b1BuldmJlbA/xYtdZvKi+7j5YGB44qJUJDZ9zwiNCfE=
 github.com/opentracing/opentracing-go v1.1.0/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
 github.com/openzipkin/zipkin-go v0.1.6/go.mod h1:QgAqvLzwWbR/WpD4A3cGpPtJrZXNIiJc5AZX7/PBEpw=
-github.com/operator-framework/api v0.15.1-0.20220624132056-decf74800a17 h1:05SuHwvLPituTsGnzoapFtJT+HVD+9noxCQBkmfWScw=
-github.com/operator-framework/api v0.15.1-0.20220624132056-decf74800a17/go.mod h1:scnY9xqSeCsOdtJtNoHIXd7OtHZ14gj1hkDA4+DlgLY=
+github.com/operator-framework/api v0.15.0 h1:4f9i0drtqHj7ykLoHxv92GR43S7MmQHhmFQkfm5YaGI=
+github.com/operator-framework/api v0.15.0/go.mod h1:scnY9xqSeCsOdtJtNoHIXd7OtHZ14gj1hkDA4+DlgLY=
 github.com/operator-framework/helm-operator-plugins v0.0.12-0.20220616200420-1a695cb9f6a1 h1:ulX/0zkiQIg2JkVuAtC329ygfXHg9Sb578vQ7kdNVkY=
 github.com/operator-framework/helm-operator-plugins v0.0.12-0.20220616200420-1a695cb9f6a1/go.mod h1:D7zPPwmIFBqHtWigU2iJiLuZ0v7hOJOb1/VC+/UuBAQ=
 github.com/operator-framework/java-operator-plugins v0.5.1 h1:HmiTocc61d/uqVPY/7EUR6ZTHDVeZ5/fgy7uo1QIBFc=
