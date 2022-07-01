@@ -144,7 +144,7 @@ func (o OperatorInstaller) UpgradeOperator(ctx context.Context, skipTLSVerify bo
 	log.Infof("Found existing catalog source with name %s and namespace %s", cs.Name, cs.Namespace)
 
 	// Update catalog source
-	err := o.CatalogUpdater.UpdateCatalog(ctx, cs, subscription, skipTLSVerify, useHTTP)
+	err := o.CatalogUpdater.UpdateCatalog(ctx, cs, subscription)
 	if err != nil {
 		return nil, fmt.Errorf("update catalog error: %v", err)
 	}
