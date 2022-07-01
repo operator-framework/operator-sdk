@@ -133,7 +133,6 @@ func nullLogger() *logrus.Entry {
 func RenderRefs(ctx context.Context, refs []string, skipTLSVerify bool, useHTTP bool) (*declarativeconfig.DeclarativeConfig, error) {
 
 	reg, err := containerdregistry.NewRegistry(
-		// containerdregistry.WithLog(logger),
 		containerdregistry.WithLog(nullLogger()),
 		containerdregistry.SkipTLSVerify(skipTLSVerify),
 		containerdregistry.WithPlainHTTP(useHTTP))
