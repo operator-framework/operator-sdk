@@ -7,18 +7,15 @@ require (
 	github.com/fatih/structtag v1.1.0
 	github.com/go-logr/logr v1.2.2
 	github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0
+	github.com/google/gnostic v0.5.7-v3refs
 	github.com/iancoleman/strcase v0.2.0
 	github.com/kr/text v0.2.0
 	github.com/markbates/inflect v1.0.4
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.2.2
 	github.com/onsi/ginkgo v1.16.5
-	github.com/onsi/gomega v1.18.1
-<<<<<<< HEAD
-	github.com/operator-framework/api v0.15.1-0.20220624132056-decf74800a17
-=======
+	github.com/onsi/gomega v1.19.0
 	github.com/openshift/api v0.0.0-20220630121623-32f1d77b9f50
 	github.com/operator-framework/api v0.15.0
->>>>>>> de090f2c (Bug 2087032: update registry pod)
 	github.com/operator-framework/helm-operator-plugins v0.0.12-0.20220616200420-1a695cb9f6a1
 	github.com/operator-framework/java-operator-plugins v0.5.1
 	github.com/operator-framework/operator-lib v0.11.0
@@ -129,7 +126,6 @@ require (
 	github.com/google/btree v1.0.1 // indirect
 	github.com/google/cel-go v0.10.1 // indirect
 	github.com/google/certificate-transparency-go v1.0.21 // indirect
-	github.com/google/gnostic v0.5.7-v3refs // indirect
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/google/go-containerregistry v0.8.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect

@@ -30,6 +30,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
@@ -202,43 +203,15 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 		return nil, fmt.Errorf("configMap error: %w", err)
 	}
 
-	proxyConfig, err := proxy.GetProxyConfig(f.cfg)
+	// create the discovery client to get the proxy configuration
+	discov, err := discovery.NewDiscoveryClientForConfig(f.cfg.RESTConfig)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("encountered an error creating a discovery client to check for the Proxy api: %w", err)
 	}
 
-	proxyEnv := []corev1.EnvVar{}
-
-	if proxyConfig != nil {
-		if proxyConfig.Status.HTTPProxy != "" {
-			proxyEnv = append(proxyEnv, corev1.EnvVar{
-				Name:  "HTTP_PROXY",
-				Value: proxyConfig.Status.HTTPProxy,
-			}, corev1.EnvVar{
-				Name:  "http_proxy",
-				Value: proxyConfig.Status.HTTPProxy,
-			})
-		}
-
-		if proxyConfig.Status.HTTPSProxy != "" {
-			proxyEnv = append(proxyEnv, corev1.EnvVar{
-				Name:  "HTTPS_PROXY",
-				Value: proxyConfig.Status.HTTPSProxy,
-			}, corev1.EnvVar{
-				Name:  "https_proxy",
-				Value: proxyConfig.Status.HTTPSProxy,
-			})
-		}
-
-		if proxyConfig.Status.NoProxy != "" {
-			proxyEnv = append(proxyEnv, corev1.EnvVar{
-				Name:  "NO_PROXY",
-				Value: proxyConfig.Status.NoProxy,
-			}, corev1.EnvVar{
-				Name:  "no_proxy",
-				Value: proxyConfig.Status.NoProxy,
-			})
-		}
+	proxyVars, err := proxy.GetProxyVars(f.cfg, discov)
+	if err != nil {
+		return nil, err
 	}
 
 	// make the pod definition
@@ -285,7 +258,7 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 							SubPath:   cm.Name,
 						},
 					},
-					Env: proxyEnv,
+					Env: proxyVars,
 				},
 			},
 		},

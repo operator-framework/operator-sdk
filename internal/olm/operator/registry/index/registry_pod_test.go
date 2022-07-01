@@ -25,7 +25,9 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -34,8 +36,8 @@ const testIndexImageTag = "some-image:v1.2.3"
 const caSecretName = "foo-secret"
 
 // newFakeClient() returns a fake controller runtime client
-func newFakeClient() client.Client {
-	return fakeclient.NewClientBuilder().Build()
+func newFakeClient(scheme *runtime.Scheme) client.Client {
+	return fakeclient.NewClientBuilder().WithScheme(scheme).Build()
 }
 
 func TestCreateRegistryPod(t *testing.T) {
@@ -55,16 +57,20 @@ var _ = Describe("SQLiteRegistryPod", func() {
 		Context("with valid registry pod values", func() {
 
 			var (
-				rp  *SQLiteRegistryPod
-				cfg *operator.Configuration
-				pod *corev1.Pod
-				err error
+				rp     *SQLiteRegistryPod
+				cfg    *operator.Configuration
+				pod    *corev1.Pod
+				err    error
+				scheme *runtime.Scheme
 			)
 
 			BeforeEach(func() {
+				scheme = runtime.NewScheme()
 				cfg = &operator.Configuration{
-					Client:    newFakeClient(),
-					Namespace: "test-default",
+					Client:     newFakeClient(scheme),
+					Namespace:  "test-default",
+					Scheme:     scheme,
+					RESTConfig: &rest.Config{},
 				}
 				rp = &SQLiteRegistryPod{
 					BundleItems: defaultBundleItems,
@@ -232,11 +238,17 @@ var _ = Describe("SQLiteRegistryPod", func() {
 		})
 
 		Context("with invalid registry pod values", func() {
-			var cfg *operator.Configuration
+			var (
+				cfg    *operator.Configuration
+				scheme *runtime.Scheme
+			)
 			BeforeEach(func() {
+				scheme = runtime.NewScheme()
 				cfg = &operator.Configuration{
-					Client:    newFakeClient(),
-					Namespace: "test-default",
+					Client:     newFakeClient(scheme),
+					Namespace:  "test-default",
+					Scheme:     scheme,
+					RESTConfig: &rest.Config{},
 				}
 			})
 
