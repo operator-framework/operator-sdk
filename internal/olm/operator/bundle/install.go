@@ -194,7 +194,6 @@ func generateExtraFBC(ctx context.Context, indexImage string, bundleDeclConfig f
 	log.SetOutput(ioutil.Discard)
 
 	reg, err := containerdregistry.NewRegistry(
-		// containerdregistry.WithLog(logger),
 		containerdregistry.WithLog(fbcutil.NullLogger()),
 		containerdregistry.SkipTLSVerify(skipTLSVerify),
 		containerdregistry.WithPlainHTTP(useHTTP))
