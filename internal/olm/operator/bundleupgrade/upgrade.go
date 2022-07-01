@@ -57,7 +57,7 @@ func (u Upgrade) Run(ctx context.Context) (*v1alpha1.ClusterServiceVersion, erro
 	if err := u.setup(ctx); err != nil {
 		return nil, err
 	}
-	return u.UpgradeOperator(ctx, u.SkipTLSVerify, u.UseHTTP)
+	return u.UpgradeOperator(ctx)
 }
 
 func (u *Upgrade) setup(ctx context.Context) error {
