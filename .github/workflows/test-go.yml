@@ -38,11 +38,15 @@ jobs:
   unit:
     name: unit
     runs-on: ubuntu-20.04
-    container:
-      image: golang:latest
-      options: "--entrypoint /bin/bash"
     needs: check_docs_only
     if: needs.check_docs_only.outputs.skip != 'true'
+    services:
+      # start an nginx service on 127.0.0.1:80 so that the discovery client used in the
+      # SQLite Registry Pod tests doesn't get a connection refused error.
+      nginx:
+        image: nginx
+        ports:
+          - 80:80
     steps:
       - uses: actions/setup-go@v2
         with:
