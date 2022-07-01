@@ -20,7 +20,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 
 	"github.com/operator-framework/operator-registry/alpha/action"
@@ -29,7 +28,7 @@ import (
 	"github.com/operator-framework/operator-registry/pkg/containertools"
 	"github.com/operator-framework/operator-registry/pkg/image/containerdregistry"
 	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -122,10 +121,10 @@ func ValidateAndStringify(declcfg *declarativeconfig.DeclarativeConfig) (string,
 	return buf.String(), nil
 }
 
-func nullLogger() *logrus.Entry {
-	logger := logrus.New()
+func NullLogger() *log.Entry {
+	logger := log.New()
 	logger.SetOutput(ioutil.Discard)
-	return logrus.NewEntry(logger)
+	return log.NewEntry(logger)
 }
 
 // RenderRefs will invoke Operator Registry APIs and return a declarative config object representation
@@ -133,7 +132,7 @@ func nullLogger() *logrus.Entry {
 func RenderRefs(ctx context.Context, refs []string, skipTLSVerify bool, useHTTP bool) (*declarativeconfig.DeclarativeConfig, error) {
 
 	reg, err := containerdregistry.NewRegistry(
-		containerdregistry.WithLog(nullLogger()),
+		containerdregistry.WithLog(NullLogger()),
 		containerdregistry.SkipTLSVerify(skipTLSVerify),
 		containerdregistry.WithPlainHTTP(useHTTP))
 

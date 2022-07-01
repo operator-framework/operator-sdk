@@ -2,8 +2,8 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      modified run bundle install and upgrade flow for FBC that will honor --skip-tls-verify and --use-http flags 
-
+      Honor `--skip-tls-verify` and `--use-http` flags from run bundle(-upgrade)
+      
     # kind is one of:
     # - addition
     # - change
