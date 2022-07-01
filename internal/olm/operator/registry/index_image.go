@@ -236,7 +236,6 @@ func (c *IndexImageCatalogCreator) runFBCUpgrade(ctx context.Context) error {
 // upgradeFBC constructs a new File-Based Catalog from both the FBCContext object and the declarative config object. This function will check to see
 // if the FBCContext object "f" is already present in the original declarative config.
 func upgradeFBC(ctx context.Context, f *fbcutil.FBCContext, originalDeclCfg *declarativeconfig.DeclarativeConfig, skipTLSVerify bool, useHTTP bool) (*declarativeconfig.DeclarativeConfig, error) {
-	// for time being added false
 	declcfg, err := fbcutil.RenderRefs(ctx, f.Refs, skipTLSVerify, useHTTP)
 	if err != nil {
 		return nil, err
