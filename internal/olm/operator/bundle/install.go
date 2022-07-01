@@ -185,13 +185,6 @@ func generateFBCContent(ctx context.Context, f *fbcutil.FBCContext, bundleImage,
 	return content, nil
 }
 
-// below is duplicate code and same added in util.go try to merge both
-func nullLogger() *log.Entry {
-	logger := log.New()
-	logger.SetOutput(ioutil.Discard)
-	return log.NewEntry(logger)
-}
-
 // generateExtraFBC verifies that a bundle is not already present on the index and if not, it renders the bundle contents into a
 // declarative config type.
 func generateExtraFBC(ctx context.Context, indexImage string, bundleDeclConfig fbcutil.BundleDeclcfg, skipTLSVerify bool, useHTTP bool) (*declarativeconfig.DeclarativeConfig, error) {
@@ -200,12 +193,12 @@ func generateExtraFBC(ctx context.Context, indexImage string, bundleDeclConfig f
 
 	reg, err := containerdregistry.NewRegistry(
 		// containerdregistry.WithLog(logger),
-		containerdregistry.WithLog(nullLogger()),
+		containerdregistry.WithLog(fbcutil.NullLogger()),
 		containerdregistry.SkipTLSVerify(skipTLSVerify),
 		containerdregistry.WithPlainHTTP(useHTTP))
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating new image registry: %v", err)
 	}
 
 	render := action.Render{
