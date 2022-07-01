@@ -59,17 +59,19 @@ type BundleDeclcfg struct {
 // a new File-Based Catalog on the fly. The fields from this struct are passed as
 // parameters to Operator Registry API calls to generate declarative config objects.
 type FBCContext struct {
-	Package      string
-	ChannelName  string
-	Refs         []string
-	ChannelEntry declarativeconfig.ChannelEntry
+	Package       string
+	ChannelName   string
+	Refs          []string
+	ChannelEntry  declarativeconfig.ChannelEntry
+	SkipTLSVerify bool
+	UseHTTP       bool
 }
 
 // CreateFBC generates an FBC by creating bundle, package and channel blobs.
-func (f *FBCContext) CreateFBC(ctx context.Context, skipTLSVerify bool, useHTTP bool) (BundleDeclcfg, error) {
+func (f *FBCContext) CreateFBC(ctx context.Context) (BundleDeclcfg, error) {
 	var bundleDC BundleDeclcfg
 	// Rendering the bundle image into a declarative config format.
-	declcfg, err := RenderRefs(ctx, f.Refs, skipTLSVerify, useHTTP)
+	declcfg, err := RenderRefs(ctx, f.Refs, f.SkipTLSVerify, f.UseHTTP)
 	if err != nil {
 		return BundleDeclcfg{}, err
 	}

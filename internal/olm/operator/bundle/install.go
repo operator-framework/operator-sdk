@@ -121,6 +121,8 @@ func (i *Install) setup(ctx context.Context) error {
 			ChannelEntry: declarativeconfig.ChannelEntry{
 				Name: csv.Name,
 			},
+			SkipTLSVerify: i.SkipTLSVerify,
+			UseHTTP:       i.UseHTTP,
 		}
 
 		if _, hasChannelMetadata := labels[registrybundle.ChannelsLabel]; hasChannelMetadata {
@@ -130,7 +132,7 @@ func (i *Install) setup(ctx context.Context) error {
 		}
 
 		// generate an fbc if an fbc specific label is found on the image or for a default index image.
-		content, err := generateFBCContent(ctx, f, i.BundleImage, i.IndexImageCatalogCreator.IndexImage, i.SkipTLSVerify, i.UseHTTP)
+		content, err := generateFBCContent(ctx, f, i.BundleImage, i.IndexImageCatalogCreator.IndexImage)
 		if err != nil {
 			return fmt.Errorf("error generating File-Based Catalog with bundle %q: %v", i.BundleImage, err)
 		}
@@ -151,10 +153,10 @@ func (i *Install) setup(ctx context.Context) error {
 }
 
 // generateFBCContent creates a File-Based Catalog using the bundle image and index image from the run bundle command.
-func generateFBCContent(ctx context.Context, f *fbcutil.FBCContext, bundleImage, indexImage string, skipTLSVerify bool, useHTTP bool) (string, error) {
+func generateFBCContent(ctx context.Context, f *fbcutil.FBCContext, bundleImage, indexImage string) (string, error) {
 	log.Infof("Creating a File-Based Catalog of the bundle %q", bundleImage)
 	// generate a File-Based Catalog representation of the bundle image
-	bundleDeclcfg, err := f.CreateFBC(ctx, skipTLSVerify, useHTTP)
+	bundleDeclcfg, err := f.CreateFBC(ctx)
 	if err != nil {
 		return "", fmt.Errorf("error creating a File-Based Catalog with image %q: %v", bundleImage, err)
 	}
@@ -168,7 +170,7 @@ func generateFBCContent(ctx context.Context, f *fbcutil.FBCContext, bundleImage,
 	if indexImage != fbcutil.DefaultIndexImage { // non-default index image was specified.
 		// since an index image is specified, the bundle image will be added to the index image.
 		// generateExtraFBC will ensure that the bundle is not already present in the index image and error out if it does.
-		declcfg, err = generateExtraFBC(ctx, indexImage, bundleDeclcfg, skipTLSVerify, useHTTP)
+		declcfg, err = generateExtraFBC(ctx, indexImage, bundleDeclcfg, f.SkipTLSVerify, f.UseHTTP)
 		if err != nil {
 			return "", fmt.Errorf("error adding bundle image %q to index image %q: %v", bundleImage, indexImage, err)
 		}
