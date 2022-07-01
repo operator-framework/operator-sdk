@@ -24,7 +24,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/discovery"
@@ -53,7 +52,7 @@ var _ = Describe("GetProxyVars", func() {
 		scheme = runtime.NewScheme()
 		discov = &disfake.FakeDiscovery{
 			Fake: &cgotesting.Fake{
-				Resources: []*v1.APIResourceList{
+				Resources: []*metav1.APIResourceList{
 					{
 						GroupVersion: apiconfigv1.GroupVersion.String(),
 					},
@@ -61,7 +60,7 @@ var _ = Describe("GetProxyVars", func() {
 			},
 		}
 		prox = &apiconfigv1.Proxy{
-			ObjectMeta: v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Name: "cluster",
 			},
 			Spec: apiconfigv1.ProxySpec{
@@ -133,7 +132,7 @@ var _ = Describe("GetProxyVars", func() {
 	It("should return nil if the discovery client does not find the proxy api", func() {
 		discov = &disfake.FakeDiscovery{
 			Fake: &cgotesting.Fake{
-				Resources: []*v1.APIResourceList{},
+				Resources: []*metav1.APIResourceList{},
 			},
 		}
 		p, err := GetProxyVars(cfg, discov)

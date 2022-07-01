@@ -38,6 +38,7 @@ jobs:
   unit:
     name: unit
     runs-on: ubuntu-20.04
+    container: golang:latest
     needs: check_docs_only
     if: needs.check_docs_only.outputs.skip != 'true'
     steps:
