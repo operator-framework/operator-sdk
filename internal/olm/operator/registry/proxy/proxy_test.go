@@ -194,7 +194,7 @@ func (c *errorDiscovery) ServerPreferredResources() ([]*metav1.APIResourceList, 
 	return nil, nil
 }
 func (c *errorDiscovery) ServerResourcesForGroupVersion(groupVersion string) (*metav1.APIResourceList, error) {
-	return nil, fmt.Errorf("TEST")
+	return nil, fmt.Errorf("test")
 }
 
 // ----------------------------------------------
