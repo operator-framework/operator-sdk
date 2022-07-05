@@ -2,7 +2,7 @@
 title: Admission Webhooks
 linkTitle: Webhook
 weight: 30
-description: An in-depth walkthough of admission webhooks.
+description: An in-depth walkthrough of admission webhooks.
 ---
 
 ## Create a validating or mutating Admission Webhook 
