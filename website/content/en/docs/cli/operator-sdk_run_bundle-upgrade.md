@@ -9,6 +9,8 @@ Upgrade an Operator previously installed in the bundle format with OLM
 
 The single argument to this command is a bundle image, with the full registry path specified.
 If using a docker.io image, you must specify docker.io(/&lt;namespace&gt;)?/&lt;bundle-image-name&gt;:&lt;tag&gt;.
+If the bundle image provided is a SQLite index, it must be pullable by the cluster as SQLite images are pulled from the cluster.
+If the bundle image provided is a File-Based Catalog (FBC) index, it will be pulled on the local machine.
 
 ```
 operator-sdk run bundle-upgrade <bundle-image> [flags]
