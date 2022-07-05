@@ -67,6 +67,12 @@ type FBCRegistryPod struct { //nolint:maligned
 	// FBCContent represents the contents of the FBC file (string YAML).
 	FBCContent string
 
+	// SkipTLSVerify represents skip TLS certificate verification for container image registries while pulling bundles.
+	SkipTLSVerify bool `json:"SkipTLSVerify"`
+
+	// UseHTTP uses plain HTTP for container image registries while pulling bundles.
+	UseHTTP bool `json:"UseHTTP"`
+
 	// FBCIndexRootDir is the FBC directory that exists under root of an FBC container image.
 	// This directory has the File-Based Catalog representation of a catalog index.
 	FBCIndexRootDir string
@@ -254,7 +260,7 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 }
 
 // container creation command for FBC type images.
-const fbcCmdTemplate = `opm serve {{ .FBCIndexRootDir}} -p {{ .GRPCPort }}`
+const fbcCmdTemplate = `opm serve {{ .FBCIndexRootDir}} -p {{ .GRPCPort }} --skip-tls-verify={{ $.SkipTLSVerify }} --use-http={{ $.UseHTTP }}`
 
 // createConfigMap creates a ConfigMap if it does not exist and if it does, then update it with new content.
 // Also, sets the owner reference by making CatalogSource the owner of ConfigMap object for cleanup purposes.
