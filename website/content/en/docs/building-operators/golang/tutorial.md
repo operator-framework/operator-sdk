@@ -2,7 +2,7 @@
 title: Go Operator Tutorial
 linkTitle: Tutorial
 weight: 30
-description: An in-depth walkthough of building and running a Go-based operator.
+description: An in-depth walkthrough of building and running a Go-based operator.
 ---
 
 **NOTE:** If your project was created with an `operator-sdk` version prior to `v1.0.0`
@@ -11,9 +11,9 @@ please [migrate][migration-guide], or consult the [legacy docs][legacy-quickstar
 ## Prerequisites
 
 - Go through the [installation guide][install-guide].
-- User authorized with `cluster-admin` permissions.
+- Make sure your user is authorized with `cluster-admin` permissions.
 - An accessible image registry for various operator images (ex. [hub.docker.com](https://hub.docker.com/signup),
-[quay.io](https://quay.io/)) and be logged in in your command line environment.
+[quay.io](https://quay.io/)) and be logged in to your command line environment.
   - `example.com` is used as the registry Docker Hub namespace in these examples.
   Replace it with another value if using a different registry or namespace.
   - [Authentication and certificates][image-reg-config] if the registry is private or uses a custom CA.
@@ -183,7 +183,7 @@ The `NewControllerManagedBy()` provides a controller builder that allows various
 
 ### Controller Configurations
 
-There are a number of other useful configurations that can be made when initialzing a controller. For more details on these configurations consult the upstream [builder][builder_godocs] and [controller][controller_godocs] godocs.
+There are a number of other useful configurations that can be made when initializing a controller. For more details on these configurations consult the upstream [builder][builder_godocs] and [controller][controller_godocs] godocs.
 
 - Set the max number of concurrent Reconciles for the controller via the [`MaxConcurrentReconciles`][controller_options]  option. Defaults to 1.
   ```Go
@@ -298,13 +298,13 @@ make docker-build docker-push
 
 There are three ways to run the operator:
 
-- As Go program outside a cluster
+- As a Go program outside a cluster
 - As a Deployment inside a Kubernetes cluster
 - Managed by the [Operator Lifecycle Manager (OLM)][doc-olm] in [bundle][quickstart-bundle] format
 
 ### 1. Run locally outside the cluster
 
-The following steps will show how to deploy the operator on the Cluster. However, to run locally for development purposes and outside of a Cluster use the target `make install run`.
+The following steps will show how to deploy the operator on the cluster. However, to run locally for development purposes and outside of a cluster use the target `make install run`.
 
 ### 2. Run as a Deployment inside the cluster
 

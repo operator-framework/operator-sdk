@@ -29,7 +29,7 @@ Scaffolded projects now use:
 - A `Makefile` with helpful targets for build, test, and deployment, and to give you flexibility to tailor things to your project's needs
 - Updated metrics configuration using [kube-auth-proxy][kube-auth-proxy], a `--metrics-bind-address` flag, and [kustomize][kustomize]-based deployment of a Kubernetes `Service` and prometheus operator `ServiceMonitor`
 - Preliminary support for CLI plugins. For more info see the [plugins design document][plugins-phase1-design-doc]
-- A `PROJECT` configuration file to store information about GVKs, plugins, and help the CLI make decisions.
+- A `PROJECT` configuration file to store information about GVKs, plugins, and help the CLI make decisions
 
 Generated files with the default API versions:
 
@@ -43,9 +43,9 @@ The easy migration path is to initialize a new project, re-recreate APIs, then c
 ### Prerequisites
 
 - Go through the [installation guide][install-guide].
-- User authorized with `cluster-admin` permissions.
+- Make sure your user is authorized with `cluster-admin` permissions.
 - An accessible image registry for various operator images (ex. [hub.docker.com](https://hub.docker.com/signup),
-[quay.io](https://quay.io/)) and be logged in in your command line environment.
+[quay.io](https://quay.io/)) and be logged in to your command line environment.
   - `example.com` is used as the registry Docker Hub namespace in these examples.
   Replace it with another value if using a different registry or namespace.
   - [Authentication and certificates][image-reg-config] if the registry is private or uses a custom CA.
@@ -143,7 +143,7 @@ The following rules were used in earlier versions of helm-operator to automatica
 ##### Updating your ServiceAccount
 
 New Helm projects come with a ServiceAccount `controller-manager` in `config/rbac/service_account.yaml`.
-Your project's RoleBinding and ClusterRoleBinding subjects, and Deployment's `spec.template.spec.serviceAccountName`
+Your project's RoleBinding and ClusterRoleBinding subjects, and Deployments `spec.template.spec.serviceAccountName`
 that reference a ServiceAccount already refer to this new name. When you run `make deploy`,
 your project's name will be prepended to `controller-manager`, making it unique within a namespace,
 much like your old `deploy/service_account.yaml`. If you wish to use the old ServiceAccount,

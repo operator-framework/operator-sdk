@@ -33,9 +33,9 @@ Scaffolded projects now use:
 - Updated metrics configuration using [kube-auth-proxy][kube-auth-proxy], a `--metrics-addr` flag, and [kustomize][kustomize]-based deployment of a Kubernetes `Service` and prometheus operator `ServiceMonitor`
 - Scaffolded tests that use the [`envtest`][envtest] test framework
 - Preliminary support for CLI plugins. For more info see the [plugins design document][plugins-phase1-design-doc]
-- A `PROJECT` configuration file to store information about GVKs, plugins, and help the CLI make decisions.
-- A new option to create projects using ComponentConfig. For more info, see [enhancement proposal][component-proposal] and the [Component config tutorial][component-config-tutorial]
-- Go version `1.15` (previously it was `1.13`).
+- A `PROJECT` configuration file to store information about GVKs, plugins, and help the CLI make decisions
+- A new option to create projects using ComponentConfig. For more info, see the [enhancement proposal][component-proposal] and the [Component config tutorial][component-config-tutorial]
+- Go version `1.15` (previously it was `1.13`)
 
 Generated files with the default API versions:
 
@@ -52,9 +52,9 @@ The easy migration path is to initialize a new project, re-recreate APIs, then c
 ### Prerequisites
 
 - Go through the [installation guide][install-guide].
-- User authorized with `cluster-admin` permissions.
+- Make sure your user is authorized with `cluster-admin` permissions.
 - An accessible image registry for various operator images (ex. [hub.docker.com](https://hub.docker.com/signup),
-[quay.io](https://quay.io/)) and be logged in in your command line environment.
+[quay.io](https://quay.io/)) and be logged in to your command line environment.
   - `example.com` is used as the registry Docker Hub namespace in these examples.
   Replace it with another value if using a different registry or namespace.
   - [Authentication and certificates][image-reg-config] if the registry is private or uses a custom CA.
@@ -86,10 +86,10 @@ operator-sdk init --domain example.com --repo github.com/example/memcached-opera
 
 ### Check if your project is multi-group
 
-Before we start to create the APIs, check if your project has more than one group such as : `foo.example.com/v1` and `crew.example.com/v1`. If you intend to work with multiple groups in your project, then to change the project's layout to support multi-group, run the command `operator-sdk edit --multigroup=true`
+Before we start creating the APIs, check if your project has more than one group such as: `foo.example.com/v1` and `crew.example.com/v1`. If you intend to work with multiple groups in your project, then run the command `operator-sdk edit --multigroup=true` to change the project's layout to support multi-group.
 
 **Note:** In multi-group projects, APIs are defined in `apis/<group>/<version>` and controllers are defined in `controllers/<group>`.
-For further information see the [Single Group to Multi-Group][multigroup-kubebuilder-doc]
+For further information see [Single Group to Multi-Group][multigroup-kubebuilder-doc].
 
 ### Migrate APIs and Controllers
 
@@ -116,7 +116,7 @@ The `apiextensions.k8s.io/v1beta1` was deprecated in Kubernetes `1.16` and will 
 
 If you would like to keep using the previous version, use the flag `--crd-version=v1beta1` in the above command. This is only needed if you want your operator to support Kubernetes `1.15` and earlier.
 
-### API's
+### APIs
 
 Now let’s copy the API definition from `pkg/apis/<group>/<version>/<kind>_types.go` to `api/<version>/<kind>_types.go`. For our example, it is only required to copy the code from the `Spec` and `Status` fields.
 
@@ -156,7 +156,7 @@ type MemcachedList struct {...}
 
 ### Webhooks
 
-SDK version `1.0.0` and later has support for webhooks by the CLI. If your project doesn't require any webhooks, you can skip this section. However, if have been using it via customizations in your project, you should use the tool to re-scaffold the webhooks.  
+SDK version `1.0.0` and later has support for webhooks by the CLI. If your project doesn't require any webhooks, you can skip this section. However, if you have been using it via customizations in your project, you should use the tool to re-scaffold the webhooks.  
 
 A webhook can only be scaffolded for a pre-existent API in your project. Then, for each case you will run the command `operator-sdk create webhook` providing the `--group`, `--kind` and `version` of the API based on the flags that need to be used.
 
@@ -195,7 +195,7 @@ If you would like to use the previous version, use the flag `--webhook-version=v
 
 ### Controllers
 
-Now let’s migrate the controller code from `pkg/controller/<kind>/<kind>_controller.go` to `controllers/<kind>_controller.go`. Following the steps:
+Now let’s migrate the controller code from `pkg/controller/<kind>/<kind>_controller.go` to `controllers/<kind>_controller.go` following these steps:
 
 1. Copy over any struct fields from the existing project into the new `<Kind>Reconciler` struct.
 **Note:** The `Reconciler` struct has been renamed from `Reconcile<Kind>` to `<Kind>Reconciler`. In our example, we would see `ReconcileMemcached` instead of `MemcachedReconciler`.
@@ -236,7 +236,7 @@ See the complete migrated `memcached_controller.go` code [here][memcached_contro
 ##### Updating your ServiceAccount
 
 New Go projects come with a ServiceAccount `controller-manager` in `config/rbac/service_account.yaml`.
-Your project's RoleBinding and ClusterRoleBinding subjects, and Deployment's `spec.template.spec.serviceAccountName`
+Your project's RoleBinding and ClusterRoleBinding subjects, and Deployments `spec.template.spec.serviceAccountName`
 that reference a ServiceAccount already refer to this new name. When you run `make deploy`,
 your project's name will be prepended to `controller-manager`, making it unique within a namespace,
 much like your old `deploy/service_account.yaml`. If you wish to use the old ServiceAccount,
@@ -246,7 +246,7 @@ make sure to update all RBAC bindings and your manager Deployment.
 
 By checking our new `main.go` we will find that:
 
-- The SDK [leader.Become][leader-lib-doc] was replaced by the [controller-runtime's leader][controller-runtime-leader] with lease mechanism. However, you still able to stick with the [leader.Become][leader-lib-doc] for life if you wish:
+- The SDK [leader.Become][leader-lib-doc] was replaced by the [controller-runtime's leader][controller-runtime-leader] with lease mechanism. However, you can still use [leader.Become][leader-lib-doc] if you wish:
 
 ```go
 func main() {
@@ -283,7 +283,7 @@ func main() {
 }
 ```
 
-- Ensure that you copy all customizations made in `cmd/manager/main.go` to `main.go`. You’ll also need to ensure that all needed schemes have been registered, if you have been using third-party API's (i.e Route Api from OpenShift).
+- Ensure that you copy all customizations made in `cmd/manager/main.go` to `main.go`. You’ll also need to ensure that all needed schemes have been registered, if you have been using third-party APIs (i.e Route Api from OpenShift).
 
 ### Migrate your tests
 
@@ -297,19 +297,19 @@ To learn more about how you can test your controllers, see the documentation abo
 
 ### Migrate your Custom Resources
 
-Custom resource samples are stored in `./config/samples` in the new project structure. Copy the examples from your existing project into this directory. In existing projects, CR files have the format `./deploy/crds/<group>.<domain>_<version>_<kind>_cr.yaml`.
+Custom resource samples are stored in `./config/samples` using the new project structure. Copy the examples from your existing project into this directory. In existing projects, CR files have the format `./deploy/crds/<group>.<domain>_<version>_<kind>_cr.yaml`.
 
 In our example, we'll copy the specs from `deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml`
 to `config/samples/cache_v1alpha1_memcached.yaml`
 
 ### Configure your Operator
 
-In case your project has customizations in the `deploy/operator.yaml` then, it needs to be port to
-`config/manager/manager.yaml`. Note that, `OPERATOR_NAME` and `POD_NAME` env vars are no longer used. For further information came back to the section [Migrate `main.go` ][migration-guide-main-section].
+In case your project has customizations in the `deploy/operator.yaml`, it needs to be added to
+`config/manager/manager.yaml`. Note that `OPERATOR_NAME` and `POD_NAME` env vars are no longer used. For further information, check out the section [Migrate `main.go` ][migration-guide-main-section].
 
 ### Export Metrics
 
-If you are using metrics and would like to keep them exported, see that the `func addMetrics()` is no longer generated in the `main.go` and it is now configurable via [kustomize][kustomize]. Following the steps.
+If you are using metrics and would like to keep them exported, see that the `func addMetrics()` is no longer generated in the `main.go` and it is now configurable via [kustomize][kustomize].
 
 #### Configure Prometheus metrics
 
@@ -330,7 +330,7 @@ kubectl apply -f https://raw.githubusercontent.com/coreos/prometheus-operator/re
 
 #### Use Handler from `operator-lib`
 
-By using the [InstrumentedEnqueueRequestForObject](https://pkg.go.dev/github.com/operator-framework/operator-lib@v0.1.0/handler?tab=doc#InstrumentedEnqueueRequestForObject) you will able to export metrics from your Custom Resources.  In our example, it would like:  
+By using the [InstrumentedEnqueueRequestForObject](https://pkg.go.dev/github.com/operator-framework/operator-lib@v0.1.0/handler?tab=doc#InstrumentedEnqueueRequestForObject) you will be able to export metrics from your Custom Resources. In our example, it would look like:  
 
 ```go
 import (
@@ -363,15 +363,15 @@ In this way, the following metric with the resource info will be exported:
 resource_created_at_seconds{"name", "namespace", "group", "version", "kind"}
 ```
 
-**Note:** To check it you can create a pod to curl the `metrics/` endpoint but note that it is now protected by the [kube-auth-proxy][kube-auth-proxy] which means that you will need to create a `ClusterRoleBinding` and obtained the token from the ServiceAccount's secret which will be used in the requests. Otherwise, to test you can disable the [kube-auth-proxy][kube-auth-proxy] as well.
+**Note:** To check it you can create a pod to curl the `metrics/` endpoint but note that it is now protected by the [kube-auth-proxy][kube-auth-proxy] which means that you will need to create a `ClusterRoleBinding` and obtain the token from the ServiceAccount's secret which will be used in the requests. Otherwise, to test you can disable the [kube-auth-proxy][kube-auth-proxy] as well.
 
 For more info see the [metrics][metrics].
 
 ### Operator image
 
-The Dockerfile image also changes and now it is a `multi-stage`, `distroless` and still been `rootless`, however, users can change it to work as however they want.
+The Dockerfile image also changes and now it is `multi-stage`, `distroless` and still `rootless`. However, users can change it to work as they want.
 
-See that, you might need to port some customizations made in your old Dockerfile as well. Also, if you wish to still using the previous UBI image replace:
+You might need to port some customizations made in your old Dockerfile as well. Also, if you wish to still use the previous UBI image replace:
 
 ```docker
 # Use distroless as minimal base image to package the manager binary

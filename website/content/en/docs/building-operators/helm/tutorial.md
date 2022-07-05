@@ -2,7 +2,7 @@
 title: Helm Operator Tutorial
 linkTitle: Tutorial
 weight: 200
-description: An in-depth walkthough of building and running a Helm-based operator.
+description: An in-depth walkthrough of building and running a Helm-based operator.
 ---
 
 **NOTE:** If your project was created with an `operator-sdk` version prior to `v1.0.0`
@@ -11,9 +11,9 @@ please [migrate][migration-guide], or consult the [legacy docs][legacy-quickstar
 ## Prerequisites
 
 - Go through the [installation guide][install-guide].
-- User authorized with `cluster-admin` permissions.
+- Make sure your user is authorized with `cluster-admin` permissions.
 - An accessible image registry for various operator images (ex. [hub.docker.com](https://hub.docker.com/signup),
-[quay.io](https://quay.io/)) and be logged in in your command line environment.
+[quay.io](https://quay.io/)) and be logged in to your command line environment.
   - `example.com` is used as the registry Docker Hub namespace in these examples.
   Replace it with another value if using a different registry or namespace.
   - [Authentication and certificates][image-reg-config] if the registry is private or uses a custom CA.
@@ -22,7 +22,7 @@ please [migrate][migration-guide], or consult the [legacy docs][legacy-quickstar
 
 We will create a sample project to let you know how it works and this sample will:
 
-- Create a Nginx Deployment if it doesn't exist
+- Create an Nginx Deployment if it doesn't exist
 - Ensure that the Deployment size is the same as specified by the Nginx CR spec
 
 ## Create a new project
@@ -94,9 +94,9 @@ https://github.com/operator-framework/operator-sdk/issues/3447
 For this example the nginx-operator will execute the following
 reconciliation logic for each `Nginx` Custom Resource (CR):
 
-- Create a nginx Deployment if it doesn't exist
-- Create a nginx Service if it doesn't exist
-- Create a nginx Ingress if it is enabled and doesn't exist
+- Create an nginx Deployment if it doesn't exist
+- Create an nginx Service if it doesn't exist
+- Create an nginx Ingress if it is enabled and doesn't exist
 - Ensure that the Deployment, Service, and optional Ingress match the desired configuration (e.g. replica count, image, service type, etc) as specified by the `Nginx` CR
 
 ### Watch the Nginx CR
@@ -194,13 +194,13 @@ make docker-build docker-push
 
 There are three ways to run the operator:
 
-- As Go program outside a cluster
+- As a Go program outside a cluster
 - As a Deployment inside a Kubernetes cluster
 - Managed by the [Operator Lifecycle Manager (OLM)][doc-olm] in [bundle][tutorial-bundle] format
 
 ### 1. Run locally outside the cluster
 
-Execute the following command, which install your CRDs and run the manager locally:
+Execute the following command, which installs your CRDs and runs the manager locally:
 
 ```sh
 make install run
@@ -208,7 +208,7 @@ make install run
 
 ### 2. Run as a Deployment inside the cluster
 
-By default, a new namespace is created with name `<project-name>-system`, ex. `nginx-operator-system`, and will be used for the deployment.
+By default, a new namespace is created with the name `<project-name>-system`, ex. `nginx-operator-system`, and will be used for the deployment.
 
 Run the following to deploy the operator. This will also install the RBAC manifests from `config/rbac`.
 
@@ -241,13 +241,13 @@ make bundle bundle-build bundle-push
 ```
 
 Finally, run your bundle. If your bundle image is hosted in a registry that is private and/or
-has a custom CA, these [configuration steps][image-reg-config] must be complete.
+has a custom CA, these [configuration steps][image-reg-config] must be completed.
 
 ```sh
 operator-sdk run bundle example.com/nginx-operator-bundle:v0.0.1
 ```
 
-Check out the [docs][tutorial-bundle] for a deep dive into `operator-sdk`'s OLM integration.
+Check out the [docs][tutorial-bundle] for a deep dive into the `operator-sdk`'s OLM integration.
 
 
 ## Create a Nginx CR
