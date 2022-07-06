@@ -38,7 +38,7 @@ import (
 const (
 	// defaultGRPCPort is the default grpc container port that the registry pod exposes
 	defaultGRPCPort = 50051
-	defaultDBPath   = "/database/index.db"
+	defaultDBPath   = "/opm/database/index.db"
 
 	defaultContainerName     = "registry-grpc"
 	defaultContainerPortName = "grpc"
@@ -62,7 +62,7 @@ type SQLiteRegistryPod struct { //nolint:maligned
 	IndexImage string
 
 	// DBPath refers to the registry DB;
-	// if an index image is provided, the existing registry DB is located at /database/index.db
+	// if an index image is provided, the existing registry DB is located at /opm/database/index.db
 	DBPath string
 
 	// GRPCPort is the container grpc port

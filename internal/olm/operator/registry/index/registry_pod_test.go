@@ -88,7 +88,7 @@ var _ = Describe("SQLiteRegistryPod", func() {
 			})
 
 			It("should create a registry pod when database path is not provided", func() {
-				Expect(rp.DBPath).To(Equal("/database/index.db"))
+				Expect(rp.DBPath).To(Equal("/opm/database/index.db"))
 			})
 
 			It("should return a valid container command for one image", func() {
@@ -292,5 +292,5 @@ func containerCommandFor(dbPath string, items []BundleItem, hasCA, skipTLSVerify
 	for _, item := range items {
 		additions.WriteString(fmt.Sprintf("opm registry add -d %s -b %s --mode=%s%s --skip-tls-verify=%v --use-http=%v && \\\n", dbPath, item.ImageTag, item.AddMode, caFlag, skipTLSVerify, useHTTP))
 	}
-	return fmt.Sprintf("mkdir -p /database && \\\n%sopm registry serve -d /database/index.db -p 50051\n", additions.String())
+	return fmt.Sprintf("mkdir -p /opm/database && \\\n%sopm registry serve -d /opm/database/index.db -p 50051\n", additions.String())
 }
