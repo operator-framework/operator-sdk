@@ -208,6 +208,9 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 			Namespace: f.cfg.Namespace,
 		},
 		Spec: corev1.PodSpec{
+			SecurityContext: &corev1.PodSecurityContext{
+				RunAsNonRoot: &[]bool{true}[0],
+			},
 			Volumes: []corev1.Volume{
 				{
 					Name: k8sutil.TrimDNS1123Label(cm.Name + "-volume"),
@@ -247,6 +250,7 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 					},
 				},
 			},
+			ServiceAccountName: f.cfg.ServiceAccount,
 		},
 	}
 
