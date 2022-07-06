@@ -469,11 +469,9 @@ func (c IndexImageCatalogCreator) createAnnotatedRegistry(ctx context.Context, c
 	if c.HasFBCLabel {
 		// Initialize and create the FBC registry pod.
 		fbcRegistryPod := fbcindex.FBCRegistryPod{
-			BundleItems:   items,
-			IndexImage:    c.IndexImage,
-			FBCContent:    c.FBCContent,
-			SkipTLSVerify: c.SkipTLSVerify,
-			UseHTTP:       c.UseHTTP,
+			BundleItems: items,
+			IndexImage:  c.IndexImage,
+			FBCContent:  c.FBCContent,
 		}
 
 		pod, err = fbcRegistryPod.Create(ctx, c.cfg, cs)
