@@ -27,6 +27,7 @@ import (
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/alpha/action"
 	declarativeconfig "github.com/operator-framework/operator-registry/alpha/declcfg"
+	"github.com/operator-framework/operator-registry/pkg/image/containerdregistry"
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	fbcutil "github.com/operator-framework/operator-sdk/internal/olm/fbcutil"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
@@ -120,6 +121,8 @@ func (i *Install) setup(ctx context.Context) error {
 			ChannelEntry: declarativeconfig.ChannelEntry{
 				Name: csv.Name,
 			},
+			SkipTLSVerify: i.SkipTLSVerify,
+			UseHTTP:       i.UseHTTP,
 		}
 
 		if _, hasChannelMetadata := labels[registrybundle.ChannelsLabel]; hasChannelMetadata {
@@ -167,7 +170,7 @@ func generateFBCContent(ctx context.Context, f *fbcutil.FBCContext, bundleImage,
 	if indexImage != fbcutil.DefaultIndexImage { // non-default index image was specified.
 		// since an index image is specified, the bundle image will be added to the index image.
 		// generateExtraFBC will ensure that the bundle is not already present in the index image and error out if it does.
-		declcfg, err = generateExtraFBC(ctx, indexImage, bundleDeclcfg)
+		declcfg, err = generateExtraFBC(ctx, indexImage, bundleDeclcfg, f.SkipTLSVerify, f.UseHTTP)
 		if err != nil {
 			return "", fmt.Errorf("error adding bundle image %q to index image %q: %v", bundleImage, indexImage, err)
 		}
@@ -186,11 +189,22 @@ func generateFBCContent(ctx context.Context, f *fbcutil.FBCContext, bundleImage,
 
 // generateExtraFBC verifies that a bundle is not already present on the index and if not, it renders the bundle contents into a
 // declarative config type.
-func generateExtraFBC(ctx context.Context, indexImage string, bundleDeclConfig fbcutil.BundleDeclcfg) (*declarativeconfig.DeclarativeConfig, error) {
+func generateExtraFBC(ctx context.Context, indexImage string, bundleDeclConfig fbcutil.BundleDeclcfg, skipTLSVerify bool, useHTTP bool) (*declarativeconfig.DeclarativeConfig, error) {
 	log.Infof("Rendering a File-Based Catalog of the Index Image %q to verify if bundle %q is present", indexImage, bundleDeclConfig.Bundle.Name)
 	log.SetOutput(ioutil.Discard)
+
+	reg, err := containerdregistry.NewRegistry(
+		containerdregistry.WithLog(fbcutil.NullLogger()),
+		containerdregistry.SkipTLSVerify(skipTLSVerify),
+		containerdregistry.WithPlainHTTP(useHTTP))
+
+	if err != nil {
+		return nil, fmt.Errorf("error creating new image registry: %v", err)
+	}
+
 	render := action.Render{
-		Refs: []string{indexImage},
+		Refs:     []string{indexImage},
+		Registry: reg,
 	}
 
 	imageDeclConfig, err := render.Run(ctx)
