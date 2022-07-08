@@ -29,6 +29,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
@@ -217,6 +218,13 @@ func (rp *SQLiteRegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 			Namespace: rp.cfg.Namespace,
 		},
 		Spec: corev1.PodSpec{
+			SecurityContext: &corev1.PodSecurityContext{
+				RunAsNonRoot: pointer.Bool(false),
+				RunAsUser:    pointer.Int64(0),
+				SeccompProfile: &corev1.SeccompProfile{
+					Type: corev1.SeccompProfileTypeRuntimeDefault,
+				},
+			},
 			Containers: []corev1.Container{
 				{
 					Name:  defaultContainerName,
@@ -228,6 +236,14 @@ func (rp *SQLiteRegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 					},
 					Ports: []corev1.ContainerPort{
 						{Name: defaultContainerPortName, ContainerPort: rp.GRPCPort},
+					},
+					SecurityContext: &corev1.SecurityContext{
+						Privileged:               pointer.Bool(false),
+						ReadOnlyRootFilesystem:   pointer.Bool(false),
+						AllowPrivilegeEscalation: pointer.Bool(false),
+						Capabilities: &corev1.Capabilities{
+							Drop: []corev1.Capability{"ALL"},
+						},
 					},
 				},
 			},

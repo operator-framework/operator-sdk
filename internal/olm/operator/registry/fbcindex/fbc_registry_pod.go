@@ -31,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
+	pointer "k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
@@ -208,6 +209,12 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 			Namespace: f.cfg.Namespace,
 		},
 		Spec: corev1.PodSpec{
+			SecurityContext: &corev1.PodSecurityContext{
+				RunAsNonRoot: pointer.Bool(true),
+				SeccompProfile: &corev1.SeccompProfile{
+					Type: corev1.SeccompProfileTypeRuntimeDefault,
+				},
+			},
 			Volumes: []corev1.Volume{
 				{
 					Name: k8sutil.TrimDNS1123Label(cm.Name + "-volume"),
@@ -245,8 +252,17 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 							SubPath:   cm.Name,
 						},
 					},
+					SecurityContext: &corev1.SecurityContext{
+						Privileged:               pointer.Bool(false),
+						ReadOnlyRootFilesystem:   pointer.Bool(false),
+						AllowPrivilegeEscalation: pointer.Bool(false),
+						Capabilities: &corev1.Capabilities{
+							Drop: []corev1.Capability{"ALL"},
+						},
+					},
 				},
 			},
+			ServiceAccountName: f.cfg.ServiceAccount,
 		},
 	}
 
