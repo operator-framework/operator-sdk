@@ -101,6 +101,15 @@ func (mh *Memcached) Run() {
 	mh.implementingWebhooks()
 	mh.uncommentDefaultKustomization()
 	mh.uncommentManifestsKustomization()
+	mh.implementingE2ETests()
+
+	// TODO: remove after the fix in Kubebuilder is applied
+	// https://github.com/operator-framework/operator-sdk/issues/5875
+	err = kbutil.ReplaceInFile(filepath.Join(mh.ctx.Dir, "Makefile"),
+		`curl -s $(KUSTOMIZE_INSTALL_SCRIPT) | bash -s -- $(subst v,,$(KUSTOMIZE_VERSION)) $(LOCALBIN)`,
+		`est -s $(LOCALBIN)/kustomize || { curl -s $(KUSTOMIZE_INSTALL_SCRIPT) | bash -s -- $(subst v,,$(KUSTOMIZE_VERSION)) $(LOCALBIN); }`,
+	)
+	pkg.CheckError("replacing test target", err)
 
 	cmd := exec.Command("go", "mod", "tidy")
 	cmd.Dir = mh.ctx.Dir
@@ -437,6 +446,12 @@ func (r *MemcachedReconciler) deploymentForMemcached(m *cachev1alpha1.Memcached)
 									"ALL",
 								},
 							},
+							// The memcached image does not use a non-zero numeric user as the default user.
+							// Due to RunAsNonRoot field being set to true, we need to force the user in the
+							// container to a non-zero numeric user. We do this using the RunAsUser field.
+							// However, if you are looking to provide solution for K8s vendors like OpenShift
+							// be aware that you can not run under its restricted-v2 SCC if you set this value.				 
+							RunAsUser: &[]int64{1000}[0],
 						},
 						Command: []string{"memcached", "-m=64", "-o", "modern", "-v"},
 						Ports: []corev1.ContainerPort{{

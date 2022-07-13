@@ -21,7 +21,6 @@ import (
 	"os"
 	"path/filepath"
 
-	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 	"sigs.k8s.io/yaml"
 
 	"github.com/blang/semver/v4"
@@ -166,11 +165,6 @@ func (c bundleCmd) runManifests() (err error) {
 		c.outputDir = defaultRootDir
 	}
 
-	// The following code was added for we ensure that default
-	// option commented in the config/manager/controller_manager_config.yaml
-	// will not be used in the bundle.
-	c.removeDefaultCommentsFromControllerManager()
-
 	col := &collector.Manifests{}
 	switch {
 	case genutil.IsPipeReader():
@@ -253,45 +247,6 @@ func (c bundleCmd) runManifests() (err error) {
 	c.println("Bundle manifests generated successfully in", c.outputDir)
 
 	return nil
-}
-
-// removeDefaultCommentsFromControllerManager will the remove the specific comment added by
-// default in the scaffolds in order to not set it on the bundles
-// note that the replace only should be made when the string and path are found
-// so that, we do not raise an issue here.
-func (c bundleCmd) removeDefaultCommentsFromControllerManager() {
-	const commentsControllerManager = `#   leaderElectionReleaseOnCancel defines if the leader should step down volume 
-#   when the Manager ends. This requires the binary to immediately end when the
-#   Manager is stopped, otherwise, this setting is unsafe. Setting this significantly
-#   speeds up voluntary leader transitions as the new leader don't have to wait
-#   LeaseDuration time first.
-#   In the default scaffold provided, the program ends immediately after 
-#   the manager stops, so would be fine to enable this option. However, 
-#   if you are doing or is intended to do any operation such as perform cleanups 
-#   after the manager stops then its usage might be unsafe.
-#   leaderElectionReleaseOnCancel: true
-`
-
-	// if not found we will not raise an error
-	_ = kbutil.ReplaceInFile(filepath.Join(c.inputDir, "config/manager/controller_manager_config.yaml"), commentsControllerManager, "")
-
-	// todo: remove the space on Kubebuilder project so that we can remove the following replace
-	// it is required because of the molecule issues, see: https://github.com/operator-framework/operator-sdk/issues/5838
-
-	const commentManagerUpdate = `# leaderElectionReleaseOnCancel defines if the leader should step down volume
-# when the Manager ends. This requires the binary to immediately end when the
-# Manager is stopped, otherwise, this setting is unsafe. Setting this significantly
-# speeds up voluntary leader transitions as the new leader don't have to wait
-# LeaseDuration time first.
-# In the default scaffold provided, the program ends immediately after
-# the manager stops, so would be fine to enable this option. However,
-# if you are doing or is intended to do any operation such as perform cleanups
-# after the manager stops then its usage might be unsafe.
-# leaderElectionReleaseOnCancel: true
-`
-
-	// if not found we will not raise an error
-	_ = kbutil.ReplaceInFile(filepath.Join(c.inputDir, "config/manager/controller_manager_config.yaml"), commentManagerUpdate, "")
 
 }
 

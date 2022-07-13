@@ -51,6 +51,17 @@ bindata: ## Update project bindata
 fix: ## Fixup files in the repo.
 	go mod tidy
 	go fmt ./...
+	make setup-lint
+	$(TOOLS_DIR)/golangci-lint run --fix
+
+.PHONY: setup-lint
+setup-lint: ## Setup the lint
+	$(SCRIPTS_DIR)/fetch golangci-lint 1.46.2
+
+.PHONY: lint
+lint: setup-lint ## Run the lint check
+	$(TOOLS_DIR)/golangci-lint run
+
 
 .PHONY: clean
 clean: ## Cleanup build artifacts and tool binaries.
@@ -132,7 +143,8 @@ test-sanity: generate fix ## Test repo formatting, linting, etc.
 	./hack/check-license.sh
 	./hack/check-error-log-msg-format.sh
 	go vet ./...
-	$(SCRIPTS_DIR)/fetch golangci-lint 1.46.2 && $(TOOLS_DIR)/golangci-lint run
+	make setup-lint
+	make lint
 	git diff --exit-code # diff again to ensure other checks don't change repo
 
 .PHONY: test-docs
@@ -176,6 +188,8 @@ test-e2e-teardown:
 $(e2e_targets):: test-e2e-setup image/scorecard-test
 test-e2e:: $(e2e_tests) ## Run e2e tests
 
+test-e2e-sample-go:: dev-install cluster-create ## Run Memcached Operator Sample e2e tests
+	make test-e2e -C ./testdata/go/v3/memcached-operator/
 test-e2e-go:: image/custom-scorecard-tests ## Run Go e2e tests
 	go test ./test/e2e/go -v -ginkgo.v
 test-e2e-ansible:: image/ansible-operator ## Run Ansible e2e tests

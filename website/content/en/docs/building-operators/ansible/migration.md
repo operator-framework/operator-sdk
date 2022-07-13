@@ -44,9 +44,9 @@ The easy migration path is to initialize a new project, re-recreate APIs, then c
 ### Prerequisites
 
 - Go through the [installation guide][install-guide].
-- User authorized with `cluster-admin` permissions.
+- Make sure your user is authorized with `cluster-admin` permissions.
 - An accessible image registry for various operator images (ex. [hub.docker.com](https://hub.docker.com/signup),
-[quay.io](https://quay.io/)) and be logged in in your command line environment.
+[quay.io](https://quay.io/)) and be logged in to your command line environment.
   - `example.com` is used as the registry Docker Hub namespace in these examples.
   Replace it with another value if using a different registry or namespace.
   - [Authentication and certificates][image-reg-config] if the registry is private or uses a custom CA.
@@ -282,13 +282,13 @@ The default port used by the metric endpoint binds to was changed from `:8383` t
 
 ### Verify the migration
 
-The project can now be deployed on cluster by running the command:
+The project can now be deployed on the cluster by running the command:
 
 ```sh
 make deploy IMG=example.com/memcached-operator:v0.0.1
 ```
 
-You can troubleshoot your deployment by checking container logs:
+You can troubleshoot your deployment by checking the container logs:
 ```sh
 kubectl logs deployment.apps/memcached-operator-controller-manager -n memcached-operator-system -c manager
 ```

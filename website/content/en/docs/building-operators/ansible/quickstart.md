@@ -10,9 +10,9 @@ This guide walks through an example of building a simple memcached-operator powe
 ## Prerequisites
 
 - Go through the [installation guide][install-guide].
-- User authorized with `cluster-admin` permissions.
-- An accessible image registry for various operator images (ex. [hub.docker.com](https://hub.docker.com/signup),
-[quay.io](https://quay.io/)) and be logged in in your command line environment.
+- Make sure your user is authorized with `cluster-admin` permissions.
+- Have an accessible image registry for various operator images (ex. [hub.docker.com](https://hub.docker.com/signup),
+[quay.io](https://quay.io/)) and be logged in to your command line environment.
   - `example.com` is used as the registry Docker Hub namespace in these examples.
   Replace it with another value if using a different registry or namespace.
   - [Authentication and certificates][image-reg-config] if the registry is private or uses a custom CA.
@@ -100,7 +100,7 @@ has a custom CA, these [configuration steps][image-reg-config] must be complete.
 
 ## Next Steps
 
-Read the [full tutorial][tutorial] for an in-depth walkthough of building a Ansible operator.
+Read the [full tutorial][tutorial] for an in-depth walkthrough of building an Ansible operator.
 
 
 [ansible-link]:https://www.ansible.com/
