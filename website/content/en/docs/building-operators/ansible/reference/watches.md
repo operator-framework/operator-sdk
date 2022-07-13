@@ -105,6 +105,7 @@ Some features can be overridden per resource via an annotation on that CR. The o
 | Finalizer | `finalizer`  | Sets a finalizer on the CR and maps a deletion event to a playbook or role | | | [finalizers](../finalizers)|
 | Selector | `selector`  | Identifies a set of objects based on their labels | | None Applied | [Labels and Selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/)|
 | Automatic Case Conversion | `snakeCaseParameters`  | Determines whether to convert the CR spec from camelCase to snake_case before passing the contents to Ansible as extra_vars| | true | |
+| Watching Annotations Changes| `watchAnnotationsChanges` | Allows the ansible operator to trigger reconciliations on annotations changes on watched resources | | false | |
 
 
 #### Example

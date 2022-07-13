@@ -121,6 +121,16 @@ var _ = BeforeSuite(func() {
 		"foo: bar")
 	Expect(err).NotTo(HaveOccurred())
 
+	By("adding task to display annotations of Foo")
+	err = kbutil.ReplaceInFile(filepath.Join(tc.Dir, "roles", "foo", "tasks", "main.yml"),
+		"# tasks file for Foo", fooDebugAnnotations)
+	Expect(err).NotTo(HaveOccurred())
+
+	By("adding to watches annotations changes")
+	err = kbutil.ReplaceInFile(filepath.Join(tc.Dir, "watches.yaml"),
+		"role: foo", fooWatchCustomizations)
+	Expect(err).NotTo(HaveOccurred())
+
 	By("adding RBAC permissions for the Memcached Kind")
 	err = kbutil.ReplaceInFile(filepath.Join(tc.Dir, "config", "rbac", "role.yaml"),
 		"#+kubebuilder:scaffold:rules", rolesForBaseOperator)
@@ -230,4 +240,24 @@ const rolesForBaseOperator = `
       - update
       - watch
 #+kubebuilder:scaffold:rules
+`
+const fooDebugAnnotations = `
+- name: Fetch annotations
+  k8s_info:
+    kind: Foo
+    api_version: cache.example.com/v1alpha1
+    name: "{{ ansible_operator_meta.name }}"
+    namespace: "{{ ansible_operator_meta.namespace }}"
+  register: foo_cr_info
+
+- name: Print annotations
+  debug:
+    msg: "test-annotation found : {{ foo_cr_info.resources[0].metadata.annotations['test-annotation'] }}"
+  when:
+  - foo_cr_info.resources | length > 0
+  - "'test-annotation' in foo_cr_info.resources[0].metadata.annotations | default({})"
+`
+
+const fooWatchCustomizations = `role: foo
+  watchAnnotationsChanges: true
 `

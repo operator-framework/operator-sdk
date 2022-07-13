@@ -50,6 +50,7 @@ type Options struct {
 	AnsibleDebugLogs            bool
 	WatchDependentResources     bool
 	WatchClusterScopedResources bool
+	WatchAnnotationsChanges     bool
 	MaxConcurrentReconciles     int
 	Selector                    metav1.LabelSelector
 }
@@ -64,14 +65,15 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 	eventHandlers := append(options.EventHandlers, events.NewLoggingEventHandler(options.LoggingLevel))
 
 	aor := &AnsibleOperatorReconciler{
-		Client:           mgr.GetClient(),
-		GVK:              options.GVK,
-		Runner:           options.Runner,
-		EventHandlers:    eventHandlers,
-		ReconcilePeriod:  options.ReconcilePeriod,
-		ManageStatus:     options.ManageStatus,
-		AnsibleDebugLogs: options.AnsibleDebugLogs,
-		APIReader:        mgr.GetAPIReader(),
+		Client:                  mgr.GetClient(),
+		GVK:                     options.GVK,
+		Runner:                  options.Runner,
+		EventHandlers:           eventHandlers,
+		ReconcilePeriod:         options.ReconcilePeriod,
+		ManageStatus:            options.ManageStatus,
+		AnsibleDebugLogs:        options.AnsibleDebugLogs,
+		APIReader:               mgr.GetAPIReader(),
+		WatchAnnotationsChanges: options.WatchAnnotationsChanges,
 	}
 
 	scheme := mgr.GetScheme()
@@ -102,6 +104,12 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 	// Set up predicates.
 	predicates := []ctrlpredicate.Predicate{
 		ctrlpredicate.Or(ctrlpredicate.GenerationChangedPredicate{}, libpredicate.NoGenerationPredicate{}),
+	}
+
+	if options.WatchAnnotationsChanges {
+		predicates = []ctrlpredicate.Predicate{
+			ctrlpredicate.Or(ctrlpredicate.AnnotationChangedPredicate{}, predicates[0]),
+		}
 	}
 
 	p, err := parsePredicateSelector(options.Selector)
