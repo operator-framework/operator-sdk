@@ -1,0 +1,9 @@
+entries:
+  - description: >
+      Add an option `WatchAnnotationsChanges` to trigger reconciliations
+      on annotations changes on watched resources.
+
+    kind: "addition"
+
+    # Is this a breaking change?
+    breaking: false
