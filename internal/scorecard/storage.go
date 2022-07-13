@@ -195,7 +195,7 @@ func gatherTestOutput(r PodTestRunner, suiteName, testName, podName, mountPath s
 		return err
 	}
 
-	srcPath := r.TestOutput
+	srcPath := mountPath
 	prefix := getStoragePrefix(srcPath)
 	prefix = path.Clean(prefix)
 	destPath := getDestPath(r.TestOutput, suiteName, testName)
