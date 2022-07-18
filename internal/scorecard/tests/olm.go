@@ -253,13 +253,7 @@ func checkOwnedCSVStatusDescriptor(cr unstructured.Unstructured, csv *operatorsv
 	hasStatusDefinition := false
 	if cr.Object["status"] != nil {
 		// Ensure that has no empty keys
-		status := cr.Object["status"].(map[string]interface{})
-		for key := range status {
-			if len(key) > 0 {
-				hasStatusDefinition = true
-				break
-			}
-		}
+		hasStatusDefinition = len(cr.Object["status"].(map[string]interface{})) > 0
 	}
 
 	if !hasStatusDefinition {
