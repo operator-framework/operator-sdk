@@ -144,15 +144,15 @@ func getChannelHead(entries []declarativeconfig.ChannelEntry) (string, error) {
 }
 
 // handleTraditionalUpgrade upgrades an operator that was installed using OLM. Subsequent upgrades will go through the runFBCUpgrade function
-func handleTraditionalUpgrade(ctx context.Context, indexImage string, bundleImage string, channelName string) (string, error) {
+func handleTraditionalUpgrade(ctx context.Context, indexImage string, bundleImage string, channelName string, skipTLSVerify bool, useHTTP bool) (string, error) {
 	// render the index image
-	originalDeclCfg, err := fbcutil.RenderRefs(ctx, []string{indexImage})
+	originalDeclCfg, err := fbcutil.RenderRefs(ctx, []string{indexImage}, skipTLSVerify, useHTTP)
 	if err != nil {
 		return "", fmt.Errorf("error rendering index %q", indexImage)
 	}
 
 	// render the bundle image
-	bundleDeclConfig, err := fbcutil.RenderRefs(ctx, []string{bundleImage})
+	bundleDeclConfig, err := fbcutil.RenderRefs(ctx, []string{bundleImage}, skipTLSVerify, useHTTP)
 	if err != nil {
 		return "", fmt.Errorf("error rendering bundle image %q", bundleImage)
 	}
@@ -201,7 +201,7 @@ func (c *IndexImageCatalogCreator) runFBCUpgrade(ctx context.Context) error {
 		refs = append(refs, c.IndexImage)
 	}
 
-	originalDeclcfg, err := fbcutil.RenderRefs(ctx, refs)
+	originalDeclcfg, err := fbcutil.RenderRefs(ctx, refs, c.SkipTLSVerify, c.UseHTTP)
 	if err != nil {
 		return err
 	}
@@ -215,7 +215,7 @@ func (c *IndexImageCatalogCreator) runFBCUpgrade(ctx context.Context) error {
 	}
 
 	// Adding the FBC "f" to the originalDeclcfg to generate a new FBC
-	declcfg, err := upgradeFBC(ctx, f, originalDeclcfg)
+	declcfg, err := upgradeFBC(ctx, f, originalDeclcfg, c.SkipTLSVerify, c.UseHTTP)
 	if err != nil {
 		return fmt.Errorf("error creating the upgraded FBC: %v", err)
 	}
@@ -235,8 +235,8 @@ func (c *IndexImageCatalogCreator) runFBCUpgrade(ctx context.Context) error {
 
 // upgradeFBC constructs a new File-Based Catalog from both the FBCContext object and the declarative config object. This function will check to see
 // if the FBCContext object "f" is already present in the original declarative config.
-func upgradeFBC(ctx context.Context, f *fbcutil.FBCContext, originalDeclCfg *declarativeconfig.DeclarativeConfig) (*declarativeconfig.DeclarativeConfig, error) {
-	declcfg, err := fbcutil.RenderRefs(ctx, f.Refs)
+func upgradeFBC(ctx context.Context, f *fbcutil.FBCContext, originalDeclCfg *declarativeconfig.DeclarativeConfig, skipTLSVerify bool, useHTTP bool) (*declarativeconfig.DeclarativeConfig, error) {
+	declcfg, err := fbcutil.RenderRefs(ctx, f.Refs, skipTLSVerify, useHTTP)
 	if err != nil {
 		return nil, err
 	}
@@ -387,7 +387,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 			}
 
 			// Upgrading when installed traditionally by OLM
-			upgradedFBC, err := handleTraditionalUpgrade(ctx, c.IndexImage, c.BundleImage, subscription.Spec.Channel)
+			upgradedFBC, err := handleTraditionalUpgrade(ctx, c.IndexImage, c.BundleImage, subscription.Spec.Channel, c.SkipTLSVerify, c.UseHTTP)
 			if err != nil {
 				return fmt.Errorf("unable to upgrade bundle: %v", err)
 			}
