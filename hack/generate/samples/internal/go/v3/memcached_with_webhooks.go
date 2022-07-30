@@ -152,32 +152,103 @@ func (mh *Memcached) uncommentDefaultKustomization() {
 	pkg.CheckError("uncomment webhookcainjection_patch.yaml", err)
 
 	err = kbutil.UncommentCode(kustomization,
-		`#- name: CERTIFICATE_NAMESPACE # namespace of the certificate CR
-#  objref:
-#    kind: Certificate
-#    group: cert-manager.io
-#    version: v1
-#    name: serving-cert # this name should match the one in certificate.yaml
-#  fieldref:
-#    fieldpath: metadata.namespace
-#- name: CERTIFICATE_NAME
-#  objref:
-#    kind: Certificate
-#    group: cert-manager.io
-#    version: v1
-#    name: serving-cert # this name should match the one in certificate.yaml
-#- name: SERVICE_NAMESPACE # namespace of the service
-#  objref:
-#    kind: Service
-#    version: v1
-#    name: webhook-service
-#  fieldref:
-#    fieldpath: metadata.namespace
-#- name: SERVICE_NAME
-#  objref:
-#    kind: Service
-#    version: v1
-#    name: webhook-service`, "#")
+		`#replacements:
+#  - source: # Add cert-manager annotation to ValidatingWebhookConfiguration, MutatingWebhookConfiguration and CRDs
+#      kind: Certificate
+#      group: cert-manager.io
+#      version: v1
+#      name: serving-cert # this name should match the one in certificate.yaml
+#      fieldPath: .metadata.namespace # namespace of the certificate CR
+#    targets:
+#      - select:
+#          kind: ValidatingWebhookConfiguration
+#        fieldPaths:
+#          - .metadata.annotations.[cert-manager.io/inject-ca-from]
+#        options:
+#          delimiter: '/'
+#          index: 0
+#          create: true
+#      - select:
+#          kind: MutatingWebhookConfiguration
+#        fieldPaths:
+#          - .metadata.annotations.[cert-manager.io/inject-ca-from]
+#        options:
+#          delimiter: '/'
+#          index: 0
+#          create: true
+#      - select:
+#          kind: CustomResourceDefinition
+#        fieldPaths:
+#          - .metadata.annotations.[cert-manager.io/inject-ca-from]
+#        options:
+#          delimiter: '/'
+#          index: 0
+#          create: true
+#  - source:
+#      kind: Certificate
+#      group: cert-manager.io
+#      version: v1
+#      name: serving-cert # this name should match the one in certificate.yaml
+#      fieldPath: .metadata.name
+#    targets:
+#      - select:
+#          kind: ValidatingWebhookConfiguration
+#        fieldPaths:
+#          - .metadata.annotations.[cert-manager.io/inject-ca-from]
+#        options:
+#          delimiter: '/'
+#          index: 1
+#          create: true
+#      - select:
+#          kind: MutatingWebhookConfiguration
+#        fieldPaths:
+#          - .metadata.annotations.[cert-manager.io/inject-ca-from]
+#        options:
+#          delimiter: '/'
+#          index: 1
+#          create: true
+#      - select:
+#          kind: CustomResourceDefinition
+#        fieldPaths:
+#          - .metadata.annotations.[cert-manager.io/inject-ca-from]
+#        options:
+#          delimiter: '/'
+#          index: 1
+#          create: true
+#  - source: # Add cert-manager annotation to the webhook Service
+#      kind: Service
+#      version: v1
+#      name: webhook-service
+#      fieldPath: .metadata.name # namespace of the service
+#    targets:
+#      - select:
+#          kind: Certificate
+#          group: cert-manager.io
+#          version: v1
+#        fieldPaths:
+#          - .spec.dnsNames.0
+#          - .spec.dnsNames.1
+#        options:
+#          delimiter: '.'
+#          index: 0
+#          create: true
+#  - source:
+#      kind: Service
+#      version: v1
+#      name: webhook-service
+#      fieldPath: .metadata.namespace # namespace of the service
+#    targets:
+#      - select:
+#          kind: Certificate
+#          group: cert-manager.io
+#          version: v1
+#        fieldPaths:
+#          - .spec.dnsNames.0
+#          - .spec.dnsNames.1
+#        options:
+#          delimiter: '.'
+#          index: 1
+#          create: true`, "#")
 	pkg.CheckError("uncommented certificate CR", err)
 }
 
@@ -199,7 +270,7 @@ func (mh *Memcached) uncommentManifestsKustomization() {
 #    # Remove the manager container's "cert" volumeMount, since OLM will create and mount a set of certs.
 #    # Update the indices in this path if adding or removing containers/volumeMounts in the manager's Deployment.
 #    - op: remove
-#      path: /spec/template/spec/containers/1/volumeMounts/0
+#      path: /spec/template/spec/containers/0/volumeMounts/0
 #    # Remove the "cert" volume, since OLM will create and mount a set of certs.
 #    # Update the indices in this path if adding or removing volumes in the manager's Deployment.
 #    - op: remove

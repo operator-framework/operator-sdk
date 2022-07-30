@@ -17,6 +17,8 @@ package kustomize
 import (
 	"bytes"
 	"fmt"
+	manifestsv3alpha "github.com/operator-framework/operator-sdk/internal/plugins/manifests/v3-alpha/templates/config/manifests"
+	"github.com/operator-framework/operator-sdk/internal/plugins/util"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -224,17 +226,32 @@ func (c manifestsCmd) run(cfg config.Config) error {
 		return fmt.Errorf("error writing CSV base: %v", err)
 	}
 
-	// Write a kustomization.yaml to outputDir if one does not exist.
-	kustomization := manifests.Kustomization{SupportsWebhooks: operatorType == projutil.OperatorTypeGo}
-	// Ensure the path to the manifest directory is correctly carried through
-	kustomization.Path = c.outputDir
-	err = machinery.NewScaffold(machinery.Filesystem{FS: afero.NewOsFs()}, machinery.WithConfig(cfg)).Execute(
-		&kustomization,
-	)
-	if err != nil {
-		return fmt.Errorf("error scaffolding manifests: %v", err)
-	}
+	// Write a kustomization.yaml to outputDir if one does not exist
+	if util.IsGolangLegacyLayout(cfg) || util.HasManifestsV2Key(cfg) {
+		kustomization := manifests.Kustomization{
+			SupportsWebhooks: operatorType == projutil.OperatorTypeGo}
 
+		// Ensure the path to the manifest directory is correctly carried through
+		kustomization.Path = c.outputDir
+		err = machinery.NewScaffold(machinery.Filesystem{FS: afero.NewOsFs()}, machinery.WithConfig(cfg)).Execute(
+			&kustomization,
+		)
+		if err != nil {
+			return fmt.Errorf("error scaffolding manifests: %v", err)
+		}
+	} else {
+		kustomization := manifestsv3alpha.Kustomization{
+			SupportsWebhooks: operatorType == projutil.OperatorTypeGo}
+
+		// Ensure the path to the manifest directory is correctly carried through
+		kustomization.Path = c.outputDir
+		err = machinery.NewScaffold(machinery.Filesystem{FS: afero.NewOsFs()}, machinery.WithConfig(cfg)).Execute(
+			&kustomization,
+		)
+		if err != nil {
+			return fmt.Errorf("error scaffolding manifests: %v", err)
+		}
+	}
 	if !c.quiet {
 		fmt.Println("Kustomize files generated successfully")
 	}

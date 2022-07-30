@@ -19,6 +19,7 @@ package scaffolds
 
 import (
 	"os"
+	kustomizev1 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/common/kustomize/v1"
 
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
 	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
@@ -31,9 +32,6 @@ import (
 )
 
 const (
-	// kustomizeVersion is the sigs.k8s.io/kustomize version to be used in the project
-	kustomizeVersion = "v3.8.7"
-
 	imageName = "controller:latest"
 )
 
@@ -80,7 +78,7 @@ func (s *initScaffolder) Scaffold() error {
 		&templates.GitIgnore{},
 		&templates.Makefile{
 			Image:               imageName,
-			KustomizeVersion:    kustomizeVersion,
+			KustomizeVersion:    kustomizev1.KustomizeVersion,
 			HelmOperatorVersion: helmOperatorVersion,
 		},
 		&templates.Watches{},

@@ -46,6 +46,7 @@ import (
 	envtestv1 "github.com/operator-framework/operator-sdk/internal/plugins/envtest/v1"
 	helmv1 "github.com/operator-framework/operator-sdk/internal/plugins/helm/v1"
 	manifestsv2 "github.com/operator-framework/operator-sdk/internal/plugins/manifests/v2"
+	manifestsv3 "github.com/operator-framework/operator-sdk/internal/plugins/manifests/v3-alpha"
 	scorecardv2 "github.com/operator-framework/operator-sdk/internal/plugins/scorecard/v2"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
@@ -85,25 +86,25 @@ func GetPluginsCLIAndRoot() (*cli.CLI, *cobra.Command) {
 	gov3Bundle, _ := plugin.NewBundle(golang.DefaultNameQualifier, golangv3.Plugin{}.Version(),
 		kustomizev1.Plugin{},
 		golangv3.Plugin{},
-		manifestsv2.Plugin{},
+		manifestsv3.Plugin{},
 		scorecardv2.Plugin{},
 	)
 	ansibleBundle, _ := plugin.NewBundle("ansible"+plugins.DefaultNameQualifier, plugin.Version{Number: 1},
 		kustomizev1.Plugin{},
 		ansiblev1.Plugin{},
-		manifestsv2.Plugin{},
+		manifestsv3.Plugin{},
 		scorecardv2.Plugin{},
 	)
 	helmBundle, _ := plugin.NewBundle("helm"+plugins.DefaultNameQualifier, plugin.Version{Number: 1},
 		kustomizev1.Plugin{},
 		helmv1.Plugin{},
-		manifestsv2.Plugin{},
+		manifestsv3.Plugin{},
 		scorecardv2.Plugin{},
 	)
 	hybridBundle, _ := plugin.NewBundle("hybrid.helm"+plugins.DefaultNameQualifier, plugin.Version{Number: 1, Stage: stage.Alpha},
 		kustomizev1.Plugin{},
 		hybrid.Plugin{},
-		manifestsv2.Plugin{},
+		manifestsv3.Plugin{},
 		scorecardv2.Plugin{},
 	)
 	c, err := cli.New(
