@@ -36,6 +36,12 @@ func (f *Kustomization) SetTemplateDefaults() error {
 		f.Path = filepath.Join("config", "manifests", "kustomization.yaml")
 	}
 
+	// We cannot overwiting the file after it be created because
+	// it might contain user changes (i.e to work with Kustomize 4.x
+	// the target /spec/template/spec/containers/1/volumeMounts/0
+	// needs to be replaced with /spec/template/spec/containers/0/volumeMounts/0
+	f.IfExistsAction = machinery.SkipFile
+
 	f.TemplateBody = kustomizationTemplate
 
 	return nil

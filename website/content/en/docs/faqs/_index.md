@@ -331,5 +331,19 @@ Here are a couple workarounds to try to resolve the issue:
 
 If neither of those solutions work for you, please [open an issue][open-issue]
 
+## After update my project to use a Kustomize 4.x version the make bundle does not properly work
+
+**Valid only for Golang/Hybrid projects using webhooks**
+
+> `Error: remove operation does not apply:doc is missing path: "/spec/template/spec/containers/1/volumeMounts/0": missing value` 
+
+The error occurs because with the upper Kustomize version the containers used in the Deployment spec of your CSV
+are no longer added at the same order. To sort it out you can update replace the target `/spec/template/spec/containers/1/volumeMounts/0`
+with `/spec/template/spec/containers/0/volumeMounts/0` in `config/manifest/kustomization.yaml`.
+
+**NOTE** You MUST use SDK CLI versions > 1.22. Previous versions have a bug 
+where the command `operator-sdk generate kustomize manifests` is not respecting the changes
+made on this manifest. 
+
 [cgo-docs]: https://pkg.go.dev/cmd/cgo
 [open-issue]: https://github.com/operator-framework/operator-sdk/issues/new/choose
