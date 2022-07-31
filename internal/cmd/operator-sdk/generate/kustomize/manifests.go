@@ -17,12 +17,13 @@ package kustomize
 import (
 	"bytes"
 	"fmt"
-	manifestsv3alpha "github.com/operator-framework/operator-sdk/internal/plugins/manifests/v3-alpha/templates/config/manifests"
-	"github.com/operator-framework/operator-sdk/internal/plugins/util"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	manifestsv3alpha "github.com/operator-framework/operator-sdk/internal/plugins/manifests/v3-alpha/templates/config/manifests"
+	"github.com/operator-framework/operator-sdk/internal/plugins/util"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"

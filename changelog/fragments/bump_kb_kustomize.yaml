@@ -1,0 +1,221 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Upgrade kustomize version from v3 to v4. [Release Notes](https://github.com/kubernetes-sigs/kustomize/releases/tag/kustomize%2Fv4.0.0)
+    kind: "change"
+
+    # Is this a breaking change?
+    breaking: yes
+    migration:
+      header:
+      body: |
+        Upgrade kustomize versions from v3 to v4
+
+        **WARNING** If your project has customizations using kustomize you might be impacted on them. See its [Release Notes](https://github.com/kubernetes-sigs/kustomize/releases/tag/kustomize%2Fv4.0.0). (Note all changes are covered by its docs)
+
+        - In the Project file, replace: `manifests.sdk.operatorframework.io/v2` with: `manifests.sdk.operatorframework.io/v3-alpha`
+        - Update the kustomize version in your Makefile: ensure that the value used for KUSTOMIZE_VERSION is `v4.5.5`
+
+        **(Valid Only for Ansible Projects)**
+        - In the molecule/default, replace `--load_restrictor none .` with `--load-restrictor LoadRestrictionsNone`
+
+        **(Valid Only for Golang Projects)**
+
+        By performing the following steps you will replace [vars](https://kubectl.docs.kubernetes.io/references/kustomize/kustomization/vars/)
+        in favor of [replacements](https://kubectl.docs.kubernetes.io/references/kustomize/kustomization/replacements/) as address other deprecations.
+        You will also ensure that you address its breaking changes.
+
+        - **(breaking change)** In the `config/manifests/kustomization.yaml` replace the target `path: /spec/template/spec/containers/1/volumeMounts/0` with `path: /spec/template/spec/containers/0/volumeMounts/0`
+
+        - In the `config/default/kustomization.yaml` file:
+        a) Replace:
+        ```yaml
+        #commonLabels:
+        #  someName: someValue
+        ```
+
+        With:
+        ```yaml
+        #labels:
+        #- includeSelectors: true
+        #  pairs:
+        #    someName: someValue
+        ```
+
+        b) Replace: `bases:` With: `resources:`
+
+        c) Replace all var content:
+        ```yaml
+        # the following config is for teaching kustomize how to do var substitution
+        vars:
+        # [CERTMANAGER] To enable cert-manager, uncomment all sections with 'CERTMANAGER' prefix.
+        - name: CERTIFICATE_NAMESPACE # namespace of the certificate CR
+          objref:
+            kind: Certificate
+            group: cert-manager.io
+            version: v1
+            name: serving-cert # this name should match the one in certificate.yaml
+          fieldref:
+            fieldpath: metadata.namespace
+        - name: CERTIFICATE_NAME
+          objref:
+            kind: Certificate
+            group: cert-manager.io
+            version: v1
+            name: serving-cert # this name should match the one in certificate.yaml
+        - name: SERVICE_NAMESPACE # namespace of the service
+          objref:
+            kind: Service
+            version: v1
+            name: webhook-service
+          fieldref:
+            fieldpath: metadata.namespace
+        - name: SERVICE_NAME
+          objref:
+            kind: Service
+            version: v1
+            name: webhook-service
+        ```
+
+        With:
+        ```yaml
+        # Uncomment the following replacements to add the cert-manager CA injection annotations
+        replacements:
+          - source: # Add cert-manager annotation to ValidatingWebhookConfiguration, MutatingWebhookConfiguration and CRDs
+              kind: Certificate
+              group: cert-manager.io
+              version: v1
+              name: serving-cert # this name should match the one in certificate.yaml
+              fieldPath: .metadata.namespace # namespace of the certificate CR
+            targets:
+              - select:
+                  kind: ValidatingWebhookConfiguration
+                fieldPaths:
+                  - .metadata.annotations.[cert-manager.io/inject-ca-from]
+                options:
+                  delimiter: '/'
+                  index: 0
+                  create: true
+              - select:
+                  kind: MutatingWebhookConfiguration
+                fieldPaths:
+                  - .metadata.annotations.[cert-manager.io/inject-ca-from]
+                options:
+                  delimiter: '/'
+                  index: 0
+                  create: true
+              - select:
+                  kind: CustomResourceDefinition
+                fieldPaths:
+                  - .metadata.annotations.[cert-manager.io/inject-ca-from]
+                options:
+                  delimiter: '/'
+                  index: 0
+                  create: true
+          - source:
+              kind: Certificate
+              group: cert-manager.io
+              version: v1
+              name: serving-cert # this name should match the one in certificate.yaml
+              fieldPath: .metadata.name
+            targets:
+              - select:
+                  kind: ValidatingWebhookConfiguration
+                fieldPaths:
+                  - .metadata.annotations.[cert-manager.io/inject-ca-from]
+                options:
+                  delimiter: '/'
+                  index: 1
+                  create: true
+              - select:
+                  kind: MutatingWebhookConfiguration
+                fieldPaths:
+                  - .metadata.annotations.[cert-manager.io/inject-ca-from]
+                options:
+                  delimiter: '/'
+                  index: 1
+                  create: true
+              - select:
+                  kind: CustomResourceDefinition
+                fieldPaths:
+                  - .metadata.annotations.[cert-manager.io/inject-ca-from]
+                options:
+                  delimiter: '/'
+                  index: 1
+                  create: true
+          - source: # Add cert-manager annotation to the webhook Service
+              kind: Service
+              version: v1
+              name: webhook-service
+              fieldPath: .metadata.name # namespace of the service
+            targets:
+              - select:
+                  kind: Certificate
+                  group: cert-manager.io
+                  version: v1
+                fieldPaths:
+                  - .spec.dnsNames.0
+                  - .spec.dnsNames.1
+                options:
+                  delimiter: '.'
+                  index: 0
+                  create: true
+          - source:
+              kind: Service
+              version: v1
+              name: webhook-service
+              fieldPath: .metadata.namespace # namespace of the service
+            targets:
+              - select:
+                  kind: Certificate
+                  group: cert-manager.io
+                  version: v1
+                fieldPaths:
+                  - .spec.dnsNames.0
+                  - .spec.dnsNames.1
+                options:
+                  delimiter: '.'
+                  index: 1
+                  create: true
+
+        ```
+
+        - In the `config/default/webhookcainjection_patch.yaml` replace `cert-manager.io/inject-ca-from: $(CERTIFICATE_NAMESPACE)/$(CERTIFICATE_NAME)` with `cert-manager.io/inject-ca-from: CERTIFICATE_NAMESPACE/CERTIFICATE_NAME`
+
+        - In the `config/certmanager/certificate.yaml`
+        Replace:
+
+        ```yaml
+        dnsNames:
+          - $(SERVICE_NAME).$(SERVICE_NAMESPACE).svc
+          - $(SERVICE_NAME).$(SERVICE_NAMESPACE).svc.cluster.local
+        ```
+
+        With:
+        ```yaml
+        - SERVICE_NAME.SERVICE_NAMESPACE.svc
+        - SERVICE_NAME.SERVICE_NAMESPACE.svc.cluster.local
+        ```
+
+        - In the `config/certmanager/kustomizeconfig.yaml` remove the following (no longer required):
+
+        ```
+        varReference:
+        - kind: Certificate
+          group: cert-manager.io
+          path: spec/commonName
+        - kind: Certificate
+          group: cert-manager.io
+          path: spec/dnsNames
+        ```
+
+        - In the `/config/webhook/kustomizeconfig.yaml` remove (no longer required):
+
+        ```
+        varReference:
+        - path: metadata/annotations
+        ```
+
+        - Run `make manifest` and `make bundle` and verify that your CSV has the Deployment spec.
+

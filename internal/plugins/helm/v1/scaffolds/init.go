@@ -19,6 +19,7 @@ package scaffolds
 
 import (
 	"os"
+
 	kustomizev1 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/common/kustomize/v1"
 
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"

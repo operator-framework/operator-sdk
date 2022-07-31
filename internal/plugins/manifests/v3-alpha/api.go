@@ -17,6 +17,7 @@ package v3
 import (
 	"errors"
 	"fmt"
+
 	"github.com/operator-framework/operator-sdk/internal/plugins/manifests/v3-alpha/templates/config/samples"
 	"github.com/operator-framework/operator-sdk/internal/plugins/util"
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
