@@ -337,7 +337,7 @@ If neither of those solutions work for you, please [open an issue][open-issue]
 
 > `Error: remove operation does not apply:doc is missing path: "/spec/template/spec/containers/1/volumeMounts/0": missing value` 
 
-The error occurs because with the upper Kustomize version the containers used in the Deployment spec of your CSV
+The error occurs due to a change in the Kustomize 4.x versions where the containers used in the Deployment spec of your CSV
 are no longer added at the same order. To sort it out you can update replace the target `/spec/template/spec/containers/1/volumeMounts/0`
 with `/spec/template/spec/containers/0/volumeMounts/0` in `config/manifest/kustomization.yaml`.
 
