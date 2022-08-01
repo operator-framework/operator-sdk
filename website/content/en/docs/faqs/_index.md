@@ -331,7 +331,7 @@ Here are a couple workarounds to try to resolve the issue:
 
 If neither of those solutions work for you, please [open an issue][open-issue]
 
-## After update my project to use a Kustomize 4.x version the make bundle does not properly work
+## After updating my project to use a Kustomize 4.x version, 'make bundle' does not work
 
 **Valid only for Golang/Hybrid projects using webhooks**
 
