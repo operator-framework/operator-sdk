@@ -234,24 +234,40 @@ func checkCSVDescriptors(bundle *apimanifests.Bundle, r scapiv1alpha3.TestResult
 func checkOwnedCSVStatusDescriptor(cr unstructured.Unstructured, csv *operatorsv1alpha1.ClusterServiceVersion,
 	r scapiv1alpha3.TestResult) scapiv1alpha3.TestResult {
 
-	var crd *operatorsv1alpha1.CRDDescription
+	var crdDescription *operatorsv1alpha1.CRDDescription
 
 	for _, owned := range csv.Spec.CustomResourceDefinitions.Owned {
 		if owned.Kind == cr.GetKind() {
-			crd = &owned
+			crdDescription = &owned
 			break
 		}
 	}
 
-	if crd == nil {
+	if crdDescription == nil {
 		msg := fmt.Sprintf("Failed to find an owned CRD for CR %s with GVK %s", cr.GetName(), cr.GroupVersionKind().String())
 		r.Errors = append(r.Errors, msg)
 		r.State = scapiv1alpha3.FailState
 		return r
 	}
 
-	if len(crd.StatusDescriptors) == 0 {
-		r.Errors = append(r.Errors, fmt.Sprintf("%s does not have a status descriptor", crd.Name))
+	hasStatusDefinition := false
+	if cr.Object["status"] != nil {
+		// Ensure that has no empty keys
+		hasStatusDefinition = len(cr.Object["status"].(map[string]interface{})) > 0
+	}
+
+	if !hasStatusDefinition {
+		r.Suggestions = append(r.Suggestions, fmt.Sprintf("%s does not have status spec. Note that"+
+			"All objects that represent a physical resource whose state may vary from the user's desired "+
+			"intent SHOULD have a spec and a status. "+
+			"More info: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#spec-and-status", crdDescription.Name))
+	}
+
+	if hasStatusDefinition && len(crdDescription.StatusDescriptors) == 0 {
+		r.Errors = append(r.Errors, fmt.Sprintf("%s does not have a status descriptor", crdDescription.Name))
+		r.Suggestions = append(r.Suggestions, fmt.Sprintf("add status descriptor for the crd %s. "+
+			"If your project is built using Golang you can use the csv markers. "+
+			"More info: https://sdk.operatorframework.io/docs/building-operators/golang/references/markers/", crdDescription.Name))
 		r.State = scapiv1alpha3.FailState
 	}
 
