@@ -53,7 +53,6 @@ var _ = Describe("operator-sdk", func() {
 			testutils.WrapWarnOutput(tc.Kubectl.Command("delete", "clusterrolebinding", metricsClusterRoleBindingName))
 
 			By("cleaning up created API objects during test process")
-			// TODO(estroz): go/v2 does not have this target, so generalize once tests are refactored.
 			testutils.WrapWarn(tc.Make("undeploy"))
 
 			By("ensuring that the namespace was deleted")
