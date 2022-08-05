@@ -218,13 +218,32 @@ func (rp *SQLiteRegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 			Namespace: rp.cfg.Namespace,
 		},
 		Spec: corev1.PodSpec{
-			SecurityContext: &corev1.PodSecurityContext{
-				RunAsNonRoot: pointer.Bool(false),
-				RunAsUser:    pointer.Int64(0),
-				SeccompProfile: &corev1.SeccompProfile{
-					Type: corev1.SeccompProfileTypeRuntimeDefault,
-				},
-			},
+			// DO NOT set RunAsUser and RunAsNonRoot, we must leave this empty to allow
+			// those that want to use this command against Openshift vendor do not face issues.
+			//
+			// Why not set RunAsUser?
+			// RunAsUser cannot be set because in OpenShift each namespace has a valid range like
+			// [1000680000, 1000689999]. Therefore, values like 1001 will not work. Also, in OCP each namespace
+			// has a valid range allocate. Therefore, by leaving it empty the OCP will adopt RunAsUser strategy
+			// of MustRunAsRange. The PSA will look for the openshift.io/sa.scc.uid-range annotation
+			// in the namespace to populate RunAsUser fields when the pod be admitted. Note that
+			// is NOT possible to know a valid value that could be accepeted beforehand.
+			//
+			// Why not set RunAsNonRoot?
+			// If we set RunAsNonRoot = true and the image informed does not define the UserID
+			// (i.e. in the Dockerfile we have not `USER 11211:11211 `) then, the Pod will fail to run with the
+			// error `"container has runAsNonRoot and image will run as root …` in ANY Kubernetes cluster.
+			// (vanilla or OCP). Therefore, by leaving it empty this field will be set by OCP if/when the Pod be
+			// qualified for restricted-v2 SCC policy.
+			//
+			// TODO: remove when OpenShift 4.10 and Kubernetes 1.19 be no longer supported
+			// Why not set SeccompProfile?
+			// This option can only work in OCP versions >= 4.11 and Kubernetes versions >= 19.
+			//SecurityContext: &corev1.PodSecurityContext{
+			//	SeccompProfile: &corev1.SeccompProfile{
+			//		Type: corev1.SeccompProfileTypeRuntimeDefault,
+			//	},
+			//},
 			Containers: []corev1.Container{
 				{
 					Name:  defaultContainerName,
