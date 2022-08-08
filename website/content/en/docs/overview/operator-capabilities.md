@@ -158,10 +158,6 @@ Native k8s objects emit events (“Events” objects) as their states change. Yo
 - Operand sends useful alerts
 - Custom Resources emit custom events
 
-### Metering
-
-- Operator leverages Operator Metering
-
 **Example:** A database Operator continues to parse the logging output of the database software and understands noteworthy log events, e.g. running out of space for database files and produces alerts. The operator also instruments the database and exposes application level, e.g. database queries per second
 
 **Guiding questions to determine Operator reaching Level 4**
@@ -180,7 +176,7 @@ Native k8s objects emit events (“Events” objects) as their states change. Yo
 
 8. Does your Operator expose Operand performance metrics?
 
-<sup>1</sup> The RED method  
+<sup>1</sup> The RED method
 The RED Method defines the three key metrics for every service in your architecture.
 * Rate (the number of requests per second)
 * Errors (the number of those requests that are failing)
