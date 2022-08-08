@@ -34,6 +34,11 @@ Please, do **not** use this field if you are looking to build Operators that wor
 ```yaml
     spec:
       securityContext:
+        # WARNING: Ensure that the image used defines an UserID in the Dockerfile
+        # otherwise the Pod will not run and will fail with `container has runAsNonRoot and image has non-numeric user`.
+        # If you want your workloads admitted in namespaces enforced with the restricted mode in OpenShift/OKD vendors
+        # then, you MUST ensure that the Dockerfile defines a User ID OR you MUST leave the `RunAsNonRoot` and
+        # RunAsUser fields empty.
         runAsNonRoot: true
         # Please ensure that you can use SeccompProfile and do not use
         # if your project must work on old Kubernetes
@@ -81,6 +86,11 @@ dep:= &appsv1.Deployment{
               Name:    "memcached",
               // Ensure restricted context for the container  
               SecurityContext: &corev1.SecurityContext{
+				 // WARNING: Ensure that the image used defines an UserID in the Dockerfile
+				 // otherwise the Pod will not run and will fail with `container has runAsNonRoot and image has non-numeric user`.
+				 // If you want your workloads admitted in namespaces enforced with the restricted mode in OpenShift/OKD vendors 
+				 // then, you MUST ensure that the Dockerfile defines a User ID OR you MUST leave the `RunAsNonRoot` and
+				 // RunAsUser fields empty. 
                  RunAsNonRoot:  &[]bool{true}[0],
                  AllowPrivilegeEscalation:  &[]bool{false}[0],
                  Capabilities: &corev1.Capabilities{
@@ -88,12 +98,6 @@ dep:= &appsv1.Deployment{
                        "ALL",
                     },
                  },
-                 // The memcached image does not use a non-zero numeric user as the default user.
-                 // Due to RunAsNonRoot field being set to true, we need to force the user in the
-                 // container to a non-zero numeric user. We do this using the RunAsUser field.
-                 // However, if you are looking to provide solution for K8s vendors like OpenShift
-                 // be aware that you can not run under its restricted-v2 SCC if you set this value.
-                 RunAsUser: &[]int64{1000}[0],
               },
            }},
         },
@@ -393,7 +397,24 @@ var _ = Describe("my operator test", func() {
 })
 ```
 
- 
+### After following the recommendations to be restricted my workload is not running (CreateContainerConfigError). What should I do?
+
+If you are encountering errors similar to `Error: container has runAsNonRoot and image has non-numeric user` 
+or `container has runAsNonRoot and image will run as root` that means that the image used does not have a non-zero numeric user defined, i.e.:
+
+```shell
+USER 65532:65532 
+OR
+USER 1001
+```
+
+Due to the `RunAsNonRoot` field being set to `true`, we need to force the user in the
+container to a non-zero numeric user.
+It is recommended that the images used by your operator have a non-zero numeric user set in the image itself (similar to the example above). For further information check the note [Consider an explicit UID/GID][docker-good-practices-doc] in the Dockerfile best practices guide.
+If your Operator will be distributed and used in vanilla Kubernetes clusters you can also fix the issue by defining the user via the security context configuration). (i.e. `RunAsUser: &[]int64{1000}[0],`). 
+
+**NOTE** If your Operator should work with specific vendors please ensure that you check if they have specific rules for Pod Security Admission.  For example, we know that if you use `RunAsUser` on OpenShift it will disqualify the Pod from their restricted-v2 SCC. 
+Therefore, if you want your workloads running in namespaces labeled to enforce restricted you must leave `RunAsUser` and `RunAsNonRoot` fields empty or if you want set `RunAsNonRoot` then, you MUST ensure that the image itself properly defines the UserID.
 
 [project-layout]: /docs/overview/project-layout
 [pod-security]: https://kubernetes.io/blog/2021/04/06/podsecuritypolicy-deprecation-past-present-and-future/#what-is-podsecuritypolicy
@@ -403,3 +424,4 @@ var _ = Describe("my operator test", func() {
 [security-standards]: https://kubernetes.io/docs/concepts/security/pod-security-standards/
 [psachecker]: https://github.com/stlaz/psachecker
 [sample]: https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v3/memcached-operator
+[docker-good-practices-doc]: https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user
