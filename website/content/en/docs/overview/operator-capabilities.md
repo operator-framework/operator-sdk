@@ -184,10 +184,7 @@ The RED Method defines the three key metrics for every service in your architect
 * Duration (the amount of time those requests take)
 
 Note that by building projects using Operator-SDK or [Kubebuilder][kubebuilder] CLI tools your solutions
-leverage on [controller-runtime][controller-runtime] which provides the above metrics exported by default. 
-For further information, see the [metrics][metrics] guidance and check the [reference][metric-reference] metric 
-document to know what is exported by default. Also, you might want to give a look at the 
-[(grafana/v1-alpha)][grafana-plugin-docs] which can help you out. 
+leverage on [controller-runtime][controller-runtime] which provides the above [metrics][metrics] exported by default. For further information, it's [reference][metric-reference] documentation to know what is exported by default. Also, you might want to give a look at the [(grafana/v1-alpha)][grafana-plugin-docs] which can help you out. 
 
 ---
 
