@@ -147,7 +147,7 @@ It should be possible to backup and restore the operand from the operator itself
 Setup full monitoring and alerting for your operand. All resources such as Prometheus rules (alerts) and Grafana dashboards should be created by the operator when the operand CR is instantiated. The RED method<sup>1</sup> is a good place to start with knowing what metrics to expose.
 Aim to have as few alerts as possible, by alerting on symptoms that are associated with end-user pain rather than trying to catch every possible way that pain could be caused. Alerts should link to relevant consoles and make it easy to figure out which component is at fault
 Native k8s objects emit events (“Events” objects) for situations users or administrators should be alerted about. Your operator should do similar for state changes related to your operand. “Custom”, here, means that it should emit events specific to your operator/operand outside of the events already emitted by their deployment methodology.  This, in conjunction with status descriptors for the CR conditions, give much needed visibility into actions taken by your operator/operand. Operators are codified domain-specific knowledge. Your end user should not need this domain-specific knowledge to gain visibility into what’s happening with their resource.
-Please, ensure that you look on the Kubernetes API conventions the [Events][k8s-api-events] and [status][k8s-api-status] sections to know how to properly deal with them.
+Please, ensure that you look at the Kubernetes API conventions in the [Events][k8s-api-events] and [status][k8s-api-status] sections to know how to properly deal with them.
 
 ### Monitoring
 
