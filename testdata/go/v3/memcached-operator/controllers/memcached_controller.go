@@ -158,6 +158,11 @@ func (r *MemcachedReconciler) deploymentForMemcached(m *cachev1alpha1.Memcached)
 					// Ensure restrictive standard for the Pod.
 					// More info: https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted
 					SecurityContext: &corev1.PodSecurityContext{
+						// WARNING: Ensure that the image used defines an UserID in the Dockerfile
+						// otherwise the Pod will not run and will fail with "container has runAsNonRoot and image has non-numeric user"".
+						// If you want your workloads admitted in namespaces enforced with the restricted mode in OpenShift/OKD vendors
+						// then, you MUST ensure that the Dockerfile defines a User ID OR you MUST leave the "RunAsNonRoot" and
+						// "RunAsUser" fields empty.
 						RunAsNonRoot: &[]bool{true}[0],
 						// Please ensure that you can use SeccompProfile and do NOT use
 						// this field if your project must work on old Kubernetes
@@ -173,6 +178,11 @@ func (r *MemcachedReconciler) deploymentForMemcached(m *cachev1alpha1.Memcached)
 						// Ensure restrictive context for the container
 						// More info: https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted
 						SecurityContext: &corev1.SecurityContext{
+							// WARNING: Ensure that the image used defines an UserID in the Dockerfile
+							// otherwise the Pod will not run and will fail with "container has runAsNonRoot and image has non-numeric user"".
+							// If you want your workloads admitted in namespaces enforced with the restricted mode in OpenShift/OKD vendors
+							// then, you MUST ensure that the Dockerfile defines a User ID OR you MUST leave the "RunAsNonRoot" and
+							// "RunAsUser" fields empty.
 							RunAsNonRoot:             &[]bool{true}[0],
 							AllowPrivilegeEscalation: &[]bool{false}[0],
 							Capabilities: &corev1.Capabilities{
