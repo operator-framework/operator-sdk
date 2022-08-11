@@ -105,7 +105,9 @@ func (s *initSubcommand) Scaffold(fs machinery.Filesystem) error {
 	)
 
 	if err := scaffold.Execute(
-		&manifests.Kustomization{SupportsWebhooks: operatorType == projutil.OperatorTypeGo},
+		&manifests.Kustomization{
+			SupportsKustomizeV4: HasSupportForKustomizeV4(s.config),
+			SupportsWebhooks:    operatorType == projutil.OperatorTypeGo},
 	); err != nil {
 		return fmt.Errorf("error scaffolding manifests: %w", err)
 	}

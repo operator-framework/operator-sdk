@@ -27,6 +27,12 @@ type Kustomization struct {
 	machinery.TemplateMixin
 	machinery.ProjectNameMixin
 
+	// SupportsKustomizeV4 is true for the projects that are
+	// scaffold using the kustomize/v2-aplha plugin and
+	// the major bump for it 4x
+	// Previous versions uses 3x
+	SupportsKustomizeV4 bool
+
 	SupportsWebhooks bool
 }
 
@@ -69,7 +75,11 @@ resources:
 #    # Remove the manager container's "cert" volumeMount, since OLM will create and mount a set of certs.
 #    # Update the indices in this path if adding or removing containers/volumeMounts in the manager's Deployment.
 #    - op: remove
+{{ if .SupportsKustomizeV4 }}
+#      path: /spec/template/spec/containers/0/volumeMounts/0
+{{ else -}} 
 #      path: /spec/template/spec/containers/1/volumeMounts/0
+{{ end -}}
 #    # Remove the "cert" volume, since OLM will create and mount a set of certs.
 #    # Update the indices in this path if adding or removing volumes in the manager's Deployment.
 #    - op: remove

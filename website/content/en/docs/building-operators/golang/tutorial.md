@@ -38,6 +38,9 @@ cd $HOME/projects/memcached-operator
 operator-sdk init --domain example.com --repo github.com/example/memcached-operator
 ```
 
+**Note** If your local environment is Apple Silicon (`darwin/arm64`) use the `go/v4-alpha`
+plugin which provides support for this platform by adding to the init subCommand the flag `--plugins=go/v4-alpha`
+
 To learn about the project directory structure, see [Kubebuilder project layout][kubebuilder_layout_doc] doc.
 
 #### A note on dependency management
