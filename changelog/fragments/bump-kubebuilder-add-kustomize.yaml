@@ -1,7 +1,7 @@
 # entries is a list of entries to include in
 # release notes and/or the migration guide
 entries:
-  - description: Legacy layout "Kubebuilder 2.x" provided via the go/v2 plugin is officially deprecated. Be aware that since `Apr 2021`, the default layout produced is done via the `go/v3`. ([More info](https://github.com/kubernetes-sigs/kubebuilder/discussions/2842)) Please, check your PROJECT file and ensure and then, if your project layout is not `go.kubebuilder.io/v3` follow the [migration guide](https://sdk.operatorframework.io/docs/building-operators/golang/migration/) to upgrade your project. 
+  - description: Legacy layout "Kubebuilder 2.x" provided via the go/v2 plugin is officially deprecated. Be aware that since `Apr 2021`, the default layout produced is done via the `go/v3`. ([More info](https://github.com/kubernetes-sigs/kubebuilder/discussions/2842)) Check your `PROJECT` file to make sure that your project layout is `go.kubebuilder.io/v3`, if not please follow the [migration guide](https://sdk.operatorframework.io/docs/building-operators/golang/migration/) to upgrade your project. 
     kind: "deprecation"
     breaking: false
   - description: Add a plugin (deploy-image/v1-alpha) for Golang projects that scaffolds the code to deploy and manage an Operand(image). You can test it out by running `operator-sdk --group=example.com --version=v1alpha1 --kind=Memcached --image=memcached:1.6.15-alpine --image-container-command="memcached,-m=64,modern,-v" --image-container-port="11211" --run-as-user="1001" --plugins="deploy-image/v1-alpha"` [More info](https://master.book.kubebuilder.io/plugins/deploy-image-plugin-v1-alpha.html)
