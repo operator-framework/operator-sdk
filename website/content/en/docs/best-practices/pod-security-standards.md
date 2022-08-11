@@ -112,15 +112,12 @@ with the requirements in the same way. You can find some examples by looking at 
 
 - **For workloads that need elevated permissions:** it is recommended that you ensure the namespace containing your 
 solution is labeled accordingly. You can either update your operator to manage the namespace labels or include 
-the namespace labeling as part of the manual install instructions. Following the labels for this case scenario:
+the namespace labeling as part of the manual install instructions. 
 
-```yaml
-  labels:
-    ...
-    pod-security.kubernetes.io/enforce: privileged
-    pod-security.kubernetes.io/audit: privileged
-    pod-security.kubernetes.io/warn: privileged
-```
+On top of that, cluster admins will be looking to understand why your solution requires raised permissions. 
+In this way, please ensure that you properly describe the reasons. 
+You can add this information and the prerequisites to the description of your 
+Operator Bundle (CSV).
 
 Following you will find a detailed description of how to configure and test your solutions. 
 The most straightforward way to ensure if your workloads will work in a restricted namespace is verifying if your solution can run in namespaces enforced as restricted. 
