@@ -52,7 +52,7 @@ entries:
     kind: "change"
     breaking: false
     migration:
-      header: go/v3) Update `controller-runtime` from `v0.12.1` to `v0.12.2` and Kubernetes dependencies from `v0.24.0` to `v0.24.2`.
+      header: (go/v3) Update `controller-runtime` from `v0.12.1` to `v0.12.2` and Kubernetes dependencies from `v0.24.0` to `v0.24.2`.
       body: |
         In the `go.mod` file, ensure the following dependencies versions and run `go mod tidy`:
 
