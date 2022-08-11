@@ -114,8 +114,7 @@ with the requirements in the same way. You can find some examples by looking at 
 solution is labeled accordingly. You can either update your operator to manage the namespace labels or include 
 the namespace labeling as part of the manual install instructions. 
 
-On top of that, cluster admins will be looking to understand why your solution requires raised permissions. 
-In this way, please ensure that you properly describe the reasons. 
+It is recommended that you provide a description to help cluster admins understand why elevated permissions are required.
 You can add this information and the prerequisites to the description of your 
 Operator Bundle (CSV).
 
