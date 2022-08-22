@@ -114,6 +114,10 @@ func GetPluginsCLIAndRoot() (*cli.CLI, *cobra.Command) {
 		manifestsv2.Plugin{},
 		scorecardv2.Plugin{},
 	)
+	deployImageBundle, _ := plugin.NewBundle("deploy-image."+golang.DefaultNameQualifier, plugin.Version{Number: 1, Stage: stage.Alpha},
+		deployimagev1alpha.Plugin{},
+		manifestsv2.Plugin{},
+	)
 	c, err := cli.New(
 		cli.WithCommandName("operator-sdk"),
 		cli.WithVersion(makeVersionString()),
@@ -125,7 +129,7 @@ func GetPluginsCLIAndRoot() (*cli.CLI, *cobra.Command) {
 			helmBundle,
 			hybridBundle,
 			grafanav1alpha.Plugin{},
-			deployimagev1alpha.Plugin{},
+			deployImageBundle,
 			declarativev1.Plugin{},
 			&quarkusv1.Plugin{},
 		),
