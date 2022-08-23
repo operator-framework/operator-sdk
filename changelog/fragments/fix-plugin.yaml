@@ -2,6 +2,6 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      for deploy-image/v1alpha add support to generate SDK bundle manifests
+      (deploy-image/v1alpha plugin) Add support to generate SDK bundle manifests
     kind: "addition"
     breaking: false
