@@ -1,7 +1,0 @@
-# entries is a list of entries to include in
-# release notes and/or the migration guide
-entries:
-  - description: >
-      Fixed scorecard testOutput tightly coupling with scorecard storage mountPath
-    kind: "bugfix"
-    breaking: false
