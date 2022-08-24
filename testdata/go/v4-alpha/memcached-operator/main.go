@@ -33,6 +33,7 @@ import (
 
 	cachev1alpha1 "github.com/example/memcached-operator/api/v1alpha1"
 	"github.com/example/memcached-operator/controllers"
+	"github.com/example/memcached-operator/monitoring"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -45,6 +46,8 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(cachev1alpha1.AddToScheme(scheme))
+
+	monitoring.RegisterMetrics()
 	//+kubebuilder:scaffold:scheme
 }
 

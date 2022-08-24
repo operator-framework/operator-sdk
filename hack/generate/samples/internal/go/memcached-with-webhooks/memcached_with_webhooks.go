@@ -100,6 +100,15 @@ func (mh *Memcached) Run() {
 	log.Infof("implementing the Controller")
 	mh.implementingController()
 
+	log.Infof("implementing Monitoring")
+	mh.implementingMonitoring()
+
+	log.Infof("customizing Main")
+	mh.customizingMain()
+
+	log.Infof("customizing Dockerfile")
+	mh.customizingDockerfile()
+
 	log.Infof("scaffolding webhook")
 	err = mh.ctx.CreateWebhook(
 		"--group", mh.ctx.Group,
@@ -397,8 +406,14 @@ func (mh *Memcached) implementingController() {
 	// Add imports
 	err := kbutil.InsertCode(controllerPath,
 		"import (",
-		importsFragment)
+		controllerImportsFragment)
 	pkg.CheckError("adding imports", err)
+
+	// Add monitoring import
+	err = kbutil.InsertCode(controllerPath,
+		`cachev1alpha1 "github.com/example/memcached-operator/api/v1alpha1"`,
+		controllerMonitoringImportFragment)
+	pkg.CheckError("adding monitoring import", err)
 
 	// Add RBAC permissions on top of reconcile
 	err = kbutil.InsertCode(controllerPath,
@@ -479,6 +494,59 @@ func (mh *Memcached) implementingAPI() {
 	pkg.CheckError("updating sample", err)
 }
 
+// implementingMonitoring will customize monitoring
+func (mh *Memcached) implementingMonitoring() {
+	// Create monitoring directory
+	err := os.Mkdir(filepath.Join(mh.ctx.Dir, "monitoring"), os.ModePerm)
+	pkg.CheckError("creating monitoring directory", err)
+
+	// Create metrics file
+	_, err = os.Create(filepath.Join(mh.ctx.Dir, "monitoring/metrics.go"))
+	pkg.CheckError("creating metrics file", err)
+
+	metricsPath := filepath.Join(mh.ctx.Dir, "monitoring/metrics.go")
+
+	// Add imports
+	err = kbutil.InsertCode(metricsPath,
+		"",
+		metricsImportsFragment)
+	pkg.CheckError("adding imports", err)
+
+	// Add metrics implementation
+	err = kbutil.InsertCode(metricsPath,
+		")",
+		metricsFragment)
+	pkg.CheckError("adding metrics content", err)
+}
+
+// customizingMain will customize main.go to register metrics
+func (mh *Memcached) customizingMain() {
+	mainPath := filepath.Join(mh.ctx.Dir, "main.go")
+
+	// Add monitoring import
+	err := kbutil.InsertCode(mainPath,
+		`"github.com/example/memcached-operator/controllers"`,
+		mainMonitoringImportFragment)
+	pkg.CheckError("adding monitoring import", err)
+
+	// Add metrics registry
+	err = kbutil.InsertCode(mainPath,
+		"utilruntime.Must(cachev1alpha1.AddToScheme(scheme))",
+		"\n\nmonitoring.RegisterMetrics()")
+	pkg.CheckError("adding metrics registry", err)
+}
+
+// customizingDockerfile will customize the Dockerfile to include monitoring
+func (mh *Memcached) customizingDockerfile() {
+	dockerfilePath := filepath.Join(mh.ctx.Dir, "Dockerfile")
+
+	// Copy monitoring
+	err := kbutil.InsertCode(dockerfilePath,
+		"COPY controllers/ controllers/",
+		"\nCOPY monitoring/ monitoring/")
+	pkg.CheckError("adding COPY monitoring/", err)
+}
+
 const rbacFragment = `
 //+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch`
@@ -521,6 +589,8 @@ const reconcileFragment = `// Fetch the Memcached instance
 	// Ensure the deployment size is the same as the spec
 	size := memcached.Spec.Size
 	if *found.Spec.Replicas != size {
+		// Increment MemcachedDeploymentSizeUndesiredCountTotal metric by 1
+		monitoring.MemcachedDeploymentSizeUndesiredCountTotal.Inc()
 		found.Spec.Replicas = &size
 		err = r.Update(ctx, found)
 		if err != nil {
@@ -555,6 +625,25 @@ const reconcileFragment = `// Fetch the Memcached instance
 			return ctrl.Result{}, err
 		}
 	}
+`
+
+const metricsFragment = `
+var (
+	// MemcachedDeploymentSizeUndesiredCountTotal will count how many times was required
+	// to perform the operation to ensure that the number of replicas on the cluster
+	// is the same as the quantity desired and specified via the custom resource size spec.
+	MemcachedDeploymentSizeUndesiredCountTotal = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "memcached_deployment_size_undesired_count_total",
+			Help: "Total number of times the deployment size was not as desired.",
+		},
+	)
+)
+
+// Register metrics with the global prometheus registry
+func RegisterMetrics() {
+	metrics.Registry.MustRegister(MemcachedDeploymentSizeUndesiredCountTotal)
+}
 `
 
 const controllerFuncsFragment = `
@@ -652,7 +741,7 @@ func getPodNames(pods []corev1.Pod) []string {
 }
 `
 
-const importsFragment = `
+const controllerImportsFragment = `
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -661,6 +750,24 @@ const importsFragment = `
 	"reflect"
 	"time"
 
+
+`
+
+const controllerMonitoringImportFragment = `
+	"github.com/example/memcached-operator/monitoring"
+`
+
+const metricsImportsFragment = `
+package monitoring
+
+import (
+	"github.com/prometheus/client_golang/prometheus"
+	"sigs.k8s.io/controller-runtime/pkg/metrics"
+)
+`
+
+const mainMonitoringImportFragment = `
+	"github.com/example/memcached-operator/monitoring"
 `
 
 const watchOriginalFragment = `return ctrl.NewControllerManagedBy(mgr).

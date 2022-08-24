@@ -33,6 +33,7 @@ import (
 	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	cachev1alpha1 "github.com/example/memcached-operator/api/v1alpha1"
+	"github.com/example/memcached-operator/monitoring"
 )
 
 // MemcachedReconciler reconciles a Memcached object
@@ -97,6 +98,8 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	// Ensure the deployment size is the same as the spec
 	size := memcached.Spec.Size
 	if *found.Spec.Replicas != size {
+		// Increment MemcachedDeploymentSizeUndesiredCountTotal metric by 1
+		monitoring.MemcachedDeploymentSizeUndesiredCountTotal.Inc()
 		found.Spec.Replicas = &size
 		err = r.Update(ctx, found)
 		if err != nil {
