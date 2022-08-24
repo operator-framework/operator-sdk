@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/operator-framework/operator-sdk/testdata/go/v3/memcached-operator/monitoring"
 	"sort"
+
+	"github.com/example/memcached-operator/monitoring/metrics"
+	"github.com/example/memcached-operator/monitoring/metrics/util"
 )
 
 // constant parts of the file
@@ -27,7 +29,7 @@ const (
 )
 
 func main() {
-	MemcachedMetricList := metricDescriptionListToMetricList(monitoring.GetMetricDesc())
+	MemcachedMetricList := metricDescriptionListToMetricList(metrics.ListMetrics())
 	sort.Sort(MemcachedMetricList)
 	writeToFile(MemcachedMetricList)
 }
@@ -43,7 +45,7 @@ type metric struct {
 	description string
 }
 
-func metricDescriptionToMetric(md monitoring.MetricDescription) metric {
+func metricDescriptionToMetric(md util.Metric) metric {
 	return metric{
 		name:        md.Name,
 		description: md.Help,
@@ -57,7 +59,7 @@ func (m metric) writeOut() {
 
 type metricList []metric
 
-func metricDescriptionListToMetricList(mdl []monitoring.MetricDescription) metricList {
+func metricDescriptionListToMetricList(mdl []util.Metric) metricList {
 	res := make([]metric, len(mdl))
 	for i, md := range mdl {
 		res[i] = metricDescriptionToMetric(md)
@@ -86,4 +88,3 @@ func (m metricList) writeOut() {
 		met.writeOut()
 	}
 }
-

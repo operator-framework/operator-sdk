@@ -1,12 +1,9 @@
 /*
 Copyright 2022.
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-
     http://www.apache.org/licenses/LICENSE-2.0
-
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,8 +36,8 @@ import (
 	cachev1alpha1 "github.com/example/memcached-operator/api/v1alpha1"
 	// This sample has an example of how to create and work with custom metrics. The code is commented
 	// in order to not break the basic tutorial to show authors how to build an operator.
-	// To enable operator custom metrics, uncomment all sections with 'monitoring'.
-	//"github.com/example/memcached-operator/monitoring"
+	// To enable operator custom metrics, uncomment all sections with 'metrics'.
+	//"github.com/example/memcached-operator/metrics"
 )
 
 const memcachedFinalizer = "cache.example.com/finalizer"
@@ -241,8 +238,8 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	// via the Size spec of the Custom Resource which we are reconciling.
 	size := memcached.Spec.Size
 	if *found.Spec.Replicas != size {
-		// Increment MemcachedDeploymentSizeUndesiredCountTotal metric by 1
-		//monitoring.MemcachedDeploymentSizeUndesiredCountTotal.Inc()
+		// Increment IncrementNumberOfUndesiredSize metric by 1
+		//metrics.IncrementNumberOfUndesiredSize()
 		found.Spec.Replicas = &size
 		if err = r.Update(ctx, found); err != nil {
 			log.Error(err, "Failed to update Deployment",
