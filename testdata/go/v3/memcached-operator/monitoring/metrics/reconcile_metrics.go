@@ -7,12 +7,12 @@ import (
 var reconcileMetrics = []util.Metric{
 	{
 		Name: "memcached_deployment_size_undesired_count_total",
-		Help: "Total number of times the deployment size was not as desired.",
+		Help: "Total number of times the deployment size was not as desired",
 		Type: util.Counter,
 	},
 	{
 		Name: "memcached_deployment_updates_count_total",
-		Help: "Total number of times the deployment resource was updated.",
+		Help: "Total number of times the deployment resource was updated",
 		Type: util.Counter,
 	},
 }

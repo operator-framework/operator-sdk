@@ -241,10 +241,10 @@ catalog-push: ## Push a catalog image.
 
 .PHONY: generate-metricsdocs
 generate-metricsdocs: build-metricsdocs
-	mkdir -p $(shell pwd)/docs
-	_out/metricsdocs > docs/metrics.md
+	mkdir -p $(shell pwd)/docs/monitoring/metrics
+	_out/metricsdocs > docs/monitoring/metrics/metrics.md
 
 .PHONY: build-metricsdocs
 build-metricsdocs:
-	go build -ldflags="${LDFLAGS}" -o _out/metricsdocs ./tools/metricsdocs
+	go build -ldflags="${LDFLAGS}" -o _out/metricsdocs ./tools/doc-generator/monitoring/metrics
 
