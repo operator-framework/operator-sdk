@@ -74,7 +74,7 @@ func (tc TestContext) AddPackagemanifestsTarget(operatorType projutil.OperatorTy
 	return nil
 }
 
-// DisableOLMBundleInterativeMode will update the Makefile to disable the interactive mode
+// DisableManifestsInteractiveMode will update the Makefile to disable the interactive mode
 func (tc TestContext) DisableManifestsInteractiveMode() error {
 	// Todo: check if we cannot improve it since the replace/content will exists in the
 	// pkgmanifest target if it be scaffolded before this call
