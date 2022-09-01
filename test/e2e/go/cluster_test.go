@@ -18,7 +18,6 @@ package e2e_go_test
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"path/filepath"
@@ -181,38 +180,30 @@ var _ = Describe("operator-sdk", func() {
 			// The controller updates memcacheds' status.nodes with a list of pods it is replicated across
 			// on a successful reconcile.
 			By("validating that the created resource object gets reconciled in the controller")
-			var status string
 			getStatus := func() error {
-				status, err = tc.Kubectl.Get(true, "memcacheds", "memcached-sample", "-o", "jsonpath={.status.nodes}")
+				status, err := tc.Kubectl.Get(true, "memcacheds", "memcached-sample", "-o", "jsonpath={.status.conditions}")
 				if err == nil && strings.TrimSpace(status) == "" {
 					err = errors.New("empty status, continue")
 				}
 				return err
 			}
 			Eventually(getStatus, 1*time.Minute, time.Second).Should(Succeed())
-			var nodes []string
-			Expect(json.Unmarshal([]byte(status), &nodes)).To(Succeed())
-			Expect(len(nodes)).To(BeNumerically(">", 0))
 
 			By("validating that pod(s) status.phase=Running")
-			var podsOutput string
-			getPods := func() error {
-				podsOutput, err = tc.Kubectl.Get(true, "pods", "-o", "jsonpath={range .items[*]}{.metadata.name},{.status.phase} {end}")
-				if err == nil && strings.TrimSpace(podsOutput) == "" {
-					err = errors.New("empty pod output, continue")
+			getPodStatus := func() error {
+				status, err := tc.Kubectl.Get(
+					true,
+					"pods", "-l", fmt.Sprintf("app.kubernetes.io/name=%s", tc.Kind),
+					"-o", "jsonpath={.items[*].status}", "-n", tc.Kubectl.Namespace,
+				)
+				fmt.Println(status)
+				ExpectWithOffset(2, err).NotTo(HaveOccurred())
+				if !strings.Contains(status, "\"phase\":\"Running\"") {
+					return fmt.Errorf("%s pod in %s status", strings.ToLower(tc.Kind), status)
 				}
-
-				return err
+				return nil
 			}
-			Eventually(getPods, 1*time.Minute, time.Second).Should(Succeed())
-			podSlice := strings.Split(strings.TrimSpace(podsOutput), " ")
-			Expect(len(podSlice)).To(BeNumerically(">", 0))
-			for _, pod := range podSlice {
-				// make sure any pod that contains the substring "memcached" is in the running state
-				if strings.Contains(pod, "memcached") {
-					Expect(pod).To(ContainSubstring(",Running"))
-				}
-			}
+			EventuallyWithOffset(1, getPodStatus, 3*time.Minute, time.Second).Should(Succeed())
 		})
 	})
 })

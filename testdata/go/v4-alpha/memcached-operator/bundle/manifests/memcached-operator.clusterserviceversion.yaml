@@ -11,6 +11,7 @@ metadata:
             "name": "memcached-sample"
           },
           "spec": {
+            "containerPort": 11211,
             "size": 1
           }
         }
@@ -31,14 +32,17 @@ spec:
         name: memcached-deployment
         version: v1
       specDescriptors:
+      - description: Port defines the port that will be used to init the container
+          with the image
+        displayName: Container Port
+        path: containerPort
       - description: Size defines the number of Memcached instances
         displayName: Size
         path: size
       statusDescriptors:
-      - description: Nodes store the name of the pods which are running Memcached
-          instances
-        displayName: Nodes
-        path: nodes
+      - description: Conditions store the status conditions of the Memcached instances
+        displayName: Conditions
+        path: conditions
       version: v1alpha1
   description: Memcached Operator description. TODO.
   displayName: Memcached Operator
@@ -87,6 +91,13 @@ spec:
           - get
           - patch
           - update
+        - apiGroups:
+          - ""
+          resources:
+          - events
+          verbs:
+          - create
+          - patch
         - apiGroups:
           - ""
           resources:
@@ -155,6 +166,9 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
+                env:
+                - name: MEMCACHED_IMAGE
+                  value: memcached:1.4.36-alpine
                 image: quay.io/example/memcached-operator:v0.0.1
                 livenessProbe:
                   httpGet:
