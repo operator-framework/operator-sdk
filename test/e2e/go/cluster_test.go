@@ -18,7 +18,6 @@ package e2e_go_test
 
 import (
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -50,9 +49,6 @@ var _ = Describe("operator-sdk", func() {
 
 			By("cleaning up permissions")
 			testutils.WrapWarnOutput(tc.Kubectl.Command("delete", "clusterrolebinding", metricsClusterRoleBindingName))
-
-			By("cleaning up created API objects during test process")
-			testutils.WrapWarn(tc.Make("undeploy"))
 
 			By("ensuring that the namespace was deleted")
 			testutils.WrapWarnOutput(tc.Kubectl.Wait(false, "namespace", "foo", "--for", "delete", "--timeout", "2m"))
@@ -175,35 +171,21 @@ var _ = Describe("operator-sdk", func() {
 				ExpectWithOffset(1, err).NotTo(HaveOccurred())
 				return metricsOutput
 			}
-			Eventually(getCurlLogs, time.Minute, time.Second).Should(ContainSubstring("< HTTP/2 200"))
-
-			// The controller updates memcacheds' status.nodes with a list of pods it is replicated across
-			// on a successful reconcile.
-			By("validating that the created resource object gets reconciled in the controller")
-			getStatus := func() error {
-				status, err := tc.Kubectl.Get(true, "memcacheds", "memcached-sample", "-o", "jsonpath={.status.conditions}")
-				if err == nil && strings.TrimSpace(status) == "" {
-					err = errors.New("empty status, continue")
-				}
-				return err
-			}
-			Eventually(getStatus, 1*time.Minute, time.Second).Should(Succeed())
+			Eventually(getCurlLogs, 3*time.Minute, time.Second).Should(ContainSubstring("< HTTP/2 200"))
 
 			By("validating that pod(s) status.phase=Running")
-			getPodStatus := func() error {
-				status, err := tc.Kubectl.Get(
-					true,
-					"pods", "-l", fmt.Sprintf("app.kubernetes.io/name=%s", tc.Kind),
-					"-o", "jsonpath={.items[*].status}", "-n", tc.Kubectl.Namespace,
+			getMemcachedPodStatus := func() error {
+				status, err := tc.Kubectl.Get(true, "pods", "-l",
+					"app.kubernetes.io/name=Memcached",
+					"-o", "jsonpath={.items[*].status}",
 				)
-				fmt.Println(status)
 				ExpectWithOffset(2, err).NotTo(HaveOccurred())
 				if !strings.Contains(status, "\"phase\":\"Running\"") {
-					return fmt.Errorf("%s pod in %s status", strings.ToLower(tc.Kind), status)
+					return err
 				}
 				return nil
 			}
-			EventuallyWithOffset(1, getPodStatus, 3*time.Minute, time.Second).Should(Succeed())
+			EventuallyWithOffset(1, getMemcachedPodStatus, 3*time.Minute, time.Second).Should(Succeed())
 		})
 	})
 })
