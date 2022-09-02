@@ -163,8 +163,8 @@ var _ = Describe("memcached", func() {
 			By("validating that pod(s) status.phase=Running")
 			getMemcachedPodStatus := func() error {
 				cmd = exec.Command("kubectl", "get",
-					"pods", "-l", "app=memcached", "-o", "jsonpath={.items[*].status}",
-					"-n", namespace,
+					"pods", "-l", "app.kubernetes.io/name=Memcached",
+					"-o", "jsonpath={.items[*].status}", "-n", namespace,
 				)
 				status, err := utils.Run(cmd)
 				fmt.Println(string(status))
@@ -175,6 +175,22 @@ var _ = Describe("memcached", func() {
 				return nil
 			}
 			EventuallyWithOffset(1, getMemcachedPodStatus, time.Minute, time.Second).Should(Succeed())
+
+			By("validating that the status of the custom resource created is updated or not")
+			getStatus := func() error {
+				cmd = exec.Command("kubectl", "get", "memcached",
+					"memcached-sample", "-o", "jsonpath={.status.conditions}",
+					"-n", namespace,
+				)
+				status, err := utils.Run(cmd)
+				fmt.Println(string(status))
+				ExpectWithOffset(2, err).NotTo(HaveOccurred())
+				if !strings.Contains(string(status), "Available") {
+					return fmt.Errorf("status condition with type Available should be set")
+				}
+				return nil
+			}
+			Eventually(getStatus, time.Minute, time.Second).Should(Succeed())
 		})
 	})
 })

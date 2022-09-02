@@ -83,6 +83,8 @@ controllers/memcached_controller.go
 
 This will scaffold the Memcached resource API at `api/v1alpha1/memcached_types.go` and the controller at `controllers/memcached_controller.go`.
 
+**Note:** You will check that in this tutorial we will be providing all steps to let you know how to implement the project. However, as a follow up you might want to check that would be possible to have the whole code generated to deploy and manage an Operand(image) using the [Deploy Image plugin][deploy-image-plugin-doc] with the command `$ operator-sdk create api --group cache --version v1alpha1 --kind Memcached --plugins="deploy-image/v1-alpha" --image=memcached:1.4.36-alpine --image-container-command="memcached,-m=64,modern,-v" --run-as-user="1001"`
+
 **Note:** This guide will cover the default case of a single group API. If you would like to support Multi-Group APIs see the [Single Group to Multi-Group][multigroup-kubebuilder-doc] doc.
 
 #### Understanding Kubernetes APIs
@@ -103,15 +105,26 @@ Define the API for the Memcached Custom Resource(CR) by modifying the Go type de
 ```Go
 // MemcachedSpec defines the desired state of Memcached
 type MemcachedSpec struct {
-	//+kubebuilder:validation:Minimum=0
-	// Size is the size of the memcached deployment
-	Size int32 `json:"size"`
+	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
+	// Important: Run "make" to regenerate code after modifying this file
+	// Size defines the number of Memcached instances
+	// The following markers will use OpenAPI v3 schema to validate the value
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=3
+	// +kubebuilder:validation:ExclusiveMaximum=false
+	Size int32 `json:"size,omitempty"`
 }
 
 // MemcachedStatus defines the observed state of Memcached
 type MemcachedStatus struct {
-	// Nodes are the names of the memcached pods
-	Nodes []string `json:"nodes"`
+	// Represents the observations of a Memcached's current state.
+	// Memcached.status.conditions.type are: "Available", "Progressing", and "Degraded"
+	// Memcached.status.conditions.status are one of True, False, Unknown.
+	// Memcached.status.conditions.reason the value should be a CamelCase string and producers of specific
+	// condition types may define expected values and meanings for this field, and whether the values
+	// are considered a guaranteed API.
+	// Memcached.status.conditions.Message is a human readable message indicating details about the transition.
+	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
 }
 ```
 
@@ -254,8 +267,9 @@ The controller needs certain [RBAC][rbac-k8s-doc] permissions to interact with t
 //+kubebuilder:rbac:groups=cache.example.com,resources=memcacheds,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=cache.example.com,resources=memcacheds/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=cache.example.com,resources=memcacheds/finalizers,verbs=update
+//+kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
 //+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;
+//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch
 
 func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
   ...
@@ -308,6 +322,14 @@ There are three ways to run the operator:
 ### 1. Run locally outside the cluster
 
 The following steps will show how to deploy the operator on the cluster. However, to run locally for development purposes and outside of a cluster use the target `make install run`.
+
+Note that by using this plugin the Operand image informed will be stored via an environment variable in the `config/manager/manager.yaml` manifest.
+
+Therefore, before run `make install run` you need to export any environment variable that you might have. Example:
+
+```sh
+export MEMCACHED_IMAGE="memcached:1.4.36-alpine"
+```
 
 ### 2. Run as a Deployment inside the cluster
 
@@ -495,3 +517,4 @@ Next, check out the following:
 [controller-runtime]: https://github.com/kubernetes-sigs/controller-runtime
 [kb-doc-gkvs]: https://book.kubebuilder.io/cronjob-tutorial/gvks.html
 [rbac_markers]: https://book.kubebuilder.io/reference/markers/rbac.html
+[deploy-image-plugin-doc]: https://master.book.kubebuilder.io/plugins/deploy-image-plugin-v1-alpha.html
