@@ -1,6 +1,7 @@
 # Build the scorecard-test-kuttl binary
 FROM --platform=$BUILDPLATFORM golang:1.18 as builder
 ARG TARGETARCH
+ARG BUILDPLATFORM
 
 WORKDIR /workspace
 # Copy the Go Modules manifests
