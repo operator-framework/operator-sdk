@@ -19,14 +19,17 @@ spec:
         name: memcached-deployment
         version: v1
       specDescriptors:
+      - description: Port defines the port that will be used to init the container
+          with the image
+        displayName: Container Port
+        path: containerPort
       - description: Size defines the number of Memcached instances
         displayName: Size
         path: size
       statusDescriptors:
-      - description: Nodes store the name of the pods which are running Memcached
-          instances
-        displayName: Nodes
-        path: nodes
+      - description: Conditions store the status conditions of the Memcached instances
+        displayName: Conditions
+        path: conditions
       version: v1alpha1
   description: Memcached Operator description. TODO.
   displayName: Memcached Operator
