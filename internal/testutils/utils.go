@@ -90,7 +90,7 @@ func makeBundleImageName(projectName string) string {
 	return fmt.Sprintf("quay.io/example/%s-bundle:v0.0.1", projectName)
 }
 
-// InstallOLM runs 'operator-sdk olm install' for specific version
+// InstallOLMVersion runs 'operator-sdk olm install' for specific version
 // and returns any errors emitted by that command.
 func (tc TestContext) InstallOLMVersion(version string) error {
 	cmd := exec.Command(tc.BinaryName, "olm", "install", "--version", version, "--timeout", "4m")
@@ -98,7 +98,7 @@ func (tc TestContext) InstallOLMVersion(version string) error {
 	return err
 }
 
-// InstallOLM runs 'operator-sdk olm uninstall' and logs any errors emitted by that command.
+// UninstallOLM runs 'operator-sdk olm uninstall' and logs any errors emitted by that command.
 func (tc TestContext) UninstallOLM() {
 	cmd := exec.Command(tc.BinaryName, "olm", "uninstall")
 	if _, err := tc.Run(cmd); err != nil {
