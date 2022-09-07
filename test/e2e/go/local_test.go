@@ -11,6 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
+// To run locally you need to export the env var with the image
+// $ export MEMCACHED_IMAGE=memcached:1.4.36-alpine
 
 package e2e_go_test
 

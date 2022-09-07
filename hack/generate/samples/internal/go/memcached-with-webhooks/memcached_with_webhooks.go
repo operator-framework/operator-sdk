@@ -87,15 +87,20 @@ func (mh *Memcached) Run() {
 		"--group", mh.ctx.Group,
 		"--version", mh.ctx.Version,
 		"--kind", mh.ctx.Kind,
-		"--controller", "true",
-		"--resource", "true")
+		"--plugins", "deploy-image/v1-alpha",
+		"--image", "memcached:1.4.36-alpine",
+		"--image-container-command", "memcached,-m=64,-o,modern,-v",
+		"--image-container-port", "11211",
+		"--run-as-user", "1001",
+		"--make=false",
+		"--manifests=false")
 	pkg.CheckError("scaffolding apis", err)
 
 	err = mh.ctx.UncommentRestrictivePodStandards()
 	pkg.CheckError("creating the bundle", err)
 
-	log.Infof("implementing the API")
-	mh.implementingAPI()
+	log.Infof("implementing the API markers")
+	mh.implementingAPIMarkers()
 
 	log.Infof("implementing the Controller")
 	mh.implementingController()
@@ -403,95 +408,85 @@ func (mh *Memcached) implementingController() {
 	controllerPath := filepath.Join(mh.ctx.Dir, "controllers", fmt.Sprintf("%s_controller.go",
 		strings.ToLower(mh.ctx.Kind)))
 
-	// Add imports
 	err := kbutil.InsertCode(controllerPath,
-		"import (",
-		controllerImportsFragment)
-	pkg.CheckError("adding imports", err)
+		`	if *found.Spec.Replicas != size {`,
+		`
+		// Increment MemcachedDeploymentSizeUndesiredCountTotal metric by 1
+		monitoring.MemcachedDeploymentSizeUndesiredCountTotal.Inc()`)
+	pkg.CheckError("adding monitoring import", err)
 
-	// Add monitoring import
 	err = kbutil.InsertCode(controllerPath,
 		`cachev1alpha1 "github.com/example/memcached-operator/api/v1alpha1"`,
 		controllerMonitoringImportFragment)
 	pkg.CheckError("adding monitoring import", err)
 
-	// Add RBAC permissions on top of reconcile
 	err = kbutil.InsertCode(controllerPath,
-		"/finalizers,verbs=update",
-		rbacFragment)
-	pkg.CheckError("adding rbac", err)
+		`						SecurityContext: &corev1.SecurityContext{`, userIDWarningFragment)
+	pkg.CheckError("adding warning comment for UserID", err)
 
-	// Replace reconcile content
-	err = kbutil.ReplaceInFile(controllerPath,
-		`"sigs.k8s.io/controller-runtime/pkg/log"`,
-		`ctrllog "sigs.k8s.io/controller-runtime/pkg/log"`,
-	)
-	pkg.CheckError("replacing controller log import", err)
-	err = kbutil.ReplaceInFile(controllerPath,
-		"_ = log.FromContext(ctx)",
-		"log := ctrllog.FromContext(ctx)",
-	)
-	pkg.CheckError("replacing controller logger construction", err)
-
-	// Add reconcile implementation
-	err = kbutil.ReplaceInFile(controllerPath,
-		"// TODO(user): your logic here", reconcileFragment)
-	pkg.CheckError("replacing reconcile content", err)
-
-	// Add helpers funcs to the controller
 	err = kbutil.InsertCode(controllerPath,
-		"return ctrl.Result{}, nil\n}", controllerFuncsFragment)
-	pkg.CheckError("adding helper methods in the controller", err)
-
-	// Add watch for the Kind
-	err = kbutil.ReplaceInFile(controllerPath,
-		fmt.Sprintf(watchOriginalFragment, mh.ctx.Group, mh.ctx.Version, mh.ctx.Kind),
-		fmt.Sprintf(watchCustomizedFragment, mh.ctx.Group, mh.ctx.Version, mh.ctx.Kind))
-	pkg.CheckError("replacing add controller to manager", err)
+		`							RunAsNonRoot:             &[]bool{true}[0],`, runAsUserCommentFragment)
+	pkg.CheckError("adding comment regarding RunAsUser field in Security Context", err)
 }
 
 // nolint:gosec
 // implementingAPI will customize the API
-func (mh *Memcached) implementingAPI() {
+func (mh *Memcached) implementingAPIMarkers() {
 	err := kbutil.InsertCode(
 		filepath.Join(mh.ctx.Dir, "api", mh.ctx.Version, fmt.Sprintf("%s_types.go", strings.ToLower(mh.ctx.Kind))),
-		fmt.Sprintf("type %sSpec struct {\n\t// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster\n\t// Important: Run \"make\" to regenerate code after modifying this file", mh.ctx.Kind),
+		"// Port defines the port that will be used to init the container with the image",
 		`
+	// +operator-sdk:csv:customresourcedefinitions:type=spec`)
+	pkg.CheckError("inserting Port spec marker", err)
 
-	// Size defines the number of Memcached instances
-	// +operator-sdk:csv:customresourcedefinitions:type=spec
-	Size int32 `+"`"+`json:"size,omitempty"`+"`"+`
-`)
-	pkg.CheckError("inserting spec Status", err)
-
-	log.Infof("implementing MemcachedStatus")
 	err = kbutil.InsertCode(
 		filepath.Join(mh.ctx.Dir, "api", mh.ctx.Version, fmt.Sprintf("%s_types.go", strings.ToLower(mh.ctx.Kind))),
-		fmt.Sprintf("type %sStatus struct {\n\t// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster\n\t// Important: Run \"make\" to regenerate code after modifying this file", mh.ctx.Kind),
+		"// +kubebuilder:validation:ExclusiveMaximum=false",
 		`
+	// +operator-sdk:csv:customresourcedefinitions:type=spec`)
+	pkg.CheckError("inserting spec Status", err)
 
-	// Nodes store the name of the pods which are running Memcached instances
-	// +operator-sdk:csv:customresourcedefinitions:type=status
-	Nodes []string `+"`"+`json:"nodes,omitempty"`+"`"+`
-`)
-	pkg.CheckError("inserting Node Status", err)
+	log.Infof("implementing MemcachedStatus marker")
+	err = kbutil.ReplaceInFile(
+		filepath.Join(mh.ctx.Dir, "api", mh.ctx.Version, fmt.Sprintf("%s_types.go", strings.ToLower(mh.ctx.Kind))),
+		`	// For further information see: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
+`,
+		`	// For further information see: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
+
+	// Conditions store the status conditions of the Memcached instances
+	// +operator-sdk:csv:customresourcedefinitions:type=status`,
+	)
+	pkg.CheckError("inserting Status marker", err)
+
+	err = kbutil.ReplaceInFile(
+		filepath.Join(mh.ctx.Dir, "api", mh.ctx.Version, fmt.Sprintf("%s_types.go", strings.ToLower(mh.ctx.Kind))),
+		`
+	// Size defines the number of Memcached instances
+	// The following markers will use OpenAPI v3 schema to validate the value
+	// More info: https://book.kubebuilder.io/reference/markers/crd-validation.html
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=3
+	// +kubebuilder:validation:ExclusiveMaximum=false
+	// +operator-sdk:csv:customresourcedefinitions:type=spec`,
+		`
+	// The following markers will use OpenAPI v3 schema to validate the value
+	// More info: https://book.kubebuilder.io/reference/markers/crd-validation.html
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=3
+	// +kubebuilder:validation:ExclusiveMaximum=false
+	
+	// Size defines the number of Memcached instances
+	// +operator-sdk:csv:customresourcedefinitions:type=spec`,
+	)
+	pkg.CheckError("updating Size spec marker", err)
 
 	// Add CSV marker that shows CRD owned resources
 	err = kbutil.InsertCode(
 		filepath.Join(mh.ctx.Dir, "api", mh.ctx.Version, fmt.Sprintf("%s_types.go", strings.ToLower(mh.ctx.Kind))),
 		`//+kubebuilder:subresource:status`,
 		`
-		// +operator-sdk:csv:customresourcedefinitions:resources={{Deployment,v1,memcached-deployment}}
-		`)
-
+// +operator-sdk:csv:customresourcedefinitions:resources={{Deployment,v1,memcached-deployment}}`)
 	pkg.CheckError("inserting CRD owned resources CSV marker", err)
-
-	sampleFile := filepath.Join("config", "samples",
-		fmt.Sprintf("%s_%s_%s.yaml", mh.ctx.Group, mh.ctx.Version, strings.ToLower(mh.ctx.Kind)))
-
-	log.Infof("updating sample to have size attribute")
-	err = kbutil.ReplaceInFile(filepath.Join(mh.ctx.Dir, sampleFile), "# TODO(user): Add fields here", "size: 1")
-	pkg.CheckError("updating sample", err)
 }
 
 // implementingMonitoring will customize monitoring
@@ -547,86 +542,6 @@ func (mh *Memcached) customizingDockerfile() {
 	pkg.CheckError("adding COPY monitoring/", err)
 }
 
-const rbacFragment = `
-//+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch`
-
-const reconcileFragment = `// Fetch the Memcached instance
-	memcached := &cachev1alpha1.Memcached{}
-	err := r.Get(ctx, req.NamespacedName, memcached)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			// Request object not found, could have been deleted after reconcile request.
-			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
-			// Return and don't requeue
-			log.Info("Memcached resource not found. Ignoring since object must be deleted")
-			return ctrl.Result{}, nil
-		}
-		// Error reading the object - requeue the request.
-		log.Error(err, "Failed to get Memcached")
-		return ctrl.Result{}, err
-	}
-
-	// Check if the deployment already exists, if not create a new one
-	found := &appsv1.Deployment{}
-	err = r.Get(ctx, types.NamespacedName{Name: memcached.Name, Namespace: memcached.Namespace}, found)
-	if err != nil && errors.IsNotFound(err) {
-		// Define a new deployment
-		dep := r.deploymentForMemcached(memcached)
-		log.Info("Creating a new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
-		err = r.Create(ctx, dep)
-		if err != nil {
-			log.Error(err, "Failed to create new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
-			return ctrl.Result{}, err
-		}
-		// Deployment created successfully - return and requeue
-		return ctrl.Result{Requeue: true}, nil
-	} else if err != nil {
-		log.Error(err, "Failed to get Deployment")
-		return ctrl.Result{}, err
-	}
-
-	// Ensure the deployment size is the same as the spec
-	size := memcached.Spec.Size
-	if *found.Spec.Replicas != size {
-		// Increment MemcachedDeploymentSizeUndesiredCountTotal metric by 1
-		monitoring.MemcachedDeploymentSizeUndesiredCountTotal.Inc()
-		found.Spec.Replicas = &size
-		err = r.Update(ctx, found)
-		if err != nil {
-			log.Error(err, "Failed to update Deployment", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
-			return ctrl.Result{}, err
-		}
-		// Ask to requeue after 1 minute in order to give enough time for the
-		// pods be created on the cluster side and the operand be able
-		// to do the next update step accurately.
-		return ctrl.Result{RequeueAfter: time.Minute }, nil
-	}
-
-	// Update the Memcached status with the pod names
-	// List the pods for this memcached's deployment
-	podList := &corev1.PodList{}
-	listOpts := []client.ListOption{
-		client.InNamespace(memcached.Namespace),
-		client.MatchingLabels(labelsForMemcached(memcached.Name)),
-	}
-	if err = r.List(ctx, podList, listOpts...); err != nil {
-		log.Error(err, "Failed to list pods", "Memcached.Namespace", memcached.Namespace, "Memcached.Name", memcached.Name)
-		return ctrl.Result{}, err
-	}
-	podNames := getPodNames(podList.Items)
-
-	// Update status.Nodes if needed
-	if !reflect.DeepEqual(podNames, memcached.Status.Nodes) {
-		memcached.Status.Nodes = podNames
-		err := r.Status().Update(ctx, memcached)
-		if err != nil {
-			log.Error(err, "Failed to update Memcached status")
-			return ctrl.Result{}, err
-		}
-	}
-`
-
 const metricsFragment = `
 var (
 	// MemcachedDeploymentSizeUndesiredCountTotal will count how many times was required
@@ -639,127 +554,14 @@ var (
 		},
 	)
 )
-
 // Register metrics with the global prometheus registry
 func RegisterMetrics() {
 	metrics.Registry.MustRegister(MemcachedDeploymentSizeUndesiredCountTotal)
 }
 `
 
-const controllerFuncsFragment = `
-
-// deploymentForMemcached returns a memcached Deployment object
-func (r *MemcachedReconciler) deploymentForMemcached(m *cachev1alpha1.Memcached) *appsv1.Deployment {
-	ls := labelsForMemcached(m.Name)
-	replicas := m.Spec.Size
-
-	dep := &appsv1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name,
-			Namespace: m.Namespace,
-		},
-		Spec: appsv1.DeploymentSpec{
-			Replicas: &replicas,
-			Selector: &metav1.LabelSelector{
-				MatchLabels: ls,
-			},
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: ls,
-				},
-				Spec: corev1.PodSpec{
-					// Ensure restrictive standard for the Pod.
-					// More info: https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted
-					SecurityContext: &corev1.PodSecurityContext{
-						// WARNING: Ensure that the image used defines an UserID in the Dockerfile
-						// otherwise the Pod will not run and will fail with "container has runAsNonRoot and image has non-numeric user"".
-						// If you want your workloads admitted in namespaces enforced with the restricted mode in OpenShift/OKD vendors
-						// then, you MUST ensure that the Dockerfile defines a User ID OR you MUST leave the "RunAsNonRoot" and
-						// "RunAsUser" fields empty.
-						RunAsNonRoot: &[]bool{true}[0],
-						// Please ensure that you can use SeccompProfile and do NOT use
-						// this field if your project must work on old Kubernetes 
-						// versions < 1.19 or on vendors versions which 
-						// do NOT support this field by default (i.e. Openshift < 4.11)
-						SeccompProfile: &corev1.SeccompProfile{
-							Type: corev1.SeccompProfileTypeRuntimeDefault,
-						},
-					},
-					Containers: []corev1.Container{{
-						Image:   "memcached:1.4.36-alpine",
-						Name:    "memcached",
-						// Ensure restrictive context for the container
-						// More info: https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted
-						SecurityContext: &corev1.SecurityContext{
-							// WARNING: Ensure that the image used defines an UserID in the Dockerfile
-							// otherwise the Pod will not run and will fail with "container has runAsNonRoot and image has non-numeric user"".
-							// If you want your workloads admitted in namespaces enforced with the restricted mode in OpenShift/OKD vendors
-							// then, you MUST ensure that the Dockerfile defines a User ID OR you MUST leave the "RunAsNonRoot" and
-							// "RunAsUser" fields empty.
-							RunAsNonRoot:  &[]bool{true}[0],
-							AllowPrivilegeEscalation:  &[]bool{false}[0],
-							Capabilities: &corev1.Capabilities{
-								Drop: []corev1.Capability{
-									"ALL",
-								},
-							},
-							// The memcached image does not use a non-zero numeric user as the default user.
-							// Due to RunAsNonRoot field being set to true, we need to force the user in the
-							// container to a non-zero numeric user. We do this using the RunAsUser field.
-							// However, if you are looking to provide solution for K8s vendors like OpenShift
-							// be aware that you can not run under its restricted-v2 SCC if you set this value.				 
-							RunAsUser: &[]int64{1000}[0],
-						},
-						Command: []string{"memcached", "-m=64", "-o", "modern", "-v"},
-						Ports: []corev1.ContainerPort{{
-							ContainerPort: 11211,
-							Name:          "memcached",
-						}},
-					}},
-				},
-			},
-		},
-	}
-	// Set Memcached instance as the owner and controller
-	ctrl.SetControllerReference(m, dep, r.Scheme)
-	return dep
-}
-
-// labelsForMemcached returns the labels for selecting the resources
-// belonging to the given memcached CR name.
-func labelsForMemcached(name string) map[string]string {
-	return map[string]string{"app": "memcached", "memcached_cr": name}
-}
-
-// getPodNames returns the pod names of the array of pods passed in
-func getPodNames(pods []corev1.Pod) []string {
-	var podNames []string
-	for _, pod := range pods {
-		podNames = append(podNames, pod.Name)
-	}
-	return podNames
-}
-`
-
-const controllerImportsFragment = `
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"reflect"
-	"time"
-
-
-`
-
-const controllerMonitoringImportFragment = `
-	"github.com/example/memcached-operator/monitoring"
-`
-
 const metricsImportsFragment = `
 package monitoring
-
 import (
 	"github.com/prometheus/client_golang/prometheus"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
@@ -768,17 +570,6 @@ import (
 
 const mainMonitoringImportFragment = `
 	"github.com/example/memcached-operator/monitoring"
-`
-
-const watchOriginalFragment = `return ctrl.NewControllerManagedBy(mgr).
-		For(&%s%s.%s{}).
-		Complete(r)
-`
-
-const watchCustomizedFragment = `return ctrl.NewControllerManagedBy(mgr).
-		For(&%s%s.%s{}).
-		Owns(&appsv1.Deployment{}).
-		Complete(r)
 `
 
 const webhooksFragment = `
@@ -814,3 +605,21 @@ func validateOdd(n int32) error {
 	return nil
 }
 `
+
+const controllerMonitoringImportFragment = `
+	"github.com/example/memcached-operator/monitoring"
+`
+
+const userIDWarningFragment = `
+							// WARNING: Ensure that the image used defines an UserID in the Dockerfile
+							// otherwise the Pod will not run and will fail with "container has runAsNonRoot and image has non-numeric user"".
+							// If you want your workloads admitted in namespaces enforced with the restricted mode in OpenShift/OKD vendors
+							// then, you MUST ensure that the Dockerfile defines a User ID OR you MUST leave the "RunAsNonRoot" and
+							// "RunAsUser" fields empty.`
+
+const runAsUserCommentFragment = `
+							// The memcached image does not use a non-zero numeric user as the default user.
+							// Due to RunAsNonRoot field being set to true, we need to force the user in the
+							// container to a non-zero numeric user. We do this using the RunAsUser field.
+							// However, if you are looking to provide solution for K8s vendors like OpenShift
+							// be aware that you cannot run under its restricted-v2 SCC if you set this value.`
