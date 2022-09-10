@@ -3,9 +3,25 @@
 KUTTL_PATH=${KUTTL_PATH:-"/bundle/tests/scorecard/kuttl"}
 KUTTL_CONFIG=${KUTTL_CONFIG:-"${KUTTL_PATH}/kuttl-test.yaml"}
 
-kubectl-kuttl test ${KUTTL_PATH} \
-  --config=${KUTTL_CONFIG} \
-  --namespace=${SCORECARD_NAMESPACE} \
-  --report=JSON --artifacts-dir=/tmp > /tmp/kuttl.stdout 2> /tmp/kuttl.stderr
+if [ $# -eq 0 ]
+  then
+    # if the arg list is 0, then just call kuttl with no test flag
+    # NOTE: this was the original call
+    kubectl-kuttl test ${KUTTL_PATH} \
+      --config=${KUTTL_CONFIG} \
+      --namespace=${SCORECARD_NAMESPACE} \
+      --report=JSON --artifacts-dir=/tmp > /tmp/kuttl.stdout 2> /tmp/kuttl.stderr
+  else
+    # if there is 1 or more then let's call kuttl multiple times
+    for i in $*; do
+      kubectl-kuttl test ${KUTTL_PATH} \
+      --test $i  \
+      --config=${KUTTL_CONFIG} \
+      --namespace=${SCORECARD_NAMESPACE} \
+      --report=JSON --artifacts-dir=/tmp > /tmp/kuttl.stdout 2> /tmp/kuttl.stderr
+    done
+fi
 
+# send the list of args to scorecard-test-kuttl
+# NOTE: I'm not sure it uses the args for anything at the moment
 exec scorecard-test-kuttl $@

@@ -1,0 +1,24 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Support test selectors in scorecard-kuttl. This only works if you
+      supply a test name in the config for the entrypoint in the scorecard test config.yaml
+
+      In the `stages.tests`section add an `entrypoint`, in this entrypoint you add the
+      name of the test you want to associate with the selector.
+
+      If you have a kuttl test directory called `smoke` your entrypoint should have `- smoke`
+      as an entry. That way scorecard can pass that into the image and kuttl will run the single
+      test.
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "bugfix"
+
+    # Is this a breaking change?
+    breaking: false
