@@ -412,7 +412,7 @@ func (mh *Memcached) implementingController() {
 		`	if *found.Spec.Replicas != size {`,
 		`
 		// Increment MemcachedDeploymentSizeUndesiredCountTotal metric by 1
-		monitoring.MemcachedDeploymentSizeUndesiredCountTotal.Inc()`)
+		//monitoring.MemcachedDeploymentSizeUndesiredCountTotal.Inc()`)
 	pkg.CheckError("adding monitoring import", err)
 
 	err = kbutil.InsertCode(controllerPath,
@@ -527,7 +527,7 @@ func (mh *Memcached) customizingMain() {
 	// Add metrics registry
 	err = kbutil.InsertCode(mainPath,
 		"utilruntime.Must(cachev1alpha1.AddToScheme(scheme))",
-		"\n\nmonitoring.RegisterMetrics()")
+		mainMonitoringRegisterMetricsFragment)
 	pkg.CheckError("adding metrics registry", err)
 }
 
@@ -569,8 +569,13 @@ import (
 `
 
 const mainMonitoringImportFragment = `
-	"github.com/example/memcached-operator/monitoring"
+	// To enable operator custom metrics, uncomment all sections with 'monitoring'
+	//"github.com/example/memcached-operator/monitoring"
 `
+
+const mainMonitoringRegisterMetricsFragment = `
+
+	//monitoring.RegisterMetrics()`
 
 const webhooksFragment = `
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
@@ -607,7 +612,10 @@ func validateOdd(n int32) error {
 `
 
 const controllerMonitoringImportFragment = `
-	"github.com/example/memcached-operator/monitoring"
+	// This sample has an example of how to create and work with custom metrics. The code is commented
+	// in order to not break the basic tutorial to show authors how to build an operator. 
+	// To enable operator custom metrics, uncomment all sections with 'monitoring'.
+	//"github.com/example/memcached-operator/monitoring"
 `
 
 const userIDWarningFragment = `
