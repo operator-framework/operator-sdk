@@ -12,7 +12,6 @@ aliases:
 
   # Contributors who can approve any PRs in the repo.
   sdk-approvers:
-  - camilamacedo86
   - fabianvf
   - jberkhahn
   - rashmigottipati
@@ -29,3 +28,4 @@ aliases:
   - hasbro17
   - shawn-hurley
   - estroz
+  - camilamacedo86
