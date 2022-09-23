@@ -147,7 +147,12 @@ func RenderRefs(ctx context.Context, refs []string, skipTLSVerify bool, useHTTP 
 		return nil, fmt.Errorf("error creating new image registry: %v", err)
 	}
 
-	defer reg.Destroy()
+	defer func() {
+		err = reg.Destroy()
+		if err != nil {
+			log.Warn(fmt.Sprintf("Unable to cleanup registry. You may have to manually cleanup by removing the %q directory", cacheDir))
+		}
+	}()
 
 	render := action.Render{
 		Refs:     refs,
