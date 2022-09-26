@@ -342,10 +342,12 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 
 	if subscription != nil && c.ChannelName == "" {
 		c.ChannelName = subscription.Spec.Channel
-		if c.ChannelName == "" {
-			c.ChannelName = fbcutil.DefaultChannel
-		}
 	}
+
+	if c.ChannelName == "" {
+		c.ChannelName = fbcutil.DefaultChannel
+	}
+
 	if annotations := cs.GetAnnotations(); len(annotations) != 0 {
 		if value, hasAnnotation := annotations[indexImageAnnotation]; hasAnnotation && value != "" {
 			c.IndexImage = value
