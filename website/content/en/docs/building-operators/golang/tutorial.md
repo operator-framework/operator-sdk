@@ -39,8 +39,9 @@ operator-sdk init --domain example.com --repo github.com/example/memcached-opera
 ```
 `--domain` will be used as the prefix of the API group your custom resources will be created in.
 API groups are a mechanism to group portions of the Kubernetes API. You're probably already familiar with
-some of the core Kubernetes API groups, such as `apps` or `rbac.authorization.k8s.io`. You should name your
-domain to group your resource types in meaningful group(s), both for ease of understanding and because these
+some of the core Kubernetes API groups, such as `apps` or `rbac.authorization.k8s.io`. API groups are used
+internally to version your Kubernetes resources and are thus used for many things. Importantly, you should 
+name your domain to group your resource types in meaningful group(s) for ease of understanding and because these
 groups determine how access can be controlled to your resource types using RBAC. For more information, see [the core Kubernetes docs](https://kubernetes.io/docs/reference/using-api/#api-groups) and [the Kubebuilder docs](https://book.kubebuilder.io/cronjob-tutorial/gvks.html).
 
 To learn about the project directory structure, see [Kubebuilder project layout][kubebuilder_layout_doc] doc.
