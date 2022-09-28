@@ -17,7 +17,6 @@ package bundle
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
@@ -121,11 +120,8 @@ func (i *Install) setup(ctx context.Context) error {
 			UseHTTP:       i.UseHTTP,
 		}
 
-		if _, hasChannelMetadata := labels[registrybundle.ChannelsLabel]; hasChannelMetadata {
-			f.ChannelName = strings.Split(labels[registrybundle.ChannelsLabel], ",")[0]
-		} else {
-			f.ChannelName = fbcutil.DefaultChannel
-		}
+		// ignore channels for the bundle and instead use the default
+		f.ChannelName = fbcutil.DefaultChannel
 
 		// generate an fbc if an fbc specific label is found on the image or for a default index image.
 		content, err := generateFBCContent(ctx, f, i.BundleImage, i.IndexImageCatalogCreator.IndexImage)
@@ -140,7 +136,7 @@ func (i *Install) setup(ctx context.Context) error {
 	i.OperatorInstaller.CatalogSourceName = operator.CatalogNameForPackage(i.OperatorInstaller.PackageName)
 	i.OperatorInstaller.StartingCSV = csv.Name
 	i.OperatorInstaller.SupportedInstallModes = operator.GetSupportedInstallModes(csv.Spec.InstallModes)
-	i.OperatorInstaller.Channel = strings.Split(labels[registrybundle.ChannelsLabel], ",")[0]
+	i.OperatorInstaller.Channel = fbcutil.DefaultChannel
 
 	i.IndexImageCatalogCreator.PackageName = i.OperatorInstaller.PackageName
 	i.IndexImageCatalogCreator.BundleImage = i.BundleImage

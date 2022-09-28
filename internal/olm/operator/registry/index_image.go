@@ -339,6 +339,15 @@ func upgradeFBC(ctx context.Context, f *fbcutil.FBCContext, originalDeclCfg *dec
 // then deletes existing registry pod based on annotation name found in catalog source object
 func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha1.CatalogSource, subscription *v1alpha1.Subscription) error {
 	var prevRegistryPodName string
+
+	if subscription != nil && c.ChannelName == "" {
+		c.ChannelName = subscription.Spec.Channel
+	}
+
+	if c.ChannelName == "" {
+		c.ChannelName = fbcutil.DefaultChannel
+	}
+
 	if annotations := cs.GetAnnotations(); len(annotations) != 0 {
 		if value, hasAnnotation := annotations[indexImageAnnotation]; hasAnnotation && value != "" {
 			c.IndexImage = value
