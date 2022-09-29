@@ -16,7 +16,7 @@ package ansible
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -190,7 +190,7 @@ func (ma *MemcachedMolecule) Run() {
 	// prevent high load of controller caused by watching all the secrets in the cluster
 	watchNamespacePatchFileName := "watch_namespace_patch.yaml"
 	log.Info("adding WATCH_NAMESPACE env patch to watch own namespace")
-	err = ioutil.WriteFile(filepath.Join(ma.ctx.Dir, "config", "testing", watchNamespacePatchFileName), []byte(watchNamespacePatch), 0644)
+	err = os.WriteFile(filepath.Join(ma.ctx.Dir, "config", "testing", watchNamespacePatchFileName), []byte(watchNamespacePatch), 0644)
 	pkg.CheckError("adding watch_namespace_patch.yaml", err)
 
 	log.Info("adding WATCH_NAMESPACE env patch to patch list to be applied")

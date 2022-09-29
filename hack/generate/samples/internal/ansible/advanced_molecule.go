@@ -75,7 +75,8 @@ func (ma *AdvancedMolecule) Run() {
 		"--kind", ma.ctx.Kind,
 		"--domain", ma.ctx.Domain,
 		"--generate-role",
-		"--generate-playbook")
+		"--generate-playbook",
+		"--component-config=true")
 	pkg.CheckError("creating the project", err)
 
 	log.Infof("enabling multigroup support")

@@ -18,7 +18,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -55,7 +55,7 @@ func (i *InputDir) makeDirs() error {
 // addFile adds a file to the given relative path within the input directory.
 func (i *InputDir) addFile(path string, content []byte) error {
 	fullPath := filepath.Join(i.Path, path)
-	err := ioutil.WriteFile(fullPath, content, 0644)
+	err := os.WriteFile(fullPath, content, 0644)
 	if err != nil {
 		log.Error(err, "Unable to write file", "Path", fullPath)
 	}
@@ -95,7 +95,7 @@ func (i *InputDir) copyInventory(src string, dst string) error {
 // given ident and returns it as a string.
 func (i *InputDir) Stdout(ident string) (string, error) {
 	errorPath := filepath.Join(i.Path, "artifacts", ident, "stdout")
-	errorText, err := ioutil.ReadFile(errorPath)
+	errorText, err := os.ReadFile(errorPath)
 	return string(errorText), err
 }
 
@@ -194,7 +194,7 @@ func (i *InputDir) Write() error {
 			}
 		}()
 
-		playbookBytes, err := ioutil.ReadAll(f)
+		playbookBytes, err := io.ReadAll(f)
 		if err != nil {
 			return err
 		}

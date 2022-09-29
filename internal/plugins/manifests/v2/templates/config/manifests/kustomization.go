@@ -78,7 +78,7 @@ resources:
 {{ if .SupportsKustomizeV4 }}
 #      path: /spec/template/spec/containers/0/volumeMounts/0
 {{ else -}} 
-#      path: /spec/template/spec/containers/1/volumeMounts/0
+#      path: /spec/template/spec/containers/0/volumeMounts/0
 {{ end -}}
 #    # Remove the "cert" volume, since OLM will create and mount a set of certs.
 #    # Update the indices in this path if adding or removing volumes in the manager's Deployment.

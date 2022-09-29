@@ -23,7 +23,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"path/filepath"
 	"time"
@@ -285,7 +284,7 @@ func (c Client) doRequest(ctx context.Context, url string) (*http.Response, erro
 	}
 	if resp.StatusCode != http.StatusOK {
 		defer resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		msg := fmt.Sprintf("failed GET '%s': unexpected status code %d, expected %d", url, resp.StatusCode, http.StatusOK)
 		if resp.StatusCode == 404 {
 			return nil, fmt.Errorf("%s; manifests may not exist for this OLM release,"+

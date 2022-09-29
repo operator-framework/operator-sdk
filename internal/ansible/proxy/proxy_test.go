@@ -18,12 +18,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"testing"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 
 	kcorev1 "k8s.io/api/core/v1"
 )
@@ -54,7 +54,7 @@ var _ = Describe("proxyTests", func() {
 				t.Errorf("Failed to close response body: (%v)", err)
 			}
 		}()
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			t.Fatalf("Error reading response body: %v", err)
 		}

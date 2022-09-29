@@ -15,7 +15,7 @@
 package registry
 
 import (
-	"io/ioutil"
+	"io"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -23,6 +23,6 @@ import (
 // DiscardLogger returns a logger that throws away input.
 func DiscardLogger() *log.Entry {
 	logger := log.New()
-	logger.SetOutput(ioutil.Discard)
+	logger.SetOutput(io.Discard)
 	return log.NewEntry(logger)
 }

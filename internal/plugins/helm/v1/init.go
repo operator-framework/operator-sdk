@@ -130,7 +130,8 @@ func (p *initSubcommand) InjectConfig(c config.Config) error {
 }
 
 func (p *initSubcommand) Scaffold(fs machinery.Filesystem) error {
-	if err := addInitCustomizations(p.config.GetProjectName()); err != nil {
+
+	if err := addInitCustomizations(p.config.GetProjectName(), p.config.IsComponentConfig()); err != nil {
 		return fmt.Errorf("error updating init manifests: %s", err)
 	}
 
@@ -177,7 +178,7 @@ func (p *initSubcommand) PostScaffold() error {
 }
 
 // addInitCustomizations will perform the required customizations for this plugin on the common base
-func addInitCustomizations(projectName string) error {
+func addInitCustomizations(projectName string, componentConfig bool) error {
 	managerFile := filepath.Join("config", "manager", "manager.yaml")
 
 	// todo: we ought to use afero instead. Replace this methods to insert/update
@@ -185,13 +186,14 @@ func addInitCustomizations(projectName string) error {
 
 	// Add leader election arg in config/manager/manager.yaml and in config/default/manager_auth_proxy_patch.yaml
 	err := util.InsertCode(managerFile,
-		"--leader-elect",
-		fmt.Sprintf("\n        - --leader-election-id=%s", projectName))
+		"- /manager",
+		fmt.Sprintf("\n        args:\n        - --leader-election-id=%s", projectName))
 	if err != nil {
 		return err
 	}
+
 	err = util.InsertCode(filepath.Join("config", "default", "manager_auth_proxy_patch.yaml"),
-		"- \"--leader-elect\"",
+		"memory: 64Mi",
 		fmt.Sprintf("\n        - \"--leader-election-id=%s\"", projectName))
 	if err != nil {
 		return err

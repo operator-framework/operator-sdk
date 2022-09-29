@@ -17,7 +17,6 @@ package registry
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -38,7 +37,7 @@ func ExtractBundleImage(ctx context.Context, logger *log.Entry, image string, lo
 	if err != nil {
 		return "", err
 	}
-	bundleDir, err := ioutil.TempDir(wd, "bundle-")
+	bundleDir, err := os.MkdirTemp(wd, "bundle-")
 	if err != nil {
 		return "", err
 	}

@@ -3,7 +3,7 @@ package util
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
@@ -104,7 +104,7 @@ func (m EntryMigration) Validate() error {
 }
 
 func LoadEntries(fragmentsDir, repo string) ([]FragmentEntry, error) {
-	files, err := ioutil.ReadDir(fragmentsDir)
+	files, err := os.ReadDir(fragmentsDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read fragments directory: %w", err)
 	}
@@ -123,7 +123,7 @@ func LoadEntries(fragmentsDir, repo string) ([]FragmentEntry, error) {
 			continue
 		}
 		path := filepath.Join(fragmentsDir, fragFile.Name())
-		fragmentData, err := ioutil.ReadFile(path)
+		fragmentData, err := os.ReadFile(path)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read fragment file %q: %w", fragFile.Name(), err)
 		}

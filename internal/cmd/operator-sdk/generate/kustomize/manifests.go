@@ -17,7 +17,6 @@ package kustomize
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -222,7 +221,7 @@ func (c manifestsCmd) run(cfg config.Config) error {
 		return err
 	}
 	outputPath := filepath.Join(c.outputDir, relBasePath)
-	if err = ioutil.WriteFile(outputPath, csvBytes, 0644); err != nil {
+	if err = os.WriteFile(outputPath, csvBytes, 0644); err != nil {
 		return fmt.Errorf("error writing CSV base: %v", err)
 	}
 

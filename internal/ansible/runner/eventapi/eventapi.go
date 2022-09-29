@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -127,7 +126,7 @@ func (e *EventReceiver) handleEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		e.logger.Error(err, "Could not read request body", "code", "500")
 		w.WriteHeader(http.StatusInternalServerError)

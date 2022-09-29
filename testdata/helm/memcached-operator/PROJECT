@@ -1,3 +1,4 @@
+componentConfig: true
 domain: example.com
 layout:
 - helm.sdk.operatorframework.io/v1

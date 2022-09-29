@@ -16,7 +16,6 @@ package registry
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
@@ -156,7 +155,7 @@ func RewriteAnnotationsYaml(filename string, content map[string]string) error {
 }
 
 func getAnnotationFileContents(filename string) (*registrybundle.AnnotationMetadata, error) {
-	f, err := ioutil.ReadFile(filename)
+	f, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +178,7 @@ func writeAnnotationFile(filename string, annotation *registrybundle.AnnotationM
 		mode = info.Mode()
 	}
 
-	err = ioutil.WriteFile(filename, file, mode)
+	err = os.WriteFile(filename, file, mode)
 	if err != nil {
 		return fmt.Errorf("error writing modified contents to annotations file, %v", err)
 	}

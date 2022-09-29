@@ -17,7 +17,7 @@ package packagemanifest
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"sort"
 
@@ -44,6 +44,7 @@ func NewGenerator() Generator {
 
 // Generator is an interface that specifies the Generate methods
 // to generate and write various package manifests
+//
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 . Generator
 type Generator interface {
 	Generate(operatorName, version, outputDir string, opts Options) error
@@ -226,7 +227,7 @@ func (b PackageManifest) makeNewBase() *apimanifests.PackageManifest {
 // readPackageManifestBase returns the PackageManifest base at path.
 // If no base is found, readPackageManifestBase returns an error.
 func readPackageManifestBase(path string) (*apimanifests.PackageManifest, error) {
-	b, err := ioutil.ReadFile(path)
+	b, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}

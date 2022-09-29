@@ -83,7 +83,8 @@ func (mh *Memcached) Run() {
 		"--group", mh.ctx.Group,
 		"--version", mh.ctx.Version,
 		"--kind", mh.ctx.Kind,
-		"--helm-chart", helmChartPath)
+		"--helm-chart", helmChartPath,
+		"--component-config=true")
 	pkg.CheckError("creating the project", err)
 
 	err = mh.ctx.UncommentRestrictivePodStandards()

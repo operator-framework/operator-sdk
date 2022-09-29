@@ -71,7 +71,8 @@ func (mh *Memcached) Run() {
 			"--plugins", "go/v4-alpha",
 			"--project-version", "3",
 			"--repo", "github.com/example/memcached-operator",
-			"--domain", mh.ctx.Domain)
+			"--domain", mh.ctx.Domain,
+			"--component-config=true")
 		pkg.CheckError("creating the project", err)
 	} else {
 		log.Infof("creating the go/v3 project")
@@ -79,7 +80,8 @@ func (mh *Memcached) Run() {
 			"--plugins", "go/v3",
 			"--project-version", "3",
 			"--repo", "github.com/example/memcached-operator",
-			"--domain", mh.ctx.Domain)
+			"--domain", mh.ctx.Domain,
+			"--component-config=true")
 		pkg.CheckError("creating the project", err)
 	}
 
@@ -345,7 +347,7 @@ func (mh *Memcached) uncommentManifestsKustomizationv3() {
 #    # Remove the manager container's "cert" volumeMount, since OLM will create and mount a set of certs.
 #    # Update the indices in this path if adding or removing containers/volumeMounts in the manager's Deployment.
 #    - op: remove
-#      path: /spec/template/spec/containers/1/volumeMounts/0
+#      path: /spec/template/spec/containers/0/volumeMounts/0
 #    # Remove the "cert" volume, since OLM will create and mount a set of certs.
 #    # Update the indices in this path if adding or removing volumes in the manager's Deployment.
 #    - op: remove
