@@ -103,23 +103,7 @@ func castCounter(metricName string, metric prometheus.Collector) prometheus.Coun
 func castGauge(metricName string, metric prometheus.Collector) prometheus.Gauge {
 	v, ok := metric.(prometheus.Gauge)
 	if !ok {
-		panic(unknownMetricTypeError(metricName, "Counter"))
-	}
-	return v
-}
-
-func castHistogram(metricName string, metric prometheus.Collector) prometheus.Histogram {
-	v, ok := metric.(prometheus.Histogram)
-	if !ok {
-		panic(unknownMetricTypeError(metricName, "Counter"))
-	}
-	return v
-}
-
-func castSummary(metricName string, metric prometheus.Collector) prometheus.Summary {
-	v, ok := metric.(prometheus.Summary)
-	if !ok {
-		panic(unknownMetricTypeError(metricName, "Counter"))
+		panic(unknownMetricTypeError(metricName, "Gauge"))
 	}
 	return v
 }
