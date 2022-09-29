@@ -100,9 +100,9 @@ func withContainerVolumeMounts(volName string, paths ...string) func(*appsv1.Dep
 }
 
 // getDBContainerCmd returns a command string that, when run, does two things:
-// 1. Runs a database initializer on the manifests in the /registry
-//    directory.
-// 2. Runs an operator-registry server serving the bundle database.
+//  1. Runs a database initializer on the manifests in the /registry
+//     directory.
+//  2. Runs an operator-registry server serving the bundle database.
 func getDBContainerCmd(dbPath, logPath string) string {
 	initCmd := fmt.Sprintf("/bin/initializer -o %s -m %s", dbPath, containerManifestsDir)
 	srvCmd := fmt.Sprintf("/bin/registry-server -d %s -t %s", dbPath, logPath)

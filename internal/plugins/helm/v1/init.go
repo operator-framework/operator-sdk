@@ -130,7 +130,8 @@ func (p *initSubcommand) InjectConfig(c config.Config) error {
 }
 
 func (p *initSubcommand) Scaffold(fs machinery.Filesystem) error {
-	if err := addInitCustomizations(p.config.GetProjectName()); err != nil {
+
+	if err := addInitCustomizations(p.config.GetProjectName(), p.config.IsComponentConfig()); err != nil {
 		return fmt.Errorf("error updating init manifests: %s", err)
 	}
 
@@ -177,31 +178,46 @@ func (p *initSubcommand) PostScaffold() error {
 }
 
 // addInitCustomizations will perform the required customizations for this plugin on the common base
-func addInitCustomizations(projectName string) error {
+func addInitCustomizations(projectName string, componentConfig bool) error {
 	managerFile := filepath.Join("config", "manager", "manager.yaml")
 
 	// todo: we ought to use afero instead. Replace this methods to insert/update
 	// by https://github.com/kubernetes-sigs/kubebuilder/pull/2119
 
 	// Add leader election arg in config/manager/manager.yaml and in config/default/manager_auth_proxy_patch.yaml
-	err := util.InsertCode(managerFile,
-		"--leader-elect",
-		fmt.Sprintf("\n        - --leader-election-id=%s", projectName))
-	if err != nil {
-		return err
-	}
-	err = util.InsertCode(filepath.Join("config", "default", "manager_auth_proxy_patch.yaml"),
-		"- \"--leader-elect\"",
-		fmt.Sprintf("\n        - \"--leader-election-id=%s\"", projectName))
-	if err != nil {
-		return err
-	}
+	if componentConfig {
+		err := util.InsertCode(managerFile,
+			"- /manager",
+			fmt.Sprintf("\n        args:\n        - --leader-election-id=%s", projectName))
+		if err != nil {
+			return err
+		}
 
-	// Remove the webhook option for the componentConfig since webhooks are not supported by helm
-	err = util.ReplaceInFile(filepath.Join("config", "manager", "controller_manager_config.yaml"),
-		"webhook:\n  port: 9443", "")
-	if err != nil {
-		return err
+		err = util.InsertCode(filepath.Join("config", "default", "manager_auth_proxy_patch.yaml"),
+			"memory: 64Mi",
+			fmt.Sprintf("\n      - name: manager\n        args:\n        - \"--leader-election-id=%s\"", projectName))
+		if err != nil {
+			return err
+		}
+		// Remove the webhook option for the componentConfig since webhooks are not supported by helm
+		err = util.ReplaceInFile(filepath.Join("config", "manager", "controller_manager_config.yaml"),
+			"webhook:\n  port: 9443", "")
+		if err != nil {
+			return err
+		}
+	} else {
+		err := util.InsertCode(managerFile,
+			"--leader-elect",
+			fmt.Sprintf("\n        - --leader-election-id=%s", projectName))
+		if err != nil {
+			return err
+		}
+		err = util.InsertCode(filepath.Join("config", "default", "manager_auth_proxy_patch.yaml"),
+			"- \"--leader-elect\"",
+			fmt.Sprintf("\n        - \"--leader-election-id=%s\"", projectName))
+		if err != nil {
+			return err
+		}
 	}
 
 	// Remove the call to the command as manager. Helm has not been exposing this entrypoint
@@ -209,13 +225,22 @@ func addInitCustomizations(projectName string) error {
 	const command = `command:
         - /manager
         `
-	err = util.ReplaceInFile(managerFile, command, "")
+	err := util.ReplaceInFile(managerFile, command, "")
 	if err != nil {
 		return err
 	}
 
 	if err := sdkpluginutil.UpdateKustomizationsInit(); err != nil {
 		return fmt.Errorf("error updating kustomization.yaml files: %v", err)
+	}
+
+	//TODO: Remove below code snippet whenever the scaffolding is updated in Kubebuilder to have proper YAML output.
+	const target = "      # according to the platforms which are supported by your solution. "
+	const replace = "      # according to the platforms which are supported by your solution."
+
+	err = util.ReplaceInFile(managerFile, target, replace)
+	if err != nil {
+		return err
 	}
 
 	return nil

@@ -18,7 +18,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -49,7 +48,7 @@ func RemoveKustomizeCRDManifests() error {
 			return err
 		}
 	}
-	children, err := ioutil.ReadDir(configPatchesDir)
+	children, err := os.ReadDir(configPatchesDir)
 	if err == nil && len(children) == 0 {
 		if err := os.RemoveAll(configPatchesDir); err != nil {
 			return err
@@ -195,7 +194,7 @@ func UpdateKustomizationsInit() error {
 func UpdateKustomizationsCreateAPI() error {
 
 	crdKFile := filepath.Join("config", "crd", "kustomization.yaml")
-	if crdKBytes, err := ioutil.ReadFile(crdKFile); err != nil && !errors.Is(err, os.ErrNotExist) {
+	if crdKBytes, err := os.ReadFile(crdKFile); err != nil && !errors.Is(err, os.ErrNotExist) {
 		log.Debugf("Error reading kustomization for substitution: %v", err)
 	} else if err == nil {
 		if bytes.Contains(crdKBytes, []byte("[WEBHOOK]")) || bytes.Contains(crdKBytes, []byte("[CERTMANAGER]")) {

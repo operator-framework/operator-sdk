@@ -19,7 +19,6 @@ package watches
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -314,7 +313,7 @@ func New(gvk schema.GroupVersionKind, role, playbook string, vars map[string]int
 func Load(path string, maxReconciler, ansibleVerbosity int) ([]Watch, error) {
 	maxConcurrentReconcilesDefault = maxReconciler
 	ansibleVerbosityDefault = ansibleVerbosity
-	b, err := ioutil.ReadFile(path)
+	b, err := os.ReadFile(path)
 	if err != nil {
 		log.Error(err, "Failed to get config file")
 		return nil, err

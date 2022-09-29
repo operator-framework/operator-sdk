@@ -1,0 +1,13 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Helm scaffolding got modified in order to incorporate with Kubebuilder `--component-config` flag changes. Previously, it was scaffolding and doing some file changes without considering component-config flag.
+      Now, this PR made changes which will consider the `--component-config` flag and modify the scaffolded file.
+
+      1. If the `--component-config` flag is passed then look for `- /manager` in the file in order to add leader election id to the manager.yaml file. If flag is not passed then look for `--leader-elect`.
+      2. Same logic for manager proxy patch file, look for `memory: 64Mi` if the flag is passed. If a flag is not passed then look for `--leader-elect`
+      3. Repeat the same logic for replacing the port number from the file.
+      4. At the end, update the `manager.yaml` file to avoid lint errors.
+    kind: "change"
+    breaking: false

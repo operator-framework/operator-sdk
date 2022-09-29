@@ -16,11 +16,11 @@ package version
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"runtime"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	ver "github.com/operator-framework/operator-sdk/internal/version"
@@ -47,7 +47,7 @@ var _ = Describe("Running a version command", func() {
 				run()
 				w.Close()
 			}()
-			stdout, err := ioutil.ReadAll(r)
+			stdout, err := io.ReadAll(r)
 			Expect(err).To(BeNil())
 			stdoutString := string(stdout)
 			version := ver.GitVersion

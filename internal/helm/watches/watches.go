@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"text/template"
 
@@ -85,7 +84,7 @@ func Load(path string) ([]Watch, error) {
 // in the watches file, it verifies the configuration. If an error is
 // encountered reading or verifying the configuration, it will be returned.
 func LoadReader(reader io.Reader) ([]Watch, error) {
-	b, err := ioutil.ReadAll(reader)
+	b, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, err
 	}

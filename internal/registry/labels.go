@@ -34,22 +34,22 @@ func (e MetadataNotFoundError) Error() string {
 }
 
 // Labels is a set of key:value labels from an operator-registry object.
-type Labels map[string]string
+type LabelsMap map[string]string
 
 // GetManifestsDir returns the manifests directory name in ls using
 // a predefined key, or false if it does not exist.
-func (ls Labels) GetManifestsDir() (string, bool) {
+func (ls LabelsMap) GetManifestsDir() (string, bool) {
 	value, hasKey := ls[registrybundle.ManifestsLabel]
 	return filepath.Clean(value), hasKey
 }
 
 // FindBundleMetadata walks bundleRoot searching for metadata (ex. annotations.yaml),
 // and returns metadata and its path if found. If one is not found, an error is returned.
-func FindBundleMetadata(bundleRoot string) (Labels, string, error) {
+func FindBundleMetadata(bundleRoot string) (LabelsMap, string, error) {
 	return findBundleMetadata(afero.NewOsFs(), bundleRoot)
 }
 
-func findBundleMetadata(fs afero.Fs, bundleRoot string) (Labels, string, error) {
+func findBundleMetadata(fs afero.Fs, bundleRoot string) (LabelsMap, string, error) {
 	// Check the default path first, and return annotations if they were found or an error if that error
 	// is not because the path does not exist (it exists or there was an unmarshalling error).
 	annotationsPath := filepath.Join(bundleRoot, registrybundle.MetadataDir, registrybundle.AnnotationsFile)
@@ -59,7 +59,7 @@ func findBundleMetadata(fs afero.Fs, bundleRoot string) (Labels, string, error) 
 	}
 
 	// Annotations are not at the default path, so search recursively.
-	annotations = make(Labels)
+	annotations = make(LabelsMap)
 	annotationsPath = ""
 	err = afero.Walk(fs, bundleRoot, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -89,7 +89,7 @@ func findBundleMetadata(fs afero.Fs, bundleRoot string) (Labels, string, error) 
 }
 
 // readAnnotations reads annotations from file(s) in bundleRoot and returns them as Labels.
-func readAnnotations(fs afero.Fs, annotationsPath string) (Labels, error) {
+func readAnnotations(fs afero.Fs, annotationsPath string) (LabelsMap, error) {
 	// The annotations file is well-defined.
 	b, err := afero.ReadFile(fs, annotationsPath)
 	if err != nil {
@@ -99,7 +99,7 @@ func readAnnotations(fs afero.Fs, annotationsPath string) (Labels, error) {
 	// Use the arbitrarily-labelled bundle representation of the annotations file
 	// for forwards and backwards compatibility.
 	annotations := registrybundle.AnnotationMetadata{
-		Annotations: make(Labels),
+		Annotations: make(LabelsMap),
 	}
 	if err = yaml.Unmarshal(b, &annotations); err != nil {
 		return nil, fmt.Errorf("error unmarshalling potential bundle metadata %s: %v", annotationsPath, err)

@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -83,7 +82,7 @@ func (c *Manifests) UpdateFromDirs(deployDir, crdsDir string) error {
 			return err
 		}
 
-		b, err := ioutil.ReadFile(path)
+		b, err := os.ReadFile(path)
 		if err != nil {
 			return err
 		}

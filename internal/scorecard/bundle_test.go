@@ -20,11 +20,11 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"os"
 	"path"
 	"path/filepath"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/operator-framework/operator-sdk/internal/registry"
@@ -42,7 +42,7 @@ var _ = Describe("Tarring a bundle", func() {
 
 		BeforeEach(func() {
 			r = PodTestRunner{}
-			expTarball, err = ioutil.ReadFile(expTarPath)
+			expTarball, err = os.ReadFile(expTarPath)
 			Expect(err).To(BeNil())
 		})
 

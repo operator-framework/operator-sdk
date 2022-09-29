@@ -19,7 +19,7 @@ import (
 	"context"
 	"path/filepath"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	apierrors "github.com/operator-framework/api/pkg/validation/errors"
 )

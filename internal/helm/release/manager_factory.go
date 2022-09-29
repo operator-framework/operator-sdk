@@ -126,10 +126,11 @@ func (f managerFactory) NewManager(cr *unstructured.Unstructured, overrideValues
 // in the same namespace.
 //
 // TODO(jlanford): As noted above, using the CR name as the release name raises
-//   the possibility of collision. We should move this logic to a validating
-//   admission webhook so that the CR owner receives immediate feedback of the
-//   collision. As is, the only indication of collision will be in the CR status
-//   and operator logs.
+//
+//	the possibility of collision. We should move this logic to a validating
+//	admission webhook so that the CR owner receives immediate feedback of the
+//	collision. As is, the only indication of collision will be in the CR status
+//	and operator logs.
 func getReleaseName(storageBackend *storage.Storage, crChartName string,
 	cr *unstructured.Unstructured) (string, error) {
 	// If a release with the CR name does not exist, return the CR name.
