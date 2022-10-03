@@ -139,19 +139,49 @@ func (g generator) getMarkedChildrenOfField(rootPkg *loader.Package, rootField m
 
 				// Add all child fields to the list to search next.
 				for _, finfo := range info.Fields {
+					var childIdent crd.TypeIdent
+					typed := false
 					segment, err := getPathSegmentForField(finfo)
 					if err != nil {
 						rootPkg.AddError(fmt.Errorf("error getting path from type %s field %s: %v", info.Name, finfo.Name, err))
 						continue
 					}
 					// Add extra information to the segment if it comes from a certain field type.
-					switch finfo.RawField.Type.(type) {
+					switch nt := finfo.RawField.Type.(type) {
 					case *ast.ArrayType:
 						// arrayFieldGroup case.
 						if segment != ignoredTag && segment != inlinedTag {
 							segment += "[0]"
 						}
+					case *ast.SelectorExpr: // child field is a Typed object
+						typed = true
+						pkgPath := importIDs.findPackagePathForSelExpr(nt)
+						if pkgPath == "" {
+							// Found no reference to pkgPath in any file.
+							return true
+						}
+						if pkg, hasImport := rootPkg.Imports()[pkgPath]; hasImport {
+							pkg.NeedTypesInfo()
+							childIdent = crd.TypeIdent{Package: pkg, Name: nt.Sel.Name}
+						}
+					case *ast.Ident: // child field is a Typed object
+						// Only look at type idents or references to type idents in other files.
+						typed = true
+						if nt.Obj == nil || nt.Obj.Kind == ast.Typ {
+							childIdent = crd.TypeIdent{Package: rootPkg, Name: nt.Name}
+						}
+					case *ast.StarExpr: // child field is a Typed object
+						typed = true
+						childIdent = crd.TypeIdent{}
 					}
+
+					if typed {
+						_, hasInfo := g.types[childIdent]
+						if childIdent == (crd.TypeIdent{}) || !hasInfo {
+							return true
+						}
+					}
+
 					// Create a new set of path segments using the parent's segments
 					// and add the field to the next fields to search.
 					parentSegments := make([]string, len(field.pathSegments), len(field.pathSegments)+1)
