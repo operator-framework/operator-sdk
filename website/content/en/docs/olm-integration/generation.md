@@ -23,11 +23,11 @@ See this [CLI overview][cli-overview] for details on each command.
 ### Kustomize files
 
 `operator-sdk generate kustomize manifests` generates a CSV kustomize base
-`config/manifests/bases/<project-name>.clusterserviceversion.yaml` and a `config/manifests/bases/kustomization.yaml`
+`config/manifests/bases/<project-name>.clusterserviceversion.yaml` and a `config/manifests/kustomization.yaml`
 by default. These files are required as `kustomize build` input in downstream commands.
 
 By default, the command starts an interactive prompt if a CSV base in `config/manifests/bases` is not present
-to collect [UI metadata](#csv-fields). You can disable the interactive prompt by passing `--kustomize=false`.
+to collect [UI metadata](#csv-fields). You can disable the interactive prompt by passing `--interactive=false`.
 
 ```console
 $ operator-sdk generate kustomize manifests
