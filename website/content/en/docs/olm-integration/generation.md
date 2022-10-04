@@ -75,7 +75,7 @@ themselves; this version is present in both their `metadata.name` and `spec.vers
 by `generate <bundle|packagemanifests>` requires certain input manifests to construct a CSV manifest; all inputs
 are read when either command is invoked, along with a CSV's [base](#kustomize-files), to idempotently regenerate a CSV.
 
-The following resource kinds are typically included in a CSV, which are addressed by `config/manifests/bases/kustomization.yaml`:
+The following resource kinds are typically included in a CSV, which are addressed by `config/manifests/kustomization.yaml`:
   - `Role`: define Operator permissions within a namespace.
   - `ClusterRole`: define cluster-wide Operator permissions.
   - `Deployment`: define how the Operator's operand is run in pods.
