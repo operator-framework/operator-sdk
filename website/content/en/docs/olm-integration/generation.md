@@ -23,11 +23,11 @@ See this [CLI overview][cli-overview] for details on each command.
 ### Kustomize files
 
 `operator-sdk generate kustomize manifests` generates a CSV kustomize base
-`config/manifests/bases/<project-name>.clusterserviceversion.yaml` and a `config/manifests/bases/kustomization.yaml`
+`config/manifests/bases/<project-name>.clusterserviceversion.yaml` and a `config/manifests/kustomization.yaml`
 by default. These files are required as `kustomize build` input in downstream commands.
 
 By default, the command starts an interactive prompt if a CSV base in `config/manifests/bases` is not present
-to collect [UI metadata](#csv-fields). You can disable the interactive prompt by passing `--kustomize=false`.
+to collect [UI metadata](#csv-fields). You can disable the interactive prompt by passing `--interactive=false`.
 
 ```console
 $ operator-sdk generate kustomize manifests
@@ -47,7 +47,8 @@ These values will persist when generating a bundle, so make necessary metadata c
 **For Go Operators only:** the command parses [CSV markers][csv-markers] from Go API type definitions, located
 in `./api` for single group projects and `./apis` for multigroup projects, to populate certain CSV fields.
 You can set an alternative path to the API types root directory with `--apis-dir`. These markers are not available
-to Ansible or Helm project types.
+to Ansible or Helm project types. Also note that the command will attempt to process local types defined in your API.
+If you import a package and use a type with the same name as a local type the parser will loop infinitely.
 
 ### ClusterServiceVersion manifests
 
