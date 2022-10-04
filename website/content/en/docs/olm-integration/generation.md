@@ -48,7 +48,24 @@ These values will persist when generating a bundle, so make necessary metadata c
 in `./api` for single group projects and `./apis` for multigroup projects, to populate certain CSV fields.
 You can set an alternative path to the API types root directory with `--apis-dir`. These markers are not available
 to Ansible or Helm project types. Also note that the command will attempt to process local types defined in your API.
-If you import a package and use a type with the same name as a local type the parser will loop infinitely.
+If you import a package and use a type with the same name as a local type as a field in the local type it will loop infinitely.
+For example, the following local type definition will cause an infinite loop:
+```go
+type PodStatus struct {
+  SomeField string
+  // imported type with the same name will infinitely trigger
+  // the parser to process the local PodStatus type
+  Status v1.PodStatus 
+}
+```
+To prevent this, name the local type something different than the imported type:
+```go
+type PodStatusWrapper struct {
+  SomeField string
+  Status v1.PodStatus 
+}
+```
+Since the local type has a different name than the imported type the parser does not get stuck.
 
 ### ClusterServiceVersion manifests
 
