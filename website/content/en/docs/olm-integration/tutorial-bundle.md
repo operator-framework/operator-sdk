@@ -152,8 +152,9 @@ INFO[0040]   Found ClusterServiceVersion "default/memcached-operator.v0.0.1" pha
 INFO[0040] OLM has successfully installed "memcached-operator.v0.0.1"
 ```
 
-**Note:** If the bundle that is being installed has dependencies, the `--index-image` flag allows adding a bundle to a catalog that contains that bundle's dependencies.  
+**Note:** If the bundle that is being installed has dependencies, the `--index-image` flag allows adding a bundle to a catalog that contains that bundle's dependencies.
 
+**Note:** If the version of `operator-sdk` you are using is < `v1.22.0` then the SQLite bundle format will be used by default rather than the new FBC bundle format. Due to this, you will need to specify the index image when runnning `operator-sdk run bundle` by adding `--index-image=quay.io/operator-framework/opm:v1.23.0`. This prevents any issues that may occur from using the default index image of `quay.io/operator-framework/opm:latest`.
 <!-- TODO(jmccormick2001): add `scorecard` usage here -->
 
 ### Upgrading a bundle to a newer version

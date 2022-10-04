@@ -347,3 +347,13 @@ made on this manifest.
 
 [cgo-docs]: https://pkg.go.dev/cmd/cgo
 [open-issue]: https://github.com/operator-framework/operator-sdk/issues/new/choose
+
+## 'operator-sdk run bundle' command fails and the registry pod has an error of 'mkdir: can't create directory '/database': Permission denied'
+
+This error occurs when using `operator-sdk` versions < `v1.22.0` as earlier versions use the deprecated SQLite bundle format by default. 
+By default `operator-sdk run bundle` will use `quay.io/operator-framework/opm:latest` as the index image for creating a registry pod.
+Due to recent pod security updates, using `quay.io/operator-framework/opm:latest` will not work as expected with the SQLite bundle format.
+
+To resolve this, there are two options:
+1. Upgrade to a version of `operator-sdk` >= `v1.22.0` which will use the new FBC bundle format by default
+2. When using `operator-sdk run bundle` specify the index image with `--index-image=quay.io/operator-framework/opm:v1.23.0`
