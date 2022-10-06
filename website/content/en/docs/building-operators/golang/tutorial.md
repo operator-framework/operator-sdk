@@ -181,6 +181,10 @@ The `NewControllerManagedBy()` provides a controller builder that allows various
 
 `Owns(&appsv1.Deployment{})` specifies the Deployments type as the secondary resource to watch. For each Deployment type Add/Update/Delete event, the event handler will map each event to a reconcile `Request` for the owner of the Deployment. Which in this case is the Memcached object for which the Deployment was created.
 
+The dependent objects, in this case the Deployments, need to have an [Owner References](https://kubernetes.io/docs/concepts/overview/working-with-objects/owners-dependents/#owner-references-in-object-specifications) field that references their owner object. This will be added by using the method `ctrl.SetControllerReference`. [More info][k8s-doc-owner-ref]
+
+Note: The K8s api will manage the resources according to the`ownerRef` which will be properly set by using this method. Therefore, the K8s API will know that these resources created on the controller, such as the Deployment to run the Memcached Operand image, depend on the custom resource for the Memcached Kind which will also allow the K8s API delete all resources that were created when/if the custom resource itself be deleted. [More info][k8s-doc-deleting-cascade]
+
 ### Controller Configurations
 
 There are a number of other useful configurations that can be made when initializing a controller. For more details on these configurations consult the upstream [builder][builder_godocs] and [controller][controller_godocs] godocs.
@@ -492,3 +496,5 @@ Next, check out the following:
 [controller-runtime]: https://github.com/kubernetes-sigs/controller-runtime
 [kb-doc-gkvs]: https://book.kubebuilder.io/cronjob-tutorial/gvks.html
 [rbac_markers]: https://book.kubebuilder.io/reference/markers/rbac.html
+[k8s-doc-owner-ref]: https://kubernetes.io/docs/concepts/overview/working-with-objects/owners-dependents/
+[k8s-doc-deleting-cascade]: https://kubernetes.io/docs/concepts/architecture/garbage-collection/#cascading-deletion
