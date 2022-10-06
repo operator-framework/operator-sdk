@@ -16,7 +16,6 @@ package bundleupgrade
 
 import (
 	"context"
-	"strings"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
@@ -79,19 +78,12 @@ func (u *Upgrade) setup(ctx context.Context) error {
 	u.OperatorInstaller.CatalogSourceName = operator.CatalogNameForPackage(u.OperatorInstaller.PackageName)
 	u.OperatorInstaller.StartingCSV = csv.Name
 	u.OperatorInstaller.SupportedInstallModes = operator.GetSupportedInstallModes(csv.Spec.InstallModes)
-	u.OperatorInstaller.Channel = strings.Split(labels[registrybundle.ChannelsLabel], ",")[0]
 
 	// Since an existing CatalogSource will have an annotation containing the existing index image,
 	// defer defaulting the bundle add mode to after the existing CatalogSource is retrieved.
 	u.IndexImageCatalogCreator.PackageName = u.OperatorInstaller.PackageName
 	u.IndexImageCatalogCreator.BundleImage = u.BundleImage
 	u.IndexImageCatalogCreator.IndexImage = fbcutil.DefaultIndexImage
-
-	if _, hasChannelMetadata := labels[registrybundle.ChannelsLabel]; hasChannelMetadata {
-		u.IndexImageCatalogCreator.ChannelName = strings.Split(labels[registrybundle.ChannelsLabel], ",")[0]
-	} else {
-		u.IndexImageCatalogCreator.ChannelName = fbcutil.DefaultChannel
-	}
 
 	return nil
 }

@@ -176,6 +176,24 @@ var _ = Describe("Basic and OLM tests", func() {
 				Expect(result.State).To(Equal(scapiv1alpha3.PassState))
 			})
 
+			It("should return warning when no spec status are defined for CRD", func() {
+				cr = unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"spec": map[string]interface{}{
+							"spec": "val",
+						},
+					},
+				}
+				cr.SetGroupVersionKind(schema.GroupVersionKind{
+					Kind:  "TestKind",
+					Group: "test.example.com",
+				})
+
+				result = checkOwnedCSVStatusDescriptor(cr, &csv, result)
+				Expect(len(result.Suggestions)).To(Equal(1))
+				Expect(result.State).To(Equal(scapiv1alpha3.PassState))
+			})
+
 			It("should pass when CR Object Descriptor is nil", func() {
 				cr := unstructured.Unstructured{
 					Object: nil,
@@ -424,7 +442,6 @@ var _ = Describe("Basic and OLM tests", func() {
 			result = CheckResources(crd, result)
 			Expect(result.State).To(Equal(scapiv1alpha3.FailState))
 		})
-
 	})
 
 })

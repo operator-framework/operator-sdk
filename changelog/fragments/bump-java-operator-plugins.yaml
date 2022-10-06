@@ -1,0 +1,16 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      Bumping java-operator-plugins to v0.6.0
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "change"
+
+    # Is this a breaking change?
+    breaking: false

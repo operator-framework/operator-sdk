@@ -28,6 +28,9 @@ This guide walks through an example of building a simple memcached-operator usin
   operator-sdk init --domain example.com --repo github.com/example/memcached-operator
   ```
 
+**Note** If your local environment is Apple Silicon (`darwin/arm64`) use the `go/v4-alpha`
+plugin which provides support for this platform by adding to the init subCommand the flag `--plugins=go/v4-alpha`
+
 1. Create a simple Memcached API:
 
   ```sh

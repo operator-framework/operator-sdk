@@ -26,7 +26,8 @@ import (
 const (
 	// The catch-all plugin key for the go/v2+manifests+scorecard plugins.
 	// Should still be accepted for backwards-compat.
-	legacyGoPluginKey = "go.sdk.operatorframework.io/v2-alpha"
+	legacyGoPluginKey      = "go.sdk.operatorframework.io/v2-alpha"
+	legacyGoPluginAlphaKey = "go.sdk.operatorframework.io/v2-alpha"
 
 	// Hard-code the latest manifests and scorecard keys here to avoid a circular import.
 	manifestsKey = "manifests.sdk.operatorframework.io/v2"
@@ -47,11 +48,7 @@ func UpdateIfLegacyKey(c config.Config) bool {
 		return false
 	}
 
-	err := c.DecodePluginConfig(legacyGoPluginKey, struct{}{})
-	if err == nil || !errors.As(err, &config.PluginKeyNotFoundError{}) {
-		// There is no way to remove keys from "plugins", so print a warning.
-		log.Warnf("Plugin key %q is deprecated. Replace this key with %q and %q on separate lines.",
-			legacyGoPluginKey, manifestsKey, scorecardKey)
+	if IsGolangLegacyLayout(c) {
 		return true
 	}
 
@@ -71,6 +68,25 @@ func UpdateIfLegacyKey(c config.Config) bool {
 			}
 			return true
 		}
+	}
+
+	return false
+}
+
+// IsGolangLegacyLayout returns true if c's does not have the plugins
+// configuration.
+func IsGolangLegacyLayout(c config.Config) bool {
+	err := c.DecodePluginConfig(legacyGoPluginKey, struct{}{})
+	if err == nil || !errors.As(err, &config.PluginKeyNotFoundError{}) {
+		// There is no way to remove keys from "plugins", so print a warning.
+		log.Warnf("Plugin key %q is deprecated. Replace this key with %q and %q on separate lines.",
+			legacyGoPluginKey, manifestsKey, scorecardKey)
+		return true
+	}
+
+	err = c.DecodePluginConfig(legacyGoPluginAlphaKey, struct{}{})
+	if err == nil || !errors.As(err, &config.PluginKeyNotFoundError{}) {
+		return true
 	}
 
 	return false

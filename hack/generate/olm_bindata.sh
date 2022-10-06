@@ -38,7 +38,7 @@ function generate_bindata() {
 delete_old_olmbindata
 
 # get go-bindata tool
-go get -u github.com/go-bindata/go-bindata/...
+go install github.com/go-bindata/go-bindata/...@latest
 
 mkdir olm-manifests
 for v in $@; do

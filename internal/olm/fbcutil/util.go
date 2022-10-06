@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/operator-framework/operator-registry/alpha/action"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
@@ -32,9 +33,10 @@ import (
 )
 
 const (
-	SchemaChannel  = "olm.channel"
-	SchemaPackage  = "olm.package"
-	DefaultChannel = "operator-sdk-run-bundle"
+	SchemaChannel   = "olm.channel"
+	SchemaPackage   = "olm.package"
+	DefaultChannel  = "operator-sdk-run-bundle"
+	DefaultCacheDir = "operator-sdk-run-bundle-cache"
 )
 
 const (
@@ -132,15 +134,25 @@ func NullLogger() *log.Entry {
 // RenderRefs will invoke Operator Registry APIs and return a declarative config object representation
 // of the references that are passed in as a string array.
 func RenderRefs(ctx context.Context, refs []string, skipTLSVerify bool, useHTTP bool) (*declarativeconfig.DeclarativeConfig, error) {
-
+	cacheDir := strings.ReplaceAll(strings.Join(refs, "_"), "/", "-")
+	if cacheDir == "" {
+		cacheDir = DefaultCacheDir
+	}
 	reg, err := containerdregistry.NewRegistry(
 		containerdregistry.WithLog(NullLogger()),
 		containerdregistry.SkipTLSVerify(skipTLSVerify),
-		containerdregistry.WithPlainHTTP(useHTTP))
-
+		containerdregistry.WithPlainHTTP(useHTTP),
+		containerdregistry.WithCacheDir(cacheDir))
 	if err != nil {
 		return nil, fmt.Errorf("error creating new image registry: %v", err)
 	}
+
+	defer func() {
+		err = reg.Destroy()
+		if err != nil {
+			log.Warn(fmt.Sprintf("Unable to cleanup registry. You may have to manually cleanup by removing the %q directory", cacheDir))
+		}
+	}()
 
 	render := action.Render{
 		Refs:     refs,
