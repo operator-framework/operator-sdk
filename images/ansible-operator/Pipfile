@@ -8,7 +8,7 @@ ansible-runner = "~=2.0.2"
 ansible-runner-http = "~=1.0.0"
 ipaddress = "==1.0.23"
 openshift = "~=0.13.0"
-ansible = "~=2.9.15"
+ansible = "~=4.2.0"
 jmespath = "==0.10.0"
 # cryptography needs to be pinned to 3.3.2 as this is the last version
 # before its setup requires rust, which is not available via RPM in the
