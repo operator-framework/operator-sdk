@@ -14,6 +14,7 @@ jmespath = "==0.10.0"
 # before its setup requires rust, which is not available via RPM in the
 # base image. This pin should be re-evaluated once the base image is updated.
 cryptography = "==3.3.2"
+oauthlib = "==3.2.1"
 
 [dev-packages]
 
