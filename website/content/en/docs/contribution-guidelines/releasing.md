@@ -77,6 +77,10 @@ correctly prior to the release commit.
   ```sh
   sed -i -E 's/(IMAGE_VERSION = ).+/\1v1\.3\.0/g' Makefile
   ```
+  For MAC users command will be little different.
+  ```sh
+  gsed -i -E 's/(IMAGE_VERSION = ).+/\1v1\.3\.0/g' Makefile
+  ```
 1. Lock down the `master` branch to prevent further commits before the release completes:
   1. Go to `Settings -> Branches` in the SDK repo.
   1. Under `Branch protection rules`, click `Edit` on the `master` branch rule.
