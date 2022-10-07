@@ -138,8 +138,7 @@ func (c *IndexImageCatalogCreator) BindFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.UseHTTP, "use-http", false, "use plain HTTP for container image registries "+
 		"while pulling bundles")
 
-	// fs.Var(&c.RestrictedMode, "security-context-config", true, "enables restricted mode TODO FILL ME IN")
-	fs.Var(&c.SecurityContext, "security-context-config", "specifies the security context to use for the catalog pod")
+	fs.Var(&c.SecurityContext, "security-context-config", "specifies the security context to use for the catalog pod. allowed: 'restricted', 'legacy'.")
 }
 
 func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string) (*v1alpha1.CatalogSource, error) {
