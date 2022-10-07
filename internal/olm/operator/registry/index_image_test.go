@@ -63,10 +63,10 @@ var _ = Describe("IndexImage", func() {
 				Expect(sc.IsEmpty()).To(BeTrue())
 			})
 			It("should return false if set a value", func() {
-				sc.Set("legacy")
+				_ = sc.Set("legacy")
 				Expect(sc.IsEmpty()).To(BeFalse())
 
-				sc.Set("restricted")
+				_ = sc.Set("restricted")
 				Expect(sc.IsEmpty()).To(BeFalse())
 			})
 		})
