@@ -3,7 +3,7 @@
 entries:
   - description: >
       For operator-sdk run bundle and bundle-upgrade subcommands: Added --security-context-config
-      flag to enable seccompprofile. It defaults to enabled to support k8s 1.25. You can disable it
+      flag to enable seccompprofile. It defaults to restricted to support k8s 1.25. You can disable it
       with --security-context-config=legacy
 
     # kind is one of:
