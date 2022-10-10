@@ -6,6 +6,8 @@
 
 ## Documentation
 
+BWAHAHAHAHA
+
 Docs can be found on the [Operator SDK website][sdk-docs].
 
 ## Overview
