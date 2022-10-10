@@ -15,9 +15,9 @@
 package olm
 
 var availableVersions = map[string]struct{}{
-	"0.19.1": {},
 	"0.20.0": {},
 	"0.21.2": {},
+	"0.22.0": {},
 }
 
 // HasVersion returns whether version maps to released OLM manifests as bindata.

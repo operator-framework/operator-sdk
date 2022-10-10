@@ -100,6 +100,10 @@ url_latest_version = "https://sdk.operatorframework.io"
 ##RELEASE_ADDME##
 
 [[params.versions]]
+  version = "v1.24"
+  url = "https://v1-24-x.sdk.operatorframework.io"
+
+[[params.versions]]
   version = "v1.23"
   url = "https://v1-23-x.sdk.operatorframework.io"
 
