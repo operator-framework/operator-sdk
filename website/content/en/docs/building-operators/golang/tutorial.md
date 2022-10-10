@@ -199,7 +199,7 @@ The `NewControllerManagedBy()` provides a controller builder that allows various
 
 The dependent objects, in this case the Deployments, need to have an [Owner References](https://kubernetes.io/docs/concepts/overview/working-with-objects/owners-dependents/#owner-references-in-object-specifications) field that references their owner object. This will be added by using the method `ctrl.SetControllerReference`. [More info][k8s-doc-owner-ref]
 
-Note: The K8s api will manage the resources according to the`ownerRef` which will be properly set by using this method. Therefore, the K8s API will know that these resources created on the controller, such as the Deployment to run the Memcached Operand image, depend on the custom resource for the Memcached Kind which will also allow the K8s API delete all resources that were created when/if the custom resource itself be deleted. [More info][k8s-doc-deleting-cascade]
+Note: The K8s api will manage the resources according to the`ownerRef` which will be properly set by using this method. Therefore, the K8s API will know that these resources, such as the Deployment to run the Memcached Operand image, depend on the custom resource for the Memcached Kind.  This allows the K8s API to delete all dependent resources when/if the custom resource is deleted. [More info][k8s-doc-deleting-cascade]
 
 ### Controller Configurations
 
