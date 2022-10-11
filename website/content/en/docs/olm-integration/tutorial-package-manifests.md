@@ -6,7 +6,7 @@ weight: 2
 <!-- TODO(2.0.0): remove this document -->
 
 **Note**
-As operator framework has moved to using bundle format by default, the package manifest commands have been deprecated and will be removed soon. It is suggested that you follow the bundle quickstart][quickstart-bundle] to package your operator. 
+As operator framework has moved to using bundle format by default, the package manifest commands have been deprecated and will be removed soon. It is suggested that you follow the [bundle quickstart][quickstart-bundle] to package your operator. 
 
 This guide assumes you have followed the introduction and *Setup* section of the [bundle quickstart][quickstart-bundle],
 and have added the `packagemanifests` target to your `Makefile` as described [here][doc-packagemanifests-makefile].
