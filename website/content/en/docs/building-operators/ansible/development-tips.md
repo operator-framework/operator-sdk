@@ -511,7 +511,7 @@ operator. The `ansible_operator_meta` fields can be accessed via dot notation in
 [k8s_ansible_module]:https://docs.ansible.com/ansible/2.6/modules/k8s_module.html
 [openshift_restclient_python]:https://github.com/openshift/openshift-restclient-python
 [tutorial]:../tutorial
-[kubernetes_collection]: https://galaxy.ansible.com/community/kubernetes
+[kubernetes_collection]: https://galaxy.ansible.com/kubernetes/core
 [manage_status_proposal]:../../proposals/ansible-operator-status.md
 [openshift-restclient-python]: https://github.com/openshift/openshift-restclient-python
 [operator_sdk_util]: https://galaxy.ansible.com/operator_sdk/util
