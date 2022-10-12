@@ -140,7 +140,7 @@ func (c *IndexImageCatalogCreator) BindFlags(fs *pflag.FlagSet) {
 
 	// default to Restricted
 	c.SecurityContext = SecurityContext{ContextType: Restricted}
-	fs.Var(&c.SecurityContext, "security-context-config", "specifies the security context to use for the catalog pod. allowed: 'restricted', 'legacy', default: 'restricted'.")
+	fs.Var(&c.SecurityContext, "security-context-config", "specifies the security context to use for the catalog pod. allowed: 'restricted', 'legacy'.")
 }
 
 func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string) (*v1alpha1.CatalogSource, error) {
