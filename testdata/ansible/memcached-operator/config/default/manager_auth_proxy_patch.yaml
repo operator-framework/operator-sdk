@@ -50,4 +50,7 @@ spec:
             memory: 64Mi
       - name: manager
         args:
+        - "--health-probe-bind-address=:6789"
+        - "--metrics-bind-address=127.0.0.1:8080"
+        - "--leader-elect"
         - "--leader-election-id=memcached-operator"

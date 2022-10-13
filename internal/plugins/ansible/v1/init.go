@@ -154,25 +154,39 @@ func (p *initSubcommand) PostScaffold() error {
 // addInitCustomizations will perform the required customizations for this plugin on the common base
 func addInitCustomizations(projectName string, componentConfig bool) error {
 	managerFile := filepath.Join("config", "manager", "manager.yaml")
+	managerProxyPatchFile := filepath.Join("config", "default", "manager_auth_proxy_patch.yaml")
 
 	// todo: we ought to use afero instead. Replace this methods to insert/update
 	// by https://github.com/kubernetes-sigs/kubebuilder/pull/2119
 
 	// Add leader election
-	err := util.InsertCode(managerFile,
-		"- /manager",
-		fmt.Sprintf("\n        args:\n        - --leader-election-id=%s", projectName))
-	if err != nil {
-		return err
-	}
+	if componentConfig {
+		err := util.InsertCode(managerFile,
+			"- /manager",
+			fmt.Sprintf("\n        args:\n        - --leader-election-id=%s", projectName))
+		if err != nil {
+			return err
+		}
 
-	managerProxyPatchFile := filepath.Join("config", "default", "manager_auth_proxy_patch.yaml")
-
-	err = util.InsertCode(managerProxyPatchFile,
-		"memory: 64Mi",
-		fmt.Sprintf("\n      - name: manager\n        args:\n        - \"--leader-election-id=%s\"", projectName))
-	if err != nil {
-		return err
+		err = util.InsertCode(managerProxyPatchFile,
+			"memory: 64Mi",
+			fmt.Sprintf("\n      - name: manager\n        args:\n        - \"--leader-election-id=%s\"", projectName))
+		if err != nil {
+			return err
+		}
+	} else {
+		err := util.InsertCode(managerFile,
+			"--leader-elect",
+			fmt.Sprintf("\n        - --leader-election-id=%s", projectName))
+		if err != nil {
+			return err
+		}
+		err = util.InsertCode(managerProxyPatchFile,
+			"- \"--leader-elect\"",
+			fmt.Sprintf("\n        - \"--leader-election-id=%s\"", projectName))
+		if err != nil {
+			return err
+		}
 	}
 
 	// update default resource request and limits with bigger values
@@ -194,7 +208,7 @@ func addInitCustomizations(projectName string, componentConfig bool) error {
             memory: 256Mi
       `
 
-	err = util.ReplaceInFile(managerFile, resourcesLimitsFragment, resourcesLimitsAnsibleFragment)
+	err := util.ReplaceInFile(managerFile, resourcesLimitsFragment, resourcesLimitsAnsibleFragment)
 	if err != nil {
 		return err
 	}
@@ -224,15 +238,17 @@ func addInitCustomizations(projectName string, componentConfig bool) error {
 		}
 	}
 
-	managerConfigFile := filepath.Join("config", "manager", "controller_manager_config.yaml")
-	err = util.ReplaceInFile(managerConfigFile, "8081", "6789")
-	if err != nil {
-		return err
-	}
-	// Remove the webhook option for the componentConfig since webhooks are not supported by ansible
-	err = util.ReplaceInFile(managerConfigFile, "webhook:\n  port: 9443", "")
-	if err != nil {
-		return err
+	if componentConfig {
+		managerConfigFile := filepath.Join("config", "manager", "controller_manager_config.yaml")
+		err = util.ReplaceInFile(managerConfigFile, "8081", "6789")
+		if err != nil {
+			return err
+		}
+		// Remove the webhook option for the componentConfig since webhooks are not supported by ansible
+		err = util.ReplaceInFile(managerConfigFile, "webhook:\n  port: 9443", "")
+		if err != nil {
+			return err
+		}
 	}
 
 	// Remove the call to the command as manager. Helm/Ansible has not been exposing this entrypoint

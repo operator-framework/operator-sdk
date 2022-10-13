@@ -1,4 +1,3 @@
-componentConfig: true
 domain: example.com
 layout:
 - ansible.sdk.operatorframework.io/v1

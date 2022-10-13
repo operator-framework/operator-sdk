@@ -62,6 +62,7 @@ spec:
           type: RuntimeDefault
       containers:
       - args:
+        - --leader-elect
         - --leader-election-id=memcached-operator
         image: controller:latest
         name: manager
