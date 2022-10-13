@@ -28,18 +28,19 @@ operator-sdk run bundle <bundle-image> [flags]
 ### Options
 
 ```
-      --ca-secret-name string           Name of a generic secret containing a PEM root certificate file required to pull bundle images. This secret *must* be in the namespace that this command is configured to run in, and the file *must* be encoded under the key "cert.pem"
-  -h, --help                            help for bundle
-      --index-image string              index image in which to inject bundle (default "quay.io/operator-framework/opm:latest")
-      --install-mode InstallModeValue   install mode
-      --kubeconfig string               Path to the kubeconfig file to use for CLI requests.
-  -n, --namespace string                If present, namespace scope for this CLI request
-      --pull-secret-name string         Name of image pull secret ("type: kubernetes.io/dockerconfigjson") required to pull bundle images. This secret *must* be both in the namespace and an imagePullSecret of the service account that this command is configured to run in
-      --service-account string          Service account name to bind registry objects to. If unset, the default service account is used. This value does not override the operator's service account
-      --skip-tls                        skip authentication of image registry TLS certificate when pulling a bundle image in-cluster
-      --skip-tls-verify                 skip TLS certificate verification for container image registries while pulling bundles
-      --timeout duration                Duration to wait for the command to complete before failing (default 2m0s)
-      --use-http                        use plain HTTP for container image registries while pulling bundles
+      --ca-secret-name string                     Name of a generic secret containing a PEM root certificate file required to pull bundle images. This secret *must* be in the namespace that this command is configured to run in, and the file *must* be encoded under the key "cert.pem"
+  -h, --help                                      help for bundle
+      --index-image string                        index image in which to inject bundle (default "quay.io/operator-framework/opm:latest")
+      --install-mode InstallModeValue             install mode
+      --kubeconfig string                         Path to the kubeconfig file to use for CLI requests.
+  -n, --namespace string                          If present, namespace scope for this CLI request
+      --pull-secret-name string                   Name of image pull secret ("type: kubernetes.io/dockerconfigjson") required to pull bundle images. This secret *must* be both in the namespace and an imagePullSecret of the service account that this command is configured to run in
+      --security-context-config SecurityContext   specifies the security context to use for the catalog pod. allowed: 'restricted', 'legacy'. (default restricted)
+      --service-account string                    Service account name to bind registry objects to. If unset, the default service account is used. This value does not override the operator's service account
+      --skip-tls                                  skip authentication of image registry TLS certificate when pulling a bundle image in-cluster
+      --skip-tls-verify                           skip TLS certificate verification for container image registries while pulling bundles
+      --timeout duration                          Duration to wait for the command to complete before failing (default 2m0s)
+      --use-http                                  use plain HTTP for container image registries while pulling bundles
 ```
 
 ### Options inherited from parent commands
