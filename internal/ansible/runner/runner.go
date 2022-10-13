@@ -319,20 +319,21 @@ func (r *runner) isFinalizerRun(u *unstructured.Unstructured) bool {
 
 // makeParameters - creates the extravars parameters for ansible
 // The resulting structure in json is:
-// { "ansible_operator_meta": {
-//      "name": <object_name>,
-//      "namespace": <object_namespace>,
-//   },
-//   <cr_spec_fields_as_snake_case>,
-//   <watch vars>,
-//   <finalizer vars>,
-//   _<group_as_snake>_<kind>: {
-//       <cr_object> as is
-//   }
-//   _<group_as_snake>_<kind>_spec: {
-//       <cr_object.spec> as is
-//   }
-// }
+//
+//	{ "ansible_operator_meta": {
+//	     "name": <object_name>,
+//	     "namespace": <object_namespace>,
+//	  },
+//	  <cr_spec_fields_as_snake_case>,
+//	  <watch vars>,
+//	  <finalizer vars>,
+//	  _<group_as_snake>_<kind>: {
+//	      <cr_object> as is
+//	  }
+//	  _<group_as_snake>_<kind>_spec: {
+//	      <cr_object.spec> as is
+//	  }
+//	}
 func (r *runner) makeParameters(u *unstructured.Unstructured) map[string]interface{} {
 	s := u.Object["spec"]
 	spec, ok := s.(map[string]interface{})
@@ -379,11 +380,14 @@ func (r *runner) makeParameters(u *unstructured.Unstructured) map[string]interfa
 
 // markUnsafe recursively checks for string values and marks them unsafe.
 // for eg:
-//		spec:
-//			key: "val"
+//
+//	spec:
+//		key: "val"
+//
 // would be marked unsafe in JSON format as:
-//		spec:
-//			key: map{__ansible_unsafe:"val"}
+//
+//	spec:
+//		key: map{__ansible_unsafe:"val"}
 func markUnsafe(values interface{}) interface{} {
 	switch v := values.(type) {
 	case []interface{}:

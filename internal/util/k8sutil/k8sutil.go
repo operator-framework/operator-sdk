@@ -118,10 +118,11 @@ func TrimDNS1123Label(label string) string {
 // The namespace of the dependent resource can either be passed in explicitly, otherwise it will be
 // extracted from the dependent runtime.Object.
 // This function performs following checks:
-//  -- True: Owner is cluster-scoped.
-//  -- True: Both Owner and dependent are Namespaced with in same namespace.
-//  -- False: Owner is Namespaced and dependent is Cluster-scoped.
-//  -- False: Both Owner and dependent are Namespaced with different namespaces.
+//
+//	-- True: Owner is cluster-scoped.
+//	-- True: Both Owner and dependent are Namespaced with in same namespace.
+//	-- False: Owner is Namespaced and dependent is Cluster-scoped.
+//	-- False: Both Owner and dependent are Namespaced with different namespaces.
 func SupportsOwnerReference(restMapper meta.RESTMapper, owner, dependent runtime.Object, depNamespace string) (bool, error) {
 	ownerGVK := owner.GetObjectKind().GroupVersionKind()
 	ownerMapping, err := restMapper.RESTMapping(ownerGVK.GroupKind(), ownerGVK.Version)
