@@ -72,6 +72,10 @@ type FBCRegistryPod struct { //nolint:maligned
 	// This directory has the File-Based Catalog representation of a catalog index.
 	FBCIndexRootDir string
 
+	// SecurityContext defines the security context which will enable the
+	// SecurityContext on the Pod
+	SecurityContext string
+
 	cfg *operator.Configuration
 }
 
@@ -113,6 +117,15 @@ func (f *FBCRegistryPod) Create(ctx context.Context, cfg *operator.Configuration
 	// make catalog source the owner of registry pod object
 	if err := controllerutil.SetOwnerReference(cs, f.pod, f.cfg.Scheme); err != nil {
 		return nil, fmt.Errorf("error setting owner reference: %w", err)
+	}
+
+	// Add security context if the user passed in the --security-context-config flag
+	if f.SecurityContext == "restricted" {
+		f.pod.Spec.SecurityContext = &corev1.PodSecurityContext{
+			SeccompProfile: &corev1.SeccompProfile{
+				Type: corev1.SeccompProfileTypeRuntimeDefault,
+			},
+		}
 	}
 
 	if err := f.cfg.Client.Create(ctx, f.pod); err != nil {
@@ -230,11 +243,19 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 			// TODO: remove when OpenShift 4.10 and Kubernetes 1.19 be no longer supported
 			// Why not set SeccompProfile?
 			// This option can only work in OCP versions >= 4.11 and Kubernetes versions >= 19.
-			//SecurityContext: &corev1.PodSecurityContext{
-			//	SeccompProfile: &corev1.SeccompProfile{
-			//		Type: corev1.SeccompProfileTypeRuntimeDefault,
-			//	},
-			//},
+			//
+			// 2022-09-27 (jesusr): We added a --security-context-config flag to run bundle
+			// that will add the following stanza to the pod. This will allow
+			// users to selectively enable this stanza. Once this context
+			// becomes the default, we should uncomment this code and remove the
+			// --security-context-config flag.
+			// ---- end of update comment
+			//
+			// SecurityContext: &corev1.PodSecurityContext{
+			//     SeccompProfile: &corev1.SeccompProfile{
+			//         Type: corev1.SeccompProfileTypeRuntimeDefault,
+			//     },
+			// },
 			Volumes: []corev1.Volume{
 				{
 					Name: k8sutil.TrimDNS1123Label(cm.Name + "-volume"),

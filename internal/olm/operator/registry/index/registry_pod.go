@@ -84,6 +84,10 @@ type SQLiteRegistryPod struct { //nolint:maligned
 	// UseHTTP uses plain HTTP for container image registries while pulling bundles.
 	UseHTTP bool `json:"UseHTTP"`
 
+	// SecurityContext defines the security context which will enable the
+	// SecurityContext on the Pod
+	SecurityContext string
+
 	// pod represents a kubernetes *corev1.pod that will be created on a cluster using an index image
 	pod *corev1.Pod
 
@@ -126,6 +130,15 @@ func (rp *SQLiteRegistryPod) Create(ctx context.Context, cfg *operator.Configura
 	// make catalog source the owner of registry pod object
 	if err := controllerutil.SetOwnerReference(cs, rp.pod, rp.cfg.Scheme); err != nil {
 		return nil, fmt.Errorf("error setting owner reference: %w", err)
+	}
+
+	// Add security context if the user passed in the --security-context-config flag
+	if rp.SecurityContext == "restricted" {
+		rp.pod.Spec.SecurityContext = &corev1.PodSecurityContext{
+			SeccompProfile: &corev1.SeccompProfile{
+				Type: corev1.SeccompProfileTypeRuntimeDefault,
+			},
+		}
 	}
 
 	if err := rp.cfg.Client.Create(ctx, rp.pod); err != nil {
@@ -239,11 +252,19 @@ func (rp *SQLiteRegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 			// TODO: remove when OpenShift 4.10 and Kubernetes 1.19 be no longer supported
 			// Why not set SeccompProfile?
 			// This option can only work in OCP versions >= 4.11 and Kubernetes versions >= 19.
-			//SecurityContext: &corev1.PodSecurityContext{
-			//	SeccompProfile: &corev1.SeccompProfile{
-			//		Type: corev1.SeccompProfileTypeRuntimeDefault,
-			//	},
-			//},
+			//
+			// 2022-09-27 (jesusr): We added a --security-context-config flag to run bundle
+			// that will add the following stanza to the pod. This will allow
+			// users to selectively enable this stanza. Once this context
+			// becomes the default, we should uncomment this code and remove the
+			// --security-context-config flag.
+			// ---- end of update comment
+			//
+			// SecurityContext: &corev1.PodSecurityContext{
+			//     SeccompProfile: &corev1.SeccompProfile{
+			//         Type: corev1.SeccompProfileTypeRuntimeDefault,
+			//     },
+			// },
 			Containers: []corev1.Container{
 				{
 					Name:  defaultContainerName,
