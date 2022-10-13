@@ -48,4 +48,6 @@ spec:
           requests:
             cpu: 5m
             memory: 64Mi
+      - name: manager
+        args:
         - "--leader-election-id=memcached-operator"

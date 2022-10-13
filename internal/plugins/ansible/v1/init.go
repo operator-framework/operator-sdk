@@ -170,7 +170,7 @@ func addInitCustomizations(projectName string, componentConfig bool) error {
 
 	err = util.InsertCode(managerProxyPatchFile,
 		"memory: 64Mi",
-		fmt.Sprintf("\n        - \"--leader-election-id=%s\"", projectName))
+		fmt.Sprintf("\n      - name: manager\n        args:\n        - \"--leader-election-id=%s\"", projectName))
 	if err != nil {
 		return err
 	}

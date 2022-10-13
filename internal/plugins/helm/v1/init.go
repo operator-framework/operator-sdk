@@ -194,7 +194,7 @@ func addInitCustomizations(projectName string, componentConfig bool) error {
 
 	err = util.InsertCode(filepath.Join("config", "default", "manager_auth_proxy_patch.yaml"),
 		"memory: 64Mi",
-		fmt.Sprintf("\n        - \"--leader-election-id=%s\"", projectName))
+		fmt.Sprintf("\n      - name: manager\n        args:\n        - \"--leader-election-id=%s\"", projectName))
 	if err != nil {
 		return err
 	}
