@@ -188,7 +188,7 @@ func (ma *AdvancedMolecule) updateConfig() {
         - "--ansible-args='--vault-password-file /opt/ansible/pwd.yml'"`
 	err = kbutil.InsertCode(
 		filepath.Join(ma.ctx.Dir, "config", "default", "manager_auth_proxy_patch.yaml"),
-		"- --leader-election-id=advanced-molecule-operator",
+		"- \"--leader-election-id=advanced-molecule-operator\"",
 		managerAuthArgs)
 	pkg.CheckError("adding vaulting args to the proxy auth", err)
 
