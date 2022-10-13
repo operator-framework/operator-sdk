@@ -72,8 +72,7 @@ func (ma *Memcached) Run() {
 		"--kind", ma.ctx.Kind,
 		"--domain", ma.ctx.Domain,
 		"--generate-role",
-		"--generate-playbook")//,
-		//config"--component-config=true")
+		"--generate-playbook")
 	pkg.CheckError("creating the project", err)
 
 	log.Infof("customizing the sample")

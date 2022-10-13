@@ -185,25 +185,39 @@ func addInitCustomizations(projectName string, componentConfig bool) error {
 	// by https://github.com/kubernetes-sigs/kubebuilder/pull/2119
 
 	// Add leader election arg in config/manager/manager.yaml and in config/default/manager_auth_proxy_patch.yaml
-	err := util.InsertCode(managerFile,
-		"- /manager",
-		fmt.Sprintf("\n        args:\n        - --leader-election-id=%s", projectName))
-	if err != nil {
-		return err
-	}
+	if componentConfig {
+		err := util.InsertCode(managerFile,
+			"- /manager",
+			fmt.Sprintf("\n        args:\n        - --leader-election-id=%s", projectName))
+		if err != nil {
+			return err
+		}
 
-	err = util.InsertCode(filepath.Join("config", "default", "manager_auth_proxy_patch.yaml"),
-		"memory: 64Mi",
-		fmt.Sprintf("\n      - name: manager\n        args:\n        - \"--leader-election-id=%s\"", projectName))
-	if err != nil {
-		return err
-	}
-
-	// Remove the webhook option for the componentConfig since webhooks are not supported by helm
-	err = util.ReplaceInFile(filepath.Join("config", "manager", "controller_manager_config.yaml"),
-		"webhook:\n  port: 9443", "")
-	if err != nil {
-		return err
+		err = util.InsertCode(filepath.Join("config", "default", "manager_auth_proxy_patch.yaml"),
+			"memory: 64Mi",
+			fmt.Sprintf("\n      - name: manager\n        args:\n        - \"--leader-election-id=%s\"", projectName))
+		if err != nil {
+			return err
+		}
+		// Remove the webhook option for the componentConfig since webhooks are not supported by helm
+		err = util.ReplaceInFile(filepath.Join("config", "manager", "controller_manager_config.yaml"),
+			"webhook:\n  port: 9443", "")
+		if err != nil {
+			return err
+		}
+	} else {
+		err := util.InsertCode(managerFile,
+			"--leader-elect",
+			fmt.Sprintf("\n        - --leader-election-id=%s", projectName))
+		if err != nil {
+			return err
+		}
+		err = util.InsertCode(filepath.Join("config", "default", "manager_auth_proxy_patch.yaml"),
+			"- \"--leader-elect\"",
+			fmt.Sprintf("\n        - \"--leader-election-id=%s\"", projectName))
+		if err != nil {
+			return err
+		}
 	}
 
 	// Remove the call to the command as manager. Helm has not been exposing this entrypoint
@@ -211,7 +225,7 @@ func addInitCustomizations(projectName string, componentConfig bool) error {
 	const command = `command:
         - /manager
         `
-	err = util.ReplaceInFile(managerFile, command, "")
+	err := util.ReplaceInFile(managerFile, command, "")
 	if err != nil {
 		return err
 	}
