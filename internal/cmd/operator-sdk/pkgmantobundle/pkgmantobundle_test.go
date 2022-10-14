@@ -16,7 +16,6 @@ package pkgmantobundle
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -26,7 +25,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
@@ -77,7 +76,7 @@ var _ = Describe("Running pkgmanToBundle command", func() {
 			Expect(getNumberOfDirectories(p.outputDir)).To(BeEquivalentTo(2))
 
 			By("Verifying that each of them are valid bundles and their package name")
-			bundles, err := ioutil.ReadDir(p.outputDir)
+			bundles, err := os.ReadDir(p.outputDir)
 			Expect(err).NotTo(HaveOccurred())
 
 			for _, bundle := range bundles {
@@ -238,7 +237,7 @@ var _ = Describe("Running pkgmanToBundle command", func() {
 func getNumberOfDirectories(inputDir string) int {
 	count := 0
 
-	dirs, err := ioutil.ReadDir(inputDir)
+	dirs, err := os.ReadDir(inputDir)
 	Expect(err).NotTo(HaveOccurred())
 
 	for _, d := range dirs {

@@ -18,7 +18,7 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
-	"io/ioutil"
+	"os"
 	"path"
 	"regexp"
 	"strings"
@@ -160,7 +160,7 @@ func convertConfig3AlphaTo3(cfgBytes []byte) (_ []byte, err error) {
 
 // Make this a var so it can be mocked in tests.
 var getModulePath = func() (string, error) {
-	b, err := ioutil.ReadFile("go.mod")
+	b, err := os.ReadFile("go.mod")
 	return modfile.ModulePath(b), err
 }
 

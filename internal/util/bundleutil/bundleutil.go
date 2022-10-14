@@ -17,7 +17,6 @@ package bundleutil
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -156,7 +155,7 @@ func copyOperatorManifests(src, dest string) error {
 		return err
 	}
 
-	srcFiles, err := ioutil.ReadDir(src)
+	srcFiles, err := os.ReadDir(src)
 	if err != nil {
 		return err
 	}
@@ -262,12 +261,12 @@ func (meta *BundleMetaData) WriteScorecardConfig(inputConfigPath string) error {
 	}
 
 	log.Info(fmt.Sprintf("Writing scorecard config in %s", scorecardDir))
-	b, err := ioutil.ReadFile(inputConfigPath)
+	b, err := os.ReadFile(inputConfigPath)
 	if err != nil {
 		return err
 	}
 
-	err = ioutil.WriteFile(filepath.Join(scorecardDir, "config.yaml"), b, 0644)
+	err = os.WriteFile(filepath.Join(scorecardDir, "config.yaml"), b, 0644)
 	if err != nil {
 		return fmt.Errorf("error writing scorecard config %v", err)
 	}

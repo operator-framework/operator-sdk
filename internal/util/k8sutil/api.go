@@ -17,7 +17,7 @@ package k8sutil
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/operator-framework/operator-registry/pkg/registry"
@@ -38,7 +38,7 @@ func GetCustomResourceDefinitions(crdsDir string) (
 	v1beta1crds []apiextv1beta1.CustomResourceDefinition,
 	err error) {
 
-	infos, err := ioutil.ReadDir(crdsDir)
+	infos, err := os.ReadDir(crdsDir)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -53,7 +53,7 @@ func GetCustomResourceDefinitions(crdsDir string) (
 			continue
 		}
 
-		b, err := ioutil.ReadFile(path)
+		b, err := os.ReadFile(path)
 		if err != nil {
 			return nil, nil, fmt.Errorf("error reading manifest %s: %w", path, err)
 		}

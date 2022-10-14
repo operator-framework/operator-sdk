@@ -19,7 +19,7 @@ import (
 	"os/exec"
 	"testing"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/operator-framework/operator-sdk/internal/testutils"
@@ -86,14 +86,14 @@ var _ = BeforeSuite(func() {
 	Expect(tc.GenerateBundle()).To(Succeed())
 
 	By("installing cert manager bundle")
-	Expect(tc.InstallCertManager(false)).To(Succeed())
+	Expect(tc.InstallCertManager()).To(Succeed())
 })
 
 // AfterSuite run after all the specs have run, regardless of whether any tests have failed to ensures that
 // all be cleaned up
 var _ = AfterSuite(func() {
 	By("uninstall cert manager bundle")
-	tc.UninstallCertManager(false)
+	tc.UninstallCertManager()
 
 	By("uninstalling prerequisites")
 	tc.UninstallPrerequisites()
