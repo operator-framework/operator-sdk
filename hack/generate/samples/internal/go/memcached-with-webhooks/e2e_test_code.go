@@ -15,11 +15,11 @@ import (
 func (mh *Memcached) implementingE2ETests() {
 	log.Infof("implementing example e2e tests")
 
-	// testdDir is testdata/go/v3/memcached-operator/test
+	// testDir is testdata/go/v3/memcached-operator/test
 	testDir := filepath.Join(mh.ctx.Dir, "test")
 	// testE2eDir is testdata/go/v3/memcached-operator/test/e2e
 	testE2eDir := filepath.Join(testDir, "e2e")
-	// testE2eDir is testdata/go/v3/memcached-operator/test/utils
+	// testUtilsDir is testdata/go/v3/memcached-operator/test/utils
 	testUtilsDir := filepath.Join(testDir, "utils")
 
 	// Following we will create the directories
@@ -30,10 +30,10 @@ func (mh *Memcached) implementingE2ETests() {
 	mh.addContent(testE2eDir, testUtilsDir)
 
 	// Add a target to run the tests into the Makefile
-	mh.addTestE2eMaekefileTarget()
+	mh.addTestE2eMakefileTarget()
 }
 
-func (mh *Memcached) addTestE2eMaekefileTarget() {
+func (mh *Memcached) addTestE2eMakefileTarget() {
 	err := kbutil.ReplaceInFile(filepath.Join(mh.ctx.Dir, "Makefile"),
 		`KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out`,
 		`KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)"  go test $(go list ./... | grep -v /test/) -coverprofile cover.out`,
@@ -177,17 +177,17 @@ var _ = Describe("memcached", func() {
 			Expect(utils.InstallCertManager()).To(Succeed())
 
 			// The namespace can be created when we run make install
-			// However, in this test we want ensure that the solution 
+			// However, in this test we want to ensure that the solution 
 			// can run in a ns labeled as restricted. Therefore, we are
-            // creating the namespace an lebeling it. 
+            // creating the namespace and labeling it. 
 			By("creating manager namespace")
 			cmd := exec.Command("kubectl", "create", "ns", namespace)
 			_, _ = utils.Run(cmd)
 
-			// Now, let's ensure that all namespaces can raise an Warn when we apply the manifests
+			// Now, let's ensure that all namespaces can raise a Warn when we apply the manifests
             // and that the namespace where the Operator and Operand will run are enforced as 
             // restricted so that we can ensure that both can be admitted and run with the enforcement
-			By("labeling all namespaces to warn when we apply the manifest if would violate the PodStandards")
+			By("labeling all namespaces to warn when we apply the manifest if it would violate the PodStandards")
 			cmd = exec.Command("kubectl", "label", "--overwrite", "ns", "--all",
 				"pod-security.kubernetes.io/audit=restricted",
 				"pod-security.kubernetes.io/enforce-version=v1.24",
@@ -377,7 +377,7 @@ func Run(cmd *exec.Cmd) ([]byte, error) {
 	fmt.Fprintf(GinkgoWriter, "running dir: %s\n", cmd.Dir)
 
 	// To allow make commands be executed from the project directory which is subdir on SDK repo
-	// TODO:(user) You might does not need the following code
+	// TODO:(user) You might not need the following code
 	if err := os.Chdir(cmd.Dir); err != nil {
 		fmt.Fprintf(GinkgoWriter, "chdir dir: %s\n", err)
 	}
