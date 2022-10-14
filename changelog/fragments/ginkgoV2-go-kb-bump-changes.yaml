@@ -2,21 +2,32 @@
 # release notes and/or the migration guide
 entries:
   - description: >
-      Modified go version to 1.19 in all the places and Kubebuilder to k8s 1.25
-      The `config-gen` is completely removed from Kubebuilder. As part of this bump, the website content of SDK was updated where the doc is referring to `config-gen`. 
+      Modified go version to 1.19 and Kubebuilder to 3.7.1. The `config-gen` is 
+      completely removed from Kubebuilder. As part of this bump, the 
+      website content of SDK was updated where the doc is referring to 
+      `config-gen`. 
     kind: "change"
     breaking: false
     migration:
       header: Kubebuilder bump brought changes that modified the `Makefile` scaffolding and also `multiarch` chanegs are also included.
       body: | 
-        1. Updated the addTestE2eMaekefileTarget() target where Makefile content is used as below.
+        1. Makefile content is updated as shown below.
 
             ```sh
                 `KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile cover.out`,
             ```
-        2. Kubebuiler bump also added multiple architecture support changes to the Makefile whenre docker buildx is used.  This change will support more than one platform.
-
+        
+        2. Add support for building binary in multiple platforms.
+        
+            Add the below content to the Makefile.
+        
             ```sh
+            # PLATFORMS defines the target platforms for  the manager image be build to provide support to multiple
+            # architectures. (i.e. make docker-buildx IMG=myregistry/mypoperator:0.0.1). To use this option you need to:
+            # - able to use docker buildx . More info: https://docs.docker.com/build/buildx/
+            # - have enable BuildKit, More info: https://docs.docker.com/develop/develop-images/build_enhancements/
+            # - be able to push the image for your registry (i.e. if you do not inform a valid value via IMG=<myregistry/image:<tag>> than the export will fail)
+            # To properly provided solutions that supports more than one platform you should use this option.
             PLATFORMS ?= linux/arm64,linux/amd64,linux/s390x,linux/ppc64le
             .PHONY: docker-buildx
             docker-buildx: test ## Build and push docker image for the manager for cross-platform support
@@ -28,7 +39,7 @@ entries:
               - docker buildx rm project-v3-builder
               rm Dockerfile.cross
             ```
-        3. Updated testdata `go.mod` file with the k8s 1.25 depedencies. In the go.mod file, ensure the following depedencies versions and run `go mod tidy`:
+        3. (go/v3) Bump dependencies in go.mod file
 
             ```go
               	github.com/onsi/ginkgo/v2 v2.1.4
@@ -40,11 +51,12 @@ entries:
                 sigs.k8s.io/controller-runtime v0.13.0
             ```
   - description: >
-      Updated ginkgo to ginkgo/v2 in all of the files. The reason behind it is Kubebuilder updated to ginkgo/v2.
-      These changes raised one issue where the Labels field is used by ginkgo/v2. Same field name is already defined in SDK that was causing the issue. I updated the SDK field Labels to LabelsMap to avoid the issue caused due to the same name.
+      Updated ginkgo to ginkgo/v2 in all of the files. 
     kind: "change"
     breaking: false
   - description: >
-      Updated all the `io/ioutil` imported package to either `io` or `os`. `io/ioutil` got deprecated in 1.16 and no longer it is used. Updated all the files in SDK.
+      Updated:
+      - ginko to `ginko/v2`
+      - `io/ioutil` packages to either `io` or `os` since its not longer supported in go1.19
     kind: "change"
     breaking: false
