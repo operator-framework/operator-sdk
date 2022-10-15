@@ -1,0 +1,18 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      For operator-sdk run bundle and bundle-upgrade subcommands: Added --security-context-config
+      flag to enable seccompprofile. It defaults to restricted to support k8s 1.25. You can disable it
+      with --security-context-config=legacy
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "bugfix"
+
+    # Is this a breaking change?
+    breaking: false

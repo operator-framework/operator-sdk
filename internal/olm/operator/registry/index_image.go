@@ -52,6 +52,44 @@ const (
 	registryPodNameAnnotation = operatorFrameworkGroup + "/registry-pod-name"
 )
 
+// TODO: Change this to use the values in operator-framework/api
+// once the release containing the enums is pulled into SDK
+type SecurityContextType string
+
+const (
+	Legacy     SecurityContextType = "legacy"
+	Restricted SecurityContextType = "restricted"
+)
+
+// SecurityContext represents the enum from the CatalogSource API
+// It is also being used by the binding flags to allow validation of the enum
+// values
+type SecurityContext struct {
+	ContextType SecurityContextType
+}
+
+func (sc *SecurityContext) String() string {
+	return string(sc.ContextType)
+}
+
+func (sc *SecurityContext) Set(value string) error {
+	switch value {
+	case "legacy", "restricted":
+		sc.ContextType = SecurityContextType(value)
+		return nil
+	default:
+		return fmt.Errorf("must be one of \"legacy\", or \"restricted\"")
+	}
+}
+
+func (sc *SecurityContext) IsEmpty() bool {
+	return sc.ContextType == ""
+}
+
+func (sc *SecurityContext) Type() string {
+	return "SecurityContext"
+}
+
 type IndexImageCatalogCreator struct {
 	SkipTLS         bool
 	SkipTLSVerify   bool
@@ -67,6 +105,7 @@ type IndexImageCatalogCreator struct {
 	PreviousBundles []string
 	cfg             *operator.Configuration
 	ChannelName     string
+	SecurityContext SecurityContext
 }
 
 var _ CatalogCreator = &IndexImageCatalogCreator{}
@@ -98,6 +137,10 @@ func (c *IndexImageCatalogCreator) BindFlags(fs *pflag.FlagSet) {
 		"while pulling bundles")
 	fs.BoolVar(&c.UseHTTP, "use-http", false, "use plain HTTP for container image registries "+
 		"while pulling bundles")
+
+	// default to Restricted
+	c.SecurityContext = SecurityContext{ContextType: Restricted}
+	fs.Var(&c.SecurityContext, "security-context-config", "specifies the security context to use for the catalog pod. allowed: 'restricted', 'legacy'.")
 }
 
 func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string) (*v1alpha1.CatalogSource, error) {
@@ -478,9 +521,10 @@ func (c IndexImageCatalogCreator) createAnnotatedRegistry(ctx context.Context, c
 	if c.HasFBCLabel {
 		// Initialize and create the FBC registry pod.
 		fbcRegistryPod := fbcindex.FBCRegistryPod{
-			BundleItems: items,
-			IndexImage:  c.IndexImage,
-			FBCContent:  c.FBCContent,
+			BundleItems:     items,
+			IndexImage:      c.IndexImage,
+			FBCContent:      c.FBCContent,
+			SecurityContext: c.SecurityContext.String(),
 		}
 
 		pod, err = fbcRegistryPod.Create(ctx, c.cfg, cs)
@@ -491,12 +535,13 @@ func (c IndexImageCatalogCreator) createAnnotatedRegistry(ctx context.Context, c
 	} else {
 		// Initialize and create registry pod
 		registryPod := index.SQLiteRegistryPod{
-			BundleItems:   items,
-			IndexImage:    c.IndexImage,
-			SecretName:    c.SecretName,
-			CASecretName:  c.CASecretName,
-			SkipTLSVerify: c.SkipTLSVerify,
-			UseHTTP:       c.UseHTTP,
+			BundleItems:     items,
+			IndexImage:      c.IndexImage,
+			SecretName:      c.SecretName,
+			CASecretName:    c.CASecretName,
+			SkipTLSVerify:   c.SkipTLSVerify,
+			UseHTTP:         c.UseHTTP,
+			SecurityContext: c.SecurityContext.String(),
 		}
 
 		if registryPod.DBPath, err = c.getDBPath(ctx); err != nil {

@@ -20,8 +20,7 @@ import (
 	"os"
 	"strings"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	genutil "github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/generate/internal"
@@ -31,20 +30,16 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+var _ = BeforeSuite(func() {
+	log.SetOutput(io.Discard)
+})
+
 var _ = Describe("FindRelatedImages", func() {
 	var images = struct {
 		memcached       string
 		memcachedLatest string
 		nginx           string
 	}{"memcached:1.4.36-alpine", "memcached:alpine", "nginx:1.21.6"}
-
-	BeforeSuite(func() {
-		log.SetOutput(io.Discard)
-	})
-
-	AfterSuite(func() {
-		log.SetOutput(os.Stdout)
-	})
 
 	DescribeTable("Valid related image definitions",
 		func(deployments []appsv1.Deployment, expected []operatorsv1alpha1.RelatedImage) {
@@ -160,6 +155,10 @@ var _ = Describe("FindRelatedImages", func() {
 			Expect(err.Error()).To(ContainSubstring("RELATED_IMAGE_MEMCACHED"))
 		})
 	})
+})
+
+var _ = AfterSuite(func() {
+	log.SetOutput(os.Stdout)
 })
 
 func relatedImage(name, image string) operatorsv1alpha1.RelatedImage {

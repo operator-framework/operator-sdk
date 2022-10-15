@@ -1,0 +1,15 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      This PR bumped Kubebuilder to 3.7.1,  with this version comes the addition of the `--component-config` flag. 
+
+      This flag is passed through `operator-sdk init` command. 
+      If this flag is passed through the command line as an argument then only the 
+      `controller_manager_config.yaml` file will be scaffolded in the 
+      manifest. 
+      If it is not passed then it will not scaffold out this file. 
+      The command for passing the flag is: 
+      operator-sdk init --domain example.com --repo github.com/example/memcached-operator --component-config  
+    kind: "change"
+    breaking: false

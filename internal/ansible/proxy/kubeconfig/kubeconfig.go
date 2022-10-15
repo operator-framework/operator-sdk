@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"errors"
 	"html/template"
-	"io/ioutil"
 	"net/url"
 	"os"
 
@@ -104,7 +103,7 @@ func Create(ownerRef metav1.OwnerReference, proxyURL string, namespace string) (
 		return nil, err
 	}
 
-	file, err := ioutil.TempFile("", "kubeconfig")
+	file, err := os.CreateTemp("", "kubeconfig")
 	if err != nil {
 		return nil, err
 	}

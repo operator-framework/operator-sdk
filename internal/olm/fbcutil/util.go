@@ -19,7 +19,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"strings"
 
@@ -127,7 +127,7 @@ func ValidateAndStringify(declcfg *declarativeconfig.DeclarativeConfig) (string,
 
 func NullLogger() *log.Entry {
 	logger := log.New()
-	logger.SetOutput(ioutil.Discard)
+	logger.SetOutput(io.Discard)
 	return log.NewEntry(logger)
 }
 
@@ -159,7 +159,7 @@ func RenderRefs(ctx context.Context, refs []string, skipTLSVerify bool, useHTTP 
 		Registry: reg,
 	}
 
-	log.SetOutput(ioutil.Discard)
+	log.SetOutput(io.Discard)
 	declcfg, err := render.Run(ctx)
 	log.SetOutput(os.Stdout)
 	if err != nil {

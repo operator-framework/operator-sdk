@@ -25,11 +25,12 @@ import (
 )
 
 // GetKubeClient will get a kubernetes client from the following sources:
-// - a path to the kubeconfig file passed on the command line (--kubeconfig)
-// - an environment variable that specifies the path (export KUBECONFIG)
-// - the user's $HOME/.kube/config file
-// - in-cluster connection for when the sdk is run within a cluster instead of
-//   the command line
+//   - a path to the kubeconfig file passed on the command line (--kubeconfig)
+//   - an environment variable that specifies the path (export KUBECONFIG)
+//   - the user's $HOME/.kube/config file
+//   - in-cluster connection for when the sdk is run within a cluster instead of
+//     the command line
+//
 // TODO(joelanford): migrate scorecard use `internal/operator.Configuration`
 func GetKubeClient(kubeconfig string) (client kubernetes.Interface, config *rest.Config, err error) {
 
@@ -61,6 +62,7 @@ func GetKubeClient(kubeconfig string) (client kubernetes.Interface, config *rest
 //   - from the KUBECONFIG env var if set
 //   - from the $HOME/.kube/config path if exists
 //   - returns 'default' as the namespace if not set in the kubeconfig
+//
 // TODO(joelanford): migrate scorecard to use `internal/operator.Configuration`
 func GetKubeNamespace(kubeconfigPath, namespace string) string {
 

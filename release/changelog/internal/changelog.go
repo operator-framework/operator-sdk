@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 	"text/template"
@@ -79,17 +78,17 @@ func (c *Changelog) WriteFile(path string) error {
 	if err != nil {
 		return err
 	}
-	existingFile, err := ioutil.ReadFile(path)
+	existingFile, err := os.ReadFile(path)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
 	if errors.Is(err, os.ErrNotExist) || len(existingFile) == 0 {
-		return ioutil.WriteFile(path, data, 0644)
+		return os.WriteFile(path, data, 0644)
 	}
 
 	data = append(data, '\n')
 	data = append(data, existingFile...)
-	return ioutil.WriteFile(path, data, 0644)
+	return os.WriteFile(path, data, 0644)
 }
 
 func ChangelogFromEntries(version semver.Version, entries []FragmentEntry) Changelog {

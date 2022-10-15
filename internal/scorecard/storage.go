@@ -18,7 +18,6 @@ import (
 	"archive/tar"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -203,13 +202,13 @@ func gatherTestOutput(r PodTestRunner, suiteName, testName, podName, mountPath s
 	if err != nil {
 		return err
 	}
-	stderr, err := ioutil.ReadAll(stderrReader)
+	stderr, err := io.ReadAll(stderrReader)
 	if err != nil {
 		return err
 	}
 	if len(stderr) > 0 {
 		destFileName := filepath.Join(destPath, "tar_stderr")
-		err = ioutil.WriteFile(destFileName, stderr, 0644)
+		err = os.WriteFile(destFileName, stderr, 0644)
 		if err != nil {
 			return err
 		}

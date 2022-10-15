@@ -16,7 +16,6 @@ package pkg
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -74,14 +73,14 @@ func removeAllAnnotationLines(annotations map[string]string, filePaths []string)
 	}
 
 	for _, file := range filePaths {
-		b, err := ioutil.ReadFile(file)
+		b, err := os.ReadFile(file)
 		if err != nil {
 			return err
 		}
 		for _, re := range annotationREs {
 			b = re.ReplaceAll(b, []byte{})
 		}
-		err = ioutil.WriteFile(file, b, 0644)
+		err = os.WriteFile(file, b, 0644)
 		if err != nil {
 			return err
 		}
