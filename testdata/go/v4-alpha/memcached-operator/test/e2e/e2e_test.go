@@ -51,17 +51,17 @@ var _ = Describe("memcached", func() {
 			Expect(utils.InstallCertManager()).To(Succeed())
 
 			// The namespace can be created when we run make install
-			// However, in this test we want ensure that the solution
+			// However, in this test we want to ensure that the solution
 			// can run in a ns labeled as restricted. Therefore, we are
-			// creating the namespace an lebeling it.
+			// creating the namespace and labeling it.
 			By("creating manager namespace")
 			cmd := exec.Command("kubectl", "create", "ns", namespace)
 			_, _ = utils.Run(cmd)
 
-			// Now, let's ensure that all namespaces can raise an Warn when we apply the manifests
+			// Now, let's ensure that all namespaces can raise a Warn when we apply the manifests
 			// and that the namespace where the Operator and Operand will run are enforced as
 			// restricted so that we can ensure that both can be admitted and run with the enforcement
-			By("labeling all namespaces to warn when we apply the manifest if would violate the PodStandards")
+			By("labeling all namespaces to warn when we apply the manifest if it would violate the PodStandards")
 			cmd = exec.Command("kubectl", "label", "--overwrite", "ns", "--all",
 				"pod-security.kubernetes.io/audit=restricted",
 				"pod-security.kubernetes.io/enforce-version=v1.24",
