@@ -80,7 +80,7 @@ func New(ident string, errChan chan<- error) (*EventReceiver, error) {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc(rec.URLPath, rec.handleEvents)
-	srv := http.Server{Handler: mux}
+	srv := http.Server{Handler: mux, ReadHeaderTimeout: 5 * time.Second}
 	rec.server = &srv
 
 	go func() {
