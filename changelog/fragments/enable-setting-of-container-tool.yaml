@@ -1,0 +1,20 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      For Go-based operators: Added `CONTAINER_TOOL` variable for setting of container tool for 
+      building the operator, bundle and catalog images.
+
+      By default, docker is used. 
+      
+      Use `CONTAINER_TOOL=podman` to build with podman. The settings can be passed to the make 
+      commands by setting 'make <target> CONTAINER_TOOL=podman' or set in the `Makefile`. 
+
+      The taget names `docker-build`, `docker-push` in the `Makefile` are kept to keep backward compability.
+      
+
+    kind: "addition"
+
+    # Is this a breaking change?
+    breaking: false
+
