@@ -13,12 +13,12 @@ require (
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.2.2
 	github.com/onsi/ginkgo/v2 v2.2.0
 	github.com/onsi/gomega v1.20.2
-	github.com/operator-framework/api v0.15.1-0.20220624132056-decf74800a17
+	github.com/operator-framework/api v0.17.2-0.20221006132308-b527a19c8e14
 	github.com/operator-framework/helm-operator-plugins v0.0.12-0.20221014213227-6f6106714f0d
-	github.com/operator-framework/java-operator-plugins v0.6.0
-	github.com/operator-framework/operator-lib v0.11.0
-	github.com/operator-framework/operator-manifest-tools v0.2.1
-	github.com/operator-framework/operator-registry v1.23.0
+	github.com/operator-framework/java-operator-plugins v0.7.1-0.20221007075838-2e24140314fb
+	github.com/operator-framework/operator-lib v0.11.1-0.20220921174810-791cc547e6c5
+	github.com/operator-framework/operator-manifest-tools v0.2.3-0.20220901033859-2a7ce32ef673
+	github.com/operator-framework/operator-registry v1.26.3-0.20220930210947-614d6a955dc0
 	github.com/prometheus/client_golang v1.13.0
 	github.com/prometheus/client_model v0.2.0
 	github.com/sergi/go-diff v1.2.0
@@ -69,7 +69,6 @@ require (
 	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20220418222510-f25a4f6275ed // indirect
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/bshuster-repo/logrus-logstash-hook v1.0.0 // indirect
 	github.com/bugsnag/bugsnag-go v1.5.3 // indirect
 	github.com/bugsnag/panicwrap v1.2.0 // indirect
@@ -77,7 +76,7 @@ require (
 	github.com/chai2010/gettext-go v1.0.2 // indirect
 	github.com/containerd/cgroups v1.0.4 // indirect
 	github.com/containerd/containerd v1.6.8 // indirect
-	github.com/containerd/continuity v0.0.0-20201208142359-180525291bb7 // indirect
+	github.com/containerd/continuity v0.1.0 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.10.1 // indirect
 	github.com/containerd/ttrpc v1.1.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
@@ -161,7 +160,6 @@ require (
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
-	github.com/mitchellh/hashstructure/v2 v2.0.2 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/moby/spdystream v0.2.0 // indirect

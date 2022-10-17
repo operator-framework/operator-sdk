@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	crmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
@@ -38,8 +39,9 @@ func Run(options Options) error {
 	mux.HandleFunc("/metrics", metricsHandler)
 
 	server := http.Server{
-		Addr:    fmt.Sprintf("%s:%d", options.Address, options.Port),
-		Handler: mux,
+		Addr:              fmt.Sprintf("%s:%d", options.Address, options.Port),
+		Handler:           mux,
+		ReadHeaderTimeout: 5 * time.Second,
 	}
 	log.Info("Starting to serve metrics listener", "Address", server.Addr)
 	return server.ListenAndServe()

@@ -1,0 +1,18 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      (ansible/v1): updates the base ansible base operator event api, api server, 
+      and proxy to now have a 5 second timeout when reading the request headers. 
+      This is to prevent the possibility of a [Slowloris attack](https://www.cloudflare.com/learning/ddos/ddos-attack-tools/slowloris/).
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "change"
+
+    # Is this a breaking change?
+    breaking: false

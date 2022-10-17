@@ -254,7 +254,8 @@ func (s *server) ListenUnix(path string) (net.Listener, error) {
 // ServeOnListener starts the server using given listener, loops forever.
 func (s *server) ServeOnListener(l net.Listener) error {
 	server := http.Server{
-		Handler: s.Handler,
+		Handler:           s.Handler,
+		ReadHeaderTimeout: 5 * time.Second,
 	}
 	return server.Serve(l)
 }
