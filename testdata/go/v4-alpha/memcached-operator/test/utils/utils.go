@@ -53,7 +53,7 @@ func Run(cmd *exec.Cmd) ([]byte, error) {
 	fmt.Fprintf(GinkgoWriter, "running dir: %s\n", cmd.Dir)
 
 	// To allow make commands be executed from the project directory which is subdir on SDK repo
-	// TODO:(user) You might does not need the following code
+	// TODO:(user) You might not need the following code
 	if err := os.Chdir(cmd.Dir); err != nil {
 		fmt.Fprintf(GinkgoWriter, "chdir dir: %s\n", err)
 	}
