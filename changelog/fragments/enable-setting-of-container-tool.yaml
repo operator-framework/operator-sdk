@@ -10,7 +10,7 @@ entries:
       Use `CONTAINER_TOOL=podman` to build with podman. The settings can be passed to the make 
       commands by setting 'make <target> CONTAINER_TOOL=podman' or set in the `Makefile`. 
 
-      The taget names `docker-build`, `docker-push` in the `Makefile` are kept to keep backward compability.
+      The target names `docker-build`, `docker-push` in the `Makefile` are kept to keep backward compability.
       
 
     kind: "addition"
