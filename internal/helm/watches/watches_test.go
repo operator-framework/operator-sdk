@@ -16,7 +16,6 @@ package watches
 
 import (
 	"bytes"
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -274,7 +273,7 @@ func TestLoad(t *testing.T) {
 				}
 			}
 
-			f, err := ioutil.TempFile("", "osdk-test-load")
+			f, err := os.CreateTemp("", "osdk-test-load")
 			if err != nil {
 				t.Fatalf("Failed to create temporary watches file: %v", err)
 			}

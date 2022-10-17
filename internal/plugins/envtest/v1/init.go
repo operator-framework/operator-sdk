@@ -16,7 +16,6 @@ package v1
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -57,7 +56,7 @@ func (s *initSubcommand) Scaffold(fs machinery.Filesystem) error {
 	if info, err := fs.FS.Stat(filePath); err == nil {
 		mode = info.Mode()
 	}
-	if err := ioutil.WriteFile(filePath, makefileBytes, mode); err != nil {
+	if err := os.WriteFile(filePath, makefileBytes, mode); err != nil {
 		return fmt.Errorf("error updating Makefile: %w", err)
 	}
 

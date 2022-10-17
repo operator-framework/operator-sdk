@@ -15,7 +15,7 @@
 package handler
 
 import (
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/operator-framework/operator-lib/handler"
 	appsv1 "k8s.io/api/apps/v1"

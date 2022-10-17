@@ -15,11 +15,10 @@
 package packagemanifest_test
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/operator-framework/operator-sdk/internal/generate/packagemanifest"
 )
@@ -89,7 +88,7 @@ packageName: memcached-operator
 			It("writes a package manifest", func() {
 				err := g.Generate(operatorName, "0.0.1", outputDir, blankOpts)
 				Expect(err).NotTo(HaveOccurred())
-				file, err := ioutil.ReadFile(outputDir + string(os.PathSeparator) + pkgManFilename)
+				file, err := os.ReadFile(outputDir + string(os.PathSeparator) + pkgManFilename)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(string(file)).To(Equal(pkgManDefault))
 			})
@@ -100,7 +99,7 @@ packageName: memcached-operator
 
 				err := g.Generate(operatorName, "0.0.1", outputDir, opts)
 				Expect(err).NotTo(HaveOccurred())
-				file, err := ioutil.ReadFile(outputDir + string(os.PathSeparator) + pkgManFilename)
+				file, err := os.ReadFile(outputDir + string(os.PathSeparator) + pkgManFilename)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(string(file)).To(Equal(pkgManOneChannel))
 			})
@@ -114,7 +113,7 @@ packageName: memcached-operator
 
 				err := g.Generate(operatorName, "0.0.1", outputDir, opts)
 				Expect(err).NotTo(HaveOccurred())
-				file, err := ioutil.ReadFile(outputDir + string(os.PathSeparator) + pkgManFilename)
+				file, err := os.ReadFile(outputDir + string(os.PathSeparator) + pkgManFilename)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(string(file)).To(Equal(pkgManOneChannel))
 			})
@@ -126,7 +125,7 @@ packageName: memcached-operator
 
 				err := g.Generate(operatorName, "0.0.2", outputDir, opts)
 				Expect(err).NotTo(HaveOccurred())
-				file, err := ioutil.ReadFile(outputDir + string(os.PathSeparator) + pkgManFilename)
+				file, err := os.ReadFile(outputDir + string(os.PathSeparator) + pkgManFilename)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(string(file)).To(Equal(pkgManUpdatedOneChannel))
 			})
@@ -138,7 +137,7 @@ packageName: memcached-operator
 
 				err := g.Generate(operatorName, "0.0.2", outputDir, opts)
 				Expect(err).NotTo(HaveOccurred())
-				file, err := ioutil.ReadFile(outputDir + string(os.PathSeparator) + pkgManFilename)
+				file, err := os.ReadFile(outputDir + string(os.PathSeparator) + pkgManFilename)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(string(file)).To(Equal(pkgManUpdatedSecondChannel))
 			})
@@ -151,7 +150,7 @@ packageName: memcached-operator
 
 				err := g.Generate(operatorName, "0.0.2", outputDir, opts)
 				Expect(err).NotTo(HaveOccurred())
-				file, err := ioutil.ReadFile(outputDir + string(os.PathSeparator) + pkgManFilename)
+				file, err := os.ReadFile(outputDir + string(os.PathSeparator) + pkgManFilename)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(string(file)).To(Equal(pkgManUpdatedSecondChannelNewDefault))
 			})

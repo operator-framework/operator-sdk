@@ -15,7 +15,7 @@
 package scorecard
 
 import (
-	"io/ioutil"
+	"os"
 
 	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 	"sigs.k8s.io/yaml"
@@ -37,7 +37,7 @@ const (
 func LoadConfig(configFilePath string) (v1alpha3.Configuration, error) {
 	c := v1alpha3.Configuration{}
 
-	yamlFile, err := ioutil.ReadFile(configFilePath)
+	yamlFile, err := os.ReadFile(configFilePath)
 	if err != nil {
 		return c, err
 	}

@@ -19,7 +19,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 
@@ -42,7 +42,7 @@ func main() {
 	defer jsonFile.Close()
 
 	var byteValue []byte
-	byteValue, err = ioutil.ReadAll(jsonFile)
+	byteValue, err = io.ReadAll(jsonFile)
 	if err != nil {
 		printErrorStatus(fmt.Errorf("could not read kuttl report %v", err))
 		return
@@ -187,13 +187,13 @@ type Testsuites struct {
 }
 
 func getKuttlLogs() string {
-	stderrFile, err := ioutil.ReadFile("/tmp/kuttl.stderr")
+	stderrFile, err := os.ReadFile("/tmp/kuttl.stderr")
 	if err != nil {
 		printErrorStatus(fmt.Errorf("could not open kuttl stderr file %v", err))
 		return err.Error()
 	}
 
-	stdoutFile, err := ioutil.ReadFile("/tmp/kuttl.stdout")
+	stdoutFile, err := os.ReadFile("/tmp/kuttl.stdout")
 	if err != nil {
 		printErrorStatus(fmt.Errorf("could not open kuttl stdout file %v", err))
 		return err.Error()

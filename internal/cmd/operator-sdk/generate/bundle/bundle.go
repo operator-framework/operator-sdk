@@ -17,7 +17,6 @@ package bundle
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -264,7 +263,7 @@ func writeScorecardConfig(dir string, cfg v1alpha3.Configuration) error {
 		return err
 	}
 	scorecardConfigPath := filepath.Join(cfgDir, scorecard.ConfigFileName)
-	return ioutil.WriteFile(scorecardConfigPath, b, 0666)
+	return os.WriteFile(scorecardConfigPath, b, 0666)
 }
 
 // runMetadata generates a bundle.Dockerfile and bundle metadata.

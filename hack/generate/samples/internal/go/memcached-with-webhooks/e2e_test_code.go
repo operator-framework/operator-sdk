@@ -1,7 +1,6 @@
 package v3
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -35,7 +34,7 @@ func (mh *Memcached) implementingE2ETests() {
 
 func (mh *Memcached) addTestE2eMakefileTarget() {
 	err := kbutil.ReplaceInFile(filepath.Join(mh.ctx.Dir, "Makefile"),
-		`KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out`,
+		`KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile cover.out`,
 		`KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)"  go test $(go list ./... | grep -v /test/) -coverprofile cover.out`,
 	)
 	pkg.CheckError("replacing test target", err)
@@ -71,13 +70,13 @@ func (mh *Memcached) addContent(testE2eDir string, testUtilsDir string) {
 }
 
 func (mh *Memcached) createGoFiles(testE2eDir string, testUtilsDir string) {
-	err := ioutil.WriteFile(filepath.Join(testE2eDir, "e2e_suite_test.go"), []byte("replace"), 0644)
+	err := os.WriteFile(filepath.Join(testE2eDir, "e2e_suite_test.go"), []byte("replace"), 0644)
 	pkg.CheckError("error to create file to add e2e_suite_test.go", err)
 
-	err = ioutil.WriteFile(filepath.Join(testE2eDir, "e2e_test.go"), []byte("replace"), 0644)
+	err = os.WriteFile(filepath.Join(testE2eDir, "e2e_test.go"), []byte("replace"), 0644)
 	pkg.CheckError("error to create file to add e2e_test.go", err)
 
-	err = ioutil.WriteFile(filepath.Join(testUtilsDir, "utils.go"), []byte("replace"), 0644)
+	err = os.WriteFile(filepath.Join(testUtilsDir, "utils.go"), []byte("replace"), 0644)
 	pkg.CheckError("error to create file to add utils.go", err)
 }
 
@@ -112,7 +111,7 @@ import (
 	"fmt"
 	"testing"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
@@ -151,7 +150,7 @@ import (
 
 	//nolint:golint
 	//nolint:revive
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 
 	//nolint:golint
 	//nolint:revive
@@ -346,7 +345,7 @@ import (
 	"os/exec"
 	"strings"
 
-	. "github.com/onsi/ginkgo" //nolint:golint,revive
+	. "github.com/onsi/ginkgo/v2" //nolint:golint,revive
 )
 
 const (

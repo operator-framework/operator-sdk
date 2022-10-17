@@ -16,7 +16,6 @@ package projutil
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"regexp"
 	"strings"
@@ -137,7 +136,7 @@ func SetGoVerbose() error {
 // RewriteFileContents adds newContent to the line after the last occurrence of target in filename's contents,
 // then writes the updated contents back to disk.
 func RewriteFileContents(filename, target, newContent string) error {
-	text, err := ioutil.ReadFile(filename)
+	text, err := os.ReadFile(filename)
 	if err != nil {
 		return fmt.Errorf("error in getting contents from the file, %v", err)
 	}
@@ -147,7 +146,7 @@ func RewriteFileContents(filename, target, newContent string) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(filename, []byte(modifiedContent), FileMode)
+	err = os.WriteFile(filename, []byte(modifiedContent), FileMode)
 	if err != nil {
 		return fmt.Errorf("error writing modified contents to file, %v", err)
 	}

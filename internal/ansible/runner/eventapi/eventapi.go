@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -81,7 +80,7 @@ func New(ident string, errChan chan<- error) (*EventReceiver, error) {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc(rec.URLPath, rec.handleEvents)
-	srv := http.Server{Handler: mux}
+	srv := http.Server{Handler: mux, ReadHeaderTimeout: 5 * time.Second}
 	rec.server = &srv
 
 	go func() {
@@ -127,7 +126,7 @@ func (e *EventReceiver) handleEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		e.logger.Error(err, "Could not read request body", "code", "500")
 		w.WriteHeader(http.StatusInternalServerError)

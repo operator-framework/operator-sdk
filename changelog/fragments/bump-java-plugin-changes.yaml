@@ -1,0 +1,17 @@
+# entries is a list of entries to include in
+# release notes and/or the migration guide
+entries:
+  - description: >
+      For Go (go/v3), Helm Hybrid (hybrid.helm/v1-alpha), and Quarkus(quarkus/v1-alpha)  language based operators: 
+      Upgrade Kubernetes dependencies from `1.24` to `1.25`
+
+    # kind is one of:
+    # - addition
+    # - change
+    # - deprecation
+    # - removal
+    # - bugfix
+    kind: "change"
+
+    # Is this a breaking change?
+    breaking: false

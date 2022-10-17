@@ -47,7 +47,7 @@ const (
 )
 
 // BundleValidationTest validates an on-disk bundle
-func BundleValidationTest(bundleRoot string, metadata registryutil.Labels) scapiv1alpha3.TestStatus {
+func BundleValidationTest(bundleRoot string, metadata registryutil.LabelsMap) scapiv1alpha3.TestStatus {
 	r := scapiv1alpha3.TestResult{}
 	r.Name = OLMBundleValidationTest
 	r.State = scapiv1alpha3.PassState

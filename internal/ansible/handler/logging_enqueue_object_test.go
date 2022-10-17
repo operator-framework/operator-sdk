@@ -15,7 +15,7 @@
 package handler
 
 import (
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	dto "github.com/prometheus/client_model/go"
 	corev1 "k8s.io/api/core/v1"

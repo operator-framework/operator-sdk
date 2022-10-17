@@ -17,7 +17,6 @@ package bundleutil
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -46,7 +45,7 @@ type BundleMetaData struct {
 	// The PackageName of the operator bundle.
 	PackageName string
 
-	// Channels and DefaultChannel the operator shoud be subscribed to.
+	// Channels and DefaultChannel the operator should be subscribed to.
 	Channels       string
 	DefaultChannel string
 
@@ -108,9 +107,9 @@ func (meta *BundleMetaData) GenerateMetadata() error {
 
 	dockerfilePath := defaultBundleDockerfilePath
 	// If migrating from packagemanifests to bundle, bundle.Dockerfile is present
-	// inside bundleDir, else its in the project directory. Hence dockerfile
+	// inside bundleDir, else it's in the project directory. Hence, dockerfile
 	// should have the path specified with respect to output directory of resulting bundles.
-	// Remmove this, when pkgman-to-bundle migrate command is removed.
+	// Remove this, when pkgman-to-bundle migrate command is removed.
 	if len(meta.PkgmanifestPath) != 0 {
 		dockerfilePath = filepath.Join(filepath.Dir(meta.BundleDir), "bundle.Dockerfile")
 		values.BundleDir = filepath.Base(meta.BundleDir)
@@ -137,7 +136,7 @@ func (meta *BundleMetaData) GenerateMetadata() error {
 			return err
 		}
 	}
-	log.Infof("Bundle metadata generated suceessfully")
+	log.Infof("Bundle metadata generated successfully")
 	return nil
 }
 
@@ -156,7 +155,7 @@ func copyOperatorManifests(src, dest string) error {
 		return err
 	}
 
-	srcFiles, err := ioutil.ReadDir(src)
+	srcFiles, err := os.ReadDir(src)
 	if err != nil {
 		return err
 	}
@@ -167,7 +166,7 @@ func copyOperatorManifests(src, dest string) error {
 
 		if f.IsDir() {
 			// TODO(verify): we may have to log an error here instead of recursively copying
-			// if there are no subfolders allowed under manifests dir of a packagemanifest.
+			// if there are no sub-folders allowed under manifests dir of a packagemanifest.
 			if err = copyOperatorManifests(srcPath, destPath); err != nil {
 				return err
 			}
@@ -262,12 +261,12 @@ func (meta *BundleMetaData) WriteScorecardConfig(inputConfigPath string) error {
 	}
 
 	log.Info(fmt.Sprintf("Writing scorecard config in %s", scorecardDir))
-	b, err := ioutil.ReadFile(inputConfigPath)
+	b, err := os.ReadFile(inputConfigPath)
 	if err != nil {
 		return err
 	}
 
-	err = ioutil.WriteFile(filepath.Join(scorecardDir, "config.yaml"), b, 0644)
+	err = os.WriteFile(filepath.Join(scorecardDir, "config.yaml"), b, 0644)
 	if err != nil {
 		return fmt.Errorf("error writing scorecard config %v", err)
 	}

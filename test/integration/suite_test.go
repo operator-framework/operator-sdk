@@ -16,13 +16,12 @@ package integration
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
@@ -147,7 +146,7 @@ func cleanup(tc *testutils.TestContext) (string, error) {
 }
 
 func readCSV(tc *testutils.TestContext, version string, isBundle bool) (*v1alpha1.ClusterServiceVersion, error) {
-	b, err := ioutil.ReadFile(csvPath(tc, version, isBundle))
+	b, err := os.ReadFile(csvPath(tc, version, isBundle))
 	if err != nil {
 		return nil, err
 	}
