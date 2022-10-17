@@ -47,9 +47,10 @@ These values will persist when generating a bundle, so make necessary metadata c
 **For Go Operators only:** the command parses [CSV markers][csv-markers] from Go API type definitions, located
 in `./api` for single group projects and `./apis` for multigroup projects, to populate certain CSV fields.
 You can set an alternative path to the API types root directory with `--apis-dir`. These markers are not available
-to Ansible or Helm project types. Also note that the command will attempt to process local types defined in your API.
-If you import a package and use a type with the same name as a local type as a field in the local type it will loop infinitely.
-For example, the following local type definition will cause an infinite loop:
+to Ansible or Helm project types. 
+
+The command attempts to process the local types defined in your API.
+If you import a package that uses the same name as a local type, running the command causes an infinite loop. For example:
 ```go
 type PodStatus struct {
   SomeField string
@@ -58,14 +59,13 @@ type PodStatus struct {
   Status v1.PodStatus 
 }
 ```
-To prevent this, name the local type something different than the imported type:
+To prevent an infinite loop, edit the local type definition to use a different name. For example:
 ```go
 type PodStatusWrapper struct {
   SomeField string
   Status v1.PodStatus 
 }
 ```
-Since the local type has a different name than the imported type the parser does not get stuck.
 
 ### ClusterServiceVersion manifests
 
