@@ -3,7 +3,7 @@
 entries:
   - description: >
       For Go (go/v3), Helm Hybrid (hybrid.helm/v1-alpha), and Quarkus(quarkus/v1-alpha)  language based operators: 
-      Upgrade Kubernetes dependencies from `1.24` to `1.25` and controller-gen from `v0.8.0` to `v0.9.0`
+      Upgrade Kubernetes dependencies from `1.24` to `1.25`
 
     # kind is one of:
     # - addition
