@@ -350,10 +350,10 @@ made on this manifest.
 
 ## 'operator-sdk run bundle' command fails and the registry pod has an error of 'mkdir: can't create directory '/database': Permission denied'
 
-This error occurs when using `operator-sdk` versions < `v1.22.0` as earlier versions use the deprecated SQLite bundle format by default. 
-By default `operator-sdk run bundle` will use `quay.io/operator-framework/opm:latest` as the index image for creating a registry pod.
-Due to recent pod security updates, using `quay.io/operator-framework/opm:latest` will not work as expected with the SQLite bundle format.
+In Operator SDK version `v1.22.0`, the `operator-sdk run bundle` command started using the new file-based catalog (FBC) bundle format by default. Earlier releases used the deprecated SQLite format. The command uses `quay.io/operator-framework/opm:latest` as the index image for creating a registry pod. Due to recent pod security updates, using the latest version of `opm` does not work as expected with the SQLite bundle format.
 
-To resolve this, there are two options:
-1. Upgrade to a version of `operator-sdk` >= `v1.22.0` which will use the new FBC bundle format by default
-2. When using `operator-sdk run bundle` specify the index image with `--index-image=quay.io/operator-framework/opm:v1.23.0`
+There are two workarounds available to resolve this issue:
+1. You can update the Operator SDK to version `v1.22.0` or later. Updating to a more recent version makes `operator-sdk run bundle` utilize the new FBC bundle format.
+2. If you are not ready to update your version of the Operator SDK, you can manually specify the index image by using the `--index-image=quay.io/operator-framework/opm:v1.23.0` flag.
+
+**Note:** The SQLite bundle format is deprecated and will be removed in a future release. If you can, it is recommended that you upgrade a newer version of the Operator SDK to resolve the issue.
