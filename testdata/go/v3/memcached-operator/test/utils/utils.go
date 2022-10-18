@@ -17,6 +17,7 @@ limitations under the License.
 package utils
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -140,4 +141,27 @@ func GetProjectDir() (string, error) {
 	}
 	wd = strings.Replace(wd, "/test/e2e", "", -1)
 	return wd, nil
+}
+
+// ReplaceInFile replaces all instances of old with new in the file at path.
+func ReplaceInFile(path, old, new string) error {
+	info, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+	// false positive
+	// nolint:gosec
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	if !strings.Contains(string(b), old) {
+		return errors.New("unable to find the content to be replaced")
+	}
+	s := strings.Replace(string(b), old, new, -1)
+	err = os.WriteFile(path, []byte(s), info.Mode())
+	if err != nil {
+		return err
+	}
+	return nil
 }
