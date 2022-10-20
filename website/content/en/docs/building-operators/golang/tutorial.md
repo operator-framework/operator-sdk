@@ -66,7 +66,7 @@ The Manager can restrict the namespace that all controllers will watch for resou
 mgr, err := ctrl.NewManager(cfg, manager.Options{Namespace: namespace})
 ```
 
-By default this will be the namespace that the operator is running in. To watch all namespaces leave the namespace option empty:
+By default this will be empty string which means watch all namespaces:
 
 ```Go
 mgr, err := ctrl.NewManager(cfg, manager.Options{Namespace: ""})
