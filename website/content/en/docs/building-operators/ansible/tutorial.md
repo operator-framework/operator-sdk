@@ -178,14 +178,6 @@ make install run
 
 By default, a new namespace is created with name `<project-name>-system`, ex. `memcached-operator-system`, and will be used for the deployment.
 
-The scaffolded `Makefile` uses [`kustomize`][kustomize-docs] to apply
-custom configurations and generate manifests from the `config/`
-directory, which are piped to `kubectl`.
-
-```sh
-kustomize build config/default | kubectl apply -f -
-```
-
 Commonly, Operator authors may need to modify `config/rbac` in order to
 give their Operator the necessary permissions to reconcile.
 
@@ -193,6 +185,15 @@ Run the following to customize the manifests and deploy the operator.
 
 ```sh
 make deploy
+```
+
+The scaffolded `Makefile` uses [`kustomize`][kustomize-docs] to apply custom
+configurations and generate manifests from the `config/` directory, which are
+piped to `kubectl`. Run the following command to see the manifests that were
+applied to the cluster.
+
+```sh
+kustomize build config/default
 ```
 
 Verify that the memcached-operator is up and running:
