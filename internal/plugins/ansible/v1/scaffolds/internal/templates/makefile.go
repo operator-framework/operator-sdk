@@ -91,8 +91,9 @@ help: ## Display this help.
 ##@ Build
 
 .PHONY: run
+ANSIBLE_ROLES_PATH?="$(shell pwd)/roles"
 run: ansible-operator ## Run against the configured Kubernetes cluster in ~/.kube/config
-	ANSIBLE_ROLES_PATH="$(ANSIBLE_ROLES_PATH):$(shell pwd)/roles" $(ANSIBLE_OPERATOR) run
+	$(ANSIBLE_OPERATOR) run
 
 .PHONY: docker-build
 docker-build: ## Build docker image with the manager.
