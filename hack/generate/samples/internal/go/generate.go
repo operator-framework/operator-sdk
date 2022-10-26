@@ -17,7 +17,7 @@ package golang
 import (
 	"path/filepath"
 
-	withwebhooks "github.com/operator-framework/operator-sdk/hack/generate/samples/internal/go/memcached-with-webhooks"
+	withcustomization "github.com/operator-framework/operator-sdk/hack/generate/samples/internal/go/memcached-with-customization"
 )
 
 func GenerateMemcachedSamples(binaryPath, rootPath string) {
@@ -26,8 +26,8 @@ func GenerateMemcachedSamples(binaryPath, rootPath string) {
 	// to use the deploy.image/v1-alpha plugin to do the scaffold instead
 	// to create an empty scaffold add add all code. So that, we can also
 	// ensure that the tutorial follows the good practices
-	withwebhooks.GenerateSample(binaryPath, filepath.Join(rootPath, "go", "v3"))
-	withwebhooks.GenerateSample(binaryPath, filepath.Join(rootPath, "go", "v3", "monitoring"))
-	withwebhooks.GenerateSample(binaryPath, filepath.Join(rootPath, "go", "v4-alpha"))
-	withwebhooks.GenerateSample(binaryPath, filepath.Join(rootPath, "go", "v4-alpha", "monitoring"))
+	withcustomization.GenerateSample(binaryPath, filepath.Join(rootPath, "go", "v3"))
+	withcustomization.GenerateSample(binaryPath, filepath.Join(rootPath, "go", "v3", "monitoring"))
+	withcustomization.GenerateSample(binaryPath, filepath.Join(rootPath, "go", "v4-alpha"))
+	withcustomization.GenerateSample(binaryPath, filepath.Join(rootPath, "go", "v4-alpha", "monitoring"))
 }
