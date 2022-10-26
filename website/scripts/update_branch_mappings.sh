@@ -15,8 +15,11 @@ if grep -C 1 "\[\[params\.versions\]\]" website/config.toml | grep -q "version =
   exit 0
 fi
 
+KUBE_VERSION="$(cat Makefile | grep "export K8S_VERSION" | awk -F= '{ gsub(/ /,""); print $2 }')"
+CLIENT_GO_VERSION="$(cat go.mod | grep "k8s.io/client-go" | awk -F" " '{ print $2 }')"
+
 MARKER="##RELEASE_ADDME##"
-PARAMS_VERSION="[[params.versions]]\\n  version = \"${VERSION_PATCHLESS}\"\\n  url = \"https://${VERSION_X_DOMAIN}.sdk.operatorframework.io\""
+PARAMS_VERSION="[[params.versions]]\\n  version = \"${VERSION_PATCHLESS}\"\\n  url = \"https://${VERSION_X_DOMAIN}.sdk.operatorframework.io\"\\n  kube_version = \"${KUBE_VERSION}\"\\n  client_go_version = \"${CLIENT_GO_VERSION}\""
 
 sed -i -E $'s@'${MARKER}'@'"${MARKER}\\n\\n${PARAMS_VERSION}"'@g' "$CONFIG_PATH"
 

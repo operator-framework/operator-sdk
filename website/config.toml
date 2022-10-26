@@ -92,129 +92,194 @@ url_latest_version = "https://sdk.operatorframework.io"
 [[params.versions]]
   version = "master"
   url = "https://master.sdk.operatorframework.io"
+  ##LATEST_RELEASE_KUBE_VERSION##
+  kube_version = "1.25.0"
+  ##LATEST_RELEASE_CLIENT_GO_VERSION##
+  client_go_version = "v0.25.3"
 
 [[params.versions]]
   version = "Latest Release"
   url = "https://sdk.operatorframework.io"
+  ##LATEST_RELEASE_KUBE_VERSION##
+  kube_version = "1.25.0"
+  ##LATEST_RELEASE_CLIENT_GO_VERSION##
+  client_go_version = "v0.25.3"
 
 ##RELEASE_ADDME##
 
 [[params.versions]]
   version = "v1.25"
   url = "https://v1-25-x.sdk.operatorframework.io"
+  kube_version = "1.25.0"
+  client_go_version = "v0.25.3"
 
 [[params.versions]]
   version = "v1.24"
   url = "https://v1-24-x.sdk.operatorframework.io"
+  kube_version = "1.24.2"
+  client_go_version = "v0.24.2"
 
 [[params.versions]]
   version = "v1.23"
   url = "https://v1-23-x.sdk.operatorframework.io"
+  kube_version = "1.24.2"
+  client_go_version = "v0.24.2"
 
 [[params.versions]]
   version = "v1.22"
   url = "https://v1-22-x.sdk.operatorframework.io"
+  kube_version = "1.24.1"
+  client_go_version = "v0.24.0"
 
 [[params.versions]]
   version = "v1.21"
   url = "https://v1-21-x.sdk.operatorframework.io"
+  kube_version = "1.23"
+  client_go_version = "v0.23.5"
 
 [[params.versions]]
   version = "v1.20"
   url = "https://v1-20-x.sdk.operatorframework.io"
+  kube_version = "1.23"
+  client_go_version = "v0.23.1"
 
 [[params.versions]]
   version = "v1.19"
   url = "https://v1-19-x.sdk.operatorframework.io"
+  kube_version = "1.23"
+  client_go_version = "v0.23.1"
 
 [[params.versions]]
   version = "v1.18"
   url = "https://v1-18-x.sdk.operatorframework.io"
+  kube_version = "1.21"
+  client_go_version = "v0.23.1"
 
 [[params.versions]]
   version = "v1.17"
   url = "https://v1-17-x.sdk.operatorframework.io"
+  kube_version = "1.21"
+  client_go_version = "v0.23.1"
 
 [[params.versions]]
   version = "v1.16"
   url = "https://v1-16-x.sdk.operatorframework.io"
+  kube_version = "1.21"
+  client_go_version = "v0.22.2"
 
 [[params.versions]]
   version = "v1.15"
   url = "https://v1-15-x.sdk.operatorframework.io"
+  kube_version = "1.21"
+  client_go_version = "v0.22.2"
 
 [[params.versions]]
   version = "v1.14"
   url = "https://v1-14-x.sdk.operatorframework.io"
+  kube_version = "1.21"
+  client_go_version = "v0.22.2"
 
 [[params.versions]]
   version = "v1.13"
   url = "https://v1-13-x.sdk.operatorframework.io"
+  kube_version = "1.21"
+  client_go_version = "v0.22.1"
 
 [[params.versions]]
   version = "v1.12"
   url = "https://v1-12-x.sdk.operatorframework.io"
+  kube_version = "1.21"
+  client_go_version = "v0.21.2"
 
 [[params.versions]]
   version = "v1.11"
   url = "https://v1-11-x.sdk.operatorframework.io"
+  kube_version = "1.20.2"
+  client_go_version = "v0.21.2"
 
 [[params.versions]]
   version = "v1.10"
   url = "https://v1-10-x.sdk.operatorframework.io"
+  kube_version = "1.20.2"
+  client_go_version = "v0.21.2"
 
 [[params.versions]]
   version = "v1.9"
   url = "https://v1-9-x.sdk.operatorframework.io"
+  kube_version = "1.20.2"
+  client_go_version = "v0.20.2"
 
 [[params.versions]]
   version = "v1.8"
   url = "https://v1-8-x.sdk.operatorframework.io"
+  kube_version = "1.20.2"
+  client_go_version = "v0.20.2"
 
 [[params.versions]]
   version = "v1.7"
   url = "https://v1-7-x.sdk.operatorframework.io"
+  kube_version = "1.19.4"
+  client_go_version = "v0.20.2"
 
 [[params.versions]]
   version = "v1.6"
   url = "https://v1-6-x.sdk.operatorframework.io"
+  kube_version = "1.19.4"
+  client_go_version = "v0.20.2"
 
 [[params.versions]]
   version = "v1.5"
   url = "https://v1-5-x.sdk.operatorframework.io"
+  kube_version = "1.19.4"
+  client_go_version = "v0.20.2"
 
 [[params.versions]]
   version = "v1.4"
   url = "https://v1-4-x.sdk.operatorframework.io"
+  kube_version = "1.19.4"
+  client_go_version = "v0.20.1"
 
 [[params.versions]]
   version = "v1.3"
   url = "https://v1-3-x.sdk.operatorframework.io"
+  kube_version = "1.19.4"
+  client_go_version = "v0.19.4"
 
 [[params.versions]]
   version = "v1.2"
   url = "https://v1-2-x.sdk.operatorframework.io"
+  kube_version = "1.18.8"
+  client_go_version = "v0.18.8"
 
 [[params.versions]]
   version = "v1.1"
   url = "https://v1-1-x.sdk.operatorframework.io"
+  kube_version = "1.18.2"
+  client_go_version = "v0.18.8"
 
 [[params.versions]]
   version = "v1.0"
   url = "https://v1-0-x.sdk.operatorframework.io"
+  kube_version = "1.18.2"
+  client_go_version = "v0.18.6"
 
 [[params.versions]]
   version = "v0.19"
   url = "https://v0-19-x.sdk.operatorframework.io"
+  kube_version = "1.18.2"
+  client_go_version = "v12.0.0+incompatible"
 
 [[params.versions]]
   version = "v0.18"
   url = "https://v0-18-x.sdk.operatorframework.io"
+  kube_version = "1.18.2"
+  client_go_version = "v12.0.0+incompatible"
 
 [[params.versions]]
   version = "v0.17"
   url = "https://github.com/operator-framework/operator-sdk/tree/v0.17.x/doc"
-
+  kube_version = "1.17.2"
+  client_go_version = "v12.0.0+incompatible"
 
 # User interface configuration
 [params.ui]
