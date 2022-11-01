@@ -16,7 +16,7 @@ package testutils
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	_ "sigs.k8s.io/kubebuilder/v3/pkg/config/v2" // Register config/v2 for `config.New`
@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	OlmVersionForTestSuite = "0.21.2"
+	OlmVersionForTestSuite = "0.22.0"
 )
 
 var makefilePackagemanifestsFragment = `
@@ -53,7 +53,7 @@ packagemanifests: kustomize %s
 // in order to test the steps described in the docs.
 // More info:  https://v1-0-x.sdk.operatorframework.io/docs/olm-integration/generation/#package-manifests-formats
 func (tc TestContext) AddPackagemanifestsTarget(operatorType projutil.OperatorType) error {
-	makefileBytes, err := ioutil.ReadFile(filepath.Join(tc.Dir, "Makefile"))
+	makefileBytes, err := os.ReadFile(filepath.Join(tc.Dir, "Makefile"))
 	if err != nil {
 		return err
 	}
@@ -67,14 +67,14 @@ func (tc TestContext) AddPackagemanifestsTarget(operatorType projutil.OperatorTy
 
 	// update makefile by adding the packagemanifests target
 	makefileBytes = append([]byte(makefilePackagemanifestsFragment), makefileBytes...)
-	err = ioutil.WriteFile(filepath.Join(tc.Dir, "Makefile"), makefileBytes, 0644)
+	err = os.WriteFile(filepath.Join(tc.Dir, "Makefile"), makefileBytes, 0644)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-// DisableOLMBundleInterativeMode will update the Makefile to disable the interactive mode
+// DisableManifestsInteractiveMode will update the Makefile to disable the interactive mode
 func (tc TestContext) DisableManifestsInteractiveMode() error {
 	// Todo: check if we cannot improve it since the replace/content will exists in the
 	// pkgmanifest target if it be scaffolded before this call

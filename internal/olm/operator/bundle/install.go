@@ -17,15 +17,11 @@ package bundle
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"os"
-	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"github.com/operator-framework/operator-registry/alpha/action"
 	declarativeconfig "github.com/operator-framework/operator-registry/alpha/declcfg"
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	fbcutil "github.com/operator-framework/operator-sdk/internal/olm/fbcutil"
@@ -97,7 +93,7 @@ func (i *Install) setup(ctx context.Context) error {
 	// check if index image adopts File-Based Catalog or SQLite index image format
 	isFBCImage, err := fbcutil.IsFBC(ctx, i.IndexImageCatalogCreator.IndexImage)
 	if err != nil {
-		return fmt.Errorf("error in upgrading the bundle %q that was installed traditionally", i.IndexImageCatalogCreator.BundleImage)
+		return fmt.Errorf("error determining whether index %q is FBC or SQLite based: %v", i.IndexImageCatalogCreator.IndexImage, err)
 	}
 	i.IndexImageCatalogCreator.HasFBCLabel = isFBCImage
 
@@ -120,13 +116,12 @@ func (i *Install) setup(ctx context.Context) error {
 			ChannelEntry: declarativeconfig.ChannelEntry{
 				Name: csv.Name,
 			},
+			SkipTLSVerify: i.SkipTLSVerify,
+			UseHTTP:       i.UseHTTP,
 		}
 
-		if _, hasChannelMetadata := labels[registrybundle.ChannelsLabel]; hasChannelMetadata {
-			f.ChannelName = strings.Split(labels[registrybundle.ChannelsLabel], ",")[0]
-		} else {
-			f.ChannelName = fbcutil.DefaultChannel
-		}
+		// ignore channels for the bundle and instead use the default
+		f.ChannelName = fbcutil.DefaultChannel
 
 		// generate an fbc if an fbc specific label is found on the image or for a default index image.
 		content, err := generateFBCContent(ctx, f, i.BundleImage, i.IndexImageCatalogCreator.IndexImage)
@@ -141,7 +136,7 @@ func (i *Install) setup(ctx context.Context) error {
 	i.OperatorInstaller.CatalogSourceName = operator.CatalogNameForPackage(i.OperatorInstaller.PackageName)
 	i.OperatorInstaller.StartingCSV = csv.Name
 	i.OperatorInstaller.SupportedInstallModes = operator.GetSupportedInstallModes(csv.Spec.InstallModes)
-	i.OperatorInstaller.Channel = strings.Split(labels[registrybundle.ChannelsLabel], ",")[0]
+	i.OperatorInstaller.Channel = fbcutil.DefaultChannel
 
 	i.IndexImageCatalogCreator.PackageName = i.OperatorInstaller.PackageName
 	i.IndexImageCatalogCreator.BundleImage = i.BundleImage
@@ -167,7 +162,7 @@ func generateFBCContent(ctx context.Context, f *fbcutil.FBCContext, bundleImage,
 	if indexImage != fbcutil.DefaultIndexImage { // non-default index image was specified.
 		// since an index image is specified, the bundle image will be added to the index image.
 		// generateExtraFBC will ensure that the bundle is not already present in the index image and error out if it does.
-		declcfg, err = generateExtraFBC(ctx, indexImage, bundleDeclcfg)
+		declcfg, err = generateExtraFBC(ctx, indexImage, bundleDeclcfg, f.SkipTLSVerify, f.UseHTTP)
 		if err != nil {
 			return "", fmt.Errorf("error adding bundle image %q to index image %q: %v", bundleImage, indexImage, err)
 		}
@@ -186,17 +181,12 @@ func generateFBCContent(ctx context.Context, f *fbcutil.FBCContext, bundleImage,
 
 // generateExtraFBC verifies that a bundle is not already present on the index and if not, it renders the bundle contents into a
 // declarative config type.
-func generateExtraFBC(ctx context.Context, indexImage string, bundleDeclConfig fbcutil.BundleDeclcfg) (*declarativeconfig.DeclarativeConfig, error) {
+func generateExtraFBC(ctx context.Context, indexImage string, bundleDeclConfig fbcutil.BundleDeclcfg, skipTLSVerify bool, useHTTP bool) (*declarativeconfig.DeclarativeConfig, error) {
 	log.Infof("Rendering a File-Based Catalog of the Index Image %q to verify if bundle %q is present", indexImage, bundleDeclConfig.Bundle.Name)
-	log.SetOutput(ioutil.Discard)
-	render := action.Render{
-		Refs: []string{indexImage},
-	}
 
-	imageDeclConfig, err := render.Run(ctx)
-	log.SetOutput(os.Stdout)
+	imageDeclConfig, err := fbcutil.RenderRefs(ctx, []string{indexImage}, skipTLSVerify, useHTTP)
 	if err != nil {
-		return nil, fmt.Errorf("error rendering the index image %q: %v", indexImage, err)
+		return nil, err
 	}
 
 	for _, bundle := range imageDeclConfig.Bundles {

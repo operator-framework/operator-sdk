@@ -1,3 +1,9 @@
+---
+title: Internal Operator Metrics
+linkTitle: Metrics
+weight: 20
+---
+
 The Ansible Operator comes with three internal metrics that provide an insight to the frequency and time of operator reconciliations. These metrics can be
 scraped by a Prometheus instance or any other openmetrics system. To publish operator metrics and scrape them with an openmetrics system such as Prometheus, view 
 [Kubebuilder documentation](https://book.kubebuilder.io/reference/metrics.html) on publishing metrics.

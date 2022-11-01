@@ -21,6 +21,7 @@ import (
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
 	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugins"
+	kustomizev2Alpha "sigs.k8s.io/kubebuilder/v3/pkg/plugins/common/kustomize/v2-alpha"
 
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates"
 	"github.com/operator-framework/operator-sdk/internal/plugins/ansible/v1/scaffolds/internal/templates/config/rbac"
@@ -33,12 +34,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/version"
 )
 
-const (
-	// kustomizeVersion is the sigs.k8s.io/kustomize version to be used in the project
-	kustomizeVersion = "v3.8.7"
-
-	imageName = "controller:latest"
-)
+const imageName = "controller:latest"
 
 // ansibleOperatorVersion is set to the version of ansible-operator at compile-time.
 var ansibleOperatorVersion = version.ImageVersion
@@ -77,7 +73,7 @@ func (s *initScaffolder) Scaffold() error {
 		&templates.Dockerfile{AnsibleOperatorVersion: ansibleOperatorVersion},
 		&templates.Makefile{
 			Image:                  imageName,
-			KustomizeVersion:       kustomizeVersion,
+			KustomizeVersion:       kustomizev2Alpha.KustomizeVersion,
 			AnsibleOperatorVersion: ansibleOperatorVersion,
 		},
 		&templates.GitIgnore{},

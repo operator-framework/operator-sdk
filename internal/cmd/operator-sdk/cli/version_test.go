@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"runtime"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	ver "github.com/operator-framework/operator-sdk/internal/version"

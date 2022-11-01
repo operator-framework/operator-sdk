@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -129,7 +128,7 @@ func (c bundleValidateCmd) run(logger *log.Entry, bundleRaw string) (res *valida
 			return res, err
 		}
 	} else {
-		c.directory, err = ioutil.TempDir("", "bundle-")
+		c.directory, err = os.MkdirTemp("", "bundle-")
 		if err != nil {
 			return res, err
 		}

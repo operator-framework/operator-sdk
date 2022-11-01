@@ -146,7 +146,8 @@ It should be possible to backup and restore the operand from the operator itself
 
 Setup full monitoring and alerting for your operand. All resources such as Prometheus rules (alerts) and Grafana dashboards should be created by the operator when the operand CR is instantiated. The RED method<sup>1</sup> is a good place to start with knowing what metrics to expose.
 Aim to have as few alerts as possible, by alerting on symptoms that are associated with end-user pain rather than trying to catch every possible way that pain could be caused. Alerts should link to relevant consoles and make it easy to figure out which component is at fault
-Native k8s objects emit events (“Events” objects) as their states change. Your operator should do similar for state changes related to your operand. “Custom”, here, means that it should emit events specific to your operator/operand outside of the events already emitted by their deployment methodology.  This, in conjunction with status descriptors, give much needed visibility into actions taken by your operator/operand. Operators are codified domain-specific knowledge. Your end user should not need this domain-specific knowledge to gain visibility into what’s happening with their resource.
+Native k8s objects emit events (“Events” objects) for situations users or administrators should be alerted about. Your operator should do similar for state changes related to your operand. “Custom”, here, means that it should emit events specific to your operator/operand outside of the events already emitted by their deployment methodology.  This, in conjunction with status descriptors for the CR conditions, give much needed visibility into actions taken by your operator/operand. Operators are codified domain-specific knowledge. Your end user should not need this domain-specific knowledge to gain visibility into what’s happening with their resource.
+Please, ensure that you look at the Kubernetes API conventions in the [Events][k8s-api-events] and [status][k8s-api-status] sections to know how to properly deal with them.
 
 ### Monitoring
 
@@ -157,10 +158,6 @@ Native k8s objects emit events (“Events” objects) as their states change. Yo
 
 - Operand sends useful alerts
 - Custom Resources emit custom events
-
-### Metering
-
-- Operator leverages Operator Metering
 
 **Example:** A database Operator continues to parse the logging output of the database software and understands noteworthy log events, e.g. running out of space for database files and produces alerts. The operator also instruments the database and exposes application level, e.g. database queries per second
 
@@ -180,11 +177,13 @@ Native k8s objects emit events (“Events” objects) as their states change. Yo
 
 8. Does your Operator expose Operand performance metrics?
 
-<sup>1</sup> The RED method  
+<sup>1</sup> The RED method
 The RED Method defines the three key metrics for every service in your architecture.
 * Rate (the number of requests per second)
 * Errors (the number of those requests that are failing)
 * Duration (the amount of time those requests take)
+
+Note that by building projects using Operator-SDK or [Kubebuilder][kubebuilder] CLI tools your solution leverages [controller-runtime][controller-runtime] which provides the following [reference][metric-reference] exported by default. For further information, see the [metrics][metrics] documentation to understand how to enable monitoring and add custom metrics . Also, you may want to give a look at the [(grafana/v1-alpha)][grafana-plugin-docs] which provides some JSON manifests to create Grafana dashboards using the default metrics exported.
 
 ---
 
@@ -227,3 +226,10 @@ The highest capability level aims to significantly reduce/eliminate any remainin
 
 6. Can it detect and alert when anything is working below the learned performance baseline that can’t be corrected automatically?
 
+[kubebuilder]: https://github.com/kubernetes-sigs/kubebuilder
+[controller-runtime]: https://github.com/kubernetes-sigs/controller-runtime
+[metrics]: https://book.kubebuilder.io/reference/metrics.html
+[metric-reference]: https://book.kubebuilder.io/reference/metrics-reference.html
+[grafana-plugin-docs]: https://book.kubebuilder.io/plugins/grafana-v1-alpha.html
+[k8s-api-events]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#events
+[k8s-api-status]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#spec-and-status

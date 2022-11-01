@@ -19,21 +19,24 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
+	"strings"
 
 	"github.com/operator-framework/operator-registry/alpha/action"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	declarativeconfig "github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/pkg/containertools"
+	"github.com/operator-framework/operator-registry/pkg/image/containerdregistry"
 	registryutil "github.com/operator-framework/operator-sdk/internal/registry"
 	log "github.com/sirupsen/logrus"
 )
 
 const (
-	SchemaChannel  = "olm.channel"
-	SchemaPackage  = "olm.package"
-	DefaultChannel = "operator-sdk-run-bundle"
+	SchemaChannel   = "olm.channel"
+	SchemaPackage   = "olm.package"
+	DefaultChannel  = "operator-sdk-run-bundle"
+	DefaultCacheDir = "operator-sdk-run-bundle-cache"
 )
 
 const (
@@ -58,17 +61,19 @@ type BundleDeclcfg struct {
 // a new File-Based Catalog on the fly. The fields from this struct are passed as
 // parameters to Operator Registry API calls to generate declarative config objects.
 type FBCContext struct {
-	Package      string
-	ChannelName  string
-	Refs         []string
-	ChannelEntry declarativeconfig.ChannelEntry
+	Package       string
+	ChannelName   string
+	Refs          []string
+	ChannelEntry  declarativeconfig.ChannelEntry
+	SkipTLSVerify bool
+	UseHTTP       bool
 }
 
 // CreateFBC generates an FBC by creating bundle, package and channel blobs.
 func (f *FBCContext) CreateFBC(ctx context.Context) (BundleDeclcfg, error) {
 	var bundleDC BundleDeclcfg
 	// Rendering the bundle image into a declarative config format.
-	declcfg, err := RenderRefs(ctx, f.Refs)
+	declcfg, err := RenderRefs(ctx, f.Refs, f.SkipTLSVerify, f.UseHTTP)
 	if err != nil {
 		return BundleDeclcfg{}, err
 	}
@@ -120,14 +125,41 @@ func ValidateAndStringify(declcfg *declarativeconfig.DeclarativeConfig) (string,
 	return buf.String(), nil
 }
 
+func NullLogger() *log.Entry {
+	logger := log.New()
+	logger.SetOutput(io.Discard)
+	return log.NewEntry(logger)
+}
+
 // RenderRefs will invoke Operator Registry APIs and return a declarative config object representation
 // of the references that are passed in as a string array.
-func RenderRefs(ctx context.Context, refs []string) (*declarativeconfig.DeclarativeConfig, error) {
-	render := action.Render{
-		Refs: refs,
+func RenderRefs(ctx context.Context, refs []string, skipTLSVerify bool, useHTTP bool) (*declarativeconfig.DeclarativeConfig, error) {
+	cacheDir := strings.ReplaceAll(strings.Join(refs, "_"), "/", "-")
+	if cacheDir == "" {
+		cacheDir = DefaultCacheDir
+	}
+	reg, err := containerdregistry.NewRegistry(
+		containerdregistry.WithLog(NullLogger()),
+		containerdregistry.SkipTLSVerify(skipTLSVerify),
+		containerdregistry.WithPlainHTTP(useHTTP),
+		containerdregistry.WithCacheDir(cacheDir))
+	if err != nil {
+		return nil, fmt.Errorf("error creating new image registry: %v", err)
 	}
 
-	log.SetOutput(ioutil.Discard)
+	defer func() {
+		err = reg.Destroy()
+		if err != nil {
+			log.Warn(fmt.Sprintf("Unable to cleanup registry. You may have to manually cleanup by removing the %q directory", cacheDir))
+		}
+	}()
+
+	render := action.Render{
+		Refs:     refs,
+		Registry: reg,
+	}
+
+	log.SetOutput(io.Discard)
 	declcfg, err := render.Run(ctx)
 	log.SetOutput(os.Stdout)
 	if err != nil {

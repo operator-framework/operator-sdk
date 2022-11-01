@@ -18,7 +18,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -49,7 +48,7 @@ func RemoveKustomizeCRDManifests() error {
 			return err
 		}
 	}
-	children, err := ioutil.ReadDir(configPatchesDir)
+	children, err := os.ReadDir(configPatchesDir)
 	if err == nil && len(children) == 0 {
 		if err := os.RemoveAll(configPatchesDir); err != nil {
 			return err
@@ -84,35 +83,105 @@ func UpdateKustomizationsInit() error {
 # 'CERTMANAGER' needs to be enabled to use ca injection
 #- webhookcainjection_patch.yaml
 
-# the following config is for teaching kustomize how to do var substitution
-vars:
 # [CERTMANAGER] To enable cert-manager, uncomment all sections with 'CERTMANAGER' prefix.
-#- name: CERTIFICATE_NAMESPACE # namespace of the certificate CR
-#  objref:
-#    kind: Certificate
-#    group: cert-manager.io
-#    version: v1
-#    name: serving-cert # this name should match the one in certificate.yaml
-#  fieldref:
-#    fieldpath: metadata.namespace
-#- name: CERTIFICATE_NAME
-#  objref:
-#    kind: Certificate
-#    group: cert-manager.io
-#    version: v1
-#    name: serving-cert # this name should match the one in certificate.yaml
-#- name: SERVICE_NAMESPACE # namespace of the service
-#  objref:
-#    kind: Service
-#    version: v1
-#    name: webhook-service
-#  fieldref:
-#    fieldpath: metadata.namespace
-#- name: SERVICE_NAME
-#  objref:
-#    kind: Service
-#    version: v1
-#    name: webhook-service
+# Uncomment the following replacements to add the cert-manager CA injection annotations
+#replacements:
+#  - source: # Add cert-manager annotation to ValidatingWebhookConfiguration, MutatingWebhookConfiguration and CRDs
+#      kind: Certificate
+#      group: cert-manager.io
+#      version: v1
+#      name: serving-cert # this name should match the one in certificate.yaml
+#      fieldPath: .metadata.namespace # namespace of the certificate CR
+#    targets:
+#      - select:
+#          kind: ValidatingWebhookConfiguration
+#        fieldPaths:
+#          - .metadata.annotations.[cert-manager.io/inject-ca-from]
+#        options:
+#          delimiter: '/'
+#          index: 0
+#          create: true
+#      - select:
+#          kind: MutatingWebhookConfiguration
+#        fieldPaths:
+#          - .metadata.annotations.[cert-manager.io/inject-ca-from]
+#        options:
+#          delimiter: '/'
+#          index: 0
+#          create: true
+#      - select:
+#          kind: CustomResourceDefinition
+#        fieldPaths:
+#          - .metadata.annotations.[cert-manager.io/inject-ca-from]
+#        options:
+#          delimiter: '/'
+#          index: 0
+#          create: true
+#  - source:
+#      kind: Certificate
+#      group: cert-manager.io
+#      version: v1
+#      name: serving-cert # this name should match the one in certificate.yaml
+#      fieldPath: .metadata.name
+#    targets:
+#      - select:
+#          kind: ValidatingWebhookConfiguration
+#        fieldPaths:
+#          - .metadata.annotations.[cert-manager.io/inject-ca-from]
+#        options:
+#          delimiter: '/'
+#          index: 1
+#          create: true
+#      - select:
+#          kind: MutatingWebhookConfiguration
+#        fieldPaths:
+#          - .metadata.annotations.[cert-manager.io/inject-ca-from]
+#        options:
+#          delimiter: '/'
+#          index: 1
+#          create: true
+#      - select:
+#          kind: CustomResourceDefinition
+#        fieldPaths:
+#          - .metadata.annotations.[cert-manager.io/inject-ca-from]
+#        options:
+#          delimiter: '/'
+#          index: 1
+#          create: true
+#  - source: # Add cert-manager annotation to the webhook Service
+#      kind: Service
+#      version: v1
+#      name: webhook-service
+#      fieldPath: .metadata.name # namespace of the service
+#    targets:
+#      - select:
+#          kind: Certificate
+#          group: cert-manager.io
+#          version: v1
+#        fieldPaths:
+#          - .spec.dnsNames.0
+#          - .spec.dnsNames.1
+#        options:
+#          delimiter: '.'
+#          index: 0
+#          create: true
+#  - source:
+#      kind: Service
+#      version: v1
+#      name: webhook-service
+#      fieldPath: .metadata.namespace # namespace of the service
+#    targets:
+#      - select:
+#          kind: Certificate
+#          group: cert-manager.io
+#          version: v1
+#        fieldPaths:
+#          - .spec.dnsNames.0
+#          - .spec.dnsNames.1
+#        options:
+#          delimiter: '.'
+#          index: 1
+#          create: true
 `, ""); err != nil {
 		return fmt.Errorf("remove %s patch and vars blocks: %v", defaultKFile, err)
 	}
@@ -125,7 +194,7 @@ vars:
 func UpdateKustomizationsCreateAPI() error {
 
 	crdKFile := filepath.Join("config", "crd", "kustomization.yaml")
-	if crdKBytes, err := ioutil.ReadFile(crdKFile); err != nil && !errors.Is(err, os.ErrNotExist) {
+	if crdKBytes, err := os.ReadFile(crdKFile); err != nil && !errors.Is(err, os.ErrNotExist) {
 		log.Debugf("Error reading kustomization for substitution: %v", err)
 	} else if err == nil {
 		if bytes.Contains(crdKBytes, []byte("[WEBHOOK]")) || bytes.Contains(crdKBytes, []byte("[CERTMANAGER]")) {

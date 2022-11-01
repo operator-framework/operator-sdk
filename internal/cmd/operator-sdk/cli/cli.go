@@ -26,11 +26,13 @@ import (
 	"sigs.k8s.io/kubebuilder/v3/pkg/model/stage"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugin"
 	kustomizev1 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/common/kustomize/v1"
-	declarativev1 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/declarative/v1"
-
+	kustomizev2Alpha "sigs.k8s.io/kubebuilder/v3/pkg/plugins/common/kustomize/v2-alpha"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang"
+	declarativev1 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/declarative/v1"
+	deployimagev1alpha "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/deploy-image/v1alpha1"
 	golangv2 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/v2"
 	golangv3 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/v3"
+	grafanav1alpha "sigs.k8s.io/kubebuilder/v3/pkg/plugins/optional/grafana/v1alpha"
 
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/alpha/config3alphato3"
 	"github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/bundle"
@@ -74,8 +76,6 @@ func Run() error {
 // This CLI can run kubebuilder commands and certain SDK specific commands that are aligned for
 // the kubebuilder project layout
 func GetPluginsCLIAndRoot() (*cli.CLI, *cobra.Command) {
-	// todo: Export the bundles KB and then change here to use the bundles exported instead
-	// more info: https://github.com/kubernetes-sigs/kubebuilder/pull/2112
 	gov2Bundle, _ := plugin.NewBundle(golang.DefaultNameQualifier, golangv2.Plugin{}.Version(),
 		golangv2.Plugin{},
 		envtestv1.Plugin{},
@@ -88,34 +88,48 @@ func GetPluginsCLIAndRoot() (*cli.CLI, *cobra.Command) {
 		manifestsv2.Plugin{},
 		scorecardv2.Plugin{},
 	)
+	gov4AlphaBundle, _ := plugin.NewBundle(golang.DefaultNameQualifier, plugin.Version{Number: 4, Stage: stage.Alpha},
+		kustomizev2Alpha.Plugin{},
+		// TODO: We need to bump here golangv4-alpha when Kubebuilder
+		// begin to provide it without k8s 1.22 support
+		golangv3.Plugin{},
+		manifestsv2.Plugin{},
+		scorecardv2.Plugin{},
+	)
 	ansibleBundle, _ := plugin.NewBundle("ansible"+plugins.DefaultNameQualifier, plugin.Version{Number: 1},
-		kustomizev1.Plugin{},
+		kustomizev2Alpha.Plugin{},
 		ansiblev1.Plugin{},
 		manifestsv2.Plugin{},
 		scorecardv2.Plugin{},
 	)
 	helmBundle, _ := plugin.NewBundle("helm"+plugins.DefaultNameQualifier, plugin.Version{Number: 1},
-		kustomizev1.Plugin{},
+		kustomizev2Alpha.Plugin{},
 		helmv1.Plugin{},
 		manifestsv2.Plugin{},
 		scorecardv2.Plugin{},
 	)
 	hybridBundle, _ := plugin.NewBundle("hybrid.helm"+plugins.DefaultNameQualifier, plugin.Version{Number: 1, Stage: stage.Alpha},
-		kustomizev1.Plugin{},
+		kustomizev2Alpha.Plugin{},
 		hybrid.Plugin{},
 		manifestsv2.Plugin{},
 		scorecardv2.Plugin{},
+	)
+	deployImageBundle, _ := plugin.NewBundle("deploy-image."+golang.DefaultNameQualifier, plugin.Version{Number: 1, Stage: stage.Alpha},
+		deployimagev1alpha.Plugin{},
+		manifestsv2.Plugin{},
 	)
 	c, err := cli.New(
 		cli.WithCommandName("operator-sdk"),
 		cli.WithVersion(makeVersionString()),
 		cli.WithPlugins(
 			ansibleBundle,
-			gov2Bundle,
+			gov2Bundle, // Deprecated
 			gov3Bundle,
+			gov4AlphaBundle,
 			helmBundle,
 			hybridBundle,
-			kustomizev1.Plugin{},
+			grafanav1alpha.Plugin{},
+			deployImageBundle,
 			declarativev1.Plugin{},
 			&quarkusv1.Plugin{},
 		),

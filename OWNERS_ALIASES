@@ -8,11 +8,9 @@ aliases:
   - asmacdo
   - jmrodri
   - joelanford
-  - marc-obrien
 
   # Contributors who can approve any PRs in the repo.
   sdk-approvers:
-  - camilamacedo86
   - fabianvf
   - jberkhahn
   - rashmigottipati
@@ -21,6 +19,7 @@ aliases:
 
   # Contributors who can review and LGTM any PRs in the repo.
   sdk-reviewers:
+  - everettraven
 
   # Contributors who were approvers that are no longer directly involved with the project.
   # This role is symbolic.
@@ -29,3 +28,5 @@ aliases:
   - hasbro17
   - shawn-hurley
   - estroz
+  - camilamacedo86
+  - marc-obrien

@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,7 +27,8 @@ import (
 
 // LoggingEnqueueRequestForAnnotation wraps operator-lib handler for
 // "InstrumentedEnqueueRequestForObject", and logs the events as they occur
-//		&handler.LoggingEnqueueRequestForAnnotation{}
+//
+//	&handler.LoggingEnqueueRequestForAnnotation{}
 type LoggingEnqueueRequestForAnnotation struct {
 	handler.EnqueueRequestForAnnotation
 }

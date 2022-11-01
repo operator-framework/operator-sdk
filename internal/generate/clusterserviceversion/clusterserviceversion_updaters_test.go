@@ -15,7 +15,7 @@
 package clusterserviceversion
 
 import (
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	admissionregv1 "k8s.io/api/admissionregistration/v1"
@@ -314,8 +314,7 @@ var _ = Describe("findMatchingDeploymentAndServiceForWebhook", func() {
 	})
 
 	Context("webhook config has a matching service name", func() {
-		By("parsing one deployment and one service with one label")
-		It("returns the first service and deployment", func() {
+		It("parsing one deployment and one service with one label, it will returns the first service and deployment", func() {
 			labels := map[string]string{"operator-name": "test-operator"}
 			c.Deployments = []appsv1.Deployment{newDeployment(depName1, labels)}
 			c.Services = []corev1.Service{newService(serviceName1, labels)}
@@ -325,8 +324,7 @@ var _ = Describe("findMatchingDeploymentAndServiceForWebhook", func() {
 			Expect(service.GetName()).To(Equal(serviceName1))
 		})
 
-		By("parsing two deployments and two services with non-intersecting labels")
-		It("returns the first service and deployment", func() {
+		It("parsing two deployments and two services with non-intersecting labels, it will returns the first service and deployment", func() {
 			labels1 := map[string]string{"operator-name": "test-operator"}
 			labels2 := map[string]string{"foo": "bar"}
 			c.Deployments = []appsv1.Deployment{
@@ -343,8 +341,7 @@ var _ = Describe("findMatchingDeploymentAndServiceForWebhook", func() {
 			Expect(service.GetName()).To(Equal(serviceName1))
 		})
 
-		By("parsing two deployments and two services with a label subset")
-		It("returns the first service and second deployment", func() {
+		It("parsing two deployments and two services with a label subset, it will returns the first service and second deployment", func() {
 			labels1 := map[string]string{"operator-name": "test-operator"}
 			labels2 := map[string]string{"operator-name": "test-operator", "foo": "bar"}
 			c.Deployments = []appsv1.Deployment{
@@ -360,8 +357,7 @@ var _ = Describe("findMatchingDeploymentAndServiceForWebhook", func() {
 	})
 
 	Context("webhook config does not have a matching service", func() {
-		By("parsing one deployment and one service with one label")
-		It("returns neither service nor deployment name", func() {
+		It("parsing one deployment and one service with one label, it will returns neither service nor deployment name", func() {
 			labels := map[string]string{"operator-name": "test-operator"}
 			c.Deployments = []appsv1.Deployment{newDeployment(depName1, labels)}
 			c.Services = []corev1.Service{newService(serviceName1, labels)}
@@ -373,8 +369,7 @@ var _ = Describe("findMatchingDeploymentAndServiceForWebhook", func() {
 	})
 
 	Context("webhook config has a matching service but labels do not match", func() {
-		By("parsing one deployment and one service with one label")
-		It("returns the first service and no deployment", func() {
+		It("parsing one deployment and one service with one label, it will returns the first service and no deployment", func() {
 			labels1 := map[string]string{"operator-name": "test-operator"}
 			labels2 := map[string]string{"foo": "bar"}
 			c.Deployments = []appsv1.Deployment{newDeployment(depName1, labels1)}
@@ -385,8 +380,7 @@ var _ = Describe("findMatchingDeploymentAndServiceForWebhook", func() {
 			Expect(service.GetName()).To(Equal(serviceName1))
 		})
 
-		By("parsing one deployment and one service with two intersecting labels")
-		It("returns the first service and no deployment", func() {
+		It("parsing one deployment and one service with two intersecting labels, it will returns the first service and no deployment", func() {
 			labels1 := map[string]string{"operator-name": "test-operator", "foo": "bar"}
 			labels2 := map[string]string{"foo": "bar", "baz": "bat"}
 			c.Deployments = []appsv1.Deployment{newDeployment(depName1, labels1)}

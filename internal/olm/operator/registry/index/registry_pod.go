@@ -29,6 +29,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
@@ -83,6 +84,10 @@ type SQLiteRegistryPod struct { //nolint:maligned
 	// UseHTTP uses plain HTTP for container image registries while pulling bundles.
 	UseHTTP bool `json:"UseHTTP"`
 
+	// SecurityContext defines the security context which will enable the
+	// SecurityContext on the Pod
+	SecurityContext string
+
 	// pod represents a kubernetes *corev1.pod that will be created on a cluster using an index image
 	pod *corev1.Pod
 
@@ -125,6 +130,15 @@ func (rp *SQLiteRegistryPod) Create(ctx context.Context, cfg *operator.Configura
 	// make catalog source the owner of registry pod object
 	if err := controllerutil.SetOwnerReference(cs, rp.pod, rp.cfg.Scheme); err != nil {
 		return nil, fmt.Errorf("error setting owner reference: %w", err)
+	}
+
+	// Add security context if the user passed in the --security-context-config flag
+	if rp.SecurityContext == "restricted" {
+		rp.pod.Spec.SecurityContext = &corev1.PodSecurityContext{
+			SeccompProfile: &corev1.SeccompProfile{
+				Type: corev1.SeccompProfileTypeRuntimeDefault,
+			},
+		}
 	}
 
 	if err := rp.cfg.Client.Create(ctx, rp.pod); err != nil {
@@ -217,6 +231,40 @@ func (rp *SQLiteRegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 			Namespace: rp.cfg.Namespace,
 		},
 		Spec: corev1.PodSpec{
+			// DO NOT set RunAsUser and RunAsNonRoot, we must leave this empty to allow
+			// those that want to use this command against Openshift vendor do not face issues.
+			//
+			// Why not set RunAsUser?
+			// RunAsUser cannot be set because in OpenShift each namespace has a valid range like
+			// [1000680000, 1000689999]. Therefore, values like 1001 will not work. Also, in OCP each namespace
+			// has a valid range allocate. Therefore, by leaving it empty the OCP will adopt RunAsUser strategy
+			// of MustRunAsRange. The PSA will look for the openshift.io/sa.scc.uid-range annotation
+			// in the namespace to populate RunAsUser fields when the pod be admitted. Note that
+			// is NOT possible to know a valid value that could be accepeted beforehand.
+			//
+			// Why not set RunAsNonRoot?
+			// If we set RunAsNonRoot = true and the image informed does not define the UserID
+			// (i.e. in the Dockerfile we have not `USER 11211:11211 `) then, the Pod will fail to run with the
+			// error `"container has runAsNonRoot and image will run as root …` in ANY Kubernetes cluster.
+			// (vanilla or OCP). Therefore, by leaving it empty this field will be set by OCP if/when the Pod be
+			// qualified for restricted-v2 SCC policy.
+			//
+			// TODO: remove when OpenShift 4.10 and Kubernetes 1.19 be no longer supported
+			// Why not set SeccompProfile?
+			// This option can only work in OCP versions >= 4.11 and Kubernetes versions >= 19.
+			//
+			// 2022-09-27 (jesusr): We added a --security-context-config flag to run bundle
+			// that will add the following stanza to the pod. This will allow
+			// users to selectively enable this stanza. Once this context
+			// becomes the default, we should uncomment this code and remove the
+			// --security-context-config flag.
+			// ---- end of update comment
+			//
+			// SecurityContext: &corev1.PodSecurityContext{
+			//     SeccompProfile: &corev1.SeccompProfile{
+			//         Type: corev1.SeccompProfileTypeRuntimeDefault,
+			//     },
+			// },
 			Containers: []corev1.Container{
 				{
 					Name:  defaultContainerName,
@@ -228,6 +276,14 @@ func (rp *SQLiteRegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 					},
 					Ports: []corev1.ContainerPort{
 						{Name: defaultContainerPortName, ContainerPort: rp.GRPCPort},
+					},
+					SecurityContext: &corev1.SecurityContext{
+						Privileged:               pointer.Bool(false),
+						ReadOnlyRootFilesystem:   pointer.Bool(false),
+						AllowPrivilegeEscalation: pointer.Bool(false),
+						Capabilities: &corev1.Capabilities{
+							Drop: []corev1.Capability{"ALL"},
+						},
 					},
 				},
 			},

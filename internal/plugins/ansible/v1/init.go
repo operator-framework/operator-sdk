@@ -108,7 +108,8 @@ func (p *initSubcommand) InjectConfig(c config.Config) error {
 }
 
 func (p *initSubcommand) Scaffold(fs machinery.Filesystem) error {
-	if err := addInitCustomizations(p.config.GetProjectName()); err != nil {
+
+	if err := addInitCustomizations(p.config.GetProjectName(), p.config.IsComponentConfig()); err != nil {
 		return fmt.Errorf("error updating init manifests: %s", err)
 	}
 
@@ -151,25 +152,41 @@ func (p *initSubcommand) PostScaffold() error {
 }
 
 // addInitCustomizations will perform the required customizations for this plugin on the common base
-func addInitCustomizations(projectName string) error {
+func addInitCustomizations(projectName string, componentConfig bool) error {
 	managerFile := filepath.Join("config", "manager", "manager.yaml")
+	managerProxyPatchFile := filepath.Join("config", "default", "manager_auth_proxy_patch.yaml")
 
 	// todo: we ought to use afero instead. Replace this methods to insert/update
 	// by https://github.com/kubernetes-sigs/kubebuilder/pull/2119
 
 	// Add leader election
-	err := util.InsertCode(managerFile,
-		"--leader-elect",
-		fmt.Sprintf("\n        - --leader-election-id=%s", projectName))
-	if err != nil {
-		return err
-	}
-	managerProxyPatchFile := filepath.Join("config", "default", "manager_auth_proxy_patch.yaml")
-	err = util.InsertCode(managerProxyPatchFile,
-		"- \"--leader-elect\"",
-		fmt.Sprintf("\n        - \"--leader-election-id=%s\"", projectName))
-	if err != nil {
-		return err
+	if componentConfig {
+		err := util.InsertCode(managerFile,
+			"- /manager",
+			fmt.Sprintf("\n        args:\n        - --leader-election-id=%s", projectName))
+		if err != nil {
+			return err
+		}
+
+		err = util.InsertCode(managerProxyPatchFile,
+			"memory: 64Mi",
+			fmt.Sprintf("\n      - name: manager\n        args:\n        - \"--leader-election-id=%s\"", projectName))
+		if err != nil {
+			return err
+		}
+	} else {
+		err := util.InsertCode(managerFile,
+			"--leader-elect",
+			fmt.Sprintf("\n        - --leader-election-id=%s", projectName))
+		if err != nil {
+			return err
+		}
+		err = util.InsertCode(managerProxyPatchFile,
+			"- \"--leader-elect\"",
+			fmt.Sprintf("\n        - \"--leader-election-id=%s\"", projectName))
+		if err != nil {
+			return err
+		}
 	}
 
 	// update default resource request and limits with bigger values
@@ -191,7 +208,7 @@ func addInitCustomizations(projectName string) error {
             memory: 256Mi
       `
 
-	err = util.ReplaceInFile(managerFile, resourcesLimitsFragment, resourcesLimitsAnsibleFragment)
+	err := util.ReplaceInFile(managerFile, resourcesLimitsFragment, resourcesLimitsAnsibleFragment)
 	if err != nil {
 		return err
 	}
@@ -213,20 +230,23 @@ func addInitCustomizations(projectName string) error {
 	if err != nil {
 		return err
 	}
-	err = util.ReplaceInFile(managerProxyPatchFile, "8081", "6789")
-	if err != nil {
-		return err
-	}
 
-	managerConfigFile := filepath.Join("config", "manager", "controller_manager_config.yaml")
-	err = util.ReplaceInFile(managerConfigFile, "8081", "6789")
-	if err != nil {
-		return err
-	}
-	// Remove the webhook option for the componentConfig since webhooks are not supported by ansible
-	err = util.ReplaceInFile(managerConfigFile, "webhook:\n  port: 9443", "")
-	if err != nil {
-		return err
+	if componentConfig {
+		managerConfigFile := filepath.Join("config", "manager", "controller_manager_config.yaml")
+		err = util.ReplaceInFile(managerConfigFile, "8081", "6789")
+		if err != nil {
+			return err
+		}
+		// Remove the webhook option for the componentConfig since webhooks are not supported by ansible
+		err = util.ReplaceInFile(managerConfigFile, "webhook:\n  port: 9443", "")
+		if err != nil {
+			return err
+		}
+	} else {
+		err = util.ReplaceInFile(managerProxyPatchFile, "8081", "6789")
+		if err != nil {
+			return err
+		}
 	}
 
 	// Remove the call to the command as manager. Helm/Ansible has not been exposing this entrypoint
@@ -243,36 +263,14 @@ func addInitCustomizations(projectName string) error {
 		return fmt.Errorf("error updating kustomization.yaml files: %v", err)
 	}
 
-	//todo: remove the space on Kubebuilder project so that we can remove the following replace
-	//it is required because of the molecule issues, see: https://github.com/operator-framework/operator-sdk/issues/5838
+	//TODO: Remove below code snippet whenever the scaffolding is updated in Kubebuilder to have proper YAML output.
+	const target = "      # according to the platforms which are supported by your solution. "
+	const replace = "      # according to the platforms which are supported by your solution."
 
-	const commentManager = `#   leaderElectionReleaseOnCancel defines if the leader should step down volume 
-#   when the Manager ends. This requires the binary to immediately end when the
-#   Manager is stopped, otherwise, this setting is unsafe. Setting this significantly
-#   speeds up voluntary leader transitions as the new leader don't have to wait
-#   LeaseDuration time first.
-#   In the default scaffold provided, the program ends immediately after 
-#   the manager stops, so would be fine to enable this option. However, 
-#   if you are doing or is intended to do any operation such as perform cleanups 
-#   after the manager stops then its usage might be unsafe.
-#   leaderElectionReleaseOnCancel: true`
-
-	const commentManagerUpdate = `# leaderElectionReleaseOnCancel defines if the leader should step down volume
-# when the Manager ends. This requires the binary to immediately end when the
-# Manager is stopped, otherwise, this setting is unsafe. Setting this significantly
-# speeds up voluntary leader transitions as the new leader don't have to wait
-# LeaseDuration time first.
-# In the default scaffold provided, the program ends immediately after
-# the manager stops, so would be fine to enable this option. However,
-# if you are doing or is intended to do any operation such as perform cleanups
-# after the manager stops then its usage might be unsafe.
-# leaderElectionReleaseOnCancel: true`
-
-	controllerManagerFile := filepath.Join("config", "manager", "controller_manager_config.yaml")
-
-	err = util.ReplaceInFile(controllerManagerFile, commentManager, commentManagerUpdate)
+	err = util.ReplaceInFile(managerFile, target, replace)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }

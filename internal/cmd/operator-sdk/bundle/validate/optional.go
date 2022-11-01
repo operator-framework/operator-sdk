@@ -70,6 +70,14 @@ var optionalValidators = validators{
 		},
 		desc: "Good Practices bundle validation. This validator validates the bundle against criteria and suggestions defined as good practices for bundles under the operator-framework solutions. More info: https://sdk.operatorframework.io/docs/best-practices/.",
 	},
+	{
+		Validator: apivalidation.MultipleArchitecturesValidator,
+		name:      "multiarch",
+		labels: map[string]string{
+			nameKey: "multiarch",
+		},
+		desc: "(Alpha) Multiple Architectures bundle validation. This validator validates the bundle against criteria defined to configure the support for multiple architectures. More info: https://olm.operatorframework.io/docs/advanced-tasks/ship-operator-supporting-multiarch/.",
+	},
 }
 
 // runOptionalValidators runs optional validators selected by sel on bundle.

@@ -17,7 +17,7 @@ package bases
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
@@ -185,7 +185,7 @@ func (b ClusterServiceVersion) newBase() *v1alpha1.ClusterServiceVersion {
 // readClusterServiceVersionBase returns the ClusterServiceVersion base at path.
 // If no base is found, readClusterServiceVersionBase returns an error.
 func readClusterServiceVersionBase(path string) (*v1alpha1.ClusterServiceVersion, error) {
-	b, err := ioutil.ReadFile(path)
+	b, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}

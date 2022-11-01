@@ -15,7 +15,6 @@
 package scorecard
 
 import (
-	"io/ioutil"
 	"log"
 	"os"
 	"testing"
@@ -24,14 +23,14 @@ import (
 func TestGetKubeNamespace(t *testing.T) {
 
 	// create temp kubeconfig file
-	file, err := ioutil.TempFile("/tmp", "")
+	file, err := os.CreateTemp("/tmp", "")
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
 	defer os.Remove(file.Name())
 
 	data := []byte(testKubeconfig)
-	err = ioutil.WriteFile(file.Name(), data, 0644)
+	err = os.WriteFile(file.Name(), data, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -61,14 +60,14 @@ func TestGetKubeNamespace(t *testing.T) {
 func TestGetKubeNamespaceEnvVar(t *testing.T) {
 
 	// create temp kubeconfig file
-	file, err := ioutil.TempFile("/tmp", "")
+	file, err := os.CreateTemp("/tmp", "")
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
 	defer os.Remove(file.Name())
 
 	data := []byte(testKubeconfig)
-	err = ioutil.WriteFile(file.Name(), data, 0644)
+	err = os.WriteFile(file.Name(), data, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}

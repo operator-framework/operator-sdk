@@ -2,7 +2,7 @@
 title: Go Operator Tutorial
 linkTitle: Tutorial
 weight: 30
-description: An in-depth walkthough of building and running a Go-based operator.
+description: An in-depth walkthrough of building and running a Go-based operator.
 ---
 
 **NOTE:** If your project was created with an `operator-sdk` version prior to `v1.0.0`
@@ -11,9 +11,9 @@ please [migrate][migration-guide], or consult the [legacy docs][legacy-quickstar
 ## Prerequisites
 
 - Go through the [installation guide][install-guide].
-- User authorized with `cluster-admin` permissions.
+- Make sure your user is authorized with `cluster-admin` permissions.
 - An accessible image registry for various operator images (ex. [hub.docker.com](https://hub.docker.com/signup),
-[quay.io](https://quay.io/)) and be logged in in your command line environment.
+[quay.io](https://quay.io/)) and be logged in to your command line environment.
   - `example.com` is used as the registry Docker Hub namespace in these examples.
   Replace it with another value if using a different registry or namespace.
   - [Authentication and certificates][image-reg-config] if the registry is private or uses a custom CA.
@@ -37,6 +37,15 @@ cd $HOME/projects/memcached-operator
 # so all API groups will be <group>.example.com
 operator-sdk init --domain example.com --repo github.com/example/memcached-operator
 ```
+`--domain` will be used as the prefix of the API group your custom resources will be created in.
+API groups are a mechanism to group portions of the Kubernetes API. You're probably already familiar with
+some of the core Kubernetes API groups, such as `apps` or `rbac.authorization.k8s.io`. API groups are used
+internally to version your Kubernetes resources and are thus used for many things. Importantly, you should 
+name your domain to group your resource types in meaningful group(s) for ease of understanding and because these
+groups determine how access can be controlled to your resource types using RBAC. For more information, see [the core Kubernetes docs](https://kubernetes.io/docs/reference/using-api/#api-groups) and [the Kubebuilder docs](https://book.kubebuilder.io/cronjob-tutorial/gvks.html).
+
+**Note** If your local environment is Apple Silicon (`darwin/arm64`) use the `go/v4-alpha`
+plugin which provides support for this platform by adding to the init subCommand the flag `--plugins=go/v4-alpha`
 
 To learn about the project directory structure, see [Kubebuilder project layout][kubebuilder_layout_doc] doc.
 
@@ -57,7 +66,7 @@ The Manager can restrict the namespace that all controllers will watch for resou
 mgr, err := ctrl.NewManager(cfg, manager.Options{Namespace: namespace})
 ```
 
-By default this will be the namespace that the operator is running in. To watch all namespaces leave the namespace option empty:
+By default this will be empty string which means watch all namespaces:
 
 ```Go
 mgr, err := ctrl.NewManager(cfg, manager.Options{Namespace: ""})
@@ -80,6 +89,8 @@ controllers/memcached_controller.go
 
 This will scaffold the Memcached resource API at `api/v1alpha1/memcached_types.go` and the controller at `controllers/memcached_controller.go`.
 
+**Note:** In this tutorial we will be providing all the steps to show you how to implement an operator project. However, as a follow up you might want to check the [Deploy Image plugin][deploy-image-plugin-doc] with which it is possible to have the whole code generated to deploy and manage an Operand(image). To do so, you can use the the command `$ operator-sdk create api --group cache --version v1alpha1 --kind Memcached --plugins="deploy-image/v1-alpha" --image=memcached:1.4.36-alpine --image-container-command="memcached,-m=64,modern,-v" --run-as-user="1001"`
+
 **Note:** This guide will cover the default case of a single group API. If you would like to support Multi-Group APIs see the [Single Group to Multi-Group][multigroup-kubebuilder-doc] doc.
 
 #### Understanding Kubernetes APIs
@@ -100,15 +111,26 @@ Define the API for the Memcached Custom Resource(CR) by modifying the Go type de
 ```Go
 // MemcachedSpec defines the desired state of Memcached
 type MemcachedSpec struct {
-	//+kubebuilder:validation:Minimum=0
-	// Size is the size of the memcached deployment
-	Size int32 `json:"size"`
+	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
+	// Important: Run "make" to regenerate code after modifying this file
+	// Size defines the number of Memcached instances
+	// The following markers will use OpenAPI v3 schema to validate the value
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=3
+	// +kubebuilder:validation:ExclusiveMaximum=false
+	Size int32 `json:"size,omitempty"`
 }
 
 // MemcachedStatus defines the observed state of Memcached
 type MemcachedStatus struct {
-	// Nodes are the names of the memcached pods
-	Nodes []string `json:"nodes"`
+	// Represents the observations of a Memcached's current state.
+	// Memcached.status.conditions.type are: "Available", "Progressing", and "Degraded"
+	// Memcached.status.conditions.status are one of True, False, Unknown.
+	// Memcached.status.conditions.reason the value should be a CamelCase string and producers of specific
+	// condition types may define expected values and meanings for this field, and whether the values
+	// are considered a guaranteed API.
+	// Memcached.status.conditions.Message is a human readable message indicating details about the transition.
+	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
 }
 ```
 
@@ -183,7 +205,7 @@ The `NewControllerManagedBy()` provides a controller builder that allows various
 
 ### Controller Configurations
 
-There are a number of other useful configurations that can be made when initialzing a controller. For more details on these configurations consult the upstream [builder][builder_godocs] and [controller][controller_godocs] godocs.
+There are a number of other useful configurations that can be made when initializing a controller. For more details on these configurations consult the upstream [builder][builder_godocs] and [controller][controller_godocs] godocs.
 
 - Set the max number of concurrent Reconciles for the controller via the [`MaxConcurrentReconciles`][controller_options]  option. Defaults to 1.
   ```Go
@@ -251,6 +273,7 @@ The controller needs certain [RBAC][rbac-k8s-doc] permissions to interact with t
 //+kubebuilder:rbac:groups=cache.example.com,resources=memcacheds,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=cache.example.com,resources=memcacheds/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=cache.example.com,resources=memcacheds/finalizers,verbs=update
+//+kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
 //+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch
 
@@ -298,13 +321,21 @@ make docker-build docker-push
 
 There are three ways to run the operator:
 
-- As Go program outside a cluster
+- As a Go program outside a cluster
 - As a Deployment inside a Kubernetes cluster
 - Managed by the [Operator Lifecycle Manager (OLM)][doc-olm] in [bundle][quickstart-bundle] format
 
 ### 1. Run locally outside the cluster
 
-The following steps will show how to deploy the operator on the Cluster. However, to run locally for development purposes and outside of a Cluster use the target `make install run`.
+The following steps will show how to deploy the operator on the cluster. However, to run locally for development purposes and outside of a cluster use the target `make install run`.
+
+Note that by using this plugin the Operand image informed will be stored via an environment variable in the `config/manager/manager.yaml` manifest.
+
+Therefore, before running `make install run` you need to export any environment variable that you might have. Example:
+
+```sh
+export MEMCACHED_IMAGE="memcached:1.4.36-alpine"
+```
 
 ### 2. Run as a Deployment inside the cluster
 
@@ -492,3 +523,4 @@ Next, check out the following:
 [controller-runtime]: https://github.com/kubernetes-sigs/controller-runtime
 [kb-doc-gkvs]: https://book.kubebuilder.io/cronjob-tutorial/gvks.html
 [rbac_markers]: https://book.kubebuilder.io/reference/markers/rbac.html
+[deploy-image-plugin-doc]: https://master.book.kubebuilder.io/plugins/deploy-image-plugin-v1-alpha.html

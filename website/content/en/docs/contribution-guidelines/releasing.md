@@ -71,12 +71,9 @@ We will use the `v1.3.0` release version in this example.
   git push -u upstream v1.3.x
   ```
 1. Make sure that the list of supported OLM versions stated in the [Overview][overview] section of SDK docs is updated. If a new version of OLM needs to be officially supported, follow the steps in [updating OLM bindata](#updating-olm-bindata) section.
-1. Create and merge a commit that updates the top-level [Makefile] variable `IMAGE_VERSION`
-to the upcoming release tag `v1.3.0`. This variable ensures sample projects have been tagged
-correctly prior to the release commit.
-  ```sh
-  sed -i -E 's/(IMAGE_VERSION = ).+/\1v1\.3\.0/g' Makefile
-  ```
+
+### 0. Lock the `master` branch
+
 1. Lock down the `master` branch to prevent further commits before the release completes:
   1. Go to `Settings -> Branches` in the SDK repo.
   1. Under `Branch protection rules`, click `Edit` on the `master` branch rule.
@@ -93,6 +90,16 @@ git pull
 git checkout -b release-$RELEASE_VERSION
 ```
 
+Update the top-level [Makefile] variable `IMAGE_VERSION`
+to the upcoming release tag `v1.3.0`. This variable ensures sample projects have been tagged
+correctly prior to the release commit.
+  ```sh
+  sed -i -E 's/(IMAGE_VERSION = ).+/\1v1\.3\.0/g' Makefile
+  ```
+  For MAC users command will be little different.
+  ```sh
+  gsed -i -E 's/(IMAGE_VERSION = ).+/\1v1\.3\.0/g' Makefile
+  ```
 Run the pre-release `make` target:
 
 ```sh

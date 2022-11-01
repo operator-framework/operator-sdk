@@ -17,10 +17,11 @@ package kustomize
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	manifestsv2 "github.com/operator-framework/operator-sdk/internal/plugins/manifests/v2"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
@@ -35,7 +36,7 @@ import (
 
 	genutil "github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/generate/internal"
 	"github.com/operator-framework/operator-sdk/internal/generate/clusterserviceversion/bases"
-	"github.com/operator-framework/operator-sdk/internal/plugins/manifests/v2/templates/config/manifests"
+	templatemanifests "github.com/operator-framework/operator-sdk/internal/plugins/manifests/v2/templates/config/manifests"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
@@ -220,12 +221,17 @@ func (c manifestsCmd) run(cfg config.Config) error {
 		return err
 	}
 	outputPath := filepath.Join(c.outputDir, relBasePath)
-	if err = ioutil.WriteFile(outputPath, csvBytes, 0644); err != nil {
+	if err = os.WriteFile(outputPath, csvBytes, 0644); err != nil {
 		return fmt.Errorf("error writing CSV base: %v", err)
 	}
 
 	// Write a kustomization.yaml to outputDir if one does not exist.
-	kustomization := manifests.Kustomization{SupportsWebhooks: operatorType == projutil.OperatorTypeGo}
+	kustomization := templatemanifests.Kustomization{
+		// we need perform different scaffold when we know that is using kustomize version 4.x
+		// and is Golang Type
+		SupportsKustomizeV4: manifestsv2.HasSupportForKustomizeV4(cfg),
+		SupportsWebhooks:    operatorType == projutil.OperatorTypeGo,
+	}
 	// Ensure the path to the manifest directory is correctly carried through
 	kustomization.Path = c.outputDir
 	err = machinery.NewScaffold(machinery.Filesystem{FS: afero.NewOsFs()}, machinery.WithConfig(cfg)).Execute(

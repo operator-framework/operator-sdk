@@ -53,14 +53,15 @@ const (
 
 // AnsibleOperatorReconciler - object to reconcile runner requests
 type AnsibleOperatorReconciler struct {
-	GVK              schema.GroupVersionKind
-	Runner           runner.Runner
-	Client           client.Client
-	APIReader        client.Reader
-	EventHandlers    []events.EventHandler
-	ReconcilePeriod  time.Duration
-	ManageStatus     bool
-	AnsibleDebugLogs bool
+	GVK                     schema.GroupVersionKind
+	Runner                  runner.Runner
+	Client                  client.Client
+	APIReader               client.Reader
+	EventHandlers           []events.EventHandler
+	ReconcilePeriod         time.Duration
+	ManageStatus            bool
+	AnsibleDebugLogs        bool
+	WatchAnnotationsChanges bool
 }
 
 // Reconcile - handle the event.

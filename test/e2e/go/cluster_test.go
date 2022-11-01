@@ -18,8 +18,6 @@ package e2e_go_test
 
 import (
 	"encoding/base64"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -27,7 +25,7 @@ import (
 
 	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/operator-framework/operator-sdk/internal/testutils"
 	"github.com/operator-framework/operator-sdk/test/common"
@@ -51,10 +49,6 @@ var _ = Describe("operator-sdk", func() {
 
 			By("cleaning up permissions")
 			testutils.WrapWarnOutput(tc.Kubectl.Command("delete", "clusterrolebinding", metricsClusterRoleBindingName))
-
-			By("cleaning up created API objects during test process")
-			// TODO(estroz): go/v2 does not have this target, so generalize once tests are refactored.
-			testutils.WrapWarn(tc.Make("undeploy"))
 
 			By("ensuring that the namespace was deleted")
 			testutils.WrapWarnOutput(tc.Kubectl.Wait(false, "namespace", "foo", "--for", "delete", "--timeout", "2m"))
@@ -177,23 +171,21 @@ var _ = Describe("operator-sdk", func() {
 				ExpectWithOffset(1, err).NotTo(HaveOccurred())
 				return metricsOutput
 			}
-			Eventually(getCurlLogs, time.Minute, time.Second).Should(ContainSubstring("< HTTP/2 200"))
+			Eventually(getCurlLogs, 3*time.Minute, time.Second).Should(ContainSubstring("< HTTP/2 200"))
 
-			// The controller updates memcacheds' status.nodes with a list of pods it is replicated across
-			// on a successful reconcile.
-			By("validating that the created resource object gets reconciled in the controller")
-			var status string
-			getStatus := func() error {
-				status, err = tc.Kubectl.Get(true, "memcacheds", "memcached-sample", "-o", "jsonpath={.status.nodes}")
-				if err == nil && strings.TrimSpace(status) == "" {
-					err = errors.New("empty status, continue")
+			By("validating that pod(s) status.phase=Running")
+			getMemcachedPodStatus := func() error {
+				status, err := tc.Kubectl.Get(true, "pods", "-l",
+					"app.kubernetes.io/name=Memcached",
+					"-o", "jsonpath={.items[*].status}",
+				)
+				ExpectWithOffset(2, err).NotTo(HaveOccurred())
+				if !strings.Contains(status, "\"phase\":\"Running\"") {
+					return err
 				}
-				return err
+				return nil
 			}
-			Eventually(getStatus, 1*time.Minute, time.Second).Should(Succeed())
-			var nodes []string
-			Expect(json.Unmarshal([]byte(status), &nodes)).To(Succeed())
-			Expect(len(nodes)).To(BeNumerically(">", 0))
+			EventuallyWithOffset(1, getMemcachedPodStatus, 3*time.Minute, time.Second).Should(Succeed())
 		})
 	})
 })

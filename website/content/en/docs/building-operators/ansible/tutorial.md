@@ -2,7 +2,7 @@
 title: Ansible Operator Tutorial
 linkTitle: Tutorial
 weight: 3
-description: An in-depth walkthough of building and running an Ansible-based operator.
+description: An in-depth walkthrough of building and running an Ansible-based operator.
 ---
 
 **NOTE:** If your project was created with an `operator-sdk` version prior to `v1.0.0`
@@ -11,9 +11,9 @@ please [migrate][migration-guide], or consult the [legacy docs][legacy-quickstar
 ## Prerequisites
 
 - Go through the [installation guide][install-guide].
-- User authorized with `cluster-admin` permissions.
+- Make sure your user is authorized with `cluster-admin` permissions.
 - An accessible image registry for various operator images (ex. [hub.docker.com](https://hub.docker.com/signup),
-[quay.io](https://quay.io/)) and be logged in in your command line environment.
+[quay.io](https://quay.io/)) and be logged in to your command line environment.
   - `example.com` is used as the registry Docker Hub namespace in these examples.
   Replace it with another value if using a different registry or namespace.
   - [Authentication and certificates][image-reg-config] if the registry is private or uses a custom CA.
@@ -54,7 +54,7 @@ The scaffolded operator has the following structure:
   - A reconciler, which is an Ansible Role or Playbook.
   - A `watches.yaml` file, which connects the `Memcached` resource to the `memcached` Ansible Role.
 
-See [scaffolded files reference][layout-doc] and [watches reference][ansible-watches] for more detailed information
+See [scaffolded files reference][layout-doc] and [watches reference][ansible-watches] for more detailed information.
 
 ### Modify the Manager
 
@@ -130,12 +130,12 @@ The key-value pairs in the Custom Resource spec are passed
 to Ansible as extra variables.
 
 **Note:** The names of all variables in the spec field are converted to
-snake_case by the operator before running ansible. For example,
-serviceAccount in the spec becomes service_account in ansible. You can
+snake_case by the operator before running Ansible. For example,
+serviceAccount in the spec becomes service_account in Ansible. You can
 disable this case conversion by setting the `snakeCaseParameters` option
 to `false` in your `watches.yaml`. It is recommended that you perform some
 type validation in Ansible on the variables to ensure that your
-application is receiving expected input.
+application is receiving the expected input.
 
 ## Configure the operator's image registry
 
@@ -162,13 +162,13 @@ make docker-build docker-push
 
 There are three ways to run the operator:
 
-- As Go program outside a cluster
+- As a Go program outside a cluster
 - As a Deployment inside a Kubernetes cluster
 - Managed by the [Operator Lifecycle Manager (OLM)][doc-olm] in [bundle][tutorial-bundle] format
 
 ### 1. Run locally outside the cluster
 
-Execute the following command, which install your CRDs and run the manager locally:
+Execute the following command, which installs your CRDs and runs the manager locally:
 
 ```sh
 make install run
@@ -178,14 +178,6 @@ make install run
 
 By default, a new namespace is created with name `<project-name>-system`, ex. `memcached-operator-system`, and will be used for the deployment.
 
-The scaffolded `Makefile` uses [`kustomize`][kustomize-docs] to apply
-custom configurations and generate manifests from the `config/`
-directory, which are piped to `kubectl`.
-
-```sh
-kustomize build config/default | kubectl apply -f -
-```
-
 Commonly, Operator authors may need to modify `config/rbac` in order to
 give their Operator the necessary permissions to reconcile.
 
@@ -193,6 +185,15 @@ Run the following to customize the manifests and deploy the operator.
 
 ```sh
 make deploy
+```
+
+The scaffolded `Makefile` uses [`kustomize`][kustomize-docs] to apply custom
+configurations and generate manifests from the `config/` directory, which are
+piped to `kubectl`. Run the following command to see the manifests that were
+applied to the cluster.
+
+```sh
+kustomize build config/default
 ```
 
 Verify that the memcached-operator is up and running:
@@ -340,14 +341,14 @@ make undeploy
 
 ## Next Steps
 
-We recommend reading through the our [Ansible development section][ansible-developer-tips]
+We recommend reading through the [Ansible development section][ansible-developer-tips]
 for tips and tricks, including how to run the operator locally.
 
 In this tutorial, the scaffolded `watches.yaml` could be used as-is, but
-has additional optional features. See [watches reference][ansible-watches].
+has additional optional features. See the [watches reference][ansible-watches].
 
 For brevity, some of the scaffolded files were left out of this guide.
-See [Scaffolding Reference][layout-doc]
+See [Scaffolding Reference][layout-doc].
 
 This example built a namespaced scope operator, but Ansible operators
 can also be used with cluster-wide scope.

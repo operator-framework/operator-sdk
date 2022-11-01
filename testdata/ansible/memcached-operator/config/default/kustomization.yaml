@@ -9,10 +9,12 @@ namespace: memcached-operator-system
 namePrefix: memcached-operator-
 
 # Labels to add to all resources and selectors.
-#commonLabels:
-#  someName: someValue
+#labels:
+#- includeSelectors: true
+#  pairs:
+#    someName: someValue
 
-bases:
+resources:
 - ../crd
 - ../rbac
 - ../manager
@@ -25,6 +27,4 @@ patchesStrategicMerge:
 # endpoint w/o any authn/z, please comment the following line.
 - manager_auth_proxy_patch.yaml
 
-# Mount the controller config file for loading manager configurations
-# through a ComponentConfig type
-#- manager_config_patch.yaml
+

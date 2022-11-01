@@ -17,14 +17,13 @@ package testutils
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	kbutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 	kbtestutils "sigs.k8s.io/kubebuilder/v3/test/e2e/utils"
@@ -90,7 +89,7 @@ func makeBundleImageName(projectName string) string {
 	return fmt.Sprintf("quay.io/example/%s-bundle:v0.0.1", projectName)
 }
 
-// InstallOLM runs 'operator-sdk olm install' for specific version
+// InstallOLMVersion runs 'operator-sdk olm install' for specific version
 // and returns any errors emitted by that command.
 func (tc TestContext) InstallOLMVersion(version string) error {
 	cmd := exec.Command(tc.BinaryName, "olm", "install", "--version", version, "--timeout", "4m")
@@ -98,7 +97,7 @@ func (tc TestContext) InstallOLMVersion(version string) error {
 	return err
 }
 
-// InstallOLM runs 'operator-sdk olm uninstall' and logs any errors emitted by that command.
+// UninstallOLM runs 'operator-sdk olm uninstall' and logs any errors emitted by that command.
 func (tc TestContext) UninstallOLM() {
 	cmd := exec.Command(tc.BinaryName, "olm", "uninstall")
 	if _, err := tc.Run(cmd); err != nil {
@@ -113,7 +112,7 @@ func ReplaceInFile(path, old, new string) error {
 	if err != nil {
 		return err
 	}
-	b, err := ioutil.ReadFile(path)
+	b, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}
@@ -121,7 +120,7 @@ func ReplaceInFile(path, old, new string) error {
 		return errors.New("unable to find the content to be replaced")
 	}
 	s := strings.Replace(string(b), old, new, -1)
-	err = ioutil.WriteFile(path, []byte(s), info.Mode())
+	err = os.WriteFile(path, []byte(s), info.Mode())
 	if err != nil {
 		return err
 	}
@@ -207,25 +206,6 @@ func WrapWarn(err error) {
 
 func (tc TestContext) UncommentRestrictivePodStandards() error {
 	configManager := filepath.Join(tc.Dir, "config", "manager", "manager.yaml")
-	managerAuth := filepath.Join(tc.Dir, "config", "default", "manager_auth_proxy_patch.yaml")
-
-	if err := kbutil.ReplaceInFile(configManager, `# TODO(user): uncomment for common cases that do not require escalating privileges
-        # capabilities:
-        #   drop:
-        #     - "ALL"`, `  capabilities:
-            drop:
-              - "ALL"`); err != nil {
-		return err
-	}
-
-	if err := kbutil.ReplaceInFile(managerAuth, `# TODO(user): uncomment for common cases that do not require escalating privileges
-        # capabilities:
-        #   drop:
-        #     - "ALL"`, `  capabilities:
-            drop:
-              - "ALL"`); err != nil {
-		return err
-	}
 
 	if err := kbutil.ReplaceInFile(configManager, `# TODO(user): For common cases that do not require escalating privileges
         # it is recommended to ensure that all your Pods/Containers are restrictive.

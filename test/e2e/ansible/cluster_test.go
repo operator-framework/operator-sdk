@@ -21,7 +21,7 @@ import (
 	"strings"
 	"time"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	kbtutil "sigs.k8s.io/kubebuilder/v3/pkg/plugin/util"
 
@@ -253,6 +253,17 @@ var _ = Describe("Running ansible projects", func() {
 				_, err = tc.Kubectl.Apply(true, "-f", secretFile)
 				return err
 			}, time.Minute, time.Second).Should(Succeed())
+			By("annotating the CR")
+			_, err = tc.Kubectl.Command(
+				"annotate", "foo", "foo-sample", "test-annotation='step2'")
+			Expect(err).NotTo(HaveOccurred())
+
+			Eventually(managerContainerLogs, time.Minute, time.Second).Should(ContainSubstring(
+				"Ansible-runner exited successfully"))
+			Eventually(managerContainerLogs, time.Minute, time.Second).Should(ContainSubstring(
+				"test-annotation found : 'step2'"))
+			Eventually(managerContainerLogs, time.Minute, time.Second).ShouldNot(ContainSubstring("failed=1"))
+			Eventually(managerContainerLogs, time.Minute, time.Second).ShouldNot(ContainSubstring("[Gathering Facts]"))
 
 			By("granting permissions to access the metrics and read the token")
 			_, err = tc.Kubectl.Command("create", "clusterrolebinding", metricsClusterRoleBindingName,

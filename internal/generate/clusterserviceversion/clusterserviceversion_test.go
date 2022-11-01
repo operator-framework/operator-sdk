@@ -16,12 +16,11 @@ package clusterserviceversion
 
 import (
 	"bytes"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"github.com/blang/semver/v4"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/format"
 	operatorversion "github.com/operator-framework/api/pkg/lib/version"
@@ -101,7 +100,7 @@ var _ = Describe("Testing CRDs with single version", func() {
 				)
 
 				BeforeEach(func() {
-					tmp, err = ioutil.TempDir(".", "")
+					tmp, err = os.MkdirTemp(".", "")
 					Expect(err).ToNot(HaveOccurred())
 					col.ClusterServiceVersions = []v1alpha1.ClusterServiceVersion{*baseCSVUIMeta}
 				})
@@ -289,31 +288,25 @@ var _ = Describe("Testing CRDs with single version", func() {
 		)
 
 		Context("when base path does not exist", func() {
-			By("turning interaction off explicitly")
-			It("returns false", func() {
+			It("turning interaction off explicitly, it will returns false", func() {
 				Expect(requiresInteraction(testNotExistingPath, projutil.InteractiveHardOff)).To(BeFalse())
 			})
-			By("turning interaction off implicitly")
-			It("returns true", func() {
+			It("turning interaction off implicitly, it will returns true", func() {
 				Expect(requiresInteraction(testNotExistingPath, projutil.InteractiveSoftOff)).To(BeTrue())
 			})
-			By("turning interaction on explicitly")
-			It("returns true", func() {
+			It("turning interaction on explicitly, it will returns true", func() {
 				Expect(requiresInteraction(testNotExistingPath, projutil.InteractiveOnAll)).To(BeTrue())
 			})
 		})
 
 		Context("when base path does exist", func() {
-			By("turning interaction off explicitly")
-			It("returns false", func() {
+			It("turning interaction off explicitly, it will returns false", func() {
 				Expect(requiresInteraction(testExistingPath, projutil.InteractiveHardOff)).To(BeFalse())
 			})
-			By("turning interaction off implicitly")
-			It("returns false", func() {
+			It("turning interaction off implicitly, it will returns false", func() {
 				Expect(requiresInteraction(testExistingPath, projutil.InteractiveSoftOff)).To(BeFalse())
 			})
-			By("turning interaction on explicitly")
-			It("returns true", func() {
+			It("turning interaction on explicitly, it will returns true", func() {
 				Expect(requiresInteraction(testExistingPath, projutil.InteractiveOnAll)).To(BeTrue())
 			})
 		})
@@ -412,7 +405,7 @@ func initTestMultiVersionCSVHelper() {
 }
 
 func readFileHelper(path string) string {
-	b, err := ioutil.ReadFile(path)
+	b, err := os.ReadFile(path)
 	ExpectWithOffset(1, err).ToNot(HaveOccurred())
 	return string(b)
 }
@@ -432,7 +425,7 @@ func modifyDepImageHelper(depSpec *appsv1.DeploymentSpec, tag string) {
 }
 
 func getCSVFromFile(path string) (*v1alpha1.ClusterServiceVersion, string, error) {
-	b, err := ioutil.ReadFile(path)
+	b, err := os.ReadFile(path)
 	if err != nil {
 		return nil, "", err
 	}

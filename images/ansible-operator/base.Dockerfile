@@ -2,7 +2,7 @@
 # It is built with dependencies that take a while to download, thus speeding
 # up ansible deploy jobs.
 
-FROM registry.access.redhat.com/ubi8/ubi:8.5
+FROM registry.access.redhat.com/ubi8/ubi:8.6
 ARG TARGETARCH
 
 # Label this image with the repo and commit that built it, for freshmaking purposes.
@@ -27,7 +27,7 @@ ENV PIP_NO_CACHE_DIR=1 \
 # Ensure fresh metadata rather than cached metadata, install system and pip python deps,
 # and remove those not needed at runtime.
 # pip3~=21.1 fixes a vulnerability described in https://github.com/pypa/pip/pull/9827.
-RUN yum clean all && rm -rf /var/cache/yum/* \
+RUN set -e && yum clean all && rm -rf /var/cache/yum/* \
   && yum update -y \
   && yum install -y libffi-devel openssl-devel python38-devel gcc python38-pip python38-setuptools \
   && pip3 install --upgrade pip~=21.1.0 \

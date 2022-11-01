@@ -105,7 +105,9 @@ func (s *initSubcommand) Scaffold(fs machinery.Filesystem) error {
 	)
 
 	if err := scaffold.Execute(
-		&manifests.Kustomization{SupportsWebhooks: operatorType == projutil.OperatorTypeGo},
+		&manifests.Kustomization{
+			SupportsKustomizeV4: HasSupportForKustomizeV4(s.config),
+			SupportsWebhooks:    operatorType == projutil.OperatorTypeGo},
 	); err != nil {
 		return fmt.Errorf("error scaffolding manifests: %w", err)
 	}
@@ -182,7 +184,7 @@ bundle: manifests kustomize ## Generate bundle manifests and metadata, then vali
 bundle: kustomize ## Generate bundle manifests and metadata, then validate generated files.
 	operator-sdk generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
-	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
+	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle $(BUNDLE_GEN_FLAGS)
 	operator-sdk bundle validate ./bundle
 `
 

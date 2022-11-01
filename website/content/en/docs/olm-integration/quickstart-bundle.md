@@ -18,8 +18,8 @@ your `PROJECT` file's `version` value.
 ## Prerequisites
 
 - Have a working operator that you have uploaded to a container registry. This guide assumes the simple Golang Memcached operator from [the building operators section][sdk-user-guide-go] at version `0.0.1`.
-- User authorized with 'cluster-admin' permissions.
-- OLM installed on your cluster. The command `operator-sdk olm install` will attempt to install a basic OLM deployment on your cluster.
+- Make sure your user is authorized with `cluster-admin` permissions.
+- Have OLM installed on your cluster. The command `operator-sdk olm install` will attempt to install a basic OLM deployment on your cluster.
 
 ## Steps
 

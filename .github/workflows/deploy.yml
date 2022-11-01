@@ -45,7 +45,7 @@ jobs:
     - name: install
       uses: actions/setup-go@v2
       with:
-        go-version: 1.18
+        go-version: 1.19
 
     - name: gpg init
       if: github.event_name != 'pull_request'
