@@ -233,7 +233,7 @@ system: restricted
 ### Can I use the metrics to check if my Pod/Containers are violating the PodSecurity policies?
 
 Yes, you can. You need to label the namespaces with `pod-security.kubernetes.io/audit: restricted` 
-(i.e. `kubectl label --overwrite ns --all pod-security.kubernetes.io/enforce-version=v1.24 pod-security.kubernetes.io/audit: restricted`).
+(i.e. `kubectl label --overwrite ns --all pod-security.kubernetes.io/enforce-version=v1.24 pod-security.kubernetes.io/audit=restricted`).
  It is important to note that the results may include metrics that do not come from your Operator and Operand(s). 
 If you are looking to use the metrics to do the checks, ensure that you check the
 results before and after performing the tests, for example: 
