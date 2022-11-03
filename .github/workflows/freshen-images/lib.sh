@@ -42,6 +42,7 @@ function is_dockerfile_fresh() {
     fi
     if ! cmp_times "$(date)" "$img_create_time"; then
       # return false
+      echo "is_dockerfile_fresh returning 1 for [$img]"
       return 1
     fi
   done
