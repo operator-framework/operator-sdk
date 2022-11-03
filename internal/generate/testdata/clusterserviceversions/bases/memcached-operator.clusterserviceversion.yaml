@@ -3,6 +3,20 @@ kind: ClusterServiceVersion
 metadata:
   name: memcached-operator.v0.0.0
   namespace: placeholder
+  annotations:
+    alm-examples: |-
+      [
+        {
+          "apiVersion": "cache.example.com/v1alpha1",
+          "kind": "Memcached",
+          "metadata": {
+            "name": "memcached-sample"
+          },
+          "spec": {
+            "foo": "bar"
+          }
+        }
+      ]
 spec:
   apiservicedefinitions: {}
   customresourcedefinitions: {}

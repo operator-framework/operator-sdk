@@ -113,7 +113,14 @@ func (mh *Memcached) Run() {
 	log.Infof("striping bundle annotations")
 	err = mh.ctx.StripBundleAnnotations()
 	pkg.CheckError("striping bundle annotations", err)
+
+	log.Infof("setting createdAt annotation")
+	csv := filepath.Join(mh.ctx.Dir, "bundle", "manifests", mh.ctx.ProjectName+".clusterserviceversion.yaml")
+	err = kbutil.ReplaceRegexInFile(csv, "createdAt:.*", createdAt)
+	pkg.CheckError("setting createdAt annotation", err)
 }
+
+const createdAt = `createdAt: "2022-11-08T17:26:37Z"`
 
 const policyRolesFragment = `
 ##
