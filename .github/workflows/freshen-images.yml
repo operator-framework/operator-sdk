@@ -43,7 +43,7 @@ jobs:
       with:
         username: ${{ secrets.QUAY_USERNAME }}
         password: ${{ secrets.QUAY_PASSWORD }}
-        registry: quay.io
+        registry: jesusr
     - name: checkout
       uses: actions/checkout@v2
       with:
