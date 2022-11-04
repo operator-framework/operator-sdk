@@ -42,7 +42,7 @@ function is_dockerfile_fresh() {
     fi
     if ! cmp_times "$(date)" "$img_create_time"; then
       # return false
-      echo "is_dockerfile_fresh returning 1 for [$img]"
+      echo "is_dockerfile_fresh returning 1 (false) for [$img]"
       return 1
     fi
   done
@@ -65,11 +65,12 @@ function build_ansible_base() {
     ansible_base_git_ref=$(echo $ansible_base_image_tag | sed -E 's|.+:.+-(.+)|\1|')
   fi
   git checkout $ansible_base_git_ref
-  if ! is_dockerfile_fresh "$dockerfile"; then
+  if is_dockerfile_fresh "$dockerfile"; then
+    echo "Skipping build of $dockerfile, it is FRESH!"
+  else
+    # dockerfile is not fresh, rebuildng image
     echo "Rebuilding image [$ansible_base_image_tag] for [$platforms]"
     _buildx --tag $ansible_base_image_tag --platform "$platforms" --file "$dockerfile" $IMAGE_DO --build-arg GIT_COMMIT=$ansible_base_git_ref ./images/ansible-operator
-  else
-    echo "Skipping build of $dockerfile, it is FRESH!"
   fi
 }
 
@@ -86,11 +87,11 @@ function build_generic() {
   local dockerfile=./images/${id}/Dockerfile
 
   git checkout refs/tags/$tag
-  if ! is_dockerfile_fresh "$dockerfile"; then
-    echo "Rebuilding image [$tag_maj_min] for [$platforms]"
-    # echo "_buildx --builder=container --tag \"$tag_maj_min\" --tag \"$tag_full\"  --platform \"$platforms\" --file \"$dockerfile\" $IMAGE_DO ."
-    _buildx --builder=container --tag "$tag_maj_min" --tag "$tag_full"  --platform "$platforms" --file "$dockerfile" $IMAGE_DO .
-  else
+  if is_dockerfile_fresh "$dockerfile"; then
     echo "Skipping build of $dockerfile, it is FRESH!"
+  else
+    # dockerfile is not fresh, rebuildng image
+    echo "Rebuilding image [$tag_maj_min] for [$platforms]"
+    _buildx --builder=container --tag "$tag_maj_min" --tag "$tag_full"  --platform "$platforms" --file "$dockerfile" $IMAGE_DO .
   fi
 }
