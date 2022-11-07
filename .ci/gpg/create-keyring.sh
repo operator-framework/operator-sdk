@@ -13,7 +13,7 @@ declare -r GPG_HOME="${DIR}/keyring"
 declare -r SECRING_AUTO="${GPG_HOME}/secring.auto"
 declare -r PUBRING_AUTO="${GPG_HOME}/pubring.auto"
 
-mkdir -p "$GPG_HOME"
+mkdir -p --mode 700 "$GPG_HOME"
 cp "${DIR}"/*.auto* "${GPG_HOME}"
 
 echo -e "\nDecrypting secret key..."
