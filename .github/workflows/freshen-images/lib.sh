@@ -18,8 +18,10 @@ function cmp_times() {
   local base_seconds=$(date -d "$1" +%s)
   local img_time_seconds=$(date -d "$2" +%s)
   if (( $base_seconds - $TIMESPAN < $img_time_seconds )) || (( $FORCE )); then
+    # return false
     return 1
   fi
+  # return true
   return 0
 }
 
@@ -34,11 +36,13 @@ function is_dockerfile_fresh() {
   for img in $docker_images; do
     _pull $img
     local img_create_time=$(docker inspect --format '{{.Created}}' $img)
-    if [[ "$img_create_time" == "0001-01-01T00:00:00Z" ]]; then 
+    if [[ "$img_create_time" == "0001-01-01T00:00:00Z" ]]; then
       echo "image creation time could be found for $img"
       exit 1
     fi
     if ! cmp_times "$(date)" "$img_create_time"; then
+      # return false
+      echo "is_dockerfile_fresh returning 1 (false) for [$img]"
       return 1
     fi
   done
@@ -61,7 +65,11 @@ function build_ansible_base() {
     ansible_base_git_ref=$(echo $ansible_base_image_tag | sed -E 's|.+:.+-(.+)|\1|')
   fi
   git checkout $ansible_base_git_ref
-  if ! is_dockerfile_fresh "$dockerfile"; then
+  if is_dockerfile_fresh "$dockerfile"; then
+    echo "Skipping build of $dockerfile, it is FRESH!"
+  else
+    # dockerfile is not fresh, rebuildng image
+    echo "Rebuilding image [$ansible_base_image_tag] for [$platforms]"
     _buildx --tag $ansible_base_image_tag --platform "$platforms" --file "$dockerfile" $IMAGE_DO --build-arg GIT_COMMIT=$ansible_base_git_ref ./images/ansible-operator
   fi
 }
@@ -79,7 +87,11 @@ function build_generic() {
   local dockerfile=./images/${id}/Dockerfile
 
   git checkout refs/tags/$tag
-  if ! is_dockerfile_fresh "$dockerfile"; then
-    _buildx --tag "$tag_maj_min" --tag "$tag_full"  --platform "$platforms" --file "$dockerfile" $IMAGE_DO .
+  if is_dockerfile_fresh "$dockerfile"; then
+    echo "Skipping build of $dockerfile, it is FRESH!"
+  else
+    # dockerfile is not fresh, rebuildng image
+    echo "Rebuilding image [$tag_maj_min] for [$platforms]"
+    _buildx --builder=container --tag "$tag_maj_min" --tag "$tag_full"  --platform "$platforms" --file "$dockerfile" $IMAGE_DO .
   fi
 }
