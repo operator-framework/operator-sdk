@@ -32,12 +32,19 @@ type Memcached struct {
 	ctx *pkg.SampleContext
 }
 
+var generateWithMonitoring bool
+
 // GenerateSample will call all actions to create the directory and generate the sample
 // Note that it should NOT be called in the e2e tests.
 func GenerateSample(binaryPath, samplesPath string) {
 	log.Infof("starting to generate Go memcached sample with webhooks")
 	ctx, err := pkg.NewSampleContext(binaryPath, filepath.Join(samplesPath, "memcached-operator"), "GO111MODULE=on")
 	pkg.CheckError("generating Go memcached with webhooks context", err)
+
+	generateWithMonitoring = false
+	if strings.HasSuffix(samplesPath, "monitoring") {
+		generateWithMonitoring = true
+	}
 
 	memcached := Memcached{&ctx}
 	memcached.Prepare()
@@ -65,7 +72,7 @@ func (mh *Memcached) Prepare() {
 // Run the steps to create the Memcached with Webhooks Go Sample
 func (mh *Memcached) Run() {
 
-	if strings.HasSuffix(mh.ctx.Dir, "v4-alpha") {
+	if strings.Contains(mh.ctx.Dir, "v4-alpha") {
 		log.Infof("creating the v4-alpha project")
 		err := mh.ctx.Init(
 			"--plugins", "go/v4-alpha",
@@ -105,14 +112,19 @@ func (mh *Memcached) Run() {
 	log.Infof("implementing the Controller")
 	mh.implementingController()
 
-	log.Infof("implementing Monitoring")
-	mh.implementingMonitoring()
+	if generateWithMonitoring {
+		log.Infof("implementing Monitoring")
+		mh.implementingMonitoring()
 
-	log.Infof("customizing Main")
-	mh.customizingMain()
+		log.Infof("customizing the Controller to include monitoring")
+		mh.customizingController()
 
-	log.Infof("customizing Dockerfile")
-	mh.customizingDockerfile()
+		log.Infof("customizing Main to include monitoring")
+		mh.customizingMain()
+
+		log.Infof("customizing Dockerfile to include monitoring")
+		mh.customizingDockerfile()
+	}
 
 	log.Infof("scaffolding webhook")
 	err = mh.ctx.CreateWebhook(
@@ -125,7 +137,7 @@ func (mh *Memcached) Run() {
 
 	mh.implementingWebhooks()
 
-	if strings.HasSuffix(mh.ctx.Dir, "v4-alpha") {
+	if strings.Contains(mh.ctx.Dir, "v4-alpha") {
 		mh.uncommentDefaultKustomizationV4()
 		mh.uncommentManifestsKustomizationv4()
 	} else {
@@ -226,7 +238,7 @@ func (mh *Memcached) uncommentDefaultKustomizationV4() {
 	err = kbutil.UncommentCode(kustomization, "#- webhookcainjection_patch.yaml", "#")
 	pkg.CheckError("uncomment webhookcainjection_patch.yaml", err)
 
-	err = kbutil.UncommentCode(filepath.Join(kustomization, "config", "default", "kustomization.yaml"),
+	err = kbutil.UncommentCode(kustomization,
 		`#replacements:
 #  - source: # Add cert-manager annotation to ValidatingWebhookConfiguration, MutatingWebhookConfiguration and CRDs
 #      kind: Certificate
@@ -371,6 +383,7 @@ func (mh *Memcached) uncommentManifestsKustomizationv4() {
 #    # Remove the manager container's "cert" volumeMount, since OLM will create and mount a set of certs.
 #    # Update the indices in this path if adding or removing containers/volumeMounts in the manager's Deployment.
 #    - op: remove
+
 #      path: /spec/template/spec/containers/0/volumeMounts/0
 #    # Remove the "cert" volume, since OLM will create and mount a set of certs.
 #    # Update the indices in this path if adding or removing volumes in the manager's Deployment.
@@ -409,24 +422,30 @@ func (mh *Memcached) implementingController() {
 		strings.ToLower(mh.ctx.Kind)))
 
 	err := kbutil.InsertCode(controllerPath,
-		`	if *found.Spec.Replicas != size {`,
-		`
-		// Increment MemcachedDeploymentSizeUndesiredCountTotal metric by 1
-		//monitoring.MemcachedDeploymentSizeUndesiredCountTotal.Inc()`)
-	pkg.CheckError("adding monitoring import", err)
-
-	err = kbutil.InsertCode(controllerPath,
-		`cachev1alpha1 "github.com/example/memcached-operator/api/v1alpha1"`,
-		controllerMonitoringImportFragment)
-	pkg.CheckError("adding monitoring import", err)
-
-	err = kbutil.InsertCode(controllerPath,
 		`						SecurityContext: &corev1.SecurityContext{`, userIDWarningFragment)
 	pkg.CheckError("adding warning comment for UserID", err)
 
 	err = kbutil.InsertCode(controllerPath,
 		`							RunAsNonRoot:             &[]bool{true}[0],`, runAsUserCommentFragment)
 	pkg.CheckError("adding comment regarding RunAsUser field in Security Context", err)
+}
+
+// customizingController will customize the Controller to include monitoring
+func (mh *Memcached) customizingController() {
+	controllerPath := filepath.Join(mh.ctx.Dir, "controllers", fmt.Sprintf("%s_controller.go",
+		strings.ToLower(mh.ctx.Kind)))
+
+	err := kbutil.InsertCode(controllerPath,
+		`	if *found.Spec.Replicas != size {`,
+		`
+		// Increment MemcachedDeploymentSizeUndesiredCountTotal metric by 1
+		monitoring.MemcachedDeploymentSizeUndesiredCountTotal.Inc()`)
+	pkg.CheckError("adding metric incrementation", err)
+
+	err = kbutil.InsertCode(controllerPath,
+		`cachev1alpha1 "github.com/example/memcached-operator/api/v1alpha1"`,
+		monitoringImportFragment)
+	pkg.CheckError("adding monitoring import", err)
 }
 
 // nolint:gosec
@@ -521,7 +540,7 @@ func (mh *Memcached) customizingMain() {
 	// Add monitoring import
 	err := kbutil.InsertCode(mainPath,
 		`"github.com/example/memcached-operator/controllers"`,
-		mainMonitoringImportFragment)
+		monitoringImportFragment)
 	pkg.CheckError("adding monitoring import", err)
 
 	// Add metrics registry
@@ -568,14 +587,13 @@ import (
 )
 `
 
-const mainMonitoringImportFragment = `
-	// To enable operator custom metrics, uncomment all sections with 'monitoring'
-	//"github.com/example/memcached-operator/monitoring"
+const monitoringImportFragment = `
+	"github.com/example/memcached-operator/monitoring"
 `
 
 const mainMonitoringRegisterMetricsFragment = `
 
-	//monitoring.RegisterMetrics()`
+	monitoring.RegisterMetrics()`
 
 const webhooksFragment = `
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
@@ -609,13 +627,6 @@ func validateOdd(n int32) error {
 	}
 	return nil
 }
-`
-
-const controllerMonitoringImportFragment = `
-	// This sample has an example of how to create and work with custom metrics. The code is commented
-	// in order to not break the basic tutorial to show authors how to build an operator. 
-	// To enable operator custom metrics, uncomment all sections with 'monitoring'.
-	//"github.com/example/memcached-operator/monitoring"
 `
 
 const userIDWarningFragment = `
