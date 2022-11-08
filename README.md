@@ -1,5 +1,5 @@
 <img src="website/static/operator_logo_sdk_color.svg" height="125px"></img>
-
+FOOBAR
 
 [![Build Status](https://github.com/operator-framework/operator-sdk/workflows/deploy/badge.svg)](https://github.com/operator-framework/operator-sdk/actions)
 [![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
