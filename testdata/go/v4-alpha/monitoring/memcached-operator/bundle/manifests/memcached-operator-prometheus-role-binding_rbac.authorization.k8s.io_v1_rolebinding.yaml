@@ -1,0 +1,13 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  creationTimestamp: null
+  name: memcached-operator-prometheus-role-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: memcached-operator-prometheus-role
+subjects:
+- kind: ServiceAccount
+  name: prometheus-k8s
+  namespace: monitoring

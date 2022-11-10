@@ -31,6 +31,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+
 	cachev1alpha1 "github.com/example/memcached-operator/api/v1alpha1"
 	"github.com/example/memcached-operator/controllers"
 	"github.com/example/memcached-operator/monitoring"
@@ -46,6 +48,8 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(cachev1alpha1.AddToScheme(scheme))
+
+	utilruntime.Must(monitoringv1.AddToScheme(scheme))
 
 	monitoring.RegisterMetrics()
 	//+kubebuilder:scaffold:scheme

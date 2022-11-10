@@ -237,7 +237,7 @@ var _ = Describe("memcached", Ordered, func() {
 
 			By(fmt.Sprintf("validating MemcachedDeploymentSizeUndesiredCountTotal has increased by %d", numberOfScales))
 			finalMetricValue := getMetricValue(memcachedDeploymentSizeUndesiredCountTotalName)
-			Expect(finalMetricValue).To(Equal(initialMetricValue + numberOfScales))
+			Expect(finalMetricValue).Should(BeNumerically(">=", initialMetricValue+numberOfScales))
 		})
 	})
 })

@@ -33,6 +33,8 @@ type Memcached struct {
 }
 
 var generateWithMonitoring bool
+var goFilesHeader string
+var prometheusAPIVersion = "v0.59.0"
 
 // GenerateSample will call all actions to create the directory and generate the sample
 // Note that it should NOT be called in the e2e tests.
@@ -113,17 +115,14 @@ func (mh *Memcached) Run() {
 	mh.implementingController()
 
 	if generateWithMonitoring {
+		goGetcmd := exec.Command("go", "get", fmt.Sprintf("%s@%s", "github.com/prometheus-operator/prometheus-operator", prometheusAPIVersion))
+		goGetcmd.Dir = mh.ctx.Dir
+		if _, err := mh.ctx.Run(goGetcmd); err != nil {
+			pkg.CheckError("error getting prometheus dependency", err)
+		}
+
 		log.Infof("implementing Monitoring")
 		mh.implementingMonitoring()
-
-		log.Infof("customizing the Controller to include monitoring")
-		mh.customizingController()
-
-		log.Infof("customizing Main to include monitoring")
-		mh.customizingMain()
-
-		log.Infof("customizing Dockerfile to include monitoring")
-		mh.customizingDockerfile()
 	}
 
 	log.Infof("scaffolding webhook")
@@ -435,22 +434,41 @@ func (mh *Memcached) implementingController() {
 	pkg.CheckError("adding comment regarding RunAsUser field in Security Context", err)
 }
 
-// customizingController will customize the Controller to include monitoring
-func (mh *Memcached) customizingController() {
-	controllerPath := filepath.Join(mh.ctx.Dir, "controllers", fmt.Sprintf("%s_controller.go",
-		strings.ToLower(mh.ctx.Kind)))
+// implementingMonitoring will customize monitoring
+func (mh *Memcached) implementingMonitoring() {
+	err := os.Mkdir(filepath.Join(mh.ctx.Dir, "monitoring"), os.ModePerm)
+	pkg.CheckError("creating monitoring directory", err)
 
-	err := kbutil.InsertCode(controllerPath,
-		`	if *found.Spec.Replicas != size {`,
-		`
-		// Increment MemcachedDeploymentSizeUndesiredCountTotal metric by 1
-		monitoring.MemcachedDeploymentSizeUndesiredCountTotal.Inc()`)
-	pkg.CheckError("adding metric incrementation", err)
+	header, err := os.ReadFile((filepath.Join(mh.ctx.Dir, "hack", "boilerplate.go.txt")))
+	goFilesHeader = string(header)
+	pkg.CheckError("reading go files header", err)
 
-	err = kbutil.InsertCode(controllerPath,
-		`cachev1alpha1 "github.com/example/memcached-operator/api/v1alpha1"`,
-		monitoringImportFragment)
-	pkg.CheckError("adding monitoring import", err)
+	log.Infof("implementing metrics")
+	mh.implementingMetrics()
+
+	log.Infof("implementing alerts")
+	mh.implementingAlerts()
+
+	log.Infof("implementing prom-rule-ci")
+	mh.implementingPromRuleCi()
+
+	log.Infof("implementing runbooks")
+	mh.implementingRunbooks()
+
+	log.Infof("implementing prometheus RBAC")
+	mh.implementingPrometheusRBAC()
+
+	log.Infof("customizing the Controller")
+	mh.customizingController()
+
+	log.Infof("customizing Main")
+	mh.customizingMain()
+
+	log.Infof("customizing Dockerfile")
+	mh.customizingDockerfile()
+
+	log.Infof("customizing Makefile")
+	mh.customizingMakefile()
 }
 
 // nolint:gosec
@@ -513,46 +531,227 @@ func (mh *Memcached) implementingAPIMarkers() {
 	pkg.CheckError("inserting CRD owned resources CSV marker", err)
 }
 
-// implementingMonitoring will customize monitoring
-func (mh *Memcached) implementingMonitoring() {
-	// Create monitoring directory
-	err := os.Mkdir(filepath.Join(mh.ctx.Dir, "monitoring"), os.ModePerm)
-	pkg.CheckError("creating monitoring directory", err)
-
+func (mh *Memcached) implementingMetrics() {
 	// Create metrics file
-	_, err = os.Create(filepath.Join(mh.ctx.Dir, "monitoring/metrics.go"))
+	metricsPath := filepath.Join(mh.ctx.Dir, "monitoring/metrics.go")
+	_, err := os.Create(metricsPath)
 	pkg.CheckError("creating metrics file", err)
 
-	metricsPath := filepath.Join(mh.ctx.Dir, "monitoring/metrics.go")
-
-	// Add imports
+	// Add go files header
 	err = kbutil.InsertCode(metricsPath,
 		"",
-		metricsImportsFragment)
-	pkg.CheckError("adding imports", err)
+		goFilesHeader)
+	pkg.CheckError("adding go files header", err)
 
 	// Add metrics implementation
 	err = kbutil.InsertCode(metricsPath,
-		")",
+		goFilesHeader,
 		metricsFragment)
 	pkg.CheckError("adding metrics content", err)
+}
+
+func (mh *Memcached) implementingAlerts() {
+	// Create alerts file
+	alertsPath := filepath.Join(mh.ctx.Dir, "monitoring/alerts.go")
+	_, err := os.Create(alertsPath)
+	pkg.CheckError("creating alerts file", err)
+
+	// Add go files header
+	err = kbutil.InsertCode(alertsPath,
+		"",
+		goFilesHeader)
+	pkg.CheckError("adding go files header", err)
+
+	// Add alerts implementation
+	err = kbutil.InsertCode(alertsPath,
+		goFilesHeader,
+		alertsFragment)
+	pkg.CheckError("adding alerts content", err)
+}
+
+func (mh *Memcached) implementingPromRuleCi() {
+	// Create prom-rule-ci directory
+	err := os.Mkdir(filepath.Join(mh.ctx.Dir, "monitoring/prom-rule-ci"), os.ModePerm)
+	pkg.CheckError("creating prom-rule-ci directory", err)
+
+	// Create prom-rules-tests file
+	promRuleTestsPath := filepath.Join(mh.ctx.Dir, "monitoring/prom-rule-ci/prom-rules-tests.yaml")
+	_, err = os.Create(promRuleTestsPath)
+	pkg.CheckError("creating prom-rules-tests file", err)
+
+	// Add prom-rules-tests implementation
+	err = kbutil.InsertCode(promRuleTestsPath,
+		"",
+		promRuleTestsFragment)
+	pkg.CheckError("adding prom-rules-tests content", err)
+
+	// Create rule-spec-dumper file
+	ruleSpecDumperPath := filepath.Join(mh.ctx.Dir, "monitoring/prom-rule-ci/rule-spec-dumper.go")
+	_, err = os.Create(ruleSpecDumperPath)
+	pkg.CheckError("creating rule-spec-dumper file", err)
+
+	// Add go files header to rule-spec-dumper
+	err = kbutil.InsertCode(ruleSpecDumperPath,
+		"",
+		goFilesHeader)
+	pkg.CheckError("adding go files header", err)
+
+	// Add rule-spec-dumper implementation
+	err = kbutil.InsertCode(ruleSpecDumperPath,
+		goFilesHeader,
+		ruleSpecDumperFragment)
+	pkg.CheckError("adding rule-spec-dumper content", err)
+
+	// Create verify-rules file
+	verifyRulesPath := filepath.Join(mh.ctx.Dir, "monitoring/prom-rule-ci/verify-rules.sh")
+	_, err = os.Create(verifyRulesPath)
+	pkg.CheckError("creating verify-rules file", err)
+
+	err = os.Chmod(filepath.Join(mh.ctx.Dir, "monitoring/prom-rule-ci/verify-rules.sh"), 0777)
+	pkg.CheckError("changing verify-rules file permissions ", err)
+
+	// Add verify-rules implementation
+	err = kbutil.InsertCode(verifyRulesPath,
+		"",
+		verifyRulesFragment)
+	pkg.CheckError("adding verify-rules content", err)
+}
+
+func (mh *Memcached) implementingRunbooks() {
+	// Create docs directory
+	err := os.Mkdir(filepath.Join(mh.ctx.Dir, "docs"), os.ModePerm)
+	pkg.CheckError("creating docs directory", err)
+
+	// Create runbooks directory
+	err = os.Mkdir(filepath.Join(mh.ctx.Dir, "docs/runbooks"), os.ModePerm)
+	pkg.CheckError("creating runbooks directory", err)
+
+	// Create MemcachedDeploymentSizeUndesired runbook file
+	memcachedDeploymentSizeUndesiredRunbookPath := filepath.Join(mh.ctx.Dir, "docs/runbooks/memcachedDeploymentSizeUndesired.md")
+	_, err = os.Create(memcachedDeploymentSizeUndesiredRunbookPath)
+	pkg.CheckError("creating MemcachedDeploymentSizeUndesired runbook file", err)
+
+	// Add MemcachedDeploymentSizeUndesired runbook content
+	err = kbutil.InsertCode(memcachedDeploymentSizeUndesiredRunbookPath,
+		"",
+		memcachedDeploymentSizeUndesiredRunbookFragment)
+	pkg.CheckError("adding MemcachedDeploymentSizeUndesired runbook content", err)
+
+	// Create MemcachedOperatorDown runbook file
+	memcachedOperatorDownRunbookPath := filepath.Join(mh.ctx.Dir, "docs/runbooks/memcachedOperatorDown.md")
+	_, err = os.Create(memcachedOperatorDownRunbookPath)
+	pkg.CheckError("creating MemcachedOperatorDown runbook file", err)
+
+	// Add MemcachedOperatorDown runbook content
+	err = kbutil.InsertCode(memcachedOperatorDownRunbookPath,
+		"",
+		memcachedOperatorDownRunbookFragment)
+	pkg.CheckError("adding MemcachedDeploymentSizeUndesired runbook content", err)
+}
+
+func (mh *Memcached) implementingPrometheusRBAC() {
+	// Create prometheus role file
+	prometheusRolePath := filepath.Join(mh.ctx.Dir, "config/rbac/prometheus_role.yaml")
+	_, err := os.Create(prometheusRolePath)
+	pkg.CheckError("creating prometheus role file", err)
+
+	// Add prometheus role content
+	err = kbutil.InsertCode(prometheusRolePath,
+		"",
+		prometheusRoleFragment)
+	pkg.CheckError("adding prometheus role content", err)
+
+	// Create prometheus role binding file
+	prometheusRoleBindingPath := filepath.Join(mh.ctx.Dir, "config/rbac/prometheus_role_binding.yaml")
+	_, err = os.Create(prometheusRoleBindingPath)
+	pkg.CheckError("creating prometheus role binding file", err)
+
+	// Add prometheus role binding content
+	err = kbutil.InsertCode(prometheusRoleBindingPath,
+		"",
+		prometheusRoleBindingFragment)
+	pkg.CheckError("adding prometheus role binding content", err)
+
+	// Add prometheus rbac files to kustomization
+	kustomizationPath := filepath.Join(mh.ctx.Dir, "config/rbac/kustomization.yaml")
+	err = kbutil.InsertCode(kustomizationPath,
+		`- leader_election_role.yaml
+- leader_election_role_binding.yaml`,
+		`
+- prometheus_role.yaml
+- prometheus_role_binding.yaml`)
+	pkg.CheckError("adding prometheus role binding content", err)
+}
+
+// customizingController will customize the Controller to include monitoring
+func (mh *Memcached) customizingController() {
+	controllerPath := filepath.Join(mh.ctx.Dir, "controllers", fmt.Sprintf("%s_controller.go",
+		strings.ToLower(mh.ctx.Kind)))
+
+	// Add monitoring imports
+	err := kbutil.InsertCode(controllerPath,
+		`"os"`,
+		`
+	"reflect"`)
+	pkg.CheckError("adding reflect import", err)
+
+	err = kbutil.InsertCode(controllerPath,
+		`"sigs.k8s.io/controller-runtime/pkg/log"`,
+		monitoringv1ImportFragment)
+	pkg.CheckError("adding monitoringv1 import", err)
+
+	err = kbutil.InsertCode(controllerPath,
+		`cachev1alpha1 "github.com/example/memcached-operator/api/v1alpha1"`,
+		monitoringImportFragment)
+	pkg.CheckError("adding monitoring import", err)
+
+	// Add monitoring parts
+	err = kbutil.InsertCode(controllerPath,
+		`const memcachedFinalizer = "cache.example.com/finalizer"`,
+		`
+		const ruleName = "memcached-operator-rules"
+		const namespace = "memcached-operator-system"`)
+	pkg.CheckError("adding monitoring constants", err)
+
+	err = kbutil.InsertCode(controllerPath,
+		`//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch`,
+		`
+		//+kubebuilder:rbac:groups=monitoring.coreos.com,resources=prometheusrules,verbs=get;list;watch;create;update;delete`)
+	pkg.CheckError("adding monitoring.coreos.com rbac", err)
+
+	err = kbutil.ReplaceInFile(controllerPath,
+		controllerMemcachedInstanceFragment,
+		controllerPrometheusRuleFragment)
+	pkg.CheckError("adding prometheus rule reconciliation", err)
+
+	err = kbutil.InsertCode(controllerPath,
+		`	if *found.Spec.Replicas != size {`,
+		`
+		// Increment MemcachedDeploymentSizeUndesiredCountTotal metric by 1
+		monitoring.MemcachedDeploymentSizeUndesiredCountTotal.Inc()`)
+	pkg.CheckError("adding metric incrementation", err)
 }
 
 // customizingMain will customize main.go to register metrics
 func (mh *Memcached) customizingMain() {
 	mainPath := filepath.Join(mh.ctx.Dir, "main.go")
 
-	// Add monitoring import
+	// Add monitoring imports
 	err := kbutil.InsertCode(mainPath,
+		`"sigs.k8s.io/controller-runtime/pkg/log/zap"`,
+		monitoringv1ImportFragment)
+	pkg.CheckError("adding monitoringv1 import", err)
+
+	err = kbutil.InsertCode(mainPath,
 		`"github.com/example/memcached-operator/controllers"`,
 		monitoringImportFragment)
 	pkg.CheckError("adding monitoring import", err)
 
-	// Add metrics registry
+	// Add monitoring parts
 	err = kbutil.InsertCode(mainPath,
 		"utilruntime.Must(cachev1alpha1.AddToScheme(scheme))",
-		mainMonitoringRegisterMetricsFragment)
-	pkg.CheckError("adding metrics registry", err)
+		mainMonitoringFragment)
+	pkg.CheckError("adding monitoring parts", err)
 }
 
 // customizingDockerfile will customize the Dockerfile to include monitoring
@@ -568,7 +767,26 @@ func (mh *Memcached) customizingDockerfile() {
 
 const createdAt = `createdAt: "2022-11-08T17:26:37Z"`
 
+// customizingMakefile will customize the Makefile to include monitoring
+func (mh *Memcached) customizingMakefile() {
+	makefilePath := filepath.Join(mh.ctx.Dir, "Makefile")
+
+	// Add prom-rule-ci target to the makefile
+	err := kbutil.InsertCode(makefilePath,
+		`$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -`,
+		makefileFragment)
+	pkg.CheckError("adding prom-rule-ci target to the makefile", err)
+}
+
 const metricsFragment = `
+
+package monitoring
+
+import (
+	"github.com/prometheus/client_golang/prometheus"
+	"sigs.k8s.io/controller-runtime/pkg/metrics"
+)
+
 var (
 	// MemcachedDeploymentSizeUndesiredCountTotal will count how many times was required
 	// to perform the operation to ensure that the number of replicas on the cluster
@@ -586,21 +804,408 @@ func RegisterMetrics() {
 }
 `
 
-const metricsImportsFragment = `
+const alertsFragment = `
+
 package monitoring
+
 import (
-	"github.com/prometheus/client_golang/prometheus"
-	"sigs.k8s.io/controller-runtime/pkg/metrics"
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
+
+const (
+	ruleName                     = "memcached-operator-rules"
+	alertRuleGroup               = "memcached.rules"
+	deploymentSizeUndesiredAlert = "MemcachedDeploymentSizeUndesired"
+	operatorDownAlert            = "MemcachedOperatorDown"
+	operatorUpTotalRecordingRule = "memcached_operator_up_total"
+	runbookURLBasePath           = "https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4-alpha/monitoring/memcached-operator/docs/runbooks/"
+)
+
+// NewPrometheusRule creates new PrometheusRule(CR) for the operator to have alerts and recording rules
+func NewPrometheusRule(namespace string) *monitoringv1.PrometheusRule {
+	return &monitoringv1.PrometheusRule{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: monitoringv1.SchemeGroupVersion.String(),
+			Kind:       "PrometheusRule",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      ruleName,
+			Namespace: namespace,
+		},
+		Spec: *NewPrometheusRuleSpec(),
+	}
+}
+
+// NewPrometheusRuleSpec creates PrometheusRuleSpec for alerts and recording rules
+func NewPrometheusRuleSpec() *monitoringv1.PrometheusRuleSpec {
+	return &monitoringv1.PrometheusRuleSpec{
+		Groups: []monitoringv1.RuleGroup{{
+			Name: alertRuleGroup,
+			Rules: []monitoringv1.Rule{
+				createDeploymentSizeUndesiredAlertRule(),
+				createOperatorDownAlertRule(),
+				createOperatorUpTotalRecordingRule(),
+			},
+		}},
+	}
+}
+
+// createDeploymentSizeUndesiredAlertRule creates MemcachedDeploymentSizeUndesired alert rule
+func createDeploymentSizeUndesiredAlertRule() monitoringv1.Rule {
+	return monitoringv1.Rule{
+		Alert: deploymentSizeUndesiredAlert,
+		Expr:  intstr.FromString("increase(memcached_deployment_size_undesired_count_total[5m]) >= 3"),
+		Annotations: map[string]string{
+			"description": "Memcached-sample deployment size was not as desired more than 3 times in the last 5 minutes.",
+		},
+		Labels: map[string]string{
+			"severity":    "warning",
+			"runbook_url": runbookURLBasePath + "MemcachedDeploymentSizeUndesired.md",
+		},
+	}
+}
+
+// createOperatorDownAlertRule creates MemcachedOperatorDown alert rule
+func createOperatorDownAlertRule() monitoringv1.Rule {
+	return monitoringv1.Rule{
+		Alert: operatorDownAlert,
+		Expr:  intstr.FromString("memcached_operator_up_total == 0"),
+		Annotations: map[string]string{
+			"description": "No running memcached-operator pods were detected in the last 5 min.",
+		},
+		For: "5m",
+		Labels: map[string]string{
+			"severity":    "critical",
+			"runbook_url": runbookURLBasePath + "MemcachedOperatorDown.md",
+		},
+	}
+}
+
+// createOperatorUpTotalRecordingRule creates memcached_operator_up_total recording rule
+func createOperatorUpTotalRecordingRule() monitoringv1.Rule {
+	return monitoringv1.Rule{
+		Record: operatorUpTotalRecordingRule,
+		Expr:   intstr.FromString("sum(up{pod=~'memcached-operator-controller-manager-.*'} or vector(0))"),
+	}
+}
+`
+
+const promRuleTestsFragment = `---
+# Prometheus official unit-testing documentation - https://prometheus.io/docs/prometheus/latest/configuration/unit_testing_rules/
+# rule_files contains the list of files to be tested
+rule_files:
+  - /tmp/rules.verify
+
+# group_eval_order contains the list of groups to be tested
+group_eval_order:
+  - memcached.rules
+
+tests:
+# for each time frame based on the interval, we define the metrics values
+  - interval: 1m
+    input_series:
+      - series: 'memcached_deployment_size_undesired_count_total'
+        # time:  0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
+        values: "0 0 0 1 2 3 3 3 3 3  3  3  3  4  5  6"
+      - series: 'memcached_operator_up_total'
+        # time:  0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
+        values: "0 0 0 0 0 0 1 1 1 1  0  0  0  0  0  0"
+
+# then, we evaluate the alerts behaviour in the eval_time we choose
+    alert_rule_test:
+      # it must not trigger before 5m
+      - eval_time: 4m
+        alertname: MemcachedDeploymentSizeUndesired
+        exp_alerts: []
+      - eval_time: 4m
+        alertname: MemcachedOperatorDown
+        exp_alerts: []
+      # it must trigger after 5m
+      - eval_time: 5m
+        alertname: MemcachedDeploymentSizeUndesired
+        exp_alerts:
+          - exp_annotations:
+              description: "Memcached-sample deployment size was not as desired more than 3 times in the last 5 minutes."
+            exp_labels:
+              severity: "warning"
+              runbook_url: "https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4-alpha/monitoring/memcached-operator/docs/runbooks/MemcachedDeploymentSizeUndesired.md"
+      - eval_time: 5m
+        alertname: MemcachedOperatorDown
+        exp_alerts:
+          - exp_annotations:
+              description: "No running memcached-operator pods were detected in the last 5 min."
+            exp_labels:
+              severity: "critical"
+              runbook_url: "https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4-alpha/monitoring/memcached-operator/docs/runbooks/MemcachedOperatorDown.md"
+      # it must not trigger before 15m
+      - eval_time: 14m
+        alertname: MemcachedDeploymentSizeUndesired
+        exp_alerts: [ ]
+      - eval_time: 14m
+        alertname: MemcachedOperatorDown
+        exp_alerts: [ ]
+      # it must trigger after 15m
+      - eval_time: 15m
+        alertname: MemcachedDeploymentSizeUndesired
+        exp_alerts:
+          - exp_annotations:
+              description: "Memcached-sample deployment size was not as desired more than 3 times in the last 5 minutes."
+            exp_labels:
+              severity: "warning"
+              runbook_url: "https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4-alpha/monitoring/memcached-operator/docs/runbooks/MemcachedDeploymentSizeUndesired.md"
+      - eval_time: 15m
+        alertname: MemcachedOperatorDown
+        exp_alerts:
+          - exp_annotations:
+              description: "No running memcached-operator pods were detected in the last 5 min."
+            exp_labels:
+              severity: "critical"
+              runbook_url: "https://github.com/operator-framework/operator-sdk/tree/master/testdata/go/v4-alpha/monitoring/memcached-operator/docs/runbooks/MemcachedOperatorDown.md"
+`
+
+const ruleSpecDumperFragment = `
+
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"os"
+
+	"github.com/example/memcached-operator/monitoring"
+)
+
+func verifyArgs(args []string) error {
+	numOfArgs := len(os.Args[1:])
+	if numOfArgs != 1 {
+		return fmt.Errorf("expected exactly 1 argument, got: %d", numOfArgs)
+	}
+	return nil
+}
+
+func main() {
+	if err := verifyArgs(os.Args); err != nil {
+		fmt.Printf("ERROR: %v\n", err)
+		os.Exit(1)
+	}
+
+	targetFile := os.Args[1]
+
+	promRuleSpec := monitoring.NewPrometheusRuleSpec()
+	b, err := json.Marshal(promRuleSpec)
+	if err != nil {
+		panic(err)
+	}
+
+	err = ioutil.WriteFile(targetFile, b, 0644)
+	if err != nil {
+		panic(err)
+	}
+}
+`
+
+const verifyRulesFragment = `#!/bin/bash -e
+
+readonly PROM_IMAGE="docker.io/prom/prometheus:v2.15.2"
+
+function cleanup() {
+    local cleanup_files=("${@:?}")
+    for file in "${cleanup_files[@]}"; do
+        rm -f "$file"
+    done
+}
+
+function lint() {
+    local target_file="${1:?}"
+    docker run --rm --entrypoint=/bin/promtool \
+        -v "$target_file":/tmp/rules.verify:ro "$PROM_IMAGE" \
+        check rules /tmp/rules.verify
+}
+
+function unit_test() {
+    local target_file="${1:?}"
+    local tests_file="${2:?}"
+    docker run --rm --entrypoint=/bin/promtool \
+        -v "$tests_file":/tmp/rules.test:ro \
+        -v "$target_file":/tmp/rules.verify:ro \
+        "$PROM_IMAGE" \
+        test rules /tmp/rules.test
+}
+
+function main() {
+    local prom_spec_dumper="${1:?}"
+    local tests_file="${2:?}"
+    local target_file
+    target_file="$(mktemp --tmpdir -u tmp.prom_rules.XXXXX)"
+    trap "cleanup $target_file" RETURN EXIT INT
+    "$prom_spec_dumper" "$target_file"
+    echo "INFO: Rules file content:"
+    cat "$target_file"
+    echo
+    lint "$target_file"
+    unit_test "$target_file" "$tests_file"
+}
+
+main "$@"
+`
+const memcachedDeploymentSizeUndesiredRunbookFragment = `# MemcachedDeploymentSizeUndesired
+
+## Meaning
+MemcachedDeploymentSizeUndesired is triggered when the number of available
+<code>memcached-sample</code> replicas doesn't match the requested configuration.
+
+## Impact
+Unavailability of distributed memory object caching system in the cluster.
+
+## Diagnosis
+- Check memcached-sample's pod namespace:
+
+  <code>export NAMESPACE="$(kubectl get deployment -A | grep memcached-sample | awk '{print $1}')"</code>
+
+- Observe the status of the memcached-sample deployment:
+
+  <code>kubectl get deploy memcached-sample -n $NAMESPACE -o yaml</code>
+
+- Observe the logs of the memcached manager pod, to see why it cannot create the memcached-sample pods.
+
+   <code>kubectl get logs <memcached-operator-controller-manager-pod> -n memcached-operator-system</code>
+  
+## Mitigation
+There can be several reasons. Like:
+- Node resource exhaustion
+- Not enough memory on the cluster
+- Nodes are down
+
+Try to identify the root cause and fix it.`
+
+const memcachedOperatorDownRunbookFragment = `# MemcachedOperatorDown
+
+## Meaning
+No running memcached-operator-controller-manager pods were detected in the last 5 min.
+
+## Impact
+Complete failure in the <code>Memcached</code> CR lifecycle management.
+i.e. launching a new <code>Memcached</code> instance or shutting down an existing one.
+## Diagnosis
+- Observe the status of the memcached-operator-controller-manager deployment:
+
+  <code>kubectl get deploy memcached-operator-controller-manager -n mecmached-operator-system -o yaml</code>
+
+## Mitigation
+There can be several reasons for the memcached-operator-controller-manager pod to be down, identify the root cause and fix it.
+
+- Check the status of the memcached-operator-controller-manager deployment to
+find out more information. The following command will provide the associated events and show if there are any issues with pulling an image, crashing pod, etc.
+
+<code>kubectl describe deploy memcached-operator-controller-manager -n memcached-operator-system</code>
+
+- Check if there are issues with the nodes. For example, if they are in a NotReady state.
+
+  </code>kubectl get nodes</code>
+`
+
+const prometheusRoleFragment = `---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: prometheus-role
+  namespace: system
+rules:
+  - apiGroups: [""]
+    resources:
+      - services
+      - endpoints
+      - pods
+    verbs: ["get", "list"]
+`
+const prometheusRoleBindingFragment = `---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: prometheus-role-binding
+  namespace: system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: prometheus-role
+subjects:
+- kind: ServiceAccount
+  name: prometheus-k8s
+  namespace: monitoring
+`
+
+const controllerMemcachedInstanceFragment = `
+	// Fetch the Memcached instance
+	// The purpose is check if the Custom Resource for the Kind Memcached
+	// is applied on the cluster if not we return nil to stop the reconciliation
+	memcached := &cachev1alpha1.Memcached{}
+	err := r.Get(ctx, req.NamespacedName, memcached)`
+
+const controllerPrometheusRuleFragment = `
+	// Check if prometheus rule already exists, if not create a new one
+	foundRule := &monitoringv1.PrometheusRule{}
+	err := r.Get(ctx, types.NamespacedName{Name: ruleName, Namespace: namespace}, foundRule)
+	if err != nil && apierrors.IsNotFound(err) {
+		// Define a new prometheus rule
+		prometheusRule := monitoring.NewPrometheusRule(namespace)
+		if err := r.Create(ctx, prometheusRule); err != nil {
+			log.Error(err, "Failed to create prometheus rule")
+			return ctrl.Result{}, nil
+		}
+	}
+
+	if err == nil {
+		// Check if prometheus rule spec was changed, if so set as desired
+		desiredRuleSpec := monitoring.NewPrometheusRuleSpec()
+		if !reflect.DeepEqual(foundRule.Spec.DeepCopy(), desiredRuleSpec) {
+			desiredRuleSpec.DeepCopyInto(&foundRule.Spec)
+			if r.Update(ctx, foundRule); err != nil {
+				log.Error(err, "Failed to update prometheus rule")
+				return ctrl.Result{}, nil
+			}
+		}
+	}
+
+	// Fetch the Memcached instance
+	// The purpose is check if the Custom Resource for the Kind Memcached
+	// is applied on the cluster if not we return nil to stop the reconciliation
+	memcached := &cachev1alpha1.Memcached{}
+	err = r.Get(ctx, req.NamespacedName, memcached)`
+
+const monitoringv1ImportFragment = `
+
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 `
 
 const monitoringImportFragment = `
 	"github.com/example/memcached-operator/monitoring"
 `
 
-const mainMonitoringRegisterMetricsFragment = `
+const mainMonitoringFragment = `
+
+	utilruntime.Must(monitoringv1.AddToScheme(scheme))
 
 	monitoring.RegisterMetrics()`
+
+const makefileFragment = `
+LDFLAGS            ?= -w -s
+
+build-prom-spec-dumper: ## Build binary from source
+	go build -ldflags="${LDFLAGS}" -o _out/rule-spec-dumper ./monitoring/prom-rule-ci/rule-spec-dumper.go
+
+current-dir := $(realpath .)
+
+# Unit testing for the operator alerts and recording rules
+# rule-spec-dumper dumps the prometheus rule spec to a temp _out/rule-spec-dumper file which prom-rules-tests runs against
+prom-rules-verify: build-prom-spec-dumper
+	./monitoring/prom-rule-ci/verify-rules.sh \
+		"${current-dir}/_out/rule-spec-dumper" \
+		"${current-dir}/monitoring/prom-rule-ci/prom-rules-tests.yaml"
+
+`
 
 const webhooksFragment = `
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
