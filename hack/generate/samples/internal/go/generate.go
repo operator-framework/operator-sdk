@@ -27,5 +27,7 @@ func GenerateMemcachedSamples(binaryPath, rootPath string) {
 	// to create an empty scaffold add add all code. So that, we can also
 	// ensure that the tutorial follows the good practices
 	withwebhooks.GenerateSample(binaryPath, filepath.Join(rootPath, "go", "v3"))
+	withwebhooks.GenerateSample(binaryPath, filepath.Join(rootPath, "go", "v3", "monitoring"))
 	withwebhooks.GenerateSample(binaryPath, filepath.Join(rootPath, "go", "v4-alpha"))
+	withwebhooks.GenerateSample(binaryPath, filepath.Join(rootPath, "go", "v4-alpha", "monitoring"))
 }
