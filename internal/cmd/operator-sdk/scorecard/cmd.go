@@ -52,6 +52,7 @@ type scorecardCmd struct {
 	storageImage   string
 	untarImage     string
 	testOutput     string
+	podSecurity    bool
 }
 
 func NewCmd() *cobra.Command {
@@ -80,6 +81,7 @@ If the argument holds an image tag, it must be present remotely.`,
 	scorecardCmd.Flags().StringVarP(&c.namespace, "namespace", "n", "", "namespace to run the test images in")
 	scorecardCmd.Flags().StringVarP(&c.outputFormat, "output", "o", "text",
 		"Output format for results. Valid values: text, json, xunit")
+	scorecardCmd.Flags().BoolVar(&c.podSecurity, "pod-security", true, "option to run scorecard with legacy pod security context")
 	scorecardCmd.Flags().StringVarP(&c.serviceAccount, "service-account", "s", "default",
 		"Service account to use for tests")
 	scorecardCmd.Flags().BoolVarP(&c.list, "list", "L", false,
