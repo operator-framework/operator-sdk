@@ -121,6 +121,94 @@ func getPodDefinition(configMapName string, test v1alpha3.TestConfiguration, r P
 	}
 }
 
+//Creates the same pod definition as above without added security context for legacy users
+func getLegacyPodDefinition(configMapName string, test v1alpha3.TestConfiguration, r PodTestRunner) *v1.Pod {
+
+	return &v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("scorecard-test-%s", rand.String(4)),
+			Namespace: r.Namespace,
+			Labels: map[string]string{
+				"app":     "scorecard-test",
+				"testrun": configMapName,
+			},
+		},
+		Spec: v1.PodSpec{
+			ServiceAccountName: r.ServiceAccount,
+			RestartPolicy:      v1.RestartPolicyNever,
+			Containers: []v1.Container{
+				{
+					Name:            "scorecard-test",
+					Image:           test.Image,
+					ImagePullPolicy: v1.PullIfNotPresent,
+					Command:         test.Entrypoint,
+					VolumeMounts: []v1.VolumeMount{
+						{
+							MountPath: PodBundleRoot,
+							Name:      "scorecard-untar",
+							ReadOnly:  true,
+						},
+					},
+					Env: []v1.EnvVar{
+						{
+							Name: "SCORECARD_NAMESPACE",
+							ValueFrom: &v1.EnvVarSource{
+								FieldRef: &v1.ObjectFieldSelector{
+									FieldPath: "metadata.namespace",
+								},
+							},
+						},
+					},
+				},
+			},
+			InitContainers: []v1.Container{
+				{
+					Name:            "scorecard-untar",
+					Image:           r.UntarImage,
+					ImagePullPolicy: v1.PullIfNotPresent,
+					Args: []string{
+						"tar",
+						"xvzf",
+						"/scorecard/bundle.tar.gz",
+						"-C",
+						"/scorecard-bundle",
+					},
+					VolumeMounts: []v1.VolumeMount{
+						{
+							MountPath: "/scorecard",
+							Name:      "scorecard-bundle",
+							ReadOnly:  true,
+						},
+						{
+							MountPath: "/scorecard-bundle",
+							Name:      "scorecard-untar",
+							ReadOnly:  false,
+						},
+					},
+				},
+			},
+			Volumes: []v1.Volume{
+				{
+					Name: "scorecard-bundle",
+					VolumeSource: v1.VolumeSource{
+						ConfigMap: &v1.ConfigMapVolumeSource{
+							LocalObjectReference: v1.LocalObjectReference{
+								Name: configMapName,
+							},
+						},
+					},
+				},
+				{
+					Name: "scorecard-untar",
+					VolumeSource: v1.VolumeSource{
+						EmptyDir: &v1.EmptyDirVolumeSource{},
+					},
+				},
+			},
+		},
+	}
+}
+
 // getPodLog fetches the test results which are found in the pod log
 func getPodLog(ctx context.Context, client kubernetes.Interface, pod *v1.Pod) ([]byte, error) {
 	podLogOptions := v1.PodLogOptions{

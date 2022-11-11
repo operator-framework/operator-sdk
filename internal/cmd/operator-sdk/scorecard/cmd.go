@@ -191,6 +191,7 @@ func (c *scorecardCmd) run() (err error) {
 
 	o := scorecard.Scorecard{
 		SkipCleanup: c.skipCleanup,
+		PodSecurity: c.podSecurity,
 	}
 
 	configPath := c.config
