@@ -223,8 +223,14 @@ func (r PodTestRunner) RunTest(ctx context.Context, test v1alpha3.TestConfigurat
 
 	// Create a Pod to run the test
 	podDef := getPodDefinition(r.configMapName, test, r)
-	if !podSec {
-		podDef = getLegacyPodDefinition(r.configMapName, test, r)
+	if podSec {
+		secCtx := v1.PodSecurityContext{}
+		secCtx.RunAsNonRoot = &podSec
+		secCtx.SeccompProfile = &v1.SeccompProfile{
+			Type: v1.SeccompProfileTypeRuntimeDefault,
+		}
+
+		podDef.Spec.SecurityContext = &secCtx
 	}
 
 	if test.Storage.Spec.MountPath.Path != "" {
