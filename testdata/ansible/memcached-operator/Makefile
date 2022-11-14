@@ -72,8 +72,9 @@ help: ## Display this help.
 ##@ Build
 
 .PHONY: run
+ANSIBLE_ROLES_PATH?="$(shell pwd)/roles"
 run: ansible-operator ## Run against the configured Kubernetes cluster in ~/.kube/config
-	ANSIBLE_ROLES_PATH="$(ANSIBLE_ROLES_PATH):$(shell pwd)/roles" $(ANSIBLE_OPERATOR) run
+	$(ANSIBLE_OPERATOR) run
 
 .PHONY: docker-build
 docker-build: ## Build docker image with the manager.
@@ -146,7 +147,7 @@ ifeq (,$(shell which ansible-operator 2>/dev/null))
 	@{ \
 	set -e ;\
 	mkdir -p $(dir $(ANSIBLE_OPERATOR)) ;\
-	curl -sSLo $(ANSIBLE_OPERATOR) https://github.com/operator-framework/operator-sdk/releases/download/v1.24.0/ansible-operator_$(OS)_$(ARCH) ;\
+	curl -sSLo $(ANSIBLE_OPERATOR) https://github.com/operator-framework/operator-sdk/releases/download/v1.25.0/ansible-operator_$(OS)_$(ARCH) ;\
 	chmod +x $(ANSIBLE_OPERATOR) ;\
 	}
 else

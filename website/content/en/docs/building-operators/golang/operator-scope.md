@@ -114,7 +114,7 @@ Update the [`RBAC markers`][rbac-markers] in `<kind>_controller.go` with `namesp
 //+kubebuilder:rbac:groups=cache.example.com,namespace=memcached-operator-system,resources=memcacheds/status,verbs=get;update;patch
 ```
 
-Then run `make manifests` to update `config/rbac/role.yaml`. In our example it would like:
+Then run `make manifests` to update `config/rbac/role.yaml`. In our example it would look like:
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1

@@ -66,7 +66,7 @@ The Manager can restrict the namespace that all controllers will watch for resou
 mgr, err := ctrl.NewManager(cfg, manager.Options{Namespace: namespace})
 ```
 
-By default this will be the namespace that the operator is running in. To watch all namespaces leave the namespace option empty:
+By default this will be empty string which means watch all namespaces:
 
 ```Go
 mgr, err := ctrl.NewManager(cfg, manager.Options{Namespace: ""})
@@ -202,6 +202,10 @@ The `NewControllerManagedBy()` provides a controller builder that allows various
 `For(&cachev1alpha1.Memcached{})` specifies the Memcached type as the primary resource to watch. For each Memcached type Add/Update/Delete event the reconcile loop will be sent a reconcile `Request` (a namespace/name key) for that Memcached object.
 
 `Owns(&appsv1.Deployment{})` specifies the Deployments type as the secondary resource to watch. For each Deployment type Add/Update/Delete event, the event handler will map each event to a reconcile `Request` for the owner of the Deployment. Which in this case is the Memcached object for which the Deployment was created.
+
+The dependent objects, in this case the Deployments, need to have an [Owner References](https://kubernetes.io/docs/concepts/overview/working-with-objects/owners-dependents/#owner-references-in-object-specifications) field that references their owner object. This will be added by using the method `ctrl.SetControllerReference`. [More info][k8s-doc-owner-ref]
+
+Note: The K8s api will manage the resources according to the`ownerRef` which will be properly set by using this method. Therefore, the K8s API will know that these resources, such as the Deployment to run the Memcached Operand image, depend on the custom resource for the Memcached Kind.  This allows the K8s API to delete all dependent resources when/if the custom resource is deleted. [More info][k8s-doc-deleting-cascade]
 
 ### Controller Configurations
 
@@ -523,4 +527,6 @@ Next, check out the following:
 [controller-runtime]: https://github.com/kubernetes-sigs/controller-runtime
 [kb-doc-gkvs]: https://book.kubebuilder.io/cronjob-tutorial/gvks.html
 [rbac_markers]: https://book.kubebuilder.io/reference/markers/rbac.html
+[k8s-doc-owner-ref]: https://kubernetes.io/docs/concepts/overview/working-with-objects/owners-dependents/
+[k8s-doc-deleting-cascade]: https://kubernetes.io/docs/concepts/architecture/garbage-collection/#cascading-deletion
 [deploy-image-plugin-doc]: https://master.book.kubebuilder.io/plugins/deploy-image-plugin-v1-alpha.html
