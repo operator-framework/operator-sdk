@@ -92,7 +92,7 @@ If the argument holds an image tag, it must be present remotely.`,
 		"docker.io/library/busybox@sha256:c71cb4f7e8ececaffb34037c2637dc86820e4185100e18b4d02d613a9bd772af",
 		"Storage image to be used by the Scorecard pod")
 	scorecardCmd.Flags().StringVarP(&c.untarImage, "untar-image", "u",
-		"registry.access.redhat.com/ubi8@sha256:910f6bc0b5ae9b555eb91b88d28d568099b060088616eba2867b07ab6ea457c7",
+		"registry.access.redhat.com/ubi8@sha256:83c0e63f5efb64cba26be647e93bf036b8d88b774f0726936c1b956424b1abf6",
 		"Untar image to be used by the Scorecard pod")
 	scorecardCmd.Flags().StringVarP(&c.testOutput, "test-output", "t", "test-output",
 		"Test output directory.")

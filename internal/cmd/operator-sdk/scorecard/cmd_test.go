@@ -74,7 +74,7 @@ var _ = Describe("Running the scorecard command", func() {
 			flag = cmd.Flags().Lookup("untar-image")
 			Expect(flag).NotTo(BeNil())
 			Expect(flag.Shorthand).To(Equal("u"))
-			Expect(flag.DefValue).To(Equal("registry.access.redhat.com/ubi8@sha256:910f6bc0b5ae9b555eb91b88d28d568099b060088616eba2867b07ab6ea457c7"))
+			Expect(flag.DefValue).To(Equal("registry.access.redhat.com/ubi8@sha256:83c0e63f5efb64cba26be647e93bf036b8d88b774f0726936c1b956424b1abf6"))
 		})
 	})
 

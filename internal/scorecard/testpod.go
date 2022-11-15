@@ -35,7 +35,6 @@ const (
 // getPodDefinition fills out a Pod definition based on
 // information from the test
 func getPodDefinition(configMapName string, test v1alpha3.TestConfiguration, r PodTestRunner) *v1.Pod {
-
 	return &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("scorecard-test-%s", rand.String(4)),
@@ -71,6 +70,15 @@ func getPodDefinition(configMapName string, test v1alpha3.TestConfiguration, r P
 							},
 						},
 					},
+					SecurityContext: &v1.SecurityContext{
+						RunAsNonRoot:             &[]bool{true}[0],
+						AllowPrivilegeEscalation: &[]bool{false}[0],
+						Capabilities: &v1.Capabilities{
+							Drop: []v1.Capability{
+								"ALL",
+							},
+						},
+					},
 				},
 			},
 			InitContainers: []v1.Container{
@@ -97,6 +105,15 @@ func getPodDefinition(configMapName string, test v1alpha3.TestConfiguration, r P
 							ReadOnly:  false,
 						},
 					},
+					SecurityContext: &v1.SecurityContext{
+						RunAsNonRoot:             &[]bool{true}[0],
+						AllowPrivilegeEscalation: &[]bool{false}[0],
+						Capabilities: &v1.Capabilities{
+							Drop: []v1.Capability{
+								"ALL",
+							},
+						},
+					},
 				},
 			},
 			Volumes: []v1.Volume{
@@ -115,6 +132,14 @@ func getPodDefinition(configMapName string, test v1alpha3.TestConfiguration, r P
 					VolumeSource: v1.VolumeSource{
 						EmptyDir: &v1.EmptyDirVolumeSource{},
 					},
+				},
+			},
+			SecurityContext: &v1.PodSecurityContext{
+				RunAsUser:    &[]int64{1000}[0],
+				RunAsGroup:   &[]int64{1000}[0],
+				RunAsNonRoot: &[]bool{true}[0],
+				SeccompProfile: &v1.SeccompProfile{
+					Type: v1.SeccompProfileTypeRuntimeDefault,
 				},
 			},
 		},
