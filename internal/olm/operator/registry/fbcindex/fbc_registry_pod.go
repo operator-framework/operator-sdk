@@ -331,10 +331,7 @@ const fbcCmdTemplate = `opm serve {{ .FBCIndexRootDir}} -p {{ .GRPCPort }}`
 func (f *FBCRegistryPod) createConfigMaps(cs *v1alpha1.CatalogSource) ([]*corev1.ConfigMap, error) {
 	// By default just use the partitioning logic.
 	// If the entire FBC contents can fit in one ConfigMap it will.
-	cms, err := f.partitionedConfigMaps()
-	if err != nil {
-		return nil, err
-	}
+	cms := f.partitionedConfigMaps()
 
 	// Loop through all the ConfigMaps and set the OwnerReference and try to create them
 	for _, cm := range cms {
@@ -343,7 +340,10 @@ func (f *FBCRegistryPod) createConfigMaps(cs *v1alpha1.CatalogSource) ([]*corev1
 			return nil, fmt.Errorf("set configmap %q owner reference: %v", cm.GetName(), err)
 		}
 
-		f.createOrUpdateConfigMap(cm)
+		err := f.createOrUpdateConfigMap(cm)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return cms, nil
@@ -352,7 +352,7 @@ func (f *FBCRegistryPod) createConfigMaps(cs *v1alpha1.CatalogSource) ([]*corev1
 // partitionedConfigMaps will create and return a list of *corev1.ConfigMap
 // that represents all the ConfigMaps that will need to be created to
 // properly have all the FBC contents rendered in the registry pod.
-func (f *FBCRegistryPod) partitionedConfigMaps() ([]*corev1.ConfigMap, error) {
+func (f *FBCRegistryPod) partitionedConfigMaps() []*corev1.ConfigMap {
 	// Split on the YAML separator `---`
 	yamlDefs := strings.Split(f.FBCContent, "---")[1:]
 	configMaps := []*corev1.ConfigMap{}
@@ -411,7 +411,7 @@ func (f *FBCRegistryPod) partitionedConfigMaps() ([]*corev1.ConfigMap, error) {
 		configMaps = append(configMaps, cm.DeepCopy())
 	}
 
-	return configMaps, nil
+	return configMaps
 }
 
 // makeBaseConfigMap will return the base *corev1.ConfigMap
