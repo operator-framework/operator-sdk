@@ -46,9 +46,9 @@ jobs:
         if [[ "$TAG" == "" ]]; then
           TAG="$(git branch --show-current)-${GIT_COMMIT}"
         fi
-        echo ::set-output name=tag::${IMG}:${TAG}
-        echo ::set-output name=git_commit::${GIT_COMMIT}
-
+        echo "tag=${IMG}:${TAG}" >> $GITHUB_OUTPUT
+        echo "git_commit=${GIT_COMMIT}" >> $GITHUB_OUTPUT
+    
     - name: create 2.11-base tag
       id: base_tag_211
       run: |
@@ -59,8 +59,8 @@ jobs:
         if [[ "$TAG" == "" ]]; then
           TAG="$(git branch --show-current)-${GIT_COMMIT}"
         fi
-        echo ::set-output name=tag::${IMG}:${TAG}
-        echo ::set-output name=git_commit::${GIT_COMMIT}
+        echo "tag=${IMG}:${TAG}" >> $GITHUB_OUTPUT
+        echo "git_commit=${GIT_COMMIT}" >> $GITHUB_OUTPUT
 
     - name: build and push ansible 2.9 dep image
       uses: docker/build-push-action@v3
@@ -93,7 +93,7 @@ jobs:
         sed -i -E 's|FROM quay\.io/operator-framework/ansible-operator-base:.+|FROM ${{ steps.base_tag_29.outputs.tag }}|g' images/ansible-operator/Dockerfile
         git diff --exit-code --quiet && echo "Failed to update images/ansible-operator/Dockerfile" && exit 1
         REF="${{ github.event.ref }}"
-        echo ::set-output name=branch_name::"${REF##*/}"
+        echo "branch_name=${REF##*/}" >> $GITHUB_OUTPUT
 
     - name: create PR for ansible-operator 2.9 Dockerfile
       uses: peter-evans/create-pull-request@v3
@@ -116,7 +116,7 @@ jobs:
         sed -i -E 's|FROM quay\.io/operator-framework/ansible-operator-2.11-preview-base:.+|FROM ${{ steps.base_tag_211.outputs.tag }}|g' images/ansible-operator-2.11-preview/Dockerfile
         git diff --exit-code --quiet && echo "Failed to update images/ansible-operator-11-preview-base/Dockerfile" && exit 1
         REF="${{ github.event.ref }}"
-        echo ::set-output name=branch_name::"${REF##*/}"
+        echo "branch_name=${REF##*/}" >> $GITHUB_OUTPUT
 
     - name: create PR for ansible-operator-2.11-preview Dockerfile
       uses: peter-evans/create-pull-request@v3

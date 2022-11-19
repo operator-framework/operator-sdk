@@ -22,7 +22,7 @@ jobs:
       with:
         fetch-depth: 0
     - id: tags
-      run: echo ::set-output name=git_tags::$(.github/workflows/freshen-images/tags.sh)
+      run: echo "git_tags=$(.github/workflows/freshen-images/tags.sh)" >> $GITHUB_OUTPUT
 
   build:
     name: build
