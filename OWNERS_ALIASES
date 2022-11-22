@@ -16,10 +16,10 @@ aliases:
   - rashmigottipati
   - theishshah
   - varshaprasad96
+  - everettraven
 
   # Contributors who can review and LGTM any PRs in the repo.
   sdk-reviewers:
-  - everettraven
 
   # Contributors who were approvers that are no longer directly involved with the project.
   # This role is symbolic.
