@@ -1,0 +1,14 @@
+{{- $siteURL := .Page.Site.BaseURL -}}
+{{- $done := false -}}
+{{- range .Page.Site.Params.versions -}}
+    {{- $verUrl := printf "%s/" .url -}}
+    {{- if eq  $verUrl $siteURL -}}
+        {{- $done = true -}}
+        <code>{{- .client_go_version -}}</code>
+    {{- end -}}
+{{- end -}}
+{{- if eq $done false -}}
+    {{- range where .Page.Site.Params.versions "version" "Latest Release" -}}
+        <code>{{- .client_go_version -}}</code> 
+    {{- end -}}
+{{- end -}}

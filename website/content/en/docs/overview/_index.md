@@ -69,11 +69,11 @@ binary or project type to look up a Y-axis version to plug into the compatibilit
 
 By binary:
 
-| Binary                  | Lookup strategy               |
-|-------------------------|-------------------------------|
-| `operator-sdk`          | `$ operator-sdk version`      |
-| `ansible-operator`      | `$ ansible-operator version`  |
-| `helm-operator`         | `$ helm-operator version`     |
+| Binary                  | Lookup strategy               | Kubernetes version    | `client-go` version        |
+|-------------------------|-------------------------------|-----------------------|----------------------------|
+| `operator-sdk`          | `$ operator-sdk version`      | {{% kube-version %}}  | {{% client-go-version %}}  |
+| `ansible-operator`      | `$ ansible-operator version`  | {{% kube-version %}}  | {{% client-go-version %}}  |
+| `helm-operator`         | `$ helm-operator version`     | {{% kube-version %}}  | {{% client-go-version %}}  |
 
 By project type (replace `${IMAGE_VERSION}` with base image version in your project `Dockerfile`):
 
