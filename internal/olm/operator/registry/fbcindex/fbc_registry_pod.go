@@ -433,8 +433,8 @@ func (f *FBCRegistryPod) makeBaseConfigMap() *corev1.ConfigMap {
 // update it if it already exists.
 func (f *FBCRegistryPod) createOrUpdateConfigMap(cm *corev1.ConfigMap) error {
 	cmKey := types.NamespacedName{
-		Namespace: cm.Namespace,
-		Name:      cm.Name,
+		Namespace: cm.GetNamespace(),
+		Name:      cm.GetName(),
 	}
 
 	// create a ConfigMap if it does not exist;
@@ -446,6 +446,7 @@ func (f *FBCRegistryPod) createOrUpdateConfigMap(cm *corev1.ConfigMap) error {
 			if err := f.cfg.Client.Create(context.TODO(), cm); err != nil {
 				return fmt.Errorf("error creating ConfigMap: %w", err)
 			}
+			return nil
 		}
 		// update ConfigMap with new FBCContent
 		tempCm.Data = cm.Data

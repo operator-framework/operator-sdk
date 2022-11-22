@@ -17,6 +17,7 @@ package fbcindex
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -25,23 +26,25 @@ import (
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator"
 	"github.com/operator-framework/operator-sdk/internal/olm/operator/registry/index"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 const testIndexImageTag = "some-image:v1.2.3"
-const caSecretName = "foo-secret"
-
-// newFakeClient() returns a fake controller runtime client
-func newFakeClient() client.Client {
-	return fakeclient.NewClientBuilder().Build()
-}
 
 func TestCreateRegistryPod(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Test Registry Pod Suite")
+}
+
+// newFakeClient() returns a fake controller runtime client
+func newFakeClient() client.Client {
+	return fakeclient.NewClientBuilder().Build()
 }
 
 var _ = Describe("FBCRegistryPod", func() {
@@ -52,31 +55,36 @@ var _ = Describe("FBCRegistryPod", func() {
 	}}
 
 	Describe("creating registry pod", func() {
+		var (
+			rp  *FBCRegistryPod
+			cfg *operator.Configuration
+			cs  *v1alpha1.CatalogSource
+		)
+
+		BeforeEach(func() {
+			cs = &v1alpha1.CatalogSource{
+				ObjectMeta: v1.ObjectMeta{
+					Name: "test-catalogsource",
+				},
+			}
+
+			schm := runtime.NewScheme()
+			Expect(v1alpha1.AddToScheme(schm)).ShouldNot(HaveOccurred())
+
+			cfg = &operator.Configuration{
+				Client:    newFakeClient(),
+				Namespace: "test-default",
+				Scheme:    schm,
+			}
+			rp = &FBCRegistryPod{
+				BundleItems: defaultBundleItems,
+				IndexImage:  testIndexImageTag,
+			}
+			By("initializing the FBCRegistryPod")
+			Expect(rp.init(cfg, cs)).To(Succeed())
+		})
+
 		Context("with valid registry pod values", func() {
-			var (
-				rp  *FBCRegistryPod
-				cfg *operator.Configuration
-				cs  *v1alpha1.CatalogSource
-			)
-
-			BeforeEach(func() {
-				cs = &v1alpha1.CatalogSource{
-					ObjectMeta: v1.ObjectMeta{
-						Name: "test-catalogsource",
-					},
-				}
-				cfg = &operator.Configuration{
-					Client:    newFakeClient(),
-					Namespace: "test-default",
-				}
-				rp = &FBCRegistryPod{
-					BundleItems: defaultBundleItems,
-					IndexImage:  testIndexImageTag,
-				}
-				By("initializing the FBCRegistryPod")
-				Expect(rp.init(cfg, cs)).To(Succeed())
-			})
-
 			It("should create the FBCRegistryPod successfully", func() {
 				expectedPodName := "quay-io-example-example-operator-bundle-0-2-0"
 				Expect(rp).NotTo(BeNil())
@@ -126,22 +134,6 @@ var _ = Describe("FBCRegistryPod", func() {
 		})
 
 		Context("with invalid registry pod values", func() {
-			var (
-				cfg *operator.Configuration
-				cs  *v1alpha1.CatalogSource
-			)
-			BeforeEach(func() {
-				cs = &v1alpha1.CatalogSource{
-					ObjectMeta: v1.ObjectMeta{
-						Name: "test-catalogsource",
-					},
-				}
-				cfg = &operator.Configuration{
-					Client:    newFakeClient(),
-					Namespace: "test-default",
-				}
-			})
-
 			It("should error when bundle image is not provided", func() {
 				expectedErr := "bundle image set cannot be empty"
 				rp := &FBCRegistryPod{}
@@ -171,6 +163,132 @@ var _ = Describe("FBCRegistryPod", func() {
 				Expect(err.Error()).Should(ContainSubstring(expectedErr))
 			})
 		})
+
+		Context("creating a ConfigMap", func() {
+			It("makeBaseConfigMap() should return a basic ConfigMap manifest", func() {
+				cm := rp.makeBaseConfigMap()
+				Expect(cm.GetObjectKind().GroupVersionKind()).Should(Equal(corev1.SchemeGroupVersion.WithKind("ConfigMap")))
+				Expect(cm.GetNamespace()).Should(Equal(cfg.Namespace))
+				Expect(cm.Data).ShouldNot(BeNil())
+				Expect(len(cm.Data)).Should(Equal(0))
+			})
+
+			It("partitionedConfigMaps() should return a single ConfigMap", func() {
+				rp.FBCContent = testYaml
+				expectedYaml := ""
+				for i, yaml := range strings.Split(testYaml, "---")[1:] {
+					if i != 0 {
+						expectedYaml += "\n---\n"
+					}
+
+					expectedYaml += yaml
+				}
+				cms := rp.partitionedConfigMaps()
+				Expect(len(cms)).Should(Equal(1))
+				Expect(cms[0].Data).Should(HaveKey("extraFBC"))
+				Expect(cms[0].Data["extraFBC"]).Should(Equal(expectedYaml))
+			})
+
+			It("partitionedConfigMaps() should return multiple ConfigMaps", func() {
+				// Create a large yaml manifest
+				largeYaml := ""
+				for i := len([]byte(largeYaml)); i < maxConfigMapSize; {
+					largeYaml += testYaml
+					i = len([]byte(largeYaml))
+				}
+
+				rp.FBCContent = largeYaml
+
+				cms := rp.partitionedConfigMaps()
+				Expect(len(cms)).Should(Equal(2))
+				Expect(cms[0].Data).Should(HaveKey("extraFBC"))
+				Expect(cms[0].Data["extraFBC"]).ShouldNot(BeEmpty())
+				Expect(cms[1].Data).Should(HaveKey("extraFBC"))
+				Expect(cms[1].Data["extraFBC"]).ShouldNot(BeEmpty())
+			})
+
+			It("createOrUpdateConfigMap() should create the ConfigMap if it does not exist", func() {
+				cm := rp.makeBaseConfigMap()
+				cm.SetName("test-cm")
+				cm.Data["test"] = "hello test world!"
+
+				Expect(rp.createOrUpdateConfigMap(cm)).Should(Succeed())
+
+				testCm := &corev1.ConfigMap{}
+				Expect(rp.cfg.Client.Get(context.TODO(), types.NamespacedName{Namespace: rp.cfg.Namespace, Name: cm.GetName()}, testCm)).Should(Succeed())
+				Expect(testCm).Should(BeEquivalentTo(cm))
+			})
+
+			It("createOrUpdateConfigMap() should update the ConfigMap if it already exists", func() {
+				cm := rp.makeBaseConfigMap()
+				cm.SetName("test-cm")
+				cm.Data["test"] = "hello test world!"
+				Expect(rp.cfg.Client.Create(context.TODO(), cm)).Should(Succeed())
+				cm.Data["test"] = "hello changed world!"
+				cm.SetResourceVersion("2")
+
+				Expect(rp.createOrUpdateConfigMap(cm)).Should(Succeed())
+
+				testCm := &corev1.ConfigMap{}
+				Expect(rp.cfg.Client.Get(context.TODO(), types.NamespacedName{Namespace: rp.cfg.Namespace, Name: cm.GetName()}, testCm)).Should(Succeed())
+				Expect(testCm).Should(BeEquivalentTo(cm))
+			})
+
+			It("createConfigMaps() should create a single ConfigMap", func() {
+				rp.FBCContent = testYaml
+				expectedYaml := ""
+				for i, yaml := range strings.Split(testYaml, "---")[1:] {
+					if i != 0 {
+						expectedYaml += "\n---\n"
+					}
+
+					expectedYaml += yaml
+				}
+
+				expectedName := fmt.Sprintf("%s-configmap-partition-1", cs.GetName())
+
+				cms, err := rp.createConfigMaps(cs)
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(len(cms)).Should(Equal(1))
+				Expect(cms[0].GetNamespace()).Should(Equal(rp.cfg.Namespace))
+				Expect(cms[0].GetName()).Should(Equal(expectedName))
+				Expect(cms[0].Data).Should(HaveKey("extraFBC"))
+				Expect(cms[0].Data["extraFBC"]).Should(Equal(expectedYaml))
+
+				testCm := &corev1.ConfigMap{}
+				Expect(rp.cfg.Client.Get(context.TODO(), types.NamespacedName{Namespace: rp.cfg.Namespace, Name: expectedName}, testCm)).Should(Succeed())
+				Expect(testCm.Data).Should(HaveKey("extraFBC"))
+				Expect(testCm.Data["extraFBC"]).Should(Equal(expectedYaml))
+				Expect(len(testCm.OwnerReferences)).Should(Equal(1))
+			})
+
+			It("createConfigMaps() should create multiple ConfigMaps", func() {
+				largeYaml := ""
+				for i := len([]byte(largeYaml)); i < maxConfigMapSize; {
+					largeYaml += testYaml
+					i = len([]byte(largeYaml))
+				}
+				rp.FBCContent = largeYaml
+
+				cms, err := rp.createConfigMaps(cs)
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(len(cms)).Should(Equal(2))
+
+				for i, cm := range cms {
+					expectedName := fmt.Sprintf("%s-configmap-partition-%d", cs.GetName(), i+1)
+					Expect(cm.Data).Should(HaveKey("extraFBC"))
+					Expect(cm.Data["extraFBC"]).ShouldNot(BeEmpty())
+					Expect(cm.GetNamespace()).Should(Equal(rp.cfg.Namespace))
+					Expect(cm.GetName()).Should(Equal(expectedName))
+
+					testCm := &corev1.ConfigMap{}
+					Expect(rp.cfg.Client.Get(context.TODO(), types.NamespacedName{Namespace: rp.cfg.Namespace, Name: expectedName}, testCm)).Should(Succeed())
+					Expect(testCm.Data).Should(HaveKey("extraFBC"))
+					Expect(testCm.Data["extraFBC"]).Should(Equal(cm.Data["extraFBC"]))
+					Expect(len(testCm.OwnerReferences)).Should(Equal(1))
+				}
+			})
+		})
 	})
 })
 
@@ -178,3 +296,39 @@ var _ = Describe("FBCRegistryPod", func() {
 func containerCommandFor(indexRootDir string, grpcPort int32) string { //nolint:unparam
 	return fmt.Sprintf("opm serve %s -p %d", indexRootDir, grpcPort)
 }
+
+const testYaml = `
+---
+name: 'Vada O''Connell'
+email: braun.leta@hirthe.biz
+phone: 815.290.6848
+description: 'Sit velit accusantium repellat itaque quisquam dolorem. Necessitatibus et provident explicabo. Animi officia enim omnis unde odio odio. Inventore autem repellendus ducimus et et et iure.'
+address:
+    streetName: 'Terence Garden'
+    streetAddress: '644 Ward Ranch'
+    city: 'North Newtonhaven'
+    postcode: 37068-6948
+    country: 'Saudi Arabia'
+---
+name: 'Miss Rita Gulgowski'
+email: oran02@gmail.com
+phone: '+13346133601'
+description: 'Inventore recusandae ducimus nemo consequatur. Dolorum vel voluptas sint tempore iste maiores. Voluptatem nisi incidunt sit. Vel et officiis eum enim dolores dolor.'
+address:
+    streetName: 'Skylar Gateway'
+    streetAddress: '8717 Karley Creek Suite 375'
+    city: Kuhlmanshire
+    postcode: '59539'
+    country: Bolivia
+---
+name: 'Prof. Laverna Stanton'
+email: nicklaus.turner@gmail.com
+phone: 928.205.3796
+description: 'Fugiat quos aspernatur iste fugit provident fugit aut. Optio rem exercitationem quas esse et nesciunt velit excepturi. Doloremque aliquid iure aut quaerat id repellat.'
+address:
+    streetName: 'Kamron Roads'
+    streetAddress: '956 Lemke Camp'
+    city: Malikatown
+    postcode: '89393'
+    country: 'French Southern Territories'
+`
