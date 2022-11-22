@@ -18,6 +18,8 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/blang/semver/v4"
 	. "github.com/onsi/ginkgo/v2"
@@ -193,6 +195,7 @@ var _ = Describe("Testing CRDs with single version", func() {
 						Version:      zeroZeroOne,
 						Collector:    col,
 					}
+					newCSV.Annotations["createdAt"] = time.Now().UTC().Format(time.RFC3339)
 					csv, err := g.generate()
 					Expect(err).ToNot(HaveOccurred())
 					Expect(csv).To(Equal(newCSV))
@@ -212,6 +215,7 @@ var _ = Describe("Testing CRDs with single version", func() {
 					csvExp := newCSVUIMeta.DeepCopy()
 					csvExp.SetName("memcached-operator.v0.0.3")
 					csvExp.GetAnnotations()["olm.skipRange"] = "<0.0.2"
+					csvExp.Annotations["createdAt"] = time.Now().UTC().Format(time.RFC3339)
 					csvExp.Spec.Replaces = "memcached-operator.v0.0.2"
 					csvExp.Spec.Version.Patch = 3
 					Expect(csv).To(Equal(csvExp))
@@ -223,6 +227,7 @@ var _ = Describe("Testing CRDs with single version", func() {
 						Version:      zeroZeroOne,
 						Collector:    col,
 					}
+					newCSVUIMeta.Annotations["createdAt"] = time.Now().UTC().Format(time.RFC3339)
 					csv, err := g.generate()
 					Expect(err).ToNot(HaveOccurred())
 					Expect(csv).To(Equal(newCSVUIMeta))
@@ -233,6 +238,7 @@ var _ = Describe("Testing CRDs with single version", func() {
 						OperatorName: operatorName,
 						Collector:    col,
 					}
+					newCSVUIMeta.Annotations["createdAt"] = time.Now().UTC().Format(time.RFC3339)
 					csv, err := g.generate()
 					Expect(err).ToNot(HaveOccurred())
 					Expect(csv).To(Equal(newCSVUIMeta))
@@ -246,6 +252,9 @@ var _ = Describe("Testing CRDs with single version", func() {
 						Version:      zeroZeroOne,
 						Collector: &collector.Manifests{
 							ClusterServiceVersions: []v1alpha1.ClusterServiceVersion{*newCSVUIMeta},
+						},
+						Annotations: map[string]string{
+							"createdAt": time.Now().UTC().Format(time.RFC3339),
 						},
 					}
 					// Update the input's and expected CSV's Deployment image.
@@ -390,6 +399,7 @@ func initTestCSVsHelper() {
 	ExpectWithOffset(1, err).ToNot(HaveOccurred())
 	path = filepath.Join(csvNewLayoutBundleDir, "with-ui-metadata.clusterserviceversion.yaml")
 	newCSVUIMeta, newCSVUIMetaStr, err = getCSVFromFile(path)
+	newCSVUIMetaStr = strings.ReplaceAll(newCSVUIMetaStr, "2022-11-08T16:44:38Z", time.Now().UTC().Format(time.RFC3339))
 	ExpectWithOffset(1, err).ToNot(HaveOccurred())
 }
 
@@ -401,6 +411,7 @@ func initTestMultiVersionCSVHelper() {
 
 	path = filepath.Join(csvNewLayoutBundleDir, "memcached-operator-multiVersion.yaml")
 	_, multiVersionCSVStr, err = getCSVFromFile(path)
+	multiVersionCSVStr = strings.ReplaceAll(multiVersionCSVStr, "2022-11-08T16:44:38Z", time.Now().UTC().Format(time.RFC3339))
 	ExpectWithOffset(1, err).ToNot(HaveOccurred())
 }
 
@@ -453,6 +464,7 @@ func updateCSV(csv *v1alpha1.ClusterServiceVersion,
 	opts ...func(*v1alpha1.ClusterServiceVersion)) *v1alpha1.ClusterServiceVersion {
 
 	updated := csv.DeepCopy()
+	updated.Annotations["createdAt"] = time.Now().UTC().Format(time.RFC3339)
 	for _, opt := range opts {
 		opt(updated)
 	}
@@ -465,6 +477,7 @@ func upgradeCSV(csv *v1alpha1.ClusterServiceVersion, name, version string) *v1al
 	// Update CSV name and upgrade version.
 	upgraded.SetName(genutil.MakeCSVName(name, version))
 	upgraded.Spec.Version = operatorversion.OperatorVersion{Version: semver.MustParse(version)}
+	upgraded.Annotations["createdAt"] = time.Now().UTC().Format(time.RFC3339)
 
 	return upgraded
 }

@@ -94,6 +94,11 @@ func (ma *Memcached) Run() {
 	log.Infof("striping bundle annotations")
 	err = ma.ctx.StripBundleAnnotations()
 	pkg.CheckError("striping bundle annotations", err)
+
+	log.Infof("setting createdAt annotation")
+	csv := filepath.Join(ma.ctx.Dir, "bundle", "manifests", ma.ctx.ProjectName+".clusterserviceversion.yaml")
+	err = kbutil.ReplaceRegexInFile(csv, "createdAt:.*", createdAt)
+	pkg.CheckError("setting createdAt annotation", err)
 }
 
 // addingMoleculeMockData will customize the molecule data
@@ -127,3 +132,5 @@ func (ma *Memcached) addingAnsibleTask() {
 		"# TODO(user): Add fields here", "size: 1")
 	pkg.CheckError("updating sample CR", err)
 }
+
+const createdAt = `createdAt: "2022-11-08T17:26:37Z"`
