@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"strings"
 	"text/template"
 	"time"
 
@@ -46,8 +47,9 @@ const (
 	defaultContainerName     = "registry-grpc"
 	defaultContainerPortName = "grpc"
 
-	defaultConfigMapName = "operator-sdk-run-bundle-config"
-	defaultConfigMapKey  = "extraFBC"
+	defaultConfigMapKey = "extraFBC"
+
+	maxConfigMapSize = 1 * 1024 * 1024
 )
 
 // FBCRegistryPod holds resources necessary for creation of a registry pod in FBC scenarios.
@@ -76,6 +78,8 @@ type FBCRegistryPod struct { //nolint:maligned
 	// SecurityContext on the Pod
 	SecurityContext string
 
+	configMapName string
+
 	cfg *operator.Configuration
 }
 
@@ -87,6 +91,10 @@ func (f *FBCRegistryPod) init(cfg *operator.Configuration, cs *v1alpha1.CatalogS
 
 	if f.FBCIndexRootDir == "" {
 		f.FBCIndexRootDir = fmt.Sprintf("/%s-configs", cs.Name)
+	}
+
+	if f.configMapName == "" {
+		f.configMapName = fmt.Sprintf("%s-configmap", cs.Name)
 	}
 
 	f.cfg = cfg
@@ -210,9 +218,37 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 
 	// create ConfigMap if it does not exist,
 	// if it exists, then update it with new content.
-	cm, err := f.createConfigMap(cs)
+	cms, err := f.createConfigMaps(cs)
 	if err != nil {
 		return nil, fmt.Errorf("configMap error: %w", err)
+	}
+
+	volumes := []corev1.Volume{}
+	volumeMounts := []corev1.VolumeMount{}
+
+	for _, cm := range cms {
+		volumes = append(volumes, corev1.Volume{
+			Name: k8sutil.TrimDNS1123Label(cm.Name + "-volume"),
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					Items: []corev1.KeyToPath{
+						{
+							Key:  defaultConfigMapKey,
+							Path: path.Join(cm.Name, fmt.Sprintf("%s.yaml", defaultConfigMapKey)),
+						},
+					},
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: cm.Name,
+					},
+				},
+			},
+		})
+
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      k8sutil.TrimDNS1123Label(cm.Name + "-volume"),
+			MountPath: path.Join(f.FBCIndexRootDir, cm.Name),
+			SubPath:   cm.Name,
+		})
 	}
 
 	// make the pod definition
@@ -256,24 +292,7 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 			//         Type: corev1.SeccompProfileTypeRuntimeDefault,
 			//     },
 			// },
-			Volumes: []corev1.Volume{
-				{
-					Name: k8sutil.TrimDNS1123Label(cm.Name + "-volume"),
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							Items: []corev1.KeyToPath{
-								{
-									Key:  defaultConfigMapKey,
-									Path: path.Join(defaultConfigMapName, fmt.Sprintf("%s.yaml", defaultConfigMapKey)),
-								},
-							},
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: cm.Name,
-							},
-						},
-					},
-				},
-			},
+			Volumes: volumes,
 			Containers: []corev1.Container{
 				{
 					Name:  defaultContainerName,
@@ -286,13 +305,7 @@ func (f *FBCRegistryPod) podForBundleRegistry(cs *v1alpha1.CatalogSource) (*core
 					Ports: []corev1.ContainerPort{
 						{Name: defaultContainerPortName, ContainerPort: f.GRPCPort},
 					},
-					VolumeMounts: []corev1.VolumeMount{
-						{
-							Name:      k8sutil.TrimDNS1123Label(cm.Name + "-volume"),
-							MountPath: path.Join(f.FBCIndexRootDir, cm.Name),
-							SubPath:   cm.Name,
-						},
-					},
+					VolumeMounts: volumeMounts,
 					SecurityContext: &corev1.SecurityContext{
 						Privileged:               pointer.Bool(false),
 						ReadOnlyRootFilesystem:   pointer.Bool(false),
@@ -315,50 +328,134 @@ const fbcCmdTemplate = `opm serve {{ .FBCIndexRootDir}} -p {{ .GRPCPort }}`
 
 // createConfigMap creates a ConfigMap if it does not exist and if it does, then update it with new content.
 // Also, sets the owner reference by making CatalogSource the owner of ConfigMap object for cleanup purposes.
-func (f *FBCRegistryPod) createConfigMap(cs *v1alpha1.CatalogSource) (*corev1.ConfigMap, error) {
-	// new ConfigMap
-	cm := &corev1.ConfigMap{
+func (f *FBCRegistryPod) createConfigMaps(cs *v1alpha1.CatalogSource) ([]*corev1.ConfigMap, error) {
+	// By default just use the partitioning logic.
+	// If the entire FBC contents can fit in one ConfigMap it will.
+	cms := f.partitionedConfigMaps()
+
+	// Loop through all the ConfigMaps and set the OwnerReference and try to create them
+	for _, cm := range cms {
+		// set owner reference by making catalog source the owner of ConfigMap object
+		if err := controllerutil.SetOwnerReference(cs, cm, f.cfg.Scheme); err != nil {
+			return nil, fmt.Errorf("set configmap %q owner reference: %v", cm.GetName(), err)
+		}
+
+		err := f.createOrUpdateConfigMap(cm)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return cms, nil
+}
+
+// partitionedConfigMaps will create and return a list of *corev1.ConfigMap
+// that represents all the ConfigMaps that will need to be created to
+// properly have all the FBC contents rendered in the registry pod.
+func (f *FBCRegistryPod) partitionedConfigMaps() []*corev1.ConfigMap {
+	// Split on the YAML separator `---`
+	yamlDefs := strings.Split(f.FBCContent, "---")[1:]
+	configMaps := []*corev1.ConfigMap{}
+
+	// Keep the number of ConfigMaps that are created to a minimum by
+	// stuffing them as full as possible.
+	partitionCount := 1
+	cm := f.makeBaseConfigMap()
+	// for each chunk of yaml see if it can be added to the ConfigMap partition
+	for _, yamlDef := range yamlDefs {
+		// If the ConfigMap has data then lets attempt to add to it
+		if len(cm.Data) != 0 {
+			// Create a copy to use to verify that adding the data doesn't
+			// exceed the max ConfigMap size of 1 MiB.
+			tempCm := cm.DeepCopy()
+			tempCm.Data[defaultConfigMapKey] = tempCm.Data[defaultConfigMapKey] + "\n---\n" + yamlDef
+
+			// if it would be too large adding the data then partition it.
+			if tempCm.Size() >= maxConfigMapSize {
+				// Set the ConfigMap name based on the partition it is
+				cm.SetName(fmt.Sprintf("%s-partition-%d", f.configMapName, partitionCount))
+				// Increase the partition count
+				partitionCount++
+				// Add the ConfigMap to the list of ConfigMaps
+				configMaps = append(configMaps, cm.DeepCopy())
+
+				// Create a new ConfigMap
+				cm = f.makeBaseConfigMap()
+				// Since adding this data would have made the previous
+				// ConfigMap too large, add it to this new one.
+				// No chunk of YAML from the bundle should cause
+				// the ConfigMap size to exceed 1 MiB and if
+				// somehow it does then there is a problem with the
+				// YAML itself. We can't reasonably break it up smaller
+				// since it is a single object.
+				cm.Data[defaultConfigMapKey] = yamlDef
+			} else {
+				// if adding the data to the ConfigMap
+				// doesn't make the ConfigMap exceed the
+				// size limit then actually add it.
+				cm.Data = tempCm.Data
+			}
+		} else {
+			// If there is no data in the ConfigMap
+			// then this is the first pass. Since it is
+			// the first pass go ahead and add the data.
+			cm.Data[defaultConfigMapKey] = yamlDef
+		}
+	}
+
+	// if there aren't as many ConfigMaps as partitions AND the unadded ConfigMap has data
+	// then add it to the list of ConfigMaps. This is so we don't miss adding a ConfigMap
+	// after the above loop completes.
+	if len(configMaps) != partitionCount && len(cm.Data) != 0 {
+		cm.SetName(fmt.Sprintf("%s-partition-%d", f.configMapName, partitionCount))
+		configMaps = append(configMaps, cm.DeepCopy())
+	}
+
+	return configMaps
+}
+
+// makeBaseConfigMap will return the base *corev1.ConfigMap
+// definition that is used by various functions when creating a ConfigMap.
+func (f *FBCRegistryPod) makeBaseConfigMap() *corev1.ConfigMap {
+	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: corev1.SchemeGroupVersion.String(),
 			Kind:       "ConfigMap",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      defaultConfigMapName,
 			Namespace: f.cfg.Namespace,
 		},
-		Data: map[string]string{
-			defaultConfigMapKey: f.FBCContent,
-		},
+		Data: map[string]string{},
 	}
+}
 
-	// set owner reference by making catalog source the owner of ConfigMap object
-	if err := controllerutil.SetOwnerReference(cs, cm, f.cfg.Scheme); err != nil {
-		return nil, fmt.Errorf("set configmap %q owner reference: %v", cm.GetName(), err)
-	}
-
+// createOrUpdateConfigMap will create a ConfigMap if it doesn't exist or
+// update it if it already exists.
+func (f *FBCRegistryPod) createOrUpdateConfigMap(cm *corev1.ConfigMap) error {
 	cmKey := types.NamespacedName{
-		Namespace: f.cfg.Namespace,
-		Name:      defaultConfigMapName,
+		Namespace: cm.GetNamespace(),
+		Name:      cm.GetName(),
 	}
 
 	// create a ConfigMap if it does not exist;
 	// update it with new data if it already exists.
 	if err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		err := f.cfg.Client.Get(context.TODO(), cmKey, cm)
+		tempCm := &corev1.ConfigMap{}
+		err := f.cfg.Client.Get(context.TODO(), cmKey, tempCm)
 		if apierrors.IsNotFound(err) {
 			if err := f.cfg.Client.Create(context.TODO(), cm); err != nil {
 				return fmt.Errorf("error creating ConfigMap: %w", err)
 			}
+			return nil
 		}
 		// update ConfigMap with new FBCContent
-		cm.Data = map[string]string{defaultConfigMapKey: f.FBCContent}
-		return f.cfg.Client.Update(context.TODO(), cm)
+		tempCm.Data = cm.Data
+		return f.cfg.Client.Update(context.TODO(), tempCm)
 	}); err != nil {
-		return nil, fmt.Errorf("error updating ConfigMap: %w", err)
+		return fmt.Errorf("error updating ConfigMap: %w", err)
 	}
 
-	return cm, nil
-
+	return nil
 }
 
 // getContainerCmd uses templating to construct the container command
