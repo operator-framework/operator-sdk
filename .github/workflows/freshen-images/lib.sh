@@ -53,7 +53,9 @@ function is_dockerfile_fresh() {
 function build_ansible_base() {
   local tag=$1
   local platforms=$2
+  local buildlatest=$3
   local dockerfile=./images/ansible-operator/base.Dockerfile
+
 
   git checkout refs/tags/$tag
   local ansible_base_image_tag=$(grep -oP 'FROM \K(quay\.io/operator-framework/ansible-operator-base:.+)' ./images/ansible-operator/Dockerfile)
@@ -69,8 +71,13 @@ function build_ansible_base() {
     echo "Skipping build of $dockerfile, it is FRESH!"
   else
     # dockerfile is not fresh, rebuildng image
-    echo "Rebuilding image [$ansible_base_image_tag] for [$platforms]"
-    _buildx --tag $ansible_base_image_tag --platform "$platforms" --file "$dockerfile" $IMAGE_DO --build-arg GIT_COMMIT=$ansible_base_git_ref ./images/ansible-operator
+    if $buildlatest; then
+      echo "Rebuilding image [$ansible_base_image_tag] and latest for [$platforms]"
+      _buildx --tag $ansible_base_image_tag --tag quay.io/operator-framework/ansible-operator-base:latest --platform "$platforms" --file "$dockerfile" $IMAGE_DO --build-arg GIT_COMMIT=$ansible_base_git_ref ./images/ansible-operator
+    else
+      echo "Rebuilding image [$ansible_base_image_tag] for [$platforms]"
+      _buildx --tag $ansible_base_image_tag --platform "$platforms" --file "$dockerfile" $IMAGE_DO --build-arg GIT_COMMIT=$ansible_base_git_ref ./images/ansible-operator
+    fi
   fi
 }
 
@@ -82,8 +89,10 @@ function build_generic() {
   local tag=$1
   local id=$2
   local platforms=$3
+  local buildlatest=$4
   local tag_maj_min="quay.io/operator-framework/${id}:$(echo $tag | grep -Eo "v[1-9]+\.[0-9]+")"
   local tag_full="quay.io/operator-framework/${id}:${tag}"
+  local tag_latest="quay.io/operator-framework/${id}:latest"
   local dockerfile=./images/${id}/Dockerfile
 
   git checkout refs/tags/$tag
@@ -91,7 +100,12 @@ function build_generic() {
     echo "Skipping build of $dockerfile, it is FRESH!"
   else
     # dockerfile is not fresh, rebuildng image
-    echo "Rebuilding image [$tag_maj_min] for [$platforms]"
-    _buildx --builder=container --tag "$tag_maj_min" --tag "$tag_full"  --platform "$platforms" --file "$dockerfile" $IMAGE_DO .
+    if $buildlatest; then
+      echo "Rebuilding image [$tag_maj_min] and latest for [$platforms]"
+      _buildx --builder=container --tag "$tag_maj_min" --tag "$tag_full"  --tag "$tag_latest" --platform "$platforms" --file "$dockerfile" $IMAGE_DO .
+    else
+      echo "Rebuilding image [$tag_maj_min] for [$platforms]"
+      _buildx --builder=container --tag "$tag_maj_min" --tag "$tag_full"  --platform "$platforms" --file "$dockerfile" $IMAGE_DO .
+    fi
   fi
 }

@@ -35,7 +35,7 @@ while [[ $# -gt 0 ]]; do
   FORCE=1
   ;;
   --tags)
-  TAGS=$(echo $2 | sed -E 's/,/ /g')
+    TAGS=($(echo $2 | sed -E 's/,/ /g'))
   shift
   ;;
   --image-id)
@@ -83,15 +83,23 @@ ansible-operator)
   # ansible-operator has a base image that must be rebuilt in advance if necessary.
   # This script will detect that the base is fresh when inspecting ansible-operator's
   # Dockerfile and build it.
-  for tag in $TAGS; do
-    build_ansible_base $tag "$PLATFORMS"
+  for i in ${!TAGS[*]}; do
+    if (($i=0)); then
+      build_ansible_base ${TAGS[$i]} "$PLATFORMS" true
+    else
+      build_ansible_base ${TAGS[$i]} "$PLATFORMS" false
+    fi
   done
 ;;
 esac
 
 # Build the image defined by IMAGE_ID for each tag for a set of platforms.
-for tag in $TAGS; do
-  build_generic $tag $IMAGE_ID "$PLATFORMS"
+for i in ${!TAGS[*]}; do
+  if (($i=0)); then
+    build_generic ${TAGS[$i]} $IMAGE_ID "$PLATFORMS" true
+  else
+    build_generic ${TAGS[$i]} $IMAGE_ID "$PLATFORMS" false
+  fi
 done
 
 popd
