@@ -139,6 +139,16 @@ func (rp *SQLiteRegistryPod) Create(ctx context.Context, cfg *operator.Configura
 				Type: corev1.SeccompProfileTypeRuntimeDefault,
 			},
 		}
+
+		// Update the Registry Pod container security context to be restrictive
+		rp.pod.Spec.Containers[0].SecurityContext = &corev1.SecurityContext{
+			Privileged:               pointer.Bool(false),
+			ReadOnlyRootFilesystem:   pointer.Bool(false),
+			AllowPrivilegeEscalation: pointer.Bool(false),
+			Capabilities: &corev1.Capabilities{
+				Drop: []corev1.Capability{"ALL"},
+			},
+		}
 	}
 
 	if err := rp.cfg.Client.Create(ctx, rp.pod); err != nil {
@@ -276,14 +286,6 @@ func (rp *SQLiteRegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 					},
 					Ports: []corev1.ContainerPort{
 						{Name: defaultContainerPortName, ContainerPort: rp.GRPCPort},
-					},
-					SecurityContext: &corev1.SecurityContext{
-						Privileged:               pointer.Bool(false),
-						ReadOnlyRootFilesystem:   pointer.Bool(false),
-						AllowPrivilegeEscalation: pointer.Bool(false),
-						Capabilities: &corev1.Capabilities{
-							Drop: []corev1.Capability{"ALL"},
-						},
 					},
 				},
 			},

@@ -89,6 +89,14 @@ func withSecrets(secretNames ...string) func(*v1alpha1.CatalogSource) {
 	}
 }
 
+func withGrpcPodConfig(securityContextConfig string) func(*v1alpha1.CatalogSource) {
+	return func(cs *v1alpha1.CatalogSource) {
+		cs.Spec.GrpcPodConfig = &v1alpha1.GrpcPodConfig{
+			SecurityContextConfig: v1alpha1.SecurityConfig(securityContextConfig),
+		}
+	}
+}
+
 // newCatalogSource creates a new CatalogSource with a name derived from
 // pkgName, the package manifest's packageName, in namespace. opts will
 // be applied to the CatalogSource object.

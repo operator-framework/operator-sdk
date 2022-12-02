@@ -139,7 +139,7 @@ func (c *IndexImageCatalogCreator) BindFlags(fs *pflag.FlagSet) {
 		"while pulling bundles")
 
 	// default to Restricted
-	c.SecurityContext = SecurityContext{ContextType: Restricted}
+	c.SecurityContext = SecurityContext{ContextType: Legacy}
 	fs.Var(&c.SecurityContext, "security-context-config", "specifies the security context to use for the catalog pod. allowed: 'restricted', 'legacy'.")
 }
 
@@ -148,6 +148,7 @@ func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string
 	cs := newCatalogSource(name, c.cfg.Namespace,
 		withSDKPublisher(c.PackageName),
 		withSecrets(c.SecretName),
+		withGrpcPodConfig(c.SecurityContext.String()),
 	)
 	if err := c.cfg.Client.Create(ctx, cs); err != nil {
 		return nil, fmt.Errorf("error creating catalog source: %v", err)
