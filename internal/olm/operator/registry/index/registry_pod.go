@@ -287,6 +287,7 @@ func (rp *SQLiteRegistryPod) podForBundleRegistry() (*corev1.Pod, error) {
 					Ports: []corev1.ContainerPort{
 						{Name: defaultContainerPortName, ContainerPort: rp.GRPCPort},
 					},
+					WorkingDir: "/tmp",
 				},
 			},
 			ServiceAccountName: rp.cfg.ServiceAccount,
@@ -364,11 +365,12 @@ func newBool(b bool) *bool {
 	return bp
 }
 
-const cmdTemplate = `mkdir -p {{ dirname .DBPath }} && \
+const cmdTemplate = `
+[[ -f {{ .DBPath }} ]] && cp {{ .DBPath }} /tmp/tmp.db; \
 {{- range $i, $item := .BundleItems }}
-opm registry add -d {{ $.DBPath }} -b {{ $item.ImageTag }} --mode={{ $item.AddMode }}{{ if $.CASecretName }} --ca-file=/certs/cert.pem{{ end }} --skip-tls-verify={{ $.SkipTLSVerify }} --use-http={{ $.UseHTTP }} && \
+opm registry add -d /tmp/tmp.db -b {{ $item.ImageTag }} --mode={{ $item.AddMode }}{{ if $.CASecretName }} --ca-file=/certs/cert.pem{{ end }} --skip-tls-verify={{ $.SkipTLSVerify }} --use-http={{ $.UseHTTP }} && \
 {{- end }}
-opm registry serve -d {{ .DBPath }} -p {{ .GRPCPort }}
+opm registry serve -d /tmp/tmp.db -p {{ .GRPCPort }}
 `
 
 // getContainerCmd uses templating to construct the container command
