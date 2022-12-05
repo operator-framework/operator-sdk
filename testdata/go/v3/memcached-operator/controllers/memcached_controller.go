@@ -177,6 +177,15 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 				return ctrl.Result{}, err
 			}
 
+		        // Re-fetch the memcached Custom Resource because its status has changed,
+			// so that we have the latest state of the resource on the cluster and we will avoid
+			// raise the issue "the object has been modified, please apply
+			// your changes to the latest version and try again" which would re-trigger the reconciliation
+			if err := r.Get(ctx, req.NamespacedName, memcached); err != nil {
+				log.Error(err, "Failed to re-fetch memcached")
+				return ctrl.Result{}, err
+			}
+			
 			log.Info("Removing Finalizer for Memcached after successfully perform the operations")
 			if ok := controllerutil.RemoveFinalizer(memcached, memcachedFinalizer); !ok {
 				log.Error(err, "Failed to remove finalizer for Memcached")
