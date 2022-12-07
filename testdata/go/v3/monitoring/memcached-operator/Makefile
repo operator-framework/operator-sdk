@@ -168,6 +168,21 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
+LDFLAGS            ?= -w -s
+
+build-prom-spec-dumper: ## Build binary from source
+	go build -ldflags="${LDFLAGS}" -o _out/rule-spec-dumper ./monitoring/prom-rule-ci/rule-spec-dumper.go
+
+current-dir := $(realpath .)
+
+# Unit testing for the operator alerts and recording rules
+# rule-spec-dumper dumps the prometheus rule spec to a temp _out/rule-spec-dumper file which prom-rules-tests runs against
+prom-rules-verify: build-prom-spec-dumper
+	./monitoring/prom-rule-ci/verify-rules.sh \
+		"${current-dir}/_out/rule-spec-dumper" \
+		"${current-dir}/monitoring/prom-rule-ci/prom-rules-tests.yaml"
+
+
 
 ##@ Build Dependencies
 
