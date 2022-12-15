@@ -332,8 +332,18 @@ func (a *apiResources) resetResources() error {
 	defer a.mu.Unlock()
 
 	_, apisResourceList, err := a.discoveryClient.ServerGroupsAndResources()
+	// Issue #5596
+	// The ServerGroupsAndResources call can return both a valid list of api
+	// resources AND an error for one or more resources that fail to correctly
+	// look up against the API server. This fix mirrors the similar fix in helm:
+	// https://github.com/helm/helm/issues/6361
 	if err != nil {
-		return err
+		if discovery.IsGroupDiscoveryFailedError(err) {
+			log.Info("WARNING: The Kubernetes server has an orphaned API service. Server reports: %s", err)
+			log.Info("WARNING: To fix this, kubectl delete apiservice <service-name>")
+		} else {
+			return err
+		}
 	}
 
 	a.gvkToAPIResource = map[string]metav1.APIResource{}
