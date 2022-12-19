@@ -365,8 +365,7 @@ func newBool(b bool) *bool {
 	return bp
 }
 
-const cmdTemplate = `
-[[ -f {{ .DBPath }} ]] && cp {{ .DBPath }} /tmp/tmp.db; \
+const cmdTemplate = `[[ -f {{ .DBPath }} ]] && cp {{ .DBPath }} /tmp/tmp.db; \
 {{- range $i, $item := .BundleItems }}
 opm registry add -d /tmp/tmp.db -b {{ $item.ImageTag }} --mode={{ $item.AddMode }}{{ if $.CASecretName }} --ca-file=/certs/cert.pem{{ end }} --skip-tls-verify={{ $.SkipTLSVerify }} --use-http={{ $.UseHTTP }} && \
 {{- end }}
